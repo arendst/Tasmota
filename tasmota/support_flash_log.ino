@@ -112,11 +112,7 @@ DEBUG_SENSOR_LOG(PSTR("FLOG: init ..."));
 size = ESP.getSketchSize();
 // round one sector up
 start = (size + FLASH_SECTOR_SIZE - 1) & (~(FLASH_SECTOR_SIZE - 1));
-#if defined(ARDUINO_ESP8266_RELEASE_2_3_0) || defined(ARDUINO_ESP8266_RELEASE_2_4_0) || defined(ARDUINO_ESP8266_RELEASE_2_4_1) || defined(ARDUINO_ESP8266_RELEASE_2_4_2) || defined(ARDUINO_ESP8266_RELEASE_2_5_0) || defined(ARDUINO_ESP8266_RELEASE_2_5_1) || defined(ARDUINO_ESP8266_RELEASE_2_5_2)
-end = (uint32_t)&_SPIFFS_start - 0x40200000;
-#else  // Core > 2.5.2 and STAGE
 end = (uint32_t)&_FS_start - 0x40200000;
-#endif
 num_sectors = (end - start)/FLASH_SECTOR_SIZE;
 DEBUG_SENSOR_LOG(PSTR("FLOG: size: 0x%lx, start: 0x%lx, end: 0x%lx, num_sectors(dec): %lu"), size, start, end, num_sectors );
 _findFirstErasedSector();
@@ -401,7 +397,7 @@ void FLOG::stopRecording(void){
       if(k%128 == 0){  // give control to the system every x iteration, TODO: This will fail, when record/entry-size is not 8
         // DEBUG_SENSOR_LOG(PSTR("FLOG: now loop(), %u bytes left"), Flog->bytes_left);
         OsWatchLoop();
-        delay(ssleep);
+        delay(TasmotaGlobal.sleep);
         }
       k+=size;
       if(bytes_left>7){
@@ -420,7 +416,7 @@ void FLOG::stopRecording(void){
     _readSector(next_sector);
     bytes_left = sector.header.buf_pointer - sizeof(sector.header);
     OsWatchLoop();
-    delay(ssleep);
+    delay(TasmotaGlobal.sleep);
   }
   running_download = false;
   // Callback 3: create a footer or simply finish the download with an empty payload

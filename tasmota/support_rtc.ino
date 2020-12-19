@@ -29,9 +29,6 @@ const uint32_t MINS_PER_HOUR = 60UL;
 
 #define LEAP_YEAR(Y)  (((1970+Y)>0) && !((1970+Y)%4) && (((1970+Y)%100) || !((1970+Y)%400)))
 
-extern "C" {
-#include "sntp.h"
-}
 #include <Ticker.h>
 
 Ticker TickerRtc;
@@ -44,11 +41,12 @@ struct RTC {
   uint32_t local_time = 0;
   uint32_t daylight_saving_time = 0;
   uint32_t standard_time = 0;
-  uint32_t ntp_time = 0;
   uint32_t midnight = 0;
   uint32_t restart_time = 0;
+  uint32_t millis = 0;
+//  uint32_t last_sync = 0;
   int32_t time_timezone = 0;
-  uint8_t ntp_sync_minute = 0;
+  bool time_synced = false;
   bool midnight_now = false;
   bool user_time_entry = false;               // Override NTP by user setting
 } Rtc;
@@ -204,6 +202,14 @@ String GetDateAndTime(uint8_t time_type)
       break;
   }
   String dt = GetDT(time);  // 2017-03-07T11:08:02
+
+  if (DT_LOCAL_MILLIS == time_type) {
+    char ms[10];
+    snprintf_P(ms, sizeof(ms), PSTR(".%03d"), RtcMillis());
+    dt += ms;
+    time_type = DT_LOCAL;
+  }
+
   if (Settings.flag3.time_append_timezone && (DT_LOCAL == time_type)) {  // SetOption52 - Append timezone to JSON time
     dt += GetTimeZone();    // 2017-03-07T11:08:02-07:00
   }
@@ -215,7 +221,7 @@ uint32_t UpTime(void)
   if (Rtc.restart_time) {
     return Rtc.utc_time - Rtc.restart_time;
   } else {
-    return uptime;
+    return TasmotaGlobal.uptime;
   }
 }
 
@@ -237,6 +243,10 @@ uint32_t MinutesPastMidnight(void)
     minutes = (RtcTime.hour *60) + RtcTime.minute;
   }
   return minutes;
+}
+
+uint32_t RtcMillis(void) {
+  return (millis() - Rtc.millis) % 1000;
 }
 
 void BreakTime(uint32_t time_input, TIME_T &tm)
@@ -360,46 +370,47 @@ uint32_t RuleToTime(TimeRule r, int yr)
 
 void RtcSecond(void)
 {
-  TIME_T tmpTime;
+  static uint32_t last_sync = 0;
+  static bool mutex = false;
 
-  if (!Rtc.user_time_entry && !global_state.wifi_down) {
-    uint8_t uptime_minute = (uptime / 60) % 60;  // 0 .. 59
-    if ((Rtc.ntp_sync_minute > 59) && (uptime_minute > 2)) {
-      Rtc.ntp_sync_minute = 1;                   // If sync prepare for a new cycle
+  if (mutex) { return; }
+
+  if (Rtc.time_synced) {
+    mutex = true;
+
+    Rtc.time_synced = false;
+    last_sync = Rtc.utc_time;
+
+    if (Rtc.restart_time == 0) {
+      Rtc.restart_time = Rtc.utc_time - TasmotaGlobal.uptime;  // save first synced time as restart time
     }
-    uint8_t offset = (uptime < 30) ? RtcTime.second : (((ESP_getChipId() & 0xF) * 3) + 3) ;  // First try ASAP to sync. If fails try once every 60 seconds based on chip id
-    if ( (((offset == RtcTime.second) && ( (RtcTime.year < 2016) ||                          // Never synced
-                                           (Rtc.ntp_sync_minute == uptime_minute))) ||       // Re-sync every hour
-                                            ntp_force_sync ) ) {                             // Forced sync
-      Rtc.ntp_time = sntp_get_current_timestamp();
-      if (Rtc.ntp_time > START_VALID_TIME) {  // Fix NTP bug in core 2.4.1/SDK 2.2.1 (returns Thu Jan 01 08:00:10 1970 after power on)
-        ntp_force_sync = false;
-        Rtc.utc_time = Rtc.ntp_time;
-        Rtc.ntp_sync_minute = 60;  // Sync so block further requests
-        if (Rtc.restart_time == 0) {
-          Rtc.restart_time = Rtc.utc_time - uptime;  // save first ntp time as restart time
-        }
-        BreakTime(Rtc.utc_time, tmpTime);
-        RtcTime.year = tmpTime.year + 1970;
-        Rtc.daylight_saving_time = RuleToTime(Settings.tflag[1], RtcTime.year);
-        Rtc.standard_time = RuleToTime(Settings.tflag[0], RtcTime.year);
 
-        // Do not use AddLog_P2 here (interrupt routine) if syslog or mqttlog is enabled. UDP/TCP will force exception 9
-        PrepLog_P2(LOG_LEVEL_DEBUG, PSTR("NTP: " D_UTC_TIME " %s, " D_DST_TIME " %s, " D_STD_TIME " %s"),
-          GetDateAndTime(DT_UTC).c_str(), GetDateAndTime(DT_DST).c_str(), GetDateAndTime(DT_STD).c_str());
+    TIME_T tmpTime;
+    BreakTime(Rtc.utc_time, tmpTime);
+    RtcTime.year = tmpTime.year + 1970;
+    Rtc.daylight_saving_time = RuleToTime(Settings.tflag[1], RtcTime.year);
+    Rtc.standard_time = RuleToTime(Settings.tflag[0], RtcTime.year);
 
-        if (Rtc.local_time < START_VALID_TIME) {  // 2016-01-01
-          rules_flag.time_init = 1;
-        } else {
-          rules_flag.time_set = 1;
-        }
-      } else {
-        Rtc.ntp_sync_minute++;  // Try again in next minute
-      }
+    // Do not use AddLog_P( here (interrupt routine) if syslog or mqttlog is enabled. UDP/TCP will force exception 9
+    AddLog_P(LOG_LEVEL_DEBUG, PSTR("RTC: " D_UTC_TIME " %s, " D_DST_TIME " %s, " D_STD_TIME " %s"),
+      GetDateAndTime(DT_UTC).c_str(), GetDateAndTime(DT_DST).c_str(), GetDateAndTime(DT_STD).c_str());
+
+    if (Rtc.local_time < START_VALID_TIME) {  // 2016-01-01
+      TasmotaGlobal.rules_flag.time_init = 1;
+    } else {
+      TasmotaGlobal.rules_flag.time_set = 1;
     }
+  } else {
+    Rtc.utc_time++;  // Increment every second
+  }
+  Rtc.millis = millis();
+
+  if ((Rtc.utc_time > (2 * 60 * 60)) && (last_sync < Rtc.utc_time - (2 * 60 * 60))) {  // Every two hours a warning
+    // Do not use AddLog_P( here (interrupt routine) if syslog or mqttlog is enabled. UDP/TCP will force exception 9
+    AddLog_P(LOG_LEVEL_DEBUG, PSTR("RTC: Not synced"));
+    last_sync = Rtc.utc_time;
   }
 
-  Rtc.utc_time++;  // Increment every second
   Rtc.local_time = Rtc.utc_time;
   if (Rtc.local_time > START_VALID_TIME) {  // 2016-01-01
     int16_t timezone_minutes = Settings.timezone_minutes;
@@ -446,31 +457,32 @@ void RtcSecond(void)
   }
 
   RtcTime.year += 1970;
+
+  mutex = false;
 }
 
-void RtcSetTime(uint32_t epoch)
-{
+void RtcSync(void) {
+  Rtc.time_synced = true;
+  RtcSecond();
+//  AddLog_P(LOG_LEVEL_DEBUG, PSTR("RTC: Synced"));
+}
+
+void RtcSetTime(uint32_t epoch) {
   if (epoch < START_VALID_TIME) {  // 2016-01-01
     Rtc.user_time_entry = false;
-    ntp_force_sync = true;
-    sntp_init();
+    TasmotaGlobal.ntp_force_sync = true;
   } else {
-    sntp_stop();
     Rtc.user_time_entry = true;
     Rtc.utc_time = epoch -1;    // Will be corrected by RtcSecond
   }
-  RtcSecond();
 }
 
-void RtcInit(void)
-{
-  sntp_setservername(0, SettingsText(SET_NTPSERVER1));
-  sntp_setservername(1, SettingsText(SET_NTPSERVER2));
-  sntp_setservername(2, SettingsText(SET_NTPSERVER3));
-  sntp_stop();
-  sntp_set_timezone(0);      // UTC time
-  sntp_init();
+void RtcInit(void) {
   Rtc.utc_time = 0;
   BreakTime(Rtc.utc_time, RtcTime);
   TickerRtc.attach(1, RtcSecond);
+}
+
+void RtcPreInit(void) {
+  Rtc.millis = millis();
 }

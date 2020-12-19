@@ -68,10 +68,16 @@ void DeepSleepReInit(void)
     if ((RtcSettings.ultradeepsleep > DEEPSLEEP_MAX_CYCLE) && (RtcSettings.ultradeepsleep < 1700000000)) {
       // Go back to sleep after 60 minutes if requested deepsleep has not been reached
       RtcSettings.ultradeepsleep = RtcSettings.ultradeepsleep - DEEPSLEEP_MAX_CYCLE;
-      AddLog_P2(LOG_LEVEL_ERROR, PSTR("DSL: Remain DeepSleep %d"), RtcSettings.ultradeepsleep);
+      AddLog_P(LOG_LEVEL_ERROR, PSTR("DSL: Remain DeepSleep %d"), RtcSettings.ultradeepsleep);
       RtcSettingsSave();
       RtcRebootReset();
+#ifdef ESP8266
       ESP.deepSleep(100 * RtcSettings.deepsleep_slip * (DEEPSLEEP_MAX_CYCLE < RtcSettings.ultradeepsleep ? DEEPSLEEP_MAX_CYCLE : RtcSettings.ultradeepsleep), WAKE_RF_DEFAULT);
+#endif  // ESP8266
+#ifdef ESP32
+      esp_sleep_enable_timer_wakeup(100 * RtcSettings.deepsleep_slip * (DEEPSLEEP_MAX_CYCLE < RtcSettings.ultradeepsleep ? DEEPSLEEP_MAX_CYCLE : RtcSettings.ultradeepsleep));
+      esp_deep_sleep_start();
+#endif  // ESP32
       yield();
       // Sleeping
     }
@@ -90,7 +96,7 @@ void DeepSleepPrepare(void)
       (RtcSettings.deepsleep_slip < 9000) ||
       (RtcSettings.deepsleep_slip > 11000) ||
       (RtcSettings.nextwakeup > (UtcTime() + Settings.deepsleep))) {
-    AddLog_P2(LOG_LEVEL_ERROR, PSTR("DSL: Reset wrong settings wakeup: %ld, slip %ld"), RtcSettings.nextwakeup, RtcSettings.deepsleep_slip );
+    AddLog_P(LOG_LEVEL_ERROR, PSTR("DSL: Reset wrong settings wakeup: %ld, slip %ld"), RtcSettings.nextwakeup, RtcSettings.deepsleep_slip );
     RtcSettings.nextwakeup = 0;
     RtcSettings.deepsleep_slip = 10000;
   }
@@ -125,7 +131,7 @@ void DeepSleepPrepare(void)
   Response_P(PSTR("{\"" D_PRFX_DEEPSLEEP "\":{\"" D_JSON_TIME "\":\"%s\",\"Epoch\":%d}}"), (char*)dt.c_str(), RtcSettings.nextwakeup);
   MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR(D_CMND_STATUS));
 
-//  Response_P(S_OFFLINE);
+//  Response_P(S_LWT_OFFLINE);
 //  MqttPublishPrefixTopic_P(TELE, PSTR(D_LWT), true);  // Offline or remove previous retained topic
 }
 
@@ -136,8 +142,13 @@ void DeepSleepStart(void)
   WifiShutdown();
   RtcSettings.ultradeepsleep = RtcSettings.nextwakeup - UtcTime();
   RtcSettingsSave();
-
+#ifdef ESP8266
   ESP.deepSleep(100 * RtcSettings.deepsleep_slip * deepsleep_sleeptime);
+#endif  // ESP8266
+#ifdef ESP32
+  esp_sleep_enable_timer_wakeup(100 * RtcSettings.deepsleep_slip * deepsleep_sleeptime);
+  esp_deep_sleep_start();
+#endif  // ESP32
   yield();
 }
 

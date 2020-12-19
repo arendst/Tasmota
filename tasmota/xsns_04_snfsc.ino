@@ -62,7 +62,7 @@ void SonoffScSend(const char *data)
 {
   Serial.write(data);
   Serial.write('\x1B');
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_SERIAL D_TRANSMIT " %s"), data);
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_SERIAL D_TRANSMIT " %s"), data);
 }
 
 void SonoffScInit(void)
@@ -78,7 +78,7 @@ void SonoffScSerialInput(char *rcvstat)
   char *str;
   uint16_t value[5] = { 0 };
 
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_SERIAL D_RECEIVED " %s"), rcvstat);
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_SERIAL D_RECEIVED " %s"), rcvstat);
 
   if (!strncasecmp_P(rcvstat, PSTR("AT+UPDATE="), 10)) {
     int8_t i = -1;
@@ -120,7 +120,7 @@ void SonoffScShow(bool json)
       ResponseAppendTHD(t, h);
       ResponseAppend_P(PSTR(",\"" D_JSON_LIGHT "\":%d,\"" D_JSON_NOISE "\":%d,\"" D_JSON_AIRQUALITY "\":%d}"), sc_value[2], sc_value[3], sc_value[4]);
 #ifdef USE_DOMOTICZ
-      if (0 == tele_period) {
+      if (0 == TasmotaGlobal.tele_period) {
         DomoticzTempHumPressureSensor(t, h);
         DomoticzSensor(DZ_ILLUMINANCE, sc_value[2]);
         DomoticzSensor(DZ_COUNT, sc_value[3]);
@@ -129,7 +129,7 @@ void SonoffScShow(bool json)
 #endif  // USE_DOMOTICZ
 
 #ifdef USE_KNX
-      if (0 == tele_period) {
+      if (0 == TasmotaGlobal.tele_period) {
         KnxSensor(KNX_TEMPERATURE, t);
         KnxSensor(KNX_HUMIDITY, h);
       }
@@ -152,7 +152,7 @@ bool Xsns04(uint8_t function)
 {
   bool result = false;
 
-  if (SONOFF_SC == my_module_type) {
+  if (SONOFF_SC == TasmotaGlobal.module_type) {
     switch (function) {
       case FUNC_JSON_APPEND:
         SonoffScShow(1);

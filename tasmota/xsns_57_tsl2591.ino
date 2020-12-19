@@ -52,7 +52,7 @@ void Tsl2591Init(void)
   }
 }
 
-bool Tsl2591Read(void)
+void Tsl2591Read(void)
 {
   uint32_t lum = tsl.getFullLuminosity();
   uint16_t ir, full;
@@ -80,7 +80,7 @@ void Tsl2591Show(bool json)
     if (json) {
       ResponseAppend_P(PSTR(",\"TSL2591\":{\"" D_JSON_ILLUMINANCE "\":%s}"), lux_str);
 #ifdef USE_DOMOTICZ
-      if (0 == tele_period) { DomoticzSensor(DZ_ILLUMINANCE, tsl2591_lux); }
+      if (0 == TasmotaGlobal.tele_period) { DomoticzSensor(DZ_ILLUMINANCE, tsl2591_lux); }
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
     } else {

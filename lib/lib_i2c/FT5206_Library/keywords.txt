@@ -1,0 +1,29 @@
+#######################################
+# Syntax Coloring Map For FT5206 Library By lewis He
+# github:https://github.com/lewisxhe
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+TP_Point	KEYWORD1
+FT5206_Class	KEYWORD1
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+begin  KEYWORD2
+adjustTheshold  KEYWORD2
+getPoint  KEYWORD2
+enterSleepMode  KEYWORD2
+enterMonitorMode  KEYWORD2
+
+
+#######################################
+# Instances (KEYWORD2)
+#######################################
+
+
+#######################################
+# Constants (LITERAL1)
+#######################################

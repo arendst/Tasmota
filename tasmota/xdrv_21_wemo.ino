@@ -17,7 +17,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#if defined(USE_WEBSERVER) && defined(USE_EMULATION) && defined (USE_EMULATION_WEMO)
+#if defined(USE_WEBSERVER) && defined(USE_EMULATION) && defined (USE_EMULATION_WEMO_SINGLE)
 /*********************************************************************************************\
  * Belkin WeMo emulation
 \*********************************************************************************************/
@@ -74,8 +74,8 @@ void WemoRespondToMSearch(int echo_type)
   } else {
     snprintf_P(message, sizeof(message), PSTR(D_FAILED_TO_SEND_RESPONSE));
   }
-  // Do not use AddLog_P2 here (interrupt routine) if syslog or mqttlog is enabled. UDP/TCP will force exception 9
-  PrepLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPNP D_WEMO " " D_JSON_TYPE " %d, %s " D_TO " %s:%d"),
+  // Do not use AddLog_P( here (interrupt routine) if syslog or mqttlog is enabled. UDP/TCP will force exception 9
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPNP D_WEMO " " D_JSON_TYPE " %d, %s " D_TO " %s:%d"),
     echo_type, message, udp_remote_ip.toString().c_str(), udp_remote_port);
 
   udp_response_mutex = false;
@@ -85,7 +85,7 @@ void WemoRespondToMSearch(int echo_type)
  * Wemo web server additions
 \*********************************************************************************************/
 
-#if defined(USE_RULES_COMPRESSION) || defined(USE_SCRIPT_COMPRESSION)
+#ifdef USE_UNISHOX_COMPRESSION
 
 //<scpd xmlns="urn:Belkin:service-1-0"><actionList><action><name>SetBinaryState</name><argumentList><argument><retval/><name>BinaryState</name><relatedStateVariable>BinaryState</relatedStateVariable><direction>in</direction></argument></argumentList></action><action><name>GetBinaryState</name><argumentList><argument><retval/><name>BinaryState</name><relatedStateVariable>BinaryState</relatedStateVariable><direction>out</direction></argument></argumentList></action></actionList><serviceStateTable><stateVariable sendEvents="yes"><name>BinaryState</name><dataType>bool</dataType><defaultValue>0</defaultValue></stateVariable><stateVariable sendEvents="yes"><name>level</name><dataType>string</dataType><defaultValue>0</defaultValue></stateVariable></serviceStateTable></scpd>\r\n\r\n
 //Successfully compressed from 779 to 249 bytes (-68%)
@@ -267,14 +267,18 @@ const char WEMO_SETUP_XML[] PROGMEM =
 
 /********************************************************************************************/
 
+void LogUpnpWithClient(const char *msg) {
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP "%s from %s"), msg, Webserver->client().remoteIP().toString().c_str());
+}
+
 void HandleUpnpEvent(void)
 {
-  AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, PSTR(D_WEMO_BASIC_EVENT));
+  LogUpnpWithClient(PSTR(D_WEMO_BASIC_EVENT));
 
   char event[500];
   strlcpy(event, Webserver->arg(0).c_str(), sizeof(event));
 
-//  AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("\n%s"), event);
+//  AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("\n%s"), event);
 
   //differentiate get and set state
   char state = 'G';
@@ -288,24 +292,24 @@ void HandleUpnpEvent(void)
       power = POWER_OFF;
     }
     if (power != POWER_TOGGLE) {
-      uint8_t device = (light_type) ? devices_present : 1;  // Select either a configured light or relay1
+      uint8_t device = (TasmotaGlobal.light_type) ? TasmotaGlobal.devices_present : 1;  // Select either a configured light or relay1
       ExecuteCommandPower(device, power, SRC_WEMO);
     }
   }
 
-#if defined(USE_RULES_COMPRESSION) || defined(USE_SCRIPT_COMPRESSION)
-  snprintf_P(event, sizeof(event), Decompress(WEMO_RESPONSE_STATE_SOAP, WEMO_RESPONSE_STATE_SOAP_SIZE).c_str(), state, bitRead(power, devices_present -1), state);
+#ifdef USE_UNISHOX_COMPRESSION
+  snprintf_P(event, sizeof(event), Decompress(WEMO_RESPONSE_STATE_SOAP, WEMO_RESPONSE_STATE_SOAP_SIZE).c_str(), state, bitRead(TasmotaGlobal.power, TasmotaGlobal.devices_present -1), state);
 #else
-  snprintf_P(event, sizeof(event), WEMO_RESPONSE_STATE_SOAP, state, bitRead(power, devices_present -1), state);
+  snprintf_P(event, sizeof(event), WEMO_RESPONSE_STATE_SOAP, state, bitRead(TasmotaGlobal.power, TasmotaGlobal.devices_present -1), state);
 #endif
   WSSend(200, CT_XML, event);
 }
 
 void HandleUpnpService(void)
 {
-  AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, PSTR(D_WEMO_EVENT_SERVICE));
+  LogUpnpWithClient(PSTR(D_WEMO_EVENT_SERVICE));
 
-#if defined(USE_RULES_COMPRESSION) || defined(USE_SCRIPT_COMPRESSION)
+#ifdef USE_UNISHOX_COMPRESSION
   WSSend(200, CT_PLAIN, Decompress(WEMO_EVENTSERVICE_XML, WEMO_EVENTSERVICE_XML_SIZE));
 #else
   WSSend(200, CT_PLAIN, FPSTR(WEMO_EVENTSERVICE_XML));
@@ -314,9 +318,9 @@ void HandleUpnpService(void)
 
 void HandleUpnpMetaService(void)
 {
-  AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, PSTR(D_WEMO_META_SERVICE));
+  LogUpnpWithClient(PSTR(D_WEMO_META_SERVICE));
 
-#if defined(USE_RULES_COMPRESSION) || defined(USE_SCRIPT_COMPRESSION)
+#ifdef USE_UNISHOX_COMPRESSION
   WSSend(200, CT_PLAIN, Decompress(WEMO_METASERVICE_XML, WEMO_METASERVICE_XML_SIZE));
 #else
   WSSend(200, CT_PLAIN, FPSTR(WEMO_METASERVICE_XML));
@@ -325,9 +329,9 @@ void HandleUpnpMetaService(void)
 
 void HandleUpnpSetupWemo(void)
 {
-  AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, PSTR(D_WEMO_SETUP));
+  LogUpnpWithClient(PSTR(D_WEMO_SETUP));
 
-#if defined(USE_RULES_COMPRESSION) || defined(USE_SCRIPT_COMPRESSION)
+#ifdef USE_UNISHOX_COMPRESSION
   String setup_xml = Decompress(WEMO_SETUP_XML, WEMO_SETUP_XML_SIZE);
 #else
   String setup_xml = FPSTR(WEMO_SETUP_XML);
@@ -346,13 +350,13 @@ bool Xdrv21(uint8_t function)
 {
   bool result = false;
 
-  if (devices_present && (EMUL_WEMO == Settings.flag2.emulation)) {
+  if (TasmotaGlobal.devices_present && (EMUL_WEMO == Settings.flag2.emulation)) {
     switch (function) {
       case FUNC_WEB_ADD_HANDLER:
-        Webserver->on(F("/upnp/control/basicevent1"), HTTP_POST, HandleUpnpEvent);
-        Webserver->on(F("/eventservice.xml"), HandleUpnpService);
-        Webserver->on(F("/metainfoservice.xml"), HandleUpnpMetaService);
-        Webserver->on(F("/setup.xml"), HandleUpnpSetupWemo);
+        WebServer_on(PSTR("/upnp/control/basicevent1"), HandleUpnpEvent, HTTP_POST);
+        WebServer_on(PSTR("/eventservice.xml"), HandleUpnpService);
+        WebServer_on(PSTR("/metainfoservice.xml"), HandleUpnpMetaService);
+        WebServer_on(PSTR("/setup.xml"), HandleUpnpSetupWemo);
         break;
     }
   }

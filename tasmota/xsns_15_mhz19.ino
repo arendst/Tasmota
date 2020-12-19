@@ -123,7 +123,7 @@ size_t MhzSendCmd(uint8_t command_id)
   memcpy_P(&mhz_send[6], kMhzCommands[command_id] + sizeof(uint16_t), sizeof(uint16_t));
   mhz_send[8] = MhzCalculateChecksum(mhz_send);
 
-//  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Final MhzCommand: %x %x %x %x %x %x %x %x %x"),mhz_send[0],mhz_send[1],mhz_send[2],mhz_send[3],mhz_send[4],mhz_send[5],mhz_send[6],mhz_send[7],mhz_send[8]);
+//  AddLog_P(LOG_LEVEL_DEBUG, PSTR("Final MhzCommand: %x %x %x %x %x %x %x %x %x"),mhz_send[0],mhz_send[1],mhz_send[2],mhz_send[3],mhz_send[4],mhz_send[5],mhz_send[6],mhz_send[7],mhz_send[8]);
 
   return MhzSerial->write(mhz_send, sizeof(mhz_send));
 }
@@ -346,7 +346,7 @@ void MhzShow(bool json)
   if (json) {
     ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_MODEL "\":\"%s\",\"" D_JSON_CO2 "\":%d,\"" D_JSON_TEMPERATURE "\":%s}"), types, model, mhz_last_ppm, temperature);
 #ifdef USE_DOMOTICZ
-    if (0 == tele_period) {
+    if (0 == TasmotaGlobal.tele_period) {
       DomoticzSensor(DZ_AIRQUALITY, mhz_last_ppm);
       DomoticzSensor(DZ_TEMP, temperature);
     }

@@ -181,7 +181,7 @@ void MPU_6050Show(bool json)
 {
   MPU_6050PerformReading();
 
-  double tempConv = (MPU_6050_temperature / 340.0 + 35.53);
+  float tempConv = ConvertTemp(MPU_6050_temperature / 340.0 + 35.53);
   char temperature[33];
   dtostrfd(tempConv, Settings.flag2.temperature_resolution, temperature);
   char axis_ax[33];
@@ -262,7 +262,7 @@ bool Xsns32(uint8_t function)
   else if (MPU_6050_found) {
     switch (function) {
       case FUNC_EVERY_SECOND:
-        if (tele_period == Settings.tele_period -3) {
+        if (TasmotaGlobal.tele_period == Settings.tele_period -3) {
           MPU_6050PerformReading();
         }
         break;

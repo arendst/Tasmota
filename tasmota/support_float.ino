@@ -17,9 +17,6 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-//#ifdef ARDUINO_ESP8266_RELEASE_2_3_0
-// Functions not available in 2.3.0
-
 float fmodf(float x, float y)
 {
   // https://github.com/micropython/micropython/blob/master/lib/libm/fmodf.c
@@ -83,7 +80,6 @@ float fmodf(float x, float y)
   ux.i = uxi;
   return ux.f;
 }
-//#endif  // ARDUINO_ESP8266_RELEASE_2_3_0
 
 double FastPrecisePow(double a, double b)
 {
@@ -120,6 +116,7 @@ double TaylorLog(double x)
   // https://stackoverflow.com/questions/46879166/finding-the-natural-logarithm-of-a-number-using-taylor-series-in-c
 
   if (x <= 0.0) { return NAN; }
+  if (x == 1.0) { return 0; }
   double z = (x + 1) / (x - 1);                              // We start from power -1, to make sure we get the right power in each iteration;
   double step = ((x - 1) * (x - 1)) / ((x + 1) * (x + 1));   // Store step to not have to calculate it each time
   double totalValue = 0;
@@ -139,7 +136,7 @@ double TaylorLog(double x)
   dtostrfd(log1, 8, log1s);
   char log2s[33];
   dtostrfd(totalValue, 8, log2s);
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("input %s, log %s, taylor %s"), logxs, log1s, log2s);
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR("input %s, log %s, taylor %s"), logxs, log1s, log2s);
 */
   return totalValue;
 }
@@ -218,6 +215,7 @@ float cos_52(float x)
     case 2: return -cos_52s(x-(float)f_pi);
     case 3: return  cos_52s((float)f_twopi - x);
   }
+  return 0.0;  // Never reached. Fixes compiler warning
 }
 //
 // The sine is just cosine shifted a half-f_pi, so
@@ -278,6 +276,7 @@ float tan_56(float x)
     case 6: return -1.0f / tan_56s((x-(float)f_threehalfpi)   * (float)f_four_over_pi);
     case 7: return -       tan_56s(((float)f_twopi - x)       * (float)f_four_over_pi);
   }
+  return 0.0;  // Never reached. Fixes compiler warning
 }
 
 // *******************************************************************
@@ -380,7 +379,7 @@ float sqrt1(const float x)
 //
 // PRE-CONDITIONS (if not satisfied, you may 'halt and catch fire')
 //    from_min < from_max  (not checked)
-//    from_min <= num <= from-max  (chacked)
+//    from_min <= num <= from_max  (checked)
 // POST-CONDITIONS
 //    to_min <= result <= to_max
 //
@@ -388,11 +387,7 @@ uint16_t changeUIntScale(uint16_t inum, uint16_t ifrom_min, uint16_t ifrom_max,
                                        uint16_t ito_min, uint16_t ito_max) {
   // guard-rails
   if (ifrom_min >= ifrom_max) {
-    if (ito_min > ito_max) {
-      return ito_max;
-    } else {
-      return ito_min;  // invalid input, return arbitrary value
-    }
+    return (ito_min > ito_max ? ito_max : ito_min);  // invalid input, return arbitrary value
   }
   // convert to uint31, it's more verbose but code is more compact
   uint32_t num = inum;

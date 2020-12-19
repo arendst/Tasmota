@@ -44,22 +44,22 @@ struct SONOFFD1 {
 
 void SonoffD1Received(void)
 {
-  if (serial_in_byte_counter < 8) { return; }  // Received ack from Rf chip (aa 55 01 04 00 00 05)
+  if (TasmotaGlobal.serial_in_byte_counter < 8) { return; }  // Received ack from Rf chip (aa 55 01 04 00 00 05)
 
-  uint8_t action = serial_in_buffer[6] & 1;
+  uint8_t action = TasmotaGlobal.serial_in_buffer[6] & 1;
   if (action != SnfD1.power) {
     SnfD1.power = action;
 
-//    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SD1: Remote power (%d, %d)"), SnfD1.power, SnfD1.dimmer);
+//    AddLog_P(LOG_LEVEL_DEBUG, PSTR("SD1: Remote power (%d, %d)"), SnfD1.power, SnfD1.dimmer);
 
     ExecuteCommandPower(1, action, SRC_SWITCH);
   }
 
-  uint8_t dimmer = serial_in_buffer[7];
+  uint8_t dimmer = TasmotaGlobal.serial_in_buffer[7];
   if (dimmer != SnfD1.dimmer) {
     SnfD1.dimmer = dimmer;
 
-//    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SD1: Remote dimmer (%d, %d)"), SnfD1.power, SnfD1.dimmer);
+//    AddLog_P(LOG_LEVEL_DEBUG, PSTR("SD1: Remote dimmer (%d, %d)"), SnfD1.power, SnfD1.dimmer);
 
     char scmnd[20];
     snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_DIMMER " %d"), SnfD1.dimmer);
@@ -69,27 +69,27 @@ void SonoffD1Received(void)
 /*
   // Send Acknowledge - Copy first 5 bytes, reset byte 6 and store crc in byte 7
   // AA 55 01 04 00 00 05
-  serial_in_buffer[5] = 0;                      // Ack
-  serial_in_buffer[6] = 0;                      // Crc
+  TasmotaGlobal.serial_in_buffer[5] = 0;                      // Ack
+  TasmotaGlobal.serial_in_buffer[6] = 0;                      // Crc
   for (uint32_t i = 0; i < 7; i++) {
-    if ((i > 1) && (i < 6)) { serial_in_buffer[6] += serial_in_buffer[i]; }
-    Serial.write(serial_in_buffer[i]);
+    if ((i > 1) && (i < 6)) { TasmotaGlobal.serial_in_buffer[6] += TasmotaGlobal.serial_in_buffer[i]; }
+    Serial.write(TasmotaGlobal.serial_in_buffer[i]);
   }
 */
 }
 
 bool SonoffD1SerialInput(void)
 {
-  if (0xAA == serial_in_byte) {               // 0xAA - Start of text
-    serial_in_byte_counter = 0;
+  if (0xAA == TasmotaGlobal.serial_in_byte) {               // 0xAA - Start of text
+    TasmotaGlobal.serial_in_byte_counter = 0;
     SnfD1.receive_len = 7;
   }
   if (SnfD1.receive_len) {
-    serial_in_buffer[serial_in_byte_counter++] = serial_in_byte;
-    if (6 == serial_in_byte_counter) {
-      SnfD1.receive_len += serial_in_byte;  // 8 or 17
+    TasmotaGlobal.serial_in_buffer[TasmotaGlobal.serial_in_byte_counter++] = TasmotaGlobal.serial_in_byte;
+    if (6 == TasmotaGlobal.serial_in_byte_counter) {
+      SnfD1.receive_len += TasmotaGlobal.serial_in_byte;  // 8 or 17
     }
-    if (serial_in_byte_counter == SnfD1.receive_len) {
+    if (TasmotaGlobal.serial_in_byte_counter == SnfD1.receive_len) {
 
       // Sonoff D1 codes
       // aa 55 01 04 00 0a 01 01 ff ff ff ff ff ff ff ff 09 - Power On, Dimmer 1%
@@ -102,15 +102,15 @@ bool SonoffD1SerialInput(void)
       AddLogSerial(LOG_LEVEL_DEBUG);
       uint8_t crc = 0;
       for (uint32_t i = 2; i < SnfD1.receive_len -1; i++) {
-        crc += serial_in_buffer[i];
+        crc += TasmotaGlobal.serial_in_buffer[i];
       }
-      if (crc == serial_in_buffer[SnfD1.receive_len -1]) {
+      if (crc == TasmotaGlobal.serial_in_buffer[SnfD1.receive_len -1]) {
         SonoffD1Received();
         SnfD1.receive_len = 0;
         return true;
       }
     }
-    serial_in_byte = 0;
+    TasmotaGlobal.serial_in_byte = 0;
   }
   return false;
 }
@@ -137,7 +137,7 @@ bool SonoffD1SendPower(void)
   if (action != SnfD1.power) {
     SnfD1.power = action;
 
-//    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SD1: Tasmota power (%d, %d)"), SnfD1.power, SnfD1.dimmer);
+//    AddLog_P(LOG_LEVEL_DEBUG, PSTR("SD1: Tasmota power (%d, %d)"), SnfD1.power, SnfD1.dimmer);
 
     SonoffD1Send();
   }
@@ -152,7 +152,7 @@ bool SonoffD1SendDimmer(void)
   if (dimmer != SnfD1.dimmer) {
     SnfD1.dimmer = dimmer;
 
-//    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SD1: Tasmota dimmer (%d, %d)"), SnfD1.power, SnfD1.dimmer);
+//    AddLog_P(LOG_LEVEL_DEBUG, PSTR("SD1: Tasmota dimmer (%d, %d)"), SnfD1.power, SnfD1.dimmer);
 
     SonoffD1Send();
   }
@@ -163,8 +163,8 @@ bool SonoffD1ModuleSelected(void)
 {
   SetSerial(9600, TS_SERIAL_8N1);
 
-  devices_present++;
-  light_type = LT_SERIAL1;
+  TasmotaGlobal.devices_present++;
+  TasmotaGlobal.light_type = LT_SERIAL1;
 
   return true;
 }
@@ -177,7 +177,7 @@ bool Xdrv37(uint8_t function)
 {
   bool result = false;
 
-  if (SONOFF_D1 == my_module_type) {
+  if (SONOFF_D1 == TasmotaGlobal.module_type) {
     switch (function) {
       case FUNC_SERIAL:
         result = SonoffD1SerialInput();

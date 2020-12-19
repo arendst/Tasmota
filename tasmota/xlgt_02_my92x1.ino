@@ -125,20 +125,20 @@ void My92x1ModuleSelected(void)
     digitalWrite(My92x1.pdcki_pin, LOW);
 
     My92x1.model = 2;
-    light_type = LT_RGBW;                    // RGBW (2 chips) as used in Lohas
-    if (AILIGHT == my_module_type) {         // RGBW (1 chip) as used in Ailight
+    TasmotaGlobal.light_type = LT_RGBW;                    // RGBW (2 chips) as used in Lohas
+    if (AILIGHT == TasmotaGlobal.module_type) {         // RGBW (1 chip) as used in Ailight
       My92x1.model = 0;
-//      light_type = LT_RGBW;
+//      TasmotaGlobal.light_type = LT_RGBW;
     }
-    else if (SONOFF_B1 == my_module_type) {  // RGBWC (2 chips) as used in Sonoff B1
+    else if (SONOFF_B1 == TasmotaGlobal.module_type) {  // RGBWC (2 chips) as used in Sonoff B1
       My92x1.model = 1;
-      light_type = LT_RGBWC;
+      TasmotaGlobal.light_type = LT_RGBWC;
     }
 
     LightMy92x1Init();
 
-    light_flg = XLGT_02;
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DBG: MY29x1 Found"));
+    TasmotaGlobal.light_driver = XLGT_02;
+    AddLog_P(LOG_LEVEL_DEBUG, PSTR("DBG: MY29x1 Found"));
   }
 }
 

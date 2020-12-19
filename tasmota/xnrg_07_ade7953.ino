@@ -131,7 +131,7 @@ void Ade7953GetData(void)
       reg[i >> 2][i &3] = value;
     }
   }
-  AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("ADE: %d, %d, [%d, %d, %d, %d], [%d, %d, %d, %d]"),
+  AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("ADE: %d, %d, [%d, %d, %d, %d], [%d, %d, %d, %d]"),
     Ade7953.voltage_rms, Ade7953.period,
     reg[0][0], reg[0][1], reg[0][2], reg[0][3],
     reg[1][0], reg[1][1], reg[1][2], reg[1][3]);
@@ -154,7 +154,7 @@ void Ade7953GetData(void)
   uint32_t current_rms_sum = Ade7953.current_rms[0] + Ade7953.current_rms[1];
   uint32_t active_power_sum = Ade7953.active_power[0] + Ade7953.active_power[1];
 
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("ADE: U %d, C %d, I %d + %d = %d, P %d + %d = %d"),
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR("ADE: U %d, C %d, I %d + %d = %d, P %d + %d = %d"),
     Ade7953.voltage_rms, Ade7953.period,
     Ade7953.current_rms[0], Ade7953.current_rms[1], current_rms_sum,
     Ade7953.active_power[0], Ade7953.active_power[1], active_power_sum);
@@ -199,7 +199,8 @@ void Ade7953EnergyEverySecond(void)
 
 void Ade7953DrvInit(void)
 {
-  if (PinUsed(GPIO_ADE7953_IRQ)) {               // Irq on GPIO16 is not supported...
+  if (PinUsed(GPIO_ADE7953_IRQ)) {                // Irq on GPIO16 is not supported...
+    pinMode(Pin(GPIO_ADE7953_IRQ), INPUT);        // Related to resetPins() - Must be set to input
     delay(100);                                   // Need 100mS to init ADE7953
     if (I2cSetDevice(ADE7953_ADDR)) {
       if (HLW_PREF_PULSE == Settings.energy_power_calibration) {
@@ -212,7 +213,7 @@ void Ade7953DrvInit(void)
       Energy.phase_count = 2;                     // Handle two channels as two phases
       Energy.voltage_common = true;               // Use common voltage
       Energy.frequency_common = true;             // Use common frequency
-      energy_flg = XNRG_07;
+      TasmotaGlobal.energy_driver = XNRG_07;
     }
   }
 }

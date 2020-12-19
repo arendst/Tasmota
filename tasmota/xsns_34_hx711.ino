@@ -205,7 +205,7 @@ bool HxCommand(void)
       Response_P(S_JSON_SENSOR_INDEX_SVALUE, XSNS_34, "Reset");
       break;
     case 2:  // Calibrate
-      if (strstr(XdrvMailbox.data, ",") != nullptr) {
+      if (strchr(XdrvMailbox.data, ',') != nullptr) {
         Settings.weight_reference = strtol(subStr(sub_string, XdrvMailbox.data, ",", 2), nullptr, 10);
       }
       Hx.scale = 1;
@@ -215,26 +215,26 @@ bool HxCommand(void)
       HxCalibrationStateTextJson(3);
       break;
     case 3:  // WeightRef to user reference
-      if (strstr(XdrvMailbox.data, ",") != nullptr) {
+      if (strchr(XdrvMailbox.data, ',') != nullptr) {
         Settings.weight_reference = strtol(subStr(sub_string, XdrvMailbox.data, ",", 2), nullptr, 10);
       }
       show_parms = true;
       break;
     case 4:  // WeightCal to user calculated value
-      if (strstr(XdrvMailbox.data, ",") != nullptr) {
+      if (strchr(XdrvMailbox.data, ',') != nullptr) {
         Settings.weight_calibration = strtol(subStr(sub_string, XdrvMailbox.data, ",", 2), nullptr, 10);
         Hx.scale = Settings.weight_calibration;
       }
       show_parms = true;
       break;
     case 5:  // WeightMax
-      if (strstr(XdrvMailbox.data, ",") != nullptr) {
+      if (strchr(XdrvMailbox.data, ',') != nullptr) {
         Settings.weight_max = strtol(subStr(sub_string, XdrvMailbox.data, ",", 2), nullptr, 10) / 1000;
       }
       show_parms = true;
       break;
     case 6:  // WeightItem
-      if (strstr(XdrvMailbox.data, ",") != nullptr) {
+      if (strchr(XdrvMailbox.data, ',') != nullptr) {
         Settings.weight_item = (unsigned long)(CharToFloat(subStr(sub_string, XdrvMailbox.data, ",", 2)) * 10);
       }
       show_parms = true;
@@ -244,13 +244,13 @@ bool HxCommand(void)
       Response_P(S_JSON_SENSOR_INDEX_SVALUE, XSNS_34, D_JSON_DONE);
       break;
     case 8:  // Json on weight change
-      if (strstr(XdrvMailbox.data, ",") != nullptr) {
+      if (strchr(XdrvMailbox.data, ',') != nullptr) {
         Settings.SensorBits1.hx711_json_weight_change = strtol(subStr(sub_string, XdrvMailbox.data, ",", 2), nullptr, 10) & 1;
       }
       show_parms = true;
       break;
     case 9:  // WeightDelta
-      if (strstr(XdrvMailbox.data, ",") != nullptr) {
+      if (strchr(XdrvMailbox.data, ',') != nullptr) {
 	Settings.weight_change = strtol(subStr(sub_string, XdrvMailbox.data, ",", 2), nullptr, 10);
 	SetWeightDelta();
       }
@@ -395,7 +395,7 @@ void HxEvery100mSecond(void)
           Hx.weight_changed = true;
         }
         else if (Hx.weight_changed && (Hx.weight == Hx.weight_diff)) {
-          mqtt_data[0] = '\0';
+          ResponseClear();
           ResponseAppendTime();
           HxShow(true);
           ResponseJsonEnd();
@@ -468,8 +468,6 @@ void HxShow(bool json)
 
 #define WEB_HANDLE_HX711 "s34"
 
-const char S_CONFIGURE_HX711[] PROGMEM = D_CONFIGURE_HX711;
-
 const char HTTP_BTN_MENU_MAIN_HX711[] PROGMEM =
   "<p><form action='" WEB_HANDLE_HX711 "' method='get'><button name='reset'>" D_RESET_HX711 "</button></form></p>";
 
@@ -492,7 +490,7 @@ void HandleHxAction(void)
 {
   if (!HttpCheckPriviledgedAccess()) { return; }
 
-  AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_CONFIGURE_HX711);
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_CONFIGURE_HX711));
 
   if (Webserver->hasArg("save")) {
     HxSaveSettings();
@@ -523,7 +521,7 @@ void HandleHxAction(void)
     return;
   }
 
-  WSContentStart_P(S_CONFIGURE_HX711);
+  WSContentStart_P(PSTR(D_CONFIGURE_HX711));
   WSContentSendStyle();
   dtostrfd((float)Settings.weight_reference / 1000, 3, stemp1);
   char stemp2[20];
@@ -551,7 +549,7 @@ void HxLogUpdates(void)
   char weigth_item_chr[33];
   dtostrfd((float)Settings.weight_item / 10000, 4, weigth_item_chr);
 
-  AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_JSON_WEIGHT_REF " %s, " D_JSON_WEIGHT_ITEM " %s"), weigth_ref_chr, weigth_item_chr);
+  AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_JSON_WEIGHT_REF " %s, " D_JSON_WEIGHT_ITEM " %s"), weigth_ref_chr, weigth_item_chr);
 }
 
 #endif  // USE_HX711_GUI
@@ -593,7 +591,7 @@ bool Xsns34(uint8_t function)
         WSContentSend_P(HTTP_BTN_MENU_HX711);
         break;
       case FUNC_WEB_ADD_HANDLER:
-        Webserver->on("/" WEB_HANDLE_HX711, HandleHxAction);
+        WebServer_on(PSTR("/" WEB_HANDLE_HX711), HandleHxAction);
         break;
 #endif  // USE_HX711_GUI
 #endif  // USE_WEBSERVER

@@ -21,10 +21,11 @@
 */
 
 #include "my_user_config.h"
-//#ifdef USE_MQTT_TLS
-#if defined ESP8266 && (defined(USE_MQTT_TLS) || defined (USE_SENDMAIL))
+#include "tasmota_configurations.h"
+#if defined(ESP8266) && defined(USE_TLS)
 
-//#define DEBUG_TLS
+// #define DEBUG_TLS
+// #define DEBUG_ESP_SSL
 
 #define LWIP_INTERNAL
 
@@ -50,9 +51,7 @@ extern "C" {
 #include "c_types.h"
 
 #include <core_version.h>
-#ifndef ARDUINO_ESP8266_RELEASE_2_5_2
 #undef DEBUG_TLS
-#endif
 
 #ifdef DEBUG_TLS
 #include "coredecls.h"
@@ -67,6 +66,10 @@ void _Log_heap_size(const char *msg) {
 #else
 #define LOG_HEAP_SIZE(a)
 #endif
+
+// get UTC time from Tasmota
+extern uint32_t UtcTime(void);
+extern uint32_t CfgTime(void);
 
 // Stack thunked versions of calls
 // Initially in BearSSLHelpers.h
@@ -163,8 +166,8 @@ unsigned char *min_br_ssl_engine_sendrec_buf(const br_ssl_engine_context *cc, si
 
 //#define DEBUG_ESP_SSL
 #ifdef DEBUG_ESP_SSL
-#define DEBUG_BSSL(fmt, ...)  DEBUG_ESP_PORT.printf_P((PGM_P)PSTR( "BSSL:" fmt), ## __VA_ARGS__)
-//#define DEBUG_BSSL(fmt, ...)  Serial.printf(fmt, ## __VA_ARGS__)
+//#define DEBUG_BSSL(fmt, ...)  DEBUG_ESP_PORT.printf_P((PGM_P)PSTR( "BSSL:" fmt), ## __VA_ARGS__)
+#define DEBUG_BSSL(fmt, ...)  Serial.printf(fmt, ## __VA_ARGS__)
 #else
 #define DEBUG_BSSL(...)
 #endif
@@ -180,7 +183,6 @@ void WiFiClientSecure_light::_clear() {
   _eng = nullptr;
   _iobuf_in = nullptr;
   _iobuf_out = nullptr;
-  _now = 0; // You can override or ensure time() is correct w/configTime
   setBufferSizes(1024, 1024); // reasonable minimum
   _handshake_done = false;
 	_last_error = 0;
@@ -192,6 +194,7 @@ void WiFiClientSecure_light::_clear() {
 	_chain_P = nullptr;
 	_sk_ec_P = nullptr;
 	_ta_P = nullptr;
+  _ta_size = 0;
 	_max_thunkstack_use = 0;
 }
 
@@ -234,8 +237,9 @@ void WiFiClientSecure_light::setClientECCert(const br_x509_certificate *cert, co
   _cert_issuer_key_type = cert_issuer_key_type;
 }
 
-void WiFiClientSecure_light::setTrustAnchor(const br_x509_trust_anchor *ta) {
+void WiFiClientSecure_light::setTrustAnchor(const br_x509_trust_anchor *ta, size_t ta_size) {
 	_ta_P = ta;
+  _ta_size = ta_size;
 }
 
 void WiFiClientSecure_light::setBufferSizes(int recv, int xmit) {
@@ -255,27 +259,18 @@ void WiFiClientSecure_light::setBufferSizes(int recv, int xmit) {
 }
 
 bool WiFiClientSecure_light::stop(unsigned int maxWaitMs) {
-#ifdef ARDUINO_ESP8266_RELEASE_2_4_2
-  WiFiClient::stop(); // calls our virtual flush()
-  _freeSSL();
-	return true;
-#else
   bool ret = WiFiClient::stop(maxWaitMs); // calls our virtual flush()
   _freeSSL();
   return ret;
-#endif
 }
 
 bool WiFiClientSecure_light::flush(unsigned int maxWaitMs) {
   (void) _run_until(BR_SSL_SENDAPP);
-#ifdef ARDUINO_ESP8266_RELEASE_2_4_2
-  WiFiClient::flush();
-#else
   return WiFiClient::flush(maxWaitMs);
-#endif
 }
 
 int WiFiClientSecure_light::connect(IPAddress ip, uint16_t port) {
+  DEBUG_BSSL("connect(%s,%d)", ip.toString().c_str(), port);
 	clearLastError();
   if (!WiFiClient::connect(ip, port)) {
 		setLastError(ERR_TCP_CONNECT);
@@ -285,6 +280,7 @@ int WiFiClientSecure_light::connect(IPAddress ip, uint16_t port) {
 }
 
 int WiFiClientSecure_light::connect(const char* name, uint16_t port) {
+  DEBUG_BSSL("connect(%s,%d)\n", name, port);
   IPAddress remote_addr;
 	clearLastError();
   if (!WiFi.hostByName(name, remote_addr)) {
@@ -292,6 +288,7 @@ int WiFiClientSecure_light::connect(const char* name, uint16_t port) {
 		setLastError(ERR_CANT_RESOLVE_IP);
     return 0;
   }
+  DEBUG_BSSL("connect(%s,%d)\n", remote_addr.toString().c_str(), port);
   if (!WiFiClient::connect(remote_addr, port)) {
     DEBUG_BSSL("connect: Unable to connect TCP socket\n");
 		_last_error = ERR_TCP_CONNECT;
@@ -692,27 +689,65 @@ extern "C" {
     xc->done_cert = true;   // first cert already processed
   }
 
+// **** Start patch Castellucci
+/*
   static void pubkeyfingerprint_pubkey_fingerprint(br_sha1_context *shactx, br_rsa_public_key rsakey) {
     br_sha1_init(shactx);
     br_sha1_update(shactx, "ssh-rsa", 7);           // tag
     br_sha1_update(shactx, rsakey.e, rsakey.elen);  // exponent
     br_sha1_update(shactx, rsakey.n, rsakey.nlen);  // modulus
   }
+*/
+  // If `compat` id false, adds a u32be length prefixed value to the sha1 state.
+  // If `compat` is true, the length will be omitted for compatibility with
+  // data from older versions of Tasmota.
+  static void sha1_update_len(br_sha1_context *shactx, const void *msg, uint32_t len, bool compat) {
+    uint8_t buf[] = {0, 0, 0, 0};
+
+    if (!compat) {
+      buf[0] = (len >> 24) & 0xff;
+      buf[1] = (len >> 16) & 0xff;
+      buf[2] = (len >>  8) & 0xff;
+      buf[3] = (len >>  0) & 0xff;
+      br_sha1_update(shactx, buf, 4); // length
+    }
+    br_sha1_update(shactx, msg, len); // message
+  }
+
+  // Update the received fingerprint based on the certificate's public key.
+  // If `compat` is true, an insecure version of the fingerprint will be
+  // calcualted for compatibility with older versions of Tasmota. Normally,
+  // `compat` should be false.
+  static void pubkeyfingerprint_pubkey_fingerprint(br_x509_pubkeyfingerprint_context *xc, bool compat) {
+    br_rsa_public_key rsakey = xc->ctx.pkey.key.rsa;
+
+    br_sha1_context shactx;
+
+    br_sha1_init(&shactx);
+
+    sha1_update_len(&shactx, "ssh-rsa", 7, compat);          // tag
+    sha1_update_len(&shactx, rsakey.e, rsakey.elen, compat); // exponent
+    sha1_update_len(&shactx, rsakey.n, rsakey.nlen, compat); // modulus
+
+    br_sha1_out(&shactx, xc->pubkey_recv_fingerprint); // copy to fingerprint
+  }
+// **** End patch Castellucci
 
   // Callback when complete chain has been parsed.
   // Return 0 on validation success, !0 on validation error
   static unsigned pubkeyfingerprint_end_chain(const br_x509_class **ctx) {
     br_x509_pubkeyfingerprint_context *xc = (br_x509_pubkeyfingerprint_context *)ctx;
-
+// **** Start patch Castellucci
+/*
     br_sha1_context sha1_context;
     pubkeyfingerprint_pubkey_fingerprint(&sha1_context, xc->ctx.pkey.key.rsa);
     br_sha1_out(&sha1_context, xc->pubkey_recv_fingerprint); // copy to fingerprint
 
 		if (!xc->fingerprint_all) {
-			if (0 == memcmp(xc->fingerprint1, xc->pubkey_recv_fingerprint, 20)) {
+			if (0 == memcmp_P(xc->pubkey_recv_fingerprint, xc->fingerprint1, 20)) {
 				return 0;
 			}
-			if (0 == memcmp(xc->fingerprint2, xc->pubkey_recv_fingerprint, 20)) {
+			if (0 == memcmp_P(xc->pubkey_recv_fingerprint, xc->fingerprint2, 20)) {
 				return 0;
 			}
 			return 1;		// no match, error
@@ -720,6 +755,59 @@ extern "C" {
 	    // Default (no validation at all) or no errors in prior checks = success.
 	    return 0;
 		}
+*/
+    // set fingerprint status byte to zero
+    // FIXME: find a better way to pass this information
+    xc->pubkey_recv_fingerprint[20] = 0;
+    // Try matching using the the new fingerprint algorithm
+    pubkeyfingerprint_pubkey_fingerprint(xc, false);
+    if (!xc->fingerprint_all) {
+      if (0 == memcmp_P(xc->pubkey_recv_fingerprint, xc->fingerprint1, 20)) {
+        return 0;
+      }
+      if (0 == memcmp_P(xc->pubkey_recv_fingerprint, xc->fingerprint2, 20)) {
+        return 0;
+      }
+
+      // No match under new algorithm, do some basic checking on the key.
+      //
+      // RSA keys normally have an e value of 65537, which is three bytes long.
+      // Other e values are suspicious, but if the modulus is a standard size
+      // (multiple of 512 bits/64 bytes), any public exponent up to eight bytes
+      // long will be allowed.
+      //
+      // A legitimate key could possibly be marked as bad by this check, but
+      // the user would have had to really worked at making a strange key.
+      if (!(xc->ctx.pkey.key.rsa.elen == 3
+            && xc->ctx.pkey.key.rsa.e[0] == 1
+            && xc->ctx.pkey.key.rsa.e[1] == 0
+            && xc->ctx.pkey.key.rsa.e[2] == 1)) {
+        if (xc->ctx.pkey.key.rsa.nlen & 63 != 0 || xc->ctx.pkey.key.rsa.elen > 8) {
+          return 2; // suspicious key, return error
+        }
+      }
+
+      // try the old algorithm and potentially mark for update
+      pubkeyfingerprint_pubkey_fingerprint(xc, true);
+      if (0 == memcmp_P(xc->pubkey_recv_fingerprint, xc->fingerprint1, 20)) {
+        xc->pubkey_recv_fingerprint[20] |= 1; // mark for update
+      }
+      if (0 == memcmp_P(xc->pubkey_recv_fingerprint, xc->fingerprint2, 20)) {
+        xc->pubkey_recv_fingerprint[20] |= 2; // mark for update
+      }
+      if (!xc->pubkey_recv_fingerprint[20]) {
+        return 1;    // not marked for update because no match, error
+      }
+
+      // the old fingerprint format matched, recompute new one for update
+      pubkeyfingerprint_pubkey_fingerprint(xc, false);
+
+      return 0;
+    } else {
+      // Default (no validation at all) or no errors in prior checks = success.
+      return 0;
+    }
+// **** End patch Castellucci
   }
 
   // Return the public key from the validator (set by x509_minimal)
@@ -759,7 +847,7 @@ extern "C" {
 	// We limit to a single cipher to reduce footprint
   // we reference it, don't put in PROGMEM
   static const uint16_t suites[] = {
-#if defined(USE_MQTT_AWS_IOT) || defined(USE_MQTT_TLS_FORCE_EC_CIPHER)
+#ifdef USE_MQTT_TLS_FORCE_EC_CIPHER
 		BR_TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
 #else
 		BR_TLS_RSA_WITH_AES_128_GCM_SHA256
@@ -786,23 +874,18 @@ extern "C" {
 		br_ssl_engine_set_aes_ctr(&cc->eng, &br_aes_small_ctr_vtable);
 		br_ssl_engine_set_ghash(&cc->eng, &br_ghash_ctmul32);
 
-#if defined(USE_MQTT_AWS_IOT) || defined(USE_MQTT_TLS_FORCE_EC_CIPHER)
+#ifdef USE_MQTT_TLS_FORCE_EC_CIPHER
 		// we support only P256 EC curve for AWS IoT, no EC curve for Letsencrypt unless forced
-		br_ssl_engine_set_ec(&cc->eng, &br_ec_p256_m15);
+		br_ssl_engine_set_ec(&cc->eng, &br_ec_p256_m15);    // TODO
 #endif
+    static const char * alpn_mqtt = "mqtt";
+    br_ssl_engine_set_protocol_names(&cc->eng, &alpn_mqtt, 1);
   }
 }
 
 // Called by connect() to do the actual SSL setup and handshake.
 // Returns if the SSL handshake succeeded.
 bool WiFiClientSecure_light::_connectSSL(const char* hostName) {
-#ifdef USE_MQTT_AWS_IOT
-	if ((!_chain_P) || (!_sk_ec_P)) {
-		setLastError(ERR_MISSING_EC_KEY);
-		return false;
-	}
-#endif
-
 	// Validation context, either full CA validation or checking only fingerprints
 #ifdef USE_MQTT_TLS_CA_CERT
 	br_x509_minimal_context *x509_minimal;
@@ -834,10 +917,14 @@ bool WiFiClientSecure_light::_connectSSL(const char* hostName) {
 	#ifdef USE_MQTT_TLS_CA_CERT
 		x509_minimal = (br_x509_minimal_context*) malloc(sizeof(br_x509_minimal_context));
 		if (!x509_minimal) break;
-		br_x509_minimal_init(x509_minimal, &br_sha256_vtable, _ta_P, 1);
+		br_x509_minimal_init(x509_minimal, &br_sha256_vtable, _ta_P, _ta_size);
 		br_x509_minimal_set_rsa(x509_minimal, br_ssl_engine_get_rsavrfy(_eng));
 		br_x509_minimal_set_hash(x509_minimal, br_sha256_ID, &br_sha256_vtable);
 		br_ssl_engine_set_x509(_eng, &x509_minimal->vtable);
+    uint32_t now = UtcTime();
+    uint32_t cfg_time = CfgTime();
+    if (cfg_time > now) { now = cfg_time; }
+    br_x509_minimal_set_time(x509_minimal, now / 86400 + 719528, now % 86400);
 
 	#else
 	  x509_insecure = (br_x509_pubkeyfingerprint_context*) malloc(sizeof(br_x509_pubkeyfingerprint_context));
@@ -909,4 +996,4 @@ bool WiFiClientSecure_light::_connectSSL(const char* hostName) {
 
 #include "t_bearssl_tasmota_config.h"
 
-#endif  // USE_MQTT_TLS
+#endif  // USE_TLS

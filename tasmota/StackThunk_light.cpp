@@ -26,6 +26,7 @@
 */
 
 #include "my_user_config.h"
+#include "tasmota_configurations.h"
 
 #include <stdint.h>
 #include <stdlib.h>
@@ -40,8 +41,10 @@ uint32_t *stack_thunk_light_save = NULL;  /* Saved A1 while in BearSSL */
 uint32_t stack_thunk_light_refcnt = 0;
 
 //#define _stackSize (5600/4)
-#if defined(USE_MQTT_AWS_IOT) || defined(USE_MQTT_TLS_FORCE_EC_CIPHER)
+#if defined(USE_MQTT_AWS_IOT)
   #define _stackSize (5300/4)   // using a light version of bearssl we can save 300 bytes
+#elif defined(USE_MQTT_TLS_FORCE_EC_CIPHER) || defined(USE_4K_RSA)
+  #define _stackSize (4800/4)   // no private key, we can reduce a little, max observed 4300
 #else
   #define _stackSize (3600/4)   // using a light version of bearssl we can save 2k
 #endif

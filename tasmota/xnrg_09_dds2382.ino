@@ -50,7 +50,7 @@ void Dds2382EverySecond(void)
     AddLogBuffer(LOG_LEVEL_DEBUG_MORE, buffer, Dds2382Modbus->ReceiveCount());
 
     if (error) {
-      AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "DDS2382 response error %d"), error);
+      AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "DDS2382 response error %d"), error);
     } else {
       Energy.data_valid[0] = 0;
 
@@ -96,14 +96,14 @@ void Dds2382SnsInit(void)
   if (result) {
     if (2 == result) { ClaimSerial(); }
   } else {
-    energy_flg = ENERGY_NONE;
+    TasmotaGlobal.energy_driver = ENERGY_NONE;
   }
 }
 
 void Dds2382DrvInit(void)
 {
   if (PinUsed(GPIO_DDS2382_RX) && PinUsed(GPIO_DDS2382_TX)) {
-    energy_flg = XNRG_09;
+    TasmotaGlobal.energy_driver = XNRG_09;
   }
 }
 
@@ -117,7 +117,7 @@ bool Xnrg09(uint8_t function)
 
   switch (function) {
     case FUNC_ENERGY_EVERY_SECOND:
-      if (uptime > 4) { Dds2382EverySecond(); }
+      if (TasmotaGlobal.uptime > 4) { Dds2382EverySecond(); }
       break;
     case FUNC_INIT:
       Dds2382SnsInit();

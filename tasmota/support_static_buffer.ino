@@ -79,12 +79,28 @@ public:
     }
     return _buf->len;
   }
+  size_t add16BigEndian(const uint16_t data) {           // append 16 bits value
+    if (_buf->len < _buf->size - 1) {    // do we have room for 2 bytes
+      _buf->buf[_buf->len++] = data >> 8;
+      _buf->buf[_buf->len++] = data;
+    }
+    return _buf->len;
+  }
   size_t add32(const uint32_t data) {           // append 32 bits value
     if (_buf->len < _buf->size - 3) {     // do we have room for 4 bytes
       _buf->buf[_buf->len++] = data;
       _buf->buf[_buf->len++] = data >> 8;
       _buf->buf[_buf->len++] = data >> 16;
       _buf->buf[_buf->len++] = data >> 24;
+    }
+    return _buf->len;
+  }
+  size_t add32BigEndian(const uint32_t data) {           // append 32 bits value
+    if (_buf->len < _buf->size - 3) {     // do we have room for 4 bytes
+      _buf->buf[_buf->len++] = data >> 24;
+      _buf->buf[_buf->len++] = data >> 16;
+      _buf->buf[_buf->len++] = data >> 8;
+      _buf->buf[_buf->len++] = data;
     }
     return _buf->len;
   }
@@ -148,10 +164,30 @@ public:
     }
     return 0;
   }
+  uint16_t get16BigEndian(const size_t offset) const {
+    if (offset < len() - 1) {
+      return _buf->buf[offset+1] | (_buf->buf[offset] << 8);
+    }
+    return 0;
+  }
   uint32_t get32(const size_t offset) const {
     if (offset < len() - 3) {
       return _buf->buf[offset] | (_buf->buf[offset+1] << 8) |
             (_buf->buf[offset+2] << 16) | (_buf->buf[offset+3] << 24);
+    }
+    return 0;
+  }
+  uint32_t get32BigEndian(const size_t offset) const {
+    if (offset < len() - 3) {
+      return _buf->buf[offset+3] | (_buf->buf[offset+2] << 8) |
+            (_buf->buf[offset+1] << 16) | (_buf->buf[offset] << 24);
+    }
+    return 0;
+  }
+  int32_t get32IBigEndian(const size_t offset) const {
+    if (offset < len() - 3) {
+      return _buf->buf[offset+3] | (_buf->buf[offset+2] << 8) |
+            (_buf->buf[offset+1] << 16) | (_buf->buf[offset] << 24);
     }
     return 0;
   }
@@ -165,14 +201,10 @@ public:
     return 0;
   }
 
-  // if no NULL is found, returns length until the end of the buffer
-  inline size_t strlen(const size_t offset) const {
-    return strnlen((const char*) &_buf->buf[offset], len() - offset);
-  }
-
-  size_t strlen_s(const size_t offset) const {
-    size_t slen = this->strlen(offset);
-    if (slen == len() - offset) {
+  size_t strlen(const size_t offset) const {
+    if (offset >= len()) { return 0; }
+    size_t slen = strnlen((const char*) &_buf->buf[offset], len() - offset);
+    if (slen == (len() - offset)) {
       return 0;   // we didn't find a NULL char
     } else {
       return slen;
@@ -237,3 +269,18 @@ public:
     _buf = nullptr;
   }
 } PreAllocatedSBuffer;
+
+// nullptr accepted
+bool equalsSBuffer(const class SBuffer * buf1, const class SBuffer * buf2) {
+  if (buf1 == buf2) { return true; }
+  if (!buf1 && (buf2->len() == 0)) { return true; }
+  if (!buf2 && (buf1->len() == 0)) { return true; }
+  if (!buf1 || !buf2) { return false; }   // at least one buf is not empty
+  // we know that both buf1 and buf2 are non-null
+  if (buf1->len() != buf2->len()) { return false; }
+  size_t len = buf1->len();
+  for (uint32_t i=0; i<len; i++) {
+    if (buf1->get8(i) != buf2->get8(i)) { return false; }
+  }
+  return true;
+}

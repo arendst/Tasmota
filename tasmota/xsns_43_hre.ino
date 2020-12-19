@@ -137,7 +137,7 @@ void hreEvery50ms(void)
    switch (hre_state)
    {
       case hre_sync:
-         if (uptime < 10)
+         if (TasmotaGlobal.uptime < 10)
             break;
          sync_run = 0;
          sync_counter = 0;
@@ -171,10 +171,10 @@ void hreEvery50ms(void)
 
          // Start reading the data block
       case hre_read:
-         AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_HRE "sync_run:%d, sync_counter:%d"), sync_run, sync_counter);
+         AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HRE "sync_run:%d, sync_counter:%d"), sync_run, sync_counter);
          read_counter = 0;
          parity_errors = 0;
-         curr_start = uptime;
+         curr_start = TasmotaGlobal.uptime;
          memset(buff, 0, sizeof(buff));
          hre_state = hre_reading;
          AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HRE "hre_state:hre_reading"));
@@ -190,7 +190,7 @@ void hreEvery50ms(void)
 
          if (read_counter == 46)
          {
-            AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_HRE "pe:%d, re:%d, buff:%s"),
+            AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HRE "pe:%d, re:%d, buff:%s"),
                       parity_errors, hre_read_errors, buff);
             if (parity_errors == 0)
             {
@@ -223,7 +223,7 @@ void hreEvery50ms(void)
       case hre_sleeping:
          // If there isn't some delay between readings, rate calculations
          // aren't as accurate. 27 seconds will give about a 30 second refresh rate
-         if (uptime - hre_usage_time >= 27)
+         if (TasmotaGlobal.uptime - hre_usage_time >= 27)
             hre_state = hre_sync;
    }
 }

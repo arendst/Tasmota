@@ -89,9 +89,9 @@ void LM75ADShow(bool json)
   dtostrfd(t, Settings.flag2.temperature_resolution, temperature);
 
   if (json) {
-    ResponseAppend_P(PSTR(",\"LM75AD\":{\"" D_JSON_TEMPERATURE "\":%s}"), temperature);
+    ResponseAppend_P(JSON_SNS_TEMP, "LM75AD", temperature);
 #ifdef USE_DOMOTICZ
-    if (0 == tele_period) DomoticzSensor(DZ_TEMP, temperature);
+    if (0 == TasmotaGlobal.tele_period) DomoticzSensor(DZ_TEMP, temperature);
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
   } else {

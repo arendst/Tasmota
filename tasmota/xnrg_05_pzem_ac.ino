@@ -63,7 +63,7 @@ void PzemAcEverySecond(void)
     AddLogBuffer(LOG_LEVEL_DEBUG_MORE, buffer, PzemAcModbus->ReceiveCount());
 
     if (error) {
-      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("PAC: PzemAc %d error %d"), PZEM_AC_DEVICE_ADDRESS + PzemAc.phase, error);
+      AddLog_P(LOG_LEVEL_DEBUG, PSTR("PAC: PzemAc %d error %d"), PZEM_AC_DEVICE_ADDRESS + PzemAc.phase, error);
     } else {
       Energy.data_valid[PzemAc.phase] = 0;
       if (10 == registers) {
@@ -81,7 +81,7 @@ void PzemAcEverySecond(void)
         PzemAc.energy += (float)((buffer[15] << 24) + (buffer[16] << 16) + (buffer[13] << 8) + buffer[14]);                           // 4294967295 Wh
         if (PzemAc.phase == Energy.phase_count -1) {
           if (PzemAc.energy > PzemAc.last_energy) {  // Handle missed phase
-            if (uptime > PZEM_AC_STABILIZE) {
+            if (TasmotaGlobal.uptime > PZEM_AC_STABILIZE) {
               EnergyUpdateTotal(PzemAc.energy, false);
             }
             PzemAc.last_energy = PzemAc.energy;
@@ -109,7 +109,7 @@ void PzemAcEverySecond(void)
   }
   else {
     PzemAc.send_retry--;
-    if ((Energy.phase_count > 1) && (0 == PzemAc.send_retry) && (uptime < PZEM_AC_STABILIZE)) {
+    if ((Energy.phase_count > 1) && (0 == PzemAc.send_retry) && (TasmotaGlobal.uptime < PZEM_AC_STABILIZE)) {
       Energy.phase_count--;  // Decrement phases if no response after retry within 30 seconds after restart
     }
   }
@@ -124,14 +124,14 @@ void PzemAcSnsInit(void)
     Energy.phase_count = 3;  // Start off with three phases
     PzemAc.phase = 0;
   } else {
-    energy_flg = ENERGY_NONE;
+    TasmotaGlobal.energy_driver = ENERGY_NONE;
   }
 }
 
 void PzemAcDrvInit(void)
 {
   if (PinUsed(GPIO_PZEM016_RX) && PinUsed(GPIO_PZEM0XX_TX)) {
-    energy_flg = XNRG_05;
+    TasmotaGlobal.energy_driver = XNRG_05;
   }
 }
 
@@ -158,7 +158,7 @@ bool Xnrg05(uint8_t function)
 
   switch (function) {
     case FUNC_ENERGY_EVERY_SECOND:
-      if (uptime > 4) { PzemAcEverySecond(); }  // Fix start up issue #5875
+      if (TasmotaGlobal.uptime > 4) { PzemAcEverySecond(); }  // Fix start up issue #5875
       break;
     case FUNC_COMMAND:
       result = PzemAcCommand();

@@ -153,5 +153,48 @@ char get_jpeg_size(unsigned char* data, unsigned int data_size, unsigned short *
    }else{ return false; }                     //Not a valid SOI header
 }
 
+
 #endif // JPEG_PICTS
 #endif //ESP32
+
+#ifdef USE_DISPLAY_DUMP
+#define bytesPerPixel 3
+#define fileHeaderSize 14
+#define infoHeaderSize 40
+
+void createBitmapFileHeader(uint32_t height, uint32_t width, uint8_t *fileHeader) {
+  int paddingSize = (4 - (width*bytesPerPixel) % 4) % 4;
+
+    int fileSize = fileHeaderSize + infoHeaderSize + (bytesPerPixel*width+paddingSize) * height;
+    memset(fileHeader,0,fileHeaderSize);
+    fileHeader[ 0] = (unsigned char)('B');
+    fileHeader[ 1] = (unsigned char)('M');
+    fileHeader[ 2] = (unsigned char)(fileSize    );
+    fileHeader[ 3] = (unsigned char)(fileSize>> 8);
+    fileHeader[ 4] = (unsigned char)(fileSize>>16);
+    fileHeader[ 5] = (unsigned char)(fileSize>>24);
+    fileHeader[10] = (unsigned char)(fileHeaderSize + infoHeaderSize);
+
+}
+
+void createBitmapInfoHeader(uint32_t height, uint32_t width, uint8_t *infoHeader ) {
+    memset(infoHeader,0,infoHeaderSize);
+
+    infoHeader[ 0] = (unsigned char)(infoHeaderSize);
+    infoHeader[ 4] = (unsigned char)(width    );
+    infoHeader[ 5] = (unsigned char)(width>> 8);
+    infoHeader[ 6] = (unsigned char)(width>>16);
+    infoHeader[ 7] = (unsigned char)(width>>24);
+    infoHeader[ 8] = (unsigned char)(height    );
+    infoHeader[ 9] = (unsigned char)(height>> 8);
+    infoHeader[10] = (unsigned char)(height>>16);
+    infoHeader[11] = (unsigned char)(height>>24);
+    infoHeader[12] = (unsigned char)(1);
+    infoHeader[14] = (unsigned char)(bytesPerPixel*8);
+    infoHeader[24] = (unsigned char)0x13;  // 72 dpi
+    infoHeader[25] = (unsigned char)0x0b;
+    infoHeader[28] = (unsigned char)0x13;
+    infoHeader[29] = (unsigned char)0x0b;
+
+}
+#endif // USE_DISPLAY_DUMP

@@ -32,6 +32,7 @@ struct BUZZER {
   uint8_t inverted = 0;            // Buzzer inverted flag (1 = (0 = On, 1 = Off))
   uint8_t count = 0;               // Number of buzzes
   uint8_t mode = 0;                // Buzzer mode (0 = regular, 1 = infinite, 2 = follow LED)
+  uint8_t freq_mode = 0;           // Output mode (0 = regular, 1 = using frequency output)
   uint8_t set[2];
   uint8_t duration;
   uint8_t state = 0;
@@ -39,9 +40,28 @@ struct BUZZER {
 
 /*********************************************************************************************/
 
-void BuzzerOff(void)
+void BuzzerSet(uint8_t state)
 {
-  DigitalWrite(GPIO_BUZZER, 0, Buzzer.inverted);  // Buzzer Off
+  if (Buzzer.inverted) {
+    state = !state;
+  }
+
+  if (Buzzer.freq_mode == 1) {
+    static uint8_t last_state = 0;
+    if (last_state != state) {
+      if (state) {
+        analogWrite(Pin(GPIO_BUZZER, 0), Settings.pwm_range / 2);  // set 50% duty cycle for frequency output
+      }
+      else {
+        analogWrite(Pin(GPIO_BUZZER, 0), 0); // set 0% (or 100% for inverted PWM) duty cycle which turns off frequency output either way
+      }
+      last_state = state;
+    }
+  }
+  else {
+    DigitalWrite(GPIO_BUZZER, 0, state);  // Buzzer On/Off
+  }
+
 }
 
 //void BuzzerBeep(uint32_t count = 1, uint32_t on = 1, uint32_t off = 1, uint32_t tune = 0, uint32_t mode = 0);
@@ -69,11 +89,27 @@ void BuzzerBeep(uint32_t count, uint32_t on, uint32_t off, uint32_t tune, uint32
   }
   Buzzer.count = count * 2;  // Start buzzer
 
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("BUZ: %d(%d),%d,%d,0x%08X(0x%08X)"), count, Buzzer.count, on, off, tune, Buzzer.tune);
+  // We can use PWM mode for buzzer output if enabled.
+  if (Settings.flag4.buzzer_freq_mode) {     // SetOption111 - Enable frequency output mode for buzzer
+      Buzzer.freq_mode = 1;
+  }
+  else {
+    Buzzer.freq_mode = 0;
+  }
+
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR("BUZ: %d(%d),%d,%d,0x%08X(0x%08X),%d"), count, Buzzer.count, on, off, tune, Buzzer.tune, Buzzer.freq_mode);
 
   Buzzer.enable = (Buzzer.count > 0);
-  if (!Buzzer.enable) {
-    BuzzerOff();
+  if (Buzzer.enable) {
+    if (Settings.sleep > PWM_MAX_SLEEP) {
+      TasmotaGlobal.sleep = PWM_MAX_SLEEP;      // set a maxumum value of 10 milliseconds to ensure that buzzer periods are a bit more accurate
+    } else {
+      TasmotaGlobal.sleep = Settings.sleep;     // or keep the current sleep if it's lower than 10
+    }
+  }
+  else {
+    TasmotaGlobal.sleep = Settings.sleep;       // restore original sleep
+    BuzzerSet(0);
   }
 }
 
@@ -81,7 +117,7 @@ void BuzzerSetStateToLed(uint32_t state)
 {
   if (Buzzer.enable && (2 == Buzzer.mode)) {
     Buzzer.state = (state != 0);
-    DigitalWrite(GPIO_BUZZER, 0, (Buzzer.inverted) ? !Buzzer.state : Buzzer.state);
+    BuzzerSet(Buzzer.state);
   }
 }
 
@@ -101,9 +137,9 @@ void BuzzerEnabledBeep(uint32_t count, uint32_t duration)
 
 bool BuzzerPinState(void)
 {
-  if (XdrvMailbox.index == GPIO_BUZZER_INV) {
+  if (XdrvMailbox.index == AGPIO(GPIO_BUZZER_INV)) {
     Buzzer.inverted = 1;
-    XdrvMailbox.index -= (GPIO_BUZZER_INV - GPIO_BUZZER);
+    XdrvMailbox.index -= (AGPIO(GPIO_BUZZER_INV) - AGPIO(GPIO_BUZZER));
     return true;
   }
   return false;
@@ -113,7 +149,7 @@ void BuzzerInit(void)
 {
   if (PinUsed(GPIO_BUZZER)) {
     pinMode(Pin(GPIO_BUZZER), OUTPUT);
-    BuzzerOff();
+    BuzzerSet(0);
   } else {
     Buzzer.active = false;
   }
@@ -140,7 +176,7 @@ void BuzzerEvery100mSec(void)
           Buzzer.duration = Buzzer.set[Buzzer.state];
         }
       }
-      DigitalWrite(GPIO_BUZZER, 0, (Buzzer.inverted) ? !Buzzer.state : Buzzer.state);
+      BuzzerSet(Buzzer.state);
     } else {
       Buzzer.enable = false;
     }

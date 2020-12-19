@@ -1,0 +1,338 @@
+
+ libmad - MPEG audio decoder library
+ Copyright (C) 2000-2004 Underbit Technologies, Inc.
+
+ $Id: CHANGES,v 1.14 2004/02/17 02:02:03 rob Exp $
+
+===============================================================================
+
+Version 0.15.1 (beta)
+
+  * Updated to autoconf 2.59, automake 1.8.2, libtool 1.5.2.
+
+  * Replaced Layer III IMDCT routine with one based on a faster algorithm,
+    improving both speed and accuracy.
+
+  * Improved portability of the Huffman table initialization.
+
+  * Fixed a problem that could result in an assertion failure in layer3.c
+    due to an invalid Layer III free format bitrate.
+
+  * Improved the robustness of Layer II bitrate/mode combinations, and added
+    a new MAD_ERROR_BADMODE error enum. The allowability of low-bitrate
+    stereo streams is influenced by the --enable-strict-iso option to
+    `configure'.
+
+Version 0.15.0 (beta)
+
+  * Updated to autoconf 2.57, automake 1.7.5, libtool 1.4.3.
+
+  * Added new mad_f_div() API routine.
+
+  * Added a 64th entry to the Layer I/Layer II scalefactor table, for better
+    compatibility with existing streams. The --enable-strict-iso option to
+    `configure' can be used to disable use of this entry.
+
+  * Modified the header decoding routine to allow the reserved emphasis
+    value, for better compatibility with existing streams. The
+    --enable-strict-iso option to `configure' can be used to restore the
+    previous behavior of reporting this value as an error.
+
+  * Added new MAD_EMPHASIS_RESERVED enumeration constant.
+
+  * Fixed a bug in the ARM version of mad_f_scale64() discovered by Andre
+    McCurdy.
+
+  * Rewrote PowerPC assembly for minor gains.
+
+  * Modified mad_timer_fraction() to avoid the possibility of division by
+    zero when 0 is passed as the second argument.
+
+  * Fixed a non-fatal problem caused by attempting to designate ancillary
+    bits in Layer III after a decoding error.
+
+  * Changed to build a shared library by default.
+
+  * Changed to use native Cygwin build by default; give --host=mingw32 to
+    `configure' to use MinGW (and avoid a dependency on the Cygwin DLL).
+
+Version 0.14.2 (beta)
+
+  * Changed Cygwin builds to use MinGW; resulting Win32 executables no
+    longer have a dependency on Cygwin DLLs.
+
+  * Added a new mad_stream_errorstr() API function to libmad for retrieving
+    a string description of the current error condition.
+
+Version 0.14.1 (beta)
+
+  * Updated config.guess and config.sub to latest upstream versions.
+
+  * Enabled libtool versioning rather than release numbering.
+
+  * Improved the documentation in minimad.c.
+
+  * Several other small fixes.
+
+Version 0.14.0 (beta)
+
+  * Added a 64-bit FPM negation operation to improve performance of subband
+    synthesis on some platforms.
+
+  * Improved MSVC++ portability and added MSVC++ project files.
+
+  * Added rounding to Layer III requantization for slightly better accuracy.
+
+Version 0.13.0 (beta)
+
+  * Ancillary data is now properly extracted from Layer III streams.
+
+  * Rewrote the Layer III joint stereo decoding routine to correct a major
+    MPEG-2 problem and a minor MPEG-1 problem decoding intensity stereo.
+
+  * Eliminated the dependency on sign-extending right shifts for Layer I and
+    Layer II.
+
+  * Renamed `private' field to `private_bits' for better C++ compatibility.
+
+  * Gratuitously renamed `sfreq' field to `samplerate' and
+    MAD_ERROR_BADSAMPLEFREQ constant to MAD_ERROR_BADSAMPLERATE.
+
+  * Added `samplerate' and `channels' fields to synth.pcm struct to allow
+    these to be different from the decoded frame, and for simpler access.
+
+  * Added new mad_stream_options() and mad_decoder_options() API entries for
+    special runtime decoding options.
+
+  * Added new MAD_OPTION_IGNORECRC and MAD_OPTION_HALFSAMPLERATE options.
+
+  * Added new MAD_FLAG_FREEFORMAT indicator flag.
+
+  * Fixed some bugs in the async decoder.
+
+  * Added a new mad_timer_multiply() API routine.
+
+  * Eliminated `+' from asm constraints under Intel for better compatibility
+    with some compilers.
+
+  * Fixed a PIC-related problem in imdct_l_arm.S.
+
+  * Eliminated a static variable to make libmad thread-safe.
+
+Version 0.12.5 (beta)
+
+  * Modified Layer III requantization to occur during Huffman decoding for
+    significant performance gains.
+
+  * Optimized short block IMDCT by eliminating redundant calculations.
+
+  * Made several other Layer III performance improvements; added
+    ASO_INTERLEAVE1, ASO_INTERLEAVE2, and ASO_ZEROCHECK
+    architecture-specific options for best performance on various
+    architectures.
+
+  * Optimized synthesis DCT to store result values as soon as they are
+    calculated.
+
+Version 0.12.4 (beta)
+
+  * New PowerPC fixed-point assembly courtesy of David Blythe.
+
+  * Reorganized fixed-point assembly routines for easier maintenance and
+    better performance.
+
+  * Improved performance of subband synthesis through better indexing and
+    fewer local variables.
+
+  * Added alias reduction for the lower two subbands of mixed short blocks,
+    per a report of ambiguity with ISO/IEC 11172-3 and for uniformity with
+    most other implementations. Also improved alias reduction performance
+    using multiply/accumulate.
+
+  * Added --enable-strict-iso option to `configure' to override best
+    accepted practices such as the alias reduction for mixed short blocks.
+
+  * Improved performance of Layer III IMDCT by using longer
+    multiply/accumulate runs where possible.
+
+Version 0.12.3 (beta)
+
+  * Added MPEG 2.5 support.
+
+  * Added preliminary support for parameterizing the binary point position
+    in the fixed-point representation.
+
+  * Added multiply/accumulate optimization to the Layer III IMDCT for long
+    blocks.
+
+  * Fixed a bug in the handling of Layer III mixed_block_flag.
+
+  * Fixed a configure problem when multiple -O CFLAGS are present.
+
+Version 0.12.2 (beta)
+
+  * Rearranged the synthesis polyphase filterbank memory vector for better
+    locality of reference, and rewrote mad_synth_frame() to accommodate,
+    resulting in improved performance.
+
+  * Discovered a combination of compiler optimization flags that further
+    improve performance.
+
+  * Changed some array references in layer3.c to pointer derefs.
+
+Version 0.12.1 (beta)
+
+  * Resolved the intensity + MS joint stereo issue (a simple bug).
+    OPT_ISKLUGE is no longer considered to be a kluge.
+
+  * Fixed another, hopefully last main_data memory bug.
+
+  * Split part of struct mad_frame into struct mad_header for convenience
+    and size.
+
+Version 0.12.0 (alpha)
+
+  * Changed the build environment to use automake and libtool. A libmad
+    shared library can now be built using the --enable-shared option to
+    `configure'.
+
+  * Added another callback to MAD's high-level decoder API after the frame
+    header has been read but before the frame's audio data is decoded.
+
+  * Streamlined header processing so that mad_frame_decode() can be called
+    with or without having already called mad_frame_header().
+
+  * Fixed some other header reading miscellany, including CRC handling and
+    free bitrate detection, and frame length verification with free
+    bitrates.
+
+  * Fixed a problem with Layer III free bitrates > 320 kbps. The main_data
+    buffer size should now be large enough to handle any size frame, by
+    virtue of the maximum possible part2_3_length.
+
+  * Further developed the async API; arbitrary messages can now be passed to
+    the subsidiary decoding process.
+
+  * Streamlined timer.c and extended its interface. It now has support for
+    video frame/field lengths, including output support for drop-frame
+    encoding.
+
+  * Replaced many constant integer preprocessor defines with enums.
+
+Version 0.11.4 (beta)
+
+  * Fixed free format bitrate discovery.
+
+  * Changed the timer implementation and extended its interface.
+
+  * Integrated Nicolas Pitre's patch for pre-shifting at compile-time and
+    for better multiply/accumulate code output.
+
+  * Applied Simon Burge's patch to imdct_l_arm.S for a.out compatibility.
+
+  * Added -mtune=strongarm for all ARM targets.
+
+Version 0.11.3 (beta)
+
+  * Added new --enable-speed and --enable-accuracy options for `configure'
+    to automatically select appropriate SSO/ASO options, et al.
+
+  * Modified subband synthesis to use multiply/accumulate optimization (if
+    available) for better speed and/or accuracy.
+
+  * Incorporated Andre McCurdy's changes for further rounding optimizations
+    in the rest of his code.
+
+Version 0.11.2 (beta)
+
+  * Incorporated Nicolas Pitre's ARM assembly and parameterized scaling
+    changes.
+
+  * Incorporated Andre McCurdy's ARM assembly optimization (used only if
+    --enable-aso is given to `configure' to enable architecture-specific
+    optimizations.)
+
+  * Reduced FPM_INTEL assembly to two instructions.
+
+  * Fixed accuracy problems with certain FPM modes in synth.c.
+
+  * Improved the accuracy of FPM_APPROX.
+
+  * Improved the accuracy of SSO.
+
+  * Improved sync discovery by checking for a sync word in the following
+    frame.
+
+  * Minor code clean-up.
+
+  * Added experimental rules for generating a libmad.so shared library.
+
+Version 0.11.1 (beta)
+
+  * Moved libmad code into a separate directory.
+
+  * Changed SSO to be disabled by default, as output accuracy is deemed to
+    be more important than speed in the general case.
+
+  * Fixed a bug in Layer III sanity checking that could cause a crash on
+    certain random data input.
+
+  * Extended the Layer III requantization table from 8191 to 8206 as some
+    encoders are known to use these values, even though ISO/IEC 11172-3
+    suggests the maximum should be 8191.
+
+Version 0.11.0 (beta)
+
+  * Implemented MPEG-2 extension to Lower Sampling Frequencies.
+
+  * Improved Layer III performance by avoiding IMDCT calculation when all
+    input samples are zero.
+
+  * Significantly reduced size of Layer II tables.
+
+Version 0.10.3 (beta)
+
+  * Improved SSO output quality.
+
+  * Made portable to cygwin.
+
+  * Localized memory references in III_huffdecode() for better performance.
+
+Version 0.10.2 (beta)
+
+  * Rewrote Layer III long block 36-point IMDCT routine for better
+    performance.
+
+  * Improved subband synthesis fixed-point games somewhat.
+
+Version 0.10.1 (beta)
+
+  * Added a subband synthesis optimization (SSO) which involves modifying
+    the fixed-point multiplication method during windowing. This produces
+    subtle differences in the output but improves performance greatly.
+
+  * Added I_STEREO and MS_STEREO flags to frame struct.
+
+  * Eliminated privately-used CRCFAILED flag.
+
+  * Fixed a bug where Layer III decoding could crash on some badly-formatted
+    (e.g. non-MPEG) bitstreams.
+
+  * Miscellaneous code clean-up.
+
+Version 0.10.0 (beta)
+
+  * Added SPARC fixed-point math support.
+
+  * Revamped libmad API for better high- and low-level support.
+
+  * Documented more of the code.
+
+  * Changed sync semantics such that new stream buffers are assumed to be
+    sync-aligned.
+
+  * Changed Layer III to dynamically allocate static memory so as not to
+    waste it (about 6.4K) when only decoding Layer I or Layer II.
+
+===============================================================================
+

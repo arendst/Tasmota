@@ -75,7 +75,7 @@ void Max4409Detect(void)
 
     if ((I2cValidRead8(&buffer1, max44009_address, REG_LOWER_THRESHOLD)) &&
         (I2cValidRead8(&buffer2, max44009_address, REG_THRESHOLD_TIMER))) {
-      //AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("MAX44009 %x: %x, %x"), max44009_address, (int)buffer1, (int)buffer2);
+      //AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("MAX44009 %x: %x, %x"), max44009_address, (int)buffer1, (int)buffer2);
       if ((0x00 == buffer1) &&
           (0xFF == buffer2)) {
 
@@ -122,7 +122,7 @@ void Max4409Show(bool json)
     if (json) {
       ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_ILLUMINANCE "\":%s}"), max44009_types, illum_str);
 #ifdef USE_DOMOTICZ
-      if (0 == tele_period) {
+      if (0 == TasmotaGlobal.tele_period) {
         DomoticzSensor(DZ_ILLUMINANCE, illum_str);
       }
 #endif  // USE_DOMOTICZ

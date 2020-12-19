@@ -72,9 +72,9 @@ void ElectriqMoodLModuleSelected(void)
 {
   if (PinUsed(GPIO_ELECTRIQ_MOODL_TX)) {
     SetSerial(9600, TS_SERIAL_8N1);
-    light_type = LT_RGBW;
-    light_flg = XLGT_06;
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("LGT: ElectriQ Mood Lamp Found"));
+    TasmotaGlobal.light_type = LT_RGBW;
+    TasmotaGlobal.light_driver = XLGT_06;
+    AddLog_P(LOG_LEVEL_DEBUG, PSTR("LGT: ElectriQ Mood Lamp Found"));
   }
 }
 

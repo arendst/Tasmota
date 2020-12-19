@@ -26,7 +26,9 @@
 #define SPS30_ADDR 0x69
 
 #include <Wire.h>
+#ifdef ESP8266
 #include <twi.h>
+#endif
 
 uint8_t sps30_ready = 0;
 uint8_t sps30_running;
@@ -74,7 +76,9 @@ uint8_t sps30_calc_CRC(uint8_t *data) {
 
 void CmdClean(void);
 
+#ifdef ESP8266
 unsigned char twi_readFrom(unsigned char address, unsigned char* buf, unsigned int len, unsigned char sendStop);
+#endif
 
 void sps30_get_data(uint16_t cmd, uint8_t *data, uint8_t dlen) {
 unsigned char cmdb[2];
@@ -93,7 +97,12 @@ uint8_t twi_buff[64];
   dlen/=2;
   dlen*=3;
 
+#ifdef ESP8266
   twi_readFrom(SPS30_ADDR,twi_buff,dlen,1);
+#endif  // ESP8266
+#ifdef ESP32
+  Wire.readTransmission(SPS30_ADDR,twi_buff,dlen,1, NULL);
+#endif  // ESP32
 
   uint8_t bind=0;
   while (bind<dlen) {
@@ -134,7 +143,7 @@ void SPS30_Detect(void)
 
   uint8_t dcode[32];
   sps30_get_data(SPS_CMD_GET_SERIAL,dcode,sizeof(dcode));
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("sps30 found with serial: %s"),dcode);
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR("sps30 found with serial: %s"),dcode);
   sps30_cmd(SPS_CMD_START_MEASUREMENT);
   sps30_running = 1;
   sps30_ready = 1;
@@ -158,7 +167,7 @@ const char HTTP_SNS_SPS30_c[] PROGMEM ="{s}SPS30 " "TYPSIZ" "{m}%s " "um" "{e}";
 void SPS30_Every_Second() {
   if (!sps30_running) return;
 
-  if (uptime%10==0) {
+  if (TasmotaGlobal.uptime%10==0) {
     uint8_t vars[sizeof(float)*10];
     sps30_get_data(SPS_CMD_READ_MEASUREMENT,vars,sizeof(vars));
     float *fp=&sps30_result.PM1_0;
@@ -178,7 +187,7 @@ void SPS30_Every_Second() {
     }
   }
 
-  if (uptime%3600==0 && uptime>60) {
+  if (TasmotaGlobal.uptime%3600==0 && TasmotaGlobal.uptime>60) {
     // should auto clean once per week runtime
     // so count hours, should be in Settings
     SPS30_HOURS++;

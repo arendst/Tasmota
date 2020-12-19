@@ -21,7 +21,7 @@
 #ifdef USE_HDC1080
 
 /*********************************************************************************************\
- * HDC1080 - Temperature and Humidy sensor
+ * HDC1080 - Temperature and Humidity sensor
  *
  * Source: Luis Teixeira
  *
@@ -176,7 +176,7 @@ bool HdcTriggerRead(void) {
   hdc_next_read = millis() + HDC1080_CONV_TIME;
 
   if(status) {
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("HdcTriggerRead: failed to open the transaction for HDC_REG_TEMP. Status = %d"), status);
+    AddLog_P(LOG_LEVEL_DEBUG, PSTR("HdcTriggerRead: failed to open the transaction for HDC_REG_TEMP. Status = %d"), status);
 
     return false;
   }
@@ -205,7 +205,7 @@ bool HdcRead(void) {
   status = HdcTransactionClose(HDC1080_ADDR, sensor_data, 4);
 
   if(status) {
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("HdcRead: failed to read HDC_REG_TEMP. Status = %d"), status);
+    AddLog_P(LOG_LEVEL_DEBUG, PSTR("HdcRead: failed to read HDC_REG_TEMP. Status = %d"), status);
 
     return false;
   }
@@ -213,7 +213,7 @@ bool HdcRead(void) {
   temp_data = (uint16_t) ((sensor_data[0] << 8) | sensor_data[1]);
   rh_data = (uint16_t) ((sensor_data[2] << 8) | sensor_data[3]);
 
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("HdcRead: temperature raw data: 0x%04x; humidity raw data: 0x%04x"), temp_data, rh_data);
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR("HdcRead: temperature raw data: 0x%04x; humidity raw data: 0x%04x"), temp_data, rh_data);
 
   // read the temperature from the first 16 bits of the result
 
@@ -237,7 +237,7 @@ bool HdcRead(void) {
 
 void HdcDetect(void) {
   if (I2cActive(HDC1080_ADDR)) {
-//    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("HdcDetect: Address = 0x%02X already in use."), HDC1080_ADDR);
+//    AddLog_P(LOG_LEVEL_DEBUG, PSTR("HdcDetect: Address = 0x%02X already in use."), HDC1080_ADDR);
 
     return;
   }
@@ -245,7 +245,7 @@ void HdcDetect(void) {
   hdc_manufacturer_id = HdcReadManufacturerId();
   hdc_device_id = HdcReadDeviceId();
 
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("HdcDetect: detected device with manufacturerId = 0x%04X and deviceId = 0x%04X"), hdc_manufacturer_id, hdc_device_id);
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR("HdcDetect: detected device with manufacturerId = 0x%04X and deviceId = 0x%04X"), hdc_manufacturer_id, hdc_device_id);
 
   if (hdc_device_id == HDC1080_DEV_ID) {
     HdcInit();
@@ -259,7 +259,7 @@ void HdcDetect(void) {
  *
  */
 void HdcEverySecond(void) {
-  if (uptime &1) {  // Every 2 seconds
+  if (TasmotaGlobal.uptime &1) {  // Every 2 seconds
     if (!HdcTriggerRead()) {
       AddLogMissed((char*) hdc_type_name, hdc_valid);
     }
@@ -273,7 +273,7 @@ void HdcEverySecond(void) {
  */
 void HdcShow(bool json) {
   if (hdc_valid) {
-    TempHumDewShow(json, (0 == tele_period), hdc_type_name, hdc_temperature, hdc_humidity);
+    TempHumDewShow(json, (0 == TasmotaGlobal.tele_period), hdc_type_name, hdc_temperature, hdc_humidity);
   }
 }
 

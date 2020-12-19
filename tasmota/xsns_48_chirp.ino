@@ -20,6 +20,8 @@
   Version Date      Action    Description
   --------------------------------------------------------------------------------------------
 
+  1.0.0.2 20200611  changed   - bugfix: decouple restart of the work loop from FUNC_JSON_APPEND callback
+  ---
   1.0.0.1 20190917  changed   - rework of the inner loop to enable delays in the middle of I2C-reads
                     changed   - double send address change only for fw>0x25
                     changed   - use DEBUG_SENSOR_LOG, change ILLUMINANCE to DARKNESS
@@ -214,13 +216,13 @@ bool ChirpSet(uint8_t addr) {
       chirp_timeout_count = 10;
       chirp_next_job = 0;
       if(chirp_sensor[chirp_current].version == 255){ // this should be Chirp! and it seems to need a power cycle (or RESET to GND)
-          AddLog_P2(LOG_LEVEL_INFO, PSTR("CHIRP: wrote new address %u, please power off device"), addr);
+          AddLog_P(LOG_LEVEL_INFO, PSTR("CHIRP: wrote new address %u, please power off device"), addr);
           chirp_sensor[chirp_current].version == 0; // make it "invisible"
       }
       return true;
     }
   }
-  AddLog_P2(LOG_LEVEL_INFO, PSTR("CHIRP: address %u incorrect and not used"), addr);
+  AddLog_P(LOG_LEVEL_INFO, PSTR("CHIRP: address %u incorrect and not used"), addr);
   return false;
 }
 
@@ -239,13 +241,13 @@ bool ChirpScan()
       I2cSetActiveFound(address, "CHIRP");
       if (chirp_found_sensors<CHIRP_MAX_SENSOR_COUNT) {
         chirp_sensor[chirp_found_sensors].address = address; // push next sensor, as long as there is space in the array
-        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("CHIRP: fw %x"), chirp_sensor[chirp_found_sensors].version);
+        AddLog_P(LOG_LEVEL_DEBUG, PSTR("CHIRP: fw %x"), chirp_sensor[chirp_found_sensors].version);
       }
       chirp_found_sensors++;
     }
   }
   // chirp_timeout_count = 11; // wait a second to read the real fw-version in the next step
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Found %u CHIRP sensor(s)."), chirp_found_sensors);
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR("Found %u CHIRP sensor(s)."), chirp_found_sensors);
   return (chirp_found_sensors > 0);
 }
 
@@ -300,7 +302,7 @@ void ChirpServiceAllSensors(uint8_t job){
 
 void ChirpEvery100MSecond(void)
 {
-  // DEBUG_SENSOR_LOG(PSTR("CHIRP: every second"));
+  // DEBUG_SENSOR_LOG(PSTR("CHIRP: every 100 mseconds, counter: %u, next job: %u"),chirp_timeout_count,chirp_next_job);
   if(chirp_timeout_count == 0) {    //countdown complete, now do something
       switch(chirp_next_job) {
           case 0:                   //this should only be called after driver initialization
@@ -377,14 +379,15 @@ void ChirpEvery100MSecond(void)
           break;
           case 13:
           DEBUG_SENSOR_LOG(PSTR("CHIRP: paused, waiting for TELE"));
+          chirp_next_job++;
           break;
           case 14:
           if (Settings.tele_period > 16){
-              chirp_timeout_count = (Settings.tele_period - 17) * 10;  // sync it with the TELEPERIOD, we need about up to 17 seconds to measure
+              chirp_timeout_count = (Settings.tele_period - 16) * 10;  // sync it with the TELEPERIOD, we need about up to 16 seconds to measure
               DEBUG_SENSOR_LOG(PSTR("CHIRP: timeout 1/10 sec: %u, tele: %u"), chirp_timeout_count, Settings.tele_period);
             }
           else{
-            AddLog_P2(LOG_LEVEL_INFO, PSTR("CHIRP: TELEPERIOD must be > 16 seconds !"));
+            AddLog_P(LOG_LEVEL_INFO, PSTR("CHIRP: TELEPERIOD must be > 16 seconds !"));
             // we could overwrite it to i.e. 20 seconds here
           }
           chirp_next_job = 1;                                 // back to step 1
@@ -440,7 +443,7 @@ void ChirpShow(bool json)
           ResponseAppend_P(PSTR(",\"%s%u\":{\"sleeping\"}"),chirp_name, i);
         }
   #ifdef USE_DOMOTICZ
-      if (0 == tele_period) {
+      if (0 == TasmotaGlobal.tele_period) {
         DomoticzTempHumPressureSensor(t_temperature, chirp_sensor[i].moisture);
         DomoticzSensor(DZ_ILLUMINANCE,chirp_sensor[i].light); // this is not LUX!!
       }
@@ -533,7 +536,6 @@ bool Xsns48(uint8_t function)
       break;
     case FUNC_JSON_APPEND:
       ChirpShow(1);
-      chirp_next_job = 14; // TELE done, now compute time for next measure cycle
       break;
 #ifdef USE_WEBSERVER
     case FUNC_WEB_SENSOR:

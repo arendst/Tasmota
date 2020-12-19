@@ -71,7 +71,7 @@ uint8_t Sr04TModeDetect(void)
     }
   }
 
-  AddLog_P2(LOG_LEVEL_INFO,PSTR("SR04: Mode %d"), sr04_type);
+  AddLog_P(LOG_LEVEL_INFO,PSTR("SR04: Mode %d"), sr04_type);
   return sr04_type;
 }
 
@@ -123,7 +123,7 @@ uint16_t Sr04TMode2Distance(void)
 
   //check crc sum
   if (crc != sonar_serial->read()) {
-    AddLog_P2(LOG_LEVEL_ERROR,PSTR("SR04: Reading CRC error."));
+    AddLog_P(LOG_LEVEL_ERROR,PSTR("SR04: Reading CRC error."));
     return NO_ECHO;
   }
   //DEBUG_SENSOR_LOG(PSTR("SR04: Distance: %d"), distance);
@@ -170,7 +170,7 @@ void Sr04Show(bool json)
     if(json) {
       ResponseAppend_P(PSTR(",\"SR04\":{\"" D_JSON_DISTANCE "\":%s}"), distance_chr);
 #ifdef USE_DOMOTICZ
-      if (0 == tele_period) {
+      if (0 == TasmotaGlobal.tele_period) {
         DomoticzSensor(DZ_COUNT, distance_chr);  // Send distance as Domoticz Counter value
       }
 #endif  // USE_DOMOTICZ

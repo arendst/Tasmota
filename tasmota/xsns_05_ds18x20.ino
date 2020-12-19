@@ -17,6 +17,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifdef ESP8266
 #ifdef USE_DS18x20
 /*********************************************************************************************\
  * DS18B20 - Temperature - Multiple sensors
@@ -37,7 +38,9 @@
 #define W1_WRITE_SCRATCHPAD  0x4E
 #define W1_READ_SCRATCHPAD   0xBE
 
+#ifndef DS18X20_MAX_SENSORS // DS18X20_MAX_SENSORS fallback to 8 if not defined in user_config_override.h
 #define DS18X20_MAX_SENSORS  8
+#endif
 
 const char kDs18x20Types[] PROGMEM = "DS18x20|DS18S20|DS1822|DS18B20|MAX31850";
 
@@ -340,7 +343,7 @@ void Ds18x20Init(void)
       }
     }
   }
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DSB D_SENSORS_FOUND " %d"), ds18x20_sensors);
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DSB D_SENSORS_FOUND " %d"), ds18x20_sensors);
 }
 
 void Ds18x20Convert(void)
@@ -375,12 +378,19 @@ bool Ds18x20Read(uint8_t sensor)
     if (OneWireCrc8(data)) {
       switch(ds18x20_sensor[index].address[0]) {
         case DS18S20_CHIPID: {
+/*
           if (data[1] > 0x80) {
             data[0] = (~data[0]) +1;
             sign = -1;                     // App-Note fix possible sign error
           }
           float temp9 = (float)(data[0] >> 1) * sign;
           ds18x20_sensor[index].temperature = ConvertTemp((temp9 - 0.25) + ((16.0 - data[6]) / 16.0));
+
+          Replaced by below based on issue #8777
+*/
+          int16_t tempS = (((data[1] << 8) | (data[0] & 0xFE)) << 3) | ((0x10 - data[6]) & 0x0F);
+          ds18x20_sensor[index].temperature = ConvertTemp(tempS * 0.0625 - 0.250);
+
           ds18x20_sensor[index].valid = SENSOR_MAX_MISS;
           return true;
         }
@@ -449,7 +459,7 @@ void Ds18x20EverySecond(void)
   if (now < w1_power_until)
     return;
 #endif
-  if (uptime & 1
+  if (TasmotaGlobal.uptime & 1
 #ifdef W1_PARASITE_POWER
       // if more than 1 sensor and only parasite power: convert every cycle
       || ds18x20_sensors >= 2
@@ -492,12 +502,12 @@ void Ds18x20Show(bool json)
         }
         ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_ID "\":\"%s\",\"" D_JSON_TEMPERATURE "\":%s}"), ds18x20_types, address, temperature);
 #ifdef USE_DOMOTICZ
-        if ((0 == tele_period) && (0 == i)) {
+        if ((0 == TasmotaGlobal.tele_period) && (0 == i)) {
           DomoticzSensor(DZ_TEMP, temperature);
         }
 #endif  // USE_DOMOTICZ
 #ifdef USE_KNX
-        if ((0 == tele_period) && (0 == i)) {
+        if ((0 == TasmotaGlobal.tele_period) && (0 == i)) {
           KnxSensor(KNX_TEMPERATURE, ds18x20_sensor[index].temperature);
         }
 #endif  // USE_KNX
@@ -540,3 +550,4 @@ bool Xsns05(uint8_t function)
 }
 
 #endif  // USE_DS18x20
+#endif  // ESP8266

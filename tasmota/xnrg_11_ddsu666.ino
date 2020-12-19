@@ -67,7 +67,7 @@ void DDSU666Every250ms(void)
     AddLogBuffer(LOG_LEVEL_DEBUG_MORE, buffer, Ddsu666Modbus->ReceiveCount());
 
     if (error) {
-      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SDM: Ddsu666 error %d"), error);
+      AddLog_P(LOG_LEVEL_DEBUG, PSTR("SDM: Ddsu666 error %d"), error);
     } else {
       Energy.data_valid[0] = 0;
 
@@ -138,14 +138,14 @@ void Ddsu666SnsInit(void)
   if (result) {
     if (2 == result) { ClaimSerial(); }
   } else {
-    energy_flg = ENERGY_NONE;
+    TasmotaGlobal.energy_driver = ENERGY_NONE;
   }
 }
 
 void Ddsu666DrvInit(void)
 {
   if (PinUsed(GPIO_DDSU666_RX) && PinUsed(GPIO_DDSU666_TX)) {
-    energy_flg = XNRG_11;
+    TasmotaGlobal.energy_driver = XNRG_11;
   }
 }
 
@@ -159,7 +159,7 @@ bool Xnrg11(uint8_t function)
 
   switch (function) {
     case FUNC_EVERY_250_MSECOND:
-      if (uptime > 4) { DDSU666Every250ms(); }
+      DDSU666Every250ms();
       break;
     case FUNC_INIT:
       Ddsu666SnsInit();

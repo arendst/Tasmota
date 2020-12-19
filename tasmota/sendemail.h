@@ -10,9 +10,10 @@
 
 #ifdef ESP8266
 #include "WiFiClientSecureLightBearSSL.h"
-#else
+#endif  // ESP8266
+#ifdef ESP32
 #include <WiFiClientSecure.h>
-#endif
+#endif  // ESP32
 
 class SendEmail
 {
@@ -25,15 +26,12 @@ class SendEmail
     const bool ssl;
     const int auth_used;
 #ifdef ESP8266
-#if defined(ARDUINO_ESP8266_RELEASE_2_3_0) || defined(ARDUINO_ESP8266_RELEASE_2_4_2)
-    WiFiClient* client;
-#else
     // use bear ssl
     BearSSL::WiFiClientSecure_light *client;
-#endif
-#else
+#endif  // ESP8266
+#ifdef ESP32
     WiFiClient *client;
-#endif
+#endif  // ESP32
 
     String readClient();
     void a3_to_a4(unsigned char * a4, unsigned char * a3);

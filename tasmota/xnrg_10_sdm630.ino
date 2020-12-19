@@ -60,9 +60,11 @@ const uint16_t sdm630_start_addresses[] {
   0x0160,  //  +   +   +   kWh  Phase 1 export active energy
   0x0162,  //  +   +   +   kWh  Phase 2 export active energy
   0x0164,  //  +   +   +   kWh  Phase 3 export active energy
-//  0x015A,  //  +   +   +   kWh  Phase 1 import active energy
-//  0x015C,  //  +   +   +   kWh  Phase 2 import active energy
-//  0x015E,  //  +   +   +   kWh  Phase 3 import active energy
+#ifdef SDM630_IMPORT
+  0x015A,  //  +   +   +   kWh  Phase 1 import active energy
+  0x015C,  //  +   +   +   kWh  Phase 2 import active energy
+  0x015E,  //  +   +   +   kWh  Phase 3 import active energy
+#endif  // SDM630_IMPORT
   0x0156   //  +   +   +   kWh  Total active energy
 };
 
@@ -84,7 +86,7 @@ void SDM630Every250ms(void)
     AddLogBuffer(LOG_LEVEL_DEBUG_MORE, buffer, Sdm630Modbus->ReceiveCount());
 
     if (error) {
-      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SDM: SDM630 error %d"), error);
+      AddLog_P(LOG_LEVEL_DEBUG, PSTR("SDM: SDM630 error %d"), error);
     } else {
       Energy.data_valid[0] = 0;
       Energy.data_valid[1] = 0;
@@ -177,6 +179,20 @@ void SDM630Every250ms(void)
           break;
 
         case 19:
+#ifdef SDM630_IMPORT
+          Energy.import_active[0] = value;
+          break;
+
+        case 20:
+          Energy.import_active[1] = value;
+          break;
+
+        case 21:
+          Energy.import_active[2] = value;
+          break;
+
+        case 22:
+#endif  // SDM630_IMPORT
           EnergyUpdateTotal(value, true);
           break;
       }
@@ -205,14 +221,14 @@ void Sdm630SnsInit(void)
     Energy.phase_count = 3;
     Energy.frequency_common = true;             // Use common frequency
   } else {
-    energy_flg = ENERGY_NONE;
+    TasmotaGlobal.energy_driver = ENERGY_NONE;
   }
 }
 
 void Sdm630DrvInit(void)
 {
   if (PinUsed(GPIO_SDM630_RX) && PinUsed(GPIO_SDM630_TX)) {
-    energy_flg = XNRG_10;
+    TasmotaGlobal.energy_driver = XNRG_10;
   }
 }
 
@@ -226,7 +242,7 @@ bool Xnrg10(uint8_t function)
 
   switch (function) {
     case FUNC_EVERY_250_MSECOND:
-      if (uptime > 4) { SDM630Every250ms(); }
+      SDM630Every250ms();
       break;
     case FUNC_INIT:
       Sdm630SnsInit();

@@ -33,7 +33,10 @@
 #define OT_BOILER_DEFAULT 85;
 
 // Seconds before OT will make an attempt to connect to the boiler after connection error
-#define SNS_OT_DISCONNECT_COOLDOWN_SECONDS 10
+#define SNS_OT_DISCONNECT_COOLDOWN_SECONDS 4
+
+// Number of consecutive timeouts which are accepted before entering disconnect state 
+#define SNS_OT_MAX_TIMEOUTS_BEFORE_DISCONNECT 3
 
 // Count of the OpenThermSettingsFlags
 #define OT_FLAGS_COUNT 6
@@ -63,6 +66,7 @@ enum OpenThermConnectionStatus
 
 OpenThermConnectionStatus sns_ot_connection_status = OpenThermConnectionStatus::OTC_NONE;
 uint8_t sns_ot_disconnect_cooldown = 0;
+uint8_t sns_ot_timeout_before_disconnect = 0;
 
 OpenTherm *sns_ot_master = NULL;
 
@@ -161,7 +165,7 @@ void ICACHE_RAM_ATTR sns_opentherm_handleInterrupt()
 void sns_opentherm_processResponseCallback(unsigned long response, int st)
 {
     OpenThermResponseStatus status = (OpenThermResponseStatus)st;
-    AddLog_P2(LOG_LEVEL_DEBUG_MORE,
+    AddLog_P(LOG_LEVEL_DEBUG_MORE,
               PSTR("[OTH]: Processing response. Status=%s, Response=0x%lX"),
               sns_ot_master->statusToString(status), response);
 
@@ -178,11 +182,13 @@ void sns_opentherm_processResponseCallback(unsigned long response, int st)
             sns_opentherm_process_success_response(&sns_ot_boiler_status, response);
         }
         sns_ot_connection_status = OpenThermConnectionStatus::OTC_READY;
+        sns_ot_timeout_before_disconnect = SNS_OT_MAX_TIMEOUTS_BEFORE_DISCONNECT;
         break;
 
     case OpenThermResponseStatus::INVALID:
         sns_opentherm_check_retry_request();
         sns_ot_connection_status = OpenThermConnectionStatus::OTC_READY;
+        sns_ot_timeout_before_disconnect = SNS_OT_MAX_TIMEOUTS_BEFORE_DISCONNECT;
         break;
 
     // Timeout may indicate not valid/supported command or connection error
@@ -191,7 +197,14 @@ void sns_opentherm_processResponseCallback(unsigned long response, int st)
     // after couple of failed attempts. See sns_opentherm_check_retry_request logic
     case OpenThermResponseStatus::TIMEOUT:
         sns_opentherm_check_retry_request();
-        sns_ot_connection_status = OpenThermConnectionStatus::OTC_DISCONNECTED;
+        if (--sns_ot_timeout_before_disconnect == 0)
+        {
+            sns_ot_connection_status = OpenThermConnectionStatus::OTC_DISCONNECTED;
+        }
+        else
+        {
+            sns_ot_connection_status = OpenThermConnectionStatus::OTC_READY;
+        }
         break;
     }
 }
@@ -298,7 +311,7 @@ void sns_ot_start_handshake()
         return;
     }
 
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("[OTH]: perform handshake"));
+    AddLog_P(LOG_LEVEL_DEBUG, PSTR("[OTH]: perform handshake"));
 
     sns_ot_master->sendRequestAync(
         OpenTherm::buildRequest(OpenThermMessageType::READ_DATA, OpenThermMessageID::SConfigSMemberIDcode, 0));
@@ -312,14 +325,14 @@ void sns_ot_process_handshake(unsigned long response, int st)
 
     if (status != OpenThermResponseStatus::SUCCESS || !sns_ot_master->isValidResponse(response))
     {
-        AddLog_P2(LOG_LEVEL_ERROR,
+        AddLog_P(LOG_LEVEL_ERROR,
                   PSTR("[OTH]: getSlaveConfiguration failed. Status=%s"),
                   sns_ot_master->statusToString(status));
         sns_ot_connection_status = OpenThermConnectionStatus::OTC_DISCONNECTED;
         return;
     }
 
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("[OTH]: getLastResponseStatus SUCCESS. Slave Cfg: %lX"), response);
+    AddLog_P(LOG_LEVEL_DEBUG, PSTR("[OTH]: getLastResponseStatus SUCCESS. Slave Cfg: %lX"), response);
 
     sns_ot_boiler_status.m_slave_flags = (response & 0xFF00) >> 8;
 
@@ -498,7 +511,7 @@ void sns_opentherm_flags_cmd(void)
         sns_opentherm_init_boiler_status();
     }
     bool addComma = false;
-    mqtt_data[0] = 0;
+    TasmotaGlobal.mqtt_data[0] = 0;
     for (int pos = 0; pos < OT_FLAGS_COUNT; ++pos)
     {
         int mask = 1 << pos;
@@ -507,9 +520,9 @@ void sns_opentherm_flags_cmd(void)
         {
             if (addComma)
             {
-                snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,"), mqtt_data);
+                snprintf_P(TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), PSTR("%s,"), TasmotaGlobal.mqtt_data);
             }
-            snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%s"), mqtt_data, sns_opentherm_flag_text(mode));
+            snprintf_P(TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), PSTR("%s%s"), TasmotaGlobal.mqtt_data, sns_opentherm_flag_text(mode));
             addComma = true;
         }
     }

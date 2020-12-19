@@ -58,8 +58,8 @@ float const windmeter_pi = 3.1415926535897932384626433;  // Pi
 float const windmeter_2pi = windmeter_pi * 2;
 
 struct WINDMETER {
-  uint32_t counter_time;
-  unsigned long counter = 0;
+  volatile uint32_t counter_time;
+  volatile unsigned long counter = 0;
   //uint32_t speed_time;
   float speed = 0;
   float last_tele_speed = 0;
@@ -72,18 +72,14 @@ struct WINDMETER {
 #endif  // USE_WINDMETER_NOSTATISTICS
 } WindMeter;
 
-#ifndef ARDUINO_ESP8266_RELEASE_2_3_0  // Fix core 2.5.x ISR not in IRAM Exception
-void WindMeterUpdateSpeed(void) ICACHE_RAM_ATTR;
-#endif  // ARDUINO_ESP8266_RELEASE_2_3_0
-
-void WindMeterUpdateSpeed(void)
+void ICACHE_RAM_ATTR WindMeterUpdateSpeed(void)
 {
   uint32_t time = micros();
   uint32_t time_diff = time - WindMeter.counter_time;
   if (time_diff > Settings.windmeter_pulse_debounce * 1000) {
     WindMeter.counter_time = time;
     WindMeter.counter++;
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("WMET: Counter %d"), WindMeter.counter);
+//    AddLog_P(LOG_LEVEL_DEBUG, PSTR("WMET: Counter %d"), WindMeter.counter);
   }
 }
 
@@ -123,7 +119,7 @@ void WindMeterEverySecond(void)
 {
   //uint32_t time = micros();
   //uint32_t delta_time = time - WindMeter.speed_time;
-  //AddLog_P2(LOG_LEVEL_INFO, PSTR("delta_time: %d"), delta_time);
+  //AddLog_P(LOG_LEVEL_INFO, PSTR("delta_time: %d"), delta_time);
 
   // speed = ( (pulses / pulses_per_rotation) * (2 * pi * radius) ) / delta_time
   WindMeter.speed = ((WindMeter.counter / Settings.windmeter_pulses_x_rot) * (windmeter_2pi * ((float)Settings.windmeter_radius / 1000))) * ((float)Settings.windmeter_speed_factor / 1000);
@@ -135,7 +131,7 @@ void WindMeterEverySecond(void)
   //dtostrfd(WindMeter.speed, 2, speed_string);
   //char uspeed_string[FLOATSZ];
   //dtostrfd(ConvertSpeed(WindMeter.speed), 2, uspeed_string);
-  //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("WMET: Speed %s [m/s] - %s [unit]"), speed_string, uspeed_string);
+  //AddLog_P(LOG_LEVEL_DEBUG, PSTR("WMET: Speed %s [m/s] - %s [unit]"), speed_string, uspeed_string);
 
 #ifndef USE_WINDMETER_NOSTATISTICS
   if (WindMeter.speed < WindMeter.speed_min) {
@@ -278,7 +274,7 @@ void WindMeterShow(bool json)
 
 void WindMeterTriggerTele(void)
 {
-  mqtt_data[0] = '\0';
+  ResponseClear();
   if (MqttShowSensor()) {
     MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
 #ifdef USE_RULES
@@ -298,27 +294,27 @@ bool Xsns68Cmnd(void)
   char sub_string[XdrvMailbox.data_len +1];
   switch (XdrvMailbox.payload) {
     case 1:
-      if (strstr(XdrvMailbox.data, ",") != nullptr) {
+      if (strchr(XdrvMailbox.data, ',') != nullptr) {
         Settings.windmeter_radius = (uint16_t)strtol(subStr(sub_string, XdrvMailbox.data, ",", 2), nullptr, 10);
       }
       break;
     case 2:
-      if (strstr(XdrvMailbox.data, ",") != nullptr) {
+      if (strchr(XdrvMailbox.data, ',') != nullptr) {
         Settings.windmeter_pulses_x_rot = (uint8_t)strtol(subStr(sub_string, XdrvMailbox.data, ",", 2), nullptr, 10);
       }
       break;
     case 3:
-      if (strstr(XdrvMailbox.data, ",") != nullptr) {
+      if (strchr(XdrvMailbox.data, ',') != nullptr) {
         Settings.windmeter_pulse_debounce = (uint16_t)strtol(subStr(sub_string, XdrvMailbox.data, ",", 2), nullptr, 10);
       }
       break;
     case 4:
-      if (strstr(XdrvMailbox.data, ",") != nullptr) {
+      if (strchr(XdrvMailbox.data, ',') != nullptr) {
         Settings.windmeter_speed_factor = (int16_t)(CharToFloat(subStr(sub_string, XdrvMailbox.data, ",", 2)) * 1000);
       }
       break;
     case 5:
-      if (strstr(XdrvMailbox.data, ",") != nullptr) {
+      if (strchr(XdrvMailbox.data, ',') != nullptr) {
         Settings.windmeter_tele_pchange = (uint8_t)strtol(subStr(sub_string, XdrvMailbox.data, ",", 2), nullptr, 10);
       }
       break;

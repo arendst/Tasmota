@@ -20,7 +20,7 @@
 
 Requirements:
    - Python
-   - pip json pycurl
+   - pip json requests
 
 Instructions:
     Execute command with option -d to retrieve status report from device or
@@ -42,59 +42,58 @@ Example:
 import io
 import os.path
 import json
-import pycurl
-import urllib2
+import requests
+import urllib
 from sys import exit
 from optparse import OptionParser
-from StringIO import StringIO
 
 a_on_off = ["OFF","ON "]
 
 a_setoption = [[
-    "Save power state and use after restart",
-    "Restrict button actions to single, double and hold",
-    "(not used) Show value units in JSON messages",
-    "MQTT enabled",
-    "Respond as Command topic instead of RESULT",
-    "MQTT retain on Power",
-    "MQTT retain on Button",
-    "MQTT retain on Switch",
-    "Convert temperature to Fahrenheit",
-    "MQTT retain on Sensor",
-    "MQTT retained LWT to OFFLINE when topic changes",
-    "Swap Single and Double press Button",
-    "Do not use flash page rotate",
-    "Button single press only",
-    "Power interlock mode",
-    "Do not allow PWM control",
-    "Reverse clock",
-    "Allow entry of decimal color values",
-    "CO2 color to light signal",
-    "HASS discovery",
-    "Do not control Power with Dimmer",
-    "Energy monitoring while powered off",
-    "MQTT serial",
-    "MQTT serial binary",
-    "Convert pressure to mmHg",
-    "KNX enabled",
-    "Use Power device index on single relay devices",
-    "KNX enhancement",
-    "RF receive decimal",
-    "IR receive decimal",
-    "Enforce HASS light group",
-    "Do not show Wifi and Mqtt state using Led"
+    "(Settings) Save power state (1) and use after restart",
+    "(Button) Control button single press (1) or multipress (0)",
+    "(Not used) Add units to JSON status messages",
+    "(MQTT) Enable (1)",
+    "(MQTT) Switch between RESULT (0) or COMMAND (1)",
+    "(MQTT) Retain on Power",
+    "(MQTT) Retain on Button",
+    "(MQTT) Retain on Switch",
+    "(Temperature) Switch between Celsius (0) or Fahrenheit (1)",
+    "(MQTT) Retain on Sensor",
+    "(MQTT) Control LWT message format, Offline (1) or none (0)",
+    "(Button) Swap (1) button single and double press functionality",
+    "(Settings) Switch between dynamic (0) or fixed (1) slot flash save location",
+    "(Button) Support only single press (1) to speed up button press recognition",
+    "(Interlock) Power interlock mode",
+    "(Light) Switch between commands PWM (1) or COLOR/DIMMER/CT/CHANNEL (0)",
+    "(WS2812) Switch between clockwise (0) or counter-clockwise (1)",
+    "(Light) Switch between decimal (1) or hexadecimal (0) output",
+    "(Light) Pair light signal (1) with CO2 sensor",
+    "(HAss) Control automatic discovery (1) (See SetOption59)",
+    "(Light) Control power in relation to Dimmer/Color/Ct changes (1)",
+    "(Energy) Show voltage even if powered off (1)",
+    "(MQTT) Serial",
+    "(MQTT) Serial binary",
+    "(Pressure) switch between hPa (0)or mmHg (1) unit",
+    "(KNX) Enabled",
+    "(MQTT, HAss) Switch between POWER (0) or POWER1 (1)",
+    "(KNX) Enhancement",
+    "(RF) Receive data format hexadecimal (0) or decimal (1)",
+    "(IR) Receive data format hexadecimal (0) or decimal (1)",
+    "(HAss) enforce autodiscovery as light (1)",
+    "(Wifi, MQTT) Control link led blinking (1)"
     ],[
-    "Key hold time (ms)",
-    "Sonoff POW Max_Power_Retry",
-    "Backlog delay (ms)",
+    "(Button) Key hold time (ms)",
+    "(Pow) Sonoff POW Max_Power_Retry",
+    "(Backlog) Delay (ms)",
     "(not used) mDNS delayed start (Sec)",
-    "Boot loop retry offset (0 = disable)",
-    "RGBWW remap",
-    "IR Unknown threshold",
-    "CSE7766 invalid power margin",
-    "Ignore hold time (s)",
-    "Gratuitous ARP repeat time",
-    "Over temperature threshold (celsius)",
+    "(Boot loop) Retry offset (0 = disable)",
+    "(Light) RGBWW remap",
+    "(IR) Unknown threshold",
+    "(CSE7766) invalid power margin",
+    "(Button) Ignore hold time (s)",
+    "(Wifi) Gratuitous ARP repeat time",
+    "(Temperature) Over temperature threshold (celsius)",
     "(not used) Tuya MCU max dimmer value",
     "(not used) Tuya MCU voltage Id",
     "(not used) Tuya MCU current Id",
@@ -103,52 +102,79 @@ a_setoption = [[
     "(not used) Energy Tariff2 start hour",
     "",
     ],[
-    "Timers enabled",
-    "Generic ESP8285 GPIO enabled",
-    "Add UTC time offset to JSON message",
-    "Show hostname and IP address in GUI",
-    "Apply SetOption20 to Tuya",
-    "mDNS enabled",
-    "Use wifi network scan at restart",
-    "Use wifi network rescan regularly",
-    "Add IR raw data to JSON message",
-    "Change state topic from tele/STATE to stat/RESULT",
-    "Enable normal sleep instead of dynamic sleep",
-    "Force local operation when button/switch topic is set",
-    "Do not use retain flag on HOLD messages",
-    "Do not scan relay power state at restart",
-    "Use _ instead of - as sensor index separator",
-    "Disable fast power cycle detection for device reset",
-    "Enable TuyaMcuReceived messages over Mqtt",
-    "Enable buzzer when available",
-    "Enable multi-channels PWM instead of Color PWM",
-    "(not used) Limits Tuya MCU dimmers to minimum of 10% (25) when enabled",
-    "Enable Weekend Energy Tariff",
-    "Select different Modbus registers for Active Energy",
-    "Enable hardware energy total counter as reference",
-    "Detach buttons from relays and enable MQTT action state for multipress",
-    "Enable internal pullup for single DS18x20 sensor",
-    "GroupTopic replaces %topic% (0) or fixed topic cmnd/grouptopic (1)",
-    "Enable incrementing bootcount when deepsleep is enabled",
-    "Do not power off if slider moved to far left",
-    "Bypass Compatibility check",
-    "Enable resetting of counters after telemetry was sent",
-    "Enable shutter support",
-    "Invert PCF8574 ports"
+    "(Timers) Enabled",
+    "(GPIO) Enable ESP8285 user GPIO's (1)",
+    "(Time) Append timezone to JSON time (1)",
+    "(GUI) Show hostname and IP address in GUI main menu (1)",
+    "(Tuya) Apply SetOption20 settings to Tuya device (1)",
+    "(mDNS) Service on (1) or off (0)",
+    "(Wifi) Scan network at restart for configured AP's (1) or used stored AP (0)",
+    "(Wifi) Scan network every 44 minutes for configured AP's (1)",
+    "(IR) Add IR Raw data to JSON message (1)",
+    "(MQTT) Send tele/%topic%/STATE in addition to stat/%topic%/RESULT (1)",
+    "(Sleep) Enable normal sleep (1) instead of dynamic sleep (0)",
+    "(Button, Switch) Force local operation (1) when button/switch topic is set",
+    "(MQTT) Don't use retain flag on HOLD messages (1)",
+    "(Power) Don't scan relay power state at restart (1)",
+    "(JSON) Enable '_' (1) instead of '-' (0) as sensor index separator",
+    "(QPC) Disable (1) fast power cycle detection for device reset",
+    "(Tuya) Enable (1) TuyaMcuReceived messages over Mqtt",
+    "(Buzzer) Enable (1) buzzer when available",
+    "(Light) Enable multi-channels PWM (1) instead of Color PWM (0)",
+    "(not used) Limits Tuya dimmers to minimum of 10% (25) when enabled",
+    "(Energy) Enable Weekend Energy Tariff",
+    "(DDS2382) Select different Modbus registers (1) for Active Energy (#6531)",
+    "(Energy) Enable (1) hardware energy total counter as reference (#6561)",
+    "(Button) Detach buttons from relays (1) and enable MQTT action state for multipress",
+    "(DS18x20) Enable internal pullup (1) for single DS18x20 sensor",
+    "(MQTT) GroupTopic replaces %topic% (0) or fixed topic cmnd/grouptopic (1)",
+    "(Deepsleep) Enable incrementing bootcount (1) when deepsleep is enabled",
+    "(Light) Do not power off (1) if slider moved to far left",
+    "(not used) Disable OTA compatibility check",
+    "(Counter) Enable resetting of counters (1) after telemetry was sent",
+    "(Shutter) Enable shutter support (1)",
+    "(PCF8574) Invert all ports on PCF8574 devices (1)"
     ],[
-    "Reduced CT range for Alexa",
-    "Use FriendlyNames instead of ShortAddresses when possible",
-    "(AWS IoT) publish MQTT state to a device shadow",
-    "Enable Device Groups",
-    "PWM Dimmer Turn brightness LED's off 5 seconds after last change",
-    "PWM Dimmer Turn red LED on when powered off",
-    "PWM Dimmer Buttons control remote devices",
-    "Distinct MQTT topics per device for Zigbee",
-    "Disable non-json MQTT response",
-    "Enable light fading at start/power on",
-    "Set PWM Mode from regular PWM to ColorTemp control","",
-    "Keep uncompressed rules in memory to avoid CPU load of uncompressing at each tick",
-    "","","",
+    "(Alexa) Reduced CT range for Alexa (1)",
+    "(Zigbee) Use FriendlyNames (1) instead of ShortAddresses (0) when possible",
+    "(AWS IoT) publish MQTT state to a device shadow (1)",
+    "(DevGroups) Enable Device Groups (1)",
+    "(PWM Dimmer) Turn brightness LED's off (1) 5 seconds after last change",
+    "(PWM Dimmer) Turn red LED on (1) when powered off",
+    "(DevGroups) Enable relays in separate device groups/PWM Dimmer Buttons control remote devices (1)",
+    "(MQTT, Zigbee) Distinct MQTT topics per device for Zigbee (1) (#7835)",
+    "(MQTT) Disable non-json MQTT response (1)",
+    "(Light) Enable light fading at start/power on (1)",
+    "(Light) Set PWM Mode from regular PWM (0) to ColorTemp (1) control (Xiaomi Philips ...)",
+    "(Compress) Keep uncompressed rules in memory to avoid CPU load of uncompressing at each tick (1)",
+    "(MAXxxx) Implement simpler MAX6675 protocol (1) instead of MAX31855 (0)",
+    "(Wifi) Enable Wifi",
+    "(Eth) Enable Ethernet (ESP32)",
+    "(Tuya) Set Baud rate for TuyaMCU serial communication to 9600 (0) or 115200 (1)",
+    "(Rotary) Use rules (1) instead of light control (0)",
+    "(PWM Dimmer) Enable zerocross dimmer (1)",
+    "(Zigbee) Remove ZbReceived form JSON message (1)",
+    "(Zigbee) Add the source endpoint as suffix to attributes, ex `Power3` (1) instead of `Power` (0) if sent from endpoint 3",
+    "(Teleinfo) Set Baud rate for Teleinfo communication to 1200 (0) or 9600 (1)",
+    "(MQTT TLS) Enable TLS mode (1) (requires TLS version)",
+    "(MQTT) No Retain (1) - disable all MQTT retained messages, some brokers don't support it: AWS IoT, Losant",
+    "(Light) White Blend Mode (1) - used to be `RGBWWTable` last value `0`, now deprecated in favor of this option",
+    "(Light) Virtual CT (1) - Creates a virtual White ColorTemp for RGBW lights",
+    "(Light) Virtual CT Channel (1) - signals whether the hardware white is cold CW (true) or warm WW (false)",
+    "(Teleinfo) Enable Teleinfo + Tasmota Energy device (0) or Teleinfo raw data only (1)",
+    "(Alexa) Gen1 mode (1) - if you only have Echo Dot 2nd gen devices",
+    "(Zigbee) Disable auto-config (1) when pairing new devices",
+    "(Buzzer) Use frequency output (1) for buzzer pin instead of on/off signal (0)",
+    "(Zigbee) Use friendly name in zigbee topic (1) (use with SetOption89)",
+    "(Rotary) Set dimmer low on rotary dial after power off (1)"
+    ],[
+    "(Switch) Detach Switches from relays and enable MQTT action state for all the SwitchModes (1)",
+    "(ESP32 BLE) Enable ESP32 MI32 BLE (1)",
+    "(Zigbee) Disable auto-query of zigbee lights and devices (1)",
+    "",
+    "","","","",
+    "","","","",
+    "","","","",
     "","","","",
     "","","","",
     "","","","",
@@ -204,11 +230,20 @@ a_features = [[
     "USE_KEELOQ","USE_HRXL","USE_SONOFF_D1","USE_HDC1080",
     "USE_IAQ","USE_DISPLAY_SEVENSEG","USE_AS3935","USE_PING",
     "USE_WINDMETER","USE_OPENTHERM","USE_THERMOSTAT","USE_VEML6075",
-    "USE_VEML7700","","","",
+    "USE_VEML7700","USE_MCP9808","USE_BL0940","USE_TELEGRAM",
+    "USE_HP303B","USE_TCP_BRIDGE","USE_TELEINFO","USE_LMT01",
+    "USE_PROMETHEUS","USE_IEM3000","USE_DYP","USE_I2S_AUDIO",
+    "USE_MLX90640","USE_VL53L1X","USE_MIEL_HVAC","USE_WE517",
+    "USE_EZOPH","USE_TTGO_WATCH","USE_ETHERNET","USE_WEBCAM"
+    ],[
+    "USE_EZOORP","USE_EZORTD","USE_EZOHUM","USE_EZOEC",
+    "USE_EZOCO2","USE_EZOO2","USE_EZOPRS","USE_EZOFLO",
+    "USE_EZODO","USE_EZORGB","USE_EZOPMP","USE_AS608",
+    "USE_SHELLY_DIMMER","USE_RC522","","",
     "","","","",
     "","","","",
     "","","","",
-    "","","","USE_WEBCAM"
+    "","","",""
     ]]
 
 usage = "usage: decode-status {-d | -f} arg"
@@ -224,25 +259,19 @@ parser.add_option("-f", "--file", metavar="FILE",
 (options, args) = parser.parse_args()
 
 if (options.device):
-    buffer = StringIO()
     loginstr = ""
     if options.password is not None:
-        loginstr = "user={}&password={}&".format(urllib2.quote(options.username), urllib2.quote(options.password))
+        loginstr = "user={}&password={}&".format(urllib.parse.quote(options.username), urllib.parse.quote(options.password))
     url = str("http://{}/cm?{}cmnd=status%200".format(options.device, loginstr))
-    c = pycurl.Curl()
-    c.setopt(c.URL, url)
-    c.setopt(c.WRITEDATA, buffer)
-    c.perform()
-    c.close()
-    body = buffer.getvalue()
-    obj = json.loads(body)
+    res = requests.get(url)
+    obj = json.loads(res.content)
 else:
     jsonfile = options.jsonfile
     with open(jsonfile, "r") as fp:
         obj = json.load(fp)
 
 def StartDecode():
-    print ("\n*** decode-status.py v20200510 by Theo Arends and Jacek Ziolkowski ***")
+    print ("\n*** decode-status.py v20201130 by Theo Arends and Jacek Ziolkowski ***")
 
 #    print("Decoding\n{}".format(obj))
 
@@ -271,17 +300,18 @@ def StartDecode():
                         continue
 
                     elif len(register) == 36:         # 6.1.1.14: array consists of SetOptions 0..31, SetOptions 32..49, and SetOptions 50..81
+                                                      # 8.4.0.2: adds another SetOptions 114..145
                         split_register = [int(register[opt*2:opt*2+2],16) for opt in range(18)] # split register into 18 values
 
                         for opt_idx, option in enumerate(opt_group):
-                            options.append(str("{0:2d} ({1:3d}) {2}".format(i, split_register[opt_idx], option)))
+                            options.append(str("{0:3d} ({1:3d}) {2}".format(i, split_register[opt_idx], option)))
                             i += 1
 
-                if r in (0, 2, 3): #registers 1 and 3 hold binary values
+                if r in (0, 2, 3, 4):                 #registers 1 and 4 hold binary values
                     for opt_idx, option in enumerate(opt_group):
                         i_register = int(register,16)
                         state = (i_register >> opt_idx) & 1
-                        options.append(str("{0:2d} ({1}) {2}".format(i, a_on_off[state], option)))
+                        options.append(str("{0:3d} ({1}) {2}".format(i, a_on_off[state], option)))
                         i += 1
 
             print("\nOptions")
@@ -291,7 +321,7 @@ def StartDecode():
     if "StatusMEM" in obj:
         if "Features" in obj["StatusMEM"]:
             features = []
-            for f in range(6):
+            for f in range(7):
                 feature = obj["StatusMEM"]["Features"][f]
                 i_feature = int(feature,16)
                 if f == 0:

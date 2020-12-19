@@ -47,7 +47,7 @@ void sgp30_Init(void)
 
   if (sgp.begin()) {
     sgp30_type = true;
-//    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SGP: Serialnumber 0x%04X-0x%04X-0x%04X"), sgp.serialnumber[0], sgp.serialnumber[1], sgp.serialnumber[2]);
+//    AddLog_P(LOG_LEVEL_DEBUG, PSTR("SGP: Serialnumber 0x%04X-0x%04X-0x%04X"), sgp.serialnumber[0], sgp.serialnumber[1], sgp.serialnumber[2]);
     I2cSetActiveFound(SGP30_ADDRESS, "SGP30");
   }
 }
@@ -55,7 +55,7 @@ void sgp30_Init(void)
 //#define POW_FUNC pow
 #define POW_FUNC FastPrecisePow
 
-float sgp30_AbsoluteHumidity(float temperature, float humidity,char tempUnit) {
+float sgp30_AbsoluteHumidity(float temperature, float humidity) {
   //taken from https://carnotcycle.wordpress.com/2012/08/04/how-to-convert-relative-humidity-to-absolute-humidity/
   //precision is about 0.1°C in range -30 to 35°C
   //August-Roche-Magnus 	6.1094 exp(17.625 x T)/(T + 243.04)
@@ -67,10 +67,6 @@ float sgp30_AbsoluteHumidity(float temperature, float humidity,char tempUnit) {
 
   if (isnan(temperature) || isnan(humidity) ) {
     return NAN;
-  }
-
-  if (tempUnit != 'C') {
-    temperature = (temperature - 32.0) * (5.0 / 9.0); /*conversion to [°C]*/
   }
 
   temp = POW_FUNC(2.718281828, (17.67 * temperature) / (temperature + 243.5));
@@ -87,21 +83,21 @@ void Sgp30Update(void)  // Perform every second to ensure proper operation of th
   if (!sgp.IAQmeasure()) {
     return;  // Measurement failed
   }
-  if (global_update && (global_humidity > 0) && (global_temperature != 9999)) {
+  if (TasmotaGlobal.global_update && (TasmotaGlobal.humidity > 0) && !isnan(TasmotaGlobal.temperature_celsius)) {
     // abs hum in mg/m3
-    sgp30_abshum=sgp30_AbsoluteHumidity(global_temperature,global_humidity,TempUnit());
+    sgp30_abshum = sgp30_AbsoluteHumidity(TasmotaGlobal.temperature_celsius, TasmotaGlobal.humidity);
     sgp.setHumidity(sgp30_abshum*1000);
   }
   sgp30_ready = true;
 
   // these should normally be stored permanently and used for fast restart
-  if (!(uptime%SAVE_PERIOD)) {
+  if (!(TasmotaGlobal.uptime%SAVE_PERIOD)) {
     // store settings every N seconds
     uint16_t TVOC_base;
     uint16_t eCO2_base;
 
     if (!sgp.getIAQBaseline(&eCO2_base, &TVOC_base)) return;  // Failed to get baseline readings
-//      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SGP: Baseline values eCO2 0x%04X, TVOC 0x%04X"), eCO2_base, TVOC_base);
+//      AddLog_P(LOG_LEVEL_DEBUG, PSTR("SGP: Baseline values eCO2 0x%04X, TVOC 0x%04X"), eCO2_base, TVOC_base);
   }
 }
 
@@ -118,24 +114,24 @@ void Sgp30Show(bool json)
 {
   if (sgp30_ready) {
     char abs_hum[33];
-    
-    if (global_update && global_humidity>0 && global_temperature!=9999) {
+
+    if (TasmotaGlobal.global_update && (TasmotaGlobal.humidity > 0) && !isnan(TasmotaGlobal.temperature_celsius)) {
         // has humidity + temperature
         dtostrfd(sgp30_abshum,4,abs_hum);
     }
     if (json) {
       ResponseAppend_P(PSTR(",\"SGP30\":{\"" D_JSON_ECO2 "\":%d,\"" D_JSON_TVOC "\":%d"), sgp.eCO2, sgp.TVOC);
-      if (global_update && global_humidity>0 && global_temperature!=9999) {
+      if (TasmotaGlobal.global_update && TasmotaGlobal.humidity>0 && !isnan(TasmotaGlobal.temperature_celsius)) {
         ResponseAppend_P(PSTR(",\"" D_JSON_AHUM "\":%s"),abs_hum);
       }
       ResponseJsonEnd();
 #ifdef USE_DOMOTICZ
-      if (0 == tele_period) DomoticzSensor(DZ_AIRQUALITY, sgp.eCO2);
+      if (0 == TasmotaGlobal.tele_period) DomoticzSensor(DZ_AIRQUALITY, sgp.eCO2);
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
     } else {
       WSContentSend_PD(HTTP_SNS_SGP30, sgp.eCO2, sgp.TVOC);
-      if (global_update) {
+      if (TasmotaGlobal.global_update) {
         WSContentSend_PD(HTTP_SNS_AHUM, abs_hum);
       }
 #endif
