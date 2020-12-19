@@ -1,7 +1,7 @@
 /*
   xdrv_21_wemo_multi.ino - multiple wemo support for Tasmota
 
-  Copyright (C) 2020  Magic73, Heiko Krupp and Theo Arends
+  Copyright (C) 2020  Magic73, Heiko Krupp, Peter Stevenson and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -235,8 +235,12 @@ private:
 
   String WemoSerialnumber(void) {
     char serial[18];
-
-    snprintf_P(serial, sizeof(serial), PSTR("201612K%08X-%d"), ESP_getChipId(), _deviceId);
+    if (_deviceId == 1)
+    {
+      snprintf_P(serial, sizeof(serial), PSTR("201612K%08X"), ESP_getChipId());
+    } else {
+      snprintf_P(serial, sizeof(serial), PSTR("201612K%08X-%d"), ESP_getChipId(), _deviceId);
+    }
     return String(serial);
   }
 
@@ -390,7 +394,14 @@ private:
 #else
     String setup_xml = FPSTR(WEMO_SETUP_XML);
 #endif
-    setup_xml.replace("{x1", SettingsText(SET_FRIENDLYNAME1 + (_deviceId - 1)));
+    if (_deviceId == 1)
+    {
+      setup_xml.replace("{x1", SettingsText(SET_FRIENDLYNAME1));
+    }
+    else
+    {
+      setup_xml.replace("{x1", SettingsText(SET_FRIENDLYNAME1 + (_deviceId - 1)));
+    }
     setup_xml.replace("{x2", WemoUuid());
     setup_xml.replace("{x3", WemoSerialnumber());
     InternalWSSend(200, CT_XML, setup_xml);
