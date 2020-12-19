@@ -292,29 +292,18 @@ void MqttUnsubscribe(const char *topic)
 }
 
 void MqttPublishLoggingAsync(void) {
-  static uint32_t counter = 1;
+  static uint32_t index = 1;
 
-  if (!Settings.flag.mqtt_enabled ||  // SetOption3 - Enable MQTT
-      !Settings.mqttlog_level ||
-      (counter == TasmotaGlobal.log_buffer_pointer) ||
-      TasmotaGlobal.global_state.mqtt_down) { return; }
+  if (!Settings.flag.mqtt_enabled) { return; }  // SetOption3 - Enable MQTT
 
-  do {
-    char* tmp;
-    size_t len;
-    uint32_t loglevel = GetLog(counter, &tmp, &len);
-    if ((len > 0) &&
-        (loglevel <= Settings.mqttlog_level) &&
-        (TasmotaGlobal.masterlog_level <= Settings.mqttlog_level)) {
-      strlcpy(TasmotaGlobal.mqtt_data, tmp, len);  // No JSON and ugly!!
-      char stopic[TOPSZ];
-      GetTopic_P(stopic, STAT, TasmotaGlobal.mqtt_topic, PSTR("LOGGING"));
-      MqttPublishLib(stopic, false);
-    }
-    counter++;
-    counter &= 0xFF;
-    if (!counter) { counter++; }  // Skip 0 as it is not allowed
-  } while (counter != TasmotaGlobal.log_buffer_pointer);
+  char* line;
+  size_t len;
+  while (GetLog(Settings.mqttlog_level, &index, &line, &len)) {
+    strlcpy(TasmotaGlobal.mqtt_data, line, len);  // No JSON and ugly!!
+    char stopic[TOPSZ];
+    GetTopic_P(stopic, STAT, TasmotaGlobal.mqtt_topic, PSTR("LOGGING"));
+    MqttPublishLib(stopic, false);
+  }
 }
 
 void MqttPublish(const char* topic, bool retained)

@@ -17,9 +17,6 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-IPAddress syslog_host_addr;      // Syslog host IP address
-uint32_t syslog_host_hash = 0;   // Syslog host name hash
-
 extern "C" {
 extern struct rst_info resetInfo;
 }
@@ -1901,6 +1898,9 @@ void SetSyslog(uint32_t loglevel)
 
 void Syslog(void)
 {
+  static IPAddress syslog_host_addr;      // Syslog host IP address
+  static uint32_t syslog_host_hash = 0;   // Syslog host name hash
+
   // Destroys TasmotaGlobal.log_data
 
   uint32_t current_hash = GetHash(SettingsText(SET_SYSLOG_HOST), strlen(SettingsText(SET_SYSLOG_HOST)));
@@ -1925,53 +1925,58 @@ void Syslog(void)
 }
 
 void SyslogAsync(void) {
-  static uint32_t counter = 1;
+  static uint32_t index = 1;
 
-  if (!TasmotaGlobal.syslog_level ||
-      (counter == TasmotaGlobal.log_buffer_pointer) ||
-      TasmotaGlobal.global_state.network_down) { return; }
-
-  do {
-    char* tmp;
-    size_t len;
-    uint32_t loglevel = GetLog(counter, &tmp, &len);
-    if ((len > 13) &&
-        (loglevel <= TasmotaGlobal.syslog_level) &&
-        (TasmotaGlobal.masterlog_level <= TasmotaGlobal.syslog_level)) {
-      strlcpy(TasmotaGlobal.log_data, tmp +13, len -13);  // Skip mxtime
+  char* line;
+  size_t len;
+  while (GetLog(TasmotaGlobal.syslog_level, &index, &line, &len)) {
+    if (len > 13) {
+      strlcpy(TasmotaGlobal.log_data, line +13, len -13);  // Skip mxtime
       Syslog();
     }
-    counter++;
-    counter &= 0xFF;
-    if (!counter) { counter++; }           // Skip 0 as it is not allowed
-  } while (counter != TasmotaGlobal.log_buffer_pointer);
+  }
 }
 
-uint32_t GetLog(uint32_t idx, char** entry_pp, size_t* len_p) {
-  char* entry_p = nullptr;
-  size_t len = 0;
-  uint32_t loglevel = 0;
-  if (idx) {
-    char* it = TasmotaGlobal.log_buffer;
+bool GetLog(uint32_t req_loglevel, uint32_t* index_p, char** entry_pp, size_t* len_p) {
+  uint32_t index = *index_p;
+
+  if (!req_loglevel || (index == TasmotaGlobal.log_buffer_pointer)) { return false; }
+
+  if (!index) {                            // Dump all
+    index = TasmotaGlobal.log_buffer_pointer +1;
+    if (index > 255) { index = 1; }
+  }
+
+  do {
+    size_t len = 0;
+    uint32_t loglevel = 0;
+    char* entry_p = TasmotaGlobal.log_buffer;
     do {
-      uint32_t cur_idx = *it;
-      it++;
-      size_t tmp = strchrspn(it, '\1');
+      uint32_t cur_idx = *entry_p;
+      entry_p++;
+      size_t tmp = strchrspn(entry_p, '\1');
       tmp++;                               // Skip terminating '\1'
-      if (cur_idx == idx) {                // Found the requested entry
-        loglevel = *it - '0';
-        it++;                              // Skip loglevel
+      if (cur_idx == index) {              // Found the requested entry
+        loglevel = *entry_p - '0';
+        entry_p++;                         // Skip loglevel
         len = tmp -1;
-        entry_p = it;
         break;
       }
-      it += tmp;
-    } while (it < TasmotaGlobal.log_buffer + LOG_BUFFER_SIZE && *it != '\0');
-  }
-  *entry_pp = entry_p;
-  *len_p = len;
-
-  return loglevel;
+      entry_p += tmp;
+    } while (entry_p < TasmotaGlobal.log_buffer + LOG_BUFFER_SIZE && *entry_p != '\0');
+    index++;
+    if (index > 255) { index = 1; }        // Skip 0 as it is not allowed
+    *index_p = index;
+    if ((len > 0) &&
+        (loglevel <= req_loglevel) &&
+        (TasmotaGlobal.masterlog_level <= req_loglevel)) {
+      *entry_pp = entry_p;
+      *len_p = len;
+      return true;
+    }
+    delay(0);
+  } while (index != TasmotaGlobal.log_buffer_pointer);
+  return false;
 }
 
 void AddLog(uint32_t loglevel) {

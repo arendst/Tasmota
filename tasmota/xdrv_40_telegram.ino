@@ -292,32 +292,24 @@ String TelegramExecuteCommand(const char *svalue) {
   uint32_t curridx = TasmotaGlobal.log_buffer_pointer;
   ExecuteCommand(svalue, SRC_CHAT);
   if (TasmotaGlobal.log_buffer_pointer != curridx) {
-    uint32_t counter = curridx;
     response = F("{");
     bool cflg = false;
-    do {
-      char* tmp;
-      size_t len;
-      uint32_t loglevel = GetLog(counter, &tmp, &len);
-      if ((len > 0) &&
-          (loglevel <= Settings.weblog_level) &&
-          (TasmotaGlobal.masterlog_level <= Settings.weblog_level)) {
-        // [14:49:36 MQTT: stat/wemos5/RESULT = {"POWER":"OFF"}] > [{"POWER":"OFF"}]
-        char* JSON = (char*)memchr(tmp, '{', len);
-        if (JSON) { // Is it a JSON message (and not only [15:26:08 MQT: stat/wemos5/POWER = O])
-          size_t JSONlen = len - (JSON - tmp);
-          if (JSONlen > sizeof(TasmotaGlobal.mqtt_data)) { JSONlen = sizeof(TasmotaGlobal.mqtt_data); }
-          char stemp[JSONlen];
-          strlcpy(stemp, JSON +1, JSONlen -2);
-          if (cflg) { response += F(","); }
-          response += stemp;
-          cflg = true;
-        }
+    uint32_t index = curridx;
+    char* line;
+    size_t len;
+    while (GetLog(Settings.weblog_level, &index, &line, &len)) {
+      // [14:49:36.123 MQTT: stat/wemos5/RESULT = {"POWER":"OFF"}] > [{"POWER":"OFF"}]
+      char* JSON = (char*)memchr(line, '{', len);
+      if (JSON) {  // Is it a JSON message (and not only [15:26:08 MQT: stat/wemos5/POWER = O])
+        size_t JSONlen = len - (JSON - line);
+        if (JSONlen > sizeof(TasmotaGlobal.mqtt_data)) { JSONlen = sizeof(TasmotaGlobal.mqtt_data); }
+        char stemp[JSONlen];
+        strlcpy(stemp, JSON +1, JSONlen -2);
+        if (cflg) { response += F(","); }
+        response += stemp;
+        cflg = true;
       }
-      counter++;
-      counter &= 0xFF;
-      if (!counter) counter++;  // Skip 0 as it is not allowed
-    } while (counter != TasmotaGlobal.log_buffer_pointer);
+    }
     response += F("}");
   } else {
     response = F("{\"" D_RSLT_WARNING "\":\"" D_ENABLE_WEBLOG_FOR_RESPONSE "\"}");
