@@ -5846,24 +5846,26 @@ bool Script_SubCmd(void) {
   if (!bitRead(Settings.rule_enabled, 0)) return false;
 
   if (tasm_cmd_activ) return false;
+  //AddLog_P(LOG_LEVEL_INFO,PSTR(">> %s, %s, %d, %d "),XdrvMailbox.topic, XdrvMailbox.data, XdrvMailbox.payload, XdrvMailbox.index);
 
   char command[CMDSZ];
   strlcpy(command, XdrvMailbox.topic, CMDSZ);
-  uint32_t pl = XdrvMailbox.payload;
-  char pld[64];
-  strlcpy(pld, XdrvMailbox.data, sizeof(pld));
+  if (XdrvMailbox.index > 1) {
+    char ind[2];
+    ind[0] = XdrvMailbox.index | 0x30;
+    ind[1] = 0;
+    strcat(command, ind);
+  }
+
+  int32_t pl = XdrvMailbox.payload;
 
   char cmdbuff[128];
   char *cp = cmdbuff;
   *cp++ = '#';
-  strcpy(cp, XdrvMailbox.topic);
-  uint8_t tlen = strlen(XdrvMailbox.topic);
+  strcpy(cp, command);
+  uint8_t tlen = strlen(command);
   cp += tlen;
-  if (XdrvMailbox.index > 0) {
-    *cp++ = XdrvMailbox.index | 0x30;
-    tlen++;
-  }
-  if ((XdrvMailbox.payload>0) || (XdrvMailbox.data_len>0)) {
+  if (XdrvMailbox.data_len>0) {
     *cp++ = '(';
     strncpy(cp, XdrvMailbox.data,XdrvMailbox.data_len);
     cp += XdrvMailbox.data_len;
@@ -5873,12 +5875,16 @@ bool Script_SubCmd(void) {
   //toLog(cmdbuff);
   uint32_t res = Run_Scripter(cmdbuff, tlen + 1, 0);
   //AddLog_P(LOG_LEVEL_INFO,">>%d",res);
-  if (res) return false;
+  if (res) {
+    return false;
+  }
   else {
-    if (pl>=0) {
-      Response_P(S_JSON_COMMAND_NVALUE, command, pl);
+    cp=XdrvMailbox.data;
+    while (*cp==' ') cp++;
+    if (isdigit(*cp) || *cp=='-') {
+      Response_P(S_JSON_COMMAND_NVALUE, command, XdrvMailbox.payload);
     } else {
-      Response_P(S_JSON_COMMAND_SVALUE, command, pld);
+      Response_P(S_JSON_COMMAND_SVALUE, command, XdrvMailbox.data);
     }
   }
   return true;
