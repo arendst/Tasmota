@@ -63,4 +63,4 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 
 ### Fixed
 - Redesign syslog and mqttlog using log buffer (#10164)
-- Shelly Dimmer 2 power on state (#10154, #10182)
+- Shelly Dimmer power on state (#10154, #10182)
