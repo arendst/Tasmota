@@ -1584,7 +1584,7 @@ float fvar;
 char *isvar(char *lp, uint8_t *vtype, struct T_INDEX *tind, float *fp, char *sp, JsonParserObject *jo) {
     uint16_t count,len = 0;
     uint8_t nres = 0;
-    char vname[32];
+    char vname[64];
     float fvar = 0;
     tind->index = 0;
     tind->bits.data = 0;
@@ -1713,7 +1713,7 @@ char *isvar(char *lp, uint8_t *vtype, struct T_INDEX *tind, float *fp, char *sp,
 
     if (jo) {
       // look for json input
-      char jvname[32];
+      char jvname[64];
       strcpy(jvname, vname);
       const char* str_value;
       uint8_t aindex;
