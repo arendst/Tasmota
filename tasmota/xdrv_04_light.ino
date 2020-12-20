@@ -2072,6 +2072,10 @@ void LightAnimate(void)
     // If the power is off and the fade is done, turn the relay off.
     if (PWM_DIMMER == TasmotaGlobal.module_type && !Light.power && !Light.fade_running) PWMDimmerSetPower();
 #endif  // USE_PWM_DIMMER
+    // For WYZE bulbs we must set the CT pin to INPUT to fully turn it off
+    if (WYZE == TasmotaGlobal.module_type && !Light.power && !Light.fade_running) {
+      pinMode(Pin(GPIO_PWM1, 1), INPUT);
+    }
   }
 }
 
@@ -2079,7 +2083,7 @@ bool isChannelGammaCorrected(uint32_t channel) {
   if (!Settings.light_correction) { return false; }   // Gamma correction not activated
   if (channel >= Light.subtype) { return false; }     // Out of range
 #ifdef ESP8266
-  if ((PHILIPS == TasmotaGlobal.module_type) || (Settings.flag4.pwm_ct_mode)) {
+  if ((PHILIPS == TasmotaGlobal.module_type) || (WYZE == TasmotaGlobal.module_type) || (Settings.flag4.pwm_ct_mode)) {
     if ((LST_COLDWARM == Light.subtype) && (1 == channel)) { return false; }   // PMW reserved for CT
     if ((LST_RGBCW == Light.subtype) && (4 == channel)) { return false; }   // PMW reserved for CT
   }
@@ -2090,7 +2094,7 @@ bool isChannelGammaCorrected(uint32_t channel) {
 // is the channel a regular PWM or ColorTemp control
 bool isChannelCT(uint32_t channel) {
 #ifdef ESP8266
-  if ((PHILIPS == TasmotaGlobal.module_type) || (Settings.flag4.pwm_ct_mode)) {
+  if ((PHILIPS == TasmotaGlobal.module_type) || (WYZE == TasmotaGlobal.module_type) || (Settings.flag4.pwm_ct_mode)) {
     if ((LST_COLDWARM == Light.subtype) && (1 == channel)) { return true; }   // PMW reserved for CT
     if ((LST_RGBCW == Light.subtype) && (4 == channel)) { return true; }   // PMW reserved for CT
   }
@@ -2280,7 +2284,7 @@ void calcGammaBulbs(uint16_t cur_col_10[5]) {
     uint16_t white_bri10_1023 = (white_bri10 > 1023) ? 1023 : white_bri10;    // max 1023
 
 #ifdef ESP8266
-    if ((PHILIPS == TasmotaGlobal.module_type) || (Settings.flag4.pwm_ct_mode)) {   // channel 1 is the color tone, mapped to cold channel (0..255)
+    if ((PHILIPS == TasmotaGlobal.module_type) || (WYZE == TasmotaGlobal.module_type) || (Settings.flag4.pwm_ct_mode)) {
       // Xiaomi Philips bulbs follow a different scheme:
       cur_col_10[cw1] = light_state.getCT10bits();
       // channel 0=intensity, channel1=temperature
