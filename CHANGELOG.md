@@ -8,7 +8,7 @@ All notable changes to this project will be documented in this file.
 - Milliseconds to console output (#10152)
 - Support for P9813 RGB Led MOSFET controller (#10104)
 - Support for GPIO option selection
-- Gpio ``Option_a1`` enabling PWM1 high impedance if powered off and no fading as used by Wyze bulbs (#10196)
+- Gpio ``Option_a1`` enabling PWM2 high impedance if powered off as used by Wyze bulbs (#10196)
 
 ### Fixed
 - Redesign syslog and mqttlog using log buffer (#10164)

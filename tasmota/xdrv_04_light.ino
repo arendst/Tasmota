@@ -2072,9 +2072,9 @@ void LightAnimate(void)
     // If the power is off and the fade is done, turn the relay off.
     if (PWM_DIMMER == TasmotaGlobal.module_type && !Light.power && !Light.fade_running) PWMDimmerSetPower();
 #endif  // USE_PWM_DIMMER
-    // For WYZE bulbs we must set the CT pin to INPUT to fully turn it off
+    // For WYZE bulbs we must set the CT pin (PWM2) to INPUT to fully turn it off
     if (TasmotaGlobal.gpio_optiona.pwm1_input && !Light.power && !Light.fade_running) {  // GPIO Option_A1
-      if (PinUsed(GPIO_PWM1)) { pinMode(Pin(GPIO_PWM1), INPUT); }
+      if (PinUsed(GPIO_PWM1, 1)) { pinMode(Pin(GPIO_PWM1, 1), INPUT); }
     }
   }
 }
