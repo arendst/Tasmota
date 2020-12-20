@@ -88,6 +88,7 @@ struct {
   uint32_t loop_load_avg;                   // Indicative loop load average
   uint32_t log_buffer_pointer;              // Index in log buffer
   uint32_t uptime;                          // Counting every second until 4294967295 = 130 year
+  GpioOptionABits gpio_optiona;             // GPIO Option_A flags
 
   power_t power;                            // Current copy of Settings.power
   power_t rel_inverted;                     // Relay inverted flag (1 = (0 = On, 1 = Off))
@@ -196,6 +197,7 @@ void setup(void) {
   memset(&TasmotaGlobal, 0, sizeof(TasmotaGlobal));
   TasmotaGlobal.baudrate = APP_BAUDRATE;
   TasmotaGlobal.seriallog_timer = SERIALLOG_TIMER;
+  TasmotaGlobal.gpio_optiona.data = 0;
   TasmotaGlobal.temperature_celsius = NAN;
   TasmotaGlobal.blinks = 201;
   TasmotaGlobal.wifi_state_flag = WIFI_RESTART;

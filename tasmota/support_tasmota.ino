@@ -1534,7 +1534,11 @@ void GpioInit(void)
       XdrvMailbox.index = mpin;
       XdrvMailbox.payload = i;
 
-      if ((mpin >= AGPIO(GPIO_SWT1_NP)) && (mpin < (AGPIO(GPIO_SWT1_NP) + MAX_SWITCHES))) {
+      if ((mpin >= AGPIO(GPIO_OPTION_A)) && (mpin < (AGPIO(GPIO_OPTION_A) + MAX_OPTIONS_A))) {
+        bitSet(TasmotaGlobal.gpio_optiona.data, mpin - AGPIO(GPIO_OPTION_A));
+        mpin = GPIO_NONE;
+      }
+      else if ((mpin >= AGPIO(GPIO_SWT1_NP)) && (mpin < (AGPIO(GPIO_SWT1_NP) + MAX_SWITCHES))) {
         SwitchPullupFlag(mpin - AGPIO(GPIO_SWT1_NP));
         mpin -= (AGPIO(GPIO_SWT1_NP) - AGPIO(GPIO_SWT1));
       }
