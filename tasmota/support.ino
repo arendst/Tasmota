@@ -1930,8 +1930,11 @@ void SyslogAsync(void) {
   char* line;
   size_t len;
   while (GetLog(TasmotaGlobal.syslog_level, &index, &line, &len)) {
-    if (len > 13) {
-      strlcpy(TasmotaGlobal.log_data, line +13, len -13);  // Skip mxtime
+    // 00:00:00.110 Project tasmota Wemos5 Version 9.2.0.1(theo)-2_7_4_9(2020-12-20T17:09:26)
+    //              Project tasmota Wemos5 Version 9.2.0.1(theo)-2_7_4_9(2020-12-20T17:09:26)
+    uint32_t mxtime = strchr(line, ' ') - line +1;  // Remove mxtime
+    if (mxtime > 0) {
+      strlcpy(TasmotaGlobal.log_data, line +mxtime, len -mxtime);
       Syslog();
     }
   }
