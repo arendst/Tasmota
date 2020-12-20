@@ -14,6 +14,7 @@ All notable changes to this project will be documented in this file.
 - Redesign syslog and mqttlog using log buffer (#10164)
 - Shelly Dimmer power on state (#10154, #10182)
 - Wemo emulation for single devices (#10165, #10194)
+- ESP32 LoadStoreError when using ``#define USER_TEMPLATE`` (#9506)
 
 ## [Released]
 
