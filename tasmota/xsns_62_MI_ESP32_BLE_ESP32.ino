@@ -381,7 +381,7 @@ const char LYWSD02_Svc[] PROGMEM = "ebe0ccb0-7a0a-4b0c-8a1a6ff2997da3a6";
 const char LYWSD02_BattChar[] PROGMEM = "EBE0CCC4-7A0A-4B0C-8A1A6FF2997DA3A6";
 const char LYWSD02_UnitChar[] PROGMEM = "EBE0CCBE-7A0A-4B0C-8A1A6FF2997DA3A6";
 const char LYWSD02_TimeChar[] PROGMEM = "EBE0CCB7-7A0A-4B0C-8A1A6FF2997DA3A6";
-const char LYWSD02_BattNotifyChar[] PROGMEM = "ebe0ccc1-a0a-4b0c-8a1a6ff2997da3a6";
+const char LYWSD02_BattNotifyChar[] PROGMEM = "ebe0ccc1-7a0a-4b0c-8a1a6ff2997da3a6";
 
 
 const char *LYWSD03_Svc = LYWSD02_Svc;
