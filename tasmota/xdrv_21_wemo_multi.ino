@@ -234,14 +234,18 @@ private:
   int _deviceId;
 
   String WemoSerialnumber(void) {
-    char serial[18];
+    char serial[20];
 
-    snprintf_P(serial, sizeof(serial), PSTR("201612K%08X-%d"), ESP_getChipId(), _deviceId);
+    char index[8] = { 0 };
+    if (_deviceId > 1) {  // Keep backward compatibility
+      snprintf_P(index, sizeof(index), PSTR("%02X"), _deviceId);
+    }
+    snprintf_P(serial, sizeof(serial), PSTR("201612K%08X%s"), ESP_getChipId(), index);
     return String(serial);
   }
 
   String WemoUuid(void) {
-    char uuid[29];
+    char uuid[32];
 
     snprintf_P(uuid, sizeof(uuid), PSTR("Socket-1_0-%s"), WemoSerialnumber().c_str());
     return String(uuid);
