@@ -68,3 +68,4 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - Shelly Dimmer power on state (#10154, #10182)
 - Wemo emulation for single devices (#10165, #10194)
 - ESP32 LoadStoreError when using ``#define USER_TEMPLATE`` (#9506)
+- Compile error when ``#ifdef USE_IR_RECEIVE`` is disabled regression from 9.1.0.2
