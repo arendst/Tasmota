@@ -129,6 +129,7 @@ enum UserSelectablePins {
   GPIO_AS608_TX, GPIO_AS608_RX,        // Serial interface AS608 / R503
   GPIO_SHELLY_DIMMER_BOOT0, GPIO_SHELLY_DIMMER_RST_INV,
   GPIO_RC522_RST,                      // RC522 reset
+  GPIO_P9813_CLK, GPIO_P9813_DAT,      // P9813 Clock and Data
   GPIO_SENSOR_END };
 
 enum ProgramSelectablePins {
@@ -237,7 +238,8 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_WE517_TX "|" D_SENSOR_WE517_RX "|"
   D_SENSOR_AS608_TX "|" D_SENSOR_AS608_RX "|"
   D_SENSOR_SHELLY_DIMMER_BOOT0 "|" D_SENSOR_SHELLY_DIMMER_RST_INV "|"
-  D_SENSOR_RC522_RST
+  D_SENSOR_RC522_RST "|"
+  D_SENSOR_P9813_CLK "|" D_SENSOR_P9813_DAT
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -247,6 +249,7 @@ const char kSensorNamesFixed[] PROGMEM =
 #define MAX_A4988_MSS    3
 #define MAX_WEBCAM_DATA  8
 #define MAX_WEBCAM_HSD   3
+#define MAX_SM2135_DAT   4
 
 const uint16_t kGpioNiceList[] PROGMEM = {
   GPIO_NONE,                            // Not used
@@ -336,7 +339,12 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 
 #ifdef USE_LIGHT
 #ifdef USE_WS2812
+#if (USE_WS2812_HARDWARE == NEO_HW_P9813)
+  AGPIO(GPIO_P9813_CLK),      // P9813 CLOCK
+  AGPIO(GPIO_P9813_DAT),      // P9813 DATA
+#else
   AGPIO(GPIO_WS2812),         // WS2812 Led string
+#endif  // NEO_HW_P9813
 #endif
 #ifdef USE_ARILUX_RF
   AGPIO(GPIO_ARIRFRCV),       // AriLux RF Receive input
@@ -352,8 +360,8 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_SM16716_SEL),    // SM16716 SELECT
 #endif  // USE_SM16716
 #ifdef USE_SM2135
-  AGPIO(GPIO_SM2135_CLK),     // SM2135 CLOCK
-  AGPIO(GPIO_SM2135_DAT),     // SM2135 DATA
+  AGPIO(GPIO_SM2135_CLK),                    // SM2135 CLOCK
+  AGPIO(GPIO_SM2135_DAT) + MAX_SM2135_DAT,   // SM2135 DATA
 #endif  // USE_SM2135
 #ifdef USE_TUYA_MCU
   AGPIO(GPIO_TUYA_TX),        // Tuya Serial interface

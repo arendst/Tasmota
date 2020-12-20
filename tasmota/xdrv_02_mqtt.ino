@@ -291,18 +291,19 @@ void MqttUnsubscribe(const char *topic)
   MqttUnsubscribeLib(topic);
 }
 
-void MqttPublishLogging(const char *mxtime)
-{
-  char saved_mqtt_data[strlen(TasmotaGlobal.mqtt_data) +1];
-  memcpy(saved_mqtt_data, TasmotaGlobal.mqtt_data, sizeof(saved_mqtt_data));
+void MqttPublishLoggingAsync(void) {
+  static uint32_t index = 1;
 
-//    ResponseTime_P(PSTR(",\"Log\":{\"%s\"}}"), TasmotaGlobal.log_data);  // Will fail as some messages contain JSON
-  Response_P(PSTR("%s%s"), mxtime, TasmotaGlobal.log_data);            // No JSON and ugly!!
-  char stopic[TOPSZ];
-  GetTopic_P(stopic, STAT, TasmotaGlobal.mqtt_topic, PSTR("LOGGING"));
-  MqttPublishLib(stopic, false);
+  if (!Settings.flag.mqtt_enabled) { return; }  // SetOption3 - Enable MQTT
 
-  memcpy(TasmotaGlobal.mqtt_data, saved_mqtt_data, sizeof(saved_mqtt_data));
+  char* line;
+  size_t len;
+  while (GetLog(Settings.mqttlog_level, &index, &line, &len)) {
+    strlcpy(TasmotaGlobal.mqtt_data, line, len);  // No JSON and ugly!!
+    char stopic[TOPSZ];
+    GetTopic_P(stopic, STAT, TasmotaGlobal.mqtt_topic, PSTR("LOGGING"));
+    MqttPublishLib(stopic, false);
+  }
 }
 
 void MqttPublish(const char* topic, bool retained)

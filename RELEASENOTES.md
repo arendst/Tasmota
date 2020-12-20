@@ -30,7 +30,7 @@ Support of Core versions before 2.7.1 has been removed.
 
 ## Support of TLS
 
-To save resources when TLS is enabled mDNS needs to be disabled. In addition to TLS using fingerprints now also user supplied CA certs and AWS IoT is supported. Read [full documentation](https://tasmota.github.io/docs/AWS-IoT)
+In addition to TLS using fingerprints now also user supplied CA certs and AWS IoT is supported. Read [full documentation](https://tasmota.github.io/docs/AWS-IoT)
 
 ## Initial configuration tools
 
@@ -56,56 +56,11 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 
 [Complete list](BUILDS.md) of available feature and sensors.
 
-## Changelog v9.1.0.2
+## Changelog v9.2.0.1
 ### Added
-- Command ``SetOption115 1`` to enable ESP32 MiBle
-- Command ``SetOption116 1`` to disable auto-query of zigbee light devices (avoids network storms with large groups)
-- Command ``RfProtocol`` to control RcSwitch receive protocols by BBBits (#10063)
-- Commands ``TuyaRGB``, ``TuyaEnum`` and ``TuyaEnumList`` (#9769)
-- Zigbee command ``ZbInfo`` and prepare support for EEPROM
-- Zigbee command ``ZbLeave`` to unpair a device
-- Zigbee support for Mi Door and Contact (#9759)
-- Zigbee alarm persistence (#9785)
-- Zigbee persistence of device/sensor data in EEPROM (only ZBBridge)
-- Zigbee better support for Tuya Protocol (#10074)
-- TyuaMcu update 2/3 by Federico Leoni (#10004)
-- Support for additional EZO sensors by Christopher Tremblay
-- Support for AS608 optical and R503 capacitive fingerprint sensor
-- Support for Shelly Dimmer 1 and 2 by James Turton (#9854)
-- Support for common anode sevenseg displays by adding ``#define USE_DISPLAY_SEVENSEG_COMMON_ANODE`` by Ken Sanislo (#9963)
-- Support for multiple WeMo devices by Magic73 (#9208)
-- Support for SPI connected MFRC522 13.56MHz rfid card reader (#9916)
-- KNX read reply for Power (#9236, #9891)
-- Fallback NTP server from x.pool.ntp.org if no ntpservers are configured
-- Optional CCloader support for CC25xx Zigbee or CC26xx BLE by Christian Baars (#9970)
-- Letsencrypt R3 in addition to X3 CA (#10086)
-
-### Breaking Changed
-- KNX DPT9 (16-bit float) to DPT14 (32-bit float) by Adrian Scillato (#9811, #9888)
-
-### Changed
-- Core library from v2.7.4.5 to v2.7.4.9
-- IRremoteESP8266 library from v2.7.12 to v2.7.13
-- Shelly Dimmer 1 and 2 stm32 firmware from v51.4 to v51.5
-- mDNS has been disabled from all pre-compiled binaries to allow new features
-- Platformio compiler option `no target align` enabled (#9749)
-- Sonoff L1 color up scaling and color margin detection (#9545)
-- MQTT Wifi connection timeout from 5000 to 200 mSec (#9886)
-- Force bigger Thunk Stack if 4K RSA even without EC ciphers (#10075)
+- Milliseconds to console output (#10152)
+- Support for P9813 RGB Led MOSFET controller (#10104)
 
 ### Fixed
-- Command ``gpio`` using non-indexed functions regression from v9.1.0 (#9962)
-- NTP fallback server functionality (#9739)
-- Telegram group chatid not supported (#9831)
-- KNX buttons, switches and sensors detection regression from v9.1.0 (#9811)
-- KNX ESP32 UDP mulicastpackage (#9811)
-- GUI MqttUser and MqttPassword updates when TLS is compiled in (#9825)
-- ESP32 TasmotaClient firmware upgrade (#9218)
-- Reset to defaults after 6 hours of DeepSleep (#9993)
-- Backlog timing wraparound (#9995)
-- First LED in addressable string does not fade when using scheme (#10088)
-- Improved Opentherm error handling (#10055)
-
-### Removed
-- Version compatibility check
-- PN532 define USE_PN532_CAUSE_EVENTS replaced by generic rule trigger `on pn532#uid=`
+- Redesign syslog and mqttlog using log buffer (#10164)
+- Shelly Dimmer power on state (#10154, #10182)

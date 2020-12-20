@@ -1,7 +1,7 @@
 /*
   it-IT.h - localization for Italian - Italy for Tasmota
 
-  Copyright (C) 2020 Gennaro Tortone - some mods by Antonio Fragola - Updated by bovirus - rev. 20.11.2020
+  Copyright (C) 2020 Gennaro Tortone - some mods by Antonio Fragola - Updated by bovirus - rev. 28.12.2020
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -646,6 +646,8 @@
 #define D_SENSOR_SM16716_CLK   "SM16716 - CLK"
 #define D_SENSOR_SM16716_DAT   "SM16716 - DAT"
 #define D_SENSOR_SM16716_POWER "SM16716 - PWR"
+#define D_SENSOR_P9813_CLK     "P9813 - CLK"
+#define D_SENSOR_P9813_DAT     "P9813 - DAT"
 #define D_SENSOR_MY92X1_DI     "MY92x1 - DI"
 #define D_SENSOR_MY92X1_DCKI   "MY92x1 - DCKI"
 #define D_SENSOR_ARIRFRCV      "IR ALux - RCV"
@@ -671,8 +673,8 @@
 #define D_SENSOR_A4988_STP     "A4988 - STP"
 #define D_SENSOR_A4988_ENA     "A4988 - ENA"
 #define D_SENSOR_A4988_MS1     "A4988 - MS1"
-#define D_SENSOR_OUTPUT_HI     "Output - Hi"
-#define D_SENSOR_OUTPUT_LO     "Output - Lo"
+#define D_SENSOR_OUTPUT_HI     "Uscita - Hi"
+#define D_SENSOR_OUTPUT_LO     "Uscita - Lo"
 #define D_SENSOR_AS608_TX      "AS608 - TX"
 #define D_SENSOR_AS608_RX      "AS608 - RX"
 #define D_SENSOR_DDS2382_TX    "DDS238-2 - TX"

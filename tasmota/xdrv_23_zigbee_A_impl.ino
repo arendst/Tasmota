@@ -1052,6 +1052,26 @@ void CmndZbBindState(void) {
   CmndZbBindState_or_Map(false);
 }
 
+void ZigbeeMapAllDevices(void) {
+  // we can't abort a mapping in progress
+  if (zigbee.mapping_in_progress) { return; }
+  // defer sending ZbMap to each device
+  zigbee_mapper.reset();    // clear all data in Zigbee mapper
+
+  const static uint32_t DELAY_ZBMAP = 2000;   // wait for 1s between commands
+  uint32_t wait_ms = DELAY_ZBMAP;
+  zigbee.mapping_in_progress = true;          // mark mapping in progress
+
+  zigbee_devices.setTimer(0x0000, 0, 0 /*wait_ms*/, 0, 0, Z_CAT_ALWAYS, 0 /* value = index */, &Z_Map);
+  for (const auto & device : zigbee_devices.getDevices()) {
+    zigbee_devices.setTimer(device.shortaddr, 0, wait_ms, 0, 0, Z_CAT_ALWAYS, 0 /* value = index */, &Z_Map);
+    wait_ms += DELAY_ZBMAP;
+  }
+  wait_ms += DELAY_ZBMAP*2;
+  zigbee_devices.setTimer(BAD_SHORTADDR, 0, wait_ms, 0, 0, Z_CAT_ALWAYS, 0 /* value = index */, &Z_Map);
+  zigbee.mapping_end_time = wait_ms + millis();
+}
+
 //
 // Command `ZbMap`
 // `ZbMap<x>` as index if it does not fit. If default, `1` starts at the beginning
@@ -1061,15 +1081,7 @@ void CmndZbMap(void) {
   RemoveSpace(XdrvMailbox.data);
 
   if (strlen(XdrvMailbox.data) == 0) {
-    // defer sending ZbMap to each device
-    const static uint32_t DELAY_ZBMAP = 2000;   // wait for 1s between commands
-    uint32_t wait_ms = DELAY_ZBMAP;
-    zigbee_devices.setTimer(0x0000, 0, 0 /*wait_ms*/, 0, 0, Z_CAT_ALWAYS, 0 /* value = index */, &Z_Map);
-    for (const auto & device : zigbee_devices.getDevices()) {
-      zigbee_devices.setTimer(device.shortaddr, 0, wait_ms, 0, 0, Z_CAT_ALWAYS, 0 /* value = index */, &Z_Map);
-      wait_ms += DELAY_ZBMAP;
-    }
-    zigbee_devices.setTimer(BAD_SHORTADDR, 0, wait_ms, 0, 0, Z_CAT_ALWAYS, 0 /* value = index */, &Z_Map);
+    ZigbeeMapAllDevices();
     ResponseCmndDone();
   } else {
   CmndZbBindState_or_Map(true);
@@ -1317,8 +1329,8 @@ void CmndZbSave(void) {
     case -10:
       { // reinit EEPROM
       ZFS::erase();
-      break;
       }
+      break;
 #endif
     default:
       saveZigbeeDevices();
@@ -1698,6 +1710,16 @@ extern "C" {
   }
 } // extern "C"
 
+#define WEB_HANDLE_ZB_MAP   "Zigbee Map"
+#define WEB_HANDLE_ZB_PERMIT_JOIN   "Zigbee Permit Join"
+#define WEB_HANDLE_ZB_MAP_REFRESH "Zigbee Map Refresh"
+const char HTTP_BTN_ZB_BUTTONS[] PROGMEM =
+  "<button onclick='la(\"&zbj=1\");'>" WEB_HANDLE_ZB_PERMIT_JOIN "</button>"
+  "<p></p>"
+  "<form action='zbm' method='get'><button>" WEB_HANDLE_ZB_MAP "</button></form>";
+const char HTTP_AUTO_REFRESH_PAGE[] PROGMEM = "<script>setTimeout(function(){location.reload();},1990);</script>";
+const char HTTP_BTN_ZB_MAP_REFRESH[] PROGMEM = "<p></p><form action='zbr' method='get'><button>" WEB_HANDLE_ZB_MAP_REFRESH "</button></form>";
+
 void ZigbeeShow(bool json)
 {
   if (json) {
@@ -1879,9 +1901,65 @@ void ZigbeeShow(bool json)
       }
     }
 
-    WSContentSend_P(PSTR("</table>{t}"));  // Terminate current multi column table and open new table
+    WSContentSend_P(PSTR("</table>{t}<p></p>"));  // Terminate current multi column table and open new table
+    if (zigbee.permit_end_time) {
+      // PermitJoin in progress
+      WSContentSend_P(PSTR("<p><b>[ <span style='color:#080;'>Devices allowed to join</span> ]</b></p>"));  // Terminate current multi column table and open new table
+    }
 #endif
   }
+}
+
+// Web handler to refresh the map, the redirect to show map
+void ZigbeeMapRefresh(void) {
+  if ((!zigbee.init_phase) && (!zigbee.mapping_in_progress)) {
+    ZigbeeMapAllDevices();
+  }
+  Webserver->sendHeader("Location","/zbm");        // Add a header to respond with a new location for the browser to go to the home page again
+  Webserver->send(302);              
+}
+
+// Display a graphical representation of the Zigbee map using vis.js network
+void ZigbeeShowMap(void) {
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP "Zigbee Mapper"));
+
+  // if no map, then launch a new mapping
+  if ((!zigbee.init_phase) && (!zigbee.mapping_ready) && (!zigbee.mapping_in_progress)) {
+    ZigbeeMapAllDevices();
+  }
+
+  WSContentStart_P(PSTR("Tasmota Zigbee Mapping"));
+  WSContentSendStyle();
+
+  if (zigbee.init_phase) {
+    WSContentSend_P(PSTR("Zigbee not started"));
+  } else if (zigbee.mapping_in_progress) {
+    int32_t mapping_remaining = 1 + (zigbee.mapping_end_time - millis()) / 1000;
+    if (mapping_remaining < 0) { mapping_remaining = 0; }
+    WSContentSend_P(PSTR("Mapping in progress (%d s. remaining)"), mapping_remaining);
+    WSContentSend_P(HTTP_AUTO_REFRESH_PAGE);
+  } else if (!zigbee.mapping_ready) {
+    WSContentSend_P(PSTR("No mapping"));
+  } else {
+    WSContentSend_P(PSTR(
+      "<script type=\"text/javascript\" src=\"https://unpkg.com/vis-network/standalone/umd/vis-network.min.js\"></script>"
+      "<div id=\"mynetwork\" style=\"background-color:#fff;color:#000;width:800px;height:400px;border:1px solid lightgray;resize:both;\">Unable to load vis.js</div>"
+      "<script type=\"text/javascript\">"
+      "var container=document.getElementById(\"mynetwork\");"
+      "var options={groups:{o:{shape:\"circle\",color:\"#d55\"},r:{shape:\"box\",color:\"#fb7\"},e:{shape:\"ellipse\",color:\"#adf\"}}};"
+      "var data={"
+    ));
+
+    zigbee_mapper.dumpInternals();
+
+    WSContentSend_P(PSTR(
+      "};"
+      "var network=new vis.Network(container,data,options);</script>"
+    ));
+    WSContentSend_P(HTTP_BTN_ZB_MAP_REFRESH);
+  }
+  WSContentSpaceButton(BUTTON_MAIN);
+  WSContentStop();
 }
 
 /*********************************************************************************************\
@@ -1920,12 +1998,17 @@ bool Xdrv23(uint8_t function)
       case FUNC_WEB_SENSOR:
         ZigbeeShow(false);
         break;
-#ifdef USE_ZIGBEE_EZSP
       // GUI xmodem
       case FUNC_WEB_ADD_HANDLER:
+#ifdef USE_ZIGBEE_EZSP
         WebServer_on(PSTR("/" WEB_HANDLE_ZIGBEE_XFER), HandleZigbeeXfer);
-        break;
 #endif  // USE_ZIGBEE_EZSP
+        WebServer_on(PSTR("/zbm"), ZigbeeShowMap, HTTP_GET);     // add web handler for Zigbee map
+        WebServer_on(PSTR("/zbr"), ZigbeeMapRefresh, HTTP_GET);     // add web handler for Zigbee map refresh
+        break;
+      case FUNC_WEB_ADD_MAIN_BUTTON:
+        WSContentSend_P(HTTP_BTN_ZB_BUTTONS);
+        break;
 #endif  // USE_WEBSERVER
       case FUNC_PRE_INIT:
         ZigbeeInit();

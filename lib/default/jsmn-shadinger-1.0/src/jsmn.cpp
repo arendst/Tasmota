@@ -399,6 +399,7 @@ void json_unescape(char* string) {
 			c = string[++i];
 			switch (c) {
         case 0:
+          string[outlength++] = 0;
           return;   // end of stream
         case '\"':
         case '/':
@@ -427,7 +428,10 @@ void json_unescape(char* string) {
             uint32_t hexval = 0;
             for (uint32_t j = 0; j < 4; ++j) {
               char val = string[++i];
-              if (0 == val) { return; }   // we reached end of string
+              if (0 == val) {
+                string[outlength++] = 0;
+                return;    // we reached end of string
+              }
               uint32_t uival = 0;
               if ((val >= 'a') && (val <= 'f'))
                 uival = 10 + (val - 'a');
@@ -450,4 +454,5 @@ void json_unescape(char* string) {
 			string[outlength++] = c;
 		}
 	}
+  string[outlength++] = 0;
 }

@@ -3,7 +3,21 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [9.1.0.2]
+## [9.2.0.1]
+### Added
+- Milliseconds to console output (#10152)
+- Support for P9813 RGB Led MOSFET controller (#10104)
+
+### Fixed
+- Redesign syslog and mqttlog using log buffer (#10164)
+- Shelly Dimmer power on state (#10154, #10182)
+
+## [Released]
+
+## [9.2.0] 20201216
+- Release Julie
+
+## [9.1.0.2] 20201216
 ### Added
 - KNX read reply for Power (#9236, #9891)
 - Zigbee persistence of device/sensor data in EEPROM (only ZBBridge)
@@ -16,6 +30,9 @@ All notable changes to this project will be documented in this file.
 - Zigbee better support for Tuya Protocol (#10074)
 - Support for SPI connected MFRC522 13.56MHz rfid card reader (#9916)
 - Letsencrypt R3 in addition to X3 CA (#10086)
+- Zigbee add visual map of network
+- Command ``SetOption117 1`` for light fading to be fixed duration instead of fixed slew rate (#10109)
+- Support ESP32 SPIFFS for internal use
 
 ### Breaking Changed
 - KNX DPT9 (16-bit float) to DPT14 (32-bit float) by Adrian Scillato (#9811, #9888)
@@ -38,6 +55,11 @@ All notable changes to this project will be documented in this file.
 - Backlog timing wraparound (#9995)
 - First LED in addressable string does not fade when using scheme (#10088)
 - Improved Opentherm error handling (#10055)
+- Platformio compiler option `no target align` removed fixing hardware watchdog exceptions
+- Shutter motordelay stop issue (#10033)
+- Shutter fix overflow on runtime over 100 seconds (#9800)
+- ESP32 CC2530 heap corruption (#10121)
+- ESP32 Analog input div10 rule trigger (#10149)
 
 ### Removed
 - PN532 define USE_PN532_CAUSE_EVENTS replaced by generic rule trigger `on pn532#uid=`
@@ -70,8 +92,6 @@ All notable changes to this project will be documented in this file.
 
 ### Removed
 - Version compatibility check
-
-## [Released]
 
 ## [9.1.0] 20201105
 - Release Imogen

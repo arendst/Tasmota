@@ -2137,7 +2137,10 @@ bool LightApplyFade(void) {   // did the value chanegd and needs to be applied
       // compute the duration of the animation
       // Note: Settings.light_speed is the number of half-seconds for a 100% fade,
       // i.e. light_speed=1 means 1024 steps in 500ms
-      Light.fade_duration = (distance * Settings.light_speed * 500) / 1023;
+      Light.fade_duration = Settings.light_speed * 500;
+      if (!Settings.flag5.fade_fixed_duration) {
+        Light.fade_duration = (distance * Light.fade_duration) / 1023;    // time is proportional to distance, except with SO117
+      }
       if (Settings.save_data) {
         // Also postpone the save_data for the duration of the Fade (in seconds)
         uint32_t delay_seconds = 1 + (Light.fade_duration + 999) / 1000;   // add one more second

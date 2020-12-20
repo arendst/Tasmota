@@ -167,10 +167,19 @@ void SettingsErase(uint8_t type) {
 }
 
 void SettingsRead(void *data, size_t size) {
+#ifdef USE_TFS
+//  if (!TfsLoadFile("/settings", (uint8_t*)data, size)) {
+    NvmLoad("main", "Settings", data, size);
+//  }
+#else
   NvmLoad("main", "Settings", data, size);
+#endif
 }
 
 void SettingsWrite(const void *pSettings, unsigned nSettingsLen) {
+#ifdef USE_TFS
+//  TfsSaveFile("/settings", (const uint8_t*)pSettings, nSettingsLen);
+#endif
   NvmSave("main", "Settings", pSettings, nSettingsLen);
 }
 
@@ -182,23 +191,11 @@ void QPCWrite(const void *pSettings, unsigned nSettingsLen) {
   NvmSave("qpc", "pcreg", pSettings, nSettingsLen);
 }
 
-void ZigbeeErase(void) {
-  NvmErase("zb");
-}
-
-void ZigbeeRead(void *pSettings, unsigned nSettingsLen) {
-  NvmLoad("zb", "zigbee", pSettings, nSettingsLen);
-}
-
-void ZigbeeWrite(const void *pSettings, unsigned nSettingsLen) {
-  NvmSave("zb", "zigbee", pSettings, nSettingsLen);
-}
-
 void NvsInfo(void) {
   nvs_stats_t nvs_stats;
   nvs_get_stats(NULL, &nvs_stats);
-  AddLog_P(LOG_LEVEL_INFO, PSTR("INF: NVS Used %d, Free %d, Total %d, Namspaces %d"),
-    nvs_stats.used_entries, nvs_stats.free_entries, nvs_stats.total_entries, nvs_stats.namespace_count);
+  AddLog_P(LOG_LEVEL_INFO, PSTR("NVS: Used %d/%d entries, NameSpaces %d"),
+    nvs_stats.used_entries, nvs_stats.total_entries, nvs_stats.namespace_count);
 }
 
 //

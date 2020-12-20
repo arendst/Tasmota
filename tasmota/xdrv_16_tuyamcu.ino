@@ -1214,6 +1214,13 @@ void TuyaSetTime(void) {
 
   uint16_t payload_len = 8;
   uint8_t payload_buffer[8];
+  uint8_t tuya_day_of_week;
+  if (RtcTime.day_of_week == 1) {
+    tuya_day_of_week = 7;
+  } else {
+    tuya_day_of_week = RtcTime.day_of_week-1;
+  }
+
   payload_buffer[0] = 0x01;
   payload_buffer[1] = RtcTime.year %100;
   payload_buffer[2] = RtcTime.month;
@@ -1221,7 +1228,7 @@ void TuyaSetTime(void) {
   payload_buffer[4] = RtcTime.hour;
   payload_buffer[5] = RtcTime.minute;
   payload_buffer[6] = RtcTime.second;
-  payload_buffer[7] = RtcTime.day_of_week;
+  payload_buffer[7] = tuya_day_of_week; //1 for Monday in TUYA Doc
 
   TuyaSendCmd(TUYA_CMD_SET_TIME, payload_buffer, payload_len);
 }

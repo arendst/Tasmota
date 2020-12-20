@@ -1661,6 +1661,18 @@ bool HandleRootStatusRefresh(void)
     ExecuteWebCommand(svalue, SRC_WEBGUI);
   }
 #endif  // USE_SONOFF_RF
+#ifdef USE_ZIGBEE
+  WebGetArg("zbj", tmp, sizeof(tmp));
+  if (strlen(tmp)) {
+    snprintf_P(svalue, sizeof(svalue), PSTR("ZbPermitJoin"));
+    ExecuteWebCommand(svalue, SRC_WEBGUI);
+  }
+  WebGetArg("zbr", tmp, sizeof(tmp));
+  if (strlen(tmp)) {
+    snprintf_P(svalue, sizeof(svalue), PSTR("ZbMap"));
+    ExecuteWebCommand(svalue, SRC_WEBGUI);
+  }
+#endif // USE_ZIGBEE
   WSContentBegin(200, CT_HTML);
   WSContentSend_P(PSTR("{t}"));
   XsnsCall(FUNC_WEB_SENSOR);
@@ -3005,34 +3017,28 @@ void HandleHttpCommand(void)
   }
 
   WSContentBegin(200, CT_JSON);
-  uint32_t curridx = TasmotaGlobal.web_log_index;
+  uint32_t curridx = TasmotaGlobal.log_buffer_pointer;
   String svalue = Webserver->arg("cmnd");
   if (svalue.length() && (svalue.length() < MQTT_MAX_PACKET_SIZE)) {
     ExecuteWebCommand((char*)svalue.c_str(), SRC_WEBCOMMAND);
-    if (TasmotaGlobal.web_log_index != curridx) {
-      uint32_t counter = curridx;
+    if (TasmotaGlobal.log_buffer_pointer != curridx) {
       WSContentSend_P(PSTR("{"));
       bool cflg = false;
-      do {
-        char* tmp;
-        size_t len;
-        GetLog(counter, &tmp, &len);
-        if (len) {
-          // [14:49:36 MQTT: stat/wemos5/RESULT = {"POWER":"OFF"}] > [{"POWER":"OFF"}]
-          char* JSON = (char*)memchr(tmp, '{', len);
-          if (JSON) { // Is it a JSON message (and not only [15:26:08 MQT: stat/wemos5/POWER = O])
-            size_t JSONlen = len - (JSON - tmp);
-            if (JSONlen > sizeof(TasmotaGlobal.mqtt_data)) { JSONlen = sizeof(TasmotaGlobal.mqtt_data); }
-            char stemp[JSONlen];
-            strlcpy(stemp, JSON +1, JSONlen -2);
-            WSContentSend_P(PSTR("%s%s"), (cflg) ? "," : "", stemp);
-            cflg = true;
-          }
+      uint32_t index = curridx;
+      char* line;
+      size_t len;
+      while (GetLog(Settings.weblog_level, &index, &line, &len)) {
+        // [14:49:36.123 MQTT: stat/wemos5/RESULT = {"POWER":"OFF"}] > [{"POWER":"OFF"}]
+        char* JSON = (char*)memchr(line, '{', len);
+        if (JSON) {  // Is it a JSON message (and not only [15:26:08 MQT: stat/wemos5/POWER = O])
+          size_t JSONlen = len - (JSON - line);
+          if (JSONlen > sizeof(TasmotaGlobal.mqtt_data)) { JSONlen = sizeof(TasmotaGlobal.mqtt_data); }
+          char stemp[JSONlen];
+          strlcpy(stemp, JSON +1, JSONlen -2);
+          WSContentSend_P(PSTR("%s%s"), (cflg) ? "," : "", stemp);
+          cflg = true;
         }
-        counter++;
-        counter &= 0xFF;
-        if (!counter) counter++;  // Skip 0 as it is not allowed
-      } while (counter != TasmotaGlobal.web_log_index);
+      }
       WSContentSend_P(PSTR("}"));
     } else {
       WSContentSend_P(PSTR("{\"" D_RSLT_WARNING "\":\"" D_ENABLE_WEBLOG_FOR_RESPONSE "\"}"));
@@ -3066,9 +3072,6 @@ void HandleConsole(void)
 
 void HandleConsoleRefresh(void)
 {
-  bool cflg = true;
-  uint32_t counter = 0;                // Initial start, should never be 0 again
-
   String svalue = Webserver->arg("c1");
   if (svalue.length() && (svalue.length() < MQTT_MAX_PACKET_SIZE)) {
     AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_COMMAND "%s"), svalue.c_str());
@@ -3077,34 +3080,24 @@ void HandleConsoleRefresh(void)
 
   char stmp[8];
   WebGetArg("c2", stmp, sizeof(stmp));
-  if (strlen(stmp)) { counter = atoi(stmp); }
+  uint32_t index = 0;                // Initial start, dump all
+  if (strlen(stmp)) { index = atoi(stmp); }
 
   WSContentBegin(200, CT_PLAIN);
-  WSContentSend_P(PSTR("%d}1%d}1"), TasmotaGlobal.web_log_index, Web.reset_web_log_flag);
+  WSContentSend_P(PSTR("%d}1%d}1"), TasmotaGlobal.log_buffer_pointer, Web.reset_web_log_flag);
   if (!Web.reset_web_log_flag) {
-    counter = 0;
+    index = 0;
     Web.reset_web_log_flag = true;
   }
-  if (counter != TasmotaGlobal.web_log_index) {
-    if (!counter) {
-      counter = TasmotaGlobal.web_log_index;
-      cflg = false;
-    }
-    do {
-      char* tmp;
-      size_t len;
-      GetLog(counter, &tmp, &len);
-      if (len) {
-        if (len > sizeof(TasmotaGlobal.mqtt_data) -2) { len = sizeof(TasmotaGlobal.mqtt_data); }
-        char stemp[len +1];
-        strlcpy(stemp, tmp, len);
-        WSContentSend_P(PSTR("%s%s"), (cflg) ? "\n" : "", stemp);
-        cflg = true;
-      }
-      counter++;
-      counter &= 0xFF;
-      if (!counter) { counter++; }  // Skip log index 0 as it is not allowed
-    } while (counter != TasmotaGlobal.web_log_index);
+  bool cflg = (index);
+  char* line;
+  size_t len;
+  while (GetLog(Settings.weblog_level, &index, &line, &len)) {
+    if (len > sizeof(TasmotaGlobal.mqtt_data) -2) { len = sizeof(TasmotaGlobal.mqtt_data); }
+    char stemp[len +1];
+    strlcpy(stemp, line, len);
+    WSContentSend_P(PSTR("%s%s"), (cflg) ? "\n" : "", stemp);
+    cflg = true;
   }
   WSContentSend_P(PSTR("}1"));
   WSContentEnd();

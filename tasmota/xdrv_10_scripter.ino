@@ -67,8 +67,8 @@ keywords if then else endif, or, and are better readable for beginners (others m
 
 #define MAX_SARRAY_NUM 32
 
-uint32_t EncodeLightId(uint8_t relay_id);
-uint32_t DecodeLightId(uint32_t hue_id);
+//uint32_t EncodeLightId(uint8_t relay_id);
+//uint32_t DecodeLightId(uint32_t hue_id);
 
 #ifdef USE_UNISHOX_COMPRESSION
 #define USE_SCRIPT_COMPRESSION
@@ -108,7 +108,11 @@ uint32_t DecodeLightId(uint32_t hue_id);
 #pragma message "script 24c256 file option used"
 #else
 //#warning "EEP_SCRIPT_SIZE also needs USE_24C256"
+#if EEP_SCRIPT_SIZE==SPI_FLASH_SEC_SIZE
 #pragma message "internal eeprom script buffer used"
+#else
+#pragma message "internal compressed eeprom script buffer used"
+#endif
 //#define USE_24C256
 #endif
 #endif // EEP_SCRIPT_SIZE
@@ -119,7 +123,7 @@ uint32_t DecodeLightId(uint32_t hue_id);
 #endif // USE_UNISHOX_COMPRESSION
 
 
-#ifdef USE_SCRIPT_COMPRESSION
+//#ifdef USE_SCRIPT_COMPRESSION
 #include <unishox.h>
 
 #define SCRIPT_COMPRESS compressor.unishox_compress
@@ -127,7 +131,8 @@ uint32_t DecodeLightId(uint32_t hue_id);
 #ifndef UNISHOXRSIZE
 #define UNISHOXRSIZE 2560
 #endif
-#endif // USE_SCRIPT_COMPRESSION
+
+//#endif // USE_SCRIPT_COMPRESSION
 
 #ifndef STASK_PRIO
 #define STASK_PRIO 1
@@ -157,6 +162,51 @@ void Script_ticker4_end(void) {
   Run_Scripter(">ti4", 4, 0);
 }
 #endif
+
+// EEPROM MACROS
+// i2c eeprom
+
+#if defined(ALT_EEPROM) && !defined(ESP32)
+#undef EEP_WRITE
+#undef EEP_READ
+#undef EEP_INIT
+#define EEP_WRITE(A,B,C) alt_eeprom_writeBytes(A, B, (uint8_t*)C);
+#define EEP_READ(A,B,C) alt_eeprom_readBytes(A, B, (uint8_t*)C);
+#define EEP_INIT(A) alt_eeprom_init(A)
+
+#if EEP_SCRIPT_SIZE>6500
+#undef EEP_SCRIPT_SIZE
+#define EEP_SCRIPT_SIZE 6500
+#endif
+
+uint32_t eeprom_block;
+
+// these support only one 4 k block below EEPROM this steals 4k of application area
+uint32_t alt_eeprom_init(uint32_t size) {
+    //EEPROM.begin(size);
+    eeprom_block = (uint32_t)&_FS_end - 0x40200000 - SPI_FLASH_SEC_SIZE;
+    return 1;
+}
+
+void alt_eeprom_writeBytes(uint32_t adr, uint32_t len, uint8_t *buf) {
+  uint32_t *lwp=(uint32_t*)buf;
+  ESP.flashEraseSector(eeprom_block / SPI_FLASH_SEC_SIZE);
+  ESP.flashWrite(eeprom_block , lwp, SPI_FLASH_SEC_SIZE);
+}
+
+void alt_eeprom_readBytes(uint32_t adr, uint32_t len, uint8_t *buf) {
+  uint32_t *lwp=(uint32_t*)buf;
+  ESP.flashRead(eeprom_block , lwp, SPI_FLASH_SEC_SIZE);
+}
+#else
+#undef EEP_WRITE
+#undef EEP_READ
+#undef EEP_INIT
+#define EEP_WRITE(A,B,C) eeprom_writeBytes(A, B, (uint8_t*)C);
+#define EEP_READ(A,B,C) eeprom_readBytes(A, B, (uint8_t*)C);
+#define EEP_INIT(A) eeprom_init(A)
+#endif // ALT_EEPROM
+
 
 
 #if defined(LITTLEFS_SCRIPT_SIZE) || (USE_SCRIPT_FATFS==-1)
@@ -516,10 +566,7 @@ void RulesTeleperiod(void) {
   if (bitRead(Settings.rule_enabled, 0) && TasmotaGlobal.mqtt_data[0]) Run_Scripter(">T", 2, TasmotaGlobal.mqtt_data);
 }
 
-// EEPROM MACROS
-// i2c eeprom
-#define EEP_WRITE(A,B,C) eeprom_writeBytes(A, B, (uint8_t*)C);
-#define EEP_READ(A,B,C) eeprom_readBytes(A, B, (uint8_t*)C);
+
 
 
 #define SCRIPT_SKIP_SPACES while (*lp==' ' || *lp=='\t') lp++;
@@ -1537,7 +1584,7 @@ float fvar;
 char *isvar(char *lp, uint8_t *vtype, struct T_INDEX *tind, float *fp, char *sp, JsonParserObject *jo) {
     uint16_t count,len = 0;
     uint8_t nres = 0;
-    char vname[32];
+    char vname[64];
     float fvar = 0;
     tind->index = 0;
     tind->bits.data = 0;
@@ -1666,7 +1713,7 @@ char *isvar(char *lp, uint8_t *vtype, struct T_INDEX *tind, float *fp, char *sp,
 
     if (jo) {
       // look for json input
-      char jvname[32];
+      char jvname[64];
       strcpy(jvname, vname);
       const char* str_value;
       uint8_t aindex;
@@ -1872,6 +1919,19 @@ chknext:
           fvar = xPortGetCoreID();
           goto exit;
         }
+#ifdef USE_M5STACK_CORE2
+        if (!strncmp(vname, "c2ps(", 5)) {
+          lp = GetNumericArgument(lp + 5, OPER_EQU, &fvar, 0);
+          while (*lp==' ') lp++;
+          float fvar1;
+          lp = GetNumericArgument(lp, OPER_EQU, &fvar1, 0);
+          fvar = core2_setaxppin(fvar, fvar1);
+          lp++;
+          len=0;
+          goto exit;
+        }
+#endif // USE_M5STACK_CORE2
+
 #ifdef USE_SCRIPT_TASK
         if (!strncmp(vname, "ct(", 3)) {
           lp = GetNumericArgument(lp + 3, OPER_EQU, &fvar, 0);
@@ -2620,7 +2680,7 @@ chknext:
           len++;
           goto exit;
         }
-#if  defined(ESP32) && (defined(USE_I2S_AUDIO) || defined(USE_TTGO_WATCH))
+#if  defined(ESP32) && (defined(USE_I2S_AUDIO) || defined(USE_TTGO_WATCH) || defined(USE_M5STACK_CORE2))
         if (!strncmp(vname, "pl(", 3)) {
           char path[SCRIPT_MAXSSIZE];
           lp = GetStringArgument(lp + 3, OPER_EQU, path, 0);
@@ -2813,7 +2873,7 @@ chknext:
           len = 0;
           goto strexit;
         }
-#if  defined(ESP32) && (defined(USE_I2S_AUDIO) || defined(USE_TTGO_WATCH))
+#if  defined(ESP32) && (defined(USE_I2S_AUDIO) || defined(USE_TTGO_WATCH) || defined(USE_M5STACK_CORE2))
         if (!strncmp(vname, "say(", 4)) {
           char text[SCRIPT_MAXSSIZE];
           lp = GetStringArgument(lp + 4, OPER_EQU, text, 0);
@@ -3114,7 +3174,7 @@ chknext:
           goto exit;
         }
 #endif // USE_TTGO_WATCH
-#if defined(USE_TTGO_WATCH) && defined(USE_FT5206)
+#if defined(USE_FT5206)
         if (!strncmp(vname, "wtch(", 5)) {
           lp = GetNumericArgument(lp + 5, OPER_EQU, &fvar, 0);
           fvar = Touch_Status(fvar);
@@ -3734,22 +3794,45 @@ void esp32_beep(int32_t freq ,uint32_t len) {
     xTimerChangePeriod( beep_th, ticks, 10);
   }
 }
+#endif // ESP32
 
-void esp32_pwm(int32_t value) {
+uint8_t pwmpin[5];
+
+void esp_pwm(int32_t value, uint32 freq, uint32_t channel) {
+  if (channel < 1 || channel > 3) channel = 1;
+#ifdef ESP32
+  channel+=7;
   if (value < 0) {
     if (value <= -64) value = 0;
-    ledcSetup(7, 4000, 10);
-    ledcAttachPin(-value, 7);
-    ledcWrite(7, 0);
+    // set range to 10 bit
+    ledcSetup(channel, freq, 10);
+    ledcAttachPin(-value, channel);
+    ledcWrite(channel, 0);
   } else {
     if (value > 1023) {
       value = 1023;
     }
-    ledcWrite(7, value);
+    ledcWrite(channel, value);
   }
+#else
+  // esp8266 default to range 0-1023
+  channel-=1;
+  if (value < 0) {
+    if (value <= -64) value = 0;
+    pwmpin[channel] = -value;
+    pinMode(pwmpin[channel], OUTPUT);
+    analogWriteFreq(freq);
+    analogWrite(pwmpin[channel], 0);
+  } else {
+    if (value > 1023) {
+      value = 1023;
+    }
+    analogWrite(pwmpin[channel],value);
+  }
+#endif // ESP32
 }
 
-#endif // ESP32
+
 
 //#define IFTHEN_DEBUG
 
@@ -4164,14 +4247,34 @@ int16_t Run_script_sub(const char *type, int8_t tlen, JsonParserObject *jo) {
               lp++;
               goto next_line;
             }
-            else if (!strncmp(lp, "pwm(", 4)) {
-              lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, 0);
+#endif //ESP32
+
+            else if (!strncmp(lp, "pwm", 3)) {
+              lp += 3;
+              uint8_t channel = 1;
+              if (*(lp+1)=='(') {
+                channel = *lp & 7;
+                if (channel > 5) {
+                  channel = 5;
+                }
+                lp += 2;
+              } else {
+                if (*lp=='(') {
+                  lp++;
+                } else {
+                  goto next_line;
+                }
+              }
+              lp = GetNumericArgument(lp, OPER_EQU, &fvar, 0);
               SCRIPT_SKIP_SPACES
-              esp32_pwm(fvar);
+              float fvar1=4000;
+              if (*lp!=')') {
+                lp = GetNumericArgument(lp, OPER_EQU, &fvar1, 0);
+              }
+              esp_pwm(fvar, fvar1, channel);
               lp++;
               goto next_line;
             }
-#endif //ESP32
             else if (!strncmp(lp, "wcs", 3)) {
               lp+=4;
               // skip one space after cmd
@@ -5116,7 +5219,16 @@ void SaveScript(void) {
 
 #ifdef EEP_SCRIPT_SIZE
   if (glob_script_mem.flags&1) {
+#if EEP_SCRIPT_SIZE==SPI_FLASH_SEC_SIZE
     EEP_WRITE(0, EEP_SCRIPT_SIZE, glob_script_mem.script_ram);
+#else
+    char *ucs;
+    ucs = (char*)calloc(SPI_FLASH_SEC_SIZE + 4, 1);
+    if (!script_compress(ucs,EEP_SCRIPT_SIZE-1)) {
+      EEP_WRITE(0, EEP_SCRIPT_SIZE, ucs);
+    }
+    if (ucs) free(ucs);
+#endif
   }
 #endif // EEP_SCRIPT_SIZE
 
@@ -5198,6 +5310,21 @@ void ScriptSaveSettings(void) {
   SaveScriptEnd();
 }
 
+//
+uint32_t script_compress(char *dest, uint32_t size) {
+  //AddLog_P(LOG_LEVEL_INFO,PSTR("in string: %s len = %d"),glob_script_mem.script_ram,strlen(glob_script_mem.script_ram));
+  uint32_t len_compressed = SCRIPT_COMPRESS(glob_script_mem.script_ram, strlen(glob_script_mem.script_ram), dest, size);
+  if (len_compressed > 0) {
+    dest[len_compressed] = 0;
+    AddLog_P(LOG_LEVEL_INFO,PSTR("script compressed to %d bytes = %d %%"),len_compressed,len_compressed * 100 / strlen(glob_script_mem.script_ram));
+    return 0;
+  } else {
+    AddLog_P(LOG_LEVEL_INFO, PSTR("script compress error: %d"), len_compressed);
+    return 1;
+  }
+}
+//#endif // USE_SCRIPT_COMPRESSION
+
 void SaveScriptEnd(void) {
 
 #ifdef USE_SCRIPT_GLOBVARS
@@ -5212,19 +5339,10 @@ void SaveScriptEnd(void) {
   }
 
 #ifdef USE_SCRIPT_COMPRESSION
-  //AddLog_P(LOG_LEVEL_INFO,PSTR("in string: %s len = %d"),glob_script_mem.script_ram,strlen(glob_script_mem.script_ram));
-  uint32_t len_compressed = SCRIPT_COMPRESS(glob_script_mem.script_ram, strlen(glob_script_mem.script_ram), Settings.rules[0], MAX_SCRIPT_SIZE-1);
-  if (len_compressed > 0) {
-    Settings.rules[0][len_compressed] = 0;
-    AddLog_P(LOG_LEVEL_INFO,PSTR("script compressed to %d bytes = %d %%"),len_compressed,len_compressed * 100 / strlen(glob_script_mem.script_ram));
-  } else {
-    AddLog_P(LOG_LEVEL_INFO, PSTR("script compress error: %d"), len_compressed);
-  }
+  script_compress(Settings.rules[0],MAX_SCRIPT_SIZE-1);
 #endif // USE_SCRIPT_COMPRESSION
 
   if (bitRead(Settings.rule_enabled, 0)) {
-
-
 
     int16_t res = Init_Scripter();
     if (res) {
@@ -5728,24 +5846,26 @@ bool Script_SubCmd(void) {
   if (!bitRead(Settings.rule_enabled, 0)) return false;
 
   if (tasm_cmd_activ) return false;
+  //AddLog_P(LOG_LEVEL_INFO,PSTR(">> %s, %s, %d, %d "),XdrvMailbox.topic, XdrvMailbox.data, XdrvMailbox.payload, XdrvMailbox.index);
 
   char command[CMDSZ];
   strlcpy(command, XdrvMailbox.topic, CMDSZ);
-  uint32_t pl = XdrvMailbox.payload;
-  char pld[64];
-  strlcpy(pld, XdrvMailbox.data, sizeof(pld));
+  if (XdrvMailbox.index > 1) {
+    char ind[2];
+    ind[0] = XdrvMailbox.index | 0x30;
+    ind[1] = 0;
+    strcat(command, ind);
+  }
+
+  int32_t pl = XdrvMailbox.payload;
 
   char cmdbuff[128];
   char *cp = cmdbuff;
   *cp++ = '#';
-  strcpy(cp, XdrvMailbox.topic);
-  uint8_t tlen = strlen(XdrvMailbox.topic);
+  strcpy(cp, command);
+  uint8_t tlen = strlen(command);
   cp += tlen;
-  if (XdrvMailbox.index > 0) {
-    *cp++ = XdrvMailbox.index | 0x30;
-    tlen++;
-  }
-  if ((XdrvMailbox.payload>0) || (XdrvMailbox.data_len>0)) {
+  if (XdrvMailbox.data_len>0) {
     *cp++ = '(';
     strncpy(cp, XdrvMailbox.data,XdrvMailbox.data_len);
     cp += XdrvMailbox.data_len;
@@ -5755,12 +5875,16 @@ bool Script_SubCmd(void) {
   //toLog(cmdbuff);
   uint32_t res = Run_Scripter(cmdbuff, tlen + 1, 0);
   //AddLog_P(LOG_LEVEL_INFO,">>%d",res);
-  if (res) return false;
+  if (res) {
+    return false;
+  }
   else {
-    if (pl>=0) {
-      Response_P(S_JSON_COMMAND_NVALUE, command, pl);
+    cp=XdrvMailbox.data;
+    while (*cp==' ') cp++;
+    if (isdigit(*cp) || *cp=='-') {
+      Response_P(S_JSON_COMMAND_NVALUE, command, XdrvMailbox.payload);
     } else {
-      Response_P(S_JSON_COMMAND_SVALUE, command, pld);
+      Response_P(S_JSON_COMMAND_SVALUE, command, XdrvMailbox.data);
     }
   }
   return true;
@@ -6990,7 +7114,7 @@ exgc:
                   WSContentSend_PD("['");
                   char lbl[16];
                   if (todflg>=0) {
-                    sprintf(lbl, "%d", todflg / divflg);
+                    sprintf(lbl, "%d:%02d", todflg / divflg, (todflg % divflg) * (60 / divflg) );
                     todflg++;
                     if (todflg >= entries) {
                       todflg = 0;
@@ -7395,9 +7519,10 @@ bool Xdrv10(uint8_t function)
 #endif //USE_BUTTON_EVENT
 
 #ifdef EEP_SCRIPT_SIZE
-      if (eeprom_init(EEP_SCRIPT_SIZE)) {
-          // found 32kb eeprom
+      if (EEP_INIT(EEP_SCRIPT_SIZE)) {
+          // found 32kb eeprom,
           char *script;
+#if EEP_SCRIPT_SIZE==SPI_FLASH_SEC_SIZE
           script = (char*)calloc(EEP_SCRIPT_SIZE + 4, 1);
           if (!script) break;
           glob_script_mem.script_ram = script;
@@ -7407,6 +7532,28 @@ bool Xdrv10(uint8_t function)
             memset(script, EEP_SCRIPT_SIZE, 0);
           }
           script[EEP_SCRIPT_SIZE - 1] = 0;
+#else
+          char *ucs;
+          ucs = (char*)calloc(SPI_FLASH_SEC_SIZE + 4, 1);
+          if (!ucs) break;
+          EEP_READ(0, SPI_FLASH_SEC_SIZE, ucs);
+          if (*ucs==0xff) {
+            memset(ucs, SPI_FLASH_SEC_SIZE, 0);
+          }
+          ucs[SPI_FLASH_SEC_SIZE - 1] = 0;
+
+          script = (char*)calloc(EEP_SCRIPT_SIZE + 4, 1);
+          if (!script) break;
+          glob_script_mem.script_ram = script;
+          glob_script_mem.script_size = EEP_SCRIPT_SIZE;
+
+          int32_t len_decompressed;
+          len_decompressed = SCRIPT_DECOMPRESS(ucs, strlen(ucs), glob_script_mem.script_ram, glob_script_mem.script_size);
+          if (len_decompressed>0) glob_script_mem.script_ram[len_decompressed] = 0;
+
+          if (ucs) free(ucs);
+
+#endif
           // use rules storage for permanent vars
           glob_script_mem.script_pram = (uint8_t*)Settings.rules[0];
           glob_script_mem.script_pram_size = MAX_SCRIPT_SIZE;
@@ -7422,7 +7569,7 @@ bool Xdrv10(uint8_t function)
       // fs on SD card
 #ifdef ESP32
       if (PinUsed(GPIO_SPI_MOSI) && PinUsed(GPIO_SPI_MISO) && PinUsed(GPIO_SPI_CLK)) {
-          SPI.begin(Pin(GPIO_SPI_CLK),Pin(GPIO_SPI_MISO),Pin(GPIO_SPI_MOSI), -1);
+          SPI.begin(Pin(GPIO_SPI_CLK), Pin(GPIO_SPI_MISO), Pin(GPIO_SPI_MOSI), -1);
       }
 #endif // ESP32
       fsp = &SD;
