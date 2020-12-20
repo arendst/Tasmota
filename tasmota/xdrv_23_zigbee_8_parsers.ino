@@ -1535,7 +1535,7 @@ int32_t EZ_ReceiveTCJoinHandler(int32_t res, const class SBuffer &buf) {
     Response_P(PSTR("{\"" D_JSON_ZIGBEE_STATE "\":{"
                     "\"Status\":%d,\"IEEEAddr\":\"0x%s\",\"ShortAddr\":\"0x%04X\""
                     ",\"ParentNetwork\":\"0x%04X\""
-                    ",\"Status\":%d,\"Decision\":%d"
+                    ",\"JoinStatus\":%d,\"Decision\":%d"
                     "}}"),
                     ZIGBEE_STATUS_DEVICE_INDICATION, hex, srcAddr, parentNw,
                     status, decision
