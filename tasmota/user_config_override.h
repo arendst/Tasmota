@@ -19,7 +19,7 @@
 
 #ifndef _USER_CONFIG_OVERRIDE_H_
 #define _USER_CONFIG_OVERRIDE_H_
-
+#endif
 // force the compiler to show a warning to confirm that this file is included
 #warning **** user_config_override.h: Using Settings from this File ****
 
@@ -83,6 +83,13 @@ Examples :
 #endif
 
 */
+
+#ifndef USE_MQTT_TLS 
+#define USE_MQTT_TLS                             // Use TLS for MQTT connection (+34.5k code, +7.0k mem and +4.8k additional during connection handshake)
+#define MQTT_PORT              8883              // [MqttPort] MQTT port (10123 on CloudMQTT)
+//  #define USE_MQTT_TLS_CA_CERT                   // Force full CA validation instead of fingerprints, slower, but simpler to use.  (+2.2k code, +1.9k mem during connection handshake)
+                                                   // This includes the LetsEncrypt CA in tasmota_ca.ino for verifying server certificates
+//  #define USE_MQTT_TLS_FORCE_EC_CIPHER           // Force Elliptic Curve cipher (higher security) required by some servers (automatically enabled with USE_MQTT_AWS_IOT) (+11.4k code, +0.4k mem)
 
 
 
