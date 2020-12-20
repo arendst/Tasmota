@@ -37,7 +37,7 @@ void StartMdns(void) {
 //      } else {
 //        mdns_delayed_start = Settings.param[P_MDNS_DELAYED_START];
         Mdns.begun = (uint8_t)MDNS.begin(TasmotaGlobal.hostname);
-        AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_MDNS "%s"), (Mdns.begun) ? D_INITIALIZED : D_FAILED);
+        AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_MDNS "%s"), (Mdns.begun) ? D_INITIALIZED : D_FAILED);
 //      }
     }
   }
@@ -50,7 +50,7 @@ void MqttDiscoverServer(void)
 
   int n = MDNS.queryService("mqtt", "tcp");  // Search for mqtt service
 
-  AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_MDNS D_QUERY_DONE " %d"), n);
+  AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_MDNS D_QUERY_DONE " %d"), n);
 
   if (n > 0) {
     uint32_t i = 0;            // If the hostname isn't set, use the first record found.
@@ -64,7 +64,7 @@ void MqttDiscoverServer(void)
     SettingsUpdateText(SET_MQTT_HOST, MDNS.IP(i).toString().c_str());
     Settings.mqtt_port = MDNS.port(i);
 
-    AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_MDNS D_MQTT_SERVICE_FOUND " %s, " D_IP_ADDRESS " %s, " D_PORT " %d"), MDNS.hostname(i).c_str(), SettingsText(SET_MQTT_HOST), Settings.mqtt_port);
+    AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_MDNS D_MQTT_SERVICE_FOUND " %s, " D_IP_ADDRESS " %s, " D_PORT " %d"), MDNS.hostname(i).c_str(), SettingsText(SET_MQTT_HOST), Settings.mqtt_port);
   }
 }
 #endif  // MQTT_HOST_DISCOVERY
@@ -81,7 +81,7 @@ void MdnsAddServiceHttp(void) {
 void MdnsUpdate(void) {
   if (2 == Mdns.begun) {
     MDNS.update();
-    AddLog_P(LOG_LEVEL_DEBUG_MORE, D_LOG_MDNS, "MDNS.update");
+    AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_MDNS "MDNS.update"));
   }
 }
 #endif  // WEBSERVER_ADVERTISE

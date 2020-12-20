@@ -52,7 +52,7 @@ void OsWatchTicker(void)
 
 #ifdef DEBUG_THEO
   int32_t rssi = WiFi.RSSI();
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_OSWATCH " FreeRam %d, rssi %d %% (%d dBm), last_run %d"), ESP_getFreeHeap(), WifiGetRssiAsQuality(rssi), rssi, last_run);
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_OSWATCH " FreeRam %d, rssi %d %% (%d dBm), last_run %d"), ESP_getFreeHeap(), WifiGetRssiAsQuality(rssi), rssi, last_run);
 #endif  // DEBUG_THEO
   if (last_run >= (OSWATCH_RESET_TIME * 1000)) {
 //    AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION D_OSWATCH " " D_BLOCKED_LOOP ". " D_RESTARTING));  // Save iram space
@@ -65,6 +65,7 @@ void OsWatchTicker(void)
     // Force an exception to get a stackdump
     volatile uint32_t dummy;
     dummy = *((uint32_t*) 0x00000000);
+    (void)dummy;    // avoid compiler warning
   }
 }
 
@@ -647,9 +648,10 @@ String GetDeviceHardware(void)
   } else {
     strcpy_P(buff, PSTR("ESP8266EX"));
   }
-#else
+#endif  // ESP8266
+#ifdef ESP32
   strcpy_P(buff, PSTR("ESP32"));
-#endif
+#endif  // ESP32
   return String(buff);
 }
 
@@ -909,19 +911,24 @@ String GetSerialConfig(void) {
   return String(config);
 }
 
+uint32_t GetSerialBaudrate(void) {
+  return (Serial.baudRate() / 300) * 300;  // Fix ESP32 strange results like 115201
+}
+
 void SetSerialBegin(void) {
   TasmotaGlobal.baudrate = Settings.baudrate * 300;
-  AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_SERIAL "Set to %s %d bit/s"), GetSerialConfig().c_str(), TasmotaGlobal.baudrate);
+  AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_SERIAL "Set to %s %d bit/s"), GetSerialConfig().c_str(), TasmotaGlobal.baudrate);
   Serial.flush();
 #ifdef ESP8266
   Serial.begin(TasmotaGlobal.baudrate, (SerialConfig)pgm_read_byte(kTasmotaSerialConfig + Settings.serial_config));
-#else  // ESP32
+#endif  // ESP8266
+#ifdef ESP32
   delay(10);  // Allow time to cleanup queues - if not used hangs ESP32
   Serial.end();
   delay(10);  // Allow time to cleanup queues - if not used hangs ESP32
   uint32_t config = pgm_read_dword(kTasmotaSerialConfig + Settings.serial_config);
   Serial.begin(TasmotaGlobal.baudrate, config);
-#endif
+#endif  // ESP32
 }
 
 void SetSerialConfig(uint32_t serial_config) {
@@ -937,7 +944,7 @@ void SetSerialConfig(uint32_t serial_config) {
 void SetSerialBaudrate(uint32_t baudrate) {
   TasmotaGlobal.baudrate = baudrate;
   Settings.baudrate = TasmotaGlobal.baudrate / 300;
-  if (Serial.baudRate() != TasmotaGlobal.baudrate) {
+  if (GetSerialBaudrate() != TasmotaGlobal.baudrate) {
     SetSerialBegin();
   }
 }
@@ -955,7 +962,7 @@ void ClaimSerial(void) {
   TasmotaGlobal.serial_local = true;
   AddLog_P(LOG_LEVEL_INFO, PSTR("SNS: Hardware Serial"));
   SetSeriallog(LOG_LEVEL_NONE);
-  TasmotaGlobal.baudrate = Serial.baudRate();
+  TasmotaGlobal.baudrate = GetSerialBaudrate();
   Settings.baudrate = TasmotaGlobal.baudrate / 300;
 }
 
@@ -1000,7 +1007,7 @@ void ShowSource(uint32_t source)
 {
   if ((source > 0) && (source < SRC_MAX)) {
     char stemp1[20];
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SRC: %s"), GetTextIndexed(stemp1, sizeof(stemp1), source, kCommandSource));
+    AddLog_P(LOG_LEVEL_DEBUG, PSTR("SRC: %s"), GetTextIndexed(stemp1, sizeof(stemp1), source, kCommandSource));
   }
 }
 
@@ -1167,7 +1174,7 @@ int ResponseJsonEndEnd(void)
 
 #ifdef ESP8266
 uint16_t GpioConvert(uint8_t gpio) {
-  if (gpio > ARRAY_SIZE(kGpioConvert)) {
+  if (gpio >= ARRAY_SIZE(kGpioConvert)) {
     return AGPIO(GPIO_USER);
   }
   return pgm_read_word(kGpioConvert + gpio);
@@ -1189,7 +1196,7 @@ void TemplateConvert(uint8_t template8[], uint16_t template16[]) {
   }
   template16[(sizeof(mytmplt) / 2) -2] = Adc0Convert(template8[sizeof(mytmplt8285) -1]);
 
-//  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("FNC: TemplateConvert"));
+//  AddLog_P(LOG_LEVEL_DEBUG, PSTR("FNC: TemplateConvert"));
 //  AddLogBuffer(LOG_LEVEL_DEBUG, template8, sizeof(mytmplt8285));
 //  AddLogBufferSize(LOG_LEVEL_DEBUG, (uint8_t*)template16, sizeof(mytmplt) / 2, 2);
 }
@@ -1205,7 +1212,7 @@ void ConvertGpios(void) {
     Settings.my_gp.io[(sizeof(myio) / 2) -1] = Adc0Convert(Settings.ex_my_adc0);
     Settings.gpio16_converted = 0xF5A0;
 
-//    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("FNC: ConvertGpios"));
+//    AddLog_P(LOG_LEVEL_DEBUG, PSTR("FNC: ConvertGpios"));
 //    AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t *)&Settings.ex_my_gp8.io, sizeof(myio8));
 //    AddLogBufferSize(LOG_LEVEL_DEBUG, (uint8_t *)&Settings.my_gp.io, sizeof(myio) / 2, 2);
   }
@@ -1342,7 +1349,7 @@ String ModuleName(void)
 void GetInternalTemplate(void* ptr, uint32_t module, uint32_t option) {
   uint8_t module_template = pgm_read_byte(kModuleTemplateList + module);
 
-//  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DBG: Template %d, Option %d"), module_template, option);
+//  AddLog_P(LOG_LEVEL_DEBUG, PSTR("DBG: Template %d, Option %d"), module_template, option);
 
   // template8 = GPIO 0,1,2,3,4,5,9,10,12,13,14,15,16,Adc
   uint8_t template8[sizeof(mytmplt8285)] = { GPIO_NONE };
@@ -1374,12 +1381,12 @@ void GetInternalTemplate(void* ptr, uint32_t module, uint32_t option) {
   }
   memcpy(ptr, &template16[index], size);
 
-//  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("FNC: GetInternalTemplate option %d"), option);
+//  AddLog_P(LOG_LEVEL_DEBUG, PSTR("FNC: GetInternalTemplate option %d"), option);
 //  AddLogBufferSize(LOG_LEVEL_DEBUG, (uint8_t *)ptr, size / 2, 2);
 }
 #endif  // ESP8266
 
-void ModuleGpios(myio *gp)
+void TemplateGpios(myio *gp)
 {
   uint16_t *dest = (uint16_t *)gp;
   uint16_t src[ARRAY_SIZE(Settings.user_template.gp.io)];
@@ -1390,9 +1397,10 @@ void ModuleGpios(myio *gp)
   } else {
 #ifdef ESP8266
     GetInternalTemplate(&src, Settings.module, 1);
-#else  // ESP32
+#endif  // ESP8266
+#ifdef ESP32
     memcpy_P(&src, &kModules.gp, sizeof(mycfgio));
-#endif  // ESP8266 - ESP32
+#endif  // ESP32
   }
   // 11 85 00 85 85 00 00 00 15 38 85 00 00 81
 
@@ -1419,9 +1427,10 @@ gpio_flag ModuleFlag(void)
   } else {
 #ifdef ESP8266
     GetInternalTemplate(&flag, Settings.module, 2);
-#else  // ESP32
+#endif  // ESP8266
+#ifdef ESP32
     memcpy_P(&flag, &kModules.flag, sizeof(gpio_flag));
-#endif  // ESP8266 - ESP32
+#endif  // ESP32
   }
 
   return flag;
@@ -1435,9 +1444,10 @@ void ModuleDefault(uint32_t module)
   SettingsUpdateText(SET_TEMPLATE_NAME, GetTextIndexed(name, sizeof(name), module, kModuleNames));
 #ifdef ESP8266
   GetInternalTemplate(&Settings.user_template, module, 3);
-#else  // ESP32
+#endif  // ESP8266
+#ifdef ESP32
   memcpy_P(&Settings.user_template, &kModules, sizeof(mytmplt));
-#endif  // ESP8266 - ESP32
+#endif  // ESP32
 }
 
 void SetModuleType(void)
@@ -1476,73 +1486,12 @@ bool ValidGPIO(uint32_t pin, uint32_t gpio)
   return (GPIO_USER == ValidPin(pin, BGPIO(gpio)));  // Only allow GPIO_USER pins
 }
 
-bool GetUsedInModule(uint32_t val, uint16_t *arr)
-{
-  int offset = 0;
-
-  if (!val) { return false; }  // None
-
-  if ((val >= GPIO_KEY1) && (val < GPIO_KEY1 + MAX_KEYS)) {
-    offset = (GPIO_KEY1_NP - GPIO_KEY1);
-  }
-  if ((val >= GPIO_KEY1_NP) && (val < GPIO_KEY1_NP + MAX_KEYS)) {
-    offset = -(GPIO_KEY1_NP - GPIO_KEY1);
-  }
-  if ((val >= GPIO_KEY1_INV) && (val < GPIO_KEY1_INV + MAX_KEYS)) {
-    offset = -(GPIO_KEY1_INV - GPIO_KEY1);
-  }
-  if ((val >= GPIO_KEY1_INV_NP) && (val < GPIO_KEY1_INV_NP + MAX_KEYS)) {
-    offset = -(GPIO_KEY1_INV_NP - GPIO_KEY1);
-  }
-
-  if ((val >= GPIO_SWT1) && (val < GPIO_SWT1 + MAX_SWITCHES)) {
-    offset = (GPIO_SWT1_NP - GPIO_SWT1);
-  }
-  if ((val >= GPIO_SWT1_NP) && (val < GPIO_SWT1_NP + MAX_SWITCHES)) {
-    offset = -(GPIO_SWT1_NP - GPIO_SWT1);
-  }
-
-  if ((val >= GPIO_REL1) && (val < GPIO_REL1 + MAX_RELAYS)) {
-    offset = (GPIO_REL1_INV - GPIO_REL1);
-  }
-  if ((val >= GPIO_REL1_INV) && (val < GPIO_REL1_INV + MAX_RELAYS)) {
-    offset = -(GPIO_REL1_INV - GPIO_REL1);
-  }
-
-  if ((val >= GPIO_LED1) && (val < GPIO_LED1 + MAX_LEDS)) {
-    offset = (GPIO_LED1_INV - GPIO_LED1);
-  }
-  if ((val >= GPIO_LED1_INV) && (val < GPIO_LED1_INV + MAX_LEDS)) {
-    offset = -(GPIO_LED1_INV - GPIO_LED1);
-  }
-
-  if ((val >= GPIO_PWM1) && (val < GPIO_PWM1 + MAX_PWMS)) {
-    offset = (GPIO_PWM1_INV - GPIO_PWM1);
-  }
-  if ((val >= GPIO_PWM1_INV) && (val < GPIO_PWM1_INV + MAX_PWMS)) {
-    offset = -(GPIO_PWM1_INV - GPIO_PWM1);
-  }
-
-  if ((val >= GPIO_CNTR1) && (val < GPIO_CNTR1 + MAX_COUNTERS)) {
-    offset = (GPIO_CNTR1_NP - GPIO_CNTR1);
-  }
-  if ((val >= GPIO_CNTR1_NP) && (val < GPIO_CNTR1_NP + MAX_COUNTERS)) {
-    offset = -(GPIO_CNTR1_NP - GPIO_CNTR1);
-  }
-
-  for (uint32_t i = 0; i < MAX_GPIO_PIN; i++) {
-    if (arr[i] == val) { return true; }
-    if (arr[i] == val + offset) { return true; }
-  }
-  return false;
-}
-
 bool JsonTemplate(char* dataBuf)
 {
   // Old: {"NAME":"Shelly 2.5","GPIO":[56,0,17,0,21,83,0,0,6,82,5,22,156],"FLAG":2,"BASE":18}
   // New: {"NAME":"Shelly 2.5","GPIO":[320,0,32,0,224,193,0,0,640,192,608,225,3456,4736],"FLAG":0,"BASE":18}
 
-//  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TPL: |%s|"), dataBuf);
+//  AddLog_P(LOG_LEVEL_DEBUG, PSTR("TPL: |%s|"), dataBuf);
 
   if (strlen(dataBuf) < 9) { return false; }  // Workaround exception if empty JSON like {} - Needs checks
 
@@ -1607,7 +1556,7 @@ bool JsonTemplate(char* dataBuf)
     Settings.user_template_base = base -1;  // Default WEMOS
   }
 
-//  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TPL: Converted"));
+//  AddLog_P(LOG_LEVEL_DEBUG, PSTR("TPL: Converted"));
 //  AddLogBufferSize(LOG_LEVEL_DEBUG, (uint8_t*)&Settings.user_template, sizeof(Settings.user_template) / 2, 2);
 
   return true;
@@ -1615,7 +1564,7 @@ bool JsonTemplate(char* dataBuf)
 
 void TemplateJson(void)
 {
-//  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TPL: Show"));
+//  AddLog_P(LOG_LEVEL_DEBUG, PSTR("TPL: Show"));
 //  AddLogBufferSize(LOG_LEVEL_DEBUG, (uint8_t*)&Settings.user_template, sizeof(Settings.user_template) / 2, 2);
 
   Response_P(PSTR("{\"" D_JSON_NAME "\":\"%s\",\"" D_JSON_GPIO "\":["), SettingsText(SET_TEMPLATE_NAME));
@@ -1888,7 +1837,7 @@ void I2cResetActive(uint32_t addr, uint32_t count = 1)
     i2c_active[addr / 32] &= ~(1 << (addr % 32));
     addr++;
   }
-//  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("I2C: Active %08X,%08X,%08X,%08X"), i2c_active[0], i2c_active[1], i2c_active[2], i2c_active[3]);
+//  AddLog_P(LOG_LEVEL_DEBUG, PSTR("I2C: Active %08X,%08X,%08X,%08X"), i2c_active[0], i2c_active[1], i2c_active[2], i2c_active[3]);
 }
 
 void I2cSetActive(uint32_t addr, uint32_t count = 1)
@@ -1899,13 +1848,13 @@ void I2cSetActive(uint32_t addr, uint32_t count = 1)
     i2c_active[addr / 32] |= (1 << (addr % 32));
     addr++;
   }
-//  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("I2C: Active %08X,%08X,%08X,%08X"), i2c_active[0], i2c_active[1], i2c_active[2], i2c_active[3]);
+//  AddLog_P(LOG_LEVEL_DEBUG, PSTR("I2C: Active %08X,%08X,%08X,%08X"), i2c_active[0], i2c_active[1], i2c_active[2], i2c_active[3]);
 }
 
 void I2cSetActiveFound(uint32_t addr, const char *types)
 {
   I2cSetActive(addr);
-  AddLog_P2(LOG_LEVEL_INFO, S_LOG_I2C_FOUND_AT, types, addr);
+  AddLog_P(LOG_LEVEL_INFO, S_LOG_I2C_FOUND_AT, types, addr);
 }
 
 bool I2cActive(uint32_t addr)
@@ -1932,7 +1881,7 @@ bool I2cSetDevice(uint32_t addr)
  * Syslog
  *
  * Example:
- *   AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_LOG "Any value %d"), value);
+ *   AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_LOG "Any value %d"), value);
  *
 \*********************************************************************************************/
 
@@ -1997,7 +1946,7 @@ void Syslog(void)
   } else {
     TasmotaGlobal.syslog_level = 0;
     TasmotaGlobal.syslog_timer = SYSLOG_TIMER;
-    AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION D_SYSLOG_HOST_NOT_FOUND ". " D_RETRY_IN " %d " D_UNIT_SECOND), SYSLOG_TIMER);
+    AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION D_SYSLOG_HOST_NOT_FOUND ". " D_RETRY_IN " %d " D_UNIT_SECOND), SYSLOG_TIMER);
   }
 }
 
@@ -2048,23 +1997,7 @@ void AddLog(uint32_t loglevel)
   TasmotaGlobal.prepped_loglevel = 0;
 }
 
-void AddLog_P(uint32_t loglevel, const char *formatP)
-{
-  snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), formatP);
-  AddLog(loglevel);
-}
-
-void AddLog_P(uint32_t loglevel, const char *formatP, const char *formatP2)
-{
-  char message[sizeof(TasmotaGlobal.log_data)];
-
-  snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), formatP);
-  snprintf_P(message, sizeof(message), formatP2);
-  strncat(TasmotaGlobal.log_data, message, sizeof(TasmotaGlobal.log_data) - strlen(TasmotaGlobal.log_data) -1);
-  AddLog(loglevel);
-}
-
-void PrepLog_P2(uint32_t loglevel, PGM_P formatP, ...)
+void PrepLog_P(uint32_t loglevel, PGM_P formatP, ...)
 {
   va_list arg;
   va_start(arg, formatP);
@@ -2074,8 +2007,12 @@ void PrepLog_P2(uint32_t loglevel, PGM_P formatP, ...)
   TasmotaGlobal.prepped_loglevel = loglevel;
 }
 
-void AddLog_P2(uint32_t loglevel, PGM_P formatP, ...)
+void AddLog_P(uint32_t loglevel, PGM_P formatP, ...)
 {
+  if (TasmotaGlobal.prepped_loglevel) {
+    AddLog(TasmotaGlobal.prepped_loglevel);
+  }
+
   va_list arg;
   va_start(arg, formatP);
   vsnprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), formatP, arg);
@@ -2109,7 +2046,7 @@ void AddLogBuffer(uint32_t loglevel, uint8_t *buffer, uint32_t count)
   AddLog(loglevel);
 */
   char hex_char[(count * 3) + 2];
-  AddLog_P2(loglevel, PSTR("DMP: %s"), ToHex_P(buffer, count, hex_char, sizeof(hex_char), ' '));
+  AddLog_P(loglevel, PSTR("DMP: %s"), ToHex_P(buffer, count, hex_char, sizeof(hex_char), ' '));
 }
 
 void AddLogSerial(uint32_t loglevel)
@@ -2119,7 +2056,7 @@ void AddLogSerial(uint32_t loglevel)
 
 void AddLogMissed(const char *sensor, uint32_t misses)
 {
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SNS: %s missed %d"), sensor, SENSOR_MAX_MISS - misses);
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR("SNS: %s missed %d"), sensor, SENSOR_MAX_MISS - misses);
 }
 
 void AddLogBufferSize(uint32_t loglevel, uint8_t *buffer, uint32_t count, uint32_t size) {
@@ -2176,9 +2113,10 @@ uint32_t HwRandom(void) {
 #if ESP8266
   // https://web.archive.org/web/20160922031242/http://esp8266-re.foogod.com/wiki/Random_Number_Generator
   #define _RAND_ADDR 0x3FF20E44UL
-#else // ESP32
+#endif  // ESP8266
+#ifdef ESP32
   #define _RAND_ADDR 0x3FF75144UL
-#endif
+#endif  // ESP32
   static uint32_t last_ccount = 0;
   uint32_t ccount;
   uint32_t result = 0;

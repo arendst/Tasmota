@@ -135,6 +135,7 @@ public:
     freeKey();
     freeVal();
     deepCopy(rhs);
+    return *this;
   }
 
   // Destructor, free memory that was allocated
@@ -164,6 +165,10 @@ public:
   void setFloat(float _val);
 
   void setBuf(const SBuffer &buf, size_t index, size_t len);
+
+  // specific formatters
+  void setHex32(uint32_t _val);
+  void setHex64(uint64_t _val);
 
   // set the string value
   // PMEM argument is allowed
@@ -256,6 +261,8 @@ public:
   inline Z_attribute & addAttribute(const __FlashStringHelper * name, uint8_t suffix = 0) {
     return addAttribute((const char*) name, true, suffix);
   }
+  // smaller version called often to reduce code size
+  Z_attribute & addAttributePMEM(const char * name);
 
   // Remove from list by reference, if null or not found, then do nothing
   inline void removeAttribute(const Z_attribute * attr) { remove(attr); }
@@ -295,6 +302,11 @@ public:
   // merge with secondary list, return true if ok, false if conflict
   bool mergeList(const Z_attribute_list &list2);
 };
+
+
+Z_attribute & Z_attribute_list::addAttributePMEM(const char * name) {
+  return addAttribute(name, true, 0);
+}
 
 /*********************************************************************************************\
  * 
@@ -378,6 +390,19 @@ void Z_attribute::setBuf(const SBuffer &buf, size_t index, size_t len) {
     val.bval->addBuffer(buf.buf(index), len);
   }
   type = Za_type::Za_raw;
+}
+
+void Z_attribute::setHex32(uint32_t _val) {
+  char hex[8];
+  snprintf_P(hex, sizeof(hex), PSTR("0x%04X"), _val);
+  setStr(hex);
+}
+void Z_attribute::setHex64(uint64_t _val) {
+  char hex[22];
+  hex[0] = '0';   // prefix with '0x'
+  hex[1] = 'x';
+  Uint64toHex(_val, &hex[2], 64);
+  setStr(hex);
 }
 
 // set the string value
@@ -658,6 +683,8 @@ void Z_attribute::freeVal(void) {
       break;
     case Za_type::Za_arr:
       if (val.arrval) { delete val.arrval; val.arrval = nullptr; }
+      break;
+    default:
       break;
   }
 }

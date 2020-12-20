@@ -75,6 +75,17 @@ void ESP_Restart(void) {
   ESP.reset();
 }
 
+uint32_t FlashWriteStartSector(void) {
+  return (ESP.getSketchSize() / SPI_FLASH_SEC_SIZE) + 2;  // Stay on the safe side
+}
+
+uint32_t FlashWriteMaxSector(void) {
+  return (((uint32_t)&_FS_end - 0x40200000) / SPI_FLASH_SEC_SIZE) - 2;
+}
+
+uint8_t* FlashDirectAccess(void) {
+  return (uint8_t*)(0x40200000 + (FlashWriteStartSector() * SPI_FLASH_SEC_SIZE));
+}
 #endif
 
 /*********************************************************************************************\
@@ -87,6 +98,7 @@ void ESP_Restart(void) {
 
 #include <nvs.h>
 #include <rom/rtc.h>
+#include <esp_phy_init.h>
 
 void NvmLoad(const char *sNvsName, const char *sName, void *pSettings, unsigned nSettingsLen) {
   nvs_handle handle;
@@ -108,32 +120,66 @@ void NvmSave(const char *sNvsName, const char *sName, const void *pSettings, uns
   interrupts();
 }
 
-void NvmErase(const char *sNvsName) {
+int32_t NvmErase(const char *sNvsName) {
   nvs_handle handle;
   noInterrupts();
-  nvs_open(sNvsName, NVS_READWRITE, &handle);
-  nvs_erase_all(handle);
-  nvs_commit(handle);
+  int32_t result = nvs_open(sNvsName, NVS_READWRITE, &handle);
+  if (ESP_OK == result) { result = nvs_erase_all(handle); }
+  if (ESP_OK == result) { result = nvs_commit(handle); }
   nvs_close(handle);
   interrupts();
+  return result;
 }
 
 void SettingsErase(uint8_t type) {
-  if (1 == type) {         // SDK parameter area
-  } else if (2 == type) {  // Tasmota parameter area (0x0F3xxx - 0x0FBFFF)
-  } else if (3 == type) {  // Tasmota and SDK parameter area (0x0F3xxx - 0x0FFFFF)
+  // All SDK and Tasmota data is held in default NVS partition
+  // cal_data - SDK PHY calibration data as documented in esp_phy_init.h
+  // qpc      - Tasmota Quick Power Cycle state
+  // main     - Tasmota Settings data
+  int32_t r1, r2, r3;
+  switch (type) {
+    case 0:               // Reset 2, 5, 6 = Erase all flash from program end to end of physical flash
+//      nvs_flash_erase();  // Erase RTC, PHY, sta.mac, ap.sndchan, ap.mac, Tasmota etc.
+      r1 = NvmErase("qpc");
+      r2 = NvmErase("main");
+      AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_ERASE " Tasmota data (%d,%d)"), r1, r2);
+      break;
+    case 1: case 4:       // Reset 3 or WIFI_FORCE_RF_CAL_ERASE = SDK parameter area
+      r1 = esp_phy_erase_cal_data_in_nvs();
+//      r1 = NvmErase("cal_data");
+      AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_ERASE " PHY data (%d)"), r1);
+      break;
+    case 2:               // Not used = QPC and Tasmota parameter area (0x0F3xxx - 0x0FBFFF)
+      r1 = NvmErase("qpc");
+      r2 = NvmErase("main");
+      AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_ERASE " Tasmota data (%d,%d)"), r1, r2);
+      break;
+    case 3:               // QPC Reached = QPC, Tasmota and SDK parameter area (0x0F3xxx - 0x0FFFFF)
+//      nvs_flash_erase();  // Erase RTC, PHY, sta.mac, ap.sndchan, ap.mac, Tasmota etc.
+      r1 = NvmErase("qpc");
+      r2 = NvmErase("main");
+//      r3 = esp_phy_erase_cal_data_in_nvs();
+//      r3 = NvmErase("cal_data");
+//      AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_ERASE " Tasmota (%d,%d) and PHY data (%d)"), r1, r2, r3);
+      AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_ERASE " Tasmota data (%d,%d)"), r1, r2);
+      break;
   }
-
-  NvmErase("main");
-
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_ERASE " t=%d"), type);
 }
 
 void SettingsRead(void *data, size_t size) {
+#ifdef USE_TFS
+//  if (!TfsLoadFile("/settings", (uint8_t*)data, size)) {
+    NvmLoad("main", "Settings", data, size);
+//  }
+#else
   NvmLoad("main", "Settings", data, size);
+#endif
 }
 
 void SettingsWrite(const void *pSettings, unsigned nSettingsLen) {
+#ifdef USE_TFS
+//  TfsSaveFile("/settings", (const uint8_t*)pSettings, nSettingsLen);
+#endif
   NvmSave("main", "Settings", pSettings, nSettingsLen);
 }
 
@@ -145,41 +191,103 @@ void QPCWrite(const void *pSettings, unsigned nSettingsLen) {
   NvmSave("qpc", "pcreg", pSettings, nSettingsLen);
 }
 
-void ZigbeeErase(void) {
-  NvmErase("zb");
+void NvsInfo(void) {
+  nvs_stats_t nvs_stats;
+  nvs_get_stats(NULL, &nvs_stats);
+  AddLog_P(LOG_LEVEL_INFO, PSTR("NVS: Used %d/%d entries, NameSpaces %d"),
+    nvs_stats.used_entries, nvs_stats.total_entries, nvs_stats.namespace_count);
 }
 
-void ZigbeeRead(void *pSettings, unsigned nSettingsLen) {
-  NvmLoad("zb", "zigbee", pSettings, nSettingsLen);
+void ZigbeeErase(unsigned nSettingsLen) {
+//  NvmErase("zb");
+#ifdef USE_TFS
+  TfsEraseFile("/zb", nSettingsLen);
+#endif
 }
 
-void ZigbeeWrite(const void *pSettings, unsigned nSettingsLen) {
-  NvmSave("zb", "zigbee", pSettings, nSettingsLen);
+void ZigbeeRead(uint8_t *pSettings, unsigned nSettingsLen) {
+//  NvmLoad("zb", "zigbee", pSettings, nSettingsLen);
+#ifdef USE_TFS
+  TfsLoadFile("/zb", pSettings, nSettingsLen);
+#endif
 }
+
+void ZigbeeWrite(const uint8_t *pSettings, unsigned nSettingsLen) {
+//  NvmSave("zb", "zigbee", pSettings, nSettingsLen);
+#ifdef USE_TFS
+  TfsSaveFile("/zb", pSettings, nSettingsLen);
+#endif
+}
+
 
 //
-// sntp emulation
+// Flash memory mapping
 //
-static bool bNetIsTimeSync = false;
-//
-void SntpInit() {
-  bNetIsTimeSync = true;
+
+#include "Esp.h"
+#include "rom/spi_flash.h"
+#include "esp_spi_flash.h"
+#include <memory>
+#include <soc/soc.h>
+#include <soc/efuse_reg.h>
+#include <esp_partition.h>
+extern "C" {
+#include "esp_ota_ops.h"
+#include "esp_image_format.h"
 }
 
-uint32_t SntpGetCurrentTimestamp(void) {
-  time_t now = 0;
-  if (bNetIsTimeSync || TasmotaGlobal.ntp_force_sync)
-  {
-    //Serial_DebugX(("timesync configTime %d\n", TasmotaGlobal.ntp_force_sync, bNetIsTimeSync));
-    // init to UTC Time
-    configTime(0, 0, SettingsText(SET_NTPSERVER1), SettingsText(SET_NTPSERVER2), SettingsText(SET_NTPSERVER3));
-    bNetIsTimeSync = false;
-    TasmotaGlobal.ntp_force_sync = false;
+uint32_t EspFlashBaseAddress(void) {
+  const esp_partition_t* partition = esp_ota_get_next_update_partition(nullptr);
+  if (!partition) { return 0; }
+  return partition->address;  // For tasmota 0x00010000 or 0x00200000
+}
+
+uint32_t EspFlashBaseEndAddress(void) {
+  const esp_partition_t* partition = esp_ota_get_next_update_partition(nullptr);
+  if (!partition) { return 0; }
+  return partition->address + partition->size;  // For tasmota 0x00200000 or 0x003F0000
+}
+
+uint8_t* EspFlashMmap(uint32_t address) {
+  static spi_flash_mmap_handle_t handle = 0;
+
+  if (handle) {
+    spi_flash_munmap(handle);
+    handle = 0;
   }
-  time(&now);
-  return now;
+
+  const uint8_t* data;
+  int32_t err = spi_flash_mmap(address, 5 * SPI_FLASH_MMU_PAGE_SIZE, SPI_FLASH_MMAP_DATA, (const void **)&data, &handle);
+
+/*
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR("DBG: Spi_flash_map %d"), err);
+
+  spi_flash_mmap_dump();
+*/
+  return (uint8_t*)data;
 }
 
+/*
+int32_t EspPartitionMmap(uint32_t action) {
+  static spi_flash_mmap_handle_t handle;
+
+  int32_t err = 0;
+  if (1 == action) {
+    const esp_partition_t *partition = esp_ota_get_running_partition();
+//    const esp_partition_t* partition = esp_ota_get_next_update_partition(nullptr);
+    if (!partition) { return 0; }
+    err = esp_partition_mmap(partition, 0, 4 * SPI_FLASH_MMU_PAGE_SIZE, SPI_FLASH_MMAP_DATA, (const void **)&TasmotaGlobal_mmap_data, &handle);
+
+    AddLog_P(LOG_LEVEL_DEBUG, PSTR("DBG: Partition start 0x%08X, Partition end 0x%08X, Mmap data 0x%08X"), partition->address, partition->size, TasmotaGlobal_mmap_data);
+
+  } else {
+    spi_flash_munmap(handle);
+    handle = 0;
+  }
+  return err;
+}
+
+*/
 //
 // Crash stuff
 //
@@ -237,7 +345,7 @@ void DisableBrownout(void) {
 
 String ESP32GetResetReason(uint32_t cpu_no) {
 	// tools\sdk\include\esp32\rom\rtc.h
-  switch (rtc_get_reset_reason( (RESET_REASON) cpu_no)) {
+  switch (rtc_get_reset_reason(cpu_no)) {
     case POWERON_RESET          : return F("Vbat power on reset");                              // 1
     case SW_RESET               : return F("Software reset digital core");                      // 3
     case OWDT_RESET             : return F("Legacy watch dog reset digital core");              // 4
@@ -253,8 +361,8 @@ String ESP32GetResetReason(uint32_t cpu_no) {
     case EXT_CPU_RESET          : return F("or APP CPU, reseted by PRO CPU");                   // 14
     case RTCWDT_BROWN_OUT_RESET : return F("Reset when the vdd voltage is not stable");         // 15
     case RTCWDT_RTC_RESET       : return F("RTC Watch dog reset digital core and rtc module");  // 16
-    default                     : return F("NO_MEAN");                                          // 0
   }
+  return F("No meaning");                                                                       // 0 and undefined
 }
 
 String ESP_getResetReason(void) {
@@ -267,6 +375,7 @@ uint32_t ESP_ResetInfoReason(void) {
   if (SW_CPU_RESET == reason) { return REASON_SOFT_RESTART; }
   if (DEEPSLEEP_RESET == reason)  { return REASON_DEEP_SLEEP_AWAKE; }
   if (SW_RESET == reason) { return REASON_EXT_SYS_RST; }
+  return -1; //no "official error code", but should work with the current code base
 }
 
 uint32_t ESP_getChipId(void) {
@@ -302,4 +411,28 @@ void ESP_Restart(void) {
   ESP.restart();
 }
 
+uint32_t FlashWriteStartSector(void) {
+  // Needs to be on SPI_FLASH_MMU_PAGE_SIZE (= 0x10000) alignment for mmap usage
+  uint32_t aligned_address = ((EspFlashBaseAddress() + (2 * SPI_FLASH_MMU_PAGE_SIZE)) / SPI_FLASH_MMU_PAGE_SIZE) * SPI_FLASH_MMU_PAGE_SIZE;
+  return aligned_address / SPI_FLASH_SEC_SIZE;
+}
+
+uint32_t FlashWriteMaxSector(void) {
+  // Needs to be on SPI_FLASH_MMU_PAGE_SIZE (= 0x10000) alignment for mmap usage
+  uint32_t aligned_end_address = (EspFlashBaseEndAddress() / SPI_FLASH_MMU_PAGE_SIZE) * SPI_FLASH_MMU_PAGE_SIZE;
+  return aligned_end_address / SPI_FLASH_SEC_SIZE;
+}
+
+uint8_t* FlashDirectAccess(void) {
+  uint32_t address = FlashWriteStartSector() * SPI_FLASH_SEC_SIZE;
+  uint8_t* data = EspFlashMmap(address);
+/*
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR("DBG: Flash start address 0x%08X, Mmap address 0x%08X"), address, data);
+
+  uint8_t buf[32];
+  memcpy(buf, data, sizeof(buf));
+  AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t*)&buf, 32);
+*/
+  return data;
+}
 #endif  // ESP32

@@ -67,6 +67,10 @@ void _Log_heap_size(const char *msg) {
 #define LOG_HEAP_SIZE(a)
 #endif
 
+// get UTC time from Tasmota
+extern uint32_t UtcTime(void);
+extern uint32_t CfgTime(void);
+
 // Stack thunked versions of calls
 // Initially in BearSSLHelpers.h
 extern "C" {
@@ -179,7 +183,6 @@ void WiFiClientSecure_light::_clear() {
   _eng = nullptr;
   _iobuf_in = nullptr;
   _iobuf_out = nullptr;
-  _now = 0; // You can override or ensure time() is correct w/configTime
   setBufferSizes(1024, 1024); // reasonable minimum
   _handshake_done = false;
 	_last_error = 0;
@@ -918,6 +921,10 @@ bool WiFiClientSecure_light::_connectSSL(const char* hostName) {
 		br_x509_minimal_set_rsa(x509_minimal, br_ssl_engine_get_rsavrfy(_eng));
 		br_x509_minimal_set_hash(x509_minimal, br_sha256_ID, &br_sha256_vtable);
 		br_ssl_engine_set_x509(_eng, &x509_minimal->vtable);
+    uint32_t now = UtcTime();
+    uint32_t cfg_time = CfgTime();
+    if (cfg_time > now) { now = cfg_time; }
+    br_x509_minimal_set_time(x509_minimal, now / 86400 + 719528, now % 86400);
 
 	#else
 	  x509_insecure = (br_x509_pubkeyfingerprint_context*) malloc(sizeof(br_x509_pubkeyfingerprint_context));

@@ -361,7 +361,7 @@
 #define D_TRANSFER_STARTED "Transfer gestartet"
 #define D_UPLOAD_ERR_1 "Keine Datei ausgewählt"
 #define D_UPLOAD_ERR_2 "Ungenügend Speicherplatz"
-#define D_UPLOAD_ERR_3 "Magic Byte ist nicht 0xE9"
+#define D_UPLOAD_ERR_3 "Falsche Dateisignatur"
 #define D_UPLOAD_ERR_4 "Datei überschreitet vorhdn. Flashspeicher"
 #define D_UPLOAD_ERR_5 "Upload Buffer Vergleich weicht ab"
 #define D_UPLOAD_ERR_6 "Upload fehlgeschlagen. Aktiviere logging 3"
@@ -488,7 +488,7 @@
 #define D_START_SIGNAL_LOW "Startausschlag niedrig"
 #define D_START_SIGNAL_HIGH "Startausschlag hoch"
 #define D_PULSE "Puls"
-#define D_CHECKSUM_FAILURE "Checksum-Fehler"
+#define D_CHECKSUM_FAILURE "Prüfsummen-Fehler"
 
 // xsns_07_sht1x.ino
 #define D_SENSOR_DID_NOT_ACK_COMMAND "Sensor hat ACK-Befehl nicht ausgeführt"
@@ -673,6 +673,8 @@
 #define D_SENSOR_A4988_MS1     "A4988 MS1"
 #define D_SENSOR_OUTPUT_HI     "Output Hi"
 #define D_SENSOR_OUTPUT_LO     "Output Lo"
+#define D_SENSOR_AS608_TX      "AS608 Tx"
+#define D_SENSOR_AS608_RX      "AS608 Rx"
 #define D_SENSOR_DDS2382_TX    "DDS238-2 Tx"
 #define D_SENSOR_DDS2382_RX    "DDS238-2 Rx"
 #define D_SENSOR_DDSU666_TX    "DDSU666 Tx"
@@ -729,6 +731,9 @@
 #define D_SENSOR_IEM3000_RX    "iEM3000 RX"
 #define D_SENSOR_MIEL_HVAC_TX  "MiEl HVAC Tx"
 #define D_SENSOR_MIEL_HVAC_RX  "MiEl HVAC Rx"
+#define D_SENSOR_SHELLY_DIMMER_BOOT0 "SHD Boot 0"
+#define D_SENSOR_SHELLY_DIMMER_RST_INV "SHD Reset"
+#define D_SENSOR_RC522_RST     "RC522 Rst"
 
 // Units
 #define D_UNIT_AMPERE "A"
@@ -755,6 +760,7 @@
 #define D_UNIT_MICROSECOND "µs"
 #define D_UNIT_MICROSIEMENS_PER_CM "µS/cm"
 #define D_UNIT_MILLIAMPERE "mA"
+#define D_UNIT_MILLILITERS "ml"
 #define D_UNIT_MILLIMETER "mm"
 #define D_UNIT_MILLIMETER_MERCURY "mmHg"
 #define D_UNIT_MILLISECOND "ms"
@@ -859,5 +865,39 @@
 #define D_OVERLOAD        "ADPS"
 #define D_MAX_POWER       "max. Leistung"
 #define D_MAX_CURRENT     "max. Stromstärke"
+
+// xsns_79_as608.ino
+#define D_FP_ENROLL_PLACEFINGER "Finger auflegen"
+#define D_FP_ENROLL_REMOVEFINGER "Finger entfernen"
+#define D_FP_ENROLL_PLACESAMEFINGER "gleichen Finger auflegen"
+#define D_FP_ENROLL_RETRY "Fehler - wiederholen"
+#define D_FP_ENROLL_RESTART "Neustart"
+#define D_FP_ENROLL_ERROR "Fehler"
+#define D_FP_ENROLL_RESET "Zurücksetzen"
+#define D_FP_ENROLL_ACTIVE "Aktiv"
+#define D_FP_ENROLL_INACTIVE "Inaktiv"
+// Indexed by Adafruit_Fingerprint.h defines
+#define D_FP_PACKETRECIEVEERR "Kommunikationsfehler"    // 0x01 Error when receiving data package
+#define D_FP_NOFINGER ""                                // 0x02 No finger on the sensor
+#define D_FP_IMAGEFAIL "Abbildungsfehler"               // 0x03 Failed to enroll the finger
+#define D_FP_IMAGEMESS "schlechtes Abbild"              // 0x06 Failed to generate character file due to overly disorderly fingerprint image
+#define D_FP_FEATUREFAIL "Fingerabdruck zu klein"       // 0x07 Failed to generate character file due to the lack of character point or small fingerprint image
+#define D_FP_NOMATCH "keine Übereinstimmung"           // 0x08 Finger doesn't match
+#define D_FP_NOTFOUND "keinen Eintrag gefunden"         // 0x09 Failed to find matching finger
+#define D_FP_ENROLLMISMATCH "Fingerabdruck fehlerhaft"  // 0x0A Failed to combine the character files
+#define D_FP_BADLOCATION "Eintrag Fehler"               // 0x0B Addressed PageID is beyond the finger library
+#define D_FP_DBRANGEFAIL "Datenbankfehler"              // 0x0C Error when reading template from library or invalid template
+#define D_FP_UPLOADFEATUREFAIL "Speicherfehler"         // 0x0D Error when uploading template
+#define D_FP_PACKETRESPONSEFAIL "Auslesefehler"         // 0x0E Module failed to receive the following data packages
+#define D_FP_UPLOADFAIL "Bildspeicherfehler"            // 0x0F Error when uploading image
+#define D_FP_DELETEFAIL "Löschfehler"                   // 0x10 Failed to delete the template
+#define D_FP_DBCLEARFAIL "Datenbanklöschfehler"         // 0x11 Failed to clear finger library
+#define D_FP_PASSFAIL "keine Übereinstimmung"           // 0x13 Find whether the fingerprint passed or failed
+#define D_FP_INVALIDIMAGE "Abbild ungültig"             // 0x15 Failed to generate image because of lac of valid primary image
+#define D_FP_FLASHERR "Flash Schreibfehler"             // 0x18 Error when writing flash
+#define D_FP_INVALIDREG "Ungültige ID-Nummer"           // 0x1A Invalid register number
+#define D_FP_ADDRCODE "Addresse"                        // 0x20 Address code
+#define D_FP_PASSVERIFY "Übereinstimmung"               // 0x21 Verify the fingerprint passed
+#define D_FP_UNKNOWNERROR "Fehler"                      // Any other error
 
 #endif  // _LANGUAGE_DE_DE_H_

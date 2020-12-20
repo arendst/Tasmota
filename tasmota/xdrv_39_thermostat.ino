@@ -234,9 +234,9 @@ struct THERMOSTAT {
   uint16_t time_max_action = THERMOSTAT_TIME_MAX_ACTION;                      // Maximum thermostat time per cycle in minutes
   uint16_t time_min_action = THERMOSTAT_TIME_MIN_ACTION;                      // Minimum thermostat time per cycle in minutes
   uint16_t time_min_turnoff_action = THERMOSTAT_TIME_MIN_TURNOFF_ACTION;      // Minimum turnoff time in minutes, below it the thermostat will stay on
+  int16_t temp_frost_protect = THERMOSTAT_TEMP_FROST_PROTECT;                 // Minimum temperature for frost protection, in tenths of degrees celsius
   uint8_t temp_reset_anti_windup = THERMOSTAT_TEMP_RESET_ANTI_WINDUP;         // Range where reset antiwindup is disabled, in tenths of degrees celsius
   int8_t temp_hysteresis = THERMOSTAT_TEMP_HYSTERESIS;                        // Range hysteresis for temperature PI controller, in tenths of degrees celsius
-  uint8_t temp_frost_protect = THERMOSTAT_TEMP_FROST_PROTECT;                 // Minimum temperature for frost protection, in tenths of degrees celsius
   ThermostatDiagBitfield diag;                                                // Bittfield including diagnostic flags
 #ifdef USE_PI_AUTOTUNING
   uint8_t dutycycle_step_autotune = THERMOSTAT_DUTYCYCLE_AUTOTUNE;            // Duty cycle for the step response of the autotune PI function in %
@@ -1237,7 +1237,7 @@ bool ThermostatTimerArm(uint8_t ctr_output, int16_t tempVal)
   // TempVal unit is tenths of degrees celsius
   if ((tempVal >= -1000)
     && (tempVal <= 1000)
-    && (tempVal >= (int16_t)Thermostat[ctr_output].temp_frost_protect)) {
+    && (tempVal >= Thermostat[ctr_output].temp_frost_protect)) {
       Thermostat[ctr_output].temp_target_level = tempVal;
       Thermostat[ctr_output].status.thermostat_mode = THERMOSTAT_AUTOMATIC_OP;
       result = true;
@@ -1272,58 +1272,58 @@ void ThermostatVirtualSwitchCtrState(uint8_t ctr_output)
 void ThermostatDebug(uint8_t ctr_output)
 {
   char result_chr[FLOATSZ];
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(""));
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("------ Thermostat Start ------"));
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR(""));
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR("------ Thermostat Start ------"));
   dtostrfd(Thermostat[ctr_output].status.counter_seconds, 0, result_chr);
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Thermostat[ctr_output].status.counter_seconds: %s"), result_chr);
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR("Thermostat[ctr_output].status.counter_seconds: %s"), result_chr);
   dtostrfd(Thermostat[ctr_output].status.thermostat_mode, 0, result_chr);
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Thermostat[ctr_output].status.thermostat_mode: %s"), result_chr);
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR("Thermostat[ctr_output].status.thermostat_mode: %s"), result_chr);
   dtostrfd(Thermostat[ctr_output].diag.state_emergency, 0, result_chr);
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Thermostat[ctr_output].diag.state_emergency: %s"), result_chr);
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR("Thermostat[ctr_output].diag.state_emergency: %s"), result_chr);
   dtostrfd(Thermostat[ctr_output].diag.output_inconsist_ctr, 0, result_chr);
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Thermostat[ctr_output].diag.output_inconsist_ctr: %s"), result_chr);
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR("Thermostat[ctr_output].diag.output_inconsist_ctr: %s"), result_chr);
   dtostrfd(Thermostat[ctr_output].status.controller_mode, 0, result_chr);
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Thermostat[ctr_output].status.controller_mode: %s"), result_chr);
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR("Thermostat[ctr_output].status.controller_mode: %s"), result_chr);
   dtostrfd(Thermostat[ctr_output].status.command_output, 0, result_chr);
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Thermostat[ctr_output].status.command_output: %s"), result_chr);
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR("Thermostat[ctr_output].status.command_output: %s"), result_chr);
   dtostrfd(Thermostat[ctr_output].status.status_output, 0, result_chr);
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Thermostat[ctr_output].status.status_output: %s"), result_chr);
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR("Thermostat[ctr_output].status.status_output: %s"), result_chr);
   dtostrfd(Thermostat[ctr_output].status.status_input, 0, result_chr);
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Thermostat[ctr_output].status.status_input: %s"), result_chr);
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR("Thermostat[ctr_output].status.status_input: %s"), result_chr);
   dtostrfd(Thermostat[ctr_output].status.phase_hybrid_ctr, 0, result_chr);
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Thermostat[ctr_output].status.phase_hybrid_ctr: %s"), result_chr);
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR("Thermostat[ctr_output].status.phase_hybrid_ctr: %s"), result_chr);
   dtostrfd(Thermostat[ctr_output].status.sensor_alive, 0, result_chr);
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Thermostat[ctr_output].status.sensor_alive: %s"), result_chr);
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR("Thermostat[ctr_output].status.sensor_alive: %s"), result_chr);
   dtostrfd(Thermostat[ctr_output].status.status_cycle_active, 0, result_chr);
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Thermostat[ctr_output].status.status_cycle_active: %s"), result_chr);
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR("Thermostat[ctr_output].status.status_cycle_active: %s"), result_chr);
   dtostrfd(Thermostat[ctr_output].temp_pi_error, 0, result_chr);
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Thermostat[ctr_output].temp_pi_error: %s"), result_chr);
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR("Thermostat[ctr_output].temp_pi_error: %s"), result_chr);
   dtostrfd(Thermostat[ctr_output].temp_pi_accum_error, 0, result_chr);
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Thermostat[ctr_output].temp_pi_accum_error: %s"), result_chr);
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR("Thermostat[ctr_output].temp_pi_accum_error: %s"), result_chr);
   dtostrfd(Thermostat[ctr_output].time_proportional_pi, 0, result_chr);
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Thermostat[ctr_output].time_proportional_pi: %s"), result_chr);
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR("Thermostat[ctr_output].time_proportional_pi: %s"), result_chr);
   dtostrfd(Thermostat[ctr_output].time_integral_pi, 0, result_chr);
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Thermostat[ctr_output].time_integral_pi: %s"), result_chr);
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR("Thermostat[ctr_output].time_integral_pi: %s"), result_chr);
   dtostrfd(Thermostat[ctr_output].time_total_pi, 0, result_chr);
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Thermostat[ctr_output].time_total_pi: %s"), result_chr);
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR("Thermostat[ctr_output].time_total_pi: %s"), result_chr);
   dtostrfd(Thermostat[ctr_output].temp_measured_gradient, 0, result_chr);
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Thermostat[ctr_output].temp_measured_gradient: %s"), result_chr);
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR("Thermostat[ctr_output].temp_measured_gradient: %s"), result_chr);
   dtostrfd(Thermostat[ctr_output].time_rampup_deadtime, 0, result_chr);
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Thermostat[ctr_output].time_rampup_deadtime: %s"), result_chr);
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR("Thermostat[ctr_output].time_rampup_deadtime: %s"), result_chr);
   dtostrfd(Thermostat[ctr_output].temp_rampup_meas_gradient, 0, result_chr);
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Thermostat[ctr_output].temp_rampup_meas_gradient: %s"), result_chr);
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR("Thermostat[ctr_output].temp_rampup_meas_gradient: %s"), result_chr);
   dtostrfd(Thermostat[ctr_output].time_ctr_changepoint, 0, result_chr);
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Thermostat[ctr_output].time_ctr_changepoint: %s"), result_chr);
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR("Thermostat[ctr_output].time_ctr_changepoint: %s"), result_chr);
   dtostrfd(Thermostat[ctr_output].temp_rampup_output_off, 0, result_chr);
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Thermostat[ctr_output].temp_rampup_output_off: %s"), result_chr);
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR("Thermostat[ctr_output].temp_rampup_output_off: %s"), result_chr);
   dtostrfd(Thermostat[ctr_output].time_ctr_checkpoint, 0, result_chr);
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Thermostat[ctr_output].time_ctr_checkpoint: %s"), result_chr);
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR("Thermostat[ctr_output].time_ctr_checkpoint: %s"), result_chr);
   dtostrfd(TasmotaGlobal.uptime, 0, result_chr);
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("uptime: %s"), result_chr);
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR("uptime: %s"), result_chr);
   dtostrfd(TasmotaGlobal.power, 0, result_chr);
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("power: %s"), result_chr);
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("------ Thermostat End ------"));
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(""));
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR("power: %s"), result_chr);
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR("------ Thermostat End ------"));
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR(""));
 }
 #endif // DEBUG_THERMOSTAT
 
@@ -1332,7 +1332,14 @@ void ThermostatGetLocalSensor(uint8_t ctr_output) {
   JsonParser parser((char*)buf.c_str());
   JsonParserObject root = parser.getRootObject();
   if (root) {
-    JsonParserToken value_token = root[PSTR(THERMOSTAT_SENSOR_NAME)].getObject()[PSTR("Temperature")];
+    String sensor_name = THERMOSTAT_SENSOR_NAME;
+    const char* value_c;
+    if (  (THERMOSTAT_SENSOR_NUMBER > 1)
+        &&(THERMOSTAT_CONTROLLER_OUTPUTS > 1)
+        &&(ctr_output < THERMOSTAT_SENSOR_NUMBER)) {
+      sensor_name.concat("_" + (ctr_output + 1));
+    }
+    JsonParserToken value_token = root[sensor_name].getObject()[PSTR("Temperature")];
     if (value_token.isNum()) {
       int16_t value = value_token.getFloat() * 10;
       if (Thermostat[ctr_output].status.temp_format == TEMP_FAHRENHEIT) {
@@ -1404,16 +1411,16 @@ void CmndTempFrostProtectSet(void)
       else {
         value = (int16_t)(CharToFloat(XdrvMailbox.data) * 10);
       }
-      if ( (value >= 0)
-        && (value <= 127)) {
-        Thermostat[ctr_output].temp_frost_protect = (uint8_t)value;
+      if ( (value >= -1000)
+        && (value <= 1000)) {
+        Thermostat[ctr_output].temp_frost_protect = value;
       }
     }
     if (Thermostat[ctr_output].status.temp_format == TEMP_FAHRENHEIT) {
       value = ThermostatCelsiusToFahrenheit((int32_t)Thermostat[ctr_output].temp_frost_protect, TEMP_CONV_ABSOLUTE);
     }
     else {
-      value = (int16_t)Thermostat[ctr_output].temp_frost_protect;
+      value = Thermostat[ctr_output].temp_frost_protect;
     }
     ResponseCmndFloat((float)value / 10, 1);
   }
@@ -1575,7 +1582,7 @@ void CmndTempTargetSet(void)
       }
       if ( (value >= -1000)
         && (value <= 1000)
-        && (value >= (int16_t)Thermostat[ctr_output].temp_frost_protect)) {
+        && (value >= Thermostat[ctr_output].temp_frost_protect)) {
         Thermostat[ctr_output].temp_target_level = value;
       }
     }

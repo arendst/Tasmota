@@ -101,7 +101,6 @@ float TimeFormula(float *DK, uint32_t Tdays) {
   float M = InPi( (pi2 * 0.993133f) + (pi2 * 99.997361f / 36525.0f) * Tdays);
   float L = InPi( (pi2 * 0.7859453f) + M + (6893.0f * sinf(M) + 72.0f * sinf(M+M) + (6191.2f / 36525.0f) * Tdays) * (pi2 / 1296.0e3f));
 
-  float eps = 0.40904f;         // we take this angle as constant over the next decade
   float cos_eps = 0.91750f;     // precompute cos(eps)
   float sin_eps = 0.39773f;     // precompute sin(eps)
 
@@ -359,7 +358,6 @@ void CmndTimer(void)
             error = 1;
           }
           else {
-            char parm_uc[10];
             index--;
             JsonParserToken val = root[PSTR(D_JSON_TIMER_ARM)];
             if (val) {
@@ -511,8 +509,6 @@ void CmndLatitude(void)
 #ifdef USE_TIMERS_WEB
 
 #define WEB_HANDLE_TIMER "tm"
-
-const char S_CONFIGURE_TIMER[] PROGMEM = D_CONFIGURE_TIMER;
 
 const char HTTP_BTN_MENU_TIMER[] PROGMEM =
   "<p><form action='" WEB_HANDLE_TIMER "' method='get'><button>" D_CONFIGURE_TIMER "</button></form></p>";
@@ -843,7 +839,7 @@ void HandleTimerConfiguration(void)
 {
   if (!HttpCheckPriviledgedAccess()) { return; }
 
-  AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_CONFIGURE_TIMER);
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_CONFIGURE_TIMER));
 
   if (Webserver->hasArg("save")) {
     TimerSaveSettings();
@@ -851,7 +847,7 @@ void HandleTimerConfiguration(void)
     return;
   }
 
-  WSContentStart_P(S_CONFIGURE_TIMER);
+  WSContentStart_P(PSTR(D_CONFIGURE_TIMER));
   WSContentSend_P(HTTP_TIMER_SCRIPT1);
 #ifdef USE_SUNRISE
   WSContentSend_P(HTTP_TIMER_SCRIPT2);

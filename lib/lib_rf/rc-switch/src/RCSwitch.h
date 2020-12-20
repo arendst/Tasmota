@@ -10,7 +10,7 @@
   - Frank Oltmanns / <first name>.<last name>(at)gmail(dot)com
   - Max Horn / max(at)quendi(dot)de
   - Robert ter Vehn / <first name>.<last name>(at)gmail(dot)com
-  
+
   Project home: https://github.com/sui77/rc-switch/
 
   This library is free software; you can redistribute it and/or
@@ -65,7 +65,7 @@ class RCSwitch {
 
   public:
     RCSwitch();
-    
+
     void switchOn(int nGroupNumber, int nSwitchNumber);
     void switchOff(int nGroupNumber, int nSwitchNumber);
     void switchOn(const char* sGroup, int nSwitchNumber);
@@ -80,7 +80,7 @@ class RCSwitch {
     void sendTriState(const char* sCodeWord);
     void send(unsigned long long code, unsigned int length);
     void send(const char* sCodeWord);
-    
+
     #if not defined( RCSwitchDisableReceiving )
     void enableReceive(int interrupt);
     void enableReceive();
@@ -93,14 +93,16 @@ class RCSwitch {
     unsigned int getReceivedDelay();
     unsigned int getReceivedProtocol();
     unsigned int* getReceivedRawdata();
+    uint8_t getNumProtos();
     #endif
-  
+
     void enableTransmit(int nTransmitterPin);
     void disableTransmit();
     void setPulseLength(int nPulseLength);
     void setRepeatTransmit(int nRepeatTransmit);
     #if not defined( RCSwitchDisableReceiving )
     void setReceiveTolerance(int nPercent);
+    void setReceiveProtocolMask(unsigned long long mask);
     #endif
 
     /**
@@ -167,17 +169,17 @@ class RCSwitch {
     #endif
     int nTransmitterPin;
     int nRepeatTransmit;
-    
     Protocol protocol;
 
     #if not defined( RCSwitchDisableReceiving )
     static int nReceiveTolerance;
     volatile static unsigned long long nReceivedValue;
+    volatile static unsigned long long nReceiveProtocolMask;
     volatile static unsigned int nReceivedBitlength;
     volatile static unsigned int nReceivedDelay;
     volatile static unsigned int nReceivedProtocol;
     const static unsigned int nSeparationLimit;
-    /* 
+    /*
      * timings[0] contains sync timing, followed by a number of bits
      */
     static unsigned int timings[RCSWITCH_MAX_CHANGES];
@@ -185,7 +187,7 @@ class RCSwitch {
     static unsigned int buftimings[4];
     #endif
 
-    
+
 };
 
 #endif

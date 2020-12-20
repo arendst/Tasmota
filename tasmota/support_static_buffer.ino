@@ -177,6 +177,13 @@ public:
     }
     return 0;
   }
+  uint32_t get32BigEndian(const size_t offset) const {
+    if (offset < len() - 3) {
+      return _buf->buf[offset+3] | (_buf->buf[offset+2] << 8) |
+            (_buf->buf[offset+1] << 16) | (_buf->buf[offset] << 24);
+    }
+    return 0;
+  }
   int32_t get32IBigEndian(const size_t offset) const {
     if (offset < len() - 3) {
       return _buf->buf[offset+3] | (_buf->buf[offset+2] << 8) |

@@ -512,7 +512,7 @@ bool MCP230xx_Command(void)
             if (Settings.mcp230xx_config[pin].int_count_en) {
               Settings.mcp230xx_config[pin].int_count_en=0;
               MCP230xx_CheckForIntCounter();
-              AddLog_P2(LOG_LEVEL_INFO, PSTR("*** WARNING *** - Disabled INTCNT for pin D%i"),pin);
+              AddLog_P(LOG_LEVEL_INFO, PSTR("*** WARNING *** - Disabled INTCNT for pin D%i"),pin);
             }
             Response_P(MCP230XX_INTCFG_RESPONSE,"DEF",pin,Settings.mcp230xx_config[pin].int_report_defer);  // "{\"MCP230xx_INT%s\":{\"D_%i\":%i}}";
             return serviced;
@@ -550,14 +550,14 @@ bool MCP230xx_Command(void)
             Settings.mcp230xx_config[pin].int_count_en=intcnt;
             if (Settings.mcp230xx_config[pin].int_report_defer) {
               Settings.mcp230xx_config[pin].int_report_defer=0;
-              AddLog_P2(LOG_LEVEL_INFO, PSTR("*** WARNING *** - Disabled INTDEF for pin D%i"),pin);
+              AddLog_P(LOG_LEVEL_INFO, PSTR("*** WARNING *** - Disabled INTDEF for pin D%i"),pin);
             }
             if (Settings.mcp230xx_config[pin].int_report_mode < 3) {
               Settings.mcp230xx_config[pin].int_report_mode=3;
-              AddLog_P2(LOG_LEVEL_INFO, PSTR("*** WARNING *** - Disabled immediate interrupt/telemetry reporting for pin D%i"),pin);
+              AddLog_P(LOG_LEVEL_INFO, PSTR("*** WARNING *** - Disabled immediate interrupt/telemetry reporting for pin D%i"),pin);
             }
             if ((Settings.mcp230xx_config[pin].int_count_en) && (!Settings.mcp230xx_int_timer)) {
-              AddLog_P2(LOG_LEVEL_INFO, PSTR("*** WARNING *** - INTCNT enabled for pin D%i but global INTTIMER is disabled!"),pin);
+              AddLog_P(LOG_LEVEL_INFO, PSTR("*** WARNING *** - INTCNT enabled for pin D%i but global INTTIMER is disabled!"),pin);
             }
             MCP230xx_CheckForIntCounter(); // update register on whether or not we should be counting interrupts
             Response_P(MCP230XX_INTCFG_RESPONSE,"CNT",pin,Settings.mcp230xx_config[pin].int_count_en);  // "{\"MCP230xx_INT%s\":{\"D_%i\":%i}}";
@@ -801,7 +801,7 @@ void MCP230xx_SwitchRelay() {
     uint8_t pin = mcp230xx_outpinmapping[i - (TasmotaGlobal.devices_present - mcp230xx_oldoutpincount)];
     uint8_t pincmd = Settings.mcp230xx_config[pin].pinmode - 5;
     uint8_t relay_state = bitRead(XdrvMailbox.index, i);
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("MCP: relay %d pin_no %d state %d"), i,pin, relay_state);
+    AddLog_P(LOG_LEVEL_DEBUG, PSTR("MCP: relay %d pin_no %d state %d"), i,pin, relay_state);
     switch (relay_state) {
     case 1:
       MCP230xx_SetOutPin(pin,abs(pincmd-1));

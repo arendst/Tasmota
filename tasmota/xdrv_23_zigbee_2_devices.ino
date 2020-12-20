@@ -32,6 +32,7 @@ enum class Z_Data_Type : uint8_t {
   Z_Alarm = 4,
   Z_Thermo = 5,             // Thermostat and sensor for home environment (temp, himudity, pressure)
   Z_OnOff = 6,              // OnOff, Buttons and Relays (always complements Lights and Plugs)
+  Z_Mode = 0xE,             // Encode special modes for communication, like Tuya Zigbee protocol
   Z_Ext = 0xF,              // extended for other values
   Z_Device = 0xFF           // special value when parsing Device level attributes
 };
@@ -43,8 +44,7 @@ const uint8_t Z_Data_Type_char[] PROGMEM = {
   'I',      // 0x03 Z_Data_Type::Z_PIR
   'A',      // 0x04 Z_Data_Type::Z_Alarm
   'T',      // 0x05 Z_Data_Type::Z_Thermo
-  'O',      // 0x05 Z_Data_Type::Z_OnOff
-  '\0',     // 0x06
+  'O',      // 0x06 Z_Data_Type::Z_OnOff
   '\0',     // 0x07
   '\0',     // 0x08
   '\0',     // 0x09
@@ -52,8 +52,8 @@ const uint8_t Z_Data_Type_char[] PROGMEM = {
   '\0',     // 0x0B
   '\0',     // 0x0C
   '\0',     // 0x0D
-  '\0',     // 0x0E
-  'E',      // 0x05 Z_Data_Type::Z_Ext
+  '~',      // 0x0E
+  'E',      // 0x0F Z_Data_Type::Z_Ext
   // '_' maps to 0xFF Z_Data_Type::Z_Device
 };
 
@@ -63,18 +63,24 @@ class Z_Data_Set;
 \*********************************************************************************************/
 class Z_Data {
 public:
-  Z_Data(Z_Data_Type type = Z_Data_Type::Z_Unknown, uint8_t endpoint = 0) : _type(type), _endpoint(endpoint), _config(0xF), _power(0) {}
+  Z_Data(Z_Data_Type type = Z_Data_Type::Z_Unknown, uint8_t endpoint = 0) : _type(type), _endpoint(endpoint), _config(0xF), _align_1(0), _reserved(0) {}
   inline Z_Data_Type getType(void) const { return _type; }
   inline int8_t getConfig(void) const { return _config; }
   inline bool validConfig(void) const { return _config != 0xF; }
   inline void setConfig(int8_t config) { _config = config; }
   uint8_t getConfigByte(void) const { return ( ((uint8_t)_type) << 4) | ((_config & 0xF) & 0x0F); }
+  uint8_t getReserved(void) const { return _reserved; }
 
   inline uint8_t getEndpoint(void) const { return _endpoint; }
 
-  void toAttributes(Z_attribute_list & attr_list, Z_Data_Type type) const;
+  void toAttributes(Z_attribute_list & attr_list) const;
+
+  // update internal structures after an attribut update
+  // True if a configuration was changed
+  inline bool update(void) { return false; }
 
   static const Z_Data_Type type = Z_Data_Type::Z_Unknown;
+  static size_t DataTypeToLength(Z_Data_Type t);
   static bool ConfigToZData(const char * config_str, Z_Data_Type * type, uint8_t * ep, uint8_t * config);
 
   static Z_Data_Type CharToDataType(char c);
@@ -83,9 +89,10 @@ public:
   friend class Z_Data_Set;
 protected:
   Z_Data_Type _type;        // encoded on 4 bits, type of the device
-  uint8_t _endpoint;    // source endpoint, or 0x00 if any endpoint
+  uint8_t _endpoint;        // source endpoint, or 0x00 if any endpoint
   uint8_t _config : 4;      // encoded on 4 bits, customize behavior
-  uint8_t _power;       // power state if the type supports it
+  uint8_t _align_1 : 4;     // force aligned to bytes, and fill with zero
+  uint8_t _reserved;           // power state if the type supports it
 };
 
 Z_Data_Type Z_Data::CharToDataType(char c) {
@@ -149,27 +156,19 @@ bool Z_Data::ConfigToZData(const char * config_str, Z_Data_Type * type, uint8_t 
 class Z_Data_OnOff : public Z_Data {
 public:
   Z_Data_OnOff(uint8_t endpoint = 0) :
-    Z_Data(Z_Data_Type::Z_OnOff, endpoint)
-    {
-      _config = 1;         // at least 1 OnOff
-    }
+    Z_Data(Z_Data_Type::Z_OnOff, endpoint),
+    power(0xFF)
+    {}
 
-  inline bool validPower(uint32_t relay = 0) const { return (_config > relay); }      // power is declared
-  inline bool getPower(uint32_t relay = 0)  const { return bitRead(_power, relay); }
-         void setPower(bool val, uint32_t relay = 0);
-
-  void toAttributes(Z_attribute_list & attr_list, Z_Data_Type type) const;
+  inline bool validPower(void) const { return 0xFF != power; }      // power is declared
+  inline bool getPower(void)   const { return validPower() ? (power != 0) : false; }   // default to false if undefined
+  inline void setPower(bool val)     { power = val ? 1 : 0; }
 
   static const Z_Data_Type type = Z_Data_Type::Z_OnOff;
+
+  // 1 byte
+  uint8_t           power;
 };
-
-
-void Z_Data_OnOff::setPower(bool val, uint32_t relay) {
-  if (relay < 8) {
-    if (_config < relay) { _config = relay; }     // we update the number of valid relays
-    bitWrite(_power, relay, val);
-  }
-}
 
 /*********************************************************************************************\
  * Device specific: Plug device
@@ -216,7 +215,7 @@ public:
   inline bool validColormode(void)      const { return 0xFF != colormode; }
   inline bool validDimmer(void)         const { return 0xFF != dimmer; }
   inline bool validSat(void)            const { return 0xFF != sat; }
-  inline bool validHue(void)            const { return 0xFFFF != hue; }
+  inline bool validHue(void)            const { return 0xFF != hue; }
   inline bool validCT(void)             const { return 0xFFFF != ct; }
   inline bool validX(void)              const { return 0xFFFF != x; }
   inline bool validY(void)              const { return 0xFFFF != y; }
@@ -309,6 +308,19 @@ void Z_Data_PIR::setTimeoutSeconds(int32_t value) {
 /*********************************************************************************************\
  * Device specific: Sensors: temp, humidity, pressure...
 \*********************************************************************************************/
+enum Z_Alarm_Type {
+  ZA_CIE =        0x0,
+  ZA_PIR =        0x1,
+  ZA_Contact =    0x2,
+  ZA_Fire =       0x3,
+  ZA_Water =      0x4,
+  ZA_CO =         0x5,
+  ZA_Personal =   0x6,
+  ZA_Movement =   0x7,
+  ZA_Panic =      0x8,
+  ZA_GlassBreak = 0x9,
+};
+
 class Z_Data_Thermo : public Z_Data {
 public:
   Z_Data_Thermo(uint8_t endpoint = 0) :
@@ -352,6 +364,30 @@ public:
 /*********************************************************************************************\
  * Device specific: Alarm
 \*********************************************************************************************/
+// We're lucky that alarm type fits in 12 bits, so we can have a total entry of 16 bits
+typedef union Z_Alarm_Types_t {
+  struct {
+    uint16_t    zcl_type : 12;
+    uint8_t     config : 4;
+  } t;
+  uint16_t i;
+} Z_Alarm_Types_t;
+
+static const Z_Alarm_Types_t Z_Alarm_Types[] PROGMEM = {
+  { .t = { 0x000, ZA_CIE }},        // 0x0 : Standard CIE
+  { .t = { 0x00d, ZA_PIR }},        // 0x1 : PIR
+  { .t = { 0x015, ZA_Contact }},    // 0x2 : Contact
+  { .t = { 0x028, ZA_Fire }},       // 0x3 : Fire
+  { .t = { 0x02a, ZA_Water }},       // 0x4 : Leak
+  { .t = { 0x02b, ZA_CO }},         // 0x5 : CO
+  { .t = { 0x02c, ZA_Personal }},   // 0x6 : Personal
+  { .t = { 0x02d, ZA_Movement }},   // 0x7 : Movement
+  { .t = { 0x10f, ZA_Panic }},      // 0x8 : Panic
+  { .t = { 0x115, ZA_Panic }},      // 0x8 : Panic
+  { .t = { 0x21d, ZA_Panic }},      // 0x8 : Panic
+  { .t = { 0x226, ZA_GlassBreak }}, // 0x9 : Glass break
+};
+
 class Z_Data_Alarm : public Z_Data {
 public:
   Z_Data_Alarm(uint8_t endpoint = 0) :
@@ -364,11 +400,39 @@ public:
   inline bool validZoneType(void)   const { return 0xFFFF != zone_type; }
 
   inline uint16_t getZoneType(void) const { return zone_type; }
+  inline bool isPIR(void)             const { return ZA_PIR         == _config; }
+  inline bool isContact(void)         const { return ZA_Contact     == _config; }
+  inline bool isFire(void)            const { return ZA_Fire        == _config; }
+  inline bool isWater(void)            const { return ZA_Water        == _config; }
+  inline bool isCO(void)              const { return ZA_CO          == _config; }
+  inline bool isPersonalAlarm(void)   const { return ZA_Personal    == _config; }
+  inline bool isMovement(void)        const { return ZA_Movement    == _config; }
+  inline bool isPanic(void)           const { return ZA_Panic       == _config; }
+  inline bool isGlassBreak(void)      const { return ZA_GlassBreak  == _config; }
 
   inline void setZoneType(uint16_t _zone_type)  { zone_type = _zone_type; }
 
+  bool update(void) {
+    for (uint32_t i=0; i<ARRAY_SIZE(Z_Alarm_Types); i++) {
+      Z_Alarm_Types_t conv_type;
+      conv_type.i = pgm_read_word(&Z_Alarm_Types[i].i);
+      if (zone_type == conv_type.t.zcl_type) {
+        if (_config == conv_type.t.config) {
+          return false;     // no change
+        } else {
+          _config = conv_type.t.config;
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  void convertZoneStatus(Z_attribute_list & attr_list, uint16_t val) const;
+  
   // 4 bytes
-  uint16_t               zone_type;       // mapped to the Zigbee standard
+  uint16_t              zone_status;      // last known state for sensor 1 & 2
+  uint16_t              zone_type;        // mapped to the Zigbee standard
     // 0x0000  Standard CIE
     // 0x000d  Motion sensor
     // 0x0015  Contact switch
@@ -384,6 +448,113 @@ public:
     // 0x0226  Glass break sensor
     // 0x0229  Security repeater*
 };
+
+void Z_Data_Alarm::convertZoneStatus(Z_attribute_list & attr_list, uint16_t val) const {
+  if (validConfig()) {
+    // indicator #1, published for false and true
+    if (isPIR()) {                  // set Occupancy
+      attr_list.addAttribute(0x0406, 0x0000).setUInt(val & 0x01 ? 1 : 0);
+    } else {                              // all other cases
+      attr_list.addAttribute(0x0500, 0xFFF0 + getConfig()).setUInt(val & 0x01 ? 1 : 0);
+    }
+    // indicator #2 published only if true
+    if (val & 0x02) {
+      if (isPIR()) {                  // set Occupancy
+        attr_list.addAttribute(0x0406, 0x0000, 2).setUInt(val & 0x02 ? 1 : 0);
+      } else {                              // all other cases
+        attr_list.addAttribute(0x0500, 0xFFF0 + getConfig(), 2).setUInt(val & 0x02 ? 1 : 0);
+      }
+    }
+    // Tamper
+    if (val & 0x04) {
+      attr_list.addAttributePMEM(PSTR("Tamper")).setUInt(1);
+    }
+    // BatteryLow
+    if (val & 0x08) {
+      attr_list.addAttributePMEM(PSTR("BatteryLow")).setUInt(1);
+    }
+    // // SupervisionReports
+    // if (val & 0x10) {
+    //   attr_list.addAttributePMEM(PSTR("SupervisionReports")).setUInt(1);
+    // }
+    // // RestoreReports
+    // if (val & 0x20) {
+    //   attr_list.addAttributePMEM(PSTR("RestoreReports")).setUInt(1);
+    // }
+    // Failure
+    if (val & 0x40) {
+      attr_list.addAttributePMEM(PSTR("Failure")).setUInt(1);
+    }
+    // MainsFault
+    if (val & 0x80) {
+      attr_list.addAttributePMEM(PSTR("MainsFault")).setUInt(1);
+    }
+    // Test
+    if (val & 0x100) {
+      attr_list.addAttributePMEM(PSTR("Test")).setUInt(1);
+    }
+    // BatteryDefect
+    if (val & 0x200) {
+      attr_list.addAttributePMEM(PSTR("BatteryDefect")).setUInt(1);
+    }
+  }
+}
+
+
+/*********************************************************************************************\
+ * Mode
+ * 
+  // List of modes
+  // 0x1 = Tuya Zigbee mode
+  // 0xF (default) = ZCL standard mode
+\*********************************************************************************************/
+enum Z_Mode_Type {
+  ZM_Tuya =       0x1,
+};
+
+class Z_Data_Mode : public Z_Data {
+public:
+  Z_Data_Mode(uint8_t endpoint = 0) :
+    Z_Data(Z_Data_Type::Z_Mode, endpoint)
+    {}
+
+  inline bool isTuyaProtocol(void) const { return _config == 1; }
+
+  static const Z_Data_Type type = Z_Data_Type::Z_Mode;
+};
+
+/*********************************************************************************************\
+ * 
+\*********************************************************************************************/
+const uint8_t Z_Data_Type_len[] PROGMEM = {
+  0,                        // 0x00 Z_Data_Type::Z_Unknown
+  sizeof(Z_Data_Light),     // 0x01 Z_Data_Type::Z_Light
+  sizeof(Z_Data_Plug),      // 0x02 Z_Data_Type::Z_Plug
+  sizeof(Z_Data_PIR),       // 0x03 Z_Data_Type::Z_PIR
+  sizeof(Z_Data_Alarm),     // 0x04 Z_Data_Type::Z_Alarm
+  sizeof(Z_Data_Thermo),    // 0x05 Z_Data_Type::Z_Thermo
+  sizeof(Z_Data_OnOff),     // 0x06 Z_Data_Type::Z_OnOff
+  0,     // 0x07
+  0,     // 0x08
+  0,     // 0x09
+  0,     // 0x0A
+  0,     // 0x0B
+  0,     // 0x0C
+  0,     // 0x0D
+  sizeof(Z_Data_Mode),      // 0x0E
+  0,      // 0x0F Z_Data_Type::Z_Ext
+  // '_' maps to 0xFF Z_Data_Type::Z_Device
+};
+
+size_t Z_Data::DataTypeToLength(Z_Data_Type t) {
+  uint32_t tt = (uint32_t) t;
+  if (tt < ARRAY_SIZE(Z_Data_Type_len)) {
+    return pgm_read_byte(&Z_Data_Type_len[tt]);
+  }
+  return 0;
+}
+
+
 /*********************************************************************************************\
  * 
  * Device specific Linked List
@@ -398,17 +569,37 @@ public:
   // getX() always returns a valid object, and creates the object if there is none
   // find() does not create an object if it does not exist, and returns *(X*)nullptr
 
+  // Emulate a virtuel update method for Z_Data
+  static bool updateData(Z_Data & elt);
 
   template <class M>
   M & get(uint8_t ep = 0);
+  template <class M>
+  const M & getConst(uint8_t ep = 0) const;
 
   template <class M>
   const M & find(uint8_t ep = 0) const;
 
-  // check if the point is null, if so create a new object with the right sub-class
+  // create a new data object from a 4 bytes buffer
+  Z_Data & createFromBuffer(const SBuffer & buf, uint32_t start, uint32_t len);
+
+  // check if the pointer is null, if so create a new object with the right sub-class
   template <class M>
   M & addIfNull(M & cur, uint8_t ep = 0);
 };
+
+bool Z_Data_Set::updateData(Z_Data & elt) {
+  switch (elt._type) {
+    case Z_Data_Type::Z_Light:  return ((Z_Data_Light&) elt).update();       break;
+    case Z_Data_Type::Z_Plug:   return ((Z_Data_Plug&) elt).update();        break;
+    case Z_Data_Type::Z_Alarm:  return ((Z_Data_Alarm&) elt).update();       break;
+    case Z_Data_Type::Z_Thermo: return ((Z_Data_Thermo&) elt).update();      break;
+    case Z_Data_Type::Z_OnOff:  return ((Z_Data_OnOff&) elt).update();       break;
+    case Z_Data_Type::Z_PIR:    return ((Z_Data_PIR&) elt).update();         break;
+    case Z_Data_Type::Z_Mode:   return ((Z_Data_Mode&) elt).update();        break;
+    default: return false;
+  }
+}
 
 Z_Data & Z_Data_Set::getByType(Z_Data_Type type, uint8_t ep) {
   switch (type) {
@@ -424,15 +615,51 @@ Z_Data & Z_Data_Set::getByType(Z_Data_Type type, uint8_t ep) {
       return get<Z_Data_OnOff>(ep);
     case Z_Data_Type::Z_PIR:
       return get<Z_Data_PIR>(ep);
+    case Z_Data_Type::Z_Mode:
+      return get<Z_Data_Mode>(ep);
     default:
       return *(Z_Data*)nullptr;
   }
+}
+
+// Instanciate with either:
+// (04)04010100          - without data except minimal Z_Data
+// (08)04010100.B06DFFFF - with complete data - in this case must not exceed the structure len
+//
+// Byte 0: type
+// Byte 1: endpoint
+// Byte 2: config
+// Byte 3: Power
+Z_Data & Z_Data_Set::createFromBuffer(const SBuffer & buf, uint32_t start, uint32_t len) {
+  if (len < sizeof(Z_Data)) {
+    AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Invalid len (<4) %d"), len);
+    return *(Z_Data*)nullptr;
+  }
+
+  Z_Data_Type data_type = (Z_Data_Type) buf.get8(start);
+  uint8_t expected_len = Z_Data::DataTypeToLength(data_type);
+  uint8_t endpoint = buf.get8(start + 1);
+
+  Z_Data & elt = getByType(data_type, endpoint);
+  if (&elt == nullptr) { return *(Z_Data*)nullptr; }
+  if (len <= expected_len) {
+    memcpy(&elt, buf.buf(start), len);
+  } else {
+    memcpy(&elt, buf.buf(start), sizeof(Z_Data));
+    AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "buffer len overflow %d > %d"), len, expected_len);
+  }
+  return elt;
 }
 
 template <class M>
 M & Z_Data_Set::get(uint8_t ep) {
   M & m = (M&) find(M::type, ep);
   return addIfNull<M>(m, ep);
+}
+template <class M>
+const M & Z_Data_Set::getConst(uint8_t ep) const {
+  const M & m = (M&) find(M::type, ep);
+  return m;
 }
 
 template <class M>
@@ -468,11 +695,6 @@ const Z_Data & Z_Data_Set::find(Z_Data_Type type, uint8_t ep) const {
   return *(Z_Data*)nullptr;
 }
 
-void Z_Data_OnOff::toAttributes(Z_attribute_list & attr_list, Z_Data_Type type) const {
-  if (validPower())             { attr_list.addAttribute(PSTR("Power")).setUInt(getPower() ? 1 : 0); }
-}
-
-
 /*********************************************************************************************\
  * Structures for Rules variables related to the last received message
 \*********************************************************************************************/
@@ -495,17 +717,20 @@ public:
   // sequence number for Zigbee frames
   uint16_t              shortaddr;      // unique key if not null, or unspecified if null
   uint8_t               seqNumber;
+  bool                  is_router;         // flag used by ZbMap to distibguish routers from end-devices
   bool                  hidden;
   bool                  reachable;
   // Light information for Hue integration integration, last known values
 
   // New version of device data handling
   Z_Data_Set            data;            // Linkedlist of device data per endpoint
-  // other status
+  // other status - device wide data is 8 bytes
+  // START OF DEVICE WIDE DATA
+  uint32_t              last_seen;      // Last seen time (epoch)
   uint8_t               lqi;            // lqi from last message, 0xFF means unknown
   uint8_t               batterypercent; // battery percentage (0..100), 0xFF means unknwon
-  // power plug data-
-  uint32_t              last_seen;      // Last seen time (epoch)
+  uint16_t              reserved_for_alignment;
+  // END OF DEVICE WIDE DATA
 
   // Constructor with all defaults
   Z_Device(uint16_t _shortaddr = BAD_SHORTADDR, uint64_t _longaddr = 0x00):
@@ -518,12 +743,14 @@ public:
     attr_list(),
     shortaddr(_shortaddr),
     seqNumber(0),
+    is_router(false),
     hidden(false),
     reachable(false),
     data(),
+    last_seen(0),
     lqi(0xFF),
     batterypercent(0xFF),
-    last_seen(0)
+    reserved_for_alignment(0xFFFF)
     { };
 
   inline bool valid(void)               const { return BAD_SHORTADDR != shortaddr; }    // is the device known, valid and found?
@@ -543,6 +770,10 @@ public:
   inline bool getReachable(void)        const { return reachable; }
   inline bool getPower(uint8_t ep =0)   const;
 
+  inline bool isRouter(void)            const { return is_router; }
+  inline bool isCoordinator(void)       const { return 0x0000 == shortaddr; }
+  inline void setRouter(bool router)          { is_router = router; }
+
   inline void setLQI(uint8_t _lqi)            { lqi = _lqi; }
   inline void setBatteryPercent(uint8_t bp)   { batterypercent = bp; }
 
@@ -556,6 +787,18 @@ public:
   void setFriendlyName(const char * str);
 
   void setLastSeenNow(void);
+
+  // multiple function to dump part of the Device state into JSON
+  void jsonAddDeviceNamme(Z_attribute_list & attr_list) const;
+  void jsonAddIEEE(Z_attribute_list & attr_list) const;
+  void jsonAddModelManuf(Z_attribute_list & attr_list) const;
+  void jsonAddEndpoints(Z_attribute_list & attr_list) const;
+  void jsonAddConfig(Z_attribute_list & attr_list) const;
+  void jsonAddDataAttributes(Z_attribute_list & attr_list) const;
+  void jsonAddDeviceAttributes(Z_attribute_list & attr_list) const;
+  void jsonDumpSingleDevice(Z_attribute_list & attr_list, uint32_t dump_mode, bool add_name) const;
+  void jsonPublishAttrList(const char * json_prefix, const Z_attribute_list &attr_list) const;
+  void jsonLightState(Z_attribute_list & attr_list) const;
 
   // dump device attributes to ZbData
   void toAttributes(Z_attribute_list & attr_list) const;
@@ -674,9 +917,8 @@ public:
   uint8_t getNextSeqNumber(uint16_t shortaddr);
 
   // Dump json
-  static String dumpLightState(const Z_Device & device);
   String dumpDevice(uint32_t dump_mode, const Z_Device & device) const;
-  static String dumpSingleDevice(uint32_t dump_mode, const Z_Device & device);
+  String dumpCoordinator(void) const;
   int32_t deviceRestore(JsonParserObject json);
 
   // Hue support
@@ -684,6 +926,9 @@ public:
   void hideHueBulb(uint16_t shortaddr, bool hidden);
   bool isHueBulbHidden(uint16_t shortaddr) const ;
   Z_Data_Light & getLight(uint16_t shortaddr);
+
+  // device is reachable
+  void deviceWasReached(uint16_t shortaddr);
 
   // Timers
   void resetTimersForDevice(uint16_t shortaddr, uint16_t groupaddr, uint8_t category, uint16_t cluster = 0xFFFF, uint8_t endpoint = 0xFF);
@@ -698,6 +943,7 @@ public:
   void jsonPublishNow(uint16_t shortaddr, Z_attribute_list &attr_list);
 
   // Iterator
+  inline const LList<Z_Device> & getDevices(void) const { return _devices; }
   size_t devicesSize(void) const {
     return _devices.length();
   }
@@ -711,8 +957,9 @@ public:
   void clean(void);   // avoid writing to flash the last changes
 
   // Find device by name, can be short_addr, long_addr, number_in_array or name
-  Z_Device & parseDeviceFromName(const char * param, bool short_must_be_known = false);
+  Z_Device & parseDeviceFromName(const char * param, uint16_t * parsed_shortaddr = nullptr);
 
+  bool isTuyaProtocol(uint16_t shortaddr, uint8_t ep = 0) const;
 
 private:
   LList<Z_Device>           _devices;     // list of devices

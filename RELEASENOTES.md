@@ -9,29 +9,28 @@ See [migration path](https://tasmota.github.io/docs/Upgrading#migration-path) fo
 1. Migrate to **Sonoff-Tasmota 3.9.x**
 2. Migrate to **Sonoff-Tasmota 4.x**
 3. Migrate to **Sonoff-Tasmota 5.14**
-4. Migrate to **Sonoff-Tasmota 6.7.1**
-5. Migrate to **Tasmota 7.2.0**
+4. Migrate to **Sonoff-Tasmota 6.7.1** (http://ota.tasmota.com/tasmota/release-6.7.1/)
+5. Migrate to **Tasmota 7.2.0** (http://ota.tasmota.com/tasmota/release-7.2.0/)
 
 --- Major change in parameter storage layout ---
 
-6. Migrate to **Tasmota 8.1**
-7. Migrate to **Tasmota 8.5.1**
+6. Migrate to **Tasmota 8.5.1** (http://ota.tasmota.com/tasmota/release-8.5.1/)
 
 --- Major change in internal GPIO function representation ---
 
-8. Migrate to **Tasmota 9.1**
+7. Migrate to **Tasmota 9.1** (http://ota.tasmota.com/tasmota/release-9.1.0/)
 
 While fallback or downgrading is common practice it was never supported due to Settings additions or changes in newer releases. Starting with release **v9.1.0 Imogen** the internal GPIO function representation has changed in such a way that fallback is only possible to the latest GPIO configuration before installing **v9.1.0**.
 
 ## Supported Core versions
 
-This release will be supported from ESP8266/Arduino library Core version **2.7.4.5** due to reported security and stability issues on previous Core version. This will also support gzipped binaries.
+This release will be supported from ESP8266/Arduino library Core version **2.7.4.9** due to reported security and stability issues on previous Core version. This will also support gzipped binaries.
 
 Support of Core versions before 2.7.1 has been removed.
 
 ## Support of TLS
 
-To save resources when TLS is enabled mDNS needs to be disabled. In addition to TLS using fingerprints now also user supplied CA certs and AWS IoT is supported. Read [full documentation](https://tasmota.github.io/docs/AWS-IoT)
+In addition to TLS using fingerprints now also user supplied CA certs and AWS IoT is supported. Read [full documentation](https://tasmota.github.io/docs/AWS-IoT)
 
 ## Initial configuration tools
 
@@ -39,7 +38,7 @@ For initial configuration this release supports Webserver based **WifiManager** 
 
 ## Provided Binary Downloads
 
-The following binary downloads have been compiled with ESP8266/Arduino library core version **2.7.4.5**.
+The following binary downloads have been compiled with ESP8266/Arduino library core version **2.7.4.9**.
 
 - **tasmota.bin** = The Tasmota version with most drivers. **RECOMMENDED RELEASE BINARY**
 - **tasmota-BG.bin** to **tasmota-TW.bin** = The Tasmota version in different languages.
@@ -57,81 +56,63 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 
 [Complete list](BUILDS.md) of available feature and sensors.
 
-## Changelog v9.1.0 Imogen
+## Changelog v9.2.0 Julie
 ### Added
-- Command ``DimmerStep 1..50`` to change default dimmer up and down step of 10% by James Turton (#9733)
-- Command ``Gpios 255`` to show all possible GPIO configurations
-- Command ``NoDelay`` for immediate backlog command execution by Erik Montnemery (#9544)
-- Command ``ShutterChange`` to increment change position (#9594)
-- Command ``SwitchMode 15`` sending only MQTT message on switch change (#9593)
-- Command ``SetOption113 1`` to set dimmer low on rotary dial after power off
-- Command ``SetOption114 1`` to detach Switches from Relays and enable MQTT action state for all the SwitchModes
-- Command ``SwitchText`` to change JSON switch names by barbudor (#9691)
-- Zigbee command ``ZbData`` for better support of device specific data
-- Zigbee command ``ZbOccupancy`` to configure the time-out for PIR
-- Optional support for Mitsubishi Electric HVAC by David Gwynne (#9237)
-- Optional support for Orno WE517-Modbus energy meter by Maxime Vincent (#9353)
-- SDM630 three phase ImportActive Energy display when ``#define SDM630_IMPORT`` is enabled by Janusz Kostorz (#9124)
-- Optional support for inverted NeoPixelBus data line by enabling ``#define USE_WS2812_INVERTED`` (#8988)
-- Support for PWM dimmer color/trigger on tap, SO88 led, DGR WITH_LOCAL flag, multi-press and ledmask by Paul Diem (#9474, #9584)
-- Support for stateful ACs using ``StateMode`` in tasmota-ir.bin by Arik Yavilevich (#9472)
-- Support for analog buttons indexed within standard button range
-- Support for Vietnamese language translations by Tâm.NT
-- Support for timers in case of no-sunset permanent day by cybermaus (#9543)
-- Support for EZO sensors by Christopher Tremblay
-- Support for fixed output Hi or Lo GPIO selection
-- Support for Hass discovery of TuyaMcu and Sonoff Ifan by Federico Leoni (#9727)
-- TLS in binary tasmota-zbbridge (#9620)
-- Zigbee reduce battery drain (#9642)
-- ESP32 support for Wireless-Tag WT32-ETH01 (#9496)
-- ESP32 MI32 Beacon support, RSSI at TELEPERIOD, refactoring by Christian Baars (#9609)
-- HM10 Beacon support and refactoring by Christian Baars (#9702)
-- Initial support for iBeacons (Sensor52) on ESP32 using internal BLE by rvbglas (#9732)
+- Command ``SetOption115 1`` to enable ESP32 MiBle
+- Command ``SetOption116 1`` to disable auto-query of zigbee light devices (avoids network storms with large groups)
+- Command ``SetOption117 1`` for light fading to be fixed duration instead of fixed slew rate [#10109](https://github.com/arendst/Tasmota/issues/10109)
+- Command ``RfProtocol`` to control RcSwitch receive protocols by BBBits [#10063](https://github.com/arendst/Tasmota/issues/10063)
+- Commands ``TuyaRGB``, ``TuyaEnum`` and ``TuyaEnumList`` [#9769](https://github.com/arendst/Tasmota/issues/9769)
+- Zigbee command ``ZbInfo`` and prepare support for EEPROM
+- Zigbee command ``ZbLeave`` to unpair a device
+- Zigbee support for Mi Door and Contact [#9759](https://github.com/arendst/Tasmota/issues/9759)
+- Zigbee alarm persistence [#9785](https://github.com/arendst/Tasmota/issues/9785)
+- Zigbee persistence of device/sensor data in EEPROM (only ZBBridge)
+- Zigbee better support for Tuya Protocol [#10074](https://github.com/arendst/Tasmota/issues/10074)
+- Zigbee visual map of network
+- TyuaMcu update 2/3 by Federico Leoni [#10004](https://github.com/arendst/Tasmota/issues/10004)
+- Support for additional EZO sensors by Christopher Tremblay
+- Support for AS608 optical and R503 capacitive fingerprint sensor
+- Support for Shelly Dimmer 1 and 2 by James Turton [#9854](https://github.com/arendst/Tasmota/issues/9854)
+- Support for common anode sevenseg displays by adding ``#define USE_DISPLAY_SEVENSEG_COMMON_ANODE`` by Ken Sanislo [#9963](https://github.com/arendst/Tasmota/issues/9963)
+- Support for multiple WeMo devices by Magic73 [#9208](https://github.com/arendst/Tasmota/issues/9208)
+- Support for SPI connected MFRC522 13.56MHz rfid card reader [#9916](https://github.com/arendst/Tasmota/issues/9916)
+- Support ESP32 SPIFFS for internal use
+- KNX read reply for Power (#9236, #9891)
+- Fallback NTP server from x.pool.ntp.org if no ntpservers are configured
+- Optional CCloader support for CC25xx Zigbee or CC26xx BLE by Christian Baars [#9970](https://github.com/arendst/Tasmota/issues/9970)
+- Letsencrypt R3 in addition to X3 CA [#10086](https://github.com/arendst/Tasmota/issues/10086)
 
 ### Breaking Changed
-- Redesigned ESP8266 GPIO internal representation in line with ESP32 changing ``Template`` layout too
-- TLS fingerprint ``#define MQTT_FINGERPRINT`` from string to hexnumbers (#9570)
-- Command ``Status`` output for disabled status types now returns {"Command":"Error"}
-- MAX31865 driver to support up to 6 thermocouples selected by ``MX31865 CS`` instead of ``SSPI CS`` (#9103)
-- When ``SetOption73 1`` JSON result from `{"ACTION":"SINGLE"}` to `{"Button1":{"Action":"SINGLE"}}`
+- KNX DPT9 (16-bit float) to DPT14 (32-bit float) by Adrian Scillato [#9811](https://github.com/arendst/Tasmota/issues/9811) [#9888](https://github.com/arendst/Tasmota/issues/9888)
 
 ### Changed
-- Command ``Gpio17`` replaces command ``Adc``
-- Command ``Gpios`` replaces command ``Adcs``
-- New IR Raw compact format (#9444)
-- A4988 optional microstep pin selection
-- Pulsetime to allow use for all relays with 8 interleaved so ``Pulsetime1`` is valid for Relay1, Relay9, Relay17 etc. (#9279)
-- Management of serial baudrate (#9554)
-- Rotary driver adjusted accordingly if Mi Desk Lamp module is selected (#9399)
-- Tasmota Arduino Core v2.7.4.5 allowing webpassword over 47 characters (#9687)
-- Webserver code optimizations (#9580, #9590)
-- PlatformIO library structure redesigned for compilation speed by Jason2866
-- Zigbee flash storage refactor adding commands ``ZbProbe``, ``ZbStatus2`` and ``ZbRestore`` (#9641)
-- Default otaurl in my_user_config.h to http://ota.tasmota.com/tasmota/release/tasmota.bin.gz
-- IRremoteESP8266 library from v2.7.10 to v2.7.11
-- NeoPixelBus library from v2.5.0.09 to v2.6.0
+- Core library from v2.7.4.5 to v2.7.4.9
+- IRremoteESP8266 library from v2.7.12 to v2.7.13
+- Shelly Dimmer 1 and 2 stm32 firmware from v51.4 to v51.5
+- mDNS has been disabled from all pre-compiled binaries to allow new features
+- Sonoff L1 color up scaling and color margin detection [#9545](https://github.com/arendst/Tasmota/issues/9545)
+- MQTT Wifi connection timeout from 5000 to 200 mSec [#9886](https://github.com/arendst/Tasmota/issues/9886)
+- Force bigger Thunk Stack if 4K RSA even without EC ciphers [#10075](https://github.com/arendst/Tasmota/issues/10075)
 
 ### Fixed
-- Light wakeup Exception 0 (divide by zero) when ``WakeupDuration`` is not initialised (#9466)
-- Exception 28 due to device group buffer overflow (#9459)
-- Arilux RF remote detection regression from v8.3.0
-- Ledlink blink when no network connected regression from v8.3.1.4 (#9292)
-- TuyaMcu energy display regression from v8.5.0.1 (#9547)
-- Thermostat sensor status corruption regression from v8.5.0.1 (#9449)
-- Telegram message decoding error regression from v8.5.0.1
-- Rule handling of Var or Mem using text regression from v8.5.0.1 (#9540)
-- Rule handling of JSON ``null`` regression from v8.5.0.1 (#9685)
-- Rule Break not working as expected when ONCE is enabled (#9245)
-- Rule expressions using mems corrupts character pool (#9301)
-- Shutter timing problem due to buffer overflow in calibration matrix (#9458)
-- Correct Energy period display shortly after midnight by gominoa (#9536)
-- Tuyamcu dimmers MQTT topic (#9606)
-- Scripter memory alignment (#9608)
-- Zigbee battery percentage (#9607)
-- HassAnyKey anomaly (#9601)
+- Command ``gpio`` using non-indexed functions regression from v9.1.0 [#9962](https://github.com/arendst/Tasmota/issues/9962)
+- NTP fallback server functionality [#9739](https://github.com/arendst/Tasmota/issues/9739)
+- Telegram group chatid not supported [#9831](https://github.com/arendst/Tasmota/issues/9831)
+- KNX buttons, switches and sensors detection regression from v9.1.0 [#9811](https://github.com/arendst/Tasmota/issues/9811)
+- KNX ESP32 UDP mulicastpackage [#9811](https://github.com/arendst/Tasmota/issues/9811)
+- GUI MqttUser and MqttPassword updates when TLS is compiled in [#9825](https://github.com/arendst/Tasmota/issues/9825)
+- ESP32 TasmotaClient firmware upgrade [#9218](https://github.com/arendst/Tasmota/issues/9218)
+- Reset to defaults after 6 hours of DeepSleep [#9993](https://github.com/arendst/Tasmota/issues/9993)
+- Backlog timing wraparound [#9995](https://github.com/arendst/Tasmota/issues/9995)
+- First LED in addressable string does not fade when using scheme [#10088](https://github.com/arendst/Tasmota/issues/10088)
+- Improved Opentherm error handling [#10055](https://github.com/arendst/Tasmota/issues/10055)
+- Shutter motordelay stop issue [#10033](https://github.com/arendst/Tasmota/issues/10033)
+- Shutter fix overflow on runtime over 100 seconds [#9800](https://github.com/arendst/Tasmota/issues/9800)
+- ESP32 CC2530 heap corruption [#10121](https://github.com/arendst/Tasmota/issues/10121)
+- ESP32 Analog input div10 rule trigger [#10149](https://github.com/arendst/Tasmota/issues/10149)
 
 ### Removed
-- Support for direct upgrade from Tasmota versions before v7.0
-- Support for downgrade to versions before 9.0 keeping current GPIO configuration
-- Auto config update for all Friendlynames and Switchtopic from Tasmota versions before v8.0
-- Auto output selection of decimal or hexadecimal data based on user input. Now only based on ``SetOption17``
+- Version compatibility check
+- PN532 define USE_PN532_CAUSE_EVENTS replaced by generic rule trigger `on pn532#uid=`
+

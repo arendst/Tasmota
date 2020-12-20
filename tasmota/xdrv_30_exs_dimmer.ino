@@ -220,9 +220,9 @@ void ExsSetBri(uint8_t device, uint8_t bri)
 void ExsSyncState(uint8_t device)
 {
 #ifdef EXS_DEBUG
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("EXS: Channel %d Power Want %d, Is %d"),
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR("EXS: Channel %d Power Want %d, Is %d"),
             device, bitRead(Exs.power, device), Exs.dimmer.channel[device].dimm);
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("EXS: Set Channel %d Brightness Want %d, Is %d"),
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR("EXS: Set Channel %d Brightness Want %d, Is %d"),
             device, Exs.dimm[device], Exs.dimmer.channel[device].bright_tbl);
 #endif
 
@@ -241,7 +241,7 @@ void ExsSyncState(uint8_t device)
 bool ExsSyncState()
 {
 #ifdef EXS_DEBUG
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("EXS: Serial %p, Cmd %d"), ExsSerial, Exs.cmd_status);
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR("EXS: Serial %p, Cmd %d"), ExsSerial, Exs.cmd_status);
 #endif
 
   if (!ExsSerial || Exs.cmd_status != 0)
@@ -255,7 +255,7 @@ bool ExsSyncState()
 void ExsDebugState()
 {
 #ifdef EXS_DEBUG
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("EXS: MCU v%d.%d, c0: On:%d,Dim:%d,Tbl:%d(%d%%), c1: On:%d,Dim:%d,Tbl:%d(%d%%), ChLock: %d"),
+    AddLog_P(LOG_LEVEL_DEBUG, PSTR("EXS: MCU v%d.%d, c0: On:%d,Dim:%d,Tbl:%d(%d%%), c1: On:%d,Dim:%d,Tbl:%d(%d%%), ChLock: %d"),
               Exs.dimmer.version_major, Exs.dimmer.version_minor,
               Exs.dimmer.channel[0].on, Exs.dimmer.channel[0].dimm,
               Exs.dimmer.channel[0].bright_tbl,
@@ -384,7 +384,7 @@ bool ExsSetChannels(void)
 
 bool ExsSetPower(void)
 {
-  AddLog_P2(LOG_LEVEL_INFO, PSTR("EXS: Set Power, Device %d, Power 0x%02x"),
+  AddLog_P(LOG_LEVEL_INFO, PSTR("EXS: Set Power, Device %d, Power 0x%02x"),
             TasmotaGlobal.active_device, XdrvMailbox.index);
 
   Exs.power = XdrvMailbox.index;
@@ -396,7 +396,7 @@ void EsxMcuStart(void)
   int retries = 3;
 
 #ifdef EXS_DEBUG
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("EXS: Request MCU configuration, PIN %d to Low"), Pin(GPIO_EXS_ENABLE));
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR("EXS: Request MCU configuration, PIN %d to Low"), Pin(GPIO_EXS_ENABLE));
 #endif
 
   pinMode(Pin(GPIO_EXS_ENABLE), OUTPUT);
@@ -414,7 +414,7 @@ void EsxMcuStart(void)
 void ExsInit(void)
 {
 #ifdef EXS_DEBUG
-  AddLog_P2(LOG_LEVEL_INFO, PSTR("EXS: Starting Tx %d Rx %d"), Pin(GPIO_TXD), Pin(GPIO_RXD));
+  AddLog_P(LOG_LEVEL_INFO, PSTR("EXS: Starting Tx %d Rx %d"), Pin(GPIO_TXD), Pin(GPIO_RXD));
 #endif
 
   Exs.buffer = (uint8_t *)malloc(EXS_BUFFER_SIZE);
@@ -442,7 +442,7 @@ void ExsSerialInput(void)
     yield();
     uint8_t serial_in_byte = ExsSerial->read();
 
-    AddLog_P2(LOG_LEVEL_INFO, PSTR("EXS: Serial In Byte 0x%02x"), serial_in_byte);
+    AddLog_P(LOG_LEVEL_INFO, PSTR("EXS: Serial In Byte 0x%02x"), serial_in_byte);
 
     if (Exs.cmd_status == 0 &&
         serial_in_byte == 0x7B)

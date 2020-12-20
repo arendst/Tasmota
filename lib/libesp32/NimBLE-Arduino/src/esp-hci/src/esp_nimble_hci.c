@@ -30,7 +30,9 @@
 #include "esp_bt.h"
 #include "freertos/semphr.h"
 #include "esp_compiler.h"
+#ifndef CONFIG_FREERTOS_UNICORE
 #include "esp_ipc.h"
+#endif
 
 #define NIMBLE_VHCI_TIMEOUT_MS  2000
 
@@ -98,7 +100,9 @@ int ble_hci_trans_hs_cmd_tx(uint8_t *cmd)
 
     if (xSemaphoreTake(vhci_send_sem, NIMBLE_VHCI_TIMEOUT_MS / portTICK_PERIOD_MS) == pdTRUE) {
         if (xPortGetCoreID() != 0) {
+#ifndef CONFIG_FREERTOS_UNICORE
             esp_ipc_call_blocking(0, ble_hci_trans_hs_cmd_tx_on_core_0, cmd);
+#endif
         } else {
             ble_hci_trans_hs_cmd_tx_on_core_0(cmd);
         }
@@ -147,7 +151,9 @@ int ble_hci_trans_hs_acl_tx(struct os_mbuf *om)
 
     if (xSemaphoreTake(vhci_send_sem, NIMBLE_VHCI_TIMEOUT_MS / portTICK_PERIOD_MS) == pdTRUE) {
         if (xPortGetCoreID() != 0) {
+#ifndef CONFIG_FREERTOS_UNICORE
             esp_ipc_call_blocking(0, ble_hci_trans_hs_acl_tx_on_core_0, om);
+#endif
         } else {
             ble_hci_trans_hs_acl_tx_on_core_0(om);
         }

@@ -361,7 +361,7 @@
 #define D_TRANSFER_STARTED "Transfer started"
 #define D_UPLOAD_ERR_1 "파일이 선택되지 않았습니다"
 #define D_UPLOAD_ERR_2 "용량이 충분하지 않습니다"
-#define D_UPLOAD_ERR_3 "Magic 바이트가 0xE9가 아닙니다"
+#define D_UPLOAD_ERR_3 "Invalid file signature"
 #define D_UPLOAD_ERR_4 "플래시 프로그램이 실제 플래시 용량보다 큽니다"
 #define D_UPLOAD_ERR_5 "업로드 버퍼가 일치하지 않습니다"
 #define D_UPLOAD_ERR_6 "업로드 실패. 로그 3 사용"
@@ -673,6 +673,8 @@
 #define D_SENSOR_A4988_MS1     "A4988 MS1"
 #define D_SENSOR_OUTPUT_HI     "Output Hi"
 #define D_SENSOR_OUTPUT_LO     "Output Lo"
+#define D_SENSOR_AS608_TX      "AS608 Tx"
+#define D_SENSOR_AS608_RX      "AS608 Rx"
 #define D_SENSOR_DDS2382_TX    "DDS238-2 Tx"
 #define D_SENSOR_DDS2382_RX    "DDS238-2 Rx"
 #define D_SENSOR_DDSU666_TX    "DDSU666 Tx"
@@ -729,6 +731,9 @@
 #define D_SENSOR_IEM3000_RX    "iEM3000 RX"
 #define D_SENSOR_MIEL_HVAC_TX  "MiEl HVAC Tx"
 #define D_SENSOR_MIEL_HVAC_RX  "MiEl HVAC Rx"
+#define D_SENSOR_SHELLY_DIMMER_BOOT0 "SHD Boot 0"
+#define D_SENSOR_SHELLY_DIMMER_RST_INV "SHD Reset"
+#define D_SENSOR_RC522_RST     "RC522 Rst"
 
 // Units
 #define D_UNIT_AMPERE "A"
@@ -755,6 +760,7 @@
 #define D_UNIT_MICROSECOND "마이크로초"
 #define D_UNIT_MICROSIEMENS_PER_CM "µS/cm"
 #define D_UNIT_MILLIAMPERE "mA"
+#define D_UNIT_MILLILITERS "ml"
 #define D_UNIT_MILLIMETER "mm"
 #define D_UNIT_MILLIMETER_MERCURY "mmHg"
 #define D_UNIT_MILLISECOND "밀리초"
@@ -859,5 +865,39 @@
 #define D_OVERLOAD        "ADPS"
 #define D_MAX_POWER       "Max Power"
 #define D_MAX_CURRENT     "Max Current"
+
+// xsns_79_as608.ino
+#define D_FP_ENROLL_PLACEFINGER "Place finger"
+#define D_FP_ENROLL_REMOVEFINGER "Remove finger"
+#define D_FP_ENROLL_PLACESAMEFINGER "Place same finger again"
+#define D_FP_ENROLL_RETRY "Error so retry"
+#define D_FP_ENROLL_RESTART "Restart"
+#define D_FP_ENROLL_ERROR "Error"
+#define D_FP_ENROLL_RESET "Reset"
+#define D_FP_ENROLL_ACTIVE "Active"
+#define D_FP_ENROLL_INACTIVE "Inactive"
+// Indexed by Adafruit_Fingerprint.h defines
+#define D_FP_PACKETRECIEVEERR "Comms error"    // 0x01 Error when receiving data package
+#define D_FP_NOFINGER ""                       // 0x02 No finger on the sensor
+#define D_FP_IMAGEFAIL "Imaging error"         // 0x03 Failed to enroll the finger
+#define D_FP_IMAGEMESS "Image too messy"       // 0x06 Failed to generate character file due to overly disorderly fingerprint image
+#define D_FP_FEATUREFAIL "Fingerprint too small" // 0x07 Failed to generate character file due to the lack of character point or small fingerprint image
+#define D_FP_NOMATCH "No match"                // 0x08 Finger doesn't match
+#define D_FP_NOTFOUND "Did not find a match"   // 0x09 Failed to find matching finger
+#define D_FP_ENROLLMISMATCH "Fingerprint did not match" // 0x0A Failed to combine the character files
+#define D_FP_BADLOCATION "Bad location"        // 0x0B Addressed PageID is beyond the finger library
+#define D_FP_DBRANGEFAIL "DB range error"      // 0x0C Error when reading template from library or invalid template
+#define D_FP_UPLOADFEATUREFAIL "Upload feature error" // 0x0D Error when uploading template
+#define D_FP_PACKETRESPONSEFAIL "Packet response error" // 0x0E Module failed to receive the following data packages
+#define D_FP_UPLOADFAIL "Upload error"         // 0x0F Error when uploading image
+#define D_FP_DELETEFAIL "Delete error"         // 0x10 Failed to delete the template
+#define D_FP_DBCLEARFAIL "DB Clear error"      // 0x11 Failed to clear finger library
+#define D_FP_PASSFAIL "Password error"         // 0x13 Find whether the fingerprint passed or failed
+#define D_FP_INVALIDIMAGE "Image invalid"      // 0x15 Failed to generate image because of lac of valid primary image
+#define D_FP_FLASHERR "Flash write error"      // 0x18 Error when writing flash
+#define D_FP_INVALIDREG "Invalid number"       // 0x1A Invalid register number
+#define D_FP_ADDRCODE "Address code"           // 0x20 Address code
+#define D_FP_PASSVERIFY "Password verified"    // 0x21 Verify the fingerprint passed
+#define D_FP_UNKNOWNERROR "Error"              // Any other error
 
 #endif  // _LANGUAGE_KO_KO_H_
