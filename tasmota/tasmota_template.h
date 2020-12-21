@@ -130,6 +130,7 @@ enum UserSelectablePins {
   GPIO_SHELLY_DIMMER_BOOT0, GPIO_SHELLY_DIMMER_RST_INV,
   GPIO_RC522_RST,                      // RC522 reset
   GPIO_P9813_CLK, GPIO_P9813_DAT,      // P9813 Clock and Data
+	GPIO_FTC532,                         // FTC532 touch ctrlr serial input
   GPIO_SENSOR_END };
 
 enum ProgramSelectablePins {
@@ -239,7 +240,8 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_AS608_TX "|" D_SENSOR_AS608_RX "|"
   D_SENSOR_SHELLY_DIMMER_BOOT0 "|" D_SENSOR_SHELLY_DIMMER_RST_INV "|"
   D_SENSOR_RC522_RST "|"
-  D_SENSOR_P9813_CLK "|" D_SENSOR_P9813_DAT
+  D_SENSOR_P9813_CLK "|" D_SENSOR_P9813_DAT "|"
+  D_SENSOR_FTC532_RX
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -331,6 +333,10 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #endif
 #ifdef USE_LMT01
   AGPIO(GPIO_LMT01),          // LMT01, count pulses on GPIO
+#endif
+
+#ifdef USE_FTC532
+  AGPIO(GPIO_FTC532),         // FTC532 touch input
 #endif
 
 /*-------------------------------------------------------------------------------------------*\

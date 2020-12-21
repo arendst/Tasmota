@@ -736,6 +736,7 @@
 #define D_SENSOR_SHELLY_DIMMER_BOOT0 "SHD Boot 0"
 #define D_SENSOR_SHELLY_DIMMER_RST_INV "SHD Reset"
 #define D_SENSOR_RC522_RST     "RC522 Rst"
+#define D_SENSOR_FTC532_RX     "FTC532 Rx"
 
 // Units
 #define D_UNIT_AMPERE "A"
