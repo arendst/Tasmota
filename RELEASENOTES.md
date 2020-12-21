@@ -58,14 +58,17 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 
 ## Changelog v9.2.0.1
 ### Added
-- Milliseconds to console output (#10152)
-- Support for P9813 RGB Led MOSFET controller (#10104)
+- Milliseconds to console output [#10152](https://github.com/arendst/Tasmota/issues/10152)
+- Support for P9813 RGB Led MOSFET controller [#10104](https://github.com/arendst/Tasmota/issues/10104)
 - Support for GPIO option selection
-- Gpio ``Option_a1`` enabling PWM2 high impedance if powered off as used by Wyze bulbs (#10196)
+- Gpio ``Option_a1`` enabling PWM2 high impedance if powered off as used by Wyze bulbs [#10196](https://github.com/arendst/Tasmota/issues/10196)
 
 ### Fixed
-- Redesign syslog and mqttlog using log buffer (#10164)
-- Shelly Dimmer power on state (#10154, #10182)
-- Wemo emulation for single devices (#10165, #10194)
-- ESP32 LoadStoreError when using ``#define USER_TEMPLATE`` (#9506)
+- Redesign syslog and mqttlog using log buffer [#10164](https://github.com/arendst/Tasmota/issues/10152)
+- Shutter stop issue [#10170](https://github.com/arendst/Tasmota/issues/10170)
+- Scripter script_sub_command [#10181](https://github.com/arendst/Tasmota/issues/10181)
+- Scripter JSON variable above 32 chars [#10193](https://github.com/arendst/Tasmota/issues/10193)
+- Shelly Dimmer power on state [#10154](https://github.com/arendst/Tasmota/issues/10154) [#10182](https://github.com/arendst/Tasmota/issues/10182)
+- Wemo emulation for single devices [#10165](https://github.com/arendst/Tasmota/issues/10165) [#10194](https://github.com/arendst/Tasmota/issues/10194)
+- ESP32 LoadStoreError when using ``#define USER_TEMPLATE`` [#9506](https://github.com/arendst/Tasmota/issues/9506)
 - Compile error when ``#ifdef USE_IR_RECEIVE`` is disabled regression from 9.1.0.2
