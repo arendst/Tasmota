@@ -847,6 +847,8 @@ typedef enum Z_Def_Category {
   Z_CAT_BIND,                 // send auto-binding to coordinator
   Z_CAT_CONFIG_ATTR,          // send a config attribute reporting request
   Z_CAT_READ_ATTRIBUTE,       // read a single attribute
+  Z_CAT_CIE_ATTRIBUTE,        // write CIE address
+  Z_CAT_CIE_ENROLL,           // enroll CIE zone
 } Z_Def_Category;
 
 const uint32_t Z_CAT_REACHABILITY_TIMEOUT = 2000;     // 1000 ms or 1s
