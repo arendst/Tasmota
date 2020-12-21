@@ -779,8 +779,9 @@ public:
   void parseReadAttributesResponse(Z_attribute_list& attr_list);
   void parseReadConfigAttributes(Z_attribute_list& attr_list);
   void parseConfigAttributes(Z_attribute_list& attr_list);
+  void parseWriteAttributesResponse(Z_attribute_list& attr_list);
   void parseResponse(void);
-  void parseResponseOld(void);
+  void parseResponse_inner(uint8_t cmd, bool cluster_specific, uint8_t status);
   void parseClusterSpecificCommand(Z_attribute_list& attr_list);
 
   // synthetic attributes converters
@@ -1467,6 +1468,11 @@ void ZCLFrame::parseConfigAttributes(Z_attribute_list& attr_list) {
   attr_1.setStrRaw(attr_config_list.toString(true).c_str());
 }
 
+// ZCL_WRITE_ATTRIBUTES_RESPONSE
+void ZCLFrame::parseWriteAttributesResponse(Z_attribute_list& attr_list) {
+  parseResponse_inner(ZCL_WRITE_ATTRIBUTES_RESPONSE, false, _payload.get8(0));
+}
+
 // ZCL_READ_REPORTING_CONFIGURATION_RESPONSE
 void ZCLFrame::parseReadConfigAttributes(Z_attribute_list& attr_list) {
   uint32_t i = 0;
@@ -1554,12 +1560,8 @@ void ZCLFrame::parseReadAttributesResponse(Z_attribute_list& attr_list) {
   }
 }
 
-// ZCL_DEFAULT_RESPONSE
-void ZCLFrame::parseResponse(void) {
-  if (_payload.len() < 2) { return; }   // wrong format
-  uint8_t cmd = _payload.get8(0);
-  uint8_t status = _payload.get8(1);
 
+void ZCLFrame::parseResponse_inner(uint8_t cmd, bool cluster_specific, uint8_t status) {
   Z_attribute_list attr_list;
 
   // "Device"
@@ -1572,7 +1574,7 @@ void ZCLFrame::parseResponse(void) {
     attr_list.addAttributePMEM(PSTR(D_JSON_ZIGBEE_NAME)).setStr(friendlyName);
   }
   // "Command"
-  snprintf_P(s, sizeof(s), PSTR("%04X!%02X"), _cluster_id, cmd);
+  snprintf_P(s, sizeof(s), PSTR("%04X%c%02X"), _cluster_id, cluster_specific ? '!' : '_', cmd);
   attr_list.addAttributePMEM(PSTR(D_JSON_ZIGBEE_CMD)).setStr(s);
   // "Status"
   attr_list.addAttributePMEM(PSTR(D_JSON_ZIGBEE_STATUS)).setUInt(status);
@@ -1589,6 +1591,15 @@ void ZCLFrame::parseResponse(void) {
 
   Response_P(PSTR("{\"" D_JSON_ZIGBEE_RESPONSE "\":%s}"), attr_list.toString(true).c_str());
   MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEEZCL_RECEIVED));
+}
+
+// ZCL_DEFAULT_RESPONSE
+void ZCLFrame::parseResponse(void) {
+  if (_payload.len() < 2) { return; }   // wrong format
+  uint8_t cmd = _payload.get8(0);
+  uint8_t status = _payload.get8(1);
+
+  parseResponse_inner(cmd, true, status);
 }
 
 // Parse non-normalized attributes
