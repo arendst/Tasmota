@@ -2109,9 +2109,8 @@ void AddLogBufferSize(uint32_t loglevel, uint8_t *buffer, uint32_t count, uint32
 
 Unishox compressor;
 
-String Decompress(const char * compressed, size_t uncompressed_size) {
-  String content("");
-
+// New variant where you provide the String object yourself
+int32_t DecompressNoAlloc(const char * compressed, size_t uncompressed_size, String & content) {
   uncompressed_size += 2;    // take a security margin
 
   // We use a nasty trick here. To avoid allocating twice the buffer,
@@ -2126,6 +2125,12 @@ String Decompress(const char * compressed, size_t uncompressed_size) {
     buffer[len] = 0;    // terminate string with NULL
     content = buffer;         // copy in place
   }
+  return len;
+}
+
+String Decompress(const char * compressed, size_t uncompressed_size) {
+  String content("");
+  DecompressNoAlloc(compressed, uncompressed_size, content);
   return content;
 }
 
