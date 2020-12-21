@@ -5,6 +5,9 @@ All notable changes to this project will be documented in this file.
 
 ## [9.2.0] 20201221
 ### Fixed Backported
+- Shutter stop issue (#10170)
+- Scripter script_sub_command (#10181)
+- Scripter JSON variable above 32 chars (#10193)
 - Shelly Dimmer power on state (#10154, #10182)
 - Wemo emulation for single devices (#10165, #10194)
 - ESP32 LoadStoreError when using ``#define USER_TEMPLATE`` (#9506)

@@ -67,8 +67,8 @@ keywords if then else endif, or, and are better readable for beginners (others m
 
 #define MAX_SARRAY_NUM 32
 
-uint32_t EncodeLightId(uint8_t relay_id);
-uint32_t DecodeLightId(uint32_t hue_id);
+//uint32_t EncodeLightId(uint8_t relay_id);
+//uint32_t DecodeLightId(uint32_t hue_id);
 
 #ifdef USE_UNISHOX_COMPRESSION
 #define USE_SCRIPT_COMPRESSION
@@ -1584,7 +1584,7 @@ float fvar;
 char *isvar(char *lp, uint8_t *vtype, struct T_INDEX *tind, float *fp, char *sp, JsonParserObject *jo) {
     uint16_t count,len = 0;
     uint8_t nres = 0;
-    char vname[32];
+    char vname[64];
     float fvar = 0;
     tind->index = 0;
     tind->bits.data = 0;
@@ -1713,7 +1713,7 @@ char *isvar(char *lp, uint8_t *vtype, struct T_INDEX *tind, float *fp, char *sp,
 
     if (jo) {
       // look for json input
-      char jvname[32];
+      char jvname[64];
       strcpy(jvname, vname);
       const char* str_value;
       uint8_t aindex;
@@ -1919,6 +1919,19 @@ chknext:
           fvar = xPortGetCoreID();
           goto exit;
         }
+#ifdef USE_M5STACK_CORE2
+        if (!strncmp(vname, "c2ps(", 5)) {
+          lp = GetNumericArgument(lp + 5, OPER_EQU, &fvar, 0);
+          while (*lp==' ') lp++;
+          float fvar1;
+          lp = GetNumericArgument(lp, OPER_EQU, &fvar1, 0);
+          fvar = core2_setaxppin(fvar, fvar1);
+          lp++;
+          len=0;
+          goto exit;
+        }
+#endif // USE_M5STACK_CORE2
+
 #ifdef USE_SCRIPT_TASK
         if (!strncmp(vname, "ct(", 3)) {
           lp = GetNumericArgument(lp + 3, OPER_EQU, &fvar, 0);
@@ -2667,7 +2680,7 @@ chknext:
           len++;
           goto exit;
         }
-#if  defined(ESP32) && (defined(USE_I2S_AUDIO) || defined(USE_TTGO_WATCH))
+#if  defined(ESP32) && (defined(USE_I2S_AUDIO) || defined(USE_TTGO_WATCH) || defined(USE_M5STACK_CORE2))
         if (!strncmp(vname, "pl(", 3)) {
           char path[SCRIPT_MAXSSIZE];
           lp = GetStringArgument(lp + 3, OPER_EQU, path, 0);
@@ -2860,7 +2873,7 @@ chknext:
           len = 0;
           goto strexit;
         }
-#if  defined(ESP32) && (defined(USE_I2S_AUDIO) || defined(USE_TTGO_WATCH))
+#if  defined(ESP32) && (defined(USE_I2S_AUDIO) || defined(USE_TTGO_WATCH) || defined(USE_M5STACK_CORE2))
         if (!strncmp(vname, "say(", 4)) {
           char text[SCRIPT_MAXSSIZE];
           lp = GetStringArgument(lp + 4, OPER_EQU, text, 0);
@@ -3161,7 +3174,7 @@ chknext:
           goto exit;
         }
 #endif // USE_TTGO_WATCH
-#if defined(USE_TTGO_WATCH) && defined(USE_FT5206)
+#if defined(USE_FT5206)
         if (!strncmp(vname, "wtch(", 5)) {
           lp = GetNumericArgument(lp + 5, OPER_EQU, &fvar, 0);
           fvar = Touch_Status(fvar);
@@ -5833,24 +5846,26 @@ bool Script_SubCmd(void) {
   if (!bitRead(Settings.rule_enabled, 0)) return false;
 
   if (tasm_cmd_activ) return false;
+  //AddLog_P(LOG_LEVEL_INFO,PSTR(">> %s, %s, %d, %d "),XdrvMailbox.topic, XdrvMailbox.data, XdrvMailbox.payload, XdrvMailbox.index);
 
   char command[CMDSZ];
   strlcpy(command, XdrvMailbox.topic, CMDSZ);
-  uint32_t pl = XdrvMailbox.payload;
-  char pld[64];
-  strlcpy(pld, XdrvMailbox.data, sizeof(pld));
+  if (XdrvMailbox.index > 1) {
+    char ind[2];
+    ind[0] = XdrvMailbox.index | 0x30;
+    ind[1] = 0;
+    strcat(command, ind);
+  }
+
+  int32_t pl = XdrvMailbox.payload;
 
   char cmdbuff[128];
   char *cp = cmdbuff;
   *cp++ = '#';
-  strcpy(cp, XdrvMailbox.topic);
-  uint8_t tlen = strlen(XdrvMailbox.topic);
+  strcpy(cp, command);
+  uint8_t tlen = strlen(command);
   cp += tlen;
-  if (XdrvMailbox.index > 0) {
-    *cp++ = XdrvMailbox.index | 0x30;
-    tlen++;
-  }
-  if ((XdrvMailbox.payload>0) || (XdrvMailbox.data_len>0)) {
+  if (XdrvMailbox.data_len>0) {
     *cp++ = '(';
     strncpy(cp, XdrvMailbox.data,XdrvMailbox.data_len);
     cp += XdrvMailbox.data_len;
@@ -5860,12 +5875,16 @@ bool Script_SubCmd(void) {
   //toLog(cmdbuff);
   uint32_t res = Run_Scripter(cmdbuff, tlen + 1, 0);
   //AddLog_P(LOG_LEVEL_INFO,">>%d",res);
-  if (res) return false;
+  if (res) {
+    return false;
+  }
   else {
-    if (pl>=0) {
-      Response_P(S_JSON_COMMAND_NVALUE, command, pl);
+    cp=XdrvMailbox.data;
+    while (*cp==' ') cp++;
+    if (isdigit(*cp) || *cp=='-') {
+      Response_P(S_JSON_COMMAND_NVALUE, command, XdrvMailbox.payload);
     } else {
-      Response_P(S_JSON_COMMAND_SVALUE, command, pld);
+      Response_P(S_JSON_COMMAND_SVALUE, command, XdrvMailbox.data);
     }
   }
   return true;
@@ -7550,7 +7569,7 @@ bool Xdrv10(uint8_t function)
       // fs on SD card
 #ifdef ESP32
       if (PinUsed(GPIO_SPI_MOSI) && PinUsed(GPIO_SPI_MISO) && PinUsed(GPIO_SPI_CLK)) {
-          SPI.begin(Pin(GPIO_SPI_CLK),Pin(GPIO_SPI_MISO),Pin(GPIO_SPI_MOSI), -1);
+          SPI.begin(Pin(GPIO_SPI_CLK), Pin(GPIO_SPI_MISO), Pin(GPIO_SPI_MOSI), -1);
       }
 #endif // ESP32
       fsp = &SD;

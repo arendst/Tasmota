@@ -113,12 +113,14 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - ESP32 Analog input div10 rule trigger [#10149](https://github.com/arendst/Tasmota/issues/10149)
 
 ### Fixed Backported
-- Shelly Dimmer power on state (#10154, #10182)
-- Wemo emulation for single devices (#10165, #10194)
-- ESP32 LoadStoreError when using ``#define USER_TEMPLATE`` (#9506)
+- Shutter stop issue [#10170](https://github.com/arendst/Tasmota/issues/10170)
+- Scripter script_sub_command [#10181](https://github.com/arendst/Tasmota/issues/10181)
+- Scripter JSON variable above 32 chars [#10193](https://github.com/arendst/Tasmota/issues/10193)
+- Shelly Dimmer power on state [#10182](https://github.com/arendst/Tasmota/issues/10182)
+- Wemo emulation for single devices [#10194](https://github.com/arendst/Tasmota/issues/10194)
+- ESP32 LoadStoreError when using ``#define USER_TEMPLATE`` [#9506](https://github.com/arendst/Tasmota/issues/9506)
 - Compile error when ``#ifdef USE_IR_RECEIVE`` is disabled regression from 9.1.0.2
 
 ### Removed
 - Version compatibility check
 - PN532 define USE_PN532_CAUSE_EVENTS replaced by generic rule trigger `on pn532#uid=`
-

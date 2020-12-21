@@ -1,7 +1,7 @@
 /*
   it-IT.h - localization for Italian - Italy for Tasmota
 
-  Copyright (C) 2020 Gennaro Tortone - some mods by Antonio Fragola - Updated by bovirus - rev. 20.11.2020
+  Copyright (C) 2020 Gennaro Tortone - some mods by Antonio Fragola - Updated by bovirus - rev. 21.12.2020
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -433,7 +433,7 @@
 #define D_TIMER_TIME "Ora"
 #define D_TIMER_DAYS "Giorni"
 #define D_TIMER_REPEAT "Ripeti"
-#define D_TIMER_OUTPUT "Output"
+#define D_TIMER_OUTPUT "Uscita"
 #define D_TIMER_ACTION "Azione"
 
 // xdrv_10_knx.ino
@@ -475,8 +475,8 @@
 #define D_PCF8574_PARAMETERS "Parametri PCF8574"
 #define D_INVERT_PORTS "Inverti porte"
 #define D_DEVICE "Dispositivo"
-#define D_DEVICE_INPUT "Input"
-#define D_DEVICE_OUTPUT "Output"
+#define D_DEVICE_INPUT "Ingresso"
+#define D_DEVICE_OUTPUT "Uscita"
 
 // xsns_05_ds18b20.ino
 #define D_SENSOR_BUSY "Sensore occupato"
@@ -560,7 +560,8 @@
 
 // tasmota_template.h - keep them as short as possible to be able to fit them in GUI drop down box
 #define D_SENSOR_NONE          "Nessuno"
-#define D_SENSOR_USER          "User"
+#define D_SENSOR_USER          "Utente"
+#define D_SENSOR_OPTION        "Opzioni"
 #define D_SENSOR_DHT11         "DHT11"
 #define D_SENSOR_AM2301        "AM2301"
 #define D_SENSOR_SI7021        "SI7021"
@@ -646,6 +647,8 @@
 #define D_SENSOR_SM16716_CLK   "SM16716 - CLK"
 #define D_SENSOR_SM16716_DAT   "SM16716 - DAT"
 #define D_SENSOR_SM16716_POWER "SM16716 - PWR"
+#define D_SENSOR_P9813_CLK     "P9813 - CLK"
+#define D_SENSOR_P9813_DAT     "P9813 - DAT"
 #define D_SENSOR_MY92X1_DI     "MY92x1 - DI"
 #define D_SENSOR_MY92X1_DCKI   "MY92x1 - DCKI"
 #define D_SENSOR_ARIRFRCV      "IR ALux - RCV"
@@ -671,8 +674,8 @@
 #define D_SENSOR_A4988_STP     "A4988 - STP"
 #define D_SENSOR_A4988_ENA     "A4988 - ENA"
 #define D_SENSOR_A4988_MS1     "A4988 - MS1"
-#define D_SENSOR_OUTPUT_HI     "Output - Hi"
-#define D_SENSOR_OUTPUT_LO     "Output - Lo"
+#define D_SENSOR_OUTPUT_HI     "Uscita - Hi"
+#define D_SENSOR_OUTPUT_LO     "Uscita - Lo"
 #define D_SENSOR_AS608_TX      "AS608 - TX"
 #define D_SENSOR_AS608_RX      "AS608 - RX"
 #define D_SENSOR_DDS2382_TX    "DDS238-2 - TX"
@@ -703,7 +706,7 @@
 #define D_SENSOR_TELEINFO_RX    "TInfo - RX"
 #define D_SENSOR_TELEINFO_ENABLE "TInfo - Abilita"
 #define D_SENSOR_LMT01_PULSE   "LMT01 - Impulso"
-#define D_SENSOR_ADC_INPUT     "ADC - Input"
+#define D_SENSOR_ADC_INPUT     "ADC - Ingresso"
 #define D_SENSOR_ADC_TEMP      "ADC - Temperatura"
 #define D_SENSOR_ADC_LIGHT     "ADC - Luce"
 #define D_SENSOR_ADC_BUTTON    "ADC - Pulsante"
