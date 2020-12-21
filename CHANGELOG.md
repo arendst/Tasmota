@@ -3,12 +3,17 @@ All notable changes to this project will be documented in this file.
 
 ## [Released]
 
+## [9.2.0] 20201221
+### Fixed Backported
+- Shelly Dimmer power on state (#10154, #10182)
+- Wemo emulation for single devices (#10165, #10194)
+- ESP32 LoadStoreError when using ``#define USER_TEMPLATE`` (#9506)
+- Compile error when ``#ifdef USE_IR_RECEIVE`` is disabled regression from 9.1.0.2
+
 ## [9.2.0] 20201216
 - Release Julie
 
-## [Unreleased] - Development
-
-## [9.1.0.2]
+## [9.1.0.2] 20201216
 ### Added
 - KNX read reply for Power (#9236, #9891)
 - Zigbee persistence of device/sensor data in EEPROM (only ZBBridge)

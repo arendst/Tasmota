@@ -112,6 +112,12 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - ESP32 CC2530 heap corruption [#10121](https://github.com/arendst/Tasmota/issues/10121)
 - ESP32 Analog input div10 rule trigger [#10149](https://github.com/arendst/Tasmota/issues/10149)
 
+### Fixed Backported
+- Shelly Dimmer power on state (#10154, #10182)
+- Wemo emulation for single devices (#10165, #10194)
+- ESP32 LoadStoreError when using ``#define USER_TEMPLATE`` (#9506)
+- Compile error when ``#ifdef USE_IR_RECEIVE`` is disabled regression from 9.1.0.2
+
 ### Removed
 - Version compatibility check
 - PN532 define USE_PN532_CAUSE_EVENTS replaced by generic rule trigger `on pn532#uid=`

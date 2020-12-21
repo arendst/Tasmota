@@ -290,7 +290,10 @@ uint32_t IrRemoteCmndIrSendJson(void)
   AddLog_P(LOG_LEVEL_DEBUG, PSTR("IRS: protocol_text %s, protocol %s, bits %d, data %s (0x%s), repeat %d, protocol_code %d"),
     protocol_text, protocol, bits, ulltoa(data, dvalue, 10), Uint64toHex(data, hvalue, bits), repeat, protocol_code);
 
+#ifdef USE_IR_RECEIVE
   if (irrecv != nullptr) { irrecv->disableIRIn(); }
+#endif  // USE_IR_RECEIVE
+
   switch (protocol_code) {  // Equals IRremoteESP8266.h enum decode_type_t
 #ifdef USE_IR_SEND_RC5
     case RC5:
@@ -305,10 +308,14 @@ uint32_t IrRemoteCmndIrSendJson(void)
       irsend->sendNEC(data, (bits > NEC_BITS) ? NEC_BITS : bits, repeat); break;
 #endif
     default:
+#ifdef USE_IR_RECEIVE
       if (irrecv != nullptr) { irrecv->enableIRIn(); }
+#endif  // USE_IR_RECEIVE
       return IE_PROTO_UNSUPPORTED;
   }
+#ifdef USE_IR_RECEIVE
   if (irrecv != nullptr) { irrecv->enableIRIn(); }
+#endif  // USE_IR_RECEIVE
 
   return IE_NO_ERROR;
 }

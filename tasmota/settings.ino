@@ -1049,7 +1049,8 @@ void SettingsDefaultSet2(void)
   flag4.mqtt_no_retain |= MQTT_NO_RETAIN;
 
 #ifdef USER_TEMPLATE
-  JsonTemplate((char *)USER_TEMPLATE);
+  String user_template = USER_TEMPLATE;
+  JsonTemplate((char*)user_template.c_str());
 #endif
 
   Settings.flag = flag;
