@@ -6201,7 +6201,7 @@ String ScriptSubscribe(const char *data, int data_len)
         }
       }
     }
-    AddLog_P(LOG_LEVEL_INFO, PSTR("Script: Subscribe command with parameters: %s, %s, %s."), event_name.c_str(), topic.c_str(), key.c_str());
+    //AddLog_P(LOG_LEVEL_DEBUG, PSTR("Script: Subscribe command with parameters: %s, %s, %s."), event_name.c_str(), topic.c_str(), key.c_str());
     //event_name.toUpperCase();
     if (event_name.length() > 0 && topic.length() > 0) {
       //Search all subscriptions
@@ -6222,7 +6222,7 @@ String ScriptSubscribe(const char *data, int data_len)
           topic.concat("/#");
         }
       }
-      AddLog_P(LOG_LEVEL_INFO, PSTR("Script: New topic: %s."), topic.c_str());
+      // AddLog_P(LOG_LEVEL_DEBUG, PSTR("Script: New topic: %s."), topic.c_str());
       //MQTT Subscribe
       subscription_item.Event = event_name;
       subscription_item.Topic = topic.substring(0, topic.length() - 2);   //Remove "/#" so easy to match
