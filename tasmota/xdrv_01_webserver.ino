@@ -3017,32 +3017,30 @@ void HandleHttpCommand(void)
   }
 
   WSContentBegin(200, CT_JSON);
-  uint32_t curridx = TasmotaGlobal.log_buffer_pointer;
   String svalue = Webserver->arg("cmnd");
   if (svalue.length() && (svalue.length() < MQTT_MAX_PACKET_SIZE)) {
+    uint32_t curridx = TasmotaGlobal.log_buffer_pointer;
+    TasmotaGlobal.templog_level = LOG_LEVEL_INFO;
     ExecuteWebCommand((char*)svalue.c_str(), SRC_WEBCOMMAND);
-    if (TasmotaGlobal.log_buffer_pointer != curridx) {
-      WSContentSend_P(PSTR("{"));
-      bool cflg = false;
-      uint32_t index = curridx;
-      char* line;
-      size_t len;
-      while (GetLog(Settings.weblog_level, &index, &line, &len)) {
-        // [14:49:36.123 MQTT: stat/wemos5/RESULT = {"POWER":"OFF"}] > [{"POWER":"OFF"}]
-        char* JSON = (char*)memchr(line, '{', len);
-        if (JSON) {  // Is it a JSON message (and not only [15:26:08 MQT: stat/wemos5/POWER = O])
-          size_t JSONlen = len - (JSON - line);
-          if (JSONlen > sizeof(TasmotaGlobal.mqtt_data)) { JSONlen = sizeof(TasmotaGlobal.mqtt_data); }
-          char stemp[JSONlen];
-          strlcpy(stemp, JSON +1, JSONlen -2);
-          WSContentSend_P(PSTR("%s%s"), (cflg) ? "," : "", stemp);
-          cflg = true;
-        }
+    WSContentSend_P(PSTR("{"));
+    bool cflg = false;
+    uint32_t index = curridx;
+    char* line;
+    size_t len;
+    while (GetLog(TasmotaGlobal.templog_level, &index, &line, &len)) {
+      // [14:49:36.123 MQTT: stat/wemos5/RESULT = {"POWER":"OFF"}] > [{"POWER":"OFF"}]
+      char* JSON = (char*)memchr(line, '{', len);
+      if (JSON) {  // Is it a JSON message (and not only [15:26:08 MQT: stat/wemos5/POWER = O])
+        size_t JSONlen = len - (JSON - line);
+        if (JSONlen > sizeof(TasmotaGlobal.mqtt_data)) { JSONlen = sizeof(TasmotaGlobal.mqtt_data); }
+        char stemp[JSONlen];
+        strlcpy(stemp, JSON +1, JSONlen -2);
+        WSContentSend_P(PSTR("%s%s"), (cflg) ? "," : "", stemp);
+        cflg = true;
       }
-      WSContentSend_P(PSTR("}"));
-    } else {
-      WSContentSend_P(PSTR("{\"" D_RSLT_WARNING "\":\"" D_ENABLE_WEBLOG_FOR_RESPONSE "\"}"));
     }
+    WSContentSend_P(PSTR("}"));
+    TasmotaGlobal.templog_level = 0;
   } else {
     WSContentSend_P(PSTR("{\"" D_RSLT_WARNING "\":\"" D_ENTER_COMMAND " cmnd=\"}"));
   }

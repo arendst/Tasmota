@@ -151,6 +151,7 @@ struct {
   uint8_t masterlog_level;                  // Master log level used to override set log level
   uint8_t seriallog_level;                  // Current copy of Settings.seriallog_level
   uint8_t syslog_level;                     // Current copy of Settings.syslog_level
+  uint8_t templog_level;                    // Temporary log level to be used by HTTP cm and Telegram
   uint8_t module_type;                      // Current copy of Settings.module or user template type
   uint8_t last_source;                      // Last command source
   uint8_t shutters_present;                 // Number of actual define shutters
@@ -197,7 +198,6 @@ void setup(void) {
   memset(&TasmotaGlobal, 0, sizeof(TasmotaGlobal));
   TasmotaGlobal.baudrate = APP_BAUDRATE;
   TasmotaGlobal.seriallog_timer = SERIALLOG_TIMER;
-  TasmotaGlobal.gpio_optiona.data = 0;
   TasmotaGlobal.temperature_celsius = NAN;
   TasmotaGlobal.blinks = 201;
   TasmotaGlobal.wifi_state_flag = WIFI_RESTART;

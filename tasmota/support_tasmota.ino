@@ -845,8 +845,8 @@ void PerformEverySecond(void)
     }
   }
 
-  MqttPublishLoggingAsync();
-  SyslogAsync();
+  MqttPublishLoggingAsync(false);
+  SyslogAsync(false);
 
   ResetGlobalValues();
 
@@ -983,6 +983,10 @@ void Every250mSeconds(void)
 #endif  // ESP8266
     SetLedPower(tstate);
   }
+
+  // Check if log refresh needed in case of fast buffer fill
+  MqttPublishLoggingAsync(true);
+  SyslogAsync(true);
 
 /*-------------------------------------------------------------------------------------------*\
  * Every second at 0.25 second interval

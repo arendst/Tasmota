@@ -290,30 +290,28 @@ String TelegramExecuteCommand(const char *svalue) {
   String response = "";
 
   uint32_t curridx = TasmotaGlobal.log_buffer_pointer;
+  TasmotaGlobal.templog_level = LOG_LEVEL_INFO;
   ExecuteCommand(svalue, SRC_CHAT);
-  if (TasmotaGlobal.log_buffer_pointer != curridx) {
-    response = F("{");
-    bool cflg = false;
-    uint32_t index = curridx;
-    char* line;
-    size_t len;
-    while (GetLog(Settings.weblog_level, &index, &line, &len)) {
-      // [14:49:36.123 MQTT: stat/wemos5/RESULT = {"POWER":"OFF"}] > [{"POWER":"OFF"}]
-      char* JSON = (char*)memchr(line, '{', len);
-      if (JSON) {  // Is it a JSON message (and not only [15:26:08 MQT: stat/wemos5/POWER = O])
-        size_t JSONlen = len - (JSON - line);
-        if (JSONlen > sizeof(TasmotaGlobal.mqtt_data)) { JSONlen = sizeof(TasmotaGlobal.mqtt_data); }
-        char stemp[JSONlen];
-        strlcpy(stemp, JSON +1, JSONlen -2);
-        if (cflg) { response += F(","); }
-        response += stemp;
-        cflg = true;
-      }
+  response = F("{");
+  bool cflg = false;
+  uint32_t index = curridx;
+  char* line;
+  size_t len;
+  while (GetLog(TasmotaGlobal.templog_level, &index, &line, &len)) {
+    // [14:49:36.123 MQTT: stat/wemos5/RESULT = {"POWER":"OFF"}] > [{"POWER":"OFF"}]
+    char* JSON = (char*)memchr(line, '{', len);
+    if (JSON) {  // Is it a JSON message (and not only [15:26:08 MQT: stat/wemos5/POWER = O])
+      size_t JSONlen = len - (JSON - line);
+      if (JSONlen > sizeof(TasmotaGlobal.mqtt_data)) { JSONlen = sizeof(TasmotaGlobal.mqtt_data); }
+      char stemp[JSONlen];
+      strlcpy(stemp, JSON +1, JSONlen -2);
+      if (cflg) { response += F(","); }
+      response += stemp;
+      cflg = true;
     }
-    response += F("}");
-  } else {
-    response = F("{\"" D_RSLT_WARNING "\":\"" D_ENABLE_WEBLOG_FOR_RESPONSE "\"}");
   }
+  response += F("}");
+  TasmotaGlobal.templog_level = 0;
 
   return response;
 }
