@@ -26,7 +26,7 @@
   ISR updating all 8 inputs         DONE
   de-bouncing for 50 ms             NOT REQUIRED
   change report every 250 ms        REPORTS EVERY 50MS
-  Webserver display "00001001"      DONE
+  Webserver display "00001001"      DONE & REMOVED
   MQTT message                      DONE
   Rules hook                        DONE
   detach interrupt before restart   POINTLESS
@@ -69,8 +69,8 @@
 static uint16_t ftc532_initialized = 0;
 
 struct FTC532 {
-  volatile uint16_t state;              // ISR state
-  volatile uint16_t valid;              // did we ever receive valid data?
+  volatile uint8_t state;               // ISR state
+  volatile uint8_t valid;               // did we ever receive valid data?
   volatile uint16_t errors;             // error counter
   volatile uint16_t sample = 0xF0F0;    // buffer for bit-coded time samples
   uint16_t keys = 0;                    // bitmap of active keys
@@ -78,6 +78,8 @@ struct FTC532 {
   volatile uint32_t rxtime;             // ISR timer memory 
   volatile uint16_t rxbit;              // ISR bit counter
 } ftc532;
+
+const char ftc532_json[] PROGMEM = "{\"FTC532\":{\"KEYS\":";
 
 void ICACHE_RAM_ATTR ftc532_ISR(void)   // Hardware interrupt routine, triggers on rising edge
 {
@@ -118,10 +120,6 @@ void ftc532_init(void)    // Initialize
   ++ftc532_initialized;
 }
 
-void ftc532_exit(void)    // Clean up
-{
-}
-
 void ftc532_update(void)  // Usually called every 50 ms
 {
 //    // WARNING: Reduce callback frequency if this code is enabled
@@ -131,33 +129,21 @@ void ftc532_update(void)  // Usually called every 50 ms
 //  }
   ftc532.keys = (ftc532.sample & 0xF) | ((ftc532.sample >> 4) & 0xF0);
   if (ftc532.keys != ftc532.old_keys) {
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR("FTC: SAM=%04X KEY=%02X OLD=%02X ERR=%u OK=%u TIME=%lu Pin=%u"),
-             ftc532.sample, ftc532.keys, ftc532.old_keys, ftc532.errors, ftc532.valid, ftc532.rxtime, Pin(GPIO_FTC532));
+//    AddLog_P(LOG_LEVEL_DEBUG, PSTR("FTC: SAM=%04X KEY=%02X OLD=%02X ERR=%u OK=%u TIME=%lu Pin=%u"),
+//             ftc532.sample, ftc532.keys, ftc532.old_keys, ftc532.errors, ftc532.valid, ftc532.rxtime, Pin(GPIO_FTC532));
     ftc532_publish();
     ftc532.old_keys = ftc532.keys;
   }
 }
 
 void ftc532_show(uint32_t json) {
-#ifdef USE_WEBSERVER
-  int i;
-  char keystring[FTC532_KEYS_MAX + 1];
-#endif  // USE_WEBSERVER
   if ( ! ftc532_initialized ) return;
-  if (json == FUNC_JSON_APPEND) {
-    ResponseAppend_P(PSTR(",\"FTC532\":{\"KEYS\":%02X"), ftc532.keys);
+    ResponseAppend_P(PSTR(",%s%02X"), ftc532_json, ftc532.keys);
     ResponseJsonEnd();
-#ifdef USE_WEBSERVER
-  } else {
-    for (i=0; i < FTC532_KEYS_MAX; ++i) keystring[i] = (ftc532.keys & (1 << i)) ? '1' : '0';
-    keystring[i]='\0';
-    WSContentSend_P(PSTR("<center>FTC532 KEYS: <b>%s</b></center>"), keystring);
-#endif  // USE_WEBSERVER
-  }
 }
 
 void ftc532_publish(void) {
-  Response_P(PSTR("{\"FTC532\":{\"KEYS\":%02X}}"), ftc532.keys);
+  Response_P(PSTR("%s%02X}}"),ftc532_json, ftc532.keys);
   MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR(D_CMND_SENSOR));
 }
 
@@ -190,11 +176,9 @@ bool Xdrv85(uint8_t function) {
 #ifdef USE_WEBSERVER
     // Show sensor data on main web page
     case FUNC_WEB_SENSOR:
-      ftc532_show(FUNC_WEB_SENSOR);
       break;
 #endif  // USE_WEBSERVER
     case FUNC_SAVE_BEFORE_RESTART:
-      ftc532_exit();
       break;
     }
   // Return bool result
