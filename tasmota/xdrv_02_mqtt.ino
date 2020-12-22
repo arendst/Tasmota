@@ -291,10 +291,11 @@ void MqttUnsubscribe(const char *topic)
   MqttUnsubscribeLib(topic);
 }
 
-void MqttPublishLoggingAsync(void) {
+void MqttPublishLoggingAsync(bool refresh) {
   static uint32_t index = 1;
 
   if (!Settings.flag.mqtt_enabled) { return; }  // SetOption3 - Enable MQTT
+  if (refresh && !NeedLogRefresh(Settings.mqttlog_level, index)) { return; }
 
   char* line;
   size_t len;

@@ -1924,8 +1924,10 @@ void Syslog(void)
   }
 }
 
-void SyslogAsync(void) {
+void SyslogAsync(bool refresh) {
   static uint32_t index = 1;
+
+  if (refresh && !NeedLogRefresh(TasmotaGlobal.syslog_level, index)) { return; }
 
   char* line;
   size_t len;
@@ -1938,6 +1940,16 @@ void SyslogAsync(void) {
       Syslog();
     }
   }
+}
+
+bool NeedLogRefresh(uint32_t req_loglevel, uint32_t index) {
+  // Skip initial buffer fill
+  if (strlen(TasmotaGlobal.log_buffer) < LOG_BUFFER_SIZE - LOGSZ) { return false; }
+
+  char* line;
+  size_t len;
+  if (!GetLog(req_loglevel, &index, &line, &len)) { return false; }
+  return ((line - TasmotaGlobal.log_buffer) < LOG_BUFFER_SIZE / 4);
 }
 
 bool GetLog(uint32_t req_loglevel, uint32_t* index_p, char** entry_pp, size_t* len_p) {
@@ -1996,6 +2008,8 @@ void AddLog(uint32_t loglevel) {
   uint32_t highest_loglevel = Settings.weblog_level;
   if (Settings.mqttlog_level > highest_loglevel) { highest_loglevel = Settings.mqttlog_level; }
   if (TasmotaGlobal.syslog_level > highest_loglevel) { highest_loglevel = TasmotaGlobal.syslog_level; }
+  if (TasmotaGlobal.templog_level > highest_loglevel) { highest_loglevel = TasmotaGlobal.templog_level; }
+
   if ((loglevel <= highest_loglevel) &&    // Log only when needed
       (TasmotaGlobal.masterlog_level <= highest_loglevel)) {
     // Delimited, zero-terminated buffer of log lines.
