@@ -86,28 +86,25 @@ void ICACHE_RAM_ATTR ftc532_ISR(void)			// Hardware interrupt routine, triggers 
 	ftc532.rxtime = time;
 
 	if (ftc532.state == FTC532_STATE_WAITING) {
-		if (time_diff > FTC532_LONG + FTC532_SHORT) {			// new frame
+		if (time_diff > FTC532_LONG + FTC532_SHORT) {		// new frame
 			ftc532.rxbit = 0;
 			ftc532.state = FTC532_STATE_READING;
-			return;
 		}
+		return;
+	}							// FTC532_STATE_READING starts here
+	if (ftc532.rxbit >= FTC532_KEYS_MAX * 2 || time_diff > FTC532_LONG + FTC532_BIT) {
+		++ftc532.errors;			// frame error
+		ftc532.rxbit = 0;
+		ftc532.state = FTC532_STATE_WAITING;
+		return;
 	}
-	else { 						// FTC532_STATE_READING
-		if (ftc532.rxbit >= FTC532_KEYS_MAX * 2 || time_diff > FTC532_LONG + FTC532_BIT) {
-			++ftc532.errors;
-			ftc532.rxbit = 0;
-			ftc532.state = FTC532_STATE_WAITING;
-			return;
-		}
-		else if (time_diff > FTC532_SHORT + FTC532_BIT) ftc532.sample |= (1 << ftc532.rxbit);
-		else ftc532.sample &= ~(1 << ftc532.rxbit);
-		++ftc532.rxbit;
-		if (ftc532.rxbit == FTC532_KEYS_MAX * 2) {
-			ftc532.rxbit = 0;
-			ftc532.valid = 1;
-			ftc532.state = FTC532_STATE_WAITING;						// frame complete
-			return;
-		}
+	if (time_diff > FTC532_SHORT + FTC532_BIT) ftc532.sample |= (1 << ftc532.rxbit);	// LONG
+	else ftc532.sample &= ~(1 << ftc532.rxbit);				// SHORT
+	++ftc532.rxbit;
+	if (ftc532.rxbit == FTC532_KEYS_MAX * 2) {				// frame complete
+		ftc532.rxbit = 0;
+		ftc532.valid = 1;
+		ftc532.state = FTC532_STATE_WAITING;
 	}
 }
 
@@ -126,9 +123,9 @@ void ftc532_exit(void)		// Clean up
 {
 }
 
-void ftc532_update(void)			// called every 50 ms
+void ftc532_update(void)	// Usually called every 50 ms
 {
-//		// WARNING: Reduce call frequency if this code is uncommented
+//		// WARNING: Reduce callback frequency if this code is enabled
 //	if ((ftc532.sample & 0xF) != ((~ftc532.sample >> 4) & 0xF) || ((ftc532.sample >> 8) & 0xF) != ((~ftc532.sample >> 12) & 0xF)) {
 //		AddLog_P(LOG_LEVEL_ERROR, PSTR("FTC532: inverted sample does not match %x %x %x %x"),
 //						 ftc532.sample & 0xF, (~ftc532.sample >> 4) & 0xF, (ftc532.sample >> 8) & 0xF, (~ftc532.sample >> 12) & 0xF);
@@ -143,17 +140,20 @@ void ftc532_update(void)			// called every 50 ms
 }
 
 void ftc532_show(uint32_t json) {
+#ifdef USE_WEBSERVER
 	int i;
 	char keystring[FTC532_KEYS_MAX + 1];
-	
+#endif	// USE_WEBSERVER
 	if ( ! ftc532_initialized ) return;
   if (json == FUNC_JSON_APPEND) {
     ResponseAppend_P(PSTR(",\"FTC532\":{\"KEYS\":%02X"), ftc532.keys);
     ResponseJsonEnd();
-  } else {
+#ifdef USE_WEBSERVER
+	} else {
 		for (i=0; i < FTC532_KEYS_MAX; ++i) keystring[i] = (ftc532.keys & (1 << i)) ? '1' : '0';
 		keystring[i]='\0';
     WSContentSend_P(PSTR("<center>FTC532 KEYS: <b>%s</b></center>"), keystring);
+#endif	// USE_WEBSERVER
   }
 }
 
@@ -193,7 +193,7 @@ bool Xdrv85(uint8_t function) {
 		case FUNC_WEB_SENSOR:
 			ftc532_show(FUNC_WEB_SENSOR);
 			break;
-#endif				// USE_WEBSERVER
+#endif	// USE_WEBSERVER
 		case FUNC_SAVE_BEFORE_RESTART:
 			ftc532_exit();
 			break;
@@ -202,4 +202,4 @@ bool Xdrv85(uint8_t function) {
 	return result;
 }
 
-#endif  // USE_FTC532
+#endif		// USE_FTC532
