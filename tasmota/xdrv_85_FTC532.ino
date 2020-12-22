@@ -52,114 +52,114 @@
 
 #ifdef USE_FTC532
 
-#define XDRV_85						85
+#define XDRV_85           85
 
-#define FTC532_KEYS_MAX		8
+#define FTC532_KEYS_MAX   8
 
-#define FTC532_STATE_WAITING			0x01
-#define FTC532_STATE_READING			0x02
+#define FTC532_STATE_WAITING      0x01
+#define FTC532_STATE_READING      0x02
 
 // Rising edge timing in microseconds
-#define FTC532_BIT								377
-#define FTC532_SHORT							(FTC532_BIT * 2)
-#define FTC532_LONG								(FTC532_BIT * 4)
-#define FTC532_IDLE								(FTC532_BIT * 10)
-#define FTC532_MAX								(FTC532_BIT * 58)
+#define FTC532_BIT                377
+#define FTC532_SHORT              (FTC532_BIT * 2)
+#define FTC532_LONG               (FTC532_BIT * 4)
+#define FTC532_IDLE               (FTC532_BIT * 10)
+#define FTC532_MAX                (FTC532_BIT * 58)
 
 static uint16_t ftc532_initialized = 0;
 
 struct FTC532 {
-	volatile uint16_t state;							// ISR state
-	volatile uint16_t valid;							// did we ever receive valid data?
-	volatile uint16_t errors;							// error counter
-	volatile uint16_t sample = 0xF0F0;		// buffer for bit-coded time samples
-	uint16_t keys = 0;										// bitmap of active keys
-	uint16_t old_keys = 0;								// previously active keys
-	volatile uint32_t rxtime;							// ISR timer memory 
-	volatile uint16_t rxbit;							// ISR bit counter
+  volatile uint16_t state;              // ISR state
+  volatile uint16_t valid;              // did we ever receive valid data?
+  volatile uint16_t errors;             // error counter
+  volatile uint16_t sample = 0xF0F0;    // buffer for bit-coded time samples
+  uint16_t keys = 0;                    // bitmap of active keys
+  uint16_t old_keys = 0;                // previously active keys
+  volatile uint32_t rxtime;             // ISR timer memory 
+  volatile uint16_t rxbit;              // ISR bit counter
 } ftc532;
 
-void ICACHE_RAM_ATTR ftc532_ISR(void)			// Hardware interrupt routine, triggers on rising edge
+void ICACHE_RAM_ATTR ftc532_ISR(void)   // Hardware interrupt routine, triggers on rising edge
 {
-	uint32_t time = micros();
-	uint32_t time_diff = time - ftc532.rxtime;
-	ftc532.rxtime = time;
+  uint32_t time = micros();
+  uint32_t time_diff = time - ftc532.rxtime;
+  ftc532.rxtime = time;
 
-	if (ftc532.state == FTC532_STATE_WAITING) {
-		if (time_diff > FTC532_LONG + FTC532_SHORT) {		// new frame
-			ftc532.rxbit = 0;
-			ftc532.state = FTC532_STATE_READING;
-		}
-		return;
-	}							// FTC532_STATE_READING starts here
-	if (ftc532.rxbit >= FTC532_KEYS_MAX * 2 || time_diff > FTC532_LONG + FTC532_BIT) {
-		++ftc532.errors;			// frame error
-		ftc532.rxbit = 0;
-		ftc532.state = FTC532_STATE_WAITING;
-		return;
-	}
-	if (time_diff > FTC532_SHORT + FTC532_BIT) ftc532.sample |= (1 << ftc532.rxbit);	// LONG
-	else ftc532.sample &= ~(1 << ftc532.rxbit);				// SHORT
-	++ftc532.rxbit;
-	if (ftc532.rxbit == FTC532_KEYS_MAX * 2) {				// frame complete
-		ftc532.rxbit = 0;
-		ftc532.valid = 1;
-		ftc532.state = FTC532_STATE_WAITING;
-	}
+  if (ftc532.state == FTC532_STATE_WAITING) {
+    if (time_diff > FTC532_LONG + FTC532_SHORT) {   // new frame
+      ftc532.rxbit = 0;
+      ftc532.state = FTC532_STATE_READING;
+    }
+    return;
+  }             // FTC532_STATE_READING starts here
+  if (ftc532.rxbit >= FTC532_KEYS_MAX * 2 || time_diff > FTC532_LONG + FTC532_BIT) {
+    ++ftc532.errors;      // frame error
+    ftc532.rxbit = 0;
+    ftc532.state = FTC532_STATE_WAITING;
+    return;
+  }
+  if (time_diff > FTC532_SHORT + FTC532_BIT) ftc532.sample |= (1 << ftc532.rxbit);  // LONG
+  else ftc532.sample &= ~(1 << ftc532.rxbit);       // SHORT
+  ++ftc532.rxbit;
+  if (ftc532.rxbit == FTC532_KEYS_MAX * 2) {        // frame complete
+    ftc532.rxbit = 0;
+    ftc532.valid = 1;
+    ftc532.state = FTC532_STATE_WAITING;
+  }
 }
 
-void ftc532_init(void)		// Initialize
+void ftc532_init(void)    // Initialize
 {
-	if (ftc532_initialized) return;
-	ftc532.errors = ftc532.valid = 0;
-	ftc532.state = FTC532_STATE_WAITING;
-	ftc532.rxtime = micros();
-	pinMode(Pin(GPIO_FTC532), INPUT_PULLUP);
-	attachInterrupt(Pin(GPIO_FTC532), ftc532_ISR, RISING);
-	++ftc532_initialized;
+  if (ftc532_initialized) return;
+  ftc532.errors = ftc532.valid = 0;
+  ftc532.state = FTC532_STATE_WAITING;
+  ftc532.rxtime = micros();
+  pinMode(Pin(GPIO_FTC532), INPUT_PULLUP);
+  attachInterrupt(Pin(GPIO_FTC532), ftc532_ISR, RISING);
+  ++ftc532_initialized;
 }
 
-void ftc532_exit(void)		// Clean up
+void ftc532_exit(void)    // Clean up
 {
 }
 
-void ftc532_update(void)	// Usually called every 50 ms
+void ftc532_update(void)  // Usually called every 50 ms
 {
-//		// WARNING: Reduce callback frequency if this code is enabled
-//	if ((ftc532.sample & 0xF) != ((~ftc532.sample >> 4) & 0xF) || ((ftc532.sample >> 8) & 0xF) != ((~ftc532.sample >> 12) & 0xF)) {
-//		AddLog_P(LOG_LEVEL_ERROR, PSTR("FTC532: inverted sample does not match %x %x %x %x"),
-//						 ftc532.sample & 0xF, (~ftc532.sample >> 4) & 0xF, (ftc532.sample >> 8) & 0xF, (~ftc532.sample >> 12) & 0xF);
-//	}
-	ftc532.keys = (ftc532.sample & 0xF) | ((ftc532.sample >> 4) & 0xF0);
-	if (ftc532.keys != ftc532.old_keys) {
-		AddLog_P(LOG_LEVEL_DEBUG, PSTR("FTC: SAM=%04X KEY=%02X OLD=%02X ERR=%u OK=%u TIME=%lu Pin=%u"),
-						 ftc532.sample, ftc532.keys, ftc532.old_keys, ftc532.errors, ftc532.valid, ftc532.rxtime, Pin(GPIO_FTC532));
-		ftc532_publish();
-		ftc532.old_keys = ftc532.keys;
-	}
+//    // WARNING: Reduce callback frequency if this code is enabled
+//  if ((ftc532.sample & 0xF) != ((~ftc532.sample >> 4) & 0xF) || ((ftc532.sample >> 8) & 0xF) != ((~ftc532.sample >> 12) & 0xF)) {
+//    AddLog_P(LOG_LEVEL_ERROR, PSTR("FTC532: inverted sample does not match %x %x %x %x"),
+//             ftc532.sample & 0xF, (~ftc532.sample >> 4) & 0xF, (ftc532.sample >> 8) & 0xF, (~ftc532.sample >> 12) & 0xF);
+//  }
+  ftc532.keys = (ftc532.sample & 0xF) | ((ftc532.sample >> 4) & 0xF0);
+  if (ftc532.keys != ftc532.old_keys) {
+    AddLog_P(LOG_LEVEL_DEBUG, PSTR("FTC: SAM=%04X KEY=%02X OLD=%02X ERR=%u OK=%u TIME=%lu Pin=%u"),
+             ftc532.sample, ftc532.keys, ftc532.old_keys, ftc532.errors, ftc532.valid, ftc532.rxtime, Pin(GPIO_FTC532));
+    ftc532_publish();
+    ftc532.old_keys = ftc532.keys;
+  }
 }
 
 void ftc532_show(uint32_t json) {
 #ifdef USE_WEBSERVER
-	int i;
-	char keystring[FTC532_KEYS_MAX + 1];
-#endif	// USE_WEBSERVER
-	if ( ! ftc532_initialized ) return;
+  int i;
+  char keystring[FTC532_KEYS_MAX + 1];
+#endif  // USE_WEBSERVER
+  if ( ! ftc532_initialized ) return;
   if (json == FUNC_JSON_APPEND) {
     ResponseAppend_P(PSTR(",\"FTC532\":{\"KEYS\":%02X"), ftc532.keys);
     ResponseJsonEnd();
 #ifdef USE_WEBSERVER
-	} else {
-		for (i=0; i < FTC532_KEYS_MAX; ++i) keystring[i] = (ftc532.keys & (1 << i)) ? '1' : '0';
-		keystring[i]='\0';
+  } else {
+    for (i=0; i < FTC532_KEYS_MAX; ++i) keystring[i] = (ftc532.keys & (1 << i)) ? '1' : '0';
+    keystring[i]='\0';
     WSContentSend_P(PSTR("<center>FTC532 KEYS: <b>%s</b></center>"), keystring);
-#endif	// USE_WEBSERVER
+#endif  // USE_WEBSERVER
   }
 }
 
 void ftc532_publish(void) {
-	Response_P(PSTR("{\"FTC532\":{\"KEYS\":%02X}}"), ftc532.keys);
-	MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR(D_CMND_SENSOR));
+  Response_P(PSTR("{\"FTC532\":{\"KEYS\":%02X}}"), ftc532.keys);
+  MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR(D_CMND_SENSOR));
 }
 
 /*********************************************************************************************\
@@ -167,39 +167,39 @@ void ftc532_publish(void) {
 \*********************************************************************************************/
 
 bool Xdrv85(uint8_t function) {
-	bool result = false;
+  bool result = false;
 
-	switch (function) {
-		// Initialize driver
-		case FUNC_INIT:
-			ftc532_init();
-			break;
-		// timed callback functions
-		case FUNC_EVERY_SECOND:
+  switch (function) {
+    // Initialize driver
+    case FUNC_INIT:
+      ftc532_init();
       break;
-		case FUNC_EVERY_250_MSECOND:
-			break;
-		case FUNC_EVERY_100_MSECOND:
-			break;
-		case FUNC_EVERY_50_MSECOND:
-			if (ftc532_initialized) ftc532_update();
-			break;
-		// Generate JSON telemetry string
-		case FUNC_JSON_APPEND:
-			ftc532_show(FUNC_JSON_APPEND);
-			break;
+    // timed callback functions
+    case FUNC_EVERY_SECOND:
+      break;
+    case FUNC_EVERY_250_MSECOND:
+      break;
+    case FUNC_EVERY_100_MSECOND:
+      break;
+    case FUNC_EVERY_50_MSECOND:
+      if (ftc532_initialized) ftc532_update();
+      break;
+    // Generate JSON telemetry string
+    case FUNC_JSON_APPEND:
+      ftc532_show(FUNC_JSON_APPEND);
+      break;
 #ifdef USE_WEBSERVER
-		// Show sensor data on main web page
-		case FUNC_WEB_SENSOR:
-			ftc532_show(FUNC_WEB_SENSOR);
-			break;
-#endif	// USE_WEBSERVER
-		case FUNC_SAVE_BEFORE_RESTART:
-			ftc532_exit();
-			break;
-		}
-	// Return bool result
-	return result;
+    // Show sensor data on main web page
+    case FUNC_WEB_SENSOR:
+      ftc532_show(FUNC_WEB_SENSOR);
+      break;
+#endif  // USE_WEBSERVER
+    case FUNC_SAVE_BEFORE_RESTART:
+      ftc532_exit();
+      break;
+    }
+  // Return bool result
+  return result;
 }
 
-#endif		// USE_FTC532
+#endif    // USE_FTC532
