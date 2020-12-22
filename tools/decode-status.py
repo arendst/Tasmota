@@ -239,7 +239,7 @@ a_features = [[
     "USE_EZOORP","USE_EZORTD","USE_EZOHUM","USE_EZOEC",
     "USE_EZOCO2","USE_EZOO2","USE_EZOPRS","USE_EZOFLO",
     "USE_EZODO","USE_EZORGB","USE_EZOPMP","USE_AS608",
-    "USE_SHELLY_DIMMER","USE_RC522","","",
+    "USE_SHELLY_DIMMER","USE_RC522","USE_FTC532","",
     "","","","",
     "","","","",
     "","","","",
@@ -271,7 +271,7 @@ else:
         obj = json.load(fp)
 
 def StartDecode():
-    print ("\n*** decode-status.py v20201130 by Theo Arends and Jacek Ziolkowski ***")
+    print ("\n*** decode-status.py v20201222 by Theo Arends and Jacek Ziolkowski ***")
 
 #    print("Decoding\n{}".format(obj))
 

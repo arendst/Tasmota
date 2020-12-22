@@ -752,6 +752,8 @@
 
 //#define USE_WINDMETER                            // Add support for analog anemometer (+2k2 code)
 
+//#define USE_FTC532                               // Add support for FTC532 8-button touch controller (+0k6 code)
+
 //#define USE_RC_SWITCH                            // Add support for RF transceiver using library RcSwitch (+2k7 code, 460 iram)
 
 //#define USE_RF_SENSOR                            // Add support for RF sensor receiver (434MHz or 868MHz) (+0k8 code)

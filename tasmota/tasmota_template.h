@@ -131,6 +131,7 @@ enum UserSelectablePins {
   GPIO_RC522_RST,                      // RC522 reset
   GPIO_P9813_CLK, GPIO_P9813_DAT,      // P9813 Clock and Data
   GPIO_OPTION_A,                       // Specific device options to be served in code
+  GPIO_FTC532,                         // FTC532 touch ctrlr serial input
   GPIO_SENSOR_END };
 
 enum ProgramSelectablePins {
@@ -282,6 +283,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_RC522_RST "|"
   D_SENSOR_P9813_CLK "|" D_SENSOR_P9813_DAT "|"
   D_SENSOR_OPTION "_a|"
+  D_SENSOR_FTC532
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -325,6 +327,9 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_LEDLNK_INV),               // Inverted link led
   AGPIO(GPIO_OUTPUT_HI),                // Fixed output high
   AGPIO(GPIO_OUTPUT_LO),                // Fixed output low
+#ifdef USE_FTC532
+  AGPIO(GPIO_FTC532),                   // FTC532 touch input
+#endif
 
 /*-------------------------------------------------------------------------------------------*\
  * Protocol specifics
