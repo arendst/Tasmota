@@ -252,6 +252,7 @@ const char * getStateString(int state);
 // a temporay safe logging mechanism.  This has a max of 40 chars, and a max of 15 slots per 50ms
 int SafeAddLog_P(uint32_t loglevel, PGM_P formatP, ...);
 
+static void BLEDiag();
 
 
 ////////////////////////////////////////////////////////////////////////
@@ -328,8 +329,8 @@ int BLETaskStartScan(int time);
 
 
 // these are run from main thread
-static void StartBLE(void);
-static void StopBLE(void);
+static int StartBLE(void);
+static int StopBLE(void);
 
 // called from advert callback
 void setDetails(ble_advertisment_t *ad);
@@ -360,6 +361,8 @@ static int BLEInitState = 0;
 static int BLERunningScan = 0;
 static uint32_t BLEScanCount = 0;
 static bool BLEScanActiveMode = false;
+static uint32_t BLELoopCount = 0;
+static uint32_t BLEOpCount = 0;
 
 static int BLEPublishDevices = 0; // causes MQTT publish of device list (each scan end)
 static BLEScan* ble32Scan = nullptr;
@@ -511,6 +514,8 @@ uint8_t BLEAdvertMode = BLE_ADV_TELE;
 uint8_t BLEdeviceLimitReached = 0;
 
 uint8_t BLEStop = 0;
+uint64_t BLEStopAt = 0;
+
 uint8_t BLERestartTasmota = 0;
 uint8_t BLERestartNimBLE = 0;
 const char *BLE_RESTART_TEAMOTA_REASON_UNKNOWN = PSTR("unknown");
@@ -810,9 +815,13 @@ int getSeenDevicesToJson(char *dest, int maxlen){
  * Mutex protected logging - max 5 logs of 40 chars
 \*********************************************************************************************/
 
-#define MAX_SAFELOG_LEN 20
-#define MAX_SAFELOG_COUNT 5
-
+#ifdef BLE_ESP32_DEBUG        
+  #define MAX_SAFELOG_LEN 40
+  #define MAX_SAFELOG_COUNT 25
+#else
+  #define MAX_SAFELOG_LEN 20
+  #define MAX_SAFELOG_COUNT 5
+#endif
 struct safelogdata {
   int level;
   char log_data[MAX_SAFELOG_LEN];
@@ -820,6 +829,7 @@ struct safelogdata {
 
 std::deque<BLE_ESP32::safelogdata*> freelogs;
 std::deque<BLE_ESP32::safelogdata*> filledlogs;
+uint8_t filledlogsOverflows = 0;
 SemaphoreHandle_t  SafeLogMutex;
 
 
@@ -867,8 +877,7 @@ int SafeAddLog_P(uint32_t loglevel, PGM_P formatP, ...) {
       }
       added = 1;
     } else {
-      logdata->level = LOG_LEVEL_ERROR;
-      strncpy(logdata->log_data, "SafeAddLog_P overflow", sizeof(logdata->log_data));
+      filledlogsOverflows++;
     }
     filledlogs.push_back(logdata);
   } else {
@@ -1287,12 +1296,6 @@ static BLESensorCallback BLESensorCB;
 \*********************************************************************************************/
 
 static void BLEscanEndedCB(NimBLEScanResults results){
-  BLERunningScan = 0;
-  BLEScanToEndBefore = 0L;
-
-  BLEScanCount++;
-
-  BLEPublishDevices = 1;
 
 #ifdef BLE_ESP32_DEBUG        
   BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("Scan ended"));
@@ -1310,6 +1313,11 @@ static void BLEscanEndedCB(NimBLEScanResults results){
 #endif
     }
   }
+
+  BLERunningScan = 2;
+  BLEScanToEndBefore = 0L;
+  BLEScanCount++;
+  BLEPublishDevices = 1;
 }
 
 
@@ -1528,13 +1536,29 @@ static void BLETaskStopStartNimBLE(NimBLEClient **ppClient, bool start = true){
     /** Set how long we are willing to wait for the connection to complete (seconds), default is 30. */
     (*ppClient)->setConnectTimeout(15);
   }
+
+  uint64_t now = esp_timer_get_time();
+
+  // don't restart because of these for a while
+  BLELastLoopTime = now; // initialise the time of the last advertisment
+  BLEScanLastAdvertismentAt = now; // initialise the time of the last advertisment
+
 }
 
 int BLETaskStartScan(int time){
   if (!ble32Scan) return -1;
-  if (BLERunningScan) return -2;
-  if (currentOperations.size()) return -3;
   if (BLEMode == BLEModeDisabled) return -4;
+  if (currentOperations.size()) return -3;
+
+  if (BLERunningScan) {
+    // if we hit 2, wait one more time before starting
+    if (BLERunningScan == 2){
+      // wait 100ms 
+      vTaskDelay(100/ portTICK_PERIOD_MS);
+      BLERunningScan = 0;
+    }
+    return -2;
+  }
 
 #ifdef BLE_ESP32_DEBUG        
   BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("BLETask: Startscan"));
@@ -1568,6 +1592,7 @@ static void BLETaskRunCurrentOperation(BLE_ESP32::generic_sensor_t** pCurrentOpe
 #ifdef BLE_ESP32_DEBUG        
       BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("BLETask: new currentOperation"));
 #endif
+      BLEOpCount++;
       generic_sensor_t* temp = *pCurrentOperation;
       //this will null it out, so save and restore.
       addOperation(&currentOperations, pCurrentOperation); 
@@ -1909,8 +1934,11 @@ static void BLETaskRunTaskDoneOperation(BLE_ESP32::generic_sensor_t** op, NimBLE
         if (waits == 60){
           BLE_ESP32::SafeAddLog_P(LOG_LEVEL_ERROR,PSTR(">60s waiting -> BLE Failed, restart Tasmota %d"), waits);
           BLEStop = 1;
+          BLEStopAt = esp_timer_get_time();
+
           BLERestartTasmota = 10;
           BLERestartTasmotaReason = BLE_RESTART_TEAMOTA_REASON_BLE_DISCONNECT_FAIL;
+          break;
         }
       } while ((*ppClient)->isConnected());
     }
@@ -1949,6 +1977,10 @@ static void BLETaskRunTaskDoneOperation(BLE_ESP32::generic_sensor_t** op, NimBLE
 // we MAY be able to run a few of these simultaneously, but this is not yet tested.
 // and probably not required.  But everything is there to do so....
 static void BLEOperationTask(void *pvParameters){
+
+  BLELoopCount = 0;
+  BLEOpCount = 0;;
+
   uint32_t timer = 0;
   // operation which is currently in progress in THIS TASK
   generic_sensor_t* currentOperation = nullptr;
@@ -1958,6 +1990,7 @@ static void BLEOperationTask(void *pvParameters){
 
   for(;;){
     BLELastLoopTime = esp_timer_get_time();
+    BLELoopCount++;
 
     BLE_ESP32::BLETaskRunCurrentOperation(&currentOperation, &pClient);
 
@@ -2000,11 +2033,10 @@ static void BLEOperationTask(void *pvParameters){
 #ifdef BLE_ESP32_DEBUG        
   BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("BLEOperationTask: Left task"));
 #endif  
-  BLEStop = 2;
-  BLERunning = false;
-  BLERunningScan = 0;
   deleteSeenDevices();
 
+  BLEStop = 2;
+  BLERunning = false;
   vTaskDelete( NULL );
 }
 
@@ -2023,7 +2055,13 @@ static void BLEEvery50mSecond(){
     int filled = filledlogs.size();
     logdata = GetSafeLog();
     if (logdata){
+      // ensure it's terminated correctly
+      logdata->log_data[sizeof(logdata->log_data)-1] = 0;
       AddLog_P(logdata->level, PSTR("SL%d-%d %s"), filled, free, logdata->log_data);
+      if (filledlogsOverflows){
+        AddLog_P(LOG_LEVEL_ERROR, PSTR("SafeAddLog_P overflow %d"), filledlogsOverflows);
+        filledlogsOverflows = 0;
+      }
       ReleaseSafeLog(logdata);
     }
   } while (logdata);
@@ -2040,15 +2078,17 @@ static void BLEEvery50mSecond(){
 
 static void BLEEverySecond(bool restart){
 
-  if (Settings.flag5.mi32_enable != BLEMasterEnable){
-    BLEMasterEnable = Settings.flag5.mi32_enable;
+  BLEDiag();
 
+  if (Settings.flag5.mi32_enable != BLEMasterEnable){
     if (BLEMasterEnable){
-      StartBLE();
+      if (StartBLE()){
+        BLEMasterEnable = Settings.flag5.mi32_enable;
+      }
     } else {
-      StopBLE();
-      // delete all seen devices;
-      deleteSeenDevices();
+      if (StopBLE()){
+        BLEMasterEnable = Settings.flag5.mi32_enable;
+      }
     }
     AddLog_P(LOG_LEVEL_INFO,PSTR("BLE: MasterEnable->%d"), BLEMasterEnable);
   }
@@ -2195,14 +2235,25 @@ int extQueueOperation(BLE_ESP32::generic_sensor_t** op){
  * Highest level BLE task control functions
 \*********************************************************************************************/
 
-static void StartBLE(void) {
-  BLE_ESP32::BLEStartOperationTask();
+static int StartBLE(void) {
+  if (BLEStop != 1){
+    BLE_ESP32::BLEStartOperationTask();
+    return 1;
+  }
+  AddLog_P(LOG_LEVEL_ERROR,PSTR("StartBLE - wait as BLEStop==1"));
+
+  return 0;
 }
 
-static void StopBLE(void){
-  BLEStop = 1;
+static int StopBLE(void){
+  if (BLEStop != 1){
+    BLEStop = 1;
+    BLEStopAt = esp_timer_get_time();
+    return 1;
+  }
+  AddLog_P(LOG_LEVEL_ERROR,PSTR("StopBLE - wait as BLEStop==1"));
+  return 0;
 }	
-
 
 
 /*********************************************************************************************\
@@ -2635,6 +2686,17 @@ static void mainThreadBLETimeouts() {
   if (!BLERunning){
     BLELastLoopTime = now; // initialise the time of the last advertisment
     BLEScanLastAdvertismentAt = now; // initialise the time of the last advertisment
+    return;
+  }
+
+  if (BLEStop == 1){
+    if (BLEStopAt + 30L*1000L*1000L < now){ // if asked to stop > 30s ago...
+      AddLog_P(LOG_LEVEL_ERROR,PSTR("BLE: Stop Timeout - restart Tasmota"));
+      BLERestartTasmota = 2;
+      BLEStopAt = now;
+    }
+    AddLog_P(LOG_LEVEL_ERROR,PSTR("BLE: Awaiting BLEStop"));
+    return;
   }
 
   // if no adverts for 120s, and BLE is running, retsart NimBLE.
@@ -2737,6 +2799,15 @@ static void BLEShow(bool json)
     
 }
 
+
+static void BLEDiag()
+{
+  uint32_t totalCount = BLEAdvertisment.totalCount;
+  uint32_t deviceCount = seenDevices.size();
+#ifdef BLE_ESP32_DEBUG        
+  AddLog_P(LOG_LEVEL_INFO,PSTR("BLE:scans:%u,advertisments:%u,devices:%u,resets:%u,BLEStop:%d,BLERunning:%d,BLERunningScan:%d,BLELoopCount:%u,BLEOpCount:%u"), BLEScanCount, totalCount, deviceCount, BLEResets, BLEStop, BLERunning, BLERunningScan, BLELoopCount, BLEOpCount);
+#endif    
+}
 
 /**
  * @brief creates a JSON representing a single operation.
