@@ -92,9 +92,8 @@ void ICACHE_RAM_ATTR ftc532_ISR(void)   // Hardware interrupt routine, triggers 
     }
     return;
   }             // FTC532_STATE_READING starts here
-  if (ftc532.rxbit >= FTC532_KEYS_MAX * 2 || time_diff > FTC532_LONG + FTC532_BIT) {
+  if (time_diff > FTC532_LONG + FTC532_BIT) {
     ++ftc532.errors;      // frame error
-    ftc532.rxbit = 0;
     ftc532.state = FTC532_STATE_WAITING;
     return;
   }
