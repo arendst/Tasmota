@@ -535,10 +535,10 @@ void Z_Device::jsonPublishAttrList(const char * json_prefix, const Z_attribute_l
 
   if (Settings.flag4.zigbee_distinct_topics) {
     char subtopic[TOPSZ];
-    if (Settings.flag4.zb_topic_fname && friendlyName) {
-      // Clean special characters and check size of friendly name
+    if (Settings.flag4.zb_topic_fname && friendlyName && strlen(friendlyName)) {
+      // Clean special characters
       char stemp[TOPSZ];
-      strlcpy(stemp, (!strlen(friendlyName)) ? MQTT_TOPIC : friendlyName, sizeof(stemp));
+      strlcpy(stemp, friendlyName, sizeof(stemp));
       MakeValidMqtt(0, stemp);
       snprintf_P(subtopic, sizeof(subtopic), PSTR("%s/%s"), TasmotaGlobal.mqtt_topic, stemp);
     } else {
