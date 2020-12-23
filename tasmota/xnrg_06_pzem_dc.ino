@@ -31,7 +31,7 @@
 
 #define XNRG_06                    6
 
-const uint8_t PZEM_DC_DEVICE_ADDRESS = 0x01;  // PZEM default address
+const uint8_t PZEM_DC_DEVICE_ADDRESS = 0xF8;  // PZEM address for single slave environment (0x01 is the default)
 const uint32_t PZEM_DC_STABILIZE = 30;        // Number of seconds to stabilize configuration
 
 #include <TasmotaModbus.h>
