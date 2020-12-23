@@ -534,20 +534,19 @@ void Z_Device::jsonPublishAttrList(const char * json_prefix, const Z_attribute_l
   }
 
   if (Settings.flag4.zigbee_distinct_topics) {
-    if (Settings.flag4.zb_topic_fname && friendlyName) {
-      //Clean special characters and check size of friendly name
+    char subtopic[TOPSZ];
+    if (Settings.flag4.zb_topic_fname && friendlyName && strlen(friendlyName)) {
+      // Clean special characters
       char stemp[TOPSZ];
-      strlcpy(stemp, (!strlen(friendlyName)) ? MQTT_TOPIC : friendlyName, sizeof(stemp));
+      strlcpy(stemp, friendlyName, sizeof(stemp));
       MakeValidMqtt(0, stemp);
-      //Create topic with Prefix3 and cleaned up friendly name
-      char frtopic[TOPSZ];
-      snprintf_P(frtopic, sizeof(frtopic), PSTR("%s/%s/" D_RSLT_SENSOR), SettingsText(SET_MQTTPREFIX3), stemp);
-      MqttPublish(frtopic, Settings.flag.mqtt_sensor_retain);
+      snprintf_P(subtopic, sizeof(subtopic), PSTR("%s/%s"), TasmotaGlobal.mqtt_topic, stemp);
     } else {
-      char subtopic[16];
-      snprintf_P(subtopic, sizeof(subtopic), PSTR("%04X/" D_RSLT_SENSOR), shortaddr);
-      MqttPublishPrefixTopic_P(TELE, subtopic, Settings.flag.mqtt_sensor_retain);
+      snprintf_P(subtopic, sizeof(subtopic), PSTR("%s/%04X"), TasmotaGlobal.mqtt_topic, shortaddr);
     }
+    char stopic[TOPSZ];
+    GetTopic_P(stopic, TELE, subtopic, D_RSLT_SENSOR);
+    MqttPublish(stopic, Settings.flag.mqtt_sensor_retain);
   } else {
     MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
   }
@@ -624,10 +623,10 @@ Z_Device & Z_Devices::parseDeviceFromName(const char * param, uint16_t * parsed_
 }
 
 /*********************************************************************************************\
- * 
+ *
  * Methods below build a JSON representation of device data
  * Used by: ZbLight, ZbStatus, ZbInfo
- * 
+ *
 \*********************************************************************************************/
 
 // Add "Device":"0x1234","Name":"FrienflyName"

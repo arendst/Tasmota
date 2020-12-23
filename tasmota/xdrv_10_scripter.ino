@@ -3622,7 +3622,8 @@ void toLogN(const char *cp, uint8_t len) {
 void toLogEOL(const char *s1,const char *str) {
   if (!str) return;
   uint8_t index = 0;
-  char *cp = TasmotaGlobal.log_data;
+  char log_data[LOGSZ];
+  char *cp = log_data;
   strcpy(cp, s1);
   cp += strlen(s1);
   while (*str) {
@@ -3630,7 +3631,7 @@ void toLogEOL(const char *s1,const char *str) {
     *cp++ = *str++;
   }
   *cp = 0;
-  AddLog(LOG_LEVEL_INFO);
+  AddLogData(LOG_LEVEL_INFO, log_data);
 }
 
 

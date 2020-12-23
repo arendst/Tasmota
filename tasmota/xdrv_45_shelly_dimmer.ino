@@ -267,10 +267,8 @@ bool ShdSerialSend(const uint8_t data[] = nullptr, uint16_t len = 0)
     int retries = 3;
 
 #ifdef SHELLY_DIMMER_DEBUG
-    snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), PSTR(SHD_LOGNAME "Tx Packet:"));
-    for (uint32_t i = 0; i < len; i++)
-        snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), PSTR("%s %02x"), TasmotaGlobal.log_data, data[i]);
-    AddLog(LOG_LEVEL_DEBUG_MORE);
+    AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR(SHD_LOGNAME "Tx Packet:"));
+    AddLogBuffer(LOG_LEVEL_DEBUG_MORE, (uint8_t*)data, len);
 #endif  // SHELLY_DIMMER_DEBUG
 
     while (retries--)
@@ -696,10 +694,8 @@ bool ShdSerialInput(void)
             // finished
 #ifdef SHELLY_DIMMER_DEBUG
             Shd.byte_counter++;
-            snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), PSTR(SHD_LOGNAME "RX Packet:"));
-            for (uint32_t i = 0; i < Shd.byte_counter; i++)
-                snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), PSTR("%s %02x"), TasmotaGlobal.log_data, Shd.buffer[i]);
-            AddLog(LOG_LEVEL_DEBUG_MORE);
+            AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR(SHD_LOGNAME "Rx Packet:"));
+            AddLogBuffer(LOG_LEVEL_DEBUG_MORE, Shd.buffer, Shd.byte_counter);
 #endif  // SHELLY_DIMMER_DEBUG
             Shd.byte_counter = 0;
 
@@ -711,12 +707,9 @@ bool ShdSerialInput(void)
         {
             // wrong data
 #ifdef SHELLY_DIMMER_DEBUG
-            AddLog_P(LOG_LEVEL_DEBUG, PSTR(SHD_LOGNAME "Byte %i of received data frame is invalid"), Shd.byte_counter);
+            AddLog_P(LOG_LEVEL_DEBUG, PSTR(SHD_LOGNAME "Byte %i of received data frame is invalid. Rx Packet:"), Shd.byte_counter);
             Shd.byte_counter++;
-            snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), PSTR(SHD_LOGNAME "RX Packet:"));
-            for (uint32_t i = 0; i < Shd.byte_counter; i++)
-                snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), PSTR("%s %02x"), TasmotaGlobal.log_data, Shd.buffer[i]);
-            AddLog(LOG_LEVEL_DEBUG_MORE);
+            AddLogBuffer(LOG_LEVEL_DEBUG_MORE, Shd.buffer, Shd.byte_counter);
 #endif  // SHELLY_DIMMER_DEBUG
             Shd.byte_counter = 0;
         }
@@ -746,11 +739,8 @@ bool ShdModuleSelected(void) {
 bool ShdSetChannels(void)
 {
 #ifdef SHELLY_DIMMER_DEBUG
-    snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), PSTR(SHD_LOGNAME "SetChannels: \""));
-    for (int i = 0; i < XdrvMailbox.data_len; i++)
-        snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), PSTR("%s%02x"), TasmotaGlobal.log_data, ((uint8_t *)XdrvMailbox.data)[i]);
-    snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), PSTR("%s\""), TasmotaGlobal.log_data);
-    AddLog(LOG_LEVEL_DEBUG_MORE);
+    AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR(SHD_LOGNAME "SetChannels:"));
+    AddLogBuffer(LOG_LEVEL_DEBUG_MORE, (uint8_t *)XdrvMailbox.data, XdrvMailbox.data_len);
 #endif  // SHELLY_DIMMER_DEBUG
 
     uint16_t brightness = ((uint32_t *)XdrvMailbox.data)[0];

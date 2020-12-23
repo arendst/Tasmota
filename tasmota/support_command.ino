@@ -245,7 +245,7 @@ void CommandHandler(char* topicBuf, char* dataBuf, uint32_t data_len)
     DEBUG_CORE_LOG(PSTR("CMD: Payload %d"), payload);
 
 //    TasmotaGlobal.backlog_timer = millis() + (100 * MIN_BACKLOG_DELAY);
-    TasmotaGlobal.backlog_timer = millis() + Settings.param[P_BACKLOG_DELAY];
+    TasmotaGlobal.backlog_timer = millis() + Settings.param[P_BACKLOG_DELAY];  // SetOption34
 
     char command[CMDSZ] = { 0 };
     XdrvMailbox.command = command;
@@ -1188,7 +1188,7 @@ void CmndGpio(void)
         }
         char stemp1[TOPSZ];
         if ((ResponseAppend_P(PSTR("\"" D_CMND_GPIO "%d\":{\"%d\":\"%s%s\"}"), i, sensor_type, GetTextIndexed(stemp1, sizeof(stemp1), sensor_name_idx, sensor_names), sindex) > (LOGSZ - TOPSZ)) || (i == ARRAY_SIZE(Settings.my_gp.io) -1)) {
-          ResponseJsonEndEnd();
+          ResponseJsonEnd();
           MqttPublishPrefixTopic_P(RESULT_OR_STAT, XdrvMailbox.command);
           jsflg2 = true;
           jsflg = false;

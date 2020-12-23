@@ -170,7 +170,6 @@ struct {
   char mqtt_client[99];                     // Composed MQTT Clientname
   char mqtt_topic[TOPSZ];                   // Composed MQTT topic
   char mqtt_data[MESSZ];                    // MQTT publish buffer and web page ajax buffer
-  char log_data[LOGSZ];                     // Logging
   char log_buffer[LOG_BUFFER_SIZE];         // Web log buffer
 } TasmotaGlobal;
 
@@ -319,8 +318,6 @@ void setup(void) {
 #ifdef FIRMWARE_MINIMAL
   AddLog_P(LOG_LEVEL_INFO, PSTR(D_WARNING_MINIMAL_VERSION));
 #endif  // FIRMWARE_MINIMAL
-
-  memcpy_P(TasmotaGlobal.log_data, VERSION_MARKER, 1);  // Dummy for compiler saving VERSION_MARKER
 
   RtcInit();
 
