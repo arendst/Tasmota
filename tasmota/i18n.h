@@ -797,8 +797,4 @@ const char HTTP_SNS_COLOR_BLUE[]    PROGMEM = "{s}%s "  D_COLOR_BLUE          "{
 const char HTTP_SNS_MILLILITERS[]   PROGMEM = "{s}%s "  D_VOLUME              "{m}%s " D_UNIT_MILLILITERS         "{e}";
 #endif  // USE_WEBSERVER
 
-const uint32_t MARKER_START = 0x5AA55AA5;
-const uint32_t MARKER_END = 0xA55AA55A;
-const uint32_t VERSION_MARKER[] PROGMEM = { MARKER_START, VERSION, MARKER_END };
-
 #endif  // _I18N_H_
