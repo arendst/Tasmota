@@ -2,7 +2,7 @@ name: Build_firmware
 
 on:
   push:
-    branches: development
+    branches: master
 
 jobs:
   tasmota_pull:
@@ -13,14 +13,14 @@ jobs:
     - name: Use latest Tasmota development
       run: | 
         git config --local user.name "Platformio BUILD"
-        git switch -c master
+        git switch -c work
         git remote add -f Tasmota "https://github.com/arendst/Tasmota.git"
-        git merge Tasmota/development --allow-unrelated-histories          
-    - name: Push Tasmota   # Push updates of latest Tasmota development to repo
+        git merge Tasmota/master --allow-unrelated-histories          
+    - name: Push Tasmota   # Push updates of latest Tasmota master to repo
       uses: ad-m/github-push-action@master
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
-        branch: 'development'
+        branch: 'master'
         force: true
 
 
@@ -1544,5 +1544,5 @@ jobs:
       uses: ad-m/github-push-action@master
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
-        branch: 'firmware'
+        branch: 'release-firmware'
         force: true
