@@ -24,7 +24,7 @@
  * https://ex-store.de/2-Kanal-RS232-WiFi-WLan-Dimmer-Modul-V4-fuer-Unterputzmontage-230V-3A
  * https://ex-store.de/2-Kanal-RS232-WiFi-WLan-Dimmer-Modul-V4-fuer-Unterputzmontage-230V-3A-ESP8266-V12-Stift-und-Buchsenleisten
 \*********************************************************************************************/
-#define EXS_DEBUG
+//#define EXS_DEBUG
 
 #define XDRV_30 30
 
