@@ -1927,6 +1927,7 @@ void Syslog(void)
 void SyslogAsync(bool refresh) {
   static uint32_t index = 1;
 
+  if (!TasmotaGlobal.syslog_level) { return; }
   if (refresh && !NeedLogRefresh(TasmotaGlobal.syslog_level, index)) { return; }
 
   char* line;
