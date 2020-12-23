@@ -55,8 +55,8 @@
 
 #define FTC532_KEYS_MAX           8
 
-#define FTC532_STATE_WAITING      0x01
-#define FTC532_STATE_READING      0x02
+#define FTC532_STATE_WAITING      false
+#define FTC532_STATE_READING      true
 
 // Rising edge timing in microseconds
 #define FTC532_BIT                377
@@ -67,14 +67,16 @@
 
 struct FTC532 {
   volatile uint32_t rxtime;             // ISR timer memory
-  volatile uint16_t errors;             // error counter
   volatile uint16_t sample = 0xF0F0;    // buffer for bit-coded time samples
   volatile uint16_t rxbit;              // ISR bit counter
-  uint16_t keys = 0;                    // bitmap of active keys
-  uint16_t old_keys = 0;                // previously active keys
-  volatile uint8_t state;               // ISR state
-  volatile uint8_t valid;               // did we ever receive valid data?
+  uint8_t keys = 0;                     // bitmap of active keys
+  uint8_t old_keys = 0;                 // previously active keys
+  volatile bool state;                  // ISR state
   bool present = false;
+#ifdef DEBUG_TASMOTA_DRIVER
+  volatile uint16_t errors;             // error counter
+  volatile bool valid;                  // did we ever receive valid data?
+#endif  // DEBUG_TASMOTA_DRIVER
 } Ftc532;
 
 const char ftc532_json[] PROGMEM = "\"FTC532\":{\"KEYS\":\"";
@@ -92,7 +94,9 @@ void ICACHE_RAM_ATTR ftc532_ISR(void) {   // Hardware interrupt routine, trigger
     return;
   }             // FTC532_STATE_READING starts here
   if (time_diff > FTC532_LONG + FTC532_BIT) {
+#ifdef DEBUG_TASMOTA_DRIVER
     ++Ftc532.errors;                               // frame error
+#endif  // DEBUG_TASMOTA_DRIVER
     Ftc532.state = FTC532_STATE_WAITING;
     return;
   }
@@ -104,16 +108,19 @@ void ICACHE_RAM_ATTR ftc532_ISR(void) {   // Hardware interrupt routine, trigger
   ++Ftc532.rxbit;
   if (Ftc532.rxbit == FTC532_KEYS_MAX * 2) {       // frame complete
     Ftc532.rxbit = 0;
-    Ftc532.valid = 1;
+#ifdef DEBUG_TASMOTA_DRIVER
+    Ftc532.valid = true;
+#endif  // DEBUG_TASMOTA_DRIVER
     Ftc532.state = FTC532_STATE_WAITING;
   }
 }
 
 void ftc532_init(void) {                           // Initialize
   if (!PinUsed(GPIO_FTC532)) { return; }
-
+#ifdef DEBUG_TASMOTA_DRIVER
   Ftc532.errors = 0;
-  Ftc532.valid = 0;
+  Ftc532.valid = false;
+#endif  // DEBUG_TASMOTA_DRIVER
   Ftc532.state = FTC532_STATE_WAITING;
   Ftc532.rxtime = micros();
   pinMode(Pin(GPIO_FTC532), INPUT_PULLUP);
@@ -122,15 +129,19 @@ void ftc532_init(void) {                           // Initialize
 }
 
 void ftc532_update(void) {                         // Usually called every 50 ms
-//    // WARNING: Reduce callback frequency if this code is enabled
-//  if ((Ftc532.sample & 0xF) != ((~Ftc532.sample >> 4) & 0xF) || ((Ftc532.sample >> 8) & 0xF) != ((~Ftc532.sample >> 12) & 0xF)) {
-//    AddLog_P(LOG_LEVEL_ERROR, PSTR("FTC: inverted sample does not match %x %x %x %x"),
-//             Ftc532.sample & 0xF, (~Ftc532.sample >> 4) & 0xF, (Ftc532.sample >> 8) & 0xF, (~Ftc532.sample >> 12) & 0xF);
-//  }
+#ifdef DEBUG_TASMOTA_DRIVER
+  // WARNING: Reduce callback frequency if this code is enabled
+  if ((Ftc532.sample & 0xF) != ((~Ftc532.sample >> 4) & 0xF) || ((Ftc532.sample >> 8) & 0xF) != ((~Ftc532.sample >> 12) & 0xF)) {
+    AddLog_P(LOG_LEVEL_ERROR, PSTR("FTC: inverted sample does not match %x %x %x %x"),
+             Ftc532.sample & 0xF, (~Ftc532.sample >> 4) & 0xF, (Ftc532.sample >> 8) & 0xF, (~Ftc532.sample >> 12) & 0xF);
+  }
+#endif  // DEBUG_TASMOTA_DRIVER
   Ftc532.keys = (Ftc532.sample & 0xF) | ((Ftc532.sample >> 4) & 0xF0);
   if (Ftc532.keys != Ftc532.old_keys) {
-//    AddLog_P(LOG_LEVEL_DEBUG, PSTR("FTC: SAM=%04X KEY=%02X OLD=%02X ERR=%u OK=%u TIME=%lu Pin=%u"),
-//             Ftc532.sample, Ftc532.keys, Ftc532.old_keys, Ftc532.errors, Ftc532.valid, Ftc532.rxtime, Pin(GPIO_FTC532));
+#ifdef DEBUG_TASMOTA_DRIVER
+    AddLog_P(LOG_LEVEL_DEBUG, PSTR("FTC: SAM=%04X KEY=%02X OLD=%02X ERR=%u OK=%u TIME=%lu Pin=%u"),
+             Ftc532.sample, Ftc532.keys, Ftc532.old_keys, Ftc532.errors, Ftc532.valid, Ftc532.rxtime, Pin(GPIO_FTC532));
+#endif  // DEBUG_TASMOTA_DRIVER
     ftc532_publish();
     Ftc532.old_keys = Ftc532.keys;
   }
