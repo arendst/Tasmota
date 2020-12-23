@@ -2,7 +2,7 @@ name: Build_firmware
 
 on:
   push:
-    branches: development
+    branches: master
 
 jobs:
   tasmota_pull:
@@ -10,17 +10,17 @@ jobs:
     continue-on-error: true
     steps:
     - uses: actions/checkout@v1
-    - name: Use latest Tasmota development
+    - name: Use Tasmota master
       run: |
         git config --local user.name "Platformio BUILD"
         git switch -c work
         git remote add -f Tasmota "https://github.com/arendst/Tasmota.git"
-        git merge Tasmota/development --allow-unrelated-histories
-    - name: Push Tasmota   # Push updates of latest Tasmota development to repo
+        git merge Tasmota/master --allow-unrelated-histories
+    - name: Push Tasmota   # Push updates of latest Tasmota master to repo
       uses: ad-m/github-push-action@master
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
-        branch: 'development'
+        branch: 'master'
         force: true
 
 
@@ -1520,7 +1520,7 @@ jobs:
         [ ! -f ./mv_firmware/tasmota-ir*.* ] || mv ./mv_firmware/tasmota-ir*.* ./firmware/tasmota/
         [ ! -f ./mv_firmware/tasmota-display.* ] || mv ./mv_firmware/tasmota-display.* ./firmware/tasmota/
         [ ! -f ./mv_firmware/tasmota-knx.* ] || mv ./mv_firmware/tasmota-knx.* ./firmware/tasmota/
-        [ ! -f ./mv_firmware/tasmota-zbbridge.* ] || mv ./mv_firmware/tasmota-zbbridge.* ./firmware/tasmota/
+        [ ! -f ./mv_firmware/tasmota-zbbridge.* ] || mv ./mv_firmware/tasmota-zbbridge.* ./firmware/tasmota/        
         [ ! -f ./mv_firmware/tasmota32.* ] || mv ./mv_firmware/tasmota32.* ./firmware/tasmota32/
         [ ! -f ./mv_firmware/tasmota32-sensors.* ] || mv ./mv_firmware/tasmota32-sensors.* ./firmware/tasmota32/
         [ ! -f ./mv_firmware/tasmota32-minimal.* ] || mv ./mv_firmware/tasmota32-minimal.* ./firmware/tasmota32/
@@ -1534,7 +1534,7 @@ jobs:
         rm ./firmware/tasmota32/*.gz
         rm ./firmware/tasmota32/languages/*.gz
         [ ! -f ./tools/Esptool/ESP32/*.* ] || mv ./tools/Esptool/ESP32/*.* ./firmware/tasmota32/ESP32_needed_files/
-        [ ! -f ./FIRMWARE.md ] || mv -f ./FIRMWARE.md ./README.md
+        [ ! -f ./FIRMWARE.md ] || mv -f ./RELEASENOTES.md ./README.md
     - name: Commit files  # transfer the new binaries back into the repository
       run: |
         git config --local user.name "Platformio BUILD"
@@ -1546,5 +1546,5 @@ jobs:
       uses: ad-m/github-push-action@master
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
-        branch: 'firmware'
+        branch: 'release-firmware'
         force: true
