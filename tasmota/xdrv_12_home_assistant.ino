@@ -370,8 +370,9 @@ void TryResponseAppend_P(const char *format, ...)
   {
     AddLog_P(LOG_LEVEL_ERROR, PSTR("%s (%u/%u):"), kHAssError1, dlen, slen);
     va_start(args, format);
-    vsnprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), format, args);
-    AddLog(LOG_LEVEL_ERROR);
+    char log_data[LOGSZ];
+    vsnprintf_P(log_data, sizeof(log_data), format, args);
+    AddLogData(LOG_LEVEL_ERROR, log_data);
   }
   else
   {

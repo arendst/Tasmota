@@ -404,16 +404,17 @@ void TuyaSendCmd(uint8_t cmd, uint8_t payload[] = nullptr, uint16_t payload_len 
   TuyaSerial->write(cmd);                   // Tuya command
   TuyaSerial->write(payload_len >> 8);      // following data length (Hi)
   TuyaSerial->write(payload_len & 0xFF);    // following data length (Lo)
-  snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), PSTR("TYA: Send \"55aa00%02x%02x%02x"), cmd, payload_len >> 8, payload_len & 0xFF);
+  char log_data[LOGSZ];
+  snprintf_P(log_data, sizeof(log_data), PSTR("TYA: Send \"55aa00%02x%02x%02x"), cmd, payload_len >> 8, payload_len & 0xFF);
   for (uint32_t i = 0; i < payload_len; ++i) {
     TuyaSerial->write(payload[i]);
     checksum += payload[i];
-    snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), PSTR("%s%02x"), TasmotaGlobal.log_data, payload[i]);
+    snprintf_P(log_data, sizeof(log_data), PSTR("%s%02x"), log_data, payload[i]);
   }
   TuyaSerial->write(checksum);
   TuyaSerial->flush();
-  snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), PSTR("%s%02x\""), TasmotaGlobal.log_data, checksum);
-  AddLog(LOG_LEVEL_DEBUG);
+  snprintf_P(log_data, sizeof(log_data), PSTR("%s%02x\""), log_data, checksum);
+  AddLogData(LOG_LEVEL_DEBUG, log_data);
 }
 
 void TuyaSendState(uint8_t id, uint8_t type, uint8_t* value)

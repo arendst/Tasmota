@@ -24,7 +24,7 @@
  * https://ex-store.de/2-Kanal-RS232-WiFi-WLan-Dimmer-Modul-V4-fuer-Unterputzmontage-230V-3A
  * https://ex-store.de/2-Kanal-RS232-WiFi-WLan-Dimmer-Modul-V4-fuer-Unterputzmontage-230V-3A-ESP8266-V12-Stift-und-Buchsenleisten
 \*********************************************************************************************/
-//#define EXS_DEBUG
+#define EXS_DEBUG
 
 #define XDRV_30 30
 
@@ -124,13 +124,8 @@ void ExsSerialSend(const uint8_t data[] = nullptr, uint16_t len = 0)
   char rc;
 
 #ifdef EXS_DEBUG
-  snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), PSTR("EXS: Tx Packet: \""));
-  for (uint32_t i = 0; i < len; i++)
-  {
-    snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), PSTR("%s%02x"), TasmotaGlobal.log_data, data[i]);
-  }
-  snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), PSTR("%s\""), TasmotaGlobal.log_data);
-  AddLog(LOG_LEVEL_DEBUG_MORE);
+  AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("EXS: Tx Packet:"));
+  AddLogBuffer(LOG_LEVEL_DEBUG_MORE, (uint8_t *)data, len);
 #endif
 
   while (retries)
@@ -368,13 +363,8 @@ bool ExsModuleSelected(void)
 bool ExsSetChannels(void)
 {
 #ifdef EXS_DEBUG
-  snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), PSTR("EXS: SetChannels: \""));
-  for (int i = 0; i < XdrvMailbox.data_len; i++)
-  {
-    snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), PSTR("%s%02x"), TasmotaGlobal.log_data, ((uint8_t *)XdrvMailbox.data)[i]);
-  }
-  snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), PSTR("%s\""), TasmotaGlobal.log_data);
-  AddLog(LOG_LEVEL_DEBUG_MORE);
+  AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("EXS: SetChannels:"));
+  AddLogBuffer(LOG_LEVEL_DEBUG_MORE, (uint8_t *)XdrvMailbox.data, XdrvMailbox.data_len);
 #endif
 
   Exs.dimm[0] = ((uint8_t *)XdrvMailbox.data)[0];
@@ -466,13 +456,8 @@ void ExsSerialInput(void)
         Exs.cmd_status = 0;
 
 #ifdef EXS_DEBUG
-        snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), PSTR("EXS: RX Packet: \""));
-        for (uint32_t i = 0; i < Exs.byte_counter; i++)
-        {
-          snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), PSTR("%s%02x"), TasmotaGlobal.log_data, Exs.buffer[i]);
-        }
-        snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), PSTR("%s\", CRC: 0x%02x"), TasmotaGlobal.log_data, crc);
-        AddLog(LOG_LEVEL_DEBUG_MORE);
+        AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("EXS: CRC: 0x%02x, RX Packet:"), crc);
+        AddLogBuffer(LOG_LEVEL_DEBUG_MORE, (uint8_t *)Exs.buffer, Exs.byte_counter);
 #endif
 
         if (Exs.buffer[0] == crc)

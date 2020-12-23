@@ -897,11 +897,6 @@ void Every100mSeconds(void)
   // As the max amount of sleep = 250 mSec this loop will shift in time...
   power_t power_now;
 
-/*
-  if (TasmotaGlobal.prepped_loglevel) {
-    AddLog(TasmotaGlobal.prepped_loglevel);
-  }
-*/
   if (TasmotaGlobal.latching_relay_pulse) {
     TasmotaGlobal.latching_relay_pulse--;
     if (!TasmotaGlobal.latching_relay_pulse) SetLatchingRelay(0, 0);
@@ -1019,7 +1014,8 @@ void Every250mSeconds(void)
         ota_result = 0;
         ota_retry_counter--;
         if (ota_retry_counter) {
-          strlcpy(TasmotaGlobal.mqtt_data, GetOtaUrl(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data)), sizeof(TasmotaGlobal.mqtt_data));
+          char ota_url[TOPSZ];
+          strlcpy(TasmotaGlobal.mqtt_data, GetOtaUrl(ota_url, sizeof(ota_url)), sizeof(TasmotaGlobal.mqtt_data));
 #ifndef FIRMWARE_MINIMAL
           if (RtcSettings.ota_loader) {
             // OTA File too large so try OTA minimal version
