@@ -2029,10 +2029,6 @@ void AddLogData(uint32_t loglevel, const char* log_data) {
   }
 }
 
-void AddLog(uint32_t loglevel) {
-  AddLogData(loglevel, TasmotaGlobal.log_data);
-}
-
 void AddLog_P(uint32_t loglevel, PGM_P formatP, ...)
 {
   char log_data[LOGSZ];

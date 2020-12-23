@@ -170,7 +170,6 @@ struct {
   char mqtt_client[99];                     // Composed MQTT Clientname
   char mqtt_topic[TOPSZ];                   // Composed MQTT topic
   char mqtt_data[MESSZ];                    // MQTT publish buffer and web page ajax buffer
-  char log_data[LOGSZ];                     // Logging
   char log_buffer[LOG_BUFFER_SIZE];         // Web log buffer
 } TasmotaGlobal;
 
