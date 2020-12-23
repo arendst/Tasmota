@@ -821,40 +821,41 @@ uint8_t sml_logindex;
 
 void Dump2log(void) {
 
-int16_t index=0,hcnt=0;
-uint32_t d_lastms;
-uint8_t dchars[16];
+  int16_t index=0,hcnt=0;
+  uint32_t d_lastms;
+  uint8_t dchars[16];
+  char log_data[LOGSZ];  // May be a lot smaller...
 
   //if (!SML_SAVAILABLE) return;
 
   if (dump2log&8) {
     // combo mode
     while (SML_SAVAILABLE) {
-      TasmotaGlobal.log_data[index]=':';
+      log_data[index]=':';
       index++;
-      TasmotaGlobal.log_data[index]=' ';
+      log_data[index]=' ';
       index++;
       d_lastms=millis();
       while ((millis()-d_lastms)<40) {
         if (SML_SAVAILABLE) {
           uint8_t c=SML_SREAD;
-          sprintf(&TasmotaGlobal.log_data[index],"%02x ",c);
+          sprintf(&log_data[index],"%02x ",c);
           dchars[hcnt]=c;
           index+=3;
           hcnt++;
           if (hcnt>15) {
             // line complete, build asci chars
-            TasmotaGlobal.log_data[index]='=';
+            log_data[index]='=';
             index++;
-            TasmotaGlobal.log_data[index]='>';
+            log_data[index]='>';
             index++;
-            TasmotaGlobal.log_data[index]=' ';
+            log_data[index]=' ';
             index++;
             for (uint8_t ccnt=0; ccnt<16; ccnt++) {
               if (isprint(dchars[ccnt])) {
-                TasmotaGlobal.log_data[index]=dchars[ccnt];
+                log_data[index]=dchars[ccnt];
               } else {
-                TasmotaGlobal.log_data[index]=' ';
+                log_data[index]=' ';
               }
               index++;
             }
@@ -863,8 +864,8 @@ uint8_t dchars[16];
         }
       }
       if (index>0) {
-        TasmotaGlobal.log_data[index]=0;
-        AddLog(LOG_LEVEL_INFO);
+        log_data[index]=0;
+        AddLogData(LOG_LEVEL_INFO, log_data);
         index=0;
         hcnt=0;
       }
@@ -875,24 +876,24 @@ uint8_t dchars[16];
       while (SML_SAVAILABLE) {
         char c=SML_SREAD&0x7f;
         if (c=='\n' || c=='\r') {
-          TasmotaGlobal.log_data[sml_logindex]=0;
+          log_data[sml_logindex]=0;
           AddLog(LOG_LEVEL_INFO);
           sml_logindex=2;
-          TasmotaGlobal.log_data[0]=':';
-          TasmotaGlobal.log_data[1]=' ';
+          log_data[0]=':';
+          log_data[1]=' ';
           break;
         }
-        TasmotaGlobal.log_data[sml_logindex]=c;
-        if (sml_logindex<sizeof(TasmotaGlobal.log_data)-2) {
+        log_data[sml_logindex]=c;
+        if (sml_logindex<sizeof(log_data)-2) {
           sml_logindex++;
         }
       }
     } else {
       //while (SML_SAVAILABLE) {
       index=0;
-      TasmotaGlobal.log_data[index]=':';
+      log_data[index]=':';
       index++;
-      TasmotaGlobal.log_data[index]=' ';
+      log_data[index]=' ';
       index++;
       d_lastms=millis();
       while ((millis()-d_lastms)<40) {
@@ -901,7 +902,7 @@ uint8_t dchars[16];
           if (meter_desc_p[(dump2log&7)-1].type=='e') {
             // ebus
             c=SML_SREAD;
-            sprintf(&TasmotaGlobal.log_data[index],"%02x ",c);
+            sprintf(&log_data[index],"%02x ",c);
             index+=3;
             if (c==EBUS_SYNC) break;
           } else {
@@ -916,14 +917,14 @@ uint8_t dchars[16];
               }
             }
             c=SML_SREAD;
-            sprintf(&TasmotaGlobal.log_data[index],"%02x ",c);
+            sprintf(&log_data[index],"%02x ",c);
             index+=3;
           }
         }
       }
       if (index>2) {
-        TasmotaGlobal.log_data[index]=0;
-        AddLog(LOG_LEVEL_INFO);
+        log_data[index]=0;
+        AddLogData(LOG_LEVEL_INFO, log_data);
       }
     }
   }
