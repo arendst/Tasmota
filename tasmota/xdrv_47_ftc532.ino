@@ -131,10 +131,10 @@ void ftc532_init(void) {                           // Initialize
 void ftc532_update(void) {                         // Usually called every 50 ms
 #ifdef DEBUG_TASMOTA_DRIVER
   // WARNING: Reduce callback frequency if this code is enabled
-  if ((Ftc532.sample & 0xF) != ((~Ftc532.sample >> 4) & 0xF) || ((Ftc532.sample >> 8) & 0xF) != ((~Ftc532.sample >> 12) & 0xF)) {
-    AddLog_P(LOG_LEVEL_ERROR, PSTR("FTC: inverted sample does not match %x %x %x %x"),
-             Ftc532.sample & 0xF, (~Ftc532.sample >> 4) & 0xF, (Ftc532.sample >> 8) & 0xF, (~Ftc532.sample >> 12) & 0xF);
-  }
+  //if ((Ftc532.sample & 0xF) != ((~Ftc532.sample >> 4) & 0xF) || ((Ftc532.sample >> 8) & 0xF) != ((~Ftc532.sample >> 12) & 0xF)) {
+  //  AddLog_P(LOG_LEVEL_DEBUG, PSTR("FTC: inverted sample does not match %x %x %x %x"),
+  //           Ftc532.sample & 0xF, (~Ftc532.sample >> 4) & 0xF, (Ftc532.sample >> 8) & 0xF, (~Ftc532.sample >> 12) & 0xF);
+  //}
 #endif  // DEBUG_TASMOTA_DRIVER
   Ftc532.keys = (Ftc532.sample & 0xF) | ((Ftc532.sample >> 4) & 0xF0);
   if (Ftc532.keys != Ftc532.old_keys) {
