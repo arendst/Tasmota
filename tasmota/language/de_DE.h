@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v9.0.0.3
+ * Updated until v9.2.0.1
 \*********************************************************************/
 
 //#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -461,30 +461,30 @@
 #define D_KNX_RX_SCENE "KNX SCENE RX"
 
 // xdrv_23_zigbee
-#define D_ZIGBEE_PERMITJOIN_ACTIVE "Devices allowed to join"
-#define D_ZIGBEE_MAPPING_TITLE "Tasmota Zigbee Mapping"
-#define D_ZIGBEE_NOT_STARTED "Zigbee not started"
-#define D_ZIGBEE_MAPPING_IN_PROGRESS_SEC "Mapping in progress (%d s. remaining)"
-#define D_ZIGBEE_MAPPING_NOT_PRESENT "No mapping"
-#define D_ZIGBEE_MAP_REFRESH "Zigbee Map Refresh"
-#define D_ZIGBEE_MAP   "Zigbee Map"
-#define D_ZIGBEE_PERMITJOIN "Zigbee Permit Join"
-#define D_ZIGBEE_GENERATE_KEY "generating random Zigbee network key"
-#define D_ZIGBEE_UNKNOWN_DEVICE "Unknown device"
-#define D_ZIGBEE_UNKNOWN_ATTRIBUTE "Unknown attribute"
-#define D_ZIGBEE_INVALID_PARAM "Invalid parameter"
-#define D_ZIGBEE_MISSING_PARAM "Missing parameters"
-#define D_ZIGBEE_UNKNWON_ATTRIBUTE "Unknown attribute name (ignored): %s"
-#define D_ZIGBEE_TOO_MANY_CLUSTERS "No more than one cluster id per command"
-#define D_ZIGBEE_WRONG_DELIMITER "Wrong delimiter for payload"
-#define D_ZIGBEE_UNRECOGNIZED_COMMAND "Unrecognized zigbee command: %s"
-#define D_ZIGBEE_TOO_MANY_COMMANDS "Only 1 command allowed (%d)"
-#define D_ZIGBEE_NO_ATTRIBUTE "No attribute in list"
-#define D_ZIGBEE_UNSUPPORTED_ATTRIBUTE_TYPE "Unsupported attribute type"
-#define D_ZIGBEE_JSON_REQUIRED "Config requires JSON objects"
-#define D_ZIGBEE_RESET_1_OR_2 "1 or 2 to reset"
-#define D_ZIGBEE_EEPROM_FOUND_AT_ADDRESS "ZBBridge EEPROM found at address"
-#define D_ZIGBEE_RANDOMIZING_ZBCONFIG "Randomizing Zigbee parameters, please check with 'ZbConfig'"
+#define D_ZIGBEE_PERMITJOIN_ACTIVE "Gerätekopplung erlaubt"
+#define D_ZIGBEE_MAPPING_TITLE "Tasmota Zigbee Karte"
+#define D_ZIGBEE_NOT_STARTED "Zigbee nicht gestartet"
+#define D_ZIGBEE_MAPPING_IN_PROGRESS_SEC "Karte in Erstellung (%d s. verbleibend)"
+#define D_ZIGBEE_MAPPING_NOT_PRESENT "Keine Karte"
+#define D_ZIGBEE_MAP_REFRESH "Zigbee Karte erneuern"
+#define D_ZIGBEE_MAP   "Zigbee Karte"
+#define D_ZIGBEE_PERMITJOIN "Zigbee Kopplung ein"
+#define D_ZIGBEE_GENERATE_KEY "Erzeuge zufälligen Zigbee Netzwerkschlüssel"
+#define D_ZIGBEE_UNKNOWN_DEVICE "Unbekanntes Gerät"
+#define D_ZIGBEE_UNKNOWN_ATTRIBUTE "Unbekanntes Attribut"
+#define D_ZIGBEE_INVALID_PARAM "Ungültiger Parameter"
+#define D_ZIGBEE_MISSING_PARAM "Fehlende Parameter"
+#define D_ZIGBEE_UNKNWON_ATTRIBUTE "Unbekannter Attribut Name (ignoriert): %s"
+#define D_ZIGBEE_TOO_MANY_CLUSTERS "Nur eine Cluster id pro Kommando"
+#define D_ZIGBEE_WRONG_DELIMITER "Falscher Delimeter für Payload"
+#define D_ZIGBEE_UNRECOGNIZED_COMMAND "Unerkanntes zigbee Kommando: %s"
+#define D_ZIGBEE_TOO_MANY_COMMANDS "Nur 1 Kommando zulässig (%d)"
+#define D_ZIGBEE_NO_ATTRIBUTE "Kein Attribut in der Liste"
+#define D_ZIGBEE_UNSUPPORTED_ATTRIBUTE_TYPE "Nicht unterstützter Attribut Typ"
+#define D_ZIGBEE_JSON_REQUIRED "Konfiguration muss JSON basiert sein"
+#define D_ZIGBEE_RESET_1_OR_2 "1 oder 2 für Reset"
+#define D_ZIGBEE_EEPROM_FOUND_AT_ADDRESS "ZBBridge EEPROM gefunden auf Addresse"
+#define D_ZIGBEE_RANDOMIZING_ZBCONFIG "Zufällige Zigbee Parameter erstellt, Überprüfung mit 'ZbConfig'"
 
 // xdrv_03_energy.ino
 #define D_ENERGY_TODAY "Energie heute"
