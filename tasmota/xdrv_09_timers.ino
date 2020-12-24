@@ -897,7 +897,7 @@ void TimerSaveSettings(void)
     }
     snprintf_P(message, sizeof(message), PSTR("%s,0x%08X"), message, Settings.timer[i].data);
   }
-  AddLog_P(LOG_LEVEL_DEBUG, message);
+  AddLogData(LOG_LEVEL_DEBUG, message);
 }
 #endif  // USE_TIMERS_WEB
 #endif  // USE_WEBSERVER
