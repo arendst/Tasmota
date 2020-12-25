@@ -2067,9 +2067,6 @@ String HtmlEscape(const String unescaped) {
   return result;
 }
 
-// Indexed by enum wl_enc_type in file wl_definitions.h starting from -1
-const char kEncryptionType[] PROGMEM = "|||" D_WPA_PSK "||" D_WPA2_PSK "|" D_WEP "||" D_NONE "|" D_AUTO;
-
 void HandleWifiConfiguration(void)
 {
   if (!HttpCheckPriviledgedAccess(!WifiIsInManagerMode())) { return; }
@@ -2118,14 +2115,11 @@ void HandleWifiConfiguration(void)
         uint32_t i = 0;
         while (i < n) {
           int32_t rssi = WiFi.RSSI(indices[i]);
+          String ssid = WiFi.SSID(indices[i]);
           DEBUG_CORE_LOG(PSTR(D_LOG_WIFI D_SSID " %s, " D_BSSID " %s, " D_CHANNEL " %d, " D_RSSI " %d"),
-            WiFi.SSID(indices[i]).c_str(), WiFi.BSSIDstr(indices[i]).c_str(), WiFi.channel(indices[i]), rssi);
-          int quality = WifiGetRssiAsQuality(rssi);
-          int auth = WiFi.encryptionType(indices[i]);
-          char encryption[20];
+            ssid.c_str(), WiFi.BSSIDstr(indices[i]).c_str(), WiFi.channel(indices[i]), rssi);
 
           // Print SSID
-          String ssid = WiFi.SSID(indices[i]);
           WSContentSend_P(PSTR("<div><a href='#p' onclick='c(this)'>%s</a><br><ul>"),
             HtmlEscape(ssid).c_str()
           );
@@ -2136,19 +2130,18 @@ void HandleWifiConfiguration(void)
           while((i+j) < n && (nextSSID = WiFi.SSID(indices[i+j])) == ssid) {
             // Update RSSI / quality
             rssi = WiFi.RSSI(indices[i+j]);
-            quality = WifiGetRssiAsQuality(rssi);
+            int quality = WifiGetRssiAsQuality(rssi);
             // Color-code quality
             uint8_t colors[2] = { 0xFF, 0xFF };
             if(quality > 50) {
               // Scale red component to go from yellow to green (full green)
-              colors[0] = (0xFF * (quality-50))/50;
+              colors[0] = (0xFF * (100-quality))/50;
             } else {
               // Scale green component to go from red to yellow (full red)
               colors[1] = (0xFF * quality)/50;
             }
             // Print item
-            WSContentSend_P(PSTR("<li title='%s, Signal: %d dBm'>%s, Channel %d, <span style='color:#%02X%02X00'>Quality %d%%</span></li>"),
-              GetTextIndexed(encryption, sizeof(encryption), auth +1, kEncryptionType),
+            WSContentSend_P(PSTR("<li title='%d dBm'>%s, CH %d, <span style='color:#%02X%02X00'>Quality %d%%</span></li>"),
               rssi, WiFi.BSSIDstr(indices[i+j]).c_str(),
               WiFi.channel(indices[i+j]), colors[0], colors[1], quality
             );
@@ -2158,8 +2151,6 @@ void HandleWifiConfiguration(void)
           i += j;
 
           WSContentSend_P(PSTR("</ul></div>"));
-          
-          delay(0);
 
         }
         WSContentSend_P(PSTR("<br>"));
