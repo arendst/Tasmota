@@ -2114,35 +2114,51 @@ void HandleWifiConfiguration(void)
           }
         }
 
-        // remove duplicates ( must be RSSI sorted )
-        String cssid;
-        for (uint32_t i = 0; i < n; i++) {
-          if (-1 == indices[i]) { continue; }
-          cssid = WiFi.SSID(indices[i]);
-          uint32_t cschn = WiFi.channel(indices[i]);
-          for (uint32_t j = i + 1; j < n; j++) {
-            if ((cssid == WiFi.SSID(indices[j])) && (cschn == WiFi.channel(indices[j]))) {
-              DEBUG_CORE_LOG(PSTR(D_LOG_WIFI D_DUPLICATE_ACCESSPOINT " %s"), WiFi.SSID(indices[j]).c_str());
-              indices[j] = -1;  // set dup aps to index -1
-            }
-          }
-        }
-
         //display networks in page
-        for (uint32_t i = 0; i < n; i++) {
-          if (-1 == indices[i]) { continue; }  // skip dups
+        uint32_t i = 0;
+        while (i < n) {
           int32_t rssi = WiFi.RSSI(indices[i]);
           DEBUG_CORE_LOG(PSTR(D_LOG_WIFI D_SSID " %s, " D_BSSID " %s, " D_CHANNEL " %d, " D_RSSI " %d"),
             WiFi.SSID(indices[i]).c_str(), WiFi.BSSIDstr(indices[i]).c_str(), WiFi.channel(indices[i]), rssi);
           int quality = WifiGetRssiAsQuality(rssi);
           int auth = WiFi.encryptionType(indices[i]);
           char encryption[20];
-          WSContentSend_P(PSTR("<div><a href='#p' onclick='c(this)'>%s</a>&nbsp;(%d)&nbsp<span class='q'>%s %d%% (%d dBm)</span></div>"),
-            HtmlEscape(WiFi.SSID(indices[i])).c_str(),
-            WiFi.channel(indices[i]),
-            GetTextIndexed(encryption, sizeof(encryption), auth +1, kEncryptionType),
-            quality, rssi
+
+          // Print SSID
+          String ssid = WiFi.SSID(indices[i]);
+          WSContentSend_P(PSTR("<div><a href='#p' onclick='c(this)'>%s</a><br><ul>"),
+            HtmlEscape(ssid).c_str()
           );
+
+          int j = 0;
+          String nextSSID = "";
+          // Handle all APs with the same SSID
+          while((i+j) < n && (nextSSID = WiFi.SSID(indices[i+j])) == ssid) {
+            // Update RSSI / quality
+            rssi = WiFi.RSSI(indices[i+j]);
+            quality = WifiGetRssiAsQuality(rssi);
+            // Color-code quality
+            uint8_t colors[2] = { 0xFF, 0xFF };
+            if(quality > 50) {
+              // Scale red component to go from yellow to green (full green)
+              colors[0] = 0xFF * (1.0f - 1.0f*(quality-50)/50);
+            } else {
+              // Scale green component to go from red to yellow (full red)
+              colors[1] = 0xFF * (1.0f*quality/50);
+            }
+            // Print item
+            WSContentSend_P(PSTR("<li title='%s, Signal: %d dBm'>%s, Channel %d, <span style='color:#%02X%02X00'>Quality %d%%</span></li>"),
+              GetTextIndexed(encryption, sizeof(encryption), auth +1, kEncryptionType),
+              rssi, WiFi.BSSIDstr(indices[i+j]).c_str(),
+              WiFi.channel(indices[i+j]), colors[0], colors[1], quality
+            );
+            j++;
+          }
+          // Skip all the duplicates
+          i += j;
+
+          WSContentSend_P(PSTR("</ul></div>"));
+          
           delay(0);
 
         }
