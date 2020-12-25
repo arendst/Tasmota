@@ -2141,10 +2141,10 @@ void HandleWifiConfiguration(void)
             uint8_t colors[2] = { 0xFF, 0xFF };
             if(quality > 50) {
               // Scale red component to go from yellow to green (full green)
-              colors[0] = 0xFF * (1.0f - 1.0f*(quality-50)/50);
+              colors[0] = (0xFF * (quality-50))/50;
             } else {
               // Scale green component to go from red to yellow (full red)
-              colors[1] = 0xFF * (1.0f*quality/50);
+              colors[1] = (0xFF * quality)/50;
             }
             // Print item
             WSContentSend_P(PSTR("<li title='%s, Signal: %d dBm'>%s, Channel %d, <span style='color:#%02X%02X00'>Quality %d%%</span></li>"),
