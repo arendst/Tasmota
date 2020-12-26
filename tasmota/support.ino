@@ -388,20 +388,23 @@ char* RemoveControlCharacter(char* p) {
   return p;
 }
 
-char* ReplaceCommaWithDot(char* p) {
-  // Replace character ',' with '.'
+char* ReplaceChar(char* p, char find, char replace) {
   char* write = (char*)p;
   char* read = (char*)p;
   char ch = '.';
 
   while (ch != '\0') {
     ch = *read++;
-    if (ch == ',') {
-      ch = '.';
+    if (ch == find) {
+      ch = replace;
     }
     *write++ = ch;
   }
   return p;
+}
+
+char* ReplaceCommaWithDot(char* p) {
+  return ReplaceChar(p, ',', '.');
 }
 
 char* LowerCase(char* dest, const char* source)
