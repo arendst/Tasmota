@@ -2130,20 +2130,10 @@ void HandleWifiConfiguration(void)
           while((i+j) < n && (nextSSID = WiFi.SSID(indices[i+j])) == ssid) {
             // Update RSSI / quality
             rssi = WiFi.RSSI(indices[i+j]);
-            int quality = WifiGetRssiAsQuality(rssi);
-            // Color-code quality
-            uint8_t colors[2] = { 0xFF, 0xFF };
-            if(quality > 50) {
-              // Scale red component to go from yellow to green (full green)
-              colors[0] = (0xFF * (100-quality))/50;
-            } else {
-              // Scale green component to go from red to yellow (full red)
-              colors[1] = (0xFF * quality)/50;
-            }
             // Print item
-            WSContentSend_P(PSTR("<li title='%d dBm'>%s, CH %d, <span style='color:#%02X%02X00'>Quality %d%%</span></li>"),
+            WSContentSend_P(PSTR("<li title='%d dBm'>%s, CH %d, Quality %d%%</li>"),
               rssi, WiFi.BSSIDstr(indices[i+j]).c_str(),
-              WiFi.channel(indices[i+j]), colors[0], colors[1], quality
+              WiFi.channel(indices[i+j]), WifiGetRssiAsQuality(rssi)
             );
             j++;
           }
