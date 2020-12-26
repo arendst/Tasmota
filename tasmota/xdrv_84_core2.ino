@@ -19,13 +19,17 @@
 
 /* remaining work:
 
-i2s microphone, at least as loudness sensor
-rtc use after reboot, sync with internet on regular intervals.
+i2s microphone as loudness sensor
+rtc better sync
 
 */
 
 #ifdef ESP32
 #ifdef USE_M5STACK_CORE2
+
+#include <Esp.h>
+#include <sys/time.h>
+#include <esp_system.h>
 
 #include <AXP192.h>
 #include <MPU6886.h>
@@ -41,9 +45,11 @@ struct CORE2_globs {
   BM8563_RTC Rtc;
   bool ready;
   bool tset;
-  uint32_t shutdownseconds;
+  int32_t shutdownseconds;
+  uint8_t wakeup_hour;
+  uint8_t wakeup_minute;
   uint8_t shutdowndelay;
-
+  bool timesynced;
 } core2_globs;
 
 struct CORE2_ADC {
@@ -79,6 +85,31 @@ void CORE2_Module_Init(void) {
 
 void CORE2_Init(void) {
 
+  if (Rtc.utc_time < START_VALID_TIME) {
+    // set rtc from chip
+    Rtc.utc_time = Get_utc();
+
+    TIME_T tmpTime;
+    TasmotaGlobal.ntp_force_sync = true; //force to sync with ntp
+  //  Rtc.utc_time = ReadFromDS3231(); //we read UTC TIME from DS3231
+    // from this line, we just copy the function from "void RtcSecond()" at the support.ino ,line 2143 and above
+    // We need it to set rules etc.
+    BreakTime(Rtc.utc_time, tmpTime);
+    if (Rtc.utc_time < START_VALID_TIME ) {
+      //ds3231ReadStatus = true; //if time in DS3231 is valid, do  not update again
+    }
+    Rtc.daylight_saving_time = RuleToTime(Settings.tflag[1], RtcTime.year);
+    Rtc.standard_time = RuleToTime(Settings.tflag[0], RtcTime.year);
+    AddLog_P(LOG_LEVEL_INFO, PSTR("Set time from BM8563 to RTC (" D_UTC_TIME ") %s, (" D_DST_TIME ") %s, (" D_STD_TIME ") %s"),
+                GetDateAndTime(DT_UTC).c_str(), GetDateAndTime(DT_DST).c_str(), GetDateAndTime(DT_STD).c_str());
+    if (Rtc.local_time < START_VALID_TIME) {  // 2016-01-01
+      TasmotaGlobal.rules_flag.time_init = 1;
+    } else {
+      TasmotaGlobal.rules_flag.time_set = 1;
+    }
+
+  }
+
 }
 
 void CORE2_audio_power(bool power) {
@@ -100,6 +131,7 @@ const char HTTP_CORE2_MPU[] PROGMEM =
 
 
 void CORE2_loop(uint32_t flg) {
+  Sync_RTOS_TIME();
 }
 
 void CORE2_WebShow(uint32_t json) {
@@ -135,24 +167,45 @@ void (* const CORE2_Command[])(void) PROGMEM = {
 
 
 void CORE2_Shutdown(void) {
-  if (XdrvMailbox.payload >= 30)  {
-    core2_globs.shutdownseconds = XdrvMailbox.payload;
+  char *mp = strchr(XdrvMailbox.data, ':');
+  if (mp) {
+    core2_globs.wakeup_hour = atoi(XdrvMailbox.data);
+    core2_globs.wakeup_minute = atoi(mp+1);
+    core2_globs.shutdownseconds = -1;
     core2_globs.shutdowndelay = 10;
+    char tbuff[16];
+    sprintf(tbuff,"%02.2d:%02.2d", core2_globs.wakeup_hour, core2_globs.wakeup_minute );
+    ResponseCmndChar(tbuff);
+  } else {
+    if (XdrvMailbox.payload >= 30)  {
+      core2_globs.shutdownseconds = XdrvMailbox.payload;
+      core2_globs.shutdowndelay = 10;
+    }
+    ResponseCmndNumber(XdrvMailbox.payload);
   }
-  ResponseCmndNumber(XdrvMailbox.payload -2);
+
 }
 
 void CORE2_DoShutdown(void) {
   SettingsSaveAll();
   RtcSettingsSave();
   core2_globs.Rtc.clearIRQ();
-  core2_globs.Rtc.SetAlarmIRQ(core2_globs.shutdownseconds);
+  if (core2_globs.shutdownseconds > 0) {
+    core2_globs.Rtc.SetAlarmIRQ(core2_globs.shutdownseconds);
+  } else {
+    RTC_TimeTypeDef wut;
+    wut.Hours = core2_globs.wakeup_hour;
+    wut.Minutes = core2_globs.wakeup_minute;
+    core2_globs.Rtc.SetAlarmIRQ(wut);
+  }
   delay(10);
   core2_globs.Axp.PowerOff();
 }
 
 extern uint8_t tbstate[3];
 
+
+// c2ps(a b)
 float core2_setaxppin(uint32_t sel, uint32_t val) {
   switch (sel) {
     case 0:
@@ -165,7 +218,25 @@ float core2_setaxppin(uint32_t sel, uint32_t val) {
       if (val<1 || val>3) val = 1;
       return tbstate[val - 1] & 1;
       break;
-
+    case 3:
+      switch (val) {
+        case 0:
+          return core2_globs.Axp.isACIN();
+          break;
+        case 1:
+          return core2_globs.Axp.isCharging();
+          break;
+        case 2:
+          return core2_globs.Axp.isVBUS();
+          break;
+        case 3:
+          return core2_globs.Axp.AXPInState();
+          break;
+      }
+      break;
+    default:
+      GetRtc();
+      break;
   }
   return 0;
 }
@@ -187,16 +258,107 @@ uint16_t voltage = 2200;
 
 }
 
+/*
+void SetRtc(void) {
+  RTC_TimeTypeDef RTCtime;
+  RTCtime.Hours = RtcTime.hour;
+  RTCtime.Minutes = RtcTime.minute;
+  RTCtime.Seconds = RtcTime.second;
+  core2_globs.Rtc.SetTime(&RTCtime);
+
+  RTC_DateTypeDef RTCdate;
+  RTCdate.WeekDay = RtcTime.day_of_week;
+  RTCdate.Month = RtcTime.month;
+  RTCdate.Date = RtcTime.day_of_month;
+  RTCdate.Year = RtcTime.year;
+  core2_globs.Rtc.SetDate(&RTCdate);
+}
+*/
+
+
+// needed for sd card time
+void Sync_RTOS_TIME(void) {
+
+  if (Rtc.local_time < START_VALID_TIME || core2_globs.timesynced) return;
+
+  core2_globs.timesynced = 1;
+// Set freertos time for sd card
+
+  struct timeval tv;
+  //tv.tv_sec = Rtc.utc_time;
+  tv.tv_sec = Rtc.local_time;
+  tv.tv_usec = 0;
+
+  //struct timezone tz;
+  //tz.tz_minuteswest = 0;
+  //tz.tz_dsttime = 0;
+  //settimeofday(&tv, &tz);
+
+  settimeofday(&tv, NULL);
+}
+
+void GetRtc(void) {
+  RTC_TimeTypeDef RTCtime;
+  core2_globs.Rtc.GetTime(&RTCtime);
+  RtcTime.hour = RTCtime.Hours;
+  RtcTime.minute = RTCtime.Minutes;
+  RtcTime.second = RTCtime.Seconds;
+
+
+  RTC_DateTypeDef RTCdate;
+  core2_globs.Rtc.GetDate(&RTCdate);
+  RtcTime.day_of_week = RTCdate.WeekDay;
+  RtcTime.month = RTCdate.Month;
+  RtcTime.day_of_month = RTCdate.Date;
+  RtcTime.year = RTCdate.Year;
+
+  AddLog_P(LOG_LEVEL_INFO, PSTR("RTC: %02d:%02d:%02d"), RTCtime.Hours, RTCtime.Minutes, RTCtime.Seconds);
+  AddLog_P(LOG_LEVEL_INFO, PSTR("RTC: %02d.%02d.%04d"),  RTCdate.Date, RTCdate.Month, RTCdate.Year);
+
+}
+
+void Set_utc(uint32_t epoch_time) {
+TIME_T tm;
+  BreakTime(epoch_time, tm);
+  RTC_TimeTypeDef RTCtime;
+  RTCtime.Hours = tm.hour;
+  RTCtime.Minutes = tm.minute;
+  RTCtime.Seconds = tm.second;
+  core2_globs.Rtc.SetTime(&RTCtime);
+  RTC_DateTypeDef RTCdate;
+  RTCdate.WeekDay = tm.day_of_week;
+  RTCdate.Month = tm.month;
+  RTCdate.Date = tm.day_of_month;
+  RTCdate.Year = tm.year + 1970;
+  core2_globs.Rtc.SetDate(&RTCdate);
+}
+
+uint32_t Get_utc(void) {
+  RTC_TimeTypeDef RTCtime;
+  // 1. read has errors ???
+  core2_globs.Rtc.GetTime(&RTCtime);
+  core2_globs.Rtc.GetTime(&RTCtime);
+  RTC_DateTypeDef RTCdate;
+  core2_globs.Rtc.GetDate(&RTCdate);
+  TIME_T tm;
+  tm.second =  RTCtime.Seconds;
+  tm.minute = RTCtime.Minutes;
+  tm.hour = RTCtime.Hours;
+  tm.day_of_week = RTCdate.WeekDay;
+  tm.day_of_month = RTCdate.Date;
+  tm.month = RTCdate.Month;
+  tm.year =RTCdate.Year - 1970;
+  return MakeTime(tm);
+}
+
 void CORE2_EverySecond(void) {
   if (core2_globs.ready) {
     CORE2_GetADC();
 
-    if (RtcTime.year>2000 && core2_globs.tset==false) {
-      RTC_TimeTypeDef RTCtime;
-      RTCtime.Hours = RtcTime.hour;
-      RTCtime.Minutes = RtcTime.minute;
-      RTCtime.Seconds = RtcTime.second;
-      core2_globs.Rtc.SetTime(&RTCtime);
+    if (Rtc.utc_time > START_VALID_TIME && core2_globs.tset==false && abs(Rtc.utc_time - Get_utc()) > 3) {
+      Set_utc(Rtc.utc_time);
+      AddLog_P(LOG_LEVEL_INFO, PSTR("Write Time TO BM8563 from NTP (" D_UTC_TIME ") %s, (" D_DST_TIME ") %s, (" D_STD_TIME ") %s"),
+                  GetDateAndTime(DT_UTC).c_str(), GetDateAndTime(DT_DST).c_str(), GetDateAndTime(DT_STD).c_str());
       core2_globs.tset = true;
     }
 
