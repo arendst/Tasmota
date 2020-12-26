@@ -642,7 +642,7 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   { Ztuya4,   CxEF00, 0x046F,  Z_(TuyaWeekSelect),       Cm1, 0 },
 
   // Aqara Opple spacific
-  { Zbool,    CxFCC0, 0x0009,  Z_(OppleMode),            Cm1, 0 },
+  { Zuint8,   CxFCC0, 0x0009,  Z_(OppleMode),            Cm1, 0 },
 
   // Terncy specific - 0xFCCC
   { Zuint16, CxFCCC, 0x001A,  Z_(TerncyDuration),        Cm1, 0 },

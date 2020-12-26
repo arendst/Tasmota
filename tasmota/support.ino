@@ -1916,21 +1916,21 @@ void SyslogAsync(bool refresh) {
         syslog_host_hash = current_hash;
         WiFi.hostByName(SettingsText(SET_SYSLOG_HOST), syslog_host_addr);  // If sleep enabled this might result in exception so try to do it once using hash
       }
-      if (PortUdp.beginPacket(syslog_host_addr, Settings.syslog_port)) {
-        char log_data[len +72];            // Hostname + Id + log data
-        snprintf_P(log_data, sizeof(log_data), PSTR("%s ESP-"), NetworkHostname());
-        uint32_t preamble_len = strlen(log_data);
-        len -= mxtime;
-        strlcpy(log_data +preamble_len, line +mxtime, len);
-        // wemos5 ESP-HTP: Web server active on wemos5 with IP address 192.168.2.172
-        PortUdp_write(log_data, preamble_len + len);
-        PortUdp.endPacket();
-        delay(1);                          // Add time for UDP handling (#5512)
-      } else {
+      if (!PortUdp.beginPacket(syslog_host_addr, Settings.syslog_port)) {
         TasmotaGlobal.syslog_level = 0;
         TasmotaGlobal.syslog_timer = SYSLOG_TIMER;
         AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION D_SYSLOG_HOST_NOT_FOUND ". " D_RETRY_IN " %d " D_UNIT_SECOND), SYSLOG_TIMER);
+        return;
       }
+      char log_data[len +72];            // Hostname + Id + log data
+      snprintf_P(log_data, sizeof(log_data), PSTR("%s ESP-"), NetworkHostname());
+      uint32_t preamble_len = strlen(log_data);
+      len -= mxtime;
+      strlcpy(log_data +preamble_len, line +mxtime, len);
+      // wemos5 ESP-HTP: Web server active on wemos5 with IP address 192.168.2.172
+      PortUdp_write(log_data, preamble_len + len);
+      PortUdp.endPacket();
+      delay(1);                          // Add time for UDP handling (#5512)
     }
   }
 }
@@ -1948,6 +1948,7 @@ bool NeedLogRefresh(uint32_t req_loglevel, uint32_t index) {
 bool GetLog(uint32_t req_loglevel, uint32_t* index_p, char** entry_pp, size_t* len_p) {
   uint32_t index = *index_p;
 
+  if (TasmotaGlobal.uptime < 3) { return false; }  // Allow time to setup correct log level
   if (!req_loglevel || (index == TasmotaGlobal.log_buffer_pointer)) { return false; }
 
   if (!index) {                            // Dump all
@@ -1988,8 +1989,6 @@ bool GetLog(uint32_t req_loglevel, uint32_t* index_p, char** entry_pp, size_t* l
 }
 
 void AddLogData(uint32_t loglevel, const char* log_data) {
-//  char mxtime[10];  // "13:45:21 "
-//  snprintf_P(mxtime, sizeof(mxtime), PSTR("%02d" D_HOUR_MINUTE_SEPARATOR "%02d" D_MINUTE_SECOND_SEPARATOR "%02d "), RtcTime.hour, RtcTime.minute, RtcTime.second);
   char mxtime[14];  // "13:45:21.999 "
   snprintf_P(mxtime, sizeof(mxtime), PSTR("%02d" D_HOUR_MINUTE_SEPARATOR "%02d" D_MINUTE_SECOND_SEPARATOR "%02d.%03d "), RtcTime.hour, RtcTime.minute, RtcTime.second, RtcMillis());
 
@@ -2002,6 +2001,7 @@ void AddLogData(uint32_t loglevel, const char* log_data) {
   if (Settings.mqttlog_level > highest_loglevel) { highest_loglevel = Settings.mqttlog_level; }
   if (TasmotaGlobal.syslog_level > highest_loglevel) { highest_loglevel = TasmotaGlobal.syslog_level; }
   if (TasmotaGlobal.templog_level > highest_loglevel) { highest_loglevel = TasmotaGlobal.templog_level; }
+  if (TasmotaGlobal.uptime < 3) { highest_loglevel = LOG_LEVEL_DEBUG_MORE; }  // Log all before setup correct log level
 
   if ((loglevel <= highest_loglevel) &&    // Log only when needed
       (TasmotaGlobal.masterlog_level <= highest_loglevel)) {

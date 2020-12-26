@@ -64,8 +64,11 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - Gpio ``Option_a1`` enabling PWM2 high impedance if powered off as used by Wyze bulbs [#10196](https://github.com/arendst/Tasmota/issues/10196)
 - Support for FTC532 8-button touch controller by Peter Franck [#10222](https://github.com/arendst/Tasmota/issues/10222)
 
+### Changed
+- Logging from fixed global memory buffer to stack buffer freeing 700 bytes RAM
+
 ### Fixed
-- Redesign syslog and mqttlog using log buffer [#10164](https://github.com/arendst/Tasmota/issues/10152)
+- Redesign syslog and mqttlog using log buffer [#10164](https://github.com/arendst/Tasmota/issues/10164)
 - Shutter stop issue [#10170](https://github.com/arendst/Tasmota/issues/10170)
 - Scripter script_sub_command [#10181](https://github.com/arendst/Tasmota/issues/10181)
 - Scripter JSON variable above 32 chars [#10193](https://github.com/arendst/Tasmota/issues/10193)
@@ -73,3 +76,4 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - Wemo emulation for single devices [#10165](https://github.com/arendst/Tasmota/issues/10165) [#10194](https://github.com/arendst/Tasmota/issues/10194)
 - ESP32 LoadStoreError when using ``#define USER_TEMPLATE`` [#9506](https://github.com/arendst/Tasmota/issues/9506)
 - Compile error when ``#ifdef USE_IR_RECEIVE`` is disabled regression from 9.1.0.2
+- Prometheus memory leak [#10221](https://github.com/arendst/Tasmota/issues/10221)

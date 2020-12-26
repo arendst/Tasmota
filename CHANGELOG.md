@@ -11,6 +11,9 @@ All notable changes to this project will be documented in this file.
 - Gpio ``Option_a1`` enabling PWM2 high impedance if powered off as used by Wyze bulbs (#10196)
 - Support for FTC532 8-button touch controller by Peter Franck (#10222)
 
+### Changed
+- Logging from fixed global memory buffer to stack buffer freeing 700 bytes RAM
+
 ### Fixed
 - Redesign syslog and mqttlog using log buffer (#10164)
 - Shutter stop issue (#10170)
@@ -20,6 +23,7 @@ All notable changes to this project will be documented in this file.
 - Wemo emulation for single devices (#10165, #10194)
 - ESP32 LoadStoreError when using ``#define USER_TEMPLATE`` (#9506)
 - Compile error when ``#ifdef USE_IR_RECEIVE`` is disabled regression from 9.1.0.2
+- Prometheus memory leak (#10221)
 
 ## [Released]
 

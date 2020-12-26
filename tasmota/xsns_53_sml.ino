@@ -877,7 +877,7 @@ void Dump2log(void) {
         char c=SML_SREAD&0x7f;
         if (c=='\n' || c=='\r') {
           log_data[sml_logindex]=0;
-          AddLog(LOG_LEVEL_INFO);
+          AddLogData(LOG_LEVEL_INFO, log_data);
           sml_logindex=2;
           log_data[0]=':';
           log_data[1]=' ';
