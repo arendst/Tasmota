@@ -1251,7 +1251,7 @@ float Get_MFVal(uint8_t index, int16_t bind) {
         if (bind<0) {
           return maxind;
         }
-        if (bind<1 || bind>maxind) bind = maxind;
+        if (bind < 1 || bind > maxind ) bind = 1;
         return mflp->rbuff[bind - 1];
     }
     mp += sizeof(struct M_FILT) + ((mflp->numvals & AND_FILT_MASK) - 1) * sizeof(float);
@@ -1266,10 +1266,12 @@ void Set_MFVal(uint8_t index, uint16_t bind, float val) {
     if (count==index) {
         uint16_t maxind = mflp->numvals & AND_FILT_MASK;
         if (!bind) {
+          if (val < 0 || val >= maxind) val = 0;
           mflp->index = val;
         } else {
-          if (bind<1 || bind>maxind) bind = maxind;
-          mflp->rbuff[bind-1] = val;
+          if (bind > 1 && bind <= maxind) {
+            mflp->rbuff[bind-1] = val;
+          }
         }
         return;
     }
@@ -2407,6 +2409,10 @@ chknext:
 #endif
           goto exit;
         }
+        if (!strncmp(vname, "frnm", 4)) {
+          if (sp) strlcpy(sp, SettingsText(SET_FRIENDLYNAME1), glob_script_mem.max_ssize);
+          goto strexit;
+        }
         break;
       case 'g':
         if (!strncmp(vname, "gtmp", 4)) {
@@ -2783,6 +2789,17 @@ chknext:
           len++;
           goto exit;
         }
+#if  defined(ESP32) && (defined(USE_M5STACK_CORE2))
+        if (!strncmp(vname, "rec(", 4)) {
+          char str[SCRIPT_MAXSSIZE];
+          lp = GetStringArgument(lp + 4, OPER_EQU, str, 0);
+          SCRIPT_SKIP_SPACES
+          lp = GetNumericArgument(lp, OPER_EQU, &fvar, 0);
+          fvar = i2s_record(str, fvar);
+          len++;
+          goto exit;
+        }
+#endif
         break;
       case 's':
         if (!strncmp(vname, "secs", 4)) {
@@ -3800,8 +3817,9 @@ void esp32_beep(int32_t freq ,uint32_t len) {
 uint8_t pwmpin[5];
 
 void esp_pwm(int32_t value, uint32 freq, uint32_t channel) {
-  if (channel < 1 || channel > 3) channel = 1;
+
 #ifdef ESP32
+  if (channel < 1 || channel > 8) channel = 1;
   channel+=7;
   if (value < 0) {
     if (value <= -64) value = 0;
@@ -3817,6 +3835,7 @@ void esp_pwm(int32_t value, uint32 freq, uint32_t channel) {
   }
 #else
   // esp8266 default to range 0-1023
+  if (channel < 1 || channel > 5) channel = 1;
   channel-=1;
   if (value < 0) {
     if (value <= -64) value = 0;
@@ -7174,7 +7193,8 @@ exgc:
                   char *cp = &label[3];
                   //todflg=atoi(&label[3]);
                   todflg = strtol(cp, &cp, 10);
-                  if (todflg>=entries) todflg = entries - 1;
+                  if (todflg >= entries) todflg = entries - 1;
+                  if (todflg < 0) todflg = 0;
                   if (*cp=='/') {
                     cp++;
                     divflg = strtol(cp, &cp, 10);
@@ -7676,6 +7696,7 @@ bool Xdrv10(uint8_t function)
 
 #endif // USE_SCRIPT_FATFS>=0
         AddLog_P(LOG_LEVEL_INFO,PSTR("FATFS mount OK!"));
+
         //fsp->dateTimeCallback(dateTime);
         glob_script_mem.script_sd_found = 1;
         char *script;
