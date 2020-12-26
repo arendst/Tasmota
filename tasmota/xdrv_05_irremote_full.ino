@@ -477,7 +477,7 @@ uint32_t IrRemoteCmndIrHvacJson(void)
   if (stateMode == StateModes::STORE_ONLY || stateMode == StateModes::SEND_STORE) { // store state in memory
     irac_prev_state = state;
   }
-  if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->enableIRIn();
+  if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->enableIRIn(); }
 
   Response_P(PSTR("{\"" D_CMND_IRHVAC "\":%s}"), sendACJsonState(state).c_str());
   return IE_RESPONSE_PROVIDED;
