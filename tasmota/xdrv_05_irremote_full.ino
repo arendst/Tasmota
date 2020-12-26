@@ -65,6 +65,12 @@ def ir_expand(ir_compact):
 #include <IRutils.h>
 #include <IRac.h>
 
+// Receiving IR while sending at the same time (i.e. receiving your own signal) was dsiabled in #10041
+// At the demand of @pilaGit, you can `#define IR_RCV_WHILE_SENDING 1` to bring back this behavior
+#ifndef IR_RCV_WHILE_SENDING
+#define IR_RCV_WHILE_SENDING  0
+#endif
+
 enum IrErrors { IE_RESPONSE_PROVIDED, IE_NO_ERROR, IE_INVALID_RAWDATA, IE_INVALID_JSON, IE_SYNTAX_IRSEND, IE_SYNTAX_IRHVAC,
                 IE_UNSUPPORTED_HVAC, IE_UNSUPPORTED_PROTOCOL, IE_MEMORY };
 
@@ -462,7 +468,7 @@ uint32_t IrRemoteCmndIrHvacJson(void)
   state.sleep = root.getInt(PSTR(D_JSON_IRHVAC_SLEEP), state.sleep);
   //if (json[D_JSON_IRHVAC_CLOCK]) { state.clock = json[D_JSON_IRHVAC_CLOCK]; }   // not sure it's useful to support 'clock'
 
-  if (irrecv != nullptr) { irrecv->disableIRIn(); }
+  if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->disableIRIn(); }
   if (stateMode == StateModes::SEND_ONLY || stateMode == StateModes::SEND_STORE) {
     IRac ac(Pin(GPIO_IRSEND));
     bool success = ac.sendAc(state, irhvac_stateful && irac_prev_state.protocol == state.protocol ? &irac_prev_state : nullptr);
@@ -471,7 +477,7 @@ uint32_t IrRemoteCmndIrHvacJson(void)
   if (stateMode == StateModes::STORE_ONLY || stateMode == StateModes::SEND_STORE) { // store state in memory
     irac_prev_state = state;
   }
-  if (irrecv != nullptr) { irrecv->enableIRIn(); }
+  if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->enableIRIn(); }
 
   Response_P(PSTR("{\"" D_CMND_IRHVAC "\":%s}"), sendACJsonState(state).c_str());
   return IE_RESPONSE_PROVIDED;
@@ -529,9 +535,9 @@ uint32_t IrRemoteCmndIrSendJson(void)
   // AddLog_P(LOG_LEVEL_DEBUG, PSTR("IRS: protocol %d, bits %d, data 0x%s (%s), repeat %d"),
   //   protocol, bits, ulltoa(data, dvalue, 10), Uint64toHex(data, hvalue, bits), repeat);
 
-  if (irrecv != nullptr) { irrecv->disableIRIn(); }
+  if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->disableIRIn(); }
   bool success = irsend->send(protocol, data, bits, repeat);
-  if (irrecv != nullptr) { irrecv->enableIRIn(); }
+  if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->enableIRIn(); }
 
   if (!success) {
       ResponseCmndChar(D_JSON_PROTOCOL_NOT_SUPPORTED);
@@ -554,11 +560,11 @@ uint32_t IrRemoteSendGC(char ** pp, uint32_t count, uint32_t repeat) {
     GC[i] = strtol(strtok_r(nullptr, ",", pp), nullptr, 0);
     if (!GC[i]) { return IE_INVALID_RAWDATA; }
   }
-  if (irrecv != nullptr) { irrecv->disableIRIn(); }
+  if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->disableIRIn(); }
   for (uint32_t r = 0; r <= repeat; r++) {
     irsend->sendGC(GC, count+1);
   }
-  if (irrecv != nullptr) { irrecv->enableIRIn(); }
+  if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->enableIRIn(); }
   return IE_NO_ERROR;
 }
 
@@ -609,7 +615,7 @@ uint32_t IrRemoteSendRawFormatted(char ** pp, uint32_t count, uint32_t repeat) {
         raw_array[i++] = mark;                    // Mark
       }
     }
-    if (irrecv != nullptr) { irrecv->disableIRIn(); }
+    if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->disableIRIn(); }
     for (uint32_t r = 0; r <= repeat; r++) {
       // AddLog_P(LOG_LEVEL_DEBUG, PSTR("sendRaw count=%d, space=%d, mark=%d, freq=%d"), count, space, mark, freq);
       irsend->sendRaw(raw_array, i, freq);
@@ -617,7 +623,7 @@ uint32_t IrRemoteSendRawFormatted(char ** pp, uint32_t count, uint32_t repeat) {
         irsend->space(40000);   // since we don't know the inter-message gap, place an arbitrary 40ms gap
       }
     }
-    if (irrecv != nullptr) { irrecv->enableIRIn(); }
+    if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->enableIRIn(); }
   } else if (6 == count) {                          // NEC Protocol
     // IRsend raw,0,8620,4260,544,411,1496,010101101000111011001110000000001100110000000001100000000000000010001100
     uint16_t raw_array[strlen(*pp)*2+3];            // Header + bits + end
@@ -636,7 +642,7 @@ uint32_t IrRemoteSendRawFormatted(char ** pp, uint32_t count, uint32_t repeat) {
       }
     }
     raw_array[i++] = parm[2];                     // Trailing mark
-    if (irrecv != nullptr) { irrecv->disableIRIn(); }
+    if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->disableIRIn(); }
     for (uint32_t r = 0; r <= repeat; r++) {
       // AddLog_P(LOG_LEVEL_DEBUG, PSTR("sendRaw %d %d %d %d %d %d"), raw_array[0], raw_array[1], raw_array[2], raw_array[3], raw_array[4], raw_array[5]);
       irsend->sendRaw(raw_array, i, freq);
@@ -644,7 +650,7 @@ uint32_t IrRemoteSendRawFormatted(char ** pp, uint32_t count, uint32_t repeat) {
         irsend->space(inter_message);   // since we don't know the inter-message gap, place an arbitrary 40ms gap
       }
     }
-    if (irrecv != nullptr) { irrecv->enableIRIn(); }
+    if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->enableIRIn(); }
   }
   else { return IE_INVALID_RAWDATA; }                   // Invalid number of parameters
   return IE_NO_ERROR;
@@ -713,11 +719,11 @@ uint32_t IrRemoteSendRawStandard(char ** pp, uint16_t freq, uint32_t count, uint
   // AddLog_P(LOG_LEVEL_DEBUG, PSTR("Arr %d %d %d %d %d %d %d %d"), arr[0], arr[1], arr[2], arr[3], arr[4], arr[5], arr[6], arr[7]);
   if (0 == count) { return IE_INVALID_RAWDATA; }
 
-  if (irrecv != nullptr) { irrecv->disableIRIn(); }
+  if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->disableIRIn(); }
   for (uint32_t r = 0; r <= repeat; r++) {
     irsend->sendRaw(arr, count, freq);
   }
-  if (irrecv != nullptr) { irrecv->enableIRIn(); }
+  if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->enableIRIn(); }
 
   if (nullptr != arr) {
     free(arr);
