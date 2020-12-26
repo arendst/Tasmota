@@ -64,7 +64,6 @@ struct SNFL1 {
 Ticker SnfL1StartDelay;
 
 void SnfL1SendDelayed(void) {
-  SnfL1StartDelay.detach();
   SnfL1Send();
 }
 
@@ -276,7 +275,7 @@ bool SnfL1SetChannels(void)
 
     static bool first_call = true;
     if (first_call) {
-      SnfL1StartDelay.attach_ms(900, SnfL1SendDelayed);  // Allow startup time for Nuvotron microcontroller
+      SnfL1StartDelay.once_ms(900, SnfL1SendDelayed);  // Allow startup time for Nuvotron microcontroller
       first_call = false;
     } else {
       SnfL1Send();

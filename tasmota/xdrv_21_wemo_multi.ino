@@ -419,8 +419,6 @@ WemoSwitch *wemoDevice[MAX_FRIENDLYNAMES] = {};
 int numOfWemoSwitch = 0;
 
 void WemoRespondToMSearch(int echo_type) {
-  TickerMSearch.detach();
-
   for (uint32_t i = 0; i < numOfWemoSwitch; i++) {
     wemoDevice[i]->WemoRespondToMSearch(echo_type);
   }

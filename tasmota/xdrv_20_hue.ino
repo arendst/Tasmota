@@ -80,7 +80,6 @@ void HueRespondToMSearch(void)
 {
   char message[TOPSZ];
 
-  TickerMSearch.detach();
   if (PortUdp.beginPacket(udp_remote_ip, udp_remote_port)) {
     char response[320];
     snprintf_P(response, sizeof(response), HUE_RESPONSE, WiFi.localIP().toString().c_str(), HueBridgeId().c_str());
