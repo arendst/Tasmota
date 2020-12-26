@@ -62,6 +62,12 @@ def ir_expand(ir_compact):
 #include <IRremoteESP8266.h>
 #include <IRutils.h>
 
+// Receiving IR while sending at the same time (i.e. receiving your own signal) was dsiabled in #10041
+// At the demand of @pilaGit, you can `#define IR_RCV_WHILE_SENDING 1` to bring back this behavior
+#ifndef IR_RCV_WHILE_SENDING
+#define IR_RCV_WHILE_SENDING  0
+#endif
+
 enum IrErrors { IE_NO_ERROR, IE_INVALID_RAWDATA, IE_INVALID_JSON, IE_SYNTAX_IRSEND, IE_PROTO_UNSUPPORTED };
 
 const char kIrRemoteCommands[] PROGMEM = "|" D_CMND_IRSEND ;
@@ -291,7 +297,7 @@ uint32_t IrRemoteCmndIrSendJson(void)
     protocol_text, protocol, bits, ulltoa(data, dvalue, 10), Uint64toHex(data, hvalue, bits), repeat, protocol_code);
 
 #ifdef USE_IR_RECEIVE
-  if (irrecv != nullptr) { irrecv->disableIRIn(); }
+  if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->disableIRIn(); }
 #endif  // USE_IR_RECEIVE
 
   switch (protocol_code) {  // Equals IRremoteESP8266.h enum decode_type_t
@@ -309,12 +315,12 @@ uint32_t IrRemoteCmndIrSendJson(void)
 #endif
     default:
 #ifdef USE_IR_RECEIVE
-      if (irrecv != nullptr) { irrecv->enableIRIn(); }
+      if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->enableIRIn(); }
 #endif  // USE_IR_RECEIVE
       return IE_PROTO_UNSUPPORTED;
   }
 #ifdef USE_IR_RECEIVE
-  if (irrecv != nullptr) { irrecv->enableIRIn(); }
+  if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->enableIRIn(); }
 #endif  // USE_IR_RECEIVE
 
   return IE_NO_ERROR;
