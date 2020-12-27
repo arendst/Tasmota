@@ -1,5 +1,5 @@
 /*
-  af-AF.h - localization for Afrikaans - Afrikaans for Tasmota
+  af_AF.h - localization for Afrikaans - Afrikaans for Tasmota
 
   Copyright (C) 2020  Christiaan Heerze
 
