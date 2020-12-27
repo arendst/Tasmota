@@ -17,8 +17,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _LANGUAGE_EN_GB_H_
-#define _LANGUAGE_EN_GB_H_
+#ifndef _LANGUAGE_AF_AF_H_
+#define _LANGUAGE_AF_AF_H_
 
 /*************************** ATTENTION *******************************\
  *
