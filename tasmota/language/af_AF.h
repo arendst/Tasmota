@@ -374,14 +374,14 @@
 #define D_UPLOAD_ERR_14 "Nie versoenbaar nie"
 #define D_UPLOAD_ERROR_CODE "Laai foutkode op"
 
-#define D_ENTER_COMMAND "Enter command"
-#define D_ENABLE_WEBLOG_FOR_RESPONSE "Enable weblog 2 if response expected"
-#define D_NEED_USER_AND_PASSWORD "Need user=<username>&password=<password>"
+#define D_ENTER_COMMAND "Voer die opdrag in"
+#define D_ENABLE_WEBLOG_FOR_RESPONSE "Skakel weblog 2 aan as antwoord verwag word"
+#define D_NEED_USER_AND_PASSWORD "Benodig user=<gebruiker>&password=<wagwoord>"
 
 // xdrv_01_mqtt.ino
-#define D_FINGERPRINT "Verify TLS fingerprint..."
-#define D_TLS_CONNECT_FAILED_TO "TLS Connect failed to"
-#define D_RETRY_IN "Retry in"
+#define D_FINGERPRINT "Verifieer TLS-vingerafdruk ..."
+#define D_TLS_CONNECT_FAILED_TO "TLS Connect kon nie"
+#define D_RETRY_IN "Probeer weer"
 #define D_VERIFIED "Verified using Fingerprint"
 #define D_INSECURE "Insecure connection due to invalid Fingerprint"
 #define D_CONNECT_FAILED_TO "Connect failed to"
