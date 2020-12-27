@@ -651,6 +651,12 @@ const char HTTP_HEAD_STYLE_ZIGBEE[] PROGMEM =
 #endif // USE_UNISHOX_COMPRESSION
 #endif // USE_ZIGBEE
 
+const char HTTP_HEAD_STYLE_SSI[] PROGMEM =
+  // Signal Strength Indicator
+  ".si{display:inline-flex;align-items:flex-end;height:15px;padding:0}"
+  ".si i{width:3px;margin-right:1px;border-radius:3px;background-color:#%06x}"
+  ".si .b0{height:25%%}.si .b1{height:50%%}.si .b2{height:75%%}.si .b3{height:100%%}.o30{opacity:.3}";
+
 const char HTTP_HEAD_STYLE3[] PROGMEM =
   "</style>"
 
@@ -2084,7 +2090,11 @@ void HandleWifiConfiguration(void)
 
   WSContentStart_P(PSTR(D_CONFIGURE_WIFI), !WifiIsInManagerMode());
   WSContentSend_P(HTTP_SCRIPT_WIFI);
+#ifdef USE_ENHANCED_GUI_WIFI_SCAN
+  WSContentSendStyle_P(HTTP_HEAD_STYLE_SSI, WebColor(COL_TEXT));
+#else
   WSContentSendStyle();
+#endif  // USE_ENHANCED_GUI_WIFI_SCAN
 
   if (HTTP_MANAGER_RESET_ONLY != Web.state) {
     if (Webserver->hasArg("scan")) {
@@ -2105,6 +2115,7 @@ void HandleWifiConfiguration(void)
           indices[i] = i;
         }
 
+
         // RSSI SORT
         for (uint32_t i = 0; i < n; i++) {
           for (uint32_t j = i + 1; j < n; j++) {
@@ -2114,6 +2125,47 @@ void HandleWifiConfiguration(void)
           }
         }
 
+#ifdef USE_ENHANCED_GUI_WIFI_SCAN
+        //display networks in page
+        for (uint32_t i = 0; i < n; i++) {
+          if (indices[i] < n) {
+            int32_t rssi = WiFi.RSSI(indices[i]);
+            String ssid = WiFi.SSID(indices[i]);
+            DEBUG_CORE_LOG(PSTR(D_LOG_WIFI D_SSID " %s, " D_BSSID " %s, " D_CHANNEL " %d, " D_RSSI " %d"),
+              ssid.c_str(), WiFi.BSSIDstr(indices[i]).c_str(), WiFi.channel(indices[i]), rssi);
+
+            // Print SSID
+            WSContentSend_P(PSTR("<div><a href='#p' onclick='c(this)'>%s</a><br>"), HtmlEscape(ssid).c_str());
+
+            String nextSSID = "";
+            // Handle all APs with the same SSID
+            for (uint32_t j = 0; j < n; j++) {
+              if ((indices[j] < n) && ((nextSSID = WiFi.SSID(indices[j])) == ssid)) {
+                // Update RSSI / quality
+                rssi = WiFi.RSSI(indices[j]);
+                uint32_t rssi_as_quality = WifiGetRssiAsQuality(rssi);
+                uint32_t num_bars = changeUIntScale(rssi_as_quality, 0, 100, 0, 4);
+
+                // Print item
+                WSContentSend_P(PSTR("<div title='%d dBm (%d%%)'>%s<span class='q'>(%d) <div class='si'>"),
+                  rssi, rssi_as_quality,
+                  WiFi.BSSIDstr(indices[j]).c_str(),
+                  WiFi.channel(indices[j])
+                );
+                // Print signal strength indicator
+                for (uint32_t k = 0; k < 4; ++k) {
+                  WSContentSend_P(PSTR("<i class='b%d%s'></i>"), k, (num_bars < k) ? PSTR(" o30") : PSTR(""));
+                }
+                WSContentSend_P(PSTR("</span></div></div>"));
+
+                indices[j] = n;
+              }
+              delay(0);
+            }
+            WSContentSend_P(PSTR("</div>"));
+          }
+        }
+#else  // No USE_ENHANCED_GUI_WIFI_SCAN
         // remove duplicates ( must be RSSI sorted )
         String cssid;
         for (uint32_t i = 0; i < n; i++) {
@@ -2135,6 +2187,7 @@ void HandleWifiConfiguration(void)
           DEBUG_CORE_LOG(PSTR(D_LOG_WIFI D_SSID " %s, " D_BSSID " %s, " D_CHANNEL " %d, " D_RSSI " %d"),
             WiFi.SSID(indices[i]).c_str(), WiFi.BSSIDstr(indices[i]).c_str(), WiFi.channel(indices[i]), rssi);
           int quality = WifiGetRssiAsQuality(rssi);
+/*
           int auth = WiFi.encryptionType(indices[i]);
           char encryption[20];
           WSContentSend_P(PSTR("<div><a href='#p' onclick='c(this)'>%s</a>&nbsp;(%d)&nbsp<span class='q'>%s %d%% (%d dBm)</span></div>"),
@@ -2143,9 +2196,17 @@ void HandleWifiConfiguration(void)
             GetTextIndexed(encryption, sizeof(encryption), auth +1, kEncryptionType),
             quality, rssi
           );
-          delay(0);
+*/
+          WSContentSend_P(PSTR("<div><a href='#p' onclick='c(this)'>%s</a>&nbsp;(%d)&nbsp<span class='q'>%d%% (%d dBm)</span></div>"),
+            HtmlEscape(WiFi.SSID(indices[i])).c_str(),
+            WiFi.channel(indices[i]),
+            quality, rssi
+          );
 
+          delay(0);
         }
+#endif  // USE_ENHANCED_GUI_WIFI_SCAN
+
         WSContentSend_P(PSTR("<br>"));
       }
     } else {

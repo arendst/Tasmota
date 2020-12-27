@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 - Gpio ``Option_a1`` enabling PWM2 high impedance if powered off as used by Wyze bulbs (#10196)
 - Support for FTC532 8-button touch controller by Peter Franck (#10222)
 - Support character `#` to be replaced by `space`-character in command ``Publish`` topic (#10258)
+- BSSID and Signal Strength Indicator to GUI wifi scan result (#10253)
 
 ### Changed
 - Logging from fixed global memory buffer to stack buffer freeing 700 bytes RAM

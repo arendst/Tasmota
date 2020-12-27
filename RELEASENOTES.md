@@ -64,6 +64,7 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - Gpio ``Option_a1`` enabling PWM2 high impedance if powered off as used by Wyze bulbs [#10196](https://github.com/arendst/Tasmota/issues/10196)
 - Support for FTC532 8-button touch controller by Peter Franck [#10222](https://github.com/arendst/Tasmota/issues/10222)
 - Support character `#` to be replaced by `space`-character in command ``Publish`` topic [#10258](https://github.com/arendst/Tasmota/issues/10258)
+- BSSID and Signal Strength Indicator to GUI wifi scan result [#10253](https://github.com/arendst/Tasmota/issues/10253)
 
 ### Changed
 - Logging from fixed global memory buffer to stack buffer freeing 700 bytes RAM
