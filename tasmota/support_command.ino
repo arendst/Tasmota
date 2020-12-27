@@ -1284,12 +1284,14 @@ void CmndTemplate(void)
     }
   }
   else {
-    if (JsonTemplate(XdrvMailbox.data)) {    // Free 336 bytes StaticJsonBuffer stack space by moving code to function
+#ifndef FIRMWARE_MINIMAL      // if tasmota-minimal, `Template` is read-only
+    if (JsonTemplate(XdrvMailbox.data)) {
       if (USER_MODULE == Settings.module) { TasmotaGlobal.restart_flag = 2; }
     } else {
       ResponseCmndChar_P(PSTR(D_JSON_INVALID_JSON));
       error = true;
     }
+#endif // FIRMWARE_MINIMAL
   }
   if (!error) { TemplateJson(); }
 }
