@@ -110,6 +110,7 @@
 #define D_HOST "Gasheer"
 #define D_HOSTNAME "Gasheername"
 #define D_HUMIDITY "Humiditeit"
+#define D_ILLUMINANCE "Verligting"
 #define D_IMMEDIATE "onmiddellik"      // Button immediate
 #define D_INDEX "Indeks"
 #define D_INFO "Inligting"
