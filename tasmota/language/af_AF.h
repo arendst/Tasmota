@@ -33,7 +33,7 @@
 
 //#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
 // https://www.science.co.il/language/Locale-codes.php
-#define LANGUAGE_LCID 2057
+#define LANGUAGE_LCID 1078
 // HTML (ISO 639-1) Language Code
 #define D_HTML_LANGUAGE "af"
 
