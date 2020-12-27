@@ -3401,7 +3401,9 @@ void CmndWebColor(void)
       }
     }
     else {
+#ifndef FIRMWARE_MINIMAL      // if tasmota-minimal, read only and don't parse JSON
       JsonWebColor(XdrvMailbox.data);
+#endif // FIRMWARE_MINIMAL
     }
   }
   Response_P(PSTR("{\"" D_CMND_WEBCOLOR "\":["));
