@@ -858,75 +858,75 @@
 #define D_SCRIPT_UPLOAD_FILES  "Laai lêers op"
 
 //xsns_67_as3935.ino
-#define D_AS3935_GAIN "gain:"
-#define D_AS3935_ENERGY "energy:"
-#define D_AS3935_DISTANCE "distance:"
-#define D_AS3935_DISTURBER "disturber:"
+#define D_AS3935_GAIN "versterking:"
+#define D_AS3935_ENERGY "energie:"
+#define D_AS3935_DISTANCE "afstand:"
+#define D_AS3935_DISTURBER "steur:"
 #define D_AS3935_VRMS "µVrms:"
 #define D_AS3935_APRX "aprx.:"
-#define D_AS3935_AWAY "away"
-#define D_AS3935_LIGHT "lightning"
-#define D_AS3935_OUT "lightning out of range"
-#define D_AS3935_NOT "distance not determined"
-#define D_AS3935_ABOVE "lightning overhead"
-#define D_AS3935_NOISE "noise detected"
-#define D_AS3935_DISTDET "disturber detected"
-#define D_AS3935_INTNOEV "Interrupt with no Event!"
-#define D_AS3935_FLICKER "IRQ Pin flicker!"
-#define D_AS3935_POWEROFF "Powerd Off"
-#define D_AS3935_NOMESS "listening..."
-#define D_AS3935_ON "On"
-#define D_AS3935_OFF "Off"
-#define D_AS3935_INDOORS "Indoors"
-#define D_AS3935_OUTDOORS "Outdoors"
-#define D_AS3935_CAL_FAIL "calibration failed"
-#define D_AS3935_CAL_OK "calibration set to:"
+#define D_AS3935_AWAY "weg"
+#define D_AS3935_LIGHT "weerlig"
+#define D_AS3935_OUT "weerlig buite bereik"
+#define D_AS3935_NOT "afstand nie bepaal nie"
+#define D_AS3935_ABOVE "weerlig oorhoofse"
+#define D_AS3935_NOISE "geraas bespeur"
+#define D_AS3935_DISTDET "steuring bespeur"
+#define D_AS3935_INTNOEV "Onderbreek met geen geleentheid nie!"
+#define D_AS3935_FLICKER "IRQ Pin flikker!"
+#define D_AS3935_POWEROFF "Skakel af"
+#define D_AS3935_NOMESS "luister..."
+#define D_AS3935_ON "Aan"
+#define D_AS3935_OFF "Uit"
+#define D_AS3935_INDOORS "Binnenshuis"
+#define D_AS3935_OUTDOORS "Buite"
+#define D_AS3935_CAL_FAIL "kalibrasie het misluk"
+#define D_AS3935_CAL_OK "kalibrasie ingestel op:"
 
 //xsns_68_opentherm.ino
 #define D_SENSOR_BOILER_OT_RX   "OpenTherm RX"
 #define D_SENSOR_BOILER_OT_TX   "OpenTherm TX"
 
 // xnrg_15_teleinfo Denky (Teleinfo)
-#define D_CONTRACT        "Contract"
-#define D_POWER_LOAD      "Power load"
-#define D_CURRENT_TARIFF  "Current Tariff"
-#define D_TARIFF          "Tariff"
+#define D_CONTRACT        "Kontrak"
+#define D_POWER_LOAD      "Kraglading"
+#define D_CURRENT_TARIFF  "Stroom tarief"
+#define D_TARIFF          "Tarief"
 #define D_OVERLOAD        "ADPS"
-#define D_MAX_POWER       "Max Power"
-#define D_MAX_CURRENT     "Max Current"
+#define D_MAX_POWER       "Max krag"
+#define D_MAX_CURRENT     "Max stroom"
 
 // xsns_79_as608.ino
-#define D_FP_ENROLL_PLACEFINGER "Place finger"
-#define D_FP_ENROLL_REMOVEFINGER "Remove finger"
-#define D_FP_ENROLL_PLACESAMEFINGER "Place same finger again"
-#define D_FP_ENROLL_RETRY "Error so retry"
-#define D_FP_ENROLL_RESTART "Restart"
-#define D_FP_ENROLL_ERROR "Error"
-#define D_FP_ENROLL_RESET "Reset"
-#define D_FP_ENROLL_ACTIVE "Active"
-#define D_FP_ENROLL_INACTIVE "Inactive"
+#define D_FP_ENROLL_PLACEFINGER "Plaas vinger"
+#define D_FP_ENROLL_REMOVEFINGER "Verwyder vinger"
+#define D_FP_ENROLL_PLACESAMEFINGER "Plaas dieselfde vinger weer"
+#define D_FP_ENROLL_RETRY "Fout, probeer dus weer"
+#define D_FP_ENROLL_RESTART "Begin oor"
+#define D_FP_ENROLL_ERROR "Fout"
+#define D_FP_ENROLL_RESET "Stel terug"
+#define D_FP_ENROLL_ACTIVE "Aktief"
+#define D_FP_ENROLL_INACTIVE "Onaktief"
 // Indexed by Adafruit_Fingerprint.h defines
-#define D_FP_PACKETRECIEVEERR "Comms error"    // 0x01 Error when receiving data package
-#define D_FP_NOFINGER ""                       // 0x02 No finger on the sensor
-#define D_FP_IMAGEFAIL "Imaging error"         // 0x03 Failed to enroll the finger
-#define D_FP_IMAGEMESS "Image too messy"       // 0x06 Failed to generate character file due to overly disorderly fingerprint image
-#define D_FP_FEATUREFAIL "Fingerprint too small" // 0x07 Failed to generate character file due to the lack of character point or small fingerprint image
-#define D_FP_NOMATCH "No match"                // 0x08 Finger doesn't match
-#define D_FP_NOTFOUND "Did not find a match"   // 0x09 Failed to find matching finger
-#define D_FP_ENROLLMISMATCH "Fingerprint did not match" // 0x0A Failed to combine the character files
-#define D_FP_BADLOCATION "Bad location"        // 0x0B Addressed PageID is beyond the finger library
-#define D_FP_DBRANGEFAIL "DB range error"      // 0x0C Error when reading template from library or invalid template
-#define D_FP_UPLOADFEATUREFAIL "Upload feature error" // 0x0D Error when uploading template
-#define D_FP_PACKETRESPONSEFAIL "Packet response error" // 0x0E Module failed to receive the following data packages
-#define D_FP_UPLOADFAIL "Upload error"         // 0x0F Error when uploading image
-#define D_FP_DELETEFAIL "Delete error"         // 0x10 Failed to delete the template
-#define D_FP_DBCLEARFAIL "DB Clear error"      // 0x11 Failed to clear finger library
-#define D_FP_PASSFAIL "Password error"         // 0x13 Find whether the fingerprint passed or failed
-#define D_FP_INVALIDIMAGE "Image invalid"      // 0x15 Failed to generate image because of lac of valid primary image
-#define D_FP_FLASHERR "Flash write error"      // 0x18 Error when writing flash
-#define D_FP_INVALIDREG "Invalid number"       // 0x1A Invalid register number
-#define D_FP_ADDRCODE "Address code"           // 0x20 Address code
-#define D_FP_PASSVERIFY "Password verified"    // 0x21 Verify the fingerprint passed
-#define D_FP_UNKNOWNERROR "Error"              // Any other error
+#define D_FP_PACKETRECIEVEERR "Komms-fout"    // 0x01 Error when receiving data package
+#define D_FP_NOFINGER "Geen vinger op die sensor nie" // 0x02 No finger on the sensor
+#define D_FP_IMAGEFAIL "Beeldfout"         // 0x03 Failed to enroll the finger
+#define D_FP_IMAGEMESS "Beeld te deurmekaar"       // 0x06 Failed to generate character file due to overly disorderly fingerprint image
+#define D_FP_FEATUREFAIL "Vingerafdruk te klein" // 0x07 Failed to generate character file due to the lack of character point or small fingerprint image
+#define D_FP_NOMATCH "Nie opgewasse"                // 0x08 Finger doesn't match
+#define D_FP_NOTFOUND "Kon nie 'n ekwivalent vind nie"   // 0x09 Failed to find matching finger
+#define D_FP_ENROLLMISMATCH "Vingerafdruk stem nie ooreen nie" // 0x0A Failed to combine the character files
+#define D_FP_BADLOCATION "Slegte ligging"        // 0x0B Addressed PageID is beyond the finger library
+#define D_FP_DBRANGEFAIL "DB-reeksfout"      // 0x0C Error when reading template from library or invalid template
+#define D_FP_UPLOADFEATUREFAIL "Fout by die oplaai van funksie" // 0x0D Error when uploading template
+#define D_FP_PACKETRESPONSEFAIL "Fout van pakketrespons" // 0x0E Module failed to receive the following data packages
+#define D_FP_UPLOADFAIL "Oplaaifout"         // 0x0F Error when uploading image
+#define D_FP_DELETEFAIL "Vee fout"         // 0x10 Failed to delete the template
+#define D_FP_DBCLEARFAIL "DB leegfout"      // 0x11 Failed to clear finger library
+#define D_FP_PASSFAIL "Wagwoordfout"         // 0x13 Find whether the fingerprint passed or failed
+#define D_FP_INVALIDIMAGE "Prent ongeldig"      // 0x15 Failed to generate image because of lac of valid primary image
+#define D_FP_FLASHERR "Flash skryffout"      // 0x18 Error when writing flash
+#define D_FP_INVALIDREG "Ongeldige nommer"       // 0x1A Invalid register number
+#define D_FP_ADDRCODE "Adres kode"           // 0x20 Address code
+#define D_FP_PASSVERIFY "Wagwoord geverifieer"    // 0x21 Verify the fingerprint passed
+#define D_FP_UNKNOWNERROR "Fout"              // Any other error
 
-#endif  // _LANGUAGE_EN_GB_H_
+#endif  // _LANGUAGE_AF_AF_H_
