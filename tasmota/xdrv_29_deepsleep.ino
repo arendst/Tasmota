@@ -142,6 +142,7 @@ void DeepSleepStart(void)
   WifiShutdown();
   RtcSettings.ultradeepsleep = RtcSettings.nextwakeup - UtcTime();
   RtcSettingsSave();
+  RtcRebootReset();
 #ifdef ESP8266
   ESP.deepSleep(100 * RtcSettings.deepsleep_slip * deepsleep_sleeptime);
 #endif  // ESP8266
