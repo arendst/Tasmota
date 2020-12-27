@@ -845,17 +845,17 @@
 #define D_SOLAX_ERROR_8   "Ander toestelfout"
 
 //xdrv_10_scripter.ino
-#define D_CONFIGURE_SCRIPT     "Edit script"
-#define D_SCRIPT               "edit script"
-#define D_SDCARD_UPLOAD        "file upload"
+#define D_CONFIGURE_SCRIPT     "Wysig skrif"
+#define D_SCRIPT               "wysig skrif"
+#define D_SDCARD_UPLOAD        "lêer oplaai"
 #define D_SDCARD_DIR           "sd card directory"
-#define D_UPL_DONE             "Done"
-#define D_SCRIPT_CHARS_LEFT    "chars left"
-#define D_SCRIPT_CHARS_NO_MORE "no more chars"
-#define D_SCRIPT_DOWNLOAD      "Download"
-#define D_SCRIPT_ENABLE        "script enable"
-#define D_SCRIPT_UPLOAD        "Upload"
-#define D_SCRIPT_UPLOAD_FILES  "Upload files"
+#define D_UPL_DONE             "Klaar"
+#define D_SCRIPT_CHARS_LEFT    "karakters oor"
+#define D_SCRIPT_CHARS_NO_MORE "nie meer karakters nie"
+#define D_SCRIPT_DOWNLOAD      "Aflaai"
+#define D_SCRIPT_ENABLE        "skrip inskakel"
+#define D_SCRIPT_UPLOAD        "Laai op"
+#define D_SCRIPT_UPLOAD_FILES  "Laai lêers op"
 
 //xsns_67_as3935.ino
 #define D_AS3935_GAIN "gain:"
