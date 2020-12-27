@@ -419,7 +419,7 @@
   #define D_DOMOTICZ_ILLUMINANCE "Beligting"
   #define D_DOMOTICZ_COUNT "Telling/PM1"
   #define D_DOMOTICZ_VOLTAGE "Spanning/PM2.5"
-  #define D_DOMOTICZ_CURRENT "Krag/PM10"
+  #define D_DOMOTICZ_CURRENT "Stroom/PM10"
   #define D_DOMOTICZ_AIRQUALITY "Lug kwaliteit"
   #define D_DOMOTICZ_P1_SMART_METER "P1SmartMeter"
 #define D_DOMOTICZ_UPDATE_TIMER "Dateer tydopdatering op"
@@ -509,28 +509,28 @@
 #define D_SENSORS_FOUND "Sensors gevind"
 
 // xsns_06_dht.ino
-#define D_TIMEOUT_WAITING_FOR "Timeout waiting for"
-#define D_START_SIGNAL_LOW "start signal low"
-#define D_START_SIGNAL_HIGH "start signal high"
-#define D_PULSE "pulse"
-#define D_CHECKSUM_FAILURE "Checksum failure"
+#define D_TIMEOUT_WAITING_FOR "Tyduitstyd wag vir"
+#define D_START_SIGNAL_LOW "begin sein laag"
+#define D_START_SIGNAL_HIGH "begin sein hoog"
+#define D_PULSE "pols"
+#define D_CHECKSUM_FAILURE "Checksum het misluk"
 
 // xsns_07_sht1x.ino
-#define D_SENSOR_DID_NOT_ACK_COMMAND "Sensor did not ACK command"
-#define D_SHT1X_FOUND "SHT1X found"
+#define D_SENSOR_DID_NOT_ACK_COMMAND "Sensor het nie ACK opdrag"
+#define D_SHT1X_FOUND "SHT1X gevind"
 
 // xsns_18_pms5003.ino
 #define D_STANDARD_CONCENTRATION "CF-1 PM"     // Standard Particle CF-1 Particle Matter
 #define D_ENVIRONMENTAL_CONCENTRATION "PM"     // Environmetal Particle Matter
-#define D_PARTICALS_BEYOND "Particles"
+#define D_PARTICALS_BEYOND "Deeltjies"
 
 // xsns_27_apds9960.ino
-#define D_GESTURE "Gesture"
-#define D_COLOR_RED "Red"
-#define D_COLOR_GREEN "Green"
-#define D_COLOR_BLUE "Blue"
+#define D_GESTURE "Gebaar"
+#define D_COLOR_RED "Rooi"
+#define D_COLOR_GREEN "Groen"
+#define D_COLOR_BLUE "Blou"
 #define D_CCT "CCT"
-#define D_PROXIMITY "Proximity"
+#define D_PROXIMITY "Nabyheid"
 
 // xsns_32_mpu6050.ino
 #define D_AX_AXIS "Accel. X-Axis"
@@ -541,47 +541,47 @@
 #define D_GZ_AXIS "Gyro Z-Axis"
 
 // xsns_34_hx711.ino
-#define D_HX_CAL_REMOVE "Remove weigth"
-#define D_HX_CAL_REFERENCE "Load reference weigth"
-#define D_HX_CAL_DONE "Calibrated"
-#define D_HX_CAL_FAIL "Calibration failed"
-#define D_RESET_HX711 "Reset Scale"
-#define D_CONFIGURE_HX711 "Configure Scale"
-#define D_HX711_PARAMETERS "Scale parameters"
-#define D_ITEM_WEIGHT "Item weight"
-#define D_REFERENCE_WEIGHT "Reference weigth"
-#define D_CALIBRATE "Calibrate"
-#define D_CALIBRATION "Calibration"
+#define D_HX_CAL_REMOVE "Verwyder gewig"
+#define D_HX_CAL_REFERENCE "Laai verwysingsgewig"
+#define D_HX_CAL_DONE "Gekalibreer"
+#define D_HX_CAL_FAIL "Kon nie kalibreer nie"
+#define D_RESET_HX711 "Stel die skaal terug"
+#define D_CONFIGURE_HX711 "Stel skaal op"
+#define D_HX711_PARAMETERS "Skaal parameters"
+#define D_ITEM_WEIGHT "Gewig van die item"
+#define D_REFERENCE_WEIGHT "Verwysingsgewig"
+#define D_CALIBRATE "Kalibreer"
+#define D_CALIBRATION "Kalibrasie"
 
 //xsns_35_tx20.ino
-#define D_TX20_WIND_DIRECTION "Wind Direction"
-#define D_TX20_WIND_SPEED "Wind Speed"
-#define D_TX20_WIND_SPEED_MIN "Wind Speed Min"
-#define D_TX20_WIND_SPEED_MAX "Wind Speed Max"
+#define D_TX20_WIND_DIRECTION "Windrigting"
+#define D_TX20_WIND_SPEED "Wind spoed"
+#define D_TX20_WIND_SPEED_MIN "Wind spoed Min"
+#define D_TX20_WIND_SPEED_MAX "Wind spoed Max"
 #define D_TX20_NORTH "N"
-#define D_TX20_EAST "E"
+#define D_TX20_EAST "O"
 #define D_TX20_SOUTH "S"
 #define D_TX20_WEST "W"
 
 // xsns_53_sml.ino
-#define D_TPWRIN "Total-In"
-#define D_TPWROUT "Total-Out"
-#define D_TPWRCURR "Current-In/Out"
-#define D_TPWRCURR1 "Current-In p1"
-#define D_TPWRCURR2 "Current-In p2"
-#define D_TPWRCURR3 "Current-In p3"
-#define D_Strom_L1 "Current L1"
-#define D_Strom_L2 "Current L2"
-#define D_Strom_L3 "Current L3"
-#define D_Spannung_L1 "Voltage L1"
-#define D_Spannung_L2 "Voltage L2"
-#define D_Spannung_L3 "Voltage L3"
-#define D_METERNR "Meter_number"
+#define D_TPWRIN "Totaal-In"
+#define D_TPWROUT "Totaal-Uit"
+#define D_TPWRCURR "Stroom-In/Uit"
+#define D_TPWRCURR1 "Stroom-In p1"
+#define D_TPWRCURR2 "Stroom-In p2"
+#define D_TPWRCURR3 "Stroom-In p3"
+#define D_Strom_L1 "Stroom L1"
+#define D_Strom_L2 "Stroom L2"
+#define D_Strom_L3 "Stroom L3"
+#define D_Spannung_L1 "Spanning L1"
+#define D_Spannung_L2 "Spanning L2"
+#define D_Spannung_L3 "Spanning L3"
+#define D_METERNR "Meter nommmer"
 #define D_METERSID "Service ID"
-#define D_GasIN "Counter"                // Gas-Verbrauch
-#define D_H2oIN "Counter"                // H2o-Verbrauch
-#define D_StL1L2L3 "Current L1+L2+L3"
-#define D_SpL1L2L3 "Voltage L1+L2+L3/3"
+#define D_GasIN "Teller"                // Gas-Verbrauch
+#define D_H2oIN "Teller"                // H2o-Verbrauch
+#define D_StL1L2L3 "Stroom L1+L2+L3"
+#define D_SpL1L2L3 "Spanning L1+L2+L3/3"
 
 // tasmota_template.h - keep them as short as possible to be able to fit them in GUI drop down box
 #define D_SENSOR_NONE          "None"
