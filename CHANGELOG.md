@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 - Support for FTC532 8-button touch controller by Peter Franck (#10222)
 - Support character `#` to be replaced by `space`-character in command ``Publish`` topic (#10258)
 - BSSID and Signal Strength Indicator to GUI wifi scan result (#10253)
+- Support for Afrikaans language translations by Christiaan Heerze
 
 ### Changed
 - Logging from fixed global memory buffer to stack buffer freeing 700 bytes RAM

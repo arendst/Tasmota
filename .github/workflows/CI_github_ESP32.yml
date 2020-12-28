@@ -23,7 +23,7 @@ jobs:
       with:
         name: firmware
         path: ./build_output/firmware
-   
+
   tasmota32-webcam:
     runs-on: ubuntu-latest
     steps:
@@ -103,7 +103,7 @@ jobs:
       with:
         name: firmware
         path: ./build_output/firmware
-       
+
   tasmota32-sensors:
     runs-on: ubuntu-latest
     steps:
@@ -164,6 +164,26 @@ jobs:
         name: firmware
         path: ./build_output/firmware
 
+  tasmota32-AF:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+    - name: Set up Python
+      uses: actions/setup-python@v1
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -U platformio
+        platformio upgrade --dev
+        platformio update
+    - name: Run PlatformIO
+      run: |
+        platformio run -e tasmota32-AF
+    - uses: actions/upload-artifact@v2
+      with:
+        name: firmware
+        path: ./build_output/firmware
+
   tasmota32-BG:
     runs-on: ubuntu-latest
     steps:
@@ -183,7 +203,7 @@ jobs:
       with:
         name: firmware
         path: ./build_output/firmware
-  
+
   tasmota32-BR:
     runs-on: ubuntu-latest
     steps:
@@ -263,7 +283,7 @@ jobs:
       with:
         name: firmware
         path: ./build_output/firmware
-       
+
   tasmota32-ES:
     runs-on: ubuntu-latest
     steps:
@@ -343,7 +363,7 @@ jobs:
       with:
         name: firmware
         path: ./build_output/firmware
-        
+
   tasmota32-HU:
     runs-on: ubuntu-latest
     steps:
@@ -423,7 +443,7 @@ jobs:
       with:
         name: firmware
         path: ./build_output/firmware
-       
+
   tasmota32-PL:
     runs-on: ubuntu-latest
     steps:
@@ -503,7 +523,7 @@ jobs:
       with:
         name: firmware
         path: ./build_output/firmware
-  
+
   tasmota32-SE:
     runs-on: ubuntu-latest
     steps:
@@ -583,7 +603,7 @@ jobs:
       with:
         name: firmware
         path: ./build_output/firmware
-       
+
   tasmota32-UK:
     runs-on: ubuntu-latest
     steps:
