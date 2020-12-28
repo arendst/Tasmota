@@ -1304,6 +1304,17 @@ uint8_t ModuleNr(void)
   return (USER_MODULE == Settings.module) ? 0 : Settings.module +1;
 }
 
+uint32_t ModuleTemplate(uint32_t module) {
+  uint32_t i = 0;
+  for (i = 0; i < sizeof(kModuleNiceList); i++) {
+    if (Settings.module == pgm_read_byte(kModuleNiceList + i)) {
+      break;
+    }
+  }
+  if (i == sizeof(kModuleNiceList)) { i = 0; }
+  return i;
+}
+
 bool ValidTemplateModule(uint32_t index)
 {
   for (uint32_t i = 0; i < sizeof(kModuleNiceList); i++) {
@@ -1399,7 +1410,7 @@ void TemplateGpios(myio *gp)
     GetInternalTemplate(&src, Settings.module, 1);
 #endif  // ESP8266
 #ifdef ESP32
-    memcpy_P(&src, &kModules.gp, sizeof(mycfgio));
+    memcpy_P(&src, &kModules[ModuleTemplate(Settings.module)].gp, sizeof(mycfgio));
 #endif  // ESP32
   }
   // 11 85 00 85 85 00 00 00 15 38 85 00 00 81
@@ -1429,7 +1440,7 @@ gpio_flag ModuleFlag(void)
     GetInternalTemplate(&flag, Settings.module, 2);
 #endif  // ESP8266
 #ifdef ESP32
-    memcpy_P(&flag, &kModules.flag, sizeof(gpio_flag));
+    memcpy_P(&flag, &kModules[ModuleTemplate(Settings.module)].flag, sizeof(gpio_flag));
 #endif  // ESP32
   }
 
@@ -1446,7 +1457,7 @@ void ModuleDefault(uint32_t module)
   GetInternalTemplate(&Settings.user_template, module, 3);
 #endif  // ESP8266
 #ifdef ESP32
-  memcpy_P(&Settings.user_template, &kModules, sizeof(mytmplt));
+  memcpy_P(&Settings.user_template, &kModules[module], sizeof(mytmplt));
 #endif  // ESP32
 }
 
