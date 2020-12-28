@@ -857,7 +857,7 @@ extern "C" {
   // Default initializion for our SSL clients
   static void br_ssl_client_base_init(br_ssl_client_context *cc) {
     br_ssl_client_zero(cc);
-    // forbid SSL renegociation, as we free the Private Key after handshake
+    // forbid SSL renegotiation, as we free the Private Key after handshake
     br_ssl_engine_add_flags(&cc->eng, BR_OPT_NO_RENEGOTIATION);
 
     br_ssl_engine_set_versions(&cc->eng, BR_TLS12, BR_TLS12);
