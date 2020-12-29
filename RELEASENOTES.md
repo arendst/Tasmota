@@ -68,6 +68,7 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - Support for Afrikaans language translations by Christiaan Heerze
 - Support for IR inverted leds using ``#define IR_SEND_INVERTED true`` [#10301](https://github.com/arendst/Tasmota/issues/10301)
 - Support for disabling 38kHz IR modulation using ``#define IR_SEND_USE_MODULATION false`` [#10301](https://github.com/arendst/Tasmota/issues/10301)
+- Basic support for ESP32 Odroid Go 16MB binary tasmota32-odroidgo.bin [#8630](https://github.com/arendst/Tasmota/issues/8630)
 
 ### Breaking Changed
 - Replaced MFRC522 13.56MHz rfid card reader GPIO selection from ``GPIO_SPI_CS`` by ``GPIO_RC522_CS``
