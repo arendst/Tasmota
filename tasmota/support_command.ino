@@ -941,6 +941,11 @@ void CmndSetoption(void)
           else if (4 == ptype) {           // SetOption82 .. 113
             bitWrite(Settings.flag4.data, pindex, XdrvMailbox.payload);
             switch (pindex) {
+#ifdef USE_LIGHT
+              case 0:                      // SetOption 82 - (Alexa) Reduced CT range for Alexa (1)
+                setAlexaCTRange();
+                break;
+#endif
               case 3:                      // SetOption85 - Enable Device Groups
               case 6:                      // SetOption88 - PWM Dimmer Buttons control remote devices
               case 15:                     // SetOption97 - Set Baud rate for TuyaMCU serial communication (0 = 9600 or 1 = 115200)
