@@ -209,7 +209,8 @@
 
 | Feature or Sensor     | minimal | lite | tasmota | knx | sensors | ir | display | webcam | Remarks
 |-----------------------|---------|-------|--------|-----|---------|----|---------|--------|--------
-| USE_MI_ESP32          | - | - | - | - | - | - | - | - |
+| USE_MI_ESP32          | - | - | X | - | X | - | - | - | See SetOption115
+| USE_IBEACON_ESP32     | - | - | - | - | - | - | - | - |
 | USE_WEBCAM            | - | - | - | - | - | - | - | x |
 | USE_ETHERNET          | - | - | - | - | - | - | - | - |
 | USE_I2S_AUDIO         | - | - | - | - | - | - | - | - |
