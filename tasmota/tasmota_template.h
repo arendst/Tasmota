@@ -364,28 +364,44 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_SPI_CLK),        // SPI Clk
   AGPIO(GPIO_SPI_CS),         // SPI Chip Select
   AGPIO(GPIO_SPI_DC),         // SPI Data Direction
+#ifdef USE_NRF24
+//  AGPIO(GPIO_NRF24_CS),
+//  AGPIO(GPIO_NRF24_DC),
 #endif
+#ifdef USE_DISPLAY
+#ifdef USE_DISPLAY_ILI9341
+//  AGPIO(GPIO_ILI9341_CS),
+//  AGPIO(GPIO_ILI9341_DC),
+#endif  // USE_DISPLAY_ILI9341
+#endif  // USE_DISPLAY
+#endif  // USE_SPI
   AGPIO(GPIO_SSPI_MISO),      // Software SPI Master Input Client Output
   AGPIO(GPIO_SSPI_MOSI),      // Software SPI Master Output Client Input
   AGPIO(GPIO_SSPI_SCLK),      // Software SPI Serial Clock
   AGPIO(GPIO_SSPI_CS),        // Software SPI Chip Select
   AGPIO(GPIO_SSPI_DC),        // Software SPI Data or Command
 #ifdef USE_DISPLAY
-//  AGPIO(GPIO_ILI9341_CS),
-//  AGPIO(GPIO_ILI9341_DC),
+#ifdef USE_DISPLAY_ILI9488
 //  AGPIO(GPIO_ILI9488_CS),
+#endif  // USE_DISPLAY_ILI9488
+#ifdef USE_DISPLAY_EPAPER_29
 //  AGPIO(GPIO_EPAPER29_CS),
+#endif  // USE_DISPLAY_EPAPER_29
+#ifdef USE_DISPLAY_EPAPER_42
 //  AGPIO(GPIO_EPAPER42_CS),
+#endif  // USE_DISPLAY_EPAPER_42
+#ifdef USE_DISPLAY_SSD1351
 //  AGPIO(GPIO_SSD1351_CS),
+#endif  // USE_DISPLAY_SSD1351
+#ifdef USE_DISPLAY_RA8876
 //  AGPIO(GPIO_RA8876_CS),
+#endif  // USE_DISPLAY_RA8876
+#ifdef USE_DISPLAY_ST7789
 //  AGPIO(GPIO_ST7789_CS),
 //  AGPIO(GPIO_ST7789_DC),
+#endif  //f USE_DISPLAY_ST7789
   AGPIO(GPIO_BACKLIGHT),      // Display backlight control
   AGPIO(GPIO_OLED_RESET),     // OLED Display Reset
-#endif
-#ifdef USE_NRF24
-//  AGPIO(GPIO_NRF24_CS),
-//  AGPIO(GPIO_NRF24_DC),
 #endif
 #ifdef USE_MAX31865
   AGPIO(GPIO_SSPI_MAX31865_CS1) + MAX_MAX31865S,
