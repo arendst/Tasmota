@@ -66,9 +66,11 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - Support for FTC532 8-button touch controller by Peter Franck [#10222](https://github.com/arendst/Tasmota/issues/10222)
 - Support character `#` to be replaced by `space`-character in command ``Publish`` topic [#10258](https://github.com/arendst/Tasmota/issues/10258)
 - Support for Afrikaans language translations by Christiaan Heerze
+- Support for IR inverted leds using ``#define IR_SEND_INVERTED true`` [#10301](https://github.com/arendst/Tasmota/issues/10301)
+- Support for disabling 38kHz IR modulation using ``#define IR_SEND_USE_MODULATION false`` [#10301](https://github.com/arendst/Tasmota/issues/10301)
 
 ### Changed
-- Logging from fixed global memory buffer to stack buffer freeing 700 bytes RAM
+- Logging from heap to stack freeing 700 bytes RAM
 
 ### Fixed
 - Redesign syslog and mqttlog using log buffer [#10164](https://github.com/arendst/Tasmota/issues/10164)
