@@ -1221,6 +1221,11 @@ void initCTRange(uint32_t channels) {
 }
 #endif // USE_LIGHT_VIRTUAL_CT
 
+void getCTRange(uint16_t * min_ct, uint16_t * max_ct) {
+  if (min_ct != nullptr) { *min_ct = Light.vct_ct[0]; }
+  if (max_ct != nullptr) { *max_ct = Light.vct_ct[CT_PIVOTS-1]; }
+}
+
 void setCTRange(uint16_t ct_min, uint16_t ct_max) {
   Light.vct_ct[0] = ct_min;
   for (uint32_t i = 1; i < CT_PIVOTS; i++) {
