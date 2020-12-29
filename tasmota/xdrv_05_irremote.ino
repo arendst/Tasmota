@@ -128,7 +128,7 @@ IRsend *irsend = nullptr;
 
 void IrSendInit(void)
 {
-  irsend = new IRsend(Pin(GPIO_IRSEND)); // an IR led is at GPIO_IRSEND
+  irsend = new IRsend(Pin(GPIO_IRSEND), IR_SEND_INVERTED, IR_SEND_USE_MODULATION); // an IR led is at GPIO_IRSEND
   irsend->begin();
 }
 

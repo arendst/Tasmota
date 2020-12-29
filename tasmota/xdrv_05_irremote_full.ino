@@ -136,7 +136,7 @@ StateModes strToStateMode(class JsonParserToken token, StateModes def); // decla
 
 void IrSendInit(void)
 {
-  irsend = new IRsend(Pin(GPIO_IRSEND)); // an IR led is at GPIO_IRSEND
+  irsend = new IRsend(Pin(GPIO_IRSEND), IR_SEND_INVERTED, IR_SEND_USE_MODULATION); // an IR led is at GPIO_IRSEND
   irsend->begin();
 }
 
@@ -470,7 +470,7 @@ uint32_t IrRemoteCmndIrHvacJson(void)
 
   if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->disableIRIn(); }
   if (stateMode == StateModes::SEND_ONLY || stateMode == StateModes::SEND_STORE) {
-    IRac ac(Pin(GPIO_IRSEND));
+    IRac ac(Pin(GPIO_IRSEND), IR_SEND_INVERTED, IR_SEND_USE_MODULATION);
     bool success = ac.sendAc(state, irhvac_stateful && irac_prev_state.protocol == state.protocol ? &irac_prev_state : nullptr);
     if (!success) { return IE_SYNTAX_IRHVAC; }
   }
