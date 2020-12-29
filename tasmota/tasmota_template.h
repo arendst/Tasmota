@@ -2259,7 +2259,8 @@ const mytmplt8285 kModules8285[TMP_MAXMODULE_8266 - TMP_WEMOS] PROGMEM = {
 enum SupportedModules {
   WEMOS,
   ESP32_CAM_AITHINKER,
-  ESP32_Solo,
+  ODROID_GO,
+  ESP32_SOLO,
   WT32_ETH01,
   TTGO_WATCH,
   M5STACK_CORE2,
@@ -2270,6 +2271,7 @@ const char kModuleNames[] PROGMEM =
 #ifdef USE_WEBCAM
   "ESP32-Cam|"
 #endif  // USE_WEBCAM
+//  "Odroid Go|""
 //  "ESP32-Solo|"
 //  "WT32-Eth01|"
 //  "TTGO Watch|"
@@ -2284,7 +2286,8 @@ const uint8_t kModuleNiceList[] PROGMEM = {
 #ifdef USE_WEBCAM
   ESP32_CAM_AITHINKER,
 #endif  // USE_WEBCAM
-//  ESP32_Solo,
+//  ODROID_GO,
+//  ESP32_SOLO,
 //  WT32_ETH01,
 //  TTGO_WATCH,
 #ifdef USE_M5STACK_CORE2
@@ -2383,7 +2386,7 @@ const mytmplt kModules[] PROGMEM =
   }
 #endif  // USE_WEBCAM
 #ifdef USE_M5STACK_CORE2
-  {                              // WEMOS - Espressif ESP32-DevKitC - Any ESP32 device like WeMos and NodeMCU hardware (ESP32)
+  {                              // M5STACK CORE2 - (ESP32)
     AGPIO(GPIO_USER),            // 0       (I)O                GPIO0, SPKR_LRCK
     AGPIO(GPIO_USER),            // 1       IO     TXD0         GPIO1, U0TXD
     AGPIO(GPIO_USER),            // 2       IO                  GPIO2, SPKR_DATA
