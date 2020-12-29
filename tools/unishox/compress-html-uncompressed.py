@@ -1,7 +1,4 @@
-import unishox
-from os import listdir
-from datetime import datetime
-
+###############################################################
 # compresses all files found in ..\..\tasmota\html_uncompressed
 # write compressed C code to    ..\..\tasmota\html_compressed
 # Instructions:
@@ -9,8 +6,24 @@ from datetime import datetime
 # cd .\tools\unishox
 # run: 
 # python compress-html-uncompressed.py
-# 
 #
+# The intent it to commit both uncompressed and compressed to the repo
+# else this script would need to be run at build. 
+#
+# Example Tasmota code:
+# #ifdef USE_UNISHOX_COMPRESSION
+#   #include "./html_compressed/HTTP_SCRIPT_CONSOL.h"
+# #else
+#   #include "./html_uncompressed/HTTP_SCRIPT_CONSOL.h"
+# #endif
+#
+###############################################################
+
+import unishox
+from os import listdir
+from datetime import datetime
+
+
 files = listdir('..\\..\\tasmota\\html_uncompressed') 
 
 totalIn = 0
