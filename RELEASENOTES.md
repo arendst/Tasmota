@@ -56,7 +56,7 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 
 [Complete list](BUILDS.md) of available feature and sensors.
 
-## Changelog v9.2.0.1
+## Changelog v9.2.0.2
 ### Added
 - Milliseconds to console output [#10152](https://github.com/arendst/Tasmota/issues/10152)
 - Gpio ``Option_a1`` enabling PWM2 high impedance if powered off as used by Wyze bulbs [#10196](https://github.com/arendst/Tasmota/issues/10196)
@@ -68,6 +68,10 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - Support for Afrikaans language translations by Christiaan Heerze
 - Support for IR inverted leds using ``#define IR_SEND_INVERTED true`` [#10301](https://github.com/arendst/Tasmota/issues/10301)
 - Support for disabling 38kHz IR modulation using ``#define IR_SEND_USE_MODULATION false`` [#10301](https://github.com/arendst/Tasmota/issues/10301)
+
+### Breaking Changed
+- Replaced MFRC522 13.56MHz rfid card reader GPIO selection from ``GPIO_SPI_CS`` by ``GPIO_RC522_CS``
+- Replaced ILI9341 GPIO selection from ``GPIO_SPI_CS`` by ``GPIO_ILI9341_CS`` and ``GPIO_SPI_DC`` by ``GPIO_ILI9341_DC``
 
 ### Changed
 - Logging from heap to stack freeing 700 bytes RAM

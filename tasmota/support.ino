@@ -1307,7 +1307,7 @@ uint8_t ModuleNr(void)
 uint32_t ModuleTemplate(uint32_t module) {
   uint32_t i = 0;
   for (i = 0; i < sizeof(kModuleNiceList); i++) {
-    if (Settings.module == pgm_read_byte(kModuleNiceList + i)) {
+    if (module == pgm_read_byte(kModuleNiceList + i)) {
       break;
     }
   }
@@ -1346,6 +1346,9 @@ String AnyModuleName(uint32_t index)
   if (USER_MODULE == index) {
     return String(SettingsText(SET_TEMPLATE_NAME));
   } else {
+#ifdef ESP32
+    index = ModuleTemplate(index);
+#endif
     char name[TOPSZ];
     return String(GetTextIndexed(name, sizeof(name), index, kModuleNames));
   }
@@ -1451,6 +1454,11 @@ void ModuleDefault(uint32_t module)
 {
   if (USER_MODULE == module) { module = WEMOS; }  // Generic
   Settings.user_template_base = module;
+
+#ifdef ESP32
+  module = ModuleTemplate(module);
+#endif
+
   char name[TOPSZ];
   SettingsUpdateText(SET_TEMPLATE_NAME, GetTextIndexed(name, sizeof(name), module, kModuleNames));
 #ifdef ESP8266

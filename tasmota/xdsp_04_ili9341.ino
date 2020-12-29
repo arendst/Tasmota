@@ -97,7 +97,18 @@ void Ili9341Init(uint8_t mode)
 
 void Ili9341InitDriver(void)
 {
+  uint32_t pin_cs = Pin(GPIO_SPI_CS);
+  uint32_t pin_dc = Pin(GPIO_SPI_DC);
   if (!Settings.display_model) {
+    if (PinUsed(GPIO_ILI9341_CS)) {
+      pin_cs = Pin(GPIO_ILI9341_CS);
+      if (PinUsed(GPIO_ILI9341_DC)) {
+        pin_dc = Pin(GPIO_ILI9341_DC);
+      }
+      Settings.display_model = XDSP_04;
+    }
+
+    // Legacy
     Settings.display_model = XDSP_04;
   }
 
@@ -109,7 +120,7 @@ void Ili9341InitDriver(void)
       Settings.display_height = ILI9341_TFTHEIGHT;
     }
 
-    tft = new Adafruit_ILI9341(Pin(GPIO_SPI_CS), Pin(GPIO_SPI_DC));
+    tft = new Adafruit_ILI9341(pin_cs, pin_dc);
     tft->begin();
 
 #ifdef USE_DISPLAY_MODES1TO5

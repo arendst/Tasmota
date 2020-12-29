@@ -17,6 +17,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifdef USE_SPI
 #ifdef USE_RC522
 /*********************************************************************************************\
  * MFRC522 - 13.56 MHz RFID reader
@@ -97,8 +98,8 @@ void RC522ScanForTag(void) {
 }
 
 void RC522Init(void) {
-  if (PinUsed(GPIO_SPI_CS) && PinUsed(GPIO_RC522_RST)) {
-    Mfrc522 = new MFRC522(Pin(GPIO_SPI_CS), Pin(GPIO_RC522_RST));
+  if (PinUsed(GPIO_RC522_CS) && PinUsed(GPIO_RC522_RST)) {
+    Mfrc522 = new MFRC522(Pin(GPIO_RC522_CS), Pin(GPIO_RC522_RST));
     SPI.begin();
     Mfrc522->PCD_Init();
 //    if (Mfrc522->PCD_PerformSelfTest()) {  // Saves 0k5 code
@@ -155,3 +156,4 @@ bool Xsns80(uint8_t function) {
 }
 
 #endif  // USE_RC522
+#endif  // USE_SPI

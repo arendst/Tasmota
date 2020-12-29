@@ -3,7 +3,12 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [9.2.0.1]
+## [9.2.0.2]
+### Breaking Changed
+- Replaced MFRC522 13.56MHz rfid card reader GPIO selection from ``GPIO_SPI_CS`` by ``GPIO_RC522_CS``
+- Replaced ILI9341 GPIO selection from ``GPIO_SPI_CS`` by ``GPIO_ILI9341_CS`` and ``GPIO_SPI_DC`` by ``GPIO_ILI9341_DC``
+
+## [9.2.0.1] 20201229
 ### Added
 - Milliseconds to console output (#10152)
 - Support for P9813 RGB Led MOSFET controller (#10104)

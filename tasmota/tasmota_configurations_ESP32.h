@@ -33,8 +33,26 @@
 #define CODE_IMAGE_STR "webcam"
 
 #define USE_WEBCAM
-#undef  USE_MI_ESP32                              // (ESP32 only) Disable support for ESP32 as a BLE-bridge (+9k2 mem, +292k flash)
+#undef  USE_MI_ESP32                             // (ESP32 only) Disable support for ESP32 as a BLE-bridge (+9k2 mem, +292k flash)
 #endif  // FIRMWARE_WEBCAM
+
+/*********************************************************************************************\
+ * [tasmota32-odroidgo.bin]
+ * Provide an image with useful supported sensors enabled
+\*********************************************************************************************/
+
+#ifdef FIRMWARE_ODROID_GO
+
+#undef CODE_IMAGE_STR
+#define CODE_IMAGE_STR "odroid-go"
+
+#define USE_ODROID_GO                            // Add support for Odroid Go
+#define USE_ADC
+#define USE_SPI
+  #define USE_DISPLAY                            // Add SPI Display Support (+2k code)
+    #define USE_DISPLAY_ILI9341                  // [DisplayModel 4] Enable ILI9341 Tft 480x320 display (+19k code)
+#define USE_MI_ESP32                             // (ESP32 only) Add support for ESP32 as a BLE-bridge (+9k2 mem, +292k flash)
+#endif  // FIRMWARE_ODROID_GO
 
 #endif  // ESP32
 

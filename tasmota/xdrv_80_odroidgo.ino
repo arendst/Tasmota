@@ -1,7 +1,7 @@
 /*
-  tasmota_version.h - Version header file for Tasmota
+  xdrv_81_webcam.ino - ESP32 webcam support for Tasmota
 
-  Copyright (C) 2020  Theo Arends
+  Copyright (C) 2020  Gerhard Mutz and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -17,9 +17,18 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _TASMOTA_VERSION_H_
-#define _TASMOTA_VERSION_H_
+#ifdef ESP32
+#ifdef USE_ODROID_GO
+/*********************************************************************************************\
+ * Odroid Go
+ *
+ * Clock frequency 160MHz (board_build.f_cpu       = 160000000L)
+ * SPI Flash Size = 16MB (board_build.partitions  = esp32_partition_app1984k_ffat12M.csv)
+ *
+ * To be done:
+ * - Audio on GPIO25/26
+ *
+/*********************************************************************************************/
 
-const uint32_t VERSION = 0x09020002;
-
-#endif  // _TASMOTA_VERSION_H_
+#endif  // USE_ODROID_GO
+#endif  // ESP32
