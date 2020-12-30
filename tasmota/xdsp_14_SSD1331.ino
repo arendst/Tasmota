@@ -32,6 +32,7 @@
 #define SSD1331_WHITE       0xFFFF      // 255, 255, 255
 
 #include <Adafruit_SSD1331.h>
+#include <SPI.h>
 
 extern uint8_t *buffer;
 extern uint8_t color_type;
@@ -60,14 +61,14 @@ void SSD1331_InitDriver() {
     bg_color = SSD1331_BLACK;
 
     // init renderer
-    if  (PinUsed(GPIO_SSPI_CS) && PinUsed(GPIO_SSPI_MOSI) && PinUsed(GPIO_SSPI_SCLK)){
-      ssd1331  = new Adafruit_SSD1331(Pin(GPIO_SSPI_CS),Pin(GPIO_SSPI_DC),Pin(GPIO_SSPI_MOSI),Pin(GPIO_SSPI_SCLK),OLED_RESET);
+    if  (PinUsed(GPIO_SSPI_CS) && PinUsed(GPIO_SSPI_DC) && PinUsed(GPIO_SSPI_MOSI) && PinUsed(GPIO_SSPI_SCLK) && PinUsed(GPIO_OLED_RESET)) {
+      ssd1331  = new Adafruit_SSD1331(Pin(GPIO_SSPI_CS),Pin(GPIO_SSPI_DC),Pin(GPIO_SSPI_MOSI),Pin(GPIO_SSPI_SCLK),Pin(GPIO_OLED_RESET));
+    } else if (PinUsed(GPIO_SPI_CS) && PinUsed(GPIO_SPI_DC) && PinUsed(GPIO_OLED_RESET)) {
+      ssd1331  = new Adafruit_SSD1331(Pin(GPIO_SPI_CS),Pin(GPIO_SPI_DC),Pin(GPIO_OLED_RESET));
+    }  else if (PinUsed(GPIO_SPI_CS) && PinUsed(GPIO_SPI_DC)) {
+      ssd1331  = new Adafruit_SSD1331(&SPI,Pin(GPIO_SPI_CS),Pin(GPIO_SPI_DC));
     } else {
-      if (PinUsed(GPIO_SPI_CS) && PinUsed(GPIO_SPI_MOSI) && PinUsed(GPIO_SPI_CLK)) {
-        ssd1331  = new Adafruit_SSD1331(Pin(GPIO_SPI_CS),Pin(GPIO_SPI_DC),Pin(GPIO_SPI_MOSI),Pin(GPIO_SPI_CLK),OLED_RESET);
-      } else {
-        return;
-      }
+      return;
     }
 
     delay(100);
