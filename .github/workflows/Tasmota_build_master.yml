@@ -1606,7 +1606,7 @@ jobs:
         rm ./firmware/tasmota32/*.gz
         rm ./firmware/tasmota32/languages/*.gz
         [ ! -f ./tools/Esptool/ESP32/*.* ] || mv ./tools/Esptool/ESP32/*.* ./firmware/tasmota32/ESP32_needed_files/
-        [ ! -f ./tools/Esptool/ESP32/*.* ] || mv ./tools/Esptool/Odroid_go/*.* ./firmware/tasmota32/Odroid_go_needed_files/
+        [ ! -f ./tools/Esptool/Odroid_go/*.* ] || mv ./tools/Esptool/Odroid_go/*.* ./firmware/tasmota32/Odroid_go_needed_files/
         [ ! -f ./FIRMWARE.md ] || mv -f ./RELEASENOTES.md ./README.md
     - name: Commit files  # transfer the new binaries back into the repository
       run: |
