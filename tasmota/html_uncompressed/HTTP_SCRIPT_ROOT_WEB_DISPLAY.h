@@ -1,11 +1,8 @@
 const char HTTP_SCRIPT_ROOT[] PROGMEM =
-  "var rfsh=1;"
+  "let rfsh=1,ft;"
   "function la(p){"
-    "var a='';"
-    "if(la.arguments.length==1){"
-      "a=p;"
-      "clearTimeout(lt);"
-    "}"
+    "a=p||'';"
+    "clearTimeout(ft);clearTimeout(lt);"
     "if(x!=null){x.abort();}"             // Abort if no response within 2 seconds (happens on restart 1)
     "x=new XMLHttpRequest();"
     "x.onreadystatechange=function(){"
@@ -17,12 +14,16 @@ const char HTTP_SCRIPT_ROOT[] PROGMEM =
                             ".replace(/{e}/g,\"</td></tr>\")"
                             ".replace(/{c}/g,\"%%'><div style='text-align:center;font-weight:\");"
         "eb('l1').innerHTML=s;"
+        "clearTimeout(ft);clearTimeout(lt);"
+        "if(rfsh){"
+          "lt=setTimeout(la,%d);"               // Settings.web_refresh
+        "}"
       "}"
     "};"
-    "if (rfsh) {"
+    "if(rfsh){"
       "x.open('GET','.?m=1'+a,true);"       // ?m related to Webserver->hasArg("m")
       "x.send();"
-      "lt=setTimeout(la,%d);"               // Settings.web_refresh
+      "ft=setTimeout(la,20000);"               // 20s failure timeout
     "}"
   "}"
   "function seva(par,ivar){"
@@ -34,11 +35,13 @@ const char HTTP_SCRIPT_ROOT[] PROGMEM =
     "rfsh=0;"
   "}"
   "function pr(f){"
-    "if (f) {"
+    "if(f){"
+      "clearTimeout(lt);clearTimeout(ft);"
       "lt=setTimeout(la,%d);"
       "rfsh=1;"
-    "} else {"
-      "clearTimeout(lt);"
+    "}else{"
+      "clearTimeout(lt);clearTimeout(ft);"
       "rfsh=0;"
     "}"
-  "}";
+  "}"
+  ;
