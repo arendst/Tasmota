@@ -6,6 +6,8 @@ All notable changes to this project will be documented in this file.
 ## [9.2.0.2]
 ### Added
 - Basic support for ESP32 Odroid Go 16MB binary tasmota32-odroidgo.bin (#8630)
+- Command ``CTRange`` to specify the visible CT range the bulb is capable of
+- Command ``VirtualCT`` to simulate or fine tune CT bulbs with 3,4,5 channels
 
 ### Breaking Changed
 - Replaced MFRC522 13.56MHz rfid card reader GPIO selection from ``GPIO_SPI_CS`` by ``GPIO_RC522_CS``

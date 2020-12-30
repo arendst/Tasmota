@@ -64,11 +64,11 @@ void ST7789_InitDriver()
 
   if (XDSP_12 == Settings.display_model) {
 
-    if (Settings.display_width != ST7789_TFTWIDTH) {
-      Settings.display_width = ST7789_TFTWIDTH;
+    if (!Settings.display_width) {
+      Settings.display_width = 240;
     }
-    if (Settings.display_height != ST7789_TFTHEIGHT) {
-      Settings.display_height = ST7789_TFTHEIGHT;
+    if (!Settings.display_height) {
+      Settings.display_height = 240;
     }
 
     // disable screen buffer
@@ -130,9 +130,15 @@ void ST7789_InitDriver()
 
 #ifdef SHOW_SPLASH
     // Welcome text
-    renderer->setTextFont(2);
     renderer->setTextColor(ST7789_WHITE,ST7789_BLACK);
-    renderer->DrawStringAt(30, 100, "ST7789 TFT!", ST7789_WHITE,0);
+    int fontSize = 2;
+    renderer->setTextFont(2);
+    if (Settings.display_width<240) {
+        fontSize = 1;
+    }
+    renderer->setTextFont(fontSize);
+    int fontHeight = 12 * fontSize;
+    renderer->DrawStringAt(30, (Settings.display_height-fontHeight)/2, "ST7789 TFT!", ST7789_WHITE,0);
     delay(1000);
 #endif
 
