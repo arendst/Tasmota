@@ -46,6 +46,11 @@
 #undef CODE_IMAGE_STR
 #define CODE_IMAGE_STR "odroid-go"
 
+#undef MODULE
+#define MODULE                 ODROID_GO         // [Module] Select default module from tasmota_template.h
+#undef FALLBACK_MODULE
+#define FALLBACK_MODULE        ODROID_GO         // [Module2] Select default module on fast reboot where USER_MODULE is user template
+
 #define USE_ODROID_GO                            // Add support for Odroid Go
 #define USE_ADC
 #define USE_SPI
