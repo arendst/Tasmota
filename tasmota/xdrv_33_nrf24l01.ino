@@ -34,7 +34,7 @@
 /*********************************************************************************************\
 * NRF24l01(+)
 *
-* Usage: 5 SPI-data-wires plus VVC/ground, use hardware SPI, select GPIO_NRF24_CS/GPIO_NRF24_DC
+* Usage: 5 SPI-data-wires plus VVC/ground, use hardware SPI, select GPIO_SPI_CS/GPIO_SPI_DC
 \*********************************************************************************************/
 
 #define XDRV_33             33
@@ -51,26 +51,28 @@ struct {
 
 RF24 NRF24radio;
 
-bool NRF24initRadio() {
-  NRF24radio.begin(Pin(GPIO_NRF24_CS), Pin(GPIO_NRF24_DC));
+bool NRF24initRadio()
+{
+  NRF24radio.begin(Pin(GPIO_SPI_CS),Pin(GPIO_SPI_DC));
   NRF24radio.powerUp();
 
-  if (NRF24radio.isChipConnected()) {
-    DEBUG_DRIVER_LOG(PSTR("NRF: Chip connected"));
+  if(NRF24radio.isChipConnected()){
+    DEBUG_DRIVER_LOG(PSTR("NRF24 chip connected"));
     return true;
   }
-  DEBUG_DRIVER_LOG(PSTR("NRF: Chip NOT !!!! connected"));
+  DEBUG_DRIVER_LOG(PSTR("NRF24 chip NOT !!!! connected"));
   return false;
 }
 
-bool NRF24Detect(void) {
-  if (PinUsed(GPIO_NRF24_CS) && PinUsed(GPIO_NRF24_DC)) {
-    if (NRF24initRadio()) {
+bool NRF24Detect(void)
+{
+  if (PinUsed(GPIO_SPI_CS) && PinUsed(GPIO_SPI_DC)) {
+    if(NRF24initRadio()){
       NRF24.chipType = 32; // SPACE
-      AddLog_P(LOG_LEVEL_INFO,PSTR("NRF: Model 24L01 initialized"));
-      if (NRF24radio.isPVariant()) {
+     AddLog_P(LOG_LEVEL_INFO,PSTR("NRF24L01 initialized"));
+      if(NRF24radio.isPVariant()){
         NRF24.chipType = 43; // +
-        AddLog_P(LOG_LEVEL_INFO,PSTR("NRF: Model 24L01+ detected"));
+        AddLog_P(LOG_LEVEL_INFO,PSTR("NRF24L01+ detected"));
       }
       return true;
     }
@@ -82,13 +84,12 @@ bool NRF24Detect(void) {
  * Interface
 \*********************************************************************************************/
 
-bool Xdrv33(uint8_t function) {
+bool Xdrv33(uint8_t function)
+{
   bool result = false;
 
-  if (TasmotaGlobal.spi_enabled) {
-    if (FUNC_INIT == function) {
-      result = NRF24Detect();
-    }
+  if (FUNC_INIT == function) {
+    result = NRF24Detect();
   }
   return result;
 }
