@@ -1,8 +1,9 @@
 const char HTTP_SCRIPT_CONSOL[] PROGMEM =
-  "var sn=0,id=0;"                        // Scroll position, Get most of weblog initially
+  "var sn=0,id=0,ft;"                      // Scroll position, Get most of weblog initially
   "function l(p){"                        // Console log and command service
-    "var c,o='',t;"
+    "var c,o='';"
     "clearTimeout(lt);"
+    "clearTimeout(ft);"
     "t=eb('t1');"
     "if(p==1){"
       "c=eb('c1');"                       // Console command id
@@ -24,12 +25,14 @@ const char HTTP_SCRIPT_CONSOL[] PROGMEM =
           "if(z.length>0){t.value+=z;}"
           "t.scrollTop=99999;"
           "sn=t.scrollTop;"
+          "clearTimeout(ft);"
+          "lt=setTimeout(l,%d);" // webrefresh timer....
         "}"
       "};"
       "x.open('GET','cs?c2='+id+o,true);"  // Related to Webserver->hasArg("c2") and WebGetArg("c2", stmp, sizeof(stmp))
       "x.send();"
+      "ft=setTimeout(l,20000);" // fail timeout, triggered 20s after asking for XHR
     "}"
-    "lt=setTimeout(l,%d);"
     "return false;"
   "}"
   "wl(l);"                                // Load initial console text
@@ -47,3 +50,4 @@ const char HTTP_SCRIPT_CONSOL[] PROGMEM =
     "});"
   "}"
   "wl(h);";                               // Add console command key eventlistener after name has been synced with id (= wl(jd))
+  
