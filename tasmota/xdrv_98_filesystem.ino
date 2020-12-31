@@ -119,10 +119,13 @@ void UFSInit(void) {
     return;
   }
 #else
-  ufsp = &FFat;
-  if (!FFat.begin(true)) {
-    ufsp = &LITTLEFS;
-    if (!LITTLEFS.begin(true)) {
+  // try lfs first
+  ufsp = &LITTLEFS;
+  if (!LITTLEFS.begin(true)) {
+    // ffat is second
+    ufsp = &FFat;
+    if (!FFat.begin(true)) {
+      // spiffs is last
       ufsp = &SPIFFS;
       if (!SPIFFS.begin(true)) {
         return;
@@ -130,11 +133,11 @@ void UFSInit(void) {
       ufs_type = UFS_TSPIFFS;
       return;
     }
-    ufs_type = UFS_TLFS;
+    ufs_type = UFS_TFAT;
     return;
   }
 #endif
-  ufs_type = UFS_TFAT;
+  ufs_type = UFS_TLFS;
   return;
 }
 
