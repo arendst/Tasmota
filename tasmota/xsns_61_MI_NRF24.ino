@@ -409,14 +409,18 @@ static union{
 
 /********************************************************************************************/
 
-void MINRFinit(void){
-  MINRFinitBLE(1);
+void MINRFinit(void) {
+  if (PinUsed(GPIO_NRF24_CS) && PinUsed(GPIO_NRF24_DC) && TasmotaGlobal.spi_enabled) {
+    MINRFinitBLE(1);
 
-  MINRF.option.allwaysAggregate = 1;
-  // MINRF.option.ignoreBogusBattery = 1; // from advertisements
-  MINRF.option.noSummary = 0;
-  MINRF.option.minimalSummary = 0;
-  MINRF.option.directBridgeMode = 0;
+    MINRF.option.allwaysAggregate = 1;
+    // MINRF.option.ignoreBogusBattery = 1; // from advertisements
+    MINRF.option.noSummary = 0;
+    MINRF.option.minimalSummary = 0;
+    MINRF.option.directBridgeMode = 0;
+
+    AddLog_P(LOG_LEVEL_INFO, PSTR("NRF: Started"));
+  }
 }
 
 /********************************************************************************************/
@@ -431,7 +435,7 @@ void MINRFinit(void){
 bool MINRFinitBLE(uint8_t _mode)
 {
   if (MINRF.timer%1000 == 0){ // only re-init every 20 seconds
-    NRF24radio.begin(Pin(GPIO_SPI_CS),Pin(GPIO_SPI_DC));
+    NRF24radio.begin(Pin(GPIO_NRF24_CS),Pin(GPIO_NRF24_DC));
     NRF24radio.setAutoAck(false);
     NRF24radio.setDataRate(RF24_1MBPS);
     NRF24radio.disableCRC();
@@ -1958,7 +1962,6 @@ bool Xsns61(uint8_t function)
     switch (function) {
       case FUNC_INIT:
         MINRFinit();
-        AddLog_P(LOG_LEVEL_INFO,PSTR("NRF: started"));
         break;
       case FUNC_EVERY_50_MSECOND:
         MINRF_EVERY_50_MSECOND();

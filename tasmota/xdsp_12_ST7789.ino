@@ -53,16 +53,15 @@ Arduino_ST7789 *st7789;
 #ifdef USE_FT5206
 uint8_t st7789_ctouch_counter = 0;
 #endif // USE_FT5206
+bool st7789_init_done = false;
 
 /*********************************************************************************************/
 
-void ST7789_InitDriver()
-{
-  if (!Settings.display_model) {
-    Settings.display_model = XDSP_12;
-  }
+void ST7789_InitDriver(void) {
+  if (PinUsed(GPIO_ST7789_CS) && PinUsed(GPIO_ST7789_DC) &&
+     ((TasmotaGlobal.soft_spi_enabled & SPI_MOSI) || (TasmotaGlobal.spi_enabled & SPI_MOSI))) {
 
-  if (XDSP_12 == Settings.display_model) {
+    Settings.display_model = XDSP_12;
 
     if (!Settings.display_width) {
       Settings.display_width = 240;
@@ -72,57 +71,30 @@ void ST7789_InitDriver()
     }
 
     // disable screen buffer
-    buffer=NULL;
+    buffer = NULL;
 
     // default colors
     fg_color = ST7789_WHITE;
     bg_color = ST7789_BLACK;
 
-    int8_t bppin=BACKPLANE_PIN;
-    if  (PinUsed(GPIO_BACKLIGHT)) {
-      bppin=Pin(GPIO_BACKLIGHT);
+    int8_t bppin = BACKPLANE_PIN;
+    if (PinUsed(GPIO_BACKLIGHT)) {
+      bppin = Pin(GPIO_BACKLIGHT);
     }
 
     int8_t reset = -1;
-    if  (PinUsed(GPIO_OLED_RESET)) {
-      reset=Pin(GPIO_OLED_RESET);
+    if (PinUsed(GPIO_OLED_RESET)) {
+      reset = Pin(GPIO_OLED_RESET);
     }
-
-    int8_t cs = -1;
-    if  (PinUsed(GPIO_SSPI_CS)) {
-      cs=Pin(GPIO_SSPI_CS);
-    } else if (PinUsed(GPIO_SPI_CS)) {
-      cs=Pin(GPIO_SPI_CS);
-    }
-
-#ifdef ESP8266
-#undef HW_SPI_MOSI
-#define HW_SPI_MOSI 13
-#undef HW_SPI_CLK
-#define HW_SPI_CLK 14
-#endif  // ESP8266
-#ifdef ESP32
-#undef HW_SPI_MOSI
-#define HW_SPI_MOSI 23
-#undef HW_SPI_CLK
-#define HW_SPI_CLK 18
-#endif  // ESP32
 
     // init renderer, may use hardware spi
-    //if (PinUsed(GPIO_SPI_CS) && (Pin(GPIO_SPI_MOSI)==HW_SPI_MOSI) && (Pin(GPIO_SPI_CLK)==HW_SPI_CLK) && PinUsed(GPIO_SPI_DC)) {
-    if ((Pin(GPIO_SPI_MOSI)==HW_SPI_MOSI) && (Pin(GPIO_SPI_CLK)==HW_SPI_CLK) && PinUsed(GPIO_SPI_DC)) {
-        st7789  = new Arduino_ST7789(Pin(GPIO_SPI_DC), reset, cs, bppin);
-    } else {
-      if ((PinUsed(GPIO_SSPI_CS) || PinUsed(GPIO_OLED_RESET)) && PinUsed(GPIO_SSPI_MOSI) && PinUsed(GPIO_SSPI_SCLK) && PinUsed(GPIO_SSPI_DC)) {
-        if ((Pin(GPIO_SSPI_MOSI)==HW_SPI_MOSI) && (Pin(GPIO_SSPI_SCLK)==HW_SPI_CLK)) {
-          st7789  = new Arduino_ST7789(Pin(GPIO_SSPI_DC), reset, cs, bppin);
-        } else {
-          st7789  = new Arduino_ST7789(Pin(GPIO_SSPI_DC), reset, Pin(GPIO_SSPI_MOSI), Pin(GPIO_SSPI_SCLK), cs, bppin);
-        }
-      } else {
-        return;
-      }
+    if (TasmotaGlobal.soft_spi_enabled) {
+      st7789 = new Arduino_ST7789(Pin(GPIO_ST7789_DC), reset, Pin(GPIO_SSPI_MOSI), Pin(GPIO_SSPI_SCLK), Pin(GPIO_ST7789_CS), bppin);
     }
+    else if (TasmotaGlobal.spi_enabled) {
+      st7789 = new Arduino_ST7789(Pin(GPIO_ST7789_DC), reset, Pin(GPIO_ST7789_CS), bppin);
+    }
+
     st7789->init(Settings.display_width,Settings.display_height);
     renderer = st7789;
     renderer->DisplayInit(DISPLAY_INIT_MODE,Settings.display_size,Settings.display_rotate,Settings.display_font);
@@ -154,6 +126,8 @@ void ST7789_InitDriver()
 #endif // USE_FT5206
 #endif // ESP32
 
+    st7789_init_done = true;
+    AddLog_P(LOG_LEVEL_INFO, PSTR("DSP: ST7789"));
   }
 }
 
@@ -212,7 +186,7 @@ bool Xdsp12(uint8_t function)
   if (FUNC_DISPLAY_INIT_DRIVER == function) {
     ST7789_InitDriver();
   }
-  else if (XDSP_12 == Settings.display_model) {
+  else if (st7789_init_done && (XDSP_12 == Settings.display_model)) {
       switch (function) {
         case FUNC_DISPLAY_MODEL:
           result = true;

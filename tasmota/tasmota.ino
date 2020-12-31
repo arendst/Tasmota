@@ -119,8 +119,6 @@ struct {
   bool blinkstate;                          // LED state
   bool pwm_present;                         // Any PWM channel configured with SetOption15 0
   bool i2c_enabled;                         // I2C configured
-  bool spi_enabled;                         // SPI configured
-  bool soft_spi_enabled;                    // Software SPI configured
   bool ntp_force_sync;                      // Force NTP sync
   bool is_8285;                             // Hardware device ESP8266EX (0) or ESP8285 (1)
   bool skip_light_fade;                     // Temporarily skip light fading
@@ -128,6 +126,8 @@ struct {
   bool module_changed;                      // Indicate module changed since last restart
 
   StateBitfield global_state;               // Global states (currently Wifi and Mqtt) (8 bits)
+  uint8_t spi_enabled;                      // SPI configured
+  uint8_t soft_spi_enabled;                 // Software SPI configured
   uint8_t blinks;                           // Number of LED blinks
   uint8_t restart_flag;                     // Tasmota restart flag
   uint8_t ota_state_flag;                   // OTA state flag

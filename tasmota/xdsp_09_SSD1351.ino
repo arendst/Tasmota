@@ -33,6 +33,7 @@
 
 #include <SSD1351.h>
 
+bool ssd1351_init_done = false;
 extern uint8_t *buffer;
 extern uint8_t color_type;
 SSD1351 *ssd1351;
@@ -40,11 +41,10 @@ SSD1351 *ssd1351;
 /*********************************************************************************************/
 
 void SSD1351_InitDriver() {
-  if (!Settings.display_model) {
-    Settings.display_model = XDSP_09;
-  }
+  if (PinUsed(GPIO_SSD1351_CS) &&
+     ((TasmotaGlobal.soft_spi_enabled & SPI_MOSI) || (TasmotaGlobal.spi_enabled & SPI_MOSI))) {
 
-  if (XDSP_09 == Settings.display_model) {
+    Settings.display_model = XDSP_09;
 
     if (Settings.display_width != SSD1351_WIDTH) {
       Settings.display_width = SSD1351_WIDTH;
@@ -53,21 +53,18 @@ void SSD1351_InitDriver() {
       Settings.display_height = SSD1351_HEIGHT;
     }
 
-    buffer=0;
+    buffer = 0;
 
     // default colors
     fg_color = SSD1351_WHITE;
     bg_color = SSD1351_BLACK;
 
     // init renderer
-    if  (PinUsed(GPIO_SSPI_CS) && PinUsed(GPIO_SSPI_MOSI) && PinUsed(GPIO_SSPI_SCLK)){
-      ssd1351  = new SSD1351(Pin(GPIO_SSPI_CS),Pin(GPIO_SSPI_MOSI),Pin(GPIO_SSPI_SCLK));
-    } else {
-      if (PinUsed(GPIO_SPI_CS) && PinUsed(GPIO_SPI_MOSI) && PinUsed(GPIO_SPI_CLK)) {
-        ssd1351  = new SSD1351(Pin(GPIO_SPI_CS),Pin(GPIO_SPI_MOSI),Pin(GPIO_SPI_CLK));
-      } else {
-        return;
-      }
+    if (TasmotaGlobal.soft_spi_enabled){
+      ssd1351 = new SSD1351(Pin(GPIO_SSD1351_CS), Pin(GPIO_SSPI_MOSI), Pin(GPIO_SSPI_SCLK));
+    }
+    else if (TasmotaGlobal.spi_enabled) {
+      ssd1351 = new SSD1351(Pin(GPIO_SSD1351_CS), Pin(GPIO_SPI_MOSI), Pin(GPIO_SPI_CLK));
     }
 
     delay(100);
@@ -85,6 +82,9 @@ void SSD1351_InitDriver() {
 
 #endif
     color_type = COLOR_COLOR;
+
+    ssd1351_init_done = true;
+    AddLog_P(LOG_LEVEL_INFO, PSTR("DSP: SSD1351"));
   }
 }
 
@@ -162,7 +162,7 @@ bool Xdsp09(uint8_t function)
   if (FUNC_DISPLAY_INIT_DRIVER == function) {
       SSD1351_InitDriver();
   }
-  else if (XDSP_09 == Settings.display_model) {
+  else if (ssd1351_init_done && (XDSP_09 == Settings.display_model)) {
     switch (function) {
       case FUNC_DISPLAY_MODEL:
         result = true;

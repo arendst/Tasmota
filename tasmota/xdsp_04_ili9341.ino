@@ -38,6 +38,7 @@ uint16_t tft_top = TFT_TOP;
 uint16_t tft_bottom = TFT_BOTTOM;
 uint16_t tft_scroll = TFT_TOP;
 uint16_t tft_cols = 0;
+bool tft_init_done = false;
 
 /*********************************************************************************************/
 
@@ -57,8 +58,7 @@ bool Ili9341Header(void) {
   return (tft_cols > 17);
 }
 
-void Ili9341InitMode(void)
-{
+void Ili9341InitMode(void) {
   tft->setRotation(Settings.display_rotate);  // 0
   tft->invertDisplay(0);
   tft->fillScreen(ILI9341_BLACK);
@@ -78,8 +78,7 @@ void Ili9341InitMode(void)
   }
 }
 
-void Ili9341Init(uint8_t mode)
-{
+void Ili9341Init(uint8_t mode) {
   switch(mode) {
     case DISPLAY_INIT_MODE:
       Ili9341InitMode();
@@ -95,24 +94,11 @@ void Ili9341Init(uint8_t mode)
   }
 }
 
-void Ili9341InitDriver(void)
-{
-  uint32_t pin_cs = Pin(GPIO_SPI_CS);
-  uint32_t pin_dc = Pin(GPIO_SPI_DC);
-  if (!Settings.display_model) {
-    if (PinUsed(GPIO_ILI9341_CS)) {
-      pin_cs = Pin(GPIO_ILI9341_CS);
-      if (PinUsed(GPIO_ILI9341_DC)) {
-        pin_dc = Pin(GPIO_ILI9341_DC);
-      }
-      Settings.display_model = XDSP_04;
-    }
+void Ili9341InitDriver(void) {
+  if (PinUsed(GPIO_ILI9341_CS) && PinUsed(GPIO_ILI9341_DC) && TasmotaGlobal.spi_enabled) {
 
-    // Legacy
     Settings.display_model = XDSP_04;
-  }
 
-  if (XDSP_04 == Settings.display_model) {
     if (Settings.display_width != ILI9341_TFTWIDTH) {
       Settings.display_width = ILI9341_TFTWIDTH;
     }
@@ -120,7 +106,7 @@ void Ili9341InitDriver(void)
       Settings.display_height = ILI9341_TFTHEIGHT;
     }
 
-    tft = new Adafruit_ILI9341(pin_cs, pin_dc);
+    tft = new Adafruit_ILI9341(Pin(GPIO_ILI9341_CS), Pin(GPIO_ILI9341_DC));
     tft->begin();
 
 #ifdef USE_DISPLAY_MODES1TO5
@@ -131,18 +117,17 @@ void Ili9341InitDriver(void)
 
     Ili9341InitMode();
 
+    tft_init_done = true;
     AddLog_P(LOG_LEVEL_INFO, PSTR("DSP: ILI9341"));
   }
 }
 
-void Ili9341Clear(void)
-{
+void Ili9341Clear(void) {
   tft->fillScreen(ILI9341_BLACK);
   tft->setCursor(0, 0);
 }
 
-void Ili9341DrawStringAt(uint16_t x, uint16_t y, char *str, uint16_t color, uint8_t flag)
-{
+void Ili9341DrawStringAt(uint16_t x, uint16_t y, char *str, uint16_t color, uint8_t flag) {
   uint16_t active_color = ILI9341_WHITE;
 
   tft->setTextSize(Settings.display_size);
@@ -156,8 +141,7 @@ void Ili9341DrawStringAt(uint16_t x, uint16_t y, char *str, uint16_t color, uint
   tft->println(str);
 }
 
-void Ili9341DisplayOnOff()
-{
+void Ili9341DisplayOnOff() {
 //  tft->showDisplay(disp_power);
 //  tft->invertDisplay(disp_power);
   if (PinUsed(GPIO_BACKLIGHT)) {
@@ -170,8 +154,7 @@ void Ili9341DisplayOnOff()
 
 #ifdef USE_DISPLAY_MODES1TO5
 
-void Ili9341PrintLog(void)
-{
+void Ili9341PrintLog(void) {
   disp_refresh--;
   if (!disp_refresh) {
     disp_refresh = Settings.display_refresh;
@@ -217,8 +200,7 @@ void Ili9341PrintLog(void)
   }
 }
 
-void Ili9341Refresh(void)  // Every second
-{
+void Ili9341Refresh(void) {  // Every second
   if (Settings.display_mode) {  // Mode 0 is User text
     // 24-04-2017 13:45:43 = 19 + 1 ('\0') = 20
     // 24-04-2017 13:45 = 16 + 1 ('\0') = 17
@@ -263,73 +245,70 @@ void Ili9341Refresh(void)  // Every second
  * Interface
 \*********************************************************************************************/
 
-bool Xdsp04(uint8_t function)
-{
+bool Xdsp04(uint8_t function) {
   bool result = false;
 
-  if (TasmotaGlobal.spi_enabled) {
-    if (FUNC_DISPLAY_INIT_DRIVER == function) {
-      Ili9341InitDriver();
-    }
-    else if (XDSP_04 == Settings.display_model) {
+  if (FUNC_DISPLAY_INIT_DRIVER == function) {
+    Ili9341InitDriver();
+  }
+  else if (tft_init_done && (XDSP_04 == Settings.display_model)) {
 
-      if (!dsp_color) { dsp_color = ILI9341_WHITE; }
+    if (!dsp_color) { dsp_color = ILI9341_WHITE; }
 
-      switch (function) {
-        case FUNC_DISPLAY_MODEL:
-          result = true;
-          break;
-        case FUNC_DISPLAY_INIT:
-          Ili9341Init(dsp_init);
-          break;
-        case FUNC_DISPLAY_POWER:
-          Ili9341DisplayOnOff();
-          break;
-        case FUNC_DISPLAY_CLEAR:
-          Ili9341Clear();
-          break;
-        case FUNC_DISPLAY_DRAW_HLINE:
-          tft->writeFastHLine(dsp_x, dsp_y, dsp_len, dsp_color);
-          break;
-        case FUNC_DISPLAY_DRAW_VLINE:
-          tft->writeFastVLine(dsp_x, dsp_y, dsp_len, dsp_color);
-          break;
-        case FUNC_DISPLAY_DRAW_LINE:
-          tft->writeLine(dsp_x, dsp_y, dsp_x2, dsp_y2, dsp_color);
-          break;
-        case FUNC_DISPLAY_DRAW_CIRCLE:
-          tft->drawCircle(dsp_x, dsp_y, dsp_rad, dsp_color);
-          break;
-        case FUNC_DISPLAY_FILL_CIRCLE:
-          tft->fillCircle(dsp_x, dsp_y, dsp_rad, dsp_color);
-          break;
-        case FUNC_DISPLAY_DRAW_RECTANGLE:
-          tft->drawRect(dsp_x, dsp_y, dsp_x2, dsp_y2, dsp_color);
-          break;
-        case FUNC_DISPLAY_FILL_RECTANGLE:
-          tft->fillRect(dsp_x, dsp_y, dsp_x2, dsp_y2, dsp_color);
-          break;
+    switch (function) {
+      case FUNC_DISPLAY_MODEL:
+        result = true;
+        break;
+      case FUNC_DISPLAY_INIT:
+        Ili9341Init(dsp_init);
+        break;
+      case FUNC_DISPLAY_POWER:
+        Ili9341DisplayOnOff();
+        break;
+      case FUNC_DISPLAY_CLEAR:
+        Ili9341Clear();
+        break;
+      case FUNC_DISPLAY_DRAW_HLINE:
+        tft->writeFastHLine(dsp_x, dsp_y, dsp_len, dsp_color);
+        break;
+      case FUNC_DISPLAY_DRAW_VLINE:
+        tft->writeFastVLine(dsp_x, dsp_y, dsp_len, dsp_color);
+        break;
+      case FUNC_DISPLAY_DRAW_LINE:
+        tft->writeLine(dsp_x, dsp_y, dsp_x2, dsp_y2, dsp_color);
+        break;
+      case FUNC_DISPLAY_DRAW_CIRCLE:
+        tft->drawCircle(dsp_x, dsp_y, dsp_rad, dsp_color);
+        break;
+      case FUNC_DISPLAY_FILL_CIRCLE:
+        tft->fillCircle(dsp_x, dsp_y, dsp_rad, dsp_color);
+        break;
+      case FUNC_DISPLAY_DRAW_RECTANGLE:
+        tft->drawRect(dsp_x, dsp_y, dsp_x2, dsp_y2, dsp_color);
+        break;
+      case FUNC_DISPLAY_FILL_RECTANGLE:
+        tft->fillRect(dsp_x, dsp_y, dsp_x2, dsp_y2, dsp_color);
+        break;
 //        case FUNC_DISPLAY_DRAW_FRAME:
 //          oled->display();
 //          break;
-        case FUNC_DISPLAY_TEXT_SIZE:
-          tft->setTextSize(Settings.display_size);
-          break;
-        case FUNC_DISPLAY_FONT_SIZE:
+      case FUNC_DISPLAY_TEXT_SIZE:
+        tft->setTextSize(Settings.display_size);
+        break;
+      case FUNC_DISPLAY_FONT_SIZE:
 //          tft->setTextSize(Settings.display_font);
-          break;
-        case FUNC_DISPLAY_DRAW_STRING:
-          Ili9341DrawStringAt(dsp_x, dsp_y, dsp_str, dsp_color, dsp_flag);
-          break;
-        case FUNC_DISPLAY_ROTATION:
-          tft->setRotation(Settings.display_rotate);
-          break;
+        break;
+      case FUNC_DISPLAY_DRAW_STRING:
+        Ili9341DrawStringAt(dsp_x, dsp_y, dsp_str, dsp_color, dsp_flag);
+        break;
+      case FUNC_DISPLAY_ROTATION:
+        tft->setRotation(Settings.display_rotate);
+        break;
 #ifdef USE_DISPLAY_MODES1TO5
-        case FUNC_DISPLAY_EVERY_SECOND:
-          Ili9341Refresh();
-          break;
+      case FUNC_DISPLAY_EVERY_SECOND:
+        Ili9341Refresh();
+        break;
 #endif  // USE_DISPLAY_MODES1TO5
-      }
     }
   }
   return result;

@@ -1596,29 +1596,33 @@ void GpioInit(void)
   if ((2 == Pin(GPIO_TXD)) || (H801 == TasmotaGlobal.module_type)) { Serial.set_tx(2); }
 #endif
 
-  TasmotaGlobal.soft_spi_enabled = (PinUsed(GPIO_SSPI_SCLK) && (PinUsed(GPIO_SSPI_MOSI) || PinUsed(GPIO_SSPI_MISO)));
+  uint32_t sspi_mosi = (PinUsed(GPIO_SSPI_SCLK) && PinUsed(GPIO_SSPI_MOSI)) ? SPI_MOSI : SPI_NONE;
+  uint32_t sspi_miso = (PinUsed(GPIO_SSPI_SCLK) && PinUsed(GPIO_SSPI_MISO)) ? SPI_MISO : SPI_NONE;
+  TasmotaGlobal.soft_spi_enabled = sspi_mosi + sspi_miso;
+  AddLogSpi(0, Pin(GPIO_SSPI_SCLK), Pin(GPIO_SSPI_MOSI), PinUsed(GPIO_SSPI_MISO));
 
 #ifdef USE_SPI
-  uint32_t pin_cs = Pin(GPIO_SPI_CS);
-  uint32_t pin_dc = Pin(GPIO_SPI_DC);
-  if (PinUsed(GPIO_RC522_CS)) {
-    pin_cs = Pin(GPIO_RC522_CS);
-  }
-  if (PinUsed(GPIO_ILI9341_CS)) {
-    pin_cs = Pin(GPIO_ILI9341_CS);
-    if (PinUsed(GPIO_ILI9341_DC)) {
-      pin_dc = Pin(GPIO_ILI9341_DC);
-    }
-  }
-
 #ifdef ESP8266
   if (!TasmotaGlobal.soft_spi_enabled) {
-    // If SPI_CS is used it must be valid
-    TasmotaGlobal.spi_enabled = ((pin_cs < 99) && ((pin_cs > 14) || (pin_cs < 12)));
-    if (TasmotaGlobal.spi_enabled && (pin_dc < 99)) {
-      // If SPI_DC is used it must be valid
-      TasmotaGlobal.spi_enabled = ((pin_dc > 14) || (pin_dc < 12));
-    }
+    bool valid_cs = (ValidSpiGPIO(GPIO_SPI_CS) &&
+                     ValidSpiGPIO(GPIO_RC522_CS) &&
+                     ValidSpiGPIO(GPIO_NRF24_CS) &&
+                     ValidSpiGPIO(GPIO_ILI9341_CS) &&
+                     ValidSpiGPIO(GPIO_EPAPER29_CS) &&
+                     ValidSpiGPIO(GPIO_EPAPER42_CS) &&
+                     ValidSpiGPIO(GPIO_ILI9488_CS) &&
+                     ValidSpiGPIO(GPIO_SSD1351_CS) &&
+                     ValidSpiGPIO(GPIO_RA8876_CS) &&
+                     ValidSpiGPIO(GPIO_ST7789_CS)
+                    );
+    bool valid_dc = (ValidSpiGPIO(GPIO_SPI_DC) &&
+                     ValidSpiGPIO(GPIO_NRF24_DC) &&
+                     ValidSpiGPIO(GPIO_ILI9341_DC) &&
+                     ValidSpiGPIO(GPIO_ST7789_DC)
+                    );
+
+    // If SPI_CS and/or SPI_DC is used they must be valid
+    TasmotaGlobal.spi_enabled = (valid_cs && valid_dc) ? SPI_MOSI_MISO : SPI_NONE;
     if (TasmotaGlobal.spi_enabled) {
       TasmotaGlobal.my_module.io[12] = AGPIO(GPIO_SPI_MISO);
       SetPin(12, AGPIO(GPIO_SPI_MISO));
@@ -1626,65 +1630,27 @@ void GpioInit(void)
       SetPin(13, AGPIO(GPIO_SPI_MOSI));
       TasmotaGlobal.my_module.io[14] = AGPIO(GPIO_SPI_CLK);
       SetPin(14, AGPIO(GPIO_SPI_CLK));
-      AddLog_P(LOG_LEVEL_DEBUG, PSTR("SPI: Using GPIO12(MISO), GPIO13(MOSI) and GPIO14(CLK)"));
     }
   }
 #endif  // ESP8266
 #ifdef ESP32
-  if (pin_cs < 99) {
-/*
-    // Do not do this as ESP32 can have SPI_CS everywhere
-    if ((15 == pin_cs) && (!GetPin(12) && !GetPin(13) && !GetPin(14))) {  // HSPI
-      TasmotaGlobal.my_module.io[12] = AGPIO(GPIO_SPI_MISO);
-      SetPin(12, AGPIO(GPIO_SPI_MISO));
-      TasmotaGlobal.my_module.io[13] = AGPIO(GPIO_SPI_MOSI);
-      SetPin(13, AGPIO(GPIO_SPI_MOSI));
-      TasmotaGlobal.my_module.io[14] = AGPIO(GPIO_SPI_CLK);
-      SetPin(14, AGPIO(GPIO_SPI_CLK));
-    }
-    else if ((5 == pin_cs) && (!GetPin(19) && !GetPin(23) && !GetPin(18))) {  // VSPI
-      TasmotaGlobal.my_module.io[19] = AGPIO(GPIO_SPI_MISO);
-      SetPin(19, AGPIO(GPIO_SPI_MISO));
-      TasmotaGlobal.my_module.io[23] = AGPIO(GPIO_SPI_MOSI);
-      SetPin(23, AGPIO(GPIO_SPI_MOSI));
-      TasmotaGlobal.my_module.io[18] = AGPIO(GPIO_SPI_CLK);
-      SetPin(18, AGPIO(GPIO_SPI_CLK));
-    }
-    else if ((12 == Pin(GPIO_SPI_MISO)) || (13 == Pin(GPIO_SPI_MOSI)) || (14 == Pin(GPIO_SPI_CLK))) {  // HSPI
-      TasmotaGlobal.my_module.io[12] = AGPIO(GPIO_SPI_MISO);
-      SetPin(12, AGPIO(GPIO_SPI_MISO));
-      TasmotaGlobal.my_module.io[13] = AGPIO(GPIO_SPI_MOSI);
-      SetPin(13, AGPIO(GPIO_SPI_MOSI));
-      TasmotaGlobal.my_module.io[14] = AGPIO(GPIO_SPI_CLK);
-      SetPin(14, AGPIO(GPIO_SPI_CLK));
-    }
-    else if ((19 == Pin(GPIO_SPI_MISO)) || (23 == Pin(GPIO_SPI_MOSI)) || (18 == Pin(GPIO_SPI_CLK))) {  // VSPI
-      TasmotaGlobal.my_module.io[19] = AGPIO(GPIO_SPI_MISO);
-      SetPin(19, AGPIO(GPIO_SPI_MISO));
-      TasmotaGlobal.my_module.io[23] = AGPIO(GPIO_SPI_MOSI);
-      SetPin(23, AGPIO(GPIO_SPI_MOSI));
-      TasmotaGlobal.my_module.io[18] = AGPIO(GPIO_SPI_CLK);
-      SetPin(18, AGPIO(GPIO_SPI_CLK));
-    }
-    TasmotaGlobal.spi_enabled = (PinUsed(GPIO_SPI_CLK) && (PinUsed(GPIO_SPI_MOSI) || PinUsed(GPIO_SPI_MISO)));
-*/
-    TasmotaGlobal.spi_enabled = (pin_cs < 99);
-    if (TasmotaGlobal.spi_enabled) {
-      if (PinUsed(GPIO_SPI_MOSI) && PinUsed(GPIO_SPI_MISO) && PinUsed(GPIO_SPI_CLK)) {
-        AddLog_P(LOG_LEVEL_DEBUG, PSTR("SPI: Using GPIO%02d(MISO), GPIO%02d(MOSI) and GPIO%02d(CLK)"),
-          Pin(GPIO_SPI_MISO), Pin(GPIO_SPI_MOSI), Pin(GPIO_SPI_CLK));
-      }
-      else if (PinUsed(GPIO_SPI_MOSI) && PinUsed(GPIO_SPI_CLK)) {
-        AddLog_P(LOG_LEVEL_DEBUG, PSTR("SPI: Using GPIO%02d(MOSI) and GPIO%02d(CLK)"),
-          Pin(GPIO_SPI_MOSI), Pin(GPIO_SPI_CLK));
-      }
-      else if (PinUsed(GPIO_SPI_MISO) && PinUsed(GPIO_SPI_CLK)) {
-        AddLog_P(LOG_LEVEL_DEBUG, PSTR("SPI: Using GPIO%02d(MISO) and GPIO%02d(CLK)"),
-          Pin(GPIO_SPI_MISO), Pin(GPIO_SPI_CLK));
-      }
-    }
+  if (PinUsed(GPIO_SPI_CS) ||
+      PinUsed(GPIO_RC522_CS) ||
+      PinUsed(GPIO_NRF24_CS) ||
+      PinUsed(GPIO_ILI9341_CS) ||
+      PinUsed(GPIO_EPAPER29_CS) ||
+      PinUsed(GPIO_EPAPER42_CS) ||
+      PinUsed(GPIO_ILI9488_CS) ||
+      PinUsed(GPIO_SSD1351_CS) ||
+      PinUsed(GPIO_RA8876_CS) ||
+      PinUsed(GPIO_ST7789_CS)
+     ) {
+    uint32_t spi_mosi = (PinUsed(GPIO_SPI_CLK) && PinUsed(GPIO_SPI_MOSI)) ? SPI_MOSI : SPI_NONE;
+    uint32_t spi_miso = (PinUsed(GPIO_SPI_CLK) && PinUsed(GPIO_SPI_MISO)) ? SPI_MISO : SPI_NONE;
+    TasmotaGlobal.spi_enabled = spi_mosi + spi_miso;
   }
 #endif  // ESP32
+  AddLogSpi(1, Pin(GPIO_SPI_CLK), Pin(GPIO_SPI_MOSI), Pin(GPIO_SPI_MISO));
 #endif  // USE_SPI
 
   for (uint32_t i = 0; i < ARRAY_SIZE(TasmotaGlobal.my_module.io); i++) {

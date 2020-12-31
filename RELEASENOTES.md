@@ -58,6 +58,8 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 
 ## Changelog v9.2.0.2
 ### Added
+- Command ``CTRange`` to specify the visible CT range the bulb is capable of [#10311](https://github.com/arendst/Tasmota/issues/10311)
+- Command ``VirtualCT`` to simulate or fine tune CT bulbs with 3,4,5 channels [#10311](https://github.com/arendst/Tasmota/issues/10311)
 - Milliseconds to console output [#10152](https://github.com/arendst/Tasmota/issues/10152)
 - Gpio ``Option_a1`` enabling PWM2 high impedance if powered off as used by Wyze bulbs [#10196](https://github.com/arendst/Tasmota/issues/10196)
 - BSSID and Signal Strength Indicator to GUI wifi scan result [#10253](https://github.com/arendst/Tasmota/issues/10253)
@@ -71,8 +73,15 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - Basic support for ESP32 Odroid Go 16MB binary tasmota32-odroidgo.bin [#8630](https://github.com/arendst/Tasmota/issues/8630)
 
 ### Breaking Changed
-- Replaced MFRC522 13.56MHz rfid card reader GPIO selection from ``GPIO_SPI_CS`` by ``GPIO_RC522_CS``
-- Replaced ILI9341 GPIO selection from ``GPIO_SPI_CS`` by ``GPIO_ILI9341_CS`` and ``GPIO_SPI_DC`` by ``GPIO_ILI9341_DC``
+- Replaced MFRC522 13.56MHz rfid card reader GPIO selection from ``SPI CS`` by ``RC522 CS``
+- Replaced NRF24L01 GPIO selection from ``SPI CS`` by ``NRF24 CS`` and ``SPI DC`` by ``NRF24 DC``
+- Replaced ILI9341 GPIO selection from ``SPI CS`` by ``ILI9341 CS`` and ``SPI DC`` by ``ILI9341 DC``
+- Replaced ST7789 GPIO selection from ``SPI CS`` by ``ST7789 CS`` and ``SPI DC`` by ``ST7789 DC``
+- Replaced ILI9488 GPIO selection from ``SPI CS`` by ``ILI9488_CS``
+- Replaced EPaper29 GPIO selection from ``SPI CS`` by ``EPaper29 CS``
+- Replaced EPaper42 GPIO selection from ``SPI CS`` by ``EPaper42 CS``
+- Replaced SSD1351 GPIO selection from ``SPI CS`` by ``SSD1351 CS``
+- Replaced RA8876 GPIO selection from ``SPI CS`` by ``RA8876 CS``
 
 ### Changed
 - Logging from heap to stack freeing 700 bytes RAM
