@@ -105,7 +105,7 @@ void UFSInit(void) {
 #else
       ufsp = &SD;
 #endif
-      ufs_type = 1;
+      ufs_type = UFS_TSDC;
       return;
     }
   }
@@ -119,10 +119,17 @@ void UFSInit(void) {
 #else
   ufsp = &FFat;
   if (!FFat.begin(true)) {
+    if (!SPIFFS.begin(true)) {
+      return;
+    }
+    ufsp = &SPIFFS;
+    ufs_type = UFS_TSPIFFS;
     return;
   }
+
+
 #endif
-  ufs_type = 2;
+  ufs_type = UFS_TFAT;
   return;
 }
 
@@ -159,9 +166,14 @@ uint32_t result = 0;
 #endif
       break;
     case UFS_TSPIFFS:
+      if (sel == 0) {
+        result = SPIFFS.totalBytes();
+      } else {
+        result = SPIFFS.totalBytes() - SPIFFS.usedBytes();
+      }
       break;
   }
-  return result / 10000;
+  return result / 1000;
 }
 
 #if USE_LONG_FILE_NAMES>0
@@ -372,6 +384,10 @@ void UFS_ListDir(char *path, uint8_t depth) {
 uint8_t UFS_DownloadFile(char *file) {
   File download_file;
   WiFiClient download_Client;
+
+    AddLog_P(LOG_LEVEL_INFO, PSTR("file not found %s"),file);
+
+    if (*file == '/') file++;
 
     if (!ufsp->exists(file)) {
       AddLog_P(LOG_LEVEL_INFO, PSTR("file not found"));
