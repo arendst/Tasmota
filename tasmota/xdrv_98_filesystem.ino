@@ -53,6 +53,7 @@ driver enabled by
 #include <SD.h>
 #include <SDFAT.h>
 #else
+#include <LITTLEFS.h>
 #include <SD.h>
 #include "FFat.h"
 #include "FS.h"
@@ -78,7 +79,8 @@ uint8_t ufs_type;
 #define UFS_TNONE 0
 #define UFS_TSDC 1
 #define UFS_TFAT 2
-#define UFS_TSPIFFS 3
+#define UFS_TLFS 3
+#define UFS_TSPIFFS 4
 
 #ifndef UFS_SDCS
 #define UFS_SDCS 4
@@ -113,21 +115,24 @@ void UFSInit(void) {
 // if no success with sd card try flash fs
 #ifdef ESP8266
   ufsp = &LittleFS;
-  if (!fsp->begin()) {
+  if (!LittleFS.begin()) {
     return;
   }
 #else
   ufsp = &FFat;
   if (!FFat.begin(true)) {
-    if (!SPIFFS.begin(true)) {
+    ufsp = &LITTLEFS;
+    if (!LITTLEFS.begin(true)) {
+      ufsp = &SPIFFS;
+      if (!SPIFFS.begin(true)) {
+        return;
+      }
+      ufs_type = UFS_TSPIFFS;
       return;
     }
-    ufsp = &SPIFFS;
-    ufs_type = UFS_TSPIFFS;
+    ufs_type = UFS_TLFS;
     return;
   }
-
-
 #endif
   ufs_type = UFS_TFAT;
   return;
@@ -145,10 +150,11 @@ uint32_t result = 0;
         result = (SD.totalBytes() - SD.usedBytes());
       }
 #else
-      // currently no support on esp8266
+      // currently no size support on esp8266 sdcard
 #endif
       break;
-    case UFS_TFAT:
+
+    case UFS_TLFS:
 #ifdef ESP8266
       FSInfo64 fsinfo;
       ufsp->info64(fsinfo);
@@ -159,12 +165,23 @@ uint32_t result = 0;
       }
 #else
       if (sel == 0) {
+        result = LITTLEFS.totalBytes();
+      } else {
+        result = LITTLEFS.totalBytes() - LITTLEFS.usedBytes();
+      }
+#endif
+      break;
+
+    case UFS_TFAT:
+#ifdef ESP32
+      if (sel == 0) {
         result = FFat.totalBytes();
       } else {
         result = FFat.freeBytes();
       }
 #endif
       break;
+
     case UFS_TSPIFFS:
       if (sel == 0) {
         result = SPIFFS.totalBytes();
@@ -385,9 +402,7 @@ uint8_t UFS_DownloadFile(char *file) {
   File download_file;
   WiFiClient download_Client;
 
-    AddLog_P(LOG_LEVEL_INFO, PSTR("file not found %s"),file);
-
-    if (*file == '/') file++;
+    //AddLog_P(LOG_LEVEL_INFO, PSTR("file not found %s"),file);
 
     if (!ufsp->exists(file)) {
       AddLog_P(LOG_LEVEL_INFO, PSTR("file not found"));
