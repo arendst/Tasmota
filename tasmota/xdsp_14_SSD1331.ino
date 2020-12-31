@@ -63,10 +63,8 @@ void SSD1331_InitDriver() {
     // init renderer
     if  (PinUsed(GPIO_SSPI_CS) && PinUsed(GPIO_SSPI_DC) && PinUsed(GPIO_SSPI_MOSI) && PinUsed(GPIO_SSPI_SCLK) && PinUsed(GPIO_OLED_RESET)) {
       ssd1331  = new Adafruit_SSD1331(Pin(GPIO_SSPI_CS),Pin(GPIO_SSPI_DC),Pin(GPIO_SSPI_MOSI),Pin(GPIO_SSPI_SCLK),Pin(GPIO_OLED_RESET));
-    } else if (PinUsed(GPIO_SPI_CS) && PinUsed(GPIO_SPI_DC) && PinUsed(GPIO_OLED_RESET)) {
-      ssd1331  = new Adafruit_SSD1331(Pin(GPIO_SPI_CS),Pin(GPIO_SPI_DC),Pin(GPIO_OLED_RESET));
     }  else if (PinUsed(GPIO_SPI_CS) && PinUsed(GPIO_SPI_DC)) {
-      ssd1331  = new Adafruit_SSD1331(&SPI,Pin(GPIO_SPI_CS),Pin(GPIO_SPI_DC));
+      ssd1331  = new Adafruit_SSD1331(&SPI,Pin(GPIO_SPI_CS),Pin(GPIO_SPI_DC),Pin(GPIO_OLED_RESET));
     } else {
       return;
     }
@@ -104,7 +102,6 @@ void SSD1331PrintLog(void)
       uint8_t last_row = Settings.display_rows -1;
 
       renderer->clearDisplay();
-      renderer->setTextSize(Settings.display_size);
       renderer->setCursor(0,0);
       for (byte i = 0; i < last_row; i++) {
         strlcpy(disp_screen_buffer[i], disp_screen_buffer[i +1], disp_screen_buffer_cols);
