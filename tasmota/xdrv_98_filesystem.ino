@@ -61,7 +61,6 @@ driver enabled by
 #endif
 #include "FFat.h"
 #include "FS.h"
-#include "SPIFFS.h"
 #endif
 
 #define UFS_FILE_WRITE "w"
@@ -84,7 +83,6 @@ uint8_t ufs_type;
 #define UFS_TSDC 1
 #define UFS_TFAT 2
 #define UFS_TLFS 3
-#define UFS_TSPIFFS 4
 
 #ifndef UFS_SDCS
 #define UFS_SDCS 4
@@ -132,12 +130,6 @@ void UFSInit(void) {
     // ffat is second
     ufsp = &FFat;
     if (!FFat.begin(true)) {
-      // spiffs is last
-      ufsp = &SPIFFS;
-      if (!SPIFFS.begin(true)) {
-        return;
-      }
-      ufs_type = UFS_TSPIFFS;
       return;
     }
     ufs_type = UFS_TFAT;
@@ -194,13 +186,6 @@ uint32_t result = 0;
 #endif
       break;
 
-    case UFS_TSPIFFS:
-      if (sel == 0) {
-        result = SPIFFS.totalBytes();
-      } else {
-        result = SPIFFS.totalBytes() - SPIFFS.usedBytes();
-      }
-      break;
   }
   return result / 1000;
 }
