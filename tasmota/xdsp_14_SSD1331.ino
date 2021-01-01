@@ -1,7 +1,7 @@
 /*
   xdsp_14_SSD1331.ino - Display SSD1331 support for Tasmota
 
-  Copyright (C) 2020  Jeroen Vermeulen, Gerhard Mutz and Theo Arends
+  Copyright (C) 2021  Jeroen Vermeulen, Gerhard Mutz and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -35,6 +35,7 @@
 #include <Adafruit_SSD1331.h>
 #include <SPI.h>
 
+bool ssd1331_init_done = false;
 extern uint8_t *buffer;
 extern uint8_t color_type;
 Adafruit_SSD1331 *ssd1331;
@@ -42,11 +43,10 @@ Adafruit_SSD1331 *ssd1331;
 /*********************************************************************************************/
 
 void SSD1331_InitDriver() {
-  if (!Settings.display_model) {
-    Settings.display_model = XDSP_14;
-  }
+  if (PinUsed(GPIO_SSD1331_CS) && PinUsed(GPIO_SSD1331_DC) &&
+     ((TasmotaGlobal.soft_spi_enabled & SPI_MOSI) || (TasmotaGlobal.spi_enabled & SPI_MOSI))) {
 
-  if (XDSP_14 == Settings.display_model) {
+    Settings.display_model = XDSP_14;
 
     if (Settings.display_width != Adafruit_SSD1331::TFTWIDTH) {
       Settings.display_width = Adafruit_SSD1331::TFTWIDTH;
@@ -55,26 +55,30 @@ void SSD1331_InitDriver() {
       Settings.display_height = Adafruit_SSD1331::TFTHEIGHT;
     }
 
-    buffer=0;
+    buffer = 0;
 
     // default colors
     fg_color = SSD1331_WHITE;
     bg_color = SSD1331_BLACK;
 
+    int8_t reset = -1;
+    if (PinUsed(GPIO_OLED_RESET)) {
+      reset = Pin(GPIO_OLED_RESET);
+    }
+
     // init renderer
-    if  (PinUsed(GPIO_SSPI_CS) && PinUsed(GPIO_SSPI_DC) && PinUsed(GPIO_SSPI_MOSI) && PinUsed(GPIO_SSPI_SCLK) && PinUsed(GPIO_OLED_RESET)) {
-      ssd1331  = new Adafruit_SSD1331(Pin(GPIO_SSPI_CS),Pin(GPIO_SSPI_DC),Pin(GPIO_SSPI_MOSI),Pin(GPIO_SSPI_SCLK),Pin(GPIO_OLED_RESET));
-    }  else if (PinUsed(GPIO_SPI_CS) && PinUsed(GPIO_SPI_DC)) {
-      ssd1331  = new Adafruit_SSD1331(&SPI,Pin(GPIO_SPI_CS),Pin(GPIO_SPI_DC),Pin(GPIO_OLED_RESET));
-    } else {
-      return;
+    if (TasmotaGlobal.soft_spi_enabled) {
+      ssd1331 = new Adafruit_SSD1331(Pin(GPIO_SSD1331_CS), Pin(GPIO_SSD1331_DC), Pin(GPIO_SSPI_MOSI), Pin(GPIO_SSPI_SCLK), reset);
+    }
+    else if (TasmotaGlobal.spi_enabled) {
+      ssd1331 = new Adafruit_SSD1331(&SPI, Pin(GPIO_SSD1331_CS), Pin(GPIO_SSD1331_DC), reset);
     }
 
     delay(100);
     ssd1331->begin();
     renderer = ssd1331;
     // Rotation is currently broken, https://github.com/adafruit/Adafruit-SSD1331-OLED-Driver-Library-for-Arduino/issues/26
-    renderer->DisplayInit(DISPLAY_INIT_MODE,Settings.display_size,Settings.display_rotate,Settings.display_font);
+    renderer->DisplayInit(DISPLAY_INIT_MODE, Settings.display_size, Settings.display_rotate, Settings.display_font);
     renderer->dim(Settings.display_dimmer);
 
 #ifdef SHOW_SPLASH
@@ -86,13 +90,15 @@ void SSD1331_InitDriver() {
 #endif
 
     color_type = COLOR_COLOR;
+
+    ssd1331_init_done = true;
+    AddLog_P(LOG_LEVEL_INFO, PSTR("DSP: SSD1331"));
   }
 }
 
 #ifdef USE_DISPLAY_MODES1TO5
 
-void SSD1331PrintLog(bool withDateTime)
-{
+void SSD1331PrintLog(bool withDateTime) {
   disp_refresh--;
   if (!disp_refresh) {
     disp_refresh = Settings.display_refresh;
@@ -129,8 +135,7 @@ void SSD1331PrintLog(bool withDateTime)
   }
 }
 
-void SSD1331Time(void)
-{
+void SSD1331Time(void) {
   char line[12];
 
   renderer->clearDisplay();
@@ -142,8 +147,7 @@ void SSD1331Time(void)
   renderer->Updateframe();
 }
 
-void SSD1331Refresh(void)  // Every second
-{
+void SSD1331Refresh(void) {     // Every second
   if (Settings.display_mode) {  // Mode 0 is User text
     switch (Settings.display_mode) {
       case 1:  // Time
@@ -162,18 +166,18 @@ void SSD1331Refresh(void)  // Every second
 }
 
 #endif  // USE_DISPLAY_MODES1TO5
-/*********************************************************************************************/
+
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
-bool Xdsp14(uint8_t function)
-{
+
+bool Xdsp14(uint8_t function) {
   bool result = false;
 
   if (FUNC_DISPLAY_INIT_DRIVER == function) {
       SSD1331_InitDriver();
   }
-  else if (XDSP_14 == Settings.display_model) {
+  else if (ssd1331_init_done && (XDSP_14 == Settings.display_model)) {
     switch (function) {
       case FUNC_DISPLAY_MODEL:
         result = true;

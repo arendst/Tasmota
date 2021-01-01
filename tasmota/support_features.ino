@@ -686,8 +686,9 @@ void ResponseAppendFeatures(void)
 #if defined(USE_SPI) && defined(USE_DISPLAY) && defined(USE_DISPLAY_ST7789)
     feature7 |= 0x00080000;  // xdsp_12_ST7789.ino
 #endif
-
-//    feature7 |= 0x00100000;
+#if defined(USE_SPI) && defined(USE_DISPLAY) && defined(USE_DISPLAY_SSD1331)
+    feature7 |= 0x00100000;  // xdsp_14_SSD1331.ino
+#endif
 //    feature7 |= 0x00200000;
 //    feature7 |= 0x00400000;
 //    feature7 |= 0x00800000;

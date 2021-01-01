@@ -141,6 +141,7 @@ enum UserSelectablePins {
   GPIO_SSD1351_CS,
   GPIO_RA8876_CS,
   GPIO_ST7789_CS, GPIO_ST7789_DC,
+  GPIO_SSD1331_CS, GPIO_SSD1331_DC,
   GPIO_SENSOR_END };
 
 enum ProgramSelectablePins {
@@ -302,6 +303,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_SSD1351_CS "|"
   D_SENSOR_RA8876_CS "|"
   D_SENSOR_ST7789_CS "|" D_SENSOR_ST7789_DC "|"
+  D_SENSOR_SSD1331_CS "|" D_SENSOR_SSD1331_DC "|"
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -403,7 +405,11 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_DISPLAY_ST7789
   AGPIO(GPIO_ST7789_CS),
   AGPIO(GPIO_ST7789_DC),
-#endif  //f USE_DISPLAY_ST7789
+#endif  // USE_DISPLAY_ST7789
+#ifdef USE_DISPLAY_SSD1331
+  AGPIO(GPIO_SSD1331_CS),
+  AGPIO(GPIO_SSD1331_DC),
+#endif  // USE_DISPLAY_SSD1331
   AGPIO(GPIO_BACKLIGHT),      // Display backlight control
   AGPIO(GPIO_OLED_RESET),     // OLED Display Reset
 #endif

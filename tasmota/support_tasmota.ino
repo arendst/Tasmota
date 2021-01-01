@@ -1614,12 +1614,14 @@ void GpioInit(void)
                      ValidSpiPinUsed(GPIO_SSD1351_CS) ||
                      ValidSpiPinUsed(GPIO_RA8876_CS) ||
                      ValidSpiPinUsed(GPIO_ST7789_DC) ||  // ST7789 CS may be omitted so chk DC too
-                     ValidSpiPinUsed(GPIO_ST7789_CS)
+                     ValidSpiPinUsed(GPIO_ST7789_CS) ||
+                     ValidSpiPinUsed(GPIO_SSD1331_CS)
                     );
     bool valid_dc = (ValidSpiPinUsed(GPIO_SPI_DC) ||
                      ValidSpiPinUsed(GPIO_NRF24_DC) ||
                      ValidSpiPinUsed(GPIO_ILI9341_DC) ||
-                     ValidSpiPinUsed(GPIO_ST7789_DC)
+                     ValidSpiPinUsed(GPIO_ST7789_DC) ||
+                     ValidSpiPinUsed(GPIO_SSD1331_DC)
                     );
     // If SPI_CS and/or SPI_DC is used they must be valid
     TasmotaGlobal.spi_enabled = (valid_cs && valid_dc) ? SPI_MOSI_MISO : SPI_NONE;
@@ -1644,7 +1646,8 @@ void GpioInit(void)
       PinUsed(GPIO_SSD1351_CS) ||
       PinUsed(GPIO_RA8876_CS) ||
       PinUsed(GPIO_ST7789_DC) ||  // ST7789 CS may be omitted so chk DC too
-      PinUsed(GPIO_ST7789_CS)
+      PinUsed(GPIO_ST7789_CS) ||
+      PinUsed(GPIO_SSD1331_CS)
      ) {
     uint32_t spi_mosi = (PinUsed(GPIO_SPI_CLK) && PinUsed(GPIO_SPI_MOSI)) ? SPI_MOSI : SPI_NONE;
     uint32_t spi_miso = (PinUsed(GPIO_SPI_CLK) && PinUsed(GPIO_SPI_MISO)) ? SPI_MISO : SPI_NONE;
