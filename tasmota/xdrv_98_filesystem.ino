@@ -22,7 +22,7 @@ this driver adds universal file system support for
 ESP8266 (sd card or littlfs on  > 1 M devices with special linker file e.g. eagle.flash.4m2m.ld)
 (makes no sense on 1M devices without sd card)
 and
-ESP32 (sd card or fatfile system)
+ESP32 (sd card or little fs or sfatfile system)
 the sd card chip select is the standard SPI_CS or when not found SDCARD_CS_PIN
 initializes the FS System Pointer ufsp which can be used by all standard file system calls
 the only specific call is ufs_fsinfo() which gets the total size (0) and free size (1)
@@ -76,7 +76,7 @@ File ufs_upload_file;
 #define SDCARD_CS_PIN 4
 #endif
 
-// 0 = none, 1 = SD, 2 = Flash
+// 0 = none, 1 = SD, 2 = ffat, 3 = littlefs
 // spiffs should be obsolete
 uint8_t ufs_type;
 #define UFS_TNONE 0
@@ -94,10 +94,8 @@ void UFSInit(void) {
 #ifdef USE_SDCARD
 //  if (TasmotaGlobal.spi_enabled) {
   if (1) {
-    int8_t cs;
-    if (!PinUsed(GPIO_SPI_CS)) {
-      cs = SDCARD_CS_PIN;
-    } else {
+    int8_t cs = SDCARD_CS_PIN;
+    if (PinUsed(GPIO_SPI_CS)) {
       cs = Pin(GPIO_SPI_CS);
     }
 
@@ -138,6 +136,9 @@ void UFSInit(void) {
 
 uint32_t ufs_fsinfo(uint32_t sel) {
 uint32_t result = 0;
+#ifdef ESP8266
+FSInfo64 fsinfo;
+#endif
 
   switch (ufs_type) {
     case UFS_TSDC:
@@ -149,14 +150,18 @@ uint32_t result = 0;
         result = (SD.totalBytes() - SD.usedBytes());
       }
 #else
-      // currently no size support on esp8266 sdcard
+      ufsp->info64(fsinfo);
+      if (sel == 0) {
+        result = fsinfo.totalBytes;
+      } else {
+        result = (fsinfo.totalBytes - fsinfo.usedBytes);
+      }
 #endif
 #endif //USE_SDCARD
       break;
 
     case UFS_TLFS:
 #ifdef ESP8266
-      FSInfo64 fsinfo;
       ufsp->info64(fsinfo);
       if (sel == 0) {
         result = fsinfo.totalBytes;
