@@ -824,7 +824,7 @@ void Dump2log(void) {
   int16_t index=0,hcnt=0;
   uint32_t d_lastms;
   uint8_t dchars[16];
-  char log_data[LOGSZ];  // May be a lot smaller...
+  char log_data[128];
 
   //if (!SML_SAVAILABLE) return;
 
