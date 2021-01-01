@@ -413,4 +413,5 @@ uint8_t* FlashDirectAccess(void) {
 */
   return data;
 }
+
 #endif  // ESP32
