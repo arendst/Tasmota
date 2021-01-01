@@ -50,11 +50,15 @@ driver enabled by
 #ifdef ESP8266
 #include <LittleFS.h>
 #include <SPI.h>
+#ifdef USE_SDCARD
 #include <SD.h>
 #include <SDFAT.h>
+#endif
 #else
 #include <LITTLEFS.h>
+#ifdef USE_SDCARD
 #include <SD.h>
+#endif
 #include "FFat.h"
 #include "FS.h"
 #include "SPIFFS.h"
@@ -92,6 +96,8 @@ void UFSInit(void) {
   // 1. check for SD card
   // 2. check for littlefs or FAT
   // 3. check for SPIFFS obsolete
+
+#ifdef USE_SDCARD
 //  if (TasmotaGlobal.spi_enabled) {
   if (1) {
     int8_t cs;
@@ -111,6 +117,7 @@ void UFSInit(void) {
       return;
     }
   }
+#endif
 
 // if no success with sd card try flash fs
 #ifdef ESP8266
@@ -146,6 +153,7 @@ uint32_t result = 0;
 
   switch (ufs_type) {
     case UFS_TSDC:
+#ifdef USE_SDCARD
 #ifdef ESP32
       if (sel == 0) {
         result = SD.totalBytes();
@@ -154,6 +162,7 @@ uint32_t result = 0;
       }
 #else
       // currently no size support on esp8266 sdcard
+#endif
 #endif
       break;
 
