@@ -63,6 +63,7 @@ const uint8_t DISPLAY_LOG_ROWS = 32;           // Number of lines in display log
 #define D_CMND_DISP_TEXT "Text"
 #define D_CMND_DISP_WIDTH "Width"
 #define D_CMND_DISP_HEIGHT "Height"
+#define D_CMND_DISP_BLINKRATE "Blinkrate"
 
 enum XdspFunctions { FUNC_DISPLAY_INIT_DRIVER, FUNC_DISPLAY_INIT, FUNC_DISPLAY_EVERY_50_MSECOND, FUNC_DISPLAY_EVERY_SECOND,
                      FUNC_DISPLAY_MODEL, FUNC_DISPLAY_MODE, FUNC_DISPLAY_POWER,
@@ -70,19 +71,20 @@ enum XdspFunctions { FUNC_DISPLAY_INIT_DRIVER, FUNC_DISPLAY_INIT, FUNC_DISPLAY_E
                      FUNC_DISPLAY_DRAW_HLINE, FUNC_DISPLAY_DRAW_VLINE, FUNC_DISPLAY_DRAW_LINE,
                      FUNC_DISPLAY_DRAW_CIRCLE, FUNC_DISPLAY_FILL_CIRCLE,
                      FUNC_DISPLAY_DRAW_RECTANGLE, FUNC_DISPLAY_FILL_RECTANGLE,
-                     FUNC_DISPLAY_TEXT_SIZE, FUNC_DISPLAY_FONT_SIZE, FUNC_DISPLAY_ROTATION, FUNC_DISPLAY_DRAW_STRING };
+                     FUNC_DISPLAY_TEXT_SIZE, FUNC_DISPLAY_FONT_SIZE, FUNC_DISPLAY_ROTATION, FUNC_DISPLAY_DRAW_STRING,
+                     FUNC_DISPLAY_DIM, FUNC_DISPLAY_BLINKRATE };
 
 enum DisplayInitModes { DISPLAY_INIT_MODE, DISPLAY_INIT_PARTIAL, DISPLAY_INIT_FULL };
 
 const char kDisplayCommands[] PROGMEM = D_PRFX_DISPLAY "|"  // Prefix
   "|" D_CMND_DISP_MODEL "|" D_CMND_DISP_WIDTH "|" D_CMND_DISP_HEIGHT "|" D_CMND_DISP_MODE "|" D_CMND_DISP_REFRESH "|"
   D_CMND_DISP_DIMMER "|" D_CMND_DISP_COLS "|" D_CMND_DISP_ROWS "|" D_CMND_DISP_SIZE "|" D_CMND_DISP_FONT "|"
-  D_CMND_DISP_ROTATE "|" D_CMND_DISP_TEXT "|" D_CMND_DISP_ADDRESS ;
+  D_CMND_DISP_ROTATE "|" D_CMND_DISP_TEXT "|" D_CMND_DISP_ADDRESS "|" D_CMND_DISP_BLINKRATE ;
 
 void (* const DisplayCommand[])(void) PROGMEM = {
   &CmndDisplay, &CmndDisplayModel, &CmndDisplayWidth, &CmndDisplayHeight, &CmndDisplayMode, &CmndDisplayRefresh,
   &CmndDisplayDimmer, &CmndDisplayColumns, &CmndDisplayRows, &CmndDisplaySize, &CmndDisplayFont,
-  &CmndDisplayRotate, &CmndDisplayText, &CmndDisplayAddress };
+  &CmndDisplayRotate, &CmndDisplayText, &CmndDisplayAddress, &CmndDisplayBlinkrate };
 
 char *dsp_str;
 
@@ -1410,9 +1412,22 @@ void CmndDisplayDimmer(void)
     else if (!Settings.display_dimmer && disp_power) {
       ExecuteCommandPower(disp_device, POWER_OFF, SRC_DISPLAY);
     }
-    if (renderer) renderer->dim(Settings.display_dimmer);
+    if (renderer)
+      renderer->dim(Settings.display_dimmer);
+    else
+      XdspCall(FUNC_DISPLAY_DIM);
   }
   ResponseCmndNumber(Settings.display_dimmer);
+}
+
+void CmndDisplayBlinkrate(void)
+{
+  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 3)) {
+  
+    if (!renderer)
+      XdspCall(FUNC_DISPLAY_BLINKRATE);
+  }
+  ResponseCmndNumber(XdrvMailbox.payload);
 }
 
 void CmndDisplaySize(void)
