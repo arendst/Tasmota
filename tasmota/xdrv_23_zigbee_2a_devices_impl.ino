@@ -515,11 +515,15 @@ void Z_Device::jsonPublishAttrList(const char * json_prefix, const Z_attribute_l
     Response_P(PSTR("{\"%s\":"), json_prefix);
   }
   // What key do we use, shortaddr or name?
-  if (use_fname) {
-    Response_P(PSTR("%s{\"%s\":{"), TasmotaGlobal.mqtt_data, friendlyName);
-  } else {
-    Response_P(PSTR("%s{\"0x%04X\":{"), TasmotaGlobal.mqtt_data, shortaddr);
+  if (!Settings.flag5.zb_omit_json_addr) {
+    if (use_fname) {
+      Response_P(PSTR("%s{\"%s\":"), TasmotaGlobal.mqtt_data, friendlyName);
+    } else {
+      Response_P(PSTR("%s{\"0x%04X\":"), TasmotaGlobal.mqtt_data, shortaddr);
+    }
   }
+  ResponseAppend_P(PSTR("{"));
+
   // Add "Device":"0x...."
   ResponseAppend_P(PSTR("\"" D_JSON_ZIGBEE_DEVICE "\":\"0x%04X\","), shortaddr);
   // Add "Name":"xxx" if name is present
@@ -527,7 +531,11 @@ void Z_Device::jsonPublishAttrList(const char * json_prefix, const Z_attribute_l
     ResponseAppend_P(PSTR("\"" D_JSON_ZIGBEE_NAME "\":\"%s\","), EscapeJSONString(friendlyName).c_str());
   }
   // Add all other attributes
-  ResponseAppend_P(PSTR("%s}}"), attr_list.toString(false).c_str());
+  ResponseAppend_P(PSTR("%s}"), attr_list.toString(false).c_str());
+
+  if (!Settings.flag5.zb_omit_json_addr) {
+    ResponseAppend_P(PSTR("}"));
+  }
 
   if (!Settings.flag4.remove_zbreceived && !Settings.flag5.zb_received_as_subtopic) {
     ResponseAppend_P(PSTR("}"));
