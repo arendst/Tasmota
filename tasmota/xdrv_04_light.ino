@@ -1,7 +1,7 @@
 /*
   xdrv_04_light.ino - PWM, WS2812 and sonoff led support for Tasmota
 
-  Copyright (C) 2020  Theo Arends
+  Copyright (C) 2021  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -134,7 +134,7 @@ const char kLightCommands[] PROGMEM = "|"  // No prefix
   D_CMND_WHITE "|" D_CMND_CHANNEL "|" D_CMND_HSBCOLOR
   "|" D_CMND_CTRANGE
 #ifdef USE_LIGHT_VIRTUAL_CT
-  "|" D_CMND_VIRTUALCT 
+  "|" D_CMND_VIRTUALCT
 #endif // USE_LIGHT_VIRTUAL_CT
 #ifdef USE_LIGHT_PALETTE
   "|" D_CMND_PALETTE
@@ -2385,7 +2385,7 @@ bool calcGammaBulbs(uint16_t cur_col_10[5]) {
     }
   }
 #endif  // ESP8266
-  
+
   // Now see if we need to mix RGB and  White
   // Valid only for LST_RGBW, LST_RGBCW, SetOption105 1, and white is zero (see doc)
   if ((LST_RGBW <= Light.subtype) && (Settings.flag4.white_blend_mode) && (0 == cur_col_10[3]+cur_col_10[4])) {
@@ -2400,7 +2400,7 @@ bool calcGammaBulbs(uint16_t cur_col_10[5]) {
     white_bri10 = (white_bri10 > 1023) ? 1023 : white_bri10;    // max 1023
     rgbwwtable_applied_white = true;
   }
-  
+
 #ifdef USE_LIGHT_VIRTUAL_CT
   // compute virtual CT, which is suppsed to be compatible with white_blend_mode
   if (Light.virtual_ct && (!white_free_cw) && (LST_RGBW <= Light.subtype)) {        // any light with a white channel
@@ -2444,7 +2444,7 @@ bool calcGammaBulbs(uint16_t cur_col_10[5]) {
     cur_col_10[3] = white_bri10;       // simple case, we set the White level to the required brightness
   } else if ((LST_COLDWARM == Light.subtype) || (LST_RGBCW == Light.subtype)) {
     // if sum of both channels is > 255, then channels are probably uncorrelated
-    if (!white_free_cw) {      
+    if (!white_free_cw) {
       // then we split the total energy among the cold and warm leds
       cur_col_10[cw0+1] = changeUIntScale(ct_10, 0, 1023, 0, white_bri10);
       cur_col_10[cw0] = white_bri10 - cur_col_10[cw0+1];

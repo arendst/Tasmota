@@ -1,7 +1,7 @@
 /*
   xdrv_11_knx.ino - KNX IP Protocol support for Tasmota
 
-  Copyright (C) 2020  Adrian Scillato  (https://github.com/ascillato)
+  Copyright (C) 2021  Adrian Scillato  (https://github.com/ascillato)
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -590,7 +590,7 @@ void KNX_CB_Action(message_t const &msg, void *arg)
       else if ((chan->type >= KNX_SLOT1) && (chan->type <= KNX_SLOT5)) // KNX RX SLOTs (write command)
       {
         if (!toggle_inhibit) {
-          char command[35]; //4294967295.00  13chars + 17 
+          char command[35]; //4294967295.00  13chars + 17
           if (msg.data_len == 1) {
             // Command received
             snprintf_P(command, sizeof(command), PSTR("event KNXRX_CMND%d=%d"), ((chan->type) - KNX_SLOT1 + 1 ), msg.data[0]);

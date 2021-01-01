@@ -1,7 +1,7 @@
 /*
   ro-RO.h - localization for Romanian - Romania and Moldova for Tasmota
 
-  Copyright (C) 2020  Augustin Marti
+  Copyright (C) 2021  Augustin Marti
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by

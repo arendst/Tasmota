@@ -1,7 +1,7 @@
 /*
   de-DE.h - localization for German - Germany for Tasmota
 
-  Copyright (C) 2020  VinceMasuka
+  Copyright (C) 2021  VinceMasuka
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by

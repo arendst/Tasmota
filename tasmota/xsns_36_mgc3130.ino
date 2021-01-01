@@ -1,7 +1,7 @@
 /*
   xsns_36_MGC3130.ino - Support for I2C MGC3130 Electric Field Sensor for Tasmota
 
-  Copyright (C) 2020  Christian Baars & Theo Arends
+  Copyright (C) 2021  Christian Baars & Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -449,7 +449,7 @@ bool MGC3130_readData()
       if(i>4 && MGC_data.out.id != MGC3130_FW_VERSION){
         AddLog_P(LOG_LEVEL_DEBUG,PSTR("MGC3130: missed a packet, mismatch: %u"), _mismatch - 1);
         AddLogBuffer(LOG_LEVEL_DEBUG,MGC_data.buffer,i);
-      } 
+      }
     }
     _lastCounter = MGC_data.out.counter;
     success = true;

@@ -1,6 +1,6 @@
 /*
   fr-FR.h - localization for French - France for Tasmota
-  Copyright (C) 2020  Olivier Francais
+  Copyright (C) 2021  Olivier Francais
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License, or

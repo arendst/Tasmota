@@ -1,7 +1,7 @@
 /*
   xdrv_23_zigbee_converters.ino - zigbee support for Tasmota
 
-  Copyright (C) 2020  Theo Arends and Stephan Hadinger
+  Copyright (C) 2021  Theo Arends and Stephan Hadinger
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -1624,7 +1624,7 @@ void ZCLFrame::parseClusterSpecificCommand(Z_attribute_list& attr_list) {
 void ZCLFrame::syntheticAnalogValue(Z_attribute_list &attr_list, class Z_attribute &attr) {
   const char * modelId_c = zigbee_devices.getModelId(_srcaddr);  // null if unknown
   String modelId((char*) modelId_c);
-  
+
   if (modelId.startsWith(F("lumi.sensor_cube"))) {
     attr.setKeyId(0x000C, 0xFF55);    // change to AqaraRotate
   }

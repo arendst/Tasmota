@@ -1,7 +1,7 @@
 /*
   xdrv_27_Shutter[i].ino - Shutter/Blind support for Tasmota
 
-  Copyright (C) 2020  Stefan Bode
+  Copyright (C) 2021  Stefan Bode
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -984,7 +984,7 @@ void CmndShutterStop(void)
 
         AddLog_P(LOG_LEVEL_DEBUG, PSTR("SHT: Stop moving %d: dir: %d"), XdrvMailbox.index, Shutter[i].direction);
         Shutter[i].target_position = Shutter[i].real_position;
-      } 
+      }
       if (XdrvMailbox.command)
         ResponseCmndDone();
     } else {

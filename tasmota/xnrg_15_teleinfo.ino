@@ -1,7 +1,7 @@
 /*
   xnrg_15_Teleinfo.ino - Teleinfo support for Tasmota
 
-  Copyright (C) 2020 Charles-Henri Hallard
+  Copyright (C) 2021  Charles-Henri Hallard
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by

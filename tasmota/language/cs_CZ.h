@@ -1,7 +1,7 @@
 /*
   cs-CZ.h - localization for Czech with diacritics - Czech for Tasmota
 
-  Copyright (C) 2020  Vladimír Synek
+  Copyright (C) 2021  Vladimír Synek
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by

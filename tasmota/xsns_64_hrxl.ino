@@ -1,7 +1,7 @@
 /*
   xsns_64_hrxl.ino - MaxBotix HRXL serial interface
 
-  Copyright (C) 2020  Jon Little
+  Copyright (C) 2021  Jon Little
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by

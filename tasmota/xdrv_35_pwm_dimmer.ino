@@ -1,7 +1,7 @@
 /*
   xdrv_35_pwm_dimmer.ino - PWM Dimmer Switch support for Tasmota
 
-  Copyright (C) 2020  Paul C Diem
+  Copyright (C) 2021  Paul C Diem
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -99,7 +99,7 @@ void PWMModulePreInit(void)
   // determine how long a button is held before a reset command is executed. If SetOption32 is
   // still 5, change it to 40 (the default).
   if (Settings.param[P_HOLD_TIME] == 5) Settings.param[P_HOLD_TIME] = 40;
- 
+
   // Make sure the brightness level settings are sensible.
   if (!Settings.bri_power_on) Settings.bri_power_on = 128;
   if (!Settings.bri_preset_low) Settings.bri_preset_low = 10;
@@ -286,7 +286,7 @@ void PWMDimmerHandleButton(uint32_t button_index, bool pressed)
     uint32_t now = millis();
 
     // If the button was pressed and released but was not processed by support_button because the
-    // button interval had not elapsed, 
+    // button interval had not elapsed,
     if (button_unprocessed[button_index]) {
       mqtt_trigger = 5;
 #ifdef USE_PWM_DIMMER_REMOTE

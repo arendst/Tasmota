@@ -1,7 +1,7 @@
 /*
   xsns_26_lm75ad.ino - Support for I2C LM75AD Temperature Sensor
 
-  Copyright (C) 2020  Andre Thomas and Theo Arends
+  Copyright (C) 2021  Andre Thomas and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by

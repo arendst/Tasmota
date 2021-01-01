@@ -1,7 +1,7 @@
 /*
   support_device_groups.ino - device groups support for Tasmota
 
-  Copyright (C) 2020  Paul C Diem
+  Copyright (C) 2021  Paul C Diem
 
   Device group allow multiple devices to be in a group with power, light
   brightness, fade and speed settings and other module-specific settings

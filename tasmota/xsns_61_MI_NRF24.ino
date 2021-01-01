@@ -1,7 +1,7 @@
 /*
   xsns_61_MI_NRF24.ino - MI-BLE-sensors via nrf24l01 support for Tasmota
 
-  Copyright (C) 2020  Christian Baars and Theo Arends
+  Copyright (C) 2021  Christian Baars and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by

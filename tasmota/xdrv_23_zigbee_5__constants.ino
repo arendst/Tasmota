@@ -1,7 +1,7 @@
 /*
   xdrv_23_zigbee_5__constants.ino - zigbee support for Tasmota
 
-  Copyright (C) 2020  Theo Arends and Stephan Hadinger
+  Copyright (C) 2021  Theo Arends and Stephan Hadinger
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -40,30 +40,30 @@ def clean(s):
 def strings_to_pmem(arg):
     #strings = arg.split("\n")
     strings = re.findall(pat, arg)
-    
+
     # do some basic cleaning
     strings_cleaned = [ clean(x) for x in strings if clean(x) != ""]
-    
+
     # remove duplicates
     strings_cleaned = list(dict.fromkeys(strings_cleaned))
-    
+
     out_s = "const char Z_strings[] PROGMEM = \n"
     out_i = "enum Z_offsets {\n"
-    
+
     index = 0;
     # add a first empty string
     out_s += "  \"\\x00\"\n"
     out_i +=  "  Zo_ = " + str(index) + ",\n"
     index += 1
-    
+
     for s in strings_cleaned:
         out_s += "  \"" + s + "\" \"\\x00\"\n"
         out_i += "  Zo_" + s + " = " + str(index) + ",\n"
         index += len(s) + 1 # add one for null char
-    
+
     out_s += "  \"\\x00\";"
     out_i += "};"
-    
+
     return ("", out_s, out_i)
 
 
@@ -73,7 +73,7 @@ def strings_to_pmem(arg):
   DO NOT EDIT
 */
 
-const char Z_strings[] PROGMEM = 
+const char Z_strings[] PROGMEM =
   "\x00"
   "ZCLVersion" "\x00"
   "AppVersion" "\x00"

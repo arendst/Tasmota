@@ -1,7 +1,7 @@
 /*
   xdrv_23_zigbee_1z_libs.ino - zigbee support for Tasmota, JSON replacement libs
 
-  Copyright (C) 2020  Theo Arends and Stephan Hadinger
+  Copyright (C) 2021  Theo Arends and Stephan Hadinger
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -45,9 +45,9 @@ int strcmp_PP(const char *p1, const char *p2) {
 }
 
 /*********************************************************************************************\
- * 
+ *
  * Variables for Rules from last Zigbee message received
- * 
+ *
 \*********************************************************************************************/
 
 typedef struct Z_LastMessageVars {
@@ -65,9 +65,9 @@ uint16_t Z_GetLastCluster(void) { return gZbLastMessage.cluster; }
 uint8_t  Z_GetLastEndpoint(void) { return gZbLastMessage.endpoint; }
 
 /*********************************************************************************************\
- * 
+ *
  * Class for single attribute
- * 
+ *
 \*********************************************************************************************/
 
 enum class Za_type : uint8_t {
@@ -126,7 +126,7 @@ public:
     attr_type(0xFF),
     attr_multiplier(1)
     {};
-  
+
   Z_attribute(const Z_attribute & rhs) {
     deepCopy(rhs);
   }
@@ -213,9 +213,9 @@ protected:
 };
 
 /*********************************************************************************************\
- * 
+ *
  * Class for attribute ordered list
- * 
+ *
 \*********************************************************************************************/
 
 
@@ -309,9 +309,9 @@ Z_attribute & Z_attribute_list::addAttributePMEM(const char * name) {
 }
 
 /*********************************************************************************************\
- * 
+ *
  * Implementation for Z_attribute
- * 
+ *
 \*********************************************************************************************/
 
 // free any allocated memoruy for keys
@@ -719,9 +719,9 @@ void Z_attribute::deepCopy(const Z_attribute & rhs) {
 }
 
 /*********************************************************************************************\
- * 
+ *
  * Implementation for Z_attribute_list
- * 
+ *
 \*********************************************************************************************/
 // add a cluster/attr_id attribute at the end of the list
 Z_attribute & Z_attribute_list::addAttribute(uint16_t cluster, uint16_t attr_id, uint8_t suffix) {

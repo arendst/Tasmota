@@ -1,7 +1,7 @@
 /*
   support_esp32.ino - ESP32 specific code for Tasmota
 
-  Copyright (C) 2020  Theo Arends / Jörg Schüler-Maroldt
+  Copyright (C) 2021  Theo Arends / Jörg Schüler-Maroldt
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
