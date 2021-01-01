@@ -626,8 +626,9 @@
 //    #define USE_DISPLAY_EPAPER_29                // [DisplayModel 5] Enable e-paper 2.9 inch display (+19k code)
 //    #define USE_DISPLAY_EPAPER_42                // [DisplayModel 6] Enable e-paper 4.2 inch display
 //    #define USE_DISPLAY_ILI9488                  // [DisplayModel 8] [I2cDriver38] (Touch)
-//    #define USE_DISPLAY_SSD1351                  // [DisplayModel 9]
+//    #define USE_DISPLAY_SSD1351                  // [DisplayModel 9] Enable SSD1351 module
 //    #define USE_DISPLAY_RA8876                   // [DisplayModel 10] [I2cDriver39] (Touch)
+//    #define USE_DISPLAY_ST7789                   // [DisplayModel 12] Enable ST7789 module
 //  #define USE_RC522                              // Add support for MFRC522 13.56Mhz Rfid reader (+6k code)
 //    #define USE_RC522_DATA_FUNCTION              // Add support for reading data block content (+0k4 code)
 //    #define USE_RC522_TYPE_INFORMATION           // Add support for showing card type (+0k4 code)

@@ -58,7 +58,7 @@ bool st7789_init_done = false;
 /*********************************************************************************************/
 
 void ST7789_InitDriver(void) {
-  if (PinUsed(GPIO_ST7789_CS) && PinUsed(GPIO_ST7789_DC) &&
+  if (PinUsed(GPIO_ST7789_DC) &&  // This device does not need CS which breaks SPI bus usage
      ((TasmotaGlobal.soft_spi_enabled & SPI_MOSI) || (TasmotaGlobal.spi_enabled & SPI_MOSI))) {
 
     Settings.display_model = XDSP_12;
@@ -87,12 +87,17 @@ void ST7789_InitDriver(void) {
       reset = Pin(GPIO_OLED_RESET);
     }
 
+    int8_t cs = -1;
+    if (PinUsed(GPIO_ST7789_CS)) {
+      reset = Pin(GPIO_ST7789_CS);
+    }
+
     // init renderer, may use hardware spi
     if (TasmotaGlobal.soft_spi_enabled) {
-      st7789 = new Arduino_ST7789(Pin(GPIO_ST7789_DC), reset, Pin(GPIO_SSPI_MOSI), Pin(GPIO_SSPI_SCLK), Pin(GPIO_ST7789_CS), bppin);
+      st7789 = new Arduino_ST7789(Pin(GPIO_ST7789_DC), reset, Pin(GPIO_SSPI_MOSI), Pin(GPIO_SSPI_SCLK), cs, bppin);
     }
     else if (TasmotaGlobal.spi_enabled) {
-      st7789 = new Arduino_ST7789(Pin(GPIO_ST7789_DC), reset, Pin(GPIO_ST7789_CS), bppin);
+      st7789 = new Arduino_ST7789(Pin(GPIO_ST7789_DC), reset, cs, bppin);
     }
 
     st7789->init(Settings.display_width,Settings.display_height);

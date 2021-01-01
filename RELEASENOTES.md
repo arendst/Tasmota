@@ -70,6 +70,7 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - Support for Afrikaans language translations by Christiaan Heerze
 - Support for IR inverted leds using ``#define IR_SEND_INVERTED true`` [#10301](https://github.com/arendst/Tasmota/issues/10301)
 - Support for disabling 38kHz IR modulation using ``#define IR_SEND_USE_MODULATION false`` [#10301](https://github.com/arendst/Tasmota/issues/10301)
+- Support for SPI display driver for ST7789 TFT by Gerhard Mutz [#9037](https://github.com/arendst/Tasmota/issues/9037)
 - Basic support for ESP32 Odroid Go 16MB binary tasmota32-odroidgo.bin [#8630](https://github.com/arendst/Tasmota/issues/8630)
 
 ### Breaking Changed

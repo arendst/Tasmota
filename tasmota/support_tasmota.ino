@@ -1604,23 +1604,23 @@ void GpioInit(void)
 #ifdef USE_SPI
 #ifdef ESP8266
   if (!TasmotaGlobal.soft_spi_enabled) {
-    bool valid_cs = (ValidSpiGPIO(GPIO_SPI_CS) &&
-                     ValidSpiGPIO(GPIO_RC522_CS) &&
-                     ValidSpiGPIO(GPIO_NRF24_CS) &&
-                     ValidSpiGPIO(GPIO_ILI9341_CS) &&
-                     ValidSpiGPIO(GPIO_EPAPER29_CS) &&
-                     ValidSpiGPIO(GPIO_EPAPER42_CS) &&
-                     ValidSpiGPIO(GPIO_ILI9488_CS) &&
-                     ValidSpiGPIO(GPIO_SSD1351_CS) &&
-                     ValidSpiGPIO(GPIO_RA8876_CS) &&
-                     ValidSpiGPIO(GPIO_ST7789_CS)
+    bool valid_cs = (ValidSpiPinUsed(GPIO_SPI_CS) ||
+                     ValidSpiPinUsed(GPIO_RC522_CS) ||
+                     ValidSpiPinUsed(GPIO_NRF24_CS) ||
+                     ValidSpiPinUsed(GPIO_ILI9341_CS) ||
+                     ValidSpiPinUsed(GPIO_EPAPER29_CS) ||
+                     ValidSpiPinUsed(GPIO_EPAPER42_CS) ||
+                     ValidSpiPinUsed(GPIO_ILI9488_CS) ||
+                     ValidSpiPinUsed(GPIO_SSD1351_CS) ||
+                     ValidSpiPinUsed(GPIO_RA8876_CS) ||
+                     ValidSpiPinUsed(GPIO_ST7789_DC) ||  // ST7789 CS may be omitted so chk DC too
+                     ValidSpiPinUsed(GPIO_ST7789_CS)
                     );
-    bool valid_dc = (ValidSpiGPIO(GPIO_SPI_DC) &&
-                     ValidSpiGPIO(GPIO_NRF24_DC) &&
-                     ValidSpiGPIO(GPIO_ILI9341_DC) &&
-                     ValidSpiGPIO(GPIO_ST7789_DC)
+    bool valid_dc = (ValidSpiPinUsed(GPIO_SPI_DC) ||
+                     ValidSpiPinUsed(GPIO_NRF24_DC) ||
+                     ValidSpiPinUsed(GPIO_ILI9341_DC) ||
+                     ValidSpiPinUsed(GPIO_ST7789_DC)
                     );
-
     // If SPI_CS and/or SPI_DC is used they must be valid
     TasmotaGlobal.spi_enabled = (valid_cs && valid_dc) ? SPI_MOSI_MISO : SPI_NONE;
     if (TasmotaGlobal.spi_enabled) {
@@ -1643,6 +1643,7 @@ void GpioInit(void)
       PinUsed(GPIO_ILI9488_CS) ||
       PinUsed(GPIO_SSD1351_CS) ||
       PinUsed(GPIO_RA8876_CS) ||
+      PinUsed(GPIO_ST7789_DC) ||  // ST7789 CS may be omitted so chk DC too
       PinUsed(GPIO_ST7789_CS)
      ) {
     uint32_t spi_mosi = (PinUsed(GPIO_SPI_CLK) && PinUsed(GPIO_SPI_MOSI)) ? SPI_MOSI : SPI_NONE;

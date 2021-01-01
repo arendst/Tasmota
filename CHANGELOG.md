@@ -32,6 +32,7 @@ All notable changes to this project will be documented in this file.
 - Support for Afrikaans language translations by Christiaan Heerze
 - Support for IR inverted leds using ``#define IR_SEND_INVERTED true`` (#10301)
 - Support for disabling 38kHz IR modulation using ``#define IR_SEND_USE_MODULATION false`` (#10301)
+- Support for SPI display driver for ST7789 TFT by Gerhard Mutz (#9037)
 
 ### Changed
 - Logging from heap to stack freeing 700 bytes RAM

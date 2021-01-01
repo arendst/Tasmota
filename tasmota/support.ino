@@ -1503,12 +1503,11 @@ bool ValidGPIO(uint32_t pin, uint32_t gpio) {
   return (GPIO_USER == ValidPin(pin, BGPIO(gpio)));  // Only allow GPIO_USER pins
 }
 
-bool ValidSpiGPIO(uint32_t gpio) {
+bool ValidSpiPinUsed(uint32_t gpio) {
   // ESP8266: If SPI pin selected chk if it's not one of the three Hardware SPI pins (12..14)
-  bool result = true;  // Not used and therefore valid
-  uint32_t pin;
+  bool result = false;
   if (PinUsed(gpio)) {
-    pin = Pin(gpio);
+    uint32_t pin = Pin(gpio);
     result = ((pin < 12) || (pin > 14));
   }
   return result;

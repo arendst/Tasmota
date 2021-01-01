@@ -162,7 +162,7 @@ void ResponseAppendFeatures(void)
     feature2 |= 0x00000800;  // xdsp_05_epaper.ino
 #endif
 #if defined(USE_I2C) && defined(USE_DISPLAY) && defined(USE_DISPLAY_SH1106)
-    feature2 |= 0x00001000;  // xdsp_06_sh1106.ino
+    feature2 |= 0x00001000;  // xdsp_07_sh1106.ino
 #endif
 #ifdef USE_MP3_PLAYER
     feature2 |= 0x00002000;  // xdrv_14_mp3.ino
@@ -671,12 +671,21 @@ void ResponseAppendFeatures(void)
 #ifdef USE_FTC532
     feature7 |= 0x00004000;  // xdrv_47_ftc532.ino
 #endif
-//    feature7 |= 0x00008000;
-
-//    feature7 |= 0x00010000;
-//    feature7 |= 0x00020000;
-//    feature7 |= 0x00040000;
-//    feature7 |= 0x00080000;
+#if defined(USE_SPI) && defined(USE_DISPLAY) && defined(USE_DISPLAY_EPAPER_42)
+    feature7 |= 0x00008000;  // xdsp_06_epaper_42.ino
+#endif
+#if defined(USE_SPI) && defined(USE_DISPLAY) && defined(USE_DISPLAY_ILI9488)
+    feature7 |= 0x00010000;  // xdsp_08_ILI9488.ino
+#endif
+#if defined(USE_SPI) && defined(USE_DISPLAY) && defined(USE_DISPLAY_SSD1351)
+    feature7 |= 0x00020000;  // xdsp_09_SSD1351.ino
+#endif
+#if defined(USE_SPI) && defined(USE_DISPLAY) && defined(USE_DISPLAY_RA8876)
+    feature7 |= 0x00040000;  // xdsp_10_RA8876.ino
+#endif
+#if defined(USE_SPI) && defined(USE_DISPLAY) && defined(USE_DISPLAY_ST7789)
+    feature7 |= 0x00080000;  // xdsp_12_ST7789.ino
+#endif
 
 //    feature7 |= 0x00100000;
 //    feature7 |= 0x00200000;
