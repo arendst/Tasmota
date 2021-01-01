@@ -171,6 +171,7 @@ struct {
   char mqtt_topic[TOPSZ];                   // Composed MQTT topic
   char mqtt_data[MESSZ];                    // MQTT publish buffer and web page ajax buffer
   char log_buffer[LOG_BUFFER_SIZE];         // Web log buffer
+  void *log_buffer_mutex;                   // control, access to log buffer
 } TasmotaGlobal;
 
 #ifdef SUPPORT_IF_STATEMENT
