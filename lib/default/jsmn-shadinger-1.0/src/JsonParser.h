@@ -1,7 +1,7 @@
 /*
   JsonParser.h - lightweight JSON parser
 
-  Copyright (C) 2020  Stephan Hadinger
+  Copyright (C) 2021  Stephan Hadinger
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -228,7 +228,7 @@ public:
 
   // destructor
   ~JsonParser();
-  
+
   // set the current buffer for attribute access (i.e. set the global)
   void setCurrent(void) { k_current_json_buffer = _json; }
 
