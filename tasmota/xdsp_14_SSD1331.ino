@@ -28,8 +28,9 @@
 #define USE_TINY_FONT
 
 #define SSD1331_BLACK       0x0000      //   0,   0,   0
-#define SSD1331_RED         0xF800      // 255,   0,   0
 #define SSD1331_WHITE       0xFFFF      // 255, 255, 255
+#define SSD1331_RED         0xF800      // 255,   0,   0
+#define SSD1331_BLUE        0x001F      //   0,   0, 255
 
 #include <Adafruit_SSD1331.h>
 #include <SPI.h>
@@ -90,7 +91,7 @@ void SSD1331_InitDriver() {
 
 #ifdef USE_DISPLAY_MODES1TO5
 
-void SSD1331PrintLog(void)
+void SSD1331PrintLog(bool withDateTime)
 {
   disp_refresh--;
   if (!disp_refresh) {
@@ -103,6 +104,16 @@ void SSD1331PrintLog(void)
 
       renderer->clearDisplay();
       renderer->setCursor(0,0);
+
+      if (withDateTime) {
+        char line[17];
+        snprintf_P(line, sizeof(line), PSTR("%02d" D_HOUR_MINUTE_SEPARATOR "%02d %02d" D_MONTH_DAY_SEPARATOR "%02d" D_YEAR_MONTH_SEPARATOR "%04d"), RtcTime.hour, RtcTime.minute, RtcTime.day_of_month, RtcTime.month, RtcTime.year);  // [12:34 01-02-2018]
+        renderer->setTextColor(SSD1331_BLUE);
+        renderer->println(line);
+        renderer->setTextColor(fg_color);
+        last_row--;
+      }
+
       for (byte i = 0; i < last_row; i++) {
         strlcpy(disp_screen_buffer[i], disp_screen_buffer[i +1], disp_screen_buffer_cols);
         renderer->println(disp_screen_buffer[i]);
@@ -139,10 +150,12 @@ void SSD1331Refresh(void)  // Every second
         SSD1331Time();
         break;
       case 2:  // Local
-      case 3:  // Local
       case 4:  // Mqtt
-      case 5:  // Mqtt
-        SSD1331PrintLog();
+        SSD1331PrintLog(false);
+        break;
+      case 3:  // Local + Time
+      case 5:  // Mqtt + Time
+        SSD1331PrintLog(true);
         break;
     }
   }
