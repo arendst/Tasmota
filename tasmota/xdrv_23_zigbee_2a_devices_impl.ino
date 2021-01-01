@@ -511,7 +511,7 @@ void Z_Device::jsonPublishAttrList(const char * json_prefix, const Z_attribute_l
 
   TasmotaGlobal.mqtt_data[0] = 0; // clear string
   // Do we prefix with `ZbReceived`?
-  if (!Settings.flag4.remove_zbreceived && !Settings.flag5.zbreceived_as_subtopic) {
+  if (!Settings.flag4.remove_zbreceived && !Settings.flag5.zb_received_as_subtopic) {
     Response_P(PSTR("{\"%s\":"), json_prefix);
   }
   // What key do we use, shortaddr or name?
@@ -529,7 +529,7 @@ void Z_Device::jsonPublishAttrList(const char * json_prefix, const Z_attribute_l
   // Add all other attributes
   ResponseAppend_P(PSTR("%s}}"), attr_list.toString(false).c_str());
 
-  if (!Settings.flag4.remove_zbreceived && !Settings.flag5.zbreceived_as_subtopic) {
+  if (!Settings.flag4.remove_zbreceived && !Settings.flag5.zb_received_as_subtopic) {
     ResponseAppend_P(PSTR("}"));
   }
 
@@ -545,7 +545,7 @@ void Z_Device::jsonPublishAttrList(const char * json_prefix, const Z_attribute_l
       snprintf_P(subtopic, sizeof(subtopic), PSTR("%s/%04X"), TasmotaGlobal.mqtt_topic, shortaddr);
     }
     char stopic[TOPSZ];
-    if (Settings.flag5.zbreceived_as_subtopic)
+    if (Settings.flag5.zb_received_as_subtopic)
       GetTopic_P(stopic, TELE, subtopic, json_prefix);
     else
       GetTopic_P(stopic, TELE, subtopic, D_RSLT_SENSOR);
