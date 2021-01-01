@@ -373,28 +373,28 @@ void UFS_ListDir(char *path, uint8_t depth) {
       if (!*(pp + 1)) pp++;
       char *cp = name;
       // osx formatted disks contain a lot of stuff we dont want
-      if (ufs_reject((char*)ep)) goto fclose;
+      if (!ufs_reject((char*)ep)) {
 
-      for (uint8_t cnt = 0; cnt<depth; cnt++) {
-        *cp++ = '-';
-      }
-
-      sprintf(cp, format, ep);
-      if (entry.isDirectory()) {
-        snprintf_P(npath, sizeof(npath), UFS_FORM_SDC_HREF, WiFi.localIP().toString().c_str(), pp,ep);
-        WSContentSend_P(UFS_FORM_SDC_DIRd, npath,ep,name);
-        uint8_t plen = strlen(path);
-        if (plen>1) {
-          strcat(path, "/");
+        for (uint8_t cnt = 0; cnt<depth; cnt++) {
+          *cp++ = '-';
         }
-        strcat(path, ep);
-        UFS_ListDir(path, depth + 4);
-        path[plen] = 0;
-      } else {
+
+        sprintf(cp, format, ep);
+        if (entry.isDirectory()) {
+          snprintf_P(npath, sizeof(npath), UFS_FORM_SDC_HREF, WiFi.localIP().toString().c_str(), pp,ep);
+          WSContentSend_P(UFS_FORM_SDC_DIRd, npath,ep,name);
+          uint8_t plen = strlen(path);
+          if (plen>1) {
+            strcat(path, "/");
+          }
+          strcat(path, ep);
+          UFS_ListDir(path, depth + 4);
+          path[plen] = 0;
+        } else {
           snprintf_P(npath, sizeof(npath), UFS_FORM_SDC_HREF, WiFi.localIP().toString().c_str(), pp,ep);
           WSContentSend_P(UFS_FORM_SDC_DIRb, npath, ep, name, tstr, entry.size());
+        }
       }
-      fclose:
       entry.close();
     }
     dir.close();
@@ -404,8 +404,6 @@ void UFS_ListDir(char *path, uint8_t depth) {
 uint8_t UFS_DownloadFile(char *file) {
   File download_file;
   WiFiClient download_Client;
-
-    //AddLog_P(LOG_LEVEL_INFO, PSTR("file not found %s"),file);
 
     if (!ufsp->exists(file)) {
       AddLog_P(LOG_LEVEL_INFO, PSTR("file not found"));
@@ -457,6 +455,7 @@ uint8_t UFS_DownloadFile(char *file) {
         //  loop();
         //}
       }
+      delay(0);
     }
     download_file.close();
     download_Client.stop();
