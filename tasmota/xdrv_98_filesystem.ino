@@ -84,16 +84,12 @@ uint8_t ufs_type;
 #define UFS_TFAT 2
 #define UFS_TLFS 3
 
-#ifndef UFS_SDCS
-#define UFS_SDCS 4
-#endif
-
 void UFSInit(void) {
   ufs_type = 0;
   // check for fs options,
   // 1. check for SD card
   // 2. check for littlefs or FAT
-  // 3. check for SPIFFS obsolete
+
 
 #ifdef USE_SDCARD
 //  if (TasmotaGlobal.spi_enabled) {
@@ -115,7 +111,7 @@ void UFSInit(void) {
       return;
     }
   }
-#endif
+#endif // USE_SDCARD
 
 // if no success with sd card try flash fs
 #ifdef ESP8266
@@ -135,7 +131,7 @@ void UFSInit(void) {
     ufs_type = UFS_TFAT;
     return;
   }
-#endif
+#endif // ESP8266
   ufs_type = UFS_TLFS;
   return;
 }
@@ -155,7 +151,7 @@ uint32_t result = 0;
 #else
       // currently no size support on esp8266 sdcard
 #endif
-#endif
+#endif //USE_SDCARD
       break;
 
     case UFS_TLFS:
@@ -173,7 +169,7 @@ uint32_t result = 0;
       } else {
         result = LITTLEFS.totalBytes() - LITTLEFS.usedBytes();
       }
-#endif
+#endif // ESP8266
       break;
 
     case UFS_TFAT:
@@ -183,7 +179,7 @@ uint32_t result = 0;
       } else {
         result = FFat.freeBytes();
       }
-#endif
+#endif // ESP32
       break;
 
   }
@@ -473,7 +469,7 @@ void UFS_Upload(void) {
     }
   } else {
     Web.upload_error=1;
-    Webserver->send(500, "text/plain", "500: couldn't create file");
+    WSSend(500, CT_PLAIN, F("500: couldn't create file"));
   }
 }
 
