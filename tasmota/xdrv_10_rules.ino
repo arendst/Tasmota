@@ -2123,21 +2123,29 @@ void CmndRule(void)
 
 void CmndRuleTimer(void)
 {
-  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_RULE_TIMERS)) {
-    if (XdrvMailbox.data_len > 0) {
-#ifdef USE_EXPRESSION
-      float timer_set = evaluateExpression(XdrvMailbox.data, XdrvMailbox.data_len);
-      Rules.timer[XdrvMailbox.index -1] = (timer_set > 0) ? millis() + (1000 * timer_set) : 0;
-#else
-      Rules.timer[XdrvMailbox.index -1] = (XdrvMailbox.payload > 0) ? millis() + (1000 * XdrvMailbox.payload) : 0;
-#endif  // USE_EXPRESSION
-    }
-    ResponseClear();
-    for (uint32_t i = 0; i < MAX_RULE_TIMERS; i++) {
-      ResponseAppend_P(PSTR("%c\"T%d\":%d"), (i) ? ',' : '{', i +1, (Rules.timer[i]) ? (Rules.timer[i] - millis()) / 1000 : 0);
-    }
-    ResponseJsonEnd();
+  if (XdrvMailbox.index > MAX_RULE_TIMERS)
+    return;
+  int i = XdrvMailbox.index, max_i = XdrvMailbox.index;
+  if (0 == i) {
+    i = 1;
+    max_i = MAX_RULE_TIMERS;
   }
+#ifdef USE_EXPRESSION
+  float timer_set = evaluateExpression(XdrvMailbox.data, XdrvMailbox.data_len);
+  timer_set = (timer_set > 0) ? millis() + (1000 * timer_set) : 0;
+#else
+  unsigned long timer_set = (XdrvMailbox.payload > 0) ? millis() + (1000 * XdrvMailbox.payload) : 0;
+#endif  // USE_EXPRESSION
+  if (XdrvMailbox.data_len > 0) {
+    for ( ; i <= max_i ; ++i ) {
+      Rules.timer[i -1] = timer_set;
+    }
+  }
+  ResponseClear();
+  for (i = 0; i < MAX_RULE_TIMERS; i++) {
+    ResponseAppend_P(PSTR("%c\"T%d\":%d"), (i) ? ',' : '{', i +1, (Rules.timer[i]) ? (Rules.timer[i] - millis()) / 1000 : 0);
+  }
+  ResponseJsonEnd();
 }
 
 void CmndEvent(void)
