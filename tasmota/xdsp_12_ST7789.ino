@@ -89,7 +89,7 @@ void ST7789_InitDriver(void) {
 
     int8_t cs = -1;
     if (PinUsed(GPIO_ST7789_CS)) {
-      reset = Pin(GPIO_ST7789_CS);
+      cs = Pin(GPIO_ST7789_CS);
     }
 
     // init renderer, may use hardware spi
