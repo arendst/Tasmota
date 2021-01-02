@@ -1,7 +1,7 @@
 /*
   xdrv_47_ftc532.ino - FTC532 touch buttons support for Tasmota
 
-  Copyright (C) 2020 Peter Franck and Theo Arends
+  Copyright (C) 2021  Peter Franck and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by

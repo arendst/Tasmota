@@ -1,7 +1,7 @@
 /*
   xsns_68_windmeter.ino - Analog wind sensor support for Tasmota
 
-  Copyright (C) 2020  Matteo Albinola
+  Copyright (C) 2021  Matteo Albinola
   (inspired by great works of Thomas Eckerstorfer, Norbert Richter, Maarten Damen and Theo Arends)
 
   This program is free software: you can redistribute it and/or modify

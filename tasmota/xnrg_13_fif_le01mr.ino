@@ -1,7 +1,7 @@
 /*
   xnrg_13_fif_le01mr.ino - F&F LE-01MR energy meter with Modbus interface - support for Tasmota
 
-  Copyright (C) 2020  Przemyslaw Wistuba
+  Copyright (C) 2021  Przemyslaw Wistuba
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by

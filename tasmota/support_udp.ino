@@ -1,7 +1,7 @@
 /*
   support_udp.ino - Udp support for Tasmota
 
-  Copyright (C) 2020  Heiko Krupp and Theo Arends
+  Copyright (C) 2021  Heiko Krupp and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -158,13 +158,13 @@ void PollUdp(void)
 #ifdef USE_EMULATION_WEMO
           if (EMUL_WEMO == Settings.flag2.emulation) {
             if (strstr_P(packet_buffer, URN_BELKIN_DEVICE) != nullptr) {     // type1 echo dot 2g, echo 1g's
-              TickerMSearch.attach_ms(response_delay, WemoRespondToMSearch, 1);
+              TickerMSearch.once_ms(response_delay, WemoRespondToMSearch, 1);
               return;
             }
             else if ((strstr_P(packet_buffer, UPNP_ROOTDEVICE) != nullptr) ||  // type2 Echo 2g (echo & echo plus)
                     (strstr_P(packet_buffer, SSDPSEARCH_ALL) != nullptr) ||
                     (strstr_P(packet_buffer, SSDP_ALL) != nullptr)) {
-              TickerMSearch.attach_ms(response_delay, WemoRespondToMSearch, 2);
+              TickerMSearch.once_ms(response_delay, WemoRespondToMSearch, 2);
               return;
             }
           }
@@ -176,7 +176,7 @@ void PollUdp(void)
                 (strstr_P(packet_buffer, UPNP_ROOTDEVICE) != nullptr) ||
                 (strstr_P(packet_buffer, SSDPSEARCH_ALL) != nullptr) ||
                 (strstr_P(packet_buffer, SSDP_ALL) != nullptr)) {
-              TickerMSearch.attach_ms(response_delay, HueRespondToMSearch);
+              TickerMSearch.once_ms(response_delay, HueRespondToMSearch);
               return;
             }
           }

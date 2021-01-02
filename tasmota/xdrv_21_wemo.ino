@@ -1,7 +1,7 @@
 /*
   xdrv_21_wemo.ino - wemo support for Tasmota
 
-  Copyright (C) 2020  Heiko Krupp and Theo Arends
+  Copyright (C) 2021  Heiko Krupp and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#if defined(USE_WEBSERVER) && defined(USE_EMULATION) && defined (USE_EMULATION_WEMO_SINGLE)
+#if defined(USE_WEBSERVER) && defined(USE_EMULATION) && defined(USE_EMULATION_WEMO_SINGLE)
 /*********************************************************************************************\
  * Belkin WeMo emulation
 \*********************************************************************************************/
@@ -58,7 +58,6 @@ void WemoRespondToMSearch(int echo_type)
 {
   char message[TOPSZ];
 
-  TickerMSearch.detach();
   if (PortUdp.beginPacket(udp_remote_ip, udp_remote_port)) {
     char type[24];
     if (1 == echo_type) {              // type1 echo 1g & dot 2g

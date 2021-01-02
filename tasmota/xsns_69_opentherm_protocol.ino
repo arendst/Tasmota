@@ -1,7 +1,7 @@
 /*
   xsns_69_opentherm_protocol.ino - OpenTherm protocol support for Tasmota
 
-  Copyright (C) 2020 Yuriy Sannikov
+  Copyright (C) 2021  Yuriy Sannikov
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by

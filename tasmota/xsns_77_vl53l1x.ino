@@ -1,7 +1,7 @@
 /*
   xsns_77_vl53l1x.ino - VL53L1X sensor support for Tasmota
 
-  Copyright (C) 2020  Theo Arends, Rui Marinho and Johann Obermeier
+  Copyright (C) 2021  Theo Arends, Rui Marinho and Johann Obermeier
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by

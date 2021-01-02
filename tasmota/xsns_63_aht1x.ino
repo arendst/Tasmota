@@ -1,7 +1,7 @@
 /*
   xsns_63_AHT1x.ino - AHT10 I2C temperature and humidity sensor support for Tasmota
 
-  Copyright (C) 2020  Martin Wagner
+  Copyright (C) 2021  Martin Wagner
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by

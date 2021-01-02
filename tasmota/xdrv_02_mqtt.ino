@@ -1,7 +1,7 @@
 /*
   xdrv_02_mqtt.ino - mqtt support for Tasmota
 
-  Copyright (C) 2020  Theo Arends
+  Copyright (C) 2021  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -106,8 +106,7 @@ bool is_fingerprint_mono_value(uint8_t finger[20], uint8_t value) {
 }
 #endif  // USE_MQTT_TLS
 
-void MakeValidMqtt(uint32_t option, char* str)
-{
+void MakeValidMqtt(uint32_t option, char* str) {
 // option 0 = replace by underscore
 // option 1 = delete character
   uint32_t i = 0;
@@ -147,8 +146,7 @@ void MakeValidMqtt(uint32_t option, char* str)
 
 PubSubClient MqttClient;
 
-void MqttInit(void)
-{
+void MqttInit(void) {
 #ifdef USE_MQTT_TLS
   if ((8883 == Settings.mqtt_port) || (8884 == Settings.mqtt_port)) {
     // Turn on TLS for port 8883 (TLS) and 8884 (TLS, client certificate)
@@ -187,30 +185,25 @@ void MqttInit(void)
 #endif // USE_MQTT_TLS
 }
 
-bool MqttIsConnected(void)
-{
+bool MqttIsConnected(void) {
   return MqttClient.connected();
 }
 
-void MqttDisconnect(void)
-{
+void MqttDisconnect(void) {
   MqttClient.disconnect();
 }
 
-void MqttSubscribeLib(const char *topic)
-{
+void MqttSubscribeLib(const char *topic) {
   MqttClient.subscribe(topic);
   MqttClient.loop();  // Solve LmacRxBlk:1 messages
 }
 
-void MqttUnsubscribeLib(const char *topic)
-{
+void MqttUnsubscribeLib(const char *topic) {
   MqttClient.unsubscribe(topic);
   MqttClient.loop();  // Solve LmacRxBlk:1 messages
 }
 
-bool MqttPublishLib(const char* topic, bool retained)
-{
+bool MqttPublishLib(const char* topic, bool retained) {
   // If Prefix1 equals Prefix2 disable next MQTT subscription to prevent loop
   if (!strcmp(SettingsText(SET_MQTTPREFIX1), SettingsText(SET_MQTTPREFIX2))) {
     char *str = strstr(topic, SettingsText(SET_MQTTPREFIX1));
@@ -225,14 +218,15 @@ bool MqttPublishLib(const char* topic, bool retained)
   return result;
 }
 
+#ifdef DEBUG_TASMOTA_CORE
 void MqttDumpData(char* topic, char* data, uint32_t data_len) {
   char dump_data[data_len +1];
   memcpy(dump_data, data, sizeof(dump_data));  // Make another copy for removing optional control characters
-  AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_MQTT D_DATA_SIZE " %d, \"%s %s\""), data_len, topic, RemoveControlCharacter(dump_data));
+  DEBUG_CORE_LOG(PSTR(D_LOG_MQTT "Size %d, \"%s %s\""), data_len, topic, RemoveControlCharacter(dump_data));
 }
+#endif
 
-void MqttDataHandler(char* mqtt_topic, uint8_t* mqtt_data, unsigned int data_len)
-{
+void MqttDataHandler(char* mqtt_topic, uint8_t* mqtt_data, unsigned int data_len) {
 #ifdef USE_DEBUG_DRIVER
   ShowFreeMem(PSTR("MqttDataHandler"));
 #endif
@@ -256,9 +250,9 @@ void MqttDataHandler(char* mqtt_topic, uint8_t* mqtt_data, unsigned int data_len
   char data[data_len +1];
   memcpy(data, mqtt_data, sizeof(data));
 
-//  AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_MQTT D_DATA_SIZE " %d, \"%s %s\""), data_len, topic, data);
-//  if (LOG_LEVEL_DEBUG_MORE <= TasmotaGlobal.seriallog_level) { Serial.println(data); }
+#ifdef DEBUG_TASMOTA_CORE
   MqttDumpData(topic, data, data_len);  // Use a function to save stack space used by dump_data
+#endif
 
   // MQTT pre-processing
   XdrvMailbox.index = strlen(topic);
@@ -274,19 +268,16 @@ void MqttDataHandler(char* mqtt_topic, uint8_t* mqtt_data, unsigned int data_len
 
 /*********************************************************************************************/
 
-void MqttRetryCounter(uint8_t value)
-{
+void MqttRetryCounter(uint8_t value) {
   Mqtt.retry_counter = value;
 }
 
-void MqttSubscribe(const char *topic)
-{
+void MqttSubscribe(const char *topic) {
   AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_MQTT D_SUBSCRIBE_TO " %s"), topic);
   MqttSubscribeLib(topic);
 }
 
-void MqttUnsubscribe(const char *topic)
-{
+void MqttUnsubscribe(const char *topic) {
   AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_MQTT D_UNSUBSCRIBE_FROM " %s"), topic);
   MqttUnsubscribeLib(topic);
 }
@@ -307,8 +298,7 @@ void MqttPublishLoggingAsync(bool refresh) {
   }
 }
 
-void MqttPublish(const char* topic, bool retained)
-{
+void MqttPublish(const char* topic, bool retained) {
 #ifdef USE_DEBUG_DRIVER
   ShowFreeMem(PSTR("MqttPublish"));
 #endif
@@ -331,7 +321,7 @@ void MqttPublish(const char* topic, bool retained)
     }
   }
 
-  char log_data[LOGSZ];
+  char log_data[MAX_LOGSZ];
   snprintf_P(log_data, sizeof(log_data), PSTR("%s%s = %s"), slog_type, (Settings.flag.mqtt_enabled) ? topic : strrchr(topic,'/')+1, TasmotaGlobal.mqtt_data);  // SetOption3 - Enable MQTT
   if (strlen(log_data) >= (sizeof(log_data) - strlen(sretained) -1)) {
     log_data[sizeof(log_data) - strlen(sretained) -5] = '\0';
@@ -345,13 +335,11 @@ void MqttPublish(const char* topic, bool retained)
   }
 }
 
-void MqttPublish(const char* topic)
-{
+void MqttPublish(const char* topic) {
   MqttPublish(topic, false);
 }
 
-void MqttPublishPrefixTopic_P(uint32_t prefix, const char* subtopic, bool retained)
-{
+void MqttPublishPrefixTopic_P(uint32_t prefix, const char* subtopic, bool retained) {
 /* prefix 0 = cmnd using subtopic
  * prefix 1 = stat using subtopic
  * prefix 2 = tele using subtopic
@@ -399,29 +387,24 @@ void MqttPublishPrefixTopic_P(uint32_t prefix, const char* subtopic, bool retain
 #endif // USE_MQTT_AWS_IOT
 }
 
-void MqttPublishPrefixTopic_P(uint32_t prefix, const char* subtopic)
-{
+void MqttPublishPrefixTopic_P(uint32_t prefix, const char* subtopic) {
   MqttPublishPrefixTopic_P(prefix, subtopic, false);
 }
 
-void MqttPublishPrefixTopicRulesProcess_P(uint32_t prefix, const char* subtopic, bool retained)
-{
+void MqttPublishPrefixTopicRulesProcess_P(uint32_t prefix, const char* subtopic, bool retained) {
   MqttPublishPrefixTopic_P(prefix, subtopic, retained);
   XdrvRulesProcess();
 }
 
-void MqttPublishPrefixTopicRulesProcess_P(uint32_t prefix, const char* subtopic)
-{
+void MqttPublishPrefixTopicRulesProcess_P(uint32_t prefix, const char* subtopic) {
   MqttPublishPrefixTopicRulesProcess_P(prefix, subtopic, false);
 }
 
-void MqttPublishTeleSensor(void)
-{
+void MqttPublishTeleSensor(void) {
   MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);  // CMND_SENSORRETAIN
 }
 
-void MqttPublishPowerState(uint32_t device)
-{
+void MqttPublishPowerState(uint32_t device) {
   char stopic[TOPSZ];
   char scommand[33];
 
@@ -455,8 +438,7 @@ void MqttPublishPowerState(uint32_t device)
 #endif  // USE_SONOFF_IFAN
 }
 
-void MqttPublishAllPowerState(void)
-{
+void MqttPublishAllPowerState(void) {
   for (uint32_t i = 1; i <= TasmotaGlobal.devices_present; i++) {
     MqttPublishPowerState(i);
 #ifdef USE_SONOFF_IFAN
@@ -465,8 +447,7 @@ void MqttPublishAllPowerState(void)
   }
 }
 
-void MqttPublishPowerBlinkState(uint32_t device)
-{
+void MqttPublishPowerBlinkState(uint32_t device) {
   char scommand[33];
 
   if ((device < 1) || (device > TasmotaGlobal.devices_present)) {
@@ -480,13 +461,11 @@ void MqttPublishPowerBlinkState(uint32_t device)
 
 /*********************************************************************************************/
 
-uint16_t MqttConnectCount(void)
-{
+uint16_t MqttConnectCount(void) {
   return Mqtt.connect_count;
 }
 
-void MqttDisconnected(int state)
-{
+void MqttDisconnected(int state) {
   Mqtt.connected = false;
 
   Mqtt.retry_counter = Settings.mqtt_retry * Mqtt.retry_counter_delay;
@@ -500,8 +479,7 @@ void MqttDisconnected(int state)
   TasmotaGlobal.rules_flag.mqtt_disconnected = 1;
 }
 
-void MqttConnected(void)
-{
+void MqttConnected(void) {
   char stopic[TOPSZ];
 
   if (Mqtt.allowed) {
@@ -582,8 +560,7 @@ void MqttConnected(void)
   }
 }
 
-void MqttReconnect(void)
-{
+void MqttReconnect(void) {
   char stopic[TOPSZ];
 
   Mqtt.allowed = Settings.flag.mqtt_enabled;  // SetOption3 - Enable MQTT
@@ -708,37 +685,6 @@ void MqttReconnect(void)
         AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT "MFLN not supported by TLS server"));
       }
 #ifndef USE_MQTT_TLS_CA_CERT  // don't bother with fingerprints if using CA validation
-// **** Start patch Castellucci
-/*
-    // create a printable version of the fingerprint received
-    char buf_fingerprint[64];
-    ToHex_P((unsigned char *)tlsClient->getRecvPubKeyFingerprint(), 20, buf_fingerprint, sizeof(buf_fingerprint), ' ');
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_MQTT "Server fingerprint: %s"), buf_fingerprint);
-
-    if (learn_fingerprint1 || learn_fingerprint2) {
-      // we potentially need to learn the fingerprint just seen
-      bool fingerprint_matched = false;
-      const uint8_t *recv_fingerprint = tlsClient->getRecvPubKeyFingerprint();
-      if (0 == memcmp(recv_fingerprint, Settings.mqtt_fingerprint[0], 20)) {
-        fingerprint_matched = true;
-      }
-      if (0 == memcmp(recv_fingerprint, Settings.mqtt_fingerprint[1], 20)) {
-        fingerprint_matched = true;
-      }
-      if (!fingerprint_matched) {
-        // we had no match, so we need to change all fingerprints ready to learn
-        if (learn_fingerprint1) {
-          memcpy(Settings.mqtt_fingerprint[0], recv_fingerprint, 20);
-        }
-        if (learn_fingerprint2) {
-          memcpy(Settings.mqtt_fingerprint[1], recv_fingerprint, 20);
-        }
-        AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT "Fingerprint learned: %s"), buf_fingerprint);
-
-        SettingsSaveAll();  // save settings
-      }
-    }
-*/
       const uint8_t *recv_fingerprint = tlsClient->getRecvPubKeyFingerprint();
       // create a printable version of the fingerprint received
       char buf_fingerprint[64];
@@ -766,7 +712,6 @@ void MqttReconnect(void)
 
         SettingsSaveAll();  // save settings
       }
-  // **** End patch Castellucci
 #endif // !USE_MQTT_TLS_CA_CERT
     }
 #endif // USE_MQTT_TLS
@@ -781,8 +726,7 @@ void MqttReconnect(void)
   }
 }
 
-void MqttCheck(void)
-{
+void MqttCheck(void) {
   if (Settings.flag.mqtt_enabled) {  // SetOption3 - Enable MQTT
     if (!MqttIsConnected()) {
       TasmotaGlobal.global_state.mqtt_down = 1;
@@ -802,8 +746,7 @@ void MqttCheck(void)
   }
 }
 
-bool KeyTopicActive(uint32_t key)
-{
+bool KeyTopicActive(uint32_t key) {
   // key = 0 - Button topic
   // key = 1 - Switch topic
   key &= 1;
@@ -817,8 +760,7 @@ bool KeyTopicActive(uint32_t key)
 \*********************************************************************************************/
 
 #if defined(USE_MQTT_TLS) && !defined(USE_MQTT_TLS_CA_CERT)
-void CmndMqttFingerprint(void)
-{
+void CmndMqttFingerprint(void) {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= 2)) {
     char fingerprint[60];
     if ((XdrvMailbox.data_len > 0) && (XdrvMailbox.data_len < sizeof(fingerprint))) {
@@ -838,8 +780,7 @@ void CmndMqttFingerprint(void)
 }
 #endif
 
-void CmndMqttUser(void)
-{
+void CmndMqttUser(void) {
   if (XdrvMailbox.data_len > 0) {
     SettingsUpdateText(SET_MQTT_USER, (SC_CLEAR == Shortcut()) ? "" : (SC_DEFAULT == Shortcut()) ? MQTT_USER : XdrvMailbox.data);
     TasmotaGlobal.restart_flag = 2;
@@ -847,8 +788,7 @@ void CmndMqttUser(void)
   ResponseCmndChar(SettingsText(SET_MQTT_USER));
 }
 
-void CmndMqttPassword(void)
-{
+void CmndMqttPassword(void) {
   if (XdrvMailbox.data_len > 0) {
     SettingsUpdateText(SET_MQTT_PWD, (SC_CLEAR == Shortcut()) ? "" : (SC_DEFAULT == Shortcut()) ? MQTT_PASS : XdrvMailbox.data);
     ResponseCmndChar(SettingsText(SET_MQTT_PWD));
@@ -858,16 +798,14 @@ void CmndMqttPassword(void)
   }
 }
 
-void CmndMqttlog(void)
-{
+void CmndMqttlog(void) {
   if ((XdrvMailbox.payload >= LOG_LEVEL_NONE) && (XdrvMailbox.payload <= LOG_LEVEL_DEBUG_MORE)) {
     Settings.mqttlog_level = XdrvMailbox.payload;
   }
   ResponseCmndNumber(Settings.mqttlog_level);
 }
 
-void CmndMqttHost(void)
-{
+void CmndMqttHost(void) {
   if (XdrvMailbox.data_len > 0) {
     SettingsUpdateText(SET_MQTT_HOST, (SC_CLEAR == Shortcut()) ? "" : (SC_DEFAULT == Shortcut()) ? MQTT_HOST : XdrvMailbox.data);
     TasmotaGlobal.restart_flag = 2;
@@ -875,8 +813,7 @@ void CmndMqttHost(void)
   ResponseCmndChar(SettingsText(SET_MQTT_HOST));
 }
 
-void CmndMqttPort(void)
-{
+void CmndMqttPort(void) {
   if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload < 65536)) {
     Settings.mqtt_port = (1 == XdrvMailbox.payload) ? MQTT_PORT : XdrvMailbox.payload;
     TasmotaGlobal.restart_flag = 2;
@@ -884,8 +821,7 @@ void CmndMqttPort(void)
   ResponseCmndNumber(Settings.mqtt_port);
 }
 
-void CmndMqttRetry(void)
-{
+void CmndMqttRetry(void) {
   if ((XdrvMailbox.payload >= MQTT_RETRY_SECS) && (XdrvMailbox.payload < 32001)) {
     Settings.mqtt_retry = XdrvMailbox.payload;
     Mqtt.retry_counter = Settings.mqtt_retry;
@@ -893,8 +829,7 @@ void CmndMqttRetry(void)
   ResponseCmndNumber(Settings.mqtt_retry);
 }
 
-void CmndStateText(void)
-{
+void CmndStateText(void) {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_STATE_TEXT)) {
     if (!XdrvMailbox.usridx) {
       ResponseCmndAll(SET_STATE_TXT1, MAX_STATE_TEXT);
@@ -910,8 +845,7 @@ void CmndStateText(void)
   }
 }
 
-void CmndMqttClient(void)
-{
+void CmndMqttClient(void) {
   if (!XdrvMailbox.grpflg && (XdrvMailbox.data_len > 0)) {
     SettingsUpdateText(SET_MQTT_CLIENT, (SC_DEFAULT == Shortcut()) ? MQTT_CLIENT_ID : XdrvMailbox.data);
     TasmotaGlobal.restart_flag = 2;
@@ -919,8 +853,7 @@ void CmndMqttClient(void)
   ResponseCmndChar(SettingsText(SET_MQTT_CLIENT));
 }
 
-void CmndFullTopic(void)
-{
+void CmndFullTopic(void) {
   if (XdrvMailbox.data_len > 0) {
     MakeValidMqtt(1, XdrvMailbox.data);
     if (!strcmp(XdrvMailbox.data, TasmotaGlobal.mqtt_client)) { SetShortcutDefault(); }
@@ -936,8 +869,7 @@ void CmndFullTopic(void)
   ResponseCmndChar(SettingsText(SET_MQTT_FULLTOPIC));
 }
 
-void CmndPrefix(void)
-{
+void CmndPrefix(void) {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_MQTT_PREFIXES)) {
     if (!XdrvMailbox.usridx) {
       ResponseCmndAll(SET_MQTTPREFIX1, MAX_MQTT_PREFIXES);
@@ -953,14 +885,16 @@ void CmndPrefix(void)
   }
 }
 
-void CmndPublish(void)
-{
+void CmndPublish(void) {
+  // Allow wildcard character "#" as space replacement in topic (#10258)
+  // publish cmnd/theo#arends/power 2 ==> publish cmnd/theo arends/power 2
   if (XdrvMailbox.data_len > 0) {
     char *payload_part;
     char *mqtt_part = strtok_r(XdrvMailbox.data, " ", &payload_part);
     if (mqtt_part) {
       char stemp1[TOPSZ];
       strlcpy(stemp1, mqtt_part, sizeof(stemp1));
+      ReplaceChar(stemp1, '#', ' ');
       if ((payload_part != nullptr) && strlen(payload_part)) {
         strlcpy(TasmotaGlobal.mqtt_data, payload_part, sizeof(TasmotaGlobal.mqtt_data));
       } else {
@@ -973,8 +907,7 @@ void CmndPublish(void)
   }
 }
 
-void CmndGroupTopic(void)
-{
+void CmndGroupTopic(void) {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_GROUP_TOPICS)) {
     if (XdrvMailbox.data_len > 0) {
       uint32_t settings_text_index = (1 == XdrvMailbox.index) ? SET_MQTT_GRP_TOPIC : SET_MQTT_GRP_TOPIC2 + XdrvMailbox.index - 2;
@@ -1023,8 +956,7 @@ void CmndGroupTopic(void)
   }
 }
 
-void CmndTopic(void)
-{
+void CmndTopic(void) {
   if (!XdrvMailbox.grpflg && (XdrvMailbox.data_len > 0)) {
     MakeValidMqtt(0, XdrvMailbox.data);
     if (!strcmp(XdrvMailbox.data, TasmotaGlobal.mqtt_client)) { SetShortcutDefault(); }
@@ -1040,8 +972,7 @@ void CmndTopic(void)
   ResponseCmndChar(SettingsText(SET_MQTT_TOPIC));
 }
 
-void CmndButtonTopic(void)
-{
+void CmndButtonTopic(void) {
   if (!XdrvMailbox.grpflg && (XdrvMailbox.data_len > 0)) {
     MakeValidMqtt(0, XdrvMailbox.data);
     if (!strcmp(XdrvMailbox.data, TasmotaGlobal.mqtt_client)) { SetShortcutDefault(); }
@@ -1055,8 +986,7 @@ void CmndButtonTopic(void)
   ResponseCmndChar(SettingsText(SET_MQTT_BUTTON_TOPIC));
 }
 
-void CmndSwitchTopic(void)
-{
+void CmndSwitchTopic(void) {
   if (!XdrvMailbox.grpflg && (XdrvMailbox.data_len > 0)) {
     MakeValidMqtt(0, XdrvMailbox.data);
     if (!strcmp(XdrvMailbox.data, TasmotaGlobal.mqtt_client)) { SetShortcutDefault(); }
@@ -1070,8 +1000,7 @@ void CmndSwitchTopic(void)
   ResponseCmndChar(SettingsText(SET_MQTT_SWITCH_TOPIC));
 }
 
-void CmndButtonRetain(void)
-{
+void CmndButtonRetain(void) {
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 1)) {
     if (!XdrvMailbox.payload) {
       for (uint32_t i = 1; i <= MAX_KEYS; i++) {
@@ -1083,8 +1012,7 @@ void CmndButtonRetain(void)
   ResponseCmndStateText(Settings.flag.mqtt_button_retain);   // CMND_BUTTONRETAIN
 }
 
-void CmndSwitchRetain(void)
-{
+void CmndSwitchRetain(void) {
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 1)) {
     if (!XdrvMailbox.payload) {
       for (uint32_t i = 1; i <= MAX_SWITCHES; i++) {
@@ -1096,8 +1024,7 @@ void CmndSwitchRetain(void)
   ResponseCmndStateText(Settings.flag.mqtt_switch_retain);   // CMND_SWITCHRETAIN
 }
 
-void CmndPowerRetain(void)
-{
+void CmndPowerRetain(void) {
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 1)) {
     if (!XdrvMailbox.payload) {
       char stemp1[TOPSZ];
@@ -1116,8 +1043,7 @@ void CmndPowerRetain(void)
   ResponseCmndStateText(Settings.flag.mqtt_power_retain);      // CMND_POWERRETAIN
 }
 
-void CmndSensorRetain(void)
-{
+void CmndSensorRetain(void) {
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 1)) {
     if (!XdrvMailbox.payload) {
       ResponseClear();

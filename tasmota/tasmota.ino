@@ -1,7 +1,7 @@
 /*
   tasmota.ino - Tasmota firmware for iTead Sonoff, Wemos and NodeMCU hardware
 
-  Copyright (C) 2020  Theo Arends
+  Copyright (C) 2021  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -89,6 +89,7 @@ struct {
   uint32_t log_buffer_pointer;              // Index in log buffer
   uint32_t uptime;                          // Counting every second until 4294967295 = 130 year
   GpioOptionABits gpio_optiona;             // GPIO Option_A flags
+  void *log_buffer_mutex;                   // Control access to log buffer
 
   power_t power;                            // Current copy of Settings.power
   power_t rel_inverted;                     // Relay inverted flag (1 = (0 = On, 1 = Off))
@@ -119,8 +120,6 @@ struct {
   bool blinkstate;                          // LED state
   bool pwm_present;                         // Any PWM channel configured with SetOption15 0
   bool i2c_enabled;                         // I2C configured
-  bool spi_enabled;                         // SPI configured
-  bool soft_spi_enabled;                    // Software SPI configured
   bool ntp_force_sync;                      // Force NTP sync
   bool is_8285;                             // Hardware device ESP8266EX (0) or ESP8285 (1)
   bool skip_light_fade;                     // Temporarily skip light fading
@@ -128,6 +127,8 @@ struct {
   bool module_changed;                      // Indicate module changed since last restart
 
   StateBitfield global_state;               // Global states (currently Wifi and Mqtt) (8 bits)
+  uint8_t spi_enabled;                      // SPI configured
+  uint8_t soft_spi_enabled;                 // Software SPI configured
   uint8_t blinks;                           // Number of LED blinks
   uint8_t restart_flag;                     // Tasmota restart flag
   uint8_t ota_state_flag;                   // OTA state flag

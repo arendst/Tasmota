@@ -3,7 +3,7 @@
   - Mostly compatible with Arduino WiFi shield library and standard
     WiFiClient/ServerSecure (except for certificate handling).
 
-  Copyright (c) 2018 Earle F. Philhower, III
+  Copyright (C) 2021  Earle F. Philhower, III
 
   This library is free software; you can redistribute it and/or
   modify it under the terms of the GNU Lesser General Public
@@ -57,8 +57,8 @@ extern "C" {
 #include "coredecls.h"
 #define LOG_HEAP_SIZE(a) _Log_heap_size(a)
 void _Log_heap_size(const char *msg) {
-	register uint32_t *sp asm("a1");
-	int freestack = 4 * (sp - g_pcont->stack);
+  register uint32_t *sp asm("a1");
+  int freestack = 4 * (sp - g_pcont->stack);
   Serial.printf("%s %d, Fragmentation=%d, Thunkstack=%d, Free stack=%d, FreeContStack=%d\n",
                 msg, ESP.getFreeHeap(), ESP.getHeapFragmentation(), stack_thunk_light_get_max_usage(),
                 freestack, ESP.getFreeContStack());
@@ -98,60 +98,60 @@ make_stack_thunk_light(br_ssl_engine_sendrec_buf);
 // unless the Thunk was initialized. Thanks to AES128 GCM, we can keep
 // symetric processing on the stack
 void min_br_ssl_engine_recvapp_ack(br_ssl_engine_context *cc, size_t len) {
-	if (stack_thunk_light_get_refcnt()) {
-		return thunk_light_br_ssl_engine_recvapp_ack(cc, len);
-	} else {
-		return br_ssl_engine_recvapp_ack(cc, len);
-	}
+  if (stack_thunk_light_get_refcnt()) {
+    return thunk_light_br_ssl_engine_recvapp_ack(cc, len);
+  } else {
+    return br_ssl_engine_recvapp_ack(cc, len);
+  }
 }
 unsigned char *min_br_ssl_engine_recvapp_buf(const br_ssl_engine_context *cc, size_t *len) {
-	if (stack_thunk_light_get_refcnt()) {
-		return thunk_light_br_ssl_engine_recvapp_buf(cc, len);
-	} else {
-		return br_ssl_engine_recvapp_buf(cc, len);
-	}
+  if (stack_thunk_light_get_refcnt()) {
+    return thunk_light_br_ssl_engine_recvapp_buf(cc, len);
+  } else {
+    return br_ssl_engine_recvapp_buf(cc, len);
+  }
 }
 void min_br_ssl_engine_recvrec_ack(br_ssl_engine_context *cc, size_t len) {
-	if (stack_thunk_light_get_refcnt()) {
-		return thunk_light_br_ssl_engine_recvrec_ack(cc, len);
-	} else {
-		return br_ssl_engine_recvrec_ack(cc, len);
-	}
+  if (stack_thunk_light_get_refcnt()) {
+    return thunk_light_br_ssl_engine_recvrec_ack(cc, len);
+  } else {
+    return br_ssl_engine_recvrec_ack(cc, len);
+  }
 }
 unsigned char *min_br_ssl_engine_recvrec_buf(const br_ssl_engine_context *cc, size_t *len) {
-	if (stack_thunk_light_get_refcnt()) {
-		return thunk_light_br_ssl_engine_recvrec_buf(cc, len);
-	} else {
-		return br_ssl_engine_recvrec_buf(cc, len);
-	}
+  if (stack_thunk_light_get_refcnt()) {
+    return thunk_light_br_ssl_engine_recvrec_buf(cc, len);
+  } else {
+    return br_ssl_engine_recvrec_buf(cc, len);
+  }
 }
 void min_br_ssl_engine_sendapp_ack(br_ssl_engine_context *cc, size_t len) {
-	if (stack_thunk_light_get_refcnt()) {
-		return thunk_light_br_ssl_engine_sendapp_ack(cc, len);
-	} else {
-		return br_ssl_engine_sendapp_ack(cc, len);
-	}
+  if (stack_thunk_light_get_refcnt()) {
+    return thunk_light_br_ssl_engine_sendapp_ack(cc, len);
+  } else {
+    return br_ssl_engine_sendapp_ack(cc, len);
+  }
 }
 unsigned char *min_br_ssl_engine_sendapp_buf(const br_ssl_engine_context *cc, size_t *len) {
-	if (stack_thunk_light_get_refcnt()) {
-		return thunk_light_br_ssl_engine_sendapp_buf(cc, len);
-	} else {
-		return br_ssl_engine_sendapp_buf(cc, len);
-	}
+  if (stack_thunk_light_get_refcnt()) {
+    return thunk_light_br_ssl_engine_sendapp_buf(cc, len);
+  } else {
+    return br_ssl_engine_sendapp_buf(cc, len);
+  }
 }
 void min_br_ssl_engine_sendrec_ack(br_ssl_engine_context *cc, size_t len) {
-	if (stack_thunk_light_get_refcnt()) {
-		return thunk_light_br_ssl_engine_sendrec_ack(cc, len);
-	} else {
-		return br_ssl_engine_sendrec_ack(cc, len);
-	}
+  if (stack_thunk_light_get_refcnt()) {
+    return thunk_light_br_ssl_engine_sendrec_ack(cc, len);
+  } else {
+    return br_ssl_engine_sendrec_ack(cc, len);
+  }
 }
 unsigned char *min_br_ssl_engine_sendrec_buf(const br_ssl_engine_context *cc, size_t *len) {
-	if (stack_thunk_light_get_refcnt()) {
-		return thunk_light_br_ssl_engine_sendrec_buf(cc, len);
-	} else {
-		return br_ssl_engine_sendrec_buf(cc, len);
-	}
+  if (stack_thunk_light_get_refcnt()) {
+    return thunk_light_br_ssl_engine_sendrec_buf(cc, len);
+  } else {
+    return br_ssl_engine_sendrec_buf(cc, len);
+  }
 }
 
 // Use min_ instead of original thunk_
@@ -176,7 +176,7 @@ namespace BearSSL {
 
 void WiFiClientSecure_light::_clear() {
   // TLS handshake may take more than the 5 second default timeout
-  _timeout = 10000;   // 10 seconds max, it should never go over 6 seconds
+  _timeout = 10000; // 10 seconds max, it should never go over 6 seconds
 
   _sc = nullptr;
   _ctx_present = false;
@@ -185,17 +185,17 @@ void WiFiClientSecure_light::_clear() {
   _iobuf_out = nullptr;
   setBufferSizes(1024, 1024); // reasonable minimum
   _handshake_done = false;
-	_last_error = 0;
+  _last_error = 0;
   _recvapp_buf = nullptr;
   _recvapp_len = 0;
-	_fingerprint_any = true;		// by default accept all fingerprints
-	_fingerprint1 = nullptr;
-	_fingerprint2 = nullptr;
-	_chain_P = nullptr;
-	_sk_ec_P = nullptr;
-	_ta_P = nullptr;
+  _fingerprint_any = true; // by default accept all fingerprints
+  _fingerprint1 = nullptr;
+  _fingerprint2 = nullptr;
+  _chain_P = nullptr;
+  _sk_ec_P = nullptr;
+  _ta_P = nullptr;
   _ta_size = 0;
-	_max_thunkstack_use = 0;
+  _max_thunkstack_use = 0;
 }
 
 // Constructor
@@ -221,24 +221,24 @@ WiFiClientSecure_light::~WiFiClientSecure_light() {
 void WiFiClientSecure_light::allocateBuffers(void) {
   // We prefer to allocate all buffers at start, rather than lazy allocation and deallocation
   // in the long run it avoids heap fragmentation and improves stability
-	LOG_HEAP_SIZE("allocateBuffers before");
+  LOG_HEAP_SIZE("allocateBuffers before");
   _sc = std::make_shared<br_ssl_client_context>();
-	LOG_HEAP_SIZE("allocateBuffers ClientContext");
+  LOG_HEAP_SIZE("allocateBuffers ClientContext");
   _iobuf_in = std::shared_ptr<unsigned char>(new unsigned char[_iobuf_in_size], std::default_delete<unsigned char[]>());
   _iobuf_out = std::shared_ptr<unsigned char>(new unsigned char[_iobuf_out_size], std::default_delete<unsigned char[]>());
-	LOG_HEAP_SIZE("allocateBuffers after");
+  LOG_HEAP_SIZE("allocateBuffers after");
 }
 
 void WiFiClientSecure_light::setClientECCert(const br_x509_certificate *cert, const br_ec_private_key *sk,
-																					unsigned allowed_usages, unsigned cert_issuer_key_type) {
-	_chain_P = cert;
-	_sk_ec_P = sk;
+                                          unsigned allowed_usages, unsigned cert_issuer_key_type) {
+  _chain_P = cert;
+  _sk_ec_P = sk;
   _allowed_usages = allowed_usages;
   _cert_issuer_key_type = cert_issuer_key_type;
 }
 
 void WiFiClientSecure_light::setTrustAnchor(const br_x509_trust_anchor *ta, size_t ta_size) {
-	_ta_P = ta;
+  _ta_P = ta;
   _ta_size = ta_size;
 }
 
@@ -271,9 +271,9 @@ bool WiFiClientSecure_light::flush(unsigned int maxWaitMs) {
 
 int WiFiClientSecure_light::connect(IPAddress ip, uint16_t port) {
   DEBUG_BSSL("connect(%s,%d)", ip.toString().c_str(), port);
-	clearLastError();
+  clearLastError();
   if (!WiFiClient::connect(ip, port)) {
-		setLastError(ERR_TCP_CONNECT);
+    setLastError(ERR_TCP_CONNECT);
     return 0;
   }
   return _connectSSL(nullptr);
@@ -282,19 +282,19 @@ int WiFiClientSecure_light::connect(IPAddress ip, uint16_t port) {
 int WiFiClientSecure_light::connect(const char* name, uint16_t port) {
   DEBUG_BSSL("connect(%s,%d)\n", name, port);
   IPAddress remote_addr;
-	clearLastError();
+  clearLastError();
   if (!WiFi.hostByName(name, remote_addr)) {
     DEBUG_BSSL("connect: Name loopup failure\n");
-		setLastError(ERR_CANT_RESOLVE_IP);
+    setLastError(ERR_CANT_RESOLVE_IP);
     return 0;
   }
   DEBUG_BSSL("connect(%s,%d)\n", remote_addr.toString().c_str(), port);
   if (!WiFiClient::connect(remote_addr, port)) {
     DEBUG_BSSL("connect: Unable to connect TCP socket\n");
-		_last_error = ERR_TCP_CONNECT;
+    _last_error = ERR_TCP_CONNECT;
     return 0;
   }
-	LOG_HEAP_SIZE("Before calling _connectSSL");
+  LOG_HEAP_SIZE("Before calling _connectSSL");
   return _connectSSL(name);
 }
 
@@ -355,7 +355,7 @@ size_t WiFiClientSecure_light::_write(const uint8_t *buf, size_t size, bool pmem
     }
   } while (size);
 
-	LOG_HEAP_SIZE("_write");
+  LOG_HEAP_SIZE("_write");
   return sent_bytes;
 }
 
@@ -399,7 +399,7 @@ int WiFiClientSecure_light::read(uint8_t *buf, size_t size) {
   int avail = available();
   bool conn = connected();
   if (!avail && conn) {
-    return 0;  // We're still connected, but nothing to read
+    return 0; // We're still connected, but nothing to read
   }
   if (!avail && !conn) {
     DEBUG_BSSL("read: Not connected, none left available\n");
@@ -434,7 +434,7 @@ int WiFiClientSecure_light::read() {
 
 int WiFiClientSecure_light::available() {
   if (_recvapp_buf) {
-    return _recvapp_len;  // Anything from last call?
+    return _recvapp_len; // Anything from last call?
   }
   _recvapp_buf = nullptr;
   _recvapp_len = 0;
@@ -443,7 +443,7 @@ int WiFiClientSecure_light::available() {
   }
   int st = br_ssl_engine_current_state(_eng);
   if (st == BR_SSL_CLOSED) {
-    return 0;  // Nothing leftover, SSL is closed
+    return 0; // Nothing leftover, SSL is closed
   }
   if (st & BR_SSL_RECVAPP) {
     _recvapp_buf = br_ssl_engine_recvapp_buf(_eng, &_recvapp_len);
@@ -620,24 +620,24 @@ static uint8_t htoi (unsigned char c)
 
 extern "C" {
 
-	// see https://stackoverflow.com/questions/6357031/how-do-you-convert-a-byte-array-to-a-hexadecimal-string-in-c
-	void tohex(unsigned char * in, size_t insz, char * out, size_t outsz) {
-		unsigned char * pin = in;
-		static const char * hex = "0123456789ABCDEF";
-		char * pout = out;
-		for(; pin < in+insz; pout +=3, pin++){
-			pout[0] = hex[(*pin>>4) & 0xF];
-			pout[1] = hex[ *pin     & 0xF];
-			pout[2] = ':';
-			if (pout + 3 - out > outsz){
-				/* Better to truncate output string than overflow buffer */
-				/* it would be still better to either return a status */
-				/* or ensure the target buffer is large enough and it never happen */
-				break;
-			}
-		}
-		pout[-1] = 0;
-	}
+  // see https://stackoverflow.com/questions/6357031/how-do-you-convert-a-byte-array-to-a-hexadecimal-string-in-c
+  void tohex(unsigned char * in, size_t insz, char * out, size_t outsz) {
+    unsigned char * pin = in;
+    static const char * hex = "0123456789ABCDEF";
+    char * pout = out;
+    for(; pin < in+insz; pout +=3, pin++){
+      pout[0] = hex[(*pin>>4) & 0xF];
+      pout[1] = hex[ *pin     & 0xF];
+      pout[2] = ':';
+      if (pout + 3 - out > outsz){
+        /* Better to truncate output string than overflow buffer */
+        /* it would be still better to either return a status */
+        /* or ensure the target buffer is large enough and it never happen */
+        break;
+      }
+    }
+    pout[-1] = 0;
+  }
 
 
   // BearSSL doesn't define a true insecure decoder, so we make one ourselves
@@ -648,12 +648,12 @@ extern "C" {
   // Private x509 decoder state
   struct br_x509_pubkeyfingerprint_context {
     const br_x509_class *vtable;
-    bool done_cert;             // did we parse the first cert already?
-		bool fingerprint_all;
-		uint8_t *pubkey_recv_fingerprint;
+    bool done_cert;               // did we parse the first cert already?
+    bool fingerprint_all;
+    uint8_t *pubkey_recv_fingerprint;
     const uint8_t *fingerprint1;
     const uint8_t *fingerprint2;
-    unsigned usages;            // pubkey usage
+    unsigned usages;              // pubkey usage
     br_x509_decoder_context ctx;  // defined in BearSSL
   };
 
@@ -662,15 +662,15 @@ extern "C" {
     br_x509_pubkeyfingerprint_context *xc = (br_x509_pubkeyfingerprint_context *)ctx;
     // Don't process anything but the first certificate in the chain
     if (!xc->done_cert) {
-    	br_x509_decoder_init(&xc->ctx, nullptr, nullptr, nullptr, nullptr);
-		}
-    (void)server_name;    // ignore server name
+      br_x509_decoder_init(&xc->ctx, nullptr, nullptr, nullptr, nullptr);
+    }
+    (void)server_name; // ignore server name
   }
 
   // Callback for each certificate present in the chain (but only operates
   // on the first one by design).
   static void pubkeyfingerprint_start_cert(const br_x509_class **ctx, uint32_t length) {
-    (void) ctx;   // do nothing
+    (void) ctx; // do nothing
     (void) length;
   }
 
@@ -686,7 +686,7 @@ extern "C" {
   // Callback on individual cert end.
   static void pubkeyfingerprint_end_cert(const br_x509_class **ctx) {
     br_x509_pubkeyfingerprint_context *xc = (br_x509_pubkeyfingerprint_context *)ctx;
-    xc->done_cert = true;   // first cert already processed
+    xc->done_cert = true; // first cert already processed
   }
 
 // **** Start patch Castellucci
@@ -743,18 +743,18 @@ extern "C" {
     pubkeyfingerprint_pubkey_fingerprint(&sha1_context, xc->ctx.pkey.key.rsa);
     br_sha1_out(&sha1_context, xc->pubkey_recv_fingerprint); // copy to fingerprint
 
-		if (!xc->fingerprint_all) {
-			if (0 == memcmp_P(xc->pubkey_recv_fingerprint, xc->fingerprint1, 20)) {
-				return 0;
-			}
-			if (0 == memcmp_P(xc->pubkey_recv_fingerprint, xc->fingerprint2, 20)) {
-				return 0;
-			}
-			return 1;		// no match, error
-		} else {
-	    // Default (no validation at all) or no errors in prior checks = success.
-	    return 0;
-		}
+    if (!xc->fingerprint_all) {
+      if (0 == memcmp_P(xc->pubkey_recv_fingerprint, xc->fingerprint1, 20)) {
+        return 0;
+      }
+      if (0 == memcmp_P(xc->pubkey_recv_fingerprint, xc->fingerprint2, 20)) {
+        return 0;
+      }
+      return 1; // no match, error
+    } else {
+      // Default (no validation at all) or no errors in prior checks = success.
+      return 0;
+    }
 */
     // set fingerprint status byte to zero
     // FIXME: find a better way to pass this information
@@ -796,7 +796,7 @@ extern "C" {
         xc->pubkey_recv_fingerprint[20] |= 2; // mark for update
       }
       if (!xc->pubkey_recv_fingerprint[20]) {
-        return 1;    // not marked for update because no match, error
+        return 1; // not marked for update because no match, error
       }
 
       // the old fingerprint format matched, recompute new one for update
@@ -822,9 +822,9 @@ extern "C" {
 
   //  Set up the x509 insecure data structures for BearSSL core to use.
   void br_x509_pubkeyfingerprint_init(br_x509_pubkeyfingerprint_context *ctx,
-																			const uint8_t *fingerprint1, const uint8_t *fingerprint2,
-																			uint8_t *recv_fingerprint,
-																		  bool fingerprint_all) {
+                                      const uint8_t *fingerprint1, const uint8_t *fingerprint2,
+                                      uint8_t *recv_fingerprint,
+                                      bool fingerprint_all) {
     static const br_x509_class br_x509_pubkeyfingerprint_vtable PROGMEM = {
       sizeof(br_x509_pubkeyfingerprint_context),
       pubkeyfingerprint_start_chain,
@@ -838,26 +838,26 @@ extern "C" {
     memset(ctx, 0, sizeof * ctx);
     ctx->vtable = &br_x509_pubkeyfingerprint_vtable;
     ctx->done_cert = false;
-		ctx->fingerprint1 = fingerprint1;
-		ctx->fingerprint2 = fingerprint2;
-		ctx->pubkey_recv_fingerprint = recv_fingerprint;
-		ctx->fingerprint_all = fingerprint_all;
+    ctx->fingerprint1 = fingerprint1;
+    ctx->fingerprint2 = fingerprint2;
+    ctx->pubkey_recv_fingerprint = recv_fingerprint;
+    ctx->fingerprint_all = fingerprint_all;
   }
 
-	// We limit to a single cipher to reduce footprint
+  // We limit to a single cipher to reduce footprint
   // we reference it, don't put in PROGMEM
   static const uint16_t suites[] = {
 #ifdef USE_MQTT_TLS_FORCE_EC_CIPHER
-		BR_TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+    BR_TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
 #else
-		BR_TLS_RSA_WITH_AES_128_GCM_SHA256
+    BR_TLS_RSA_WITH_AES_128_GCM_SHA256
 #endif
   };
 
   // Default initializion for our SSL clients
   static void br_ssl_client_base_init(br_ssl_client_context *cc) {
     br_ssl_client_zero(cc);
-    // forbid SSL renegociation, as we free the Private Key after handshake
+    // forbid SSL renegotiation, as we free the Private Key after handshake
     br_ssl_engine_add_flags(&cc->eng, BR_OPT_NO_RENEGOTIATION);
 
     br_ssl_engine_set_versions(&cc->eng, BR_TLS12, BR_TLS12);
@@ -869,14 +869,14 @@ extern "C" {
     br_ssl_engine_set_hash(&cc->eng, br_sha256_ID, &br_sha256_vtable);
     br_ssl_engine_set_prf_sha256(&cc->eng, &br_tls12_sha256_prf);
 
-		// AES CTR/GCM small version, not contstant time (we don't really care here as there is no TPM anyways)
-		br_ssl_engine_set_gcm(&cc->eng, &br_sslrec_in_gcm_vtable, &br_sslrec_out_gcm_vtable);
-		br_ssl_engine_set_aes_ctr(&cc->eng, &br_aes_small_ctr_vtable);
-		br_ssl_engine_set_ghash(&cc->eng, &br_ghash_ctmul32);
+    // AES CTR/GCM small version, not contstant time (we don't really care here as there is no TPM anyways)
+    br_ssl_engine_set_gcm(&cc->eng, &br_sslrec_in_gcm_vtable, &br_sslrec_out_gcm_vtable);
+    br_ssl_engine_set_aes_ctr(&cc->eng, &br_aes_small_ctr_vtable);
+    br_ssl_engine_set_ghash(&cc->eng, &br_ghash_ctmul32);
 
 #ifdef USE_MQTT_TLS_FORCE_EC_CIPHER
-		// we support only P256 EC curve for AWS IoT, no EC curve for Letsencrypt unless forced
-		br_ssl_engine_set_ec(&cc->eng, &br_ec_p256_m15);    // TODO
+    // we support only P256 EC curve for AWS IoT, no EC curve for Letsencrypt unless forced
+    br_ssl_engine_set_ec(&cc->eng, &br_ec_p256_m15); // TODO
 #endif
     static const char * alpn_mqtt = "mqtt";
     br_ssl_engine_set_protocol_names(&cc->eng, &alpn_mqtt, 1);
@@ -886,110 +886,110 @@ extern "C" {
 // Called by connect() to do the actual SSL setup and handshake.
 // Returns if the SSL handshake succeeded.
 bool WiFiClientSecure_light::_connectSSL(const char* hostName) {
-	// Validation context, either full CA validation or checking only fingerprints
+  // Validation context, either full CA validation or checking only fingerprints
 #ifdef USE_MQTT_TLS_CA_CERT
-	br_x509_minimal_context *x509_minimal;
+  br_x509_minimal_context *x509_minimal;
 #else
   br_x509_pubkeyfingerprint_context *x509_insecure;
 #endif
 
-	LOG_HEAP_SIZE("_connectSSL.start");
+  LOG_HEAP_SIZE("_connectSSL.start");
 
-	do {		// used to exit on Out of Memory error and keep all cleanup code at the same place
-		// ============================================================
-		// allocate Thunk stack, move to alternate stack and initialize
-	  stack_thunk_light_add_ref();
-		LOG_HEAP_SIZE("Thunk allocated");
-		DEBUG_BSSL("_connectSSL: start connection\n");
-	  _freeSSL();
-		clearLastError();
-		if (!stack_thunk_light_get_stack_bot()) break;
+  do {    // used to exit on Out of Memory error and keep all cleanup code at the same place
+    // ============================================================
+    // allocate Thunk stack, move to alternate stack and initialize
+    stack_thunk_light_add_ref();
+    LOG_HEAP_SIZE("Thunk allocated");
+    DEBUG_BSSL("_connectSSL: start connection\n");
+    _freeSSL();
+    clearLastError();
+    if (!stack_thunk_light_get_stack_bot()) break;
 
-	  _ctx_present = true;
-	  _eng = &_sc->eng; // Allocation/deallocation taken care of by the _sc shared_ptr
+    _ctx_present = true;
+    _eng = &_sc->eng; // Allocation/deallocation taken care of by the _sc shared_ptr
 
-	  br_ssl_client_base_init(_sc.get());
+    br_ssl_client_base_init(_sc.get());
 
-		// ============================================================
-		// Allocatte and initialize Decoder Context
-		LOG_HEAP_SIZE("_connectSSL before DecoderContext allocation");
-	  // Only failure possible in the installation is OOM
-	#ifdef USE_MQTT_TLS_CA_CERT
-		x509_minimal = (br_x509_minimal_context*) malloc(sizeof(br_x509_minimal_context));
-		if (!x509_minimal) break;
-		br_x509_minimal_init(x509_minimal, &br_sha256_vtable, _ta_P, _ta_size);
-		br_x509_minimal_set_rsa(x509_minimal, br_ssl_engine_get_rsavrfy(_eng));
-		br_x509_minimal_set_hash(x509_minimal, br_sha256_ID, &br_sha256_vtable);
-		br_ssl_engine_set_x509(_eng, &x509_minimal->vtable);
+    // ============================================================
+    // Allocatte and initialize Decoder Context
+    LOG_HEAP_SIZE("_connectSSL before DecoderContext allocation");
+    // Only failure possible in the installation is OOM
+  #ifdef USE_MQTT_TLS_CA_CERT
+    x509_minimal = (br_x509_minimal_context*) malloc(sizeof(br_x509_minimal_context));
+    if (!x509_minimal) break;
+    br_x509_minimal_init(x509_minimal, &br_sha256_vtable, _ta_P, _ta_size);
+    br_x509_minimal_set_rsa(x509_minimal, br_ssl_engine_get_rsavrfy(_eng));
+    br_x509_minimal_set_hash(x509_minimal, br_sha256_ID, &br_sha256_vtable);
+    br_ssl_engine_set_x509(_eng, &x509_minimal->vtable);
     uint32_t now = UtcTime();
     uint32_t cfg_time = CfgTime();
     if (cfg_time > now) { now = cfg_time; }
     br_x509_minimal_set_time(x509_minimal, now / 86400 + 719528, now % 86400);
 
-	#else
-	  x509_insecure = (br_x509_pubkeyfingerprint_context*) malloc(sizeof(br_x509_pubkeyfingerprint_context));
-		//x509_insecure = std::unique_ptr<br_x509_pubkeyfingerprint_context>(new br_x509_pubkeyfingerprint_context);
-		if (!x509_insecure) break;
-	  br_x509_pubkeyfingerprint_init(x509_insecure, _fingerprint1, _fingerprint2, _recv_fingerprint, _fingerprint_any);
-		br_ssl_engine_set_x509(_eng, &x509_insecure->vtable);
-	#endif
-		LOG_HEAP_SIZE("_connectSSL after DecoderContext allocation");
+  #else
+    x509_insecure = (br_x509_pubkeyfingerprint_context*) malloc(sizeof(br_x509_pubkeyfingerprint_context));
+    //x509_insecure = std::unique_ptr<br_x509_pubkeyfingerprint_context>(new br_x509_pubkeyfingerprint_context);
+    if (!x509_insecure) break;
+    br_x509_pubkeyfingerprint_init(x509_insecure, _fingerprint1, _fingerprint2, _recv_fingerprint, _fingerprint_any);
+    br_ssl_engine_set_x509(_eng, &x509_insecure->vtable);
+  #endif
+    LOG_HEAP_SIZE("_connectSSL after DecoderContext allocation");
 
-		// ============================================================
-		// Set send/receive buffers
-	  br_ssl_engine_set_buffers_bidi(_eng, _iobuf_in.get(), _iobuf_in_size, _iobuf_out.get(), _iobuf_out_size);
+    // ============================================================
+    // Set send/receive buffers
+    br_ssl_engine_set_buffers_bidi(_eng, _iobuf_in.get(), _iobuf_in_size, _iobuf_out.get(), _iobuf_out_size);
 
-		// ============================================================
-		// allocate Private key if needed, only if USE_MQTT_AWS_IOT
-		LOG_HEAP_SIZE("_connectSSL before PrivKey allocation");
-	#ifdef USE_MQTT_AWS_IOT
-		// ============================================================
-		// Set the EC Private Key, only USE_MQTT_AWS_IOT
-		// limited to P256 curve
-		br_ssl_client_set_single_ec(_sc.get(), _chain_P, 1,
-	                              _sk_ec_P, _allowed_usages,
-	                              _cert_issuer_key_type, &br_ec_p256_m15, br_ecdsa_sign_asn1_get_default());
-	#endif // USE_MQTT_AWS_IOT
+    // ============================================================
+    // allocate Private key if needed, only if USE_MQTT_AWS_IOT
+    LOG_HEAP_SIZE("_connectSSL before PrivKey allocation");
+  #ifdef USE_MQTT_AWS_IOT
+    // ============================================================
+    // Set the EC Private Key, only USE_MQTT_AWS_IOT
+    // limited to P256 curve
+    br_ssl_client_set_single_ec(_sc.get(), _chain_P, 1,
+                                _sk_ec_P, _allowed_usages,
+                                _cert_issuer_key_type, &br_ec_p256_m15, br_ecdsa_sign_asn1_get_default());
+  #endif // USE_MQTT_AWS_IOT
 
-		// ============================================================
-		// Start TLS connection, ALL
-	  if (!br_ssl_client_reset(_sc.get(), hostName, 0)) break;
+    // ============================================================
+    // Start TLS connection, ALL
+    if (!br_ssl_client_reset(_sc.get(), hostName, 0)) break;
 
-	  auto ret = _wait_for_handshake();
-	#ifdef DEBUG_ESP_SSL
-	  if (!ret) {
-	    DEBUG_BSSL("Couldn't connect. Error = %d\n", getLastError());
-	  } else {
-	    DEBUG_BSSL("Connected! MFLNStatus = %d\n", getMFLNStatus());
-	  }
-	#endif
-		LOG_HEAP_SIZE("_connectSSL.end");
-		_max_thunkstack_use = stack_thunk_light_get_max_usage();
-		stack_thunk_light_del_ref();
-	  //stack_thunk_light_repaint();
-		LOG_HEAP_SIZE("_connectSSL.end, freeing StackThunk");
+    auto ret = _wait_for_handshake();
+  #ifdef DEBUG_ESP_SSL
+    if (!ret) {
+      DEBUG_BSSL("Couldn't connect. Error = %d\n", getLastError());
+    } else {
+      DEBUG_BSSL("Connected! MFLNStatus = %d\n", getMFLNStatus());
+    }
+  #endif
+    LOG_HEAP_SIZE("_connectSSL.end");
+    _max_thunkstack_use = stack_thunk_light_get_max_usage();
+    stack_thunk_light_del_ref();
+    //stack_thunk_light_repaint();
+    LOG_HEAP_SIZE("_connectSSL.end, freeing StackThunk");
 
-	#ifdef USE_MQTT_TLS_CA_CERT
-		free(x509_minimal);
-	#else
-		free(x509_insecure);
-	#endif
-		LOG_HEAP_SIZE("_connectSSL after release of Priv Key");
-	  return ret;
-	} while (0);
+  #ifdef USE_MQTT_TLS_CA_CERT
+    free(x509_minimal);
+  #else
+    free(x509_insecure);
+  #endif
+    LOG_HEAP_SIZE("_connectSSL after release of Priv Key");
+    return ret;
+  } while (0);
 
-	// ============================================================
-	// if we arrived here, this means we had an OOM error, cleaning up
-	setLastError(ERR_OOM);
-	DEBUG_BSSL("_connectSSL: Out of memory\n");
-	stack_thunk_light_del_ref();
+  // ============================================================
+  // if we arrived here, this means we had an OOM error, cleaning up
+  setLastError(ERR_OOM);
+  DEBUG_BSSL("_connectSSL: Out of memory\n");
+  stack_thunk_light_del_ref();
 #ifdef USE_MQTT_TLS_CA_CERT
-	free(x509_minimal);
+  free(x509_minimal);
 #else
-	free(x509_insecure);
+  free(x509_insecure);
 #endif
-	LOG_HEAP_SIZE("_connectSSL clean_on_error");
-	return false;
+  LOG_HEAP_SIZE("_connectSSL clean_on_error");
+  return false;
 }
 
 };
