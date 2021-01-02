@@ -2048,11 +2048,11 @@ void ZigbeeShow(bool json)
           if (light.validHue() && light.validSat() && (channels >= 3)) {
             uint8_t r,g,b;
             uint8_t sat = changeUIntScale(light.getSat(), 0, 254, 0, 255);    // scale to 0..255
-            LightStateClass::HsToRgb(light.getHue(), sat, &r, &g, &b);
+            HsToRgb(light.getHue(), sat, &r, &g, &b);
             WSContentSend_P(msg[ZB_WEB_COLOR_RGB], r,g,b,r,g,b);
           } else if (light.validX() && light.validY() && (channels >= 3)) {
             uint8_t r,g,b;
-            LightStateClass::XyToRgb(light.getX() / 65535.0f, light.getY() / 65535.0f, &r, &g, &b);
+            XyToRgb(light.getX() / 65535.0f, light.getY() / 65535.0f, &r, &g, &b);
             WSContentSend_P(msg[ZB_WEB_COLOR_RGB], r,g,b,r,g,b);
           }
         }

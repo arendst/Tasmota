@@ -17,7 +17,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#if defined(USE_WEBSERVER) && defined(USE_EMULATION) && defined(USE_EMULATION_HUE) && defined(USE_LIGHT)
+#if defined(USE_WEBSERVER) && defined(USE_EMULATION) && defined(USE_EMULATION_HUE) && (defined(USE_ZIGBEE) || defined(USE_LIGHT))
 /*********************************************************************************************\
  * Philips Hue bridge emulation
  *
@@ -303,6 +303,7 @@ uint16_t prev_ct  = 254;
 char     prev_x_str[24] = "\0"; // store previously set xy by Alexa app
 char     prev_y_str[24] = "\0";
 
+#ifdef USE_LIGHT
 uint8_t getLocalLightSubtype(uint8_t device) {
   if (TasmotaGlobal.light_type) {
     if (device >= Light.device) {
@@ -422,6 +423,7 @@ void HueLightStatus2(uint8_t device, String *response)
   *response += buf;
   free(buf);
 }
+#endif // USE_LIGHT
 
 // generate a unique lightId mixing local IP address and device number
 // it is limited to 32 devices.
@@ -496,7 +498,9 @@ void HueGlobalConfig(String *path) {
   path->remove(0,1);                                 // cut leading / to get <id>
   response = F("{\"lights\":{");
   bool appending = false;                             // do we need to add a comma to append
+#ifdef USE_LIGHT
   CheckHue(&response, appending);
+#endif // USE_LIGHT
 #ifdef USE_ZIGBEE
   ZigbeeCheckHue(&response, appending);
 #endif // USE_ZIGBEE
@@ -515,6 +519,7 @@ void HueAuthentication(String *path)
   AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_HTTP D_HUE " Authentication Result (%s)"), response);
 }
 
+#ifdef USE_LIGHT
 // refactored to remove code duplicates
 void CheckHue(String * response, bool &appending) {
   uint8_t maxhue = (TasmotaGlobal.devices_present > MAX_HUE_DEVICES) ? MAX_HUE_DEVICES : TasmotaGlobal.devices_present;
@@ -621,8 +626,8 @@ void HueLightsCommand(uint8_t device, uint32_t device_id, String &response) {
       strlcpy(prev_x_str, tok_x.getStr(), sizeof(prev_x_str));
       strlcpy(prev_y_str, tok_y.getStr(), sizeof(prev_y_str));
       uint8_t rr,gg,bb;
-      LightStateClass::XyToRgb(x, y, &rr, &gg, &bb);
-      LightStateClass::RgbToHsb(rr, gg, bb, &hue, &sat, nullptr);
+      XyToRgb(x, y, &rr, &gg, &bb);
+      RgbToHsb(rr, gg, bb, &hue, &sat, nullptr);
       prev_hue = changeUIntScale(hue, 0, 360, 0, 65535);  // calculate back prev_hue
       prev_sat = (sat > 254 ? 254 : sat);
       //AddLog_P(LOG_LEVEL_DEBUG_MORE, "XY RGB (%d %d %d) HS (%d %d)", rr,gg,bb,hue,sat);
@@ -728,6 +733,7 @@ void HueLightsCommand(uint8_t device, uint32_t device_id, String &response) {
   }
   free(buf);
 }
+#endif // USE_LIGHT
 
 void HueLights(String *path)
 {
@@ -744,7 +750,9 @@ void HueLights(String *path)
   if (path->endsWith(F("/lights"))) {                   // Got /lights
     response = "{";
     bool appending = false;
+#ifdef USE_LIGHT
     CheckHue(&response, appending);
+#endif // USE_LIGHT
 #ifdef USE_ZIGBEE
     ZigbeeCheckHue(&response, appending);
 #endif // USE_ZIGBEE
@@ -771,9 +779,11 @@ void HueLights(String *path)
       return Script_Handle_Hue(path);
     }
 #endif
+#ifdef USE_LIGHT
     if ((device >= 1) || (device <= maxhue)) {
       HueLightsCommand(device, device_id, response);
     }
+#endif // USE_LIGHT
 
   }
   else if(path->indexOf(F("/lights/")) >= 0) {          // Got /lights/ID
@@ -797,12 +807,14 @@ void HueLights(String *path)
     }
 #endif
 
+#ifdef USE_LIGHT
     if ((device < 1) || (device > maxhue)) {
       device = 1;
     }
     response += F("{\"state\":");
     HueLightStatus1(device, &response);
     HueLightStatus2(device, &response);
+#endif // USE_LIGHT
   }
   else {
     response = "{}";
@@ -835,7 +847,9 @@ void HueGroups(String *path)
     ZigbeeHueGroups(&response);
 #endif // USE_ZIGBEE
     response.replace("{l1", lights);
+#ifdef USE_LIGHT
     HueLightStatus1(1, &response);
+#endif // USE_LIGHT
     response += F("}");
   }
 

@@ -947,7 +947,7 @@ void HandleRoot(void)
           char scolor[8];
           snprintf_P(scolor, sizeof(scolor), PSTR("#%02X%02X%02X"), dcolor, dcolor, dcolor);  // Saturation start color from Black to White
           uint8_t red, green, blue;
-          LightHsToRgb(hue, 255, &red, &green, &blue);
+          HsToRgb(hue, 255, &red, &green, &blue);
           snprintf_P(stemp, sizeof(stemp), PSTR("#%02X%02X%02X"), red, green, blue);  // Saturation end color
 
           WSContentSend_P(HTTP_MSG_SLIDER_GRADIENT,  // Saturation
