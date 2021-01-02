@@ -120,18 +120,23 @@ String GetResetReason(void)
 // automutex.
 // create a mute in your driver with:
 // void *mutex = nullptr;
-// TasAutoMutex::init(&mutex);
 //
 // then protect any function with
-// TasAutoMutex m(mutex);
+// TasAutoMutex m(&mutex, "somename");
+// - mutex is automatically initialised if not already intialised.
 // - it will be automagically released when the function is over.
 // - the same thread can take multiple times (recursive).
 // - advanced options m.give() and m.take() allow you fine control within a function.
+// - if take=false at creat, it will not be initially taken.
+// - name is used in serial log of mutex deadlock.
+// - maxWait in ticks is how long it will wait before failing in a deadlock scenario (and then emitting on serial)
 class TasAutoMutex {
   SemaphoreHandle_t mutex;
   bool taken;
+  int maxWait;
+  const char *name;
   public:
-    TasAutoMutex(void * mutex, bool take=true);
+    TasAutoMutex(void ** mutex, const char *name = "", int maxWait = 40, bool take=true);
     ~TasAutoMutex();
     void give();
     void take();
@@ -139,13 +144,20 @@ class TasAutoMutex {
 };
 //////////////////////////////////////////
 
-TasAutoMutex::TasAutoMutex(void * mutex, bool take) {
+TasAutoMutex::TasAutoMutex(void **mutex, const char *name, int maxWait, bool take) {
   if (mutex) {
-    if (take) {
-      xSemaphoreTakeRecursive(mutex, portMAX_DELAY);
-      this->taken = true;
+    if (!(*mutex)){
+      TasAutoMutex::init(mutex);  
     }
-    this->mutex = (SemaphoreHandle_t)mutex;
+    this->mutex = (SemaphoreHandle_t)*mutex;
+    this->maxWait = maxWait;
+    this->name = name;
+    if (take) {
+      this->taken = xSemaphoreTakeRecursive(this->mutex, this->maxWait);
+      if (!this->taken){
+        Serial.printf("\r\nMutexfail %s\r\n", this->name);
+      }
+    }
   } else {
     this->mutex = (SemaphoreHandle_t)nullptr;
   }
@@ -179,13 +191,16 @@ void TasAutoMutex::give() {
 void TasAutoMutex::take() {
   if (this->mutex) {
     if (!this->taken) {
-      xSemaphoreTakeRecursive(this->mutex, portMAX_DELAY);
-      this->taken = true;
+      this->taken = xSemaphoreTakeRecursive(this->mutex, this->maxWait);
+      if (!this->taken){
+        Serial.printf("\r\nMutexfail %s\r\n", this->name);
+      }
     }
   }
 }
 
 #endif  // ESP32
+
 
 /*********************************************************************************************\
  * Miscellaneous
@@ -2046,7 +2061,7 @@ bool NeedLogRefresh(uint32_t req_loglevel, uint32_t index) {
 #ifdef ESP32
   // this takes the mutex, and will be release when the class is destroyed -
   // i.e. when the functon leaves  You CAN call mutex.give() to leave early.
-  TasAutoMutex mutex(TasmotaGlobal.log_buffer_mutex);
+  TasAutoMutex mutex(&TasmotaGlobal.log_buffer_mutex);
 #endif  // ESP32
 
   // Skip initial buffer fill
@@ -2067,7 +2082,7 @@ bool GetLog(uint32_t req_loglevel, uint32_t* index_p, char** entry_pp, size_t* l
 #ifdef ESP32
   // this takes the mutex, and will be release when the class is destroyed -
   // i.e. when the functon leaves  You CAN call mutex.give() to leave early.
-  TasAutoMutex mutex(TasmotaGlobal.log_buffer_mutex);
+  TasAutoMutex mutex(&TasmotaGlobal.log_buffer_mutex);
 #endif  // ESP32
 
   if (!index) {                            // Dump all
@@ -2110,12 +2125,9 @@ bool GetLog(uint32_t req_loglevel, uint32_t* index_p, char** entry_pp, size_t* l
 void AddLogData(uint32_t loglevel, const char* log_data) {
 
 #ifdef ESP32
-  if (!TasmotaGlobal.log_buffer_mutex) {
-    TasAutoMutex::init(&TasmotaGlobal.log_buffer_mutex);
-  }
   // this takes the mutex, and will be release when the class is destroyed -
   // i.e. when the functon leaves  You CAN call mutex.give() to leave early.
-  TasAutoMutex mutex(TasmotaGlobal.log_buffer_mutex);
+  TasAutoMutex mutex(&TasmotaGlobal.log_buffer_mutex);
 #endif  // ESP32
 
   char mxtime[14];  // "13:45:21.999 "
