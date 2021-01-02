@@ -20,6 +20,9 @@ All notable changes to this project will be documented in this file.
 - Replaced SSD1351 GPIO selection from ``SPI CS`` by ``SSD1351 CS``
 - Replaced RA8876 GPIO selection from ``SPI CS`` by ``RA8876 CS``
 
+### Changed
+- Maximum chars in AddLog_P logging reduced from 700 to 128 (LOGSZ) to enhance stability
+
 ## [9.2.0.1] 20201229
 ### Added
 - Milliseconds to console output (#10152)

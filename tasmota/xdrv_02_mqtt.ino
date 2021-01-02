@@ -321,7 +321,7 @@ void MqttPublish(const char* topic, bool retained) {
     }
   }
 
-  char log_data[LOGSZ];
+  char log_data[MAX_LOGSZ];
   snprintf_P(log_data, sizeof(log_data), PSTR("%s%s = %s"), slog_type, (Settings.flag.mqtt_enabled) ? topic : strrchr(topic,'/')+1, TasmotaGlobal.mqtt_data);  // SetOption3 - Enable MQTT
   if (strlen(log_data) >= (sizeof(log_data) - strlen(sretained) -1)) {
     log_data[sizeof(log_data) - strlen(sretained) -5] = '\0';

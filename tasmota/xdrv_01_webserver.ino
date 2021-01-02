@@ -1927,7 +1927,7 @@ void OtherSaveSettings(void)
   char tmp[300];   // Needs to hold complete ESP32 template of minimal 230 chars
   char webindex[5];
   char friendlyname[TOPSZ];
-  char message[LOGSZ];
+  char message[MAX_LOGSZ];
 
   WebGetArg("dn", tmp, sizeof(tmp));
   SettingsUpdateText(SET_DEVICENAME, (!strlen(tmp)) ? "" : (!strcmp(tmp,"1")) ? SettingsText(SET_FRIENDLYNAME1) : tmp);

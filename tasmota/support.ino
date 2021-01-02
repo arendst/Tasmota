@@ -1321,7 +1321,7 @@ void DumpConvertTable(void) {
       ResponseAppend_P(PSTR(","));
     }
     jsflg = true;
-    if ((ResponseAppend_P(PSTR("\"%d\":\"%d\""), i, data) > (LOGSZ - TOPSZ)) || (i == ARRAY_SIZE(kGpioConvert) -1)) {
+    if ((ResponseAppend_P(PSTR("\"%d\":\"%d\""), i, data) > (MAX_LOGSZ - TOPSZ)) || (i == ARRAY_SIZE(kGpioConvert) -1)) {
       ResponseJsonEndEnd();
       MqttPublishPrefixTopic_P(RESULT_OR_STAT, XdrvMailbox.command);
       jsflg = false;
@@ -1336,7 +1336,7 @@ void DumpConvertTable(void) {
       ResponseAppend_P(PSTR(","));
     }
     jsflg = true;
-    if ((ResponseAppend_P(PSTR("\"%d\":\"%d\""), i, data) > (LOGSZ - TOPSZ)) || (i == ARRAY_SIZE(kAdcNiceList) -1)) {
+    if ((ResponseAppend_P(PSTR("\"%d\":\"%d\""), i, data) > (MAX_LOGSZ - TOPSZ)) || (i == ARRAY_SIZE(kAdcNiceList) -1)) {
       ResponseJsonEndEnd();
       MqttPublishPrefixTopic_P(RESULT_OR_STAT, XdrvMailbox.command);
       jsflg = false;
@@ -2065,7 +2065,7 @@ bool NeedLogRefresh(uint32_t req_loglevel, uint32_t index) {
 #endif  // ESP32
 
   // Skip initial buffer fill
-  if (strlen(TasmotaGlobal.log_buffer) < LOG_BUFFER_SIZE - LOGSZ) { return false; }
+  if (strlen(TasmotaGlobal.log_buffer) < LOG_BUFFER_SIZE - MAX_LOGSZ) { return false; }
 
   char* line;
   size_t len;
@@ -2172,13 +2172,13 @@ void AddLogData(uint32_t loglevel, const char* log_data) {
 
 void AddLog_P(uint32_t loglevel, PGM_P formatP, ...)
 {
-  char log_data[132];
+  char log_data[LOGSZ +4];
 
   va_list arg;
   va_start(arg, formatP);
-  uint32_t len = vsnprintf_P(log_data, 129, formatP, arg);
+  uint32_t len = vsnprintf_P(log_data, LOGSZ +1, formatP, arg);
   va_end(arg);
-  if (len > 128) { strcat(log_data, "..."); }  // Actual data is more
+  if (len > LOGSZ) { strcat(log_data, "..."); }  // Actual data is more
 
 #ifdef DEBUG_TASMOTA_CORE
   // Profile max_len
@@ -2194,7 +2194,7 @@ void AddLog_P(uint32_t loglevel, PGM_P formatP, ...)
 
 void AddLog_Debug(PGM_P formatP, ...)
 {
-  char log_data[LOGSZ];
+  char log_data[MAX_LOGSZ];
 
   va_list arg;
   va_start(arg, formatP);
