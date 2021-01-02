@@ -18,7 +18,7 @@
 */
 
 #ifdef USE_ZIGBEE
-#if defined(USE_WEBSERVER) && defined(USE_EMULATION) && defined(USE_EMULATION_HUE) && defined(USE_LIGHT)
+#if defined(USE_WEBSERVER) && defined(USE_EMULATION) && defined(USE_EMULATION_HUE)
 
 // Add global functions for Hue Emulation
 
