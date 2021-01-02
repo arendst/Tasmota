@@ -218,11 +218,13 @@ bool MqttPublishLib(const char* topic, bool retained) {
   return result;
 }
 
+#ifdef DEBUG_TASMOTA_CORE
 void MqttDumpData(char* topic, char* data, uint32_t data_len) {
   char dump_data[data_len +1];
   memcpy(dump_data, data, sizeof(dump_data));  // Make another copy for removing optional control characters
-  AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_MQTT D_DATA_SIZE " %d, \"%s %s\""), data_len, topic, RemoveControlCharacter(dump_data));
+  DEBUG_CORE_LOG(PSTR(D_LOG_MQTT "Size %d, \"%s %s\""), data_len, topic, RemoveControlCharacter(dump_data));
 }
+#endif
 
 void MqttDataHandler(char* mqtt_topic, uint8_t* mqtt_data, unsigned int data_len) {
 #ifdef USE_DEBUG_DRIVER
@@ -248,9 +250,9 @@ void MqttDataHandler(char* mqtt_topic, uint8_t* mqtt_data, unsigned int data_len
   char data[data_len +1];
   memcpy(data, mqtt_data, sizeof(data));
 
-//  AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_MQTT D_DATA_SIZE " %d, \"%s %s\""), data_len, topic, data);
-//  if (LOG_LEVEL_DEBUG_MORE <= TasmotaGlobal.seriallog_level) { Serial.println(data); }
+#ifdef DEBUG_TASMOTA_CORE
   MqttDumpData(topic, data, data_len);  // Use a function to save stack space used by dump_data
+#endif
 
   // MQTT pre-processing
   XdrvMailbox.index = strlen(topic);
