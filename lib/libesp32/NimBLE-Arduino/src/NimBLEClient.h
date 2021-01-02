@@ -59,6 +59,7 @@ public:
     void                                        setClientCallbacks(NimBLEClientCallbacks *pClientCallbacks,
                                                                    bool deleteCallbacks = true);
     std::string                                 toString();
+    int                                         getResult();
     uint16_t                                    getConnId();
     uint16_t                                    getMTU();
     bool                                        secureConnection();
@@ -92,6 +93,7 @@ private:
     int32_t                 m_connectTimeout;
     NimBLEClientCallbacks*  m_pClientCallbacks;
     ble_task_data_t         *m_pTaskData;
+    int                     m_result;
 
     std::vector<NimBLERemoteService*> m_servicesVector;
 

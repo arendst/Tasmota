@@ -201,6 +201,7 @@ bool NimBLEClient::connect(const NimBLEAddress &address, bool deleteAttibutes) {
         }
     }while(rc == BLE_HS_EBUSY);
 
+    m_result = rc;
     if (rc != 0 && rc != BLE_HS_EDONE) {
         NIMBLE_LOGE(LOG_TAG, "Error: Failed to connect to device; "
                     "addr=%s, rc=%d; %s",
@@ -230,6 +231,9 @@ bool NimBLEClient::connect(const NimBLEAddress &address, bool deleteAttibutes) {
     return true;
 } // connect
 
+int NimBLEClient::getResult(){
+  return m_result;
+}
 
 /**
  * @brief Initiate a secure connection (pair/bond) with the server.\n

@@ -45,6 +45,7 @@
                     forked  - from arendst/tasmota            - https://github.com/arendst/Tasmota
 
 */
+#ifndef USE_BLE_ESP32
 #ifdef ESP32                       // ESP32 only. Use define USE_HM10 for ESP8266 support
 
 #ifdef USE_MI_ESP32
@@ -2322,3 +2323,4 @@ bool Xsns62(uint8_t function)
 }
 #endif  // USE_MI_ESP32
 #endif  // ESP32
+#endif
