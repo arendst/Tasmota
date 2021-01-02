@@ -974,9 +974,8 @@ void RulesEvery100ms(void)
 
 void RulesEverySecond(void)
 {
+  char json_event[120];
   if (Settings.rule_enabled && !Rules.busy) {  // Any rule enabled
-    char json_event[120];
-
     if (RtcTime.valid) {
       if ((TasmotaGlobal.uptime > 60) && (RtcTime.minute != Rules.last_minute)) {  // Execute from one minute after restart every minute only once
         Rules.last_minute = RtcTime.minute;
@@ -984,10 +983,12 @@ void RulesEverySecond(void)
         RulesProcessEvent(json_event);
       }
     }
-    for (uint32_t i = 0; i < MAX_RULE_TIMERS; i++) {
-      if (Rules.timer[i] != 0L) {           // Timer active?
-        if (TimeReached(Rules.timer[i])) {  // Timer finished?
-          Rules.timer[i] = 0L;              // Turn off this timer
+  }
+  for (uint32_t i = 0; i < MAX_RULE_TIMERS; i++) {
+    if (Rules.timer[i] != 0L) {           // Timer active?
+      if (TimeReached(Rules.timer[i])) {  // Timer finished?
+        Rules.timer[i] = 0L;              // Turn off this timer
+        if (Settings.rule_enabled && !Rules.busy) {  // Any rule enabled
           snprintf_P(json_event, sizeof(json_event), PSTR("{\"Rules\":{\"Timer\":%d}}"), i +1);
           RulesProcessEvent(json_event);
         }
