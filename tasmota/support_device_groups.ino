@@ -423,7 +423,7 @@ void SendReceiveDeviceGroupMessage(struct device_group * device_group, struct de
 
 write_log:
   *log_ptr++ = 0;
-  AddLog_P(LOG_LEVEL_DEBUG_MORE, log_buffer);
+  AddLogData(LOG_LEVEL_DEBUG_MORE, log_buffer);
 
   // If this is a received status request message, then if the requestor didn't just ack our
   // previous full status update, send a full status update.
