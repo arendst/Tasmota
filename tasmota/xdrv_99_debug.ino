@@ -258,7 +258,7 @@ void DebugRtcDump(char* parms)
     maxrow = srow + mrow;
   }
 
-  char log_data[LOGSZ];
+  char log_data[100];  // 020:  C7 2B 2E AB  70 E8 09 AE  C8 88 3D EA  7C FF 48 2F | +. p     = | H/|
   for (row = srow; row < maxrow; row++) {
     idx = row * CFG_COLS;
     snprintf_P(log_data, sizeof(log_data), PSTR("%03X:"), idx);
@@ -310,7 +310,7 @@ void DebugDump(uint32_t start, uint32_t size) {
     maxrow = srow + mrow;
   }
 
-  char log_data[LOGSZ];
+  char log_data[150];  // 020:  C7 2B 2E AB  70 E8 09 AE  C8 88 3D EA  7C FF 48 2F  0E A7 D7 BF  02 0E D7 7D  C9 6F B9 3A  1D 01 3F 28 | +. p     = | H/       } o :  ?(|
   for (row = srow; row < maxrow; row++) {
     idx = row * CFG_COLS;
     snprintf_P(log_data, sizeof(log_data), PSTR("%03X:"), idx);
@@ -361,7 +361,7 @@ void DebugCfgDump(char* parms)
     maxrow = srow + mrow;
   }
 
-  char log_data[LOGSZ];
+  char log_data[100];  // 020:  6D 75 73 31  3A 38 30 2F  61 70 69 2F  61 72 64 75 |mus1:80/api/ardu|
   for (row = srow; row < maxrow; row++) {
     idx = row * CFG_COLS;
     snprintf_P(log_data, sizeof(log_data), PSTR("%03X:"), idx);
@@ -397,7 +397,7 @@ void DebugCfgPeek(char* parms)
   uint16_t data16 = (buffer[address +1] << 8) + buffer[address];
   uint32_t data32 = (buffer[address +3] << 24) + (buffer[address +2] << 16) + data16;
 
-  char log_data[LOGSZ];
+  char log_data[100];  // 000: 09 12 00 10 |    | 0x09 (9), 0x1209 (4617), 0x10001209 (268440073)
   snprintf_P(log_data, sizeof(log_data), PSTR("%03X:"), address);
   for (uint32_t i = 0; i < 4; i++) {
     snprintf_P(log_data, sizeof(log_data), PSTR("%s %02X"), log_data, buffer[address +i]);
