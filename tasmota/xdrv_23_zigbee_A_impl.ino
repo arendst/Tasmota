@@ -1856,24 +1856,23 @@ const char ZB_WEB[] PROGMEM = "\x00\x66\x3D\x0E\xCA\xB1\xC1\x33\xF0\xF6\xD1\xEE\
 // ++++++++++++++++++++ DO NOT EDIT ABOVE ++++++++++++++++++++
 // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-extern "C" {
-  // comparator function used to sort Zigbee devices by alphabetical order (if friendlyname)
-  // then by shortaddr if they don't have friendlyname
-  int device_cmp(const void * a, const void * b) {
-    const Z_Device &dev_a = zigbee_devices.devicesAt(*(uint8_t*)a);
-    const Z_Device &dev_b = zigbee_devices.devicesAt(*(uint8_t*)b);
-    const char * fn_a = dev_a.friendlyName;
-    const char * fn_b = dev_b.friendlyName;
+// comparator function used to sort Zigbee devices by alphabetical order (if friendlyname)
+// then by shortaddr if they don't have friendlyname
+int device_cmp(uint8_t a, uint8_t b) {
+  const Z_Device &dev_a = zigbee_devices.devicesAt(a);
+  const Z_Device &dev_b = zigbee_devices.devicesAt(b);
+  const char * fn_a = dev_a.friendlyName;
+  const char * fn_b = dev_b.friendlyName;
 
-    if (fn_a && fn_b) {
-      return strcasecmp(fn_a, fn_b);
-    } else if (!fn_a && !fn_b) {
-      return (int32_t)dev_a.shortaddr - (int32_t)dev_b.shortaddr;
-    } else {
-      if (fn_a) return -1;
-      else      return 1;
-    }
+  if (fn_a && fn_b) {
+    return strcasecmp(fn_a, fn_b);
+  } else if (!fn_a && !fn_b) {
+    return (int32_t)dev_a.shortaddr - (int32_t)dev_b.shortaddr;
+  } else {
+    if (fn_a) return -1;
+    else      return 1;
   }
+}
 
 
 // Convert seconds to a string representing days, hours or minutes present in the n-value.
@@ -1884,24 +1883,23 @@ extern "C" {
 // - char for unit (d for day, h for hour, m for minute)
 // - the hex color to be used to display the text
 //
-  uint32_t convert_seconds_to_dhm(uint32_t seconds,  char *unit, uint8_t *color){
-    static uint32_t conversions[3] = {24 * 3600, 3600, 60};
-    static char     units[3] = { 'd', 'h', 'm'};   // day, hour, minute
-    uint8_t color_text_8 = WebColor(COL_TEXT) & 0xFF;    // color of text on 8 bits
-    uint8_t color_back_8 = WebColor(COL_BACKGROUND) & 0xFF;    // color of background on 8 bits
-    uint8_t  colors[3] = { (uint8_t) changeUIntScale(6, 0, 16, color_back_8, color_text_8),   // 6/16 of text
-                           (uint8_t) changeUIntScale(10, 0, 16, color_back_8, color_text_8),  // 10/16 of text color
-                           color_text_8};
-    for(int i = 0; i < 3; ++i) {
-      *color = colors[i];
-      *unit = units[i];
-      if (seconds > conversions[i]) {    // always pass even if 00m
-        return seconds / conversions[i];
-      }
+uint32_t convert_seconds_to_dhm(uint32_t seconds,  char *unit, uint8_t *color){
+  static uint32_t conversions[3] = {24 * 3600, 3600, 60};
+  static char     units[3] = { 'd', 'h', 'm'};   // day, hour, minute
+  uint8_t color_text_8 = WebColor(COL_TEXT) & 0xFF;    // color of text on 8 bits
+  uint8_t color_back_8 = WebColor(COL_BACKGROUND) & 0xFF;    // color of background on 8 bits
+  uint8_t  colors[3] = { (uint8_t) changeUIntScale(6, 0, 16, color_back_8, color_text_8),   // 6/16 of text
+                          (uint8_t) changeUIntScale(10, 0, 16, color_back_8, color_text_8),  // 10/16 of text color
+                          color_text_8};
+  for(int i = 0; i < 3; ++i) {
+    *color = colors[i];
+    *unit = units[i];
+    if (seconds > conversions[i]) {    // always pass even if 00m
+      return seconds / conversions[i];
     }
-    return 0;
   }
-} // extern "C"
+  return 0;
+}
 
 const char HTTP_BTN_ZB_BUTTONS[] PROGMEM =
   "<button onclick='la(\"&zbj=1\");'>" D_ZIGBEE_PERMITJOIN "</button>"
@@ -1927,7 +1925,17 @@ void ZigbeeShow(bool json)
     for (uint32_t i = 0; i < zigbee_num; i++) {
       sorted_idx[i] = i;
     }
-    qsort(sorted_idx, zigbee_num, sizeof(sorted_idx[0]), device_cmp);
+
+    // insertion sort
+    for (uint32_t i = 1; i < zigbee_num; i++) {
+      uint8_t key = sorted_idx[i];
+      uint8_t j = i;
+      while ((j > 0) && (device_cmp(sorted_idx[j - 1], key) > 0)) {
+        sorted_idx[j] = sorted_idx[j - 1];
+        j--;
+      }
+      sorted_idx[j] = key;
+    }
 
     uint32_t now = Rtc.utc_time;
 
