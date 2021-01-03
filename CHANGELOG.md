@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 - Command ``VirtualCT`` to simulate or fine tune CT bulbs with 3,4,5 channels (#10311)
 - Command ``SetOption118 1`` to move ZbReceived from JSON message and into the subtopic replacing "SENSOR" default (#10353)
 - Command ``SetOption119 1`` to remove the device addr from json payload, can be used with zb_topic_fname where the addr is already known from the topic (#10355)
+- Command ``RuleTimer0`` to access all RuleTimers at once (#10352)
 
 ### Breaking Changed
 - Replaced MFRC522 13.56MHz rfid card reader GPIO selection from ``SPI CS`` by ``RC522 CS``

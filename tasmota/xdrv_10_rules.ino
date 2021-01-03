@@ -2124,9 +2124,10 @@ void CmndRule(void)
 
 void CmndRuleTimer(void)
 {
-  if (XdrvMailbox.index > MAX_RULE_TIMERS)
-    return;
-  int i = XdrvMailbox.index, max_i = XdrvMailbox.index;
+  if (XdrvMailbox.index > MAX_RULE_TIMERS) { return; }
+
+  uint32_t i = XdrvMailbox.index;
+  uint32_t max_i = XdrvMailbox.index;
   if (0 == i) {
     i = 1;
     max_i = MAX_RULE_TIMERS;
@@ -2135,7 +2136,7 @@ void CmndRuleTimer(void)
   float timer_set = evaluateExpression(XdrvMailbox.data, XdrvMailbox.data_len);
   timer_set = (timer_set > 0) ? millis() + (1000 * timer_set) : 0;
 #else
-  unsigned long timer_set = (XdrvMailbox.payload > 0) ? millis() + (1000 * XdrvMailbox.payload) : 0;
+  uint32_t timer_set = (XdrvMailbox.payload > 0) ? millis() + (1000 * XdrvMailbox.payload) : 0;
 #endif  // USE_EXPRESSION
   if (XdrvMailbox.data_len > 0) {
     for ( ; i <= max_i ; ++i ) {
