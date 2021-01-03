@@ -368,7 +368,11 @@ void BacklogLoop(void) {
 void SleepDelay(uint32_t mseconds) {
   if (mseconds) {
     for (uint32_t wait = 0; wait < mseconds; wait++) {
+      // ESP8266 does an optimistic_yield(1000) in Serial.available()
+      // ESP32 does not so needs delay here
+#ifdef ESP32
       delay(1);
+#endif
       if (Serial.available()) { break; }  // We need to service serial buffer ASAP as otherwise we get uart buffer overrun
     }
   } else {
@@ -383,7 +387,6 @@ void loop(void) {
   XsnsCall(FUNC_LOOP);
 
   OsWatchLoop();
-
   ButtonLoop();
   SwitchLoop();
 #ifdef USE_DEVICE_GROUPS
@@ -391,7 +394,7 @@ void loop(void) {
 #endif  // USE_DEVICE_GROUPS
   BacklogLoop();
 
-  static uint32_t state_50msecond = 0;               // State 50msecond timer
+  static uint32_t state_50msecond = 0;             // State 50msecond timer
   if (TimeReached(state_50msecond)) {
     SetNextTimeInterval(state_50msecond, 50);
 #ifdef ROTARY_V1
@@ -401,7 +404,7 @@ void loop(void) {
     XsnsCall(FUNC_EVERY_50_MSECOND);
   }
 
-  static uint32_t state_100msecond = 0;              // State 100msecond timer
+  static uint32_t state_100msecond = 0;            // State 100msecond timer
   if (TimeReached(state_100msecond)) {
     SetNextTimeInterval(state_100msecond, 100);
     Every100mSeconds();
@@ -409,7 +412,7 @@ void loop(void) {
     XsnsCall(FUNC_EVERY_100_MSECOND);
   }
 
-  static uint32_t state_250msecond = 0;              // State 250msecond timer
+  static uint32_t state_250msecond = 0;            // State 250msecond timer
   if (TimeReached(state_250msecond)) {
     SetNextTimeInterval(state_250msecond, 250);
     Every250mSeconds();
@@ -417,7 +420,7 @@ void loop(void) {
     XsnsCall(FUNC_EVERY_250_MSECOND);
   }
 
-  static uint32_t state_second = 0;                  // State second timer
+  static uint32_t state_second = 0;                // State second timer
   if (TimeReached(state_second)) {
     SetNextTimeInterval(state_second, 1000);
     PerformEverySecond();
@@ -435,7 +438,7 @@ void loop(void) {
 
   if (Settings.flag3.sleep_normal) {               // SetOption60 - Enable normal sleep instead of dynamic sleep
     //  yield();                                   // yield == delay(0), delay contains yield, auto yield in loop
-    SleepDelay(TasmotaGlobal.sleep);                            // https://github.com/esp8266/Arduino/issues/2021
+    SleepDelay(TasmotaGlobal.sleep);               // https://github.com/esp8266/Arduino/issues/2021
   } else {
     if (my_activity < (uint32_t)TasmotaGlobal.sleep) {
       SleepDelay((uint32_t)TasmotaGlobal.sleep - my_activity);  // Provide time for background tasks like wifi
