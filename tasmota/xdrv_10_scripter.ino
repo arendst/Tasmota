@@ -1,7 +1,7 @@
 /*
   xdrv_10_scripter.ino - script support for Tasmota
 
-  Copyright (C) 2021  Gerhard Mutz and Theo Arends
+  Copyright (C) 2020  Gerhard Mutz and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -209,51 +209,17 @@ void alt_eeprom_readBytes(uint32_t adr, uint32_t len, uint8_t *buf) {
 
 
 
-#if defined(LITTLEFS_SCRIPT_SIZE) || (USE_SCRIPT_FATFS==-1)
+#if USE_SCRIPT_FATFS==-1
 #ifdef ESP32
 #include "FS.h"
-#ifdef LITTLEFS_SCRIPT_SIZE
-#include "SPIFFS.h"
-#else
 #include "FFat.h"
-//#include <LittleFS.h>
-#endif
 #else
 #include <LittleFS.h>
 #endif
 FS *fsp;
 #endif // LITTLEFS_SCRIPT_SIZE
 
-
-#ifdef LITTLEFS_SCRIPT_SIZE
-void SaveFile(const char *name, const uint8_t *buf, uint32_t len) {
-  File file = fsp->open(name, "w");
-  if (!file) return;
-  file.write(buf, len);
-  file.close();
-}
-
-
-uint8_t fs_mounted=0;
-
-void LoadFile(const char *name, uint8_t *buf, uint32_t len) {
-  if (!fs_mounted) {
-#ifdef ESP32
-    if (!SPIFFS.begin(FORMAT_SPIFFS_IF_FAILED)) {
-#else
-    if (!fsp->begin()) {
-#endif
-          //Serial.println("SPIFFS Mount Failed");
-      return;
-    }
-    fs_mounted=1;
-  }
-  File file = fsp->open(name, "r");
-  if (!file) return;
-  file.read(buf, len);
-  file.close();
-}
-#endif // LITTLEFS_SCRIPT_SIZE
+//extern FS *ufsp;
 
 // offsets epoch readings by 1.1.2019 00:00:00 to fit into float with second resolution
 #define EPOCH_OFFSET 1546300800
@@ -266,7 +232,10 @@ enum {SCRIPT_LOGLEVEL=1,SCRIPT_TELEPERIOD,SCRIPT_EVENT_HANDLED};
 #if USE_SCRIPT_FATFS>=0
 #include <SPI.h>
 #include <SD.h>
+#include <FS.h>
+
 #ifdef ESP32
+#include "FFat.h"
 FS *fsp;
 #else
 SDClass *fsp;
@@ -996,6 +965,10 @@ char *script;
       }
     }
 
+// init file system
+//#ifndef USE_UFILESYS
+#if 1
+
 #ifdef USE_SCRIPT_FATFS
     if (!glob_script_mem.script_sd_found) {
 
@@ -1022,6 +995,10 @@ char *script;
     for (uint8_t cnt = 0; cnt<SFS_MAX; cnt++) {
       glob_script_mem.file_flags[cnt].is_open = 0;
     }
+#endif
+
+#else
+    fsp = ufsp;
 #endif
 
 #if SCRIPT_DEBUG>0
@@ -1757,6 +1734,7 @@ char *isvar(char *lp, uint8_t *vtype, struct T_INDEX *tind, float *fp, char *sp,
                         fvar = Get_MFilter(index);
                       }
                     } else {
+                      if (ja) continue;
                       fvar = glob_script_mem.fvars[index];
                     }
                     if (nres) fvar = -fvar;
@@ -5319,11 +5297,6 @@ void SaveScript(void) {
   }
 #endif // USE_SCRIPT_FATFS
 
-#ifdef LITTLEFS_SCRIPT_SIZE
-  if (glob_script_mem.flags&1) {
-    SaveFile("/script.txt", (uint8_t*)glob_script_mem.script_ram, LITTLEFS_SCRIPT_SIZE);
-  }
-#endif // LITTLEFS_SCRIPT_SIZE
 }
 
 void ScriptSaveSettings(void) {
@@ -5848,8 +5821,8 @@ void Script_Handle_Hue(String *path) {
       String x_str = tok_x.getStr();
       String y_str = tok_y.getStr();
       uint8_t rr,gg,bb;
-      XyToRgb(x, y, &rr, &gg, &bb);
-      RgbToHsb(rr, gg, bb, &hue, &sat, nullptr);
+      LightStateClass::XyToRgb(x, y, &rr, &gg, &bb);
+      LightStateClass::RgbToHsb(rr, gg, bb, &hue, &sat, nullptr);
       if (resp) { response += ","; }
       response += FPSTR(sHUE_LIGHT_RESPONSE_JSON);
       response.replace("{id", String(device));
@@ -7679,7 +7652,8 @@ bool Xdrv10(uint8_t function)
   char *sprt;
 
   switch (function) {
-    case FUNC_PRE_INIT:
+    //case FUNC_PRE_INIT:
+    case FUNC_INIT:
       // set defaults to rules memory
       //bitWrite(Settings.rule_enabled,0,0);
       glob_script_mem.script_ram = Settings.rules[0];
@@ -7771,8 +7745,6 @@ bool Xdrv10(uint8_t function)
 #else
     // flash file system
 #ifdef ESP32
-      //fsp = &SPIFFS;
-      //if (SPIFFS.begin(FORMAT_SPIFFS_IF_FAILED)) {
       fsp = &FFat;
       if (FFat.begin(true)) {
 #else
@@ -7782,6 +7754,7 @@ bool Xdrv10(uint8_t function)
 #endif // ESP
 
 #endif // USE_SCRIPT_FATFS>=0
+
         Script_AddLog_P(LOG_LEVEL_INFO,PSTR("FATFS mount OK!"));
 
         //fsp->dateTimeCallback(dateTime);
@@ -7810,31 +7783,6 @@ bool Xdrv10(uint8_t function)
 #endif // USE_SCRIPT_FATFS
 
 
-#ifdef LITTLEFS_SCRIPT_SIZE
-
-#ifdef ESP32
-    // spiffs on esp32
-    fsp = &SPIFFS;
-    //esp32_part = esp_partition_find_first(ESP_PARTITION_TYPE_DATA,ESP_PARTITION_SUBTYPE_DATA_SPIFFS,NULL);
-    //Serial.printf("address %d - %d - %s\n",esp32_part->address,esp32_part->size, esp32_part->label);
-#else
-    // lfs on esp8266
-    fsp = &LittleFS;
-#endif //ESP32
-    char *script;
-    script = (char*)calloc(LITTLEFS_SCRIPT_SIZE + 4, 1);
-    if (!script) break;
-    LoadFile("/script.txt", (uint8_t*)script, LITTLEFS_SCRIPT_SIZE);
-
-    glob_script_mem.script_ram = script;
-    glob_script_mem.script_size = LITTLEFS_SCRIPT_SIZE;
-    script[LITTLEFS_SCRIPT_SIZE-1] = 0;
-    // use rules storage for permanent vars
-    glob_script_mem.script_pram = (uint8_t*)Settings.rules[0];
-    glob_script_mem.script_pram_size = MAX_SCRIPT_SIZE;
-    glob_script_mem.flags = 1;
-#endif // LITTLEFS_SCRIPT_SIZE
-
     // a valid script MUST start with >D
     if (glob_script_mem.script_ram[0]!='>' && glob_script_mem.script_ram[1]!='D') {
       // clr all
@@ -7852,8 +7800,8 @@ bool Xdrv10(uint8_t function)
       }
 
       if (bitRead(Settings.rule_enabled, 0)) Init_Scripter();
-      break;
-    case FUNC_INIT:
+    //  break;
+    //case FUNC_INIT:
       if (bitRead(Settings.rule_enabled, 0)) {
         Run_Scripter(">B\n", 3, 0);
         fast_script = Run_Scripter(">F", -2, 0);
