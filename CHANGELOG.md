@@ -8,7 +8,8 @@ All notable changes to this project will be documented in this file.
 - Basic support for ESP32 Odroid Go 16MB binary tasmota32-odroidgo.bin (#8630)
 - Command ``CTRange`` to specify the visible CT range the bulb is capable of (#10311)
 - Command ``VirtualCT`` to simulate or fine tune CT bulbs with 3,4,5 channels (#10311)
-- Disable `USE_LIGHT`` light support for ZBBridge (saves 17.6kb)
+- Command ``SetOption118 1`` to move ZbReceived from JSON message and into the subtopic replacing "SENSOR" default (#10353)
+- Command ``SetOption119 1`` to remove the device addr from json payload, can be used with zb_topic_fname where the addr is already known from the topic (#10355)
 
 ### Breaking Changed
 - Replaced MFRC522 13.56MHz rfid card reader GPIO selection from ``SPI CS`` by ``RC522 CS``
@@ -23,6 +24,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 - Maximum chars in AddLog_P logging reduced from 700 to 128 (LOGSZ) to enhance stability
+- Disabled ``USE_LIGHT`` light support for ZBBridge saving 17.6kB (#10374)
 
 ## [9.2.0.1] 20201229
 ### Added
