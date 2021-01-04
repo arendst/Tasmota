@@ -54,8 +54,8 @@
 #define XDRV_47                   47
 
 #define FTC532_KEYS               4     // number of key pins on chip
-#define FTC532_KEYS_MAX           8     // number of slots in protocol
-#define FTC532_DEBOUNCE           2     // number of consecutive cycles until key accepted
+#define FTC532_KEYS_MAX           8     // number of key slots in protocol
+#define FTC532_DEBOUNCE           0     // number of consecutive cycles until key accepted
 
 #define FTC532_STATE_WAITING      0x1
 #define FTC532_STATE_READING      0x2
@@ -79,7 +79,9 @@ struct FTC532 {
   volatile uint16_t state;              // ISR state
   uint8_t keys              = 0;        // bitmap of active keys
   uint8_t old_keys          = 0;        // previously active keys
+#if FTC532_DEBOUNCE > 1
   uint8_t key_cnt           = 0;        // used to de-bounce
+#endif  // FTC532_DEBOUNCE > 1
   bool present = false;                 // driver active
 #ifdef DEBUG_FTC532
   volatile uint16_t e_inv   = 0;        // inv. key error counter
@@ -91,7 +93,7 @@ struct FTC532 {
 
 const char ftc532_json[] PROGMEM = "\"FTC532\":{\"KEYS\":\"";
 
-void ICACHE_RAM_ATTR ftc532_ISR(void) {     // Hardware interrupt routine, triggers on rising edge
+void ICACHE_RAM_ATTR ftc532_ISR(void) {   // Hardware interrupt routine, triggers on rising edge
   uint32_t time = micros();
   uint32_t time_diff = time - Ftc532.rxtime;
   Ftc532.rxtime = time;
@@ -100,7 +102,7 @@ void ICACHE_RAM_ATTR ftc532_ISR(void) {     // Hardware interrupt routine, trigg
     if (time_diff > FTC532_LONG + FTC532_SHORT) {   // new frame
       Ftc532.rxbit = 0;
       if (Ftc532.state & FTC532_STATE_COMPLETE) {
-      Ftc532.sample = Ftc532.tsmp;                  // copy complete frame
+      Ftc532.sample = Ftc532.tsmp;                  // copy completed frame
 #ifdef DEBUG_FTC532
       Ftc532.valid = true;
 #endif  // DEBUG_FTC532
@@ -149,20 +151,25 @@ void ftc532_update(void) {                        // Usually called every 50 ms
   if ((Ftc532.sample & 0xF0F0) == ((~Ftc532.sample & 0x0F0F) << 4) && (Ftc532.sample >> 8) == 0xF0) {
     Ftc532.keys = Ftc532.sample & 0xF;
     if (Ftc532.keys != Ftc532.old_keys) {
+#if FTC532_DEBOUNCE > 1
       if (++Ftc532.key_cnt >= FTC532_DEBOUNCE) {
+#endif  // FTC532_DEBOUNCE > 1
 #ifdef DEBUG_FTC532
         AddLog_P(LOG_LEVEL_DEBUG, PSTR("FTC: SAM=%04X KEY=%X OLD=%X INV=%u NOI=%u FRM=%u OK=%u TIME=%lu Pin=%u"),
                 Ftc532.sample, Ftc532.keys, Ftc532.old_keys, Ftc532.e_inv, Ftc532.e_noise, Ftc532.e_frame, Ftc532.valid, Ftc532.rxtime, Pin(GPIO_FTC532));
 #endif  // DEBUG_FTC532
         ftc532_publish();
         Ftc532.old_keys = Ftc532.keys;
+#if FTC532_DEBOUNCE > 1
         Ftc532.key_cnt = 0;
       }
     } else {
       Ftc532.key_cnt = 0;
+#endif  // FTC532_DEBOUNCE > 1
     }
+  }
 #ifdef DEBUG_FTC532
-  } else {
+  else {
     ++Ftc532.e_inv;
     AddLog_P(LOG_LEVEL_DEBUG, PSTR("FTC: SAM=%04X"), Ftc532.sample);
   }
