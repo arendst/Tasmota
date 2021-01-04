@@ -17,17 +17,19 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/*
-this driver adds universal file system support for
-ESP8266 (sd card or littlfs on  > 1 M devices with special linker file e.g. eagle.flash.4m2m.ld)
-(makes no sense on 1M devices without sd card)
-and
-ESP32 (sd card or little fs or sfatfile system)
-the sd card chip select is the standard SPI_CS or when not found SDCARD_CS_PIN
-initializes the FS System Pointer ufsp which can be used by all standard file system calls
-the only specific call is ufs_fsinfo() which gets the total size (0) and free size (1)
-a button is created in the setup section to show up the file directory to download and upload files
-subdirectories are supported
+#ifdef USE_UFILESYS
+/*********************************************************************************************\
+This driver adds universal file system support for ESP8266 (sd card or littlfs on  > 1 M devices
+with special linker file e.g. eagle.flash.4m2m.ld) (makes no sense on 1M devices without sd card)
+and ESP32 (sd card or little fs or sfatfile system).
+
+The sd card chip select is the standard SDCARD_CS or when not found SDCARD_CS_PIN and initializes
+the FS System Pointer ufsp which can be used by all standard file system calls.
+
+The only specific call is ufs_fsinfo() which gets the total size (0) and free size (1).
+
+A button is created in the setup section to show up the file directory to download and upload files
+subdirectories are supported.
 
 console calls :
 
@@ -36,16 +38,14 @@ ufstype   get filesytem type 0=none 1=SD  2=Flashfile
 ufssize   total size in kB
 ufsfree   free size in kB
 
-driver enabled by
+The driver enabled by #define USE_UFILESYS
+\*********************************************************************************************/
 
-#define USE_UFILESYS
+#define XDRV_98           98
 
-*/
-
-
-#ifdef USE_UFILESYS
-
-#define XDRV_98                               98
+#ifndef SDCARD_CS_PIN
+#define SDCARD_CS_PIN     4
+#endif
 
 #ifdef ESP8266
 #include <LittleFS.h>
@@ -53,15 +53,17 @@ driver enabled by
 #ifdef USE_SDCARD
 #include <SD.h>
 #include <SDFAT.h>
-#endif
-#else
+#endif  // USE_SDCARD
+#endif  // ESP8266
+
+#ifdef ESP32
 #include <LITTLEFS.h>
 #ifdef USE_SDCARD
 #include <SD.h>
-#endif
+#endif  // USE_SDCARD
 #include "FFat.h"
 #include "FS.h"
-#endif
+#endif  // ESP32
 
 #define UFS_FILE_WRITE "w"
 #define UFS_FILE_READ "r"
@@ -70,11 +72,6 @@ driver enabled by
 FS *ufsp;
 char ufs_path[48];
 File ufs_upload_file;
-
-
-#ifndef SDCARD_CS_PIN
-#define SDCARD_CS_PIN 4
-#endif
 
 // 0 = none, 1 = SD, 2 = ffat, 3 = littlefs
 // spiffs should be obsolete
@@ -92,19 +89,20 @@ void UFSInit(void) {
 
 
 #ifdef USE_SDCARD
-//  if (TasmotaGlobal.spi_enabled) {
-  if (1) {
+  if (TasmotaGlobal.spi_enabled) {
+//  if (1) {
     int8_t cs = SDCARD_CS_PIN;
-    if (PinUsed(GPIO_SPI_CS)) {
-      cs = Pin(GPIO_SPI_CS);
+    if (PinUsed(GPIO_SDCARD_CS)) {
+      cs = Pin(GPIO_SDCARD_CS);
     }
 
     if (SD.begin(cs)) {
 #ifdef ESP8266
       ufsp = (FS*)&SD;
-#else
+#endif  // ESP8266
+#ifdef ESP32
       ufsp = &SD;
-#endif
+#endif  // ESP32
       ufs_type = UFS_TSDC;
       return;
     }
@@ -117,7 +115,8 @@ void UFSInit(void) {
   if (!LittleFS.begin()) {
     return;
   }
-#else
+#endif  // ESP8266
+#ifdef ESP32
   // try lfs first
   ufsp = &LITTLEFS;
   if (!LITTLEFS.begin(true)) {
@@ -129,32 +128,34 @@ void UFSInit(void) {
     ufs_type = UFS_TFAT;
     return;
   }
-#endif // ESP8266
+#endif // ESP32
   ufs_type = UFS_TLFS;
   return;
 }
 
 uint32_t ufs_fsinfo(uint32_t sel) {
-uint32_t result = 0;
+  uint32_t result = 0;
+
 #ifdef ESP8266
-FSInfo64 fsinfo;
-#endif
+  FSInfo64 fsinfo;
+#endif  // ESP8266
 
   switch (ufs_type) {
     case UFS_TSDC:
 #ifdef USE_SDCARD
-#ifdef ESP32
-      if (sel == 0) {
-        result = SD.totalBytes();
-      } else {
-        result = (SD.totalBytes() - SD.usedBytes());
-      }
-#else
+#ifdef ESP8266
       ufsp->info64(fsinfo);
       if (sel == 0) {
         result = fsinfo.totalBytes;
       } else {
         result = (fsinfo.totalBytes - fsinfo.usedBytes);
+      }
+#endif  // ESP8266
+#ifdef ESP32
+      if (sel == 0) {
+        result = SD.totalBytes();
+      } else {
+        result = (SD.totalBytes() - SD.usedBytes());
       }
 #endif
 #endif //USE_SDCARD
@@ -168,13 +169,14 @@ FSInfo64 fsinfo;
       } else {
         result = (fsinfo.totalBytes - fsinfo.usedBytes);
       }
-#else
+#endif  // ESP8266
+#ifdef ESP32
       if (sel == 0) {
         result = LITTLEFS.totalBytes();
       } else {
         result = LITTLEFS.totalBytes() - LITTLEFS.usedBytes();
       }
-#endif // ESP8266
+#endif // ESP32
       break;
 
     case UFS_TFAT:
@@ -200,21 +202,20 @@ FSInfo64 fsinfo;
 #endif
 
 uint8_t ufs_reject(char *name) {
-
   char *lcp = strrchr(name,'/');
   if (lcp) {
     name = lcp + 1;
   }
 
-  while (*name=='/') name++;
-  if (*name=='_') return 1;
-  if (*name=='.') return 1;
+  while (*name=='/') { name++; }
+  if (*name=='_') { return 1; }
+  if (*name=='.') { return 1; }
 
-  if (!strncasecmp(name, "SPOTLI~1", REJCMPL)) return 1;
-  if (!strncasecmp(name, "TRASHE~1", REJCMPL)) return 1;
-  if (!strncasecmp(name, "FSEVEN~1", REJCMPL)) return 1;
-  if (!strncasecmp(name, "SYSTEM~1", REJCMPL)) return 1;
-  if (!strncasecmp(name, "System Volume", 13)) return 1;
+  if (!strncasecmp(name, "SPOTLI~1", REJCMPL)) { return 1; }
+  if (!strncasecmp(name, "TRASHE~1", REJCMPL)) { return 1; }
+  if (!strncasecmp(name, "FSEVEN~1", REJCMPL)) { return 1; }
+  if (!strncasecmp(name, "SYSTEM~1", REJCMPL)) { return 1; }
+  if (!strncasecmp(name, "System Volume", 13)) { return 1; }
   return 0;
 }
 
@@ -225,35 +226,35 @@ void UFS_form1000(uint32_t number, char *dp, char sc) {
   char *sp = str;
   uint32_t inum = strlen(sp)/3;
   uint32_t fnum = strlen(sp)%3;
-  if (!fnum) inum--;
-  for (uint32_t count=0; count<=inum; count++) {
-    if (fnum){
-      memcpy(dp,sp,fnum);
-      dp+=fnum;
-      sp+=fnum;
-      fnum=0;
+  if (!fnum) { inum--; }
+  for (uint32_t count = 0; count <= inum; count++) {
+    if (fnum) {
+      memcpy(dp, sp, fnum);
+      dp += fnum;
+      sp += fnum;
+      fnum = 0;
     } else {
-      memcpy(dp,sp,3);
-      dp+=3;
-      sp+=3;
+      memcpy(dp, sp, 3);
+      dp += 3;
+      sp += 3;
     }
-    if (count!=inum) {
-      *dp++=sc;
+    if (count != inum) {
+      *dp++ = sc;
     }
   }
-  *dp=0;
+  *dp = 0;
 }
 
-
-const char kUFSCommands[] PROGMEM = "UFS" "|"  // Prefix
-  "|" "TYPE" "|" "SIZE" "|" "FREE";
+const char kUFSCommands[] PROGMEM = "Ufs" "|"  // Prefix
+  "|" "Type" "|" "Size" "|" "Free";
 
 void (* const kUFSCommand[])(void) PROGMEM = {
     &UFS_info, &UFS_type, &UFS_size, &UFS_free};
 
 void UFS_info(void) {
-  Response_P(PSTR("{\"UFS\":{\"TYPE\":%d,\"SIZE\":%d,\"FREE\":%d}}"),ufs_type,ufs_fsinfo(0),ufs_fsinfo(1));
+  Response_P(PSTR("{\"Ufs\":{\"Type\":%d,\"Size\":%d,\"Free\":%d}}"), ufs_type, ufs_fsinfo(0), ufs_fsinfo(1));
 }
+
 void UFS_type(void) {
   ResponseCmndNumber(ufs_type);
 }
@@ -268,28 +269,28 @@ const char UFS_WEB_DIR[] PROGMEM =
   "<p><form action='" "ufsd" "' method='get'><button>" "%s" "</button></form></p>";
 const char UFS_FILE_UPLOAD[] PROGMEM = D_SDCARD_DIR;
 const char UFS_FORM_FILE_UPLOAD[] PROGMEM =
-"<div id='f1' name='f1' style='display:block;'>"
-"<fieldset><legend><b>&nbsp;%s"  "&nbsp;</b></legend>";
+  "<div id='f1' name='f1' style='display:block;'>"
+  "<fieldset><legend><b>&nbsp;%s"  "&nbsp;</b></legend>";
 const char UFS_FORM_FILE_UPG[] PROGMEM =
-"<form method='post' action='ufsu' enctype='multipart/form-data'>"
-"<br/><input type='file' name='ufsu'><br/>"
-"<br/><button type='submit' onclick='eb(\"f1\").style.display=\"none\";eb(\"f2\").style.display=\"block\";this.form.submit();'>" D_START " %s</button></form>";
+  "<form method='post' action='ufsu' enctype='multipart/form-data'>"
+  "<br/><input type='file' name='ufsu'><br/>"
+  "<br/><button type='submit' onclick='eb(\"f1\").style.display=\"none\";eb(\"f2\").style.display=\"block\";this.form.submit();'>" D_START " %s</button></form>";
 const char UFS_FORM_FILE_UPGc[] PROGMEM =
-"<div style='text-align:left;color:green;'>total size: %s kB - free: %s kB</div>";
+  "<div style='text-align:left;color:green;'>total size: %s kB - free: %s kB</div>";
 const char UFS_FORM_SDC_DIRa[] PROGMEM =
-"<div style='text-align:left'>";
+  "<div style='text-align:left'>";
 const char UFS_FORM_SDC_DIRc[] PROGMEM =
-"</div>";
+  "</div>";
 const char UFS_FORM_FILE_UPGb[] PROGMEM =
-"</fieldset>"
-"</div>"
-"<div id='f2' name='f2' style='display:none;text-align:center;'><b>" D_UPLOAD_STARTED " ...</b></div>";
+  "</fieldset>"
+  "</div>"
+  "<div id='f2' name='f2' style='display:none;text-align:center;'><b>" D_UPLOAD_STARTED " ...</b></div>";
 const char UFS_FORM_SDC_DIRd[] PROGMEM =
-"<pre><a href='%s' file='%s'>%s</a></pre>";
+  "<pre><a href='%s' file='%s'>%s</a></pre>";
 const char UFS_FORM_SDC_DIRb[] PROGMEM =
- "<pre><a href='%s' file='%s'>%s</a>     %s : %8d</pre>";
+  "<pre><a href='%s' file='%s'>%s</a>     %s : %8d</pre>";
 const char UFS_FORM_SDC_HREF[] PROGMEM =
- "http://%s/ufsd?download=%s/%s";
+  "http://%s/ufsd?download=%s/%s";
 
 void UFSdirectory(void) {
   uint8_t depth = 0;
@@ -324,7 +325,6 @@ void UFSdirectory(void) {
   WSContentSpaceButton(BUTTON_CONFIGURATION);
   WSContentStop();
   Web.upload_error = 0;
-
 }
 
 void UFS_ListDir(char *path, uint8_t depth) {
@@ -337,15 +337,18 @@ void UFS_ListDir(char *path, uint8_t depth) {
   if (dir) {
     dir.rewindDirectory();
     if (strlen(path)>1) {
-      snprintf_P(npath, sizeof(npath), PSTR("http://%s/ufsd?download=%s"), WiFi.localIP().toString().c_str(),path);
-      for (uint8_t cnt = strlen(npath) - 1; cnt>0; cnt--) {
-        if (npath[cnt]=='/') {
-          if (npath[cnt - 1]=='=') npath[cnt + 1] = 0;
-          else npath[cnt] = 0;
+      snprintf_P(npath, sizeof(npath), PSTR("http://%s/ufsd?download=%s"), WiFi.localIP().toString().c_str(), path);
+      for (uint32_t cnt = strlen(npath) - 1; cnt > 0; cnt--) {
+        if (npath[cnt] == '/') {
+          if (npath[cnt - 1] == '=') {
+            npath[cnt + 1] = 0;
+          } else {
+            npath[cnt] = 0;
+          }
           break;
         }
       }
-      WSContentSend_P(UFS_FORM_SDC_DIRd, npath,path, "..");
+      WSContentSend_P(UFS_FORM_SDC_DIRd, npath, path, "..");
     }
     char *ep;
     while (true) {
@@ -355,17 +358,17 @@ void UFS_ListDir(char *path, uint8_t depth) {
       }
       // esp32 returns path here, shorten to filename
       ep = (char*)entry.name();
-      if (*ep=='/') ep++;
+      if (*ep == '/') { ep++; }
       char *lcp = strrchr(ep,'/');
       if (lcp) {
         ep = lcp + 1;
       }
       time_t tm = entry.getLastWrite();
       char tstr[24];
-      strftime(tstr, 22, "%d-%m-%Y - %H:%M:%S ", localtime(&tm));
+      strftime(tstr, 22, "%d-%m-%Y - %H:%M:%S ", localtime(&tm));  // Theo note to me. Isn't strftime expensive? SHould use ISO Date/Time
 
       char *pp = path;
-      if (!*(pp + 1)) pp++;
+      if (!*(pp + 1)) { pp++; }
       char *cp = name;
       // osx formatted disks contain a lot of stuff we dont want
       if (!ufs_reject((char*)ep)) {
@@ -376,17 +379,17 @@ void UFS_ListDir(char *path, uint8_t depth) {
 
         sprintf(cp, format, ep);
         if (entry.isDirectory()) {
-          snprintf_P(npath, sizeof(npath), UFS_FORM_SDC_HREF, WiFi.localIP().toString().c_str(), pp,ep);
-          WSContentSend_P(UFS_FORM_SDC_DIRd, npath,ep,name);
+          snprintf_P(npath, sizeof(npath), UFS_FORM_SDC_HREF, WiFi.localIP().toString().c_str(), pp, ep);
+          WSContentSend_P(UFS_FORM_SDC_DIRd, npath, ep, name);
           uint8_t plen = strlen(path);
-          if (plen>1) {
+          if (plen > 1) {
             strcat(path, "/");
           }
           strcat(path, ep);
           UFS_ListDir(path, depth + 4);
           path[plen] = 0;
         } else {
-          snprintf_P(npath, sizeof(npath), UFS_FORM_SDC_HREF, WiFi.localIP().toString().c_str(), pp,ep);
+          snprintf_P(npath, sizeof(npath), UFS_FORM_SDC_HREF, WiFi.localIP().toString().c_str(), pp, ep);
           WSContentSend_P(UFS_FORM_SDC_DIRb, npath, ep, name, tstr, entry.size());
         }
       }
@@ -400,61 +403,61 @@ uint8_t UFS_DownloadFile(char *file) {
   File download_file;
   WiFiClient download_Client;
 
-    if (!ufsp->exists(file)) {
-      AddLog_P(LOG_LEVEL_INFO, PSTR("file not found"));
-      return 0;
-    }
-
-    download_file = ufsp->open(file, UFS_FILE_READ);
-    if (!download_file) {
-      AddLog_P(LOG_LEVEL_INFO, PSTR("could not open file"));
-      return 0;
-    }
-
-    if (download_file.isDirectory()) {
-      download_file.close();
-      return 1;
-    }
-
-    uint32_t flen = download_file.size();
-
-    download_Client = Webserver->client();
-    Webserver->setContentLength(flen);
-
-    char attachment[100];
-    char *cp;
-    for (uint8_t cnt = strlen(file); cnt>=0; cnt--) {
-      if (file[cnt]=='/') {
-        cp = &file[cnt + 1];
-        break;
-      }
-    }
-    snprintf_P(attachment, sizeof(attachment), PSTR("attachment; filename=%s"), cp);
-    Webserver->sendHeader(F("Content-Disposition"), attachment);
-    WSSend(200, CT_STREAM, "");
-
-    uint8_t buff[512];
-    uint16_t bread;
-
-    // transfer is about 150kb/s
-    uint8_t cnt = 0;
-    while (download_file.available()) {
-      bread = download_file.read(buff, sizeof(buff));
-      uint16_t bw = download_Client.write((const char*)buff, bread);
-      if (!bw) break;
-      cnt++;
-      if (cnt>7) {
-        cnt = 0;
-        //if (glob_script_mem.script_loglevel & 0x80) {
-          // this indeed multitasks, but is slower 50 kB/s
-        //  loop();
-        //}
-      }
-      delay(0);
-    }
-    download_file.close();
-    download_Client.stop();
+  if (!ufsp->exists(file)) {
+    AddLog_P(LOG_LEVEL_INFO, PSTR("UFS: File not found"));
     return 0;
+  }
+
+  download_file = ufsp->open(file, UFS_FILE_READ);
+  if (!download_file) {
+    AddLog_P(LOG_LEVEL_INFO, PSTR("UFS: Could not open file"));
+    return 0;
+  }
+
+  if (download_file.isDirectory()) {
+    download_file.close();
+    return 1;
+  }
+
+  uint32_t flen = download_file.size();
+
+  download_Client = Webserver->client();
+  Webserver->setContentLength(flen);
+
+  char attachment[100];
+  char *cp;
+  for (uint32_t cnt = strlen(file); cnt >= 0; cnt--) {
+    if (file[cnt] == '/') {
+      cp = &file[cnt + 1];
+      break;
+    }
+  }
+  snprintf_P(attachment, sizeof(attachment), PSTR("attachment; filename=%s"), cp);
+  Webserver->sendHeader(F("Content-Disposition"), attachment);
+  WSSend(200, CT_STREAM, "");
+
+  uint8_t buff[512];
+  uint32_t bread;
+
+  // transfer is about 150kb/s
+  uint32_t cnt = 0;
+  while (download_file.available()) {
+    bread = download_file.read(buff, sizeof(buff));
+    uint32_t bw = download_Client.write((const char*)buff, bread);
+    if (!bw) { break; }
+    cnt++;
+    if (cnt > 7) {
+      cnt = 0;
+      //if (glob_script_mem.script_loglevel & 0x80) {
+        // this indeed multitasks, but is slower 50 kB/s
+      //  loop();
+      //}
+    }
+    delay(0);
+  }
+  download_file.close();
+  download_Client.stop();
+  return 0;
 }
 
 void UFS_Upload(void) {
@@ -464,16 +467,20 @@ void UFS_Upload(void) {
     sprintf(npath, "%s/%s", ufs_path, upload.filename.c_str());
     ufsp->remove(npath);
     ufs_upload_file = ufsp->open(npath, UFS_FILE_WRITE);
-    if (!ufs_upload_file) Web.upload_error = 1;
-  } else if(upload.status == UPLOAD_FILE_WRITE) {
-    if (ufs_upload_file) ufs_upload_file.write(upload.buf, upload.currentSize);
-  } else if(upload.status == UPLOAD_FILE_END) {
-    if (ufs_upload_file) ufs_upload_file.close();
+    if (!ufs_upload_file) { Web.upload_error = 1; }
+  }
+  else if (upload.status == UPLOAD_FILE_WRITE) {
+    if (ufs_upload_file) {
+      ufs_upload_file.write(upload.buf, upload.currentSize);
+    }
+  }
+  else if (upload.status == UPLOAD_FILE_END) {
+    if (ufs_upload_file) { ufs_upload_file.close(); }
     if (Web.upload_error) {
       AddLog_P(LOG_LEVEL_INFO, PSTR("HTP: upload error"));
     }
   } else {
-    Web.upload_error=1;
+    Web.upload_error = 1;
     WSSend(500, CT_PLAIN, F("500: couldn't create file"));
   }
 }
@@ -484,7 +491,7 @@ void UFSFileUploadSuccess(void) {
   WSContentSend_P(PSTR("<div style='text-align:center;'><b>" D_UPLOAD " <font color='#"));
   WSContentSend_P(PSTR("%06x'>" D_SUCCESSFUL "</font></b><br/>"), WebColor(COL_TEXT_SUCCESS));
   WSContentSend_P(PSTR("</div><br/>"));
-  WSContentSend_P(PSTR("<p><form action='%s' method='get'><button>%s</button></form></p>"),"/ufsd",D_UPL_DONE);
+  WSContentSend_P(PSTR("<p><form action='%s' method='get'><button>%s</button></form></p>"), "/ufsd", D_UPL_DONE);
   WSContentStop();
 }
 
@@ -513,7 +520,10 @@ bool Xdrv98(uint8_t function) {
     case FUNC_WEB_ADD_HANDLER:
       Webserver->on("/ufsd", UFSdirectory);
       Webserver->on("/ufsu", HTTP_GET, UFSFileUploadSuccess);
-      Webserver->on("/ufsu", HTTP_POST,[]() { Webserver->sendHeader("Location","/ufsu");Webserver->send(303);}, UFS_Upload);
+      Webserver->on("/ufsu", HTTP_POST,[]() {
+        Webserver->sendHeader("Location","/ufsu");
+        Webserver->send(303);
+      }, UFS_Upload);
       break;
 #endif // USE_WEBSERVER
   }
