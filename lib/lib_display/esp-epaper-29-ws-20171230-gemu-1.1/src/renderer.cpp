@@ -32,6 +32,10 @@
 //#define USE_GFX_FONTS
 #define USE_TINY_FONT
 
+#ifdef ESP32
+#define USE_ICON_FONT
+#endif
+
 uint8_t wr_redir=0;
 
 uint8_t *buffer;
@@ -223,27 +227,32 @@ void Renderer::setTextFont(uint8_t f) {
       break;
     case 7:
       selected_font = &RAFont;
+      break;
     default:
-      font=0;
+      selected_font = &Font12;
+      break;
   }
 #else
 #ifdef USE_EPD_FONTS
-  if (1 == font) {
+  switch (font) {
     selected_font = &Font12;
-  } else {
-  #ifdef USE_TINY_FONT
-    if (2 == font) {
-      selected_font = &Font24;
-    } else {
-      selected_font = &Font8;
-    }
-  #else
+    break;
+  case 2:
     selected_font = &Font24;
-  #endif
+    break;
+  case 3:
+#ifdef USE_TINY_FONT
+    selected_font = &Font8;
+#else
+    selected_font = &Font24;
+#endif
+    break;
+  default:
+    selected_font = &Font12;
+    break;
   }
 #endif
 #endif
-
 }
 
 
@@ -513,11 +522,16 @@ void Renderer::setDrawMode(uint8_t mode) {
   drawmode=mode;
 }
 
+void Renderer::invertDisplay(boolean i) {
+}
+
 void VButton::xdrawButton(bool inverted) {
   wr_redir=1;
   drawButton(inverted);
   wr_redir=0;
 }
+
+
 
 
 /* END OF FILE */

@@ -136,6 +136,7 @@ class ILI9488 : public Renderer {
 
   void begin(void);
   void DisplayInit(int8_t p,int8_t size,int8_t rot,int8_t font);
+  void setAddrWindow_int(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1);
   void setAddrWindow(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1);
   void setScrollArea(uint16_t topFixedArea, uint16_t bottomFixedArea);
   void scroll(uint16_t pixels);

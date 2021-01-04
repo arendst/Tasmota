@@ -119,30 +119,6 @@ class ILI9341_2 : public Renderer {
   ILI9341_2(int8_t cs, int8_t res, int8_t dc, int8_t bp);
 
   void init(uint16_t width, uint16_t height);
-  /*
-  void begin(void);
-  void DisplayInit(int8_t p,int8_t size,int8_t rot,int8_t font);
-  void setAddrWindow(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1);
-  void setScrollArea(uint16_t topFixedArea, uint16_t bottomFixedArea);
-  void scroll(uint16_t pixels);
-  void pushColor(uint16_t color);
-  void pushColors(uint16_t *data, uint8_t len, boolean first);
-  //void drawImage(const uint8_t* img, uint16_t x, uint16_t y, uint16_t w, uint16_t h);
-  void fillScreen(uint16_t color);
-  void drawPixel(int16_t x, int16_t y, uint16_t color);
-  void drawFastVLine(int16_t x, int16_t y, int16_t h, uint16_t color);
-  void drawFastHLine(int16_t x, int16_t y, int16_t w, uint16_t color);
-  void fillRect(int16_t x, int16_t y, int16_t w, int16_t h,uint16_t color);
-  void setRotation(uint8_t r);
-  void invertDisplay(boolean i);
-  uint16_t color565(uint8_t r, uint8_t g, uint8_t b);
-  void DisplayOnff(int8_t on);
-  void writecommand(uint8_t c);
-  void writedata(uint8_t d);
-  void write16BitColor(uint16_t color);
-  void commandList(uint8_t *addr);
-  void hw_spi_init();
-  void dim(uint8_t contrast);*/
   uint16_t GetColorFromIndex(uint8_t index);
 
  private:
@@ -161,7 +137,7 @@ class ILI9341_2 : public Renderer {
   void fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color);
   void dim(uint8_t dim);
   void pushColors(uint16_t *data, uint8_t len, boolean first);
-
+  void invertDisplay(boolean i);
   void spiwrite(uint8_t c);
   void spiwrite16(uint16_t c);
   void spiwrite32(uint32_t c);
