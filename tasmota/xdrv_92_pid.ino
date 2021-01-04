@@ -182,17 +182,43 @@ void PID_Show_Sensor() {
   // Update period is specified in TELE_PERIOD
   // e.g. "{"Time":"2018-03-13T16:48:05","DS18B20":{"Temperature":22.0},"TempUnit":"C"}"
   AddLog_P(LOG_LEVEL_INFO, PSTR("PID_Show_Sensor: mqtt_data: %s"), TasmotaGlobal.mqtt_data);
-  StaticJsonBuffer<400> jsonBuffer;
-  // force mqtt_data to read only to stop parse from overwriting it
-  JsonObject& data_json = jsonBuffer.parseObject((const char*)mqtt_data);
-  if (data_json.success()) {
-    const char* value = data_json["DS18B20"]["Temperature"];
+  AddLog_P(LOG_LEVEL_INFO, PSTR("length of MQTT MEssage: %d"), sizeof(TasmotaGlobal.mqtt_data));
+
+  // I need a copy of the mqtt buffer, because otherwise the actual
+  // message will be truncated after this call:
+  // JsonParser parser( (char*)TasmotaGlobal.mqtt_data);
+  char mqtt_buf[sizeof(TasmotaGlobal.mqtt_data)];
+  strncpy (mqtt_buf, TasmotaGlobal.mqtt_data, 300);
+
+  JsonParser parser( (char*)mqtt_buf);
+  JsonParserObject root = parser.getRootObject();
+  if (!root) {
+    AddLog_P(LOG_LEVEL_ERROR, PSTR("Invalid JSON in PID processing: %s"), mqtt_buf);
+  }
+
+  // Check if there is a named entry in the json:
+  JsonParserToken ds18b20_entry = root[PSTR("DS18B20")];
+  if (ds18b20_entry) {
+    // create a new object for the DS18B20 branch:
+    JsonParserObject ds18b20_obj = root[PSTR("DS18B20")].getObject();
+    if (ds18b20_obj) {
+      float ds18b20_temperature = 666; // use a temperature outside the range as a default 
+      JsonParserToken ds18b20_temperature_token = ds18b20_obj[PSTR("Temperature")];
+      if (ds18b20_temperature_token) {
+        ds18b20_temperature = ds18b20_obj.getFloat(PSTR("Temperature"), 665);
+
+        char the_value[10];
+        dtostrfd(ds18b20_temperature, 3, the_value);
+        AddLog_P(LOG_LEVEL_INFO, PSTR("the_value: %s"), the_value);
+      } else {
+        AddLog_P(LOG_LEVEL_ERROR, PSTR("No Temperature found in DS18B20"));
+      }
     // check that something was found and it contains a number
-    if (value != NULL && strlen(value) > 0 && (isdigit(value[0]) || (value[0] == '-' && isdigit(value[1])) ) ) {
-      AddLog_P(LOG_LEVEL_INFO, PSTR("PID_Show_Sensor: Temperature: %s"), value);
+    if (ds18b20_temperature < 130) { // maximal range of DS18B20 is 125
+      AddLog_P(LOG_LEVEL_INFO, PSTR("PID_Show_Sensor: Temperature: %f"), ds18b20_temperature);
       // pass the value to the pid alogorithm to use as current pv
       last_pv_update_secs = pid_current_time_secs;
-      pid.setPv(atof(value), last_pv_update_secs);
+      pid.setPv(ds18b20_temperature, last_pv_update_secs);
       // also trigger running the pid algorithm if we have been told to run it each pv sample
       if (update_secs == 0) {
         // this runs it at the next second
@@ -201,7 +227,10 @@ void PID_Show_Sensor() {
     } else {
       AddLog_P(LOG_LEVEL_INFO, PSTR("PID_Show_Sensor - no temperature found"));
     }
-  } else  {
+    } else {// if no ds18b20_obj found
+      AddLog_P(LOG_LEVEL_ERROR, PSTR("Invalid JSON in PID processing..."));
+    }
+  } else  { // no ds18b20 key found
     // parse failed
     AddLog_P(LOG_LEVEL_INFO, PSTR("PID_Show_Sensor - json parse failed"));
   }
@@ -321,6 +350,7 @@ static void run_pid()
   dtostrfd(power, 3, buf);
   snprintf_P(TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), PSTR("{\"%s\":\"%s\"}"), "power", buf);
   MqttPublishPrefixTopic_P(TELE, "PID", false);
+  AddLog_P (LOG_LEVEL_INFO, PSTR("power: %s"), buf);
 
 #if defined PID_SHUTTER
     // send output as a position from 0-100 to defined shutter
