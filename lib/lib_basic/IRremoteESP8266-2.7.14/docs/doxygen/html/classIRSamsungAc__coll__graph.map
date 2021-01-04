@@ -1,0 +1,5 @@
+<map id="IRSamsungAc" name="IRSamsungAc">
+<area shape="rect" id="node1" title="Class for handling detailed Samsung A/C messages." alt="" coords="80,95,191,121"/>
+<area shape="rect" id="node2" href="$unionSamsungProtocol.html" title="Native representation of a Samsung A/C message." alt="" coords="5,5,140,32"/>
+<area shape="rect" id="node3" href="$classIRsend.html" title="Class for sending all basic IR protocols." alt="" coords="165,5,231,32"/>
+</map>
