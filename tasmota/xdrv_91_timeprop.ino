@@ -106,8 +106,7 @@ void Timeprop_Set_Power( int index, float power )
 
 void Timeprop_Init()
 {
-  snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), "Timeprop Init");
-  AddLog(LOG_LEVEL_INFO);
+  AddLog_P(LOG_LEVEL_INFO, PSTR("Timeprop Init"));
   int cycleTimes[TIMEPROP_NUM_OUTPUTS] = {TIMEPROP_CYCLETIMES};
   int deadTimes[TIMEPROP_NUM_OUTPUTS] = {TIMEPROP_DEADTIMES};
   int opInverts[TIMEPROP_NUM_OUTPUTS] = {TIMEPROP_OPINVERTS};
