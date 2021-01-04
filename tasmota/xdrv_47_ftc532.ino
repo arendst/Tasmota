@@ -25,7 +25,7 @@
   select pin                        (GPIO_FTC532)
   attach interrupt to pin           DONE
   ISR updating all 8 inputs         DONE
-  de-bouncing for 50 ms             NOT REQUIRED
+  de-bouncing for 50 ms             DONE
   change report every 250 ms        REPORTS EVERY 50MS
   Webserver display "00001001"      DONE & REMOVED
   MQTT message                      DONE
@@ -53,11 +53,13 @@
 
 #define XDRV_47                   47
 
-#define FTC532_KEYS_MAX           8
-#define FTC532_RETRY              8     // number of reads before discarding
+#define FTC532_KEYS               4     // number of key pins on chip
+#define FTC532_KEYS_MAX           8     // number of slots in protocol
+#define FTC532_DEBOUNCE           2     // number of consecutive cycles until key accepted
 
-#define FTC532_STATE_WAITING      false
-#define FTC532_STATE_READING      true
+#define FTC532_STATE_WAITING      0x1
+#define FTC532_STATE_READING      0x2
+#define FTC532_STATE_COMPLETE     0x4
 
 // Rising edge timing in microseconds
 #define FTC532_BIT                377
@@ -71,17 +73,18 @@
 
 struct FTC532 {
   volatile uint32_t rxtime;             // ISR timer memory
-  volatile uint16_t tsmp   = 0xF0F0;    // buffer for bit-coded time samples
-  volatile uint16_t sample = 0xF0F0;    // complete samples
+  volatile uint16_t tsmp    = 0xF0F0;   // buffer for bit-coded time samples
+  volatile uint16_t sample  = 0xF0F0;   // valid samples
   volatile uint16_t rxbit;              // ISR bit counter
-  uint8_t keys = 0;                     // bitmap of active keys
-  uint8_t old_keys = 0;                 // previously active keys
-  volatile bool state;                  // ISR state
+  volatile uint16_t state;              // ISR state
+  uint8_t keys              = 0;        // bitmap of active keys
+  uint8_t old_keys          = 0;        // previously active keys
+  uint8_t key_cnt           = 0;        // used to de-bounce
   bool present = false;                 // driver active
 #ifdef DEBUG_FTC532
-  volatile uint16_t errors = 0;         // inv. key error counter
-  volatile uint16_t frame  = 0;         // frame error counter
-  volatile uint16_t noise  = 0;         // noise detection counter
+  volatile uint16_t e_inv   = 0;        // inv. key error counter
+  volatile uint16_t e_frame = 0;        // frame error counter
+  volatile uint16_t e_noise = 0;        // noise detection counter
   volatile bool valid = 0;              // did we ever receive valid data?
 #endif  // DEBUG_FTC532
 } Ftc532;
@@ -93,16 +96,25 @@ void ICACHE_RAM_ATTR ftc532_ISR(void) {     // Hardware interrupt routine, trigg
   uint32_t time_diff = time - Ftc532.rxtime;
   Ftc532.rxtime = time;
 
-  if (Ftc532.state == FTC532_STATE_WAITING) {
+  if (Ftc532.state & (FTC532_STATE_WAITING | FTC532_STATE_COMPLETE)) {
     if (time_diff > FTC532_LONG + FTC532_SHORT) {   // new frame
       Ftc532.rxbit = 0;
+      if (Ftc532.state & FTC532_STATE_COMPLETE) {
+      Ftc532.sample = Ftc532.tsmp;                  // copy complete frame
+#ifdef DEBUG_FTC532
+      Ftc532.valid = true;
+#endif  // DEBUG_FTC532
+      }
       Ftc532.state = FTC532_STATE_READING;
+    } else {
+      Ftc532.state = FTC532_STATE_WAITING;
     }
     return;
-  }             // FTC532_STATE_READING starts here
+  }
+        // FTC532_STATE_READING starts here
   if (time_diff > FTC532_LONG + FTC532_BIT) {
 #ifdef DEBUG_FTC532
-    ++Ftc532.frame;                                // frame error
+    ++Ftc532.e_frame;                             // frame error
 #endif  // DEBUG_FTC532
     Ftc532.state = FTC532_STATE_WAITING;
     return;
@@ -111,7 +123,7 @@ void ICACHE_RAM_ATTR ftc532_ISR(void) {     // Hardware interrupt routine, trigg
     Ftc532.tsmp |= (1 << Ftc532.rxbit);           // LONG
   } else if (time_diff < FTC532_NOISE) {          // noise detector
 #ifdef DEBUG_FTC532
-    ++Ftc532.noise;
+    ++Ftc532.e_noise;
 #endif  // DEBUG_FTC532
     Ftc532.state = FTC532_STATE_WAITING;
     return;
@@ -120,16 +132,11 @@ void ICACHE_RAM_ATTR ftc532_ISR(void) {     // Hardware interrupt routine, trigg
   }
   ++Ftc532.rxbit;
   if (Ftc532.rxbit == FTC532_KEYS_MAX * 2) {      // frame complete
-    Ftc532.sample = Ftc532.tsmp;                  // copy frame
-    Ftc532.rxbit = 0;
-    Ftc532.state = FTC532_STATE_WAITING;
-#ifdef DEBUG_FTC532
-    Ftc532.valid = true;
-#endif  // DEBUG_FTC532
+    Ftc532.state = FTC532_STATE_COMPLETE;
   }
 }
 
-void ftc532_init(void) {                            // Initialize
+void ftc532_init(void) {                          // Initialize
   if (!PinUsed(GPIO_FTC532)) { return; }
   Ftc532.state = FTC532_STATE_WAITING;
   pinMode(Pin(GPIO_FTC532), INPUT_PULLUP);
@@ -138,30 +145,28 @@ void ftc532_init(void) {                            // Initialize
   Ftc532.present = true;
 }
 
-void ftc532_update(void) {                          // Usually called every 50 ms
-  uint16_t smp;
-  uint16_t i;
-
-  while (i++ < FTC532_RETRY) {                      // fix 'ghost' keys from bad hardware
-    smp = Ftc532.sample;
-    if ((smp & 0xF0F0) != ((~smp & 0x0F0F) << 4)) { // inverted keys don't match
-      ++Ftc532.errors;
+void ftc532_update(void) {                        // Usually called every 50 ms
+  if ((Ftc532.sample & 0xF0F0) == ((~Ftc532.sample & 0x0F0F) << 4) && (Ftc532.sample >> 8) == 0xF0) {
+    Ftc532.keys = Ftc532.sample & 0xF;
+    if (Ftc532.keys != Ftc532.old_keys) {
+      if (++Ftc532.key_cnt >= FTC532_DEBOUNCE) {
 #ifdef DEBUG_FTC532
-      AddLog_P(LOG_LEVEL_DEBUG, PSTR("FTC: SAM=%04X"), smp);
-#endif  // DEBUG_FTC532
-    } else {
-      Ftc532.keys = (smp & 0xF) | ((smp >> 4) & 0xF0);
-      if (Ftc532.keys != Ftc532.old_keys) {
-#ifdef DEBUG_FTC532
-        AddLog_P(LOG_LEVEL_DEBUG, PSTR("FTC: SAM=%04X KEY=%02X OLD=%02X ERR=%u NOI=%u FRM=%u OK=%u TIME=%lu Pin=%u"),
-                Ftc532.sample, Ftc532.keys, Ftc532.old_keys, Ftc532.errors, Ftc532.noise, Ftc532.frame, Ftc532.valid, Ftc532.rxtime, Pin(GPIO_FTC532));
+        AddLog_P(LOG_LEVEL_DEBUG, PSTR("FTC: SAM=%04X KEY=%X OLD=%X INV=%u NOI=%u FRM=%u OK=%u TIME=%lu Pin=%u"),
+                Ftc532.sample, Ftc532.keys, Ftc532.old_keys, Ftc532.e_inv, Ftc532.e_noise, Ftc532.e_frame, Ftc532.valid, Ftc532.rxtime, Pin(GPIO_FTC532));
 #endif  // DEBUG_FTC532
         ftc532_publish();
         Ftc532.old_keys = Ftc532.keys;
+        Ftc532.key_cnt = 0;
       }
-    break;
+    } else {
+      Ftc532.key_cnt = 0;
     }
+#ifdef DEBUG_FTC532
+  } else {
+    ++Ftc532.e_inv;
+    AddLog_P(LOG_LEVEL_DEBUG, PSTR("FTC: SAM=%04X"), Ftc532.sample);
   }
+#endif  // DEBUG_FTC532
 }
 
 void ftc532_show() {
