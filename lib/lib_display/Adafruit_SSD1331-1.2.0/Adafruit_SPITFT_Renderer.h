@@ -1,5 +1,10 @@
+/*
+ * This class is basically the same as Adafruit_SPITFT.
+ * The only difference is: it extends Renderer which extends Adafruit_GFX.
+ * The original Adafruit_SPITFT class directly extends Adafruit_GFX.
+ */
 /*!
- * @file Adafruit_SPITFT.h
+ * @file Adafruit_SPITFT_Renderer.h
  *
  * Part of Adafruit's GFX graphics library. Originally this class was
  * written to handle a range of color TFT displays connected via SPI,
@@ -17,8 +22,8 @@
  * BSD license, all text here must be included in any redistribution.
  */
 
-#ifndef _ADAFRUIT_SPITFT_H_
-#define _ADAFRUIT_SPITFT_H_
+#ifndef _ADAFRUIT_SPITFT_RENDERER_H_
+#define _ADAFRUIT_SPITFT_RENDERER_H_
 
 #if !defined(__AVR_ATtiny85__) // Not for ATtiny, at all
 
@@ -100,7 +105,7 @@ typedef volatile  ADAGFX_PORT_t* PORTreg_t; ///< PORT register type
 // an enumerated type as the first argument: tft8 (for 8-bit parallel) or
 // tft16 (for 16-bit)...even though 16-bit isn't fully implemented or tested
 // and might never be, still needed that disambiguation from soft SPI.
-enum tftBusWidth { tft8bitbus, tft16bitbus }; ///< For first arg to parallel constructor
+enum tftBusWidth_Renderer { tft8bitbus_Renderer, tft16bitbus_Renderer }; ///< For first arg to parallel constructor
 
 // CLASS DEFINITION --------------------------------------------------------
 
@@ -117,7 +122,7 @@ enum tftBusWidth { tft8bitbus, tft16bitbus }; ///< For first arg to parallel con
           again to avoid breaking a lot of other code. If in doubt, read
           the comments.
 */
-class Adafruit_SPITFT : public Renderer {
+class Adafruit_SPITFT_Renderer : public Renderer {
 
   public:
 
@@ -128,7 +133,7 @@ class Adafruit_SPITFT : public Renderer {
     // (reset, miso). cs argument is required but can be -1 if unused --
     // rather than moving it to the optional arguments, it was done this way
     // to avoid breaking existing code (-1 option was a later addition).
-    Adafruit_SPITFT(uint16_t w, uint16_t h,
+    Adafruit_SPITFT_Renderer(uint16_t w, uint16_t h,
       int8_t cs, int8_t dc, int8_t mosi, int8_t sck,
       int8_t rst = -1, int8_t miso = -1);
 
@@ -137,14 +142,14 @@ class Adafruit_SPITFT : public Renderer {
     // optional reset pin. cs is required but can be -1 if unused -- rather
     // than moving it to the optional arguments, it was done this way to
     // avoid breaking existing code (-1 option was a later addition).
-    Adafruit_SPITFT(uint16_t w, uint16_t h,
+    Adafruit_SPITFT_Renderer(uint16_t w, uint16_t h,
       int8_t cs, int8_t dc, int8_t rst = -1);
 
 #if !defined(ESP8266) // See notes in .cpp
     // Hardware SPI constructor using an arbitrary SPI peripheral: expects
     // width & height (rotation 0), SPIClass pointer, 2 signal pins (cs, dc)
     // and optional reset pin. cs is required but can be -1 if unused.
-    Adafruit_SPITFT(uint16_t w, uint16_t h, SPIClass *spiClass,
+    Adafruit_SPITFT_Renderer(uint16_t w, uint16_t h, SPIClass *spiClass,
       int8_t cs, int8_t dc, int8_t rst = -1);
 #endif // end !ESP8266
 
@@ -153,7 +158,7 @@ class Adafruit_SPITFT : public Renderer {
     // pins (d0, wr, dc), 3 optional pins (cs, rst, rd). 16-bit parallel
     // isn't even fully implemented but the 'wide' flag was added as a
     // required argument to avoid ambiguity with other constructors.
-    Adafruit_SPITFT(uint16_t w, uint16_t h, tftBusWidth busWidth,
+    Adafruit_SPITFT_Renderer(uint16_t w, uint16_t h, tftBusWidth_Renderer busWidth,
       int8_t d0, int8_t wr, int8_t dc,
       int8_t cs = -1, int8_t rst = -1, int8_t rd = -1);
 

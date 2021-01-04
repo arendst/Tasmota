@@ -146,7 +146,7 @@ void Adafruit_SSD1331::begin(uint32_t freq) {
 /**************************************************************************/
 Adafruit_SSD1331::Adafruit_SSD1331(int8_t cs, int8_t dc, int8_t mosi,
                                    int8_t sclk, int8_t rst)
-    : Adafruit_SPITFT(TFTWIDTH, TFTHEIGHT, cs, dc, mosi, sclk, rst, -1) {}
+    : Adafruit_SPITFT_Renderer(TFTWIDTH, TFTHEIGHT, cs, dc, mosi, sclk, rst, -1) {}
 
 /**************************************************************************/
 /*!
@@ -157,7 +157,7 @@ Adafruit_SSD1331::Adafruit_SSD1331(int8_t cs, int8_t dc, int8_t mosi,
 */
 /**************************************************************************/
 Adafruit_SSD1331::Adafruit_SSD1331(int8_t cs, int8_t dc, int8_t rst)
-    : Adafruit_SPITFT(TFTWIDTH, TFTHEIGHT, cs, dc, rst) {}
+    : Adafruit_SPITFT_Renderer(TFTWIDTH, TFTHEIGHT, cs, dc, rst) {}
 
 /**************************************************************************/
 /*!
@@ -173,9 +173,9 @@ Adafruit_SSD1331::Adafruit_SSD1331(SPIClass *spi, int8_t cs, int8_t dc,
                                    int8_t rst)
     :
 #if defined(ESP8266)
-      Adafruit_SPITFT(TFTWIDTH, TFTWIDTH, cs, dc, rst) {
+      Adafruit_SPITFT_Renderer(TFTWIDTH, TFTWIDTH, cs, dc, rst) {
 #else
-      Adafruit_SPITFT(TFTWIDTH, TFTWIDTH, spi, cs, dc, rst) {
+      Adafruit_SPITFT_Renderer(TFTWIDTH, TFTWIDTH, spi, cs, dc, rst) {
 #endif
 }
 

@@ -55,7 +55,7 @@
 #define SSD1331_CMD_VCOMH 0xBE          //!< Set Vcomh voltge
 
 /// Class to manage hardware interface with SSD1331 chipset
-class Adafruit_SSD1331 : public Adafruit_SPITFT {
+class Adafruit_SSD1331 : public Adafruit_SPITFT_Renderer {
 public:
   Adafruit_SSD1331(int8_t cs, int8_t dc, int8_t mosi, int8_t sclk, int8_t rst);
   Adafruit_SSD1331(int8_t cs, int8_t dc, int8_t rst);
