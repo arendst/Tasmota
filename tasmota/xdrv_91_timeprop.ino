@@ -106,7 +106,7 @@ void Timeprop_Set_Power( int index, float power )
 
 void Timeprop_Init()
 {
-  snprintf_P(log_data, sizeof(log_data), "Timeprop Init");
+  snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), "Timeprop Init");
   AddLog(LOG_LEVEL_INFO);
   int cycleTimes[TIMEPROP_NUM_OUTPUTS] = {TIMEPROP_CYCLETIMES};
   int deadTimes[TIMEPROP_NUM_OUTPUTS] = {TIMEPROP_DEADTIMES};
@@ -182,7 +182,7 @@ boolean Timeprop_Command()
       if (XdrvMailbox.index >=0 && XdrvMailbox.index < TIMEPROP_NUM_OUTPUTS) {
         timeprops[XdrvMailbox.index].setPower( atof(XdrvMailbox.data), timeprop_current_time_secs );
       }
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_TIMEPROP D_CMND_TIMEPROP_SETPOWER "%d\":\"%s\"}"),
+      snprintf_P(TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), PSTR("{\"" D_CMND_TIMEPROP D_CMND_TIMEPROP_SETPOWER "%d\":\"%s\"}"),
         XdrvMailbox.index, XdrvMailbox.data);
     }
     else {

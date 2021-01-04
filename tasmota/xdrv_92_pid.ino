@@ -160,7 +160,7 @@ static long pid_current_time_secs = 0;  // a counter that counts seconds since i
 
 void PID_Init()
 {
-  snprintf_P(log_data, sizeof(log_data), "PID Init");
+  snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), "PID Init");
   AddLog(LOG_LEVEL_INFO);
   pid.initialise( PID_SETPOINT, PID_PROPBAND, PID_INTEGRAL_TIME, PID_DERIVATIVE_TIME, PID_INITIAL_INT,
     PID_MAX_INTERVAL, PID_DERIV_SMOOTH_FACTOR, PID_AUTO, PID_MANUAL_POWER );
@@ -182,7 +182,7 @@ void PID_Show_Sensor() {
   // as published in tele/SENSOR
   // Update period is specified in TELE_PERIOD
   // e.g. "{"Time":"2018-03-13T16:48:05","DS18B20":{"Temperature":22.0},"TempUnit":"C"}"
-  snprintf_P(log_data, sizeof(log_data), "PID_Show_Sensor: mqtt_data: %s", mqtt_data);
+  snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), "PID_Show_Sensor: mqtt_data: %s", TasmotaGlobal.mqtt_data);
   AddLog(LOG_LEVEL_INFO);
   StaticJsonBuffer<400> jsonBuffer;
   // force mqtt_data to read only to stop parse from overwriting it
@@ -191,7 +191,7 @@ void PID_Show_Sensor() {
     const char* value = data_json["DS18B20"]["Temperature"];
     // check that something was found and it contains a number
     if (value != NULL && strlen(value) > 0 && (isdigit(value[0]) || (value[0] == '-' && isdigit(value[1])) ) ) {
-      snprintf_P(log_data, sizeof(log_data), "PID_Show_Sensor: Temperature: %s", value);
+      snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), "PID_Show_Sensor: Temperature: %s", value);
       AddLog(LOG_LEVEL_INFO);
       // pass the value to the pid alogorithm to use as current pv
       last_pv_update_secs = pid_current_time_secs;
@@ -202,12 +202,12 @@ void PID_Show_Sensor() {
         run_pid_now = true;
       }
     } else {
-      snprintf_P(log_data, sizeof(log_data), "PID_Show_Sensor - no temperature found");
+      snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), "PID_Show_Sensor - no temperature found");
       AddLog(LOG_LEVEL_INFO);
     }
   } else  {
     // parse failed
-    snprintf_P(log_data, sizeof(log_data), "PID_Show_Sensor - json parse failed");
+    snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), "PID_Show_Sensor - json parse failed");
     AddLog(LOG_LEVEL_INFO);
   }
 }
@@ -228,7 +228,7 @@ boolean PID_Command()
   boolean serviced = true;
   uint8_t ua_prefix_len = strlen(D_CMND_PID); // to detect prefix of command
 
-  snprintf_P(log_data, sizeof(log_data), "Command called: "
+  snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), "Command called: "
     "index: %d data_len: %d payload: %d topic: %s data: %s",
     XdrvMailbox.index,
     XdrvMailbox.data_len,
@@ -243,7 +243,7 @@ boolean PID_Command()
     serviced = true;
     switch (command_code) {
       case CMND_PID_SETPV:
-        snprintf_P(log_data, sizeof(log_data), "PID command setpv");
+        snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), "PID command setpv");
         AddLog(LOG_LEVEL_INFO);
         last_pv_update_secs = pid_current_time_secs;
         pid.setPv(atof(XdrvMailbox.data), last_pv_update_secs);
@@ -255,62 +255,62 @@ boolean PID_Command()
         break;
 
       case CMND_PID_SETSETPOINT:
-        snprintf_P(log_data, sizeof(log_data), "PID command setsetpoint");
+        snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), "PID command setsetpoint");
         AddLog(LOG_LEVEL_INFO);
         pid.setSp(atof(XdrvMailbox.data));
         break;
 
       case CMND_PID_SETPROPBAND:
-        snprintf_P(log_data, sizeof(log_data), "PID command propband");
+        snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), "PID command propband");
         AddLog(LOG_LEVEL_INFO);
         pid.setPb(atof(XdrvMailbox.data));
         break;
 
       case CMND_PID_SETINTEGRAL_TIME:
-        snprintf_P(log_data, sizeof(log_data), "PID command Ti");
+        snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), "PID command Ti");
         AddLog(LOG_LEVEL_INFO);
         pid.setTi(atof(XdrvMailbox.data));
         break;
 
       case CMND_PID_SETDERIVATIVE_TIME:
-        snprintf_P(log_data, sizeof(log_data), "PID command Td");
+        snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), "PID command Td");
         AddLog(LOG_LEVEL_INFO);
         pid.setTd(atof(XdrvMailbox.data));
         break;
 
       case CMND_PID_SETINITIAL_INT:
-        snprintf_P(log_data, sizeof(log_data), "PID command initial int");
+        snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), "PID command initial int");
         AddLog(LOG_LEVEL_INFO);
         pid.setInitialInt(atof(XdrvMailbox.data));
         break;
 
       case CMND_PID_SETDERIV_SMOOTH_FACTOR:
-        snprintf_P(log_data, sizeof(log_data), "PID command deriv smooth");
+        snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), "PID command deriv smooth");
         AddLog(LOG_LEVEL_INFO);
         pid.setDSmooth(atof(XdrvMailbox.data));
         break;
 
       case CMND_PID_SETAUTO:
-        snprintf_P(log_data, sizeof(log_data), "PID command auto");
+        snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), "PID command auto");
         AddLog(LOG_LEVEL_INFO);
         pid.setAuto(atoi(XdrvMailbox.data));
         break;
 
       case CMND_PID_SETMANUAL_POWER:
-        snprintf_P(log_data, sizeof(log_data), "PID command manual power");
+        snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), "PID command manual power");
         AddLog(LOG_LEVEL_INFO);
         pid.setManualPower(atof(XdrvMailbox.data));
         break;
 
       case CMND_PID_SETMAX_INTERVAL:
-      snprintf_P(log_data, sizeof(log_data), "PID command set max interval");
+      snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), "PID command set max interval");
       AddLog(LOG_LEVEL_INFO);
       max_interval = atoi(XdrvMailbox.data);
       pid.setMaxInterval(max_interval);
       break;
 
       case CMND_PID_SETUPDATE_SECS:
-        snprintf_P(log_data, sizeof(log_data), "PID command set update secs");
+        snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), "PID command set update secs");
         AddLog(LOG_LEVEL_INFO);
         update_secs = atoi(XdrvMailbox.data) ;
         if (update_secs < 0) update_secs = 0;
@@ -322,7 +322,7 @@ boolean PID_Command()
 
     if (serviced) {
       // set mqtt RESULT
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"%s\":\"%s\"}"), XdrvMailbox.topic, XdrvMailbox.data);
+      snprintf_P(TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), PSTR("{\"%s\":\"%s\"}"), XdrvMailbox.topic, XdrvMailbox.data);
     }
 
   } else {
@@ -336,7 +336,7 @@ static void run_pid()
   double power = pid.tick(pid_current_time_secs);
   char buf[10];
   dtostrfd(power, 3, buf);
-  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"%s\":\"%s\"}"), "power", buf);
+  snprintf_P(TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), PSTR("{\"%s\":\"%s\"}"), "power", buf);
   MqttPublishPrefixTopic_P(TELE, "PID", false);
 
 #if defined PID_SHUTTER
