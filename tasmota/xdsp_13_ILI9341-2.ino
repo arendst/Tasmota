@@ -94,10 +94,9 @@ void ILI9341_2_InitDriver()
 #ifdef SHOW_SPLASH
     // Welcome text
     renderer->setTextFont(2);
-    renderer->setTextColor(ILI9341_2_WHITE,ILI9341_2_BLACK);
-    renderer->DrawStringAt(20, 140, "ILI9341 TFT!", ILI9341_2_RED,0);
+    renderer->setTextColor(ILI9341_2_WHITE, ILI9341_2_BLACK);
+    renderer->DrawStringAt(30, (Settings.display_height/2)-12, "ILI9341 TFT!", ILI9341_2_WHITE, 0);
     delay(1000);
-    renderer->clearDisplay();
 #endif
 
     color_type = COLOR_COLOR;
