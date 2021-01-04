@@ -1,0 +1,5 @@
+<map id="IRSharpAc" name="IRSharpAc">
+<area shape="rect" id="node1" title="Class for handling detailed Sharp A/C messages." alt="" coords="51,95,139,121"/>
+<area shape="rect" id="node2" href="$classIRsend.html" title="Class for sending all basic IR protocols." alt="" coords="5,5,72,32"/>
+<area shape="rect" id="node3" href="$unionSharpProtocol.html" title="Native representation of a Sharp A/C message." alt="" coords="96,5,208,32"/>
+</map>
