@@ -291,7 +291,10 @@ void WifiBeginAfterScan(void)
                 memcpy((void*) &Wifi.bssid, (void*) bssid_scan, sizeof(Wifi.bssid));
               }
             }
-            break;
+            // Do NOT terminate at first matching SSID as it may not be the strongest one where multiple access points are visible.
+            // NOTE: The scan results are not sorted in descending order of RSSI, rather they are grouped by channel number
+            // Early termination means a very weak match on channel 1 will be selected over a very strong match for the same SSID on channel 6.
+            // break;
           }
         }
         char hex_char[18];
