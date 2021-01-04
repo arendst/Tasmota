@@ -368,8 +368,7 @@ void BacklogLoop(void) {
 void SleepDelay(uint32_t mseconds) {
   if (mseconds) {
     uint32_t wait = millis() + mseconds;
-    while (!TimeReached(wait)) {
-      if (Serial.available()) { return; }  // We need to service serial buffer ASAP as otherwise we get uart buffer overrun
+    while (!TimeReached(wait) && !Serial.available()) {  // We need to service serial buffer ASAP as otherwise we get uart buffer overrun
       delay(1);
     }
   } else {
