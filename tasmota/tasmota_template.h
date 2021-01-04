@@ -142,6 +142,7 @@ enum UserSelectablePins {
   GPIO_RA8876_CS,
   GPIO_ST7789_CS, GPIO_ST7789_DC,
   GPIO_SSD1331_CS, GPIO_SSD1331_DC,
+  GPIO_SDCARD_CS,
   GPIO_SENSOR_END };
 
 enum ProgramSelectablePins {
@@ -304,6 +305,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_RA8876_CS "|"
   D_SENSOR_ST7789_CS "|" D_SENSOR_ST7789_DC "|"
   D_SENSOR_SSD1331_CS "|" D_SENSOR_SSD1331_DC "|"
+  D_SENSOR_SDCARD_CS "|"
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -374,12 +376,9 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_RC522_CS),                 // RC522 Rfid Chip Select
   AGPIO(GPIO_RC522_RST),                // RC522 Rfid Reset
 #endif
-#ifdef USE_DISPLAY
-#ifdef USE_DISPLAY_ILI9341
-  AGPIO(GPIO_ILI9341_CS),
-  AGPIO(GPIO_ILI9341_DC),
-#endif  // USE_DISPLAY_ILI9341
-#endif  // USE_DISPLAY
+#ifdef USE_SDCARD
+  AGPIO(GPIO_SDCARD_CS),
+#endif  // USE_SDCARD
 #endif  // USE_SPI
   AGPIO(GPIO_SSPI_MISO),      // Software SPI Master Input Client Output
   AGPIO(GPIO_SSPI_MOSI),      // Software SPI Master Output Client Input
@@ -387,6 +386,10 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_SSPI_CS),        // Software SPI Chip Select
   AGPIO(GPIO_SSPI_DC),        // Software SPI Data or Command
 #ifdef USE_DISPLAY
+#ifdef USE_DISPLAY_ILI9341
+  AGPIO(GPIO_ILI9341_CS),
+  AGPIO(GPIO_ILI9341_DC),
+#endif  // USE_DISPLAY_ILI9341
 #ifdef USE_DISPLAY_ILI9488
   AGPIO(GPIO_ILI9488_CS),
 #endif  // USE_DISPLAY_ILI9488
