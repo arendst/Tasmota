@@ -369,17 +369,8 @@ void SleepDelay(uint32_t mseconds) {
   if (mseconds) {
     uint32_t wait = millis() + mseconds;
     while (!TimeReached(wait)) {
-#ifdef ESP8266
-      if ((wait - millis()) > 10) {  // ESP8266 does an optimistic_yield(10000) in Serial.available()
-#endif
-        if (Serial.available()) { return; }  // We need to service serial buffer ASAP as otherwise we get uart buffer overrun
-#ifdef ESP8266
-      } else {
-#endif
-        delay(1);
-#ifdef ESP8266
-      }
-#endif  // ESP8266
+      if (Serial.available()) { return; }  // We need to service serial buffer ASAP as otherwise we get uart buffer overrun
+      delay(1);
     }
   } else {
     delay(0);
