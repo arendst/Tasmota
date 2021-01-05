@@ -98,7 +98,7 @@ void UFSInit(void) {
 
     if (SD.begin(cs)) {
 #ifdef ESP8266
-      ufsp = (FS*)&SD;
+      ufsp = &SDFS;
 #endif  // ESP8266
 #ifdef ESP32
       ufsp = &SD;

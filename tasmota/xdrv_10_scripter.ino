@@ -36,6 +36,13 @@ no math hierarchy  (costs ram and execution time, better group with brackets, an
 (will probably make math hierarchy an ifdefed option)
 keywords if then else endif, or, and are better readable for beginners (others may use {})
 
+// to doo
+remove all filesystem inititialization and gui
+adapt 3 options
+1. ufilesystem
+2. eeprom hardware and emulation
+3. compression
+
 \*********************************************************************************************/
 
 #define XDRV_10             10
@@ -70,69 +77,50 @@ keywords if then else endif, or, and are better readable for beginners (others m
 //uint32_t EncodeLightId(uint8_t relay_id);
 //uint32_t DecodeLightId(uint32_t hue_id);
 
-#ifdef USE_UNISHOX_COMPRESSION
-#define USE_SCRIPT_COMPRESSION
-#endif
+#define SPECIAL_EEPMODE_SIZE 6200
 
-// solve conficting defines
-// highest priority
-#ifdef USE_SCRIPT_FATFS
-#undef LITTLEFS_SCRIPT_SIZE
-#undef EEP_SCRIPT_SIZE
-#undef USE_SCRIPT_COMPRESSION
+#ifdef USE_UFILESYS
 
-#if USE_SCRIPT_FATFS==-1
+#undef USE_SCRIPT_FATFS
+#define USE_SCRIPT_FATFS -1
+#pragma message "universal file system used"
 
-#ifdef ESP32
-#pragma message "script fat file option -1 used"
-#else
-#pragma message "script fat file option -1 used"
-#endif
-
-#else
-#pragma message "script fat file SDC option used"
-#endif
-#endif // USE_SCRIPT_FATFS
-
-// lfs on esp8266 spiffs on esp32
-#ifdef LITTLEFS_SCRIPT_SIZE
-#undef EEP_SCRIPT_SIZE
-#undef USE_SCRIPT_COMPRESSION
-#pragma message "script little file system option used"
-#endif // LITTLEFS_SCRIPT_SIZE
+#else // USE_UFILESYS
 
 // eeprom script
 #ifdef EEP_SCRIPT_SIZE
-#undef USE_SCRIPT_COMPRESSION
+
+#ifdef ESP32
+#error "unsupported option for ESP32"
+#endif
+
 #ifdef USE_24C256
 #pragma message "script 24c256 file option used"
 #else
-//#warning "EEP_SCRIPT_SIZE also needs USE_24C256"
-#if EEP_SCRIPT_SIZE==SPI_FLASH_SEC_SIZE
-#pragma message "internal eeprom script buffer used"
-#else
+
+#if EEP_SCRIPT_SIZE==SPECIAL_EEPMODE_SIZE
 #pragma message "internal compressed eeprom script buffer used"
+#else
+#error "unsupported eeprom option used"
 #endif
-//#define USE_24C256
-#endif
+#endif // USE_24C256
+
+#else // EEP_SCRIPT_SIZE
+
+// default
+#pragma message "script compression option used"
+
 #endif // EEP_SCRIPT_SIZE
 
-// compression last option before default
-#ifdef USE_SCRIPT_COMPRESSION
-#pragma message "script compression option used"
-#endif // USE_UNISHOX_COMPRESSION
+#endif // USE_UFILESYS
 
-
-//#ifdef USE_SCRIPT_COMPRESSION
 #include <unishox.h>
-
 #define SCRIPT_COMPRESS compressor.unishox_compress
 #define SCRIPT_DECOMPRESS compressor.unishox_decompress
 #ifndef UNISHOXRSIZE
 #define UNISHOXRSIZE 2560
 #endif
 
-//#endif // USE_SCRIPT_COMPRESSION
 
 #ifndef STASK_PRIO
 #define STASK_PRIO 1
@@ -165,22 +153,14 @@ void Script_ticker4_end(void) {
 
 // EEPROM MACROS
 // i2c eeprom
+#define EEP_WRITE(A,B,C) eeprom_writeBytes(A, B, (uint8_t*)C);
+#define EEP_READ(A,B,C) eeprom_readBytes(A, B, (uint8_t*)C);
+#define EEP_INIT(A) eeprom_init(A)
 
-#if defined(ALT_EEPROM) && !defined(ESP32)
-#undef EEP_WRITE
-#undef EEP_READ
-#undef EEP_INIT
-#define EEP_WRITE(A,B,C) alt_eeprom_writeBytes(A, B, (uint8_t*)C);
-#define EEP_READ(A,B,C) alt_eeprom_readBytes(A, B, (uint8_t*)C);
-#define EEP_INIT(A) alt_eeprom_init(A)
 
-#if EEP_SCRIPT_SIZE>6500
-#undef EEP_SCRIPT_SIZE
-#define EEP_SCRIPT_SIZE 6500
-#endif
+#if defined(EEP_SCRIPT_SIZE) && !defined(ESP32)
 
 uint32_t eeprom_block;
-
 // these support only one 4 k block below EEPROM this steals 4k of application area
 uint32_t alt_eeprom_init(uint32_t size) {
     //EEPROM.begin(size);
@@ -198,28 +178,30 @@ void alt_eeprom_readBytes(uint32_t adr, uint32_t len, uint8_t *buf) {
   uint32_t *lwp=(uint32_t*)buf;
   ESP.flashRead(eeprom_block , lwp, SPI_FLASH_SEC_SIZE);
 }
-#else
-#undef EEP_WRITE
-#undef EEP_READ
-#undef EEP_INIT
-#define EEP_WRITE(A,B,C) eeprom_writeBytes(A, B, (uint8_t*)C);
-#define EEP_READ(A,B,C) eeprom_readBytes(A, B, (uint8_t*)C);
-#define EEP_INIT(A) eeprom_init(A)
-#endif // ALT_EEPROM
+#endif // EEP_SCRIPT_SIZE
+
+#include "FS.h"
+
+#define FS_FILE_WRITE "w"
+#define FS_FILE_READ "r"
+#define FS_FILE_APPEND "a"
 
 
 
 #if USE_SCRIPT_FATFS==-1
 #ifdef ESP32
-#include "FS.h"
-#include "FFat.h"
+//#include "FS.h"
+//#include "FFat.h"
 #else
-#include <LittleFS.h>
+//#include <LittleFS.h>
 #endif
-FS *fsp;
+
+#ifndef UFILESYSTEM
+//FS *ufsp;
+#endif
+
 #endif // LITTLEFS_SCRIPT_SIZE
 
-//extern FS *ufsp;
 
 // offsets epoch readings by 1.1.2019 00:00:00 to fit into float with second resolution
 #define EPOCH_OFFSET 1546300800
@@ -230,50 +212,65 @@ enum {SCRIPT_LOGLEVEL=1,SCRIPT_TELEPERIOD,SCRIPT_EVENT_HANDLED};
 #ifdef USE_SCRIPT_FATFS
 
 #if USE_SCRIPT_FATFS>=0
-#include <SPI.h>
-#include <SD.h>
-#include <FS.h>
+//#include <SPI.h>
+//#include <SD.h>
+//#include <FS.h>
 
 #ifdef ESP32
-#include "FFat.h"
-FS *fsp;
+//#include "FFat.h"
+#ifndef UFILESYSTEM
+//FS *ufsp;
+#endif
 #else
-SDClass *fsp;
+#ifndef UFILESYSTEM
+//SDClass *ufsp;
+#endif
 #endif
 #endif //USE_SCRIPT_FATFS
+
+#ifndef FAT_SCRIPT_SIZE
+#define FAT_SCRIPT_SIZE 4096
+#endif
+
 
 #ifndef ESP32
 // esp8266
 
 #if USE_SCRIPT_FATFS>=0
 // old fs
-#undef FILE_WRITE
-#define FILE_WRITE (sdfat::O_READ | sdfat::O_WRITE | sdfat::O_CREAT)
-#define FILE_APPEND (sdfat::O_READ | sdfat::O_WRITE | sdfat::O_CREAT | sdfat::O_APPEND)
+//#undef FILE_WRITE
+//#define FILE_WRITE (sdfat::O_READ | sdfat::O_WRITE | sdfat::O_CREAT)
+//#undef FILE_APPEND
+//#define FILE_APPEND (sdfat::O_READ | sdfat::O_WRITE | sdfat::O_CREAT | sdfat::O_APPEND)
 
 #else
 // new fs
-#undef FILE_WRITE
-#define FILE_WRITE "w"
-#undef FILE_READ
-#define FILE_READ "r"
-#undef FILE_APPEND
-#define FILE_APPEND "a"
+//undef FILE_WRITE
+//#define FILE_WRITE "w"
+//#undef FILE_READ
+//#define FILE_READ "r"
+//#undef FILE_APPEND
+//#define FILE_APPEND "a"
 #endif
 
 #endif // USE_SCRIPT_FATFS>=0
 
 
-#ifndef FAT_SCRIPT_SIZE
-#define FAT_SCRIPT_SIZE 4096
+extern uint8_t ufs_type;
+extern FS *ufsp;
+
+
+#ifndef UFSYS_SIZE
+#define UFSYS_SIZE 8192
 #endif
+
 
 #ifdef ESP32
 #undef FAT_SCRIPT_NAME
 #define FAT_SCRIPT_NAME "/script.txt"
 #else
 #undef FAT_SCRIPT_NAME
-#define FAT_SCRIPT_NAME "script.txt"
+#define FAT_SCRIPT_NAME "/script.txt"
 #endif
 
 //#if USE_STANDARD_SPI_LIBRARY==0
@@ -383,6 +380,20 @@ typedef union {
   };
 } UDP_FLAGS;
 
+typedef union {
+  uint8_t data;
+  struct {
+      uint8_t nutu8 : 1;
+      uint8_t nutu7 : 1;
+      uint8_t nutu6 : 1;
+      uint8_t nutu5 : 1;
+      uint8_t nutu4 : 1;
+      uint8_t nutu3 : 1;
+      bool fsys : 1;
+      bool eeprom : 1;
+  };
+} FS_FLAGS;
+
 
 #define NUM_RES 0xfe
 #define STR_RES 0xfd
@@ -425,7 +436,7 @@ struct SCRIPT_MEM {
     uint8_t glob_error;
     uint8_t max_ssize;
     uint8_t script_loglevel;
-    uint8_t flags;
+    FS_FLAGS FLAGS;
     uint8_t si_num[3];
     uint8_t siro_num[3];
     uint8_t sind_num;
@@ -512,7 +523,7 @@ char *GetNumericArgument(char *lp,uint8_t lastop,float *fp, JsonParserObject *jo
 char *GetStringArgument(char *lp,uint8_t lastop,char *cp, JsonParserObject *jo);
 char *ForceStringVar(char *lp,char *dstr);
 void send_download(void);
-uint8_t reject(char *name);
+uint8_t ufs_reject(char *name);
 
 void ScriptEverySecond(void) {
 
@@ -965,42 +976,6 @@ char *script;
       }
     }
 
-// init file system
-//#ifndef USE_UFILESYS
-#if 1
-
-#ifdef USE_SCRIPT_FATFS
-    if (!glob_script_mem.script_sd_found) {
-
-#if USE_SCRIPT_FATFS>=0
-    // user sd card
-      fsp = &SD;
-      if (SD.begin(USE_SCRIPT_FATFS)) {
-#else
-    // use flash file
-#ifdef ESP32
-    //  if (SPIFFS.begin(FORMAT_SPIFFS_IF_FAILED)) {
-      if (FFat.begin(true)) {
-#else
-      if (fsp->begin()) {
-#endif // ESP32
-
-#endif // USE_SCRIPT_FATFS>=0
-
-        glob_script_mem.script_sd_found = 1;
-      } else {
-        glob_script_mem.script_sd_found = 0;
-      }
-    }
-    for (uint8_t cnt = 0; cnt<SFS_MAX; cnt++) {
-      glob_script_mem.file_flags[cnt].is_open = 0;
-    }
-#endif
-
-#else
-    fsp = ufsp;
-#endif
-
 #if SCRIPT_DEBUG>0
     ClaimSerial();
     SetSerialBaudrate(9600);
@@ -1023,63 +998,6 @@ char *script;
     return err;
 }
 
-#ifdef USE_SCRIPT_FATFS
-uint32_t get_fsinfo(uint32_t sel) {
-uint32_t result = 0;
-#ifdef ESP32
-#if USE_SCRIPT_FATFS >=0
-  if (sel == 0) {
-    result = SD.totalBytes()/1000;
-  } else if (sel == 1) {
-    result = (SD.totalBytes() - SD.usedBytes())/1000;
-  }
-#else
-  if (sel == 0) {
-    result = FFat.totalBytes()/1000;
-  } else if (sel == 1) {
-    result = FFat.freeBytes()/1000;
-  }
-#endif // USE_SCRIPT_FATFS>=0
-#else
-  // ESP8266
-  FSInfo64 fsinfo;
-  fsp->info64(fsinfo);
-  if (sel == 0) {
-    result = fsinfo.totalBytes/1000;
-  } else if (sel == 1) {
-    result = (fsinfo.totalBytes - fsinfo.usedBytes)/1000;
-  }
-#endif // ESP32
-  return result;
-}
-
-// format number with thousand marker
-void form1000(uint32_t number, char *dp, char sc) {
-  char str[32];
-  sprintf(str, "%d", number);
-  char *sp = str;
-  uint32_t inum = strlen(sp)/3;
-  uint32_t fnum = strlen(sp)%3;
-  if (!fnum) inum--;
-  for (uint32_t count=0; count<=inum; count++) {
-    if (fnum){
-      memcpy(dp,sp,fnum);
-      dp+=fnum;
-      sp+=fnum;
-      fnum=0;
-    } else {
-      memcpy(dp,sp,3);
-      dp+=3;
-      sp+=3;
-    }
-    if (count!=inum) {
-      *dp++=sc;
-    }
-  }
-  *dp=0;
-}
-
-#endif //USE_SCRIPT_FATFS
 
 #ifdef USE_SCRIPT_GLOBVARS
 #define SCRIPT_UDP_BUFFER_SIZE 128
@@ -2090,7 +2008,7 @@ chknext:
 #ifdef DEBUG_FS
                 Script_AddLog_P(LOG_LEVEL_INFO, PSTR("open file for read %d"), cnt);
 #endif
-                glob_script_mem.files[cnt] = fsp->open(str, FILE_READ);
+                glob_script_mem.files[cnt] = ufsp->open(str, FS_FILE_READ);
                 if (glob_script_mem.files[cnt].isDirectory()) {
                   glob_script_mem.files[cnt].rewindDirectory();
                   glob_script_mem.file_flags[cnt].is_dir = 1;
@@ -2100,12 +2018,12 @@ chknext:
               }
               else {
                 if (mode==1) {
-                  glob_script_mem.files[cnt] = fsp->open(str,FILE_WRITE);
+                  glob_script_mem.files[cnt] = ufsp->open(str,FS_FILE_WRITE);
 #ifdef DEBUG_FS
                   Script_AddLog_P(LOG_LEVEL_INFO, PSTR("open file for write %d"), cnt);
 #endif
                 } else {
-                  glob_script_mem.files[cnt] = fsp->open(str,FILE_APPEND);
+                  glob_script_mem.files[cnt] = ufsp->open(str,FS_FILE_APPEND);
 #ifdef DEBUG_FS
                   Script_AddLog_P(LOG_LEVEL_INFO, PSTR("open file for append %d"), cnt);
 #endif
@@ -2198,7 +2116,7 @@ chknext:
               while (true) {
                 File entry = glob_script_mem.files[find].openNextFile();
                 if (entry) {
-                  if (!reject((char*)entry.name())) {
+                  if (!ufs_reject((char*)entry.name())) {
                     char *ep = (char*)entry.name();
                     if (*ep=='/') ep++;
                     char *lcp = strrchr(ep,'/');
@@ -2242,7 +2160,7 @@ chknext:
         if (!strncmp(vname, "fd(", 3)) {
           char str[glob_script_mem.max_ssize + 1];
           lp = GetStringArgument(lp + 3, OPER_EQU, str, 0);
-          fsp->remove(str);
+          ufsp->remove(str);
           lp++;
           len = 0;
           goto exit;
@@ -2280,7 +2198,7 @@ chknext:
           char str[glob_script_mem.max_ssize + 1];
           lp = GetStringArgument(lp + 3, OPER_EQU, str, 0);
           // execute script
-          File ef = fsp->open(str, FILE_READ);
+          File ef = ufsp->open(str, FS_FILE_READ);
           if (ef) {
             uint16_t fsiz = ef.size();
             if (fsiz<2048) {
@@ -2301,7 +2219,7 @@ chknext:
         if (!strncmp(vname, "fmd(", 4)) {
           char str[glob_script_mem.max_ssize + 1];
           lp = GetStringArgument(lp + 4, OPER_EQU, str, 0);
-          fvar = fsp->mkdir(str);
+          fvar = ufsp->mkdir(str);
           lp++;
           len = 0;
           goto exit;
@@ -2309,7 +2227,7 @@ chknext:
         if (!strncmp(vname, "frd(", 4)) {
           char str[glob_script_mem.max_ssize + 1];
           lp = GetStringArgument(lp + 4, OPER_EQU, str, 0);
-          fvar = fsp->rmdir(str);
+          fvar = ufsp->rmdir(str);
           lp++;
           len = 0;
           goto exit;
@@ -2317,7 +2235,7 @@ chknext:
         if (!strncmp(vname, "fx(", 3)) {
           char str[glob_script_mem.max_ssize + 1];
           lp = GetStringArgument(lp + 3, OPER_EQU, str, 0);
-          if (fsp->exists(str)) fvar = 1;
+          if (ufsp->exists(str)) fvar = 1;
           else fvar = 0;
           lp++;
           len = 0;
@@ -2326,7 +2244,7 @@ chknext:
 
         if (!strncmp(vname, "fsi(", 4)) {
           lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, 0);
-          fvar = get_fsinfo(fvar);
+          fvar = ufs_fsinfo(fvar);
           lp++;
           len = 0;
           goto exit;
@@ -4852,46 +4770,13 @@ const char HTTP_SCRIPT_FORM_END[] PROGMEM =
 #ifdef USE_SCRIPT_FATFS
 const char HTTP_FORM_SCRIPT1c[] PROGMEM =
     "<button name='d%d' type='submit' class='button bgrn'>" D_SCRIPT_DOWNLOAD " '%s'</button>";
-#ifdef SDCARD_DIR
-const char HTTP_FORM_SCRIPT1d[] PROGMEM =
-    "<button method='post' name='upl' type='submit' class='button bgrn'>" D_SDCARD_DIR "</button>";
-#else
+
+
 const char HTTP_FORM_SCRIPT1d[] PROGMEM =
     "<button method='post' name='upl' type='submit' class='button bgrn'>" D_SCRIPT_UPLOAD_FILES "</button>";
-#endif
 
-#ifdef SDCARD_DIR
-const char S_SCRIPT_FILE_UPLOAD[] PROGMEM = D_SDCARD_DIR;
-#else
 const char S_SCRIPT_FILE_UPLOAD[] PROGMEM = D_SDCARD_UPLOAD;
-#endif
 
-const char HTTP_FORM_FILE_UPLOAD[] PROGMEM =
-"<div id='f1' name='f1' style='display:block;'>"
-"<fieldset><legend><b>&nbsp;%s"  "&nbsp;</b></legend>";
-const char HTTP_FORM_FILE_UPG[] PROGMEM =
-"<form method='post' action='u13' enctype='multipart/form-data'>"
-"<br/><input type='file' name='u13'><br/>"
-"<br/><button type='submit' onclick='eb(\"f1\").style.display=\"none\";eb(\"f2\").style.display=\"block\";this.form.submit();'>" D_START " %s</button></form>";
-
-const char HTTP_FORM_FILE_UPGb[] PROGMEM =
-"</fieldset>"
-"</div>"
-"<div id='f2' name='f2' style='display:none;text-align:center;'><b>" D_UPLOAD_STARTED " ...</b></div>";
-
-const char HTTP_FORM_FILE_UPGc[] PROGMEM =
-"<div style='text-align:left;color:green;'>total size: %s kB - free: %s kB</div>";
-
-const char HTTP_FORM_SDC_DIRa[] PROGMEM =
-"<div style='text-align:left'>";
-const char HTTP_FORM_SDC_DIRb[] PROGMEM =
- "<pre><a href='%s' file='%s'>%s</a>     %s : %8d</pre>";
-const char HTTP_FORM_SDC_DIRd[] PROGMEM =
-"<pre><a href='%s' file='%s'>%s</a></pre>";
-const char HTTP_FORM_SDC_DIRc[] PROGMEM =
-"</div>";
-const char HTTP_FORM_SDC_HREF[] PROGMEM =
-"http://%s/upl?download=%s/%s";
 #endif
 
 
@@ -4968,194 +4853,16 @@ void ScriptExecuteUploadSuccess(void) {
 
 #ifdef USE_SCRIPT_FATFS
 
-#if USE_LONG_FILE_NAMES>0
-#undef REJCMPL
-#define REJCMPL 6
-#else
-#undef REJCMPL
-#define REJCMPL 8
-#endif
-
-uint8_t reject(char *name) {
-
-  char *lcp = strrchr(name,'/');
-  if (lcp) {
-    name = lcp + 1;
-  }
-
-  while (*name=='/') name++;
-  if (*name=='_') return 1;
-  if (*name=='.') return 1;
-
-  if (!strncasecmp(name, "SPOTLI~1", REJCMPL)) return 1;
-  if (!strncasecmp(name, "TRASHE~1", REJCMPL)) return 1;
-  if (!strncasecmp(name, "FSEVEN~1", REJCMPL)) return 1;
-  if (!strncasecmp(name, "SYSTEM~1", REJCMPL)) return 1;
-  if (!strncasecmp(name, "System Volume", 13)) return 1;
-  return 0;
-}
-
-void ListDir(char *path, uint8_t depth) {
-  char name[32];
-  char npath[128];
-  char format[12];
-  sprintf(format, "%%-%ds", 24 - depth);
-
-  File dir = fsp->open(path, FILE_READ);
-  if (dir) {
-    dir.rewindDirectory();
-    if (strlen(path)>1) {
-      snprintf_P(npath, sizeof(npath), PSTR("http://%s/upl?download=%s"), WiFi.localIP().toString().c_str(),path);
-      for (uint8_t cnt = strlen(npath) - 1; cnt>0; cnt--) {
-        if (npath[cnt]=='/') {
-          if (npath[cnt - 1]=='=') npath[cnt + 1] = 0;
-          else npath[cnt] = 0;
-          break;
-        }
-      }
-      WSContentSend_P(HTTP_FORM_SDC_DIRd, npath,path, "..");
-    }
-    char *ep;
-    while (true) {
-      File entry = dir.openNextFile();
-      if (!entry) {
-        break;
-      }
-      // esp32 returns path here, shorten to filename
-      ep = (char*)entry.name();
-      if (*ep=='/') ep++;
-      char *lcp = strrchr(ep,'/');
-      if (lcp) {
-        ep = lcp + 1;
-      }
-      //Script_AddLog_P(LOG_LEVEL_INFO, PSTR("entry: %s"),ep);
-      time_t tm = entry.getLastWrite();
-      char tstr[24];
-      strftime(tstr, 22, "%d-%m-%Y - %H:%M:%S ", localtime(&tm));
-
-      char *pp = path;
-      if (!*(pp + 1)) pp++;
-      char *cp = name;
-      // osx formatted disks contain a lot of stuff we dont want
-      if (reject((char*)ep)) goto fclose;
-
-      for (uint8_t cnt = 0; cnt<depth; cnt++) {
-        *cp++ = '-';
-      }
-
-      sprintf(cp, format, ep);
-      if (entry.isDirectory()) {
-        snprintf_P(npath, sizeof(npath), HTTP_FORM_SDC_HREF, WiFi.localIP().toString().c_str(), pp,ep);
-        WSContentSend_P(HTTP_FORM_SDC_DIRd, npath,ep,name);
-        uint8_t plen = strlen(path);
-        if (plen>1) {
-          strcat(path, "/");
-        }
-        strcat(path, ep);
-        ListDir(path, depth + 4);
-        path[plen] = 0;
-      } else {
-          snprintf_P(npath, sizeof(npath), HTTP_FORM_SDC_HREF, WiFi.localIP().toString().c_str(), pp,ep);
-          WSContentSend_P(HTTP_FORM_SDC_DIRb, npath, ep, name, tstr, entry.size());
-      }
-      fclose:
-      entry.close();
-    }
-    dir.close();
-  }
-}
-
-char path[48];
-
-void Script_FileUploadConfiguration(void) {
-  uint8_t depth = 0;
-
-  strcpy(path, "/");
-
-  if (!HttpCheckPriviledgedAccess()) { return; }
-
-  if (Webserver->hasArg("download")) {
-    String stmp = Webserver->arg("download");
-    char *cp = (char*)stmp.c_str();
-    if (DownloadFile(cp)) {
-      // is directory
-      strcpy(path, cp);
-    }
-  }
-
-  WSContentStart_P(S_SCRIPT_FILE_UPLOAD);
-  WSContentSendStyle();
-  WSContentSend_P(HTTP_FORM_FILE_UPLOAD,D_SDCARD_DIR);
-  WSContentSend_P(HTTP_FORM_FILE_UPG, D_SCRIPT_UPLOAD);
-#ifdef SDCARD_DIR
-  char ts[16];
-  char fs[16];
-  form1000(get_fsinfo(0), ts, '.');
-  form1000(get_fsinfo(1), fs, '.');
-  WSContentSend_P(HTTP_FORM_FILE_UPGc, ts, fs);
-  WSContentSend_P(HTTP_FORM_SDC_DIRa);
-  if (glob_script_mem.script_sd_found) {
-    ListDir(path, depth);
-  }
-  WSContentSend_P(HTTP_FORM_SDC_DIRc);
-#endif
-  WSContentSend_P(HTTP_FORM_FILE_UPGb);
-  WSContentSpaceButton(BUTTON_CONFIGURATION);
-  WSContentStop();
-  Web.upload_error = 0;
-}
-
-void ScriptFileUploadSuccess(void) {
-  WSContentStart_P(PSTR(D_INFORMATION));
-  WSContentSendStyle();
-  WSContentSend_P(PSTR("<div style='text-align:center;'><b>" D_UPLOAD " <font color='#"));
-  WSContentSend_P(PSTR("%06x'>" D_SUCCESSFUL "</font></b><br/>"), WebColor(COL_TEXT_SUCCESS));
-  WSContentSend_P(PSTR("</div><br/>"));
-  WSContentSend_P(PSTR("<p><form action='%s' method='get'><button>%s</button></form></p>"),"/upl",D_UPL_DONE);
-  //WSContentSpaceButton(BUTTON_MAIN);
-  WSContentStop();
-}
-
-
-File upload_file;
-
-void script_upload(void) {
-  //Script_AddLog_P(LOG_LEVEL_INFO, PSTR("HTP: file upload"));
-  HTTPUpload& upload = Webserver->upload();
-  if (upload.status == UPLOAD_FILE_START) {
-    char npath[48];
-#if defined(ESP32) && defined(USE_SCRIPT_FATFS) && USE_SCRIPT_FATFS==-1
-    //sprintf(npath,"/%s",upload.filename.c_str());
-    sprintf(npath, "%s/%s", path, upload.filename.c_str());
-#else
-    sprintf(npath, "%s/%s", path, upload.filename.c_str());
-#endif
-    fsp->remove(npath);
-    upload_file = fsp->open(npath, FILE_WRITE);
-    if (!upload_file) Web.upload_error = 1;
-  } else if(upload.status == UPLOAD_FILE_WRITE) {
-    if (upload_file) upload_file.write(upload.buf, upload.currentSize);
-  } else if(upload.status == UPLOAD_FILE_END) {
-    if (upload_file) upload_file.close();
-    if (Web.upload_error) {
-      Script_AddLog_P(LOG_LEVEL_INFO, PSTR("HTP: upload error"));
-    }
-  } else {
-    Web.upload_error=1;
-    Webserver->send(500, "text/plain", "500: couldn't create file");
-  }
-}
-
 uint8_t DownloadFile(char *file) {
   File download_file;
   WiFiClient download_Client;
 
-    if (!fsp->exists(file)) {
+    if (!ufsp->exists(file)) {
       Script_AddLog_P(LOG_LEVEL_INFO,PSTR("file not found"));
       return 0;
     }
 
-    download_file = fsp->open(file, FILE_READ);
+    download_file = ufsp->open(file, FS_FILE_READ);
     if (!download_file) {
       Script_AddLog_P(LOG_LEVEL_INFO,PSTR("could not open file"));
       return 0;
@@ -5233,9 +4940,6 @@ void HandleScriptConfiguration(void) {
     if (Webserver->hasArg("d2")) {
       DownloadFile(glob_script_mem.flink[1]);
     }
-    if (Webserver->hasArg("upl")) {
-      Script_FileUploadConfiguration();
-    }
 #endif
 
     WSContentStart_P(PSTR(D_CONFIGURE_SCRIPT));
@@ -5273,30 +4977,40 @@ void HandleScriptConfiguration(void) {
 
 void SaveScript(void) {
 
-#ifdef EEP_SCRIPT_SIZE
-  if (glob_script_mem.flags&1) {
-#if EEP_SCRIPT_SIZE==SPI_FLASH_SEC_SIZE
-    EEP_WRITE(0, EEP_SCRIPT_SIZE, glob_script_mem.script_ram);
-#else
-    char *ucs;
-    ucs = (char*)calloc(SPI_FLASH_SEC_SIZE + 4, 1);
-    if (!script_compress(ucs,EEP_SCRIPT_SIZE-1)) {
-      EEP_WRITE(0, EEP_SCRIPT_SIZE, ucs);
-    }
-    if (ucs) free(ucs);
-#endif
+
+#ifdef USE_UFILESYS
+  if (glob_script_mem.FLAGS.fsys == true) {
+    ufsp->remove(FAT_SCRIPT_NAME);
+    File file = ufsp->open(FAT_SCRIPT_NAME, FS_FILE_WRITE);
+    file.write((const uint8_t*)glob_script_mem.script_ram, strlen(glob_script_mem.script_ram));
+    file.close();
+  } else {
+    // fallback to compressed mode
+    script_compress(Settings.rules[0],MAX_SCRIPT_SIZE-1);
   }
+#else // USE_UFILESYS
+
+#ifdef EEP_SCRIPT_SIZE
+  // here we handle EEPROM modes
+  if (glob_script_mem.FLAGS.eeprom == true) {
+    if (EEP_SCRIPT_SIZE!=SPECIAL_EEPMODE_SIZE) {
+      EEP_WRITE(0, EEP_SCRIPT_SIZE, glob_script_mem.script_ram);
+    } else {
+      uint8_t *ucs;
+      ucs = (uint8_t*)calloc(SPI_FLASH_SEC_SIZE + 4, 1);
+      if (!script_compress((char*)ucs,EEP_SCRIPT_SIZE-1)) {
+        alt_eeprom_writeBytes(0, EEP_SCRIPT_SIZE, ucs);
+      }
+      if (ucs) free(ucs);
+    }
+  }
+#else
+    // default mode is compression
+    script_compress(Settings.rules[0],MAX_SCRIPT_SIZE-1);
 #endif // EEP_SCRIPT_SIZE
 
-#ifdef USE_SCRIPT_FATFS
-  if (glob_script_mem.flags & 1) {
-    fsp->remove(FAT_SCRIPT_NAME);
-    File file = fsp->open(FAT_SCRIPT_NAME, FILE_WRITE);
-    file.write((const uint8_t*)glob_script_mem.script_ram, FAT_SCRIPT_SIZE);
-    file.close();
-  }
-#endif // USE_SCRIPT_FATFS
 
+#endif // USE_UFILESYS
 }
 
 void ScriptSaveSettings(void) {
@@ -5307,45 +5021,12 @@ void ScriptSaveSettings(void) {
     bitWrite(Settings.rule_enabled, 0, 0);
   }
 
-
   String str = Webserver->arg("t1");
 
   if (*str.c_str()) {
 
     str.replace("\r\n", "\n");
     str.replace("\r", "\n");
-
-#ifdef xSCRIPT_STRIP_COMMENTS
-    if (bitRead(Settings.rule_enabled, 1)) {
-      char *sp = (char*)str.c_str();
-      char *sp1 = sp;
-      char *dp = sp;
-      uint8_t flg = 0;
-      while (*sp) {
-        while (*sp==' ') sp++;
-        sp1 = sp;
-        sp = strchr(sp,'\n');
-        if (!sp) {
-          flg = 1;
-        } else {
-          *sp = 0;
-        }
-        if (*sp1!=';') {
-          uint8_t slen = strlen(sp1);
-          if (slen) {
-            strcpy(dp, sp1);
-            dp += slen;
-            *dp++ = '\n';
-          }
-        }
-        if (flg) {
-          *dp = 0;
-          break;
-        }
-        sp++;
-      }
-    }
-#endif //xSCRIPT_STRIP_COMMENTS
 
     strlcpy(glob_script_mem.script_ram, str.c_str(), glob_script_mem.script_size);
 
@@ -5388,10 +5069,6 @@ void SaveScriptEnd(void) {
     glob_script_mem.script_mem = 0;
     glob_script_mem.script_mem_size = 0;
   }
-
-#ifdef USE_SCRIPT_COMPRESSION
-  script_compress(Settings.rules[0],MAX_SCRIPT_SIZE-1);
-#endif // USE_SCRIPT_COMPRESSION
 
   if (bitRead(Settings.rule_enabled, 0)) {
 
@@ -6460,7 +6137,7 @@ void ScriptGetSDCard(void) {
       SendFile(cp);
       return;
     } else {
-      if (fsp->exists(cp)) {
+      if (ufsp->exists(cp)) {
         SendFile(cp);
         return;
       }
@@ -6543,7 +6220,7 @@ char buff[512];
     }
 #endif // USE_DISPLAY_DUMP
   } else {
-    File file = fsp->open(fname,FILE_READ);
+    File file = ufsp->open(fname,FS_FILE_READ);
     uint32_t siz = file.size();
     uint32_t len = sizeof(buff);
     while (siz > 0) {
@@ -7645,6 +7322,8 @@ void cpy2lf(char *dst, uint32_t dstlen, char *src) {
 \*********************************************************************************************/
 //const esp_partition_t *esp32_part;
 
+
+
 bool Xdrv10(uint8_t function)
 {
   bool result = false;
@@ -7658,13 +7337,93 @@ bool Xdrv10(uint8_t function)
       //bitWrite(Settings.rule_enabled,0,0);
       glob_script_mem.script_ram = Settings.rules[0];
       glob_script_mem.script_size = MAX_SCRIPT_SIZE;
-      glob_script_mem.flags = 0;
+      glob_script_mem.FLAGS.fsys = false;
+      glob_script_mem.FLAGS.eeprom = false;
       glob_script_mem.script_pram = (uint8_t*)Settings.script_pram[0];
       glob_script_mem.script_pram_size = PMEM_SIZE;
 
-      // indicates scripter enabled (use rules[][] as single array)
-      bitWrite(Settings.rule_once, 7, 1);
-#ifdef USE_SCRIPT_COMPRESSION
+#ifdef USE_UFILESYS
+      if (ufs_type) {
+        // we have a file system
+        Script_AddLog_P(LOG_LEVEL_INFO,PSTR("UFILESYSTEM OK!"));
+        char *script;
+        script = (char*)calloc(UFSYS_SIZE + 4, 1);
+        if (!script) break;
+        glob_script_mem.script_ram = script;
+        glob_script_mem.script_size = UFSYS_SIZE;
+        if (ufsp->exists(FAT_SCRIPT_NAME)) {
+          File file = ufsp->open(FAT_SCRIPT_NAME, FS_FILE_READ);
+          file.read((uint8_t*)script, UFSYS_SIZE);
+          file.close();
+        }
+        script[UFSYS_SIZE - 1] = 0;
+        // use rules storage for permanent vars
+        glob_script_mem.script_pram = (uint8_t*)Settings.rules[0];
+        glob_script_mem.script_pram_size = MAX_SCRIPT_SIZE;
+        glob_script_mem.FLAGS.fsys = true;
+        // indicates scripter use no compression
+        bitWrite(Settings.rule_once, 6, 0);
+      } else {
+        Script_AddLog_P(LOG_LEVEL_INFO,PSTR("UFILESYSTEM fail, using compression!"));
+        int32_t len_decompressed;
+        sprt = (char*)calloc(UNISHOXRSIZE + 8,1);
+        if (!sprt) { break; }
+        glob_script_mem.script_ram = sprt;
+        glob_script_mem.script_size = UNISHOXRSIZE;
+        len_decompressed = SCRIPT_DECOMPRESS(Settings.rules[0], strlen(Settings.rules[0]), glob_script_mem.script_ram, glob_script_mem.script_size);
+        if (len_decompressed>0) glob_script_mem.script_ram[len_decompressed] = 0;
+        // indicates scripter use compression
+        bitWrite(Settings.rule_once, 6, 1);
+      }
+#else // USE_UFILESYS
+
+#ifdef EEP_SCRIPT_SIZE
+
+      if (EEP_INIT(EEP_SCRIPT_SIZE)) {
+          // found 32kb eeprom,
+          char *script;
+          if (EEP_SCRIPT_SIZE!=SPECIAL_EEPMODE_SIZE) {
+            script = (char*)calloc(EEP_SCRIPT_SIZE + 4, 1);
+            if (!script) break;
+            glob_script_mem.script_ram = script;
+            glob_script_mem.script_size = EEP_SCRIPT_SIZE;
+            EEP_READ(0, EEP_SCRIPT_SIZE, script);
+            if (*script==0xff) {
+              memset(script, EEP_SCRIPT_SIZE, 0);
+            }
+            script[EEP_SCRIPT_SIZE - 1] = 0;
+          } else {
+            uint8_t *ucs;
+            ucs = (uint8_t*)calloc(SPI_FLASH_SEC_SIZE + 4, 1);
+            if (!ucs) break;
+            alt_eeprom_readBytes(0, SPI_FLASH_SEC_SIZE, ucs);
+            if (*ucs==0xff) {
+              memset(ucs, SPI_FLASH_SEC_SIZE, 0);
+            }
+            ucs[SPI_FLASH_SEC_SIZE - 1] = 0;
+
+            script = (char*)calloc(EEP_SCRIPT_SIZE + 4, 1);
+            if (!script) break;
+            glob_script_mem.script_ram = script;
+            glob_script_mem.script_size = EEP_SCRIPT_SIZE;
+
+            int32_t len_decompressed;
+            len_decompressed = SCRIPT_DECOMPRESS((char*)ucs, strlen((char*)ucs), glob_script_mem.script_ram, glob_script_mem.script_size);
+            if (len_decompressed>0) glob_script_mem.script_ram[len_decompressed] = 0;
+
+            if (ucs) free(ucs);
+
+          }
+
+          // use rules storage for permanent vars
+          glob_script_mem.script_pram = (uint8_t*)Settings.rules[0];
+          glob_script_mem.script_pram_size = MAX_SCRIPT_SIZE;
+
+          glob_script_mem.FLAGS.fsys = true;
+      }
+#else // EEP_SCRIPT_SIZE
+
+      // default mode is compression
       int32_t len_decompressed;
       sprt = (char*)calloc(UNISHOXRSIZE + 8,1);
       if (!sprt) { break; }
@@ -7674,11 +7433,14 @@ bool Xdrv10(uint8_t function)
       if (len_decompressed>0) glob_script_mem.script_ram[len_decompressed] = 0;
       // indicates scripter use compression
       bitWrite(Settings.rule_once, 6, 1);
-      //Script_AddLog_P(LOG_LEVEL_INFO, PSTR("decompressed script len %d"),len_decompressed);
-#else  // USE_SCRIPT_COMPRESSION
-      // indicates scripter does not use compression
-      bitWrite(Settings.rule_once, 6, 0);
-#endif // USE_SCRIPT_COMPRESSION
+
+#endif
+
+#endif // UFILESYSTEM
+
+
+// indicates scripter enabled (use rules[][] as single array)
+      bitWrite(Settings.rule_once, 7, 1);
 
 #ifdef USE_BUTTON_EVENT
       for (uint32_t cnt = 0; cnt < MAX_KEYS; cnt++) {
@@ -7686,110 +7448,13 @@ bool Xdrv10(uint8_t function)
       }
 #endif //USE_BUTTON_EVENT
 
-#ifdef EEP_SCRIPT_SIZE
-      if (EEP_INIT(EEP_SCRIPT_SIZE)) {
-          // found 32kb eeprom,
-          char *script;
-#if EEP_SCRIPT_SIZE==SPI_FLASH_SEC_SIZE
-          script = (char*)calloc(EEP_SCRIPT_SIZE + 4, 1);
-          if (!script) break;
-          glob_script_mem.script_ram = script;
-          glob_script_mem.script_size = EEP_SCRIPT_SIZE;
-          EEP_READ(0, EEP_SCRIPT_SIZE, script);
-          if (*script==0xff) {
-            memset(script, EEP_SCRIPT_SIZE, 0);
-          }
-          script[EEP_SCRIPT_SIZE - 1] = 0;
-#else
-          char *ucs;
-          ucs = (char*)calloc(SPI_FLASH_SEC_SIZE + 4, 1);
-          if (!ucs) break;
-          EEP_READ(0, SPI_FLASH_SEC_SIZE, ucs);
-          if (*ucs==0xff) {
-            memset(ucs, SPI_FLASH_SEC_SIZE, 0);
-          }
-          ucs[SPI_FLASH_SEC_SIZE - 1] = 0;
-
-          script = (char*)calloc(EEP_SCRIPT_SIZE + 4, 1);
-          if (!script) break;
-          glob_script_mem.script_ram = script;
-          glob_script_mem.script_size = EEP_SCRIPT_SIZE;
-
-          int32_t len_decompressed;
-          len_decompressed = SCRIPT_DECOMPRESS(ucs, strlen(ucs), glob_script_mem.script_ram, glob_script_mem.script_size);
-          if (len_decompressed>0) glob_script_mem.script_ram[len_decompressed] = 0;
-
-          if (ucs) free(ucs);
-
-#endif
-          // use rules storage for permanent vars
-          glob_script_mem.script_pram = (uint8_t*)Settings.rules[0];
-          glob_script_mem.script_pram_size = MAX_SCRIPT_SIZE;
-
-          glob_script_mem.flags = 1;
+      // a valid script MUST start with >D
+      if (glob_script_mem.script_ram[0]!='>' && glob_script_mem.script_ram[1]!='D') {
+        // clr all
+        memset(glob_script_mem.script_ram, 0 ,glob_script_mem.script_size);
+        strcpy_P(glob_script_mem.script_ram, PSTR(">D\nscript error must start with >D"));
+        bitWrite(Settings.rule_enabled, 0, 0);
       }
-#endif // EEP_SCRIPT_SIZE
-
-
-#ifdef USE_SCRIPT_FATFS
-
-#if USE_SCRIPT_FATFS>=0
-      // fs on SD card
-#ifdef ESP32
-      if (PinUsed(GPIO_SPI_MOSI) && PinUsed(GPIO_SPI_MISO) && PinUsed(GPIO_SPI_CLK)) {
-          SPI.begin(Pin(GPIO_SPI_CLK), Pin(GPIO_SPI_MISO), Pin(GPIO_SPI_MOSI), -1);
-      }
-#endif // ESP32
-      fsp = &SD;
-      if (SD.begin(USE_SCRIPT_FATFS)) {
-#else
-    // flash file system
-#ifdef ESP32
-      fsp = &FFat;
-      if (FFat.begin(true)) {
-#else
-        // fs on flash
-      fsp = &LittleFS;
-      if (fsp->begin()) {
-#endif // ESP
-
-#endif // USE_SCRIPT_FATFS>=0
-
-        Script_AddLog_P(LOG_LEVEL_INFO,PSTR("FATFS mount OK!"));
-
-        //fsp->dateTimeCallback(dateTime);
-        glob_script_mem.script_sd_found = 1;
-        char *script;
-        script = (char*)calloc(FAT_SCRIPT_SIZE + 4, 1);
-        if (!script) break;
-        glob_script_mem.script_ram = script;
-        glob_script_mem.script_size = FAT_SCRIPT_SIZE;
-        if (fsp->exists(FAT_SCRIPT_NAME)) {
-          File file = fsp->open(FAT_SCRIPT_NAME, FILE_READ);
-          file.read((uint8_t*)script, FAT_SCRIPT_SIZE);
-          file.close();
-        }
-        script[FAT_SCRIPT_SIZE - 1] = 0;
-        // use rules storage for permanent vars
-        glob_script_mem.script_pram = (uint8_t*)Settings.rules[0];
-        glob_script_mem.script_pram_size = MAX_SCRIPT_SIZE;
-
-        glob_script_mem.flags = 1;
-
-      } else {
-        Script_AddLog_P(LOG_LEVEL_INFO,PSTR("FATFS mount failed!"));
-        glob_script_mem.script_sd_found = 0;
-      }
-#endif // USE_SCRIPT_FATFS
-
-
-    // a valid script MUST start with >D
-    if (glob_script_mem.script_ram[0]!='>' && glob_script_mem.script_ram[1]!='D') {
-      // clr all
-      memset(glob_script_mem.script_ram, 0 ,glob_script_mem.script_size);
-      strcpy_P(glob_script_mem.script_ram, PSTR(">D\nscript error must start with >D"));
-      bitWrite(Settings.rule_enabled, 0, 0);
-    }
 
       // assure permanent memory is 4 byte aligned
       { uint32_t ptr = (uint32_t)glob_script_mem.script_pram;
@@ -7800,6 +7465,7 @@ bool Xdrv10(uint8_t function)
       }
 
       if (bitRead(Settings.rule_enabled, 0)) Init_Scripter();
+
     //  break;
     //case FUNC_INIT:
       if (bitRead(Settings.rule_enabled, 0)) {
@@ -7863,12 +7529,6 @@ bool Xdrv10(uint8_t function)
       Webserver->on("/ta",HTTP_POST, HandleScriptTextareaConfiguration);
       Webserver->on("/exs", HTTP_POST,[]() { Webserver->sendHeader("Location","/exs");Webserver->send(303);}, script_upload_start);
       Webserver->on("/exs", HTTP_GET, ScriptExecuteUploadSuccess);
-
-#ifdef USE_SCRIPT_FATFS
-      Webserver->on("/u13", HTTP_POST,[]() { Webserver->sendHeader("Location","/u13");Webserver->send(303);}, script_upload);
-      Webserver->on("/u13", HTTP_GET, ScriptFileUploadSuccess);
-      Webserver->on("/upl", HTTP_GET, Script_FileUploadConfiguration);
-#endif //USE_SCRIPT_FATFS
       break;
 #endif // USE_WEBSERVER
     case FUNC_SAVE_BEFORE_RESTART:
