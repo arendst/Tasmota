@@ -112,14 +112,8 @@ void ST7789_InitDriver(void) {
 #ifdef SHOW_SPLASH
     // Welcome text
     renderer->setTextColor(ST7789_WHITE,ST7789_BLACK);
-    int fontSize = 2;
     renderer->setTextFont(2);
-    if (Settings.display_width<240) {
-        fontSize = 1;
-    }
-    renderer->setTextFont(fontSize);
-    int fontHeight = 12 * fontSize;
-    renderer->DrawStringAt(30, (Settings.display_height-fontHeight)/2, "ST7789 TFT!", ST7789_WHITE,0);
+    renderer->DrawStringAt(30, (Settings.display_height-12)/2, "ST7789 TFT!", ST7789_WHITE,0);
     delay(1000);
 #endif
 
@@ -131,8 +125,8 @@ void ST7789_InitDriver(void) {
     #define SDA_2 23
     #define SCL_2 32
   #ifdef USE_LANBON_L8
-    #undef SDA_2 
-    #undef SCL_2 
+    #undef SDA_2
+    #undef SCL_2
     #define SDA_2 4
     #define SCL_2 0
   #endif // USE_LANBON_L8
