@@ -1,7 +1,7 @@
 /*
   it-IT.h - localization for Italian - Italy for Tasmota
 
-  Copyright (C) 2021  Gennaro Tortone - some mods by Antonio Fragola - Updated by bovirus - rev. 24.12.2020
+  Copyright (C) 2021  Gennaro Tortone - some mods by Antonio Fragola - Updated by bovirus - rev. 05.01.2021
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -778,7 +778,7 @@
 #define D_SENSOR_ST7789_DC     "ST7789 - DC"
 #define D_SENSOR_SSD1331_CS    "SSD1331 - CS"
 #define D_SENSOR_SSD1331_DC    "SSD1331 - DC"
-#define D_SENSOR_SDCARD_CS     "SDCard - CS"
+#define D_SENSOR_SDCARD_CS     "Scheda SD - CS"
 
 // Units
 #define D_UNIT_AMPERE "A"
