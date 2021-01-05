@@ -97,11 +97,9 @@
 #define FTC532_IDLE               (FTC532_BIT * 10)
 #define FTC532_MAX                (FTC532_BIT * 58)
 
-#define DEBUG_FTC532  //@@@@@@@@@@@@@@@@
-
 struct FTC532 {
   volatile uint32_t rxtime;             // ISR timer memory
-  volatile uint16_t tsmp    = 0xF0F0;   // buffer for bit-coded time samples
+  volatile uint16_t tsmp    = 0;        // buffer for bit-coded time samples
   volatile uint16_t sample  = 0xF0F0;   // valid samples
   volatile uint16_t rxbit;              // ISR bit counter
   volatile uint16_t state;              // ISR state
@@ -152,7 +150,7 @@ void ICACHE_RAM_ATTR ftc532_ISR(void) {   // Hardware interrupt routine, trigger
   }
   if (time_diff > FTC532_SHORT + FTC532_BIT) {
     Ftc532.tsmp |= (1 << Ftc532.rxbit);             // LONG
-  } else if (time_diff < FTC532_NOISE) {            // NOISE
+  } else if (time_diff < FTC532_NOISE) {            // NOISE (SHORT now implicitly default)
 #ifdef DEBUG_FTC532
     ++Ftc532.e_noise;
 #endif  // DEBUG_FTC532
