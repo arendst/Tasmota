@@ -3723,6 +3723,8 @@ void IMAPData::setFetchUID(const String &fetchUID)
   std::string().swap(tmp);
 }
 
+extern FS *ufsp;
+
 void IMAPData::setFileStorageType(uint8_t storageType)
 {
   _storageType = storageType;
@@ -3735,6 +3737,9 @@ void IMAPData::setFileStorageType(uint8_t storageType)
       break;
     case MailClientStorageType::FFat:
       fsp = &FFat;
+      break;
+    case MailClientStorageType::Univ:
+      fsp = ufsp;
       break;
   }
 }
@@ -4765,6 +4770,9 @@ void SMTPData::setFileStorageType(uint8_t storageType)
       break;
     case MailClientStorageType::FFat:
       fsp = &FFat;
+      break;
+    case MailClientStorageType::Univ:
+      fsp = ufsp;
       break;
   }
 }
