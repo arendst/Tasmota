@@ -102,14 +102,14 @@
 #define ANALOG_PH_MIN                             0.0
 
 // Default values for calibration solution with lower PH
-#define ANALOG_PH_CALSOLUTION_LOW_PH              0.0
-#define ANALOG_PH_CALSOLUTION_LOW_ANALOG_VALUE    0 
+#define ANALOG_PH_CALSOLUTION_LOW_PH              4.0
+#define ANALOG_PH_CALSOLUTION_LOW_ANALOG_VALUE    282
 // Default values for calibration solution with higher PH
-#define ANALOG_PH_CALSOLUTION_HIGH_PH             14.0          
-#define ANALOG_PH_CALSOLUTION_HIGH_ANALOG_VALUE   ANALOG_RANGE
+#define ANALOG_PH_CALSOLUTION_HIGH_PH             9.18          
+#define ANALOG_PH_CALSOLUTION_HIGH_ANALOG_VALUE   435
 
 // Multiplier used to store pH with 2 decimal places in a non decimal datatype 
-#define ANALOG_PH_DECIMAL_MULTIPLIER              100
+#define ANALOG_PH_DECIMAL_MULTIPLIER              100.0
 
 struct {
   uint8_t present = 0;
@@ -334,16 +334,22 @@ uint16_t AdcGetLux(uint32_t idx) {
 
 float AdcGetPh(uint32_t idx) {
   int adc = AdcRead(Adc[idx].pin, 2);
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION "PH ADC RAW Value %d"), adc);
+
 
   float y1 = Adc[idx].param1 / ANALOG_PH_DECIMAL_MULTIPLIER;
-  float x1 = Adc[idx].param2;
+  uint32_t x1 = Adc[idx].param2;
   float y2 = Adc[idx].param3 / ANALOG_PH_DECIMAL_MULTIPLIER;
-  float x2 = Adc[idx].param4;
+  uint32_t x2 = Adc[idx].param4;
 
   float m = (y2 - y1) / (x2 - x1);
   float ph = m * (adc - x1) + y1;
   
+  
+  char phLow_chr[6];
+  char phHigh_chr[6];
+  dtostrfd(y1, 2, phLow_chr);
+  dtostrfd(y2, 2, phHigh_chr);
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION "Analog pH read. ADC-RAW: %d, cal-low(pH=ADC): %s=%d, cal-high(pH=ADC): %s=%d"), adc, phLow_chr, x1, phHigh_chr,x2);
   
   return ph;
 }
@@ -554,7 +560,7 @@ void AdcShow(bool json) {
         char ph_chr[6];
         dtostrfd(ph, 2, ph_chr);
 
-        AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION "PHS Adc mapped sw %s"), ph_chr);
+        
         if (json) {
           AdcShowContinuation(&jsonflg);
           ResponseAppend_P(PSTR("\"pH%d\":%s"), idx + offset, ph_chr);
@@ -618,7 +624,7 @@ void CmndAdcParam(void) {
             Adc[idx].param3 = phHigh * ANALOG_PH_DECIMAL_MULTIPLIER;
             Adc[idx].param4 = strtol(subStr(sub_string, XdrvMailbox.data, ",", 5), nullptr, 10);
 
-            AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION "pH probe calibrated. Low: pH %s ^= %d; High: pH %s ^= %d"), phLow_chr, Adc[idx].param2, phHigh_chr, Adc[idx].param4);
+            AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION "Analog pH probe calibrated. cal-low(pH=ADC): %s=%d, cal-high(pH=ADC): %s=%d"), phLow_chr, Adc[idx].param2, phHigh_chr, Adc[idx].param4);
           }
 
           if (ADC_CT_POWER == XdrvMailbox.payload) {
