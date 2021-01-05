@@ -181,13 +181,6 @@ int advertismentCallback(BLE_ESP32::ble_advertisment_t *pStruct)
       uint16_t    Minor = ENDIAN_CHANGE_U16(oBeacon.getMinor());
       uint8_t     PWR   = oBeacon.getSignalPower();
 
-      AddLog_P(LOG_LEVEL_DEBUG, PSTR("%s: MAC: %s Major: %d Minor: %d UUID: %s Power: %d RSSI: %d"),
-        "BLE",
-        advertisedDevice->getAddress().toString().c_str(),
-        Major, Minor,
-        oBeacon.getProximityUUID().toString().c_str(),
-        PWR, pStruct->RSSI);
-
       DumpHex((const unsigned char*)&UUID,16,ib.UID);
       DumpHex((const unsigned char*)&Major,2,ib.MAJOR);
       DumpHex((const unsigned char*)&Minor,2,ib.MINOR);
@@ -196,7 +189,15 @@ int advertismentCallback(BLE_ESP32::ble_advertisment_t *pStruct)
       memcpy(ib.RSSI,sRSSI,4);
       memset(ib.NAME,0x0,16);
 
-      ibeacon_add(&ib);
+      // if we added it
+      if (ibeacon_add(&ib) == 1){
+        AddLog_P(LOG_LEVEL_DEBUG, PSTR("%s: MAC: %s Major: %d Minor: %d UUID: %s Power: %d RSSI: %d"),
+          "iBeacon",
+          advertisedDevice->getAddress().toString().c_str(),
+          Major, Minor,
+          oBeacon.getProximityUUID().toString().c_str(),
+          PWR, pStruct->RSSI);
+      }
       return 0;
     }
   }
@@ -382,8 +383,8 @@ uint32_t ibeacon_add(struct IBEACON *ib) {
     return 0;
   }
 
-  // 
-  TasAutoMutex localmutex(&beaconmutex, "iBeacAdd");
+  // don't bother protecting this. 
+  //TasAutoMutex localmutex(&beaconmutex, "iBeacAdd");
 
   // keyfob starts with ffff, ibeacon has valid facid
   if (!strncmp(ib->MAC,"FFFF",4) || strncmp(ib->FACID,"00000000",8)) {
@@ -400,7 +401,7 @@ uint32_t ibeacon_add(struct IBEACON *ib) {
               ibeacons[cnt].REPORTED = 0;
             }
 #endif
-            return 1;
+            return 2;
           }
         } else {
           if (!strncmp(ibeacons[cnt].UID,ib->UID,32)) {
@@ -413,7 +414,7 @@ uint32_t ibeacon_add(struct IBEACON *ib) {
               ibeacons[cnt].REPORTED = 0;
             }
 #endif
-            return 1;
+            return 2;
           }
         }
       }
@@ -642,7 +643,7 @@ hm17_v110:
 void IBEACON_loop() {
 
 #ifdef USE_IBEACON_ESP32
-  TasAutoMutex localmutex(&beaconmutex, "iBeacLoop");
+  //TasAutoMutex localmutex(&beaconmutex, "iBeacLoop");
   for (uint32_t cnt=0;cnt<MAX_IBEACONS;cnt++) {
     if (ibeacons[cnt].FLAGS && ! ibeacons[cnt].REPORTED) {
       ibeacon_mqtt(ibeacons[cnt].MAC,ibeacons[cnt].RSSI,ibeacons[cnt].UID,ibeacons[cnt].MAJOR,ibeacons[cnt].MINOR,ibeacons[cnt].NAME);
@@ -696,7 +697,7 @@ void IBEACON_Show(void) {
   char uid[34];
 #ifdef USE_IBEACON_ESP32
   char name[18];
-  TasAutoMutex localmutex(&beaconmutex, "iBeacShow");
+  //TasAutoMutex localmutex(&beaconmutex, "iBeacShow");
 #endif
   int total = 0;
 
