@@ -497,7 +497,7 @@ void DisplayText(void)
             cp += var;
             linebuf[fill] = 0;
             break;
-#if defined(USE_SCRIPT_FATFS) && defined(USE_SCRIPT)
+#if (defined(USE_SCRIPT_FATFS) && defined(USE_SCRIPT)) || defined(UFILESYSTEM)
           case 'P':
             { char *ep=strchr(cp,':');
              if (ep) {
@@ -682,7 +682,7 @@ void DisplayText(void)
               RedrawGraph(temp,temp1);
               break;
             }
-#if defined(USE_SCRIPT_FATFS) && defined(USE_SCRIPT)
+#if (defined(USE_SCRIPT_FATFS) && defined(USE_SCRIPT)) || defined(UFILESYSTEM)
             if (*cp=='s') {
               cp++;
               var=atoiv(cp,&temp);
@@ -1569,8 +1569,8 @@ char get_jpeg_size(unsigned char* data, unsigned int data_size, unsigned short *
 #endif // JPEG_PICTS
 #endif // ESP32
 
-#if defined(USE_SCRIPT_FATFS) && defined(USE_SCRIPT) && defined(USE_DISPLAY)
-extern FS *fsp;
+#if (defined(USE_SCRIPT_FATFS) && defined(USE_SCRIPT)) || defined(UFILESYSTEM)
+extern FS *ufsp;
 #define XBUFF_LEN 128
 void Draw_RGB_Bitmap(char *file,uint16_t xp, uint16_t yp, bool inverted ) {
   if (!renderer) return;
@@ -1586,7 +1586,7 @@ void Draw_RGB_Bitmap(char *file,uint16_t xp, uint16_t yp, bool inverted ) {
 
   if (!strcmp(estr,"rgb")) {
     // special rgb format
-    fp=fsp->open(file,FILE_READ);
+    fp=ufsp->open(file,FS_FILE_READ);
     if (!fp) return;
     uint16_t xsize;
     fp.read((uint8_t*)&xsize,2);
@@ -1621,7 +1621,7 @@ void Draw_RGB_Bitmap(char *file,uint16_t xp, uint16_t yp, bool inverted ) {
     // jpeg files on ESP32 with more memory
 #ifdef ESP32
 #ifdef JPEG_PICTS
-    fp=fsp->open(file,FILE_READ);
+    fp=ufsp->open(file,FS_FILE_READ);
     if (!fp) return;
     uint32_t size = fp.size();
     uint8_t *mem = (uint8_t *)special_malloc(size+4);
@@ -1914,7 +1914,7 @@ void DisplayCheckGraph() {
 }
 
 
-#if defined(USE_SCRIPT_FATFS) && defined(USE_SCRIPT)
+#if (defined(USE_SCRIPT_FATFS) && defined(USE_SCRIPT)) || defined(UFILESYSTEM)
 #ifdef ESP32
 #include <SD.h>
 #endif
@@ -1925,8 +1925,8 @@ void Save_graph(uint8_t num, char *path) {
   struct GRAPH *gp=graph[index];
   if (!gp) return;
   File fp;
-  fsp->remove(path);
-  fp=fsp->open(path,FILE_WRITE);
+  ufsp->remove(path);
+  fp=ufsp->open(path,FS_FILE_WRITE);
   if (!fp) return;
   char str[32];
   sprintf_P(str,PSTR("%d\t%d\t%d\t"),gp->xcnt,gp->xs,gp->ys);
@@ -1951,7 +1951,7 @@ void Restore_graph(uint8_t num, char *path) {
   struct GRAPH *gp=graph[index];
   if (!gp) return;
   File fp;
-  fp=fsp->open(path,FILE_READ);
+  fp=ufsp->open(path,FS_FILE_READ);
   if (!fp) return;
   char vbuff[32];
   char *cp=vbuff;
