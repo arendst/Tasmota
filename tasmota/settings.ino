@@ -51,31 +51,33 @@ void RtcSettingsSave(void)
   }
 }
 
-bool RtcSettingsLoad(void) {
-  bool was_read_valid = true;
+bool RtcSettingsLoad(uint32_t update) {
 #ifdef ESP8266
   ESP.rtcUserMemoryRead(100, (uint32_t*)&RtcSettings, sizeof(RtcSettings));  // 0x290
 #endif  // ESP8266
 #ifdef ESP32
   RtcSettings = RtcDataSettings;
 #endif  // ESP32
-  if (RtcSettings.valid != RTC_MEM_VALID) {
-    was_read_valid = false;
-    memset(&RtcSettings, 0, sizeof(RtcSettings));
-    RtcSettings.valid = RTC_MEM_VALID;
-    RtcSettings.energy_kWhtoday = Settings.energy_kWhtoday;
-    RtcSettings.energy_kWhtotal = Settings.energy_kWhtotal;
-    RtcSettings.energy_usage = Settings.energy_usage;
-    for (uint32_t i = 0; i < MAX_COUNTERS; i++) {
-      RtcSettings.pulse_counter[i] = Settings.pulse_counter[i];
+
+  bool read_valid = (RTC_MEM_VALID == RtcSettings.valid);
+  if (update) {
+    if (!read_valid) {
+      memset(&RtcSettings, 0, sizeof(RtcSettings));
+      RtcSettings.valid = RTC_MEM_VALID;
+      RtcSettings.energy_kWhtoday = Settings.energy_kWhtoday;
+      RtcSettings.energy_kWhtotal = Settings.energy_kWhtotal;
+      RtcSettings.energy_usage = Settings.energy_usage;
+      for (uint32_t i = 0; i < MAX_COUNTERS; i++) {
+        RtcSettings.pulse_counter[i] = Settings.pulse_counter[i];
+      }
+      RtcSettings.power = Settings.power;
+  //    RtcSettings.baudrate = Settings.baudrate * 300;
+      RtcSettings.baudrate = APP_BAUDRATE;
+      RtcSettingsSave();
     }
-    RtcSettings.power = Settings.power;
-//    RtcSettings.baudrate = Settings.baudrate * 300;
-    RtcSettings.baudrate = APP_BAUDRATE;
-    RtcSettingsSave();
+    rtc_settings_crc = GetRtcSettingsCrc();
   }
-  rtc_settings_crc = GetRtcSettingsCrc();
-  return was_read_valid;
+  return read_valid;
 }
 
 bool RtcSettingsValid(void)
@@ -571,7 +573,7 @@ void SettingsLoad(void) {
   settings_crc32 = GetSettingsCrc32();
 #endif  // FIRMWARE_MINIMAL
 
-  RtcSettingsLoad();
+  RtcSettingsLoad(1);
 }
 
 // Used in TLS - returns the timestamp of the last Flash settings write
