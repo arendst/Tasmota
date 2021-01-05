@@ -101,7 +101,8 @@ void HueLightStatus2Zigbee(uint16_t shortaddr, String *response)
   char shortaddrname[8];
   snprintf_P(shortaddrname, sizeof(shortaddrname), PSTR("0x%04X"), shortaddr);
 
-  snprintf_P(buf, buf_size, HUE_LIGHTS_STATUS_JSON2,
+  UnishoxStrings msg(HUE_LIGHTS);
+  snprintf_P(buf, buf_size, msg[HUE_LIGHTS_STATUS_JSON2],
               (friendlyName) ? EscapeJSONString(friendlyName).c_str() : shortaddrname,
               (modelId) ? EscapeJSONString(modelId).c_str() : PSTR("Unknown"),
               (manufacturerId) ? EscapeJSONString(manufacturerId).c_str() : PSTR("Tasmota"),
@@ -219,6 +220,7 @@ void ZigbeeHandleHue(uint16_t shortaddr, uint32_t device_id, String &response) {
 
   const size_t buf_size = 100;
   char * buf = (char*) malloc(buf_size);
+  UnishoxStrings msg(HUE_LIGHTS);
 
   if (Webserver->args()) {
     response = "[";
@@ -230,7 +232,7 @@ void ZigbeeHandleHue(uint16_t shortaddr, uint32_t device_id, String &response) {
     if (hue_on) {
       on = hue_on.getBool();
       snprintf_P(buf, buf_size,
-                 PSTR("{\"success\":{\"/lights/%d/state/on\":%s}}"),
+                 msg[HUE_RESP_ON],
                  device_id, on ? "true" : "false");
 
       if (on) {
@@ -249,7 +251,7 @@ void ZigbeeHandleHue(uint16_t shortaddr, uint32_t device_id, String &response) {
       prev_bri = bri;   // store command value
       if (resp) { response += ","; }
       snprintf_P(buf, buf_size,
-                 PSTR("{\"success\":{\"/lights/%d/state/%s\":%d}}"),
+                 msg[HUE_RESP_NUM],
                  device_id, "bri", bri);
       response += buf;
       if (LST_SINGLE <= bulbtype) {
@@ -273,7 +275,7 @@ void ZigbeeHandleHue(uint16_t shortaddr, uint32_t device_id, String &response) {
       strlcpy(prev_y_str, tok_y.getStr(), sizeof(prev_y_str));
       if (resp) { response += ","; }
       snprintf_P(buf, buf_size,
-                 PSTR("{\"success\":{\"/lights/%d/state/xy\":[%s,%s]}}"),
+                 msg[HUE_RESP_XY],
                  device_id, prev_x_str, prev_y_str);
       response += buf;
       resp = true;
@@ -290,7 +292,7 @@ void ZigbeeHandleHue(uint16_t shortaddr, uint32_t device_id, String &response) {
       prev_hue = hue;
       if (resp) { response += ","; }
       snprintf_P(buf, buf_size,
-                 PSTR("{\"success\":{\"/lights/%d/state/%s\":%d}}"),
+                 msg[HUE_RESP_NUM],
                  device_id, "hue", hue);
       response += buf;
       if (LST_RGB <= bulbtype) {
@@ -308,7 +310,7 @@ void ZigbeeHandleHue(uint16_t shortaddr, uint32_t device_id, String &response) {
       prev_sat = sat;   // store command value
       if (resp) { response += ","; }
       snprintf_P(buf, buf_size,
-                 PSTR("{\"success\":{\"/lights/%d/state/%s\":%d}}"),
+                 msg[HUE_RESP_NUM],
                  device_id, "sat", sat);
       response += buf;
       if (LST_RGB <= bulbtype) {
@@ -329,7 +331,7 @@ void ZigbeeHandleHue(uint16_t shortaddr, uint32_t device_id, String &response) {
       prev_ct = ct;   // store commande value
       if (resp) { response += ","; }
       snprintf_P(buf, buf_size,
-                 PSTR("{\"success\":{\"/lights/%d/state/%s\":%d}}"),
+                 msg[HUE_RESP_NUM],
                  device_id, "ct", ct);
       response += buf;
       if ((LST_COLDWARM == bulbtype) || (LST_RGBW <= bulbtype)) {
@@ -340,11 +342,11 @@ void ZigbeeHandleHue(uint16_t shortaddr, uint32_t device_id, String &response) {
 
     response += "]";
     if (2 == response.length()) {
-      response = FPSTR(HUE_ERROR_JSON);
+      response = msg[HUE_ERROR_JSON];
     }
   }
   else {
-    response = FPSTR(HUE_ERROR_JSON);
+    response = msg[HUE_ERROR_JSON];
   }
   AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_HTTP D_HUE " Result (%s)"), response.c_str());
   WSSend(code, CT_JSON, response);
