@@ -1671,18 +1671,22 @@ void MI32ParseResponse(const uint8_t *buf, uint16_t bufsize, const uint8_t* addr
 
 
 
+void MI32mqttBlockList(){
+  ResponseTime_P(PSTR(",\"Block\":["));
 
-void MI32showBlockList(){
-  ResponseAppend_P(PSTR(",\"Block\":["));
+  int cnt = 0;
   for(auto _scanResult : MIBLEBlockList){
     char _MAC[18];
-    ToHex_P(_scanResult.buf,6,_MAC,18,':');
-    ResponseAppend_P(PSTR("\"%s\","), _MAC);
+    if (cnt++){
+      ResponseAppend_P(PSTR(","));
+    }
+    ToHex_P(_scanResult.buf,6,_MAC,18,0);
+    ResponseAppend_P(PSTR("\"%s\""), _MAC);
   }
-  if(MIBLEBlockList.size()!=0) TasmotaGlobal.mqtt_data[strlen(TasmotaGlobal.mqtt_data)-1] = 0; // delete last comma
-  ResponseAppend_P(PSTR("]"));
-  MI32.mode.shallShowBlockList = 0;
+  ResponseAppend_P(PSTR("]}"));
+  MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
 }
+
 
 bool MI32isInBlockList(const uint8_t* MAC){
   bool isBlocked = false;
@@ -1740,6 +1744,12 @@ void MI32notifyHT_LY(int slot, char *_buf, int len){
  */
 
 void MI32Every50mSecond(){
+
+  if (MI32.mode.shallShowBlockList){
+    MI32.mode.shallShowBlockList = 0;
+    MI32mqttBlockList();
+  }
+
   if(MI32.mode.shallTriggerTele){
       MI32.mode.shallTriggerTele = 0;
       MI32triggerTele();
@@ -1923,7 +1933,6 @@ void CmndMi32Block(void){
     }
   }
   MI32.mode.shallShowBlockList = 1;
-  MI32triggerTele();
 }
 
 void CmndMi32Option(void){
@@ -2287,10 +2296,6 @@ void MI32Show(bool json)
   int numsensors = MIBLEsensors.size();
 
   if (json) { 
-    if(MI32.mode.shallShowBlockList) {
-      return MI32showBlockList();
-    }
-
     // TELE JSON messages now do nothing here, apart from set MI32.mqttCurrentSlot
     // which will trigger send next second of up to 4 sensors, then the next four in the next second, etc.
     MI32.mqttCurrentSlot = 0;
