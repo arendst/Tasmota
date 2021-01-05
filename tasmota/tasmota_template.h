@@ -101,7 +101,6 @@ enum UserSelectablePins {
   GPIO_ADC_BUTTON, GPIO_ADC_BUTTON_INV,  // Analog Button
   GPIO_ADC_RANGE,                      // Analog Range
   GPIO_ADC_CT_POWER,                   // ANalog Current
-  GPIO_ADC_PH,                         // Analog PH Sensor
 #ifdef ESP32
   GPIO_WEBCAM_PWDN, GPIO_WEBCAM_RESET, GPIO_WEBCAM_XCLK,  // Webcam
   GPIO_WEBCAM_SIOD, GPIO_WEBCAM_SIOC,  // Webcam I2C
@@ -144,6 +143,7 @@ enum UserSelectablePins {
   GPIO_ST7789_CS, GPIO_ST7789_DC,
   GPIO_SSD1331_CS, GPIO_SSD1331_DC,
   GPIO_SDCARD_CS,
+  GPIO_ADC_PH,                         // Analog PH Sensor
   GPIO_SENSOR_END };
 
 enum ProgramSelectablePins {
@@ -267,7 +267,6 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_ADC_BUTTON "|" D_SENSOR_ADC_BUTTON "_i|"
   D_SENSOR_ADC_RANGE "|"
   D_SENSOR_ADC_CT_POWER "|"
-  D_SENSOR_ADC_PH "|"
 #ifdef ESP32
   D_GPIO_WEBCAM_PWDN "|" D_GPIO_WEBCAM_RESET "|" D_GPIO_WEBCAM_XCLK "|"
   D_GPIO_WEBCAM_SIOD "|" D_GPIO_WEBCAM_SIOC "|"
@@ -308,6 +307,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_ST7789_CS "|" D_SENSOR_ST7789_DC "|"
   D_SENSOR_SSD1331_CS "|" D_SENSOR_SSD1331_DC "|"
   D_SENSOR_SDCARD_CS "|"
+  D_SENSOR_ADC_PH "|"
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
