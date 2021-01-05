@@ -101,6 +101,7 @@ enum UserSelectablePins {
   GPIO_ADC_BUTTON, GPIO_ADC_BUTTON_INV,  // Analog Button
   GPIO_ADC_RANGE,                      // Analog Range
   GPIO_ADC_CT_POWER,                   // ANalog Current
+  GPIO_ADC_PH,                         // Analog PH Sensor
 #ifdef ESP32
   GPIO_WEBCAM_PWDN, GPIO_WEBCAM_RESET, GPIO_WEBCAM_XCLK,  // Webcam
   GPIO_WEBCAM_SIOD, GPIO_WEBCAM_SIOC,  // Webcam I2C
@@ -266,6 +267,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_ADC_BUTTON "|" D_SENSOR_ADC_BUTTON "_i|"
   D_SENSOR_ADC_RANGE "|"
   D_SENSOR_ADC_CT_POWER "|"
+  D_SENSOR_ADC_PH "|"
 #ifdef ESP32
   D_GPIO_WEBCAM_PWDN "|" D_GPIO_WEBCAM_RESET "|" D_GPIO_WEBCAM_XCLK "|"
   D_GPIO_WEBCAM_SIOD "|" D_GPIO_WEBCAM_SIOC "|"
@@ -761,6 +763,7 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_ADC_RANGE) + MAX_ADCS,       // Range
   AGPIO(GPIO_ADC_CT_POWER) + MAX_ADCS,    // Current
   AGPIO(GPIO_ADC_JOY) + MAX_ADCS,         // Joystick
+  AGPIO(GPIO_ADC_PH) + MAX_ADCS,          // Analog PH Sensor
 #endif  // ESP32
 };
 
@@ -779,6 +782,7 @@ const uint16_t kAdcNiceList[] PROGMEM = {
   AGPIO(GPIO_ADC_RANGE),                  // Range
   AGPIO(GPIO_ADC_CT_POWER),               // Current
   AGPIO(GPIO_ADC_JOY),                    // Joystick
+  AGPIO(GPIO_ADC_PH),                     // Analog PH Sensor
 };
 #endif  // ESP8266
 
@@ -793,6 +797,7 @@ enum UserSelectableAdc {
   ADC_RANGE,          // Range
   ADC_CT_POWER,       // Current
   ADC_JOY,            // Joystick
+  ADC_PH,             // Analog PH Sensor
 //  ADC_SWITCH,         // Switch
 //  ADC_SWITCH_INV,
   ADC_END };
