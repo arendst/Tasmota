@@ -740,6 +740,7 @@
 #define D_SENSOR_ADC_RANGE     "ADC - Intervallo"
 #define D_SENSOR_ADC_CT_POWER  "ADC - CTR alimentazione"
 #define D_SENSOR_ADC_JOYSTICK  "ADC - Joystick"
+#define D_SENSOR_ADC_PH        "Analog pH Sensor"
 #define D_GPIO_WEBCAM_PWDN     "Webcam - PWDN"
 #define D_GPIO_WEBCAM_RESET    "Webcam - RESET"
 #define D_GPIO_WEBCAM_XCLK     "Webcam - XCLK"
