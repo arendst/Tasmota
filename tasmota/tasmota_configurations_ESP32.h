@@ -54,7 +54,7 @@
 #define USE_ODROID_GO                            // Add support for Odroid Go
 #define USE_UFILESYS
 #define USE_SDCARD
-//#define SDCARD_CS_PIN     4                      // Need to look which is the Odroid Gpio for
+#define SDCARD_CS_PIN     22
 #define USE_ADC
 #define USE_SPI
   #define USE_DISPLAY                            // Add SPI Display Support (+2k code)
