@@ -3,7 +3,11 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [9.2.0.2]
+## [9.2.0.3]
+### Changed
+- Force initial default state ``SetOption57 1`` to scan wifi network every 44 minutes for strongest signal (#10395)
+
+## [9.2.0.2] 20210105
 ### Added
 - Basic support for ESP32 Odroid Go 16MB binary tasmota32-odroidgo.bin (#8630)
 - Command ``CTRange`` to specify the visible CT range the bulb is capable of (#10311)

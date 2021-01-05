@@ -1325,6 +1325,9 @@ void SettingsDelta(void)
     if (Settings.version < 0x09010000) {
       Settings.dimmer_step = DEFAULT_DIMMER_STEP;
     }
+    if (Settings.version < 0x09020003) {
+      Settings.flag3.use_wifi_rescan = true;  // As a result of #10395
+    }
 
     Settings.version = VERSION;
     SettingsSave(1);

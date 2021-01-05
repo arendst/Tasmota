@@ -56,7 +56,7 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 
 [Complete list](BUILDS.md) of available feature and sensors.
 
-## Changelog v9.2.0.2
+## Changelog v9.2.0.3
 ### Added
 - Command ``CTRange`` to specify the visible CT range the bulb is capable of [#10311](https://github.com/arendst/Tasmota/issues/10311)
 - Command ``RuleTimer0`` to access all RuleTimers at once [#10352](https://github.com/arendst/Tasmota/issues/10352)
@@ -90,7 +90,8 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 
 ### Changed
 - Logging from heap to stack freeing 700 bytes RAM
-- Disabled ``USE_LIGHT`` light support for ZBBridge saving 17.6kB (#10374)
+- Disabled ``USE_LIGHT`` light support for ZBBridge saving 17.6kB [#10374](https://github.com/arendst/Tasmota/issues/10374)
+- Force initial default state ``SetOption57 1`` to scan wifi network every 44 minutes for strongest signal [#10395](https://github.com/arendst/Tasmota/issues/10395)
 
 ### Fixed
 - Redesign syslog and mqttlog using log buffer [#10164](https://github.com/arendst/Tasmota/issues/10164)
