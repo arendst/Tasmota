@@ -739,6 +739,7 @@
 #define D_SENSOR_ADC_BUTTON    "ADC Button"
 #define D_SENSOR_ADC_RANGE     "ADC Range"
 #define D_SENSOR_ADC_CT_POWER  "ADC CT Power"
+#define D_SENSOR_ADC_JOYSTICK  "ADC Joystick"
 #define D_SENSOR_ADC_PH        "Analog pH Sensor"
 #define D_GPIO_WEBCAM_PWDN     "CAM_PWDN"
 #define D_GPIO_WEBCAM_RESET    "CAM_RESET"
