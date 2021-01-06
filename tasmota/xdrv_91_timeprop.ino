@@ -106,7 +106,7 @@ void Timeprop_Set_Power( int index, float power )
 
 void Timeprop_Init()
 {
-  AddLog_P(LOG_LEVEL_INFO, PSTR("TPR: Timeprop Init"));
+  // AddLog_P(LOG_LEVEL_INFO, PSTR("TPR: Timeprop Init"));
   int cycleTimes[TIMEPROP_NUM_OUTPUTS] = {TIMEPROP_CYCLETIMES};
   int deadTimes[TIMEPROP_NUM_OUTPUTS] = {TIMEPROP_DEADTIMES};
   int opInverts[TIMEPROP_NUM_OUTPUTS] = {TIMEPROP_OPINVERTS};
