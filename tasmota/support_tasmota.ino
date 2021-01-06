@@ -1538,6 +1538,16 @@ void GpioInit(void)
         bitSet(TasmotaGlobal.gpio_optiona.data, mpin - AGPIO(GPIO_OPTION_A));
         mpin = GPIO_NONE;
       }
+#ifdef ROTARY_V1
+      else if ((mpin >= AGPIO(GPIO_ROT1A_NP)) && (mpin < (AGPIO(GPIO_ROT1A_NP) + MAX_ROTARIES))) {
+        RotaryAPullupFlag(mpin - AGPIO(GPIO_ROT1A_NP));
+        mpin -= (AGPIO(GPIO_ROT1A_NP) - AGPIO(GPIO_ROT1A));
+      }
+      else if ((mpin >= AGPIO(GPIO_ROT1B_NP)) && (mpin < (AGPIO(GPIO_ROT1B_NP) + MAX_ROTARIES))) {
+        RotaryBPullupFlag(mpin - AGPIO(GPIO_ROT1B_NP));
+        mpin -= (AGPIO(GPIO_ROT1B_NP) - AGPIO(GPIO_ROT1B));
+      }
+#endif  // ROTARY_V1
       else if ((mpin >= AGPIO(GPIO_SWT1_NP)) && (mpin < (AGPIO(GPIO_SWT1_NP) + MAX_SWITCHES))) {
         SwitchPullupFlag(mpin - AGPIO(GPIO_SWT1_NP));
         mpin -= (AGPIO(GPIO_SWT1_NP) - AGPIO(GPIO_SWT1));

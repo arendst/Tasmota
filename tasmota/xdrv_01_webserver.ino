@@ -1583,7 +1583,7 @@ void ModuleSaveSettings(void)
     } else {
       if (ValidGPIO(i, template_gp.io[i])) {
         Settings.my_gp.io[i] = WebGetGpioArg(i);
-        gpios += F(", " D_GPIO ); gpios += String(i); gpios += F(" "); gpios += String(Settings.my_gp.io[i]);
+        gpios += F(", "); gpios += String(i); gpios += F(" "); gpios += String(Settings.my_gp.io[i]);
       }
     }
   }

@@ -17,6 +17,7 @@ All notable changes to this project will be documented in this file.
 - Command ``RuleTimer0`` to access all RuleTimers at once (#10352)
 - SPI display driver SSD1331 Color oled by Jeroen Vermeulen (#10376)
 - IRremoteESP8266 library from v2.7.13 to v2.7.14
+- Rotary No Pullup GPIO selection ``Rotary A/B_n`` (#10407)
 
 ### Breaking Changed
 - Replaced MFRC522 13.56MHz rfid card reader GPIO selection from ``SPI CS`` by ``RC522 CS``

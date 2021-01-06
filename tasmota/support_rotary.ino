@@ -55,6 +55,8 @@ const uint8_t rotary_offset = 128;
 const int8_t rotary_state_pos[16] = { 0, 1, -1, 2, -1, 0, -2, 1, 1, -2, 0, -1, 2, -1, 1, 0 };
 
 struct ROTARY {
+  uint8_t no_pullup_mask_a = 0;                // Rotary A pull-up bitmask flags
+  uint8_t no_pullup_mask_b = 0;                // Rotary B pull-up bitmask flags
   uint8_t model;
   bool present;
 } Rotary;
@@ -73,6 +75,14 @@ struct tEncoder {
 tEncoder Encoder[MAX_ROTARIES];
 
 /********************************************************************************************/
+
+void RotaryAPullupFlag(uint32 switch_bit) {
+  bitSet(Rotary.no_pullup_mask_a, switch_bit);
+}
+
+void RotaryBPullupFlag(uint32 switch_bit) {
+  bitSet(Rotary.no_pullup_mask_b, switch_bit);
+}
 
 bool RotaryButtonPressed(uint32_t button_index) {
   if (!Rotary.present) { return false; }
@@ -136,8 +146,8 @@ void RotaryInit(void) {
       Encoder[index].position = rotary_offset;
       Encoder[index].pina = Pin(GPIO_ROT1A, index);
       Encoder[index].pinb = Pin(GPIO_ROT1B, index);
-      pinMode(Encoder[index].pina, INPUT_PULLUP);
-      pinMode(Encoder[index].pinb, INPUT_PULLUP);
+      pinMode(Encoder[index].pina, bitRead(Rotary.no_pullup_mask_a, index) ? INPUT : INPUT_PULLUP);
+      pinMode(Encoder[index].pinb, bitRead(Rotary.no_pullup_mask_b, index) ? INPUT : INPUT_PULLUP);
       if (0 == Rotary.model) {
         attachInterruptArg(Encoder[index].pina, RotaryIsrArgMiDesk, &Encoder[index], CHANGE);
         attachInterruptArg(Encoder[index].pinb, RotaryIsrArgMiDesk, &Encoder[index], CHANGE);
