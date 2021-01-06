@@ -363,10 +363,9 @@ void PIDShowValues(void) {
 
 static void run_pid()
 {
-  #define PID_BACKWARD_COMPATIBLE
+#ifdef PID_BACKWARD_COMPATIBLE
   // This part is left inside to regularly publish the PID Power via
   // `%topic%/PID {"power":"0.000"}`
-#ifdef PID_BACKWARD_COMPATIBLE
   double power = pid.tick(pid_current_time_secs);
   char str_buf[FLOATSZ];
   dtostrfd(power, 3, str_buf);
