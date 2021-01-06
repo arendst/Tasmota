@@ -113,8 +113,10 @@
                                                  // If not using the sensor then you can supply process values via MQTT using
                                                  // cmnd pid_pv
 
-   //#define PID_SHUTTER                   1     // if using the PID to control a 3-way valve, create Tasmota Shutter and define the 
+   #define PID_SHUTTER                   1     // if using the PID to control a 3-way valve, create Tasmota Shutter and define the 
                                                  // number of the shutter here. Otherwise leave this commented out
+
+   #define PID_DEBUGGING                         // Increase number of log messages
 
  * Help with using the PID algorithm and with loop tuning can be found at
  * http://blog.clanlaw.org.uk/2018/01/09/PID-tuning-with-node-red-contrib-pid.html
@@ -154,13 +156,15 @@ static PID pid;
 static int update_secs = PID_UPDATE_SECS <= 0  ?  0  :  PID_UPDATE_SECS;   // how often (secs) the pid alogorithm is run
 static int max_interval = PID_MAX_INTERVAL;
 static unsigned long last_pv_update_secs = 0;
-static boolean run_pid_now = false;     // tells PID_Every_Second to run the pid algorithm
+static bool run_pid_now = false;     // tells PID_Every_Second to run the pid algorithm
 
 static long pid_current_time_secs = 0;  // a counter that counts seconds since initialisation
 
 void PID_Init()
 {
-  AddLog_P(LOG_LEVEL_INFO, PSTR("PID Init"));
+  #ifdef PID_DEBUGGING
+  AddLog_P(LOG_LEVEL_INFO, PSTR("PID: Init"));
+  #endif // PID_DEBUGGING
   pid.initialise( PID_SETPOINT, PID_PROPBAND, PID_INTEGRAL_TIME, PID_DERIVATIVE_TIME, PID_INITIAL_INT,
     PID_MAX_INTERVAL, PID_DERIV_SMOOTH_FACTOR, PID_AUTO, PID_MANUAL_POWER );
 }
@@ -180,61 +184,30 @@ void PID_Show_Sensor() {
   // Called each time new sensor data available, data in mqtt data in same format
   // as published in tele/SENSOR
   // Update period is specified in TELE_PERIOD
-  // e.g. "{"Time":"2018-03-13T16:48:05","DS18B20":{"Temperature":22.0},"TempUnit":"C"}"
-  AddLog_P(LOG_LEVEL_INFO, PSTR("PID_Show_Sensor: mqtt_data: %s"), TasmotaGlobal.mqtt_data);
-  AddLog_P(LOG_LEVEL_INFO, PSTR("length of MQTT MEssage: %d"), sizeof(TasmotaGlobal.mqtt_data));
+  if (!isnan(TasmotaGlobal.temperature_celsius)) {
+    const float ds18b20_temperature = TasmotaGlobal.temperature_celsius;
 
-  // I need a copy of the mqtt buffer, because otherwise the actual
-  // message will be truncated after this call:
-  // JsonParser parser( (char*)TasmotaGlobal.mqtt_data);
-  char mqtt_buf[sizeof(TasmotaGlobal.mqtt_data)];
-  strncpy (mqtt_buf, TasmotaGlobal.mqtt_data, 300);
+    #define marcus_debug
+    #ifdef marcus_debug
+    char the_value[10];
+    dtostrfd(ds18b20_temperature, 3, the_value);
+    AddLog_P(LOG_LEVEL_INFO, PSTR("PID: the_value: %s"), the_value);
+    #endif marcus_debug
 
-  JsonParser parser( (char*)mqtt_buf);
-  JsonParserObject root = parser.getRootObject();
-  if (!root) {
-    AddLog_P(LOG_LEVEL_ERROR, PSTR("Invalid JSON in PID processing: %s"), mqtt_buf);
-  }
-
-  // Check if there is a named entry in the json:
-  JsonParserToken ds18b20_entry = root[PSTR("DS18B20")];
-  if (ds18b20_entry) {
-    // create a new object for the DS18B20 branch:
-    JsonParserObject ds18b20_obj = root[PSTR("DS18B20")].getObject();
-    if (ds18b20_obj) {
-      float ds18b20_temperature = 666; // use a temperature outside the range as a default 
-      JsonParserToken ds18b20_temperature_token = ds18b20_obj[PSTR("Temperature")];
-      if (ds18b20_temperature_token) {
-        ds18b20_temperature = ds18b20_obj.getFloat(PSTR("Temperature"), 665);
-
-        char the_value[10];
-        dtostrfd(ds18b20_temperature, 3, the_value);
-        AddLog_P(LOG_LEVEL_INFO, PSTR("the_value: %s"), the_value);
-      } else {
-        AddLog_P(LOG_LEVEL_ERROR, PSTR("No Temperature found in DS18B20"));
-      }
-    // check that something was found and it contains a number
-    if (ds18b20_temperature < 130) { // maximal range of DS18B20 is 125
-      AddLog_P(LOG_LEVEL_INFO, PSTR("PID_Show_Sensor: Temperature: %f"), ds18b20_temperature);
-      // pass the value to the pid alogorithm to use as current pv
-      last_pv_update_secs = pid_current_time_secs;
-      pid.setPv(ds18b20_temperature, last_pv_update_secs);
-      // also trigger running the pid algorithm if we have been told to run it each pv sample
-      if (update_secs == 0) {
-        // this runs it at the next second
-        run_pid_now = true;
-      }
-    } else {
-      AddLog_P(LOG_LEVEL_INFO, PSTR("PID_Show_Sensor - no temperature found"));
-    }
-    } else {// if no ds18b20_obj found
-      AddLog_P(LOG_LEVEL_ERROR, PSTR("Invalid JSON in PID processing..."));
-    }
-  } else  { // no ds18b20 key found
-    // parse failed
-    AddLog_P(LOG_LEVEL_INFO, PSTR("PID_Show_Sensor - json parse failed"));
+    AddLog_P(LOG_LEVEL_INFO, PSTR("PID: PID_Show_Sensor: Temperature: %f"), ds18b20_temperature);
+    // pass the value to the pid alogorithm to use as current pv
+    last_pv_update_secs = pid_current_time_secs;
+    pid.setPv(ds18b20_temperature, last_pv_update_secs);
+    // also trigger running the pid algorithm if we have been told to run it each pv sample
+    if (update_secs == 0) {
+      // this runs it at the next second
+      run_pid_now = true;
+    } 
+  } else {
+    AddLog_P(LOG_LEVEL_INFO, PSTR("PID: No Temperature found"));
   }
 }
+
 
 
 /* struct XDRVMAILBOX { */
@@ -246,13 +219,13 @@ void PID_Show_Sensor() {
 /*   char         *data; */
 /* } XdrvMailbox; */
 
-boolean PID_Command()
+bool PID_Command()
 {
   char command [CMDSZ];
-  boolean serviced = true;
+  bool serviced = true;
   uint8_t ua_prefix_len = strlen(D_CMND_PID); // to detect prefix of command
 
-  AddLog_P(LOG_LEVEL_INFO, PSTR("Command called: "
+  AddLog_P(LOG_LEVEL_INFO, PSTR("PID: Command called: "
     "index: %d data_len: %d payload: %d topic: %s data: %s"),
     XdrvMailbox.index,
     XdrvMailbox.data_len,
@@ -266,7 +239,7 @@ boolean PID_Command()
     serviced = true;
     switch (command_code) {
       case CMND_PID_SETPV:
-        AddLog_P(LOG_LEVEL_INFO, PSTR("PID command setpv"));
+        AddLog_P(LOG_LEVEL_INFO, PSTR("PID: command setpv"));
         last_pv_update_secs = pid_current_time_secs;
         pid.setPv(atof(XdrvMailbox.data), last_pv_update_secs);
         // also trigger running the pid algorithm if we have been told to run it each pv sample
@@ -277,53 +250,53 @@ boolean PID_Command()
         break;
 
       case CMND_PID_SETSETPOINT:
-        AddLog_P(LOG_LEVEL_INFO, PSTR("PID command setsetpoint"));
+        AddLog_P(LOG_LEVEL_INFO, PSTR("PID: command setsetpoint"));
         pid.setSp(atof(XdrvMailbox.data));
         break;
 
       case CMND_PID_SETPROPBAND:
-        AddLog_P(LOG_LEVEL_INFO, PSTR("PID command propband"));
+        AddLog_P(LOG_LEVEL_INFO, PSTR("PID: command propband"));
         pid.setPb(atof(XdrvMailbox.data));
         break;
 
       case CMND_PID_SETINTEGRAL_TIME:
-        AddLog_P(LOG_LEVEL_INFO, PSTR("PID command Ti"));
+        AddLog_P(LOG_LEVEL_INFO, PSTR("PID: command Ti"));
         pid.setTi(atof(XdrvMailbox.data));
         break;
 
       case CMND_PID_SETDERIVATIVE_TIME:
-        AddLog_P(LOG_LEVEL_INFO, PSTR("PID command Td"));
+        AddLog_P(LOG_LEVEL_INFO, PSTR("PID: command Td"));
         pid.setTd(atof(XdrvMailbox.data));
         break;
 
       case CMND_PID_SETINITIAL_INT:
-        AddLog_P(LOG_LEVEL_INFO, PSTR("PID command initial int"));
+        AddLog_P(LOG_LEVEL_INFO, PSTR("PID: command initial int"));
         pid.setInitialInt(atof(XdrvMailbox.data));
         break;
 
       case CMND_PID_SETDERIV_SMOOTH_FACTOR:
-        AddLog_P(LOG_LEVEL_INFO, PSTR("PID command deriv smooth"));
+        AddLog_P(LOG_LEVEL_INFO, PSTR("PID: command deriv smooth"));
         pid.setDSmooth(atof(XdrvMailbox.data));
         break;
 
       case CMND_PID_SETAUTO:
-        AddLog_P(LOG_LEVEL_INFO, PSTR("PID command auto"));
+        AddLog_P(LOG_LEVEL_INFO, PSTR("PID: command auto"));
         pid.setAuto(atoi(XdrvMailbox.data));
         break;
 
       case CMND_PID_SETMANUAL_POWER:
-        AddLog_P(LOG_LEVEL_INFO, PSTR("PID command manual power"));
+        AddLog_P(LOG_LEVEL_INFO, PSTR("PID: command manual power"));
         pid.setManualPower(atof(XdrvMailbox.data));
         break;
 
       case CMND_PID_SETMAX_INTERVAL:
-      AddLog_P(LOG_LEVEL_INFO, PSTR("PID command set max interval"));
+      AddLog_P(LOG_LEVEL_INFO, PSTR("PID: command set max interval"));
       max_interval = atoi(XdrvMailbox.data);
       pid.setMaxInterval(max_interval);
       break;
 
       case CMND_PID_SETUPDATE_SECS:
-        AddLog_P(LOG_LEVEL_INFO, PSTR("PID command set update secs"));
+        AddLog_P(LOG_LEVEL_INFO, PSTR("PID: command set update secs"));
         update_secs = atoi(XdrvMailbox.data) ;
         if (update_secs < 0) update_secs = 0;
         break;
@@ -335,6 +308,7 @@ boolean PID_Command()
     if (serviced) {
       // set mqtt RESULT
       snprintf_P(TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), PSTR("{\"%s\":\"%s\"}"), XdrvMailbox.topic, XdrvMailbox.data);
+      Response_P("Hello world of results");
     }
 
   } else {
@@ -350,7 +324,7 @@ static void run_pid()
   dtostrfd(power, 3, buf);
   snprintf_P(TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), PSTR("{\"%s\":\"%s\"}"), "power", buf);
   MqttPublishPrefixTopic_P(TELE, "PID", false);
-  AddLog_P (LOG_LEVEL_INFO, PSTR("power: %s"), buf);
+  AddLog_P (LOG_LEVEL_INFO, PSTR("PID: power: %s"), buf);
 
 #if defined PID_SHUTTER
     // send output as a position from 0-100 to defined shutter
@@ -370,10 +344,10 @@ static void run_pid()
 
 #define XDRV_92       92
 
-boolean Xdrv92(byte function)
-//boolean XDRV_92(byte function)
+bool Xdrv92(byte function)
+//bool XDRV_92(byte function)
 {
-  boolean result = false;
+  bool result = false;
 
   switch (function) {
   case FUNC_INIT:
