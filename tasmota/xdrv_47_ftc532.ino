@@ -60,8 +60,8 @@
   The first version of this driver was working fine on well behaved hardware. After being
   released to the field and installed on crappy hardware in noisy environments it developed
   a habit of random 'ghost' switchings at night, much to the chagrin of some users.
-  This is almost a re-write containing a lot more timing (and other) checks in order to
-  detect and mitigate various incarnations of noise.
+  This is almost a re-write containing more timing (and other) checks in order to detect
+  and mitigate various incarnations of noise.
   If you should still experience 'ghost switching' issues a solution may be increasing
   FTC532_DEBOUNCE to 2 or higher. That will enable the de-bouncing code, at the expense of
   'snappiness' of touch reactions. Higher values will accumulate more samples in 50 ms steps
@@ -197,13 +197,13 @@ void ftc532_update(void) {                          // Usually called every 50 m
 #ifdef DEBUG_FTC532
   else {
     ++Ftc532.e_inv;
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR("FTC: ILL SAM=%04X"), Ftc532.sample);
+    AddLog_P(LOG_LEVEL_DEBUG, PSTR("FTC: ILL SAM=%04X"), Ftc532.sample);  // Hex keys need JSON quotes
   }
 #endif  // DEBUG_FTC532
 }
 
 void ftc532_show() {
-  ResponseAppend_P(PSTR(",%s%02X\"}"), ftc532_json, Ftc532.keys);
+  ResponseAppend_P(PSTR(",%s%02X\"}"), ftc532_json, Ftc532.keys);         // Hex keys need JSON quotes
 }
 
 void ftc532_publish(void) {
