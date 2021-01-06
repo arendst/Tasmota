@@ -2067,6 +2067,8 @@ void MI32TimeoutSensors(){
 void MI32GetOneSensorJson(int slot){
   mi_sensor_t *p;
   p = &MIBLEsensors[slot];
+  p->eventType.raw = 0;
+  p->shallSendMQTT = 0;
 
   ResponseAppend_P(PSTR(",\"%s-%02x%02x%02x\":{"),
         kMI32DeviceType[p->type-1],
@@ -2300,7 +2302,7 @@ void MI32ShowTriggeredSensors(){
     }
     if (cnt){ // if we got one, then publish
       ResponseAppend_P(PSTR("}"));
-      MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
+      MqttPublishPrefixTopic_P(STAT, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
     } else { // else don't and clear
       ResponseClear();
     }
