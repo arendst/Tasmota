@@ -1424,7 +1424,7 @@ void MI32Init(void) {
   MI32.option.minimalSummary = 0;
   MI32.option.directBridgeMode = 0;
   MI32.option.showRSSI = 1;
-  MI32.option.ignoreBogusBattery = 1; // from advertisements
+  MI32.option.ignoreBogusBattery = 0; // from advertisements
   MI32.option.holdBackFirstAutodiscovery = 1;
 
   BLE_ESP32::registerForAdvertismentCallbacks((const char *)"MI32", MI32advertismentCallback);
@@ -1820,13 +1820,31 @@ void CmndMi32Period(void) {
   ResponseCmndNumber(MI32.period);
 }
 
+int findSlot(char *addrOrAlias){
+  uint8_t mac[6];
+  int res = BLE_ESP32::getAddr(mac, addrOrAlias);
+  if (!res) return -1;
+
+  for (int i = MIBLEsensors.size()-1; i >= 0 ; i--) {
+    if (!memcmp(MIBLEsensors[i].MAC, mac, 6)){
+      return i;
+    }
+  }
+  return -1;
+}
+
+
 void CmndMi32Time(void) {
   if (XdrvMailbox.data_len > 0) {
-    if (MIBLEsensors.size() > XdrvMailbox.payload) {
-      int res = genericTimeWriteFn(XdrvMailbox.payload);
+    int slot = findSlot(XdrvMailbox.data);
+    if (slot < 0) {
+      slot = XdrvMailbox.payload;
+    }
+    if (MIBLEsensors.size() > slot) {
+      int res = genericTimeWriteFn(slot);
       if (res > 0){
         if (BLE_ESP32::BLEDebugMode > 0) AddLog_P(LOG_LEVEL_DEBUG, PSTR("MI32: will set Time"));
-        ResponseCmndNumber(XdrvMailbox.payload);
+        ResponseCmndNumber(slot);
       }
       if (res < 0) {
         AddLog_P(LOG_LEVEL_ERROR, PSTR("MI32: cannot set Time on sensor type"));
@@ -1855,12 +1873,17 @@ void CmndMi32Battery(void) {
 
 void CmndMi32Unit(void) {
   if (XdrvMailbox.data_len > 0) {
-    if (MIBLEsensors.size() > XdrvMailbox.payload) {
+    int slot = findSlot(XdrvMailbox.data);
+    if (slot < 0) {
+      slot = XdrvMailbox.payload;
+    }
+
+    if (MIBLEsensors.size() > slot) {
       // TOGGLE unit?
-      int res = genericUnitWriteFn(XdrvMailbox.payload, -1);
+      int res = genericUnitWriteFn(slot, -1);
       if (res > 0){
         if (BLE_ESP32::BLEDebugMode > 0) AddLog_P(LOG_LEVEL_DEBUG, PSTR("MI32: will toggle Unit"));
-        ResponseCmndNumber(XdrvMailbox.payload);
+        ResponseCmndNumber(slot);
         return;
       }
       if (res < 0) {
@@ -1947,13 +1970,8 @@ void CmndMi32Option(void){
     case 2:
       MI32.option.directBridgeMode = onOff;
       break;
-    case 3:{
-      // add 40 dummy sensors
-      for (int i = 0; i < 40; i++){
-        uint8_t mac[6] = {0};
-        mac[0] = i;
-        MIBLEgetSensorSlot(mac, 0,  1);
-      }
+    case 4:{
+      MI32.option.ignoreBogusBattery = onOff;
     } break;
   }
   ResponseCmndDone();
@@ -2033,14 +2051,14 @@ void MI32TimeoutSensors(){
   // BUT, devicePresent uses the 
   // remove devices for which the adverts have timed out
   for (int i = MIBLEsensors.size()-1; i >= 0 ; i--) {
-    if (MIBLEsensors[i].MAC[2] || MIBLEsensors[i].MAC[3] || MIBLEsensors[i].MAC[4] || MIBLEsensors[i].MAC[5]){
+    //if (MIBLEsensors[i].MAC[2] || MIBLEsensors[i].MAC[3] || MIBLEsensors[i].MAC[4] || MIBLEsensors[i].MAC[5]){
       if (!BLE_ESP32::devicePresent(MIBLEsensors[i].MAC)){
         uint8_t *mac = MIBLEsensors[i].MAC;
         AddLog_P(LOG_LEVEL_DEBUG,PSTR("MI32: dev no longer present MAC: %02x%02x%02x%02x%02x%02x"), mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
         TasAutoMutex localmutex(&slotmutex, "Mi32Timeout");
         MIBLEsensors.erase(MIBLEsensors.begin() + i);
       }
-    }
+    //}
   }
 }
 
