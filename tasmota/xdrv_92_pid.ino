@@ -27,14 +27,14 @@
  #define USE_PID         // include the pid feature (+4.3k)
    #define PID_SETPOINT                  19.5    // Setpoint value. This is the process value that the process is
                                                  // aiming for.
-                                                 // May be adjusted via MQTT using cmnd pid_sp
+                                                 // May be adjusted via MQTT using cmnd PidSp
 
    #define PID_PROPBAND                  5       // Proportional band in process units (eg degrees). This controls
                                                  // the gain of the loop and is the range of process value over which
                                                  // the power output will go from 0 to full power. The units are that
                                                  // of the process and setpoint, so for example in a heating
                                                  // application it might be set to 1.5 degrees.
-                                                 // May be adjusted via MQTT using cmnd pid_pb
+                                                 // May be adjusted via MQTT using cmnd PidPb
 
    #define PID_INTEGRAL_TIME             1800    // Integral time seconds. This is a setting for the integral time,
                                                  // in seconds. It represents the time constant of the integration
@@ -43,7 +43,7 @@
                                                  // example for a domestic room heated by convection radiators a setting
                                                  // of one hour might be appropriate (in seconds). To disable the
                                                  // integral effect set this to a large number.
-                                                 // May be adjusted via MQTT using cmnd pid_ti
+                                                 // May be adjusted via MQTT using cmnd PidTi
 
    #define PID_DERIVATIVE_TIME           15      // Derivative time seconds. This is a setting for the derivative time,
                                                  // in seconds. It represents the time constant of the derivative effect.
@@ -53,7 +53,7 @@
                                                  // disable the derivative effect set this to 0. When initially tuning a
                                                  // loop it is often sensible to start with derivative zero and wind it in
                                                  // once other parameters have been setup.
-                                                 // May be adjusted via MQTT using cmnd pid_td
+                                                 // May be adjusted via MQTT using cmnd PidTd
 
    #define PID_INITIAL_INT               0.5     // Initial integral value (0:1). This is an initial value which is used
                                                  // to preset the integrated error value when the flow is deployed in
@@ -69,7 +69,7 @@
                                                  // that might prevent the node from being supplied with a process value.
                                                  // If no new process value is received for this time then the power is set
                                                  // to the value defined for PID_MANUAL_POWER.
-                                                 // May be adjusted via MQTT using cmnd pid_max_interval
+                                                 // May be adjusted via MQTT using cmnd PidMaxInterval
 
    #define PID_DERIV_SMOOTH_FACTOR       3       // In situations where the process sensor has limited resolution (such as
                                                  // the DS18B20), the use of deriviative can be problematic as when the
@@ -82,16 +82,16 @@
                                                  // noisy. The smaller the value the greater the filtering effect but the
                                                  // more it will reduce the effectiveness of the derivative. A value of zero
                                                  // disables this feature.
-                                                 // May be adjusted via MQTT using cmnd pid_d_smooth
+                                                 // May be adjusted via MQTT using cmnd PidDSmooth
 
    #define PID_AUTO                      1       // Auto mode 1 or 0 (for manual). This can be used to enable or disable
                                                  // the control (1=enable, auto mode, 0=disabled, manual mode). When in
                                                  // manual mode the output is set the value definded for PID_MANUAL_POWER
-                                                 // May be adjusted via MQTT using cmnd pid_auto
+                                                 // May be adjusted via MQTT using cmnd PidAuto
 
    #define PID_MANUAL_POWER              0       // Power output when in manual mode or fallback mode if too long elapses
                                                  // between process values
-                                                 // May be adjusted via MQTT using cmnd pid_manual_power
+                                                 // May be adjusted via MQTT using cmnd PidManualPower
 
    #define PID_UPDATE_SECS               0       // How often to run the pid algorithm (integer secs) or 0 to run the algorithm
                                                  // each time a new pv value is received, for most applictions specify 0.
@@ -99,7 +99,7 @@
                                                  // that is short compared to the response of the process.  For example,
                                                  // something like 15 seconds may well be appropriate for a domestic room
                                                  // heating application.
-                                                 // May be adjusted via MQTT using cmnd pid_update_secs
+                                                 // May be adjusted via MQTT using cmnd PidUpdateSecs
 
    #define PID_USE_TIMPROP               1       // To use an internal relay for a time proportioned output to drive the
                                                  // process, set this to indicate which timeprop output to use. For a device
@@ -108,15 +108,23 @@
                                                  // explained in xdrv_91_timeprop.ino
                                                  // To disable this feature leave this undefined (undefined, not defined to nothing).
 
-   #define PID_USE_LOCAL_SENSOR                  // if defined then the local sensor will be used for pv. Leave undefined if
+   #define PID_USE_LOCAL_SENSOR                  // If defined then the local sensor will be used for pv. Leave undefined if
                                                  // this is not required.  The rate that the sensor is read is defined by TELE_PERIOD
                                                  // If not using the sensor then you can supply process values via MQTT using
-                                                 // cmnd pid_pv
+                                                 // cmnd PidPv
 
    #define PID_SHUTTER                   1     // if using the PID to control a 3-way valve, create Tasmota Shutter and define the 
                                                  // number of the shutter here. Otherwise leave this commented out
 
    #define PID_DEBUGGING                         // Increase number of log messages
+
+   #define PID_REPORT_SETTINGS                   // If defined, the SENSOR output will provide more extensive json
+                                                 // output in the PID section
+
+//   #define PID_BACKWARD_COMPATIBLE             // Preserve the backward compatible reporting of PID power via
+                                                 // `%topic%/PID {"power":"0.000"}`  This is now available in
+                                                 // `%topic$/SENSOR {..., "PID":{"PidPower":0.00}}`
+                                                 // Don't use unless you know that you need it
 
  * Help with using the PID algorithm and with loop tuning can be found at
  * http://blog.clanlaw.org.uk/2018/01/09/PID-tuning-with-node-red-contrib-pid.html
@@ -131,26 +139,47 @@
 
 #include "PID.h"
 
-#define D_CMND_PID "pid_"
+/* This might need to go to i18n.h */
+#define D_PRFX_PID "Pid"
+#define D_CMND_PID_SETPV "Pv"
+#define D_CMND_PID_SETSETPOINT "Sp"
+#define D_CMND_PID_SETPROPBAND "Pb"
+#define D_CMND_PID_SETINTEGRAL_TIME "Ti"
+#define D_CMND_PID_SETDERIVATIVE_TIME "Td"
+#define D_CMND_PID_SETINITIAL_INT "Initint"
+#define D_CMND_PID_SETDERIV_SMOOTH_FACTOR "DSmooth"
+#define D_CMND_PID_SETAUTO "Auto"
+#define D_CMND_PID_SETMANUAL_POWER "ManualPower"
+#define D_CMND_PID_SETMAX_INTERVAL "MaxInterval"
+#define D_CMND_PID_SETUPDATE_SECS "UpdateSecs"
 
-#define D_CMND_PID_SETPV "pv"
-#define D_CMND_PID_SETSETPOINT "sp"
-#define D_CMND_PID_SETPROPBAND "pb"
-#define D_CMND_PID_SETINTEGRAL_TIME "ti"
-#define D_CMND_PID_SETDERIVATIVE_TIME "td"
-#define D_CMND_PID_SETINITIAL_INT "initint"
-#define D_CMND_PID_SETDERIV_SMOOTH_FACTOR "d_smooth"
-#define D_CMND_PID_SETAUTO "auto"
-#define D_CMND_PID_SETMANUAL_POWER "manual_power"
-#define D_CMND_PID_SETMAX_INTERVAL "max_interval"
-#define D_CMND_PID_SETUPDATE_SECS "update_secs"
+const char kPIDCommands[] PROGMEM = D_PRFX_PID "|" // Prefix
+  D_CMND_PID_SETPV "|"
+  D_CMND_PID_SETSETPOINT "|"
+  D_CMND_PID_SETPROPBAND "|"
+  D_CMND_PID_SETINTEGRAL_TIME "|"
+  D_CMND_PID_SETDERIVATIVE_TIME "|"
+  D_CMND_PID_SETINITIAL_INT "|"
+  D_CMND_PID_SETDERIV_SMOOTH_FACTOR "|"
+  D_CMND_PID_SETAUTO "|"
+  D_CMND_PID_SETMANUAL_POWER "|"
+  D_CMND_PID_SETMAX_INTERVAL "|"
+  D_CMND_PID_SETUPDATE_SECS;
+  ;
 
-enum PIDCommands { CMND_PID_SETPV, CMND_PID_SETSETPOINT, CMND_PID_SETPROPBAND, CMND_PID_SETINTEGRAL_TIME,
-  CMND_PID_SETDERIVATIVE_TIME, CMND_PID_SETINITIAL_INT, CMND_PID_SETDERIV_SMOOTH_FACTOR, CMND_PID_SETAUTO,
-  CMND_PID_SETMANUAL_POWER, CMND_PID_SETMAX_INTERVAL, CMND_PID_SETUPDATE_SECS };
-const char kPIDCommands[] PROGMEM = D_CMND_PID_SETPV "|" D_CMND_PID_SETSETPOINT "|" D_CMND_PID_SETPROPBAND "|"
-  D_CMND_PID_SETINTEGRAL_TIME "|" D_CMND_PID_SETDERIVATIVE_TIME "|" D_CMND_PID_SETINITIAL_INT "|" D_CMND_PID_SETDERIV_SMOOTH_FACTOR "|"
-  D_CMND_PID_SETAUTO "|" D_CMND_PID_SETMANUAL_POWER "|" D_CMND_PID_SETMAX_INTERVAL "|" D_CMND_PID_SETUPDATE_SECS;
+void (* const PIDCommand[])(void) PROGMEM = {
+  &CmndSetPv, 
+  &CmndSetSp,
+  &CmndSetPb,
+  &CmndSetTi,
+  &cmndsetTd,
+  &CmndSetInitialInt,
+  &CmndSetDSmooth,
+  &CmndSetAuto,
+  &CmndSetManualPower,
+  &CmndSetMaxInterval,
+  &CmndSetUpdateSecs
+  };
 
 static PID pid;
 static int update_secs = PID_UPDATE_SECS <= 0  ?  0  :  PID_UPDATE_SECS;   // how often (secs) the pid alogorithm is run
@@ -162,9 +191,6 @@ static long pid_current_time_secs = 0;  // a counter that counts seconds since i
 
 void PID_Init()
 {
-  #ifdef PID_DEBUGGING
-  AddLog_P(LOG_LEVEL_INFO, PSTR("PID: Init"));
-  #endif // PID_DEBUGGING
   pid.initialise( PID_SETPOINT, PID_PROPBAND, PID_INTEGRAL_TIME, PID_DERIVATIVE_TIME, PID_INITIAL_INT,
     PID_MAX_INTERVAL, PID_DERIV_SMOOTH_FACTOR, PID_AUTO, PID_MANUAL_POWER );
 }
@@ -185,30 +211,20 @@ void PID_Show_Sensor() {
   // as published in tele/SENSOR
   // Update period is specified in TELE_PERIOD
   if (!isnan(TasmotaGlobal.temperature_celsius)) {
-    const float ds18b20_temperature = TasmotaGlobal.temperature_celsius;
+    const float temperature = TasmotaGlobal.temperature_celsius;
 
-    #define marcus_debug
-    #ifdef marcus_debug
-    char the_value[10];
-    dtostrfd(ds18b20_temperature, 3, the_value);
-    AddLog_P(LOG_LEVEL_INFO, PSTR("PID: the_value: %s"), the_value);
-    #endif marcus_debug
-
-    AddLog_P(LOG_LEVEL_INFO, PSTR("PID: PID_Show_Sensor: Temperature: %f"), ds18b20_temperature);
     // pass the value to the pid alogorithm to use as current pv
     last_pv_update_secs = pid_current_time_secs;
-    pid.setPv(ds18b20_temperature, last_pv_update_secs);
+    pid.setPv(temperature, last_pv_update_secs);
     // also trigger running the pid algorithm if we have been told to run it each pv sample
     if (update_secs == 0) {
       // this runs it at the next second
       run_pid_now = true;
     } 
   } else {
-    AddLog_P(LOG_LEVEL_INFO, PSTR("PID: No Temperature found"));
+    AddLog_P(LOG_LEVEL_ERROR, PSTR("PID: No local temperature sensor found"));
   }
 }
-
-
 
 /* struct XDRVMAILBOX { */
 /*   uint16_t      valid; */
@@ -219,112 +235,144 @@ void PID_Show_Sensor() {
 /*   char         *data; */
 /* } XdrvMailbox; */
 
-bool PID_Command()
-{
-  char command [CMDSZ];
-  bool serviced = true;
-  uint8_t ua_prefix_len = strlen(D_CMND_PID); // to detect prefix of command
-
-  AddLog_P(LOG_LEVEL_INFO, PSTR("PID: Command called: "
-    "index: %d data_len: %d payload: %d topic: %s data: %s"),
-    XdrvMailbox.index,
-    XdrvMailbox.data_len,
-    XdrvMailbox.payload,
-    (XdrvMailbox.payload >= 0 ? XdrvMailbox.topic : ""),
-    (XdrvMailbox.data_len >= 0 ? XdrvMailbox.data : ""));
-
-  if (0 == strncasecmp_P(XdrvMailbox.topic, PSTR(D_CMND_PID), ua_prefix_len)) {
-    // command starts with pid_
-    int command_code = GetCommandCode(command, sizeof(command), XdrvMailbox.topic + ua_prefix_len, kPIDCommands);
-    serviced = true;
-    switch (command_code) {
-      case CMND_PID_SETPV:
-        AddLog_P(LOG_LEVEL_INFO, PSTR("PID: command setpv"));
-        last_pv_update_secs = pid_current_time_secs;
-        pid.setPv(atof(XdrvMailbox.data), last_pv_update_secs);
-        // also trigger running the pid algorithm if we have been told to run it each pv sample
-        if (update_secs == 0) {
-          // this runs it at the next second
-          run_pid_now = true;
-        }
-        break;
-
-      case CMND_PID_SETSETPOINT:
-        AddLog_P(LOG_LEVEL_INFO, PSTR("PID: command setsetpoint"));
-        pid.setSp(atof(XdrvMailbox.data));
-        break;
-
-      case CMND_PID_SETPROPBAND:
-        AddLog_P(LOG_LEVEL_INFO, PSTR("PID: command propband"));
-        pid.setPb(atof(XdrvMailbox.data));
-        break;
-
-      case CMND_PID_SETINTEGRAL_TIME:
-        AddLog_P(LOG_LEVEL_INFO, PSTR("PID: command Ti"));
-        pid.setTi(atof(XdrvMailbox.data));
-        break;
-
-      case CMND_PID_SETDERIVATIVE_TIME:
-        AddLog_P(LOG_LEVEL_INFO, PSTR("PID: command Td"));
-        pid.setTd(atof(XdrvMailbox.data));
-        break;
-
-      case CMND_PID_SETINITIAL_INT:
-        AddLog_P(LOG_LEVEL_INFO, PSTR("PID: command initial int"));
-        pid.setInitialInt(atof(XdrvMailbox.data));
-        break;
-
-      case CMND_PID_SETDERIV_SMOOTH_FACTOR:
-        AddLog_P(LOG_LEVEL_INFO, PSTR("PID: command deriv smooth"));
-        pid.setDSmooth(atof(XdrvMailbox.data));
-        break;
-
-      case CMND_PID_SETAUTO:
-        AddLog_P(LOG_LEVEL_INFO, PSTR("PID: command auto"));
-        pid.setAuto(atoi(XdrvMailbox.data));
-        break;
-
-      case CMND_PID_SETMANUAL_POWER:
-        AddLog_P(LOG_LEVEL_INFO, PSTR("PID: command manual power"));
-        pid.setManualPower(atof(XdrvMailbox.data));
-        break;
-
-      case CMND_PID_SETMAX_INTERVAL:
-      AddLog_P(LOG_LEVEL_INFO, PSTR("PID: command set max interval"));
-      max_interval = atoi(XdrvMailbox.data);
-      pid.setMaxInterval(max_interval);
-      break;
-
-      case CMND_PID_SETUPDATE_SECS:
-        AddLog_P(LOG_LEVEL_INFO, PSTR("PID: command set update secs"));
-        update_secs = atoi(XdrvMailbox.data) ;
-        if (update_secs < 0) update_secs = 0;
-        break;
-
-      default:
-        serviced = false;
+void CmndSetPv(void) {
+  last_pv_update_secs = pid_current_time_secs;
+  pid.setPv(atof(XdrvMailbox.data), last_pv_update_secs);
+  // also trigger running the pid algorithm if we have been told to run it each pv sample
+  if (update_secs == 0) {
+    // this runs it at the next second
+    run_pid_now = true;
   }
+}
 
-    if (serviced) {
-      // set mqtt RESULT
-      snprintf_P(TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), PSTR("{\"%s\":\"%s\"}"), XdrvMailbox.topic, XdrvMailbox.data);
-      Response_P("Hello world of results");
-    }
+void CmndSetSp(void) {
+  pid.setSp(atof(XdrvMailbox.data));
+  ResponseCmndNumber(atof(XdrvMailbox.data));
+}
 
-  } else {
-    serviced = false;
-  }
-  return serviced;
+void CmndSetPb(void) {
+  pid.setPb(atof(XdrvMailbox.data));
+  ResponseCmndNumber(atof(XdrvMailbox.data));
+}
+
+void CmndSetTi(void) {
+  pid.setTi(atof(XdrvMailbox.data));
+  ResponseCmndNumber(atof(XdrvMailbox.data));
+}
+
+void cmndsetTd(void) {
+  pid.setTd(atof(XdrvMailbox.data));
+  ResponseCmndNumber(atof(XdrvMailbox.data));
+}
+
+void CmndSetInitialInt(void) {
+  pid.setInitialInt(atof(XdrvMailbox.data));
+  ResponseCmndNumber(atof(XdrvMailbox.data));
+}
+
+void CmndSetDSmooth(void) {
+  pid.setDSmooth(atof(XdrvMailbox.data));
+  ResponseCmndNumber(atof(XdrvMailbox.data));
+}
+
+void CmndSetAuto(void) {
+  pid.setAuto(atoi(XdrvMailbox.data));
+  ResponseCmndNumber(atoi(XdrvMailbox.data));
+}
+
+void CmndSetManualPower(void) {
+  pid.setManualPower(atof(XdrvMailbox.data));
+  ResponseCmndNumber(atof(XdrvMailbox.data));
+}
+
+void CmndSetMaxInterval(void) {
+  pid.setMaxInterval(atoi(XdrvMailbox.data));
+  ResponseCmndNumber(atoi(XdrvMailbox.data));
+}
+
+// case CMND_PID_SETUPDATE_SECS:
+//   update_secs = atoi(XdrvMailbox.data) ;
+//   if (update_secs < 0)
+//     update_secs = 0;
+void CmndSetUpdateSecs(void) {
+  update_secs = (atoi(XdrvMailbox.data));
+  if (update_secs < 0)
+    update_secs = 0;
+  ResponseCmndNumber(update_secs);
+}
+
+void PIDShowValues(void) {
+  char str_buf[FLOATSZ];
+  char chr_buf;
+  int i_buf;
+  double d_buf;
+  ResponseAppend_P(PSTR(",\"PID\":{"));
+
+// #define D_CMND_PID_SETPV "Pv"
+  d_buf = pid.getPv();
+  dtostrfd(d_buf, 2, str_buf);
+  ResponseAppend_P(PSTR("\"PidPv\":%s,"), str_buf);
+// #define D_CMND_PID_SETSETPOINT "Sp"
+  d_buf = pid.getSp();
+  dtostrfd(d_buf, 2, str_buf);
+  ResponseAppend_P(PSTR("\"PidSp\":%s,"), str_buf);
+
+#ifdef PID_REPORT_MORE_SETTINGS
+// #define D_CMND_PID_SETPROPBAND "Pb"
+  d_buf = pid.getPb();
+  dtostrfd(d_buf, 2, str_buf);
+  ResponseAppend_P(PSTR("\"PidPb\":%s,"), str_buf);
+// #define D_CMND_PID_SETINTEGRAL_TIME "Ti"
+  d_buf = pid.getTi();
+  dtostrfd(d_buf, 2, str_buf);
+  ResponseAppend_P(PSTR("\"PidTi\":%s,"), str_buf);
+// #define D_CMND_PID_SETDERIVATIVE_TIME "Td"
+  d_buf = pid.getTd();
+  dtostrfd(d_buf, 2, str_buf);
+  ResponseAppend_P(PSTR("\"PidTd\":%s,"), str_buf);
+// #define D_CMND_PID_SETINITIAL_INT "Initint"
+  d_buf = pid.getInitialInt();
+  dtostrfd(d_buf, 2, str_buf);
+  ResponseAppend_P(PSTR("\"PidInitialInt\":%s,"), str_buf);
+// #define D_CMND_PID_SETDERIV_SMOOTH_FACTOR "DSmooth"
+  d_buf = pid.getDSmooth();
+  dtostrfd(d_buf, 2, str_buf);
+  ResponseAppend_P(PSTR("\"PidDSmooth\":%s,"), str_buf);
+// #define D_CMND_PID_SETAUTO "Auto"
+  chr_buf = pid.getAuto();
+  ResponseAppend_P(PSTR("\"PidAuto\":%d,"), chr_buf);
+// #define D_CMND_PID_SETMANUAL_POWER "ManualPower"
+  d_buf = pid.getManualPower();
+  dtostrfd(d_buf, 2, str_buf);
+  ResponseAppend_P(PSTR("\"PidManualPower\":%s,"), str_buf);
+// #define D_CMND_PID_SETMAX_INTERVAL "MaxInterval"
+  i_buf = pid.getMaxInterval();
+  ResponseAppend_P(PSTR("\"PidMaxInterval\":%d,"), i_buf);
+
+// #define D_CMND_PID_SETUPDATE_SECS "UpdateSecs"
+  ResponseAppend_P(PSTR("\"PidUpdateSecs\":%d,"), update_secs);
+#endif // PID_REPORT_MORE_SETTINGS
+
+// The actual power value
+  d_buf = pid.tick(pid_current_time_secs);
+  dtostrfd(d_buf, 2, str_buf);
+  ResponseAppend_P(PSTR("\"PidPower\":%s"), str_buf);
+
+  ResponseAppend_P(PSTR("}"));
 }
 
 static void run_pid()
 {
+  #define PID_BACKWARD_COMPATIBLE
+  // This part is left inside to regularly publish the PID Power via
+  // `%topic%/PID {"power":"0.000"}`
+#ifdef PID_BACKWARD_COMPATIBLE
   double power = pid.tick(pid_current_time_secs);
-  char buf[10];
-  dtostrfd(power, 3, buf);
-  snprintf_P(TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), PSTR("{\"%s\":\"%s\"}"), "power", buf);
+  char str_buf[FLOATSZ];
+  dtostrfd(power, 3, str_buf);
+  snprintf_P(TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), PSTR("{\"%s\":\"%s\"}"), "power", str_buf);
   MqttPublishPrefixTopic_P(TELE, "PID", false);
-  AddLog_P (LOG_LEVEL_INFO, PSTR("PID: power: %s"), buf);
+#endif // PID_BACKWARD_COMPATIBLE
 
 #if defined PID_SHUTTER
     // send output as a position from 0-100 to defined shutter
@@ -363,7 +411,10 @@ bool Xdrv92(byte function)
     #endif // PID_USE_LOCAL_SENSOR
     break;
   case FUNC_COMMAND:
-    result = PID_Command();
+    result = DecodeCommand(kPIDCommands, PIDCommand);
+    break;
+  case FUNC_JSON_APPEND:
+    PIDShowValues();
     break;
   }
   return result;
