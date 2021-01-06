@@ -304,11 +304,8 @@ void loadZigbeeDevices(bool dump_only = false) {
     AddLog_P(LOG_LEVEL_ERROR, PSTR(D_LOG_ZIGBEE "Cannot allocate 4KB buffer"));
     return;
   }
-#ifdef USE_TFS
-  TfsLoadFile("/zb", spi_buffer, z_spi_len);
-#endif
 #ifdef USE_UFILESYS
-  UfsLoadFile("/zb", spi_buffer, z_spi_len);
+  TfsLoadFile("/zb", spi_buffer, z_spi_len);
 #endif
   z_dev_start = spi_buffer;
 #endif  // ESP32
@@ -372,11 +369,8 @@ void saveZigbeeDevices(void) {
   ESP.flashRead(z_spi_start_sector * SPI_FLASH_SEC_SIZE, (uint32_t*) spi_buffer, SPI_FLASH_SEC_SIZE);
 #endif  // ESP8266
 #ifdef ESP32
-#ifdef USE_TFS
-  TfsLoadFile("/zb", spi_buffer, z_spi_len);
-#endif
 #ifdef USE_UFILESYS
-  UfsLoadFile("/zb", spi_buffer, z_spi_len);
+  TfsLoadFile("/zb", spi_buffer, z_spi_len);
 #endif
 #endif  // ESP32
 
@@ -395,11 +389,8 @@ void saveZigbeeDevices(void) {
   AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Zigbee Devices Data store in Flash (0x%08X - %d bytes)"), z_dev_start, buf_len);
 #endif  // ESP8266
 #ifdef ESP32
-#ifdef USE_TFS
-  TfsSaveFile("/zb", spi_buffer, z_spi_len);
-#endif
 #ifdef USE_UFILESYS
-  UfsSaveFile("/zb", spi_buffer, z_spi_len);
+  TfsSaveFile("/zb", spi_buffer, z_spi_len);
 #endif
   AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Zigbee Devices Data saved in %s (%d bytes)"), PSTR("Flash"), buf_len);
 #endif  // ESP32
@@ -434,11 +425,8 @@ void eraseZigbeeDevices(void) {
   AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Zigbee Devices Data erased in %s"), PSTR("Flash"));
 #endif  // ESP8266
 #ifdef ESP32
-#ifdef USE_TFS
-  TfsEraseFile("/zb", z_block_len);
-#endif
 #ifdef USE_UFILESYS
-  UfsInitFile("/zb", z_block_len, 0xFF);
+  TfsInitFile("/zb", z_block_len, 0xFF);
 #endif
   AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Zigbee Devices Data erased (%d bytes)"), z_block_len);
 #endif  // ESP32

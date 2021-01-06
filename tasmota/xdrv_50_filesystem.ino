@@ -149,22 +149,22 @@ void UfsInit(void) {
   return;
 }
 
-bool UfsFileExists(const char *fname){
+bool TfsFileExists(const char *fname){
   if (!ufs_type) { return false; }
 
-  bool yes = ufsp->exists(fname);
+  bool yes = ffsp->exists(fname);
   if (!yes) {
-    AddLog_P(LOG_LEVEL_INFO, PSTR("UFS: File not found"));
+    AddLog_P(LOG_LEVEL_INFO, PSTR("TFS: File not found"));
   }
   return yes;
 }
 
-bool UfsSaveFile(const char *fname, const uint8_t *buf, uint32_t len) {
+bool TfsSaveFile(const char *fname, const uint8_t *buf, uint32_t len) {
   if (!ufs_type) { return false; }
 
-  File file = ufsp->open(fname, "w");
+  File file = ffsp->open(fname, "w");
   if (!file) {
-    AddLog_P(LOG_LEVEL_INFO, PSTR("UFS: Save failed"));
+    AddLog_P(LOG_LEVEL_INFO, PSTR("TFS: Save failed"));
     return false;
   }
 
@@ -173,12 +173,12 @@ bool UfsSaveFile(const char *fname, const uint8_t *buf, uint32_t len) {
   return true;
 }
 
-bool UfsInitFile(const char *fname, uint32_t len, uint8_t init_value) {
+bool TfsInitFile(const char *fname, uint32_t len, uint8_t init_value) {
   if (!ufs_type) { return false; }
 
-  File file = ufsp->open(fname, "w");
+  File file = ffsp->open(fname, "w");
   if (!file) {
-    AddLog_P(LOG_LEVEL_INFO, PSTR("UFS: Erase failed"));
+    AddLog_P(LOG_LEVEL_INFO, PSTR("TFS: Erase failed"));
     return false;
   }
 
@@ -189,13 +189,13 @@ bool UfsInitFile(const char *fname, uint32_t len, uint8_t init_value) {
   return true;
 }
 
-bool UfsLoadFile(const char *fname, uint8_t *buf, uint32_t len) {
+bool TfsLoadFile(const char *fname, uint8_t *buf, uint32_t len) {
   if (!ufs_type) { return false; }
-  if (!UfsFileExists(fname)) { return false; }
+  if (!TfsFileExists(fname)) { return false; }
 
-  File file = ufsp->open(fname, "r");
+  File file = ffsp->open(fname, "r");
   if (!file) {
-    AddLog_P(LOG_LEVEL_INFO, PSTR("UFS: File not found"));
+    AddLog_P(LOG_LEVEL_INFO, PSTR("TFS: File not found"));
     return false;
   }
 

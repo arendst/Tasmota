@@ -172,7 +172,7 @@ void SettingsErase(uint8_t type) {
 }
 
 void SettingsRead(void *data, size_t size) {
-#ifdef USE_TFS
+#ifdef USE_UFILESYS
 //  if (!TfsLoadFile("/settings", (uint8_t*)data, size)) {
     NvmLoad("main", "Settings", data, size);
 //  }
@@ -182,7 +182,7 @@ void SettingsRead(void *data, size_t size) {
 }
 
 void SettingsWrite(const void *pSettings, unsigned nSettingsLen) {
-#ifdef USE_TFS
+#ifdef USE_UFILESYS
 //  TfsSaveFile("/settings", (const uint8_t*)pSettings, nSettingsLen);
 #endif
   NvmSave("main", "Settings", pSettings, nSettingsLen);
