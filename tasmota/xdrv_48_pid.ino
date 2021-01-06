@@ -390,7 +390,7 @@ static void run_pid()
  * Interface
 \*********************************************************************************************/
 
-#define XDRV_92       92
+#define XDRV_48       48
 
 bool Xdrv92(byte function)
 //bool XDRV_92(byte function)
@@ -420,4 +420,4 @@ bool Xdrv92(byte function)
   return result;
 }
 
-#endif // USE_TIMEPROP
+#endif // USE_PID
