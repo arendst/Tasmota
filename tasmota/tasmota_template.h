@@ -2470,7 +2470,7 @@ const mytmplt kModules[] PROGMEM =
     AGPIO(GPIO_SPI_MISO),        // 19      IO                  GPIO19, VSPI_MISO
     0,                           // 20
     AGPIO(GPIO_ILI9341_DC),      // 21      IO                  GPIO21, SPI_DC_LCD
-    0,                           // 22      IO      LED         GPIO22, VSPI_CS1_TFLASH
+    AGPIO(GPIO_SDCARD_CS),       // 22      IO      LED         GPIO22, VSPI_CS1_TFLASH
     AGPIO(GPIO_SPI_MOSI),        // 23      IO                  GPIO23, VSPI_MOSI
     0,                           // 24
     0,                           // 25      IO                  GPIO25, DAC_1 (PAM8304A)
