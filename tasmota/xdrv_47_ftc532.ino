@@ -197,17 +197,17 @@ void ftc532_update(void) {                          // Usually called every 50 m
 #ifdef DEBUG_FTC532
   else {
     ++Ftc532.e_inv;
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR("FTC: ILL SAM=%04X"), Ftc532.sample);  // Hex keys need JSON quotes
+    AddLog_P(LOG_LEVEL_DEBUG, PSTR("FTC: ILL SAM=%04X"), Ftc532.sample);
   }
 #endif  // DEBUG_FTC532
 }
 
 void ftc532_show() {
-  ResponseAppend_P(PSTR(",%s%02X\"}"), ftc532_json, Ftc532.keys);         // Hex keys need JSON quotes
+  ResponseAppend_P(PSTR(",%s%02X\"}"), ftc532_json, Ftc532.keys);   // Hex keys need JSON quotes
 }
 
 void ftc532_publish(void) {
-  Response_P(PSTR("{%s%02X\"}}"), ftc532_json, Ftc532.keys);
+  Response_P(PSTR("{%s%02X\"}}"), ftc532_json, Ftc532.keys);        // Hex keys need JSON quotes
   MqttPublishTeleSensor();
 }
 
