@@ -390,7 +390,7 @@ static void run_pid()
  * Interface
 \*********************************************************************************************/
 
-#define XDRV_48       48
+#define XDRV_49       49
 
 bool Xdrv92(byte function)
 //bool XDRV_92(byte function)
