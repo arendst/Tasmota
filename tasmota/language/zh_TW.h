@@ -864,7 +864,7 @@
 #define D_CONFIGURE_SCRIPT     "編輯腳本"
 #define D_SCRIPT               "編輯腳本"
 #define D_SDCARD_UPLOAD        "上傳檔案"
-#define D_SDCARD_DIR           "記憶卡目錄"
+#define D_UFSDIR               "記憶卡目錄"
 #define D_UPL_DONE             "完成"
 #define D_SCRIPT_CHARS_LEFT    "剩餘字元"
 #define D_SCRIPT_CHARS_NO_MORE "放不下更多字元了"

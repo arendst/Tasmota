@@ -857,7 +857,7 @@
 #define D_CONFIGURE_SCRIPT     "Éditer le script"
 #define D_SCRIPT               "édition du script"
 #define D_SDCARD_UPLOAD        "Envoi du fichier"
-#define D_SDCARD_DIR           "Dossier carte SD"
+#define D_UFSDIR               "Dossier UFS"
 #define D_UPL_DONE             "Terminé"
 #define D_SCRIPT_CHARS_LEFT    "car. restant"
 #define D_SCRIPT_CHARS_NO_MORE "plus de car."

@@ -70,6 +70,8 @@ The driver enabled by #define USE_UFILESYS
 
 // global file system pointer
 FS *ufsp;
+// flash file system pointer on esp32
+FS *ffsp;
 char ufs_path[48];
 File ufs_upload_file;
 
@@ -83,6 +85,7 @@ uint8_t ufs_type;
 
 void UFSInit(void) {
   ufs_type = 0;
+  ffsp = 0;
   // check for fs options,
   // 1. check for SD card
   // 2. check for littlefs or FAT
@@ -104,6 +107,16 @@ void UFSInit(void) {
       ufsp = &SD;
 #endif  // ESP32
       ufs_type = UFS_TSDC;
+      // now detect ffs
+      ffsp = &LITTLEFS;
+      if (!LITTLEFS.begin()) {
+        // ffat is second
+        ffsp = &FFat;
+        if (!FFat.begin(true)) {
+          ffsp = 0;
+          return;
+        }
+      }
       return;
     }
   }
@@ -126,10 +139,12 @@ void UFSInit(void) {
       return;
     }
     ufs_type = UFS_TFAT;
+    ffsp = ufsp;
     return;
   }
 #endif // ESP32
   ufs_type = UFS_TLFS;
+  ffsp = ufsp;
   return;
 }
 
@@ -267,7 +282,7 @@ void UFS_free(void) {
 
 const char UFS_WEB_DIR[] PROGMEM =
   "<p><form action='" "ufsd" "' method='get'><button>" "%s" "</button></form></p>";
-const char UFS_FILE_UPLOAD[] PROGMEM = D_SDCARD_DIR;
+const char UFS_FILE_UPLOAD[] PROGMEM = D_UFSDIR;
 const char UFS_FORM_FILE_UPLOAD[] PROGMEM =
   "<div id='f1' name='f1' style='display:block;'>"
   "<fieldset><legend><b>&nbsp;%s"  "&nbsp;</b></legend>";
@@ -278,7 +293,7 @@ const char UFS_FORM_FILE_UPG[] PROGMEM =
 const char UFS_FORM_FILE_UPGc[] PROGMEM =
   "<div style='text-align:left;color:green;'>total size: %s kB - free: %s kB</div>";
 const char UFS_FORM_SDC_DIRa[] PROGMEM =
-  "<div style='text-align:left'>";
+  "<div style='text-align:left;overflow:scroll;height:400px;'>";
 const char UFS_FORM_SDC_DIRc[] PROGMEM =
   "</div>";
 const char UFS_FORM_FILE_UPGb[] PROGMEM =
@@ -309,7 +324,7 @@ void UFSdirectory(void) {
 
   WSContentStart_P(UFS_FILE_UPLOAD);
   WSContentSendStyle();
-  WSContentSend_P(UFS_FORM_FILE_UPLOAD,D_SDCARD_DIR);
+  WSContentSend_P(UFS_FORM_FILE_UPLOAD, D_UFSDIR);
   WSContentSend_P(UFS_FORM_FILE_UPG, D_SCRIPT_UPLOAD);
   char ts[16];
   char fs[16];
@@ -495,7 +510,7 @@ void UFSFileUploadSuccess(void) {
   WSContentStop();
 }
 
-#define D_UFSDIR "UFS directory"
+
 
 /*********************************************************************************************\
  * Interface
