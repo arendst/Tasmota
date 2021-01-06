@@ -865,7 +865,7 @@
 #define D_CONFIGURE_SCRIPT     "Editar Script"
 #define D_SCRIPT               "Editar Script"
 #define D_SDCARD_UPLOAD        "Subir Archivo"
-#define D_SDCARD_DIR           "Directorio en Tarjeta SD"
+#define D_UFSDIR               "Directorio en Tarjeta UFS"
 #define D_UPL_DONE             "Listo"
 #define D_SCRIPT_CHARS_LEFT    "Caracteres disponibles"
 #define D_SCRIPT_CHARS_NO_MORE "No hay mas espacio"

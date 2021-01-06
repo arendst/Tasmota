@@ -865,7 +865,7 @@
 #define D_CONFIGURE_SCRIPT     "Configurare script"
 #define D_SCRIPT               "editează script"
 #define D_SDCARD_UPLOAD        "Încarcă fișier"
-#define D_SDCARD_DIR           "director sd card"
+#define D_UFSDIR               "director ufs"
 #define D_UPL_DONE             "Terminat"
 #define D_SCRIPT_CHARS_LEFT    "caractere rămase"
 #define D_SCRIPT_CHARS_NO_MORE "caractere terminate"

@@ -865,7 +865,7 @@
 #define D_CONFIGURE_SCRIPT     "Wysig skrif"
 #define D_SCRIPT               "wysig skrif"
 #define D_SDCARD_UPLOAD        "lêer oplaai"
-#define D_SDCARD_DIR           "sd card directory"
+#define D_UFSDIR               "ufs directory"
 #define D_UPL_DONE             "Klaar"
 #define D_SCRIPT_CHARS_LEFT    "karakters oor"
 #define D_SCRIPT_CHARS_NO_MORE "nie meer karakters nie"

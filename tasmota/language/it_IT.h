@@ -865,7 +865,7 @@
 #define D_CONFIGURE_SCRIPT     "Modifica script"
 #define D_SCRIPT               "modifica script"
 #define D_SDCARD_UPLOAD        "upload file"
-#define D_SDCARD_DIR           "cartella scheda SD"
+#define D_UFSDIR               "cartella scheda UFS"
 #define D_UPL_DONE             "Completato"
 #define D_SCRIPT_CHARS_LEFT    "caratteri rimanenti"
 #define D_SCRIPT_CHARS_NO_MORE "nessun altro carattere"

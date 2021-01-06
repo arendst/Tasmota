@@ -3,7 +3,11 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [9.2.0.2]
+## [9.2.0.3]
+### Changed
+- Force initial default state ``SetOption57 1`` to scan wifi network every 44 minutes for strongest signal (#10395)
+
+## [9.2.0.2] 20210105
 ### Added
 - Basic support for ESP32 Odroid Go 16MB binary tasmota32-odroidgo.bin (#8630)
 - Command ``CTRange`` to specify the visible CT range the bulb is capable of (#10311)
@@ -13,6 +17,7 @@ All notable changes to this project will be documented in this file.
 - Command ``RuleTimer0`` to access all RuleTimers at once (#10352)
 - SPI display driver SSD1331 Color oled by Jeroen Vermeulen (#10376)
 - IRremoteESP8266 library from v2.7.13 to v2.7.14
+- Rotary No Pullup GPIO selection ``Rotary A/B_n`` (#10407)
 
 ### Breaking Changed
 - Replaced MFRC522 13.56MHz rfid card reader GPIO selection from ``SPI CS`` by ``RC522 CS``

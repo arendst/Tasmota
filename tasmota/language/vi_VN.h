@@ -865,7 +865,7 @@
 #define D_CONFIGURE_SCRIPT     "Chỉnh sửa kịch bản"
 #define D_SCRIPT               "chỉnh sửa kịch bản"
 #define D_SDCARD_UPLOAD        "tải lên tệp"
-#define D_SDCARD_DIR           "thư mục thẻ nhớ sd"
+#define D_UFSDIR               "thư mục thẻ nhớ ufs"
 #define D_UPL_DONE             "Hoàn thành"
 #define D_SCRIPT_CHARS_LEFT    "ký tự đã dùng"
 #define D_SCRIPT_CHARS_NO_MORE "không còn ký tự trống"
