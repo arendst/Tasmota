@@ -43,18 +43,25 @@
 // Timing in microseconds
 #define BS814_BIT                 40
 #define BS814_PULSE               20
+#define BS814_ERR_WAIT            6000
 #define BS814_FREQ                25000
+
+#define DEBUG_BS814_DRIVER        // @@@@@@@
 
 struct BS814 {
   uint8_t keys = 0;               // bitmap of active & old keys: [ooookkkk]
   bool present = false;           // driver initialized
-//@@@#ifdef DEBUG_TASMOTA_DRIVER
+#ifdef DEBUG_BS814_DRIVER
   uint16_t errors;                // error counter
   bool valid;                     // did we ever receive valid data?
-//@@@#endif  // DEBUG_TASMOTA_DRIVER
+#endif  // DEBUG_BS814_DRIVER
 } Bs814;
 
 const char Bs814_json[] PROGMEM = "\"BS814\":{\"KEYS\":\"";
+
+extern "C" {
+  void os_delay_us(uint32_t);
+}
 
 void bs814_init(void) {                         // Initialize
   if (!PinUsed(GPIO_BS814_CLK) || !PinUsed(GPIO_BS814_DAT)) { return; }
@@ -65,41 +72,44 @@ void bs814_init(void) {                         // Initialize
 }
 
 void bs814_read(void) {                         // Poll touch keys
-  uint32_t wait;
-  uint16_t us = ESP.getCpuFreqMHz();
   uint8_t frame;
-  uint8_t bit;
+  uint8_t bitpos;
+  uint8_t bitval;
+  uint8_t checksum = 0;
   
   // Data waiting for us?
-  if (digitalRead(Pin(GPIO_BS814_DAT) == HIGH)) { return; }
+//@@@@  if (digitalRead(Pin(GPIO_BS814_DAT) == HIGH)) { return; }
 
   // generate clock signal & read frame on rising edge
-  for (bit = 0; bit < 2 * BS814_KEYS_MAX - 1; ++bit) {
+  for (bitpos = 0; bitpos < 2 * BS814_KEYS_MAX - 1; ++bitpos) {
     digitalWrite(Pin(GPIO_BS814_CLK), LOW);
-    wait = ESP.getCycleCount() + BS814_PULSE * us;
-    while (ESP.getCycleCount() < wait);
+    os_delay_us(BS814_PULSE);
     digitalWrite(Pin(GPIO_BS814_CLK), HIGH);
-    wait = ESP.getCycleCount() + BS814_PULSE * us;
-    frame |= ((uint8_t) digitalRead(Pin(GPIO_BS814_DAT)) << bit);
-    while (ESP.getCycleCount() < wait);
+    bitval = digitalRead(Pin(GPIO_BS814_DAT));
+    frame |= (bitval << bitpos);
+    if (bitpos < BS814_KEYS_MAX) {
+      checksum += bitval;
+    }
+    os_delay_us(BS814_PULSE);
   }
   digitalWrite(Pin(GPIO_BS814_CLK), LOW);
-  wait = ESP.getCycleCount() + BS814_PULSE * us;
-  while (ESP.getCycleCount() < wait);
+  os_delay_us(BS814_PULSE);
   digitalWrite(Pin(GPIO_BS814_CLK), HIGH);
-  frame |= ((uint8_t) digitalRead(Pin(GPIO_BS814_DAT)) << bit);
+  bitval = digitalRead(Pin(GPIO_BS814_DAT));
+  frame |= (bitval << bitpos);
 
   // validate frame TODO
-  Bs814.keys = (Bs814.keys & 0xF0) | (~frame & 0xF);                  // frame logic inverted
+  checksum = BS814_KEYS_MAX - checksum;                         // checksum count zeros
+  Bs814.keys = (Bs814.keys & 0xF0) | (~frame & 0xF);            // frame logic inverted
 }
 
 void bs814_update(void) {                       // Usually called every 50 ms
   bs814_read();
   if ((Bs814.keys & 0xF) != (Bs814.keys >> 4)) {
-//@@@#ifdef DEBUG_TASMOTA_DRIVER
+#ifdef DEBUG_BS814_DRIVER
     AddLog_P(LOG_LEVEL_DEBUG, PSTR("BS814: KEY=%0X OLD=%0X ERR=%u OK=%u CLK=%u DAT=%u"),
              Bs814.keys & 0xF, Bs814.keys >> 4, Bs814.errors, Bs814.valid, Pin(GPIO_BS814_CLK), Pin(GPIO_BS814_DAT));
-//@@@#endif  // DEBUG_TASMOTA_DRIVER
+#endif  // DEBUG_BS814_DRIVER
     bs814_publish();
     Bs814.keys = (Bs814.keys << 4) | (Bs814.keys & 0xF);
   }
