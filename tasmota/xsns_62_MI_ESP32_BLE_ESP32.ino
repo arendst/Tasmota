@@ -81,6 +81,7 @@ struct {
   uint8_t mqttCurrentSlot = 0;
   uint32_t period;             // set manually in addition to TELE-period, is set to TELE-period after start
   int secondsCounter = 0;   // counts up in MI32EverySecond to period
+  int secondsCounter2 = 0;  // counts up in MI32EverySecond to period
   union {
     struct {
       uint32_t init:1;
@@ -1496,8 +1497,10 @@ void MI32ParseATCPacket(const uint8_t * _buf, uint32_t length, const uint8_t *ad
     MIBLEsensors[_slot].bat = _packet->batPer;
     MIBLEsensors[_slot].eventType.bat  = 1;
 
-    MIBLEsensors[_slot].shallSendMQTT = 1;
-    if(MI32.option.directBridgeMode) MI32.mode.shallTriggerTele = 1;
+    if(MI32.option.directBridgeMode) {
+      MIBLEsensors[_slot].shallSendMQTT = 1;
+      MI32.mode.shallTriggerTele = 1;
+    }
   } else {
 
   }
@@ -1525,9 +1528,11 @@ int MI32parseMiPayload(int _slot, struct mi_beacon_data_t *parsed){
       MI32.mode.shallTriggerTele = 1;
       break;
     case 0x02: 
+      res = 0;
       break;
     case 0x03: {// motion? 1 byte
       uint8_t motion = parsed->payload.data[0];
+      res = 0;
     }break;
     case 0x04:{
       float _tempFloat=(float)(pld->temp)/10.0f;
@@ -1535,6 +1540,8 @@ int MI32parseMiPayload(int _slot, struct mi_beacon_data_t *parsed){
         MIBLEsensors[_slot].temp=_tempFloat;
         MIBLEsensors[_slot].eventType.temp = 1;
         if (BLE_ESP32::BLEDebugMode > 0) AddLog_P(LOG_LEVEL_DEBUG_MORE,PSTR("Mode 4: temp updated"));
+      } else {
+        res = 0;
       }
       // AddLog_P(LOG_LEVEL_DEBUG,PSTR("Mode 4: U16:  %u Temp"), _beacon.temp );
     } break;
@@ -1544,6 +1551,8 @@ int MI32parseMiPayload(int _slot, struct mi_beacon_data_t *parsed){
         MIBLEsensors[_slot].hum=_tempFloat;
         MIBLEsensors[_slot].eventType.hum = 1;
         if (BLE_ESP32::BLEDebugMode > 0) AddLog_P(LOG_LEVEL_DEBUG_MORE,PSTR("Mode 6: hum updated"));
+      } else {
+        res = 0;
       }
       // AddLog_P(LOG_LEVEL_DEBUG,PSTR("Mode 6: U16:  %u Hum"), _beacon.hum);
     } break;
@@ -1570,6 +1579,7 @@ int MI32parseMiPayload(int _slot, struct mi_beacon_data_t *parsed){
     case 0x0a:
       if(MI32.option.ignoreBogusBattery){
         if(MIBLEsensors[_slot].type==MI_LYWSD03MMC || MIBLEsensors[_slot].type==MI_MHOC401){
+          res = 0;
           break;
         }
       }
@@ -1577,7 +1587,9 @@ int MI32parseMiPayload(int _slot, struct mi_beacon_data_t *parsed){
         MIBLEsensors[_slot].bat = pld->bat;
         MIBLEsensors[_slot].eventType.bat  = 1;
         if (BLE_ESP32::BLEDebugMode > 0) AddLog_P(LOG_LEVEL_DEBUG_MORE,PSTR("Mode a: bat updated"));
-        }
+      } else {
+        res = 0;
+      }
       // AddLog_P(LOG_LEVEL_DEBUG,PSTR("Mode a: U8: %u %%"), _beacon.bat);
     break;
     case 0x0d:{
@@ -1608,12 +1620,15 @@ int MI32parseMiPayload(int _slot, struct mi_beacon_data_t *parsed){
     case 0x10:{ // 'formaldehide'
       const uint16_t f = uint16_t(parsed->payload.data[0]) | (uint16_t(parsed->payload.data[1]) << 8);
       float formaldehyde = (float)f / 100.0f;
+      res = 0;
     } break;
     case 0x12:{ // 'active'
       int active = parsed->payload.data[0];
+      res = 0;
     } break;
     case 0x13:{ //mosquito tablet
       int tablet = parsed->payload.data[0];
+      res = 0;
     } break;
     case 0x17:{
       const uint32_t idle_time =
@@ -1632,6 +1647,12 @@ int MI32parseMiPayload(int _slot, struct mi_beacon_data_t *parsed){
       res = 0;
     } break;
   }
+
+  if(res && MI32.option.directBridgeMode) {
+    MIBLEsensors[_slot].shallSendMQTT = 1;
+    MI32.mode.shallTriggerTele = 1;
+  }
+
   return res;
 }
 
@@ -1732,8 +1753,10 @@ void MI32notifyHT_LY(int slot, char *_buf, int len){
       MIBLEsensors[_slot].bat = ((float)LYWSD0x_HT.volt-2100.0f)/12.0f;
       MIBLEsensors[_slot].eventType.bat  = 1;
     }
-    MIBLEsensors[_slot].shallSendMQTT = 1;
-    MI32.mode.shallTriggerTele = 1;
+    if(MI32.option.directBridgeMode) {
+      MIBLEsensors[_slot].shallSendMQTT = 1;
+      MI32.mode.shallTriggerTele = 1;
+    }
   }
 }
 
@@ -1788,6 +1811,19 @@ void MI32EverySecond(bool restart){
     }
   }
   MI32.secondsCounter ++;
+
+  if (MI32.secondsCounter2 >= MI32.period){
+    if (MI32.mqttCurrentSlot >= MIBLEsensors.size()){
+      AddLog_P(LOG_LEVEL_DEBUG,PSTR("kick off tele sending"));
+      MI32.mqttCurrentSlot = 0;
+      MI32.secondsCounter2 = 0;
+    } else {
+      AddLog_P(LOG_LEVEL_DEBUG,PSTR("hit tele time, restarted but not finished last - lost from slot %d")+MI32.mqttCurrentSlot);
+      MI32.mqttCurrentSlot = 0;
+      MI32.secondsCounter2 = 0;
+    }
+  }
+  MI32.secondsCounter2++;
 
   static uint32_t _counter = MI32.period - 15;
   static uint32_t _nextSensorSlot = 0;
@@ -2067,8 +2103,6 @@ void MI32TimeoutSensors(){
 void MI32GetOneSensorJson(int slot){
   mi_sensor_t *p;
   p = &MIBLEsensors[slot];
-  p->eventType.raw = 0;
-  p->shallSendMQTT = 0;
 
   ResponseAppend_P(PSTR(",\"%s-%02x%02x%02x\":{"),
         kMI32DeviceType[p->type-1],
@@ -2214,6 +2248,9 @@ void MI32GetOneSensorJson(int slot){
   if (MI32.option.showRSSI) ResponseAppend_P(PSTR(",\"RSSI\":%d"), p->RSSI);
 
   ResponseAppend_P(PSTR("}"));
+  p->eventType.raw = 0;
+  p->shallSendMQTT = 0;
+
 }
 
 
@@ -2318,7 +2355,7 @@ void MI32Show(bool json)
   if (json) { 
     // TELE JSON messages now do nothing here, apart from set MI32.mqttCurrentSlot
     // which will trigger send next second of up to 4 sensors, then the next four in the next second, etc.
-    MI32.mqttCurrentSlot = 0;
+    //MI32.mqttCurrentSlot = 0;
 
 #ifdef USE_WEBSERVER
   } else {
@@ -2472,7 +2509,8 @@ bool Xsns62(uint8_t function)
       result = DecodeCommand(kMI32_Commands, MI32_Commands);
       break;
     case FUNC_JSON_APPEND:
-      MI32Show(1);
+      // we are not in control of when this is called...
+      //MI32Show(1);
       break;
 #ifdef USE_WEBSERVER
     case FUNC_WEB_ADD_HANDLER:
