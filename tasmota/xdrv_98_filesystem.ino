@@ -278,7 +278,7 @@ const char UFS_FORM_FILE_UPG[] PROGMEM =
 const char UFS_FORM_FILE_UPGc[] PROGMEM =
   "<div style='text-align:left;color:green;'>total size: %s kB - free: %s kB</div>";
 const char UFS_FORM_SDC_DIRa[] PROGMEM =
-  "<div style='text-align:left'>";
+  "<div style='text-align:left;overflow:scroll;height:400px;'>";
 const char UFS_FORM_SDC_DIRc[] PROGMEM =
   "</div>";
 const char UFS_FORM_FILE_UPGb[] PROGMEM =
