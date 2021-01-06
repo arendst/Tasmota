@@ -338,18 +338,19 @@ void UFS_free(void) {
 
 const char UFS_WEB_DIR[] PROGMEM =
   "<p><form action='" "ufsd" "' method='get'><button>" "%s" "</button></form></p>";
-const char UFS_FILE_UPLOAD[] PROGMEM = D_UFSDIR;
+
 const char UFS_FORM_FILE_UPLOAD[] PROGMEM =
   "<div id='f1' name='f1' style='display:block;'>"
-  "<fieldset><legend><b>&nbsp;%s"  "&nbsp;</b></legend>";
+  "<fieldset><legend><b>&nbsp;" D_MANAGE_FILE_SYSTEM "&nbsp;</b></legend>";
+const char UFS_FORM_FILE_UPGc[] PROGMEM =
+  "<div style='text-align:left;color:#%06x;'>" D_FS_SIZE " %s kB - " D_FS_FREE " %s kB</div>";
 const char UFS_FORM_FILE_UPG[] PROGMEM =
   "<form method='post' action='ufsu' enctype='multipart/form-data'>"
-  "<br/><input type='file' name='ufsu'><br/>"
-  "<br/><button type='submit' onclick='eb(\"f1\").style.display=\"none\";eb(\"f2\").style.display=\"block\";this.form.submit();'>" D_START " %s</button></form>";
-const char UFS_FORM_FILE_UPGc[] PROGMEM =
-  "<div style='text-align:left;color:green;'>total size: %s kB - free: %s kB</div>";
+  "<br><input type='file' name='ufsu'><br>"
+  "<br><button type='submit' onclick='eb(\"f1\").style.display=\"none\";eb(\"f2\").style.display=\"block\";this.form.submit();'>" D_START " %s</button></form>"
+  "<br>";
 const char UFS_FORM_SDC_DIRa[] PROGMEM =
-  "<div style='text-align:left;overflow:scroll;height:400px;'>";
+  "<div style='text-align:left;overflow:auto;height:250px;'>";
 const char UFS_FORM_SDC_DIRc[] PROGMEM =
   "</div>";
 const char UFS_FORM_FILE_UPGb[] PROGMEM =
@@ -359,7 +360,7 @@ const char UFS_FORM_FILE_UPGb[] PROGMEM =
 const char UFS_FORM_SDC_DIRd[] PROGMEM =
   "<pre><a href='%s' file='%s'>%s</a></pre>";
 const char UFS_FORM_SDC_DIRb[] PROGMEM =
-  "<pre><a href='%s' file='%s'>%s</a>     %s : %8d</pre>";
+  "<pre><a href='%s' file='%s'>%s</a> %s %8d</pre>";
 const char UFS_FORM_SDC_HREF[] PROGMEM =
   "http://%s/ufsd?download=%s/%s";
 
@@ -378,15 +379,18 @@ void UFSdirectory(void) {
     }
   }
 
-  WSContentStart_P(UFS_FILE_UPLOAD);
+  WSContentStart_P(PSTR(D_MANAGE_FILE_SYSTEM));
   WSContentSendStyle();
-  WSContentSend_P(UFS_FORM_FILE_UPLOAD, D_UFSDIR);
-  WSContentSend_P(UFS_FORM_FILE_UPG, D_SCRIPT_UPLOAD);
+  WSContentSend_P(UFS_FORM_FILE_UPLOAD);
+
   char ts[16];
   char fs[16];
   UFS_form1000(ufs_fsinfo(0), ts, '.');
   UFS_form1000(ufs_fsinfo(1), fs, '.');
-  WSContentSend_P(UFS_FORM_FILE_UPGc, ts, fs);
+  WSContentSend_P(UFS_FORM_FILE_UPGc, WebColor(COL_TEXT), ts, fs);
+
+  WSContentSend_P(UFS_FORM_FILE_UPG, D_SCRIPT_UPLOAD);
+
   WSContentSend_P(UFS_FORM_SDC_DIRa);
   if (ufs_type) {
     UFS_ListDir(ufs_path, depth);
@@ -434,9 +438,9 @@ void UFS_ListDir(char *path, uint8_t depth) {
       if (lcp) {
         ep = lcp + 1;
       }
-      time_t tm = entry.getLastWrite();
-      char tstr[24];
-      strftime(tstr, 22, "%d-%m-%Y - %H:%M:%S ", localtime(&tm));  // Theo note to me. Isn't strftime expensive? SHould use ISO Date/Time
+
+      uint32_t tm = entry.getLastWrite();
+      String tstr = GetDT(tm);
 
       char *pp = path;
       if (!*(pp + 1)) { pp++; }
@@ -461,7 +465,7 @@ void UFS_ListDir(char *path, uint8_t depth) {
           path[plen] = 0;
         } else {
           snprintf_P(npath, sizeof(npath), UFS_FORM_SDC_HREF, WiFi.localIP().toString().c_str(), pp, ep);
-          WSContentSend_P(UFS_FORM_SDC_DIRb, npath, ep, name, tstr, entry.size());
+          WSContentSend_P(UFS_FORM_SDC_DIRb, npath, ep, name, tstr.c_str(), entry.size());
         }
       }
       entry.close();
@@ -556,18 +560,6 @@ void UFS_Upload(void) {
   }
 }
 
-void UFSFileUploadSuccess(void) {
-  WSContentStart_P(PSTR(D_INFORMATION));
-  WSContentSendStyle();
-  WSContentSend_P(PSTR("<div style='text-align:center;'><b>" D_UPLOAD " <font color='#"));
-  WSContentSend_P(PSTR("%06x'>" D_SUCCESSFUL "</font></b><br/>"), WebColor(COL_TEXT_SUCCESS));
-  WSContentSend_P(PSTR("</div><br/>"));
-  WSContentSend_P(PSTR("<p><form action='%s' method='get'><button>%s</button></form></p>"), "/ufsd", D_UPL_DONE);
-  WSContentStop();
-}
-
-
-
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
@@ -583,14 +575,14 @@ bool Xdrv50(uint8_t function) {
       result = DecodeCommand(kUFSCommands, kUFSCommand);
       break;
 #ifdef USE_WEBSERVER
-    case FUNC_WEB_ADD_BUTTON:
+    case FUNC_WEB_ADD_MANAGEMENT_BUTTON:
       if (ufs_type) {
-        WSContentSend_PD(UFS_WEB_DIR,D_UFSDIR);
+        WSContentSend_PD(UFS_WEB_DIR, D_MANAGE_FILE_SYSTEM);
       }
       break;
     case FUNC_WEB_ADD_HANDLER:
       Webserver->on("/ufsd", UFSdirectory);
-      Webserver->on("/ufsu", HTTP_GET, UFSFileUploadSuccess);
+      Webserver->on("/ufsu", HTTP_GET, UFSdirectory);
       Webserver->on("/ufsu", HTTP_POST,[]() {
         Webserver->sendHeader("Location","/ufsu");
         Webserver->send(303);

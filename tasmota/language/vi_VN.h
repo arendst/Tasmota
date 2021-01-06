@@ -874,6 +874,11 @@
 #define D_SCRIPT_UPLOAD        "Tải lên"
 #define D_SCRIPT_UPLOAD_FILES  "Tệp tải lên"
 
+//xdrv_50_filesystem.ino
+#define D_MANAGE_FILE_SYSTEM   "Manage File system"
+#define D_FS_SIZE              "Size"
+#define D_FS_FREE              "Free"
+
 //xsns_67_as3935.ino
 #define D_AS3935_GAIN "khuếch đại:"
 #define D_AS3935_ENERGY "năng lượng:"

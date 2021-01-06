@@ -874,6 +874,11 @@
 #define D_SCRIPT_UPLOAD        "Carica"
 #define D_SCRIPT_UPLOAD_FILES  "Carica file"
 
+//xdrv_50_filesystem.ino
+#define D_MANAGE_FILE_SYSTEM   "Manage File system"
+#define D_FS_SIZE              "Size"
+#define D_FS_FREE              "Free"
+
 //xsns_67_as3935.ino
 #define D_AS3935_GAIN "guadagno:"
 #define D_AS3935_ENERGY "energia:"

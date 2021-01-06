@@ -874,6 +874,11 @@
 #define D_SCRIPT_UPLOAD        "Upload"
 #define D_SCRIPT_UPLOAD_FILES  "Upload files"
 
+//xdrv_50_filesystem.ino
+#define D_MANAGE_FILE_SYSTEM   "Bestandsbeheer"
+#define D_FS_SIZE              "Grootte"
+#define D_FS_FREE              "Vrij"
+
 //xsns_67_as3935.ino
 #define D_AS3935_GAIN "gain:"
 #define D_AS3935_ENERGY "energy:"
