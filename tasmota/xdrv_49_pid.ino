@@ -116,9 +116,7 @@
    #define PID_SHUTTER                   1     // if using the PID to control a 3-way valve, create Tasmota Shutter and define the 
                                                  // number of the shutter here. Otherwise leave this commented out
 
-   #define PID_DEBUGGING                         // Increase number of log messages
-
-   #define PID_REPORT_SETTINGS                   // If defined, the SENSOR output will provide more extensive json
+   #define PID_REPORT_MORE_SETTINGS                   // If defined, the SENSOR output will provide more extensive json
                                                  // output in the PID section
 
 //   #define PID_BACKWARD_COMPATIBLE             // Preserve the backward compatible reporting of PID power via
@@ -363,10 +361,10 @@ void PIDShowValues(void) {
 
 static void run_pid()
 {
+  double power = pid.tick(pid_current_time_secs);
 #ifdef PID_BACKWARD_COMPATIBLE
   // This part is left inside to regularly publish the PID Power via
   // `%topic%/PID {"power":"0.000"}`
-  double power = pid.tick(pid_current_time_secs);
   char str_buf[FLOATSZ];
   dtostrfd(power, 3, str_buf);
   snprintf_P(TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), PSTR("{\"%s\":\"%s\"}"), "power", str_buf);
