@@ -65,6 +65,17 @@ public:
   void setManualPower( double manual_op );
   void setMaxInterval( int max_interval );
 
+  double getPv();
+  double getSp();
+  double getPb();
+  double getTi();
+  double getTd();
+  double getInitialInt();
+  double getDSmooth();
+  unsigned char getAuto();
+  double getManualPower();
+  int getMaxInterval();
+
 private:
   double m_pv;
   double m_setpoint;

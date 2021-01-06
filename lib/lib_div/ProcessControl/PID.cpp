@@ -191,3 +191,44 @@ void PID::setManualPower( double manual_op ) {
 void PID::setMaxInterval( int max_interval ) {
   m_max_interval = max_interval;
 }
+
+
+double PID::getPv() {
+  return(m_pv);
+}
+
+double PID::getSp() {
+  return(m_setpoint);
+}
+
+double PID::getPb() {
+  return(m_prop_band);
+}
+
+double PID::getTi() {
+  return(m_t_integral);
+}
+
+double PID::getTd() {
+  return(m_t_derivative);
+}
+
+double PID::getInitialInt() {
+  return(m_integral_default);
+}
+
+double PID::getDSmooth() {
+  return(m_smooth_factor);
+}
+
+unsigned char PID::getAuto() {
+  return(m_mode_auto);
+}
+
+double PID::getManualPower() {
+  return(m_manual_op);
+}
+
+int PID::getMaxInterval() {
+  return(m_max_interval);
+}
