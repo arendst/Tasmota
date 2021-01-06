@@ -143,7 +143,8 @@ enum UserSelectablePins {
   GPIO_ST7789_CS, GPIO_ST7789_DC,
   GPIO_SSD1331_CS, GPIO_SSD1331_DC,
   GPIO_SDCARD_CS,
-  GPIO_ROT1A_NP, GPIO_ROT1B_NP,       // Rotary switch
+  GPIO_ROT1A_NP, GPIO_ROT1B_NP,        // Rotary switch
+  GPIO_ADC_PH,                         // Analog PH Sensor
   GPIO_SENSOR_END };
 
 enum ProgramSelectablePins {
@@ -308,6 +309,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_SSD1331_CS "|" D_SENSOR_SSD1331_DC "|"
   D_SENSOR_SDCARD_CS "|"
   D_SENSOR_ROTARY " A_n|" D_SENSOR_ROTARY " B_n|"
+  D_SENSOR_ADC_PH "|"
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -765,6 +767,7 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_ADC_RANGE) + MAX_ADCS,       // Range
   AGPIO(GPIO_ADC_CT_POWER) + MAX_ADCS,    // Current
   AGPIO(GPIO_ADC_JOY) + MAX_ADCS,         // Joystick
+  AGPIO(GPIO_ADC_PH) + MAX_ADCS,          // Analog PH Sensor
 #endif  // ESP32
 };
 
@@ -783,6 +786,7 @@ const uint16_t kAdcNiceList[] PROGMEM = {
   AGPIO(GPIO_ADC_RANGE),                  // Range
   AGPIO(GPIO_ADC_CT_POWER),               // Current
   AGPIO(GPIO_ADC_JOY),                    // Joystick
+  AGPIO(GPIO_ADC_PH),                     // Analog PH Sensor
 };
 #endif  // ESP8266
 
@@ -797,6 +801,7 @@ enum UserSelectableAdc {
   ADC_RANGE,          // Range
   ADC_CT_POWER,       // Current
   ADC_JOY,            // Joystick
+  ADC_PH,             // Analog PH Sensor
 //  ADC_SWITCH,         // Switch
 //  ADC_SWITCH_INV,
   ADC_END };
