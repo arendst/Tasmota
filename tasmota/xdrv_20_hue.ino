@@ -30,26 +30,145 @@
 
 #define XDRV_20           20
 
-const char HUE_RESPONSE[] PROGMEM =
+#include "UnishoxStrings.h"
+
+const char HUE_RESP_MSG_U[] PROGMEM =
+  //=HUE_RESP_RESPONSE
   "HTTP/1.1 200 OK\r\n"
   "HOST: 239.255.255.250:1900\r\n"
   "CACHE-CONTROL: max-age=100\r\n"
   "EXT:\r\n"
   "LOCATION: http://%s:80/description.xml\r\n"
   "SERVER: Linux/3.14.0 UPnP/1.0 IpBridge/1.24.0\r\n"  // was 1.17
-  "hue-bridgeid: %s\r\n";
-const char HUE_ST1[] PROGMEM =
+  "hue-bridgeid: %s\r\n"
+  "\0"
+  //=HUE_RESP_ST1
   "ST: upnp:rootdevice\r\n"
   "USN: uuid:%s::upnp:rootdevice\r\n"
-  "\r\n";
-const char HUE_ST2[] PROGMEM =
+  "\r\n"
+  "\0"
+  //=HUE_RESP_ST2
   "ST: uuid:%s\r\n"
   "USN: uuid:%s\r\n"
-  "\r\n";
-const char HUE_ST3[] PROGMEM =
+  "\r\n"
+  "\0"
+  //=HUE_RESP_ST3
   "ST: urn:schemas-upnp-org:device:basic:1\r\n"
   "USN: uuid:%s\r\n"
-  "\r\n";
+  "\r\n"
+  "\0";
+
+
+// Use the tool at https://tasmota.hadinger.fr/util and choose "Compress Strings template with Unishox"
+// +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// ++++++++++++++++++++ DO NOT EDIT BELOW ++++++++++++++++++++
+// ++++++++++++++++++++vvvvvvvvvvvvvvvvvvv++++++++++++++++++++
+enum {
+  HUE_RESP_RESPONSE=0,
+  HUE_RESP_ST1=185,
+  HUE_RESP_ST2=240,
+  HUE_RESP_ST3=270,
+};
+
+// Compressed from 328 to 247, -24.7%
+const char HUE_RESP_MSG[] PROGMEM = "\x00\x15\x21\x45\x45\x44\x30\xEC\x39\x0E\x90\xEE\x53\x67\x70\x8B\x08\xD2\x70\xA4"
+                             "\x6E\x21\x45\x85\xE2\xA3\xCD\x1C\xAB\x47\x4A\xDD\x3A\x56\xE9\xD2\xB5\x9E\x71\x36"
+                             "\x53\x85\x23\x71\x06\x56\x41\x90\xA2\x67\x59\x10\x79\xD5\xFC\x08\x8F\x34\x36\xCD"
+                             "\x87\x5D\x8F\x33\xE1\xC8\xD9\x4E\x14\x8D\xC4\xC8\xD8\x54\x79\xCE\x14\x8D\xC4\x41"
+                             "\x60\x77\x5B\x9C\x47\x9A\x15\x54\x30\xF3\x3B\x0E\xC3\xEB\xC7\x99\xCF\xB3\xB0\x84"
+                             "\x7E\x0F\xFA\x32\xB7\x38\xE8\x6C\x1A\x14\xE1\x48\xDC\x45\xE7\xF3\x37\xF2\x3C\xD1"
+                             "\x05\xBC\x2C\xD8\x76\x1C\xB3\xA4\xC3\xA3\x3B\x84\x42\xC8\x67\x10\xC3\xB0\xE4\x3A"
+                             "\x33\xB8\x45\xA3\x08\x77\xF4\x41\xE6\x76\x1C\x87\x4A\xC3\xA3\x29\xC2\x91\xB8\x50"
+                             "\xB6\x75\x8E\xFE\x88\x3C\xF4\x43\xCD\x1F\x5E\x9C\x29\x1B\xA7\x0B\xE5\xE2\xA3\xCD"
+                             "\x0B\x19\xC3\x0F\x3F\xE6\x50\x8C\xCF\x43\x73\x85\x23\x71\x0B\x2F\x17\x1E\x68\x58"
+                             "\xBD\x10\xF3\x3E\xBC\x79\x9E\x60\x99\x6C\x10\xF1\x30\x41\xBA\x09\x38\x58\x22\xDA"
+                             "\xFF\x1E\x7E\x0C\x53\x1B\x7E\x3A\xC5\x8C\xE1\x87\x5E\x7C\x78\xF3\x04\x1C\x78\xF3"
+                             "\x1D\x7E\xD0\xCF\x33\x90\x81\x3B\x16";
+
+// ++++++++++++++++++++^^^^^^^^^^^^^^^^^^^++++++++++++++++++++
+// ++++++++++++++++++++ DO NOT EDIT ABOVE ++++++++++++++++++++
+// +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+// const char HUE_RESPONSE[] PROGMEM =
+//   "HTTP/1.1 200 OK\r\n"
+//   "HOST: 239.255.255.250:1900\r\n"
+//   "CACHE-CONTROL: max-age=100\r\n"
+//   "EXT:\r\n"
+//   "LOCATION: http://%s:80/description.xml\r\n"
+//   "SERVER: Linux/3.14.0 UPnP/1.0 IpBridge/1.24.0\r\n"  // was 1.17
+//   "hue-bridgeid: %s\r\n";
+// const char HUE_ST1[] PROGMEM =
+//   "ST: upnp:rootdevice\r\n"
+//   "USN: uuid:%s::upnp:rootdevice\r\n"
+//   "\r\n";
+// const char HUE_ST2[] PROGMEM =
+//   "ST: uuid:%s\r\n"
+//   "USN: uuid:%s\r\n"
+//   "\r\n";
+// const char HUE_ST3[] PROGMEM =
+//   "ST: urn:schemas-upnp-org:device:basic:1\r\n"
+//   "USN: uuid:%s\r\n"
+//   "\r\n";
+
+const char HUE_API_U[] PROGMEM =
+  //=HUE_INVALID
+  "/invalid/"
+  "\0"
+  //=HUE_ROOT
+  "/"
+  "\0"
+  //=HUE_CONFIG
+  "/config"
+  "\0"
+  //=HUE_LIGHTS_API
+  "/lights"
+  "\0"
+  //=HUE_GROUPS
+  "/groups"
+  "\0"
+  //=HUE_SCHEDULES
+  "/schedules"
+  "\0"
+  //=HUE_SENSORS
+  "/sensors"
+  "\0"
+  //=HUE_SCENES
+  "/scenes"
+  "\0"
+  //=HUE_RULES
+  "/rules"
+  "\0"
+  //=HUE_RESOURCELINKS
+  "/resourcelinks"
+  "\0"
+  ;
+
+// Use the tool at https://tasmota.hadinger.fr/util and choose "Compress Strings template with Unishox"
+// +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// ++++++++++++++++++++ DO NOT EDIT BELOW ++++++++++++++++++++
+// ++++++++++++++++++++vvvvvvvvvvvvvvvvvvv++++++++++++++++++++
+enum {
+  HUE_INVALID=0,
+  HUE_ROOT=10,
+  HUE_CONFIG=12,
+  HUE_LIGHTS_API=20,
+  HUE_GROUPS=28,
+  HUE_SCHEDULES=36,
+  HUE_SENSORS=47,
+  HUE_SCENES=56,
+  HUE_RULES=64,
+  HUE_RESOURCELINKS=71,
+};
+
+// Compressed from 86 to 74, -14.0%
+const char HUE_API[] PROGMEM = "\x00\x06\x3B\x37\x8C\xEC\x2D\x10\xEC\x9C\x2F\x9D\x93\x85\xF3\xB0\x3C\xE3\x1A\x3D"
+                             "\x38\x5F\x3B\x02\xD1\xE1\x55\xE9\xC2\xF9\xD8\x3D\xFC\x16\x33\xD3\x85\xF3\xB3\xC1"
+                             "\x8A\x62\x0B\x09\xFA\x70\xBE\x76\x79\xF7\xB3\xFE\x9C\x2F\x9D\x9E\x0D\xF3\xF4\xE1"
+                             "\x7C\xEC\xF8\x20\xD4\xFB\xF6\x0B\xF8\x6C\x2D\xE3\x4F\x4E\x17\xCD";
+// ++++++++++++++++++++^^^^^^^^^^^^^^^^^^^++++++++++++++++++++
+// ++++++++++++++++++++ DO NOT EDIT ABOVE ++++++++++++++++++++
+// +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 String HueBridgeId(void)
 {
@@ -81,20 +200,21 @@ void HueRespondToMSearch(void)
   char message[TOPSZ];
 
   if (PortUdp.beginPacket(udp_remote_ip, udp_remote_port)) {
+    UnishoxStrings msg(HUE_RESP_MSG);
     char response[320];
-    snprintf_P(response, sizeof(response), HUE_RESPONSE, WiFi.localIP().toString().c_str(), HueBridgeId().c_str());
+    snprintf_P(response, sizeof(response), msg[HUE_RESP_RESPONSE], WiFi.localIP().toString().c_str(), HueBridgeId().c_str());
     int len = strlen(response);
     String uuid = HueUuid();
 
-    snprintf_P(response + len, sizeof(response) - len, HUE_ST1, uuid.c_str());
+    snprintf_P(response + len, sizeof(response) - len, msg[HUE_RESP_ST1], uuid.c_str());
     PortUdp.write(response);
     PortUdp.endPacket();
 
-    snprintf_P(response + len, sizeof(response) - len, HUE_ST2, uuid.c_str(), uuid.c_str());
+    snprintf_P(response + len, sizeof(response) - len, msg[HUE_RESP_ST2], uuid.c_str(), uuid.c_str());
     PortUdp.write(response);
     PortUdp.endPacket();
 
-    snprintf_P(response + len, sizeof(response) - len, HUE_ST3, uuid.c_str());
+    snprintf_P(response + len, sizeof(response) - len, msg[HUE_RESP_ST3], uuid.c_str());
     PortUdp.write(response);
     PortUdp.endPacket();
 
@@ -158,81 +278,135 @@ const char HUE_DESCRIPTION_XML_COMPRESSED[] PROGMEM = "\x3D\x0E\xD1\xB0\x68\x48\
 //   "</root>\r\n"
 //   "\r\n";
 
-//%s"alert":"none","effect":"none","reachable":true}
-//Successfully compressed from 50 to 34 bytes (-32%)
-// const size_t HUE_LIGHTS_STATUS_JSON1_SUFFIX_size = 50;
-// const char HUE_LIGHTS_STATUS_JSON1_SUFFIX[] PROGMEM = "\x3E\xBC\x7B\x2C\x27\xFA\x3D\x87\x99\xEC\xEC\xE6\x7B\x0E\xA3\xD8\xCC\x18\x61\x82"
-//                              "\x34\xCF\xBB\x0C\x55\x8E\x09\x9E\xC3\xCE\xBE\x2D\x9E\xE3";
-const char HUE_LIGHTS_STATUS_JSON1_SUFFIX[] PROGMEM =
+const char HUE_LIGHTS_U[] PROGMEM =
+  //=HUE_LIGHTS_STATUS_JSON1_SUFFIX
   "%s\"alert\":\"none\","
   "\"effect\":\"none\","
-  "\"reachable\":true}";
-
-//,"type":"Extended color light","name":"%s","modelid":"%s","manufacturername":"%s","uniqueid":"%s"}
-//Successfully compressed from 98 to 64 bytes (-34.7%)
-// const size_t HUE_LIGHTS_STATUS_JSON2_size = 98;
-// const char HUE_LIGHTS_STATUS_JSON2[] PROGMEM = "\x3A\x8F\x65\x19\x0C\x67\xB0\xF3\x3D\x84\xCD\x94\xF8\x46\x22\x0F\x02\xCF\xA0\xB4"
-//                              "\x78\x55\x1E\xC3\xA8\xF6\x75\x8D\x67\xB0\xF3\x3D\x87\xD7\x8F\x61\xD4\x7B\x06\xE0"
-//                              "\x8C\x2D\x10\x11\x25\xDF\x0B\x31\x61\xD0\xBF\xBF\x82\x3E\x06\x2F\xB4\xD4\x2D\x82"
-//                              "\x1E\x08\x7B\x8D";
-const char HUE_LIGHTS_STATUS_JSON2[] PROGMEM =
+  "\"reachable\":true}"
+  "\0"
+  //=HUE_LIGHTS_STATUS_JSON2
   ",\"type\":\"Extended color light\","
   "\"name\":\"%s\","
   "\"modelid\":\"%s\","
   "\"manufacturername\":\"%s\","
-  "\"uniqueid\":\"%s\"}";
-
-//{"name":"Group 0","lights":[{l1],"type":"LightGroup","action":
-//Successfully compressed from 62 to 61 bytes (-1.6%)
-const char HUE_GROUP0_STATUS_JSON[] PROGMEM =
+  "\"uniqueid\":\"%s\"}"
+  "\0"
+  //=HUE_GROUP0_STATUS_JSON
   "{\"name\":\"Group 0\","
    "\"lights\":[{l1],"
    "\"type\":\"LightGroup\","
-   "\"action\":";
-//     "\"scene\":\"none\",";
+   "\"action\":"
+   "\0"
+  //=HUE_ERROR_JSON
+  "[{\"error\":{\"type\":901,\"address\":\"/\",\"description\":\"Internal Error\"}}]"
+  "\0"
+  //=HUE_RESP_ON
+  "{\"success\":{\"/lights/%d/state/on\":%s}}"
+  "\0"
+  //=HUE_RESP_NUM
+  "{\"success\":{\"/lights/%d/state/%s\":%d}}"
+  "\0"
+  //=HUE_RESP_XY
+  "{\"success\":{\"/lights/%d/state/xy\":[%s,%s]}}"
+  "\0"
+  ;
 
+// Use the tool at https://tasmota.hadinger.fr/util and choose "Compress Strings template with Unishox"
+// +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// ++++++++++++++++++++ DO NOT EDIT BELOW ++++++++++++++++++++
+// ++++++++++++++++++++vvvvvvvvvvvvvvvvvvv++++++++++++++++++++
+enum {
+  HUE_LIGHTS_STATUS_JSON1_SUFFIX=0,
+  HUE_LIGHTS_STATUS_JSON2=51,
+  HUE_GROUP0_STATUS_JSON=150,
+  HUE_ERROR_JSON=213,
+  HUE_RESP_ON=283,
+  HUE_RESP_NUM=322,
+  HUE_RESP_XY=361,
+};
+
+// Compressed from 405 to 275, -32.1%
+const char HUE_LIGHTS[] PROGMEM = "\x00\x1A\x3E\xBC\x7B\x2C\x27\xFA\x3D\x87\x99\xEC\xEC\xE6\x7B\x0E\xA3\xD8\xCC\x18"
+                             "\x61\x82\x34\xCF\xBB\x0C\x55\x8E\x09\x9E\xC3\xCE\xBE\x2D\x9E\xE9\xC2\xF9\xD4\x7B"
+                             "\x28\xC8\x63\x3D\x87\x99\xEC\x26\x6C\xA7\xC2\x31\x10\x78\x16\x7D\x05\xA3\xC2\xA8"
+                             "\xF6\x1D\x47\xB3\xAC\x6B\x3D\x87\x99\xEC\x3E\xBC\x7B\x0E\xA3\xD8\x37\x04\x61\x68"
+                             "\x80\x89\x2E\xF8\x59\x8B\x0E\x85\xFD\xFC\x11\xF0\x31\x7D\xA6\xA1\x6C\x10\xF0\x43"
+                             "\xDD\x38\x5F\x3D\xA0\x87\x90\x90\xF7\xF0\x58\xC4\x71\x9E\xC3\xA8\xF6\x10\x5A\x3C"
+                             "\x2A\x2B\xBC\x7B\x0F\x33\xDE\x3D\xA1\x1C\x87\xBE\x40\x89\xAF\x90\x5A\x3C\x2A\x2B"
+                             "\x88\x7B\xF8\x2C\x61\xEC\x3A\x8F\x65\x87\x5B\x9C\x7B\x0F\x39\xC2\xF9\xEF\x1E\xD3"
+                             "\xD8\xFF\xFC\xF9\xEC\x3C\xCF\x68\x21\x60\xA7\x13\x87\x51\xEC\x2B\x10\x4F\xBF\x78"
+                             "\xF6\x1E\x67\xB0\xEC\x3D\x87\x51\xEC\x11\xF8\x3F\xE8\xC0\x41\xC3\xCF\x61\x6F\x53"
+                             "\xFF\x58\x48\x9F\xFF\x9F\x3D\x87\xB8\xF7\x1E\xFC\xE1\x7C\xF6\x9E\xCF\x0B\x0C\x37"
+                             "\xEF\x1E\xC3\xCC\xF6\x9E\xC3\xB0\x10\x75\xC3\xB0\xFA\x10\xEC\xF5\x5D\x33\xB3\x38"
+                             "\xF6\x1E\x67\xD7\x8F\x71\xEE\x05\xAC\x0C\xFA\xF1\xEC\x3C\xCF\xA1\x01\x73\x03\x36"
+                             "\x19\x1E\xC3\xCC\xF7\x8F\xAF\x1D\x47\xD7\x8F\x7C\xF7\x1E\xE9\xC2\xF9";
+// ++++++++++++++++++++^^^^^^^^^^^^^^^^^^^++++++++++++++++++++
+// ++++++++++++++++++++ DO NOT EDIT ABOVE ++++++++++++++++++++
+// +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+
+
+// const char HUE_LIGHTS_STATUS_JSON1_SUFFIX[] PROGMEM =
+//   "%s\"alert\":\"none\","
+//   "\"effect\":\"none\","
+//   "\"reachable\":true}";
+
+// const char HUE_LIGHTS_STATUS_JSON2[] PROGMEM =
+//   ",\"type\":\"Extended color light\","
+//   "\"name\":\"%s\","
+//   "\"modelid\":\"%s\","
+//   "\"manufacturername\":\"%s\","
+//   "\"uniqueid\":\"%s\"}";
+
+// const char HUE_GROUP0_STATUS_JSON[] PROGMEM =
+//   "{\"name\":\"Group 0\","
+//    "\"lights\":[{l1],"
+//    "\"type\":\"LightGroup\","
+//    "\"action\":";
+
+// const char HueConfigResponse_JSON[] PROGMEM =
+//   "{\"name\":\"Philips hue\","
+//    "\"mac\":\"{ma\","
+//    "\"dhcp\":true,"
+//    "\"ipaddress\":\"{ip\","
+//    "\"netmask\":\"{ms\","
+//    "\"gateway\":\"{gw\","
+//    "\"proxyaddress\":\"none\","
+//    "\"proxyport\":0,"
+//    "\"bridgeid\":\"{br\","
+//    "\"UTC\":\"{dt\","
+//    "\"whitelist\":{\"{id\":{"
+//      "\"last use date\":\"{dt\","
+//      "\"create date\":\"{dt\","
+//      "\"name\":\"Remote\"}},"
+//    "\"swversion\":\"01041302\","
+//    "\"apiversion\":\"1.17.0\","
+//    "\"swupdate\":{\"updatestate\":0,\"url\":\"\",\"text\":\"\",\"notify\": false},"
+//    "\"linkbutton\":false,"
+//    "\"portalservices\":false"
+//   "}";
 //{"name":"Philips hue","mac":"{ma","dhcp":true,"ipaddress":"{ip","netmask":"{ms","gateway":"{gw","proxyaddress":"none","proxyport":0,"bridgeid":"{br","UTC":"{dt","whitelist":{"{id":{"last use date":"{dt","create date":"{dt","name":"Remote"}},"swversion":"01041302","apiversion":"1.17.0","swupdate":{"updatestate":0,"url":"","text":"","notify": false},"linkbutton":false,"portalservices":false}
-//Successfully compressed from 392 to 302 bytes (-23%)
-// const size_t HueConfigResponse_JSON_size = 392;
-// const char HueConfigResponse_JSON[] PROGMEM = "\x3D\xA7\xB3\xAC\x6B\x3D\x87\x99\xEC\x21\x82\xB4\x2D\x19\xE4\x28\x5B\x3D\x87\x51"
-//                              "\xEC\x1B\x61\x9E\xC3\xCC\xF6\x1E\xD1\xB6\x7B\x0E\xA3\xD8\x20\xA0\xC6\x1E\xC3\xCE"
-//                              "\xBE\x2D\x9D\x47\xB3\x46\x58\x82\x7D\xFB\xC7\xB0\xF3\x3D\x87\xB7\x46\x1E\xC3\xA8"
-//                              "\xF6\x73\xA1\xB7\xE3\x43\xD8\x79\x9E\xC3\xDA\x37\xC7\xB0\xEA\x3D\x83\xD7\x4C\x7E"
-//                              "\xCC\x8F\x61\xE6\x7B\x0F\x68\xF0\xF9\xEC\x3A\x8F\x60\xCF\xE1\xB0\xC8\x11\x71\x1E"
-//                              "\xCE\x60\x87\x48\x66\x7E\x8F\x61\xE6\x71\x9D\x47\xB0\x87\x7F\x44\x1E\x7A\x21\xEC"
-//                              "\x3C\xCF\x61\xED\x1D\xF3\xD8\x75\x1E\xC2\x16\x54\x41\x9E\xC3\xCC\xF6\x1E\xD1\x28"
-//                              "\xF6\x1D\x47\xB0\x7C\x56\xD3\x0B\x7D\x47\xB0\xF3\x3D\xA7\xB0\xF6\xE8\x87\xB0\xF3"
-//                              "\x3D\xA7\xB0\x2B\xF5\x21\x7E\x68\x4B\xA6\x08\x98\x30\x7F\x77\x40\x95\x40\x10\xB8"
-//                              "\x3A\x2F\xB1\xB9\x4C\xF6\x1E\xE3\xDC\x75\x1E\xCF\x0F\x99\xBF\xFB\x73\x8F\x61\xE6"
-//                              "\x7B\x0E\x38\xF2\x5B\xA3\xD8\x75\x1E\xC2\xB1\x9A\x08\xB5\x0E\x43\xA4\xF1\xD1\x9E"
-//                              "\xC3\xA8\xF6\x17\x87\xC5\x8C\x04\x1C\xB0\xF6\x9E\xC0\x41\x8D\xEA\xBA\x67\xB0\xF3"
-//                              "\x38\xCE\xA3\xD8\x42\xFE\x11\xEC\x3C\xCF\x61\xEC\x3A\x8F\x65\x33\x65\x02\x0C\x6E"
-//                              "\xCA\xD3\x06\x47\xB0\xF3\x46\x2C\x2F\x33\xDC\x75\x1E\xC0\xB7\x8D\x07\x0B\xAA\xCE"
-//                              "\x3D\x87\x99\x8B\x0B\xCC\xEA\x3D\x83\x33\xF5\x61\x79\xFC\xCF\x43\x7E\x04\x2A\x2B"
-//                              "\x67\xB8";
-const char HueConfigResponse_JSON[] PROGMEM =
-  "{\"name\":\"Philips hue\","
-   "\"mac\":\"{ma\","
-   "\"dhcp\":true,"
-   "\"ipaddress\":\"{ip\","
-   "\"netmask\":\"{ms\","
-   "\"gateway\":\"{gw\","
-   "\"proxyaddress\":\"none\","
-   "\"proxyport\":0,"
-   "\"bridgeid\":\"{br\","
-   "\"UTC\":\"{dt\","
-   "\"whitelist\":{\"{id\":{"
-     "\"last use date\":\"{dt\","
-     "\"create date\":\"{dt\","
-     "\"name\":\"Remote\"}},"
-   "\"swversion\":\"01041302\","
-   "\"apiversion\":\"1.17.0\","
-   "\"swupdate\":{\"updatestate\":0,\"url\":\"\",\"text\":\"\",\"notify\": false},"
-   "\"linkbutton\":false,"
-   "\"portalservices\":false"
-  "}";
-const char HUE_ERROR_JSON[] PROGMEM =
-  "[{\"error\":{\"type\":901,\"address\":\"/\",\"description\":\"Internal Error\"}}]";
+const size_t HueConfigResponse_JSON_SIZE = 392;
+const char HueConfigResponse_JSON[] PROGMEM = "\x3D\xA7\xB3\xAC\x6B\x3D\x87\x99\xEC\x21\x82\xB4\x2D\x19\xE4\x28\x5B\x3D\x87\x51"
+                             "\xEC\x1B\x61\x9E\xC3\xCC\xF6\x1E\xD1\xB6\x7B\x0E\xA3\xD8\x20\xA0\xC6\x1E\xC3\xCE"
+                             "\xBE\x2D\x9D\x47\xB3\x46\x58\x82\x7D\xFB\xC7\xB0\xF3\x3D\x87\xB7\x46\x1E\xC3\xA8"
+                             "\xF6\x73\xA1\xB7\xE3\x43\xD8\x79\x9E\xC3\xDA\x37\xC7\xB0\xEA\x3D\x83\xD7\x4C\x7E"
+                             "\xCC\x8F\x61\xE6\x7B\x0F\x68\xF0\xF9\xEC\x3A\x8F\x60\xCF\xE1\xB0\xC8\x11\x71\x1E"
+                             "\xCE\x60\x87\x48\x66\x7E\x8F\x61\xE6\x71\x9D\x47\xB0\x87\x7F\x44\x1E\x7A\x21\xEC"
+                             "\x3C\xCF\x61\xED\x1D\xF3\xD8\x75\x1E\xC2\x16\x54\x41\x9E\xC3\xCC\xF6\x1E\xD1\x28"
+                             "\xF6\x1D\x47\xB0\x7C\x56\xD3\x0B\x7D\x47\xB0\xF3\x3D\xA7\xB0\xF6\xE8\x87\xB0\xF3"
+                             "\x3D\xA7\xB0\x2B\xF5\x21\x7E\x68\x4B\xA6\x08\x98\x30\x7F\x77\x40\x95\x40\x10\xB8"
+                             "\x3A\x2F\xB1\xB9\x4C\xF6\x1E\xE3\xDC\x75\x1E\xCF\x0F\x99\xBF\xFB\x73\x8F\x61\xE6"
+                             "\x7B\x0E\x38\xF2\x5B\xA3\xD8\x75\x1E\xC2\xB1\x9A\x08\xB5\x0E\x43\xA4\xF1\xD1\x9E"
+                             "\xC3\xA8\xF6\x17\x87\xC5\x8C\x04\x1C\xB0\xF6\x9E\xC0\x41\x8D\xEA\xBA\x67\xB0\xF3"
+                             "\x38\xCE\xA3\xD8\x42\xFE\x11\xEC\x3C\xCF\x61\xEC\x3A\x8F\x65\x33\x65\x02\x0C\x6E"
+                             "\xCA\xD3\x06\x47\xB0\xF3\x46\x2C\x2F\x33\xDC\x75\x1E\xC0\xB7\x8D\x07\x0B\xAA\xCE"
+                             "\x3D\x87\x99\x8B\x0B\xCC\xEA\x3D\x83\x33\xF5\x61\x79\xFC\xCF\x43\x7E\x04\x2A\x2B"
+                             "\x67\xB8";
+
+// const char HUE_ERROR_JSON[] PROGMEM =
+//   "[{\"error\":{\"type\":901,\"address\":\"/\",\"description\":\"Internal Error\"}}]";
 
 /********************************************************************************************/
 
@@ -272,7 +446,7 @@ void HueNotImplemented(String *path)
 
 void HueConfigResponse(String *response)
 {
-  *response += FPSTR(HueConfigResponse_JSON);
+  *response += Decompress(HueConfigResponse_JSON, HueConfigResponse_JSON_SIZE);
   response->replace("{ma", WiFi.macAddress());
   response->replace("{ip", WiFi.localIP().toString());
   response->replace("{ms", WiFi.subnetMask().toString());
@@ -360,6 +534,7 @@ void HueLightStatus1(uint8_t device, String *response)
 
   const size_t buf_size = 256;
   char * buf = (char*) malloc(buf_size);     // temp buffer for strings, avoid stack
+  UnishoxStrings msg(HUE_LIGHTS);
 
   snprintf_P(buf, buf_size, PSTR("{\"on\":%s,"), (TasmotaGlobal.power & (1 << (device-1))) ? "true" : "false");
   // Brightness for all devices with PWM
@@ -382,7 +557,7 @@ void HueLightStatus1(uint8_t device, String *response)
   if (LST_COLDWARM == local_light_subtype || LST_RGBW <= local_light_subtype) {  // white temp
     snprintf_P(buf, buf_size, PSTR("%s\"ct\":%d,"), buf, ct > 0 ? ct : 284);
   }
-  snprintf_P(buf, buf_size, HUE_LIGHTS_STATUS_JSON1_SUFFIX, buf);
+  snprintf_P(buf, buf_size, msg[HUE_LIGHTS_STATUS_JSON1_SUFFIX], buf);
 
   *response += buf;
   free(buf);
@@ -415,7 +590,8 @@ void HueLightStatus2(uint8_t device, String *response)
     }
     fname[fname_len] = 0x00;
   }
-  snprintf_P(buf, buf_size, HUE_LIGHTS_STATUS_JSON2,
+  UnishoxStrings msg(HUE_LIGHTS);
+  snprintf_P(buf, buf_size, msg[HUE_LIGHTS_STATUS_JSON2],
             EscapeJSONString(fname).c_str(),
             EscapeJSONString(Settings.user_template_name).c_str(),
             PSTR("Tasmota"),
@@ -548,6 +724,7 @@ void HueLightsCommand(uint8_t device, uint32_t device_id, String &response) {
 
   const size_t buf_size = 100;
   char * buf = (char*) malloc(buf_size);
+  UnishoxStrings msg(HUE_LIGHTS);
 
   if (Webserver->args()) {
     response = "[";
@@ -559,7 +736,7 @@ void HueLightsCommand(uint8_t device, uint32_t device_id, String &response) {
     if (hue_on) {
       on = hue_on.getBool();
       snprintf_P(buf, buf_size,
-                 PSTR("{\"success\":{\"/lights/%d/state/on\":%s}}"),
+                 msg[HUE_RESP_ON],
                  device_id, on ? "true" : "false");
 
 #ifdef USE_SHUTTER
@@ -602,7 +779,7 @@ void HueLightsCommand(uint8_t device, uint32_t device_id, String &response) {
       prev_bri = bri;   // store command value
       if (resp) { response += ","; }
       snprintf_P(buf, buf_size,
-                 PSTR("{\"success\":{\"/lights/%d/state/%s\":%d}}"),
+                 msg[HUE_RESP_NUM],
                  device_id, "bri", bri);
       response += buf;
       if (LST_SINGLE <= Light.subtype) {
@@ -633,7 +810,7 @@ void HueLightsCommand(uint8_t device, uint32_t device_id, String &response) {
       //AddLog_P(LOG_LEVEL_DEBUG_MORE, "XY RGB (%d %d %d) HS (%d %d)", rr,gg,bb,hue,sat);
       if (resp) { response += ","; }
       snprintf_P(buf, buf_size,
-                 PSTR("{\"success\":{\"/lights/%d/state/xy\":[%s,%s]}}"),
+                 msg[HUE_RESP_XY],
                  device_id, prev_x_str, prev_y_str);
       response += buf;
       g_gotct = false;
@@ -648,7 +825,7 @@ void HueLightsCommand(uint8_t device, uint32_t device_id, String &response) {
       prev_hue = hue;
       if (resp) { response += ","; }
       snprintf_P(buf, buf_size,
-                 PSTR("{\"success\":{\"/lights/%d/state/%s\":%d}}"),
+                 msg[HUE_RESP_NUM],
                  device_id, "hue", hue);
       response += buf;
       if (LST_RGB <= Light.subtype) {
@@ -667,7 +844,7 @@ void HueLightsCommand(uint8_t device, uint32_t device_id, String &response) {
       prev_sat = sat;   // store command value
       if (resp) { response += ","; }
       snprintf_P(buf, buf_size,
-                 PSTR("{\"success\":{\"/lights/%d/state/%s\":%d}}"),
+                 msg[HUE_RESP_NUM],
                  device_id, "sat", sat);
       response += buf;
       if (LST_RGB <= Light.subtype) {
@@ -686,7 +863,7 @@ void HueLightsCommand(uint8_t device, uint32_t device_id, String &response) {
       prev_ct = ct;   // store commande value
       if (resp) { response += ","; }
       snprintf_P(buf, buf_size,
-                 PSTR("{\"success\":{\"/lights/%d/state/%s\":%d}}"),
+                 msg[HUE_RESP_NUM],
                  device_id, "ct", ct);
       response += buf;
       if ((LST_COLDWARM == Light.subtype) || (LST_RGBW <= Light.subtype)) {
@@ -725,11 +902,11 @@ void HueLightsCommand(uint8_t device, uint32_t device_id, String &response) {
     }
     response += "]";
     if (2 == response.length()) {
-      response = FPSTR(HUE_ERROR_JSON);
+      response = msg[HUE_ERROR_JSON];
     }
   }
   else {
-    response = FPSTR(HUE_ERROR_JSON);
+    response = msg[HUE_ERROR_JSON];
   }
   free(buf);
 }
@@ -835,7 +1012,8 @@ void HueGroups(String *path)
   //AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_HTTP D_HUE " HueGroups (%s)"), path->c_str());
 
   if (path->endsWith("/0")) {
-    response = FPSTR(HUE_GROUP0_STATUS_JSON);
+    UnishoxStrings msg(HUE_LIGHTS);
+    response = msg[HUE_GROUP0_STATUS_JSON];
     String lights = F("\"1\"");
     for (uint32_t i = 2; i <= maxhue; i++) {
       lights += ",\"";
@@ -881,17 +1059,18 @@ void HandleHueApi(String *path)
     AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_HTTP D_HUE_POST_ARGS " (%s)"), json.c_str());  // HTP: Hue POST args ({"on":false})
   }
 
-  if (path->endsWith(F("/invalid/"))) {}                // Just ignore
+  UnishoxStrings msg(HUE_API);
+  if (path->endsWith(msg[HUE_INVALID])) {}                // Just ignore
   else if (!apilen) HueAuthentication(path);                  // New HUE App setup
-  else if (path->endsWith(F("/"))) HueAuthentication(path);      // New HUE App setup
-  else if (path->endsWith(F("/config"))) HueConfig(path);
-  else if (path->indexOf(F("/lights")) >= 0) HueLights(path);
-  else if (path->indexOf(F("/groups")) >= 0) HueGroups(path);
-  else if (path->endsWith(F("/schedules"))) HueNotImplemented(path);
-  else if (path->endsWith(F("/sensors"))) HueNotImplemented(path);
-  else if (path->endsWith(F("/scenes"))) HueNotImplemented(path);
-  else if (path->endsWith(F("/rules"))) HueNotImplemented(path);
-  else if (path->endsWith(F("/resourcelinks"))) HueNotImplemented(path);
+  else if (path->endsWith(msg[HUE_ROOT])) HueAuthentication(path);      // New HUE App setup
+  else if (path->endsWith(msg[HUE_CONFIG])) HueConfig(path);
+  else if (path->indexOf(msg[HUE_LIGHTS_API]) >= 0) HueLights(path);
+  else if (path->indexOf(msg[HUE_GROUPS]) >= 0) HueGroups(path);
+  else if (path->endsWith(msg[HUE_SCHEDULES])) HueNotImplemented(path);
+  else if (path->endsWith(msg[HUE_SENSORS])) HueNotImplemented(path);
+  else if (path->endsWith(msg[HUE_SCENES])) HueNotImplemented(path);
+  else if (path->endsWith(msg[HUE_RULES])) HueNotImplemented(path);
+  else if (path->endsWith(msg[HUE_RESOURCELINKS])) HueNotImplemented(path);
   else HueGlobalConfig(path);
 }
 

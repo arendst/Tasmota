@@ -740,6 +740,7 @@
 #define D_SENSOR_ADC_RANGE     "ADC Range"
 #define D_SENSOR_ADC_CT_POWER  "ADC CT Power"
 #define D_SENSOR_ADC_JOYSTICK  "ADC Joystick"
+#define D_SENSOR_ADC_PH        "ADC pH"
 #define D_GPIO_WEBCAM_PWDN     "CAM_PWDN"
 #define D_GPIO_WEBCAM_RESET    "CAM_RESET"
 #define D_GPIO_WEBCAM_XCLK     "CAM_XCLK"
@@ -778,6 +779,7 @@
 #define D_SENSOR_ST7789_DC     "ST7789 DC"
 #define D_SENSOR_SSD1331_CS    "SSD1331 CS"
 #define D_SENSOR_SSD1331_DC    "SSD1331 DC"
+#define D_SENSOR_SDCARD_CS     "SDCard CS"
 
 // Units
 #define D_UNIT_AMPERE "A"
@@ -863,7 +865,7 @@
 #define D_CONFIGURE_SCRIPT     "Editar Script"
 #define D_SCRIPT               "Editar Script"
 #define D_SDCARD_UPLOAD        "Subir Archivo"
-#define D_SDCARD_DIR           "Directorio en Tarjeta SD"
+#define D_UFSDIR               "Directorio en Tarjeta UFS"
 #define D_UPL_DONE             "Listo"
 #define D_SCRIPT_CHARS_LEFT    "Caracteres disponibles"
 #define D_SCRIPT_CHARS_NO_MORE "No hay mas espacio"
@@ -871,6 +873,11 @@
 #define D_SCRIPT_ENABLE        "Habilitar Script"
 #define D_SCRIPT_UPLOAD        "Cargar"
 #define D_SCRIPT_UPLOAD_FILES  "Cargar Archivos"
+
+//xdrv_50_filesystem.ino
+#define D_MANAGE_FILE_SYSTEM   "Manage File system"
+#define D_FS_SIZE              "Size"
+#define D_FS_FREE              "Free"
 
 //xsns_67_as3935.ino
 #define D_AS3935_GAIN "Ganancia:"

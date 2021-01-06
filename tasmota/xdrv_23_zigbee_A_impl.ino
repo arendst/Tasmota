@@ -1768,8 +1768,7 @@ const char ZB_WEB_U[] PROGMEM =
     "\0"
     // +++++++++++++++++++++++++++++++++++++++++++++++++++++++
     //=ZB_WEB_LINE_END
-    "</div></td>" // Close LQI
-    "%s{e}" // dhm (Last Seen)
+    "</table>{t}<p></p>"
     "\0"
     ;   // end of list
 
@@ -1794,7 +1793,7 @@ enum {
   ZB_WEB_LINE_END=1608,
 };
 
-// Compressed from 1625 to 1111, -31.6%
+// Compressed from 1627 to 1118, -31.3%
 const char ZB_WEB[] PROGMEM = "\x00\x66\x3D\x0E\xCA\xB1\xC1\x33\xF0\xF6\xD1\xEE\x3D\x3D\x46\x41\x33\xF0\xE8\x6D"
                              "\xA1\x15\x08\x79\xF6\x51\xDD\x3C\xCC\x6F\xFD\x47\x58\x62\xB4\x21\x0E\xF1\xED\x1F"
                              "\xD1\x28\x51\xE6\x72\x99\x0C\x36\x1E\x0C\x67\x51\xD7\xED\x36\xB3\xCC\xE7\x99\xF4"
@@ -1850,30 +1849,29 @@ const char ZB_WEB[] PROGMEM = "\x00\x66\x3D\x0E\xCA\xB1\xC1\x33\xF0\xF6\xD1\xEE\
                              "\x30\xF6\x1F\x87\xE8\xF2\x59\xEF\x9E\x0A\x70\xBE\x08\x5D\x15\xA0\x42\xE0\x6C\x83"
                              "\x2A\x2B\x47\xD0\x87\xB0\xFC\x3D\x3C\x36\xC2\x08\xFC\x3F\x47\x91\xC5\xF5\xF3\xC1"
                              "\xDC\x3D\x0E\xC2\x04\x19\x87\xD0\x84\x68\x08\x5D\x16\xC9\xC2\xF8\x21\x74\x18\x4E"
-                             "\xCA\x10\xFC\x3E\xBC\x7B\x59\xEE\x04\xC9\xB3\x85\xF3";
+                             "\xCA\x10\xFC\x3E\xBC\x7B\x59\xEE\x9C\x2F\x82\x3F\x4E\x90\x10\x79\x23\x9C\x2F\x9B";
 
 // ++++++++++++++++++++^^^^^^^^^^^^^^^^^^^++++++++++++++++++++
 // ++++++++++++++++++++ DO NOT EDIT ABOVE ++++++++++++++++++++
 // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-extern "C" {
-  // comparator function used to sort Zigbee devices by alphabetical order (if friendlyname)
-  // then by shortaddr if they don't have friendlyname
-  int device_cmp(const void * a, const void * b) {
-    const Z_Device &dev_a = zigbee_devices.devicesAt(*(uint8_t*)a);
-    const Z_Device &dev_b = zigbee_devices.devicesAt(*(uint8_t*)b);
-    const char * fn_a = dev_a.friendlyName;
-    const char * fn_b = dev_b.friendlyName;
+// comparator function used to sort Zigbee devices by alphabetical order (if friendlyname)
+// then by shortaddr if they don't have friendlyname
+int device_cmp(uint8_t a, uint8_t b) {
+  const Z_Device &dev_a = zigbee_devices.devicesAt(a);
+  const Z_Device &dev_b = zigbee_devices.devicesAt(b);
+  const char * fn_a = dev_a.friendlyName;
+  const char * fn_b = dev_b.friendlyName;
 
-    if (fn_a && fn_b) {
-      return strcasecmp(fn_a, fn_b);
-    } else if (!fn_a && !fn_b) {
-      return (int32_t)dev_a.shortaddr - (int32_t)dev_b.shortaddr;
-    } else {
-      if (fn_a) return -1;
-      else      return 1;
-    }
+  if (fn_a && fn_b) {
+    return strcasecmp(fn_a, fn_b);
+  } else if (!fn_a && !fn_b) {
+    return (int32_t)dev_a.shortaddr - (int32_t)dev_b.shortaddr;
+  } else {
+    if (fn_a) return -1;
+    else      return 1;
   }
+}
 
 
 // Convert seconds to a string representing days, hours or minutes present in the n-value.
@@ -1884,24 +1882,23 @@ extern "C" {
 // - char for unit (d for day, h for hour, m for minute)
 // - the hex color to be used to display the text
 //
-  uint32_t convert_seconds_to_dhm(uint32_t seconds,  char *unit, uint8_t *color){
-    static uint32_t conversions[3] = {24 * 3600, 3600, 60};
-    static char     units[3] = { 'd', 'h', 'm'};   // day, hour, minute
-    uint8_t color_text_8 = WebColor(COL_TEXT) & 0xFF;    // color of text on 8 bits
-    uint8_t color_back_8 = WebColor(COL_BACKGROUND) & 0xFF;    // color of background on 8 bits
-    uint8_t  colors[3] = { (uint8_t) changeUIntScale(6, 0, 16, color_back_8, color_text_8),   // 6/16 of text
-                           (uint8_t) changeUIntScale(10, 0, 16, color_back_8, color_text_8),  // 10/16 of text color
-                           color_text_8};
-    for(int i = 0; i < 3; ++i) {
-      *color = colors[i];
-      *unit = units[i];
-      if (seconds > conversions[i]) {    // always pass even if 00m
-        return seconds / conversions[i];
-      }
+uint32_t convert_seconds_to_dhm(uint32_t seconds,  char *unit, uint8_t *color){
+  static uint32_t conversions[3] = {24 * 3600, 3600, 60};
+  static char     units[3] = { 'd', 'h', 'm'};   // day, hour, minute
+  uint8_t color_text_8 = WebColor(COL_TEXT) & 0xFF;    // color of text on 8 bits
+  uint8_t color_back_8 = WebColor(COL_BACKGROUND) & 0xFF;    // color of background on 8 bits
+  uint8_t  colors[3] = { (uint8_t) changeUIntScale(6, 0, 16, color_back_8, color_text_8),   // 6/16 of text
+                          (uint8_t) changeUIntScale(10, 0, 16, color_back_8, color_text_8),  // 10/16 of text color
+                          color_text_8};
+  for(int i = 0; i < 3; ++i) {
+    *color = colors[i];
+    *unit = units[i];
+    if (seconds > conversions[i]) {    // always pass even if 00m
+      return seconds / conversions[i];
     }
-    return 0;
   }
-} // extern "C"
+  return 0;
+}
 
 const char HTTP_BTN_ZB_BUTTONS[] PROGMEM =
   "<button onclick='la(\"&zbj=1\");'>" D_ZIGBEE_PERMITJOIN "</button>"
@@ -1916,160 +1913,171 @@ void ZigbeeShow(bool json)
   } else {
     UnishoxStrings msg(ZB_WEB);
     uint32_t zigbee_num = zigbee_devices.devicesSize();
-    if (!zigbee_num) { return; }
-    if (zigbee_num > 255) { zigbee_num = 255; }
+    if (zigbee_num > 0) {
+      if (zigbee_num > 255) { zigbee_num = 255; }
 
-    WSContentSend_P(msg[ZB_WEB_CSS], WebColor(COL_TEXT));
-    // WSContentSend_compressed(ZB_WEB, 0);
+      WSContentSend_P(msg[ZB_WEB_CSS], WebColor(COL_TEXT));
+      // WSContentSend_compressed(ZB_WEB, 0);
 
-    // sort elements by name, then by id
-    uint8_t sorted_idx[zigbee_num];
-    for (uint32_t i = 0; i < zigbee_num; i++) {
-      sorted_idx[i] = i;
-    }
-    qsort(sorted_idx, zigbee_num, sizeof(sorted_idx[0]), device_cmp);
-
-    uint32_t now = Rtc.utc_time;
-
-    for (uint32_t i = 0; i < zigbee_num; i++) {
-      const Z_Device &device = zigbee_devices.devicesAt(sorted_idx[i]);
-      uint16_t shortaddr = device.shortaddr;
-      char *name = (char*) device.friendlyName;
-
-      char sdevice[33];
-      if (nullptr == name) {
-        snprintf_P(sdevice, sizeof(sdevice), PSTR(D_DEVICE " 0x%04X"), shortaddr);
-        name = sdevice;
+      // sort elements by name, then by id
+      uint8_t sorted_idx[zigbee_num];
+      for (uint32_t i = 0; i < zigbee_num; i++) {
+        sorted_idx[i] = i;
       }
 
-      char sbatt[64];
-      snprintf_P(sbatt, sizeof(sbatt), PSTR("&nbsp;"));
-      if (device.validBatteryPercent()) {
-        snprintf_P(sbatt, sizeof(sbatt),
-          msg[ZB_WEB_BATTERY],
-          device.batterypercent, changeUIntScale(device.batterypercent, 0, 100, 0, 14)
-        );
-      }
-
-      uint32_t num_bars = 0;
-
-      char slqi[4];
-      slqi[0] = '-';
-      slqi[1] = '\0';
-      if (device.validLqi()){
-        num_bars = changeUIntScale(device.lqi, 0, 254, 0, 4);
-        snprintf_P(slqi, sizeof(slqi), PSTR("%d"), device.lqi);
-      }
-
-      WSContentSend_PD(msg[ZB_WEB_STATUS_LINE],
-      shortaddr,
-      device.modelId ? device.modelId : "",
-      device.manufacturerId ? device.manufacturerId : "",
-      name, sbatt, slqi);
-
-      if(device.validLqi()) {
-          for(uint32_t j = 0; j < 4; ++j) {
-            WSContentSend_PD(PSTR("<i class='b%d%s'></i>"), j, (num_bars < j) ? PSTR(" o30") : PSTR(""));
-          }
-      }
-      char dhm[48];
-      snprintf_P(dhm, sizeof(dhm), PSTR("<td>&nbsp;"));
-      if (device.validLastSeen()) {
-        char unit;
-        uint8_t color;
-        uint16_t val = convert_seconds_to_dhm(now - device.last_seen, &unit, &color);
-        if (val < 100) {
-          snprintf_P(dhm, sizeof(dhm), msg[ZB_WEB_LAST_SEEN],
-                                      color, color, color, val, unit);
+      // insertion sort
+      for (uint32_t i = 1; i < zigbee_num; i++) {
+        uint8_t key = sorted_idx[i];
+        uint8_t j = i;
+        while ((j > 0) && (device_cmp(sorted_idx[j - 1], key) > 0)) {
+          sorted_idx[j] = sorted_idx[j - 1];
+          j--;
         }
+        sorted_idx[j] = key;
       }
 
-      WSContentSend_PD(msg[ZB_WEB_END_STATUS], dhm );
+      uint32_t now = Rtc.utc_time;
 
-      // Sensors
-      const Z_Data_Thermo & thermo = device.data.find<Z_Data_Thermo>();
+      for (uint32_t i = 0; i < zigbee_num; i++) {
+        const Z_Device &device = zigbee_devices.devicesAt(sorted_idx[i]);
+        uint16_t shortaddr = device.shortaddr;
+        char *name = (char*) device.friendlyName;
 
-      if (&thermo != nullptr) {
-        bool validTemp = thermo.validTemperature();
-        bool validTempTarget = thermo.validTempTarget();
-        bool validThSetpoint = thermo.validThSetpoint();
-        bool validHumidity = thermo.validHumidity();
-        bool validPressure = thermo.validPressure();
+        char sdevice[33];
+        if (nullptr == name) {
+          snprintf_P(sdevice, sizeof(sdevice), PSTR(D_DEVICE " 0x%04X"), shortaddr);
+          name = sdevice;
+        }
 
-        if (validTemp || validTempTarget || validThSetpoint || validHumidity || validPressure) {
+        char sbatt[64];
+        snprintf_P(sbatt, sizeof(sbatt), PSTR("&nbsp;"));
+        if (device.validBatteryPercent()) {
+          snprintf_P(sbatt, sizeof(sbatt),
+            msg[ZB_WEB_BATTERY],
+            device.batterypercent, changeUIntScale(device.batterypercent, 0, 100, 0, 14)
+          );
+        }
+
+        uint32_t num_bars = 0;
+
+        char slqi[4];
+        slqi[0] = '-';
+        slqi[1] = '\0';
+        if (device.validLqi()){
+          num_bars = changeUIntScale(device.lqi, 0, 254, 0, 4);
+          snprintf_P(slqi, sizeof(slqi), PSTR("%d"), device.lqi);
+        }
+
+        WSContentSend_PD(msg[ZB_WEB_STATUS_LINE],
+        shortaddr,
+        device.modelId ? device.modelId : "",
+        device.manufacturerId ? device.manufacturerId : "",
+        name, sbatt, slqi);
+
+        if(device.validLqi()) {
+            for(uint32_t j = 0; j < 4; ++j) {
+              WSContentSend_PD(PSTR("<i class='b%d%s'></i>"), j, (num_bars < j) ? PSTR(" o30") : PSTR(""));
+            }
+        }
+        char dhm[48];
+        snprintf_P(dhm, sizeof(dhm), PSTR("<td>&nbsp;"));
+        if (device.validLastSeen()) {
+          char unit;
+          uint8_t color;
+          uint16_t val = convert_seconds_to_dhm(now - device.last_seen, &unit, &color);
+          if (val < 100) {
+            snprintf_P(dhm, sizeof(dhm), msg[ZB_WEB_LAST_SEEN],
+                                        color, color, color, val, unit);
+          }
+        }
+
+        WSContentSend_PD(msg[ZB_WEB_END_STATUS], dhm );
+
+        // Sensors
+        const Z_Data_Thermo & thermo = device.data.find<Z_Data_Thermo>();
+
+        if (&thermo != nullptr) {
+          bool validTemp = thermo.validTemperature();
+          bool validTempTarget = thermo.validTempTarget();
+          bool validThSetpoint = thermo.validThSetpoint();
+          bool validHumidity = thermo.validHumidity();
+          bool validPressure = thermo.validPressure();
+
+          if (validTemp || validTempTarget || validThSetpoint || validHumidity || validPressure) {
+            WSContentSend_P(msg[ZB_WEB_LINE_START]);
+            if (validTemp) {
+              char buf[12];
+              dtostrf(thermo.getTemperature() / 100.0f, 3, 1, buf);
+              WSContentSend_PD(PSTR(" &#x2600;&#xFE0F; %s°C"), buf);
+            }
+            if (validTempTarget) {
+              char buf[12];
+              dtostrf(thermo.getTempTarget() / 100.0f, 3, 1, buf);
+              WSContentSend_PD(PSTR(" &#127919; %s°C"), buf);
+            }
+            if (validThSetpoint) {
+              WSContentSend_PD(PSTR(" &#9881;&#65039; %d%%"), thermo.getThSetpoint());
+            }
+            if (validHumidity) {
+              WSContentSend_P(PSTR(" &#x1F4A7; %d%%"), (uint16_t)(thermo.getHumidity() / 100.0f + 0.5f));
+            }
+            if (validPressure) {
+              WSContentSend_P(PSTR(" &#x26C5; %d hPa"), thermo.getPressure());
+            }
+
+            WSContentSend_P(PSTR("{e}"));
+          }
+        }
+
+        // Light, switches and plugs
+        const Z_Data_OnOff & onoff = device.data.find<Z_Data_OnOff>();
+        bool onoff_display = (&onoff != nullptr) ? onoff.validPower() : false;
+        const Z_Data_Light & light = device.data.find<Z_Data_Light>();
+        bool light_display = (&light != nullptr) ? light.validDimmer() : false;
+        const Z_Data_Plug & plug = device.data.find<Z_Data_Plug>();
+        bool plug_voltage = (&plug != nullptr) ? plug.validMainsVoltage() : false;
+        bool plug_power = (&plug != nullptr) ? plug.validMainsPower() : false;
+        if (onoff_display || light_display || plug_voltage || plug_power) {
+          int8_t channels = device.getLightChannels();
+          if (channels < 0) { channels = 5; }     // if number of channel is unknown, display all known attributes
           WSContentSend_P(msg[ZB_WEB_LINE_START]);
-          if (validTemp) {
-            char buf[12];
-            dtostrf(thermo.getTemperature() / 100.0f, 3, 1, buf);
-            WSContentSend_PD(PSTR(" &#x2600;&#xFE0F; %s°C"), buf);
+          if (onoff_display) {
+            WSContentSend_P(PSTR(" %s"), onoff.getPower() ? PSTR(D_ON) : PSTR(D_OFF));
           }
-          if (validTempTarget) {
-            char buf[12];
-            dtostrf(thermo.getTempTarget() / 100.0f, 3, 1, buf);
-            WSContentSend_PD(PSTR(" &#127919; %s°C"), buf);
+          if (&light != nullptr) {
+            if (light.validDimmer() && (channels >= 1)) {
+              WSContentSend_P(PSTR(" &#128261; %d%%"), changeUIntScale(light.getDimmer(),0,254,0,100));
+            }
+            if (light.validCT() && ((channels == 2) || (channels == 5))) {
+              uint32_t ct_k = (((1000000 / light.getCT()) + 25) / 50) * 50;
+              WSContentSend_P(msg[ZB_WEB_LIGHT_CT], light.getCT(), ct_k);
+            }
+            if (light.validHue() && light.validSat() && (channels >= 3)) {
+              uint8_t r,g,b;
+              uint8_t sat = changeUIntScale(light.getSat(), 0, 254, 0, 255);    // scale to 0..255
+              HsToRgb(light.getHue(), sat, &r, &g, &b);
+              WSContentSend_P(msg[ZB_WEB_COLOR_RGB], r,g,b,r,g,b);
+            } else if (light.validX() && light.validY() && (channels >= 3)) {
+              uint8_t r,g,b;
+              XyToRgb(light.getX() / 65535.0f, light.getY() / 65535.0f, &r, &g, &b);
+              WSContentSend_P(msg[ZB_WEB_COLOR_RGB], r,g,b,r,g,b);
+            }
           }
-          if (validThSetpoint) {
-            WSContentSend_PD(PSTR(" &#9881;&#65039; %d%%"), thermo.getThSetpoint());
+          if (plug_voltage || plug_power) {
+            WSContentSend_P(PSTR(" &#9889; "));
+            if (plug_voltage) {
+              WSContentSend_P(PSTR(" %dV"), plug.getMainsVoltage());
+            }
+            if (plug_power) {
+              WSContentSend_P(PSTR(" %dW"), plug.getMainsPower());
+            }
           }
-          if (validHumidity) {
-            WSContentSend_P(PSTR(" &#x1F4A7; %d%%"), (uint16_t)(thermo.getHumidity() / 100.0f + 0.5f));
-          }
-          if (validPressure) {
-            WSContentSend_P(PSTR(" &#x26C5; %d hPa"), thermo.getPressure());
-          }
-
           WSContentSend_P(PSTR("{e}"));
         }
       }
 
-      // Light, switches and plugs
-      const Z_Data_OnOff & onoff = device.data.find<Z_Data_OnOff>();
-      bool onoff_display = (&onoff != nullptr) ? onoff.validPower() : false;
-      const Z_Data_Light & light = device.data.find<Z_Data_Light>();
-      bool light_display = (&light != nullptr) ? light.validDimmer() : false;
-      const Z_Data_Plug & plug = device.data.find<Z_Data_Plug>();
-      bool plug_voltage = (&plug != nullptr) ? plug.validMainsVoltage() : false;
-      bool plug_power = (&plug != nullptr) ? plug.validMainsPower() : false;
-      if (onoff_display || light_display || plug_voltage || plug_power) {
-        int8_t channels = device.getLightChannels();
-        if (channels < 0) { channels = 5; }     // if number of channel is unknown, display all known attributes
-        WSContentSend_P(msg[ZB_WEB_LINE_START]);
-        if (onoff_display) {
-          WSContentSend_P(PSTR(" %s"), onoff.getPower() ? PSTR(D_ON) : PSTR(D_OFF));
-        }
-        if (&light != nullptr) {
-          if (light.validDimmer() && (channels >= 1)) {
-            WSContentSend_P(PSTR(" &#128261; %d%%"), changeUIntScale(light.getDimmer(),0,254,0,100));
-          }
-          if (light.validCT() && ((channels == 2) || (channels == 5))) {
-            uint32_t ct_k = (((1000000 / light.getCT()) + 25) / 50) * 50;
-            WSContentSend_P(msg[ZB_WEB_LIGHT_CT], light.getCT(), ct_k);
-          }
-          if (light.validHue() && light.validSat() && (channels >= 3)) {
-            uint8_t r,g,b;
-            uint8_t sat = changeUIntScale(light.getSat(), 0, 254, 0, 255);    // scale to 0..255
-            HsToRgb(light.getHue(), sat, &r, &g, &b);
-            WSContentSend_P(msg[ZB_WEB_COLOR_RGB], r,g,b,r,g,b);
-          } else if (light.validX() && light.validY() && (channels >= 3)) {
-            uint8_t r,g,b;
-            XyToRgb(light.getX() / 65535.0f, light.getY() / 65535.0f, &r, &g, &b);
-            WSContentSend_P(msg[ZB_WEB_COLOR_RGB], r,g,b,r,g,b);
-          }
-        }
-        if (plug_voltage || plug_power) {
-          WSContentSend_P(PSTR(" &#9889; "));
-          if (plug_voltage) {
-            WSContentSend_P(PSTR(" %dV"), plug.getMainsVoltage());
-          }
-          if (plug_power) {
-            WSContentSend_P(PSTR(" %dW"), plug.getMainsPower());
-          }
-        }
-        WSContentSend_P(PSTR("{e}"));
-      }
+      WSContentSend_P(msg[ZB_WEB_LINE_END]);  // Terminate current multi column table and open new table
     }
-
-    WSContentSend_P(msg[ZB_WEB_LINE_END]);  // Terminate current multi column table and open new table
     if (zigbee.permit_end_time) {
       // PermitJoin in progress
 

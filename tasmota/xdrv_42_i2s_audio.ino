@@ -69,6 +69,8 @@ AudioGeneratorMP3 *decoder = NULL;
 void *mp3ram = NULL;
 
 
+extern FS *ufsp;
+
 #ifdef ESP8266
 const int preallocateBufferSize = 5*1024;
 const int preallocateCodecSize = 29192; // MP3 codec max mem needed
@@ -391,7 +393,7 @@ static const uint8_t wavHTemplate[] PROGMEM = { // Hardcoded simple WAV header w
     0x64, 0x61, 0x74, 0x61, 0xff, 0xff, 0xff, 0xff };
 
 bool SaveWav(char *path, uint8_t *buff, uint32_t size) {
-  File fwp = fsp->open(path, FILE_WRITE);
+  File fwp = ufsp->open(path, FILE_WRITE);
   uint8_t wavHeader[sizeof(wavHTemplate)];
   memcpy_P(wavHeader, wavHTemplate, sizeof(wavHTemplate));
 
@@ -552,7 +554,7 @@ void I2S_WR_Show(void) {
 
 #ifdef ESP32
 void Play_mp3(const char *path) {
-#if defined(USE_SCRIPT) && defined(USE_SCRIPT_FATFS)
+#if (defined(USE_SCRIPT_FATFS) && defined(USE_SCRIPT)) || defined(UFILESYSTEM)
   if (decoder || mp3) return;
   if (!out) return;
 
@@ -566,7 +568,7 @@ void Play_mp3(const char *path) {
     I2S_Task = false;
   }
 
-  file = new AudioFileSourceFS(*fsp,path);
+  file = new AudioFileSourceFS(*ufsp,path);
   id3 = new AudioFileSourceID3(file);
 
   if (mp3ram) {

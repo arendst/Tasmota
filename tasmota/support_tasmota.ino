@@ -1538,6 +1538,16 @@ void GpioInit(void)
         bitSet(TasmotaGlobal.gpio_optiona.data, mpin - AGPIO(GPIO_OPTION_A));
         mpin = GPIO_NONE;
       }
+#ifdef ROTARY_V1
+      else if ((mpin >= AGPIO(GPIO_ROT1A_NP)) && (mpin < (AGPIO(GPIO_ROT1A_NP) + MAX_ROTARIES))) {
+        RotaryAPullupFlag(mpin - AGPIO(GPIO_ROT1A_NP));
+        mpin -= (AGPIO(GPIO_ROT1A_NP) - AGPIO(GPIO_ROT1A));
+      }
+      else if ((mpin >= AGPIO(GPIO_ROT1B_NP)) && (mpin < (AGPIO(GPIO_ROT1B_NP) + MAX_ROTARIES))) {
+        RotaryBPullupFlag(mpin - AGPIO(GPIO_ROT1B_NP));
+        mpin -= (AGPIO(GPIO_ROT1B_NP) - AGPIO(GPIO_ROT1B));
+      }
+#endif  // ROTARY_V1
       else if ((mpin >= AGPIO(GPIO_SWT1_NP)) && (mpin < (AGPIO(GPIO_SWT1_NP) + MAX_SWITCHES))) {
         SwitchPullupFlag(mpin - AGPIO(GPIO_SWT1_NP));
         mpin -= (AGPIO(GPIO_SWT1_NP) - AGPIO(GPIO_SWT1));
@@ -1615,7 +1625,8 @@ void GpioInit(void)
                      ValidSpiPinUsed(GPIO_RA8876_CS) ||
                      ValidSpiPinUsed(GPIO_ST7789_DC) ||  // ST7789 CS may be omitted so chk DC too
                      ValidSpiPinUsed(GPIO_ST7789_CS) ||
-                     ValidSpiPinUsed(GPIO_SSD1331_CS)
+                     ValidSpiPinUsed(GPIO_SSD1331_CS) ||
+                     ValidSpiPinUsed(GPIO_SDCARD_CS)
                     );
     bool valid_dc = (ValidSpiPinUsed(GPIO_SPI_DC) ||
                      ValidSpiPinUsed(GPIO_NRF24_DC) ||
@@ -1647,7 +1658,8 @@ void GpioInit(void)
       PinUsed(GPIO_RA8876_CS) ||
       PinUsed(GPIO_ST7789_DC) ||  // ST7789 CS may be omitted so chk DC too
       PinUsed(GPIO_ST7789_CS) ||
-      PinUsed(GPIO_SSD1331_CS)
+      PinUsed(GPIO_SSD1331_CS) ||
+      PinUsed(GPIO_SDCARD_CS)
      ) {
     uint32_t spi_mosi = (PinUsed(GPIO_SPI_CLK) && PinUsed(GPIO_SPI_MOSI)) ? SPI_MOSI : SPI_NONE;
     uint32_t spi_miso = (PinUsed(GPIO_SPI_CLK) && PinUsed(GPIO_SPI_MISO)) ? SPI_MISO : SPI_NONE;

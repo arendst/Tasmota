@@ -454,6 +454,17 @@ void RtcSecond(void)
       Rtc.midnight = Rtc.local_time;
       Rtc.midnight_now = true;
     }
+
+#ifdef ESP32
+    if (mutex) {  // Time is just synced and is valid
+      // Sync RTOS time to be used by SD Card time stamps
+      struct timeval tv;
+      tv.tv_sec = Rtc.local_time;
+      tv.tv_usec = 0;
+      settimeofday(&tv, nullptr);
+    }
+#endif  // ESP32
+
   }
 
   RtcTime.year += 1970;

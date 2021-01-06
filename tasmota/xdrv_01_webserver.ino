@@ -1302,6 +1302,9 @@ void HandleConfiguration(void)
   WSContentButton(BUTTON_BACKUP);
   WSContentButton(BUTTON_RESTORE);
 
+  WSContentSend_P(PSTR("<div></div>"));            // 5px padding
+  XdrvCall(FUNC_WEB_ADD_MANAGEMENT_BUTTON);
+
   WSContentSpaceButton(BUTTON_MAIN);
   WSContentStop();
 }
@@ -1583,7 +1586,7 @@ void ModuleSaveSettings(void)
     } else {
       if (ValidGPIO(i, template_gp.io[i])) {
         Settings.my_gp.io[i] = WebGetGpioArg(i);
-        gpios += F(", " D_GPIO ); gpios += String(i); gpios += F(" "); gpios += String(Settings.my_gp.io[i]);
+        gpios += F(", "); gpios += String(i); gpios += F(" "); gpios += String(Settings.my_gp.io[i]);
       }
     }
   }

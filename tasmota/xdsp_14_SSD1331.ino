@@ -19,7 +19,7 @@
 
 #ifdef USE_SPI
 #ifdef USE_DISPLAY
-#ifdef USE_DISPLAY_SSD1331
+#ifdef USE_DISPLAY_SSD1331 // This driver eats 5.3 K flash
 
 #define XDSP_14                14
 
@@ -87,6 +87,7 @@ void SSD1331_InitDriver() {
     renderer->setTextFont(1);
     renderer->DrawStringAt(24, 27, "SSD1331", SSD1331_RED, 0);
     delay(1000);
+    renderer->clearDisplay();
 #endif
 
     color_type = COLOR_COLOR;
@@ -139,10 +140,11 @@ void SSD1331Time(void) {
   char line[12];
 
   renderer->clearDisplay();
-  renderer->setCursor(0, 0);
   snprintf_P(line, sizeof(line), PSTR(" %02d" D_HOUR_MINUTE_SEPARATOR "%02d" D_MINUTE_SECOND_SEPARATOR "%02d"), RtcTime.hour, RtcTime.minute, RtcTime.second);  // [ 12:34:56 ]
+  renderer->setCursor(17, 20);
   renderer->println(line);
   snprintf_P(line, sizeof(line), PSTR("%02d" D_MONTH_DAY_SEPARATOR "%02d" D_YEAR_MONTH_SEPARATOR "%04d"), RtcTime.day_of_month, RtcTime.month, RtcTime.year);   // [01-02-2018]
+  renderer->setCursor(17, 35);
   renderer->println(line);
   renderer->Updateframe();
 }

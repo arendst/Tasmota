@@ -948,7 +948,11 @@ void TuyaNormalPowerModePacketProcess(void)
       }
       TuyaRequestState(0);
       break;
-
+#ifdef USE_TUYA_TIME
+    case TUYA_CMD_SET_TIME:
+      TuyaSetTime();
+      break;
+#endif
     default:
       AddLog_P(LOG_LEVEL_DEBUG, PSTR("TYA: RX unknown command"));
   }

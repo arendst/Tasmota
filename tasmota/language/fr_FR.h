@@ -736,6 +736,7 @@
 #define D_SENSOR_ADC_RANGE     "ADC Distance"
 #define D_SENSOR_ADC_CT_POWER  "ADC CT Power"
 #define D_SENSOR_ADC_JOYSTICK  "ADC Manette"
+#define D_SENSOR_ADC_PH        "ADC pH"
 #define D_GPIO_WEBCAM_PWDN     "CAM_PWDN"
 #define D_GPIO_WEBCAM_RESET    "CAM_RESET"
 #define D_GPIO_WEBCAM_XCLK     "CAM_XCLK"
@@ -774,6 +775,7 @@
 #define D_SENSOR_ST7789_DC     "ST7789 DC"
 #define D_SENSOR_SSD1331_CS    "SSD1331 CS"
 #define D_SENSOR_SSD1331_DC    "SSD1331 DC"
+#define D_SENSOR_SDCARD_CS     "SDCard CS"
 
 // Units
 #define D_UNIT_AMPERE "A"
@@ -852,11 +854,12 @@
 #define D_SOLAX_ERROR_6   "Défaut Surchauffe"
 #define D_SOLAX_ERROR_7   "Défaut Ventilateur"
 #define D_SOLAX_ERROR_8   "Défaut Autre équipement"
+
 //xdrv_10_scripter.ino
 #define D_CONFIGURE_SCRIPT     "Éditer le script"
 #define D_SCRIPT               "édition du script"
 #define D_SDCARD_UPLOAD        "Envoi du fichier"
-#define D_SDCARD_DIR           "Dossier carte SD"
+#define D_UFSDIR               "Dossier UFS"
 #define D_UPL_DONE             "Terminé"
 #define D_SCRIPT_CHARS_LEFT    "car. restant"
 #define D_SCRIPT_CHARS_NO_MORE "plus de car."
@@ -864,6 +867,12 @@
 #define D_SCRIPT_ENABLE        "script actif"
 #define D_SCRIPT_UPLOAD        "Envoi"
 #define D_SCRIPT_UPLOAD_FILES  "Envoi de fichiers"
+
+//xdrv_50_filesystem.ino
+#define D_MANAGE_FILE_SYSTEM   "Manage File system"
+#define D_FS_SIZE              "Size"
+#define D_FS_FREE              "Free"
+
 //xsns_67_as3935.ino
 #define D_AS3935_GAIN "gain:"
 #define D_AS3935_ENERGY "energie:"
@@ -888,9 +897,11 @@
 #define D_AS3935_OUTDOORS "Extérieur"
 #define D_AS3935_CAL_FAIL "défaut de calibration"
 #define D_AS3935_CAL_OK "calibration établie à :"
+
 //xsns_68_opentherm.ino
 #define D_SENSOR_BOILER_OT_RX   "OpenTherm RX"
 #define D_SENSOR_BOILER_OT_TX   "OpenTherm TX"
+
 // xnrg_15_teleinfo Denky (Teleinfo)
 #define D_CONTRACT        "Type contrat"
 #define D_POWER_LOAD      "Charge actuelle"

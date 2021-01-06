@@ -86,6 +86,11 @@ uint32_t FlashWriteMaxSector(void) {
 uint8_t* FlashDirectAccess(void) {
   return (uint8_t*)(0x40200000 + (FlashWriteStartSector() * SPI_FLASH_SEC_SIZE));
 }
+
+void *special_malloc(uint32_t size) {
+  return malloc(size);
+}
+
 #endif
 
 /*********************************************************************************************\
@@ -167,7 +172,7 @@ void SettingsErase(uint8_t type) {
 }
 
 void SettingsRead(void *data, size_t size) {
-#ifdef USE_TFS
+#ifdef USE_UFILESYS
 //  if (!TfsLoadFile("/settings", (uint8_t*)data, size)) {
     NvmLoad("main", "Settings", data, size);
 //  }
@@ -177,7 +182,7 @@ void SettingsRead(void *data, size_t size) {
 }
 
 void SettingsWrite(const void *pSettings, unsigned nSettingsLen) {
-#ifdef USE_TFS
+#ifdef USE_UFILESYS
 //  TfsSaveFile("/settings", (const uint8_t*)pSettings, nSettingsLen);
 #endif
   NvmSave("main", "Settings", pSettings, nSettingsLen);
@@ -412,6 +417,15 @@ uint8_t* FlashDirectAccess(void) {
   AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t*)&buf, 32);
 */
   return data;
+}
+
+
+void *special_malloc(uint32_t size) {
+  if (psramFound()) {
+    return heap_caps_malloc(size, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+  } else {
+    return malloc(size);
+  }
 }
 
 #endif  // ESP32

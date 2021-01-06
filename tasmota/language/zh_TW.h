@@ -740,6 +740,7 @@
 #define D_SENSOR_ADC_RANGE     "ADC Range"
 #define D_SENSOR_ADC_CT_POWER  "ADC CT Power"
 #define D_SENSOR_ADC_JOYSTICK  "ADC Joystick"
+#define D_SENSOR_ADC_PH        "ADC pH"
 #define D_GPIO_WEBCAM_PWDN     "CAM_PWDN"
 #define D_GPIO_WEBCAM_RESET    "CAM_RESET"
 #define D_GPIO_WEBCAM_XCLK     "CAM_XCLK"
@@ -778,6 +779,7 @@
 #define D_SENSOR_ST7789_DC     "ST7789 DC"
 #define D_SENSOR_SSD1331_CS    "SSD1331 CS"
 #define D_SENSOR_SSD1331_DC    "SSD1331 DC"
+#define D_SENSOR_SDCARD_CS     "SDCard CS"
 
 // Units
 #define D_UNIT_AMPERE "安培"
@@ -863,7 +865,7 @@
 #define D_CONFIGURE_SCRIPT     "編輯腳本"
 #define D_SCRIPT               "編輯腳本"
 #define D_SDCARD_UPLOAD        "上傳檔案"
-#define D_SDCARD_DIR           "記憶卡目錄"
+#define D_UFSDIR               "記憶卡目錄"
 #define D_UPL_DONE             "完成"
 #define D_SCRIPT_CHARS_LEFT    "剩餘字元"
 #define D_SCRIPT_CHARS_NO_MORE "放不下更多字元了"
@@ -871,6 +873,11 @@
 #define D_SCRIPT_ENABLE        "啟用腳本"
 #define D_SCRIPT_UPLOAD        "上傳"
 #define D_SCRIPT_UPLOAD_FILES  "上傳檔案"
+
+//xdrv_50_filesystem.ino
+#define D_MANAGE_FILE_SYSTEM   "Manage File system"
+#define D_FS_SIZE              "Size"
+#define D_FS_FREE              "Free"
 
 //xsns_67_as3935.ino
 #define D_AS3935_GAIN "gain:"

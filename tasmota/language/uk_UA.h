@@ -740,6 +740,7 @@
 #define D_SENSOR_ADC_RANGE     "ADC Range"
 #define D_SENSOR_ADC_CT_POWER  "ADC CT Power"
 #define D_SENSOR_ADC_JOYSTICK  "ADC Joystick"
+#define D_SENSOR_ADC_PH        "ADC pH"
 #define D_GPIO_WEBCAM_PWDN     "CAM_PWDN"
 #define D_GPIO_WEBCAM_RESET    "CAM_RESET"
 #define D_GPIO_WEBCAM_XCLK     "CAM_XCLK"
@@ -778,6 +779,7 @@
 #define D_SENSOR_ST7789_DC     "ST7789 DC"
 #define D_SENSOR_SSD1331_CS    "SSD1331 CS"
 #define D_SENSOR_SSD1331_DC    "SSD1331 DC"
+#define D_SENSOR_SDCARD_CS     "SDCard CS"
 
 // Units
 #define D_UNIT_AMPERE                    "А"
@@ -863,7 +865,7 @@
 #define D_CONFIGURE_SCRIPT     "Конфігурація сценарія"
 #define D_SCRIPT               "Редагування сценарія"
 #define D_SDCARD_UPLOAD        "завантажити файл на карту SD"
-#define D_SDCARD_DIR           "завантажити файл в каталог на карту SD"
+#define D_UFSDIR               "завантажити файл в каталог на карту UFS"
 #define D_UPL_DONE             "Готово"
 #define D_SCRIPT_CHARS_LEFT    "символів ще вільно"
 #define D_SCRIPT_CHARS_NO_MORE "більше немає місця"
@@ -871,6 +873,11 @@
 #define D_SCRIPT_ENABLE        "Сценарій увімкнено"
 #define D_SCRIPT_UPLOAD        "Завантажити"
 #define D_SCRIPT_UPLOAD_FILES  "Завантажити файли"
+
+//xdrv_50_filesystem.ino
+#define D_MANAGE_FILE_SYSTEM   "Manage File system"
+#define D_FS_SIZE              "Size"
+#define D_FS_FREE              "Free"
 
 //xsns_67_as3935.ino
 #define D_AS3935_GAIN "gain:"
