@@ -106,7 +106,7 @@ void Timeprop_Set_Power( int index, float power )
 
 void Timeprop_Init()
 {
-  AddLog_P(LOG_LEVEL_INFO, PSTR("Timeprop Init"));
+  AddLog_P(LOG_LEVEL_INFO, PSTR("TPR: Timeprop Init"));
   int cycleTimes[TIMEPROP_NUM_OUTPUTS] = {TIMEPROP_CYCLETIMES};
   int deadTimes[TIMEPROP_NUM_OUTPUTS] = {TIMEPROP_DEADTIMES};
   int opInverts[TIMEPROP_NUM_OUTPUTS] = {TIMEPROP_OPINVERTS};
@@ -148,10 +148,10 @@ void Timeprop_Xdrv_Power() {
 /* } XdrvMailbox; */
 
 // To get here post with topic cmnd/timeprop_setpower_n where n is index into timeprops 0:7
-boolean Timeprop_Command()
+bool Timeprop_Command()
 {
   char command [CMDSZ];
-  boolean serviced = true;
+  bool serviced = true;
   uint8_t ua_prefix_len = strlen(D_CMND_TIMEPROP); // to detect prefix of command
   /*
   snprintf_P(log_data, sizeof(log_data), "Command called: "
@@ -199,10 +199,10 @@ boolean Timeprop_Command()
 
 #define XDRV_91       91
 
-boolean Xdrv91(byte function)
-//boolean XDRV_91(byte function)
+bool Xdrv91(byte function)
+//bool XDRV_91(byte function)
 {
-  boolean result = false;
+  bool result = false;
 
   switch (function) {
   case FUNC_INIT:
