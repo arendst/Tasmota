@@ -1,5 +1,5 @@
 /*
-  xdrv_98_filesystem.ino - unified file system for Tasmota
+  xdrv_50_filesystem.ino - unified file system for Tasmota
 
   Copyright (C) 2020  Gerhard Mutz and Theo Arends
 
@@ -41,7 +41,7 @@ ufsfree   free size in kB
 The driver enabled by #define USE_UFILESYS
 \*********************************************************************************************/
 
-#define XDRV_98           98
+#define XDRV_50           50
 
 #ifndef SDCARD_CS_PIN
 #define SDCARD_CS_PIN     4
@@ -516,7 +516,7 @@ void UFSFileUploadSuccess(void) {
  * Interface
 \*********************************************************************************************/
 
-bool Xdrv98(uint8_t function) {
+bool Xdrv50(uint8_t function) {
   bool result = false;
 
   switch (function) {
