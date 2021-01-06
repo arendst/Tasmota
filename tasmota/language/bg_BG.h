@@ -863,7 +863,7 @@
 #define D_CONFIGURE_SCRIPT     "Редакция на скрипт"
 #define D_SCRIPT               "редактирай скрипт"
 #define D_SDCARD_UPLOAD        "изпрати файл"
-#define D_SDCARD_DIR           "директория на SD картата"
+#define D_UFSDIR               "директория на UFS картата"
 #define D_UPL_DONE             "Готово"
 #define D_SCRIPT_CHARS_LEFT    "оставащи символи"
 #define D_SCRIPT_CHARS_NO_MORE "няма повече символи"

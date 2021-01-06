@@ -267,7 +267,7 @@ void UFS_free(void) {
 
 const char UFS_WEB_DIR[] PROGMEM =
   "<p><form action='" "ufsd" "' method='get'><button>" "%s" "</button></form></p>";
-const char UFS_FILE_UPLOAD[] PROGMEM = D_SDCARD_DIR;
+const char UFS_FILE_UPLOAD[] PROGMEM = D_UFSDIR;
 const char UFS_FORM_FILE_UPLOAD[] PROGMEM =
   "<div id='f1' name='f1' style='display:block;'>"
   "<fieldset><legend><b>&nbsp;%s"  "&nbsp;</b></legend>";
@@ -309,7 +309,7 @@ void UFSdirectory(void) {
 
   WSContentStart_P(UFS_FILE_UPLOAD);
   WSContentSendStyle();
-  WSContentSend_P(UFS_FORM_FILE_UPLOAD,D_SDCARD_DIR);
+  WSContentSend_P(UFS_FORM_FILE_UPLOAD, D_UFSDIR);
   WSContentSend_P(UFS_FORM_FILE_UPG, D_SCRIPT_UPLOAD);
   char ts[16];
   char fs[16];
@@ -495,7 +495,7 @@ void UFSFileUploadSuccess(void) {
   WSContentStop();
 }
 
-#define D_UFSDIR "UFS directory"
+
 
 /*********************************************************************************************\
  * Interface

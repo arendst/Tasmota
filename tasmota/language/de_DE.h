@@ -864,7 +864,7 @@
 #define D_CONFIGURE_SCRIPT     "Skript konfigurieren"
 #define D_SCRIPT               "Skript bearbeiten"
 #define D_SDCARD_UPLOAD        "Datei speichern"
-#define D_SDCARD_DIR           "SD Card Verzeichnis"
+#define D_UFSDIR               "UFS Verzeichnis"
 #define D_UPL_DONE             "Fertig"
 #define D_SCRIPT_CHARS_LEFT    "Zeichen übrig"
 #define D_SCRIPT_CHARS_NO_MORE "kein Speicher mehr"
