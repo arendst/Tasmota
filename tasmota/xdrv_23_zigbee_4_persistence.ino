@@ -307,6 +307,9 @@ void loadZigbeeDevices(bool dump_only = false) {
 #ifdef USE_TFS
   TfsLoadFile("/zb", spi_buffer, z_spi_len);
 #endif
+#ifdef USE_UFILESYS
+  UfsLoadFile("/zb", spi_buffer, z_spi_len);
+#endif
   z_dev_start = spi_buffer;
 #endif  // ESP32
   Z_Flashentry flashdata;
@@ -372,6 +375,9 @@ void saveZigbeeDevices(void) {
 #ifdef USE_TFS
   TfsLoadFile("/zb", spi_buffer, z_spi_len);
 #endif
+#ifdef USE_UFILESYS
+  UfsLoadFile("/zb", spi_buffer, z_spi_len);
+#endif
 #endif  // ESP32
 
   Z_Flashentry *flashdata = (Z_Flashentry*)(spi_buffer + z_block_offset);
@@ -391,6 +397,9 @@ void saveZigbeeDevices(void) {
 #ifdef ESP32
 #ifdef USE_TFS
   TfsSaveFile("/zb", spi_buffer, z_spi_len);
+#endif
+#ifdef USE_UFILESYS
+  UfsSaveFile("/zb", spi_buffer, z_spi_len);
 #endif
   AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Zigbee Devices Data saved in %s (%d bytes)"), PSTR("Flash"), buf_len);
 #endif  // ESP32
@@ -427,6 +436,9 @@ void eraseZigbeeDevices(void) {
 #ifdef ESP32
 #ifdef USE_TFS
   TfsEraseFile("/zb", z_block_len);
+#endif
+#ifdef USE_UFILESYS
+  UfsInitFile("/zb", z_block_len, 0xFF);
 #endif
   AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Zigbee Devices Data erased (%d bytes)"), z_block_len);
 #endif  // ESP32

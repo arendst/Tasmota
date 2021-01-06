@@ -107,7 +107,8 @@ String EthernetMacAddress(void);
 #define ARDUINO_CORE_RELEASE        ARDUINO_ESP32_RELEASE
 #endif  // ARDUINO_ESP32_RELEASE
 
-#define USE_TFS
+//#define USE_TFS
+#define USE_UFILESYS
 
 #ifdef USE_SCRIPT
 #undef USE_TFS

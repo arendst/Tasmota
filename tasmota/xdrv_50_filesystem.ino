@@ -19,9 +19,10 @@
 
 #ifdef USE_UFILESYS
 /*********************************************************************************************\
-This driver adds universal file system support for ESP8266 (sd card or littlfs on  > 1 M devices
-with special linker file e.g. eagle.flash.4m2m.ld) (makes no sense on 1M devices without sd card)
-and ESP32 (sd card or little fs or sfatfile system).
+This driver adds universal file system support for
+- ESP8266 (sd card or littlefs on  > 1 M devices with special linker file e.g. eagle.flash.4m2m.ld)
+  (makes no sense on 1M devices without sd card)
+- ESP32 (sd card or littlefs or sfatfile system).
 
 The sd card chip select is the standard SDCARD_CS or when not found SDCARD_CS_PIN and initializes
 the FS System Pointer ufsp which can be used by all standard file system calls.
@@ -83,7 +84,7 @@ uint8_t ufs_type;
 #define UFS_TFAT 2
 #define UFS_TLFS 3
 
-void UFSInit(void) {
+void UfsInit(void) {
   ufs_type = 0;
   ffsp = 0;
   // check for fs options,
@@ -146,6 +147,61 @@ void UFSInit(void) {
   ufs_type = UFS_TLFS;
   ffsp = ufsp;
   return;
+}
+
+bool UfsFileExists(const char *fname){
+  if (!ufs_type) { return false; }
+
+  bool yes = ufsp->exists(fname);
+  if (!yes) {
+    AddLog_P(LOG_LEVEL_INFO, PSTR("UFS: File not found"));
+  }
+  return yes;
+}
+
+bool UfsSaveFile(const char *fname, const uint8_t *buf, uint32_t len) {
+  if (!ufs_type) { return false; }
+
+  File file = ufsp->open(fname, "w");
+  if (!file) {
+    AddLog_P(LOG_LEVEL_INFO, PSTR("UFS: Save failed"));
+    return false;
+  }
+
+  file.write(buf, len);
+  file.close();
+  return true;
+}
+
+bool UfsInitFile(const char *fname, uint32_t len, uint8_t init_value) {
+  if (!ufs_type) { return false; }
+
+  File file = ufsp->open(fname, "w");
+  if (!file) {
+    AddLog_P(LOG_LEVEL_INFO, PSTR("UFS: Erase failed"));
+    return false;
+  }
+
+  for (uint32_t i = 0; i < len; i++) {
+    file.write(&init_value, 1);
+  }
+  file.close();
+  return true;
+}
+
+bool UfsLoadFile(const char *fname, uint8_t *buf, uint32_t len) {
+  if (!ufs_type) { return false; }
+  if (!UfsFileExists(fname)) { return false; }
+
+  File file = ufsp->open(fname, "r");
+  if (!file) {
+    AddLog_P(LOG_LEVEL_INFO, PSTR("UFS: File not found"));
+    return false;
+  }
+
+  file.read(buf, len);
+  file.close();
+  return true;
 }
 
 uint32_t ufs_fsinfo(uint32_t sel) {
@@ -521,7 +577,7 @@ bool Xdrv50(uint8_t function) {
 
   switch (function) {
     case FUNC_PRE_INIT:
-      UFSInit();
+      UfsInit();
       break;
     case FUNC_COMMAND:
       result = DecodeCommand(kUFSCommands, kUFSCommand);

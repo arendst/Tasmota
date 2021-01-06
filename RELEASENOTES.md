@@ -79,6 +79,7 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - SPI display driver SSD1331 Color oled by Jeroen Vermeulen [#10376](https://github.com/arendst/Tasmota/issues/10376)
 
 ### Breaking Changed
+- ESP32 switch from default SPIFFS to default LittleFS file system loosing current (zigbee) files
 - Replaced MFRC522 13.56MHz rfid card reader GPIO selection from ``SPI CS`` by ``RC522 CS``
 - Replaced NRF24L01 GPIO selection from ``SPI CS`` by ``NRF24 CS`` and ``SPI DC`` by ``NRF24 DC``
 - Replaced ILI9341 GPIO selection from ``SPI CS`` by ``ILI9341 CS`` and ``SPI DC`` by ``ILI9341 DC``

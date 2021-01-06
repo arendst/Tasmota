@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased] - Development
 
 ## [9.2.0.3]
+### Breaking Changed
+- ESP32 switch from default SPIFFS to default LittleFS file system loosing current (zigbee) files
+
 ### Changed
 - Force initial default state ``SetOption57 1`` to scan wifi network every 44 minutes for strongest signal (#10395)
 
