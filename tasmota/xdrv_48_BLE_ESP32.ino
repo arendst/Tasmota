@@ -267,6 +267,7 @@ const char * getStateString(int state);
 
 static void BLEDiag();
 const char *getAlias(uint8_t *addr);
+void BLEAliasMqttList();
 
 ////////////////////////////////////////////////////////////////////////
 // utilities
@@ -371,7 +372,7 @@ uint32_t BLEResets = 0;
 // controls request of details about one device
 uint8_t BLEDetailsRequest = 0;
 uint8_t BLEDetailsMac[6];
-
+uint8_t BLEAliasListTrigger = 0;
 // triggers send for ALL operations known about
 uint8_t BLEPostMQTTTrigger = 0;
 int BLEMaxAge = 60*10; // 10 minutes
@@ -2076,41 +2077,11 @@ static void BLEOperationTask(void *pvParameters){
  * Regular Tasmota called functions
  * 
 \***********************************************************************/
-static void BLEEvery50mSecond(){
-
-  // BLE interaction with web prevents OTA working properly, so prevent it. 
-  // **** note: TasmotaGlobal.ota_state_flag is not to do with web upload!
-/*  if (TasmotaGlobal.ota_state_flag) {
-    if (!BLEOtaStallBLE){
-      BLEOtaStallBLE = 1;
-      BLEStopScan = 1;
-    }
-  } else {
-    if (BLEOtaStallBLE){
-      BLEOtaStallBLE = 0;
-      BLEStopScan = 0;
-    }
-  }*/
-
-/*
-  safelogdata* logdata = nullptr;
-  do{
-    int free = freelogs.size();
-    int filled = filledlogs.size();
-    logdata = GetSafeLog();
-    if (logdata){
-      // ensure it's terminated correctly
-      logdata->log_data[sizeof(logdata->log_data)-1] = 0;
-      AddLog_P(logdata->level, PSTR("SL%d-%d %s"), filled, free, logdata->log_data);
-      if (filledlogsOverflows){
-        AddLog_P(LOG_LEVEL_ERROR, PSTR("SafeAddLog_P overflow %d"), filledlogsOverflows);
-        filledlogsOverflows = 0;
-      }
-      ReleaseSafeLog(logdata);
-    }
-  } while (logdata);
-*/
-
+void BLEEvery50mSecond(){
+  if (BLEAliasListTrigger){
+    BLEAliasListTrigger = 0;
+    BLEAliasMqttList();
+  }
   postAdvertismentDetails();
 }
 
@@ -2663,7 +2634,6 @@ void CmndBLEAlias(void){
       bool trigger = false;
       int added = 0;
 
-
       do {
         if (!p || !(*p)){
           break;
@@ -2695,8 +2665,10 @@ void CmndBLEAlias(void){
       if (added){
         if (BLEDebugMode > 0) AddLog_P(LOG_LEVEL_DEBUG,PSTR("Added %d Aliases"), added);
         ResponseCmndDone();
+        BLEAliasListTrigger = 1;
       } else {
-        ResponseCmndChar("failed");
+        ResponseCmndDone();
+        BLEAliasListTrigger = 1;
       }
       return;
     } break;
@@ -2708,6 +2680,8 @@ void CmndBLEAlias(void){
         delete alias;
       }
       ResponseCmndDone();
+      BLEAliasListTrigger = 1;
+      return;
     } break;
   }
   ResponseCmndChar("invalididx");
@@ -3180,6 +3154,19 @@ static void BLEShow(bool json)
     
 }
 
+void BLEAliasMqttList(){
+  ResponseTime_P(PSTR(",\"BLEAlias\":["));
+  for (int i = 0; i < aliases.size(); i++){
+    if (i){
+      ResponseAppend_P(PSTR(","));
+    }
+    char tmp[20];
+    ToHex_P(aliases[i]->addr,6,tmp,20,0);
+    ResponseAppend_P(PSTR("{\"%s\":\"%s\"}"), tmp, aliases[i]->name);
+  }
+  ResponseAppend_P(PSTR("]}"));
+  MqttPublishPrefixTopic_P(TELE, PSTR("BLE"), Settings.flag.mqtt_sensor_retain);
+}
 
 static void BLEDiag()
 {
