@@ -1,5 +1,5 @@
 /*
-  xdrv_92_pid.ino - PID algorithm plugin for Sonoff-Tasmota
+  xdrv_49_pid.ino - PID algorithm plugin for Sonoff-Tasmota
   Copyright (C) 2018 Colin Law and Thomas Herrmann
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -21,7 +21,7 @@
  * Clone the library https://github.com/colinl/process-control.git from Github
  * into a subfolder of lib.
  * If you want to use a time proportioned relay output with this then also get
- * xdrv_91_timeprop.ino
+ * xdrv_49_timeprop.ino
  * In user_config.h or user_config_override.h include code as follows:
 
  #define USE_PID         // include the pid feature (+4.3k)
@@ -105,7 +105,7 @@
                                                  // process, set this to indicate which timeprop output to use. For a device
                                                  // with just one relay then this will be 1.
                                                  // It is then also necessary to define USE_TIMEPROP and set the output up as
-                                                 // explained in xdrv_91_timeprop.ino
+                                                 // explained in xdrv_49_timeprop.ino
                                                  // To disable this feature leave this undefined (undefined, not defined to nothing).
 
    #define PID_USE_LOCAL_SENSOR                  // If defined then the local sensor will be used for pv. Leave undefined if
@@ -392,8 +392,7 @@ static void run_pid()
 
 #define XDRV_49       49
 
-bool Xdrv92(byte function)
-//bool XDRV_92(byte function)
+bool Xdrv49(byte function)
 {
   bool result = false;
 

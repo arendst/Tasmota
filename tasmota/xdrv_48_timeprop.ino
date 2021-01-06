@@ -1,5 +1,5 @@
 /*
-  xdrv_91_timeprop.ino - Timeprop support for Sonoff-Tasmota
+  xdrv_48_timeprop.ino - Timeprop support for Sonoff-Tasmota
   Copyright (C) 2018 Colin Law and Thomas Herrmann
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -197,10 +197,9 @@ bool Timeprop_Command()
  * Interface
 \*********************************************************************************************/
 
-#define XDRV_91       91
+#define XDRV_48       48
 
-bool Xdrv91(byte function)
-//bool XDRV_91(byte function)
+bool Xdrv48(byte function)
 {
   bool result = false;
 
