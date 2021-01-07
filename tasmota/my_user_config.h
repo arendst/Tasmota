@@ -811,6 +811,11 @@
 // -- Prometheus exporter ---------------------------
 //#define USE_PROMETHEUS                           // Add support for https://prometheus.io/ metrics exporting over HTTP /metrics endpoint
 
+// -- PID and Timeprop ------------------------------
+// #define use TIMEPROP                            // Add support for the timeprop feature (+0k8 code)
+                                                   // For details on the configuration please see the header of tasmota/xdrv_48_timeprop.ino
+// #define USE_PID                                 // Add suport for the PID  feature (+11k1 code)
+                                                   // For details on the configuration please see the header of tasmota/xdrv_49_pid.ino
 // -- End of general directives -------------------
 
 /*********************************************************************************************\
