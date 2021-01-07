@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 ## [9.2.0.3]
 ### Added
 - Support for time proportioned (``#define USE_TIMEPROP``) and optional PID (``#define USE_PID``) relay control (#10412)
+- Support rotary encoder on Shelly Dimmer (#10407)
 
 ### Breaking Changed
 - ESP32 switch from default SPIFFS to default LittleFS file system loosing current (zigbee) files
