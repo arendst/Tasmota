@@ -698,8 +698,9 @@ void ResponseAppendFeatures(void)
 #ifdef USE_PID
     feature7 |= 0x00800000;  // xdrv_49_pid.ino
 #endif
-
-//    feature7 |= 0x01000000;
+#ifdef USE_BS814A2
+    feature7 |= 0x01000000;  // xdrv_51_bs814a2.ino
+#endif
 //    feature7 |= 0x02000000;
 //    feature7 |= 0x04000000;
 //    feature7 |= 0x08000000;
