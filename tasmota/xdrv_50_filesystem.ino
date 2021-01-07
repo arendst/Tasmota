@@ -156,6 +156,7 @@ void UfsInit(void) {
     }
     ufs_type = UFS_TFAT;
     ffsp = ufsp;
+    dfsp = ufsp;
     return;
   }
 #endif // ESP32
