@@ -2244,7 +2244,7 @@ chknext:
 
         if (!strncmp(vname, "fsi(", 4)) {
           lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, 0);
-          fvar = ufs_fsinfo(fvar);
+          fvar = ufs_fsinfo(fvar, 0);
           lp++;
           len = 0;
           goto exit;

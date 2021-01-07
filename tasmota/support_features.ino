@@ -690,10 +690,14 @@ void ResponseAppendFeatures(void)
     feature7 |= 0x00100000;  // xdsp_14_SSD1331.ino
 #endif
 #ifdef USE_UFILESYS
-    feature7 |= 0x00200000;
+    feature7 |= 0x00200000;  // xdrv_50_filesystem.ino
 #endif
-//    feature7 |= 0x00400000;
-//    feature7 |= 0x00800000;
+#ifdef USE_TIMEPROP
+    feature7 |= 0x00400000;  // xdrv_48_timeprop.ino
+#endif
+#ifdef USE_PID
+    feature7 |= 0x00800000;  // xdrv_49_pid.ino
+#endif
 
 //    feature7 |= 0x01000000;
 //    feature7 |= 0x02000000;
