@@ -267,8 +267,8 @@ const char * getStateString(int state);
 
 static void BLEDiag();
 const char *getAlias(uint8_t *addr);
-void BLEAliasMqttList();
-
+//void BLEAliasMqttList();
+void BLEAliasListResp();
 ////////////////////////////////////////////////////////////////////////
 // utilities
 // dump a binary to hex
@@ -2078,10 +2078,10 @@ static void BLEOperationTask(void *pvParameters){
  * 
 \***********************************************************************/
 void BLEEvery50mSecond(){
-  if (BLEAliasListTrigger){
+/*  if (BLEAliasListTrigger){
     BLEAliasListTrigger = 0;
     BLEAliasMqttList();
-  }
+  }*/
   postAdvertismentDetails();
 }
 
@@ -2651,7 +2651,16 @@ void CmndBLEAlias(void){
         p = strtok(nullptr, " ,=");
         char *name = p;
         if (!p || !(*p)){
-          ResponseCmndChar("invalidname");
+          int i = 0;
+          for (i = 0; i < aliases.size(); i++){
+            BLE_ESP32::ble_alias_t *alias = aliases[i];
+            if (!memcmp(alias->addr, addr, 6)){
+              aliases.erase(aliases.begin() + i);
+              BLEAliasListResp();
+              return;
+            }
+          }
+          ResponseCmndChar("invalidmac");
           return;
         }
 
@@ -2664,11 +2673,9 @@ void CmndBLEAlias(void){
 
       if (added){
         if (BLEDebugMode > 0) AddLog_P(LOG_LEVEL_DEBUG,PSTR("Added %d Aliases"), added);
-        ResponseCmndDone();
-        BLEAliasListTrigger = 1;
+        BLEAliasListResp();
       } else {
-        ResponseCmndDone();
-        BLEAliasListTrigger = 1;
+        BLEAliasListResp();
       }
       return;
     } break;
@@ -2679,8 +2686,7 @@ void CmndBLEAlias(void){
         aliases.pop_back();
         delete alias;
       }
-      ResponseCmndDone();
-      BLEAliasListTrigger = 1;
+      BLEAliasListResp();
       return;
     } break;
   }
@@ -3154,7 +3160,7 @@ static void BLEShow(bool json)
     
 }
 
-void BLEAliasMqttList(){
+/*void BLEAliasMqttList(){
   ResponseTime_P(PSTR(",\"BLEAlias\":["));
   for (int i = 0; i < aliases.size(); i++){
     if (i){
@@ -3166,7 +3172,21 @@ void BLEAliasMqttList(){
   }
   ResponseAppend_P(PSTR("]}"));
   MqttPublishPrefixTopic_P(TELE, PSTR("BLE"), Settings.flag.mqtt_sensor_retain);
+}*/
+
+void BLEAliasListResp(){
+  Response_P(PSTR("{\"BLEAlias\":{"));
+  for (int i = 0; i < aliases.size(); i++){
+    if (i){
+      ResponseAppend_P(PSTR(","));
+    }
+    char tmp[20];
+    ToHex_P(aliases[i]->addr,6,tmp,20,0);
+    ResponseAppend_P(PSTR("\"%s\":\"%s\""), tmp, aliases[i]->name);
+  }
+  ResponseAppend_P(PSTR("}}"));
 }
+
 
 static void BLEDiag()
 {

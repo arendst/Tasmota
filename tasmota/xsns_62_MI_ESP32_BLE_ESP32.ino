@@ -317,12 +317,14 @@ void *slotmutex = nullptr;
 const char kMI32_Commands[] PROGMEM = D_CMND_MI32 "|"
 #ifdef USE_MI_DECRYPTION
   "Key|"
+  "Keys|"
 #endif  // USE_MI_DECRYPTION
   "Period|Time|Page|Battery|Unit|Block|Option";
 
 void (*const MI32_Commands[])(void) PROGMEM = {
 #ifdef USE_MI_DECRYPTION
   &CmndMi32Key,
+  &CmndMi32Keys,
 #endif  // USE_MI_DECRYPTION
   &CmndMi32Period, &CmndMi32Time, &CmndMi32Page, &CmndMi32Battery, &CmndMi32Unit, &CmndMi32Block, &CmndMi32Option };
 
@@ -1010,20 +1012,31 @@ void MI32_ReverseMAC(uint8_t _mac[]){
 }
 
 #ifdef USE_MI_DECRYPTION
-void MI32AddKey(char* payload){
+int MI32AddKey(char* payload, char* key = nullptr){
   mi_bindKey_t keyMAC;
-  MI32HexStringToBytes(payload,keyMAC.buf);
+
+  if (!key){
+    MI32HexStringToBytes(payload,keyMAC.buf);
+  } else {
+    MI32HexStringToBytes(payload,keyMAC.MAC);
+    MI32HexStringToBytes(key,keyMAC.key);
+  }
+
   bool unknownKey = true;
   for(uint32_t i=0; i<MIBLEbindKeys.size(); i++){
     if(memcmp(keyMAC.MAC,MIBLEbindKeys[i].MAC,sizeof(keyMAC.MAC))==0){
       AddLog_P(LOG_LEVEL_DEBUG,PSTR("known key"));
+      memcpy(MIBLEbindKeys[i].key, keyMAC.key, 16);
       unknownKey=false;
+      return 1;
     }
   }
   if(unknownKey){
     AddLog_P(LOG_LEVEL_DEBUG,PSTR("New key"));
     MIBLEbindKeys.push_back(keyMAC);
+    return 1;
   }
+  return 0;
 }
 
 
@@ -1955,8 +1968,8 @@ void CmndMi32Unit(void) {
 #ifdef USE_MI_DECRYPTION
 void CmndMi32Key(void) {
   if (44 == XdrvMailbox.data_len) {  // a KEY-MAC-string
-    MI32AddKey(XdrvMailbox.data);
-    ResponseCmndDone();
+    MI32AddKey(XdrvMailbox.data, nullptr);
+    MI32KeyListResp();
   } else {
     ResponseCmndIdxChar(PSTR("Invalid"));
   }
@@ -2032,6 +2045,97 @@ void CmndMi32Option(void){
   ResponseCmndDone();
 }
 
+void MI32KeyListResp(){
+  Response_P(PSTR("{\"MIKeys\":{"));
+  for (int i = 0; i < MIBLEbindKeys.size(); i++){
+    if (i){
+      ResponseAppend_P(PSTR(","));
+    }
+    char tmp[20];
+    ToHex_P(MIBLEbindKeys[i].MAC,6,tmp,20,0);
+    char key[16*2+1];
+    ToHex_P(MIBLEbindKeys[i].key,16,key,33,0);
+    
+    ResponseAppend_P(PSTR("\"%s\":\"%s\""), tmp, key);
+  }
+  ResponseAppend_P(PSTR("}}"));
+}
+
+
+void CmndMi32Keys(void){
+#ifdef BLE_ESP32_ALIASES
+  int op = XdrvMailbox.index;
+  if (BLE_ESP32::BLEDebugMode > 0) AddLog_P(LOG_LEVEL_DEBUG,PSTR("key %d %s"), op, XdrvMailbox.data);
+
+  int res = -1;
+  switch(op){
+    case 0:
+    case 1:{
+      char *p = strtok(XdrvMailbox.data, " ,=");
+      bool trigger = false;
+      int added = 0;
+
+      do {
+        if (!p || !(*p)){
+          break;
+        }
+
+        uint8_t addr[6];
+        char *mac = p;
+        int addrres = BLE_ESP32::getAddr(addr, p);
+        if (!addrres){
+          ResponseCmndChar("invalidmac");
+          return;
+        }
+
+        p = strtok(nullptr, " ,=");
+        char *key = p;
+        if (!p || !(*p)){
+          int i = 0;
+          for (i = 0; i < MIBLEbindKeys.size(); i++){
+            mi_bindKey_t *key = &MIBLEbindKeys[i];
+            if (!memcmp(key->MAC, addr, 6)){
+              MIBLEbindKeys.erase(MIBLEbindKeys.begin() + i);
+              MI32KeyListResp();
+              return;
+            }
+          }
+          ResponseCmndChar("invalidmac");
+          return;
+        }
+
+        AddLog_P(LOG_LEVEL_ERROR,PSTR("Add key mac %s = key %s"), mac, key);
+        char tmp[20];
+        // convert mac back to string
+        ToHex_P(addr,6,tmp,20,0);
+        if (MI32AddKey(tmp, key)){
+          added++;
+        }
+        p = strtok(nullptr, " ,=");
+      } while (p);
+
+      if (added){
+        if (BLE_ESP32::BLEDebugMode > 0) AddLog_P(LOG_LEVEL_DEBUG,PSTR("Added %d Keys"), added);
+        MI32KeyListResp();
+      } else {
+        MI32KeyListResp();
+      }
+      return;
+    } break;
+    case 2:{ // clear
+      if (BLE_ESP32::BLEDebugMode > 0) AddLog_P(LOG_LEVEL_DEBUG,PSTR("MI32Keys clearing %d"), MIBLEbindKeys.size());
+      for (int i = MIBLEbindKeys.size()-1; i >= 0; i--){
+        MIBLEbindKeys.pop_back();
+      }
+      MI32KeyListResp();
+      return;
+    } break;
+  }
+  ResponseCmndChar("invalididx");
+#endif
+}
+
+
 /*********************************************************************************************\
  * Presentation
 \*********************************************************************************************/
@@ -2090,7 +2194,7 @@ void HandleMI32Key(){
   }
 
   strncat(key, mac, sizeof(key));
-  MI32AddKey(key);
+  MI32AddKey(key, nullptr);
 
   WSContentSend_P(HTTP_KEY_ADDED, key);
 //  WSContentSpaceButton(BUTTON_CONFIGURATION);
