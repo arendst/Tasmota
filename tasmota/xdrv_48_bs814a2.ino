@@ -1,7 +1,7 @@
 /*
   xdrv_48_bs814a2.ino - BS814A-2 touch buttons support for Tasmota
 
-  Copyright (C) 2020 Peter Franck and Theo Arends
+  Copyright (C) 2021 Peter Franck and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -23,11 +23,11 @@
   ==============                        ========
   appear in a dropdown                  (BS814 CLK, BS814 DAT)
   select 2 pins (clk, data)             DONE
-  poll data pin for low state           DONE
+  poll data pin for low state           UNRELIABLE
   generate high-speed clock (25kHz)     DONE
-  poll data bits on clock plateau       DONE
+  poll data bits on clock plateau       RISING EDGE
   update data & report every 50 ms      DONE
-  error & retry logic (if reqired)      DONE
+  error & retry logic (if reqired)      BASIC
   MQTT message & rules hook             DONE
   test on actual Hardware               DONE
 
@@ -35,7 +35,28 @@
   ==================
   see Holtek-Semicon BS814A-2 datasheet for details
   
-  NOTE: Keys are 8 bits per key bitmap although it would fit in 4 bits.
+  *********************
+  * About this driver *
+  *********************
+
+  This driver implements the documented protocol of the Holtek BS814A-2 touch controller.
+  The protocol encodes the bitmap of touched keys in a syncronous serial data stream and
+  adds a 3-bit checksum to it. The Chip is supposed to alert the MCU of new key input by
+  pulling the data line low. This mechanism would have been nice but it didn't function
+  reliablly in my hardware sample. So I decided to poll the touch keys every 50 ms regard-
+  less of a change signal. The rest of the driver logic follows pretty much my previous
+  touch driver FTC532.
+
+  Usage:
+  ------
+  This driver does not actually switch anything. It is a pure "rules" driver that solely emits
+  {"BS814":{"KEYS":"XX"}} JSON messages to be used in a rule or by an MQTT broker. "XX" stands
+  for the hexadecimal (big endian) representation of a bitmap of keys currently touched, where
+  e.g. "00" means "no key touched" while "03" means "keys 1 and 2 touched simultaneously".
+  Selecting "BS814 CLK" on one GPIO and "BS814 DAT" on another GPIO will awake the driver.
+  This driver can only be selected once.
+
+  NOTE: Key hex output is sent in 2 digits although it would fit in one.
         The reason is a provision for BS818A-2 8-key controllers.
 \*********************************************************************************************/
 
@@ -49,12 +70,9 @@
 #define BS814_ERR_WAIT            6000      // minimum time before retry
 #define BS814_FREQ                25000     // max bitrate
 
-#define DEBUG_BS814_DRIVER        // @@@@@@@
-
 struct BS814 {
   uint8_t keys            = 0;              // bitmap of active & old keys: [ooookkkk]
   bool present            = false;          // driver initialized
-  uint32_t lastread       = 0;              // make sure >6 ms passed between reads
 #ifdef DEBUG_BS814_DRIVER
   uint16_t e_level        = 0;              // level disagree error
   uint16_t e_cksum        = 0;              // checksum errror
@@ -106,11 +124,10 @@ void bs814_read(void) {                     // Poll touch keys
   bitval = digitalRead(Pin(GPIO_BS814_DAT));
   frame |= (bitval << bitp);
   // validate frame
-  checksum = BS814_KEYS_MAX - checksum;                             // invert calculated checksum
-  if (checksum != ((frame >> 4) & 0x7)) {                           // checksum error
+  if (BS814_KEYS_MAX - checksum != ((frame >> 4) & 0x7)) {          // checksum error
 #ifdef DEBUG_BS814_DRIVER
     ++Bs814.e_cksum; 
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR("CKS=%02X CFR=%02X"), checksum, (frame >> 4) & 0xF);
+    AddLog_P(LOG_LEVEL_DEBUG, PSTR("CKS=%02X CFR=%02X"), checksum, (frame >> 4) & 0x7);
 #endif  // DEBUG_BS814_DRIVER
     return;
   }
