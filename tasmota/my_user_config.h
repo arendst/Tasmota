@@ -774,6 +774,8 @@
 //#define USE_HRE                                  // Add support for Badger HR-E Water Meter (+1k4 code)
 //#define USE_A4988_STEPPER                        // Add support for A4988/DRV8825 stepper-motor-driver-circuit (+10k5 code)
 
+//#define USE_PROMETHEUS                           // Add support for https://prometheus.io/ metrics exporting over HTTP /metrics endpoint
+
 // -- Thermostat control ----------------------------
 //#define USE_THERMOSTAT                           // Add support for Thermostat
   #define THERMOSTAT_CONTROLLER_OUTPUTS         1         // Number of outputs to be controlled independently
@@ -808,15 +810,12 @@
   #define THERMOSTAT_TEMP_BAND_NO_PEAK_DET      1         // Default temperature band in thenths of degrees celsius within no peak will be detected
   #define THERMOSTAT_TIME_STD_DEV_PEAK_DET_OK   10        // Default standard deviation in minutes of the oscillation periods within the peak detection is successful
 
-// -- Prometheus exporter ---------------------------
-//#define USE_PROMETHEUS                           // Add support for https://prometheus.io/ metrics exporting over HTTP /metrics endpoint
-
 // -- PID and Timeprop ------------------------------
-// #define use TIMEPROP                            // Add support for the timeprop feature (+0k8 code)
+//#define USE_TIMEPROP                             // Add support for the timeprop feature (+0k8 code)
                                                    // For details on the configuration please see the header of tasmota/xdrv_48_timeprop.ino
-// #define USE_PID                                 // Add suport for the PID  feature (+11k1 code)
+//#define USE_PID                                  // Add suport for the PID  feature (+11k1 code)
                                                    // For details on the configuration please see the header of tasmota/xdrv_49_pid.ino
-// -- End of general directives -------------------
+// -- End of general directives ---------------------
 
 /*********************************************************************************************\
  * ESP32 only features

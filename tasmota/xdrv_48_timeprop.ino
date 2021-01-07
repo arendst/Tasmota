@@ -1,19 +1,24 @@
 /*
   xdrv_48_timeprop.ino - Timeprop support for Sonoff-Tasmota
-  Copyright (C) 2018 Colin Law and Thomas Herrmann
+
+  Copyright (C) 2021  Colin Law and Thomas Herrmann
+
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
+
   This program is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU General Public License for more details.
+
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/**
+#ifdef USE_TIMEPROP
+/*********************************************************************************************\
  * Code to drive one or more relays in a time proportioned manner give a
  * required power value.
  *
@@ -74,33 +79,48 @@
    #define TIMEPROP_RELAYS               1,      2       // which relay to control 1:8
 
  * Publish values between 0 and 1 to the topic(s) described above
- *
-**/
+\*********************************************************************************************/
 
+#ifndef TIMEPROP_NUM_OUTPUTS
+#define TIMEPROP_NUM_OUTPUTS          1       // how many outputs to control (with separate alogorithm for each)
+#endif
+#ifndef TIMEPROP_CYCLETIMES
+#define TIMEPROP_CYCLETIMES           60      // cycle time seconds
+#endif
+#ifndef TIMEPROP_DEADTIMES
+#define TIMEPROP_DEADTIMES            0       // actuator action time seconds
+#endif
+#ifndef TIMEPROP_OPINVERTS
+#define TIMEPROP_OPINVERTS            false   // whether to invert the output
+#endif
+#ifndef TIMEPROP_FALLBACK_POWERS
+#define TIMEPROP_FALLBACK_POWERS      0       // falls back to this if too long betwen power updates
+#endif
+#ifndef TIMEPROP_MAX_UPDATE_INTERVALS
+#define TIMEPROP_MAX_UPDATE_INTERVALS 120     // max no secs that are allowed between power updates (0 to disable)
+#endif
+#ifndef TIMEPROP_RELAYS
+#define TIMEPROP_RELAYS               1       // which relay to control 1:8
+#endif
 
-#ifdef USE_TIMEPROP
+#include "Timeprop.h"
 
-# include "Timeprop.h"
-
-
-static Timeprop timeprops[TIMEPROP_NUM_OUTPUTS];
-static int relayNos[TIMEPROP_NUM_OUTPUTS] = {TIMEPROP_RELAYS};
-static long currentRelayStates = 0;  // current actual relay states. Bit 0 first relay
-
-static long timeprop_current_time_secs = 0;  // a counter that counts seconds since initialisation
+struct {
+  Timeprop timeprops[TIMEPROP_NUM_OUTPUTS];
+  int relay_nos[TIMEPROP_NUM_OUTPUTS] = {TIMEPROP_RELAYS};
+  long current_relay_states = 0;  // current actual relay states. Bit 0 first relay
+  long current_time_secs = 0;  // a counter that counts seconds since initialisation
+} Tprop;
 
 /* call this from elsewhere if required to set the power value for one of the timeprop instances */
 /* index specifies which one, 0 up */
-void Timeprop_Set_Power( int index, float power )
-{
-  if (index >= 0  &&  index < TIMEPROP_NUM_OUTPUTS)
-  {
-    timeprops[index].setPower( power, timeprop_current_time_secs);
+void TimepropSetPower(int index, float power) {
+  if (index >= 0  &&  index < TIMEPROP_NUM_OUTPUTS) {
+    Tprop.timeprops[index].setPower( power, Tprop.current_time_secs);
   }
 }
 
-void Timeprop_Init()
-{
+void TimepropInit(void) {
   // AddLog_P(LOG_LEVEL_INFO, PSTR("TPR: Timeprop Init"));
   int cycleTimes[TIMEPROP_NUM_OUTPUTS] = {TIMEPROP_CYCLETIMES};
   int deadTimes[TIMEPROP_NUM_OUTPUTS] = {TIMEPROP_DEADTIMES};
@@ -108,29 +128,29 @@ void Timeprop_Init()
   int fallbacks[TIMEPROP_NUM_OUTPUTS] = {TIMEPROP_FALLBACK_POWERS};
   int maxIntervals[TIMEPROP_NUM_OUTPUTS] = {TIMEPROP_MAX_UPDATE_INTERVALS};
 
-  for (int i=0; i<TIMEPROP_NUM_OUTPUTS; i++) {
-    timeprops[i].initialise(cycleTimes[i], deadTimes[i], opInverts[i], fallbacks[i],
-      maxIntervals[i], timeprop_current_time_secs);
+  for (int i = 0; i < TIMEPROP_NUM_OUTPUTS; i++) {
+    Tprop.timeprops[i].initialise(cycleTimes[i], deadTimes[i], opInverts[i], fallbacks[i],
+      maxIntervals[i], Tprop.current_time_secs);
   }
 }
 
-void Timeprop_Every_Second() {
-  timeprop_current_time_secs++;    // increment time
+void TimepropEverySecond(void) {
+  Tprop.current_time_secs++;    // increment time
   for (int i=0; i<TIMEPROP_NUM_OUTPUTS; i++) {
-    int newState = timeprops[i].tick(timeprop_current_time_secs);
-    if (newState != bitRead(currentRelayStates, relayNos[i]-1)){
+    int newState = Tprop.timeprops[i].tick(Tprop.current_time_secs);
+    if (newState != bitRead(Tprop.current_relay_states, Tprop.relay_nos[i]-1)){
       // remove the third parameter below if using tasmota prior to v6.0.0
-      ExecuteCommandPower(relayNos[i], newState,SRC_IGNORE);
+      ExecuteCommandPower(Tprop.relay_nos[i], newState,SRC_IGNORE);
     }
   }
 }
 
 // called by the system each time a relay state is changed
-void Timeprop_Xdrv_Power() {
+void TimepropXdrvPower(void) {
   // for a single relay the state is in the lsb of index, I have think that for
   // multiple outputs then succesive bits will hold the state but have not been
   // able to test that
-  currentRelayStates = XdrvMailbox.index;
+  Tprop.current_relay_states = XdrvMailbox.index;
 }
 
 /* struct XDRVMAILBOX { */
@@ -142,8 +162,7 @@ void Timeprop_Xdrv_Power() {
 /*   char         *data; */
 /* } XdrvMailbox; */
 
-// To get here post with topic cmnd/timeprop_setpower_n where n is index into timeprops 0:7
-
+// To get here post with topic cmnd/timeprop_setpower_n where n is index into Tprop.timeprops 0:7
 
 /*********************************************************************************************\
  * Interface
@@ -151,20 +170,19 @@ void Timeprop_Xdrv_Power() {
 
 #define XDRV_48       48
 
-bool Xdrv48(byte function)
-{
+bool Xdrv48(byte function) {
   bool result = false;
 
   switch (function) {
-  case FUNC_INIT:
-    Timeprop_Init();
-    break;
-  case FUNC_EVERY_SECOND:
-    Timeprop_Every_Second();
-    break;
-  case FUNC_SET_POWER:
-    Timeprop_Xdrv_Power();
-    break;
+    case FUNC_INIT:
+      TimepropInit();
+      break;
+    case FUNC_EVERY_SECOND:
+      TimepropEverySecond();
+      break;
+    case FUNC_SET_POWER:
+      TimepropXdrvPower();
+      break;
   }
   return result;
 }

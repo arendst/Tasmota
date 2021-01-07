@@ -165,6 +165,10 @@ String EthernetMacAddress(void);
 #define USE_UNISHOX_COMPRESSION                // Add support for string compression
 #endif
 
+#ifdef USE_PID
+#define USE_TIMEPROP
+#endif
+
                                                // See https://github.com/esp8266/Arduino/pull/4889
 #undef NO_EXTRA_4K_HEAP                        // Allocate 4k heap for WPS in ESP8166/Arduino core v2.4.2 (was always allocated in previous versions)
 
