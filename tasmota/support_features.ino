@@ -692,7 +692,9 @@ void ResponseAppendFeatures(void)
 #ifdef USE_UFILESYS
     feature7 |= 0x00200000;
 #endif
-//    feature7 |= 0x00400000;
+#ifdef USE_BS814A2
+    feature7 |= 0x00400000;  // xdrv_48_bs814a2.ino
+#endif
 //    feature7 |= 0x00800000;
 
 //    feature7 |= 0x01000000;

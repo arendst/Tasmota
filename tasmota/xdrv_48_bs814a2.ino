@@ -25,35 +25,41 @@
   select 2 pins (clk, data)             DONE
   poll data pin for low state           DONE
   generate high-speed clock (25kHz)     DONE
-  poll data bits on clock plateau       sample after rising clk edge
+  poll data bits on clock plateau       DONE
   update data & report every 50 ms      DONE
-  error & retry logic (if reqired)      TODO
+  error & retry logic (if reqired)      DONE
   MQTT message & rules hook             DONE
-  test on actual Hardware               TODO
+  test on actual Hardware               DONE
 
   THE PROTOCOL [tm]:
   ==================
   see Holtek-Semicon BS814A-2 datasheet for details
+  
+  NOTE: Keys are 8 bits per key bitmap although it would fit in 4 bits.
+        The reason is a provision for BS818A-2 8-key controllers.
 \*********************************************************************************************/
 
 #define XDRV_48                   48
 
-#define BS814_KEYS_MAX            4
+#define BS814_KEYS_MAX            4         // no. of keys supported
 
 // Timing in microseconds
-#define BS814_BIT                 40
-#define BS814_PULSE               20
-#define BS814_ERR_WAIT            6000
-#define BS814_FREQ                25000
+#define BS814_BIT                 40        // serial bit time
+#define BS814_PULSE               20        // clock pulse width
+#define BS814_ERR_WAIT            6000      // minimum time before retry
+#define BS814_FREQ                25000     // max bitrate
 
 #define DEBUG_BS814_DRIVER        // @@@@@@@
 
 struct BS814 {
-  uint8_t keys = 0;               // bitmap of active & old keys: [ooookkkk]
-  bool present = false;           // driver initialized
+  uint8_t keys            = 0;              // bitmap of active & old keys: [ooookkkk]
+  bool present            = false;          // driver initialized
+  uint32_t lastread       = 0;              // make sure >6 ms passed between reads
 #ifdef DEBUG_BS814_DRIVER
-  uint16_t errors;                // error counter
-  bool valid;                     // did we ever receive valid data?
+  uint16_t e_level        = 0;              // level disagree error
+  uint16_t e_cksum        = 0;              // checksum errror
+  uint16_t e_stp          = 0;              // stop bit error
+  bool valid              = false;          // did we ever receive valid data?
 #endif  // DEBUG_BS814_DRIVER
 } Bs814;
 
@@ -63,7 +69,7 @@ extern "C" {
   void os_delay_us(uint32_t);
 }
 
-void bs814_init(void) {                         // Initialize
+void bs814_init(void) {                     // Initialize
   if (!PinUsed(GPIO_BS814_CLK) || !PinUsed(GPIO_BS814_DAT)) { return; }
   pinMode(Pin(GPIO_BS814_DAT), INPUT_PULLUP);
   pinMode(Pin(GPIO_BS814_CLK), OUTPUT);
@@ -71,23 +77,25 @@ void bs814_init(void) {                         // Initialize
   bs814_read();
 }
 
-void bs814_read(void) {                         // Poll touch keys
-  uint8_t frame;
-  uint8_t bitpos;
-  uint8_t bitval;
+void bs814_read(void) {                     // Poll touch keys
+  uint8_t frame    = 0;
   uint8_t checksum = 0;
+  uint8_t bitp;
+  bool bitval;
   
-  // Data waiting for us?
-//@@@@  if (digitalRead(Pin(GPIO_BS814_DAT) == HIGH)) { return; }
-
-  // generate clock signal & read frame on rising edge
-  for (bitpos = 0; bitpos < 2 * BS814_KEYS_MAX - 1; ++bitpos) {
+  // generate clock signal & sample frame
+  for (bitp = 0; bitp < 2 * BS814_KEYS_MAX - 1; ++bitp) {
     digitalWrite(Pin(GPIO_BS814_CLK), LOW);
     os_delay_us(BS814_PULSE);
     digitalWrite(Pin(GPIO_BS814_CLK), HIGH);
     bitval = digitalRead(Pin(GPIO_BS814_DAT));
-    frame |= (bitval << bitpos);
-    if (bitpos < BS814_KEYS_MAX) {
+#ifdef DEBUG_BS814_DRIVER
+    if (bitval != digitalRead(Pin(GPIO_BS814_DAT))) {               // value consistent?
+      ++Bs814.e_level;
+    }
+#endif  // DEBUG_BS814_DRIVER
+    frame |= (bitval << bitp);
+    if (bitp < BS814_KEYS_MAX) {
       checksum += bitval;
     }
     os_delay_us(BS814_PULSE);
@@ -96,19 +104,35 @@ void bs814_read(void) {                         // Poll touch keys
   os_delay_us(BS814_PULSE);
   digitalWrite(Pin(GPIO_BS814_CLK), HIGH);
   bitval = digitalRead(Pin(GPIO_BS814_DAT));
-  frame |= (bitval << bitpos);
-
-  // validate frame TODO
-  checksum = BS814_KEYS_MAX - checksum;                         // checksum count zeros
-  Bs814.keys = (Bs814.keys & 0xF0) | (~frame & 0xF);            // frame logic inverted
+  frame |= (bitval << bitp);
+  // validate frame
+  checksum = BS814_KEYS_MAX - checksum;                             // invert calculated checksum
+  if (checksum != ((frame >> 4) & 0x7)) {                           // checksum error
+#ifdef DEBUG_BS814_DRIVER
+    ++Bs814.e_cksum; 
+    AddLog_P(LOG_LEVEL_DEBUG, PSTR("CKS=%02X CFR=%02X"), checksum, (frame >> 4) & 0xF);
+#endif  // DEBUG_BS814_DRIVER
+    return;
+  }
+  if ((frame & 0x80) == 0) {                                        // stop bit error
+#ifdef DEBUG_BS814_DRIVER
+    ++Bs814.e_stp;
+#endif  // DEBUG_BS814_DRIVER
+    return;
+  }
+  Bs814.keys = (Bs814.keys & 0xF0) | (~frame & 0xF);                // frame logic inverted
+#ifdef DEBUG_BS814_DRIVER
+  Bs814.valid = true;
+#endif  // DEBUG_BS814_DRIVER
 }
 
-void bs814_update(void) {                       // Usually called every 50 ms
+void bs814_update(void) {                   // Usually called every 50 ms
   bs814_read();
   if ((Bs814.keys & 0xF) != (Bs814.keys >> 4)) {
 #ifdef DEBUG_BS814_DRIVER
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR("BS814: KEY=%0X OLD=%0X ERR=%u OK=%u CLK=%u DAT=%u"),
-             Bs814.keys & 0xF, Bs814.keys >> 4, Bs814.errors, Bs814.valid, Pin(GPIO_BS814_CLK), Pin(GPIO_BS814_DAT));
+    AddLog_P(LOG_LEVEL_DEBUG, PSTR("BS814: KEY=%0X OLD=%0X LVL=%u CKS=%u STP=%u OK=%u CLK=%u DAT=%u"),
+             Bs814.keys & 0xF, Bs814.keys >> 4, Bs814.e_level, Bs814.e_cksum, Bs814.e_stp,
+             Bs814.valid, Pin(GPIO_BS814_CLK), Pin(GPIO_BS814_DAT));
 #endif  // DEBUG_BS814_DRIVER
     bs814_publish();
     Bs814.keys = (Bs814.keys << 4) | (Bs814.keys & 0xF);
@@ -116,11 +140,11 @@ void bs814_update(void) {                       // Usually called every 50 ms
 }
 
 void bs814_show() {
-  ResponseAppend_P(PSTR(",%s%X\"}"), Bs814_json, Bs814.keys & 0xF);   // tele json
+  ResponseAppend_P(PSTR(",%s%02X\"}"), Bs814_json, Bs814.keys & 0xF);   // tele json
 }
 
 void bs814_publish(void) {
-  Response_P(PSTR("{%s%X\"}}"), Bs814_json, Bs814.keys & 0xF);        // mqtt & rules
+  Response_P(PSTR("{%s%02X\"}}"), Bs814_json, Bs814.keys & 0xF);        // mqtt & rules
   MqttPublishTeleSensor();
 }
 

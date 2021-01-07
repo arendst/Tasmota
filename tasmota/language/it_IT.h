@@ -641,6 +641,8 @@
 #define D_SENSOR_HX711_SCK     "HX711 - SCK"
 #define D_SENSOR_HX711_DAT     "HX711 - DAT"
 #define D_SENSOR_FTC532        "FTC532"
+#define D_SENSOR_BS814_CLK     "BS814 CLK"
+#define D_SENSOR_BS814_DAT     "BS814 DAT"
 #define D_SENSOR_TX2X_TX       "TX2x"
 #define D_SENSOR_RFSEND        "RF - TX"
 #define D_SENSOR_RFRECV        "RF - RX"
