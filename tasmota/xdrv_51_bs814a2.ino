@@ -102,7 +102,7 @@ void bs814_read(void) {                     // Poll touch keys
   bool bitval;
   
   // generate clock signal & sample frame
-  for (bitp = 0; bitp < 2 * BS814_KEYS_MAX - 1; ++bitp) {
+  for (bitp = 0; bitp < 2 * BS814_KEYS_MAX; ++bitp) {
     digitalWrite(Pin(GPIO_BS814_CLK), LOW);
     os_delay_us(BS814_PULSE);
     digitalWrite(Pin(GPIO_BS814_CLK), HIGH);
@@ -113,16 +113,13 @@ void bs814_read(void) {                     // Poll touch keys
     }
 #endif  // DEBUG_BS814_DRIVER
     frame |= (bitval << bitp);
-    if (bitp < BS814_KEYS_MAX) {
-      checksum += bitval;
+    if (bitp < 2 * BS814_KEYS_MAX - 1) {                            // stop bit
+      if (bitp < BS814_KEYS_MAX) {
+        checksum += bitval;                                         // checksum key bits
+      }
+      os_delay_us(BS814_PULSE);
     }
-    os_delay_us(BS814_PULSE);
   }
-  digitalWrite(Pin(GPIO_BS814_CLK), LOW);
-  os_delay_us(BS814_PULSE);
-  digitalWrite(Pin(GPIO_BS814_CLK), HIGH);
-  bitval = digitalRead(Pin(GPIO_BS814_DAT));
-  frame |= (bitval << bitp);
   // validate frame
   if (BS814_KEYS_MAX - checksum != ((frame >> 4) & 0x7)) {          // checksum error
 #ifdef DEBUG_BS814_DRIVER
