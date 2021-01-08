@@ -117,11 +117,6 @@
    #define PID_REPORT_MORE_SETTINGS                   // If defined, the SENSOR output will provide more extensive json
                                                  // output in the PID section
 
-//   #define PID_BACKWARD_COMPATIBLE             // Preserve the backward compatible reporting of PID power via
-                                                 // `%topic%/PID {"power":"0.000"}`  This is now available in
-                                                 // `%topic$/SENSOR {..., "PID":{"PidPower":0.00}}`
-                                                 // Don't use unless you know that you need it
-
  * Help with using the PID algorithm and with loop tuning can be found at
  * http://blog.clanlaw.org.uk/2018/01/09/PID-tuning-with-node-red-contrib-pid.html
  * This is directed towards using the algorithm in the node-red node node-red-contrib-pid but the algorithm here is based on
@@ -391,14 +386,14 @@ void PIDShowValues(void) {
 
 void PIDRun(void) {
   double power = Pid.pid.tick(Pid.current_time_secs);
-#ifdef PID_BACKWARD_COMPATIBLE
+#ifdef PID_DONT_USE_PID_TOPIC
   // This part is left inside to regularly publish the PID Power via
   // `%topic%/PID {"power":"0.000"}`
   char str_buf[FLOATSZ];
   dtostrfd(power, 3, str_buf);
   snprintf_P(TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), PSTR("{\"%s\":\"%s\"}"), "power", str_buf);
   MqttPublishPrefixTopic_P(TELE, "PID", false);
-#endif // PID_BACKWARD_COMPATIBLE
+#endif // PID_DONT_USE_PID_TOPIC
 
 #if defined PID_SHUTTER
   // send output as a position from 0-100 to defined shutter
