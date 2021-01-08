@@ -137,7 +137,8 @@ int32_t NvmErase(const char *sNvsName) {
 }
 
 void SettingsErase(uint8_t type) {
-  // All SDK and Tasmota data is held in default NVS partition
+  // SDK and Tasmota data is held in default NVS partition
+  // Tasmota data is held also in file /settings on default filesystem
   // cal_data - SDK PHY calibration data as documented in esp_phy_init.h
   // qpc      - Tasmota Quick Power Cycle state
   // main     - Tasmota Settings data
@@ -147,7 +148,8 @@ void SettingsErase(uint8_t type) {
 //      nvs_flash_erase();  // Erase RTC, PHY, sta.mac, ap.sndchan, ap.mac, Tasmota etc.
       r1 = NvmErase("qpc");
       r2 = NvmErase("main");
-      AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_ERASE " Tasmota data (%d,%d)"), r1, r2);
+      r3 = TfsDeleteFile(TASM_FILE_SETTINGS);
+      AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_ERASE " Tasmota data (%d,%d,%d)"), r1, r2, r3);
       break;
     case 1: case 4:       // Reset 3 or WIFI_FORCE_RF_CAL_ERASE = SDK parameter area
       r1 = esp_phy_erase_cal_data_in_nvs();
@@ -157,7 +159,8 @@ void SettingsErase(uint8_t type) {
     case 2:               // Not used = QPC and Tasmota parameter area (0x0F3xxx - 0x0FBFFF)
       r1 = NvmErase("qpc");
       r2 = NvmErase("main");
-      AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_ERASE " Tasmota data (%d,%d)"), r1, r2);
+      r3 = TfsDeleteFile(TASM_FILE_SETTINGS);
+      AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_ERASE " Tasmota data (%d,%d,%d)"), r1, r2, r3);
       break;
     case 3:               // QPC Reached = QPC, Tasmota and SDK parameter area (0x0F3xxx - 0x0FFFFF)
 //      nvs_flash_erase();  // Erase RTC, PHY, sta.mac, ap.sndchan, ap.mac, Tasmota etc.
@@ -166,14 +169,15 @@ void SettingsErase(uint8_t type) {
 //      r3 = esp_phy_erase_cal_data_in_nvs();
 //      r3 = NvmErase("cal_data");
 //      AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_ERASE " Tasmota (%d,%d) and PHY data (%d)"), r1, r2, r3);
-      AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_ERASE " Tasmota data (%d,%d)"), r1, r2);
+      r3 = TfsDeleteFile(TASM_FILE_SETTINGS);
+      AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_ERASE " Tasmota data (%d,%d,%d)"), r1, r2, r3);
       break;
   }
 }
 
 uint32_t SettingsRead(void *data, size_t size) {
   uint32_t source = 1;
-  if (!TfsLoadFile("/settings", (uint8_t*)data, size)) {
+  if (!TfsLoadFile(TASM_FILE_SETTINGS, (uint8_t*)data, size)) {
     source = 0;
     NvmLoad("main", "Settings", data, size);
   }
@@ -181,7 +185,7 @@ uint32_t SettingsRead(void *data, size_t size) {
 }
 
 void SettingsWrite(const void *pSettings, unsigned nSettingsLen) {
-  TfsSaveFile("/settings", (const uint8_t*)pSettings, nSettingsLen);
+  TfsSaveFile(TASM_FILE_SETTINGS, (const uint8_t*)pSettings, nSettingsLen);
   NvmSave("main", "Settings", pSettings, nSettingsLen);
 }
 
