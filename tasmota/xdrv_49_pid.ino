@@ -129,6 +129,7 @@
 
 
 #ifdef USE_PID
+#ifndef FIRMWARE_MINIMAL
 
 #include "PID.h"
 
@@ -410,4 +411,5 @@ bool Xdrv49(byte function)
   }
   return result;
 }
+#endif // FIRMWARE_MINIMAL
 #endif // USE_PID
