@@ -88,7 +88,6 @@ struct {
       uint32_t shallClearResults:1;   // BLE scan results
       uint32_t shallShowStatusInfo:1; // react to amount of found sensors via RULES
       uint32_t firstAutodiscoveryDone:1;
-      uint32_t shallShowBlockList:1;
       uint32_t shallTriggerTele:1;
       uint32_t triggeredTele:1;
     };
@@ -899,9 +898,9 @@ int MI32advertismentCallback(BLE_ESP32::ble_advertisment_t *pStruct)
   // AddLog_P(LOG_LEVEL_DEBUG,PSTR("Advertised Device: %s Buffer: %u"),advertisedDevice->getAddress().toString().c_str(),advertisedDevice->getServiceData(0).length());
   int RSSI = pStruct->RSSI;
   const uint8_t *addr = pStruct->addr;
+  if(MI32isInBlockList(addr) == true) return 0;
+
   int svcdataCount = advertisedDevice->getServiceDataCount();
-
-
 
   if (svcdataCount == 0) {
     return 0;
@@ -935,11 +934,9 @@ int MI32advertismentCallback(BLE_ESP32::ble_advertisment_t *pStruct)
       case 0xfe95: // std MI?
       case 0xfdcd: // CGD1?
       {
-        if(MI32isInBlockList(addr) == true) return 0;
         MI32ParseResponse(ServiceData, ServiceDataLength, addr, RSSI);
       } break;
       case 0x181a: { //ATC
-        if(MI32isInBlockList(addr) == true) return 0;
         MI32ParseATCPacket(ServiceData, ServiceDataLength, addr, RSSI);
       } break;
 
@@ -1712,25 +1709,6 @@ void MI32ParseResponse(const uint8_t *buf, uint16_t bufsize, const uint8_t* addr
   }
 }
 
-
-
-void MI32mqttBlockList(){
-  ResponseTime_P(PSTR(",\"Block\":["));
-
-  int cnt = 0;
-  for(auto _scanResult : MIBLEBlockList){
-    char _MAC[18];
-    if (cnt++){
-      ResponseAppend_P(PSTR(","));
-    }
-    ToHex_P(_scanResult.buf,6,_MAC,18,0);
-    ResponseAppend_P(PSTR("\"%s\""), _MAC);
-  }
-  ResponseAppend_P(PSTR("]}"));
-  MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
-}
-
-
 bool MI32isInBlockList(const uint8_t* MAC){
   bool isBlocked = false;
   for(auto &_blockedMAC : MIBLEBlockList){
@@ -1799,11 +1777,6 @@ void MI32notifyHT_LY(int slot, char *_buf, int len){
  */
 
 void MI32Every50mSecond(){
-
-  if (MI32.mode.shallShowBlockList){
-    MI32.mode.shallShowBlockList = 0;
-    MI32mqttBlockList();
-  }
 
   if(MI32.mode.shallTriggerTele){
       MI32.mode.shallTriggerTele = 0;
@@ -1976,54 +1949,66 @@ void CmndMi32Key(void) {
 }
 #endif  // USE_MI_DECRYPTION
 
+void MI32BlockListResp(){
+  Response_P(PSTR("{\"MI32Block\":{"));
+  for (int i = 0; i < MIBLEBlockList.size(); i++){
+    if (i){
+      ResponseAppend_P(PSTR(","));
+    }
+    char tmp[20];
+    ToHex_P(MIBLEBlockList[i].buf,6,tmp,20,0);
+    ResponseAppend_P(PSTR("\"%s\":1"), tmp);
+  }
+  ResponseAppend_P(PSTR("}}"));
+}
+
+
 void CmndMi32Block(void){
   if (XdrvMailbox.data_len == 0) {
     switch (XdrvMailbox.index) {
       case 0: {
         //TasAutoMutex localmutex(&slotmutex, "Mi32Block1");
         MIBLEBlockList.clear();
-        // AddLog_P(LOG_LEVEL_INFO,PSTR("MI32: size of ilist: %u"), MIBLEBlockList.size());
-        ResponseCmndIdxChar(PSTR("block list cleared"));
       } break;
+      default:
       case 1:
-        ResponseCmndIdxChar(PSTR("show block list"));
         break;  
     }
+    MI32BlockListResp();
+    return;
   }
-  else {
-    MAC_t _MACasBytes;
-    int res = BLE_ESP32::getAddr(_MACasBytes.buf, XdrvMailbox.data);
-    if (!res){
-      ResponseCmndIdxChar(PSTR("Addr invalid"));
-    } else {
-      //MI32HexStringToBytes(XdrvMailbox.data,_MACasBytes.buf);
-      switch (XdrvMailbox.index) {
-        case 0: {
-          //TasAutoMutex localmutex(&slotmutex, "Mi32Block2");
-          MIBLEBlockList.erase( std::remove_if( begin( MIBLEBlockList ), end( MIBLEBlockList ), [_MACasBytes]( MAC_t& _entry )->bool
-            { return (memcmp(_entry.buf,_MACasBytes.buf,6) == 0); } 
-            ), end( MIBLEBlockList ) );
-          ResponseCmndIdxChar(PSTR("MAC not blocked anymore"));
-        } break;
-        case 1: {
-          //TasAutoMutex localmutex(&slotmutex, "Mi32Block3");
-          bool _notYetInList = true;
-          for (auto &_entry : MIBLEBlockList) {
-            if (memcmp(_entry.buf,_MACasBytes.buf,6) == 0){
-              _notYetInList = false;
-            }
-          }
-          if (_notYetInList) {
-            MIBLEBlockList.push_back(_MACasBytes);
-            ResponseCmndIdxChar(XdrvMailbox.data);
-            MI32removeMIBLEsensor(_MACasBytes.buf);
-          }
-          // AddLog_P(LOG_LEVEL_INFO,PSTR("MI32: size of ilist: %u"), MIBLEBlockList.size());
-        } break;  
+
+  MAC_t _MACasBytes;
+  int res = BLE_ESP32::getAddr(_MACasBytes.buf, XdrvMailbox.data);
+  if (!res){
+    ResponseCmndIdxChar(PSTR("Addr invalid"));
+    return;
+  }
+
+  //MI32HexStringToBytes(XdrvMailbox.data,_MACasBytes.buf);
+  switch (XdrvMailbox.index) {
+    case 0: {
+      //TasAutoMutex localmutex(&slotmutex, "Mi32Block2");
+      MIBLEBlockList.erase( std::remove_if( begin( MIBLEBlockList ), end( MIBLEBlockList ), [_MACasBytes]( MAC_t& _entry )->bool
+        { return (memcmp(_entry.buf,_MACasBytes.buf,6) == 0); } 
+        ), end( MIBLEBlockList ) );
+    } break;
+    case 1: {
+      //TasAutoMutex localmutex(&slotmutex, "Mi32Block3");
+      bool _notYetInList = true;
+      for (auto &_entry : MIBLEBlockList) {
+        if (memcmp(_entry.buf,_MACasBytes.buf,6) == 0){
+          _notYetInList = false;
+        }
       }
-    }
+      if (_notYetInList) {
+        MIBLEBlockList.push_back(_MACasBytes);
+        MI32removeMIBLEsensor(_MACasBytes.buf);
+      }
+      // AddLog_P(LOG_LEVEL_INFO,PSTR("MI32: size of ilist: %u"), MIBLEBlockList.size());
+    } break;  
   }
-  MI32.mode.shallShowBlockList = 1;
+  MI32BlockListResp();
 }
 
 void CmndMi32Option(void){
@@ -2384,7 +2369,7 @@ void MI32GetOneSensorJson(int slot){
 void MI32ShowSomeSensors(){
   // don't detect half-added ones here
   int numsensors = MIBLEsensors.size();
-  if (MI32.mqttCurrentSlot == numsensors){
+  if (MI32.mqttCurrentSlot >= numsensors){
     // if we got to the end of the sensors, then don't send more
     return;
   }
@@ -2418,6 +2403,8 @@ void MI32ShowSomeSensors(){
   }
   ResponseAppend_P(PSTR("}"));
   MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
+  //AddLog_P(LOG_LEVEL_DEBUG,PSTR("%s: show some %d %s"),D_CMND_MI32, MI32.mqttCurrentSlot, TasmotaGlobal.mqtt_data);
+
 #ifdef USE_RULES
   RulesTeleperiod();  // Allow rule based HA messages
 #endif  // USE_RULES
@@ -2466,6 +2453,8 @@ void MI32ShowTriggeredSensors(){
     if (cnt){ // if we got one, then publish
       ResponseAppend_P(PSTR("}"));
       MqttPublishPrefixTopic_P(STAT, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
+      AddLog_P(LOG_LEVEL_DEBUG,PSTR("%s: triggered %d %s"),D_CMND_MI32, sensor, TasmotaGlobal.mqtt_data);
+
 #ifdef USE_RULES
       RulesTeleperiod();  // Allow rule based HA messages
 #endif  // USE_RULES
