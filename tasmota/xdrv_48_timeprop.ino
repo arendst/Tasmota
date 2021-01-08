@@ -81,6 +81,16 @@
  * Publish values between 0 and 1 to the topic(s) described above
 \*********************************************************************************************/
 
+#define D_CMND_TIMEPROP "timeprop_"
+#define D_CMND_TIMEPROP_SETPOWER "setpower_"    // add index no on end (0:8) and data is power 0:1
+
+enum TimepropCommands { CMND_TIMEPROP_SETPOWER };
+const char kTimepropCommands[] PROGMEM = D_CMND_TIMEPROP_SETPOWER;
+
+static Timeprop timeprops[TIMEPROP_NUM_OUTPUTS];
+static int relayNos[TIMEPROP_NUM_OUTPUTS] = {TIMEPROP_RELAYS};
+static long currentRelayStates = 0;  // current actual relay states. Bit 0 first relay
+
 #ifndef TIMEPROP_NUM_OUTPUTS
 #define TIMEPROP_NUM_OUTPUTS          1       // how many outputs to control (with separate alogorithm for each)
 #endif
@@ -162,7 +172,51 @@ void TimepropXdrvPower(void) {
 /*   char         *data; */
 /* } XdrvMailbox; */
 
-// To get here post with topic cmnd/timeprop_setpower_n where n is index into Tprop.timeprops 0:7
+// To get here post with topic cmnd/timeprop_setpower_n where n is index into timeprops 0:7
+bool TimepropCommand()
+{
+  char command [CMDSZ];
+  bool serviced = true;
+  uint8_t ua_prefix_len = strlen(D_CMND_TIMEPROP); // to detect prefix of command
+  /*
+  snprintf_P(log_data, sizeof(log_data), "Command called: "
+    "index: %d data_len: %d payload: %d topic: %s data: %s\n",
+    XdrvMailbox.index,
+    XdrvMailbox.data_len,
+    XdrvMailbox.payload,
+    (XdrvMailbox.payload >= 0 ? XdrvMailbox.topic : ""),
+    (XdrvMailbox.data_len >= 0 ? XdrvMailbox.data : ""));
+
+    AddLog(LOG_LEVEL_INFO);
+  */
+  if (0 == strncasecmp_P(XdrvMailbox.topic, PSTR(D_CMND_TIMEPROP), ua_prefix_len)) {
+    // command starts with timeprop_
+    int command_code = GetCommandCode(command, sizeof(command), XdrvMailbox.topic + ua_prefix_len, kTimepropCommands);
+    if (CMND_TIMEPROP_SETPOWER == command_code) {
+      /*
+      snprintf_P(log_data, sizeof(log_data), "Timeprop command timeprop_setpower: "
+        "index: %d data_len: %d payload: %d topic: %s data: %s",
+	      XdrvMailbox.index,
+	      XdrvMailbox.data_len,
+	      XdrvMailbox.payload,
+	      (XdrvMailbox.payload >= 0 ? XdrvMailbox.topic : ""),
+	      (XdrvMailbox.data_len >= 0 ? XdrvMailbox.data : ""));
+        AddLog(LOG_LEVEL_INFO);
+      */
+      if (XdrvMailbox.index >=0 && XdrvMailbox.index < TIMEPROP_NUM_OUTPUTS) {
+        timeprops[XdrvMailbox.index].setPower( atof(XdrvMailbox.data), timeprop_current_time_secs );
+      }
+      snprintf_P(TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), PSTR("{\"" D_CMND_TIMEPROP D_CMND_TIMEPROP_SETPOWER "%d\":\"%s\"}"),
+        XdrvMailbox.index, XdrvMailbox.data);
+    }
+    else {
+      serviced = false;
+    }
+  } else {
+    serviced = false;
+  }
+  return serviced;
+}
 
 /*********************************************************************************************\
  * Interface
@@ -180,6 +234,9 @@ bool Xdrv48(byte function) {
     case FUNC_EVERY_SECOND:
       TimepropEverySecond();
       break;
+  case FUNC_COMMAND:
+    result = TimepropCommand();
+    break;
     case FUNC_SET_POWER:
       TimepropXdrvPower();
       break;
