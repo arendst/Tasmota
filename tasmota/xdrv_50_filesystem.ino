@@ -88,17 +88,57 @@ uint8_t ffs_type;
 
 /*********************************************************************************************/
 
+
+
+
+// init flash file system
 void UfsInitOnce(void) {
   ufs_type = 0;
   ffsp = 0;
   ufs_dir = 0;
-  // check for fs options,
-  // 1. check for SD card
-  // 2. check for littlefs or FAT
+
+#ifdef ESP8266
+  ffsp = &LittleFS;
+  if (!LittleFS.begin()) {
+    return;
+  }
+#endif  // ESP8266
+
+#ifdef ESP32
+  // try lfs first
+  ffsp = &LITTLEFS;
+  if (!LITTLEFS.begin(true)) {
+    // ffat is second
+    ffsp = &FFat;
+    if (!FFat.begin(true)) {
+      return;
+    }
+    ffs_type = UFS_TFAT;
+    ufs_type = ffs_type;
+    ufsp = ffsp;
+    dfsp = ffsp;
+    return;
+  }
+#endif // ESP32
+  ffs_type = UFS_TLFS;
+  ufs_type = ffs_type;
+  ufsp = ffsp;
+  dfsp = ffsp;
+}
+
+// actually this inits flash file only
+void UfsInit(void) {
+  UfsInitOnce();
+  if (ufs_type) {
+    AddLog_P(LOG_LEVEL_INFO, PSTR("UFS: Type %d mounted with %d kB free"), ufs_type, UfsInfo(1, 0));
+  }
+}
+
 
 #ifdef USE_SDCARD
+void UfsCheckSDCardInit(void) {
   if (TasmotaGlobal.spi_enabled) {
-//  if (1) {
+  //  if (1) {
     int8_t cs = SDCARD_CS_PIN;
     if (PinUsed(GPIO_SDCARD_CS)) {
       cs = Pin(GPIO_SDCARD_CS);
@@ -108,66 +148,25 @@ void UfsInitOnce(void) {
 #ifdef ESP8266
       ufsp = &SDFS;
 #endif  // ESP8266
+
 #ifdef ESP32
       ufsp = &SD;
 #endif  // ESP32
       ufs_type = UFS_TSDC;
       dfsp = ufsp;
-#ifdef FFS_2
-      // now detect ffs
-      ffsp = &LITTLEFS;
-      if (!LITTLEFS.begin()) {
-        // ffat is second
-        ffsp = &FFat;
-        if (!FFat.begin(true)) {
-          ffsp = 0;
-          return;
-        }
-        ffs_type = UFS_TFAT;
-        ufs_dir = 1;
-        return;
-      }
-      ffs_type = UFS_TLFS;
       ufs_dir = 1;
-#endif // FFS_2
-      return;
-    }
-  }
-#endif // USE_SDCARD
-
-// if no success with sd card try flash fs
+      // make sd card the global filesystem
 #ifdef ESP8266
-  ufsp = &LittleFS;
-  if (!LittleFS.begin()) {
-    return;
-  }
-#endif  // ESP8266
+      // on esp8266 sdcard info takes several seconds !!!, so we ommit it here
+      AddLog_P(LOG_LEVEL_INFO, PSTR("UFS: SDCARD mounted"));
+#endif // ESP8266
 #ifdef ESP32
-  // try lfs first
-  ufsp = &LITTLEFS;
-  if (!LITTLEFS.begin(true)) {
-    // ffat is second
-    ufsp = &FFat;
-    if (!FFat.begin(true)) {
-      return;
-    }
-    ufs_type = UFS_TFAT;
-    ffsp = ufsp;
-    dfsp = ufsp;
-    return;
-  }
+      AddLog_P(LOG_LEVEL_INFO, PSTR("UFS: SDCARD mounted with %d kB free"), UfsInfo(1, 0));
 #endif // ESP32
-  ufs_type = UFS_TLFS;
-  ffsp = ufsp;
-  dfsp = ufsp;
-}
-
-void UfsInit(void) {
-  UfsInitOnce();
-  if (ufs_type) {
-    AddLog_P(LOG_LEVEL_INFO, PSTR("UFS: Type %d mounted with %dkB free"), ufs_type, UfsInfo(1, 0));
+    }
   }
 }
+#endif // USE_SDCARD
 
 uint32_t UfsInfo(uint32_t sel, uint32_t type) {
   uint32_t result = 0;
@@ -677,6 +676,11 @@ bool Xdrv50(uint8_t function) {
   bool result = false;
 
   switch (function) {
+#ifdef USE_SDCARD
+    case FUNC_PRE_INIT:
+      UfsCheckSDCardInit();
+      break;
+#endif // USE_SDCARD
     case FUNC_COMMAND:
       result = DecodeCommand(kUFSCommands, kUFSCommand);
       break;
