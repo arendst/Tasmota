@@ -783,7 +783,6 @@ int getSeenDeviceToJson(int index, BLE_ESP32::BLE_simple_device_t* dev, char **d
 int nextSeenDev = 0;
 
 int getSeenDevicesToJson(char *dest, int maxlen){
-  int res = 0;
 
   if ((nextSeenDev == 0) || (nextSeenDev >= seenDevices.size())){
     nextSeenDev = 0;
@@ -815,7 +814,7 @@ int getSeenDevicesToJson(char *dest, int maxlen){
         *(dest++) = ',';
         maxlen--;
       }
-      res += getSeenDeviceToJson(nextSeenDev, seenDevices[nextSeenDev], &dest, &maxlen);
+      int res = getSeenDeviceToJson(nextSeenDev, seenDevices[nextSeenDev], &dest, &maxlen);
       if (res) {
         added++;
       } else {
