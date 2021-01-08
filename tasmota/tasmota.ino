@@ -229,6 +229,10 @@ void setup(void) {
 //  Serial.setRxBufferSize(INPUT_BUFFER_SIZE);  // Default is 256 chars
   TasmotaGlobal.seriallog_level = LOG_LEVEL_INFO;  // Allow specific serial messages until config loaded
 
+#ifdef USE_UFILESYS
+  UfsInit();  // xdrv_50_filesystem.ino
+#endif
+
   SettingsLoad();
   SettingsDelta();
 
