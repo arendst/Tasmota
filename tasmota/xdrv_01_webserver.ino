@@ -684,7 +684,7 @@ void WSContentSend_PD(const char* formatP, ...)    // Content send snprintf_P ch
 
 void WSContentStart_P(const char* title, bool auth)
 {
-  if (auth && strlen(SettingsText(SET_WEBPWD)) && !Webserver->authenticate(WEB_USERNAME, SettingsText(SET_WEBPWD))) {
+  if (auth && !WebAuthenticate()) {
     return Webserver->requestAuthentication();
   }
 
@@ -2606,22 +2606,19 @@ void HandleHttpCommand(void)
 
   AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_COMMAND));
 
-  if (strlen(SettingsText(SET_WEBPWD))) {
-    //Prefer authorization via HTTP header (Basic auth), if it fails, use legacy method via GET parameters
-    if (!Webserver->authenticate(WEB_USERNAME, SettingsText(SET_WEBPWD))) {
-      char tmp1[33];
-      WebGetArg("user", tmp1, sizeof(tmp1));
-      char tmp2[strlen(SettingsText(SET_WEBPWD)) + 1];
-      WebGetArg("password", tmp2, sizeof(tmp2));
+  if (!WebAuthenticate()) {
+    // Prefer authorization via HTTP header (Basic auth), if it fails, use legacy method via GET parameters
+    char tmp1[33];
+    WebGetArg("user", tmp1, sizeof(tmp1));
+    char tmp2[strlen(SettingsText(SET_WEBPWD)) + 1];
+    WebGetArg("password", tmp2, sizeof(tmp2));
 
-      if (!(!strcmp(tmp1, WEB_USERNAME) && !strcmp(tmp2, SettingsText(SET_WEBPWD))))
-      {
-        WSContentBegin(401, CT_JSON);
-        WSContentSend_P(PSTR("{\"" D_RSLT_WARNING "\":\"" D_NEED_USER_AND_PASSWORD "\"}"));
-        WSContentEnd();
-        return;
-      }
-    } 
+    if (!(!strcmp(tmp1, WEB_USERNAME) && !strcmp(tmp2, SettingsText(SET_WEBPWD)))) {
+      WSContentBegin(401, CT_JSON);
+      WSContentSend_P(PSTR("{\"" D_RSLT_WARNING "\":\"" D_NEED_USER_AND_PASSWORD "\"}"));
+      WSContentEnd();
+      return;
+    }
   }
 
   WSContentBegin(200, CT_JSON);
