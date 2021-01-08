@@ -292,7 +292,7 @@ void ILI9341_2::setAddrWindow(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1
   }
 }
 
-void ILI9341_2::pushColors(uint16_t *data, uint8_t len, boolean first) {
+void ILI9341_2::pushColors(uint16_t *data, uint16_t len, boolean first) {
   uint16_t color;
 
   while (len--) {

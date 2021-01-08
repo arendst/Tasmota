@@ -1543,7 +1543,7 @@ void CmndDisplayRows(void)
 
 #ifdef USE_TOUCH_BUTTONS
 // very limited path size, so, add .jpg
-void draw_picture(char *path, uint32_t xp, uint32_t yp, uint32_t xs, uint32_t ys, bool inverted) {
+void draw_picture(char *path, uint32_t xp, uint32_t yp, uint32_t xs, uint32_t ys, uint32_t ocol, bool inverted) {
 char ppath[16];
   strcpy(ppath, path);
   uint8_t plen = strlen(path) -1;
@@ -1554,7 +1554,11 @@ char ppath[16];
     }
     inverted = false;
   }
-  strcat(ppath, ".jpg");
+  if (ocol == 9) {
+    strcat(ppath, ".rgb");
+  } else {
+    strcat(ppath, ".jpg");
+  }
   Draw_RGB_Bitmap(ppath, xp, yp, inverted);
 }
 #endif

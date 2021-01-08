@@ -136,7 +136,7 @@ class ILI9341_2 : public Renderer {
   void fillScreen(uint16_t color);
   void fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color);
   void dim(uint8_t dim);
-  void pushColors(uint16_t *data, uint8_t len, boolean first);
+  void pushColors(uint16_t *data, uint16_t len, boolean first);
   void invertDisplay(boolean i);
   void spiwrite(uint8_t c);
   void spiwrite16(uint16_t c);

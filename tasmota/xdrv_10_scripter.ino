@@ -1913,6 +1913,10 @@ chknext:
           fvar = RtcTime.day_of_month;
           goto exit;
         }
+        if (!strncmp(vname, "dvnm", 4)) {
+          if (sp) strlcpy(sp, SettingsText(SET_DEVICENAME), glob_script_mem.max_ssize);
+          goto strexit;
+        }
         break;
       case 'e':
         if (!strncmp(vname, "epoch", 5)) {
@@ -2367,6 +2371,7 @@ chknext:
           goto strexit;
         }
         break;
+
       case 'g':
         if (!strncmp(vname, "gtmp", 4)) {
           fvar = TasmotaGlobal.temperature_celsius;

@@ -152,7 +152,7 @@ class Arduino_ST7789 : public Renderer {
   uint16_t color565(uint8_t r, uint8_t g, uint8_t b) { return Color565(r, g, b); }
   void DisplayOnff(int8_t on);
   void dim(uint8_t contrast);
-  void pushColors(uint16_t *data, uint8_t len, boolean first);
+  void pushColors(uint16_t *data, uint16_t len, boolean first);
 
  protected:
   uint8_t  _colstart, _rowstart, _xstart, _ystart; // some displays need this changed

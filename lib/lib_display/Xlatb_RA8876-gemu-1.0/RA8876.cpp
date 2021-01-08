@@ -932,18 +932,28 @@ void RA8876::setAddrWindow(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1) {
   SPI.endTransaction();
 }
 
-void RA8876::pushColors(uint16_t *data, uint8_t len, boolean first) {
+void RA8876::pushColors(uint16_t *data, uint16_t len, boolean first) {
   SPI.beginTransaction(m_spiSettings);
+  //RA8876_CS_LOW
   while (len--) {
 
-    //uint16_t color=RA8876_WHITE;
     uint16_t color=*data++;
+
+#if 0
+    SPI.transfer(RA8876_DATA_WRITE);
+    SPI.transfer(color&0xff);
+    SPI.transfer(RA8876_DATA_WRITE);
+    SPI.transfer(color>>8);
+
+#else
+
     //waitWriteFifo();
     writeData(color&0xff);
     //waitWriteFifo();
     writeData(color>>8);
-
+#endif
   }
+  //RA8876_CS_HIGH
   SPI.endTransaction();
 }
 

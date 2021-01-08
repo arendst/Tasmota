@@ -48,7 +48,9 @@ The driver enabled by #define USE_UFILESYS
 #define SDCARD_CS_PIN     4
 #endif
 
+#ifdef ESP32
 #define FFS_2
+#endif
 
 #ifdef ESP8266
 #include <LittleFS.h>
@@ -428,8 +430,8 @@ void UFSdirectory(void) {
 
   char ts[16];
   char fs[16];
-  UFS_form1000(ufs_fsinfo(0, ufs_dir == 1 ? 0:1), ts, '.');
-  UFS_form1000(ufs_fsinfo(1, ufs_dir == 1 ? 0:1), fs, '.');
+  UFS_form1000(ufs_fsinfo(0, ufs_dir == 2 ? 1:0), ts, '.');
+  UFS_form1000(ufs_fsinfo(1, ufs_dir == 2 ? 1:0), fs, '.');
 
   WSContentSend_P(UFS_FORM_FILE_UPGc, WebColor(COL_TEXT), ts, fs);
 

@@ -99,7 +99,7 @@ class SSD1351 : public Renderer {
   void DisplayInit(int8_t p,int8_t size,int8_t rot,int8_t font);
   void setAddrWindow_i(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1);
   void setAddrWindow(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1);
-  void pushColors(uint16_t *data, uint8_t len, boolean first);
+  void pushColors(uint16_t *data, uint16_t len, boolean first);
   void drawPixel(int16_t x, int16_t y, uint16_t color);
   void write16BitColor(uint16_t color);
   void setRotation(uint8_t r);

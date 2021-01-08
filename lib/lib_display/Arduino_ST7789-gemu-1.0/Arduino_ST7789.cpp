@@ -611,7 +611,7 @@ void Arduino_ST7789::pushColor(uint16_t color) {
   SPI_END_TRANSACTION();
 }
 
-void Arduino_ST7789::pushColors(uint16_t *data, uint8_t len, boolean first) {
+void Arduino_ST7789::pushColors(uint16_t *data, uint16_t len, boolean first) {
   uint16_t color;
 
   SPI_BEGIN_TRANSACTION();
