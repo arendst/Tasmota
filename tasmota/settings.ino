@@ -562,8 +562,8 @@ void SettingsLoad(void) {
   }
 #endif  // ESP8266
 #ifdef ESP32
-  SettingsRead(&Settings, sizeof(Settings));
-  AddLog_P(LOG_LEVEL_NONE, PSTR(D_LOG_CONFIG "Loaded, " D_COUNT " %lu"), Settings.save_flag);
+  uint32_t source = SettingsRead(&Settings, sizeof(Settings));
+  AddLog_P(LOG_LEVEL_NONE, PSTR(D_LOG_CONFIG "Loaded from %s, " D_COUNT " %lu"), (source)?"File":"Nvm", Settings.save_flag);
 #endif  // ESP32
 
 #ifndef FIRMWARE_MINIMAL

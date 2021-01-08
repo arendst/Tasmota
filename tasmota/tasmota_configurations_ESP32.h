@@ -52,7 +52,6 @@
 #define FALLBACK_MODULE        ODROID_GO         // [Module2] Select default module on fast reboot where USER_MODULE is user template
 
 #define USE_ODROID_GO                            // Add support for Odroid Go
-#define USE_UFILESYS
 #define USE_SDCARD
 #define USE_ADC
 #define USE_SPI

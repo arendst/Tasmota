@@ -88,7 +88,7 @@ uint8_t ffs_type;
 
 /*********************************************************************************************/
 
-void UfsInit(void) {
+void UfsInitOnce(void) {
   ufs_type = 0;
   ffsp = 0;
   ufs_dir = 0;
@@ -160,6 +160,13 @@ void UfsInit(void) {
   ufs_type = UFS_TLFS;
   ffsp = ufsp;
   dfsp = ufsp;
+}
+
+void UfsInit(void) {
+  UfsInitOnce();
+  if (ufs_type) {
+    AddLog_P(LOG_LEVEL_INFO, PSTR("UFS: Type %d mounted with %dkB free"), ufs_type, UfsInfo(1, 0));
+  }
 }
 
 uint32_t UfsInfo(uint32_t sel, uint32_t type) {
@@ -339,15 +346,25 @@ bool TfsLoadFile(const char *fname, uint8_t *buf, uint32_t len) {
   return true;
 }
 
+bool TfsDeleteFile(const char *fname) {
+  if (!ufs_type) { return false; }
+
+  if (!ffsp->remove(fname)) {
+    AddLog_P(LOG_LEVEL_INFO, PSTR("TFS: Delete failed"));
+    return false;
+  }
+  return true;
+}
+
 /*********************************************************************************************\
  * Commands
 \*********************************************************************************************/
 
-const char kUFSCommands[] PROGMEM = "Ufs" "|"  // Prefix
-  "|" "Type" "|" "Size" "|" "Free";
+const char kUFSCommands[] PROGMEM = "Ufs|"  // Prefix
+  "|Type|Size|Free|Delete";
 
 void (* const kUFSCommand[])(void) PROGMEM = {
-    &UFSInfo, &UFSType, &UFSSize, &UFSFree};
+  &UFSInfo, &UFSType, &UFSSize, &UFSFree, &UFSDelete};
 
 void UFSInfo(void) {
   Response_P(PSTR("{\"Ufs\":{\"Type\":%d,\"Size\":%d,\"Free\":%d}}"), ufs_type, UfsInfo(0, 0), UfsInfo(1, 0));
@@ -356,11 +373,23 @@ void UFSInfo(void) {
 void UFSType(void) {
   ResponseCmndNumber(ufs_type);
 }
+
 void UFSSize(void) {
   ResponseCmndNumber(UfsInfo(0, 0));
 }
+
 void UFSFree(void) {
   ResponseCmndNumber(UfsInfo(1, 0));
+}
+
+void UFSDelete(void) {
+  if (XdrvMailbox.data_len > 0) {
+    if (!TfsDeleteFile(XdrvMailbox.data)) {
+      ResponseCmndChar(D_JSON_FAILED);
+    } else {
+      ResponseCmndDone();
+    }
+  }
 }
 
 /*********************************************************************************************\
