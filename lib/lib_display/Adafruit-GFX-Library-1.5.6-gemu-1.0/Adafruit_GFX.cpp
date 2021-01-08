@@ -1579,7 +1579,7 @@ void Adafruit_GFX_Button::initButtonUL(
   strncpy(_label, label, 9);
 }
 
-void draw_picture(char *path, uint32_t xp, uint32_t yp, uint32_t xs, uint32_t ys, bool inverted);
+void draw_picture(char *path, uint32_t xp, uint32_t yp, uint32_t xs, uint32_t ys, uint32_t ocolor, bool inverted);
 
 /**************************************************************************/
 /*!
@@ -1601,8 +1601,7 @@ void Adafruit_GFX_Button::drawButton(boolean inverted) {
   }
 
   if (_label[0]=='/') {
-    // picture path
-    draw_picture(_label, _x1, _y1, _w, _h, inverted);
+    draw_picture(_label, _x1, _y1, _w, _h, outline, inverted);
     _gfx->drawRect(_x1, _y1, _w, _h, text);
   } else {
     uint8_t r = min(_w, _h) / 4; // Corner radius

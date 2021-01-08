@@ -605,7 +605,7 @@ void ILI9488::pushColor(uint16_t color) {
 }
 
 #if 1
-void ILI9488::pushColors(uint16_t *data, uint8_t len, boolean first) {
+void ILI9488::pushColors(uint16_t *data, uint16_t len, boolean first) {
   uint16_t color;
   uint8_t  buff[len*3+1];
   uint16_t count = 0;

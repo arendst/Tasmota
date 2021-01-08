@@ -33,7 +33,7 @@ public:
   virtual void Begin(int16_t p1,int16_t p2,int16_t p3);
   virtual void Updateframe();
   virtual void dim(uint8_t contrast);
-  virtual void pushColors(uint16_t *data, uint8_t len, boolean first);
+  virtual void pushColors(uint16_t *data, uint16_t len, boolean first);
   virtual void setAddrWindow(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1);
   virtual void invertDisplay(boolean i);
   void setDrawMode(uint8_t mode);
