@@ -486,7 +486,6 @@ void UfsDirectory(void) {
   WSContentSend_P(UFS_FORM_FILE_UPGb);
   WSContentSpaceButton(BUTTON_CONFIGURATION);
   WSContentStop();
-  Web.upload_error = 0;
 }
 
 void UfsListDir(char *path, uint8_t depth) {
@@ -623,27 +622,48 @@ uint8_t UfsDownloadFile(char *file) {
 }
 
 void UfsUpload(void) {
+  bool _serialoutput = (LOG_LEVEL_DEBUG <= TasmotaGlobal.seriallog_level);
+
   HTTPUpload& upload = Webserver->upload();
   if (upload.status == UPLOAD_FILE_START) {
+    Web.upload_error = 0;
     char npath[48];
-    sprintf(npath, "%s/%s", ufs_path, upload.filename.c_str());
+    snprintf_P(npath, sizeof(npath), PSTR("%s/%s"), ufs_path, upload.filename.c_str());
+    AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_UPLOAD D_FILE " %s ..."), npath);
     dfsp->remove(npath);
     ufs_upload_file = dfsp->open(npath, UFS_FILE_WRITE);
-    if (!ufs_upload_file) { Web.upload_error = 1; }
+    if (!ufs_upload_file) {
+      Web.upload_error = 1;
+    }
+    Web.upload_progress_dot_count = 0;
   }
   else if (upload.status == UPLOAD_FILE_WRITE) {
     if (ufs_upload_file) {
       ufs_upload_file.write(upload.buf, upload.currentSize);
+      if (_serialoutput) {
+        Serial.printf(".");
+        Web.upload_progress_dot_count++;
+        if (!(Web.upload_progress_dot_count % 80)) { Serial.println(); }
+      }
+    } else {
+      Web.upload_error = 2;
     }
   }
   else if (upload.status == UPLOAD_FILE_END) {
-    if (ufs_upload_file) { ufs_upload_file.close(); }
-    if (Web.upload_error) {
-      AddLog_P(LOG_LEVEL_INFO, PSTR("HTP: upload error"));
+    if (_serialoutput && (Web.upload_progress_dot_count % 80)) {
+      Serial.println();
+    }
+    if (ufs_upload_file) {
+      ufs_upload_file.close();
+    } else {
+      Web.upload_error = 3;
     }
   } else {
-    Web.upload_error = 1;
-    WSSend(500, CT_PLAIN, F("500: couldn't create file"));
+    Web.upload_error = 4;
+    WSSend(500, CT_PLAIN, F("500: Couldn't create file"));
+  }
+  if (Web.upload_error) {
+    AddLog_P(LOG_LEVEL_INFO, PSTR("HTP: Upload error %d"), Web.upload_error);
   }
 }
 
@@ -669,7 +689,7 @@ bool Xdrv50(uint8_t function) {
     case FUNC_WEB_ADD_HANDLER:
       Webserver->on("/ufsd", UfsDirectory);
       Webserver->on("/ufsu", HTTP_GET, UfsDirectory);
-      Webserver->on("/ufsu", HTTP_POST,[]() { Webserver->sendHeader("Location","/ufsu"); Webserver->send(303); }, UfsUpload);
+      Webserver->on("/ufsu", HTTP_POST,[](){Webserver->sendHeader("Location","/ufsu");Webserver->send(303);}, UfsUpload);
       break;
 #endif // USE_WEBSERVER
   }
