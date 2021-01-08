@@ -1438,7 +1438,7 @@ void MI32Init(void) {
   MI32.option.minimalSummary = 0;
   MI32.option.directBridgeMode = 0;
   MI32.option.showRSSI = 1;
-  MI32.option.ignoreBogusBattery = 0; // from advertisements
+  MI32.option.ignoreBogusBattery = 1; // from advertisements
   MI32.option.holdBackFirstAutodiscovery = 1;
 
   BLE_ESP32::registerForAdvertismentCallbacks((const char *)"MI32", MI32advertismentCallback);
