@@ -48,7 +48,9 @@ The driver enabled by #define USE_UFILESYS
 #define SDCARD_CS_PIN     4
 #endif
 
+#ifdef ESP32
 #define FFS_2
+#endif
 
 #ifdef ESP8266
 #include <LittleFS.h>
