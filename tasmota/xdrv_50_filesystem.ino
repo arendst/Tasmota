@@ -396,6 +396,8 @@ void UFSDelete(void) {
  * Web support
 \*********************************************************************************************/
 
+#ifdef USE_WEBSERVER
+
 const char UFS_WEB_DIR[] PROGMEM =
   "<p><form action='" "ufsd" "' method='get'><button>" "%s" "</button></form></p>";
 
@@ -645,6 +647,8 @@ void UfsUpload(void) {
   }
 }
 
+#endif  // USE_WEBSERVER
+
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
@@ -665,10 +669,7 @@ bool Xdrv50(uint8_t function) {
     case FUNC_WEB_ADD_HANDLER:
       Webserver->on("/ufsd", UfsDirectory);
       Webserver->on("/ufsu", HTTP_GET, UfsDirectory);
-      Webserver->on("/ufsu", HTTP_POST,[]() {
-        Webserver->sendHeader("Location","/ufsu");
-        Webserver->send(303);
-      }, UfsUpload);
+      Webserver->on("/ufsu", HTTP_POST,[]() { Webserver->sendHeader("Location","/ufsu"); Webserver->send(303); }, UfsUpload);
       break;
 #endif // USE_WEBSERVER
   }
