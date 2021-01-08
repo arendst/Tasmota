@@ -79,7 +79,10 @@
    #define TIMEPROP_RELAYS               1,      2       // which relay to control 1:8
 
  * Publish values between 0 and 1 to the topic(s) described above
-\*********************************************************************************************/
+ *
+**/
+
+
 
 #define D_CMND_TIMEPROP "timeprop_"
 #define D_CMND_TIMEPROP_SETPOWER "setpower_"    // add index no on end (0:8) and data is power 0:1
@@ -90,6 +93,7 @@ const char kTimepropCommands[] PROGMEM = D_CMND_TIMEPROP_SETPOWER;
 static Timeprop timeprops[TIMEPROP_NUM_OUTPUTS];
 static int relayNos[TIMEPROP_NUM_OUTPUTS] = {TIMEPROP_RELAYS};
 static long currentRelayStates = 0;  // current actual relay states. Bit 0 first relay
+
 
 #ifndef TIMEPROP_NUM_OUTPUTS
 #define TIMEPROP_NUM_OUTPUTS          1       // how many outputs to control (with separate alogorithm for each)
@@ -178,6 +182,7 @@ bool TimepropCommand()
   char command [CMDSZ];
   bool serviced = true;
   uint8_t ua_prefix_len = strlen(D_CMND_TIMEPROP); // to detect prefix of command
+  AddLog_P(LOG_LEVEL_ERROR, PSTR("TRP: Timeprop_Command called"));
   /*
   snprintf_P(log_data, sizeof(log_data), "Command called: "
     "index: %d data_len: %d payload: %d topic: %s data: %s\n",
