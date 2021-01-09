@@ -23,7 +23,7 @@
  * Odroid Go
  *
  * Clock frequency 160MHz (board_build.f_cpu       = 160000000L)
- * SPI Flash Size = 16MB (board_build.partitions  = esp32_partition_app1984k_ffat12M.csv)
+ * SPI Flash Size = 16MB (board_build.partitions  = esp32_partition_app1984k_spiffs12M.csv)
  *
  * To be done:
  * - Audio on GPIO25/26
