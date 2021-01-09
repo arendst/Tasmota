@@ -1799,33 +1799,49 @@ void ZCLFrame::syntheticAqaraCubeOrButton(class Z_attribute_list &attr_list, cla
     //     presentValue = x + 512 = double tap while side x is on top
   } else if (modelId.startsWith(F("lumi.remote")) || modelId.startsWith(F("lumi.sensor_swit"))) {   // only for Aqara buttons WXKG11LM & WXKG12LM, 'swit' because of #9923
     int32_t val = attr.getInt();
-    const __FlashStringHelper *aqara_click = F("click");
-    const __FlashStringHelper *aqara_action = F("action");
+    const __FlashStringHelper *aqara_click = F("click");    // deprecated
+    const __FlashStringHelper *aqara_action = F("action");  // deprecated
+    static const char * aqara_Click = PSTR("Click");
+    static const char * aqara_Action = PSTR("Action");
 
     switch (val) {
       case 0:
-        attr_list.addAttribute(aqara_action).setStr(PSTR("hold"));
+        attr_list.addAttribute(aqara_action).setStr(PSTR("hold"));            // deprecated
+        attr_list.addAttribute(aqara_Action, true).setStr(PSTR("hold"));
         break;
       case 1:
-        attr_list.addAttribute(aqara_click).setStr(PSTR("single"));
+        attr_list.addAttribute(aqara_click).setStr(PSTR("single"));            // deprecated
+        attr_list.addAttribute(aqara_Click, true).setStr(PSTR("single"));
         break;
       case 2:
-        attr_list.addAttribute(aqara_click).setStr(PSTR("double"));
+        attr_list.addAttribute(aqara_click).setStr(PSTR("double"));            // deprecated
+        attr_list.addAttribute(aqara_Click, true).setStr(PSTR("double"));
+        break;
+      case 3:
+        attr_list.addAttribute(aqara_Click, true).setStr(PSTR("triple"));
+        break;
+      case 4:
+        attr_list.addAttribute(aqara_Click, true).setStr(PSTR("quadruple"));
         break;
       case 16:
-        attr_list.addAttribute(aqara_action).setStr(PSTR("hold"));
+        attr_list.addAttribute(aqara_action).setStr(PSTR("hold"));            // deprecated
+        attr_list.addAttribute(aqara_Action, true).setStr(PSTR("hold"));
         break;
       case 17:
-        attr_list.addAttribute(aqara_action).setStr(PSTR("release"));
+        attr_list.addAttribute(aqara_action).setStr(PSTR("release"));            // deprecated
+        attr_list.addAttribute(aqara_Action, true).setStr(PSTR("release"));
         break;
       case 18:
-        attr_list.addAttribute(aqara_action).setStr(PSTR("shake"));
+        attr_list.addAttribute(aqara_action).setStr(PSTR("shake"));            // deprecated
+        attr_list.addAttribute(aqara_Action, true).setStr(PSTR("shake"));
         break;
       case 255:
-        attr_list.addAttribute(aqara_action).setStr(PSTR("release"));
+        attr_list.addAttribute(aqara_action).setStr(PSTR("release"));            // deprecated
+        attr_list.addAttribute(aqara_Action, true).setStr(PSTR("release"));
         break;
       default:
         attr_list.addAttribute(aqara_click).setUInt(val);
+        attr_list.addAttribute(aqara_Click, true).setStr(PSTR("release"));
         break;
     }
   }
