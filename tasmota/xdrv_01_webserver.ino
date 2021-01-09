@@ -2337,7 +2337,7 @@ void HandleUploadDone(void) {
 
 void HandleUploadLoop(void) {
   // Based on ESP8266HTTPUpdateServer.cpp uses ESP8266WebServer Parsing.cpp and Cores Updater.cpp (Update)
-  static uint32_t upload_size = 0;
+  static uint32_t upload_size;
   bool _serialoutput = (LOG_LEVEL_DEBUG <= TasmotaGlobal.seriallog_level);
 
   if (HTTP_USER == Web.state) { return; }
@@ -2351,6 +2351,7 @@ void HandleUploadLoop(void) {
   // ***** Step1: Start upload file
   if (UPLOAD_FILE_START == upload.status) {
     Web.upload_error = 0;
+    upload_size = 0;
     TasmotaGlobal.restart_flag = 60;
     if (0 == upload.filename.c_str()[0]) {
       Web.upload_error = 1;  // No file selected
@@ -2365,7 +2366,17 @@ void HandleUploadLoop(void) {
         Web.upload_error = 2;  // Not enough space
         return;
       }
-    } else {
+    }
+#ifdef USE_UFILESYS
+    else if (UPL_UFSFILE == Web.upload_file_type) {
+      if (!UfsUploadFileOpen(upload.filename.c_str())) {
+        Web.upload_error = 2;
+        return;
+      }
+      TasmotaGlobal.restart_flag = 0;
+    }
+#endif  // USE_UFILESYS
+    else {
       MqttRetryCounter(60);
 #ifdef USE_COUNTER
       CounterInterruptDisable(true);  // Prevent OTA failures on 100Hz counter interrupts
@@ -2425,11 +2436,11 @@ void HandleUploadLoop(void) {
       }
 #endif  // USE_ZIGBEE_EZSP
 #endif  // USE_WEB_FW_UPGRADE
-      else if ((upload.buf[0] != 0xE9) && (upload.buf[0] != 0x1F)) {  // 0x1F is gzipped 0xE9
-        Web.upload_error = 3;      // Invalid file signature - Magic byte is not 0xE9
-        return;
-      }
-      if (UPL_TASMOTA == Web.upload_file_type) {
+      else if (UPL_TASMOTA == Web.upload_file_type) {
+        if ((upload.buf[0] != 0xE9) && (upload.buf[0] != 0x1F)) {  // 0x1F is gzipped 0xE9
+          Web.upload_error = 3;      // Invalid file signature - Magic byte is not 0xE9
+          return;
+        }
         if (0xE9 == upload.buf[0]) {
           uint32_t bin_flash_size = ESP.magicFlashChipSize((upload.buf[3] & 0xf0) >> 4);
           if (bin_flash_size > ESP.getFlashChipRealSize()) {
@@ -2455,6 +2466,14 @@ void HandleUploadLoop(void) {
       memcpy(settings_buffer + (Web.config_block_count * HTTP_UPLOAD_BUFLEN), upload.buf, upload.currentSize);
       Web.config_block_count++;
     }
+#ifdef USE_UFILESYS
+    else if (UPL_UFSFILE == Web.upload_file_type) {
+      if (!UfsUploadFileWrite(upload.buf, upload.currentSize)) {
+        Web.upload_error = 9;  // File too large
+        return;
+      }
+    }
+#endif  // USE_UFILESYS
 #ifdef USE_WEB_FW_UPGRADE
     else if (BUpload.active) {
       // Write a block
@@ -2523,6 +2542,11 @@ void HandleUploadLoop(void) {
         return;
       }
     }
+#ifdef USE_UFILESYS
+    else if (UPL_UFSFILE == Web.upload_file_type) {
+      UfsUploadFileClose();
+    }
+#endif  // USE_UFILESYS
 #ifdef USE_WEB_FW_UPGRADE
     else if (BUpload.active) {
       // Done writing the data to SPI flash
@@ -2588,7 +2612,7 @@ void HandleUploadLoop(void) {
     if (UPL_TASMOTA == Web.upload_file_type) { Update.end(); }
   }
   delay(0);
-  OsWatchLoop();          // Feed OsWatch timer to prevent restart
+  OsWatchLoop();          // Feed OsWatch timer to prevent restart on long uploads
 }
 
 /*-------------------------------------------------------------------------------------------*/

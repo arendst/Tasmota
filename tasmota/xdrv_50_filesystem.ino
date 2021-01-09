@@ -422,7 +422,7 @@ const char UFS_FORM_FILE_UPGc1[] PROGMEM =
     " &nbsp;&nbsp;<a href='http://%s/ufsd?dir=%d'>%s</a>";
 
 const char UFS_FORM_FILE_UPGc2[] PROGMEM =
-    "</div>";
+  "</div>";
 
 const char UFS_FORM_FILE_UPG[] PROGMEM =
   "<form method='post' action='ufsu' enctype='multipart/form-data'>"
@@ -451,10 +451,13 @@ const char UFS_FORM_SDC_HREFdel[] PROGMEM =
 
 
 void UfsDirectory(void) {
+  if (!HttpCheckPriviledgedAccess()) { return; }
+
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_MANAGE_FILE_SYSTEM));
+
   uint8_t depth = 0;
 
   strcpy(ufs_path, "/");
-  if (!HttpCheckPriviledgedAccess()) { return; }
 
   if (Webserver->hasArg("download")) {
     String stmp = Webserver->arg("download");
@@ -509,6 +512,8 @@ void UfsDirectory(void) {
   WSContentSend_P(UFS_FORM_FILE_UPGb);
   WSContentSpaceButton(BUTTON_CONFIGURATION);
   WSContentStop();
+
+  Web.upload_file_type = UPL_UFSFILE;
 }
 
 void UfsListDir(char *path, uint8_t depth) {
@@ -651,56 +656,25 @@ uint8_t UfsDownloadFile(char *file) {
   return 0;
 }
 
-void UfsUpload(void) {
-  static uint32_t upload_size = 0;
-  bool _serialoutput = (LOG_LEVEL_DEBUG <= TasmotaGlobal.seriallog_level);
+bool UfsUploadFileOpen(const char* upload_filename) {
+  char npath[48];
+  snprintf_P(npath, sizeof(npath), PSTR("%s/%s"), ufs_path, upload_filename);
+  dfsp->remove(npath);
+  ufs_upload_file = dfsp->open(npath, UFS_FILE_WRITE);
+  return (ufs_upload_file);
+}
 
-  HTTPUpload& upload = Webserver->upload();
-  if (upload.status == UPLOAD_FILE_START) {
-    Web.upload_error = 0;
-    char npath[48];
-    snprintf_P(npath, sizeof(npath), PSTR("%s/%s"), ufs_path, upload.filename.c_str());
-    AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_UPLOAD D_FILE " %s ..."), npath);
-    dfsp->remove(npath);
-    ufs_upload_file = dfsp->open(npath, UFS_FILE_WRITE);
-    if (!ufs_upload_file) {
-      Web.upload_error = 1;
-    }
-    Web.upload_progress_dot_count = 0;
-  }
-  else if (upload.status == UPLOAD_FILE_WRITE) {
-    if (ufs_upload_file) {
-      ufs_upload_file.write(upload.buf, upload.currentSize);
-      if (_serialoutput) {
-        upload_size += upload.currentSize;
-        Serial.printf(".");
-        Web.upload_progress_dot_count++;
-        if (!(Web.upload_progress_dot_count % 50)) {  // Assuming core HTTP_UPLOAD_BUFLEN=2048
-          Serial.printf("%5dkB\n", upload_size / 1024);
-        }
-      }
-    } else {
-      Web.upload_error = 2;
-    }
-  }
-  else if (upload.status == UPLOAD_FILE_END) {
-    if (_serialoutput && (Web.upload_progress_dot_count % 50)) {
-      Serial.printf("%5dkB\n", upload_size / 1024);
-    }
-    if (ufs_upload_file) {
-      ufs_upload_file.close();
-    } else {
-      Web.upload_error = 3;
-    }
+bool UfsUploadFileWrite(uint8_t *upload_buf, size_t current_size) {
+  if (ufs_upload_file) {
+    ufs_upload_file.write(upload_buf, current_size);
   } else {
-    Web.upload_error = 4;
-    WSSend(500, CT_PLAIN, F("500: Couldn't create file"));
+    return false;
   }
-  if (Web.upload_error) {
-    AddLog_P(LOG_LEVEL_INFO, PSTR("HTP: Upload error %d"), Web.upload_error);
-  }
-  delay(0);
-  OsWatchLoop();          // Feed OsWatch timer to prevent restart
+  return true;
+}
+
+void UfsUploadFileClose(void) {
+  ufs_upload_file.close();
 }
 
 #endif  // USE_WEBSERVER
@@ -730,7 +704,7 @@ bool Xdrv50(uint8_t function) {
     case FUNC_WEB_ADD_HANDLER:
       Webserver->on("/ufsd", UfsDirectory);
       Webserver->on("/ufsu", HTTP_GET, UfsDirectory);
-      Webserver->on("/ufsu", HTTP_POST,[](){Webserver->sendHeader("Location","/ufsu");Webserver->send(303);}, UfsUpload);
+      Webserver->on("/ufsu", HTTP_POST,[](){Webserver->sendHeader("Location","/ufsu");Webserver->send(303);}, HandleUploadLoop);
       break;
 #endif // USE_WEBSERVER
   }
