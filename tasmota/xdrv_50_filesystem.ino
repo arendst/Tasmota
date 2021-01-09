@@ -681,6 +681,7 @@ void UfsUpload(void) {
     AddLog_P(LOG_LEVEL_INFO, PSTR("HTP: Upload error %d"), Web.upload_error);
   }
   delay(0);
+  OsWatchLoop();          // Feed OsWatch timer to prevent restart
 }
 
 #endif  // USE_WEBSERVER

@@ -2588,6 +2588,7 @@ void HandleUploadLoop(void) {
     if (UPL_TASMOTA == Web.upload_file_type) { Update.end(); }
   }
   delay(0);
+  OsWatchLoop();          // Feed OsWatch timer to prevent restart
 }
 
 /*-------------------------------------------------------------------------------------------*/
