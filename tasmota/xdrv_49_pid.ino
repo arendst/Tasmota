@@ -237,6 +237,7 @@ void CmndSetPv(void) {
     // this runs it at the next second
     run_pid_now = true;
   }
+  ResponseCmndNumber(atof(XdrvMailbox.data));
 }
 
 void CmndSetSp(void) {
@@ -358,7 +359,7 @@ void PIDShowValues(void) {
 static void run_pid()
 {
   double power = pid.tick(pid_current_time_secs);
-#ifdef PID_DONT_USE_PID_TOPIC
+#ifndef PID_DONT_USE_PID_TOPIC
   // This part is left inside to regularly publish the PID Power via
   // `%topic%/PID {"power":"0.000"}`
   char str_buf[FLOATSZ];
