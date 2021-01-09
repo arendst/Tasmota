@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 - Support for time proportioned (``#define USE_TIMEPROP``) and optional PID (``#define USE_PID``) relay control (#10412)
 - Support rotary encoder on Shelly Dimmer (#10407)
 - Command ``SetOption43 1..100`` to control Rotary step (#10407)
+- Zigbee debounce duplicate commands received from the same device within ``USE_ZIGBEE_DEBOUNCE_COMMANDS`` milliseconds
 
 ### Breaking Changed
 - ESP32 switch from default SPIFFS to default LittleFS file system loosing current (zigbee) files
