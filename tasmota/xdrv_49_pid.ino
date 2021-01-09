@@ -266,6 +266,7 @@ void CmndSetPv(void) {
     // this runs it at the next second
     Pid.run_pid_now = true;
   }
+  ResponseCmndNumber(atof(XdrvMailbox.data));
 }
 
 void CmndSetSp(void) {
