@@ -86,11 +86,15 @@ void SEESAW_SOILDetect(void) {
 }
 
 void SEESAW_SOILEverySecond(void) {             // update sensor values and publish if changed
+#ifdef SEESAW_SOIL_PUBLISH
   uint32_t old_moist;
+#endif // SEESAW_SOIL_PUBLISH
 
   for (uint32_t i = 0; i < SeeSoilCount; i++) {
     SeeSoil[i].temperature = ConvertTemp(SeeSoil[i].ss->getTemp());
+#ifdef SEESAW_SOIL_PUBLISH
     old_moist = uint32_t (CAP_TO_MOIST(SeeSoil[i].capacitance)*100);
+#endif // SEESAW_SOIL_PUBLISH
     SeeSoil[i].capacitance = SeeSoil[i].ss->touchRead(0);
 #ifdef SEESAW_SOIL_PUBLISH
     if (uint32_t (CAP_TO_MOIST(SeeSoil[i].capacitance)*100) != old_moist) {
