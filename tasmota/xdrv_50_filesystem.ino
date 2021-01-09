@@ -100,6 +100,7 @@ void UfsInitOnce(void) {
 #ifdef ESP8266
   ffsp = &LittleFS;
   if (!LittleFS.begin()) {
+    ffsp = 0;
     return;
   }
 #endif  // ESP8266
@@ -137,12 +138,26 @@ void UfsInit(void) {
 
 #ifdef USE_SDCARD
 void UfsCheckSDCardInit(void) {
+
+#ifdef ESP8266
+  if (PinUsed(GPIO_SPI_CLK) && PinUsed(GPIO_SPI_MOSI) && PinUsed(GPIO_SPI_MISO)) {
+#endif // ESP8266
+
+#ifdef ESP32
   if (TasmotaGlobal.spi_enabled) {
-  //  if (1) {
+#endif // ESP32
     int8_t cs = SDCARD_CS_PIN;
     if (PinUsed(GPIO_SDCARD_CS)) {
       cs = Pin(GPIO_SDCARD_CS);
     }
+
+#ifdef EPS8266
+    SPI.begin();
+#endif // EPS8266
+
+#ifdef ESP32
+    SPI.begin(Pin(GPIO_SPI_CLK), Pin(GPIO_SPI_MISO), Pin(GPIO_SPI_MOSI), -1);
+#endif // ESP32
 
     if (SD.begin(cs)) {
 #ifdef ESP8266
@@ -154,7 +169,7 @@ void UfsCheckSDCardInit(void) {
 #endif  // ESP32
       ufs_type = UFS_TSDC;
       dfsp = ufsp;
-      ufs_dir = 1;
+      if (ffsp) {ufs_dir = 1;}
       // make sd card the global filesystem
 #ifdef ESP8266
       // on esp8266 sdcard info takes several seconds !!!, so we ommit it here
