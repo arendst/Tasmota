@@ -2512,7 +2512,7 @@ const mytmplt kModules[] PROGMEM =
     AGPIO(GPIO_USER),            // 1       IO     TXD0         GPIO1, U0TXD
     AGPIO(GPIO_USER),            // 2       IO                  GPIO2, SPKR_DATA
     AGPIO(GPIO_USER),            // 3       IO     RXD0         GPIO3, U0RXD
-    0,                           // 4       IO                  GPIO4, SPI_CS_CARD
+    AGPIO(GPIO_SDCARD_CS),       // 4       IO                  GPIO4, SPI_CS_CARD
     0,                           // 5       IO                  GPIO5, SPI_CS_LCD
                                  // 6       IO                  GPIO6, Flash CLK
                                  // 7       IO                  GPIO7, Flash D0
