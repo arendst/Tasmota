@@ -45,7 +45,7 @@ const uint16_t HTTP_OTA_RESTART_RECONNECT_TIME = 10000;  // milliseconds - Allow
 #include <ESP8266WebServer.h>
 #include <DNSServer.h>
 
-enum UploadTypes { UPL_TASMOTA, UPL_SETTINGS, UPL_EFM8BB1, UPL_TASMOTACLIENT, UPL_EFR32, UPL_SHD, UPL_CCL };
+enum UploadTypes { UPL_TASMOTA, UPL_SETTINGS, UPL_EFM8BB1, UPL_TASMOTACLIENT, UPL_EFR32, UPL_SHD, UPL_CCL, UPL_UFSFILE };
 
 #ifdef USE_UNISHOX_COMPRESSION
   #ifdef USE_JAVASCRIPT_ES6
@@ -2042,7 +2042,6 @@ void HandleRestoreConfiguration(void)
   }
   WSContentStop();
 
-  Web.upload_error = 0;
   Web.upload_file_type = UPL_SETTINGS;
 }
 
@@ -2242,8 +2241,7 @@ uint32_t BUploadWriteBuffer(uint8_t *buf, size_t size) {
 
 #endif  // USE_WEB_FW_UPGRADE
 
-void HandleUpgradeFirmware(void)
-{
+void HandleUpgradeFirmware(void) {
   if (!HttpCheckPriviledgedAccess()) { return; }
 
   AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_FIRMWARE_UPGRADE));
@@ -2255,12 +2253,10 @@ void HandleUpgradeFirmware(void)
   WSContentSpaceButton(BUTTON_MAIN);
   WSContentStop();
 
-  Web.upload_error = 0;
   Web.upload_file_type = UPL_TASMOTA;
 }
 
-void HandleUpgradeFirmwareStart(void)
-{
+void HandleUpgradeFirmwareStart(void) {
   if (!HttpCheckPriviledgedAccess()) { return; }
 
   char command[TOPSZ + 10];  // OtaUrl
@@ -2287,8 +2283,7 @@ void HandleUpgradeFirmwareStart(void)
   ExecuteWebCommand(command, SRC_WEBGUI);
 }
 
-void HandleUploadDone(void)
-{
+void HandleUploadDone(void) {
   if (!HttpCheckPriviledgedAccess()) { return; }
 
 #if defined(USE_ZIGBEE_EZSP)
@@ -2340,9 +2335,9 @@ void HandleUploadDone(void)
   WSContentStop();
 }
 
-void HandleUploadLoop(void)
-{
+void HandleUploadLoop(void) {
   // Based on ESP8266HTTPUpdateServer.cpp uses ESP8266WebServer Parsing.cpp and Cores Updater.cpp (Update)
+  static uint32_t upload_size = 0;
   bool _serialoutput = (LOG_LEVEL_DEBUG <= TasmotaGlobal.seriallog_level);
 
   if (HTTP_USER == Web.state) { return; }
@@ -2355,13 +2350,16 @@ void HandleUploadLoop(void)
 
   // ***** Step1: Start upload file
   if (UPLOAD_FILE_START == upload.status) {
+    Web.upload_error = 0;
     TasmotaGlobal.restart_flag = 60;
     if (0 == upload.filename.c_str()[0]) {
       Web.upload_error = 1;  // No file selected
       return;
     }
     SettingsSave(1);  // Free flash for upload
+
     AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_UPLOAD D_FILE " %s ..."), upload.filename.c_str());
+
     if (UPL_SETTINGS == Web.upload_file_type) {
       if (!SettingsBufferAlloc()) {
         Web.upload_error = 2;  // Not enough space
@@ -2471,16 +2469,19 @@ void HandleUploadLoop(void)
       return;
     }
     if (_serialoutput) {
+      upload_size += upload.currentSize;
       Serial.printf(".");
       Web.upload_progress_dot_count++;
-      if (!(Web.upload_progress_dot_count % 80)) { Serial.println(); }
+      if (!(Web.upload_progress_dot_count % 50)) {  // Assuming core HTTP_UPLOAD_BUFLEN=2048
+        Serial.printf("%5dkB\n", upload_size / 1024);
+      }
     }
   }
 
   // ***** Step3: Finish upload file
   else if (UPLOAD_FILE_END == upload.status) {
-    if (_serialoutput && (Web.upload_progress_dot_count % 80)) {
-      Serial.println();
+    if (_serialoutput && (Web.upload_progress_dot_count % 50)) {
+      Serial.printf("%5dkB\n", upload_size / 1024);
     }
     if (UPL_SETTINGS == Web.upload_file_type) {
       if (Web.config_xor_on_set) {
@@ -2576,7 +2577,8 @@ void HandleUploadLoop(void)
   }
 
   // ***** Step4: Abort upload file
-  else if (UPLOAD_FILE_ABORTED == upload.status) {
+//  else if (UPLOAD_FILE_ABORTED == upload.status) {
+  else {
     TasmotaGlobal.restart_flag = 0;
     MqttRetryCounter(0);
 #ifdef USE_COUNTER

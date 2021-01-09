@@ -88,9 +88,6 @@ uint8_t ffs_type;
 
 /*********************************************************************************************/
 
-
-
-
 // init flash file system
 void UfsInitOnce(void) {
   ufs_type = 0;
@@ -636,6 +633,7 @@ uint8_t UfsDownloadFile(char *file) {
 }
 
 void UfsUpload(void) {
+  static uint32_t upload_size = 0;
   bool _serialoutput = (LOG_LEVEL_DEBUG <= TasmotaGlobal.seriallog_level);
 
   HTTPUpload& upload = Webserver->upload();
@@ -655,17 +653,20 @@ void UfsUpload(void) {
     if (ufs_upload_file) {
       ufs_upload_file.write(upload.buf, upload.currentSize);
       if (_serialoutput) {
+        upload_size += upload.currentSize;
         Serial.printf(".");
         Web.upload_progress_dot_count++;
-        if (!(Web.upload_progress_dot_count % 80)) { Serial.println(); }
+        if (!(Web.upload_progress_dot_count % 50)) {  // Assuming core HTTP_UPLOAD_BUFLEN=2048
+          Serial.printf("%5dkB\n", upload_size / 1024);
+        }
       }
     } else {
       Web.upload_error = 2;
     }
   }
   else if (upload.status == UPLOAD_FILE_END) {
-    if (_serialoutput && (Web.upload_progress_dot_count % 80)) {
-      Serial.println();
+    if (_serialoutput && (Web.upload_progress_dot_count % 50)) {
+      Serial.printf("%5dkB\n", upload_size / 1024);
     }
     if (ufs_upload_file) {
       ufs_upload_file.close();
@@ -679,6 +680,7 @@ void UfsUpload(void) {
   if (Web.upload_error) {
     AddLog_P(LOG_LEVEL_INFO, PSTR("HTP: Upload error %d"), Web.upload_error);
   }
+  delay(0);
 }
 
 #endif  // USE_WEBSERVER
