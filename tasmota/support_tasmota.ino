@@ -1609,7 +1609,7 @@ void GpioInit(void)
   uint32_t sspi_mosi = (PinUsed(GPIO_SSPI_SCLK) && PinUsed(GPIO_SSPI_MOSI)) ? SPI_MOSI : SPI_NONE;
   uint32_t sspi_miso = (PinUsed(GPIO_SSPI_SCLK) && PinUsed(GPIO_SSPI_MISO)) ? SPI_MISO : SPI_NONE;
   TasmotaGlobal.soft_spi_enabled = sspi_mosi + sspi_miso;
-  AddLogSpi(0, Pin(GPIO_SSPI_SCLK), Pin(GPIO_SSPI_MOSI), PinUsed(GPIO_SSPI_MISO));
+  AddLogSpi(0, Pin(GPIO_SSPI_SCLK), Pin(GPIO_SSPI_MOSI), Pin(GPIO_SSPI_MISO));
 
 #ifdef USE_SPI
 #ifdef ESP8266
