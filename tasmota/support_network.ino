@@ -61,10 +61,10 @@ void MqttDiscoverServer(void)
       }
     }
 #endif  // MDNS_HOSTNAME
-    SettingsUpdateText(SET_MQTT_HOST, MDNS.IP(i).toString().c_str());
+    SettingsUpdateText(SET_MQTT_HOST, MDNS.hostname(i).c_str());
     Settings.mqtt_port = MDNS.port(i);
 
-    AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_MDNS D_MQTT_SERVICE_FOUND " %s, " D_IP_ADDRESS " %s, " D_PORT " %d"), MDNS.hostname(i).c_str(), SettingsText(SET_MQTT_HOST), Settings.mqtt_port);
+    AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_MDNS D_MQTT_SERVICE_FOUND " %s," D_PORT " %d"), SettingsText(SET_MQTT_HOST), Settings.mqtt_port);
   }
 }
 #endif  // MQTT_HOST_DISCOVERY
