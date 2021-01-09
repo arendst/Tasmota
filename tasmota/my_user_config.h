@@ -746,6 +746,7 @@
   #define USE_ZIGBEE_TXRADIO_DBM  20             // Tx Radio power in dBm (only for EZSP, EFR32 can go up to 20 dBm)
 
   #define USE_ZIGBEE_COALESCE_ATTR_TIMER 350     // timer to coalesce attribute values (in ms)
+  #define USE_ZIGBEE_DEBOUNCE_COMMANDS   200     // if commands are received from the same device/endpoint with same ZCL transaction number, discard packet in this time window (ms)
   #define USE_ZIGBEE_MODELID      "Tasmota Z2T"  // reported "ModelId"      (cluster 0000 / attribute 0005)
   #define USE_ZIGBEE_MANUFACTURER "Tasmota"      // reported "Manufacturer" (cluster 0000 / attribute 0004)
   #define USE_ZBBRIDGE_TLS                       // TLS support for zbbridge

@@ -730,6 +730,11 @@ public:
   uint8_t               lqi;            // lqi from last message, 0xFF means unknown
   uint8_t               batterypercent; // battery percentage (0..100), 0xFF means unknwon
   uint16_t              reserved_for_alignment;
+  // Debounce informmation when receiving commands
+  // If we receive the same ZCL transaction number from the same device and the same endpoint within 300ms
+  // then discard the second packet
+  uint8_t               debounce_endpoint;  // endpoint of the last received packet, or 0 if not active (expired)
+  uint8_t               debounce_transact;  // ZCL transaction number of the last packet
   // END OF DEVICE WIDE DATA
 
   // Constructor with all defaults
@@ -750,7 +755,9 @@ public:
     last_seen(0),
     lqi(0xFF),
     batterypercent(0xFF),
-    reserved_for_alignment(0xFFFF)
+    reserved_for_alignment(0xFFFF),
+    debounce_endpoint(0),
+    debounce_transact(0)
     { };
 
   inline bool valid(void)               const { return BAD_SHORTADDR != shortaddr; }    // is the device known, valid and found?
@@ -847,6 +854,7 @@ typedef enum Z_Def_Category {
   Z_CAT_BIND,                 // send auto-binding to coordinator
   Z_CAT_CONFIG_ATTR,          // send a config attribute reporting request
   Z_CAT_READ_ATTRIBUTE,       // read a single attribute
+  Z_CAT_DEBOUNCE_CMD,         // debounce incoming commands
   Z_CAT_CIE_ATTRIBUTE,        // write CIE address
   Z_CAT_CIE_ENROLL,           // enroll CIE zone
 } Z_Def_Category;
