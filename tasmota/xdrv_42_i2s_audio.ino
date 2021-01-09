@@ -568,7 +568,8 @@ void Play_mp3(const char *path) {
     I2S_Task = false;
   }
 
-  file = new AudioFileSourceFS(*ufsp,path);
+  file = new AudioFileSourceFS(*ufsp, path);
+
   id3 = new AudioFileSourceID3(file);
 
   if (mp3ram) {
@@ -584,11 +585,11 @@ void Play_mp3(const char *path) {
     while (mp3->isRunning()) {
       if (!mp3->loop()) {
         mp3->stop();
-        mp3_delete();
         break;
       }
       OsWatchLoop();
     }
+    mp3_delete();
   }
 
 #endif // USE_SCRIPT
