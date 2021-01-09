@@ -1,7 +1,7 @@
 /*
   it-IT.h - localization for Italian - Italy for Tasmota
 
-  Copyright (C) 2021  Gennaro Tortone - some mods by Antonio Fragola - Updated by bovirus - rev. 07.01.2021
+  Copyright (C) 2021  Gennaro Tortone - some mods by Antonio Fragola - Updated by bovirus - rev. 09.01.2021
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -641,8 +641,8 @@
 #define D_SENSOR_HX711_SCK     "HX711 - SCK"
 #define D_SENSOR_HX711_DAT     "HX711 - DAT"
 #define D_SENSOR_FTC532        "FTC532"
-#define D_SENSOR_BS814_CLK     "BS814 CLK"
-#define D_SENSOR_BS814_DAT     "BS814 DAT"
+#define D_SENSOR_BS814_CLK     "BS814 - CLK"
+#define D_SENSOR_BS814_DAT     "BS814 - DAT"
 #define D_SENSOR_TX2X_TX       "TX2x"
 #define D_SENSOR_RFSEND        "RF - TX"
 #define D_SENSOR_RFRECV        "RF - RX"
