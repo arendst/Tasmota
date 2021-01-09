@@ -440,9 +440,15 @@ const char UFS_FORM_FILE_UPGb[] PROGMEM =
 const char UFS_FORM_SDC_DIRd[] PROGMEM =
   "<pre><a href='%s' file='%s'>%s</a></pre>";
 const char UFS_FORM_SDC_DIRb[] PROGMEM =
-  "<pre><a href='%s' file='%s'>%s</a> %s %8d</pre>";
+  "<pre><a href='%s' file='%s'>%s</a> %s %8d %s</pre>";
 const char UFS_FORM_SDC_HREF[] PROGMEM =
   "http://%s/ufsd?download=%s/%s";
+#ifdef GUI_TRASH_FILE
+const char UFS_FORM_SDC_HREFdel[] PROGMEM =
+  //"<a href=http://%s/ufsd?delete=%s/%s>&#128465;</a>";
+  "<a href=http://%s/ufsd?delete=%s/%s>&#128293;</a>"; // 🔥
+#endif // GUI_TRASH_FILE
+
 
 void UfsDirectory(void) {
   uint8_t depth = 0;
@@ -469,6 +475,12 @@ void UfsDirectory(void) {
         dfsp = ffsp;
       }
     }
+  }
+
+  if (Webserver->hasArg("delete")) {
+    String stmp = Webserver->arg("delete");
+    char *cp = (char*)stmp.c_str();
+    dfsp->remove(cp);
   }
 
   WSContentStart_P(PSTR(D_MANAGE_FILE_SYSTEM));
@@ -561,8 +573,15 @@ void UfsListDir(char *path, uint8_t depth) {
           UfsListDir(path, depth + 4);
           path[plen] = 0;
         } else {
+#ifdef GUI_TRASH_FILE
+          char delpath[128];
+          snprintf_P(delpath, sizeof(delpath), UFS_FORM_SDC_HREFdel, WiFi.localIP().toString().c_str(), pp, ep);
+#else
+          char delpath[2];
+          delpath[0]=0;
+#endif // GUI_TRASH_FILE
           snprintf_P(npath, sizeof(npath), UFS_FORM_SDC_HREF, WiFi.localIP().toString().c_str(), pp, ep);
-          WSContentSend_P(UFS_FORM_SDC_DIRb, npath, ep, name, tstr.c_str(), entry.size());
+          WSContentSend_P(UFS_FORM_SDC_DIRb, npath, ep, name, tstr.c_str(), entry.size(), delpath);
         }
       }
       entry.close();
