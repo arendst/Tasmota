@@ -78,12 +78,15 @@ void MdnsAddServiceHttp(void) {
   }
 }
 
+#ifdef ESP8266 //Not needed with esp32 mdns
 void MdnsUpdate(void) {
   if (2 == Mdns.begun) {
-    MDNS.update();
-    AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_MDNS "MDNS.update"));
+    MDNS.update(); // this is basically passpacket like a webserver
+   // being called in main loop so no logging
+   // AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_MDNS "MDNS.update"));
   }
 }
+#endif  // ESP8266
 #endif  // WEBSERVER_ADVERTISE
 #endif  // USE_DISCOVERY
 

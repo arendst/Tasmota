@@ -223,7 +223,7 @@
 #define KNX_ENHANCED           false             // [Knx_Enhanced] Enable KNX Enhanced Mode
 
 // -- mDNS ----------------------------------------
-#define MDNS_ENABLED           false             // [SetOption55] Use mDNS (false = Disable, true = Enable)
+#define MDNS_ENABLED           true             // [SetOption55] Use mDNS (false = Disable, true = Enable)
 
 // -- Time - Up to three NTP servers in your region
 #define NTP_SERVER1            "pool.ntp.org"       // [NtpServer1] Select first NTP server by name or IP address (129.250.35.250)

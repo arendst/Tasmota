@@ -401,11 +401,6 @@ void WifiCheckIp(void)
       memcpy((void*) &Settings.wifi_bssid, (void*) bssid, sizeof(Settings.wifi_bssid));
     }
     Wifi.status = WL_CONNECTED;
-#ifdef USE_DISCOVERY
-#ifdef WEBSERVER_ADVERTISE
-    MdnsUpdate();
-#endif  // USE_DISCOVERY
-#endif  // WEBSERVER_ADVERTISE
   } else {
     WifiSetState(0);
     uint8_t wifi_config_tool = Settings.sta_config;
