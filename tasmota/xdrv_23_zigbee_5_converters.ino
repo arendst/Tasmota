@@ -1826,47 +1826,46 @@ void ZCLFrame::syntheticAqaraCubeOrButton(class Z_attribute_list &attr_list, cla
     int32_t val = attr.getInt();
     const __FlashStringHelper *aqara_click = F("click");    // deprecated
     const __FlashStringHelper *aqara_action = F("action");  // deprecated
-    static const char * aqara_Click = PSTR("Click");
-    static const char * aqara_Action = PSTR("Action");
+    Z_attribute & attr_click = attr_list.addAttribute(PSTR("Click"), true);
 
     switch (val) {
       case 0:
         attr_list.addAttribute(aqara_action).setStr(PSTR("hold"));            // deprecated
-        attr_list.addAttribute(aqara_Action, true).setStr(PSTR("hold"));
+        attr_click.setStr(PSTR("hold"));
         break;
       case 1:
         attr_list.addAttribute(aqara_click).setStr(PSTR("single"));            // deprecated
-        attr_list.addAttribute(aqara_Click, true).setStr(PSTR("single"));
+        attr_click.setStr(PSTR("single"));
         break;
       case 2:
         attr_list.addAttribute(aqara_click).setStr(PSTR("double"));            // deprecated
-        attr_list.addAttribute(aqara_Click, true).setStr(PSTR("double"));
+        attr_click.setStr(PSTR("double"));
         break;
       case 3:
-        attr_list.addAttribute(aqara_Click, true).setStr(PSTR("triple"));
+        attr_click.setStr(PSTR("triple"));
         break;
       case 4:
-        attr_list.addAttribute(aqara_Click, true).setStr(PSTR("quadruple"));
+        attr_click.setStr(PSTR("quadruple"));
         break;
       case 16:
         attr_list.addAttribute(aqara_action).setStr(PSTR("hold"));            // deprecated
-        attr_list.addAttribute(aqara_Action, true).setStr(PSTR("hold"));
+        attr_click.setStr(PSTR("hold"));
         break;
       case 17:
         attr_list.addAttribute(aqara_action).setStr(PSTR("release"));            // deprecated
-        attr_list.addAttribute(aqara_Action, true).setStr(PSTR("release"));
+        attr_click.setStr(PSTR("release"));
         break;
       case 18:
         attr_list.addAttribute(aqara_action).setStr(PSTR("shake"));            // deprecated
-        attr_list.addAttribute(aqara_Action, true).setStr(PSTR("shake"));
+        attr_click.setStr(PSTR("shake"));
         break;
       case 255:
         attr_list.addAttribute(aqara_action).setStr(PSTR("release"));            // deprecated
-        attr_list.addAttribute(aqara_Action, true).setStr(PSTR("release"));
+        attr_click.setStr(PSTR("release"));
         break;
       default:
         attr_list.addAttribute(aqara_click).setUInt(val);
-        attr_list.addAttribute(aqara_Click, true).setStr(PSTR("release"));
+        attr_click.setStr(PSTR("release"));
         break;
     }
   }
