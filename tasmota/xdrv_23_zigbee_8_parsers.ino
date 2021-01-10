@@ -1639,9 +1639,9 @@ void Z_IncomingMessage(class ZCLFrame &zcl_received) {
       zcl_received.parseResponse();   // Zigbee general "Default Response", publish ZbResponse message
   } else {
     // Build the ZbReceive list
-    if ( (!zcl_received.isClusterSpecificCommand()) && (ZCL_REPORT_ATTRIBUTES == zcl_received.getCmdId())) {
+    if ( (!zcl_received.isClusterSpecificCommand()) && (ZCL_REPORT_ATTRIBUTES == zcl_received.getCmdId() || ZCL_WRITE_ATTRIBUTES == zcl_received.getCmdId())) {
       zcl_received.parseReportAttributes(attr_list);    // Zigbee report attributes from sensors
-      if (clusterid) { defer_attributes = true; }  // don't defer system Cluster=0 messages
+      if (clusterid && (ZCL_REPORT_ATTRIBUTES == zcl_received.getCmdId())) { defer_attributes = true; }  // don't defer system Cluster=0 messages or Write Attribute
     } else if ( (!zcl_received.isClusterSpecificCommand()) && (ZCL_READ_ATTRIBUTES_RESPONSE == zcl_received.getCmdId())) {
       zcl_received.parseReadAttributesResponse(attr_list);
       if (clusterid) { defer_attributes = true; }  // don't defer system Cluster=0 messages
