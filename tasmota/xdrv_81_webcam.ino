@@ -466,7 +466,7 @@ void draw_face_boxes(dl_matrix3du_t *image_matrix, box_array_t *boxes, int face_
 }
 */
 
-#define DL_SPIRAM_SUPPORT
+//#define DL_SPIRAM_SUPPORT
 
 uint32_t WcSetFaceDetect(int32_t value) {
   if (value >= 0) { Wc.face_detect_time = value; }
@@ -530,6 +530,7 @@ uint32_t WcDetectFace(void) {
     //Serial.printf("face detected: %d",Wc.faces);
 
   }
+  return 0;
 }
 #endif
 
