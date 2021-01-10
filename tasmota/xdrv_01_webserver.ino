@@ -365,13 +365,13 @@ ESP8266WebServer *Webserver;
 
 struct WEB {
   String chunk_buffer = "";                         // Could be max 2 * CHUNKED_BUFFER_SIZE
-  uint16_t upload_progress_dot_count;
   uint16_t upload_error = 0;
   uint8_t state = HTTP_OFF;
   uint8_t upload_file_type;
   uint8_t config_block_count = 0;
   uint8_t config_xor_on = 0;
   uint8_t config_xor_on_set = CONFIG_FILE_XOR;
+  bool upload_services_stopped = false;
   bool reset_web_log_flag = false;                  // Reset web console log
 } Web;
 
@@ -2298,14 +2298,8 @@ void HandleUploadDone(void) {
 
   AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_UPLOAD_DONE));
 
-  char error[100];
-
   WifiConfigCounter();
-  TasmotaGlobal.restart_flag = 0;
-  MqttRetryCounter(0);
-#ifdef USE_COUNTER
-  CounterInterruptDisable(false);
-#endif  // USE_COUNTER
+  UploadServices(1);
 
   WSContentStart_P(PSTR(D_INFORMATION));
   if (!Web.upload_error) {
@@ -2315,6 +2309,7 @@ void HandleUploadDone(void) {
   WSContentSend_P(PSTR("<div style='text-align:center;'><b>" D_UPLOAD " <font color='#"));
   if (Web.upload_error) {
     WSContentSend_P(PSTR("%06x'>" D_FAILED "</font></b><br><br>"), WebColor(COL_TEXT_WARNING));
+    char error[100];
     if (Web.upload_error < 10) {
       GetTextIndexed(error, sizeof(error), Web.upload_error -1, kUploadErrors);
     } else {
@@ -2323,6 +2318,7 @@ void HandleUploadDone(void) {
     WSContentSend_P(error);
     DEBUG_CORE_LOG(PSTR("UPL: %s"), error);
     TasmotaGlobal.stop_flash_rotate = Settings.flag.stop_flash_rotate;  // SetOption12 - Switch between dynamic or fixed slot flash save location
+    Web.upload_error = 0;
   } else {
     WSContentSend_P(PSTR("%06x'>" D_SUCCESSFUL "</font></b><br>"), WebColor(COL_TEXT_SUCCESS));
     TasmotaGlobal.restart_flag = 2;  // Always restart to re-enable disabled features during update
@@ -2335,14 +2331,65 @@ void HandleUploadDone(void) {
   WSContentStop();
 }
 
+void UploadServices(uint32_t start_service) {
+  if (Web.upload_services_stopped == start_service) { return; }
+  Web.upload_services_stopped = start_service;
+
+  if (start_service) {
+//    AddLog_P(LOG_LEVEL_DEBUG, PSTR("UPL: Services enabled"));
+
+    TasmotaGlobal.restart_flag = 0;
+/*
+    MqttRetryCounter(0);
+*/
+#ifdef USE_ARILUX_RF
+    AriluxRfInit();
+#endif  // USE_ARILUX_RF
+#ifdef USE_COUNTER
+    CounterInterruptDisable(false);
+#endif  // USE_COUNTER
+#ifdef USE_EMULATION
+    UdpConnect();
+#endif  // USE_EMULATION
+
+  } else {
+//    AddLog_P(LOG_LEVEL_DEBUG, PSTR("UPL: Services disabled"));
+
+#ifdef USE_EMULATION
+    UdpDisconnect();
+#endif  // USE_EMULATION
+#ifdef USE_COUNTER
+    CounterInterruptDisable(true);     // Prevent OTA failures on 100Hz counter interrupts
+#endif  // USE_COUNTER
+#ifdef USE_ARILUX_RF
+    AriluxRfDisable();                 // Prevent restart exception on Arilux Interrupt routine
+#endif  // USE_ARILUX_RF
+/*
+    MqttRetryCounter(60);
+    if (Settings.flag.mqtt_enabled) {  // SetOption3 - Enable MQTT
+      MqttDisconnect();
+    }
+*/
+    TasmotaGlobal.restart_flag = 120;  // Set restart watchdog after 2 minutes
+  }
+}
+
 void HandleUploadLoop(void) {
   // Based on ESP8266HTTPUpdateServer.cpp uses ESP8266WebServer Parsing.cpp and Cores Updater.cpp (Update)
   static uint32_t upload_size;
-  bool _serialoutput = (LOG_LEVEL_DEBUG <= TasmotaGlobal.seriallog_level);
+  static bool upload_error_signalled;
 
   if (HTTP_USER == Web.state) { return; }
+
   if (Web.upload_error) {
-    if (UPL_TASMOTA == Web.upload_file_type) { Update.end(); }
+    if (!upload_error_signalled) {
+      if (UPL_TASMOTA == Web.upload_file_type) { Update.end(); }
+      UploadServices(1);
+
+//      AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPLOAD "Upload error %d"), Web.upload_error);
+
+      upload_error_signalled = true;
+    }
     return;
   }
 
@@ -2351,15 +2398,18 @@ void HandleUploadLoop(void) {
   // ***** Step1: Start upload file
   if (UPLOAD_FILE_START == upload.status) {
     Web.upload_error = 0;
+    upload_error_signalled = false;
     upload_size = 0;
-    TasmotaGlobal.restart_flag = 60;
+
+    UploadServices(0);
+
     if (0 == upload.filename.c_str()[0]) {
       Web.upload_error = 1;  // No file selected
       return;
     }
     SettingsSave(1);  // Free flash for upload
 
-    AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_UPLOAD D_FILE " %s ..."), upload.filename.c_str());
+    AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_UPLOAD D_FILE " %s"), upload.filename.c_str());
 
     if (UPL_SETTINGS == Web.upload_file_type) {
       if (!SettingsBufferAlloc()) {
@@ -2376,22 +2426,6 @@ void HandleUploadLoop(void) {
       TasmotaGlobal.restart_flag = 0;
     }
 #endif  // USE_UFILESYS
-    else {
-      MqttRetryCounter(60);
-#ifdef USE_COUNTER
-      CounterInterruptDisable(true);  // Prevent OTA failures on 100Hz counter interrupts
-#endif  // USE_COUNTER
-#ifdef USE_EMULATION
-      UdpDisconnect();
-#endif  // USE_EMULATION
-#ifdef USE_ARILUX_RF
-      AriluxRfDisable();  // Prevent restart exception on Arilux Interrupt routine
-#endif  // USE_ARILUX_RF
-      if (Settings.flag.mqtt_enabled) {  // SetOption3 - Enable MQTT
-        MqttDisconnect();
-      }
-    }
-    Web.upload_progress_dot_count = 0;
   }
 
   // ***** Step2: Write upload file
@@ -2487,21 +2521,14 @@ void HandleUploadLoop(void) {
       Web.upload_error = 5;  // Upload buffer miscompare
       return;
     }
-    if (_serialoutput) {
-      upload_size += upload.currentSize;
-      Serial.printf(".");
-      Web.upload_progress_dot_count++;
-      if (!(Web.upload_progress_dot_count % 50)) {  // Assuming core HTTP_UPLOAD_BUFLEN=2048
-        Serial.printf("%5dkB\n", upload_size / 1024);
-      }
+    if (upload.totalSize && !(upload.totalSize % 102400)) {
+      AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPLOAD "Progress %dkB"), upload.totalSize / 1024);
     }
   }
 
   // ***** Step3: Finish upload file
   else if (UPLOAD_FILE_END == upload.status) {
-    if (_serialoutput && (Web.upload_progress_dot_count % 50)) {
-      Serial.printf("%5dkB\n", upload_size / 1024);
-    }
+    UploadServices(1);
     if (UPL_SETTINGS == Web.upload_file_type) {
       if (Web.config_xor_on_set) {
         for (uint32_t i = 2; i < sizeof(Settings); i++) {
@@ -2593,7 +2620,6 @@ void HandleUploadLoop(void) {
     }
 #endif  // USE_WEB_FW_UPGRADE
     else if (!Update.end(true)) { // true to set the size to the current progress
-      if (_serialoutput) { Update.printError(Serial); }
       Web.upload_error = 6;  // Upload failed. Enable logging 3
       return;
     }
@@ -2601,18 +2627,13 @@ void HandleUploadLoop(void) {
   }
 
   // ***** Step4: Abort upload file
-//  else if (UPLOAD_FILE_ABORTED == upload.status) {
   else {
-    TasmotaGlobal.restart_flag = 0;
-    MqttRetryCounter(0);
-#ifdef USE_COUNTER
-    CounterInterruptDisable(false);
-#endif  // USE_COUNTER
+    UploadServices(1);
     Web.upload_error = 7;  // Upload aborted
     if (UPL_TASMOTA == Web.upload_file_type) { Update.end(); }
   }
   delay(0);
-  OsWatchLoop();          // Feed OsWatch timer to prevent restart on long uploads
+  Scheduler();          // Feed OsWatch timer to prevent restart on long uploads
 }
 
 /*-------------------------------------------------------------------------------------------*/

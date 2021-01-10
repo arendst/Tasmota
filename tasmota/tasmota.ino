@@ -380,22 +380,21 @@ void SleepDelay(uint32_t mseconds) {
   }
 }
 
-void loop(void) {
-  uint32_t my_sleep = millis();
-
-// check LEAmDNS.h 
-// MDNS.update() needs to be called in main loop
-  #ifdef ESP8266  //Not needed with esp32 mdns
-  #ifdef USE_DISCOVERY
-  #ifdef WEBSERVER_ADVERTISE
-  // previously this was only called in WifiCheckIp() and that causes delays in responses to mdns
-  MdnsUpdate();  
-  #endif  // WEBSERVER_ADVERTISE
-  #endif  // USE_DISCOVERY
-  #endif  // ESP8266
-
+void Scheduler(void) {
   XdrvCall(FUNC_LOOP);
   XsnsCall(FUNC_LOOP);
+
+// check LEAmDNS.h
+// MDNS.update() needs to be called in main loop
+#ifdef ESP8266                     // Not needed with esp32 mdns
+#ifdef USE_DISCOVERY
+#ifdef USE_WEBSERVER
+#ifdef WEBSERVER_ADVERTISE
+  MdnsUpdate();
+#endif  // WEBSERVER_ADVERTISE
+#endif  // USE_WEBSERVER
+#endif  // USE_DISCOVERY
+#endif  // ESP8266
 
   OsWatchLoop();
   ButtonLoop();
@@ -444,6 +443,12 @@ void loop(void) {
 #ifdef USE_ARDUINO_OTA
   ArduinoOtaLoop();
 #endif  // USE_ARDUINO_OTA
+}
+
+void loop(void) {
+  uint32_t my_sleep = millis();
+
+  Scheduler();
 
   uint32_t my_activity = millis() - my_sleep;
 
