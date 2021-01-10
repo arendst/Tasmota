@@ -181,7 +181,7 @@ void UfsCheckSDCardInit(void) {
 #endif // USE_SDCARD
 
 uint32_t UfsInfo(uint32_t sel, uint32_t type) {
-  uint32_t result = 0;
+  uint64_t result = 0;
   FS *ifsp = ufsp;
   uint8_t itype = ufs_type;
   if (type) {
