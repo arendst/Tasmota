@@ -98,7 +98,10 @@ void SEESAW_SOILEverySecond(void) {             // update sensor values and publ
     SeeSoil[i].capacitance = SeeSoil[i].ss->touchRead(0);
 #ifdef SEESAW_SOIL_PUBLISH
     if (uint32_t (CAP_TO_MOIST(SeeSoil[i].capacitance)*100) != old_moist) {
-      SEESAW_SOILPublish(i);                    // publish new sensor value if moisture changed 1%
+      Response_P(PSTR("{"));                    // send values to MQTT & rules
+      SEESAW_SOILJson(i);
+      ResponseJsonEnd();
+      MqttPublishTeleSensor();
     }
 #endif // SEESAW_SOIL_PUBLISH
   }
@@ -110,12 +113,7 @@ void SEESAW_SOILShow(bool json) {
 
   for (uint32_t i = 0; i < SeeSoilCount; i++) {
     dtostrfd(SeeSoil[i].temperature, Settings.flag2.temperature_resolution, temperature);
-    strlcpy(sensor_name, SeeSoilName, sizeof(sensor_name));
-    if (SeeSoilCount > 1) {
-      snprintf_P(sensor_name, sizeof(sensor_name), PSTR("%s%c%2X"),         // SeeSoil-18, SeeSoil-1A  etc.
-                 SeeSoilName, IndexSeparator(), SeeSoil[i].address);
-    }
-
+    SEESAW_SOILName(i, sensor_name, sizeof(sensor_name));
     if (json) {
       ResponseAppend_P(PSTR(","));                                          // compose tele json
       SEESAW_SOILJson(i);
@@ -141,22 +139,24 @@ void SEESAW_SOILShow(bool json) {
   } // for each sensor connected
 }
 
-#ifdef SEESAW_SOIL_PUBLISH
-void SEESAW_SOILPublish(int no) {               // send values to MQTT & rules
-  Response_P(PSTR("{"));
-  SEESAW_SOILJson(no);
-  ResponseJsonEnd();
-  MqttPublishTeleSensor();
-}
-#endif // SEESAW_SOIL_PUBLISH
-
-void SEESAW_SOILJson(int no) {                  // common json
+void SEESAW_SOILJson(int no) {                        // common json
   char temperature[FLOATSZ];
+  char sensor_name[sizeof(SeeSoilName) + 3];
 
+  SEESAW_SOILName(no, sensor_name, sizeof(sensor_name));
   dtostrfd(SeeSoil[no].temperature, Settings.flag2.temperature_resolution, temperature);
-  ResponseAppend_P(PSTR ("\"%s\":{\"Id\":\"%02X\",\"Temperature\":%s,\"Moisture\":%u}"),
-                   SeeSoilName, SeeSoil[no].address, temperature,
-                   uint32_t (CAP_TO_MOIST(SeeSoil[no].capacitance)*100));
+  ResponseAppend_P(PSTR ("\"%s\":{\"" D_JSON_ID "\":\"%02X\",\"" D_JSON_TEMPERATURE "\":%s,\"" D_JSON_MOISTURE "\":%u}"),
+                   sensor_name, SeeSoil[no].address, temperature, uint32_t (CAP_TO_MOIST(SeeSoil[no].capacitance)*100));
+}
+
+void SEESAW_SOILName(int no, char *name, int len)    // generates a sensor name
+{
+  if (SeeSoilCount > 1) {
+    snprintf_P(name, len, PSTR("%s%c%u"), SeeSoilName, IndexSeparator(), no + 1);
+  }
+  else {
+    strlcpy(name, SeeSoilName, len);
+  }
 }
 
 /*********************************************************************************************\
