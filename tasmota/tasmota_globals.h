@@ -123,7 +123,7 @@ String EthernetMacAddress(void);
 #undef USE_RF_FLASH
 
 // Not ported (yet)
-#undef USE_DISCOVERY
+
 #undef USE_MY92X1
 #undef USE_TUYA_MCU
 #undef USE_PS_16_DZ
