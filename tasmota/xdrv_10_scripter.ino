@@ -155,16 +155,30 @@ void Script_ticker4_end(void) {
 // i2c eeprom
 #define EEP_WRITE(A,B,C) eeprom_writeBytes(A, B, (uint8_t*)C);
 #define EEP_READ(A,B,C) eeprom_readBytes(A, B, (uint8_t*)C);
+
+#ifdef ESP8266
+#ifdef USE_24C256
+#undef EEP_INIT
 #define EEP_INIT(A) eeprom_init(A)
+#else
+#undef EEP_INIT
+#define EEP_INIT(A) alt_eeprom_init(A)
+#endif
+#endif
 
 
 #if defined(EEP_SCRIPT_SIZE) && !defined(ESP32)
 
+// seems to be the last untouched sector, beside OTA and serial Flash
+#define SPEC_SCRIPT_FLASH 0x000F2000
+
 uint32_t eeprom_block;
+
 // these support only one 4 k block below EEPROM this steals 4k of application area
 uint32_t alt_eeprom_init(uint32_t size) {
     //EEPROM.begin(size);
-    eeprom_block = (uint32_t)&_FS_end - 0x40200000 - SPI_FLASH_SEC_SIZE;
+    //eeprom_block = (uint32_t)&_FS_end - 0x40200000 - SPI_FLASH_SEC_SIZE;
+    eeprom_block = SPEC_SCRIPT_FLASH;
     return 1;
 }
 
@@ -7424,7 +7438,7 @@ bool Xdrv10(uint8_t function)
           glob_script_mem.script_pram = (uint8_t*)Settings.rules[0];
           glob_script_mem.script_pram_size = MAX_SCRIPT_SIZE;
 
-          glob_script_mem.FLAGS.fsys = true;
+          glob_script_mem.FLAGS.eeprom = true;
       }
 #else // EEP_SCRIPT_SIZE
 
@@ -7521,9 +7535,6 @@ bool Xdrv10(uint8_t function)
             cpy2lf(bname, sizeof(bname), glob_script_mem.section_ptr + 3);
             WSContentSend_PD(HTTP_WEB_FULL_DISPLAY, bname);
             Webserver->on("/sfd", ScriptFullWebpage);
-#ifdef USE_SCRIPT_FATFS
-            Webserver->onNotFound(ScriptGetSDCard);
-#endif
         }
 #endif // SCRIPT_FULL_WEBPAGE
       }
