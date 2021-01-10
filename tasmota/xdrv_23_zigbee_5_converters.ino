@@ -195,6 +195,7 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   { Zoctstr,  Cx0000, 0x000A,  Z_(ProductCode),          Cm1, 0 },
   { Zstring,  Cx0000, 0x000B,  Z_(ProductURL),           Cm1, 0 },
   { Zstring,  Cx0000, 0x4000,  Z_(SWBuildID),            Cm1, 0 },
+  { Zuint8,   Cx0000, 0x4005,  Z_(MullerLightMode),      Cm1, 0 },
   // { Zunk,     Cx0000, 0xFFFF,  nullptr,                 Cm0, 0 },    // Remove all other values
   // Cmd 0x0A - Cluster 0x0000, attribute 0xFF01 - proprietary
   { Zmap8,    Cx0000, 0xFF01,  Z_(),                     Cm0, 0 },
@@ -1184,6 +1185,10 @@ uint32_t parseSingleAttribute(Z_attribute & attr, const SBuffer &buf,
 void ZCLFrame::parseReportAttributes(Z_attribute_list& attr_list) {
   uint32_t i = 0;
   uint32_t len = _payload.len();
+
+  if (ZCL_WRITE_ATTRIBUTES == getCmdId()) {
+    attr_list.addAttribute(PSTR("Command"), true).setStr(PSTR("Write"));
+  }
 
   while (len >= i + 3) {
     uint16_t attrid = _payload.get16(i);
