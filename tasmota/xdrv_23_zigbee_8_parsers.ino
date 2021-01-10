@@ -1472,25 +1472,25 @@ typedef struct Z_autoAttributeReporting_t {
 
 // Note the attribute must be registered in the converter list, used to retrieve the type of the attribute
 const Z_autoAttributeReporting_t Z_autoAttributeReporting[] PROGMEM = {
-  { 0x0001, 0x0020,    60*60, 4*60*60,  0.1 },      // BatteryVoltage
-  { 0x0001, 0x0021,    60*60, 4*60*60,    1 },      // BatteryPercentage
-  { 0x0006, 0x0000,        1,   60*60,    0 },      // Power
-  { 0x0201, 0x0000,       60,   60*10,  0.5 },      // LocalTemperature
-  { 0x0201, 0x0008,       60,   60*10,   10 },      // PIHeatingDemand
-  { 0x0201, 0x0012,       60,   60*10,  0.5 },      // OccupiedHeatingSetpoint
-  { 0x0008, 0x0000,        1,   60*60,    5 },      // Dimmer
-  { 0x0300, 0x0000,        1,   60*60,    5 },      // Hue
-  { 0x0300, 0x0001,        1,   60*60,    5 },      // Sat
-  { 0x0300, 0x0003,        1,   60*60,  100 },      // X
-  { 0x0300, 0x0004,        1,   60*60,  100 },      // Y
-  { 0x0300, 0x0007,        1,   60*60,    5 },      // CT
-  { 0x0300, 0x0008,        1,   60*60,    0 },      // ColorMode
-  { 0x0400, 0x0000,       10,   60*60,    5 },      // Illuminance (5 lux)
-  { 0x0402, 0x0000,       30,   60*60,  0.2 },      // Temperature (0.2 °C)
-  { 0x0403, 0x0000,       30,   60*60,    1 },      // Pressure (1 hPa)
-  { 0x0405, 0x0000,       30,   60*60,  1.0 },      // Humidity (1 %)
-  { 0x0406, 0x0000,       10,   60*60,    0 },      // Occupancy
-  { 0x0500, 0x0002,        1,   60*60,    0 },      // ZoneStatus
+  { 0x0001, 0x0020,    60*60, USE_ZIGBEE_MAXTIME_BATT,  USE_ZIGBEE_AUTOBIND_BATTVOLTAGE },      // BatteryVoltage
+  { 0x0001, 0x0021,    60*60, USE_ZIGBEE_MAXTIME_BATT,  USE_ZIGBEE_AUTOBIND_BATTPERCENT },      // BatteryPercentage
+  { 0x0006, 0x0000,        1,   USE_ZIGBEE_MAXTIME_LIGHT,    0 },      // Power
+  { 0x0201, 0x0000,       60,   USE_ZIGBEE_MAXTIME_TRV,  USE_ZIGBEE_AUTOBIND_TEMPERATURE },      // LocalTemperature
+  { 0x0201, 0x0008,       60,   USE_ZIGBEE_MAXTIME_TRV,  USE_ZIGBEE_AUTOBIND_HEATDEMAND  },      // PIHeatingDemand
+  { 0x0201, 0x0012,       60,   USE_ZIGBEE_MAXTIME_TRV,  USE_ZIGBEE_AUTOBIND_TEMPERATURE },      // OccupiedHeatingSetpoint
+  { 0x0008, 0x0000,        1,   USE_ZIGBEE_MAXTIME_LIGHT,    5 },      // Dimmer
+  { 0x0300, 0x0000,        1,   USE_ZIGBEE_MAXTIME_LIGHT,    5 },      // Hue
+  { 0x0300, 0x0001,        1,   USE_ZIGBEE_MAXTIME_LIGHT,    5 },      // Sat
+  { 0x0300, 0x0003,        1,   USE_ZIGBEE_MAXTIME_LIGHT,  100 },      // X
+  { 0x0300, 0x0004,        1,   USE_ZIGBEE_MAXTIME_LIGHT,  100 },      // Y
+  { 0x0300, 0x0007,        1,   USE_ZIGBEE_MAXTIME_LIGHT,    5 },      // CT
+  { 0x0300, 0x0008,        1,   USE_ZIGBEE_MAXTIME_LIGHT,    0 },      // ColorMode
+  { 0x0400, 0x0000,       10,   USE_ZIGBEE_MAXTIME_SENSOR,  USE_ZIGBEE_AUTOBIND_ILLUMINANCE },      // Illuminance (5 lux)
+  { 0x0402, 0x0000,       30,   USE_ZIGBEE_MAXTIME_SENSOR,  USE_ZIGBEE_AUTOBIND_TEMPERATURE },      // Temperature (0.2 °C)
+  { 0x0403, 0x0000,       30,   USE_ZIGBEE_MAXTIME_SENSOR,  USE_ZIGBEE_AUTOBIND_PRESSURE    },      // Pressure (1 hPa)
+  { 0x0405, 0x0000,       30,   USE_ZIGBEE_MAXTIME_SENSOR,  USE_ZIGBEE_AUTOBIND_HUMIDITY    },      // Humidity (1 %)
+  { 0x0406, 0x0000,       10,   USE_ZIGBEE_MAXTIME_SENSOR,    0 },      // Occupancy
+  { 0x0500, 0x0002,        1,   USE_ZIGBEE_MAXTIME_SENSOR,    0 },      // ZoneStatus
 };
 
 //

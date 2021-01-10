@@ -752,6 +752,23 @@
   #define USE_ZBBRIDGE_TLS                       // TLS support for zbbridge
   #define USE_ZIGBEE_ZBBRIDGE_EEPROM 0x50        // I2C id for the ZBBridge EEPROM
 
+  // Auto-binding constants, see `Z_autoAttributeReporting`
+  // Below are the threshold for attribute reporting
+  #define USE_ZIGBEE_AUTOBIND_BATTVOLTAGE   0.1     // V
+  #define USE_ZIGBEE_AUTOBIND_BATTPERCENT   1       // %
+  #define USE_ZIGBEE_AUTOBIND_TEMPERATURE   0.5     // °C
+  #define USE_ZIGBEE_AUTOBIND_HEATDEMAND    10      // %
+  #define USE_ZIGBEE_AUTOBIND_PRESSURE      1       // hPA
+  #define USE_ZIGBEE_AUTOBIND_ILLUMINANCE   5       // lux
+  #define USE_ZIGBEE_AUTOBIND_HUMIDITY      1.0     // %
+  // Below are the Max Thresholds for reporting time (in seconds)
+  #define USE_ZIGBEE_MAXTIME_BATT           4*60*60   // 4h
+  #define USE_ZIGBEE_MAXTIME_TRV            60*10     // 10m
+  #define USE_ZIGBEE_MAXTIME_SENSOR         60*60     // 1h
+  #define USE_ZIGBEE_MAXTIME_LIGHT          60*60     // 1h
+
+
+
 // -- Other sensors/drivers -----------------------
 
 //#define USE_TM1638                               // Add support for TM1638 switches copying Switch1 .. Switch8 (+1k code)
