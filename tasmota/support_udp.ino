@@ -22,11 +22,12 @@
 #ifndef UDP_BUFFER_SIZE
 #define UDP_BUFFER_SIZE         120      // Max UDP buffer size needed for M-SEARCH message
 #endif
-#define UDP_MSEARCH_SEND_DELAY  1500     // Delay in ms before M-Search response is send
+#define UDP_MSEARCH_DEBOUNCE  300        // Don't send new response if same request within 300 ms
 
-#include <Ticker.h>
-Ticker TickerMSearch;
-
+uint32_t  udp_last_received = 0;         // timestamp of last udp received packet
+                                         // if non-zero we keep silend and don't send response
+                                         // there is a very low probability that after 53 days the timestamp is
+                                         // genuingly zero. This is not an issue and would result in an extra response sent.
 IPAddress udp_remote_ip;                 // M-Search remote IP address
 uint16_t udp_remote_port;                // M-Search remote port
 
@@ -109,6 +110,9 @@ bool UdpConnect(void)
 void PollUdp(void)
 {
   if (udp_connected) {
+    if (TimeReached(udp_last_received + UDP_MSEARCH_DEBOUNCE)) {
+      udp_last_received = 0;      // re-init timer
+    }
 #ifdef ESP8266
     while (UdpCtx.next()) {
       UdpPacket<UDP_BUFFER_SIZE> *packet;
@@ -116,7 +120,7 @@ void PollUdp(void)
       if (packet->len >= UDP_BUFFER_SIZE) {
         packet->len--;    // leave space for NULL terminator
       }
-      packet->buf[packet->len] = 0;   // add NULL at the end of the packer
+      packet->buf[packet->len] = 0;   // add NULL at the end of the packet
       char * packet_buffer = (char*) &packet->buf;
       int32_t len = packet->len;
 #endif  // ESP8266
@@ -137,53 +141,54 @@ void PollUdp(void)
 #else
         if (TasmotaGlobal.devices_present && !udp_response_mutex && (strstr_P(packet_buffer, PSTR("M-SEARCH")) != nullptr)) {
 #endif
-          udp_response_mutex = true;
+          if (0 == udp_last_received) {
+            udp_last_received = millis();
+            udp_response_mutex = true;
 
 #ifdef ESP8266
-          udp_remote_ip = packet->srcaddr;
-          udp_remote_port = packet->srcport;
+            udp_remote_ip = packet->srcaddr;
+            udp_remote_port = packet->srcport;
 #else
-          udp_remote_ip = PortUdp.remoteIP();
-          udp_remote_port = PortUdp.remotePort();
+            udp_remote_ip = PortUdp.remoteIP();
+            udp_remote_port = PortUdp.remotePort();
 #endif
 
-          // AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("UDP: M-SEARCH Packet from %s:%d\n%s"),
-          //   udp_remote_ip.toString().c_str(), udp_remote_port, packet_buffer);
+            // AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("UDP: M-SEARCH Packet from %s:%d\n%s"),
+            //   udp_remote_ip.toString().c_str(), udp_remote_port, packet_buffer);
 
-          uint32_t response_delay = UDP_MSEARCH_SEND_DELAY + ((millis() &0x7) * 100);  // 1500 - 2200 msec
-
-          LowerCase(packet_buffer, packet_buffer);
-          RemoveSpace(packet_buffer);
+            LowerCase(packet_buffer, packet_buffer);
+            RemoveSpace(packet_buffer);
 
 #ifdef USE_EMULATION_WEMO
-          if (EMUL_WEMO == Settings.flag2.emulation) {
-            if (strstr_P(packet_buffer, URN_BELKIN_DEVICE) != nullptr) {     // type1 echo dot 2g, echo 1g's
-              TickerMSearch.once_ms(response_delay, WemoRespondToMSearch, 1);
-              return;
+            if (EMUL_WEMO == Settings.flag2.emulation) {
+              if (strstr_P(packet_buffer, URN_BELKIN_DEVICE) != nullptr) {     // type1 echo dot 2g, echo 1g's
+                WemoRespondToMSearch(1);
+                return;
+              }
+              else if ((strstr_P(packet_buffer, UPNP_ROOTDEVICE) != nullptr) ||  // type2 Echo 2g (echo & echo plus)
+                      (strstr_P(packet_buffer, SSDPSEARCH_ALL) != nullptr) ||
+                      (strstr_P(packet_buffer, SSDP_ALL) != nullptr)) {
+                WemoRespondToMSearch(2);
+                return;
+              }
             }
-            else if ((strstr_P(packet_buffer, UPNP_ROOTDEVICE) != nullptr) ||  // type2 Echo 2g (echo & echo plus)
-                    (strstr_P(packet_buffer, SSDPSEARCH_ALL) != nullptr) ||
-                    (strstr_P(packet_buffer, SSDP_ALL) != nullptr)) {
-              TickerMSearch.once_ms(response_delay, WemoRespondToMSearch, 2);
-              return;
-            }
-          }
 #endif  // USE_EMULATION_WEMO
 
 #ifdef USE_EMULATION_HUE
-          if (EMUL_HUE == Settings.flag2.emulation) {
-            if ((strstr_P(packet_buffer, PSTR(":device:basic:1")) != nullptr) ||
-                (strstr_P(packet_buffer, UPNP_ROOTDEVICE) != nullptr) ||
-                (strstr_P(packet_buffer, SSDPSEARCH_ALL) != nullptr) ||
-                (strstr_P(packet_buffer, SSDP_ALL) != nullptr)) {
-              TickerMSearch.once_ms(response_delay, HueRespondToMSearch);
-              return;
+            if (EMUL_HUE == Settings.flag2.emulation) {
+              if ((strstr_P(packet_buffer, PSTR(":device:basic:1")) != nullptr) ||
+                  (strstr_P(packet_buffer, UPNP_ROOTDEVICE) != nullptr) ||
+                  (strstr_P(packet_buffer, SSDPSEARCH_ALL) != nullptr) ||
+                  (strstr_P(packet_buffer, SSDP_ALL) != nullptr)) {
+                HueRespondToMSearch();
+                return;
+              }
             }
-          }
 #endif  // USE_EMULATION_HUE
 
-          udp_response_mutex = false;
-          continue;
+            udp_response_mutex = false;
+            continue;
+          }
         }
       }
     }
