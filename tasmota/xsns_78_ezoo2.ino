@@ -1,7 +1,7 @@
 /*
   xsns_78_ezoo2.ino - EZO O2 I2C O2 sensor support for Tasmota
 
-  Copyright (C) 2020  Christopher Tremblay
+  Copyright (C) 2021  Christopher Tremblay
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -41,7 +41,7 @@ struct EZOO2 : public EZOStruct {
     if (json) {
       ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_O2 "\":%d}" ), name, str);
     }
-#ifdef USE_WEBSERVER  
+#ifdef USE_WEBSERVER
     else {
       WSContentSend_PD(HTTP_SNS_O2, name, str);
 #endif  // USE_WEBSERVER

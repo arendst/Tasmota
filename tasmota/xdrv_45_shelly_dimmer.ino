@@ -1,7 +1,7 @@
 /*
     xdrv_45_shelly_dimmer.ino - shelly dimmer support for Tasmota
 
-    Copyright (C) 2020  James Turton
+    Copyright (C) 2021  James Turton
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by

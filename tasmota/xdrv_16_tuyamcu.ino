@@ -1,7 +1,7 @@
 /*
   xdrv_16_tuyamcu.ino - Tuya MCU support for Tasmota
 
-  Copyright (C) 2020 Federico Leoni, digiblur, Joel Stein and Theo Arends
+  Copyright (C) 2021  Federico Leoni, digiblur, Joel Stein and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -404,7 +404,7 @@ void TuyaSendCmd(uint8_t cmd, uint8_t payload[] = nullptr, uint16_t payload_len 
   TuyaSerial->write(cmd);                   // Tuya command
   TuyaSerial->write(payload_len >> 8);      // following data length (Hi)
   TuyaSerial->write(payload_len & 0xFF);    // following data length (Lo)
-  char log_data[LOGSZ];
+  char log_data[MAX_LOGSZ];
   snprintf_P(log_data, sizeof(log_data), PSTR("TYA: Send \"55aa00%02x%02x%02x"), cmd, payload_len >> 8, payload_len & 0xFF);
   for (uint32_t i = 0; i < payload_len; ++i) {
     TuyaSerial->write(payload[i]);
@@ -517,7 +517,7 @@ bool TuyaSetChannels(void)
       Tuya.Snapshot[0] = changeUIntScale(Light.current_color[0], 0, 255, 0, 100);
       Tuya.Snapshot[1] = changeUIntScale(Light.current_color[1], 0, 255, 0, 100);
     } else { // CT Light or RGBWC
-      light_state.getCTRange(&Tuya.CTMin, &Tuya.CTMax); // SetOption82 - Reduce the CT range from 153..500 to 200..380 to accomodate with Alexa range
+      getCTRange(&Tuya.CTMin, &Tuya.CTMax); // SetOption82 - Reduce the CT range from 153..500 to 200..380 to accomodate with Alexa range
       Tuya.Snapshot[0] = light_state.getDimmer();
       Tuya.Snapshot[1] = light_state.getCT();
     }
@@ -948,7 +948,11 @@ void TuyaNormalPowerModePacketProcess(void)
       }
       TuyaRequestState(0);
       break;
-
+#ifdef USE_TUYA_TIME
+    case TUYA_CMD_SET_TIME:
+      TuyaSetTime();
+      break;
+#endif
     default:
       AddLog_P(LOG_LEVEL_DEBUG, PSTR("TYA: RX unknown command"));
   }

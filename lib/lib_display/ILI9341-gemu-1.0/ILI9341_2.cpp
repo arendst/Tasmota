@@ -292,7 +292,7 @@ void ILI9341_2::setAddrWindow(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1
   }
 }
 
-void ILI9341_2::pushColors(uint16_t *data, uint8_t len, boolean first) {
+void ILI9341_2::pushColors(uint16_t *data, uint16_t len, boolean first) {
   uint16_t color;
 
   while (len--) {
@@ -543,6 +543,12 @@ void ILI9341_2::DisplayOnff(int8_t on) {
 #endif
     }
   }
+}
+
+void ILI9341_2::invertDisplay(boolean i) {
+  ILI9341_2_CS_LOW
+  writecmd(i ? ILI9341_2_INVOFF : ILI9341_2_INVON);
+  ILI9341_2_CS_HIGH
 }
 
 void ili9342_dimm(uint8_t dim);

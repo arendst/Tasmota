@@ -389,7 +389,7 @@ void xsend_message_txt(char *msg) {
 #ifdef DEBUG_EMAIL_PORT
   AddLog_P(LOG_LEVEL_INFO, PSTR("%s"),msg);
 #endif
-#if defined(USE_SCRIPT_FATFS) && defined(USE_SCRIPT)
+#if (defined(USE_SCRIPT_FATFS) && defined(USE_SCRIPT)) || defined(UFILESYSTEM)
   if (*msg=='@') {
     msg++;
     attach_File(msg);
@@ -415,9 +415,9 @@ void xsend_message_txt(char *msg) {
 #endif
 }
 
-#if defined(USE_SCRIPT_FATFS) && defined(USE_SCRIPT)
+#if (defined(USE_SCRIPT_FATFS) && defined(USE_SCRIPT)) || defined(UFILESYSTEM)
 #include <LittleFS.h>
-extern FS *fsp;
+extern FS *ufsp;
 
 void attach_File(char *path) {
   g_client->print(F("--frontier\r\n"));
@@ -425,7 +425,7 @@ void attach_File(char *path) {
   char buff[64];
   char *cp = path;
   while (*cp=='/') cp++;
-  File file = fsp->open(path, "r");
+  File file = ufsp->open(path, "r");
   if (file) {
     sprintf_P(buff,PSTR("Content-Disposition: attachment; filename=\"%s\"\r\n\r\n"), cp);
     g_client->write(buff);
@@ -717,6 +717,8 @@ uint16_t SendMail(char *buffer) {
   //Set the storage types to read the attach files (SD is default)
   //smtpData.setFileStorageType(MailClientStorageType::SPIFFS);
 
+
+/*
 #ifdef USE_SCRIPT_FATFS
 #if USE_SCRIPT_FATFS<0
   smtpData.setFileStorageType(MailClientStorageType::FFat);
@@ -724,6 +726,9 @@ uint16_t SendMail(char *buffer) {
   smtpData.setFileStorageType(MailClientStorageType::SD);
 #endif
 #endif
+*/
+
+smtpData.setFileStorageType(MailClientStorageType::Univ);
 
 
   //smtpData.setSendCallback(sendCallback);

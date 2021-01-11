@@ -1,7 +1,7 @@
 /*
   xdrv_23_zigbee_4a_eeprom.ino - zigbee support for Tasmota - saving configuration in I2C Eeprom of ZBBridge
 
-  Copyright (C) 2020  Theo Arends and Stephan Hadinger
+  Copyright (C) 2021  Theo Arends and Stephan Hadinger
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -107,9 +107,9 @@ int32_t hydrateSingleDevice(const class SBuffer & buf, size_t start, size_t len)
 }
 
 /*********************************************************************************************\
- * 
+ *
  * Hydrate data from the EEPROM
- * 
+ *
 \*********************************************************************************************/
 // Parse the entire blob
 // return true if ok
@@ -200,9 +200,9 @@ class SBuffer hibernateDeviceData(const struct Z_Device & device, bool mqtt = fa
 }
 
 /*********************************************************************************************\
- * 
+ *
  * Hibernate data to the EEPROM
- * 
+ *
 \*********************************************************************************************/
 void hibernateAllData(void) {
 #ifdef USE_ZIGBEE_EZSP
@@ -255,7 +255,7 @@ bool hibernateDevicesInEEPROM(void) {
   if (!zigbee.eeprom_ready) { return false; }
 
   ZFS_Write_File write_data(ZIGB_NAME2);
-  
+
   // first prefix is number of devices
   uint8_t devices_size = zigbee_devices.devicesSize();
   if (devices_size > 64) { devices_size = 64; }         // arbitrarily limit to 64 devices in EEPROM instead of 32 in Flash

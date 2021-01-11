@@ -1,7 +1,7 @@
 /*
   support_tasmota.ino - Core support for Tasmota
 
-  Copyright (C) 2020  Theo Arends
+  Copyright (C) 2021  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -1538,6 +1538,16 @@ void GpioInit(void)
         bitSet(TasmotaGlobal.gpio_optiona.data, mpin - AGPIO(GPIO_OPTION_A));
         mpin = GPIO_NONE;
       }
+#ifdef ROTARY_V1
+      else if ((mpin >= AGPIO(GPIO_ROT1A_NP)) && (mpin < (AGPIO(GPIO_ROT1A_NP) + MAX_ROTARIES))) {
+        RotaryAPullupFlag(mpin - AGPIO(GPIO_ROT1A_NP));
+        mpin -= (AGPIO(GPIO_ROT1A_NP) - AGPIO(GPIO_ROT1A));
+      }
+      else if ((mpin >= AGPIO(GPIO_ROT1B_NP)) && (mpin < (AGPIO(GPIO_ROT1B_NP) + MAX_ROTARIES))) {
+        RotaryBPullupFlag(mpin - AGPIO(GPIO_ROT1B_NP));
+        mpin -= (AGPIO(GPIO_ROT1B_NP) - AGPIO(GPIO_ROT1B));
+      }
+#endif  // ROTARY_V1
       else if ((mpin >= AGPIO(GPIO_SWT1_NP)) && (mpin < (AGPIO(GPIO_SWT1_NP) + MAX_SWITCHES))) {
         SwitchPullupFlag(mpin - AGPIO(GPIO_SWT1_NP));
         mpin -= (AGPIO(GPIO_SWT1_NP) - AGPIO(GPIO_SWT1));
@@ -1594,74 +1604,70 @@ void GpioInit(void)
 
 #ifdef ESP8266
   if ((2 == Pin(GPIO_TXD)) || (H801 == TasmotaGlobal.module_type)) { Serial.set_tx(2); }
+#endif
+
+  uint32_t sspi_mosi = (PinUsed(GPIO_SSPI_SCLK) && PinUsed(GPIO_SSPI_MOSI)) ? SPI_MOSI : SPI_NONE;
+  uint32_t sspi_miso = (PinUsed(GPIO_SSPI_SCLK) && PinUsed(GPIO_SSPI_MISO)) ? SPI_MISO : SPI_NONE;
+  TasmotaGlobal.soft_spi_enabled = sspi_mosi + sspi_miso;
+  AddLogSpi(0, Pin(GPIO_SSPI_SCLK), Pin(GPIO_SSPI_MOSI), Pin(GPIO_SSPI_MISO));
 
 #ifdef USE_SPI
-  TasmotaGlobal.spi_enabled = (((PinUsed(GPIO_SPI_CS) && (Pin(GPIO_SPI_CS) > 14)) || (Pin(GPIO_SPI_CS) < 12)) || ((PinUsed(GPIO_SPI_DC) && (Pin(GPIO_SPI_DC) > 14)) || (Pin(GPIO_SPI_DC) < 12)));
-  if (TasmotaGlobal.spi_enabled) {
-    TasmotaGlobal.my_module.io[12] = AGPIO(GPIO_SPI_MISO);
-    SetPin(12, AGPIO(GPIO_SPI_MISO));
-    TasmotaGlobal.my_module.io[13] = AGPIO(GPIO_SPI_MOSI);
-    SetPin(13, AGPIO(GPIO_SPI_MOSI));
-    TasmotaGlobal.my_module.io[14] = AGPIO(GPIO_SPI_CLK);
-    SetPin(14, AGPIO(GPIO_SPI_CLK));
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR("SPI: Using GPIO12(MISO), GPIO13(MOSI) and GPIO14(CLK)"));
+#ifdef ESP8266
+  if (!TasmotaGlobal.soft_spi_enabled) {
+    bool valid_cs = (ValidSpiPinUsed(GPIO_SPI_CS) ||
+                     ValidSpiPinUsed(GPIO_RC522_CS) ||
+                     ValidSpiPinUsed(GPIO_NRF24_CS) ||
+                     ValidSpiPinUsed(GPIO_ILI9341_CS) ||
+                     ValidSpiPinUsed(GPIO_EPAPER29_CS) ||
+                     ValidSpiPinUsed(GPIO_EPAPER42_CS) ||
+                     ValidSpiPinUsed(GPIO_ILI9488_CS) ||
+                     ValidSpiPinUsed(GPIO_SSD1351_CS) ||
+                     ValidSpiPinUsed(GPIO_RA8876_CS) ||
+                     ValidSpiPinUsed(GPIO_ST7789_DC) ||  // ST7789 CS may be omitted so chk DC too
+                     ValidSpiPinUsed(GPIO_ST7789_CS) ||
+                     ValidSpiPinUsed(GPIO_SSD1331_CS) ||
+                     ValidSpiPinUsed(GPIO_SDCARD_CS)
+                    );
+    bool valid_dc = (ValidSpiPinUsed(GPIO_SPI_DC) ||
+                     ValidSpiPinUsed(GPIO_NRF24_DC) ||
+                     ValidSpiPinUsed(GPIO_ILI9341_DC) ||
+                     ValidSpiPinUsed(GPIO_ST7789_DC) ||
+                     ValidSpiPinUsed(GPIO_SSD1331_DC)
+                    );
+    // If SPI_CS and/or SPI_DC is used they must be valid
+    TasmotaGlobal.spi_enabled = (valid_cs && valid_dc) ? SPI_MOSI_MISO : SPI_NONE;
+    if (TasmotaGlobal.spi_enabled) {
+      TasmotaGlobal.my_module.io[12] = AGPIO(GPIO_SPI_MISO);
+      SetPin(12, AGPIO(GPIO_SPI_MISO));
+      TasmotaGlobal.my_module.io[13] = AGPIO(GPIO_SPI_MOSI);
+      SetPin(13, AGPIO(GPIO_SPI_MOSI));
+      TasmotaGlobal.my_module.io[14] = AGPIO(GPIO_SPI_CLK);
+      SetPin(14, AGPIO(GPIO_SPI_CLK));
+    }
   }
-#endif  // USE_SPI
 #endif  // ESP8266
 #ifdef ESP32
-#ifdef USE_SPI
-  if (PinUsed(GPIO_SPI_CS) || PinUsed(GPIO_SPI_DC)) {
-    if ((15 == Pin(GPIO_SPI_CS)) && (!GetPin(12) && !GetPin(13) && !GetPin(14))) {  // HSPI
-      TasmotaGlobal.my_module.io[12] = AGPIO(GPIO_SPI_MISO);
-      SetPin(12, AGPIO(GPIO_SPI_MISO));
-      TasmotaGlobal.my_module.io[13] = AGPIO(GPIO_SPI_MOSI);
-      SetPin(13, AGPIO(GPIO_SPI_MOSI));
-      TasmotaGlobal.my_module.io[14] = AGPIO(GPIO_SPI_CLK);
-      SetPin(14, AGPIO(GPIO_SPI_CLK));
-    }
-    else if ((5 == Pin(GPIO_SPI_CS)) && (!GetPin(19) && !GetPin(23) && !GetPin(18))) {  // VSPI
-      TasmotaGlobal.my_module.io[19] = AGPIO(GPIO_SPI_MISO);
-      SetPin(19, AGPIO(GPIO_SPI_MISO));
-      TasmotaGlobal.my_module.io[23] = AGPIO(GPIO_SPI_MOSI);
-      SetPin(23, AGPIO(GPIO_SPI_MOSI));
-      TasmotaGlobal.my_module.io[18] = AGPIO(GPIO_SPI_CLK);
-      SetPin(18, AGPIO(GPIO_SPI_CLK));
-    }
-    else if ((12 == Pin(GPIO_SPI_MISO)) || (13 == Pin(GPIO_SPI_MOSI)) || (14 == Pin(GPIO_SPI_CLK))) {  // HSPI
-      TasmotaGlobal.my_module.io[12] = AGPIO(GPIO_SPI_MISO);
-      SetPin(12, AGPIO(GPIO_SPI_MISO));
-      TasmotaGlobal.my_module.io[13] = AGPIO(GPIO_SPI_MOSI);
-      SetPin(13, AGPIO(GPIO_SPI_MOSI));
-      TasmotaGlobal.my_module.io[14] = AGPIO(GPIO_SPI_CLK);
-      SetPin(14, AGPIO(GPIO_SPI_CLK));
-    }
-    else if ((19 == Pin(GPIO_SPI_MISO)) || (23 == Pin(GPIO_SPI_MOSI)) || (18 == Pin(GPIO_SPI_CLK))) {  // VSPI
-      TasmotaGlobal.my_module.io[19] = AGPIO(GPIO_SPI_MISO);
-      SetPin(19, AGPIO(GPIO_SPI_MISO));
-      TasmotaGlobal.my_module.io[23] = AGPIO(GPIO_SPI_MOSI);
-      SetPin(23, AGPIO(GPIO_SPI_MOSI));
-      TasmotaGlobal.my_module.io[18] = AGPIO(GPIO_SPI_CLK);
-      SetPin(18, AGPIO(GPIO_SPI_CLK));
-    }
-    TasmotaGlobal.spi_enabled = (PinUsed(GPIO_SPI_CLK) && (PinUsed(GPIO_SPI_MOSI) || PinUsed(GPIO_SPI_MISO)));
-    if (TasmotaGlobal.spi_enabled) {
-      if (PinUsed(GPIO_SPI_MOSI) && PinUsed(GPIO_SPI_MISO)) {
-        AddLog_P(LOG_LEVEL_DEBUG, PSTR("SPI: Using GPIO%02d(MISO), GPIO%02d(MOSI) and GPIO%02d(CLK)"),
-          Pin(GPIO_SPI_MISO), Pin(GPIO_SPI_MOSI), Pin(GPIO_SPI_CLK));
-      }
-      else if (PinUsed(GPIO_SPI_MOSI)) {
-        AddLog_P(LOG_LEVEL_DEBUG, PSTR("SPI: Using GPIO%02d(MOSI) and GPIO%02d(CLK)"),
-          Pin(GPIO_SPI_MOSI), Pin(GPIO_SPI_CLK));
-      }
-      else if (PinUsed(GPIO_SPI_MISO)) {
-        AddLog_P(LOG_LEVEL_DEBUG, PSTR("SPI: Using GPIO%02d(MISO) and GPIO%02d(CLK)"),
-          Pin(GPIO_SPI_MISO), Pin(GPIO_SPI_CLK));
-      }
-    }
+  if (PinUsed(GPIO_SPI_CS) ||
+      PinUsed(GPIO_RC522_CS) ||
+      PinUsed(GPIO_NRF24_CS) ||
+      PinUsed(GPIO_ILI9341_CS) ||
+      PinUsed(GPIO_EPAPER29_CS) ||
+      PinUsed(GPIO_EPAPER42_CS) ||
+      PinUsed(GPIO_ILI9488_CS) ||
+      PinUsed(GPIO_SSD1351_CS) ||
+      PinUsed(GPIO_RA8876_CS) ||
+      PinUsed(GPIO_ST7789_DC) ||  // ST7789 CS may be omitted so chk DC too
+      PinUsed(GPIO_ST7789_CS) ||
+      PinUsed(GPIO_SSD1331_CS) ||
+      PinUsed(GPIO_SDCARD_CS)
+     ) {
+    uint32_t spi_mosi = (PinUsed(GPIO_SPI_CLK) && PinUsed(GPIO_SPI_MOSI)) ? SPI_MOSI : SPI_NONE;
+    uint32_t spi_miso = (PinUsed(GPIO_SPI_CLK) && PinUsed(GPIO_SPI_MISO)) ? SPI_MISO : SPI_NONE;
+    TasmotaGlobal.spi_enabled = spi_mosi + spi_miso;
   }
-#endif  // USE_SPI
 #endif  // ESP32
-  TasmotaGlobal.soft_spi_enabled = (PinUsed(GPIO_SSPI_SCLK) && (PinUsed(GPIO_SSPI_MOSI) || PinUsed(GPIO_SSPI_MISO)));
+  AddLogSpi(1, Pin(GPIO_SPI_CLK), Pin(GPIO_SPI_MOSI), Pin(GPIO_SPI_MISO));
+#endif  // USE_SPI
 
   for (uint32_t i = 0; i < ARRAY_SIZE(TasmotaGlobal.my_module.io); i++) {
     uint32_t mpin = ValidPin(i, TasmotaGlobal.my_module.io[i]);

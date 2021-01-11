@@ -1,7 +1,7 @@
 /*
   xdrv_03_energy.ino - Energy sensor support for Tasmota
 
-  Copyright (C) 2020  Theo Arends
+  Copyright (C) 2021  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -558,14 +558,16 @@ void EnergyCommandCalResponse(uint32_t nvalue)
 
 void CmndEnergyReset(void)
 {
-  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= 3)) {
-    char *p;
-    unsigned long lnum = strtoul(XdrvMailbox.data, &p, 10);
-    if (p != XdrvMailbox.data) {
+  uint32_t values[2] = { 0 };
+  uint32_t params = ParseParameters(2, values);
+  values[0] *= 100;
+
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= 5)) {
+    if (params > 0) {
       switch (XdrvMailbox.index) {
       case 1:
         // Reset Energy Today
-        Energy.kWhtoday_offset = lnum *100;
+        Energy.kWhtoday_offset = values[0];
         Energy.kWhtoday = 0;
         Energy.kWhtoday_delta = 0;
         Energy.start_energy = 0;
@@ -573,56 +575,55 @@ void CmndEnergyReset(void)
         Settings.energy_kWhtoday = Energy.kWhtoday_offset;
         RtcSettings.energy_kWhtoday = Energy.kWhtoday_offset;
         Energy.daily = (float)Energy.kWhtoday_offset / 100000;
-        if (!RtcSettings.energy_kWhtotal && !Energy.kWhtoday_offset) {
-          Settings.energy_kWhtotal_time = LocalTime();
+        if( params > 1) {
+          Settings.energy_kWhtotal_time = values[1];
+        }
+        else {
+          if (!RtcSettings.energy_kWhtotal && !Energy.kWhtoday_offset) {
+            Settings.energy_kWhtotal_time = LocalTime();
+          }
         }
         break;
       case 2:
         // Reset Energy Yesterday
-        Settings.energy_kWhyesterday = lnum *100;
+        Settings.energy_kWhyesterday = values[0];
+        if( params > 1) {
+          Settings.energy_kWhtotal_time = values[1];
+        }
         break;
       case 3:
         // Reset Energy Total
-        RtcSettings.energy_kWhtotal = lnum *100;
+        RtcSettings.energy_kWhtotal = values[0];
         Settings.energy_kWhtotal = RtcSettings.energy_kWhtotal;
 //        Energy.total = (float)(RtcSettings.energy_kWhtotal + Energy.kWhtoday_offset + Energy.kWhtoday) / 100000;
-        Settings.energy_kWhtotal_time = (!Energy.kWhtoday_offset) ? LocalTime() : Midnight();
+        if( params > 1) {
+          Settings.energy_kWhtotal_time = values[1];
+        }
+        else {
+          Settings.energy_kWhtotal_time = (!Energy.kWhtoday_offset) ? LocalTime() : Midnight();
+        }
         RtcSettings.energy_usage.last_usage_kWhtotal = (uint32_t)(Energy.total * 1000);
         break;
-      }
-    }
-  }
-  else if ((XdrvMailbox.index > 3) && (XdrvMailbox.index <= 5)) {
-    uint32_t values[2] = { 0 };
-    uint32_t position = ParseParameters(2, values);
-    values[0] *= 100;
-    values[1] *= 100;
-
-    switch (XdrvMailbox.index)
-    {
       case 4:
         // Reset energy_usage.usage totals
-        if (position > 0) {
-          RtcSettings.energy_usage.usage1_kWhtotal = values[0];
-        }
-        if (position > 1) {
-          RtcSettings.energy_usage.usage2_kWhtotal = values[1];
+        RtcSettings.energy_usage.usage1_kWhtotal = values[0];
+        if (params > 1) {
+          RtcSettings.energy_usage.usage2_kWhtotal = values[1] * 100;
         }
         Settings.energy_usage.usage1_kWhtotal = RtcSettings.energy_usage.usage1_kWhtotal;
         Settings.energy_usage.usage2_kWhtotal = RtcSettings.energy_usage.usage2_kWhtotal;
         break;
       case 5:
         // Reset energy_usage.return totals
-        if (position > 0) {
-          RtcSettings.energy_usage.return1_kWhtotal = values[0];
-        }
-        if (position > 1) {
-          RtcSettings.energy_usage.return2_kWhtotal = values[1];
+        RtcSettings.energy_usage.return1_kWhtotal = values[0];
+        if (params > 1) {
+          RtcSettings.energy_usage.return2_kWhtotal = values[1] * 100;
         }
         Settings.energy_usage.return1_kWhtotal = RtcSettings.energy_usage.return1_kWhtotal;
         Settings.energy_usage.return2_kWhtotal = RtcSettings.energy_usage.return2_kWhtotal;
         break;
       }
+    }
   }
 
   Energy.total = (float)(RtcSettings.energy_kWhtotal + Energy.kWhtoday_offset + Energy.kWhtoday) / 100000;

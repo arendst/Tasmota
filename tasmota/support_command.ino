@@ -1,7 +1,7 @@
 /*
   support_command.ino - command support for Tasmota
 
-  Copyright (C) 2020  Theo Arends
+  Copyright (C) 2021  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -884,7 +884,12 @@ void CmndSetoption(void)
 #endif
 #if (defined(USE_IR_REMOTE) && defined(USE_IR_RECEIVE)) || defined(USE_IR_REMOTE_FULL)
           if (P_IR_UNKNOW_THRESHOLD == pindex) {
-            IrReceiveUpdateThreshold();
+            IrReceiveUpdateThreshold();    // SetOption38
+          }
+#endif
+#ifdef ROTARY_V1
+          if (P_ROTARY_MAX_STEP == pindex) {
+            RotaryInitMaxSteps();          // SetOption43
           }
 #endif
         } else {
@@ -941,6 +946,11 @@ void CmndSetoption(void)
           else if (4 == ptype) {           // SetOption82 .. 113
             bitWrite(Settings.flag4.data, pindex, XdrvMailbox.payload);
             switch (pindex) {
+#ifdef USE_LIGHT
+              case 0:                      // SetOption 82 - (Alexa) Reduced CT range for Alexa (1)
+                setAlexaCTRange();
+                break;
+#endif
               case 3:                      // SetOption85 - Enable Device Groups
               case 6:                      // SetOption88 - PWM Dimmer Buttons control remote devices
               case 15:                     // SetOption97 - Set Baud rate for TuyaMCU serial communication (0 = 9600 or 1 = 115200)
@@ -1119,7 +1129,7 @@ void CmndModules(void)
     }
     jsflg = true;
     uint32_t j = i ? midx +1 : 0;
-    if ((ResponseAppend_P(PSTR("\"%d\":\"%s\""), j, AnyModuleName(midx).c_str()) > (LOGSZ - TOPSZ)) || (i == sizeof(kModuleNiceList))) {
+    if ((ResponseAppend_P(PSTR("\"%d\":\"%s\""), j, AnyModuleName(midx).c_str()) > (MAX_LOGSZ - TOPSZ)) || (i == sizeof(kModuleNiceList))) {
       ResponseJsonEndEnd();
       MqttPublishPrefixTopic_P(RESULT_OR_STAT, XdrvMailbox.command);
       jsflg = false;
@@ -1187,7 +1197,7 @@ void CmndGpio(void)
           sensor_names = kSensorNamesFixed;
         }
         char stemp1[TOPSZ];
-        if ((ResponseAppend_P(PSTR("\"" D_CMND_GPIO "%d\":{\"%d\":\"%s%s\"}"), i, sensor_type, GetTextIndexed(stemp1, sizeof(stemp1), sensor_name_idx, sensor_names), sindex) > (LOGSZ - TOPSZ)) || (i == ARRAY_SIZE(Settings.my_gp.io) -1)) {
+        if ((ResponseAppend_P(PSTR("\"" D_CMND_GPIO "%d\":{\"%d\":\"%s%s\"}"), i, sensor_type, GetTextIndexed(stemp1, sizeof(stemp1), sensor_name_idx, sensor_names), sindex) > (MAX_LOGSZ - TOPSZ)) || (i == ARRAY_SIZE(Settings.my_gp.io) -1)) {
           ResponseJsonEnd();
           MqttPublishPrefixTopic_P(RESULT_OR_STAT, XdrvMailbox.command);
           jsflg2 = true;
@@ -1222,7 +1232,7 @@ void ShowGpios(const uint16_t *NiceList, uint32_t size, uint32_t offset, uint32_
     }
     jsflg = true;
     char stemp1[TOPSZ];
-    if ((ResponseAppend_P(PSTR("\"%d\":\"%s\""), ridx, GetTextIndexed(stemp1, sizeof(stemp1), midx, kSensorNames)) > (LOGSZ - TOPSZ)) || (i == size -1)) {
+    if ((ResponseAppend_P(PSTR("\"%d\":\"%s\""), ridx, GetTextIndexed(stemp1, sizeof(stemp1), midx, kSensorNames)) > (MAX_LOGSZ - TOPSZ)) || (i == size -1)) {
       ResponseJsonEndEnd();
       MqttPublishPrefixTopic_P(RESULT_OR_STAT, XdrvMailbox.command);
       jsflg = false;
@@ -2078,9 +2088,6 @@ void CmndDriver(void)
 
 void CmndInfo(void) {
   NvsInfo();
-#ifdef USE_TFS
-  TfsInfo();
-#endif
   ResponseCmndDone();
 }
 

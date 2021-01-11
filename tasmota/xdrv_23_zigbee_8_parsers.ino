@@ -1,7 +1,7 @@
 /*
   xdrv_23_zigbee.ino - zigbee support for Tasmota
 
-  Copyright (C) 2020  Theo Arends and Stephan Hadinger
+  Copyright (C) 2021  Theo Arends and Stephan Hadinger
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -1425,7 +1425,7 @@ void Z_SendCIEZoneEnrollResponse(uint16_t shortaddr, uint16_t groupaddr, uint16_
 void Z_AutoBind(uint16_t shortaddr, uint16_t groupaddr, uint16_t cluster, uint8_t endpoint, uint32_t value) {
   uint64_t srcLongAddr = zigbee_devices.getDeviceLongAddr(shortaddr);
 
-  AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "auto-bind `ZbBind {\"Device\":\"0x%04X\",\"Endpoint\":%d,\"Cluster\":\"0x%04X\"}`"),
+  AddLogZ_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "auto-bind `ZbBind {\"Device\":\"0x%04X\",\"Endpoint\":%d,\"Cluster\":\"0x%04X\"}`"),
                                   shortaddr, endpoint, cluster);
 #ifdef USE_ZIGBEE_ZNP
   SBuffer buf(34);
@@ -1472,25 +1472,25 @@ typedef struct Z_autoAttributeReporting_t {
 
 // Note the attribute must be registered in the converter list, used to retrieve the type of the attribute
 const Z_autoAttributeReporting_t Z_autoAttributeReporting[] PROGMEM = {
-  { 0x0001, 0x0020,    60*60, 4*60*60,  0.1 },      // BatteryVoltage
-  { 0x0001, 0x0021,    60*60, 4*60*60,    1 },      // BatteryPercentage
-  { 0x0006, 0x0000,        1,   60*60,    0 },      // Power
-  { 0x0201, 0x0000,       60,   60*10,  0.5 },      // LocalTemperature
-  { 0x0201, 0x0008,       60,   60*10,   10 },      // PIHeatingDemand
-  { 0x0201, 0x0012,       60,   60*10,  0.5 },      // OccupiedHeatingSetpoint
-  { 0x0008, 0x0000,        1,   60*60,    5 },      // Dimmer
-  { 0x0300, 0x0000,        1,   60*60,    5 },      // Hue
-  { 0x0300, 0x0001,        1,   60*60,    5 },      // Sat
-  { 0x0300, 0x0003,        1,   60*60,  100 },      // X
-  { 0x0300, 0x0004,        1,   60*60,  100 },      // Y
-  { 0x0300, 0x0007,        1,   60*60,    5 },      // CT
-  { 0x0300, 0x0008,        1,   60*60,    0 },      // ColorMode
-  { 0x0400, 0x0000,       10,   60*60,    5 },      // Illuminance (5 lux)
-  { 0x0402, 0x0000,       30,   60*60,  0.2 },      // Temperature (0.2 °C)
-  { 0x0403, 0x0000,       30,   60*60,    1 },      // Pressure (1 hPa)
-  { 0x0405, 0x0000,       30,   60*60,  1.0 },      // Humidity (1 %)
-  { 0x0406, 0x0000,       10,   60*60,    0 },      // Occupancy
-  { 0x0500, 0x0002,        1,   60*60,    0 },      // ZoneStatus
+  { 0x0001, 0x0020,    60*60, USE_ZIGBEE_MAXTIME_BATT,  USE_ZIGBEE_AUTOBIND_BATTVOLTAGE },      // BatteryVoltage
+  { 0x0001, 0x0021,    60*60, USE_ZIGBEE_MAXTIME_BATT,  USE_ZIGBEE_AUTOBIND_BATTPERCENT },      // BatteryPercentage
+  { 0x0006, 0x0000,        1,   USE_ZIGBEE_MAXTIME_LIGHT,    0 },      // Power
+  { 0x0201, 0x0000,       60,   USE_ZIGBEE_MAXTIME_TRV,  USE_ZIGBEE_AUTOBIND_TEMPERATURE },      // LocalTemperature
+  { 0x0201, 0x0008,       60,   USE_ZIGBEE_MAXTIME_TRV,  USE_ZIGBEE_AUTOBIND_HEATDEMAND  },      // PIHeatingDemand
+  { 0x0201, 0x0012,       60,   USE_ZIGBEE_MAXTIME_TRV,  USE_ZIGBEE_AUTOBIND_TEMPERATURE },      // OccupiedHeatingSetpoint
+  { 0x0008, 0x0000,        1,   USE_ZIGBEE_MAXTIME_LIGHT,    5 },      // Dimmer
+  { 0x0300, 0x0000,        1,   USE_ZIGBEE_MAXTIME_LIGHT,    5 },      // Hue
+  { 0x0300, 0x0001,        1,   USE_ZIGBEE_MAXTIME_LIGHT,    5 },      // Sat
+  { 0x0300, 0x0003,        1,   USE_ZIGBEE_MAXTIME_LIGHT,  100 },      // X
+  { 0x0300, 0x0004,        1,   USE_ZIGBEE_MAXTIME_LIGHT,  100 },      // Y
+  { 0x0300, 0x0007,        1,   USE_ZIGBEE_MAXTIME_LIGHT,    5 },      // CT
+  { 0x0300, 0x0008,        1,   USE_ZIGBEE_MAXTIME_LIGHT,    0 },      // ColorMode
+  { 0x0400, 0x0000,       10,   USE_ZIGBEE_MAXTIME_SENSOR,  USE_ZIGBEE_AUTOBIND_ILLUMINANCE },      // Illuminance (5 lux)
+  { 0x0402, 0x0000,       30,   USE_ZIGBEE_MAXTIME_SENSOR,  USE_ZIGBEE_AUTOBIND_TEMPERATURE },      // Temperature (0.2 °C)
+  { 0x0403, 0x0000,       30,   USE_ZIGBEE_MAXTIME_SENSOR,  USE_ZIGBEE_AUTOBIND_PRESSURE    },      // Pressure (1 hPa)
+  { 0x0405, 0x0000,       30,   USE_ZIGBEE_MAXTIME_SENSOR,  USE_ZIGBEE_AUTOBIND_HUMIDITY    },      // Humidity (1 %)
+  { 0x0406, 0x0000,       10,   USE_ZIGBEE_MAXTIME_SENSOR,    0 },      // Occupancy
+  { 0x0500, 0x0002,        1,   USE_ZIGBEE_MAXTIME_SENSOR,    0 },      // ZoneStatus
 };
 
 //
@@ -1550,7 +1550,7 @@ void Z_AutoConfigReportingForCluster(uint16_t shortaddr, uint16_t groupaddr, uin
   ResponseAppend_P(PSTR("}}"));
 
   if (buf.len() > 0) {
-    AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "auto-bind `%s`"), TasmotaGlobal.mqtt_data);
+    AddLogZ_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "auto-bind `%s`"), TasmotaGlobal.mqtt_data);
     ZigbeeZCLSend_Raw(ZigbeeZCLSendMessage({
       shortaddr,
       0x0000, /* group */
@@ -1639,9 +1639,9 @@ void Z_IncomingMessage(class ZCLFrame &zcl_received) {
       zcl_received.parseResponse();   // Zigbee general "Default Response", publish ZbResponse message
   } else {
     // Build the ZbReceive list
-    if ( (!zcl_received.isClusterSpecificCommand()) && (ZCL_REPORT_ATTRIBUTES == zcl_received.getCmdId())) {
+    if ( (!zcl_received.isClusterSpecificCommand()) && (ZCL_REPORT_ATTRIBUTES == zcl_received.getCmdId() || ZCL_WRITE_ATTRIBUTES == zcl_received.getCmdId())) {
       zcl_received.parseReportAttributes(attr_list);    // Zigbee report attributes from sensors
-      if (clusterid) { defer_attributes = true; }  // don't defer system Cluster=0 messages
+      if (clusterid && (ZCL_REPORT_ATTRIBUTES == zcl_received.getCmdId())) { defer_attributes = true; }  // don't defer system Cluster=0 messages or Write Attribute
     } else if ( (!zcl_received.isClusterSpecificCommand()) && (ZCL_READ_ATTRIBUTES_RESPONSE == zcl_received.getCmdId())) {
       zcl_received.parseReadAttributesResponse(attr_list);
       if (clusterid) { defer_attributes = true; }  // don't defer system Cluster=0 messages
@@ -1658,7 +1658,7 @@ void Z_IncomingMessage(class ZCLFrame &zcl_received) {
       zcl_received.parseClusterSpecificCommand(attr_list);
     }
 
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE D_JSON_ZIGBEEZCL_RAW_RECEIVED ": {\"0x%04X\":{%s}}"), srcaddr, attr_list.toString().c_str());
+    AddLogZ_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE D_JSON_ZIGBEEZCL_RAW_RECEIVED ": {\"0x%04X\":{%s}}"), srcaddr, attr_list.toString().c_str());
 
     // discard the message if it was sent by us (broadcast or group loopback)
     if (srcaddr == localShortAddr) {
@@ -2143,7 +2143,7 @@ void ZCLFrame::autoResponder(const uint16_t *attr_list_ids, size_t attr_len) {
     // we have a non-empty output
 
     // log first
-    AddLog_P(LOG_LEVEL_INFO, PSTR("ZIG: Auto-responder: ZbSend {\"Device\":\"0x%04X\""
+    AddLogZ_P(LOG_LEVEL_INFO, PSTR("ZIG: Auto-responder: ZbSend {\"Device\":\"0x%04X\""
                                           ",\"Cluster\":\"0x%04X\""
                                           ",\"Endpoint\":%d"
                                           ",\"Response\":%s}"

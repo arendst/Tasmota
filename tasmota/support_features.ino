@@ -1,7 +1,7 @@
 /*
   support_features.ino - feature support for Tasmota
 
-  Copyright (C) 2020  Theo Arends
+  Copyright (C) 2021  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -162,7 +162,7 @@ void ResponseAppendFeatures(void)
     feature2 |= 0x00000800;  // xdsp_05_epaper.ino
 #endif
 #if defined(USE_I2C) && defined(USE_DISPLAY) && defined(USE_DISPLAY_SH1106)
-    feature2 |= 0x00001000;  // xdsp_06_sh1106.ino
+    feature2 |= 0x00001000;  // xdsp_07_sh1106.ino
 #endif
 #ifdef USE_MP3_PLAYER
     feature2 |= 0x00002000;  // xdrv_14_mp3.ino
@@ -671,20 +671,39 @@ void ResponseAppendFeatures(void)
 #ifdef USE_FTC532
     feature7 |= 0x00004000;  // xdrv_47_ftc532.ino
 #endif
-//    feature7 |= 0x00008000;
-
-//    feature7 |= 0x00010000;
-//    feature7 |= 0x00020000;
-//    feature7 |= 0x00040000;
-//    feature7 |= 0x00080000;
-
-//    feature7 |= 0x00100000;
-//    feature7 |= 0x00200000;
-//    feature7 |= 0x00400000;
-//    feature7 |= 0x00800000;
-
-//    feature7 |= 0x01000000;
-//    feature7 |= 0x02000000;
+#if defined(USE_SPI) && defined(USE_DISPLAY) && defined(USE_DISPLAY_EPAPER_42)
+    feature7 |= 0x00008000;  // xdsp_06_epaper_42.ino
+#endif
+#if defined(USE_SPI) && defined(USE_DISPLAY) && defined(USE_DISPLAY_ILI9488)
+    feature7 |= 0x00010000;  // xdsp_08_ILI9488.ino
+#endif
+#if defined(USE_SPI) && defined(USE_DISPLAY) && defined(USE_DISPLAY_SSD1351)
+    feature7 |= 0x00020000;  // xdsp_09_SSD1351.ino
+#endif
+#if defined(USE_SPI) && defined(USE_DISPLAY) && defined(USE_DISPLAY_RA8876)
+    feature7 |= 0x00040000;  // xdsp_10_RA8876.ino
+#endif
+#if defined(USE_SPI) && defined(USE_DISPLAY) && defined(USE_DISPLAY_ST7789)
+    feature7 |= 0x00080000;  // xdsp_12_ST7789.ino
+#endif
+#if defined(USE_SPI) && defined(USE_DISPLAY) && defined(USE_DISPLAY_SSD1331)
+    feature7 |= 0x00100000;  // xdsp_14_SSD1331.ino
+#endif
+#ifdef USE_UFILESYS
+    feature7 |= 0x00200000;  // xdrv_50_filesystem.ino
+#endif
+#ifdef USE_TIMEPROP
+    feature7 |= 0x00400000;  // xdrv_48_timeprop.ino
+#endif
+#ifdef USE_PID
+    feature7 |= 0x00800000;  // xdrv_49_pid.ino
+#endif
+#ifdef USE_BS814A2
+    feature7 |= 0x01000000;  // xdrv_51_bs814a2.ino
+#endif
+#ifdef USE_SEESAW_SOIL
+    feature7 |= 0x02000000;  // xsns_81_seesaw_soil.ino
+#endif
 //    feature7 |= 0x04000000;
 //    feature7 |= 0x08000000;
 

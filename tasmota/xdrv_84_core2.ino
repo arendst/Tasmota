@@ -1,7 +1,7 @@
 /*
   xdrv_84_core2.ino - ESP32 m5stack core2 support for Tasmota
 
-  Copyright (C) 2020  Gerhard Mutz and Theo Arends
+  Copyright (C) 2021  Gerhard Mutz and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -55,6 +55,8 @@ struct CORE2_globs {
 struct CORE2_ADC {
   float vbus_v;
   float batt_v;
+  float vbus_c;
+  float batt_c;
   float temp;
   int16_t x;
   int16_t y;
@@ -72,6 +74,8 @@ void CORE2_Module_Init(void) {
   I2cSetActiveFound(AXP_ADDR, "AXP192");
 
   core2_globs.Axp.SetAdcState(true);
+  // motor voltage
+  core2_globs.Axp.SetLDOVoltage(3,2000);
 
   core2_globs.Mpu.Init();
   I2cSetActiveFound(MPU6886_ADDRESS, "MPU6886");
@@ -91,13 +95,7 @@ void CORE2_Init(void) {
 
     TIME_T tmpTime;
     TasmotaGlobal.ntp_force_sync = true; //force to sync with ntp
-  //  Rtc.utc_time = ReadFromDS3231(); //we read UTC TIME from DS3231
-    // from this line, we just copy the function from "void RtcSecond()" at the support.ino ,line 2143 and above
-    // We need it to set rules etc.
     BreakTime(Rtc.utc_time, tmpTime);
-    if (Rtc.utc_time < START_VALID_TIME ) {
-      //ds3231ReadStatus = true; //if time in DS3231 is valid, do  not update again
-    }
     Rtc.daylight_saving_time = RuleToTime(Settings.tflag[1], RtcTime.year);
     Rtc.standard_time = RuleToTime(Settings.tflag[0], RtcTime.year);
     AddLog_P(LOG_LEVEL_INFO, PSTR("Set time from BM8563 to RTC (" D_UTC_TIME ") %s, (" D_DST_TIME ") %s, (" D_STD_TIME ") %s"),
@@ -119,7 +117,9 @@ void CORE2_audio_power(bool power) {
 #ifdef USE_WEBSERVER
 const char HTTP_CORE2[] PROGMEM =
  "{s}VBUS Voltage" "{m}%s V" "{e}"
+ "{s}VBUS Current" "{m}%s mA" "{e}"
  "{s}BATT Voltage" "{m}%s V" "{e}"
+ "{s}BATT Current" "{m}%s mA" "{e}"
  "{s}Chip Temperature" "{m}%s C" "{e}";
 #ifdef USE_MPU6886
 const char HTTP_CORE2_MPU[] PROGMEM =
@@ -131,27 +131,31 @@ const char HTTP_CORE2_MPU[] PROGMEM =
 
 
 void CORE2_loop(uint32_t flg) {
-  Sync_RTOS_TIME();
+
 }
 
 void CORE2_WebShow(uint32_t json) {
 
   char vstring[32];
   char bvstring[32];
+  char cstring[32];
+  char bcstring[32];
   char tstring[32];
   dtostrfd(core2_adc.vbus_v, 3, vstring);
   dtostrfd(core2_adc.batt_v, 3, bvstring);
+  dtostrfd(core2_adc.vbus_c, 1, cstring);
+  dtostrfd(core2_adc.batt_c, 1, bcstring);
   dtostrfd(core2_adc.temp, 2, tstring);
 
   if (json) {
-    ResponseAppend_P(PSTR(",\"CORE2\":{\"VBV\":%s,\"BV\":%s,\"CT\":%s"), vstring, bvstring, tstring);
+    ResponseAppend_P(PSTR(",\"CORE2\":{\"VBV\":%s,\"BV\":%s,\"VBC\":%s,\"BC\":%s,\"CT\":%s"), vstring, cstring, bvstring, bcstring, tstring);
 
 #ifdef USE_MPU6886
     ResponseAppend_P(PSTR(",\"MPUX\":%d,\"MPUY\":%d,\"MPUZ\":%d"), core2_adc.x, core2_adc.y, core2_adc.z);
 #endif
     ResponseJsonEnd();
   } else {
-    WSContentSend_PD(HTTP_CORE2, vstring, bvstring, tstring);
+    WSContentSend_PD(HTTP_CORE2, vstring, cstring, bvstring, bcstring, tstring);
 
 #ifdef USE_MPU6886
     WSContentSend_PD(HTTP_CORE2_MPU, core2_adc.x, core2_adc.y, core2_adc.z);
@@ -368,13 +372,17 @@ void CORE2_EverySecond(void) {
         CORE2_DoShutdown();
       }
     }
+
+    Sync_RTOS_TIME();
   }
 }
 
-// currents are not supported by hardware implementation
 void CORE2_GetADC(void) {
     core2_adc.vbus_v = core2_globs.Axp.GetVBusVoltage();
     core2_adc.batt_v = core2_globs.Axp.GetBatVoltage();
+    core2_adc.vbus_c = core2_globs.Axp.GetVinCurrent();
+    core2_adc.batt_c = core2_globs.Axp.GetBatCurrent();
+
     core2_adc.temp = core2_globs.Axp.GetTempInAXP192();
 #ifdef USE_MPU6886
       float x;

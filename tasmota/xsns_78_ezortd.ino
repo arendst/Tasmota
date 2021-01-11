@@ -1,7 +1,7 @@
 /*
   xsns_78_ezortd.ino - EZO RTD I2C RTD sensor support for Tasmota
 
-  Copyright (C) 2020  Christopher Tremblay
+  Copyright (C) 2021  Christopher Tremblay
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -41,7 +41,7 @@ struct EZORTD : public EZOStruct {
     if (json) {
       ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_TEMPERATURE "\":%s}"), name, str);
     }
-#ifdef USE_WEBSERVER  
+#ifdef USE_WEBSERVER
     else {
       WSContentSend_PD(HTTP_SNS_TEMP, name, str, TempUnit());
 #endif  // USE_WEBSERVER

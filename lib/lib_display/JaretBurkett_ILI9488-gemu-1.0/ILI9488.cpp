@@ -503,6 +503,16 @@ void ILI9488::scroll(uint16_t pixels){
 }*/
 
 void ILI9488::setAddrWindow(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1) {
+  if (!x0 && !y0 && !x1 && !y1) {
+    x0=0;
+    y0=0;
+    x1=_width;
+    y1=_height;
+  }
+  setAddrWindow_int(x0, y0, x1-1, y1-1);
+}
+
+void ILI9488::setAddrWindow_int(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1) {
 uint8_t flag=0;
 
    if (!x0 && !y0 && !x1 && !y1) {
@@ -594,7 +604,8 @@ void ILI9488::pushColor(uint16_t color) {
   ILI9488_STOP
 }
 
-void ILI9488::pushColors(uint16_t *data, uint8_t len, boolean first) {
+#if 1
+void ILI9488::pushColors(uint16_t *data, uint16_t len, boolean first) {
   uint16_t color;
   uint8_t  buff[len*3+1];
   uint16_t count = 0;
@@ -616,6 +627,17 @@ void ILI9488::pushColors(uint16_t *data, uint8_t len, boolean first) {
     ILI9488_STOP
 
 }
+#else
+
+void ILI9488::pushColors(uint16_t *data, uint8_t len, boolean first) {
+  uint16_t color;
+
+  while (len--) {
+    write16BitColor(*data++);
+  }
+  ILI9488_STOP
+}
+#endif
 
 void ILI9488::write16BitColor(uint16_t color){
   // #if (__STM32F1__)
@@ -688,7 +710,7 @@ void ILI9488::drawPixel(int16_t x, int16_t y, uint16_t color) {
 
   if((x < 0) ||(x >= _width) || (y < 0) || (y >= _height)) return;
 
-  setAddrWindow(x,y,x+1,y+1);
+  setAddrWindow_int(x,y,x+1,y+1);
   write16BitColor(color);
   ILI9488_STOP
 }
@@ -702,7 +724,7 @@ void ILI9488::drawFastVLine(int16_t x, int16_t y, int16_t h,
   if((y+h-1) >= _height)
     h = _height-y;
 
-  setAddrWindow(x, y, x, y+h-1);
+  setAddrWindow_int(x, y, x, y+h-1);
 
   uint8_t r = (color & 0xF800) >> 11;
   uint8_t g = (color & 0x07E0) >> 5;
@@ -770,7 +792,7 @@ void ILI9488::drawFastHLine(int16_t x, int16_t y, int16_t w,
   if((x >= _width) || (y >= _height)) return;
   if((x+w-1) >= _width)  w = _width-x;
 
-  setAddrWindow(x, y, x+w-1, y);
+  setAddrWindow_int(x, y, x+w-1, y);
 
   uint8_t r = (color & 0xF800) >> 11;
   uint8_t g = (color & 0x07E0) >> 5;
@@ -905,7 +927,7 @@ void ILI9488::fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t colo
   if((x + w - 1) >= _width)  w = _width  - x;
   if((y + h - 1) >= _height) h = _height - y;
 
-  setAddrWindow(x, y, x+w-1, y+h-1);
+  setAddrWindow_int(x, y, x+w-1, y+h-1);
   //ILI9488_START
 
   uint8_t r = (color & 0xF800) >> 11;
@@ -1050,7 +1072,7 @@ void ILI9488::fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t colo
     if((x + w - 1) >= _width)  w = _width  - x;
     if((y + h - 1) >= _height) h = _height - y;
 
-    setAddrWindow(x, y, x+w-1, y+h-1);
+    setAddrWindow_int(x, y, x+w-1, y+h-1);
 
     uint8_t r = (color & 0xF800) >> 11;
     uint8_t g = (color & 0x07E0) >> 5;

@@ -1,7 +1,7 @@
 /*
   it-IT.h - localization for Italian - Italy for Tasmota
 
-  Copyright (C) 2020 Gennaro Tortone - some mods by Antonio Fragola - Updated by bovirus - rev. 24.12.2020
+  Copyright (C) 2021  Gennaro Tortone - some mods by Antonio Fragola - Updated by bovirus - rev. 09.01.2021
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -641,6 +641,8 @@
 #define D_SENSOR_HX711_SCK     "HX711 - SCK"
 #define D_SENSOR_HX711_DAT     "HX711 - DAT"
 #define D_SENSOR_FTC532        "FTC532"
+#define D_SENSOR_BS814_CLK     "BS814 - CLK"
+#define D_SENSOR_BS814_DAT     "BS814 - DAT"
 #define D_SENSOR_TX2X_TX       "TX2x"
 #define D_SENSOR_RFSEND        "RF - TX"
 #define D_SENSOR_RFRECV        "RF - RX"
@@ -740,6 +742,7 @@
 #define D_SENSOR_ADC_RANGE     "ADC - Intervallo"
 #define D_SENSOR_ADC_CT_POWER  "ADC - CTR alimentazione"
 #define D_SENSOR_ADC_JOYSTICK  "ADC - Joystick"
+#define D_SENSOR_ADC_PH        "ADC pH"
 #define D_GPIO_WEBCAM_PWDN     "Webcam - PWDN"
 #define D_GPIO_WEBCAM_RESET    "Webcam - RESET"
 #define D_GPIO_WEBCAM_XCLK     "Webcam - XCLK"
@@ -764,6 +767,21 @@
 #define D_SENSOR_SHELLY_DIMMER_BOOT0 "SHD - Boot 0"
 #define D_SENSOR_SHELLY_DIMMER_RST_INV "SHD - Reset"
 #define D_SENSOR_RC522_RST     "RC522 - Reset"
+#define D_SENSOR_RC522_CS      "RC522 - CS"
+#define D_SENSOR_NRF24_CS      "NRF24 - CS"
+#define D_SENSOR_NRF24_DC      "NRF24 - DC"
+#define D_SENSOR_ILI9341_CS    "ILI9341 - CS"
+#define D_SENSOR_ILI9341_DC    "ILI9341 - DC"
+#define D_SENSOR_ILI9488_CS    "ILI9488 - CS"
+#define D_SENSOR_EPAPER29_CS   "EPaper29 - CS"
+#define D_SENSOR_EPAPER42_CS   "EPaper42 - CS"
+#define D_SENSOR_SSD1351_CS    "SSD1351 - CS"
+#define D_SENSOR_RA8876_CS     "RA8876 - CS"
+#define D_SENSOR_ST7789_CS     "ST7789 - CS"
+#define D_SENSOR_ST7789_DC     "ST7789 - DC"
+#define D_SENSOR_SSD1331_CS    "SSD1331 - CS"
+#define D_SENSOR_SSD1331_DC    "SSD1331 - DC"
+#define D_SENSOR_SDCARD_CS     "Scheda SD - CS"
 
 // Units
 #define D_UNIT_AMPERE "A"
@@ -849,7 +867,7 @@
 #define D_CONFIGURE_SCRIPT     "Modifica script"
 #define D_SCRIPT               "modifica script"
 #define D_SDCARD_UPLOAD        "upload file"
-#define D_SDCARD_DIR           "cartella scheda SD"
+#define D_UFSDIR               "cartella scheda UFS"
 #define D_UPL_DONE             "Completato"
 #define D_SCRIPT_CHARS_LEFT    "caratteri rimanenti"
 #define D_SCRIPT_CHARS_NO_MORE "nessun altro carattere"
@@ -857,6 +875,11 @@
 #define D_SCRIPT_ENABLE        "abilita script"
 #define D_SCRIPT_UPLOAD        "Carica"
 #define D_SCRIPT_UPLOAD_FILES  "Carica file"
+
+//xdrv_50_filesystem.ino
+#define D_MANAGE_FILE_SYSTEM   "Gestione File system"
+#define D_FS_SIZE              "Dimensione"
+#define D_FS_FREE              "Liberi"
 
 //xsns_67_as3935.ino
 #define D_AS3935_GAIN "guadagno:"

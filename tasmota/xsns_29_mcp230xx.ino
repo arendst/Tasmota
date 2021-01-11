@@ -1,7 +1,7 @@
 /*
   xsns_29_mcp230xx.ino - Support for I2C MCP23008/MCP23017 GPIO Expander on Tasmota
 
-  Copyright (C) 2020  Andre Thomas and Theo Arends
+  Copyright (C) 2021  Andre Thomas and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -196,6 +196,7 @@ void MCP230xx_ApplySettings(void)
     I2cWrite8(USE_MCP230xx_ADDR, MCP230xx_GPIO+mcp230xx_port, reg_portpins);
 #endif // USE_MCP230xx_OUTPUT
   }
+#ifdef USE_MCP230xx_OUTPUT
   TasmotaGlobal.devices_present -= mcp230xx_oldoutpincount;
   mcp230xx_oldoutpincount = 0;
   for (uint32_t idx=0;idx<mcp230xx_pincount;idx++) {
@@ -206,6 +207,7 @@ void MCP230xx_ApplySettings(void)
     int_millis[idx]=millis();
   }
   TasmotaGlobal.devices_present += mcp230xx_oldoutpincount;
+#endif // USE_MCP230xx_OUTPUT
   mcp230xx_int_en = int_en;
   MCP230xx_CheckForIntCounter();  // update register on whether or not we should be counting interrupts
   MCP230xx_CheckForIntRetainer(); // update register on whether or not we should be retaining interrupt events for teleperiod

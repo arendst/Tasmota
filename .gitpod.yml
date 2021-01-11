@@ -1,4 +1,5 @@
 tasks:
+  - before: platformio upgrade
   - command: platformio run -e tasmota
 
 image:

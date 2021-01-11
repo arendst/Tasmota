@@ -1,7 +1,7 @@
 /*
   xdsp_11_sevenseg.ino - Display seven segment support for Tasmota
 
-  Copyright (C) 2020  Theo Arends and Adafruit
+  Copyright (C) 2021  Theo Arends and Adafruit
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -59,6 +59,61 @@ void SevensegWrite(void)
     bufferStuffer(i);
 #endif
     sevenseg[i]->writeDisplay();
+  }
+}
+
+void SevensegLog(void)
+{
+  // get sensor data
+  ResponseClear();
+  ResponseAppendTime();
+  XsnsCall(FUNC_JSON_APPEND);
+  ResponseJsonEnd();
+
+  // display nth sensor value on nth display
+  // code adapted from xdrv_13_display.ino, DisplayAnalyzeJson()
+  uint8_t unit = 0;
+  int16_t valueDecimal = 0;
+  double valueFloat = 0;
+  uint8 fDigits = 0;
+  String jsonStr = TasmotaGlobal.mqtt_data;  // Move from stack to heap to fix watchdogs (20180626)
+  JsonParser parser((char*)jsonStr.c_str());
+  JsonParserObject object_root = parser.getRootObject();
+  if (object_root) {
+    for (auto key_level1 : object_root) {
+      JsonParserToken token_level1 = key_level1.getValue();
+      if (token_level1.isObject()) {
+        JsonParserObject object_level1 = token_level1.getObject();
+        for (auto key_level2 : object_level1) {
+          const char* value_level2 = key_level2.getValue().getStr(nullptr);
+          if (value_level2 != nullptr) {
+            if ((unit < sevensegs) && (sevenseg[unit] != nullptr)) {
+              if (strchr( value_level2, '.') == NULL) {
+                sevenseg[unit]->print(atoi(value_level2), DEC);
+              } else {
+                sevenseg[unit]->printFloat(atof(value_level2), 1, DEC);
+              }
+              sevenseg[unit]->writeDisplay();
+              unit++;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+void SevensegDim(void)
+{
+  for (uint32_t i = 0; i < sevensegs; i++) {
+    sevenseg[i]->setBrightness(Settings.display_dimmer);
+  }
+}
+
+void SevensegBlinkrate( void)
+{
+  for (uint32_t i = 0; i < sevensegs; i++) {
+    sevenseg[i]->blinkRate(XdrvMailbox.payload);
   }
 }
 
@@ -352,6 +407,7 @@ void SevensegRefresh(void)  // Every second
         case 4:  // Mqtt
         case 3:  // Local
         case 5: {  // Mqtt
+          SevensegLog();
           break;
         }
       }
@@ -396,6 +452,13 @@ bool Xdsp11(uint8_t function)
       case FUNC_DISPLAY_DRAW_STRING:
         SevensegDrawStringAt(dsp_x, dsp_y, dsp_str, dsp_color, dsp_flag);
         break;
+      case FUNC_DISPLAY_DIM:
+        SevensegDim();
+	break;
+      case FUNC_DISPLAY_BLINKRATE:
+        SevensegBlinkrate();
+	break;
+
     }
   }
   return result;

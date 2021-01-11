@@ -1,7 +1,7 @@
 /*
   support_light_list.ino - Lightweight Linked List for simple objects - optimized for low code size and low memory
 
-  Copyright (C) 2020  Theo Arends and Stephan Hadinger
+  Copyright (C) 2021  Theo Arends and Stephan Hadinger
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -18,9 +18,9 @@
 */
 
 /*********************************************************************************************\
- * 
+ *
  * private class for Linked List element
- * 
+ *
 \*********************************************************************************************/
 template <typename T>
 class LList;
@@ -43,9 +43,9 @@ protected:
 };
 
 /*********************************************************************************************\
- * 
+ *
  * Lightweight Linked List - optimized for low code size
- * 
+ *
 \*********************************************************************************************/
 template <typename T>
 class LList {

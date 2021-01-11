@@ -1,7 +1,7 @@
 /*
   xlgt_06_moodlamp.ino - ElectriQ iQ-wifiMOODL LED support for Tasmota
 
-  Copyright (C) 2020  ianbyte and Theo Arends
+  Copyright (C) 2021  ianbyte and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by

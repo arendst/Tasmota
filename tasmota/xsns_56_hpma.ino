@@ -1,8 +1,8 @@
 /*
   xsns_56_hpma.ino - Honeywell HPMA115S0 particle concentration sensor support for Tasmota
 
-  Copyright (C) 2020  Theo Arends
-  Copyright (C) 2020  David Hunt
+  Copyright (C) 2021  Theo Arends
+  Copyright (C) 2021  David Hunt
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by

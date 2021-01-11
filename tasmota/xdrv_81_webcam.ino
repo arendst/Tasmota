@@ -1,7 +1,7 @@
 /*
   xdrv_81_webcam.ino - ESP32 webcam support for Tasmota
 
-  Copyright (C) 2020  Gerhard Mutz and Theo Arends
+  Copyright (C) 2021  Gerhard Mutz and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -466,7 +466,7 @@ void draw_face_boxes(dl_matrix3du_t *image_matrix, box_array_t *boxes, int face_
 }
 */
 
-#define DL_SPIRAM_SUPPORT
+//#define DL_SPIRAM_SUPPORT
 
 uint32_t WcSetFaceDetect(int32_t value) {
   if (value >= 0) { Wc.face_detect_time = value; }
@@ -530,6 +530,7 @@ uint32_t WcDetectFace(void) {
     //Serial.printf("face detected: %d",Wc.faces);
 
   }
+  return 0;
 }
 #endif
 

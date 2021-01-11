@@ -1,7 +1,7 @@
 /*
   tasmota_globals.h - Function prototypes and global configurations for Tasmota
 
-  Copyright (C) 2020  Theo Arends
+  Copyright (C) 2021  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -107,11 +107,7 @@ String EthernetMacAddress(void);
 #define ARDUINO_CORE_RELEASE        ARDUINO_ESP32_RELEASE
 #endif  // ARDUINO_ESP32_RELEASE
 
-#define USE_TFS
-
-#ifdef USE_SCRIPT
-#undef USE_TFS
-#endif  // USE_SCRIPT
+#define USE_UFILESYS
 
 // Hardware has no ESP32
 #undef USE_TUYA_DIMMER
@@ -127,7 +123,7 @@ String EthernetMacAddress(void);
 #undef USE_RF_FLASH
 
 // Not ported (yet)
-#undef USE_DISCOVERY
+
 #undef USE_MY92X1
 #undef USE_TUYA_MCU
 #undef USE_PS_16_DZ
@@ -167,6 +163,10 @@ String EthernetMacAddress(void);
 #endif
 #ifdef USE_EMULATION_HUE
 #define USE_UNISHOX_COMPRESSION                // Add support for string compression
+#endif
+
+#ifdef USE_PID
+#define USE_TIMEPROP
 #endif
 
                                                // See https://github.com/esp8266/Arduino/pull/4889
@@ -224,6 +224,9 @@ const uint16_t LOG_BUFFER_SIZE = 4000;         // Max number of characters in lo
 #if defined(ARDUINO_ESP8266_RELEASE_2_3_0) || defined(ARDUINO_ESP8266_RELEASE_2_4_0) || defined(ARDUINO_ESP8266_RELEASE_2_4_1) || defined(ARDUINO_ESP8266_RELEASE_2_4_2) || defined(ARDUINO_ESP8266_RELEASE_2_5_0) || defined(ARDUINO_ESP8266_RELEASE_2_5_1) || defined(ARDUINO_ESP8266_RELEASE_2_5_2)
   #error "Arduino ESP8266 Core versions before 2.7.1 are not supported"
 #endif
+
+#define TASM_FILE_SETTINGS          "/.settings"
+#define TASM_FILE_ZIGBEE            "/zb"
 
 #ifndef MQTT_MAX_PACKET_SIZE
 #define MQTT_MAX_PACKET_SIZE        1200       // Bytes

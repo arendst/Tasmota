@@ -1,7 +1,7 @@
 /*
   tasmota_configurations.h - Configurations for Tasmota
 
-  Copyright (C) 2020  Theo Arends
+  Copyright (C) 2021  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -306,9 +306,11 @@
     #define USE_DISPLAY_ILI9341                  // [DisplayModel 4] Enable ILI9341 Tft 480x320 display (+19k code)
     #define USE_DISPLAY_EPAPER_29                // [DisplayModel 5] Enable e-paper 2.9 inch display (+19k code)
     #define USE_DISPLAY_EPAPER_42                // [DisplayModel 6] Enable e-paper 4.2 inch display
-//    #define USE_DISPLAY_ILI9488                  // [DisplayModel 8]
-//    #define USE_DISPLAY_SSD1351                  // [DisplayModel 9]
-//    #define USE_DISPLAY_RA8876                   // [DisplayModel 10]
+    #define USE_DISPLAY_ILI9488                  // [DisplayModel 8]
+    #define USE_DISPLAY_SSD1351                  // [DisplayModel 9]
+    #define USE_DISPLAY_RA8876                   // [DisplayModel 10]
+    #define USE_DISPLAY_ST7789                   // [DisplayModel 12] Enable ST7789 module
+    #define USE_DISPLAY_SSD1331                  // [DisplayModel 14] Enable SSD1331 module
 
 #undef DEBUG_THEO                                // Disable debug code
 #undef USE_DEBUG_DRIVER                          // Disable debug code
@@ -472,6 +474,7 @@
 
 #undef USE_KNX                                   // Disable KNX IP Protocol Support
 //#undef USE_WEBSERVER                             // Disable Webserver
+#undef USE_ENHANCED_GUI_WIFI_SCAN                // Disable wifi scan output with BSSID (+0k5 code)
 //#undef USE_WEBSEND_RESPONSE                      // Disable command WebSend response message (+1k code)
 #define USE_EMULATION                            // Enable Hue emulation
 #define USE_EMULATION_HUE                        // Enable Hue Bridge emulation for Alexa (+14k code, +2k mem common)
@@ -506,7 +509,8 @@
 #undef USE_SONOFF_D1                             // Disable support for Sonoff D1 Dimmer (+0k7 code)
 
 // -- Optional light modules ----------------------
-//#undef USE_LIGHT                                 // Enable Dimmer/Light support
+#undef USE_LIGHT                                 // Disable Dimmer/Light support
+#undef USE_LIGHT_VIRTUAL_CT                      // Disable support for Virtual White Color Temperature (SO106)
 #undef USE_WS2812                                // Disable WS2812 Led string using library NeoPixelBus (+5k code, +1k mem, 232 iram) - Disable by //
 #undef USE_MY92X1                                // Disable support for MY92X1 RGBCW led controller as used in Sonoff B1, Ailight and Lohas
 #undef USE_SM16716                               // Disable support for SM16716 RGB LED controller (+0k7 code)
@@ -607,6 +611,7 @@
 #undef USE_MQTT_TLS                              // Disable TLS support won't work as the MQTTHost is not set
 #undef USE_KNX                                   // Disable KNX IP Protocol Support
 //#undef USE_WEBSERVER                             // Disable Webserver
+#undef USE_ENHANCED_GUI_WIFI_SCAN                // Disable wifi scan output with BSSID (+0k5 code)
 #undef USE_WEBSEND_RESPONSE                      // Disable command WebSend response message (+1k code)
 //#undef USE_EMULATION                             // Disable Wemo or Hue emulation
 //#undef USE_EMULATION_HUE                         // Disable Hue Bridge emulation for Alexa (+14k code, +2k mem common)
@@ -641,6 +646,7 @@
 //#undef USE_SONOFF_D1                             // Disable support for Sonoff D1 Dimmer (+0k7 code)
 
 // -- Optional light modules ----------------------
+#undef USE_LIGHT_VIRTUAL_CT                      // Disable support for Virtual White Color Temperature (SO106)
 //#undef USE_LIGHT                                 // Also disable all Dimmer/Light support
 #undef USE_WS2812                                // Disable WS2812 Led string using library NeoPixelBus (+5k code, +1k mem, 232 iram) - Disable by //
 #undef USE_MY92X1                                // Disable support for MY92X1 RGBCW led controller as used in Sonoff B1, Ailight and Lohas
@@ -739,6 +745,7 @@
 //#undef USE_MQTT_TLS                              // Disable TLS support won't work as the MQTTHost is not set
 #undef USE_KNX                                   // Disable KNX IP Protocol Support
 //#undef USE_WEBSERVER                             // Disable Webserver
+#undef USE_ENHANCED_GUI_WIFI_SCAN                // Disable wifi scan output with BSSID (+0k5 code)
 #undef USE_WEBSEND_RESPONSE                      // Disable command WebSend response message (+1k code)
 #undef USE_EMULATION                             // Disable Wemo or Hue emulation
 #undef USE_EMULATION_HUE                         // Disable Hue Bridge emulation for Alexa (+14k code, +2k mem common)

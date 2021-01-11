@@ -1579,6 +1579,8 @@ void Adafruit_GFX_Button::initButtonUL(
   strncpy(_label, label, 9);
 }
 
+void draw_picture(char *path, uint32_t xp, uint32_t yp, uint32_t xs, uint32_t ys, uint32_t ocolor, bool inverted);
+
 /**************************************************************************/
 /*!
    @brief    Draw the button on the screen
@@ -1598,16 +1600,19 @@ void Adafruit_GFX_Button::drawButton(boolean inverted) {
     text    = _fillcolor;
   }
 
-  uint8_t r = min(_w, _h) / 4; // Corner radius
-  _gfx->fillRoundRect(_x1, _y1, _w, _h, r, fill);
-  _gfx->drawRoundRect(_x1, _y1, _w, _h, r, outline);
+  if (_label[0]=='/') {
+    draw_picture(_label, _x1, _y1, _w, _h, outline, inverted);
+    _gfx->drawRect(_x1, _y1, _w, _h, text);
+  } else {
+    uint8_t r = min(_w, _h) / 4; // Corner radius
+    _gfx->fillRoundRect(_x1, _y1, _w, _h, r, fill);
+    _gfx->drawRoundRect(_x1, _y1, _w, _h, r, outline);
 
-  _gfx->setCursor(_x1 + (_w/2) - (strlen(_label) * 3 * _textsize_x),
-    _y1 + (_h/2) - (4 * _textsize_y));
-  _gfx->setTextColor(text);
-  _gfx->setTextSize(_textsize_x, _textsize_y);
-  _gfx->print(_label);
-
+    _gfx->setCursor(_x1 + (_w/2) - (strlen(_label) * 3 * _textsize_x), _y1 + (_h/2) - (4 * _textsize_y));
+    _gfx->setTextColor(text);
+    _gfx->setTextSize(_textsize_x, _textsize_y);
+    _gfx->print(_label);
+  }
 }
 
 /**************************************************************************/

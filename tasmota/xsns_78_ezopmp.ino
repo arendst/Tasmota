@@ -1,7 +1,7 @@
 /*
   xsns_78_ezopmp.ino - EZO PMP I2C PMP sensor support for Tasmota
 
-  Copyright (C) 2020  Christopher Tremblay
+  Copyright (C) 2021  Christopher Tremblay
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by

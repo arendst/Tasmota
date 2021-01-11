@@ -1,7 +1,7 @@
 /*
   xsns_69_opentherm.ino - OpenTherm protocol support for Tasmota
 
-  Copyright (C) 2020 Yuriy Sannikov
+  Copyright (C) 2021  Yuriy Sannikov
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -35,7 +35,7 @@
 // Seconds before OT will make an attempt to connect to the boiler after connection error
 #define SNS_OT_DISCONNECT_COOLDOWN_SECONDS 4
 
-// Number of consecutive timeouts which are accepted before entering disconnect state 
+// Number of consecutive timeouts which are accepted before entering disconnect state
 #define SNS_OT_MAX_TIMEOUTS_BEFORE_DISCONNECT 3
 
 // Count of the OpenThermSettingsFlags

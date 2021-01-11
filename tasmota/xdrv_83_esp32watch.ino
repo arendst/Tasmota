@@ -1,7 +1,7 @@
 /*
   xdrv_83_esp32watch.ino - ESP32 TTGO watch support for Tasmota
 
-  Copyright (C) 2020  Gerhard Mutz and Theo Arends
+  Copyright (C) 2021  Gerhard Mutz and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by

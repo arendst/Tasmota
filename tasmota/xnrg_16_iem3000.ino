@@ -1,7 +1,7 @@
 /*
   xnrg_16_iem3000.ino - Schneider Electric iEM3000 series Modbus energy meter support for Tasmota
 
-  Copyright (C) 2020  Marius Bezuidenhout
+  Copyright (C) 2021  Marius Bezuidenhout
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by

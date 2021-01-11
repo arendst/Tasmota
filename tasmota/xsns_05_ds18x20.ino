@@ -1,7 +1,7 @@
 /*
   xsns_05_ds18x20.ino - DS18x20 temperature sensor support for Tasmota
 
-  Copyright (C) 2020  Theo Arends
+  Copyright (C) 2021  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -26,6 +26,7 @@
 #define XSNS_05              5
 
 //#define USE_DS18x20_RECONFIGURE    // When sensor is lost keep retrying or re-configure
+//#define DS18x20_USE_ID_AS_NAME      // Use last 3 bytes for naming of sensors
 
 #define DS18S20_CHIPID       0x10  // +/-0.5C 9-bit
 #define DS1822_CHIPID        0x22  // +/-2C 12-bit
@@ -56,7 +57,7 @@ uint8_t ds18x20_sensors = 0;
 uint8_t ds18x20_pin = 0;           // Shelly GPIO3 input only
 uint8_t ds18x20_pin_out = 0;       // Shelly GPIO00 output only
 bool ds18x20_dual_mode = false;    // Single pin mode
-char ds18x20_types[12];
+char ds18x20_types[17];
 #ifdef W1_PARASITE_POWER
 uint8_t ds18x20_sensor_curr = 0;
 unsigned long w1_power_until = 0;
@@ -443,7 +444,15 @@ void Ds18x20Name(uint8_t sensor)
   }
   GetTextIndexed(ds18x20_types, sizeof(ds18x20_types), index, kDs18x20Types);
   if (ds18x20_sensors > 1) {
+#ifdef DS18x20_USE_ID_AS_NAME
+    char address[17];
+    for (uint32_t j = 0; j < 3; j++) {
+      sprintf(address+2*j, "%02X", ds18x20_sensor[ds18x20_sensor[sensor].index].address[3-j]);  // Only last 3 bytes
+    }
+    snprintf_P(ds18x20_types, sizeof(ds18x20_types), PSTR("%s%c%s"), ds18x20_types, IndexSeparator(), address);
+#else
     snprintf_P(ds18x20_types, sizeof(ds18x20_types), PSTR("%s%c%d"), ds18x20_types, IndexSeparator(), sensor +1);
+#endif
   }
 }
 

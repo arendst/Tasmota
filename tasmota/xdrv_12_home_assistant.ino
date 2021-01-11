@@ -1,7 +1,7 @@
 /*
   xdrv_12_home_assistant.ino - home assistant support for Tasmota
 
-  Copyright (C) 2020  Erik Montnemery, Federico Leoni and Theo Arends
+  Copyright (C) 2021  Erik Montnemery, Federico Leoni and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -370,7 +370,7 @@ void TryResponseAppend_P(const char *format, ...)
   {
     AddLog_P(LOG_LEVEL_ERROR, PSTR("%s (%u/%u):"), kHAssError1, dlen, slen);
     va_start(args, format);
-    char log_data[LOGSZ];
+    char log_data[MAX_LOGSZ];
     vsnprintf_P(log_data, sizeof(log_data), format, args);
     AddLogData(LOG_LEVEL_ERROR, log_data);
   }

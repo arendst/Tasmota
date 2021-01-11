@@ -1,7 +1,7 @@
 /*
   xdrv_40_telegram.ino - telegram for Tasmota
 
-  Copyright (C) 2020  Theo Arends
+  Copyright (C) 2021  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -256,7 +256,7 @@ bool TelegramSendMessage(int32_t chat_id, String text) {
   bool sent = false;
   if (text != "") {
     String _token = SettingsText(SET_TELEGRAM_TOKEN);
-    String command = "bot" + _token + "/sendMessage?chat_id=" + String(chat_id) + "&text=" + text;
+    String command = "bot" + _token + "/sendMessage?chat_id=" + String(chat_id) + "&text=" + UrlEncode(text);
     String response = TelegramConnectToTelegram(command);
 
 //    AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("TGM: Response %s"), response.c_str());

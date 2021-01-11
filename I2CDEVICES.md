@@ -89,3 +89,4 @@ Index | Define              | Driver  | Device   | Address(es) | Description
   55  | USE_EZODO           | xsns_78 | EZODO    | 0x61 - 0x70 | Disolved Oxygen sensor
   55  | USE_EZORGB          | xsns_78 | EZORGB   | 0x61 - 0x70 | Color sensor
   55  | USE_EZOPMP          | xsns_78 | EZOPMP   | 0x61 - 0x70 | Peristaltic Pump
+  56  | USE_SEESAW_SOIL     | xsns_81 | SEESOIL  | 0x36 - 0x39 | Adafruit seesaw soil moisture sensor

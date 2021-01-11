@@ -1,7 +1,7 @@
 /*
   xsns_65_hdc1080.ino - Texas Instruments HDC1080 temperature and humidity sensor support for Tasmota
 
-  Copyright (C) 2020  Luis Teixeira
+  Copyright (C) 2021  Luis Teixeira
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by

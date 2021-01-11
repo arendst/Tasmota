@@ -1,7 +1,7 @@
 /*
   pt-PT.h - localization for Portuguese - Portugal for Tasmota
 
-  Copyright (C) 2020  Paulo Paiva
+  Copyright (C) 2021  Paulo Paiva
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -641,6 +641,8 @@
 #define D_SENSOR_HX711_SCK     "HX711 SCK"
 #define D_SENSOR_HX711_DAT     "HX711 DAT"
 #define D_SENSOR_FTC532        "FTC532"
+#define D_SENSOR_BS814_CLK     "BS814 CLK"
+#define D_SENSOR_BS814_DAT     "BS814 DAT"
 #define D_SENSOR_TX2X_TX       "TX2x"
 #define D_SENSOR_RFSEND        "RFSend"
 #define D_SENSOR_RFRECV        "RFrecv"
@@ -740,6 +742,7 @@
 #define D_SENSOR_ADC_RANGE     "ADC Range"
 #define D_SENSOR_ADC_CT_POWER  "ADC CT Power"
 #define D_SENSOR_ADC_JOYSTICK  "ADC Joystick"
+#define D_SENSOR_ADC_PH        "ADC pH"
 #define D_GPIO_WEBCAM_PWDN     "CAM_PWDN"
 #define D_GPIO_WEBCAM_RESET    "CAM_RESET"
 #define D_GPIO_WEBCAM_XCLK     "CAM_XCLK"
@@ -764,6 +767,21 @@
 #define D_SENSOR_SHELLY_DIMMER_BOOT0 "SHD Boot 0"
 #define D_SENSOR_SHELLY_DIMMER_RST_INV "SHD Reset"
 #define D_SENSOR_RC522_RST     "RC522 Rst"
+#define D_SENSOR_RC522_CS      "RC522 CS"
+#define D_SENSOR_NRF24_CS      "NRF24 CS"
+#define D_SENSOR_NRF24_DC      "NRF24 DC"
+#define D_SENSOR_ILI9341_CS    "ILI9341 CS"
+#define D_SENSOR_ILI9341_DC    "ILI9341 DC"
+#define D_SENSOR_ILI9488_CS    "ILI9488 CS"
+#define D_SENSOR_EPAPER29_CS   "EPaper29 CS"
+#define D_SENSOR_EPAPER42_CS   "EPaper42 CS"
+#define D_SENSOR_SSD1351_CS    "SSD1351 CS"
+#define D_SENSOR_RA8876_CS     "RA8876 CS"
+#define D_SENSOR_ST7789_CS     "ST7789 CS"
+#define D_SENSOR_ST7789_DC     "ST7789 DC"
+#define D_SENSOR_SSD1331_CS    "SSD1331 CS"
+#define D_SENSOR_SSD1331_DC    "SSD1331 DC"
+#define D_SENSOR_SDCARD_CS     "SDCard CS"
 
 // Units
 #define D_UNIT_AMPERE "A"
@@ -849,7 +867,7 @@
 #define D_CONFIGURE_SCRIPT     "Edit script"
 #define D_SCRIPT               "edit script"
 #define D_SDCARD_UPLOAD        "file upload"
-#define D_SDCARD_DIR           "sd card directory"
+#define D_UFSDIR               "ufs directory"
 #define D_UPL_DONE             "Done"
 #define D_SCRIPT_CHARS_LEFT    "chars left"
 #define D_SCRIPT_CHARS_NO_MORE "no more chars"
@@ -857,6 +875,11 @@
 #define D_SCRIPT_ENABLE        "script enable"
 #define D_SCRIPT_UPLOAD        "Upload"
 #define D_SCRIPT_UPLOAD_FILES  "Upload files"
+
+//xdrv_50_filesystem.ino
+#define D_MANAGE_FILE_SYSTEM   "Manage File system"
+#define D_FS_SIZE              "Size"
+#define D_FS_FREE              "Free"
 
 //xsns_67_as3935.ino
 #define D_AS3935_GAIN "gain:"

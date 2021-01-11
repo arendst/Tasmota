@@ -1,7 +1,7 @@
 /*
   xsns_34_hx711.ino - HX711 load cell support for Tasmota
 
-  Copyright (C) 2020  Theo Arends
+  Copyright (C) 2021  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -264,7 +264,7 @@ bool HxCommand(void)
     char item[33];
     dtostrfd((float)Settings.weight_item / 10, 1, item);
     Response_P(PSTR("{\"Sensor34\":{\"" D_JSON_WEIGHT_REF "\":%d,\"" D_JSON_WEIGHT_CAL "\":%d,\"" D_JSON_WEIGHT_MAX "\":%d,\""
-		    D_JSON_WEIGHT_ITEM "\":%s,\"" D_JSON_WEIGHT_CHANGE "\":%s,\"" D_JSON_WEIGHT_DELTA "\":%d}}"),
+		    D_JSON_WEIGHT_ITEM "\":%s,\"" D_JSON_WEIGHT_CHANGE "\":\"%s\",\"" D_JSON_WEIGHT_DELTA "\":%d}}"),
 	       Settings.weight_reference, Settings.weight_calibration, Settings.weight_max * 1000,
 	       item, GetStateText(Settings.SensorBits1.hx711_json_weight_change), Settings.weight_change);
   }

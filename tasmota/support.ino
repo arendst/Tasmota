@@ -1,7 +1,7 @@
 /*
   support.ino - support for Tasmota
 
-  Copyright (C) 2020  Theo Arends
+  Copyright (C) 2021  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -58,8 +58,8 @@ void OsWatchTicker(void)
 
 //    ESP.restart();  // normal reboot
 //    ESP.reset();  // hard reset
-
     // Force an exception to get a stackdump
+    // ESP32: Guru Meditation Error: Core  0 panic'ed (LoadProhibited). Exception was unhandled.
     volatile uint32_t dummy;
     dummy = *((uint32_t*) 0x00000000);
     (void)dummy;    // avoid compiler warning
@@ -110,6 +110,97 @@ String GetResetReason(void)
     return ESP_getResetReason();
   }
 }
+
+#ifdef ESP32
+/*********************************************************************************************\
+ * ESP32 AutoMutex
+\*********************************************************************************************/
+
+//////////////////////////////////////////
+// automutex.
+// create a mute in your driver with:
+// void *mutex = nullptr;
+//
+// then protect any function with
+// TasAutoMutex m(&mutex, "somename");
+// - mutex is automatically initialised if not already intialised.
+// - it will be automagically released when the function is over.
+// - the same thread can take multiple times (recursive).
+// - advanced options m.give() and m.take() allow you fine control within a function.
+// - if take=false at creat, it will not be initially taken.
+// - name is used in serial log of mutex deadlock.
+// - maxWait in ticks is how long it will wait before failing in a deadlock scenario (and then emitting on serial)
+class TasAutoMutex {
+  SemaphoreHandle_t mutex;
+  bool taken;
+  int maxWait;
+  const char *name;
+  public:
+    TasAutoMutex(void ** mutex, const char *name = "", int maxWait = 40, bool take=true);
+    ~TasAutoMutex();
+    void give();
+    void take();
+    static void init(void ** ptr);
+};
+//////////////////////////////////////////
+
+TasAutoMutex::TasAutoMutex(void **mutex, const char *name, int maxWait, bool take) {
+  if (mutex) {
+    if (!(*mutex)){
+      TasAutoMutex::init(mutex);
+    }
+    this->mutex = (SemaphoreHandle_t)*mutex;
+    this->maxWait = maxWait;
+    this->name = name;
+    if (take) {
+      this->taken = xSemaphoreTakeRecursive(this->mutex, this->maxWait);
+      if (!this->taken){
+        Serial.printf("\r\nMutexfail %s\r\n", this->name);
+      }
+    }
+  } else {
+    this->mutex = (SemaphoreHandle_t)nullptr;
+  }
+}
+
+TasAutoMutex::~TasAutoMutex() {
+  if (this->mutex) {
+    if (this->taken) {
+      xSemaphoreGiveRecursive(this->mutex);
+      this->taken = false;
+    }
+  }
+}
+
+void TasAutoMutex::init(void ** ptr) {
+  SemaphoreHandle_t mutex = xSemaphoreCreateRecursiveMutex();
+  (*ptr) = (void *) mutex;
+  // needed, else for ESP8266 as we will initialis more than once in logging
+//  (*ptr) = (void *) 1;
+}
+
+void TasAutoMutex::give() {
+  if (this->mutex) {
+    if (this->taken) {
+      xSemaphoreGiveRecursive(this->mutex);
+      this->taken= false;
+    }
+  }
+}
+
+void TasAutoMutex::take() {
+  if (this->mutex) {
+    if (!this->taken) {
+      this->taken = xSemaphoreTakeRecursive(this->mutex, this->maxWait);
+      if (!this->taken){
+        Serial.printf("\r\nMutexfail %s\r\n", this->name);
+      }
+    }
+  }
+}
+
+#endif  // ESP32
+
 
 /*********************************************************************************************\
  * Miscellaneous
@@ -456,6 +547,38 @@ char* Trim(char* p)
     *q = '\0';
   }
   return p;
+}
+
+String UrlEncode(const String& text) {
+  const char hex[] = "0123456789ABCDEF";
+
+	String encoded = "";
+	int len = text.length();
+	int i = 0;
+	while (i < len)	{
+		char decodedChar = text.charAt(i++);
+/*
+    if (('a' <= decodedChar && decodedChar <= 'z') ||
+        ('A' <= decodedChar && decodedChar <= 'Z') ||
+        ('0' <= decodedChar && decodedChar <= '9') ||
+        ('=' == decodedChar)) {
+      encoded += decodedChar;
+		} else {
+      encoded += '%';
+			encoded += hex[decodedChar >> 4];
+			encoded += hex[decodedChar & 0xF];
+    }
+*/
+    if ((' ' == decodedChar) || ('+' == decodedChar)) {
+      encoded += '%';
+			encoded += hex[decodedChar >> 4];
+			encoded += hex[decodedChar & 0xF];
+    } else {
+      encoded += decodedChar;
+    }
+
+	}
+	return encoded;
 }
 
 /*
@@ -1230,7 +1353,7 @@ void DumpConvertTable(void) {
       ResponseAppend_P(PSTR(","));
     }
     jsflg = true;
-    if ((ResponseAppend_P(PSTR("\"%d\":\"%d\""), i, data) > (LOGSZ - TOPSZ)) || (i == ARRAY_SIZE(kGpioConvert) -1)) {
+    if ((ResponseAppend_P(PSTR("\"%d\":\"%d\""), i, data) > (MAX_LOGSZ - TOPSZ)) || (i == ARRAY_SIZE(kGpioConvert) -1)) {
       ResponseJsonEndEnd();
       MqttPublishPrefixTopic_P(RESULT_OR_STAT, XdrvMailbox.command);
       jsflg = false;
@@ -1245,7 +1368,7 @@ void DumpConvertTable(void) {
       ResponseAppend_P(PSTR(","));
     }
     jsflg = true;
-    if ((ResponseAppend_P(PSTR("\"%d\":\"%d\""), i, data) > (LOGSZ - TOPSZ)) || (i == ARRAY_SIZE(kAdcNiceList) -1)) {
+    if ((ResponseAppend_P(PSTR("\"%d\":\"%d\""), i, data) > (MAX_LOGSZ - TOPSZ)) || (i == ARRAY_SIZE(kAdcNiceList) -1)) {
       ResponseJsonEndEnd();
       MqttPublishPrefixTopic_P(RESULT_OR_STAT, XdrvMailbox.command);
       jsflg = false;
@@ -1304,6 +1427,17 @@ uint8_t ModuleNr(void)
   return (USER_MODULE == Settings.module) ? 0 : Settings.module +1;
 }
 
+uint32_t ModuleTemplate(uint32_t module) {
+  uint32_t i = 0;
+  for (i = 0; i < sizeof(kModuleNiceList); i++) {
+    if (module == pgm_read_byte(kModuleNiceList + i)) {
+      break;
+    }
+  }
+  if (i == sizeof(kModuleNiceList)) { i = 0; }
+  return i;
+}
+
 bool ValidTemplateModule(uint32_t index)
 {
   for (uint32_t i = 0; i < sizeof(kModuleNiceList); i++) {
@@ -1335,6 +1469,9 @@ String AnyModuleName(uint32_t index)
   if (USER_MODULE == index) {
     return String(SettingsText(SET_TEMPLATE_NAME));
   } else {
+#ifdef ESP32
+    index = ModuleTemplate(index);
+#endif
     char name[TOPSZ];
     return String(GetTextIndexed(name, sizeof(name), index, kModuleNames));
   }
@@ -1399,7 +1536,7 @@ void TemplateGpios(myio *gp)
     GetInternalTemplate(&src, Settings.module, 1);
 #endif  // ESP8266
 #ifdef ESP32
-    memcpy_P(&src, &kModules.gp, sizeof(mycfgio));
+    memcpy_P(&src, &kModules[ModuleTemplate(Settings.module)].gp, sizeof(mycfgio));
 #endif  // ESP32
   }
   // 11 85 00 85 85 00 00 00 15 38 85 00 00 81
@@ -1429,7 +1566,7 @@ gpio_flag ModuleFlag(void)
     GetInternalTemplate(&flag, Settings.module, 2);
 #endif  // ESP8266
 #ifdef ESP32
-    memcpy_P(&flag, &kModules.flag, sizeof(gpio_flag));
+    memcpy_P(&flag, &kModules[ModuleTemplate(Settings.module)].flag, sizeof(gpio_flag));
 #endif  // ESP32
   }
 
@@ -1440,13 +1577,18 @@ void ModuleDefault(uint32_t module)
 {
   if (USER_MODULE == module) { module = WEMOS; }  // Generic
   Settings.user_template_base = module;
+
+#ifdef ESP32
+  module = ModuleTemplate(module);
+#endif
+
   char name[TOPSZ];
   SettingsUpdateText(SET_TEMPLATE_NAME, GetTextIndexed(name, sizeof(name), module, kModuleNames));
 #ifdef ESP8266
   GetInternalTemplate(&Settings.user_template, module, 3);
 #endif  // ESP8266
 #ifdef ESP32
-  memcpy_P(&Settings.user_template, &kModules, sizeof(mytmplt));
+  memcpy_P(&Settings.user_template, &kModules[module], sizeof(mytmplt));
 #endif  // ESP32
 }
 
@@ -1460,8 +1602,7 @@ bool FlashPin(uint32_t pin)
   return (((pin > 5) && (pin < 9)) || (11 == pin));
 }
 
-uint32_t ValidPin(uint32_t pin, uint32_t gpio)
-{
+uint32_t ValidPin(uint32_t pin, uint32_t gpio) {
   if (FlashPin(pin)) {
     return GPIO_NONE;    // Disable flash pins GPIO6, GPIO7, GPIO8 and GPIO11
   }
@@ -1476,14 +1617,23 @@ uint32_t ValidPin(uint32_t pin, uint32_t gpio)
   return gpio;
 }
 
-bool ValidGPIO(uint32_t pin, uint32_t gpio)
-{
+bool ValidGPIO(uint32_t pin, uint32_t gpio) {
 #ifdef ESP8266
 #ifdef USE_ADC_VCC
   if (ADC0_PIN == pin) { return false; }  // ADC0 = GPIO17
 #endif
 #endif
   return (GPIO_USER == ValidPin(pin, BGPIO(gpio)));  // Only allow GPIO_USER pins
+}
+
+bool ValidSpiPinUsed(uint32_t gpio) {
+  // ESP8266: If SPI pin selected chk if it's not one of the three Hardware SPI pins (12..14)
+  bool result = false;
+  if (PinUsed(gpio)) {
+    uint32_t pin = Pin(gpio);
+    result = ((pin < 12) || (pin > 14));
+  }
+  return result;
 }
 
 bool JsonTemplate(char* dataBuf)
@@ -1939,8 +2089,15 @@ void SyslogAsync(bool refresh) {
 }
 
 bool NeedLogRefresh(uint32_t req_loglevel, uint32_t index) {
+
+#ifdef ESP32
+  // this takes the mutex, and will be release when the class is destroyed -
+  // i.e. when the functon leaves  You CAN call mutex.give() to leave early.
+  TasAutoMutex mutex(&TasmotaGlobal.log_buffer_mutex);
+#endif  // ESP32
+
   // Skip initial buffer fill
-  if (strlen(TasmotaGlobal.log_buffer) < LOG_BUFFER_SIZE - LOGSZ) { return false; }
+  if (strlen(TasmotaGlobal.log_buffer) < LOG_BUFFER_SIZE - MAX_LOGSZ) { return false; }
 
   char* line;
   size_t len;
@@ -1953,6 +2110,12 @@ bool GetLog(uint32_t req_loglevel, uint32_t* index_p, char** entry_pp, size_t* l
 
   if (TasmotaGlobal.uptime < 3) { return false; }  // Allow time to setup correct log level
   if (!req_loglevel || (index == TasmotaGlobal.log_buffer_pointer)) { return false; }
+
+#ifdef ESP32
+  // this takes the mutex, and will be release when the class is destroyed -
+  // i.e. when the functon leaves  You CAN call mutex.give() to leave early.
+  TasAutoMutex mutex(&TasmotaGlobal.log_buffer_mutex);
+#endif  // ESP32
 
   if (!index) {                            // Dump all
     index = TasmotaGlobal.log_buffer_pointer +1;
@@ -1992,6 +2155,13 @@ bool GetLog(uint32_t req_loglevel, uint32_t* index_p, char** entry_pp, size_t* l
 }
 
 void AddLogData(uint32_t loglevel, const char* log_data) {
+
+#ifdef ESP32
+  // this takes the mutex, and will be release when the class is destroyed -
+  // i.e. when the functon leaves  You CAN call mutex.give() to leave early.
+  TasAutoMutex mutex(&TasmotaGlobal.log_buffer_mutex);
+#endif  // ESP32
+
   char mxtime[14];  // "13:45:21.999 "
   snprintf_P(mxtime, sizeof(mxtime), PSTR("%02d" D_HOUR_MINUTE_SEPARATOR "%02d" D_MINUTE_SECOND_SEPARATOR "%02d.%03d "), RtcTime.hour, RtcTime.minute, RtcTime.second, RtcMillis());
 
@@ -2034,24 +2204,43 @@ void AddLogData(uint32_t loglevel, const char* log_data) {
 
 void AddLog_P(uint32_t loglevel, PGM_P formatP, ...)
 {
-  char log_data[LOGSZ];
+  char log_data[LOGSZ +4];
 
   va_list arg;
   va_start(arg, formatP);
-  vsnprintf_P(log_data, sizeof(log_data), formatP, arg);
+  uint32_t len = vsnprintf_P(log_data, LOGSZ +1, formatP, arg);
   va_end(arg);
+  if (len > LOGSZ) { strcat(log_data, "..."); }  // Actual data is more
+
+#ifdef DEBUG_TASMOTA_CORE
+  // Profile max_len
+  static uint32_t max_len = 0;
+  if (len > max_len) {
+    max_len = len;
+    Serial.printf("PRF: AddLog_P %d\n", max_len);
+  }
+#endif
 
   AddLogData(loglevel, log_data);
 }
 
 void AddLog_Debug(PGM_P formatP, ...)
 {
-  char log_data[LOGSZ];
+  char log_data[MAX_LOGSZ];
 
   va_list arg;
   va_start(arg, formatP);
-  vsnprintf_P(log_data, sizeof(log_data), formatP, arg);
+  uint32_t len = vsnprintf_P(log_data, sizeof(log_data), formatP, arg);
   va_end(arg);
+
+#ifdef DEBUG_TASMOTA_CORE
+  // Profile max_len
+  static uint32_t max_len = 0;
+  if (len > max_len) {
+    max_len = len;
+    Serial.printf("PRF: AddLog_Debug %d\n", max_len);
+  }
+#endif
 
   AddLogData(LOG_LEVEL_DEBUG, log_data);
 }
@@ -2073,18 +2262,37 @@ void AddLogMissed(const char *sensor, uint32_t misses)
 }
 
 void AddLogBufferSize(uint32_t loglevel, uint8_t *buffer, uint32_t count, uint32_t size) {
-  char log_data[LOGSZ];
+  char log_data[4 + (count * size * 3)];
 
   snprintf_P(log_data, sizeof(log_data), PSTR("DMP:"));
   for (uint32_t i = 0; i < count; i++) {
-    if (1 ==  size) {  // uint8_t
+    if (1 == size) {  // uint8_t
       snprintf_P(log_data, sizeof(log_data), PSTR("%s %02X"), log_data, *(buffer));
-    } else {           // uint16_t
+    } else {          // uint16_t
       snprintf_P(log_data, sizeof(log_data), PSTR("%s %02X%02X"), log_data, *(buffer +1), *(buffer));
     }
     buffer += size;
   }
   AddLogData(loglevel, log_data);
+}
+
+void AddLogSpi(bool hardware, uint32_t clk, uint32_t mosi, uint32_t miso) {
+  // Needs optimization
+  uint32_t enabled = (hardware) ? TasmotaGlobal.spi_enabled : TasmotaGlobal.soft_spi_enabled;
+  switch(enabled) {
+    case SPI_MOSI:
+      AddLog_P(LOG_LEVEL_INFO, PSTR("SPI: %s using GPIO%02d(CLK) and GPIO%02d(MOSI)"),
+        (hardware) ? PSTR("Hardware") : PSTR("Software"), clk, mosi);
+      break;
+    case SPI_MISO:
+      AddLog_P(LOG_LEVEL_INFO, PSTR("SPI: %s using GPIO%02d(CLK) and GPIO%02d(MISO)"),
+        (hardware) ? PSTR("Hardware") : PSTR("Software"), clk, miso);
+      break;
+    case SPI_MOSI_MISO:
+      AddLog_P(LOG_LEVEL_INFO, PSTR("SPI: %s using GPIO%02d(CLK), GPIO%02d(MOSI) and GPIO%02d(MISO)"),
+        (hardware) ? PSTR("Hardware") : PSTR("Software"), clk, mosi, miso);
+      break;
+  }
 }
 
 /*********************************************************************************************\

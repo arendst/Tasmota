@@ -39,11 +39,23 @@
 
 //#define SPI_HAS_TRANSACTION // already defined in SPI.h
 
-#define ST7789_TFTWIDTH 	240
-#define ST7789_TFTHEIGHT 	240
+#define ST7789_240x240_XSTART_R0 0
+#define ST7789_240x240_YSTART_R0 80
+#define ST7789_240x240_XSTART_R1 80
+#define ST7789_240x240_YSTART_R1 0
+#define ST7789_240x240_XSTART_R2 0
+#define ST7789_240x240_YSTART_R2 0
+#define ST7789_240x240_XSTART_R3 0
+#define ST7789_240x240_YSTART_R3 0
 
-#define ST7789_240x240_XSTART 0
-#define ST7789_240x240_YSTART 0
+#define ST7789_135x240_XSTART_R0 53
+#define ST7789_135x240_YSTART_R0 40
+#define ST7789_135x240_XSTART_R1 40
+#define ST7789_135x240_YSTART_R1 52
+#define ST7789_135x240_XSTART_R2 52
+#define ST7789_135x240_YSTART_R2 40
+#define ST7789_135x240_XSTART_R3 40
+#define ST7789_135x240_YSTART_R3 53
 
 #define ST_CMD_DELAY   0x80    // special signifier for command lists
 
@@ -140,7 +152,7 @@ class Arduino_ST7789 : public Renderer {
   uint16_t color565(uint8_t r, uint8_t g, uint8_t b) { return Color565(r, g, b); }
   void DisplayOnff(int8_t on);
   void dim(uint8_t contrast);
-  void pushColors(uint16_t *data, uint8_t len, boolean first);
+  void pushColors(uint16_t *data, uint16_t len, boolean first);
 
  protected:
   uint8_t  _colstart, _rowstart, _xstart, _ystart; // some displays need this changed
