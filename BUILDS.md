@@ -215,7 +215,7 @@
 ## Additional Features and Sensors on ESP32
 
 | Feature or Sensor     | lite | tasmota | knx | sensors | ir | display | webcam | Remarks
-|-----------------------|---------|-------|--------|-----|---------|----|---------|--------|--------
+|-----------------------|-------|--------|-----|---------|----|---------|--------|--------
 | USE_UFILESYS          | x | x | x | x | x | x | x |
 | USE_MI_ESP32          | - | x | - | x | - | - | - | See SetOption115
 | USE_IBEACON_ESP32     | - | - | - | - | - | - | - |
