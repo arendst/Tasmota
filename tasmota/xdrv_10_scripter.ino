@@ -177,7 +177,7 @@ uint32_t eeprom_block;
 // these support only one 4 k block below EEPROM this steals 4k of application area
 uint32_t alt_eeprom_init(uint32_t size) {
     //EEPROM.begin(size);
-    //eeprom_block = (uint32_t)&_FS_end - 0x40200000 - SPI_FLASH_SEC_SIZE;
+    //eeprom_block = (uint32_t)&_EEPROM_start - 0x40200000 - SPI_FLASH_SEC_SIZE;
     eeprom_block = SPEC_SCRIPT_FLASH;
     return 1;
 }

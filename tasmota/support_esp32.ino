@@ -80,7 +80,7 @@ uint32_t FlashWriteStartSector(void) {
 }
 
 uint32_t FlashWriteMaxSector(void) {
-  return (((uint32_t)&_FS_end - 0x40200000) / SPI_FLASH_SEC_SIZE) - 2;
+  return (((uint32_t)&_FS_start - 0x40200000) / SPI_FLASH_SEC_SIZE) - 2;
 }
 
 uint8_t* FlashDirectAccess(void) {

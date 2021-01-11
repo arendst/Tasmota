@@ -10,9 +10,11 @@ All notable changes to this project will be documented in this file.
 - Command ``SetOption43 1..255`` to control Rotary step (#10407)
 - Support for BS814A-2 8-button touch buttons by Peter Franck (#10447)
 - Support for up to 4 I2C SEESAW_SOIL Capacitance & Temperature sensors by Peter Franck (#10481)
+- ESP8266 Support for 2MB and up linker files with 1MB and up LittleFS
 
 ### Breaking Changed
 - ESP32 switch from default SPIFFS to default LittleFS file system loosing current (zigbee) files
+- ESP8266 until now NOT SUPPORTED linker files 2MB and up. Current settings will be overwritten once LittleFS is enabled
 
 ### Changed
 - Force initial default state ``SetOption57 1`` to scan wifi network every 44 minutes for strongest signal (#10395)

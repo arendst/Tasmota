@@ -23,8 +23,8 @@
 // basics
 //
 // dummy defines
-#define SPIFFS_END (SPI_FLASH_SEC_SIZE * 200)
-#define SETTINGS_LOCATION SPIFFS_END
+//#define SPIFFS_END (SPI_FLASH_SEC_SIZE * 200)
+//#define SETTINGS_LOCATION SPIFFS_END
 
 #include <Esp.h>
 

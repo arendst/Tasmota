@@ -194,6 +194,7 @@ void setup(void) {
 #endif
 
   RtcPreInit();
+  SettingsInit();
 
   memset(&TasmotaGlobal, 0, sizeof(TasmotaGlobal));
   TasmotaGlobal.baudrate = APP_BAUDRATE;
