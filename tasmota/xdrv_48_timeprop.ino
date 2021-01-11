@@ -242,6 +242,9 @@ bool Xdrv48(byte function) {
   case FUNC_COMMAND:
     result = TimepropCommand();
     break;
+  case FUNC_COMMAND:
+    result = TimepropCommand();
+    break;
     case FUNC_SET_POWER:
       TimepropXdrvPower();
       break;
@@ -249,4 +252,5 @@ bool Xdrv48(byte function) {
   return result;
 }
 
+#endif // FIRMWARE_MINIMAL
 #endif // USE_TIMEPROP
