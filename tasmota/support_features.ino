@@ -701,7 +701,9 @@ void ResponseAppendFeatures(void)
 #ifdef USE_BS814A2
     feature7 |= 0x01000000;  // xdrv_51_bs814a2.ino
 #endif
-//    feature7 |= 0x02000000;
+#ifdef USE_SEESAW_SOIL
+    feature7 |= 0x02000000;  // xsns_81_seesaw_soil.ino
+#endif
 //    feature7 |= 0x04000000;
 //    feature7 |= 0x08000000;
 

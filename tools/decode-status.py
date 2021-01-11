@@ -94,7 +94,7 @@ a_setoption = [[
     "(Button) Ignore hold time (s)",
     "(Wifi) Gratuitous ARP repeat time",
     "(Temperature) Over temperature threshold (celsius)",
-    "(not used) Tuya MCU max dimmer value",
+    "(Rotary) Max allowed steps",
     "(not used) Tuya MCU voltage Id",
     "(not used) Tuya MCU current Id",
     "(not used) Tuya MCU power Id",
@@ -244,7 +244,7 @@ a_features = [[
     "USE_SHELLY_DIMMER","USE_RC522","USE_FTC532","USE_DISPLAY_EPAPER_42",
     "USE_DISPLAY_ILI9488","USE_DISPLAY_SSD1351","USE_DISPLAY_RA8876","USE_DISPLAY_ST7789",
     "USE_DISPLAY_SSD1331","USE_UFILESYS","USE_TIMEPROP","USE_PID",
-    "","","","",
+    "USE_BS814A2","USE_SEESAW_SOIL","","",
     "","","",""
     ]]
 
@@ -273,7 +273,7 @@ else:
         obj = json.load(fp)
 
 def StartDecode():
-    print ("\n*** decode-status.py v20210106 by Theo Arends and Jacek Ziolkowski ***")
+    print ("\n*** decode-status.py v20210111 by Theo Arends and Jacek Ziolkowski ***")
 
 #    print("Decoding\n{}".format(obj))
 

@@ -7,8 +7,9 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Support for time proportioned (``#define USE_TIMEPROP``) and optional PID (``#define USE_PID``) relay control (#10412)
 - Support rotary encoder on Shelly Dimmer (#10407)
-- Command ``SetOption43 1..100`` to control Rotary step (#10407)
-- Zigbee debounce duplicate commands received from the same device within ``USE_ZIGBEE_DEBOUNCE_COMMANDS`` milliseconds
+- Command ``SetOption43 1..255`` to control Rotary step (#10407)
+- Support for BS814A-2 8-button touch buttons by Peter Franck (#10447)
+- Support for up to 4 I2C SEESAW_SOIL Capacitance & Temperature sensors by Peter Franck (#10481)
 
 ### Breaking Changed
 - ESP32 switch from default SPIFFS to default LittleFS file system loosing current (zigbee) files
