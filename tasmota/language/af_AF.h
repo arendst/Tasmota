@@ -257,16 +257,16 @@
 #define D_CONSOLE "Konsole"
 #define D_CONFIRM_RESTART "Bevestig weer te begin"
 
-#define D_CONFIGURE_MODULE "Stel module in"
+#define D_CONFIGURE_MODULE "Stel Module in"
 #define D_CONFIGURE_WIFI "Stel WiFi in"
 #define D_CONFIGURE_MQTT "Stel MQTT in"
 #define D_CONFIGURE_DOMOTICZ "Stel Domoticz in"
-#define D_CONFIGURE_LOGGING "Stel logging in"
-#define D_CONFIGURE_OTHER "Stel ander in"
+#define D_CONFIGURE_LOGGING "Stel Logging in"
+#define D_CONFIGURE_OTHER "Stel Ander in"
 #define D_CONFIRM_RESET_CONFIGURATION "Bevestig die herstel van die konfigurasie"
 #define D_RESET_CONFIGURATION "Stel die konfigurasie terug"
 #define D_BACKUP_CONFIGURATION "Rugsteun die konfigurasie"
-#define D_RESTORE_CONFIGURATION "Stel die konfigurasie terug"
+#define D_RESTORE_CONFIGURATION "Herstel die konfigurasie"
 #define D_MAIN_MENU "Hoofkieslys"
 
 #define D_MODULE_PARAMETERS "Moduleparameters"
@@ -426,7 +426,7 @@
 #define D_DOMOTICZ_UPDATE_TIMER "Dateer tydopdatering op"
 
 // xdrv_09_timers.ino
-#define D_CONFIGURE_TIMER "Stel timer in"
+#define D_CONFIGURE_TIMER "Stel Timer in"
 #define D_TIMER_PARAMETERS "Timer-parameters"
 #define D_TIMER_ENABLE "Aktiveer timers"
 #define D_TIMER_ARM "Aktiveer"
@@ -867,7 +867,7 @@
 #define D_CONFIGURE_SCRIPT     "Wysig skrif"
 #define D_SCRIPT               "wysig skrif"
 #define D_SDCARD_UPLOAD        "lêer oplaai"
-#define D_UFSDIR               "ufs directory"
+#define D_UFSDIR               "ufs vouer"
 #define D_UPL_DONE             "Klaar"
 #define D_SCRIPT_CHARS_LEFT    "karakters oor"
 #define D_SCRIPT_CHARS_NO_MORE "nie meer karakters nie"
@@ -877,9 +877,9 @@
 #define D_SCRIPT_UPLOAD_FILES  "Laai lêers op"
 
 //xdrv_50_filesystem.ino
-#define D_MANAGE_FILE_SYSTEM   "Manage File system"
-#define D_FS_SIZE              "Size"
-#define D_FS_FREE              "Free"
+#define D_MANAGE_FILE_SYSTEM   "Bestuur lêerstelsel"
+#define D_FS_SIZE              "Grootte"
+#define D_FS_FREE              "Vry"
 
 //xsns_67_as3935.ino
 #define D_AS3935_GAIN "versterking:"
