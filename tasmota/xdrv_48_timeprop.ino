@@ -87,6 +87,8 @@
 #define D_CMND_TIMEPROP "timeprop_"
 #define D_CMND_TIMEPROP_SETPOWER "setpower_"    // add index no on end (0:8) and data is power 0:1
 
+#include "Timeprop.h"
+
 enum TimepropCommands { CMND_TIMEPROP_SETPOWER };
 const char kTimepropCommands[] PROGMEM = D_CMND_TIMEPROP_SETPOWER;
 
@@ -116,8 +118,6 @@ static long currentRelayStates = 0;  // current actual relay states. Bit 0 first
 #ifndef TIMEPROP_RELAYS
 #define TIMEPROP_RELAYS               1       // which relay to control 1:8
 #endif
-
-#include "Timeprop.h"
 
 struct {
   Timeprop timeprops[TIMEPROP_NUM_OUTPUTS];
@@ -209,7 +209,7 @@ bool TimepropCommand()
         AddLog(LOG_LEVEL_INFO);
       */
       if (XdrvMailbox.index >=0 && XdrvMailbox.index < TIMEPROP_NUM_OUTPUTS) {
-        timeprops[XdrvMailbox.index].setPower( atof(XdrvMailbox.data), timeprop_current_time_secs );
+        timeprops[XdrvMailbox.index].setPower( atof(XdrvMailbox.data), Tprop.current_time_secs );
       }
       snprintf_P(TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), PSTR("{\"" D_CMND_TIMEPROP D_CMND_TIMEPROP_SETPOWER "%d\":\"%s\"}"),
         XdrvMailbox.index, XdrvMailbox.data);
@@ -239,12 +239,9 @@ bool Xdrv48(byte function) {
     case FUNC_EVERY_SECOND:
       TimepropEverySecond();
       break;
-  case FUNC_COMMAND:
-    result = TimepropCommand();
-    break;
-  case FUNC_COMMAND:
-    result = TimepropCommand();
-    break;
+    case FUNC_COMMAND:
+      result = TimepropCommand();
+      break;
     case FUNC_SET_POWER:
       TimepropXdrvPower();
       break;
@@ -252,5 +249,4 @@ bool Xdrv48(byte function) {
   return result;
 }
 
-#endif // FIRMWARE_MINIMAL
 #endif // USE_TIMEPROP
