@@ -183,7 +183,6 @@ bool TimepropCommand()
   char command [CMDSZ];
   bool serviced = true;
   uint8_t ua_prefix_len = strlen(D_CMND_TIMEPROP); // to detect prefix of command
-  AddLog_P(LOG_LEVEL_ERROR, PSTR("TRP: Timeprop_Command called"));
   /*
   snprintf_P(log_data, sizeof(log_data), "Command called: "
     "index: %d data_len: %d payload: %d topic: %s data: %s\n",
