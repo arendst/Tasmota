@@ -85,6 +85,8 @@ uint8_t ufs_dir;
 // 0 = none, 1 = SD, 2 = ffat, 3 = littlefs
 uint8_t ufs_type;
 uint8_t ffs_type;
+bool download_busy;
+
 
 /*********************************************************************************************/
 
@@ -459,6 +461,8 @@ void UfsDirectory(void) {
 
   strcpy(ufs_path, "/");
 
+
+
   if (Webserver->hasArg("download")) {
     String stmp = Webserver->arg("download");
     char *cp = (char*)stmp.c_str();
@@ -595,9 +599,10 @@ void UfsListDir(char *path, uint8_t depth) {
   }
 }
 
+
+
 uint8_t UfsDownloadFile(char *file) {
   File download_file;
-  WiFiClient download_Client;
 
   if (!dfsp->exists(file)) {
     AddLog_P(LOG_LEVEL_INFO, PSTR("UFS: File not found"));
@@ -615,6 +620,8 @@ uint8_t UfsDownloadFile(char *file) {
     return 1;
   }
 
+#ifdef ESP8266
+  WiFiClient download_Client;
   uint32_t flen = download_file.size();
 
   download_Client = Webserver->client();
@@ -634,7 +641,6 @@ uint8_t UfsDownloadFile(char *file) {
 
   uint8_t buff[512];
   uint32_t bread;
-
   // transfer is about 150kb/s
   uint32_t cnt = 0;
   while (download_file.available()) {
@@ -650,11 +656,77 @@ uint8_t UfsDownloadFile(char *file) {
       //}
     }
     delay(0);
+    OsWatchLoop();
   }
   download_file.close();
   download_Client.stop();
+#endif // esp8266
+
+
+#ifdef ESP32
+  download_file.close();
+
+  if (download_busy == true) {
+    AddLog_P(LOG_LEVEL_INFO, PSTR("UFS: Download is busy"));
+    return 0;
+  }
+
+  download_busy = true;
+  char *path = (char*)malloc(128);
+  strcpy(path,file);
+  xTaskCreatePinnedToCore(donload_task, "DT", 6000, (void*)path, 3, NULL, 1);
+#endif // ESP32
+
   return 0;
 }
+
+
+#ifdef ESP32
+#ifndef DOWNLOAD_SIZE
+#define DOWNLOAD_SIZE 4096
+#endif
+void donload_task(void *path) {
+  File download_file;
+  WiFiClient download_Client;
+  char *file = (char*) path;
+
+  download_file = dfsp->open(file, UFS_FILE_READ);
+  free(file);
+
+  uint32_t flen = download_file.size();
+
+  download_Client = Webserver->client();
+  Webserver->setContentLength(flen);
+
+  char attachment[100];
+  char *cp;
+  for (uint32_t cnt = strlen(file); cnt >= 0; cnt--) {
+    if (file[cnt] == '/') {
+      cp = &file[cnt + 1];
+      break;
+    }
+  }
+  snprintf_P(attachment, sizeof(attachment), PSTR("attachment; filename=%s"), cp);
+  Webserver->sendHeader(F("Content-Disposition"), attachment);
+  WSSend(200, CT_STREAM, "");
+
+  uint8_t *buff = (uint8_t*)malloc(DOWNLOAD_SIZE);
+  if (buff) {
+    uint32_t bread;
+    while (download_file.available()) {
+      bread = download_file.read(buff, DOWNLOAD_SIZE);
+      uint32_t bw = download_Client.write((const char*)buff, bread);
+      if (!bw) { break; }
+    }
+    free(buff);
+  }
+  download_file.close();
+  download_Client.stop();
+  download_busy = false;
+  vTaskDelete( NULL );
+}
+#endif //  ESP32
+
 
 bool UfsUploadFileOpen(const char* upload_filename) {
   char npath[48];
