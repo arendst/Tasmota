@@ -225,7 +225,7 @@ const uint16_t LOG_BUFFER_SIZE = 4000;         // Max number of characters in lo
   #error "Arduino ESP8266 Core versions before 2.7.1 are not supported"
 #endif
 
-#define TASM_FILE_SETTINGS          "/settings"
+#define TASM_FILE_SETTINGS          "/.settings"
 #define TASM_FILE_ZIGBEE            "/zb"
 
 #ifndef MQTT_MAX_PACKET_SIZE
