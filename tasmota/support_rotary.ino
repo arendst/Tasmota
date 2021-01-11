@@ -131,7 +131,7 @@ void ICACHE_RAM_ATTR RotaryIsrArg(void *arg) {
 }
 
 void RotaryInitMaxSteps(void) {
-  if ((0 == Settings.param[P_ROTARY_MAX_STEP]) || (Settings.param[P_ROTARY_MAX_STEP] > 100)) {
+  if (0 == Settings.param[P_ROTARY_MAX_STEP]) {
     Settings.param[P_ROTARY_MAX_STEP] = ROTARY_MAX_STEPS;  // SetOption43
   }
   uint8_t max_steps = Settings.param[P_ROTARY_MAX_STEP];
