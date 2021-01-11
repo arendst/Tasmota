@@ -18,6 +18,7 @@
 */
 
 #ifdef USE_TIMEPROP
+#ifndef FIRMWARE_MINIMAL
 /*********************************************************************************************\
  * Code to drive one or more relays in a time proportioned manner give a
  * required power value.
@@ -249,4 +250,5 @@ bool Xdrv48(byte function) {
   return result;
 }
 
+#endif // FIRMWARE_MINIMAL
 #endif // USE_TIMEPROP

@@ -18,6 +18,7 @@
 */
 
 #ifdef USE_PID
+#ifndef FIRMWARE_MINIMAL
 /*********************************************************************************************\
  * Uses the library https://github.com/colinl/process-control.git from Github
  * In user_config_override.h include code as follows:
@@ -439,4 +440,5 @@ bool Xdrv49(byte function) {
   }
   return result;
 }
+#endif //FIRMWARE_MINIMAL
 #endif // USE_PID
