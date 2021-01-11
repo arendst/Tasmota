@@ -4245,10 +4245,14 @@ int16_t Run_script_sub(const char *type, int8_t tlen, JsonParserObject *jo) {
               lp += 3;
               uint8_t channel = 1;
               if (*(lp+1)=='(') {
-                channel = *lp & 7;
-                if (channel > 5) {
-                  channel = 5;
-                }
+                channel = *lp & 0x0f;
+#ifdef ESP8266
+                if (channel > 5) {channel = 5;}
+#endif // ESP8266
+#ifdef ESP32
+                if (channel > 8) {channel = 8;}
+#endif // ESP32
+                if (channel < 1) {channel = 1;}
                 lp += 2;
               } else {
                 if (*lp=='(') {
