@@ -2332,8 +2332,8 @@ void HandleUploadDone(void) {
 }
 
 void UploadServices(uint32_t start_service) {
-  if (Web.upload_services_stopped == start_service) { return; }
-  Web.upload_services_stopped = start_service;
+  if (Web.upload_services_stopped != start_service) { return; }
+  Web.upload_services_stopped = !start_service;
 
   if (start_service) {
 //    AddLog_P(LOG_LEVEL_DEBUG, PSTR("UPL: Services enabled"));
@@ -2633,7 +2633,8 @@ void HandleUploadLoop(void) {
     if (UPL_TASMOTA == Web.upload_file_type) { Update.end(); }
   }
   delay(0);
-  Scheduler();          // Feed OsWatch timer to prevent restart on long uploads
+  OsWatchLoop();
+//  Scheduler();          // Feed OsWatch timer to prevent restart on long uploads
 }
 
 /*-------------------------------------------------------------------------------------------*/
