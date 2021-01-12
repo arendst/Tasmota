@@ -18,6 +18,7 @@
 */
 
 #ifdef USE_PID
+#ifndef FIRMWARE_MINIMAL
 /*********************************************************************************************\
  * Uses the library https://github.com/colinl/process-control.git from Github
  * In user_config_override.h include code as follows:
@@ -116,11 +117,6 @@
 
    #define PID_REPORT_MORE_SETTINGS                   // If defined, the SENSOR output will provide more extensive json
                                                  // output in the PID section
-
-//   #define PID_BACKWARD_COMPATIBLE             // Preserve the backward compatible reporting of PID power via
-                                                 // `%topic%/PID {"power":"0.000"}`  This is now available in
-                                                 // `%topic$/SENSOR {..., "PID":{"PidPower":0.00}}`
-                                                 // Don't use unless you know that you need it
 
  * Help with using the PID algorithm and with loop tuning can be found at
  * http://blog.clanlaw.org.uk/2018/01/09/PID-tuning-with-node-red-contrib-pid.html
@@ -271,26 +267,27 @@ void CmndSetPv(void) {
     // this runs it at the next second
     Pid.run_pid_now = true;
   }
+  ResponseCmndFloat(atof(XdrvMailbox.data), 1);
 }
 
 void CmndSetSp(void) {
   Pid.pid.setSp(atof(XdrvMailbox.data));
-  ResponseCmndNumber(atof(XdrvMailbox.data));
+  ResponseCmndFloat(atof(XdrvMailbox.data), 1);
 }
 
 void CmndSetPb(void) {
   Pid.pid.setPb(atof(XdrvMailbox.data));
-  ResponseCmndNumber(atof(XdrvMailbox.data));
+  ResponseCmndFloat(atof(XdrvMailbox.data), 1);
 }
 
 void CmndSetTi(void) {
   Pid.pid.setTi(atof(XdrvMailbox.data));
-  ResponseCmndNumber(atof(XdrvMailbox.data));
+  ResponseCmndFloat(atof(XdrvMailbox.data), 1);
 }
 
 void CmndSetTd(void) {
   Pid.pid.setTd(atof(XdrvMailbox.data));
-  ResponseCmndNumber(atof(XdrvMailbox.data));
+  ResponseCmndFloat(atof(XdrvMailbox.data), 1);
 }
 
 void CmndSetInitialInt(void) {
@@ -300,7 +297,7 @@ void CmndSetInitialInt(void) {
 
 void CmndSetDSmooth(void) {
   Pid.pid.setDSmooth(atof(XdrvMailbox.data));
-  ResponseCmndNumber(atof(XdrvMailbox.data));
+  ResponseCmndFloat(atof(XdrvMailbox.data), 1);
 }
 
 void CmndSetAuto(void) {
@@ -310,7 +307,7 @@ void CmndSetAuto(void) {
 
 void CmndSetManualPower(void) {
   Pid.pid.setManualPower(atof(XdrvMailbox.data));
-  ResponseCmndNumber(atof(XdrvMailbox.data));
+  ResponseCmndFloat(atof(XdrvMailbox.data), 1);
 }
 
 void CmndSetMaxInterval(void) {
@@ -391,14 +388,14 @@ void PIDShowValues(void) {
 
 void PIDRun(void) {
   double power = Pid.pid.tick(Pid.current_time_secs);
-#ifdef PID_BACKWARD_COMPATIBLE
+#ifdef PID_DONT_USE_PID_TOPIC
   // This part is left inside to regularly publish the PID Power via
   // `%topic%/PID {"power":"0.000"}`
   char str_buf[FLOATSZ];
   dtostrfd(power, 3, str_buf);
   snprintf_P(TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), PSTR("{\"%s\":\"%s\"}"), "power", str_buf);
   MqttPublishPrefixTopic_P(TELE, "PID", false);
-#endif // PID_BACKWARD_COMPATIBLE
+#endif // PID_DONT_USE_PID_TOPIC
 
 #if defined PID_SHUTTER
   // send output as a position from 0-100 to defined shutter
@@ -443,4 +440,5 @@ bool Xdrv49(byte function) {
   }
   return result;
 }
+#endif //FIRMWARE_MINIMAL
 #endif // USE_PID
