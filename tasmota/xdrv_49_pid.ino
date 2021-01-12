@@ -267,27 +267,27 @@ void CmndSetPv(void) {
     // this runs it at the next second
     Pid.run_pid_now = true;
   }
-  ResponseCmndFloat(atof(XdrvMailbox.data));
+  ResponseCmndFloat(atof(XdrvMailbox.data), 1);
 }
 
 void CmndSetSp(void) {
   Pid.pid.setSp(atof(XdrvMailbox.data));
-  ResponseCmndFloat(atof(XdrvMailbox.data));
+  ResponseCmndFloat(atof(XdrvMailbox.data), 1);
 }
 
 void CmndSetPb(void) {
   Pid.pid.setPb(atof(XdrvMailbox.data));
-  ResponseCmndFloat(atof(XdrvMailbox.data));
+  ResponseCmndFloat(atof(XdrvMailbox.data), 1);
 }
 
 void CmndSetTi(void) {
   Pid.pid.setTi(atof(XdrvMailbox.data));
-  ResponseCmndFloat(atof(XdrvMailbox.data));
+  ResponseCmndFloat(atof(XdrvMailbox.data), 1);
 }
 
 void CmndSetTd(void) {
   Pid.pid.setTd(atof(XdrvMailbox.data));
-  ResponseCmndFloat(atof(XdrvMailbox.data));
+  ResponseCmndFloat(atof(XdrvMailbox.data), 1);
 }
 
 void CmndSetInitialInt(void) {
@@ -297,7 +297,7 @@ void CmndSetInitialInt(void) {
 
 void CmndSetDSmooth(void) {
   Pid.pid.setDSmooth(atof(XdrvMailbox.data));
-  ResponseCmndFloat(atof(XdrvMailbox.data));
+  ResponseCmndFloat(atof(XdrvMailbox.data), 1);
 }
 
 void CmndSetAuto(void) {
@@ -307,7 +307,7 @@ void CmndSetAuto(void) {
 
 void CmndSetManualPower(void) {
   Pid.pid.setManualPower(atof(XdrvMailbox.data));
-  ResponseCmndFloat(atof(XdrvMailbox.data));
+  ResponseCmndFloat(atof(XdrvMailbox.data), 1);
 }
 
 void CmndSetMaxInterval(void) {
