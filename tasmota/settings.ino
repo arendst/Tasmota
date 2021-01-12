@@ -205,14 +205,16 @@ uint32_t SETTINGS_LOCATION = FLASH_EEPROM_START;
 
 #endif  // ESP32
 
-const uint8_t CFG_ROTATES = 7;          // Number of flash sectors used (handles uploads)
+const uint8_t CFG_ROTATES = 7;      // Number of flash sectors used (handles uploads)
 
 uint32_t settings_location = FLASH_EEPROM_START;
 uint32_t settings_crc32 = 0;
 uint8_t *settings_buffer = nullptr;
 
 void SettingsInit(void) {
-  if (SETTINGS_LOCATION > 0xFA) { SETTINGS_LOCATION = 0xFA; }  // Skip empty partition part
+  if (SETTINGS_LOCATION > 0xFA) {
+    SETTINGS_LOCATION = 0xFD;       // Skip empty partition part
+  }
 }
 
 /********************************************************************************************/
