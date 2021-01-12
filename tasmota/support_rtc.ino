@@ -455,7 +455,7 @@ void RtcSecond(void)
       Rtc.midnight_now = true;
     }
 
-#ifdef ESP32
+//#ifdef ESP32
     if (mutex) {  // Time is just synced and is valid
       // Sync RTOS time to be used by SD Card time stamps
       struct timeval tv;
@@ -463,7 +463,7 @@ void RtcSecond(void)
       tv.tv_usec = 0;
       settimeofday(&tv, nullptr);
     }
-#endif  // ESP32
+//#endif  // ESP32
 
   }
 
