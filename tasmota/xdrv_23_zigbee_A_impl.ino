@@ -2081,7 +2081,7 @@ void ZigbeeShow(bool json)
     if (zigbee.permit_end_time) {
       // PermitJoin in progress
 
-      WSContentSend_P(msg[ZB_WEB_PERMITJOIN_ACTIVE], D_ZIGBEE_PERMITJOIN_ACTIVE);
+      WSContentSend_P(msg[ZB_WEB_PERMITJOIN_ACTIVE], PSTR(D_ZIGBEE_PERMITJOIN_ACTIVE));
     }
 #endif
   }

@@ -4979,9 +4979,9 @@ void HandleScriptConfiguration(void) {
 #ifdef xSCRIPT_STRIP_COMMENTS
     uint16_t ssize = glob_script_mem.script_size;
     if (bitRead(Settings.rule_enabled, 1)) ssize *= 2;
-    WSContentSend_P(HTTP_FORM_SCRIPT1,1,1,bitRead(Settings.rule_enabled,0) ? " checked" : "",ssize);
+    WSContentSend_P(HTTP_FORM_SCRIPT1,1,1,bitRead(Settings.rule_enabled,0) ? PSTR(" checked") : "",ssize);
 #else
-    WSContentSend_P(HTTP_FORM_SCRIPT1,1,1,bitRead(Settings.rule_enabled,0) ? " checked" : "",glob_script_mem.script_size);
+    WSContentSend_P(HTTP_FORM_SCRIPT1,1,1,bitRead(Settings.rule_enabled,0) ? PSTR(" checked") : "",glob_script_mem.script_size);
 #endif
 
     // script is to large for WSContentSend_P

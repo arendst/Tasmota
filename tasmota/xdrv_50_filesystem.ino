@@ -502,7 +502,7 @@ void UfsDirectory(void) {
   WSContentSend_P(UFS_FORM_FILE_UPGc, WebColor(COL_TEXT), ts, fs);
 
   if (ufs_dir) {
-    WSContentSend_P(UFS_FORM_FILE_UPGc1, WiFi.localIP().toString().c_str(),ufs_dir == 1 ? 2:1, ufs_dir == 1 ? "SDCard":"FlashFS");
+    WSContentSend_P(UFS_FORM_FILE_UPGc1, WiFi.localIP().toString().c_str(),ufs_dir == 1 ? 2:1, ufs_dir == 1 ? PSTR("SDCard"):PSTR("FlashFS"));
   }
   WSContentSend_P(UFS_FORM_FILE_UPGc2);
 
