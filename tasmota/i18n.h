@@ -680,7 +680,7 @@
 #define D_LOG_KNX "KNX: "
 #define D_LOG_LOG "LOG: "          // Logging
 #define D_LOG_MODULE "MOD: "       // Module
-#define D_LOG_MDNS "DNS: "         // mDNS
+#define D_LOG_MDNS "mDN: "         // mDNS
 #define D_LOG_MQTT "MQT: "         // MQTT
 #define D_LOG_OTHER "OTH: "        // Other
 #define D_LOG_RESULT "RSL: "       // Result
