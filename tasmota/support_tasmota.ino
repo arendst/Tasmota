@@ -1134,7 +1134,7 @@ void Every250mSeconds(void)
           // Backup mqtt host, port, client, username and password
 //        }
         if ((215 == TasmotaGlobal.restart_flag) || (216 == TasmotaGlobal.restart_flag)) {
-          SettingsErase(0);  // Erase all flash from program end to end of physical flash
+          SettingsErase(2);  // Erase all flash from program end to end of physical excluding optional filesystem
         }
         SettingsDefault();
         // Restore current SSIDs and Passwords

@@ -138,7 +138,7 @@ int32_t NvmErase(const char *sNvsName) {
 
 void SettingsErase(uint8_t type) {
   // SDK and Tasmota data is held in default NVS partition
-  // Tasmota data is held also in file /settings on default filesystem
+  // Tasmota data is held also in file /.settings on default filesystem
   // cal_data - SDK PHY calibration data as documented in esp_phy_init.h
   // qpc      - Tasmota Quick Power Cycle state
   // main     - Tasmota Settings data
