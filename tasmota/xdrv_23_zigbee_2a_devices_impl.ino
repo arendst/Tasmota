@@ -681,9 +681,9 @@ void Z_Device::jsonAddConfig(Z_attribute_list & attr_list) const {
   for (auto & data_elt : data) {
     char key[8];
     if (data_elt.validConfig()) {
-      snprintf_P(key, sizeof(key), "?%02X.%1X", data_elt.getEndpoint(), data_elt.getConfig());
+      snprintf_P(key, sizeof(key), PSTR("?%02X.%1X"), data_elt.getEndpoint(), data_elt.getConfig());
     } else {
-      snprintf_P(key, sizeof(key), "?%02X", data_elt.getEndpoint());
+      snprintf_P(key, sizeof(key), PSTR("?%02X"), data_elt.getEndpoint());
     }
     key[0] = Z_Data::DataTypeToChar(data_elt.getType());
     arr_data.addStr(key);

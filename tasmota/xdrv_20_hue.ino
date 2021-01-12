@@ -175,7 +175,7 @@ String HueBridgeId(void)
   String temp = WiFi.macAddress();
   temp.replace(":", "");
   String bridgeid = temp.substring(0, 6);
-  bridgeid += "FFFE";
+  bridgeid += F("FFFE");
   bridgeid += temp.substring(6);
   return bridgeid;  // 5CCF7FFFFE139F3D
 }

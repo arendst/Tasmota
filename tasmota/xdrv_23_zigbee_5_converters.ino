@@ -1903,7 +1903,7 @@ void ZCLFrame::syntheticAqaraVibration(class Z_attribute_list &attr_list, class 
           y = buf2.get16(2);
           x = buf2.get16(4);
           char temp[32];
-          snprintf_P(temp, sizeof(temp), "[%i,%i,%i]", x, y, z);
+          snprintf_P(temp, sizeof(temp), PSTR("[%i,%i,%i]"), x, y, z);
           attr.setStrRaw(temp);
           // calculate angles
           float X = x;
@@ -1912,7 +1912,7 @@ void ZCLFrame::syntheticAqaraVibration(class Z_attribute_list &attr_list, class 
           int32_t Angle_X = 0.5f + atanf(X/sqrtf(z*z+y*y)) * f_180pi;
           int32_t Angle_Y = 0.5f + atanf(Y/sqrtf(x*x+z*z)) * f_180pi;
           int32_t Angle_Z = 0.5f + atanf(Z/sqrtf(x*x+y*y)) * f_180pi;
-          snprintf_P(temp, sizeof(temp), "[%i,%i,%i]", Angle_X, Angle_Y, Angle_Z);
+          snprintf_P(temp, sizeof(temp), PSTR("[%i,%i,%i]"), Angle_X, Angle_Y, Angle_Z);
           attr_list.addAttributePMEM(PSTR("AqaraAngles")).setStrRaw(temp);
         }
       }

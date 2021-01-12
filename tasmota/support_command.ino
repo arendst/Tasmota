@@ -727,12 +727,12 @@ void CmndRestart(void)
   switch (XdrvMailbox.payload) {
   case 1:
     TasmotaGlobal.restart_flag = 2;
-    ResponseCmndChar(D_JSON_RESTARTING);
+    ResponseCmndChar(PSTR(D_JSON_RESTARTING));
     break;
   case 2:
     TasmotaGlobal.restart_flag = 2;
     TasmotaGlobal.restart_halt = true;
-    ResponseCmndChar(D_JSON_HALTING);
+    ResponseCmndChar(PSTR(D_JSON_HALTING));
     break;
   case -1:
     CmndCrash();    // force a crash
@@ -1208,7 +1208,7 @@ void CmndGpio(void)
     if (jsflg2) {
       ResponseClear();
     } else {
-      ResponseCmndChar(D_JSON_NOT_SUPPORTED);
+      ResponseCmndChar(PSTR(D_JSON_NOT_SUPPORTED));
     }
   }
 }
