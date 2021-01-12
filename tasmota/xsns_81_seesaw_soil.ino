@@ -20,10 +20,13 @@
 
 #ifdef USE_I2C
 #ifdef USE_SEESAW_SOIL
+
 /*********************************************************************************************\
  * SEESAW_SOIL - Capacitance & Temperature Sensor
  *
  * I2C Address: 0x36, 0x37, 0x38, 0x39
+ *
+ * Memory footprint: 1296 bytes flash, 64 bytes RAM
  *
  * NOTE:  #define SEESAW_SOIL_PUBLISH enables immediate MQTT on soil moisture change
  *        otherwise the moisture value will only be emitted every TelePeriod
@@ -34,19 +37,26 @@
 #define XSNS_81              81
 #define XI2C_56              56                 // See I2CDEVICES.md
 
-#include "Adafruit_seesaw.h"
+#include "Adafruit_seesaw.h"                    // we only use definitions, no code
 
-#define SEESAW_SOIL_MAX_SENSORS    4
-#define SEESAW_SOIL_START_ADDRESS  0x36
+//#define SEESAW_SOIL_RAW                       // enable raw readings
+//#define SEESAW_SOIL_PUBLISH                   // enable immediate publish
+//#define SEESAW_SOIL_PERSISTENT_NAMING         // enable naming sensors by i2c address
+//#define DEBUG_SEESAW_SOIL                     // enable debugging
+
+#define SEESAW_SOIL_MAX_SENSORS     4
+#define SEESAW_SOIL_START_ADDRESS   0x36
 
 const char SeeSoilName[]  = "SeeSoil";          // spaces not allowed for Homeassistant integration/mqtt topics
 uint8_t    SeeSoilCount   = 0;                  // global sensor count
 
 struct SEESAW_SOIL {
-  Adafruit_seesaw *ss;                          // instance pointer
-  uint16_t capacitance;
-  float    temperature;
-  uint8_t  address;
+  uint8_t   address;                            // i2c address
+  float     moisture;
+  float     temperature;
+#ifdef SEESAW_SOIL_RAW
+  uint16_t  capacitance;                        // raw analog reading
+#endif // SEESAW_SOIL_RAW
 } SeeSoil[SEESAW_SOIL_MAX_SENSORS];
 
 // Used to convert capacitance into a moisture.
@@ -56,48 +66,122 @@ struct SEESAW_SOIL {
 // So let's make a scale that converts those (apparent) facts into a percentage
 #define MAX_CAPACITANCE 1020.0f   // subject to calibration
 #define MIN_CAPACITANCE 320       // subject to calibration
-#define CAP_TO_MOIST(c) ((max((int)(c),MIN_CAPACITANCE)-MIN_CAPACITANCE)/(MAX_CAPACITANCE-MIN_CAPACITANCE))
+#define CAP_TO_MOIST(c) ((max((int)(c),MIN_CAPACITANCE)-MIN_CAPACITANCE)/(MAX_CAPACITANCE-MIN_CAPACITANCE)*100)
 
-/********************************************************************************************/
+/*********************************************************************************************\
+ * i2c routines
+\*********************************************************************************************/
 
 void SEESAW_SOILDetect(void) {
-  Adafruit_seesaw *SSptr=0;
+  uint8_t buf;
+  uint32_t i, addr;
 
-  for (uint32_t i = 0; i < SEESAW_SOIL_MAX_SENSORS; i++) {
-    int addr = SEESAW_SOIL_START_ADDRESS + i;
-    if (!I2cSetDevice(addr)) { continue; }
-
-    if (!SSptr) {                               // don't have an object,
-      SSptr = new Adafruit_seesaw();            // allocate one
-    }
-    if (SSptr->begin(addr)) {
-      SeeSoil[SeeSoilCount].ss = SSptr;         // save copy of pointer
-      SSptr = 0;                                // mark that we took it
-      SeeSoil[SeeSoilCount].address = addr;
-      SeeSoil[SeeSoilCount].temperature = NAN;
-      SeeSoil[SeeSoilCount].capacitance = 0;
-      I2cSetActiveFound(SeeSoil[SeeSoilCount].address, SeeSoilName);
-      SeeSoilCount++;
-    }
+  for (i = 0; i < SEESAW_SOIL_MAX_SENSORS; i++) {
+    addr = SEESAW_SOIL_START_ADDRESS + i;
+    if ( ! I2cSetDevice(addr)) { continue; }
+    delay(1);
+    SEESAW_Reset(addr);                         // reset all seesaw MCUs at once
   }
-  if (SSptr) {
-    delete SSptr; // used object for detection, didn't find anything so we don't need this object
+  delay(500);                                   // give MCUs time to boot
+  for (i = 0; i < SEESAW_SOIL_MAX_SENSORS; i++) {
+    addr = SEESAW_SOIL_START_ADDRESS + i;
+    if ( ! I2cSetDevice(addr)) { continue; }
+    if ( ! SEESAW_ValidRead(addr, SEESAW_STATUS_BASE, SEESAW_STATUS_HW_ID, &buf, 1, 0)) {
+      continue;
+    }
+    if (buf != SEESAW_HW_ID_CODE) {
+#ifdef DEBUG_SEESAW_SOIL
+      AddLog_P(LOG_LEVEL_DEBUG, PSTR("SEE: HWID mismatch ADDR=%X, ID=%X"), addr, buf);
+#endif // DEBUG_SEESAW_SOIL
+      continue;
+    }
+    SeeSoil[SeeSoilCount].address = addr;
+    SeeSoil[SeeSoilCount].temperature = NAN;
+    SeeSoil[SeeSoilCount].moisture = NAN;
+ #ifdef SEESAW_SOIL_RAW
+    SeeSoil[SeeSoilCount].capacitance = 0;      // raw analog reading
+#endif // SEESAW_SOIL_RAW
+    I2cSetActiveFound(SeeSoil[SeeSoilCount].address, SeeSoilName);
+    SeeSoilCount++;
   }
 }
+
+float SEESAW_Temp(uint8_t addr) {               // get temperature from seesaw at addr
+  uint8_t buf[4];
+
+  if (SEESAW_ValidRead(addr, SEESAW_STATUS_BASE, SEESAW_STATUS_TEMP, buf, 4, 1000)) {
+    int32_t ret = ((uint32_t)buf[0] << 24) | ((uint32_t)buf[1] << 16) |
+                  ((uint32_t)buf[2] << 8) | (uint32_t)buf[3];
+    return ConvertTemp((1.0 / (1UL << 16)) * ret);
+  }
+  return NAN;
+}
+
+float SEESAW_Moist(uint8_t addr) {              // get moisture from seesaw at addr
+  uint8_t buf[2];
+  uint16_t ret;
+  int32_t tries = 2;
+
+  while (tries--) {
+    delay(1);
+    if (SEESAW_ValidRead(addr, SEESAW_TOUCH_BASE, SEESAW_TOUCH_CHANNEL_OFFSET, buf, 2, 3000)) {
+      ret = ((uint16_t)buf[0] << 8) | buf[1];
+#ifdef SEESAW_SOIL_RAW
+      for (int i=0; i < SeeSoilCount; i++) {
+        if (SeeSoil[i].address == addr) {
+          SeeSoil[i].capacitance = ret;
+          break;
+        }
+      }
+#endif // SEESAW_SOIL_RAW
+      if (ret != 0xFFFF) { return (float) CAP_TO_MOIST(ret); }
+    }
+  }
+  return NAN;
+}
+
+bool SEESAW_ValidRead(uint8_t addr, uint8_t regHigh, uint8_t regLow,        // read from seesaw sensor
+                 uint8_t *buf, uint8_t num, uint16_t delay) {
+
+  Wire.beginTransmission((uint8_t) addr);
+  Wire.write((uint8_t) regHigh);
+  Wire.write((uint8_t) regLow);
+  int err = Wire.endTransmission();
+  if (err) { return false; }
+  delayMicroseconds(delay);
+  if (num != Wire.requestFrom((uint8_t) addr, (uint8_t) num)) {
+    return false;
+  }
+  for (int i = 0; i < num; i++) {
+    buf[i] = (uint8_t) Wire.read();
+  }
+  return true;
+}
+
+bool SEESAW_Reset(uint8_t addr) {               // init sensor MCU
+  Wire.beginTransmission((uint8_t) addr);
+  Wire.write((uint8_t) SEESAW_STATUS_BASE);
+  Wire.write((uint8_t) SEESAW_STATUS_SWRST);
+  return (Wire.endTransmission() == 0);
+}
+
+/*********************************************************************************************\
+ * JSON routines
+\*********************************************************************************************/
 
 void SEESAW_SOILEverySecond(void) {             // update sensor values and publish if changed
 #ifdef SEESAW_SOIL_PUBLISH
   uint32_t old_moist;
 #endif // SEESAW_SOIL_PUBLISH
 
-  for (uint32_t i = 0; i < SeeSoilCount; i++) {
-    SeeSoil[i].temperature = ConvertTemp(SeeSoil[i].ss->getTemp());
+  for (int i = 0; i < SeeSoilCount; i++) {
+    SeeSoil[i].temperature = SEESAW_Temp(SeeSoil[i].address);
 #ifdef SEESAW_SOIL_PUBLISH
-    old_moist = uint32_t (CAP_TO_MOIST(SeeSoil[i].capacitance)*100);
+    old_moist = (uint32_t) SeeSoil[i].moisture;
 #endif // SEESAW_SOIL_PUBLISH
-    SeeSoil[i].capacitance = SeeSoil[i].ss->touchRead(0);
+    SeeSoil[i].moisture = SEESAW_Moist(SeeSoil[i].address);
 #ifdef SEESAW_SOIL_PUBLISH
-    if (uint32_t (CAP_TO_MOIST(SeeSoil[i].capacitance)*100) != old_moist) {
+    if ((uint32_t) SeeSoil[i].moisture != old_moist) {
       Response_P(PSTR("{"));                    // send values to MQTT & rules
       SEESAW_SOILJson(i);
       ResponseJsonEnd();
@@ -119,20 +203,19 @@ void SEESAW_SOILShow(bool json) {
       SEESAW_SOILJson(i);
       if (0 == TasmotaGlobal.tele_period) {
 #ifdef USE_DOMOTICZ
-        DomoticzTempHumPressureSensor(SeeSoil[i].temperature, CAP_TO_MOIST(SeeSoil[i].capacitance)*100, -42.0f);
+        DomoticzTempHumPressureSensor(SeeSoil[i].temperature, SeeSoil[i].moisture, -42.0f);
 #endif  // USE_DOMOTICZ
 #ifdef USE_KNX
         KnxSensor(KNX_TEMPERATURE, SeeSoil[i].temperature);
-        KnxSensor(KNX_HUMIDITY, CAP_TO_MOIST(SeeSoil[i].capacitance) * 100);
+        KnxSensor(KNX_HUMIDITY, SeeSoil[i].moisture);
 #endif // USE_KNX
       }
 #ifdef USE_WEBSERVER
     } else {
 #ifdef SEESAW_SOIL_RAW
-      WSContentSend_PD(HTTP_SNS_ANALOG, sensor_name, 0, SeeSoil[i].capacitance);  // dump raw value
+      WSContentSend_PD(HTTP_SNS_ANALOG, sensor_name, 0, SeeSoil[i].capacitance);
 #endif // SEESAW_SOIL_RAW
-      WSContentSend_PD(HTTP_SNS_MOISTURE, sensor_name,
-                       uint32_t (CAP_TO_MOIST(SeeSoil[i].capacitance)*100));      // web page formats as integer (%d) percent
+      WSContentSend_PD(HTTP_SNS_MOISTURE, sensor_name, (uint32_t) SeeSoil[i].moisture);
       WSContentSend_PD(HTTP_SNS_TEMP, sensor_name, temperature, TempUnit());
 #endif // USE_WEBSERVER
     }
@@ -146,17 +229,21 @@ void SEESAW_SOILJson(int no) {                        // common json
   SEESAW_SOILName(no, sensor_name, sizeof(sensor_name));
   dtostrfd(SeeSoil[no].temperature, Settings.flag2.temperature_resolution, temperature);
   ResponseAppend_P(PSTR ("\"%s\":{\"" D_JSON_ID "\":\"%02X\",\"" D_JSON_TEMPERATURE "\":%s,\"" D_JSON_MOISTURE "\":%u}"),
-                   sensor_name, SeeSoil[no].address, temperature, uint32_t (CAP_TO_MOIST(SeeSoil[no].capacitance)*100));
+                   sensor_name, SeeSoil[no].address, temperature, (uint32_t) SeeSoil[no].moisture);
 }
 
 void SEESAW_SOILName(int no, char *name, int len)    // generates a sensor name
 {
+#ifdef SEESAW_SOIL_PERSISTENT_NAMING
+  snprintf_P(name, len, PSTR("%s%c%02X"), SeeSoilName, IndexSeparator(), SeeSoil[no].address);
+#else
   if (SeeSoilCount > 1) {
     snprintf_P(name, len, PSTR("%s%c%u"), SeeSoilName, IndexSeparator(), no + 1);
   }
   else {
     strlcpy(name, SeeSoilName, len);
   }
+#endif // SEESAW_SOIL_PERSISTENT_NAMING
 }
 
 /*********************************************************************************************\
