@@ -313,15 +313,15 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule)
       case COMPARE_OPERATOR_SMALLER_EQUAL:
         match = (value <= rule_value);
         break;
-      case COMPARE_OPERATOR_STRING_ENDS_WITH
+      case COMPARE_OPERATOR_STRING_ENDS_WITH:
         String str_value_str = String(str_value);
         match = str_value_str.endsWith(rule_svalue);
         break;
-      case COMPARE_OPERATOR_STRING_STARTS_WITH
+      case COMPARE_OPERATOR_STRING_STARTS_WITH:
         String str_value_str = String(str_value);
         match = str_value_str.startsWith(rule_svalue);
         break;
-      case COMPARE_OPERATOR_STRING_CONTAINS
+      case COMPARE_OPERATOR_STRING_CONTAINS:
         String str_value_str = String(str_value);
         match = (str_value_str.indexOf(rule_svalue) > 0);
         break;        
