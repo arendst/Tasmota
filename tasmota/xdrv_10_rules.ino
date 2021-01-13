@@ -91,8 +91,11 @@
 #define COMPARE_OPERATOR_NOT_EQUAL        5
 #define COMPARE_OPERATOR_BIGGER_EQUAL     6
 #define COMPARE_OPERATOR_SMALLER_EQUAL    7
+#define COMPARE_OPERATOR_STRING_ENDS_WITH      8    //$>
+#define COMPARE_OPERATOR_STRING_STARTS_WITH    9    //$<
+#define COMPARE_OPERATOR_STRING_CONTAINS      10    //$|
 #define MAXIMUM_COMPARE_OPERATOR          COMPARE_OPERATOR_SMALLER_EQUAL
-const char kCompareOperators[] PROGMEM = "=\0>\0<\0|\0==!=>=<=";
+const char kCompareOperators[] PROGMEM = "=\0>\0<\0|\0==!=>=<=$>$<$|";
 
 #ifdef USE_EXPRESSION
   #include <LinkedList.h>                 // Import LinkedList library
@@ -310,6 +313,15 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule)
       case COMPARE_OPERATOR_SMALLER_EQUAL:
         match = (value <= rule_value);
         break;
+      case COMPARE_OPERATOR_STRING_ENDS_WITH
+        match = str_value.endsWith(rule_svalue)
+        break;
+      case COMPARE_OPERATOR_STRING_STARTS_WITH
+        match = str_value.startsWith(rule_svalue)
+        break;
+      case COMPARE_OPERATOR_STRING_CONTAINS
+        match = (str_value.indexOf(rule_svalue) > 0)
+        break;        
       default:
         match = true;
     }
