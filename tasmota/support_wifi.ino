@@ -163,9 +163,12 @@ void WiFiSetSleepMode(void)
   if (TasmotaGlobal.sleep && Settings.flag3.sleep_normal) {  // SetOption60 - Enable normal sleep instead of dynamic sleep
     WiFi.setSleepMode(WIFI_LIGHT_SLEEP);        // Allow light sleep during idle times
   } else {
+#ifdef ESP8266
     if (0 == TasmotaGlobal.sleep) {
       WiFi.setSleepMode(WIFI_NONE_SLEEP);       // Disable sleep
-    } else {
+    } else
+#endif
+    {
       WiFi.setSleepMode(WIFI_MODEM_SLEEP);      // Sleep (Esp8288/Arduino core and sdk default)
     }
   }
