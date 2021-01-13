@@ -288,6 +288,7 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule)
     value = CharToFloat((char*)str_value);
     int int_value = int(value);
     int int_rule_value = int(rule_value);
+    String str_value_str = String(str_value);
     switch (compareOperator) {
       case COMPARE_OPERATOR_EXACT_DIVISION:
         match = (int_rule_value && (int_value % int_rule_value) == 0);
@@ -314,15 +315,12 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule)
         match = (value <= rule_value);
         break;
       case COMPARE_OPERATOR_STRING_ENDS_WITH:
-        String str_value_str = String(str_value);
         match = str_value_str.endsWith(rule_svalue);
         break;
       case COMPARE_OPERATOR_STRING_STARTS_WITH:
-        String str_value_str = String(str_value);
         match = str_value_str.startsWith(rule_svalue);
         break;
       case COMPARE_OPERATOR_STRING_CONTAINS:
-        String str_value_str = String(str_value);
         match = (str_value_str.indexOf(rule_svalue) > 0);
         break;        
       default:
