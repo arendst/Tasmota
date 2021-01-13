@@ -274,32 +274,6 @@ uint8_t UfsReject(char *name) {
   return 0;
 }
 
-// Format number with thousand marker - Not international as '.' is decimal on most countries
-void UfsForm1000(uint32_t number, char *dp, char sc) {
-  char str[32];
-  sprintf(str, "%d", number);
-  char *sp = str;
-  uint32_t inum = strlen(sp)/3;
-  uint32_t fnum = strlen(sp)%3;
-  if (!fnum) { inum--; }
-  for (uint32_t count = 0; count <= inum; count++) {
-    if (fnum) {
-      memcpy(dp, sp, fnum);
-      dp += fnum;
-      sp += fnum;
-      fnum = 0;
-    } else {
-      memcpy(dp, sp, 3);
-      dp += 3;
-      sp += 3;
-    }
-    if (count != inum) {
-      *dp++ = sc;
-    }
-  }
-  *dp = 0;
-}
-
 /*********************************************************************************************\
  * Tfs low level functions
 \*********************************************************************************************/
@@ -418,7 +392,7 @@ const char UFS_FORM_FILE_UPLOAD[] PROGMEM =
   "<div id='f1' name='f1' style='display:block;'>"
   "<fieldset><legend><b>&nbsp;" D_MANAGE_FILE_SYSTEM "&nbsp;</b></legend>";
 const char UFS_FORM_FILE_UPGc[] PROGMEM =
-  "<div style='text-align:left;color:#%06x;'>" D_FS_SIZE " %s kB - " D_FS_FREE " %s kB";
+  "<div style='text-align:left;color:#%06x;'>" D_FS_SIZE " %s MB - " D_FS_FREE " %s MB";
 
 const char UFS_FORM_FILE_UPGc1[] PROGMEM =
     " &nbsp;&nbsp;<a href='http://%s/ufsd?dir=%d'>%s</a>";
@@ -451,7 +425,6 @@ const char UFS_FORM_SDC_HREFdel[] PROGMEM =
   "<a href=http://%s/ufsd?delete=%s/%s>&#128293;</a>"; // 🔥
 #endif // GUI_TRASH_FILE
 
-
 void UfsDirectory(void) {
   if (!HttpCheckPriviledgedAccess()) { return; }
 
@@ -460,8 +433,6 @@ void UfsDirectory(void) {
   uint8_t depth = 0;
 
   strcpy(ufs_path, "/");
-
-
 
   if (Webserver->hasArg("download")) {
     String stmp = Webserver->arg("download");
@@ -494,15 +465,14 @@ void UfsDirectory(void) {
   WSContentSendStyle();
   WSContentSend_P(UFS_FORM_FILE_UPLOAD);
 
-  char ts[16];
-  char fs[16];
-  UfsForm1000(UfsInfo(0, ufs_dir == 2 ? 1:0), ts, '.');
-  UfsForm1000(UfsInfo(1, ufs_dir == 2 ? 1:0), fs, '.');
-
-  WSContentSend_P(UFS_FORM_FILE_UPGc, WebColor(COL_TEXT), ts, fs);
+  char ts[FLOATSZ];
+  dtostrfd((float)UfsInfo(0, ufs_dir == 2 ? 1:0) / 1000, 3, ts);
+  char fs[FLOATSZ];
+  dtostrfd((float)UfsInfo(1, ufs_dir == 2 ? 1:0) / 1000, 3, fs);
+  WSContentSend_PD(UFS_FORM_FILE_UPGc, WebColor(COL_TEXT), ts, fs);
 
   if (ufs_dir) {
-    WSContentSend_P(UFS_FORM_FILE_UPGc1, WiFi.localIP().toString().c_str(),ufs_dir == 1 ? 2:1, ufs_dir == 1 ? PSTR("SDCard"):PSTR("FlashFS"));
+    WSContentSend_P(UFS_FORM_FILE_UPGc1, WiFi.localIP().toString().c_str(), (ufs_dir == 1)?2:1, (ufs_dir == 1)?PSTR("SDCard"):PSTR("FlashFS"));
   }
   WSContentSend_P(UFS_FORM_FILE_UPGc2);
 
