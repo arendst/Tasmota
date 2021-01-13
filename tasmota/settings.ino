@@ -540,7 +540,7 @@ void SettingsSave(uint8_t rotate)
 #ifdef ESP8266
 #ifdef USE_UFILESYS
     TfsSaveFile(TASM_FILE_SETTINGS, (const uint8_t*)&Settings, sizeof(Settings));
-#endif
+#endif  // USE_UFILESYS
     if (ESP.flashEraseSector(settings_location)) {
       ESP.flashWrite(settings_location * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(Settings));
     }
@@ -578,7 +578,7 @@ void SettingsLoad(void) {
     flash_location = 1;
     slot = 0;
   }
-#endif
+#endif  // USE_UFILESYS
   while (slot <= max_slots) {                                  // Read all config pages in search of valid and latest
     if (slot > 0) {
       flash_location = (1 == slot) ? FLASH_EEPROM_START : (2 == slot) ? SETTINGS_LOCATION : flash_location -1;
@@ -602,7 +602,7 @@ void SettingsLoad(void) {
       TfsLoadFile(TASM_FILE_SETTINGS, (uint8_t*)&Settings, sizeof(Settings));
       AddLog_P(LOG_LEVEL_NONE, PSTR(D_LOG_CONFIG "Loaded from File, " D_COUNT " %lu"), Settings.save_flag);
     } else
-#endif
+#endif  // USE_UFILESYS
     {
       ESP.flashRead(settings_location * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(Settings));
       AddLog_P(LOG_LEVEL_NONE, PSTR(D_LOG_CONFIG D_LOADED_FROM_FLASH_AT " %X, " D_COUNT " %lu"), settings_location, Settings.save_flag);
@@ -617,7 +617,15 @@ void SettingsLoad(void) {
 
 #ifndef FIRMWARE_MINIMAL
   if ((0 == settings_location) || (Settings.cfg_holder != (uint16_t)CFG_HOLDER)) {  // Init defaults if cfg_holder differs from user settings in my_user_config.h
-    SettingsDefault();
+#ifdef USE_UFILESYS
+    if (TfsLoadFile(TASM_FILE_SETTINGS_LKG, (uint8_t*)&Settings, sizeof(Settings)) && (Settings.cfg_crc32 == GetSettingsCrc32())) {
+      settings_location = 1;
+      AddLog_P(LOG_LEVEL_NONE, PSTR(D_LOG_CONFIG "Loaded from LKG File, " D_COUNT " %lu"), Settings.save_flag);
+    } else
+#endif  // USE_UFILESYS
+    {
+      SettingsDefault();
+    }
   }
   settings_crc32 = GetSettingsCrc32();
 #endif  // FIRMWARE_MINIMAL
