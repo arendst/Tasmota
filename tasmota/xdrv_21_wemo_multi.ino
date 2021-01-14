@@ -422,8 +422,6 @@ void WemoRespondToMSearch(int echo_type) {
   for (uint32_t i = 0; i < numOfWemoSwitch; i++) {
     wemoDevice[i]->WemoRespondToMSearch(echo_type);
   }
-
-  udp_response_mutex = false;
 }
 
 /*********************************************************************************************\
