@@ -967,8 +967,9 @@ void CmndSetoption(void)
             bitWrite(Settings.flag5.data, pindex, XdrvMailbox.payload);
             switch (pindex) {
               case 1:                      // SetOption115 - Enable ESP32 MI32
-                Settings.flag3.sleep_normal = 1;  // SetOption60 - Enable normal sleep instead of dynamic sleep
-                TasmotaGlobal.restart_flag = 2;
+                if (0 == XdrvMailbox.payload) {
+                  TasmotaGlobal.restart_flag = 2;
+                }
                 break;
             }
           }

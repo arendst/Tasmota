@@ -96,6 +96,7 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - Replaced RA8876 GPIO selection from ``SPI CS`` by ``RA8876 CS``
 
 ### Changed
+- Command ``Sleep 0`` removes any sleep from wifi modem except when ESP32 BLE is active
 - Logging from heap to stack freeing 700 bytes RAM
 - Disabled ``USE_LIGHT`` light support for ZBBridge saving 17.6kB [#10374](https://github.com/arendst/Tasmota/issues/10374)
 - Force initial default state ``SetOption57 1`` to scan wifi network every 44 minutes for strongest signal [#10395](https://github.com/arendst/Tasmota/issues/10395)

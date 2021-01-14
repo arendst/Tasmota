@@ -18,6 +18,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 - Force initial default state ``SetOption57 1`` to scan wifi network every 44 minutes for strongest signal (#10395)
+- Command ``Sleep 0`` removes any sleep from wifi modem except when ESP32 BLE is active
 
 ## [9.2.0.2] 20210105
 ### Added
