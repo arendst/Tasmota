@@ -580,6 +580,11 @@
 #define D_StL1L2L3 "Courant Ph1+Ph2+Ph3"
 #define D_SpL1L2L3 "Tension (Ph1+Ph2+Ph3)/3"
 
+// xsns_82_wiegand.ino
+#define D_DOMOTICZ_GENERAL "General"
+#define D_SENSOR_WIEGAND_D0 "Wiegand D0 (green) 5V"
+#define D_SENSOR_WIEGAND_D1 "Wiegand D1 (white) 5V"
+
 // tasmota_template.h - keep them as short as possible to be able to fit them in GUI drop down box
 #define D_SENSOR_NONE          "Aucun"
 #define D_SENSOR_USER          "Utilisateur"

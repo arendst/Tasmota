@@ -2,7 +2,7 @@
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
-
+ - Added support for 24/26/32/34 bit RFID Wiegand interface (D0/D1). Used be RFID reader EM4000 / EM4002. (``#define USE_WIEGAND``) (#3647) 
 ## [9.2.0.3]
 ### Added
 - Support for time proportioned (``#define USE_TIMEPROP``) and optional PID (``#define USE_PID``) relay control (#10412)
