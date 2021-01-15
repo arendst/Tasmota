@@ -28,6 +28,7 @@
 #include "my_user_config.h"
 #include "tasmota_configurations.h"
 
+#if defined(ESP8266) && defined(USE_TLS)
 #include <stdint.h>
 #include <stdlib.h>
 #include "StackThunk_light.h"
@@ -145,3 +146,5 @@ void stack_thunk_light_fatal_overflow()
 }
 
 };
+
+#endif

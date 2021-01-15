@@ -22,7 +22,7 @@
 
 #include "my_user_config.h"
 #include "tasmota_configurations.h"
-#if defined(ESP8266) && defined(USE_TLS)
+#if defined(USE_TLS)
 
 // #define DEBUG_TLS
 // #define DEBUG_ESP_SSL
@@ -47,7 +47,9 @@ extern "C" {
 #include "lwip/tcp.h"
 #include "lwip/inet.h"
 #include "lwip/netif.h"
-#include <include/ClientContext.h>
+#ifdef ESP8266
+  #include <include/ClientContext.h>
+#endif
 #include "c_types.h"
 
 #include <core_version.h>
@@ -57,11 +59,15 @@ extern "C" {
 #include "coredecls.h"
 #define LOG_HEAP_SIZE(a) _Log_heap_size(a)
 void _Log_heap_size(const char *msg) {
+#ifdef ESP8266
   register uint32_t *sp asm("a1");
   int freestack = 4 * (sp - g_pcont->stack);
   Serial.printf("%s %d, Fragmentation=%d, Thunkstack=%d, Free stack=%d, FreeContStack=%d\n",
                 msg, ESP.getFreeHeap(), ESP.getHeapFragmentation(), stack_thunk_light_get_max_usage(),
                 freestack, ESP.getFreeContStack());
+#elif defined(ESP32)
+  Serial.printf("> Heap %s = %d\n", msg, uxTaskGetStackHighWaterMark(nullptr));
+#endif
 }
 #else
 #define LOG_HEAP_SIZE(a)
@@ -71,6 +77,7 @@ void _Log_heap_size(const char *msg) {
 extern uint32_t UtcTime(void);
 extern uint32_t CfgTime(void);
 
+#ifdef ESP8266    // Stack thunk is not needed with ESP32
 // Stack thunked versions of calls
 // Initially in BearSSLHelpers.h
 extern "C" {
@@ -164,6 +171,8 @@ unsigned char *min_br_ssl_engine_sendrec_buf(const br_ssl_engine_context *cc, si
 #define br_ssl_engine_sendrec_ack min_br_ssl_engine_sendrec_ack
 #define br_ssl_engine_sendrec_buf min_br_ssl_engine_sendrec_buf
 
+#endif // ESP8266
+
 //#define DEBUG_ESP_SSL
 #ifdef DEBUG_ESP_SSL
 //#define DEBUG_BSSL(fmt, ...)  DEBUG_ESP_PORT.printf_P((PGM_P)PSTR( "BSSL:" fmt), ## __VA_ARGS__)
@@ -201,19 +210,23 @@ void WiFiClientSecure_light::_clear() {
 // Constructor
 WiFiClientSecure_light::WiFiClientSecure_light(int recv, int xmit) : WiFiClient() {
   _clear();
-LOG_HEAP_SIZE("StackThunk before");
+  // LOG_HEAP_SIZE("StackThunk before");
   //stack_thunk_light_add_ref();
-LOG_HEAP_SIZE("StackThunk after");
+  // LOG_HEAP_SIZE("StackThunk after");
   // now finish the setup
   setBufferSizes(recv, xmit); // reasonable minimum
   allocateBuffers();
 }
 
 WiFiClientSecure_light::~WiFiClientSecure_light() {
+#ifdef ESP8266
   if (_client) {
     _client->unref();
     _client = nullptr;
   }
+#elif defined(ESP32)
+  stop();
+#endif
   //_cipher_list = nullptr; // std::shared will free if last reference
   _freeSSL();
 }
@@ -258,6 +271,7 @@ void WiFiClientSecure_light::setBufferSizes(int recv, int xmit) {
   _iobuf_out_size = xmit;
 }
 
+#ifdef ESP8266
 bool WiFiClientSecure_light::stop(unsigned int maxWaitMs) {
   bool ret = WiFiClient::stop(maxWaitMs); // calls our virtual flush()
   _freeSSL();
@@ -268,6 +282,17 @@ bool WiFiClientSecure_light::flush(unsigned int maxWaitMs) {
   (void) _run_until(BR_SSL_SENDAPP);
   return WiFiClient::flush(maxWaitMs);
 }
+#elif defined(ESP32)
+void WiFiClientSecure_light::stop(void) {
+  WiFiClient::stop(); // calls our virtual flush()
+  _freeSSL();
+}
+
+void WiFiClientSecure_light::flush(void) {
+  (void) _run_until(BR_SSL_SENDAPP);
+  WiFiClient::flush();
+}
+#endif
 
 int WiFiClientSecure_light::connect(IPAddress ip, uint16_t port) {
   DEBUG_BSSL("connect(%s,%d)", ip.toString().c_str(), port);
@@ -307,7 +332,11 @@ void WiFiClientSecure_light::_freeSSL() {
 }
 
 bool WiFiClientSecure_light::_clientConnected() {
+#ifdef ESP8266
   return (_client && _client->state() == ESTABLISHED);
+#elif defined(ESP32)
+  return WiFiClient::connected();
+#endif
 }
 
 uint8_t WiFiClientSecure_light::connected() {
@@ -489,7 +518,7 @@ size_t WiFiClientSecure_light::peekBytes(uint8_t *buffer, size_t length) {
    achieved, this function returns 0. On error, it returns -1.
 */
 int WiFiClientSecure_light::_run_until(unsigned target, bool blocking) {
-//LOG_HEAP_SIZE("_run_until 1");
+  //LOG_HEAP_SIZE("_run_until 1");
   if (!ctx_present()) {
     DEBUG_BSSL("_run_until: Not connected\n");
     return -1;
@@ -506,9 +535,15 @@ int WiFiClientSecure_light::_run_until(unsigned target, bool blocking) {
       return -1;
     }
 
+#ifdef ESP8266
     if (!(_client->state() == ESTABLISHED) && !WiFiClient::available()) {
       return (state & target) ? 0 : -1;
     }
+#elif defined(ESP32)
+    if (!_clientConnected() && !WiFiClient::available()) {
+      return (state & target) ? 0 : -1;
+    }
+#endif
 
     /*
        If there is some record data to send, do it. This takes
@@ -898,12 +933,16 @@ bool WiFiClientSecure_light::_connectSSL(const char* hostName) {
   do {    // used to exit on Out of Memory error and keep all cleanup code at the same place
     // ============================================================
     // allocate Thunk stack, move to alternate stack and initialize
+#ifdef ESP8266
     stack_thunk_light_add_ref();
+#endif // ESP8266
     LOG_HEAP_SIZE("Thunk allocated");
     DEBUG_BSSL("_connectSSL: start connection\n");
     _freeSSL();
     clearLastError();
-    if (!stack_thunk_light_get_stack_bot()) break;
+#ifdef ESP8266
+    if (!stack_thunk_light_get_stack_bot()) break;  
+#endif // ESP8266
 
     _ctx_present = true;
     _eng = &_sc->eng; // Allocation/deallocation taken care of by the _sc shared_ptr
@@ -964,10 +1003,12 @@ bool WiFiClientSecure_light::_connectSSL(const char* hostName) {
     }
   #endif
     LOG_HEAP_SIZE("_connectSSL.end");
+#ifdef ESP8266
     _max_thunkstack_use = stack_thunk_light_get_max_usage();
     stack_thunk_light_del_ref();
     //stack_thunk_light_repaint();
     LOG_HEAP_SIZE("_connectSSL.end, freeing StackThunk");
+#endif // ESP8266
 
   #ifdef USE_MQTT_TLS_CA_CERT
     free(x509_minimal);
@@ -982,7 +1023,9 @@ bool WiFiClientSecure_light::_connectSSL(const char* hostName) {
   // if we arrived here, this means we had an OOM error, cleaning up
   setLastError(ERR_OOM);
   DEBUG_BSSL("_connectSSL: Out of memory\n");
+#ifdef ESP8266
   stack_thunk_light_del_ref();
+#endif
 #ifdef USE_MQTT_TLS_CA_CERT
   free(x509_minimal);
 #else

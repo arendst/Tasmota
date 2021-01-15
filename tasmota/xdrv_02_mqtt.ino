@@ -679,8 +679,13 @@ void MqttReconnect(void) {
   if (MqttClient.connect(TasmotaGlobal.mqtt_client, mqtt_user, mqtt_pwd, stopic, 1, lwt_retain, TasmotaGlobal.mqtt_data, MQTT_CLEAN_SESSION)) {
 #ifdef USE_MQTT_TLS
     if (Mqtt.mqtt_tls) {
+#ifdef ESP8266
       AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT "TLS connected in %d ms, max ThunkStack used %d"),
         millis() - mqtt_connect_time, tlsClient->getMaxThunkStackUse());
+#elif defined(ESP32)
+      AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT "TLS connected in %d ms, stack low mark %d"),
+        millis() - mqtt_connect_time, uxTaskGetStackHighWaterMark(nullptr));
+#endif
       if (!tlsClient->getMFLNStatus()) {
         AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT "MFLN not supported by TLS server"));
       }
