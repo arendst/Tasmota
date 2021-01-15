@@ -581,7 +581,6 @@
 #define D_SpL1L2L3 "Tension (Ph1+Ph2+Ph3)/3"
 
 // xsns_82_wiegand.ino
-#define D_DOMOTICZ_GENERAL "General"
 #define D_SENSOR_WIEGAND_D0 "Wiegand D0 (green) 5V"
 #define D_SENSOR_WIEGAND_D1 "Wiegand D1 (white) 5V"
 

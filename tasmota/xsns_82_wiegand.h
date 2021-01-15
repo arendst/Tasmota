@@ -11,8 +11,6 @@
     Wiegand(void);
     void Init(void);
     void ScanForTag(void);
-   /*  uint16_t GetTagSize(void);
-    void SetTagSize(uint8_t); */
     #ifdef USE_WEBSERVER
     void Show(void); 
     #endif

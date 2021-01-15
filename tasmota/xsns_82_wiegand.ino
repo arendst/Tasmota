@@ -5,9 +5,7 @@
   %prefix%/%topic%/SENSOR = {"Time":"2021-01-13T12:30:38","Wiegand":{"UID":"rfid tag"}}
   
   Domoticz:
-  because there is no sensor_idx defined for the GENERAL idx (DZ_GENERAL) of Domoticz, and I'm not sure whether my change will be accepted.
-  If you don't see Sensor IDX xx General, I will reuse the Sensor IDX 1 (DZ_TEMP) for configuration in that case.  
-  The nvalue will be always 0 and the svalue will contain the tag UID as string.
+    Use a rule and DZSEND to send the UID to Domoticz.
 
 
   Copyright (C) 2021  Sigurd Leuther and Theo Arends
@@ -138,7 +136,7 @@ void Wiegand::Init() {
   isInit = false;  
   if (PinUsed(GPIO_WIEGAND_D0) && PinUsed(GPIO_WIEGAND_D1)) { //only start, if the Wiegang pins are 
         #if (DEV_WIEGAND_TEST_MODE)>0
-        AddLog_P(LOG_LEVEL_INFO, PSTR("Wiegand::Init() 1."));
+        AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: Init()"));
         #endif
     pinMode(Pin(GPIO_WIEGAND_D0), INPUT_PULLUP);
     pinMode(Pin(GPIO_WIEGAND_D1), INPUT_PULLUP);
@@ -146,16 +144,16 @@ void Wiegand::Init() {
     attachInterrupt(Pin(GPIO_WIEGAND_D1),  handleD1Interrupt, FALLING);
     isInit = true;  // helps to run only if correctly setup
         #if (DEV_WIEGAND_TEST_MODE)>0 
-        AddLog_P(LOG_LEVEL_INFO, PSTR("Wiegand compiled with DEV_WIEGAND_TEST_MODE initialized"));  // for tests without reader attaiched
-        AddLog_P(LOG_LEVEL_INFO, PSTR("Pin D0:%u"),Pin(GPIO_WIEGAND_D0));
-        AddLog_P(LOG_LEVEL_INFO, PSTR("Pin D1:%u"),Pin(GPIO_WIEGAND_D1));
+        AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: Testmode"));  // for tests without reader attaiched
+        AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: D0:%u"),Pin(GPIO_WIEGAND_D0));
+        AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: D1:%u"),Pin(GPIO_WIEGAND_D1));
         #else
-    AddLog_P(LOG_LEVEL_INFO, PSTR("Wiegand initialized D0=%u, D1=%u"),Pin(GPIO_WIEGAND_D0), Pin(GPIO_WIEGAND_D1)); 
+    AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: D0=%u, D1=%u"),Pin(GPIO_WIEGAND_D0), Pin(GPIO_WIEGAND_D1)); 
         #endif
   }
   #if (DEV_WIEGAND_TEST_MODE)>0 
   else {
-    AddLog_P(LOG_LEVEL_INFO, PSTR("Wiegan::Init() GPIOs not set yet."));
+    AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: no GPIOs."));
   }
   #endif
 }
@@ -191,13 +189,13 @@ uint64_t Wiegand::CheckAndConvertRfid(uint64_t rfidIn, uint16_t bitcount) {
   calcParity = CalculateParities(rfidIn, bitCount);   //ckeck result on http://www.ccdesignworks.com/wiegand_calc.htm with raw tag as input
   if (calcParity != (evenParityBit | oddParityBit)) { // Paritybit is wrong
     rfidIn=0;
-    AddLog_P(LOG_LEVEL_INFO, PSTR("RFID %llu invalid, wrong parity"), rfidIn);
+    AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: %llu parity error"), rfidIn);
   }
         #if (DEV_WIEGAND_TEST_MODE)>0 
-          AddLog_P(LOG_LEVEL_INFO, PSTR("RFID even (left) parity: %u "), (evenParityBit>>7));
-          AddLog_P(LOG_LEVEL_INFO, PSTR("RFID odd (calc) parity: %u "), (calcParity & 0x80)>>7);
-          AddLog_P(LOG_LEVEL_INFO, PSTR("RFID odd (right) parity: %u "), oddParityBit);
-          AddLog_P(LOG_LEVEL_INFO, PSTR("RFID odd (calc) parity: %u "), (calcParity & 0x01));
+          AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: even (left) parity: %u "), (evenParityBit>>7));
+          AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: even (calc) parity: %u "), (calcParity & 0x80)>>7);
+          AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: odd (right) parity: %u "), oddParityBit);
+          AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: odd (calc) parity: %u "), (calcParity & 0x01));
         #endif
   return rfidIn;
 }
@@ -248,8 +246,8 @@ bool Wiegand::WiegandConversion ()
 	if ((nowTick - lastFoundTime) > WIEGAND_BIT_TIMEOUT)		//last bit found is WIEGAND_BIT_TIMEOUT ms ago
 	{
           #if (DEV_WIEGAND_TEST_MODE)>0 
-          AddLog_P(LOG_LEVEL_INFO, PSTR("RFID   raw tag: %llu "), rfidBuffer);
-          AddLog_P(LOG_LEVEL_INFO, PSTR("RFID bit count: %u "), bitCount);
+          AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: raw tag: %llu "), rfidBuffer);
+          AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: bit count: %u "), bitCount);
           #endif
       if ((bitCount==4)||(bitCount==8)||(bitCount==24)||(bitCount==26)||(bitCount==32)||(bitCount==34)) {
         if ((bitCount==24)||(bitCount==26)||(bitCount==32)||(bitCount==34)) {
@@ -300,8 +298,8 @@ bool Wiegand::WiegandConversion ()
 	    bRet=false; // watching time not finished
     }
         #if (DEV_WIEGAND_TEST_MODE)>0 
-        AddLog_P(LOG_LEVEL_INFO, PSTR("RFID tag   out: %llu "), rfid);
-        AddLog_P(LOG_LEVEL_INFO, PSTR("RFID tag  size: %u"), tagSize);
+        AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: tag   out: %llu "), rfid);
+        AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: tag  size: %u"), tagSize);
         #endif
     return bRet;
 }
@@ -309,8 +307,8 @@ bool Wiegand::WiegandConversion ()
 void Wiegand::ScanForTag() {
  
   if (!isInit)  { return;} 
-        #if (DEV_WIEGAND_TEST_MODE)>0
-          AddLog_P(LOG_LEVEL_INFO, PSTR("Wiegand::ScanForTag()."));  
+          #if (DEV_WIEGAND_TEST_MODE)>0
+          AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: ScanForTag()."));  
           #if (DEV_WIEGAND_TEST_MODE==1) 
           switch (millis() %4 ) {
             case 0:
@@ -329,46 +327,33 @@ void Wiegand::ScanForTag() {
               rfidBuffer = GetRandomRfid(34); 
             break;
           } 
-          AddLog_P(LOG_LEVEL_INFO, PSTR("RFID raw generated: %lX"), rfidBuffer);  // for tests without reader attaiched
+          AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: raw generated: %lX"), rfidBuffer);  // for tests without reader attaiched
           #endif
         #endif
   if (bitCount > 0)   { 
     uint64_t oldTag = rfid;
     bool newKey =  WiegandConversion();
           #if (DEV_WIEGAND_TEST_MODE)>0 
-                    AddLog_P(LOG_LEVEL_INFO, PSTR("RFID previous tag: %llu "), oldTag);
+                    AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: previous tag: %llu"), oldTag);
           #endif
     if(newKey && (oldTag != rfid)) { 
-      AddLog_P(LOG_LEVEL_INFO, PSTR("RFID new tag received: %llu "), rfid); 
+      AddLog_P(LOG_LEVEL_INFO, PSTR("WIE:  new= %llu"), rfid); 
       }
     else
-    { AddLog_P(LOG_LEVEL_INFO, PSTR("RFID same tag received: %llu "), rfid);}
-    AddLog_P(LOG_LEVEL_INFO, PSTR("RFID %u bits"), tagSize);
-    // if same tag is recognized it may be not send by MQTT or Domoticz will not handle it
-    // perhaps we need to send a 0 UID after each recognized tag?
+    { AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: prev= %llu"), rfid);}
+    AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: bits= %u"), tagSize);
     ResponseTime_P(PSTR(",\"Wiegand\":{\"UID\":\"%0llu\"}}"), rfid);
-    MqttPublishTeleSensor();
-    #ifdef USE_DOMOTICZ 
-      uint8_t sensIdx = DZ_TEMP;
-      #ifdef D_DOMOTICZ_GENERAL
-        {sensIdx = DZ_GENERAL; }
-      #endif
-      
-      char data[64];
-      snprintf_P(data, sizeof(data), PSTR("%llu"), rfid);
-      DomoticzSensor(sensIdx, data);
-    #endif
-    
+    MqttPublishTeleSensor();    
   }
 }
 
 #ifdef USE_WEBSERVER
 void Wiegand::Show(void) {
   if (!isInit) { return; }
-  WSContentSend_PD(PSTR("{s}Wiegand RFID-Tag{m}%llu {e}"), rfid);
-  #if (nDEV_WIEGAND_TEST_MODE)>0 
-    AddLog_P(LOG_LEVEL_INFO,PSTR("Wiegand RFID Tag: %llu"), rfid);
-    AddLog_P(LOG_LEVEL_INFO, PSTR("RFID %u bits"), bitCount);
+  WSContentSend_PD(PSTR("{s}Wiegand UID{m}%llu {e}"), rfid);
+  #if (DEV_WIEGAND_TEST_MODE)>0 
+    AddLog_P(LOG_LEVEL_INFO,PSTR("WIE: Tag: %llu"), rfid);
+    AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: %u bits"), bitCount);
   #endif
 }
 #endif  // USE_WEBSERVER

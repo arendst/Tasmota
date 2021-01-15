@@ -314,7 +314,6 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_ADC_PH "|"
   D_SENSOR_BS814_CLK "|" D_SENSOR_BS814_DAT "|"
   D_SENSOR_WIEGAND_D0 "|" D_SENSOR_WIEGAND_D1 "|"
-  D_SENSOR_OPTION "_a|"
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
