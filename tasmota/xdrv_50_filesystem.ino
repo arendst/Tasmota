@@ -72,25 +72,28 @@ ufsfree   free size in kB
 #include "FS.h"
 #endif  // ESP32
 
-// global file system pointer
+// Global file system pointer
 FS *ufsp;
-// flash file system pointer on esp32
+// Flash file system pointer
 FS *ffsp;
-// local pointer for file managment
+// Local pointer for file managment
 FS *dfsp;
 
 char ufs_path[48];
 File ufs_upload_file;
 uint8_t ufs_dir;
-// 0 = none, 1 = SD, 2 = ffat, 3 = littlefs
+// 0 = None, 1 = SD, 2 = ffat, 3 = littlefs
 uint8_t ufs_type;
 uint8_t ffs_type;
 bool download_busy;
 
 
+
+
+
 /*********************************************************************************************/
 
-// init flash file system
+// Init flash file system
 void UfsInitOnce(void) {
   ufs_type = 0;
   ffsp = 0;
@@ -130,21 +133,13 @@ void UfsInitOnce(void) {
 void UfsInit(void) {
   UfsInitOnce();
   if (ufs_type) {
-    AddLog_P(LOG_LEVEL_INFO, PSTR("UFS: Type %d mounted with %d kB free"), ufs_type, UfsInfo(1, 0));
+    AddLog_P(LOG_LEVEL_INFO, PSTR("UFS: FlashFS mounted with %d kB free"), UfsInfo(1, 0));
   }
 }
 
-
 #ifdef USE_SDCARD
 void UfsCheckSDCardInit(void) {
-
-#ifdef ESP8266
-  if (PinUsed(GPIO_SPI_CLK) && PinUsed(GPIO_SPI_MOSI) && PinUsed(GPIO_SPI_MISO)) {
-#endif // ESP8266
-
-#ifdef ESP32
   if (TasmotaGlobal.spi_enabled) {
-#endif // ESP32
     int8_t cs = SDCARD_CS_PIN;
     if (PinUsed(GPIO_SDCARD_CS)) {
       cs = Pin(GPIO_SDCARD_CS);
@@ -172,10 +167,10 @@ void UfsCheckSDCardInit(void) {
       // make sd card the global filesystem
 #ifdef ESP8266
       // on esp8266 sdcard info takes several seconds !!!, so we ommit it here
-      AddLog_P(LOG_LEVEL_INFO, PSTR("UFS: SDCARD mounted"));
+      AddLog_P(LOG_LEVEL_INFO, PSTR("UFS: SDCard mounted"));
 #endif // ESP8266
 #ifdef ESP32
-      AddLog_P(LOG_LEVEL_INFO, PSTR("UFS: SDCARD mounted with %d kB free"), UfsInfo(1, 0));
+      AddLog_P(LOG_LEVEL_INFO, PSTR("UFS: SDCard mounted with %d kB free"), UfsInfo(1, 0));
 #endif // ESP32
     }
   }
@@ -279,7 +274,7 @@ uint8_t UfsReject(char *name) {
 \*********************************************************************************************/
 
 bool TfsFileExists(const char *fname){
-  if (!ufs_type) { return false; }
+  if (!ffs_type) { return false; }
 
   bool yes = ffsp->exists(fname);
   if (!yes) {
@@ -289,7 +284,7 @@ bool TfsFileExists(const char *fname){
 }
 
 bool TfsSaveFile(const char *fname, const uint8_t *buf, uint32_t len) {
-  if (!ufs_type) { return false; }
+  if (!ffs_type) { return false; }
 
   File file = ffsp->open(fname, "w");
   if (!file) {
@@ -303,7 +298,7 @@ bool TfsSaveFile(const char *fname, const uint8_t *buf, uint32_t len) {
 }
 
 bool TfsInitFile(const char *fname, uint32_t len, uint8_t init_value) {
-  if (!ufs_type) { return false; }
+  if (!ffs_type) { return false; }
 
   File file = ffsp->open(fname, "w");
   if (!file) {
@@ -319,7 +314,7 @@ bool TfsInitFile(const char *fname, uint32_t len, uint8_t init_value) {
 }
 
 bool TfsLoadFile(const char *fname, uint8_t *buf, uint32_t len) {
-  if (!ufs_type) { return false; }
+  if (!ffs_type) { return false; }
   if (!TfsFileExists(fname)) { return false; }
 
   File file = ffsp->open(fname, "r");
@@ -334,7 +329,7 @@ bool TfsLoadFile(const char *fname, uint8_t *buf, uint32_t len) {
 }
 
 bool TfsDeleteFile(const char *fname) {
-  if (!ufs_type) { return false; }
+  if (!ffs_type) { return false; }
 
   if (!ffsp->remove(fname)) {
     AddLog_P(LOG_LEVEL_INFO, PSTR("TFS: Delete failed"));
@@ -354,24 +349,48 @@ void (* const kUFSCommand[])(void) PROGMEM = {
   &UFSInfo, &UFSType, &UFSSize, &UFSFree, &UFSDelete};
 
 void UFSInfo(void) {
-  Response_P(PSTR("{\"Ufs\":{\"Type\":%d,\"Size\":%d,\"Free\":%d}}"), ufs_type, UfsInfo(0, 0), UfsInfo(1, 0));
+  Response_P(PSTR("{\"Ufs\":{\"Type\":%d,\"Size\":%d,\"Free\":%d}"), ufs_type, UfsInfo(0, 0), UfsInfo(1, 0));
+  if (ffs_type && (ffs_type != ufs_type)) {
+    ResponseAppend_P(PSTR(",{\"Type\":%d,\"Size\":%d,\"Free\":%d}"), ffs_type, UfsInfo(0, 1), UfsInfo(1, 1));
+  }
+  ResponseJsonEnd();
 }
 
 void UFSType(void) {
-  ResponseCmndNumber(ufs_type);
+  if (ffs_type && (ffs_type != ufs_type)) {
+    Response_P(PSTR("{\"%s\":[%d,%d]}"), XdrvMailbox.command, ufs_type, ffs_type);
+  } else {
+    ResponseCmndNumber(ufs_type);
+  }
 }
 
 void UFSSize(void) {
-  ResponseCmndNumber(UfsInfo(0, 0));
+  if (ffs_type && (ffs_type != ufs_type)) {
+    Response_P(PSTR("{\"%s\":[%d,%d]}"), XdrvMailbox.command, UfsInfo(0, 0), UfsInfo(0, 1));
+  } else {
+    ResponseCmndNumber(UfsInfo(0, 0));
+  }
 }
 
 void UFSFree(void) {
-  ResponseCmndNumber(UfsInfo(1, 0));
+  if (ffs_type && (ffs_type != ufs_type)) {
+    Response_P(PSTR("{\"%s\":[%d,%d]}"), XdrvMailbox.command, UfsInfo(1, 0), UfsInfo(1, 1));
+  } else {
+    ResponseCmndNumber(UfsInfo(1, 0));
+  }
 }
 
 void UFSDelete(void) {
+  // UfsDelete  sdcard or flashfs file if only one of them available
+  // UfsDelete2 flashfs file if available
   if (XdrvMailbox.data_len > 0) {
-    if (!TfsDeleteFile(XdrvMailbox.data)) {
+    bool result = false;
+    if (ffs_type && (ffs_type != ufs_type) && (2 == XdrvMailbox.index)) {
+      result = TfsDeleteFile(XdrvMailbox.data);
+    } else {
+      result = (ufs_type && ufsp->remove(XdrvMailbox.data));
+    }
+    if (!result) {
       ResponseCmndChar(D_JSON_FAILED);
     } else {
       ResponseCmndDone();
