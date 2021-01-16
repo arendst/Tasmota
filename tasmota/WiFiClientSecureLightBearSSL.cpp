@@ -804,6 +804,7 @@ extern "C" {
         return 0;
       }
 
+#ifndef USE_MQTT_TLS_DROP_OLD_FINGERPRINT
       // No match under new algorithm, do some basic checking on the key.
       //
       // RSA keys normally have an e value of 65537, which is three bytes long.
@@ -838,6 +839,9 @@ extern "C" {
       pubkeyfingerprint_pubkey_fingerprint(xc, false);
 
       return 0;
+#else   // USE_TLS_OLD_FINGERPRINT_COMPAT
+      return 1;   // no match, error
+#endif  // USE_TLS_OLD_FINGERPRINT_COMPAT
     } else {
       // Default (no validation at all) or no errors in prior checks = success.
       return 0;
