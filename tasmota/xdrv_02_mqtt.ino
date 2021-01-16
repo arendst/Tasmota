@@ -1315,7 +1315,7 @@ void MqttSaveSettings(void)
   WebGetArg("ml", tmp, sizeof(tmp));
   Settings.mqtt_port = (!strlen(tmp)) ? MQTT_PORT : atoi(tmp);
 #ifdef USE_MQTT_TLS
-  Mqtt.mqtt_tls = Webserver->hasArg("b3");  // SetOption102 - Enable MQTT TLS
+  Settings.flag4.mqtt_tls = Webserver->hasArg("b3");  // SetOption102 - Enable MQTT TLS
 #endif
   WebGetArg("mc", tmp, sizeof(tmp));
   SettingsUpdateText(SET_MQTT_CLIENT, (!strlen(tmp)) ? MQTT_CLIENT_ID : tmp);

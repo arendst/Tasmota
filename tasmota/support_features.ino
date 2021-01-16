@@ -704,7 +704,9 @@ void ResponseAppendFeatures(void)
 #ifdef USE_SEESAW_SOIL
     feature7 |= 0x02000000;  // xsns_81_seesaw_soil.ino
 #endif
-//    feature7 |= 0x04000000;
+#ifdef USE_WIEGAND
+    feature7 |= 0x04000000;  // xsns_82_wiegand.ino
+#endif
 //    feature7 |= 0x08000000;
 
 //    feature7 |= 0x10000000;
