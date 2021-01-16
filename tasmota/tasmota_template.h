@@ -146,6 +146,7 @@ enum UserSelectablePins {
   GPIO_ROT1A_NP, GPIO_ROT1B_NP,        // Rotary switch
   GPIO_ADC_PH,                         // Analog PH Sensor
   GPIO_BS814_CLK, GPIO_BS814_DAT,      // Holtek BS814A2 touch ctrlr
+  GPIO_WIEGAND_D0, GPIO_WIEGAND_D1,    // Wiegand Data lines
   GPIO_SENSOR_END };
 
 enum ProgramSelectablePins {
@@ -312,6 +313,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_ROTARY " A_n|" D_SENSOR_ROTARY " B_n|"
   D_SENSOR_ADC_PH "|"
   D_SENSOR_BS814_CLK "|" D_SENSOR_BS814_DAT "|"
+  D_SENSOR_WIEGAND_D0 "|" D_SENSOR_WIEGAND_D1 "|"
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -734,6 +736,10 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_MIEL_HVAC
   AGPIO(GPIO_MIEL_HVAC_TX),    // Mitsubishi Electric HVAC TX pin
   AGPIO(GPIO_MIEL_HVAC_RX),    // Mitsubishi Electric HVAC RX pin
+#endif
+#ifdef USE_WIEGAND
+  AGPIO(GPIO_WIEGAND_D0),      // Date line D0 of Wiegand devices
+  AGPIO(GPIO_WIEGAND_D1),      // Date line D1 of Wiegand devices
 #endif
 
 /*-------------------------------------------------------------------------------------------*\

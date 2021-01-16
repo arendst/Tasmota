@@ -710,6 +710,7 @@
   #define MAX31865_REF_RES    430                // Reference resistor (Usually 430Ω for a PT100, 4300Ω for a PT1000)
   #define MAX31865_PTD_BIAS   0                  // To calibrate your not-so-good PTD
 //#define USE_LMT01                                // Add support for TI LMT01 temperature sensor, count pulses on single GPIO (+0k5 code)
+//#define USE_WIEGAND                              // Add support for 24/26/32/34 bit RFID Wiegand interface (D0/D1) (+1k7 code)
 
 // -- IR Remote features - all protocols from IRremoteESP8266 --------------------------
 // IR Full Protocols mode is activated through platform.io only.
@@ -766,8 +767,6 @@
   #define USE_ZIGBEE_MAXTIME_TRV            60*10     // 10m
   #define USE_ZIGBEE_MAXTIME_SENSOR         60*60     // 1h
   #define USE_ZIGBEE_MAXTIME_LIGHT          60*60     // 1h
-
-
 
 // -- Other sensors/drivers -----------------------
 

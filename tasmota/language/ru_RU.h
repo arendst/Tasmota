@@ -782,6 +782,8 @@
 #define D_SENSOR_SSD1331_CS    "SSD1331 CS"
 #define D_SENSOR_SSD1331_DC    "SSD1331 DC"
 #define D_SENSOR_SDCARD_CS     "SDCard CS"
+#define D_SENSOR_WIEGAND_D0    "Wiegand D0"
+#define D_SENSOR_WIEGAND_D1    "Wiegand D1"
 
 // Units
 #define D_UNIT_AMPERE "А"

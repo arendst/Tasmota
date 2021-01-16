@@ -78,6 +78,7 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - Support for disabling 38kHz IR modulation using ``#define IR_SEND_USE_MODULATION false`` [#10301](https://github.com/arendst/Tasmota/issues/10301)
 - Support for SPI display driver for ST7789 TFT by Gerhard Mutz [#9037](https://github.com/arendst/Tasmota/issues/9037)
 - Support for time proportioned (``#define USE_TIMEPROP``) and optional PID (``#define USE_PID``) relay control [#10412](https://github.com/arendst/Tasmota/issues/10412)
+- Support for 24/26/32/34 bit RFID Wiegand interface (D0/D1) by Sigurd Leuther [#3647](https://github.com/arendst/Tasmota/issues/3647)
 - Support rotary encoder on Shelly Dimmer [#10407](https://github.com/arendst/Tasmota/issues/10407#issuecomment-756240920)
 - Support character `#` to be replaced by `space`-character in command ``Publish`` topic [#10258](https://github.com/arendst/Tasmota/issues/10258)
 - Basic support for ESP32 Odroid Go 16MB binary tasmota32-odroidgo.bin [#8630](https://github.com/arendst/Tasmota/issues/8630)
