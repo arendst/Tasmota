@@ -785,7 +785,7 @@ static const Zigbee_Instruction zb_prog[] PROGMEM = {
     ZI_WAIT_UNTIL(5000, ZBR_RSTACK)     // wait for RSTACK message
 
     // Init device and probe version
-    ZI_SEND(ZBS_VERSION)                ZI_WAIT_RECV_FUNC(1000, ZBR_VERSION, &EZ_ReceiveCheckVersion)       // check EXT PAN ID
+    ZI_SEND(ZBS_VERSION)                ZI_WAIT_RECV_FUNC(5000, ZBR_VERSION, &EZ_ReceiveCheckVersion)       // check EXT PAN ID
 
     // configure EFR32
     ZI_MQTT_STATE(ZIGBEE_STATUS_STARTING, kConfiguredCoord)
