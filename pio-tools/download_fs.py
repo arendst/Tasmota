@@ -1,14 +1,14 @@
 # Written by Maximilian Gerhardt <maximilian.gerhardt@rub.de>
 # 29th December 2020
 # License: Apache
-# Expanded from functionality provided by PlatformIO's espressif32 and espressif8266 platforms, credited below. 
-# This script provides functions to download the filesystem (SPIFFS or LittleFS) from a running ESP32 / ESP8266 
+# Expanded from functionality provided by PlatformIO's espressif32 and espressif8266 platforms, credited below.
+# This script provides functions to download the filesystem (SPIFFS or LittleFS) from a running ESP32 / ESP8266
 # over the serial bootloader using esptool.py, and mklittlefs / mkspiffs for extracting.
-# run by either using the VSCode task "Custom" -> "Download Filesystem" 
-# or by doing 'pio run -t downloadfs' (with optional '-e <environment>') from the commandline. 
+# run by either using the VSCode task "Custom" -> "Download Filesystem"
+# or by doing 'pio run -t downloadfs' (with optional '-e <environment>') from the commandline.
 # output will be saved, by default, in the "unpacked_fs" of the project.
-# this folder can be changed by writing 'custom_unpack_dir = some_other_dir' in the corresponding platformio.ini 
-# environment. 
+# this folder can be changed by writing 'custom_unpack_dir = some_other_dir' in the corresponding platformio.ini
+# environment.
 import re
 import sys
 from os.path import isfile, join
@@ -23,25 +23,30 @@ Import("env")
 platform = env.PioPlatform()
 board = env.BoardConfig()
 mcu = board.get("build.mcu", "esp32")
+# Hack for using mklittlefs instead of mkspiffs -> needed since littlefs is not supported with this for ESP32
+if env["PIOPLATFORM"] == "espressif32":
+    #print("Replace MKSPIFFSTOOL with mklittlefs")
+    env.Replace( MKSPIFFSTOOL=platform.get_package_dir("tool-mklittlefs") + '/mklittlefs' )
+
 # needed for later
 AutodetectUploadPort(env)
 
-class FSType(Enum): 
+class FSType(Enum):
     SPIFFS="spiffs"
     LITTLEFS="littlefs"
-    FATFS="fatfs"   
+    FATFS="fatfs"
 
 class FSInfo:
-    def __init__(self, fs_type, start, length, page_size, block_size): 
+    def __init__(self, fs_type, start, length, page_size, block_size):
         self.fs_type = fs_type
-        self.start = start 
+        self.start = start
         self.length = length
         self.page_size = page_size
         self.block_size = block_size
     def __repr__(self):
         return f"FS type {self.fs_type} Start {hex(self.start)} Len {self.length} Page size {self.page_size} Block size {self.block_size}"
     # extract command supposed to be implemented by subclasses
-    def get_extract_cmd(self):
+    def get_extract_cmd(self, input_file, output_dir):
         raise NotImplementedError()
 
 class LittleFSInfo(FSInfo):
@@ -53,10 +58,10 @@ class LittleFSInfo(FSInfo):
             self.tool = env["MKFSTOOL"] # from mkspiffs package
         self.tool = join(platform.get_package_dir("tool-mklittlefs"), self.tool)
         super().__init__(FSType.LITTLEFS, start, length, page_size, block_size)
-    def __repr__(self): 
+    def __repr__(self):
         return f"FS type {self.fs_type} Start {hex(self.start)} Len {self.length} Page size {self.page_size} Block size {self.block_size} Tool: {self.tool}"
     def get_extract_cmd(self, input_file, output_dir):
-        return f'"{self.tool}" -b {self.block_size} -p {self.page_size} --unpack "{output_dir}" "{input_file}"'
+        return [self.tool, "-b", str(self.block_size), "-p", str(self.page_size), "--unpack", output_dir, input_file]
 
 
 class SPIFFSInfo(FSInfo):
@@ -68,7 +73,7 @@ class SPIFFSInfo(FSInfo):
             self.tool = env["MKFSTOOL"] # from mkspiffs package
         self.tool = join(platform.get_package_dir("tool-mkspiffs"), self.tool)
         super().__init__(FSType.SPIFFS, start, length, page_size, block_size)
-    def __repr__(self): 
+    def __repr__(self):
         return f"FS type {self.fs_type} Start {hex(self.start)} Len {self.length} Page size {self.page_size} Block size {self.block_size} Tool: {self.tool}"
     def get_extract_cmd(self, input_file, output_dir):
         return f'"{self.tool}" -b {self.block_size} -p {self.page_size} --unpack "{output_dir}" "{input_file}"'
@@ -258,16 +263,16 @@ def download_fs(fs_info: FSInfo):
     fs_file = join(env["PROJECT_DIR"], f"downloaded_fs_{hex(fs_info.start)}_{hex(fs_info.length)}.bin")
     esptoolpy_flags = [
             "--chip", mcu,
-            "--port", '"' + env.subst("$UPLOAD_PORT") + '"',
+            "--port", env.subst("$UPLOAD_PORT"),
             "--baud",  env.subst("$UPLOAD_SPEED"),
             "--before", "default_reset",
             "--after", "hard_reset",
-            "read_flash", 
+            "read_flash",
             hex(fs_info.start),
             hex(fs_info.length),
-            '"' + fs_file + '"'
+            fs_file
     ]
-    esptoolpy_cmd = '"' + env["PYTHONEXE"]+ '"' + ' "' + esptoolpy + '" ' + " ".join(esptoolpy_flags)
+    esptoolpy_cmd = [env["PYTHONEXE"], esptoolpy] + esptoolpy_flags
     print("Executing flash download command.")
     print(esptoolpy_cmd)
     try:
@@ -302,7 +307,7 @@ def unpack_fs(fs_info: FSInfo, downloaded_file: str):
         return (False, "")
 
 def display_fs(extracted_dir):
-    # extract command already nicely lists all extracted files. 
+    # extract command already nicely lists all extracted files.
     # no need to display that ourselves. just display a summary
     file_count = sum([len(files) for r, d, files in os.walk(extracted_dir)])
     print("Extracted " + str(file_count) + " file(s) from filesystem.")
