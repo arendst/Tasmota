@@ -75,7 +75,7 @@ Index | Define              | Driver  | Device   | Address(es) | Description
   50  | USE_VEML7700        | xsns_71 | VEML7700 | 0x10        | Ambient light intensity sensor
   51  | USE_MCP9808         | xsns_72 | MCP9808  | 0x18 - 0x1F | Temperature sensor
   52  | USE_HP303B          | xsns_73 | HP303B   | 0x76 - 0x77 | Pressure and temperature sensor
-  53  | USE_MLX90640        | xdrv_84 | MLX90640 | 0x33        | IR array temperature sensor
+  53  | USE_MLX90640        | xdrv_43 | MLX90640 | 0x33        | IR array temperature sensor
   54  | USE_VL53L1X         | xsns_77 | VL53L1X  | 0x29        | Time-of-flight (ToF) distance sensor
   55  | USE_EZOPH           | xsns_78 | EZOPH    | 0x61 - 0x70 | pH sensor
   55  | USE_EZOORP          | xsns_78 | EZOORP   | 0x61 - 0x70 | ORP sensor

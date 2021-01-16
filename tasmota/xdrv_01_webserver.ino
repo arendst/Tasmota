@@ -475,14 +475,14 @@ void StartWebserver(int type, IPAddress ipweb)
     String ipv6_addr = WifiGetIPv6();
     if (ipv6_addr!="") {
       AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_HTTP D_WEBSERVER_ACTIVE_ON " %s%s " D_WITH_IP_ADDRESS " %s and IPv6 global address %s "),
-        NetworkHostname(), (Mdns.begun) ? ".local" : "", ipweb.toString().c_str(), ipv6_addr.c_str());
+        NetworkHostname(), (Mdns.begun) ? PSTR(".local") : "", ipweb.toString().c_str(), ipv6_addr.c_str());
     } else {
       AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_HTTP D_WEBSERVER_ACTIVE_ON " %s%s " D_WITH_IP_ADDRESS " %s"),
-        NetworkHostname(), (Mdns.begun) ? ".local" : "", ipweb.toString().c_str());
+        NetworkHostname(), (Mdns.begun) ? PSTR(".local") : "", ipweb.toString().c_str());
     }
 #else
     AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_HTTP D_WEBSERVER_ACTIVE_ON " %s%s " D_WITH_IP_ADDRESS " %s"),
-      NetworkHostname(), (Mdns.begun) ? ".local" : "", ipweb.toString().c_str());
+      NetworkHostname(), (Mdns.begun) ? PSTR(".local") : "", ipweb.toString().c_str());
 #endif // LWIP_IPV6 = 1
     TasmotaGlobal.rules_flag.http_init = 1;
   }
@@ -744,7 +744,7 @@ void WSContentSendStyle_P(const char* formatP, ...)
     bool sip = (static_cast<uint32_t>(WiFi.softAPIP()) != 0);
     WSContentSend_P(PSTR("<h4>%s%s (%s%s%s)</h4>"),    // tasmota.local (192.168.2.12, 192.168.4.1)
       NetworkHostname(),
-      (Mdns.begun) ? ".local" : "",
+      (Mdns.begun) ? PSTR(".local") : "",
       (lip) ? WiFi.localIP().toString().c_str() : "",
       (lip && sip) ? ", " : "",
       (sip) ? WiFi.softAPIP().toString().c_str() : "");
@@ -1230,15 +1230,15 @@ bool HandleRootStatusRefresh(void)
     uint32_t fsize = (TasmotaGlobal.devices_present < 5) ? 70 - (TasmotaGlobal.devices_present * 8) : 32;
 #ifdef USE_SONOFF_IFAN
     if (IsModuleIfan()) {
-      WSContentSend_P(HTTP_DEVICE_STATE, 36, (bitRead(TasmotaGlobal.power, 0)) ? "bold" : "normal", 54, GetStateText(bitRead(TasmotaGlobal.power, 0)));
+      WSContentSend_P(HTTP_DEVICE_STATE, 36, (bitRead(TasmotaGlobal.power, 0)) ? PSTR("bold") : PSTR("normal"), 54, GetStateText(bitRead(TasmotaGlobal.power, 0)));
       uint32_t fanspeed = GetFanspeed();
       snprintf_P(svalue, sizeof(svalue), PSTR("%d"), fanspeed);
-      WSContentSend_P(HTTP_DEVICE_STATE, 64, (fanspeed) ? "bold" : "normal", 54, (fanspeed) ? svalue : GetStateText(0));
+      WSContentSend_P(HTTP_DEVICE_STATE, 64, (fanspeed) ? PSTR("bold") : PSTR("normal"), 54, (fanspeed) ? svalue : GetStateText(0));
     } else {
 #endif  // USE_SONOFF_IFAN
       for (uint32_t idx = 1; idx <= TasmotaGlobal.devices_present; idx++) {
         snprintf_P(svalue, sizeof(svalue), PSTR("%d"), bitRead(TasmotaGlobal.power, idx -1));
-        WSContentSend_P(HTTP_DEVICE_STATE, 100 / TasmotaGlobal.devices_present, (bitRead(TasmotaGlobal.power, idx -1)) ? "bold" : "normal", fsize, (TasmotaGlobal.devices_present < 5) ? GetStateText(bitRead(TasmotaGlobal.power, idx -1)) : svalue);
+        WSContentSend_P(HTTP_DEVICE_STATE, 100 / TasmotaGlobal.devices_present, (bitRead(TasmotaGlobal.power, idx -1)) ? PSTR("bold") : PSTR("normal"), fsize, (TasmotaGlobal.devices_present < 5) ? GetStateText(bitRead(TasmotaGlobal.power, idx -1)) : svalue);
       }
 #ifdef USE_SONOFF_IFAN
     }
@@ -1438,7 +1438,7 @@ void HandleTemplateConfiguration(void)
   for (uint32_t i = 0; i < MAX_GPIO_PIN; i++) {
     if (!FlashPin(i)) {
       WSContentSend_P(PSTR("<tr><td><b><font color='#%06x'>" D_GPIO "%d</font></b></td><td%s><select id='g%d' onchange='ot(%d,this.value)'></select></td>"),
-        ((9==i)||(10==i)) ? WebColor(COL_TEXT_WARNING) : WebColor(COL_TEXT), i, (0==i) ? " style='width:150px'" : "", i, i);
+        ((9==i)||(10==i)) ? WebColor(COL_TEXT_WARNING) : WebColor(COL_TEXT), i, (0==i) ? PSTR(" style='width:150px'") : "", i, i);
       WSContentSend_P(PSTR("<td style='width:50px'><select id='h%d'></select></td></tr>"), i);
     }
   }
@@ -1824,7 +1824,7 @@ void HandleLoggingConfiguration(void)
       idx);
     for (uint32_t i = LOG_LEVEL_NONE; i <= LOG_LEVEL_DEBUG_MORE; i++) {
       WSContentSend_P(PSTR("<option%s value='%d'>%d %s</option>"),
-        (i == llevel) ? " selected" : "", i, i,
+        (i == llevel) ? PSTR(" selected") : "", i, i,
         GetTextIndexed(stemp1, sizeof(stemp1), i, kLoggingLevels));
     }
     WSContentSend_P(PSTR("</select></p>"));
@@ -1880,8 +1880,8 @@ void HandleOtherConfiguration(void)
   TemplateJson();
   char stemp[strlen(TasmotaGlobal.mqtt_data) +1];
   strlcpy(stemp, TasmotaGlobal.mqtt_data, sizeof(stemp));  // Get JSON template
-  WSContentSend_P(HTTP_FORM_OTHER, stemp, (USER_MODULE == Settings.module) ? " checked disabled" : "",
-    (Settings.flag.mqtt_enabled) ? " checked" : "",   // SetOption3 - Enable MQTT
+  WSContentSend_P(HTTP_FORM_OTHER, stemp, (USER_MODULE == Settings.module) ? PSTR(" checked disabled") : "",
+    (Settings.flag.mqtt_enabled) ? PSTR(" checked") : "",   // SetOption3 - Enable MQTT
     SettingsText(SET_FRIENDLYNAME1), SettingsText(SET_DEVICENAME));
 
   uint32_t maxfn = (TasmotaGlobal.devices_present > MAX_FRIENDLYNAMES) ? MAX_FRIENDLYNAMES : (!TasmotaGlobal.devices_present) ? 1 : TasmotaGlobal.devices_present;
@@ -1911,9 +1911,9 @@ void HandleOtherConfiguration(void)
     if (i < EMUL_MAX) {
       WSContentSend_P(PSTR("<input id='r%d' name='b2' type='radio' value='%d'%s><b>%s</b> %s<br>"),  // Different id only used for labels
         i, i,
-        (i == Settings.flag2.emulation) ? " checked" : "",
+        (i == Settings.flag2.emulation) ? PSTR(" checked") : "",
         GetTextIndexed(stemp, sizeof(stemp), i, kEmulationOptions),
-        (i == EMUL_NONE) ? "" : (i == EMUL_WEMO) ? D_SINGLE_DEVICE : D_MULTI_DEVICE);
+        (i == EMUL_NONE) ? "" : (i == EMUL_WEMO) ? PSTR(D_SINGLE_DEVICE) : PSTR(D_MULTI_DEVICE));
     }
   }
   WSContentSend_P(PSTR("</p></fieldset>"));
@@ -2086,7 +2086,7 @@ void HandleInformation(void)
 #ifdef ESP32
 #ifdef USE_ETHERNET
   if (static_cast<uint32_t>(EthernetLocalIP()) != 0) {
-    WSContentSend_P(PSTR("}1" D_HOSTNAME "}2%s%s"), EthernetHostname(), (Mdns.begun) ? ".local" : "");
+    WSContentSend_P(PSTR("}1" D_HOSTNAME "}2%s%s"), EthernetHostname(), (Mdns.begun) ? PSTR(".local") : "");
     WSContentSend_P(PSTR("}1" D_MAC_ADDRESS "}2%s"), EthernetMacAddress().c_str());
     WSContentSend_P(PSTR("}1" D_IP_ADDRESS " (eth)}2%s"), EthernetLocalIP().toString().c_str());
     WSContentSend_P(PSTR("}1<hr/>}2<hr/>"));
@@ -2096,7 +2096,7 @@ void HandleInformation(void)
   if (Settings.flag4.network_wifi) {
     int32_t rssi = WiFi.RSSI();
     WSContentSend_P(PSTR("}1" D_AP "%d " D_SSID " (" D_RSSI ")}2%s (%d%%, %d dBm)"), Settings.sta_active +1, HtmlEscape(SettingsText(SET_STASSID1 + Settings.sta_active)).c_str(), WifiGetRssiAsQuality(rssi), rssi);
-    WSContentSend_P(PSTR("}1" D_HOSTNAME "}2%s%s"), TasmotaGlobal.hostname, (Mdns.begun) ? ".local" : "");
+    WSContentSend_P(PSTR("}1" D_HOSTNAME "}2%s%s"), TasmotaGlobal.hostname, (Mdns.begun) ? PSTR(".local") : "");
 #if LWIP_IPV6
     String ipv6_addr = WifiGetIPv6();
     if (ipv6_addr != "") {
@@ -2169,15 +2169,15 @@ void HandleInformation(void)
 #ifdef ESP8266
   WSContentSend_P(PSTR("}1" D_FLASH_CHIP_ID "}20x%06X"), ESP.getFlashChipId());
 #endif
-  WSContentSend_P(PSTR("}1" D_FLASH_CHIP_SIZE "}2%dkB"), ESP.getFlashChipRealSize() / 1024);
-  WSContentSend_P(PSTR("}1" D_PROGRAM_FLASH_SIZE "}2%dkB"), ESP.getFlashChipSize() / 1024);
-  WSContentSend_P(PSTR("}1" D_PROGRAM_SIZE "}2%dkB"), ESP_getSketchSize() / 1024);
-  WSContentSend_P(PSTR("}1" D_FREE_PROGRAM_SPACE "}2%dkB"), ESP.getFreeSketchSpace() / 1024);
-  WSContentSend_P(PSTR("}1" D_FREE_MEMORY "}2%dkB"), freeMem / 1024);
+  WSContentSend_P(PSTR("}1" D_FLASH_CHIP_SIZE "}2%d kB"), ESP.getFlashChipRealSize() / 1024);
+  WSContentSend_P(PSTR("}1" D_PROGRAM_FLASH_SIZE "}2%d kB"), ESP.getFlashChipSize() / 1024);
+  WSContentSend_P(PSTR("}1" D_PROGRAM_SIZE "}2%d kB"), ESP_getSketchSize() / 1024);
+  WSContentSend_P(PSTR("}1" D_FREE_PROGRAM_SPACE "}2%d kB"), ESP.getFreeSketchSpace() / 1024);
+  WSContentSend_P(PSTR("}1" D_FREE_MEMORY "}2%d kB"), freeMem / 1024);
 #ifdef ESP32
   if (psramFound()) {
-    WSContentSend_P(PSTR("}1" D_PSR_MAX_MEMORY "}2%dkB"), ESP.getPsramSize() / 1024);
-    WSContentSend_P(PSTR("}1" D_PSR_FREE_MEMORY "}2%dkB"), ESP.getFreePsram() / 1024);
+    WSContentSend_P(PSTR("}1" D_PSR_MAX_MEMORY "}2%d kB"), ESP.getPsramSize() / 1024);
+    WSContentSend_P(PSTR("}1" D_PSR_FREE_MEMORY "}2%d kB"), ESP.getFreePsram() / 1024);
   }
 #endif
   WSContentSend_P(PSTR("</td></tr></table>"));
@@ -2522,7 +2522,7 @@ void HandleUploadLoop(void) {
       return;
     }
     if (upload.totalSize && !(upload.totalSize % 102400)) {
-      AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPLOAD "Progress %dkB"), upload.totalSize / 1024);
+      AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPLOAD "Progress %d kB"), upload.totalSize / 1024);
     }
   }
 
@@ -2788,7 +2788,7 @@ bool CaptivePortal(void)
   if ((WifiIsInManagerMode()) && !ValidIpAddress(Webserver->hostHeader().c_str())) {
     AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_REDIRECTED));
 
-    Webserver->sendHeader(F("Location"), String("http://") + Webserver->client().localIP().toString(), true);
+    Webserver->sendHeader(F("Location"), String(F("http://")) + Webserver->client().localIP().toString(), true);
     WSSend(302, CT_PLAIN, "");  // Empty content inhibits Content-length header so we have to close the socket ourselves.
     Webserver->client().stop();  // Stop is needed because we sent no content length
     return true;

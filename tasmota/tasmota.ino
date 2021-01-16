@@ -125,6 +125,7 @@ struct {
   bool skip_light_fade;                     // Temporarily skip light fading
   bool restart_halt;                        // Do not restart but stay in wait loop
   bool module_changed;                      // Indicate module changed since last restart
+  bool wifi_stay_asleep;                    // Allow sleep only incase of ESP32 BLE
 
   StateBitfield global_state;               // Global states (currently Wifi and Mqtt) (8 bits)
   uint8_t spi_enabled;                      // SPI configured

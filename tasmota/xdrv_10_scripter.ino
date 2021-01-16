@@ -4550,53 +4550,59 @@ int16_t Run_script_sub(const char *type, int8_t tlen, JsonParserObject *jo) {
                 if (*ctype=='#') {
                   // check for parameter
                   ctype += tlen;
-                  if (*ctype=='(' && *(lp+tlen)=='(') {
-                    float fparam;
-                    numeric = 1;
-                    glob_script_mem.glob_error = 0;
-                    GetNumericArgument((char*)ctype, OPER_EQU, &fparam, 0);
-                    if (glob_script_mem.glob_error==1) {
-                      // was string, not number
-                      numeric = 0;
-                      // get the string
-                      GetStringArgument((char*)ctype + 1, OPER_EQU, cmpstr, 0);
-                    }
-                    lp += tlen;
-                    if (*lp=='(') {
-                      // fetch destination
-                      lp++;
-                      lp = isvar(lp, &vtype, &ind, 0, 0, 0);
-                      if (vtype!=VAR_NV) {
-                        // found variable as result
-                        uint8_t index = glob_script_mem.type[ind.index].index;
-                        if ((vtype&STYPE)==0) {
-                            // numeric result
-                            dfvar = &glob_script_mem.fvars[index];
-                            if (numeric) {
-                              *dfvar = fparam;
-                            } else {
-                              // mismatch
-                              *dfvar = CharToFloat(cmpstr);
-                            }
-                        } else {
-                            // string result
-                            sindex = index;
-                            if (!numeric) {
-                              strlcpy(glob_script_mem.glob_snp + (sindex * glob_script_mem.max_ssize), cmpstr, glob_script_mem.max_ssize);
-                            } else {
-                              // mismatch
-                              dtostrfd(fparam, 6, glob_script_mem.glob_snp + (sindex * glob_script_mem.max_ssize));
-                            }
+                  char nxttok = '(';
+                  char *argptr = ctype+tlen;
+                  
+                  lp += tlen;
+                  do {
+                    if (*ctype==nxttok && *lp==nxttok) {
+                      float fparam;
+                      numeric = 1;
+                      glob_script_mem.glob_error = 0;
+                      argptr = GetNumericArgument((char*)ctype + 1, OPER_EQU, &fparam, 0);
+                      if (glob_script_mem.glob_error==1) {
+                        // was string, not number
+                        numeric = 0;
+                        // get the string
+                        argptr = GetStringArgument((char*)ctype + 1, OPER_EQU, cmpstr, 0);
+                      }
+                      if (*lp==nxttok) {
+                        // fetch destination
+                        lp++;
+                        lp = isvar(lp, &vtype, &ind, 0, 0, 0);
+                        if (vtype!=VAR_NV) {
+                          // found variable as result
+                          uint8_t index = glob_script_mem.type[ind.index].index;
+                          if ((vtype&STYPE)==0) {
+                              // numeric result
+                              dfvar = &glob_script_mem.fvars[index];
+                              if (numeric) {
+                                *dfvar = fparam;
+                              } else {
+                                // mismatch
+                                *dfvar = CharToFloat(cmpstr);
+                              }
+                          } else {
+                              // string result
+                              sindex = index;
+                              if (!numeric) {
+                                strlcpy(glob_script_mem.glob_snp + (sindex * glob_script_mem.max_ssize), cmpstr, glob_script_mem.max_ssize);
+                              } else {
+                                // mismatch
+                                dtostrfd(fparam, 6, glob_script_mem.glob_snp + (sindex * glob_script_mem.max_ssize));
+                              }
+                          }
                         }
                       }
+                    } else {
+                      if (*ctype==nxttok || (*lp!=SCRIPT_EOL && *lp!='?')) {
+                        // revert
+                        section = 0;
+                      }
                     }
-                  } else {
-                    lp += tlen;
-                    if (*ctype=='(' || (*lp!=SCRIPT_EOL && *lp!='?')) {
-                      // revert
-                      section = 0;
-                    }
-                  }
+                    nxttok = ' ';
+                    ctype = argptr;
+                  } while (*lp==' ' && (section == 1) );
                 }
             }
         }
@@ -4973,9 +4979,9 @@ void HandleScriptConfiguration(void) {
 #ifdef xSCRIPT_STRIP_COMMENTS
     uint16_t ssize = glob_script_mem.script_size;
     if (bitRead(Settings.rule_enabled, 1)) ssize *= 2;
-    WSContentSend_P(HTTP_FORM_SCRIPT1,1,1,bitRead(Settings.rule_enabled,0) ? " checked" : "",ssize);
+    WSContentSend_P(HTTP_FORM_SCRIPT1,1,1,bitRead(Settings.rule_enabled,0) ? PSTR(" checked") : "",ssize);
 #else
-    WSContentSend_P(HTTP_FORM_SCRIPT1,1,1,bitRead(Settings.rule_enabled,0) ? " checked" : "",glob_script_mem.script_size);
+    WSContentSend_P(HTTP_FORM_SCRIPT1,1,1,bitRead(Settings.rule_enabled,0) ? PSTR(" checked") : "",glob_script_mem.script_size);
 #endif
 
     // script is to large for WSContentSend_P

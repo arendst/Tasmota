@@ -886,6 +886,15 @@ void PerformEverySecond(void)
     ESP_getSketchSize();             // Init sketchsize as it can take up to 2 seconds
   }
 #endif
+
+#ifdef USE_UFILESYS
+  static bool settings_lkg = false;  // Settings saved as Last Known Good
+  // Copy Settings as Last Known Good if no changes have been saved since 30 minutes
+  if (!settings_lkg && (UtcTime() > START_VALID_TIME) && (Settings.cfg_timestamp < UtcTime() - (30 * 60))) {
+    TfsSaveFile(TASM_FILE_SETTINGS_LKG, (const uint8_t*)&Settings, sizeof(Settings));
+    settings_lkg = true;
+  }
+#endif
 }
 
 /*-------------------------------------------------------------------------------------------*\
@@ -1134,7 +1143,7 @@ void Every250mSeconds(void)
           // Backup mqtt host, port, client, username and password
 //        }
         if ((215 == TasmotaGlobal.restart_flag) || (216 == TasmotaGlobal.restart_flag)) {
-          SettingsErase(0);  // Erase all flash from program end to end of physical flash
+          SettingsErase(2);  // Erase all flash from program end to end of physical excluding optional filesystem
         }
         SettingsDefault();
         // Restore current SSIDs and Passwords
@@ -1169,7 +1178,7 @@ void Every250mSeconds(void)
       }
       TasmotaGlobal.restart_flag--;
       if (TasmotaGlobal.restart_flag <= 0) {
-        AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION "%s"), (TasmotaGlobal.restart_halt) ? "Halted" : D_RESTARTING);
+        AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION "%s"), (TasmotaGlobal.restart_halt) ? PSTR("Halted") : PSTR(D_RESTARTING));
         EspRestart();
       }
     }
@@ -1616,8 +1625,8 @@ void GpioInit(void)
   if (!TasmotaGlobal.soft_spi_enabled) {
     bool valid_cs = (ValidSpiPinUsed(GPIO_SPI_CS) ||
                      ValidSpiPinUsed(GPIO_RC522_CS) ||
-                     ValidSpiPinUsed(GPIO_NRF24_CS) ||
-                     ValidSpiPinUsed(GPIO_ILI9341_CS) ||
+                     (ValidSpiPinUsed(GPIO_NRF24_CS) && ValidSpiPinUsed(GPIO_NRF24_DC)) ||
+                     (ValidSpiPinUsed(GPIO_ILI9341_CS) && ValidSpiPinUsed(GPIO_ILI9341_DC)) ||
                      ValidSpiPinUsed(GPIO_EPAPER29_CS) ||
                      ValidSpiPinUsed(GPIO_EPAPER42_CS) ||
                      ValidSpiPinUsed(GPIO_ILI9488_CS) ||
@@ -1625,17 +1634,11 @@ void GpioInit(void)
                      ValidSpiPinUsed(GPIO_RA8876_CS) ||
                      ValidSpiPinUsed(GPIO_ST7789_DC) ||  // ST7789 CS may be omitted so chk DC too
                      ValidSpiPinUsed(GPIO_ST7789_CS) ||
-                     ValidSpiPinUsed(GPIO_SSD1331_CS) ||
+                     (ValidSpiPinUsed(GPIO_SSD1331_CS) && ValidSpiPinUsed(GPIO_SSD1331_DC)) ||
                      ValidSpiPinUsed(GPIO_SDCARD_CS)
                     );
-    bool valid_dc = (ValidSpiPinUsed(GPIO_SPI_DC) ||
-                     ValidSpiPinUsed(GPIO_NRF24_DC) ||
-                     ValidSpiPinUsed(GPIO_ILI9341_DC) ||
-                     ValidSpiPinUsed(GPIO_ST7789_DC) ||
-                     ValidSpiPinUsed(GPIO_SSD1331_DC)
-                    );
     // If SPI_CS and/or SPI_DC is used they must be valid
-    TasmotaGlobal.spi_enabled = (valid_cs && valid_dc) ? SPI_MOSI_MISO : SPI_NONE;
+    TasmotaGlobal.spi_enabled = (valid_cs) ? SPI_MOSI_MISO : SPI_NONE;
     if (TasmotaGlobal.spi_enabled) {
       TasmotaGlobal.my_module.io[12] = AGPIO(GPIO_SPI_MISO);
       SetPin(12, AGPIO(GPIO_SPI_MISO));

@@ -138,29 +138,25 @@ int32_t NvmErase(const char *sNvsName) {
 
 void SettingsErase(uint8_t type) {
   // SDK and Tasmota data is held in default NVS partition
-  // Tasmota data is held also in file /settings on default filesystem
+  // Tasmota data is held also in file /.settings on default filesystem
   // cal_data - SDK PHY calibration data as documented in esp_phy_init.h
   // qpc      - Tasmota Quick Power Cycle state
   // main     - Tasmota Settings data
   int32_t r1, r2, r3;
   switch (type) {
-    case 0:               // Reset 2, 5, 6 = Erase all flash from program end to end of physical flash
+    case 0:               // Reset 2 = Erase all flash from program end to end of physical flash
+    case 2:               // Reset 5, 6 = Erase all flash from program end to end of physical flash excluding filesystem
 //      nvs_flash_erase();  // Erase RTC, PHY, sta.mac, ap.sndchan, ap.mac, Tasmota etc.
       r1 = NvmErase("qpc");
       r2 = NvmErase("main");
       r3 = TfsDeleteFile(TASM_FILE_SETTINGS);
       AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_ERASE " Tasmota data (%d,%d,%d)"), r1, r2, r3);
       break;
-    case 1: case 4:       // Reset 3 or WIFI_FORCE_RF_CAL_ERASE = SDK parameter area
+    case 1:               // Reset 3 = SDK parameter area
+    case 4:               // WIFI_FORCE_RF_CAL_ERASE = SDK parameter area
       r1 = esp_phy_erase_cal_data_in_nvs();
 //      r1 = NvmErase("cal_data");
       AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_ERASE " PHY data (%d)"), r1);
-      break;
-    case 2:               // Not used = QPC and Tasmota parameter area (0x0F3xxx - 0x0FBFFF)
-      r1 = NvmErase("qpc");
-      r2 = NvmErase("main");
-      r3 = TfsDeleteFile(TASM_FILE_SETTINGS);
-      AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_ERASE " Tasmota data (%d,%d,%d)"), r1, r2, r3);
       break;
     case 3:               // QPC Reached = QPC, Tasmota and SDK parameter area (0x0F3xxx - 0x0FFFFF)
 //      nvs_flash_erase();  // Erase RTC, PHY, sta.mac, ap.sndchan, ap.mac, Tasmota etc.

@@ -154,19 +154,20 @@ bool RtcRebootValid(void)
  * 0x000xxxxx                         - Unzipped binary code end
  * 0x000x1000                         - First page used by Core OTA
  *    ::::
- * 0x000F2FFF
+ * 0x000F2FFF  0x000F5FFF  0x000F5FFF
  ******************************************************************************
  *                                      Next 32k is overwritten by OTA
- * 0x000F3000                         - 4k Tasmota Quick Power Cycle counter (SETTINGS_LOCATION - CFG_ROTATES) - First four bytes only
- * 0x000F3FFF
- * 0x000F4000                         - 4k First Tasmota rotating settings page
+ * 0x000F3000  0x000F6000  0x000F6000 - 4k Tasmota Quick Power Cycle counter (SETTINGS_LOCATION - CFG_ROTATES) - First four bytes only
+ * 0x000F3FFF  0x000F6FFF  0x000F6FFF
+ * 0x000F4000  0x000F7000  0x000F7000 - 4k First Tasmota rotating settings page
  *    ::::
- * 0x000FA000                         - 4k Last Tasmota rotating settings page = Last page used by Core OTA (SETTINGS_LOCATION)
- * 0x000FAFFF
+ * 0x000FA000  0x000FD000  0x000FD000 - 4k Last Tasmota rotating settings page = Last page used by Core OTA (SETTINGS_LOCATION)
+ * 0x000FAFFF  0x000FDFFF  0x000FDFFF
  ******************************************************************************
- *             0x000FB000  0x000FB000 - 15k9 Not used
+ *             0x000FE000  0x000FE000 - 3k9 Not used
  *             0x000FEFF0  0x000FEFF0 - 4k1  Empty
  *             0x000FFFFF  0x000FFFFF
+ *
  * 0x000FB000  0x00100000  0x00100000 - 0k, 980k or 2980k Core FS start (LittleFS)
  * 0x000FB000  0x001FA000  0x003FA000 - 0k, 980k or 2980k Core FS end (LittleFS)
  *             0x001FAFFF  0x003FAFFF
@@ -189,7 +190,8 @@ extern "C" {
 #ifdef ESP8266
 
 extern "C" uint32_t _FS_start;      // 1M = 0x402fb000, 2M = 0x40300000, 4M = 0x40300000
-uint32_t SETTINGS_LOCATION = (((uint32_t)&_FS_start - 0x40200000) / SPI_FLASH_SEC_SIZE) -1;        // 0xFA, 0xFF or 0xFF
+const uint32_t FLASH_FS_START = (((uint32_t)&_FS_start - 0x40200000) / SPI_FLASH_SEC_SIZE);
+uint32_t SETTINGS_LOCATION = FLASH_FS_START -1;                                                    // 0xFA, 0x0FF or 0x0FF
 
 // From libraries/EEPROM/EEPROM.cpp EEPROMClass
 extern "C" uint32_t _EEPROM_start;  // 1M = 0x402FB000, 2M = 0x403FB000, 4M = 0x405FB000
@@ -205,14 +207,16 @@ uint32_t SETTINGS_LOCATION = FLASH_EEPROM_START;
 
 #endif  // ESP32
 
-const uint8_t CFG_ROTATES = 7;          // Number of flash sectors used (handles uploads)
+const uint8_t CFG_ROTATES = 7;      // Number of flash sectors used (handles uploads)
 
 uint32_t settings_location = FLASH_EEPROM_START;
 uint32_t settings_crc32 = 0;
 uint8_t *settings_buffer = nullptr;
 
 void SettingsInit(void) {
-  if (SETTINGS_LOCATION > 0xFA) { SETTINGS_LOCATION = 0xFA; }  // Skip empty partition part
+  if (SETTINGS_LOCATION > 0xFA) {
+    SETTINGS_LOCATION = 0xFD;       // Skip empty partition part and keep in first 1M
+  }
 }
 
 /********************************************************************************************/
@@ -534,6 +538,9 @@ void SettingsSave(uint8_t rotate)
     Settings.cfg_crc32 = GetSettingsCrc32();
 
 #ifdef ESP8266
+#ifdef USE_UFILESYS
+    TfsSaveFile(TASM_FILE_SETTINGS, (const uint8_t*)&Settings, sizeof(Settings));
+#endif  // USE_UFILESYS
     if (ESP.flashEraseSector(settings_location)) {
       ESP.flashWrite(settings_location * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(Settings));
     }
@@ -559,39 +566,66 @@ void SettingsSave(uint8_t rotate)
 
 void SettingsLoad(void) {
 #ifdef ESP8266
-  // Load configuration from eeprom or one of 7 slots below if first valid load does not stop_flash_rotate
+  // Load configuration from optional file and flash (eeprom and 7 additonal slots) if first valid load does not stop_flash_rotate
   // Activated with version 8.4.0.2 - Fails to read any config before version 6.6.0.11
   settings_location = 0;
   uint32_t save_flag = 0;
-  uint32_t flash_location = FLASH_EEPROM_START;
-  for (uint32_t i = 0; i < CFG_ROTATES; i++) {              // Read all config pages in search of valid and latest
-    if (1 == i) { flash_location = SETTINGS_LOCATION; }
-    ESP.flashRead(flash_location * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(Settings));
+  uint32_t max_slots = CFG_ROTATES +1;
+  uint32_t flash_location;
+  uint32_t slot = 1;
+#ifdef USE_UFILESYS
+  if (TfsLoadFile(TASM_FILE_SETTINGS, (uint8_t*)&Settings, sizeof(Settings))) {
+    flash_location = 1;
+    slot = 0;
+  }
+#endif  // USE_UFILESYS
+  while (slot <= max_slots) {                                  // Read all config pages in search of valid and latest
+    if (slot > 0) {
+      flash_location = (1 == slot) ? FLASH_EEPROM_START : (2 == slot) ? SETTINGS_LOCATION : flash_location -1;
+      ESP.flashRead(flash_location * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(Settings));
+    }
     if ((Settings.cfg_crc32 != 0xFFFFFFFF) && (Settings.cfg_crc32 != 0x00000000) && (Settings.cfg_crc32 == GetSettingsCrc32())) {
-      if (Settings.save_flag > save_flag) {                 // Find latest page based on incrementing save_flag
+      if (Settings.save_flag > save_flag) {                    // Find latest page based on incrementing save_flag
         save_flag = Settings.save_flag;
         settings_location = flash_location;
-        if (Settings.flag.stop_flash_rotate && (0 == i)) {  // Stop if only eeprom area should be used and it is valid
+        if (Settings.flag.stop_flash_rotate && (1 == slot)) {  // Stop if only eeprom area should be used and it is valid
           break;
         }
       }
     }
-    flash_location--;
+    slot++;
     delay(1);
   }
   if (settings_location > 0) {
-    ESP.flashRead(settings_location * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(Settings));
-    AddLog_P(LOG_LEVEL_NONE, PSTR(D_LOG_CONFIG D_LOADED_FROM_FLASH_AT " %X, " D_COUNT " %lu"), settings_location, Settings.save_flag);
+#ifdef USE_UFILESYS
+    if (1 == settings_location) {
+      TfsLoadFile(TASM_FILE_SETTINGS, (uint8_t*)&Settings, sizeof(Settings));
+      AddLog_P(LOG_LEVEL_NONE, PSTR(D_LOG_CONFIG "Loaded from File, " D_COUNT " %lu"), Settings.save_flag);
+    } else
+#endif  // USE_UFILESYS
+    {
+      ESP.flashRead(settings_location * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(Settings));
+      AddLog_P(LOG_LEVEL_NONE, PSTR(D_LOG_CONFIG D_LOADED_FROM_FLASH_AT " %X, " D_COUNT " %lu"), settings_location, Settings.save_flag);
+    }
   }
 #endif  // ESP8266
 #ifdef ESP32
   uint32_t source = SettingsRead(&Settings, sizeof(Settings));
+  if (source) { settings_location = 1; }
   AddLog_P(LOG_LEVEL_NONE, PSTR(D_LOG_CONFIG "Loaded from %s, " D_COUNT " %lu"), (source)?"File":"Nvm", Settings.save_flag);
 #endif  // ESP32
 
 #ifndef FIRMWARE_MINIMAL
   if ((0 == settings_location) || (Settings.cfg_holder != (uint16_t)CFG_HOLDER)) {  // Init defaults if cfg_holder differs from user settings in my_user_config.h
-    SettingsDefault();
+#ifdef USE_UFILESYS
+    if (TfsLoadFile(TASM_FILE_SETTINGS_LKG, (uint8_t*)&Settings, sizeof(Settings)) && (Settings.cfg_crc32 == GetSettingsCrc32())) {
+      settings_location = 1;
+      AddLog_P(LOG_LEVEL_NONE, PSTR(D_LOG_CONFIG "Loaded from LKG File, " D_COUNT " %lu"), Settings.save_flag);
+    } else
+#endif  // USE_UFILESYS
+    {
+      SettingsDefault();
+    }
   }
   settings_crc32 = GetSettingsCrc32();
 #endif  // FIRMWARE_MINIMAL
@@ -602,25 +636,6 @@ void SettingsLoad(void) {
 // Used in TLS - returns the timestamp of the last Flash settings write
 uint32_t CfgTime(void) {
   return Settings.cfg_timestamp;
-}
-
-void EspErase(uint32_t start_sector, uint32_t end_sector)
-{
-  bool serial_output = (LOG_LEVEL_DEBUG_MORE <= TasmotaGlobal.seriallog_level);
-  for (uint32_t sector = start_sector; sector < end_sector; sector++) {
-
-    bool result = ESP.flashEraseSector(sector);  // Arduino core - erases flash as seen by SDK
-//    bool result = !SPIEraseSector(sector);       // SDK - erases flash as seen by SDK
-//    bool result = EsptoolEraseSector(sector);    // Esptool - erases flash completely (slow)
-
-    if (serial_output) {
-      Serial.printf_P(PSTR(D_LOG_APPLICATION D_ERASED_SECTOR " %d %s\n"), sector, (result) ? D_OK : D_ERROR);
-      delay(10);
-    } else {
-      yield();
-    }
-    OsWatchLoop();
-  }
 }
 
 #ifdef ESP8266
@@ -635,54 +650,52 @@ void SettingsErase(uint8_t type)
 
     The default erase function is EspTool (EsptoolErase)
 
-    0 = Erase from program end until end of flash as seen by SDK
-    1 = Erase 16k SDK parameter area near end of flash as seen by SDK (0x0xFCxxx - 0x0xFFFFF) solving possible wifi errors
-    2 = Erase Tasmota parameter area (0x0xF3xxx - 0x0xFBFFF)
+    0 = Erase from program end until end of flash as seen by SDK including optional filesystem
+    1 = Erase 16k SDK parameter area near end of flash as seen by SDK (0x0XFCxxx - 0x0XFFFFF) solving possible wifi errors
+    2 = Erase from program end until end of flash as seen by SDK excluding optional filesystem
     3 = Erase Tasmota and SDK parameter area (0x0F3xxx - 0x0FFFFF)
     4 = Erase SDK parameter area used for wifi calibration (0x0FCxxx - 0x0FCFFF)
   */
 
 #ifndef FIRMWARE_MINIMAL
+                           // Reset 2 = Erase all flash from program end to end of physical flash
   uint32_t _sectorStart = (ESP.getSketchSize() / SPI_FLASH_SEC_SIZE) + 1;
   uint32_t _sectorEnd = ESP.getFlashChipRealSize() / SPI_FLASH_SEC_SIZE;  // Flash size as reported by hardware
-  if (1 == type) {
+  if (1 == type) {         // Reset 3 = SDK parameter area
     // source Esp.cpp and core_esp8266_phy.cpp
-    _sectorStart = (ESP.getFlashChipSize() / SPI_FLASH_SEC_SIZE) - 4;     // SDK parameter area
+    _sectorStart = (ESP.getFlashChipSize() / SPI_FLASH_SEC_SIZE) - 4;
   }
-  else if (2 == type) {
-    _sectorStart = SETTINGS_LOCATION - CFG_ROTATES;                       // Tasmota parameter area (0x0F3xxx - 0x0FAFFF)
-    _sectorEnd = SETTINGS_LOCATION;
-  }
-  else if (3 == type) {
-    _sectorStart = SETTINGS_LOCATION - CFG_ROTATES;                       // Tasmota and SDK parameter area (0x0F3xxx - 0x0FFFFF)
-    _sectorEnd = ESP.getFlashChipSize() / SPI_FLASH_SEC_SIZE;             // Flash size as seen by SDK
-  }
-  else if (4 == type) {
-//    _sectorStart = (ESP.getFlashChipSize() / SPI_FLASH_SEC_SIZE) - 4;     // SDK phy area and Core calibration sector (0x0FC000)
-    _sectorStart = FLASH_EEPROM_START +1;                                  // SDK phy area and Core calibration sector (0x0FC000)
-    _sectorEnd = _sectorStart +1;                                         // SDK end of phy area and Core calibration sector (0x0FCFFF)
-  }
+  else if (2 == type) {    // Reset 5, 6 = Erase all flash from program end to end of physical flash but skip filesystem
 /*
-  else if (5 == type) {
-    _sectorStart = (ESP.getFlashChipRealSize() / SPI_FLASH_SEC_SIZE) -4;  // SDK phy area and Core calibration sector (0xxFC000)
-    _sectorEnd = _sectorStart +1;                                         // SDK end of phy area and Core calibration sector (0xxFCFFF)
-  }
+#ifdef USE_UFILESYS
+    TfsDeleteFile(TASM_FILE_SETTINGS);  // Not needed as it is recreated by set defaults before restart
+#endif
 */
-  else {
-    return;
+    EsptoolErase(_sectorStart, FLASH_FS_START);
+    _sectorStart = FLASH_EEPROM_START;
+    _sectorEnd = ESP.getFlashChipSize() / SPI_FLASH_SEC_SIZE;  // Flash size as seen by SDK
+  }
+  else if (3 == type) {    // QPC Reached = QPC and Tasmota and SDK parameter area (0x0F3xxx - 0x0FFFFF)
+#ifdef USE_UFILESYS
+    TfsDeleteFile(TASM_FILE_SETTINGS);
+#endif
+    EsptoolErase(SETTINGS_LOCATION - CFG_ROTATES, SETTINGS_LOCATION +1);
+    _sectorStart = FLASH_EEPROM_START;
+    _sectorEnd = ESP.getFlashChipSize() / SPI_FLASH_SEC_SIZE;  // Flash size as seen by SDK
+  }
+  else if (4 == type) {    // WIFI_FORCE_RF_CAL_ERASE = SDK wifi calibration
+    _sectorStart = FLASH_EEPROM_START +1;                      // SDK phy area and Core calibration sector (0x0XFC000)
+    _sectorEnd = _sectorStart +1;                              // SDK end of phy area and Core calibration sector (0x0XFCFFF)
   }
 
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_ERASE " from 0x%08X to 0x%08X"), _sectorStart * SPI_FLASH_SEC_SIZE, (_sectorEnd * SPI_FLASH_SEC_SIZE) -1);
-
-//  EspErase(_sectorStart, _sectorEnd);                                     // Arduino core and SDK - erases flash as seen by SDK
-  EsptoolErase(_sectorStart, _sectorEnd);                                 // Esptool - erases flash completely
+  EsptoolErase(_sectorStart, _sectorEnd);                      // Esptool - erases flash completely
 #endif  // FIRMWARE_MINIMAL
 }
 #endif  // ESP8266
 
 void SettingsSdkErase(void)
 {
-  WiFi.disconnect(false);    // Delete SDK wifi config
+  WiFi.disconnect(false);  // Delete SDK wifi config
   SettingsErase(1);
   delay(1000);
 }

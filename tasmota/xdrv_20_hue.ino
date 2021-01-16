@@ -175,7 +175,7 @@ String HueBridgeId(void)
   String temp = WiFi.macAddress();
   temp.replace(":", "");
   String bridgeid = temp.substring(0, 6);
-  bridgeid += "FFFE";
+  bridgeid += F("FFFE");
   bridgeid += temp.substring(6);
   return bridgeid;  // 5CCF7FFFFE139F3D
 }
@@ -225,8 +225,6 @@ void HueRespondToMSearch(void)
   // Do not use AddLog_P( here (interrupt routine) if syslog or mqttlog is enabled. UDP/TCP will force exception 9
   AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPNP D_HUE " %s " D_TO " %s:%d"),
     message, udp_remote_ip.toString().c_str(), udp_remote_port);
-
-  udp_response_mutex = false;
 }
 
 /*********************************************************************************************\

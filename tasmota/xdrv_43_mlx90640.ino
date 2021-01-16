@@ -418,12 +418,12 @@ void MLX90640HandleWebGuiResponse(void){
     if(_line==0){_buf[0]=1000+MLX90640.Ta;} //ambient temperature modulation hack
     else{_buf[0]=(float)_line;}
     memcpy((char*)&_buf[1],(char*)&MLX90640.To[_line*64],64*4);
-    Webserver->send(200,PSTR("application/octet-stream"),(const char*)&_buf,65*4);
+    Webserver->send_P(200,PSTR("application/octet-stream"),(const char*)&_buf,65*4);
     return;
     }
   WebGetArg("up", tmp, sizeof(tmp));                  // update POI to browser
   if (strlen(tmp)==1) {
-    Webserver->send(200,PSTR("application/octet-stream"),(const char*)&MLX90640.pois,MLX90640_POI_NUM*2);
+    Webserver->send_P(200,PSTR("application/octet-stream"),(const char*)&MLX90640.pois,MLX90640_POI_NUM*2);
     return;
     }
   else if (strlen(tmp)>2) {                           // receive updated POI from browser
