@@ -509,8 +509,6 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   { Zuint16,  Cx0300, 0x003A,  Z_(ColorPointBX),         Cm1, 0 },
   { Zuint16,  Cx0300, 0x003B,  Z_(ColorPointBY),         Cm1, 0 },
   { Zuint8,   Cx0300, 0x003C,  Z_(ColorPointBIntensity), Cm1, 0 },
-  { Zoctstr,  Cx0300, 0xFFF0,  Z_(RGB),                  Cm1, 0 },    // synthetic argument to show color as RGB (converted from HueSat or XY)
-  { Zoctstr,  Cx0300, 0xFFF1,  Z_(RGBb),                 Cm1, 0 },    // synthetic argument to show color as RGB including last known brightness
 
   // Illuminance Measurement cluster
   { Zuint16,  Cx0400, 0x0000,  Z_(Illuminance),          Cm1 + Z_EXPORT_DATA, Z_MAPPING(Z_Data_PIR, illuminance) }, // Illuminance (in Lux)
@@ -1340,45 +1338,27 @@ void ZCLFrame::computeSyntheticAttributes(Z_attribute_list& attr_list) {
       case 0x03000003:    // X
       case 0x03000004:    // Y
         {                 // generate synthetic RGB
-          const Z_attribute * attr_rgb = attr_list.findAttribute(0x0300, 0xFFF0);
+          const Z_attribute * attr_rgb = attr_list.findAttribute(PSTR("RGB"));
           if (attr_rgb == nullptr) {      // make sure we didn't already computed it
-            uint8_t r,g,b;
-            bool    is_rgb = false;
+            uint8_t brightness = 255;
+            if (device.valid()) {
+              const Z_Data_Light & light = device.data.find<Z_Data_Light>(_srcendpoint);
+              if ((&light != nullptr) && (light.validDimmer())) {
+                // Dimmer has a valid value
+                brightness = changeUIntScale(light.getDimmer(), 0, 254, 0, 255);   // range is 0..255
+              }
+            }
+            
             const Z_attribute * attr_hue = attr_list.findAttribute(0x0300, 0x0000);
             const Z_attribute * attr_sat = attr_list.findAttribute(0x0300, 0x0001);
             const Z_attribute * attr_x   = attr_list.findAttribute(0x0300, 0x0003);
             const Z_attribute * attr_y   = attr_list.findAttribute(0x0300, 0x0004);
             if (attr_hue && attr_sat) {
               uint8_t sat = changeUIntScale(attr_sat->getUInt(), 0, 254, 0, 255);
-              HsToRgb(attr_hue->getUInt(), sat, &r, &g, &b);
-              is_rgb = true;
-            } else if (attr_x && attr_y) {              
-              XyToRgb(attr_x->getUInt() / 65535.0f, attr_y->getUInt() / 65535.0f, &r, &g, &b);
-              is_rgb = true;
-            }
-            if (is_rgb) {
-              SBuffer rgb(3);
-              rgb.add8(r);
-              rgb.add8(g);
-              rgb.add8(b);
-              attr_list.addAttribute(0x0300, 0xFFF0).setBuf(rgb, 0, 3);
-
-              // do we know ZbData for this bulb
-              uint8_t brightness = 255;
-              if (device.valid()) {
-                const Z_Data_Light & light = device.data.find<Z_Data_Light>(_srcendpoint);
-                if (light.validDimmer()) {
-                  // Dimmer has a valid value
-                  brightness = changeUIntScale(light.getDimmer(), 0, 254, 0, 255);   // range is 0..255
-                }
-              }
-              r = changeUIntScale(r, 0, 255, 0, brightness);
-              g = changeUIntScale(g, 0, 255, 0, brightness);
-              b = changeUIntScale(b, 0, 255, 0, brightness);
-              rgb.set8(0, r);
-              rgb.set8(1, g);
-              rgb.set8(2, b);
-              attr_list.addAttribute(0x0300, 0xFFF1).setBuf(rgb, 0, 3);
+              uint16_t hue = changeUIntScale(attr_hue->getUInt(), 0, 254, 0, 360);
+              Z_Data_Light::toRGBAttributesHSB(attr_list, hue, sat, brightness);
+            } else if (attr_x && attr_y) {
+              Z_Data_Light::toRGBAttributesXYB(attr_list, attr_x->getUInt(), attr_y->getUInt(), brightness);
             }
           }
         }
@@ -2229,6 +2209,58 @@ void Z_Data::toAttributes(Z_attribute_list & attr_list) const {
         attr.setFloat(fval);
       }
     }
+  }
+}
+
+// Add both attributes RGB and RGBb based on the inputs
+// r,g,b are expected to be 100% brightness
+// brightness is expected 0..255
+void Z_Data_Light::toRGBAttributesRGBb(Z_attribute_list & attr_list, uint8_t r, uint8_t g, uint8_t b, uint8_t brightness) {
+  SBuffer rgb(3);
+  rgb.add8(r);
+  rgb.add8(g);
+  rgb.add8(b);
+  attr_list.addAttribute(PSTR("RGB"), true).setBuf(rgb, 0, 3);
+  // now blend with brightness
+  r = changeUIntScale(r, 0, 255, 0, brightness);
+  g = changeUIntScale(g, 0, 255, 0, brightness);
+  b = changeUIntScale(b, 0, 255, 0, brightness);
+  rgb.set8(0, r);
+  rgb.set8(1, g);
+  rgb.set8(2, b);
+  attr_list.addAttribute(PSTR("RGBb"), true).setBuf(rgb, 0, 3);
+}
+
+// Convert from Hue/Sat + Brightness to RGB+RGBb
+// sat: 0..255
+// hue: 0..359
+// brightness: 0..255
+void Z_Data_Light::toRGBAttributesHSB(Z_attribute_list & attr_list, uint16_t hue, uint8_t sat, uint8_t brightness) {
+  uint8_t r,g,b;
+  HsToRgb(hue, sat, &r, &g, &b);
+  Z_Data_Light::toRGBAttributesRGBb(attr_list, r, g, b, brightness);
+}
+
+// Convert X/Y to RGB and RGBb
+// X: 0..65535
+// Y: 0..65535
+// brightness: 0..255
+void Z_Data_Light::toRGBAttributesXYB(Z_attribute_list & attr_list, uint16_t x, uint16_t y, uint8_t brightness) {
+  uint8_t r,g,b;
+  XyToRgb(x / 65535.0f, y / 65535.0f, &r, &g, &b);
+  Z_Data_Light::toRGBAttributesRGBb(attr_list, r, g, b, brightness);
+}
+
+void Z_Data_Light::toRGBAttributes(Z_attribute_list & attr_list) const {
+  uint8_t brightness = 255;
+  if (validDimmer()) {
+    brightness = changeUIntScale(getDimmer(), 0, 254, 0, 255);   // range is 0..255
+  }
+  if (validHue() && validSat()) {
+    uint8_t sat = changeUIntScale(getSat(), 0, 254, 0, 255);
+    Z_Data_Light::toRGBAttributesHSB(attr_list, getHue(), sat, brightness);
+  } else if (validX() && validY()) {
+    Z_Data_Light::toRGBAttributesXYB(attr_list, getX(), getY(), brightness);
   }
 }
 
