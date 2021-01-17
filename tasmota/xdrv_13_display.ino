@@ -41,7 +41,7 @@ VButton *buttons[MAXBUTTONS];
 uint16_t fg_color = 1;
 uint16_t bg_color = 0;
 uint8_t color_type = COLOR_BW;
-uint8_t auto_draw=1;
+uint8_t auto_draw = 1;
 
 const uint8_t DISPLAY_MAX_DRIVERS = 16;        // Max number of display drivers/models supported by xdsp_interface.ino
 const uint8_t DISPLAY_MAX_COLS = 64;           // Max number of columns allowed with command DisplayCols
@@ -1284,6 +1284,8 @@ void DisplayInitDriver(void)
   if (renderer) {
     renderer->setTextFont(Settings.display_font);
     renderer->setTextSize(Settings.display_size);
+    // force opaque mode
+    renderer->setDrawMode(0);
   }
 
 
