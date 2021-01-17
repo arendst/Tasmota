@@ -1,7 +1,7 @@
 /*
   xsns_52_ibeacon.ino - Support for HM17 BLE Module + ibeacon reader on Tasmota
 
-  Copyright (C) 2021  Gerhard Mutz and Theo Arends
+  Copyright (C) 2020  Gerhard Mutz and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -17,9 +17,11 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-// for testing of BLE_ESP32, we remove this completely, and instead add the modified xsns_52_ibeacon_BLE_ESP32.ino
+// for testing of BLE_ESP32, we remove xsns_52_ibeacon.ino completely, and instead add this modified xsns_52_ibeacon_BLE_ESP32.ino
 // in the future this may be more fine-grained, e.g. to allow hm17 for this, and BLE-ESP32 for other
-#ifndef USE_BLE_ESP32
+#ifdef USE_BLE_ESP32
+
+#ifdef USE_IBEACON_ESP32
 
 #ifdef USE_IBEACON
 
@@ -32,69 +34,61 @@
 
 // should be in Settings
 #if 1
-uint8_t ib_upd_interval,ib_tout_interval;
-#define IB_UPDATE_TIME ib_upd_interval
-#define IB_TIMEOUT_TIME ib_tout_interval
+  uint8_t ib_upd_interval,ib_tout_interval;
+  #define IB_UPDATE_TIME ib_upd_interval
+  #define IB_TIMEOUT_TIME ib_tout_interval
 #else
-#undef IB_UPDATE_TIME
-#undef IB_TIMEOUT_TIME
-#define IB_UPDATE_TIME Settings.ib_upd_interval
-#define IB_TIMEOUT_TIME Settings.ib_tout_interval
+  #undef IB_UPDATE_TIME
+  #undef IB_TIMEOUT_TIME
+  #define IB_UPDATE_TIME Settings.ib_upd_interval
+  #define IB_TIMEOUT_TIME Settings.ib_tout_interval
 #endif
 
 char ib_mac[14];
 
-#ifdef USE_IBEACON_ESP32
+  
+  struct {
+    union {
+      struct {
+        uint32_t init:1;
+      };
+      uint32_t all = 0;
+    } mode;
+  } ESP32BLE;
 
-struct {
-  union {
-    struct {
-      uint32_t init:1;
-      uint32_t runningScan:1;
-    };
-    uint32_t all = 0;
-  } mode;
-} ESP32BLE;
+  void *beaconmutex = nullptr;
 
-#include <NimBLEDevice.h>
-#include <NimBLEAdvertisedDevice.h>
-#include "NimBLEEddystoneURL.h"
-#include "NimBLEEddystoneTLM.h"
-#include "NimBLEBeacon.h"
-
-#define ENDIAN_CHANGE_U16(x) ((((x)&0xFF00) >> 8) + (((x)&0xFF) << 8))
-
-BLEScan *ESP32BLEScan;
+  #define ENDIAN_CHANGE_U16(x) ((((x)&0xFF00) >> 8) + (((x)&0xFF) << 8))
 
 #else
 
-#include <TasmotaSerial.h>
+  #include <TasmotaSerial.h>
 
-#define TMSBSIZ52 512
+  #define TMSBSIZ52 512
 
-#define HM17_BAUDRATE 9600
+  #define HM17_BAUDRATE 9600
 
-#define IBEACON_DEBUG
+  #define IBEACON_DEBUG
 
-// use this for Version 110
-#define HM17_V110
+  // use this for Version 110
+  #define HM17_V110
 
-TasmotaSerial *IBEACON_Serial = nullptr;
+  TasmotaSerial *IBEACON_Serial = nullptr;
 
-uint8_t hm17_found,hm17_cmd,hm17_flag;
+  uint8_t hm17_found,hm17_cmd,hm17_flag;
 
-#ifdef IBEACON_DEBUG
-uint8_t hm17_debug=0;
-#endif
+  #ifdef IBEACON_DEBUG
+  uint8_t hm17_debug=0;
+  #endif
 
-// 78 is max serial response
-#define HM17_BSIZ 128
-char hm17_sbuffer[HM17_BSIZ];
-uint8_t hm17_sindex,hm17_result,hm17_scanning,hm17_connecting;
-uint32_t hm17_lastms;
+  // 78 is max serial response
+  #define HM17_BSIZ 128
+  char hm17_sbuffer[HM17_BSIZ];
+  uint8_t hm17_sindex,hm17_result,hm17_scanning,hm17_connecting;
+  uint32_t hm17_lastms;
 
-enum {HM17_TEST,HM17_ROLE,HM17_IMME,HM17_DISI,HM17_IBEA,HM17_SCAN,HM17_DISC,HM17_RESET,HM17_RENEW,HM17_CON};
-#define HM17_SUCESS 99
+  enum {HM17_TEST,HM17_ROLE,HM17_IMME,HM17_DISI,HM17_IBEA,HM17_SCAN,HM17_DISC,HM17_RESET,HM17_RENEW,HM17_CON};
+  #define HM17_SUCESS 99
 
 #endif
 
@@ -155,167 +149,95 @@ void DumpHex(const unsigned char * in, size_t insz, char * out)
   }
 }
 
-
-class ESP32BLEScanCallback : public BLEAdvertisedDeviceCallbacks
+int advertismentCallback(BLE_ESP32::ble_advertisment_t *pStruct)
 {
-    void onResult(BLEAdvertisedDevice *advertisedDevice)
+  struct IBEACON ib;
+  BLEAdvertisedDevice *advertisedDevice = pStruct->advertisedDevice;
+
+  char sRSSI[6];
+  itoa(pStruct->RSSI,sRSSI,10);
+  const uint8_t *MAC = pStruct->addr;
+
+  int manufacturerDataLen = 0;
+  std::string data;
+  if (advertisedDevice->haveManufacturerData()){
+    data = advertisedDevice->getManufacturerData();
+    manufacturerDataLen = data.length();
+  }
+  if (manufacturerDataLen){
+    const uint8_t *manufacturerData = (const uint8_t *)data.data();
+    DumpHex(manufacturerData, 2, ib.FACID);
+    if (manufacturerDataLen == 25 && 
+        manufacturerData[0] == 0x4C && 
+        manufacturerData[1] == 0x00)
     {
-      struct IBEACON ib;
-      ESP32BLEScan->erase(advertisedDevice->getAddress());
-      if (advertisedDevice->haveManufacturerData() == true) {
-        std::string strManufacturerData = advertisedDevice->getManufacturerData();
+      BLEBeacon oBeacon = BLEBeacon();
+      oBeacon.setData(std::string((char *)manufacturerData, manufacturerDataLen));
+      uint8_t UUID[16];
+      memcpy(UUID,oBeacon.getProximityUUID().getNative()->u128.value,16);
+      ESP32BLE_ReverseStr(UUID,16);
 
-        uint8_t cManufacturerData[100];
-        strManufacturerData.copy((char *)cManufacturerData, strManufacturerData.length(), 0);
+      uint16_t    Major = ENDIAN_CHANGE_U16(oBeacon.getMajor());
+      uint16_t    Minor = ENDIAN_CHANGE_U16(oBeacon.getMinor());
+      uint8_t     PWR   = oBeacon.getSignalPower();
 
-        int16_t     RSSI  = advertisedDevice->getRSSI();
-        char sRSSI[6];
-        itoa(RSSI,sRSSI,10);
+      DumpHex((const unsigned char*)&UUID,16,ib.UID);
+      DumpHex((const unsigned char*)&Major,2,ib.MAJOR);
+      DumpHex((const unsigned char*)&Minor,2,ib.MINOR);
+      DumpHex((const unsigned char*)&PWR,1,ib.PWR);
+      DumpHex((const unsigned char*)MAC,6,ib.MAC);
+      memcpy(ib.RSSI,sRSSI,4);
+      memset(ib.NAME,0x0,16);
 
-        DumpHex(cManufacturerData,2,ib.FACID);
-
-        uint8_t MAC[6];
-        memcpy(MAC,advertisedDevice->getAddress().getNative(),6);
-        ESP32BLE_ReverseStr(MAC,6);
-
-        if (strManufacturerData.length() == 25 && cManufacturerData[0] == 0x4C && cManufacturerData[1] == 0x00)
-        {
-          BLEBeacon oBeacon = BLEBeacon();
-          oBeacon.setData(strManufacturerData);
-
-          uint8_t UUID[16];
-	  memcpy(UUID,oBeacon.getProximityUUID().getNative()->u128.value,16);
-          ESP32BLE_ReverseStr(UUID,16);
-
-	  uint16_t    Major = ENDIAN_CHANGE_U16(oBeacon.getMajor());
-          uint16_t    Minor = ENDIAN_CHANGE_U16(oBeacon.getMinor());
-
-          uint8_t     PWR   = oBeacon.getSignalPower();
-
-          AddLog_P(LOG_LEVEL_DEBUG, PSTR("%s: MAC: %s Major: %d Minor: %d UUID: %s Power: %d RSSI: %d"),
-            "BLE",
-            advertisedDevice->getAddress().toString().c_str(),
-            Major, Minor,
-            oBeacon.getProximityUUID().toString().c_str(),
-            PWR, RSSI);
-
-          DumpHex((const unsigned char*)&UUID,16,ib.UID);
-          DumpHex((const unsigned char*)&Major,2,ib.MAJOR);
-          DumpHex((const unsigned char*)&Minor,2,ib.MINOR);
-          DumpHex((const unsigned char*)&PWR,1,ib.PWR);
-          DumpHex((const unsigned char*)&MAC,6,ib.MAC);
-          memcpy(ib.RSSI,sRSSI,4);
-          memset(ib.NAME,0x0,16);
-
-          ibeacon_add(&ib);
-
-        } else {
-
-          memset(ib.UID,'0',32);
-          memset(ib.MAJOR,'0',4);
-          memset(ib.MINOR,'0',4);
-          memset(ib.PWR,'0',2);
-          DumpHex((const unsigned char*)&MAC,6,ib.MAC);
-          memcpy(ib.RSSI,sRSSI,4);
-
-          if (advertisedDevice->haveName()) {
-            strncpy(ib.NAME,advertisedDevice->getName().c_str(),16);
-          } else {
-            memset(ib.NAME,0x0,16);
-          }
-
-          ibeacon_add(&ib);
-        }
+      // if we added it
+      if (ibeacon_add(&ib) == 1){
+        AddLog_P(LOG_LEVEL_DEBUG, PSTR("%s: MAC: %s Major: %d Minor: %d UUID: %s Power: %d RSSI: %d"),
+          "iBeacon",
+          advertisedDevice->getAddress().toString().c_str(),
+          Major, Minor,
+          oBeacon.getProximityUUID().toString().c_str(),
+          PWR, pStruct->RSSI);
       }
+      return 0;
     }
-};
-
-void ESP32StartScanTask(){
-    ESP32BLE.mode.runningScan = 1;
-    xTaskCreatePinnedToCore(
-    ESP32ScanTask,    /* Function to implement the task */
-    "ESP32ScanTask",  /* Name of the task */
-    2048,             /* Stack size in words */
-    NULL,             /* Task input parameter */
-    0,                /* Priority of the task */
-    NULL,             /* Task handle. */
-    0);               /* Core where the task should run */
-    AddLog_P(LOG_LEVEL_DEBUG,PSTR("%s: Start scanning"),"BLE");
-}
-
-void ESP32scanEndedCB(NimBLEScanResults results);
-
-void ESP32ScanTask(void *pvParameters){
-  if (ESP32BLEScan == nullptr) ESP32BLEScan = NimBLEDevice::getScan();
-  ESP32BLEScan->setInterval(70);
-  ESP32BLEScan->setWindow(50);
-  ESP32BLEScan->setAdvertisedDeviceCallbacks(new ESP32BLEScanCallback());
-  ESP32BLEScan->setActiveScan(false);
-  ESP32BLEScan->setDuplicateFilter(false);
-
-  ESP32BLEScan->start(0, ESP32scanEndedCB, false);
-
-  for (;;) {
-    vTaskDelay(10000/ portTICK_PERIOD_MS);
-    ESP32BLEScan->clearResults();
-    AddLog_P(LOG_LEVEL_DEBUG,PSTR("%s: Clear scanning results"),"BLE");
   }
 
-}
+  // no manufacturer data, or not recognised.
+  // still have an RSSi....
+  memset(ib.UID,'0',32);
+  memset(ib.MAJOR,'0',4);
+  memset(ib.MINOR,'0',4);
+  memset(ib.PWR,'0',2);
+  DumpHex((const unsigned char*)MAC,6,ib.MAC);
+  memcpy(ib.RSSI,sRSSI,4);
 
-void ESP32scanEndedCB(NimBLEScanResults results) {
-  ESP32BLE.mode.runningScan = 0;
-  AddLog_P(LOG_LEVEL_DEBUG,PSTR("%s: Stop scanning"),"BLE");
-}
+  if (advertisedDevice->haveName()) {
+    strncpy(ib.NAME,advertisedDevice->getName().c_str(),16);
+  } else {
+    memset(ib.NAME,0x0,16);
+  }
 
-void ESP32StopScanTask() {
-  ESP32BLEScan->stop();
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR("%s: Pausing scanner task"),"BLE");
-}
-
-void ESP32ResumeScanTask() {
-  ESP32BLE.mode.runningScan = 1;
-  ESP32BLEScan->start(0, ESP32scanEndedCB, false);
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR("%s: Resumed scanner task"),"BLE");
+  ibeacon_add(&ib);
+  return 0;
 }
 
 void ESP32Init() {
 
-  if (TasmotaGlobal.global_state.wifi_down) { return; }
-
-  if (WiFi.getSleep() == false) {
-    if (0 == Settings.flag3.sleep_normal) {
-      AddLog_P(LOG_LEVEL_DEBUG,PSTR("%s: About to restart to put WiFi modem in sleep mode"),"BLE");
-      Settings.flag3.sleep_normal = 1;  // SetOption60 - Enable normal sleep instead of dynamic sleep
-      TasmotaGlobal.restart_flag = 2;
-    }
-    return;
-  }
-
-  AddLog_P(LOG_LEVEL_DEBUG,PSTR("%s: Initializing Blueetooth..."),"BLE");
-
   if (!ESP32BLE.mode.init) {
-    NimBLEDevice::init("");
-
     ESP32BLE.mode.init = 1;
-
-    ESP32StartScanTask(); // Let's get started !!
-
     IB_UPDATE_TIME=IB_UPDATE_TIME_INTERVAL;
     IB_TIMEOUT_TIME=IB_TIMEOUT_INTERVAL;
   }
-
 }
+
 
 #endif
 
 void IBEACON_Init() {
 
+
 #ifdef USE_IBEACON_ESP32
-
-  ESP32BLE.mode.init = false;
-  ESP32BLE.mode.runningScan = false;
-
+  BLE_ESP32::registerForAdvertismentCallbacks((const char *)"iBeacon", advertismentCallback);
 #else
 
   hm17_found=0;
@@ -342,29 +264,27 @@ void IBEACON_Init() {
 #ifdef USE_IBEACON_ESP32
 
 void esp32_every_second(void) {
-
-  if (!ESP32BLE.mode.init) { return; }
-
-  if (TasmotaGlobal.ota_state_flag) {
-    if (ESP32BLE.mode.runningScan) {
-      AddLog_P(LOG_LEVEL_DEBUG,PSTR("%s: Upgrade procedure started"),"BLE");
-      ESP32StopScanTask();
-    }
-  } else {
-    if (!ESP32BLE.mode.runningScan) {
-      AddLog_P(LOG_LEVEL_DEBUG,PSTR("%s: Resuming scan"),"BLE");
-      ESP32ResumeScanTask();
-    }
-  }
-
-  for (uint32_t cnt=0;cnt<MAX_IBEACONS;cnt++) {
+  for (uint32_t cnt=0; cnt < MAX_IBEACONS; cnt++) {
     if (ibeacons[cnt].FLAGS) {
-      ibeacons[cnt].TIME++;
-      ibeacons[cnt].REPTIME++;
-      if (ibeacons[cnt].TIME>IB_TIMEOUT_TIME) {
+      uint8_t mac[6];
+      char tmp[13];
+      memcpy(tmp, ibeacons[cnt].MAC, 12);
+      tmp[12] = 0;
+      BLE_ESP32::fromHex(mac, tmp, 6);
+      // use global device timeouts from BLE_ESP32.
+
+      uint32_t ageS = BLE_ESP32::devicePresent(mac);
+
+      // if device not present at all.
+      if (!ageS){
+        //AddLog_P(LOG_LEVEL_INFO, PSTR("iBeacon no device %s %02x%02x%02x%02x%02x%02x"),tmp, mac[0],mac[1], mac[2],mac[3], mac[4],mac[5]);
         ibeacons[cnt].FLAGS=0;
         ibeacon_mqtt(ibeacons[cnt].MAC,"0000",ibeacons[cnt].UID,ibeacons[cnt].MAJOR,ibeacons[cnt].MINOR,ibeacons[cnt].NAME);
+      } else {
+        //AddLog_P(LOG_LEVEL_INFO, PSTR("iBeacon device %s %02x%02x%02x%02x%02x%02x"),tmp, mac[0],mac[1], mac[2],mac[3], mac[4],mac[5]);
       }
+      //ibeacons[cnt].TIME++;
+      ibeacons[cnt].REPTIME++; // counter used to send mqtt for a dev regularly
     }
   }
 }
@@ -463,6 +383,9 @@ uint32_t ibeacon_add(struct IBEACON *ib) {
     return 0;
   }
 
+  // don't bother protecting this. 
+  //TasAutoMutex localmutex(&beaconmutex, "iBeacAdd");
+
   // keyfob starts with ffff, ibeacon has valid facid
   if (!strncmp(ib->MAC,"FFFF",4) || strncmp(ib->FACID,"00000000",8)) {
     for (uint32_t cnt=0;cnt<MAX_IBEACONS;cnt++) {
@@ -478,7 +401,7 @@ uint32_t ibeacon_add(struct IBEACON *ib) {
               ibeacons[cnt].REPORTED = 0;
             }
 #endif
-            return 1;
+            return 2;
           }
         } else {
           if (!strncmp(ibeacons[cnt].UID,ib->UID,32)) {
@@ -491,7 +414,7 @@ uint32_t ibeacon_add(struct IBEACON *ib) {
               ibeacons[cnt].REPORTED = 0;
             }
 #endif
-            return 1;
+            return 2;
           }
         }
       }
@@ -720,7 +643,7 @@ hm17_v110:
 void IBEACON_loop() {
 
 #ifdef USE_IBEACON_ESP32
-
+  //TasAutoMutex localmutex(&beaconmutex, "iBeacLoop");
   for (uint32_t cnt=0;cnt<MAX_IBEACONS;cnt++) {
     if (ibeacons[cnt].FLAGS && ! ibeacons[cnt].REPORTED) {
       ibeacon_mqtt(ibeacons[cnt].MAC,ibeacons[cnt].RSSI,ibeacons[cnt].UID,ibeacons[cnt].MAJOR,ibeacons[cnt].MINOR,ibeacons[cnt].NAME);
@@ -732,7 +655,7 @@ void IBEACON_loop() {
 
   if (!IBEACON_Serial) return;
 
-uint32_t difftime=millis()-hm17_lastms;
+  uint32_t difftime=millis()-hm17_lastms;
 
   while (IBEACON_Serial->available()) {
     hm17_lastms=millis();
@@ -759,24 +682,28 @@ uint32_t difftime=millis()-hm17_lastms;
 }
 
 #ifdef USE_WEBSERVER
+const char HTTP_IBEACON_HL[] PROGMEM = "{s}<hr>{m}<hr>{e}";
 const char HTTP_IBEACON_mac[] PROGMEM =
- "{s}IBEACON-MAC : %s" " - RSSI : %s" "{m}{e}";
+ "{s}IBEACON-MAC : %s" " {m} RSSI : %s" "{e}";
 const char HTTP_IBEACON_uid[] PROGMEM =
- "{s}IBEACON-UID : %s" " - RSSI : %s" "{m}{e}";
+ "{s}IBEACON-UID : %s" " {m} RSSI : %s" "{e}";
 #ifdef USE_IBEACON_ESP32
 const char HTTP_IBEACON_name[] PROGMEM =
- "{s}IBEACON-NAME : %s (%s)" " - RSSI : %s" "{m}{e}";
+ "{s}IBEACON-NAME : %s (%s)" " {m} RSSI : %s" "{e}";
 #endif
 void IBEACON_Show(void) {
-char mac[14];
-char rssi[6];
-char uid[34];
+  char mac[14];
+  char rssi[6];
+  char uid[34];
 #ifdef USE_IBEACON_ESP32
-char name[18];
+  char name[18];
+  //TasAutoMutex localmutex(&beaconmutex, "iBeacShow");
 #endif
+  int total = 0;
 
   for (uint32_t cnt=0;cnt<MAX_IBEACONS;cnt++) {
     if (ibeacons[cnt].FLAGS) {
+      total++;
       memcpy(mac,ibeacons[cnt].MAC,12);
       mac[12]=0;
       memcpy(rssi,ibeacons[cnt].RSSI,4);
@@ -802,7 +729,9 @@ char name[18];
       }
     }
   }
-
+  // add a break line after us, if we showed anything.
+  if (total) WSContentSend_PD(HTTP_IBEACON_HL);
+  
 }
 #endif  // USE_WEBSERVER
 
