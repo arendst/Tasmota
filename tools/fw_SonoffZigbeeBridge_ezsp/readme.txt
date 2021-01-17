@@ -13,3 +13,5 @@ Silicon Labs do not currently have a consolidated list of changes by EmberZNet S
 The largest change was between EZSP v4 (first added in EmberZNet 4.7.2 SDK) and EZSP v5 that was added in EmberZNet 5.9.0 SDK which requires the Legacy Frame ID 0xFF. The change from EZSP v5 to EZSP v6 was done in EmberZNet 6.0.0 SDK. The change from EZSP v6 to EZSP v7 was in EmberZNet 6.4.0 SDK. EmberZNet 6.7.0 SDK added EZSP v8 (and Secure EZSP Protocol Version 2).
 
 Perhaps more important to know is that EZSP v5, v6 and v7 (EmberZNet 6.6.x.x) use the same framing format, but EmberZNet 6.7.x.x/EZSP v8 introduced new framing format and expanded command id field from 8 bits to 16 bits.
+
+The Silabs comunity have making one collection of knownd releses in [Reference Collection of Ember ZNet and AFV2 Release Notes](https://www.silabs.com/community/wireless/zigbee-and-thread/knowledge-base.entry.html/2017/12/27/reference_collection-PD7Q) that looks being updated with new releses.
