@@ -509,6 +509,7 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   { Zuint16,  Cx0300, 0x003A,  Z_(ColorPointBX),         Cm1, 0 },
   { Zuint16,  Cx0300, 0x003B,  Z_(ColorPointBY),         Cm1, 0 },
   { Zuint8,   Cx0300, 0x003C,  Z_(ColorPointBIntensity), Cm1, 0 },
+  { Zoctstr,  Cx0300, 0xFFF0,  Z_(RGB),                  Cm1, 0 },    // synthetic argument to show color as RGB (converted from HueSat or XY)
 
   // Illuminance Measurement cluster
   { Zuint16,  Cx0400, 0x0000,  Z_(Illuminance),          Cm1 + Z_EXPORT_DATA, Z_MAPPING(Z_Data_PIR, illuminance) }, // Illuminance (in Lux)
@@ -1332,7 +1333,38 @@ void ZCLFrame::computeSyntheticAttributes(Z_attribute_list& attr_list) {
           }
         }
         break;
-      case 0x04030000:    // Pressure
+      case 0x03000000:    // Hue
+      case 0x03000001:    // Sat
+      case 0x03000003:    // X
+      case 0x03000004:    // Y
+        {                 // generate synthetic RGB
+          const Z_attribute * attr_rgb = attr_list.findAttribute(0x0300, 0xFFF0);
+          if (attr_rgb == nullptr) {      // make sure we didn't already computed it
+            uint8_t r,g,b;
+            bool    is_rgb = false;
+            const Z_attribute * attr_hue = attr_list.findAttribute(0x0300, 0x0000);
+            const Z_attribute * attr_sat = attr_list.findAttribute(0x0300, 0x0001);
+            const Z_attribute * attr_x   = attr_list.findAttribute(0x0300, 0x0003);
+            const Z_attribute * attr_y   = attr_list.findAttribute(0x0300, 0x0004);
+            if (attr_hue && attr_sat) {
+              uint8_t sat = changeUIntScale(attr_sat->getUInt(), 0, 254, 0, 255);
+              HsToRgb(attr_hue->getUInt(), sat, &r, &g, &b);
+              is_rgb = true;
+            } else if (attr_x && attr_y) {              
+              XyToRgb(attr_x->getUInt() / 65535.0f, attr_y->getUInt() / 65535.0f, &r, &g, &b);
+              is_rgb = true;
+            }
+            if (is_rgb) {
+              SBuffer rgb(3);
+              rgb.add8(r);
+              rgb.add8(g);
+              rgb.add8(b);
+              attr_list.addAttribute(0x0300, 0xFFF0).setBuf(rgb, 0, 3);
+            }
+          }
+        }
+        break;
+      case 0x04030000:    // SeaPressure
         {
           int16_t pressure = attr.getInt();
           int16_t pressure_sealevel = (pressure / FastPrecisePow(1.0 - ((float)Settings.altitude / 44330.0f), 5.255f)) - 21.6f;
