@@ -270,6 +270,15 @@ void ButtonHandler(void) {
                   ExecuteCommand(scmnd, SRC_BUTTON);
                 }
               }
+              else
+              {
+                if (Settings.param[P_HOLD_IGNORE] > 0) {         // SetOption40 (0) - Do not ignore button hold
+                  if (Button.hold_timer[button_index] > loops_per_second * Settings.param[P_HOLD_IGNORE] / 10) {
+                    Button.hold_timer[button_index] = 0;                // Reset button hold counter to stay below hold trigger
+                    Button.press_counter[button_index] = 0;                // Discard button press to disable functionality
+                  }
+                }
+              }              
             }
           }
         }
