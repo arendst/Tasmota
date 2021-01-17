@@ -510,6 +510,7 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   { Zuint16,  Cx0300, 0x003B,  Z_(ColorPointBY),         Cm1, 0 },
   { Zuint8,   Cx0300, 0x003C,  Z_(ColorPointBIntensity), Cm1, 0 },
   { Zoctstr,  Cx0300, 0xFFF0,  Z_(RGB),                  Cm1, 0 },    // synthetic argument to show color as RGB (converted from HueSat or XY)
+  { Zoctstr,  Cx0300, 0xFFF1,  Z_(RGBb),                 Cm1, 0 },    // synthetic argument to show color as RGB including last known brightness
 
   // Illuminance Measurement cluster
   { Zuint16,  Cx0400, 0x0000,  Z_(Illuminance),          Cm1 + Z_EXPORT_DATA, Z_MAPPING(Z_Data_PIR, illuminance) }, // Illuminance (in Lux)
@@ -1287,6 +1288,7 @@ void ZCLFrame::removeInvalidAttributes(Z_attribute_list& attr_list) {
 // Note: both function are now split to compute on extracted attributes
 //
 void ZCLFrame::computeSyntheticAttributes(Z_attribute_list& attr_list) {
+  const Z_Device & device = zigbee_devices.findShortAddr(_srcaddr);
   const char * model_c = zigbee_devices.getModelId(_srcaddr);  // null if unknown
   String modelId((char*) model_c);
   // scan through attributes and apply specific converters
@@ -1360,6 +1362,23 @@ void ZCLFrame::computeSyntheticAttributes(Z_attribute_list& attr_list) {
               rgb.add8(g);
               rgb.add8(b);
               attr_list.addAttribute(0x0300, 0xFFF0).setBuf(rgb, 0, 3);
+
+              // do we know ZbData for this bulb
+              uint8_t brightness = 255;
+              if (device.valid()) {
+                const Z_Data_Light & light = device.data.find<Z_Data_Light>(_srcendpoint);
+                if (light.validDimmer()) {
+                  // Dimmer has a valid value
+                  brightness = changeUIntScale(light.getDimmer(), 0, 254, 0, 255);   // range is 0..255
+                }
+              }
+              r = changeUIntScale(r, 0, 255, 0, brightness);
+              g = changeUIntScale(g, 0, 255, 0, brightness);
+              b = changeUIntScale(b, 0, 255, 0, brightness);
+              rgb.set8(0, r);
+              rgb.set8(1, g);
+              rgb.set8(2, b);
+              attr_list.addAttribute(0x0300, 0xFFF1).setBuf(rgb, 0, 3);
             }
           }
         }
