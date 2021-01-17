@@ -236,6 +236,11 @@ public:
   inline void setX(uint16_t _x)                 { x = _x; }
   inline void setY(uint16_t _y)                 { y = _y; }
 
+  void toRGBAttributes(Z_attribute_list & attr_list) const ;
+  static void toRGBAttributesHSB(Z_attribute_list & attr_list, uint16_t hue, uint8_t sat, uint8_t brightness);
+  static void toRGBAttributesXYB(Z_attribute_list & attr_list, uint16_t x, uint16_t y, uint8_t brightness);
+  static void toRGBAttributesRGBb(Z_attribute_list & attr_list, uint8_t r, uint8_t g, uint8_t b, uint8_t brightness);
+
   static const Z_Data_Type type = Z_Data_Type::Z_Light;
   // 12 bytes
   uint8_t               colormode;      // 0x00: Hue/Sat, 0x01: XY, 0x02: CT | 0xFF not set, default 0x01
