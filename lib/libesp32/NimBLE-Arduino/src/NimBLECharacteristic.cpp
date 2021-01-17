@@ -473,9 +473,10 @@ void NimBLECharacteristic::setValue(const uint8_t* data, size_t length) {
         return;
     }
 
+    time_t t = time(nullptr);
     portENTER_CRITICAL(&m_valMux);
     m_value = std::string((char*)data, length);
-    m_timestamp = time(nullptr);
+    m_timestamp = t;
     portEXIT_CRITICAL(&m_valMux);
 
     NIMBLE_LOGD(LOG_TAG, "<< setValue");

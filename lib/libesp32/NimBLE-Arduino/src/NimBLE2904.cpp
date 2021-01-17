@@ -37,7 +37,7 @@ NimBLE2904::NimBLE2904(NimBLECharacteristic* pCharacterisitic)
     m_data.m_unit        = 0;
     m_data.m_description = 0;
     setValue((uint8_t*) &m_data, sizeof(m_data));
-} // BLE2902
+} // BLE2904
 
 
 /**
