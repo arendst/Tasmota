@@ -69,6 +69,7 @@ const Z_CommandConverter Z_Commands[] PROGMEM = {
   { Z_(PowerOffEffect), 0x0006, 0x40, 0x81,   Z_(xxyy) },         // Power Off With Effect
   { Z_(PowerOnRecall),  0x0006, 0x41, 0x81,   Z_() },             // Power On With Recall Global Scene
   { Z_(PowerOnTimer),   0x0006, 0x42, 0x81,   Z_(xxyyyyzzzz) },   // Power On with Timed Off
+  { Z_(LidlPower),      0x0006, 0xFD, 0x01,   Z_(xx) },           // Lidl specific encoding
   { Z_(Power),          0x0006, 0xFF, 0x01,   Z_() },             // 0=Off, 1=On, 2=Toggle
   { Z_(Dimmer),         0x0008, 0x04, 0x01,   Z_(xx0A00) },       // Move to Level with On/Off, xx=0..254 (255 is invalid)
   { Z_(DimmerUp),       0x0008, 0x06, 0x01,   Z_(00190200) },       // Step up by 10%, 0.2 secs
