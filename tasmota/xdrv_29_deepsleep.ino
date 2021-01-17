@@ -1,7 +1,7 @@
 /*
   xdrv_29_deepsleep.ino - DeepSleep support for Tasmota
 
-  Copyright (C) 2020  Stefan Bode
+  Copyright (C) 2021  Stefan Bode
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -142,6 +142,7 @@ void DeepSleepStart(void)
   WifiShutdown();
   RtcSettings.ultradeepsleep = RtcSettings.nextwakeup - UtcTime();
   RtcSettingsSave();
+  RtcRebootReset();
 #ifdef ESP8266
   ESP.deepSleep(100 * RtcSettings.deepsleep_slip * deepsleep_sleeptime);
 #endif  // ESP8266

@@ -27,7 +27,7 @@ uint16_t Arduino_ST7789::GetColorFromIndex(uint8_t index) {
 }
 
 static const uint8_t PROGMEM
-  cmd_240x240[] = {                 		// Initialization commands for 7789 screens
+  init_cmd[] = {                 		    // Initialization commands for 7789 screens
     10,                       				// 9 commands in list:
     ST7789_SWRESET,   ST_CMD_DELAY,  		// 1: Software reset, no args, w/delay
       150,                     				// 150 ms delay
@@ -38,14 +38,6 @@ static const uint8_t PROGMEM
       10,                     				// 10 ms delay
     ST7789_MADCTL , 1,  					// 4: Memory access ctrl (directions), 1 arg:
       0x00,                   				// Row addr/col addr, bottom to top refresh
-    ST7789_CASET  , 4,  					// 5: Column addr set, 4 args, no delay:
-      0x00, ST7789_240x240_XSTART,          // XSTART = 0
-	  (ST7789_TFTWIDTH+ST7789_240x240_XSTART) >> 8,
-	  (ST7789_TFTWIDTH+ST7789_240x240_XSTART) & 0xFF,   // XEND = 240
-    ST7789_RASET  , 4,  					// 6: Row addr set, 4 args, no delay:
-      0x00, ST7789_240x240_YSTART,          // YSTART = 0
-      (ST7789_TFTHEIGHT+ST7789_240x240_YSTART) >> 8,
-	  (ST7789_TFTHEIGHT+ST7789_240x240_YSTART) & 0xFF,	// YEND = 240
     ST7789_INVON ,   ST_CMD_DELAY,  		// 7: Inversion ON
       10,
     ST7789_NORON  ,   ST_CMD_DELAY,  		// 8: Normal display on, no args, w/delay
@@ -75,7 +67,7 @@ inline uint16_t swapcolor(uint16_t x) {
 
 // Constructor when using software SPI.  All output pins are configurable.
 Arduino_ST7789::Arduino_ST7789(int8_t dc, int8_t rst, int8_t sid, int8_t sclk, int8_t cs, int8_t bp)
-  : Renderer(ST7789_TFTWIDTH, ST7789_TFTHEIGHT)
+  : Renderer(_width, _height)
 {
   _cs   = cs;
   _dc   = dc;
@@ -91,7 +83,7 @@ Arduino_ST7789::Arduino_ST7789(int8_t dc, int8_t rst, int8_t sid, int8_t sclk, i
 // Constructor when using hardware SPI.  Faster, but must use SPI pins
 // specific to each board type (e.g. 11,13 for Uno, 51,52 for Mega, etc.)
 Arduino_ST7789::Arduino_ST7789(int8_t dc, int8_t rst, int8_t cs, int8_t bp)
-  : Renderer(ST7789_TFTWIDTH, ST7789_TFTHEIGHT) {
+  : Renderer(_width, _height) {
   _cs   = cs;
   _dc   = dc;
   _rst  = rst;
@@ -104,8 +96,11 @@ Arduino_ST7789::Arduino_ST7789(int8_t dc, int8_t rst, int8_t cs, int8_t bp)
 
 void Arduino_ST7789::DisplayInit(int8_t p,int8_t size,int8_t rot,int8_t font) {
   setRotation(rot);
-  //invertDisplay(false);
-  invertDisplay(true);
+  if (_width==320 || _height==320) {
+    invertDisplay(false);
+  } else {
+    invertDisplay(true);
+  }
   //setTextWrap(false);         // Allow text to run off edges
   //cp437(true);
   setTextFont(font&3);
@@ -335,29 +330,59 @@ void Arduino_ST7789::setRotation(uint8_t m) {
    case 0:
      writedata(ST7789_MADCTL_MX | ST7789_MADCTL_MY | ST7789_MADCTL_RGB);
 
-     _xstart = _colstart;
-    // _ystart = _rowstart;
-     _ystart = 80;
+     _xstart = 0;
+     _ystart = 0;
+     if (_width==240 && _height==240) {
+       _xstart = ST7789_240x240_XSTART_R0;
+       _ystart = ST7789_240x240_YSTART_R0;
+     }
+     if (_width==135 && _height==240) {
+       _xstart = ST7789_135x240_XSTART_R0;
+       _ystart = ST7789_135x240_YSTART_R0;
+     }
      break;
    case 1:
      writedata(ST7789_MADCTL_MY | ST7789_MADCTL_MV | ST7789_MADCTL_RGB);
 
-     _ystart = _colstart;
-    // _xstart = _rowstart;
-     _xstart = 80;
+     _ystart = 0;
+     _xstart = 0;
+     if (_width==240 && _height==240) {
+       _xstart = ST7789_240x240_XSTART_R1;
+       _ystart = ST7789_240x240_YSTART_R1;
+     }
+     if (_width==240 && _height==135) {
+       _xstart = ST7789_135x240_XSTART_R1;
+       _ystart = ST7789_135x240_YSTART_R1;
+     }
      break;
   case 2:
      writedata(ST7789_MADCTL_RGB);
 
-     _xstart = _colstart;
-     _ystart = _rowstart;
+     _xstart = 0;
+     _ystart = 0;
+     if (_width==240 && _height==240) {
+       _xstart = ST7789_240x240_XSTART_R2;
+       _ystart = ST7789_240x240_YSTART_R2;
+     }
+     if (_width==135 && _height==240) {
+       _xstart = ST7789_135x240_XSTART_R2;
+       _ystart = ST7789_135x240_YSTART_R2;
+     }
      break;
 
    case 3:
      writedata(ST7789_MADCTL_MX | ST7789_MADCTL_MV | ST7789_MADCTL_RGB);
 
-     _ystart = _colstart;
-     _xstart = _rowstart;
+     _xstart = 0;
+     _ystart = 0;
+     if (_width==240 && _height==240) {
+       _xstart = ST7789_240x240_XSTART_R3;
+       _ystart = ST7789_240x240_YSTART_R3;
+     }
+     if (_width==240 && _height==135) {
+       _xstart = ST7789_135x240_XSTART_R3;
+       _ystart = ST7789_135x240_YSTART_R3;
+     }
      break;
   }
 }
@@ -533,12 +558,10 @@ inline void Arduino_ST7789::DC_LOW(void) {
 void Arduino_ST7789::init(uint16_t width, uint16_t height) {
   commonInit(NULL);
 
-  _colstart = ST7789_240x240_XSTART;
-  _rowstart = ST7789_240x240_YSTART;
   _height = height;
   _width = width;
 
-  displayInit(cmd_240x240);
+  displayInit(init_cmd);
 
   setRotation(2);
 
@@ -588,7 +611,7 @@ void Arduino_ST7789::pushColor(uint16_t color) {
   SPI_END_TRANSACTION();
 }
 
-void Arduino_ST7789::pushColors(uint16_t *data, uint8_t len, boolean first) {
+void Arduino_ST7789::pushColors(uint16_t *data, uint16_t len, boolean first) {
   uint16_t color;
 
   SPI_BEGIN_TRANSACTION();

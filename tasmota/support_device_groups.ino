@@ -1,7 +1,7 @@
 /*
   support_device_groups.ino - device groups support for Tasmota
 
-  Copyright (C) 2020  Paul C Diem
+  Copyright (C) 2021  Paul C Diem
 
   Device group allow multiple devices to be in a group with power, light
   brightness, fade and speed settings and other module-specific settings
@@ -423,7 +423,7 @@ void SendReceiveDeviceGroupMessage(struct device_group * device_group, struct de
 
 write_log:
   *log_ptr++ = 0;
-  AddLog_P(LOG_LEVEL_DEBUG_MORE, log_buffer);
+  AddLogData(LOG_LEVEL_DEBUG_MORE, log_buffer);
 
   // If this is a received status request message, then if the requestor didn't just ack our
   // previous full status update, send a full status update.

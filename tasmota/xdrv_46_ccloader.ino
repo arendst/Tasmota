@@ -1,7 +1,7 @@
 /*
   xdrv_46_ccloader.ino - CCLoader for Tasmota
 
-  Copyright (C) 2020 Christian Baars and Theo Arends
+  Copyright (C) 2021  Christian Baars and Theo Arends
 
   based on CCLoader - Copyright (c) 2012-2014 RedBearLab
 
@@ -25,14 +25,14 @@
 
   0.9.0.0 20191124  started - further development by Christian Baars
                     forked  - CCLoader - Copyright (c) 2012-2014 RedBearLab
-                    
+
 */
 #ifdef USE_CCLOADER
 
 /*********************************************************************************************\
 * CCLOader
 *
-* Usage: 
+* Usage:
 \*********************************************************************************************/
 
 #define XDRV_46             46
@@ -123,7 +123,7 @@ struct {
     bool init = false;
 } CCL;
 
-const char CCLtype[] PROGMEM = "CCL";   
+const char CCLtype[] PROGMEM = "CCL";
 
 // Debug control pins & the indicate LED
 int CCL_RESET = 14; //GPIO14=D5 on NodeMCU/WeMos D1 Mini
@@ -175,7 +175,7 @@ unsigned char CCLread_debug_byte(void)
         if(HIGH == digitalRead(CCL_DD))
         {
           data |= 0x01;
-        }        
+        }
         digitalWrite(CCL_DC, LOW);     // DC low
     }
     return data;
@@ -604,23 +604,23 @@ bool CLLFlashFirmware(uint8_t* data, uint32_t size)
         // Enable DMA (Disable DMA_PAUSE bit in debug configuration)
         debug_config = 0x22;
         CCLdebug_command(CCL_CMD_WR_CONFIG, &debug_config, 1);
-        
-        unsigned char  rxBuf[512]; 
-        uint32_t block = 0; 
+
+        unsigned char  rxBuf[512];
+        uint32_t block = 0;
         unsigned int addr = 0x0000;
         AddLog_P(LOG_LEVEL_INFO,PSTR("CCL: will flash ...."));
         AddLogBuffer(LOG_LEVEL_DEBUG,data,16); // quick check to compare with a hex editor
 
         while((block*512)<size)
         {
-            memcpy_P(rxBuf,data+(block*512),512);           
-            CCLwrite_flash_memory_block(rxBuf, addr, 512); // src, address, count                    
+            memcpy_P(rxBuf,data+(block*512),512);
+            CCLwrite_flash_memory_block(rxBuf, addr, 512); // src, address, count
 
             unsigned char bank = addr / (512 * 16);
             unsigned int  offset = (addr % (512 * 16)) * 4;
             unsigned char read_data[512];
-            CCLread_flash_memory_block(bank, offset, 512, read_data); // Bank, address, count, dest.            
-            for(unsigned int i = 0; i < 512; i++) 
+            CCLread_flash_memory_block(bank, offset, 512, read_data); // Bank, address, count, dest.
+            for(unsigned int i = 0; i < 512; i++)
                 {
                     if(read_data[i] !=rxBuf[i])
                     {

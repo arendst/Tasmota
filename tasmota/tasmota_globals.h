@@ -1,7 +1,7 @@
 /*
   tasmota_globals.h - Function prototypes and global configurations for Tasmota
 
-  Copyright (C) 2020  Theo Arends
+  Copyright (C) 2021  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -107,11 +107,7 @@ String EthernetMacAddress(void);
 #define ARDUINO_CORE_RELEASE        ARDUINO_ESP32_RELEASE
 #endif  // ARDUINO_ESP32_RELEASE
 
-#define USE_TFS
-
-#ifdef USE_SCRIPT
-#undef USE_TFS
-#endif  // USE_SCRIPT
+#define USE_UFILESYS
 
 // Hardware has no ESP32
 #undef USE_TUYA_DIMMER
@@ -127,7 +123,7 @@ String EthernetMacAddress(void);
 #undef USE_RF_FLASH
 
 // Not ported (yet)
-#undef USE_DISCOVERY
+
 #undef USE_MY92X1
 #undef USE_TUYA_MCU
 #undef USE_PS_16_DZ
@@ -157,6 +153,20 @@ String EthernetMacAddress(void);
 #endif
 #ifdef USE_TASMOTA_SLAVE_SERIAL_SPEED
 #define USE_TASMOTA_CLIENT_SERIAL_SPEED USE_TASMOTA_SLAVE_SERIAL_SPEED
+#endif
+
+#ifdef USE_SCRIPT
+#define USE_UNISHOX_COMPRESSION                // Add support for string compression
+#endif
+#ifdef USE_ZIGBEE
+#define USE_UNISHOX_COMPRESSION                // Add support for string compression
+#endif
+#ifdef USE_EMULATION_HUE
+#define USE_UNISHOX_COMPRESSION                // Add support for string compression
+#endif
+
+#ifdef USE_PID
+#define USE_TIMEPROP
 #endif
 
                                                // See https://github.com/esp8266/Arduino/pull/4889
@@ -209,15 +219,15 @@ String EthernetMacAddress(void);
 #define WS2812_LEDS                 30         // [Pixels] Number of LEDs
 #endif
 
-//#ifdef USE_MQTT_TLS                            // Set to 4000 on 20200922 per #9305
-//  const uint16_t WEB_LOG_SIZE = 2000;          // Max number of characters in weblog
-//#else
-  const uint16_t WEB_LOG_SIZE = 4000;          // Max number of characters in weblog
-//#endif
+const uint16_t LOG_BUFFER_SIZE = 4000;         // Max number of characters in logbuffer used by weblog, syslog and mqttlog
 
 #if defined(ARDUINO_ESP8266_RELEASE_2_3_0) || defined(ARDUINO_ESP8266_RELEASE_2_4_0) || defined(ARDUINO_ESP8266_RELEASE_2_4_1) || defined(ARDUINO_ESP8266_RELEASE_2_4_2) || defined(ARDUINO_ESP8266_RELEASE_2_5_0) || defined(ARDUINO_ESP8266_RELEASE_2_5_1) || defined(ARDUINO_ESP8266_RELEASE_2_5_2)
   #error "Arduino ESP8266 Core versions before 2.7.1 are not supported"
 #endif
+
+#define TASM_FILE_SETTINGS          "/.settings"       // Settings binary blob
+#define TASM_FILE_SETTINGS_LKG      "/.settings.lkg"   // Last Known Good Settings binary blob
+#define TASM_FILE_ZIGBEE            "/zb"              // Zigbee settings blob as used by CC2530 on ESP32
 
 #ifndef MQTT_MAX_PACKET_SIZE
 #define MQTT_MAX_PACKET_SIZE        1200       // Bytes

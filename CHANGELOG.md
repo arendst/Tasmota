@@ -3,9 +3,80 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [9.2.0.1]
+## [9.2.0.3]
+### Added
+- Support for time proportioned (``#define USE_TIMEPROP``) and optional PID (``#define USE_PID``) relay control (#10412)
+- Support rotary encoder on Shelly Dimmer (#10407)
+- Command ``SetOption43 1..255`` to control Rotary step (#10407)
+- Support for BS814A-2 8-button touch buttons by Peter Franck (#10447)
+- Support for up to 4 I2C SEESAW_SOIL Capacitance & Temperature sensors by Peter Franck (#10481)
+- ESP8266 Support for 2MB and up linker files with 1MB and up LittleFS
+- ESP32 support for TLS MQTT using BearSSL (same as ESP8266)
+- Support for 24/26/32/34 bit RFID Wiegand interface (D0/D1) by Sigurd Leuther (#3647)
+- Added ``USE_MQTT_TLS_DROP_OLD_FINGERPRINT`` compile time option to drop old (less secure) TLS fingerprint
+
+### Breaking Changed
+- ESP32 switch from default SPIFFS to default LittleFS file system loosing current (zigbee) files
+- ESP8266 until now NOT SUPPORTED linker files 2MB and up. Current settings will be overwritten once LittleFS is enabled
+
+### Changed
+- Force initial default state ``SetOption57 1`` to scan wifi network every 44 minutes for strongest signal (#10395)
+- Command ``Sleep 0`` removes any sleep from wifi modem except when ESP32 BLE is active
+
+## [9.2.0.2] 20210105
+### Added
+- Basic support for ESP32 Odroid Go 16MB binary tasmota32-odroidgo.bin (#8630)
+- Command ``CTRange`` to specify the visible CT range the bulb is capable of (#10311)
+- Command ``VirtualCT`` to simulate or fine tune CT bulbs with 3,4,5 channels (#10311)
+- Command ``SetOption118 1`` to move ZbReceived from JSON message and into the subtopic replacing "SENSOR" default (#10353)
+- Command ``SetOption119 1`` to remove the device addr from json payload, can be used with zb_topic_fname where the addr is already known from the topic (#10355)
+- Command ``RuleTimer0`` to access all RuleTimers at once (#10352)
+- SPI display driver SSD1331 Color oled by Jeroen Vermeulen (#10376)
+- IRremoteESP8266 library from v2.7.13 to v2.7.14
+- Rotary No Pullup GPIO selection ``Rotary A/B_n`` (#10407)
+
+### Breaking Changed
+- Replaced MFRC522 13.56MHz rfid card reader GPIO selection from ``SPI CS`` by ``RC522 CS``
+- Replaced NRF24L01 GPIO selection from ``SPI CS`` by ``NRF24 CS`` and ``SPI DC`` by ``NRF24 DC``
+- Replaced ILI9341 GPIO selection from ``SPI CS`` by ``ILI9341 CS`` and ``SPI DC`` by ``ILI9341 DC``
+- Replaced ST7789 GPIO selection from ``SPI CS`` by ``ST7789 CS`` and ``SPI DC`` by ``ST7789 DC``
+- Replaced ILI9488 GPIO selection from ``SPI CS`` by ``ILI9488_CS``
+- Replaced EPaper29 GPIO selection from ``SPI CS`` by ``EPaper29 CS``
+- Replaced EPaper42 GPIO selection from ``SPI CS`` by ``EPaper42 CS``
+- Replaced SSD1351 GPIO selection from ``SPI CS`` by ``SSD1351 CS``
+- Replaced RA8876 GPIO selection from ``SPI CS`` by ``RA8876 CS``
+
+### Changed
+- Maximum chars in AddLog_P logging reduced from 700 to 128 (LOGSZ) to enhance stability
+- Disabled ``USE_LIGHT`` light support for ZBBridge saving 17.6kB (#10374)
+
+## [9.2.0.1] 20201229
 ### Added
 - Milliseconds to console output (#10152)
+- Support for P9813 RGB Led MOSFET controller (#10104)
+- Support for GPIO option selection
+- Gpio ``Option_a1`` enabling PWM2 high impedance if powered off as used by Wyze bulbs (#10196)
+- Support for FTC532 8-button touch controller by Peter Franck (#10222)
+- Support character `#` to be replaced by `space`-character in command ``Publish`` topic (#10258)
+- BSSID and Signal Strength Indicator to GUI wifi scan result (#10253)
+- Support for Afrikaans language translations by Christiaan Heerze
+- Support for IR inverted leds using ``#define IR_SEND_INVERTED true`` (#10301)
+- Support for disabling 38kHz IR modulation using ``#define IR_SEND_USE_MODULATION false`` (#10301)
+- Support for SPI display driver for ST7789 TFT by Gerhard Mutz (#9037)
+
+### Changed
+- Logging from heap to stack freeing 700 bytes RAM
+
+### Fixed
+- Redesign syslog and mqttlog using log buffer (#10164)
+- Shutter stop issue (#10170)
+- Scripter script_sub_command (#10181)
+- Scripter JSON variable above 32 chars (#10193)
+- Shelly Dimmer power on state (#10154, #10182)
+- Wemo emulation for single devices (#10165, #10194)
+- ESP32 LoadStoreError when using ``#define USER_TEMPLATE`` (#9506)
+- Compile error when ``#ifdef USE_IR_RECEIVE`` is disabled regression from 9.1.0.2
+- Prometheus memory leak (#10221)
 
 ## [Released]
 

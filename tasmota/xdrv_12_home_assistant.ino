@@ -1,7 +1,7 @@
 /*
   xdrv_12_home_assistant.ino - home assistant support for Tasmota
 
-  Copyright (C) 2020  Erik Montnemery, Federico Leoni and Theo Arends
+  Copyright (C) 2021  Erik Montnemery, Federico Leoni and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -197,7 +197,7 @@ const char HASS_DISCOVER_DEVICE[] PROGMEM =                         // Basic par
   "\"tp\":[\"%s\",\"%s\",\"%s\"],"                                  // Topics for command, stat and tele
   "\"rl\":[%s],\"swc\":[%s],\"swn\":[%s],\"btn\":[%s],"             // Inputs / Outputs
   "\"so\":{\"4\":%d,\"11\":%d,\"13\":%d,\"17\":%d,\"20\":%d,"       // SetOptions
-  "\"30\":%d,\"68\":%d,\"73\":%d,\"82\":%d,\"114\":%d},"
+  "\"30\":%d,\"68\":%d,\"73\":%d,\"82\":%d,\"114\":%d,\"117\":%d},"
   "\"lk\":%d,\"lt_st\":%d,\"sho\":[%s],\"ver\":1}";                 // Light SubType, Shutter Options and Discovery version
 
 typedef struct HASS {
@@ -341,7 +341,7 @@ void NewHAssDiscovery(void)
               TasmotaGlobal.version, TasmotaGlobal.mqtt_topic, SettingsText(SET_MQTT_FULLTOPIC), SUB_PREFIX, PUB_PREFIX, PUB_PREFIX2, Hass.RelLst, stemp3, stemp4,
               stemp5, Settings.flag.mqtt_response, Settings.flag.button_swap, Settings.flag.button_single, Settings.flag.decimal_text, Settings.flag.not_power_linked,
               Settings.flag.hass_light, Settings.flag3.pwm_multi_channels, Settings.flag3.mqtt_buttons, Settings.flag4.alexa_ct_range, Settings.flag5.mqtt_switches,
-              light_controller.isCTRGBLinked(), Light.subtype, stemp6);
+              Settings.flag5.fade_fixed_duration, light_controller.isCTRGBLinked(), Light.subtype, stemp6);
   }
   MqttPublish(stopic, true);
 
@@ -370,8 +370,9 @@ void TryResponseAppend_P(const char *format, ...)
   {
     AddLog_P(LOG_LEVEL_ERROR, PSTR("%s (%u/%u):"), kHAssError1, dlen, slen);
     va_start(args, format);
-    vsnprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), format, args);
-    AddLog(LOG_LEVEL_ERROR);
+    char log_data[MAX_LOGSZ];
+    vsnprintf_P(log_data, sizeof(log_data), format, args);
+    AddLogData(LOG_LEVEL_ERROR, log_data);
   }
   else
   {

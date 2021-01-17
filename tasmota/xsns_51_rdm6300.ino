@@ -1,7 +1,7 @@
 /*
   xsns_51_rdm6300.ino - Support for RDM630(0) 125kHz NFC Tag Reader on Tasmota
 
-  Copyright (C) 2020  Gerhard Mutz and Theo Arends
+  Copyright (C) 2021  Gerhard Mutz and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by

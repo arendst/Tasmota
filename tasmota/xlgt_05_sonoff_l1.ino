@@ -1,7 +1,7 @@
 /*
   xlgt_05_sonoff_l1.ino - Sonoff L1 led support for Tasmota
 
-  Copyright (C) 2020  Theo Arends
+  Copyright (C) 2021  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -64,7 +64,6 @@ struct SNFL1 {
 Ticker SnfL1StartDelay;
 
 void SnfL1SendDelayed(void) {
-  SnfL1StartDelay.detach();
   SnfL1Send();
 }
 
@@ -276,7 +275,7 @@ bool SnfL1SetChannels(void)
 
     static bool first_call = true;
     if (first_call) {
-      SnfL1StartDelay.attach_ms(900, SnfL1SendDelayed);  // Allow startup time for Nuvotron microcontroller
+      SnfL1StartDelay.once_ms(900, SnfL1SendDelayed);  // Allow startup time for Nuvotron microcontroller
       first_call = false;
     } else {
       SnfL1Send();

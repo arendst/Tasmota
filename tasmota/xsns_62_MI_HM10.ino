@@ -1,7 +1,7 @@
 /*
   xsns_62_MI_HM10.ino - MI-BLE-sensors via HM-10 support for Tasmota
 
-  Copyright (C) 2020  Christian Baars and Theo Arends
+  Copyright (C) 2021  Christian Baars and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -1085,7 +1085,7 @@ bool HM10isInBlockList(uint8_t* MAC){
 
 void HM10removeMIBLEsensor(uint8_t* MAC){
   MIBLEsensors.erase( std::remove_if( MIBLEsensors.begin() , MIBLEsensors.end(), [MAC]( mi_sensor_t _sensor )->bool
-  { return (memcmp(_sensor.MAC,MAC,6) == 0); } 
+  { return (memcmp(_sensor.MAC,MAC,6) == 0); }
   ), end( MIBLEsensors ) );
 }
 /*********************************************************************************************\
@@ -1693,7 +1693,7 @@ void CmndHM10Block(void){
         break;
       case 1:
         ResponseCmndIdxChar(PSTR("show block list"));
-        break;  
+        break;
     }
   }
   else {
@@ -1702,7 +1702,7 @@ void CmndHM10Block(void){
     switch (XdrvMailbox.index) {
       case 0:
         MIBLEBlockList.erase( std::remove_if( begin( MIBLEBlockList ), end( MIBLEBlockList ), [_MACasBytes]( MAC_t& _entry )->bool
-          { return (memcmp(_entry.buf,_MACasBytes.buf,6) == 0); } 
+          { return (memcmp(_entry.buf,_MACasBytes.buf,6) == 0); }
           ), end( MIBLEBlockList ) );
         ResponseCmndIdxChar(PSTR("MAC not blocked anymore"));
         break;
@@ -1719,7 +1719,7 @@ void CmndHM10Block(void){
           HM10removeMIBLEsensor(_MACasBytes.buf);
         }
         // AddLog_P(LOG_LEVEL_INFO,PSTR("HM10: size of ilist: %u"), MIBLEBlockList.size());
-        break;  
+        break;
     }
   }
   HM10.mode.shallShowBlockList = 1;

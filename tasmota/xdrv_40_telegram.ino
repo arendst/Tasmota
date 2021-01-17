@@ -1,7 +1,7 @@
 /*
   xdrv_40_telegram.ino - telegram for Tasmota
 
-  Copyright (C) 2020  Theo Arends
+  Copyright (C) 2021  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -256,7 +256,7 @@ bool TelegramSendMessage(int32_t chat_id, String text) {
   bool sent = false;
   if (text != "") {
     String _token = SettingsText(SET_TELEGRAM_TOKEN);
-    String command = "bot" + _token + "/sendMessage?chat_id=" + String(chat_id) + "&text=" + text;
+    String command = "bot" + _token + "/sendMessage?chat_id=" + String(chat_id) + "&text=" + UrlEncode(text);
     String response = TelegramConnectToTelegram(command);
 
 //    AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("TGM: Response %s"), response.c_str());
@@ -289,37 +289,29 @@ void TelegramSendGetMe(void) {
 String TelegramExecuteCommand(const char *svalue) {
   String response = "";
 
-  uint32_t curridx = TasmotaGlobal.web_log_index;
+  uint32_t curridx = TasmotaGlobal.log_buffer_pointer;
+  TasmotaGlobal.templog_level = LOG_LEVEL_INFO;
   ExecuteCommand(svalue, SRC_CHAT);
-  if (TasmotaGlobal.web_log_index != curridx) {
-    uint32_t counter = curridx;
-    response = F("{");
-    bool cflg = false;
-    do {
-      char* tmp;
-      size_t len;
-      GetLog(counter, &tmp, &len);
-      if (len) {
-        // [14:49:36 MQTT: stat/wemos5/RESULT = {"POWER":"OFF"}] > [{"POWER":"OFF"}]
-        char* JSON = (char*)memchr(tmp, '{', len);
-        if (JSON) { // Is it a JSON message (and not only [15:26:08 MQT: stat/wemos5/POWER = O])
-          size_t JSONlen = len - (JSON - tmp);
-          if (JSONlen > sizeof(TasmotaGlobal.mqtt_data)) { JSONlen = sizeof(TasmotaGlobal.mqtt_data); }
-          char stemp[JSONlen];
-          strlcpy(stemp, JSON +1, JSONlen -2);
-          if (cflg) { response += F(","); }
-          response += stemp;
-          cflg = true;
-        }
-      }
-      counter++;
-      counter &= 0xFF;
-      if (!counter) counter++;  // Skip 0 as it is not allowed
-    } while (counter != TasmotaGlobal.web_log_index);
-    response += F("}");
-  } else {
-    response = F("{\"" D_RSLT_WARNING "\":\"" D_ENABLE_WEBLOG_FOR_RESPONSE "\"}");
+  response = F("{");
+  bool cflg = false;
+  uint32_t index = curridx;
+  char* line;
+  size_t len;
+  while (GetLog(TasmotaGlobal.templog_level, &index, &line, &len)) {
+    // [14:49:36.123 MQTT: stat/wemos5/RESULT = {"POWER":"OFF"}] > [{"POWER":"OFF"}]
+    char* JSON = (char*)memchr(line, '{', len);
+    if (JSON) {  // Is it a JSON message (and not only [15:26:08 MQT: stat/wemos5/POWER = O])
+      size_t JSONlen = len - (JSON - line);
+      if (JSONlen > sizeof(TasmotaGlobal.mqtt_data)) { JSONlen = sizeof(TasmotaGlobal.mqtt_data); }
+      char stemp[JSONlen];
+      strlcpy(stemp, JSON +1, JSONlen -2);
+      if (cflg) { response += F(","); }
+      response += stemp;
+      cflg = true;
+    }
   }
+  response += F("}");
+  TasmotaGlobal.templog_level = 0;
 
   return response;
 }

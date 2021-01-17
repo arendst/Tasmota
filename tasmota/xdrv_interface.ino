@@ -1,7 +1,7 @@
 /*
   xdrv_interface.ino - Driver interface support for Tasmota
 
-  Copyright (C) 2020  Theo Arends inspired by ESPEasy
+  Copyright (C) 2021  Theo Arends inspired by ESPEasy
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -416,7 +416,123 @@ bool (* const xdrv_func_ptr[])(uint8_t) = {   // Driver Function Pointers
 #endif
 
 #ifdef XDRV_99
-  &Xdrv99
+  &Xdrv99,
+#endif
+
+#ifdef XDRV_100
+  &Xdrv100,
+#endif
+
+#ifdef XDRV_101
+  &Xdrv101,
+#endif
+
+#ifdef XDRV_102
+  &Xdrv102,
+#endif
+
+#ifdef XDRV_103
+  &Xdrv103,
+#endif
+
+#ifdef XDRV_104
+  &Xdrv104,
+#endif
+
+#ifdef XDRV_105
+  &Xdrv105,
+#endif
+
+#ifdef XDRV_106
+  &Xdrv106,
+#endif
+
+#ifdef XDRV_107
+  &Xdrv107,
+#endif
+
+#ifdef XDRV_108
+  &Xdrv108,
+#endif
+
+#ifdef XDRV_109
+  &Xdrv109,
+#endif
+
+#ifdef XDRV_110
+  &Xdrv110,
+#endif
+
+#ifdef XDRV_111
+  &Xdrv111,
+#endif
+
+#ifdef XDRV_112
+  &Xdrv112,
+#endif
+
+#ifdef XDRV_113
+  &Xdrv113,
+#endif
+
+#ifdef XDRV_114
+  &Xdrv114,
+#endif
+
+#ifdef XDRV_115
+  &Xdrv115,
+#endif
+
+#ifdef XDRV_116
+  &Xdrv116,
+#endif
+
+#ifdef XDRV_117
+  &Xdrv117,
+#endif
+
+#ifdef XDRV_118
+  &Xdrv118,
+#endif
+
+#ifdef XDRV_119
+  &Xdrv119,
+#endif
+
+#ifdef XDRV_120
+  &Xdrv120,
+#endif
+
+#ifdef XDRV_121
+  &Xdrv121,
+#endif
+
+#ifdef XDRV_122
+  &Xdrv122,
+#endif
+
+#ifdef XDRV_123
+  &Xdrv123,
+#endif
+
+#ifdef XDRV_124
+  &Xdrv124,
+#endif
+
+#ifdef XDRV_125
+  &Xdrv125,
+#endif
+
+#ifdef XDRV_126
+  &Xdrv126,
+#endif
+
+#ifdef XDRV_127
+  &Xdrv127,
+#endif
+
+#ifdef XDRV_128
+  &Xdrv128
 #endif
 };
 
@@ -825,7 +941,123 @@ const uint8_t kXdrvList[] = {
 #endif
 
 #ifdef XDRV_99
-  XDRV_99
+  XDRV_99,
+#endif
+
+#ifdef XDRV_100
+  Xdrv100,
+#endif
+
+#ifdef XDRV_101
+  Xdrv101,
+#endif
+
+#ifdef XDRV_102
+  Xdrv102,
+#endif
+
+#ifdef XDRV_103
+  Xdrv103,
+#endif
+
+#ifdef XDRV_104
+  Xdrv104,
+#endif
+
+#ifdef XDRV_105
+  Xdrv105,
+#endif
+
+#ifdef XDRV_106
+  Xdrv106,
+#endif
+
+#ifdef XDRV_107
+  Xdrv107,
+#endif
+
+#ifdef XDRV_108
+  Xdrv108,
+#endif
+
+#ifdef XDRV_109
+  Xdrv109,
+#endif
+
+#ifdef XDRV_110
+  Xdrv110,
+#endif
+
+#ifdef XDRV_111
+  Xdrv111,
+#endif
+
+#ifdef XDRV_112
+  Xdrv112,
+#endif
+
+#ifdef XDRV_113
+  Xdrv113,
+#endif
+
+#ifdef XDRV_114
+  Xdrv114,
+#endif
+
+#ifdef XDRV_115
+  Xdrv115,
+#endif
+
+#ifdef XDRV_116
+  Xdrv116,
+#endif
+
+#ifdef XDRV_117
+  Xdrv117,
+#endif
+
+#ifdef XDRV_118
+  Xdrv118,
+#endif
+
+#ifdef XDRV_119
+  Xdrv119,
+#endif
+
+#ifdef XDRV_120
+  Xdrv120,
+#endif
+
+#ifdef XDRV_121
+  Xdrv121,
+#endif
+
+#ifdef XDRV_122
+  Xdrv122,
+#endif
+
+#ifdef XDRV_123
+  Xdrv123,
+#endif
+
+#ifdef XDRV_124
+  Xdrv124,
+#endif
+
+#ifdef XDRV_125
+  Xdrv125,
+#endif
+
+#ifdef XDRV_126
+  Xdrv126,
+#endif
+
+#ifdef XDRV_127
+  Xdrv127,
+#endif
+
+#ifdef XDRV_128
+  Xdrv128
 #endif
 };
 

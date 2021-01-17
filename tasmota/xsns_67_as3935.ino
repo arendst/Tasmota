@@ -1,7 +1,7 @@
 /*
   xsns_67_as3935.ino - AS3935 Franklin Lightning Sensor support for Tasmota
 
-  Copyright (C) 2020  Martin Wagner
+  Copyright (C) 2021  Martin Wagner
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by

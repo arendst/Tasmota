@@ -1,7 +1,7 @@
 /*
   xlgt_04_sm2135.ino - sm2135 five channel led support for Tasmota
 
-  Copyright (C) 2020  Theo Arends and CrudelisPL
+  Copyright (C) 2021  Theo Arends and CrudelisPL
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by

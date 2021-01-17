@@ -7,7 +7,7 @@
   between a secondary, user-allocated stack on the heap and the real
   stack.
 
-  Copyright (c) 2017 Earle F. Philhower, III. All rights reserved.
+  Copyright (C) 2021  Earle F. Philhower, III. All rights reserved.
 
   This library is free software; you can redistribute it and/or
   modify it under the terms of the GNU Lesser General Public

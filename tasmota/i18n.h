@@ -1,7 +1,7 @@
 /*
   i18n.h - internationalization for Tasmota
 
-  Copyright (C) 2020  Theo Arends
+  Copyright (C) 2021  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -425,6 +425,8 @@
 #define D_CMND_DIMMER_RANGE "DimmerRange"
 #define D_CMND_DIMMER_STEP "DimmerStep"
 #define D_CMND_HSBCOLOR "HSBColor"
+#define D_CMND_VIRTUALCT "VirtualCT"
+#define D_CMND_CTRANGE "CTRange"
 #define D_CMND_LED "Led"
 #define D_CMND_LEDTABLE "LedTable"
 #define D_CMND_FADE "Fade"
@@ -678,7 +680,7 @@
 #define D_LOG_KNX "KNX: "
 #define D_LOG_LOG "LOG: "          // Logging
 #define D_LOG_MODULE "MOD: "       // Module
-#define D_LOG_MDNS "DNS: "         // mDNS
+#define D_LOG_MDNS "mDN: "         // mDNS
 #define D_LOG_MQTT "MQT: "         // MQTT
 #define D_LOG_OTHER "OTH: "        // Other
 #define D_LOG_RESULT "RSL: "       // Result
@@ -796,9 +798,5 @@ const char HTTP_SNS_COLOR_GREEN[]   PROGMEM = "{s}%s "  D_COLOR_GREEN         "{
 const char HTTP_SNS_COLOR_BLUE[]    PROGMEM = "{s}%s "  D_COLOR_BLUE          "{m}%u "                            "{e}";
 const char HTTP_SNS_MILLILITERS[]   PROGMEM = "{s}%s "  D_VOLUME              "{m}%s " D_UNIT_MILLILITERS         "{e}";
 #endif  // USE_WEBSERVER
-
-const uint32_t MARKER_START = 0x5AA55AA5;
-const uint32_t MARKER_END = 0xA55AA55A;
-const uint32_t VERSION_MARKER[] PROGMEM = { MARKER_START, VERSION, MARKER_END };
 
 #endif  // _I18N_H_

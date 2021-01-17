@@ -1,7 +1,7 @@
 /*
   xsns_02_analog.ino - ADC support for Tasmota
 
-  Copyright (C) 2020  Theo Arends
+  Copyright (C) 2021  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -97,6 +97,20 @@
 // Press "Up" will raise ADC to ANALOG_RANGE, Press "Dn" will raise ADC to ANALOG_RANGE/2
 #define ANALOG_JOYSTICK              (ANALOG_RANGE / 3) +100  // Add resistor tolerance
 
+// pH scale minimum and maximum values
+#define ANALOG_PH_MAX                             14.0
+#define ANALOG_PH_MIN                             0.0
+
+// Default values for calibration solution with lower PH
+#define ANALOG_PH_CALSOLUTION_LOW_PH              4.0
+#define ANALOG_PH_CALSOLUTION_LOW_ANALOG_VALUE    282
+// Default values for calibration solution with higher PH
+#define ANALOG_PH_CALSOLUTION_HIGH_PH             9.18          
+#define ANALOG_PH_CALSOLUTION_HIGH_ANALOG_VALUE   435
+
+// Multiplier used to store pH with 2 decimal places in a non decimal datatype 
+#define ANALOG_PH_DECIMAL_MULTIPLIER              100.0
+
 struct {
   uint8_t present = 0;
   uint8_t type = 0;
@@ -169,6 +183,12 @@ void AdcInitParams(uint8_t idx) {
       Adc[idx].param2 = ANALOG_CT_MULTIPLIER;    // (uint32_t) 100000
       Adc[idx].param3 = ANALOG_CT_VOLTAGE;       // (int)      10
     }
+    else if (ADC_PH == Adc[idx].type) {
+      Adc[idx].param1 = ANALOG_PH_CALSOLUTION_LOW_PH * ANALOG_PH_DECIMAL_MULTIPLIER;  // PH of the calibration solution 1, which is the one with the lower PH
+      Adc[idx].param2 = ANALOG_PH_CALSOLUTION_LOW_ANALOG_VALUE;                       // Reading of AnalogInput while probe is in solution 1
+      Adc[idx].param3 = ANALOG_PH_CALSOLUTION_HIGH_PH * ANALOG_PH_DECIMAL_MULTIPLIER; // PH of the calibration solution 2, which is the one with the higher PH
+      Adc[idx].param4 = ANALOG_PH_CALSOLUTION_HIGH_ANALOG_VALUE;                      // Reading of AnalogInput while probe is in solution 2
+    }
   }
   if ((Adcs.type != Adc[idx].type) || (0 == Adc[idx].param1) || (Adc[idx].param1 > ANALOG_RANGE)) {
     if ((ADC_BUTTON == Adc[idx].type) || (ADC_BUTTON_INV == Adc[idx].type)) {
@@ -210,6 +230,9 @@ void AdcInit(void) {
     }
     if (PinUsed(GPIO_ADC_JOY, i)) {
       AdcAttach(Pin(GPIO_ADC_JOY, i), ADC_JOY);
+    }
+    if (PinUsed(GPIO_ADC_PH, i)) {
+      AdcAttach(Pin(GPIO_ADC_PH, i), ADC_PH);
     }
   }
   for (uint32_t i = 0; i < MAX_KEYS; i++) {
@@ -307,6 +330,28 @@ uint16_t AdcGetLux(uint32_t idx) {
   double ldrLux = (double)Adc[idx].param2 * FastPrecisePow(ldrResistance, (double)Adc[idx].param3 / 10000);
 
   return (uint16_t)ldrLux;
+}
+
+float AdcGetPh(uint32_t idx) {
+  int adc = AdcRead(Adc[idx].pin, 2);
+
+
+  float y1 = Adc[idx].param1 / ANALOG_PH_DECIMAL_MULTIPLIER;
+  uint32_t x1 = Adc[idx].param2;
+  float y2 = Adc[idx].param3 / ANALOG_PH_DECIMAL_MULTIPLIER;
+  uint32_t x2 = Adc[idx].param4;
+
+  float m = (y2 - y1) / (x2 - x1);
+  float ph = m * (adc - x1) + y1;
+  
+  
+  char phLow_chr[6];
+  char phHigh_chr[6];
+  dtostrfd(y1, 2, phLow_chr);
+  dtostrfd(y2, 2, phHigh_chr);
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION "Analog pH read. ADC-RAW: %d, cal-low(pH=ADC): %s=%d, cal-high(pH=ADC): %s=%d"), adc, phLow_chr, x1, phHigh_chr,x2);
+  
+  return ph;
 }
 
 uint16_t AdcGetRange(uint32_t idx) {
@@ -510,6 +555,22 @@ void AdcShow(bool json) {
         }
         break;
       }
+      case ADC_PH: {
+        float ph = AdcGetPh(idx);
+        char ph_chr[6];
+        dtostrfd(ph, 2, ph_chr);
+
+        
+        if (json) {
+          AdcShowContinuation(&jsonflg);
+          ResponseAppend_P(PSTR("\"pH%d\":%s"), idx + offset, ph_chr);
+  #ifdef USE_WEBSERVER
+        } else {
+          WSContentSend_PD(HTTP_SNS_PH, "", ph_chr);
+  #endif // USE_WEBSERVER
+        }
+        break;
+      }
     }
   }
   if (jsonflg) {
@@ -551,6 +612,21 @@ void CmndAdcParam(void) {
           } else {
             Adc[idx].param3 = (int)(CharToFloat(subStr(sub_string, XdrvMailbox.data, ",", 4)) * 10000);
           }
+
+          if (ADC_PH == XdrvMailbox.payload) {
+            char *phLow_chr = subStr(sub_string, XdrvMailbox.data, ",", 2);
+            char *phHigh_chr = subStr(sub_string, XdrvMailbox.data, ",", 4);
+            float phLow = CharToFloat(phLow_chr);
+            float phHigh = CharToFloat(phHigh_chr);
+            
+            Adc[idx].param1 = phLow * ANALOG_PH_DECIMAL_MULTIPLIER;
+            Adc[idx].param2 = strtol(subStr(sub_string, XdrvMailbox.data, ",", 3), nullptr, 10);
+            Adc[idx].param3 = phHigh * ANALOG_PH_DECIMAL_MULTIPLIER;
+            Adc[idx].param4 = strtol(subStr(sub_string, XdrvMailbox.data, ",", 5), nullptr, 10);
+
+            AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION "Analog pH probe calibrated. cal-low(pH=ADC): %s=%d, cal-high(pH=ADC): %s=%d"), phLow_chr, Adc[idx].param2, phHigh_chr, Adc[idx].param4);
+          }
+
           if (ADC_CT_POWER == XdrvMailbox.payload) {
             if (((1 == Adc[idx].param1) & CT_FLAG_ENERGY_RESET) > 0) {
               for (uint32_t idx = 0; idx < MAX_ADCS; idx++) {

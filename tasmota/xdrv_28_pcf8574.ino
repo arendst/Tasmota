@@ -1,7 +1,7 @@
 /*
   xdrv_28_pcf8574.ino - PCF8574 I2C support for Tasmota
 
-  Copyright (C) 2020  Stefan Bode
+  Copyright (C) 2021  Stefan Bode
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -168,7 +168,7 @@ void HandlePcf8574(void)
 
   WSContentStart_P(D_CONFIGURE_PCF8574);
   WSContentSendStyle();
-  WSContentSend_P(HTTP_FORM_I2C_PCF8574_1, (Settings.flag3.pcf8574_ports_inverted) ? " checked" : "");  // SetOption81 - Invert all ports on PCF8574 devices
+  WSContentSend_P(HTTP_FORM_I2C_PCF8574_1, (Settings.flag3.pcf8574_ports_inverted) ? PSTR(" checked") : "");  // SetOption81 - Invert all ports on PCF8574 devices
   WSContentSend_P(HTTP_TABLE100);
   for (uint32_t idx = 0; idx < Pcf8574.max_devices; idx++) {
     for (uint32_t idx2 = 0; idx2 < 8; idx2++) {  // 8 ports on PCF8574
@@ -177,8 +177,8 @@ void HandlePcf8574(void)
         idx +1, idx2,
         idx2 + 8*idx,
         idx2 + 8*idx,
-        ((helper & Settings.pcf8574_config[idx]) >> idx2 == 0) ? " selected " : " ",
-        ((helper & Settings.pcf8574_config[idx]) >> idx2 == 1) ? " selected " : " "
+        ((helper & Settings.pcf8574_config[idx]) >> idx2 == 0) ? PSTR(" selected ") : " ",
+        ((helper & Settings.pcf8574_config[idx]) >> idx2 == 1) ? PSTR(" selected ") : " "
       );
     }
   }

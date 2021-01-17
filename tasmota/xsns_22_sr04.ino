@@ -1,7 +1,7 @@
 /*
   xsns_22_sr04.ino - SR04 ultrasonic sensor support for Tasmota
 
-  Copyright (C) 2020  Nuno Ferreira and Theo Arends
+  Copyright (C) 2021  Nuno Ferreira and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by

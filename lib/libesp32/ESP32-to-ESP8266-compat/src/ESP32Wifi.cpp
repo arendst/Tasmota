@@ -1,7 +1,7 @@
 /*
   WiFi compat with ESP32
 
-  Copyright (C) 2020  Theo Arends / Jörg Schüler-Maroldt
+  Copyright (C) 2021  Theo Arends / Jörg Schüler-Maroldt
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -28,14 +28,12 @@
 #undef WiFi
 #endif
 
-void WiFiClass32::setSleepMode(int iSleepMode)
-{
-    // WIFI_MODEM_SLEEP
-    WiFi.setSleep(iSleepMode != WIFI_MODEM_SLEEP);
+void WiFiClass32::setSleepMode(int iSleepMode) {
+  // WIFI_LIGHT_SLEEP and WIFI_MODEM_SLEEP
+  WiFi.setSleep(iSleepMode != WIFI_NONE_SLEEP);
 }
 
-int WiFiClass32::getPhyMode()
-{
+int WiFiClass32::getPhyMode() {
   int phy_mode = 0;  // " BGNL"
   uint8_t protocol_bitmap;
   if (esp_wifi_get_protocol(WIFI_IF_STA, &protocol_bitmap) == ESP_OK) {
@@ -47,12 +45,10 @@ int WiFiClass32::getPhyMode()
   return phy_mode;
 }
 
-void WiFiClass32::wps_disable()
-{
+void WiFiClass32::wps_disable() {
 }
 
-void WiFiClass32::setOutputPower(int n)
-{
+void WiFiClass32::setOutputPower(int n) {
     wifi_power_t p = WIFI_POWER_2dBm;
     if (n > 19)
         p = WIFI_POWER_19_5dBm;
@@ -75,28 +71,23 @@ void WiFiClass32::setOutputPower(int n)
     WiFi.setTxPower(p);
 }
 
-void WiFiClass32::forceSleepBegin()
-{
+void WiFiClass32::forceSleepBegin() {
 }
 
-void WiFiClass32::forceSleepWake()
-{
+void WiFiClass32::forceSleepWake() {
 }
 
-bool WiFiClass32::getNetworkInfo(uint8_t i, String &ssid, uint8_t &encType, int32_t &rssi, uint8_t *&bssid, int32_t &channel, bool &hidden_scan)
-{
+bool WiFiClass32::getNetworkInfo(uint8_t i, String &ssid, uint8_t &encType, int32_t &rssi, uint8_t *&bssid, int32_t &channel, bool &hidden_scan) {
     hidden_scan = false;
     return WiFi.getNetworkInfo(i, ssid, encType, rssi, bssid, channel);
 }
 
-void wifi_station_disconnect()
-{
+void wifi_station_disconnect() {
     // erase ap: empty ssid, ...
     WiFi.disconnect(true, true);
 }
 
-void wifi_station_dhcpc_start()
-{
+void wifi_station_dhcpc_start() {
 }
 
 WiFiClass32 WiFi32;

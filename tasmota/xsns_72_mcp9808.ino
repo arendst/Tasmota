@@ -1,7 +1,7 @@
 /*
   xsns_72_mcp9808 - MCP9808 I2C temperature sensor support for Tasmota
 
-  Copyright (C) 2020  Martin Wagner and Theo Arends
+  Copyright (C) 2021  Martin Wagner and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by

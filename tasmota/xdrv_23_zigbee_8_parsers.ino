@@ -1,7 +1,7 @@
 /*
   xdrv_23_zigbee.ino - zigbee support for Tasmota
 
-  Copyright (C) 2020  Theo Arends and Stephan Hadinger
+  Copyright (C) 2021  Theo Arends and Stephan Hadinger
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -652,6 +652,8 @@ void Z_AutoBindDefer(uint16_t shortaddr, uint8_t endpoint, const SBuffer &buf,
   if (bitRead(cluster_map, Z_ClusterToCxBinding(0x0500))) {
     // send a read command to cluster 0x0500, attribute 0x0001 (ZoneType) - to read the type of sensor
     zigbee_devices.queueTimer(shortaddr, 0 /* groupaddr */, 2000, 0x0500, endpoint, Z_CAT_READ_ATTRIBUTE, 0x0001, &Z_SendSingleAttributeRead);
+    zigbee_devices.queueTimer(shortaddr, 0 /* groupaddr */, 2000, 0x0500, endpoint, Z_CAT_CIE_ATTRIBUTE, 0 /* value */, &Z_WriteCIEAddress);
+    zigbee_devices.queueTimer(shortaddr, 0 /* groupaddr */, 2000, 0x0500, endpoint, Z_CAT_CIE_ENROLL, 1 /* zone */, &Z_SendCIEZoneEnrollResponse);
   }
 
   // enqueue bind requests
@@ -1346,7 +1348,7 @@ void Z_SendDeviceInfoRequest(uint16_t shortaddr) {
 }
 
 //
-// Send sing attribute read request in Timer
+// Send single attribute read request in Timer
 //
 void Z_SendSingleAttributeRead(uint16_t shortaddr, uint16_t groupaddr, uint16_t cluster, uint8_t endpoint, uint32_t value) {
   uint8_t transacid = zigbee_devices.getNextSeqNumber(shortaddr);
@@ -1368,12 +1370,62 @@ void Z_SendSingleAttributeRead(uint16_t shortaddr, uint16_t groupaddr, uint16_t 
 }
 
 //
+// Write CIE address
+//
+void Z_WriteCIEAddress(uint16_t shortaddr, uint16_t groupaddr, uint16_t cluster, uint8_t endpoint, uint32_t value) {
+  uint8_t transacid = zigbee_devices.getNextSeqNumber(shortaddr);
+  SBuffer buf(12);
+  buf.add16(0x0010);    // attribute 0x0010
+  buf.add8(ZEUI64);
+  buf.add64(localIEEEAddr);
+
+  AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Writing CIE address"));
+  ZigbeeZCLSend_Raw(ZigbeeZCLSendMessage({
+    shortaddr,
+    0x0000, /* group */
+    0x0500 /*cluster*/,
+    endpoint,
+    ZCL_WRITE_ATTRIBUTES,
+    0x0000,  /* manuf */
+    false /* not cluster specific */,
+    true /* response */,
+    false /* discover route */,
+    transacid,  /* zcl transaction id */
+    buf.getBuffer(), buf.len()
+  }));
+}
+
+
+//
+// Write CIE address
+//
+void Z_SendCIEZoneEnrollResponse(uint16_t shortaddr, uint16_t groupaddr, uint16_t cluster, uint8_t endpoint, uint32_t value) {
+  uint8_t transacid = zigbee_devices.getNextSeqNumber(shortaddr);
+  uint8_t EnrollRSP[2] = { 0x00 /* Sucess */, Z_B0(value) /* ZoneID */ };
+
+  AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Sending Enroll Zone %d"), Z_B0(value));
+  ZigbeeZCLSend_Raw(ZigbeeZCLSendMessage({
+    shortaddr,
+    0x0000, /* group */
+    0x0500 /*cluster*/,
+    endpoint,
+    0x00,   // Zone Enroll Response
+    0x0000,  /* manuf */
+    true /* cluster specific */,
+    true /* response */,
+    false /* discover route */,
+    transacid,  /* zcl transaction id */
+    EnrollRSP, sizeof(EnrollRSP)
+  }));
+}
+
+//
 // Auto-bind some clusters to the coordinator's endpoint 0x01
 //
 void Z_AutoBind(uint16_t shortaddr, uint16_t groupaddr, uint16_t cluster, uint8_t endpoint, uint32_t value) {
   uint64_t srcLongAddr = zigbee_devices.getDeviceLongAddr(shortaddr);
 
-  AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "auto-bind `ZbBind {\"Device\":\"0x%04X\",\"Endpoint\":%d,\"Cluster\":\"0x%04X\"}`"),
+  AddLogZ_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "auto-bind `ZbBind {\"Device\":\"0x%04X\",\"Endpoint\":%d,\"Cluster\":\"0x%04X\"}`"),
                                   shortaddr, endpoint, cluster);
 #ifdef USE_ZIGBEE_ZNP
   SBuffer buf(34);
@@ -1420,25 +1472,25 @@ typedef struct Z_autoAttributeReporting_t {
 
 // Note the attribute must be registered in the converter list, used to retrieve the type of the attribute
 const Z_autoAttributeReporting_t Z_autoAttributeReporting[] PROGMEM = {
-  { 0x0001, 0x0020,    60*60, 4*60*60,  0.1 },      // BatteryVoltage
-  { 0x0001, 0x0021,    60*60, 4*60*60,    1 },      // BatteryPercentage
-  { 0x0006, 0x0000,        1,   60*60,    0 },      // Power
-  { 0x0201, 0x0000,       60,   60*10,  0.5 },      // LocalTemperature
-  { 0x0201, 0x0008,       60,   60*10,   10 },      // PIHeatingDemand
-  { 0x0201, 0x0012,       60,   60*10,  0.5 },      // OccupiedHeatingSetpoint
-  { 0x0008, 0x0000,        1,   60*60,    5 },      // Dimmer
-  { 0x0300, 0x0000,        1,   60*60,    5 },      // Hue
-  { 0x0300, 0x0001,        1,   60*60,    5 },      // Sat
-  { 0x0300, 0x0003,        1,   60*60,  100 },      // X
-  { 0x0300, 0x0004,        1,   60*60,  100 },      // Y
-  { 0x0300, 0x0007,        1,   60*60,    5 },      // CT
-  { 0x0300, 0x0008,        1,   60*60,    0 },      // ColorMode
-  { 0x0400, 0x0000,       10,   60*60,    5 },      // Illuminance (5 lux)
-  { 0x0402, 0x0000,       30,   60*60,  0.2 },      // Temperature (0.2 °C)
-  { 0x0403, 0x0000,       30,   60*60,    1 },      // Pressure (1 hPa)
-  { 0x0405, 0x0000,       30,   60*60,  1.0 },      // Humidity (1 %)
-  { 0x0406, 0x0000,       10,   60*60,    0 },      // Occupancy
-  { 0x0500, 0x0002,        1,   60*60,    0 },      // ZoneStatus
+  { 0x0001, 0x0020,    60*60, USE_ZIGBEE_MAXTIME_BATT,  USE_ZIGBEE_AUTOBIND_BATTVOLTAGE },      // BatteryVoltage
+  { 0x0001, 0x0021,    60*60, USE_ZIGBEE_MAXTIME_BATT,  USE_ZIGBEE_AUTOBIND_BATTPERCENT },      // BatteryPercentage
+  { 0x0006, 0x0000,        1,   USE_ZIGBEE_MAXTIME_LIGHT,    0 },      // Power
+  { 0x0201, 0x0000,       60,   USE_ZIGBEE_MAXTIME_TRV,  USE_ZIGBEE_AUTOBIND_TEMPERATURE },      // LocalTemperature
+  { 0x0201, 0x0008,       60,   USE_ZIGBEE_MAXTIME_TRV,  USE_ZIGBEE_AUTOBIND_HEATDEMAND  },      // PIHeatingDemand
+  { 0x0201, 0x0012,       60,   USE_ZIGBEE_MAXTIME_TRV,  USE_ZIGBEE_AUTOBIND_TEMPERATURE },      // OccupiedHeatingSetpoint
+  { 0x0008, 0x0000,        1,   USE_ZIGBEE_MAXTIME_LIGHT,    5 },      // Dimmer
+  { 0x0300, 0x0000,        1,   USE_ZIGBEE_MAXTIME_LIGHT,    5 },      // Hue
+  { 0x0300, 0x0001,        1,   USE_ZIGBEE_MAXTIME_LIGHT,    5 },      // Sat
+  { 0x0300, 0x0003,        1,   USE_ZIGBEE_MAXTIME_LIGHT,  100 },      // X
+  { 0x0300, 0x0004,        1,   USE_ZIGBEE_MAXTIME_LIGHT,  100 },      // Y
+  { 0x0300, 0x0007,        1,   USE_ZIGBEE_MAXTIME_LIGHT,    5 },      // CT
+  { 0x0300, 0x0008,        1,   USE_ZIGBEE_MAXTIME_LIGHT,    0 },      // ColorMode
+  { 0x0400, 0x0000,       10,   USE_ZIGBEE_MAXTIME_SENSOR,  USE_ZIGBEE_AUTOBIND_ILLUMINANCE },      // Illuminance (5 lux)
+  { 0x0402, 0x0000,       30,   USE_ZIGBEE_MAXTIME_SENSOR,  USE_ZIGBEE_AUTOBIND_TEMPERATURE },      // Temperature (0.2 °C)
+  { 0x0403, 0x0000,       30,   USE_ZIGBEE_MAXTIME_SENSOR,  USE_ZIGBEE_AUTOBIND_PRESSURE    },      // Pressure (1 hPa)
+  { 0x0405, 0x0000,       30,   USE_ZIGBEE_MAXTIME_SENSOR,  USE_ZIGBEE_AUTOBIND_HUMIDITY    },      // Humidity (1 %)
+  { 0x0406, 0x0000,       10,   USE_ZIGBEE_MAXTIME_SENSOR,    0 },      // Occupancy
+  { 0x0500, 0x0002,        1,   USE_ZIGBEE_MAXTIME_SENSOR,    0 },      // ZoneStatus
 };
 
 //
@@ -1498,7 +1550,7 @@ void Z_AutoConfigReportingForCluster(uint16_t shortaddr, uint16_t groupaddr, uin
   ResponseAppend_P(PSTR("}}"));
 
   if (buf.len() > 0) {
-    AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "auto-bind `%s`"), TasmotaGlobal.mqtt_data);
+    AddLogZ_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "auto-bind `%s`"), TasmotaGlobal.mqtt_data);
     ZigbeeZCLSend_Raw(ZigbeeZCLSendMessage({
       shortaddr,
       0x0000, /* group */
@@ -1535,7 +1587,7 @@ int32_t EZ_ReceiveTCJoinHandler(int32_t res, const class SBuffer &buf) {
     Response_P(PSTR("{\"" D_JSON_ZIGBEE_STATE "\":{"
                     "\"Status\":%d,\"IEEEAddr\":\"0x%s\",\"ShortAddr\":\"0x%04X\""
                     ",\"ParentNetwork\":\"0x%04X\""
-                    ",\"Status\":%d,\"Decision\":%d"
+                    ",\"JoinStatus\":%d,\"Decision\":%d"
                     "}}"),
                     ZIGBEE_STATUS_DEVICE_INDICATION, hex, srcAddr, parentNw,
                     status, decision
@@ -1587,9 +1639,9 @@ void Z_IncomingMessage(class ZCLFrame &zcl_received) {
       zcl_received.parseResponse();   // Zigbee general "Default Response", publish ZbResponse message
   } else {
     // Build the ZbReceive list
-    if ( (!zcl_received.isClusterSpecificCommand()) && (ZCL_REPORT_ATTRIBUTES == zcl_received.getCmdId())) {
+    if ( (!zcl_received.isClusterSpecificCommand()) && (ZCL_REPORT_ATTRIBUTES == zcl_received.getCmdId() || ZCL_WRITE_ATTRIBUTES == zcl_received.getCmdId())) {
       zcl_received.parseReportAttributes(attr_list);    // Zigbee report attributes from sensors
-      if (clusterid) { defer_attributes = true; }  // don't defer system Cluster=0 messages
+      if (clusterid && (ZCL_REPORT_ATTRIBUTES == zcl_received.getCmdId())) { defer_attributes = true; }  // don't defer system Cluster=0 messages or Write Attribute
     } else if ( (!zcl_received.isClusterSpecificCommand()) && (ZCL_READ_ATTRIBUTES_RESPONSE == zcl_received.getCmdId())) {
       zcl_received.parseReadAttributesResponse(attr_list);
       if (clusterid) { defer_attributes = true; }  // don't defer system Cluster=0 messages
@@ -1600,11 +1652,13 @@ void Z_IncomingMessage(class ZCLFrame &zcl_received) {
       zcl_received.parseReadConfigAttributes(attr_list);
     } else if ( (!zcl_received.isClusterSpecificCommand()) && (ZCL_CONFIGURE_REPORTING_RESPONSE == zcl_received.getCmdId())) {
       zcl_received.parseConfigAttributes(attr_list);
+    } else if ( (!zcl_received.isClusterSpecificCommand()) && (ZCL_WRITE_ATTRIBUTES_RESPONSE == zcl_received.getCmdId())) {
+      zcl_received.parseWriteAttributesResponse(attr_list);
     } else if (zcl_received.isClusterSpecificCommand()) {
       zcl_received.parseClusterSpecificCommand(attr_list);
     }
 
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE D_JSON_ZIGBEEZCL_RAW_RECEIVED ": {\"0x%04X\":{%s}}"), srcaddr, attr_list.toString().c_str());
+    AddLogZ_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE D_JSON_ZIGBEEZCL_RAW_RECEIVED ": {\"0x%04X\":{%s}}"), srcaddr, attr_list.toString().c_str());
 
     // discard the message if it was sent by us (broadcast or group loopback)
     if (srcaddr == localShortAddr) {
@@ -2089,7 +2143,7 @@ void ZCLFrame::autoResponder(const uint16_t *attr_list_ids, size_t attr_len) {
     // we have a non-empty output
 
     // log first
-    AddLog_P(LOG_LEVEL_INFO, PSTR("ZIG: Auto-responder: ZbSend {\"Device\":\"0x%04X\""
+    AddLogZ_P(LOG_LEVEL_INFO, PSTR("ZIG: Auto-responder: ZbSend {\"Device\":\"0x%04X\""
                                           ",\"Cluster\":\"0x%04X\""
                                           ",\"Endpoint\":%d"
                                           ",\"Response\":%s}"

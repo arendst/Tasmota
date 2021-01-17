@@ -1,7 +1,7 @@
 /*
   xdrv_21_wemo_multi.ino - multiple wemo support for Tasmota
 
-  Copyright (C) 2020  Magic73, Heiko Krupp and Theo Arends
+  Copyright (C) 2021  Magic73, Heiko Krupp and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -234,14 +234,18 @@ private:
   int _deviceId;
 
   String WemoSerialnumber(void) {
-    char serial[18];
+    char serial[20];
 
-    snprintf_P(serial, sizeof(serial), PSTR("201612K%08X-%d"), ESP_getChipId(), _deviceId);
+    char index[8] = { 0 };
+    if (_deviceId > 1) {  // Keep backward compatibility
+      snprintf_P(index, sizeof(index), PSTR("%02X"), _deviceId);
+    }
+    snprintf_P(serial, sizeof(serial), PSTR("201612K%08X%s"), ESP_getChipId(), index);
     return String(serial);
   }
 
   String WemoUuid(void) {
-    char uuid[29];
+    char uuid[32];
 
     snprintf_P(uuid, sizeof(uuid), PSTR("Socket-1_0-%s"), WemoSerialnumber().c_str());
     return String(uuid);
@@ -297,8 +301,8 @@ public:
       snprintf_P(message, sizeof(message), PSTR(D_FAILED_TO_SEND_RESPONSE));
     }
     // Do not use AddLog_P here (interrupt routine) if syslog or mqttlog is enabled. UDP/TCP will force exception 9
-    PrepLog_P(LOG_LEVEL_DEBUG, PSTR("WMO: WeMo Type %d, %s to %s:%d"),
-              echo_type, message, udp_remote_ip.toString().c_str(), udp_remote_port);
+    AddLog_P(LOG_LEVEL_DEBUG, PSTR("WMO: WeMo Type %d, %s to %s:%d"),
+             echo_type, message, udp_remote_ip.toString().c_str(), udp_remote_port);
   }
 
   void HandleServerLoop() {
@@ -415,13 +419,9 @@ WemoSwitch *wemoDevice[MAX_FRIENDLYNAMES] = {};
 int numOfWemoSwitch = 0;
 
 void WemoRespondToMSearch(int echo_type) {
-  TickerMSearch.detach();
-
   for (uint32_t i = 0; i < numOfWemoSwitch; i++) {
     wemoDevice[i]->WemoRespondToMSearch(echo_type);
   }
-
-  udp_response_mutex = false;
 }
 
 /*********************************************************************************************\

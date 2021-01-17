@@ -1,7 +1,7 @@
 /*
   WiFi compat with ESP32
 
-  Copyright (C) 2020  Theo Arends / Jörg Schüler-Maroldt
+  Copyright (C) 2021  Theo Arends / Jörg Schüler-Maroldt
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -28,6 +28,7 @@
 #define ENC_TYPE_TKIP  	WIFI_AUTH_WPA_WPA2_PSK
 #define ENC_TYPE_AUTO   WIFI_AUTH_MAX + 1
 
+#define WIFI_NONE_SLEEP     0
 #define WIFI_LIGHT_SLEEP	1
 #define WIFI_MODEM_SLEEP	2
 

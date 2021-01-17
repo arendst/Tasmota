@@ -1,7 +1,7 @@
 /*
   xdrv_44_miel_hvac.ino - Mitsubishi Electric HVAC support for Tasmota
 
-  Copyright (C) 2020  David Gwynne <david@gwynne.id.au>
+  Copyright (C) 2021  David Gwynne <david@gwynne.id.au>
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by

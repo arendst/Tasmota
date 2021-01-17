@@ -1,7 +1,7 @@
 /*
   xsns_79_as608.ino - AS608 and R503 fingerprint sensor support for Tasmota
 
-  Copyright (C) 2020  boaschti and Theo Arends
+  Copyright (C) 2021  boaschti and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by

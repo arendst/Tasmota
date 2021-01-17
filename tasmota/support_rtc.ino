@@ -1,7 +1,7 @@
 /*
   support_rtc.ino - Real Time Clock support for Tasmota
 
-  Copyright (C) 2020  Theo Arends
+  Copyright (C) 2021  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -392,7 +392,7 @@ void RtcSecond(void)
     Rtc.standard_time = RuleToTime(Settings.tflag[0], RtcTime.year);
 
     // Do not use AddLog_P( here (interrupt routine) if syslog or mqttlog is enabled. UDP/TCP will force exception 9
-    PrepLog_P(LOG_LEVEL_DEBUG, PSTR("RTC: " D_UTC_TIME " %s, " D_DST_TIME " %s, " D_STD_TIME " %s"),
+    AddLog_P(LOG_LEVEL_DEBUG, PSTR("RTC: " D_UTC_TIME " %s, " D_DST_TIME " %s, " D_STD_TIME " %s"),
       GetDateAndTime(DT_UTC).c_str(), GetDateAndTime(DT_DST).c_str(), GetDateAndTime(DT_STD).c_str());
 
     if (Rtc.local_time < START_VALID_TIME) {  // 2016-01-01
@@ -407,7 +407,7 @@ void RtcSecond(void)
 
   if ((Rtc.utc_time > (2 * 60 * 60)) && (last_sync < Rtc.utc_time - (2 * 60 * 60))) {  // Every two hours a warning
     // Do not use AddLog_P( here (interrupt routine) if syslog or mqttlog is enabled. UDP/TCP will force exception 9
-    PrepLog_P(LOG_LEVEL_DEBUG, PSTR("RTC: Not synced"));
+    AddLog_P(LOG_LEVEL_DEBUG, PSTR("RTC: Not synced"));
     last_sync = Rtc.utc_time;
   }
 
@@ -454,6 +454,14 @@ void RtcSecond(void)
       Rtc.midnight = Rtc.local_time;
       Rtc.midnight_now = true;
     }
+
+    if (mutex) {  // Time is just synced and is valid
+      // Sync Core/RTOS time to be used by file system time stamps
+      struct timeval tv;
+      tv.tv_sec = Rtc.local_time;
+      tv.tv_usec = 0;
+      settimeofday(&tv, nullptr);
+    }
   }
 
   RtcTime.year += 1970;
@@ -481,4 +489,8 @@ void RtcInit(void) {
   Rtc.utc_time = 0;
   BreakTime(Rtc.utc_time, RtcTime);
   TickerRtc.attach(1, RtcSecond);
+}
+
+void RtcPreInit(void) {
+  Rtc.millis = millis();
 }

@@ -1,7 +1,7 @@
 /*
   support_wifi.ino - wifi support for Tasmota
 
-  Copyright (C) 2020  Theo Arends
+  Copyright (C) 2021  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -153,10 +153,23 @@ void WiFiSetSleepMode(void)
  */
 
 // Sleep explanation: https://github.com/esp8266/Arduino/blob/3f0c601cfe81439ce17e9bd5d28994a7ed144482/libraries/ESP8266WiFi/src/ESP8266WiFiGeneric.cpp#L255
+/*
   if (TasmotaGlobal.sleep && Settings.flag3.sleep_normal) {  // SetOption60 - Enable normal sleep instead of dynamic sleep
     WiFi.setSleepMode(WIFI_LIGHT_SLEEP);        // Allow light sleep during idle times
   } else {
     WiFi.setSleepMode(WIFI_MODEM_SLEEP);        // Disable sleep (Esp8288/Arduino core and sdk default)
+  }
+*/
+  if (0 == TasmotaGlobal.sleep) {
+    if (!TasmotaGlobal.wifi_stay_asleep) {
+      WiFi.setSleepMode(WIFI_NONE_SLEEP);       // Disable sleep
+    }
+  } else {
+    if (Settings.flag3.sleep_normal) {          // SetOption60 - Enable normal sleep instead of dynamic sleep
+      WiFi.setSleepMode(WIFI_LIGHT_SLEEP);      // Allow light sleep during idle times
+    } else {
+      WiFi.setSleepMode(WIFI_MODEM_SLEEP);      // Sleep (Esp8288/Arduino core and sdk default)
+    }
   }
   WifiSetOutputPower();
 }
@@ -401,11 +414,6 @@ void WifiCheckIp(void)
       memcpy((void*) &Settings.wifi_bssid, (void*) bssid, sizeof(Settings.wifi_bssid));
     }
     Wifi.status = WL_CONNECTED;
-#ifdef USE_DISCOVERY
-#ifdef WEBSERVER_ADVERTISE
-    MdnsUpdate();
-#endif  // USE_DISCOVERY
-#endif  // WEBSERVER_ADVERTISE
   } else {
     WifiSetState(0);
     uint8_t wifi_config_tool = Settings.sta_config;
@@ -740,6 +748,7 @@ uint32_t WifiGetNtp(void) {
   char* ntp_server;
   bool resolved_ip = false;
   for (uint32_t i = 0; i <= MAX_NTP_SERVERS; i++) {
+    if (ntp_server_id > 2) { ntp_server_id = 0; }
     if (i < MAX_NTP_SERVERS) {
       ntp_server = SettingsText(SET_NTPSERVER1 + ntp_server_id);
     } else {
@@ -752,7 +761,6 @@ uint32_t WifiGetNtp(void) {
       if (resolved_ip) { break; }
     }
     ntp_server_id++;
-    if (ntp_server_id > 2) { ntp_server_id = 0; }
   }
   if (!resolved_ip) {
 //    AddLog_P(LOG_LEVEL_DEBUG, PSTR("NTP: No server found"));
@@ -790,8 +798,7 @@ uint32_t WifiGetNtp(void) {
   packet_buffer[15] = 52;
 
   if (udp.beginPacket(time_server_ip, 123) == 0) {  // NTP requests are to port 123
-    ntp_server_id++;
-    if (ntp_server_id > 2) { ntp_server_id = 0; }   // Next server next time
+    ntp_server_id++;                                // Next server next time
     udp.stop();
     return 0;
   }
@@ -811,6 +818,7 @@ uint32_t WifiGetNtp(void) {
         // Leap-Indicator: unknown (clock unsynchronized)
         // See: https://github.com/letscontrolit/ESPEasy/issues/2886#issuecomment-586656384
         AddLog_P(LOG_LEVEL_DEBUG, PSTR("NTP: IP %s unsynched"), time_server_ip.toString().c_str());
+        ntp_server_id++;                            // Next server next time
         return 0;
       }
 
@@ -821,6 +829,7 @@ uint32_t WifiGetNtp(void) {
       secs_since_1900 |= (uint32_t)packet_buffer[42] << 8;
       secs_since_1900 |= (uint32_t)packet_buffer[43];
       if (0 == secs_since_1900) {                   // No time stamp received
+        ntp_server_id++;                            // Next server next time
         return 0;
       }
       return secs_since_1900 - 2208988800UL;
@@ -830,6 +839,7 @@ uint32_t WifiGetNtp(void) {
   // Timeout.
   AddLog_P(LOG_LEVEL_DEBUG, PSTR("NTP: No reply"));
   udp.stop();
+  ntp_server_id++;                                  // Next server next time
   return 0;
 }
 

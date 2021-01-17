@@ -1,7 +1,7 @@
 /*
   xdrv_34_wemos_motor_v1.ino - Support for I2C WEMOS motor shield (6612FNG)
 
-  Copyright (C) 2020  Denis Sborets and Theo Arends
+  Copyright (C) 2021  Denis Sborets and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by

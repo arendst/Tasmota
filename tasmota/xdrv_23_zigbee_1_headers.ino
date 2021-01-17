@@ -1,7 +1,7 @@
 /*
   xdrv_23_zigbee_1_headers.ino - zigbee support for Tasmota
 
-  Copyright (C) 2020  Theo Arends and Stephan Hadinger
+  Copyright (C) 2021  Theo Arends and Stephan Hadinger
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -127,6 +127,18 @@ uint32_t parseHex(const char **data, size_t max_len = 8) {
     *data += 1;
   }
   return ret;
+}
+
+// Since v9.2.0.2 Log buffer was reduced from 700 bytes to 120. This version is specific to Zigbee and restores the 700 bytes limit
+void AddLogZ_P(uint32_t loglevel, PGM_P formatP, ...) {
+  char log_data[MAX_LOGSZ];
+
+  va_list arg;
+  va_start(arg, formatP);
+  vsnprintf_P(log_data, sizeof(log_data), formatP, arg);
+  va_end(arg);
+
+  AddLogData(loglevel, log_data);
 }
 
 #endif // USE_ZIGBEE

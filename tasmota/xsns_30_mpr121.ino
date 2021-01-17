@@ -1,7 +1,7 @@
 /*
   xsns_30_mpr121.ino - MPR121 support for Tasmota
 
-  Copyright (C) 2020  Rene 'Renne' Bartsch and Theo Arends
+  Copyright (C) 2021  Rene 'Renne' Bartsch and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by

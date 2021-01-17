@@ -9,13 +9,13 @@ jobs:
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-    - uses: actions/checkout@v1 
+    - uses: actions/checkout@v1
     - name: Use latest Tasmota development
-      run: | 
+      run: |
         git config --local user.name "Platformio BUILD"
-        git switch -c master
+        git switch -c work
         git remote add -f Tasmota "https://github.com/arendst/Tasmota.git"
-        git merge Tasmota/development --allow-unrelated-histories          
+        git merge Tasmota/development --allow-unrelated-histories
     - name: Push Tasmota   # Push updates of latest Tasmota development to repo
       uses: ad-m/github-push-action@master
       with:
@@ -39,14 +39,14 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
+      run: |
         platformio run -e tasmota
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
         path: ./build_output/firmware
 
-  
+
   tasmota-minimal:
     needs: tasmota_pull
     runs-on: ubuntu-latest
@@ -62,14 +62,14 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
+      run: |
         platformio run -e tasmota-minimal
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
         path: ./build_output/firmware
 
-  
+
   tasmota-lite:
     needs: tasmota_pull
     runs-on: ubuntu-latest
@@ -85,14 +85,14 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
+      run: |
         platformio run -e tasmota-lite
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
         path: ./build_output/firmware
 
-  
+
   tasmota-knx:
     needs: tasmota_pull
     runs-on: ubuntu-latest
@@ -108,14 +108,14 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
+      run: |
         platformio run -e tasmota-knx
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
         path: ./build_output/firmware
 
-  
+
   tasmota-sensors:
     needs: tasmota_pull
     runs-on: ubuntu-latest
@@ -131,14 +131,14 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
+      run: |
         platformio run -e tasmota-sensors
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
         path: ./build_output/firmware
 
-  
+
   tasmota-display:
     needs: tasmota_pull
     runs-on: ubuntu-latest
@@ -154,14 +154,14 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
+      run: |
         platformio run -e tasmota-display
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
         path: ./build_output/firmware
 
-  
+
   tasmota-ir:
     needs: tasmota_pull
     runs-on: ubuntu-latest
@@ -177,14 +177,14 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
+      run: |
         platformio run -e tasmota-ir
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
         path: ./build_output/firmware
 
-  
+
   tasmota-ircustom:
     needs: tasmota_pull
     runs-on: ubuntu-latest
@@ -200,14 +200,14 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
+      run: |
         platformio run -e tasmota-ircustom
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
         path: ./build_output/firmware
 
-  
+
   tasmota-zbbridge:
     needs: tasmota_pull
     runs-on: ubuntu-latest
@@ -223,13 +223,37 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
+      run: |
         platformio run -e tasmota-zbbridge
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
         path: ./build_output/firmware
-  
+
+
+  tasmota-AF:
+    needs: tasmota_pull
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v1
+    - name: Set up Python
+      uses: actions/setup-python@v1
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -U platformio
+        platformio upgrade --dev
+        platformio update
+    - name: Run PlatformIO
+      run: |
+        platformio run -e tasmota-AF
+    - uses: actions/upload-artifact@v2
+      with:
+        name: firmware
+        path: ./build_output/firmware
+
+
   tasmota-BG:
     needs: tasmota_pull
     runs-on: ubuntu-latest
@@ -245,14 +269,14 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
+      run: |
         platformio run -e tasmota-BG
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
         path: ./build_output/firmware
 
-  
+
   tasmota-BR:
     needs: tasmota_pull
     runs-on: ubuntu-latest
@@ -268,14 +292,14 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
+      run: |
         platformio run -e tasmota-BR
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
         path: ./build_output/firmware
 
-  
+
   tasmota-CN:
     needs: tasmota_pull
     runs-on: ubuntu-latest
@@ -291,14 +315,14 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
+      run: |
         platformio run -e tasmota-CN
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
         path: ./build_output/firmware
 
-  
+
   tasmota-CZ:
     needs: tasmota_pull
     runs-on: ubuntu-latest
@@ -314,14 +338,14 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
+      run: |
         platformio run -e tasmota-CZ
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
         path: ./build_output/firmware
 
-  
+
   tasmota-DE:
     needs: tasmota_pull
     runs-on: ubuntu-latest
@@ -337,14 +361,14 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
+      run: |
         platformio run -e tasmota-DE
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
         path: ./build_output/firmware
 
-  
+
   tasmota-ES:
     needs: tasmota_pull
     runs-on: ubuntu-latest
@@ -360,14 +384,14 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
+      run: |
         platformio run -e tasmota-ES
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
         path: ./build_output/firmware
 
-  
+
   tasmota-FR:
     needs: tasmota_pull
     runs-on: ubuntu-latest
@@ -383,14 +407,14 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
+      run: |
         platformio run -e tasmota-FR
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
         path: ./build_output/firmware
 
-  
+
   tasmota-GR:
     needs: tasmota_pull
     runs-on: ubuntu-latest
@@ -406,14 +430,14 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
+      run: |
         platformio run -e tasmota-GR
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
         path: ./build_output/firmware
 
-  
+
   tasmota-HE:
     needs: tasmota_pull
     runs-on: ubuntu-latest
@@ -429,14 +453,14 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
+      run: |
         platformio run -e tasmota-HE
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
         path: ./build_output/firmware
 
-  
+
   tasmota-HU:
     needs: tasmota_pull
     runs-on: ubuntu-latest
@@ -452,14 +476,14 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
+      run: |
         platformio run -e tasmota-HU
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
         path: ./build_output/firmware
 
-  
+
   tasmota-IT:
     needs: tasmota_pull
     runs-on: ubuntu-latest
@@ -475,14 +499,14 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
+      run: |
         platformio run -e tasmota-IT
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
         path: ./build_output/firmware
 
-  
+
   tasmota-KO:
     needs: tasmota_pull
     runs-on: ubuntu-latest
@@ -498,14 +522,14 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
+      run: |
         platformio run -e tasmota-KO
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
         path: ./build_output/firmware
 
-  
+
   tasmota-NL:
     needs: tasmota_pull
     runs-on: ubuntu-latest
@@ -521,14 +545,14 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
+      run: |
         platformio run -e tasmota-NL
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
         path: ./build_output/firmware
 
-  
+
   tasmota-PL:
     needs: tasmota_pull
     runs-on: ubuntu-latest
@@ -544,14 +568,14 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
+      run: |
         platformio run -e tasmota-PL
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
         path: ./build_output/firmware
 
-  
+
   tasmota-PT:
     needs: tasmota_pull
     runs-on: ubuntu-latest
@@ -567,14 +591,14 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
+      run: |
         platformio run -e tasmota-PT
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
         path: ./build_output/firmware
 
-  
+
   tasmota-RO:
     needs: tasmota_pull
     runs-on: ubuntu-latest
@@ -590,14 +614,14 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
+      run: |
         platformio run -e tasmota-RO
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
         path: ./build_output/firmware
 
-  
+
   tasmota-RU:
     needs: tasmota_pull
     runs-on: ubuntu-latest
@@ -613,14 +637,14 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
+      run: |
         platformio run -e tasmota-RU
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
         path: ./build_output/firmware
 
-  
+
   tasmota-SE:
     needs: tasmota_pull
     runs-on: ubuntu-latest
@@ -636,14 +660,14 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
+      run: |
         platformio run -e tasmota-SE
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
         path: ./build_output/firmware
 
-  
+
   tasmota-SK:
     needs: tasmota_pull
     runs-on: ubuntu-latest
@@ -659,14 +683,14 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
+      run: |
         platformio run -e tasmota-SK
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
         path: ./build_output/firmware
 
-  
+
   tasmota-TR:
     needs: tasmota_pull
     runs-on: ubuntu-latest
@@ -682,14 +706,14 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
+      run: |
         platformio run -e tasmota-TR
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
         path: ./build_output/firmware
 
-  
+
   tasmota-TW:
     needs: tasmota_pull
     runs-on: ubuntu-latest
@@ -705,14 +729,14 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
+      run: |
         platformio run -e tasmota-TW
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
         path: ./build_output/firmware
 
-  
+
   tasmota-UK:
     needs: tasmota_pull
     runs-on: ubuntu-latest
@@ -728,7 +752,7 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
+      run: |
         platformio run -e tasmota-UK
     - uses: actions/upload-artifact@v2
       with:
@@ -751,7 +775,7 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
+      run: |
         platformio run -e tasmota-VN
     - uses: actions/upload-artifact@v2
       with:
@@ -781,7 +805,7 @@ jobs:
         name: firmware
         path: ./build_output/firmware
 
-  
+
   tasmota32-minimal:
     needs: tasmota_pull
     runs-on: ubuntu-latest
@@ -804,7 +828,7 @@ jobs:
         name: firmware
         path: ./build_output/firmware
 
-  
+
   tasmota32-lite:
     needs: tasmota_pull
     runs-on: ubuntu-latest
@@ -850,7 +874,30 @@ jobs:
         name: firmware
         path: ./build_output/firmware
 
-    
+
+  tasmota32-odroidgo:
+    needs: tasmota_pull
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v1
+    - name: Set up Python
+      uses: actions/setup-python@v1
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -U platformio
+        platformio upgrade --dev
+        platformio update
+    - name: Run PlatformIO
+      run: |
+        platformio run -e tasmota32-odroidgo
+    - uses: actions/upload-artifact@v2
+      with:
+        name: firmware
+        path: ./build_output/firmware
+
+
   tasmota32-knx:
     needs: tasmota_pull
     runs-on: ubuntu-latest
@@ -873,7 +920,7 @@ jobs:
         name: firmware
         path: ./build_output/firmware
 
-  
+
   tasmota32-sensors:
     needs: tasmota_pull
     runs-on: ubuntu-latest
@@ -896,7 +943,7 @@ jobs:
         name: firmware
         path: ./build_output/firmware
 
-  
+
   tasmota32-display:
     needs: tasmota_pull
     runs-on: ubuntu-latest
@@ -919,7 +966,7 @@ jobs:
         name: firmware
         path: ./build_output/firmware
 
-  
+
   tasmota32-ir:
     needs: tasmota_pull
     runs-on: ubuntu-latest
@@ -942,7 +989,7 @@ jobs:
         name: firmware
         path: ./build_output/firmware
 
-  
+
   tasmota32-ircustom:
     needs: tasmota_pull
     runs-on: ubuntu-latest
@@ -965,7 +1012,30 @@ jobs:
         name: firmware
         path: ./build_output/firmware
 
-  
+
+  tasmota32-AF:
+    needs: tasmota_pull
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v1
+    - name: Set up Python
+      uses: actions/setup-python@v1
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -U platformio
+        platformio upgrade --dev
+        platformio update
+    - name: Run PlatformIO
+      run: |
+        platformio run -e tasmota32-AF
+    - uses: actions/upload-artifact@v2
+      with:
+        name: firmware
+        path: ./build_output/firmware
+
+
   tasmota32-BG:
     needs: tasmota_pull
     runs-on: ubuntu-latest
@@ -988,7 +1058,7 @@ jobs:
         name: firmware
         path: ./build_output/firmware
 
-  
+
   tasmota32-BR:
     needs: tasmota_pull
     runs-on: ubuntu-latest
@@ -1011,7 +1081,7 @@ jobs:
         name: firmware
         path: ./build_output/firmware
 
-  
+
   tasmota32-CN:
     needs: tasmota_pull
     runs-on: ubuntu-latest
@@ -1034,7 +1104,7 @@ jobs:
         name: firmware
         path: ./build_output/firmware
 
-  
+
   tasmota32-CZ:
     needs: tasmota_pull
     runs-on: ubuntu-latest
@@ -1057,7 +1127,7 @@ jobs:
         name: firmware
         path: ./build_output/firmware
 
-  
+
   tasmota32-DE:
     needs: tasmota_pull
     runs-on: ubuntu-latest
@@ -1080,7 +1150,7 @@ jobs:
         name: firmware
         path: ./build_output/firmware
 
-  
+
   tasmota32-ES:
     needs: tasmota_pull
     runs-on: ubuntu-latest
@@ -1103,7 +1173,7 @@ jobs:
         name: firmware
         path: ./build_output/firmware
 
-  
+
   tasmota32-FR:
     needs: tasmota_pull
     runs-on: ubuntu-latest
@@ -1126,7 +1196,7 @@ jobs:
         name: firmware
         path: ./build_output/firmware
 
-  
+
   tasmota32-GR:
     needs: tasmota_pull
     runs-on: ubuntu-latest
@@ -1149,7 +1219,7 @@ jobs:
         name: firmware
         path: ./build_output/firmware
 
-  
+
   tasmota32-HE:
     needs: tasmota_pull
     runs-on: ubuntu-latest
@@ -1172,7 +1242,7 @@ jobs:
         name: firmware
         path: ./build_output/firmware
 
-  
+
   tasmota32-HU:
     needs: tasmota_pull
     runs-on: ubuntu-latest
@@ -1195,7 +1265,7 @@ jobs:
         name: firmware
         path: ./build_output/firmware
 
-  
+
   tasmota32-IT:
     needs: tasmota_pull
     runs-on: ubuntu-latest
@@ -1218,7 +1288,7 @@ jobs:
         name: firmware
         path: ./build_output/firmware
 
-  
+
   tasmota32-KO:
     needs: tasmota_pull
     runs-on: ubuntu-latest
@@ -1241,7 +1311,7 @@ jobs:
         name: firmware
         path: ./build_output/firmware
 
-  
+
   tasmota32-NL:
     needs: tasmota_pull
     runs-on: ubuntu-latest
@@ -1264,7 +1334,7 @@ jobs:
         name: firmware
         path: ./build_output/firmware
 
-  
+
   tasmota32-PL:
     needs: tasmota_pull
     runs-on: ubuntu-latest
@@ -1287,7 +1357,7 @@ jobs:
         name: firmware
         path: ./build_output/firmware
 
-  
+
   tasmota32-PT:
     needs: tasmota_pull
     runs-on: ubuntu-latest
@@ -1310,7 +1380,7 @@ jobs:
         name: firmware
         path: ./build_output/firmware
 
-  
+
   tasmota32-RO:
     needs: tasmota_pull
     runs-on: ubuntu-latest
@@ -1333,7 +1403,7 @@ jobs:
         name: firmware
         path: ./build_output/firmware
 
-  
+
   tasmota32-RU:
     needs: tasmota_pull
     runs-on: ubuntu-latest
@@ -1356,7 +1426,7 @@ jobs:
         name: firmware
         path: ./build_output/firmware
 
-  
+
   tasmota32-SE:
     needs: tasmota_pull
     runs-on: ubuntu-latest
@@ -1379,7 +1449,7 @@ jobs:
         name: firmware
         path: ./build_output/firmware
 
-  
+
   tasmota32-SK:
     needs: tasmota_pull
     runs-on: ubuntu-latest
@@ -1402,7 +1472,7 @@ jobs:
         name: firmware
         path: ./build_output/firmware
 
-  
+
   tasmota32-TR:
     needs: tasmota_pull
     runs-on: ubuntu-latest
@@ -1425,7 +1495,7 @@ jobs:
         name: firmware
         path: ./build_output/firmware
 
-  
+
   tasmota32-TW:
     needs: tasmota_pull
     runs-on: ubuntu-latest
@@ -1448,7 +1518,7 @@ jobs:
         name: firmware
         path: ./build_output/firmware
 
-  
+
   tasmota32-UK:
     needs: tasmota_pull
     runs-on: ubuntu-latest
@@ -1496,7 +1566,7 @@ jobs:
 
 
   Upload:
-    needs: [tasmota-VN, tasmota32-ircustom, tasmota32-VN, tasmota32-TW, tasmota32-TR]    
+    needs: [tasmota-VN, tasmota32-ircustom, tasmota32-VN, tasmota32-TW, tasmota32-TR]
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -1513,6 +1583,7 @@ jobs:
         mkdir -p ./firmware/tasmota/languages
         mkdir -p ./firmware/tasmota32/languages
         mkdir -p ./firmware/tasmota32/ESP32_needed_files/
+        mkdir -p ./firmware/tasmota32/Odroid_go_needed_files/
         [ ! -f ./mv_firmware/tasmota.* ] || mv ./mv_firmware/tasmota.* ./firmware/tasmota/
         [ ! -f ./mv_firmware/tasmota-sensors.* ] || mv ./mv_firmware/tasmota-sensors.* ./firmware/tasmota/
         [ ! -f ./mv_firmware/tasmota-minimal.* ] || mv ./mv_firmware/tasmota-minimal.* ./firmware/tasmota/
@@ -1520,7 +1591,7 @@ jobs:
         [ ! -f ./mv_firmware/tasmota-ir*.* ] || mv ./mv_firmware/tasmota-ir*.* ./firmware/tasmota/
         [ ! -f ./mv_firmware/tasmota-display.* ] || mv ./mv_firmware/tasmota-display.* ./firmware/tasmota/
         [ ! -f ./mv_firmware/tasmota-knx.* ] || mv ./mv_firmware/tasmota-knx.* ./firmware/tasmota/
-        [ ! -f ./mv_firmware/tasmota-zbbridge.* ] || mv ./mv_firmware/tasmota-zbbridge.* ./firmware/tasmota/        
+        [ ! -f ./mv_firmware/tasmota-zbbridge.* ] || mv ./mv_firmware/tasmota-zbbridge.* ./firmware/tasmota/
         [ ! -f ./mv_firmware/tasmota32.* ] || mv ./mv_firmware/tasmota32.* ./firmware/tasmota32/
         [ ! -f ./mv_firmware/tasmota32-sensors.* ] || mv ./mv_firmware/tasmota32-sensors.* ./firmware/tasmota32/
         [ ! -f ./mv_firmware/tasmota32-minimal.* ] || mv ./mv_firmware/tasmota32-minimal.* ./firmware/tasmota32/
@@ -1528,11 +1599,15 @@ jobs:
         [ ! -f ./mv_firmware/tasmota32-ir*.* ] || mv ./mv_firmware/tasmota32-ir*.* ./firmware/tasmota32/
         [ ! -f ./mv_firmware/tasmota32-display.* ] || mv ./mv_firmware/tasmota32-display.* ./firmware/tasmota32/
         [ ! -f ./mv_firmware/tasmota32-web*.* ] || mv ./mv_firmware/tasmota32-web*.* ./firmware/tasmota32/
+        [ ! -f ./mv_firmware/tasmota32-odroidgo.* ] || mv ./mv_firmware/tasmota32-odroidgo.* ./firmware/tasmota32/
         [ ! -f ./mv_firmware/tasmota32-knx.* ] || mv ./mv_firmware/tasmota32-knx.* ./firmware/tasmota32/
         [ ! -f ./mv_firmware/tasmota32* ] || mv ./mv_firmware/tasmota32* ./firmware/tasmota32/languages/
         [ ! -f ./mv_firmware/* ] || mv ./mv_firmware/* ./firmware/tasmota/languages/
+        rm ./firmware/tasmota32/*.gz
+        rm ./firmware/tasmota32/languages/*.gz
         [ ! -f ./tools/Esptool/ESP32/*.* ] || mv ./tools/Esptool/ESP32/*.* ./firmware/tasmota32/ESP32_needed_files/
-        [ ! -f ./FIRMWARE.md ] || mv -f ./FIRMWARE.md ./README.md        
+        [ ! -f ./tools/Esptool/Odroid_go/*.* ] || mv ./tools/Esptool/Odroid_go/*.* ./firmware/tasmota32/Odroid_go_needed_files/
+        [ ! -f ./FIRMWARE.md ] || mv -f ./FIRMWARE.md ./README.md
     - name: Commit files  # transfer the new binaries back into the repository
       run: |
         git config --local user.name "Platformio BUILD"

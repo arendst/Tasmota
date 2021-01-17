@@ -1,7 +1,7 @@
 /*
   xsns_76_dyp.ino - DYP ME007 serial interface
 
-  Copyright (C) 2020 Janusz Kostorz
+  Copyright (C) 2021  Janusz Kostorz
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by

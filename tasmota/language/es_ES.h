@@ -1,7 +1,7 @@
 /*
   es-ES.h - localization for Spanish - Spain for Tasmota
 
-  Copyright (C) 2020  Adrian Scillato
+  Copyright (C) 2021  Adrian Scillato
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v9.1.0.2
+ * Updated until v9.2.0.3
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -460,6 +460,32 @@
 #define D_KNX_TX_SCENE "KNX ESCENA TX"
 #define D_KNX_RX_SCENE "KNX ESCENA RX"
 
+// xdrv_23_zigbee
+#define D_ZIGBEE_PERMITJOIN_ACTIVE "Dispositivos permitidos a unirse"
+#define D_ZIGBEE_MAPPING_TITLE "Mapeo de Tasmota Zigbee"
+#define D_ZIGBEE_NOT_STARTED "Zigbee no iniciado"
+#define D_ZIGBEE_MAPPING_IN_PROGRESS_SEC "Mapeo en progreso (%d s. restantes)"
+#define D_ZIGBEE_MAPPING_NOT_PRESENT "Sin mapeo"
+#define D_ZIGBEE_MAP_REFRESH "Actualizar Mapa Zigbee"
+#define D_ZIGBEE_MAP "Mapa Zigbee"
+#define D_ZIGBEE_PERMITJOIN "Permitir unirse a Zigbee"
+#define D_ZIGBEE_GENERATE_KEY "Generando una clave aleatoria de red Zigbee"
+#define D_ZIGBEE_UNKNOWN_DEVICE "Dispositivo desconocido"
+#define D_ZIGBEE_UNKNOWN_ATTRIBUTE "Atributo desconocido"
+#define D_ZIGBEE_INVALID_PARAM "Parámetro inválido"
+#define D_ZIGBEE_MISSING_PARAM "Parámetros faltantes"
+#define D_ZIGBEE_UNKNWON_ATTRIBUTE "Nombre de atributo desconocido (ignorado): %s"
+#define D_ZIGBEE_TOO_MANY_CLUSTERS "No mas de un id de cluster por comando"
+#define D_ZIGBEE_WRONG_DELIMITER "Delimitador incorrecto para payload"
+#define D_ZIGBEE_UNRECOGNIZED_COMMAND "Comando zigbee no reconocido: %s"
+#define D_ZIGBEE_TOO_MANY_COMMANDS "Solo un comando es permitido (%d)"
+#define D_ZIGBEE_NO_ATTRIBUTE "No hay atributos en la lista"
+#define D_ZIGBEE_UNSUPPORTED_ATTRIBUTE_TYPE "Atributo no soportado"
+#define D_ZIGBEE_JSON_REQUIRED "La configuración debe ser en JSON"
+#define D_ZIGBEE_RESET_1_OR_2 "1 o 2 para resetear"
+#define D_ZIGBEE_EEPROM_FOUND_AT_ADDRESS "Encontrada EEPROM de ZBBridge en"
+#define D_ZIGBEE_RANDOMIZING_ZBCONFIG "Configurando parámetros Zigbee de forma aleatoria. Usar 'ZbConfig' para revisarlos."
+
 // xdrv_03_energy.ino
 #define D_ENERGY_TODAY "Energía Hoy"
 #define D_ENERGY_YESTERDAY "Energía Ayer"
@@ -561,6 +587,7 @@
 // tasmota_template.h - keep them as short as possible to be able to fit them in GUI drop down box
 #define D_SENSOR_NONE          "Ninguno"
 #define D_SENSOR_USER          "Por Usuario"
+#define D_SENSOR_OPTION        "Option"
 #define D_SENSOR_DHT11         "DHT11"
 #define D_SENSOR_AM2301        "AM2301"
 #define D_SENSOR_SI7021        "SI7021"
@@ -613,6 +640,9 @@
 #define D_SENSOR_TM1638_STB    "TM16 STB"
 #define D_SENSOR_HX711_SCK     "HX711 SCK"
 #define D_SENSOR_HX711_DAT     "HX711 DAT"
+#define D_SENSOR_FTC532        "FTC532"
+#define D_SENSOR_BS814_CLK     "BS814 CLK"
+#define D_SENSOR_BS814_DAT     "BS814 DAT"
 #define D_SENSOR_TX2X_TX       "TX2x"
 #define D_SENSOR_RFSEND        "RFSend"
 #define D_SENSOR_RFRECV        "RFrecv"
@@ -646,6 +676,8 @@
 #define D_SENSOR_SM16716_CLK   "SM16716 CLK"
 #define D_SENSOR_SM16716_DAT   "SM16716 DAT"
 #define D_SENSOR_SM16716_POWER "SM16716 PWR"
+#define D_SENSOR_P9813_CLK     "P9813 Clk"
+#define D_SENSOR_P9813_DAT     "P9813 Dat"
 #define D_SENSOR_MY92X1_DI     "MY92x1 DI"
 #define D_SENSOR_MY92X1_DCKI   "MY92x1 DCKI"
 #define D_SENSOR_ARIRFRCV      "ALux IrRcv"
@@ -710,6 +742,7 @@
 #define D_SENSOR_ADC_RANGE     "ADC Range"
 #define D_SENSOR_ADC_CT_POWER  "ADC CT Power"
 #define D_SENSOR_ADC_JOYSTICK  "ADC Joystick"
+#define D_SENSOR_ADC_PH        "ADC pH"
 #define D_GPIO_WEBCAM_PWDN     "CAM_PWDN"
 #define D_GPIO_WEBCAM_RESET    "CAM_RESET"
 #define D_GPIO_WEBCAM_XCLK     "CAM_XCLK"
@@ -734,6 +767,23 @@
 #define D_SENSOR_SHELLY_DIMMER_BOOT0 "SHD Boot 0"
 #define D_SENSOR_SHELLY_DIMMER_RST_INV "SHD Reset"
 #define D_SENSOR_RC522_RST     "RC522 Rst"
+#define D_SENSOR_RC522_CS      "RC522 CS"
+#define D_SENSOR_NRF24_CS      "NRF24 CS"
+#define D_SENSOR_NRF24_DC      "NRF24 DC"
+#define D_SENSOR_ILI9341_CS    "ILI9341 CS"
+#define D_SENSOR_ILI9341_DC    "ILI9341 DC"
+#define D_SENSOR_ILI9488_CS    "ILI9488 CS"
+#define D_SENSOR_EPAPER29_CS   "EPaper29 CS"
+#define D_SENSOR_EPAPER42_CS   "EPaper42 CS"
+#define D_SENSOR_SSD1351_CS    "SSD1351 CS"
+#define D_SENSOR_RA8876_CS     "RA8876 CS"
+#define D_SENSOR_ST7789_CS     "ST7789 CS"
+#define D_SENSOR_ST7789_DC     "ST7789 DC"
+#define D_SENSOR_SSD1331_CS    "SSD1331 CS"
+#define D_SENSOR_SSD1331_DC    "SSD1331 DC"
+#define D_SENSOR_SDCARD_CS     "SDCard CS"
+#define D_SENSOR_WIEGAND_D0    "Wiegand D0"
+#define D_SENSOR_WIEGAND_D1    "Wiegand D1"
 
 // Units
 #define D_UNIT_AMPERE "A"
@@ -819,7 +869,7 @@
 #define D_CONFIGURE_SCRIPT     "Editar Script"
 #define D_SCRIPT               "Editar Script"
 #define D_SDCARD_UPLOAD        "Subir Archivo"
-#define D_SDCARD_DIR           "Directorio en Tarjeta SD"
+#define D_UFSDIR               "Directorio en Tarjeta UFS"
 #define D_UPL_DONE             "Listo"
 #define D_SCRIPT_CHARS_LEFT    "Caracteres disponibles"
 #define D_SCRIPT_CHARS_NO_MORE "No hay mas espacio"
@@ -827,6 +877,11 @@
 #define D_SCRIPT_ENABLE        "Habilitar Script"
 #define D_SCRIPT_UPLOAD        "Cargar"
 #define D_SCRIPT_UPLOAD_FILES  "Cargar Archivos"
+
+//xdrv_50_filesystem.ino
+#define D_MANAGE_FILE_SYSTEM   "Explorar Archivos"
+#define D_FS_SIZE              "Tamaño"
+#define D_FS_FREE              "Libre"
 
 //xsns_67_as3935.ino
 #define D_AS3935_GAIN "Ganancia:"
