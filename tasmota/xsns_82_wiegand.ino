@@ -30,21 +30,21 @@
 #define XSNS_82                82
 
 #define WIEGAND_BIT_TIMEOUT    25 //time to be wait after last bit detected.
-// use only a randomly generate RFID for testing. using #define will save some space in the final code
+
+// Use only a randomly generate RFID for testing. using #define will save some space in the final code
 //  DEV_WIEGAND_TEST_MODE 1 : testing with random rfid without hardware connected, but GPIOs set correctly
 //  DEV_WIEGAND_TEST_MODE 2 : testing with hardware corretly connected.
-//
 #define DEV_WIEGAND_TEST_MODE  0
 
 #ifdef DEV_WIEGAND_TEST_MODE
-    #if (DEV_WIEGAND_TEST_MODE==0)
-    #elif (DEV_WIEGAND_TEST_MODE==1)
-      #warning "Wiegand Interface compiled with 'DEV_WIEGAND_TEST_MODE' 1 (Random RFID)"
-    #elif (DEV_WIEGAND_TEST_MODE==2)
-      #warning "Wiegand Interface compiled with 'DEV_WIEGAND_TEST_MODE' 2 (Hardware connected)"
-    #else
-      #warning "Wiegand Interface compiled with unknown mode"
-    #endif
+  #if (DEV_WIEGAND_TEST_MODE==0)
+  #elif (DEV_WIEGAND_TEST_MODE==1)
+    #warning "Wiegand Interface compiled with 'DEV_WIEGAND_TEST_MODE' 1 (Random RFID)"
+  #elif (DEV_WIEGAND_TEST_MODE==2)
+    #warning "Wiegand Interface compiled with 'DEV_WIEGAND_TEST_MODE' 2 (Hardware connected)"
+  #else
+    #warning "Wiegand Interface compiled with unknown mode"
+  #endif
 #endif
 
 class Wiegand {
@@ -96,16 +96,16 @@ Wiegand::Wiegand()   {
   rfidBuffer = 0;
   bitCount = 0 ;
   timeOut = 0;
-  isInit= false;
+  isInit = false;
 }
 
 #if (DEV_WIEGAND_TEST_MODE)==1
 uint64_t Wiegand::GetRandomRfid(uint8_t tag_size=34) {
-  //todo add support for 4 and 8 bit keyboard "tags"
+  // Todo add support for 4 and 8 bit keyboard "tags"
   uint64_t result = (uint32_t)HwRandom();
   uint8_t parities = 0;
   bitCount = tag_size;
-  timeOut=millis() - WIEGAND_BIT_TIMEOUT;
+  timeOut = millis() - WIEGAND_BIT_TIMEOUT;
   result = result << 32;
   result += HwRandom();
 
@@ -127,8 +127,8 @@ uint64_t Wiegand::GetRandomRfid(uint8_t tag_size=34) {
   }
   parities = CalculateParities(result, tag_size);
 
-  result = (result << 1) | (parities & 0x01); //set LSB parity
-  if (parities & 0x80) { //MSB parity is 1
+  result = (result << 1) | (parities & 0x01);  // Set LSB parity
+  if (parities & 0x80) {  // MSB parity is 1
     switch (tag_size) {
       case 24:
         result |= 0x800000;
@@ -151,47 +151,47 @@ uint64_t Wiegand::GetRandomRfid(uint8_t tag_size=34) {
 }
 #endif
 
-void ICACHE_RAM_ATTR Wiegand::handleD1Interrupt() { // receive a 1 bit. (D0=high & D1=low)
-  rfidBuffer = (rfidBuffer << 1) | 1; // leftshift + 1 bit
-  bitCount++; //increment the counter
-  lastFoundTime = millis(); // last time bit found
+void ICACHE_RAM_ATTR Wiegand::handleD1Interrupt() {  // Receive a 1 bit. (D0=high & D1=low)
+  rfidBuffer = (rfidBuffer << 1) | 1;                // Leftshift + 1 bit
+  bitCount++;                                        // Increment the counter
+  lastFoundTime = millis();                          // Last time bit found
 }
 
-void ICACHE_RAM_ATTR Wiegand::handleD0Interrupt() { // receive a 0 bit. (D0=low & D1=high)
-  rfidBuffer = rfidBuffer << 1; // leftshift the 0 bit is now at the end of rfidBuffer
-  bitCount++; //increment the counter
-  lastFoundTime = millis(); //last time bit found
+void ICACHE_RAM_ATTR Wiegand::handleD0Interrupt() {  // Receive a 0 bit. (D0=low & D1=high)
+  rfidBuffer = rfidBuffer << 1;                      // Leftshift the 0 bit is now at the end of rfidBuffer
+  bitCount++;                                        // Increment the counter
+  lastFoundTime = millis();                          // Last time bit found
 }
 
 void Wiegand::Init() {
   isInit = false;
-  if (PinUsed(GPIO_WIEGAND_D0) && PinUsed(GPIO_WIEGAND_D1)) { //only start, if the Wiegang pins are
-        #if (DEV_WIEGAND_TEST_MODE)>0
-        AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: Init()"));
-        #endif
+  if (PinUsed(GPIO_WIEGAND_D0) && PinUsed(GPIO_WIEGAND_D1)) {  // Only start, if the Wiegang pins are
+#if (DEV_WIEGAND_TEST_MODE)>0
+    AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: Init()"));
+#endif
     pinMode(Pin(GPIO_WIEGAND_D0), INPUT_PULLUP);
     pinMode(Pin(GPIO_WIEGAND_D1), INPUT_PULLUP);
-    attachInterrupt(Pin(GPIO_WIEGAND_D0),  handleD0Interrupt, FALLING);
-    attachInterrupt(Pin(GPIO_WIEGAND_D1),  handleD1Interrupt, FALLING);
-    isInit = true;  // helps to run only if correctly setup
-        #if (DEV_WIEGAND_TEST_MODE)>0
-        AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: Testmode"));  // for tests without reader attaiched
-        AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: D0:%u"),Pin(GPIO_WIEGAND_D0));
-        AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: D1:%u"),Pin(GPIO_WIEGAND_D1));
-        #else
+    attachInterrupt(Pin(GPIO_WIEGAND_D0), handleD0Interrupt, FALLING);
+    attachInterrupt(Pin(GPIO_WIEGAND_D1), handleD1Interrupt, FALLING);
+    isInit = true;                                            // Helps to run only if correctly setup
+#if (DEV_WIEGAND_TEST_MODE)>0
+    AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: Testmode"));          // For tests without reader attaiched
+    AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: D0:%u"),Pin(GPIO_WIEGAND_D0));
+    AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: D1:%u"),Pin(GPIO_WIEGAND_D1));
+#else
     AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: D0=%u, D1=%u"),Pin(GPIO_WIEGAND_D0), Pin(GPIO_WIEGAND_D1));
-        #endif
+#endif
   }
-  #if (DEV_WIEGAND_TEST_MODE)>0
+#if (DEV_WIEGAND_TEST_MODE)>0
   else {
     AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: no GPIOs."));
   }
-  #endif
+#endif
 }
 
 uint64_t Wiegand::CheckAndConvertRfid(uint64_t rfidIn, uint16_t bitcount) {
   uint8_t evenParityBit = 0;
-  uint8_t oddParityBit = (uint8_t) (rfidIn & 0x1); // last bit = odd parity
+  uint8_t oddParityBit = (uint8_t) (rfidIn & 0x1);  // Last bit = odd parity
   uint8_t calcParity = 0;
   switch (bitcount) {
     case 24:
@@ -217,42 +217,42 @@ uint64_t Wiegand::CheckAndConvertRfid(uint64_t rfidIn, uint16_t bitcount) {
     default:
     break;
   }
-  calcParity = CalculateParities(rfidIn, bitCount);   //ckeck result on http://www.ccdesignworks.com/wiegand_calc.htm with raw tag as input
-  if (calcParity != (evenParityBit | oddParityBit)) { // Paritybit is wrong
+  calcParity = CalculateParities(rfidIn, bitCount);    // check result on http://www.ccdesignworks.com/wiegand_calc.htm with raw tag as input
+  if (calcParity != (evenParityBit | oddParityBit)) {  // Paritybit is wrong
     rfidIn=0;
     AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: %llu parity error"), rfidIn);
   }
-        #if (DEV_WIEGAND_TEST_MODE)>0
-          AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: even (left) parity: %u "), (evenParityBit>>7));
-          AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: even (calc) parity: %u "), (calcParity & 0x80)>>7);
-          AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: odd (right) parity: %u "), oddParityBit);
-          AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: odd (calc) parity: %u "), (calcParity & 0x01));
-        #endif
+#if (DEV_WIEGAND_TEST_MODE)>0
+  AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: even (left) parity: %u "), (evenParityBit>>7));
+  AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: even (calc) parity: %u "), (calcParity & 0x80)>>7);
+  AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: odd (right) parity: %u "), oddParityBit);
+  AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: odd (calc) parity: %u "), (calcParity & 0x01));
+#endif
   return rfidIn;
 }
 
 uint8_t Wiegand::CalculateParities(uint64_t tagWithoutParities, int tag_size=26) {
-  //tag_size is the size of the final tag including the 2 parity bits
-  //so length if the tagWithoutParities should be (tag_size-2) !! That will be not profed and
-  //lead to wrong results if the input value is larger!
-  //calculated start parity (even) will be returned as bit 8
-  //calculated end parity (odd) will be returned as bit 1
+  // tag_size is the size of the final tag including the 2 parity bits
+  // So length if the tagWithoutParities should be (tag_size-2) !! That will be not profed and
+  // lead to wrong results if the input value is larger!
+  // Calculated start parity (even) will be returned as bit 8
+  // calculated end parity (odd) will be returned as bit 1
   uint8_t retValue=0;
   tag_size -= 2;
-  if (tag_size<=0) { return retValue; } //prohibit div zero exception and other wrong inputs
-  uint8_t parity=1; //check for odd parity on LSB
-  for (uint8_t i=0; i<(tag_size/2); i++) {
-    parity^=(tagWithoutParities & 1);
-    tagWithoutParities>>=1;
-    }
+  if (tag_size <= 0) { return retValue; }      // Prohibit div zero exception and other wrong inputs
+  uint8_t parity = 1;                          // Check for odd parity on LSB
+  for (uint8_t i = 0; i < (tag_size / 2); i++) {
+    parity ^= (tagWithoutParities & 1);
+    tagWithoutParities >>= 1;
+  }
   retValue |= parity;
 
-  parity=0; //check for even parity on MSB
+  parity = 0;                                  // Check for even parity on MSB
   while (tagWithoutParities) {
-    parity^=(tagWithoutParities & 1);
-    tagWithoutParities>>=1;
-    }
-  retValue |= (parity<<7);
+    parity ^= (tagWithoutParities & 1);
+    tagWithoutParities >>= 1;
+  }
+  retValue |= (parity << 7);
 
   return retValue;
 }
@@ -260,10 +260,10 @@ uint8_t Wiegand::CalculateParities(uint64_t tagWithoutParities, int tag_size=26)
 char Wiegand::translateEnterEscapeKeyPress(char oKeyPressed) {
 	switch(oKeyPressed) {
 	case 0x0b:        // 11 or * key
-		return 0x0d;  // 13 or ASCII ENTER
+		return 0x0d;    // 13 or ASCII ENTER
 
 	case 0x0a:        // 10 or # key
-		return 0x1b;  // 27 or ASCII ESCAPE
+		return 0x1b;    // 27 or ASCII ESCAPE
 
 	default:
 		return oKeyPressed;
@@ -274,19 +274,19 @@ bool Wiegand::WiegandConversion ()
 {
   bool bRet = false;
 	unsigned long nowTick = millis();
-//add a maximum wait time for new bits
+  // Add a maximum wait time for new bits
   unsigned long diffTicks = nowTick - lastFoundTime;
-  if ((diffTicks > WIEGAND_BIT_TIMEOUT) && (diffTicks >= 5000 )) {  //max. 5 secs between 2 bits comming in
-    bitCount=0;
-    rfidBuffer=0;
-    lastFoundTime=nowTick;
+  if ((diffTicks > WIEGAND_BIT_TIMEOUT) && (diffTicks >= 5000 )) {  // Max. 5 secs between 2 bits comming in
+    bitCount = 0;
+    rfidBuffer = 0;
+    lastFoundTime = nowTick;
     return bRet;
-    }
-  if (diffTicks > WIEGAND_BIT_TIMEOUT)	{   //last bit found is WIEGAND_BIT_TIMEOUT ms ago
-      #if (DEV_WIEGAND_TEST_MODE)>0
-      AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: raw tag: %llu "), rfidBuffer);
-      AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: bit count: %u "), bitCount);
-      #endif
+  }
+  if (diffTicks > WIEGAND_BIT_TIMEOUT) {                            // Last bit found is WIEGAND_BIT_TIMEOUT ms ago
+#if (DEV_WIEGAND_TEST_MODE)>0
+    AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: raw tag: %llu "), rfidBuffer);
+    AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: bit count: %u "), bitCount);
+#endif
     if ((bitCount==4)||(bitCount==8)||(bitCount==24)||(bitCount==26)||(bitCount==32)||(bitCount==34)) {
       if ((bitCount==24)||(bitCount==26)||(bitCount==32)||(bitCount==34)) {
         // 24,26,32,34-bit Wiegand codes
@@ -310,79 +310,74 @@ bool Wiegand::WiegandConversion ()
         // eg if key 1 pressed, data=E1 in binary 11100001 , high nibble=1110 , low nibble = 0001
         char highNibble = (rfidBuffer & 0xf0) >>4;
         char lowNibble = (rfidBuffer & 0x0f);
-        if (lowNibble == (~highNibble & 0x0f))		// check if low nibble matches the "NOT" of high nibble.
-        {
+        if (lowNibble == (~highNibble & 0x0f)) {   // Check if low nibble matches the "NOT" of high nibble.
           rfid = (int)translateEnterEscapeKeyPress(lowNibble);
-          bRet=true;
+          bRet = true;
+        } else {
+          lastFoundTime = nowTick;
+          bRet = false;
         }
-        else {
-          lastFoundTime=nowTick;
-          bRet=false;
-        }
-        tagSize=bitCount;
-        bitCount=0;
-        rfidBuffer=0;
+        tagSize = bitCount;
+        bitCount = 0;
+        rfidBuffer = 0;
       }
+    } else {
+      // Time reached but unknown bitCount, clear and start again
+      lastFoundTime = nowTick;
+      bitCount = 0;
+      rfidBuffer = 0;
+      bRet = false;
     }
-    else {
-      // time reached but unknown bitCount, clear and start again
-      lastFoundTime=nowTick;
-      bitCount=0;
-      rfidBuffer=0;
-      bRet=false;
-    }
+  } else {
+    bRet = false; // watching time not finished
   }
-  else{
-    bRet=false; // watching time not finished
-  }
-      #if (DEV_WIEGAND_TEST_MODE)>0
-      AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: tag   out: %llu "), rfid);
-      AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: tag  size: %u"), tagSize);
-      #endif
+#if (DEV_WIEGAND_TEST_MODE)>0
+  AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: tag   out: %llu "), rfid);
+  AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: tag  size: %u"), tagSize);
+#endif
   return bRet;
 }
 
 void Wiegand::ScanForTag() {
-
   if (!isInit)  { return;}
-          #if (DEV_WIEGAND_TEST_MODE)>0
-          AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: ScanForTag()."));
-          #if (DEV_WIEGAND_TEST_MODE==1)
-          switch (millis() %4 ) {
-            case 0:
-              rfidBuffer = GetRandomRfid(24);
-            break;
-            case 1:
-              rfidBuffer = GetRandomRfid(26);
-            break;
-            case 2:
-              rfidBuffer = GetRandomRfid(32);
-            break;
-            case 3:
-              rfidBuffer = GetRandomRfid(34);
-            break;
-            default:
-              rfidBuffer = GetRandomRfid(34);
-            break;
-          }
-          AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: raw generated: %lX"), rfidBuffer);  // for tests without reader attaiched
-          #endif
-        #endif
+#if (DEV_WIEGAND_TEST_MODE)>0
+    AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: ScanForTag()."));
+#if (DEV_WIEGAND_TEST_MODE==1)
+    switch (millis() %4 ) {
+      case 0:
+        rfidBuffer = GetRandomRfid(24);
+      break;
+      case 1:
+        rfidBuffer = GetRandomRfid(26);
+      break;
+      case 2:
+        rfidBuffer = GetRandomRfid(32);
+      break;
+      case 3:
+        rfidBuffer = GetRandomRfid(34);
+      break;
+      default:
+        rfidBuffer = GetRandomRfid(34);
+      break;
+    }
+    AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: raw generated: %lX"), rfidBuffer);  // for tests without reader attaiched
+#endif
+#endif
   if (bitCount > 0)   {
     uint64_t oldTag = rfid;
     bool validKey =  WiegandConversion();
-          #if (DEV_WIEGAND_TEST_MODE)>0
-                    AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: previous tag: %llu"), oldTag);
-          #endif
+#if (DEV_WIEGAND_TEST_MODE)>0
+    AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: previous tag: %llu"), oldTag);
+#endif
     // only in case of valid key do action. Issue#10585
     if(validKey) {
       if (oldTag != rfid) { AddLog_P(LOG_LEVEL_INFO, PSTR("WIE:  new= %llu"), rfid); }
       else  { AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: prev= %llu"), rfid); }
       AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: bits= %u"), tagSize);
       ResponseTime_P(PSTR(",\"Wiegand\":{\"UID\":\"%0llu\"}}"), rfid);
-      MqttPublishTeleSensor(); 
-    }   
-  }  
+      MqttPublishTeleSensor();
+    }
+  }
 }
 
 #ifdef USE_WEBSERVER
@@ -410,27 +405,26 @@ bool Xsns82(byte function) {
       scanDelay = 1;
       break;
 
-    case FUNC_EVERY_250_MSECOND: // some tags need more time, don't try shorter period
-            #if (DEV_WIEGAND_TEST_MODE)==1
-                  if (scanDelay>=4) // give a second because of the log entries to be send.
-            #else
-      if (scanDelay>=2) // only run every (delay * 250 ms) (every 250ms is too fast for some tags)
-            #endif
+    case FUNC_EVERY_250_MSECOND:  // Some tags need more time, don't try shorter period
+#if (DEV_WIEGAND_TEST_MODE)==1
+      if (scanDelay >= 4)         // Give a second because of the log entries to be send.
+#else
+      if (scanDelay >= 2)         // Only run every (delay * 250 ms) (every 250ms is too fast for some tags)
+#endif
       {
         oWiegand->ScanForTag();
         scanDelay = 1;
-      }
-      else {
+      } else {
         scanDelay++;
       }
       break;
-
-    #ifdef USE_WEBSERVER
+#ifdef USE_WEBSERVER
     case FUNC_WEB_SENSOR:
       oWiegand->Show();
       break;
-    #endif  // USE_WEBSERVER
+#endif  // USE_WEBSERVER
   }
   return result;
 }
+
 #endif  // USE_WIEGAND
