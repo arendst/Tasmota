@@ -263,22 +263,20 @@ void ButtonHandler(void) {
                 SendKey(KEY_BUTTON, button_index +1, POWER_HOLD);  // Execute Hold command via MQTT if ButtonTopic is set
               }
             } else {
-              if (!Settings.flag.button_restrict) {    // SetOption1  - Control button multipress
+              if (Settings.flag.button_restrict) {     // SetOption1 (0) - Control button multipress
+                if (Settings.param[P_HOLD_IGNORE] > 0) {     // SetOption40 (0) - Do not ignore button hold
+                  if (Button.hold_timer[button_index] > loops_per_second * Settings.param[P_HOLD_IGNORE] / 10) {
+                    Button.hold_timer[button_index] = 0;     // Reset button hold counter to stay below hold trigger
+                    Button.press_counter[button_index] = 0;  // Discard button press to disable functionality
+                  }
+                }
+              } else {
                 if ((Button.hold_timer[button_index] == loops_per_second * hold_time_extent * Settings.param[P_HOLD_TIME] / 10)) {  // SetOption32 (40) - Button held for factor times longer
                   Button.press_counter[button_index] = 0;
                   snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_RESET " 1"));
                   ExecuteCommand(scmnd, SRC_BUTTON);
                 }
               }
-              else
-              {
-                if (Settings.param[P_HOLD_IGNORE] > 0) {         // SetOption40 (0) - Do not ignore button hold
-                  if (Button.hold_timer[button_index] > loops_per_second * Settings.param[P_HOLD_IGNORE] / 10) {
-                    Button.hold_timer[button_index] = 0;                // Reset button hold counter to stay below hold trigger
-                    Button.press_counter[button_index] = 0;                // Discard button press to disable functionality
-                  }
-                }
-              }              
             }
           }
         }

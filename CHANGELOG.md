@@ -13,7 +13,8 @@ All notable changes to this project will be documented in this file.
 - ESP8266 Support for 2MB and up linker files with 1MB and up LittleFS
 - ESP32 support for TLS MQTT using BearSSL (same as ESP8266)
 - Support for 24/26/32/34 bit RFID Wiegand interface (D0/D1) by Sigurd Leuther (#3647)
-- Added ``USE_MQTT_TLS_DROP_OLD_FINGERPRINT`` compile time option to drop old (less secure) TLS fingerprint
+- Compile time option ``USE_MQTT_TLS_DROP_OLD_FINGERPRINT`` to drop old (less secure) TLS fingerprint
+- Command ``SetOption40 0..250`` to disable button functionality if activated for over 0.1 second re-introduced
 
 ### Breaking Changed
 - ESP32 switch from default SPIFFS to default LittleFS file system loosing current (zigbee) files
