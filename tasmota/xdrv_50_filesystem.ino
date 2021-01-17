@@ -402,6 +402,7 @@ void UFSDelete(void) {
  * Web support
 \*********************************************************************************************/
 
+
 #ifdef USE_WEBSERVER
 
 const char UFS_WEB_DIR[] PROGMEM =
@@ -459,6 +460,8 @@ void UfsDirectory(void) {
     if (UfsDownloadFile(cp)) {
       // is directory
       strcpy(ufs_path, cp);
+    } else {
+      return;
     }
   }
 
@@ -588,7 +591,9 @@ void UfsListDir(char *path, uint8_t depth) {
   }
 }
 
-
+#ifdef ESP32
+#define ESP32_DOWNLOAD_TASK
+#endif // ESP32
 
 uint8_t UfsDownloadFile(char *file) {
   File download_file;
@@ -609,7 +614,7 @@ uint8_t UfsDownloadFile(char *file) {
     return 1;
   }
 
-#ifdef ESP8266
+#ifndef ESP32_DOWNLOAD_TASK
   WiFiClient download_Client;
   uint32_t flen = download_file.size();
 
@@ -649,10 +654,10 @@ uint8_t UfsDownloadFile(char *file) {
   }
   download_file.close();
   download_Client.stop();
-#endif // esp8266
+#endif // ESP32_DOWNLOAD_TASK
 
 
-#ifdef ESP32
+#ifdef ESP32_DOWNLOAD_TASK
   download_file.close();
 
   if (download_busy == true) {
@@ -664,16 +669,16 @@ uint8_t UfsDownloadFile(char *file) {
   char *path = (char*)malloc(128);
   strcpy(path,file);
   xTaskCreatePinnedToCore(donload_task, "DT", 6000, (void*)path, 3, NULL, 1);
-#endif // ESP32
+#endif // ESP32_DOWNLOAD_TASK
 
   return 0;
 }
 
 
-#ifdef ESP32
+#ifdef ESP32_DOWNLOAD_TASK
 #ifndef DOWNLOAD_SIZE
 #define DOWNLOAD_SIZE 4096
-#endif
+#endif // DOWNLOAD_SIZE
 void donload_task(void *path) {
   File download_file;
   WiFiClient download_Client;
@@ -714,7 +719,7 @@ void donload_task(void *path) {
   download_busy = false;
   vTaskDelete( NULL );
 }
-#endif //  ESP32
+#endif //  ESP32_DOWNLOAD_TASK
 
 
 bool UfsUploadFileOpen(const char* upload_filename) {
