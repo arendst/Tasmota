@@ -274,65 +274,72 @@ bool Wiegand::WiegandConversion ()
 {
   bool bRet = false;
 	unsigned long nowTick = millis();
-	if ((nowTick - lastFoundTime) > WIEGAND_BIT_TIMEOUT)		//last bit found is WIEGAND_BIT_TIMEOUT ms ago
-	{
-          #if (DEV_WIEGAND_TEST_MODE)>0
-          AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: raw tag: %llu "), rfidBuffer);
-          AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: bit count: %u "), bitCount);
-          #endif
-      if ((bitCount==4)||(bitCount==8)||(bitCount==24)||(bitCount==26)||(bitCount==32)||(bitCount==34)) {
-        if ((bitCount==24)||(bitCount==26)||(bitCount==32)||(bitCount==34)) {
-          // 24,26,32,34-bit Wiegand codes
-          rfid = CheckAndConvertRfid( rfidBuffer, bitCount);
-          tagSize=bitCount;
-          bitCount=0;
-          rfidBuffer=0;
-          bRet=true;
-        }
-        if (bitCount==4) {
-          // 4-bit Wiegand codes for keypads
-          rfid = (int)translateEnterEscapeKeyPress(rfidBuffer & 0x0000000F);
-          tagSize = bitCount;
-          bitCount = 0;
-          rfidBuffer = 0;
-          bRet=true;
-        }
-        if (bitCount==8){
-          // 8-bit Wiegand codes for keypads with integrity
-          // 8-bit Wiegand keyboard data, high nibble is the "NOT" of low nibble
-          // eg if key 1 pressed, data=E1 in binary 11100001 , high nibble=1110 , low nibble = 0001
-          char highNibble = (rfidBuffer & 0xf0) >>4;
-          char lowNibble = (rfidBuffer & 0x0f);
-          if (lowNibble == (~highNibble & 0x0f))		// check if low nibble matches the "NOT" of high nibble.
-          {
-            rfid = (int)translateEnterEscapeKeyPress(lowNibble);
-            bRet=true;
-          }
-          else {
-            lastFoundTime=nowTick;
-            bRet=false;
-          }
-          tagSize=bitCount;
-          bitCount=0;
-          rfidBuffer=0;
-        }
-      }
-      else {
-        // time reached but unknown bitCount, clear and start again
-        lastFoundTime=nowTick;
+//add a maximum wait time for new bits
+  unsigned long diffTicks = nowTick - lastFoundTime;
+  if ((diffTicks > WIEGAND_BIT_TIMEOUT) && (diffTicks >= 5000 )) {  //max. 5 secs between 2 bits comming in
+    bitCount=0;
+    rfidBuffer=0;
+    lastFoundTime=nowTick;
+    return bRet;
+    }
+  if (diffTicks > WIEGAND_BIT_TIMEOUT)	{   //last bit found is WIEGAND_BIT_TIMEOUT ms ago
+      #if (DEV_WIEGAND_TEST_MODE)>0
+      AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: raw tag: %llu "), rfidBuffer);
+      AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: bit count: %u "), bitCount);
+      #endif
+    if ((bitCount==4)||(bitCount==8)||(bitCount==24)||(bitCount==26)||(bitCount==32)||(bitCount==34)) {
+      if ((bitCount==24)||(bitCount==26)||(bitCount==32)||(bitCount==34)) {
+        // 24,26,32,34-bit Wiegand codes
+        rfid = CheckAndConvertRfid( rfidBuffer, bitCount);
+        tagSize=bitCount;
         bitCount=0;
         rfidBuffer=0;
-        bRet=false;
+        bRet=true;
+      }
+      if (bitCount==4) {
+        // 4-bit Wiegand codes for keypads
+        rfid = (int)translateEnterEscapeKeyPress(rfidBuffer & 0x0000000F);
+        tagSize = bitCount;
+        bitCount = 0;
+        rfidBuffer = 0;
+        bRet=true;
+      }
+      if (bitCount==8){
+        // 8-bit Wiegand codes for keypads with integrity
+        // 8-bit Wiegand keyboard data, high nibble is the "NOT" of low nibble
+        // eg if key 1 pressed, data=E1 in binary 11100001 , high nibble=1110 , low nibble = 0001
+        char highNibble = (rfidBuffer & 0xf0) >>4;
+        char lowNibble = (rfidBuffer & 0x0f);
+        if (lowNibble == (~highNibble & 0x0f))		// check if low nibble matches the "NOT" of high nibble.
+        {
+          rfid = (int)translateEnterEscapeKeyPress(lowNibble);
+          bRet=true;
+        }
+        else {
+          lastFoundTime=nowTick;
+          bRet=false;
+        }
+        tagSize=bitCount;
+        bitCount=0;
+        rfidBuffer=0;
       }
     }
-		else{
-	    bRet=false; // watching time not finished
+    else {
+      // time reached but unknown bitCount, clear and start again
+      lastFoundTime=nowTick;
+      bitCount=0;
+      rfidBuffer=0;
+      bRet=false;
     }
-        #if (DEV_WIEGAND_TEST_MODE)>0
-        AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: tag   out: %llu "), rfid);
-        AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: tag  size: %u"), tagSize);
-        #endif
-    return bRet;
+  }
+  else{
+    bRet=false; // watching time not finished
+  }
+      #if (DEV_WIEGAND_TEST_MODE)>0
+      AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: tag   out: %llu "), rfid);
+      AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: tag  size: %u"), tagSize);
+      #endif
+  return bRet;
 }
 
 void Wiegand::ScanForTag() {
@@ -363,19 +370,19 @@ void Wiegand::ScanForTag() {
         #endif
   if (bitCount > 0)   {
     uint64_t oldTag = rfid;
-    bool newKey =  WiegandConversion();
+    bool validKey =  WiegandConversion();
           #if (DEV_WIEGAND_TEST_MODE)>0
                     AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: previous tag: %llu"), oldTag);
           #endif
-    if(newKey && (oldTag != rfid)) {
-      AddLog_P(LOG_LEVEL_INFO, PSTR("WIE:  new= %llu"), rfid);
-      }
-    else
-    { AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: prev= %llu"), rfid);}
-    AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: bits= %u"), tagSize);
-    ResponseTime_P(PSTR(",\"Wiegand\":{\"UID\":\"%0llu\"}}"), rfid);
-    MqttPublishTeleSensor();
-  }
+    // only in case of valid key do action. Issue#10585
+    if(validKey) {
+      if (oldTag != rfid) { AddLog_P(LOG_LEVEL_INFO, PSTR("WIE:  new= %llu"), rfid); }
+      else  { AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: prev= %llu"), rfid); }
+      AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: bits= %u"), tagSize);
+      ResponseTime_P(PSTR(",\"Wiegand\":{\"UID\":\"%0llu\"}}"), rfid);
+      MqttPublishTeleSensor(); 
+    }   
+  }  
 }
 
 #ifdef USE_WEBSERVER
