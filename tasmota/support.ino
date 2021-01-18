@@ -655,13 +655,11 @@ uint8_t Shortcut(void)
 
 bool ValidIpAddress(const char* str)
 {
-  const char* p = str;
-
-  while (*p && ((*p == '.') || ((*p >= '0') && (*p <= '9')))) { p++; }
-  return (*p == '\0');
+  IPAddress ip_address;
+  return ip_address.fromString(str);
 }
 
-bool ParseIp(uint32_t* addr, const char* str)
+bool ParseIPv4(uint32_t* addr, const char* str)
 {
   uint8_t *part = (uint8_t*)addr;
   uint8_t i;

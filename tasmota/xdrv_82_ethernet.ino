@@ -95,9 +95,9 @@ void EthernetEvent(WiFiEvent_t event) {
     case SYSTEM_EVENT_ETH_GOT_IP:
       AddLog_P(LOG_LEVEL_DEBUG, PSTR("ETH: Mac %s, IPAddress %s, Hostname %s"),
         ETH.macAddress().c_str(), ETH.localIP().toString().c_str(), eth_hostname);
-      Settings.ip_address[1] = (uint32_t)ETH.gatewayIP();
-      Settings.ip_address[2] = (uint32_t)ETH.subnetMask();
-      Settings.ip_address[3] = (uint32_t)ETH.dnsIP();
+      Settings.ipv4_address[1] = (uint32_t)ETH.gatewayIP();
+      Settings.ipv4_address[2] = (uint32_t)ETH.subnetMask();
+      Settings.ipv4_address[3] = (uint32_t)ETH.dnsIP();
       TasmotaGlobal.global_state.eth_down = 0;
       break;
     case SYSTEM_EVENT_ETH_DISCONNECTED:
