@@ -941,6 +941,11 @@ void Every100mSeconds(void)
  * Every 0.25 second
 \*-------------------------------------------------------------------------------------------*/
 
+#ifdef USE_BLE_ESP32
+  // declare the fn
+  int ExtStopBLE();
+#endif  // USE_BLE_ESP32
+
 void Every250mSeconds(void)
 {
 // As the max amount of sleep = 250 mSec this loop should always be taken...
@@ -1010,6 +1015,9 @@ void Every250mSeconds(void)
         SettingsSave(1);  // Free flash for OTA update
       }
       if (TasmotaGlobal.ota_state_flag <= 0) {
+#ifdef USE_BLE_ESP32
+        ExtStopBLE();
+#endif  // USE_BLE_ESP32
 #ifdef USE_COUNTER
         CounterInterruptDisable(true);  // Prevent OTA failures on 100Hz counter interrupts
 #endif  // USE_COUNTER

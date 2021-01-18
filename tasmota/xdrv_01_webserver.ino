@@ -2331,6 +2331,11 @@ void HandleUploadDone(void) {
   WSContentStop();
 }
 
+#ifdef USE_BLE_ESP32
+  // declare the fn
+  int ExtStopBLE();
+#endif
+
 void UploadServices(uint32_t start_service) {
   if (Web.upload_services_stopped != start_service) { return; }
   Web.upload_services_stopped = !start_service;
@@ -2355,6 +2360,9 @@ void UploadServices(uint32_t start_service) {
   } else {
 //    AddLog_P(LOG_LEVEL_DEBUG, PSTR("UPL: Services disabled"));
 
+#ifdef USE_BLE_ESP32
+    ExtStopBLE();
+#endif
 #ifdef USE_EMULATION
     UdpDisconnect();
 #endif  // USE_EMULATION
@@ -2373,11 +2381,6 @@ void UploadServices(uint32_t start_service) {
     TasmotaGlobal.restart_flag = 120;  // Set restart watchdog after 2 minutes
   }
 }
-
-#ifdef USE_BLE_ESP32 
-  // declare the fn
-  int ExtStopBLE();
-#endif    
 
 void HandleUploadLoop(void) {
   // Based on ESP8266HTTPUpdateServer.cpp uses ESP8266WebServer Parsing.cpp and Cores Updater.cpp (Update)
@@ -2413,11 +2416,6 @@ void HandleUploadLoop(void) {
       return;
     }
     SettingsSave(1);  // Free flash for upload
-
-#ifdef USE_BLE_ESP32 
-    ExtStopBLE();
-#endif    
-
 
     AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_UPLOAD D_FILE " %s"), upload.filename.c_str());
 

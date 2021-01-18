@@ -690,12 +690,6 @@ void CmndSleep(void)
 
 }
 
-#ifdef USE_BLE_ESP32 
-  // declare the fn
-  int ExtStopBLE();
-#endif    
-
-
 void CmndUpgrade(void)
 {
   // Check if the payload is numerically 1, and had no trailing chars.
@@ -706,11 +700,6 @@ void CmndUpgrade(void)
     TasmotaGlobal.ota_state_flag = 3;
     char stemp1[TOPSZ];
     Response_P(PSTR("{\"%s\":\"" D_JSON_VERSION " %s " D_JSON_FROM " %s\"}"), XdrvMailbox.command, TasmotaGlobal.version, GetOtaUrl(stemp1, sizeof(stemp1)));
-
-#ifdef USE_BLE_ESP32 
-    ExtStopBLE();
-#endif    
-
   } else {
     Response_P(PSTR("{\"%s\":\"" D_JSON_ONE_OR_GT "\"}"), XdrvMailbox.command, TasmotaGlobal.version);
   }
