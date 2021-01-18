@@ -2374,6 +2374,11 @@ void UploadServices(uint32_t start_service) {
   }
 }
 
+#ifdef USE_BLE_ESP32 
+  // declare the fn
+  int ExtStopBLE();
+#endif    
+
 void HandleUploadLoop(void) {
   // Based on ESP8266HTTPUpdateServer.cpp uses ESP8266WebServer Parsing.cpp and Cores Updater.cpp (Update)
   static uint32_t upload_size;
@@ -2408,6 +2413,11 @@ void HandleUploadLoop(void) {
       return;
     }
     SettingsSave(1);  // Free flash for upload
+
+#ifdef USE_BLE_ESP32 
+    ExtStopBLE();
+#endif    
+
 
     AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_UPLOAD D_FILE " %s"), upload.filename.c_str());
 
@@ -2632,7 +2642,9 @@ void HandleUploadLoop(void) {
     Web.upload_error = 7;  // Upload aborted
     if (UPL_TASMOTA == Web.upload_file_type) { Update.end(); }
   }
-  delay(0);
+  // do actually wait a little to allow ESP32 tasks to tick
+  // fixes task timeout in ESP32Solo1 style unicore code.
+  delay(10);
   OsWatchLoop();
 //  Scheduler();          // Feed OsWatch timer to prevent restart on long uploads
 }

@@ -264,10 +264,14 @@ void FreeRTOS::Semaphore::setName(std::string name) {
  * @param [in] length The amount of storage to allocate for the ring buffer.
  * @param [in] type The type of buffer.  One of RINGBUF_TYPE_NOSPLIT, RINGBUF_TYPE_ALLOWSPLIT, RINGBUF_TYPE_BYTEBUF.
  */
-#if defined(ESP_IDF_VERSION) && !defined(ESP_IDF_VERSION_VAL) //Quick hack to detect if using IDF version that replaced ringbuf_type_t, ESP_IDF_VERSION_VAL is for IDF>4.0.0
-Ringbuffer::Ringbuffer(size_t length, RingbufferType_t type) {
+#ifdef ESP_IDF_VERSION //Quick hack to detect if using IDF version that replaced ringbuf_type_t
+#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(4, 0, 0)
+    Ringbuffer::Ringbuffer(size_t length, RingbufferType_t type) {
 #else
-Ringbuffer::Ringbuffer(size_t length, ringbuf_type_t type) {
+    Ringbuffer::Ringbuffer(size_t length, ringbuf_type_t type) {
+#endif
+#else
+    Ringbuffer::Ringbuffer(size_t length, ringbuf_type_t type) {
 #endif
     m_handle = ::xRingbufferCreate(length, type);
 } // Ringbuffer

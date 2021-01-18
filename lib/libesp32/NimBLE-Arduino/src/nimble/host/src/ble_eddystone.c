@@ -76,7 +76,7 @@ ble_eddystone_set_adv_data_gen(struct ble_hs_adv_fields *adv_fields,
     if (adv_fields->num_uuids16 > BLE_EDDYSTONE_MAX_UUIDS16) {
         return BLE_HS_EINVAL;
     }
-    if (svc_data_len > BLE_EDDYSTONE_MAX_SVC_DATA_LEN) {
+    if (svc_data_len > (BLE_EDDYSTONE_MAX_SVC_DATA_LEN - BLE_EDDYSTONE_SVC_DATA_BASE_SZ)) {
         return BLE_HS_EINVAL;
     }
     if (adv_fields->num_uuids16 > 0 && !adv_fields->uuids16_is_complete) {

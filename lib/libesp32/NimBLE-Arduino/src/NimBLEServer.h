@@ -114,6 +114,15 @@ public:
      */
     virtual void onDisconnect(NimBLEServer* pServer);
 
+     /**
+     * @brief Handle a client disconnection.
+     * This is called when a client discconnects.
+     * @param [in] pServer A pointer to the %BLE server that received the client disconnection.
+     * @param [in] desc A pointer to the connection description structure containig information
+     * about the connection.
+     */
+    virtual void onDisconnect(NimBLEServer* pServer, ble_gap_conn_desc* desc);
+
     /**
      * @brief Called when a client requests a passkey for pairing.
      * @return The passkey to be sent to the client.

@@ -296,6 +296,7 @@ size_t NimBLEServer::getConnectedCount() {
             }
 
             server->m_pServerCallbacks->onDisconnect(server);
+            server->m_pServerCallbacks->onDisconnect(server, &event->disconnect.conn);
 
             if(server->m_advertiseOnDisconnect) {
                 server->startAdvertising();
@@ -655,6 +656,10 @@ void NimBLEServerCallbacks::onConnect(NimBLEServer* pServer, ble_gap_conn_desc* 
 
 
 void NimBLEServerCallbacks::onDisconnect(NimBLEServer* pServer) {
+    NIMBLE_LOGD("NimBLEServerCallbacks", "onDisconnect(): Default");
+} // onDisconnect
+
+void NimBLEServerCallbacks::onDisconnect(NimBLEServer* pServer, ble_gap_conn_desc* desc) {
     NIMBLE_LOGD("NimBLEServerCallbacks", "onDisconnect(): Default");
 } // onDisconnect
 

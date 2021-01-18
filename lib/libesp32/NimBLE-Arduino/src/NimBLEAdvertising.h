@@ -77,7 +77,7 @@ public:
     void addServiceUUID(const NimBLEUUID &serviceUUID);
     void addServiceUUID(const char* serviceUUID);
     void removeServiceUUID(const NimBLEUUID &serviceUUID);
-    void start(uint32_t duration = 0, void (*advCompleteCB)(NimBLEAdvertising *pAdv) = nullptr);
+    bool start(uint32_t duration = 0, void (*advCompleteCB)(NimBLEAdvertising *pAdv) = nullptr);
     void stop();
     void setAppearance(uint16_t appearance);
     void setAdvertisementType(uint8_t adv_type);
@@ -87,13 +87,15 @@ public:
     void setScanFilter(bool scanRequestWhitelistOnly, bool connectWhitelistOnly);
     void setScanResponseData(NimBLEAdvertisementData& advertisementData);
     void setScanResponse(bool);
+    void setMinPreferred(uint16_t);
+    void setMaxPreferred(uint16_t);
     void advCompleteCB();
     bool isAdvertising();
 
 private:
     friend class NimBLEDevice;
 
-    void                    onHostReset();
+    void                    onHostSync();
     static int              handleGapEvent(struct ble_gap_event *event, void *arg);
 
     ble_hs_adv_fields       m_advData;
@@ -104,8 +106,9 @@ private:
     bool                    m_customScanResponseData;
     bool                    m_scanResp;
     bool                    m_advDataSet;
-    void                   (*m_advCompCB)(NimBLEAdvertising *pAdv);
-
+    void                    (*m_advCompCB)(NimBLEAdvertising *pAdv);
+    uint8_t                 m_slaveItvl[4];
+    uint32_t                m_duration;
 };
 
 #endif // #if defined(CONFIG_BT_NIMBLE_ROLE_PERIPHERAL)
