@@ -1687,7 +1687,7 @@ void ZCLFrame::parseClusterSpecificCommand(Z_attribute_list& attr_list) {
       _srcendpoint,
       ZCL_DEFAULT_RESPONSE,
       _manuf_code,
-      true /* cluster specific */,
+      false /* not cluster specific */,
       false /* noresponse */,
       true /* direct no retry */,
       _transact_seq,  /* zcl transaction id */
