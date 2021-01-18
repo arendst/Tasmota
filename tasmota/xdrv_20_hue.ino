@@ -429,9 +429,9 @@ void HandleUpnpSetupHue(void)
 {
   AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_HUE_BRIDGE_SETUP));
   String description_xml = Decompress(HUE_DESCRIPTION_XML_COMPRESSED,HUE_DESCRIPTION_XML_SIZE);
-  description_xml.replace("{x1", WiFi.localIP().toString());
-  description_xml.replace("{x2", HueUuid());
-  description_xml.replace("{x3", HueSerialnumber());
+  description_xml.replace(F("{x1"), WiFi.localIP().toString());
+  description_xml.replace(F("{x2"), HueUuid());
+  description_xml.replace(F("{x3"), HueSerialnumber());
   WSSend(200, CT_XML, description_xml);
 }
 
@@ -439,19 +439,19 @@ void HueNotImplemented(String *path)
 {
   AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_HTTP D_HUE_API_NOT_IMPLEMENTED " (%s)"), path->c_str());
 
-  WSSend(200, CT_JSON, "{}");
+  WSSend(200, CT_JSON, PSTR("{}"));
 }
 
 void HueConfigResponse(String *response)
 {
   *response += Decompress(HueConfigResponse_JSON, HueConfigResponse_JSON_SIZE);
-  response->replace("{ma", WiFi.macAddress());
-  response->replace("{ip", WiFi.localIP().toString());
-  response->replace("{ms", WiFi.subnetMask().toString());
-  response->replace("{gw", WiFi.gatewayIP().toString());
-  response->replace("{br", HueBridgeId());
-  response->replace("{dt", GetDateAndTime(DT_UTC));
-  response->replace("{id", GetHueUserId());
+  response->replace(F("{ma"), WiFi.macAddress());
+  response->replace(F("{ip"), WiFi.localIP().toString());
+  response->replace(F("{ms"), WiFi.subnetMask().toString());
+  response->replace(F("{gw"), WiFi.gatewayIP().toString());
+  response->replace(F("{br"), HueBridgeId());
+  response->replace(F("{dt"), GetDateAndTime(DT_UTC));
+  response->replace(F("{id"), GetHueUserId());
 }
 
 void HueConfig(String *path)
@@ -534,13 +534,13 @@ void HueLightStatus1(uint8_t device, String *response)
   char * buf = (char*) malloc(buf_size);     // temp buffer for strings, avoid stack
   UnishoxStrings msg(HUE_LIGHTS);
 
-  snprintf_P(buf, buf_size, PSTR("{\"on\":%s,"), (TasmotaGlobal.power & (1 << (device-1))) ? "true" : "false");
+  snprintf_P(buf, buf_size, PSTR("{\"on\":%s,"), (TasmotaGlobal.power & (1 << (device-1))) ? PSTR("true") : PSTR("false"));
   // Brightness for all devices with PWM
   if ((1 == echo_gen) || (LST_SINGLE <= local_light_subtype)) { // force dimmer for 1st gen Echo
     snprintf_P(buf, buf_size, PSTR("%s\"bri\":%d,"), buf, bri);
   }
   if (LST_COLDWARM <= local_light_subtype) {
-    snprintf_P(buf, buf_size, PSTR("%s\"colormode\":\"%s\","), buf, g_gotct ? "ct" : "hs");
+    snprintf_P(buf, buf_size, PSTR("%s\"colormode\":\"%s\","), buf, g_gotct ? PSTR("ct") : PSTR("hs"));
   }
   if (LST_RGB <= local_light_subtype) {  // colors
     if (prev_x_str[0] && prev_y_str[0]) {
@@ -680,7 +680,7 @@ void HueGlobalConfig(String *path) {
 #endif // USE_ZIGBEE
   response += F("},\"groups\":{},\"schedules\":{},\"config\":");
   HueConfigResponse(&response);
-  response += "}";
+  response += F("}");
   WSSend(200, CT_JSON, response);
 }
 
@@ -700,7 +700,7 @@ void CheckHue(String * response, bool &appending) {
   for (uint32_t i = 1; i <= maxhue; i++) {
     if (HueActive(i)) {
       if (appending) { *response += ","; }
-      *response += "\"";
+      *response += F("\"");
       *response += EncodeLightId(i);
       *response += F("\":{\"state\":");
       HueLightStatus1(i, response);
@@ -735,7 +735,7 @@ void HueLightsCommand(uint8_t device, uint32_t device_id, String &response) {
       on = hue_on.getBool();
       snprintf_P(buf, buf_size,
                  msg[HUE_RESP_ON],
-                 device_id, on ? "true" : "false");
+                 device_id, on ? PSTR("true") : PSTR("false"));
 
 #ifdef USE_SHUTTER
       if (ShutterState(device)) {
@@ -778,7 +778,7 @@ void HueLightsCommand(uint8_t device, uint32_t device_id, String &response) {
       if (resp) { response += ","; }
       snprintf_P(buf, buf_size,
                  msg[HUE_RESP_NUM],
-                 device_id, "bri", bri);
+                 device_id, PSTR("bri"), bri);
       response += buf;
       if (LST_SINGLE <= Light.subtype) {
         // extend bri value if set to max
@@ -824,7 +824,7 @@ void HueLightsCommand(uint8_t device, uint32_t device_id, String &response) {
       if (resp) { response += ","; }
       snprintf_P(buf, buf_size,
                  msg[HUE_RESP_NUM],
-                 device_id, "hue", hue);
+                 device_id, PSTR("hue"), hue);
       response += buf;
       if (LST_RGB <= Light.subtype) {
         // change range from 0..65535 to 0..360
@@ -843,7 +843,7 @@ void HueLightsCommand(uint8_t device, uint32_t device_id, String &response) {
       if (resp) { response += ","; }
       snprintf_P(buf, buf_size,
                  msg[HUE_RESP_NUM],
-                 device_id, "sat", sat);
+                 device_id, PSTR("sat"), sat);
       response += buf;
       if (LST_RGB <= Light.subtype) {
         // extend sat value if set to max
@@ -862,7 +862,7 @@ void HueLightsCommand(uint8_t device, uint32_t device_id, String &response) {
       if (resp) { response += ","; }
       snprintf_P(buf, buf_size,
                  msg[HUE_RESP_NUM],
-                 device_id, "ct", ct);
+                 device_id, PSTR("ct"), ct);
       response += buf;
       if ((LST_COLDWARM == Light.subtype) || (LST_RGBW <= Light.subtype)) {
         g_gotct = true;
@@ -923,7 +923,7 @@ void HueLights(String *path)
 
   path->remove(0,path->indexOf(F("/lights")));          // Remove until /lights
   if (path->endsWith(F("/lights"))) {                   // Got /lights
-    response = "{";
+    response = F("{");
     bool appending = false;
 #ifdef USE_LIGHT
     CheckHue(&response, appending);
@@ -934,7 +934,7 @@ void HueLights(String *path)
 #ifdef USE_SCRIPT_HUE
     Script_Check_Hue(&response);
 #endif
-    response += "}";
+    response += F("}");
   }
   else if (path->endsWith(F("/state"))) {               // Got ID/state
     path->remove(0,8);                               // Remove /lights/
@@ -992,7 +992,7 @@ void HueLights(String *path)
 #endif // USE_LIGHT
   }
   else {
-    response = "{}";
+    response = F("{}");
     code = 406;
   }
   exit:
@@ -1005,24 +1005,24 @@ void HueGroups(String *path)
 /*
  * http://tasmota/api/username/groups?1={"name":"Woonkamer","lights":[],"type":"Room","class":"Living room"})
  */
-  String response = "{}";
+  String response(F("{}"));
   uint8_t maxhue = (TasmotaGlobal.devices_present > MAX_HUE_DEVICES) ? MAX_HUE_DEVICES : TasmotaGlobal.devices_present;
   //AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_HTTP D_HUE " HueGroups (%s)"), path->c_str());
 
-  if (path->endsWith("/0")) {
+  if (path->endsWith(F("/0"))) {
     UnishoxStrings msg(HUE_LIGHTS);
     response = msg[HUE_GROUP0_STATUS_JSON];
     String lights = F("\"1\"");
     for (uint32_t i = 2; i <= maxhue; i++) {
-      lights += ",\"";
+      lights += F(",\"");
       lights += EncodeLightId(i);
-      lights += "\"";
+      lights += F("\"");
     }
 
 #ifdef USE_ZIGBEE
     ZigbeeHueGroups(&response);
 #endif // USE_ZIGBEE
-    response.replace("{l1", lights);
+    response.replace(F("{l1"), lights);
 #ifdef USE_LIGHT
     HueLightStatus1(1, &response);
 #endif // USE_LIGHT

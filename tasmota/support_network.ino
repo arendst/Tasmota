@@ -38,7 +38,7 @@ void StartMdns(void) {
 //        mdns_delayed_start = Settings.param[P_MDNS_DELAYED_START];
         MDNS.end(); // close existing or MDNS.begin will fail
         Mdns.begun = (uint8_t)MDNS.begin(TasmotaGlobal.hostname);
-        AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_MDNS "%s"), (Mdns.begun) ? D_INITIALIZED : D_FAILED);
+        AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_MDNS "%s"), (Mdns.begun) ? PSTR(D_INITIALIZED) : PSTR(D_FAILED));
 //      }
     }
   }

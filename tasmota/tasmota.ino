@@ -302,7 +302,7 @@ void setup(void) {
     snprintf_P(TasmotaGlobal.version, sizeof(TasmotaGlobal.version), PSTR("%s.%d"), TasmotaGlobal.version, VERSION & 0xff);
   }
   // Thehackbox inserts "release" or "commit number" before compiling using sed -i -e 's/PSTR("(%s)")/PSTR("(85cff52-%s)")/g' tasmota.ino
-  snprintf_P(TasmotaGlobal.image_name, sizeof(TasmotaGlobal.image_name), PSTR("(%s)"), CODE_IMAGE_STR);  // Results in (85cff52-tasmota) or (release-tasmota)
+  snprintf_P(TasmotaGlobal.image_name, sizeof(TasmotaGlobal.image_name), PSTR("(%s)"), PSTR(CODE_IMAGE_STR));  // Results in (85cff52-tasmota) or (release-tasmota)
 
   Format(TasmotaGlobal.mqtt_client, SettingsText(SET_MQTT_CLIENT), sizeof(TasmotaGlobal.mqtt_client));
   Format(TasmotaGlobal.mqtt_topic, SettingsText(SET_MQTT_TOPIC), sizeof(TasmotaGlobal.mqtt_topic));
@@ -321,7 +321,7 @@ void setup(void) {
   SetPowerOnState();
 
   AddLog_P(LOG_LEVEL_INFO, PSTR(D_PROJECT " %s %s " D_VERSION " %s%s-" ARDUINO_CORE_RELEASE "(%s)"),
-    PROJECT, SettingsText(SET_DEVICENAME), TasmotaGlobal.version, TasmotaGlobal.image_name, GetBuildDateAndTime().c_str());
+    PSTR(PROJECT), SettingsText(SET_DEVICENAME), TasmotaGlobal.version, TasmotaGlobal.image_name, GetBuildDateAndTime().c_str());
 #ifdef FIRMWARE_MINIMAL
   AddLog_P(LOG_LEVEL_INFO, PSTR(D_WARNING_MINIMAL_VERSION));
 #endif  // FIRMWARE_MINIMAL

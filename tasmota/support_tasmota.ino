@@ -20,10 +20,12 @@
 const char kSleepMode[] PROGMEM = "Dynamic|Normal";
 const char kPrefixes[] PROGMEM = D_CMND "|" D_STAT "|" D_TELE;
 
-char* Format(char* output, const char* input, int size)
+char* Format(char* output, const char* input_p, int size)
 {
   char *token;
   uint32_t digits = 0;
+  char input[strlen_P(input_p)+1];  // copy from PMEM to RAM
+  strcpy_P(input, input_p);
 
   if (strchr(input, '%') != nullptr) {
     strlcpy(output, input, size);
@@ -102,7 +104,7 @@ char* GetTopic_P(char *stopic, uint32_t prefix, char *topic, const char* subtopi
       fulltopic += TasmotaGlobal.mqtt_client;
       fulltopic += F("_fb");                  // cmnd/<mqttclient>_fb
     } else {
-      fulltopic += topic;                     // cmnd/<grouptopic>
+      fulltopic += (const __FlashStringHelper *)topic;                     // cmnd/<grouptopic>
     }
   } else {
     fulltopic = SettingsText(SET_MQTT_FULLTOPIC);
@@ -118,7 +120,7 @@ char* GetTopic_P(char *stopic, uint32_t prefix, char *topic, const char* subtopi
     }
     fulltopic.replace(FPSTR(MQTT_TOKEN_PREFIX), SettingsText(SET_MQTTPREFIX1 + prefix));
 
-    fulltopic.replace(FPSTR(MQTT_TOKEN_TOPIC), topic);
+    fulltopic.replace(FPSTR(MQTT_TOKEN_TOPIC), (const __FlashStringHelper *)topic);
     fulltopic.replace(F("%hostname%"), TasmotaGlobal.hostname);
     String token_id = WiFi.macAddress();
     token_id.replace(":", "");
@@ -486,7 +488,7 @@ bool SendKey(uint32_t key, uint32_t device, uint32_t state)
 #endif  // USE_DOMOTICZ
     result = !Settings.flag3.button_switch_force_local;  // SetOption61 - Force local operation when button/switch topic is set
   } else {
-    Response_P(PSTR("{\"%s%d\":{\"State\":%d}}"), (key) ? "Switch" : "Button", device, state);
+    Response_P(PSTR("{\"%s%d\":{\"State\":%d}}"), (key) ? PSTR("Switch") : PSTR("Button"), device, state);
     result = XdrvRulesProcess();
   }
 #ifdef USE_PWM_DIMMER
@@ -742,7 +744,7 @@ void TempHumDewShow(bool json, bool pass_on, const char *types, float f_temperat
 String GetSwitchText(uint32_t i) {
   String switch_text = SettingsText(SET_SWITCH_TXT1 + i);
   if ('\0' == switch_text[0]) {
-    switch_text = D_JSON_SWITCH + String(i +1);
+    switch_text = F(D_JSON_SWITCH) + String(i +1);
   }
   return switch_text;
 }

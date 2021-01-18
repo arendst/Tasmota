@@ -32,7 +32,7 @@ extern String EscapeJSONString(const char *str);
 class JsonGeneratorArray {
 public:
 
-  JsonGeneratorArray(): val("[]") {}     // start with empty array
+  JsonGeneratorArray(): val(F("[]")) {}     // start with empty array
 
   void add(uint32_t uval32);
   void add(int32_t uval32);
@@ -53,7 +53,7 @@ protected:
 class JsonGeneratorObject {
 public:
 
-  JsonGeneratorObject(): val("{}") {}     // start with empty object
+  JsonGeneratorObject(): val(F("{}")) {}     // start with empty object
 
   void add(const char* key, uint32_t uval32);
   void add(const char* key, int32_t uval32);

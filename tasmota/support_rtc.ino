@@ -33,8 +33,8 @@ const uint32_t MINS_PER_HOUR = 60UL;
 
 Ticker TickerRtc;
 
-static const uint8_t kDaysInMonth[] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 }; // API starts months from 1, this array starts from 0
-static const char kMonthNamesEnglish[] = "JanFebMarAprMayJunJulAugSepOctNovDec";
+static const uint8_t kDaysInMonth[] PROGMEM = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 }; // API starts months from 1, this array starts from 0
+static const char kMonthNamesEnglish[] PROGMEM = "JanFebMarAprMayJunJulAugSepOctNovDec";
 
 struct RTC {
   uint32_t utc_time = 0;
@@ -88,7 +88,9 @@ String GetBuildDateAndTime(void)
   // "2017-03-07T11:08:02" - ISO8601:2004
   char bdt[21];
   char *p;
-  char mdate[] = __DATE__;  // "Mar  7 2017"
+  static const char mdate_P[] PROGMEM = __DATE__;  // "Mar  7 2017"
+  char mdate[strlen_P(mdate_P)+1];      // copy on stack first
+  strcpy_P(mdate, mdate_P);
   char *smonth = mdate;
   int day = 0;
   int year = 0;
@@ -107,8 +109,10 @@ String GetBuildDateAndTime(void)
       year = atoi(str);
     }
   }
-  int month = (strstr(kMonthNamesEnglish, smonth) -kMonthNamesEnglish) /3 +1;
-  snprintf_P(bdt, sizeof(bdt), PSTR("%d" D_YEAR_MONTH_SEPARATOR "%02d" D_MONTH_DAY_SEPARATOR "%02d" D_DATE_TIME_SEPARATOR "%s"), year, month, day, __TIME__);
+  char MonthNamesEnglish[sizeof(kMonthNamesEnglish)];
+  strcpy_P(MonthNamesEnglish, kMonthNamesEnglish);
+  int month = (strstr(MonthNamesEnglish, smonth) -MonthNamesEnglish) /3 +1;
+  snprintf_P(bdt, sizeof(bdt), PSTR("%d" D_YEAR_MONTH_SEPARATOR "%02d" D_MONTH_DAY_SEPARATOR "%02d" D_DATE_TIME_SEPARATOR "%s"), year, month, day, PSTR(__TIME__));
   return String(bdt);  // 2017-03-07T11:08:02
 }
 
@@ -290,7 +294,7 @@ void BreakTime(uint32_t time_input, TIME_T &tm)
         month_length = 28;
       }
     } else {
-      month_length = kDaysInMonth[month];
+      month_length = pgm_read_byte(&kDaysInMonth[month]);
     }
 
     if (time >= month_length) {
@@ -326,7 +330,7 @@ uint32_t MakeTime(TIME_T &tm)
     if ((2 == i) && LEAP_YEAR(tm.year)) {
       seconds += SECS_PER_DAY * 29;
     } else {
-      seconds += SECS_PER_DAY * kDaysInMonth[i-1];  // monthDay array starts from 0
+      seconds += SECS_PER_DAY * pgm_read_byte(&kDaysInMonth[i-1]);  // monthDay array starts from 0
     }
   }
   seconds+= (tm.day_of_month - 1) * SECS_PER_DAY;

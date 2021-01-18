@@ -434,14 +434,14 @@ void CmndTmChatId(void) {
 
 void CmndTmSend(void) {
   if (!Telegram.send_enable || !strlen(SettingsText(SET_TELEGRAM_CHATID))) {
-    ResponseCmndChar(D_JSON_FAILED);
+    ResponseCmndChar(PSTR(D_JSON_FAILED));
     return;
   }
   if (XdrvMailbox.data_len > 0) {
     String message = XdrvMailbox.data;
     String chat_id = SettingsText(SET_TELEGRAM_CHATID);
     if (!TelegramSendMessage(chat_id.toInt(), message)) {
-      ResponseCmndChar(D_JSON_FAILED);
+      ResponseCmndChar(PSTR(D_JSON_FAILED));
       return;
     }
   }
