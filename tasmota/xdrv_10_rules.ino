@@ -720,7 +720,7 @@ bool RuleSetProcess(uint8_t rule_set, String &event_saved)
       if ((ucommand.indexOf(F("IF ")) == -1) &&
           (ucommand.indexOf(F("EVENT ")) != -1) &&
           (ucommand.indexOf(F("BACKLOG ")) == -1)) {
-        commands = F("backlog ") + commands;
+        commands = String(F("backlog ")) + commands;
       }
 
       RulesVarReplace(commands, F("%VALUE%"), Rules.event_value);
