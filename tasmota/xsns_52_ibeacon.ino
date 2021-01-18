@@ -283,16 +283,13 @@ void ESP32Init() {
 
   if (TasmotaGlobal.global_state.wifi_down) { return; }
 
+  TasmotaGlobal.wifi_stay_asleep = true;
   if (WiFi.getSleep() == false) {
-    if (0 == Settings.flag3.sleep_normal) {
-      AddLog_P(LOG_LEVEL_DEBUG,PSTR("%s: About to restart to put WiFi modem in sleep mode"),"BLE");
-      Settings.flag3.sleep_normal = 1;  // SetOption60 - Enable normal sleep instead of dynamic sleep
-      TasmotaGlobal.restart_flag = 2;
-    }
-    return;
+    AddLog_P(LOG_LEVEL_DEBUG,PSTR("%s: Put WiFi modem in sleep mode"),"BLE");
+    WiFi.setSleep(true); // Sleep
   }
 
-  AddLog_P(LOG_LEVEL_DEBUG,PSTR("%s: Initializing Blueetooth..."),"BLE");
+  AddLog_P(LOG_LEVEL_DEBUG,PSTR("%s: Initializing Bluetooth..."),"BLE");
 
   if (!ESP32BLE.mode.init) {
     NimBLEDevice::init("");
@@ -1020,4 +1017,4 @@ bool Xsns52(byte function)
 
 #endif  // USE_IBEACON
 
-#endif
+#endif  // USE_BLE_ESP32
