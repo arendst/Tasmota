@@ -767,7 +767,7 @@ String Z_Devices::dumpCoordinator(void) const {
   attr_list.addAttributePMEM(PSTR("IEEEAddr")).setHex64(localIEEEAddr);
   attr_list.addAttributePMEM(PSTR("TotalDevices")).setUInt(zigbee_devices.devicesSize());
 
-  return attr_list.toString();
+  return attr_list.toString(true);
 }
 
 // If &device == nullptr, then dump all
