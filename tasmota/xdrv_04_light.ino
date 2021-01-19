@@ -2625,7 +2625,7 @@ void CmndWakeup(void)
   Light.wakeup_active = 3;
   Settings.light_scheme = LS_WAKEUP;
   LightPowerOn();
-  ResponseCmndChar(D_JSON_STARTED);
+  ResponseCmndChar(PSTR(D_JSON_STARTED));
 }
 
 void CmndColorTemperature(void)

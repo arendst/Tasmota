@@ -384,7 +384,7 @@ char* Uint64toHex(uint64_t value, char *str, uint16_t bits)
 char* dtostrfd(double number, unsigned char prec, char *s)
 {
   if ((isnan(number)) || (isinf(number))) {  // Fix for JSON output (https://stackoverflow.com/questions/1423081/json-left-out-infinity-and-nan-json-status-in-ecmascript)
-    strcpy(s, "null");
+    strcpy_P(s, PSTR("null"));
     return s;
   } else {
     return dtostrf(number, 1, prec, s);
@@ -659,10 +659,14 @@ bool ValidIpAddress(const char* str)
   return ip_address.fromString(str);
 }
 
-bool ParseIPv4(uint32_t* addr, const char* str)
+
+bool ParseIPv4(uint32_t* addr, const char* str_p)
 {
   uint8_t *part = (uint8_t*)addr;
   uint8_t i;
+  char str_r[strlen_P(str_p)+1];
+  char * str = &str_r[0];
+  strcpy_P(str, str_p);
 
   *addr = 0;
   for (i = 0; i < 4; i++) {
@@ -859,7 +863,7 @@ float ConvertPressureForSeaLevel(float pressure)
 
 String PressureUnit(void)
 {
-  return (Settings.flag.pressure_conversion) ? String(D_UNIT_MILLIMETER_MERCURY) : String(D_UNIT_PRESSURE);
+  return (Settings.flag.pressure_conversion) ? String(F(D_UNIT_MILLIMETER_MERCURY)) : String(F(D_UNIT_PRESSURE));
 }
 
 float ConvertSpeed(float s)
@@ -1022,11 +1026,11 @@ String GetSerialConfig(void) {
   // b00000x00 - 1 or 2 stop bits
   // b000xx000 - None, Even or Odd parity
 
-  const char kParity[] = "NEOI";
+  const static char kParity[] PROGMEM = "NEOI";
 
   char config[4];
   config[0] = '5' + (Settings.serial_config & 0x3);
-  config[1] = kParity[(Settings.serial_config >> 3) & 0x3];
+  config[1] = pgm_read_byte(&kParity[(Settings.serial_config >> 3) & 0x3]);
   config[2] = '1' + ((Settings.serial_config >> 2) & 0x1);
   config[3] = '\0';
   return String(config);

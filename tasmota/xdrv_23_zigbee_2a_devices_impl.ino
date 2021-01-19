@@ -556,7 +556,7 @@ void Z_Device::jsonPublishAttrList(const char * json_prefix, const Z_attribute_l
     if (Settings.flag5.zb_received_as_subtopic)
       GetTopic_P(stopic, TELE, subtopic, json_prefix);
     else
-      GetTopic_P(stopic, TELE, subtopic, D_RSLT_SENSOR);
+      GetTopic_P(stopic, TELE, subtopic, PSTR(D_RSLT_SENSOR));
     MqttPublish(stopic, Settings.flag.mqtt_sensor_retain);
   } else {
     MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
@@ -767,7 +767,7 @@ String Z_Devices::dumpCoordinator(void) const {
   attr_list.addAttributePMEM(PSTR("IEEEAddr")).setHex64(localIEEEAddr);
   attr_list.addAttributePMEM(PSTR("TotalDevices")).setUInt(zigbee_devices.devicesSize());
 
-  return attr_list.toString();
+  return attr_list.toString(true);
 }
 
 // If &device == nullptr, then dump all

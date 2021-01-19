@@ -416,7 +416,7 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule, bool stop_all
   // Step1: Analyse rule
   String rule_expr = rule;                             // "TELE-INA219#CURRENT>0.100"
   if (Rules.teleperiod) {
-    int ppos = rule_expr.indexOf("TELE-");             // "TELE-INA219#CURRENT>0.100" or "INA219#CURRENT>0.100"
+    int ppos = rule_expr.indexOf(F("TELE-"));             // "TELE-INA219#CURRENT>0.100" or "INA219#CURRENT>0.100"
     if (ppos == -1) { return false; }                  // No pre-amble in rule
     rule_expr = rule.substring(5);                     // "INA219#CURRENT>0.100" or "SYSTEM#BOOT"
   }
@@ -494,7 +494,7 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule, bool stop_all
   // Step2: Search rule_name
   int pos;
   int rule_name_idx = 0;
-  if ((pos = rule_name.indexOf("[")) > 0) {            // "SUBTYPE1#CURRENT[1]"
+  if ((pos = rule_name.indexOf(F("["))) > 0) {            // "SUBTYPE1#CURRENT[1]"
     rule_name_idx = rule_name.substring(pos +1).toInt();
     if ((rule_name_idx < 1) || (rule_name_idx > 6)) {  // Allow indexes 1 to 6
       rule_name_idx = 1;
@@ -515,7 +515,7 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule, bool stop_all
   }
   String subtype;
   uint32_t i = 0;
-  while ((pos = rule_name.indexOf("#")) > 0) {         // "SUBTYPE1#SUBTYPE2#CURRENT"
+  while ((pos = rule_name.indexOf(F("#"))) > 0) {         // "SUBTYPE1#SUBTYPE2#CURRENT"
     subtype = rule_name.substring(0, pos);
     obj = obj[subtype.c_str()].getObject();
     if (!obj) { return false; }                        // not found
@@ -686,14 +686,14 @@ bool RuleSetProcess(uint8_t rule_set, String &event_saved)
 
     String rule = rules;
     rule.toUpperCase();                                   // "ON INA219#CURRENT>0.100 DO BACKLOG DIMMER 10;COLOR 100000 ENDON"
-    if (!rule.startsWith("ON ")) { return serviced; }     // Bad syntax - Nothing to start on
+    if (!rule.startsWith(F("ON "))) { return serviced; }     // Bad syntax - Nothing to start on
 
-    int pevt = rule.indexOf(" DO ");
+    int pevt = rule.indexOf(F(" DO "));
     if (pevt == -1) { return serviced; }                  // Bad syntax - Nothing to do
     String event_trigger = rule.substring(3, pevt);       // "INA219#CURRENT>0.100"
 
-    plen = rule.indexOf(" ENDON");
-    plen2 = rule.indexOf(" BREAK");
+    plen = rule.indexOf(F(" ENDON"));
+    plen2 = rule.indexOf(F(" BREAK"));
     if ((plen == -1) && (plen2 == -1)) { return serviced; } // Bad syntax - No ENDON neither BREAK
 
     if (plen == -1) { plen = 9999; }
@@ -717,10 +717,10 @@ bool RuleSetProcess(uint8_t rule_set, String &event_saved)
 
 //      if (!ucommand.startsWith("BACKLOG")) { commands = "backlog " + commands; }  // Always use Backlog to prevent power race exception
       // Use Backlog with event to prevent rule event loop exception unless IF is used which uses an implicit backlog
-      if ((ucommand.indexOf("IF ") == -1) &&
-          (ucommand.indexOf("EVENT ") != -1) &&
-          (ucommand.indexOf("BACKLOG ") == -1)) {
-        commands = "backlog " + commands;
+      if ((ucommand.indexOf(F("IF ")) == -1) &&
+          (ucommand.indexOf(F("EVENT ")) != -1) &&
+          (ucommand.indexOf(F("BACKLOG ")) == -1)) {
+        commands = String(F("backlog ")) + commands;
       }
 
       RulesVarReplace(commands, F("%VALUE%"), Rules.event_value);

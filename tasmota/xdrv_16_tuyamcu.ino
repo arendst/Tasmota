@@ -1295,7 +1295,7 @@ void TuyaSensorsShow(bool json)
 
         GetTextIndexed(sname, sizeof(sname), (sensor-71), kTuyaSensors);
         ResponseAppend_P(PSTR("\"%s\":%s"), sname,
-                        (Tuya.SensorsValid[sensor-71] ? dtostrfd(Tuya.Sensors[sensor-71], res, tempval) : "null"));
+                        (Tuya.SensorsValid[sensor-71] ? dtostrfd(Tuya.Sensors[sensor-71], res, tempval) : PSTR("null")));
         added = true;
       }
   #ifdef USE_WEBSERVER

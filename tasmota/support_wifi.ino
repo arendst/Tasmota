@@ -176,7 +176,7 @@ void WiFiSetSleepMode(void)
 
 void WifiBegin(uint8_t flag, uint8_t channel)
 {
-  const char kWifiPhyMode[] = " bgnl";
+  const static char kWifiPhyMode[] PROGMEM = " bgnl";
 
 #ifdef USE_EMULATION
   UdpDisconnect();
@@ -218,7 +218,7 @@ void WifiBegin(uint8_t flag, uint8_t channel)
     WiFi.begin(SettingsText(SET_STASSID1 + Settings.sta_active), SettingsText(SET_STAPWD1 + Settings.sta_active));
   }
   AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_CONNECTING_TO_AP "%d %s%s " D_IN_MODE " 11%c " D_AS " %s..."),
-    Settings.sta_active +1, SettingsText(SET_STASSID1 + Settings.sta_active), stemp, kWifiPhyMode[WiFi.getPhyMode() & 0x3], TasmotaGlobal.hostname);
+    Settings.sta_active +1, SettingsText(SET_STASSID1 + Settings.sta_active), stemp, pgm_read_byte(&kWifiPhyMode[WiFi.getPhyMode() & 0x3]), TasmotaGlobal.hostname);
 
 #if LWIP_IPV6
   for (bool configured = false; !configured;) {

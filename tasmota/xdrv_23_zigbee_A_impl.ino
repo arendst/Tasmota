@@ -2092,7 +2092,7 @@ void ZigbeeMapRefresh(void) {
   if ((!zigbee.init_phase) && (!zigbee.mapping_in_progress)) {
     ZigbeeMapAllDevices();
   }
-  Webserver->sendHeader("Location","/zbm");        // Add a header to respond with a new location for the browser to go to the home page again
+  Webserver->sendHeader(F("Location"),F("/zbm"));        // Add a header to respond with a new location for the browser to go to the home page again
   Webserver->send(302);
 }
 

@@ -156,7 +156,7 @@ void MqttInit(void) {
 
   // Detect AWS IoT and set default parameters
   String host = String(SettingsText(SET_MQTT_HOST));
-  if (host.indexOf(".iot.") && host.endsWith(".amazonaws.com")) {  // look for ".iot." and ".amazonaws.com" in the domain name
+  if (host.indexOf(F(".iot.")) && host.endsWith(F(".amazonaws.com"))) {  // look for ".iot." and ".amazonaws.com" in the domain name
     Settings.flag4.mqtt_no_retain = true;
   }
 
@@ -527,10 +527,10 @@ void MqttConnected(void) {
       if (Settings.webserver) {
 #if LWIP_IPV6
         Response_P(PSTR("{\"" D_JSON_WEBSERVER_MODE "\":\"%s\",\"" D_CMND_HOSTNAME "\":\"%s\",\"" D_CMND_IPADDRESS "\":\"%s\",\"IPv6Address\":\"%s\"}"),
-          (2 == Settings.webserver) ? D_ADMIN : D_USER, NetworkHostname(), NetworkAddress().toString().c_str(), WifiGetIPv6().c_str());
+          (2 == Settings.webserver) ? PSTR(D_ADMIN) : PSTR(D_USER), NetworkHostname(), NetworkAddress().toString().c_str(), WifiGetIPv6().c_str());
 #else
         Response_P(PSTR("{\"" D_JSON_WEBSERVER_MODE "\":\"%s\",\"" D_CMND_HOSTNAME "\":\"%s\",\"" D_CMND_IPADDRESS "\":\"%s\"}"),
-          (2 == Settings.webserver) ? D_ADMIN : D_USER, NetworkHostname(), NetworkAddress().toString().c_str());
+          (2 == Settings.webserver) ? PSTR(D_ADMIN) : PSTR(D_USER), NetworkHostname(), NetworkAddress().toString().c_str());
 #endif // LWIP_IPV6 = 1
         MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_INFO "2"));
       }
@@ -787,7 +787,7 @@ void CmndMqttFingerprint(void) {
 
 void CmndMqttUser(void) {
   if (XdrvMailbox.data_len > 0) {
-    SettingsUpdateText(SET_MQTT_USER, (SC_CLEAR == Shortcut()) ? "" : (SC_DEFAULT == Shortcut()) ? MQTT_USER : XdrvMailbox.data);
+    SettingsUpdateText(SET_MQTT_USER, (SC_CLEAR == Shortcut()) ? "" : (SC_DEFAULT == Shortcut()) ? PSTR(MQTT_USER) : XdrvMailbox.data);
     TasmotaGlobal.restart_flag = 2;
   }
   ResponseCmndChar(SettingsText(SET_MQTT_USER));
@@ -795,7 +795,7 @@ void CmndMqttUser(void) {
 
 void CmndMqttPassword(void) {
   if (XdrvMailbox.data_len > 0) {
-    SettingsUpdateText(SET_MQTT_PWD, (SC_CLEAR == Shortcut()) ? "" : (SC_DEFAULT == Shortcut()) ? MQTT_PASS : XdrvMailbox.data);
+    SettingsUpdateText(SET_MQTT_PWD, (SC_CLEAR == Shortcut()) ? "" : (SC_DEFAULT == Shortcut()) ? PSTR(MQTT_PASS) : XdrvMailbox.data);
     ResponseCmndChar(SettingsText(SET_MQTT_PWD));
     TasmotaGlobal.restart_flag = 2;
   } else {
@@ -852,7 +852,7 @@ void CmndStateText(void) {
 
 void CmndMqttClient(void) {
   if (!XdrvMailbox.grpflg && (XdrvMailbox.data_len > 0)) {
-    SettingsUpdateText(SET_MQTT_CLIENT, (SC_DEFAULT == Shortcut()) ? MQTT_CLIENT_ID : XdrvMailbox.data);
+    SettingsUpdateText(SET_MQTT_CLIENT, (SC_DEFAULT == Shortcut()) ? PSTR(MQTT_CLIENT_ID) : XdrvMailbox.data);
     TasmotaGlobal.restart_flag = 2;
   }
   ResponseCmndChar(SettingsText(SET_MQTT_CLIENT));
@@ -882,7 +882,7 @@ void CmndPrefix(void) {
       if (XdrvMailbox.data_len > 0) {
         MakeValidMqtt(0, XdrvMailbox.data);
         SettingsUpdateText(SET_MQTTPREFIX1 + XdrvMailbox.index -1,
-          (SC_DEFAULT == Shortcut()) ? (1==XdrvMailbox.index) ? SUB_PREFIX : (2==XdrvMailbox.index) ? PUB_PREFIX : PUB_PREFIX2 : XdrvMailbox.data);
+          (SC_DEFAULT == Shortcut()) ? (1==XdrvMailbox.index) ? PSTR(SUB_PREFIX) : (2==XdrvMailbox.index) ? PSTR(PUB_PREFIX) : PSTR(PUB_PREFIX2) : XdrvMailbox.data);
         TasmotaGlobal.restart_flag = 2;
       }
       ResponseCmndIdxChar(SettingsText(SET_MQTTPREFIX1 + XdrvMailbox.index -1));
@@ -918,7 +918,7 @@ void CmndGroupTopic(void) {
       uint32_t settings_text_index = (1 == XdrvMailbox.index) ? SET_MQTT_GRP_TOPIC : SET_MQTT_GRP_TOPIC2 + XdrvMailbox.index - 2;
       MakeValidMqtt(0, XdrvMailbox.data);
       if (!strcmp(XdrvMailbox.data, TasmotaGlobal.mqtt_client)) { SetShortcutDefault(); }
-      SettingsUpdateText(settings_text_index, (SC_CLEAR == Shortcut()) ? "" : (SC_DEFAULT == Shortcut()) ? MQTT_GRPTOPIC : XdrvMailbox.data);
+      SettingsUpdateText(settings_text_index, (SC_CLEAR == Shortcut()) ? "" : (SC_DEFAULT == Shortcut()) ? PSTR(MQTT_GRPTOPIC) : XdrvMailbox.data);
 
       // Eliminate duplicates, have at least one and fill from index 1
       char stemp[MAX_GROUP_TOPICS][TOPSZ];
@@ -940,7 +940,7 @@ void CmndGroupTopic(void) {
         }
       }
       if (0 == read_index) {
-        SettingsUpdateText(SET_MQTT_GRP_TOPIC, MQTT_GRPTOPIC);
+        SettingsUpdateText(SET_MQTT_GRP_TOPIC, PSTR(MQTT_GRPTOPIC));
       } else {
         uint32_t write_index = 0;
         uint32_t real_index = SET_MQTT_GRP_TOPIC;
@@ -998,7 +998,7 @@ void CmndSwitchTopic(void) {
     switch (Shortcut()) {
       case SC_CLEAR: SettingsUpdateText(SET_MQTT_SWITCH_TOPIC, ""); break;
       case SC_DEFAULT: SettingsUpdateText(SET_MQTT_SWITCH_TOPIC, TasmotaGlobal.mqtt_topic); break;
-      case SC_USER: SettingsUpdateText(SET_MQTT_SWITCH_TOPIC, MQTT_SWITCH_TOPIC); break;
+      case SC_USER: SettingsUpdateText(SET_MQTT_SWITCH_TOPIC, PSTR(MQTT_SWITCH_TOPIC)); break;
       default: SettingsUpdateText(SET_MQTT_SWITCH_TOPIC, XdrvMailbox.data);
     }
   }
@@ -1266,7 +1266,7 @@ void HandleMqttConfiguration(void)
 
   AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_CONFIGURE_MQTT));
 
-  if (Webserver->hasArg("save")) {
+  if (Webserver->hasArg(F("save"))) {
     MqttSaveSettings();
     WebRestart(1);
     return;
@@ -1282,11 +1282,11 @@ void HandleMqttConfiguration(void)
 #ifdef USE_MQTT_TLS
     Mqtt.mqtt_tls ? PSTR(" checked") : "",      // SetOption102 - Enable MQTT TLS
 #endif // USE_MQTT_TLS
-    Format(str, MQTT_CLIENT_ID, sizeof(str)), MQTT_CLIENT_ID, SettingsText(SET_MQTT_CLIENT));
+    Format(str, PSTR(MQTT_CLIENT_ID), sizeof(str)), PSTR(MQTT_CLIENT_ID), SettingsText(SET_MQTT_CLIENT));
   WSContentSend_P(HTTP_FORM_MQTT2,
     (!strlen(SettingsText(SET_MQTT_USER))) ? "0" : SettingsText(SET_MQTT_USER),
-    Format(str, MQTT_TOPIC, sizeof(str)), MQTT_TOPIC, SettingsText(SET_MQTT_TOPIC),
-    MQTT_FULLTOPIC, MQTT_FULLTOPIC, SettingsText(SET_MQTT_FULLTOPIC));
+    Format(str, PSTR(MQTT_TOPIC), sizeof(str)), PSTR(MQTT_TOPIC), SettingsText(SET_MQTT_TOPIC),
+    PSTR(MQTT_FULLTOPIC), PSTR(MQTT_FULLTOPIC), SettingsText(SET_MQTT_FULLTOPIC));
   WSContentSend_P(HTTP_FORM_END);
   WSContentSpaceButton(BUTTON_CONFIGURATION);
   WSContentStop();
@@ -1298,10 +1298,10 @@ void MqttSaveSettings(void)
   char stemp[TOPSZ];
   char stemp2[TOPSZ];
 
-  WebGetArg("mt", tmp, sizeof(tmp));
+  WebGetArg(PSTR("mt"), tmp, sizeof(tmp));
   strlcpy(stemp, (!strlen(tmp)) ? MQTT_TOPIC : tmp, sizeof(stemp));
   MakeValidMqtt(0, stemp);
-  WebGetArg("mf", tmp, sizeof(tmp));
+  WebGetArg(PSTR("mf"), tmp, sizeof(tmp));
   strlcpy(stemp2, (!strlen(tmp)) ? MQTT_FULLTOPIC : tmp, sizeof(stemp2));
   MakeValidMqtt(1, stemp2);
   if ((strcmp(stemp, SettingsText(SET_MQTT_TOPIC))) || (strcmp(stemp2, SettingsText(SET_MQTT_FULLTOPIC)))) {
@@ -1310,18 +1310,18 @@ void MqttSaveSettings(void)
   }
   SettingsUpdateText(SET_MQTT_TOPIC, stemp);
   SettingsUpdateText(SET_MQTT_FULLTOPIC, stemp2);
-  WebGetArg("mh", tmp, sizeof(tmp));
-  SettingsUpdateText(SET_MQTT_HOST, (!strlen(tmp)) ? MQTT_HOST : (!strcmp(tmp,"0")) ? "" : tmp);
-  WebGetArg("ml", tmp, sizeof(tmp));
+  WebGetArg(PSTR("mh"), tmp, sizeof(tmp));
+  SettingsUpdateText(SET_MQTT_HOST, (!strlen(tmp)) ? PSTR(MQTT_HOST) : (!strcmp(tmp,"0")) ? "" : tmp);
+  WebGetArg(PSTR("ml"), tmp, sizeof(tmp));
   Settings.mqtt_port = (!strlen(tmp)) ? MQTT_PORT : atoi(tmp);
 #ifdef USE_MQTT_TLS
-  Settings.flag4.mqtt_tls = Webserver->hasArg("b3");  // SetOption102 - Enable MQTT TLS
+  Settings.flag4.mqtt_tls = Webserver->hasArg(F("b3"));  // SetOption102 - Enable MQTT TLS
 #endif
-  WebGetArg("mc", tmp, sizeof(tmp));
-  SettingsUpdateText(SET_MQTT_CLIENT, (!strlen(tmp)) ? MQTT_CLIENT_ID : tmp);
-  WebGetArg("mu", tmp, sizeof(tmp));
-  SettingsUpdateText(SET_MQTT_USER, (!strlen(tmp)) ? MQTT_USER : (!strcmp(tmp,"0")) ? "" : tmp);
-  WebGetArg("mp", tmp, sizeof(tmp));
+  WebGetArg(PSTR("mc"), tmp, sizeof(tmp));
+  SettingsUpdateText(SET_MQTT_CLIENT, (!strlen(tmp)) ? PSTR(MQTT_CLIENT_ID) : tmp);
+  WebGetArg(PSTR("mu"), tmp, sizeof(tmp));
+  SettingsUpdateText(SET_MQTT_USER, (!strlen(tmp)) ? PSTR(MQTT_USER) : (!strcmp(tmp,"0")) ? "" : tmp);
+  WebGetArg(PSTR("mp"), tmp, sizeof(tmp));
   SettingsUpdateText(SET_MQTT_PWD, (!strlen(tmp)) ? "" : (!strcmp(tmp, D_ASTERISK_PWD)) ? SettingsText(SET_MQTT_PWD) : tmp);
   AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT D_CMND_MQTTHOST " %s, " D_CMND_MQTTPORT " %d, " D_CMND_MQTTCLIENT " %s, " D_CMND_MQTTUSER " %s, " D_CMND_TOPIC " %s, " D_CMND_FULLTOPIC " %s"),
     SettingsText(SET_MQTT_HOST), Settings.mqtt_port, SettingsText(SET_MQTT_CLIENT), SettingsText(SET_MQTT_USER), SettingsText(SET_MQTT_TOPIC), SettingsText(SET_MQTT_FULLTOPIC));

@@ -110,7 +110,7 @@ void ResponseCmndStateText(uint32_t value)
 
 void ResponseCmndDone(void)
 {
-  ResponseCmndChar(D_JSON_DONE);
+  ResponseCmndChar(PSTR(D_JSON_DONE));
 }
 
 void ResponseCmndIdxChar(const char* value)
@@ -352,7 +352,7 @@ void CmndBacklog(void)
 #else
     TasmotaGlobal.backlog_pointer = TasmotaGlobal.backlog_index;
 #endif
-    ResponseCmndChar(blflag ? D_JSON_EMPTY : D_JSON_ABORTED);
+    ResponseCmndChar(blflag ? PSTR(D_JSON_EMPTY) : PSTR(D_JSON_ABORTED));
   }
 }
 
@@ -1282,7 +1282,7 @@ void CmndTemplate(void)
       if (Settings.module != USER_MODULE) {
         ModuleDefault(Settings.module);
       }
-      SettingsUpdateText(SET_TEMPLATE_NAME, "Merged");
+      SettingsUpdateText(SET_TEMPLATE_NAME, PSTR("Merged"));
       uint32_t j = 0;
       for (uint32_t i = 0; i < ARRAY_SIZE(Settings.user_template.gp.io); i++) {
         if (6 == i) { j = 9; }
