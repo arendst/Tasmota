@@ -2148,8 +2148,6 @@ void HandleInformation(void)
 
 #ifdef USE_EMULATION
   WSContentSend_P(PSTR("}1" D_EMULATION "}2%s"), GetTextIndexed(stopic, sizeof(stopic), Settings.flag2.emulation, kEmulationOptions));
-#else
-  WSContentSend_P(PSTR("}1" D_EMULATION "}2" D_DISABLED));
 #endif // USE_EMULATION
 
 #ifdef USE_DISCOVERY
@@ -2161,8 +2159,6 @@ void HandleInformation(void)
     WSContentSend_P(PSTR("}1" D_MDNS_ADVERTISE "}2" D_DISABLED));
 #endif // WEBSERVER_ADVERTISE
   }
-#else
-  WSContentSend_P(PSTR("}1" D_MDNS_DISCOVERY "}2" D_DISABLED));
 #endif // USE_DISCOVERY
 
   WSContentSend_P(PSTR("}1}2&nbsp;"));  // Empty line
