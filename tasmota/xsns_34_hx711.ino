@@ -241,7 +241,7 @@ bool HxCommand(void)
       break;
     case 7:  // WeightSave
       Settings.energy_frequency_calibration = Hx.weight;
-      Response_P(S_JSON_SENSOR_INDEX_SVALUE, XSNS_34, D_JSON_DONE);
+      Response_P(S_JSON_SENSOR_INDEX_SVALUE, XSNS_34, PSTR(D_JSON_DONE));
       break;
     case 8:  // Json on weight change
       if (strchr(XdrvMailbox.data, ',') != nullptr) {

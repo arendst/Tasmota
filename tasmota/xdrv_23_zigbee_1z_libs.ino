@@ -579,7 +579,7 @@ String Z_attribute::toString(bool prefix_comma) const {
   // value part
   switch (type) {
   case Za_type::Za_none:
-    res += "null";
+    res += F("null");
     break;
   case Za_type::Za_bool:
     res += val.uval32 ? F("true") : F("false");
@@ -638,7 +638,9 @@ String Z_attribute::toString(bool prefix_comma) const {
     if (val.arrval) {
       res += val.arrval->toString();
     } else {
-      res += "[]";
+      // res += '[';
+      // res += ']';
+      res += F("[]");
     }
     break;
   }

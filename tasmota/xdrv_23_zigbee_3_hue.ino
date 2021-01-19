@@ -62,13 +62,13 @@ void HueLightStatus1Zigbee(uint16_t shortaddr, uint8_t local_light_subtype, Stri
   const size_t buf_size = 256;
   char * buf = (char*) malloc(buf_size);     // temp buffer for strings, avoid stack
 
-  snprintf_P(buf, buf_size, PSTR("{\"on\":%s,"), power ? "true" : "false");
+  snprintf_P(buf, buf_size, PSTR("{\"on\":%s,"), power ? PSTR("true") : PSTR("false"));
   // Brightness for all devices with PWM
   if ((1 == echo_gen) || (LST_SINGLE <= local_light_subtype)) { // force dimmer for 1st gen Echo
     snprintf_P(buf, buf_size, PSTR("%s\"bri\":%d,"), buf, bri);
   }
   if (LST_COLDWARM <= local_light_subtype) {
-    snprintf_P(buf, buf_size, PSTR("%s\"colormode\":\"%s\","), buf, (0 == colormode) ? "hs" : (1 == colormode) ? "xy" : "ct");
+    snprintf_P(buf, buf_size, PSTR("%s\"colormode\":\"%s\","), buf, (0 == colormode) ? PSTR("hs") : (1 == colormode) ? PSTR("xy") : PSTR("ct"));
   }
   if (LST_RGB <= local_light_subtype) {  // colors
     if (prev_x_str[0] && prev_y_str[0]) {
@@ -83,7 +83,7 @@ void HueLightStatus1Zigbee(uint16_t shortaddr, uint8_t local_light_subtype, Stri
   if (LST_COLDWARM == local_light_subtype || LST_RGBW <= local_light_subtype) {  // white temp
     snprintf_P(buf, buf_size, PSTR("%s\"ct\":%d,"), buf, ct > 0 ? ct : 284);
   }
-  snprintf_P(buf, buf_size, HUE_LIGHTS_STATUS_JSON1_SUFFIX_ZIGBEE, buf, reachable ? "true" : "false");
+  snprintf_P(buf, buf_size, HUE_LIGHTS_STATUS_JSON1_SUFFIX_ZIGBEE, buf, reachable ? PSTR("true") : PSTR("false"));
 
   *response += buf;
   free(buf);
@@ -233,7 +233,7 @@ void ZigbeeHandleHue(uint16_t shortaddr, uint32_t device_id, String &response) {
       on = hue_on.getBool();
       snprintf_P(buf, buf_size,
                  msg[HUE_RESP_ON],
-                 device_id, on ? "true" : "false");
+                 device_id, on ? PSTR("true") : PSTR("false"));
 
       if (on) {
         ZigbeeHuePower(shortaddr, 0x01);
@@ -252,7 +252,7 @@ void ZigbeeHandleHue(uint16_t shortaddr, uint32_t device_id, String &response) {
       if (resp) { response += ","; }
       snprintf_P(buf, buf_size,
                  msg[HUE_RESP_NUM],
-                 device_id, "bri", bri);
+                 device_id, PSTR("bri"), bri);
       response += buf;
       if (LST_SINGLE <= bulbtype) {
         // extend bri value if set to max
@@ -293,7 +293,7 @@ void ZigbeeHandleHue(uint16_t shortaddr, uint32_t device_id, String &response) {
       if (resp) { response += ","; }
       snprintf_P(buf, buf_size,
                  msg[HUE_RESP_NUM],
-                 device_id, "hue", hue);
+                 device_id, PSTR("hue"), hue);
       response += buf;
       if (LST_RGB <= bulbtype) {
         // change range from 0..65535 to 0..360
@@ -311,7 +311,7 @@ void ZigbeeHandleHue(uint16_t shortaddr, uint32_t device_id, String &response) {
       if (resp) { response += ","; }
       snprintf_P(buf, buf_size,
                  msg[HUE_RESP_NUM],
-                 device_id, "sat", sat);
+                 device_id, PSTR("sat"), sat);
       response += buf;
       if (LST_RGB <= bulbtype) {
         // extend sat value if set to max
@@ -332,7 +332,7 @@ void ZigbeeHandleHue(uint16_t shortaddr, uint32_t device_id, String &response) {
       if (resp) { response += ","; }
       snprintf_P(buf, buf_size,
                  msg[HUE_RESP_NUM],
-                 device_id, "ct", ct);
+                 device_id, PSTR("ct"), ct);
       response += buf;
       if ((LST_COLDWARM == bulbtype) || (LST_RGBW <= bulbtype)) {
         ZigbeeHueCT(shortaddr, ct);
