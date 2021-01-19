@@ -2341,7 +2341,6 @@ void UploadServices(uint32_t start_service) {
   if (start_service) {
 //    AddLog_P(LOG_LEVEL_DEBUG, PSTR("UPL: Services enabled"));
 
-    TasmotaGlobal.restart_flag = 0;
 /*
     MqttRetryCounter(0);
 */
@@ -2376,7 +2375,6 @@ void UploadServices(uint32_t start_service) {
       MqttDisconnect();
     }
 */
-    TasmotaGlobal.restart_flag = 120;  // Set restart watchdog after 2 minutes
   }
 }
 
@@ -2429,7 +2427,6 @@ void HandleUploadLoop(void) {
         Web.upload_error = 2;
         return;
       }
-      TasmotaGlobal.restart_flag = 0;
     }
 #endif  // USE_UFILESYS
   }
