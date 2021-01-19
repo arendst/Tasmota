@@ -68,18 +68,18 @@ Examples :
 // Ie:  export PLATFORMIO_BUILD_FLAGS='-DUSE_CONFIG_OVERRIDE -DMY_IP="192.168.1.99" -DMY_GW="192.168.1.1" -DMY_DNS="192.168.1.1"'
 
 #ifdef MY_IP
-#undef  WIFI_IPV4_ADDRESS
-#define WIFI_IPV4_ADDRESS   MY_IP                // Set to 0.0.0.0 for using DHCP or enter a static IP address
+#undef  WIFI_IP_ADDRESS
+#define WIFI_IP_ADDRESS     MY_IP                // Set to 0.0.0.0 for using DHCP or enter a static IP address
 #endif
 
 #ifdef MY_GW
-#undef  WIFI_IPV4_GATEWAY
-#define WIFI_IPV4_GATEWAY   MY_GW                // if not using DHCP set Gateway IP address
+#undef  WIFI_GATEWAY
+#define WIFI_GATEWAY        MY_GW                // if not using DHCP set Gateway IP address
 #endif
 
 #ifdef MY_DNS
-#undef  WIFI_IPV4_DNS
-#define WIFI_IPV4_DNS       MY_DNS               // If not using DHCP set DNS IP address (might be equal to WIFI_GATEWAY)
+#undef  WIFI_DNS
+#define WIFI_DNS            MY_DNS               // If not using DHCP set DNS IP address (might be equal to WIFI_GATEWAY)
 #endif
 
 */
