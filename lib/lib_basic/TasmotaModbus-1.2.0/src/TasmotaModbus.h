@@ -32,6 +32,8 @@ class TasmotaModbus : public TasmotaSerial {
 
     int Begin(long speed = TM_MODBUS_BAUDRATE, int stop_bits = 1);
 
+    uint16_t CalculateCRC(uint8_t *frame, uint8_t num);
+
     void Send(uint8_t device_address, uint8_t function_code, uint16_t start_address, uint16_t register_count);
 
     bool ReceiveReady();

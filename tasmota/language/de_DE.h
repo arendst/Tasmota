@@ -784,6 +784,9 @@
 #define D_SENSOR_SDCARD_CS     "SDCard CS"
 #define D_SENSOR_WIEGAND_D0    "Wiegand D0"
 #define D_SENSOR_WIEGAND_D1    "Wiegand D1"
+#define D_SENSOR_NEOPOOL_TX    "NeoPool Tx"
+#define D_SENSOR_NEOPOOL_RX    "NeoPool Rx"
+
 
 // Units
 #define D_UNIT_AMPERE "A"
@@ -954,5 +957,57 @@
 #define D_FP_ADDRCODE "Addresse"                        // 0x20 Address code
 #define D_FP_PASSVERIFY "Übereinstimmung"               // 0x21 Verify the fingerprint passed
 #define D_FP_UNKNOWNERROR "Fehler"                      // Any other error
+
+// xsns_83_neopool.ino
+#define D_NEOPOOL_MACH_NONE               "NeoPool"           // Machine names
+#define D_NEOPOOL_MACH_HIDROLIFE          "Hidrolife (Gelb)"
+#define D_NEOPOOL_MACH_AQUASCENIC         "Aquascenic (Blau)"
+#define D_NEOPOOL_MACH_OXILIFE            "Oxilife (Grün)"
+#define D_NEOPOOL_MACH_BIONET             "Bionet (Hellblau)"
+#define D_NEOPOOL_MACH_HIDRONISER         "Hidroniser (Rot)"
+#define D_NEOPOOL_MACH_UVSCENIC           "UVScenic (Lila)"
+#define D_NEOPOOL_MACH_STATION            "Station (Orange)"
+#define D_NEOPOOL_MACH_BRILIX             "Brilix"
+#define D_NEOPOOL_MACH_GENERIC            "Generic"
+#define D_NEOPOOL_MACH_BAYROL             "Bayrol"
+#define D_NEOPOOL_MACH_HAY                "Hay"
+#define D_NEOPOOL_FILTRATION_MANUAL       "Manuell"            // Filtration modes
+#define D_NEOPOOL_FILTRATION_AUTO         "Auto"
+#define D_NEOPOOL_FILTRATION_HEATING      "Heizung"
+#define D_NEOPOOL_FILTRATION_SMART        "Smart"
+#define D_NEOPOOL_FILTRATION_INTELLIGENT  "Intelligent"
+#define D_NEOPOOL_FILTRATION_BACKWASH     "Rückspülung"
+#define D_NEOPOOL_FILTRATION_NONE         ""                  // Filtration speed level
+#define D_NEOPOOL_FILTRATION_SLOW         "Langsam"
+#define D_NEOPOOL_FILTRATION_MEDIUM       "Mittel"
+#define D_NEOPOOL_FILTRATION_FAST         "Schnell"
+#define D_NEOPOOL_TYPE                    "Typ"              // Sensor & relais names
+#define D_NEOPOOL_REDOX                   "Redox"
+#define D_NEOPOOL_CHLORINE                "Chlor"
+#define D_NEOPOOL_CONDUCTIVITY            "Konduktivität"
+#define D_NEOPOOL_IONIZATION              "Ionisierung"
+#define D_NEOPOOL_HYDROLYSIS              "Hydrolyse"
+#define D_NEOPOOL_RELAY                   "Relais"
+#define D_NEOPOOL_RELAY_FILTRATION        "Filtration"
+#define D_NEOPOOL_RELAY_LIGHT             "Licht"
+#define D_NEOPOOL_RELAY_PH_ACID           "Säurepumpe"
+#define D_NEOPOOL_RELAY_PH_BASE           "Laugenpumpe"
+#define D_NEOPOOL_RELAY_RX                "Redox Pegel"
+#define D_NEOPOOL_RELAY_CL                "Chlorpumpe"
+#define D_NEOPOOL_RELAY_CD                "Salzwasserpumpe"
+#define D_NEOPOOL_TIME                    "Zeit"
+#define D_NEOPOOL_FILT_MODE               "Filtration"
+#define D_NEOPOOL_POLARIZATION            "Pol"               // Sensor status
+#define D_NEOPOOL_PR_OFF                  "PrAus"
+#define D_NEOPOOL_SETPOINT_OK             "Ok"
+#define D_NEOPOOL_COVER                   "Abdeckung"
+#define D_NEOPOOL_SHOCK                   "Shock"
+#define D_NEOPOOL_ALARM                   "! "
+#define D_NEOPOOL_LOW                     "Niedrig"
+#define D_NEOPOOL_FLOW1                   "FL1"
+#define D_NEOPOOL_FLOW2                   "FL2"
+#define D_NEOPOOL_PH_HIGH                 "zu hoch"          // ph Alarms
+#define D_NEOPOOL_PH_LOW                  "zu niedrig"
+#define D_NEOPOOL_PUMP_TIME_EXCEEDED      "Pumpzeit überschritten"
 
 #endif  // _LANGUAGE_DE_DE_H_

@@ -147,6 +147,7 @@ enum UserSelectablePins {
   GPIO_ADC_PH,                         // Analog PH Sensor
   GPIO_BS814_CLK, GPIO_BS814_DAT,      // Holtek BS814A2 touch ctrlr
   GPIO_WIEGAND_D0, GPIO_WIEGAND_D1,    // Wiegand Data lines
+  GPIO_NEOPOOL_TX, GPIO_NEOPOOL_RX,    // Sugar Valley RS485 interface
   GPIO_SENSOR_END };
 
 enum ProgramSelectablePins {
@@ -314,6 +315,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_ADC_PH "|"
   D_SENSOR_BS814_CLK "|" D_SENSOR_BS814_DAT "|"
   D_SENSOR_WIEGAND_D0 "|" D_SENSOR_WIEGAND_D1 "|"
+  D_SENSOR_NEOPOOL_TX "|" D_SENSOR_NEOPOOL_RX "|"
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -740,6 +742,10 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_WIEGAND
   AGPIO(GPIO_WIEGAND_D0),      // Date line D0 of Wiegand devices
   AGPIO(GPIO_WIEGAND_D1),      // Date line D1 of Wiegand devices
+#endif
+#ifdef USE_NEOPOOL
+  AGPIO(GPIO_NEOPOOL_TX),      // Sugar Valley RS485 Interface
+  AGPIO(GPIO_NEOPOOL_RX),      // Sugar Valley RS485 Interface
 #endif
 
 /*-------------------------------------------------------------------------------------------*\
