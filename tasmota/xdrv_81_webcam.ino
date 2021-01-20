@@ -44,6 +44,8 @@
  * WcSaturation = Set picture Saturation -2 ... +2
  * WcBrightness = Set picture Brightness -2 ... +2
  * WcContrast   = Set picture Contrast -2 ... +2
+ * WcInit       = Init Camera Interface
+ * WcRtsp       = Control RTSP Server, 0=disable, 1=enable (forces restart) (if defined ENABLE_RTSPSERVER)
  *
  * Only boards with PSRAM should be used. To enable PSRAM board should be se set to esp32cam in common32 of platform_override.ini
  * board                   = esp32cam
@@ -54,6 +56,7 @@
  * not tolerate any capictive load
  * flash led = gpio 4
  * red led = gpio 33
+ * optional rtsp url: rtsp://xxx.xxx.xxx.xxx:8554/mjpeg/1
  */
 
 /*********************************************************************************************/
@@ -69,10 +72,7 @@
 bool HttpCheckPriviledgedAccess(bool);
 extern ESP8266WebServer *Webserver;
 
-ESP8266WebServer *CamServer;
 #define BOUNDARY "e8b8c539-047d-4777-a985-fbba6edff11e"
-
-WiFiClient client;
 
 
 // CAMERA_MODEL_AI_THINKER default template pins
@@ -94,29 +94,50 @@ WiFiClient client;
 #define HREF_GPIO_NUM     23
 #define PCLK_GPIO_NUM     22
 
-struct {
-  uint8_t  up;
-  uint16_t width;
-  uint16_t height;
-  uint8_t  stream_active;
-#ifdef USE_FACE_DETECT
-  uint8_t  faces;
-  uint16_t face_detect_time;
+#ifndef MAX_PICSTORE
+#define MAX_PICSTORE 4
 #endif
-} Wc;
+struct PICSTORE {
+  uint8_t *buff;
+  uint32_t len;
+};
 
 #ifdef ENABLE_RTSPSERVER
 #include <OV2640.h>
 #include <SimStreamer.h>
 #include <OV2640Streamer.h>
 #include <CRtspSession.h>
-WiFiServer rtspServer(8554);
-CStreamer *rtsp_streamer;
-CRtspSession *rtsp_session;
-WiFiClient rtsp_client;
-uint8_t rtsp_start;
-OV2640 cam;
-#endif
+#ifndef RTSP_FRAME_TIME
+#define RTSP_FRAME_TIME 100
+#endif // RTSP_FRAME_TIME
+#endif // ENABLE_RTSPSERVER
+
+struct {
+  uint8_t  up;
+  uint16_t width;
+  uint16_t height;
+  uint8_t  stream_active;
+  WiFiClient client;
+  ESP8266WebServer *CamServer;
+  struct PICSTORE picstore[MAX_PICSTORE];
+#ifdef USE_FACE_DETECT
+  uint8_t  faces;
+  uint16_t face_detect_time;
+  uint32_t face_ltime;
+  mtmn_config_t mtmn_config = {0};
+#endif // USE_FACE_DETECT
+#ifdef ENABLE_RTSPSERVER
+  WiFiServer *rtspp;
+  CStreamer *rtsp_streamer;
+  CRtspSession *rtsp_session;
+  WiFiClient rtsp_client;
+  uint8_t rtsp_start;
+  OV2640 cam;
+  uint32_t rtsp_lastframe_time;
+#endif // ENABLE_RTSPSERVER
+} Wc;
+
+
 
 /*********************************************************************************************/
 
@@ -336,18 +357,21 @@ uint32_t WcGetHeight(void) {
 
 /*********************************************************************************************/
 
+struct WC_Motion {
 uint16_t motion_detect;
 uint32_t motion_ltime;
 uint32_t motion_trigger;
 uint32_t motion_brightness;
 uint8_t *last_motion_buffer;
+} wc_motion;
+
 
 uint32_t WcSetMotionDetect(int32_t value) {
-  if (value >= 0) { motion_detect = value; }
+  if (value >= 0) { wc_motion.motion_detect = value; }
   if (-1 == value) {
-    return motion_trigger;
+    return wc_motion.motion_trigger;
   } else  {
-    return motion_brightness;
+    return wc_motion.motion_brightness;
   }
 }
 
@@ -356,22 +380,22 @@ void WcDetectMotion(void) {
   camera_fb_t *wc_fb;
   uint8_t *out_buf = 0;
 
-  if ((millis()-motion_ltime) > motion_detect) {
-    motion_ltime = millis();
+  if ((millis()-wc_motion.motion_ltime) > wc_motion.motion_detect) {
+    wc_motion.motion_ltime = millis();
     wc_fb = esp_camera_fb_get();
     if (!wc_fb) { return; }
 
-    if (!last_motion_buffer) {
-      last_motion_buffer=(uint8_t *)heap_caps_malloc((wc_fb->width*wc_fb->height)+4, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+    if (!wc_motion.last_motion_buffer) {
+      wc_motion.last_motion_buffer = (uint8_t *)heap_caps_malloc((wc_fb->width*wc_fb->height) + 4, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
     }
-    if (last_motion_buffer) {
+    if (wc_motion.last_motion_buffer) {
       if (PIXFORMAT_JPEG == wc_fb->format) {
         out_buf = (uint8_t *)heap_caps_malloc((wc_fb->width*wc_fb->height*3)+4, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
         if (out_buf) {
           fmt2rgb888(wc_fb->buf, wc_fb->len, wc_fb->format, out_buf);
           uint32_t x, y;
           uint8_t *pxi = out_buf;
-          uint8_t *pxr = last_motion_buffer;
+          uint8_t *pxr = wc_motion.last_motion_buffer;
           // convert to bw
           uint64_t accu = 0;
           uint64_t bright = 0;
@@ -386,8 +410,8 @@ void WcDetectMotion(void) {
               bright += gray;
             }
           }
-          motion_trigger = accu / ((wc_fb->height * wc_fb->width) / 100);
-          motion_brightness = bright / ((wc_fb->height * wc_fb->width) / 100);
+          wc_motion.motion_trigger = accu / ((wc_fb->height * wc_fb->width) / 100);
+          wc_motion.motion_brightness = bright / ((wc_fb->height * wc_fb->width) / 100);
           free(out_buf);
         }
       }
@@ -400,22 +424,20 @@ void WcDetectMotion(void) {
 
 #ifdef USE_FACE_DETECT
 
-static mtmn_config_t mtmn_config = {0};
-
 void fd_init(void) {
-  mtmn_config.type = FAST;
-  mtmn_config.min_face = 80;
-  mtmn_config.pyramid = 0.707;
-  mtmn_config.pyramid_times = 4;
-  mtmn_config.p_threshold.score = 0.6;
-  mtmn_config.p_threshold.nms = 0.7;
-  mtmn_config.p_threshold.candidate_number = 20;
-  mtmn_config.r_threshold.score = 0.7;
-  mtmn_config.r_threshold.nms = 0.7;
-  mtmn_config.r_threshold.candidate_number = 10;
-  mtmn_config.o_threshold.score = 0.7;
-  mtmn_config.o_threshold.nms = 0.7;
-  mtmn_config.o_threshold.candidate_number = 1;
+  Wc.mtmn_config.type = FAST;
+  Wc.mtmn_config.min_face = 80;
+  Wc.mtmn_config.pyramid = 0.707;
+  Wc.mtmn_config.pyramid_times = 4;
+  Wc.mtmn_config.p_threshold.score = 0.6;
+  Wc.mtmn_config.p_threshold.nms = 0.7;
+  Wc.mtmn_config.p_threshold.candidate_number = 20;
+  Wc.mtmn_config.r_threshold.score = 0.7;
+  Wc.mtmn_config.r_threshold.nms = 0.7;
+  Wc.mtmn_config.r_threshold.candidate_number = 10;
+  Wc.mtmn_config.o_threshold.score = 0.7;
+  Wc.mtmn_config.o_threshold.nms = 0.7;
+  Wc.mtmn_config.o_threshold.candidate_number = 1;
 }
 
 #define FACE_COLOR_WHITE  0x00FFFFFF
@@ -473,8 +495,6 @@ uint32_t WcSetFaceDetect(int32_t value) {
   return Wc.faces;
 }
 
-uint32_t face_ltime;
-
 uint32_t WcDetectFace(void);
 
 uint32_t WcDetectFace(void) {
@@ -486,8 +506,8 @@ uint32_t WcDetectFace(void) {
   int face_id = 0;
   camera_fb_t *fb;
 
-  if ((millis() - face_ltime) > Wc.face_detect_time) {
-    face_ltime = millis();
+  if ((millis() - Wc.face_ltime) > Wc.face_detect_time) {
+    Wc.face_ltime = millis();
     fb = esp_camera_fb_get();
     if (!fb) { return ESP_FAIL; }
 
@@ -511,7 +531,7 @@ uint32_t WcDetectFace(void) {
       return ESP_FAIL;
     }
 
-    box_array_t *net_boxes = face_detect(image_matrix, &mtmn_config);
+    box_array_t *net_boxes = face_detect(image_matrix, &Wc.mtmn_config);
     if (net_boxes){
       detected = true;
       Wc.faces = net_boxes->len;
@@ -536,15 +556,6 @@ uint32_t WcDetectFace(void) {
 
 /*********************************************************************************************/
 
-#ifndef MAX_PICSTORE
-#define MAX_PICSTORE 4
-#endif
-struct PICSTORE {
-  uint8_t *buff;
-  uint32_t len;
-};
-
-struct PICSTORE picstore[MAX_PICSTORE];
 
 #ifdef COPYFRAME
 struct PICSTORE tmp_picstore;
@@ -552,8 +563,8 @@ struct PICSTORE tmp_picstore;
 
 uint32_t WcGetPicstore(int32_t num, uint8_t **buff) {
   if (num<0) { return MAX_PICSTORE; }
-  *buff = picstore[num].buff;
-  return picstore[num].len;
+  *buff = Wc.picstore[num].buff;
+  return Wc.picstore[num].len;
 }
 
 uint32_t WcGetFrame(int32_t bnum) {
@@ -566,8 +577,8 @@ uint32_t WcGetFrame(int32_t bnum) {
     if (bnum < -MAX_PICSTORE) { bnum=-1; }
     bnum = -bnum;
     bnum--;
-    if (picstore[bnum].buff) { free(picstore[bnum].buff); }
-    picstore[bnum].len = 0;
+    if (Wc.picstore[bnum].buff) { free(Wc.picstore[bnum].buff); }
+    Wc.picstore[bnum].len = 0;
     return 0;
   }
 
@@ -608,18 +619,18 @@ uint32_t WcGetFrame(int32_t bnum) {
 pcopy:
   if ((bnum < 1) || (bnum > MAX_PICSTORE)) { bnum = 1; }
   bnum--;
-  if (picstore[bnum].buff) { free(picstore[bnum].buff); }
-  picstore[bnum].buff = (uint8_t *)heap_caps_malloc(_jpg_buf_len+4, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
-  if (picstore[bnum].buff) {
-    memcpy(picstore[bnum].buff, _jpg_buf, _jpg_buf_len);
-    picstore[bnum].len = _jpg_buf_len;
+  if (Wc.picstore[bnum].buff) { free(Wc.picstore[bnum].buff); }
+  Wc.picstore[bnum].buff = (uint8_t *)heap_caps_malloc(_jpg_buf_len+4, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+  if (Wc.picstore[bnum].buff) {
+    memcpy(Wc.picstore[bnum].buff, _jpg_buf, _jpg_buf_len);
+    Wc.picstore[bnum].len = _jpg_buf_len;
   } else {
     AddLog_P(LOG_LEVEL_DEBUG, PSTR("CAM: Can't allocate picstore"));
-    picstore[bnum].len = 0;
+    Wc.picstore[bnum].len = 0;
   }
   if (wc_fb) { esp_camera_fb_return(wc_fb); }
   if (jpeg_converted) { free(_jpg_buf); }
-  if (!picstore[bnum].buff) { return 0; }
+  if (!Wc.picstore[bnum].buff) { return 0; }
 
   return  _jpg_buf_len;
 }
@@ -657,11 +668,11 @@ void HandleImage(void) {
     if (wc_fb) { esp_camera_fb_return(wc_fb); }
   } else {
     bnum--;
-    if (!picstore[bnum].len) {
+    if (!Wc.picstore[bnum].len) {
       AddLog_P(LOG_LEVEL_DEBUG, PSTR("CAM: No image #: %d"), bnum);
       return;
     }
-    client.write((char *)picstore[bnum].buff, picstore[bnum].len);
+    client.write((char *)Wc.picstore[bnum].buff, Wc.picstore[bnum].len);
   }
   client.stop();
 
@@ -674,7 +685,7 @@ void HandleImageBasic(void) {
   AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_HTTP "Capture image"));
 
   if (Settings.webcam_config.stream) {
-    if (!CamServer) {
+    if (!Wc.CamServer) {
       WcStreamControl();
     }
   }
@@ -717,7 +728,7 @@ void HandleWebcamMjpeg(void) {
 //  if (!Wc.stream_active) {
 // always restart stream
     Wc.stream_active = 1;
-    client = CamServer->client();
+    Wc.client = Wc.CamServer->client();
     AddLog_P(LOG_LEVEL_DEBUG, PSTR("CAM: Create client"));
 //  }
 }
@@ -731,15 +742,15 @@ void HandleWebcamMjpegTask(void) {
   uint32_t tlen;
   bool jpeg_converted = false;
 
-  if (!client.connected()) {
+  if (!Wc.client.connected()) {
     AddLog_P(LOG_LEVEL_DEBUG, PSTR("CAM: Client fail"));
     Wc.stream_active = 0;
   }
   if (1 == Wc.stream_active) {
-    client.flush();
-    client.setTimeout(3);
+    Wc.client.flush();
+    Wc.client.setTimeout(3);
     AddLog_P(LOG_LEVEL_DEBUG, PSTR("CAM: Start stream"));
-    client.print("HTTP/1.1 200 OK\r\n"
+    Wc.client.print("HTTP/1.1 200 OK\r\n"
       "Content-Type: multipart/x-mixed-replace;boundary=" BOUNDARY "\r\n"
       "\r\n");
     Wc.stream_active = 2;
@@ -764,17 +775,17 @@ void HandleWebcamMjpegTask(void) {
       _jpg_buf = wc_fb->buf;
     }
 
-    client.printf("Content-Type: image/jpeg\r\n"
+    Wc.client.printf("Content-Type: image/jpeg\r\n"
       "Content-Length: %d\r\n"
       "\r\n", static_cast<int>(_jpg_buf_len));
-    tlen = client.write(_jpg_buf, _jpg_buf_len);
+    tlen = Wc.client.write(_jpg_buf, _jpg_buf_len);
     /*
     if (tlen!=_jpg_buf_len) {
       esp_camera_fb_return(wc_fb);
       Wc.stream_active=0;
       AddLog_P(LOG_LEVEL_DEBUG, PSTR("CAM: Send fail"));
     }*/
-    client.print("\r\n--" BOUNDARY "\r\n");
+    Wc.client.print("\r\n--" BOUNDARY "\r\n");
 
 #ifdef COPYFRAME
     if (tmp_picstore.buff) { free(tmp_picstore.buff); }
@@ -793,15 +804,15 @@ void HandleWebcamMjpegTask(void) {
   }
   if (0 == Wc.stream_active) {
     AddLog_P(LOG_LEVEL_DEBUG, PSTR("CAM: Stream exit"));
-    client.flush();
-    client.stop();
+    Wc.client.flush();
+    Wc.client.stop();
   }
 }
 
 void HandleWebcamRoot(void) {
   //CamServer->redirect("http://" + String(ip) + ":81/cam.mjpeg");
-  CamServer->sendHeader("Location", WiFi.localIP().toString() + ":81/cam.mjpeg");
-  CamServer->send(302, "", "");
+  Wc.CamServer->sendHeader("Location", WiFi.localIP().toString() + ":81/cam.mjpeg");
+  Wc.CamServer->send(302, "", "");
   AddLog_P(LOG_LEVEL_DEBUG, PSTR("CAM: Root called"));
 }
 
@@ -813,20 +824,20 @@ uint32_t WcSetStreamserver(uint32_t flag) {
   Wc.stream_active = 0;
 
   if (flag) {
-    if (!CamServer) {
-      CamServer = new ESP8266WebServer(81);
-      CamServer->on("/", HandleWebcamRoot);
-      CamServer->on("/cam.mjpeg", HandleWebcamMjpeg);
-      CamServer->on("/cam.jpg", HandleWebcamMjpeg);
-      CamServer->on("/stream", HandleWebcamMjpeg);
+    if (!Wc.CamServer) {
+      Wc.CamServer = new ESP8266WebServer(81);
+      Wc.CamServer->on("/", HandleWebcamRoot);
+      Wc.CamServer->on("/cam.mjpeg", HandleWebcamMjpeg);
+      Wc.CamServer->on("/cam.jpg", HandleWebcamMjpeg);
+      Wc.CamServer->on("/stream", HandleWebcamMjpeg);
       AddLog_P(LOG_LEVEL_DEBUG, PSTR("CAM: Stream init"));
-      CamServer->begin();
+      Wc.CamServer->begin();
     }
   } else {
-    if (CamServer) {
-      CamServer->stop();
-      delete CamServer;
-      CamServer = NULL;
+    if (Wc.CamServer) {
+      Wc.CamServer->stop();
+      delete Wc.CamServer;
+      Wc.CamServer = NULL;
       AddLog_P(LOG_LEVEL_DEBUG, PSTR("CAM: Stream exit"));
     }
   }
@@ -839,61 +850,58 @@ void WcStreamControl() {
 }
 
 /*********************************************************************************************/
-#ifdef ENABLE_RTSPSERVER
-static uint32_t rtsp_lastframe_time;
-#ifndef RTSP_FRAME_TIME
-#define RTSP_FRAME_TIME 100
-#endif
-#endif
+
 
 void WcLoop(void) {
-  if (CamServer) {
-    CamServer->handleClient();
+  if (Wc.CamServer) {
+    Wc.CamServer->handleClient();
     if (Wc.stream_active) { HandleWebcamMjpegTask(); }
   }
-  if (motion_detect) { WcDetectMotion(); }
+  if (wc_motion.motion_detect) { WcDetectMotion(); }
 #ifdef USE_FACE_DETECT
   if (Wc.face_detect_time) { WcDetectFace(); }
 #endif
 
 #ifdef ENABLE_RTSPSERVER
+    if (Settings.webcam_config.rtsp && !TasmotaGlobal.global_state.wifi_down && Wc.up) {
+      if (!Wc.rtsp_start) {
+        Wc.rtspp = new WiFiServer(8554);
+        Wc.rtspp->begin();
+        Wc.rtsp_start = 1;
+        AddLog_P(LOG_LEVEL_INFO, PSTR("CAM: RTSP init"));
+        Wc.rtsp_lastframe_time = millis();
+      }
 
-    if (!rtsp_start && !TasmotaGlobal.global_state.wifi_down && Wc.up) {
-      rtspServer.begin();
-      rtsp_start = 1;
-      AddLog_P(LOG_LEVEL_INFO, PSTR("CAM: RTSP init"));
-      rtsp_lastframe_time = millis();
-    }
-
-    // If we have an active client connection, just service that until gone
-    if (rtsp_session) {
-        rtsp_session->handleRequests(0); // we don't use a timeout here,
+      // If we have an active client connection, just service that until gone
+      if (Wc.rtsp_session) {
+        Wc.rtsp_session->handleRequests(0); // we don't use a timeout here,
         // instead we send only if we have new enough frames
 
         uint32_t now = millis();
-        if ((now-rtsp_lastframe_time) > RTSP_FRAME_TIME) {
-            rtsp_session->broadcastCurrentFrame(now);
-            rtsp_lastframe_time = now;
+        if ((now-Wc.rtsp_lastframe_time) > RTSP_FRAME_TIME) {
+            Wc.rtsp_session->broadcastCurrentFrame(now);
+            Wc.rtsp_lastframe_time = now;
           //  AddLog_P(LOG_LEVEL_INFO, PSTR("CAM: RTSP session frame"));
         }
 
-        if (rtsp_session->m_stopped) {
-            delete rtsp_session;
-            delete rtsp_streamer;
-            rtsp_session = NULL;
-            rtsp_streamer = NULL;
+        if (Wc.rtsp_session->m_stopped) {
+            delete Wc.rtsp_session;
+            delete Wc.rtsp_streamer;
+            Wc.rtsp_session = NULL;
+            Wc.rtsp_streamer = NULL;
             AddLog_P(LOG_LEVEL_INFO, PSTR("CAM: RTSP stopped"));
         }
-    }
-    else {
-        rtsp_client = rtspServer.accept();
-        if (rtsp_client) {
-            rtsp_streamer = new OV2640Streamer(&rtsp_client, cam);        // our streamer for UDP/TCP based RTP transport
-            rtsp_session = new CRtspSession(&rtsp_client, rtsp_streamer); // our threads RTSP session and state
+      }
+      else {
+        Wc.rtsp_client = Wc.rtspp->accept();
+        if (Wc.rtsp_client) {
+            Wc.rtsp_streamer = new OV2640Streamer(&Wc.rtsp_client, Wc.cam);        // our streamer for UDP/TCP based RTP transport
+            Wc.rtsp_session = new CRtspSession(&Wc.rtsp_client, Wc.rtsp_streamer); // our threads RTSP session and state
             AddLog_P(LOG_LEVEL_INFO, PSTR("CAM: RTSP stream created"));
         }
+      }
     }
-#endif
+#endif // ENABLE_RTSPSERVER
 }
 
 void WcPicSetup(void) {
@@ -904,12 +912,12 @@ void WcPicSetup(void) {
 
 void WcShowStream(void) {
   if (Settings.webcam_config.stream) {
-//    if (!CamServer || !Wc.up) {
-    if (!CamServer) {
+//    if (!Wc.CamServer || !Wc.up) {
+    if (!Wc.CamServer) {
       WcStreamControl();
       delay(50);   // Give the webcam webserver some time to prepare the stream
     }
-    if (CamServer && Wc.up) {
+    if (Wc.CamServer && Wc.up) {
       WSContentSend_P(PSTR("<p></p><center><img src='http://%s:81/stream' alt='Webcam stream' style='width:99%%;'></center><p></p>"),
         WiFi.localIP().toString().c_str());
     }
@@ -941,24 +949,39 @@ void WcInit(void) {
 #define D_CMND_WC_BRIGHTNESS "Brightness"
 #define D_CMND_WC_CONTRAST "Contrast"
 #define D_CMND_WC_INIT "Init"
+#define D_CMND_RTSP "Rtsp"
 
 const char kWCCommands[] PROGMEM =  D_PRFX_WEBCAM "|"  // Prefix
   "|" D_CMND_WC_STREAM "|" D_CMND_WC_RESOLUTION "|" D_CMND_WC_MIRROR "|" D_CMND_WC_FLIP "|"
   D_CMND_WC_SATURATION "|" D_CMND_WC_BRIGHTNESS "|" D_CMND_WC_CONTRAST "|" D_CMND_WC_INIT
+#ifdef ENABLE_RTSPSERVER
+  "|" D_CMND_RTSP
+#endif // ENABLE_RTSPSERVER
   ;
 
 void (* const WCCommand[])(void) PROGMEM = {
   &CmndWebcam, &CmndWebcamStream, &CmndWebcamResolution, &CmndWebcamMirror, &CmndWebcamFlip,
   &CmndWebcamSaturation, &CmndWebcamBrightness, &CmndWebcamContrast, &CmndWebcamInit
+#ifdef ENABLE_RTSPSERVER
+  , &CmndWebRtsp
+#endif // ENABLE_RTSPSERVER
   };
 
 void CmndWebcam(void) {
   Response_P(PSTR("{\"" D_PRFX_WEBCAM "\":{\"" D_CMND_WC_STREAM "\":%d,\"" D_CMND_WC_RESOLUTION "\":%d,\"" D_CMND_WC_MIRROR "\":%d,\""
     D_CMND_WC_FLIP "\":%d,\""
-    D_CMND_WC_SATURATION "\":%d,\"" D_CMND_WC_BRIGHTNESS "\":%d,\"" D_CMND_WC_CONTRAST "\":%d}}"),
+    D_CMND_WC_SATURATION "\":%d,\"" D_CMND_WC_BRIGHTNESS "\":%d,\"" D_CMND_WC_CONTRAST "\":%d"
+#ifdef ENABLE_RTSPSERVER
+  ",\"" D_CMND_RTSP "\":%d"
+#endif // ENABLE_RTSPSERVER
+  "}}"),
     Settings.webcam_config.stream, Settings.webcam_config.resolution, Settings.webcam_config.mirror,
     Settings.webcam_config.flip,
-    Settings.webcam_config.saturation -2, Settings.webcam_config.brightness -2, Settings.webcam_config.contrast -2);
+    Settings.webcam_config.saturation -2, Settings.webcam_config.brightness -2, Settings.webcam_config.contrast -2
+#ifdef ENABLE_RTSPSERVER
+  , Settings.webcam_config.rtsp
+#endif // ENABLE_RTSPSERVER
+  );
 }
 
 void CmndWebcamStream(void) {
@@ -1021,6 +1044,17 @@ void CmndWebcamInit(void) {
   WcStreamControl();
   ResponseCmndDone();
 }
+
+#ifdef ENABLE_RTSPSERVER
+void CmndWebRtsp(void) {
+  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 1)) {
+    Settings.webcam_config.rtsp = XdrvMailbox.payload;
+    TasmotaGlobal.restart_flag = 2;
+  }
+  ResponseCmndStateText(Settings.webcam_config.rtsp);
+}
+#endif // ENABLE_RTSPSERVER
+
 
 /*********************************************************************************************\
  * Interface
