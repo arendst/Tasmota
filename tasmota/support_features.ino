@@ -707,7 +707,9 @@ void ResponseAppendFeatures(void)
 #ifdef USE_WIEGAND
     feature7 |= 0x04000000;  // xsns_82_wiegand.ino
 #endif
-//    feature7 |= 0x08000000;
+#ifdef USE_NEOPOOL
+    feature7 |= 0x08000000;  // xsns_83_neopool.ino
+#endif
 
 //    feature7 |= 0x10000000;
 //    feature7 |= 0x20000000;
