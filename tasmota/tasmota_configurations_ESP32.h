@@ -99,19 +99,21 @@
 
 //#define USE_SCRIPT                               // Add support for script (+17k code)
 // Script related defines
-#define UFSYS_SIZE 8192
-#define USE_SCRIPT_TASK
-#define LARGE_ARRAYS
-#define SCRIPT_LARGE_VNBUFF
-#define USE_SCRIPT_GLOBVARS
-#define USE_SCRIPT_SUB_COMMAND
-#define MAXFILT 10
-#define USE_ANGLE_FUNC
-#define MAXVARS 75
-#define MAXSVARS 15
-#define SCRIPT_FULL_WEBPAGE
-#define SCRIPT_GET_HTTPS_JP
-#define USE_GOOGLE_CHARTS
+#ifdef USE_SCRIPT
+  #define UFSYS_SIZE 8192
+  #define USE_SCRIPT_TASK
+  #define LARGE_ARRAYS
+  #define SCRIPT_LARGE_VNBUFF
+  #define USE_SCRIPT_GLOBVARS
+  #define USE_SCRIPT_SUB_COMMAND
+  #define MAXFILT 10
+  #define USE_ANGLE_FUNC
+  #define MAXVARS 75
+  #define MAXSVARS 15
+  #define SCRIPT_FULL_WEBPAGE
+  #define SCRIPT_GET_HTTPS_JP
+  #define USE_GOOGLE_CHARTS
+#endif  // USE_SCRIPT
 #endif  // FIRMWARE_M5STACK_CORE2
 
 #endif  // ESP32
