@@ -28,12 +28,12 @@ Renderer *renderer;
 
 enum ColorType { COLOR_BW, COLOR_COLOR };
 
-#ifndef MAXBUTTONS
-#define MAXBUTTONS 16
+#ifndef MAX_TOUCH_BUTTONS
+#define MAX_TOUCH_BUTTONS 16
 #endif
 
 #ifdef USE_TOUCH_BUTTONS
-VButton *buttons[MAXBUTTONS];
+VButton *buttons[MAX_TOUCH_BUTTONS];
 #endif
 
 // drawing color is WHITE
@@ -772,7 +772,7 @@ void DisplayText(void)
               if (*cp=='d') dis=1;
               cp++;
               var=atoiv(cp,&num);
-              num=num%MAXBUTTONS;
+              num=num%MAX_TOUCH_BUTTONS;
               cp+=var;
               if (buttons[num]) {
                 buttons[num]->vpower.disable=dis;
@@ -791,7 +791,7 @@ void DisplayText(void)
             cp+=var;
             cp++;
             uint8_t bflags=num>>8;
-            num=num%MAXBUTTONS;
+            num=num%MAX_TOUCH_BUTTONS;
             var=atoiv(cp,&gxp);
             cp+=var;
             cp++;
@@ -2188,7 +2188,7 @@ uint8_t vbutt=0;
 
       //AddLog_P(LOG_LEVEL_INFO, PSTR("touch %d - %d"), pLoc.x, pLoc.y);
       // now must compare with defined buttons
-      for (uint8_t count=0; count<MAXBUTTONS; count++) {
+      for (uint8_t count=0; count<MAX_TOUCH_BUTTONS; count++) {
         if (buttons[count] && !buttons[count]->vpower.disable) {
             if (buttons[count]->contains(pLoc.x, pLoc.y)) {
                 // did hit
@@ -2237,7 +2237,7 @@ uint8_t vbutt=0;
       }
     }
 #endif
-    for (uint8_t count=0; count<MAXBUTTONS; count++) {
+    for (uint8_t count=0; count<MAX_TOUCH_BUTTONS; count++) {
       if (buttons[count]) {
         buttons[count]->press(false);
         if (buttons[count]->justReleased()) {

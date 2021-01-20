@@ -300,7 +300,7 @@ extern FS *ufsp;
 #ifdef USE_DISPLAY
 #ifdef USE_TOUCH_BUTTONS
 #include <renderer.h>
-extern VButton *buttons[MAXBUTTONS];
+extern VButton *buttons[MAX_TOUCH_BUTTONS];
 #endif
 #endif
 
@@ -3044,7 +3044,7 @@ chknext:
         if (!strncmp(vname, "tbut[", 5)) {
           GetNumericArgument(vname + 5, OPER_EQU, &fvar, 0);
           uint8_t index = fvar;
-          if (index<1 || index>MAXBUTTONS) index = 1;
+          if (index<1 || index>MAX_TOUCH_BUTTONS) index = 1;
           index--;
           if (buttons[index]) {
             fvar = buttons[index]->vpower.on_off;

@@ -89,7 +89,7 @@
   #define USE_DISPLAY
     #define USE_DISPLAY_ILI9342
 #define USE_TOUCH_BUTTONS
-  #define MAXBUTTONS 16
+  #define MAX_TOUCH_BUTTONS 16
 #define JPEG_PICTS
 #define USE_FT5206
 #define USE_MPU6886
