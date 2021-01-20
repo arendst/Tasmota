@@ -34,8 +34,8 @@ void CRtspSession::Init()
 
 bool CRtspSession::ParseRtspRequest(char const * aRequest, unsigned aRequestSize)
 {
-    char CmdName[RTSP_PARAM_STRING_MAX];
-    static char CurRequest[RTSP_BUFFER_SIZE]; // Note: we assume single threaded, this large buf we keep off of the tiny stack
+    // char CmdName[RTSP_PARAM_STRING_MAX];
+    //char CurRequest[RTSP_BUFFER_SIZE]; // Note: we assume single threaded, this large buf we keep off of the tiny stack
     unsigned CurRequestSize;
 
     Init();
@@ -45,7 +45,7 @@ bool CRtspSession::ParseRtspRequest(char const * aRequest, unsigned aRequestSize
     // check whether the request contains information about the RTP/RTCP UDP client ports (SETUP command)
     char * ClientPortPtr;
     char * TmpPtr;
-    static char CP[1024];
+    char CP[128]; //static char CP[1024];
     char * pCP;
 
     ClientPortPtr = strstr(CurRequest,"client_port");
@@ -230,7 +230,7 @@ RTSP_CMD_TYPES CRtspSession::Handle_RtspRequest(char const * aRequest, unsigned 
 
 void CRtspSession::Handle_RtspOPTION()
 {
-    static char Response[1024]; // Note: we assume single threaded, this large buf we keep off of the tiny stack
+    //static char Response[1024]; // Note: we assume single threaded, this large buf we keep off of the tiny stack
 
     snprintf(Response,sizeof(Response),
              "RTSP/1.0 200 OK\r\nCSeq: %s\r\n"
@@ -241,9 +241,9 @@ void CRtspSession::Handle_RtspOPTION()
 
 void CRtspSession::Handle_RtspDESCRIBE()
 {
-    static char Response[1024]; // Note: we assume single threaded, this large buf we keep off of the tiny stack
-    static char SDPBuf[1024];
-    static char URLBuf[1024];
+    //static char Response[1024]; // Note: we assume single threaded, this large buf we keep off of the tiny stack
+    char SDPBuf[128]; //static char SDPBuf[1024];
+    char URLBuf[128];  //static char URLBuf[1024];
 
     // check whether we know a stream with the URL which is requested
     m_StreamID = -1;        // invalid URL
@@ -261,7 +261,7 @@ void CRtspSession::Handle_RtspDESCRIBE()
     };
 
     // simulate DESCRIBE server response
-    static char OBuf[256];
+    // static char OBuf[256];
     char * ColonPtr;
     strcpy(OBuf,m_URLHostPort);
     ColonPtr = strstr(OBuf,":");
@@ -305,8 +305,8 @@ void CRtspSession::Handle_RtspDESCRIBE()
 
 void CRtspSession::Handle_RtspSETUP()
 {
-    static char Response[1024];
-    static char Transport[255];
+    //static char Response[1024];
+    //static char Transport[255];
 
     // init RTP streamer transport type (UDP or TCP) and ports for UDP transport
     m_Streamer->InitTransport(m_ClientRTPPort,m_ClientRTCPPort,m_TcpTransport);
@@ -336,7 +336,7 @@ void CRtspSession::Handle_RtspSETUP()
 
 void CRtspSession::Handle_RtspPLAY()
 {
-    static char Response[1024];
+    //static char Response[1024];
 
     // simulate SETUP server response
     snprintf(Response,sizeof(Response),
@@ -354,10 +354,10 @@ void CRtspSession::Handle_RtspPLAY()
 
 char const * CRtspSession::DateHeader()
 {
-    static char buf[200];
+    //static char buf[200];
     time_t tt = time(NULL);
-    strftime(buf, sizeof buf, "Date: %a, %b %d %Y %H:%M:%S GMT", gmtime(&tt));
-    return buf;
+    strftime(session_buf, sizeof(session_buf), "Date: %a, %b %d %Y %H:%M:%S GMT", gmtime(&tt));
+    return session_buf;
 }
 
 int CRtspSession::GetStreamID()
@@ -375,7 +375,7 @@ bool CRtspSession::handleRequests(uint32_t readTimeoutMs)
     if(m_stopped)
         return false; // Already closed down
 
-    static char RecvBuf[RTSP_BUFFER_SIZE];   // Note: we assume single threaded, this large buf we keep off of the tiny stack
+    //char RecvBuf[RTSP_BUFFER_SIZE];   // Note: we assume single threaded, this large buf we keep off of the tiny stack
 
     memset(RecvBuf,0x00,sizeof(RecvBuf));
     int res = socketread(m_RtspClient,RecvBuf,sizeof(RecvBuf), readTimeoutMs);

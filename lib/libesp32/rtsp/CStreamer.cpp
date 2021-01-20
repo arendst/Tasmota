@@ -48,7 +48,7 @@ int CStreamer::SendRtpPacket(unsigned const char * jpeg, int jpegLen, int fragme
     bool includeQuantTbl = quant0tbl && quant1tbl && fragmentOffset == 0;
     uint8_t q = includeQuantTbl ? 128 : 0x5e;
 
-    static char RtpBuf[2048]; // Note: we assume single threaded, this large buf we keep off of the tiny stack
+    //static char RtpBuf[2048]; // Note: we assume single threaded, this large buf we keep off of the tiny stack
     int RtpPacketSize = fragmentLen + KRtpHeaderSize + KJpegHeaderSize + (includeQuantTbl ? (4 + 64 * 2) : 0);
 
     memset(RtpBuf,0x00,sizeof(RtpBuf));

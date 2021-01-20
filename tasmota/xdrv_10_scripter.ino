@@ -1976,6 +1976,9 @@ chknext:
             case 11:
               fvar = Energy.daily;
               break;
+            case 12:
+              fvar = (float)Settings.energy_kWhyesterday/100000.0;
+              break;
 
             default:
               fvar = 99999;
@@ -2783,6 +2786,12 @@ chknext:
           fvar = GetStack();
           goto exit;
         }
+#ifdef ESP32
+        if (!strncmp(vname, "stkwm", 5)) {
+          fvar = uxTaskGetStackHighWaterMark(NULL);
+          goto exit;
+        }
+#endif // ESP32
         if (!strncmp(vname, "slen", 4)) {
           fvar = strlen(glob_script_mem.script_ram);
           goto exit;
@@ -3054,6 +3063,30 @@ chknext:
 
 #endif //USE_TOUCH_BUTTONS
 #endif //USE_DISPLAY
+#if 1
+        if (!strncmp(vname, "test(", 5)) {
+          lp = GetNumericArgument(lp + 5, OPER_EQU, &fvar, 0);
+          uint32_t cycles;
+          uint64_t accu=0;
+          char sbuffer[32];
+          // PSTR performance test
+          // this is best case since everything will be in cache
+          // PSTR at least 3 times slower here, will be much slower if cache missed
+          for (uint16 cnt=0; cnt<1000; cnt++) {
+            cycles=ESP.getCycleCount();
+            if (fvar>0) {
+              snprintf_P(sbuffer, sizeof(sbuffer), PSTR("1234"));
+            } else {
+              snprintf(sbuffer, sizeof(sbuffer), "1234");
+            }
+            accu += ESP.getCycleCount()-cycles;
+          }
+          lp++;
+          len = 0;
+          fvar = accu / 1000;
+          goto exit;
+        }
+#endif
         break;
       case 'u':
         if (!strncmp(vname, "uptime", 6)) {
@@ -4545,7 +4578,7 @@ int16_t Run_script_sub(const char *type, int8_t tlen, JsonParserObject *jo) {
                   ctype += tlen;
                   char nxttok = '(';
                   char *argptr = ctype+tlen;
-                  
+
                   lp += tlen;
                   do {
                     if (*ctype==nxttok && *lp==nxttok) {
@@ -7174,7 +7207,7 @@ bool RulesProcessEvent(char *json_event) {
 #ifdef USE_SCRIPT_TASK
 
 #ifndef STASK_STACK
-#define STASK_STACK 8192
+#define STASK_STACK 8192-2048
 #endif
 
 #if 1

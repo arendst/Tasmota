@@ -49,7 +49,6 @@ struct CORE2_globs {
   uint8_t wakeup_hour;
   uint8_t wakeup_minute;
   uint8_t shutdowndelay;
-  bool timesynced;
 } core2_globs;
 
 struct CORE2_ADC {
@@ -262,44 +261,6 @@ uint16_t voltage = 2200;
 
 }
 
-/*
-void SetRtc(void) {
-  RTC_TimeTypeDef RTCtime;
-  RTCtime.Hours = RtcTime.hour;
-  RTCtime.Minutes = RtcTime.minute;
-  RTCtime.Seconds = RtcTime.second;
-  core2_globs.Rtc.SetTime(&RTCtime);
-
-  RTC_DateTypeDef RTCdate;
-  RTCdate.WeekDay = RtcTime.day_of_week;
-  RTCdate.Month = RtcTime.month;
-  RTCdate.Date = RtcTime.day_of_month;
-  RTCdate.Year = RtcTime.year;
-  core2_globs.Rtc.SetDate(&RTCdate);
-}
-*/
-
-
-// needed for sd card time
-void Sync_RTOS_TIME(void) {
-
-  if (Rtc.local_time < START_VALID_TIME || core2_globs.timesynced) return;
-
-  core2_globs.timesynced = 1;
-// Set freertos time for sd card
-
-  struct timeval tv;
-  //tv.tv_sec = Rtc.utc_time;
-  tv.tv_sec = Rtc.local_time;
-  tv.tv_usec = 0;
-
-  //struct timezone tz;
-  //tz.tz_minuteswest = 0;
-  //tz.tz_dsttime = 0;
-  //settimeofday(&tv, &tz);
-
-  settimeofday(&tv, NULL);
-}
 
 void GetRtc(void) {
   RTC_TimeTypeDef RTCtime;
@@ -372,8 +333,6 @@ void CORE2_EverySecond(void) {
         CORE2_DoShutdown();
       }
     }
-
-    Sync_RTOS_TIME();
   }
 }
 

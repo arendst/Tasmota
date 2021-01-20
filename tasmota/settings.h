@@ -226,7 +226,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t stream : 1;
     uint32_t mirror : 1;
     uint32_t flip : 1;
-    uint32_t spare3 : 1;
+    uint32_t rtsp : 1;
     uint32_t spare4 : 1;
     uint32_t spare5 : 1;
     uint32_t spare6 : 1;
