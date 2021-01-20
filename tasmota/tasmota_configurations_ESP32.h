@@ -89,27 +89,27 @@
   #define USE_DISPLAY
     #define USE_DISPLAY_ILI9342
 #define USE_TOUCH_BUTTONS
+  #define MAXBUTTONS 16
 #define JPEG_PICTS
 #define USE_FT5206
 #define USE_MPU6886
 #define USE_SENDMAIL
 #define USE_ESP32MAIL
-//#define USE_BLE_ESP32                            // Enable new BLE driver
-//#define USE_MI_ESP32                             // (ESP32 only) Add support for ESP32 as a BLE-bridge (+9k2 mem, +292k flash)
 
 //#define USE_SCRIPT                               // Add support for script (+17k code)
 // Script related defines
 #ifdef USE_SCRIPT
+  #undef USE_RULES
+  #define MAXVARS 75
+  #define MAXSVARS 15
+  #define MAXFILT 10
   #define UFSYS_SIZE 8192
   #define USE_SCRIPT_TASK
   #define LARGE_ARRAYS
   #define SCRIPT_LARGE_VNBUFF
   #define USE_SCRIPT_GLOBVARS
   #define USE_SCRIPT_SUB_COMMAND
-  #define MAXFILT 10
   #define USE_ANGLE_FUNC
-  #define MAXVARS 75
-  #define MAXSVARS 15
   #define SCRIPT_FULL_WEBPAGE
   #define SCRIPT_GET_HTTPS_JP
   #define USE_GOOGLE_CHARTS
