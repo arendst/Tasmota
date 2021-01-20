@@ -784,6 +784,9 @@
 #define D_SENSOR_SDCARD_CS     "SDCard CS"
 #define D_SENSOR_WIEGAND_D0    "Wiegand D0"
 #define D_SENSOR_WIEGAND_D1    "Wiegand D1"
+#define D_SENSOR_NEOPOOL_TX    "NeoPool Tx"
+#define D_SENSOR_NEOPOOL_RX    "NeoPool Rx"
+
 
 // Units
 #define D_UNIT_AMPERE "安培"
