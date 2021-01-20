@@ -812,10 +812,10 @@ void SettingsDefaultSet2(void)
   flag3.use_wifi_rescan |= WIFI_SCAN_REGULARLY;
   Settings.wifi_output_power = 170;
   Settings.param[P_ARP_GRATUITOUS] = WIFI_ARP_INTERVAL;
-  ParseIp(&Settings.ip_address[0], PSTR(WIFI_IP_ADDRESS));
-  ParseIp(&Settings.ip_address[1], PSTR(WIFI_GATEWAY));
-  ParseIp(&Settings.ip_address[2], PSTR(WIFI_SUBNETMASK));
-  ParseIp(&Settings.ip_address[3], PSTR(WIFI_DNS));
+  ParseIPv4(&Settings.ipv4_address[0], PSTR(WIFI_IP_ADDRESS));
+  ParseIPv4(&Settings.ipv4_address[1], PSTR(WIFI_GATEWAY));
+  ParseIPv4(&Settings.ipv4_address[2], PSTR(WIFI_SUBNETMASK));
+  ParseIPv4(&Settings.ipv4_address[3], PSTR(WIFI_DNS));
   Settings.sta_config = WIFI_CONFIG_TOOL;
 //  Settings.sta_active = 0;
   SettingsUpdateText(SET_STASSID1, PSTR(STA_SSID1));

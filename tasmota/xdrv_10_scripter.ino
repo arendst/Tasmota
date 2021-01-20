@@ -477,13 +477,6 @@ bool event_handeled = false;
 IPAddress last_udp_ip;
 WiFiUDP Script_PortUdp;
 
-#ifndef USE_DEVICE_GROUPS
-char * IPAddressToString(const IPAddress& ip_address) {
-  static char ipbuffer[16];
-  sprintf_P(ipbuffer, PSTR("%u.%u.%u.%u"), ip_address[0], ip_address[1], ip_address[2], ip_address[3]);
-  return ipbuffer;
-}
-#endif //USE_DEVICE_GROUPS
 #endif //USE_SCRIPT_GLOBVARS
 
 int16_t last_findex;
@@ -2525,7 +2518,7 @@ chknext:
         }
 #ifdef USE_SCRIPT_GLOBVARS
         if (!strncmp(vname, "luip", 4)) {
-          if (sp) strlcpy(sp, IPAddressToString(last_udp_ip), glob_script_mem.max_ssize);
+          if (sp) strlcpy(sp, last_udp_ip.toString().c_str(), glob_script_mem.max_ssize);
           goto strexit;
         }
 #endif //USE_SCRIPT_GLOBVARS

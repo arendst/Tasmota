@@ -203,8 +203,8 @@ void WifiBegin(uint8_t flag, uint8_t channel)
   if (!strlen(SettingsText(SET_STASSID1 + Settings.sta_active))) {
     Settings.sta_active ^= 1;  // Skip empty SSID
   }
-  if (Settings.ip_address[0]) {
-    WiFi.config(Settings.ip_address[0], Settings.ip_address[1], Settings.ip_address[2], Settings.ip_address[3]);  // Set static IP
+  if (Settings.ipv4_address[0]) {
+    WiFi.config(Settings.ipv4_address[0], Settings.ipv4_address[1], Settings.ipv4_address[2], Settings.ipv4_address[3]);  // Set static IP
   }
   WiFi.hostname(TasmotaGlobal.hostname);
 
@@ -229,7 +229,7 @@ void WifiBegin(uint8_t flag, uint8_t channel)
         break;  // IPv6 is mandatory but stop after 15 seconds
       }
       delay(500);  // Loop until real IPv6 address is aquired or too many tries failed
-      cfgcnt++;
+      cfgcnt++;    
     }
   }
 #endif  // LWIP_IPV6=1
@@ -361,16 +361,6 @@ void WifiSetState(uint8_t state)
 }
 
 #if LWIP_IPV6
-bool WifiCheckIPv6(void)
-{
-  bool ipv6_global=false;
-
-  for (auto a : addrList) {
-    if(!a.isLocal() && a.isV6()) ipv6_global=true;
-  }
-  return ipv6_global;
-}
-
 String WifiGetIPv6(void)
 {
   for (auto a : addrList) {
@@ -378,35 +368,30 @@ String WifiGetIPv6(void)
   }
   return "";
 }
-
-bool WifiCheckIPAddrStatus(void)	// Return false for 169.254.x.x or fe80::/64
-{
-  bool ip_global=false;
-
-  for (auto a : addrList) {
-    if(!a.isLocal()) ip_global=true;
-  }
-  return ip_global;
-}
 #endif  // LWIP_IPV6=1
+
+// Check to see if we have any routable IP address
+inline bool WifiCheck_hasIP(IPAddress const & ip_address)
+{
+#ifdef LWIP2_IPV6  
+  return !a.isLocal();
+#else
+  return static_cast<uint32_t>(ip_address) != 0;
+#endif  
+}
 
 void WifiCheckIp(void)
 {
-#if LWIP_IPV6
-  if(WifiCheckIPAddrStatus()) {
-    Wifi.status = WL_CONNECTED;
-#else
-  if ((WL_CONNECTED == WiFi.status()) && (static_cast<uint32_t>(WiFi.localIP()) != 0)) {
-#endif  // LWIP_IPV6=1
+  if ((WL_CONNECTED == WiFi.status()) && WifiCheck_hasIP(WiFi.localIP())) {
     WifiSetState(1);
     Wifi.counter = WIFI_CHECK_SEC;
     Wifi.retry = Wifi.retry_init;
     if (Wifi.status != WL_CONNECTED) {
       AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_CONNECTED));
 //      AddLog_P(LOG_LEVEL_INFO, PSTR("Wifi: Set IP addresses"));
-      Settings.ip_address[1] = (uint32_t)WiFi.gatewayIP();
-      Settings.ip_address[2] = (uint32_t)WiFi.subnetMask();
-      Settings.ip_address[3] = (uint32_t)WiFi.dnsIP();
+      Settings.ipv4_address[1] = (uint32_t)WiFi.gatewayIP();
+      Settings.ipv4_address[2] = (uint32_t)WiFi.subnetMask();
+      Settings.ipv4_address[3] = (uint32_t)WiFi.dnsIP();
 
       // Save current AP parameters for quick reconnect
       Settings.wifi_channel = WiFi.channel();
@@ -521,11 +506,7 @@ void WifiCheck(uint8_t param)
         Wifi.counter = WIFI_CHECK_SEC;
         WifiCheckIp();
       }
-#if LWIP_IPV6
-      if (WifiCheckIPAddrStatus()) {
-#else
-      if ((WL_CONNECTED == WiFi.status()) && (static_cast<uint32_t>(WiFi.localIP()) != 0) && !Wifi.config_type) {
-#endif  // LWIP_IPV6=1
+      if ((WL_CONNECTED == WiFi.status()) && WifiCheck_hasIP(WiFi.localIP()) && !Wifi.config_type) {
         WifiSetState(1);
         if (Settings.flag3.use_wifi_rescan) {  // SetOption57 - Scan wifi network every 44 minutes for configured AP's
           if (!(TasmotaGlobal.uptime % (60 * WIFI_RESCAN_MINUTES))) {

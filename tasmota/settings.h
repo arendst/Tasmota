@@ -497,7 +497,7 @@ struct {
   uint8_t       ina219_mode;               // 531
   uint16_t      pulse_timer[MAX_PULSETIMERS];  // 532
   uint16_t      button_debounce;           // 542
-  uint32_t      ip_address[4];             // 544
+  uint32_t      ipv4_address[4];           // 544
   unsigned long energy_kWhtotal;           // 554
 
   char          ex_mqtt_fulltopic[100];    // 558  Free since 8.0.0.1
