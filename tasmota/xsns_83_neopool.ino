@@ -751,7 +751,7 @@ uint8_t NeoPoolWriteRegister(uint16_t addr, uint16_t *data, uint16_t cnt)
 
   neopool_poll = false;
   numbytes = 7+cnt*2;
-  frame = (uint8_t*)malloc(numbytes);
+  frame = (uint8_t*)malloc(numbytes+2);
   if (nullptr == frame) {
 #ifdef DEBUG_TASMOTA_SENSOR
     AddLog_P(LOG_LEVEL_DEBUG, PSTR("NEO: addr 0x%04X write out of memory"), addr);
@@ -778,10 +778,10 @@ uint8_t NeoPoolWriteRegister(uint16_t addr, uint16_t *data, uint16_t cnt)
 
   NeoPoolModbus->flush();
   NeoPoolModbus->write(frame, numbytes+2);
-  free(frame);
 
   timeoutMS = millis() + 1 * NEOPOOL_READ_TIMEOUT; // Max delay before we timeout
   while (!(data_ready = NeoPoolModbus->ReceiveReady()) && millis() < timeoutMS) { delay(1); }
+  free(frame);
   if (data_ready) {
     uint8_t buffer[9];
     uint8_t error = NeoPoolModbus->ReceiveBuffer(buffer, 1);
@@ -799,7 +799,7 @@ uint8_t NeoPoolWriteRegister(uint16_t addr, uint16_t *data, uint16_t cnt)
       }
     }
     neopool_poll = true;
-    // delay(2);
+    delay(2);
     return NEOPOOL_OK;
   }
 #ifdef DEBUG_TASMOTA_SENSOR
