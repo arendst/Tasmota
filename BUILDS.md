@@ -193,6 +193,7 @@
 | USE_RF_SENSOR         | - | - | - | - | x | - | - | AlectoV2 only
 | USE_HRE               | - | - | - | - | x | - | - |
 | USE_A4988_STEPPER     | - | - | - | - | - | - | - |
+| USE_NEOPOOL           | - | - | - | - | - | - | - |
 |                       |   |   |   |   |   |   |   |
 | Feature or Sensor     | minimal | lite | tasmota | knx | sensors | ir | display | Remarks
 | USE_DISPLAY           | - | - | - | - | - | - | x |
