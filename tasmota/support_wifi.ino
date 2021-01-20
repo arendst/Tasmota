@@ -228,9 +228,9 @@ void WifiBegin(uint8_t flag, uint8_t channel)
         AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI "Got IPv6 global address %s"), addr.toString().c_str());
         break;  // IPv6 is mandatory but stop after 15 seconds
       }
+      delay(500);  // Loop until real IPv6 address is aquired or too many tries failed
+      cfgcnt++;    
     }
-    delay(500);  // Loop until real IPv6 address is aquired or too many tries failed
-    cfgcnt++;    
   }
 #endif  // LWIP_IPV6=1
 }
