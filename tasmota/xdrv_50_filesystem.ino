@@ -50,6 +50,8 @@ ufsfree   free size in kB
 #define UFS_TFAT          2
 #define UFS_TLFS          3
 
+/*
+// In tasmota.ino
 #ifdef ESP8266
 #include <LittleFS.h>
 #include <SPI.h>
@@ -68,6 +70,7 @@ ufsfree   free size in kB
 #include "FFat.h"
 #include "FS.h"
 #endif  // ESP32
+*/
 
 // Global file system pointer
 FS *ufsp;

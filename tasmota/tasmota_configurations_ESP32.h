@@ -52,8 +52,9 @@
 #define FALLBACK_MODULE        ODROID_GO         // [Module2] Select default module on fast reboot where USER_MODULE is user template
 
 #define USE_ODROID_GO                            // Add support for Odroid Go
+#define USE_UFILESYS
 #define USE_SDCARD
-#define GUI_TRASH_FILE
+  #define GUI_TRASH_FILE
 #define USE_ADC
 #define USE_SPI
   #define USE_DISPLAY                            // Add SPI Display Support (+2k code)
@@ -78,21 +79,21 @@
 #define FALLBACK_MODULE        M5STACK_CORE2     // [Module2] Select default module on fast reboot where USER_MODULE is user template
 
 #define USE_M5STACK_CORE2                        // Add support for M5Stack Core2
+  #define SAY_TIME
+  #define USE_WEBRADIO
+  #define USE_MPU6886
 #define USE_UFILESYS
 #define USE_SDCARD
-#define GUI_TRASH_FILE
+  #define GUI_TRASH_FILE
 #define USE_I2C
-#define USE_BMA423
-#define SAY_TIME
-#define USE_WEBRADIO
+  #define USE_BMA423
 #define USE_SPI
   #define USE_DISPLAY
     #define USE_DISPLAY_ILI9342
-#define USE_TOUCH_BUTTONS
-  #define MAX_TOUCH_BUTTONS 16
-#define JPEG_PICTS
-#define USE_FT5206
-#define USE_MPU6886
+    #define JPEG_PICTS
+    #define USE_FT5206
+    #define USE_TOUCH_BUTTONS
+      #define MAX_TOUCH_BUTTONS 16
 #define USE_SENDMAIL
 #define USE_ESP32MAIL
 
