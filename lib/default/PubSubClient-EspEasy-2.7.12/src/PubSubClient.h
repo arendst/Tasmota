@@ -25,19 +25,20 @@
 #ifndef MQTT_MAX_PACKET_SIZE
 //#define MQTT_MAX_PACKET_SIZE 128
 //#define MQTT_MAX_PACKET_SIZE 1000   // Tasmota v5.11.1c
-#define MQTT_MAX_PACKET_SIZE 1200   // Tasmota v8.1.0.8
+#define MQTT_MAX_PACKET_SIZE 1200     // Tasmota v8.1.0.8
 #endif
 
 // MQTT_KEEPALIVE : keepAlive interval in Seconds
 // Keepalive timeout for default MQTT Broker is 10s
 #ifndef MQTT_KEEPALIVE
 //#define MQTT_KEEPALIVE 10
-#define MQTT_KEEPALIVE 30  // Tasmota v6.5.0.14 enabling AWS-iot
+#define MQTT_KEEPALIVE 30             // Tasmota v6.5.0.14 enabling AWS-iot
 #endif
 
 // MQTT_SOCKET_TIMEOUT: socket timeout interval in Seconds
 #ifndef MQTT_SOCKET_TIMEOUT
-#define MQTT_SOCKET_TIMEOUT 15
+//#define MQTT_SOCKET_TIMEOUT 15
+#define MQTT_SOCKET_TIMEOUT 4         // Tasmota 20210120
 #endif
 
 // MQTT_MAX_TRANSFER_SIZE : limit how much data is passed to the network client
