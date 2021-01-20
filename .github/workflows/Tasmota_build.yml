@@ -1623,6 +1623,7 @@ jobs:
         [ ! -f ./mv_firmware/tasmota32-display.* ] || mv ./mv_firmware/tasmota32-display.* ./firmware/tasmota32/
         [ ! -f ./mv_firmware/tasmota32-web*.* ] || mv ./mv_firmware/tasmota32-web*.* ./firmware/tasmota32/
         [ ! -f ./mv_firmware/tasmota32-odroidgo.* ] || mv ./mv_firmware/tasmota32-odroidgo.* ./firmware/tasmota32/
+        [ ! -f ./mv_firmware/tasmota32-core2.* ] || mv ./mv_firmware/tasmota32-core2.* ./firmware/tasmota32/
         [ ! -f ./mv_firmware/tasmota32-knx.* ] || mv ./mv_firmware/tasmota32-knx.* ./firmware/tasmota32/
         [ ! -f ./mv_firmware/tasmota32* ] || mv ./mv_firmware/tasmota32* ./firmware/tasmota32/languages/
         [ ! -f ./mv_firmware/* ] || mv ./mv_firmware/* ./firmware/tasmota/languages/
