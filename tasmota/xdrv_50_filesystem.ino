@@ -60,9 +60,7 @@ ufsfree   free size in kB
 #include <SDFAT.h>
 #endif  // USE_SDCARD
 #endif  // ESP8266
-
 #ifdef ESP32
-#define FFS_2
 #include <LITTLEFS.h>
 #ifdef USE_SDCARD
 #include <SD.h>

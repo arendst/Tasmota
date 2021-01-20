@@ -656,23 +656,20 @@ void NeoPool250ms(void)              // Every 250 mSec
 
 /*********************************************************************************************/
 
-void NeoPoolInit(void)
-{
-  if (NeoPoolInitData()) {
-    if (PinUsed(GPIO_NEOPOOL_RX) && PinUsed(GPIO_NEOPOOL_TX)) {
-      NeoPoolModbus = new TasmotaModbus(Pin(GPIO_NEOPOOL_RX), Pin(GPIO_NEOPOOL_TX));
-      uint8_t result = NeoPoolModbus->Begin(NEOPOOL_MODBUS_SPEED);
-      if (result) {
-        if (2 == result) {
-            ClaimSerial();
-        }
-#ifdef NEOPOOL_OPTIMIZE_READINGS
-        neopool_first_read = true;
-#endif  // NEOPOOL_OPTIMIZE_READINGS
-        neopool_active = true;
+void NeoPoolInit(void) {
+  neopool_active = false;
+  if (PinUsed(GPIO_NEOPOOL_RX) && PinUsed(GPIO_NEOPOOL_TX)) {
+    NeoPoolModbus = new TasmotaModbus(Pin(GPIO_NEOPOOL_RX), Pin(GPIO_NEOPOOL_TX));
+    uint8_t result = NeoPoolModbus->Begin(NEOPOOL_MODBUS_SPEED);
+    if (result) {
+      if (2 == result) {
+          ClaimSerial();
       }
-      else {
-        neopool_active = false;
+#ifdef NEOPOOL_OPTIMIZE_READINGS
+      neopool_first_read = true;
+#endif  // NEOPOOL_OPTIMIZE_READINGS
+      if (NeoPoolInitData()) {  // Claims heap space
+        neopool_active = true;
       }
     }
   }
@@ -1314,32 +1311,28 @@ bool Xsns83(uint8_t function)
 {
   bool result = false;
 
-  switch (function) {
-    case FUNC_INIT:
-      NeoPoolInit();
-      break;
-    case FUNC_EVERY_250_MSECOND:
-      if (neopool_active) {
+  if (FUNC_INIT == function) {
+    NeoPoolInit();
+  }
+  else if (neopool_active) {
+    switch (function) {
+      case FUNC_EVERY_250_MSECOND:
         NeoPool250ms();
-      }
-      break;
-    case FUNC_COMMAND_SENSOR:
-      if (XSNS_83 == XdrvMailbox.index) {
-        result = NeoPoolCmnd();
-      }
-      break;
-    case FUNC_JSON_APPEND:
-      if (neopool_active) {
+        break;
+      case FUNC_COMMAND_SENSOR:
+        if (XSNS_83 == XdrvMailbox.index) {
+          result = NeoPoolCmnd();
+        }
+        break;
+      case FUNC_JSON_APPEND:
         NeoPoolShow(1);
-      }
-      break;
+        break;
 #ifdef USE_WEBSERVER
-    case FUNC_WEB_SENSOR:
-      if (neopool_active) {
+      case FUNC_WEB_SENSOR:
         NeoPoolShow(0);
-      }
-      break;
+        break;
 #endif  // USE_WEBSERVER
+    }
   }
   return result;
 }

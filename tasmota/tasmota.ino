@@ -67,7 +67,7 @@
   #include <Wire.h>                         // I2C support library
 //#endif  // USE_I2C
 #ifdef USE_SPI
-  #include <SPI.h>                          // SPI support, TFT
+  #include <SPI.h>                          // SPI support, TFT, SDcard
 #endif  // USE_SPI
 
 #ifdef USE_UFILESYS
@@ -79,9 +79,7 @@
 #include <SDFAT.h>
 #endif  // USE_SDCARD
 #endif  // ESP8266
-
 #ifdef ESP32
-#define FFS_2
 #include <LITTLEFS.h>
 #ifdef USE_SDCARD
 #include <SD.h>
