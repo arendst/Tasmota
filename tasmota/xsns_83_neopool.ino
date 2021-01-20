@@ -516,20 +516,6 @@ struct NEOPOOL_REG {
 
 #define D_NEOPOOL_NAME "NeoPool"
 
-// Machine names
-#define D_NEOPOOL_MACH_NONE               D_NEOPOOL_NAME
-#define D_NEOPOOL_MACH_HIDROLIFE          "Hidrolife (yellow)"
-#define D_NEOPOOL_MACH_AQUASCENIC         "Aquascenic (blue)"
-#define D_NEOPOOL_MACH_OXILIFE            "Oxilife (green)"
-#define D_NEOPOOL_MACH_BIONET             "Bionet (light blue)"
-#define D_NEOPOOL_MACH_HIDRONISER         "Hidroniser (red)"
-#define D_NEOPOOL_MACH_UVSCENIC           "UVScenic (lilac)"
-#define D_NEOPOOL_MACH_STATION            "Station (orange)"
-#define D_NEOPOOL_MACH_BRILIX             "Brilix"
-#define D_NEOPOOL_MACH_GENERIC            "Generic"
-#define D_NEOPOOL_MACH_BAYROL             "Bayrol"
-#define D_NEOPOOL_MACH_HAY                "Hay"
-
 const char kNeoPoolMachineNames[] PROGMEM =
   D_NEOPOOL_MACH_NONE "|"
   D_NEOPOOL_MACH_HIDROLIFE "|"
@@ -545,13 +531,6 @@ const char kNeoPoolMachineNames[] PROGMEM =
   D_NEOPOOL_MACH_HAY
   ;
 
-// Filtration modes
-#define D_NEOPOOL_FILTRATION_MANUAL       "Manual"
-#define D_NEOPOOL_FILTRATION_AUTO         "Auto"
-#define D_NEOPOOL_FILTRATION_HEATING      "Heating"
-#define D_NEOPOOL_FILTRATION_SMART        "Smart"
-#define D_NEOPOOL_FILTRATION_INTELLIGENT  "Intelligent"
-#define D_NEOPOOL_FILTRATION_BACKWASH     "Backwash"
 const char kNeoPoolFiltrationMode[] PROGMEM =
   D_NEOPOOL_FILTRATION_MANUAL "|"
   D_NEOPOOL_FILTRATION_AUTO "|"
@@ -561,11 +540,6 @@ const char kNeoPoolFiltrationMode[] PROGMEM =
   D_NEOPOOL_FILTRATION_BACKWASH
   ;
 
-// Filtration speed level
-#define D_NEOPOOL_FILTRATION_NONE         ""
-#define D_NEOPOOL_FILTRATION_SLOW         "slow"
-#define D_NEOPOOL_FILTRATION_MEDIUM       "medium"
-#define D_NEOPOOL_FILTRATION_FAST         "fast"
 const char kNeoPoolFiltrationSpeed[] PROGMEM =
   D_NEOPOOL_FILTRATION_NONE "|"
   D_NEOPOOL_FILTRATION_SLOW "|"
@@ -573,38 +547,6 @@ const char kNeoPoolFiltrationSpeed[] PROGMEM =
   D_NEOPOOL_FILTRATION_FAST
   ;
 
-// Sensor & relais names
-#define D_NEOPOOL_TYPE                    "Type"
-#define D_NEOPOOL_REDOX                   "Redox"
-#define D_NEOPOOL_CHLORINE                "Chlorine"
-#define D_NEOPOOL_CONDUCTIVITY            "Conductivity"
-#define D_NEOPOOL_IONIZATION              "Ionization"
-#define D_NEOPOOL_HYDROLYSIS              "Hydrolysis"
-#define D_NEOPOOL_RELAY                   "Relay"
-#define D_NEOPOOL_RELAY_FILTRATION        "Filtration"
-#define D_NEOPOOL_RELAY_LIGHT             "Light"
-#define D_NEOPOOL_RELAY_PH_ACID           "Acid pump"
-#define D_NEOPOOL_RELAY_PH_BASE           "Base pump"
-#define D_NEOPOOL_RELAY_RX                "Redox level"
-#define D_NEOPOOL_RELAY_CL                "Chlorine pump"
-#define D_NEOPOOL_RELAY_CD                "Brine pump"
-#define D_NEOPOOL_TIME                    "Time"
-#define D_NEOPOOL_FILT_MODE               "Filtration"
-
-// Sensor status
-#define D_NEOPOOL_POLARIZATION            "Pol"
-#define D_NEOPOOL_PR_OFF                  "PrOff"
-#define D_NEOPOOL_SETPOINT_OK             "Ok"
-#define D_NEOPOOL_COVER                   "Cover"
-#define D_NEOPOOL_SHOCK                   "Shock"
-#define D_NEOPOOL_ALARM                   "! "
-#define D_NEOPOOL_LOW                     "Low"
-#define D_NEOPOOL_FLOW1                   "FL1"
-#define D_NEOPOOL_FLOW2                   "FL2"
-
-#define D_NEOPOOL_PH_HIGH                 "too high"
-#define D_NEOPOOL_PH_LOW                  "too low"
-#define D_NEOPOOL_PUMP_TIME_EXCEEDED      "pump time exceeded"
 const char kNeoPoolpHAlarms[] PROGMEM =
   D_NEOPOOL_SETPOINT_OK "|"
   D_NEOPOOL_PH_HIGH "|"
@@ -612,7 +554,9 @@ const char kNeoPoolpHAlarms[] PROGMEM =
   D_NEOPOOL_PUMP_TIME_EXCEEDED
   ;
 
-#define D_STR_BIT                         "Bit"
+#ifndef D_STR_BIT
+#define D_STR_BIT "Bit"
+#endif  // D_STR_BIT
 
 const char HTTP_SNS_NEOPOOL_PH[]               PROGMEM = "{s}%s " D_PH                      "{m}%s " "%s%s"                   "{e}";
 const char HTTP_SNS_NEOPOOL_TIME[]             PROGMEM = "{s}%s " D_NEOPOOL_TIME            "{m}%s"                           "{e}";
