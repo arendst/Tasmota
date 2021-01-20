@@ -225,6 +225,12 @@ const uint16_t LOG_BUFFER_SIZE = 4000;         // Max number of characters in lo
   #error "Arduino ESP8266 Core versions before 2.7.1 are not supported"
 #endif
 
+#define UFS_FILE_WRITE              "w"
+#define UFS_FILE_READ               "r"
+#define FS_FILE_WRITE               "w"
+#define FS_FILE_READ                "r"
+#define FS_FILE_APPEND              "a"
+
 #define TASM_FILE_SETTINGS          "/.settings"       // Settings binary blob
 #define TASM_FILE_SETTINGS_LKG      "/.settings.lkg"   // Last Known Good Settings binary blob
 #define TASM_FILE_ZIGBEE            "/zb"              // Zigbee settings blob as used by CC2530 on ESP32

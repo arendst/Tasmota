@@ -50,9 +50,6 @@ ufsfree   free size in kB
 #define UFS_TFAT          2
 #define UFS_TLFS          3
 
-#define UFS_FILE_WRITE "w"
-#define UFS_FILE_READ "r"
-
 #ifdef ESP8266
 #include <LittleFS.h>
 #include <SPI.h>

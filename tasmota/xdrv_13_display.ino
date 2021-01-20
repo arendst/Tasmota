@@ -497,7 +497,7 @@ void DisplayText(void)
             cp += var;
             linebuf[fill] = 0;
             break;
-#if (defined(USE_SCRIPT_FATFS) && defined(USE_SCRIPT)) || defined(UFILESYSTEM)
+#if (defined(USE_SCRIPT_FATFS) && defined(USE_SCRIPT)) || defined(USE_UFILESYS)
           case 'P':
             { char *ep=strchr(cp,':');
              if (ep) {
@@ -682,7 +682,7 @@ void DisplayText(void)
               RedrawGraph(temp,temp1);
               break;
             }
-#if (defined(USE_SCRIPT_FATFS) && defined(USE_SCRIPT)) || defined(UFILESYSTEM)
+#if (defined(USE_SCRIPT_FATFS) && defined(USE_SCRIPT)) || defined(USE_UFILESYS)
             if (*cp=='s') {
               cp++;
               var=atoiv(cp,&temp);
@@ -1575,7 +1575,7 @@ char get_jpeg_size(unsigned char* data, unsigned int data_size, unsigned short *
 #endif // JPEG_PICTS
 #endif // ESP32
 
-#if (defined(USE_SCRIPT_FATFS) && defined(USE_SCRIPT)) || defined(UFILESYSTEM)
+#if (defined(USE_SCRIPT_FATFS) && defined(USE_SCRIPT)) || defined(USE_UFILESYS)
 extern FS *ufsp;
 #define XBUFF_LEN 128
 void Draw_RGB_Bitmap(char *file,uint16_t xp, uint16_t yp, bool inverted ) {
@@ -1920,7 +1920,7 @@ void DisplayCheckGraph() {
 }
 
 
-#if (defined(USE_SCRIPT_FATFS) && defined(USE_SCRIPT)) || defined(UFILESYSTEM)
+#if (defined(USE_SCRIPT_FATFS) && defined(USE_SCRIPT)) || defined(USE_UFILESYS)
 #ifdef ESP32
 #include <SD.h>
 #endif

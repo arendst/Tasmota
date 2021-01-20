@@ -196,12 +196,6 @@ void alt_eeprom_readBytes(uint32_t adr, uint32_t len, uint8_t *buf) {
 
 #include "FS.h"
 
-#define FS_FILE_WRITE "w"
-#define FS_FILE_READ "r"
-#define FS_FILE_APPEND "a"
-
-
-
 #if USE_SCRIPT_FATFS==-1
 #ifdef ESP32
 //#include "FS.h"
@@ -7491,7 +7485,7 @@ bool Xdrv10(uint8_t function)
 
 #endif
 
-#endif // UFILESYSTEM
+#endif // USE_UFILESYS
 
 
 // indicates scripter enabled (use rules[][] as single array)

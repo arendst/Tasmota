@@ -572,7 +572,7 @@ void I2S_WR_Show(void) {
 
 #ifdef ESP32
 void Play_mp3(const char *path) {
-#if (defined(USE_SCRIPT_FATFS) && defined(USE_SCRIPT)) || defined(UFILESYSTEM)
+#if (defined(USE_SCRIPT_FATFS) && defined(USE_SCRIPT)) || defined(USE_UFILESYS)
   if (decoder || mp3) return;
   if (!out) return;
 

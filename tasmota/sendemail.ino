@@ -389,7 +389,7 @@ void xsend_message_txt(char *msg) {
 #ifdef DEBUG_EMAIL_PORT
   AddLog_P(LOG_LEVEL_INFO, PSTR("%s"),msg);
 #endif
-#if (defined(USE_SCRIPT_FATFS) && defined(USE_SCRIPT)) || defined(UFILESYSTEM)
+#if (defined(USE_SCRIPT_FATFS) && defined(USE_SCRIPT)) || defined(USE_UFILESYS)
   if (*msg=='@') {
     msg++;
     attach_File(msg);
@@ -415,7 +415,7 @@ void xsend_message_txt(char *msg) {
 #endif
 }
 
-#if (defined(USE_SCRIPT_FATFS) && defined(USE_SCRIPT)) || defined(UFILESYSTEM)
+#if (defined(USE_SCRIPT_FATFS) && defined(USE_SCRIPT)) || defined(USE_UFILESYS)
 #include <LittleFS.h>
 extern FS *ufsp;
 
