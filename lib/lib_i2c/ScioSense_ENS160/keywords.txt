@@ -1,0 +1,60 @@
+#######################################
+# Syntax Coloring Map
+#######################################
+# https://spencer.bliven.us/index.php/2012/01/18/arduino-ide-keywords/
+# KEYWORD1 Classes, datatypes, and C++ keywords
+# KEYWORD2 Methods and functions
+# KEYWORD3 setup and loop functions, as well as the Serial keywords
+# LITERAL1 Constants
+# LITERAL2 Built-in variables (unused by default)
+
+
+#######################################
+# Classes, datatypes (KEYWORD1)
+#######################################
+ENS160				KEYWORD1
+ens160				KEYWORD1
+sciosense_ens160	KEYWORD1
+SCIOSENSE_ENS160	KEYWORD1
+ScioSense_ens160	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+begin				KEYWORD2
+available			KEYWORD2
+setMode				KEYWORD2
+
+initCustomMode		KEYWORD2
+addCustomStep		KEYWORD2
+
+measure				KEYWORD2
+set_envdata210		KEYWORD2
+getMajorRev			KEYWORD2
+getMinorRev			KEYWORD2
+getBuild			KEYWORD2
+
+getIAQ				KEYWORD2
+getTVOC				KEYWORD2
+geteCO2				KEYWORD2
+getNO2				KEYWORD2
+getHP0				KEYWORD2
+getHP0BL			KEYWORD2
+getHP1				KEYWORD2
+getHP1BL			KEYWORD2
+getHP2				KEYWORD2
+getHP2BL			KEYWORD2
+getHP3				KEYWORD2
+getHP3BL			KEYWORD2
+
+flash				KEYWORD2
+
+######################################
+# Constants (LITERAL1)
+#######################################
+
+ENS160_I2CADDR_0			LITERAL1
+ENS160_I2CADDR_1			LITERAL1
+ENS160_OPMODE_IDLE		LITERAL1
+ENS160_OPMODE_STD 		LITERAL1
+ENS160_OPMODE_CUSTOM	LITERAL1
