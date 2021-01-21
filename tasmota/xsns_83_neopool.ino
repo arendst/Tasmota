@@ -163,18 +163,18 @@ enum NeoPoolRegister {
   MBF_PAR_RELAY_MODE,                 // 0x0432        Behavior of the system when the dosing time is exceeded (see MBMSK_PAR_RELAY_MODE_* and MBV_PAR_RELAY_MODE_*)
   MBF_PAR_RELAY_ACTIVATION_DELAY,     // 0x0433        Delay time in seconds for the pH pump when the measured pH value is outside the allowable pH setpoints. The system internally adds an extra time of 10 seconds to the value stored here. The pump starts the dosing operation once the condition of pH out of valid interval is maintained during the time specified in this register.
   MBF_PAR_TIMER_BLOCK_BASE,           // 0x0434        This block of 180 registers holds the configuration of the system timers. The system has a set of 12 fully configurable timers, each one assigned to a specific function, described below:
-  MBF_PAR_TIMER_BLOCK_FILT_INT1=0x0434,//0x0434        Filtration interval 1 (15 register - see PAR_TIMER_BLOCK_OFF* for desc)
-  MBF_PAR_TIMER_BLOCK_FILT_INT2=0x0443,//0x0443        Filtration interval 2 (15 register - see PAR_TIMER_BLOCK_OFF* for desc)
-  MBF_PAR_TIMER_BLOCK_FILT_INT3=0x0452,//0x0452        Filtration interval 3 (15 register - see PAR_TIMER_BLOCK_OFF* for desc)
-  MBF_PAR_TIMER_BLOCK_AUX1_INT2=0x0461,//0x0461        Auxiliary relay 1 - 2. interval (15 register - see PAR_TIMER_BLOCK_OFF* for desc)
-  MBF_PAR_TIMER_BLOCK_LIGHT_INT=0x0470,//0x0470        Lighting interval (15 register - see PAR_TIMER_BLOCK_OFF* for desc)
-  MBF_PAR_TIMER_BLOCK_AUX2_INT2=0x047F,//0x047F        Auxiliary relay 2 - 2. interval (15 register - see PAR_TIMER_BLOCK_OFF* for desc)
-  MBF_PAR_TIMER_BLOCK_AUX3_INT2=0x048E,//0x048E        Auxiliary relay 3 - 2. interval (15 register - see PAR_TIMER_BLOCK_OFF* for desc)
-  MBF_PAR_TIMER_BLOCK_AUX4_INT2=0x049D,//0x049D        Auxiliary relay 4 - 2. interval (15 register - see PAR_TIMER_BLOCK_OFF* for desc)
-  MBF_PAR_TIMER_BLOCK_AUX1_INT1=0x04AC,//0x04AC        Auxiliary relay 1 - 1. interval (15 register - see PAR_TIMER_BLOCK_OFF* for desc)
-  MBF_PAR_TIMER_BLOCK_AUX2_INT1=0x04BB,//0x04BB        Auxiliary relay 2 - 1. interval (15 register - see PAR_TIMER_BLOCK_OFF* for desc)
-  MBF_PAR_TIMER_BLOCK_AUX3_INT1=0x04CA,//0x04CA        Auxiliary relay 3 - 1. interval (15 register - see PAR_TIMER_BLOCK_OFF* for desc)
-  MBF_PAR_TIMER_BLOCK_AUX4_INT1=0x04D9,//0x04D9        Auxiliary relay 4 - 1. interval (15 register - see PAR_TIMER_BLOCK_OFF* for desc)
+  MBF_PAR_TIMER_BLOCK_FILT_INT1=0x0434,//0x0434        Filtration interval 1 (15 register - see MBV_TIMER_OFFMB_* for desc)
+  MBF_PAR_TIMER_BLOCK_FILT_INT2=0x0443,//0x0443        Filtration interval 2 (15 register - see MBV_TIMER_OFFMB_* for desc)
+  MBF_PAR_TIMER_BLOCK_FILT_INT3=0x0452,//0x0452        Filtration interval 3 (15 register - see MBV_TIMER_OFFMB_* for desc)
+  MBF_PAR_TIMER_BLOCK_AUX1_INT2=0x0461,//0x0461        Auxiliary relay 1 - 2. interval (15 register - see MBV_TIMER_OFFMB_* for desc)
+  MBF_PAR_TIMER_BLOCK_LIGHT_INT=0x0470,//0x0470        Lighting interval (15 register - see MBV_TIMER_OFFMB_* for desc)
+  MBF_PAR_TIMER_BLOCK_AUX2_INT2=0x047F,//0x047F        Auxiliary relay 2 - 2. interval (15 register - see MBV_TIMER_OFFMB_* for desc)
+  MBF_PAR_TIMER_BLOCK_AUX3_INT2=0x048E,//0x048E        Auxiliary relay 3 - 2. interval (15 register - see MBV_TIMER_OFFMB_* for desc)
+  MBF_PAR_TIMER_BLOCK_AUX4_INT2=0x049D,//0x049D        Auxiliary relay 4 - 2. interval (15 register - see MBV_TIMER_OFFMB_* for desc)
+  MBF_PAR_TIMER_BLOCK_AUX1_INT1=0x04AC,//0x04AC        Auxiliary relay 1 - 1. interval (15 register - see MBV_TIMER_OFFMB_* for desc)
+  MBF_PAR_TIMER_BLOCK_AUX2_INT1=0x04BB,//0x04BB        Auxiliary relay 2 - 1. interval (15 register - see MBV_TIMER_OFFMB_* for desc)
+  MBF_PAR_TIMER_BLOCK_AUX3_INT1=0x04CA,//0x04CA        Auxiliary relay 3 - 1. interval (15 register - see MBV_TIMER_OFFMB_* for desc)
+  MBF_PAR_TIMER_BLOCK_AUX4_INT1=0x04D9,//0x04D9        Auxiliary relay 4 - 1. interval (15 register - see MBV_TIMER_OFFMB_* for desc)
   MBF_PAR_FILTVALVE_ENABLE=0x04E8,    // 0x04E8        Filter cleaning functionality mode (0=off, 1=Besgo)
   MBF_PAR_FILTVALVE_MODE,             // 0x04E9        Filter cleaning valve timing mode, possible modes: MBV_PAR_CTIMER_ENABLED, MBV_PAR_CTIMER_ALWAYS_ON, MBV_PAR_CTIMER_ALWAYS_OFF
   MBF_PAR_FILTVALVE_GPIO,             // 0x04EA        Relay associated with the filter cleaning function. default AUX2 (value 5)
@@ -423,7 +423,7 @@ enum NeoPoolConstAndBitMask {
   MBV_TIMER_OFFMB_TIMER_PERIOD            = 5,      // Time in seconds between starting points (32-bit, LSB first), e.g. 86400 means daily
   MBV_TIMER_OFFMB_TIMER_INTERVAL          = 7,      // Time in seconds that the timer has to run when started (32-bit, LSB first)
   MBV_TIMER_OFFMB_TIMER_COUNTDOWN         = 9,      // Time remaining in seconds for the countdown mode (32-bit, LSB first)
-  MBV_TIMER_OFFMB_TIMER_FUNCTION          = 11,     // Function assigned to this timer, see
+  MBV_TIMER_OFFMB_TIMER_FUNCTION          = 11,     // Function assigned to this timer, see MBV_PAR_CTIMER_FCT_*
   MBV_TIMER_OFFMB_TIMER_WORK_TIME         = 13,     // Number of seconds that the timer has been operating
   // MBV_TIMER_OFFMB_TIMER_ENABLE working modes:
   MBV_PAR_CTIMER_DISABLE                  = 0,      // Timer disabled
@@ -708,6 +708,9 @@ uint8_t NeoPoolReadRegister(uint16_t addr, uint16_t *data, uint16_t cnt)
   neopool_poll = false;
   *data = 0;
 
+#ifdef DEBUG_TASMOTA_SENSOR
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR("NEO: NeoPoolReadRegister(0x%04X, %p, %d)"), addr, data, cnt);
+#endif  // DEBUG_TASMOTA_SENSOR
   NeoPoolModbus->Send(NEOPOOL_MODBUS_ADDRESS, NEOPOOL_READ_REGISTER, addr, cnt);
   timeoutMS = millis() + cnt * NEOPOOL_READ_TIMEOUT; // Max delay before we timeout
   while (!(data_ready = NeoPoolModbus->ReceiveReady()) && millis() < timeoutMS) { delay(1); }
@@ -749,6 +752,9 @@ uint8_t NeoPoolWriteRegister(uint16_t addr, uint16_t *data, uint16_t cnt)
   bool data_ready;
   uint32_t timeoutMS;
 
+#ifdef DEBUG_TASMOTA_SENSOR
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR("NEO: NeoPoolWriteRegister(0x%04X, %p, %d)"), addr, data, cnt);
+#endif  // DEBUG_TASMOTA_SENSOR
   neopool_poll = false;
   numbytes = 7+cnt*2;
   frame = (uint8_t*)malloc(numbytes+2);
@@ -1055,12 +1061,12 @@ void NeoPoolShow(bool json)
  * Sensor83  1 <addr> (<cnt>)
  *            read 16-bit register (cnt=1..30, cnt=1 if omitted)
  *
- * Sensor83  2 <addr> <bit> (<data>)
+ * Sensor83  2 <addr> <data> (<data>...)
+ *            write 16-bit register (data=0..65535, <data> max 8 times)
+ *
+ * Sensor83  3 <addr> <bit> (<data>)
  *            read/write register bit (bit=0..15, data=0|1)
  *            read if param <data> is omitted otherwise set <bit> to new <data>
- *
- * Sensor83  3 <addr> <data> (<data>...)
- *            write 16-bit register (data=0..65535, <data> max 8 times)
  *
  * Sensor83  4 (<state>)
  *            get/set manual filtration (state=0|1)
@@ -1079,6 +1085,16 @@ void NeoPoolShow(bool json)
  *
  * Sensor83 16 <addr> (<cnt>)
  *            same as "Sensor83 1" but using hex data output
+ *
+ * Sensor83 21 <addr> (<cnt>)
+ *            read 32-bit register (cnt=1..15, cnt=1 if omitted)
+ *
+ * Sensor83 22 <addr> <data> (<data>...)
+ *            write 32-bit register (data=0..0xffffffff, <data> max 8 times)
+ *
+ * Sensor83 26 <addr> (<cnt>)
+ *            same as "Sensor83 21" but using hex data output
+ *
  *
  *
  * Examples:
@@ -1106,6 +1122,19 @@ void NeoPoolShow(bool json)
  *    Sensor83 3 0x0605,3,1
  *    RESULT = {"Sensor83":{"Command":2,"Address":"0x0605","Bit":3,"Data":1}}
  *
+ * Read Filtration interval 1-3 settings
+ *    Backlog Sensor83 1 0x434;Sensor83 21 0x435 7;Sensor83 1 0x0443;Sensor83 21 0x0444 7;Sensor83 1 0x0452;Sensor83 21 0x0453 7
+ *    RESULT = {"Sensor83":{"Command":1,"Address":"0x0434","Data":1}}
+ *    RESULT = {"Sensor83":{"Command":21,"Address":"0x0435","Data":[28800,0,86400,14400,0,1,0]}}
+ *    RESULT = {"Sensor83":{"Command":1,"Address":"0x0443","Data":1}}
+ *    RESULT = {"Sensor83":{"Command":21,"Address":"0x0444","Data":[43200,0,86400,21600,0,1,0]}}
+ *    RESULT = {"Sensor83":{"Command":1,"Address":"0x0452","Data":1}}
+ *    RESULT = {"Sensor83":{"Command":21,"Address":"0x0453","Data":[0,0,86400,0,0,1,0]}}
+ *
+ * Set Filtration interval 1 to daily 9:00 - 12:30 (9:00: 3600 * 9 ≙ 32400 / 12:30 ≙ 3,5h = 12600)
+ *    Sensor83 22 0x435 32400 0 86400 12600
+ *    RESULT = {"Sensor83":{"Command":22,"Address":"0x0435","Data":[32400,0,86400,12600]}}
+ *
  *********************************************************************************************/
 #define NEOPOOL_CMND_READ_REG         1
 #define NEOPOOL_CMND_WRITE_REG        2
@@ -1114,6 +1143,9 @@ void NeoPoolShow(bool json)
 #define NEOPOOL_CMND_FILTRATION_MODE  5
 #define NEOPOOL_CMND_TIME             6
 #define NEOPOOL_CMND_READ_REG_HEX     16
+#define NEOPOOL_CMND_READ_REG32       21
+#define NEOPOOL_CMND_WRITE_REG32      22
+#define NEOPOOL_CMND_READ_REG_HEX32   26
 
 bool NeoPoolCmnd(void)
 {
@@ -1121,6 +1153,7 @@ bool NeoPoolCmnd(void)
   char sub_string[XdrvMailbox.data_len +1];
   uint16_t cmnd, addr, data[30], cnt=1;
   int8_t bit;
+  bool bits32 = false;
   uint32_t value[10] = { 0 };
   uint32_t params_cnt = ParseParameters(ARRAY_SIZE(value), value);
 
@@ -1133,34 +1166,44 @@ bool NeoPoolCmnd(void)
     params_cnt--;
 
     cmnd = value[0];
+    bits32 = (NEOPOOL_CMND_READ_REG32 == cmnd || NEOPOOL_CMND_WRITE_REG32 == cmnd || NEOPOOL_CMND_READ_REG_HEX32 == cmnd);
     switch (cmnd) {
 
     case NEOPOOL_CMND_READ_REG:  // <addr> (<cnt>)
     case NEOPOOL_CMND_READ_REG_HEX:
+    case NEOPOOL_CMND_READ_REG_HEX32:
+    case NEOPOOL_CMND_READ_REG32:
       {
         addr = value[1];
         cnt = 1;
         if (2 == params_cnt) {
           cnt = value[2];
         }
-        if (cnt > ARRAY_SIZE(data)) {
+        if (cnt > (bits32 ? (ARRAY_SIZE(data)/2) : ARRAY_SIZE(data))) {
           serviced = false;
         }
         else {
-          serviced = (NEOPOOL_OK == NeoPoolReadRegister(addr, data, cnt));
+          serviced = (NEOPOOL_OK == NeoPoolReadRegister(addr, data, bits32 ? (cnt*2) : cnt));
         }
       }
       break;
 
     case NEOPOOL_CMND_WRITE_REG:  // <addr> <data> (<data>...)
+    case NEOPOOL_CMND_WRITE_REG32:
       {
         addr = value[1];
         if (params_cnt >= 2) {
           cnt = params_cnt-1;
           for(uint32_t i=0; i<cnt; i++) {
-            data[i] = value[i+2];
+            if (bits32) {
+              data[i*2] = value[i+2];       // LSB
+              data[i*2+1] = value[i+2]>>16; // MSB
+            }
+            else {
+              data[i] = value[i+2];
+            }
           }
-          serviced = (NEOPOOL_OK == NeoPoolWriteRegister(addr, data, cnt));
+          serviced = (NEOPOOL_OK == NeoPoolWriteRegister(addr, data, bits32 ? (cnt*2) : cnt));
         }
       }
       break;
@@ -1265,6 +1308,10 @@ bool NeoPoolCmnd(void)
         }
       }
       break;
+
+    default:
+      AddLog_P(LOG_LEVEL_DEBUG, PSTR("NEO: Unknown " D_CMND_SENSOR "%d cmnd %d"), XSNS_83, cmnd);
+      break;
     }
   }
 
@@ -1278,17 +1325,29 @@ bool NeoPoolCmnd(void)
     default:
       {
         Response_P(PSTR("{\"" D_CMND_SENSOR "%d\":{\"" D_JSON_COMMAND "\":%d,\"" D_JSON_ADDRESS "\":\"0x%04X\",\"" D_JSON_DATA"\":"), XSNS_83, cmnd, addr);
-        if ( cnt>1 || params_cnt>1 ) {
+        if ( cnt > 1 ) {
           char sdel[2] = {0};
           ResponseAppend_P(PSTR("["));
           for(uint32_t i=0; i<cnt; i++) {
-            ResponseAppend_P(NEOPOOL_CMND_READ_REG_HEX == cmnd ? PSTR("%s\"0x%04X\"") : PSTR("%s%d"), sdel, data[i]);
+            if (bits32) {
+            uint32_t data32 = ((uint32_t)data[i*2+1]) << 16 | (uint32_t)data[i*2];
+              ResponseAppend_P(NEOPOOL_CMND_READ_REG_HEX32 == cmnd ? PSTR("%s\"0x%08X\"") : PSTR("%s%ld"), sdel, data32);
+            }
+            else {
+              ResponseAppend_P(NEOPOOL_CMND_READ_REG_HEX == cmnd ? PSTR("%s\"0x%04X\"") : PSTR("%s%d"), sdel, data[i]);
+            }
             *sdel = ',';
           }
           ResponseAppend_P(PSTR("]"));
         }
         else {
-          ResponseAppend_P(NEOPOOL_CMND_READ_REG_HEX == cmnd ? PSTR("\"0x%04X\"") : PSTR("%d"), data[0]);
+          if (bits32) {
+            uint32_t data32 = ((uint32_t)data[1]) << 16 | (uint32_t)data[0];
+            ResponseAppend_P(NEOPOOL_CMND_READ_REG_HEX32 == cmnd ? PSTR("\"0x%08X\"") : PSTR("%ld"), data32);
+          }
+          else {
+            ResponseAppend_P(NEOPOOL_CMND_READ_REG_HEX == cmnd ? PSTR("\"0x%04X\"") : PSTR("%d"), data[0]);
+          }
         }
         ResponseJsonEndEnd();
       }
