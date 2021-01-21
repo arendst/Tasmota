@@ -19,11 +19,19 @@
 
 #ifdef USE_WIEGAND
 /*********************************************************************************************\
-  MQTT:
-  %prefix%/%topic%/SENSOR = {"Time":"2021-01-13T12:30:38","Wiegand":{"UID":"rfid tag"}}
-
-  Domoticz:
-  The nvalue will be always 0 and the svalue will contain the tag UID as string.
+ * Wiegand 24, 26, 32, 34 bit Rfid reader 125 kHz
+ *
+ * Wire connections:
+ * Red     Vdc
+ * Black   Gnd
+ * Green   D0
+ * White   D1
+ * Yellow  Buzzer
+ * Blue    Led
+ * Grey    34-bit if connected to Gnd
+ *
+ * MQTT:
+ * %prefix%/%topic%/SENSOR = {"Time":"2021-01-13T12:30:38","Wiegand":{"UID":"rfid tag"}}
 \*********************************************************************************************/
 #warning **** Wiegand interface enabled ****
 
@@ -270,8 +278,7 @@ char Wiegand::translateEnterEscapeKeyPress(char oKeyPressed) {
 	}
 }
 
-bool Wiegand::WiegandConversion ()
-{
+bool Wiegand::WiegandConversion () {
   bool bRet = false;
 	unsigned long nowTick = millis();
   // Add a maximum wait time for new bits
@@ -284,43 +291,40 @@ bool Wiegand::WiegandConversion ()
   }
   if (diffTicks > WIEGAND_BIT_TIMEOUT) {                            // Last bit found is WIEGAND_BIT_TIMEOUT ms ago
 #if (DEV_WIEGAND_TEST_MODE)>0
-    AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: raw tag: %llu "), rfidBuffer);
-    AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: bit count: %u "), bitCount);
+    AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: Raw tag %llu, Bit count %u"), rfidBuffer, bitCount);
 #endif
-    if ((bitCount==4)||(bitCount==8)||(bitCount==24)||(bitCount==26)||(bitCount==32)||(bitCount==34)) {
-      if ((bitCount==24)||(bitCount==26)||(bitCount==32)||(bitCount==34)) {
-        // 24,26,32,34-bit Wiegand codes
-        rfid = CheckAndConvertRfid( rfidBuffer, bitCount);
-        tagSize=bitCount;
-        bitCount=0;
-        rfidBuffer=0;
-        bRet=true;
+    if ((24 == bitCount) || (26 == bitCount) || (32 == bitCount) || (34 == bitCount)) {
+      // 24, 26, 32, 34-bit Wiegand codes
+      rfid = CheckAndConvertRfid( rfidBuffer, bitCount);
+      tagSize = bitCount;
+      bitCount = 0;
+      rfidBuffer = 0;
+      bRet = true;
+    }
+    else if (4 == bitCount) {
+      // 4-bit Wiegand codes for keypads
+      rfid = (int)translateEnterEscapeKeyPress(rfidBuffer & 0x0000000F);
+      tagSize = bitCount;
+      bitCount = 0;
+      rfidBuffer = 0;
+      bRet = true;
+    }
+    else if (8 == bitCount) {
+      // 8-bit Wiegand codes for keypads with integrity
+      // 8-bit Wiegand keyboard data, high nibble is the "NOT" of low nibble
+      // eg if key 1 pressed, data=E1 in binary 11100001 , high nibble=1110 , low nibble = 0001
+      char highNibble = (rfidBuffer & 0xf0) >>4;
+      char lowNibble = (rfidBuffer & 0x0f);
+      if (lowNibble == (~highNibble & 0x0f)) {   // Check if low nibble matches the "NOT" of high nibble.
+        rfid = (int)translateEnterEscapeKeyPress(lowNibble);
+        bRet = true;
+      } else {
+        lastFoundTime = nowTick;
+        bRet = false;
       }
-      if (bitCount==4) {
-        // 4-bit Wiegand codes for keypads
-        rfid = (int)translateEnterEscapeKeyPress(rfidBuffer & 0x0000000F);
-        tagSize = bitCount;
-        bitCount = 0;
-        rfidBuffer = 0;
-        bRet=true;
-      }
-      if (bitCount==8){
-        // 8-bit Wiegand codes for keypads with integrity
-        // 8-bit Wiegand keyboard data, high nibble is the "NOT" of low nibble
-        // eg if key 1 pressed, data=E1 in binary 11100001 , high nibble=1110 , low nibble = 0001
-        char highNibble = (rfidBuffer & 0xf0) >>4;
-        char lowNibble = (rfidBuffer & 0x0f);
-        if (lowNibble == (~highNibble & 0x0f)) {   // Check if low nibble matches the "NOT" of high nibble.
-          rfid = (int)translateEnterEscapeKeyPress(lowNibble);
-          bRet = true;
-        } else {
-          lastFoundTime = nowTick;
-          bRet = false;
-        }
-        tagSize = bitCount;
-        bitCount = 0;
-        rfidBuffer = 0;
-      }
+      tagSize = bitCount;
+      bitCount = 0;
+      rfidBuffer = 0;
     } else {
       // Time reached but unknown bitCount, clear and start again
       lastFoundTime = nowTick;
@@ -332,18 +336,17 @@ bool Wiegand::WiegandConversion ()
     bRet = false; // watching time not finished
   }
 #if (DEV_WIEGAND_TEST_MODE)>0
-  AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: tag   out: %llu "), rfid);
-  AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: tag  size: %u"), tagSize);
+  AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: tag out %llu, tag size %u "), rfid, tagSize);
 #endif
   return bRet;
 }
 
 void Wiegand::ScanForTag() {
-  if (!isInit)  { return;}
+  if (!isInit) { return;}
 #if (DEV_WIEGAND_TEST_MODE)>0
     AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: ScanForTag()."));
 #if (DEV_WIEGAND_TEST_MODE==1)
-    switch (millis() %4 ) {
+    switch (millis() %4) {
       case 0:
         rfidBuffer = GetRandomRfid(24);
       break;
@@ -370,9 +373,9 @@ void Wiegand::ScanForTag() {
     AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: previous tag: %llu"), oldTag);
 #endif
     // only in case of valid key do action. Issue#10585
-    if(validKey) {
+    if (validKey) {
       if (oldTag != rfid) { AddLog_P(LOG_LEVEL_INFO, PSTR("WIE:  new= %llu"), rfid); }
-      else  { AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: prev= %llu"), rfid); }
+      else { AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: prev= %llu"), rfid); }
       AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: bits= %u"), tagSize);
       ResponseTime_P(PSTR(",\"Wiegand\":{\"UID\":\"%0llu\"}}"), rfid);
       MqttPublishTeleSensor();
@@ -384,13 +387,12 @@ void Wiegand::ScanForTag() {
 void Wiegand::Show(void) {
   if (!isInit) { return; }
   WSContentSend_PD(PSTR("{s}Wiegand UID{m}%llu {e}"), rfid);
-  #if (DEV_WIEGAND_TEST_MODE)>0
-    AddLog_P(LOG_LEVEL_INFO,PSTR("WIE: Tag: %llu"), rfid);
-    AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: %u bits"), bitCount);
-  #endif
+#if (DEV_WIEGAND_TEST_MODE)>0
+  AddLog_P(LOG_LEVEL_INFO,PSTR("WIE: Tag: %llu"), rfid);
+  AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: %u bits"), bitCount);
+#endif
 }
 #endif  // USE_WEBSERVER
-
 
 /*********************************************************************************************\
  * Interface
