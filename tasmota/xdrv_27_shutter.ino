@@ -414,7 +414,6 @@ void ShutterDecellerateForStop(uint8_t i)
         analogWriteFreq(Shutter[i].pwm_velocity);
         analogWrite(Pin(GPIO_PWM1, i), 50);
         Shutter[i].pwm_velocity = 0;
-        analogWriteFreq(Shutter[i].pwm_velocity);
         while (RtcSettings.pulse_counter[i] < (uint32_t)(Shutter[i].target_position-Shutter[i].start_position)*Shutter[i].direction*ShutterGlobal.open_velocity_max/RESOLUTION/STEPS_PER_SECOND) {
           delay(1);
         }
