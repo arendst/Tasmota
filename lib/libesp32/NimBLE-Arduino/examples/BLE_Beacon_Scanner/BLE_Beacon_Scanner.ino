@@ -79,27 +79,24 @@ class MyAdvertisedDeviceCallbacks : public BLEAdvertisedDeviceCallbacks
         return;
       }
 
-      uint8_t *payLoad = advertisedDevice->getPayload();
+      BLEUUID eddyUUID = (uint16_t)0xfeaa;
 
-      BLEUUID checkUrlUUID = (uint16_t)0xfeaa;
-
-      if (advertisedDevice->getServiceUUID().equals(checkUrlUUID))
+      if (advertisedDevice->getServiceUUID().equals(eddyUUID))
       {
-        if (payLoad[11] == 0x10)
+        std::string serviceData = advertisedDevice->getServiceData(eddyUUID);
+        if (serviceData[0] == 0x10)
         {
           Serial.println("Found an EddystoneURL beacon!");
           BLEEddystoneURL foundEddyURL = BLEEddystoneURL();
-          std::string eddyContent((char *)&payLoad[11]); // incomplete EddystoneURL struct!
 
-          foundEddyURL.setData(eddyContent);
+          foundEddyURL.setData(serviceData);
           std::string bareURL = foundEddyURL.getURL();
           if (bareURL[0] == 0x00)
           {
-            size_t payLoadLen = advertisedDevice->getPayloadLength();
             Serial.println("DATA-->");
-            for (int idx = 0; idx < payLoadLen; idx++)
+            for (int idx = 0; idx < serviceData.length(); idx++)
             {
-              Serial.printf("0x%08X ", payLoad[idx]);
+              Serial.printf("0x%08X ", serviceData[idx]);
             }
             Serial.println("\nInvalid Data");
             return;
@@ -110,23 +107,15 @@ class MyAdvertisedDeviceCallbacks : public BLEAdvertisedDeviceCallbacks
           Serial.printf("TX power %d\n", foundEddyURL.getPower());
           Serial.println("\n");
         }
-        else if (payLoad[11] == 0x20)
+        else if (serviceData[0] == 0x20)
         {
           Serial.println("Found an EddystoneTLM beacon!");
           BLEEddystoneTLM foundEddyURL = BLEEddystoneTLM();
-          std::string eddyContent((char *)&payLoad[11]); // incomplete EddystoneURL struct!
+          foundEddyURL.setData(serviceData);
 
-          eddyContent = "01234567890123";
-
-          for (int idx = 0; idx < 14; idx++)
-          {
-            eddyContent[idx] = payLoad[idx + 11];
-          }
-
-          foundEddyURL.setData(eddyContent);
           Serial.printf("Reported battery voltage: %dmV\n", foundEddyURL.getVolt());
           Serial.printf("Reported temperature from TLM class: %.2fC\n", (double)foundEddyURL.getTemp());
-          int temp = (int)payLoad[16] + (int)(payLoad[15] << 8);
+          int temp = (int)serviceData[5] + (int)(serviceData[4] << 8);
           float calcTemp = temp / 256.0f;
           Serial.printf("Reported temperature from data: %.2fC\n", calcTemp);
           Serial.printf("Reported advertise count: %d\n", foundEddyURL.getCount());
