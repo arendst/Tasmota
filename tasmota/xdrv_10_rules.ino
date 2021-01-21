@@ -87,17 +87,20 @@
 
 #define D_JSON_INITIATED "Initiated"
 
-#define COMPARE_OPERATOR_NONE            -1
-#define COMPARE_OPERATOR_EQUAL            0
-#define COMPARE_OPERATOR_BIGGER           1
-#define COMPARE_OPERATOR_SMALLER          2
-#define COMPARE_OPERATOR_EXACT_DIVISION   3
-#define COMPARE_OPERATOR_NUMBER_EQUAL     4
-#define COMPARE_OPERATOR_NOT_EQUAL        5
-#define COMPARE_OPERATOR_BIGGER_EQUAL     6
-#define COMPARE_OPERATOR_SMALLER_EQUAL    7
-#define MAXIMUM_COMPARE_OPERATOR          COMPARE_OPERATOR_SMALLER_EQUAL
-const char kCompareOperators[] PROGMEM = "=\0>\0<\0|\0==!=>=<=";
+#define COMPARE_OPERATOR_NONE                 -1
+#define COMPARE_OPERATOR_EQUAL                 0
+#define COMPARE_OPERATOR_BIGGER                1
+#define COMPARE_OPERATOR_SMALLER               2
+#define COMPARE_OPERATOR_EXACT_DIVISION        3
+#define COMPARE_OPERATOR_NUMBER_EQUAL          4
+#define COMPARE_OPERATOR_NOT_EQUAL             5
+#define COMPARE_OPERATOR_BIGGER_EQUAL          6
+#define COMPARE_OPERATOR_SMALLER_EQUAL         7
+#define COMPARE_OPERATOR_STRING_ENDS_WITH      8
+#define COMPARE_OPERATOR_STRING_STARTS_WITH    9
+#define COMPARE_OPERATOR_STRING_CONTAINS      10
+#define MAXIMUM_COMPARE_OPERATOR              COMPARE_OPERATOR_STRING_CONTAINS
+const char kCompareOperators[] PROGMEM = "=\0>\0<\0|\0==!=>=<=$>$<$|";
 
 #ifdef USE_EXPRESSION
   #include <LinkedList.h>                 // Import LinkedList library
@@ -416,7 +419,7 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule, bool stop_all
   // Step1: Analyse rule
   String rule_expr = rule;                             // "TELE-INA219#CURRENT>0.100"
   if (Rules.teleperiod) {
-    int ppos = rule_expr.indexOf(F("TELE-"));             // "TELE-INA219#CURRENT>0.100" or "INA219#CURRENT>0.100"
+    int ppos = rule_expr.indexOf(F("TELE-"));          // "TELE-INA219#CURRENT>0.100" or "INA219#CURRENT>0.100"
     if (ppos == -1) { return false; }                  // No pre-amble in rule
     rule_expr = rule.substring(5);                     // "INA219#CURRENT>0.100" or "SYSTEM#BOOT"
   }
@@ -553,6 +556,7 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule, bool stop_all
     value = CharToFloat((char*)str_value);
     int int_value = int(value);
     int int_rule_value = int(rule_value);
+    String str_str_value = String(str_value);
     switch (compareOperator) {
       case COMPARE_OPERATOR_EXACT_DIVISION:
         match = (int_rule_value && (int_value % int_rule_value) == 0);
@@ -577,6 +581,15 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule, bool stop_all
         break;
       case COMPARE_OPERATOR_SMALLER_EQUAL:
         match = (value <= rule_value);
+        break;
+      case COMPARE_OPERATOR_STRING_ENDS_WITH:
+        match = str_str_value.endsWith(rule_svalue);
+        break;
+      case COMPARE_OPERATOR_STRING_STARTS_WITH:
+        match = str_str_value.startsWith(rule_svalue);
+        break;
+      case COMPARE_OPERATOR_STRING_CONTAINS:
+        match = (str_str_value.indexOf(rule_svalue) > 0);
         break;
       default:
         match = true;
@@ -1613,6 +1626,15 @@ bool evaluateComparisonExpression(const char *expression, int len)
       break;
     case COMPARE_OPERATOR_SMALLER_EQUAL:
       bResult = (leftValue <= rightValue);
+      break;
+    case COMPARE_OPERATOR_STRING_ENDS_WITH:
+      bResult = leftExpr.endsWith(rightExpr);
+      break;
+    case COMPARE_OPERATOR_STRING_STARTS_WITH:
+      bResult = leftExpr.startsWith(rightExpr);
+      break;
+    case COMPARE_OPERATOR_STRING_CONTAINS:
+      bResult = (leftExpr.indexOf(rightExpr) > 0);
       break;
   }
   return bResult;

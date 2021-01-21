@@ -18,6 +18,7 @@ All notable changes to this project will be documented in this file.
 - Support for SM2135 current selection using GPIO ``SM2135 DAT`` index (#10634)
 - Basic support for ESP32 M5stack core2 16MB binary tasmota32-core2.bin (#10635)
 - Support for Sugar Valley NeoPool Controller by Norbert Richter (#10637)
+- Rule trigger string comparisons for EndsWith ``$>``, StartsWith ``$<`` and Contains ``$|`` (#10538)
 
 ### Breaking Changed
 - ESP32 switch from default SPIFFS to default LittleFS file system loosing current (zigbee) files
