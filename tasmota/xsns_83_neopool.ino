@@ -1096,20 +1096,20 @@ void NeoPoolShow(bool json)
  *    RESULT = {"Sensor83":{"Command":1,"Address":"0x0416","Data":28}}
  *
  * Enable temperature module by setting MBF_PAR_TEMPERATURE_ACTIVE
- *    Sensor83 3 0x40F,1
+ *    Sensor83 2 0x40F,1
  *    RESULT = {"Sensor83":{"Command":3,"Address":"0x040F","Data":[1]}}
  * and set it permanent by using a write to MBF_SAVE_TO_EEPROM (0x02F0)
- *    Sensor83 3 0x2F0,1
+ *    Sensor83 2 0x2F0,1
  *    RESULT = {"Sensor83":{"Command":3,"Address":"0x2F0","Data":[1]}}
  *
  * Hide auxiliary relay display from main menu by setting bit 3 of MBF_PAR_UICFG_VISUAL_OPTIONS
- *    Sensor83 2 0x0605,3,1
+ *    Sensor83 3 0x0605,3,1
  *    RESULT = {"Sensor83":{"Command":2,"Address":"0x0605","Bit":3,"Data":1}}
  *
  *********************************************************************************************/
 #define NEOPOOL_CMND_READ_REG         1
-#define NEOPOOL_CMND_READWRITE_BIT    2
-#define NEOPOOL_CMND_WRITE_REG        3
+#define NEOPOOL_CMND_WRITE_REG        2
+#define NEOPOOL_CMND_READWRITE_BIT    3
 #define NEOPOOL_CMND_FILTRATION       4
 #define NEOPOOL_CMND_FILTRATION_MODE  5
 #define NEOPOOL_CMND_TIME             6
