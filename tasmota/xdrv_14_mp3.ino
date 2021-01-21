@@ -22,6 +22,7 @@
   1.0.0.5 20210121  added   - support for DY_SV17F Player (#define USE_DY_SV17F)
                             - cmds supported:
                             - track
+                            - stop
                             - volume
                             - play
                             - play /path
