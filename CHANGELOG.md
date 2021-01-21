@@ -27,6 +27,7 @@ All notable changes to this project will be documented in this file.
 - Force initial default state ``SetOption57 1`` to scan wifi network every 44 minutes for strongest signal (#10395)
 - Command ``Sleep 0`` removes any sleep from wifi modem except when ESP32 BLE is active
 - PubSubClient MQTT_SOCKET_TIMEOUT from 15 to 4 seconds
+- Domoticz fixed 2 decimals resolution by user selectable ``TempRes``, ``HumRes`` and ``PressRes`` resolutions
 
 ## [9.2.0.2] 20210105
 ### Added

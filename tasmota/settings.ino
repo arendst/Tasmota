@@ -508,13 +508,13 @@ void SettingsSave(uint8_t rotate)
 #ifndef FIRMWARE_MINIMAL
   UpdateBackwardCompatibility();
   if ((GetSettingsCrc32() != settings_crc32) || rotate) {
-    if (1 == rotate) {   // Use eeprom flash slot only and disable flash rotate from now on (upgrade)
+    if (1 == rotate) {                                 // Use eeprom flash slot only and disable flash rotate from now on (upgrade)
       TasmotaGlobal.stop_flash_rotate = 1;
     }
-    if (2 == rotate) {   // Use eeprom flash slot and erase next flash slots if stop_flash_rotate is off (default)
-      settings_location = FLASH_EEPROM_START + 1;
+    if (2 == rotate) {                                 // Use eeprom flash slot and erase next flash slots if stop_flash_rotate is off (default)
+      settings_location = FLASH_EEPROM_START +1;       // Decremented to correct location by settings_location--; just below
     }
-    if (TasmotaGlobal.stop_flash_rotate) {
+    if (TasmotaGlobal.stop_flash_rotate) {             // SetOption12 - (Settings) Switch between dynamic (0) or fixed (1) slot flash save location
       settings_location = FLASH_EEPROM_START;
     } else {
       if (settings_location == FLASH_EEPROM_START) {
@@ -534,7 +534,7 @@ void SettingsSave(uint8_t rotate)
       Settings.cfg_timestamp++;
     }
     Settings.cfg_size = sizeof(Settings);
-    Settings.cfg_crc = GetSettingsCrc();  // Keep for backward compatibility in case of fall-back just after upgrade
+    Settings.cfg_crc = GetSettingsCrc();               // Keep for backward compatibility in case of fall-back just after upgrade
     Settings.cfg_crc32 = GetSettingsCrc32();
 
 #ifdef ESP8266
@@ -545,9 +545,9 @@ void SettingsSave(uint8_t rotate)
       ESP.flashWrite(settings_location * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(Settings));
     }
 
-    if (!TasmotaGlobal.stop_flash_rotate && rotate) {
+    if (!TasmotaGlobal.stop_flash_rotate && rotate) {  // SetOption12 - (Settings) Switch between dynamic (0) or fixed (1) slot flash save location
       for (uint32_t i = 0; i < CFG_ROTATES; i++) {
-        ESP.flashEraseSector(SETTINGS_LOCATION -i);  // Delete previous configurations by resetting to 0xFF
+        ESP.flashEraseSector(SETTINGS_LOCATION -i);    // Delete previous configurations by resetting to 0xFF
         delay(1);
       }
     }
