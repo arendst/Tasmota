@@ -371,7 +371,7 @@ void DomoticzSendData(uint32_t sensor_idx, uint32_t idx, char *data) {
       nvalue = position < 2 ? 0 : (position == 100 ? 1 : 2);
     }
 #endif  // USE_SHUTTER
-    Response_P(DOMOTICZ_MESSAGE,
+    Response_P(DOMOTICZ_MESSAGE,  // "{\"idx\":%d,\"nvalue\":%d,\"svalue\":\"%s\",\"Battery\":%d,\"RSSI\":%d}"
       idx, nvalue, data, DomoticzBatteryQuality(), DomoticzRssiQuality());
   }
   MqttPublish(domoticz_in_topic);
@@ -400,14 +400,14 @@ void DomoticzSensor(uint8_t idx, uint32_t value) {
 //void DomoticzTempHumPressureSensor(float temp, float hum, float baro = -1);
 void DomoticzTempHumPressureSensor(float temp, float hum, float baro) {
   char temperature[FLOATSZ];
-  dtostrfd(temp, 2, temperature);
+  dtostrfd(temp, Settings.flag2.temperature_resolution, temperature);
   char humidity[FLOATSZ];
-  dtostrfd(hum, 2, humidity);
+  dtostrfd(hum, Settings.flag2.humidity_resolution, humidity);
 
   char data[32];
   if (baro > -1) {
     char pressure[FLOATSZ];
-    dtostrfd(baro, 2, pressure);
+    dtostrfd(baro, Settings.flag2.pressure_resolution, pressure);
 
     snprintf_P(data, sizeof(data), PSTR("%s;%s;%d;%s;5"), temperature, humidity, DomoticzHumidityState(hum), pressure);
     DomoticzSensor(DZ_TEMP_HUM_BARO, data);
