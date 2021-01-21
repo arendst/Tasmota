@@ -512,7 +512,7 @@ void SettingsSave(uint8_t rotate)
       TasmotaGlobal.stop_flash_rotate = 1;
     }
     if (2 == rotate) {   // Use eeprom flash slot and erase next flash slots if stop_flash_rotate is off (default)
-      settings_location = FLASH_EEPROM_START;
+      settings_location = FLASH_EEPROM_START + 1;
     }
     if (TasmotaGlobal.stop_flash_rotate) {
       settings_location = FLASH_EEPROM_START;
