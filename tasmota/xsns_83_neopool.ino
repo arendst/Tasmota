@@ -1178,7 +1178,7 @@ bool NeoPoolCmnd(void)
             data[0] = (data[0] >> bit) & 0x0001;
           }
           if (3 == params_cnt) {
-            if (NEOPOOL_OK != NeoPoolReadRegister(addr, &tempdata, 1)) {
+            if (NEOPOOL_OK == NeoPoolReadRegister(addr, &tempdata, 1)) {
               tempdata &= ~(1<<bit);
               tempdata |= (data[0]<<bit);
               serviced = (NEOPOOL_OK == NeoPoolWriteRegister(addr, &tempdata, 1));
