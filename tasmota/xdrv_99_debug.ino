@@ -574,7 +574,7 @@ void CmndFlashDump(void)
   // FlashDump 0xFC000 10
   const uint32_t flash_start = 0x40200000;  // Start address flash
   const uint8_t bytes_per_cols = 0x20;
-  const uint32_t max = (FLASH_EEPROM_START + 5) * SPI_FLASH_SEC_SIZE;  // 0x100000 for 1M flash, 0x400000 for 4M flash
+  const uint32_t max = (EEPROM_LOCATION + 5) * SPI_FLASH_SEC_SIZE;  // 0x100000 for 1M flash, 0x400000 for 4M flash
 
   uint32_t start = flash_start;
   uint32_t rows = 8;

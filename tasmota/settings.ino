@@ -25,8 +25,7 @@ const uint16_t RTC_MEM_VALID = 0xA55A;
 
 uint32_t rtc_settings_crc = 0;
 
-uint32_t GetRtcSettingsCrc(void)
-{
+uint32_t GetRtcSettingsCrc(void) {
   uint32_t crc = 0;
   uint8_t *bytes = (uint8_t*)&RtcSettings;
 
@@ -36,8 +35,7 @@ uint32_t GetRtcSettingsCrc(void)
   return crc;
 }
 
-void RtcSettingsSave(void)
-{
+void RtcSettingsSave(void) {
   RtcSettings.baudrate = Settings.baudrate * 300;
   if (GetRtcSettingsCrc() != rtc_settings_crc) {
     RtcSettings.valid = RTC_MEM_VALID;
@@ -80,8 +78,7 @@ bool RtcSettingsLoad(uint32_t update) {
   return read_valid;
 }
 
-bool RtcSettingsValid(void)
-{
+bool RtcSettingsValid(void) {
   return (RTC_MEM_VALID == RtcSettings.valid);
 }
 
@@ -89,8 +86,7 @@ bool RtcSettingsValid(void)
 
 uint32_t rtc_reboot_crc = 0;
 
-uint32_t GetRtcRebootCrc(void)
-{
+uint32_t GetRtcRebootCrc(void) {
   uint32_t crc = 0;
   uint8_t *bytes = (uint8_t*)&RtcReboot;
 
@@ -100,8 +96,7 @@ uint32_t GetRtcRebootCrc(void)
   return crc;
 }
 
-void RtcRebootSave(void)
-{
+void RtcRebootSave(void) {
   if (GetRtcRebootCrc() != rtc_reboot_crc) {
     RtcReboot.valid = RTC_MEM_VALID;
 #ifdef ESP8266
@@ -114,14 +109,12 @@ void RtcRebootSave(void)
   }
 }
 
-void RtcRebootReset(void)
-{
+void RtcRebootReset(void) {
   RtcReboot.fast_reboot_count = 0;
   RtcRebootSave();
 }
 
-void RtcRebootLoad(void)
-{
+void RtcRebootLoad(void) {
 #ifdef ESP8266
   ESP.rtcUserMemoryRead(100 - sizeof(RtcReboot), (uint32_t*)&RtcReboot, sizeof(RtcReboot));  // 0x280
 #endif  // ESP8266
@@ -137,8 +130,7 @@ void RtcRebootLoad(void)
   rtc_reboot_crc = GetRtcRebootCrc();
 }
 
-bool RtcRebootValid(void)
-{
+bool RtcRebootValid(void) {
   return (RTC_MEM_VALID == RtcReboot.valid);
 }
 
@@ -172,7 +164,7 @@ bool RtcRebootValid(void)
  * 0x000FB000  0x001FA000  0x003FA000 - 0k, 980k or 2980k Core FS end (LittleFS)
  *             0x001FAFFF  0x003FAFFF
  *
- * 0x000FB000  0x001FB000  0x003FB000 - 4k Core EEPROM = Tasmota settings page during OTA and when no flash rotation is active (FLASH_EEPROM_START)
+ * 0x000FB000  0x001FB000  0x003FB000 - 4k Core EEPROM = Tasmota settings page during OTA and when no flash rotation is active (EEPROM_LOCATION)
  * 0x000FBFFF  0x001FBFFF  0x003FBFFF
  *
  * 0x000FC000  0x001FC000  0x003FC000 - 4k SDK - Uses first 128 bytes for phy init data mirrored by Core in RAM. See core_esp8266_phy.cpp phy_init_data[128] = Core user_rf_cal_sector
@@ -191,25 +183,25 @@ extern "C" {
 
 extern "C" uint32_t _FS_start;      // 1M = 0x402fb000, 2M = 0x40300000, 4M = 0x40300000
 const uint32_t FLASH_FS_START = (((uint32_t)&_FS_start - 0x40200000) / SPI_FLASH_SEC_SIZE);
-uint32_t SETTINGS_LOCATION = FLASH_FS_START -1;                                                    // 0xFA, 0x0FF or 0x0FF
+uint32_t SETTINGS_LOCATION = FLASH_FS_START -1;                                                 // 0xFA, 0x0FF or 0x0FF
 
 // From libraries/EEPROM/EEPROM.cpp EEPROMClass
 extern "C" uint32_t _EEPROM_start;  // 1M = 0x402FB000, 2M = 0x403FB000, 4M = 0x405FB000
-const uint32_t FLASH_EEPROM_START = ((uint32_t)&_EEPROM_start - 0x40200000) / SPI_FLASH_SEC_SIZE;  // 0xFB, 0x1FB or 0x3FB
+const uint32_t EEPROM_LOCATION = ((uint32_t)&_EEPROM_start - 0x40200000) / SPI_FLASH_SEC_SIZE;  // 0xFB, 0x1FB or 0x3FB
 
 #endif  // ESP8266
 
 #ifdef ESP32
 
 // dummy defines
-#define FLASH_EEPROM_START (SPI_FLASH_SEC_SIZE * 200)
-uint32_t SETTINGS_LOCATION = FLASH_EEPROM_START;
+#define EEPROM_LOCATION (SPI_FLASH_SEC_SIZE * 200)
+uint32_t SETTINGS_LOCATION = EEPROM_LOCATION;
 
 #endif  // ESP32
 
 const uint8_t CFG_ROTATES = 7;      // Number of flash sectors used (handles uploads)
 
-uint32_t settings_location = FLASH_EEPROM_START;
+uint32_t settings_location = EEPROM_LOCATION;
 uint32_t settings_crc32 = 0;
 uint8_t *settings_buffer = nullptr;
 
@@ -223,8 +215,7 @@ void SettingsInit(void) {
 /*
  * Based on cores/esp8266/Updater.cpp
  */
-void SetFlashModeDout(void)
-{
+void SetFlashModeDout(void) {
 #ifdef ESP8266
   uint8_t *_buffer;
   uint32_t address;
@@ -246,16 +237,14 @@ void SetFlashModeDout(void)
 #endif  // ESP8266
 }
 
-void SettingsBufferFree(void)
-{
+void SettingsBufferFree(void) {
   if (settings_buffer != nullptr) {
     free(settings_buffer);
     settings_buffer = nullptr;
   }
 }
 
-bool SettingsBufferAlloc(void)
-{
+bool SettingsBufferAlloc(void) {
   SettingsBufferFree();
   if (!(settings_buffer = (uint8_t *)malloc(sizeof(Settings)))) {
     AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_UPLOAD_ERR_2));  // Not enough (memory) space
@@ -264,8 +253,7 @@ bool SettingsBufferAlloc(void)
   return true;
 }
 
-uint16_t GetCfgCrc16(uint8_t *bytes, uint32_t size)
-{
+uint16_t GetCfgCrc16(uint8_t *bytes, uint32_t size) {
   uint16_t crc = 0;
 
   for (uint32_t i = 0; i < size; i++) {
@@ -274,15 +262,13 @@ uint16_t GetCfgCrc16(uint8_t *bytes, uint32_t size)
   return crc;
 }
 
-uint16_t GetSettingsCrc(void)
-{
+uint16_t GetSettingsCrc(void) {
   // Fix miscalculation if previous Settings was 3584 and current Settings is 4096 between 0x06060007 and 0x0606000A
   uint32_t size = ((Settings.version < 0x06060007) || (Settings.version > 0x0606000A)) ? 3584 : sizeof(Settings);
   return GetCfgCrc16((uint8_t*)&Settings, size);
 }
 
-uint32_t GetCfgCrc32(uint8_t *bytes, uint32_t size)
-{
+uint32_t GetCfgCrc32(uint8_t *bytes, uint32_t size) {
   // https://create.stephan-brumme.com/crc32/#bitwise
   uint32_t crc = 0;
 
@@ -295,13 +281,11 @@ uint32_t GetCfgCrc32(uint8_t *bytes, uint32_t size)
   return ~crc;
 }
 
-uint32_t GetSettingsCrc32(void)
-{
+uint32_t GetSettingsCrc32(void) {
   return GetCfgCrc32((uint8_t*)&Settings, sizeof(Settings) -4);  // Skip crc32
 }
 
-void SettingsSaveAll(void)
-{
+void SettingsSaveAll(void) {
   if (Settings.flag.save_state) {
     Settings.power = TasmotaGlobal.power;
   } else {
@@ -465,8 +449,7 @@ bool SettingsUpdateText(uint32_t index, const char* replace_me) {
   return true;
 }
 
-char* SettingsText(uint32_t index)
-{
+char* SettingsText(uint32_t index) {
   char* position = Settings.text_pool;
 
   if (index >= SET_MAX) {
@@ -484,19 +467,16 @@ char* SettingsText(uint32_t index)
  * Config Save - Save parameters to Flash ONLY if any parameter has changed
 \*********************************************************************************************/
 
-void UpdateBackwardCompatibility(void)
-{
+void UpdateBackwardCompatibility(void) {
   // Perform updates for backward compatibility
   strlcpy(Settings.user_template_name, SettingsText(SET_TEMPLATE_NAME), sizeof(Settings.user_template_name));
 }
 
-uint32_t GetSettingsAddress(void)
-{
+uint32_t GetSettingsAddress(void) {
   return settings_location * SPI_FLASH_SEC_SIZE;
 }
 
-void SettingsSave(uint8_t rotate)
-{
+void SettingsSave(uint8_t rotate) {
 /* Save configuration in eeprom or one of 7 slots below
  *
  * rotate 0 = Save in next flash slot
@@ -511,19 +491,17 @@ void SettingsSave(uint8_t rotate)
     if (1 == rotate) {                                 // Use eeprom flash slot only and disable flash rotate from now on (upgrade)
       TasmotaGlobal.stop_flash_rotate = 1;
     }
-    if (2 == rotate) {                                 // Use eeprom flash slot and erase next flash slots if stop_flash_rotate is off (default)
-      settings_location = FLASH_EEPROM_START +1;       // Decremented to correct location by settings_location--; just below
-    }
-    if (TasmotaGlobal.stop_flash_rotate) {             // SetOption12 - (Settings) Switch between dynamic (0) or fixed (1) slot flash save location
-      settings_location = FLASH_EEPROM_START;
-    } else {
-      if (settings_location == FLASH_EEPROM_START) {
+
+    if (TasmotaGlobal.stop_flash_rotate || (2 == rotate)) {  // Use eeprom flash slot and erase next flash slots if stop_flash_rotate is off (default)
+      settings_location = EEPROM_LOCATION;
+    } else {                                           // Rotate flash slots
+      if (settings_location == EEPROM_LOCATION) {
         settings_location = SETTINGS_LOCATION;
       } else {
         settings_location--;
       }
       if (settings_location <= (SETTINGS_LOCATION - CFG_ROTATES)) {
-        settings_location = FLASH_EEPROM_START;
+        settings_location = EEPROM_LOCATION;
       }
     }
 
@@ -581,7 +559,7 @@ void SettingsLoad(void) {
 #endif  // USE_UFILESYS
   while (slot <= max_slots) {                                  // Read all config pages in search of valid and latest
     if (slot > 0) {
-      flash_location = (1 == slot) ? FLASH_EEPROM_START : (2 == slot) ? SETTINGS_LOCATION : flash_location -1;
+      flash_location = (1 == slot) ? EEPROM_LOCATION : (2 == slot) ? SETTINGS_LOCATION : flash_location -1;
       ESP.flashRead(flash_location * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(Settings));
     }
     if ((Settings.cfg_crc32 != 0xFFFFFFFF) && (Settings.cfg_crc32 != 0x00000000) && (Settings.cfg_crc32 == GetSettingsCrc32())) {
@@ -639,8 +617,7 @@ uint32_t CfgTime(void) {
 }
 
 #ifdef ESP8266
-void SettingsErase(uint8_t type)
-{
+void SettingsErase(uint8_t type) {
   /*
     For Arduino core and SDK:
     Erase only works from flash start address to SDK recognized flash end address (flashchip->chip_size = ESP.getFlashChipSize).
@@ -672,7 +649,7 @@ void SettingsErase(uint8_t type)
 #endif
 */
     EsptoolErase(_sectorStart, FLASH_FS_START);
-    _sectorStart = FLASH_EEPROM_START;
+    _sectorStart = EEPROM_LOCATION;
     _sectorEnd = ESP.getFlashChipSize() / SPI_FLASH_SEC_SIZE;  // Flash size as seen by SDK
   }
   else if (3 == type) {    // QPC Reached = QPC and Tasmota and SDK parameter area (0x0F3xxx - 0x0FFFFF)
@@ -680,11 +657,11 @@ void SettingsErase(uint8_t type)
     TfsDeleteFile(TASM_FILE_SETTINGS);
 #endif
     EsptoolErase(SETTINGS_LOCATION - CFG_ROTATES, SETTINGS_LOCATION +1);
-    _sectorStart = FLASH_EEPROM_START;
+    _sectorStart = EEPROM_LOCATION;
     _sectorEnd = ESP.getFlashChipSize() / SPI_FLASH_SEC_SIZE;  // Flash size as seen by SDK
   }
   else if (4 == type) {    // WIFI_FORCE_RF_CAL_ERASE = SDK wifi calibration
-    _sectorStart = FLASH_EEPROM_START +1;                      // SDK phy area and Core calibration sector (0x0XFC000)
+    _sectorStart = EEPROM_LOCATION +1;                         // SDK phy area and Core calibration sector (0x0XFC000)
     _sectorEnd = _sectorStart +1;                              // SDK end of phy area and Core calibration sector (0x0XFCFFF)
   }
 
@@ -693,8 +670,7 @@ void SettingsErase(uint8_t type)
 }
 #endif  // ESP8266
 
-void SettingsSdkErase(void)
-{
+void SettingsSdkErase(void) {
   WiFi.disconnect(false);  // Delete SDK wifi config
   SettingsErase(1);
   delay(1000);
@@ -702,16 +678,14 @@ void SettingsSdkErase(void)
 
 /********************************************************************************************/
 
-void SettingsDefault(void)
-{
+void SettingsDefault(void) {
   AddLog_P(LOG_LEVEL_NONE, PSTR(D_LOG_CONFIG D_USE_DEFAULTS));
   SettingsDefaultSet1();
   SettingsDefaultSet2();
   SettingsSave(2);
 }
 
-void SettingsDefaultSet1(void)
-{
+void SettingsDefaultSet1(void) {
   memset(&Settings, 0x00, sizeof(Settings));
 
   Settings.cfg_holder = (uint16_t)CFG_HOLDER;
@@ -726,8 +700,7 @@ void SettingsDefaultSet1(void)
 const uint8_t default_fingerprint1[] PROGMEM = { MQTT_FINGERPRINT1 };
 const uint8_t default_fingerprint2[] PROGMEM = { MQTT_FINGERPRINT2 };
 
-void SettingsDefaultSet2(void)
-{
+void SettingsDefaultSet2(void) {
   memset((char*)&Settings +16, 0x00, sizeof(Settings) -16);
 
   // this little trick allows GCC to optimize the assignment by grouping values and doing only ORs
@@ -1099,8 +1072,7 @@ void SettingsDefaultSet2(void)
 
 /********************************************************************************************/
 
-void SettingsResetStd(void)
-{
+void SettingsResetStd(void) {
   Settings.tflag[0].hemis = TIME_STD_HEMISPHERE;
   Settings.tflag[0].week = TIME_STD_WEEK;
   Settings.tflag[0].dow = TIME_STD_DAY;
@@ -1109,8 +1081,7 @@ void SettingsResetStd(void)
   Settings.toffset[0] = TIME_STD_OFFSET;
 }
 
-void SettingsResetDst(void)
-{
+void SettingsResetDst(void) {
   Settings.tflag[1].hemis = TIME_DST_HEMISPHERE;
   Settings.tflag[1].week = TIME_DST_WEEK;
   Settings.tflag[1].dow = TIME_DST_DAY;
@@ -1119,16 +1090,14 @@ void SettingsResetDst(void)
   Settings.toffset[1] = TIME_DST_OFFSET;
 }
 
-void SettingsDefaultWebColor(void)
-{
+void SettingsDefaultWebColor(void) {
   char scolor[10];
   for (uint32_t i = 0; i < COL_LAST; i++) {
     WebHexCode(i, GetTextIndexed(scolor, sizeof(scolor), i, kWebColors));
   }
 }
 
-void SettingsEnableAllI2cDrivers(void)
-{
+void SettingsEnableAllI2cDrivers(void) {
   Settings.i2c_drivers[0] = 0xFFFFFFFF;
   Settings.i2c_drivers[1] = 0xFFFFFFFF;
   Settings.i2c_drivers[2] = 0xFFFFFFFF;
@@ -1136,8 +1105,7 @@ void SettingsEnableAllI2cDrivers(void)
 
 /********************************************************************************************/
 
-void SettingsDelta(void)
-{
+void SettingsDelta(void) {
   if (Settings.version != VERSION) {      // Fix version dependent changes
 
 #ifdef ESP8266

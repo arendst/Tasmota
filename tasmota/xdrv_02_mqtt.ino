@@ -1065,7 +1065,7 @@ void CmndSensorRetain(void) {
 \*********************************************************************************************/
 #if defined(USE_MQTT_TLS) && defined(USE_MQTT_AWS_IOT)
 
-// const static uint16_t tls_spi_start_sector = FLASH_EEPROM_START + 4;  // 0xXXFF
+// const static uint16_t tls_spi_start_sector = EEPROM_LOCATION + 4;  // 0xXXFF
 // const static uint8_t* tls_spi_start    = (uint8_t*) ((tls_spi_start_sector * SPI_FLASH_SEC_SIZE) + 0x40200000);  // 0x40XFF000
 const static uint16_t tls_spi_start_sector = 0xFF;  // Force last bank of first MB
 const static uint8_t* tls_spi_start    = (uint8_t*) 0x402FF000;  // 0x402FF000
