@@ -149,6 +149,7 @@
 | USE_EZORGB            | - | - | - | - | - | - | - |
 | USE_EZORTD            | - | - | - | - | - | - | - |
 | USE_SEESAW_SOIL       | - | - | - | - | - | - | - |
+| USE_TOF10120          | - | - | - | - | - | - | - |
 |                       |   |   |   |   |   |   |   |
 | Feature or Sensor     | minimal | lite | tasmota | knx | sensors | ir | display | Remarks
 | USE_SPI               | - | - | - | - | - | - | x |

@@ -74,6 +74,7 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - Support for FTC532 8-button touch controller by Peter Franck [#10222](https://github.com/arendst/Tasmota/issues/10222)
 - Support for BS814A-2 8-button touch buttons by Peter Franck [#10447](https://github.com/arendst/Tasmota/issues/10447)
 - Support for up to 4 I2C SEESAW_SOIL Capacitance & Temperature sensors by Peter Franck [#10481](https://github.com/arendst/Tasmota/issues/10481)
+- Support for TOF10120 time of flight sensor by Cyril Pawelko [#10190](https://github.com/arendst/Tasmota/issues/10190)
 - Support for Afrikaans language translations by Christiaan Heerze
 - Support for IR inverted leds using ``#define IR_SEND_INVERTED true`` [#10301](https://github.com/arendst/Tasmota/issues/10301)
 - Support for disabling 38kHz IR modulation using ``#define IR_SEND_USE_MODULATION false`` [#10301](https://github.com/arendst/Tasmota/issues/10301)

@@ -36,8 +36,8 @@ VL53L1X vl53l1x = VL53L1X(); // create object copy
 #define VL53L1X_ADDRESS 0x29
 
 struct {
-  bool ready = false;
   uint16_t distance = 0;
+  bool ready = false;
 } vl53l1x_sensors;
 
 /********************************************************************************************/
@@ -54,13 +54,7 @@ void Vl53l1Detect(void) {
   vl53l1x_sensors.ready = true;
 }
 
-#ifdef USE_WEBSERVER
-const char HTTP_SNS_VL53L1X[] PROGMEM =
- "{s}VL53L1X " D_DISTANCE "{m}%d" D_UNIT_MILLIMETER "{e}"; // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
-#endif  // USE_WEBSERVER
-
 void Vl53l1Every_250MSecond(void) {
-  // every 250 ms
   uint16_t dist = vl53l1x.read();
   if (!dist || dist > 4000) {
     dist = 9999;
@@ -78,15 +72,15 @@ void Vl53l1Every_Second(void) {
 
 void Vl53l1Show(bool json) {
   if (json) {
+    ResponseAppend_P(PSTR(",\"VL53L1X\":{\"" D_JSON_DISTANCE "\":%d}"), vl53l1x_sensors.distance);
 #ifdef USE_DOMOTICZ
     if (0 == TasmotaGlobal.tele_period) {
       Vl53l1Every_Second();
     }
 #endif  // USE_DOMOTICZ
-    ResponseAppend_P(PSTR(",\"VL53L1X\":{\"" D_JSON_DISTANCE "\":%d}"), vl53l1x_sensors.distance);
 #ifdef USE_WEBSERVER
   } else {
-    WSContentSend_PD(HTTP_SNS_VL53L1X, vl53l1x_sensors.distance);
+    WSContentSend_PD(HTTP_SNS_DISTANCE, PSTR("VL53L1X"), vl53l1x_sensors.distance);
 #endif
   }
 }
@@ -95,9 +89,9 @@ void Vl53l1Show(bool json) {
  * Interface
 \*********************************************************************************************/
 
-bool Xsns77(uint8_t function)
-{
+bool Xsns77(uint8_t function) {
   if (!I2cEnabled(XI2C_54)) { return false; }
+
   bool result = false;
 
   if (FUNC_INIT == function) {

@@ -701,7 +701,7 @@ void ResponseAppendFeatures(void)
 #ifdef USE_BS814A2
     feature7 |= 0x01000000;  // xdrv_51_bs814a2.ino
 #endif
-#ifdef USE_SEESAW_SOIL
+#if defined(USE_I2C) && defined(USE_SEESAW_SOIL)
     feature7 |= 0x02000000;  // xsns_81_seesaw_soil.ino
 #endif
 #ifdef USE_WIEGAND
@@ -710,8 +710,9 @@ void ResponseAppendFeatures(void)
 #ifdef USE_NEOPOOL
     feature7 |= 0x08000000;  // xsns_83_neopool.ino
 #endif
-
-//    feature7 |= 0x10000000;
+#if defined(USE_I2C) && defined(USE_TOF10120)
+    feature7 |= 0x10000000;  // xsns_84_tof10120
+#endif
 //    feature7 |= 0x20000000;
 //    feature7 |= 0x40000000;
 //    feature7 |= 0x80000000;
