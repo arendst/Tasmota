@@ -558,7 +558,7 @@ const char kNeoPoolpHAlarms[] PROGMEM =
 #define D_STR_BIT "Bit"
 #endif  // D_STR_BIT
 
-const char HTTP_SNS_NEOPOOL_PH[]               PROGMEM = "{s}%s " D_PH                      "{m}%s " "%s%s"                   "{e}";
+const char HTTP_SNS_NEOPOOL_PH[]               PROGMEM = "{s}%s " D_PH                      "{m}%s " "<span%s>&nbsp;%s&nbsp;</span>"    "{e}";
 const char HTTP_SNS_NEOPOOL_TIME[]             PROGMEM = "{s}%s " D_NEOPOOL_TIME            "{m}%s"                           "{e}";
 const char HTTP_SNS_NEOPOOL_PPM_REDOX[]        PROGMEM = "{s}%s " D_NEOPOOL_REDOX           "{m}%s " D_UNIT_PARTS_PER_MILLION "{e}";
 const char HTTP_SNS_NEOPOOL_PPM_CHLORINE[]     PROGMEM = "{s}%s " D_NEOPOOL_CHLORINE        "{m}%s " D_UNIT_PARTS_PER_MILLION "{e}";
@@ -839,12 +839,20 @@ uint32_t NeoPoolGetSpeedIndex(uint16_t speedvalue)
   return 0;
 }
 
+char *NeoPoolGetInverse(char *scss, size_t size)
+{
+  char scolor[10];
+  GetTextIndexed(scolor, sizeof(scolor), COL_BACKGROUND, kWebColors);
+  snprintf_P(scss, size, PSTR(" style=\"background-color:%s;filter:invert(1);\""),scolor);
+  return scss;
+}
+
 void NeoPoolShow(bool json)
 {
   char parameter[FLOATSZ];
   char *neopool_type;
-  char stemp[128];
-  char smachine[32];
+  char stemp[160];
+  char smachine[60];
 
   if (neopool_error) {
     return;
@@ -951,12 +959,13 @@ void NeoPoolShow(bool json)
 
     // pH
     if (NeoPoolGetData(MBF_PH_STATUS) & MBMSK_PH_STATUS_MEASURE_ACTIVE) {
+      char scss[60];
       dtostrfd((float)NeoPoolGetData(MBF_MEASURE_PH)/100, 2, parameter);
       *stemp = 0;
       if ((NeoPoolGetData(MBF_PH_STATUS) & MBMSK_PH_STATUS_ALARM) >=1 && (NeoPoolGetData(MBF_PH_STATUS) & MBMSK_PH_STATUS_ALARM) <= 3) {
         GetTextIndexed(stemp, sizeof(stemp), NeoPoolGetData(MBF_PH_STATUS) & MBMSK_PH_STATUS_ALARM, kNeoPoolpHAlarms);
       }
-      WSContentSend_PD(HTTP_SNS_NEOPOOL_PH, neopool_type, parameter, *stemp ? PSTR(" " D_NEOPOOL_ALARM) : PSTR(""), stemp);
+      WSContentSend_PD(HTTP_SNS_NEOPOOL_PH, neopool_type, parameter, *stemp ? NeoPoolGetInverse(scss, sizeof(scss)) : PSTR(""), stemp);
     }
 
     // Redox
@@ -995,18 +1004,19 @@ void NeoPoolShow(bool json)
     //AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("NEO: MBF_PAR_MODEL 0x%04X MBF_HIDRO_STATUS 0x%04X"), NeoPoolGetData(MBF_PAR_MODEL), NeoPoolGetData(MBF_HIDRO_STATUS));
 #endif  // DEBUG_TASMOTA_SENSOR
     if ((NeoPoolGetData(MBF_PAR_MODEL) & MBMSK_MODEL_HIDRO) && (NeoPoolGetData(MBF_HIDRO_STATUS) & MBMSK_HIDRO_STATUS_MODULE_ACTIVE)) {
-      dtostrfd((float)NeoPoolGetData(MBF_HIDRO_CURRENT), 1, parameter);
       char spol[32];
+      char scss[60];
+      dtostrfd((float)NeoPoolGetData(MBF_HIDRO_CURRENT), 1, parameter);
       sprintf_P(spol,PSTR(" " D_NEOPOOL_POLARIZATION "%d"),NeoPoolGetData(MBF_HIDRO_STATUS)>>13);
-      sprintf_P(stemp, PSTR("%s%s%s%s%s%s%s%s"),
+      sprintf_P(stemp, PSTR("%s%s%s%s <span%s>%s%s%s</span>"),
         NeoPoolGetData(MBF_HIDRO_STATUS)>>13?spol:PSTR(""),
-        NeoPoolGetData(MBF_HIDRO_STATUS) & MBMSK_HIDRO_STATUS_ON_TARGET ? PSTR(" " D_NEOPOOL_SETPOINT_OK) : PSTR(""),
-        NeoPoolGetData(MBF_HIDRO_STATUS) & MBMSK_HIDRO_STATUS_COVER ? PSTR(" " D_NEOPOOL_COVER) : PSTR(""),
-        NeoPoolGetData(MBF_HIDRO_STATUS) & MBMSK_HIDRO_STATUS_SHOCK_ENABLED ? PSTR(" " D_NEOPOOL_SHOCK) : PSTR(""),
-        (NeoPoolGetData(MBF_HIDRO_STATUS) ^(MBMSK_HIDRO_STATUS_FL1|MBMSK_HIDRO_STATUS_FL2)) & (MBMSK_HIDRO_STATUS_LOW|MBMSK_HIDRO_STATUS_FL1|MBMSK_HIDRO_STATUS_FL2) ? PSTR(" " D_NEOPOOL_ALARM) : PSTR(""),
-        NeoPoolGetData(MBF_HIDRO_STATUS) & MBMSK_HIDRO_STATUS_LOW ? PSTR(" " D_NEOPOOL_LOW) : PSTR(""),
-        !(NeoPoolGetData(MBF_HIDRO_STATUS) & MBMSK_HIDRO_STATUS_FL1) ? PSTR(" " D_NEOPOOL_FLOW1) : PSTR(""),
-        !(NeoPoolGetData(MBF_HIDRO_STATUS) & MBMSK_HIDRO_STATUS_FL2) ? PSTR(" " D_NEOPOOL_FLOW2) : PSTR("")
+        NeoPoolGetData(MBF_HIDRO_STATUS) & MBMSK_HIDRO_STATUS_ON_TARGET ? PSTR(" " D_NEOPOOL_SETPOINT_OK " ") : PSTR(""),
+        NeoPoolGetData(MBF_HIDRO_STATUS) & MBMSK_HIDRO_STATUS_COVER ? PSTR(" " D_NEOPOOL_COVER " ") : PSTR(""),
+        NeoPoolGetData(MBF_HIDRO_STATUS) & MBMSK_HIDRO_STATUS_SHOCK_ENABLED ? PSTR(" " D_NEOPOOL_SHOCK " ") : PSTR(""),
+        (NeoPoolGetData(MBF_HIDRO_STATUS) ^(MBMSK_HIDRO_STATUS_FL1|MBMSK_HIDRO_STATUS_FL2)) & (MBMSK_HIDRO_STATUS_LOW|MBMSK_HIDRO_STATUS_FL1|MBMSK_HIDRO_STATUS_FL2) ? NeoPoolGetInverse(scss, sizeof(scss)) : PSTR(""),
+        NeoPoolGetData(MBF_HIDRO_STATUS) & MBMSK_HIDRO_STATUS_LOW ? PSTR("&nbsp;" D_NEOPOOL_LOW "&nbsp;") : PSTR(""),
+        !(NeoPoolGetData(MBF_HIDRO_STATUS) & MBMSK_HIDRO_STATUS_FL1) ? PSTR("&nbsp;" D_NEOPOOL_FLOW1 "&nbsp;") : PSTR(""),
+        !(NeoPoolGetData(MBF_HIDRO_STATUS) & MBMSK_HIDRO_STATUS_FL2) ? PSTR("&nbsp;" D_NEOPOOL_FLOW2 "&nbsp;") : PSTR("")
         );
       WSContentSend_PD(HTTP_SNS_NEOPOOL_HYDROLYSIS, neopool_type, parameter, *stemp ? PSTR("/") : PSTR(""), stemp);
     }
@@ -1058,41 +1068,41 @@ void NeoPoolShow(bool json)
 /*********************************************************************************************\
  * Supported commands for Sensor83:
  *
- * Sensor83  1 <addr> (<cnt>)
+ * Sensor83  1 <addr> {<cnt>}
  *            read 16-bit register (cnt=1..30, cnt=1 if omitted)
  *
- * Sensor83  2 <addr> <data> (<data>...)
+ * Sensor83  2 <addr> <data> {<data>...}
  *            write 16-bit register (data=0..65535, <data> max 8 times)
  *
- * Sensor83  3 <addr> <bit> (<data>)
+ * Sensor83  3 <addr> <bit> {<data>}
  *            read/write register bit (bit=0..15, data=0|1)
  *            read if param <data> is omitted otherwise set <bit> to new <data>
  *
- * Sensor83  4 (<state>)
+ * Sensor83  4 {<state>}
  *            get/set manual filtration (state=0|1)
  *            get filtration state if param <state> is omitted otherwise set new state
  *
- * Sensor83  5 (<mode>)
+ * Sensor83  5 {<mode>}
  *            get/set filtration mode (mode=0..4|13)
  *            get mode if param <mode> is omitted otherwise set new mode
  *
- * Sensor83  6 (<time>)
+ * Sensor83  6 {<time>}
  *            get/set system time
  *            get current time if param <time> is omitted otherwise set time according:
  *              0 - sync with Tasmota local time
  *              1 - sync with Tasmota utc time
  *            any other value of <time> will set time as epoch
  *
- * Sensor83 16 <addr> (<cnt>)
+ * Sensor83 16 <addr> {<cnt>}
  *            same as "Sensor83 1" but using hex data output
  *
- * Sensor83 21 <addr> (<cnt>)
+ * Sensor83 21 <addr> {<cnt>}
  *            read 32-bit register (cnt=1..15, cnt=1 if omitted)
  *
- * Sensor83 22 <addr> <data> (<data>...)
+ * Sensor83 22 <addr> <data> {<data>...}
  *            write 32-bit register (data=0..0xffffffff, <data> max 8 times)
  *
- * Sensor83 26 <addr> (<cnt>)
+ * Sensor83 26 <addr> (<cnt>}
  *            same as "Sensor83 21" but using hex data output
  *
  *
