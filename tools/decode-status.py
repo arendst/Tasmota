@@ -246,6 +246,15 @@ a_features = [[
     "USE_DISPLAY_SSD1331","USE_UFILESYS","USE_TIMEPROP","USE_PID",
     "USE_BS814A2","USE_SEESAW_SOIL","USE_WIEGAND","USE_NEOPOOL",
     "USE_TOF10120","","",""
+    ],[
+    "","","","",
+    "","","","",
+    "","","","",
+    "","","","",
+    "","","","",
+    "","","","",
+    "","","","",
+    "","","",""
     ]]
 
 usage = "usage: decode-status {-d | -f} arg"
