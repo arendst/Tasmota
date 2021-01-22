@@ -965,6 +965,7 @@ public:
   Z_Device & devicesAt(size_t i) const;
 
   // Remove device from list
+  void clearDeviceRouterInfo(void);           // reset all router flags, done just before ZbMap
   bool removeDevice(uint16_t shortaddr);
 
   // Mark data as 'dirty' and requiring to save in Flash

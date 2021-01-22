@@ -501,12 +501,15 @@ int32_t ZNP_ReceivePermitJoinStatus(int32_t res, const class SBuffer &buf) {
   if (0xFF == duration) {
     status_code = ZIGBEE_STATUS_PERMITJOIN_OPEN_XX;
     message = PSTR("Enable Pairing mode until next boot");
+    zigbee.permit_end_time = true;   // In ZNP mode, declare permitjoin open
   } else if (duration > 0) {
     status_code = ZIGBEE_STATUS_PERMITJOIN_OPEN_60;
     message = PSTR("Enable Pairing mode for %d seconds");
+    zigbee.permit_end_time = true;   // In ZNP mode, declare permitjoin open
   } else {
     status_code = ZIGBEE_STATUS_PERMITJOIN_CLOSE;
     message = PSTR("Disable Pairing mode");
+    zigbee.permit_end_time = false;   // In ZNP mode, declare permitjoin closed
   }
   Response_P(PSTR("{\"" D_JSON_ZIGBEE_STATE "\":{"
                   "\"Status\":%d,\"Message\":\""),
@@ -884,6 +887,14 @@ int32_t Z_ReceiveEndDeviceAnnonce(int32_t res, const class SBuffer &buf) {
   uint8_t           capabilities = buf.get8(10);
 #endif
 
+  // record if we already knew the ieeeAddr for this device
+  // this will influence the decision whether we do auto-binding or not
+  const Z_Device & device_before = zigbee_devices.findShortAddr(nwkAddr);
+  bool ieee_already_known = false;
+  if (device_before.valid() && (device_before.longaddr != 0) && (device_before.longaddr == ieeeAddr)) {
+    ieee_already_known = true;
+  }
+
   zigbee_devices.updateDevice(nwkAddr, ieeeAddr);
   // device is reachable
   zigbee_devices.deviceWasReached(nwkAddr);
@@ -903,7 +914,10 @@ int32_t Z_ReceiveEndDeviceAnnonce(int32_t res, const class SBuffer &buf) {
   Z_Query_Bulb(nwkAddr, wait_ms);
 
   MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEEZCL_RECEIVED));
-  Z_SendActiveEpReq(nwkAddr);
+  // Continue the discovery process and auto-binding only if the device was unknown or if PermitJoin is ongoing
+  if (!ieee_already_known || zigbee.permit_end_time) {
+    Z_SendActiveEpReq(nwkAddr);
+  }
   return -1;
 }
 

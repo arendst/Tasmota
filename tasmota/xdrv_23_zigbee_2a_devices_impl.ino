@@ -218,6 +218,15 @@ Z_Device & Z_Devices::updateDevice(uint16_t shortaddr, uint64_t longaddr) {
   return device_unk;
 }
 
+// Clear the router flag for each device, called at the beginning of ZbMap
+void Z_Devices::clearDeviceRouterInfo(void) {
+  for (Z_Device & device : zigbee_devices._devices) {
+    if (device.valid()) {
+      device.setRouter(false);
+    }
+  }
+}
+
 //
 // Clear all endpoints
 //
