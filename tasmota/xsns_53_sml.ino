@@ -1539,16 +1539,16 @@ void SML_Decode(uint8_t index) {
 #ifdef ED300L
         g_mindex=mindex;
 #endif
-        if (*mp=='#') {
+        if (*mp == '#') {
           // get string value
           mp++;
-          if (meter_desc_p[mindex].type=='o') {
-            for (uint8_t p=0;p<METER_ID_SIZE;p++) {
-              if (*cp==*mp) {
-                meter_id[mindex][p]=0;
+          if (meter_desc_p[mindex].type == 'o') {
+            for (uint8_t p=0; p<METER_ID_SIZE; p++) {
+              if (*cp == *mp) {
+                meter_id[mindex][p] = 0;
                 break;
               }
-              meter_id[mindex][p]=*cp++;
+              meter_id[mindex][p] = *cp++;
             }
           } else {
             sml_getvalue(cp,mindex);
@@ -1558,9 +1558,19 @@ void SML_Decode(uint8_t index) {
           if (meter_desc_p[mindex].type!='e' && meter_desc_p[mindex].type!='r' && meter_desc_p[mindex].type!='m' && meter_desc_p[mindex].type!='M' && meter_desc_p[mindex].type!='p') {
             // get numeric values
             if (meter_desc_p[mindex].type=='o' || meter_desc_p[mindex].type=='c') {
-              dval=CharToDouble((char*)cp);
+              if (*mp == '(') {
+                mp++;
+                // skip this bracket
+                char *bp = strchr((char*)cp, '(');
+                if (bp) {
+                  cp = (uint8_t*) (bp + 1);
+                }
+                dval=CharToDouble((char*)cp);
+              } else {
+                dval=CharToDouble((char*)cp);
+              }
             } else {
-              dval=sml_getvalue(cp,mindex);
+              dval = sml_getvalue(cp,mindex);
             }
           } else {
             // ebus pzem or mbus or raw
