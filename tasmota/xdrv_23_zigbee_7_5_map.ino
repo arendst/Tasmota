@@ -76,7 +76,7 @@ public:
     edges()
     {}
 
-  void reset(void) { edges.reset(); }
+  void reset(void) { edges.reset(); zigbee_devices.clearDeviceRouterInfo(); }
 
   Z_Mapper_Edge & findEdge(const Z_Mapper_Edge & edge2);
   bool addEdge(const Z_Mapper_Edge & edge2);

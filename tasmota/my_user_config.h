@@ -760,8 +760,8 @@
 
   // Auto-binding constants, see `Z_autoAttributeReporting`
   // Below are the threshold for attribute reporting
-  #define USE_ZIGBEE_AUTOBIND_BATTVOLTAGE   0.1     // V
-  #define USE_ZIGBEE_AUTOBIND_BATTPERCENT   1       // %
+  #define USE_ZIGBEE_AUTOBIND_BATTVOLTAGE   0.2     // V
+  #define USE_ZIGBEE_AUTOBIND_BATTPERCENT   5       // %
   #define USE_ZIGBEE_AUTOBIND_TEMPERATURE   0.5     // °C
   #define USE_ZIGBEE_AUTOBIND_HEATDEMAND    10      // %
   #define USE_ZIGBEE_AUTOBIND_PRESSURE      1       // hPA
