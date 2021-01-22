@@ -498,7 +498,12 @@ bool _SendDeviceGroupMessage(uint8_t device_group_index, DevGroupMessageType mes
     building_status_message = true;
 
     // Call the drivers to build the status update.
-    SendDeviceGroupMessage(device_group_index, DGR_MSGTYP_PARTIAL_UPDATE, DGR_ITEM_POWER, TasmotaGlobal.power);
+    power_t power = TasmotaGlobal.power;
+    if (Settings.flag4.multiple_device_groups) {  // SetOption88 - Enable relays in separate device groups
+      power >>= device_group_index;
+      power &= 1;
+    }
+    SendDeviceGroupMessage(device_group_index, DGR_MSGTYP_PARTIAL_UPDATE, DGR_ITEM_POWER, power);
     XdrvMailbox.index = 0;
     if (device_group_index == 0 && first_device_group_is_local) XdrvMailbox.index = DGR_FLAG_LOCAL;
     XdrvMailbox.command_code = DGR_ITEM_STATUS;
