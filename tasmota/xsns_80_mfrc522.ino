@@ -25,7 +25,7 @@
  * Connections:
  * MFRC522  ESP8266         Tasmota
  * -------  --------------  ----------
- *  SDA     GPIO0..5,15,16  SPI CS
+ *  SDA     GPIO0..5,15,16  RC522 CS
  *  SCK     GPIO14          SPI CLK
  *  MOSI    GPIO13          SPI MOSI
  *  MISO    GPIO12          SPI MISO
