@@ -219,7 +219,7 @@ bool DomoticzMqttData(void) {
   uint32_t idx = domoticz.getUInt(PSTR("idx"), 0);
   int16_t nvalue = domoticz.getInt(PSTR("nvalue"), -1);
 
-  AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_DOMOTICZ "idx %d, nvalue %d"), idx, nvalue);
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_DOMOTICZ "idx %d, nvalue %d"), idx, nvalue);
 
   bool found = false;
   if ((idx > 0) && (nvalue >= 0) && (nvalue <= 15)) {
@@ -544,7 +544,7 @@ const char HTTP_FORM_DOMOTICZ_TIMER[] PROGMEM =
 void HandleDomoticzConfiguration(void) {
   if (!HttpCheckPriviledgedAccess()) { return; }
 
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_CONFIGURE_DOMOTICZ));
+  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_CONFIGURE_DOMOTICZ));
 
   if (Webserver->hasArg(F("save"))) {
     DomoticzSaveSettings();

@@ -41,7 +41,7 @@
 int32_t hydrateDeviceWideData(class Z_Device & device, const SBuffer & buf, size_t start, size_t len) {
   size_t segment_len = buf.get8(start);
   if ((segment_len < 6) || (segment_len > len)) {
-    AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "invalid device wide data length=%d"), segment_len);
+    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "invalid device wide data length=%d"), segment_len);
     return -1;
   }
   device.last_seen = buf.get32(start+1);
@@ -77,13 +77,13 @@ bool hydrateDeviceData(class Z_Device & device, const SBuffer & buf, size_t star
 int32_t hydrateSingleDevice(const class SBuffer & buf, size_t start, size_t len) {
   uint8_t segment_len = buf.get8(start);
   if ((segment_len < 4) || (start + segment_len > len)) {
-    AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "invalid segment_len=%d"), segment_len);
+    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "invalid segment_len=%d"), segment_len);
     return -1;
   }
   // read shortaddr
   uint16_t shortaddr = buf.get16(start + 1);
   if (shortaddr >= 0xFFF0) {
-    AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "invalid shortaddr=0x%04X"), shortaddr);
+    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "invalid shortaddr=0x%04X"), shortaddr);
     return -1;
   }
 #ifdef Z_EEPROM_DEBUG
@@ -118,9 +118,9 @@ bool hydrateDevicesDataFromEEPROM(void) {
   if (!zigbee.eeprom_ready) { return false; }
   int32_t file_length = ZFS::getLength(ZIGB_DATA2);
   if (file_length > 0) {
-    AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Zigbee device data in EEPROM (%d bytes)"), file_length);
+    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Zigbee device data in EEPROM (%d bytes)"), file_length);
   } else {
-    AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "No Zigbee device data in EEPROM"));
+    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "No Zigbee device data in EEPROM"));
     return false;
   }
 
@@ -222,7 +222,7 @@ void hibernateAllData(void) {
   }
   int32_t ret = write_data.close();
 #ifdef Z_EEPROM_DEBUG
-  AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "ZbData - %d bytes written to EEPROM"), ret);
+  AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "ZbData - %d bytes written to EEPROM"), ret);
 #endif
 #endif // USE_ZIGBEE_EZSP
 }
@@ -270,10 +270,10 @@ bool hibernateDevicesInEEPROM(void) {
   int32_t ret = write_data.close();
 
   if (ret < 0) {
-    AddLog_P(LOG_LEVEL_ERROR, PSTR(D_LOG_ZIGBEE "Error writing Devices to EEPROM"));
+    AddLog(LOG_LEVEL_ERROR, PSTR(D_LOG_ZIGBEE "Error writing Devices to EEPROM"));
     return false;
   } else {
-    AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Zigbee Devices Data saved in %s (%d bytes)"), PSTR("EEPROM"), ret);
+    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Zigbee Devices Data saved in %s (%d bytes)"), PSTR("EEPROM"), ret);
   }
   return true;
 }
@@ -288,10 +288,10 @@ bool loadZigbeeDevicesFromEEPROM(void) {
   ZFS::readBytes(ZIGB_NAME2, &num_devices, sizeof(num_devices), 0, sizeof(num_devices));
 
   if ((file_len < 10) || (num_devices == 0x00) || (num_devices == 0xFF)) {             // No data
-    AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "No Zigbee device information in %s"), PSTR("EEPROM"));
+    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "No Zigbee device information in %s"), PSTR("EEPROM"));
     return false;
   }
-  AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Zigbee device information in %s (%d bytes)"), PSTR("EEPROM"), file_len);
+  AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Zigbee device information in %s (%d bytes)"), PSTR("EEPROM"), file_len);
 
   uint32_t k = 1;   // byte index in global buffer
   for (uint32_t i = 0; (i < num_devices) && (k < file_len); i++) {
@@ -301,7 +301,7 @@ bool loadZigbeeDevicesFromEEPROM(void) {
     buf.setLen(dev_record_len);
     ret = ZFS::readBytes(ZIGB_NAME2, buf.getBuffer(), dev_record_len, k, dev_record_len);
     if (ret != dev_record_len) {
-      AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "File too short when reading EEPROM"));
+      AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "File too short when reading EEPROM"));
       return false;
     }
 
@@ -318,7 +318,7 @@ bool loadZigbeeDevicesFromEEPROM(void) {
 void ZFS_Erase(void) {
   if (zigbee.eeprom_present) {
     ZFS::erase();
-    AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Zigbee Devices Data erased in %s"), PSTR("EEPROM"));
+    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Zigbee Devices Data erased in %s"), PSTR("EEPROM"));
   }
 }
 

@@ -845,7 +845,7 @@ static void
 miel_hvac_input_connected(struct miel_hvac_softc *sc,
     const void *buf, size_t len)
 {
-	AddLog_P(LOG_LEVEL_INFO,
+	AddLog(LOG_LEVEL_INFO,
 	    PSTR(MIEL_HVAC_LOGNAME ": connected to Mitsubishi Electric HVAC"));
 	sc->sc_connected = 1;
 }
@@ -973,7 +973,7 @@ miel_hvac_input_data(struct miel_hvac_softc *sc,
 
 	miel_hvac_log_bytes(sc, "data", buf, len);
 	if (len < sizeof(*d)) {
-		AddLog_P(LOG_LEVEL_DEBUG, PSTR(MIEL_HVAC_LOGNAME
+		AddLog(LOG_LEVEL_DEBUG, PSTR(MIEL_HVAC_LOGNAME
 		    ": short data response (%zu < %zu)"), len, sizeof(*d));
 		return;
 	}
@@ -1021,7 +1021,7 @@ miel_hvac_pre_init(void)
 
 	sc = (struct miel_hvac_softc *)malloc(sizeof(*sc));
 	if (sc == NULL) {
-		AddLog_P(LOG_LEVEL_ERROR,
+		AddLog(LOG_LEVEL_ERROR,
 		    PSTR(MIEL_HVAC_LOGNAME ": unable to allocate state"));
 		return;
 	}
@@ -1033,7 +1033,7 @@ miel_hvac_pre_init(void)
 	    Pin(GPIO_MIEL_HVAC_TX), 2);
 
 	if (!sc->sc_serial->begin(baudrate, 2)) {
-		AddLog_P(LOG_LEVEL_ERROR,
+		AddLog(LOG_LEVEL_ERROR,
 		    PSTR(MIEL_HVAC_LOGNAME ": unable to begin serial "
 		    "(baudrate %d)"), baudrate);
 		goto del;

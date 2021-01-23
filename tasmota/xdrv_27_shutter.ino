@@ -144,7 +144,7 @@ void ShutterRtc50mS(void)
 
         case SHT_COUNTER:
           if (Shutter[i].accelerator) {
-            //AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Accelerator i=%d -> %d"),i, Shutter[i].accelerator);
+            //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Accelerator i=%d -> %d"),i, Shutter[i].accelerator);
             ShutterUpdateVelocity(i);
             analogWriteFreq(Shutter[i].pwm_velocity);
             analogWrite(Pin(GPIO_PWM1, i), 50);
@@ -164,7 +164,7 @@ int32_t ShutterPercentToRealPosition(int16_t percent, uint32_t index)
     // check against DIV 0
     for (uint32_t j = 0; j < 5; j++) {
       if (0 == Settings.shuttercoeff[j][index]) {
-        AddLog_P(LOG_LEVEL_ERROR, PSTR("SHT: RESET/INIT CALIBRATION MATRIX DIV 0"));
+        AddLog(LOG_LEVEL_ERROR, PSTR("SHT: RESET/INIT CALIBRATION MATRIX DIV 0"));
         for (uint32_t k = 0; k < 5; k++) {
           Settings.shuttercoeff[k][index] = SHT_DIV_ROUND(calibrate_pos[k+1] * 1000, calibrate_pos[5]);
         }
@@ -251,7 +251,7 @@ void ShutterInit(void)
 
       if (Settings.shutter_mode == SHT_UNDEF) {
         bool relay_in_interlock = false;
-        AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Mode undef.. calculate..."));
+        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Mode undef.. calculate..."));
 
         for (uint32_t j = 0; j < MAX_INTERLOCKS * Settings.flag.interlock; j++) {  // CMND_INTERLOCK - Enable/disable interlock
           //AddLog_P(LOG_LEVEL_DEBUG, PSTR("SHT: Interlock state i=%d %d, flag %d, Shuttermask %d, MaskedIL %d"),i, Settings.interlock[i], Settings.flag.interlock,ShutterGlobal.RelayShutterMask, Settings.interlock[i]&ShutterGlobal.RelayShutterMask);
@@ -400,7 +400,7 @@ void ShutterDecellerateForStop(uint8_t i)
       int16_t missing_steps;
       Shutter[i].accelerator = -(ShutterGlobal.open_velocity_max / (Shutter[i].motordelay>4 ? (Shutter[i].motordelay*11)/10 : 4) );
       while (Shutter[i].pwm_velocity > -2*Shutter[i].accelerator ) {
-        AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Velocity %ld, Delta %d"), Shutter[i].pwm_velocity, Shutter[i].accelerator );
+        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Velocity %ld, Delta %d"), Shutter[i].pwm_velocity, Shutter[i].accelerator );
         //Shutter[i].pwm_velocity = tmax(Shutter[i].pwm_velocity-Shutter[i].accelerator , 0);
         // Control will be done in RTC Ticker.
         delay(50);
@@ -408,7 +408,7 @@ void ShutterDecellerateForStop(uint8_t i)
       if (ShutterGlobal.position_mode == SHT_COUNTER){
         missing_steps = ((Shutter[i].target_position-Shutter[i].start_position)*Shutter[i].direction*ShutterGlobal.open_velocity_max/RESOLUTION/STEPS_PER_SECOND) - RtcSettings.pulse_counter[i];
         //prepare for stop PWM
-        AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Remain steps %d, Counter %d, Freq %d"), missing_steps, RtcSettings.pulse_counter[i] ,Shutter[i].pwm_velocity);
+        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Remain steps %d, Counter %d, Freq %d"), missing_steps, RtcSettings.pulse_counter[i] ,Shutter[i].pwm_velocity);
         Shutter[i].accelerator = 0;
         Shutter[i].pwm_velocity = Shutter[i].pwm_velocity > 250 ? 250 : Shutter[i].pwm_velocity;
         analogWriteFreq(Shutter[i].pwm_velocity);
@@ -419,7 +419,7 @@ void ShutterDecellerateForStop(uint8_t i)
         }
         analogWrite(Pin(GPIO_PWM1, i), 0); // removed with 8.3 because of reset caused by watchog
         Shutter[i].real_position = ShutterCalculatePosition(i);
-        AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Real %d, Pulsecount %d, Start %d"), Shutter[i].real_position,RtcSettings.pulse_counter[i], Shutter[i].start_position);
+        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Real %d, Pulsecount %d, Start %d"), Shutter[i].real_position,RtcSettings.pulse_counter[i], Shutter[i].start_position);
 
       }
       Shutter[i].direction = 0;
@@ -429,7 +429,7 @@ void ShutterDecellerateForStop(uint8_t i)
 }
 
 void ShutterPowerOff(uint8_t i) {
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR("SHT: Stop Shutter %d. Switchmode %d"), i,Shutter[i].switch_mode);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("SHT: Stop Shutter %d. Switchmode %d"), i,Shutter[i].switch_mode);
   ShutterDecellerateForStop(i);
   switch (Shutter[i].switch_mode) {
     case SHT_SWITCH:
@@ -520,14 +520,14 @@ void ShutterAllowPreStartProcedure(uint8_t i)
 {
 #ifdef USE_RULES
   uint32_t uptime_Local=0;
-  AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Delay Start. var%d <99>=<%s>, max10s?"),i+i, rules_vars[i]);
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Delay Start. var%d <99>=<%s>, max10s?"),i+i, rules_vars[i]);
   TasmotaGlobal.rules_flag.shutter_moving = 1;
   XdrvRulesProcess();
   uptime_Local = TasmotaGlobal.uptime;
   while (uptime_Local+10 > TasmotaGlobal.uptime && (String)rules_vars[i] == "99") {
     loop();
   }
-  AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Delay Start. Done"));
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Delay Start. Done"));
 #endif  // USE_RULES
 }
 
@@ -657,7 +657,7 @@ void ShutterRelayChanged(void)
          switch (powerstate_local) {
            case 1:
              ShutterStartInit(i, Shutter[i].lastdirection*-1 , Shutter[i].lastdirection == 1 ?  0 : Shutter[i].open_max);
-             AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Shtr%d Garage. NewTarget %d"), i, Shutter[i].target_position);
+             AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Shtr%d Garage. NewTarget %d"), i, Shutter[i].target_position);
            break;
            default:
             Shutter[i].target_position = Shutter[i].real_position;
@@ -665,7 +665,7 @@ void ShutterRelayChanged(void)
 
 
 			  } // switch (ShutterGlobal.position_mode)
-        AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Shtr%d, Target %ld, Powerstatelocal %d"), i+1, Shutter[i].target_position, powerstate_local);
+        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Shtr%d, Target %ld, Powerstatelocal %d"), i+1, Shutter[i].target_position, powerstate_local);
 		 } // if (manual_relays_changed)
   } // for (uint32_t i = 0; i < TasmotaGlobal.shutters_present; i++)
 }
@@ -760,12 +760,12 @@ void ShutterButtonHandler(void)
               Settings.shutter_button[i], shutter_index, Button.press_counter[i] , min_shutterbutton_press_counter, i);
             if ((button_index != i) && (Settings.shutter_button[i] & (1<<31)) && ((Settings.shutter_button[i] & 0x03) == shutter_index) && (i != button_index) && (Button.press_counter[i] < min_shutterbutton_press_counter)) {
               min_shutterbutton_press_counter = Button.press_counter[i];
-              AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: minShutterButtonPressCounter %d"), min_shutterbutton_press_counter);
+              AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: minShutterButtonPressCounter %d"), min_shutterbutton_press_counter);
             }
           }
           if (min_shutterbutton_press_counter == Button.press_counter[button_index]) {
             // simultaneous shutter button press detected
-            AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Simultanous press detected"));
+            AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Simultanous press detected"));
             press_index = Button.press_counter[button_index];
             for (uint32_t i = 0; i < MAX_KEYS; i++)
               if ((Settings.shutter_button[i] & (1<<31)) && ((Settings.shutter_button[i] & 0x03) != shutter_index))
@@ -871,7 +871,7 @@ void ShutterSetPosition(uint32_t device, uint32_t position)
 
 void ShutterToggle(bool dir)
 {
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR("SHT: Payload toggle: %d, i %d, dir %d"), XdrvMailbox.payload, XdrvMailbox.index, dir);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("SHT: Payload toggle: %d, i %d, dir %d"), XdrvMailbox.payload, XdrvMailbox.index, dir);
   if ((1 == XdrvMailbox.index) && (XdrvMailbox.payload != -99)) {
     XdrvMailbox.index = XdrvMailbox.payload;
   }
@@ -895,7 +895,7 @@ void ShutterToggle(bool dir)
 
 void CmndShutterOpen(void)
 {
-  //AddLog_P(LOG_LEVEL_DEBUG, PSTR("SHT: Payload open: %d, i %d"), XdrvMailbox.payload, XdrvMailbox.index);
+  //AddLog(LOG_LEVEL_DEBUG, PSTR("SHT: Payload open: %d, i %d"), XdrvMailbox.payload, XdrvMailbox.index);
   if ((1 == XdrvMailbox.index) && (XdrvMailbox.payload != -99)) {
     XdrvMailbox.index = XdrvMailbox.payload;
   }
@@ -918,7 +918,7 @@ void CmndShutterStopOpen(void)
 
 void CmndShutterClose(void)
 {
-  //AddLog_P(LOG_LEVEL_DEBUG, PSTR("SHT: Payload close: %d, i %d"), XdrvMailbox.payload, XdrvMailbox.index);
+  //AddLog(LOG_LEVEL_DEBUG, PSTR("SHT: Payload close: %d, i %d"), XdrvMailbox.payload, XdrvMailbox.index);
   if ((1 == XdrvMailbox.index) && (XdrvMailbox.payload != -99)) {
     XdrvMailbox.index = XdrvMailbox.payload;
   }
@@ -984,7 +984,7 @@ void CmndShutterStop(void)
       uint32_t i = XdrvMailbox.index -1;
       if (Shutter[i].direction != 0) {
 
-        AddLog_P(LOG_LEVEL_DEBUG, PSTR("SHT: Stop moving %d: dir: %d"), XdrvMailbox.index, Shutter[i].direction);
+        AddLog(LOG_LEVEL_DEBUG, PSTR("SHT: Stop moving %d: dir: %d"), XdrvMailbox.index, Shutter[i].direction);
         Shutter[i].target_position = Shutter[i].real_position;
       }
       if (XdrvMailbox.command)
@@ -1016,7 +1016,7 @@ void CmndShutterPosition(void)
     if (!(Settings.shutter_options[XdrvMailbox.index-1] & 2)) {
       uint32_t index = XdrvMailbox.index-1;
       //limit the payload
-      AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Pos. in: payload %s (%d), payload %d, idx %d, src %d"), XdrvMailbox.data , XdrvMailbox.data_len, XdrvMailbox.payload , XdrvMailbox.index, TasmotaGlobal.last_source );
+      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Pos. in: payload %s (%d), payload %d, idx %d, src %d"), XdrvMailbox.data , XdrvMailbox.data_len, XdrvMailbox.payload , XdrvMailbox.index, TasmotaGlobal.last_source );
 
       // value 0 with data_len > 0 can mean Open
       // special handling fo UP,DOWN,TOGGLE,STOP command comming with payload -99
@@ -1053,7 +1053,7 @@ void CmndShutterPosition(void)
         Shutter[index].target_position = ShutterPercentToRealPosition(target_pos_percent, index);
         //Shutter[i].accelerator[index] = ShutterGlobal.open_velocity_max / ((Shutter[i].motordelay[index] > 0) ? Shutter[i].motordelay[index] : 1);
         //Shutter[i].target_position[index] = XdrvMailbox.payload < 5 ?  Settings.shuttercoeff[2][index] * XdrvMailbox.payload : Settings.shuttercoeff[1][index] * XdrvMailbox.payload + Settings.shuttercoeff[0,index];
-        AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: lastsource %d:, real %d, target %d, payload %d"), TasmotaGlobal.last_source, Shutter[index].real_position ,Shutter[index].target_position,target_pos_percent);
+        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: lastsource %d:, real %d, target %d, payload %d"), TasmotaGlobal.last_source, Shutter[index].real_position ,Shutter[index].target_position,target_pos_percent);
       }
       if ( (target_pos_percent >= 0) && (target_pos_percent <= 100) && abs(Shutter[index].target_position - Shutter[index].real_position ) / Shutter[index].close_velocity > 2) {
         if (Settings.shutter_options[index] & 4) {
@@ -1090,7 +1090,7 @@ void CmndShutterPosition(void)
             case SHT_TIME_GARAGE:
               if (!ShutterGlobal.skip_relay_change) {
                 if (new_shutterdirection == Shutter[index].lastdirection) {
-                  AddLog_P(LOG_LEVEL_INFO, PSTR("SHT: Garage not move in this direction: %d"), Shutter[index].switch_mode == SHT_PULSE);
+                  AddLog(LOG_LEVEL_INFO, PSTR("SHT: Garage not move in this direction: %d"), Shutter[index].switch_mode == SHT_PULSE);
                   for (uint8_t k=0 ; k <= (uint8_t)(Shutter[index].switch_mode == SHT_PULSE) ; k++) {
                     ExecuteCommandPowerShutter(Settings.shutter_startrelay[index], 1, SRC_SHUTTER);
                     delay(500);
@@ -1400,7 +1400,7 @@ void CmndShutterPwmRange(void)
         }
         Settings.shutter_pwmrange[i][XdrvMailbox.index -1] = field;
       }
-      AddLog_P(LOG_LEVEL_DEBUG, PSTR("SHT: Shtr%d Init1. pwmmin %d, pwmmax %d"), XdrvMailbox.index , Settings.shutter_pwmrange[0][XdrvMailbox.index -1], Settings.shutter_pwmrange[1][XdrvMailbox.index -1]);
+      AddLog(LOG_LEVEL_DEBUG, PSTR("SHT: Shtr%d Init1. pwmmin %d, pwmmax %d"), XdrvMailbox.index , Settings.shutter_pwmrange[0][XdrvMailbox.index -1], Settings.shutter_pwmrange[1][XdrvMailbox.index -1]);
       ShutterInit();
       ResponseCmndIdxChar(XdrvMailbox.data);
     } else {
@@ -1433,7 +1433,7 @@ void CmndShutterCalibration(void)
       Settings.shutter_set50percent[XdrvMailbox.index -1] = 50;
       for (i = 0; i < 5; i++) {
         Settings.shuttercoeff[i][XdrvMailbox.index -1] = SHT_DIV_ROUND((uint32_t)messwerte[i] * 1000, messwerte[4]);
-        AddLog_P(LOG_LEVEL_DEBUG, PSTR("SHT: Shuttercoeff %d, i %d, Value %d, MeasuredValue %d"), i,XdrvMailbox.index -1,Settings.shuttercoeff[i][XdrvMailbox.index -1], messwerte[i]);
+        AddLog(LOG_LEVEL_DEBUG, PSTR("SHT: Shuttercoeff %d, i %d, Value %d, MeasuredValue %d"), i,XdrvMailbox.index -1,Settings.shuttercoeff[i][XdrvMailbox.index -1], messwerte[i]);
       }
       ShutterInit();
       ResponseCmndIdxChar(XdrvMailbox.data);
@@ -1514,7 +1514,7 @@ bool Xdrv27(uint8_t function)
         char stemp1[10];
         // extract the number of the relay that was switched and save for later in Update Position.
         ShutterGlobal.RelayCurrentMask = XdrvMailbox.index ^ ShutterGlobal.RelayOldMask;
-        AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Switched relay %d by %s"), ShutterGlobal.RelayCurrentMask,GetTextIndexed(stemp1, sizeof(stemp1), TasmotaGlobal.last_source, kCommandSource));
+        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Switched relay %d by %s"), ShutterGlobal.RelayCurrentMask,GetTextIndexed(stemp1, sizeof(stemp1), TasmotaGlobal.last_source, kCommandSource));
         ShutterRelayChanged();
         ShutterGlobal.RelayOldMask = XdrvMailbox.index;
       break;
@@ -1527,10 +1527,10 @@ bool Xdrv27(uint8_t function)
             }
             ShutterGlobal.RelayCurrentMask >>= 1;
           }
-          //AddLog_P(LOG_LEVEL_ERROR, PSTR("SHT: Skip relay change %d"), i+1);
+          //AddLog(LOG_LEVEL_ERROR, PSTR("SHT: Skip relay change %d"), i+1);
           result = true;
           ShutterGlobal.skip_relay_change = 0;
-          AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Skipping switch off relay %d"), i);
+          AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Skipping switch off relay %d"), i);
           ExecuteCommandPowerShutter(i+1, 0, SRC_SHUTTER);
         }
       break;

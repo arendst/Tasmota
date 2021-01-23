@@ -1289,7 +1289,7 @@ void DisplayInitDriver(void)
   }
 
 
-//  AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "Display model %d"), Settings.display_model);
+//  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "Display model %d"), Settings.display_model);
 
   if (Settings.display_model) {
     TasmotaGlobal.devices_present++;
@@ -1312,7 +1312,7 @@ void DisplaySetPower(void)
 {
   disp_power = bitRead(XdrvMailbox.index, disp_device -1);
 
-//AddLog_P(LOG_LEVEL_DEBUG, PSTR("DSP: Power %d"), disp_power);
+//AddLog(LOG_LEVEL_DEBUG, PSTR("DSP: Power %d"), disp_power);
 
   if (Settings.display_model) {
     if (!renderer) {
@@ -2176,7 +2176,7 @@ uint8_t vbutt=0;
           if (!(tbstate[tbut] & 1)) {
               // pressed
               tbstate[tbut] |= 1;
-              //AddLog_P(LOG_LEVEL_INFO, PSTR("tbut: %d pressed"), tbut);
+              //AddLog(LOG_LEVEL_INFO, PSTR("tbut: %d pressed"), tbut);
               Touch_MQTT(tbut, "BIB", tbstate[tbut] & 1);
           }
         }
@@ -2186,7 +2186,7 @@ uint8_t vbutt=0;
 
       rotconvert(&pLoc.x, &pLoc.y);
 
-      //AddLog_P(LOG_LEVEL_INFO, PSTR("touch %d - %d"), pLoc.x, pLoc.y);
+      //AddLog(LOG_LEVEL_INFO, PSTR("touch %d - %d"), pLoc.x, pLoc.y);
       // now must compare with defined buttons
       for (uint8_t count=0; count<MAX_TOUCH_BUTTONS; count++) {
         if (buttons[count] && !buttons[count]->vpower.disable) {
@@ -2233,7 +2233,7 @@ uint8_t vbutt=0;
         // released
         tbstate[tbut] &= 0xfe;
         Touch_MQTT(tbut, "BIB", tbstate[tbut] & 1);
-        //AddLog_P(LOG_LEVEL_INFO, PSTR("tbut: %d released"), tbut);
+        //AddLog(LOG_LEVEL_INFO, PSTR("tbut: %d released"), tbut);
       }
     }
 #endif

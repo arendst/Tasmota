@@ -1656,7 +1656,7 @@ void ZCLFrame::parseClusterSpecificCommand(Z_attribute_list& attr_list) {
   Z_Device & device = zigbee_devices.getShortAddr(_srcaddr);
   if ((device.debounce_endpoint != 0) && (device.debounce_endpoint == _srcendpoint) && (device.debounce_transact == _transact_seq)) {
     // this is a duplicate, drop the packet
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE "Discarding duplicate command from 0x%04X, endpoint %d"), _srcaddr, _srcendpoint);
+    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE "Discarding duplicate command from 0x%04X, endpoint %d"), _srcaddr, _srcendpoint);
   } else {
     // reset the duplicate marker, parse the packet normally, and set a timer to reset the marker later (which will discard any existing timer for the same device/endpoint)
     device.debounce_endpoint = _srcendpoint;

@@ -97,7 +97,7 @@ void BuzzerBeep(uint32_t count, uint32_t on, uint32_t off, uint32_t tune, uint32
     Buzzer.freq_mode = 0;
   }
 
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR("BUZ: %d(%d),%d,%d,0x%08X(0x%08X),%d"), count, Buzzer.count, on, off, tune, Buzzer.tune, Buzzer.freq_mode);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("BUZ: %d(%d),%d,%d,0x%08X(0x%08X),%d"), count, Buzzer.count, on, off, tune, Buzzer.tune, Buzzer.freq_mode);
 
   Buzzer.enable = (Buzzer.count > 0);
   if (Buzzer.enable) {

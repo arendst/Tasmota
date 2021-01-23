@@ -71,7 +71,7 @@ bool UdpDisconnect(void)
     // stop all
     WiFiUDP::stopAll();
 #endif  // !USE_DEVICE_GROUPS
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPNP D_MULTICAST_DISABLED));
+    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPNP D_MULTICAST_DISABLED));
     udp_connected = false;
   }
   return udp_connected;
@@ -87,18 +87,18 @@ bool UdpConnect(void)
       ip_addr_t addr = IPADDR4_INIT(INADDR_ANY);
       if (UdpCtx.listen(&addr, 1900)) {         // port 1900
         // OK
-        AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_UPNP D_MULTICAST_REJOINED));
+        AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_UPNP D_MULTICAST_REJOINED));
         udp_connected = true;
       }
 #endif  // ESP8266
 #ifdef ESP32
     if (PortUdp.beginMulticast(WiFi.localIP(), IPAddress(239,255,255,250), 1900)) {
-      AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_UPNP D_MULTICAST_REJOINED));
+      AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_UPNP D_MULTICAST_REJOINED));
       udp_connected = true;
 #endif  // ESP32
     }
     if (!udp_connected) {     // if connection failed
-      AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_UPNP D_MULTICAST_JOIN_FAILED));
+      AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_UPNP D_MULTICAST_JOIN_FAILED));
     }
   }
   return udp_connected;
@@ -120,7 +120,7 @@ void PollUdp(void)
       packet->buf[packet->len] = 0;   // add NULL at the end of the packet
       char * packet_buffer = (char*) &packet->buf;
       int32_t len = packet->len;
-      AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("UDP: Packet (%d)"), len);
+      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("UDP: Packet (%d)"), len);
 #endif  // ESP8266
 #ifdef ESP32
     while (uint32_t pack_len = PortUdp.parsePacket()) {
@@ -129,7 +129,7 @@ void PollUdp(void)
       int32_t len = PortUdp.read(packet_buffer, UDP_BUFFER_SIZE -1);
       packet_buffer[len] = 0;
       PortUdp.flush();
-      AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("UDP: Packet (%d/%d)"), len, pack_len);
+      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("UDP: Packet (%d/%d)"), len, pack_len);
 #endif  // ESP32
 
       // AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("\n%s"), packet_buffer);
@@ -175,7 +175,7 @@ void PollUdp(void)
 
 #ifdef USE_EMULATION_HUE
             if (!udp_proccessed && (EMUL_HUE == Settings.flag2.emulation)) {
-              AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("UDP: HUE"));
+              AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("UDP: HUE"));
               if ((strstr_P(packet_buffer, PSTR(":device:basic:1")) != nullptr) ||
                   (strstr_P(packet_buffer, UPNP_ROOTDEVICE) != nullptr) ||
                   (strstr_P(packet_buffer, SSDPSEARCH_ALL) != nullptr) ||

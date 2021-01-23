@@ -150,13 +150,13 @@ void SettingsErase(uint8_t type) {
       r1 = NvmErase("qpc");
       r2 = NvmErase("main");
       r3 = TfsDeleteFile(TASM_FILE_SETTINGS);
-      AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_ERASE " Tasmota data (%d,%d,%d)"), r1, r2, r3);
+      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_ERASE " Tasmota data (%d,%d,%d)"), r1, r2, r3);
       break;
     case 1:               // Reset 3 = SDK parameter area
     case 4:               // WIFI_FORCE_RF_CAL_ERASE = SDK parameter area
       r1 = esp_phy_erase_cal_data_in_nvs();
 //      r1 = NvmErase("cal_data");
-      AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_ERASE " PHY data (%d)"), r1);
+      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_ERASE " PHY data (%d)"), r1);
       break;
     case 3:               // QPC Reached = QPC, Tasmota and SDK parameter area (0x0F3xxx - 0x0FFFFF)
 //      nvs_flash_erase();  // Erase RTC, PHY, sta.mac, ap.sndchan, ap.mac, Tasmota etc.
@@ -164,9 +164,9 @@ void SettingsErase(uint8_t type) {
       r2 = NvmErase("main");
 //      r3 = esp_phy_erase_cal_data_in_nvs();
 //      r3 = NvmErase("cal_data");
-//      AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_ERASE " Tasmota (%d,%d) and PHY data (%d)"), r1, r2, r3);
+//      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_ERASE " Tasmota (%d,%d) and PHY data (%d)"), r1, r2, r3);
       r3 = TfsDeleteFile(TASM_FILE_SETTINGS);
-      AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_ERASE " Tasmota data (%d,%d,%d)"), r1, r2, r3);
+      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_ERASE " Tasmota data (%d,%d,%d)"), r1, r2, r3);
       break;
   }
 }
@@ -196,7 +196,7 @@ void QPCWrite(const void *pSettings, unsigned nSettingsLen) {
 void NvsInfo(void) {
   nvs_stats_t nvs_stats;
   nvs_get_stats(NULL, &nvs_stats);
-  AddLog_P(LOG_LEVEL_INFO, PSTR("NVS: Used %d/%d entries, NameSpaces %d"),
+  AddLog(LOG_LEVEL_INFO, PSTR("NVS: Used %d/%d entries, NameSpaces %d"),
     nvs_stats.used_entries, nvs_stats.total_entries, nvs_stats.namespace_count);
 }
 
@@ -240,7 +240,7 @@ uint8_t* EspFlashMmap(uint32_t address) {
   int32_t err = spi_flash_mmap(address, 5 * SPI_FLASH_MMU_PAGE_SIZE, SPI_FLASH_MMAP_DATA, (const void **)&data, &handle);
 
 /*
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR("DBG: Spi_flash_map %d"), err);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("DBG: Spi_flash_map %d"), err);
 
   spi_flash_mmap_dump();
 */
@@ -258,7 +258,7 @@ int32_t EspPartitionMmap(uint32_t action) {
     if (!partition) { return 0; }
     err = esp_partition_mmap(partition, 0, 4 * SPI_FLASH_MMU_PAGE_SIZE, SPI_FLASH_MMAP_DATA, (const void **)&TasmotaGlobal_mmap_data, &handle);
 
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR("DBG: Partition start 0x%08X, Partition end 0x%08X, Mmap data 0x%08X"), partition->address, partition->size, TasmotaGlobal_mmap_data);
+    AddLog(LOG_LEVEL_DEBUG, PSTR("DBG: Partition start 0x%08X, Partition end 0x%08X, Mmap data 0x%08X"), partition->address, partition->size, TasmotaGlobal_mmap_data);
 
   } else {
     spi_flash_munmap(handle);
@@ -407,7 +407,7 @@ uint8_t* FlashDirectAccess(void) {
   uint32_t address = FlashWriteStartSector() * SPI_FLASH_SEC_SIZE;
   uint8_t* data = EspFlashMmap(address);
 /*
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR("DBG: Flash start address 0x%08X, Mmap address 0x%08X"), address, data);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("DBG: Flash start address 0x%08X, Mmap address 0x%08X"), address, data);
 
   uint8_t buf[32];
   memcpy(buf, data, sizeof(buf));

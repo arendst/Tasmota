@@ -396,7 +396,7 @@ void RtcSecond(void)
     Rtc.standard_time = RuleToTime(Settings.tflag[0], RtcTime.year);
 
     // Do not use AddLog_P( here (interrupt routine) if syslog or mqttlog is enabled. UDP/TCP will force exception 9
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR("RTC: " D_UTC_TIME " %s, " D_DST_TIME " %s, " D_STD_TIME " %s"),
+    AddLog(LOG_LEVEL_DEBUG, PSTR("RTC: " D_UTC_TIME " %s, " D_DST_TIME " %s, " D_STD_TIME " %s"),
       GetDateAndTime(DT_UTC).c_str(), GetDateAndTime(DT_DST).c_str(), GetDateAndTime(DT_STD).c_str());
 
     if (Rtc.local_time < START_VALID_TIME) {  // 2016-01-01
@@ -411,7 +411,7 @@ void RtcSecond(void)
 
   if ((Rtc.utc_time > (2 * 60 * 60)) && (last_sync < Rtc.utc_time - (2 * 60 * 60))) {  // Every two hours a warning
     // Do not use AddLog_P( here (interrupt routine) if syslog or mqttlog is enabled. UDP/TCP will force exception 9
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR("RTC: Not synced"));
+    AddLog(LOG_LEVEL_DEBUG, PSTR("RTC: Not synced"));
     last_sync = Rtc.utc_time;
   }
 
@@ -476,7 +476,7 @@ void RtcSecond(void)
 void RtcSync(void) {
   Rtc.time_synced = true;
   RtcSecond();
-//  AddLog_P(LOG_LEVEL_DEBUG, PSTR("RTC: Synced"));
+//  AddLog(LOG_LEVEL_DEBUG, PSTR("RTC: Synced"));
 }
 
 void RtcSetTime(uint32_t epoch) {

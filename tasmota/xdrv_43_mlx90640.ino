@@ -413,7 +413,7 @@ void MLX90640HandleWebGuiResponse(void){
   WebGetArg("ul", tmp, sizeof(tmp));                  // update line
   if (strlen(tmp)) {
     uint8_t _line = atoi(tmp);
-    // AddLog_P(LOG_LEVEL_DEBUG, "MLX90640: send line %u", _line);
+    // AddLog(LOG_LEVEL_DEBUG, "MLX90640: send line %u", _line);
     float _buf[65];
     if(_line==0){_buf[0]=1000+MLX90640.Ta;} //ambient temperature modulation hack
     else{_buf[0]=(float)_line;}
@@ -431,9 +431,9 @@ void MLX90640HandleWebGuiResponse(void){
     uint32_t _poiNum = (_poi-(_poi%10000))/10000;
     MLX90640.pois[_poiNum*2] = (_poi%10000)/100;
     MLX90640.pois[(_poiNum*2)+1] = _poi%100;
-    // AddLog_P(LOG_LEVEL_DEBUG, PSTR("RAW: %u, POI-%u: x: %u, y: %u"),_poi,_poiNum,MLX90640.pois[_poiNum],MLX90640.pois[_poiNum+1]);
+    // AddLog(LOG_LEVEL_DEBUG, PSTR("RAW: %u, POI-%u: x: %u, y: %u"),_poi,_poiNum,MLX90640.pois[_poiNum],MLX90640.pois[_poiNum+1]);
     for(int i = 0;i<MLX90640_POI_NUM;i++){
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR("POI-%u: x: %u, y: %u"),i+1,MLX90640.pois[i*2],MLX90640.pois[(i*2)+1]);
+    AddLog(LOG_LEVEL_DEBUG, PSTR("POI-%u: x: %u, y: %u"),i+1,MLX90640.pois[i*2],MLX90640.pois[(i*2)+1]);
     }
     return;
   }
@@ -468,7 +468,7 @@ bool MLX90640Cmd(void){
           MLX90640.pois[_idx+1] = _coord%100;
           if(MLX90640.pois[_idx+1]>23) MLX90640.pois[_idx+1]=23;
         }
-        AddLog_P(LOG_LEVEL_INFO, PSTR("POI-%u = x:%u,y:%u"),XdrvMailbox.index,MLX90640.pois[_idx],MLX90640.pois[_idx+1]);
+        AddLog(LOG_LEVEL_INFO, PSTR("POI-%u = x:%u,y:%u"),XdrvMailbox.index,MLX90640.pois[_idx],MLX90640.pois[_idx+1]);
         Response_P(S_JSON_MLX90640_COMMAND_NVALUE, command, XdrvMailbox.payload);
         break;
       default:
@@ -494,10 +494,10 @@ void MLX90640init()
   if(!MLX90640.dumpedEE){
     status = MLX90640_DumpEE(MLX90640_ADDRESS, MLX90640.Frame);
     if (status != 0){
-      AddLog_P(LOG_LEVEL_INFO, PSTR("Failed to load system parameters"));
+      AddLog(LOG_LEVEL_INFO, PSTR("Failed to load system parameters"));
     }
     else {
-      AddLog_P(LOG_LEVEL_INFO, PSTR("MLX90640: started"));
+      AddLog(LOG_LEVEL_INFO, PSTR("MLX90640: started"));
       MLX90640.type = true;
     }
   MLX90640.params = new paramsMLX90640;
@@ -514,11 +514,11 @@ void MLX90640every100msec(){
 
     if(!MLX90640.extractedParams){
       static uint32_t _chunk = 0;
-      AddLog_P(LOG_LEVEL_DEBUG, PSTR("MLX90640: will read chunk: %u"), _chunk);
+      AddLog(LOG_LEVEL_DEBUG, PSTR("MLX90640: will read chunk: %u"), _chunk);
       _time = millis();
       status = MLX90640_ExtractParameters(MLX90640.Frame, MLX90640.params, _chunk);
       if (status == 0){
-        AddLog_P(LOG_LEVEL_DEBUG, PSTR("MLX90640: parameter received after: %u msec, status: %u"), TimePassedSince(_time), status);
+        AddLog(LOG_LEVEL_DEBUG, PSTR("MLX90640: parameter received after: %u msec, status: %u"), TimePassedSince(_time), status);
       }
       if (_chunk == 5) MLX90640.extractedParams = true;
       _chunk++;
@@ -529,12 +529,12 @@ void MLX90640every100msec(){
         case 0:
         if(MLX90640_SynchFrame(MLX90640_ADDRESS)!=0){
             _job=-1;
-            AddLog_P(LOG_LEVEL_DEBUG, PSTR("MLX90640: frame not ready"));
+            AddLog(LOG_LEVEL_DEBUG, PSTR("MLX90640: frame not ready"));
             break;
             }
         // _time = millis();
         status = MLX90640_GetFrameData(MLX90640_ADDRESS, MLX90640.Frame);
-        // AddLog_P(LOG_LEVEL_DEBUG, PSTR("MLX90640: got frame 0 in %u msecs, status: %i"), TimePassedSince(_time), status);
+        // AddLog(LOG_LEVEL_DEBUG, PSTR("MLX90640: got frame 0 in %u msecs, status: %i"), TimePassedSince(_time), status);
         break;
         case 1:
         MLX90640.Ta = MLX90640_GetTa(MLX90640.Frame, MLX90640.params);
@@ -542,7 +542,7 @@ void MLX90640every100msec(){
         case 2:
         // _time = millis();
         MLX90640_CalculateTo(MLX90640.Frame, MLX90640.params, 0.95f, MLX90640.Ta - 8, MLX90640.To, 0);
-        // AddLog_P(LOG_LEVEL_DEBUG, PSTR("MLX90640: calculated temperatures in %u msecs"), TimePassedSince(_time));
+        // AddLog(LOG_LEVEL_DEBUG, PSTR("MLX90640: calculated temperatures in %u msecs"), TimePassedSince(_time));
         break;
         case 5:
         if(MLX90640_SynchFrame(MLX90640_ADDRESS)!=0){
@@ -551,12 +551,12 @@ void MLX90640every100msec(){
         }
         // _time = millis();
         status = MLX90640_GetFrameData(MLX90640_ADDRESS, MLX90640.Frame);
-        // // AddLog_P(LOG_LEVEL_DEBUG, PSTR("MLX90640: got frame 1 in %u msecs, status: %i"), TimePassedSince(_time), status);
+        // // AddLog(LOG_LEVEL_DEBUG, PSTR("MLX90640: got frame 1 in %u msecs, status: %i"), TimePassedSince(_time), status);
         break;
         case 7:
         // _time = millis();
         MLX90640_CalculateTo(MLX90640.Frame, MLX90640.params, 0.95f, MLX90640.Ta - 8, MLX90640.To, 1);
-        // AddLog_P(LOG_LEVEL_DEBUG, PSTR("MLX90640: calculated temperatures in %u msecs"), TimePassedSince(_time));
+        // AddLog(LOG_LEVEL_DEBUG, PSTR("MLX90640: calculated temperatures in %u msecs"), TimePassedSince(_time));
         break;
         default:
         break;
@@ -580,8 +580,8 @@ void MLX90640Show(uint8_t json)
     char obj_tstr[FLOATSZ];
     dtostrfd(MLX90640.To[MLX90640.pois[i*2]+(MLX90640.pois[(i*2)+1]*32)], Settings.flag2.temperature_resolution, obj_tstr);
     ResponseAppend_P(PSTR(",%s"),obj_tstr);
-    // AddLog_P(LOG_LEVEL_DEBUG, PSTR("Array pos: %u"),MLX90640.pois[i*2]+(MLX90640.pois[(i*2)+1]*32));
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR("POI-%u: x: %u, y: %u"),i+1,MLX90640.pois[i*2],MLX90640.pois[(i*2)+1]);
+    // AddLog(LOG_LEVEL_DEBUG, PSTR("Array pos: %u"),MLX90640.pois[i*2]+(MLX90640.pois[(i*2)+1]*32));
+    AddLog(LOG_LEVEL_DEBUG, PSTR("POI-%u: x: %u, y: %u"),i+1,MLX90640.pois[i*2],MLX90640.pois[(i*2)+1]);
     }
     ResponseAppend_P(PSTR("]}"));
   }

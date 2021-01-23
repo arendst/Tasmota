@@ -324,7 +324,7 @@ class LightStateClass {
 
   public:
     LightStateClass() {
-      //AddLog_P(LOG_LEVEL_DEBUG_MORE, "LightStateClass::Constructor RGB raw (%d %d %d) HS (%d %d) bri (%d)", _r, _g, _b, _hue, _sat, _bri);
+      //AddLog(LOG_LEVEL_DEBUG_MORE, "LightStateClass::Constructor RGB raw (%d %d %d) HS (%d %d) bri (%d)", _r, _g, _b, _hue, _sat, _bri);
     }
 
     void setSubType(uint8_t sub_type) {
@@ -371,7 +371,7 @@ class LightStateClass {
         if (0 == _briCT) { _briCT = maxbri; }
       }
 #ifdef DEBUG_LIGHT
-      AddLog_P(LOG_LEVEL_DEBUG_MORE, "LightStateClass::setColorMode prev_cm (%d) req_cm (%d) new_cm (%d)", prev_cm, cm, _color_mode);
+      AddLog(LOG_LEVEL_DEBUG_MORE, "LightStateClass::setColorMode prev_cm (%d) req_cm (%d) new_cm (%d)", prev_cm, cm, _color_mode);
 #endif
       return prev_cm;
     }
@@ -484,7 +484,7 @@ class LightStateClass {
       setBriRGB(_color_mode & LCM_RGB ? bri : 0);
       setBriCT(_color_mode & LCM_CT ? bri : 0);
 #ifdef DEBUG_LIGHT
-      AddLog_P(LOG_LEVEL_DEBUG_MORE, "LightStateClass::setBri RGB raw (%d %d %d) HS (%d %d) bri (%d)", _r, _g, _b, _hue, _sat, _briRGB);
+      AddLog(LOG_LEVEL_DEBUG_MORE, "LightStateClass::setBri RGB raw (%d %d %d) HS (%d %d) bri (%d)", _r, _g, _b, _hue, _sat, _briRGB);
 #endif
     }
 
@@ -530,7 +530,7 @@ class LightStateClass {
         addCTMode();
       }
 #ifdef DEBUG_LIGHT
-      AddLog_P(LOG_LEVEL_DEBUG_MORE, "LightStateClass::setCT RGB raw (%d %d %d) HS (%d %d) briRGB (%d) briCT (%d) CT (%d)", _r, _g, _b, _hue, _sat, _briRGB, _briCT, _ct);
+      AddLog(LOG_LEVEL_DEBUG_MORE, "LightStateClass::setCT RGB raw (%d %d %d) HS (%d %d) briRGB (%d) briCT (%d) CT (%d)", _r, _g, _b, _hue, _sat, _briRGB, _briCT, _ct);
 #endif
     }
 
@@ -570,7 +570,7 @@ class LightStateClass {
         if (_color_mode & LCM_CT) { _briCT = free_range ? max : (sum > 255 ? 255 : sum); }
       }
 #ifdef DEBUG_LIGHT
-      AddLog_P(LOG_LEVEL_DEBUG_MORE, "LightStateClass::setCW CW (%d %d) CT (%d) briCT (%d)", c, w, _ct, _briCT);
+      AddLog(LOG_LEVEL_DEBUG_MORE, "LightStateClass::setCW CW (%d %d) CT (%d) briCT (%d)", c, w, _ct, _briCT);
 #endif
     }
 
@@ -579,7 +579,7 @@ class LightStateClass {
       uint16_t hue;
       uint8_t  sat;
 #ifdef DEBUG_LIGHT
-      AddLog_P(LOG_LEVEL_DEBUG_MORE, "LightStateClass::setRGB RGB input (%d %d %d)", r, g, b);
+      AddLog(LOG_LEVEL_DEBUG_MORE, "LightStateClass::setRGB RGB input (%d %d %d)", r, g, b);
 #endif
 
       uint32_t max = (r > g && r > b) ? r : (g > b) ? g : b;   // 0..255
@@ -607,7 +607,7 @@ class LightStateClass {
       _hue = hue;
       _sat = sat;
 #ifdef DEBUG_LIGHT
-      AddLog_P(LOG_LEVEL_DEBUG_MORE, "LightStateClass::setRGB RGB raw (%d %d %d) HS (%d %d) bri (%d)", _r, _g, _b, _hue, _sat, _briRGB);
+      AddLog(LOG_LEVEL_DEBUG_MORE, "LightStateClass::setRGB RGB raw (%d %d %d) HS (%d %d) bri (%d)", _r, _g, _b, _hue, _sat, _briRGB);
 #endif
       return max;
     }
@@ -622,8 +622,8 @@ class LightStateClass {
       _sat = sat;
       addRGBMode();
 #ifdef DEBUG_LIGHT
-      AddLog_P(LOG_LEVEL_DEBUG_MORE, "LightStateClass::setHS HS (%d %d) rgb (%d %d %d)", hue, sat, r, g, b);
-      AddLog_P(LOG_LEVEL_DEBUG_MORE, "LightStateClass::setHS RGB raw (%d %d %d) HS (%d %d) bri (%d)", _r, _g, _b, _hue, _sat, _briRGB);
+      AddLog(LOG_LEVEL_DEBUG_MORE, "LightStateClass::setHS HS (%d %d) rgb (%d %d %d)", hue, sat, r, g, b);
+      AddLog(LOG_LEVEL_DEBUG_MORE, "LightStateClass::setHS RGB raw (%d %d %d) HS (%d %d) bri (%d)", _r, _g, _b, _hue, _sat, _briRGB);
 #endif
   }
 
@@ -644,10 +644,10 @@ class LightStateClass {
     setRGB(channels[0], channels[1], channels[2]);
     setCW(channels[3], channels[4], true);  // free range for WC and WW
 #ifdef DEBUG_LIGHT
-    AddLog_P(LOG_LEVEL_DEBUG_MORE, "LightStateClass::setChannels (%d %d %d %d %d)",
+    AddLog(LOG_LEVEL_DEBUG_MORE, "LightStateClass::setChannels (%d %d %d %d %d)",
       channels[0], channels[1], channels[2], channels[3], channels[4]);
-    AddLog_P(LOG_LEVEL_DEBUG_MORE, "LightStateClass::setChannels CT (%d) briRGB (%d) briCT (%d)", _ct, _briRGB, _briCT);
-    AddLog_P(LOG_LEVEL_DEBUG_MORE, "LightStateClass::setChannels Actuals (%d %d %d %d %d)",
+    AddLog(LOG_LEVEL_DEBUG_MORE, "LightStateClass::setChannels CT (%d) briRGB (%d) briCT (%d)", _ct, _briRGB, _briCT);
+    AddLog(LOG_LEVEL_DEBUG_MORE, "LightStateClass::setChannels Actuals (%d %d %d %d %d)",
       _r, _g, _b, _wc, _ww);
 #endif
   }
@@ -704,9 +704,9 @@ public:
   void debugLogs() {
     uint8_t r,g,b,c,w;
     _state->getActualRGBCW(&r,&g,&b,&c,&w);
-    AddLog_P(LOG_LEVEL_DEBUG_MORE, "LightControllerClass::debugLogs rgb (%d %d %d) cw (%d %d)",
+    AddLog(LOG_LEVEL_DEBUG_MORE, "LightControllerClass::debugLogs rgb (%d %d %d) cw (%d %d)",
       r, g, b, c, w);
-    AddLog_P(LOG_LEVEL_DEBUG_MORE, "LightControllerClass::debugLogs lightCurrent (%d %d %d %d %d)",
+    AddLog(LOG_LEVEL_DEBUG_MORE, "LightControllerClass::debugLogs lightCurrent (%d %d %d %d %d)",
       Light.current_color[0], Light.current_color[1], Light.current_color[2],
       Light.current_color[3], Light.current_color[4]);
   }
@@ -714,10 +714,10 @@ public:
 
   void loadSettings() {
 #ifdef DEBUG_LIGHT
-    AddLog_P(LOG_LEVEL_DEBUG_MORE, "LightControllerClass::loadSettings Settings.light_color (%d %d %d %d %d - %d)",
+    AddLog(LOG_LEVEL_DEBUG_MORE, "LightControllerClass::loadSettings Settings.light_color (%d %d %d %d %d - %d)",
       Settings.light_color[0], Settings.light_color[1], Settings.light_color[2],
       Settings.light_color[3], Settings.light_color[4], Settings.light_dimmer);
-    AddLog_P(LOG_LEVEL_DEBUG_MORE, "LightControllerClass::loadSettings light_type/sub (%d %d)",
+    AddLog(LOG_LEVEL_DEBUG_MORE, "LightControllerClass::loadSettings light_type/sub (%d %d)",
       TasmotaGlobal.light_type, Light.subtype);
 #endif
     if (_pwm_multi_channels) {
@@ -892,7 +892,7 @@ public:
       }
     }
 #ifdef DEBUG_LIGHT
-    AddLog_P(LOG_LEVEL_DEBUG_MORE, "LightControllerClass::saveSettings Settings.light_color (%d %d %d %d %d - %d)",
+    AddLog(LOG_LEVEL_DEBUG_MORE, "LightControllerClass::saveSettings Settings.light_color (%d %d %d %d %d - %d)",
       Settings.light_color[0], Settings.light_color[1], Settings.light_color[2],
       Settings.light_color[3], Settings.light_color[4], Settings.light_dimmer);
 #endif
@@ -1074,7 +1074,7 @@ void LightCalcPWMRange(void) {
 
   Light.pwm_min = pwm_min;
   Light.pwm_max = pwm_max;
-  //AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("LightCalcPWMRange %d %d - %d %d"), Settings.dimmer_hw_min, Settings.dimmer_hw_max, Light.pwm_min, Light.pwm_max);
+  //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("LightCalcPWMRange %d %d - %d %d"), Settings.dimmer_hw_min, Settings.dimmer_hw_max, Light.pwm_min, Light.pwm_max);
 }
 
 void LightInit(void)
@@ -1189,7 +1189,7 @@ void LightUpdateColorMapping(void)
   Light.color_remap[4] = tmp[1-param];
 
   Light.update = true;
-  //AddLog_P(LOG_LEVEL_DEBUG, PSTR("%d colors: %d %d %d %d %d") ,Settings.param[P_RGB_REMAP], Light.color_remap[0],Light.color_remap[1],Light.color_remap[2],Light.color_remap[3],Light.color_remap[4]);
+  //AddLog(LOG_LEVEL_DEBUG, PSTR("%d colors: %d %d %d %d %d") ,Settings.param[P_RGB_REMAP], Light.color_remap[0],Light.color_remap[1],Light.color_remap[2],Light.color_remap[3],Light.color_remap[4]);
 }
 
 uint8_t LightGetDimmer(uint8_t dimmer) {
@@ -1306,7 +1306,7 @@ void LightSetSignal(uint16_t lo, uint16_t hi, uint16_t value)
 */
   if (Settings.flag.light_signal) {  // SetOption18 - Pair light signal with CO2 sensor
     uint16_t signal = changeUIntScale(value, lo, hi, 0, 255);  // 0..255
-//    AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "Light signal %d"), signal);
+//    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "Light signal %d"), signal);
     light_controller.changeRGB(signal, 255 - signal, 0, true);  // keep bri
     Settings.light_scheme = 0;
     if (0 == light_state.getBri()) {
@@ -1423,7 +1423,7 @@ void ResponseLightState(uint8_t append)
 
 void LightPreparePower(power_t channels = 0xFFFFFFFF) {    // 1 = only RGB, 2 = only CT, 3 = both RGB and CT
 #ifdef DEBUG_LIGHT
-  AddLog_P(LOG_LEVEL_DEBUG, "LightPreparePower power=%d Light.power=%d", TasmotaGlobal.power, Light.power);
+  AddLog(LOG_LEVEL_DEBUG, "LightPreparePower power=%d Light.power=%d", TasmotaGlobal.power, Light.power);
 #endif
   // If multi-channels, then we only switch off channels with a value of zero
   if (Light.pwm_multi_channels) {
@@ -1486,7 +1486,7 @@ void LightPreparePower(power_t channels = 0xFFFFFFFF) {    // 1 = only RGB, 2 = 
   }
 
 #ifdef DEBUG_LIGHT
-  AddLog_P(LOG_LEVEL_DEBUG, "LightPreparePower End power=%d Light.power=%d", TasmotaGlobal.power, Light.power);
+  AddLog(LOG_LEVEL_DEBUG, "LightPreparePower End power=%d Light.power=%d", TasmotaGlobal.power, Light.power);
 #endif
   Light.power = TasmotaGlobal.power >> (Light.device - 1);  // reset next state, works also with unlinked RGB/CT
   ResponseLightState(0);
@@ -1543,7 +1543,7 @@ void LightCycleColor(int8_t direction)
                        (Light.random > Light.wheel +128) ? 0 : 1;  // Increment or Decrement and roll-over
       Light.random = (Light.random & 0xFE) | my_dir;
 
-//      AddLog_P(LOG_LEVEL_DEBUG, PSTR("LGT: random %d"), Light.random);
+//      AddLog(LOG_LEVEL_DEBUG, PSTR("LGT: random %d"), Light.random);
     }
 //    direction = (Light.random < Light.wheel) ? -1 : 1;
     direction = (Light.random &0x01) ? 1 : -1;
@@ -1554,7 +1554,7 @@ void LightCycleColor(int8_t direction)
   Light.wheel += direction;
   uint16_t hue = changeUIntScale(Light.wheel, 0, 255, 0, 359);  // Scale to hue to keep amount of steps low (max 255 instead of 359)
 
-//  AddLog_P(LOG_LEVEL_DEBUG, PSTR("LGT: random %d, wheel %d, hue %d"), Light.random, Light.wheel, hue);
+//  AddLog(LOG_LEVEL_DEBUG, PSTR("LGT: random %d, wheel %d, hue %d"), Light.random, Light.wheel, hue);
 
   if (!Light.pwm_multi_channels) {
     uint8_t sat;

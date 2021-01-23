@@ -49,11 +49,11 @@
 
   Timing of an ALL OFF frame in clock cycles T=377µs, triggering on rising edge:
   IDLE-2222444422224444-IDLE
-  
+
   *********************
   * About this driver *
   *********************
-  
+
   This driver implements the reverse engineered protocol of the FTC532 touch controller.
   The protocol encodes the bitmap of touched keys in variable length pulses comprising a
   fixed length frame. These frames are then sent out continuously from the FTC532 chip.
@@ -67,7 +67,7 @@
   'snappiness' of touch reactions. Higher values will accumulate more samples in 50 ms steps
   before actually firing the rules trigger. It will eat a few bytes off your RAM and Flash
   budget, too.
-  
+
   Usage:
   ------
   This driver does not actually switch anything. It is a pure "rules" driver that solely emits
@@ -76,7 +76,7 @@
   e.g. "00" means "no key touched" while "03" means "keys 1 and 2 touched simultaneously".
   Selecting "FTC532" on a GPIO will awake the driver. This driver can only be selected once.
 
-  
+
 \*********************************************************************************************/
 
 #define XDRV_47                   47
@@ -180,7 +180,7 @@ void ftc532_update(void) {                          // Usually called every 50 m
       if (++Ftc532.key_cnt >= FTC532_DEBOUNCE) {
 #endif  // FTC532_DEBOUNCE > 1
 #ifdef DEBUG_FTC532
-        AddLog_P(LOG_LEVEL_DEBUG, PSTR("FTC: SAM=%04X KEY=%X OLD=%X INV=%u NOI=%u FRM=%u OK=%u TIME=%lu Pin=%u"),
+        AddLog(LOG_LEVEL_DEBUG, PSTR("FTC: SAM=%04X KEY=%X OLD=%X INV=%u NOI=%u FRM=%u OK=%u TIME=%lu Pin=%u"),
                  Ftc532.sample, Ftc532.keys, Ftc532.old_keys, Ftc532.e_inv, Ftc532.e_noise, Ftc532.e_frame,
                  Ftc532.valid, Ftc532.rxtime, Pin(GPIO_FTC532));
 #endif  // DEBUG_FTC532
@@ -197,7 +197,7 @@ void ftc532_update(void) {                          // Usually called every 50 m
 #ifdef DEBUG_FTC532
   else {
     ++Ftc532.e_inv;
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR("FTC: ILL SAM=%04X"), Ftc532.sample);
+    AddLog(LOG_LEVEL_DEBUG, PSTR("FTC: ILL SAM=%04X"), Ftc532.sample);
   }
 #endif  // DEBUG_FTC532
 }

@@ -136,7 +136,7 @@ double TaylorLog(double x)
   dtostrfd(log1, 8, log1s);
   char log2s[33];
   dtostrfd(totalValue, 8, log2s);
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR("input %s, log %s, taylor %s"), logxs, log1s, log2s);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("input %s, log %s, taylor %s"), logxs, log1s, log2s);
 */
   return totalValue;
 }

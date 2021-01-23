@@ -170,7 +170,7 @@ void ZigbeeHueDimmer(uint16_t shortaddr, uint8_t dimmer) {
 // CT
 void ZigbeeHueCT(uint16_t shortaddr, uint16_t ct) {
   if (ct > 0xFEFF) { ct = 0xFEFF; }
-  AddLog_P(LOG_LEVEL_INFO, PSTR("ZigbeeHueCT 0x%04X - %d"), shortaddr, ct);
+  AddLog(LOG_LEVEL_INFO, PSTR("ZigbeeHueCT 0x%04X - %d"), shortaddr, ct);
   char param[12];
   snprintf_P(param, sizeof(param), PSTR("%02X%02X0A00"), ct & 0xFF, ct >> 8);
   uint8_t colormode = 2;      // "ct"

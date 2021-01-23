@@ -1025,7 +1025,7 @@ void HAssAnnounceDeviceInfoAndStatusSensor(void)
 
   if (!Settings.flag.hass_discovery) {
     TasmotaGlobal.masterlog_level = 0;
-    AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_LOG "Home Assistant MQTT Discovery disabled."));
+    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_LOG "Home Assistant MQTT Discovery disabled."));
   }
 }
 

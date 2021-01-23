@@ -190,7 +190,7 @@ void IrReceiveCheck(void)
       Uint64toHex(results.value, hvalue, 32);  // UNKNOWN is always 32 bits hash
     }
 
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_IRR "RawLen %d, Overflow %d, Bits %d, Value 0x%s, Decode %d"),
+    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_IRR "RawLen %d, Overflow %d, Bits %d, Value 0x%s, Decode %d"),
               results.rawlen, results.overflow, results.bits, hvalue, results.decode_type);
 
     unsigned long now = millis();

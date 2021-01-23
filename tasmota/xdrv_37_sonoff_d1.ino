@@ -50,7 +50,7 @@ void SonoffD1Received(void)
   if (action != SnfD1.power) {
     SnfD1.power = action;
 
-//    AddLog_P(LOG_LEVEL_DEBUG, PSTR("SD1: Remote power (%d, %d)"), SnfD1.power, SnfD1.dimmer);
+//    AddLog(LOG_LEVEL_DEBUG, PSTR("SD1: Remote power (%d, %d)"), SnfD1.power, SnfD1.dimmer);
 
     ExecuteCommandPower(1, action, SRC_SWITCH);
   }
@@ -59,7 +59,7 @@ void SonoffD1Received(void)
   if (dimmer != SnfD1.dimmer) {
     SnfD1.dimmer = dimmer;
 
-//    AddLog_P(LOG_LEVEL_DEBUG, PSTR("SD1: Remote dimmer (%d, %d)"), SnfD1.power, SnfD1.dimmer);
+//    AddLog(LOG_LEVEL_DEBUG, PSTR("SD1: Remote dimmer (%d, %d)"), SnfD1.power, SnfD1.dimmer);
 
     char scmnd[20];
     snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_DIMMER " %d"), SnfD1.dimmer);
@@ -137,7 +137,7 @@ bool SonoffD1SendPower(void)
   if (action != SnfD1.power) {
     SnfD1.power = action;
 
-//    AddLog_P(LOG_LEVEL_DEBUG, PSTR("SD1: Tasmota power (%d, %d)"), SnfD1.power, SnfD1.dimmer);
+//    AddLog(LOG_LEVEL_DEBUG, PSTR("SD1: Tasmota power (%d, %d)"), SnfD1.power, SnfD1.dimmer);
 
     SonoffD1Send();
   }
@@ -152,7 +152,7 @@ bool SonoffD1SendDimmer(void)
   if (dimmer != SnfD1.dimmer) {
     SnfD1.dimmer = dimmer;
 
-//    AddLog_P(LOG_LEVEL_DEBUG, PSTR("SD1: Tasmota dimmer (%d, %d)"), SnfD1.power, SnfD1.dimmer);
+//    AddLog(LOG_LEVEL_DEBUG, PSTR("SD1: Tasmota dimmer (%d, %d)"), SnfD1.power, SnfD1.dimmer);
 
     SonoffD1Send();
   }
