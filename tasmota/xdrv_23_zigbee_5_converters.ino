@@ -743,7 +743,7 @@ public:
     if (Settings.flag3.tuya_serial_mqtt_publish) {
       MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR(D_RSLT_SENSOR));
     } else {
-      AddLogZ_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE "%s"), TasmotaGlobal.mqtt_data);
+      AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE "%s"), TasmotaGlobal.mqtt_data);
     }
   }
 
@@ -1348,7 +1348,7 @@ void ZCLFrame::computeSyntheticAttributes(Z_attribute_list& attr_list) {
                 brightness = changeUIntScale(light.getDimmer(), 0, 254, 0, 255);   // range is 0..255
               }
             }
-            
+
             const Z_attribute * attr_hue = attr_list.findAttribute(0x0300, 0x0000);
             const Z_attribute * attr_sat = attr_list.findAttribute(0x0300, 0x0001);
             const Z_attribute * attr_x   = attr_list.findAttribute(0x0300, 0x0003);

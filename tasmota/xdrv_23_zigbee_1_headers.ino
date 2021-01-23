@@ -133,16 +133,4 @@ uint32_t parseHex(const char **data, size_t max_len = 8) {
   return ret;
 }
 
-// Since v9.2.0.2 Log buffer was reduced from 700 bytes to 120. This version is specific to Zigbee and restores the 700 bytes limit
-void AddLogZ_P(uint32_t loglevel, PGM_P formatP, ...) {
-  char log_data[MAX_LOGSZ];
-
-  va_list arg;
-  va_start(arg, formatP);
-  vsnprintf_P(log_data, sizeof(log_data), formatP, arg);
-  va_end(arg);
-
-  AddLogData(loglevel, log_data);
-}
-
 #endif // USE_ZIGBEE
