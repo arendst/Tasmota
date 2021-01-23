@@ -34,7 +34,6 @@ rtc better sync
 #include <AXP192.h>
 #include <MPU6886.h>
 #include <BM8563_RTC.h>
-#include <i2c_bus.h>
 #include <soc/rtc.h>
 
 #define XDRV_84          84
