@@ -161,7 +161,7 @@ void IrReceiveInit(void)
   irrecv->setUnknownThreshold(Settings.param[P_IR_UNKNOW_THRESHOLD]);
   irrecv->enableIRIn();                  // Start the receiver
 
-  //  AddLog_P(LOG_LEVEL_DEBUG, PSTR("IrReceive initialized"));
+  //  AddLog(LOG_LEVEL_DEBUG, PSTR("IrReceive initialized"));
 }
 
 void IrReceiveCheck(void)
@@ -293,7 +293,7 @@ uint32_t IrRemoteCmndIrSendJson(void)
 
   char dvalue[64];
   char hvalue[20];
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR("IRS: protocol_text %s, protocol %s, bits %d, data %s (0x%s), repeat %d, protocol_code %d"),
+  AddLog(LOG_LEVEL_DEBUG, PSTR("IRS: protocol_text %s, protocol %s, bits %d, data %s (0x%s), repeat %d, protocol_code %d"),
     protocol_text, protocol, bits, ulltoa(data, dvalue, 10), Uint64toHex(data, hvalue, bits), repeat, protocol_code);
 
 #ifdef USE_IR_RECEIVE

@@ -366,7 +366,7 @@ miel_hvac_parse(struct miel_hvac_softc *sc, uint8_t byte)
 
 	case MIEL_HVAC_P_MIDDLE1:
 		if (byte != MIEL_HVAC_H_MIDDLE1) {
-			AddLog_P(LOG_LEVEL_DEBUG, PSTR(MIEL_HVAC_LOGNAME
+			AddLog(LOG_LEVEL_DEBUG, PSTR(MIEL_HVAC_LOGNAME
 			   ": parse state MIDDLE1 expected %02x got %02x"
 			   ", restarting"), MIEL_HVAC_H_MIDDLE1, byte);
 			return (MIEL_HVAC_P_START);
@@ -377,7 +377,7 @@ miel_hvac_parse(struct miel_hvac_softc *sc, uint8_t byte)
 
 	case MIEL_HVAC_P_MIDDLE2:
 		if (byte != MIEL_HVAC_H_MIDDLE2) {
-			AddLog_P(LOG_LEVEL_DEBUG, PSTR(MIEL_HVAC_LOGNAME
+			AddLog(LOG_LEVEL_DEBUG, PSTR(MIEL_HVAC_LOGNAME
 			   ": parse state MIDDLE2 expected %02x got %02x"
 			   ", restarting"), MIEL_HVAC_H_MIDDLE2, byte);
 			return (MIEL_HVAC_P_START);
@@ -388,7 +388,7 @@ miel_hvac_parse(struct miel_hvac_softc *sc, uint8_t byte)
 
 	case MIEL_HVAC_P_LEN:
 		if (byte == 0) {
-			AddLog_P(LOG_LEVEL_DEBUG, PSTR(MIEL_HVAC_LOGNAME
+			AddLog(LOG_LEVEL_DEBUG, PSTR(MIEL_HVAC_LOGNAME
 			    ": skipping 0 byte message type 0x%02x"),
 			    p->p_type);
 			return (MIEL_HVAC_P_SKIP_CKSUM);
@@ -403,14 +403,14 @@ miel_hvac_parse(struct miel_hvac_softc *sc, uint8_t byte)
 		case MIEL_HVAC_H_TYPE_UPDATED:
 			break;
 		default:
-			AddLog_P(LOG_LEVEL_DEBUG, PSTR(MIEL_HVAC_LOGNAME
+			AddLog(LOG_LEVEL_DEBUG, PSTR(MIEL_HVAC_LOGNAME
 			    ": skipping unknown message type 0x%02x"),
 			    p->p_type);
 			return (MIEL_HVAC_P_SKIP);
 		}
 
 		if (byte > sizeof(p->p_data)) {
-			AddLog_P(LOG_LEVEL_DEBUG, PSTR(MIEL_HVAC_LOGNAME
+			AddLog(LOG_LEVEL_DEBUG, PSTR(MIEL_HVAC_LOGNAME
 			    ": skipping %u data bytes of message type 0x%02x"),
 			    p->p_len, p->p_type);
 			return (MIEL_HVAC_P_SKIP);
@@ -427,7 +427,7 @@ miel_hvac_parse(struct miel_hvac_softc *sc, uint8_t byte)
 
 	case MIEL_HVAC_P_CKSUM:
 		if (miel_hvac_cksum_fini(p->p_sum) != byte) {
-			AddLog_P(LOG_LEVEL_DEBUG, PSTR(MIEL_HVAC_LOGNAME
+			AddLog(LOG_LEVEL_DEBUG, PSTR(MIEL_HVAC_LOGNAME
 			    ": checksum failed, restarting"));
 			return (MIEL_HVAC_P_START);
 		}

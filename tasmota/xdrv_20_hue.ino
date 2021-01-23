@@ -222,7 +222,6 @@ void HueRespondToMSearch(void)
   } else {
     snprintf_P(message, sizeof(message), PSTR(D_FAILED_TO_SEND_RESPONSE));
   }
-  // Do not use AddLog_P( here (interrupt routine) if syslog or mqttlog is enabled. UDP/TCP will force exception 9
   AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPNP D_HUE " %s " D_TO " %s:%d"),
     message, udp_remote_ip.toString().c_str(), udp_remote_port);
 }
@@ -1007,7 +1006,7 @@ void HueGroups(String *path)
  */
   String response(F("{}"));
   uint8_t maxhue = (TasmotaGlobal.devices_present > MAX_HUE_DEVICES) ? MAX_HUE_DEVICES : TasmotaGlobal.devices_present;
-  //AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_HTTP D_HUE " HueGroups (%s)"), path->c_str());
+  //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_HTTP D_HUE " HueGroups (%s)"), path->c_str());
 
   if (path->endsWith(F("/0"))) {
     UnishoxStrings msg(HUE_LIGHTS);

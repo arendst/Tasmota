@@ -446,7 +446,7 @@ uint32_t IrRemoteCmndIrHvacJson(void)
   if (val = root[PSTR(D_JSON_IRHVAC_SWINGV)]) { state.swingv = IRac::strToSwingV(val.getStr()); }
   if (val = root[PSTR(D_JSON_IRHVAC_SWINGH)]) { state.swingh = IRac::strToSwingH(val.getStr()); }
   state.degrees = root.getFloat(PSTR(D_JSON_IRHVAC_TEMP), state.degrees);
-  // AddLog_P(LOG_LEVEL_DEBUG, PSTR("model %d, mode %d, fanspeed %d, swingv %d, swingh %d"),
+  // AddLog(LOG_LEVEL_DEBUG, PSTR("model %d, mode %d, fanspeed %d, swingv %d, swingh %d"),
   //             state.model, state.mode, state.fanspeed, state.swingv, state.swingh);
 
   // if and how we should handle the state for IRremote
@@ -532,7 +532,7 @@ uint32_t IrRemoteCmndIrSendJson(void)
 
   char dvalue[32];
   char hvalue[32];
-  // AddLog_P(LOG_LEVEL_DEBUG, PSTR("IRS: protocol %d, bits %d, data 0x%s (%s), repeat %d"),
+  // AddLog(LOG_LEVEL_DEBUG, PSTR("IRS: protocol %d, bits %d, data 0x%s (%s), repeat %d"),
   //   protocol, bits, ulltoa(data, dvalue, 10), Uint64toHex(data, hvalue, bits), repeat);
 
   if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->disableIRIn(); }
@@ -617,7 +617,7 @@ uint32_t IrRemoteSendRawFormatted(char ** pp, uint32_t count, uint32_t repeat) {
     }
     if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->disableIRIn(); }
     for (uint32_t r = 0; r <= repeat; r++) {
-      // AddLog_P(LOG_LEVEL_DEBUG, PSTR("sendRaw count=%d, space=%d, mark=%d, freq=%d"), count, space, mark, freq);
+      // AddLog(LOG_LEVEL_DEBUG, PSTR("sendRaw count=%d, space=%d, mark=%d, freq=%d"), count, space, mark, freq);
       irsend->sendRaw(raw_array, i, freq);
       if (r < repeat) {         // if it's not the last message
         irsend->space(40000);   // since we don't know the inter-message gap, place an arbitrary 40ms gap
@@ -644,7 +644,7 @@ uint32_t IrRemoteSendRawFormatted(char ** pp, uint32_t count, uint32_t repeat) {
     raw_array[i++] = parm[2];                     // Trailing mark
     if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->disableIRIn(); }
     for (uint32_t r = 0; r <= repeat; r++) {
-      // AddLog_P(LOG_LEVEL_DEBUG, PSTR("sendRaw %d %d %d %d %d %d"), raw_array[0], raw_array[1], raw_array[2], raw_array[3], raw_array[4], raw_array[5]);
+      // AddLog(LOG_LEVEL_DEBUG, PSTR("sendRaw %d %d %d %d %d %d"), raw_array[0], raw_array[1], raw_array[2], raw_array[3], raw_array[4], raw_array[5]);
       irsend->sendRaw(raw_array, i, freq);
       if (r < repeat) {         // if it's not the last message
         irsend->space(inter_message);   // since we don't know the inter-message gap, place an arbitrary 40ms gap
@@ -710,13 +710,13 @@ uint32_t IrRemoteSendRawStandard(char ** pp, uint16_t freq, uint32_t count, uint
   } else {
     count++;
   }
-  // AddLog_P(LOG_LEVEL_DEBUG, PSTR("IrRemoteSendRawStandard: count_1 = %d"), count);
+  // AddLog(LOG_LEVEL_DEBUG, PSTR("IrRemoteSendRawStandard: count_1 = %d"), count);
   arr = (uint16_t*) malloc(count * sizeof(uint16_t));
   if (nullptr == arr) { return IE_MEMORY; }
 
   count = IrRemoteParseRawCompact(*pp, arr, count);
-  // AddLog_P(LOG_LEVEL_DEBUG, PSTR("IrRemoteSendRawStandard: count_2 = %d"), count);
-  // AddLog_P(LOG_LEVEL_DEBUG, PSTR("Arr %d %d %d %d %d %d %d %d"), arr[0], arr[1], arr[2], arr[3], arr[4], arr[5], arr[6], arr[7]);
+  // AddLog(LOG_LEVEL_DEBUG, PSTR("IrRemoteSendRawStandard: count_2 = %d"), count);
+  // AddLog(LOG_LEVEL_DEBUG, PSTR("Arr %d %d %d %d %d %d %d %d"), arr[0], arr[1], arr[2], arr[3], arr[4], arr[5], arr[6], arr[7]);
   if (0 == count) { return IE_INVALID_RAWDATA; }
 
   if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->disableIRIn(); }

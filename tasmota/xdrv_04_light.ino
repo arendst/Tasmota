@@ -1696,7 +1696,7 @@ void LightAnimate(void)
     // Apply power modifiers to Light.new_color
     LightApplyPower(Light.new_color, Light.power);
 
-    // AddLog_P(LOG_LEVEL_INFO, PSTR("last_color (%02X%02X%02X%02X%02X) new_color (%02X%02X%02X%02X%02X) power %d"),
+    // AddLog(LOG_LEVEL_INFO, PSTR("last_color (%02X%02X%02X%02X%02X) new_color (%02X%02X%02X%02X%02X) power %d"),
     // Light.last_color[0], Light.last_color[1], Light.last_color[2], Light.last_color[3], Light.last_color[4],
     // Light.new_color[0], Light.new_color[1], Light.new_color[2], Light.new_color[3], Light.new_color[4],
     // Light.power
@@ -1724,9 +1724,9 @@ void LightAnimate(void)
       if (Light.pwm_multi_channels) {
         calcGammaMultiChannels(cur_col_10);
       } else {
-        // AddLog_P(LOG_LEVEL_INFO, PSTR(">>> calcGammaBulbs In  %03X,%03X,%03X,%03X,%03X"), cur_col_10[0], cur_col_10[1], cur_col_10[2], cur_col_10[3], cur_col_10[4]);
+        // AddLog(LOG_LEVEL_INFO, PSTR(">>> calcGammaBulbs In  %03X,%03X,%03X,%03X,%03X"), cur_col_10[0], cur_col_10[1], cur_col_10[2], cur_col_10[3], cur_col_10[4]);
         rgbwwtable_applied_white = calcGammaBulbs(cur_col_10);     // true means that one PWM channel is used for CT
-        // AddLog_P(LOG_LEVEL_INFO, PSTR(">>> calcGammaBulbs Out %03X,%03X,%03X,%03X,%03X"), cur_col_10[0], cur_col_10[1], cur_col_10[2], cur_col_10[3], cur_col_10[4]);
+        // AddLog(LOG_LEVEL_INFO, PSTR(">>> calcGammaBulbs Out %03X,%03X,%03X,%03X,%03X"), cur_col_10[0], cur_col_10[1], cur_col_10[2], cur_col_10[3], cur_col_10[4]);
       }
 
       // Apply RGBWWTable only if not Settings.flag4.white_blend_mode
@@ -1768,7 +1768,7 @@ void LightAnimate(void)
     }
     if (Light.fade_running) {
       if (LightApplyFade()) {
-        // AddLog_P(LOG_LEVEL_INFO, PSTR("LightApplyFade %d %d %d %d %d"),
+        // AddLog(LOG_LEVEL_INFO, PSTR("LightApplyFade %d %d %d %d %d"),
         //   Light.fade_cur_10[0], Light.fade_cur_10[1], Light.fade_cur_10[2], Light.fade_cur_10[3], Light.fade_cur_10[4]);
 
         LightSetOutputs(Light.fade_cur_10);
@@ -1854,7 +1854,7 @@ bool LightApplyFade(void) {   // did the value chanegd and needs to be applied
       if (Settings.save_data) {
         // Also postpone the save_data for the duration of the Fade (in seconds)
         uint32_t delay_seconds = 1 + (Light.fade_duration + 999) / 1000;   // add one more second
-        // AddLog_P(LOG_LEVEL_INFO, PSTR("delay_seconds %d, save_data_counter %d"), delay_seconds, TasmotaGlobal.save_data_counter);
+        // AddLog(LOG_LEVEL_INFO, PSTR("delay_seconds %d, save_data_counter %d"), delay_seconds, TasmotaGlobal.save_data_counter);
         if (TasmotaGlobal.save_data_counter < delay_seconds) {
           TasmotaGlobal.save_data_counter = delay_seconds;      // pospone
         }
@@ -1904,7 +1904,7 @@ void LightApplyPower(uint8_t new_color[LST_MAX], power_t power) {
       }
     }
     // #ifdef DEBUG_LIGHT
-    // AddLog_P(LOG_LEVEL_DEBUG_MORE, "Animate>> Light.power=%d Light.new_color=[%d,%d,%d,%d,%d]",
+    // AddLog(LOG_LEVEL_DEBUG_MORE, "Animate>> Light.power=%d Light.new_color=[%d,%d,%d,%d,%d]",
     //   Light.power, Light.new_color[0], Light.new_color[1], Light.new_color[2],
     //   Light.new_color[3], Light.new_color[4]);
     // #endif
@@ -1930,7 +1930,7 @@ void LightSetOutputs(const uint16_t *cur_col_10) {
   if (TasmotaGlobal.light_type < LT_PWM6) {   // only for direct PWM lights, not for Tuya, Armtronix...
     for (uint32_t i = 0; i < (Light.subtype - Light.pwm_offset); i++) {
       if (PinUsed(GPIO_PWM1, i)) {
-        //AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION "Cur_Col%d 10 bits %d"), i, cur_col_10[i]);
+        //AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION "Cur_Col%d 10 bits %d"), i, cur_col_10[i]);
         uint16_t cur_col = cur_col_10[i + Light.pwm_offset];
         if (!isChannelCT(i)) {   // if CT don't use pwm_min and pwm_max
           cur_col = cur_col > 0 ? changeUIntScale(cur_col, 0, Settings.pwm_range, Light.pwm_min, Light.pwm_max) : 0;   // shrink to the range of pwm_min..pwm_max
@@ -1942,7 +1942,7 @@ void LightSetOutputs(const uint16_t *cur_col_10) {
     }
   }
 //  char msg[24];
-//  AddLog_P(LOG_LEVEL_DEBUG, PSTR("LGT: Channels %s"), ToHex_P((const unsigned char *)cur_col_10, 10, msg, sizeof(msg)));
+//  AddLog(LOG_LEVEL_DEBUG, PSTR("LGT: Channels %s"), ToHex_P((const unsigned char *)cur_col_10, 10, msg, sizeof(msg)));
 
   // Some devices need scaled RGB like Sonoff L1
   uint32_t max = (cur_col_10[0] > cur_col_10[1] && cur_col_10[0] > cur_col_10[2]) ? cur_col_10[0] : (cur_col_10[1] > cur_col_10[2]) ? cur_col_10[1] : cur_col_10[2];   // 0..1023
@@ -1950,7 +1950,7 @@ void LightSetOutputs(const uint16_t *cur_col_10) {
   for (uint32_t i = 0; i < 3; i++) {
     scale_col[i] = (0 == max) ? 255 : changeUIntScale(cur_col_10[i], 0, max, 0, 255);
   }
-//  AddLog_P(LOG_LEVEL_DEBUG, PSTR("LGT: CurCol %03X %03X %03X, ScaleCol %02X %02X %02X, Max %02X"),
+//  AddLog(LOG_LEVEL_DEBUG, PSTR("LGT: CurCol %03X %03X %03X, ScaleCol %02X %02X %02X, Max %02X"),
 //    cur_col_10[0], cur_col_10[1], cur_col_10[2], scale_col[0], scale_col[1], scale_col[2], max);
 
   uint8_t cur_col[LST_MAX];
@@ -2110,10 +2110,10 @@ bool calcGammaBulbs(uint16_t cur_col_10[5]) {
     calcGammaBulb5Channels_8(*(pivot+1), to10);
 
     vct_pivot_t   *pivot1 = pivot + 1;
-    // AddLog_P(LOG_LEVEL_INFO, PSTR("+++ from_ct %d, to_ct %d [%03X,%03X,%03X,%03X,%03X] - [%03X,%03X,%03X,%03X,%03X]"),
+    // AddLog(LOG_LEVEL_INFO, PSTR("+++ from_ct %d, to_ct %d [%03X,%03X,%03X,%03X,%03X] - [%03X,%03X,%03X,%03X,%03X]"),
     //           *from_ct, *(from_ct+1), (*pivot)[0], (*pivot)[1], (*pivot)[2], (*pivot)[3], (*pivot)[4],
     //           (*pivot1)[0], (*pivot1)[1], (*pivot1)[2], (*pivot1)[3], (*pivot1)[4]);
-    // AddLog_P(LOG_LEVEL_INFO, PSTR("+++ from10 [%03X,%03X,%03X,%03X,%03X] - to 10 [%03X,%03X,%03X,%03X,%03X]"),
+    // AddLog(LOG_LEVEL_INFO, PSTR("+++ from10 [%03X,%03X,%03X,%03X,%03X] - to 10 [%03X,%03X,%03X,%03X,%03X]"),
     //           from10[0],from10[0],from10[0],from10[0],from10[4],
     //           to10[0],to10[0],to10[0],to10[0],to10[4]);
 
