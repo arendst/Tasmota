@@ -3,7 +3,14 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [9.2.0.3]
+## [9.2.0.4]
+### Added
+- Function ``AddLog`` to provide logging for up to 128 (LOGSZ) characters to save stack space
+
+### Changed
+- Maximum chars in ``AddLog_P`` logging restored from 128 to 700 (MAX_LOGSZ) to solve broken error messages
+
+## [9.2.0.3] 20210122
 ### Added
 - Support for time proportioned (``#define USE_TIMEPROP``) and optional PID (``#define USE_PID``) relay control (#10412)
 - Support rotary encoder on Shelly Dimmer (#10407)
@@ -55,7 +62,7 @@ All notable changes to this project will be documented in this file.
 - Replaced RA8876 GPIO selection from ``SPI CS`` by ``RA8876 CS``
 
 ### Changed
-- Maximum chars in AddLog_P logging reduced from 700 to 128 (LOGSZ) to enhance stability
+- Maximum chars in ``AddLog_P`` logging reduced from 700 to 128 (LOGSZ) to enhance stability
 - Disabled ``USE_LIGHT`` light support for ZBBridge saving 17.6kB (#10374)
 
 ## [9.2.0.1] 20201229

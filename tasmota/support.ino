@@ -2204,8 +2204,8 @@ void AddLogData(uint32_t loglevel, const char* log_data) {
   }
 }
 
-void AddLog_P(uint32_t loglevel, PGM_P formatP, ...)
-{
+void AddLog(uint32_t loglevel, PGM_P formatP, ...) {
+  // To save stack space support logging for max text length of 128 characters
   char log_data[LOGSZ +4];
 
   va_list arg;
@@ -2219,9 +2219,21 @@ void AddLog_P(uint32_t loglevel, PGM_P formatP, ...)
   static uint32_t max_len = 0;
   if (len > max_len) {
     max_len = len;
-    Serial.printf("PRF: AddLog_P %d\n", max_len);
+    Serial.printf("PRF: AddLog %d\n", max_len);
   }
 #endif
+
+  AddLogData(loglevel, log_data);
+}
+
+void AddLog_P(uint32_t loglevel, PGM_P formatP, ...) {
+  // Use more stack space to support logging for max text length of 700 characters
+  char log_data[MAX_LOGSZ];
+
+  va_list arg;
+  va_start(arg, formatP);
+  uint32_t len = vsnprintf_P(log_data, sizeof(log_data), formatP, arg);
+  va_end(arg);
 
   AddLogData(loglevel, log_data);
 }
@@ -2234,15 +2246,6 @@ void AddLog_Debug(PGM_P formatP, ...)
   va_start(arg, formatP);
   uint32_t len = vsnprintf_P(log_data, sizeof(log_data), formatP, arg);
   va_end(arg);
-
-#ifdef DEBUG_TASMOTA_CORE
-  // Profile max_len
-  static uint32_t max_len = 0;
-  if (len > max_len) {
-    max_len = len;
-    Serial.printf("PRF: AddLog_Debug %d\n", max_len);
-  }
-#endif
 
   AddLogData(LOG_LEVEL_DEBUG, log_data);
 }
