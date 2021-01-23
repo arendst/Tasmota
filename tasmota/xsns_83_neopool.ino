@@ -592,14 +592,14 @@ void NeoPool250ms(void)              // Every 250 mSec
       }
 #ifdef DEBUG_TASMOTA_SENSOR
       else {
-        AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("NEO: modbus receive error %d"), error);
+        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("NEO: modbus receive error %d"), error);
       }
 #endif  // DEBUG_TASMOTA_SENSOR
       free(buffer);
     }
 #ifdef DEBUG_TASMOTA_SENSOR
     else {
-        AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("NEO: modbus block 0x%04X - 0x%04X skipped"), NeoPoolReg[neopool_read_state].addr, NeoPoolReg[neopool_read_state].addr+NeoPoolReg[neopool_read_state].cnt);
+        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("NEO: modbus block 0x%04X - 0x%04X skipped"), NeoPoolReg[neopool_read_state].addr, NeoPoolReg[neopool_read_state].addr+NeoPoolReg[neopool_read_state].cnt);
     }
 #endif  // DEBUG_TASMOTA_SENSOR
 
@@ -620,7 +620,7 @@ void NeoPool250ms(void)              // Every 250 mSec
             (NeoPoolGetData(MBF_NOTIFICATION) & (1 << (NeoPoolReg[neopool_read_state].addr >> 8)-1))) {
 #endif  // NEOPOOL_OPTIMIZE_READINGS
 #ifdef DEBUG_TASMOTA_SENSOR
-        AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("NEO: modbus send(%d, %d, 0x%04X, %d)"), NEOPOOL_MODBUS_ADDRESS, NEOPOOL_READ_REGISTER, NeoPoolReg[neopool_read_state].addr, NeoPoolReg[neopool_read_state].cnt);
+        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("NEO: modbus send(%d, %d, 0x%04X, %d)"), NEOPOOL_MODBUS_ADDRESS, NEOPOOL_READ_REGISTER, NeoPoolReg[neopool_read_state].addr, NeoPoolReg[neopool_read_state].cnt);
 #endif  // DEBUG_TASMOTA_SENSOR
         NeoPoolModbus->Send(NEOPOOL_MODBUS_ADDRESS, NEOPOOL_READ_REGISTER, NeoPoolReg[neopool_read_state].addr, NeoPoolReg[neopool_read_state].cnt);
 #ifdef NEOPOOL_OPTIMIZE_READINGS
@@ -629,7 +629,7 @@ void NeoPool250ms(void)              // Every 250 mSec
         // search next addr block having notification
         while( (NeoPoolReg[neopool_read_state].addr & 0x0F00) != 0x100 || (NeoPoolGetData(MBF_NOTIFICATION) & (1 << (NeoPoolReg[neopool_read_state].addr >> 8)-1)) ) {
 #ifdef DEBUG_TASMOTA_SENSOR
-          AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("NEO: notify 0x%04X - addr block 0x%04X ignored"), NeoPoolGetData(MBF_NOTIFICATION), NeoPoolReg[neopool_read_state].addr);
+          AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("NEO: notify 0x%04X - addr block 0x%04X ignored"), NeoPoolGetData(MBF_NOTIFICATION), NeoPoolReg[neopool_read_state].addr);
 #endif  // DEBUG_TASMOTA_SENSOR
           ++neopool_read_state %= ARRAY_SIZE(NeoPoolReg);
           // neopool_read_state++;
@@ -686,13 +686,13 @@ bool NeoPoolInitData(void)
       if (nullptr != NeoPoolReg[i].data) {
         memset(NeoPoolReg[i].data, 0, sizeof(uint16_t)*NeoPoolReg[i].cnt);
 #ifdef DEBUG_TASMOTA_SENSOR
-        AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("NEO: Init - addr 0x%04x cnt %d data %p"), NeoPoolReg[i].addr, NeoPoolReg[i].cnt, NeoPoolReg[i].data);
+        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("NEO: Init - addr 0x%04x cnt %d data %p"), NeoPoolReg[i].addr, NeoPoolReg[i].cnt, NeoPoolReg[i].data);
 #endif  // DEBUG_TASMOTA_SENSOR
         res = true;
       }
 #ifdef DEBUG_TASMOTA_SENSOR
       else {
-        AddLog_P(LOG_LEVEL_DEBUG, PSTR("NEO: Init - out of memory"));
+        AddLog(LOG_LEVEL_DEBUG, PSTR("NEO: Init - out of memory"));
       }
 #endif  // DEBUG_TASMOTA_SENSOR
     }
@@ -717,7 +717,7 @@ uint8_t NeoPoolReadRegister(uint16_t addr, uint16_t *data, uint16_t cnt)
       uint8_t error = NeoPoolModbus->ReceiveBuffer(buffer, cnt);
       if (error) {
 #ifdef DEBUG_TASMOTA_SENSOR
-        AddLog_P(LOG_LEVEL_DEBUG, PSTR("NEO: addr 0x%04X read data error %d"), addr, error);
+        AddLog(LOG_LEVEL_DEBUG, PSTR("NEO: addr 0x%04X read data error %d"), addr, error);
 #endif  // DEBUG_TASMOTA_SENSOR
         neopool_poll = true;
         return NEOPOOL_ERROR_RW_DATA;
@@ -731,12 +731,12 @@ uint8_t NeoPoolReadRegister(uint16_t addr, uint16_t *data, uint16_t cnt)
       return 0;
     }
 #ifdef DEBUG_TASMOTA_SENSOR
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR("NEO: addr 0x%04X read out of memory"), addr);
+    AddLog(LOG_LEVEL_DEBUG, PSTR("NEO: addr 0x%04X read out of memory"), addr);
 #endif  // DEBUG_TASMOTA_SENSOR
     return NEOPOOL_ERROR_OUT_OF_MEM;
   }
 #ifdef DEBUG_TASMOTA_SENSOR
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR("NEO: addr 0x%04X read data timeout"), addr);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("NEO: addr 0x%04X read data timeout"), addr);
 #endif  // DEBUG_TASMOTA_SENSOR
   neopool_poll = true;
   return NEOPOOL_ERROR_TIMEOUT;
@@ -754,7 +754,7 @@ uint8_t NeoPoolWriteRegister(uint16_t addr, uint16_t *data, uint16_t cnt)
   frame = (uint8_t*)malloc(numbytes);
   if (nullptr == frame) {
 #ifdef DEBUG_TASMOTA_SENSOR
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR("NEO: addr 0x%04X write out of memory"), addr);
+    AddLog(LOG_LEVEL_DEBUG, PSTR("NEO: addr 0x%04X write out of memory"), addr);
 #endif  // DEBUG_TASMOTA_SENSOR
     return NEOPOOL_ERROR_OUT_OF_MEM;
   }
@@ -787,7 +787,7 @@ uint8_t NeoPoolWriteRegister(uint16_t addr, uint16_t *data, uint16_t cnt)
     uint8_t error = NeoPoolModbus->ReceiveBuffer(buffer, 1);
     if (0!=error && 9!=error) { // ReceiveBuffer can't handle 0x10 code result
 #ifdef DEBUG_TASMOTA_SENSOR
-      AddLog_P(LOG_LEVEL_DEBUG, PSTR("NEO: addr 0x%04X write data response error %d"), addr, error);
+      AddLog(LOG_LEVEL_DEBUG, PSTR("NEO: addr 0x%04X write data response error %d"), addr, error);
 #endif  // DEBUG_TASMOTA_SENSOR
       neopool_poll = true;
       return NEOPOOL_ERROR_RW_DATA;
@@ -803,7 +803,7 @@ uint8_t NeoPoolWriteRegister(uint16_t addr, uint16_t *data, uint16_t cnt)
     return NEOPOOL_OK;
   }
 #ifdef DEBUG_TASMOTA_SENSOR
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR("NEO: addr 0x%04X write data response timeout"), addr);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("NEO: addr 0x%04X write data response timeout"), addr);
 #endif  // DEBUG_TASMOTA_SENSOR
   neopool_poll = true;
   return NEOPOOL_ERROR_TIMEOUT;
@@ -986,7 +986,7 @@ void NeoPoolShow(bool json)
 
     // Hydrolysis
 #ifdef DEBUG_TASMOTA_SENSOR
-    //AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("NEO: MBF_PAR_MODEL 0x%04X MBF_HIDRO_STATUS 0x%04X"), NeoPoolGetData(MBF_PAR_MODEL), NeoPoolGetData(MBF_HIDRO_STATUS));
+    //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("NEO: MBF_PAR_MODEL 0x%04X MBF_HIDRO_STATUS 0x%04X"), NeoPoolGetData(MBF_PAR_MODEL), NeoPoolGetData(MBF_HIDRO_STATUS));
 #endif  // DEBUG_TASMOTA_SENSOR
     if ((NeoPoolGetData(MBF_PAR_MODEL) & MBMSK_MODEL_HIDRO) && (NeoPoolGetData(MBF_HIDRO_STATUS) & MBMSK_HIDRO_STATUS_MODULE_ACTIVE)) {
       dtostrfd((float)NeoPoolGetData(MBF_HIDRO_CURRENT), 1, parameter);
@@ -1240,7 +1240,7 @@ bool NeoPoolCmnd(void)
           t_low = (uint16_t)(new_time & 0xFFFF);
           t_high = (uint16_t)((new_time>>16) & 0xFFFF);
 #ifdef DEBUG_TASMOTA_SENSOR
-          AddLog_P(LOG_LEVEL_DEBUG, PSTR("NEO: set time to %ld (%04X%04X)"), new_time, t_low, t_high);
+          AddLog(LOG_LEVEL_DEBUG, PSTR("NEO: set time to %ld (%04X%04X)"), new_time, t_low, t_high);
 #endif  // DEBUG_TASMOTA_SENSOR
           serviced = (NEOPOOL_OK == NeoPoolWriteRegister(MBF_PAR_TIME_HIGH, &t_high, 1));
           if (serviced) {
@@ -1254,7 +1254,7 @@ bool NeoPoolCmnd(void)
         else if (0 == params_cnt) {
           serviced = (NEOPOOL_OK == NeoPoolReadRegister(MBF_PAR_TIME_LOW, &t_low, 1) && NEOPOOL_OK == NeoPoolReadRegister(MBF_PAR_TIME_HIGH, &t_high, 1));
 #ifdef DEBUG_TASMOTA_SENSOR
-          AddLog_P(LOG_LEVEL_DEBUG, PSTR("NEO: time read 0x%04X%04X %ld"), t_high, t_low, (uint32_t)t_low + ((uint32_t)t_high << 16));
+          AddLog(LOG_LEVEL_DEBUG, PSTR("NEO: time read 0x%04X%04X %ld"), t_high, t_low, (uint32_t)t_low + ((uint32_t)t_high << 16));
 #endif  // DEBUG_TASMOTA_SENSOR
         }
         else {

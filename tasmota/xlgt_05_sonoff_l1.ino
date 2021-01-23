@@ -70,7 +70,7 @@ void SnfL1SendDelayed(void) {
 void SnfL1Send(void)
 {
 #ifdef SONOFF_L1_DEBUG1
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR("SL1: Send %s"), Snfl1.buffer);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("SL1: Send %s"), Snfl1.buffer);
 #endif
   Serial.print(Snfl1.buffer);
   Serial.write(0x1B);
@@ -87,7 +87,7 @@ void SnfL1SerialSendOk(void)
 void SnfL1Send(const char *buffer)
 {
 #ifdef SONOFF_L1_DEBUG1
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR("SL1: Send %s"), buffer);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("SL1: Send %s"), buffer);
 #endif
   Serial.print(buffer);
   Serial.write(0x1B);
@@ -119,7 +119,7 @@ bool SnfL1SerialInput(void)
     // AT+UPDATE="sequence":"34906","switch":"on","light_type":1,"colorR":0,"colorG":16,"colorB":0,"bright":6,"mode":1
     // AT+UPDATE="switch":"on","light_type":1,"colorR":255,"colorG":0,"colorB":0,"bright":6,"mode":1,"speed":100,"sensitive":10
 #ifdef SONOFF_L1_DEBUG1
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR("SL1: Rcvd %s"), TasmotaGlobal.serial_in_buffer);
+    AddLog(LOG_LEVEL_DEBUG, PSTR("SL1: Rcvd %s"), TasmotaGlobal.serial_in_buffer);
 #endif
     if (!strncmp(TasmotaGlobal.serial_in_buffer +3, "RESULT", 6)) {
 #ifdef SONOFF_L1_ALLOW_REMOTE_INTERRUPT
@@ -147,7 +147,7 @@ bool SnfL1SerialInput(void)
 
         if (!strncmp(token2, "\"sequence\"", 10)) {
 
-//          AddLog_P(LOG_LEVEL_DEBUG, PSTR("SL1: Rcvd sequence %s"), token3);
+//          AddLog(LOG_LEVEL_DEBUG, PSTR("SL1: Rcvd sequence %s"), token3);
 
           token = nullptr;
         }
@@ -155,7 +155,7 @@ bool SnfL1SerialInput(void)
         else if (!strncmp(token2, "\"switch\"", 8)) {
           switch_state = !strncmp(token3, "\"on\"", 4) ? true : false;
 
-//          AddLog_P(LOG_LEVEL_DEBUG, PSTR("SL1: Rcvd switch %d (%d)"), switch_state, Light.power);
+//          AddLog(LOG_LEVEL_DEBUG, PSTR("SL1: Rcvd switch %d (%d)"), switch_state, Light.power);
 
           is_power_change = (switch_state != Light.power);
         }
@@ -178,7 +178,7 @@ bool SnfL1SerialInput(void)
           bool all_color_channels_updated = color_updated[0] && color_updated[1] && color_updated[2];
           if (all_color_channels_updated) {
 
-//            AddLog_P(LOG_LEVEL_DEBUG, PSTR("SL1: Rcvd color R%d G%d B%d (R%d G%d B%d)"),
+//            AddLog(LOG_LEVEL_DEBUG, PSTR("SL1: Rcvd color R%d G%d B%d (R%d G%d B%d)"),
 //              Snfl1.color[0], Snfl1.color[1], Snfl1.color[2],
 //              Settings.light_color[0], Settings.light_color[1], Settings.light_color[2]);
 
@@ -190,7 +190,7 @@ bool SnfL1SerialInput(void)
         else if (!strncmp(token2, "\"bright\"", 8)) {
           uint8_t dimmer = atoi(token3);
 
-//          AddLog_P(LOG_LEVEL_DEBUG, PSTR("SL1: Rcvd dimmer %d (%d)"), dimmer, Settings.light_dimmer);
+//          AddLog(LOG_LEVEL_DEBUG, PSTR("SL1: Rcvd dimmer %d (%d)"), dimmer, Settings.light_dimmer);
 
           is_brightness_change = (Light.power && (dimmer > 0) && (dimmer != Settings.light_dimmer));
           snprintf_P(cmnd_dimmer, sizeof(cmnd_dimmer), PSTR(D_CMND_DIMMER " %d"), dimmer);
@@ -311,7 +311,7 @@ bool SnfL1ModuleSelected(void)
 
       TasmotaGlobal.light_type = LT_RGB;
       TasmotaGlobal.light_driver = XLGT_05;
-      AddLog_P(LOG_LEVEL_DEBUG, PSTR("LGT: Sonoff L1 Found"));
+      AddLog(LOG_LEVEL_DEBUG, PSTR("LGT: Sonoff L1 Found"));
       return true;
     }
   }

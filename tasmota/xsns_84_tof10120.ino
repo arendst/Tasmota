@@ -59,10 +59,10 @@ uint16_t Tof10120Read() {
     distance = distance <<8;
     distance |= Wire.read();
   } else {  // Incorrect value read
-    AddLog_P(LOG_LEVEL_DEBUG, "TOF: No value read");
+    AddLog(LOG_LEVEL_DEBUG, "TOF: No value read");
     return TOF10120_INCORRECT_DISTANCE;
   }
-  AddLog_P(LOG_LEVEL_DEBUG_MORE, "TOF: Distance %u", distance);
+  AddLog(LOG_LEVEL_DEBUG_MORE, "TOF: Distance %u", distance);
   return distance;
 }
 

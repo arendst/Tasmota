@@ -70,16 +70,16 @@ void Senseair250ms(void)              // Every 250 mSec
     if (data_ready) {
       uint8_t error = SenseairModbus->Receive16BitRegister(&value);
       if (error) {
-        AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "SenseAir response error %d"), error);
+        AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "SenseAir response error %d"), error);
       } else {
         switch(senseair_read_state) {
           case 0:                // 0x1A (26) READ_TYPE_LOW - S8: fe 04 02 01 77 ec 92
             senseair_type = 2;
-            AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "SenseAir type id low %04X"), value);
+            AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "SenseAir type id low %04X"), value);
             break;
           case 1:                // 0x00 (0) READ_ERRORLOG - fe 04 02 00 00 ad 24
             if (value) {
-              AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "SenseAir error %04X"), value);
+              AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "SenseAir error %04X"), value);
             }
             break;
           case 2:                // 0x03 (3) READ_CO2 - fe 04 02 06 2c af 59
@@ -97,11 +97,11 @@ void Senseair250ms(void)              // Every 250 mSec
           case 5:                // 0x1C (28) READ_RELAY_STATE - S8: fe 04 02 01 54 ad 4b - firmware version
           {
             bool relay_state = value >> 8 & 1;
-            AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "SenseAir relay state %d"), relay_state);
+            AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "SenseAir relay state %d"), relay_state);
             break;
           }
           case 6:                // 0x0A (10) READ_TEMP_ADJUSTMENT - S8: fe 84 02 f2 f1 - Illegal Data Address
-            AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "SenseAir temp adjustment %d"), value);
+            AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "SenseAir temp adjustment %d"), value);
             break;
         }
       }

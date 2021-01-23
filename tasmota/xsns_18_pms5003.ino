@@ -145,7 +145,7 @@ bool PmsReadData(void)
 #else
   if (sum != buffer_u16[14]) {
 #endif  // PMS_MODEL_PMS3003
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR("PMS: " D_CHECKSUM_FAILURE));
+    AddLog(LOG_LEVEL_DEBUG, PSTR("PMS: " D_CHECKSUM_FAILURE));
     return false;
   }
 

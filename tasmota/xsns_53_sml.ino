@@ -1258,7 +1258,7 @@ void sml_shift_in(uint32_t meters,uint32_t shard) {
             SML_Decode(meters);
         } else {
             // crc error
-            //AddLog_P(LOG_LEVEL_INFO, PSTR("ebus crc error"));
+            //AddLog(LOG_LEVEL_INFO, PSTR("ebus crc error"));
         }
       }
       meter_spos[meters]=0;
@@ -2014,7 +2014,7 @@ void SML_Init(void) {
           index--;
           srcpin=strtol(lp,&lp,10);
           if (Gpio_used(srcpin)) {
-            AddLog_P(LOG_LEVEL_INFO, PSTR("gpio rx double define!"));
+            AddLog(LOG_LEVEL_INFO, PSTR("gpio rx double define!"));
 dddef_exit:
             if (script_meter) free(script_meter);
             script_meter=0;
@@ -2051,7 +2051,7 @@ dddef_exit:
             lp++;
             script_meter_desc[index].trxpin=strtol(lp,&lp,10);
             if (Gpio_used(script_meter_desc[index].trxpin)) {
-              AddLog_P(LOG_LEVEL_INFO, PSTR("gpio tx double define!"));
+              AddLog(LOG_LEVEL_INFO, PSTR("gpio tx double define!"));
               goto dddef_exit;
             }
             if (*lp!=',') goto next_line;

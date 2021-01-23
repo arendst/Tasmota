@@ -50,7 +50,7 @@ void Dds2382EverySecond(void)
     AddLogBuffer(LOG_LEVEL_DEBUG_MORE, buffer, Dds2382Modbus->ReceiveCount());
 
     if (error) {
-      AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "DDS2382 response error %d"), error);
+      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "DDS2382 response error %d"), error);
     } else {
       Energy.data_valid[0] = 0;
 

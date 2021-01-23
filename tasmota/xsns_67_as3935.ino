@@ -218,7 +218,7 @@ bool AS3935AutoTuneCaps(uint8_t irqpin) {
 // functions
 bool AS3935CalRCOResult(void) {
   if(AS3935ReadRegister(CAL_SRCO_NOK) || AS3935ReadRegister(CAL_TRCO_NOK)) {
-    AddLog_P(LOG_LEVEL_INFO, PSTR("I2C: AS3935 Fatal Failure of TRCO or SRCO calibration"));
+    AddLog(LOG_LEVEL_INFO, PSTR("I2C: AS3935 Fatal Failure of TRCO or SRCO calibration"));
     return false;
   }
   return true;
@@ -514,7 +514,7 @@ void AS3935Detect(void) {
         if (!AS3935Setup()) return;
       as3935_sensor.active = true;
     } else {
-      AddLog_P(LOG_LEVEL_INFO, PSTR("I2C: AS3935 GPIO Pin not defined!"));
+      AddLog(LOG_LEVEL_INFO, PSTR("I2C: AS3935 GPIO Pin not defined!"));
     }
   }
 }

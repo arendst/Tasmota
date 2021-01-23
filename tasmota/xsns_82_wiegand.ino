@@ -1,5 +1,5 @@
 /*
-  xsns_82_wiegand.ino - Support for Wiegand Interface 125kHz NFC Tag Reader for Tasmota
+  xsns_82_wiegand.ino - Support for Wiegand Interface 125kHz Rfid Tag Reader for Tasmota
 
   Copyright (C) 2021  Sigurd Leuther and Theo Arends
 
@@ -181,7 +181,7 @@ void Wiegand::Init() {
   isInit = false;
   if (PinUsed(GPIO_WIEGAND_D0) && PinUsed(GPIO_WIEGAND_D1)) {  // Only start, if the Wiegang pins are selected
 #if (DEV_WIEGAND_TEST_MODE)>0
-    AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: Init()"));
+    AddLog(LOG_LEVEL_INFO, PSTR("WIE: Init()"));
 #endif  // DEV_WIEGAND_TEST_MODE>0
     pinMode(Pin(GPIO_WIEGAND_D0), INPUT_PULLUP);
     pinMode(Pin(GPIO_WIEGAND_D1), INPUT_PULLUP);
@@ -189,14 +189,14 @@ void Wiegand::Init() {
     attachInterrupt(Pin(GPIO_WIEGAND_D1), handleD1Interrupt, FALLING);
     isInit = true;                                             // Helps to run only if correctly setup
 #if (DEV_WIEGAND_TEST_MODE)>0
-    AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: Testmode, D0:%u, D1:%u"), Pin(GPIO_WIEGAND_D0), Pin(GPIO_WIEGAND_D1));        // For tests without reader attaiched
+    AddLog(LOG_LEVEL_INFO, PSTR("WIE: Testmode, D0:%u, D1:%u"), Pin(GPIO_WIEGAND_D0), Pin(GPIO_WIEGAND_D1));        // For tests without reader attaiched
 #else
-    AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: Wiegand Rfid Reader detected"));
+    AddLog(LOG_LEVEL_INFO, PSTR("WIE: Wiegand Rfid Reader detected"));
 #endif  // DEV_WIEGAND_TEST_MODE>0
   }
 #if (DEV_WIEGAND_TEST_MODE)>0
   else {
-    AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: no GPIOs."));
+    AddLog(LOG_LEVEL_INFO, PSTR("WIE: no GPIOs."));
   }
 #endif  // DEV_WIEGAND_TEST_MODE>0
 }
@@ -232,13 +232,13 @@ uint64_t Wiegand::CheckAndConvertRfid(uint64_t rfidIn, uint16_t bitcount) {
   calcParity = CalculateParities(rfidIn, bitCount);    // Check result on http://www.ccdesignworks.com/wiegand_calc.htm with raw tag as input
   if (calcParity != (evenParityBit | oddParityBit)) {  // Parity bit is wrong
     rfidIn=0;
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR("WIE: %llu parity error"), rfidIn);
+    AddLog(LOG_LEVEL_DEBUG, PSTR("WIE: %llu parity error"), rfidIn);
   }
 #if (DEV_WIEGAND_TEST_MODE)>0
-  AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: even (left) parity: %u "), (evenParityBit>>7));
-  AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: even (calc) parity: %u "), (calcParity & 0x80)>>7);
-  AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: odd (right) parity: %u "), oddParityBit);
-  AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: odd (calc) parity: %u "), (calcParity & 0x01));
+  AddLog(LOG_LEVEL_INFO, PSTR("WIE: even (left) parity: %u "), (evenParityBit>>7));
+  AddLog(LOG_LEVEL_INFO, PSTR("WIE: even (calc) parity: %u "), (calcParity & 0x80)>>7);
+  AddLog(LOG_LEVEL_INFO, PSTR("WIE: odd (right) parity: %u "), oddParityBit);
+  AddLog(LOG_LEVEL_INFO, PSTR("WIE: odd (calc) parity: %u "), (calcParity & 0x01));
 #endif  // DEV_WIEGAND_TEST_MODE>0
   return rfidIn;
 }
@@ -295,7 +295,7 @@ bool Wiegand::WiegandConversion () {
   }
   if (diffTicks > WIEGAND_BIT_TIMEOUT) {   // Last bit found is WIEGAND_BIT_TIMEOUT ms ago
 #if (DEV_WIEGAND_TEST_MODE)>0
-    AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: Raw tag %llu, Bit count %u"), rfidBuffer, bitCount);
+    AddLog(LOG_LEVEL_INFO, PSTR("WIE: Raw tag %llu, Bit count %u"), rfidBuffer, bitCount);
 #endif  // DEV_WIEGAND_TEST_MODE>0
     if ((24 == bitCount) || (26 == bitCount) || (32 == bitCount) || (34 == bitCount)) {
       // 24, 26, 32, 34-bit Wiegand codes
@@ -334,14 +334,14 @@ bool Wiegand::WiegandConversion () {
     bRet = false;                       // Watching time not finished
   }
 #if (DEV_WIEGAND_TEST_MODE)>0
-  AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: Tag out %llu, tag size %u "), rfid, tagSize);
+  AddLog(LOG_LEVEL_INFO, PSTR("WIE: Tag out %llu, tag size %u "), rfid, tagSize);
 #endif  // DEV_WIEGAND_TEST_MODE>0
   return bRet;
 }
 
 void Wiegand::ScanForTag() {
 #if (DEV_WIEGAND_TEST_MODE)>0
-    AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: ScanForTag()."));
+    AddLog(LOG_LEVEL_INFO, PSTR("WIE: ScanForTag()."));
 #if (DEV_WIEGAND_TEST_MODE==1)
     switch (millis() %4) {
       case 0:
@@ -360,18 +360,18 @@ void Wiegand::ScanForTag() {
         rfidBuffer = GetRandomRfid(34);
       break;
     }
-    AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: Raw generated %lX"), rfidBuffer);  // For tests without reader attaiched
+    AddLog(LOG_LEVEL_INFO, PSTR("WIE: Raw generated %lX"), rfidBuffer);  // For tests without reader attaiched
 #endif  // DEV_WIEGAND_TEST_MODE==1
 #endif  // DEV_WIEGAND_TEST_MODE>0
   if (bitCount > 0)   {
     uint64_t oldTag = rfid;
     bool validKey =  WiegandConversion();
 #if (DEV_WIEGAND_TEST_MODE)>0
-    AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: Previous tag %llu"), oldTag);
+    AddLog(LOG_LEVEL_INFO, PSTR("WIE: Previous tag %llu"), oldTag);
 #endif  // DEV_WIEGAND_TEST_MODE>0
     if (validKey) {                     // Only in case of valid key do action. Issue#10585
       if (oldTag == rfid) {
-        AddLog_P(LOG_LEVEL_DEBUG, PSTR("WIE: Old tag"));
+        AddLog(LOG_LEVEL_DEBUG, PSTR("WIE: Old tag"));
       }
       ResponseTime_P(PSTR(",\"Wiegand\":{\"UID\":%0llu,\"" D_JSON_SIZE "\":%u}}"), rfid, tagSize);
       MqttPublishTeleSensor();
@@ -383,7 +383,7 @@ void Wiegand::ScanForTag() {
 void Wiegand::Show(void) {
   WSContentSend_PD(PSTR("{s}Wiegand UID{m}%llu {e}"), rfid);
 #if (DEV_WIEGAND_TEST_MODE)>0
-  AddLog_P(LOG_LEVEL_INFO, PSTR("WIE: Tag %llu, Bits %u"), rfid, bitCount);
+  AddLog(LOG_LEVEL_INFO, PSTR("WIE: Tag %llu, Bits %u"), rfid, bitCount);
 #endif  // DEV_WIEGAND_TEST_MODE>0
 }
 #endif  // USE_WEBSERVER

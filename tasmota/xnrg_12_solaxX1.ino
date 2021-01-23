@@ -257,7 +257,7 @@ void solaxX1250MSecond(void) // Every 250 milliseconds
         DEBUG_SENSOR_LOG(PSTR("SX1: Data response CRC error"));
       }
       else
-      { 
+      {
         solaxX1_send_retry = 20;
         Energy.data_valid[0] = 0;
 
@@ -380,7 +380,7 @@ void solaxX1250MSecond(void) // Every 250 milliseconds
 
 void solaxX1SnsInit(void)
 {
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR("SX1: Solax X1 Inverter Init"));
+  AddLog(LOG_LEVEL_DEBUG, PSTR("SX1: Solax X1 Inverter Init"));
   DEBUG_SENSOR_LOG(PSTR("SX1: RX pin: %d, TX pin: %d"), Pin(GPIO_SOLAXX1_RX), Pin(GPIO_SOLAXX1_TX));
   protocolStatus.status = 0b00100000; // hasAddress
 

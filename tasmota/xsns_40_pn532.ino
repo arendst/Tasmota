@@ -80,7 +80,7 @@ void PN532_Init(void) {
         ToHex_P((unsigned char*)empty_uid, sizeof(empty_uid), Pn532.uids, sizeof(Pn532.uids));
         PN532_setPassiveActivationRetries(0xFF);
         PN532_SAMConfig();
-        AddLog_P(LOG_LEVEL_INFO,"NFC: PN532 NFC Reader detected v%u.%u",(ver>>16) & 0xFF, (ver>>8) & 0xFF);
+        AddLog(LOG_LEVEL_INFO,"NFC: PN532 NFC Reader detected v%u.%u",(ver>>16) & 0xFF, (ver>>8) & 0xFF);
         Pn532.present = true;
       }
     }
@@ -429,7 +429,7 @@ void PN532_ScanForTag(void) {
           }
           if (mifareclassic_WriteDataBlock(1, card_data)) {
             erase_success = true;
-            AddLog_P(LOG_LEVEL_INFO, PSTR("NFC: PN532 NFC - Erase success"));
+            AddLog(LOG_LEVEL_INFO, PSTR("NFC: PN532 NFC - Erase success"));
             memcpy(&card_datas,&card_data,sizeof(card_data)); // Cast block 1 to a string
           }
         }
@@ -438,7 +438,7 @@ void PN532_ScanForTag(void) {
           memcpy(&card_data,&Pn532.newdata,sizeof(card_data));
           if (mifareclassic_WriteDataBlock(1, card_data)) {
             set_success = true;
-            AddLog_P(LOG_LEVEL_INFO, PSTR("NFC: PN532 NFC - Data write successful"));
+            AddLog(LOG_LEVEL_INFO, PSTR("NFC: PN532 NFC - Data write successful"));
             memcpy(&card_datas,&card_data,sizeof(card_data)); // Cast block 1 to a string
           }
 #else
@@ -453,11 +453,11 @@ void PN532_ScanForTag(void) {
             card_data[Pn532.newdata_len] = '\0'; // Enforce null termination
             if (mifareclassic_WriteDataBlock(1, card_data)) {
               set_success = true;
-              AddLog_P(LOG_LEVEL_INFO, PSTR("NFC: PN532 NFC - Data write successful"));
+              AddLog(LOG_LEVEL_INFO, PSTR("NFC: PN532 NFC - Data write successful"));
               memcpy(&card_datas,&card_data,sizeof(card_data)); // Cast block 1 to a string
             }
           } else {
-            AddLog_P(LOG_LEVEL_INFO, PSTR("NFC: PN532 NFC - Data must be alphanumeric"));
+            AddLog(LOG_LEVEL_INFO, PSTR("NFC: PN532 NFC - Data must be alphanumeric"));
           }
 #endif  // USE_PN532_DATA_RAW
         }
@@ -468,12 +468,12 @@ void PN532_ScanForTag(void) {
     switch (Pn532.function) {
       case 0x01:
         if (!erase_success) {
-          AddLog_P(LOG_LEVEL_INFO, PSTR("NFC: PN532 NFC - Erase fail - exiting erase mode"));
+          AddLog(LOG_LEVEL_INFO, PSTR("NFC: PN532 NFC - Erase fail - exiting erase mode"));
         }
         break;
       case 0x02:
         if (!set_success) {
-          AddLog_P(LOG_LEVEL_INFO, PSTR("NFC: PN532 NFC - Write failed - exiting set mode"));
+          AddLog(LOG_LEVEL_INFO, PSTR("NFC: PN532 NFC - Write failed - exiting set mode"));
         }
       default:
         break;
@@ -509,7 +509,7 @@ bool PN532_Command(void) {
   UpperCase(XdrvMailbox.data,XdrvMailbox.data);
   if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 1),"E")) {
     Pn532.function = 1; // Block 1 of next card/tag will be reset to 0x00...
-    AddLog_P(LOG_LEVEL_INFO, PSTR("NFC: PN532 NFC - Next scanned tag data block 1 will be erased"));
+    AddLog(LOG_LEVEL_INFO, PSTR("NFC: PN532 NFC - Next scanned tag data block 1 will be erased"));
     ResponseTime_P(PSTR(",\"PN532\":{\"COMMAND\":\"E\"}}"));
     return serviced;
   }
@@ -525,7 +525,7 @@ bool PN532_Command(void) {
       memcpy(&Pn532.newdata,&sub_string_tmp,Pn532.newdata_len);
       Pn532.newdata[Pn532.newdata_len] = 0x00; // Null terminate the string
       Pn532.function = 2;
-      AddLog_P(LOG_LEVEL_INFO, PSTR("NFC: PN532 NFC - Next scanned tag data block 1 will be set to '%s'"), Pn532.newdata);
+      AddLog(LOG_LEVEL_INFO, PSTR("NFC: PN532 NFC - Next scanned tag data block 1 will be set to '%s'"), Pn532.newdata);
       ResponseTime_P(PSTR(",\"PN532\":{\"COMMAND\":\"S\"}}"));
       return serviced;
     }

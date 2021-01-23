@@ -76,7 +76,7 @@ void IEM3000Every250ms(void)
     AddLogBuffer(LOG_LEVEL_DEBUG_MORE, buffer, Iem3000Modbus->ReceiveCount());
 
     if (error) {
-      AddLog_P(LOG_LEVEL_DEBUG, PSTR("SDM: Iem3000 error %d"), error);
+      AddLog(LOG_LEVEL_DEBUG, PSTR("SDM: Iem3000 error %d"), error);
     } else {
       Energy.data_valid[0] = 0;
 

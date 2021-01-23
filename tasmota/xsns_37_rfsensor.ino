@@ -619,7 +619,7 @@ void RfSnsInit(void)
 
 void RfSnsAnalyzeRawSignal(void)
 {
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR("RFS: Pulses %d"), (int)rfsns_raw_signal->Number);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("RFS: Pulses %d"), (int)rfsns_raw_signal->Number);
 
 #ifdef USE_THEO_V2
     RfSnsAnalyzeTheov2();

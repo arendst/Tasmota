@@ -1437,7 +1437,7 @@ int16_t readGesture(void) {
     if (gesture_loop_counter == APDS9960_MAX_GESTURE_CYCLES) {  // We will escape after a few loops
       disableGestureSensor();     // stop the sensor to prevent problems with power consumption/blocking and return to the main loop
       APDS9960_overload = true;   // we report this as "long"-gesture
-      AddLog_P(LOG_LEVEL_DEBUG, PSTR("Sensor overload"));
+      AddLog(LOG_LEVEL_DEBUG, PSTR("Sensor overload"));
     }
     gesture_loop_counter += 1;
 
@@ -1453,7 +1453,7 @@ int16_t readGesture(void) {
       fifo_level = I2cRead8(APDS9960_I2C_ADDR, APDS9960_GFLVL);
 
 #ifdef USE_DEBUG_DRIVER
-      AddLog_P(LOG_LEVEL_DEBUG, PSTR("DRV: FIFO Level : %d"), fifo_level);
+      AddLog(LOG_LEVEL_DEBUG, PSTR("DRV: FIFO Level : %d"), fifo_level);
 #endif  // USE_DEBUG_DRIVER
 
       /* If there's stuff in the FIFO, read it into our data block */
@@ -1471,7 +1471,7 @@ int16_t readGesture(void) {
       for ( i = 0; i < bytes_read; i++ ) {
           ptr += sprintf(ptr, "%02X", fifo_data[i]);
       }
-      AddLog_P(LOG_LEVEL_DEBUG, PSTR("DRV: FIFO Dump : %s"), output);
+      AddLog(LOG_LEVEL_DEBUG, PSTR("DRV: FIFO Dump : %s"), output);
 #endif  // USE_DEBUG_DRIVER
 
         /* If at least 1 set of data, sort the data into U/D/L/R */
@@ -1745,27 +1745,27 @@ void handleGesture(void) {
   if (isGestureAvailable()) {
     switch (readGesture()) {
       case DIR_UP:
-        AddLog_P(LOG_LEVEL_DEBUG, GESTURE_UP);
+        AddLog(LOG_LEVEL_DEBUG, GESTURE_UP);
         snprintf_P(currentGesture, sizeof(currentGesture), GESTURE_UP);
         break;
       case DIR_DOWN:
-        AddLog_P(LOG_LEVEL_DEBUG, GESTURE_DOWN);
+        AddLog(LOG_LEVEL_DEBUG, GESTURE_DOWN);
         snprintf_P(currentGesture, sizeof(currentGesture), GESTURE_DOWN);
         break;
       case DIR_LEFT:
-        AddLog_P(LOG_LEVEL_DEBUG, GESTURE_LEFT);
+        AddLog(LOG_LEVEL_DEBUG, GESTURE_LEFT);
         snprintf_P(currentGesture, sizeof(currentGesture), GESTURE_LEFT);
         break;
       case DIR_RIGHT:
-        AddLog_P(LOG_LEVEL_DEBUG, GESTURE_RIGHT);
+        AddLog(LOG_LEVEL_DEBUG, GESTURE_RIGHT);
         snprintf_P(currentGesture, sizeof(currentGesture), GESTURE_RIGHT);
         break;
       default:
         if (APDS9960_overload) {
-          AddLog_P(LOG_LEVEL_DEBUG, GESTURE_LONG);
+          AddLog(LOG_LEVEL_DEBUG, GESTURE_LONG);
           snprintf_P(currentGesture, sizeof(currentGesture), GESTURE_LONG);
         } else {
-          AddLog_P(LOG_LEVEL_DEBUG, GESTURE_NONE);
+          AddLog(LOG_LEVEL_DEBUG, GESTURE_NONE);
           snprintf_P(currentGesture, sizeof(currentGesture), GESTURE_NONE);
         }
         break;
@@ -1812,7 +1812,7 @@ void APDS9960_detect(void) {
 
 #ifdef USE_DEBUG_DRIVER
   // Debug new chip
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR("DRV: %s Chip %X"), APDS9960_TAG, APDS9960_type);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("DRV: %s Chip %X"), APDS9960_TAG, APDS9960_type);
 #endif  // USE_DEBUG_DRIVER
 
   if (APDS9960_type == APDS9960_CHIPID_1 || APDS9960_type == APDS9960_CHIPID_2 || APDS9960_type == APDS9960_CHIPID_3) {

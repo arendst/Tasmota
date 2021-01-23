@@ -82,7 +82,7 @@ void WE517Every250ms(void)
     AddLogBuffer(LOG_LEVEL_DEBUG_MORE, buffer, We517Modbus->ReceiveCount());
 
     if (error) {
-      AddLog_P(LOG_LEVEL_DEBUG, PSTR("ORNO: WE517 error %d"), error);
+      AddLog(LOG_LEVEL_DEBUG, PSTR("ORNO: WE517 error %d"), error);
     } else {
       Energy.data_valid[0] = 0;
       Energy.data_valid[1] = 0;
@@ -188,7 +188,7 @@ void We517SnsInit(void)
   uint8_t result = We517Modbus->Begin(WE517_SPEED);
   if (result) {
       if (2 == result) {
-          AddLog_P(LOG_LEVEL_DEBUG, PSTR("ORNO: WE517 HW serial init 8E1 at %d baud"), WE517_SPEED);
+          AddLog(LOG_LEVEL_DEBUG, PSTR("ORNO: WE517 HW serial init 8E1 at %d baud"), WE517_SPEED);
           Serial.begin(WE517_SPEED, SERIAL_8E1);
           ClaimSerial();
       }

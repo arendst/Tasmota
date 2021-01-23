@@ -168,7 +168,7 @@ unsigned long sns_opentherm_set_slave_flags(struct OpenThermCommandT *self, stru
     }
 
     if (self->m_results[1].m_bool != centralHeatingIsOn) {
-        AddLog_P(LOG_LEVEL_INFO,
+        AddLog(LOG_LEVEL_INFO,
             PSTR("[OTH]: Central Heating transitioning from %s to %s"),
             self->m_results[1].m_bool ? "on" : "off",
             status->m_enableCentralHeating ? "on" : "off");
@@ -219,7 +219,7 @@ unsigned long sns_opentherm_set_boiler_temperature(struct OpenThermCommandT *sel
     {
         return -1;
     }
-    AddLog_P(LOG_LEVEL_INFO,
+    AddLog(LOG_LEVEL_INFO,
               PSTR("[OTH]: Setting Boiler Temp. Old: %d, New: %d"),
               (int)self->m_results[0].m_float,
               (int)status->m_boilerSetpoint);
@@ -258,7 +258,7 @@ unsigned long sns_opentherm_set_boiler_dhw_temperature(struct OpenThermCommandT 
     {
         return -1;
     }
-    AddLog_P(LOG_LEVEL_INFO,
+    AddLog(LOG_LEVEL_INFO,
               PSTR("[OTH]: Setting Hot Water Temp. Old: %d, New: %d"),
               (int)self->m_results[0].m_float,
               (int)status->m_hotWaterSetpoint);
@@ -400,7 +400,7 @@ void sns_opentherm_check_retry_request()
     if (!canRetry && !cmd->m_flags.supported)
     {
         cmd->m_flags.notSupported = true;
-        AddLog_P(LOG_LEVEL_ERROR,
+        AddLog(LOG_LEVEL_ERROR,
                   PSTR("[OTH]: command %s is not supported by the boiler. Last status: %s"),
                   cmd->m_command_name,
                   sns_ot_master->statusToString(sns_ot_master->getLastResponseStatus()));

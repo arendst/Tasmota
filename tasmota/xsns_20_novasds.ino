@@ -82,7 +82,7 @@ bool NovaSdsCommand(uint8_t byte1, uint8_t byte2, uint8_t byte3, uint16_t sensor
   }
 
 //  char hex_char[60];
-//  AddLog_P(LOG_LEVEL_DEBUG, PSTR("SDS: Send %s"), ToHex_P((unsigned char*)novasds_cmnd, 19, hex_char, sizeof(hex_char), ' '));
+//  AddLog(LOG_LEVEL_DEBUG, PSTR("SDS: Send %s"), ToHex_P((unsigned char*)novasds_cmnd, 19, hex_char, sizeof(hex_char), ' '));
 
   // send cmnd
   NovaSdsSerial->write(novasds_cmnd, sizeof(novasds_cmnd));
@@ -115,7 +115,7 @@ bool NovaSdsCommand(uint8_t byte1, uint8_t byte2, uint8_t byte3, uint16_t sensor
 
   // checksum & tail check
   if ((0xAB != recbuf[9] ) || (recbuf[8] != ((recbuf[2] + recbuf[3] + recbuf[4] + recbuf[5] + recbuf[6] + recbuf[7]) & 0xFF))) {
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR("SDS: " D_CHECKSUM_FAILURE));
+    AddLog(LOG_LEVEL_DEBUG, PSTR("SDS: " D_CHECKSUM_FAILURE));
     return false;
   }
 

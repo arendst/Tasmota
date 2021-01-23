@@ -58,7 +58,7 @@ void Ds18x20Init(void) {
   ds = new OneWire(Pin(GPIO_DSB));
 
   Ds18x20Search();
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DSB D_SENSORS_FOUND " %d"), ds18x20_sensors);
+  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DSB D_SENSORS_FOUND " %d"), ds18x20_sensors);
 }
 
 void Ds18x20Search(void) {
@@ -144,7 +144,7 @@ bool Ds18x20Read(uint8_t sensor, float &t)
       }
     }
   }
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DSB D_SENSOR_CRC_ERROR));
+  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DSB D_SENSOR_CRC_ERROR));
   return false;
 }
 

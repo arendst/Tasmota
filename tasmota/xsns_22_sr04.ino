@@ -71,7 +71,7 @@ uint8_t Sr04TModeDetect(void)
     }
   }
 
-  AddLog_P(LOG_LEVEL_INFO,PSTR("SR04: Mode %d"), sr04_type);
+  AddLog(LOG_LEVEL_INFO,PSTR("SR04: Mode %d"), sr04_type);
   return sr04_type;
 }
 
@@ -123,7 +123,7 @@ uint16_t Sr04TMode2Distance(void)
 
   //check crc sum
   if (crc != sonar_serial->read()) {
-    AddLog_P(LOG_LEVEL_ERROR,PSTR("SR04: Reading CRC error."));
+    AddLog(LOG_LEVEL_ERROR,PSTR("SR04: Reading CRC error."));
     return NO_ECHO;
   }
   //DEBUG_SENSOR_LOG(PSTR("SR04: Distance: %d"), distance);

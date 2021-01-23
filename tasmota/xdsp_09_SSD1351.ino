@@ -84,7 +84,7 @@ void SSD1351_InitDriver() {
     color_type = COLOR_COLOR;
 
     ssd1351_init_done = true;
-    AddLog_P(LOG_LEVEL_INFO, PSTR("DSP: SSD1351"));
+    AddLog(LOG_LEVEL_INFO, PSTR("DSP: SSD1351"));
   }
 }
 
@@ -110,7 +110,7 @@ void SSD1351PrintLog(void) {
       strlcpy(disp_screen_buffer[last_row], txt, disp_screen_buffer_cols);
       DisplayFillScreen(last_row);
 
-      AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "[%s]"), disp_screen_buffer[last_row]);
+      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "[%s]"), disp_screen_buffer[last_row]);
 
       renderer->println(disp_screen_buffer[last_row]);
       renderer->Updateframe();
