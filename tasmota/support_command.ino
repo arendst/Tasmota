@@ -1209,7 +1209,11 @@ void CmndGpio(void)
     if (jsflg2) {
       ResponseClear();
     } else {
-      ResponseCmndChar(PSTR(D_JSON_NOT_SUPPORTED));
+      if (jsflg) {
+        ResponseJsonEnd();
+      } else {
+        ResponseCmndChar(D_JSON_NOT_SUPPORTED);
+      }
     }
   }
 }
