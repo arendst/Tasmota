@@ -480,17 +480,6 @@ uint8_t fast_script=0;
 uint8_t glob_script=0;
 uint32_t script_lastmillis;
 
-void Script_AddLog_P(uint32_t loglevel, PGM_P formatP, ...) {
-  char log_data[128];
-
-  va_list arg;
-  va_start(arg, formatP);
-  vsnprintf_P(log_data, sizeof(log_data), formatP, arg);
-  va_end(arg);
-
-  AddLogData(loglevel, log_data);
-}
-
 void flt2char(float num, char *nbuff) {
   dtostrfd(num, glob_script_mem.script_dprec, nbuff);
 }
@@ -905,7 +894,7 @@ char *script;
     }
 
     // variables usage info
-    Script_AddLog_P(LOG_LEVEL_INFO, PSTR("Script: nv=%d, tv=%d, vns=%d, ram=%d"), nvars, svars, index, glob_script_mem.script_mem_size);
+    AddLog(LOG_LEVEL_INFO, PSTR("Script: nv=%d, tv=%d, vns=%d, ram=%d"), nvars, svars, index, glob_script_mem.script_mem_size);
 
     // copy string variables
     char *cp1 = glob_script_mem.glob_snp;
@@ -1025,10 +1014,10 @@ void Script_Init_UDP() {
   if (glob_script_mem.udp_flags.udp_connected) return;
 
   if (Script_PortUdp.beginMulticast(WiFi.localIP(), IPAddress(239,255,255,250), SCRIPT_UDP_PORT)) {
-    Script_AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPNP "SCRIPT UDP started"));
+    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPNP "SCRIPT UDP started"));
     glob_script_mem.udp_flags.udp_connected = 1;
   } else {
-    Script_AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPNP "SCRIPT UDP failed"));
+    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPNP "SCRIPT UDP failed"));
     glob_script_mem.udp_flags.udp_connected  = 0;
   }
 }
@@ -1042,7 +1031,7 @@ void Script_PollUdp(void) {
       int32_t len = Script_PortUdp.read(packet_buffer, SCRIPT_UDP_BUFFER_SIZE - 1);
       packet_buffer[len] = 0;
       script_udp_remote_ip = Script_PortUdp.remoteIP();
-      Script_AddLog_P(LOG_LEVEL_DEBUG, PSTR("UDP: Packet %s - %d - %s"), packet_buffer, len, script_udp_remote_ip.toString().c_str());
+      AddLog(LOG_LEVEL_DEBUG, PSTR("UDP: Packet %s - %d - %s"), packet_buffer, len, script_udp_remote_ip.toString().c_str());
       char *lp=packet_buffer;
       if (!strncmp(lp,"=>", 2)) {
         lp += 2;
@@ -1061,10 +1050,10 @@ void Script_PollUdp(void) {
           uint32_t index;
           uint32_t res = match_vars(vnam, &fp, &sp, &index);
           if (res == NUM_RES) {
-            Script_AddLog_P(LOG_LEVEL_DEBUG, PSTR("num var found - %s - %d - %d"), vnam, res, index);
+            AddLog(LOG_LEVEL_DEBUG, PSTR("num var found - %s - %d - %d"), vnam, res, index);
             *fp=CharToFloat(cp + 1);
           } else if (res == STR_RES) {
-            Script_AddLog_P(LOG_LEVEL_DEBUG, PSTR("string var found - %s - %d - %d"), vnam, res, index);
+            AddLog(LOG_LEVEL_DEBUG, PSTR("string var found - %s - %d - %d"), vnam, res, index);
             strlcpy(sp, cp + 1, SCRIPT_MAXSSIZE);
           } else {
             // error var not found
@@ -1098,10 +1087,10 @@ void script_udp_sendvar(char *vname,float *fp,char *sp) {
     char flstr[16];
     dtostrfd(*fp, 8, flstr);
     strcat(sbuf, flstr);
-    Script_AddLog_P(LOG_LEVEL_DEBUG, PSTR("num var updated - %s"), sbuf);
+    AddLog(LOG_LEVEL_DEBUG, PSTR("num var updated - %s"), sbuf);
   } else {
     strcat(sbuf, sp);
-    Script_AddLog_P(LOG_LEVEL_DEBUG, PSTR("string var updated - %s"), sbuf);
+    AddLog(LOG_LEVEL_DEBUG, PSTR("string var updated - %s"), sbuf);
   }
   Script_PortUdp.beginPacket(IPAddress(239, 255, 255, 250), SCRIPT_UDP_PORT);
   //  Udp.print(String("RET UC: ") + String(recv_Packet));
@@ -2014,7 +2003,7 @@ chknext:
             if (!glob_script_mem.file_flags[cnt].is_open) {
               if (mode==0) {
 #ifdef DEBUG_FS
-                Script_AddLog_P(LOG_LEVEL_INFO, PSTR("open file for read %d"), cnt);
+                AddLog(LOG_LEVEL_INFO, PSTR("open file for read %d"), cnt);
 #endif
                 glob_script_mem.files[cnt] = ufsp->open(str, FS_FILE_READ);
                 if (glob_script_mem.files[cnt].isDirectory()) {
@@ -2028,12 +2017,12 @@ chknext:
                 if (mode==1) {
                   glob_script_mem.files[cnt] = ufsp->open(str,FS_FILE_WRITE);
 #ifdef DEBUG_FS
-                  Script_AddLog_P(LOG_LEVEL_INFO, PSTR("open file for write %d"), cnt);
+                  AddLog(LOG_LEVEL_INFO, PSTR("open file for write %d"), cnt);
 #endif
                 } else {
                   glob_script_mem.files[cnt] = ufsp->open(str,FS_FILE_APPEND);
 #ifdef DEBUG_FS
-                  Script_AddLog_P(LOG_LEVEL_INFO, PSTR("open file for append %d"), cnt);
+                  AddLog(LOG_LEVEL_INFO, PSTR("open file for append %d"), cnt);
 #endif
                 }
               }
@@ -2041,7 +2030,7 @@ chknext:
                 fvar = cnt;
                 glob_script_mem.file_flags[cnt].is_open = 1;
               } else {
-                Script_AddLog_P(LOG_LEVEL_INFO, PSTR("file open failed"));
+                AddLog(LOG_LEVEL_INFO, PSTR("file open failed"));
               }
               break;
             }
@@ -2056,7 +2045,7 @@ chknext:
             uint8_t ind = fvar;
             if (ind>=SFS_MAX) ind = SFS_MAX - 1;
 #ifdef DEBUG_FS
-            Script_AddLog_P(LOG_LEVEL_INFO, PSTR("closing file %d"), ind);
+            AddLog(LOG_LEVEL_INFO, PSTR("closing file %d"), ind);
 #endif
             glob_script_mem.files[ind].close();
             glob_script_mem.file_flags[ind].is_open = 0;
@@ -2192,7 +2181,7 @@ chknext:
             } else {
               fvar = 0;
             }
-            //Script_AddLog_P(LOG_LEVEL_INFO, PSTR("picture save: %d"), len);
+            //AddLog(LOG_LEVEL_INFO, PSTR("picture save: %d"), len);
           } else {
             fvar = 0;
           }
@@ -3616,7 +3605,7 @@ void Replace_Cmd_Vars(char *srcbuf, uint32_t srcsize, char *dstbuf, uint32_t dst
 
 void toLog(const char *str) {
   if (!str) return;
-  Script_AddLog_P(LOG_LEVEL_INFO, str);
+  AddLog(LOG_LEVEL_INFO, str);
 }
 
 
@@ -4328,7 +4317,7 @@ int16_t Run_script_sub(const char *type, int8_t tlen, JsonParserObject *jo) {
                     }
                     cmd[count] = *lp++;
                   }
-                  //Script_AddLog_P(LOG_LEVEL_INFO, tmp);
+                  //AddLog(LOG_LEVEL_INFO, tmp);
                   // replace vars in cmd
                   char *tmp = cmdmem + SCRIPT_CMDMEM / 2;
                   Replace_Cmd_Vars(cmd, 0, tmp, SCRIPT_CMDMEM / 2);
@@ -4340,7 +4329,7 @@ int16_t Run_script_sub(const char *type, int8_t tlen, JsonParserObject *jo) {
                   } else {
                     if (!sflag) {
                       tasm_cmd_activ = 1;
-                      Script_AddLog_P(glob_script_mem.script_loglevel&0x7f, PSTR("Script: performs \"%s\""), tmp);
+                      AddLog(glob_script_mem.script_loglevel&0x7f, PSTR("Script: performs \"%s\""), tmp);
                     } else if (sflag==2) {
                       // allow recursive call
                     } else {
@@ -4836,13 +4825,13 @@ uint8_t sc_state;
 // upload script and start immediately
 void script_upload_start(void) {
 
-  //Script_AddLog_P(LOG_LEVEL_INFO, PSTR("HTP: file upload execute"));
+  //AddLog(LOG_LEVEL_INFO, PSTR("HTP: file upload execute"));
 
   HTTPUpload& upload = Webserver->upload();
   if (upload.status == UPLOAD_FILE_START) {
-    //Script_AddLog_P(LOG_LEVEL_INFO, PSTR("HTP: upload start"));
+    //AddLog(LOG_LEVEL_INFO, PSTR("HTP: upload start"));
     script_ex_ptr = (uint8_t*)glob_script_mem.script_ram;
-    //Script_AddLog_P(LOG_LEVEL_INFO, PSTR("HTP: upload file %s, %d"),upload.filename.c_str(),upload.totalSize);
+    //AddLog(LOG_LEVEL_INFO, PSTR("HTP: upload file %s, %d"),upload.filename.c_str(),upload.totalSize);
 
     if (strcmp(upload.filename.c_str(), "execute_script")) {
       Web.upload_error = 1;
@@ -4860,7 +4849,7 @@ void script_upload_start(void) {
     bitWrite(Settings.rule_enabled, 0, 0);
 
   } else if(upload.status == UPLOAD_FILE_WRITE) {
-    //Script_AddLog_P(LOG_LEVEL_INFO, PSTR("HTP: upload write"));
+    //AddLog(LOG_LEVEL_INFO, PSTR("HTP: upload write"));
     uint32_t csiz = upload.currentSize;
     uint32_t tsiz = glob_script_mem.script_size - 1;
     if (uplsize<tsiz) {
@@ -4874,20 +4863,20 @@ void script_upload_start(void) {
         script_ex_ptr += csiz;
         uplsize += csiz;
       }
-      //Script_AddLog_P(LOG_LEVEL_INFO, PSTR("HTP: write %d - %d"),csiz,uplsize);
+      //AddLog(LOG_LEVEL_INFO, PSTR("HTP: write %d - %d"),csiz,uplsize);
     }
 
     //if (upload_file) upload_file.write(upload.buf,upload.currentSize);
   } else if(upload.status == UPLOAD_FILE_END) {
     //if (upload_file) upload_file.close();
     if (Web.upload_error) {
-      Script_AddLog_P(LOG_LEVEL_INFO, PSTR("HTP: upload error"));
+      AddLog(LOG_LEVEL_INFO, PSTR("HTP: upload error"));
     } else {
       *script_ex_ptr = 0;
       bitWrite(Settings.rule_enabled, 0, sc_state);
       SaveScript();
       SaveScriptEnd();
-      //Script_AddLog_P(LOG_LEVEL_INFO, PSTR("HTP: upload success"));
+      //AddLog(LOG_LEVEL_INFO, PSTR("HTP: upload success"));
     }
   } else {
     Web.upload_error = 1;
@@ -4907,13 +4896,13 @@ uint8_t DownloadFile(char *file) {
   WiFiClient download_Client;
 
     if (!ufsp->exists(file)) {
-      Script_AddLog_P(LOG_LEVEL_INFO,PSTR("file not found"));
+      AddLog(LOG_LEVEL_INFO,PSTR("file not found"));
       return 0;
     }
 
     download_file = ufsp->open(file, FS_FILE_READ);
     if (!download_file) {
-      Script_AddLog_P(LOG_LEVEL_INFO,PSTR("could not open file"));
+      AddLog(LOG_LEVEL_INFO,PSTR("could not open file"));
       return 0;
     }
 
@@ -4980,7 +4969,7 @@ void HandleScriptConfiguration(void) {
 
     if (!HttpCheckPriviledgedAccess()) { return; }
 
-    Script_AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_CONFIGURE_SCRIPT));
+    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_CONFIGURE_SCRIPT));
 
 #ifdef USE_SCRIPT_FATFS
     if (Webserver->hasArg("d1")) {
@@ -5080,7 +5069,7 @@ void ScriptSaveSettings(void) {
     strlcpy(glob_script_mem.script_ram, str.c_str(), glob_script_mem.script_size);
 
     if (glob_script_mem.script_ram[0]!='>' && glob_script_mem.script_ram[1]!='D') {
-      Script_AddLog_P(LOG_LEVEL_INFO, PSTR("script error: must start with >D"));
+      AddLog(LOG_LEVEL_INFO, PSTR("script error: must start with >D"));
       bitWrite(Settings.rule_enabled, 0, 0);
     }
 
@@ -5093,14 +5082,14 @@ void ScriptSaveSettings(void) {
 
 //
 uint32_t script_compress(char *dest, uint32_t size) {
-  //Script_AddLog_P(LOG_LEVEL_INFO,PSTR("in string: %s len = %d"),glob_script_mem.script_ram,strlen(glob_script_mem.script_ram));
+  //AddLog(LOG_LEVEL_INFO,PSTR("in string: %s len = %d"),glob_script_mem.script_ram,strlen(glob_script_mem.script_ram));
   uint32_t len_compressed = SCRIPT_COMPRESS(glob_script_mem.script_ram, strlen(glob_script_mem.script_ram), dest, size);
   if (len_compressed > 0) {
     dest[len_compressed] = 0;
-    Script_AddLog_P(LOG_LEVEL_INFO,PSTR("script compressed to %d bytes = %d %%"),len_compressed,len_compressed * 100 / strlen(glob_script_mem.script_ram));
+    AddLog(LOG_LEVEL_INFO,PSTR("script compressed to %d bytes = %d %%"),len_compressed,len_compressed * 100 / strlen(glob_script_mem.script_ram));
     return 0;
   } else {
-    Script_AddLog_P(LOG_LEVEL_INFO, PSTR("script compress error: %d"), len_compressed);
+    AddLog(LOG_LEVEL_INFO, PSTR("script compress error: %d"), len_compressed);
     return 1;
   }
 }
@@ -5123,7 +5112,7 @@ void SaveScriptEnd(void) {
 
     int16_t res = Init_Scripter();
     if (res) {
-      Script_AddLog_P(LOG_LEVEL_INFO, PSTR("script init error: %d"), res);
+      AddLog(LOG_LEVEL_INFO, PSTR("script init error: %d"), res);
       return;
     }
 
@@ -5449,7 +5438,7 @@ void Script_Check_Hue(String *response) {
         }
         *response += String(EncodeLightId(hue_devs + TasmotaGlobal.devices_present + 1))+"\":";
         Script_HueStatus(response, hue_devs);
-        //Script_AddLog_P(LOG_LEVEL_INFO, PSTR("Hue: %s - %d "),response->c_str(), hue_devs);
+        //AddLog(LOG_LEVEL_INFO, PSTR("Hue: %s - %d "),response->c_str(), hue_devs);
       }
 
       hue_devs++;
@@ -5464,7 +5453,7 @@ void Script_Check_Hue(String *response) {
   }
 #if 0
   if (response) {
-    Script_AddLog_P(LOG_LEVEL_DEBUG, PSTR("Hue: %d"), hue_devs);
+    AddLog(LOG_LEVEL_DEBUG, PSTR("Hue: %d"), hue_devs);
     toLog(">>>>");
     toLog(response->c_str());
     toLog(response->c_str()+MAX_LOGSZ);
@@ -5609,7 +5598,7 @@ void Script_Handle_Hue(String *path) {
   } else {
     response = FPSTR(sHUE_ERROR_JSON);
   }
-  Script_AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_HTTP D_HUE " Result (%s)"), response.c_str());
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_HTTP D_HUE " Result (%s)"), response.c_str());
   WSSend(code, CT_JSON, response);
   if (resp) {
     Run_Scripter(">E", 2, 0);
@@ -5623,7 +5612,7 @@ bool Script_SubCmd(void) {
   if (!bitRead(Settings.rule_enabled, 0)) return false;
 
   if (tasm_cmd_activ) return false;
-  //Script_AddLog_P(LOG_LEVEL_INFO,PSTR(">> %s, %s, %d, %d "),XdrvMailbox.topic, XdrvMailbox.data, XdrvMailbox.payload, XdrvMailbox.index);
+  //AddLog(LOG_LEVEL_INFO,PSTR(">> %s, %s, %d, %d "),XdrvMailbox.topic, XdrvMailbox.data, XdrvMailbox.payload, XdrvMailbox.index);
 
   char command[CMDSZ];
   strlcpy(command, XdrvMailbox.topic, CMDSZ);
@@ -5651,7 +5640,7 @@ bool Script_SubCmd(void) {
   }
   //toLog(cmdbuff);
   uint32_t res = Run_Scripter(cmdbuff, tlen + 1, 0);
-  //Script_AddLog_P(LOG_LEVEL_INFO,">>%d",res);
+  //AddLog(LOG_LEVEL_INFO,">>%d",res);
   if (res) {
     return false;
   }
@@ -5792,7 +5781,7 @@ uint32_t JsonParsePath(JsonParserObject *jobj, const char *spath, char delim, fl
   uint32_t res = 0;
   const char *cp = spath;
 #ifdef DEBUG_MQTT_EVENT
-//  Script_AddLog_P(LOG_LEVEL_INFO, PSTR("Script: parsing json key: %s from json: %s"), cp, jpath);
+//  AddLog(LOG_LEVEL_INFO, PSTR("Script: parsing json key: %s from json: %s"), cp, jpath);
 #endif
   JsonParserObject obj = *jobj;
   JsonParserObject lastobj = obj;
@@ -5810,7 +5799,7 @@ uint32_t JsonParsePath(JsonParserObject *jobj, const char *spath, char delim, fl
       selem[sp] = *cp++;
     }
 #ifdef DEBUG_MQTT_EVENT
-    Script_AddLog_P(LOG_LEVEL_INFO, PSTR("Script: cmp current key: %s"), selem);
+    AddLog(LOG_LEVEL_INFO, PSTR("Script: cmp current key: %s"), selem);
 #endif
     // check for array
     char *sp = strchr(selem,'[');
@@ -5823,7 +5812,7 @@ uint32_t JsonParsePath(JsonParserObject *jobj, const char *spath, char delim, fl
     obj = obj[selem];
     if (!obj.isValid()) {
 #ifdef DEBUG_MQTT_EVENT
-      Script_AddLog_P(LOG_LEVEL_INFO, PSTR("Script: obj invalid: %s"), selem);
+      AddLog(LOG_LEVEL_INFO, PSTR("Script: obj invalid: %s"), selem);
 #endif
       JsonParserToken tok = lastobj[selem];
       if (tok.isValid()) {
@@ -5848,7 +5837,7 @@ uint32_t JsonParsePath(JsonParserObject *jobj, const char *spath, char delim, fl
 
       }
 #ifdef DEBUG_MQTT_EVENT
-      Script_AddLog_P(LOG_LEVEL_INFO, PSTR("Script: token invalid: %s"), selem);
+      AddLog(LOG_LEVEL_INFO, PSTR("Script: token invalid: %s"), selem);
 #endif
       break;
     }
@@ -5891,7 +5880,7 @@ bool ScriptMqttData(void)
   String sData = XdrvMailbox.data;
 
 #ifdef DEBUG_MQTT_EVENT
-    Script_AddLog_P(LOG_LEVEL_INFO, PSTR("Script: MQTT Topic %s, Event %s"), XdrvMailbox.topic, XdrvMailbox.data);
+    AddLog(LOG_LEVEL_INFO, PSTR("Script: MQTT Topic %s, Event %s"), XdrvMailbox.topic, XdrvMailbox.data);
 #endif
 
   MQTT_Subscription event_item;
@@ -5901,7 +5890,7 @@ bool ScriptMqttData(void)
     uint8_t json_valid = 0;
 
 #ifdef DEBUG_MQTT_EVENT
-    Script_AddLog_P(LOG_LEVEL_INFO, PSTR("Script: Match MQTT message Topic %s with subscription topic %s and key %s"), sTopic.c_str(), event_item.Topic.c_str(),event_item.Key.c_str());
+    AddLog(LOG_LEVEL_INFO, PSTR("Script: Match MQTT message Topic %s with subscription topic %s and key %s"), sTopic.c_str(), event_item.Topic.c_str(),event_item.Key.c_str());
 #endif
     if (sTopic.startsWith(event_item.Topic)) {
       //This topic is subscribed by us, so serve it
@@ -5958,7 +5947,7 @@ bool ScriptMqttData(void)
             snprintf_P(sbuffer, sizeof(sbuffer), PSTR(">%s=\"%s\"\n"), event_item.Event.c_str(), value.c_str());
           }
 #ifdef DEBUG_MQTT_EVENT
-          Script_AddLog_P(LOG_LEVEL_INFO, PSTR("Script: setting script var %s"), sbuffer);
+          AddLog(LOG_LEVEL_INFO, PSTR("Script: setting script var %s"), sbuffer);
 #endif
           //toLog(sbuffer);
           execute_script(sbuffer);
@@ -6007,7 +5996,7 @@ String ScriptSubscribe(const char *data, int data_len)
         }
       }
     }
-    //Script_AddLog_P(LOG_LEVEL_DEBUG, PSTR("Script: Subscribe command with parameters: %s, %s, %s."), event_name.c_str(), topic.c_str(), key.c_str());
+    //AddLog(LOG_LEVEL_DEBUG, PSTR("Script: Subscribe command with parameters: %s, %s, %s."), event_name.c_str(), topic.c_str(), key.c_str());
     //event_name.toUpperCase();
     if (event_name.length() > 0 && topic.length() > 0) {
       //Search all subscriptions
@@ -6028,7 +6017,7 @@ String ScriptSubscribe(const char *data, int data_len)
           topic.concat("/#");
         }
       }
-      // Script_AddLog_P(LOG_LEVEL_DEBUG, PSTR("Script: New topic: %s."), topic.c_str());
+      // AddLog(LOG_LEVEL_DEBUG, PSTR("Script: New topic: %s."), topic.c_str());
       //MQTT Subscribe
       subscription_item.Event = event_name;
       subscription_item.Topic = topic.substring(0, topic.length() - 2);   //Remove "/#" so easy to match
@@ -7394,7 +7383,7 @@ bool Xdrv10(uint8_t function)
 #ifdef USE_UFILESYS
       if (ufs_type) {
         // we have a file system
-        Script_AddLog_P(LOG_LEVEL_INFO,PSTR("UFILESYSTEM OK!"));
+        AddLog(LOG_LEVEL_INFO,PSTR("UFILESYSTEM OK!"));
         char *script;
         script = (char*)calloc(UFSYS_SIZE + 4, 1);
         if (!script) break;
@@ -7413,7 +7402,7 @@ bool Xdrv10(uint8_t function)
         // indicates scripter use no compression
         bitWrite(Settings.rule_once, 6, 0);
       } else {
-        Script_AddLog_P(LOG_LEVEL_INFO,PSTR("UFILESYSTEM fail, using compression!"));
+        AddLog(LOG_LEVEL_INFO,PSTR("UFILESYSTEM fail, using compression!"));
         int32_t len_decompressed;
         sprt = (char*)calloc(UNISHOXRSIZE + 8,1);
         if (!sprt) { break; }
