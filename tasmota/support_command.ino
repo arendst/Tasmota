@@ -1201,18 +1201,17 @@ void CmndGpio(void)
         if ((ResponseAppend_P(PSTR("\"" D_CMND_GPIO "%d\":{\"%d\":\"%s%s\"}"), i, sensor_type, GetTextIndexed(stemp1, sizeof(stemp1), sensor_name_idx, sensor_names), sindex) > (MAX_LOGSZ - TOPSZ)) || (i == ARRAY_SIZE(Settings.my_gp.io) -1)) {
           ResponseJsonEnd();
           MqttPublishPrefixTopic_P(RESULT_OR_STAT, XdrvMailbox.command);
+          ResponseClear();
           jsflg2 = true;
           jsflg = false;
         }
       }
     }
-    if (jsflg2) {
-      ResponseClear();
+    if (jsflg) {
+      ResponseJsonEnd();
     } else {
-      if (jsflg) {
-        ResponseJsonEnd();
-      } else {
-        ResponseCmndChar(D_JSON_NOT_SUPPORTED);
+      if (!jsflg2) {
+        ResponseCmndChar(PSTR(D_JSON_NOT_SUPPORTED));
       }
     }
   }
