@@ -52,6 +52,7 @@
 #include <ESP8266HTTPClient.h>              // Ota
 #include <ESP8266httpUpdate.h>              // Ota
 #include <StreamString.h>                   // Webserver, Updater
+#include <ext_printf.h>
 #include <JsonParser.h>
 #include <JsonGenerator.h>
 #ifdef USE_ARDUINO_OTA
