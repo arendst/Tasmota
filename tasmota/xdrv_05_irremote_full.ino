@@ -235,57 +235,36 @@ String sendACJsonState(const stdAc::state_t &state) {
   return payload;
 }
 
-String sendIRJsonState(const struct decode_results &results) {
-  String json("{");
-  json += "\"" D_JSON_IR_PROTOCOL "\":\"";
-  json += typeToString(results.decode_type);
-  json += "\",\"" D_JSON_IR_BITS "\":";
-  json += results.bits;
+void sendIRJsonState(const struct decode_results &results) {
+  Response_P(PSTR("\"" D_JSON_IR_PROTOCOL "\":\"%s\",\"" D_JSON_IR_BITS "\":%d"),
+                  typeToString(results.decode_type).c_str(),
+                  results.bits);
 
   if (hasACState(results.decode_type)) {
-    json += ",\"" D_JSON_IR_DATA "\":\"";
-    json += resultToHexidecimal(&results);
-    json += "\"";
+    ResponseAppend_P(PSTR(",\"" D_JSON_IR_DATA "\":\"%s\""),
+                          resultToHexidecimal(&results).c_str());
   } else {
-    if (UNKNOWN != results.decode_type) {
-      json += ",\"" D_JSON_IR_DATA "\":";
-    } else {
-      json += ",\"" D_JSON_IR_HASH "\":";
-    }
+    ResponseAppend_P(PSTR(",\"%s\":"), UNKNOWN != results.decode_type ? PSTR(D_JSON_IR_DATA) : PSTR(D_JSON_IR_HASH));
     if (Settings.flag.ir_receive_decimal) {  // SetOption29 - IR receive data format
-      char svalue[32];
-      ulltoa(results.value, svalue, 10);
-      json += svalue;
+      ResponseAppend_P(PSTR("%u"), (uint32_t) results.value);
     } else {
-      char hvalue[64];
       if (UNKNOWN != results.decode_type) {
-        Uint64toHex(results.value, hvalue, results.bits);  // Get 64bit value as hex 0x00123456
-        json += "\"0x";
-        json += hvalue;
-        json += "\",\"" D_JSON_IR_DATALSB "\":\"0x";
-        Uint64toHex(reverseBitsInBytes64(results.value), hvalue, results.bits);  // Get 64bit value as hex 0x00123456, LSB
-        json += hvalue;
-        json += "\"";
+        uint64_t reverse = reverseBitsInBytes64(results.value);
+        ResponseAppend_P(PSTR("\"0x%_X\",\"" D_JSON_IR_DATALSB "\":\"0x%_X\""),
+                         &results.value, &reverse);
       } else {    // UNKNOWN
-        Uint64toHex(results.value, hvalue, 32);  // Unknown is always 32 bits
-        json += "\"0x";
-        json += hvalue;
-        json += "\"";
+        ResponseAppend_P(PSTR("\"0x08X\""), (uint32_t) results.value);  // Unknown is always 32 bits
       }
     }
   }
-  json += ",\"" D_JSON_IR_REPEAT "\":";
-  json += results.repeat;
+  ResponseAppend_P(PSTR(",\"" D_JSON_IR_REPEAT "\":%d"), results.repeat);
 
   stdAc::state_t new_state;
   if (IRAcUtils::decodeToState(&results, &new_state, irhvac_stateful && irac_prev_state.protocol == results.decode_type ? &irac_prev_state : nullptr)) {
     // we have a decoded state
-    json += ",\"" D_CMND_IRHVAC "\":";
-    json += sendACJsonState(new_state);
+    ResponseAppend_P(PSTR(",\"" D_CMND_IRHVAC "\":%s"), sendACJsonState(new_state).c_str());
     irac_prev_state = new_state; // store for next time
   }
-
-  return json;
 }
 
 void IrReceiveCheck(void)
@@ -298,7 +277,8 @@ void IrReceiveCheck(void)
 //    if ((now - ir_lasttime > IR_TIME_AVOID_DUPLICATE) && (UNKNOWN != results.decode_type) && (results.bits > 0)) {
     if (now - ir_lasttime > IR_TIME_AVOID_DUPLICATE) {
       ir_lasttime = now;
-      Response_P(PSTR("{\"" D_JSON_IRRECEIVED "\":%s"), sendIRJsonState(results).c_str());
+      Response_P(PSTR("{\"" D_JSON_IRRECEIVED "\":{"));
+      sendIRJsonState(results);
 
       IRRawTable raw_table;
       bool prev_number = false;     // was the previous value a number, meaning we may need a comma prefix

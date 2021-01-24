@@ -399,9 +399,7 @@ void Z_attribute::setHex32(uint32_t _val) {
 }
 void Z_attribute::setHex64(uint64_t _val) {
   char hex[22];
-  hex[0] = '0';   // prefix with '0x'
-  hex[1] = 'x';
-  Uint64toHex(_val, &hex[2], 64);
+  ext_snprintf_P(hex, sizeof(hex), PSTR("0x%_X"), &_val);
   setStr(hex);
 }
 

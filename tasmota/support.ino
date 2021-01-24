@@ -322,26 +322,6 @@ int TextToInt(char *str)
   return strtol(str, &p, radix);
 }
 
-char* ulltoa(unsigned long long value, char *str, int radix)
-{
-  char digits[64];
-  char *dst = str;
-  int i = 0;
-
-//  if (radix < 2 || radix > 36) { radix = 10; }
-
-  do {
-    int n = value % radix;
-    digits[i++] = (n < 10) ? (char)n+'0' : (char)n-10+'A';
-    value /= radix;
-  } while (value != 0);
-
-  while (i > 0) { *dst++ = digits[--i]; }
-
-  *dst = 0;
-  return str;
-}
-
 // see https://stackoverflow.com/questions/6357031/how-do-you-convert-a-byte-array-to-a-hexadecimal-string-in-c
 // char* ToHex_P(unsigned char * in, size_t insz, char * out, size_t outsz, char inbetween = '\0'); in tasmota_globals.h
 char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, char inbetween)
@@ -361,24 +341,6 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
   }
   pout[(inbetween && insz) ? -1 : 0] = 0;   // Discard last inbetween if any input
   return out;
-}
-
-char* Uint64toHex(uint64_t value, char *str, uint16_t bits)
-{
-  ulltoa(value, str, 16);  // Get 64bit value
-
-  int fill = 8;
-  if ((bits > 3) && (bits < 65)) {
-    fill = bits / 4;  // Max 16
-    if (bits % 4) { fill++; }
-  }
-  int len = strlen(str);
-  fill -= len;
-  if (fill > 0) {
-    memmove(str + fill, str, len +1);
-    memset(str, '0', fill);
-  }
-  return str;
 }
 
 char* dtostrfd(double number, unsigned char prec, char *s)
@@ -1229,7 +1191,7 @@ int Response_P(const char* format, ...)        // Content send snprintf_P char d
   // This uses char strings. Be aware of sending %% if % is needed
   va_list args;
   va_start(args, format);
-  int len = vsnprintf_P(TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), format, args);
+  int len = ext_vsnprintf_P(TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), format, args);
   va_end(args);
   return len;
 }
@@ -1243,7 +1205,7 @@ int ResponseTime_P(const char* format, ...)    // Content send snprintf_P char d
   ResponseGetTime(Settings.flag2.time_format, TasmotaGlobal.mqtt_data);
 
   int mlen = strlen(TasmotaGlobal.mqtt_data);
-  int len = vsnprintf_P(TasmotaGlobal.mqtt_data + mlen, sizeof(TasmotaGlobal.mqtt_data) - mlen, format, args);
+  int len = ext_vsnprintf_P(TasmotaGlobal.mqtt_data + mlen, sizeof(TasmotaGlobal.mqtt_data) - mlen, format, args);
   va_end(args);
   return len + mlen;
 }
@@ -1254,7 +1216,7 @@ int ResponseAppend_P(const char* format, ...)  // Content send snprintf_P char d
   va_list args;
   va_start(args, format);
   int mlen = strlen(TasmotaGlobal.mqtt_data);
-  int len = vsnprintf_P(TasmotaGlobal.mqtt_data + mlen, sizeof(TasmotaGlobal.mqtt_data) - mlen, format, args);
+  int len = ext_vsnprintf_P(TasmotaGlobal.mqtt_data + mlen, sizeof(TasmotaGlobal.mqtt_data) - mlen, format, args);
   va_end(args);
   return len + mlen;
 }
@@ -1270,17 +1232,28 @@ int ResponseAppendTime(void)
   return ResponseAppendTimeFormat(Settings.flag2.time_format);
 }
 
+// int ResponseAppendTHD(float f_temperature, float f_humidity)
+// {
+//   char temperature[FLOATSZ];
+//   dtostrfd(f_temperature, Settings.flag2.temperature_resolution, temperature);
+//   char humidity[FLOATSZ];
+//   dtostrfd(f_humidity, Settings.flag2.humidity_resolution, humidity);
+//   char dewpoint[FLOATSZ];
+//   dtostrfd(CalcTempHumToDew(f_temperature, f_humidity), Settings.flag2.temperature_resolution, dewpoint);
+
+//   return ResponseAppend_P(PSTR("\"" D_JSON_TEMPERATURE "\":%s,\"" D_JSON_HUMIDITY "\":%s,\"" D_JSON_DEWPOINT "\":%s"), temperature, humidity, dewpoint);
+// }
+
 int ResponseAppendTHD(float f_temperature, float f_humidity)
 {
-  char temperature[FLOATSZ];
-  dtostrfd(f_temperature, Settings.flag2.temperature_resolution, temperature);
-  char humidity[FLOATSZ];
-  dtostrfd(f_humidity, Settings.flag2.humidity_resolution, humidity);
-  char dewpoint[FLOATSZ];
-  dtostrfd(CalcTempHumToDew(f_temperature, f_humidity), Settings.flag2.temperature_resolution, dewpoint);
+  float dewpoint = CalcTempHumToDew(f_temperature, f_humidity);
 
-  return ResponseAppend_P(PSTR("\"" D_JSON_TEMPERATURE "\":%s,\"" D_JSON_HUMIDITY "\":%s,\"" D_JSON_DEWPOINT "\":%s"), temperature, humidity, dewpoint);
+  return ResponseAppend_P(PSTR("\"" D_JSON_TEMPERATURE "\":%*_f,\"" D_JSON_HUMIDITY "\":%*_f,\"" D_JSON_DEWPOINT "\":%*_f"),
+                          Settings.flag2.temperature_resolution, &f_temperature,
+                          Settings.flag2.humidity_resolution, &f_humidity,
+                          Settings.flag2.temperature_resolution, &dewpoint);
 }
+
 
 int ResponseJsonEnd(void)
 {
@@ -2209,7 +2182,7 @@ void AddLog(uint32_t loglevel, PGM_P formatP, ...) {
 
   va_list arg;
   va_start(arg, formatP);
-  uint32_t len = vsnprintf_P(log_data, LOGSZ +1, formatP, arg);
+  uint32_t len = ext_vsnprintf_P(log_data, LOGSZ +1, formatP, arg);
   va_end(arg);
   if (len > LOGSZ) { strcat(log_data, "..."); }  // Actual data is more
 
@@ -2243,7 +2216,7 @@ void AddLog_Debug(PGM_P formatP, ...)
 
   va_list arg;
   va_start(arg, formatP);
-  uint32_t len = vsnprintf_P(log_data, sizeof(log_data), formatP, arg);
+  uint32_t len = ext_vsnprintf_P(log_data, sizeof(log_data), formatP, arg);
   va_end(arg);
 
   AddLogData(LOG_LEVEL_DEBUG, log_data);

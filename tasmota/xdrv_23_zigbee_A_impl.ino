@@ -1643,25 +1643,18 @@ void CmndZbConfig(void) {
   }
 
   // display the current or new configuration
-  char hex_ext_panid[20] = "0x";
-  Uint64toHex(zb_ext_panid, &hex_ext_panid[2], 64);
-  char hex_precfgkey_l[20] = "0x";
-  Uint64toHex(zb_precfgkey_l, &hex_precfgkey_l[2], 64);
-  char hex_precfgkey_h[20] = "0x";
-  Uint64toHex(zb_precfgkey_h, &hex_precfgkey_h[2], 64);
-
   // {"ZbConfig":{"Channel":11,"PanID":"0x1A63","ExtPanID":"0xCCCCCCCCCCCCCCCC","KeyL":"0x0F0D0B0907050301L","KeyH":"0x0D0C0A0806040200L"}}
   Response_P(PSTR("{\"" D_PRFX_ZB D_JSON_ZIGBEE_CONFIG "\":{"
                   "\"Channel\":%d"
                   ",\"PanID\":\"0x%04X\""
-                  ",\"ExtPanID\":\"%s\""
-                  ",\"KeyL\":\"%s\""
-                  ",\"KeyH\":\"%s\""
+                  ",\"ExtPanID\":\"0x%_X\""
+                  ",\"KeyL\":\"0x%_X\""
+                  ",\"KeyH\":\"0x%_X\""
                   ",\"TxRadio\":%d"
                   "}}"),
                   zb_channel, zb_pan_id,
-                  hex_ext_panid,
-                  hex_precfgkey_l, hex_precfgkey_h,
+                  &zb_ext_panid,
+                  &zb_precfgkey_l, &zb_precfgkey_h,
                   zb_txradio_dbm);
 }
 
