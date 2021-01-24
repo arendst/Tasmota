@@ -2204,7 +2204,7 @@ void AddLog_P(uint32_t loglevel, PGM_P formatP, ...) {
 
   va_list arg;
   va_start(arg, formatP);
-  uint32_t len = vsnprintf_P(log_data, sizeof(log_data), formatP, arg);
+  uint32_t len = ext_vsnprintf_P(log_data, sizeof(log_data), formatP, arg);
   va_end(arg);
 
   AddLogData(loglevel, log_data);
