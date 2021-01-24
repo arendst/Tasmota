@@ -659,7 +659,6 @@ bool ValidIpAddress(const char* str)
   return ip_address.fromString(str);
 }
 
-
 bool ParseIPv4(uint32_t* addr, const char* str_p)
 {
   uint8_t *part = (uint8_t*)addr;
