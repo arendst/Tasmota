@@ -66,6 +66,13 @@ bool device_groups_up = false;
 bool building_status_message = false;
 bool ignore_dgr_sends = false;
 
+char * IPAddressToString(const IPAddress& ip_address)
+{
+  static char buffer[16];
+  sprintf_P(buffer, PSTR("%u.%u.%u.%u"), ip_address[0], ip_address[1], ip_address[2], ip_address[3]);
+  return buffer;
+}
+
 uint8_t * BeginDeviceGroupMessage(struct device_group * device_group, uint16_t flags, bool hold_sequence = false)
 {
   uint8_t * message_ptr = &device_group->message[device_group->message_header_length];
@@ -218,7 +225,8 @@ void SendReceiveDeviceGroupMessage(struct device_group * device_group, struct de
   flags |= *message_ptr++ << 8;
 
   // Initialize the log buffer.
-  log_length = sprintf(log_buffer, PSTR("DGR: %s %s message %s %s: seq=%u, flags=%u"), (received ? PSTR("Received") : PSTR("Sending")), device_group->group_name, (received ? PSTR("from") : PSTR("to")), (device_group_member ? device_group_member->ip_address.toString().c_str() : received ? PSTR("local") : PSTR("network")), message_sequence, flags);
+//  log_length = sprintf(log_buffer, PSTR("DGR: %s %s message %s %s: seq=%u, flags=%u"), (received ? PSTR("Received") : PSTR("Sending")), device_group->group_name, (received ? PSTR("from") : PSTR("to")), (device_group_member ? device_group_member->ip_address.toString().c_str() : received ? PSTR("local") : PSTR("network")), message_sequence, flags);
+  log_length = sprintf(log_buffer, PSTR("DGR: %s %s message %s %s: seq=%u, flags=%u"), (received ? PSTR("Received") : PSTR("Sending")), device_group->group_name, (received ? PSTR("from") : PSTR("to")), (device_group_member ? IPAddressToString(device_group_member->ip_address) : received ? PSTR("local") : PSTR("network")), message_sequence, flags);
   log_ptr = log_buffer + log_length;
   log_remaining = sizeof(log_buffer) - log_length;
 
@@ -775,7 +783,8 @@ void ProcessDeviceGroupMessage(uint8_t * message, int message_length)
       }
       device_group_member->ip_address = remote_ip;
       *flink = device_group_member;
-      AddLog(LOG_LEVEL_DEBUG, PSTR("DGR: Member %s added"), remote_ip.toString().c_str());
+//      AddLog(LOG_LEVEL_DEBUG, PSTR("DGR: Member %s added"), remote_ip.toString().c_str());
+      AddLog(LOG_LEVEL_DEBUG, PSTR("DGR: Member %s added"), IPAddressToString(remote_ip));
       break;
     }
     else if (device_group_member->ip_address == remote_ip) {
@@ -795,7 +804,8 @@ void DeviceGroupStatus(uint8_t device_group_index)
     struct device_group * device_group = &device_groups[device_group_index];
     buffer[0] = buffer[1] = 0;
     for (struct device_group_member * device_group_member = device_group->device_group_members; device_group_member; device_group_member = device_group_member->flink) {
-      snprintf_P(buffer, sizeof(buffer), PSTR("%s,{\"IPAddress\":\"%s\",\"ResendCount\":%u,\"LastRcvdSeq\":%u,\"LastAckedSeq\":%u}"), buffer, device_group_member->ip_address.toString().c_str(), device_group_member->unicast_count, device_group_member->received_sequence, device_group_member->acked_sequence);
+//      snprintf_P(buffer, sizeof(buffer), PSTR("%s,{\"IPAddress\":\"%s\",\"ResendCount\":%u,\"LastRcvdSeq\":%u,\"LastAckedSeq\":%u}"), buffer, device_group_member->ip_address.toString().c_str(), device_group_member->unicast_count, device_group_member->received_sequence, device_group_member->acked_sequence);
+      snprintf_P(buffer, sizeof(buffer), PSTR("%s,{\"IPAddress\":\"%s\",\"ResendCount\":%u,\"LastRcvdSeq\":%u,\"LastAckedSeq\":%u}"), buffer, IPAddressToString(device_group_member->ip_address), device_group_member->unicast_count, device_group_member->received_sequence, device_group_member->acked_sequence);
       member_count++;
     }
     Response_P(PSTR("{\"" D_CMND_DEVGROUPSTATUS "\":{\"Index\":%u,\"GroupName\":\"%s\",\"MessageSeq\":%u,\"MemberCount\":%d,\"Members\":[%s]}}"), device_group_index, device_group->group_name, device_group->outgoing_sequence, member_count, &buffer[1]);
@@ -872,7 +882,8 @@ AddLog(LOG_LEVEL_DEBUG, PSTR("DGR: Checking next_check_time=%u, now=%u"), next_c
                 if ((long)(now - device_group->member_timeout_time) >= 0) {
                   *flink = device_group_member->flink;
                   free(device_group_member);
-                  AddLog(LOG_LEVEL_DEBUG, PSTR("DGR: Member %s removed"), device_group_member->ip_address.toString().c_str());
+//                  AddLog(LOG_LEVEL_DEBUG, PSTR("DGR: Member %s removed"), device_group_member->ip_address.toString().c_str());
+                  AddLog(LOG_LEVEL_DEBUG, PSTR("DGR: Member %s removed"), IPAddressToString(device_group_member->ip_address));
                   continue;
                 }
 
