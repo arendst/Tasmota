@@ -1291,7 +1291,7 @@ bool NeoPoolCmnd(void)
           data[0] = (uint16_t)(new_time & 0xFFFF);
           data[1] = (uint16_t)((new_time>>16) & 0xFFFF);
 #ifdef DEBUG_TASMOTA_SENSOR
-          AddLog(LOG_LEVEL_DEBUG, PSTR("NEO: set time to %ld (%04X%04X)"), new_time, t_low, t_high);
+          AddLog(LOG_LEVEL_DEBUG, PSTR("NEO: set time to %ld (%04X%04X)"), new_time, data[0], data[1]);
 #endif  // DEBUG_TASMOTA_SENSOR
           serviced = (NEOPOOL_OK == NeoPoolWriteRegister(MBF_PAR_TIME_LOW, data, 2));
           if (serviced) {
@@ -1302,7 +1302,7 @@ bool NeoPoolCmnd(void)
         else if (0 == params_cnt) {
           serviced = (NEOPOOL_OK == NeoPoolReadRegister(MBF_PAR_TIME_LOW, data, 2));
 #ifdef DEBUG_TASMOTA_SENSOR
-          AddLog(LOG_LEVEL_DEBUG, PSTR("NEO: time read 0x%04X%04X %ld"), t_high, t_low, (uint32_t)t_low + ((uint32_t)t_high << 16));
+          AddLog(LOG_LEVEL_DEBUG, PSTR("NEO: time read 0x%04X%04X %ld"), data[1], data[0], (uint32_t)data[0] + ((uint32_t)data[1] << 16));
 #endif  // DEBUG_TASMOTA_SENSOR
         }
         else {
