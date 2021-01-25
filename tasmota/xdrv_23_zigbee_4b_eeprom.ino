@@ -74,7 +74,7 @@ bool hydrateDeviceData(class Z_Device & device, const SBuffer & buf, size_t star
 
 // negative means error
 // positive is the segment length
-int32_t hydrateSingleDevice(const class SBuffer & buf, size_t start, size_t len) {
+int32_t hydrateSingleDevice(const SBuffer & buf, size_t start, size_t len) {
   uint8_t segment_len = buf.get8(start);
   if ((segment_len < 4) || (start + segment_len > len)) {
     AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "invalid segment_len=%d"), segment_len);
@@ -154,7 +154,7 @@ bool hydrateDevicesDataFromEEPROM(void) {
 #endif // USE_ZIGBEE_EZSP
 }
 
-class SBuffer hibernateDeviceData(const struct Z_Device & device, bool mqtt = false) {
+SBuffer hibernateDeviceData(const struct Z_Device & device, bool mqtt = false) {
   SBuffer buf(192);
 
   // If we have zero information about the device, just skip ir

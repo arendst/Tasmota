@@ -134,25 +134,21 @@ void ZigbeeInputLoop(void) {
   }
 
   if (zigbee_buffer->len() && (millis() > (zigbee_polling_window + ZIGBEE_POLLING))) {
-    char hex_char[(zigbee_buffer->len() * 2) + 2];
-		ToHex_P((unsigned char*)zigbee_buffer->getBuffer(), zigbee_buffer->len(), hex_char, sizeof(hex_char));
-
     // AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_ZIGBEE "Bytes follow_read_metric = %0d"), ZigbeeSerial->getLoopReadMetric());
 		// buffer received, now check integrity
 		if (zigbee_buffer->len() != zigbee_frame_len) {
 			// Len is not correct, log and reject frame
-      AddLog_P(LOG_LEVEL_INFO, PSTR(D_JSON_ZIGBEEZNPRECEIVED ": received frame of wrong size %s, len %d, expected %d"), hex_char, zigbee_buffer->len(), zigbee_frame_len);
+      AddLog_P(LOG_LEVEL_INFO, PSTR(D_JSON_ZIGBEEZNPRECEIVED ": received frame of wrong size %_B, len %d, expected %d"), &zigbee_buffer, zigbee_buffer->len(), zigbee_frame_len);
 		} else if (0x00 != fcs) {
 			// FCS is wrong, packet is corrupt, log and reject frame
-      AddLog_P(LOG_LEVEL_INFO, PSTR(D_JSON_ZIGBEEZNPRECEIVED ": received bad FCS frame %s, %d"), hex_char, fcs);
+      AddLog_P(LOG_LEVEL_INFO, PSTR(D_JSON_ZIGBEEZNPRECEIVED ": received bad FCS frame %_B, %d"), &zigbee_buffer, fcs);
 		} else {
 			// frame is correct
 			//AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR(D_JSON_ZIGBEEZNPRECEIVED ": received correct frame %s"), hex_char);
 
 			SBuffer znp_buffer = zigbee_buffer->subBuffer(2, zigbee_frame_len - 3);	// remove SOF, LEN and FCS
 
-			ToHex_P((unsigned char*)znp_buffer.getBuffer(), znp_buffer.len(), hex_char, sizeof(hex_char));
-      Response_P(PSTR("{\"" D_JSON_ZIGBEEZNPRECEIVED "\":\"%s\"}"), hex_char);
+      Response_P(PSTR("{\"" D_JSON_ZIGBEEZNPRECEIVED "\":\"%_B\"}"), &znp_buffer);
       if (Settings.flag3.tuya_serial_mqtt_publish) {
         MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR(D_RSLT_SENSOR));
       } else {
@@ -552,7 +548,7 @@ void ZigbeeEZSPSendDATA(const uint8_t *msg, size_t len) {
 }
 
 // Receive a high-level EZSP command/response, starting with 16-bits frame ID
-void ZigbeeProcessInputEZSP(class SBuffer &buf) {
+void ZigbeeProcessInputEZSP(SBuffer &buf) {
   // verify errors in first 2 bytes.
   // TODO
   // uint8_t  sequence_num = buf.get8(0);
@@ -632,7 +628,7 @@ void EZSP_HandleAck(uint8_t new_ack) {
 }
 
 // Receive raw ASH frame (CRC was removed, data unstuffed) but still contains frame numbers
-void ZigbeeProcessInputRaw(class SBuffer &buf) {
+void ZigbeeProcessInputRaw(SBuffer &buf) {
   uint8_t control_byte = buf.get8(0);
   uint8_t ack_num = control_byte & 0x07;        // keep 3 LSB
   if (control_byte & 0x80) {  // non DATA frame

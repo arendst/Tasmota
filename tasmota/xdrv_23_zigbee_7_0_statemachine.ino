@@ -1094,7 +1094,7 @@ void ZigbeeStateMachine_Run(void) {
 //
 // Process a bytes buffer and call any callback that matches the received message
 //
-int32_t ZigbeeProcessInput(class SBuffer &buf) {
+int32_t ZigbeeProcessInput(SBuffer &buf) {
   if (!zigbee.state_machine) { return -1; }     // if state machine is stopped, send 'ignore' message
 
   // apply the receive filter, acts as 'startsWith()'

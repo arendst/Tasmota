@@ -484,6 +484,8 @@ void StartWebserver(int type, IPAddress ipweb)
 #else
     AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_HTTP D_WEBSERVER_ACTIVE_ON " %s%s " D_WITH_IP_ADDRESS " %s"),
       NetworkHostname(), (Mdns.begun) ? PSTR(".local") : "", ipweb.toString().c_str());
+//    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_HTTP D_WEBSERVER_ACTIVE_ON " %s%s " D_WITH_IP_ADDRESS " %_I"),
+//      NetworkHostname(), (Mdns.begun) ? PSTR(".local") : "", (uint32_t)ipweb);
 #endif // LWIP_IPV6 = 1
     TasmotaGlobal.rules_flag.http_init = 1;
   }
@@ -1587,12 +1589,12 @@ void ModuleSaveSettings(void)
     } else {
       if (ValidGPIO(i, template_gp.io[i])) {
         Settings.my_gp.io[i] = WebGetGpioArg(i);
-        gpios += F(", "); gpios += String(i); gpios += F(" "); gpios += String(Settings.my_gp.io[i]);
+        gpios += F(", IO"); gpios += String(i); gpios += F(" "); gpios += String(Settings.my_gp.io[i]);
       }
     }
   }
 
-  AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_MODULE "%s " D_CMND_MODULE "%s"), ModuleName().c_str(), gpios.c_str());
+  AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_MODULE "%s " D_CMND_MODULE "%s"), ModuleName().c_str(), gpios.c_str());
 }
 
 /*-------------------------------------------------------------------------------------------*/

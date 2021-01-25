@@ -64,11 +64,15 @@ void test_ext_snprintf_P(void) {
 
   ext_snprintf_P(c, sizeof(c), "Float default=%1_f, int(3)=%4_f, int(3)=%-4_f, int(3)=%-4_f, 6dec=%-8_f", &fpi, &f3, &f3, &f31, &fpi);
   Serial.printf("--> out=%s\n", c);
+  ext_snprintf_P(c, sizeof(c), "Float default=%*_f, int(3)=%*_f, int(3)=%*_f, int(3)=%*_f, 6dec=%*_f", 1, &fpi, 4, &f3, -4, &f3, -4, &f31, -8, &fpi);
+  Serial.printf("--> out=%s\n", c);
   uint64_t u641 = 0x1122334455667788LL;
   uint64_t u642 = 0x0123456789ABCDEFLL;
   uint64_t u643 = 0xFEDCBA9876543210LL;
   ext_snprintf_P(c, sizeof(c), "Int64 0x%_X 0x%_X 0x%_X", &u641, &u642, &u643);
   Serial.printf("--> out=%s\n", c);
+
+  // ext_snprintf_P(c, sizeof(c), "Float default=%*_f, int(3)=%*_f, int(3)=%*_f, int(3)=%*_f, 6dec=%*_f", &fpi, &f3, &f3, &f31, &fpi);
 
   // String string("Foobar");
   // ext_snprintf_P(c, sizeof(c), "String 0x%08X %_s", &string, &string);

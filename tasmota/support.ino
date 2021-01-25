@@ -322,27 +322,6 @@ int TextToInt(char *str)
   return strtol(str, &p, radix);
 }
 
-// see https://stackoverflow.com/questions/6357031/how-do-you-convert-a-byte-array-to-a-hexadecimal-string-in-c
-// char* ToHex_P(unsigned char * in, size_t insz, char * out, size_t outsz, char inbetween = '\0'); in tasmota_globals.h
-char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, char inbetween)
-{
-  // ToHex_P(in, insz, out, outz)      -> "12345667"
-  // ToHex_P(in, insz, out, outz, ' ') -> "12 34 56 67"
-  // ToHex_P(in, insz, out, outz, ':') -> "12:34:56:67"
-  static const char * hex = "0123456789ABCDEF";
-  int between = (inbetween) ? 3 : 2;
-  const unsigned char * pin = in;
-  char * pout = out;
-  for (; pin < in+insz; pout += between, pin++) {
-    pout[0] = hex[(pgm_read_byte(pin)>>4) & 0xF];
-    pout[1] = hex[ pgm_read_byte(pin)     & 0xF];
-    if (inbetween) { pout[2] = inbetween; }
-    if (pout + 3 - out > outsz) { break; }  // Better to truncate output string than overflow buffer
-  }
-  pout[(inbetween && insz) ? -1 : 0] = 0;   // Discard last inbetween if any input
-  return out;
-}
-
 char* dtostrfd(double number, unsigned char prec, char *s)
 {
   if ((isnan(number)) || (isinf(number))) {  // Fix for JSON output (https://stackoverflow.com/questions/1423081/json-left-out-infinity-and-nan-json-status-in-ecmascript)

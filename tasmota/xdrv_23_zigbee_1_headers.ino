@@ -45,7 +45,7 @@ public:
 };
 
 typedef int32_t (*ZB_Func)(uint8_t value);
-typedef int32_t (*ZB_RecvMsgFunc)(int32_t res, const class SBuffer &buf);
+typedef int32_t (*ZB_RecvMsgFunc)(int32_t res, const SBuffer &buf);
 
 // Labels used in the State Machine -- internal only
 const uint8_t  ZIGBEE_LABEL_RESTART = 1;     // Restart the state_machine in a different mode
@@ -118,6 +118,7 @@ public:
 struct ZigbeeStatus zigbee;
 SBuffer *zigbee_buffer = nullptr;
 
+void zigbeeZCLSendCmd(const ZigbeeZCLSendMessage &msg);
 void ZigbeeZCLSend_Raw(const ZigbeeZCLSendMessage &zcl);
 bool ZbAppendWriteBuf(SBuffer & buf, const Z_attribute & attr, bool prepend_status_ok = false);
 
