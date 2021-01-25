@@ -847,13 +847,16 @@ void CmndSavedata(void)
 void CmndSetoptionSO(void)
 {
   snprintf_P(XdrvMailbox.command, CMDSZ, PSTR(D_CMND_SETOPTION));  // Rename result shortcut command SO to SetOption
-  CmndSetoption();
+  CmndSetoptionBase(1);
 }
 
 void CmndSetoption(void)
 {
-//  snprintf_P(XdrvMailbox.command, CMDSZ, PSTR(D_CMND_SETOPTION));  // Rename result shortcut command SO to SetOption
+  CmndSetoptionBase(1);
+}
 
+void CmndSetoptionBase(bool indexed)
+{
   if (XdrvMailbox.index < 146) {
     uint32_t ptype;
     uint32_t pindex;
@@ -996,7 +999,11 @@ void CmndSetoption(void)
 
     if (ptype < 99) {
       if (1 == ptype) {
-        ResponseCmndIdxNumber(Settings.param[pindex]);
+        if (indexed) {
+          ResponseCmndIdxNumber(Settings.param[pindex]);
+        } else {
+          ResponseCmndNumber(Settings.param[pindex]);
+        }
       } else {
         uint32_t flag = Settings.flag.data;
         if (3 == ptype) {
@@ -1008,7 +1015,11 @@ void CmndSetoption(void)
         else if (5 == ptype) {
           flag = Settings.flag5.data;
         }
-        ResponseCmndIdxChar(GetStateText(bitRead(flag, pindex)));
+        if (indexed) {
+          ResponseCmndIdxChar(GetStateText(bitRead(flag, pindex)));
+        } else {
+          ResponseCmndChar(GetStateText(bitRead(flag, pindex)));
+        }
       }
     }
   }
