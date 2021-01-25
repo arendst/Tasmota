@@ -869,7 +869,7 @@ uint8_t toPercentageCR2032(uint32_t voltage) {
 // Adds to buf:
 // - n bytes: value (typically between 1 and 4 bytes, or bigger for strings)
 // returns number of bytes of attribute, or <0 if error
-int32_t encodeSingleAttribute(class SBuffer &buf, double val_d, const char *val_str, uint8_t attrtype) {
+int32_t encodeSingleAttribute(SBuffer &buf, double val_d, const char *val_str, uint8_t attrtype) {
   uint32_t len = Z_getDatatypeLen(attrtype);    // pre-compute length, overloaded for variable length attributes
   uint32_t u32 = val_d;
   int32_t  i32 = val_d;

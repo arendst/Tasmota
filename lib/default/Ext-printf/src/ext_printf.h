@@ -27,6 +27,8 @@
 int32_t ext_vsnprintf_P(char * buf, size_t buf_len, const char * fmt_P, va_list va);
 int32_t ext_snprintf_P(char * buf, size_t buf_len, const char * fmt, ...);
 
+char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, char inbetween);
+
 // void test_ext_snprintf_P(void);
 
 #endif // EXT_PRINTF_H
