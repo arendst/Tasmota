@@ -565,7 +565,7 @@ const char HTTP_SNS_NEOPOOL_PPM_REDOX[]        PROGMEM = "{s}%s " D_NEOPOOL_REDO
 const char HTTP_SNS_NEOPOOL_PPM_CHLORINE[]     PROGMEM = "{s}%s " D_NEOPOOL_CHLORINE        "{m}%*_f "  D_UNIT_PARTS_PER_MILLION          "{e}";
 const char HTTP_SNS_NEOPOOL_CONDUCTIVITY[]     PROGMEM = "{s}%s " D_NEOPOOL_CONDUCTIVITY    "{m}%d "    D_UNIT_PERCENT                    "{e}";
 const char HTTP_SNS_NEOPOOL_IONIZATION[]       PROGMEM = "{s}%s " D_NEOPOOL_IONIZATION      "{m}%*_f "  "%s%s"                            "{e}";
-const char HTTP_SNS_NEOPOOL_HYDROLYSIS[]       PROGMEM = "{s}%s " D_NEOPOOL_HYDROLYSIS      "{m}%*_f "  "%s%s"                            "{e}";
+const char HTTP_SNS_NEOPOOL_HYDROLYSIS[]       PROGMEM = "{s}%s " D_NEOPOOL_HYDROLYSIS      "{m}%*_f "  D_UNIT_PERCENT "<span style=\"font-size:small\">%s</span>"               "{e}";
 const char HTTP_SNS_NEOPOOL_FILT_MODE[]        PROGMEM = "{s}%s " D_NEOPOOL_FILT_MODE       "{m}%s"                                       "{e}";
 const char HTTP_SNS_NEOPOOL_RELAY[]            PROGMEM = "{s}%s " D_NEOPOOL_RELAY " %d %s"  "{m}%s"                                       "{e}";
 
@@ -1019,7 +1019,7 @@ void NeoPoolShow(bool json)
         !(NeoPoolGetData(MBF_HIDRO_STATUS) & MBMSK_HIDRO_STATUS_FL2) ? PSTR("&nbsp;" D_NEOPOOL_FLOW2 "&nbsp;") : PSTR("")
         );
       fvalue = (float)NeoPoolGetData(MBF_HIDRO_CURRENT);
-      WSContentSend_PD(HTTP_SNS_NEOPOOL_HYDROLYSIS, neopool_type, 1, &fvalue, *stemp ? PSTR("/") : PSTR(""), stemp);
+      WSContentSend_PD(HTTP_SNS_NEOPOOL_HYDROLYSIS, neopool_type, 1, &fvalue, stemp);
     }
 
     // Filtration mode
