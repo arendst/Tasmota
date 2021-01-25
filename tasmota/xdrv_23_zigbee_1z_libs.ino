@@ -537,7 +537,7 @@ bool Z_attribute::equalsVal(const Z_attribute & attr2) const {
     if (val.uval32 != attr2.val.uval32) { return false; }
   } else if (type == Za_type::Za_raw) {
     // compare 2 Static buffers
-    return equalsSBuffer(val.bval, attr2.val.bval);
+    return SBuffer::equalsSBuffer(val.bval, attr2.val.bval);
   } else if (type == Za_type::Za_str) {
     // if (val_str_raw != attr2.val_str_raw) { return false; }
     if (strcmp_PP(val.sval, attr2.val.sval)) { return false; }

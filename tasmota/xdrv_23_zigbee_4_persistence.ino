@@ -136,7 +136,7 @@ bool hibernateDeviceConfiguration(SBuffer & buf, const class Z_Data_Set & data, 
   return found;
 }
 
-class SBuffer hibernateDevicev2(const struct Z_Device &device) {
+SBuffer hibernateDevicev2(const struct Z_Device &device) {
   SBuffer buf(128);
 
   buf.add8(0x00);     // overall length, will be updated later
@@ -178,7 +178,7 @@ class SBuffer hibernateDevicev2(const struct Z_Device &device) {
   return buf;
 }
 
-class SBuffer hibernateDevices(void) {
+SBuffer hibernateDevices(void) {
   SBuffer buf(2048);
 
   size_t devices_size = zigbee_devices.devicesSize();

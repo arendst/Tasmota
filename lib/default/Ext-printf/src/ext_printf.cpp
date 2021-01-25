@@ -20,6 +20,7 @@
 #include "ext_printf.h"
 #include <Arduino.h>
 #include <IPAddress.h>
+#include <SBuffer.hpp>
 
 /*********************************************************************************************\
  * va_list extended support
@@ -139,6 +140,26 @@ char * U64toHex(uint64_t value, char *str) {
   return str;
 }
 
+// see https://stackoverflow.com/questions/6357031/how-do-you-convert-a-byte-array-to-a-hexadecimal-string-in-c
+// char* ToHex_P(unsigned char * in, size_t insz, char * out, size_t outsz, char inbetween = '\0'); in tasmota_globals.h
+char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, char inbetween = '\0') {
+  // ToHex_P(in, insz, out, outz)      -> "12345667"
+  // ToHex_P(in, insz, out, outz, ' ') -> "12 34 56 67"
+  // ToHex_P(in, insz, out, outz, ':') -> "12:34:56:67"
+  static const char * hex PROGMEM = "0123456789ABCDEF";
+  int between = (inbetween) ? 3 : 2;
+  const unsigned char * pin = in;
+  char * pout = out;
+  for (; pin < in+insz; pout += between, pin++) {
+    pout[0] = pgm_read_byte(&hex[(pgm_read_byte(pin)>>4) & 0xF]);
+    pout[1] = pgm_read_byte(&hex[ pgm_read_byte(pin)     & 0xF]);
+    if (inbetween) { pout[2] = inbetween; }
+    if (pout + 3 - out > outsz) { break; }  // Better to truncate output string than overflow buffer
+  }
+  pout[(inbetween && insz) ? -1 : 0] = 0;   // Discard last inbetween if any input
+  return out;
+}
+
 /*********************************************************************************************\
  * snprintf extended
  * 
@@ -166,10 +187,11 @@ int32_t ext_vsnprintf_P(char * buf, size_t buf_len, const char * fmt_P, va_list 
   const uint32_t ALLOC_SIZE = 12;
   static char * allocs[ALLOC_SIZE] = {};     // initialized to zeroes
   uint32_t alloc_idx = 0;
-  int32_t decimals = -2;      // default to 2 decimals and remove trailing zeros
   static char hex[20];        // buffer used for 64 bits, favor RAM instead of stack to remove pressure
 
 	for (; *fmt != 0; ++fmt) {
+    int32_t decimals = -2;      // default to 2 decimals and remove trailing zeros
+    int32_t * decimals_ptr = nullptr;
     if (alloc_idx >= ALLOC_SIZE) { break; }     // buffer is full, don't continue parsing
     if (*fmt == '%') {
       fmt++;
@@ -177,8 +199,11 @@ int32_t ext_vsnprintf_P(char * buf, size_t buf_len, const char * fmt_P, va_list 
 			if (*fmt == '\0') { break; }              // end of string
 			if (*fmt == '%') { continue; }            // actual '%' char
 			if (*fmt == '*') {
-				va_arg(va, int32_t);   // skip width argument as int
+				decimals = va_arg(va, int32_t);   // skip width argument as int
+        decimals_ptr = va_cur_ptr4(va, int32_t);    // pointer to value on stack
+        const char ** cur_val_ptr = va_cur_ptr4(va, const char*);    // pointer to value on stack
         fmt++;
+        // Serial.printf("> decimals=%d, decimals_ptr=0x%08X\n", decimals, decimals_ptr);
 			}
       if (*fmt < 'A') {
         decimals = strtol(fmt, nullptr, 10);
@@ -189,6 +214,12 @@ int32_t ext_vsnprintf_P(char * buf, size_t buf_len, const char * fmt_P, va_list 
 			}
     
       if (*fmt == '_') {      // extension
+        if (decimals_ptr) {
+          // Serial.printf(">2 decimals=%d, decimals_ptr=0x%08X\n", decimals, decimals_ptr);
+          *decimals_ptr = 0;      // if '*' was used, make sure we replace the value with zero for snprintf()
+          *(fmt_start++) = '-';   // in this case replace with `%-*s`
+          *(fmt_start++) = '*';
+        }
         for (; fmt_start <= fmt; fmt_start++) {
           *fmt_start = '0';
         }
@@ -198,14 +229,42 @@ int32_t ext_vsnprintf_P(char * buf, size_t buf_len, const char * fmt_P, va_list 
         const char ** cur_val_ptr = va_cur_ptr4(va, const char*);    // pointer to value on stack
         char * new_val_str = (char*) "";
         switch (*fmt) {
+          case 'H':     // Hex, decimals indicates the length, default 2
+            {
+              if (decimals < 0) { decimals = 0; }
+              if (decimals > 0) {
+                char * hex_char = (char*) malloc(decimals*2 + 2);
+                ToHex_P((const uint8_t *)cur_val, decimals, hex_char, decimals*2 + 2);
+                new_val_str = hex_char;
+                allocs[alloc_idx++] = new_val_str;
+                // Serial.printf("> hex=%s\n", hex_char);
+              }
+            }
+            break;
+          case 'B':     // Pointer to SBuffer
+            {
+              const SBuffer & buf = *(const SBuffer*)cur_val;
+              size_t buf_len = (&buf != nullptr) ? buf.len() : 0;
+              if (buf_len) {
+                char * hex_char = (char*) malloc(buf_len*2 + 2);
+                ToHex_P(buf.getBuffer(), buf_len, hex_char, buf_len*2 + 2);
+                new_val_str = hex_char;
+                allocs[alloc_idx++] = new_val_str;
+              }
+            }
+            break;
           // case 'D':
           //   decimals = *(int32_t*)cur_val_ptr;
           //   break;
           
           // `%_I` ouputs an IPv4 32 bits address passed as u32 into a decimal dotted format
           case 'I':     // Input is `uint32_t` 32 bits IP address, output is decimal dotted address
-            new_val_str = copyStr(IPAddress(cur_val).toString().c_str());
-            allocs[alloc_idx++] = new_val_str;
+            {
+              char * ip_str = (char*) malloc(16);
+              snprintf_P(ip_str, 16, PSTR("%u.%u.%u.%u"), cur_val & 0xFF, (cur_val >> 8) & 0xFF, (cur_val >> 16) & 0xFF, (cur_val >> 24) & 0xFF);
+              new_val_str = ip_str;
+              allocs[alloc_idx++] = new_val_str;
+            }
             break;
 
           // `%_f` or `%*_f` outputs a float with optionan number of decimals passed as first argument if `*` is present
@@ -224,21 +283,26 @@ int32_t ext_vsnprintf_P(char * buf, size_t buf_len, const char * fmt_P, va_list 
                 decimals = -decimals;
                 truncate = true;
               }
-              dtostrf(*(float*)cur_val, (decimals + 2), decimals, hex);
+              float number = *(float*)cur_val;
+              if (isnan(number) || isinf(number)) {
+                new_val_str = (char*) "null";
+              } else {
+                dtostrf(*(float*)cur_val, (decimals + 2), decimals, hex);
 
-              if (truncate) {
-                uint32_t last = strlen(hex) - 1;
-                // remove trailing zeros
-                while (hex[last] == '0') {
-                  hex[last--] = 0;              // remove last char
+                if (truncate) {
+                  uint32_t last = strlen(hex) - 1;
+                  // remove trailing zeros
+                  while (hex[last] == '0') {
+                    hex[last--] = 0;              // remove last char
+                  }
+                  // remove trailing dot
+                  if (hex[last] == '.') {
+                    hex[last] = 0;
+                  }
                 }
-                // remove trailing dot
-                if (hex[last] == '.') {
-                  hex[last] = 0;
-                }
+                new_val_str = copyStr(hex);
+                allocs[alloc_idx++] = new_val_str;
               }
-              new_val_str = copyStr(hex);
-              allocs[alloc_idx++] = new_val_str;
             }
             break;
           // '%_X' outputs a 64 bits unsigned int to uppercase HEX with 16 digits
@@ -271,20 +335,22 @@ int32_t ext_vsnprintf_P(char * buf, size_t buf_len, const char * fmt_P, va_list 
         va_arg(va, int32_t);      // munch one 32 bits argument and leave it unchanged
         // we take the hypothesis here that passing 64 bits arguments is always unsupported in ESP8266
       }
-      fmt++;
     }
   }
 #else // defined(ESP8266) || defined(ESP32)
   #error "ext_printf is not suppoerted on this platform" 
 #endif // defined(ESP8266) || defined(ESP32)
+  // Serial.printf("> format_final=%s\n", fmt_cpy); Serial.flush();
   int32_t ret = vsnprintf_P(buf, buf_len, fmt_cpy, va_cpy);
 
   va_end(va_cpy);
+
+  // disallocated all temporary strings
   for (uint32_t i = 0; i < alloc_idx; i++) {
-    free(allocs[i]);
+    free(allocs[i]);      // it is ok to call free() on nullptr so we don't test for nullptr first
     allocs[i] = nullptr;
   }
-  free(fmt_cpy);
+  free(fmt_cpy);          // free the local copy of the format string
   return ret;
 }
 
