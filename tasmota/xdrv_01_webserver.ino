@@ -475,17 +475,15 @@ void StartWebserver(int type, IPAddress ipweb)
 #if LWIP_IPV6
     String ipv6_addr = WifiGetIPv6();
     if (ipv6_addr!="") {
-      AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_HTTP D_WEBSERVER_ACTIVE_ON " %s%s " D_WITH_IP_ADDRESS " %s and IPv6 global address %s "),
-        NetworkHostname(), (Mdns.begun) ? PSTR(".local") : "", ipweb.toString().c_str(), ipv6_addr.c_str());
+      AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_HTTP D_WEBSERVER_ACTIVE_ON " %s%s " D_WITH_IP_ADDRESS " %_I and IPv6 global address %s "),
+        NetworkHostname(), (Mdns.begun) ? PSTR(".local") : "", (uint32_t)ipweb, ipv6_addr.c_str());
     } else {
-      AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_HTTP D_WEBSERVER_ACTIVE_ON " %s%s " D_WITH_IP_ADDRESS " %s"),
-        NetworkHostname(), (Mdns.begun) ? PSTR(".local") : "", ipweb.toString().c_str());
+      AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_HTTP D_WEBSERVER_ACTIVE_ON " %s%s " D_WITH_IP_ADDRESS " %_I"),
+        NetworkHostname(), (Mdns.begun) ? PSTR(".local") : "", (uint32_t)ipweb);
     }
 #else
-    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_HTTP D_WEBSERVER_ACTIVE_ON " %s%s " D_WITH_IP_ADDRESS " %s"),
-      NetworkHostname(), (Mdns.begun) ? PSTR(".local") : "", ipweb.toString().c_str());
-//    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_HTTP D_WEBSERVER_ACTIVE_ON " %s%s " D_WITH_IP_ADDRESS " %_I"),
-//      NetworkHostname(), (Mdns.begun) ? PSTR(".local") : "", (uint32_t)ipweb);
+    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_HTTP D_WEBSERVER_ACTIVE_ON " %s%s " D_WITH_IP_ADDRESS " %_I"),
+      NetworkHostname(), (Mdns.begun) ? PSTR(".local") : "", (uint32_t)ipweb);
 #endif // LWIP_IPV6 = 1
     TasmotaGlobal.rules_flag.http_init = 1;
   }
