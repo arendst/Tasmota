@@ -47,7 +47,7 @@ const char kTasmotaCommands[] PROGMEM = "|"  // No prefix
 void (* const TasmotaCommand[])(void) PROGMEM = {
   &CmndBacklog, &CmndDelay, &CmndPower, &CmndStatus, &CmndState, &CmndSleep, &CmndUpgrade, &CmndUpgrade, &CmndOtaUrl,
   &CmndSeriallog, &CmndRestart, &CmndPowerOnState, &CmndPulsetime, &CmndBlinktime, &CmndBlinkcount, &CmndSavedata,
-  &CmndSetoption, &CmndSetoption, &CmndTemperatureResolution, &CmndHumidityResolution, &CmndPressureResolution, &CmndPowerResolution,
+  &CmndSetoptionSO, &CmndSetoption, &CmndTemperatureResolution, &CmndHumidityResolution, &CmndPressureResolution, &CmndPowerResolution,
   &CmndVoltageResolution, &CmndFrequencyResolution, &CmndCurrentResolution, &CmndEnergyResolution, &CmndWeightResolution,
   &CmndModule, &CmndModules, &CmndGpio, &CmndGpios, &CmndTemplate, &CmndPwm, &CmndPwmfrequency, &CmndPwmrange,
   &CmndButtonDebounce, &CmndSwitchDebounce, &CmndSyslog, &CmndLoghost, &CmndLogport, &CmndSerialSend, &CmndBaudrate, &CmndSerialConfig,
@@ -507,12 +507,21 @@ void CmndStatus(void)
   }
 
   if ((0 == payload) || (5 == payload)) {
+/*
     Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS5_NETWORK "\":{\"" D_CMND_HOSTNAME "\":\"%s\",\"" D_CMND_IPADDRESS "\":\"%s\",\"" D_JSON_GATEWAY "\":\"%s\",\""
                           D_JSON_SUBNETMASK "\":\"%s\",\"" D_JSON_DNSSERVER "\":\"%s\",\"" D_JSON_MAC "\":\"%s\",\""
                           D_CMND_WEBSERVER "\":%d,\"" D_CMND_WIFICONFIG "\":%d,\"" D_CMND_WIFIPOWER "\":%s}}"),
                           NetworkHostname(), NetworkAddress().toString().c_str(), IPAddress(Settings.ipv4_address[1]).toString().c_str(),
                           IPAddress(Settings.ipv4_address[2]).toString().c_str(), IPAddress(Settings.ipv4_address[3]).toString().c_str(), NetworkMacAddress().c_str(),
                           Settings.webserver, Settings.sta_config, WifiGetOutputPower().c_str());
+*/
+    Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS5_NETWORK "\":{\"" D_CMND_HOSTNAME "\":\"%s\",\"" D_CMND_IPADDRESS "\":\"%s\",\""
+                          D_JSON_GATEWAY "\":\"%_I\",\"" D_JSON_SUBNETMASK "\":\"%_I\",\"" D_JSON_DNSSERVER "\":\"%_I\",\""
+                          D_JSON_MAC "\":\"%s\",\"" D_CMND_WEBSERVER "\":%d,\"" D_CMND_WIFICONFIG "\":%d,\"" D_CMND_WIFIPOWER "\":%s}}"),
+                          NetworkHostname(), NetworkAddress().toString().c_str(),
+                          Settings.ipv4_address[1], Settings.ipv4_address[2], Settings.ipv4_address[3],
+                          NetworkMacAddress().c_str(), Settings.webserver, Settings.sta_config, WifiGetOutputPower().c_str());
+
     MqttPublishPrefixTopic_P(STAT, PSTR(D_CMND_STATUS "5"));
   }
 
@@ -835,9 +844,15 @@ void CmndSavedata(void)
   ResponseCmndChar((Settings.save_data > 1) ? stemp1 : GetStateText(Settings.save_data));
 }
 
-void CmndSetoption(void)
+void CmndSetoptionSO(void)
 {
   snprintf_P(XdrvMailbox.command, CMDSZ, PSTR(D_CMND_SETOPTION));  // Rename result shortcut command SO to SetOption
+  CmndSetoption();
+}
+
+void CmndSetoption(void)
+{
+//  snprintf_P(XdrvMailbox.command, CMDSZ, PSTR(D_CMND_SETOPTION));  // Rename result shortcut command SO to SetOption
 
   if (XdrvMailbox.index < 146) {
     uint32_t ptype;
