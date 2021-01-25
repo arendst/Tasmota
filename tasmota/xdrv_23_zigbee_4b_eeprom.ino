@@ -89,8 +89,7 @@ int32_t hydrateSingleDevice(const SBuffer & buf, size_t start, size_t len) {
 #ifdef Z_EEPROM_DEBUG
   {
     if (segment_len > 3) {
-      char hex_char[((segment_len+1) * 2) + 2];
-      AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "ZbData 0x%04X,%s"), shortaddr, ToHex_P(buf.buf(start+3), segment_len+1-3, hex_char, sizeof(hex_char)));
+      AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "ZbData 0x%04X,%*_H"), shortaddr, segment_len+1-3, buf.buf(start+3));
     }
   }
 #endif
@@ -182,16 +181,14 @@ SBuffer hibernateDeviceData(const struct Z_Device & device, bool mqtt = false) {
     buf.set8(0, buf.len() - 1);
 
     {
-      size_t buf_len = buf.len() - 3;
-      char hex[2*buf_len + 1];
       // skip first 3 bytes
-      ToHex_P(buf.buf(3), buf_len, hex, sizeof(hex));
+      size_t buf_len = buf.len() - 3;
 
       if (mqtt) {
-        Response_P(PSTR("{\"" D_PRFX_ZB D_CMND_ZIGBEE_DATA "\":\"ZbData 0x%04X,%s\"}"), device.shortaddr, hex);
+        Response_P(PSTR("{\"" D_PRFX_ZB D_CMND_ZIGBEE_DATA "\":\"ZbData 0x%04X,%*_H\"}"), device.shortaddr, buf_len, buf.buf(3));
         MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, PSTR(D_PRFX_ZB D_CMND_ZIGBEE_DATA));
       } else {
-        AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "ZbData 0x%04X,%s"), device.shortaddr, hex);
+        AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "ZbData 0x%04X,%*_H"), device.shortaddr, buf_len, buf.buf(3));
       }
     }
   }

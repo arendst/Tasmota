@@ -183,23 +183,7 @@ void zigbeeZCLSendStr(uint16_t shortaddr, uint16_t groupaddr, uint8_t endpoint, 
     }
   }
 
-  if ((0 == endpoint) && (BAD_SHORTADDR != shortaddr)) {
-    // endpoint is not specified, let's try to find it from shortAddr, unless it's a group address
-    endpoint = zigbee_devices.findFirstEndpoint(shortaddr);
-    //AddLog_P(LOG_LEVEL_DEBUG, PSTR("ZbSend: guessing endpoint 0x%02X"), endpoint);
-  }
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR("ZbSend: shortaddr 0x%04X, groupaddr 0x%04X, cluster 0x%04X, endpoint 0x%02X, cmd 0x%02X, data %s"),
-    shortaddr, groupaddr, cluster, endpoint, cmd, param);
-
-  if ((0 == endpoint) && (BAD_SHORTADDR != shortaddr)) {     // endpoint null is ok for group address
-    AddLog_P(LOG_LEVEL_INFO, PSTR("ZbSend: unspecified endpoint"));
-    return;
-  }
-
-  // everything is good, we can send the command
-
-  uint8_t seq = zigbee_devices.getNextSeqNumber(shortaddr);
-  ZigbeeZCLSend_Raw(ZigbeeZCLSendMessage({
+  zigbeeZCLSendCmd(ZigbeeZCLSendMessage({
     shortaddr,
     groupaddr,
     cluster /*cluster*/,
@@ -209,14 +193,37 @@ void zigbeeZCLSendStr(uint16_t shortaddr, uint16_t groupaddr, uint8_t endpoint, 
     clusterSpecific /* not cluster specific */,
     true /* response */,
     false /* discover route */,
-    seq,  /* zcl transaction id */
+    0,  /* zcl transaction id */
     buf.getBuffer(), buf.len()
   }));
+}
+
+void zigbeeZCLSendCmd(const class ZigbeeZCLSendMessage &msg_const) {
+  ZigbeeZCLSendMessage msg = msg_const;     // copy to a modifiable variable
+
+  if ((0 == msg.endpoint) && (BAD_SHORTADDR != msg.shortaddr)) {
+    // endpoint is not specified, let's try to find it from shortAddr, unless it's a group address
+    msg.endpoint = zigbee_devices.findFirstEndpoint(msg.shortaddr);
+    //AddLog_P(LOG_LEVEL_DEBUG, PSTR("ZbSend: guessing endpoint 0x%02X"), endpoint);
+  }
+
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR("ZbSend: shortaddr 0x%04X, groupaddr 0x%04X, cluster 0x%04X, endpoint 0x%02X, cmd 0x%02X, data %*_H"),
+    msg.shortaddr, msg.groupaddr, msg.cluster, msg.endpoint, msg.cmd, msg.len, msg.msg);
+
+  if ((0 == msg.endpoint) && (BAD_SHORTADDR != msg.shortaddr)) {     // endpoint null is ok for group address
+    AddLog_P(LOG_LEVEL_INFO, PSTR("ZbSend: unspecified endpoint"));
+    return;
+  }
+
+  // everything is good, we can send the command
+
+  msg.transacId = zigbee_devices.getNextSeqNumber(msg.shortaddr);
+  ZigbeeZCLSend_Raw(msg);
   // now set the timer, if any, to read back the state later
-  if (clusterSpecific) {
+  if (msg.clusterSpecific) {
     if (!Settings.flag5.zb_disable_autoquery) {
       // read back attribute value unless it is disabled
-      sendHueUpdate(shortaddr, groupaddr, cluster, endpoint);
+      sendHueUpdate(msg.shortaddr, msg.groupaddr, msg.cluster, msg.endpoint);
     }
   }
 }
@@ -463,7 +470,7 @@ void ZbSendSend(class JsonParserToken val_cmd, uint16_t device, uint16_t groupad
   const char *cmd_s = "";                 // pointer to payload string
   bool     clusterSpecific = true;
 
-  static char delim[] = ", ";     // delimiters for parameters
+  static const char delim[] = ", ";     // delimiters for parameters
   // probe the type of the argument
   // If JSON object, it's high level commands
   // If String, it's a low level command

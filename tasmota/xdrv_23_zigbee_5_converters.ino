@@ -723,8 +723,6 @@ public:
 
 
   void log(void) {
-    char hex_char[_payload.len()*2+2];
-		ToHex_P((unsigned char*)_payload.getBuffer(), _payload.len(), hex_char, sizeof(hex_char));
     Response_P(PSTR("{\"" D_JSON_ZIGBEEZCL_RECEIVED "\":{"
                     "\"groupid\":%d," "\"clusterid\":\"0x%04X\"," "\"srcaddr\":\"0x%04X\","
                     "\"srcendpoint\":%d," "\"dstendpoint\":%d," "\"wasbroadcast\":%d,"
@@ -732,14 +730,14 @@ public:
                     "\"fc\":\"0x%02X\","
                     "\"frametype\":%d,\"direction\":%d,\"disableresp\":%d,"
                     "\"manuf\":\"0x%04X\",\"transact\":%d,"
-                    "\"cmdid\":\"0x%02X\",\"payload\":\"%s\"}}"),
+                    "\"cmdid\":\"0x%02X\",\"payload\":\"%_B\"}}"),
                     _groupaddr, _cluster_id, _srcaddr,
                     _srcendpoint, _dstendpoint, _wasbroadcast,
                     _linkquality, _securityuse, _seqnumber,
                     _frame_control,
                     _frame_control.b.frame_type, _frame_control.b.direction, _frame_control.b.disable_def_resp,
                     _manuf_code, _transact_seq, _cmd_id,
-                    hex_char);
+                    &_payload);
     if (Settings.flag3.tuya_serial_mqtt_publish) {
       MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR(D_RSLT_SENSOR));
     } else {

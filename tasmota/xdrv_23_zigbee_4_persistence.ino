@@ -436,9 +436,7 @@ void restoreDumpAllDevices(void) {
   for (const auto & device : zigbee_devices.getDevices()) {
     const SBuffer buf = hibernateDevicev2(device);
     if (buf.len() > 0) {
-      char hex_char[buf.len()*2+2];
-      Response_P(PSTR("{\"" D_PRFX_ZB D_CMND_ZIGBEE_RESTORE "\":\"ZbRestore %s\"}"),
-                      ToHex_P(buf.buf(0), buf.len(), hex_char, sizeof(hex_char)));
+      Response_P(PSTR("{\"" D_PRFX_ZB D_CMND_ZIGBEE_RESTORE "\":\"ZbRestore %_B\"}"), &buf);
       MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, PSTR(D_PRFX_ZB D_CMND_ZIGBEE_DATA));
     }
   }

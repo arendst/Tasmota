@@ -90,9 +90,7 @@ void TCPLoop(void)
       }
     }
     if (buf_len > 0) {
-      char hex_char[TCP_BRIDGE_BUF_SIZE+1];
-  		ToHex_P(tcp_buf, buf_len, hex_char, 256);
-      AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_TCP "from MCU: %s"), hex_char);
+      AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_TCP "from MCU: %*_H"), buf_len, tcp_buf);
 
       for (uint32_t i=0; i<ARRAY_SIZE(client_tcp); i++) {
         WiFiClient &client = client_tcp[i];
@@ -112,9 +110,7 @@ void TCPLoop(void)
         }
       }
       if (buf_len > 0) {
-        char hex_char[TCP_BRIDGE_BUF_SIZE+1];
-        ToHex_P(tcp_buf, buf_len, hex_char, 256);
-        AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_TCP "to MCU/%d: %s"), i+1, hex_char);
+        AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_TCP "to MCU/%d: %*_H"), i+1, buf_len, tcp_buf);
         TCPSerial->write(tcp_buf, buf_len);
       }
     }

@@ -415,16 +415,16 @@ int32_t ZNP_ReceiveCheckVersion(int32_t res, SBuffer &buf) {
 int32_t EZ_ReceiveCheckVersion(int32_t res, SBuffer &buf) {
   uint8_t protocol_version = buf.get8(2);
   uint8_t stack_type = buf.get8(3);
-  uint16_t stack_version = buf.get16(4);
+  zigbee.ezsp_version = buf.get16(4);
 
   Response_P(PSTR("{\"" D_JSON_ZIGBEE_STATE "\":{"
                   "\"Status\":%d,\"Version\":\"%d.%d.%d.%d\",\"Protocol\":%d"
                   ",\"Stack\":%d}}"),
                   ZIGBEE_STATUS_EZ_VERSION,
-                  (stack_version & 0xF000) >> 12,
-                  (stack_version & 0x0F00) >> 8,
-                  (stack_version & 0x00F0) >> 4,
-                  stack_version & 0x000F,
+                  (zigbee.ezsp_version & 0xF000) >> 12,
+                  (zigbee.ezsp_version & 0x0F00) >> 8,
+                  (zigbee.ezsp_version & 0x00F0) >> 4,
+                  zigbee.ezsp_version & 0x000F,
                   protocol_version,
                   stack_type
                   );
@@ -432,7 +432,7 @@ int32_t EZ_ReceiveCheckVersion(int32_t res, SBuffer &buf) {
   MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEE_STATE));
 
   if (0x08 == protocol_version) {
-    if ((stack_version & 0xFF00) == 0x6700) {
+    if ((zigbee.ezsp_version & 0xFF00) == 0x6700) {
       // If v6.7 there is a bug so we need to change the response
       ZBW(ZBR_SET_OK2, 0x00, 0x00 /*high*/, 0x00 /*ok*/)
     }
