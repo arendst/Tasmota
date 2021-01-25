@@ -222,9 +222,6 @@ void ZigbeeInputLoop(void) {
 
   uint32_t frame_len = zigbee_buffer->len();
   if (frame_complete || (frame_len && (millis() > (zigbee_polling_window + ZIGBEE_POLLING)))) {
-    char hex_char[frame_len * 2 + 2];
-    ToHex_P((unsigned char*)zigbee_buffer->getBuffer(), zigbee_buffer->len(), hex_char, sizeof(hex_char));
-
     // AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_ZIGBEE "Bytes follow_read_metric = %0d"), ZigbeeSerial->getLoopReadMetric());
     if ((frame_complete) && (frame_len >= 3)) {
       // frame received and has at least 3 bytes (without EOF), checking CRC
@@ -246,7 +243,7 @@ void ZigbeeInputLoop(void) {
       // remove 2 last bytes
 
       if (crc_received != crc) {
-        AddLog_P(LOG_LEVEL_INFO, PSTR(D_JSON_ZIGBEE_EZSP_RECEIVED ": bad crc (received 0x%04X, computed 0x%04X) %s"), crc_received, crc, hex_char);
+        AddLog_P(LOG_LEVEL_INFO, PSTR(D_JSON_ZIGBEE_EZSP_RECEIVED ": bad crc (received 0x%04X, computed 0x%04X) %_B"), crc_received, crc, &zigbee_buffer);
       } else {
         // copy buffer
     	  SBuffer ezsp_buffer = zigbee_buffer->subBuffer(0, frame_len - 2);	// CRC
@@ -262,14 +259,13 @@ void ZigbeeInputLoop(void) {
           }
         }
 
-        ToHex_P((unsigned char*)ezsp_buffer.getBuffer(), ezsp_buffer.len(), hex_char, sizeof(hex_char));
-        AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_ZIGBEE "{\"" D_JSON_ZIGBEE_EZSP_RECEIVED "2\":\"%s\"}"), hex_char);
+        AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_ZIGBEE "{\"" D_JSON_ZIGBEE_EZSP_RECEIVED "2\":\"%_B\"}"), &ezsp_buffer);
         // now process the message
         ZigbeeProcessInputRaw(ezsp_buffer);
       }
     } else {
       // the buffer timed-out, print error and discard
-      AddLog_P(LOG_LEVEL_INFO, PSTR(D_JSON_ZIGBEE_EZSP_RECEIVED ": time-out, discarding %s, %d"), hex_char);
+      AddLog_P(LOG_LEVEL_INFO, PSTR(D_JSON_ZIGBEE_EZSP_RECEIVED ": time-out, discarding %s, %_B"), &zigbee_buffer);
     }
     zigbee_buffer->setLen(0);		// empty buffer
     escape = false;
@@ -352,9 +348,7 @@ void ZigbeeZNPSend(const uint8_t *msg, size_t len) {
 		//AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("ZNPSend FCS %02X"), fcs);
   }
 	// Now send a MQTT message to report the sent message
-	char hex_char[(len * 2) + 2];
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE D_JSON_ZIGBEEZNPSENT " %s"),
-                               		ToHex_P(msg, len, hex_char, sizeof(hex_char)));
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE D_JSON_ZIGBEEZNPSENT " %*_H"), len, msg);
 }
 
 //
@@ -486,17 +480,13 @@ void ZigbeeEZSPSendRaw(const uint8_t *msg, size_t len, bool send_cancel) {
   }
 
   // Now send a MQTT message to report the sent message
-  char hex_char[(len * 2) + 2];
-  AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_ZIGBEE D_JSON_ZIGBEE_EZSP_SENT_RAW " %s"),
-                                  ToHex_P(msg, len, hex_char, sizeof(hex_char)));
+  AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_ZIGBEE D_JSON_ZIGBEE_EZSP_SENT_RAW " %*_H"), len, msg);
 }
 
 // Send an EZSP command and data
 // Ex: Version with min v8 = 000008
 void ZigbeeEZSPSendCmd(const uint8_t *msg, size_t len) {
-  char hex_char[len*2 + 2];
-  ToHex_P(msg, len, hex_char, sizeof(hex_char));
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE "ZbEZSPSend %s"), hex_char);
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE "ZbEZSPSend %*_H"), len, msg);
 
   SBuffer cmd(len+3);   // prefix with seq number (1 byte) and frame control bytes (2 bytes)
 
@@ -567,11 +557,8 @@ void ZigbeeProcessInputEZSP(SBuffer &buf) {
   }
   buf.setLen(buf.len() - 3);
 
-  char hex_char[buf.len()*2 + 2];
-
   // log message
-  ToHex_P((unsigned char*)buf.getBuffer(), buf.len(), hex_char, sizeof(hex_char));
-  Response_P(PSTR("{\"" D_JSON_ZIGBEE_EZSP_RECEIVED "\":\"%s\"}"), hex_char);
+  Response_P(PSTR("{\"" D_JSON_ZIGBEE_EZSP_RECEIVED "\":\"%_B\"}"), &buf);
   if (Settings.flag3.tuya_serial_mqtt_publish) {
     MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR(D_RSLT_SENSOR));
   } else {
