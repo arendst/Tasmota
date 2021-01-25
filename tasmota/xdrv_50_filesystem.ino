@@ -131,7 +131,7 @@ void UfsInitOnce(void) {
 void UfsInit(void) {
   UfsInitOnce();
   if (ufs_type) {
-    AddLog_P(LOG_LEVEL_INFO, PSTR("UFS: FlashFS mounted with %d kB free"), UfsInfo(1, 0));
+    AddLog(LOG_LEVEL_INFO, PSTR("UFS: FlashFS mounted with %d kB free"), UfsInfo(1, 0));
   }
 }
 
@@ -165,10 +165,10 @@ void UfsCheckSDCardInit(void) {
       // make sd card the global filesystem
 #ifdef ESP8266
       // on esp8266 sdcard info takes several seconds !!!, so we ommit it here
-      AddLog_P(LOG_LEVEL_INFO, PSTR("UFS: SDCard mounted"));
+      AddLog(LOG_LEVEL_INFO, PSTR("UFS: SDCard mounted"));
 #endif // ESP8266
 #ifdef ESP32
-      AddLog_P(LOG_LEVEL_INFO, PSTR("UFS: SDCard mounted with %d kB free"), UfsInfo(1, 0));
+      AddLog(LOG_LEVEL_INFO, PSTR("UFS: SDCard mounted with %d kB free"), UfsInfo(1, 0));
 #endif // ESP32
     }
   }
@@ -276,7 +276,7 @@ bool TfsFileExists(const char *fname){
 
   bool yes = ffsp->exists(fname);
   if (!yes) {
-    AddLog_P(LOG_LEVEL_INFO, PSTR("TFS: File not found"));
+    AddLog(LOG_LEVEL_INFO, PSTR("TFS: File not found"));
   }
   return yes;
 }
@@ -286,7 +286,7 @@ bool TfsSaveFile(const char *fname, const uint8_t *buf, uint32_t len) {
 
   File file = ffsp->open(fname, "w");
   if (!file) {
-    AddLog_P(LOG_LEVEL_INFO, PSTR("TFS: Save failed"));
+    AddLog(LOG_LEVEL_INFO, PSTR("TFS: Save failed"));
     return false;
   }
 
@@ -300,7 +300,7 @@ bool TfsInitFile(const char *fname, uint32_t len, uint8_t init_value) {
 
   File file = ffsp->open(fname, "w");
   if (!file) {
-    AddLog_P(LOG_LEVEL_INFO, PSTR("TFS: Erase failed"));
+    AddLog(LOG_LEVEL_INFO, PSTR("TFS: Erase failed"));
     return false;
   }
 
@@ -317,7 +317,7 @@ bool TfsLoadFile(const char *fname, uint8_t *buf, uint32_t len) {
 
   File file = ffsp->open(fname, "r");
   if (!file) {
-    AddLog_P(LOG_LEVEL_INFO, PSTR("TFS: File not found"));
+    AddLog(LOG_LEVEL_INFO, PSTR("TFS: File not found"));
     return false;
   }
 
@@ -330,7 +330,7 @@ bool TfsDeleteFile(const char *fname) {
   if (!ffs_type) { return false; }
 
   if (!ffsp->remove(fname)) {
-    AddLog_P(LOG_LEVEL_INFO, PSTR("TFS: Delete failed"));
+    AddLog(LOG_LEVEL_INFO, PSTR("TFS: Delete failed"));
     return false;
   }
   return true;
@@ -446,7 +446,7 @@ const char UFS_FORM_SDC_HREFdel[] PROGMEM =
 void UfsDirectory(void) {
   if (!HttpCheckPriviledgedAccess()) { return; }
 
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_MANAGE_FILE_SYSTEM));
+  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_MANAGE_FILE_SYSTEM));
 
   uint8_t depth = 0;
 
@@ -597,13 +597,13 @@ uint8_t UfsDownloadFile(char *file) {
   File download_file;
 
   if (!dfsp->exists(file)) {
-    AddLog_P(LOG_LEVEL_INFO, PSTR("UFS: File not found"));
+    AddLog(LOG_LEVEL_INFO, PSTR("UFS: File not found"));
     return 0;
   }
 
   download_file = dfsp->open(file, UFS_FILE_READ);
   if (!download_file) {
-    AddLog_P(LOG_LEVEL_INFO, PSTR("UFS: Could not open file"));
+    AddLog(LOG_LEVEL_INFO, PSTR("UFS: Could not open file"));
     return 0;
   }
 
@@ -659,7 +659,7 @@ uint8_t UfsDownloadFile(char *file) {
   download_file.close();
 
   if (download_busy == true) {
-    AddLog_P(LOG_LEVEL_INFO, PSTR("UFS: Download is busy"));
+    AddLog(LOG_LEVEL_INFO, PSTR("UFS: Download is busy"));
     return 0;
   }
 

@@ -85,15 +85,15 @@ char eth_hostname[sizeof(TasmotaGlobal.hostname)];
 void EthernetEvent(WiFiEvent_t event) {
   switch (event) {
     case SYSTEM_EVENT_ETH_START:
-      AddLog_P(LOG_LEVEL_DEBUG, PSTR("ETH: " D_ATTEMPTING_CONNECTION));
+      AddLog(LOG_LEVEL_DEBUG, PSTR("ETH: " D_ATTEMPTING_CONNECTION));
       ETH.setHostname(eth_hostname);
       break;
     case SYSTEM_EVENT_ETH_CONNECTED:
-      AddLog_P(LOG_LEVEL_INFO, PSTR("ETH: " D_CONNECTED " at %dMbps%s"),
+      AddLog(LOG_LEVEL_INFO, PSTR("ETH: " D_CONNECTED " at %dMbps%s"),
         ETH.linkSpeed(), (ETH.fullDuplex()) ? " Full Duplex" : "");
       break;
     case SYSTEM_EVENT_ETH_GOT_IP:
-      AddLog_P(LOG_LEVEL_DEBUG, PSTR("ETH: Mac %s, IPAddress %s, Hostname %s"),
+      AddLog(LOG_LEVEL_DEBUG, PSTR("ETH: Mac %s, IPAddress %s, Hostname %s"),
         ETH.macAddress().c_str(), ETH.localIP().toString().c_str(), eth_hostname);
       Settings.ipv4_address[1] = (uint32_t)ETH.gatewayIP();
       Settings.ipv4_address[2] = (uint32_t)ETH.subnetMask();
@@ -101,11 +101,11 @@ void EthernetEvent(WiFiEvent_t event) {
       TasmotaGlobal.global_state.eth_down = 0;
       break;
     case SYSTEM_EVENT_ETH_DISCONNECTED:
-      AddLog_P(LOG_LEVEL_INFO, PSTR("ETH: Disconnected"));
+      AddLog(LOG_LEVEL_INFO, PSTR("ETH: Disconnected"));
       TasmotaGlobal.global_state.eth_down = 1;
       break;
     case SYSTEM_EVENT_ETH_STOP:
-      AddLog_P(LOG_LEVEL_DEBUG, PSTR("ETH: Stopped"));
+      AddLog(LOG_LEVEL_DEBUG, PSTR("ETH: Stopped"));
       TasmotaGlobal.global_state.eth_down = 1;
       break;
     default:
@@ -116,7 +116,7 @@ void EthernetEvent(WiFiEvent_t event) {
 void EthernetInit(void) {
   if (!Settings.flag4.network_ethernet) { return; }
   if (!PinUsed(GPIO_ETH_PHY_MDC) && !PinUsed(GPIO_ETH_PHY_MDIO)) {
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR("ETH: No ETH MDC and/or ETH MDIO GPIO defined"));
+    AddLog(LOG_LEVEL_DEBUG, PSTR("ETH: No ETH MDC and/or ETH MDIO GPIO defined"));
     return;
   }
 
@@ -130,7 +130,7 @@ void EthernetInit(void) {
   int eth_mdc = Pin(GPIO_ETH_PHY_MDC);
   int eth_mdio = Pin(GPIO_ETH_PHY_MDIO);
   if (!ETH.begin(Settings.eth_address, eth_power, eth_mdc, eth_mdio, (eth_phy_type_t)Settings.eth_type, (eth_clock_mode_t)Settings.eth_clk_mode)) {
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR("ETH: Bad PHY type or init error"));
+    AddLog(LOG_LEVEL_DEBUG, PSTR("ETH: Bad PHY type or init error"));
   };
 }
 

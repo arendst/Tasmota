@@ -159,7 +159,7 @@ void seeSoilDetect(void) {                      // detect sensors
     buf = (uint8_t) Wire.read();
     if (buf != SEESAW_HW_ID_CODE) {             // check hardware id
 #ifdef DEBUG_SEESAW_SOIL
-      AddLog_P(LOG_LEVEL_DEBUG, PSTR("SEE: HWID mismatch ADDR=%X, ID=%X"), addr, buf);
+      AddLog(LOG_LEVEL_DEBUG, PSTR("SEE: HWID mismatch ADDR=%X, ID=%X"), addr, buf);
 #endif // DEBUG_SEESAW_SOIL
       continue;
     }
@@ -173,7 +173,7 @@ void seeSoilDetect(void) {                      // detect sensors
     SeeSoil.count++;
     SeeSoil.present = true;
 #ifdef DEBUG_SEESAW_SOIL
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR("SEE: FOUND sensor %u at %02X"), i, addr);
+    AddLog(LOG_LEVEL_DEBUG, PSTR("SEE: FOUND sensor %u at %02X"), i, addr);
 #endif // DEBUG_SEESAW_SOIL
   }
 }
@@ -201,7 +201,7 @@ void seeSoilCommand(uint32_t command) {         // issue commands to sensors
       break;
     default:
 #ifdef DEBUG_SEESAW_SOIL
-      AddLog_P(LOG_LEVEL_DEBUG, PSTR("SEE: ILL CMD:%02X"), command);
+      AddLog(LOG_LEVEL_DEBUG, PSTR("SEE: ILL CMD:%02X"), command);
 #endif // DEBUG_SEESAW_SOIL
       return;
   }
@@ -212,7 +212,7 @@ void seeSoilCommand(uint32_t command) {         // issue commands to sensors
     Wire.write((uint8_t) regLow);
     uint32_t err = Wire.endTransmission();
 #ifdef DEBUG_SEESAW_SOIL
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR("SEE: SNS=%u ADDR=%02X CMD=%02X ERR=%u"), i, addr, command, err);
+    AddLog(LOG_LEVEL_DEBUG, PSTR("SEE: SNS=%u ADDR=%02X CMD=%02X ERR=%u"), i, addr, command, err);
 #endif // DEBUG_SEESAW_SOIL
     }
 }
@@ -242,7 +242,7 @@ void seeSoilRead(uint32_t command) {            // read values from sensors
 #endif // SEESAW_SOIL_RAW
     }
 #ifdef DEBUG_SEESAW_SOIL
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR("SEE: READ #%u ADDR=%02X NUM=%u RET=%X"), i, SeeSoilSNS[i].address, num, ret);
+    AddLog(LOG_LEVEL_DEBUG, PSTR("SEE: READ #%u ADDR=%02X NUM=%u RET=%X"), i, SeeSoilSNS[i].address, num, ret);
 #endif // DEBUG_SEESAW_SOIL
   }
 }

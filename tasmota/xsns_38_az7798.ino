@@ -166,14 +166,14 @@ void AzEverySecond(void)
     AddLogBuffer(LOG_LEVEL_DEBUG_MORE, az_response, counter);
 
     if (!az_received) {
-      AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "AZ7798 comms timeout"));
+      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "AZ7798 comms timeout"));
       return;
     }
 
     i = 0;
     while((az_response[i] != 'T') && (i < counter)) {i++;} // find the start of response
     if(az_response[i] != 'T') {
-      AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "AZ7798 failed to find start of response"));
+      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "AZ7798 failed to find start of response"));
       return;
     }
     i++;                                    // advance to start of temperature value
@@ -183,7 +183,7 @@ void AzEverySecond(void)
       response_substr[j++] = az_response[i++];
     }
     if((az_response[i] != 'C') && (az_response[i] != 'F')){
-      AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "AZ7798 failed to find end of temperature"));
+      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "AZ7798 failed to find end of temperature"));
       return;
     }
     response_substr[j] = 0;                 // add null terminator
@@ -195,12 +195,12 @@ void AzEverySecond(void)
     }
     i++;                                    // advance to first delimiter
     if(az_response[i] != ':') {
-      AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "AZ7798 error first delimiter"));
+      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "AZ7798 error first delimiter"));
       return;
     }
     i++;                                    // advance to start of CO2
     if(az_response[i] != 'C') {
-      AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "AZ7798 error start of CO2"));
+      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "AZ7798 error start of CO2"));
       return;
     }
     i++;                                    // advance to start of CO2 value
@@ -210,7 +210,7 @@ void AzEverySecond(void)
       response_substr[j++] = az_response[i++];
     }
     if(az_response[i] != 'p') {
-      AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "AZ7798 failed to find end of CO2"));
+      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "AZ7798 failed to find end of CO2"));
       return;
     }
     response_substr[j] = 0;                 // add null terminator
@@ -220,12 +220,12 @@ void AzEverySecond(void)
 #endif  // USE_LIGHT
     i += 3;                                 // advance to second delimiter
     if(az_response[i] != ':') {
-      AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "AZ7798 error second delimiter"));
+      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "AZ7798 error second delimiter"));
       return;
     }
     i++;                                    // advance to start of humidity
     if(az_response[i] != 'H') {
-      AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "AZ7798 error start of humidity"));
+      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "AZ7798 error start of humidity"));
       return;
     }
     i++;                                    // advance to start of humidity value
@@ -235,7 +235,7 @@ void AzEverySecond(void)
       response_substr[j++] = az_response[i++];
     }
     if(az_response[i] != '%') {
-      AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "AZ7798 failed to find end of humidity"));
+      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "AZ7798 failed to find end of humidity"));
       return;
     }
     response_substr[j] = 0;                 // add null terminator
@@ -256,7 +256,7 @@ void AzEverySecond(void)
       }
     } while(((millis() - start) < AZ_READ_TIMEOUT));
     az_clock_update = AZ_CLOCK_UPDATE_INTERVAL;
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "AZ7798 clock updated"));
+    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "AZ7798 clock updated"));
   } else {
     az_clock_update--;
   }

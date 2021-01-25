@@ -25,8 +25,11 @@
  * I2C Addres: 0x29
 \*********************************************************************************************/
 
-#define XSNS_45     45
-#define XI2C_31     31  // See I2CDEVICES.md
+#define XSNS_45            45
+#define XI2C_31            31  // See I2CDEVICES.md
+
+#define USE_VL_MEDIAN
+#define USE_VL_MEDIAN_SIZE 5   // Odd number of samples median detection
 
 #include <Wire.h>
 #include "VL53L0X.h"
@@ -44,7 +47,6 @@ struct {
 
 void Vl53l0Detect(void) {
   if (!I2cSetDevice(0x29)) { return; }
-
   if (!sensor.init()) { return; }
 
   I2cSetActiveFound(sensor.getAddress(), "VL53L0X");
@@ -61,15 +63,7 @@ void Vl53l0Detect(void) {
   Vl53l0x.index = 0;
 }
 
-#ifdef USE_WEBSERVER
-const char HTTP_SNS_VL53L0X[] PROGMEM =
- "{s}VL53L0X " D_DISTANCE "{m}%d" D_UNIT_MILLIMETER "{e}"; // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
-#endif  // USE_WEBSERVER
-
-#define USE_VL_MEDIAN
-
 void Vl53l0Every_250MSecond(void) {
-  // every 200 ms
   uint16_t dist = sensor.readRangeContinuousMillimeters();
   if ((0 == dist) || (dist > 2000)) {
     dist = 9999;
@@ -79,18 +73,18 @@ void Vl53l0Every_250MSecond(void) {
   // store in ring buffer
   Vl53l0x.buffer[Vl53l0x.index] = dist;
   Vl53l0x.index++;
-  if (Vl53l0x.index >= 5) {
+  if (Vl53l0x.index >= USE_VL_MEDIAN_SIZE) {
     Vl53l0x.index = 0;
   }
 
   // sort list and take median
-  uint16_t tbuff[5];
+  uint16_t tbuff[USE_VL_MEDIAN_SIZE];
   memmove(tbuff, Vl53l0x.buffer, sizeof(tbuff));
   uint16_t tmp;
   uint8_t flag;
-  for (uint32_t ocnt = 0; ocnt < 5; ocnt++) {
+  for (uint32_t ocnt = 0; ocnt < USE_VL_MEDIAN_SIZE; ocnt++) {
     flag = 0;
-    for (uint32_t count = 0; count < 4; count++) {
+    for (uint32_t count = 0; count < USE_VL_MEDIAN_SIZE -1; count++) {
       if (tbuff[count] > tbuff[count +1]) {
         tmp = tbuff[count];
         tbuff[count] = tbuff[count +1];
@@ -100,7 +94,7 @@ void Vl53l0Every_250MSecond(void) {
     }
     if (!flag) { break; }
   }
-  Vl53l0x.distance = tbuff[2];
+  Vl53l0x.distance = tbuff[(USE_VL_MEDIAN_SIZE -1) / 2];
 #else
   Vl53l0x.distance = dist;
 #endif
@@ -125,7 +119,7 @@ void Vl53l0Show(boolean json) {
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
   } else {
-    WSContentSend_PD(HTTP_SNS_VL53L0X, Vl53l0x.distance);
+    WSContentSend_PD(HTTP_SNS_DISTANCE, PSTR("VL53L0X"), Vl53l0x.distance);
 #endif
   }
 }
@@ -134,8 +128,7 @@ void Vl53l0Show(boolean json) {
  * Interface
 \*********************************************************************************************/
 
-bool Xsns45(byte function)
-{
+bool Xsns45(byte function) {
   if (!I2cEnabled(XI2C_31)) { return false; }
 
   bool result = false;

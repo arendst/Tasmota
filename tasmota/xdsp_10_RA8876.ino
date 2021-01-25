@@ -82,7 +82,7 @@ void RA8876_InitDriver(void) {
 #endif
 
     ra8876_init_done = true;
-    AddLog_P(LOG_LEVEL_INFO, PSTR("DSP: RA8876"));
+    AddLog(LOG_LEVEL_INFO, PSTR("DSP: RA8876"));
   }
 }
 

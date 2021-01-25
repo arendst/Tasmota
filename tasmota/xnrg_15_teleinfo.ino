@@ -158,7 +158,7 @@ void ADPSCallback(uint8_t phase)
     // Publish adding ADCO serial number into the topic
     MqttPublishPrefixTopic_P(RESULT_OR_TELE, serialNumber, false);
 
-    AddLog_P(LOG_LEVEL_INFO, PSTR("ADPS on phase %d"), phase);
+    AddLog(LOG_LEVEL_INFO, PSTR("ADPS on phase %d"), phase);
 }
 
 /* ======================================================================
@@ -187,7 +187,7 @@ void DataCallback(struct _ValueList * me, uint8_t  flags)
 
         if (flags & TINFO_FLAGS_ADDED)   { c = '#';  }
         if (flags & TINFO_FLAGS_UPDATED) { c = '*';  }
-        AddLog_P(LOG_LEVEL_DEBUG, PSTR("TIC: [%d]%c %s=%s"), ilabel, c , me->name, me->value);
+        AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: [%d]%c %s=%s"), ilabel, c , me->name, me->value);
 
         if (ilabel<LABEL_END) {
 
@@ -202,19 +202,19 @@ void DataCallback(struct _ValueList * me, uint8_t  flags)
                         break;
                     }
                 }
-                AddLog_P(LOG_LEVEL_DEBUG, PSTR("TIC: Tarif changed, now '%s' (%d)"), me->value, tarif);
+                AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: Tarif changed, now '%s' (%d)"), me->value, tarif);
             }
 
             // Current tariff (standard is in clear text in value)
             else if (ilabel == LABEL_LTARF)
             {
-                AddLog_P(LOG_LEVEL_DEBUG, PSTR("TIC: Tarif name changed, now '%s'"), me->value);
+                AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: Tarif name changed, now '%s'"), me->value);
             }
             // Current tariff (standard index is is in clear text in value)
             else if (ilabel == LABEL_NTARF)
             {
                 tarif = atoi(me->value);
-                AddLog_P(LOG_LEVEL_DEBUG, PSTR("TIC: Tarif index changed, now '%d'"), tarif);
+                AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: Tarif index changed, now '%d'"), tarif);
             }
 
 
@@ -223,21 +223,21 @@ void DataCallback(struct _ValueList * me, uint8_t  flags)
             {
                 Energy.voltage_available = true;
                 Energy.voltage[0]  = (float) atoi(me->value);
-                AddLog_P(LOG_LEVEL_DEBUG, PSTR("TIC: Voltage %s, now %d"), me->value, (int) Energy.voltage[0]);
+                AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: Voltage %s, now %d"), me->value, (int) Energy.voltage[0]);
             }
 
             // Current I
             else if (ilabel == LABEL_IINST || ilabel == LABEL_IRMS1)
             {
                 Energy.current[0]  = (float) atoi(me->value);
-                AddLog_P(LOG_LEVEL_DEBUG, PSTR("TIC: Current %s, now %d"), me->value, (int) Energy.current[0]);
+                AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: Current %s, now %d"), me->value, (int) Energy.current[0]);
             }
 
             // Power P
             else if (ilabel == LABEL_PAPP || ilabel == LABEL_SINSTS)
             {
                 Energy.active_power[0]  = (float) atoi(me->value);;
-                AddLog_P(LOG_LEVEL_DEBUG, PSTR("TIC: Power %s, now %d"), me->value, (int)  Energy.active_power[0]);
+                AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: Power %s, now %d"), me->value, (int)  Energy.active_power[0]);
             }
 
             // Wh indexes (legacy)
@@ -251,7 +251,7 @@ void DataCallback(struct _ValueList * me, uint8_t  flags)
                 // Base, un seul index
                 if (ilabel == LABEL_BASE) {
                     total = atoi(me->value);
-                    AddLog_P(LOG_LEVEL_DEBUG, PSTR("TIC: Base:%u"), total);
+                    AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: Base:%u"), total);
                 // Heures creuses/pleines calculer total
                 } else {
                     // Heures creuses get heures pleines
@@ -269,7 +269,7 @@ void DataCallback(struct _ValueList * me, uint8_t  flags)
                         }
                     }
                     total = hc + hp;
-                    AddLog_P(LOG_LEVEL_DEBUG, PSTR("TIC: HC:%u  HP:%u  Total:%u"), hc, hp, total);
+                    AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: HC:%u  HP:%u  Total:%u"), hc, hp, total);
                 }
 
                 if (!Settings.flag4.teleinfo_rawdata) {
@@ -284,17 +284,17 @@ void DataCallback(struct _ValueList * me, uint8_t  flags)
                 if (!Settings.flag4.teleinfo_rawdata) {
                     EnergyUpdateTotal(total/1000.0f, true);
                 }
-                AddLog_P(LOG_LEVEL_DEBUG, PSTR("TIC: Total:%uWh"), total);
+                AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: Total:%uWh"), total);
             }
 
             // Wh indexes (standard)
             else if ( ilabel == LABEL_EASF01)
             {
-                AddLog_P(LOG_LEVEL_DEBUG, PSTR("TIC: HC:%u"),  atoi(me->value));
+                AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: HC:%u"),  atoi(me->value));
             }
             else if ( ilabel == LABEL_EASF02)
             {
-                AddLog_P(LOG_LEVEL_DEBUG, PSTR("TIC: HP:%u"),  atoi(me->value));
+                AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: HP:%u"),  atoi(me->value));
             }
 
             // Contract subscribed (legacy)
@@ -308,26 +308,26 @@ void DataCallback(struct _ValueList * me, uint8_t  flags)
                         break;
                     }
                 }
-                AddLog_P(LOG_LEVEL_DEBUG, PSTR("TIC: Contract changed, now '%s' (%d)"), me->value, contrat);
+                AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: Contract changed, now '%s' (%d)"), me->value, contrat);
             }
             // Contract subscribed (standard is in clear text in value)
             else if (ilabel == LABEL_NGTF)
             {
-                AddLog_P(LOG_LEVEL_DEBUG, PSTR("TIC: Contract changed, now '%s'"), me->value);
+                AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: Contract changed, now '%s'"), me->value);
             }
 
             // Contract subscribed (Power)
             else if (ilabel == LABEL_ISOUSC || ilabel == LABEL_PREF)
             {
                 isousc = atoi( me->value);
-                AddLog_P(LOG_LEVEL_DEBUG, PSTR("TIC: ISousc set to %d"), isousc);
+                AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: ISousc set to %d"), isousc);
             }
 
             // Serial Number of device
             else if (ilabel == LABEL_ADCO || ilabel == LABEL_ADSC)
             {
                 strcpy(serialNumber, me->value);
-                AddLog_P(LOG_LEVEL_DEBUG, PSTR("TIC: %s set to %s"), me->name, serialNumber);
+                AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: %s set to %s"), me->name, serialNumber);
             }
 
         }
@@ -447,20 +447,20 @@ void TInfoInit(void)
         tinfo_mode = TINFO_MODE_HISTORIQUE;
     }
 
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR("TIC: inferface speed %d bps"),baudrate);
+    AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: inferface speed %d bps"),baudrate);
 
     if (PinUsed(GPIO_TELEINFO_RX)) {
          uint8_t rx_pin = Pin(GPIO_TELEINFO_RX);
-         AddLog_P(LOG_LEVEL_INFO, PSTR("TIC: RX on GPIO%d"), rx_pin);
+         AddLog(LOG_LEVEL_INFO, PSTR("TIC: RX on GPIO%d"), rx_pin);
 
         // Enable Teleinfo pin used, control it
         if (PinUsed(GPIO_TELEINFO_ENABLE)) {
             uint8_t en_pin = Pin(GPIO_TELEINFO_ENABLE);
             pinMode(en_pin, OUTPUT);
             digitalWrite(en_pin, HIGH);
-            AddLog_P(LOG_LEVEL_INFO, PSTR("TIC: Enable with GPIO%d"), en_pin);
+            AddLog(LOG_LEVEL_INFO, PSTR("TIC: Enable with GPIO%d"), en_pin);
         } else  {
-            AddLog_P(LOG_LEVEL_INFO, PSTR("TIC: always enabled"));
+            AddLog(LOG_LEVEL_INFO, PSTR("TIC: always enabled"));
         }
 
 #ifdef ESP8266
@@ -488,13 +488,13 @@ void TInfoInit(void)
                 //SetSerialConfig(TS_SERIAL_7E1);
                 //TInfoSerial->setTimeout(TINFO_READ_TIMEOUT);
 
-                AddLog_P(LOG_LEVEL_INFO, PSTR("TIC: using hardware serial"));
+                AddLog(LOG_LEVEL_INFO, PSTR("TIC: using hardware serial"));
             } else {
-                AddLog_P(LOG_LEVEL_INFO, PSTR("TIC: using software serial"));
+                AddLog(LOG_LEVEL_INFO, PSTR("TIC: using software serial"));
             }
 #endif  // ESP8266
 #ifdef ESP32
-            AddLog_P(LOG_LEVEL_INFO, PSTR("TIC: using ESP32 hardware serial"));
+            AddLog(LOG_LEVEL_INFO, PSTR("TIC: using ESP32 hardware serial"));
 #endif  // ESP32
             // Init teleinfo
             tinfo.init(tinfo_mode);
@@ -504,7 +504,7 @@ void TInfoInit(void)
             tinfo.attachNewFrame(NewFrameCallback);
             tinfo_found = true;
 
-            AddLog_P(LOG_LEVEL_INFO, PSTR("TIC: Ready"));
+            AddLog(LOG_LEVEL_INFO, PSTR("TIC: Ready"));
         }
     }
 }

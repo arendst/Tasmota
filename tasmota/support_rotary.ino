@@ -209,7 +209,7 @@ void RotaryHandler(void) {
 
     bool button_pressed = (Button.hold_timer[index]);  // Button is pressed: set color temperature
     if (button_pressed) { Encoder[index].changed = true; }
-//    AddLog_P(LOG_LEVEL_DEBUG, PSTR("ROT: Button1 %d, Position %d"), button_pressed, rotary_position);
+//    AddLog(LOG_LEVEL_DEBUG, PSTR("ROT: Button1 %d, Position %d"), button_pressed, rotary_position);
 
 #ifdef USE_LIGHT
     if (!Settings.flag4.rotary_uses_rules) {   // SetOption98 - Use rules instead of light control

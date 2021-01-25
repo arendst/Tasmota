@@ -95,7 +95,7 @@ void ILI9488_InitDriver(void) {
 #endif
 
     ili9488_init_done = true;
-    AddLog_P(LOG_LEVEL_INFO, PSTR("DSP: ILI9488"));
+    AddLog(LOG_LEVEL_INFO, PSTR("DSP: ILI9488"));
   }
 }
 

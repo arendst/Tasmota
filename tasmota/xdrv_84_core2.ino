@@ -34,7 +34,6 @@ rtc better sync
 #include <AXP192.h>
 #include <MPU6886.h>
 #include <BM8563_RTC.h>
-#include <i2c_bus.h>
 #include <soc/rtc.h>
 
 #define XDRV_84          84
@@ -97,7 +96,7 @@ void CORE2_Init(void) {
     BreakTime(Rtc.utc_time, tmpTime);
     Rtc.daylight_saving_time = RuleToTime(Settings.tflag[1], RtcTime.year);
     Rtc.standard_time = RuleToTime(Settings.tflag[0], RtcTime.year);
-    AddLog_P(LOG_LEVEL_INFO, PSTR("Set time from BM8563 to RTC (" D_UTC_TIME ") %s, (" D_DST_TIME ") %s, (" D_STD_TIME ") %s"),
+    AddLog(LOG_LEVEL_INFO, PSTR("Set time from BM8563 to RTC (" D_UTC_TIME ") %s, (" D_DST_TIME ") %s, (" D_STD_TIME ") %s"),
                 GetDateAndTime(DT_UTC).c_str(), GetDateAndTime(DT_DST).c_str(), GetDateAndTime(DT_STD).c_str());
     if (Rtc.local_time < START_VALID_TIME) {  // 2016-01-01
       TasmotaGlobal.rules_flag.time_init = 1;
@@ -277,8 +276,8 @@ void GetRtc(void) {
   RtcTime.day_of_month = RTCdate.Date;
   RtcTime.year = RTCdate.Year;
 
-  AddLog_P(LOG_LEVEL_INFO, PSTR("RTC: %02d:%02d:%02d"), RTCtime.Hours, RTCtime.Minutes, RTCtime.Seconds);
-  AddLog_P(LOG_LEVEL_INFO, PSTR("RTC: %02d.%02d.%04d"),  RTCdate.Date, RTCdate.Month, RTCdate.Year);
+  AddLog(LOG_LEVEL_INFO, PSTR("RTC: %02d:%02d:%02d"), RTCtime.Hours, RTCtime.Minutes, RTCtime.Seconds);
+  AddLog(LOG_LEVEL_INFO, PSTR("RTC: %02d.%02d.%04d"),  RTCdate.Date, RTCdate.Month, RTCdate.Year);
 
 }
 
@@ -322,7 +321,7 @@ void CORE2_EverySecond(void) {
 
     if (Rtc.utc_time > START_VALID_TIME && core2_globs.tset==false && abs(Rtc.utc_time - Get_utc()) > 3) {
       Set_utc(Rtc.utc_time);
-      AddLog_P(LOG_LEVEL_INFO, PSTR("Write Time TO BM8563 from NTP (" D_UTC_TIME ") %s, (" D_DST_TIME ") %s, (" D_STD_TIME ") %s"),
+      AddLog(LOG_LEVEL_INFO, PSTR("Write Time TO BM8563 from NTP (" D_UTC_TIME ") %s, (" D_DST_TIME ") %s, (" D_STD_TIME ") %s"),
                   GetDateAndTime(DT_UTC).c_str(), GetDateAndTime(DT_DST).c_str(), GetDateAndTime(DT_STD).c_str());
       core2_globs.tset = true;
     }

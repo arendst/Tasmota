@@ -34,7 +34,7 @@
   THE PROTOCOL [tm]:
   ==================
   see Holtek-Semicon BS814A-2 datasheet for details
-  
+
   *********************
   * About this driver *
   *********************
@@ -100,7 +100,7 @@ void bs814_read(void) {                     // Poll touch keys
   uint8_t checksum = 0;
   uint8_t bitp;
   bool bitval;
-  
+
   // generate clock signal & sample frame
   for (bitp = 0; bitp < 2 * BS814_KEYS_MAX; ++bitp) {
     digitalWrite(Pin(GPIO_BS814_CLK), LOW);
@@ -123,8 +123,8 @@ void bs814_read(void) {                     // Poll touch keys
   // validate frame
   if (BS814_KEYS_MAX - checksum != ((frame >> 4) & 0x7)) {          // checksum error
 #ifdef DEBUG_BS814_DRIVER
-    ++Bs814.e_cksum; 
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR("CKS=%02X CFR=%02X"), checksum, (frame >> 4) & 0x7);
+    ++Bs814.e_cksum;
+    AddLog(LOG_LEVEL_DEBUG, PSTR("CKS=%02X CFR=%02X"), checksum, (frame >> 4) & 0x7);
 #endif  // DEBUG_BS814_DRIVER
     return;
   }
@@ -144,7 +144,7 @@ void bs814_update(void) {                   // Usually called every 50 ms
   bs814_read();
   if ((Bs814.keys & 0xF) != (Bs814.keys >> 4)) {
 #ifdef DEBUG_BS814_DRIVER
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR("BS814: KEY=%0X OLD=%0X LVL=%u CKS=%u STP=%u OK=%u CLK=%u DAT=%u"),
+    AddLog(LOG_LEVEL_DEBUG, PSTR("BS814: KEY=%0X OLD=%0X LVL=%u CKS=%u STP=%u OK=%u CLK=%u DAT=%u"),
              Bs814.keys & 0xF, Bs814.keys >> 4, Bs814.e_level, Bs814.e_cksum, Bs814.e_stp,
              Bs814.valid, Pin(GPIO_BS814_CLK), Pin(GPIO_BS814_DAT));
 #endif  // DEBUG_BS814_DRIVER

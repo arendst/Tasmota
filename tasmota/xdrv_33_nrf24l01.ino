@@ -67,10 +67,10 @@ void NRF24Detect(void) {
   if (PinUsed(GPIO_NRF24_CS) && PinUsed(GPIO_NRF24_DC) && TasmotaGlobal.spi_enabled) {
     if (NRF24initRadio()) {
       NRF24.chipType = 32; // SPACE
-      AddLog_P(LOG_LEVEL_INFO, PSTR("NRF: Model 24L01 initialized"));
+      AddLog(LOG_LEVEL_INFO, PSTR("NRF: Model 24L01 initialized"));
       if (NRF24radio.isPVariant()) {
         NRF24.chipType = 43; // +
-        AddLog_P(LOG_LEVEL_INFO, PSTR("NRF: Model 24L01+ detected"));
+        AddLog(LOG_LEVEL_INFO, PSTR("NRF: Model 24L01+ detected"));
       }
     }
   }

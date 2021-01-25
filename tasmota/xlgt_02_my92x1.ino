@@ -138,7 +138,7 @@ void My92x1ModuleSelected(void)
     LightMy92x1Init();
 
     TasmotaGlobal.light_driver = XLGT_02;
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR("DBG: MY29x1 Found"));
+    AddLog(LOG_LEVEL_DEBUG, PSTR("DBG: MY29x1 Found"));
   }
 }
 

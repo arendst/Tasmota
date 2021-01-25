@@ -49,10 +49,10 @@ void OsWatchTicker(void)
 
 #ifdef DEBUG_THEO
   int32_t rssi = WiFi.RSSI();
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_OSWATCH " FreeRam %d, rssi %d %% (%d dBm), last_run %d"), ESP_getFreeHeap(), WifiGetRssiAsQuality(rssi), rssi, last_run);
+  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_OSWATCH " FreeRam %d, rssi %d %% (%d dBm), last_run %d"), ESP_getFreeHeap(), WifiGetRssiAsQuality(rssi), rssi, last_run);
 #endif  // DEBUG_THEO
   if (last_run >= (OSWATCH_RESET_TIME * 1000)) {
-//    AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION D_OSWATCH " " D_BLOCKED_LOOP ". " D_RESTARTING));  // Save iram space
+//    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION D_OSWATCH " " D_BLOCKED_LOOP ". " D_RESTARTING));  // Save iram space
     RtcSettings.oswatch_blocked_loop = 1;
     RtcSettingsSave();
 
@@ -322,26 +322,6 @@ int TextToInt(char *str)
   return strtol(str, &p, radix);
 }
 
-char* ulltoa(unsigned long long value, char *str, int radix)
-{
-  char digits[64];
-  char *dst = str;
-  int i = 0;
-
-//  if (radix < 2 || radix > 36) { radix = 10; }
-
-  do {
-    int n = value % radix;
-    digits[i++] = (n < 10) ? (char)n+'0' : (char)n-10+'A';
-    value /= radix;
-  } while (value != 0);
-
-  while (i > 0) { *dst++ = digits[--i]; }
-
-  *dst = 0;
-  return str;
-}
-
 // see https://stackoverflow.com/questions/6357031/how-do-you-convert-a-byte-array-to-a-hexadecimal-string-in-c
 // char* ToHex_P(unsigned char * in, size_t insz, char * out, size_t outsz, char inbetween = '\0'); in tasmota_globals.h
 char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, char inbetween)
@@ -361,24 +341,6 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
   }
   pout[(inbetween && insz) ? -1 : 0] = 0;   // Discard last inbetween if any input
   return out;
-}
-
-char* Uint64toHex(uint64_t value, char *str, uint16_t bits)
-{
-  ulltoa(value, str, 16);  // Get 64bit value
-
-  int fill = 8;
-  if ((bits > 3) && (bits < 65)) {
-    fill = bits / 4;  // Max 16
-    if (bits % 4) { fill++; }
-  }
-  int len = strlen(str);
-  fill -= len;
-  if (fill > 0) {
-    memmove(str + fill, str, len +1);
-    memset(str, '0', fill);
-  }
-  return str;
 }
 
 char* dtostrfd(double number, unsigned char prec, char *s)
@@ -658,7 +620,6 @@ bool ValidIpAddress(const char* str)
   IPAddress ip_address;
   return ip_address.fromString(str);
 }
-
 
 bool ParseIPv4(uint32_t* addr, const char* str_p)
 {
@@ -1042,7 +1003,7 @@ uint32_t GetSerialBaudrate(void) {
 
 void SetSerialBegin(void) {
   TasmotaGlobal.baudrate = Settings.baudrate * 300;
-  AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_SERIAL "Set to %s %d bit/s"), GetSerialConfig().c_str(), TasmotaGlobal.baudrate);
+  AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_SERIAL "Set to %s %d bit/s"), GetSerialConfig().c_str(), TasmotaGlobal.baudrate);
   Serial.flush();
 #ifdef ESP8266
   Serial.begin(TasmotaGlobal.baudrate, (SerialConfig)pgm_read_byte(kTasmotaSerialConfig + Settings.serial_config));
@@ -1085,7 +1046,7 @@ void SetSerial(uint32_t baudrate, uint32_t serial_config) {
 
 void ClaimSerial(void) {
   TasmotaGlobal.serial_local = true;
-  AddLog_P(LOG_LEVEL_INFO, PSTR("SNS: Hardware Serial"));
+  AddLog(LOG_LEVEL_INFO, PSTR("SNS: Hardware Serial"));
   SetSeriallog(LOG_LEVEL_NONE);
   TasmotaGlobal.baudrate = GetSerialBaudrate();
   Settings.baudrate = TasmotaGlobal.baudrate / 300;
@@ -1132,7 +1093,7 @@ void ShowSource(uint32_t source)
 {
   if ((source > 0) && (source < SRC_MAX)) {
     char stemp1[20];
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR("SRC: %s"), GetTextIndexed(stemp1, sizeof(stemp1), source, kCommandSource));
+    AddLog(LOG_LEVEL_DEBUG, PSTR("SRC: %s"), GetTextIndexed(stemp1, sizeof(stemp1), source, kCommandSource));
   }
 }
 
@@ -1230,7 +1191,7 @@ int Response_P(const char* format, ...)        // Content send snprintf_P char d
   // This uses char strings. Be aware of sending %% if % is needed
   va_list args;
   va_start(args, format);
-  int len = vsnprintf_P(TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), format, args);
+  int len = ext_vsnprintf_P(TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), format, args);
   va_end(args);
   return len;
 }
@@ -1244,7 +1205,7 @@ int ResponseTime_P(const char* format, ...)    // Content send snprintf_P char d
   ResponseGetTime(Settings.flag2.time_format, TasmotaGlobal.mqtt_data);
 
   int mlen = strlen(TasmotaGlobal.mqtt_data);
-  int len = vsnprintf_P(TasmotaGlobal.mqtt_data + mlen, sizeof(TasmotaGlobal.mqtt_data) - mlen, format, args);
+  int len = ext_vsnprintf_P(TasmotaGlobal.mqtt_data + mlen, sizeof(TasmotaGlobal.mqtt_data) - mlen, format, args);
   va_end(args);
   return len + mlen;
 }
@@ -1255,7 +1216,7 @@ int ResponseAppend_P(const char* format, ...)  // Content send snprintf_P char d
   va_list args;
   va_start(args, format);
   int mlen = strlen(TasmotaGlobal.mqtt_data);
-  int len = vsnprintf_P(TasmotaGlobal.mqtt_data + mlen, sizeof(TasmotaGlobal.mqtt_data) - mlen, format, args);
+  int len = ext_vsnprintf_P(TasmotaGlobal.mqtt_data + mlen, sizeof(TasmotaGlobal.mqtt_data) - mlen, format, args);
   va_end(args);
   return len + mlen;
 }
@@ -1271,17 +1232,28 @@ int ResponseAppendTime(void)
   return ResponseAppendTimeFormat(Settings.flag2.time_format);
 }
 
+// int ResponseAppendTHD(float f_temperature, float f_humidity)
+// {
+//   char temperature[FLOATSZ];
+//   dtostrfd(f_temperature, Settings.flag2.temperature_resolution, temperature);
+//   char humidity[FLOATSZ];
+//   dtostrfd(f_humidity, Settings.flag2.humidity_resolution, humidity);
+//   char dewpoint[FLOATSZ];
+//   dtostrfd(CalcTempHumToDew(f_temperature, f_humidity), Settings.flag2.temperature_resolution, dewpoint);
+
+//   return ResponseAppend_P(PSTR("\"" D_JSON_TEMPERATURE "\":%s,\"" D_JSON_HUMIDITY "\":%s,\"" D_JSON_DEWPOINT "\":%s"), temperature, humidity, dewpoint);
+// }
+
 int ResponseAppendTHD(float f_temperature, float f_humidity)
 {
-  char temperature[FLOATSZ];
-  dtostrfd(f_temperature, Settings.flag2.temperature_resolution, temperature);
-  char humidity[FLOATSZ];
-  dtostrfd(f_humidity, Settings.flag2.humidity_resolution, humidity);
-  char dewpoint[FLOATSZ];
-  dtostrfd(CalcTempHumToDew(f_temperature, f_humidity), Settings.flag2.temperature_resolution, dewpoint);
+  float dewpoint = CalcTempHumToDew(f_temperature, f_humidity);
 
-  return ResponseAppend_P(PSTR("\"" D_JSON_TEMPERATURE "\":%s,\"" D_JSON_HUMIDITY "\":%s,\"" D_JSON_DEWPOINT "\":%s"), temperature, humidity, dewpoint);
+  return ResponseAppend_P(PSTR("\"" D_JSON_TEMPERATURE "\":%*_f,\"" D_JSON_HUMIDITY "\":%*_f,\"" D_JSON_DEWPOINT "\":%*_f"),
+                          Settings.flag2.temperature_resolution, &f_temperature,
+                          Settings.flag2.humidity_resolution, &f_humidity,
+                          Settings.flag2.temperature_resolution, &dewpoint);
 }
+
 
 int ResponseJsonEnd(void)
 {
@@ -1321,7 +1293,7 @@ void TemplateConvert(uint8_t template8[], uint16_t template16[]) {
   }
   template16[(sizeof(mytmplt) / 2) -2] = Adc0Convert(template8[sizeof(mytmplt8285) -1]);
 
-//  AddLog_P(LOG_LEVEL_DEBUG, PSTR("FNC: TemplateConvert"));
+//  AddLog(LOG_LEVEL_DEBUG, PSTR("FNC: TemplateConvert"));
 //  AddLogBuffer(LOG_LEVEL_DEBUG, template8, sizeof(mytmplt8285));
 //  AddLogBufferSize(LOG_LEVEL_DEBUG, (uint8_t*)template16, sizeof(mytmplt) / 2, 2);
 }
@@ -1337,7 +1309,7 @@ void ConvertGpios(void) {
     Settings.my_gp.io[(sizeof(myio) / 2) -1] = Adc0Convert(Settings.ex_my_adc0);
     Settings.gpio16_converted = 0xF5A0;
 
-//    AddLog_P(LOG_LEVEL_DEBUG, PSTR("FNC: ConvertGpios"));
+//    AddLog(LOG_LEVEL_DEBUG, PSTR("FNC: ConvertGpios"));
 //    AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t *)&Settings.ex_my_gp8.io, sizeof(myio8));
 //    AddLogBufferSize(LOG_LEVEL_DEBUG, (uint8_t *)&Settings.my_gp.io, sizeof(myio) / 2, 2);
   }
@@ -1488,7 +1460,7 @@ String ModuleName(void)
 void GetInternalTemplate(void* ptr, uint32_t module, uint32_t option) {
   uint8_t module_template = pgm_read_byte(kModuleTemplateList + module);
 
-//  AddLog_P(LOG_LEVEL_DEBUG, PSTR("DBG: Template %d, Option %d"), module_template, option);
+//  AddLog(LOG_LEVEL_DEBUG, PSTR("DBG: Template %d, Option %d"), module_template, option);
 
   // template8 = GPIO 0,1,2,3,4,5,9,10,12,13,14,15,16,Adc
   uint8_t template8[sizeof(mytmplt8285)] = { GPIO_NONE };
@@ -1520,7 +1492,7 @@ void GetInternalTemplate(void* ptr, uint32_t module, uint32_t option) {
   }
   memcpy(ptr, &template16[index], size);
 
-//  AddLog_P(LOG_LEVEL_DEBUG, PSTR("FNC: GetInternalTemplate option %d"), option);
+//  AddLog(LOG_LEVEL_DEBUG, PSTR("FNC: GetInternalTemplate option %d"), option);
 //  AddLogBufferSize(LOG_LEVEL_DEBUG, (uint8_t *)ptr, size / 2, 2);
 }
 #endif  // ESP8266
@@ -1674,7 +1646,7 @@ bool JsonTemplate(char* dataBuf)
     }
     if (old_template) {
 
-      AddLog_P(LOG_LEVEL_DEBUG, PSTR("TPL: Converting template ..."));
+      AddLog(LOG_LEVEL_DEBUG, PSTR("TPL: Converting template ..."));
 
       val = root[PSTR(D_JSON_FLAG)];
       if (val) {
@@ -1708,7 +1680,7 @@ bool JsonTemplate(char* dataBuf)
     Settings.user_template_base = base -1;  // Default WEMOS
   }
 
-//  AddLog_P(LOG_LEVEL_DEBUG, PSTR("TPL: Converted"));
+//  AddLog(LOG_LEVEL_DEBUG, PSTR("TPL: Converted"));
 //  AddLogBufferSize(LOG_LEVEL_DEBUG, (uint8_t*)&Settings.user_template, sizeof(Settings.user_template) / 2, 2);
 
   return true;
@@ -1716,7 +1688,7 @@ bool JsonTemplate(char* dataBuf)
 
 void TemplateJson(void)
 {
-//  AddLog_P(LOG_LEVEL_DEBUG, PSTR("TPL: Show"));
+//  AddLog(LOG_LEVEL_DEBUG, PSTR("TPL: Show"));
 //  AddLogBufferSize(LOG_LEVEL_DEBUG, (uint8_t*)&Settings.user_template, sizeof(Settings.user_template) / 2, 2);
 
   Response_P(PSTR("{\"" D_JSON_NAME "\":\"%s\",\"" D_JSON_GPIO "\":["), SettingsText(SET_TEMPLATE_NAME));
@@ -1989,7 +1961,7 @@ void I2cResetActive(uint32_t addr, uint32_t count = 1)
     i2c_active[addr / 32] &= ~(1 << (addr % 32));
     addr++;
   }
-//  AddLog_P(LOG_LEVEL_DEBUG, PSTR("I2C: Active %08X,%08X,%08X,%08X"), i2c_active[0], i2c_active[1], i2c_active[2], i2c_active[3]);
+//  AddLog(LOG_LEVEL_DEBUG, PSTR("I2C: Active %08X,%08X,%08X,%08X"), i2c_active[0], i2c_active[1], i2c_active[2], i2c_active[3]);
 }
 
 void I2cSetActive(uint32_t addr, uint32_t count = 1)
@@ -2000,13 +1972,13 @@ void I2cSetActive(uint32_t addr, uint32_t count = 1)
     i2c_active[addr / 32] |= (1 << (addr % 32));
     addr++;
   }
-//  AddLog_P(LOG_LEVEL_DEBUG, PSTR("I2C: Active %08X,%08X,%08X,%08X"), i2c_active[0], i2c_active[1], i2c_active[2], i2c_active[3]);
+//  AddLog(LOG_LEVEL_DEBUG, PSTR("I2C: Active %08X,%08X,%08X,%08X"), i2c_active[0], i2c_active[1], i2c_active[2], i2c_active[3]);
 }
 
 void I2cSetActiveFound(uint32_t addr, const char *types)
 {
   I2cSetActive(addr);
-  AddLog_P(LOG_LEVEL_INFO, S_LOG_I2C_FOUND_AT, types, addr);
+  AddLog(LOG_LEVEL_INFO, S_LOG_I2C_FOUND_AT, types, addr);
 }
 
 bool I2cActive(uint32_t addr)
@@ -2033,7 +2005,7 @@ bool I2cSetDevice(uint32_t addr)
  * Syslog
  *
  * Example:
- *   AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_LOG "Any value %d"), value);
+ *   AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_LOG "Any value %d"), value);
  *
 \*********************************************************************************************/
 
@@ -2074,7 +2046,7 @@ void SyslogAsync(bool refresh) {
       if (!PortUdp.beginPacket(syslog_host_addr, Settings.syslog_port)) {
         TasmotaGlobal.syslog_level = 0;
         TasmotaGlobal.syslog_timer = SYSLOG_TIMER;
-        AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION D_SYSLOG_HOST_NOT_FOUND ". " D_RETRY_IN " %d " D_UNIT_SECOND), SYSLOG_TIMER);
+        AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION D_SYSLOG_HOST_NOT_FOUND ". " D_RETRY_IN " %d " D_UNIT_SECOND), SYSLOG_TIMER);
         return;
       }
       char log_data[len +72];            // Hostname + Id + log data
@@ -2204,13 +2176,13 @@ void AddLogData(uint32_t loglevel, const char* log_data) {
   }
 }
 
-void AddLog_P(uint32_t loglevel, PGM_P formatP, ...)
-{
+void AddLog(uint32_t loglevel, PGM_P formatP, ...) {
+  // To save stack space support logging for max text length of 128 characters
   char log_data[LOGSZ +4];
 
   va_list arg;
   va_start(arg, formatP);
-  uint32_t len = vsnprintf_P(log_data, LOGSZ +1, formatP, arg);
+  uint32_t len = ext_vsnprintf_P(log_data, LOGSZ +1, formatP, arg);
   va_end(arg);
   if (len > LOGSZ) { strcat(log_data, "..."); }  // Actual data is more
 
@@ -2219,9 +2191,21 @@ void AddLog_P(uint32_t loglevel, PGM_P formatP, ...)
   static uint32_t max_len = 0;
   if (len > max_len) {
     max_len = len;
-    Serial.printf("PRF: AddLog_P %d\n", max_len);
+    Serial.printf("PRF: AddLog %d\n", max_len);
   }
 #endif
+
+  AddLogData(loglevel, log_data);
+}
+
+void AddLog_P(uint32_t loglevel, PGM_P formatP, ...) {
+  // Use more stack space to support logging for max text length of 700 characters
+  char log_data[MAX_LOGSZ];
+
+  va_list arg;
+  va_start(arg, formatP);
+  uint32_t len = ext_vsnprintf_P(log_data, sizeof(log_data), formatP, arg);
+  va_end(arg);
 
   AddLogData(loglevel, log_data);
 }
@@ -2232,17 +2216,8 @@ void AddLog_Debug(PGM_P formatP, ...)
 
   va_list arg;
   va_start(arg, formatP);
-  uint32_t len = vsnprintf_P(log_data, sizeof(log_data), formatP, arg);
+  uint32_t len = ext_vsnprintf_P(log_data, sizeof(log_data), formatP, arg);
   va_end(arg);
-
-#ifdef DEBUG_TASMOTA_CORE
-  // Profile max_len
-  static uint32_t max_len = 0;
-  if (len > max_len) {
-    max_len = len;
-    Serial.printf("PRF: AddLog_Debug %d\n", max_len);
-  }
-#endif
 
   AddLogData(LOG_LEVEL_DEBUG, log_data);
 }
@@ -2260,7 +2235,7 @@ void AddLogSerial(uint32_t loglevel)
 
 void AddLogMissed(const char *sensor, uint32_t misses)
 {
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR("SNS: %s missed %d"), sensor, SENSOR_MAX_MISS - misses);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("SNS: %s missed %d"), sensor, SENSOR_MAX_MISS - misses);
 }
 
 void AddLogBufferSize(uint32_t loglevel, uint8_t *buffer, uint32_t count, uint32_t size) {
@@ -2283,15 +2258,15 @@ void AddLogSpi(bool hardware, uint32_t clk, uint32_t mosi, uint32_t miso) {
   uint32_t enabled = (hardware) ? TasmotaGlobal.spi_enabled : TasmotaGlobal.soft_spi_enabled;
   switch(enabled) {
     case SPI_MOSI:
-      AddLog_P(LOG_LEVEL_INFO, PSTR("SPI: %s using GPIO%02d(CLK) and GPIO%02d(MOSI)"),
+      AddLog(LOG_LEVEL_INFO, PSTR("SPI: %s using GPIO%02d(CLK) and GPIO%02d(MOSI)"),
         (hardware) ? PSTR("Hardware") : PSTR("Software"), clk, mosi);
       break;
     case SPI_MISO:
-      AddLog_P(LOG_LEVEL_INFO, PSTR("SPI: %s using GPIO%02d(CLK) and GPIO%02d(MISO)"),
+      AddLog(LOG_LEVEL_INFO, PSTR("SPI: %s using GPIO%02d(CLK) and GPIO%02d(MISO)"),
         (hardware) ? PSTR("Hardware") : PSTR("Software"), clk, miso);
       break;
     case SPI_MOSI_MISO:
-      AddLog_P(LOG_LEVEL_INFO, PSTR("SPI: %s using GPIO%02d(CLK), GPIO%02d(MOSI) and GPIO%02d(MISO)"),
+      AddLog(LOG_LEVEL_INFO, PSTR("SPI: %s using GPIO%02d(CLK), GPIO%02d(MOSI) and GPIO%02d(MISO)"),
         (hardware) ? PSTR("Hardware") : PSTR("Software"), clk, mosi, miso);
       break;
   }

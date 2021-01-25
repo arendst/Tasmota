@@ -80,7 +80,7 @@ uint16_t SendMail(char *buffer) {
   cmd=endcmd+1;
 
   #ifdef DEBUG_EMAIL_PORT
-    AddLog_P(LOG_LEVEL_INFO, PSTR("mailsize: %d"),blen);
+    AddLog(LOG_LEVEL_INFO, PSTR("mailsize: %d"),blen);
   #endif
 
   mserv=strtok(params,":");
@@ -148,7 +148,7 @@ uint16_t SendMail(char *buffer) {
 
 
 #ifdef DEBUG_EMAIL_PORT
-  AddLog_P(LOG_LEVEL_INFO, PSTR("%s - %d - %s - %s"),mserv,port,user,passwd);
+  AddLog(LOG_LEVEL_INFO, PSTR("%s - %d - %s - %s"),mserv,port,user,passwd);
 #endif
 
   // 2 seconds timeout
@@ -216,12 +216,12 @@ String buffer;
   client->setTimeout(timeout);
   // smtp connect
 #ifdef DEBUG_EMAIL_PORT
-  AddLog_P(LOG_LEVEL_INFO, PSTR("Connecting: %s on port %d"),host.c_str(),port);
+  AddLog(LOG_LEVEL_INFO, PSTR("Connecting: %s on port %d"),host.c_str(),port);
 #endif
 
   if (!client->connect(host.c_str(), port)) {
 #ifdef DEBUG_EMAIL_PORT
-    AddLog_P(LOG_LEVEL_INFO, PSTR("Connection failed"));
+    AddLog(LOG_LEVEL_INFO, PSTR("Connection failed"));
 #endif
     goto exit;
   }
@@ -458,7 +458,7 @@ void attach_Array(char *aname) {
   g_client->print(F("Content-Type: text/plain\r\n"));
   if (array && alen) {
 #ifdef DEBUG_EMAIL_PORT
-    AddLog_P(LOG_LEVEL_INFO, PSTR("array found %d"),alen);
+    AddLog(LOG_LEVEL_INFO, PSTR("array found %d"),alen);
 #endif
     char buff[64];
     sprintf_P(buff,PSTR("Content-Disposition: attachment; filename=\"%s.txt\"\r\n\r\n"), aname);
@@ -545,7 +545,7 @@ uint16_t SendMail(char *buffer) {
 
   // return if not enough memory
   uint32_t mem=ESP.getFreeHeap();
-  //AddLog_P(LOG_LEVEL_INFO, PSTR("heap: %d"),mem);
+  //AddLog(LOG_LEVEL_INFO, PSTR("heap: %d"),mem);
   if (mem<SEND_MAIL32_MINRAM) {
     return 4;
   }
@@ -581,7 +581,7 @@ uint16_t SendMail(char *buffer) {
 
 
   #ifdef DEBUG_EMAIL_PORT
-    AddLog_P(LOG_LEVEL_INFO, PSTR("mailsize: %d"),blen);
+    AddLog(LOG_LEVEL_INFO, PSTR("mailsize: %d"),blen);
   #endif
 
   mserv=strtok(params,":");
@@ -736,7 +736,7 @@ smtpData.setFileStorageType(MailClientStorageType::Univ);
   //Start sending Email, can be set callback function to track the status
   if (!MailClient.sendMail(smtpData)) {
     //Serial.println("Error sending Email, " + MailClient.smtpErrorReason());
-    AddLog_P(LOG_LEVEL_INFO, PSTR("Error sending Email, %s"), MailClient.smtpErrorReason().c_str());
+    AddLog(LOG_LEVEL_INFO, PSTR("Error sending Email, %s"), MailClient.smtpErrorReason().c_str());
 
   } else {
     status=0;

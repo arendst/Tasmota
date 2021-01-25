@@ -101,14 +101,14 @@ void ZigbeeInputLoop(void) {
       // in this case the first bit (lsb) is missed and Tasmota receives 0xFF instead of 0xFE
       // We forgive this mistake, and next bytes are automatically resynchronized
       if (ZIGBEE_SOF_ALT == zigbee_in_byte) {
-        AddLog_P(LOG_LEVEL_INFO, PSTR("ZbInput forgiven first byte %02X (only for statistics)"), zigbee_in_byte);
+        AddLog(LOG_LEVEL_INFO, PSTR("ZbInput forgiven first byte %02X (only for statistics)"), zigbee_in_byte);
         zigbee_in_byte = ZIGBEE_SOF;
       }
 		}
 
     if ((0 == zigbee_buffer->len()) && (ZIGBEE_SOF != zigbee_in_byte)) {
       // waiting for SOF (Start Of Frame) byte, discard anything else
-      AddLog_P(LOG_LEVEL_INFO, PSTR("ZbInput discarding byte %02X"), zigbee_in_byte);
+      AddLog(LOG_LEVEL_INFO, PSTR("ZbInput discarding byte %02X"), zigbee_in_byte);
       continue;     // discard
     }
 
@@ -156,7 +156,7 @@ void ZigbeeInputLoop(void) {
       if (Settings.flag3.tuya_serial_mqtt_publish) {
         MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR(D_RSLT_SENSOR));
       } else {
-        AddLogZ_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE "%s"), TasmotaGlobal.mqtt_data);
+        AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE "%s"), TasmotaGlobal.mqtt_data);
       }
 			// now process the message
       ZigbeeProcessInput(znp_buffer);
@@ -267,7 +267,7 @@ void ZigbeeInputLoop(void) {
         }
 
         ToHex_P((unsigned char*)ezsp_buffer.getBuffer(), ezsp_buffer.len(), hex_char, sizeof(hex_char));
-        AddLogZ_P(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_ZIGBEE "{\"" D_JSON_ZIGBEE_EZSP_RECEIVED "2\":\"%s\"}"), hex_char);
+        AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_ZIGBEE "{\"" D_JSON_ZIGBEE_EZSP_RECEIVED "2\":\"%s\"}"), hex_char);
         // now process the message
         ZigbeeProcessInputRaw(ezsp_buffer);
       }
@@ -357,7 +357,7 @@ void ZigbeeZNPSend(const uint8_t *msg, size_t len) {
   }
 	// Now send a MQTT message to report the sent message
 	char hex_char[(len * 2) + 2];
-  AddLogZ_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE D_JSON_ZIGBEEZNPSENT " %s"),
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE D_JSON_ZIGBEEZNPSENT " %s"),
                                		ToHex_P(msg, len, hex_char, sizeof(hex_char)));
 }
 
@@ -491,7 +491,7 @@ void ZigbeeEZSPSendRaw(const uint8_t *msg, size_t len, bool send_cancel) {
 
   // Now send a MQTT message to report the sent message
   char hex_char[(len * 2) + 2];
-  AddLogZ_P(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_ZIGBEE D_JSON_ZIGBEE_EZSP_SENT_RAW " %s"),
+  AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_ZIGBEE D_JSON_ZIGBEE_EZSP_SENT_RAW " %s"),
                                   ToHex_P(msg, len, hex_char, sizeof(hex_char)));
 }
 
@@ -500,7 +500,7 @@ void ZigbeeEZSPSendRaw(const uint8_t *msg, size_t len, bool send_cancel) {
 void ZigbeeEZSPSendCmd(const uint8_t *msg, size_t len) {
   char hex_char[len*2 + 2];
   ToHex_P(msg, len, hex_char, sizeof(hex_char));
-  AddLogZ_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE "ZbEZSPSend %s"), hex_char);
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE "ZbEZSPSend %s"), hex_char);
 
   SBuffer cmd(len+3);   // prefix with seq number (1 byte) and frame control bytes (2 bytes)
 
@@ -607,7 +607,7 @@ void ZigbeeProcessInputEZSP(class SBuffer &buf) {
         log_level = LOG_LEVEL_DEBUG;
         break;
     }
-    AddLogZ_P(log_level, PSTR(D_LOG_ZIGBEE "%s"), TasmotaGlobal.mqtt_data);    // TODO move to LOG_LEVEL_DEBUG when stable
+    AddLog_P(log_level, PSTR(D_LOG_ZIGBEE "%s"), TasmotaGlobal.mqtt_data);    // TODO move to LOG_LEVEL_DEBUG when stable
   }
 
   // Pass message to state machine

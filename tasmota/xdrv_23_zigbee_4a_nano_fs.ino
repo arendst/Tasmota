@@ -363,15 +363,15 @@ void ZFS::initOrFormat(void) {
     byte map[256];
     char hex_char[(256 * 2) + 2];
     zigbee.eeprom.readBytes(0x0000, 256, map);
-    AddLogZ_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "BLK 00 %s"), ToHex_P(map, sizeof(map), hex_char, sizeof(hex_char)));
+    AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "BLK 00 %s"), ToHex_P(map, sizeof(map), hex_char, sizeof(hex_char)));
     // zigbee.eeprom.readBytes(0x0100, 256, map);
-    // AddLogZ_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "BLK 01 %s"), ToHex_P(map, sizeof(map), hex_char, sizeof(hex_char)));
+    // AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "BLK 01 %s"), ToHex_P(map, sizeof(map), hex_char, sizeof(hex_char)));
     zigbee.eeprom.readBytes(0x0200, 256, map);
-    AddLogZ_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "BLK 02 %s"), ToHex_P(map, sizeof(map), hex_char, sizeof(hex_char)));
+    AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "BLK 02 %s"), ToHex_P(map, sizeof(map), hex_char, sizeof(hex_char)));
     zigbee.eeprom.readBytes(0x2100, 256, map);
-    AddLogZ_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "BLK 21 %s"), ToHex_P(map, sizeof(map), hex_char, sizeof(hex_char)));
+    AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "BLK 21 %s"), ToHex_P(map, sizeof(map), hex_char, sizeof(hex_char)));
     // zigbee.eeprom.readBytes(0xFF00, 256, map);
-    // AddLogZ_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "BLK FF %s"), ToHex_P(map, sizeof(map), hex_char, sizeof(hex_char)));
+    // AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "BLK FF %s"), ToHex_P(map, sizeof(map), hex_char, sizeof(hex_char)));
   }
 #endif
 

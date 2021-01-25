@@ -79,7 +79,7 @@ void ICACHE_RAM_ATTR WindMeterUpdateSpeed(void)
   if (time_diff > Settings.windmeter_pulse_debounce * 1000) {
     WindMeter.counter_time = time;
     WindMeter.counter++;
-//    AddLog_P(LOG_LEVEL_DEBUG, PSTR("WMET: Counter %d"), WindMeter.counter);
+//    AddLog(LOG_LEVEL_DEBUG, PSTR("WMET: Counter %d"), WindMeter.counter);
   }
 }
 
@@ -119,7 +119,7 @@ void WindMeterEverySecond(void)
 {
   //uint32_t time = micros();
   //uint32_t delta_time = time - WindMeter.speed_time;
-  //AddLog_P(LOG_LEVEL_INFO, PSTR("delta_time: %d"), delta_time);
+  //AddLog(LOG_LEVEL_INFO, PSTR("delta_time: %d"), delta_time);
 
   // speed = ( (pulses / pulses_per_rotation) * (2 * pi * radius) ) / delta_time
   WindMeter.speed = ((WindMeter.counter / Settings.windmeter_pulses_x_rot) * (windmeter_2pi * ((float)Settings.windmeter_radius / 1000))) * ((float)Settings.windmeter_speed_factor / 1000);
@@ -131,7 +131,7 @@ void WindMeterEverySecond(void)
   //dtostrfd(WindMeter.speed, 2, speed_string);
   //char uspeed_string[FLOATSZ];
   //dtostrfd(ConvertSpeed(WindMeter.speed), 2, uspeed_string);
-  //AddLog_P(LOG_LEVEL_DEBUG, PSTR("WMET: Speed %s [m/s] - %s [unit]"), speed_string, uspeed_string);
+  //AddLog(LOG_LEVEL_DEBUG, PSTR("WMET: Speed %s [m/s] - %s [unit]"), speed_string, uspeed_string);
 
 #ifndef USE_WINDMETER_NOSTATISTICS
   if (WindMeter.speed < WindMeter.speed_min) {

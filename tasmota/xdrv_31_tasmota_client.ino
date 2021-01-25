@@ -238,14 +238,14 @@ uint8_t TasmotaClient_receiveData(char* buffer, int size) {
   }
   if (255 == index) { index = 0; }
 
-//  AddLog_P(LOG_LEVEL_DEBUG, PSTR("TCL: ReceiveData"));
+//  AddLog(LOG_LEVEL_DEBUG, PSTR("TCL: ReceiveData"));
 //  AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t*)buffer, index);
 
   return index;
 }
 
 uint8_t TasmotaClient_sendBytes(uint8_t* bytes, int count) {
-//  AddLog_P(LOG_LEVEL_DEBUG, PSTR("TCL: SendBytes"));
+//  AddLog(LOG_LEVEL_DEBUG, PSTR("TCL: SendBytes"));
 //  AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t*)&bytes, count);
 
   TasmotaClient_Serial->write(bytes, count);
@@ -298,7 +298,7 @@ uint32_t TasmotaClient_Flash(uint8_t* data, size_t size) {
   }
   if (timeout > 50) { return 1; }            // Error: Bootloader could not be found
 
-  AddLog_P(LOG_LEVEL_INFO, PSTR("TCL: Found bootloader"));
+  AddLog(LOG_LEVEL_INFO, PSTR("TCL: Found bootloader"));
 
   uint8_t ProgParams[] = {0x86, 0x00, 0x00, 0x01, 0x01, 0x01, 0x01, 0x03, 0xff, 0xff, 0xff, 0xff, 0x00, 0x80, 0x04, 0x00, 0x00, 0x00, 0x80, 0x00};
   if (!TasmotaClient_execParam(CMND_STK_SET_DEVICE, ProgParams, sizeof(ProgParams))) {
@@ -368,7 +368,7 @@ uint32_t TasmotaClient_Flash(uint8_t* data, size_t size) {
         }
         else if (0x0A != flash_buffer[ca]) {
           if (!isalnum(flash_buffer[ca])) {
-//            AddLog_P(LOG_LEVEL_DEBUG, PSTR("DBG: Size %d, Processed %d"), size, processed);
+//            AddLog(LOG_LEVEL_DEBUG, PSTR("DBG: Size %d, Processed %d"), size, processed);
             error = 7;                       // Error: Invalid data
             break;
           }
@@ -408,7 +408,7 @@ void TasmotaClient_Init(void) {
         pinMode(Pin(GPIO_TASMOTACLIENT_RST), OUTPUT);
         TClient.SerialEnabled = true;
         TasmotaClient_Reset();
-        AddLog_P(LOG_LEVEL_INFO, PSTR("TCL: Enabled"));
+        AddLog(LOG_LEVEL_INFO, PSTR("TCL: Enabled"));
       }
     }
   }
@@ -421,10 +421,10 @@ void TasmotaClient_Init(void) {
       memcpy(&TClientSettings, &buffer, sizeof(TClientSettings));
       if (TASMOTA_CLIENT_LIB_VERSION == TClientSettings.features_version) {
         TClient.type = true;
-        AddLog_P(LOG_LEVEL_INFO, PSTR("TCL: Version %u"), TClientSettings.features_version);
+        AddLog(LOG_LEVEL_INFO, PSTR("TCL: Version %u"), TClientSettings.features_version);
       } else {
         if ((!TClient.unsupported) && (TClientSettings.features_version > 0)) {
-          AddLog_P(LOG_LEVEL_INFO, PSTR("TCL: Version %u not supported!"), TClientSettings.features_version);
+          AddLog(LOG_LEVEL_INFO, PSTR("TCL: Version %u not supported!"), TClientSettings.features_version);
           TClient.unsupported = true;
         }
       }
@@ -456,7 +456,7 @@ void TasmotaClient_sendCmnd(uint8_t cmnd, uint8_t param) {
   memcpy(&buffer[1], &TClientCommand, sizeof(TClientCommand));
   buffer[sizeof(TClientCommand)+1] = CMND_END;
 
-//  AddLog_P(LOG_LEVEL_DEBUG, PSTR("TCL: SendCmnd"));
+//  AddLog(LOG_LEVEL_DEBUG, PSTR("TCL: SendCmnd"));
 //  AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t*)&buffer, sizeof(buffer));
 
   for (uint32_t ca = 0; ca < sizeof(buffer); ca++) {

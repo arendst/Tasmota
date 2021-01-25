@@ -254,6 +254,12 @@ void PWMDimmerHandleDevGroupItem(void)
 #endif  // USE_PWM_DIMMER_REMOTE
         SendLocalDeviceGroupMessage(DGR_MSGTYP_UPDATE, DGR_ITEM_BRI_POWER_ON, Settings.bri_power_on,
           DGR_ITEM_BRI_PRESET_LOW, Settings.bri_preset_low, DGR_ITEM_BRI_PRESET_HIGH, Settings.bri_preset_high);
+#ifdef USE_PWM_DIMMER_REMOTE
+      else
+        SendDeviceGroupMessage(device_group_index, DGR_MSGTYP_UPDATE, DGR_ITEM_POWER, remote_pwm_dimmer->power_on,
+          DGR_ITEM_BRI_POWER_ON, remote_pwm_dimmer->bri_power_on, DGR_ITEM_BRI_PRESET_LOW, remote_pwm_dimmer->bri_preset_low,
+          DGR_ITEM_BRI_PRESET_HIGH, remote_pwm_dimmer->bri_preset_high);
+#endif  // USE_PWM_DIMMER_REMOTE
       break;
   }
 }
@@ -614,7 +620,7 @@ void PWMDimmerHandleButton(uint32_t button_index, bool pressed)
     char topic[TOPSZ];
     sprintf_P(TasmotaGlobal.mqtt_data, PSTR("Trigger%u"), mqtt_trigger);
 #ifdef USE_PWM_DIMMER_REMOTE
-    if (active_remote_pwm_dimmer) {
+    if (Settings.flag4.multiple_device_groups) {
       snprintf_P(topic, sizeof(topic), PSTR("cmnd/%s/EVENT"), device_groups[power_button_index].group_name);
       MqttPublish(topic);
     }

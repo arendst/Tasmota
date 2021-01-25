@@ -637,7 +637,7 @@ Z_Data & Z_Data_Set::getByType(Z_Data_Type type, uint8_t ep) {
 // Byte 3: Power
 Z_Data & Z_Data_Set::createFromBuffer(const SBuffer & buf, uint32_t start, uint32_t len) {
   if (len < sizeof(Z_Data)) {
-    AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Invalid len (<4) %d"), len);
+    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Invalid len (<4) %d"), len);
     return *(Z_Data*)nullptr;
   }
 
@@ -651,7 +651,7 @@ Z_Data & Z_Data_Set::createFromBuffer(const SBuffer & buf, uint32_t start, uint3
     memcpy(&elt, buf.buf(start), len);
   } else {
     memcpy(&elt, buf.buf(start), sizeof(Z_Data));
-    AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "buffer len overflow %d > %d"), len, expected_len);
+    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "buffer len overflow %d > %d"), len, expected_len);
   }
   return elt;
 }
@@ -965,6 +965,7 @@ public:
   Z_Device & devicesAt(size_t i) const;
 
   // Remove device from list
+  void clearDeviceRouterInfo(void);           // reset all router flags, done just before ZbMap
   bool removeDevice(uint16_t shortaddr);
 
   // Mark data as 'dirty' and requiring to save in Flash

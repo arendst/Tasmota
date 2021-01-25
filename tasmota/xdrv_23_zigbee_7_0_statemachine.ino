@@ -932,12 +932,12 @@ void ZigbeeGotoLabel(uint8_t label) {
   }
 
   // no label found, abort
-  AddLog_P(LOG_LEVEL_ERROR, PSTR(D_LOG_ZIGBEE "Goto label not found, label=%d pc=%d"), label, zigbee.pc);
+  AddLog(LOG_LEVEL_ERROR, PSTR(D_LOG_ZIGBEE "Goto label not found, label=%d pc=%d"), label, zigbee.pc);
   if (ZIGBEE_LABEL_ABORT != label) {
     // if not already looking for ZIGBEE_LABEL_ABORT, goto ZIGBEE_LABEL_ABORT
     ZigbeeGotoLabel(ZIGBEE_LABEL_ABORT);
   } else {
-    AddLog_P(LOG_LEVEL_ERROR, PSTR(D_LOG_ZIGBEE "Label Abort (%d) not present, aborting Zigbee"), ZIGBEE_LABEL_ABORT);
+    AddLog(LOG_LEVEL_ERROR, PSTR(D_LOG_ZIGBEE "Label Abort (%d) not present, aborting Zigbee"), ZIGBEE_LABEL_ABORT);
     zigbee.state_machine = false;
     zigbee.active = false;
   }
@@ -955,7 +955,7 @@ void ZigbeeStateMachine_Run(void) {
     // checking if timeout expired
     if ((zigbee.next_timeout) && (now > zigbee.next_timeout)) {    // if next_timeout == 0 then wait forever
       if (!zigbee.state_no_timeout) {
-        AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "timeout, goto label %d"), zigbee.on_timeout_goto);
+        AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "timeout, goto label %d"), zigbee.on_timeout_goto);
         ZigbeeGotoLabel(zigbee.on_timeout_goto);
       } else {
         zigbee.state_waiting = false;     // simply stop waiting
@@ -971,7 +971,7 @@ void ZigbeeStateMachine_Run(void) {
     zigbee.state_no_timeout = false;   // reset the no_timeout for next instruction
 
     if (zigbee.pc > ARRAY_SIZE(zb_prog)) {
-      AddLog_P(LOG_LEVEL_ERROR, PSTR(D_LOG_ZIGBEE "Invalid pc: %d, aborting"), zigbee.pc);
+      AddLog(LOG_LEVEL_ERROR, PSTR(D_LOG_ZIGBEE "Invalid pc: %d, aborting"), zigbee.pc);
       zigbee.pc = -1;
     }
     if (zigbee.pc < 0) {
@@ -1020,7 +1020,7 @@ void ZigbeeStateMachine_Run(void) {
       case ZGB_INSTR_STOP:
         zigbee.state_machine = false;
         if (cur_d8) {
-          AddLog_P(LOG_LEVEL_ERROR, PSTR(D_LOG_ZIGBEE "Stopping (%d)"), cur_d8);
+          AddLog(LOG_LEVEL_ERROR, PSTR(D_LOG_ZIGBEE "Stopping (%d)"), cur_d8);
         }
         break;
       case ZGB_INSTR_CALL:

@@ -136,7 +136,7 @@ void ST7789_InitDriver(void) {
 #endif // ESP32
 
     st7789_init_done = true;
-    AddLog_P(LOG_LEVEL_INFO, PSTR("DSP: ST7789"));
+    AddLog(LOG_LEVEL_INFO, PSTR("DSP: ST7789"));
   }
 }
 
@@ -190,7 +190,7 @@ bool Xdsp12(uint8_t function)
 {
   bool result = false;
 
-//AddLog_P(LOG_LEVEL_INFO, PSTR("touch %d - %d"), FT5206_found, function);
+//AddLog(LOG_LEVEL_INFO, PSTR("touch %d - %d"), FT5206_found, function);
 
   if (FUNC_DISPLAY_INIT_DRIVER == function) {
     ST7789_InitDriver();

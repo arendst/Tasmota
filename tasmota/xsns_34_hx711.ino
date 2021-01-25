@@ -490,7 +490,7 @@ void HandleHxAction(void)
 {
   if (!HttpCheckPriviledgedAccess()) { return; }
 
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_CONFIGURE_HX711));
+  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_CONFIGURE_HX711));
 
   if (Webserver->hasArg("save")) {
     HxSaveSettings();
@@ -549,7 +549,7 @@ void HxLogUpdates(void)
   char weigth_item_chr[33];
   dtostrfd((float)Settings.weight_item / 10000, 4, weigth_item_chr);
 
-  AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_JSON_WEIGHT_REF " %s, " D_JSON_WEIGHT_ITEM " %s"), weigth_ref_chr, weigth_item_chr);
+  AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_JSON_WEIGHT_REF " %s, " D_JSON_WEIGHT_ITEM " %s"), weigth_ref_chr, weigth_item_chr);
 }
 
 #endif  // USE_HX711_GUI

@@ -105,7 +105,11 @@ public:
   ZB_RecvMsgFunc recv_func = nullptr;          // function to call when message is expected
   ZB_RecvMsgFunc recv_unexpected = nullptr;    // function called when unexpected message is received
 
+#ifdef USE_ZIGBEE_EZSP
   uint32_t permit_end_time = 0;       // timestamp when permit join ends
+#elif defined(USE_ZIGBEE_ZNP)
+  bool permit_end_time = false;       // in ZNP mode it's only a boolean
+#endif
 
 #ifdef USE_ZIGBEE_EZSP
   Eeprom24C512 eeprom;     // takes only 1 bytes of RAM
@@ -127,18 +131,6 @@ uint32_t parseHex(const char **data, size_t max_len = 8) {
     *data += 1;
   }
   return ret;
-}
-
-// Since v9.2.0.2 Log buffer was reduced from 700 bytes to 120. This version is specific to Zigbee and restores the 700 bytes limit
-void AddLogZ_P(uint32_t loglevel, PGM_P formatP, ...) {
-  char log_data[MAX_LOGSZ];
-
-  va_list arg;
-  va_start(arg, formatP);
-  vsnprintf_P(log_data, sizeof(log_data), formatP, arg);
-  va_end(arg);
-
-  AddLogData(loglevel, log_data);
 }
 
 #endif // USE_ZIGBEE

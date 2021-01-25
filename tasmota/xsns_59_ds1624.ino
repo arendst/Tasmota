@@ -69,7 +69,7 @@ void DS1624_Restart(uint8_t config, uint32_t idx) {
     config &= ~(DS1621_CFG_DONE|DS1621_CFG_1SHOT);
     I2cWrite8(addr, DS1624_CONF_REGISTER, config);  // 1shot off
     delay(10);                                      // by spec after writing
-    AddLog_P(LOG_LEVEL_ERROR, "%s addr %x is reset, reconfig: %x", ds1624_sns[idx].name, addr, config);
+    AddLog(LOG_LEVEL_ERROR, "%s addr %x is reset, reconfig: %x", ds1624_sns[idx].name, addr, config);
   }
   I2cValidRead(addr, DS1624_START_REGISTER, 1);
 }
@@ -94,7 +94,7 @@ void DS1624_HotPlugUp(uint32_t idx)
     ds1624_sns[idx].errcnt = 0;
     ds1624_sns[idx].misscnt = 0;
     DS1624_Restart(config,idx);
-    AddLog_P(LOG_LEVEL_INFO, "Hot Plug %s addr %x config: %x", ds1624_sns[idx].name, addr, config);
+    AddLog(LOG_LEVEL_INFO, "Hot Plug %s addr %x config: %x", ds1624_sns[idx].name, addr, config);
   }
 }
 
@@ -104,7 +104,7 @@ void DS1624_HotPlugDown(int idx)
   if (!I2cActive(addr)) { return; }
   I2cResetActive(addr);
   ds1624_sns[idx].valid = false;
-  AddLog_P(LOG_LEVEL_INFO, "Hot UnPlug %s", ds1624_sns[idx].name);
+  AddLog(LOG_LEVEL_INFO, "Hot UnPlug %s", ds1624_sns[idx].name);
 }
 
 bool DS1624GetTemp(float *value, int idx)
@@ -114,13 +114,13 @@ bool DS1624GetTemp(float *value, int idx)
   uint8_t config;
   if (!I2cValidRead8(&config, addr, DS1624_CONF_REGISTER)) {
     ds1624_sns[idx].misscnt++;
-    AddLog_P(LOG_LEVEL_INFO, "%s device missing (errors: %i)", ds1624_sns[idx].name, ds1624_sns[idx].misscnt);
+    AddLog(LOG_LEVEL_INFO, "%s device missing (errors: %i)", ds1624_sns[idx].name, ds1624_sns[idx].misscnt);
     return false;
   }
   ds1624_sns[idx].misscnt=0;
   if (config & (DS1621_CFG_1SHOT|DS1621_CFG_DONE)) {
     ds1624_sns[idx].errcnt++;
-    AddLog_P(LOG_LEVEL_INFO, "%s config error, restart... (errors: %i)", ds1624_sns[idx].name, ds1624_sns[idx].errcnt);
+    AddLog(LOG_LEVEL_INFO, "%s config error, restart... (errors: %i)", ds1624_sns[idx].name, ds1624_sns[idx].errcnt);
     DS1624_Restart(config, idx);
     return false;
   }

@@ -379,7 +379,7 @@ uint32_t i2s_record(char *path, uint32_t secs) {
     if (data_offset >= mic_size-DATA_SIZE) break;
     delay(0);
   }
-  //AddLog_P(LOG_LEVEL_INFO, PSTR("rectime: %d ms"), millis()-stime);
+  //AddLog(LOG_LEVEL_INFO, PSTR("rectime: %d ms"), millis()-stime);
   SpeakerMic(MODE_SPK);
   // save to path
   SaveWav(path, mic_buff, mic_size);
@@ -457,7 +457,7 @@ void MDCallback(void *cbData, const char *type, bool isUnicode, const char *str)
   if (strstr_P(type, PSTR("Title"))) {
     strncpy(wr_title, str, sizeof(wr_title));
     wr_title[sizeof(wr_title)-1] = 0;
-    //AddLog_P(LOG_LEVEL_INFO,PSTR("WR-Title: %s"),wr_title);
+    //AddLog(LOG_LEVEL_INFO,PSTR("WR-Title: %s"),wr_title);
   } else {
     // Who knows what to do?  Not me!
   }

@@ -67,7 +67,7 @@ void DDSU666Every250ms(void)
     AddLogBuffer(LOG_LEVEL_DEBUG_MORE, buffer, Ddsu666Modbus->ReceiveCount());
 
     if (error) {
-      AddLog_P(LOG_LEVEL_DEBUG, PSTR("SDM: Ddsu666 error %d"), error);
+      AddLog(LOG_LEVEL_DEBUG, PSTR("SDM: Ddsu666 error %d"), error);
     } else {
       Energy.data_valid[0] = 0;
 

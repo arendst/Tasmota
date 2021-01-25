@@ -264,7 +264,7 @@ void SyncACDimmer(void)
 #ifdef ESP32
           analogWrite(Pin(GPIO_PWM1, i), 5);
 #endif  // ESP32
-          //AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("CNT: [%d] dimm_time_CCs %d, current_cycle_CC: %d, timelag %lu, lastcc %lu, currentSteps %d, curr %d"), i, ac_zero_cross_dimmer.dimm_timeClockCycles,ac_zero_cross_dimmer.current_cycle_ClockCycles , timelag_ClockCycles, ac_zero_cross_dimmer.currentCycleCount, ac_zero_cross_dimmer.currentSteps, Light.fade_cur_10[i]);
+          //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("CNT: [%d] dimm_time_CCs %d, current_cycle_CC: %d, timelag %lu, lastcc %lu, currentSteps %d, curr %d"), i, ac_zero_cross_dimmer.dimm_timeClockCycles,ac_zero_cross_dimmer.current_cycle_ClockCycles , timelag_ClockCycles, ac_zero_cross_dimmer.currentCycleCount, ac_zero_cross_dimmer.currentSteps, Light.fade_cur_10[i]);
       }
     }
   }

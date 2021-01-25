@@ -142,7 +142,7 @@ void hreEvery50ms(void)
          sync_run = 0;
          sync_counter = 0;
          hre_state = hre_syncing;
-         AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HRE "hre_state:hre_syncing"));
+         AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_HRE "hre_state:hre_syncing"));
          break;
 
       case hre_syncing:
@@ -165,19 +165,19 @@ void hreEvery50ms(void)
          if (sync_counter > 1000)
          {
             hre_state = hre_sleep;
-            AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HRE D_ERROR));
+            AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_HRE D_ERROR));
          }
          break;
 
          // Start reading the data block
       case hre_read:
-         AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HRE "sync_run:%d, sync_counter:%d"), sync_run, sync_counter);
+         AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_HRE "sync_run:%d, sync_counter:%d"), sync_run, sync_counter);
          read_counter = 0;
          parity_errors = 0;
          curr_start = TasmotaGlobal.uptime;
          memset(buff, 0, sizeof(buff));
          hre_state = hre_reading;
-         AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HRE "hre_state:hre_reading"));
+         AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_HRE "hre_state:hre_reading"));
          // So this is intended to fall through to the hre_reading section.
          // it seems that if there is much of a delay between getting the sync
          // bits and starting the read, the HRE won't output the message we
@@ -190,7 +190,7 @@ void hreEvery50ms(void)
 
          if (read_counter == 46)
          {
-            AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HRE "pe:%d, re:%d, buff:%s"),
+            AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_HRE "pe:%d, re:%d, buff:%s"),
                       parity_errors, hre_read_errors, buff);
             if (parity_errors == 0)
             {
@@ -218,7 +218,7 @@ void hreEvery50ms(void)
       case hre_sleep:
          hre_usage_time = curr_start;
          hre_state = hre_sleeping;
-         AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HRE "hre_state:hre_sleeping"));
+         AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_HRE "hre_state:hre_sleeping"));
 
       case hre_sleeping:
          // If there isn't some delay between readings, rate calculations
