@@ -261,8 +261,7 @@ int32_t ext_vsnprintf_P(char * buf, size_t buf_len, const char * fmt_P, va_list 
           case 'I':     // Input is `uint32_t` 32 bits IP address, output is decimal dotted address
             {
               char * ip_str = (char*) malloc(16);
-              IPAddress ip(cur_val);
-              sprintf_P(ip_str, PSTR("%u.%u.%u.%u"), ip[0], ip[1], ip[2], ip[3]);
+              snprintf_P(ip_str, 16, PSTR("%u.%u.%u.%u"), cur_val & 0xFF, (cur_val >> 8) & 0xFF, (cur_val >> 16) & 0xFF, (cur_val >> 24) & 0xFF);
               new_val_str = ip_str;
               allocs[alloc_idx++] = new_val_str;
             }
@@ -336,7 +335,6 @@ int32_t ext_vsnprintf_P(char * buf, size_t buf_len, const char * fmt_P, va_list 
         va_arg(va, int32_t);      // munch one 32 bits argument and leave it unchanged
         // we take the hypothesis here that passing 64 bits arguments is always unsupported in ESP8266
       }
-      fmt++;
     }
   }
 #else // defined(ESP8266) || defined(ESP32)
