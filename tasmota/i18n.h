@@ -420,6 +420,13 @@
   #define D_JSON_MAXENERGYREACHED "MaxEnergyReached"
 
 // Commands xdrv_04_light.ino
+#define D_SO_CHANNELREMAP "ChannelRemap"    // SO37
+#define D_SO_MULTIPWM "MultiPWM"            // SO68
+#define D_SO_ALEXACTRANGE "AlexaCTRange"    // SO82
+#define D_SO_POWERONFADE "PowerOnFade"      // SO91
+#define D_SO_PWMCT "PWMCT"                  // SO92
+#define D_SO_WHITEBLEND "WhiteBlend"        // SO105
+#define D_SO_VIRTUALCT "VirtualCT"          // SO106
 #define D_CMND_CHANNEL "Channel"
 #define D_CMND_COLOR "Color"
 #define D_CMND_COLORTEMPERATURE "CT"
