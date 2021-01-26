@@ -279,7 +279,7 @@ const char * getStateString(int state);
 //int SafeAddLog_P(uint32_t loglevel, PGM_P formatP, ...);
 
 static void BLEDiag();
-const char *getAlias(uint8_t *addr);
+const char *getAlias(const uint8_t *addr);
 //void BLEAliasMqttList();
 void BLEAliasListResp();
 ////////////////////////////////////////////////////////////////////////
@@ -2404,7 +2404,7 @@ static const char *noAlias = PSTR("");
 
 ////////////////////////////////////////////
 // use to display the alias name if required
-const char *getAlias(uint8_t *addr){
+const char *getAlias(const uint8_t *addr){
   if (!addr){
     return noAlias;
   }

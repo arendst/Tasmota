@@ -922,11 +922,10 @@ int MI32advertismentCallback(BLE_ESP32::ble_advertisment_t *pStruct)
   int RSSI = pStruct->RSSI;
   const uint8_t *addr = pStruct->addr;
   if(MI32isInBlockList(addr) == true) return 0;
-
   if (MI32.option.onlyAliased){
-    const char *alias = BLE_ESP32::getAlias(p->MAC);
+    const char *alias = BLE_ESP32::getAlias(addr);
     if (!alias || !(*alias)){
-      return;
+      return 0;
     }
   }
 
@@ -2130,6 +2129,10 @@ void CmndMi32Option(void){
     } break;
     case 5:{
       MI32.option.onlyAliased = onOff;
+      if (MI32.option.onlyAliased){
+        // discard all sensors for a restart
+        MIBLEsensors.clear();
+      }
     } break;
   }
   ResponseCmndDone();
