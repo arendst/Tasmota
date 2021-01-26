@@ -783,11 +783,15 @@ void WSContentSpaceButton(uint32_t title_index)
   WSContentButton(title_index);
 }
 
+void WSContentSend_Temp(const char *types, float f_temperature) {
+  WSContentSend_PD(HTTP_SNS_F_TEMP, types, Settings.flag2.temperature_resolution, &f_temperature, TempUnit());
+}
+
 void WSContentSend_THD(const char *types, float f_temperature, float f_humidity)
 {
+  WSContentSend_Temp(types, f_temperature);
+
   char parameter[FLOATSZ];
-  dtostrfd(f_temperature, Settings.flag2.temperature_resolution, parameter);
-  WSContentSend_PD(HTTP_SNS_TEMP, types, parameter, TempUnit());
   dtostrfd(f_humidity, Settings.flag2.humidity_resolution, parameter);
   WSContentSend_PD(HTTP_SNS_HUM, types, parameter);
   dtostrfd(CalcTempHumToDew(f_temperature, f_humidity), Settings.flag2.temperature_resolution, parameter);

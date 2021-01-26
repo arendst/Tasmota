@@ -83,9 +83,7 @@ void ResponseCmndNumber(int value)
 
 void ResponseCmndFloat(float value, uint32_t decimals)
 {
-  char stemp1[TOPSZ];
-  dtostrfd(value, decimals, stemp1);
-  Response_P(S_JSON_COMMAND_XVALUE, XdrvMailbox.command, stemp1);  // Return float value without quotes
+  Response_P(PSTR("{\"%s\":%*_f}"), XdrvMailbox.command, decimals, &value);  // Return float value without quotes
 }
 
 void ResponseCmndIdxNumber(int value)

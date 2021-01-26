@@ -457,15 +457,12 @@ void AdcShow(bool json) {
         break;
       }
       case ADC_TEMP: {
-        char temperature[33];
-        dtostrfd(Adc[idx].temperature, Settings.flag2.temperature_resolution, temperature);
-
         if (json) {
           AdcShowContinuation(&jsonflg);
-          ResponseAppend_P(PSTR("\"" D_JSON_TEMPERATURE "%s\":%s"), adc_idx, temperature);
+          ResponseAppend_P(PSTR("\"" D_JSON_TEMPERATURE "%s\":%*_f"), adc_idx, Settings.flag2.temperature_resolution, &Adc[idx].temperature);
           if ((0 == TasmotaGlobal.tele_period) && (!domo_flag[ADC_TEMP])) {
 #ifdef USE_DOMOTICZ
-            DomoticzSensor(DZ_TEMP, temperature);
+            DomoticzFloatSensor(DZ_TEMP, Adc[idx].temperature);
             domo_flag[ADC_TEMP] = true;
 #endif  // USE_DOMOTICZ
 #ifdef USE_KNX
@@ -474,7 +471,7 @@ void AdcShow(bool json) {
           }
 #ifdef USE_WEBSERVER
         } else {
-          WSContentSend_PD(HTTP_SNS_TEMP, adc_name, temperature, TempUnit());
+          WSContentSend_Temp(adc_name, Adc[idx].temperature);
 #endif  // USE_WEBSERVER
         }
         break;

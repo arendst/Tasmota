@@ -338,23 +338,22 @@ void MhzInit(void)
 void MhzShow(bool json)
 {
   char types[7] = "MHZ19B";  // MHZ19B for legacy reasons. Prefered is MHZ19
-  char temperature[33];
-  dtostrfd(mhz_temperature, Settings.flag2.temperature_resolution, temperature);
   char model[3];
   GetTextIndexed(model, sizeof(model), mhz_type -1, kMhzModels);
 
   if (json) {
-    ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_MODEL "\":\"%s\",\"" D_JSON_CO2 "\":%d,\"" D_JSON_TEMPERATURE "\":%s}"), types, model, mhz_last_ppm, temperature);
+    ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_MODEL "\":\"%s\",\"" D_JSON_CO2 "\":%d,\"" D_JSON_TEMPERATURE "\":%*_f}"),
+      types, model, mhz_last_ppm, Settings.flag2.temperature_resolution, &mhz_temperature);
 #ifdef USE_DOMOTICZ
     if (0 == TasmotaGlobal.tele_period) {
       DomoticzSensor(DZ_AIRQUALITY, mhz_last_ppm);
-      DomoticzSensor(DZ_TEMP, temperature);
+      DomoticzFloatSensor(DZ_TEMP, mhz_temperature);
     }
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
   } else {
     WSContentSend_PD(HTTP_SNS_CO2, types, mhz_last_ppm);
-    WSContentSend_PD(HTTP_SNS_TEMP, types, temperature, TempUnit());
+    WSContentSend_Temp(types, mhz_temperature);
 #endif  // USE_WEBSERVER
   }
 }
