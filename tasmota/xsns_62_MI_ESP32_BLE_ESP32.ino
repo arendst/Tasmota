@@ -2561,14 +2561,14 @@ void MI32ShowOneMISensor(){
     p = &MIBLEsensors[MI32.mqttCurrentSingleSlot];
 
     ResponseAppend_P(PSTR("}"));
-    
+
     char idstr[32];
     const char *alias = BLE_ESP32::getAlias(p->MAC);
     const char *id = idstr;
     if (alias && *alias){
       id = alias;
     } else {
-      sprintf(idstr, PSTR("%s%02x%02x%02x"), 
+      sprintf(idstr, PSTR("%s%02x%02x%02x"),
             kMI32DeviceType[p->type-1],
             p->MAC[3], p->MAC[4], p->MAC[5]);
     }
@@ -2587,21 +2587,23 @@ void MI32ShowOneMISensor(){
 ///////////////////////////////////////////////
 // starts a completely fresh MQTT message.
 // sends ONE sensor's worth of HA discovery msg
-#define MI_HA_DISCOVERY_TEMPLATE PSTR("{\"availability\":[],\"device\": \
-{\"identifiers\":[\"BLE%s\"],\
-\"name\":\"%s\",\
-\"manufacturer\":\"tas\",\
-\"model\":\"%s\",\
-\"via_device\":\"%s\"\
-}, \
-\"dev_cla\":\"%s\",\
-\"expire_after\":600,\
-\"json_attr_t\":\"%s\",\
-\"name\":\"%s_%s\",\
-\"state_topic\":\"%s\",\
-\"uniq_id\":\"%s_%s\",\
-\"unit_of_meas\":\"%s\",\
-\"val_tpl\":\"{{ value_json.%s }}\"}")
+const char MI_HA_DISCOVERY_TEMPLATE[] PROGMEM =
+  "{\"availability\":[],\"device\":"
+  "{\"identifiers\":[\"BLE%s\"],"
+  "\"name\":\"%s\","
+  "\"manufacturer\":\"tas\","
+  "\"model\":\"%s\","
+  "\"via_device\":\"%s\""
+  "},"
+  "\"dev_cla\":\"%s\","
+  "\"expire_after\":600,"
+  "\"json_attr_t\":\"%s\","
+  "\"name\":\"%s_%s\","
+  "\"state_topic\":\"%s\","
+  "\"uniq_id\":\"%s_%s\","
+  "\"unit_of_meas\":\"%s\","
+  "\"val_tpl\":\"{{ value_json.%s }}\"}")
+
 void MI32DiscoveryOneMISensor(){
   // don't detect half-added ones here
   int numsensors = MIBLEsensors.size();
@@ -2617,7 +2619,7 @@ void MI32DiscoveryOneMISensor(){
 
 
     // careful - a missing comma causes a crash!!!!
-    // because of the way we loop? 
+    // because of the way we loop?
     const char *classes[] = {
       "temperature",
       "Temperature",
@@ -2654,7 +2656,7 @@ void MI32DiscoveryOneMISensor(){
       if (alias && *alias){
         id = alias;
       } else {
-        sprintf(idstr, PSTR("%s%02x%02x%02x"), 
+        sprintf(idstr, PSTR("%s%02x%02x%02x"),
               kMI32DeviceType[p->type-1],
               p->MAC[3], p->MAC[4], p->MAC[5]);
       }
@@ -2676,7 +2678,7 @@ void MI32DiscoveryOneMISensor(){
     "val_tpl":"{{ value_json.LYWSD037fc1e1.Temperature }}"}
     */
 
-      ResponseAppend_P(MI_HA_DISCOVERY_TEMPLATE, 
+      ResponseAppend_P(MI_HA_DISCOVERY_TEMPLATE,
       //"{\"identifiers\":[\"BLE%s\"],"
         id,
       //"\"name\":\"%s\"},"
@@ -2701,7 +2703,7 @@ void MI32DiscoveryOneMISensor(){
         classes[i+1]
           //
       );
-      
+
       char DiscoveryTopic[80];
       sprintf(DiscoveryTopic, "homeassistant/sensor/%s/%s/config",
         id, classes[i+1]);
@@ -2709,7 +2711,7 @@ void MI32DiscoveryOneMISensor(){
       MqttPublish(DiscoveryTopic);
       p->nextDiscoveryData++;
       //vTaskDelay(100/ portTICK_PERIOD_MS);
-    }  
+    }
   } // end if hass discovery
   //AddLog_P(LOG_LEVEL_DEBUG,PSTR("M32: %s: show some %d %s"),D_CMND_MI32, MI32.mqttCurrentSlot, TasmotaGlobal.mqtt_data);
 #endif //USE_HOME_ASSISTANT
