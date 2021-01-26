@@ -117,6 +117,7 @@ struct {
     uint32_t showRSSI:1;
     uint32_t ignoreBogusBattery:1;
     uint32_t minimalSummary:1;   // DEPRECATED!!
+    uint32_t onlyAliased:1;      // only include sensors that are aliased
   } option;
 } MI32;
 
@@ -921,6 +922,13 @@ int MI32advertismentCallback(BLE_ESP32::ble_advertisment_t *pStruct)
   int RSSI = pStruct->RSSI;
   const uint8_t *addr = pStruct->addr;
   if(MI32isInBlockList(addr) == true) return 0;
+
+  if (MI32.option.onlyAliased){
+    const char *alias = BLE_ESP32::getAlias(p->MAC);
+    if (!alias || !(*alias)){
+      return;
+    }
+  }
 
   int svcdataCount = advertisedDevice->getServiceDataCount();
 
@@ -2119,6 +2127,9 @@ void CmndMi32Option(void){
       break;
     case 4:{
       MI32.option.ignoreBogusBattery = onOff;
+    } break;
+    case 5:{
+      MI32.option.onlyAliased = onOff;
     } break;
   }
   ResponseCmndDone();
