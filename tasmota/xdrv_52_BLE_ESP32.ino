@@ -320,7 +320,7 @@ static void BLEGenNotifyCB(NimBLERemoteCharacteristic* pRemoteCharacteristic, ui
 void BLEPostAdvert(ble_advertisment_t *Advertisment);
 static void BLEPostMQTTSeenDevices(int type);
 
-static void BLEShow(bool json);
+static void BLEShowStats();
 static void BLEPostMQTT(bool json);
 static void BLEStartOperationTask();
 
@@ -390,7 +390,7 @@ uint8_t BLEAliasListTrigger = 0;
 // triggers send for ALL operations known about
 uint8_t BLEPostMQTTTrigger = 0;
 int BLEMaxAge = 60*10; // 10 minutes
-int BLEAddressFilter = 3;
+int BLEAddressFilter = 0;
 
 
 //////////////////////////////////////////////////
@@ -2181,6 +2181,7 @@ static void BLEEverySecond(bool restart){
 
   if (BLEPublishDevices){
     BLEPostMQTTSeenDevices(BLEPublishDevices);
+    BLEShowStats();
     BLEPublishDevices = 0;
   }
 
@@ -3209,25 +3210,14 @@ static void mainThreadOpCallbacks() {
   }
 }
 
-
-static void BLEShow(bool json)
-{
-  if (json){
-#ifdef BLE_ESP32_DEBUG
-    if (BLEDebugMode > 0) AddLog_P(LOG_LEVEL_INFO,PSTR("BLE: show json %d"),json);
-#endif
-    uint32_t totalCount = BLEAdvertisment.totalCount;
-    uint32_t deviceCount = seenDevices.size();
-
-    ResponseAppend_P(PSTR(",\"BLE\":{\"scans\":%u,\"adverts\":%u,\"devices\":%u,\"resets\":%u}"), BLEScanCount, totalCount, deviceCount, BLEResets);
-  }
-#ifdef USE_WEBSERVER
-  else {
-  //WSContentSend_PD(HTTP_MI32, i+1,stemp,MIBLEsensors.size());
-  }
-#endif  // USE_WEBSERVER
-
+static void BLEShowStats(){
+  uint32_t totalCount = BLEAdvertisment.totalCount;
+  uint32_t deviceCount = seenDevices.size();
+  ResponseTime_P(PSTR(""));
+  ResponseAppend_P(PSTR(",\"BLE\":{\"scans\":%u,\"adverts\":%u,\"devices\":%u,\"resets\":%u}}"), BLEScanCount, totalCount, deviceCount, BLEResets);
+  MqttPublishPrefixTopic_P(TELE, PSTR("BLE"), 0);
 }
+
 
 /*void BLEAliasMqttList(){
   ResponseTime_P(PSTR(",\"BLEAlias\":["));
@@ -3495,7 +3485,6 @@ bool Xdrv52(uint8_t function)
       result = DecodeCommand(BLE_ESP32::kBLE_Commands, BLE_ESP32::BLE_Commands);
       break;
     case FUNC_JSON_APPEND:
-      BLE_ESP32::BLEShow(1);
       break;
 
     // next second, we will publish to our MQTT topic.
@@ -3509,10 +3498,6 @@ bool Xdrv52(uint8_t function)
       break;
     case FUNC_WEB_ADD_HANDLER:
       WebServer_on(PSTR("/" WEB_HANDLE_BLE), BLE_ESP32::HandleBleConfiguration);
-      break;
-
-    case FUNC_WEB_SENSOR:
-      BLE_ESP32::BLEShow(0);
       break;
 #endif  // USE_WEBSERVER
     }

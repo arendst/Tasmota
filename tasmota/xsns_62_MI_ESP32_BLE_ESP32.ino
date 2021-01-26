@@ -79,6 +79,7 @@ void MI32notifyCB(NimBLERemoteCharacteristic* pRemoteCharacteristic, uint8_t* pD
 struct {
   uint16_t perPage = 4;
   uint8_t mqttCurrentSlot = 0;
+  uint8_t mqttCurrentSingleSlot = 0;
   uint32_t period;             // set manually in addition to TELE-period, is set to TELE-period after start
   int secondsCounter = 0;   // counts up in MI32EverySecond to period
   int secondsCounter2 = 0;  // counts up in MI32EverySecond to period
@@ -255,6 +256,8 @@ struct mi_sensor_t{
   uint8_t type; //MI_Flora = 1; MI_MI-HT_V1=2; MI_LYWSD02=3; MI_LYWSD03=4; MI_CGG1=5; MI_CGD1=6
   uint8_t needkey; // tells http to display needkey message with link
   uint8_t lastCnt; //device generated counter of the packet
+  uint8_t nextDiscoveryData; // used to lkimit discovery to one MQTT per sec
+
   uint8_t shallSendMQTT;
   uint8_t MAC[6];
   union {
@@ -1880,6 +1883,9 @@ void MI32EverySecond(bool restart){
 
   MI32ShowSomeSensors();
 
+  MI32DiscoveryOneMISensor();
+  MI32ShowOneMISensor();
+
   // read a battery if
   // MI32.batteryreader.slot < filled and !MI32.batteryreader.active
   readOneBat();
@@ -1906,10 +1912,12 @@ void MI32EverySecond(bool restart){
       AddLog_P(LOG_LEVEL_DEBUG,PSTR("M32: Kick off tele sending"));
       MI32.mqttCurrentSlot = 0;
       MI32.secondsCounter2 = 0;
+      MI32.mqttCurrentSingleSlot = 0;
     } else {
       AddLog_P(LOG_LEVEL_DEBUG,PSTR("M32: Hit tele time, restarted but not finished last - lost from slot %d")+MI32.mqttCurrentSlot);
       MI32.mqttCurrentSlot = 0;
       MI32.secondsCounter2 = 0;
+      MI32.mqttCurrentSingleSlot = 0;
     }
   }
   MI32.secondsCounter2++;
@@ -2302,15 +2310,18 @@ void MI32TimeoutSensors(){
 
 
 // this assumes that we're adding to a ResponseTime_P
-void MI32GetOneSensorJson(int slot){
+void MI32GetOneSensorJson(int slot, int hidename){
   mi_sensor_t *p;
   p = &MIBLEsensors[slot];
 
-  ResponseAppend_P(PSTR(",\"%s-%02x%02x%02x\":{"),
-        kMI32DeviceType[p->type-1],
-        p->MAC[3], p->MAC[4], p->MAC[5]);
+  // remove hyphen - make it difficult to configure HASS
+  if (!hidename) {
+    ResponseAppend_P(PSTR("\"%s%02x%02x%02x\":{"),
+          kMI32DeviceType[p->type-1],
+          p->MAC[3], p->MAC[4], p->MAC[5]);
+  }
 
-  ResponseAppend_P(PSTR("\"MAC\":\"%02x%02x%02x%02x%02x%02x\""),
+  ResponseAppend_P(PSTR("\"mac\":\"%02x%02x%02x%02x%02x%02x\""),
         p->MAC[0], p->MAC[1], p->MAC[2],
         p->MAC[3], p->MAC[4], p->MAC[5]);
 
@@ -2449,7 +2460,9 @@ void MI32GetOneSensorJson(int slot){
   }
   if (MI32.option.showRSSI) ResponseAppend_P(PSTR(",\"RSSI\":%d"), p->RSSI);
 
-  ResponseAppend_P(PSTR("}"));
+  if (!hidename) {
+    ResponseAppend_P(PSTR("}"));
+  }
   p->eventType.raw = 0;
   p->shallSendMQTT = 0;
 
@@ -2486,7 +2499,8 @@ void MI32ShowSomeSensors(){
   ResponseTime_P(PSTR(""));
   int cnt = 0;
   for (; (MI32.mqttCurrentSlot < numsensors) && (cnt < 4); MI32.mqttCurrentSlot++, cnt++) {
-    MI32GetOneSensorJson(MI32.mqttCurrentSlot);
+    ResponseAppend_P(PSTR(","));
+    MI32GetOneSensorJson(MI32.mqttCurrentSlot, 0);
     int mlen = strlen(TasmotaGlobal.mqtt_data);
 
     // if we ran out of room, leave here.
@@ -2509,6 +2523,183 @@ void MI32ShowSomeSensors(){
     MI32.option.minimalSummary = _minimalSummarySave;
   }
 #endif //USE_HOME_ASSISTANT
+}
+
+
+///////////////////////////////////////////////
+// starts a completely fresh MQTT message.
+// sends ONE sensor on a dedicated topic NOT related to this TAS
+// triggered by setting MI32.mqttCurrentSingleSlot = 0
+void MI32ShowOneMISensor(){
+  // don't detect half-added ones here
+  int numsensors = MIBLEsensors.size();
+  if (MI32.mqttCurrentSingleSlot >= numsensors){
+    // if we got to the end of the sensors, then don't send more
+    return;
+  }
+
+#ifdef USE_HOME_ASSISTANT
+  if(Settings.flag.hass_discovery){
+
+    ResponseTime_P(PSTR(","));
+    MI32GetOneSensorJson(MI32.mqttCurrentSingleSlot, 1);
+    mi_sensor_t *p;
+    p = &MIBLEsensors[MI32.mqttCurrentSingleSlot];
+
+    ResponseAppend_P(PSTR("}"));
+    
+    char idstr[32];
+    const char *alias = BLE_ESP32::getAlias(p->MAC);
+    const char *id = idstr;
+    if (alias && *alias){
+      id = alias;
+    } else {
+      sprintf(idstr, PSTR("%s%02x%02x%02x"), 
+            kMI32DeviceType[p->type-1],
+            p->MAC[3], p->MAC[4], p->MAC[5]);
+    }
+    char SensorTopic[60];
+    sprintf(SensorTopic, "tele/tasmota_ble/%s",
+      id);
+
+    MqttPublish(SensorTopic);
+    //AddLog_P(LOG_LEVEL_DEBUG,PSTR("M32: %s: show some %d %s"),D_CMND_MI32, MI32.mqttCurrentSlot, TasmotaGlobal.mqtt_data);
+  }
+#endif //USE_HOME_ASSISTANT
+  MI32.mqttCurrentSingleSlot++;
+}
+
+
+///////////////////////////////////////////////
+// starts a completely fresh MQTT message.
+// sends ONE sensor's worth of HA discovery msg
+#define MI_HA_DISCOVERY_TEMPLATE PSTR("{\"availability\":[],\"device\": \
+{\"identifiers\":[\"BLE%s\"],\
+\"name\":\"%s\",\
+\"manufacturer\":\"tas\",\
+\"model\":\"%s\",\
+\"via_device\":\"%s\"\
+}, \
+\"dev_cla\":\"%s\",\
+\"expire_after\":600,\
+\"json_attr_t\":\"%s\",\
+\"name\":\"%s_%s\",\
+\"state_topic\":\"%s\",\
+\"uniq_id\":\"%s_%s\",\
+\"unit_of_meas\":\"%s\",\
+\"val_tpl\":\"{{ value_json.%s }}\"}")
+void MI32DiscoveryOneMISensor(){
+  // don't detect half-added ones here
+  int numsensors = MIBLEsensors.size();
+  if (MI32.mqttCurrentSingleSlot >= numsensors){
+    // if we got to the end of the sensors, then don't send more
+    return;
+  }
+
+#ifdef USE_HOME_ASSISTANT
+  if(Settings.flag.hass_discovery){
+    mi_sensor_t *p;
+    p = &MIBLEsensors[MI32.mqttCurrentSingleSlot];
+
+
+    // careful - a missing comma causes a crash!!!!
+    // because of the way we loop? 
+    const char *classes[] = {
+      "temperature",
+      "Temperature",
+      "°C",
+      "humidity",
+      "Humidity",
+      "%",
+      "temperature",
+      "DewPoint",
+      "°C",
+      "battery",
+      "Battery",
+      "%",
+      "signal_strength",
+      "RSSI",
+      "dB"
+    };
+
+    int datacount = (sizeof(classes)/sizeof(*classes))/3;
+
+    if (p->nextDiscoveryData >= datacount){
+      p->nextDiscoveryData = 0;
+    }
+
+    //int i = p->nextDiscoveryData*3;
+    for (int i = 0; i < datacount*3; i += 3){
+      if (!classes[i] || !classes[i+1] || !classes[i+2]){
+        return;
+      }
+
+      char idstr[32];
+      const char *alias = BLE_ESP32::getAlias(p->MAC);
+      const char *id = idstr;
+      if (alias && *alias){
+        id = alias;
+      } else {
+        sprintf(idstr, PSTR("%s%02x%02x%02x"), 
+              kMI32DeviceType[p->type-1],
+              p->MAC[3], p->MAC[4], p->MAC[5]);
+      }
+
+      char SensorTopic[60];
+      sprintf(SensorTopic, "tele/tasmota_ble/%s",
+        id);
+
+
+      ResponseClear();
+
+    /*
+    {"availability":[],"device":{"identifiers":["TasmotaBLEa4c1387fc1e1"],"manufacturer":"simon","model":"someBLEsensor","name":"TASBLEa4c1387fc1e1","sw_version":"0.0.0"},"dev_cla":"temperature","json_attr_t":"tele/tasmota_esp32/SENSOR","name":"TASLYWSD037fc1e1Temp","state_topic":"tele/tasmota_esp32/SENSOR","uniq_id":"Tasmotaa4c1387fc1e1temp","unit_of_meas":"°C","val_tpl":"{{ value_json.LYWSD037fc1e1.Temperature }}"}
+    {"availability":[],"device":{"identifiers":["TasmotaBLEa4c1387fc1e1"],
+    "name":"TASBLEa4c1387fc1e1"},"dev_cla":"temperature",
+    "json_attr_t":"tele/tasmota_esp32/SENSOR",
+    "name":"TASLYWSD037fc1e1Temp","state_topic":  "tele/tasmota_esp32/SENSOR",
+    "uniq_id":"Tasmotaa4c1387fc1e1temp","unit_of_meas":"°C",
+    "val_tpl":"{{ value_json.LYWSD037fc1e1.Temperature }}"}
+    */
+
+      ResponseAppend_P(MI_HA_DISCOVERY_TEMPLATE, 
+      //"{\"identifiers\":[\"BLE%s\"],"
+        id,
+      //"\"name\":\"%s\"},"
+        id,
+      //\"model\":\"%s\",
+        kMI32DeviceType[p->type-1],
+      //\"via_device\":\"%s\"
+        NetworkHostname(),
+      //"\"dev_cla\":\"%s\","
+        classes[i],
+      //"\"json_attr_t\":\"%s\"," - the topic the sensor publishes on
+        SensorTopic,
+      //"\"name\":\"%s_%s\"," - the name of this DATA
+        id, classes[i+1],
+      //"\"state_topic\":\"%s\","  - the topic the sensor publishes on?
+        SensorTopic,
+      //"\"uniq_id\":\"%s_%s\"," - unique for this data,
+        id, classes[i+1],
+      //"\"unit_of_meas\":\"%s\"," - the measure of this type of data
+        classes[i+2],
+      //"\"val_tpl\":\"{{ value_json.%s }}") // e.g. Temperature
+        classes[i+1]
+          //
+      );
+      
+      char DiscoveryTopic[80];
+      sprintf(DiscoveryTopic, "homeassistant/sensor/%s/%s/config",
+        id, classes[i+1]);
+
+      MqttPublish(DiscoveryTopic);
+      p->nextDiscoveryData++;
+      //vTaskDelay(100/ portTICK_PERIOD_MS);
+    }  
+  } // end if hass discovery
+  //AddLog_P(LOG_LEVEL_DEBUG,PSTR("M32: %s: show some %d %s"),D_CMND_MI32, MI32.mqttCurrentSlot, TasmotaGlobal.mqtt_data);
+#endif //USE_HOME_ASSISTANT
+
 }
 
 ///////////////////////////////////////////////
@@ -2535,7 +2726,8 @@ void MI32ShowTriggeredSensors(){
       if(p->shallSendMQTT==0) continue;
 
       cnt++;
-      MI32GetOneSensorJson(sensor);
+      ResponseAppend_P(PSTR(","));
+      MI32GetOneSensorJson(sensor, 0);
       int mlen = strlen(TasmotaGlobal.mqtt_data);
 
       // if we ran out of room, leave here.
