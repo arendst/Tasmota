@@ -2052,9 +2052,8 @@ void MI32Show(bool json)
               ||(hass_mode!=-1)
 #endif //USE_HOME_ASSISTANT
             ) {
-              char temperature[FLOATSZ];
-              dtostrfd(MIBLEsensors[i].temp, Settings.flag2.temperature_resolution, temperature);
-              ResponseAppend_P(PSTR(",\"" D_JSON_TEMPERATURE "\":%s"), temperature);
+              ResponseAppend_P(PSTR(",\"" D_JSON_TEMPERATURE "\":%*_f"),
+                Settings.flag2.temperature_resolution, &MIBLEsensors[i].temp);
             }
           }
         }
@@ -2211,9 +2210,7 @@ void MI32Show(bool json)
         WSContentSend_PD(HTTP_RSSI, kMI32DeviceType[MIBLEsensors[i].type-1], MIBLEsensors[i].RSSI);
         if (MIBLEsensors[i].type==FLORA) {
           if (!isnan(MIBLEsensors[i].temp)) {
-            char temperature[FLOATSZ];
-            dtostrfd(MIBLEsensors[i].temp, Settings.flag2.temperature_resolution, temperature);
-            WSContentSend_PD(HTTP_SNS_TEMP, kMI32DeviceType[MIBLEsensors[i].type-1], temperature, TempUnit());
+            WSContentSend_Temp(kMI32DeviceType[MIBLEsensors[i].type-1], MIBLEsensors[i].temp);
           }
           if (MIBLEsensors[i].moisture!=0xff) {
             WSContentSend_PD(HTTP_SNS_MOISTURE, kMI32DeviceType[MIBLEsensors[i].type-1], MIBLEsensors[i].moisture);

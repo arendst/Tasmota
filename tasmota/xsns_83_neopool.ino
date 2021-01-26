@@ -866,10 +866,14 @@ void NeoPoolShow(bool json)
 
     // Temperature
     if (NeoPoolGetData(MBF_PAR_TEMPERATURE_ACTIVE)) {
+/*
       dtostrfd(Settings.flag.temperature_conversion ?
         (float)NeoPoolGetData(MBF_MEASURE_TEMPERATURE)/10 * 1.8 + 32 :
         (float)NeoPoolGetData(MBF_MEASURE_TEMPERATURE)/10, Settings.flag2.temperature_resolution, parameter);
       ResponseAppend_P(PSTR("%s\"" D_TEMPERATURE "\":%s"), delimiter, parameter);
+*/
+      float temp = ConvertTemp((float)NeoPoolGetData(MBF_MEASURE_TEMPERATURE) / 10);
+      ResponseAppend_P(PSTR("%s\"" D_TEMPERATURE "\":%*_f"), delimiter, Settings.flag2.temperature_resolution, &temp);
       *delimiter = ',';
     }
 
@@ -939,8 +943,12 @@ void NeoPoolShow(bool json)
 
     // Temperature
     if (NeoPoolGetData(MBF_PAR_TEMPERATURE_ACTIVE)) {
+/*
       dtostrfd(Settings.flag.temperature_conversion?(float)NeoPoolGetData(MBF_MEASURE_TEMPERATURE)/10 * 1.8 + 32:(float)NeoPoolGetData(MBF_MEASURE_TEMPERATURE)/10, Settings.flag2.temperature_resolution, parameter);
       WSContentSend_PD(HTTP_SNS_TEMP, neopool_type, parameter, TempUnit());
+*/
+      float temp = ConvertTemp((float)NeoPoolGetData(MBF_MEASURE_TEMPERATURE) / 10);
+      WSContentSend_Temp(neopool_type, temp);
     }
 
     // pH

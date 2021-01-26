@@ -176,18 +176,16 @@ void DS1624EverySecond(void)
 
 void DS1624Show(bool json)
 {
-  char temperature[33];
   bool once = true;
 
   for (uint32_t i = 0; i < DS1624_MAX_SENSORS; i++) {
     if (!ds1624_sns[i].valid) { continue; }
 
-    dtostrfd(ds1624_sns[i].value, Settings.flag2.temperature_resolution, temperature);
     if (json) {
-      ResponseAppend_P(JSON_SNS_TEMP, ds1624_sns[i].name, temperature);
+      ResponseAppend_P(JSON_SNS_F_TEMP, ds1624_sns[i].name, Settings.flag2.temperature_resolution, &ds1624_sns[i].value);
       if ((0 == TasmotaGlobal.tele_period) && once) {
 #ifdef USE_DOMOTICZ
-        DomoticzSensor(DZ_TEMP, temperature);
+        DomoticzFloatSensor(DZ_TEMP, ds1624_sns[i].value);
 #endif  // USE_DOMOTICZ
 #ifdef USE_KNX
         KnxSensor(KNX_TEMPERATURE, ds1624_sns[i].value);
@@ -196,7 +194,7 @@ void DS1624Show(bool json)
       }
 #ifdef USE_WEBSERVER
     } else {
-      WSContentSend_PD(HTTP_SNS_TEMP, ds1624_sns[i].name, temperature, TempUnit());
+      WSContentSend_Temp(ds1624_sns[i].name, ds1624_sns[i].value);
 #endif  // USE_WEBSERVER
     }
   }

@@ -272,11 +272,9 @@ void seeSoilEverySecond(void) {                 // update sensor values and publ
 #endif // SEESAW_SOIL_PUBLISH
 
 void seeSoilShow(bool json) {
-  char temperature[FLOATSZ];
   char sensor_name[sizeof(SeeSoil.name) + 3];
 
   for (uint32_t i = 0; i < SeeSoil.count; i++) {
-    dtostrfd(SeeSoilSNS[i].temperature, Settings.flag2.temperature_resolution, temperature);
     seeSoilName(i, sensor_name, sizeof(sensor_name));
     if (json) {
       ResponseAppend_P(PSTR(","));              // compose tele json
@@ -296,20 +294,20 @@ void seeSoilShow(bool json) {
       WSContentSend_PD(HTTP_SNS_ANALOG, sensor_name, 0, SeeSoilSNS[i].capacitance);
 #endif // SEESAW_SOIL_RAW
       WSContentSend_PD(HTTP_SNS_MOISTURE, sensor_name, (uint32_t) SeeSoilSNS[i].moisture);
-      WSContentSend_PD(HTTP_SNS_TEMP, sensor_name, temperature, TempUnit());
+      WSContentSend_Temp(sensor_name, SeeSoilSNS[i].temperature);
 #endif // USE_WEBSERVER
     }
   } // for each sensor connected
 }
 
 void seeSoilJson(int no) {                      // common json
-  char temperature[FLOATSZ];
   char sensor_name[sizeof(SeeSoil.name) + 3];
-
   seeSoilName(no, sensor_name, sizeof(sensor_name));
-  dtostrfd(SeeSoilSNS[no].temperature, Settings.flag2.temperature_resolution, temperature);
-  ResponseAppend_P(PSTR ("\"%s\":{\"" D_JSON_ID "\":\"%02X\",\"" D_JSON_TEMPERATURE "\":%s,\"" D_JSON_MOISTURE "\":%u}"),
-                   sensor_name, SeeSoilSNS[no].address, temperature, (uint32_t) SeeSoilSNS[no].moisture);
+
+  ResponseAppend_P(PSTR ("\"%s\":{\"" D_JSON_ID "\":\"%02X\",\"" D_JSON_TEMPERATURE "\":%*_f,\"" D_JSON_MOISTURE "\":%u}"),
+    sensor_name, SeeSoilSNS[no].address,
+    Settings.flag2.temperature_resolution, &SeeSoilSNS[no].temperature,
+    (uint32_t) SeeSoilSNS[no].moisture);
 }
 
 void seeSoilName(int no, char *name, int len)   // generates a sensor name

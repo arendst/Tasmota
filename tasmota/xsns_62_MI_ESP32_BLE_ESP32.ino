@@ -2361,9 +2361,8 @@ void MI32GetOneSensorJson(int slot, int hidename){
           ||(hass_mode!=-1)
 #endif //USE_HOME_ASSISTANT
         ) {
-          char temperature[FLOATSZ];
-          dtostrfd(p->temp, Settings.flag2.temperature_resolution, temperature);
-          ResponseAppend_P(PSTR(",\"" D_JSON_TEMPERATURE "\":%s"), temperature);
+          ResponseAppend_P(PSTR(",\"" D_JSON_TEMPERATURE "\":%*_f"),
+            Settings.flag2.temperature_resolution, &p->temp);
         }
       }
     }
@@ -2815,9 +2814,7 @@ void MI32Show(bool json)
       switch(p->type){
         case MI_FLORA:{
           if (!isnan(p->temp)) {
-            char temperature[FLOATSZ];
-            dtostrfd(p->temp, Settings.flag2.temperature_resolution, temperature);
-            WSContentSend_PD(HTTP_SNS_TEMP, typeName, temperature, TempUnit());
+            WSContentSend_Temp(typeName, p->temp);
           }
           if (p->moisture!=0xff) {
             WSContentSend_PD(HTTP_SNS_MOISTURE, typeName, p->moisture);
