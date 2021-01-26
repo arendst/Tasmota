@@ -621,7 +621,13 @@ uint16_t NimBLEServer::getPeerMTU(uint16_t conn_id) {
 
 
 /**
- * Update connection parameters can be called only after connection has been established
+ * @brief Request an Update the connection parameters:
+ * * Can only be used after a connection has been established.
+ * @param [in] conn_handle The connection handle of the peer to send the request to.
+ * @param [in] minInterval The minimum connection interval in 1.25ms units.
+ * @param [in] maxInterval The maximum connection interval in 1.25ms units.
+ * @param [in] latency The number of packets allowed to skip (extends max interval).
+ * @param [in] timeout The timeout time in 10ms units before disconnecting.
  */
 void NimBLEServer::updateConnParams(uint16_t conn_handle,
                             uint16_t minInterval, uint16_t maxInterval,

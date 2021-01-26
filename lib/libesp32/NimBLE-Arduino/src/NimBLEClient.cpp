@@ -100,9 +100,10 @@ NimBLEClient::~NimBLEClient() {
  * be called to reset the host in the case of a stalled controller.
  */
 void NimBLEClient::dcTimerCb(ble_npl_event *event) {
-    NimBLEClient *pClient = (NimBLEClient*)event->arg;
+ /*   NimBLEClient *pClient = (NimBLEClient*)event->arg;
     NIMBLE_LOGC(LOG_TAG, "Timed out disconnecting from %s - resetting host",
                 std::string(pClient->getPeerAddress()).c_str());
+ */
     ble_hs_sched_reset(BLE_HS_ECONTROLLER);
 }
 
@@ -182,25 +183,30 @@ bool NimBLEClient::connect(const NimBLEAddress &address, bool deleteAttibutes) {
         return false;
     }
 
-    if(isConnected() || m_pTaskData != nullptr) {
+    if(isConnected() || m_connEstablished || m_pTaskData != nullptr) {
         NIMBLE_LOGE(LOG_TAG, "Client busy, connected to %s, id=%d",
                     std::string(m_peerAddress).c_str(), getConnId());
+        return false;
+    }
+
+    ble_addr_t peerAddr_t;
+    memcpy(&peerAddr_t.val, address.getNative(),6);
+    peerAddr_t.type = address.getType();
+    if(ble_gap_conn_find_by_addr(&peerAddr_t, NULL) == 0) {
+        NIMBLE_LOGE(LOG_TAG, "A connection to %s already exists",
+                    address.toString().c_str());
         return false;
     }
 
     if(address == NimBLEAddress("")) {
         NIMBLE_LOGE(LOG_TAG, "Invalid peer address;(NULL)");
         return false;
-    } else if(m_peerAddress != address) {
+    } else {
         m_peerAddress = address;
     }
 
-    ble_addr_t peerAddr_t;
-    memcpy(&peerAddr_t.val, m_peerAddress.getNative(),6);
-    peerAddr_t.type = m_peerAddress.getType();
-
-
     ble_task_data_t taskData = {this, xTaskGetCurrentTaskHandle(), 0, nullptr};
+    m_pTaskData = &taskData;
     int rc = 0;
 
     /* Try to connect the the advertiser.  Allow 30 seconds (30000 ms) for
@@ -213,13 +219,12 @@ bool NimBLEClient::connect(const NimBLEAddress &address, bool deleteAttibutes) {
                              NimBLEClient::handleGapEvent, this);
         switch (rc) {
             case 0:
-                m_pTaskData = &taskData;
                 break;
 
             case BLE_HS_EBUSY:
                 // Scan was still running, stop it and try again
                 if (!NimBLEDevice::getScan()->stop()) {
-                    return false;
+                    rc = BLE_HS_EUNKNOWN;
                 }
                 break;
 
@@ -227,7 +232,7 @@ bool NimBLEClient::connect(const NimBLEAddress &address, bool deleteAttibutes) {
                 // A connection to this device already exists, do not connect twice.
                 NIMBLE_LOGE(LOG_TAG, "Already connected to device; addr=%s",
                             std::string(m_peerAddress).c_str());
-                return false;
+                break;
 
             case BLE_HS_EALREADY:
                 // Already attemting to connect to this device, cancel the previous
@@ -235,16 +240,21 @@ bool NimBLEClient::connect(const NimBLEAddress &address, bool deleteAttibutes) {
                 NIMBLE_LOGE(LOG_TAG, "Already attempting to connect to %s - cancelling",
                             std::string(m_peerAddress).c_str());
                 ble_gap_conn_cancel();
-                return false;
+                break;
 
             default:
                 NIMBLE_LOGE(LOG_TAG, "Failed to connect to %s, rc=%d; %s",
                             std::string(m_peerAddress).c_str(),
                             rc, NimBLEUtils::returnCodeToString(rc));
-                return false;
+                break;
         }
 
     } while (rc == BLE_HS_EBUSY);
+
+    if(rc != 0) {
+        m_pTaskData = nullptr;
+        return false;
+    }
 
     // Wait for the connect timeout time +1 second for the connection to complete
     if(ulTaskNotifyTake(pdTRUE, pdMS_TO_TICKS(m_connectTimeout + 1000)) == pdFALSE) {
@@ -255,7 +265,7 @@ bool NimBLEClient::connect(const NimBLEAddress &address, bool deleteAttibutes) {
             disconnect();
         } else {
         // workaround; if the controller doesn't cancel the connection
-        // at the timeout cancel it here.
+        // at the timeout, cancel it here.
             NIMBLE_LOGE(LOG_TAG, "Connect timeout - cancelling");
             ble_gap_conn_cancel();
         }
@@ -269,7 +279,7 @@ bool NimBLEClient::connect(const NimBLEAddress &address, bool deleteAttibutes) {
         // If the failure was not a result of a disconnection
         // make sure we disconnect now to avoid dangling connections
         if(isConnected()) {
-            ble_gap_terminate(m_conn_id, BLE_ERR_REM_USER_CONN_TERM);
+            disconnect();
         }
         return false;
     } else {
@@ -325,26 +335,35 @@ bool NimBLEClient::secureConnection() {
  */
 int NimBLEClient::disconnect(uint8_t reason) {
     NIMBLE_LOGD(LOG_TAG, ">> disconnect()");
-
     int rc = 0;
-    if(isConnected()){
-        rc = ble_gap_terminate(m_conn_id, reason);
-        if (rc == 0) {
-            ble_addr_t peerAddr_t;
-            memcpy(&peerAddr_t.val, m_peerAddress.getNative(),6);
-            peerAddr_t.type = m_peerAddress.getType();
+    if(isConnected()) {
+        // If the timer was already started, ignore this call.
+        if(ble_npl_callout_is_active(&m_dcTimer)) {
+            NIMBLE_LOGI(LOG_TAG, "Already disconnecting, timer started");
+            return BLE_HS_EALREADY;
+        }
 
-            // Set the disconnect timeout to the supervison timeout time + 1 second
-            // In case the event triggers shortly after the supervision timeout.
-            // We don't want to prematurely reset the host.
-            ble_gap_conn_desc desc;
-            if(ble_gap_conn_find_by_addr(&peerAddr_t, &desc) == 0){
-                ble_npl_time_t ticks;
-                ble_npl_time_ms_to_ticks((desc.supervision_timeout + 100) * 10, &ticks);
-                ble_npl_callout_reset(&m_dcTimer, ticks);
-                NIMBLE_LOGD(LOG_TAG, "DC TIMEOUT = %dms", (desc.supervision_timeout + 100) * 10);
+        ble_gap_conn_desc desc;
+        if(ble_gap_conn_find(m_conn_id, &desc) != 0){
+            NIMBLE_LOGI(LOG_TAG, "Connection ID not found");
+            return BLE_HS_EALREADY;
+        }
+
+        // We use a timer to detect a controller error in the event that it does
+        // not inform the stack when disconnection is complete.
+        // This is a common error in certain esp-idf versions.
+        // The disconnect timeout time is the supervison timeout time + 1 second.
+        // In the case that the event happenss shortly after the supervision timeout
+        // we don't want to prematurely reset the host.
+        ble_npl_time_t ticks;
+        ble_npl_time_ms_to_ticks((desc.supervision_timeout + 100) * 10, &ticks);
+        ble_npl_callout_reset(&m_dcTimer, ticks);
+
+        rc = ble_gap_terminate(m_conn_id, reason);
+        if (rc != 0) {
+            if(rc != BLE_HS_EALREADY) {
+                ble_npl_callout_stop(&m_dcTimer);
             }
-        } else if (rc != BLE_HS_EALREADY) {
             NIMBLE_LOGE(LOG_TAG, "ble_gap_terminate failed: rc=%d %s",
                         rc, NimBLEUtils::returnCodeToString(rc));
         }
@@ -359,12 +378,12 @@ int NimBLEClient::disconnect(uint8_t reason) {
 
 /**
  * @brief Set the connection paramaters to use when connecting to a server.
- * @param [in] minInterval minimum connection interval in 0.625ms units.
- * @param [in] maxInterval maximum connection interval in 0.625ms units.
- * @param [in] latency number of packets allowed to skip (extends max interval)
- * @param [in] timeout the timeout time in 10ms units before disconnecting
- * @param [in] scanInterval the scan interval to use when attempting to connect in 0.625ms units.
- * @param [in] scanWindow the scan window to use when attempting to connect in 0.625ms units.
+ * @param [in] minInterval The minimum connection interval in 1.25ms units.
+ * @param [in] maxInterval The maximum connection interval in 1.25ms units.
+ * @param [in] latency The number of packets allowed to skip (extends max interval).
+ * @param [in] timeout The timeout time in 10ms units before disconnecting.
+ * @param [in] scanInterval The scan interval to use when attempting to connect in 0.625ms units.
+ * @param [in] scanWindow The scan window to use when attempting to connect in 0.625ms units.
  */
 void NimBLEClient::setConnectionParams(uint16_t minInterval, uint16_t maxInterval,
                                 uint16_t latency, uint16_t timeout,
@@ -391,10 +410,10 @@ void NimBLEClient::setConnectionParams(uint16_t minInterval, uint16_t maxInterva
 /**
  * @brief Update the connection parameters:
  * * Can only be used after a connection has been established.
- * @param [in] minInterval minimum connection interval in 0.625ms units.
- * @param [in] maxInterval maximum connection interval in 0.625ms units.
- * @param [in] latency number of packets allowed to skip (extends max interval)
- * @param [in] timeout the timeout time in 10ms units before disconnecting
+ * @param [in] minInterval The minimum connection interval in 1.25ms units.
+ * @param [in] maxInterval The maximum connection interval in 1.25ms units.
+ * @param [in] latency The number of packets allowed to skip (extends max interval).
+ * @param [in] timeout The timeout time in 10ms units before disconnecting.
  */
 void NimBLEClient::updateConnParams(uint16_t minInterval, uint16_t maxInterval,
                             uint16_t latency, uint16_t timeout)
@@ -797,13 +816,14 @@ uint16_t NimBLEClient::getMTU() {
                     break;
             }
 
-            client->m_conn_id = BLE_HS_CONN_HANDLE_NONE;
-
             // Stop the disconnect timer since we are now disconnected.
             ble_npl_callout_stop(&client->m_dcTimer);
 
             // Remove the device from ignore list so we will scan it again
             NimBLEDevice::removeIgnored(client->m_peerAddress);
+
+            // No longer connected, clear the connection ID.
+            client->m_conn_id = BLE_HS_CONN_HANDLE_NONE;
 
             // If we received a connected event but did not get established (no PDU)
             // then a disconnect event will be sent but we should not send it to the
