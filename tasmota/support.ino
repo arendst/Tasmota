@@ -916,7 +916,7 @@ int GetCommandCode(char* destination, size_t destination_size, const char* needl
   return result;
 }
 
-bool DecodeCommandSynonyms(const char* haystack, void (* const MyCommand[])(void), const uint8_t *synonyms, size_t syn_count)
+bool DecodeCommandSynonyms(const char* haystack, void (* const MyCommand[])(void), const uint8_t *synonyms)
 {
   GetTextIndexed(XdrvMailbox.command, CMDSZ, 0, haystack);  // Get prefix if available
   int prefix_length = strlen(XdrvMailbox.command);
@@ -927,6 +927,7 @@ bool DecodeCommandSynonyms(const char* haystack, void (* const MyCommand[])(void
       return false;                                         // Prefix not in command
     }
   }
+  size_t syn_count = synonyms ? pgm_read_byte(synonyms) : 0;
   int command_code = GetCommandCode(XdrvMailbox.command + prefix_length, CMDSZ, XdrvMailbox.topic + prefix_length, haystack);
   if (command_code > 0) {                                   // Skip prefix
     if (command_code > syn_count) {
@@ -935,7 +936,7 @@ bool DecodeCommandSynonyms(const char* haystack, void (* const MyCommand[])(void
       MyCommand[XdrvMailbox.command_code]();
     } else {
       // we have a SetOption synonym
-      XdrvMailbox.index = pgm_read_byte(synonyms + command_code - 1);
+      XdrvMailbox.index = pgm_read_byte(synonyms + command_code);
       CmndSetoptionBase(0);
     }
     return true;
@@ -945,7 +946,7 @@ bool DecodeCommandSynonyms(const char* haystack, void (* const MyCommand[])(void
 
 bool DecodeCommand(const char* haystack, void (* const MyCommand[])(void))
 {
-  return DecodeCommandSynonyms(haystack, MyCommand, nullptr, 0);
+  return DecodeCommandSynonyms(haystack, MyCommand, nullptr);
 }
 
 const char kOptions[] PROGMEM = "OFF|" D_OFF "|FALSE|" D_FALSE "|STOP|" D_STOP "|" D_CELSIUS "|"              // 0

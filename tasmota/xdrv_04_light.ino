@@ -149,6 +149,7 @@ const char kLightCommands[] PROGMEM = "|"  // No prefix
    "|UNDOCA" ;
 
 const uint8_t kLightSynonyms[] PROGMEM = {
+  7,                    // number of entries
   37, 68, 82, 91, 92,
   105, 106, 
 };
@@ -3088,7 +3089,7 @@ bool Xdrv04(uint8_t function)
         LightSetPower();
         break;
       case FUNC_COMMAND:
-        result = DecodeCommandSynonyms(kLightCommands, LightCommand, kLightSynonyms, sizeof(kLightSynonyms));
+        result = DecodeCommandSynonyms(kLightCommands, LightCommand, kLightSynonyms);
         if (!result) {
           result = XlgtCall(FUNC_COMMAND);
         }
