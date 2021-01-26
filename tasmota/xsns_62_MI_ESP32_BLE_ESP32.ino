@@ -2602,7 +2602,7 @@ const char MI_HA_DISCOVERY_TEMPLATE[] PROGMEM =
   "\"state_topic\":\"%s\","
   "\"uniq_id\":\"%s_%s\","
   "\"unit_of_meas\":\"%s\","
-  "\"val_tpl\":\"{{ value_json.%s }}\"}")
+  "\"val_tpl\":\"{{ value_json.%s }}\"}";
 
 void MI32DiscoveryOneMISensor(){
   // don't detect half-added ones here
