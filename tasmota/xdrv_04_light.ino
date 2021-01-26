@@ -129,6 +129,10 @@ enum LightSchemes { LS_POWER, LS_WAKEUP, LS_CYCLEUP, LS_CYCLEDN, LS_RANDOM, LS_M
 const uint8_t LIGHT_COLOR_SIZE = 25;   // Char array scolor size
 
 const char kLightCommands[] PROGMEM = "|"  // No prefix
+  // SetOptions synonyms
+  D_SO_CHANNELREMAP "|" D_SO_MULTIPWM "|" D_SO_ALEXACTRANGE "|" D_SO_POWERONFADE "|" D_SO_PWMCT "|"
+  D_SO_WHITEBLEND "|" D_SO_VIRTUALCT "|"
+  // Other commands
   D_CMND_COLOR "|" D_CMND_COLORTEMPERATURE "|" D_CMND_DIMMER "|" D_CMND_DIMMER_RANGE "|" D_CMND_DIMMER_STEP "|" D_CMND_LEDTABLE "|" D_CMND_FADE "|"
   D_CMND_RGBWWTABLE "|" D_CMND_SCHEME "|" D_CMND_SPEED "|" D_CMND_WAKEUP "|" D_CMND_WAKEUPDURATION "|"
   D_CMND_WHITE "|" D_CMND_CHANNEL "|" D_CMND_HSBCOLOR
@@ -143,6 +147,12 @@ const char kLightCommands[] PROGMEM = "|"  // No prefix
   "|" D_CMND_SEQUENCE_OFFSET
 #endif  // USE_DGR_LIGHT_SEQUENCE
    "|UNDOCA" ;
+
+const uint8_t kLightSynonyms[] PROGMEM = {
+  7,                    // number of entries
+  37, 68, 82, 91, 92,
+  105, 106,
+};
 
 void (* const LightCommand[])(void) PROGMEM = {
   &CmndColor, &CmndColorTemperature, &CmndDimmer, &CmndDimmerRange, &CmndDimmerStep, &CmndLedTable, &CmndFade,
@@ -3078,7 +3088,7 @@ bool Xdrv04(uint8_t function)
         LightSetPower();
         break;
       case FUNC_COMMAND:
-        result = DecodeCommand(kLightCommands, LightCommand);
+        result = DecodeCommand(kLightCommands, LightCommand, kLightSynonyms);
         if (!result) {
           result = XlgtCall(FUNC_COMMAND);
         }

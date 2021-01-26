@@ -420,6 +420,13 @@
   #define D_JSON_MAXENERGYREACHED "MaxEnergyReached"
 
 // Commands xdrv_04_light.ino
+#define D_SO_CHANNELREMAP "ChannelRemap"    // SO37
+#define D_SO_MULTIPWM "MultiPWM"            // SO68
+#define D_SO_ALEXACTRANGE "AlexaCTRange"    // SO82
+#define D_SO_POWERONFADE "PowerOnFade"      // SO91
+#define D_SO_PWMCT "PWMCT"                  // SO92
+#define D_SO_WHITEBLEND "WhiteBlend"        // SO105
+#define D_SO_VIRTUALCT "VirtualCT"          // SO106
 #define D_CMND_CHANNEL "Channel"
 #define D_CMND_COLOR "Color"
 #define D_CMND_COLORTEMPERATURE "CT"
@@ -771,6 +778,8 @@ const float kSpeedConversionFactor[] = {1,            // none
 // xdrv_02_webserver.ino
 #ifdef USE_WEBSERVER
 // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
+const char HTTP_SNS_F_TEMP[]        PROGMEM = "{s}%s "  D_TEMPERATURE         "{m}%*_f " D_UNIT_DEGREE            "%c{e}";
+
 const char HTTP_SNS_TEMP[]          PROGMEM = "{s}%s "  D_TEMPERATURE         "{m}%s " D_UNIT_DEGREE            "%c{e}";
 const char HTTP_SNS_HUM[]           PROGMEM = "{s}%s "  D_HUMIDITY            "{m}%s " D_UNIT_PERCENT             "{e}";
 const char HTTP_SNS_DEW[]           PROGMEM = "{s}%s "  D_DEWPOINT            "{m}%s " D_UNIT_DEGREE            "%c{e}";
