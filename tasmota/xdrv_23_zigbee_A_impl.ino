@@ -24,6 +24,9 @@
 #include "UnishoxStrings.h"
 
 const char kZbCommands[] PROGMEM = D_PRFX_ZB "|"    // prefix
+  // SetOption synonyms
+  D_SO_ZIGBEE_NAMEKEY "|" D_SO_ZIGBEE_DEVICETOPIC "|" D_SO_ZIGBEE_NOPREFIX "|" D_SO_ZIGBEE_ENDPOINTSUFFIX "|" D_SO_ZIGBEE_NOAUTOBIND "|"
+  D_SO_ZIGBEE_NAMETOPIC "|"
 #ifdef USE_ZIGBEE_ZNP
   D_CMND_ZIGBEEZNPSEND "|" D_CMND_ZIGBEEZNPRECEIVE "|"
 #endif // USE_ZIGBEE_ZNP
@@ -38,6 +41,12 @@ const char kZbCommands[] PROGMEM = D_PRFX_ZB "|"    // prefix
   D_CMND_ZIGBEE_RESTORE "|" D_CMND_ZIGBEE_BIND_STATE "|" D_CMND_ZIGBEE_MAP "|" D_CMND_ZIGBEE_LEAVE "|"
   D_CMND_ZIGBEE_CONFIG "|" D_CMND_ZIGBEE_DATA
   ;
+
+const uint8_t kZbSynonyms[] PROGMEM = {
+  6,    // number of synonyms
+  83, 89, 100, 101, 110,
+  112, 
+};
 
 void (* const ZigbeeCommand[])(void) PROGMEM = {
 #ifdef USE_ZIGBEE_ZNP
@@ -2182,7 +2191,7 @@ bool Xdrv23(uint8_t function)
         ZigbeeInit();
         break;
       case FUNC_COMMAND:
-        result = DecodeCommand(kZbCommands, ZigbeeCommand);
+        result = DecodeCommand(kZbCommands, ZigbeeCommand, kZbSynonyms);
         break;
       case FUNC_SAVE_BEFORE_RESTART:
 #ifdef USE_ZIGBEE_EZSP
