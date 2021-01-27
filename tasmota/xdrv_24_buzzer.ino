@@ -174,8 +174,13 @@ void BuzzerEvery100mSec(void) {
  * Commands
 \*********************************************************************************************/
 
-const char kBuzzerCommands[] PROGMEM = "|"  // No prefix
-  "Buzzer" ;
+const char kBuzzerCommands[] PROGMEM = "Buzzer|"  // Prefix
+  "Active|Pwm||" ;
+
+const uint8_t kBuzzerSynonyms[] PROGMEM = {
+  2,    // number of synonyms
+  67, 111
+};
 
 void (* const BuzzerCommand[])(void) PROGMEM = {
   &CmndBuzzer };
@@ -229,7 +234,7 @@ bool Xdrv24(uint8_t function) {
         BuzzerEvery100mSec();
         break;
       case FUNC_COMMAND:
-        result = DecodeCommand(kBuzzerCommands, BuzzerCommand);
+        result = DecodeCommand(kBuzzerCommands, BuzzerCommand, kBuzzerSynonyms);
         break;
       case FUNC_PRE_INIT:
         BuzzerInit();

@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 - Function ``AddLog`` to provide logging for up to 128 (LOGSZ) characters to save stack space
 - Commands ``ChannelRemap``, ``MultiPWM``, ``AlexaCTRange``, ``PowerOnFade``, ``PWMCT``, ``WhiteBlend``, ``VirtualCT`` as synonyms for ``SetOption37, 68, 82, 91, 92, 105 and 106`` respectively
 - Commands ``ZbNameKey``, ``ZbDeviceTopic``, ``ZbNoPrefix``, ``ZbEndpointSuffix``, ``ZbNoAutoBind``, ``ZbNameTopic`` as synonyms for ``SetOption83, 89, 100, 101, 110 and 112`` respectively
+- Commands ``BuzzerActive``, ``BuzzerPwm`` as synonyms for ``SetOption67, 111`` respectively
 - Support for ESP32 ``Module 5`` Wireless Tag Eth01 (#9496)
 - Support trailing silence in buzzer tune (#10694)
 
