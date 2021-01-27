@@ -181,7 +181,7 @@ int hass_tele_period = 0;
 // NEW DISCOVERY
 
 const char HASS_DISCOVER_DEVICE[] PROGMEM =                         // Basic parameters for Discovery
-  "{\"ip\":\"%s\","                                                 // IP Address
+  "{\"ip\":\"%_I\","                                                // IP Address
   "\"dn\":\"%s\","                                                  // Device Name
   "\"fn\":[%s],"                                                    // Friendly Names
   "\"hn\":\"%s\","                                                  // Host Name
@@ -336,7 +336,7 @@ void NewHAssDiscovery(void)
   // Send empty message if new discovery is disabled
   TasmotaGlobal.masterlog_level = 4;   // Hide topic on clean and remove use weblog 4 to show it
   if (!Settings.flag.hass_discovery) { // HassDiscoveryRelays(relays)
-    Response_P(HASS_DISCOVER_DEVICE, WiFi.localIP().toString().c_str(), SettingsText(SET_DEVICENAME),
+    Response_P(HASS_DISCOVER_DEVICE, (uint32_t)WiFi.localIP(), SettingsText(SET_DEVICENAME),
               stemp2, TasmotaGlobal.hostname, unique_id, ModuleName().c_str(), TuyaMod, iFanMod, GetStateText(0), GetStateText(1), GetStateText(2), GetStateText(3),
               TasmotaGlobal.version, TasmotaGlobal.mqtt_topic, SettingsText(SET_MQTT_FULLTOPIC), PSTR(SUB_PREFIX), PSTR(PUB_PREFIX), PSTR(PUB_PREFIX2), Hass.RelLst, stemp3, stemp4,
               stemp5, Settings.flag.mqtt_response, Settings.flag.button_swap, Settings.flag.button_single, Settings.flag.decimal_text, Settings.flag.not_power_linked,
@@ -1033,10 +1033,10 @@ void HAssPublishStatus(void)
 {
   Response_P(PSTR("{\"" D_JSON_VERSION "\":\"%s%s\",\"" D_JSON_BUILDDATETIME "\":\"%s\",\"" D_CMND_MODULE " or " D_CMND_TEMPLATE"\":\"%s\","
                   "\"" D_JSON_RESTARTREASON "\":\"%s\",\"" D_JSON_UPTIME "\":\"%s\",\"" D_CMND_HOSTNAME "\":\"%s\","
-                  "\"" D_CMND_IPADDRESS "\":\"%s\",\"" D_JSON_RSSI "\":\"%d\",\"" D_JSON_SIGNAL " (dBm)""\":\"%d\","
+                  "\"" D_CMND_IPADDRESS "\":\"%_I\",\"" D_JSON_RSSI "\":\"%d\",\"" D_JSON_SIGNAL " (dBm)""\":\"%d\","
                   "\"WiFi " D_JSON_LINK_COUNT "\":%d,\"WiFi " D_JSON_DOWNTIME "\":\"%s\",\"" D_JSON_MQTT_COUNT "\":%d,\"LoadAvg\":%lu}"),
              TasmotaGlobal.version, TasmotaGlobal.image_name, GetBuildDateAndTime().c_str(), ModuleName().c_str(), GetResetReason().c_str(),
-             GetUptime().c_str(), TasmotaGlobal.hostname, WiFi.localIP().toString().c_str(), WifiGetRssiAsQuality(WiFi.RSSI()),
+             GetUptime().c_str(), TasmotaGlobal.hostname, (uint32_t)WiFi.localIP(), WifiGetRssiAsQuality(WiFi.RSSI()),
              WiFi.RSSI(), WifiLinkCount(), WifiDowntime().c_str(), MqttConnectCount(), TasmotaGlobal.loop_load_avg);
   MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_HASS_STATE));
 }
