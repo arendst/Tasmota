@@ -2350,24 +2350,6 @@ enum SupportedModules {
   M5STACK_CORE2,
   MAXMODULE };
 
-const char kModuleNames[] PROGMEM =
-  "ESP32-DevKit|"
-#ifdef USE_WEBCAM
-  "ESP32-Cam|"
-#endif  // USE_WEBCAM
-#ifdef USE_ODROID_GO
-  "Odroid Go|"
-#endif  // USE_ODROID_GO
-//  "ESP32-Solo|"
-#ifdef USE_WT32_ETH01
-  "WT32-Eth01|"
-#endif  // USE_WT32_ETH01
-//  "TTGO Watch|"
-#ifdef USE_M5STACK_CORE2
-  "M5Stack Core2|"
-#endif  // USE_M5STACK_CORE2
-  ;
-
 // Default module settings
 const uint8_t kModuleNiceList[] PROGMEM = {
   WEMOS,
@@ -2377,18 +2359,43 @@ const uint8_t kModuleNiceList[] PROGMEM = {
 #ifdef USE_ODROID_GO
   ODROID_GO,
 #endif  // USE_ODROID_GO
-//  ESP32_SOLO,
+#ifdef USE_ESP32_SOLO
+//  ESP32_SOLO,                // To be defined
+#endif  // USE_ESP32_SOLO
 #ifdef USE_WT32_ETH01
   WT32_ETH01,
 #endif  // USE_WT32_ETH01
-//  TTGO_WATCH,
+#ifdef USE_TTGO_WATCH
+//  TTGO_WATCH,                // To be defined
+#endif  // USE_TTGO_WATCH
 #ifdef USE_M5STACK_CORE2
   M5STACK_CORE2,
 #endif  // USE_M5STACK_CORE2
 };
 
-const mytmplt kModules[] PROGMEM =
-{
+const char kModuleNames[] PROGMEM =
+  "ESP32-DevKit|"
+#ifdef USE_WEBCAM
+  "ESP32-Cam|"
+#endif  // USE_WEBCAM
+#ifdef USE_ODROID_GO
+  "Odroid Go|"
+#endif  // USE_ODROID_GO
+#ifdef USE_ESP32_SOLO
+//  "ESP32-Solo|"              // To be defined
+#endif  // USE_ESP32_SOLO
+#ifdef USE_WT32_ETH01
+  "WT32-Eth01|"
+#endif  // USE_WT32_ETH01
+#ifdef USE_TTGO_WATCH
+//  "TTGO Watch|"              // To be defined
+#endif  // USE_TTGO_WATCH
+#ifdef USE_M5STACK_CORE2
+  "M5Stack Core2|"
+#endif  // USE_M5STACK_CORE2
+  ;
+
+const mytmplt kModules[] PROGMEM = {
   {                              // WEMOS - Espressif ESP32-DevKitC - Any ESP32 device like WeMos and NodeMCU hardware (ESP32)
     AGPIO(GPIO_USER),            // 0       (I)O                GPIO0, ADC2_CH1, TOUCH1, RTC_GPIO11, CLK_OUT1, EMAC_TX_CLK
     AGPIO(GPIO_USER),            // 1       IO     TXD0         GPIO1, U0TXD, CLK_OUT3, EMAC_RXD2
@@ -2432,6 +2439,7 @@ const mytmplt kModules[] PROGMEM =
     AGPIO(GPIO_USER),            // 39      I   NO PULLUP       GPIO39, SENSOR_VN, ADC1_CH3, ADC_H, RTC_GPIO3
     0                            // Flag
   },
+
 #ifdef USE_WEBCAM
   {                              // ESP32_CAM_AITHINKER - Any ESP32 device with webcam (ESP32)
     AGPIO(GPIO_WEBCAM_XCLK),     // 0       (I)O                GPIO0, CAM_XCLK
@@ -2477,6 +2485,7 @@ const mytmplt kModules[] PROGMEM =
     0                            // Flag
   },
 #endif  // USE_WEBCAM
+
 #ifdef USE_ODROID_GO
   {                              // ODROID_GO - (ESP32)
     AGPIO(GPIO_KEY1),            // 0       (I)O                GPIO0, BTN-VOLUME
@@ -2522,6 +2531,12 @@ const mytmplt kModules[] PROGMEM =
     0                            // Flag
   },
 #endif  // USE_ODROID_GO
+
+#ifdef USE_ESP32_SOLO
+//  {                              // ESP32 Solo (ESP32) - To be defined
+//  },
+#endif  // USE_ESP32_SOLO
+
 #ifdef USE_WT32_ETH01
   {                              // WT32_ETH01 - (ESP32)
     0,                           // 0       (I)O                GPIO0, Ethernet EMAC_REF_CLK
@@ -2567,6 +2582,12 @@ const mytmplt kModules[] PROGMEM =
     0                            // Flag
   },
 #endif  // USE_WT32_ETH01
+
+#ifdef USE_TTGO_WATCH
+//  {                              // TTGO Watch (ESP32) - To be defined
+//  },
+#endif  // USE_TTGO_WATCH
+
 #ifdef USE_M5STACK_CORE2
   {                              // M5STACK CORE2 - (ESP32)
     AGPIO(GPIO_USER),            // 0       (I)O                GPIO0, SPKR_LRCK
