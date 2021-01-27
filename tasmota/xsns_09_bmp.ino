@@ -527,8 +527,6 @@ void BmpShow(bool json)
         snprintf_P(name, sizeof(name), PSTR("%s%c%02X"), name, IndexSeparator(), bmp_sensors[bmp_idx].bmp_address);  // BMXXXX-XX
       }
 
-      char temperature[33];
-      dtostrfd(bmp_temperature, Settings.flag2.temperature_resolution, temperature);
       char pressure[33];
       dtostrfd(bmp_pressure, Settings.flag2.pressure_resolution, pressure);
       char sea_pressure[33];
@@ -554,16 +552,16 @@ void BmpShow(bool json)
         char json_gas[40];
         snprintf_P(json_gas, sizeof(json_gas), PSTR(",\"" D_JSON_GAS "\":%s"), gas_resistance);
 
-        ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_TEMPERATURE "\":%s%s,\"" D_JSON_PRESSURE "\":%s%s%s}"),
+        ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_TEMPERATURE "\":%*_f%s,\"" D_JSON_PRESSURE "\":%s%s%s}"),
           name,
-          temperature,
+          Settings.flag2.temperature_resolution, &bmp_temperature,
           (bmp_sensors[bmp_idx].bmp_model >= 2) ? json_humidity : "",
           pressure,
           (Settings.altitude != 0) ? json_sealevel : "",
           (bmp_sensors[bmp_idx].bmp_model >= 3) ? json_gas : "");
 #else
-        ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_TEMPERATURE "\":%s%s,\"" D_JSON_PRESSURE "\":%s%s}"),
-          name, temperature, (bmp_sensors[bmp_idx].bmp_model >= 2) ? json_humidity : "", pressure, (Settings.altitude != 0) ? json_sealevel : "");
+        ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_TEMPERATURE "\":%*_f%s,\"" D_JSON_PRESSURE "\":%s%s}"),
+          name, Settings.flag2.temperature_resolution, &bmp_temperature, (bmp_sensors[bmp_idx].bmp_model >= 2) ? json_humidity : "", pressure, (Settings.altitude != 0) ? json_sealevel : "");
 #endif  // USE_BME680
 
 #ifdef USE_DOMOTICZ
@@ -584,7 +582,7 @@ void BmpShow(bool json)
 
 #ifdef USE_WEBSERVER
       } else {
-        WSContentSend_PD(HTTP_SNS_TEMP, name, temperature, TempUnit());
+        WSContentSend_Temp(name, bmp_temperature);
         if (bmp_sensors[bmp_idx].bmp_model >= 2) {
           WSContentSend_PD(HTTP_SNS_HUM, name, humidity);
           WSContentSend_PD(HTTP_SNS_DEW, name, dewpoint, TempUnit());

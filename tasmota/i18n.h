@@ -420,6 +420,13 @@
   #define D_JSON_MAXENERGYREACHED "MaxEnergyReached"
 
 // Commands xdrv_04_light.ino
+#define D_SO_CHANNELREMAP "ChannelRemap"    // SO37
+#define D_SO_MULTIPWM "MultiPWM"            // SO68
+#define D_SO_ALEXACTRANGE "AlexaCTRange"    // SO82
+#define D_SO_POWERONFADE "PowerOnFade"      // SO91
+#define D_SO_PWMCT "PWMCT"                  // SO92
+#define D_SO_WHITEBLEND "WhiteBlend"        // SO105
+#define D_SO_VIRTUALCT "VirtualCT"          // SO106
 #define D_CMND_CHANNEL "Channel"
 #define D_CMND_COLOR "Color"
 #define D_CMND_COLORTEMPERATURE "CT"
@@ -522,6 +529,12 @@
 
 // Commands xdrv_23_zigbee.ino
 #define D_PRFX_ZB "Zb"
+#define D_SO_ZIGBEE_NAMEKEY "NameKey"
+#define D_SO_ZIGBEE_DEVICETOPIC "DeviceTopic"
+#define D_SO_ZIGBEE_NOPREFIX "NoPrefix"
+#define D_SO_ZIGBEE_ENDPOINTSUFFIX "EndpointSuffix"
+#define D_SO_ZIGBEE_NOAUTOBIND "NoAutoBind"
+#define D_SO_ZIGBEE_NAMETOPIC "NameTopic"
 #define D_ZIGBEE_NOT_STARTED "Zigbee not started"
 #define D_CMND_ZIGBEE_PERMITJOIN "PermitJoin"
 #define D_CMND_ZIGBEE_STATUS "Status"
@@ -739,6 +752,7 @@ const char S_JSON_DRIVER_INDEX_SVALUE[] PROGMEM =             "{\"" D_CMND_DRIVE
 
 const char S_JSON_SVALUE_ACTION_SVALUE[] PROGMEM =            "{\"%s\":{\"Action\":\"%s\"}}";
 
+const char JSON_SNS_F_TEMP[] PROGMEM = ",\"%s\":{\"" D_JSON_TEMPERATURE "\":%*_f}";
 const char JSON_SNS_TEMP[] PROGMEM = ",\"%s\":{\"" D_JSON_TEMPERATURE "\":%s}";
 
 const char JSON_SNS_ILLUMINANCE[] PROGMEM = ",\"%s\":{\"" D_JSON_ILLUMINANCE "\":%d}";
@@ -771,7 +785,9 @@ const float kSpeedConversionFactor[] = {1,            // none
 // xdrv_02_webserver.ino
 #ifdef USE_WEBSERVER
 // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
-const char HTTP_SNS_TEMP[]          PROGMEM = "{s}%s "  D_TEMPERATURE         "{m}%s " D_UNIT_DEGREE            "%c{e}";
+const char HTTP_SNS_F_TEMP[]        PROGMEM = "{s}%s "  D_TEMPERATURE         "{m}%*_f " D_UNIT_DEGREE            "%c{e}";
+//const char HTTP_SNS_TEMP[]          PROGMEM = "{s}%s "  D_TEMPERATURE         "{m}%s " D_UNIT_DEGREE            "%c{e}";
+
 const char HTTP_SNS_HUM[]           PROGMEM = "{s}%s "  D_HUMIDITY            "{m}%s " D_UNIT_PERCENT             "{e}";
 const char HTTP_SNS_DEW[]           PROGMEM = "{s}%s "  D_DEWPOINT            "{m}%s " D_UNIT_DEGREE            "%c{e}";
 const char HTTP_SNS_PRESSURE[]      PROGMEM = "{s}%s "  D_PRESSURE            "{m}%s "                          "%s{e}";

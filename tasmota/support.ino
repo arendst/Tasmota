@@ -916,8 +916,8 @@ int GetCommandCode(char* destination, size_t destination_size, const char* needl
   return result;
 }
 
-bool DecodeCommand(const char* haystack, void (* const MyCommand[])(void))
-{
+bool DecodeCommand(const char* haystack, void (* const MyCommand[])(void), const uint8_t *synonyms = nullptr);
+bool DecodeCommand(const char* haystack, void (* const MyCommand[])(void), const uint8_t *synonyms) {
   GetTextIndexed(XdrvMailbox.command, CMDSZ, 0, haystack);  // Get prefix if available
   int prefix_length = strlen(XdrvMailbox.command);
   if (prefix_length) {
@@ -927,10 +927,18 @@ bool DecodeCommand(const char* haystack, void (* const MyCommand[])(void))
       return false;                                         // Prefix not in command
     }
   }
+  size_t syn_count = synonyms ? pgm_read_byte(synonyms) : 0;
   int command_code = GetCommandCode(XdrvMailbox.command + prefix_length, CMDSZ, XdrvMailbox.topic + prefix_length, haystack);
   if (command_code > 0) {                                   // Skip prefix
-    XdrvMailbox.command_code = command_code -1;
-    MyCommand[XdrvMailbox.command_code]();
+    if (command_code > syn_count) {
+      // We passed the synonyms zone, it's a regular command
+      XdrvMailbox.command_code = command_code - 1 - syn_count;
+      MyCommand[XdrvMailbox.command_code]();
+    } else {
+      // We have a SetOption synonym
+      XdrvMailbox.index = pgm_read_byte(synonyms + command_code);
+      CmndSetoptionBase(0);
+    }
     return true;
   }
   return false;

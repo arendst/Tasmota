@@ -36,6 +36,10 @@
 #define HID_DIGITAL_PEN	0x03C7
 #define HID_BARCODE		0x03C8
 
+
+/**
+ * @brief A model of a %BLE Human Interface Device.
+ */
 class NimBLEHIDDevice {
 public:
 	NimBLEHIDDevice(NimBLEServer*);

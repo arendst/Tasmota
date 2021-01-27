@@ -107,6 +107,7 @@ public:
 
 #ifdef USE_ZIGBEE_EZSP
   uint32_t permit_end_time = 0;       // timestamp when permit join ends
+  uint16_t ezsp_version = 0;
 #elif defined(USE_ZIGBEE_ZNP)
   bool permit_end_time = false;       // in ZNP mode it's only a boolean
 #endif

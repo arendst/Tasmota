@@ -435,8 +435,6 @@ void solaxX1Show(bool json)
   char pv2_power[33];
   dtostrfd(solaxX1.dc2_power, Settings.flag2.wattage_resolution, pv2_power);
 #endif
-  char temperature[33];
-  dtostrfd(solaxX1.temperature, Settings.flag2.temperature_resolution, temperature);
   char runtime[33];
   dtostrfd(solaxX1.runtime_total, 0, runtime);
   char status[33];
@@ -450,12 +448,12 @@ void solaxX1Show(bool json)
     ResponseAppend_P(PSTR(",\"" D_JSON_PV2_VOLTAGE "\":%s,\"" D_JSON_PV2_CURRENT "\":%s,\"" D_JSON_PV2_POWER "\":%s"),
                                 pv2_voltage, pv2_current, pv2_power);
 #endif
-    ResponseAppend_P(PSTR(",\"" D_JSON_TEMPERATURE "\":%s,\"" D_JSON_RUNTIME "\":%s,\"" D_JSON_STATUS "\":\"%s\",\"" D_JSON_ERROR "\":%d"),
-                                temperature, runtime, status, solaxX1.errorCode);
+    ResponseAppend_P(PSTR(",\"" D_JSON_TEMPERATURE "\":%*_f,\"" D_JSON_RUNTIME "\":%s,\"" D_JSON_STATUS "\":\"%s\",\"" D_JSON_ERROR "\":%d"),
+                                Settings.flag2.temperature_resolution, &solaxX1.temperature, runtime, status, solaxX1.errorCode);
 
 #ifdef USE_DOMOTICZ
     // Avoid bad temperature report at beginning of the day (spikes of 1200 celsius degrees)
-    if (0 == TasmotaGlobal.tele_period && solaxX1.temperature < 100) { DomoticzSensor(DZ_TEMP, temperature); }
+    if (0 == TasmotaGlobal.tele_period && solaxX1.temperature < 100) { DomoticzFloatSensor(DZ_TEMP, solaxX1.temperature); }
 #endif // USE_DOMOTICZ
 
 #ifdef USE_WEBSERVER
@@ -464,7 +462,7 @@ void solaxX1Show(bool json)
 #ifdef SOLAXX1_PV2
     WSContentSend_PD(HTTP_SNS_solaxX1_DATA2, pv2_voltage, pv2_current, pv2_power);
 #endif
-    WSContentSend_PD(HTTP_SNS_TEMP, D_SOLAX_X1, temperature, TempUnit());
+    WSContentSend_Temp(D_SOLAX_X1, solaxX1.temperature);
     char errorCodeString[33];
     WSContentSend_PD(HTTP_SNS_solaxX1_DATA3, runtime, status,
       GetTextIndexed(errorCodeString, sizeof(errorCodeString), solaxX1_ParseErrorCode(solaxX1.errorCode), kSolaxError));

@@ -107,15 +107,14 @@ void HP303B_Show(bool json) {
 
       float sealevel = ConvertPressureForSeaLevel(hp303b_sensor[i].pressure);
 
-      char str_temperature[33];
-      dtostrfd(hp303b_sensor[i].temperature, Settings.flag2.temperature_resolution, str_temperature);
       char str_pressure[33];
       dtostrfd(hp303b_sensor[i].pressure, Settings.flag2.pressure_resolution, str_pressure);
       char sea_pressure[33];
       dtostrfd(sealevel, Settings.flag2.pressure_resolution, sea_pressure);
 
       if (json) {
-        ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_TEMPERATURE "\":%s,\"" D_JSON_PRESSURE "\":%s"), sensor_name, str_temperature,  str_pressure);
+        ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_TEMPERATURE "\":%*_f,\"" D_JSON_PRESSURE "\":%s"),
+          sensor_name, Settings.flag2.temperature_resolution, &hp303b_sensor[i].temperature,  str_pressure);
         if (Settings.altitude != 0) {
           ResponseAppend_P(PSTR(",\"" D_JSON_PRESSUREATSEALEVEL "\":%s"), sea_pressure);
         }
@@ -123,12 +122,12 @@ void HP303B_Show(bool json) {
 #ifdef USE_DOMOTICZ
         // Domoticz and knx only support one temp sensor
         if ((0 == TasmotaGlobal.tele_period) && (0 == i)) {
-          DomoticzSensor(DZ_TEMP, hp303b_sensor[i].temperature);
+          DomoticzFloatSensor(DZ_TEMP, hp303b_sensor[i].temperature);
         }
 #endif // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
       } else {
-        WSContentSend_PD(HTTP_SNS_TEMP, sensor_name, str_temperature, TempUnit());
+        WSContentSend_Temp(sensor_name, hp303b_sensor[i].temperature);
         WSContentSend_PD(HTTP_SNS_PRESSURE, sensor_name, str_pressure, PressureUnit().c_str());
         if (Settings.altitude != 0) {
           WSContentSend_PD(HTTP_SNS_SEAPRESSURE, sensor_name, sea_pressure, PressureUnit().c_str());

@@ -1738,9 +1738,8 @@ void MINRFShow(bool json)
               ||(hass_mode==2)
 #endif //USE_HOME_ASSISTANT
             ) {
-              char temperature[FLOATSZ];
-              dtostrfd(MIBLEsensors[i].temp, Settings.flag2.temperature_resolution, temperature);
-              ResponseAppend_P(PSTR(",\"" D_JSON_TEMPERATURE "\":%s"), temperature);
+              ResponseAppend_P(PSTR(",\"" D_JSON_TEMPERATURE "\":%*_f"),
+                Settings.flag2.temperature_resolution, &MIBLEsensors[i].temp);
             }
           }
         }
@@ -1897,9 +1896,7 @@ void MINRFShow(bool json)
         if (MIBLEsensors[i].type==YEERC) continue;
         if (MIBLEsensors[i].type==FLORA){
           if(!isnan(MIBLEsensors[i].temp)){
-            char temperature[FLOATSZ];
-            dtostrfd(MIBLEsensors[i].temp, Settings.flag2.temperature_resolution, temperature);
-            WSContentSend_PD(HTTP_SNS_TEMP, kMINRFDeviceType[MIBLEsensors[i].type-1], temperature, TempUnit());
+            WSContentSend_Temp(kMINRFDeviceType[MIBLEsensors[i].type-1], MIBLEsensors[i].temp);
           }
           if(MIBLEsensors[i].lux!=0xffffffff){ // this is the error code -> no valid value
             WSContentSend_PD(HTTP_SNS_ILLUMINANCE, kMINRFDeviceType[MIBLEsensors[i].type-1], MIBLEsensors[i].lux);

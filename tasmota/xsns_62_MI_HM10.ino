@@ -1812,9 +1812,8 @@ void HM10Show(bool json)
               ||(hass_mode!=-1)
 #endif //USE_HOME_ASSISTANT
             ) {
-              char temperature[FLOATSZ];
-              dtostrfd(MIBLEsensors[i].temp, Settings.flag2.temperature_resolution, temperature);
-              ResponseAppend_P(PSTR(",\"" D_JSON_TEMPERATURE "\":%s"), temperature);
+              ResponseAppend_P(PSTR(",\"" D_JSON_TEMPERATURE "\":%*_f"),
+                Settings.flag2.temperature_resolution, &MIBLEsensors[i].temp);
             }
           }
         }
@@ -1967,9 +1966,7 @@ void HM10Show(bool json)
         WSContentSend_PD(HTTP_HM10_MAC, kHM10DeviceType[MIBLEsensors[i].type-1], D_MAC_ADDRESS, _MAC);
         if (MIBLEsensors[i].type==FLORA){
           if(!isnan(MIBLEsensors[i].temp)){
-            char temperature[FLOATSZ];
-            dtostrfd(MIBLEsensors[i].temp, Settings.flag2.temperature_resolution, temperature);
-            WSContentSend_PD(HTTP_SNS_TEMP, kHM10DeviceType[MIBLEsensors[i].type-1], temperature, TempUnit());
+            WSContentSend_Temp(kHM10DeviceType[MIBLEsensors[i].type-1], MIBLEsensors[i].temp);
           }
           if(MIBLEsensors[i].lux!=0x00ffffff){ // this is the error code -> no valid value
             WSContentSend_PD(HTTP_SNS_ILLUMINANCE, kHM10DeviceType[MIBLEsensors[i].type-1], MIBLEsensors[i].lux);

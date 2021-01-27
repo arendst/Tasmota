@@ -268,14 +268,11 @@ bool Bl0940Command(void) {
 }
 
 void Bl0940Show(bool json) {
-  char temperature[33];
-  dtostrfd(Bl0940.temperature, Settings.flag2.temperature_resolution, temperature);
-
   if (json) {
-    ResponseAppend_P(JSON_SNS_TEMP, "BL0940", temperature);
+    ResponseAppend_P(JSON_SNS_F_TEMP, "BL0940", Settings.flag2.temperature_resolution, &Bl0940.temperature);
     if (0 == TasmotaGlobal.tele_period) {
 #ifdef USE_DOMOTICZ
-      DomoticzSensor(DZ_TEMP, temperature);
+      DomoticzFloatSensor(DZ_TEMP, Bl0940.temperature);
 #endif  // USE_DOMOTICZ
 #ifdef USE_KNX
       KnxSensor(KNX_TEMPERATURE, Bl0940.temperature);
@@ -283,8 +280,9 @@ void Bl0940Show(bool json) {
     }
 #ifdef USE_WEBSERVER
   } else {
-    WSContentSend_PD(HTTP_SNS_TEMP, "", temperature, TempUnit());
+    WSContentSend_Temp("", Bl0940.temperature);
 #endif  // USE_WEBSERVER
+
   }
 }
 

@@ -264,9 +264,7 @@ bool ZigbeeUploadBootloaderPrompt(void) {
   }
 
   if (buf_len) {
-    char hex_char[256];
-    ToHex_P(serial_buffer, buf_len, hex_char, 256);
-    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("XMD: Rcvd %s"), hex_char);
+    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("XMD: Rcvd %*_H"), buf_len, serial_buffer);
   }
 
   return ((4 == ZbUpload.byte_counter) && (millis() > XModem.flush_delay));

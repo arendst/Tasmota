@@ -417,10 +417,8 @@ void ChirpShow(bool json)
 {
   for (uint32_t i = 0; i < chirp_found_sensors; i++) {
     if (chirp_sensor[i].version) {
-      // convert double values to string
-      char str_temperature[33];
-      double t_temperature = ((double) chirp_sensor[i].temperature )/10.0;
-      dtostrfd(t_temperature, Settings.flag2.temperature_resolution, str_temperature);
+      float t_temperature = ConvertTemp(((float)chirp_sensor[i].temperature )/10.0);
+
       char str_light[33];
       dtostrfd(chirp_sensor[i].light, 0, str_light);
       char str_version[7];
@@ -435,7 +433,7 @@ void ChirpShow(bool json)
         if(!chirp_sensor[i].explicitSleep) {
           ResponseAppend_P(PSTR(",\"%s%u\":{\"" D_JSON_MOISTURE "\":%d"), chirp_name, i, chirp_sensor[i].moisture);
           if(chirp_sensor[i].temperature!=-1){ // this is the error code -> no temperature
-            ResponseAppend_P(PSTR(",\"" D_JSON_TEMPERATURE "\":%s"),str_temperature);
+            ResponseAppend_P(PSTR(",\"" D_JSON_TEMPERATURE "\":%*_f"), Settings.flag2.temperature_resolution, &t_temperature);
           }
           ResponseAppend_P(PSTR(",\"" D_JSON_DARKNESS "\":%s}"),str_light);
         }
@@ -458,7 +456,7 @@ void ChirpShow(bool json)
           WSContentSend_PD(HTTP_SNS_MOISTURE, "", chirp_sensor[i].moisture);
           WSContentSend_PD(HTTP_SNS_DARKNESS, str_light);
           if (chirp_sensor[i].temperature!=-1) { // this is the error code -> no temperature
-            WSContentSend_PD(HTTP_SNS_TEMP, "", str_temperature, TempUnit());
+            WSContentSend_Temp("", t_temperature);
           }
         }
 

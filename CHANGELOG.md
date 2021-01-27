@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 ## [9.2.0.4]
 ### Added
 - Function ``AddLog`` to provide logging for up to 128 (LOGSZ) characters to save stack space
+- Commands ``ChannelRemap``, ``MultiPWM``, ``AlexaCTRange``, ``PowerOnFade``, ``PWMCT``, ``WhiteBlend``, ``VirtualCT`` as synonyms for ``SetOption37, 68, 82, 91, 92, 105 and 106`` respectively
 
 ### Changed
 - Maximum chars in ``AddLog_P`` logging restored from 128 to 700 (MAX_LOGSZ) to solve broken error messages

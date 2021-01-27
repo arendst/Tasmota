@@ -182,8 +182,6 @@ void MPU_6050Show(bool json)
   MPU_6050PerformReading();
 
   float tempConv = ConvertTemp(MPU_6050_temperature / 340.0 + 35.53);
-  char temperature[33];
-  dtostrfd(tempConv, Settings.flag2.temperature_resolution, temperature);
   char axis_ax[33];
   dtostrfd(MPU_6050_ax, Settings.flag2.axis_resolution, axis_ax);
   char axis_ay[33];
@@ -225,19 +223,19 @@ void MPU_6050Show(bool json)
     snprintf_P(json_ypr_p, sizeof(json_ypr_p), PSTR(",\"" D_JSON_PITCH "\":%s"), axis_pitch);
     char json_ypr_r[25];
     snprintf_P(json_ypr_r, sizeof(json_ypr_r), PSTR(",\"" D_JSON_ROLL "\":%s"), axis_roll);
-    ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_TEMPERATURE "\":%s%s%s%s%s%s%s%s%s%s}"),
-      D_SENSOR_MPU6050, temperature, json_axis_ax, json_axis_ay, json_axis_az, json_axis_gx, json_axis_gy, json_axis_gz,
+    ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_TEMPERATURE "\":%*_f%s%s%s%s%s%s%s%s%s}"),
+      D_SENSOR_MPU6050, Settings.flag2.temperature_resolution, &tempConv, json_axis_ax, json_axis_ay, json_axis_az, json_axis_gx, json_axis_gy, json_axis_gz,
       json_ypr_y, json_ypr_p, json_ypr_r);
 #else
-    ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_TEMPERATURE "\":%s%s%s%s%s%s%s}"),
-      D_SENSOR_MPU6050, temperature, json_axis_ax, json_axis_ay, json_axis_az, json_axis_gx, json_axis_gy, json_axis_gz);
+    ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_TEMPERATURE "\":%*_f%s%s%s%s%s%s}"),
+      D_SENSOR_MPU6050, Settings.flag2.temperature_resolution, &tempConv, json_axis_ax, json_axis_ay, json_axis_az, json_axis_gx, json_axis_gy, json_axis_gz);
 #endif // USE_MPU6050_DMP
 #ifdef USE_DOMOTICZ
-    DomoticzSensor(DZ_TEMP, temperature);
+    DomoticzFloatSensor(DZ_TEMP, tempConv);
 #endif // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
   } else {
-    WSContentSend_PD(HTTP_SNS_TEMP, D_SENSOR_MPU6050, temperature, TempUnit());
+    WSContentSend_Temp(D_SENSOR_MPU6050, tempConv);
     WSContentSend_PD(HTTP_SNS_AXIS, axis_ax, axis_ay, axis_az, axis_gx, axis_gy, axis_gz);
 #ifdef USE_MPU6050_DMP
     WSContentSend_PD(HTTP_SNS_YPR, axis_yaw, axis_pitch, axis_roll);
