@@ -1115,6 +1115,8 @@ void NeoPoolShow(bool json)
  * Sensor83 26 <addr> (<cnt>}
  *            same as "Sensor83 21" but using hex data output
  *
+ * Sensor83 99
+ *            write data permanent into flash
  *
  *
  * Examples:
@@ -1164,6 +1166,7 @@ void NeoPoolShow(bool json)
 #define NEOPOOL_CMND_READ_REG32       21
 #define NEOPOOL_CMND_WRITE_REG32      22
 #define NEOPOOL_CMND_READ_REG_HEX32   26
+#define NEOPOOL_CMND_SAVE_TO_EEPROM   99
 
 bool NeoPoolCmnd(void)
 {
@@ -1326,6 +1329,14 @@ bool NeoPoolCmnd(void)
         }
       }
       break;
+
+    case NEOPOOL_CMND_SAVE_TO_EEPROM:
+        addr = MBF_SAVE_TO_EEPROM;
+        if (0 == params_cnt) {
+          data[0] = 1;
+          serviced = (NEOPOOL_OK == NeoPoolWriteRegister(addr, data, 1));
+        }
+        break;
 
     default:
       AddLog_P(LOG_LEVEL_DEBUG, PSTR("NEO: Unknown " D_CMND_SENSOR "%d cmnd %d"), XSNS_83, cmnd);
