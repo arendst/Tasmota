@@ -1,5 +1,5 @@
 /*
-  xdrv_52_BLE_ESP32.ino - BLE via ESP32 support for Tasmota
+  xdrv_79_esp32_ble.ino - BLE via ESP32 support for Tasmota
 
   Copyright (C) 2020  Christian Baars and Theo Arends and Simon Hailes
 
@@ -22,8 +22,18 @@
   --------------------------------------------------------------------------------------------
 */
 
+// TEMPORARILY define ESP32 and USE_BLE_ESP32 so VSCODE shows highlighting....
+//#define VSCODE_DEV
+#ifdef VSCODE_DEV
+#define ESP32
+#define USE_BLE_ESP32
+#endif
+
+#ifdef ESP32                       // ESP32 only. Use define USE_HM10 for ESP8266 support
+#ifdef USE_BLE_ESP32
+
 /*
-  xdrv_52:
+  xdrv_79:
   This driver uses the ESP32 BLE functionality to hopefully provide enough
   BLE functionality to implement specific drivers on top of it.
 
@@ -80,27 +90,12 @@ i.e. the Bluetooth of the ESP can be shared without conflict.
 
 */
 
-
-// TEMPORARILY define ESP32 and USE_BLE_ESP32 so VSCODE shows highlighting....
-//#define VSCODE_DEV
-
-#ifdef VSCODE_DEV
-#define ESP32
-#define USE_BLE_ESP32
-#endif
-
-#ifdef ESP32                       // ESP32 only. Use define USE_HM10 for ESP8266 support
-
-#ifdef USE_BLE_ESP32
-
 #define BLE_ESP32_ALIASES
 
 // uncomment for more diagnostic/information messages - + more flash use.
 //#define BLE_ESP32_DEBUG
 
-
-
-#define XDRV_52                    52
+#define XDRV_79                    79
 #define USE_MI_DECRYPTION
 
 #include <vector>
@@ -3456,7 +3451,7 @@ int ExtStopBLE(){
   return 0;
 }
 
-bool Xdrv52(uint8_t function)
+bool Xdrv79(uint8_t function)
 {
   //if (!Settings.flag5.mi32_enable) { return false; }  // SetOption115 - Enable ESP32 BLE BLE
 

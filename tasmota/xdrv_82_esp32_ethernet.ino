@@ -1,5 +1,5 @@
 /*
-  xdrv_82_ethernet.ino - ESP32 (PoE) ethernet support for Tasmota
+  xdrv_82_esp32_ethernet.ino - ESP32 (PoE) ethernet support for Tasmota
 
   Copyright (C) 2021  Theo Arends
 

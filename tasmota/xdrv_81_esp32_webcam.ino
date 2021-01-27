@@ -1,5 +1,5 @@
 /*
-  xdrv_81_webcam.ino - ESP32 webcam support for Tasmota
+  xdrv_81_esp32_webcam.ino - ESP32 webcam support for Tasmota
 
   Copyright (C) 2021  Gerhard Mutz and Theo Arends
 
