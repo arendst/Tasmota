@@ -1,5 +1,9 @@
 /*
-  xsns_52_ibeacon.ino - Support for HM17 BLE Module + ibeacon reader on Tasmota
+  xsns_52_esp32_ibeacon_ble.ino
+  if (!USE_IBEACON_ESP32 && USE_BLE_ESP32)
+   - Support for HM17 BLE Module + ibeacon reader on Tasmota (untested?)
+  if (USE_IBEACON_ESP32 && USE_BLE_ESP32)
+   - Support for BLE_ESP32 ibeacon reader on Tasmota
 
   Copyright (C) 2020  Gerhard Mutz and Theo Arends
 
