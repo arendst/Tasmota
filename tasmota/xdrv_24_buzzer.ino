@@ -64,7 +64,9 @@ void BuzzerBeep(uint32_t count, uint32_t on, uint32_t off, uint32_t tune, uint32
   Buzzer.set[0] = off;                       // Off duration in 100 mSec steps
   Buzzer.set[1] = on;                        // On duration in 100 mSec steps
   Buzzer.duration = 1;                       // Start buzzer on first step
+  Buzzer.size = 0;
   Buzzer.tune_size = 0;
+  Buzzer.tune = 0;
   Buzzer.tune_reload = 0;
   Buzzer.mode = mode;
 
@@ -182,14 +184,15 @@ void CmndBuzzer(void) {
   // Buzzer <number of beeps>,<duration of beep in 100mS steps>,<duration of silence in 100mS steps>,<tune>
   // All parameters are optional
   //
-  // Buzzer             = Buzzer 1,1,1 = Beep once with both duration and pause set to 100mS
-  // Buzzer 0           = Stop active beep cycle
-  // Buzzer 2           = Beep twice with duration 200mS and pause 100mS
-  // Buzzer 2,3         = Beep twice with duration 300mS and pause 100mS
-  // Buzzer 2,3,4       = Beep twice with duration 300mS and pause 400mS
-  // Buzzer 2,3,4,0xF54 = Beep a sequence twice indicated by 0xF54 = 1111 0101 01 with duration 300mS and pause 400mS
-  // Buzzer -1          = Beep infinite
-  // Buzzer -2          = Beep following link led
+  // Buzzer              = Buzzer 1,1,1 = Beep once with both duration and pause set to 100mS
+  // Buzzer 0            = Stop active beep cycle
+  // Buzzer 2            = Beep twice with duration 200mS and pause 100mS
+  // Buzzer 2,3          = Beep twice with duration 300mS and pause 100mS
+  // Buzzer 2,3,4        = Beep twice with duration 300mS and pause 400mS
+  // Buzzer 2,3,4,0x0F54 = Beep a sequence twice indicated by 0x0F54 = 1111 0101 0100 with duration 300mS and pause 400mS
+  //                         Notice skipped leading zeroes but valid trailing zeroes
+  // Buzzer -1           = Beep infinite
+  // Buzzer -2           = Beep following link led
 
   if (XdrvMailbox.data_len > 0) {
     if (XdrvMailbox.payload != 0) {
@@ -197,11 +200,11 @@ void CmndBuzzer(void) {
       uint32_t mode = 0;
       ParseParameters(4, parm);
       if (XdrvMailbox.payload <= 0) {
-        parm[0] = 1;                       // Default Count
-        mode = -XdrvMailbox.payload;       // 0, 1 or 2
+        parm[0] = 1;                         // Default Count
+        mode = -XdrvMailbox.payload;         // 0, 1 or 2
       }
       for (uint32_t i = 1; i < 3; i++) {
-        if (parm[i] < 1) { parm[i] = 1; }  // Default On time, Off time
+        if (parm[i] < 1) { parm[i] = 1; }    // Default On time, Off time
       }
       BuzzerBeep(parm[0], parm[1], parm[2], parm[3], mode);
     } else {
