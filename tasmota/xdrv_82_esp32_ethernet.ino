@@ -120,6 +120,12 @@ void EthernetInit(void) {
     return;
   }
 
+  if (WT32_ETH01 == TasmotaGlobal.module_type) {
+    Settings.eth_address = 1;                    // EthAddress
+    Settings.eth_type = ETH_PHY_LAN8720;         // EthType
+    Settings.eth_clk_mode = ETH_CLOCK_GPIO0_IN;  // EthClockMode
+  }
+
 //  snprintf_P(Eth.hostname, sizeof(Eth.hostname), PSTR("%s_eth"), TasmotaGlobal.hostname);
   strlcpy(eth_hostname, TasmotaGlobal.hostname, sizeof(eth_hostname) -5);  // Make sure there is room for "_eth"
   strcat(eth_hostname, "_eth");
