@@ -1,5 +1,7 @@
 /*
-  xsns_62_MI_ESP32.ino - MI-BLE-sensors via ESP32 support for Tasmota
+  xsns_62_esp32_mi.ino - MI-BLE-sensors via ESP32 support for Tasmota
+  enabled by ESP32 && !USE_BLE_ESP32
+  if (ESP32 && USE_BLE_ESP32) then xsns_62_esp32_mi_ble.ino is used
 
   Copyright (C) 2021  Christian Baars and Theo Arends
 
