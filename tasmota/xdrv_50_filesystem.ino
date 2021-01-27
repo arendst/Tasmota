@@ -413,7 +413,7 @@ const char UFS_FORM_FILE_UPGc[] PROGMEM =
   "<div style='text-align:left;color:#%06x;'>" D_FS_SIZE " %s MB - " D_FS_FREE " %s MB";
 
 const char UFS_FORM_FILE_UPGc1[] PROGMEM =
-    " &nbsp;&nbsp;<a href='http://%s/ufsd?dir=%d'>%s</a>";
+    " &nbsp;&nbsp;<a href='http://%_I/ufsd?dir=%d'>%s</a>";
 
 const char UFS_FORM_FILE_UPGc2[] PROGMEM =
   "</div>";
@@ -436,11 +436,11 @@ const char UFS_FORM_SDC_DIRd[] PROGMEM =
 const char UFS_FORM_SDC_DIRb[] PROGMEM =
   "<pre><a href='%s' file='%s'>%s</a> %s %8d %s</pre>";
 const char UFS_FORM_SDC_HREF[] PROGMEM =
-  "http://%s/ufsd?download=%s/%s";
+  "http://%_I/ufsd?download=%s/%s";
 #ifdef GUI_TRASH_FILE
 const char UFS_FORM_SDC_HREFdel[] PROGMEM =
-  //"<a href=http://%s/ufsd?delete=%s/%s>&#128465;</a>";
-  "<a href=http://%s/ufsd?delete=%s/%s>&#128293;</a>"; // 🔥
+  //"<a href=http://%_I/ufsd?delete=%s/%s>&#128465;</a>";
+  "<a href=http://%_I/ufsd?delete=%s/%s>&#128293;</a>"; // 🔥
 #endif // GUI_TRASH_FILE
 
 void UfsDirectory(void) {
@@ -492,7 +492,7 @@ void UfsDirectory(void) {
   WSContentSend_PD(UFS_FORM_FILE_UPGc, WebColor(COL_TEXT), ts, fs);
 
   if (ufs_dir) {
-    WSContentSend_P(UFS_FORM_FILE_UPGc1, WiFi.localIP().toString().c_str(), (ufs_dir == 1)?2:1, (ufs_dir == 1)?PSTR("SDCard"):PSTR("FlashFS"));
+    WSContentSend_P(UFS_FORM_FILE_UPGc1, (uint32_t)WiFi.localIP(), (ufs_dir == 1)?2:1, (ufs_dir == 1)?PSTR("SDCard"):PSTR("FlashFS"));
   }
   WSContentSend_P(UFS_FORM_FILE_UPGc2);
 
@@ -520,7 +520,7 @@ void UfsListDir(char *path, uint8_t depth) {
   if (dir) {
     dir.rewindDirectory();
     if (strlen(path)>1) {
-      snprintf_P(npath, sizeof(npath), PSTR("http://%s/ufsd?download=%s"), WiFi.localIP().toString().c_str(), path);
+      ext_snprintf_P(npath, sizeof(npath), PSTR("http://%_I/ufsd?download=%s"), (uint32_t)WiFi.localIP(), path);
       for (uint32_t cnt = strlen(npath) - 1; cnt > 0; cnt--) {
         if (npath[cnt] == '/') {
           if (npath[cnt - 1] == '=') {
@@ -562,7 +562,7 @@ void UfsListDir(char *path, uint8_t depth) {
 
         sprintf(cp, format, ep);
         if (entry.isDirectory()) {
-          snprintf_P(npath, sizeof(npath), UFS_FORM_SDC_HREF, WiFi.localIP().toString().c_str(), pp, ep);
+          snprintf_P(npath, sizeof(npath), UFS_FORM_SDC_HREF, (uint32_t)WiFi.localIP(), pp, ep);
           WSContentSend_P(UFS_FORM_SDC_DIRd, npath, ep, name);
           uint8_t plen = strlen(path);
           if (plen > 1) {
@@ -574,12 +574,12 @@ void UfsListDir(char *path, uint8_t depth) {
         } else {
 #ifdef GUI_TRASH_FILE
           char delpath[128];
-          snprintf_P(delpath, sizeof(delpath), UFS_FORM_SDC_HREFdel, WiFi.localIP().toString().c_str(), pp, ep);
+          snprintf_P(delpath, sizeof(delpath), UFS_FORM_SDC_HREFdel, (uint32_t)WiFi.localIP(), pp, ep);
 #else
           char delpath[2];
           delpath[0]=0;
 #endif // GUI_TRASH_FILE
-          snprintf_P(npath, sizeof(npath), UFS_FORM_SDC_HREF, WiFi.localIP().toString().c_str(), pp, ep);
+          snprintf_P(npath, sizeof(npath), UFS_FORM_SDC_HREF, (uint32_t)WiFi.localIP(), pp, ep);
           WSContentSend_P(UFS_FORM_SDC_DIRb, npath, ep, name, tstr.c_str(), entry.size(), delpath);
         }
       }

@@ -93,8 +93,8 @@ void EthernetEvent(WiFiEvent_t event) {
         ETH.linkSpeed(), (ETH.fullDuplex()) ? " Full Duplex" : "");
       break;
     case SYSTEM_EVENT_ETH_GOT_IP:
-      AddLog(LOG_LEVEL_DEBUG, PSTR("ETH: Mac %s, IPAddress %s, Hostname %s"),
-        ETH.macAddress().c_str(), ETH.localIP().toString().c_str(), eth_hostname);
+      AddLog(LOG_LEVEL_DEBUG, PSTR("ETH: Mac %s, IPAddress %_I, Hostname %s"),
+        ETH.macAddress().c_str(), (uint32_t)ETH.localIP(), eth_hostname);
       Settings.ipv4_address[1] = (uint32_t)ETH.gatewayIP();
       Settings.ipv4_address[2] = (uint32_t)ETH.subnetMask();
       Settings.ipv4_address[3] = (uint32_t)ETH.dnsIP();
