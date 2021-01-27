@@ -1219,28 +1219,14 @@ int ResponseAppendTime(void)
   return ResponseAppendTimeFormat(Settings.flag2.time_format);
 }
 
-// int ResponseAppendTHD(float f_temperature, float f_humidity)
-// {
-//   char temperature[FLOATSZ];
-//   dtostrfd(f_temperature, Settings.flag2.temperature_resolution, temperature);
-//   char humidity[FLOATSZ];
-//   dtostrfd(f_humidity, Settings.flag2.humidity_resolution, humidity);
-//   char dewpoint[FLOATSZ];
-//   dtostrfd(CalcTempHumToDew(f_temperature, f_humidity), Settings.flag2.temperature_resolution, dewpoint);
-
-//   return ResponseAppend_P(PSTR("\"" D_JSON_TEMPERATURE "\":%s,\"" D_JSON_HUMIDITY "\":%s,\"" D_JSON_DEWPOINT "\":%s"), temperature, humidity, dewpoint);
-// }
-
 int ResponseAppendTHD(float f_temperature, float f_humidity)
 {
   float dewpoint = CalcTempHumToDew(f_temperature, f_humidity);
-
   return ResponseAppend_P(PSTR("\"" D_JSON_TEMPERATURE "\":%*_f,\"" D_JSON_HUMIDITY "\":%*_f,\"" D_JSON_DEWPOINT "\":%*_f"),
                           Settings.flag2.temperature_resolution, &f_temperature,
                           Settings.flag2.humidity_resolution, &f_humidity,
                           Settings.flag2.temperature_resolution, &dewpoint);
 }
-
 
 int ResponseJsonEnd(void)
 {
