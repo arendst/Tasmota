@@ -324,19 +324,6 @@ bool SnfL1ModuleSelected(void)
   return false;
 }
 
-// SONOFF_L1_MODE_COLORFUL
-void SnfL1ModeColorful() {
-  char buffer[SONOFF_L1_BUFFER_SIZE];
-  snprintf_P(buffer, sizeof(buffer), PSTR("AT+UPDATE=\"sequence\":\"%d%03d\",\"switch\":\"%s\",\"colorR\":%d,\"colorG\":%d,\"colorB\":%d,\"bright\":%d,\"mode\":%d"),
-    LocalTime(), millis()%1000,
-    Snfl1.power ? "on" : "off",
-    Snfl1.color[0], Snfl1.color[1], Snfl1.color[2],
-    Snfl1.dimmer,
-    SONOFF_L1_MODE_COLORFUL);
-
-  SnfL1Send(buffer);
-}
-
 // SONOFF_L1_MODE_SYNC_TO_MUSIC
 void SnfL1ModeMusic(uint32_t sensitive, uint32_t speed) {
   char buffer[SONOFF_L1_BUFFER_SIZE];
