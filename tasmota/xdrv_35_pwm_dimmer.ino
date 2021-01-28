@@ -619,13 +619,13 @@ void PWMDimmerHandleButton(uint32_t button_index, bool pressed)
   if (mqtt_trigger) {
     char topic[TOPSZ];
     sprintf_P(TasmotaGlobal.mqtt_data, PSTR("Trigger%u"), mqtt_trigger);
-#ifdef USE_PWM_DIMMER_REMOTE
-    if (Settings.flag4.multiple_device_groups) {
+#ifdef USE_DEVICE_GROUPS
+    if (Settings.flag4.device_groups_enabled) {
       snprintf_P(topic, sizeof(topic), PSTR("cmnd/%s/EVENT"), device_groups[power_button_index].group_name);
       MqttPublish(topic);
     }
     else
-#endif  // USE_PWM_DIMMER_REMOTE
+#endif  // USE_DEVICE_GROUPS
       MqttPublishPrefixTopic_P(CMND, PSTR("EVENT"));
   }
 
