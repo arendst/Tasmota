@@ -26,7 +26,7 @@
 const char kZbCommands[] PROGMEM = D_PRFX_ZB "|"    // prefix
   // SetOption synonyms
   D_SO_ZIGBEE_NAMEKEY "|" D_SO_ZIGBEE_DEVICETOPIC "|" D_SO_ZIGBEE_NOPREFIX "|" D_SO_ZIGBEE_ENDPOINTSUFFIX "|" D_SO_ZIGBEE_NOAUTOBIND "|"
-  D_SO_ZIGBEE_NAMETOPIC "|"
+  D_SO_ZIGBEE_NAMETOPIC "|" D_SO_ZIGBEE_ENDPOINTTOPIC "|"
 #ifdef USE_ZIGBEE_ZNP
   D_CMND_ZIGBEEZNPSEND "|" D_CMND_ZIGBEEZNPRECEIVE "|"
 #endif // USE_ZIGBEE_ZNP
@@ -44,7 +44,7 @@ const char kZbCommands[] PROGMEM = D_PRFX_ZB "|"    // prefix
 
 SO_SYNONYMS(kZbSynonyms,
   83, 89, 100, 101, 110,
-  112,
+  112, 120,
 );
 
 void (* const ZigbeeCommand[])(void) PROGMEM = {

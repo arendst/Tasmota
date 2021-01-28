@@ -561,6 +561,11 @@ void Z_Device::jsonPublishAttrList(const char * json_prefix, const Z_attribute_l
     } else {
       snprintf_P(subtopic, sizeof(subtopic), PSTR("%s/%04X"), TasmotaGlobal.mqtt_topic, shortaddr);
     }
+    if (Settings.flag5.zb_topic_endpoint) {
+      if (attr_list.isValidSrcEp()) {
+        snprintf_P(subtopic, sizeof(subtopic), PSTR("%s_%d"), subtopic, attr_list.src_ep);
+      }
+    }
     char stopic[TOPSZ];
     if (Settings.flag5.zb_received_as_subtopic)
       GetTopic_P(stopic, TELE, subtopic, json_prefix);
