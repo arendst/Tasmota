@@ -42,11 +42,10 @@ const char kZbCommands[] PROGMEM = D_PRFX_ZB "|"    // prefix
   D_CMND_ZIGBEE_CONFIG "|" D_CMND_ZIGBEE_DATA
   ;
 
-const uint8_t kZbSynonyms[] PROGMEM = {
-  6,    // number of synonyms
+SO_SYNONYMS(kZbSynonyms,
   83, 89, 100, 101, 110,
-  112, 
-};
+  112,
+);
 
 void (* const ZigbeeCommand[])(void) PROGMEM = {
 #ifdef USE_ZIGBEE_ZNP

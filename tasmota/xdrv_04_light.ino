@@ -148,11 +148,10 @@ const char kLightCommands[] PROGMEM = "|"  // No prefix
 #endif  // USE_DGR_LIGHT_SEQUENCE
    "|UNDOCA" ;
 
-const uint8_t kLightSynonyms[] PROGMEM = {
-  7,                    // number of entries
+SO_SYNONYMS(kLightSynonyms,
   37, 68, 82, 91, 92,
   105, 106,
-};
+);
 
 void (* const LightCommand[])(void) PROGMEM = {
   &CmndColor, &CmndColorTemperature, &CmndDimmer, &CmndDimmerRange, &CmndDimmerStep, &CmndLedTable, &CmndFade,

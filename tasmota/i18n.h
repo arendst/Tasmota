@@ -349,7 +349,11 @@
 #define D_CMND_CPU_FREQUENCY "CpuFrequency"
 #endif  // ESP32
 
-// Commands xdrv_01_mqtt.ino
+// Commands xdrv_02_mqtt.ino
+#define D_SO_MQTTJSONONLY "MqttJSONOnly"
+#define D_SO_MQTTTLS "MqttTLS"
+#define D_SO_MQTTNORETAIN "MqttNoRetain"
+#define D_SO_MQTTDETACHRELAY "MqttDetachRelay"
 #define D_CMND_MQTTLOG "MqttLog"
 #define D_CMND_MQTTHOST "MqttHost"
 #define D_CMND_MQTTPORT "MqttPort"
@@ -375,7 +379,7 @@
 #define D_CMND_SENSORRETAIN "SensorRetain"
 #define D_CMND_PUBLISH "Publish"
 
-// Commands xdrv_02_webserver.ino
+// Commands xdrv_01_webserver.ino
 #define D_CMND_WEBSERVER "Webserver"
   #define D_JSON_WEBSERVER_MODE "WebServerMode"
   #define D_JSON_ACTIVE_FOR "Active for"
