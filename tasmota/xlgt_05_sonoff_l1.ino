@@ -57,6 +57,12 @@ struct SNFL1 {
   uint8_t power;
 } Snfl1;
 
+const char kL1Commands[] PROGMEM = "L1|" // prefix
+  "MusicSync";
+
+void (* const L1Command[])(void) PROGMEM = {
+  &CmndMusicSync };
+
 /********************************************************************************************/
 
 #ifdef SONOFF_L1_START_DELAY
@@ -318,6 +324,42 @@ bool SnfL1ModuleSelected(void)
   return false;
 }
 
+// SONOFF_L1_MODE_SYNC_TO_MUSIC
+void SnfL1ModeMusic(uint32_t sensitive, uint32_t speed) {
+  char buffer[SONOFF_L1_BUFFER_SIZE];
+  snprintf_P(buffer, sizeof(buffer), PSTR("AT+UPDATE=\"sequence\":\"%d%03d\",\"mode\":%d,\"sensitive\":%d,\"speed\":%d"),
+  LocalTime(), millis()%1000,
+  SONOFF_L1_MODE_SYNC_TO_MUSIC,
+  sensitive,
+  speed
+  );
+
+  SnfL1Send(buffer);
+}
+
+void CmndMusicSync(void) 
+{
+  // Format is L1MusicSync sensitivity,speed 
+  // sensitivity 1..10, speed 1..100
+  char *p;
+  strtok_r(XdrvMailbox.data, ",", &p);
+  if (0 == XdrvMailbox.payload) {
+    SnfL1SetChannels();
+
+    ResponseCmndDone();
+  } 
+  else if (p != nullptr) {
+    uint32_t sen = strtol(XdrvMailbox.data, nullptr, 0);
+    uint32_t spd = strtol(p, nullptr, 0);
+    if ( (sen >= 0) && (sen <= 10) && (spd >= 0) && (spd <= 100) ) {
+      SnfL1ModeMusic(sen, spd);
+    ResponseCmndDone();
+    } 
+  else {
+      return;     // error
+    }
+  } 
+}
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
@@ -335,6 +377,9 @@ bool Xlgt05(uint8_t function)
       break;
     case FUNC_MODULE_INIT:
       result = SnfL1ModuleSelected();
+      break;
+    case FUNC_COMMAND:
+      result = DecodeCommand(kL1Commands, L1Command);
       break;
   }
   return result;
