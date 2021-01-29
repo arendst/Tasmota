@@ -2844,6 +2844,7 @@ void CmndFade(void)
       Light.fade_once_value = XdrvMailbox.payload;
       break;
     }
+    ResponseCmndStateText(Light.fade_once_value);
     return;
   }
 
@@ -2876,6 +2877,7 @@ void CmndSpeed(void)
       Light.speed_once_enabled = true;
       Light.speed_once_value = XdrvMailbox.payload;
     }
+    ResponseCmndNumber(Light.speed_once_value);
     return;
   }
 
