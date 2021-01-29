@@ -540,7 +540,7 @@
 #define D_SO_ZIGBEE_NOAUTOBIND "NoAutoBind"
 #define D_SO_ZIGBEE_NAMETOPIC "NameTopic"
 #define D_SO_ZIGBEE_ENDPOINTTOPIC "EndpointTopic"
-#define D_SO_ZIGBEE_NOAUTOBIND "NoAutoBind"
+#define D_SO_ZIGBEE_NOAUTOQUERY "NoAutoQuery"
 #define D_SO_ZIGBEE_ZBRECEIVEDTOPIC "ReceivedTopic"
 #define D_SO_ZIGBEE_OMITDEVICE "OmitDevice"
 #define D_ZIGBEE_NOT_STARTED "Zigbee not started"
