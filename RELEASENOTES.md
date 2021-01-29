@@ -59,14 +59,15 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 ## Changelog v9.2.0.4
 ### Added
 - Command ``CTRange`` to specify the visible CT range the bulb is capable of [#10311](https://github.com/arendst/Tasmota/issues/10311)
-- Command ``RuleTimer0`` to access all RuleTimers at once [#10352](https://github.com/arendst/Tasmota/issues/10352)
-- Command ``VirtualCT`` to simulate or fine tune CT bulbs with 3,4,5 channels [#10311](https://github.com/arendst/Tasmota/issues/10311)
 - Command ``L1MusicSync <0|Off>|<1|On>|<2|Toggle>, 1..10, 1..100>`` to control Sonoff L1 Music Sync mode sensitivity and speed [#10722](https://github.com/arendst/Tasmota/issues/10722)
+- Command ``RuleTimer0`` to access all RuleTimers at once [#10352](https://github.com/arendst/Tasmota/issues/10352)
+- Command ``Speed2`` to control a once off fade [#10741](https://github.com/arendst/Tasmota/issues/10741)
+- Command ``VirtualCT`` to simulate or fine tune CT bulbs with 3,4,5 channels [#10311](https://github.com/arendst/Tasmota/issues/10311)
 - Command ``SetOption40 0..250`` to disable button functionality if activated for over 0.1 second re-introduced
 - Command ``SetOption43 1..255`` to control Rotary step (#10407)
 - Command ``SetOption118 1`` to move ZbReceived from JSON message and into the subtopic replacing "SENSOR" default [#10353](https://github.com/arendst/Tasmota/issues/10353)
 - Command ``SetOption119 1`` to remove the device addr from json payload, can be used with zb_topic_fname where the addr is already known from the topic [#10355](https://github.com/arendst/Tasmota/issues/10355)
-- Commands ``Speed2`` and ``Fade2`` to control a once off speed and/or fade [#10730](https://github.com/arendst/Tasmota/issues/10730)
+- Zigbee command ``SetOption120 1`` or ``ZbEndpointTopic 1`` to add the zigbee endpoint as suffix in topic when using ``SetOption89 1``
 - Commands ``ChannelRemap``, ``MultiPWM``, ``AlexaCTRange``, ``PowerOnFade``, ``PWMCT``, ``WhiteBlend``, ``VirtualCT`` as synonyms for ``SetOption37, 68, 82, 91, 92, 105 and 106`` respectively
 - Commands ``ZbNameKey``, ``ZbDeviceTopic``, ``ZbNoPrefix``, ``ZbEndpointSuffix``, ``ZbNoAutoBind``, ``ZbNameTopic`` as synonyms for ``SetOption83, 89, 100, 101, 110 and 112`` respectively
 - Commands ``BuzzerActive``, ``BuzzerPwm`` as synonyms for ``SetOption67, 111`` respectively

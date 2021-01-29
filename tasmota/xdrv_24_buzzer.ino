@@ -177,10 +177,9 @@ void BuzzerEvery100mSec(void) {
 const char kBuzzerCommands[] PROGMEM = "Buzzer|"  // Prefix
   "Active|Pwm||" ;
 
-const uint8_t kBuzzerSynonyms[] PROGMEM = {
-  2,    // number of synonyms
+SO_SYNONYMS(kBuzzerSynonyms,
   67, 111
-};
+);
 
 void (* const BuzzerCommand[])(void) PROGMEM = {
   &CmndBuzzer };
