@@ -292,8 +292,8 @@ bool SnfL1ModuleSelected(void) {
         Snfl1.power = !Light.power;
         Snfl1.dimmer = !light_state.getDimmer();
         Snfl1.music_sync = 0;
-        Snfl1.sensitive = 1;   // 1..10
-        Snfl1.speed = 1;       // 1..100
+        Snfl1.sensitive = 5;   // 1..10
+        Snfl1.speed = 50;      // 1..100
 
         TasmotaGlobal.light_type = LT_RGB;
         TasmotaGlobal.light_driver = XLGT_05;
