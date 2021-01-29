@@ -2836,17 +2836,6 @@ void CmndRgbwwTable(void)
 
 void CmndFade(void)
 {
-  if (XdrvMailbox.index == 2) {
-    switch (XdrvMailbox.payload) {
-    case 0: // Off
-    case 1: // On
-      Light.fade_once_enabled = true;
-      Light.fade_once_value = XdrvMailbox.payload;
-      break;
-    }
-    return;
-  }
-
   // Fade        - Show current Fade state
   // Fade 0      - Turn Fade Off
   // Fade On     - Turn Fade On
@@ -2863,18 +2852,19 @@ void CmndFade(void)
 #ifdef USE_DEVICE_GROUPS
   if (XdrvMailbox.payload >= 0 && XdrvMailbox.payload <= 2) SendDeviceGroupMessage(Light.device_group_index, DGR_MSGTYP_UPDATE, DGR_ITEM_LIGHT_FADE, Settings.light_fade);
 #endif  // USE_DEVICE_GROUPS
-#ifdef USE_LIGHT
   if (!Settings.light_fade) { Light.fade_running = false; }
-#endif  // USE_LIGHT
   ResponseCmndStateText(Settings.light_fade);
 }
 
 void CmndSpeed(void)
 {
   if (XdrvMailbox.index == 2) {
-    if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload <= 40)) {
+    if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 40)) {
+      Light.fade_once_enabled = true;
+      Light.fade_once_value = XdrvMailbox.payload > 0;
       Light.speed_once_enabled = true;
       Light.speed_once_value = XdrvMailbox.payload;
+      if (!Light.fade_once_value) { Light.fade_running = false; }
     }
     return;
   }
