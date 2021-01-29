@@ -6,9 +6,10 @@ All notable changes to this project will be documented in this file.
 ## [9.2.0.4]
 ### Added
 - Function ``AddLog`` to provide logging for up to 128 (LOGSZ) characters to save stack space
-- Commands ``ChannelRemap``, ``MultiPWM``, ``AlexaCTRange``, ``PowerOnFade``, ``PWMCT``, ``WhiteBlend``, ``VirtualCT`` as synonyms for ``SetOption37, 68, 82, 91, 92, 105 and 106`` respectively
-- Commands ``ZbNameKey``, ``ZbDeviceTopic``, ``ZbNoPrefix``, ``ZbEndpointSuffix``, ``ZbNoAutoBind``, ``ZbNameTopic`` as synonyms for ``SetOption83, 89, 100, 101, 110 and 112`` respectively
-- Commands ``BuzzerActive``, ``BuzzerPwm`` as synonyms for ``SetOption67, 111`` respectively
+- Commands ``ChannelRemap``, ``MultiPWM``, ``AlexaCTRange``, ``PowerOnFade``, ``PWMCT``, ``WhiteBlend`` and ``VirtualCT`` as synonyms for ``SetOption37, 68, 82, 91, 92, 105`` and ``106``
+- Commands ``ZbNameKey``, ``ZbDeviceTopic``, ``ZbNoPrefix``, ``ZbEndpointSuffix``, ``ZbNoAutoBind`` and ``ZbNameTopic`` as synonyms for ``SetOption83, 89, 100, 101, 110`` and ``112``
+- Commands ``ZbNoAutoBind``, ``ZbReceivedTopic`` and ``ZbOmitDevice`` as synonyms for ``SetOption116, 118`` and ``119``
+- Commands ``BuzzerActive`` and ``BuzzerPwm`` as synonyms for ``SetOption67`` and ``111``
 - Support for ESP32 ``Module 5`` Wireless Tag Eth01 (#9496)
 - Support trailing silence in buzzer tune (#10694)
 - Command ``L1MusicSync <0|Off>|<1|On>|<2|Toggle>, 1..10, 1..100>`` to control Sonoff L1 Music Sync mode sensitivity and speed (#10722)
