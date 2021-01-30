@@ -488,7 +488,6 @@ volatile bool neopool_poll = true;
 
 uint8_t neopool_read_state = 0;
 uint8_t neopool_send_retry = 0;
-uint8_t neopool_failed = 0;
 uint8_t neopool_failed_count = 0;
 #ifdef NEOPOOL_OPTIMIZE_READINGS
 bool neopool_first_read = true;
@@ -622,7 +621,7 @@ void NeoPool250ms(void)              // Every 250 mSec
 
   if (nullptr != NeoPoolReg[neopool_read_state].data) {
     if (0 == neopool_send_retry || data_ready) {
-      neopool_send_retry = (1000/250)+1;
+      neopool_send_retry = SENSOR_MAX_MISS;   // controller sometimes takes long time to answer
 #ifdef NEOPOOL_OPTIMIZE_READINGS
       // optimize register block reads by attend to MBF_NOTIFICATION bits
       if ( neopool_first_read || 0x0100 == (NeoPoolReg[neopool_read_state].addr & 0x0700) ||
@@ -641,10 +640,6 @@ void NeoPool250ms(void)              // Every 250 mSec
           AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("NEO: notify 0x%04X - addr block 0x%04X ignored"), NeoPoolGetData(MBF_NOTIFICATION), NeoPoolReg[neopool_read_state].addr);
 #endif  // DEBUG_TASMOTA_SENSOR
           ++neopool_read_state %= ARRAY_SIZE(NeoPoolReg);
-          // neopool_read_state++;
-          // if (ARRAY_SIZE(NeoPoolReg) <= neopool_read_state) {
-          //   neopool_read_state = 0;
-          // }
         }
       }
 #endif  // NEOPOOL_OPTIMIZE_READINGS
