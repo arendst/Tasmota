@@ -94,6 +94,7 @@ enum NeoPoolRegister {
 
   // GLOBAL page (0x02xx)
   MBF_SAVE_TO_EEPROM=0x02F0,          // 0x02F0        A write operation to this register starts a EEPROM storage operation immediately. During the EEPROM storage procedure, the system may be unresponsive to MODBUS requests. The operation will last always less than 1 second.
+  MBF_IMM_TAKE_OVER=0x02F5,           // 0x02F5        undocumented - immediately tale over - a write operation to this register take over the previous written data (neccessary if changing e.g. timers)
 
   // FACTORY page (0x03xx)
   MBF_PAR_VERSION=0x0300,             // 0x0300*       Software version of the PowerBox (unused)
@@ -1118,6 +1119,9 @@ void NeoPoolShow(bool json)
  * Sensor83 99
  *            write data permanent into flash
  *
+ * Sensor83 100
+ *            immediately take over data to running firmware
+ *
  *
  * Examples:
  *
@@ -1167,6 +1171,7 @@ void NeoPoolShow(bool json)
 #define NEOPOOL_CMND_WRITE_REG32      22
 #define NEOPOOL_CMND_READ_REG_HEX32   26
 #define NEOPOOL_CMND_SAVE_TO_EEPROM   99
+#define NEOPOOL_CMND_IMM_TAKE_OVER   100
 
 #define NEOPOOL_CMND_SENSOR D_CMND_SENSOR STR(XSNS_83)
 
@@ -1335,6 +1340,14 @@ bool NeoPoolCmnd(void)
 
     case NEOPOOL_CMND_SAVE_TO_EEPROM:
         addr = MBF_SAVE_TO_EEPROM;
+        if (0 == params_cnt) {
+          data[0] = 1;
+          serviced = (NEOPOOL_OK == NeoPoolWriteRegister(addr, data, 1));
+        }
+        break;
+
+    case NEOPOOL_CMND_IMM_TAKE_OVER:
+        addr = MBF_IMM_TAKE_OVER;
         if (0 == params_cnt) {
           data[0] = 1;
           serviced = (NEOPOOL_OK == NeoPoolWriteRegister(addr, data, 1));
