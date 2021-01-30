@@ -58,7 +58,7 @@
 #endif
 
 
-#define NEOPOOL_READ_REGISTER        0x03   // Function code used to read register:   Read Holding Registers
+#define NEOPOOL_READ_REGISTER        0x04   // Function code used to read register:   Read Input Registers
 #define NEOPOOL_WRITE_REGISTER       0x10   // Function code used to write register: Write Multiple Registers
 #define NEOPOOL_READ_TIMEOUT           25   // read data timeout in ms
 
@@ -717,7 +717,7 @@ uint8_t NeoPoolReadRegister(uint16_t addr, uint16_t *data, uint16_t cnt)
   *data = 0;
 
 #ifdef DEBUG_TASMOTA_SENSOR
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR("NEO: NeoPoolReadRegister(0x%04X, %p, %d)"), addr, data, cnt);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("NEO: NeoPoolReadRegister(0x%04X, %p, %d)"), addr, data, cnt);
 #endif  // DEBUG_TASMOTA_SENSOR
   NeoPoolModbus->Send(NEOPOOL_MODBUS_ADDRESS, NEOPOOL_READ_REGISTER, addr, cnt);
   timeoutMS = millis() + cnt * NEOPOOL_READ_TIMEOUT; // Max delay before we timeout
@@ -761,7 +761,7 @@ uint8_t NeoPoolWriteRegister(uint16_t addr, uint16_t *data, uint16_t cnt)
   uint32_t timeoutMS;
 
 #ifdef DEBUG_TASMOTA_SENSOR
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR("NEO: NeoPoolWriteRegister(0x%04X, %p, %d)"), addr, data, cnt);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("NEO: NeoPoolWriteRegister(0x%04X, %p, %d)"), addr, data, cnt);
 #endif  // DEBUG_TASMOTA_SENSOR
   neopool_poll = false;
   numbytes = 7+cnt*2;
@@ -1086,19 +1086,19 @@ void NeoPoolShow(bool json)
  *
  * Sensor83  3 <addr> <bit> {<data>}
  *            read/write register bit (bit=0..15, data=0|1)
- *            read if param <data> is omitted otherwise set <bit> to new <data>
+ *            read if <data> is omitted, otherwise set <bit> to new <data>
  *
  * Sensor83  4 {<state>}
  *            get/set manual filtration (state=0|1)
- *            get filtration state if param <state> is omitted otherwise set new state
+ *            get filtration state if <state> is omitted, otherwise set new state
  *
  * Sensor83  5 {<mode>}
  *            get/set filtration mode (mode=0..4|13)
- *            get mode if param <mode> is omitted otherwise set new mode
+ *            get mode if <mode> is omitted, otherwise set new mode
  *
  * Sensor83  6 {<time>}
  *            get/set system time
- *            get current time if param <time> is omitted otherwise set time according:
+ *            get current time if <time> is omitted, otherwise set time according:
  *              0 - sync with Tasmota local time
  *              1 - sync with Tasmota utc time
  *            any other value of <time> will set time as epoch
@@ -1167,6 +1167,8 @@ void NeoPoolShow(bool json)
 #define NEOPOOL_CMND_WRITE_REG32      22
 #define NEOPOOL_CMND_READ_REG_HEX32   26
 #define NEOPOOL_CMND_SAVE_TO_EEPROM   99
+
+#define NEOPOOL_CMND_SENSOR D_CMND_SENSOR STR(XSNS_83)
 
 bool NeoPoolCmnd(void)
 {
@@ -1264,7 +1266,7 @@ bool NeoPoolCmnd(void)
           data[0] = value[1] ? 1 : 0;
           // Filtration ON/OFF:
           // First set filtration mode to manual
-          snprintf_P(stemp, sizeof(stemp), PSTR(D_CMND_SENSOR "%d %d,0"), XSNS_83, NEOPOOL_CMND_FILTRATION_MODE);
+          snprintf_P(stemp, sizeof(stemp), PSTR(NEOPOOL_CMND_SENSOR " %d,0"), NEOPOOL_CMND_FILTRATION_MODE);
           ExecuteWebCommand(stemp, SRC_WEBGUI);
           // Set MBF_PAR_FILT_MANUAL_STATE [MBF_PAR_FILT_MANUAL_STATE] accordingly (0|1)
           serviced = (NEOPOOL_OK == NeoPoolWriteRegister(addr, data, 1));
@@ -1325,10 +1327,11 @@ bool NeoPoolCmnd(void)
           BreakTime((uint32_t)data[0] + ((uint32_t)data[1] << 16), tmpTime);
           snprintf_P(dt, sizeof(dt), PSTR("%04d" D_YEAR_MONTH_SEPARATOR "%02d" D_MONTH_DAY_SEPARATOR "%02d" D_DATE_TIME_SEPARATOR "%02d" D_HOUR_MINUTE_SEPARATOR "%02d" D_MINUTE_SECOND_SEPARATOR "%02d"),
             tmpTime.year +1970, tmpTime.month, tmpTime.day_of_month, tmpTime.hour, tmpTime.minute, tmpTime.second);
-          Response_P(PSTR("{\"" D_CMND_SENSOR "%d\":{\"" D_JSON_TIME "\":\"%s\"}}"), XSNS_83, dt);
+          Response_P(PSTR("{\"" NEOPOOL_CMND_SENSOR "\":{\"" D_JSON_TIME "\":\"%s\"}}"), dt);
         }
       }
       break;
+
 
     case NEOPOOL_CMND_SAVE_TO_EEPROM:
         addr = MBF_SAVE_TO_EEPROM;
@@ -1339,7 +1342,7 @@ bool NeoPoolCmnd(void)
         break;
 
     default:
-      AddLog_P(LOG_LEVEL_DEBUG, PSTR("NEO: Unknown " D_CMND_SENSOR "%d cmnd %d"), XSNS_83, cmnd);
+      AddLog_P(LOG_LEVEL_DEBUG, PSTR("NEO: Unknown " NEOPOOL_CMND_SENSOR " cmnd %d"), cmnd);
       break;
     }
   }
@@ -1349,11 +1352,11 @@ bool NeoPoolCmnd(void)
     case NEOPOOL_CMND_TIME:
       break;
     case NEOPOOL_CMND_READWRITE_BIT:
-        Response_P(PSTR("{\"" D_CMND_SENSOR "%d\":{\"" D_JSON_COMMAND "\":%d,\"" D_JSON_ADDRESS "\":\"0x%04X\",\"" D_STR_BIT "\":%d,\"" D_JSON_DATA "\":%d}}"), XSNS_83, cmnd, addr, bit, data[0]);
+        Response_P(PSTR("{\"" NEOPOOL_CMND_SENSOR "\":{\"" D_JSON_COMMAND "\":%d,\"" D_JSON_ADDRESS "\":\"0x%04X\",\"" D_STR_BIT "\":%d,\"" D_JSON_DATA "\":%d}}"), cmnd, addr, bit, data[0]);
       break;
     default:
       {
-        Response_P(PSTR("{\"" D_CMND_SENSOR "%d\":{\"" D_JSON_COMMAND "\":%d,\"" D_JSON_ADDRESS "\":\"0x%04X\",\"" D_JSON_DATA"\":"), XSNS_83, cmnd, addr);
+        Response_P(PSTR("{\"" NEOPOOL_CMND_SENSOR "\":{\"" D_JSON_COMMAND "\":%d,\"" D_JSON_ADDRESS "\":\"0x%04X\",\"" D_JSON_DATA"\":"), cmnd, addr);
         if ( cnt > 1 ) {
           char sdel[2] = {0};
           ResponseAppend_P(PSTR("["));
