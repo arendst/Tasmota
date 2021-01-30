@@ -1104,6 +1104,13 @@ void NeoPoolShow(bool json)
  *              1 - sync with Tasmota utc time
  *            any other value of <time> will set time as epoch
  *
+ * Sensor83  7 {<state>}
+ *            get/set light (state=0|1|2)
+ *            get light state if <state> is omitted, otherwise set new state
+ *              0 - switch light manual off
+ *              1 - switch light manual on
+ *              2 - switch light to auto mode
+ *
  * Sensor83 16 <addr> {<cnt>}
  *            same as "Sensor83 1" but using hex data output
  *
@@ -1166,6 +1173,7 @@ void NeoPoolShow(bool json)
 #define NEOPOOL_CMND_FILTRATION       4
 #define NEOPOOL_CMND_FILTRATION_MODE  5
 #define NEOPOOL_CMND_TIME             6
+#define NEOPOOL_CMND_LIGHT            7
 #define NEOPOOL_CMND_READ_REG_HEX     16
 #define NEOPOOL_CMND_READ_REG32       21
 #define NEOPOOL_CMND_WRITE_REG32      22
@@ -1174,6 +1182,7 @@ void NeoPoolShow(bool json)
 #define NEOPOOL_CMND_IMM_TAKE_OVER   100
 
 #define NEOPOOL_CMND_SENSOR D_CMND_SENSOR STR(XSNS_83)
+#define NEOPOOL_MAX_CMND_LEN 160
 
 bool NeoPoolCmnd(void)
 {
@@ -1184,13 +1193,9 @@ bool NeoPoolCmnd(void)
   bool bits32 = false;
   uint32_t value[10] = { 0 };
   uint32_t params_cnt = ParseParameters(ARRAY_SIZE(value), value);
+  char *scmnd = (char *)malloc(NEOPOOL_MAX_CMND_LEN);
 
-  if (neopool_error) {
-    serviced = false;
-    return serviced;
-  }
-
-  if(params_cnt > 0) {
+  if(!neopool_error && scmnd != nullptr && params_cnt > 0) {
     params_cnt--;
 
     cmnd = value[0];
@@ -1266,14 +1271,12 @@ bool NeoPoolCmnd(void)
           serviced = (NEOPOOL_OK == NeoPoolReadRegister(addr, data, 1));
         }
         if (1 == params_cnt) {
-          char stemp[20];
-
-          data[0] = value[1] ? 1 : 0;
           // Filtration ON/OFF:
           // First set filtration mode to manual
-          snprintf_P(stemp, sizeof(stemp), PSTR(NEOPOOL_CMND_SENSOR " %d,0"), NEOPOOL_CMND_FILTRATION_MODE);
-          ExecuteWebCommand(stemp, SRC_WEBGUI);
+          snprintf_P(scmnd, NEOPOOL_MAX_CMND_LEN, PSTR(NEOPOOL_CMND_SENSOR " " STR(NEOPOOL_CMND_FILTRATION_MODE) ",0"));
+          ExecuteWebCommand(scmnd, SRC_WEBGUI);
           // Set MBF_PAR_FILT_MANUAL_STATE [MBF_PAR_FILT_MANUAL_STATE] accordingly (0|1)
+          data[0] = value[1] ? 1 : 0;
           serviced = (NEOPOOL_OK == NeoPoolWriteRegister(addr, data, 1));
         }
       }
@@ -1281,11 +1284,11 @@ bool NeoPoolCmnd(void)
 
     case NEOPOOL_CMND_FILTRATION_MODE:  // (<mode>)
       {
+        addr = MBF_PAR_FILT_MODE;
         if (0 == params_cnt) {
           serviced = (NEOPOOL_OK == NeoPoolReadRegister(addr, data, 1));
         }
         if (1 == params_cnt) {
-          addr = MBF_PAR_FILT_MODE;
           data[0] = value[1];
           if( (data[0] >= MBV_PAR_FILT_MANUAL && data[0] <= MBV_PAR_FILT_INTELLIGENT) || MBV_PAR_FILT_BACKWASH == data[0]) {
             // Set MBF_PAR_FILT_MODE
@@ -1337,6 +1340,39 @@ bool NeoPoolCmnd(void)
       }
       break;
 
+    case NEOPOOL_CMND_LIGHT:  // (<state>)
+      {
+        if (0 == params_cnt) {
+          addr = MBF_RELAY_STATE;
+          if (NEOPOOL_OK == NeoPoolReadRegister(MBF_PAR_LIGHTING_GPIO, data, 1) && 0 != data[0]) {
+            data[1] = data[0] - 1;
+            serviced = (NEOPOOL_OK == NeoPoolReadRegister(MBF_RELAY_STATE, data, 1));
+            data[0] >>= data[1];
+          }
+          else {
+            serviced = false;
+          }
+        }
+        if (1 == params_cnt) {
+          addr = MBF_PAR_TIMER_BLOCK_LIGHT_INT + MBV_TIMER_OFFMB_TIMER_ENABLE;
+          uint16_t timer_val[] = {MBV_PAR_CTIMER_ALWAYS_OFF, MBV_PAR_CTIMER_ALWAYS_ON, MBV_PAR_CTIMER_ENABLED};
+          if (value[1] <= ARRAY_SIZE(timer_val)) {
+              data[0] = timer_val[value[1]];
+              serviced = true;
+          }
+          if( serviced ) {
+            snprintf_P(scmnd, NEOPOOL_MAX_CMND_LEN,
+              PSTR(D_CMND_BACKLOG " "
+                   NEOPOOL_CMND_SENSOR " " STR(NEOPOOL_CMND_WRITE_REG) ",0x%04X,%d;"
+                   NEOPOOL_CMND_SENSOR " " STR(NEOPOOL_CMND_SAVE_TO_EEPROM) ";"
+                   NEOPOOL_CMND_SENSOR " " STR(NEOPOOL_CMND_IMM_TAKE_OVER)),
+               addr, data[0]);
+            ExecuteWebCommand(scmnd, SRC_WEBGUI);
+            serviced = (NEOPOOL_OK == NeoPoolReadRegister(addr, data, 1));
+          }
+        }
+      }
+      break;
 
     case NEOPOOL_CMND_SAVE_TO_EEPROM:
         addr = MBF_SAVE_TO_EEPROM;
@@ -1358,6 +1394,7 @@ bool NeoPoolCmnd(void)
       AddLog_P(LOG_LEVEL_DEBUG, PSTR("NEO: Unknown " NEOPOOL_CMND_SENSOR " cmnd %d"), cmnd);
       break;
     }
+    free(scmnd);
   }
 
   if (serviced) {
