@@ -530,7 +530,7 @@ void EnergyEverySecond(void)
     }
   }
   if (!data_valid) {
-    Energy.start_energy = 0;
+    //Energy.start_energy = 0;
     AddLog(LOG_LEVEL_DEBUG, PSTR("NRG: Energy reset by " STR(ENERGY_WATCHDOG) " seconds invalid data"));
 
     XnrgCall(FUNC_ENERGY_RESET);
