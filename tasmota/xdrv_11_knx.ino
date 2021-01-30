@@ -1208,13 +1208,13 @@ void CmndKnxGa(void)
 {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_KNX_GA)) {
     if (XdrvMailbox.data_len) {
-      if (strchr(XdrvMailbox.data, ',') != nullptr) {  // Process parameter entry
-        char sub_string[XdrvMailbox.data_len];
+      if (ArgC() > 1) {  // Process parameter entry
+        char argument[XdrvMailbox.data_len];
 
-        int ga_option = atoi(subStr(sub_string, XdrvMailbox.data, ",", 1));
-        int ga_area = atoi(subStr(sub_string, XdrvMailbox.data, ",", 2));
-        int ga_line = atoi(subStr(sub_string, XdrvMailbox.data, ",", 3));
-        int ga_member = atoi(subStr(sub_string, XdrvMailbox.data, ",", 4));
+        int ga_option = atoi(ArgV(argument, 1));
+        int ga_area = atoi(ArgV(argument, 2));
+        int ga_line = atoi(ArgV(argument, 3));
+        int ga_member = atoi(ArgV(argument, 4));
 
         if ( ((ga_area == 0) && (ga_line == 0) && (ga_member == 0))
           || (ga_area > 31) || (ga_line > 7) || (ga_member > 255)
@@ -1259,13 +1259,13 @@ void CmndKnxCb(void)
 {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_KNX_CB)) {
     if (XdrvMailbox.data_len) {
-      if (strchr(XdrvMailbox.data, ',') != nullptr) {  // Process parameter entry
-        char sub_string[XdrvMailbox.data_len];
+      if (ArgC() > 1) {  // Process parameter entry
+        char argument[XdrvMailbox.data_len];
 
-        int cb_option = atoi(subStr(sub_string, XdrvMailbox.data, ",", 1));
-        int cb_area = atoi(subStr(sub_string, XdrvMailbox.data, ",", 2));
-        int cb_line = atoi(subStr(sub_string, XdrvMailbox.data, ",", 3));
-        int cb_member = atoi(subStr(sub_string, XdrvMailbox.data, ",", 4));
+        int cb_option = atoi(ArgV(argument, 1));
+        int cb_area = atoi(ArgV(argument, 2));
+        int cb_line = atoi(ArgV(argument, 3));
+        int cb_member = atoi(ArgV(argument, 4));
 
         if ( ((cb_area == 0) && (cb_line == 0) && (cb_member == 0))
           || (cb_area > 31) || (cb_line > 7) || (cb_member > 255)
