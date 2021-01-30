@@ -252,39 +252,33 @@ uint32_t ChrCount(const char *str, const char *delim) {
   return count;
 }
 
+uint32_t ArgC(void) {
+  return ChrCount(XdrvMailbox.data, ",") +1;
+}
+
 // Function to return a substring defined by a delimiter at an index
 char* subStr(char* dest, char* str, const char *delim, int index) {
-/*
-  // Exceptions on empty fields
-  char *act;
-  char *sub = nullptr;
-  char *ptr;
-  int i;
+  char* write = dest;
+  char* read = str;
+  char ch = '.';
 
-  // Since strtok consumes the first arg, make a copy
-  strncpy(dest, str, strlen(str)+1);
-  for (i = 1, act = dest; i <= index; i++, act = nullptr) {
-    sub = strtok_r(act, delim, &ptr);
-    if (sub == nullptr) break;
+  while (index && (ch != '\0')) {
+    ch = *read++;
+    if (strchr(delim, ch)) {
+      index--;
+      if (index) { write = dest; }
+    } else {
+      *write++ = ch;
+    }
   }
-  return sub;
-*/
-  uint32_t len = strlen(str) -1;
-  // Since strtok consumes the first arg, make a copy
-  strncpy(dest, str, len +2);
-  // Since strtok_r will exception if last char is delim change to space
-  if (strchr(delim, dest[len]) != nullptr) { dest[len] = ' '; }
+  *write = '\0';
+  dest = Trim(dest);
+  return dest;
+}
 
-  char *ptr = dest;
-  char *sub;
-  int i = index;
-  while ( ptr && ((sub = strtok_r(ptr, delim, &ptr))) && (--i) ) {
-//    Serial.printf("%s|", sub);
-  }
-//  Serial.printf("%s|=\n|", sub);
 
-  sub = Trim(sub);
-  return sub;
+char* ArgV(char* dest, int index) {
+  return subStr(dest, XdrvMailbox.data, ",", index);
 }
 
 float CharToFloat(const char *str)

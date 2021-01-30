@@ -2283,14 +2283,14 @@ void CmndScale(void)
 {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_RULE_VARS)) {
     if (XdrvMailbox.data_len > 0) {
-      if (strchr(XdrvMailbox.data, ',') != nullptr) {  // Process parameter entry
-        char sub_string[XdrvMailbox.data_len +1];
+      if (ArgC() > 1) {  // Process parameter entry
+        char argument[XdrvMailbox.data_len];
 
-        float valueIN = CharToFloat(subStr(sub_string, XdrvMailbox.data, ",", 1));
-        float fromLow = CharToFloat(subStr(sub_string, XdrvMailbox.data, ",", 2));
-        float fromHigh = CharToFloat(subStr(sub_string, XdrvMailbox.data, ",", 3));
-        float toLow = CharToFloat(subStr(sub_string, XdrvMailbox.data, ",", 4));
-        float toHigh = CharToFloat(subStr(sub_string, XdrvMailbox.data, ",", 5));
+        float valueIN = CharToFloat(ArgV(argument, 1));
+        float fromLow = CharToFloat(ArgV(argument, 2));
+        float fromHigh = CharToFloat(ArgV(argument, 3));
+        float toLow = CharToFloat(ArgV(argument, 4));
+        float toHigh = CharToFloat(ArgV(argument, 5));
         float value = map_double(valueIN, fromLow, fromHigh, toLow, toHigh);
         dtostrfd(value, Settings.flag2.calc_resolution, rules_vars[XdrvMailbox.index -1]);
         bitSet(Rules.vars_event, XdrvMailbox.index -1);
