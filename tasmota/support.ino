@@ -253,7 +253,7 @@ uint32_t ChrCount(const char *str, const char *delim) {
 }
 
 uint32_t ArgC(void) {
-  return ChrCount(XdrvMailbox.data, ",") +1;
+  return (XdrvMailbox.data_len > 0) ? ChrCount(XdrvMailbox.data, ",") +1 : 0;
 }
 
 // Function to return a substring defined by a delimiter at an index
@@ -280,8 +280,25 @@ char* ArgV(char* dest, int index) {
   return subStr(dest, XdrvMailbox.data, ",", index);
 }
 
-uint32_t ParseParameters(uint32_t count, uint32_t *params)
-{
+uint32_t ArgVul(uint32_t *args, uint32_t count) {
+  uint32_t argc = ArgC();
+  if (argc > count) { argc = count; }
+  count = argc;
+  if (argc) {
+    char argument[XdrvMailbox.data_len];
+    for (uint32_t i = 0; i < argc; i++) {
+      if (strlen(ArgV(argument, i +1))) {
+        args[i] = strtoul(argument, nullptr, 0);
+      } else {
+        count--;
+      }
+    }
+  }
+  return count;
+}
+
+uint32_t ParseParameters(uint32_t count, uint32_t *params) {
+  // Destroys XdrvMailbox.data
   char *p;
   uint32_t i = 0;
   for (char *str = strtok_r(XdrvMailbox.data, ", ", &p); str && i < count; str = strtok_r(nullptr, ", ", &p), i++) {

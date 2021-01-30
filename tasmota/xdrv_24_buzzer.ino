@@ -201,11 +201,13 @@ void CmndBuzzer(void) {
   if (XdrvMailbox.data_len > 0) {
     if (XdrvMailbox.payload != 0) {
       uint32_t parm[4] = { 0 };
-      uint32_t mode = 0;
       ParseParameters(4, parm);
-      if (XdrvMailbox.payload <= 0) {
+      uint32_t mode = 0;
+      if (XdrvMailbox.payload < 0) {
         parm[0] = 1;                         // Default Count
-        mode = -XdrvMailbox.payload;         // 0, 1 or 2
+        if (XdrvMailbox.payload > -3) {
+          mode = -XdrvMailbox.payload;       // 0, 1 or 2
+        }
       }
       for (uint32_t i = 1; i < 3; i++) {
         if (parm[i] < 1) { parm[i] = 1; }    // Default On time, Off time
