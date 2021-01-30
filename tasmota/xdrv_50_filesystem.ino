@@ -562,7 +562,7 @@ void UfsListDir(char *path, uint8_t depth) {
 
         sprintf(cp, format, ep);
         if (entry.isDirectory()) {
-          snprintf_P(npath, sizeof(npath), UFS_FORM_SDC_HREF, (uint32_t)WiFi.localIP(), pp, ep);
+          ext_snprintf_P(npath, sizeof(npath), UFS_FORM_SDC_HREF, (uint32_t)WiFi.localIP(), pp, ep);
           WSContentSend_P(UFS_FORM_SDC_DIRd, npath, ep, name);
           uint8_t plen = strlen(path);
           if (plen > 1) {
@@ -574,12 +574,12 @@ void UfsListDir(char *path, uint8_t depth) {
         } else {
 #ifdef GUI_TRASH_FILE
           char delpath[128];
-          snprintf_P(delpath, sizeof(delpath), UFS_FORM_SDC_HREFdel, (uint32_t)WiFi.localIP(), pp, ep);
+          ext_snprintf_P(delpath, sizeof(delpath), UFS_FORM_SDC_HREFdel, (uint32_t)WiFi.localIP(), pp, ep);
 #else
           char delpath[2];
           delpath[0]=0;
 #endif // GUI_TRASH_FILE
-          snprintf_P(npath, sizeof(npath), UFS_FORM_SDC_HREF, (uint32_t)WiFi.localIP(), pp, ep);
+          ext_snprintf_P(npath, sizeof(npath), UFS_FORM_SDC_HREF, (uint32_t)WiFi.localIP(), pp, ep);
           WSContentSend_P(UFS_FORM_SDC_DIRb, npath, ep, name, tstr.c_str(), entry.size(), delpath);
         }
       }
