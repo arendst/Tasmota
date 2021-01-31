@@ -119,20 +119,20 @@ bool PCA9685_Command(void)
     serviced = false;
     return serviced;
   }
-  char sub_string[XdrvMailbox.data_len];
+  char argument[XdrvMailbox.data_len];
   for (uint32_t ca=0;ca<XdrvMailbox.data_len;ca++) {
     if ((' ' == XdrvMailbox.data[ca]) || ('=' == XdrvMailbox.data[ca])) { XdrvMailbox.data[ca] = ','; }
     if (',' == XdrvMailbox.data[ca]) { paramcount++; }
   }
   UpperCase(XdrvMailbox.data,XdrvMailbox.data);
 
-  if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 1),"RESET"))  {  PCA9685_Reset(); return serviced; }
+  if (!strcmp(ArgV(argument, 1),"RESET"))  {  PCA9685_Reset(); return serviced; }
 
-  if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 1),"STATUS"))  { PCA9685_OutputTelemetry(false); return serviced; }
+  if (!strcmp(ArgV(argument, 1),"STATUS"))  { PCA9685_OutputTelemetry(false); return serviced; }
 
-  if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 1),"PWMF")) {
+  if (!strcmp(ArgV(argument, 1),"PWMF")) {
     if (paramcount > 1) {
-      uint16_t new_freq = atoi(subStr(sub_string, XdrvMailbox.data, ",", 2));
+      uint16_t new_freq = atoi(ArgV(argument, 2));
       if ((new_freq >= 24) && (new_freq <= 1526)) {
         PCA9685_SetPWMfreq(new_freq);
         Response_P(PSTR("{\"PCA9685\":{\"PWMF\":%i, \"Result\":\"OK\"}}"),new_freq);
@@ -143,23 +143,23 @@ bool PCA9685_Command(void)
       return serviced;
     }
   }
-  if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 1),"PWM")) {
+  if (!strcmp(ArgV(argument, 1),"PWM")) {
     if (paramcount > 1) {
-      uint8_t pin = atoi(subStr(sub_string, XdrvMailbox.data, ",", 2));
+      uint8_t pin = atoi(ArgV(argument, 2));
       if (paramcount > 2) {
-        if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 3), "ON")) {
+        if (!strcmp(ArgV(argument, 3), "ON")) {
           PCA9685_SetPWM(pin, 4096, false);
           Response_P(PSTR("{\"PCA9685\":{\"PIN\":%i,\"PWM\":%i}}"),pin,4096);
           serviced = true;
           return serviced;
         }
-        if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 3), "OFF")) {
+        if (!strcmp(ArgV(argument, 3), "OFF")) {
           PCA9685_SetPWM(pin, 0, false);
           Response_P(PSTR("{\"PCA9685\":{\"PIN\":%i,\"PWM\":%i}}"),pin,0);
           serviced = true;
           return serviced;
         }
-        uint16_t pwm = atoi(subStr(sub_string, XdrvMailbox.data, ",", 3));
+        uint16_t pwm = atoi(ArgV(argument, 3));
         if ((pin >= 0 && pin <= 15) && (pwm >= 0 && pwm <= 4096)) {
           PCA9685_SetPWM(pin, pwm, false);
           Response_P(PSTR("{\"PCA9685\":{\"PIN\":%i,\"PWM\":%i}}"),pin,pwm);

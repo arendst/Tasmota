@@ -252,22 +252,59 @@ uint32_t ChrCount(const char *str, const char *delim) {
   return count;
 }
 
-// Function to return a substring defined by a delimiter at an index
-char* subStr(char* dest, char* str, const char *delim, int index)
-{
-  char *act;
-  char *sub = nullptr;
-  char *ptr;
-  int i;
+uint32_t ArgC(void) {
+  return (XdrvMailbox.data_len > 0) ? ChrCount(XdrvMailbox.data, ",") +1 : 0;
+}
 
-  // Since strtok consumes the first arg, make a copy
-  strncpy(dest, str, strlen(str)+1);
-  for (i = 1, act = dest; i <= index; i++, act = nullptr) {
-    sub = strtok_r(act, delim, &ptr);
-    if (sub == nullptr) break;
+// Function to return a substring defined by a delimiter at an index
+char* subStr(char* dest, char* str, const char *delim, int index) {
+  char* write = dest;
+  char* read = str;
+  char ch = '.';
+
+  while (index && (ch != '\0')) {
+    ch = *read++;
+    if (strchr(delim, ch)) {
+      index--;
+      if (index) { write = dest; }
+    } else {
+      *write++ = ch;
+    }
   }
-  sub = Trim(sub);
-  return sub;
+  *write = '\0';
+  dest = Trim(dest);
+  return dest;
+}
+
+char* ArgV(char* dest, int index) {
+  return subStr(dest, XdrvMailbox.data, ",", index);
+}
+
+uint32_t ArgVul(uint32_t *args, uint32_t count) {
+  uint32_t argc = ArgC();
+  if (argc > count) { argc = count; }
+  count = argc;
+  if (argc) {
+    char argument[XdrvMailbox.data_len];
+    for (uint32_t i = 0; i < argc; i++) {
+      if (strlen(ArgV(argument, i +1))) {
+        args[i] = strtoul(argument, nullptr, 0);
+      } else {
+        count--;
+      }
+    }
+  }
+  return count;
+}
+
+uint32_t ParseParameters(uint32_t count, uint32_t *params) {
+  // Destroys XdrvMailbox.data
+  char *p;
+  uint32_t i = 0;
+  for (char *str = strtok_r(XdrvMailbox.data, ", ", &p); str && i < count; str = strtok_r(nullptr, ", ", &p), i++) {
+    params[i] = strtoul(str, nullptr, 0);
+  }
+  return i;
 }
 
 float CharToFloat(const char *str)
@@ -618,16 +655,6 @@ bool ParseIPv4(uint32_t* addr, const char* str_p)
     str++;                                   // Point to next character after separator
   }
   return (3 == i);
-}
-
-uint32_t ParseParameters(uint32_t count, uint32_t *params)
-{
-  char *p;
-  uint32_t i = 0;
-  for (char *str = strtok_r(XdrvMailbox.data, ", ", &p); str && i < count; str = strtok_r(nullptr, ", ", &p), i++) {
-    params[i] = strtoul(str, nullptr, 0);
-  }
-  return i;
 }
 
 // Function to parse & check if version_str is newer than our currently installed version.

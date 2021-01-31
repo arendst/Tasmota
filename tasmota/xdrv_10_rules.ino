@@ -99,8 +99,10 @@
 #define COMPARE_OPERATOR_STRING_ENDS_WITH      8
 #define COMPARE_OPERATOR_STRING_STARTS_WITH    9
 #define COMPARE_OPERATOR_STRING_CONTAINS      10
-#define MAXIMUM_COMPARE_OPERATOR              COMPARE_OPERATOR_STRING_CONTAINS
-const char kCompareOperators[] PROGMEM = "=\0>\0<\0|\0==!=>=<=$>$<$|";
+#define COMPARE_OPERATOR_STRING_NOT_EQUAL     11
+#define COMPARE_OPERATOR_STRING_NOT_CONTAINS  12
+#define MAXIMUM_COMPARE_OPERATOR              COMPARE_OPERATOR_STRING_NOT_CONTAINS
+const char kCompareOperators[] PROGMEM = "=\0>\0<\0|\0==!=>=<=$>$<$|$!$^";
 
 #ifdef USE_EXPRESSION
   #include <LinkedList.h>                 // Import LinkedList library
@@ -589,7 +591,13 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule, bool stop_all
         match = str_str_value.startsWith(rule_svalue);
         break;
       case COMPARE_OPERATOR_STRING_CONTAINS:
-        match = (str_str_value.indexOf(rule_svalue) > 0);
+        match = (str_str_value.indexOf(rule_svalue) >= 0);
+        break;
+      case  COMPARE_OPERATOR_STRING_NOT_EQUAL:
+        match = (0!=strcasecmp(str_value, rule_svalue));  // Compare strings - this also works for hexadecimals
+        break;
+      case  COMPARE_OPERATOR_STRING_NOT_CONTAINS:
+        match = (str_str_value.indexOf(rule_svalue) < 0);
         break;
       default:
         match = true;
@@ -1634,7 +1642,13 @@ bool evaluateComparisonExpression(const char *expression, int len)
       bResult = leftExpr.startsWith(rightExpr);
       break;
     case COMPARE_OPERATOR_STRING_CONTAINS:
-      bResult = (leftExpr.indexOf(rightExpr) > 0);
+      bResult = (leftExpr.indexOf(rightExpr) >= 0);
+      break;
+    case  COMPARE_OPERATOR_STRING_NOT_EQUAL:
+      bResult = !leftExpr.equalsIgnoreCase(rightExpr);  // Compare strings - this also works for hexadecimals
+      break;
+    case  COMPARE_OPERATOR_STRING_NOT_CONTAINS:
+      bResult = (leftExpr.indexOf(rightExpr) < 0);
       break;
   }
   return bResult;
@@ -2283,17 +2297,20 @@ void CmndScale(void)
 {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_RULE_VARS)) {
     if (XdrvMailbox.data_len > 0) {
-      if (strchr(XdrvMailbox.data, ',') != nullptr) {  // Process parameter entry
-        char sub_string[XdrvMailbox.data_len +1];
+      if (ArgC() == 5) {  // Process parameter entry
+        char argument[XdrvMailbox.data_len];
 
-        float valueIN = CharToFloat(subStr(sub_string, XdrvMailbox.data, ",", 1));
-        float fromLow = CharToFloat(subStr(sub_string, XdrvMailbox.data, ",", 2));
-        float fromHigh = CharToFloat(subStr(sub_string, XdrvMailbox.data, ",", 3));
-        float toLow = CharToFloat(subStr(sub_string, XdrvMailbox.data, ",", 4));
-        float toHigh = CharToFloat(subStr(sub_string, XdrvMailbox.data, ",", 5));
+        float valueIN = CharToFloat(ArgV(argument, 1));
+        float fromLow = CharToFloat(ArgV(argument, 2));
+        float fromHigh = CharToFloat(ArgV(argument, 3));
+        float toLow = CharToFloat(ArgV(argument, 4));
+        float toHigh = CharToFloat(ArgV(argument, 5));
         float value = map_double(valueIN, fromLow, fromHigh, toLow, toHigh);
         dtostrfd(value, Settings.flag2.calc_resolution, rules_vars[XdrvMailbox.index -1]);
         bitSet(Rules.vars_event, XdrvMailbox.index -1);
+      } else {
+        ResponseCmndIdxError();
+        return;
       }
     }
     ResponseCmndIdxChar(rules_vars[XdrvMailbox.index -1]);

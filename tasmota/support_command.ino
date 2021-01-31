@@ -76,48 +76,47 @@ const char kWifiConfig[] PROGMEM =
 
 /********************************************************************************************/
 
-void ResponseCmndNumber(int value)
-{
+void ResponseCmndNumber(int value) {
   Response_P(S_JSON_COMMAND_NVALUE, XdrvMailbox.command, value);
 }
 
-void ResponseCmndFloat(float value, uint32_t decimals)
-{
+void ResponseCmndFloat(float value, uint32_t decimals) {
   Response_P(PSTR("{\"%s\":%*_f}"), XdrvMailbox.command, decimals, &value);  // Return float value without quotes
 }
 
-void ResponseCmndIdxNumber(int value)
-{
+void ResponseCmndIdxNumber(int value) {
   Response_P(S_JSON_COMMAND_INDEX_NVALUE, XdrvMailbox.command, XdrvMailbox.index, value);
 }
 
-void ResponseCmndChar_P(const char* value)
-{
+void ResponseCmndChar_P(const char* value) {
   Response_P(S_JSON_COMMAND_SVALUE, XdrvMailbox.command, value);
 }
 
-void ResponseCmndChar(const char* value)
-{
+void ResponseCmndChar(const char* value) {
   Response_P(S_JSON_COMMAND_SVALUE, XdrvMailbox.command, EscapeJSONString(value).c_str());
 }
 
-void ResponseCmndStateText(uint32_t value)
-{
+void ResponseCmndStateText(uint32_t value) {
   ResponseCmndChar(GetStateText(value));
 }
 
-void ResponseCmndDone(void)
-{
-  ResponseCmndChar(PSTR(D_JSON_DONE));
+void ResponseCmndDone(void) {
+  ResponseCmndChar_P(PSTR(D_JSON_DONE));
 }
 
-void ResponseCmndIdxChar(const char* value)
-{
+void ResponseCmndError(void) {
+  ResponseCmndChar_P(PSTR(D_JSON_ERROR));
+}
+
+void ResponseCmndIdxChar(const char* value) {
   Response_P(S_JSON_COMMAND_INDEX_SVALUE, XdrvMailbox.command, XdrvMailbox.index, EscapeJSONString(value).c_str());
 }
 
-void ResponseCmndAll(uint32_t text_index, uint32_t count)
-{
+void ResponseCmndIdxError(void) {
+  ResponseCmndIdxChar(PSTR(D_JSON_ERROR));
+}
+
+void ResponseCmndAll(uint32_t text_index, uint32_t count) {
   uint32_t real_index = text_index;
   ResponseClear();
   for (uint32_t i = 0; i < count; i++) {
@@ -1509,7 +1508,7 @@ void CmndIpAddress(void)
 {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= 4)) {
     char network_address[22];
-    ext_snprintf_P(network_address, sizeof(network_address), PSTR(" = %_I"), (uint32_t)NetworkAddress());
+    ext_snprintf_P(network_address, sizeof(network_address), PSTR(" (%_I)"), (uint32_t)NetworkAddress());
     if (!XdrvMailbox.usridx) {
       ResponseClear();
       for (uint32_t i = 0; i < 4; i++) {

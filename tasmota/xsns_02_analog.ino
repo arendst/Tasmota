@@ -591,8 +591,8 @@ void CmndAdcParam(void) {
     if (XdrvMailbox.data_len) {
       if (XdrvMailbox.payload > ADC_INPUT) {
         AdcGetSettings(idx);
-        if (ChrCount(XdrvMailbox.data, ",") > 2) {  // Process parameter entry
-          char sub_string[XdrvMailbox.data_len +1];
+        if (ArgC() > 3) {  // Process parameter entry
+          char argument[XdrvMailbox.data_len];
           // AdcParam 2, 32000, 10000, 3350
           // AdcParam 3, 10000, 12518931, -1.405
           // AdcParam 4, 128, 0, 0
@@ -601,29 +601,24 @@ void CmndAdcParam(void) {
           // AdcParam 7, 0, 2146, 0.23
           // AdcParam 8, 1000, 0, 0
           Adc[idx].type = XdrvMailbox.payload;
-          Adc[idx].param1 = strtol(subStr(sub_string, XdrvMailbox.data, ",", 2), nullptr, 10);
-          Adc[idx].param2 = strtol(subStr(sub_string, XdrvMailbox.data, ",", 3), nullptr, 10);
+          Adc[idx].param1 = strtol(ArgV(argument, 2), nullptr, 10);
+          Adc[idx].param2 = strtol(ArgV(argument, 3), nullptr, 10);
           if (ADC_RANGE == XdrvMailbox.payload) {
-            Adc[idx].param3 = abs(strtol(subStr(sub_string, XdrvMailbox.data, ",", 4), nullptr, 10));
-            Adc[idx].param4 = abs(strtol(subStr(sub_string, XdrvMailbox.data, ",", 5), nullptr, 10));
+            Adc[idx].param3 = abs(strtol(ArgV(argument, 4), nullptr, 10));
+            Adc[idx].param4 = abs(strtol(ArgV(argument, 5), nullptr, 10));
           } else {
-            Adc[idx].param3 = (int)(CharToFloat(subStr(sub_string, XdrvMailbox.data, ",", 4)) * 10000);
+            Adc[idx].param3 = (int)(CharToFloat(ArgV(argument, 4)) * 10000);
           }
-
           if (ADC_PH == XdrvMailbox.payload) {
-            char *phLow_chr = subStr(sub_string, XdrvMailbox.data, ",", 2);
-            char *phHigh_chr = subStr(sub_string, XdrvMailbox.data, ",", 4);
-            float phLow = CharToFloat(phLow_chr);
-            float phHigh = CharToFloat(phHigh_chr);
-
+            float phLow = CharToFloat(ArgV(argument, 2));
+            float phHigh = CharToFloat(ArgV(argument, 4));
             Adc[idx].param1 = phLow * ANALOG_PH_DECIMAL_MULTIPLIER;
-            Adc[idx].param2 = strtol(subStr(sub_string, XdrvMailbox.data, ",", 3), nullptr, 10);
+            Adc[idx].param2 = strtol(ArgV(argument, 3), nullptr, 10);
             Adc[idx].param3 = phHigh * ANALOG_PH_DECIMAL_MULTIPLIER;
-            Adc[idx].param4 = strtol(subStr(sub_string, XdrvMailbox.data, ",", 5), nullptr, 10);
-
-            AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION "Analog pH probe calibrated. cal-low(pH=ADC): %s=%d, cal-high(pH=ADC): %s=%d"), phLow_chr, Adc[idx].param2, phHigh_chr, Adc[idx].param4);
+            Adc[idx].param4 = strtol(ArgV(argument, 5), nullptr, 10);
+            AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION "Analog pH probe calibrated. cal-low(pH=ADC) %2_f=%d, cal-high(pH=ADC) %2_f=%d"),
+              &phLow, Adc[idx].param2, &phHigh, Adc[idx].param4);
           }
-
           if (ADC_CT_POWER == XdrvMailbox.payload) {
             if (((1 == Adc[idx].param1) & CT_FLAG_ENERGY_RESET) > 0) {
               for (uint32_t idx = 0; idx < MAX_ADCS; idx++) {

@@ -500,29 +500,28 @@ bool PN532_Command(void) {
     serviced = false;
     return serviced;
   }
-  char sub_string[XdrvMailbox.data_len];
-  char sub_string_tmp[XdrvMailbox.data_len];
+  char argument[XdrvMailbox.data_len];
   for (uint32_t ca=0;ca<XdrvMailbox.data_len;ca++) {
     if ((' ' == XdrvMailbox.data[ca]) || ('=' == XdrvMailbox.data[ca])) { XdrvMailbox.data[ca] = ','; }
     if (',' == XdrvMailbox.data[ca]) { paramcount++; }
   }
   UpperCase(XdrvMailbox.data,XdrvMailbox.data);
-  if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 1),"E")) {
+  if (!strcmp(ArgV(argument, 1),"E")) {
     Pn532.function = 1; // Block 1 of next card/tag will be reset to 0x00...
     AddLog(LOG_LEVEL_INFO, PSTR("NFC: PN532 NFC - Next scanned tag data block 1 will be erased"));
     ResponseTime_P(PSTR(",\"PN532\":{\"COMMAND\":\"E\"}}"));
     return serviced;
   }
-  if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 1),"S")) {
+  if (!strcmp(ArgV(argument, 1),"S")) {
     if (paramcount > 1) {
       if (XdrvMailbox.data[XdrvMailbox.data_len-1] == ',') {
         serviced = false;
         return serviced;
       }
-      sprintf(sub_string_tmp,subStr(sub_string, XdrvMailbox.data, ",", 2));
-      Pn532.newdata_len = strlen(sub_string_tmp);
+      ArgV(argument, 2);
+      Pn532.newdata_len = strlen(argument);
       if (Pn532.newdata_len > 15) { Pn532.newdata_len = 15; }
-      memcpy(&Pn532.newdata,&sub_string_tmp,Pn532.newdata_len);
+      memcpy(&Pn532.newdata,&argument,Pn532.newdata_len);
       Pn532.newdata[Pn532.newdata_len] = 0x00; // Null terminate the string
       Pn532.function = 2;
       AddLog(LOG_LEVEL_INFO, PSTR("NFC: PN532 NFC - Next scanned tag data block 1 will be set to '%s'"), Pn532.newdata);

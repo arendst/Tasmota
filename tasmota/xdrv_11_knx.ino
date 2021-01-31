@@ -1189,7 +1189,7 @@ void CmndKnxPa(void)
 
       if ( ((pa_area == 0) && (pa_line == 0) && (pa_member == 0))
             || (pa_area > 15) || (pa_line > 15) || (pa_member > 255) ) {
-              Response_P (PSTR("{\"%s\":\"" D_ERROR "\"}"), XdrvMailbox.command );
+              ResponseCmndError();
               return;
       }  // Invalid command
 
@@ -1208,19 +1208,19 @@ void CmndKnxGa(void)
 {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_KNX_GA)) {
     if (XdrvMailbox.data_len) {
-      if (strchr(XdrvMailbox.data, ',') != nullptr) {  // Process parameter entry
-        char sub_string[XdrvMailbox.data_len];
+      if (ArgC() > 1) {  // Process parameter entry
+        char argument[XdrvMailbox.data_len];
 
-        int ga_option = atoi(subStr(sub_string, XdrvMailbox.data, ",", 1));
-        int ga_area = atoi(subStr(sub_string, XdrvMailbox.data, ",", 2));
-        int ga_line = atoi(subStr(sub_string, XdrvMailbox.data, ",", 3));
-        int ga_member = atoi(subStr(sub_string, XdrvMailbox.data, ",", 4));
+        int ga_option = atoi(ArgV(argument, 1));
+        int ga_area = atoi(ArgV(argument, 2));
+        int ga_line = atoi(ArgV(argument, 3));
+        int ga_member = atoi(ArgV(argument, 4));
 
         if ( ((ga_area == 0) && (ga_line == 0) && (ga_member == 0))
           || (ga_area > 31) || (ga_line > 7) || (ga_member > 255)
           || (ga_option < 0) || ((ga_option > KNX_MAX_device_param ) && (ga_option != KNX_Empty))
           || (!device_param[ga_option-1].show) ) {
-               Response_P (PSTR("{\"%s\":\"" D_ERROR "\"}"), XdrvMailbox.command );
+               ResponseCmndIdxError();
                return;
         }  // Invalid command
 
@@ -1239,7 +1239,7 @@ void CmndKnxGa(void)
         if ( (XdrvMailbox.payload <= Settings.knx_GA_registered) && (XdrvMailbox.payload > 0) ) {
           XdrvMailbox.index = XdrvMailbox.payload;
         } else {
-          Response_P (PSTR("{\"%s\":\"" D_ERROR "\"}"), XdrvMailbox.command );
+          ResponseCmndIdxError();
           return;
         }
       }
@@ -1250,7 +1250,7 @@ void CmndKnxGa(void)
           KNX_addr.ga.area, KNX_addr.ga.line, KNX_addr.ga.member );
       }
     } else {
-      ResponseCmndNumber (Settings.knx_GA_registered );
+      ResponseCmndIdxNumber (Settings.knx_GA_registered );
     }
   }
 }
@@ -1259,19 +1259,19 @@ void CmndKnxCb(void)
 {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_KNX_CB)) {
     if (XdrvMailbox.data_len) {
-      if (strchr(XdrvMailbox.data, ',') != nullptr) {  // Process parameter entry
-        char sub_string[XdrvMailbox.data_len];
+      if (ArgC() > 1) {  // Process parameter entry
+        char argument[XdrvMailbox.data_len];
 
-        int cb_option = atoi(subStr(sub_string, XdrvMailbox.data, ",", 1));
-        int cb_area = atoi(subStr(sub_string, XdrvMailbox.data, ",", 2));
-        int cb_line = atoi(subStr(sub_string, XdrvMailbox.data, ",", 3));
-        int cb_member = atoi(subStr(sub_string, XdrvMailbox.data, ",", 4));
+        int cb_option = atoi(ArgV(argument, 1));
+        int cb_area = atoi(ArgV(argument, 2));
+        int cb_line = atoi(ArgV(argument, 3));
+        int cb_member = atoi(ArgV(argument, 4));
 
         if ( ((cb_area == 0) && (cb_line == 0) && (cb_member == 0))
           || (cb_area > 31) || (cb_line > 7) || (cb_member > 255)
           || (cb_option < 0) || ((cb_option > KNX_MAX_device_param ) && (cb_option != KNX_Empty))
           || (!device_param[cb_option-1].show) ) {
-               Response_P (PSTR("{\"%s\":\"" D_ERROR "\"}"), XdrvMailbox.command );
+               ResponseCmndIdxError();
                return;
         }  // Invalid command
 
@@ -1290,7 +1290,7 @@ void CmndKnxCb(void)
         if ( (XdrvMailbox.payload <= Settings.knx_CB_registered) && (XdrvMailbox.payload > 0) ) {
           XdrvMailbox.index = XdrvMailbox.payload;
         } else {
-          Response_P (PSTR("{\"%s\":\"" D_ERROR "\"}"), XdrvMailbox.command );
+          ResponseCmndIdxError();
           return;
         }
       }
@@ -1301,7 +1301,7 @@ void CmndKnxCb(void)
           KNX_addr.ga.area, KNX_addr.ga.line, KNX_addr.ga.member );
       }
     } else {
-      ResponseCmndNumber (Settings.knx_CB_registered );
+      ResponseCmndIdxNumber (Settings.knx_CB_registered );
     }
   }
 }
