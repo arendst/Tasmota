@@ -1509,7 +1509,7 @@ void CmndIpAddress(void)
 {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= 4)) {
     char network_address[22];
-    ext_snprintf_P(network_address, sizeof(network_address), PSTR(" = %_I"), (uint32_t)NetworkAddress());
+    ext_snprintf_P(network_address, sizeof(network_address), PSTR(" (%_I)"), (uint32_t)NetworkAddress());
     if (!XdrvMailbox.usridx) {
       ResponseClear();
       for (uint32_t i = 0; i < 4; i++) {
