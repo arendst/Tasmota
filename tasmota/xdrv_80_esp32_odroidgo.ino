@@ -1,7 +1,7 @@
 /*
-  xdrv_81_webcam.ino - ESP32 webcam support for Tasmota
+  xdrv_81_esp32_odroidgo.ino - ESP32 odroid go support for Tasmota
 
-  Copyright (C) 2021  Gerhard Mutz and Theo Arends
+  Copyright (C) 2021  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by

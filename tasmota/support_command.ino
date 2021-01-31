@@ -505,21 +505,12 @@ void CmndStatus(void)
   }
 
   if ((0 == payload) || (5 == payload)) {
-/*
-    Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS5_NETWORK "\":{\"" D_CMND_HOSTNAME "\":\"%s\",\"" D_CMND_IPADDRESS "\":\"%s\",\"" D_JSON_GATEWAY "\":\"%s\",\""
-                          D_JSON_SUBNETMASK "\":\"%s\",\"" D_JSON_DNSSERVER "\":\"%s\",\"" D_JSON_MAC "\":\"%s\",\""
-                          D_CMND_WEBSERVER "\":%d,\"" D_CMND_WIFICONFIG "\":%d,\"" D_CMND_WIFIPOWER "\":%s}}"),
-                          NetworkHostname(), NetworkAddress().toString().c_str(), IPAddress(Settings.ipv4_address[1]).toString().c_str(),
-                          IPAddress(Settings.ipv4_address[2]).toString().c_str(), IPAddress(Settings.ipv4_address[3]).toString().c_str(), NetworkMacAddress().c_str(),
-                          Settings.webserver, Settings.sta_config, WifiGetOutputPower().c_str());
-*/
-    Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS5_NETWORK "\":{\"" D_CMND_HOSTNAME "\":\"%s\",\"" D_CMND_IPADDRESS "\":\"%s\",\""
+    Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS5_NETWORK "\":{\"" D_CMND_HOSTNAME "\":\"%s\",\"" D_CMND_IPADDRESS "\":\"%_I\",\""
                           D_JSON_GATEWAY "\":\"%_I\",\"" D_JSON_SUBNETMASK "\":\"%_I\",\"" D_JSON_DNSSERVER "\":\"%_I\",\""
                           D_JSON_MAC "\":\"%s\",\"" D_CMND_WEBSERVER "\":%d,\"" D_CMND_WIFICONFIG "\":%d,\"" D_CMND_WIFIPOWER "\":%s}}"),
-                          NetworkHostname(), NetworkAddress().toString().c_str(),
+                          NetworkHostname(), (uint32_t)NetworkAddress(),
                           Settings.ipv4_address[1], Settings.ipv4_address[2], Settings.ipv4_address[3],
                           NetworkMacAddress().c_str(), Settings.webserver, Settings.sta_config, WifiGetOutputPower().c_str());
-
     MqttPublishPrefixTopic_P(STAT, PSTR(D_CMND_STATUS "5"));
   }
 
@@ -1517,23 +1508,20 @@ void CmndLogport(void)
 void CmndIpAddress(void)
 {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= 4)) {
+    char network_address[22];
+    ext_snprintf_P(network_address, sizeof(network_address), PSTR(" = %_I"), (uint32_t)NetworkAddress());
     if (!XdrvMailbox.usridx) {
-      char stemp1[TOPSZ];
-      snprintf_P(stemp1, sizeof(stemp1), PSTR(" %s"), NetworkAddress().toString().c_str());
       ResponseClear();
       for (uint32_t i = 0; i < 4; i++) {
-        ResponseAppend_P(PSTR("%c\"%s%d\":\"%s%s\""), (i) ? ',' : '{', XdrvMailbox.command, i +1, IPAddress(Settings.ipv4_address[i]).toString().c_str(), (0 == i) ? stemp1:"");
+        ResponseAppend_P(PSTR("%c\"%s%d\":\"%_I%s\""), (i)?',':'{', XdrvMailbox.command, i +1, Settings.ipv4_address[i], (0 == i)?network_address:"");
       }
       ResponseJsonEnd();
     } else {
       uint32_t ipv4_address;
       if (ParseIPv4(&ipv4_address, XdrvMailbox.data)) {
         Settings.ipv4_address[XdrvMailbox.index -1] = ipv4_address;
-//        TasmotaGlobal.restart_flag = 2;
       }
-      char stemp1[TOPSZ];
-      snprintf_P(stemp1, sizeof(stemp1), PSTR(" %s"), NetworkAddress().toString().c_str());
-      Response_P(S_JSON_COMMAND_INDEX_SVALUE_SVALUE, XdrvMailbox.command, XdrvMailbox.index, IPAddress(Settings.ipv4_address[XdrvMailbox.index -1]).toString().c_str(), (1 == XdrvMailbox.index) ? stemp1:"");
+      Response_P(PSTR("{\"%s%d\":\"%_I%s\"}"), XdrvMailbox.command, XdrvMailbox.index, Settings.ipv4_address[XdrvMailbox.index -1], (1 == XdrvMailbox.index)?network_address:"");
     }
   }
 }

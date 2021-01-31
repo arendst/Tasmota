@@ -1,5 +1,8 @@
 /*
-  xsns_62_MI_ESP32.ino - MI-BLE-sensors via ESP32 support for Tasmota
+  xsns_62_esp32_mi_ble.ino - MI-BLE-sensors via ESP32 support for Tasmota
+  enabled by ESP32 && USE_BLE_ESP32
+  if (ESP32 && !USE_BLE_ESP32) then xsns_62_esp32_mi.ino is used - the older driver
+
 
   Copyright (C) 2020  Christian Baars and Theo Arends
 
@@ -20,6 +23,8 @@
   --------------------------------------------------------------------------------------------
   Version yyyymmdd  Action    Description
   --------------------------------------------------------------------------------------------
+  0.9.2.0 20210127  changed - Officially includes as the mi driver when using USE_BLE_ESP32.
+  -------
   0.9.1.9 20201226  changed - All change now.
   -------
   0.9.1.7 20201116  changed - small bugfixes, add BLOCK and OPTION command, send BLE scan via MQTT
@@ -2233,7 +2238,7 @@ void CmndMi32Keys(void){
  * Presentation
 \*********************************************************************************************/
 
-const char HTTP_MI32[] PROGMEM = "{s}MI ESP32 v0918{m}%u%s / %u{e}";
+const char HTTP_MI32[] PROGMEM = "{s}MI ESP32 v0920{m}%u%s / %u{e}";
 const char HTTP_MI32_ALIAS[] PROGMEM = "{s}%s Alias {m}%s{e}";
 const char HTTP_MI32_MAC[] PROGMEM = "{s}%s %s{m}%s{e}";
 const char HTTP_RSSI[] PROGMEM = "{s}%s " D_RSSI "{m}%d dBm{e}";

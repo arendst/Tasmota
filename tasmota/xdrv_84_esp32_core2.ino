@@ -1,5 +1,5 @@
 /*
-  xdrv_84_core2.ino - ESP32 m5stack core2 support for Tasmota
+  xdrv_84_esp32_core2.ino - ESP32 m5stack core2 support for Tasmota
 
   Copyright (C) 2021  Gerhard Mutz and Theo Arends
 

@@ -6,7 +6,15 @@ All notable changes to this project will be documented in this file.
 ## [9.2.0.4]
 ### Added
 - Function ``AddLog`` to provide logging for up to 128 (LOGSZ) characters to save stack space
-- Commands ``ChannelRemap``, ``MultiPWM``, ``AlexaCTRange``, ``PowerOnFade``, ``PWMCT``, ``WhiteBlend``, ``VirtualCT`` as synonyms for ``SetOption37, 68, 82, 91, 92, 105 and 106`` respectively
+- Commands ``ChannelRemap``, ``MultiPWM``, ``AlexaCTRange``, ``PowerOnFade``, ``PWMCT``, ``WhiteBlend`` and ``VirtualCT`` as synonyms for ``SetOption37, 68, 82, 91, 92, 105`` and ``106``
+- Commands ``ZbNameKey``, ``ZbDeviceTopic``, ``ZbNoPrefix``, ``ZbEndpointSuffix``, ``ZbNoAutoBind`` and ``ZbNameTopic`` as synonyms for ``SetOption83, 89, 100, 101, 110`` and ``112``
+- Commands ``ZbNoAutoBind``, ``ZbReceivedTopic`` and ``ZbOmitDevice`` as synonyms for ``SetOption116, 118`` and ``119``
+- Commands ``BuzzerActive`` and ``BuzzerPwm`` as synonyms for ``SetOption67`` and ``111``
+- Support for ESP32 ``Module 5`` Wireless Tag Eth01 (#9496)
+- Support trailing silence in buzzer tune (#10694)
+- Command ``L1MusicSync <0|Off>|<1|On>|<2|Toggle>, 1..10, 1..100>`` to control Sonoff L1 Music Sync mode sensitivity and speed (#10722)
+- Command ``Speed2`` to control a once off fade (#10741)
+- Zigbee command ``SetOption120 1`` or ``ZbEndpointTopic 1`` to add the endpoint as suffix in topic when using ``SetOption89 1``
 
 ### Changed
 - Maximum chars in ``AddLog_P`` logging restored from 128 to 700 (MAX_LOGSZ) to solve broken error messages
@@ -24,7 +32,7 @@ All notable changes to this project will be documented in this file.
 - Compile time option ``USE_MQTT_TLS_DROP_OLD_FINGERPRINT`` to drop old (less secure) TLS fingerprint
 - Command ``SetOption40 0..250`` to disable button functionality if activated for over 0.1 second re-introduced
 - Support for SM2135 current selection using GPIO ``SM2135 DAT`` index (#10634)
-- Basic support for ESP32 M5stack core2 16MB binary tasmota32-core2.bin (#10635)
+- Support for ESP32 ``Module 7`` M5stack core2 16MB binary tasmota32-core2.bin (#10635)
 - Support for Sugar Valley NeoPool Controller by Norbert Richter (#10637)
 - Rule trigger string comparisons for EndsWith ``$>``, StartsWith ``$<`` and Contains ``$|`` (#10538)
 - Support for TOF10120 time of flight sensor by Cyril Pawelko (#10190)
@@ -41,7 +49,7 @@ All notable changes to this project will be documented in this file.
 
 ## [9.2.0.2] 20210105
 ### Added
-- Basic support for ESP32 Odroid Go 16MB binary tasmota32-odroidgo.bin (#8630)
+- Support for ESP32 ``Module 3`` Odroid Go 16MB binary tasmota32-odroidgo.bin (#8630)
 - Command ``CTRange`` to specify the visible CT range the bulb is capable of (#10311)
 - Command ``VirtualCT`` to simulate or fine tune CT bulbs with 3,4,5 channels (#10311)
 - Command ``SetOption118 1`` to move ZbReceived from JSON message and into the subtopic replacing "SENSOR" default (#10353)

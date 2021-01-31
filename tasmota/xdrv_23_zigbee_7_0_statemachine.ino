@@ -132,7 +132,7 @@ const char kZigbeeStarted[] PROGMEM = D_LOG_ZIGBEE "Zigbee started";
 const char kResetting[] PROGMEM = "Resetting configuration";
 const char kResettingDevice[] PROGMEM = D_LOG_ZIGBEE "Resetting EZSP device";
 const char kReconfiguringDevice[] PROGMEM = D_LOG_ZIGBEE "Factory reset EZSP device";
-const char kZNP12[] PROGMEM = "Only ZNP 1.2 is currently supported";
+const char kZNP123[] PROGMEM = "Only ZNP 1.2 and 3.x are currently supported";
 const char kEZ8[] PROGMEM = "Only EZSP protocol v8 is currently supported";
 const char kAbort[] PROGMEM = "Abort";
 const char kZigbeeAbort[] PROGMEM = D_LOG_ZIGBEE "Abort";
@@ -194,6 +194,7 @@ ZBM(ZBS_LOGTYPE_DEVICE, Z_SRSP | Z_SAPI, SAPI_READ_CONFIGURATION, Z_SUCCESS, CON
 // Write configuration - write success
 ZBM(ZBR_W_OK, Z_SRSP | Z_SAPI, SAPI_WRITE_CONFIGURATION, Z_SUCCESS )				// 660500 - Write Configuration
 ZBM(ZBR_WNV_OK, Z_SRSP | Z_SYS, SYS_OSAL_NV_WRITE, Z_SUCCESS )				// 610900 - NV Write
+ZBM(ZBR_WNV_OKE, Z_SRSP | Z_SYS, SYS_OSAL_NV_WRITE )				          // 6109xx - NV Write, OK or error
 
 // Factory reset
 ZBM(ZBS_FACTRES, Z_SREQ | Z_SAPI, SAPI_WRITE_CONFIGURATION, CONF_STARTUP_OPTION, 0x01 /* len */, 0x03 )				// 2605030103
@@ -415,7 +416,7 @@ static const Zigbee_Instruction zb_prog[] PROGMEM = {
     // Z_ZDO:startupFromApp
     //ZI_LOG(LOG_LEVEL_INFO, D_LOG_ZIGBEE "starting zigbee coordinator")
     ZI_SEND(ZBS_STARTUPFROMAPP)                       // start coordinator
-    ZI_WAIT_RECV(2000, ZBR_STARTUPFROMAPP)        // wait for sync ack of command
+    ZI_WAIT_RECV(5000, ZBR_STARTUPFROMAPP)        // wait for sync ack of command
     ZI_WAIT_UNTIL_FUNC(10000, AREQ_STARTUPFROMAPP, &ZNP_ReceiveStateChange)      // wait for async message that coordinator started
     ZI_SEND(ZBS_GETDEVICEINFO)                    // GetDeviceInfo
     ZI_WAIT_RECV_FUNC(2000, ZBR_GETDEVICEINFO, &ZNP_ReceiveDeviceInfo)
@@ -472,7 +473,7 @@ static const Zigbee_Instruction zb_prog[] PROGMEM = {
     ZI_SEND(ZBS_W_PFGKEN)                         // write PRECFGKEY Enable
     ZI_WAIT_RECV(1000, ZBR_W_OK)
     ZI_SEND(ZBS_WNV_SECMODE)                      // write Security Mode
-    ZI_WAIT_RECV(1000, ZBR_WNV_OK)
+    ZI_WAIT_RECV(1000, ZBR_WNV_OKE)               // Tolerate error for ZNP 3.x
     ZI_SEND(ZBS_W_ZDODCB)                         // write Z_ZDO Direct CB
     ZI_WAIT_RECV(1000, ZBR_W_OK)
     // Now mark the device as ready, writing 0x55 in memory slot 0x0F00
@@ -558,7 +559,7 @@ static const Zigbee_Instruction zb_prog[] PROGMEM = {
 
   // Error: version of Z-Stack is not supported
   ZI_LABEL(ZIGBEE_LABEL_UNSUPPORTED_VERSION)
-    ZI_MQTT_STATE(ZIGBEE_STATUS_UNSUPPORTED_VERSION, kZNP12)
+    ZI_MQTT_STATE(ZIGBEE_STATUS_UNSUPPORTED_VERSION, kZNP123)
     ZI_GOTO(ZIGBEE_LABEL_ABORT)
 
   // Abort state machine, general error

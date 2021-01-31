@@ -151,8 +151,8 @@ void PollUdp(void)
             udp_remote_port = PortUdp.remotePort();
 #endif
 
-            // AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("UDP: M-SEARCH Packet from %s:%d\n%s"),
-            //   udp_remote_ip.toString().c_str(), udp_remote_port, packet_buffer);
+            // AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("UDP: M-SEARCH Packet from %_I:%d\n%s"),
+            //   (uint32_t)udp_remote_ip, udp_remote_port, packet_buffer);
 
             LowerCase(packet_buffer, packet_buffer);
             RemoveSpace(packet_buffer);

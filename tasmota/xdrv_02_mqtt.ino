@@ -32,6 +32,13 @@
 WiFiClient EspClient;                     // Wifi Client - non-TLS
 
 const char kMqttCommands[] PROGMEM = "|"  // No prefix
+  // SetOption synonyms
+  D_SO_MQTTJSONONLY "|" 
+#ifdef USE_MQTT_TLS
+  D_SO_MQTTTLS "|"
+#endif
+  D_SO_MQTTNORETAIN "|" D_SO_MQTTDETACHRELAY "|"
+  // regular commands
 #if defined(USE_MQTT_TLS) && !defined(USE_MQTT_TLS_CA_CERT)
   D_CMND_MQTTFINGERPRINT "|"
 #endif
@@ -42,6 +49,19 @@ const char kMqttCommands[] PROGMEM = "|"  // No prefix
   D_CMND_MQTTHOST "|" D_CMND_MQTTPORT "|" D_CMND_MQTTRETRY "|" D_CMND_STATETEXT "|" D_CMND_MQTTCLIENT "|"
   D_CMND_FULLTOPIC "|" D_CMND_PREFIX "|" D_CMND_GROUPTOPIC "|" D_CMND_TOPIC "|" D_CMND_PUBLISH "|" D_CMND_MQTTLOG "|"
   D_CMND_BUTTONTOPIC "|" D_CMND_SWITCHTOPIC "|" D_CMND_BUTTONRETAIN "|" D_CMND_SWITCHRETAIN "|" D_CMND_POWERRETAIN "|" D_CMND_SENSORRETAIN ;
+
+SO_SYNONYMS(kMqttSynonyms,
+  90,
+#ifdef USE_MQTT_TLS
+  103,
+#endif
+  104, 114
+);
+
+// const uint8_t kMqttSynonyms[] PROGMEM = {
+//   4,  // number of synonyms
+//   90, 103, 104, 114,
+// };
 
 void (* const MqttCommand[])(void) PROGMEM = {
 #if defined(USE_MQTT_TLS) && !defined(USE_MQTT_TLS_CA_CERT)
@@ -1353,7 +1373,7 @@ bool Xdrv02(uint8_t function)
         break;
 #endif  // USE_WEBSERVER
       case FUNC_COMMAND:
-        result = DecodeCommand(kMqttCommands, MqttCommand);
+        result = DecodeCommand(kMqttCommands, MqttCommand, kMqttSynonyms);
         break;
     }
   }

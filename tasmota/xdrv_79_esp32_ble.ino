@@ -1,5 +1,5 @@
 /*
-  xdrv_52_BLE_ESP32.ino - BLE via ESP32 support for Tasmota
+  xdrv_79_esp32_ble.ino - BLE via ESP32 support for Tasmota
 
   Copyright (C) 2020  Christian Baars and Theo Arends and Simon Hailes
 
@@ -22,8 +22,18 @@
   --------------------------------------------------------------------------------------------
 */
 
+// TEMPORARILY define ESP32 and USE_BLE_ESP32 so VSCODE shows highlighting....
+//#define VSCODE_DEV
+#ifdef VSCODE_DEV
+#define ESP32
+#define USE_BLE_ESP32
+#endif
+
+#ifdef ESP32                       // ESP32 only. Use define USE_HM10 for ESP8266 support
+#ifdef USE_BLE_ESP32
+
 /*
-  xdrv_52:
+  xdrv_79:
   This driver uses the ESP32 BLE functionality to hopefully provide enough
   BLE functionality to implement specific drivers on top of it.
 
@@ -35,34 +45,26 @@
       connect/read/awaitnotify from a MAC/Service/Characteristic/NotifyCharacteristic
 
     Cmnds:
-      BLEOp0 - requests status of operations
-      BLEOp1 MAC - create an operation in preparation, and populate it's MAC address
-      BLEOp2 Service - add a serviceUUID to the operation in preparation
-      BLEOp3 Characteristic - add a CharacteristicUUID to the operation in preparation for read/write
-      BLEOp4 writedata - optional:add data to write to the operation in preparation - hex string
-      BLEOp5 - optional:signify that a read should be done
-      BLEOp6 NotifyCharacteristic - optional:add a NotifyCharacteristicUUID to the operation in preparation to wait for a notify
-      BLEOp9 - publish the 'operation in preparation' to MQTT.
-      BLEOp10 - add the 'operation in preparation' to the queue of operations to perform.
+      BLEPeriod
+      BLEAdv
+      BLEOp
+      BLEMode
+      BLEDetails
+      BLEScan
+      BLEAlias
+      BLEName
+      BLEDebug
+      BLEDevices
+      BLEMaxAge
+      BLEAddrFilter
 
   Other drivers can add callbacks to receive advertisements
   Other drivers can add 'operations' to be performed and receive callbacks from the operation's success or failure
 
-Example:
+Example BLEOp:
 Write and request next notify:
-backlog BLEOp1 001A22092EE0; BLEOp2 3e135142-654f-9090-134a-a6ff5bb77046; BLEOp3 3fa4585a-ce4a-3bad-db4b-b8df8179ea09; BLEOp4 03; BLEOp6 d0e8434d-cd29-0996-af41-6c90f4e0eb2a;
-BLEOp10 ->
-19:25:08 RSL: tele/tasmota_E89E98/SENSOR = {"BLEOperation":{"opid":"3,"state":"1,"MAC":"001A22092EE0","svc":"3e135142-654f-9090-134a-a6ff5bb77046","char":"3fa4585a-ce4a-3bad-db4b-b8df8179ea09","wrote":"03}}
-19:25:08 queued 0 sent {"BLEOperation":{"opid":"3,"state":"1,"MAC":"001A22092EE0","svc":"3e135142-654f-9090-134a-a6ff5bb77046","char":"3fa4585a-ce4a-3bad-db4b-b8df8179ea09","wrote":"03}}
-19:25:08 RSL: stat/tasmota_E89E98/RESULT = {"BLEOp":"Done"}
-.....
-19:25:11 RSL: tele/tasmota_E89E98/SENSOR = {"BLEOperation":{"opid":"3,"state":"11,"MAC":"001A22092EE0","svc":"3e135142-654f-9090-134a-a6ff5bb77046","char":"3fa4585a-ce4a-3bad-db4b-b8df8179ea09","wrote":"03","notify":"020109000428}}
-
-state: 1 -> starting,
-7 -> read complete
-8 -> write complete
-11 -> notify complete
--ve + -> failure (see GEN_STATE_FAILED_XXXX constants below.)
+BLEOp M:4C65A8DAF43A s:00001530-1212-efde-1523-785feabcd123 n:00001531-1212-efde-1523-785feabcd123 c:00001531-1212-efde-1523-785feabcd123 w:00 go
+12:45:12 MQT: tele/tasmota_esp32/BLE = {"BLEOperation":{"opid":"11","stat":"7","state":"DONENOTIFIED","MAC":"4C65A8DAF43A","svc":"00001530-1212-efde-1523-785feabcd123","char":"00001531-1212-efde-1523-785feabcd123","notifychar":"00001531-1212-efde-1523-785feabcd123","write":"00","notify":"100003"}}
 
 
 The driver can also be used by other drivers, using the functions:
@@ -80,27 +82,12 @@ i.e. the Bluetooth of the ESP can be shared without conflict.
 
 */
 
-
-// TEMPORARILY define ESP32 and USE_BLE_ESP32 so VSCODE shows highlighting....
-//#define VSCODE_DEV
-
-#ifdef VSCODE_DEV
-#define ESP32
-#define USE_BLE_ESP32
-#endif
-
-#ifdef ESP32                       // ESP32 only. Use define USE_HM10 for ESP8266 support
-
-#ifdef USE_BLE_ESP32
-
 #define BLE_ESP32_ALIASES
 
 // uncomment for more diagnostic/information messages - + more flash use.
 //#define BLE_ESP32_DEBUG
 
-
-
-#define XDRV_52                    52
+#define XDRV_79                    79
 #define USE_MI_DECRYPTION
 
 #include <vector>
@@ -3456,7 +3443,7 @@ int ExtStopBLE(){
   return 0;
 }
 
-bool Xdrv52(uint8_t function)
+bool Xdrv79(uint8_t function)
 {
   //if (!Settings.flag5.mi32_enable) { return false; }  // SetOption115 - Enable ESP32 BLE BLE
 

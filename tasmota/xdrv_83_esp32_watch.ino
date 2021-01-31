@@ -1,5 +1,5 @@
 /*
-  xdrv_83_esp32watch.ino - ESP32 TTGO watch support for Tasmota
+  xdrv_83_esp32_watch.ino - ESP32 TTGO watch support for Tasmota
 
   Copyright (C) 2021  Gerhard Mutz and Theo Arends
 

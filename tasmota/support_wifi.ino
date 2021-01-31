@@ -748,7 +748,7 @@ uint32_t WifiGetNtp(void) {
     return 0;
   }
 
-//  AddLog(LOG_LEVEL_DEBUG, PSTR("NTP: Name %s, IP %s"), ntp_server, time_server_ip.toString().c_str());
+//  AddLog(LOG_LEVEL_DEBUG, PSTR("NTP: Name %s, IP %_I"), ntp_server, (uint32_t)time_server_ip);
 
   WiFiUDP udp;
 
@@ -798,7 +798,7 @@ uint32_t WifiGetNtp(void) {
       if ((packet_buffer[0] & 0b11000000) == 0b11000000) {
         // Leap-Indicator: unknown (clock unsynchronized)
         // See: https://github.com/letscontrolit/ESPEasy/issues/2886#issuecomment-586656384
-        AddLog(LOG_LEVEL_DEBUG, PSTR("NTP: IP %s unsynched"), time_server_ip.toString().c_str());
+        AddLog(LOG_LEVEL_DEBUG, PSTR("NTP: IP %_I unsynched"), (uint32_t)time_server_ip);
         ntp_server_id++;                            // Next server next time
         return 0;
       }

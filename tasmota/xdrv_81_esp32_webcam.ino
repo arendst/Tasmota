@@ -1,5 +1,5 @@
 /*
-  xdrv_81_webcam.ino - ESP32 webcam support for Tasmota
+  xdrv_81_esp32_webcam.ino - ESP32 webcam support for Tasmota
 
   Copyright (C) 2021  Gerhard Mutz and Theo Arends
 
@@ -918,8 +918,8 @@ void WcShowStream(void) {
       delay(50);   // Give the webcam webserver some time to prepare the stream
     }
     if (Wc.CamServer && Wc.up) {
-      WSContentSend_P(PSTR("<p></p><center><img src='http://%s:81/stream' alt='Webcam stream' style='width:99%%;'></center><p></p>"),
-        WiFi.localIP().toString().c_str());
+      WSContentSend_P(PSTR("<p></p><center><img src='http://%_I:81/stream' alt='Webcam stream' style='width:99%%;'></center><p></p>"),
+        (uint32_t)WiFi.localIP());
     }
   }
 }

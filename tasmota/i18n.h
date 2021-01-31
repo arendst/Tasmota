@@ -349,7 +349,11 @@
 #define D_CMND_CPU_FREQUENCY "CpuFrequency"
 #endif  // ESP32
 
-// Commands xdrv_01_mqtt.ino
+// Commands xdrv_02_mqtt.ino
+#define D_SO_MQTTJSONONLY "MqttJSONOnly"
+#define D_SO_MQTTTLS "MqttTLS"
+#define D_SO_MQTTNORETAIN "MqttNoRetain"
+#define D_SO_MQTTDETACHRELAY "MqttDetachRelay"
 #define D_CMND_MQTTLOG "MqttLog"
 #define D_CMND_MQTTHOST "MqttHost"
 #define D_CMND_MQTTPORT "MqttPort"
@@ -375,7 +379,7 @@
 #define D_CMND_SENSORRETAIN "SensorRetain"
 #define D_CMND_PUBLISH "Publish"
 
-// Commands xdrv_02_webserver.ino
+// Commands xdrv_01_webserver.ino
 #define D_CMND_WEBSERVER "Webserver"
   #define D_JSON_WEBSERVER_MODE "WebServerMode"
   #define D_JSON_ACTIVE_FOR "Active for"
@@ -535,6 +539,10 @@
 #define D_SO_ZIGBEE_ENDPOINTSUFFIX "EndpointSuffix"
 #define D_SO_ZIGBEE_NOAUTOBIND "NoAutoBind"
 #define D_SO_ZIGBEE_NAMETOPIC "NameTopic"
+#define D_SO_ZIGBEE_ENDPOINTTOPIC "EndpointTopic"
+#define D_SO_ZIGBEE_NOAUTOBIND "NoAutoBind"
+#define D_SO_ZIGBEE_ZBRECEIVEDTOPIC "ReceivedTopic"
+#define D_SO_ZIGBEE_OMITDEVICE "OmitDevice"
 #define D_ZIGBEE_NOT_STARTED "Zigbee not started"
 #define D_CMND_ZIGBEE_PERMITJOIN "PermitJoin"
 #define D_CMND_ZIGBEE_STATUS "Status"
@@ -742,7 +750,6 @@ const char S_JSON_COMMAND_INDEX_NVALUE[] PROGMEM =            "{\"%s%d\":%d}";
 const char S_JSON_COMMAND_INDEX_LVALUE[] PROGMEM =            "{\"%s%d\":%lu}";
 const char S_JSON_COMMAND_INDEX_SVALUE[] PROGMEM =            "{\"%s%d\":\"%s\"}";
 const char S_JSON_COMMAND_INDEX_ASTERISK[] PROGMEM =          "{\"%s%d\":\"" D_ASTERISK_PWD "\"}";
-const char S_JSON_COMMAND_INDEX_SVALUE_SVALUE[] PROGMEM =     "{\"%s%d\":\"%s%s\"}";
 
 const char S_JSON_SENSOR_INDEX_NVALUE[] PROGMEM =             "{\"" D_CMND_SENSOR "%d\":%d}";
 const char S_JSON_SENSOR_INDEX_SVALUE[] PROGMEM =             "{\"" D_CMND_SENSOR "%d\":\"%s\"}";

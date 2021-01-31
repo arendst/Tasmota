@@ -372,8 +372,8 @@ int32_t ZNP_Reboot(int32_t res, SBuffer &buf) {
 
   MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEE_STATE));
 
-  if ((0x02 == major_rel) && (0x06 == minor_rel)) {
-  	return 0;	  // version 2.6.x is ok
+  if ((0x02 == major_rel) && ((0x06 == minor_rel) || (0x07 == minor_rel))) {
+  	return 0;	  // version 2.6.x and 2.7.x are ok
   } else {
     return ZIGBEE_LABEL_UNSUPPORTED_VERSION;  // abort
   }
@@ -403,8 +403,8 @@ int32_t ZNP_ReceiveCheckVersion(int32_t res, SBuffer &buf) {
 
   MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEE_STATE));
 
-  if ((0x02 == major_rel) && (0x06 == minor_rel)) {
-  	return 0;	  // version 2.6.x is ok
+  if ((0x02 == major_rel) && ((0x06 == minor_rel) || (0x07 == minor_rel))) {
+  	return 0;	  // version 2.6.x and 2.7.x are ok
   } else {
     return ZIGBEE_LABEL_UNSUPPORTED_VERSION;  // abort
   }

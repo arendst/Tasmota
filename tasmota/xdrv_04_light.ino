@@ -148,11 +148,10 @@ const char kLightCommands[] PROGMEM = "|"  // No prefix
 #endif  // USE_DGR_LIGHT_SEQUENCE
    "|UNDOCA" ;
 
-const uint8_t kLightSynonyms[] PROGMEM = {
-  7,                    // number of entries
+SO_SYNONYMS(kLightSynonyms,
   37, 68, 82, 91, 92,
   105, 106,
-};
+);
 
 void (* const LightCommand[])(void) PROGMEM = {
   &CmndColor, &CmndColorTemperature, &CmndDimmer, &CmndDimmerRange, &CmndDimmerStep, &CmndLedTable, &CmndFade,
@@ -252,6 +251,10 @@ struct LIGHT {
   uint16_t fade_end_10[LST_MAX];         // 10 bits resolution target channel values
   uint16_t fade_duration = 0;            // duration of fade in milliseconds
   uint32_t fade_start = 0;               // fade start time in milliseconds, compared to millis()
+  bool     fade_once_enabled = false;    // override fade a single time
+  bool     fade_once_value = false;      // override fade a single time
+  bool     speed_once_enabled = false;   // override speed a single time
+  uint8_t  speed_once_value = 0;         // override speed a single time
 
   uint16_t pwm_min = 0;                  // minimum value for PWM, from DimmerRange, 0..1023
   uint16_t pwm_max = 1023;               // maxumum value for PWM, from DimmerRange, 0..1023
@@ -1608,6 +1611,16 @@ void LightSetPower(void)
   LightAnimate();
 }
 
+bool LightGetFadeSetting(void) {
+  if (Light.fade_once_enabled) return Light.fade_once_value;
+  return Settings.light_fade;
+}
+
+uint8_t LightGetSpeedSetting(void) {
+  if (Light.speed_once_enabled) return Light.speed_once_value;
+  return Settings.light_speed;
+}
+
 // On entry Light.new_color[5] contains the color to be displayed
 // and Light.last_color[5] the color currently displayed
 // Light.power tells which lights or channels (SetOption68) are on/off
@@ -1758,12 +1771,14 @@ void LightAnimate(void)
         cur_col_10[i] = orig_col_10bits[Light.color_remap[i]];
       }
 
-      if (!Settings.light_fade || TasmotaGlobal.skip_light_fade || power_off || (!Light.fade_initialized)) { // no fade
+      if (!LightGetFadeSetting() || TasmotaGlobal.skip_light_fade || power_off || (!Light.fade_initialized)) { // no fade
         // record the current value for a future Fade
         memcpy(Light.fade_start_10, cur_col_10, sizeof(Light.fade_start_10));
         // push the final values at 8 and 10 bits resolution to the PWMs
         LightSetOutputs(cur_col_10);
         Light.fade_initialized = true;      // it is now ok to fade
+        Light.fade_once_enabled = false;    // light has been set, reset fade_once_enabled
+        Light.speed_once_enabled = false;   // light has been set, reset speed_once_enabled
       } else {  // fade on
         if (Light.fade_running) {
           // if fade is running, we take the curring value as the start for the next fade
@@ -1773,6 +1788,7 @@ void LightAnimate(void)
         Light.fade_running = true;
         Light.fade_duration = 0;    // set the value to zero to force a recompute
         Light.fade_start = 0;
+        Light.fade_once_enabled = false;    // fade will be applied, reset fade_once_enabled
         // Fade will applied immediately below
       }
     }
@@ -1857,7 +1873,8 @@ bool LightApplyFade(void) {   // did the value chanegd and needs to be applied
       // compute the duration of the animation
       // Note: Settings.light_speed is the number of half-seconds for a 100% fade,
       // i.e. light_speed=1 means 1024 steps in 500ms
-      Light.fade_duration = Settings.light_speed * 500;
+      Light.fade_duration = LightGetSpeedSetting() * 500;
+      Light.speed_once_enabled = false; // The once off speed value has been read, reset it
       if (!Settings.flag5.fade_fixed_duration) {
         Light.fade_duration = (distance * Light.fade_duration) / 1023;    // time is proportional to distance, except with SO117
       }
@@ -2835,14 +2852,23 @@ void CmndFade(void)
 #ifdef USE_DEVICE_GROUPS
   if (XdrvMailbox.payload >= 0 && XdrvMailbox.payload <= 2) SendDeviceGroupMessage(Light.device_group_index, DGR_MSGTYP_UPDATE, DGR_ITEM_LIGHT_FADE, Settings.light_fade);
 #endif  // USE_DEVICE_GROUPS
-#ifdef USE_LIGHT
   if (!Settings.light_fade) { Light.fade_running = false; }
-#endif  // USE_LIGHT
   ResponseCmndStateText(Settings.light_fade);
 }
 
 void CmndSpeed(void)
 {
+  if (XdrvMailbox.index == 2) {
+    if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 40)) {
+      Light.fade_once_enabled = true;
+      Light.fade_once_value = XdrvMailbox.payload > 0;
+      Light.speed_once_enabled = true;
+      Light.speed_once_value = XdrvMailbox.payload;
+      if (!Light.fade_once_value) { Light.fade_running = false; }
+    }
+    return;
+  }
+
   // Speed 1  - Fast
   // Speed 40 - Very slow
   // Speed +  - Increment Speed
