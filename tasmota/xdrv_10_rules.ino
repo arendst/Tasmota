@@ -2297,7 +2297,7 @@ void CmndScale(void)
 {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_RULE_VARS)) {
     if (XdrvMailbox.data_len > 0) {
-      if (ArgC() > 1) {  // Process parameter entry
+      if (ArgC() == 5) {  // Process parameter entry
         char argument[XdrvMailbox.data_len];
 
         float valueIN = CharToFloat(ArgV(argument, 1));
@@ -2308,6 +2308,9 @@ void CmndScale(void)
         float value = map_double(valueIN, fromLow, fromHigh, toLow, toHigh);
         dtostrfd(value, Settings.flag2.calc_resolution, rules_vars[XdrvMailbox.index -1]);
         bitSet(Rules.vars_event, XdrvMailbox.index -1);
+      } else {
+        ResponseCmndIdxError();
+        return;
       }
     }
     ResponseCmndIdxChar(rules_vars[XdrvMailbox.index -1]);

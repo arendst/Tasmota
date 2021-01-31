@@ -1189,7 +1189,7 @@ void CmndKnxPa(void)
 
       if ( ((pa_area == 0) && (pa_line == 0) && (pa_member == 0))
             || (pa_area > 15) || (pa_line > 15) || (pa_member > 255) ) {
-              Response_P (PSTR("{\"%s\":\"" D_ERROR "\"}"), XdrvMailbox.command );
+              ResponseCmndError();
               return;
       }  // Invalid command
 
@@ -1220,7 +1220,7 @@ void CmndKnxGa(void)
           || (ga_area > 31) || (ga_line > 7) || (ga_member > 255)
           || (ga_option < 0) || ((ga_option > KNX_MAX_device_param ) && (ga_option != KNX_Empty))
           || (!device_param[ga_option-1].show) ) {
-               Response_P (PSTR("{\"%s\":\"" D_ERROR "\"}"), XdrvMailbox.command );
+               ResponseCmndIdxError();
                return;
         }  // Invalid command
 
@@ -1239,7 +1239,7 @@ void CmndKnxGa(void)
         if ( (XdrvMailbox.payload <= Settings.knx_GA_registered) && (XdrvMailbox.payload > 0) ) {
           XdrvMailbox.index = XdrvMailbox.payload;
         } else {
-          Response_P (PSTR("{\"%s\":\"" D_ERROR "\"}"), XdrvMailbox.command );
+          ResponseCmndIdxError();
           return;
         }
       }
@@ -1250,7 +1250,7 @@ void CmndKnxGa(void)
           KNX_addr.ga.area, KNX_addr.ga.line, KNX_addr.ga.member );
       }
     } else {
-      ResponseCmndNumber (Settings.knx_GA_registered );
+      ResponseCmndIdxNumber (Settings.knx_GA_registered );
     }
   }
 }
@@ -1271,7 +1271,7 @@ void CmndKnxCb(void)
           || (cb_area > 31) || (cb_line > 7) || (cb_member > 255)
           || (cb_option < 0) || ((cb_option > KNX_MAX_device_param ) && (cb_option != KNX_Empty))
           || (!device_param[cb_option-1].show) ) {
-               Response_P (PSTR("{\"%s\":\"" D_ERROR "\"}"), XdrvMailbox.command );
+               ResponseCmndIdxError();
                return;
         }  // Invalid command
 
@@ -1290,7 +1290,7 @@ void CmndKnxCb(void)
         if ( (XdrvMailbox.payload <= Settings.knx_CB_registered) && (XdrvMailbox.payload > 0) ) {
           XdrvMailbox.index = XdrvMailbox.payload;
         } else {
-          Response_P (PSTR("{\"%s\":\"" D_ERROR "\"}"), XdrvMailbox.command );
+          ResponseCmndIdxError();
           return;
         }
       }
@@ -1301,7 +1301,7 @@ void CmndKnxCb(void)
           KNX_addr.ga.area, KNX_addr.ga.line, KNX_addr.ga.member );
       }
     } else {
-      ResponseCmndNumber (Settings.knx_CB_registered );
+      ResponseCmndIdxNumber (Settings.knx_CB_registered );
     }
   }
 }

@@ -188,7 +188,7 @@ void CmndDeepsleepTime(void)
       }
     }
   }
-  Response_P(S_JSON_COMMAND_NVALUE, XdrvMailbox.command, Settings.deepsleep);
+  ResponseCmndNumber(Settings.deepsleep);
 }
 
 /*********************************************************************************************\
