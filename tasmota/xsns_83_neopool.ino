@@ -94,7 +94,7 @@ enum NeoPoolRegister {
 
   // GLOBAL page (0x02xx)
   MBF_SAVE_TO_EEPROM=0x02F0,          // 0x02F0        A write operation to this register starts a EEPROM storage operation immediately. During the EEPROM storage procedure, the system may be unresponsive to MODBUS requests. The operation will last always less than 1 second.
-  MBF_IMM_TAKE_OVER=0x02F5,           // 0x02F5        undocumented - immediately tale over - a write operation to this register take over the previous written data (neccessary if changing e.g. timers)
+  MBF_EXEC=0x02F5,                    // 0x02F5        undocumented - immediately take over settings - a write operation to this register take over the previous written data
 
   // FACTORY page (0x03xx)
   MBF_PAR_VERSION=0x0300,             // 0x0300*       Software version of the PowerBox (unused)
@@ -483,6 +483,13 @@ enum NeoPoolConstAndBitMask {
 #include <TasmotaModbus.h>
 TasmotaModbus *NeoPoolModbus;
 
+enum NeoPoolResult {
+  NEOPOOL_RESULT_DEC=false,
+  NEOPOOL_RESULT_HEX,
+  NEOPOOL_RESULT_MAX
+};
+uint8_t neopool_result = NEOPOOL_RESULT_HEX;
+
 bool neopool_active = false;
 volatile bool neopool_poll = true;
 
@@ -507,11 +514,13 @@ struct NEOPOOL_REG {
 };
 
 // NeoPool modbus function errors
-#define NEOPOOL_OK                    0
-#define NEOPOOL_ERROR_RW_DATA         1
-#define NEOPOOL_ERROR_TIMEOUT         2
-#define NEOPOOL_ERROR_OUT_OF_MEM      3
-#define NEOPOOL_ERROR_DEADLOCK        4
+enum NeoPoolModbusCode {
+  NEOPOOL_OK=0,
+  NEOPOOL_ERROR_RW_DATA,
+  NEOPOOL_ERROR_TIMEOUT,
+  NEOPOOL_ERROR_OUT_OF_MEM,
+  NEOPOOL_ERROR_DEADLOCK
+};
 
 
 #define D_NEOPOOL_NAME "NeoPool"
@@ -575,6 +584,153 @@ const char HTTP_SNS_NEOPOOL_IONIZATION[]       PROGMEM = "{s}%s " D_NEOPOOL_IONI
 const char HTTP_SNS_NEOPOOL_HYDROLYSIS[]       PROGMEM = "{s}%s " D_NEOPOOL_HYDROLYSIS      "{m}"  NEOPOOL_FMT_HIDRO  " "  D_UNIT_PERCENT HTTP_SNS_NEOPOOL_FLAGS  "{e}";
 const char HTTP_SNS_NEOPOOL_FILT_MODE[]        PROGMEM = "{s}%s " D_NEOPOOL_FILT_MODE       "{m}%s"                                                               "{e}";
 const char HTTP_SNS_NEOPOOL_RELAY[]            PROGMEM = "{s}%s " D_NEOPOOL_RELAY " %d %s"  "{m}%s"                                                               "{e}";
+
+/*********************************************************************************************\
+ * Commands
+ *
+ * NPFiltration {<state>}
+ *            get/set manual filtration (state=0|1)
+ *            get filtration state if <state> is omitted, otherwise set new state
+ *
+ * NPFiltrationMode {<mode>}
+ *            get/set filtration mode (mode=0..4|13)
+ *            get mode if <mode> is omitted, otherwise set new mode
+ *
+ * NPTime {<time>}
+ *            get/set system time
+ *            get current time if <time> is omitted, otherwise set time according:
+ *              0 - sync with Tasmota local time
+ *              1 - sync with Tasmota utc time
+ *            any other value of <time> will set time as epoch
+ *
+ * NPLight {<state>}
+ *            get/set light (state=0|1|2)
+ *            get light state if <state> is omitted, otherwise set new state
+ *              0 - switch light manual off
+ *              1 - switch light manual on
+ *              2 - switch light to auto mode
+ *
+ * NPSave
+ *            write data permanently into EEPROM
+ *
+ * NPExec
+ *            immediately take over changed data (without writing to EEPROM)
+ *
+ * NPResult {<format>}
+ *            get/set addr/data result format read/write commands (format=0|1):
+ *              0 - output as decimal numbers
+ *              1 - output as hexadecimal strings (default)
+ *            get output format if <format> is omitted, otherwise
+ *
+ * NPRead <addr> {<cnt>}
+ * NPReadL <addr> {<cnt>}
+ *            read 16/32-bit register (cnt = 1..30|1..15), cnt=1 if omitted
+ *            NPRead read 16-bit register
+ *            NPReadL read 32-bit register
+ *
+ * NPWrite <addr> <data> {<data>...}
+ * NPWriteL <addr> <data> {<data>...}
+ *            NPWrite write 16-bit register (data = 0..65535), <data> max 10 times
+ *            NPWriteL write 32-bit register (data = 0..4294967295), <data> max 10 times
+ *
+ * NPBit <addr> <bit> {<data>}
+ * NPBitL <addr> <bit> {<data>}
+ *            read/write register bit (bit = 0..15, data = 0|1)
+ *            read if <data> is omitted, otherwise set <bit> to new <data>
+ *
+ * Examples:
+ *
+ * Get/Set filtration mode
+ *    NPFiltrationMode
+ *    RESULT = {"NPFiltrationmode":"Manual"}
+ *    NPFiltrationMode 1
+ *    {"NPFiltrationmode":"Auto"}
+ *
+ * Switch light relay on
+ *    NPLight 1
+ *    RESULT = {"NPLight":"ON"}
+ *
+ * Read Heating setpoint temperature MBF_PAR_HEATING_TEMP
+ *    Backlog NPResult 0;NPRead 0x416
+ *    RESULT = {"NPResult":0}
+ *    RESULT = {"NPRead":{"Address":1046,"Data":28}}
+ *
+ * Read system time MBF_PAR_TIME_* as 32-bit register using decimal output
+ *    Backlog NPResult 0;NPReadL 0x408
+ *    RESULT = {"NPResult":0}
+ *    RESULT = {"NPReadL":{"Address":1032,"Data":1612124540}}
+ *
+ * Enable temperature module by setting MBF_PAR_TEMPERATURE_ACTIVE and set it permanently into EEPROM
+ *    Backlog NPWrite 0x40F,1;NPSave
+ *    RESULT = {"NPWrite":{"Address":"0x040F","Data":"0x0001"}}
+ *    RESULT = {"NPSave":"Done"}
+ *
+ * Hide auxiliary relay display from main menu by setting bit 3 of MBF_PAR_UICFG_VISUAL_OPTIONS
+ *    NPBit 0x605,3,1
+ *    RESULT = {"NPBit":{"Address":"0x0605","Data":"0x08C8"}}
+ *
+ * Read Filtration interval 1-3 settings
+ *    Backlog NPResult 0;NPRead 0x434;NPReadL 0x435,7;NPRead 0x443;NPReadL 0x444,7;NPRead 0x452;NPReadL 0x0453,7
+ *    RESULT = {"NPResult":0}
+ *    RESULT = {"NPRead":{"Address":1076,"Data":1}}
+ *    RESULT = {"NPReadL":{"Address":1077,"Data":[28800,0,86400,14400,0,1,0]}}
+ *    RESULT = {"NPRead":{"Address":1091,"Data":1}}
+ *    RESULT = {"NPReadL":{"Address":1092,"Data":[43200,0,86400,21600,0,1,0]}}
+ *    RESULT = {"NPRead":{"Address":1106,"Data":1}}
+ *    RESULT = {"NPReadL":{"Address":1107,"Data":[0,0,86400,0,0,1,0]}} *
+ *
+ * Set filtration interval 1 to daily 9:00 - 12:30 (9:00: 3600 * 9 ≙ 32400 / 12:30 ≙ 3,5h = 12600)
+ *    NPWriteL 0x435,32400 0 86400 12600
+ *    RESULT = {"NPWriteL":{"Address":1077,"Data":[32400,0,86400,12600]}}
+ *
+ *********************************************************************************************/
+#define D_PRFX_NEOPOOL "NP"
+#define D_CMND_NP_RESULT "Result"
+#define D_CMND_NP_READ "Read"
+#define D_CMND_NP_READL "ReadL"
+#define D_CMND_NP_WRITE "Write"
+#define D_CMND_NP_WRITEL "WriteL"
+#define D_CMND_NP_BIT "Bit"
+#define D_CMND_NP_BITL "BitL"
+#define D_CMND_NP_FILTRATION "Filtration"
+#define D_CMND_NP_FILTRATIONMODE "Filtrationmode"
+#define D_CMND_NP_TIME "Time"
+#define D_CMND_NP_LIGHT "Light"
+#define D_CMND_NP_SAVE "Save"
+#define D_CMND_NP_EXEC "Exec"
+
+const char kNPCommands[] PROGMEM =  D_PRFX_NEOPOOL "|"  // Prefix
+  D_CMND_NP_RESULT "|"
+  D_CMND_NP_READ  "|"
+  D_CMND_NP_READL  "|"
+  D_CMND_NP_WRITE  "|"
+  D_CMND_NP_WRITEL  "|"
+  D_CMND_NP_BIT "|"
+  D_CMND_NP_BITL "|"
+  D_CMND_NP_FILTRATION "|"
+  D_CMND_NP_FILTRATIONMODE "|"
+  D_CMND_NP_TIME "|"
+  D_CMND_NP_LIGHT "|"
+  D_CMND_NP_SAVE "|"
+  D_CMND_NP_EXEC
+  ;
+
+void (* const NPCommand[])(void) PROGMEM = {
+  &CmndNeopoolResult,
+  &CmndNeopoolReadReg,
+  &CmndNeopoolReadReg,
+  &CmndNeopoolWriteReg,
+  &CmndNeopoolWriteReg,
+  &CmndNeopoolBit,
+  &CmndNeopoolBit,
+  &CmndNeopoolFiltration,
+  &CmndNeopoolFiltrationMode,
+  &CmndNeopoolTime,
+  &CmndNeopoolLight,
+  &CmndNeopoolSave,
+  &CmndNeopoolExec
+  };
+
 
 
 void NeoPool250ms(void)              // Every 250 mSec
@@ -704,17 +860,32 @@ bool NeoPoolInitData(void)
   return res;
 }
 
+/*********************************************************************************************/
+
+#ifdef DEBUG_TASMOTA_SENSOR
+void NeoPoolLogRW(const char *name, uint16_t addr, uint16_t *data, uint16_t cnt)
+{
+  char *log_data = (char *)malloc(cnt*7+1);
+  *log_data = 0;
+  for (uint16_t i=0; i<cnt; i++) {
+    char h[8];
+    snprintf_P(h, sizeof(h), PSTR("%s0x%04X"), i?PSTR(","):PSTR(""), data[i]);
+    strncat(log_data, h, cnt*7+1);
+  }
+  AddLog(LOG_LEVEL_DEBUG, PSTR("NEO: %s(0x%04X, %d)=[%s]"), name, addr, cnt, log_data);
+  free(log_data);
+}
+#endif  // DEBUG_TASMOTA_SENSOR
+
 uint8_t NeoPoolReadRegister(uint16_t addr, uint16_t *data, uint16_t cnt)
 {
   bool data_ready;
   uint32_t timeoutMS;
+  uint16_t *origin = data;
 
   neopool_poll = false;
   *data = 0;
 
-#ifdef DEBUG_TASMOTA_SENSOR
-  AddLog(LOG_LEVEL_DEBUG, PSTR("NEO: NeoPoolReadRegister(0x%04X, %p, %d)"), addr, data, cnt);
-#endif  // DEBUG_TASMOTA_SENSOR
   NeoPoolModbus->Send(NEOPOOL_MODBUS_ADDRESS, NEOPOOL_READ_REGISTER, addr, cnt);
   timeoutMS = millis() + cnt * NEOPOOL_READ_TIMEOUT; // Max delay before we timeout
   while (!(data_ready = NeoPoolModbus->ReceiveReady()) && millis() < timeoutMS) { delay(1); }
@@ -735,6 +906,9 @@ uint8_t NeoPoolReadRegister(uint16_t addr, uint16_t *data, uint16_t cnt)
       neopool_poll = true;
       delay(2);
       free(buffer);
+#ifdef DEBUG_TASMOTA_SENSOR
+      NeoPoolLogRW("NeoPoolReadRegister", addr, origin, cnt);
+#endif  // DEBUG_TASMOTA_SENSOR
       return 0;
     }
 #ifdef DEBUG_TASMOTA_SENSOR
@@ -757,7 +931,7 @@ uint8_t NeoPoolWriteRegister(uint16_t addr, uint16_t *data, uint16_t cnt)
   uint32_t timeoutMS;
 
 #ifdef DEBUG_TASMOTA_SENSOR
-  AddLog(LOG_LEVEL_DEBUG, PSTR("NEO: NeoPoolWriteRegister(0x%04X, %p, %d)"), addr, data, cnt);
+  NeoPoolLogRW("NeoPoolWriteRegister", addr, data, cnt);
 #endif  // DEBUG_TASMOTA_SENSOR
   neopool_poll = false;
   numbytes = 7+cnt*2;
@@ -810,6 +984,12 @@ uint8_t NeoPoolWriteRegister(uint16_t addr, uint16_t *data, uint16_t cnt)
     }
     neopool_poll = true;
     delay(2);
+    if (MBF_SAVE_TO_EEPROM == addr) {
+        // EEPROM write can take some time, wait until device is ready
+        timeoutMS = millis() + 1000;  // Max delay for save eeprom cmnd
+        uint16_t tmp;
+        while (NEOPOOL_OK != NeoPoolReadRegister(MBF_NOTIFICATION, &tmp, 1) && millis() < timeoutMS);
+    }
     return NEOPOOL_OK;
   }
 #ifdef DEBUG_TASMOTA_SENSOR
@@ -851,6 +1031,8 @@ char *NeoPoolGetInverse(char *scss, size_t size)
   return scss;
 }
 
+/*********************************************************************************************/
+
 void NeoPoolShow(bool json)
 {
   char parameter[FLOATSZ];
@@ -877,6 +1059,7 @@ void NeoPoolShow(bool json)
     *delimiter = ',';
 #endif  // NEOPOOL_OPTIMIZE_READINGS
 
+    // TODO: Relay states as names {"Filtration":0|1,"Light":0|1,"Aux":0|1...}
     // TODO: Add alarm infos
 
     // Type
@@ -1004,9 +1187,6 @@ void NeoPoolShow(bool json)
     }
 
     // Hydrolysis
-#ifdef DEBUG_TASMOTA_SENSOR
-    //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("NEO: MBF_PAR_MODEL 0x%04X MBF_HIDRO_STATUS 0x%04X"), NeoPoolGetData(MBF_PAR_MODEL), NeoPoolGetData(MBF_HIDRO_STATUS));
-#endif  // DEBUG_TASMOTA_SENSOR
     if ((NeoPoolGetData(MBF_PAR_MODEL) & MBMSK_MODEL_HIDRO) && (NeoPoolGetData(MBF_HIDRO_STATUS) & MBMSK_HIDRO_STATUS_MODULE_ACTIVE)) {
       char spol[32];
       char scss[60];
@@ -1026,7 +1206,7 @@ void NeoPoolShow(bool json)
     }
 
     // Filtration mode
-    GetTextIndexed(stemp, sizeof(stemp), NeoPoolGetData(MBF_PAR_FILT_MODE) < MBV_PAR_FILT_INTELLIGENT ? NeoPoolGetData(MBF_PAR_FILT_MODE) : 5, kNeoPoolFiltrationMode);
+    GetTextIndexed(stemp, sizeof(stemp), NeoPoolGetData(MBF_PAR_FILT_MODE) < MBV_PAR_FILT_INTELLIGENT ? NeoPoolGetData(MBF_PAR_FILT_MODE) : ARRAY_SIZE(kNeoPoolFiltrationMode)-1, kNeoPoolFiltrationMode);
     WSContentSend_PD(HTTP_SNS_NEOPOOL_FILT_MODE, neopool_type, stemp);
 
     // Relays
@@ -1070,370 +1250,308 @@ void NeoPoolShow(bool json)
   }
 }
 
+/*********************************************************************************************/
 
-/*********************************************************************************************\
- * Supported commands for Sensor83:
- *
- * Sensor83  1 <addr> {<cnt>}
- *            read 16-bit register (cnt=1..30, cnt=1 if omitted)
- *
- * Sensor83  2 <addr> <data> {<data>...}
- *            write 16-bit register (data=0..65535, <data> max 8 times)
- *
- * Sensor83  3 <addr> <bit> {<data>}
- *            read/write register bit (bit=0..15, data=0|1)
- *            read if <data> is omitted, otherwise set <bit> to new <data>
- *
- * Sensor83  4 {<state>}
- *            get/set manual filtration (state=0|1)
- *            get filtration state if <state> is omitted, otherwise set new state
- *
- * Sensor83  5 {<mode>}
- *            get/set filtration mode (mode=0..4|13)
- *            get mode if <mode> is omitted, otherwise set new mode
- *
- * Sensor83  6 {<time>}
- *            get/set system time
- *            get current time if <time> is omitted, otherwise set time according:
- *              0 - sync with Tasmota local time
- *              1 - sync with Tasmota utc time
- *            any other value of <time> will set time as epoch
- *
- * Sensor83  7 {<state>}
- *            get/set light (state=0|1|2)
- *            get light state if <state> is omitted, otherwise set new state
- *              0 - switch light manual off
- *              1 - switch light manual on
- *              2 - switch light to auto mode
- *
- * Sensor83 16 <addr> {<cnt>}
- *            same as "Sensor83 1" but using hex data output
- *
- * Sensor83 21 <addr> {<cnt>}
- *            read 32-bit register (cnt=1..15, cnt=1 if omitted)
- *
- * Sensor83 22 <addr> <data> {<data>...}
- *            write 32-bit register (data=0..0xffffffff, <data> max 8 times)
- *
- * Sensor83 26 <addr> (<cnt>}
- *            same as "Sensor83 21" but using hex data output
- *
- * Sensor83 99
- *            write data permanent into flash
- *
- * Sensor83 100
- *            immediately take over data to running firmware
- *
- *
- * Examples:
- *
- * Read filtration status MBF_PAR_FILT_MANUAL_STATE
- *    Sensor83 1 0x413
- *    RESULT = {"Sensor83":{"Command":1,"Address":"0x0413","Data":0}}
- *
- * Read Heating setpoint temperature MBF_PAR_HEATING_TEMP
- *    Sensor83 1 0x416
- *    RESULT = {"Sensor83":{"Command":1,"Address":"0x0416","Data":28}}
- *
- * Read system time MBF_PAR_TIME_* as 32-bit register
- *    Sensor83 21 0x408
- *    RESULT = {"Sensor83":{"Command":21,"Address":"0x0408","Data":1611399658}}
- *
- * Enable temperature module by setting MBF_PAR_TEMPERATURE_ACTIVE and set it permanent by using a write to MBF_SAVE_TO_EEPROM (0x02F0)
- *    Backlog Sensor83 2 0x40F,1;Sensor83 2 0x2F0,1
- *    RESULT = {"Sensor83":{"Command":3,"Address":"0x040F","Data":1}}
- *    RESULT = {"Sensor83":{"Command":3,"Address":"0x2F0","Data":1}}
- *
- * Hide auxiliary relay display from main menu by setting bit 3 of MBF_PAR_UICFG_VISUAL_OPTIONS
- *    Sensor83 3 0x0605,3,1
- *    RESULT = {"Sensor83":{"Command":2,"Address":"0x0605","Bit":3,"Data":1}}
- *
- * Read Filtration interval 1-3 settings
- *    Backlog Sensor83 1 0x434;Sensor83 21 0x435 7;Sensor83 1 0x0443;Sensor83 21 0x0444 7;Sensor83 1 0x0452;Sensor83 21 0x0453 7
- *    RESULT = {"Sensor83":{"Command":1,"Address":"0x0434","Data":1}}
- *    RESULT = {"Sensor83":{"Command":21,"Address":"0x0435","Data":[28800,0,86400,14400,0,1,0]}}
- *    RESULT = {"Sensor83":{"Command":1,"Address":"0x0443","Data":1}}
- *    RESULT = {"Sensor83":{"Command":21,"Address":"0x0444","Data":[43200,0,86400,21600,0,1,0]}}
- *    RESULT = {"Sensor83":{"Command":1,"Address":"0x0452","Data":1}}
- *    RESULT = {"Sensor83":{"Command":21,"Address":"0x0453","Data":[0,0,86400,0,0,1,0]}}
- *
- * Set Filtration interval 1 to daily 9:00 - 12:30 (9:00: 3600 * 9 ≙ 32400 / 12:30 ≙ 3,5h = 12600)
- *    Sensor83 22 0x435 32400 0 86400 12600
- *    RESULT = {"Sensor83":{"Command":22,"Address":"0x0435","Data":[32400,0,86400,12600]}}
- *
- *********************************************************************************************/
-#define NEOPOOL_CMND_READ_REG         1
-#define NEOPOOL_CMND_WRITE_REG        2
-#define NEOPOOL_CMND_READWRITE_BIT    3
-#define NEOPOOL_CMND_FILTRATION       4
-#define NEOPOOL_CMND_FILTRATION_MODE  5
-#define NEOPOOL_CMND_TIME             6
-#define NEOPOOL_CMND_LIGHT            7
-#define NEOPOOL_CMND_READ_REG_HEX     16
-#define NEOPOOL_CMND_READ_REG32       21
-#define NEOPOOL_CMND_WRITE_REG32      22
-#define NEOPOOL_CMND_READ_REG_HEX32   26
-#define NEOPOOL_CMND_SAVE_TO_EEPROM   99
-#define NEOPOOL_CMND_IMM_TAKE_OVER   100
-
-#define NEOPOOL_CMND_SENSOR D_CMND_SENSOR STR(XSNS_83)
-#define NEOPOOL_MAX_CMND_LEN 160
-
-bool NeoPoolCmnd(void)
+void NeopoolReadWriteResponse(uint16_t addr, uint16_t *data, uint16_t cnt, bool fbits32)
 {
-  bool serviced = false;
-  char sub_string[XdrvMailbox.data_len +1];
-  uint16_t cmnd, addr, data[30], cnt=1;
-  int8_t bit;
-  bool bits32 = false;
-  uint32_t value[10] = { 0 };
-  uint32_t params_cnt = ParseParameters(ARRAY_SIZE(value), value);
-  char *scmnd = (char *)malloc(NEOPOOL_MAX_CMND_LEN);
-
-  if(!neopool_error && scmnd != nullptr && params_cnt > 0) {
-    params_cnt--;
-
-    cmnd = value[0];
-    bits32 = (NEOPOOL_CMND_READ_REG32 == cmnd || NEOPOOL_CMND_WRITE_REG32 == cmnd || NEOPOOL_CMND_READ_REG_HEX32 == cmnd);
-    switch (cmnd) {
-
-    case NEOPOOL_CMND_READ_REG:  // <addr> (<cnt>)
-    case NEOPOOL_CMND_READ_REG_HEX:
-    case NEOPOOL_CMND_READ_REG_HEX32:
-    case NEOPOOL_CMND_READ_REG32:
-      {
-        addr = value[1];
-        cnt = 1;
-        if (2 == params_cnt) {
-          cnt = value[2];
-        }
-        if (cnt > (bits32 ? (ARRAY_SIZE(data)/2) : ARRAY_SIZE(data))) {
-          serviced = false;
-        }
-        else {
-          serviced = (NEOPOOL_OK == NeoPoolReadRegister(addr, data, bits32 ? (cnt*2) : cnt));
-        }
+  Response_P(PSTR("{\"%s\":{\"" D_JSON_ADDRESS "\":"), XdrvMailbox.command);
+  ResponseAppend_P(NEOPOOL_RESULT_HEX == neopool_result ? PSTR("\"0x%04X\"") : PSTR("%d"), addr);
+  ResponseAppend_P(PSTR(",\"" D_JSON_DATA"\":"));
+  if ( cnt > 1 ) {
+    char sdel[2] = {0};
+    ResponseAppend_P(PSTR("["));
+    for(uint16_t i=0; i<cnt; i++) {
+      if (fbits32) {
+      uint32_t data32 = ((uint32_t)data[i*2+1]) << 16 | (uint32_t)data[i*2];
+        ResponseAppend_P(NEOPOOL_RESULT_HEX == neopool_result ? PSTR("%s\"0x%08X\"") : PSTR("%s%ld"), sdel, data32);
       }
-      break;
-
-    case NEOPOOL_CMND_WRITE_REG:  // <addr> <data> (<data>...)
-    case NEOPOOL_CMND_WRITE_REG32:
-      {
-        addr = value[1];
-        if (params_cnt >= 2) {
-          cnt = params_cnt-1;
-          for(uint32_t i=0; i<cnt; i++) {
-            if (bits32) {
-              data[i*2] = value[i+2];       // LSB
-              data[i*2+1] = value[i+2]>>16; // MSB
-            }
-            else {
-              data[i] = value[i+2];
-            }
-          }
-          serviced = (NEOPOOL_OK == NeoPoolWriteRegister(addr, data, bits32 ? (cnt*2) : cnt));
-        }
+      else {
+        ResponseAppend_P(NEOPOOL_RESULT_HEX == neopool_result ? PSTR("%s\"0x%04X\"") : PSTR("%s%d"), sdel, data[i]);
       }
-      break;
-
-    case NEOPOOL_CMND_READWRITE_BIT:  // <addr> <bit> (<data>)
-      {
-        uint16_t tempdata;
-
-        addr = value[1];
-        bit = (int8_t)value[2];
-        data[0] = value[3];
-        if (bit>=0 && bit<=15 && data[0]>=0 && data[0]<=1) {
-          if (2 == params_cnt) {
-            serviced = (NEOPOOL_OK == NeoPoolReadRegister(addr, data, 1));
-            data[0] = (data[0] >> bit) & 0x0001;
-          }
-          if (3 == params_cnt) {
-            if (NEOPOOL_OK == NeoPoolReadRegister(addr, &tempdata, 1)) {
-              tempdata &= ~(1<<bit);
-              tempdata |= (data[0]<<bit);
-              serviced = (NEOPOOL_OK == NeoPoolWriteRegister(addr, &tempdata, 1));
-            }
-          }
-        }
-      }
-      break;
-
-    case NEOPOOL_CMND_FILTRATION:  // (<state>)
-      {
-        addr = MBF_PAR_FILT_MANUAL_STATE;
-        if (0 == params_cnt) {
-          serviced = (NEOPOOL_OK == NeoPoolReadRegister(addr, data, 1));
-        }
-        if (1 == params_cnt) {
-          // Filtration ON/OFF:
-          // First set filtration mode to manual
-          snprintf_P(scmnd, NEOPOOL_MAX_CMND_LEN, PSTR(NEOPOOL_CMND_SENSOR " " STR(NEOPOOL_CMND_FILTRATION_MODE) ",0"));
-          ExecuteWebCommand(scmnd, SRC_WEBGUI);
-          // Set MBF_PAR_FILT_MANUAL_STATE [MBF_PAR_FILT_MANUAL_STATE] accordingly (0|1)
-          data[0] = value[1] ? 1 : 0;
-          serviced = (NEOPOOL_OK == NeoPoolWriteRegister(addr, data, 1));
-        }
-      }
-      break;
-
-    case NEOPOOL_CMND_FILTRATION_MODE:  // (<mode>)
-      {
-        addr = MBF_PAR_FILT_MODE;
-        if (0 == params_cnt) {
-          serviced = (NEOPOOL_OK == NeoPoolReadRegister(addr, data, 1));
-        }
-        if (1 == params_cnt) {
-          data[0] = value[1];
-          if( (data[0] >= MBV_PAR_FILT_MANUAL && data[0] <= MBV_PAR_FILT_INTELLIGENT) || MBV_PAR_FILT_BACKWASH == data[0]) {
-            // Set MBF_PAR_FILT_MODE
-            serviced = (NEOPOOL_OK == NeoPoolWriteRegister(addr, data, 1));
-          }
-        }
-      }
-      break;
-
-    case NEOPOOL_CMND_TIME:  // (<time>)
-      {
-        char dt[20];
-        TIME_T tmpTime;
-
-        if (1 == params_cnt) {
-          uint32_t new_time = Rtc.local_time;
-          if (1==value[1]) {
-            new_time = Rtc.utc_time;
-          }
-          if (value[1]>1) {
-            new_time = value[1];
-          }
-          data[0] = (uint16_t)(new_time & 0xFFFF);
-          data[1] = (uint16_t)((new_time>>16) & 0xFFFF);
-#ifdef DEBUG_TASMOTA_SENSOR
-          AddLog(LOG_LEVEL_DEBUG, PSTR("NEO: set time to %ld (%04X%04X)"), new_time, data[0], data[1]);
-#endif  // DEBUG_TASMOTA_SENSOR
-          serviced = (NEOPOOL_OK == NeoPoolWriteRegister(MBF_PAR_TIME_LOW, data, 2));
-          if (serviced) {
-            uint16_t set=0;
-            serviced = (NEOPOOL_OK == NeoPoolWriteRegister(MBF_ACTION_COPY_TO_RTC, &set, 1));
-          }
-        }
-        else if (0 == params_cnt) {
-          serviced = (NEOPOOL_OK == NeoPoolReadRegister(MBF_PAR_TIME_LOW, data, 2));
-#ifdef DEBUG_TASMOTA_SENSOR
-          AddLog(LOG_LEVEL_DEBUG, PSTR("NEO: time read 0x%04X%04X %ld"), data[1], data[0], (uint32_t)data[0] + ((uint32_t)data[1] << 16));
-#endif  // DEBUG_TASMOTA_SENSOR
-        }
-        else {
-          serviced = false;
-        }
-        if (serviced) {
-          BreakTime((uint32_t)data[0] + ((uint32_t)data[1] << 16), tmpTime);
-          snprintf_P(dt, sizeof(dt), PSTR("%04d" D_YEAR_MONTH_SEPARATOR "%02d" D_MONTH_DAY_SEPARATOR "%02d" D_DATE_TIME_SEPARATOR "%02d" D_HOUR_MINUTE_SEPARATOR "%02d" D_MINUTE_SECOND_SEPARATOR "%02d"),
-            tmpTime.year +1970, tmpTime.month, tmpTime.day_of_month, tmpTime.hour, tmpTime.minute, tmpTime.second);
-          Response_P(PSTR("{\"" NEOPOOL_CMND_SENSOR "\":{\"" D_JSON_TIME "\":\"%s\"}}"), dt);
-        }
-      }
-      break;
-
-    case NEOPOOL_CMND_LIGHT:  // (<state>)
-      {
-        if (0 == params_cnt) {
-          addr = MBF_RELAY_STATE;
-          if (NEOPOOL_OK == NeoPoolReadRegister(MBF_PAR_LIGHTING_GPIO, data, 1) && 0 != data[0]) {
-            data[1] = data[0] - 1;
-            serviced = (NEOPOOL_OK == NeoPoolReadRegister(MBF_RELAY_STATE, data, 1));
-            data[0] >>= data[1];
-          }
-          else {
-            serviced = false;
-          }
-        }
-        if (1 == params_cnt) {
-          addr = MBF_PAR_TIMER_BLOCK_LIGHT_INT + MBV_TIMER_OFFMB_TIMER_ENABLE;
-          uint16_t timer_val[] = {MBV_PAR_CTIMER_ALWAYS_OFF, MBV_PAR_CTIMER_ALWAYS_ON, MBV_PAR_CTIMER_ENABLED};
-          if (value[1] <= ARRAY_SIZE(timer_val)) {
-              data[0] = timer_val[value[1]];
-              serviced = true;
-          }
-          if( serviced ) {
-            snprintf_P(scmnd, NEOPOOL_MAX_CMND_LEN,
-              PSTR(D_CMND_BACKLOG " "
-                   NEOPOOL_CMND_SENSOR " " STR(NEOPOOL_CMND_WRITE_REG) ",0x%04X,%d;"
-                   NEOPOOL_CMND_SENSOR " " STR(NEOPOOL_CMND_SAVE_TO_EEPROM) ";"
-                   NEOPOOL_CMND_SENSOR " " STR(NEOPOOL_CMND_IMM_TAKE_OVER)),
-               addr, data[0]);
-            ExecuteWebCommand(scmnd, SRC_WEBGUI);
-            serviced = (NEOPOOL_OK == NeoPoolReadRegister(addr, data, 1));
-          }
-        }
-      }
-      break;
-
-    case NEOPOOL_CMND_SAVE_TO_EEPROM:
-        addr = MBF_SAVE_TO_EEPROM;
-        if (0 == params_cnt) {
-          data[0] = 1;
-          serviced = (NEOPOOL_OK == NeoPoolWriteRegister(addr, data, 1));
-        }
-        break;
-
-    case NEOPOOL_CMND_IMM_TAKE_OVER:
-        addr = MBF_IMM_TAKE_OVER;
-        if (0 == params_cnt) {
-          data[0] = 1;
-          serviced = (NEOPOOL_OK == NeoPoolWriteRegister(addr, data, 1));
-        }
-        break;
-
-    default:
-      AddLog_P(LOG_LEVEL_DEBUG, PSTR("NEO: Unknown " NEOPOOL_CMND_SENSOR " cmnd %d"), cmnd);
-      break;
+      *sdel = ',';
     }
-    free(scmnd);
+    ResponseAppend_P(PSTR("]"));
   }
-
-  if (serviced) {
-    switch (cmnd) {
-    case NEOPOOL_CMND_TIME:
-      break;
-    case NEOPOOL_CMND_READWRITE_BIT:
-        Response_P(PSTR("{\"" NEOPOOL_CMND_SENSOR "\":{\"" D_JSON_COMMAND "\":%d,\"" D_JSON_ADDRESS "\":\"0x%04X\",\"" D_STR_BIT "\":%d,\"" D_JSON_DATA "\":%d}}"), cmnd, addr, bit, data[0]);
-      break;
-    default:
-      {
-        Response_P(PSTR("{\"" NEOPOOL_CMND_SENSOR "\":{\"" D_JSON_COMMAND "\":%d,\"" D_JSON_ADDRESS "\":\"0x%04X\",\"" D_JSON_DATA"\":"), cmnd, addr);
-        if ( cnt > 1 ) {
-          char sdel[2] = {0};
-          ResponseAppend_P(PSTR("["));
-          for(uint32_t i=0; i<cnt; i++) {
-            if (bits32) {
-            uint32_t data32 = ((uint32_t)data[i*2+1]) << 16 | (uint32_t)data[i*2];
-              ResponseAppend_P(NEOPOOL_CMND_READ_REG_HEX32 == cmnd ? PSTR("%s\"0x%08X\"") : PSTR("%s%ld"), sdel, data32);
-            }
-            else {
-              ResponseAppend_P(NEOPOOL_CMND_READ_REG_HEX == cmnd ? PSTR("%s\"0x%04X\"") : PSTR("%s%d"), sdel, data[i]);
-            }
-            *sdel = ',';
-          }
-          ResponseAppend_P(PSTR("]"));
-        }
-        else {
-          if (bits32) {
-            uint32_t data32 = ((uint32_t)data[1]) << 16 | (uint32_t)data[0];
-            ResponseAppend_P(NEOPOOL_CMND_READ_REG_HEX32 == cmnd ? PSTR("\"0x%08X\"") : PSTR("%ld"), data32);
-          }
-          else {
-            ResponseAppend_P(NEOPOOL_CMND_READ_REG_HEX == cmnd ? PSTR("\"0x%04X\"") : PSTR("%d"), data[0]);
-          }
-        }
-        ResponseJsonEndEnd();
-      }
-      break;
+  else {
+    if (fbits32) {
+      uint32_t data32 = ((uint32_t)data[1]) << 16 | (uint32_t)data[0];
+      ResponseAppend_P(NEOPOOL_RESULT_HEX == neopool_result ? PSTR("\"0x%08X\"") : PSTR("%ld"), data32);
+    }
+    else {
+      ResponseAppend_P(NEOPOOL_RESULT_HEX == neopool_result ? PSTR("\"0x%04X\"") : PSTR("%d"), data[0]);
     }
   }
-
-  return serviced;
+  ResponseJsonEndEnd();
 }
+
+void NeopoolCmndError(void)
+{
+  Response_P(PSTR("{\"" D_JSON_COMMAND "\":\"" D_JSON_ERROR "\"}"));
+}
+
+void NeopoolResponseError(void)
+{
+  ResponseCmndChar(PSTR(D_JSON_ERROR));
+}
+
+void CmndNeopoolResult(void)
+{
+  if (XdrvMailbox.data_len && XdrvMailbox.payload >= 0 && XdrvMailbox.payload < NEOPOOL_RESULT_MAX) {
+    neopool_result = XdrvMailbox.payload;
+  }
+  ResponseCmndNumber(neopool_result);
+}
+
+void CmndNeopoolReadReg(void)
+{
+  uint16_t addr, data[30] = { 0 }, cnt=1;
+  uint32_t value[2] = { 0 };
+  uint32_t params_cnt = ParseParameters(ARRAY_SIZE(value), value);
+  bool fbits32 = !strcasecmp_P(XdrvMailbox.command, PSTR(D_PRFX_NEOPOOL  D_CMND_NP_READL));
+
+  cnt = 1;
+  if (2 == params_cnt) {
+    cnt = value[1];
+  }
+  if (params_cnt && cnt < (fbits32 ? (ARRAY_SIZE(data)/2) : ARRAY_SIZE(data))) {
+    addr = value[0];
+    if (NEOPOOL_OK != NeoPoolReadRegister(addr, data, fbits32 ? (cnt*2) : cnt)) {
+      NeopoolResponseError();
+      return;
+    }
+  }
+  NeopoolReadWriteResponse(addr, data, cnt, fbits32);
+}
+
+void CmndNeopoolWriteReg(void)
+{
+  uint16_t addr, data[20] = { 0 }, cnt;
+  uint32_t value[(ARRAY_SIZE(data)/2)+1] = { 0 };
+  uint32_t params_cnt = ParseParameters(ARRAY_SIZE(value), value);
+  bool fbits32 = !strcasecmp_P(XdrvMailbox.command, PSTR(D_PRFX_NEOPOOL  D_CMND_NP_WRITEL));
+
+  if (params_cnt > 1) {
+    addr = value[0];
+    cnt = params_cnt-1;
+    for(uint16_t i=0; i<cnt; i++) {
+      if (fbits32) {
+        data[i*2] = value[i+1];       // LSB
+        data[i*2+1] = value[i+1]>>16; // MSB
+      }
+      else {
+        data[i] = value[i+1];
+      }
+    }
+    if (NEOPOOL_OK != NeoPoolWriteRegister(addr, data, fbits32 ? cnt*2 : cnt)) {
+      NeopoolResponseError();
+      return;
+    }
+  }
+  if (NEOPOOL_OK != NeoPoolReadRegister(addr, data, fbits32 ? (cnt*2) : cnt)) {
+    NeopoolResponseError();
+    return;
+  }
+  NeopoolReadWriteResponse(addr, data, cnt, fbits32);
+}
+
+void CmndNeopoolBit(void)
+{
+  uint16_t addr, data;
+  int8_t bit;
+  uint32_t value[3] = { 0 };
+  uint32_t params_cnt = ParseParameters(ARRAY_SIZE(value), value);
+  bool fbits32 = !strcasecmp_P(XdrvMailbox.command, PSTR(D_PRFX_NEOPOOL  D_CMND_NP_BITL));
+  uint16_t tempdata[2];
+
+  if (params_cnt >= 2) {
+    addr = value[0];
+    bit = (int8_t)value[1];
+
+    if (bit >= 0 && bit < 16<<fbits32) {
+      if (3 == params_cnt) {
+        data = value[2];
+        if (data >=0 && data <= 1 && NEOPOOL_OK == NeoPoolReadRegister(addr, tempdata, 1<<fbits32)) {
+          if (fbits32) {
+            uint32_t tempdata32 = tempdata[0] | (tempdata[1]<<16);
+            tempdata32 &= ~(1<<bit);
+            tempdata32 |= data<<bit;
+            tempdata[0] = (uint16_t)tempdata32;
+            tempdata[1] = (uint16_t)(tempdata32>>16);
+          }
+          else {
+            tempdata[0] &= ~(1<<bit);
+            tempdata[0] |= (data<<bit);
+          }
+          if (NEOPOOL_OK != NeoPoolWriteRegister(addr, tempdata, 1<<fbits32)) {
+            NeopoolResponseError();
+            return;
+          }
+        }
+        else {
+          NeopoolResponseError();
+          return;
+        }
+      }
+      if (NEOPOOL_OK != NeoPoolReadRegister(addr, &data, 1)) {
+        NeopoolResponseError();
+        return;
+      }
+      NeopoolReadWriteResponse(addr, &data, 1, fbits32);
+      return;
+    }
+
+  }
+  NeopoolCmndError();
+}
+
+void CmndNeopoolFiltration(void)
+{
+  uint16_t addr = MBF_PAR_FILT_MANUAL_STATE;
+  uint16_t data;
+  if (XdrvMailbox.data_len) {
+    if ( XdrvMailbox.payload >= 0 && XdrvMailbox.payload <= 1) {
+      // Set filtration mode to manual
+      data = MBV_PAR_FILT_MANUAL;
+      NeoPoolWriteRegister(MBF_PAR_FILT_MODE, &data, 1);
+      // Set MBF_PAR_FILT_MODE
+      data = XdrvMailbox.payload;
+      if (NEOPOOL_OK != NeoPoolWriteRegister(addr, &data, 1)) {
+        NeopoolResponseError();
+        return;
+      }
+    }
+    else {
+      NeopoolCmndError();
+      return;
+    }
+  }
+  if (NEOPOOL_OK != NeoPoolReadRegister(addr, &data, 1)) {
+    NeopoolResponseError();
+    return;
+  }
+  ResponseCmndStateText(data);
+}
+
+void CmndNeopoolFiltrationMode(void)
+{
+  uint16_t addr = MBF_PAR_FILT_MODE;
+  uint16_t data;
+  char stemp[80];
+
+  if (XdrvMailbox.data_len) {
+    if ((XdrvMailbox.payload >= MBV_PAR_FILT_MANUAL && XdrvMailbox.payload <= MBV_PAR_FILT_INTELLIGENT) ||
+        MBV_PAR_FILT_BACKWASH == XdrvMailbox.payload) {
+        data = XdrvMailbox.payload;
+        // Set MBF_PAR_FILT_MODE
+        if (NEOPOOL_OK != NeoPoolWriteRegister(addr, &data, 1)) {
+          NeopoolResponseError();
+          return;
+        }
+    }
+    else {
+      NeopoolCmndError();
+      return;
+    }
+  }
+  if (NEOPOOL_OK != NeoPoolReadRegister(addr, &data, 1)) {
+    NeopoolResponseError();
+    return;
+  }
+  ResponseCmndChar(GetTextIndexed(stemp, sizeof(stemp), data < MBV_PAR_FILT_INTELLIGENT ? data : ARRAY_SIZE(kNeoPoolFiltrationMode)-1, kNeoPoolFiltrationMode));
+}
+
+void CmndNeopoolTime(void)
+{
+  char dt[20];
+  uint16_t data[2];
+  TIME_T tmpTime;
+
+  if (XdrvMailbox.data_len) {
+    uint32_t new_time = XdrvMailbox.payload;
+    if (0 == XdrvMailbox.payload) {
+      new_time = Rtc.local_time;
+    }
+    if (1 == XdrvMailbox.payload) {
+      new_time = Rtc.utc_time;
+    }
+    data[0] = (uint16_t)new_time;
+    data[1] = (uint16_t)(new_time>>16);
+#ifdef DEBUG_TASMOTA_SENSOR
+    AddLog(LOG_LEVEL_DEBUG, PSTR("NEO: set time to %ld (%04X%04X)"), new_time, data[0], data[1]);
+#endif  // DEBUG_TASMOTA_SENSOR
+    NeoPoolWriteRegister(MBF_PAR_TIME_LOW, data, 2);
+    uint16_t set = 1;
+    NeoPoolWriteRegister(MBF_ACTION_COPY_TO_RTC, &set, 1);
+  }
+  if (NEOPOOL_OK != NeoPoolReadRegister(MBF_PAR_TIME_LOW, data, 2)) {
+    NeopoolResponseError();
+    return;
+  }
+#ifdef DEBUG_TASMOTA_SENSOR
+  AddLog(LOG_LEVEL_DEBUG, PSTR("NEO: time read 0x%04X%04X %ld"), data[1], data[0], (uint32_t)data[0] | ((uint32_t)data[1] << 16));
+#endif  // DEBUG_TASMOTA_SENSOR
+  BreakTime((uint32_t)data[0] + ((uint32_t)data[1] << 16), tmpTime);
+  snprintf_P(dt, sizeof(dt), PSTR("%04d" D_YEAR_MONTH_SEPARATOR "%02d" D_MONTH_DAY_SEPARATOR "%02d" D_DATE_TIME_SEPARATOR "%02d" D_HOUR_MINUTE_SEPARATOR "%02d" D_MINUTE_SECOND_SEPARATOR "%02d"),
+    tmpTime.year +1970, tmpTime.month, tmpTime.day_of_month, tmpTime.hour, tmpTime.minute, tmpTime.second);
+  ResponseCmndChar(dt);
+}
+
+
+void CmndNeopoolLight(void)
+{
+  uint16_t addr;
+  uint16_t data, relay;
+  uint16_t timer_val[] = {MBV_PAR_CTIMER_ALWAYS_OFF, MBV_PAR_CTIMER_ALWAYS_ON, MBV_PAR_CTIMER_ENABLED};
+
+  if (NEOPOOL_OK != NeoPoolReadRegister(MBF_PAR_LIGHTING_GPIO, &relay, 1)) {
+    NeopoolResponseError();
+    return;
+  }
+  if (relay >=1 && relay <=8) {
+    if (XdrvMailbox.data_len && XdrvMailbox.payload >= 0 && XdrvMailbox.payload < ARRAY_SIZE(timer_val)) {
+      addr = MBF_PAR_TIMER_BLOCK_LIGHT_INT + MBV_TIMER_OFFMB_TIMER_ENABLE;
+      data = timer_val[XdrvMailbox.payload];
+      NeoPoolWriteRegister(MBF_PAR_TIMER_BLOCK_LIGHT_INT + MBV_TIMER_OFFMB_TIMER_ENABLE, &data, 1);
+      data = 1;
+      NeoPoolWriteRegister(MBF_EXEC, &data, 1);
+    }
+    if (NEOPOOL_OK != NeoPoolReadRegister(MBF_RELAY_STATE, &data, 1)) {
+      NeopoolResponseError();
+      return;
+    }
+    data >>= (relay - 1);
+    ResponseCmndStateText(data & 1);
+    return;
+  }
+  NeopoolCmndError();
+}
+
+
+void CmndNeopoolSave(void)
+{
+  uint16_t addr = MBF_SAVE_TO_EEPROM;
+  uint16_t data = 1;
+  if (NEOPOOL_OK == NeoPoolWriteRegister(addr, &data, 1)) {
+    ResponseCmndDone();
+  }
+  else {
+    NeopoolResponseError();
+  }
+}
+
+
+void CmndNeopoolExec(void)
+{
+  uint16_t addr = MBF_EXEC;
+  uint16_t data = 1;
+  if (NEOPOOL_OK == NeoPoolWriteRegister(addr, &data, 1)) {
+    ResponseCmndDone();
+  }
+  else {
+    NeopoolResponseError();
+  }
+}
+
 
 
 /*********************************************************************************************\
@@ -1452,10 +1570,8 @@ bool Xsns83(uint8_t function)
       case FUNC_EVERY_250_MSECOND:
         NeoPool250ms();
         break;
-      case FUNC_COMMAND_SENSOR:
-        if (XSNS_83 == XdrvMailbox.index) {
-          result = NeoPoolCmnd();
-        }
+      case FUNC_COMMAND:
+        result = DecodeCommand(kNPCommands, NPCommand);
         break;
       case FUNC_JSON_APPEND:
         NeoPoolShow(1);
