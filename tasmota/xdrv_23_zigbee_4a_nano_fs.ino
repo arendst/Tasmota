@@ -20,7 +20,7 @@
 #ifdef USE_ZIGBEE
 #ifdef USE_ZIGBEE_EZSP
 
-#define Z_EEPROM_DEBUG
+// #define Z_EEPROM_DEBUG
 
 // The EEPROM is 64KB in size with individually writable bytes.
 // They are conveniently organized in pages of 128 bytes to accelerate
@@ -291,7 +291,7 @@ bool ZFS::findFileEntry(uint32_t name, ZFS_File_Entry & entry, uint8_t * _entry_
 #ifdef Z_EEPROM_DEBUG
     // {
     //   char hex_char[(sizeof(ZFS_File_Entry) * 2) + 2];
-    //   AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Read entry %d at address 0x%04X contains %s"), entry_idx, entry_addr, ToHex_P((uint8_t*)&entry, sizeof(entry), hex_char, sizeof(hex_char)));
+    //   AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Read entry %d at address 0x%04X contains %*_H"), entry_idx, entry_addr, sizeof(entry), &entry);
     // }
 #endif
     if (entry.name == name) {
@@ -363,15 +363,15 @@ void ZFS::initOrFormat(void) {
     byte map[256];
     char hex_char[(256 * 2) + 2];
     zigbee.eeprom.readBytes(0x0000, 256, map);
-    AddLogZ_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "BLK 00 %s"), ToHex_P(map, sizeof(map), hex_char, sizeof(hex_char)));
+    AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "BLK 00 %s"), ToHex_P(map, sizeof(map), hex_char, sizeof(hex_char)));
     // zigbee.eeprom.readBytes(0x0100, 256, map);
-    // AddLogZ_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "BLK 01 %s"), ToHex_P(map, sizeof(map), hex_char, sizeof(hex_char)));
+    // AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "BLK 01 %s"), ToHex_P(map, sizeof(map), hex_char, sizeof(hex_char)));
     zigbee.eeprom.readBytes(0x0200, 256, map);
-    AddLogZ_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "BLK 02 %s"), ToHex_P(map, sizeof(map), hex_char, sizeof(hex_char)));
+    AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "BLK 02 %s"), ToHex_P(map, sizeof(map), hex_char, sizeof(hex_char)));
     zigbee.eeprom.readBytes(0x2100, 256, map);
-    AddLogZ_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "BLK 21 %s"), ToHex_P(map, sizeof(map), hex_char, sizeof(hex_char)));
+    AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "BLK 21 %s"), ToHex_P(map, sizeof(map), hex_char, sizeof(hex_char)));
     // zigbee.eeprom.readBytes(0xFF00, 256, map);
-    // AddLogZ_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "BLK FF %s"), ToHex_P(map, sizeof(map), hex_char, sizeof(hex_char)));
+    // AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "BLK FF %s"), ToHex_P(map, sizeof(map), hex_char, sizeof(hex_char)));
   }
 #endif
 

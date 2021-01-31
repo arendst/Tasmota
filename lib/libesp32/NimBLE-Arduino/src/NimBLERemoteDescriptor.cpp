@@ -31,6 +31,7 @@ static const char* LOG_TAG = "NimBLERemoteDescriptor";
 NimBLERemoteDescriptor::NimBLERemoteDescriptor(NimBLERemoteCharacteristic* pRemoteCharacteristic,
                                                const struct ble_gatt_dsc *dsc)
 {
+    NIMBLE_LOGD(LOG_TAG, ">> NimBLERemoteDescriptor()");
     switch (dsc->uuid.u.type) {
         case BLE_UUID_TYPE_16:
             m_uuid = NimBLEUUID(dsc->uuid.u16.value);
@@ -42,12 +43,13 @@ NimBLERemoteDescriptor::NimBLERemoteDescriptor(NimBLERemoteCharacteristic* pRemo
             m_uuid = NimBLEUUID(const_cast<ble_uuid128_t*>(&dsc->uuid.u128));
             break;
         default:
-            m_uuid = nullptr;
             break;
     }
 
     m_handle                = dsc->handle;
     m_pRemoteCharacteristic = pRemoteCharacteristic;
+
+    NIMBLE_LOGD(LOG_TAG, "<< NimBLERemoteDescriptor(): %s", m_uuid.toString().c_str());
 }
 
 

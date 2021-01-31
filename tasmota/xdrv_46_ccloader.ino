@@ -533,7 +533,7 @@ void CCLProgrammerInit(void)
 bool CCLoaderinit()
 {
   CCLProgrammerInit();
-  AddLog_P(LOG_LEVEL_INFO,PSTR("CCL: programmer init"));
+  AddLog(LOG_LEVEL_INFO,PSTR("CCL: programmer init"));
   CCL.init = true;
   return true;
 }
@@ -564,17 +564,17 @@ void CCLoaderLoop() {
     switch(step) {
         case 0:
             CCLdebug_init();
-            AddLog_P(LOG_LEVEL_INFO,PSTR("CCL: debug init"));
+            AddLog(LOG_LEVEL_INFO,PSTR("CCL: debug init"));
             step++;
             break;
         case 1:
             CCLread_chip_id();
             if((CCL.chip.ID!=0)) {
-                AddLog_P(LOG_LEVEL_INFO,PSTR("CCL: found chip with ID: %x, Rev: %x -> %s"), CCL.chip.ID, CCL.chip.rev, CCLChipName(CCL.chip.ID).c_str());
+                AddLog(LOG_LEVEL_INFO,PSTR("CCL: found chip with ID: %x, Rev: %x -> %s"), CCL.chip.ID, CCL.chip.rev, CCLChipName(CCL.chip.ID).c_str());
                 step++;
             }
             else {
-                AddLog_P(LOG_LEVEL_INFO,PSTR("CCL: no chip found"));
+                AddLog(LOG_LEVEL_INFO,PSTR("CCL: no chip found"));
                 return;
             }
             break;
@@ -587,7 +587,7 @@ bool CLLFlashFirmware(uint8_t* data, uint32_t size)
     bool ret = true;
     unsigned char debug_config = 0;
     unsigned char Verify = 0;
-    AddLog_P(LOG_LEVEL_INFO,PSTR("CCL: .bin file downloaded with size: %u blocks"), size/512);
+    AddLog(LOG_LEVEL_INFO,PSTR("CCL: .bin file downloaded with size: %u blocks"), size/512);
     if (CCL.chip.ID!=0)
     {
         CCLRunDUP();
@@ -608,7 +608,7 @@ bool CLLFlashFirmware(uint8_t* data, uint32_t size)
         unsigned char  rxBuf[512];
         uint32_t block = 0;
         unsigned int addr = 0x0000;
-        AddLog_P(LOG_LEVEL_INFO,PSTR("CCL: will flash ...."));
+        AddLog(LOG_LEVEL_INFO,PSTR("CCL: will flash ...."));
         AddLogBuffer(LOG_LEVEL_DEBUG,data,16); // quick check to compare with a hex editor
 
         while((block*512)<size)
@@ -624,7 +624,7 @@ bool CLLFlashFirmware(uint8_t* data, uint32_t size)
                 {
                     if(read_data[i] !=rxBuf[i])
                     {
-                    AddLog_P(LOG_LEVEL_INFO,PSTR("CCL: flashing error, erasing flash!!"));
+                    AddLog(LOG_LEVEL_INFO,PSTR("CCL: flashing error, erasing flash!!"));
                     CCLchip_erase();
                     return true;
                     }
@@ -633,7 +633,7 @@ bool CLLFlashFirmware(uint8_t* data, uint32_t size)
             addr += (unsigned int)128;
             block++;
             delay(10); // feed the dog
-            AddLog_P(LOG_LEVEL_INFO,PSTR("CCL: written block %u of %u"), block, size/512);
+            AddLog(LOG_LEVEL_INFO,PSTR("CCL: written block %u of %u"), block, size/512);
         }
         CCLRunDUP();
     }

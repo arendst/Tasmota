@@ -86,7 +86,7 @@ void Bl0940Received(void) {
   if ((Bl0940.rx_buffer[0] != BL0940_PACKET_HEADER) ||                                                   // Bad header
       (Bl0940.tps1 && ((tps1 < (Bl0940.tps1 -10)) || (tps1 > (Bl0940.tps1 +10))))                        // Invalid temperature change
      ) {
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR("BL9: Invalid data"));
+    AddLog(LOG_LEVEL_DEBUG, PSTR("BL9: Invalid data"));
     return;
   }
 
@@ -101,7 +101,7 @@ void Bl0940Received(void) {
   int32_t cf_cnt = Bl0940.rx_buffer[24] << 24 | Bl0940.rx_buffer[23] << 16 | Bl0940.rx_buffer[22] << 8;  // CF_CNT signed
   Bl0940.cf_pulses = abs(cf_cnt) >> 8;
 
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR("BL9: U %d, I %d, P %d, C %d, T %d"),
+  AddLog(LOG_LEVEL_DEBUG, PSTR("BL9: U %d, I %d, P %d, C %d, T %d"),
     Bl0940.voltage, Bl0940.current, Bl0940.power, Bl0940.cf_pulses, Bl0940.tps1);
 
   if (Energy.power_on) {  // Powered on
@@ -149,7 +149,7 @@ void Bl0940SerialInput(void) {
             Bl0940.byte_counter--;
           } while ((Bl0940.byte_counter > 1) && (BL0940_PACKET_HEADER != Bl0940.rx_buffer[0]));
           if (BL0940_PACKET_HEADER != Bl0940.rx_buffer[0]) {
-            AddLog_P(LOG_LEVEL_DEBUG, PSTR("BL9: " D_CHECKSUM_FAILURE));
+            AddLog(LOG_LEVEL_DEBUG, PSTR("BL9: " D_CHECKSUM_FAILURE));
             Bl0940.received = false;
             Bl0940.byte_counter = 0;
           }
@@ -191,7 +191,7 @@ void Bl0940EverySecond(void) {
           Bl0940.cf_pulses_last_time = Bl0940.cf_pulses;
           Energy.kWhtoday_delta += delta;
         } else {
-          AddLog_P(LOG_LEVEL_DEBUG, PSTR("BL9: Overload"));
+          AddLog(LOG_LEVEL_DEBUG, PSTR("BL9: Overload"));
           Bl0940.cf_pulses_last_time = BL0940_PULSES_NOT_INITIALIZED;
         }
         EnergyUpdateToday();
@@ -200,7 +200,7 @@ void Bl0940EverySecond(void) {
 
   }
 
-//  AddLog_P(LOG_LEVEL_DEBUG, PSTR("BL9: Poll"));
+//  AddLog(LOG_LEVEL_DEBUG, PSTR("BL9: Poll"));
 
   Bl0940Serial->flush();
   Bl0940Serial->write(BL0940_READ_COMMAND);
@@ -268,14 +268,11 @@ bool Bl0940Command(void) {
 }
 
 void Bl0940Show(bool json) {
-  char temperature[33];
-  dtostrfd(Bl0940.temperature, Settings.flag2.temperature_resolution, temperature);
-
   if (json) {
-    ResponseAppend_P(JSON_SNS_TEMP, "BL0940", temperature);
+    ResponseAppend_P(JSON_SNS_F_TEMP, "BL0940", Settings.flag2.temperature_resolution, &Bl0940.temperature);
     if (0 == TasmotaGlobal.tele_period) {
 #ifdef USE_DOMOTICZ
-      DomoticzSensor(DZ_TEMP, temperature);
+      DomoticzFloatSensor(DZ_TEMP, Bl0940.temperature);
 #endif  // USE_DOMOTICZ
 #ifdef USE_KNX
       KnxSensor(KNX_TEMPERATURE, Bl0940.temperature);
@@ -283,8 +280,9 @@ void Bl0940Show(bool json) {
     }
 #ifdef USE_WEBSERVER
   } else {
-    WSContentSend_PD(HTTP_SNS_TEMP, "", temperature, TempUnit());
+    WSContentSend_Temp("", Bl0940.temperature);
 #endif  // USE_WEBSERVER
+
   }
 }
 

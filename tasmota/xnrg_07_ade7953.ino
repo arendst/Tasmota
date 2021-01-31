@@ -131,7 +131,7 @@ void Ade7953GetData(void)
       reg[i >> 2][i &3] = value;
     }
   }
-  AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("ADE: %d, %d, [%d, %d, %d, %d], [%d, %d, %d, %d]"),
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("ADE: %d, %d, [%d, %d, %d, %d], [%d, %d, %d, %d]"),
     Ade7953.voltage_rms, Ade7953.period,
     reg[0][0], reg[0][1], reg[0][2], reg[0][3],
     reg[1][0], reg[1][1], reg[1][2], reg[1][3]);
@@ -154,7 +154,7 @@ void Ade7953GetData(void)
   uint32_t current_rms_sum = Ade7953.current_rms[0] + Ade7953.current_rms[1];
   uint32_t active_power_sum = Ade7953.active_power[0] + Ade7953.active_power[1];
 
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR("ADE: U %d, C %d, I %d + %d = %d, P %d + %d = %d"),
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("ADE: U %d, C %d, I %d + %d = %d, P %d + %d = %d"),
     Ade7953.voltage_rms, Ade7953.period,
     Ade7953.current_rms[0], Ade7953.current_rms[1], current_rms_sum,
     Ade7953.active_power[0], Ade7953.active_power[1], active_power_sum);

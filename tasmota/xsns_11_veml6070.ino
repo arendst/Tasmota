@@ -155,11 +155,11 @@ void Veml6070UvTableInit(void)
       uv_risk_map[i] = ( (USE_VEML6070_RSET / VEML6070_TABLE_COEFFCIENT) / VEML6070_UV_MAX_DEFAULT ) * (i+1);
     } else {
       uv_risk_map[i] = ( (VEML6070_RSET_DEFAULT / VEML6070_TABLE_COEFFCIENT) / VEML6070_UV_MAX_DEFAULT ) * (i+1);
-      AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "VEML6070 resistor error %d"), USE_VEML6070_RSET);
+      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "VEML6070 resistor error %d"), USE_VEML6070_RSET);
     }
 #else
     uv_risk_map[i] = ( (VEML6070_RSET_DEFAULT / VEML6070_TABLE_COEFFCIENT) / VEML6070_UV_MAX_DEFAULT ) * (i+1);
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "VEML6070 resistor default used %d"), VEML6070_RSET_DEFAULT);
+    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "VEML6070 resistor default used %d"), VEML6070_RSET_DEFAULT);
 #endif
   }
 }
@@ -187,7 +187,7 @@ void Veml6070ModeCmd(bool mode_cmd)
   uint8_t status   = Wire.endTransmission();
   // action on status
   if (!status) {
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "VEML6070 mode_cmd"));
+    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "VEML6070 mode_cmd"));
   }
 }
 
@@ -231,7 +231,7 @@ double Veml6070UvRiskLevel(uint16_t uv_level)
     // out of range and much to high - it must be outerspace or sensor damaged
     snprintf_P(str_uvrisk_text, sizeof(str_uvrisk_text), D_UV_INDEX_7);
     return ( risk = 99 );
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "VEML6070 out of range %d"), risk);
+    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "VEML6070 out of range %d"), risk);
   }
 }
 

@@ -48,14 +48,14 @@ void Pcf8574SwitchRelay(void)
   for (uint32_t i = 0; i < TasmotaGlobal.devices_present; i++) {
     uint8_t relay_state = bitRead(XdrvMailbox.index, i);
 
-    //AddLog_P(LOG_LEVEL_DEBUG, PSTR("PCF: Pcf8574.max_devices %d requested pin %d"), Pcf8574.max_devices,Pcf8574.pin[i]);
+    //AddLog(LOG_LEVEL_DEBUG, PSTR("PCF: Pcf8574.max_devices %d requested pin %d"), Pcf8574.max_devices,Pcf8574.pin[i]);
 
     if (Pcf8574.max_devices > 0 && Pcf8574.pin[i] < 99) {
       uint8_t board = Pcf8574.pin[i]>>3;
       uint8_t oldpinmask = Pcf8574.pin_mask[board];
       uint8_t _val = bitRead(TasmotaGlobal.rel_inverted, i) ? !relay_state : relay_state;
 
-      //AddLog_P(LOG_LEVEL_DEBUG, PSTR("PCF: Pcf8574SwitchRelay %d on pin %d"), i,state);
+      //AddLog(LOG_LEVEL_DEBUG, PSTR("PCF: Pcf8574SwitchRelay %d on pin %d"), i,state);
 
       if (_val) {
         Pcf8574.pin_mask[board] |= _val << (Pcf8574.pin[i]&0x7);
@@ -79,7 +79,7 @@ void Pcf8574Init(void)
 
 #ifdef USE_MCP230xx_ADDR
     if (USE_MCP230xx_ADDR == pcf8574_address) {
-      AddLog_P(LOG_LEVEL_INFO, PSTR("PCF: Address 0x%02x reserved for MCP320xx skipped"), pcf8574_address);
+      AddLog(LOG_LEVEL_INFO, PSTR("PCF: Address 0x%02x reserved for MCP320xx skipped"), pcf8574_address);
       pcf8574_address++;
       if ((PCF8574_ADDR1 +7) == pcf8574_address) {  // Support I2C addresses 0x20 to 0x26 and 0x39 to 0x3F
         pcf8574_address = PCF8574_ADDR2 +1;
@@ -87,7 +87,7 @@ void Pcf8574Init(void)
     }
 #endif
 
-  //  AddLog_P(LOG_LEVEL_DEBUG, PSTR("PCF: Probing addr: 0x%x for PCF8574"), pcf8574_address);
+  //  AddLog(LOG_LEVEL_DEBUG, PSTR("PCF: Probing addr: 0x%x for PCF8574"), pcf8574_address);
 
     if (I2cSetDevice(pcf8574_address)) {
       Pcf8574.type = true;
@@ -115,7 +115,7 @@ void Pcf8574Init(void)
     Pcf8574.max_connected_ports = 0;  // reset no of devices to avoid duplicate ports on duplicate init.
     for (uint32_t idx = 0; idx < Pcf8574.max_devices; idx++) { // suport up to 8 boards PCF8574
 
-      AddLog_P(LOG_LEVEL_DEBUG, PSTR("PCF: Device %d config 0x%02x"), idx +1, Settings.pcf8574_config[idx]);
+      AddLog(LOG_LEVEL_DEBUG, PSTR("PCF: Device %d config 0x%02x"), idx +1, Settings.pcf8574_config[idx]);
 
       for (uint32_t i = 0; i < 8; i++) {
         uint8_t _result = Settings.pcf8574_config[idx] >> i &1;
@@ -128,7 +128,7 @@ void Pcf8574Init(void)
         }
       }
     }
-    AddLog_P(LOG_LEVEL_INFO, PSTR("PCF: Total devices %d, PCF8574 output ports %d"), Pcf8574.max_devices, Pcf8574.max_connected_ports);
+    AddLog(LOG_LEVEL_INFO, PSTR("PCF: Total devices %d, PCF8574 output ports %d"), Pcf8574.max_devices, Pcf8574.max_connected_ports);
   }
 }
 
@@ -158,7 +158,7 @@ void HandlePcf8574(void)
 {
   if (!HttpCheckPriviledgedAccess()) { return; }
 
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP  D_CONFIGURE_PCF8574));
+  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP  D_CONFIGURE_PCF8574));
 
   if (Webserver->hasArg("save")) {
     Pcf8574SaveSettings();
@@ -193,7 +193,7 @@ void Pcf8574SaveSettings(void)
   char stemp[7];
   char tmp[100];
 
-  //AddLog_P(LOG_LEVEL_DEBUG, PSTR("PCF: Start working on Save arguements: inverted:%d")), Webserver->hasArg("b1");
+  //AddLog(LOG_LEVEL_DEBUG, PSTR("PCF: Start working on Save arguements: inverted:%d")), Webserver->hasArg("b1");
 
   Settings.flag3.pcf8574_ports_inverted = Webserver->hasArg("b1");  // SetOption81 - Invert all ports on PCF8574 devices
   for (byte idx = 0; idx < Pcf8574.max_devices; idx++) {
@@ -219,7 +219,7 @@ void Pcf8574SaveSettings(void)
       }
     }
     //Settings.pcf8574_config[0] = (!strlen(webServer->arg("i2cs0").c_str())) ?  0 : atoi(webServer->arg("i2cs0").c_str());
-    //AddLog_P(LOG_LEVEL_INFO, PSTR("PCF: I2C Board: %d, Config: %2x")),  idx, Settings.pcf8574_config[idx];
+    //AddLog(LOG_LEVEL_INFO, PSTR("PCF: I2C Board: %d, Config: %2x")),  idx, Settings.pcf8574_config[idx];
 
   }
 }

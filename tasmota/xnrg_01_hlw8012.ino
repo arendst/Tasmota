@@ -164,7 +164,7 @@ void HlwEvery200ms(void)
         }
       }
       uint32_t median = Hlw.debug[(Hlw.cf1_pulse_counter +1) / 2];
-      AddLog_P(LOG_LEVEL_DEBUG, PSTR("NRG: power %d, ui %d, cnt %d, smpl%s, sum %d, mean %d, median %d"),
+      AddLog(LOG_LEVEL_DEBUG, PSTR("NRG: power %d, ui %d, cnt %d, smpl%s, sum %d, mean %d, median %d"),
         Hlw.cf_power_pulse_length , Hlw.select_ui_flag, Hlw.cf1_pulse_counter, stemp, Hlw.cf1_summed_pulse_length, cf1_pulse_length, median);
 #endif
 

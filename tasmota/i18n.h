@@ -156,6 +156,7 @@
 #define D_JSON_SERIALRECEIVED "SerialReceived"
 #define D_JSON_SET "Set"
 #define D_JSON_SIGNAL "Signal"
+#define D_JSON_SIZE "Size"
 #define D_JSON_SPEED "Speed"
 #define D_JSON_SPEED_UNIT "SpeedUnit"
 #define D_JSON_SSID "SSId"
@@ -180,6 +181,7 @@
 #define D_JSON_TOTAL_START_TIME "TotalStartTime"
 #define D_JSON_TVOC "TVOC"
 #define D_JSON_TYPE "Type"
+#define D_JSON_UID "UID"
 #define D_JSON_UPTIME "Uptime"
 #define D_JSON_UTC_TIME "UTC"
 #define D_JSON_UV_INDEX "UvIndex"
@@ -347,7 +349,11 @@
 #define D_CMND_CPU_FREQUENCY "CpuFrequency"
 #endif  // ESP32
 
-// Commands xdrv_01_mqtt.ino
+// Commands xdrv_02_mqtt.ino
+#define D_SO_MQTTJSONONLY "MqttJSONOnly"
+#define D_SO_MQTTTLS "MqttTLS"
+#define D_SO_MQTTNORETAIN "MqttNoRetain"
+#define D_SO_MQTTDETACHRELAY "MqttDetachRelay"
 #define D_CMND_MQTTLOG "MqttLog"
 #define D_CMND_MQTTHOST "MqttHost"
 #define D_CMND_MQTTPORT "MqttPort"
@@ -373,7 +379,7 @@
 #define D_CMND_SENSORRETAIN "SensorRetain"
 #define D_CMND_PUBLISH "Publish"
 
-// Commands xdrv_02_webserver.ino
+// Commands xdrv_01_webserver.ino
 #define D_CMND_WEBSERVER "Webserver"
   #define D_JSON_WEBSERVER_MODE "WebServerMode"
   #define D_JSON_ACTIVE_FOR "Active for"
@@ -418,6 +424,13 @@
   #define D_JSON_MAXENERGYREACHED "MaxEnergyReached"
 
 // Commands xdrv_04_light.ino
+#define D_SO_CHANNELREMAP "ChannelRemap"    // SO37
+#define D_SO_MULTIPWM "MultiPWM"            // SO68
+#define D_SO_ALEXACTRANGE "AlexaCTRange"    // SO82
+#define D_SO_POWERONFADE "PowerOnFade"      // SO91
+#define D_SO_PWMCT "PWMCT"                  // SO92
+#define D_SO_WHITEBLEND "WhiteBlend"        // SO105
+#define D_SO_VIRTUALCT "VirtualCT"          // SO106
 #define D_CMND_CHANNEL "Channel"
 #define D_CMND_COLOR "Color"
 #define D_CMND_COLORTEMPERATURE "CT"
@@ -520,7 +533,16 @@
 
 // Commands xdrv_23_zigbee.ino
 #define D_PRFX_ZB "Zb"
-#define D_ZIGBEE_NOT_STARTED "Zigbee not started"
+#define D_SO_ZIGBEE_NAMEKEY "NameKey"
+#define D_SO_ZIGBEE_DEVICETOPIC "DeviceTopic"
+#define D_SO_ZIGBEE_NOPREFIX "NoPrefix"
+#define D_SO_ZIGBEE_ENDPOINTSUFFIX "EndpointSuffix"
+#define D_SO_ZIGBEE_NOAUTOBIND "NoAutoBind"
+#define D_SO_ZIGBEE_NAMETOPIC "NameTopic"
+#define D_SO_ZIGBEE_ENDPOINTTOPIC "EndpointTopic"
+#define D_SO_ZIGBEE_NOAUTOQUERY "NoAutoQuery"
+#define D_SO_ZIGBEE_ZBRECEIVEDTOPIC "ReceivedTopic"
+#define D_SO_ZIGBEE_OMITDEVICE "OmitDevice"
 #define D_CMND_ZIGBEE_PERMITJOIN "PermitJoin"
 #define D_CMND_ZIGBEE_STATUS "Status"
 #define D_CMND_ZIGBEE_RESET "Reset"
@@ -727,7 +749,6 @@ const char S_JSON_COMMAND_INDEX_NVALUE[] PROGMEM =            "{\"%s%d\":%d}";
 const char S_JSON_COMMAND_INDEX_LVALUE[] PROGMEM =            "{\"%s%d\":%lu}";
 const char S_JSON_COMMAND_INDEX_SVALUE[] PROGMEM =            "{\"%s%d\":\"%s\"}";
 const char S_JSON_COMMAND_INDEX_ASTERISK[] PROGMEM =          "{\"%s%d\":\"" D_ASTERISK_PWD "\"}";
-const char S_JSON_COMMAND_INDEX_SVALUE_SVALUE[] PROGMEM =     "{\"%s%d\":\"%s%s\"}";
 
 const char S_JSON_SENSOR_INDEX_NVALUE[] PROGMEM =             "{\"" D_CMND_SENSOR "%d\":%d}";
 const char S_JSON_SENSOR_INDEX_SVALUE[] PROGMEM =             "{\"" D_CMND_SENSOR "%d\":\"%s\"}";
@@ -737,6 +758,7 @@ const char S_JSON_DRIVER_INDEX_SVALUE[] PROGMEM =             "{\"" D_CMND_DRIVE
 
 const char S_JSON_SVALUE_ACTION_SVALUE[] PROGMEM =            "{\"%s\":{\"Action\":\"%s\"}}";
 
+const char JSON_SNS_F_TEMP[] PROGMEM = ",\"%s\":{\"" D_JSON_TEMPERATURE "\":%*_f}";
 const char JSON_SNS_TEMP[] PROGMEM = ",\"%s\":{\"" D_JSON_TEMPERATURE "\":%s}";
 
 const char JSON_SNS_ILLUMINANCE[] PROGMEM = ",\"%s\":{\"" D_JSON_ILLUMINANCE "\":%d}";
@@ -769,7 +791,9 @@ const float kSpeedConversionFactor[] = {1,            // none
 // xdrv_02_webserver.ino
 #ifdef USE_WEBSERVER
 // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
-const char HTTP_SNS_TEMP[]          PROGMEM = "{s}%s "  D_TEMPERATURE         "{m}%s " D_UNIT_DEGREE            "%c{e}";
+const char HTTP_SNS_F_TEMP[]        PROGMEM = "{s}%s "  D_TEMPERATURE         "{m}%*_f " D_UNIT_DEGREE            "%c{e}";
+//const char HTTP_SNS_TEMP[]          PROGMEM = "{s}%s "  D_TEMPERATURE         "{m}%s " D_UNIT_DEGREE            "%c{e}";
+
 const char HTTP_SNS_HUM[]           PROGMEM = "{s}%s "  D_HUMIDITY            "{m}%s " D_UNIT_PERCENT             "{e}";
 const char HTTP_SNS_DEW[]           PROGMEM = "{s}%s "  D_DEWPOINT            "{m}%s " D_UNIT_DEGREE            "%c{e}";
 const char HTTP_SNS_PRESSURE[]      PROGMEM = "{s}%s "  D_PRESSURE            "{m}%s "                          "%s{e}";
@@ -782,6 +806,7 @@ const char HTTP_SNS_GALLONS[]       PROGMEM = "{s}%s "  D_TOTAL_USAGE         "{
 const char HTTP_SNS_GPM[]           PROGMEM = "{s}%s "  D_FLOW_RATE           "{m}%s " D_UNIT_GALLONS_PER_MIN     "{e}";
 const char HTTP_SNS_MOISTURE[]      PROGMEM = "{s}%s "  D_MOISTURE            "{m}%d " D_UNIT_PERCENT             "{e}";
 const char HTTP_SNS_RANGE[]         PROGMEM = "{s}%s "  D_RANGE               "{m}%d"                             "{e}";
+const char HTTP_SNS_DISTANCE[]      PROGMEM = "{s}%s "  D_DISTANCE            "{m}%d " D_UNIT_MILLIMETER          "{e}";
 const char HTTP_SNS_VOLTAGE[]       PROGMEM = "{s}"     D_VOLTAGE             "{m}%s " D_UNIT_VOLT                "{e}";
 const char HTTP_SNS_CURRENT[]       PROGMEM = "{s}"     D_CURRENT             "{m}%s " D_UNIT_AMPERE              "{e}";
 const char HTTP_SNS_POWER[]         PROGMEM = "{s}"     D_POWERUSAGE          "{m}%s " D_UNIT_WATT                "{e}";

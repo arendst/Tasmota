@@ -87,17 +87,20 @@
 
 #define D_JSON_INITIATED "Initiated"
 
-#define COMPARE_OPERATOR_NONE            -1
-#define COMPARE_OPERATOR_EQUAL            0
-#define COMPARE_OPERATOR_BIGGER           1
-#define COMPARE_OPERATOR_SMALLER          2
-#define COMPARE_OPERATOR_EXACT_DIVISION   3
-#define COMPARE_OPERATOR_NUMBER_EQUAL     4
-#define COMPARE_OPERATOR_NOT_EQUAL        5
-#define COMPARE_OPERATOR_BIGGER_EQUAL     6
-#define COMPARE_OPERATOR_SMALLER_EQUAL    7
-#define MAXIMUM_COMPARE_OPERATOR          COMPARE_OPERATOR_SMALLER_EQUAL
-const char kCompareOperators[] PROGMEM = "=\0>\0<\0|\0==!=>=<=";
+#define COMPARE_OPERATOR_NONE                 -1
+#define COMPARE_OPERATOR_EQUAL                 0
+#define COMPARE_OPERATOR_BIGGER                1
+#define COMPARE_OPERATOR_SMALLER               2
+#define COMPARE_OPERATOR_EXACT_DIVISION        3
+#define COMPARE_OPERATOR_NUMBER_EQUAL          4
+#define COMPARE_OPERATOR_NOT_EQUAL             5
+#define COMPARE_OPERATOR_BIGGER_EQUAL          6
+#define COMPARE_OPERATOR_SMALLER_EQUAL         7
+#define COMPARE_OPERATOR_STRING_ENDS_WITH      8
+#define COMPARE_OPERATOR_STRING_STARTS_WITH    9
+#define COMPARE_OPERATOR_STRING_CONTAINS      10
+#define MAXIMUM_COMPARE_OPERATOR              COMPARE_OPERATOR_STRING_CONTAINS
+const char kCompareOperators[] PROGMEM = "=\0>\0<\0|\0==!=>=<=$>$<$|";
 
 #ifdef USE_EXPRESSION
   #include <LinkedList.h>                 // Import LinkedList library
@@ -355,7 +358,7 @@ int32_t SetRule(uint32_t idx, const char *content, bool append = false) {
 
       len_uncompressed = strlen(Settings.rules[idx]);
       len_compressed = compressor.unishox_compress(Settings.rules[idx], len_uncompressed, nullptr /* dry-run */, MAX_RULE_SIZE + 8);
-      AddLog_P(LOG_LEVEL_INFO, PSTR("RUL: Stored uncompressed, would compress from %d to %d (-%d%%)"), len_uncompressed, len_compressed, 100 - changeUIntScale(len_compressed, 0, len_uncompressed, 0, 100));
+      AddLog(LOG_LEVEL_INFO, PSTR("RUL: Stored uncompressed, would compress from %d to %d (-%d%%)"), len_uncompressed, len_compressed, 100 - changeUIntScale(len_compressed, 0, len_uncompressed, 0, 100));
     }
 
 #endif // USE_UNISHOX_COMPRESSION
@@ -384,9 +387,9 @@ int32_t SetRule(uint32_t idx, const char *content, bool append = false) {
       Settings.rules[idx][1] = (len_in + 7) / 8;    // store original length in first bytes (4 bytes chuks)
       memcpy(&Settings.rules[idx][2], buf_out, len_compressed);
       Settings.rules[idx][len_compressed + 2] = 0;  // add NULL termination
-      AddLog_P(LOG_LEVEL_INFO, PSTR("RUL: Compressed from %d to %d (-%d%%)"), len_in, len_compressed, 100 - changeUIntScale(len_compressed, 0, len_in, 0, 100));
-      // AddLog_P(LOG_LEVEL_INFO, PSTR("RUL: First bytes: %02X%02X%02X%02X"), Settings.rules[idx][0], Settings.rules[idx][1], Settings.rules[idx][2], Settings.rules[idx][3]);
-      // AddLog_P(LOG_LEVEL_INFO, PSTR("RUL: GetRuleLenStorage = %d"), GetRuleLenStorage(idx));
+      AddLog(LOG_LEVEL_INFO, PSTR("RUL: Compressed from %d to %d (-%d%%)"), len_in, len_compressed, 100 - changeUIntScale(len_compressed, 0, len_in, 0, 100));
+      // AddLog(LOG_LEVEL_INFO, PSTR("RUL: First bytes: %02X%02X%02X%02X"), Settings.rules[idx][0], Settings.rules[idx][1], Settings.rules[idx][2], Settings.rules[idx][3]);
+      // AddLog(LOG_LEVEL_INFO, PSTR("RUL: GetRuleLenStorage = %d"), GetRuleLenStorage(idx));
     } else {
       len_compressed = -1;    // failed
       // clear rule cache, so it will be reloaded from Settings
@@ -416,7 +419,7 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule, bool stop_all
   // Step1: Analyse rule
   String rule_expr = rule;                             // "TELE-INA219#CURRENT>0.100"
   if (Rules.teleperiod) {
-    int ppos = rule_expr.indexOf("TELE-");             // "TELE-INA219#CURRENT>0.100" or "INA219#CURRENT>0.100"
+    int ppos = rule_expr.indexOf(F("TELE-"));          // "TELE-INA219#CURRENT>0.100" or "INA219#CURRENT>0.100"
     if (ppos == -1) { return false; }                  // No pre-amble in rule
     rule_expr = rule.substring(5);                     // "INA219#CURRENT>0.100" or "SYSTEM#BOOT"
   }
@@ -494,7 +497,7 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule, bool stop_all
   // Step2: Search rule_name
   int pos;
   int rule_name_idx = 0;
-  if ((pos = rule_name.indexOf("[")) > 0) {            // "SUBTYPE1#CURRENT[1]"
+  if ((pos = rule_name.indexOf(F("["))) > 0) {            // "SUBTYPE1#CURRENT[1]"
     rule_name_idx = rule_name.substring(pos +1).toInt();
     if ((rule_name_idx < 1) || (rule_name_idx > 6)) {  // Allow indexes 1 to 6
       rule_name_idx = 1;
@@ -510,12 +513,12 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule, bool stop_all
   JsonParserObject obj = parser.getRootObject();
   if (!obj) {
 //    AddLog_P(LOG_LEVEL_DEBUG, PSTR("RUL: Event too long (%d)"), event.length());
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR("RUL: No valid JSON (%s)"), buf.c_str());
+    AddLog(LOG_LEVEL_DEBUG, PSTR("RUL: No valid JSON (%s)"), buf.c_str());
     return false; // No valid JSON data
   }
   String subtype;
   uint32_t i = 0;
-  while ((pos = rule_name.indexOf("#")) > 0) {         // "SUBTYPE1#SUBTYPE2#CURRENT"
+  while ((pos = rule_name.indexOf(F("#"))) > 0) {         // "SUBTYPE1#SUBTYPE2#CURRENT"
     subtype = rule_name.substring(0, pos);
     obj = obj[subtype.c_str()].getObject();
     if (!obj) { return false; }                        // not found
@@ -553,6 +556,7 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule, bool stop_all
     value = CharToFloat((char*)str_value);
     int int_value = int(value);
     int int_rule_value = int(rule_value);
+    String str_str_value = String(str_value);
     switch (compareOperator) {
       case COMPARE_OPERATOR_EXACT_DIVISION:
         match = (int_rule_value && (int_value % int_rule_value) == 0);
@@ -577,6 +581,15 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule, bool stop_all
         break;
       case COMPARE_OPERATOR_SMALLER_EQUAL:
         match = (value <= rule_value);
+        break;
+      case COMPARE_OPERATOR_STRING_ENDS_WITH:
+        match = str_str_value.endsWith(rule_svalue);
+        break;
+      case COMPARE_OPERATOR_STRING_STARTS_WITH:
+        match = str_str_value.startsWith(rule_svalue);
+        break;
+      case COMPARE_OPERATOR_STRING_CONTAINS:
+        match = (str_str_value.indexOf(rule_svalue) > 0);
         break;
       default:
         match = true;
@@ -686,14 +699,14 @@ bool RuleSetProcess(uint8_t rule_set, String &event_saved)
 
     String rule = rules;
     rule.toUpperCase();                                   // "ON INA219#CURRENT>0.100 DO BACKLOG DIMMER 10;COLOR 100000 ENDON"
-    if (!rule.startsWith("ON ")) { return serviced; }     // Bad syntax - Nothing to start on
+    if (!rule.startsWith(F("ON "))) { return serviced; }     // Bad syntax - Nothing to start on
 
-    int pevt = rule.indexOf(" DO ");
+    int pevt = rule.indexOf(F(" DO "));
     if (pevt == -1) { return serviced; }                  // Bad syntax - Nothing to do
     String event_trigger = rule.substring(3, pevt);       // "INA219#CURRENT>0.100"
 
-    plen = rule.indexOf(" ENDON");
-    plen2 = rule.indexOf(" BREAK");
+    plen = rule.indexOf(F(" ENDON"));
+    plen2 = rule.indexOf(F(" BREAK"));
     if ((plen == -1) && (plen2 == -1)) { return serviced; } // Bad syntax - No ENDON neither BREAK
 
     if (plen == -1) { plen = 9999; }
@@ -717,10 +730,10 @@ bool RuleSetProcess(uint8_t rule_set, String &event_saved)
 
 //      if (!ucommand.startsWith("BACKLOG")) { commands = "backlog " + commands; }  // Always use Backlog to prevent power race exception
       // Use Backlog with event to prevent rule event loop exception unless IF is used which uses an implicit backlog
-      if ((ucommand.indexOf("IF ") == -1) &&
-          (ucommand.indexOf("EVENT ") != -1) &&
-          (ucommand.indexOf("BACKLOG ") == -1)) {
-        commands = "backlog " + commands;
+      if ((ucommand.indexOf(F("IF ")) == -1) &&
+          (ucommand.indexOf(F("EVENT ")) != -1) &&
+          (ucommand.indexOf(F("BACKLOG ")) == -1)) {
+        commands = String(F("backlog ")) + commands;
       }
 
       RulesVarReplace(commands, F("%VALUE%"), Rules.event_value);
@@ -757,7 +770,7 @@ bool RuleSetProcess(uint8_t rule_set, String &event_saved)
       char command[commands.length() +1];
       strlcpy(command, commands.c_str(), sizeof(command));
 
-      AddLog_P(LOG_LEVEL_INFO, PSTR("RUL: %s performs \"%s\""), event_trigger.c_str(), command);
+      AddLog(LOG_LEVEL_INFO, PSTR("RUL: %s performs \"%s\""), event_trigger.c_str(), command);
 
 //      Response_P(S_JSON_COMMAND_SVALUE, D_CMND_RULE, D_JSON_INITIATED);
 //      MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR(D_CMND_RULE));
@@ -1614,6 +1627,15 @@ bool evaluateComparisonExpression(const char *expression, int len)
     case COMPARE_OPERATOR_SMALLER_EQUAL:
       bResult = (leftValue <= rightValue);
       break;
+    case COMPARE_OPERATOR_STRING_ENDS_WITH:
+      bResult = leftExpr.endsWith(rightExpr);
+      break;
+    case COMPARE_OPERATOR_STRING_STARTS_WITH:
+      bResult = leftExpr.startsWith(rightExpr);
+      break;
+    case COMPARE_OPERATOR_STRING_CONTAINS:
+      bResult = (leftExpr.indexOf(rightExpr) > 0);
+      break;
   }
   return bResult;
 }
@@ -2081,7 +2103,7 @@ void CmndRule(void)
         }
         int32_t res = SetRule(index - 1, ('"' == XdrvMailbox.data[0]) ? "" : XdrvMailbox.data, append);
         if (res < 0) {
-          AddLog_P(LOG_LEVEL_ERROR, PSTR("RUL: Not enough space"));
+          AddLog(LOG_LEVEL_ERROR, PSTR("RUL: Not enough space"));
         }
       }
       Rules.triggers[index -1] = 0;  // Reset once flag
@@ -2101,7 +2123,7 @@ void CmndRule(void)
         } else {
           last_index = rule_len;                                    // until the end of the rule
         }
-        AddLog_P(LOG_LEVEL_INFO, PSTR("RUL: Rule%d %s%s"),
+        AddLog(LOG_LEVEL_INFO, PSTR("RUL: Rule%d %s%s"),
                                         index, 0 == start_index ? PSTR("") : PSTR("+"),
                                         rule.substring(start_index, last_index).c_str());
         start_index = last_index + 1;
@@ -2261,14 +2283,14 @@ void CmndScale(void)
 {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_RULE_VARS)) {
     if (XdrvMailbox.data_len > 0) {
-      if (strchr(XdrvMailbox.data, ',') != nullptr) {  // Process parameter entry
-        char sub_string[XdrvMailbox.data_len +1];
+      if (ArgC() > 1) {  // Process parameter entry
+        char argument[XdrvMailbox.data_len];
 
-        float valueIN = CharToFloat(subStr(sub_string, XdrvMailbox.data, ",", 1));
-        float fromLow = CharToFloat(subStr(sub_string, XdrvMailbox.data, ",", 2));
-        float fromHigh = CharToFloat(subStr(sub_string, XdrvMailbox.data, ",", 3));
-        float toLow = CharToFloat(subStr(sub_string, XdrvMailbox.data, ",", 4));
-        float toHigh = CharToFloat(subStr(sub_string, XdrvMailbox.data, ",", 5));
+        float valueIN = CharToFloat(ArgV(argument, 1));
+        float fromLow = CharToFloat(ArgV(argument, 2));
+        float fromHigh = CharToFloat(ArgV(argument, 3));
+        float toLow = CharToFloat(ArgV(argument, 4));
+        float toHigh = CharToFloat(ArgV(argument, 5));
         float value = map_double(valueIN, fromLow, fromHigh, toLow, toHigh);
         dtostrfd(value, Settings.flag2.calc_resolution, rules_vars[XdrvMailbox.index -1]);
         bitSet(Rules.vars_event, XdrvMailbox.index -1);

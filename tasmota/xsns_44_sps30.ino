@@ -143,7 +143,7 @@ void SPS30_Detect(void)
 
   uint8_t dcode[32];
   sps30_get_data(SPS_CMD_GET_SERIAL,dcode,sizeof(dcode));
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR("sps30 found with serial: %s"),dcode);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("sps30 found with serial: %s"),dcode);
   sps30_cmd(SPS_CMD_START_MEASUREMENT);
   sps30_running = 1;
   sps30_ready = 1;

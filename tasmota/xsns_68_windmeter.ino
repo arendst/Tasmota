@@ -79,7 +79,7 @@ void ICACHE_RAM_ATTR WindMeterUpdateSpeed(void)
   if (time_diff > Settings.windmeter_pulse_debounce * 1000) {
     WindMeter.counter_time = time;
     WindMeter.counter++;
-//    AddLog_P(LOG_LEVEL_DEBUG, PSTR("WMET: Counter %d"), WindMeter.counter);
+//    AddLog(LOG_LEVEL_DEBUG, PSTR("WMET: Counter %d"), WindMeter.counter);
   }
 }
 
@@ -119,7 +119,7 @@ void WindMeterEverySecond(void)
 {
   //uint32_t time = micros();
   //uint32_t delta_time = time - WindMeter.speed_time;
-  //AddLog_P(LOG_LEVEL_INFO, PSTR("delta_time: %d"), delta_time);
+  //AddLog(LOG_LEVEL_INFO, PSTR("delta_time: %d"), delta_time);
 
   // speed = ( (pulses / pulses_per_rotation) * (2 * pi * radius) ) / delta_time
   WindMeter.speed = ((WindMeter.counter / Settings.windmeter_pulses_x_rot) * (windmeter_2pi * ((float)Settings.windmeter_radius / 1000))) * ((float)Settings.windmeter_speed_factor / 1000);
@@ -131,7 +131,7 @@ void WindMeterEverySecond(void)
   //dtostrfd(WindMeter.speed, 2, speed_string);
   //char uspeed_string[FLOATSZ];
   //dtostrfd(ConvertSpeed(WindMeter.speed), 2, uspeed_string);
-  //AddLog_P(LOG_LEVEL_DEBUG, PSTR("WMET: Speed %s [m/s] - %s [unit]"), speed_string, uspeed_string);
+  //AddLog(LOG_LEVEL_DEBUG, PSTR("WMET: Speed %s [m/s] - %s [unit]"), speed_string, uspeed_string);
 
 #ifndef USE_WINDMETER_NOSTATISTICS
   if (WindMeter.speed < WindMeter.speed_min) {
@@ -289,48 +289,36 @@ void WindMeterTriggerTele(void)
 
 bool Xsns68Cmnd(void)
 {
-  bool serviced = true;
-  bool show_parms = true;
-  char sub_string[XdrvMailbox.data_len +1];
-  switch (XdrvMailbox.payload) {
-    case 1:
-      if (strchr(XdrvMailbox.data, ',') != nullptr) {
-        Settings.windmeter_radius = (uint16_t)strtol(subStr(sub_string, XdrvMailbox.data, ",", 2), nullptr, 10);
-      }
-      break;
-    case 2:
-      if (strchr(XdrvMailbox.data, ',') != nullptr) {
-        Settings.windmeter_pulses_x_rot = (uint8_t)strtol(subStr(sub_string, XdrvMailbox.data, ",", 2), nullptr, 10);
-      }
-      break;
-    case 3:
-      if (strchr(XdrvMailbox.data, ',') != nullptr) {
-        Settings.windmeter_pulse_debounce = (uint16_t)strtol(subStr(sub_string, XdrvMailbox.data, ",", 2), nullptr, 10);
-      }
-      break;
-    case 4:
-      if (strchr(XdrvMailbox.data, ',') != nullptr) {
-        Settings.windmeter_speed_factor = (int16_t)(CharToFloat(subStr(sub_string, XdrvMailbox.data, ",", 2)) * 1000);
-      }
-      break;
-    case 5:
-      if (strchr(XdrvMailbox.data, ',') != nullptr) {
-        Settings.windmeter_tele_pchange = (uint8_t)strtol(subStr(sub_string, XdrvMailbox.data, ",", 2), nullptr, 10);
-      }
-      break;
+  if (ArgC() > 1) {
+    char argument[XdrvMailbox.data_len];
+    switch (XdrvMailbox.payload) {
+      case 1:
+        Settings.windmeter_radius = (uint16_t)strtol(ArgV(argument, 2), nullptr, 10);
+        break;
+      case 2:
+        Settings.windmeter_pulses_x_rot = (uint8_t)strtol(ArgV(argument, 2), nullptr, 10);
+        break;
+      case 3:
+        Settings.windmeter_pulse_debounce = (uint16_t)strtol(ArgV(argument, 2), nullptr, 10);
+        break;
+      case 4:
+        Settings.windmeter_speed_factor = (int16_t)(CharToFloat(ArgV(argument, 2)) * 1000);
+        break;
+      case 5:
+        Settings.windmeter_tele_pchange = (uint8_t)strtol(ArgV(argument, 2), nullptr, 10);
+        break;
+    }
   }
 
-  if (show_parms) {
-    char speed_factor_string[FLOATSZ];
-    dtostrfd((float)Settings.windmeter_speed_factor / 1000, 3, speed_factor_string);
-    char tele_pchange_string[4] = "off";
-    if (Settings.windmeter_tele_pchange <= 100) {
-      itoa(Settings.windmeter_tele_pchange, tele_pchange_string, 10);
-    }
-    Response_P(PSTR("{\"" D_WINDMETER_NAME "\":{\"Radius\":%d,\"PulsesPerRot\":%d,\"PulseDebounce\":%d,\"SpeedFactor\":%s,\"TeleTriggerMin%Change\":%s}}"),
-	       Settings.windmeter_radius, Settings.windmeter_pulses_x_rot, Settings.windmeter_pulse_debounce, speed_factor_string, tele_pchange_string);
+  float speed_factor = (float)Settings.windmeter_speed_factor / 1000;
+  char tele_pchange_string[4] = "off";
+  if (Settings.windmeter_tele_pchange <= 100) {
+    itoa(Settings.windmeter_tele_pchange, tele_pchange_string, 10);
   }
-  return serviced;
+  Response_P(PSTR("{\"" D_WINDMETER_NAME "\":{\"Radius\":%d,\"PulsesPerRot\":%d,\"PulseDebounce\":%d,\"SpeedFactor\":%3_f,\"TeleTriggerMin%Change\":%s}}"),
+        Settings.windmeter_radius, Settings.windmeter_pulses_x_rot, Settings.windmeter_pulse_debounce, &speed_factor, tele_pchange_string);
+
+  return true;
 }
 
 /*********************************************************************************************\

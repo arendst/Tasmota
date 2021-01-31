@@ -74,7 +74,7 @@ void EZ_ERROR(uint8_t error_code) {
   MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEE_STATE));
 }
 
-int32_t EZ_ReadAPSUnicastMessage(int32_t res, class SBuffer &buf) {
+int32_t EZ_ReadAPSUnicastMessage(int32_t res, SBuffer &buf) {
   // Called when receiving a response from getConfigurationValue
   // Value is in bytes 2+3
   // uint16_t value = buf.get16(2);
@@ -88,7 +88,7 @@ int32_t EZ_ReadAPSUnicastMessage(int32_t res, class SBuffer &buf) {
 //
 // Handle a "getEui64" incoming message
 //
-int32_t EZ_GetEUI64(int32_t res, class SBuffer &buf) {
+int32_t EZ_GetEUI64(int32_t res, SBuffer &buf) {
   localIEEEAddr = buf.get64(2);
   return res;
 }
@@ -96,7 +96,7 @@ int32_t EZ_GetEUI64(int32_t res, class SBuffer &buf) {
 //
 // Handle a "getEui64" incoming message
 //
-int32_t EZ_GetNodeId(int32_t res, class SBuffer &buf) {
+int32_t EZ_GetNodeId(int32_t res, SBuffer &buf) {
   localShortAddr = buf.get8(2);
   return res;
 }
@@ -104,7 +104,7 @@ int32_t EZ_GetNodeId(int32_t res, class SBuffer &buf) {
 //
 // Handle a "getNetworkParameters" incoming message
 //
-int32_t EZ_NetworkParameters(int32_t res, class SBuffer &buf) {
+int32_t EZ_NetworkParameters(int32_t res, SBuffer &buf) {
   uint8_t  node_type = buf.get8(3);
   // ext panid: 4->11
   // panid: 12->13
@@ -115,12 +115,10 @@ int32_t EZ_NetworkParameters(int32_t res, class SBuffer &buf) {
   // localIEEEAddr = long_adr;
   // localShortAddr = short_adr;
 
-  char hex[20];
-  Uint64toHex(localIEEEAddr, hex, 64);
   Response_P(PSTR("{\"" D_JSON_ZIGBEE_STATE "\":{"
-                  "\"Status\":%d,\"IEEEAddr\":\"0x%s\",\"ShortAddr\":\"0x%04X\""
+                  "\"Status\":%d,\"IEEEAddr\":\"0x%_X\",\"ShortAddr\":\"0x%04X\""
                   ",\"DeviceType\":%d}}"),
-                  ZIGBEE_STATUS_EZ_INFO, hex, localShortAddr, node_type);
+                  ZIGBEE_STATUS_EZ_INFO, &localIEEEAddr, localShortAddr, node_type);
 
   MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEE_STATE));
 
@@ -130,7 +128,7 @@ int32_t EZ_NetworkParameters(int32_t res, class SBuffer &buf) {
 //
 // Analyze response to "getKey" and check NWK key
 //
-int32_t EZ_CheckKeyNWK(int32_t res, class SBuffer &buf) {
+int32_t EZ_CheckKeyNWK(int32_t res, SBuffer &buf) {
   // uint8_t  status = buf.get8(2);
   // uint16_t bitmask = buf.get16(3);
   uint8_t  key_type = buf.get8(5);
@@ -149,7 +147,7 @@ int32_t EZ_CheckKeyNWK(int32_t res, class SBuffer &buf) {
 //
 // Handle a "incomingRouteErrorHandler" incoming message
 //
-int32_t EZ_RouteError(int32_t res, const class SBuffer &buf) {
+int32_t EZ_RouteError(int32_t res, const SBuffer &buf) {
   uint8_t  status = buf.get8(2);
   uint16_t shortaddr = buf.get16(3);
 
@@ -165,7 +163,7 @@ int32_t EZ_RouteError(int32_t res, const class SBuffer &buf) {
 //
 // Handle a "permitJoining" incoming message
 //
-int32_t EZ_PermitJoinRsp(int32_t res, const class SBuffer &buf) {
+int32_t EZ_PermitJoinRsp(int32_t res, const SBuffer &buf) {
   uint8_t  status = buf.get8(2);
 
   if (status) {     // only report if there is an error
@@ -189,13 +187,13 @@ void Z_PermitJoinDisable(void) {
 //
 // We normally ignore the message, but it's a way to sniff group ids for IKEA remote
 // In case of a multicast message sent to 0xFFFD with non-null group id, we log the group id
-int32_t EZ_MessageSent(int32_t res, const class SBuffer &buf) {
+int32_t EZ_MessageSent(int32_t res, const SBuffer &buf) {
   uint8_t  message_type = buf.get8(2);
   uint16_t dst_addr = buf.get16(3);
   uint16_t group_addr = buf.get16(13);
 
   if ((EMBER_OUTGOING_MULTICAST == message_type) && (0xFFFD == dst_addr)) {
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE "Sniffing group 0x%04X"), group_addr);
+    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE "Sniffing group 0x%04X"), group_addr);
   }
   return -1;    // ignore
 }
@@ -229,7 +227,7 @@ void Z_Send_State_or_Map(uint16_t shortaddr, uint8_t index, uint16_t zdo_cmd) {
 // This callback is registered to send ZbMap(s) to each device one at a time
 void Z_Map(uint16_t shortaddr, uint16_t groupaddr, uint16_t cluster, uint8_t endpoint, uint32_t value) {
   if (BAD_SHORTADDR != shortaddr) {
-    AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "sending `ZbMap 0x%04X`"), shortaddr);
+    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "sending `ZbMap 0x%04X`"), shortaddr);
 #ifdef USE_ZIGBEE_ZNP
     Z_Send_State_or_Map(shortaddr, value, ZDO_MGMT_LQI_REQ);
 #endif // USE_ZIGBEE_ZNP
@@ -237,7 +235,7 @@ void Z_Map(uint16_t shortaddr, uint16_t groupaddr, uint16_t cluster, uint8_t end
     Z_Send_State_or_Map(shortaddr, value, ZDO_Mgmt_Lqi_req);
 #endif // USE_ZIGBEE_EZSP
   } else {
-    AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "ZbMap done"));
+    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "ZbMap done"));
     zigbee.mapping_in_progress = false;
     zigbee.mapping_ready = true;
   }
@@ -249,7 +247,7 @@ void Z_Map(uint16_t shortaddr, uint16_t groupaddr, uint16_t cluster, uint8_t end
 //
 // Handle a "getEui64" incoming message
 //
-int32_t Z_EZSPGetEUI64(int32_t res, class SBuffer &buf) {
+int32_t Z_EZSPGetEUI64(int32_t res, SBuffer &buf) {
   localIEEEAddr = buf.get64(2);
   return res;
 }
@@ -257,7 +255,7 @@ int32_t Z_EZSPGetEUI64(int32_t res, class SBuffer &buf) {
 //
 // Handle a "getEui64" incoming message
 //
-int32_t Z_EZSPGetNodeId(int32_t res, class SBuffer &buf) {
+int32_t Z_EZSPGetNodeId(int32_t res, SBuffer &buf) {
   localShortAddr = buf.get8(2);
   return res;
 }
@@ -265,7 +263,7 @@ int32_t Z_EZSPGetNodeId(int32_t res, class SBuffer &buf) {
 //
 // Handle a "getNetworkParameters" incoming message
 //
-int32_t Z_EZSPNetworkParameters(int32_t res, class SBuffer &buf) {
+int32_t Z_EZSPNetworkParameters(int32_t res, SBuffer &buf) {
   uint8_t  node_type = buf.get8(3);
   // ext panid: 4->11
   // panid: 12->13
@@ -276,12 +274,10 @@ int32_t Z_EZSPNetworkParameters(int32_t res, class SBuffer &buf) {
   // localIEEEAddr = long_adr;
   // localShortAddr = short_adr;
 
-  char hex[20];
-  Uint64toHex(localIEEEAddr, hex, 64);
   Response_P(PSTR("{\"" D_JSON_ZIGBEE_STATE "\":{"
-                  "\"Status\":%d,\"IEEEAddr\":\"0x%s\",\"ShortAddr\":\"0x%04X\""
+                  "\"Status\":%d,\"IEEEAddr\":\"0x%_X\",\"ShortAddr\":\"0x%04X\""
                   ",\"DeviceType\":%d}}"),
-                  ZIGBEE_STATUS_EZ_INFO, hex, localShortAddr, node_type);
+                  ZIGBEE_STATUS_EZ_INFO, &localIEEEAddr, localShortAddr, node_type);
 
   MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEE_STATE));
 
@@ -295,7 +291,7 @@ int32_t Z_EZSPNetworkParameters(int32_t res, class SBuffer &buf) {
 //
 // Handle a "Receive Device Info" incoming message
 //
-int32_t ZNP_ReceiveDeviceInfo(int32_t res, class SBuffer &buf) {
+int32_t ZNP_ReceiveDeviceInfo(int32_t res, SBuffer &buf) {
   // Ex= 6700.00.6263151D004B1200.0000.07.09.02.83869991
   // IEEE Adr (8 bytes) = 0x00124B001D156362
   // Short Addr (2 bytes) = 0x0000
@@ -313,13 +309,11 @@ int32_t ZNP_ReceiveDeviceInfo(int32_t res, class SBuffer &buf) {
   localIEEEAddr = long_adr;
   localShortAddr = short_adr;
 
-  char hex[20];
-  Uint64toHex(long_adr, hex, 64);
   Response_P(PSTR("{\"" D_JSON_ZIGBEE_STATE "\":{"
-                  "\"Status\":%d,\"IEEEAddr\":\"0x%s\",\"ShortAddr\":\"0x%04X\""
+                  "\"Status\":%d,\"IEEEAddr\":\"0x%_X\",\"ShortAddr\":\"0x%04X\""
                   ",\"DeviceType\":%d,\"DeviceState\":%d"
                   ",\"NumAssocDevices\":%d"),
-                  ZIGBEE_STATUS_CC_INFO, hex, short_adr, device_type, device_state,
+                  ZIGBEE_STATUS_CC_INFO, &long_adr, short_adr, device_type, device_state,
                   device_associated);
 
   if (device_associated > 0) {    // If there are devices registered in CC2530, print the list
@@ -339,7 +333,7 @@ int32_t ZNP_ReceiveDeviceInfo(int32_t res, class SBuffer &buf) {
   return res;
 }
 
-int32_t ZNP_CheckNVWrite(int32_t res, class SBuffer &buf) {
+int32_t ZNP_CheckNVWrite(int32_t res, SBuffer &buf) {
   // Check the status after NV Init "ZNP Has Configured"
   // Good response should be 610700 or 610709 (Success or Created)
   // We only filter the response on 6107 and check the code in this function
@@ -351,7 +345,7 @@ int32_t ZNP_CheckNVWrite(int32_t res, class SBuffer &buf) {
   }
 }
 
-int32_t ZNP_Reboot(int32_t res, class SBuffer &buf) {
+int32_t ZNP_Reboot(int32_t res, SBuffer &buf) {
   // print information about the reboot of device
   // 4180.02.02.00.02.06.03
   //
@@ -378,15 +372,15 @@ int32_t ZNP_Reboot(int32_t res, class SBuffer &buf) {
 
   MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEE_STATE));
 
-  if ((0x02 == major_rel) && (0x06 == minor_rel)) {
-  	return 0;	  // version 2.6.x is ok
+  if ((0x02 == major_rel) && ((0x06 == minor_rel) || (0x07 == minor_rel))) {
+  	return 0;	  // version 2.6.x and 2.7.x are ok
   } else {
     return ZIGBEE_LABEL_UNSUPPORTED_VERSION;  // abort
   }
 }
 
 #ifdef USE_ZIGBEE_ZNP
-int32_t ZNP_ReceiveCheckVersion(int32_t res, class SBuffer &buf) {
+int32_t ZNP_ReceiveCheckVersion(int32_t res, SBuffer &buf) {
   // check that the version is supported
   // typical version for ZNP 1.2
   // 61020200-02.06.03.D9143401.0200000000
@@ -409,8 +403,8 @@ int32_t ZNP_ReceiveCheckVersion(int32_t res, class SBuffer &buf) {
 
   MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEE_STATE));
 
-  if ((0x02 == major_rel) && (0x06 == minor_rel)) {
-  	return 0;	  // version 2.6.x is ok
+  if ((0x02 == major_rel) && ((0x06 == minor_rel) || (0x07 == minor_rel))) {
+  	return 0;	  // version 2.6.x and 2.7.x are ok
   } else {
     return ZIGBEE_LABEL_UNSUPPORTED_VERSION;  // abort
   }
@@ -418,19 +412,19 @@ int32_t ZNP_ReceiveCheckVersion(int32_t res, class SBuffer &buf) {
 #endif // USE_ZIGBEE_ZNP
 
 #ifdef USE_ZIGBEE_EZSP
-int32_t EZ_ReceiveCheckVersion(int32_t res, class SBuffer &buf) {
+int32_t EZ_ReceiveCheckVersion(int32_t res, SBuffer &buf) {
   uint8_t protocol_version = buf.get8(2);
   uint8_t stack_type = buf.get8(3);
-  uint16_t stack_version = buf.get16(4);
+  zigbee.ezsp_version = buf.get16(4);
 
   Response_P(PSTR("{\"" D_JSON_ZIGBEE_STATE "\":{"
                   "\"Status\":%d,\"Version\":\"%d.%d.%d.%d\",\"Protocol\":%d"
                   ",\"Stack\":%d}}"),
                   ZIGBEE_STATUS_EZ_VERSION,
-                  (stack_version & 0xF000) >> 12,
-                  (stack_version & 0x0F00) >> 8,
-                  (stack_version & 0x00F0) >> 4,
-                  stack_version & 0x000F,
+                  (zigbee.ezsp_version & 0xF000) >> 12,
+                  (zigbee.ezsp_version & 0x0F00) >> 8,
+                  (zigbee.ezsp_version & 0x00F0) >> 4,
+                  zigbee.ezsp_version & 0x000F,
                   protocol_version,
                   stack_type
                   );
@@ -438,7 +432,7 @@ int32_t EZ_ReceiveCheckVersion(int32_t res, class SBuffer &buf) {
   MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEE_STATE));
 
   if (0x08 == protocol_version) {
-    if ((stack_version & 0xFF00) == 0x6700) {
+    if ((zigbee.ezsp_version & 0xFF00) == 0x6700) {
       // If v6.7 there is a bug so we need to change the response
       ZBW(ZBR_SET_OK2, 0x00, 0x00 /*high*/, 0x00 /*ok*/)
     }
@@ -469,7 +463,7 @@ int32_t EZ_GotoIfResetConfig(uint8_t value) {
 // If coordinator continue
 // If router goto ZIGBEE_LABEL_START_ROUTER
 // If device goto ZIGBEE_LABEL_START_DEVICE
-int32_t Z_SwitchDeviceType(int32_t res, class SBuffer &buf) {
+int32_t Z_SwitchDeviceType(int32_t res, SBuffer &buf) {
   switch (Settings.zb_pan_id) {
     case 0xFFFF:    return ZIGBEE_LABEL_INIT_ROUTER;
     case 0xFFFE:    return ZIGBEE_LABEL_INIT_DEVICE;
@@ -480,7 +474,7 @@ int32_t Z_SwitchDeviceType(int32_t res, class SBuffer &buf) {
 //
 // Helper function, checks if the incoming buffer matches the 2-bytes prefix, i.e. message type in PMEM
 //
-bool Z_ReceiveMatchPrefix(const class SBuffer &buf, const uint8_t *match) {
+bool Z_ReceiveMatchPrefix(const SBuffer &buf, const uint8_t *match) {
   if ( (pgm_read_byte(&match[0]) == buf.get8(0)) &&
        (pgm_read_byte(&match[1]) == buf.get8(1)) ) {
     return true;
@@ -492,7 +486,7 @@ bool Z_ReceiveMatchPrefix(const class SBuffer &buf, const uint8_t *match) {
 //
 // Handle Permit Join response
 //
-int32_t ZNP_ReceivePermitJoinStatus(int32_t res, const class SBuffer &buf) {
+int32_t ZNP_ReceivePermitJoinStatus(int32_t res, const SBuffer &buf) {
   // we received a PermitJoin status change
   uint8_t     duration = buf.get8(2);
   uint8_t     status_code;
@@ -501,12 +495,15 @@ int32_t ZNP_ReceivePermitJoinStatus(int32_t res, const class SBuffer &buf) {
   if (0xFF == duration) {
     status_code = ZIGBEE_STATUS_PERMITJOIN_OPEN_XX;
     message = PSTR("Enable Pairing mode until next boot");
+    zigbee.permit_end_time = true;   // In ZNP mode, declare permitjoin open
   } else if (duration > 0) {
     status_code = ZIGBEE_STATUS_PERMITJOIN_OPEN_60;
     message = PSTR("Enable Pairing mode for %d seconds");
+    zigbee.permit_end_time = true;   // In ZNP mode, declare permitjoin open
   } else {
     status_code = ZIGBEE_STATUS_PERMITJOIN_CLOSE;
     message = PSTR("Disable Pairing mode");
+    zigbee.permit_end_time = false;   // In ZNP mode, declare permitjoin closed
   }
   Response_P(PSTR("{\"" D_JSON_ZIGBEE_STATE "\":{"
                   "\"Status\":%d,\"Message\":\""),
@@ -521,7 +518,7 @@ int32_t ZNP_ReceivePermitJoinStatus(int32_t res, const class SBuffer &buf) {
 //
 // ZNP only
 //
-int32_t ZNP_ReceiveNodeDesc(int32_t res, const class SBuffer &buf) {
+int32_t ZNP_ReceiveNodeDesc(int32_t res, const SBuffer &buf) {
   // Received ZDO_NODE_DESC_RSP
   // Z_ShortAddress    srcAddr = buf.get16(2);
   uint8_t           status  = buf.get8(4);
@@ -563,7 +560,7 @@ int32_t ZNP_ReceiveNodeDesc(int32_t res, const class SBuffer &buf) {
 //
 // Porcess Receive Active Endpoint
 //
-int32_t Z_ReceiveActiveEp(int32_t res, const class SBuffer &buf) {
+int32_t Z_ReceiveActiveEp(int32_t res, const SBuffer &buf) {
   // Received ZDO_ACTIVE_EP_RSP
 #ifdef USE_ZIGBEE_ZNP
   // Z_ShortAddress    srcAddr = buf.get16(2);
@@ -675,7 +672,7 @@ void Z_AutoBindDefer(uint16_t shortaddr, uint8_t endpoint, const SBuffer &buf,
   }
 }
 
-int32_t Z_ReceiveSimpleDesc(int32_t res, const class SBuffer &buf) {
+int32_t Z_ReceiveSimpleDesc(int32_t res, const SBuffer &buf) {
 #ifdef USE_ZIGBEE_ZNP
   // Received ZDO_SIMPLE_DESC_RSP
   // Z_ShortAddress    srcAddr = buf.get16(2);
@@ -750,7 +747,7 @@ int32_t Z_ReceiveSimpleDesc(int32_t res, const class SBuffer &buf) {
 // Handle IEEEAddr incoming message
 //
 // Same works for both ZNP and EZSP
-int32_t Z_ReceiveIEEEAddr(int32_t res, const class SBuffer &buf) {
+int32_t Z_ReceiveIEEEAddr(int32_t res, const SBuffer &buf) {
 #ifdef USE_ZIGBEE_ZNP
   uint8_t           status = buf.get8(2);
   Z_IEEEAddress     ieeeAddr = buf.get64(3);
@@ -769,13 +766,11 @@ int32_t Z_ReceiveIEEEAddr(int32_t res, const class SBuffer &buf) {
   if (0 == status) {    // SUCCESS
     zigbee_devices.updateDevice(nwkAddr, ieeeAddr);
     zigbee_devices.deviceWasReached(nwkAddr);
-    char hex[20];
-    Uint64toHex(ieeeAddr, hex, 64);
     // Ping response
     const char * friendlyName = zigbee_devices.getFriendlyName(nwkAddr);
 
     Response_P(PSTR("{\"" D_JSON_ZIGBEE_PING "\":{\"" D_JSON_ZIGBEE_DEVICE "\":\"0x%04X\""
-                    ",\"" D_JSON_ZIGBEE_IEEE "\":\"0x%s\""), nwkAddr, hex);
+                    ",\"" D_JSON_ZIGBEE_IEEE "\":\"0x%_X\""), nwkAddr, &ieeeAddr);
     if (friendlyName) {
       ResponseAppend_P(PSTR(",\"" D_JSON_ZIGBEE_NAME "\":\"%s\""), friendlyName);
     }
@@ -789,7 +784,7 @@ int32_t Z_ReceiveIEEEAddr(int32_t res, const class SBuffer &buf) {
 // Report any AF_DATA_CONFIRM message
 // Ex: {"ZbConfirm":{"Endpoint":1,"Status":0,"StatusMessage":"SUCCESS"}}
 //
-int32_t ZNP_DataConfirm(int32_t res, const class SBuffer &buf) {
+int32_t ZNP_DataConfirm(int32_t res, const SBuffer &buf) {
   uint8_t           status = buf.get8(2);
   uint8_t           endpoint = buf.get8(3);
   //uint8_t           transId = buf.get8(4);    // unused
@@ -820,7 +815,7 @@ int32_t ZNP_DataConfirm(int32_t res, const class SBuffer &buf) {
 // 0x08: Starting as ZigBee Coordinator
 // 0x09: Started as ZigBee Coordinator
 // 0x0A: Device has lost information about its parent
-int32_t ZNP_ReceiveStateChange(int32_t res, const class SBuffer &buf) {
+int32_t ZNP_ReceiveStateChange(int32_t res, const SBuffer &buf) {
   uint8_t           state = buf.get8(2);
   const char *      msg = nullptr;
 
@@ -870,7 +865,7 @@ int32_t ZNP_ReceiveStateChange(int32_t res, const class SBuffer &buf) {
 // This message is also received when a previously paired device is powered up
 // Send back Active Ep Req message
 //
-int32_t Z_ReceiveEndDeviceAnnonce(int32_t res, const class SBuffer &buf) {
+int32_t Z_ReceiveEndDeviceAnnonce(int32_t res, const SBuffer &buf) {
 #ifdef USE_ZIGBEE_ZNP
   // Z_ShortAddress    srcAddr = buf.get16(2);
   Z_ShortAddress    nwkAddr = buf.get16(4);
@@ -884,16 +879,22 @@ int32_t Z_ReceiveEndDeviceAnnonce(int32_t res, const class SBuffer &buf) {
   uint8_t           capabilities = buf.get8(10);
 #endif
 
+  // record if we already knew the ieeeAddr for this device
+  // this will influence the decision whether we do auto-binding or not
+  const Z_Device & device_before = zigbee_devices.findShortAddr(nwkAddr);
+  bool ieee_already_known = false;
+  if (device_before.valid() && (device_before.longaddr != 0) && (device_before.longaddr == ieeeAddr)) {
+    ieee_already_known = true;
+  }
+
   zigbee_devices.updateDevice(nwkAddr, ieeeAddr);
   // device is reachable
   zigbee_devices.deviceWasReached(nwkAddr);
 
-  char hex[20];
-  Uint64toHex(ieeeAddr, hex, 64);
   Response_P(PSTR("{\"" D_JSON_ZIGBEE_STATE "\":{"
-                  "\"Status\":%d,\"IEEEAddr\":\"0x%s\",\"ShortAddr\":\"0x%04X\""
+                  "\"Status\":%d,\"IEEEAddr\":\"0x%_X\",\"ShortAddr\":\"0x%04X\""
                   ",\"PowerSource\":%s,\"ReceiveWhenIdle\":%s,\"Security\":%s}}"),
-                  ZIGBEE_STATUS_DEVICE_ANNOUNCE, hex, nwkAddr,
+                  ZIGBEE_STATUS_DEVICE_ANNOUNCE, &ieeeAddr, nwkAddr,
                   (capabilities & 0x04) ? PSTR("true") : PSTR("false"),
                   (capabilities & 0x08) ? PSTR("true") : PSTR("false"),
                   (capabilities & 0x40) ? PSTR("true") : PSTR("false")
@@ -903,7 +904,10 @@ int32_t Z_ReceiveEndDeviceAnnonce(int32_t res, const class SBuffer &buf) {
   Z_Query_Bulb(nwkAddr, wait_ms);
 
   MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEEZCL_RECEIVED));
-  Z_SendActiveEpReq(nwkAddr);
+  // Continue the discovery process and auto-binding only if the device was unknown or if PermitJoin is ongoing
+  if (!ieee_already_known || zigbee.permit_end_time) {
+    Z_SendActiveEpReq(nwkAddr);
+  }
   return -1;
 }
 
@@ -911,7 +915,7 @@ int32_t Z_ReceiveEndDeviceAnnonce(int32_t res, const class SBuffer &buf) {
 // Handle Receive TC Dev Ind incoming message
 // 45CA
 //
-int32_t ZNP_ReceiveTCDevInd(int32_t res, const class SBuffer &buf) {
+int32_t ZNP_ReceiveTCDevInd(int32_t res, const SBuffer &buf) {
   Z_ShortAddress    srcAddr = buf.get16(2);
   Z_IEEEAddress     ieeeAddr = buf.get64(4);
   Z_ShortAddress    parentNw = buf.get16(12);
@@ -920,12 +924,10 @@ int32_t ZNP_ReceiveTCDevInd(int32_t res, const class SBuffer &buf) {
   // device is reachable
   zigbee_devices.deviceWasReached(srcAddr);
 
-  char hex[20];
-  Uint64toHex(ieeeAddr, hex, 64);
   Response_P(PSTR("{\"" D_JSON_ZIGBEE_STATE "\":{"
-                  "\"Status\":%d,\"IEEEAddr\":\"0x%s\",\"ShortAddr\":\"0x%04X\""
+                  "\"Status\":%d,\"IEEEAddr\":\"0x%_X\",\"ShortAddr\":\"0x%04X\""
                   ",\"ParentNetwork\":\"0x%04X\"}}"),
-                  ZIGBEE_STATUS_DEVICE_INDICATION, hex, srcAddr, parentNw
+                  ZIGBEE_STATUS_DEVICE_INDICATION, &ieeeAddr, srcAddr, parentNw
                   );
 
   MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEEZCL_RECEIVED));
@@ -935,7 +937,7 @@ int32_t ZNP_ReceiveTCDevInd(int32_t res, const class SBuffer &buf) {
 //
 // Handle Bind Rsp incoming message
 //
-int32_t Z_BindRsp(int32_t res, const class SBuffer &buf) {
+int32_t Z_BindRsp(int32_t res, const SBuffer &buf) {
 #ifdef USE_ZIGBEE_ZNP
   Z_ShortAddress    nwkAddr = buf.get16(2);
   uint8_t           status = buf.get8(4);
@@ -968,7 +970,7 @@ int32_t Z_BindRsp(int32_t res, const class SBuffer &buf) {
 //
 // Handle Unbind Rsp incoming message
 //
-int32_t Z_UnbindRsp(int32_t res, const class SBuffer &buf) {
+int32_t Z_UnbindRsp(int32_t res, const SBuffer &buf) {
 #ifdef USE_ZIGBEE_ZNP
   Z_ShortAddress    nwkAddr = buf.get16(2);
   uint8_t           status = buf.get8(4);
@@ -1001,7 +1003,7 @@ int32_t Z_UnbindRsp(int32_t res, const class SBuffer &buf) {
 //
 // Handle MgMt Bind Rsp incoming message
 //
-int32_t Z_MgmtBindRsp(int32_t res, const class SBuffer &buf) {
+int32_t Z_MgmtBindRsp(int32_t res, const SBuffer &buf) {
   return Z_Mgmt_Lqi_Bind_Rsp(res, buf, false);
 }
 
@@ -1041,7 +1043,7 @@ const char * Z_DeviceType(uint32_t value) {
 //
 // If the response has a follow-up, send more requests automatically
 //
-int32_t Z_Mgmt_Lqi_Bind_Rsp(int32_t res, const class SBuffer &buf, boolean lqi) {
+int32_t Z_Mgmt_Lqi_Bind_Rsp(int32_t res, const SBuffer &buf, boolean lqi) {
 #ifdef USE_ZIGBEE_ZNP
   uint16_t    shortaddr   = buf.get16(2);
   uint8_t     status      = buf.get8(4);
@@ -1173,9 +1175,7 @@ int32_t Z_Mgmt_Lqi_Bind_Rsp(int32_t res, const class SBuffer &buf, boolean lqi) 
       if (Z_Addr_Group == addrmode) {               // Group address mode
         ResponseAppend_P(PSTR("\"ToGroup\":%d}"), group);
       } else if (Z_Addr_IEEEAddress == addrmode) {  // IEEE address mode
-        char hex[20];
-        Uint64toHex(dstaddr, hex, 64);
-        ResponseAppend_P(PSTR("\"ToDevice\":\"0x%s\",\"ToEndpoint\":%d}"), hex, dstep);
+        ResponseAppend_P(PSTR("\"ToDevice\":\"0x%_X\",\"ToEndpoint\":%d}"), &dstaddr, dstep);
       }
     }
 
@@ -1202,7 +1202,7 @@ int32_t Z_Mgmt_Lqi_Bind_Rsp(int32_t res, const class SBuffer &buf, boolean lqi) 
 //
 // Handle MgMt Bind Rsp incoming message
 //
-int32_t Z_MgmtLqiRsp(int32_t res, const class SBuffer &buf) {
+int32_t Z_MgmtLqiRsp(int32_t res, const SBuffer &buf) {
   return Z_Mgmt_Lqi_Bind_Rsp(res, buf, true);
 }
 
@@ -1211,7 +1211,7 @@ int32_t Z_MgmtLqiRsp(int32_t res, const class SBuffer &buf) {
 // Handle Parent Annonce Rsp incoming message
 //
 // rsp: true = ZDO_Parent_annce_rsp, false = ZDO_Parent_annce
-int32_t EZ_ParentAnnceRsp(int32_t res, const class SBuffer &buf, bool rsp) {
+int32_t EZ_ParentAnnceRsp(int32_t res, const SBuffer &buf, bool rsp) {
   size_t prefix_len;
   uint8_t     status;
   uint8_t     num_children;
@@ -1254,9 +1254,7 @@ int32_t EZ_ParentAnnceRsp(int32_t res, const class SBuffer &buf, bool rsp) {
     if (i > 0) {
       ResponseAppend_P(PSTR(","));
     }
-    char hex[20];
-    Uint64toHex(child_ieee, hex, 64);
-    ResponseAppend_P(PSTR("\"0x%s\""), hex);
+    ResponseAppend_P(PSTR("\"0x%_X\""), &child_ieee);
   }
 
   ResponseAppend_P(PSTR("]}}"));
@@ -1379,7 +1377,7 @@ void Z_WriteCIEAddress(uint16_t shortaddr, uint16_t groupaddr, uint16_t cluster,
   buf.add8(ZEUI64);
   buf.add64(localIEEEAddr);
 
-  AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Writing CIE address"));
+  AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Writing CIE address"));
   ZigbeeZCLSend_Raw(ZigbeeZCLSendMessage({
     shortaddr,
     0x0000, /* group */
@@ -1403,7 +1401,7 @@ void Z_SendCIEZoneEnrollResponse(uint16_t shortaddr, uint16_t groupaddr, uint16_
   uint8_t transacid = zigbee_devices.getNextSeqNumber(shortaddr);
   uint8_t EnrollRSP[2] = { 0x00 /* Sucess */, Z_B0(value) /* ZoneID */ };
 
-  AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Sending Enroll Zone %d"), Z_B0(value));
+  AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Sending Enroll Zone %d"), Z_B0(value));
   ZigbeeZCLSend_Raw(ZigbeeZCLSendMessage({
     shortaddr,
     0x0000, /* group */
@@ -1425,7 +1423,7 @@ void Z_SendCIEZoneEnrollResponse(uint16_t shortaddr, uint16_t groupaddr, uint16_
 void Z_AutoBind(uint16_t shortaddr, uint16_t groupaddr, uint16_t cluster, uint8_t endpoint, uint32_t value) {
   uint64_t srcLongAddr = zigbee_devices.getDeviceLongAddr(shortaddr);
 
-  AddLogZ_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "auto-bind `ZbBind {\"Device\":\"0x%04X\",\"Endpoint\":%d,\"Cluster\":\"0x%04X\"}`"),
+  AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "auto-bind `ZbBind {\"Device\":\"0x%04X\",\"Endpoint\":%d,\"Cluster\":\"0x%04X\"}`"),
                                   shortaddr, endpoint, cluster);
 #ifdef USE_ZIGBEE_ZNP
   SBuffer buf(34);
@@ -1535,7 +1533,7 @@ void Z_AutoConfigReportingForCluster(uint16_t shortaddr, uint16_t groupaddr, uin
           // encode value
           int32_t res = encodeSingleAttribute(buf, report_change, "", attr_type);
           if (res < 0) {
-            AddLog_P(LOG_LEVEL_ERROR, PSTR(D_LOG_ZIGBEE "internal error, unsupported attribute type"));
+            AddLog(LOG_LEVEL_ERROR, PSTR(D_LOG_ZIGBEE "internal error, unsupported attribute type"));
           } else {
             Z_attribute attr;
             attr.setKeyName(PSTR("ReportableChange"), true);    // true because in PMEM
@@ -1550,7 +1548,7 @@ void Z_AutoConfigReportingForCluster(uint16_t shortaddr, uint16_t groupaddr, uin
   ResponseAppend_P(PSTR("}}"));
 
   if (buf.len() > 0) {
-    AddLogZ_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "auto-bind `%s`"), TasmotaGlobal.mqtt_data);
+    AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "auto-bind `%s`"), TasmotaGlobal.mqtt_data);
     ZigbeeZCLSend_Raw(ZigbeeZCLSendMessage({
       shortaddr,
       0x0000, /* group */
@@ -1572,7 +1570,7 @@ void Z_AutoConfigReportingForCluster(uint16_t shortaddr, uint16_t groupaddr, uin
 // 2400
 //
 #ifdef USE_ZIGBEE_EZSP
-int32_t EZ_ReceiveTCJoinHandler(int32_t res, const class SBuffer &buf) {
+int32_t EZ_ReceiveTCJoinHandler(int32_t res, const SBuffer &buf) {
   uint16_t      srcAddr = buf.get16(2);
   uint64_t      ieeeAddr = buf.get64(4);
   uint8_t       status = buf.get8(12);
@@ -1582,14 +1580,12 @@ int32_t EZ_ReceiveTCJoinHandler(int32_t res, const class SBuffer &buf) {
   if (EMBER_DEVICE_LEFT != status) {    // ignore message if the device is leaving
     zigbee_devices.updateDevice(srcAddr, ieeeAddr);
 
-    char hex[20];
-    Uint64toHex(ieeeAddr, hex, 64);
     Response_P(PSTR("{\"" D_JSON_ZIGBEE_STATE "\":{"
-                    "\"Status\":%d,\"IEEEAddr\":\"0x%s\",\"ShortAddr\":\"0x%04X\""
+                    "\"Status\":%d,\"IEEEAddr\":\"0x%_X\",\"ShortAddr\":\"0x%04X\""
                     ",\"ParentNetwork\":\"0x%04X\""
                     ",\"JoinStatus\":%d,\"Decision\":%d"
                     "}}"),
-                    ZIGBEE_STATUS_DEVICE_INDICATION, hex, srcAddr, parentNw,
+                    ZIGBEE_STATUS_DEVICE_INDICATION, &ieeeAddr, srcAddr, parentNw,
                     status, decision
                     );
 
@@ -1658,11 +1654,11 @@ void Z_IncomingMessage(class ZCLFrame &zcl_received) {
       zcl_received.parseClusterSpecificCommand(attr_list);
     }
 
-    AddLogZ_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE D_JSON_ZIGBEEZCL_RAW_RECEIVED ": {\"0x%04X\":{%s}}"), srcaddr, attr_list.toString().c_str());
+    AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE D_JSON_ZIGBEEZCL_RAW_RECEIVED ": {\"0x%04X\":{%s}}"), srcaddr, attr_list.toString().c_str());
 
     // discard the message if it was sent by us (broadcast or group loopback)
     if (srcaddr == localShortAddr) {
-      AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE  "loopback message, ignoring"));
+      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE  "loopback message, ignoring"));
       return;     // abort the rest of message management
     }
 
@@ -1747,7 +1743,7 @@ void EZ_SendZDO(uint16_t shortaddr, uint16_t cmd, const unsigned char *payload, 
  * Send specific EZSP messages
 \*********************************************************************************************/
 
-int32_t EZ_IncomingMessage(int32_t res, const class SBuffer &buf) {
+int32_t EZ_IncomingMessage(int32_t res, const SBuffer &buf) {
   uint8_t         msgtype = buf.get8(2);      // see EZSP_EmberIncomingMessageType
   bool            wasbroadcast = (msgtype >= EMBER_INCOMING_MULTICAST) && (msgtype <= EMBER_INCOMING_BROADCAST_LOOPBACK);
   uint16_t        profileid = buf.get16(3);   // HA = 0x0104, ZDO = 0x0000
@@ -1841,7 +1837,7 @@ int32_t EZ_Reset_Device(uint8_t value) {
  * Default resolver
 \*********************************************************************************************/
 
-int32_t EZ_Recv_Default(int32_t res, const class SBuffer &buf) {
+int32_t EZ_Recv_Default(int32_t res, const SBuffer &buf) {
   // Default message handler for new messages
   if (zigbee.init_phase) {
     // if still during initialization phase, ignore any unexpected message
@@ -1911,7 +1907,7 @@ int32_t ZNP_Reset_Device(uint8_t value) {
   return 0;                              // continue
 }
 
-int32_t ZNP_ReceiveAfIncomingMessage(int32_t res, const class SBuffer &buf) {
+int32_t ZNP_ReceiveAfIncomingMessage(int32_t res, const SBuffer &buf) {
   uint16_t        groupid = buf.get16(2);
   uint16_t        clusterid = buf.get16(4);
   uint16_t        srcaddr = buf.get16(6);
@@ -1972,7 +1968,7 @@ const Z_Dispatcher Z_DispatchTable[] PROGMEM = {
  * Default resolver
 \*********************************************************************************************/
 
-int32_t ZNP_Recv_Default(int32_t res, const class SBuffer &buf) {
+int32_t ZNP_Recv_Default(int32_t res, const SBuffer &buf) {
   // Default message handler for new messages
   if (zigbee.init_phase) {
     // if still during initialization phase, ignore any unexpected message
@@ -2143,7 +2139,7 @@ void ZCLFrame::autoResponder(const uint16_t *attr_list_ids, size_t attr_len) {
     // we have a non-empty output
 
     // log first
-    AddLogZ_P(LOG_LEVEL_INFO, PSTR("ZIG: Auto-responder: ZbSend {\"Device\":\"0x%04X\""
+    AddLog_P(LOG_LEVEL_INFO, PSTR("ZIG: Auto-responder: ZbSend {\"Device\":\"0x%04X\""
                                           ",\"Cluster\":\"0x%04X\""
                                           ",\"Endpoint\":%d"
                                           ",\"Response\":%s}"

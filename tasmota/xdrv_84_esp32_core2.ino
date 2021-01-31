@@ -1,5 +1,5 @@
 /*
-  xdrv_84_core2.ino - ESP32 m5stack core2 support for Tasmota
+  xdrv_84_esp32_core2.ino - ESP32 m5stack core2 support for Tasmota
 
   Copyright (C) 2021  Gerhard Mutz and Theo Arends
 
@@ -34,7 +34,6 @@ rtc better sync
 #include <AXP192.h>
 #include <MPU6886.h>
 #include <BM8563_RTC.h>
-#include <i2c_bus.h>
 #include <soc/rtc.h>
 
 #define XDRV_84          84
@@ -49,7 +48,6 @@ struct CORE2_globs {
   uint8_t wakeup_hour;
   uint8_t wakeup_minute;
   uint8_t shutdowndelay;
-  bool timesynced;
 } core2_globs;
 
 struct CORE2_ADC {
@@ -98,7 +96,7 @@ void CORE2_Init(void) {
     BreakTime(Rtc.utc_time, tmpTime);
     Rtc.daylight_saving_time = RuleToTime(Settings.tflag[1], RtcTime.year);
     Rtc.standard_time = RuleToTime(Settings.tflag[0], RtcTime.year);
-    AddLog_P(LOG_LEVEL_INFO, PSTR("Set time from BM8563 to RTC (" D_UTC_TIME ") %s, (" D_DST_TIME ") %s, (" D_STD_TIME ") %s"),
+    AddLog(LOG_LEVEL_INFO, PSTR("Set time from BM8563 to RTC (" D_UTC_TIME ") %s, (" D_DST_TIME ") %s, (" D_STD_TIME ") %s"),
                 GetDateAndTime(DT_UTC).c_str(), GetDateAndTime(DT_DST).c_str(), GetDateAndTime(DT_STD).c_str());
     if (Rtc.local_time < START_VALID_TIME) {  // 2016-01-01
       TasmotaGlobal.rules_flag.time_init = 1;
@@ -262,44 +260,6 @@ uint16_t voltage = 2200;
 
 }
 
-/*
-void SetRtc(void) {
-  RTC_TimeTypeDef RTCtime;
-  RTCtime.Hours = RtcTime.hour;
-  RTCtime.Minutes = RtcTime.minute;
-  RTCtime.Seconds = RtcTime.second;
-  core2_globs.Rtc.SetTime(&RTCtime);
-
-  RTC_DateTypeDef RTCdate;
-  RTCdate.WeekDay = RtcTime.day_of_week;
-  RTCdate.Month = RtcTime.month;
-  RTCdate.Date = RtcTime.day_of_month;
-  RTCdate.Year = RtcTime.year;
-  core2_globs.Rtc.SetDate(&RTCdate);
-}
-*/
-
-
-// needed for sd card time
-void Sync_RTOS_TIME(void) {
-
-  if (Rtc.local_time < START_VALID_TIME || core2_globs.timesynced) return;
-
-  core2_globs.timesynced = 1;
-// Set freertos time for sd card
-
-  struct timeval tv;
-  //tv.tv_sec = Rtc.utc_time;
-  tv.tv_sec = Rtc.local_time;
-  tv.tv_usec = 0;
-
-  //struct timezone tz;
-  //tz.tz_minuteswest = 0;
-  //tz.tz_dsttime = 0;
-  //settimeofday(&tv, &tz);
-
-  settimeofday(&tv, NULL);
-}
 
 void GetRtc(void) {
   RTC_TimeTypeDef RTCtime;
@@ -316,8 +276,8 @@ void GetRtc(void) {
   RtcTime.day_of_month = RTCdate.Date;
   RtcTime.year = RTCdate.Year;
 
-  AddLog_P(LOG_LEVEL_INFO, PSTR("RTC: %02d:%02d:%02d"), RTCtime.Hours, RTCtime.Minutes, RTCtime.Seconds);
-  AddLog_P(LOG_LEVEL_INFO, PSTR("RTC: %02d.%02d.%04d"),  RTCdate.Date, RTCdate.Month, RTCdate.Year);
+  AddLog(LOG_LEVEL_INFO, PSTR("RTC: %02d:%02d:%02d"), RTCtime.Hours, RTCtime.Minutes, RTCtime.Seconds);
+  AddLog(LOG_LEVEL_INFO, PSTR("RTC: %02d.%02d.%04d"),  RTCdate.Date, RTCdate.Month, RTCdate.Year);
 
 }
 
@@ -361,7 +321,7 @@ void CORE2_EverySecond(void) {
 
     if (Rtc.utc_time > START_VALID_TIME && core2_globs.tset==false && abs(Rtc.utc_time - Get_utc()) > 3) {
       Set_utc(Rtc.utc_time);
-      AddLog_P(LOG_LEVEL_INFO, PSTR("Write Time TO BM8563 from NTP (" D_UTC_TIME ") %s, (" D_DST_TIME ") %s, (" D_STD_TIME ") %s"),
+      AddLog(LOG_LEVEL_INFO, PSTR("Write Time TO BM8563 from NTP (" D_UTC_TIME ") %s, (" D_DST_TIME ") %s, (" D_STD_TIME ") %s"),
                   GetDateAndTime(DT_UTC).c_str(), GetDateAndTime(DT_DST).c_str(), GetDateAndTime(DT_STD).c_str());
       core2_globs.tset = true;
     }
@@ -372,8 +332,6 @@ void CORE2_EverySecond(void) {
         CORE2_DoShutdown();
       }
     }
-
-    Sync_RTOS_TIME();
   }
 }
 

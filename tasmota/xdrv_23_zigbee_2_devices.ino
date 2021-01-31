@@ -236,6 +236,11 @@ public:
   inline void setX(uint16_t _x)                 { x = _x; }
   inline void setY(uint16_t _y)                 { y = _y; }
 
+  void toRGBAttributes(Z_attribute_list & attr_list) const ;
+  static void toRGBAttributesHSB(Z_attribute_list & attr_list, uint16_t hue, uint8_t sat, uint8_t brightness);
+  static void toRGBAttributesXYB(Z_attribute_list & attr_list, uint16_t x, uint16_t y, uint8_t brightness);
+  static void toRGBAttributesRGBb(Z_attribute_list & attr_list, uint8_t r, uint8_t g, uint8_t b, uint8_t brightness);
+
   static const Z_Data_Type type = Z_Data_Type::Z_Light;
   // 12 bytes
   uint8_t               colormode;      // 0x00: Hue/Sat, 0x01: XY, 0x02: CT | 0xFF not set, default 0x01
@@ -632,7 +637,7 @@ Z_Data & Z_Data_Set::getByType(Z_Data_Type type, uint8_t ep) {
 // Byte 3: Power
 Z_Data & Z_Data_Set::createFromBuffer(const SBuffer & buf, uint32_t start, uint32_t len) {
   if (len < sizeof(Z_Data)) {
-    AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Invalid len (<4) %d"), len);
+    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Invalid len (<4) %d"), len);
     return *(Z_Data*)nullptr;
   }
 
@@ -646,7 +651,7 @@ Z_Data & Z_Data_Set::createFromBuffer(const SBuffer & buf, uint32_t start, uint3
     memcpy(&elt, buf.buf(start), len);
   } else {
     memcpy(&elt, buf.buf(start), sizeof(Z_Data));
-    AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "buffer len overflow %d > %d"), len, expected_len);
+    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "buffer len overflow %d > %d"), len, expected_len);
   }
   return elt;
 }
@@ -960,6 +965,7 @@ public:
   Z_Device & devicesAt(size_t i) const;
 
   // Remove device from list
+  void clearDeviceRouterInfo(void);           // reset all router flags, done just before ZbMap
   bool removeDevice(uint16_t shortaddr);
 
   // Mark data as 'dirty' and requiring to save in Flash

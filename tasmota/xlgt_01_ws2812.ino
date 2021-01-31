@@ -171,6 +171,11 @@ struct WS2812 {
 
 /********************************************************************************************/
 
+// For some reason map fails to compile so renamed to wsmap
+long wsmap(long x, long in_min, long in_max, long out_min, long out_max) {
+  return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+}
+
 void Ws2812StripShow(void)
 {
 #if (USE_WS2812_CTYPE > NEO_3LED)
@@ -276,9 +281,9 @@ void Ws2812GradientColor(uint32_t schemenr, struct WsColor* mColor, uint32_t ran
     end = (scheme.count -1) - end;
   }
   float dimmer = 100 / (float)Settings.light_dimmer;
-  float fmyRed = (float)map(rangeIndex % gradRange, 0, gradRange, scheme.colors[start].red, scheme.colors[end].red) / dimmer;
-  float fmyGrn = (float)map(rangeIndex % gradRange, 0, gradRange, scheme.colors[start].green, scheme.colors[end].green) / dimmer;
-  float fmyBlu = (float)map(rangeIndex % gradRange, 0, gradRange, scheme.colors[start].blue, scheme.colors[end].blue) / dimmer;
+  float fmyRed = (float)wsmap(rangeIndex % gradRange, 0, gradRange, scheme.colors[start].red, scheme.colors[end].red) / dimmer;
+  float fmyGrn = (float)wsmap(rangeIndex % gradRange, 0, gradRange, scheme.colors[start].green, scheme.colors[end].green) / dimmer;
+  float fmyBlu = (float)wsmap(rangeIndex % gradRange, 0, gradRange, scheme.colors[start].blue, scheme.colors[end].blue) / dimmer;
   mColor->red = (uint8_t)fmyRed;
   mColor->green = (uint8_t)fmyGrn;
   mColor->blue = (uint8_t)fmyBlu;
@@ -316,9 +321,9 @@ void Ws2812Gradient(uint32_t schemenr)
       Ws2812GradientColor(schemenr, &currentColor, range, gradRange, i + offset + 1);
     }
     // Blend old and current color based on time for smooth movement.
-    c.R = map(Light.strip_timer_counter % speed, 0, speed, oldColor.red, currentColor.red);
-    c.G = map(Light.strip_timer_counter % speed, 0, speed, oldColor.green, currentColor.green);
-    c.B = map(Light.strip_timer_counter % speed, 0, speed, oldColor.blue, currentColor.blue);
+    c.R = wsmap(Light.strip_timer_counter % speed, 0, speed, oldColor.red, currentColor.red);
+    c.G = wsmap(Light.strip_timer_counter % speed, 0, speed, oldColor.green, currentColor.green);
+    c.B = wsmap(Light.strip_timer_counter % speed, 0, speed, oldColor.blue, currentColor.blue);
     strip->SetPixelColor(i, c);
     oldColor = currentColor;
   }

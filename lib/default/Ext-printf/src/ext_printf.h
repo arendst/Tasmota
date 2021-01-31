@@ -1,7 +1,7 @@
 /*
-  xdrv_81_webcam.ino - ESP32 webcam support for Tasmota
+  ext_printf.ino - Extended printf for Arduino  objects
 
-  Copyright (C) 2021  Gerhard Mutz and Theo Arends
+  Copyright (C) 2021  Stephan Hadinger
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -17,18 +17,18 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifdef ESP32
-#ifdef USE_ODROID_GO
-/*********************************************************************************************\
- * Odroid Go
- *
- * Clock frequency 160MHz (board_build.f_cpu       = 160000000L)
- * SPI Flash Size = 16MB (board_build.partitions  = esp32_partition_app1984k_spiffs12M.csv)
- *
- * To be done:
- * - Audio on GPIO25/26
- *
-/*********************************************************************************************/
+#ifndef EXT_PRINTF_H
+#define EXT_PRINTF_H
 
-#endif  // USE_ODROID_GO
-#endif  // ESP32
+#include <cstddef>
+#include <cstdint>
+#include <cstdarg>
+
+int32_t ext_vsnprintf_P(char * buf, size_t buf_len, const char * fmt_P, va_list va);
+int32_t ext_snprintf_P(char * buf, size_t buf_len, const char * fmt, ...);
+
+char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, char inbetween);
+
+// void test_ext_snprintf_P(void);
+
+#endif // EXT_PRINTF_H

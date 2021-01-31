@@ -24,6 +24,9 @@
 #include "UnishoxStrings.h"
 
 const char kZbCommands[] PROGMEM = D_PRFX_ZB "|"    // prefix
+  // SetOption synonyms
+  D_SO_ZIGBEE_NAMEKEY "|" D_SO_ZIGBEE_DEVICETOPIC "|" D_SO_ZIGBEE_NOPREFIX "|" D_SO_ZIGBEE_ENDPOINTSUFFIX "|" D_SO_ZIGBEE_NOAUTOBIND "|"
+  D_SO_ZIGBEE_NAMETOPIC "|" D_SO_ZIGBEE_ENDPOINTTOPIC "|" D_SO_ZIGBEE_NOAUTOQUERY "|" D_SO_ZIGBEE_ZBRECEIVEDTOPIC "|" D_SO_ZIGBEE_OMITDEVICE "|"
 #ifdef USE_ZIGBEE_ZNP
   D_CMND_ZIGBEEZNPSEND "|" D_CMND_ZIGBEEZNPRECEIVE "|"
 #endif // USE_ZIGBEE_ZNP
@@ -38,6 +41,11 @@ const char kZbCommands[] PROGMEM = D_PRFX_ZB "|"    // prefix
   D_CMND_ZIGBEE_RESTORE "|" D_CMND_ZIGBEE_BIND_STATE "|" D_CMND_ZIGBEE_MAP "|" D_CMND_ZIGBEE_LEAVE "|"
   D_CMND_ZIGBEE_CONFIG "|" D_CMND_ZIGBEE_DATA
   ;
+
+SO_SYNONYMS(kZbSynonyms,
+  83, 89, 100, 101, 110,
+  112, 120, 116, 118, 119,
+);
 
 void (* const ZigbeeCommand[])(void) PROGMEM = {
 #ifdef USE_ZIGBEE_ZNP
@@ -67,7 +75,7 @@ void ZigbeeInit(void)
   // Check if settings in Flash are set
   if (PinUsed(GPIO_ZIGBEE_RX) && PinUsed(GPIO_ZIGBEE_TX)) {
     if (0 == Settings.zb_channel) {
-      AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE D_ZIGBEE_RANDOMIZING_ZBCONFIG));
+      AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE D_ZIGBEE_RANDOMIZING_ZBCONFIG));
       uint64_t mac64 = 0;     // stuff mac address into 64 bits
       WiFi.macAddress((uint8_t*) &mac64);
       uint32_t esp_id = ESP_getChipId();
@@ -103,7 +111,7 @@ void ZigbeeInit(void)
     Wire.beginTransmission(USE_ZIGBEE_ZBBRIDGE_EEPROM);
     uint8_t error = Wire.endTransmission();
     if (0 == error) {
-      AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE D_ZIGBEE_EEPROM_FOUND_AT_ADDRESS " 0x%02X"), USE_ZIGBEE_ZBBRIDGE_EEPROM);
+      AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE D_ZIGBEE_EEPROM_FOUND_AT_ADDRESS " 0x%02X"), USE_ZIGBEE_ZBBRIDGE_EEPROM);
       zigbee.eeprom_present = true;
     }
 #endif
@@ -183,23 +191,7 @@ void zigbeeZCLSendStr(uint16_t shortaddr, uint16_t groupaddr, uint8_t endpoint, 
     }
   }
 
-  if ((0 == endpoint) && (BAD_SHORTADDR != shortaddr)) {
-    // endpoint is not specified, let's try to find it from shortAddr, unless it's a group address
-    endpoint = zigbee_devices.findFirstEndpoint(shortaddr);
-    //AddLog_P(LOG_LEVEL_DEBUG, PSTR("ZbSend: guessing endpoint 0x%02X"), endpoint);
-  }
-  AddLogZ_P(LOG_LEVEL_DEBUG, PSTR("ZbSend: shortaddr 0x%04X, groupaddr 0x%04X, cluster 0x%04X, endpoint 0x%02X, cmd 0x%02X, data %s"),
-    shortaddr, groupaddr, cluster, endpoint, cmd, param);
-
-  if ((0 == endpoint) && (BAD_SHORTADDR != shortaddr)) {     // endpoint null is ok for group address
-    AddLog_P(LOG_LEVEL_INFO, PSTR("ZbSend: unspecified endpoint"));
-    return;
-  }
-
-  // everything is good, we can send the command
-
-  uint8_t seq = zigbee_devices.getNextSeqNumber(shortaddr);
-  ZigbeeZCLSend_Raw(ZigbeeZCLSendMessage({
+  zigbeeZCLSendCmd(ZigbeeZCLSendMessage({
     shortaddr,
     groupaddr,
     cluster /*cluster*/,
@@ -209,14 +201,37 @@ void zigbeeZCLSendStr(uint16_t shortaddr, uint16_t groupaddr, uint8_t endpoint, 
     clusterSpecific /* not cluster specific */,
     true /* response */,
     false /* discover route */,
-    seq,  /* zcl transaction id */
+    0,  /* zcl transaction id */
     buf.getBuffer(), buf.len()
   }));
+}
+
+void zigbeeZCLSendCmd(const class ZigbeeZCLSendMessage &msg_const) {
+  ZigbeeZCLSendMessage msg = msg_const;     // copy to a modifiable variable
+
+  if ((0 == msg.endpoint) && (BAD_SHORTADDR != msg.shortaddr)) {
+    // endpoint is not specified, let's try to find it from shortAddr, unless it's a group address
+    msg.endpoint = zigbee_devices.findFirstEndpoint(msg.shortaddr);
+    //AddLog_P(LOG_LEVEL_DEBUG, PSTR("ZbSend: guessing endpoint 0x%02X"), endpoint);
+  }
+
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR("ZbSend: shortaddr 0x%04X, groupaddr 0x%04X, cluster 0x%04X, endpoint 0x%02X, cmd 0x%02X, data %*_H"),
+    msg.shortaddr, msg.groupaddr, msg.cluster, msg.endpoint, msg.cmd, msg.len, msg.msg);
+
+  if ((0 == msg.endpoint) && (BAD_SHORTADDR != msg.shortaddr)) {     // endpoint null is ok for group address
+    AddLog_P(LOG_LEVEL_INFO, PSTR("ZbSend: unspecified endpoint"));
+    return;
+  }
+
+  // everything is good, we can send the command
+
+  msg.transacId = zigbee_devices.getNextSeqNumber(msg.shortaddr);
+  ZigbeeZCLSend_Raw(msg);
   // now set the timer, if any, to read back the state later
-  if (clusterSpecific) {
+  if (msg.clusterSpecific) {
     if (!Settings.flag5.zb_disable_autoquery) {
       // read back attribute value unless it is disabled
-      sendHueUpdate(shortaddr, groupaddr, cluster, endpoint);
+      sendHueUpdate(msg.shortaddr, msg.groupaddr, msg.cluster, msg.endpoint);
     }
   }
 }
@@ -463,7 +478,7 @@ void ZbSendSend(class JsonParserToken val_cmd, uint16_t device, uint16_t groupad
   const char *cmd_s = "";                 // pointer to payload string
   bool     clusterSpecific = true;
 
-  static char delim[] = ", ";     // delimiters for parameters
+  static const char delim[] = ", ";     // delimiters for parameters
   // probe the type of the argument
   // If JSON object, it's high level commands
   // If String, it's a low level command
@@ -580,7 +595,7 @@ void ZbSendSend(class JsonParserToken val_cmd, uint16_t device, uint16_t groupad
     // we have an unsupported command type, just ignore it and fallback to missing command
   }
 
-  AddLogZ_P(LOG_LEVEL_DEBUG, PSTR("ZigbeeZCLSend device: 0x%04X, group: 0x%04X, endpoint:%d, cluster:0x%04X, cmd:0x%02X, send:\"%s\""),
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR("ZigbeeZCLSend device: 0x%04X, group: 0x%04X, endpoint:%d, cluster:0x%04X, cmd:0x%02X, send:\"%s\""),
             device, groupaddr, endpoint, cluster, cmd, cmd_s);
   zigbeeZCLSendStr(device, groupaddr, endpoint, clusterSpecific, manuf, cluster, cmd, cmd_s);
   ResponseCmndDone();
@@ -1643,25 +1658,18 @@ void CmndZbConfig(void) {
   }
 
   // display the current or new configuration
-  char hex_ext_panid[20] = "0x";
-  Uint64toHex(zb_ext_panid, &hex_ext_panid[2], 64);
-  char hex_precfgkey_l[20] = "0x";
-  Uint64toHex(zb_precfgkey_l, &hex_precfgkey_l[2], 64);
-  char hex_precfgkey_h[20] = "0x";
-  Uint64toHex(zb_precfgkey_h, &hex_precfgkey_h[2], 64);
-
   // {"ZbConfig":{"Channel":11,"PanID":"0x1A63","ExtPanID":"0xCCCCCCCCCCCCCCCC","KeyL":"0x0F0D0B0907050301L","KeyH":"0x0D0C0A0806040200L"}}
   Response_P(PSTR("{\"" D_PRFX_ZB D_JSON_ZIGBEE_CONFIG "\":{"
                   "\"Channel\":%d"
                   ",\"PanID\":\"0x%04X\""
-                  ",\"ExtPanID\":\"%s\""
-                  ",\"KeyL\":\"%s\""
-                  ",\"KeyH\":\"%s\""
+                  ",\"ExtPanID\":\"0x%_X\""
+                  ",\"KeyL\":\"0x%_X\""
+                  ",\"KeyH\":\"0x%_X\""
                   ",\"TxRadio\":%d"
                   "}}"),
                   zb_channel, zb_pan_id,
-                  hex_ext_panid,
-                  hex_precfgkey_l, hex_precfgkey_h,
+                  &zb_ext_panid,
+                  &zb_precfgkey_l, &zb_precfgkey_h,
                   zb_txradio_dbm);
 }
 
@@ -2092,7 +2100,7 @@ void ZigbeeMapRefresh(void) {
   if ((!zigbee.init_phase) && (!zigbee.mapping_in_progress)) {
     ZigbeeMapAllDevices();
   }
-  Webserver->sendHeader("Location","/zbm");        // Add a header to respond with a new location for the browser to go to the home page again
+  Webserver->sendHeader(F("Location"),F("/zbm"));        // Add a header to respond with a new location for the browser to go to the home page again
   Webserver->send(302);
 }
 
@@ -2182,7 +2190,7 @@ bool Xdrv23(uint8_t function)
         ZigbeeInit();
         break;
       case FUNC_COMMAND:
-        result = DecodeCommand(kZbCommands, ZigbeeCommand);
+        result = DecodeCommand(kZbCommands, ZigbeeCommand, kZbSynonyms);
         break;
       case FUNC_SAVE_BEFORE_RESTART:
 #ifdef USE_ZIGBEE_EZSP

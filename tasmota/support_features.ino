@@ -661,7 +661,6 @@ void ResponseAppendFeatures(void)
 #ifdef USE_AS608
     feature7 |= 0x00000800;  // xsns_79_as608.ino
 #endif
-
 #if defined(USE_SHELLY_DIMMER)
     feature7 |= 0x00001000;  // xdrv_45_shelly_dimmer.ino
 #endif
@@ -701,20 +700,68 @@ void ResponseAppendFeatures(void)
 #ifdef USE_BS814A2
     feature7 |= 0x01000000;  // xdrv_51_bs814a2.ino
 #endif
-#ifdef USE_SEESAW_SOIL
+#if defined(USE_I2C) && defined(USE_SEESAW_SOIL)
     feature7 |= 0x02000000;  // xsns_81_seesaw_soil.ino
 #endif
-//    feature7 |= 0x04000000;
-//    feature7 |= 0x08000000;
-
-//    feature7 |= 0x10000000;
+#ifdef USE_WIEGAND
+    feature7 |= 0x04000000;  // xsns_82_wiegand.ino
+#endif
+#ifdef USE_NEOPOOL
+    feature7 |= 0x08000000;  // xsns_83_neopool.ino
+#endif
+#if defined(USE_I2C) && defined(USE_TOF10120)
+    feature7 |= 0x10000000;  // xsns_84_tof10120
+#endif
 //    feature7 |= 0x20000000;
 //    feature7 |= 0x40000000;
 //    feature7 |= 0x80000000;
   }
 
+  static uint32_t feature8 = 0x00000000;
+  if (!feature8) {           // Only fill this once
+//    feature8 |= 0x00000001;
+//    feature8 |= 0x00000002;
+//    feature8 |= 0x00000004;
+//    feature8 |= 0x00000008;
+
+//    feature8 |= 0x00000010;
+//    feature8 |= 0x00000020;
+//    feature8 |= 0x00000040;
+//    feature8 |= 0x00000080;
+
+//    feature8 |= 0x00000100;
+//    feature8 |= 0x00000200;
+//    feature8 |= 0x00000400;
+//    feature8 |= 0x00000800;
+
+//    feature8 |= 0x00001000;
+//    feature8 |= 0x00002000;
+//    feature8 |= 0x00004000;
+//    feature8 |= 0x00008000;
+
+//    feature8 |= 0x00010000;
+//    feature8 |= 0x00020000;
+//    feature8 |= 0x00040000;
+//    feature8 |= 0x00080000;
+
+//    feature8 |= 0x00100000;
+//    feature8 |= 0x00200000;
+//    feature8 |= 0x00400000;
+//    feature8 |= 0x00800000;
+
+//    feature8 |= 0x01000000;
+//    feature8 |= 0x02000000;
+//    feature8 |= 0x04000000;
+//    feature8 |= 0x08000000;
+
+//    feature8 |= 0x10000000;
+//    feature8 |= 0x20000000;
+//    feature8 |= 0x40000000;
+//    feature8 |= 0x80000000;
+  }
+
 /*********************************************************************************************/
 
-  ResponseAppend_P(PSTR(",\"" D_JSON_FEATURES "\":[\"%08X\",\"%08X\",\"%08X\",\"%08X\",\"%08X\",\"%08X\",\"%08X\",\"%08X\"]"),
-    LANGUAGE_LCID, feature1, feature2, feature3, feature4, feature5, feature6, feature7);
+  ResponseAppend_P(PSTR(",\"" D_JSON_FEATURES "\":[\"%08X\",\"%08X\",\"%08X\",\"%08X\",\"%08X\",\"%08X\",\"%08X\",\"%08X\",\"%08X\"]"),
+    LANGUAGE_LCID, feature1, feature2, feature3, feature4, feature5, feature6, feature7, feature8);
 }

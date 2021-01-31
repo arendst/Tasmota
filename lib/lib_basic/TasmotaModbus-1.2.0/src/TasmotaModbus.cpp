@@ -24,7 +24,7 @@ TasmotaModbus::TasmotaModbus(int receive_pin, int transmit_pin) : TasmotaSerial(
   mb_address = 0;
 }
 
-uint16_t CalculateCRC(uint8_t *frame, uint8_t num)
+uint16_t TasmotaModbus::CalculateCRC(uint8_t *frame, uint8_t num)
 {
   uint16_t crc = 0xFFFF;
 
@@ -81,30 +81,37 @@ bool TasmotaModbus::ReceiveReady()
 uint8_t TasmotaModbus::ReceiveBuffer(uint8_t *buffer, uint8_t register_count)
 {
   mb_len = 0;
-  uint32_t last = millis();
-  while ((available() > 0) && (mb_len < (register_count *2) + 5) && (millis() - last < 10)) {
-    uint8_t data = (uint8_t)read();
-    if (!mb_len) {               // Skip leading data as provided by hardware serial
-      if (mb_address == data) {
+  uint32_t timeout = millis() + 10;
+  while ((mb_len < (register_count *2) + 5) && (millis() < timeout)) {
+    if (available()) {
+      uint8_t data = (uint8_t)read();
+      if (!mb_len) {               // Skip leading data as provided by hardware serial
+        if (mb_address == data) {
+          buffer[mb_len++] = data;
+        }
+      } else {
         buffer[mb_len++] = data;
-      }
-    } else {
-      buffer[mb_len++] = data;
-      if (3 == mb_len) {
-        if (buffer[1] & 0x80) {  // 01 84 02 f2 f1
-          return buffer[2];      // 1 = Illegal Function,
-                                 // 2 = Illegal Data Address,
-                                 // 3 = Illegal Data Value,
-                                 // 4 = Slave Error
-                                 // 5 = Acknowledge but not finished (no error)
-                                 // 6 = Slave Busy
-                                 // 8 = Memory Parity error
-                                 // 10 = Gateway Path Unavailable
-                                 // 11 = Gateway Target device failed to respond
+        if (3 == mb_len) {
+          if (buffer[1] & 0x80) {  // 01 84 02 f2 f1
+            if (0 == buffer[2]) {
+              return 3;            // 3 = Illegal Data Value,
+            }
+            return buffer[2];      // 1 = Illegal Function,
+                                   // 2 = Illegal Data Address,
+                                   // 3 = Illegal Data Value,
+                                   // 4 = Slave Error
+                                   // 5 = Acknowledge but not finished (no error)
+                                   // 6 = Slave Busy
+                                   // 8 = Memory Parity error
+                                   // 10 = Gateway Path Unavailable
+                                   // 11 = Gateway Target device failed to respond
+          }
         }
       }
+
+      timeout = millis() + 10;
+
     }
-    last = millis();
   }
 
   if (mb_len < 7) { return 7; }  // 7 = Not enough data

@@ -38,7 +38,7 @@ static const char* LOG_TAG = "NimBLERemoteCharacteristic";
  NimBLERemoteCharacteristic::NimBLERemoteCharacteristic(NimBLERemoteService *pRemoteService,
                                                         const struct ble_gatt_chr *chr)
 {
-
+    NIMBLE_LOGD(LOG_TAG, ">> NimBLERemoteCharacteristic()");
      switch (chr->uuid.u.type) {
         case BLE_UUID_TYPE_16:
             m_uuid = NimBLEUUID(chr->uuid.u16.value);
@@ -50,7 +50,6 @@ static const char* LOG_TAG = "NimBLERemoteCharacteristic";
             m_uuid = NimBLEUUID(const_cast<ble_uuid128_t*>(&chr->uuid.u128));
             break;
         default:
-            m_uuid = nullptr;
             break;
     }
 
@@ -61,6 +60,8 @@ static const char* LOG_TAG = "NimBLERemoteCharacteristic";
     m_notifyCallback     = nullptr;
     m_timestamp          = 0;
     m_valMux             = portMUX_INITIALIZER_UNLOCKED;
+
+    NIMBLE_LOGD(LOG_TAG, "<< NimBLERemoteCharacteristic(): %s", m_uuid.toString().c_str());
  } // NimBLERemoteCharacteristic
 
 
@@ -208,15 +209,21 @@ int NimBLERemoteCharacteristic::descriptorDiscCB(uint16_t conn_handle,
 bool NimBLERemoteCharacteristic::retrieveDescriptors(const NimBLEUUID *uuid_filter) {
     NIMBLE_LOGD(LOG_TAG, ">> retrieveDescriptors() for characteristic: %s", getUUID().toString().c_str());
 
+    uint16_t endHandle = getRemoteService()->getEndHandle(this);
+    if(m_handle >= endHandle) {
+        return false;
+    }
+
     int rc = 0;
     ble_task_data_t taskData = {this, xTaskGetCurrentTaskHandle(), 0, nullptr};
     desc_filter_t filter = {uuid_filter, &taskData};
 
     rc = ble_gattc_disc_all_dscs(getRemoteService()->getClient()->getConnId(),
                                  m_handle,
-                                 getRemoteService()->getEndHandle(),
+                                 endHandle,
                                  NimBLERemoteCharacteristic::descriptorDiscCB,
                                  &filter);
+
     if (rc != 0) {
         NIMBLE_LOGE(LOG_TAG, "ble_gattc_disc_all_chrs: rc=%d %s", rc, NimBLEUtils::returnCodeToString(rc));
         return false;
@@ -225,12 +232,13 @@ bool NimBLERemoteCharacteristic::retrieveDescriptors(const NimBLEUUID *uuid_filt
     ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
 
     if(taskData.rc != 0) {
+        NIMBLE_LOGE(LOG_TAG, "ble_gattc_disc_all_chrs: startHandle:%d endHandle:%d taskData.rc=%d %s", m_handle, endHandle, taskData.rc, NimBLEUtils::returnCodeToString(0x0100+taskData.rc));
         return false;
     }
 
     return true;
     NIMBLE_LOGD(LOG_TAG, "<< retrieveDescriptors(): Found %d descriptors.", m_descriptorVector.size());
-} // getDescriptors
+} // retrieveDescriptors
 
 
 /**
@@ -243,7 +251,7 @@ NimBLERemoteDescriptor* NimBLERemoteCharacteristic::getDescriptor(const NimBLEUU
 
     for(auto &it: m_descriptorVector) {
         if(it->getUUID() == uuid) {
-            NIMBLE_LOGD(LOG_TAG, "<< getDescriptor: found");
+            NIMBLE_LOGD(LOG_TAG, "<< getDescriptor: found the descriptor with uuid: %s", uuid.toString().c_str());
             return it;
         }
     }
@@ -253,7 +261,18 @@ NimBLERemoteDescriptor* NimBLERemoteCharacteristic::getDescriptor(const NimBLEUU
         if(m_descriptorVector.size() > prev_size) {
             return m_descriptorVector.back();
         }
+
+        // If the request was successful but 16/32 bit descriptor not found
+        // try again with the 128 bit uuid.
+        if(uuid.bitSize() == BLE_UUID_TYPE_16 ||
+           uuid.bitSize() == BLE_UUID_TYPE_32)
+        {
+            NimBLEUUID uuid128(uuid);
+            uuid128.to128();
+            return getDescriptor(uuid128);
+        }
     }
+
     NIMBLE_LOGD(LOG_TAG, "<< getDescriptor: Not found");
     return nullptr;
 } // getDescriptor
@@ -447,9 +466,10 @@ std::string NimBLERemoteCharacteristic::readValue(time_t *timestamp) {
         }
     } while(rc != 0 && retryCount--);
 
+    time_t t = time(nullptr);
     portENTER_CRITICAL(&m_valMux);
     m_value = value;
-    m_timestamp = time(nullptr);
+    m_timestamp = t;
     if(timestamp != nullptr) {
         *timestamp = m_timestamp;
     }
@@ -506,18 +526,18 @@ int NimBLERemoteCharacteristic::onReadCB(uint16_t conn_handle,
  * @param [in] notifyCallback A callback to be invoked for a notification.
  * @param [in] response If write response required set this to true.
  * If NULL is provided then no callback is performed.
- * @return true if successful.
+ * @return false if writing to the descriptor failed.
  */
 bool NimBLERemoteCharacteristic::setNotify(uint16_t val, notify_callback notifyCallback, bool response) {
     NIMBLE_LOGD(LOG_TAG, ">> setNotify(): %s, %02x", toString().c_str(), val);
 
+    m_notifyCallback = notifyCallback;
+
     NimBLERemoteDescriptor* desc = getDescriptor(NimBLEUUID((uint16_t)0x2902));
     if(desc == nullptr) {
-        NIMBLE_LOGE(LOG_TAG, "<< setNotify(): Could not get descriptor");
-        return false;
+        NIMBLE_LOGW(LOG_TAG, "<< setNotify(): Callback set, CCCD not found");
+        return true;
     }
-
-    m_notifyCallback = notifyCallback;
 
     NIMBLE_LOGD(LOG_TAG, "<< setNotify()");
 
@@ -531,7 +551,7 @@ bool NimBLERemoteCharacteristic::setNotify(uint16_t val, notify_callback notifyC
  * @param [in] notifyCallback A callback to be invoked for a notification.
  * @param [in] response If true, require a write response from the descriptor write operation.
  * If NULL is provided then no callback is performed.
- * @return true if successful.
+ * @return false if writing to the descriptor failed.
  */
 bool NimBLERemoteCharacteristic::subscribe(bool notifications, notify_callback notifyCallback, bool response) {
     if(notifications) {
@@ -545,7 +565,7 @@ bool NimBLERemoteCharacteristic::subscribe(bool notifications, notify_callback n
 /**
  * @brief Unsubscribe for notifications or indications.
  * @param [in] response bool if true, require a write response from the descriptor write operation.
- * @return true if successful.
+ * @return false if writing to the descriptor failed.
  */
 bool NimBLERemoteCharacteristic::unsubscribe(bool response) {
     return setNotify(0x00, nullptr, response);

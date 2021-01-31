@@ -44,12 +44,11 @@ NimBLERemoteService::NimBLERemoteService(NimBLEClient* pClient, const struct ble
             m_uuid = NimBLEUUID(const_cast<ble_uuid128_t*>(&service->uuid.u128));
             break;
         default:
-            m_uuid = nullptr;
             break;
     }
     m_startHandle = service->start_handle;
     m_endHandle = service->end_handle;
-    NIMBLE_LOGD(LOG_TAG, "<< NimBLERemoteService()");
+    NIMBLE_LOGD(LOG_TAG, "<< NimBLERemoteService(): %s", m_uuid.toString().c_str());
 }
 
 
@@ -95,8 +94,11 @@ NimBLERemoteCharacteristic* NimBLERemoteService::getCharacteristic(const char* u
  * @return A pointer to the characteristic object, or nullptr if not found.
  */
 NimBLERemoteCharacteristic* NimBLERemoteService::getCharacteristic(const NimBLEUUID &uuid) {
+    NIMBLE_LOGD(LOG_TAG, ">> getCharacteristic: uuid: %s", uuid.toString().c_str());
+
     for(auto &it: m_characteristicVector) {
         if(it->getUUID() == uuid) {
+            NIMBLE_LOGD(LOG_TAG, "<< getCharacteristic: found the characteristic with uuid: %s", uuid.toString().c_str());
             return it;
         }
     }
@@ -106,8 +108,19 @@ NimBLERemoteCharacteristic* NimBLERemoteService::getCharacteristic(const NimBLEU
         if(m_characteristicVector.size() > prev_size) {
             return m_characteristicVector.back();
         }
+
+        // If the request was successful but 16/32 bit characteristic not found
+        // try again with the 128 bit uuid.
+        if(uuid.bitSize() == BLE_UUID_TYPE_16 ||
+           uuid.bitSize() == BLE_UUID_TYPE_32)
+        {
+            NimBLEUUID uuid128(uuid);
+            uuid128.to128();
+            return getCharacteristic(uuid128);
+        }
     }
 
+    NIMBLE_LOGD(LOG_TAG, "<< getCharacteristic: not found");
     return nullptr;
 } // getCharacteristic
 
@@ -234,6 +247,23 @@ NimBLEClient* NimBLERemoteService::getClient() {
  */
 uint16_t NimBLERemoteService::getEndHandle() {
     return m_endHandle;
+} // getEndHandle
+
+/**
+ * @brief Get the end handle of specified NimBLERemoteCharacteristic.
+ */
+
+uint16_t NimBLERemoteService::getEndHandle(NimBLERemoteCharacteristic *pCharacteristic) {
+    uint16_t endHandle = m_endHandle;
+    
+    for(auto &it: m_characteristicVector) {
+        uint16_t defHandle = it->getDefHandle() - 1;
+        if(defHandle > pCharacteristic->getDefHandle() && endHandle > defHandle) {
+            endHandle = defHandle;
+        }
+    }
+
+    return endHandle;
 } // getEndHandle
 
 

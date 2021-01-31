@@ -28,12 +28,12 @@ Renderer *renderer;
 
 enum ColorType { COLOR_BW, COLOR_COLOR };
 
-#ifndef MAXBUTTONS
-#define MAXBUTTONS 16
+#ifndef MAX_TOUCH_BUTTONS
+#define MAX_TOUCH_BUTTONS 16
 #endif
 
 #ifdef USE_TOUCH_BUTTONS
-VButton *buttons[MAXBUTTONS];
+VButton *buttons[MAX_TOUCH_BUTTONS];
 #endif
 
 // drawing color is WHITE
@@ -41,7 +41,7 @@ VButton *buttons[MAXBUTTONS];
 uint16_t fg_color = 1;
 uint16_t bg_color = 0;
 uint8_t color_type = COLOR_BW;
-uint8_t auto_draw=1;
+uint8_t auto_draw = 1;
 
 const uint8_t DISPLAY_MAX_DRIVERS = 16;        // Max number of display drivers/models supported by xdsp_interface.ino
 const uint8_t DISPLAY_MAX_COLS = 64;           // Max number of columns allowed with command DisplayCols
@@ -497,7 +497,7 @@ void DisplayText(void)
             cp += var;
             linebuf[fill] = 0;
             break;
-#if (defined(USE_SCRIPT_FATFS) && defined(USE_SCRIPT)) || defined(UFILESYSTEM)
+#if (defined(USE_SCRIPT_FATFS) && defined(USE_SCRIPT)) || defined(USE_UFILESYS)
           case 'P':
             { char *ep=strchr(cp,':');
              if (ep) {
@@ -682,7 +682,7 @@ void DisplayText(void)
               RedrawGraph(temp,temp1);
               break;
             }
-#if (defined(USE_SCRIPT_FATFS) && defined(USE_SCRIPT)) || defined(UFILESYSTEM)
+#if (defined(USE_SCRIPT_FATFS) && defined(USE_SCRIPT)) || defined(USE_UFILESYS)
             if (*cp=='s') {
               cp++;
               var=atoiv(cp,&temp);
@@ -772,7 +772,7 @@ void DisplayText(void)
               if (*cp=='d') dis=1;
               cp++;
               var=atoiv(cp,&num);
-              num=num%MAXBUTTONS;
+              num=num%MAX_TOUCH_BUTTONS;
               cp+=var;
               if (buttons[num]) {
                 buttons[num]->vpower.disable=dis;
@@ -791,7 +791,7 @@ void DisplayText(void)
             cp+=var;
             cp++;
             uint8_t bflags=num>>8;
-            num=num%MAXBUTTONS;
+            num=num%MAX_TOUCH_BUTTONS;
             var=atoiv(cp,&gxp);
             cp+=var;
             cp++;
@@ -1045,7 +1045,7 @@ void DisplayLogBufferInit(void)
     DisplayLogBufferAdd(buffer);
     snprintf_P(buffer, sizeof(buffer), PSTR(D_JSON_MAC " %s"), NetworkMacAddress().c_str());
     DisplayLogBufferAdd(buffer);
-    snprintf_P(buffer, sizeof(buffer), PSTR("IP %s"), NetworkAddress().toString().c_str());
+    ext_snprintf_P(buffer, sizeof(buffer), PSTR("IP %_I"), (uint32_t)NetworkAddress());
     DisplayLogBufferAdd(buffer);
     if (!TasmotaGlobal.global_state.wifi_down) {
       snprintf_P(buffer, sizeof(buffer), PSTR(D_JSON_SSID " %s"), SettingsText(SET_STASSID1 + Settings.sta_active));
@@ -1284,10 +1284,12 @@ void DisplayInitDriver(void)
   if (renderer) {
     renderer->setTextFont(Settings.display_font);
     renderer->setTextSize(Settings.display_size);
+    // force opaque mode
+    renderer->setDrawMode(0);
   }
 
 
-//  AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "Display model %d"), Settings.display_model);
+//  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "Display model %d"), Settings.display_model);
 
   if (Settings.display_model) {
     TasmotaGlobal.devices_present++;
@@ -1310,7 +1312,7 @@ void DisplaySetPower(void)
 {
   disp_power = bitRead(XdrvMailbox.index, disp_device -1);
 
-//AddLog_P(LOG_LEVEL_DEBUG, PSTR("DSP: Power %d"), disp_power);
+//AddLog(LOG_LEVEL_DEBUG, PSTR("DSP: Power %d"), disp_power);
 
   if (Settings.display_model) {
     if (!renderer) {
@@ -1573,7 +1575,7 @@ char get_jpeg_size(unsigned char* data, unsigned int data_size, unsigned short *
 #endif // JPEG_PICTS
 #endif // ESP32
 
-#if (defined(USE_SCRIPT_FATFS) && defined(USE_SCRIPT)) || defined(UFILESYSTEM)
+#if (defined(USE_SCRIPT_FATFS) && defined(USE_SCRIPT)) || defined(USE_UFILESYS)
 extern FS *ufsp;
 #define XBUFF_LEN 128
 void Draw_RGB_Bitmap(char *file,uint16_t xp, uint16_t yp, bool inverted ) {
@@ -1918,7 +1920,7 @@ void DisplayCheckGraph() {
 }
 
 
-#if (defined(USE_SCRIPT_FATFS) && defined(USE_SCRIPT)) || defined(UFILESYSTEM)
+#if (defined(USE_SCRIPT_FATFS) && defined(USE_SCRIPT)) || defined(USE_UFILESYS)
 #ifdef ESP32
 #include <SD.h>
 #endif
@@ -2174,7 +2176,7 @@ uint8_t vbutt=0;
           if (!(tbstate[tbut] & 1)) {
               // pressed
               tbstate[tbut] |= 1;
-              //AddLog_P(LOG_LEVEL_INFO, PSTR("tbut: %d pressed"), tbut);
+              //AddLog(LOG_LEVEL_INFO, PSTR("tbut: %d pressed"), tbut);
               Touch_MQTT(tbut, "BIB", tbstate[tbut] & 1);
           }
         }
@@ -2184,9 +2186,9 @@ uint8_t vbutt=0;
 
       rotconvert(&pLoc.x, &pLoc.y);
 
-      //AddLog_P(LOG_LEVEL_INFO, PSTR("touch %d - %d"), pLoc.x, pLoc.y);
+      //AddLog(LOG_LEVEL_INFO, PSTR("touch %d - %d"), pLoc.x, pLoc.y);
       // now must compare with defined buttons
-      for (uint8_t count=0; count<MAXBUTTONS; count++) {
+      for (uint8_t count=0; count<MAX_TOUCH_BUTTONS; count++) {
         if (buttons[count] && !buttons[count]->vpower.disable) {
             if (buttons[count]->contains(pLoc.x, pLoc.y)) {
                 // did hit
@@ -2231,11 +2233,11 @@ uint8_t vbutt=0;
         // released
         tbstate[tbut] &= 0xfe;
         Touch_MQTT(tbut, "BIB", tbstate[tbut] & 1);
-        //AddLog_P(LOG_LEVEL_INFO, PSTR("tbut: %d released"), tbut);
+        //AddLog(LOG_LEVEL_INFO, PSTR("tbut: %d released"), tbut);
       }
     }
 #endif
-    for (uint8_t count=0; count<MAXBUTTONS; count++) {
+    for (uint8_t count=0; count<MAX_TOUCH_BUTTONS; count++) {
       if (buttons[count]) {
         buttons[count]->press(false);
         if (buttons[count]->justReleased()) {

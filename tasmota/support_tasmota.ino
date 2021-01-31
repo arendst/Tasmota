@@ -20,10 +20,12 @@
 const char kSleepMode[] PROGMEM = "Dynamic|Normal";
 const char kPrefixes[] PROGMEM = D_CMND "|" D_STAT "|" D_TELE;
 
-char* Format(char* output, const char* input, int size)
+char* Format(char* output, const char* input_p, int size)
 {
   char *token;
   uint32_t digits = 0;
+  char input[strlen_P(input_p)+1];  // copy from PMEM to RAM
+  strcpy_P(input, input_p);
 
   if (strchr(input, '%') != nullptr) {
     strlcpy(output, input, size);
@@ -102,7 +104,7 @@ char* GetTopic_P(char *stopic, uint32_t prefix, char *topic, const char* subtopi
       fulltopic += TasmotaGlobal.mqtt_client;
       fulltopic += F("_fb");                  // cmnd/<mqttclient>_fb
     } else {
-      fulltopic += topic;                     // cmnd/<grouptopic>
+      fulltopic += (const __FlashStringHelper *)topic;                     // cmnd/<grouptopic>
     }
   } else {
     fulltopic = SettingsText(SET_MQTT_FULLTOPIC);
@@ -118,7 +120,7 @@ char* GetTopic_P(char *stopic, uint32_t prefix, char *topic, const char* subtopi
     }
     fulltopic.replace(FPSTR(MQTT_TOKEN_PREFIX), SettingsText(SET_MQTTPREFIX1 + prefix));
 
-    fulltopic.replace(FPSTR(MQTT_TOKEN_TOPIC), topic);
+    fulltopic.replace(FPSTR(MQTT_TOKEN_TOPIC), (const __FlashStringHelper *)topic);
     fulltopic.replace(F("%hostname%"), TasmotaGlobal.hostname);
     String token_id = WiFi.macAddress();
     token_id.replace(":", "");
@@ -486,7 +488,7 @@ bool SendKey(uint32_t key, uint32_t device, uint32_t state)
 #endif  // USE_DOMOTICZ
     result = !Settings.flag3.button_switch_force_local;  // SetOption61 - Force local operation when button/switch topic is set
   } else {
-    Response_P(PSTR("{\"%s%d\":{\"State\":%d}}"), (key) ? "Switch" : "Button", device, state);
+    Response_P(PSTR("{\"%s%d\":{\"State\":%d}}"), (key) ? PSTR("Switch") : PSTR("Button"), device, state);
     result = XdrvRulesProcess();
   }
 #ifdef USE_PWM_DIMMER
@@ -742,7 +744,8 @@ void TempHumDewShow(bool json, bool pass_on, const char *types, float f_temperat
 String GetSwitchText(uint32_t i) {
   String switch_text = SettingsText(SET_SWITCH_TXT1 + i);
   if ('\0' == switch_text[0]) {
-    switch_text = D_JSON_SWITCH + String(i +1);
+    switch_text = F(D_JSON_SWITCH);
+    switch_text += String(i+1);
   }
   return switch_text;
 }
@@ -812,7 +815,7 @@ void PerformEverySecond(void)
     if (!(DeepSleepEnabled() && !Settings.flag3.bootcount_update)) {
 #endif
       Settings.bootcount++;              // Moved to here to stop flash writes during start-up
-      AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_BOOT_COUNT " %d"), Settings.bootcount);
+      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_BOOT_COUNT " %d"), Settings.bootcount);
 #ifdef USE_DEEPSLEEP
     }
 #endif
@@ -829,7 +832,7 @@ void PerformEverySecond(void)
     TasmotaGlobal.seriallog_timer--;
     if (!TasmotaGlobal.seriallog_timer) {
       if (TasmotaGlobal.seriallog_level) {
-        AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION D_SERIAL_LOGGING_DISABLED));
+        AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION D_SERIAL_LOGGING_DISABLED));
       }
       TasmotaGlobal.seriallog_level = 0;
     }
@@ -840,7 +843,7 @@ void PerformEverySecond(void)
     if (!TasmotaGlobal.syslog_timer) {
       TasmotaGlobal.syslog_level = Settings.syslog_level;
       if (Settings.syslog_level) {
-        AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION D_SYSLOG_LOGGING_REENABLED));  // Might trigger disable again (on purpose)
+        AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION D_SYSLOG_LOGGING_REENABLED));  // Might trigger disable again (on purpose)
       }
     }
   }
@@ -941,6 +944,11 @@ void Every100mSeconds(void)
  * Every 0.25 second
 \*-------------------------------------------------------------------------------------------*/
 
+#ifdef USE_BLE_ESP32
+  // declare the fn
+  int ExtStopBLE();
+#endif  // USE_BLE_ESP32
+
 void Every250mSeconds(void)
 {
 // As the max amount of sleep = 250 mSec this loop should always be taken...
@@ -1010,6 +1018,9 @@ void Every250mSeconds(void)
         SettingsSave(1);  // Free flash for OTA update
       }
       if (TasmotaGlobal.ota_state_flag <= 0) {
+#ifdef USE_BLE_ESP32
+        ExtStopBLE();
+#endif  // USE_BLE_ESP32
 #ifdef USE_COUNTER
         CounterInterruptDisable(true);  // Prevent OTA failures on 100Hz counter interrupts
 #endif  // USE_COUNTER
@@ -1048,7 +1059,7 @@ void Every250mSeconds(void)
             char *ech = strchr(bch, '.');                              // Find file type in filename (none, .ino.bin, .ino.bin.gz, .bin, .bin.gz or .gz)
             if (ech == nullptr) { ech = TasmotaGlobal.mqtt_data + strlen(TasmotaGlobal.mqtt_data); }  // Point to '/0' at end of mqtt_data becoming an empty string
 
-//AddLog_P(LOG_LEVEL_DEBUG, PSTR("OTA: File type [%s]"), ech);
+//AddLog(LOG_LEVEL_DEBUG, PSTR("OTA: File type [%s]"), ech);
 
             char ota_url_type[strlen(ech) +1];
             strncpy(ota_url_type, ech, sizeof(ota_url_type));          // Either empty, .ino.bin, .ino.bin.gz, .bin, .bin.gz or .gz
@@ -1059,7 +1070,7 @@ void Every250mSeconds(void)
             snprintf_P(TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), PSTR("%s-" D_JSON_MINIMAL "%s"), TasmotaGlobal.mqtt_data, ota_url_type);  // Minimal filename must be filename-minimal
           }
 #endif  // FIRMWARE_MINIMAL
-          AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPLOAD "%s"), TasmotaGlobal.mqtt_data);
+          AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPLOAD "%s"), TasmotaGlobal.mqtt_data);
           WiFiClient OTAclient;
           ota_result = (HTTP_UPDATE_FAILED != ESPhttpUpdate.update(OTAclient, TasmotaGlobal.mqtt_data));
           if (!ota_result) {
@@ -1178,7 +1189,7 @@ void Every250mSeconds(void)
       }
       TasmotaGlobal.restart_flag--;
       if (TasmotaGlobal.restart_flag <= 0) {
-        AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION "%s"), (TasmotaGlobal.restart_halt) ? PSTR("Halted") : PSTR(D_RESTARTING));
+        AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION "%s"), (TasmotaGlobal.restart_halt) ? PSTR("Halted") : PSTR(D_RESTARTING));
         EspRestart();
       }
     }
@@ -1289,7 +1300,7 @@ void ArduinoOTAInit(void)
     if (Settings.flag.mqtt_enabled) {
       MqttDisconnect();      // SetOption3  - Enable MQTT
     }
-    AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_UPLOAD "Arduino OTA " D_UPLOAD_STARTED));
+    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_UPLOAD "Arduino OTA " D_UPLOAD_STARTED));
     arduino_ota_triggered = true;
     arduino_ota_progress_dot_count = 0;
     delay(100);              // Allow time for message xfer
@@ -1320,19 +1331,19 @@ void ArduinoOTAInit(void)
       default:
         snprintf_P(error_str, sizeof(error_str), PSTR(D_UPLOAD_ERROR_CODE " %d"), error);
     }
-    AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_UPLOAD "Arduino OTA  %s. " D_RESTARTING), error_str);
+    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_UPLOAD "Arduino OTA  %s. " D_RESTARTING), error_str);
     EspRestart();
   });
 
   ArduinoOTA.onEnd([]()
   {
     if ((LOG_LEVEL_DEBUG <= TasmotaGlobal.seriallog_level)) { Serial.println(); }
-    AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_UPLOAD "Arduino OTA " D_SUCCESSFUL ". " D_RESTARTING));
+    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_UPLOAD "Arduino OTA " D_SUCCESSFUL ". " D_RESTARTING));
     EspRestart();
 	});
 
   ArduinoOTA.begin();
-  AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_UPLOAD "Arduino OTA " D_ENABLED " " D_PORT " 8266"));
+  AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_UPLOAD "Arduino OTA " D_ENABLED " " D_PORT " 8266"));
 }
 
 void ArduinoOtaLoop(void)
@@ -1440,7 +1451,7 @@ void SerialInput(void)
       TasmotaGlobal.serial_in_buffer[TasmotaGlobal.serial_in_byte_counter] = 0;                // Serial data completed
       TasmotaGlobal.seriallog_level = (Settings.seriallog_level < LOG_LEVEL_INFO) ? (uint8_t)LOG_LEVEL_INFO : Settings.seriallog_level;
       if (serial_buffer_overrun) {
-        AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_COMMAND "Serial buffer overrun"));
+        AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_COMMAND "Serial buffer overrun"));
       } else {
         AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_COMMAND "%s"), TasmotaGlobal.serial_in_buffer);
         ExecuteCommand(TasmotaGlobal.serial_in_buffer, SRC_SERIAL);
@@ -1508,7 +1519,7 @@ void GpioInit(void)
   }
   SetModuleType();
 
-//  AddLog_P(LOG_LEVEL_DEBUG, PSTR("DBG: Used GPIOs %d"), GPIO_SENSOR_END);
+//  AddLog(LOG_LEVEL_DEBUG, PSTR("DBG: Used GPIOs %d"), GPIO_SENSOR_END);
 
 #ifdef ESP8266
   ConvertGpios();
@@ -1674,7 +1685,7 @@ void GpioInit(void)
 
   for (uint32_t i = 0; i < ARRAY_SIZE(TasmotaGlobal.my_module.io); i++) {
     uint32_t mpin = ValidPin(i, TasmotaGlobal.my_module.io[i]);
-//    AddLog_P(LOG_LEVEL_DEBUG, PSTR("INI: gpio pin %d, mpin %d"), i, mpin);
+//    AddLog(LOG_LEVEL_DEBUG, PSTR("INI: gpio pin %d, mpin %d"), i, mpin);
     if (AGPIO(GPIO_OUTPUT_HI) == mpin) {
       pinMode(i, OUTPUT);
       digitalWrite(i, 1);

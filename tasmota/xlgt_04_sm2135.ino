@@ -58,7 +58,7 @@
 #define SM2135_55MA         0x09
 #define SM2135_60MA         0x0A
 
-enum Sm2135Color { SM2135_WCGRB, SM2135_WCBGR, SM2135_WCGRBHI, SM2135_WCBGRHI };
+enum Sm2135Color { SM2135_WCGRB, SM2135_WCBGR, SM2135_WCGRBHI, SM2135_WCBGRHI, SM2135_WCGRB15W, SM2135_WCBGR15W };
 
 struct SM2135 {
   uint8_t clk = 0;
@@ -139,7 +139,7 @@ bool Sm2135SetChannels(void) {
   uint8_t data[6];
 
   uint32_t light_type = 3;      // RGB and CW
-  if (Sm2135.model < 2) {
+  if (Sm2135.model < 2) {       // Only allow one of two options due to power supply
     if ((0 == cur_col[0]) && (0 == cur_col[1]) && (0 == cur_col[2])) {
       light_type = 1;           // CW only
     } else {
@@ -182,25 +182,35 @@ void Sm2135ModuleSelected(void)
     Sm2135.clk = Pin(GPIO_SM2135_CLK);
     Sm2135.data = Pin(GPIO_SM2135_DAT, GPIO_ANY);
 
-    Sm2135.model = GetPin(Sm2135.data) - AGPIO(GPIO_SM2135_DAT);  // 0 .. 3
+    // See #define MAX_SM2135_DAT 6 in tasmota_template.h
+    Sm2135.model = GetPin(Sm2135.data) - AGPIO(GPIO_SM2135_DAT);  // 0 .. 5
+
+    // Legacy support of model selection
     if (PinUsed(GPIO_SWT1)) {
       Sm2135.model = SM2135_WCBGR;
       pinMode(Pin(GPIO_SWT1), INPUT);             // Discard GPIO_SWT functionality
       SetPin(Pin(GPIO_SWT1), AGPIO(GPIO_NONE));
     }
 
-//                    RGB current         CW current
+    // SM2135 Dat 1/2
+    //                RGB current         CW current
     Sm2135.current = (SM2135_20MA << 4) | SM2135_15MA;  // See https://github.com/arendst/Tasmota/issues/6495#issuecomment-549121683
-    if (Sm2135.model > SM2135_WCBGR) {
-      Sm2135.current = (SM2135_20MA << 4) | SM2135_30MA;
+    switch (Sm2135.model) {
+      case SM2135_WCGRBHI:      // SM2135 Dat 3
+      case SM2135_WCBGRHI:      // SM2135 Dat 4
+        Sm2135.current = (SM2135_20MA << 4) | SM2135_30MA;
+        break;
+      case SM2135_WCGRB15W:     // SM2135 Dat 5
+      case SM2135_WCBGR15W:     // SM2135 Dat 6
+        Sm2135.current = (SM2135_45MA << 4) | SM2135_60MA;
+        break;
     }
 
     Sm2135Init();
 
     TasmotaGlobal.light_type = LT_RGBWC;
     TasmotaGlobal.light_driver = XLGT_04;
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR("LGT: SM2135 (%s-%s current) Found"),
-      (SM2135_WCBGR == (Sm2135.model &1)) ? PSTR("BGR") : PSTR("GRB"), (Sm2135.model > SM2135_WCBGR) ? PSTR("High") : PSTR("Low"));
+    AddLog(LOG_LEVEL_DEBUG, PSTR("LGT: SM2135 %s Found"), (SM2135_WCBGR == (Sm2135.model &1)) ? PSTR("BGR") : PSTR("GRB"));
   }
 }
 

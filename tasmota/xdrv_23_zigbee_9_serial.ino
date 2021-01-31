@@ -101,14 +101,14 @@ void ZigbeeInputLoop(void) {
       // in this case the first bit (lsb) is missed and Tasmota receives 0xFF instead of 0xFE
       // We forgive this mistake, and next bytes are automatically resynchronized
       if (ZIGBEE_SOF_ALT == zigbee_in_byte) {
-        AddLog_P(LOG_LEVEL_INFO, PSTR("ZbInput forgiven first byte %02X (only for statistics)"), zigbee_in_byte);
+        AddLog(LOG_LEVEL_INFO, PSTR("ZbInput forgiven first byte %02X (only for statistics)"), zigbee_in_byte);
         zigbee_in_byte = ZIGBEE_SOF;
       }
 		}
 
     if ((0 == zigbee_buffer->len()) && (ZIGBEE_SOF != zigbee_in_byte)) {
       // waiting for SOF (Start Of Frame) byte, discard anything else
-      AddLog_P(LOG_LEVEL_INFO, PSTR("ZbInput discarding byte %02X"), zigbee_in_byte);
+      AddLog(LOG_LEVEL_INFO, PSTR("ZbInput discarding byte %02X"), zigbee_in_byte);
       continue;     // discard
     }
 
@@ -134,29 +134,25 @@ void ZigbeeInputLoop(void) {
   }
 
   if (zigbee_buffer->len() && (millis() > (zigbee_polling_window + ZIGBEE_POLLING))) {
-    char hex_char[(zigbee_buffer->len() * 2) + 2];
-		ToHex_P((unsigned char*)zigbee_buffer->getBuffer(), zigbee_buffer->len(), hex_char, sizeof(hex_char));
-
     // AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_ZIGBEE "Bytes follow_read_metric = %0d"), ZigbeeSerial->getLoopReadMetric());
 		// buffer received, now check integrity
 		if (zigbee_buffer->len() != zigbee_frame_len) {
 			// Len is not correct, log and reject frame
-      AddLog_P(LOG_LEVEL_INFO, PSTR(D_JSON_ZIGBEEZNPRECEIVED ": received frame of wrong size %s, len %d, expected %d"), hex_char, zigbee_buffer->len(), zigbee_frame_len);
+      AddLog_P(LOG_LEVEL_INFO, PSTR(D_JSON_ZIGBEEZNPRECEIVED ": received frame of wrong size %_B, len %d, expected %d"), &zigbee_buffer, zigbee_buffer->len(), zigbee_frame_len);
 		} else if (0x00 != fcs) {
 			// FCS is wrong, packet is corrupt, log and reject frame
-      AddLog_P(LOG_LEVEL_INFO, PSTR(D_JSON_ZIGBEEZNPRECEIVED ": received bad FCS frame %s, %d"), hex_char, fcs);
+      AddLog_P(LOG_LEVEL_INFO, PSTR(D_JSON_ZIGBEEZNPRECEIVED ": received bad FCS frame %_B, %d"), &zigbee_buffer, fcs);
 		} else {
 			// frame is correct
 			//AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR(D_JSON_ZIGBEEZNPRECEIVED ": received correct frame %s"), hex_char);
 
 			SBuffer znp_buffer = zigbee_buffer->subBuffer(2, zigbee_frame_len - 3);	// remove SOF, LEN and FCS
 
-			ToHex_P((unsigned char*)znp_buffer.getBuffer(), znp_buffer.len(), hex_char, sizeof(hex_char));
-      Response_P(PSTR("{\"" D_JSON_ZIGBEEZNPRECEIVED "\":\"%s\"}"), hex_char);
+      Response_P(PSTR("{\"" D_JSON_ZIGBEEZNPRECEIVED "\":\"%_B\"}"), &znp_buffer);
       if (Settings.flag3.tuya_serial_mqtt_publish) {
         MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR(D_RSLT_SENSOR));
       } else {
-        AddLogZ_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE "%s"), TasmotaGlobal.mqtt_data);
+        AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE "%s"), TasmotaGlobal.mqtt_data);
       }
 			// now process the message
       ZigbeeProcessInput(znp_buffer);
@@ -226,9 +222,6 @@ void ZigbeeInputLoop(void) {
 
   uint32_t frame_len = zigbee_buffer->len();
   if (frame_complete || (frame_len && (millis() > (zigbee_polling_window + ZIGBEE_POLLING)))) {
-    char hex_char[frame_len * 2 + 2];
-    ToHex_P((unsigned char*)zigbee_buffer->getBuffer(), zigbee_buffer->len(), hex_char, sizeof(hex_char));
-
     // AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_ZIGBEE "Bytes follow_read_metric = %0d"), ZigbeeSerial->getLoopReadMetric());
     if ((frame_complete) && (frame_len >= 3)) {
       // frame received and has at least 3 bytes (without EOF), checking CRC
@@ -250,7 +243,7 @@ void ZigbeeInputLoop(void) {
       // remove 2 last bytes
 
       if (crc_received != crc) {
-        AddLog_P(LOG_LEVEL_INFO, PSTR(D_JSON_ZIGBEE_EZSP_RECEIVED ": bad crc (received 0x%04X, computed 0x%04X) %s"), crc_received, crc, hex_char);
+        AddLog_P(LOG_LEVEL_INFO, PSTR(D_JSON_ZIGBEE_EZSP_RECEIVED ": bad crc (received 0x%04X, computed 0x%04X) %_B"), crc_received, crc, &zigbee_buffer);
       } else {
         // copy buffer
     	  SBuffer ezsp_buffer = zigbee_buffer->subBuffer(0, frame_len - 2);	// CRC
@@ -266,14 +259,13 @@ void ZigbeeInputLoop(void) {
           }
         }
 
-        ToHex_P((unsigned char*)ezsp_buffer.getBuffer(), ezsp_buffer.len(), hex_char, sizeof(hex_char));
-        AddLogZ_P(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_ZIGBEE "{\"" D_JSON_ZIGBEE_EZSP_RECEIVED "2\":\"%s\"}"), hex_char);
+        AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_ZIGBEE "{\"" D_JSON_ZIGBEE_EZSP_RECEIVED "2\":\"%_B\"}"), &ezsp_buffer);
         // now process the message
         ZigbeeProcessInputRaw(ezsp_buffer);
       }
     } else {
       // the buffer timed-out, print error and discard
-      AddLog_P(LOG_LEVEL_INFO, PSTR(D_JSON_ZIGBEE_EZSP_RECEIVED ": time-out, discarding %s, %d"), hex_char);
+      AddLog_P(LOG_LEVEL_INFO, PSTR(D_JSON_ZIGBEE_EZSP_RECEIVED ": time-out, discarding %s, %_B"), &zigbee_buffer);
     }
     zigbee_buffer->setLen(0);		// empty buffer
     escape = false;
@@ -356,9 +348,7 @@ void ZigbeeZNPSend(const uint8_t *msg, size_t len) {
 		//AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("ZNPSend FCS %02X"), fcs);
   }
 	// Now send a MQTT message to report the sent message
-	char hex_char[(len * 2) + 2];
-  AddLogZ_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE D_JSON_ZIGBEEZNPSENT " %s"),
-                               		ToHex_P(msg, len, hex_char, sizeof(hex_char)));
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE D_JSON_ZIGBEEZNPSENT " %*_H"), len, msg);
 }
 
 //
@@ -490,17 +480,13 @@ void ZigbeeEZSPSendRaw(const uint8_t *msg, size_t len, bool send_cancel) {
   }
 
   // Now send a MQTT message to report the sent message
-  char hex_char[(len * 2) + 2];
-  AddLogZ_P(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_ZIGBEE D_JSON_ZIGBEE_EZSP_SENT_RAW " %s"),
-                                  ToHex_P(msg, len, hex_char, sizeof(hex_char)));
+  AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_ZIGBEE D_JSON_ZIGBEE_EZSP_SENT_RAW " %*_H"), len, msg);
 }
 
 // Send an EZSP command and data
 // Ex: Version with min v8 = 000008
 void ZigbeeEZSPSendCmd(const uint8_t *msg, size_t len) {
-  char hex_char[len*2 + 2];
-  ToHex_P(msg, len, hex_char, sizeof(hex_char));
-  AddLogZ_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE "ZbEZSPSend %s"), hex_char);
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE "ZbEZSPSend %*_H"), len, msg);
 
   SBuffer cmd(len+3);   // prefix with seq number (1 byte) and frame control bytes (2 bytes)
 
@@ -552,7 +538,7 @@ void ZigbeeEZSPSendDATA(const uint8_t *msg, size_t len) {
 }
 
 // Receive a high-level EZSP command/response, starting with 16-bits frame ID
-void ZigbeeProcessInputEZSP(class SBuffer &buf) {
+void ZigbeeProcessInputEZSP(SBuffer &buf) {
   // verify errors in first 2 bytes.
   // TODO
   // uint8_t  sequence_num = buf.get8(0);
@@ -571,11 +557,8 @@ void ZigbeeProcessInputEZSP(class SBuffer &buf) {
   }
   buf.setLen(buf.len() - 3);
 
-  char hex_char[buf.len()*2 + 2];
-
   // log message
-  ToHex_P((unsigned char*)buf.getBuffer(), buf.len(), hex_char, sizeof(hex_char));
-  Response_P(PSTR("{\"" D_JSON_ZIGBEE_EZSP_RECEIVED "\":\"%s\"}"), hex_char);
+  Response_P(PSTR("{\"" D_JSON_ZIGBEE_EZSP_RECEIVED "\":\"%_B\"}"), &buf);
   if (Settings.flag3.tuya_serial_mqtt_publish) {
     MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR(D_RSLT_SENSOR));
   } else {
@@ -607,7 +590,7 @@ void ZigbeeProcessInputEZSP(class SBuffer &buf) {
         log_level = LOG_LEVEL_DEBUG;
         break;
     }
-    AddLogZ_P(log_level, PSTR(D_LOG_ZIGBEE "%s"), TasmotaGlobal.mqtt_data);    // TODO move to LOG_LEVEL_DEBUG when stable
+    AddLog_P(log_level, PSTR(D_LOG_ZIGBEE "%s"), TasmotaGlobal.mqtt_data);    // TODO move to LOG_LEVEL_DEBUG when stable
   }
 
   // Pass message to state machine
@@ -632,7 +615,7 @@ void EZSP_HandleAck(uint8_t new_ack) {
 }
 
 // Receive raw ASH frame (CRC was removed, data unstuffed) but still contains frame numbers
-void ZigbeeProcessInputRaw(class SBuffer &buf) {
+void ZigbeeProcessInputRaw(SBuffer &buf) {
   uint8_t control_byte = buf.get8(0);
   uint8_t ack_num = control_byte & 0x07;        // keep 3 LSB
   if (control_byte & 0x80) {  // non DATA frame

@@ -39,6 +39,7 @@ private:
 
     u_short m_width; // image data info
     u_short m_height;
+    char RtpBuf[2048];
 };
 
 

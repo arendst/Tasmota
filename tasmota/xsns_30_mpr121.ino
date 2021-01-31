@@ -293,7 +293,7 @@ void Mpr121Init(struct mpr121 *pS, bool initial)
 			// Check if sensor is running
 			pS->running[i] = (0x00 != I2cRead8(pS->i2c_addr[i], MPR121_ECR_REG));
 
-			AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_I2C "MPR121%c: %sRunning"), pS->id[i], (pS->running[i]) ? "" : "NOT");
+			AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_I2C "MPR121%c: %sRunning"), pS->id[i], (pS->running[i]) ? "" : "NOT");
 
 		} else {
 
@@ -305,7 +305,7 @@ void Mpr121Init(struct mpr121 *pS, bool initial)
 	// Display no sensor found message
 	if (!(pS->connected[0] || pS->connected[1] || pS->connected[2]
 	      || pS->connected[3])) {
-		AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_I2C "MPR121: No sensors found"));
+		AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_I2C "MPR121: No sensors found"));
 	}
 }				// void Mpr121Init(struct mpr121 *s)
 
@@ -334,7 +334,7 @@ void Mpr121Show(struct mpr121 *pS, uint8_t function)
 
 			// Read data
 			if (!I2cValidRead16LE(&pS->current[i], pS->i2c_addr[i], MPR121_ELEX_REG)) {
-				AddLog_P(LOG_LEVEL_ERROR, PSTR(D_LOG_I2C "MPR121%c: ERROR: Cannot read data!"), pS->id[i]);
+				AddLog(LOG_LEVEL_ERROR, PSTR(D_LOG_I2C "MPR121%c: ERROR: Cannot read data!"), pS->id[i]);
 				Mpr121Init(pS, false);
 				return;
 			}
@@ -343,7 +343,7 @@ void Mpr121Show(struct mpr121 *pS, uint8_t function)
 
 				// Clear OVCF bit
 				I2cWrite8(pS->i2c_addr[i], MPR121_ELEX_REG, 0x00);
-				AddLog_P(LOG_LEVEL_ERROR, PSTR(D_LOG_I2C "MPR121%c: ERROR: Excess current detected! Fix circuits if it happens repeatedly! Soft-resetting MPR121 ..."), pS->id[i]);
+				AddLog(LOG_LEVEL_ERROR, PSTR(D_LOG_I2C "MPR121%c: ERROR: Excess current detected! Fix circuits if it happens repeatedly! Soft-resetting MPR121 ..."), pS->id[i]);
 				Mpr121Init(pS, false);
 				return;
 			}

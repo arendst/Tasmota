@@ -218,6 +218,15 @@ Z_Device & Z_Devices::updateDevice(uint16_t shortaddr, uint64_t longaddr) {
   return device_unk;
 }
 
+// Clear the router flag for each device, called at the beginning of ZbMap
+void Z_Devices::clearDeviceRouterInfo(void) {
+  for (Z_Device & device : zigbee_devices._devices) {
+    if (device.valid()) {
+      device.setRouter(false);
+    }
+  }
+}
+
 //
 // Clear all endpoints
 //
@@ -552,11 +561,16 @@ void Z_Device::jsonPublishAttrList(const char * json_prefix, const Z_attribute_l
     } else {
       snprintf_P(subtopic, sizeof(subtopic), PSTR("%s/%04X"), TasmotaGlobal.mqtt_topic, shortaddr);
     }
+    if (Settings.flag5.zb_topic_endpoint) {
+      if (attr_list.isValidSrcEp()) {
+        snprintf_P(subtopic, sizeof(subtopic), PSTR("%s_%d"), subtopic, attr_list.src_ep);
+      }
+    }
     char stopic[TOPSZ];
     if (Settings.flag5.zb_received_as_subtopic)
       GetTopic_P(stopic, TELE, subtopic, json_prefix);
     else
-      GetTopic_P(stopic, TELE, subtopic, D_RSLT_SENSOR);
+      GetTopic_P(stopic, TELE, subtopic, PSTR(D_RSLT_SENSOR));
     MqttPublish(stopic, Settings.flag.mqtt_sensor_retain);
   } else {
     MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
@@ -695,6 +709,9 @@ void Z_Device::jsonAddDataAttributes(Z_attribute_list & attr_list) const {
   // show internal data - mostly last known values
   for (auto & data_elt : data) {
     data_elt.toAttributes(attr_list);
+    if (data_elt.getType() == Z_Data_Type::Z_Light) {   // since we don't have virtual methods, do an explicit test
+      ((Z_Data_Light&)data_elt).toRGBAttributes(attr_list);
+    }
   }
 }
 // Add "BatteryPercentage", "LastSeen", "LastSeenEpoch", "LinkQuality"
@@ -728,6 +745,7 @@ void Z_Device::jsonLightState(Z_attribute_list & attr_list) const {
       if (light.validHue()) {
         attr_list.findOrCreateAttribute(PSTR("Hue")).setUInt(light.getHue());
       }
+      light.toRGBAttributes(attr_list);
     }
     attr_list.addAttributePMEM(PSTR("Light")).setInt(light_mode);
   }
@@ -763,7 +781,7 @@ String Z_Devices::dumpCoordinator(void) const {
   attr_list.addAttributePMEM(PSTR("IEEEAddr")).setHex64(localIEEEAddr);
   attr_list.addAttributePMEM(PSTR("TotalDevices")).setUInt(zigbee_devices.devicesSize());
 
-  return attr_list.toString();
+  return attr_list.toString(true);
 }
 
 // If &device == nullptr, then dump all

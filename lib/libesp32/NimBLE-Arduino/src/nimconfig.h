@@ -15,8 +15,13 @@
  * This converts them to "CONFIG_BT_NIMBLE_" format used in the latest IDF.
  */
 
-/* Detect if using ESP-IDF or Arduino (Arduino won't have these defines in sdkconfig) */
-#if defined(CONFIG_BT_NIMBLE_TASK_STACK_SIZE) || defined(CONFIG_NIMBLE_TASK_STACK_SIZE)
+/* Detect if using ESP-IDF or Arduino (Arduino won't have these defines in sdkconfig) 
+ *
+ * Note: We do not use #ifdef CONFIG_BT_NIMBLE_ENABLED since we cannot enable NimBLE when using
+ * Arduino as a component and the esp-nimble-compnent, so we check if other config options are defined.
+ * We also need to use a config parameter that must be present and not likely defined in the command line.
+ */
+#if defined(CONFIG_BT_NIMBLE_GAP_DEVICE_NAME_MAX_LEN) || defined(CONFIG_NIMBLE_GAP_DEVICE_NAME_MAX_LEN)
 
 #if defined(CONFIG_NIMBLE_ENABLED) && !defined(CONFIG_BT_NIMBLE_ENABLED)
 #define CONFIG_BT_NIMBLE_ENABLED
@@ -51,22 +56,30 @@
 /** @brief Comment out if not using NimBLE Client functions \n
  *  Reduces flash size by approx. 7kB.
  */
+#ifndef CONFIG_BT_NIMBLE_ROLE_CENTRAL_DISABLED
 #define CONFIG_BT_NIMBLE_ROLE_CENTRAL
+#endif
 
 /** @brief Comment out if not using NimBLE Scan functions \n
  *  Reduces flash size by approx. 26kB.
  */
+#ifndef CONFIG_BT_NIMBLE_ROLE_OBSERVER_DISABLED
 #define CONFIG_BT_NIMBLE_ROLE_OBSERVER
+#endif
 
 /** @brief Comment out if not using NimBLE Server functions \n
  *  Reduces flash size by approx. 16kB.
  */
-// #define CONFIG_BT_NIMBLE_ROLE_PERIPHERAL
+#ifndef CONFIG_BT_NIMBLE_ROLE_PERIPHERAL_DISABLED
+#define CONFIG_BT_NIMBLE_ROLE_PERIPHERAL
+#endif
 
 /** @brief Comment out if not using NimBLE Advertising functions \n
  *  Reduces flash size by approx. 5kB.
  */
-// #define CONFIG_BT_NIMBLE_ROLE_BROADCASTER
+#ifndef CONFIG_BT_NIMBLE_ROLE_BROADCASTER_DISABLED
+#define CONFIG_BT_NIMBLE_ROLE_BROADCASTER
+#endif
 
 /*  Uncomment to see debug log messages from the NimBLE host
  *  Uses approx. 32kB of flash memory.
@@ -89,38 +102,52 @@
 // #define CONFIG_NIMBLE_CPP_ENABLE_ADVERTISMENT_TYPE_TEXT
 
 /** @brief Sets the core NimBLE host runs on */
+#ifndef CONFIG_BT_NIMBLE_PINNED_TO_CORE
 #define CONFIG_BT_NIMBLE_PINNED_TO_CORE 0
+#endif
 
 /** @brief Sets the stack size for the NimBLE host task */
+#ifndef CONFIG_BT_NIMBLE_TASK_STACK_SIZE
 #define CONFIG_BT_NIMBLE_TASK_STACK_SIZE 4096
+#endif
 
 /**
  * @brief Sets the memory pool where NimBLE will be loaded
  * @details By default NimBLE is loaded in internal ram.\n
  * To use external PSRAM you must change this to `#define CONFIG_BT_NIMBLE_MEM_ALLOC_MODE_EXTERNAL 1`
  */
+#ifndef CONFIG_BT_NIMBLE_MEM_ALLOC_MODE_EXTERNAL
 #define CONFIG_BT_NIMBLE_MEM_ALLOC_MODE_INTERNAL 1
+#endif
 
 /** @brief Sets the number of simultaneous connections (esp controller max is 9) */
+#ifndef CONFIG_BT_NIMBLE_MAX_CONNECTIONS
 #define CONFIG_BT_NIMBLE_MAX_CONNECTIONS 3
+#endif
 
 /** @brief Sets the number of devices allowed to store/bond with */
+#ifndef CONFIG_BT_NIMBLE_MAX_BONDS
 #define CONFIG_BT_NIMBLE_MAX_BONDS 3
+#endif
 
 /** @brief Sets the maximum number of CCCD subscriptions to store */
+#ifndef CONFIG_BT_NIMBLE_MAX_CCCDS
 #define CONFIG_BT_NIMBLE_MAX_CCCDS 8
+#endif
+
+/** @brief Default device name */
+#ifndef CONFIG_BT_NIMBLE_SVC_GAP_DEVICE_NAME
+#define CONFIG_BT_NIMBLE_SVC_GAP_DEVICE_NAME "nimble"
+#endif
 
 /** @brief Set if CCCD's and bond data should be stored in NVS */
-#define CONFIG_BT_NIMBLE_NVS_PERSIST 0
+#define CONFIG_BT_NIMBLE_NVS_PERSIST 1
 
 /** @brief Allow legacy paring */
 #define CONFIG_BT_NIMBLE_SM_LEGACY 1
 
 /** @brief Allow BLE secure connections */
 #define CONFIG_BT_NIMBLE_SM_SC 1
-
-/** @brief Default device name */
-#define CONFIG_BT_NIMBLE_SVC_GAP_DEVICE_NAME "nimble"
 
 /** @brief Max device name length (bytes) */
 #define CONFIG_BT_NIMBLE_GAP_DEVICE_NAME_MAX_LEN 31
@@ -153,7 +180,6 @@
  * you are sending large blocks of data with a low MTU. E.g: 512 bytes with 23 MTU will fail. 
  */
 #define CONFIG_BT_NIMBLE_MSYS1_BLOCK_COUNT 12
-
 
 /** @brief Random address refresh time in seconds */
 #define CONFIG_BT_NIMBLE_RPA_TIMEOUT 900

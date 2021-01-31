@@ -30,6 +30,7 @@
 #include <string>
 
 class NimBLERemoteService;
+class NimBLERemoteCharacteristic;
 class NimBLEClientCallbacks;
 class NimBLEAdvertisedDevice;
 
@@ -54,7 +55,8 @@ public:
     size_t                                      deleteService(const NimBLEUUID &uuid);
     std::string                                 getValue(const NimBLEUUID &serviceUUID, const NimBLEUUID &characteristicUUID);
     bool                                        setValue(const NimBLEUUID &serviceUUID, const NimBLEUUID &characteristicUUID,
-                                                         const std::string &value);
+                                                         const std::string &value, bool response = false);
+    NimBLERemoteCharacteristic*                 getCharacteristic(const uint16_t handle);
     bool                                        isConnected();
     void                                        setClientCallbacks(NimBLEClientCallbacks *pClientCallbacks,
                                                                    bool deleteCallbacks = true);
@@ -82,16 +84,17 @@ private:
                                                 const struct ble_gatt_error *error,
                                                 const struct ble_gatt_svc *service,
                                                 void *arg);
+    static void             dcTimerCb(ble_npl_event *event);
     bool                    retrieveServices(const NimBLEUUID *uuid_filter = nullptr);
 
     NimBLEAddress           m_peerAddress;
     uint16_t                m_conn_id;
-    bool                    m_isConnected;
-    bool                    m_waitingToConnect;
+    bool                    m_connEstablished;
     bool                    m_deleteCallbacks;
     int32_t                 m_connectTimeout;
     NimBLEClientCallbacks*  m_pClientCallbacks;
-    ble_task_data_t         *m_pTaskData;
+    ble_task_data_t*        m_pTaskData;
+    ble_npl_callout         m_dcTimer;
 
     std::vector<NimBLERemoteService*> m_servicesVector;
 

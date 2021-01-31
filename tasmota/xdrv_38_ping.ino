@@ -303,7 +303,7 @@ void PingResponsePoll(void) {
                       ",\"AvgTime\":%d"
                       "}}}"),
                       ping->hostname.c_str(),
-                      success ? "true" : "false",
+                      success ? PSTR("true") : PSTR("false"),
                       ip & 0xFF, (ip >> 8) & 0xFF, (ip >> 16) & 0xFF, ip >> 24,
                       success,
                       ping->timeout_count,

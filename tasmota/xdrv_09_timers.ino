@@ -839,9 +839,9 @@ void HandleTimerConfiguration(void)
 {
   if (!HttpCheckPriviledgedAccess()) { return; }
 
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_CONFIGURE_TIMER));
+  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_CONFIGURE_TIMER));
 
-  if (Webserver->hasArg("save")) {
+  if (Webserver->hasArg(F("save"))) {
     TimerSaveSettings();
     HandleConfiguration();
     return;
@@ -883,8 +883,8 @@ void TimerSaveSettings(void)
   char message[32 + (MAX_TIMERS *11)];  // MQT: Timers 0,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000
   Timer timer;
 
-  Settings.flag3.timers_enable = Webserver->hasArg("e0");  // CMND_TIMERS
-  WebGetArg("t0", tmp, sizeof(tmp));
+  Settings.flag3.timers_enable = Webserver->hasArg(F("e0"));  // CMND_TIMERS
+  WebGetArg(PSTR("t0"), tmp, sizeof(tmp));
   char *p = tmp;
   snprintf_P(message, sizeof(message), PSTR(D_LOG_MQTT D_CMND_TIMERS " %d"), Settings.flag3.timers_enable);  // CMND_TIMERS
   for (uint32_t i = 0; i < MAX_TIMERS; i++) {

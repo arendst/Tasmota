@@ -898,6 +898,29 @@ jobs:
         path: ./build_output/firmware
 
 
+  tasmota32-core2:
+    needs: tasmota_pull
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v1
+    - name: Set up Python
+      uses: actions/setup-python@v1
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -U platformio
+        platformio upgrade --dev
+        platformio update
+    - name: Run PlatformIO
+      run: |
+        platformio run -e tasmota32-core2
+    - uses: actions/upload-artifact@v2
+      with:
+        name: firmware
+        path: ./build_output/firmware
+
+
   tasmota32-knx:
     needs: tasmota_pull
     runs-on: ubuntu-latest
@@ -1600,11 +1623,10 @@ jobs:
         [ ! -f ./mv_firmware/tasmota32-display.* ] || mv ./mv_firmware/tasmota32-display.* ./firmware/tasmota32/
         [ ! -f ./mv_firmware/tasmota32-web*.* ] || mv ./mv_firmware/tasmota32-web*.* ./firmware/tasmota32/
         [ ! -f ./mv_firmware/tasmota32-odroidgo.* ] || mv ./mv_firmware/tasmota32-odroidgo.* ./firmware/tasmota32/
+        [ ! -f ./mv_firmware/tasmota32-core2.* ] || mv ./mv_firmware/tasmota32-core2.* ./firmware/tasmota32/
         [ ! -f ./mv_firmware/tasmota32-knx.* ] || mv ./mv_firmware/tasmota32-knx.* ./firmware/tasmota32/
         [ ! -f ./mv_firmware/tasmota32* ] || mv ./mv_firmware/tasmota32* ./firmware/tasmota32/languages/
         [ ! -f ./mv_firmware/* ] || mv ./mv_firmware/* ./firmware/tasmota/languages/
-        rm ./firmware/tasmota32/*.gz
-        rm ./firmware/tasmota32/languages/*.gz
         [ ! -f ./tools/Esptool/ESP32/*.* ] || mv ./tools/Esptool/ESP32/*.* ./firmware/tasmota32/ESP32_needed_files/
         [ ! -f ./tools/Esptool/Odroid_go/*.* ] || mv ./tools/Esptool/Odroid_go/*.* ./firmware/tasmota32/Odroid_go_needed_files/
         [ ! -f ./FIRMWARE.md ] || mv -f ./RELEASENOTES.md ./README.md

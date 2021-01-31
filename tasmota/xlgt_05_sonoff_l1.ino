@@ -25,11 +25,11 @@
 
 #define XLGT_05                           5
 
-//#define SONOFF_L1_START_DELAY                // Sync Nuvotron power state with Tasmota on power up
+#define SONOFF_L1_START_DELAY                // Sync Nuvotron power state with Tasmota on power up
 //#define SONOFF_L1_ALLOW_REMOTE_INTERRUPT     // During schemes 2..4
 #define SONOFF_L1_DEBUG1                     // Add send and receive logging
 
-#define SONOFF_L1_BUFFER_SIZE           140
+#define SONOFF_L1_BUFFER_SIZE           170
 
 #define SONOFF_L1_MODE_COLORFUL           1  // [Color key] Colorful (static color)
 #define SONOFF_L1_MODE_COLORFUL_GRADIENT  2  // [SMOOTH] Colorful Gradient
@@ -45,17 +45,25 @@
 #define SONOFF_L1_MODE_SYNC_TO_MUSIC     12  // Sync to music [Speed 1- 100, sensitivity 1 - 10]
 
 struct SNFL1 {
+  char *buffer;
 #ifdef SONOFF_L1_ALLOW_REMOTE_INTERRUPT
   uint32_t unlock = 0;
   bool receive_ready = true;
 #endif
-#ifdef SONOFF_L1_START_DELAY
-  char buffer[SONOFF_L1_BUFFER_SIZE];
-#endif
   uint8_t color[3];
   uint8_t dimmer;
   uint8_t power;
+  uint8_t old_music_sync = 0;
+  uint8_t music_sync = 0;
+  uint8_t sensitive;
+  uint8_t speed;
 } Snfl1;
+
+const char kL1Commands[] PROGMEM = "L1|"  // Prefix
+  "MusicSync";
+
+void (* const L1Command[])(void) PROGMEM = {
+  &CmndMusicSync };
 
 /********************************************************************************************/
 
@@ -66,9 +74,9 @@ Ticker SnfL1StartDelay;
 void SnfL1SendDelayed(void) {
   SnfL1Send();
 }
+#endif  // SONOFF_L1_START_DELAY
 
-void SnfL1Send(void)
-{
+void SnfL1Send(void) {
 #ifdef SONOFF_L1_DEBUG1
   AddLog_P(LOG_LEVEL_DEBUG, PSTR("SL1: Send %s"), Snfl1.buffer);
 #endif
@@ -77,34 +85,13 @@ void SnfL1Send(void)
   Serial.flush();
 }
 
-void SnfL1SerialSendOk(void)
-{
-  snprintf_P(Snfl1.buffer, sizeof(Snfl1.buffer), PSTR("AT+SEND=ok"));
+void SnfL1SerialSendOk(void) {
+  snprintf_P(Snfl1.buffer, SONOFF_L1_BUFFER_SIZE, PSTR("AT+SEND=ok"));
 
   SnfL1Send();
 }
-#else
-void SnfL1Send(const char *buffer)
-{
-#ifdef SONOFF_L1_DEBUG1
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR("SL1: Send %s"), buffer);
-#endif
-  Serial.print(buffer);
-  Serial.write(0x1B);
-  Serial.flush();
-}
 
-void SnfL1SerialSendOk(void)
-{
-  char buffer[16];
-  snprintf_P(buffer, sizeof(buffer), PSTR("AT+SEND=ok"));
-
-  SnfL1Send(buffer);
-}
-#endif  // SONOFF_L1_START_DELAY
-
-bool SnfL1SerialInput(void)
-{
+bool SnfL1SerialInput(void) {
   if (TasmotaGlobal.serial_in_byte != 0x1B) {
     if (TasmotaGlobal.serial_in_byte_counter >= SONOFF_L1_BUFFER_SIZE) {
       TasmotaGlobal.serial_in_byte_counter = 0;
@@ -147,7 +134,7 @@ bool SnfL1SerialInput(void)
 
         if (!strncmp(token2, "\"sequence\"", 10)) {
 
-//          AddLog_P(LOG_LEVEL_DEBUG, PSTR("SL1: Rcvd sequence %s"), token3);
+//          AddLog(LOG_LEVEL_DEBUG, PSTR("SL1: Rcvd sequence %s"), token3);
 
           token = nullptr;
         }
@@ -155,7 +142,7 @@ bool SnfL1SerialInput(void)
         else if (!strncmp(token2, "\"switch\"", 8)) {
           switch_state = !strncmp(token3, "\"on\"", 4) ? true : false;
 
-//          AddLog_P(LOG_LEVEL_DEBUG, PSTR("SL1: Rcvd switch %d (%d)"), switch_state, Light.power);
+//          AddLog(LOG_LEVEL_DEBUG, PSTR("SL1: Rcvd switch %d (%d)"), switch_state, Light.power);
 
           is_power_change = (switch_state != Light.power);
         }
@@ -178,7 +165,7 @@ bool SnfL1SerialInput(void)
           bool all_color_channels_updated = color_updated[0] && color_updated[1] && color_updated[2];
           if (all_color_channels_updated) {
 
-//            AddLog_P(LOG_LEVEL_DEBUG, PSTR("SL1: Rcvd color R%d G%d B%d (R%d G%d B%d)"),
+//            AddLog(LOG_LEVEL_DEBUG, PSTR("SL1: Rcvd color R%d G%d B%d (R%d G%d B%d)"),
 //              Snfl1.color[0], Snfl1.color[1], Snfl1.color[2],
 //              Settings.light_color[0], Settings.light_color[1], Settings.light_color[2]);
 
@@ -190,7 +177,7 @@ bool SnfL1SerialInput(void)
         else if (!strncmp(token2, "\"bright\"", 8)) {
           uint8_t dimmer = atoi(token3);
 
-//          AddLog_P(LOG_LEVEL_DEBUG, PSTR("SL1: Rcvd dimmer %d (%d)"), dimmer, Settings.light_dimmer);
+//          AddLog(LOG_LEVEL_DEBUG, PSTR("SL1: Rcvd dimmer %d (%d)"), dimmer, Settings.light_dimmer);
 
           is_brightness_change = (Light.power && (dimmer > 0) && (dimmer != Settings.light_dimmer));
           snprintf_P(cmnd_dimmer, sizeof(cmnd_dimmer), PSTR(D_CMND_DIMMER " %d"), dimmer);
@@ -240,8 +227,7 @@ bool SnfL1SerialInput(void)
 
 /********************************************************************************************/
 
-bool SnfL1SetChannels(void)
-{
+bool SnfL1SetChannels(void) {
 #ifdef SONOFF_L1_ALLOW_REMOTE_INTERRUPT
   if (Snfl1.receive_ready || TimeReached(Snfl1.unlock)) {
 #endif
@@ -263,34 +249,30 @@ bool SnfL1SetChannels(void)
         Snfl1.color[i] = scale_col[i];
       }
     }
-    if (!power_changed && !dimmer_changed && !color_changed) { return true; }
+    if (!power_changed && !dimmer_changed && !color_changed && (Snfl1.old_music_sync == Snfl1.music_sync)) { return true; }
 
-#ifdef SONOFF_L1_START_DELAY
-    snprintf_P(Snfl1.buffer, sizeof(Snfl1.buffer), PSTR("AT+UPDATE=\"sequence\":\"%d%03d\",\"switch\":\"%s\",\"light_type\":1,\"colorR\":%d,\"colorG\":%d,\"colorB\":%d,\"bright\":%d,\"mode\":%d"),
+    uint32_t mode = SONOFF_L1_MODE_COLORFUL;
+    if (Snfl1.music_sync) {
+      mode = SONOFF_L1_MODE_SYNC_TO_MUSIC;
+    }
+
+    snprintf_P(Snfl1.buffer, SONOFF_L1_BUFFER_SIZE, PSTR("AT+UPDATE=\"sequence\":\"%d%03d\",\"switch\":\"%s\",\"light_type\":1,\"colorR\":%d,\"colorG\":%d,\"colorB\":%d,\"bright\":%d,\"mode\":%d,\"sensitive\":%d,\"speed\":%d"),
       LocalTime(), millis()%1000,
       Snfl1.power ? "on" : "off",
       Snfl1.color[0], Snfl1.color[1], Snfl1.color[2],
       Snfl1.dimmer,
-      SONOFF_L1_MODE_COLORFUL);
+      mode,
+      Snfl1.sensitive,
+      Snfl1.speed);
 
+#ifdef SONOFF_L1_START_DELAY
     static bool first_call = true;
     if (first_call) {
       SnfL1StartDelay.once_ms(900, SnfL1SendDelayed);  // Allow startup time for Nuvotron microcontroller
       first_call = false;
-    } else {
-      SnfL1Send();
-    }
-#else
-    char buffer[SONOFF_L1_BUFFER_SIZE];
-    snprintf_P(buffer, sizeof(buffer), PSTR("AT+UPDATE=\"sequence\":\"%d%03d\",\"switch\":\"%s\",\"light_type\":1,\"colorR\":%d,\"colorG\":%d,\"colorB\":%d,\"bright\":%d,\"mode\":%d"),
-      LocalTime(), millis()%1000,
-      Snfl1.power ? "on" : "off",
-      Snfl1.color[0], Snfl1.color[1], Snfl1.color[2],
-      Snfl1.dimmer,
-      SONOFF_L1_MODE_COLORFUL);
-
-    SnfL1Send(buffer);
+    } else
 #endif  // SONOFF_L1_START_DELAY
+    SnfL1Send();
 
 #ifdef SONOFF_L1_ALLOW_REMOTE_INTERRUPT
     Snfl1.unlock = millis() + 500;  // Allow time for the RC
@@ -300,22 +282,51 @@ bool SnfL1SetChannels(void)
   return true;
 }
 
-bool SnfL1ModuleSelected(void)
-{
+bool SnfL1ModuleSelected(void) {
   if (SONOFF_L1 == TasmotaGlobal.module_type) {
     if (PinUsed(GPIO_RXD) && PinUsed(GPIO_TXD)) {
-      SetSerial(19200, TS_SERIAL_8N1);
+      Snfl1.buffer = (char*)malloc(SONOFF_L1_BUFFER_SIZE);
+      if (Snfl1.buffer) {
+        SetSerial(19200, TS_SERIAL_8N1);
 
-      Snfl1.power = !Light.power;
-      Snfl1.dimmer = !light_state.getDimmer();
+        Snfl1.power = !Light.power;
+        Snfl1.dimmer = !light_state.getDimmer();
+        Snfl1.music_sync = 0;
+        Snfl1.sensitive = 5;   // 1..10
+        Snfl1.speed = 50;      // 1..100
 
-      TasmotaGlobal.light_type = LT_RGB;
-      TasmotaGlobal.light_driver = XLGT_05;
-      AddLog_P(LOG_LEVEL_DEBUG, PSTR("LGT: Sonoff L1 Found"));
-      return true;
+        TasmotaGlobal.light_type = LT_RGB;
+        TasmotaGlobal.light_driver = XLGT_05;
+        AddLog(LOG_LEVEL_DEBUG, PSTR("LGT: Sonoff L1 Found"));
+        return true;
+      }
     }
   }
   return false;
+}
+
+void CmndMusicSync(void) {
+  // Format is L1MusicSync on/off/toggle, sensitivity, speed
+  // sensitivity 1..10, speed 1..100
+  if (XdrvMailbox.data_len > 0) {
+    Snfl1.old_music_sync = Snfl1.music_sync;
+    uint32_t parm[3] = { 0 };
+    ParseParameters(3, parm);
+    if (2 == parm[0]) {
+      Snfl1.music_sync ^= 1;                 // Toggle
+    } else {
+      Snfl1.music_sync = parm[0] & 1;        // On or Off
+    }
+    if ((parm[1] > 0) && (parm[1] < 11)) {
+      Snfl1.sensitive = parm[1];             // 1..10
+    }
+    if ((parm[2] > 0) && (parm[2] < 101)) {
+      Snfl1.speed = parm[2];                 // 1..100
+    }
+    SnfL1SetChannels();
+  }
+  Response_P(PSTR("{\"%s\":{\"Mode\":\"%s\",\"Sensitive\":%d,\"Speed\":%d}}"),
+    XdrvMailbox.command, GetStateText(Snfl1.music_sync), Snfl1.sensitive, Snfl1.speed);
 }
 
 /*********************************************************************************************\
@@ -335,6 +346,9 @@ bool Xlgt05(uint8_t function)
       break;
     case FUNC_MODULE_INIT:
       result = SnfL1ModuleSelected();
+      break;
+    case FUNC_COMMAND:
+      result = DecodeCommand(kL1Commands, L1Command);
       break;
   }
   return result;

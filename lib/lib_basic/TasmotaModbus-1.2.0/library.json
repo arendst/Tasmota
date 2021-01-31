@@ -11,5 +11,5 @@
         "url": "https://github.com/arendst/Tasmota/lib/TasmotaModbus"
     },
     "frameworks": "arduino",
-    "platforms": "espressif8266"
+    "platforms": ["espressif8266", "espressif32"]
 }

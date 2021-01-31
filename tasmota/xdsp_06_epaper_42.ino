@@ -96,7 +96,7 @@ void EpdInitDriver42() {
 #endif
 
     epd42_init_done = true;
-    AddLog_P(LOG_LEVEL_INFO, PSTR("DSP: E-Paper 4.2"));
+    AddLog(LOG_LEVEL_INFO, PSTR("DSP: E-Paper 4.2"));
   }
 }
 

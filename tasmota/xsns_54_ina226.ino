@@ -125,7 +125,7 @@ static void _debug_fval(const char *str, float fval, uint8_t prec = 4 )
 {
   char fstr[32];
   dtostrfd(fval, prec, fstr);
-  AddLog_P( LOG_LEVEL_DEBUG, PSTR("%s: %s"), str, fstr );
+  AddLog( LOG_LEVEL_DEBUG, PSTR("%s: %s"), str, fstr );
 }
 
 
@@ -168,7 +168,7 @@ bool Ina226TestPresence(uint8_t device)
   // Read config
 
   uint16_t config  = I2cRead16( Ina226Info[device].address, INA226_REG_CONFIG );
-  //AddLog_P( LOG_LEVEL_NONE, PSTR("Config register %04x" ), config);
+  //AddLog( LOG_LEVEL_NONE, PSTR("Config register %04x" ), config);
 
   if (config != Ina226Info[device].config)
     return false;
@@ -203,11 +203,11 @@ void Ina226Init()
 
   Ina226Info_t *p = Ina226Info;
 
-  //AddLog_P( LOG_LEVEL_NONE, "Ina226Init");
-//  AddLog_P( LOG_LEVEL_NONE, "Size of Settings: %d bytes", sizeof(Settings));
+  //AddLog( LOG_LEVEL_NONE, "Ina226Init");
+//  AddLog( LOG_LEVEL_NONE, "Size of Settings: %d bytes", sizeof(Settings));
 
 //  if (!TasmotaGlobal.i2c_enabled)
-//    AddLog_P(LOG_LEVEL_DEBUG, "INA226: Initialization failed: No I2C support");
+//    AddLog(LOG_LEVEL_DEBUG, "INA226: Initialization failed: No I2C support");
 
 
   // Clear Ina226 info data
@@ -216,7 +216,7 @@ void Ina226Init()
     *p = {0};
   }
 
-  //AddLog_P( LOG_LEVEL_NONE, PSTR("Sizeof Ina226Cfg: %d" ), sizeof(Ina226Cfg));
+  //AddLog( LOG_LEVEL_NONE, PSTR("Sizeof Ina226Cfg: %d" ), sizeof(Ina226Cfg));
 
   // Detect devices
 
@@ -227,25 +227,25 @@ void Ina226Init()
 
     // Skip device probing if the full scale current is zero
 
-    //AddLog_P( LOG_LEVEL_NONE, "fs_i[%d]: %d", i, Settings.ina226_i_fs[i]);
+    //AddLog( LOG_LEVEL_NONE, "fs_i[%d]: %d", i, Settings.ina226_i_fs[i]);
     if (!Settings.ina226_i_fs[i])
       continue;
 
 
-    //AddLog_P( LOG_LEVEL_NONE, PSTR("INA226 trying address %02x" ), addr );
+    //AddLog( LOG_LEVEL_NONE, PSTR("INA226 trying address %02x" ), addr );
 
     // Try Resetting the device
 
     if (!I2cWrite16( addr, INA226_REG_CONFIG, INA226_CONFIG_RESET)){
 
-      AddLog_P( LOG_LEVEL_DEBUG, "No INA226 at address: %02X", addr);
+      AddLog( LOG_LEVEL_DEBUG, "No INA226 at address: %02X", addr);
       continue; // No device
     }
 
     // Read config
 
     uint16_t config  = I2cRead16( addr, INA226_REG_CONFIG );
-    //AddLog_P( LOG_LEVEL_NONE, PSTR("INA226 Config register %04x" ), config);
+    //AddLog( LOG_LEVEL_NONE, PSTR("INA226 Config register %04x" ), config);
 
     if (INA226_RES_CONFIG != config)
       continue;
@@ -264,19 +264,19 @@ void Ina226Init()
     // Configuration
     p->config = config;
     // Full scale current in tenths of an amp
-    //AddLog_P( LOG_LEVEL_NONE, "Full Scale I in tenths of an amp: %u", Settings.ina226_i_fs[i]);
+    //AddLog( LOG_LEVEL_NONE, "Full Scale I in tenths of an amp: %u", Settings.ina226_i_fs[i]);
     p->i_lsb = (((float) Settings.ina226_i_fs[i])/10.0f)/32768.0f;
     //_debug_fval("i_lsb: %s", p->i_lsb, 7);
 
     // Get shunt resistor value in micro ohms
     uint32_t r_shunt_uohms = _expand_r_shunt(Settings.ina226_r_shunt[i]);
-    //AddLog_P( LOG_LEVEL_NONE, "Shunt R in micro-ohms: %u", r_shunt_uohms);
+    //AddLog( LOG_LEVEL_NONE, "Shunt R in micro-ohms: %u", r_shunt_uohms);
 
 
     p->calibrationValue = ((uint16_t) (0.00512/(p->i_lsb * r_shunt_uohms/1000000.0f)));
     // Device present
     p->present = true;
-    //AddLog_P( LOG_LEVEL_NONE, "INA226 Device %d calibration value: %04X", i, p->calibrationValue);
+    //AddLog( LOG_LEVEL_NONE, "INA226 Device %d calibration value: %04X", i, p->calibrationValue);
 
     Ina226SetCalibration(i);
 
@@ -336,11 +336,11 @@ float Ina226ReadPower_w(uint8_t device)
 
 void Ina226Read(uint8_t device)
 {
-  //AddLog_P( LOG_LEVEL_NONE, "Ina226Read");
+  //AddLog( LOG_LEVEL_NONE, "Ina226Read");
   voltages[device] = Ina226ReadBus_v(device);
   currents[device] = Ina226ReadShunt_i(device);
   powers[device] = Ina226ReadPower_w(device);
-  //AddLog_P( LOG_LEVEL_NONE, "INA226 Device %d", device );
+  //AddLog( LOG_LEVEL_NONE, "INA226 Device %d", device );
   //_debug_fval("Voltage", voltages[device]);
   //_debug_fval("Current", currents[device]);
   //_debug_fval("Power", powers[device]);
@@ -352,7 +352,7 @@ void Ina226Read(uint8_t device)
 
 void Ina226EverySecond()
 {
-  //AddLog_P( LOG_LEVEL_NONE, "Ina226EverySecond");
+  //AddLog( LOG_LEVEL_NONE, "Ina226EverySecond");
   for (uint8_t device = 0; device < INA226_MAX_ADDRESSES; device++){
     // If there are Ina226s, and the device was present, and the device still is present, read its registers
     if (Ina226sFound && Ina226Info[device].present && Ina226TestPresence(device)){
@@ -363,7 +363,7 @@ void Ina226EverySecond()
         // If device was present, note that it dropped off here
         //if(Ina226Info[device].present){
           //reinit_count[device]++;
-          //AddLog_P( LOG_LEVEL_DEBUG, "INA226 Device %d dropped off, count: %d", device, reinit_count[device]);
+          //AddLog( LOG_LEVEL_DEBUG, "INA226 Device %d dropped off, count: %d", device, reinit_count[device]);
         //}
         // Device no longer present
         Ina226Info[device].present = false;
@@ -384,8 +384,8 @@ bool Ina226CommandSensor()
   uint8_t i, param_count, device, p1 = XdrvMailbox.payload;
   uint32_t r_shunt_uohms;
   uint16_t compact_r_shunt_uohms;
-  //AddLog_P( LOG_LEVEL_NONE, "Command received: %d", XdrvMailbox.payload);
-  //AddLog_P( LOG_LEVEL_NONE, "Command data received: %s", XdrvMailbox.data);
+  //AddLog( LOG_LEVEL_NONE, "Command received: %d", XdrvMailbox.payload);
+  //AddLog( LOG_LEVEL_NONE, "Command data received: %s", XdrvMailbox.data);
 
   // Make a copy of the data and add another terminator
 
@@ -401,7 +401,7 @@ bool Ina226CommandSensor()
     if (param_str[i] == ' ' || param_str[i] == ',' || param_str[i] == 0){
       param_str[i] = 0;
       params[param_count] = cp;
-      //AddLog_P( LOG_LEVEL_NONE, "INA226 Command parameter: %d, value: %s", param_count, params[param_count]);
+      //AddLog( LOG_LEVEL_NONE, "INA226 Command parameter: %d, value: %s", param_count, params[param_count]);
       param_count++;
       cp = param_str + i + 1;
     }
@@ -437,7 +437,7 @@ bool Ina226CommandSensor()
         r_shunt_uohms = (uint32_t) ((CharToFloat(params[1])) * 1000000.0f);
 
 
-        //AddLog_P( LOG_LEVEL_NONE, "r_shunt_uohms: %d", r_shunt_uohms);
+        //AddLog( LOG_LEVEL_NONE, "r_shunt_uohms: %d", r_shunt_uohms);
         if (r_shunt_uohms > 32767){
           uint32_t r_shunt_mohms = r_shunt_uohms/1000UL;
           Settings.ina226_r_shunt[device] = (uint16_t) (r_shunt_mohms | 0x8000);
@@ -445,13 +445,13 @@ bool Ina226CommandSensor()
         else
           Settings.ina226_r_shunt[device] = (uint16_t) r_shunt_uohms;
 
-        //AddLog_P( LOG_LEVEL_NONE, "r_shunt_compacted: %04X", Settings.ina226_r_shunt[device]);
+        //AddLog( LOG_LEVEL_NONE, "r_shunt_compacted: %04X", Settings.ina226_r_shunt[device]);
         show_config = true;
         break;
 
       case 2: // Set full scale current in tenths of amps from user input in Amps
         Settings.ina226_i_fs[device] = (uint16_t) ((CharToFloat(params[1])) * 10.0f);
-        //AddLog_P( LOG_LEVEL_NONE, "i_fs: %d", Settings.ina226_i_fs[device]);
+        //AddLog( LOG_LEVEL_NONE, "i_fs: %d", Settings.ina226_i_fs[device]);
         show_config = true;
         break;
 

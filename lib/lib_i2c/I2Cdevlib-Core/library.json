@@ -9,5 +9,5 @@
     "url": "https://github.com/jrowberg/i2cdevlib.git"
   },
   "frameworks": "arduino",
-  "platforms": "atmelavr"
+  "platforms": "*"
 }

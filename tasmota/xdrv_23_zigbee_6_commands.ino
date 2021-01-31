@@ -69,6 +69,7 @@ const Z_CommandConverter Z_Commands[] PROGMEM = {
   { Z_(PowerOffEffect), 0x0006, 0x40, 0x81,   Z_(xxyy) },         // Power Off With Effect
   { Z_(PowerOnRecall),  0x0006, 0x41, 0x81,   Z_() },             // Power On With Recall Global Scene
   { Z_(PowerOnTimer),   0x0006, 0x42, 0x81,   Z_(xxyyyyzzzz) },   // Power On with Timed Off
+  { Z_(LidlPower),      0x0006, 0xFD, 0x01,   Z_(xx) },           // Lidl specific encoding
   { Z_(Power),          0x0006, 0xFF, 0x01,   Z_() },             // 0=Off, 1=On, 2=Toggle
   { Z_(Dimmer),         0x0008, 0x04, 0x01,   Z_(xx0A00) },       // Move to Level with On/Off, xx=0..254 (255 is invalid)
   { Z_(DimmerUp),       0x0008, 0x06, 0x01,   Z_(00190200) },       // Step up by 10%, 0.2 secs
@@ -81,6 +82,7 @@ const Z_CommandConverter Z_Commands[] PROGMEM = {
   { Z_(HueSat),         0x0300, 0x06, 0x01,   Z_(xxyy0A00) },     // Hue, Sat
   { Z_(Color),          0x0300, 0x07, 0x01,   Z_(xxxxyyyy0A00) }, // x, y (uint16)
   { Z_(CT),             0x0300, 0x0A, 0x01,   Z_(xxxx0A00) },     // Color Temperature Mireds (uint16)
+  { Z_(RGB),            0x0300, 0xF0, 0x81,   Z_() },             // synthetic commands converting RGB to XY
   { Z_(ShutterOpen),    0x0102, 0x00, 0x01,   Z_() },
   { Z_(ShutterClose),   0x0102, 0x01, 0x01,   Z_() },
   { Z_(ShutterStop),    0x0102, 0x02, 0x01,   Z_() },
@@ -281,7 +283,7 @@ void convertClusterSpecific(class Z_attribute_list &attr_list, uint16_t cluster,
   uint8_t conv_direction;
   Z_XYZ_Var xyz;
 
-//AddLog_P(LOG_LEVEL_INFO, PSTR(">>> len = %d - %02X%02X%02X"), payload.len(), payload.get8(0), payload.get8(1), payload.get8(2));
+  //AddLog_P(LOG_LEVEL_INFO, PSTR(">>> len = %d - %02X%02X%02X"), payload.len(), payload.get8(0), payload.get8(1), payload.get8(2));
   for (uint32_t i = 0; i < sizeof(Z_Commands) / sizeof(Z_Commands[0]); i++) {
     const Z_CommandConverter *conv = &Z_Commands[i];
     uint16_t conv_cluster = pgm_read_word(&conv->cluster);
@@ -297,18 +299,18 @@ void convertClusterSpecific(class Z_attribute_list &attr_list, uint16_t cluster,
           //  - payload exactly matches conv->param (conv->param may be longer)
           //  - payload matches conv->param until 'x', 'y' or 'z'
           const char * p = Z_strings + pgm_read_word(&conv->param_offset);
-  //AddLog_P(LOG_LEVEL_INFO, PSTR(">>>++1 param = %s"), p);
+          //AddLog_P(LOG_LEVEL_INFO, PSTR(">>>++1 param = %s"), p);
           bool match = true;
           for (uint8_t i = 0; i < payload.len(); i++) {
             const char c1 = pgm_read_byte(p);
             // const char c2 = pgm_read_byte(p+1);
-  //AddLog_P(LOG_LEVEL_INFO, PSTR(">>>++2 c1 = %c, c2 = %c"), c1, c2);
+            //AddLog_P(LOG_LEVEL_INFO, PSTR(">>>++2 c1 = %c, c2 = %c"), c1, c2);
             if ((0x00 == c1) || isXYZ(c1)) {
               break;
             }
             const char * p2 = p;
             uint32_t nextbyte = parseHex_P(&p2, 2);
-  //AddLog_P(LOG_LEVEL_INFO, PSTR(">>>++3 parseHex_P = %02X"), nextbyte);
+            //AddLog_P(LOG_LEVEL_INFO, PSTR(">>>++3 parseHex_P = %02X"), nextbyte);
             if (nextbyte != payload.get8(i)) {
               match = false;
               break;
@@ -460,6 +462,12 @@ void convertClusterSpecific(class Z_attribute_list &attr_list, uint16_t cluster,
   }
 }
 
+/*********************************************************************************************\
+ * 
+ * Tuya Zigbee specific protocol
+ * 
+\*********************************************************************************************/
+// Parse a sinlge attribute value and convert to human readable JSON attribute value
 void parseSingleTuyaAttribute(Z_attribute & attr, const SBuffer &buf,
                               uint32_t i, uint32_t len, int32_t attrtype) {
 
@@ -518,6 +526,11 @@ bool convertTuyaSpecificCluster(class Z_attribute_list &attr_list, uint16_t clus
   return false;
 }
 
+/*********************************************************************************************\
+ * 
+ * Find commands
+ * 
+\*********************************************************************************************/
 // Find the command details by command name
 // Only take commands outgoing, i.e. direction == 0
 // If not found:
@@ -602,5 +615,12 @@ uint32_t ZigbeeAliasOrNumber(const char *state_text) {
     return strtoul(state_text, nullptr, 0);
   }
 }
+
+
+/*********************************************************************************************\
+ * 
+ * Send Zigbee commands
+ * 
+\*********************************************************************************************/
 
 #endif // USE_ZIGBEE

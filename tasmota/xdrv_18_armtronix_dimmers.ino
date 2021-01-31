@@ -61,11 +61,11 @@ void LightSerial2Duty(uint8_t duty1, uint8_t duty2)
     ArmtronixSerial->print("\nDimmer2:");
     ArmtronixSerial->println(duty2);
 
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR("ARM: Send Serial Packet Dim Values=%d,%d"), Armtronix.dim_state[0],Armtronix.dim_state[1]);
+    AddLog(LOG_LEVEL_DEBUG, PSTR("ARM: Send Serial Packet Dim Values=%d,%d"), Armtronix.dim_state[0],Armtronix.dim_state[1]);
 
   } else {
     Armtronix.ignore_dim = false;
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR("ARM: Send Dim Level skipped due to already set. Value=%d,%d"), Armtronix.dim_state[0],Armtronix.dim_state[1]);
+    AddLog(LOG_LEVEL_DEBUG, PSTR("ARM: Send Dim Level skipped due to already set. Value=%d,%d"), Armtronix.dim_state[0],Armtronix.dim_state[1]);
 
   }
 }
@@ -74,7 +74,7 @@ void ArmtronixRequestState(void)
 {
   if (ArmtronixSerial) {
     // Get current status of MCU
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR("ARM: Request MCU state"));
+    AddLog(LOG_LEVEL_DEBUG, PSTR("ARM: Request MCU state"));
     ArmtronixSerial->println("Status");
 
   }
@@ -124,7 +124,7 @@ void ArmtronixSerialInput(void)
           Armtronix.ignore_dim = true;
           snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_CHANNEL "%d %d"),i+1, temp);
           ExecuteCommand(scmnd,SRC_SWITCH);
-          AddLog_P(LOG_LEVEL_DEBUG, PSTR("ARM: Send CMND_CHANNEL=%s"), scmnd );
+          AddLog(LOG_LEVEL_DEBUG, PSTR("ARM: Send CMND_CHANNEL=%s"), scmnd );
         }
         commaIndex = answer.indexOf(',',commaIndex+1);
       }
@@ -148,7 +148,7 @@ void ArmtronixSetWifiLed(void)
       break;
   }
 
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR("ARM: Set WiFi LED to state %d (%d)"), wifi_state, WifiState());
+  AddLog(LOG_LEVEL_DEBUG, PSTR("ARM: Set WiFi LED to state %d (%d)"), wifi_state, WifiState());
 
   char state = '0' + ((wifi_state & 1) > 0);
   ArmtronixSerial->print("Setled:");

@@ -43,7 +43,7 @@ struct PS16DZ {
 
 void PS16DZSerialSend(const char *tx_buffer)
 {
-//  AddLog_P(LOG_LEVEL_DEBUG, PSTR("PSZ: Send %s"), tx_buffer);
+//  AddLog(LOG_LEVEL_DEBUG, PSTR("PSZ: Send %s"), tx_buffer);
 
   PS16DZSerial->print(tx_buffer);
   PS16DZSerial->write(0x1B);
@@ -96,7 +96,7 @@ void PS16DZSerialInput(void)
       Ps16dz.rx_buffer[Ps16dz.byte_counter++] = 0x00;
 
       // AT+RESULT="sequence":"1554682835320"
-//      AddLog_P(LOG_LEVEL_DEBUG, PSTR("PSZ: Rcvd %s"), Ps16dz.rx_buffer);
+//      AddLog(LOG_LEVEL_DEBUG, PSTR("PSZ: Rcvd %s"), Ps16dz.rx_buffer);
 
       if (!strncmp(Ps16dz.rx_buffer+3, "RESULT", 6)) {
 
@@ -118,7 +118,7 @@ void PS16DZSerialInput(void)
           if (!strncmp(token2, "\"switch\"", 8)) {
             bool switch_state = !strncmp(token3, "\"on\"", 4) ? true : false;
 
-//            AddLog_P(LOG_LEVEL_DEBUG, PSTR("PSZ: Switch %d"), switch_state);
+//            AddLog(LOG_LEVEL_DEBUG, PSTR("PSZ: Switch %d"), switch_state);
 
             is_switch_change = (switch_state != TasmotaGlobal.power);
             if (is_switch_change) {
@@ -128,7 +128,7 @@ void PS16DZSerialInput(void)
           else if (!strncmp(token2, "\"bright\"", 8)) {
             Ps16dz.dimmer = atoi(token3);
 
-//            AddLog_P(LOG_LEVEL_DEBUG, PSTR("PSZ: Brightness %d"), Ps16dz.dimmer);
+//            AddLog(LOG_LEVEL_DEBUG, PSTR("PSZ: Brightness %d"), Ps16dz.dimmer);
 
             is_brightness_change = Ps16dz.dimmer != Settings.light_dimmer;
             if (TasmotaGlobal.power && (Ps16dz.dimmer > 0) && is_brightness_change) {
@@ -138,7 +138,7 @@ void PS16DZSerialInput(void)
           }
           else if (!strncmp(token2, "\"sequence\"", 10)) {
 
-//            AddLog_P(LOG_LEVEL_DEBUG, PSTR("PSZ: Sequence %s"), token3);
+//            AddLog(LOG_LEVEL_DEBUG, PSTR("PSZ: Sequence %s"), token3);
 
           }
           token = strtok_r(nullptr, ",", &end_str);
@@ -146,7 +146,7 @@ void PS16DZSerialInput(void)
 
         if (!is_brightness_change) {
 
-//          AddLog_P(LOG_LEVEL_DEBUG, PSTR("PSZ: Update"));
+//          AddLog(LOG_LEVEL_DEBUG, PSTR("PSZ: Update"));
 
           PS16DZSerialSendOk();
         }

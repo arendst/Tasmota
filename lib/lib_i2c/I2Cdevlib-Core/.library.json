@@ -5,7 +5,7 @@
         "type": "git"
     }, 
     "platforms": [
-        "atmelavr"
+        "*"
     ], 
     "frameworks": [
         "arduino"

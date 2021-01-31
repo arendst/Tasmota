@@ -246,7 +246,7 @@ void PIDShowSensor() {
       Pid.run_pid_now = true;
     }
   } else {
-    AddLog_P(LOG_LEVEL_ERROR, PSTR("PID: No local temperature sensor found"));
+    AddLog(LOG_LEVEL_ERROR, PSTR("PID: No local temperature sensor found"));
   }
 }
 

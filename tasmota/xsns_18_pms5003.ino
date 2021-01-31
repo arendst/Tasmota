@@ -98,7 +98,7 @@ bool PmsReadData(void)
     PmsSerial->read();
   }
 #ifdef PMS_MODEL_PMS3003
-  if (PmsSerial->available() < 22) {
+  if (PmsSerial->available() < 24) {
 #else
   if (PmsSerial->available() < 32) {
 #endif  // PMS_MODEL_PMS3003
@@ -106,8 +106,8 @@ bool PmsReadData(void)
   }
 
 #ifdef PMS_MODEL_PMS3003
-  uint8_t buffer[22];
-  PmsSerial->readBytes(buffer, 22);
+  uint8_t buffer[24];
+  PmsSerial->readBytes(buffer, 24);
 #else
   uint8_t buffer[32];
   PmsSerial->readBytes(buffer, 32);
@@ -116,14 +116,14 @@ bool PmsReadData(void)
   PmsSerial->flush();  // Make room for another burst
 
 #ifdef PMS_MODEL_PMS3003
-  AddLogBuffer(LOG_LEVEL_DEBUG_MORE, buffer, 22);
+  AddLogBuffer(LOG_LEVEL_DEBUG_MORE, buffer, 24);
 #else
   AddLogBuffer(LOG_LEVEL_DEBUG_MORE, buffer, 32);
 #endif  // PMS_MODEL_PMS3003
 
   // get checksum ready
 #ifdef PMS_MODEL_PMS3003
-  for (uint32_t i = 0; i < 20; i++) {
+  for (uint32_t i = 0; i < 22; i++) {
 #else
   for (uint32_t i = 0; i < 30; i++) {
 #endif  // PMS_MODEL_PMS3003
@@ -131,8 +131,8 @@ bool PmsReadData(void)
   }
   // The data comes in endian'd, this solves it so it works on all platforms
 #ifdef PMS_MODEL_PMS3003
-  uint16_t buffer_u16[10];
-  for (uint32_t i = 0; i < 10; i++) {
+  uint16_t buffer_u16[12];
+  for (uint32_t i = 0; i < 12; i++) {
 #else
   uint16_t buffer_u16[15];
   for (uint32_t i = 0; i < 15; i++) {
@@ -141,16 +141,16 @@ bool PmsReadData(void)
     buffer_u16[i] += (buffer[2 + i*2] << 8);
   }
 #ifdef PMS_MODEL_PMS3003
-  if (sum != buffer_u16[9]) {
+  if (sum != buffer_u16[10]) {
 #else
   if (sum != buffer_u16[14]) {
 #endif  // PMS_MODEL_PMS3003
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR("PMS: " D_CHECKSUM_FAILURE));
+    AddLog(LOG_LEVEL_DEBUG, PSTR("PMS: " D_CHECKSUM_FAILURE));
     return false;
   }
 
 #ifdef PMS_MODEL_PMS3003
-  memcpy((void *)&pms_data, (void *)buffer_u16, 20);
+  memcpy((void *)&pms_data, (void *)buffer_u16, 22);
 #else
   memcpy((void *)&pms_data, (void *)buffer_u16, 30);
 #endif  // PMS_MODEL_PMS3003

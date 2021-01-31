@@ -57,7 +57,7 @@ bool Dht12Read(void)
   uint8_t checksum      = Wire.read();
 
   Dht12.humidity    = ConvertHumidity( (float) humidity + (float) humidityTenth/(float) 10.0 );
-  Dht12.temperature = ConvertTemp( (float) temp + (float) tempTenth/(float) 10.0 );
+  Dht12.temperature = ConvertTemp( ((float)temp + (float)(tempTenth & 0x7F) / (float) 10.0) * (tempTenth & 0x80) ? -1.0 : 1.0 );
 
   if (isnan(Dht12.temperature) || isnan(Dht12.humidity)) { return false; }
 

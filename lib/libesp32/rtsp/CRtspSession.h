@@ -70,4 +70,11 @@ private:
     char m_CSeq[RTSP_PARAM_STRING_MAX];                       // RTSP command sequence number
     char m_URLHostPort[MAX_HOSTNAME_LEN];                     // host:port part of the URL
     unsigned m_ContentLength;                                 // SDP string size
+    char CurRequest[RTSP_BUFFER_SIZE];
+    char RecvBuf[RTSP_BUFFER_SIZE];
+    char session_buf[128];
+    char CmdName[RTSP_PARAM_STRING_MAX];
+    char Transport[255];
+    char Response[1024];
+    char OBuf[256];
 };

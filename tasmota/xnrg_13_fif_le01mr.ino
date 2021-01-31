@@ -123,7 +123,7 @@ void FifLEEvery250ms(void)
     AddLogBuffer(LOG_LEVEL_DEBUG_MORE, buffer, FifLEModbus->ReceiveCount());
 
     if (error) {
-      AddLog_P(LOG_LEVEL_DEBUG, PSTR("FiF-LE: LE01MR Modbus error %d"), error);
+      AddLog(LOG_LEVEL_DEBUG, PSTR("FiF-LE: LE01MR Modbus error %d"), error);
     } else {
       Energy.data_valid[0] = 0;
 

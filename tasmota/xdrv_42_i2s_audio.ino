@@ -94,7 +94,7 @@ uint32_t retryms = 0;
 
 #ifdef SAY_TIME
 AudioGeneratorTalkie *talkie = nullptr;
-#endif
+#endif // SAY_TIME
 
 //! MAX98357A + INMP441 DOUBLE I2S BOARD
 #ifdef ESP8266
@@ -111,22 +111,22 @@ AudioGeneratorTalkie *talkie = nullptr;
 #ifndef DAC_IIS_BCK
 #undef DAC_IIS_BCK
 #define DAC_IIS_BCK       26
-#endif
+#endif // DAC_IIS_BCK
 
 #ifndef DAC_IIS_WS
 #undef DAC_IIS_WS
 #define DAC_IIS_WS        25
-#endif
+#endif // DAC_IIS_WS
 
 #ifndef DAC_IIS_DOUT
 #undef DAC_IIS_DOUT
 #define DAC_IIS_DOUT      33
-#endif
+#endif // DAC_IIS_DOUT
 
 #ifndef DAC_IIS_DIN
 #undef DAC_IIS_DIN
 #define DAC_IIS_DIN      34
-#endif
+#endif // DAC_IIS_DIN
 
 #endif  // ESP32
 
@@ -229,7 +229,7 @@ void sayTime(int hour, int minutes, AudioGeneratorTalkie *talkie) {
   out->stop();
   AUDIO_PWR_OFF
 }
-#endif
+#endif // SAY_TIME
 
 // should be in settings
 uint8_t is2_volume;
@@ -379,10 +379,10 @@ uint32_t i2s_record(char *path, uint32_t secs) {
     if (data_offset >= mic_size-DATA_SIZE) break;
     delay(0);
   }
-  //AddLog_P(LOG_LEVEL_INFO, PSTR("rectime: %d ms"), millis()-stime);
+  //AddLog(LOG_LEVEL_INFO, PSTR("rectime: %d ms"), millis()-stime);
   SpeakerMic(MODE_SPK);
   // save to path
-  SaveWav(mic_path, mic_buff, mic_size);
+  SaveWav(path, mic_buff, mic_size);
   free(mic_buff);
   return 0;
 }
@@ -393,7 +393,8 @@ static const uint8_t wavHTemplate[] PROGMEM = { // Hardcoded simple WAV header w
     0x64, 0x61, 0x74, 0x61, 0xff, 0xff, 0xff, 0xff };
 
 bool SaveWav(char *path, uint8_t *buff, uint32_t size) {
-  File fwp = ufsp->open(path, FILE_WRITE);
+  File fwp = ufsp->open(path, "w");
+  if (!fwp) return false;
   uint8_t wavHeader[sizeof(wavHTemplate)];
   memcpy_P(wavHeader, wavHTemplate, sizeof(wavHTemplate));
 
@@ -446,7 +447,7 @@ void mp3_task(void *arg) {
     }
   }
 }
-#endif
+#endif // ESP32
 
 #ifdef USE_WEBRADIO
 void MDCallback(void *cbData, const char *type, bool isUnicode, const char *str) {
@@ -456,7 +457,7 @@ void MDCallback(void *cbData, const char *type, bool isUnicode, const char *str)
   if (strstr_P(type, PSTR("Title"))) {
     strncpy(wr_title, str, sizeof(wr_title));
     wr_title[sizeof(wr_title)-1] = 0;
-    //AddLog_P(LOG_LEVEL_INFO,PSTR("WR-Title: %s"),wr_title);
+    //AddLog(LOG_LEVEL_INFO,PSTR("WR-Title: %s"),wr_title);
   } else {
     // Who knows what to do?  Not me!
   }
@@ -541,6 +542,23 @@ void Cmd_WebRadio(void) {
 
 }
 
+#ifdef USE_M5STACK_CORE2
+void Cmd_MicRec(void) {
+  if (XdrvMailbox.data_len > 0) {
+    uint16 time = 10;
+    char *cp = strchr(XdrvMailbox.data, ':');
+    if (cp) {
+      time = atoi(cp + 1);
+      *cp = 0;
+    }
+    if (time<10) time = 10;
+    if (time>30) time = 30;
+    i2s_record(XdrvMailbox.data, time);
+    ResponseCmndChar(XdrvMailbox.data);
+  }
+}
+#endif // USE_M5STACK_CORE2
+
 const char HTTP_WEBRADIO[] PROGMEM =
    "{s}" "I2S_WR-Title" "{m}%s{e}";
 
@@ -554,7 +572,7 @@ void I2S_WR_Show(void) {
 
 #ifdef ESP32
 void Play_mp3(const char *path) {
-#if (defined(USE_SCRIPT_FATFS) && defined(USE_SCRIPT)) || defined(UFILESYSTEM)
+#if (defined(USE_SCRIPT_FATFS) && defined(USE_SCRIPT)) || defined(USE_UFILESYS)
   if (decoder || mp3) return;
   if (!out) return;
 
@@ -626,8 +644,11 @@ const char kI2SAudio_Commands[] PROGMEM = "I2S|"
   "|Play"
 #ifdef USE_WEBRADIO
   "|WR"
-#endif
-#endif
+#endif // USE_WEBRADIO
+#ifdef USE_M5STACK_CORE2
+  "|REC"
+#endif // USE_M5STACK_CORE2
+#endif // ESP32
   ;
 
 void (* const I2SAudio_Command[])(void) PROGMEM = {
@@ -636,8 +657,11 @@ void (* const I2SAudio_Command[])(void) PROGMEM = {
   ,&Cmd_Play
 #ifdef USE_WEBRADIO
   ,&Cmd_WebRadio
-#endif
-#endif
+#endif // USE_WEBRADIO
+#ifdef USE_M5STACK_CORE2
+  ,&Cmd_MicRec
+#endif // USE_M5STACK_CORE2
+#endif // ESP32
 };
 
 
@@ -669,7 +693,7 @@ void Cmd_Say(void) {
 void Cmd_Time(void) {
 #ifdef SAY_TIME
   sayTime(RtcTime.hour, RtcTime.minute, talkie);
-#endif
+#endif // SAY_TIME
   ResponseCmndDone();
 }
 
@@ -692,8 +716,8 @@ bool Xdrv42(uint8_t function) {
     case FUNC_WEB_SENSOR:
       I2S_WR_Show();
       break;
-#endif
-#endif
+#endif // USE_WEBRADIO
+#endif // USE_WEBSERVER
   }
   return result;
 }
