@@ -233,6 +233,8 @@ const uint16_t LOG_BUFFER_SIZE = 4000;         // Max number of characters in lo
 
 #define TASM_FILE_SETTINGS          "/.settings"       // Settings binary blob
 #define TASM_FILE_SETTINGS_LKG      "/.settings.lkg"   // Last Known Good Settings binary blob
+#define TASM_FILE_DRIVER            "/.drvset%03d"
+#define TASM_FILE_SENSOR            "/.snsset%03d"
 #define TASM_FILE_ZIGBEE            "/zb"              // Zigbee settings blob as used by CC2530 on ESP32
 
 #ifndef MQTT_MAX_PACKET_SIZE
@@ -475,18 +477,18 @@ bool first_device_group_is_local = true;
 
 /*********************************************************************************************\
  * Macro for SetOption synonyms
- * 
+ *
  * SetOption synonyms come first in the list of commands, right after the prefix.
  * They don't need any matching function pointer, since they are handled internally.
  * So don't forget to NOT put pointers in the functions pointers list.
- * 
+ *
  * The additionnal list of unsigned bytes contains the Option numbers of each synonyms
  * in the same order. The first byte of the list contains the number of synonyms
  * (not including the number itself). The is the number of names to skip to find the first command.
- * 
+ *
  * As it si cumbersome to calculate the first byte (number of synonyms), we provide the following
  * macro `SO_SYNONYMS(<name>, <list of bytes>)`
- * 
+ *
  * For example:
  * ```
  *   SO_SYNONYMS(kLightSynonyms,
@@ -494,7 +496,7 @@ bool first_device_group_is_local = true;
  *     106,
  *   );
  * ```
- * 
+ *
  * is equivalent to:
  * ```
  *   const static uint8_t kLightSynonyms[] PROGMEM = {
@@ -503,7 +505,7 @@ bool first_device_group_is_local = true;
  *     106,
  *   };
  * ```
- * 
+ *
  * This comes very handy if you need to adjust the number of synonyms depending on #defines
 \*********************************************************************************************/
 

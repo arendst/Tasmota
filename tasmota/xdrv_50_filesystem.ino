@@ -85,10 +85,6 @@ uint8_t ufs_type;
 uint8_t ffs_type;
 bool download_busy;
 
-
-
-
-
 /*********************************************************************************************/
 
 // Init flash file system
