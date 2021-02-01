@@ -457,7 +457,10 @@ bool IRMitsubishiAC::getPower(void) const {
 /// @param[in] degrees The temperature in degrees celsius.
 void IRMitsubishiAC::setTemp(const uint8_t degrees) {
   uint8_t temp = std::max(kMitsubishiAcMinTemp, degrees);
-  temp = std::min(kMitsubishiAcMaxTemp, temp);
+  // Devices that support 0.5 degree increments are mapped to 0.5 degrees above maximum temperature
+  if (kMitsubishiAcMaxTemp <= temp - kMitsubishiAcMinTemp) {
+    temp = std::min(kMitsubishiAcMaxTemp, temp);
+  }
   _.Temp = temp - kMitsubishiAcMinTemp;
 }
 
