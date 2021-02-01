@@ -24,9 +24,9 @@
 
 /*********************************************************************************************\
  * va_list extended support
- * 
+ *
  * va_list allows to get the next argument but not to get the address of this argument in the stack.
- * 
+ *
  * We add `va_cur_ptr(va, TYPE)` to get a pointer to the current argument.
  * This will allow to modify it in place and call back printf with altered arguments
 \*********************************************************************************************/
@@ -129,6 +129,7 @@ void * __va_cur_ptr4(va_list &va) {
  * Genral function to convert u64 to hex
 \*********************************************************************************************/
 // Simple function to print a 64 bits unsigned int
+/*
 char * U64toHex(uint64_t value, char *str) {
   // str must be at least 17 bytes long
   str[16] = 0;    // end of string
@@ -136,6 +137,29 @@ char * U64toHex(uint64_t value, char *str) {
     uint32_t n = value & 0x0F;
     str[15 - i] = (n < 10) ? (char)n+'0' : (char)n-10+'A';
     value = value >> 4;
+  }
+  return str;
+}
+*/
+
+char * U64toHex(uint64_t value, char *str, uint32_t zeroleads) {
+  // str must be at least 17 bytes long
+  str[16] = 0;    // end of string
+  for (uint32_t i=0; i<16; i++) {       // 16 digits
+    uint32_t n = value & 0x0F;
+    str[15 - i] = (n < 10) ? (char)n+'0' : (char)n-10+'A';
+    value = value >> 4;
+  }
+  if (zeroleads < 16) {
+    uint32_t max_zeroes = 16 - zeroleads;
+    while (max_zeroes) {
+      if (str[0] == '0') {
+        memmove(str, str +1, strlen(str));
+      } else {
+        break;
+      }
+      max_zeroes--;
+    }
   }
   return str;
 }
@@ -162,7 +186,7 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 
 /*********************************************************************************************\
  * snprintf extended
- * 
+ *
 \*********************************************************************************************/
 
 // get a fresh malloc allocated string based on the current pointer (can be in PROGMEM)
@@ -212,7 +236,7 @@ int32_t ext_vsnprintf_P(char * buf, size_t buf_len, const char * fmt_P, va_list 
       // while ((*fmt >= '0' && *fmt <= '9') || (*fmt == '.') || (*fmt == '*') || (*fmt == '-' || (*fmt == ' ' || (*fmt == '+') || (*fmt == '#')))) {
         fmt++;
 			}
-    
+
       if (*fmt == '_') {      // extension
         if (decimals_ptr) {
           // Serial.printf(">2 decimals=%d, decimals_ptr=0x%08X\n", decimals, decimals_ptr);
@@ -256,7 +280,7 @@ int32_t ext_vsnprintf_P(char * buf, size_t buf_len, const char * fmt_P, va_list 
           // case 'D':
           //   decimals = *(int32_t*)cur_val_ptr;
           //   break;
-          
+
           // `%_I` ouputs an IPv4 32 bits address passed as u32 into a decimal dotted format
           case 'I':     // Input is `uint32_t` 32 bits IP address, output is decimal dotted address
             {
@@ -269,7 +293,7 @@ int32_t ext_vsnprintf_P(char * buf, size_t buf_len, const char * fmt_P, va_list 
 
           // `%_f` or `%*_f` outputs a float with optionan number of decimals passed as first argument if `*` is present
           // positive number of decimals means an exact number of decimals, can be `0` terminate
-          // negative number of decimals will suppress 
+          // negative number of decimals will suppress
           // Ex:
           //    char c[128];
           //    float f = 3.141f;
@@ -308,7 +332,8 @@ int32_t ext_vsnprintf_P(char * buf, size_t buf_len, const char * fmt_P, va_list 
           // '%_X' outputs a 64 bits unsigned int to uppercase HEX with 16 digits
           case 'X':     // input is `uint64_t*`, printed as 16 hex digits (no prefix 0x)
             {
-              U64toHex(*(uint64_t*)cur_val, hex);
+              if ((decimals < 0) || (decimals > 16)) { decimals = 16; }
+              U64toHex(*(uint64_t*)cur_val, hex, decimals);
               new_val_str = copyStr(hex);
               allocs[alloc_idx++] = new_val_str;
             }
@@ -338,7 +363,7 @@ int32_t ext_vsnprintf_P(char * buf, size_t buf_len, const char * fmt_P, va_list 
     }
   }
 #else // defined(ESP8266) || defined(ESP32)
-  #error "ext_printf is not suppoerted on this platform" 
+  #error "ext_printf is not suppoerted on this platform"
 #endif // defined(ESP8266) || defined(ESP32)
   // Serial.printf("> format_final=%s\n", fmt_cpy); Serial.flush();
   int32_t ret = vsnprintf_P(buf, buf_len, fmt_cpy, va_cpy);
@@ -356,7 +381,7 @@ int32_t ext_vsnprintf_P(char * buf, size_t buf_len, const char * fmt_P, va_list 
 
 int32_t ext_snprintf_P(char * buf, size_t buf_len, const char * fmt, ...) {
   va_list va;
-  va_start(va, fmt);  
+  va_start(va, fmt);
 
   int32_t ret = ext_vsnprintf_P(buf, buf_len, fmt, va);
   va_end(va);
