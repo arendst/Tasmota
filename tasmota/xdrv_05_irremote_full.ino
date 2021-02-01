@@ -236,7 +236,7 @@ String sendACJsonState(const stdAc::state_t &state) {
 }
 
 void sendIRJsonState(const struct decode_results &results) {
-  Response_P(PSTR("\"" D_JSON_IR_PROTOCOL "\":\"%s\",\"" D_JSON_IR_BITS "\":%d"),
+  ResponseAppend_P(PSTR("\"" D_JSON_IR_PROTOCOL "\":\"%s\",\"" D_JSON_IR_BITS "\":%d"),
                   typeToString(results.decode_type).c_str(),
                   results.bits);
 
