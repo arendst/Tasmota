@@ -253,7 +253,7 @@ void sendIRJsonState(const struct decode_results &results) {
         ResponseAppend_P(PSTR("\"0x%_X\",\"" D_JSON_IR_DATALSB "\":\"0x%_X\""),
                          &results.value, &reverse);
       } else {    // UNKNOWN
-        ResponseAppend_P(PSTR("\"0x08X\""), (uint32_t) results.value);  // Unknown is always 32 bits
+        ResponseAppend_P(PSTR("\"0x&08X\""), (uint32_t) results.value);  // Unknown is always 32 bits
       }
     }
   }
