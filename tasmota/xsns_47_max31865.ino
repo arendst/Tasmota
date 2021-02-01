@@ -1,7 +1,7 @@
 /*
   xsns_39_MAX31865.ino - MAX31865 thermocouple sensor support for Tasmota
 
-  Copyright (C) 2021  Alberto Lopez Siemens
+  Copyright (C) 2020 Alberto Lopez Siemens
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -24,15 +24,122 @@
 
 #define XSNS_47              47
 
-#if MAX31865_PTD_WIRES == 4
-  #define PTD_WIRES MAX31865_4WIRE
-#elif MAX31865_PTD_WIRES == 3
-  #define PTD_WIRES MAX31865_3WIRE
-#else
-  #define PTD_WIRES MAX31865_2WIRE
+#include "Adafruit_MAX31865.h"
+
+// set defaults if not defined
+#ifndef MAX31865_PTD_WIRES
+  #define MAX31865_PTD_WIRES  2
+#endif
+#ifndef MAX31865_PTD_RES
+  #define MAX31865_PTD_RES    100
+#endif
+#ifndef MAX31865_REF_RES
+  #define MAX31865_REF_RES    430
+#endif
+#ifndef MAX31865_PTD_BIAS
+  #define MAX31865_PTD_BIAS   0
+#endif
+#ifndef MAX31865_PTD_LOW_RES
+  #define MAX31865_PTD_LOW_RES 0
+#endif
+#ifndef MAX31865_PTD_HIGH_RES
+  #define MAX31865_PTD_HIGH_RES 0xffff
 #endif
 
-#include "Adafruit_MAX31865.h"
+#if MAX31865_PTD_WIRES == 4
+  #define MAX31865_PTD_WIRESCFG MAX31865_4WIRE
+#elif MAX31865_PTD_WIRES == 3
+  #define MAX31865_PTD_WIRESCFG MAX31865_3WIRE
+#else
+  #define MAX31865_PTD_WIRESCFG MAX31865_2WIRE
+#endif  // MAX31865_PTD_WIRES
+#ifdef MAX31865_PTD_WIRES1
+  #if MAX31865_PTD_WIRES1 == 4
+    #define MAX31865_PTD_WIRES1CFG MAX31865_4WIRE
+  #elif MAX31865_PTD_WIRES == 3
+    #define MAX31865_PTD_WIRES1CFG MAX31865_3WIRE
+  #else
+    #define MAX31865_PTD_WIRES1CFG MAX31865_2WIRE
+  #endif
+#endif  // MAX31865_PTD_WIRES1
+#ifdef MAX31865_PTD_WIRES2
+  #if MAX31865_PTD_WIRES2 == 4
+    #define MAX31865_PTD_WIRES2CFG MAX31865_4WIRE
+  #elif MAX31865_PTD_WIRES == 3
+    #define MAX31865_PTD_WIRES2CFG MAX31865_3WIRE
+  #else
+    #define MAX31865_PTD_WIRES2CFG MAX31865_2WIRE
+  #endif
+#endif  // MAX31865_PTD_WIRES2
+#ifdef MAX31865_PTD_WIRES3
+  #if MAX31865_PTD_WIRES3 == 4
+    #define MAX31865_PTD_WIRES3CFG MAX31865_4WIRE
+  #elif MAX31865_PTD_WIRES == 3
+    #define MAX31865_PTD_WIRES3CFG MAX31865_3WIRE
+  #else
+    #define MAX31865_PTD_WIRES3CFG MAX31865_2WIRE
+  #endif
+#endif  // MAX31865_PTD_WIRE3
+#ifdef MAX31865_PTD_WIRES4
+  #if MAX31865_PTD_WIRES4 == 4
+    #define MAX31865_PTD_WIRES4CFG MAX31865_4WIRE
+  #elif MAX31865_PTD_WIRES == 3
+    #define MAX31865_PTD_WIRES4CFG MAX31865_3WIRE
+  #else
+    #define MAX31865_PTD_WIRES4CFG MAX31865_2WIRE
+  #endif
+#endif  // MAX31865_PTD_WIRES4
+#ifdef MAX31865_PTD_WIRES5
+  #if MAX31865_PTD_WIRES5 == 4
+    #define MAX31865_PTD_WIRES5CFG MAX31865_4WIRE
+  #elif MAX31865_PTD_WIRES == 3
+    #define MAX31865_PTD_WIRES5CFG MAX31865_3WIRE
+  #else
+    #define MAX31865_PTD_WIRES5CFG MAX31865_2WIRE
+  #endif
+#endif  // MAX31865_PTD_WIRES5
+#ifdef MAX31865_PTD_WIRES6
+  #if MAX31865_PTD_WIRES6 == 4
+    #define MAX31865_PTD_WIRES6CFG MAX31865_4WIRE
+  #elif MAX31865_PTD_WIRES == 3
+    #define MAX31865_PTD_WIRES6CFG MAX31865_3WIRE
+  #else
+    #define MAX31865_PTD_WIRES6CFG MAX31865_2WIRE
+  #endif
+#endif  // MAX31865_PTD_WIRES6
+
+float RefRes [] = {
+#ifdef MAX31865_REF_RES1
+    MAX31865_REF_RES1,
+#else
+    MAX31865_REF_RES,
+#endif
+#ifdef MAX31865_REF_RES2
+    MAX31865_REF_RES2,
+#else
+    MAX31865_REF_RES,
+#endif
+#ifdef MAX31865_REF_RES3
+    MAX31865_REF_RES3,
+#else
+    MAX31865_REF_RES,
+#endif
+#ifdef MAX31865_REF_RES4
+    MAX31865_REF_RES4,
+#else
+    MAX31865_REF_RES,
+#endif
+#ifdef MAX31865_REF_RES5
+    MAX31865_REF_RES5,
+#else
+    MAX31865_REF_RES,
+#endif
+#ifdef MAX31865_REF_RES6
+    MAX31865_REF_RES6
+#else
+    MAX31865_REF_RES
+#endif
+  };
 
 int8_t max31865_init_status = 0;
 uint8_t max31865_pins_used = 0; //used as a bit array
@@ -49,6 +156,103 @@ struct MAX31865_Result_Struct {
 void MAX31865_Init(void) {
   if (max31865_init_status) { return; }
 
+  max31865_numwires_t PtdWires [] = {
+#ifdef MAX31865_PTD_WIRES1
+    MAX31865_PTD_WIRES1CFG,
+#else
+    MAX31865_PTD_WIRESCFG,
+#endif
+#ifdef MAX31865_PTD_WIRES2
+    MAX31865_PTD_WIRES2CFG,
+#else
+    MAX31865_PTD_WIRESCFG,
+#endif
+#ifdef MAX31865_PTD_WIRES3
+    MAX31865_PTD_WIRES3CFG,
+#else
+    MAX31865_PTD_WIRESCFG,
+#endif
+#ifdef MAX31865_PTD_WIRES4
+    MAX31865_PTD_WIRES4CFG,
+#else
+    MAX31865_PTD_WIRESCFG,
+#endif
+#ifdef MAX31865_PTD_WIRES5
+    MAX31865_PTD_WIRES5CFG,
+#else
+    MAX31865_PTD_WIRESCFG,
+#endif
+#ifdef MAX31865_PTD_WIRES6
+    MAX31865_PTD_WIRES6CFG
+#else
+    MAX31865_PTD_WIRESCFG
+#endif
+  };
+  float PtdLowRes [] = {
+#ifdef MAX31865_PTD_LOW_RES1
+    MAX31865_PTD_LOW_RES1,
+#else
+    MAX31865_PTD_LOW_RES,
+#endif
+#ifdef MAX31865_PTD_LOW_RES2
+    MAX31865_PTD_LOW_RES2,
+#else
+    MAX31865_PTD_LOW_RES,
+#endif
+#ifdef MAX31865_PTD_LOW_RES3
+    MAX31865_PTD_LOW_RES3,
+#else
+    MAX31865_PTD_LOW_RES,
+#endif
+#ifdef MAX31865_PTD_LOW_RES4
+    MAX31865_PTD_LOW_RES4,
+#else
+    MAX31865_PTD_LOW_RES,
+#endif
+#ifdef MAX31865_PTD_LOW_RES5
+    MAX31865_PTD_LOW_RES5,
+#else
+    MAX31865_PTD_LOW_RES,
+#endif
+#ifdef MAX31865_PTD_LOW_RES6
+    MAX31865_PTD_LOW_RES6
+#else
+    MAX31865_PTD_LOW_RES
+#endif
+  };
+  float PtdHighRes [] = {
+#ifdef MAX31865_PTD_HIGH_RES1
+    MAX31865_PTD_HIGH_RES1,
+#else
+    MAX31865_PTD_HIGH_RES,
+#endif
+#ifdef MAX31865_PTD_HIGH_RES2
+    MAX31865_PTD_HIGH_RES2,
+#else
+    MAX31865_PTD_HIGH_RES,
+#endif
+#ifdef MAX31865_PTD_HIGH_RES3
+    MAX31865_PTD_HIGH_RES3,
+#else
+    MAX31865_PTD_HIGH_RES,
+#endif
+#ifdef MAX31865_PTD_HIGH_RES4
+    MAX31865_PTD_HIGH_RES4,
+#else
+    MAX31865_PTD_HIGH_RES,
+#endif
+#ifdef MAX31865_PTD_HIGH_RES5
+    MAX31865_PTD_HIGH_RES5,
+#else
+    MAX31865_PTD_HIGH_RES,
+#endif
+#ifdef MAX31865_PTD_HIGH_RES6
+    MAX31865_PTD_HIGH_RES6
+#else
+    MAX31865_PTD_HIGH_RES
+#endif
+  };
+
   max31865_init_status = 1;
   for (uint32_t i = 0; i < MAX_MAX31865S; i++) {
     if (PinUsed(GPIO_SSPI_MAX31865_CS1, i)) {
@@ -60,26 +264,91 @@ void MAX31865_Init(void) {
         Pin(GPIO_SSPI_SCLK)
       );
 
-      if (!max31865[i].begin(PTD_WIRES)) {
+      if (!max31865[i].begin(PtdWires[i])) {
         max31865_init_status = -1;
       }
     }
   }
 }
 
+
 /*
 *   MAX31865_GetResult(void)
 *   Acquires the raw data via SPI, checks for MAX31865 errors and fills result structure
 */
 void MAX31865_GetResult(void) {
+  float PtdBias [] = {
+#ifdef MAX31865_PTD_BIAS1
+    MAX31865_PTD_BIAS1,
+#else
+    MAX31865_PTD_BIAS,
+#endif
+#ifdef MAX31865_PTD_BIAS2
+    MAX31865_PTD_BIAS2,
+#else
+    MAX31865_PTD_BIAS,
+#endif
+#ifdef MAX31865_PTD_BIAS3
+    MAX31865_PTD_BIAS3,
+#else
+    MAX31865_PTD_BIAS,
+#endif
+#ifdef MAX31865_PTD_BIAS4
+    MAX31865_PTD_BIAS4,
+#else
+    MAX31865_PTD_BIAS,
+#endif
+#ifdef MAX31865_PTD_BIAS5
+    MAX31865_PTD_BIAS5,
+#else
+    MAX31865_PTD_BIAS,
+#endif
+#ifdef MAX31865_PTD_BIAS6
+    MAX31865_PTD_BIAS6
+#else
+    MAX31865_PTD_BIAS
+#endif
+  };
+  float PtdRes [] = {
+#ifdef MAX31865_PTD_RES1
+    MAX31865_PTD_RES1,
+#else
+    MAX31865_PTD_RES,
+#endif
+#ifdef MAX31865_PTD_RES2
+    MAX31865_PTD_RES2,
+#else
+    MAX31865_PTD_RES,
+#endif
+#ifdef MAX31865_PTD_RES3
+    MAX31865_PTD_RES3,
+#else
+    MAX31865_PTD_RES,
+#endif
+#ifdef MAX31865_PTD_RES4
+    MAX31865_PTD_RES4,
+#else
+    MAX31865_PTD_RES,
+#endif
+#ifdef MAX31865_PTD_RES5
+    MAX31865_PTD_RES5,
+#else
+    MAX31865_PTD_RES,
+#endif
+#ifdef MAX31865_PTD_RES6
+    MAX31865_PTD_RES6
+#else
+    MAX31865_PTD_RES
+#endif
+  };
   for (uint32_t i = 0; i < MAX_MAX31865S; i++) {
     if (max31865_pins_used & (1 << i)) {
       uint16_t rtd;
 
       rtd = max31865[i].readRTD();
       MAX31865_Result[i].Rtd = rtd;
-      MAX31865_Result[i].PtdResistance = max31865[i].rtd_to_resistance(rtd, MAX31865_REF_RES);
-      MAX31865_Result[i].PtdTemp = ConvertTemp(max31865[i].rtd_to_temperature(rtd, MAX31865_PTD_RES, MAX31865_REF_RES) + MAX31865_PTD_BIAS);
+      MAX31865_Result[i].PtdResistance = max31865[i].rtd_to_resistance(rtd, RefRes[i]);
+      MAX31865_Result[i].PtdTemp = ConvertTemp(max31865[i].rtd_to_temperature(rtd, PtdRes[i], RefRes[i]) + PtdBias[i]);
     }
   }
 }
