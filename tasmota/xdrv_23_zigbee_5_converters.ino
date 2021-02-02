@@ -1209,23 +1209,19 @@ void ZCLFrame::parseReportAttributes(Z_attribute_list& attr_list) {
   // The sensor expects the coordinator to send a Default Response to acknowledge the attribute reporting
   if (0 == _frame_control.b.disable_def_resp) {
     // the device expects a default response
-    SBuffer buf(2);
-    buf.add8(_cmd_id);
-    buf.add8(0x00);   // Status = OK
-
-    ZigbeeZCLSend_Raw(ZigbeeZCLSendMessage({
-      _srcaddr,
-      0x0000,
-      _cluster_id,
-      _srcendpoint,
-      ZCL_DEFAULT_RESPONSE,
-      _manuf_code,
-      false /* not cluster specific */,
-      false /* noresponse */,
-      true /* direct no retry */,
-      _transact_seq,  /* zcl transaction id */
-      buf.getBuffer(), buf.len()
-    }));
+    ZCLMessage zcl(2);   // message is 2 bytes
+    zcl.shortaddr = _srcaddr;
+    zcl.cluster = _cluster_id;
+    zcl.endpoint = _srcendpoint;
+    zcl.cmd = ZCL_DEFAULT_RESPONSE;
+    zcl.manuf = _manuf_code;
+    zcl.clusterSpecific = false;  /* not cluster specific */
+    zcl.needResponse = false;     /* noresponse */
+    zcl.direct = true;            /* direct no retry */
+    zcl.setTransac(_transact_seq);
+    zcl.buf.add8(_cmd_id);
+    zcl.buf.add8(0);    // Status = OK
+    zigbeeZCLSendCmd(zcl);
   }
 }
 
@@ -1674,23 +1670,19 @@ void ZCLFrame::parseClusterSpecificCommand(Z_attribute_list& attr_list) {
   // Send Default Response to acknowledge the attribute reporting
   if (0 == _frame_control.b.disable_def_resp) {
     // the device expects a default response
-    SBuffer buf(2);
-    buf.add8(_cmd_id);
-    buf.add8(0x00);   // Status = OK
-
-    ZigbeeZCLSend_Raw(ZigbeeZCLSendMessage({
-      _srcaddr,
-      0x0000,
-      _cluster_id,
-      _srcendpoint,
-      ZCL_DEFAULT_RESPONSE,
-      _manuf_code,
-      false /* not cluster specific */,
-      false /* noresponse */,
-      true /* direct no retry */,
-      _transact_seq,  /* zcl transaction id */
-      buf.getBuffer(), buf.len()
-    }));
+    ZCLMessage zcl(2);   // message is 4 bytes
+    zcl.shortaddr = _srcaddr;
+    zcl.cluster = _cluster_id;
+    zcl.endpoint = _srcendpoint;
+    zcl.cmd = ZCL_DEFAULT_RESPONSE;
+    zcl.manuf = _manuf_code;
+    zcl.clusterSpecific = false;  /* not cluster specific */
+    zcl.needResponse = false;     /* noresponse */
+    zcl.direct = true;            /* direct no retry */
+    zcl.setTransac(_transact_seq);
+    zcl.buf.add8(_cmd_id);
+    zcl.buf.add8(0x00);   // Status = OK
+    zigbeeZCLSendCmd(zcl);
   }
 }
 

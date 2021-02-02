@@ -46,7 +46,7 @@ typedef struct Z_XYZ_Var {    // Holds values for vairables X, Y and Z
 // - cluster: cluster number of the command
 // - cmd: the command number, of 0xFF if it's actually a variable to be assigned from 'xx'
 // - direction: the direction of the command (bit field). 0x01=from client to server (coord to device), 0x02= from server to client (response), 0x80=needs specific decoding
-// - param: the paylod template, x/y/z are substituted with arguments, little endian. For command display, payload must match until x/y/z character or until the end of the paylod. '??' means ignore.
+// - param: the paylod template, x/y/z are substituted with arguments, little endian. For command display, payload must match until x/y/z character or until the end of the paylod. '_' means custom converter.
 const Z_CommandConverter Z_Commands[] PROGMEM = {
   // Identify cluster
   { Z_(Identify),       0x0003, 0x00, 0x01,   Z_(xxxx) },         // Identify device, time in seconds
@@ -82,7 +82,7 @@ const Z_CommandConverter Z_Commands[] PROGMEM = {
   { Z_(HueSat),         0x0300, 0x06, 0x01,   Z_(xxyy0A00) },     // Hue, Sat
   { Z_(Color),          0x0300, 0x07, 0x01,   Z_(xxxxyyyy0A00) }, // x, y (uint16)
   { Z_(CT),             0x0300, 0x0A, 0x01,   Z_(xxxx0A00) },     // Color Temperature Mireds (uint16)
-  { Z_(RGB),            0x0300, 0xF0, 0x81,   Z_() },             // synthetic commands converting RGB to XY
+  { Z_(RGB),            0x0300, 0xF0, 0x81,   Z_(_) },            // synthetic commands converting RGB to XY
   { Z_(ShutterOpen),    0x0102, 0x00, 0x01,   Z_() },
   { Z_(ShutterClose),   0x0102, 0x01, 0x01,   Z_() },
   { Z_(ShutterStop),    0x0102, 0x02, 0x01,   Z_() },
@@ -180,20 +180,18 @@ void Z_ReadAttrCallback(uint16_t shortaddr, uint16_t groupaddr, uint16_t cluster
     if (groupaddr) {
       shortaddr = BAD_SHORTADDR;   // if group address, don't send to device
     }
-    uint8_t seq = zigbee_devices.getNextSeqNumber(shortaddr);
-    ZigbeeZCLSend_Raw(ZigbeeZCLSendMessage({
-      shortaddr,
-      groupaddr,
-      cluster /*cluster*/,
-      endpoint,
-      ZCL_READ_ATTRIBUTES,
-      0,  /* manuf */
-      false /* not cluster specific */,
-      true /* response */,
-      false /* discover route */,
-      seq,  /* zcl transaction id */
-      attrs, attrs_len
-    }));
+
+    ZCLMessage zcl(attrs_len);   // message is `attrs_len` bytes
+    zcl.shortaddr = shortaddr;
+    zcl.groupaddr = groupaddr;
+    zcl.cluster = cluster;
+    zcl.endpoint = endpoint;
+    zcl.cmd = ZCL_READ_ATTRIBUTES;
+    zcl.clusterSpecific = false;
+    zcl.needResponse = true;
+    zcl.direct = false;   // discover route
+    zcl.buf.addBuffer(attrs, attrs_len);
+    zigbeeZCLSendCmd(zcl);
   }
 }
 
@@ -535,17 +533,19 @@ bool convertTuyaSpecificCluster(class Z_attribute_list &attr_list, uint16_t clus
 // Only take commands outgoing, i.e. direction == 0
 // If not found:
 //  - returns nullptr
-const __FlashStringHelper* zigbeeFindCommand(const char *command, uint16_t *cluster, uint16_t *cmd) {
+//  - return PROGMEM string
+const char * zigbeeFindCommand(const char *command, uint16_t *cluster, uint16_t *cmd) {
   if (nullptr == command) { return nullptr; }
   for (uint32_t i = 0; i < sizeof(Z_Commands) / sizeof(Z_Commands[0]); i++) {
     const Z_CommandConverter *conv = &Z_Commands[i];
     uint8_t conv_direction = pgm_read_byte(&conv->direction);
     uint8_t conv_cmd = pgm_read_byte(&conv->cmd);
     uint16_t conv_cluster = pgm_read_word(&conv->cluster);
+    // conv_direction must be client (coord) -> server (device), we can only send commands to end devices
     if ((conv_direction & 0x01) && (0 == strcasecmp_P(command, Z_strings + pgm_read_word(&conv->tasmota_cmd_offset)))) {
       *cluster = conv_cluster;
       *cmd = conv_cmd;
-      return (const __FlashStringHelper*) (Z_strings + pgm_read_word(&conv->param_offset));
+      return Z_strings + pgm_read_word(&conv->param_offset);
     }
   }
 
@@ -559,16 +559,17 @@ inline char hexDigit(uint32_t h) {
 }
 
 // replace all xx/yy/zz substrings with unsigned ints, and the corresponding len (8, 16 or 32 bits)
-String zigbeeCmdAddParams(const char *zcl_cmd_P, uint32_t x, uint32_t y, uint32_t z) {
-  size_t len = strlen_P(zcl_cmd_P);
-  char zcl_cmd[len+1];
-  strcpy_P(zcl_cmd, zcl_cmd_P);     // copy into RAM
+// Returns a SBuffer allocated object, it is the caller's responsibility to delete it
+void zigbeeCmdAddParams(SBuffer & buf, const char *zcl_cmd_P, uint32_t x, uint32_t y, uint32_t z) {
+  size_t hex_len = strlen_P(zcl_cmd_P);
+  buf.reserve((hex_len + 1)/2);
 
-  char *p = zcl_cmd;
-  while (*p) {
-    if (isXYZ(*p) && (*p == *(p+1))) {    // if char is [x-z] and followed by same char
+  const char * p = zcl_cmd_P;
+  char c0, c1;
+  while ((c0 = pgm_read_byte(p)) && (c1 = pgm_read_byte(p+1))) {
+    if (isXYZ(c0) && (c0 == c1)) {    // if char is [x-z] and followed by same char
       uint8_t val = 0;
-      switch (*p) {
+      switch (pgm_read_byte(p)) {
         case 'x':
           val = x & 0xFF;
           x = x >> 8;
@@ -582,15 +583,18 @@ String zigbeeCmdAddParams(const char *zcl_cmd_P, uint32_t x, uint32_t y, uint32_
           z = z >> 8;
           break;
       }
-      *p = hexDigit(val >> 4);
-      *(p+1) = hexDigit(val);
-      p++;
+      buf.add8(val);
+      // *p = hexDigit(val >> 4);
+      // *(p+1) = hexDigit(val);
+    } else {
+      char hex[4];
+      hex[0] = c0;
+      hex[1] = c1;
+      hex[2] = 0;
+      buf.add8(strtoul(hex, nullptr, 16) & 0xFF);
     }
-    p++;
+    p += 2;
   }
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR("SendZCLCommand_P: zcl_cmd = %s"), zcl_cmd);
-
-  return String(zcl_cmd);
 }
 
 const char kZ_Alias[] PROGMEM = "OFF|" D_OFF "|" D_FALSE "|" D_STOP  "|" "OPEN" "|"           // 0
