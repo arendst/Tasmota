@@ -1,0 +1,31 @@
+{
+  "build": {
+    "arduino":{
+      "ldscript": "esp32s2_out.ld"
+    },
+    "core": "esp32",
+    "mcu": "esp32s2",
+    "extra_flags": "-Desp32S2_dev_module",
+    "f_cpu": "240000000L",
+    "f_flash": "80000000L",
+    "flash_mode": "qio",
+    "mcu": "esp32s2",
+    "variant": "esp32s2"
+  },
+  "connectivity": [
+    "wifi"
+  ],
+  "frameworks": [
+    "arduino"
+  ],
+  "name": "ESP32S2 Dev Module",
+  "upload": {
+    "flash_size": "4MB",
+    "maximum_ram_size": 327680,
+    "maximum_size": 4194304,
+    "require_upload_port": true,
+    "speed": 460800
+  },
+  "url": "https://espressif.com",
+  "vendor": "espressif"
+}
