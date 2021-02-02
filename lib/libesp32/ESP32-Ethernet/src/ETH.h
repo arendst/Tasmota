@@ -21,6 +21,8 @@
 #ifndef _ETH_H_
 #define _ETH_H_
 
+#if CONFIG_IDF_TARGET_ESP32
+
 #include "WiFi.h"
 #include "esp_eth.h"
 
@@ -92,4 +94,5 @@ class ETHClass {
 
 extern ETHClass ETH;
 
+#endif  // CONFIG_IDF_TARGET_ESP32
 #endif /* _ETH_H_ */

@@ -30,6 +30,7 @@
 #endif
 
 #ifdef ESP32                       // ESP32 only. Use define USE_HM10 for ESP8266 support
+#if CONFIG_IDF_TARGET_ESP32
 #ifdef USE_BLE_ESP32
 
 /*
@@ -3574,6 +3575,7 @@ void sendExample(){
 
 
 #endif
+#endif  // CONFIG_IDF_TARGET_ESP32
 #endif  // ESP32
 
 

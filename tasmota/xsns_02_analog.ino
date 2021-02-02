@@ -247,7 +247,9 @@ void AdcInit(void) {
   if (Adcs.present) {
 #ifdef ESP32
     analogSetClockDiv(1);               // Default 1
+#if CONFIG_IDF_TARGET_ESP32
     analogSetWidth(ANALOG_RESOLUTION);  // Default 12 bits (0 - 4095)
+#endif  // CONFIG_IDF_TARGET_ESP32
     analogSetAttenuation(ADC_11db);     // Default 11db
 #endif
     for (uint32_t idx = 0; idx < Adcs.present; idx++) {

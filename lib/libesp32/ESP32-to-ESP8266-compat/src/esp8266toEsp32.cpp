@@ -17,7 +17,14 @@
 #include "Arduino.h"
 #include "lwip/apps/sntp.h"
 #include <nvs.h>
+
+#if CONFIG_IDF_TARGET_ESP32
 #include <rom/rtc.h>
+//#include "esp32/rom/rtc.h"
+#elif CONFIG_IDF_TARGET_ESP32S2
+#include "esp32s2/rom/rtc.h"
+#endif
+
 #include <ESP8266WiFi.h>
 #include "esp8266toEsp32.h"
 
