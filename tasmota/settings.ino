@@ -778,7 +778,7 @@ void SettingsDefaultSet2(void) {
 #ifdef ESP32
   Settings.eth_type = ETH_TYPE;
   Settings.eth_clk_mode = ETH_CLKMODE;
-  Settings.eth_address = ETH_ADDR;
+  Settings.eth_address = ETH_ADDRESS;
 #endif  // ESP32
 
   // Wifi
@@ -1309,7 +1309,7 @@ void SettingsDelta(void) {
     if (Settings.version < 0x08030105) {
       Settings.eth_type = ETH_TYPE;
       Settings.eth_clk_mode = ETH_CLKMODE;
-      Settings.eth_address = ETH_ADDR;
+      Settings.eth_address = ETH_ADDRESS;
     }
 #endif  // ESP32
     if (Settings.version < 0x08030106) {
