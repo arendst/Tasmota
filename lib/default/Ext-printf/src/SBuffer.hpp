@@ -52,6 +52,20 @@ public:
     delete[] _buf;
   }
 
+  // increase the internal buffer if needed
+  // do nothing if the buffer is big enough
+  void reserve(const size_t size) {
+    if (size > _buf->size) {
+      // we need to increase the buffer size
+      SBuffer_impl * new_buf = (SBuffer_impl*) new char[size+4];   // add 4 bytes for size and len
+      new_buf->size = size;
+      new_buf->len = _buf->len;
+      memmove(&new_buf->buf, &_buf->buf, _buf->len);               // copy buffer
+      delete[] _buf;
+      _buf = new_buf;
+    }
+  }
+
   inline void setLen(const size_t len) {
     uint16_t old_len = _buf->len;
     _buf->len = (len <= _buf->size) ? len : _buf->size;
@@ -116,6 +130,13 @@ public:
       _buf->buf[_buf->len++] = data >> 56;
     }
     return _buf->len;
+  }
+
+  void replace(const SBuffer &buf2) {
+    uint32_t len = buf2.len();
+    reserve(len);
+    setLen(0);      // clear buffer
+    addBuffer(buf2);
   }
 
   size_t addBuffer(const SBuffer &buf2) {

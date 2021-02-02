@@ -152,27 +152,21 @@ void ZigbeeHueGroups(String * lights) {
 }
 
 void ZigbeeSendHue(uint16_t shortaddr, uint16_t cluster, uint8_t cmd, const SBuffer & s) {
-  zigbeeZCLSendCmd(ZigbeeZCLSendMessage({
-    shortaddr,
-    0 /* groupaddr */,
-    cluster /*cluster*/,
-    0 /* endpoint */,
-    cmd /* cmd */,
-    0,  /* manuf */
-    true /* cluster specific */,
-    true /* response */,
-    false /* discover route */,
-    0,  /* zcl transaction id */
-    (&s != nullptr) ? s.getBuffer() : nullptr,
-    (&s != nullptr) ? s.len() : 0
-  }));
+  ZCLMessage zcl(&s ? s.len() : 0);
+  zcl.shortaddr = shortaddr;
+  zcl.cluster = cluster;
+  zcl.cmd = cmd;
+  zcl.clusterSpecific = true;
+  zcl.needResponse = true;
+  zcl.direct = false;   // discover route
+  if (&s) { zcl.buf.replace(s); }
+  zigbeeZCLSendCmd(zcl);
 }
 
 // Send commands
 // Power On/Off
 void ZigbeeHuePower(uint16_t shortaddr, bool power) {
   ZigbeeSendHue(shortaddr, 0x0006, power ? 1 : 0, *(SBuffer*)nullptr);
-//  zigbeeZCLSendStr(shortaddr, 0, 0, true, 0, 0x0006, power ? 1 : 0, "");
   zigbee_devices.getShortAddr(shortaddr).setPower(power, 0);
 }
 
@@ -183,23 +177,16 @@ void ZigbeeHueDimmer(uint16_t shortaddr, uint8_t dimmer) {
   s.add8(dimmer);
   s.add16(0x000A);    // transition time = 1s
   ZigbeeSendHue(shortaddr, 0x0008, 0x04, s);
-  // char param[8];
-  // snprintf_P(param, sizeof(param), PSTR("%02X0A00"), dimmer);
-  // zigbeeZCLSendStr(shortaddr, 0, 0, true, 0, 0x0008, 0x04, param);
   zigbee_devices.getLight(shortaddr).setDimmer(dimmer);
 }
 
 // CT
 void ZigbeeHueCT(uint16_t shortaddr, uint16_t ct) {
   if (ct > 0xFEFF) { ct = 0xFEFF; }
-  // AddLog(LOG_LEVEL_INFO, PSTR("ZigbeeHueCT 0x%04X - %d"), shortaddr, ct);
   SBuffer s(4);
   s.add16(ct);
   s.add16(0x000A);    // transition time = 1s
   ZigbeeSendHue(shortaddr, 0x0300, 0x0A, s);
-  // char param[12];
-  // snprintf_P(param, sizeof(param), PSTR("%02X%02X0A00"), ct & 0xFF, ct >> 8);
-  // zigbeeZCLSendStr(shortaddr, 0, 0, true, 0, 0x0300, 0x0A, param);
   Z_Data_Light & light = zigbee_devices.getLight(shortaddr);
   light.setColorMode(2);      // "ct"
   light.setCT(ct);
@@ -214,10 +201,6 @@ void ZigbeeHueXY(uint16_t shortaddr, uint16_t x, uint16_t y) {
   s.add16(y);
   s.add16(0x000A);    // transition time = 1s
   ZigbeeSendHue(shortaddr, 0x0300, 0x07, s);
-  // char param[16];
-  // snprintf_P(param, sizeof(param), PSTR("%02X%02X%02X%02X0A00"), x & 0xFF, x >> 8, y & 0xFF, y >> 8);
-  // uint8_t colormode = 1;      // "xy"
-  // zigbeeZCLSendStr(shortaddr, 0, 0, true, 0, 0x0300, 0x07, param);
   Z_Data_Light & light = zigbee_devices.getLight(shortaddr);
   light.setColorMode(1);      // "xy"
   light.setX(x);
@@ -233,10 +216,6 @@ void ZigbeeHueHS(uint16_t shortaddr, uint16_t hue, uint8_t sat) {
   s.add8(sat);
   s.add16(0);
   ZigbeeSendHue(shortaddr, 0x0300, 0x06, s);
-  // char param[16];
-  // snprintf_P(param, sizeof(param), PSTR("%02X%02X0000"), hue8, sat);
-  // uint8_t colormode = 0;      // "hs"
-  // zigbeeZCLSendStr(shortaddr, 0, 0, true, 0, 0x0300, 0x06, param);
   Z_Data_Light & light = zigbee_devices.getLight(shortaddr);
   light.setColorMode(0);      // "hs"
   light.setSat(sat);
