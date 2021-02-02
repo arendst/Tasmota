@@ -625,7 +625,7 @@ uint8_t UfsDownloadFile(char *file) {
   }
   snprintf_P(attachment, sizeof(attachment), PSTR("attachment; filename=%s"), cp);
   Webserver->sendHeader(F("Content-Disposition"), attachment);
-  WSSend(200, CT_STREAM, "");
+  WSSend(200, CT_APP_STREAM, "");
 
   uint8_t buff[512];
   uint32_t bread;
@@ -696,7 +696,7 @@ void donload_task(void *path) {
   }
   snprintf_P(attachment, sizeof(attachment), PSTR("attachment; filename=%s"), cp);
   Webserver->sendHeader(F("Content-Disposition"), attachment);
-  WSSend(200, CT_STREAM, "");
+  WSSend(200, CT_APP_STREAM, "");
 
   uint8_t *buff = (uint8_t*)malloc(DOWNLOAD_SIZE);
   if (buff) {

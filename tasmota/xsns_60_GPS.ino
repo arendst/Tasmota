@@ -490,7 +490,7 @@ void UBXsendHeader(void)
 {
   Webserver->setContentLength(CONTENT_LENGTH_UNKNOWN);
   Webserver->sendHeader(F("Content-Disposition"), F("attachment; filename=TASMOTA.gpx"));
-  WSSend(200, CT_STREAM, F(
+  WSSend(200, CT_APP_STREAM, F(
     "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\r\n"
     "<GPX version=\"1.1\" creator=\"TASMOTA\" xmlns=\"http://www.topografix.com/GPX/1/1\" \r\n"
     "xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\r\n"

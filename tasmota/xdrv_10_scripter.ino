@@ -4926,7 +4926,7 @@ uint8_t DownloadFile(char *file) {
     }
     snprintf_P(attachment, sizeof(attachment), PSTR("attachment; filename=%s"), cp);
     Webserver->sendHeader(F("Content-Disposition"), attachment);
-    WSSend(200, CT_STREAM, "");
+    WSSend(200, CT_APP_STREAM, "");
 
     uint8_t buff[512];
     uint16_t bread;
@@ -5599,7 +5599,7 @@ void Script_Handle_Hue(String *path) {
     response = FPSTR(sHUE_ERROR_JSON);
   }
   AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_HTTP D_HUE " Result (%s)"), response.c_str());
-  WSSend(code, CT_JSON, response);
+  WSSend(code, CT_APP_JSON, response);
   if (resp) {
     Run_Scripter(">E", 2, 0);
   }

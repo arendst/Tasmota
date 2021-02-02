@@ -27,6 +27,9 @@
 
 #define XDRV_01                               1
 
+// Enable below demo feature only if defines USE_UNISHOX_COMPRESSION and USE_SCRIPT_WEB_DISPLAY are disabled
+//#define USE_WEB_SSE
+
 #ifndef WIFI_SOFT_AP_CHANNEL
 #define WIFI_SOFT_AP_CHANNEL                  1          // Soft Access Point Channel number between 1 and 11 as used by WifiManager web GUI
 #endif
@@ -61,8 +64,6 @@ enum UploadTypes { UPL_TASMOTA, UPL_SETTINGS, UPL_EFM8BB1, UPL_TASMOTACLIENT, UP
   #endif
 #endif
 
-
-
 const char HTTP_SCRIPT_COUNTER[] PROGMEM =
   "var cn=180;"                           // seconds
   "function u(){"
@@ -73,7 +74,6 @@ const char HTTP_SCRIPT_COUNTER[] PROGMEM =
     "}"
   "}"
   "wl(u);";
-
 
 #ifdef USE_UNISHOX_COMPRESSION
   #ifdef USE_SCRIPT_WEB_DISPLAY
@@ -86,7 +86,11 @@ const char HTTP_SCRIPT_COUNTER[] PROGMEM =
   #ifdef USE_SCRIPT_WEB_DISPLAY
     #include "./html_uncompressed/HTTP_SCRIPT_ROOT_WEB_DISPLAY.h"
   #else
-    #include "./html_uncompressed/HTTP_SCRIPT_ROOT_NO_WEB_DISPLAY.h"
+    #ifdef USE_WEB_SSE
+      #include "./html_uncompressed/HTTP_SCRIPT_ROOT_SSE_NO_WEB_DISPLAY.h"
+    #else
+      #include "./html_uncompressed/HTTP_SCRIPT_ROOT_NO_WEB_DISPLAY.h"
+    #endif  // USE_WEB_SSE
   #endif
   #include "./html_uncompressed/HTTP_SCRIPT_ROOT_PART2.h"
 #endif
@@ -346,8 +350,8 @@ const char kButtonAction[] PROGMEM =
   "md|wi|lg|co|tp|dl|rs";
 const char kButtonConfirm[] PROGMEM = D_CONFIRM_RESTART "|" D_CONFIRM_RESET_CONFIGURATION;
 
-enum CTypes { CT_HTML, CT_PLAIN, CT_XML, CT_JSON, CT_STREAM };
-const char kContentTypes[] PROGMEM = "text/html|text/plain|text/xml|application/json|application/octet-stream";
+enum CTypes { CT_HTML, CT_PLAIN, CT_XML, CT_STREAM, CT_APP_JSON, CT_APP_STREAM };
+const char kContentTypes[] PROGMEM = "text/html|text/plain|text/xml|text/event-stream|application/json|application/octet-stream";
 
 const char kLoggingOptions[] PROGMEM = D_SERIAL_LOG_LEVEL "|" D_WEB_LOG_LEVEL "|" D_MQTT_LOG_LEVEL "|" D_SYS_LOG_LEVEL;
 const char kLoggingLevels[] PROGMEM = D_NONE "|" D_ERROR "|" D_INFO "|" D_DEBUG "|" D_MORE_DEBUG;
@@ -1223,7 +1227,13 @@ bool HandleRootStatusRefresh(void)
     ExecuteWebCommand(svalue, SRC_WEBGUI);
   }
 #endif // USE_ZIGBEE
+
+#ifdef USE_WEB_SSE
+  WSContentBegin(200, CT_STREAM);
+  WSContentSend_P(PSTR("data: "));
+#else
   WSContentBegin(200, CT_HTML);
+#endif  // USE_WEB_SSE
   WSContentSend_P(PSTR("{t}"));
   XsnsCall(FUNC_WEB_SENSOR);
   XdrvCall(FUNC_WEB_SENSOR);
@@ -1259,6 +1269,10 @@ bool HandleRootStatusRefresh(void)
     }
   }
 #endif  // USE_TUYA_MCU
+
+#ifdef USE_WEB_SSE
+  WSContentSend_P(PSTR("\n\n"));
+#endif  // USE_WEB_SSE
   WSContentEnd();
 
   return true;
@@ -1990,7 +2004,7 @@ void HandleBackupConfiguration(void)
 
   Webserver->sendHeader(F("Content-Disposition"), attachment);
 
-  WSSend(200, CT_STREAM, "");
+  WSSend(200, CT_APP_STREAM, "");
 
   uint32_t cfg_crc32 = Settings.cfg_crc32;
   Settings.cfg_crc32 = GetSettingsCrc32();  // Calculate crc (again) as it might be wrong when savedata = 0 (#3918)
@@ -2671,14 +2685,14 @@ void HandleHttpCommand(void)
     WebGetArg(PSTR("password"), tmp2, sizeof(tmp2));
 
     if (!(!strcmp(tmp1, WEB_USERNAME) && !strcmp(tmp2, SettingsText(SET_WEBPWD)))) {
-      WSContentBegin(401, CT_JSON);
+      WSContentBegin(401, CT_APP_JSON);
       WSContentSend_P(PSTR("{\"" D_RSLT_WARNING "\":\"" D_NEED_USER_AND_PASSWORD "\"}"));
       WSContentEnd();
       return;
     }
   }
 
-  WSContentBegin(200, CT_JSON);
+  WSContentBegin(200, CT_APP_JSON);
   String svalue = Webserver->arg(F("cmnd"));
   if (svalue.length() && (svalue.length() < MQTT_MAX_PACKET_SIZE)) {
     uint32_t curridx = TasmotaGlobal.log_buffer_pointer;
