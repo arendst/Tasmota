@@ -1261,18 +1261,7 @@ bool HandleRootStatusRefresh(void)
 
     WSContentSend_P(PSTR("</tr></table>"));
   }
-#ifdef USE_TUYA_MCU
-  if (IsModuleTuya()) {
-    uint32_t modeset = TuyaModeSet();
-    if (AsModuleTuyaMS()) {
-      WSContentSend_P(PSTR("<div style='text-align:center;font-size:25px;'>" D_JSON_IRHVAC_MODE ": %d</div>"), modeset);
-    }
-  }
-#endif  // USE_TUYA_MCU
-
-#ifdef USE_WEB_SSE
-  WSContentSend_P(PSTR("\n\n"));
-#endif  // USE_WEB_SSE
+  WSContentSend_P(PSTR("\n\n"));  // Prep for SSE
   WSContentEnd();
 
   return true;
