@@ -762,9 +762,12 @@ bool Xdrv50(uint8_t function) {
       }
       break;
     case FUNC_WEB_ADD_HANDLER:
-      Webserver->on(F("/ufsd"), UfsDirectory);
-      Webserver->on(F("/ufsu"), HTTP_GET, UfsDirectory);
-      Webserver->on(F("/ufsu"), HTTP_POST,[](){Webserver->sendHeader(F("Location"),F("/ufsu"));Webserver->send(303);}, HandleUploadLoop);
+//      Webserver->on(F("/ufsd"), UfsDirectory);
+//      Webserver->on(F("/ufsu"), HTTP_GET, UfsDirectory);
+//      Webserver->on(F("/ufsu"), HTTP_POST,[](){Webserver->sendHeader(F("Location"),F("/ufsu"));Webserver->send(303);}, HandleUploadLoop);
+      Webserver->on("/ufsd", UfsDirectory);
+      Webserver->on("/ufsu", HTTP_GET, UfsDirectory);
+      Webserver->on("/ufsu", HTTP_POST,[](){Webserver->sendHeader(F("Location"),F("/ufsu"));Webserver->send(303);}, HandleUploadLoop);
       break;
 #endif // USE_WEBSERVER
   }
