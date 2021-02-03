@@ -15,6 +15,7 @@ All notable changes to this project will be documented in this file.
 - Command ``L1MusicSync <0|Off>|<1|On>|<2|Toggle>, 1..10, 1..100>`` to control Sonoff L1 Music Sync mode sensitivity and speed (#10722)
 - Command ``Speed2`` to control a once off fade (#10741)
 - Zigbee command ``SetOption120 1`` or ``ZbEndpointTopic 1`` to add the endpoint as suffix in topic when using ``SetOption89 1``
+- Zigbee command ``ZbScan`` to do an energy scan on each radio channel
 
 ### Changed
 - Maximum chars in ``AddLog_P`` logging restored from 128 to 700 (MAX_LOGSZ) to solve broken error messages

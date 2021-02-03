@@ -161,6 +161,60 @@ int32_t EZ_RouteError(int32_t res, const SBuffer &buf) {
 }
 
 //
+// Handle EZSP Energy Scan result
+//
+int32_t EZSP_EnergyScanResult(int32_t res, const SBuffer &buf) {
+  uint8_t  channel = buf.get8(2);
+  int8_t   energy = buf.get8(3);
+
+  if ((channel >= USE_ZIGBEE_CHANNEL_MIN) && (channel <= USE_ZIGBEE_CHANNEL_MAX)) {
+    zigbee.energy[channel - USE_ZIGBEE_CHANNEL_MIN] = energy;
+  }
+  return -1;
+}
+//
+// Handle EZSP Energy Scan complete
+//
+int32_t EZSP_EnergyScanComplete(int32_t res, const SBuffer &buf) {
+  // uint8_t  channel = buf.get8(2);
+  uint8_t   status = buf.get8(3);
+
+  if (0 == status) {
+    EnergyScanResults();
+  }
+
+  return -1;
+}
+
+//
+// Dump energu scan results
+//
+void EnergyScanResults(void) {
+  Response_P(PSTR("{\"" D_JSON_ZIGBEE_SCAN "\":["));
+  for (uint32_t i = 0; i < USE_ZIGBEE_CHANNEL_COUNT; i++) {
+    int8_t energy = zigbee.energy[i];
+
+    if (i > 0) { ResponseAppend_P(PSTR(",")); }
+    ResponseAppend_P(PSTR("\"%d\":%d"), i + USE_ZIGBEE_CHANNEL_MIN, energy);
+
+    // display as log
+    static const int32_t bar_min = -87;
+    static const int32_t bar_max = 10;
+    static const uint32_t bar_count = 60;
+    char bar_str[bar_count + 1];
+    uint32_t energy_unsigned = energy + 0x80;
+
+    uint32_t bars = changeUIntScale(energy_unsigned, bar_min + 0x80, bar_max + 0x80, 0, bar_count);
+    for  (uint32_t j = 0; j < bars; j++) { bar_str[j] = '#'; }
+    bar_str[bars] = 0;
+    
+    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Channel %2d: %s"), i + USE_ZIGBEE_CHANNEL_MIN, bar_str);
+  }
+  ResponseAppend_P(PSTR("]}"));
+  MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEE_STATE));
+}
+
+//
 // Handle a "permitJoining" incoming message
 //
 int32_t EZ_PermitJoinRsp(int32_t res, const SBuffer &buf) {
@@ -1817,19 +1871,18 @@ int32_t EZ_Recv_Default(int32_t res, const SBuffer &buf) {
     switch (ezsp_command_index) {
       case EZSP_incomingMessageHandler:
         return EZ_IncomingMessage(res, buf);
-        break;
       case EZSP_trustCenterJoinHandler:
         return EZ_ReceiveTCJoinHandler(res, buf);
-        break;
       case EZSP_incomingRouteErrorHandler:
         return EZ_RouteError(res, buf);
-        break;
       case EZSP_permitJoining:
         return EZ_PermitJoinRsp(res, buf);
-        break;
       case EZSP_messageSentHandler:
         return EZ_MessageSent(res, buf);
-        break;
+      case EZSP_energyScanResultHandler:
+        return EZSP_EnergyScanResult(res, buf);
+      case EZSP_scanCompleteHandler:
+        return EZSP_EnergyScanComplete(res, buf);
     }
     return -1;
   }

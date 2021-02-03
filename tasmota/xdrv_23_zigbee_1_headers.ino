@@ -23,6 +23,11 @@
 #include "Eeprom24C512.h"
 #endif // USE_ZIGBEE_EZSP
 
+// channels numbers for Zigbee radio energy scan
+#define USE_ZIGBEE_CHANNEL_MIN    11
+#define USE_ZIGBEE_CHANNEL_MAX    26
+#define USE_ZIGBEE_CHANNEL_COUNT  (USE_ZIGBEE_CHANNEL_MAX - USE_ZIGBEE_CHANNEL_MIN + 1)
+
 // contains some definitions for functions used before their declarations
 
 //
@@ -122,6 +127,9 @@ public:
 
   ZB_RecvMsgFunc recv_func = nullptr;          // function to call when message is expected
   ZB_RecvMsgFunc recv_unexpected = nullptr;    // function called when unexpected message is received
+
+  // Energy scan
+  int8_t energy[USE_ZIGBEE_CHANNEL_COUNT];
 
 #ifdef USE_ZIGBEE_EZSP
   uint32_t permit_end_time = 0;       // timestamp when permit join ends
