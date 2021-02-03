@@ -1597,6 +1597,7 @@ char *isvar(char *lp, uint8_t *vtype, struct T_INDEX *tind, float *fp, char *sp,
 
     if (gv && gv->jo) {
       // look for json input
+      JsonParserObject *jpo = gv->jo;
       char jvname[64];
       strcpy(jvname, vname);
       const char* str_value;
@@ -1609,12 +1610,12 @@ char *isvar(char *lp, uint8_t *vtype, struct T_INDEX *tind, float *fp, char *sp,
         ja++;
         // fetch array index
         float fvar;
-        GetNumericArgument(ja, OPER_EQU, &fvar, gv);
+        GetNumericArgument(ja, OPER_EQU, &fvar, 0);
         aindex = fvar;
         if (aindex<1 || aindex>6) aindex = 1;
         aindex--;
       }
-      if (gv->jo->isValid()) {
+      if (jpo->isValid()) {
         char *subtype = strchr(jvname, '#');
         char *subtype2;
         if (subtype) {
@@ -1627,23 +1628,23 @@ char *isvar(char *lp, uint8_t *vtype, struct T_INDEX *tind, float *fp, char *sp,
           }
         }
         vn = jvname;
-        str_value = (*gv->jo)[vn].getStr();
-        if ((*gv->jo)[vn].isValid()) {
+        str_value = (*jpo)[vn].getStr();
+        if ((*jpo)[vn].isValid()) {
           if (subtype) {
-            JsonParserObject jobj1 = (*gv->jo)[vn];
+            JsonParserObject jobj1 = (*jpo)[vn];
             if (jobj1.isValid()) {
               vn = subtype;
-              gv->jo = &jobj1;
-              str_value = (*gv->jo)[vn].getStr();
-              if ((*gv->jo)[vn].isValid()) {
+              jpo = &jobj1;
+              str_value = (*jpo)[vn].getStr();
+              if ((*jpo)[vn].isValid()) {
                 // 2. stage
                 if (subtype2) {
-                  JsonParserObject jobj2 = (*gv->jo)[vn];
-                  if ((*gv->jo)[vn].isValid()) {
+                  JsonParserObject jobj2 = (*jpo)[vn];
+                  if ((*jpo)[vn].isValid()) {
                     vn = subtype2;
-                    gv->jo = &jobj2;
-                    str_value = (*gv->jo)[vn].getStr();
-                    if ((*gv->jo)[vn].isValid()) {
+                    jpo = &jobj2;
+                    str_value = (*jpo)[vn].getStr();
+                    if ((*jpo)[vn].isValid()) {
                       goto skip;
                     } else {
                       goto chknext;
@@ -1662,10 +1663,10 @@ char *isvar(char *lp, uint8_t *vtype, struct T_INDEX *tind, float *fp, char *sp,
           skip:
           if (ja) {
             // json array
-            str_value = (*gv->jo)[vn].getArray()[aindex].getStr();
+            str_value = (*jpo)[vn].getArray()[aindex].getStr();
           }
           if (str_value && *str_value) {
-            if ((*gv->jo)[vn].isStr()) {
+            if ((*jpo)[vn].isStr()) {
               if (!strncmp(str_value, "ON", 2)) {
                 if (fp) *fp = 1;
                 goto nexit;
@@ -1782,7 +1783,7 @@ chknext:
           // var changed
           struct T_INDEX ind;
           uint8_t vtype;
-          isvar(vname + 4, &vtype, &ind, 0, 0, 0);
+          isvar(vname + 4, &vtype, &ind, 0, 0, gv);
           if (!ind.bits.constant) {
             uint8_t index = glob_script_mem.type[ind.index].index;
             if (glob_script_mem.fvars[index] != glob_script_mem.s_fvars[index]) {
@@ -2024,7 +2025,7 @@ chknext:
           struct T_INDEX ind;
           uint8_t vtype;
           uint8_t sindex = 0;
-          lp = isvar(lp + 3, &vtype, &ind, 0, 0, 0);
+          lp = isvar(lp + 3, &vtype, &ind, 0, 0, gv);
           if (vtype!=VAR_NV) {
             // found variable as result
             if ((vtype&STYPE)==0) {
@@ -2189,7 +2190,7 @@ chknext:
         if (!strncmp(vname, "fwa(", 4)) {
           struct T_INDEX ind;
           uint8_t vtype;
-          lp = isvar(lp + 4, &vtype, &ind, 0, 0, 0);
+          lp = isvar(lp + 4, &vtype, &ind, 0, 0, gv);
           if (vtype!=VAR_NV && (vtype&STYPE)==0 && glob_script_mem.type[ind.index].bits.is_filter) {
             // found array as result
 
@@ -2228,7 +2229,7 @@ chknext:
         if (!strncmp(vname, "fra(", 4)) {
           struct T_INDEX ind;
           uint8_t vtype;
-          lp = isvar(lp + 4, &vtype, &ind, 0, 0, 0);
+          lp = isvar(lp + 4, &vtype, &ind, 0, 0, gv);
           if (vtype!=VAR_NV && (vtype&STYPE)==0 && glob_script_mem.type[ind.index].bits.is_filter) {
             // found array as result
 
@@ -3103,7 +3104,7 @@ chknext:
           // var was updated
           struct T_INDEX ind;
           uint8_t vtype;
-          isvar(vname + 4, &vtype, &ind, 0, 0, 0);
+          isvar(vname + 4, &vtype, &ind, 0, 0, gv);
           if (!ind.bits.constant) {
             if (!ind.bits.changed) {
               fvar = 0;
@@ -4040,7 +4041,7 @@ int16_t Run_script_sub(const char *type, int8_t tlen, struct GVARS *gv) {
               lp += 3;
               SCRIPT_SKIP_SPACES
               lp_next = 0;
-              lp = isvar(lp, &vtype, &ind, 0, 0, 0);
+              lp = isvar(lp, &vtype, &ind, 0, 0, gv);
               if ((vtype!=VAR_NV) && (vtype&STYPE)==0) {
                   // numeric var
                   uint8_t index = glob_script_mem.type[ind.index].index;
@@ -4099,7 +4100,7 @@ int16_t Run_script_sub(const char *type, int8_t tlen, struct GVARS *gv) {
                 // was string, not number
                 lp = slp;
                 // get the string
-                lp = isvar(lp, &vtype, &ind, 0, cmpstr, 0);
+                lp = isvar(lp, &vtype, &ind, 0, cmpstr, gv);
                 swflg = 0x81;
               } else {
                 swflg = 1;
@@ -4240,7 +4241,7 @@ int16_t Run_script_sub(const char *type, int8_t tlen, struct GVARS *gv) {
 #ifdef USE_LIGHT
 #ifdef USE_WS2812
             else if (!strncmp(lp, "ws2812(", 7)) {
-              lp = isvar(lp + 7, &vtype, &ind, 0, 0, 0);
+              lp = isvar(lp + 7, &vtype, &ind, 0, 0, gv);
               if (vtype!=VAR_NV) {
                 SCRIPT_SKIP_SPACES
                 if (*lp!=')') {
@@ -4604,7 +4605,7 @@ int16_t Run_script_sub(const char *type, int8_t tlen, struct GVARS *gv) {
                       if (*lp==nxttok) {
                         // fetch destination
                         lp++;
-                        lp = isvar(lp, &vtype, &ind, 0, 0, 0);
+                        lp = isvar(lp, &vtype, &ind, 0, 0, gv);
                         if (vtype!=VAR_NV) {
                           // found variable as result
                           uint8_t index = glob_script_mem.type[ind.index].index;
