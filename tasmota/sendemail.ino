@@ -416,7 +416,12 @@ void xsend_message_txt(char *msg) {
 }
 
 #if (defined(USE_SCRIPT_FATFS) && defined(USE_SCRIPT)) || defined(USE_UFILESYS)
+#ifdef ESP8266
 #include <LittleFS.h>
+#endif  // ESP8266
+#ifdef ESP32
+#include <LITTLEFS.h>
+#endif  // ESP32
 extern FS *ufsp;
 
 void attach_File(char *path) {
