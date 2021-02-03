@@ -32,18 +32,19 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#define boolean bool 
+#define boolean bool
 #endif
 
 #ifdef ARDUINO
 #include <Arduino.h>
+#include <time.h>       /* struct tm */
 #endif
 
 // Define this if you want library to be verbose
 //#define TI_DEBUG
 
 // I prefix debug macro to be sure to use specific for THIS library
-// debugging, this should not interfere with main sketch or other 
+// debugging, this should not interfere with main sketch or other
 // libraries
 #ifdef TI_DEBUG
   // Tasmota build
@@ -82,16 +83,16 @@
 
 // Linked list structure containing all values received
 typedef struct _ValueList ValueList;
-struct _ValueList 
+struct _ValueList
 {
   ValueList *next; // next element
-//#ifdef USE_TELEINFO_STANDARD  
+//#ifdef USE_TELEINFO_STANDARD
   time_t  ts;      // TimeStamp of data if any
 //#endif
   uint8_t checksum;// checksum
   uint8_t flags;   // specific flags
   char  * name;    // LABEL of value name
-  char  * value;   // value 
+  char  * value;   // value
 };
 
 #pragma pack(pop)
@@ -118,9 +119,9 @@ enum _State_e {
 #define TINFO_FLAGS_UPDATED  0x08
 #define TINFO_FLAGS_ALERT    0x80 /* This will generate an alert */
 
-// Local buffer for one line of teleinfo 
+// Local buffer for one line of teleinfo
 // maximum size, I think it should be enought
-#ifdef USE_TELEINFO_STANDARD  
+#ifdef USE_TELEINFO_STANDARD
 // Linky and standard mode may have longer lines
 #define TINFO_BUFSIZE  128
 #else
@@ -129,10 +130,10 @@ enum _State_e {
 
 // Teleinfo start and end of frame characters
 #define TINFO_STX 0x02
-#define TINFO_ETX 0x03 
+#define TINFO_ETX 0x03
 #define TINFO_HT  0x09
-#define TINFO_SGR '\n' // start of group  
-#define TINFO_EGR '\r' // End of group    
+#define TINFO_SGR '\n' // start of group
+#define TINFO_EGR '\r' // End of group
 
 typedef void (*_fn_ADPS) (uint8_t);
 typedef void (*_fn_data) (ValueList *, uint8_t);
@@ -145,10 +146,10 @@ class TInfo
     TInfo();
     void          init(_Mode_e mode = TINFO_MODE_HISTORIQUE);
     _State_e      process (char c);
-    void          attachADPS(void (*_fn_ADPS)(uint8_t phase));  
-    void          attachData(void (*_fn_data)(ValueList * valueslist, uint8_t state));  
-    void          attachNewFrame(void (*_fn_new_frame)(ValueList * valueslist));  
-    void          attachUpdatedFrame(void (*_fn_updated_frame)(ValueList * valueslist));  
+    void          attachADPS(void (*_fn_ADPS)(uint8_t phase));
+    void          attachData(void (*_fn_data)(ValueList * valueslist, uint8_t state));
+    void          attachNewFrame(void (*_fn_new_frame)(ValueList * valueslist));
+    void          attachUpdatedFrame(void (*_fn_updated_frame)(ValueList * valueslist));
     ValueList *   addCustomValue(char * name, char * value, uint8_t * flags);
     ValueList *   getList(void);
     uint8_t       valuesDump(void);
