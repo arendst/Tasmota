@@ -15,7 +15,7 @@
  */
 //
 #include "Arduino.h"
-#include "lwip/apps/sntp.h"
+//#include "lwip/apps/sntp.h"
 #include <nvs.h>
 
 // See libraries\ESP32\examples\ResetReason.ino
