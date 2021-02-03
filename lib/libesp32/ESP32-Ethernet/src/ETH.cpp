@@ -18,8 +18,6 @@
  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#if CONFIG_IDF_TARGET_ESP32
-
 #include "ETH.h"
 #include "eth_phy/phy.h"
 #include "eth_phy/phy_tlk110.h"
@@ -304,5 +302,3 @@ String ETHClass::macAddress(void)
 }
 
 ETHClass ETH;
-
-#endif  // CONFIG_IDF_TARGET_ESP32
