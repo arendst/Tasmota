@@ -2063,7 +2063,7 @@ void HandleInformation(void)
 
   char stopic[TOPSZ];
 
-  float freeMem = ((float)ESP_getFreeHeap()) / 1024;
+  float freeMem = ESP_getFreeHeap1024();
 
   WSContentStart_P(PSTR(D_INFORMATION));
   // Save 1k of code space replacing table html with javascript replace codes

@@ -658,7 +658,7 @@ void MqttShowPWMState(void)
 void MqttShowState(void)
 {
   char stemp1[TOPSZ];
-  float freeMem = ((float)ESP_getFreeHeap()) / 1024;
+  float freeMem = ESP_getFreeHeap1024();
 
   ResponseAppendTime();
   ResponseAppend_P(PSTR(",\"" D_JSON_UPTIME "\":\"%s\",\"UptimeSec\":%u"), GetUptime().c_str(), UpTime());

@@ -47,6 +47,10 @@ uint32_t ESP_getFreeHeap(void) {
   return ESP.getFreeHeap();
 }
 
+float ESP_getFreeHeap1024(void) {
+  return ((float)ESP_getFreeHeap()) / 1024;
+}
+
 void ESP_Restart(void) {
 //  ESP.restart();            // This results in exception 3 on restarts on core 2.3.0
   ESP.reset();
@@ -409,6 +413,10 @@ uint32_t ESP_getSketchSize(void) {
 
 uint32_t ESP_getFreeHeap(void) {
   return ESP.getFreeHeap();
+}
+
+float ESP_getFreeHeap1024(void) {
+  return ((float)ESP_getFreeHeap()) / 1024;
 }
 
 uint32_t ESP_getMaxAllocHeap(void) {

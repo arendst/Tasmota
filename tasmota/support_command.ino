@@ -477,7 +477,7 @@ void CmndStatus(void)
   }
 
   if ((0 == payload) || (4 == payload)) {
-    float freeMem = ((float)ESP_getFreeHeap()) / 1024;
+    float freeMem = ESP_getFreeHeap1024();
     Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS4_MEMORY "\":{\"" D_JSON_PROGRAMSIZE "\":%d,\"" D_JSON_FREEMEMORY "\":%d,\"" D_JSON_HEAPSIZE "\":%1_f,\""
 #ifdef ESP32
                           D_JSON_PSRMAXMEMORY "\":%d,\"" D_JSON_PSRFREEMEMORY "\":%d,\""
