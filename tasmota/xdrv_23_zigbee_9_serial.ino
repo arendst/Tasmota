@@ -570,6 +570,8 @@ void ZigbeeProcessInputEZSP(SBuffer &buf) {
       case EZSP_setConcentrator:          // 1000
       case EZSP_networkInit:              // 1700
       case EZSP_stackStatusHandler:       // 1900
+      case EZSP_startScan:                // 1A00
+      case EZSP_scanCompleteHandler:      // 1C00
       case EZSP_formNetwork:              // 1E00
       case EZSP_permitJoining:            // 2200
       case EZSP_getEui64:                 // 2600
@@ -580,6 +582,7 @@ void ZigbeeProcessInputEZSP(SBuffer &buf) {
       case EZSP_sendMulticast:            // 3800
       case EZSP_messageSentHandler:       // 3F00
       case EZSP_incomingMessageHandler:   // 4500
+      case EZSP_energyScanResultHandler:  // 4800
       case EZSP_setConfigurationValue:    // 5300
       case EZSP_setPolicy:                // 5500
       case 0x0059:                        // 5900 - supposedly removed by still happening
