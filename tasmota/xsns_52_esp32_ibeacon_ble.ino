@@ -287,6 +287,7 @@ void IBEACON_Init() {
   AddLog(LOG_LEVEL_INFO, PSTR("iBeacon register for advert callbacks"));
   BLE_ESP32::registerForAdvertismentCallbacks((const char *)"iBeacon", advertismentCallback);
   IB_UPDATE_TIME=IB_UPDATE_TIME_INTERVAL;
+  IB_TIMEOUT_TIME=IB_TIMEOUT_INTERVAL;
 }
 
 void esp32_every_second(void) {
