@@ -100,6 +100,7 @@
 #define D_FALSE "假"
 #define D_FILE "檔案:"
 #define D_FLOW_RATE "流量"
+#define D_FRAGMENTATION "frag."      // Lower case abbreviated version of fragmentation used in "memory fragmentation"
 #define D_FREE_MEMORY "可用的記憶體"
 #define D_PSR_MAX_MEMORY "偽靜態隨機存取記憶體(PS-RAM)容量"
 #define D_PSR_FREE_MEMORY "偽靜態隨機存取記憶體(PS-RAM)可用空間"

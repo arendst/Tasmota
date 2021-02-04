@@ -96,6 +96,7 @@
 #define D_FALSE "Faux"
 #define D_FILE "Fichier"
 #define D_FLOW_RATE "Débit"
+#define D_FRAGMENTATION "frag."      // Lower case abbreviated version of fragmentation used in "memory fragmentation"
 #define D_FREE_MEMORY "Mémoire libre"
 #define D_PSR_MAX_MEMORY "Mémoire PS-RAM"
 #define D_PSR_FREE_MEMORY "Mémoire PS-RAM libre"

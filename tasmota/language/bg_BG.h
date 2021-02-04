@@ -100,6 +100,7 @@
 #define D_FALSE "Невярно"
 #define D_FILE "Файл"
 #define D_FLOW_RATE "Дебит"
+#define D_FRAGMENTATION "frag."      // Lower case abbreviated version of fragmentation used in "memory fragmentation"
 #define D_FREE_MEMORY "Свободна памет"
 #define D_PSR_MAX_MEMORY "PS-RAM Memory"
 #define D_PSR_FREE_MEMORY "PS-RAM free Memory"

@@ -100,6 +100,7 @@
 #define D_FALSE "Onwaar"
 #define D_FILE "Lêer"
 #define D_FLOW_RATE "Vloeitempo"
+#define D_FRAGMENTATION "frag."      // Lower case abbreviated version of fragmentation used in "memory fragmentation"
 #define D_FREE_MEMORY "Vrye geheue"
 #define D_PSR_MAX_MEMORY "PS-RAM geheue"
 #define D_PSR_FREE_MEMORY "PS-RAM vrye geheue"

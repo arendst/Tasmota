@@ -100,6 +100,7 @@
 #define D_FALLBACK_TOPIC "Záložný topic"
 #define D_FALSE "Nepravda"
 #define D_FILE "Súbor"
+#define D_FRAGMENTATION "frag."      // Lower case abbreviated version of fragmentation used in "memory fragmentation"
 #define D_FREE_MEMORY "Voľná pamäť"
 #define D_PSR_MAX_MEMORY "PS-RAM Memory"
 #define D_PSR_FREE_MEMORY "PS-RAM free Memory"

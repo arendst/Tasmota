@@ -100,6 +100,7 @@
 #define D_FALSE "Sai"
 #define D_FILE "Tệp"
 #define D_FLOW_RATE "Tốc độ dòng"
+#define D_FRAGMENTATION "frag."      // Lower case abbreviated version of fragmentation used in "memory fragmentation"
 #define D_FREE_MEMORY "Bộ nhớ trống"
 #define D_PSR_MAX_MEMORY "Bộ nhớ PS-RAM"
 #define D_PSR_FREE_MEMORY "Bộ nhớ PS-RAM trống"

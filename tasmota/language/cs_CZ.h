@@ -100,6 +100,7 @@
 #define D_FALSE "Nepravda"
 #define D_FILE "Soubor"
 #define D_FLOW_RATE "Flow rate"
+#define D_FRAGMENTATION "frag."      // Lower case abbreviated version of fragmentation used in "memory fragmentation"
 #define D_FREE_MEMORY "Volná paměť"
 #define D_PSR_MAX_MEMORY "PS-RAM Memory"
 #define D_PSR_FREE_MEMORY "PS-RAM free Memory"
