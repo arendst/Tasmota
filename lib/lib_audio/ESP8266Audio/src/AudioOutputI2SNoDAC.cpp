@@ -99,7 +99,8 @@ bool AudioOutputI2SNoDAC::ConsumeSample(int16_t sample[2])
 // Deprecated. Use i2s_write
 //  if (!i2s_write_bytes((i2s_port_t)portNo, (const char *)dsBuff, sizeof(uint32_t) * (oversample/32), 0))
   size_t bytes_written;
-  if (!i2s_write((i2s_port_t)portNo, (const char *)dsBuff, sizeof(uint32_t) * (oversample/32), &bytes_written, 0))
+  i2s_write((i2s_port_t)portNo, (const char *)dsBuff, sizeof(uint32_t) * (oversample/32), &bytes_written, 0);
+  if (!bytes_written)
     return false;
 #else
   if (!i2s_write_sample_nb(dsBuff[0])) return false; // No room at the inn
