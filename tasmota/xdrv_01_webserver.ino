@@ -2063,7 +2063,7 @@ void HandleInformation(void)
 
   char stopic[TOPSZ];
 
-  int freeMem = ESP_getFreeHeap();
+  float freeMem = ESP_getFreeHeap1024();
 
   WSContentStart_P(PSTR(D_INFORMATION));
   // Save 1k of code space replacing table html with javascript replace codes
@@ -2178,13 +2178,16 @@ void HandleInformation(void)
   WSContentSend_P(PSTR("}1" D_PROGRAM_FLASH_SIZE "}2%d kB"), ESP.getFlashChipSize() / 1024);
   WSContentSend_P(PSTR("}1" D_PROGRAM_SIZE "}2%d kB"), ESP_getSketchSize() / 1024);
   WSContentSend_P(PSTR("}1" D_FREE_PROGRAM_SPACE "}2%d kB"), ESP.getFreeSketchSpace() / 1024);
-  WSContentSend_P(PSTR("}1" D_FREE_MEMORY "}2%d kB"), freeMem / 1024);
 #ifdef ESP32
+  int32_t freeMaxMem = 100 - (int32_t)(ESP_getMaxAllocHeap() * 100 / ESP_getFreeHeap());
+  WSContentSend_P(PSTR("}1" D_FREE_MEMORY "}2%1_f kB (frag. %d%%)"), &freeMem, freeMaxMem);
   if (psramFound()) {
     WSContentSend_P(PSTR("}1" D_PSR_MAX_MEMORY "}2%d kB"), ESP.getPsramSize() / 1024);
     WSContentSend_P(PSTR("}1" D_PSR_FREE_MEMORY "}2%d kB"), ESP.getFreePsram() / 1024);
   }
-#endif
+#else // ESP32
+  WSContentSend_P(PSTR("}1" D_FREE_MEMORY "}2%1_f kB"), &freeMem);
+#endif // ESP32
   WSContentSend_P(PSTR("</td></tr></table>"));
 
   WSContentSend_P(HTTP_SCRIPT_INFO_END);

@@ -658,6 +658,7 @@ void MqttShowPWMState(void)
 void MqttShowState(void)
 {
   char stemp1[TOPSZ];
+  float freeMem = ESP_getFreeHeap1024();
 
   ResponseAppendTime();
   ResponseAppend_P(PSTR(",\"" D_JSON_UPTIME "\":\"%s\",\"UptimeSec\":%u"), GetUptime().c_str(), UpTime());
@@ -669,8 +670,8 @@ void MqttShowState(void)
 #endif  // USE_ADC_VCC
 #endif  // ESP8266
 
-  ResponseAppend_P(PSTR(",\"" D_JSON_HEAPSIZE "\":%d,\"SleepMode\":\"%s\",\"Sleep\":%u,\"LoadAvg\":%u,\"MqttCount\":%u"),
-    ESP_getFreeHeap()/1024, GetTextIndexed(stemp1, sizeof(stemp1), Settings.flag3.sleep_normal, kSleepMode),  // SetOption60 - Enable normal sleep instead of dynamic sleep
+  ResponseAppend_P(PSTR(",\"" D_JSON_HEAPSIZE "\":%1_f,\"SleepMode\":\"%s\",\"Sleep\":%u,\"LoadAvg\":%u,\"MqttCount\":%u"),
+    &freeMem, GetTextIndexed(stemp1, sizeof(stemp1), Settings.flag3.sleep_normal, kSleepMode),  // SetOption60 - Enable normal sleep instead of dynamic sleep
     TasmotaGlobal.sleep, TasmotaGlobal.loop_load_avg, MqttConnectCount());
 
   for (uint32_t i = 1; i <= TasmotaGlobal.devices_present; i++) {
