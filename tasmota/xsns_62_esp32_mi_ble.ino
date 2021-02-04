@@ -2649,27 +2649,30 @@ void MI32DiscoveryOneMISensor(){
       p->nextDiscoveryData = 0;
     }
 
+    char DiscoveryTopic[80];
+    const char *host = NetworkHostname();
+    const char *devtype = kMI32DeviceType[p->type-1];
+    char idstr[32];
+    const char *alias = BLE_ESP32::getAlias(p->MAC);
+    const char *id = idstr;
+    if (alias && *alias){
+      id = alias;
+    } else {
+      sprintf(idstr, PSTR("%s%02x%02x%02x"),
+            devtype,
+            p->MAC[3], p->MAC[4], p->MAC[5]);
+    }
+
+    char SensorTopic[60];
+    sprintf(SensorTopic, "tele/tasmota_ble/%s",
+      id);
+
+
     //int i = p->nextDiscoveryData*3;
     for (int i = 0; i < datacount*3; i += 3){
       if (!classes[i] || !classes[i+1] || !classes[i+2]){
         return;
       }
-
-      char idstr[32];
-      const char *alias = BLE_ESP32::getAlias(p->MAC);
-      const char *id = idstr;
-      if (alias && *alias){
-        id = alias;
-      } else {
-        sprintf(idstr, PSTR("%s%02x%02x%02x"),
-              kMI32DeviceType[p->type-1],
-              p->MAC[3], p->MAC[4], p->MAC[5]);
-      }
-
-      char SensorTopic[60];
-      sprintf(SensorTopic, "tele/tasmota_ble/%s",
-        id);
-
 
       ResponseClear();
 
@@ -2689,9 +2692,9 @@ void MI32DiscoveryOneMISensor(){
       //"\"name\":\"%s\"},"
         id,
       //\"model\":\"%s\",
-        kMI32DeviceType[p->type-1],
+        devtype,
       //\"via_device\":\"%s\"
-        NetworkHostname(),
+        host,
       //"\"dev_cla\":\"%s\","
         classes[i],
       //"\"json_attr_t\":\"%s\"," - the topic the sensor publishes on
@@ -2709,7 +2712,6 @@ void MI32DiscoveryOneMISensor(){
           //
       );
 
-      char DiscoveryTopic[80];
       sprintf(DiscoveryTopic, "homeassistant/sensor/%s/%s/config",
         id, classes[i+1]);
 
