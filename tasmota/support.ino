@@ -742,7 +742,11 @@ String GetDeviceHardware(void)
   }
 #endif  // ESP8266
 #ifdef ESP32
+#if CONFIG_IDF_TARGET_ESP32S2  // ESP32-S2
+  strcpy_P(buff, PSTR("ESP32-S2"));
+#else
   strcpy_P(buff, PSTR("ESP32"));
+#endif  // CONFIG_IDF_TARGET_ESP32S2
 #endif  // ESP32
   return String(buff);
 }
