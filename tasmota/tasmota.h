@@ -48,9 +48,16 @@ const uint32_t POWER_MASK = 0xffffffffUL;   // Power (Relay) full mask
  * Constants
 \*********************************************************************************************/
 
+#ifdef ESP8266
+const uint8_t MAX_RELAYS = 8;               // Max number of relays
+#endif  // ESP8266
+#ifdef ESP32
+const uint8_t MAX_RELAYS = 28;              // Max number of relays
+#endif  // ESP32
+
 // Changes to the following MAX_ defines will impact settings layout
 const uint8_t MAX_SWITCHES = 8;             // Max number of switches
-const uint8_t MAX_RELAYS = 8;               // Max number of relays
+const uint8_t MAX_SHUTTER_RELAYS = 8;       // Max number of shutter relays
 const uint8_t MAX_INTERLOCKS = 4;           // Max number of interlock groups (MAX_RELAYS / 2)
 const uint8_t MAX_LEDS = 4;                 // Max number of leds
 const uint8_t MAX_KEYS = 4;                 // Max number of keys or buttons

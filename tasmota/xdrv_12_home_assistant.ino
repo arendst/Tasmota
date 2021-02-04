@@ -209,8 +209,8 @@ typedef struct HASS {
 void HassDiscoveryRelays(struct HASS &Hass)
 {
   Hass = {.Relay={0,0,0,0,0,0,0,0}, .RelLst={'\0'}};
-  uint16_t Shutter[8] = {0,0,0,0,0,0,0,0};  // Array to store a temp list for shutters
-  uint8_t lightidx = MAX_RELAYS + 1;        // Will store the starting position of the lights
+  uint16_t Shutter[MAX_RELAYS] = { 0 };  // Array to store a temp list for shutters
+  uint8_t lightidx = MAX_RELAYS + 1;     // Will store the starting position of the lights
   bool iFan = false;
 
   Hass.RelPst = TasmotaGlobal.devices_present > 0;
@@ -241,7 +241,7 @@ void HassDiscoveryRelays(struct HASS &Hass)
           if (0 == Settings.shutter_startrelay[k]) {
             break;
           } else {
-            if (Settings.shutter_startrelay[k] > 0 && Settings.shutter_startrelay[k] <= MAX_RELAYS) {
+            if (Settings.shutter_startrelay[k] > 0 && Settings.shutter_startrelay[k] <= MAX_SHUTTER_RELAYS) {
               Shutter[Settings.shutter_startrelay[k]-1] = Shutter[Settings.shutter_startrelay[k]] = 1;
             }
           }
@@ -429,7 +429,7 @@ void HAssAnnounceRelayLight(void)
 #ifdef USE_SHUTTER
   if (Settings.flag3.shutter_mode) {
     for (uint32_t i = 0; i < MAX_SHUTTERS; i++) {
-      if (Settings.shutter_startrelay[i] > 0 && Settings.shutter_startrelay[i] <= MAX_RELAYS) {
+      if (Settings.shutter_startrelay[i] > 0 && Settings.shutter_startrelay[i] <= MAX_SHUTTER_RELAYS) {
         bitSet(shutter_mask, Settings.shutter_startrelay[i] -1);
         bitSet(shutter_mask, Settings.shutter_startrelay[i]);
       }
@@ -957,7 +957,7 @@ void HAssAnnounceShutters(void)
     snprintf_P(unique_id, sizeof(unique_id), PSTR("%06X_SHT_%d"), ESP_getChipId(), i + 1);
     snprintf_P(stopic, sizeof(stopic), PSTR(HOME_ASSISTANT_DISCOVERY_PREFIX "/cover/%s/config"), unique_id);
 
-    if (Settings.flag.hass_discovery && Settings.flag3.shutter_mode && Settings.shutter_startrelay[i] > 0 && Settings.shutter_startrelay[i] <= MAX_RELAYS) {
+    if (Settings.flag.hass_discovery && Settings.flag3.shutter_mode && Settings.shutter_startrelay[i] > 0 && Settings.shutter_startrelay[i] <= MAX_SHUTTER_RELAYS) {
        ShowTopic = 0; // Show the new generated topic
       if (i > MAX_FRIENDLYNAMES) {
         snprintf_P(stemp1, sizeof(stemp1), PSTR("%s Shutter %d"), SettingsText(SET_DEVICENAME), i + 1);
