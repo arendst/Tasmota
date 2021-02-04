@@ -41,14 +41,20 @@
 #endif
 
 // Define this if you want library to be verbose
-#define TI_DEBUG
+//#define TI_DEBUG
 
 // I prefix debug macro to be sure to use specific for THIS library
 // debugging, this should not interfere with main sketch or other
 // libraries
+void AddLog(uint32_t loglevel, PGM_P formatP, ...);
 #ifdef TI_DEBUG
   // Tasmota build
   #ifdef CODE_IMAGE_STR
+      // THIS DOES NOT WORK
+      //    TI_Debug() is based on Arduino's print() which supports a wide range of
+      //    arguments (chars, numbers, ...)
+      //    Tasmota AddLog() can only support a format string + optional arguments (like printf())
+      //    Must use AddLog() directly in Tasmota
       #define TI_Debug(x)    AddLog_P2(LOG_LEVEL_DEBUG, x);
       #define TI_Debugln(x)  AddLog_P2(LOG_LEVEL_DEBUG, x);
       #define TI_Debugf(...) AddLog_P2(LOG_LEVEL_DEBUG, __VA_ARGS__);
@@ -121,12 +127,12 @@ enum _State_e {
 
 // Local buffer for one line of teleinfo
 // maximum size, I think it should be enought
-#ifdef USE_TELEINFO_STANDARD
+//#ifdef USE_TELEINFO_STANDARD  
 // Linky and standard mode may have longer lines
 #define TINFO_BUFSIZE  128
-#else
-#define TINFO_BUFSIZE  64
-#endif
+//#else
+//#define TINFO_BUFSIZE  64
+//#endif
 
 // Teleinfo start and end of frame characters
 #define TINFO_STX 0x02

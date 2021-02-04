@@ -640,10 +640,21 @@ Input   : label name
           label timestamp
 Output  : checksum
 Comments: return '\0' in case of error
+
+Group format with timestamp (horodatage)
+LF etiquette HT horodatage HT donnee HT Chk CR
+0A           09            09        09     0D
+   \____________checkum_______________/
+
+Group format without timestamp (horodatage)
+LF etiquette HT donnee HT Chk CR
+0A           09        09     0D
+   \_____checkum________/
+
 ====================================================================== */
 unsigned char TInfo::calcChecksum(char *etiquette, char *valeur, char * horodate) 
 {
-  uint8_t sum = _separator ;  // Somme des codes ASCII du message + un separateur
+  uint8_t sum = 2 * _separator ;  // Somme des codes ASCII du message + 2 separateurs
 
   // avoid dead loop, always check all is fine 
   if (etiquette && valeur) {
@@ -767,15 +778,19 @@ ValueList * TInfo::checkLine(char * pline)
   int sep =0;
   bool hasts = false ;  // Assume timestamp on line
 
-  if (pline==NULL)
+  if (pline==NULL) {
+    //AddLog(3, PSTR("LibTeleinfo: Error pline==NULL"));
     return NULL;
+  }
 
   len = strlen(pline); 
 
   // a line should be at least 7 Char
   // 2 Label + Space + 1 etiquette + space + checksum + \r
-  if ( len < 7 || len >= TINFO_BUFSIZE)
+  if ( len < 7 || len >= TINFO_BUFSIZE) {
+    //AddLog(3, PSTR("LibTeleinfo: Error len < 7 || len >= TINFO_BUFSIZE"));
     return NULL;
+  }
 
   p = &buff[0];
   sep = 0;
@@ -852,11 +867,13 @@ ValueList * TInfo::checkLine(char * pline)
         // Always check to avoid bad behavior 
         if(strlen(ptok) && strlen(pvalue)) {
           // Is checksum is OK
-          if ( calcChecksum(ptok,pvalue,pts) == checksum) {
+          char   calc_checksum = calcChecksum(ptok,pvalue,pts);
+          if ( calc_checksum == checksum) {
             // In case we need to do things on specific labels
             customLabel(ptok, pvalue, &flags);
 
             // Add value to linked lists of values
+            //AddLog(3, PSTR("LibTeleinfo: %s = %s"), ptok, pvalue);
             ValueList * me = valueAdd(ptok, pvalue, checksum, &flags);
 
             // value correctly added/changed
@@ -871,6 +888,10 @@ ValueList * TInfo::checkLine(char * pline)
                   _fn_data(me, flags);
               }
             }
+          }
+          else
+          {
+            //AddLog(3, PSTR("LibTeleinfo: Err checksum 0x%02X != 0x%02X"), calc_checksum, checksum);
           }
         }
       }
@@ -899,6 +920,7 @@ _State_e TInfo::process(char c)
   switch (c)  {
     // start of transmission ???
     case  TINFO_STX:
+      //AddLog(3, PSTR("LibTeleinfo: case TINFO_STX <<<<<<<<<<<<<<<<<<"));
       // Clear buffer, begin to store in it
       clearBuffer();
 
@@ -909,12 +931,14 @@ _State_e TInfo::process(char c)
       // We were waiting fo this one ?
       if (_state == TINFO_INIT || _state == TINFO_WAIT_STX ) {
           TI_Debugln(F("TINFO_WAIT_ETX"));
+          //AddLog(3, PSTR("LibTeleinfo: state => TINFO_WAIT_ETX"));
          _state = TINFO_WAIT_ETX;
       } 
     break;
       
     // End of transmission ?
     case  TINFO_ETX:
+      //AddLog(3, PSTR("LibTeleinfo: case TINFO_ETX >>>>>>>>>>>>>>>>>>"));
 
       // Normal working mode ?
       if (_state == TINFO_READY) {
@@ -940,12 +964,14 @@ _State_e TInfo::process(char c)
       // We were waiting fo this one ?
       if (_state == TINFO_WAIT_ETX) {
         TI_Debugln(F("TINFO_READY"));
+        //AddLog(3, PSTR("LibTeleinfo: state => TINFO_READY"));
         _state = TINFO_READY;
-      } 
+      }
       else if ( _state == TINFO_INIT) {
         TI_Debugln(F("TINFO_WAIT_STX"));
+        //AddLog(3, PSTR("LibTeleinfo: state => TINFO_WAIT_STX"));
         _state = TINFO_WAIT_STX ;
-      } 
+      }
 
     break;
 
@@ -953,10 +979,13 @@ _State_e TInfo::process(char c)
     case  TINFO_SGR:
       // Do nothing we'll work at end of group
       // we can safely ignore this char
+      //AddLog(3, PSTR("LibTeleinfo: case TINFO_SGR _recv_idx=%d"), _recv_idx);
     break;
 
     // End of group \r ?
     case  TINFO_EGR:
+      //AddLog(3, PSTR("LibTeleinfo: case TINFO_EGR _recv_idx=%d"), _recv_idx);
+
       // Are we ready to process ?
       if (_state == TINFO_READY) {
         // Store data recceived (we'll need it)
@@ -967,13 +996,14 @@ _State_e TInfo::process(char c)
         memset(&_recv_buff[_recv_idx], 0, TINFO_BUFSIZE-_recv_idx);
 
         // check the group we've just received
+        //AddLog(3, PSTR("LibTeleinfo: Group received %d bytes %s"), _recv_idx, _recv_buff);
         checkLine(_recv_buff) ;
 
         // Whatever error or not, we done
         clearBuffer();
       }
     break;
-    
+
     // other char ?
     default:
     {
@@ -982,8 +1012,10 @@ _State_e TInfo::process(char c)
         // If buffer is not full, Store data 
         if ( _recv_idx < TINFO_BUFSIZE)
           _recv_buff[_recv_idx++]=c;
-        else
+        else {
+          //AddLog(3, PSTR("LibTeleinfo: _recv_idx = %d/%d buffer overflow"), _recv_idx, TINFO_BUFSIZE);
           clearBuffer();
+       }
       }
     }
     break;
