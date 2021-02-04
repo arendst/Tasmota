@@ -46,13 +46,13 @@ extern "C" int startWaveformClockCycles(uint8_t pin, uint32_t highCcys, uint32_t
   uint32_t runTimeCcys, int8_t alignPhase, uint32_t phaseOffsetCcys, bool autoPwm);
 
 #ifdef ESP32
-
+#if CONFIG_IDF_TARGET_ESP32       // ESP32/PICO-D4
 #ifdef USE_ETHERNET
 IPAddress EthernetLocalIP(void);
 char* EthernetHostname(void);
 String EthernetMacAddress(void);
-#endif
-
+#endif  // USE_ETHERNET
+#endif  // CONFIG_IDF_TARGET_ESP32
 #endif  // ESP32
 
 /*********************************************************************************************\
@@ -93,6 +93,29 @@ String EthernetMacAddress(void);
 \*********************************************************************************************/
 
 #ifdef ESP32
+
+/*-------------------------------------------------------------------------------------------*\
+ * Start ESP32-S2 specific parameters - disable features not present in ESP32-S2
+\*-------------------------------------------------------------------------------------------*/
+
+#if CONFIG_IDF_TARGET_ESP32S2                      // ESP32-S2
+#ifdef USE_ETHERNET
+#undef USE_ETHERNET                                // ESP32-S2 does not support ethernet
+#endif
+#ifdef USE_BLE_ESP32
+#undef USE_BLE_ESP32                               // ESP32-S2 does not support BLE
+#endif
+#ifdef USE_MI_ESP32
+#undef USE_MI_ESP32                                // ESP32-S2 does not support BLE
+#endif
+#ifdef USE_IBEACON_ESP32
+#undef USE_IBEACON_ESP32                           // ESP32-S2 does not support BLE
+#endif
+#endif  // CONFIG_IDF_TARGET_ESP32S2
+
+/*-------------------------------------------------------------------------------------------*\
+ * End ESP32-S2 specific parameters
+\*-------------------------------------------------------------------------------------------*/
 
 #ifndef MODULE
 #define MODULE                      WEMOS          // [Module] Select default model
