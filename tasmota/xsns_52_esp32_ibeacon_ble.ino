@@ -20,6 +20,7 @@
 
 ////////////////////////////////////////
 // Commands:
+// iBeacon 0/1 - Enable 
 // iBeaconOnlyAliased 0/1/2 - 
 //   0 = all BLE devices, 
 //   1 = only devices with any BLEAlias
