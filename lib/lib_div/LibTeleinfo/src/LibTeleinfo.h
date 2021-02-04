@@ -41,7 +41,7 @@
 #endif
 
 // Define this if you want library to be verbose
-//#define TI_DEBUG
+#define TI_DEBUG
 
 // I prefix debug macro to be sure to use specific for THIS library
 // debugging, this should not interfere with main sketch or other

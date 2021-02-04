@@ -47,6 +47,7 @@ class TasmotaSerial : public Stream {
 
     virtual size_t write(uint8_t byte);
     virtual int read();
+    size_t read(char* buffer, size_t size);
     virtual int available();
     virtual void flush();
 

@@ -105,6 +105,8 @@ const char kLabel[] PROGMEM =
     "|DEMAIN"
     ;
 
+#define BUFFER_SIZE        300     // Receive buffer size
+
 TInfo tinfo; // Teleinfo object
 TasmotaSerial *TInfoSerial = nullptr;
 _Mode_e tinfo_mode = TINFO_MODE_HISTORIQUE;
@@ -113,6 +115,7 @@ bool tinfo_found = false;
 int contrat;
 int tarif;
 int isousc;
+char buff[BUFFER_SIZE];
 
 /*********************************************************************************************/
 
@@ -476,7 +479,7 @@ void TInfoInit(void)
         // this is not working, need to call SetSerialConfig after
         if (TInfoSerial->begin(baudrate)) {
 
-
+            
 #ifdef ESP8266
             if (TInfoSerial->hardwareSerial() ) {
                 ClaimSerial();
@@ -494,6 +497,7 @@ void TInfoInit(void)
             }
 #endif  // ESP8266
 #ifdef ESP32
+            SetSerialConfig(TS_SERIAL_7E1);
             AddLog(LOG_LEVEL_INFO, PSTR("TIC: using ESP32 hardware serial"));
 #endif  // ESP32
             // Init teleinfo
@@ -516,23 +520,26 @@ Input   : -
 Output  : -
 Comments: -
 ====================================================================== */
-void TInfoEvery250ms(void)
+void TInfoEveryTime(void)
 {
     if (!tinfo_found) {
         return;
     }
 
     if (TInfoSerial->available()) {
-        unsigned long start = millis();
-        char c;
+        int compteur = 0;
 
         // We received some data, process but never more than 100ms ?
-        while (TInfoSerial->available()>8 && millis()-start < 100) {
-            // get char
-            c = TInfoSerial->read();
+        // get char
+        size_t size = TInfoSerial->read(buff,BUFFER_SIZE);
+        for(int i = 0; i < size; i++)
+        {
+            buff[i] &= 0x7F;
             // data processing
-            tinfo.process(c & 0x7F);
+            AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: car %d %c"), buff[i], buff[i]);
+            AddLog(LOG_LEVEL_INFO, PSTR("TIC: stats %d"), tinfo.process(buff[i]));
         }
+        AddLog(LOG_LEVEL_INFO, PSTR("TIC: %d cars"), size);
     }
 }
 
@@ -640,8 +647,8 @@ bool Xnrg15(uint8_t function)
 {
     switch (function)
     {
-        case FUNC_EVERY_250_MSECOND:
-            TInfoEvery250ms();
+        case FUNC_LOOP:
+            TInfoEveryTime();
             break;
         case FUNC_JSON_APPEND:
             TInfoShow(1);

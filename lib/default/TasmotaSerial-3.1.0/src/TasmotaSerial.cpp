@@ -207,6 +207,15 @@ int TasmotaSerial::read() {
   }
 }
 
+size_t TasmotaSerial::read(char* buffer, size_t size) {
+#ifdef ESP8266
+    return ;
+#endif  // ESP8266
+#ifdef ESP32
+    return TSerial->read(buffer,size);
+#endif  // ESP32
+}
+
 int TasmotaSerial::available() {
   if (m_hardserial) {
 #ifdef ESP8266
