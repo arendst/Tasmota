@@ -203,12 +203,11 @@ String sendACJsonState(const stdAc::state_t &state) {
   json.add(PSTR(D_JSON_IRHVAC_VENDOR), typeToString(state.protocol));
   json.add(PSTR(D_JSON_IRHVAC_MODEL), state.model);
 
-  // Home Assistant wants mode to be off if power is also off & vice-versa.
-  if (state.mode == stdAc::opmode_t::kOff || !state.power) {
-    json.add(PSTR(D_JSON_IRHVAC_MODE), IRac::opmodeToString(stdAc::opmode_t::kOff));
+  json.add(PSTR(D_JSON_IRHVAC_MODE), IRac::opmodeToString(state.mode));
+  // Home Assistant wants power to be off if mode is also off.
+  if (state.mode == stdAc::opmode_t::kOff) {
     json.add(PSTR(D_JSON_IRHVAC_POWER),  IRac::boolToString(false));
   } else {
-    json.add(PSTR(D_JSON_IRHVAC_MODE), IRac::opmodeToString(state.mode));
     json.add(PSTR(D_JSON_IRHVAC_POWER), IRac::boolToString(state.power));
   }
   json.add(PSTR(D_JSON_IRHVAC_CELSIUS), IRac::boolToString(state.celsius));
