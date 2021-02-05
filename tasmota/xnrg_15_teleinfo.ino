@@ -527,9 +527,7 @@ void TInfoEvery250ms(void)
     }
 
     if (TInfoSerial->available()) {
-        int compteur = 0;
-
-        // We received some data, process but never more than 100ms ?
+        // We received some data, process but never more than 200 characters
         // get char
         size_t size = TInfoSerial->read(buff,BUFFER_SIZE);
         for(int i = 0; i < size; i++)
