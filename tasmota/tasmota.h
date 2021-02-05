@@ -56,7 +56,7 @@ const uint8_t MAX_RELAYS = 28;              // Max number of relays
 #endif  // ESP32
 
 // Changes to the following MAX_ defines will impact settings layout
-const uint8_t MAX_SWITCHES = 8;             // Max number of switches
+const uint8_t MAX_SWITCHES = 28;            // Max number of switches
 const uint8_t MAX_SHUTTER_RELAYS = 8;       // Max number of shutter relays
 const uint8_t MAX_INTERLOCKS = 4;           // Max number of interlock groups (MAX_RELAYS / 2)
 const uint8_t MAX_LEDS = 4;                 // Max number of leds
@@ -95,6 +95,7 @@ const uint8_t MAX_ADCS = 1;                 // Max number of ESP8266 ADC pins
 #ifdef ESP32
 const uint8_t MAX_ADCS = 8;                 // Max number of ESP32 ADC pins (ADC2 pins are unusable with Wifi enabled)
 #endif  // ESP32
+const uint8_t MAX_SWITCHES_TXT = 8;         // Max number of switches user text
 
 const uint8_t MAX_HUE_DEVICES = 15;         // Max number of Philips Hue device per emulation
 const uint8_t MAX_ROTARIES = 2;             // Max number of Rotary Encoders
@@ -318,7 +319,7 @@ enum SettingsTextIndex { SET_OTAURL,
 #ifdef ESP32
                          SET_ADC_PARAM1, SET_ADC_PARAM2, SET_ADC_PARAM3, SET_ADC_PARAM4, SET_ADC_PARAM5, SET_ADC_PARAM6, SET_ADC_PARAM7, SET_ADC_PARAM8,  // MAX_ADCS
 #endif  // ESP32
-                         SET_SWITCH_TXT1, SET_SWITCH_TXT2, SET_SWITCH_TXT3, SET_SWITCH_TXT4, SET_SWITCH_TXT5, SET_SWITCH_TXT6, SET_SWITCH_TXT7, SET_SWITCH_TXT8,  // MAX_SWITCHES
+                         SET_SWITCH_TXT1, SET_SWITCH_TXT2, SET_SWITCH_TXT3, SET_SWITCH_TXT4, SET_SWITCH_TXT5, SET_SWITCH_TXT6, SET_SWITCH_TXT7, SET_SWITCH_TXT8,  // MAX_SWITCHES_TXT
                          SET_SHD_PARAM,
                          SET_MAX };
 

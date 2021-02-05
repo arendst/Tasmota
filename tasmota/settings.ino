@@ -1194,7 +1194,7 @@ void SettingsDelta(void) {
       SettingsUpdateText(SET_MQTT_BUTTON_TOPIC, temp12);
       SettingsUpdateText(SET_MQTT_GRP_TOPIC, temp13);
 
-      SettingsUpdateText(SET_WEBPWD, Settings.ex_web_password);
+//      SettingsUpdateText(SET_WEBPWD, Settings.ex_web_password);
       SettingsUpdateText(SET_CORS, Settings.ex_cors_domain);
       SettingsUpdateText(SET_MQTT_FULLTOPIC, Settings.ex_mqtt_fulltopic);
 //      SettingsUpdateText(SET_MQTT_SWITCH_TOPIC, Settings.ex_switch_topic);
@@ -1333,6 +1333,11 @@ void SettingsDelta(void) {
     }
     if (Settings.version < 0x09020003) {
       Settings.flag3.use_wifi_rescan = true;  // As a result of #10395
+    }
+    if (Settings.version < 0x09020006) {
+      for (uint32_t i = 0; i < MAX_SWITCHES; i++) {
+        Settings.switchmode[i] = (i < 8) ? Settings.ex_switchmode[i] : SWITCH_MODE;
+      }
     }
 
     Settings.version = VERSION;

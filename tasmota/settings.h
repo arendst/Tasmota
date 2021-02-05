@@ -433,7 +433,9 @@ struct {
   uint16_t      blinkcount;                // 39C
   uint16_t      light_rotation;            // 39E
   SysBitfield3  flag3;                     // 3A0
-  uint8_t       switchmode[MAX_SWITCHES];  // 3A4
+
+  uint8_t       ex_switchmode[8];          // 3A4 - Free since 9.2.0.6
+
   myio          my_gp;                     // 3AC  2 x 18 bytes (ESP8266) / 2 x 40 bytes (ESP32)
 #ifdef ESP8266
   uint16_t      gpio16_converted;          // 3D0
@@ -487,8 +489,9 @@ struct {
   uint8_t       knx_GA_registered;         // 4A5  Number of Group Address to read
   uint16_t      light_wakeup;              // 4A6
   uint8_t       knx_CB_registered;         // 4A8  Number of Group Address to write
+  uint8_t       switchmode[MAX_SWITCHES];  // 4A9
 
-  char          ex_web_password[33];       // 4A9  Free since 8.0.0.1
+  uint8_t       free_4c5[5];               // 4C5
 
   uint8_t       interlock[MAX_INTERLOCKS]; // 4CA
 
