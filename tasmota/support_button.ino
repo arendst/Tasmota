@@ -34,18 +34,20 @@ const char kMultiPress[] PROGMEM =
 
 struct BUTTON {
   uint32_t debounce = 0;                     // Button debounce timer
+  uint32_t no_pullup_mask = 0;               // key no pullup flag (1 = no pullup)
+  uint32_t inverted_mask = 0;                // Key inverted flag (1 = inverted)
+#ifdef ESP32
+  uint32_t touch_mask = 0;                   // Touch flag (1 = inverted)
+#endif  // ESP32
   uint16_t hold_timer[MAX_KEYS] = { 0 };     // Timer for button hold
   uint16_t dual_code = 0;                    // Sonoff dual received code
 
-  uint8_t last_state[MAX_KEYS] = { NOT_PRESSED, NOT_PRESSED, NOT_PRESSED, NOT_PRESSED };  // Last button states
+  uint8_t last_state[MAX_KEYS];              // Last button states
   uint8_t window_timer[MAX_KEYS] = { 0 };    // Max time between button presses to record press count
   uint8_t press_counter[MAX_KEYS] = { 0 };   // Number of button presses within Button.window_timer
 
   uint8_t dual_receive_count = 0;            // Sonoff dual input flag
-  uint8_t no_pullup_mask = 0;                // key no pullup flag (1 = no pullup)
-  uint8_t inverted_mask = 0;                 // Key inverted flag (1 = inverted)
 #ifdef ESP32
-  uint8_t touch_mask = 0;                    // Touch flag (1 = inverted)
   uint8_t touch_hits[MAX_KEYS] = { 0 };      // Hits in a row to filter out noise
 #endif  // ESP32
   uint8_t present = 0;                       // Number of buttons found flag
@@ -55,7 +57,7 @@ struct BUTTON {
 struct TOUCH_BUTTON {
   uint8_t pin_threshold = TOUCH_PIN_THRESHOLD;
   uint8_t hit_threshold = TOUCH_HIT_THRESHOLD;
-  uint8_t calibration = 0; // Bitfield
+  uint32_t calibration = 0; // Bitfield
 } TOUCH_BUTTON;
 #endif  // ESP32
 
@@ -83,6 +85,7 @@ void ButtonInit(void) {
   }
 #endif  // ESP8266
   for (uint32_t i = 0; i < MAX_KEYS; i++) {
+    Button.last_state[i] = NOT_PRESSED;
     if (PinUsed(GPIO_KEY1, i)) {
       Button.present++;
 #ifdef ESP8266

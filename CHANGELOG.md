@@ -3,7 +3,14 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [9.2.0.5]
+## [9.2.0.6]
+### Changed
+- Removed migration support for versions before v8.1.0 (Doris)
+- ESP32 Increase number of switch GPIOs from 8 to 28
+- ESP32 Increase number of interlock groups from 4 to 14
+- Increase number of button GPIOs from 4 to 8
+
+## [9.2.0.5] 20210205
 ### Changed
 - ESP32 increase number of relay GPIOs from 8 to 28
 

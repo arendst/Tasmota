@@ -31,16 +31,18 @@
 #define IB_UPDATE_TIME_INTERVAL 10
 
 // should be in Settings
-#if 1
+//#if 1
 uint8_t ib_upd_interval,ib_tout_interval;
+//#undef IB_UPDATE_TIME
+//#undef IB_TIMEOUT_TIME
 #define IB_UPDATE_TIME ib_upd_interval
 #define IB_TIMEOUT_TIME ib_tout_interval
-#else
-#undef IB_UPDATE_TIME
-#undef IB_TIMEOUT_TIME
-#define IB_UPDATE_TIME Settings.ib_upd_interval
-#define IB_TIMEOUT_TIME Settings.ib_tout_interval
-#endif
+//#else
+//#undef IB_UPDATE_TIME
+//#undef IB_TIMEOUT_TIME
+//#define IB_UPDATE_TIME Settings.ib_upd_interval
+//#define IB_TIMEOUT_TIME Settings.ib_tout_interval
+//#endif
 
 char ib_mac[14];
 

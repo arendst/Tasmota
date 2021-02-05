@@ -1,7 +1,7 @@
 /*
   it-IT.h - localization for Italian - Italy for Tasmota
 
-  Copyright (C) 2021  Gennaro Tortone - some mods by Antonio Fragola - Updated by bovirus - rev. 22.01.2021
+  Copyright (C) 2021  Gennaro Tortone - some mods by Antonio Fragola - Updated by bovirus - rev. 04.02.2021
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -100,7 +100,7 @@
 #define D_FALSE "Falso"
 #define D_FILE "File"
 #define D_FLOW_RATE "Flusso dati"
-#define D_FRAGMENTATION "frag."      // Lower case abbreviated version of fragmentation used in "memory fragmentation"
+#define D_FRAGMENTATION "framm."      // Lower case abbreviated version of fragmentation used in "memory fragmentation"
 #define D_FREE_MEMORY "Memoria libera"
 #define D_PSR_MAX_MEMORY "PS-RAM - Memoria"
 #define D_PSR_FREE_MEMORY "PS-RAM - Memoria libera"

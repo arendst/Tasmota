@@ -119,11 +119,18 @@ void ResponseCmndIdxError(void) {
 void ResponseCmndAll(uint32_t text_index, uint32_t count) {
   uint32_t real_index = text_index;
   ResponseClear();
+  bool jsflg = false;
   for (uint32_t i = 0; i < count; i++) {
     if ((SET_MQTT_GRP_TOPIC == text_index) && (1 == i)) { real_index = SET_MQTT_GRP_TOPIC2 -1; }
-    ResponseAppend_P(PSTR("%c\"%s%d\":\"%s\""), (i) ? ',' : '{', XdrvMailbox.command, i +1, EscapeJSONString(SettingsText(real_index +i)).c_str());
+    if ((ResponseAppend_P(PSTR("%c\"%s%d\":\"%s\""), (jsflg)?',':'{', XdrvMailbox.command, i +1, EscapeJSONString(SettingsText(real_index +i)).c_str()) > (MAX_LOGSZ - TOPSZ)) || (i == count -1)) {
+      ResponseJsonEnd();
+      MqttPublishPrefixTopic_P(RESULT_OR_STAT, XdrvMailbox.command);
+      ResponseClear();
+      jsflg = false;
+    } else {
+      jsflg = true;
+    }
   }
-  ResponseJsonEnd();
 }
 
 /********************************************************************************************/
@@ -1651,9 +1658,9 @@ void CmndFriendlyname(void)
 }
 
 void CmndSwitchText(void) {
-  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_SWITCHES)) {
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_SWITCHES_TXT)) {
     if (!XdrvMailbox.usridx && !XdrvMailbox.data_len) {
-      ResponseCmndAll(SET_SWITCH_TXT1, MAX_SWITCHES);
+      ResponseCmndAll(SET_SWITCH_TXT1, MAX_SWITCHES_TXT);
     } else {
       if (XdrvMailbox.data_len > 0) {
         RemoveSpace(XdrvMailbox.data);
@@ -1682,7 +1689,7 @@ void CmndInterlock(void)
   if (max_relays > sizeof(Settings.interlock[0]) * 8) { max_relays = sizeof(Settings.interlock[0]) * 8; }
   if (max_relays > 1) {                                         // Only interlock with more than 1 relay
     if (XdrvMailbox.data_len > 0) {
-      if (strchr(XdrvMailbox.data, ',') != nullptr) {                    // Interlock entry
+      if (strchr(XdrvMailbox.data, ',') != nullptr) {           // Interlock entry
         for (uint32_t i = 0; i < MAX_INTERLOCKS; i++) { Settings.interlock[i] = 0; }  // Reset current interlocks
         char *group;
         char *q;

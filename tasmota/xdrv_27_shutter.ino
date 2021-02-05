@@ -673,7 +673,7 @@ void ShutterRelayChanged(void)
 bool ShutterButtonIsSimultaneousHold(uint32_t button_index, uint32_t shutter_index) {
   // check for simultaneous shutter button hold
   uint32 min_shutterbutton_hold_timer = -1; // -1 == max(uint32)
-  for (uint32_t i = 0; i < MAX_KEYS; i++) {
+  for (uint32_t i = 0; i < MAX_SHUTTER_KEYS; i++) {
     if ((button_index != i) && (Settings.shutter_button[i] & (1<<31)) && ((Settings.shutter_button[i] & 0x03) == shutter_index) && (Button.hold_timer[i] < min_shutterbutton_hold_timer))
       min_shutterbutton_hold_timer = Button.hold_timer[i];
   }
@@ -722,7 +722,7 @@ void ShutterButtonHandler(void)
         // check for simultaneous shutter button hold
         if (ShutterButtonIsSimultaneousHold(button_index, shutter_index)) {
           // simultaneous shutter button hold detected
-          for (uint32_t i = 0; i < MAX_KEYS; i++)
+          for (uint32_t i = 0; i < MAX_SHUTTER_KEYS; i++)
             if ((Settings.shutter_button[i] & (1<<31)) && ((Settings.shutter_button[i] & 0x03) == shutter_index))
               Button.press_counter[i] = 99; // Remember to discard further action for press & hold within button timings
           press_index = 0;
@@ -755,7 +755,7 @@ void ShutterButtonHandler(void)
         if (Button.press_counter[button_index]<99) {
           // check for simultaneous shutter button press
           uint32 min_shutterbutton_press_counter = -1; // -1 == max(uint32)
-          for (uint32_t i = 0; i < MAX_KEYS; i++) {
+          for (uint32_t i = 0; i < MAX_SHUTTER_KEYS; i++) {
             AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: ShutterButton[i] %ld, ShutterIndex %d, ButtonPressCounter[i] %d, minShutterButtonPressCounter %d, i %d"),
               Settings.shutter_button[i], shutter_index, Button.press_counter[i] , min_shutterbutton_press_counter, i);
             if ((button_index != i) && (Settings.shutter_button[i] & (1<<31)) && ((Settings.shutter_button[i] & 0x03) == shutter_index) && (i != button_index) && (Button.press_counter[i] < min_shutterbutton_press_counter)) {
@@ -767,7 +767,7 @@ void ShutterButtonHandler(void)
             // simultaneous shutter button press detected
             AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Simultanous press detected"));
             press_index = Button.press_counter[button_index];
-            for (uint32_t i = 0; i < MAX_KEYS; i++)
+            for (uint32_t i = 0; i < MAX_SHUTTER_KEYS; i++)
               if ((Settings.shutter_button[i] & (1<<31)) && ((Settings.shutter_button[i] & 0x03) != shutter_index))
                 Button.press_counter[i] = 99; // Remember to discard further action for press & hold within button timings
             buttonState = SHT_PRESSED_MULTI_SIMULTANEOUS;
@@ -787,7 +787,7 @@ void ShutterButtonHandler(void)
     if ((!Settings.flag.button_restrict) && (((press_index>=5) && (press_index<=7)) || (buttonState == SHT_PRESSED_EXT_HOLD) || (buttonState == SHT_PRESSED_EXT_HOLD_SIMULTANEOUS))){
       // check number of buttons for this shutter
       uint8_t shutter_index_num_buttons = 0;
-      for (uint32_t i = 0; i < MAX_KEYS; i++) {
+      for (uint32_t i = 0; i < MAX_SHUTTER_KEYS; i++) {
         if ((Settings.shutter_button[i] & (1<<31)) && ((Settings.shutter_button[i] & 0x03) == shutter_index)) {
           shutter_index_num_buttons++;
         }
@@ -1292,7 +1292,7 @@ void CmndShutterButton(void)
         if (button_index) {
           if (button_index==-1) {
             // remove all buttons for this shutter
-            for (uint32_t i=0 ; i < MAX_KEYS ; i++)
+            for (uint32_t i=0 ; i < MAX_SHUTTER_KEYS ; i++)
               if ((Settings.shutter_button[i]&0x3) == (XdrvMailbox.index-1))
                 Settings.shutter_button[i] = 0;
           } else {
@@ -1305,8 +1305,8 @@ void CmndShutterButton(void)
           }
         }
       }
-      char setting_chr[30*MAX_KEYS] = "-", *setting_chr_ptr = setting_chr;
-      for (uint32_t i=0 ; i < MAX_KEYS ; i++) {
+      char setting_chr[30*MAX_SHUTTER_KEYS] = "-", *setting_chr_ptr = setting_chr;
+      for (uint32_t i=0 ; i < MAX_SHUTTER_KEYS ; i++) {
         setting = Settings.shutter_button[i];
         if ((setting&(1<<31)) && ((setting&0x3) == (XdrvMailbox.index-1))) {
           if (*setting_chr_ptr == 0)
