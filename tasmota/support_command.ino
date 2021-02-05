@@ -1682,7 +1682,7 @@ void CmndInterlock(void)
   if (max_relays > sizeof(Settings.interlock[0]) * 8) { max_relays = sizeof(Settings.interlock[0]) * 8; }
   if (max_relays > 1) {                                         // Only interlock with more than 1 relay
     if (XdrvMailbox.data_len > 0) {
-      if (strchr(XdrvMailbox.data, ',') != nullptr) {                    // Interlock entry
+      if (strchr(XdrvMailbox.data, ',') != nullptr) {           // Interlock entry
         for (uint32_t i = 0; i < MAX_INTERLOCKS; i++) { Settings.interlock[i] = 0; }  // Reset current interlocks
         char *group;
         char *q;

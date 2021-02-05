@@ -493,9 +493,13 @@ struct {
 
   uint8_t       free_4c5[5];               // 4C5
 
-  uint8_t       interlock[MAX_INTERLOCKS]; // 4CA
+  uint8_t       ex_interlock[4];           // 4CA MAX_INTERLOCKS = MAX_RELAYS / 2 (Legacy)
 
-  char          ex_ntp_server[3][33];      // 4CE  Free since 8.0.0.1
+  uint8_t       free_4ce[2];               // 4CE
+
+  power_t       interlock[MAX_INTERLOCK_GROUPS];  // 4D0 MAX_INTERLOCKS = MAX_RELAYS / 2
+
+  uint8_t       free_508[41];              // 508
 
   uint8_t       ina219_mode;               // 531
   uint16_t      pulse_timer[MAX_PULSETIMERS];  // 532
