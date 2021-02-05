@@ -244,8 +244,8 @@
 #define D_WEBSERVER_STOPPED "Webserver gestopt"
 #define D_FILE_NOT_FOUND "Bestand niet gevonden"
 #define D_REDIRECTED "Omleiding naar captive portal"
-#define D_WIFIMANAGER_SET_ACCESSPOINT_AND_STATION "Wifimanager start AccessPoint en hou Station"
-#define D_WIFIMANAGER_SET_ACCESSPOINT "Wifimanager start AccessPoint"
+#define D_WIFIMANAGER_SET_ACCESSPOINT_AND_STATION "WiFimanager start AccessPoint en hou Station"
+#define D_WIFIMANAGER_SET_ACCESSPOINT "WiFimanager start AccessPoint"
 #define D_TRYING_TO_CONNECT "Apparaat probeert te verbinden met netwerk"
 
 #define D_RESTART_IN "Herstart over"
@@ -278,8 +278,8 @@
 #define D_SERIAL_IN "Serieel In"
 #define D_SERIAL_OUT "Serieel Uit"
 
-#define D_WIFI_PARAMETERS "Wifi parameters"
-#define D_SCAN_FOR_WIFI_NETWORKS "Zoek wifi netwerken"
+#define D_WIFI_PARAMETERS "WiFi parameters"
+#define D_SCAN_FOR_WIFI_NETWORKS "Zoek WiFi netwerken"
 #define D_SCAN_DONE "Scan klaar"
 #define D_NO_NETWORKS_FOUND "Geen netwerken gevonden"
 #define D_REFRESH_TO_SCAN_AGAIN "Vernieuw om opnieuw te zoeken"
