@@ -244,8 +244,8 @@
 #define D_WEBSERVER_STOPPED "Webserver stoppe"
 #define D_FILE_NOT_FOUND "Bestân net fûn"
 #define D_REDIRECTED "Trochferwize nei captive portal"
-#define D_WIFIMANAGER_SET_ACCESSPOINT_AND_STATION "Wi-Fi Manager start AccessPoint en hâldt Station"
-#define D_WIFIMANAGER_SET_ACCESSPOINT "Wi-Fi manager start AccessPoint"
+#define D_WIFIMANAGER_SET_ACCESSPOINT_AND_STATION "WiFi Manager start AccessPoint en hâldt Station"
+#define D_WIFIMANAGER_SET_ACCESSPOINT "WiFi manager start AccessPoint"
 #define D_TRYING_TO_CONNECT "Apparaat besiket te ferbinen mei netwurk"
 
 #define D_RESTART_IN "Start opnij yn"
@@ -259,7 +259,7 @@
 #define D_CONFIRM_RESTART "Befestigje opnij starte"
 
 #define D_CONFIGURE_MODULE "Module ynstelle"
-#define D_CONFIGURE_WIFI "Wi-Fi ynstelle"
+#define D_CONFIGURE_WIFI "WiFi ynstelle"
 #define D_CONFIGURE_MQTT "MQTT ynstelle"
 #define D_CONFIGURE_DOMOTICZ "Domoticz ynstelle"
 #define D_CONFIGURE_LOGGING "Logging ynstelle"
@@ -278,8 +278,8 @@
 #define D_SERIAL_IN "Serial In"
 #define D_SERIAL_OUT "Serial Out"
 
-#define D_WIFI_PARAMETERS "Wi-Fi parameters"
-#define D_SCAN_FOR_WIFI_NETWORKS "Sykje Wi-Fi-netwurken"
+#define D_WIFI_PARAMETERS "WiFi parameters"
+#define D_SCAN_FOR_WIFI_NETWORKS "Sykje WiFi netwurken"
 #define D_SCAN_DONE "Scan dien"
 #define D_NO_NETWORKS_FOUND "Gjin netwurken fûn"
 #define D_REFRESH_TO_SCAN_AGAIN "Ferfarskje om opnij te sykjen"
