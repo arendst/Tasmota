@@ -244,8 +244,8 @@
 #define D_WEBSERVER_STOPPED "Webbediener gestop"
 #define D_FILE_NOT_FOUND "Lêer nie gevind nie"
 #define D_REDIRECTED "Herlei na captive portal"
-#define D_WIFIMANAGER_SET_ACCESSPOINT_AND_STATION "Wi-Fi manager stel AccessPoint in en hou Station"
-#define D_WIFIMANAGER_SET_ACCESSPOINT "Wi-Fi manager het AccessPoint ingestel"
+#define D_WIFIMANAGER_SET_ACCESSPOINT_AND_STATION "WiFi manager stel AccessPoint in en hou Station"
+#define D_WIFIMANAGER_SET_ACCESSPOINT "WiFi manager het AccessPoint ingestel"
 #define D_TRYING_TO_CONNECT "Probeer om toestel aan netwerk te koppel"
 
 #define D_RESTART_IN "Begin weer binne"
@@ -259,7 +259,7 @@
 #define D_CONFIRM_RESTART "Bevestig weer te begin"
 
 #define D_CONFIGURE_MODULE "Stel Module in"
-#define D_CONFIGURE_WIFI "Stel Wi-Fi in"
+#define D_CONFIGURE_WIFI "Stel WiFi in"
 #define D_CONFIGURE_MQTT "Stel MQTT in"
 #define D_CONFIGURE_DOMOTICZ "Stel Domoticz in"
 #define D_CONFIGURE_LOGGING "Stel Logging in"
@@ -278,8 +278,8 @@
 #define D_SERIAL_IN "Serial in"
 #define D_SERIAL_OUT "Serial uit"
 
-#define D_WIFI_PARAMETERS "Wi-Fi parameters"
-#define D_SCAN_FOR_WIFI_NETWORKS "Soek vir Wi-Fi netwerke"
+#define D_WIFI_PARAMETERS "WiFi parameters"
+#define D_SCAN_FOR_WIFI_NETWORKS "Soek vir WiFi netwerke"
 #define D_SCAN_DONE "Skandering gedoen"
 #define D_NO_NETWORKS_FOUND "Geen netwerke gevind nie"
 #define D_REFRESH_TO_SCAN_AGAIN "Verfris om weer te skandeer"
