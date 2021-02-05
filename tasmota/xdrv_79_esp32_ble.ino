@@ -1478,12 +1478,14 @@ static void BLEInit(void) {
 
   if (BLEInitState) { return; }
 
-  if (TasmotaGlobal.global_state.wifi_down) { return; }
+  if (TasmotaGlobal.global_state.wifi_down && TasmotaGlobal.global_state.eth_down) { return; }
 
-  TasmotaGlobal.wifi_stay_asleep = true;
-  if (WiFi.getSleep() == false) {
-    AddLog(LOG_LEVEL_DEBUG,PSTR("%s: Put WiFi modem in sleep mode"),"BLE");
-    WiFi.setSleep(true); // Sleep
+  if (!TasmotaGlobal.global_state.wifi_down) {
+    TasmotaGlobal.wifi_stay_asleep = true;
+    if (WiFi.getSleep() == false) {
+      AddLog(LOG_LEVEL_DEBUG,PSTR("%s: Put WiFi modem in sleep mode"), "BLE");
+      WiFi.setSleep(true); // Sleep
+    }
   }
 
   // this is only for testing, does nothin if examples are undefed

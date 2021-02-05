@@ -789,12 +789,14 @@ void MI32PreInit(void) {
 void MI32Init(void) {
   if (MI32.mode.init) { return; }
 
-  if (TasmotaGlobal.global_state.wifi_down) { return; }
+  if (TasmotaGlobal.global_state.wifi_down && TasmotaGlobal.global_state.eth_down) { return; }
 
-  TasmotaGlobal.wifi_stay_asleep = true;
-  if (WiFi.getSleep() == false) {
-    AddLog(LOG_LEVEL_DEBUG,PSTR("M32: Put WiFi modem in sleep mode"));
-    WiFi.setSleep(true); // Sleep
+  if (!TasmotaGlobal.global_state.wifi_down) {
+    TasmotaGlobal.wifi_stay_asleep = true;
+    if (WiFi.getSleep() == false) {
+      AddLog(LOG_LEVEL_DEBUG,PSTR("M32: Put WiFi modem in sleep mode"));
+      WiFi.setSleep(true); // Sleep
+    }
   }
 
   if (!MI32.mode.init) {
