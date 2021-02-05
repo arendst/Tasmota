@@ -216,8 +216,13 @@ size_t TasmotaSerial::read(char* buffer, size_t size) {
     return TSerial->read(buffer,size);
 #endif  // ESP32
   } else {
-    memcpy ( buffer, m_buffer, sizeof(m_buffer) );
-    m_out_pos = 0;
+    size_t count = 0;
+    if ((-1 == m_rx_pin) || (m_in_pos == m_out_pos)) return -1;
+    for( ; size && (m_in_pos == m_out_pos) ; --size, ++count) {
+      *buffer++ = m_buffer[m_out_pos];
+      m_out_pos = (m_out_pos +1) % serial_buffer_size;
+    }
+    return count;
   }
 }
 
