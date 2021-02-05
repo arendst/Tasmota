@@ -343,8 +343,7 @@ struct {
 
   // Start of char array storing all parameter strings ********
 
-  char          text_pool[101];            // 017  Was ota_url[101] - size is settings_text_size
-  uint8_t       text_pool_07c[37];         // 07C
+  char          text_pool[138];            // 017  Size is settings_text_size
   char          ex_sta_ssid[2][33];        // 0A1
   char          ex_sta_pwd[2][65];         // 0E3
   uint8_t       text_pool_165[132];        // 165
@@ -467,7 +466,7 @@ struct {
   uint8_t       knx_GA_registered;         // 4A5  Number of Group Address to read
   uint16_t      light_wakeup;              // 4A6
   uint8_t       knx_CB_registered;         // 4A8  Number of Group Address to write
-  uint8_t       switchmode[MAX_SWITCHES];  // 4A9
+  uint8_t       switchmode[MAX_SWITCHES_SET];  // 4A9
 
   uint8_t       free_4c5[5];               // 4C5
 
@@ -475,7 +474,7 @@ struct {
 
   uint8_t       free_4ce[2];               // 4CE
 
-  power_t       interlock[MAX_INTERLOCK_GROUPS];  // 4D0 MAX_INTERLOCKS = MAX_RELAYS / 2
+  power_t       interlock[MAX_INTERLOCKS_SET];  // 4D0 MAX_INTERLOCKS = MAX_RELAYS / 2
 
   uint8_t       free_508[41];              // 508
 

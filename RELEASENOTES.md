@@ -121,8 +121,8 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - Force initial default state ``SetOption57 1`` to scan wifi network every 44 minutes for strongest signal [#10395](https://github.com/arendst/Tasmota/issues/10395)
 - PubSubClient MQTT_SOCKET_TIMEOUT from 15 to 4 seconds
 - Domoticz fixed 2 decimals resolution by user selectable ``TempRes``, ``HumRes`` and ``PressRes`` resolutions
-- Increase number of switch GPIOs from 8 to 28
 - Increase number of button GPIOs from 4 to 8
+- ESP32 Increase number of switch GPIOs from 8 to 28
 - ESP32 increase number of relay GPIOs from 8 to 28
 - ESP32 Increase number of interlock groups from 4 to 14
 

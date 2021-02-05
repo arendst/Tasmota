@@ -821,7 +821,7 @@ void SettingsDefaultSet2(void) {
   Settings.param[P_HOLD_TIME] = KEY_HOLD_TIME;  // Default 4 seconds hold time
 
   // Switch
-  for (uint32_t i = 0; i < MAX_SWITCHES; i++) { Settings.switchmode[i] = SWITCH_MODE; }
+  for (uint32_t i = 0; i < MAX_SWITCHES_SET; i++) { Settings.switchmode[i] = SWITCH_MODE; }
 
   // MQTT
   flag.mqtt_enabled |= MQTT_USE;
@@ -1225,10 +1225,10 @@ void SettingsDelta(void) {
       Settings.flag3.use_wifi_rescan = true;  // As a result of #10395
     }
     if (Settings.version < 0x09020006) {
-      for (uint32_t i = 0; i < MAX_SWITCHES; i++) {
+      for (uint32_t i = 0; i < MAX_SWITCHES_SET; i++) {
         Settings.switchmode[i] = (i < 8) ? Settings.ex_switchmode[i] : SWITCH_MODE;
       }
-      for (uint32_t i = 0; i < MAX_INTERLOCK_GROUPS; i++) {
+      for (uint32_t i = 0; i < MAX_INTERLOCKS_SET; i++) {
         Settings.interlock[i] = (i < 4) ? Settings.ex_interlock[i] : 0;
       }
     }
