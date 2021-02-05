@@ -119,11 +119,18 @@ void ResponseCmndIdxError(void) {
 void ResponseCmndAll(uint32_t text_index, uint32_t count) {
   uint32_t real_index = text_index;
   ResponseClear();
+  bool jsflg = false;
   for (uint32_t i = 0; i < count; i++) {
     if ((SET_MQTT_GRP_TOPIC == text_index) && (1 == i)) { real_index = SET_MQTT_GRP_TOPIC2 -1; }
-    ResponseAppend_P(PSTR("%c\"%s%d\":\"%s\""), (i) ? ',' : '{', XdrvMailbox.command, i +1, EscapeJSONString(SettingsText(real_index +i)).c_str());
+    if ((ResponseAppend_P(PSTR("%c\"%s%d\":\"%s\""), (jsflg)?',':'{', XdrvMailbox.command, i +1, EscapeJSONString(SettingsText(real_index +i)).c_str()) > (MAX_LOGSZ - TOPSZ)) || (i == count -1)) {
+      ResponseJsonEnd();
+      MqttPublishPrefixTopic_P(RESULT_OR_STAT, XdrvMailbox.command);
+      ResponseClear();
+      jsflg = false;
+    } else {
+      jsflg = true;
+    }
   }
-  ResponseJsonEnd();
 }
 
 /********************************************************************************************/
