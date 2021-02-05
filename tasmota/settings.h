@@ -664,7 +664,7 @@ struct {
 
   int           ex_adc_param4;             // FD8  Free since 9.0.0.1
 
-  uint32_t      shutter_button[MAX_KEYS];  // FDC
+  uint32_t      shutter_button[MAX_SHUTTER_KEYS];  // FDC
   uint32_t      i2c_drivers[3];            // FEC  I2cDriver
   uint32_t      cfg_timestamp;             // FF8
   uint32_t      cfg_crc32;                 // FFC

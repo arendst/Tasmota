@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 ## [9.2.0.6]
 ### Changed
 - Increase number of switch GPIOs from 8 to 28
+- Increase number of button GPIOs from 4 to 8
 
 ## [9.2.0.5] 20210205
 ### Changed

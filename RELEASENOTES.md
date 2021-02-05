@@ -122,6 +122,7 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - Domoticz fixed 2 decimals resolution by user selectable ``TempRes``, ``HumRes`` and ``PressRes`` resolutions
 - ESP32 increase number of relay GPIOs from 8 to 28
 - Increase number of switch GPIOs from 8 to 28
+- Increase number of button GPIOs from 4 to 8
 
 ### Fixed
 - Redesign syslog and mqttlog using log buffer [#10164](https://github.com/arendst/Tasmota/issues/10164)

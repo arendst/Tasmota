@@ -54,13 +54,12 @@ const uint8_t MAX_RELAYS = 8;               // Max number of relays
 #ifdef ESP32
 const uint8_t MAX_RELAYS = 28;              // Max number of relays
 #endif  // ESP32
+const uint8_t MAX_KEYS = 8;                 // Max number of keys or buttons
 
 // Changes to the following MAX_ defines will impact settings layout
-const uint8_t MAX_SWITCHES = 28;            // Max number of switches
-const uint8_t MAX_SHUTTER_RELAYS = 8;       // Max number of shutter relays
 const uint8_t MAX_INTERLOCKS = 4;           // Max number of interlock groups (MAX_RELAYS / 2)
+const uint8_t MAX_SWITCHES = 28;            // Max number of switches
 const uint8_t MAX_LEDS = 4;                 // Max number of leds
-const uint8_t MAX_KEYS = 4;                 // Max number of keys or buttons
 const uint8_t MAX_PWMS = 5;                 // Max number of PWM channels
 const uint8_t MAX_COUNTERS = 4;             // Max number of counter sensors
 const uint8_t MAX_TIMERS = 16;              // Max number of Timers
@@ -75,6 +74,8 @@ const uint8_t MAX_XDRV_DRIVERS = 96;        // Max number of allowed driver driv
 const uint8_t MAX_XSNS_DRIVERS = 96;        // Max number of allowed sensor drivers
 const uint8_t MAX_I2C_DRIVERS = 96;         // Max number of allowed i2c drivers
 const uint8_t MAX_SHUTTERS = 4;             // Max number of shutters
+const uint8_t MAX_SHUTTER_RELAYS = 8;       // Max number of shutter relays
+const uint8_t MAX_SHUTTER_KEYS = 4;         // Max number of shutter keys or buttons
 const uint8_t MAX_PCF8574 = 4;              // Max number of PCF8574 devices
 const uint8_t MAX_RULE_SETS = 3;            // Max number of rule sets of size 512 characters
 const uint16_t MAX_RULE_SIZE = 512;         // Max number of characters in rules
