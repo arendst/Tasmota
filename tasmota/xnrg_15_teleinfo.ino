@@ -105,7 +105,7 @@ const char kLabel[] PROGMEM =
     "|DEMAIN"
     ;
 
-#define BUFFER_SIZE        300     // Receive buffer size
+#define BUFFER_SIZE        200     // Receive buffer size
 
 TInfo tinfo; // Teleinfo object
 TasmotaSerial *TInfoSerial = nullptr;
@@ -520,7 +520,7 @@ Input   : -
 Output  : -
 Comments: -
 ====================================================================== */
-void TInfoEveryTime(void)
+void TInfoEvery250ms(void)
 {
     if (!tinfo_found) {
         return;
@@ -536,10 +536,10 @@ void TInfoEveryTime(void)
         {
             buff[i] &= 0x7F;
             // data processing
-            AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: car %d %c"), buff[i], buff[i]);
-            AddLog(LOG_LEVEL_INFO, PSTR("TIC: stats %d"), tinfo.process(buff[i]));
+            //AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: car %d %c"), buff[i], buff[i]);
+            tinfo.process(buff[i]);
         }
-        AddLog(LOG_LEVEL_INFO, PSTR("TIC: %d cars"), size);
+        //AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: %d cars"), size);
     }
 }
 
@@ -647,8 +647,8 @@ bool Xnrg15(uint8_t function)
 {
     switch (function)
     {
-        case FUNC_LOOP:
-            TInfoEveryTime();
+        case FUNC_EVERY_250_MSECOND:
+            TInfoEvery250ms();
             break;
         case FUNC_JSON_APPEND:
             TInfoShow(1);
