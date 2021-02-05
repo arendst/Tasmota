@@ -112,7 +112,7 @@
 #define D_HOSTNAME "Hostnaam"
 #define D_HUMIDITY "Luchtvochtigheid"
 #define D_ILLUMINANCE "Verlichtingssterkte"
-#define D_IMMEDIATE "onmiddelijk"      // Button immediate
+#define D_IMMEDIATE "onmiddellijk"      // Button immediate
 #define D_INDEX "Index"
 #define D_INFO "Info"
 #define D_INFRARED "Infrarood"
@@ -558,8 +558,8 @@
 //xsns_35_tx20.ino
 #define D_TX20_WIND_DIRECTION "Windrichting"
 #define D_TX20_WIND_SPEED "Windsnelheid"
-#define D_TX20_WIND_SPEED_MIN "Windsnelhied minimum"
-#define D_TX20_WIND_SPEED_MAX "Windsnelhied maximaal"
+#define D_TX20_WIND_SPEED_MIN "Windsnelheid minimum"
+#define D_TX20_WIND_SPEED_MAX "Windsnelheid maximaal"
 #define D_TX20_NORTH "N"
 #define D_TX20_EAST "E"
 #define D_TX20_SOUTH "S"
