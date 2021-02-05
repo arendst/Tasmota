@@ -1111,8 +1111,9 @@ void SettingsDelta(void) {
   if (Settings.version != VERSION) {      // Fix version dependent changes
 
 #ifdef ESP8266
+#ifndef UPGRADE_V8_MIN
+    // Although no direct upgrade is supported try to make a viable environment
     if (Settings.version < 0x08000000) {
-#ifdef UPGRADE_V8_MIN_KEEP_WIFI
       // Save SSIDs and Passwords
       char temp31[strlen(Settings.ex_sta_ssid[0]) +1];
       strncpy(temp31, Settings.ex_sta_ssid[0], sizeof(temp31));
@@ -1122,9 +1123,7 @@ void SettingsDelta(void) {
       strncpy(temp41, Settings.ex_sta_pwd[0], sizeof(temp41));
       char temp42[strlen(Settings.ex_sta_pwd[1]) +1];
       strncpy(temp42, Settings.ex_sta_pwd[1], sizeof(temp42));
-#endif  // UPGRADE_V8_MIN_KEEP_WIFI
 
-#ifdef UPGRADE_V8_MIN_KEEP_MQTT
       char temp7[strlen(Settings.ex_mqtt_host) +1];
       strncpy(temp7, Settings.ex_mqtt_host, sizeof(temp7));
       char temp9[strlen(Settings.ex_mqtt_user) +1];
@@ -1133,19 +1132,15 @@ void SettingsDelta(void) {
       strncpy(temp10, Settings.ex_mqtt_pwd, sizeof(temp10));
       char temp11[strlen(Settings.ex_mqtt_topic) +1];
       strncpy(temp11, Settings.ex_mqtt_topic, sizeof(temp11));
-#endif  // UPGRADE_V8_MIN_KEEP_MQTT
 
       SettingsDefault();
 
-#ifdef UPGRADE_V8_MIN_KEEP_WIFI
       // Restore current SSIDs and Passwords
       SettingsUpdateText(SET_STASSID1, temp31);
       SettingsUpdateText(SET_STASSID2, temp32);
       SettingsUpdateText(SET_STAPWD1, temp41);
       SettingsUpdateText(SET_STAPWD2, temp42);
-#endif  // UPGRADE_V8_MIN_KEEP_WIFI
 
-#ifdef UPGRADE_V8_MIN_KEEP_MQTT
 #if defined(USE_MQTT_TLS) && defined(USE_MQTT_AWS_IOT)
       if (!strlen(Settings.ex_mqtt_user)) {
         SettingsUpdateText(SET_MQTT_HOST, temp7);
@@ -1162,8 +1157,8 @@ void SettingsDelta(void) {
 #endif  // USE_MQTT_TLS and USE_MQTT_AWS_IOT
       SettingsUpdateText(SET_MQTT_PWD, temp10);
       SettingsUpdateText(SET_MQTT_TOPIC, temp11);
-#endif  // UPGRADE_V8_MIN_KEEP_MQTT
     }
+#endif  // UPGRADE_V8_MIN
 
     if (Settings.version < 0x08020003) {
       SettingsUpdateText(SET_TEMPLATE_NAME, Settings.user_template_name);

@@ -344,38 +344,16 @@ struct {
   // Start of char array storing all parameter strings ********
 
   char          text_pool[101];            // 017  Was ota_url[101] - size is settings_text_size
-
-  char          ex_mqtt_prefix[3][11];     // 07C  Free since 8.0.0.1
-  uint8_t       ex_baudrate;               // 09D
-  uint8_t       ex_seriallog_level;        // 09E
-  uint8_t       ex_sta_config;             // 09F
-  uint8_t       ex_sta_active;             // 0A0
+  uint8_t       text_pool_07c[37];         // 07C
   char          ex_sta_ssid[2][33];        // 0A1
   char          ex_sta_pwd[2][65];         // 0E3
-  char          ex_hostname[33];           // 165
-  char          ex_syslog_host[33];        // 186
-  uint8_t       ex_rule_stop;              // 1A7
-  uint16_t      ex_syslog_port;            // 1A8
-  uint8_t       ex_syslog_level;           // 1AA
-  uint8_t       ex_webserver;              // 1AB
-  uint8_t       ex_weblog_level;           // 1AC
-  uint8_t       ex_mqtt_fingerprint[2][20];  // 1AD
-  uint8_t       ex_ex_adc_param_type;      // 1D5
-  uint8_t       ex_free_1d6[10];           // 1D6
-  SysBitfield4  ex_flag4;                  // 1E0
-  uint8_t       ex_serial_config;          // 1E4
-  uint8_t       ex_wifi_output_power;      // 1E5
-  uint8_t       ex_shutter_accuracy;       // 1E6
-  uint8_t       ex_mqttlog_level;          // 1E7
-  uint8_t       ex_sps30_inuse_hours;      // 1E8
+  uint8_t       text_pool_165[132];        // 165
   char          ex_mqtt_host[33];          // 1E9
-  uint16_t      ex_mqtt_port;              // 20A
-  char          ex_mqtt_client[33];        // 20C
+  uint8_t       text_pool_20A[35];         // 20A
   char          ex_mqtt_user[33];          // 22D
   char          ex_mqtt_pwd[33];           // 24E
   char          ex_mqtt_topic[33];         // 26F
-  char          ex_button_topic[33];       // 290
-  char          ex_mqtt_grptopic[33];      // 2B1
+  uint8_t       text_pool_290[66];         // 290
 
   // End of single char array of 698 chars max ****************
 
@@ -399,7 +377,7 @@ struct {
   int16_t       toffset[2];                // 30E
   uint8_t       display_font;              // 312
 
-  char          ex_state_text[4][11];      // 313  Free since 8.0.0.1
+  uint8_t       free_313[44];              // 313
 
   uint8_t       tuyamcu_topic;             // 33F  Manage tuyaSend topic. ex_energy_power_delta on 6.6.0.20, replaced on 8.5.0.1
   uint16_t      domoticz_update_timer;     // 340
@@ -507,7 +485,7 @@ struct {
   uint32_t      ipv4_address[4];           // 544
   unsigned long energy_kWhtotal;           // 554
 
-  char          ex_mqtt_fulltopic[100];    // 558  Free since 8.0.0.1
+  uint8_t       free_558[100];             // 558
 
   SysBitfield2  flag2;                     // 5BC
   unsigned long pulse_counter[MAX_COUNTERS];  // 5C0
@@ -593,7 +571,7 @@ struct {
   uint8_t       weight_change;             // E9F
   uint8_t       web_color2[2][3];          // EA0  Needs to be on integer / 3 distance from web_color
 
-  char          ex_cors_domain[33];        // EA6  Free since 8.0.0.1
+  uint8_t       free_ea6[33];              // EA6
 
   uint8_t       sta_config;                // EC7
   uint8_t       sta_active;                // EC8
