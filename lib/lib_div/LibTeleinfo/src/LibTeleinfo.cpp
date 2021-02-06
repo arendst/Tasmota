@@ -215,6 +215,8 @@ ValueList * TInfo::valueAdd(char * name, char * value, uint8_t checksum, uint8_t
     TI_Debug(F("' Not added bad checksum calculated '"));
     TI_Debug((char) thischeck);
     TI_Debugln(F("'"));
+    AddLog(3, PSTR("LibTeleinfo: Err checksum (2) 0x%02X != 0x%02X"), thischeck, checksum);
+
   } else  {
     // Got one and all seems good ?
     if (me && lgname && lgvalue && checksum) {
@@ -891,7 +893,7 @@ ValueList * TInfo::checkLine(char * pline)
           }
           else
           {
-            //AddLog(3, PSTR("LibTeleinfo: Err checksum 0x%02X != 0x%02X"), calc_checksum, checksum);
+            AddLog(3, PSTR("LibTeleinfo: Err checksum 0x%02X != 0x%02X"), calc_checksum, checksum);
           }
         }
       }
@@ -1013,7 +1015,7 @@ _State_e TInfo::process(char c)
         if ( _recv_idx < TINFO_BUFSIZE)
           _recv_buff[_recv_idx++]=c;
         else {
-          //AddLog(3, PSTR("LibTeleinfo: _recv_idx = %d/%d buffer overflow"), _recv_idx, TINFO_BUFSIZE);
+          AddLog(3, PSTR("LibTeleinfo: _recv_idx = %d/%d buffer overflow"), _recv_idx, TINFO_BUFSIZE);
           clearBuffer();
        }
       }
