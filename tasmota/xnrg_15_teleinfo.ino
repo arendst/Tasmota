@@ -528,8 +528,7 @@ static char buff[TELEINFO_BUFFER_SIZE];
     if (!tinfo_found) {
         return;
     }
-
-    // Process as many bytes as aailable in serial buffer
+    // Process as many bytes as available in serial buffer
     int size = TInfoSerial->read(buff,TELEINFO_BUFFER_SIZE);
     for(int i = 0; size; i++, size--)
     {
