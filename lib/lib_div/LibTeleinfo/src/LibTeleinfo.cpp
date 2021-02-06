@@ -215,7 +215,7 @@ ValueList * TInfo::valueAdd(char * name, char * value, uint8_t checksum, uint8_t
     TI_Debug(F("' Not added bad checksum calculated '"));
     TI_Debug((char) thischeck);
     TI_Debugln(F("'"));
-    AddLog(1, PSTR("LibTeleinfo: Err checksum (2) 0x%02X != 0x%02X"), thischeck, checksum);
+    AddLog(1, PSTR("LibTeleinfo::valueAdd Err checksum 0x%02X != 0x%02X"), thischeck, checksum);
 
   } else  {
     // Got one and all seems good ?
@@ -876,7 +876,7 @@ ValueList * TInfo::checkLine(char * pline)
 
             // Add value to linked lists of values
             //AddLog(3, PSTR("LibTeleinfo: %s = %s"), ptok, pvalue);
-            ValueList * me = valueAdd(ptok, pvalue, checksum, &flags);
+            ValueList * me = valueAdd(ptok, pvalue, checksum, &flags, pts);
 
             // value correctly added/changed
             if ( me ) {
@@ -893,7 +893,7 @@ ValueList * TInfo::checkLine(char * pline)
           }
           else
           {
-            AddLog(1, PSTR("LibTeleinfo: Err checksum 0x%02X != 0x%02X"), calc_checksum, checksum);
+            AddLog(1, PSTR("LibTeleinfo::checkLine Err checksum 0x%02X != 0x%02X"), calc_checksum, checksum);
           }
         }
       }

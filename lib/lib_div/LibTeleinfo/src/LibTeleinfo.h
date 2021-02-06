@@ -47,17 +47,12 @@
 // debugging, this should not interfere with main sketch or other
 // libraries
 void AddLog(uint32_t loglevel, PGM_P formatP, ...);
+#define TI_Errorf(...) AddLog(LOG_LEVEL_ERROR, __VA_ARGS__);
 #ifdef TI_DEBUG
   // Tasmota build
   #ifdef CODE_IMAGE_STR
-      // THIS DOES NOT WORK
-      //    TI_Debug() is based on Arduino's print() which supports a wide range of
-      //    arguments (chars, numbers, ...)
-      //    Tasmota AddLog() can only support a format string + optional arguments (like printf())
-      //    Must use AddLog() directly in Tasmota
-      #define TI_Debug(x)    AddLog_P2(LOG_LEVEL_DEBUG, x);
-      #define TI_Debugln(x)  AddLog_P2(LOG_LEVEL_DEBUG, x);
-      #define TI_Debugf(...) AddLog_P2(LOG_LEVEL_DEBUG, __VA_ARGS__);
+      // Only TI_Debugf() can work with Tasmota
+      #define TI_Debugf(...) AddLog(LOG_LEVEL_DEBUG, __VA_ARGS__);
       #define TI_Debugflush  {}
   #else
     #ifdef ESP8266
