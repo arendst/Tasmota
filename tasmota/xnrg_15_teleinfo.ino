@@ -105,7 +105,7 @@ const char kLabel[] PROGMEM =
     "|DEMAIN"
     ;
 
-#define BUFFER_SIZE        200     // Receive buffer size
+#define TELEINFO_BUFFER_SIZE        512     // Receive buffer size
 
 TInfo tinfo; // Teleinfo object
 TasmotaSerial *TInfoSerial = nullptr;
@@ -115,7 +115,6 @@ bool tinfo_found = false;
 int contrat;
 int tarif;
 int isousc;
-char buff[BUFFER_SIZE];
 
 /*********************************************************************************************/
 
@@ -468,11 +467,13 @@ void TInfoInit(void)
 
 #ifdef ESP8266
         // Allow GPIO3 AND GPIO13 with hardware fallback to 2
-        TInfoSerial = new TasmotaSerial(rx_pin, -1, 2);
+        // Set buffer to nnn char to support 250ms loop at 9600 baud
+        TInfoSerial = new TasmotaSerial(rx_pin, -1, 2, 0, TELEINFO_BUFFER_SIZE);
         //pinMode(rx_pin, INPUT_PULLUP);
 #endif  // ESP8266
 #ifdef ESP32
-        TInfoSerial = new TasmotaSerial(rx_pin, -1, 1);
+        // Set buffer to nnn char to support 250ms loop at 9600 baud
+        TInfoSerial = new TasmotaSerial(rx_pin, -1, 1, 0, TELEINFO_BUFFER_SIZE);
 #endif  // ESP32
 
         // Trick here even using SERIAL_7E1 or TS_SERIAL_7E1
@@ -514,30 +515,27 @@ void TInfoInit(void)
 }
 
 /* ======================================================================
-Function: TInfoEvery250ms
-Purpose : Tasmota callback executed every 250ms
+Function: TInfoProcess
+Purpose : Tasmota callback executed often enough to read serial
 Input   : -
 Output  : -
 Comments: -
 ====================================================================== */
-void TInfoEvery250ms(void)
+void TInfoProcess(void)
 {
+static char buff[TELEINFO_BUFFER_SIZE];
+
     if (!tinfo_found) {
         return;
     }
 
-    if (TInfoSerial->available()) {
-        // We received some data, process but never more than 200 characters
-        // get char
-        size_t size = TInfoSerial->read(buff,BUFFER_SIZE);
-        for(int i = 0; i < size; i++)
-        {
-            buff[i] &= 0x7F;
-            // data processing
-            //AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: car %d %c"), buff[i], buff[i]);
-            tinfo.process(buff[i]);
-        }
-        //AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: %d cars"), size);
+    // Process as many bytes as aailable in serial buffer
+    int size = TInfoSerial->read(buff,TELEINFO_BUFFER_SIZE);
+    for(int i = 0; size; i++, size--)
+    {
+        buff[i] &= 0x7F;
+        // data processing
+        tinfo.process(buff[i]);
     }
 }
 
@@ -646,7 +644,7 @@ bool Xnrg15(uint8_t function)
     switch (function)
     {
         case FUNC_EVERY_250_MSECOND:
-            TInfoEvery250ms();
+            TInfoProcess();
             break;
         case FUNC_JSON_APPEND:
             TInfoShow(1);
