@@ -41,16 +41,17 @@ class TasmotaSerial : public Stream {
     virtual ~TasmotaSerial();
 
     bool begin(long speed, int stop_bits = 1);
-    bool begin();
-    bool hardwareSerial();
-    int peek();
+    bool begin(void);
+    bool hardwareSerial(void);
+    int peek(void);
 
-    virtual size_t write(uint8_t byte);
-    virtual int read();
-    virtual int available();
-    virtual void flush();
+    size_t write(uint8_t byte) override;
+    int read(void) override;
+    size_t read(char* buffer, size_t size);
+    int available(void) override;
+    void flush(void) override;
 
-    void rxRead();
+    void rxRead(void);
 
     uint32_t getLoopReadMetric(void) const { return m_bit_follow_metric; }
 
