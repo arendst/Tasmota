@@ -114,6 +114,9 @@ bool TasmotaSerial::begin(long speed, int stop_bits) {
   if (m_hardserial) {
 #ifdef ESP8266
     Serial.flush();
+    if (serial_buffer_size > 256) {
+        Serial.setRxBufferSize(serial_buffer_size);
+    }
     if (2 == m_stop_bits) {
       Serial.begin(speed, SERIAL_8N2);
     } else {
