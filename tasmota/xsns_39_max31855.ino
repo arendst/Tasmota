@@ -143,7 +143,7 @@ void MAX31855_Show(bool Json) {
   GetTextIndexed(sensor_name, sizeof(sensor_name), Settings.flag4.max6675, kMax31855Types);
 
   if (Json) {
-    ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_PROBETEMPERATURE "\":%*_f,\"" D_JSON_REFERENCETEMPERATURE "\":%*_f,\"" D_JSON_ERROR "\":%d}"), \
+    ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_TEMPERATURE "\":%*_f,\"" D_JSON_REFERENCETEMPERATURE "\":%*_f,\"" D_JSON_ERROR "\":%d}"), \
       sensor_name,
       Settings.flag2.temperature_resolution, &MAX31855_Result.ProbeTemperature,
       Settings.flag2.temperature_resolution, &MAX31855_Result.ReferenceTemperature,

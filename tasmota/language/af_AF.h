@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v9.2.1.0
+ * Updated until v9.2.0.4
 \*********************************************************************/
 
 //#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -244,8 +244,8 @@
 #define D_WEBSERVER_STOPPED "Webbediener gestop"
 #define D_FILE_NOT_FOUND "Lêer nie gevind nie"
 #define D_REDIRECTED "Herlei na captive portal"
-#define D_WIFIMANAGER_SET_ACCESSPOINT_AND_STATION "Wifimanager stel AccessPoint in en hou Station"
-#define D_WIFIMANAGER_SET_ACCESSPOINT "Wifimanager het AccessPoint ingestel"
+#define D_WIFIMANAGER_SET_ACCESSPOINT_AND_STATION "WiFi manager stel AccessPoint in en hou Station"
+#define D_WIFIMANAGER_SET_ACCESSPOINT "WiFi manager het AccessPoint ingestel"
 #define D_TRYING_TO_CONNECT "Probeer om toestel aan netwerk te koppel"
 
 #define D_RESTART_IN "Begin weer binne"
@@ -278,8 +278,8 @@
 #define D_SERIAL_IN "Serial in"
 #define D_SERIAL_OUT "Serial uit"
 
-#define D_WIFI_PARAMETERS "Wifi-parameters"
-#define D_SCAN_FOR_WIFI_NETWORKS "Soek vir wifi-netwerke"
+#define D_WIFI_PARAMETERS "WiFi parameters"
+#define D_SCAN_FOR_WIFI_NETWORKS "Soek vir WiFi netwerke"
 #define D_SCAN_DONE "Skandering gedoen"
 #define D_NO_NETWORKS_FOUND "Geen netwerke gevind nie"
 #define D_REFRESH_TO_SCAN_AGAIN "Verfris om weer te skandeer"

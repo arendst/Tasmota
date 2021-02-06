@@ -91,7 +91,7 @@ TasmotaSerial::TasmotaSerial(int receive_pin, int transmit_pin, int hardware_fal
   m_valid = true;
 }
 
-TasmotaSerial::~TasmotaSerial() {
+TasmotaSerial::~TasmotaSerial(void) {
 #ifdef ESP8266
   if (!m_hardserial) {
     if (m_rx_pin > -1) {
@@ -114,9 +114,6 @@ bool TasmotaSerial::begin(long speed, int stop_bits) {
   if (m_hardserial) {
 #ifdef ESP8266
     Serial.flush();
-    if (serial_buffer_size > 256) {
-        Serial.setRxBufferSize(serial_buffer_size);
-    }
     if (2 == m_stop_bits) {
       Serial.begin(speed, SERIAL_8N2);
     } else {
@@ -125,19 +122,22 @@ bool TasmotaSerial::begin(long speed, int stop_bits) {
     if (m_hardswap) {
       Serial.swap();
     }
+    if (serial_buffer_size > 256) {
+      Serial.setRxBufferSize(serial_buffer_size);
+    }
 #endif  // ESP8266
 #ifdef ESP32
     if (tasmota_serial_index > 0) {  // We only support UART1 and UART2 and keep UART0 for debugging
       m_uart = tasmota_serial_index;
       tasmota_serial_index--;
       TSerial = new HardwareSerial(m_uart);
-      if (serial_buffer_size > 256) {
-        TSerial->setRxBufferSize(serial_buffer_size);
-      }
       if (2 == m_stop_bits) {
         TSerial->begin(speed, SERIAL_8N2, m_rx_pin, m_tx_pin);
       } else {
         TSerial->begin(speed, SERIAL_8N1, m_rx_pin, m_tx_pin);
+      }
+      if (serial_buffer_size > 256) {
+        TSerial->setRxBufferSize(serial_buffer_size);
       }
     } else {
       m_valid = false;
@@ -154,11 +154,11 @@ bool TasmotaSerial::begin(long speed, int stop_bits) {
   return m_valid;
 }
 
-bool TasmotaSerial::begin() {
+bool TasmotaSerial::begin(void) {
   return begin(TM_SERIAL_BAUDRATE);
 }
 
-bool TasmotaSerial::hardwareSerial() {
+bool TasmotaSerial::hardwareSerial(void) {
 #ifdef ESP8266
   return m_hardserial;
 #endif  // ESP8266
@@ -167,7 +167,7 @@ bool TasmotaSerial::hardwareSerial() {
 #endif  // ESP32
 }
 
-void TasmotaSerial::flush() {
+void TasmotaSerial::flush(void) {
   if (m_hardserial) {
 #ifdef ESP8266
     Serial.flush();
@@ -180,7 +180,7 @@ void TasmotaSerial::flush() {
   }
 }
 
-int TasmotaSerial::peek() {
+int TasmotaSerial::peek(void) {
   if (m_hardserial) {
 #ifdef ESP8266
     return Serial.peek();
@@ -194,7 +194,7 @@ int TasmotaSerial::peek() {
   }
 }
 
-int TasmotaSerial::read() {
+int TasmotaSerial::read(void) {
   if (m_hardserial) {
 #ifdef ESP8266
     return Serial.read();
@@ -213,14 +213,14 @@ int TasmotaSerial::read() {
 size_t TasmotaSerial::read(char* buffer, size_t size) {
   if (m_hardserial) {
 #ifdef ESP8266
-    return Serial.read(buffer,size);
+    return Serial.read(buffer, size);
 #endif  // ESP8266
 #ifdef ESP32
-    return TSerial->read(buffer,size);
+    return TSerial->read(buffer, size);
 #endif  // ESP32
   } else {
+    if ((-1 == m_rx_pin) || (m_in_pos == m_out_pos)) { return 0; }
     size_t count = 0;
-    if ((-1 == m_rx_pin) || (m_in_pos == m_out_pos)) return 0;
     for( ; size && (m_in_pos == m_out_pos) ; --size, ++count) {
       *buffer++ = m_buffer[m_out_pos];
       m_out_pos = (m_out_pos +1) % serial_buffer_size;
@@ -229,7 +229,7 @@ size_t TasmotaSerial::read(char* buffer, size_t size) {
   }
 }
 
-int TasmotaSerial::available() {
+int TasmotaSerial::available(void) {
   if (m_hardserial) {
 #ifdef ESP8266
     return Serial.available();
@@ -305,7 +305,7 @@ size_t TasmotaSerial::write(uint8_t b) {
   }
 }
 
-void ICACHE_RAM_ATTR TasmotaSerial::rxRead() {
+void ICACHE_RAM_ATTR TasmotaSerial::rxRead(void) {
   if (!m_nwmode) {
     int32_t loop_read = m_very_high_speed ? serial_buffer_size : 1;
     // Advance the starting point for the samples but compensate for the
