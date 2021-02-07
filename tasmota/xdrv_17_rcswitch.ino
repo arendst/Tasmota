@@ -157,7 +157,7 @@ void CmndRfSend(void)
     unsigned int bits = 24;
     int protocol = 1;
     int repeat = 10;
-    int pulse = 350;
+    int pulse = 0; // 0 leave the library use the default value depending on protocol
 
     JsonParser parser(XdrvMailbox.data);
     JsonParserObject root = parser.getRootObject();
@@ -195,8 +195,8 @@ void CmndRfSend(void)
 
     if (!protocol) { protocol = 1; }
     mySwitch.setProtocol(protocol);
-    if (!pulse) { pulse = 350; }      // Default pulse length for protocol 1
-    mySwitch.setPulseLength(pulse);
+    // if pulse is specified in the command, enforce the provided value (otherwise lib takes default)
+    if (!pulse) { mySwitch.setPulseLength(pulse); }
     if (!repeat) { repeat = 10; }     // Default at init
     mySwitch.setRepeatTransmit(repeat);
     if (!bits) { bits = 24; }         // Default 24 bits
