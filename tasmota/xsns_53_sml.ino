@@ -1414,8 +1414,9 @@ void SML_Decode(uint8_t index) {
       }
     } else {
       // compare value
-      uint8_t found=1;
-      uint32_t ebus_dval=99;
+      uint8_t found=1, use_uval = 1;
+      uint32_t ebus_uval=99;
+      float ebus_dval;
       float mbus_dval=99;
       while (*mp!='@') {
         if (meter_desc_p[mindex].type=='o' || meter_desc_p[mindex].type=='c') {
@@ -1439,18 +1440,19 @@ void SML_Decode(uint8_t index) {
               cp++;
             } else if (!strncmp(mp,"UUuuUUuu",8)) {
               uint32_t val= (cp[0]<<24)|(cp[1]<<16)|(cp[2]<<8)|(cp[3]<<0);
-              ebus_dval=val;
+              ebus_uval=val;
               mbus_dval=val;
               mp+=8;
               cp+=4;
             } else if (*mp=='U' && *(mp+1)=='U' && *(mp+2)=='u' && *(mp+3)=='u'){
               uint16_t val = cp[1]|(cp[0]<<8);
               mbus_dval=val;
-              ebus_dval=val;
+              ebus_uval=val;
               mp+=4;
               cp+=2;
             } else if (!strncmp(mp,"SSssSSss",8)) {
               int32_t val= (cp[0]<<24)|(cp[1]<<16)|(cp[2]<<8)|(cp[3]<<0);
+              use_uval = 0;
               ebus_dval=val;
               mbus_dval=val;
               mp+=8;
@@ -1458,23 +1460,25 @@ void SML_Decode(uint8_t index) {
             } else if (*mp=='u' && *(mp+1)=='u' && *(mp+2)=='U' && *(mp+3)=='U'){
               uint16_t val = cp[0]|(cp[1]<<8);
               mbus_dval=val;
-              ebus_dval=val;
+              ebus_uval=val;
               mp+=4;
               cp+=2;
             } else if (*mp=='u' && *(mp+1)=='u') {
               uint8_t val = *cp++;
               mbus_dval=val;
-              ebus_dval=val;
+              ebus_uval=val;
               mp+=2;
             } else if (*mp=='s' && *(mp+1)=='s' && *(mp+2)=='S' && *(mp+3)=='S') {
               int16_t val = *cp|(*(cp+1)<<8);
               mbus_dval=val;
+              use_uval = 0;
               ebus_dval=val;
               mp+=4;
               cp+=2;
             } else if (*mp=='S' && *(mp+1)=='S' && *(mp+2)=='s' && *(mp+3)=='s') {
               int16_t val = cp[1]|(cp[0]<<8);
               mbus_dval=val;
+              use_uval = 0;
               ebus_dval=val;
               mp+=4;
               cp+=2;
@@ -1482,12 +1486,14 @@ void SML_Decode(uint8_t index) {
             else if (*mp=='s' && *(mp+1)=='s') {
               int8_t val = *cp++;
               mbus_dval=val;
+              use_uval = 0;
               ebus_dval=val;
               mp+=2;
             }
             else if (!strncmp(mp,"ffffffff",8)) {
               uint32_t val= (cp[0]<<24)|(cp[1]<<16)|(cp[2]<<8)|(cp[3]<<0);
               float *fp=(float*)&val;
+              use_uval = 0;
               ebus_dval=*fp;
               mbus_dval=*fp;
               mp+=8;
@@ -1497,6 +1503,7 @@ void SML_Decode(uint8_t index) {
               // reverse word float
               uint32_t val= (cp[1]<<0)|(cp[0]<<8)|(cp[3]<<16)|(cp[2]<<24);
               float *fp=(float*)&val;
+              use_uval = 0;
               ebus_dval=*fp;
               mbus_dval=*fp;
               mp+=8;
@@ -1577,8 +1584,8 @@ void SML_Decode(uint8_t index) {
             if (*mp=='b') {
               mp++;
               uint8_t shift=*mp&7;
-              ebus_dval>>=shift;
-              ebus_dval&=1;
+              ebus_uval>>=shift;
+              ebus_uval&=1;
               mp+=2;
             }
             if (*mp=='i') {
@@ -1601,6 +1608,8 @@ void SML_Decode(uint8_t index) {
                 uint8_t crc = SML_PzemCrc(&smltbuf[mindex][0],6);
                 if (crc!=smltbuf[mindex][6]) goto nextsect;
                 dval=mbus_dval;
+              } else if (use_uval) {
+                dval=ebus_uval;
               } else {
                 dval=ebus_dval;
               }
