@@ -904,7 +904,12 @@ void Dump2log(void) {
             c=SML_SREAD;
             sprintf(&log_data[index],"%02x ",c);
             index+=3;
-            if (c==EBUS_SYNC) break;
+            if (c==EBUS_SYNC) {
+#if SML_EBUS_SKIP_SYNC_DUMPS
+              index = index == 5 ? 0 : index;
+#endif
+              break;
+            }
           } else {
             // sml
             if (sml_start==0x77) {
