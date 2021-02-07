@@ -69,12 +69,12 @@ void TInfo::init(_Mode_e mode)
   // We're in INIT in term of receive data
   _state = TINFO_INIT;
  
-  if ( mode == TINFO_MODE_STANDARD ) {
+  _mode = mode;
+  if ( _mode == TINFO_MODE_STANDARD ) {
     _separator = TINFO_HT;
   } else {
     _separator = ' ';
   } 
-
 }
 
 /* ======================================================================
@@ -643,12 +643,18 @@ Input   : label name
 Output  : checksum
 Comments: return '\0' in case of error
 
-Group format with timestamp (horodatage)
+Group format in legacy mode (Mode Historique) - Last space not included in checksum
+LF etiquette SP donnee SP Chk CR
+0A           20        20     0D
+   \____check________/
+
+
+Group format in standard mode with timestamp (horodatage) - Last HT included in checksum
 LF etiquette HT horodatage HT donnee HT Chk CR
 0A           09            09        09     0D
    \____________checkum_______________/
 
-Group format without timestamp (horodatage)
+Group format in standard mode without timestamp (horodatage) - Last HT included in checksum
 LF etiquette HT donnee HT Chk CR
 0A           09        09     0D
    \_____checkum________/
@@ -656,7 +662,7 @@ LF etiquette HT donnee HT Chk CR
 ====================================================================== */
 unsigned char TInfo::calcChecksum(char *etiquette, char *valeur, char * horodate) 
 {
-  uint8_t sum = 2 * _separator ;  // Somme des codes ASCII du message + 2 separateurs
+  uint8_t sum = (_mode == TINFO_MODE_HISTORIQUE) ? _separator : (2 * _separator);  // Somme des codes ASCII du message + 2 separateurs
 
   // avoid dead loop, always check all is fine 
   if (etiquette && valeur) {

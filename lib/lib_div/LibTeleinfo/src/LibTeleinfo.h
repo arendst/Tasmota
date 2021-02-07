@@ -87,9 +87,7 @@ typedef struct _ValueList ValueList;
 struct _ValueList
 {
   ValueList *next; // next element
-//#ifdef USE_TELEINFO_STANDARD
   time_t  ts;      // TimeStamp of data if any
-//#endif
   uint8_t checksum;// checksum
   uint8_t flags;   // specific flags
   char  * name;    // LABEL of value name
@@ -121,13 +119,8 @@ enum _State_e {
 #define TINFO_FLAGS_ALERT    0x80 /* This will generate an alert */
 
 // Local buffer for one line of teleinfo
-// maximum size, I think it should be enought
-//#ifdef USE_TELEINFO_STANDARD  
-// Linky and standard mode may have longer lines
+// maximum size for Standard
 #define TINFO_BUFSIZE  128
-//#else
-//#define TINFO_BUFSIZE  64
-//#endif
 
 // Teleinfo start and end of frame characters
 #define TINFO_STX 0x02
@@ -145,7 +138,7 @@ class TInfo
 {
   public:
     TInfo();
-    void          init(_Mode_e mode = TINFO_MODE_HISTORIQUE);
+    void          init(_Mode_e mode); // mode MUST be specified
     _State_e      process (char c);
     void          attachADPS(void (*_fn_ADPS)(uint8_t phase));
     void          attachData(void (*_fn_data)(ValueList * valueslist, uint8_t state));
@@ -169,6 +162,7 @@ class TInfo
     void          customLabel( char * plabel, char * pvalue, uint8_t * pflags) ;
     ValueList *   checkLine(char * pline) ;
 
+    _Mode_e   _mode; // Teleinfo mode (legacy/historique vs standard)
     _State_e  _state; // Teleinfo machine state
     ValueList _valueslist;   // Linked list of teleinfo values
     char      _recv_buff[TINFO_BUFSIZE]; // line receive buffer

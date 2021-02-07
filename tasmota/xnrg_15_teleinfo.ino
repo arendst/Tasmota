@@ -204,19 +204,19 @@ void DataCallback(struct _ValueList * me, uint8_t  flags)
                         break;
                     }
                 }
-                AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: Tarif changed, now '%s' (%d)"), me->value, tarif);
+                AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: Tariff changed, now '%s' (%d)"), me->value, tarif);
             }
 
             // Current tariff (standard is in clear text in value)
             else if (ilabel == LABEL_LTARF)
             {
-                AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: Tarif name changed, now '%s'"), me->value);
+                AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: Tariff name changed, now '%s'"), me->value);
             }
             // Current tariff (standard index is is in clear text in value)
             else if (ilabel == LABEL_NTARF)
             {
                 tarif = atoi(me->value);
-                AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: Tarif index changed, now '%d'"), tarif);
+                AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: Tariff index changed, now '%d'"), tarif);
             }
 
 
@@ -444,16 +444,14 @@ void TInfoInit(void)
     if (Settings.flag4.teleinfo_baudrate) {
         baudrate = 9600;
         tinfo_mode = TINFO_MODE_STANDARD;
-    }  else {
+    } else {
         baudrate = 1200;
         tinfo_mode = TINFO_MODE_HISTORIQUE;
     }
 
-    AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: inferface speed %d bps"),baudrate);
-
     if (PinUsed(GPIO_TELEINFO_RX)) {
          uint8_t rx_pin = Pin(GPIO_TELEINFO_RX);
-         AddLog(LOG_LEVEL_INFO, PSTR("TIC: RX on GPIO%d"), rx_pin);
+         AddLog(LOG_LEVEL_INFO, PSTR("TIC: RX on GPIO%d, baudrate %d"), rx_pin, baudrate);
 
         // Enable Teleinfo pin used, control it
         if (PinUsed(GPIO_TELEINFO_ENABLE)) {
