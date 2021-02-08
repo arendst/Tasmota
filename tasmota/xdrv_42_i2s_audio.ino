@@ -21,7 +21,11 @@
 #include "AudioFileSourcePROGMEM.h"
 #include "AudioFileSourceID3.h"
 #include "AudioGeneratorMP3.h"
-#include "AudioOutputI2S.h"
+#ifdef I2SNODAC // we can choose external I2S DAC or transistor-based output no DAC
+#include "AudioOutputI2SNoDAC.h" //transistor-driven lower quality connected to RX pin
+#else
+#include "AudioOutputI2S.h" //external I2S DAC IC
+#endif
 #include <ESP8266SAM.h>
 #include "AudioFileSourceFS.h"
 #ifdef SAY_TIME
@@ -63,7 +67,11 @@
 
 AudioGeneratorMP3 *mp3 = nullptr;
 AudioFileSourceFS *file;
+#ifdef I2SNODAC //if we're not using an external DAC
+AudioOutputI2SNoDAC *out;
+#else  // using external I2S DAC
 AudioOutputI2S *out;
+#endif
 AudioFileSourceID3 *id3;
 AudioGeneratorMP3 *decoder = NULL;
 void *mp3ram = NULL;
@@ -237,12 +245,20 @@ uint8_t is2_volume;
 void I2S_Init(void) {
 
 #if EXTERNAL_DAC_PLAY
-    out = new AudioOutputI2S();
+  #ifdef I2SNODAC
+  out = new AudioOutputI2SNoDAC(); //using rough transistor output through RX
+  #else
+  out = new AudioOutputI2S(); //using external I2S DAC
+  #endif
 #ifdef ESP32
     out->SetPinout(DAC_IIS_BCK, DAC_IIS_WS, DAC_IIS_DOUT);
 #endif  // ESP32
 #else
-    out = new AudioOutputI2S(0, 1);
+  #ifdef I2SNODAC
+  out = new AudioOutputI2SNoDAC(0, 1); // using no I2S, is this right usage?
+  #else
+  out = new AudioOutputI2S(0, 1); // using I2S - as originally set
+  #endif
 #endif // EXTERNAL_DAC_PLAY
 
   is2_volume=10;
