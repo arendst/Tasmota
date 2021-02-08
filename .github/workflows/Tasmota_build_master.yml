@@ -1447,7 +1447,7 @@ jobs:
         [ ! -f ./mv_firmware/firmware/* ] || mv ./mv_firmware/firmware/* ./firmware/tasmota/languages/
         [ ! -f ./tools/Esptool/ESP32/*.* ] || mv ./tools/Esptool/ESP32/*.* ./firmware/tasmota32/ESP32_needed_files/
         [ ! -f ./tools/Esptool/Odroid_go/*.* ] || mv ./tools/Esptool/Odroid_go/*.* ./firmware/tasmota32/Odroid_go_needed_files/
-        [ ! -f ./FIRMWARE.md ] || mv -f ./RELEASENOTES ./README.md
+        [ ! -f ./FIRMWARE.md ] || mv -f ./RELEASENOTES.md ./README.md
     - name: Commit files  # transfer the new binaries back into the repository
       run: |
         git config --local user.name "Platformio BUILD"
