@@ -673,6 +673,12 @@
 #define D_CMND_PING "Ping"
 #define D_JSON_PING "Ping"
 
+// Commands xdrv_52_berry.ino - Berry scripting language
+#define D_PRFX_BR "Br"
+#define D_CMND_BR_RUN ""
+#define D_CMND_BR_RESET "Reset"
+#define D_BR_NOT_STARTED  "Berry not started"
+
 // Commands xsns_02_analog.ino
 #define D_CMND_ADCPARAM "AdcParam"
 
@@ -716,6 +722,7 @@
 #define D_LOG_WIFI "WIF: "         // Wifi
 #define D_LOG_ZIGBEE "ZIG: "       // Zigbee
 #define D_LOG_TCP "TCP: "          // TCP bridge
+#define D_LOG_BERRY "BRY: "        // Berry scripting language
 
 /********************************************************************************************/
 
