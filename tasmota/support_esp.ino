@@ -1,5 +1,5 @@
 /*
-  support_esp32.ino - ESP32 specific code for Tasmota
+  support_esp.ino - ESP specific code for Tasmota
 
   Copyright (C) 2021  Theo Arends / Jörg Schüler-Maroldt
 
@@ -16,6 +16,12 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+
+/*********************************************************************************************\
+ * ESP8266 and ESP32 specific code
+ *
+ * At the end the common Tasmota calls are provided
+\*********************************************************************************************/
 
 /*********************************************************************************************\
  * ESP8266 Support
@@ -45,10 +51,6 @@ uint32_t ESP_getSketchSize(void) {
 
 uint32_t ESP_getFreeHeap(void) {
   return ESP.getFreeHeap();
-}
-
-float ESP_getFreeHeap1024(void) {
-  return ((float)ESP_getFreeHeap()) / 1024;
 }
 
 void ESP_Restart(void) {
@@ -415,10 +417,6 @@ uint32_t ESP_getFreeHeap(void) {
   return ESP.getFreeHeap();
 }
 
-float ESP_getFreeHeap1024(void) {
-  return ((float)ESP_getFreeHeap()) / 1024;
-}
-
 uint32_t ESP_getMaxAllocHeap(void) {
   // largest block of heap that can be allocated at once
   uint32_t free_block_size = ESP.getMaxAllocHeap();
@@ -465,3 +463,72 @@ void *special_malloc(uint32_t size) {
 }
 
 #endif  // ESP32
+
+/*********************************************************************************************\
+ * ESP Support
+\*********************************************************************************************/
+
+String GetDeviceHardware(void) {
+  char buff[10];
+#ifdef ESP8266
+  // esptool.py get_efuses
+  uint32_t efuse1 = *(uint32_t*)(0x3FF00050);
+  uint32_t efuse2 = *(uint32_t*)(0x3FF00054);
+//  uint32_t efuse3 = *(uint32_t*)(0x3FF00058);
+//  uint32_t efuse4 = *(uint32_t*)(0x3FF0005C);
+
+  bool is_8285 = ( (efuse1 & (1 << 4)) || (efuse2 & (1 << 16)) );
+  if (is_8285 && (ESP.getFlashChipRealSize() > 1048576)) {
+    is_8285 = false;  // ESP8285 can only have 1M flash
+  }
+  if (is_8285) {
+    strcpy_P(buff, PSTR("ESP8285"));
+  } else {
+    strcpy_P(buff, PSTR("ESP8266EX"));
+  }
+#endif  // ESP8266
+
+#ifdef ESP32
+#if CONFIG_IDF_TARGET_ESP32S2  // ESP32-S2
+  strcpy_P(buff, PSTR("ESP32-S2"));
+#else
+  strcpy_P(buff, PSTR("ESP32"));
+#endif  // CONFIG_IDF_TARGET_ESP32S2
+#endif  // ESP32
+
+  return String(buff);
+}
+
+uint32_t ESP_getFreeHeap1024(void) {
+  return ESP_getFreeHeap() / 1024;
+}
+/*
+float ESP_getFreeHeap1024(void) {
+  return ((float)ESP_getFreeHeap()) / 1024;
+}
+*/
+
+/*********************************************************************************************\
+ * High entropy hardware random generator
+ * Thanks to DigitalAlchemist
+\*********************************************************************************************/
+// Based on code from https://raw.githubusercontent.com/espressif/esp-idf/master/components/esp32/hw_random.c
+uint32_t HwRandom(void) {
+#if ESP8266
+  // https://web.archive.org/web/20160922031242/http://esp8266-re.foogod.com/wiki/Random_Number_Generator
+  #define _RAND_ADDR 0x3FF20E44UL
+#endif  // ESP8266
+#ifdef ESP32
+  #define _RAND_ADDR 0x3FF75144UL
+#endif  // ESP32
+  static uint32_t last_ccount = 0;
+  uint32_t ccount;
+  uint32_t result = 0;
+  do {
+    ccount = ESP.getCycleCount();
+    result ^= *(volatile uint32_t *)_RAND_ADDR;
+  } while (ccount - last_ccount < 64);
+  last_ccount = ccount;
+  return result ^ *(volatile uint32_t *)_RAND_ADDR;
+#undef _RAND_ADDR
+}

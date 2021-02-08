@@ -196,7 +196,7 @@ void CmndRfSend(void)
     if (!protocol) { protocol = 1; }
     mySwitch.setProtocol(protocol);
     // if pulse is specified in the command, enforce the provided value (otherwise lib takes default)
-    if (!pulse) { mySwitch.setPulseLength(pulse); }
+    if (pulse) { mySwitch.setPulseLength(pulse); }
     if (!repeat) { repeat = 10; }     // Default at init
     mySwitch.setRepeatTransmit(repeat);
     if (!bits) { bits = 24; }         // Default 24 bits
