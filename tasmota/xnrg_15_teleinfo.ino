@@ -105,7 +105,9 @@ const char kLabel[] PROGMEM =
     "|DEMAIN"
     ;
 
-#define TELEINFO_BUFFER_SIZE        512     // Receive buffer size
+#define TELEINFO_SERIAL_BUFFER_STANDARD        512      // Receive buffer size for Standard mode
+#define TELEINFO_SERIAL_BUFFER_HISTORIQUE      512      // Receive buffer size for Legacy mode
+#define TELEINFO_PROCESS_BUFFER                 32      // Local processing buffer
 
 TInfo tinfo; // Teleinfo object
 TasmotaSerial *TInfoSerial = nullptr;
@@ -439,14 +441,18 @@ Comments: -
 void TInfoInit(void)
 {
     int baudrate;
+    int serial_buffer_size;
+
 
     // SetOption102 - Set Baud rate for Teleinfo serial communication (0 = 1200 or 1 = 9600)
     if (Settings.flag4.teleinfo_baudrate) {
         baudrate = 9600;
         tinfo_mode = TINFO_MODE_STANDARD;
+        serial_buffer_size = TELEINFO_SERIAL_BUFFER_STANDARD;
     } else {
         baudrate = 1200;
         tinfo_mode = TINFO_MODE_HISTORIQUE;
+        serial_buffer_size = TELEINFO_SERIAL_BUFFER_HISTORIQUE;
     }
 
     if (PinUsed(GPIO_TELEINFO_RX)) {
@@ -466,12 +472,12 @@ void TInfoInit(void)
 #ifdef ESP8266
         // Allow GPIO3 AND GPIO13 with hardware fallback to 2
         // Set buffer to nnn char to support 250ms loop at 9600 baud
-        TInfoSerial = new TasmotaSerial(rx_pin, -1, 2, 0, TELEINFO_BUFFER_SIZE);
+        TInfoSerial = new TasmotaSerial(rx_pin, -1, 2, 0, serial_buffer_size);
         //pinMode(rx_pin, INPUT_PULLUP);
 #endif  // ESP8266
 #ifdef ESP32
         // Set buffer to nnn char to support 250ms loop at 9600 baud
-        TInfoSerial = new TasmotaSerial(rx_pin, -1, 1, 0, TELEINFO_BUFFER_SIZE);
+        TInfoSerial = new TasmotaSerial(rx_pin, -1, 1, 0, serial_buffer_size);
 #endif  // ESP32
 
         // Trick here even using SERIAL_7E1 or TS_SERIAL_7E1
@@ -519,21 +525,41 @@ Input   : -
 Output  : -
 Comments: -
 ====================================================================== */
+//#define MEASURE_PERF // Define to enable performance measurments
+
 void TInfoProcess(void)
 {
-static char buff[TELEINFO_BUFFER_SIZE];
+    static char buff[TELEINFO_PROCESS_BUFFER];
+    #ifdef MEASURE_PERF
+    static unsigned long max_time = 0;
+    unsigned long duration = millis();
+    static int max_size = 0;
+    int tmp_size = 0;
+    #endif
 
     if (!tinfo_found) {
         return;
     }
-    // Process as many bytes as available in serial buffer
-    int size = TInfoSerial->read(buff,TELEINFO_BUFFER_SIZE);
-    for(int i = 0; size; i++, size--)
-    {
-        buff[i] &= 0x7F;
-        // data processing
-        tinfo.process(buff[i]);
+
+    int size = TInfoSerial->read(buff,TELEINFO_PROCESS_BUFFER);
+    while ( size ) {
+        #ifdef MEASURE_PERF
+        tmp_size += size;
+        #endif
+        // Process as many bytes as available in serial buffer
+        for(int i = 0; size; i++, size--)
+        {
+            buff[i] &= 0x7F;
+            // data processing
+            tinfo.process(buff[i]);
+        }
+        size = TInfoSerial->read(buff,TELEINFO_PROCESS_BUFFER);
     }
+    #ifdef MEASURE_PERF
+    duration = millis()-duration;
+    if (duration > max_time) { max_time = duration; AddLog(LOG_LEVEL_INFO,PSTR("TIC: max_time=%lu"), max_time); }
+    if (tmp_size > max_size) { max_size = tmp_size; AddLog(LOG_LEVEL_INFO,PSTR("TIC: max_size=%d"), max_size); }
+    #endif
 }
 
 /* ======================================================================
