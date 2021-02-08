@@ -142,7 +142,6 @@ struct {
   bool pwm_present;                         // Any PWM channel configured with SetOption15 0
   bool i2c_enabled;                         // I2C configured
   bool ntp_force_sync;                      // Force NTP sync
-  bool is_8285;                             // Hardware device ESP8266EX (0) or ESP8285 (1)
   bool skip_light_fade;                     // Temporarily skip light fading
   bool restart_halt;                        // Do not restart but stay in wait loop
   bool module_changed;                      // Indicate module changed since last restart
@@ -334,7 +333,6 @@ void setup(void) {
     snprintf_P(TasmotaGlobal.hostname, sizeof(TasmotaGlobal.hostname)-1, SettingsText(SET_HOSTNAME));
   }
 
-  GetEspHardwareType();
   GpioInit();
 
   WifiConnect();
