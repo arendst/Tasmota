@@ -476,7 +476,9 @@ struct {
 
   power_t       interlock[MAX_INTERLOCKS_SET];  // 4D0 MAX_INTERLOCKS = MAX_RELAYS / 2
 
-  // uint8_t       free_508[41];              // 508
+  uint8_t       free_508[39];              // 508
+
+  uint16_t      ccs811_baseline;           // 50A
 
   uint8_t       ina219_mode;               // 531
   uint16_t      pulse_timer[MAX_PULSETIMERS];  // 532
@@ -484,9 +486,7 @@ struct {
   uint32_t      ipv4_address[4];           // 544
   unsigned long energy_kWhtotal;           // 554
 
-  // uint8_t       free_558[100];             // 558
-
-  uint16_t      ccs811_baseline;
+  uint8_t       free_558[100];             // 558
 
   SysBitfield2  flag2;                     // 5BC
   unsigned long pulse_counter[MAX_COUNTERS];  // 5C0

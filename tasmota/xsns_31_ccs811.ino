@@ -51,9 +51,11 @@ void CCS811Detect(void)
   if (!ccs.begin(CCS811_ADDRESS)) {
     CCS811_type = 1;
     I2cSetActiveFound(CCS811_ADDRESS, "CCS811");
+    
     // restore saved baseline
     if (0 != Settings.ccs811_baseline) {
-      css.setBaseline(Settings.ccs811_baseline) 
+      ccs.setBaseline(Settings.ccs811_baseline);
+      AddLog(LOG_LEVEL_DEBUG, PSTR("Baseline restored: %d"), Settings.ccs811_baseline);
     }
   }
 }
