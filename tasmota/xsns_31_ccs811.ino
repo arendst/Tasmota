@@ -39,7 +39,6 @@ uint8_t CCS811_ready = 0;
 uint8_t CCS811_type = 0;;
 uint16_t eCO2;
 uint16_t TVOC;
-uint16_t baseline;
 uint8_t tcnt = 0;
 uint8_t ecnt = 0;
 
@@ -52,6 +51,10 @@ void CCS811Detect(void)
   if (!ccs.begin(CCS811_ADDRESS)) {
     CCS811_type = 1;
     I2cSetActiveFound(CCS811_ADDRESS, "CCS811");
+    // restore saved baseline
+    if (0 != Settings.ccs811_baseline) {
+      css.setBaseline(Settings.ccs811_baseline) 
+    }
   }
 }
 
@@ -65,7 +68,10 @@ void CCS811Update(void)  // Perform every n second
       if (!ccs.readData()){
         TVOC = ccs.getTVOC();
         eCO2 = ccs.geteCO2();
-        baseline = ccs.getBaseline();
+
+        // save current baseline
+        Settings.ccs811_baseline = ccs.getBaseline();
+
         CCS811_ready = 1;
         if (TasmotaGlobal.global_update && (TasmotaGlobal.humidity > 0) && !isnan(TasmotaGlobal.temperature_celsius)) {
           ccs.setEnvironmentalData((uint8_t)TasmotaGlobal.humidity, TasmotaGlobal.temperature_celsius);
@@ -85,20 +91,19 @@ void CCS811Update(void)  // Perform every n second
 
 const char HTTP_SNS_CCS811[] PROGMEM =
   "{s}CCS811 " D_ECO2 "{m}%d " D_UNIT_PARTS_PER_MILLION "{e}"                // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
-  "{s}CCS811 " D_TVOC "{m}%d " D_UNIT_PARTS_PER_BILLION "{e}"
-  "{s}CCS811 " D_BASELINE "{m}%d {e}";
+  "{s}CCS811 " D_TVOC "{m}%d " D_UNIT_PARTS_PER_BILLION "{e}";
 
 void CCS811Show(bool json)
 {
   if (CCS811_ready) {
     if (json) {
-      ResponseAppend_P(PSTR(",\"CCS811\":{\"" D_JSON_ECO2 "\":%d,\"" D_JSON_TVOC "\":%d,\"" D_JSON_BASELINE "\":%d}"), eCO2,TVOC,baseline);
+      ResponseAppend_P(PSTR(",\"CCS811\":{\"" D_JSON_ECO2 "\":%d}"), eCO2, TVOC);
 #ifdef USE_DOMOTICZ
       if (0 == TasmotaGlobal.tele_period) DomoticzSensor(DZ_AIRQUALITY, eCO2);
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
     } else {
-      WSContentSend_PD(HTTP_SNS_CCS811, eCO2, TVOC, baseline);
+      WSContentSend_PD(HTTP_SNS_CCS811, eCO2, TVOC);
 #endif
     }
   }
