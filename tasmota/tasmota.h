@@ -347,13 +347,15 @@ enum DevGroupItem { DGR_ITEM_EOL, DGR_ITEM_STATUS, DGR_ITEM_FLAGS,
                     //DGR_ITEM_ANALOG1, DGR_ITEM_ANALOG2, DGR_ITEM_ANALOG3, DGR_ITEM_ANALOG4, DGR_ITEM_ANALOG5,
                     // Add new 16-bit items before this line
                     DGR_ITEM_LAST_16BIT, DGR_ITEM_MAX_16BIT = 127,
-                    DGR_ITEM_POWER,
+                    DGR_ITEM_POWER, DGR_ITEM_NO_STATUS_SHARE,
                     // Add new 32-bit items before this line
                     DGR_ITEM_LAST_32BIT, DGR_ITEM_MAX_32BIT = 191,
                     DGR_ITEM_EVENT, DGR_ITEM_COMMAND,
                     // Add new string items before this line
                     DGR_ITEM_LAST_STRING, DGR_ITEM_MAX_STRING = 223,
                     DGR_ITEM_LIGHT_CHANNELS };
+
+enum DevGroupItemFlag { DGR_ITEM_FLAG_NO_SHARE = 1 };
 
 enum DevGroupShareItem { DGR_SHARE_POWER = 1, DGR_SHARE_LIGHT_BRI = 2, DGR_SHARE_LIGHT_FADE = 4, DGR_SHARE_LIGHT_SCHEME = 8,
                          DGR_SHARE_LIGHT_COLOR = 16, DGR_SHARE_DIMMER_SETTINGS = 32, DGR_SHARE_EVENT = 64 };
