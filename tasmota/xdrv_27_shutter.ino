@@ -429,7 +429,7 @@ void ShutterDecellerateForStop(uint8_t i)
 }
 
 void ShutterPowerOff(uint8_t i) {
-  AddLog(LOG_LEVEL_DEBUG, PSTR("SHT: Stop Shutter %d. Switchmode %d"), i,Shutter[i].switch_mode);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("SHT: Stop Shutter %d. Switchmode %d"), i+1,Shutter[i].switch_mode); // fix log to indicate correct shutter number
   ShutterDecellerateForStop(i);
   switch (Shutter[i].switch_mode) {
     case SHT_SWITCH:
@@ -458,7 +458,8 @@ void ShutterPowerOff(uint8_t i) {
   switch (ShutterGlobal.position_mode) {
     case SHT_PWM_VALUE:
     char scmnd[20];
-    snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_PWM "%d %d" ),i ,Shutter[i].pwm_value); // Add device number to PWM command
+    AddLog(LOG_LEVEL_DEBUG, PSTR("SHT: Setting PWM%d. value: %d"), i+1,Shutter[i].pwm_value);
+    snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_PWM "%d %d" ),i+1 ,Shutter[i].pwm_value); // Add device number to PWM command
     ExecuteCommand(scmnd, SRC_BUTTON);
     break;
   }
