@@ -79,8 +79,8 @@
 #define FALLBACK_MODULE        M5STACK_CORE2     // [Module2] Select default module on fast reboot where USER_MODULE is user template
 
 #define USE_M5STACK_CORE2                        // Add support for M5Stack Core2
-  #define SAY_TIME
-  #define USE_WEBRADIO
+  #define USE_I2S_SAY_TIME
+  #define USE_I2S_WEBRADIO
   #define USE_MPU6886
 #define USE_UFILESYS
 #define USE_SDCARD
