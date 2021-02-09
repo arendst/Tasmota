@@ -448,7 +448,7 @@ write_log:
   if (received) {
     if ((flags & DGR_FLAG_STATUS_REQUEST)) {
       if ((flags & DGR_FLAG_RESET) || device_group_member->acked_sequence != device_group->last_full_status_sequence) {
-        _SendDeviceGroupMessage(device_group_index, DGR_MSGTYP_FULL_STATUS);
+        _SendDeviceGroupMessage(-device_group_index, DGR_MSGTYP_FULL_STATUS);
       }
     }
   }
@@ -479,7 +479,7 @@ cleanup:
   }
 }
 
-bool _SendDeviceGroupMessage(uint8_t device_group_index, DevGroupMessageType message_type, ...)
+bool _SendDeviceGroupMessage(uint32_t device, DevGroupMessageType message_type, ...)
 {
   // If device groups is not up, ignore this request.
   if (!device_groups_up) return 1;
@@ -492,11 +492,16 @@ bool _SendDeviceGroupMessage(uint8_t device_group_index, DevGroupMessageType mes
   if (ignore_dgr_sends && message_type != DGR_MSGTYPE_UPDATE_COMMAND) return 0;
 
   // If device is < 0, the device group index is the device negated. If not, get the device group
-  // index from the device group maps.
-//  uint8_t device_group_index = -device;
-//  if (device > 0) device_group_index = (Settings.device_group_maps >> (device - 1) * 3 & 0x7 - 1;
-
-  // If the device group index is higher then the number of device groups, ignore this request.
+  // index for this device.
+  uint8_t device_group_index = -device;
+  if (device > 0) {
+    device_group_index = 0;
+    if (Settings.flag4.multiple_device_groups) {  // SetOption88 - Enable relays in separate device groups
+      for (; device_group_index < device_group_count; device_group_index++) {
+        if (Settings.device_group_device[device_group_index] == device) break;
+      }
+    }
+  }
   if (device_group_index >= device_group_count) return 0;
 
   // Get a pointer to the device information for this device.
@@ -507,7 +512,7 @@ bool _SendDeviceGroupMessage(uint8_t device_group_index, DevGroupMessageType mes
 
   // Load the message header, sequence and flags.
 #ifdef DEVICE_GROUPS_DEBUG
-    AddLog(LOG_LEVEL_DEBUG, PSTR("DGR: Building %s %spacket"), device_group->group_name, (message_type == DGR_MSGTYP_FULL_STATUS ? PSTR("full status ") : PSTR("")));
+  AddLog(LOG_LEVEL_DEBUG, PSTR("DGR: Building %s %spacket"), device_group->group_name, (message_type == DGR_MSGTYP_FULL_STATUS ? PSTR("full status ") : PSTR("")));
 #endif  // DEVICE_GROUPS_DEBUG
   uint16_t original_sequence = device_group->outgoing_sequence;
   uint16_t flags = 0;
@@ -531,10 +536,9 @@ bool _SendDeviceGroupMessage(uint8_t device_group_index, DevGroupMessageType mes
     // Call the drivers to build the status update.
     power_t power = TasmotaGlobal.power;
     if (Settings.flag4.multiple_device_groups) {  // SetOption88 - Enable relays in separate device groups
-      power >>= device_group_index;
-      power &= 1;
+      power = (power >> (Settings.device_group_device[device_group_index] - 1)) & 1;
     }
-    SendDeviceGroupMessage(device_group_index, DGR_MSGTYP_PARTIAL_UPDATE, DGR_ITEM_NO_STATUS_SHARE, device_group->no_status_share, DGR_ITEM_POWER, power);
+    SendDeviceGroupMessage(-device_group_index, DGR_MSGTYP_PARTIAL_UPDATE, DGR_ITEM_NO_STATUS_SHARE, device_group->no_status_share, DGR_ITEM_POWER, power);
     XdrvMailbox.index = 0;
     if (device_group_index == 0 && first_device_group_is_local) XdrvMailbox.index = DGR_FLAG_LOCAL;
     XdrvMailbox.command_code = DGR_ITEM_STATUS;
@@ -620,22 +624,25 @@ bool _SendDeviceGroupMessage(uint8_t device_group_index, DevGroupMessageType mes
             switch (item) {
               case DGR_ITEM_LIGHT_CHANNELS:
                 {
-                  int i = 0;
                   char * endptr;
                   value = strtoul((char *)value_ptr, &endptr, 10);
-                  if ((*endptr && *endptr != ',' && *endptr != ' ') || value > 255) {
-                    for (; i < 6; i++) {
-                      if (!*value_ptr || *value_ptr == ' ') break;
-                      uint8_t * next_value_ptr = value_ptr + 2;
-                      uint8_t save_char = *next_value_ptr;
-                      *next_value_ptr = 'X';
-                      *out_ptr++ = strtoul((char *)value_ptr, (char **)&value_ptr, 16);
-                      *next_value_ptr = save_char;
+                  bool hex = (*endptr != ',');
+                  for (int i = 0; i < 6; i++) {
+                    *out_ptr = 0;
+                    if (*value_ptr != ' ') {
+                      if (hex) {
+                        endptr = (char *)value_ptr + 2;
+                        chr = *endptr;
+                        *endptr = 0;
+                        *out_ptr = strtoul((char *)value_ptr, (char **)&value_ptr, 16);
+                        *endptr = chr;
+                      }
+                      else {
+                        *out_ptr = strtoul((char *)value_ptr, (char **)&value_ptr, 10);
+                        if (*value_ptr == ',') value_ptr++;
+                      }
                     }
-                  }
-                  for (; i < 6; i++) {
-                    *out_ptr++ = (*value_ptr == ' ' ? 0 : strtoul((char *)value_ptr, (char **)&value_ptr, 10));
-                    if (*value_ptr == ',') value_ptr++;
+                    out_ptr++;
                   }
                 }
                 break;
@@ -933,7 +940,7 @@ AddLog(LOG_LEVEL_DEBUG, PSTR("DGR: Checking next_check_time=%u, now=%u"), next_c
             // If we've sent the initial status request message the set number of times, send our
             // status to all the members.
             else {
-              _SendDeviceGroupMessage(device_group_index, DGR_MSGTYP_FULL_STATUS);
+              _SendDeviceGroupMessage(-device_group_index, DGR_MSGTYP_FULL_STATUS);
             }
           }
 

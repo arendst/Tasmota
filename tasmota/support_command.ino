@@ -32,7 +32,7 @@ const char kTasmotaCommands[] PROGMEM = "|"  // No prefix
   D_CMND_I2CSCAN "|" D_CMND_I2CDRIVER "|"
 #endif
 #ifdef USE_DEVICE_GROUPS
-  D_CMND_DEVGROUP_NAME "|"
+  D_CMND_DEVGROUP_DEVICE "|" D_CMND_DEVGROUP_NAME "|"
 #ifdef USE_DEVICE_GROUPS_SEND
   D_CMND_DEVGROUP_SEND "|"
 #endif  // USE_DEVICE_GROUPS_SEND
@@ -59,7 +59,7 @@ void (* const TasmotaCommand[])(void) PROGMEM = {
   &CmndI2cScan, CmndI2cDriver,
 #endif
 #ifdef USE_DEVICE_GROUPS
-  &CmndDevGroupName,
+  &CmndDevGroupDevice, &CmndDevGroupName,
 #ifdef USE_DEVICE_GROUPS_SEND
   &CmndDevGroupSend,
 #endif  // USE_DEVICE_GROUPS_SEND
@@ -2052,6 +2052,16 @@ void CmndI2cDriver(void)
 #endif  // USE_I2C
 
 #ifdef USE_DEVICE_GROUPS
+void CmndDevGroupDevice(void)
+{
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_DEV_GROUP_NAMES)) {
+    if (XdrvMailbox.data_len > 0) {
+      Settings.device_group_device[XdrvMailbox.index - 1] = XdrvMailbox.payload;
+    }
+    ResponseCmndIdxNumber(Settings.device_group_device[XdrvMailbox.index - 1]);
+  }
+}
+
 void CmndDevGroupName(void)
 {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_DEV_GROUP_NAMES)) {
@@ -2072,7 +2082,7 @@ void CmndDevGroupSend(void)
 {
   uint8_t device_group_index = (XdrvMailbox.usridx ? XdrvMailbox.index - 1 : 0);
   if (device_group_index < device_group_count) {
-    if (!_SendDeviceGroupMessage(device_group_index, (DevGroupMessageType)(DGR_MSGTYPE_UPDATE_COMMAND + DGR_MSGTYPFLAG_WITH_LOCAL))) {
+    if (!_SendDeviceGroupMessage(-device_group_index, (DevGroupMessageType)(DGR_MSGTYPE_UPDATE_COMMAND + DGR_MSGTYPFLAG_WITH_LOCAL))) {
       ResponseCmndChar(XdrvMailbox.data);
     }
   }

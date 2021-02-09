@@ -1232,6 +1232,9 @@ void SettingsDelta(void) {
         Settings.interlock[i] = (i < 4) ? Settings.ex_interlock[i] : 0;
       }
     }
+    if (Settings.version < 0x09020007) {
+      *(uint32_t *)&Settings.device_group_device = 0x04030201;
+    }
 
     Settings.version = VERSION;
     SettingsSave(1);

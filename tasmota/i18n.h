@@ -324,6 +324,7 @@
 #define D_CMND_SPEEDUNIT "SpeedUnit"
 #define D_CMND_I2CSCAN "I2CScan"
 #define D_CMND_I2CDRIVER "I2CDriver"
+#define D_CMND_DEVGROUP_DEVICE "DevGroupDevice"
 #define D_CMND_DEVGROUP_NAME "DevGroupName"
 #define D_CMND_DEVGROUP_SEND "DevGroupSend"
 #define D_CMND_DEVGROUP_SHARE "DevGroupShare"
