@@ -630,6 +630,8 @@
 #define D_SENSOR_SBR_TX        "SerBr Tx"
 #define D_SENSOR_SR04_TRIG     "SR04 Tri/TX"
 #define D_SENSOR_SR04_ECHO     "SR04 Ech/RX"
+#define D_SENSOR_SDM72_TX      "SDM72 Tx"
+#define D_SENSOR_SDM72_RX      "SDM72 Rx"
 #define D_SENSOR_SDM120_TX     "SDMx20 Tx"
 #define D_SENSOR_SDM120_RX     "SDMx20 Rx"
 #define D_SENSOR_SDM630_TX     "SDM630 Tx"
@@ -834,7 +836,9 @@
 #define D_UNIT_WATTHOUR                  "Вт/г"
 #define D_UNIT_WATT_METER_QUADRAT        "Вт/м²"
 
-//SDM220, SDM120, LE01MR
+//SDM220, SDM120, SDM72, LE01MR
+#define D_EXPORT_POWER    "Export Power"
+#define D_IMPORT_POWER 	  "Import Power"
 #define D_PHASE_ANGLE     "Кут фази"
 #define D_IMPORT_ACTIVE   "Активна вхід"
 #define D_EXPORT_ACTIVE   "Активна вихід"

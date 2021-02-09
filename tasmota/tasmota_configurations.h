@@ -185,6 +185,7 @@
 #define USE_PZEM_AC                              // Add support for PZEM014,016 Energy monitor (+1k1 code)
 #define USE_PZEM_DC                              // Add support for PZEM003,017 Energy monitor (+1k1 code)
 #define USE_MCP39F501                            // Add support for MCP39F501 Energy monitor as used in Shelly 2 (+3k1 code)
+#define USE_SDM72                                // Add support for Eastron SDM72-Modbus energy monitor (+0k3 code)
 #define USE_SDM120                               // Add support for Eastron SDM120-Modbus energy monitor (+1k1 code)
 #define USE_SDM630                               // Add support for Eastron SDM630-Modbus energy monitor (+0k6 code)
 #define USE_DDS2382                              // Add support for Hiking DDS2382 Modbus energy monitor (+0k6 code)
@@ -287,6 +288,7 @@
   #undef USE_PZEM_AC                             // Disable PZEM014,016 Energy monitor
   #undef USE_PZEM_DC                             // Disable PZEM003,017 Energy monitor
   #undef USE_MCP39F501                           // Disable MCP39F501 Energy monitor as used in Shelly 2
+  #undef USE_SDM72                               // Disable support for Eastron SDM72-Modbus energy meter
   #undef USE_SDM120                              // Disable support for Eastron SDM120-Modbus energy meter
   #undef USE_SDM630                              // Disable support for Eastron SDM630-Modbus energy monitor (+0k6 code)
   #undef USE_DDS2382                             // Disable support for Hiking DDS2382 Modbus energy monitor (+0k6 code)
@@ -388,6 +390,7 @@
   #undef USE_PZEM_AC                             // Disable PZEM014,016 Energy monitor
   #undef USE_PZEM_DC                             // Disable PZEM003,017 Energy monitor
   #undef USE_MCP39F501                           // Disable MCP39F501 Energy monitor as used in Shelly 2
+  #undef USE_SDM72                               // Disable support for Eastron SDM72-Modbus energy meter
   #undef USE_SDM120                              // Disable support for Eastron SDM120-Modbus energy meter
   #undef USE_SDM630                              // Disable support for Eastron SDM630-Modbus energy monitor (+0k6 code)
   #undef USE_DDS2382                             // Disable support for Hiking DDS2382 Modbus energy monitor (+0k6 code)
@@ -563,6 +566,7 @@
 #undef USE_PZEM_AC                               // Disable PZEM014,016 Energy monitor
 #undef USE_PZEM_DC                               // Disable PZEM003,017 Energy monitor
 #undef USE_MCP39F501                             // Disable MCP39F501 Energy monitor as used in Shelly 2
+#undef USE_SDM72                                 // Disable support for Eastron SDM72-Modbus energy meter
 #undef USE_SDM120                                // Disable support for Eastron SDM120-Modbus energy meter
 #undef USE_SDM630                                // Disable support for Eastron SDM630-Modbus energy monitor (+0k6 code)
 #undef USE_DDS2382                               // Disable support for Hiking DDS2382 Modbus energy monitor (+0k6 code)
@@ -700,6 +704,7 @@
 #undef USE_PZEM_AC                               // Disable PZEM014,016 Energy monitor
 #undef USE_PZEM_DC                               // Disable PZEM003,017 Energy monitor
 //#undef USE_MCP39F501                             // Disable MCP39F501 Energy monitor as used in Shelly 2
+#undef USE_SDM72                                 // Disable support for Eastron SDM72-Modbus energy meter
 #undef USE_SDM120                                // Disable support for Eastron SDM120-Modbus energy meter
 #undef USE_SDM630                                // Disable support for Eastron SDM630-Modbus energy monitor (+0k6 code)
 #undef USE_DDS2382                               // Disable support for Hiking DDS2382 Modbus energy monitor (+0k6 code)
@@ -841,6 +846,7 @@
 #undef USE_PZEM_AC                               // Disable PZEM014,016 Energy monitor
 #undef USE_PZEM_DC                               // Disable PZEM003,017 Energy monitor
 #undef USE_MCP39F501                             // Disable MCP39F501 Energy monitor as used in Shelly 2
+#undef USE_SDM72                                 // Disable support for Eastron SDM72-Modbus energy meter
 #undef USE_SDM120                                // Disable support for Eastron SDM120-Modbus energy meter
 #undef USE_SDM630                                // Disable support for Eastron SDM630-Modbus energy monitor (+0k6 code)
 #undef USE_DDS2382                               // Disable support for Hiking DDS2382 Modbus energy monitor (+0k6 code)
