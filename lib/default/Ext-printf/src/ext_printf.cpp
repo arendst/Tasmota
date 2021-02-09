@@ -31,6 +31,8 @@
  * This will allow to modify it in place and call back printf with altered arguments
 \*********************************************************************************************/
 
+#if defined(__XTENSA__)    // this works only for xtensa, other platforms needs va_list to be adapted
+
 // This code is heavily inspired by the gcc implementation of va_list
 // https://github.com/gcc-mirror/gcc/blob/master/gcc/config/xtensa/xtensa.c
 
@@ -124,6 +126,18 @@ void * __va_cur_ptr4(va_list &va) {
 // >>> Reading a_ptr=0x3FFFFD70 *a_ptr=6
 // >>> Reading a_ptr=0x3FFFFD74 *a_ptr=7
 // >>> Reading a_ptr=0x3FFFFD78 *a_ptr=8
+#elif defined(__RISC_V__)
+// #define __va_argsiz_tas(t)  	(((sizeof(t) + sizeof(int) - 1) / sizeof(int)) * sizeof(int))
+#define va_cur_ptr4(va,T) ( (T*) __va_cur_ptr4(va) )
+void * __va_cur_ptr4(va_list &va) {
+  uintptr_t * va_ptr = (uintptr_t*) &va;
+  void * cur_ptr = (void*) *va_ptr;
+  *va_ptr += 4;
+  return cur_ptr;
+}
+#else   // __XTENSA__, __RISCV__
+  #error "ext_printf is not suppoerted on this platform"
+#endif  // __XTENSA__, __RISCV__
 
 /*********************************************************************************************\
  * Genral function to convert u64 to hex
@@ -202,7 +216,6 @@ int32_t ext_vsnprintf_P(char * buf, size_t buf_len, const char * fmt_P, va_list 
   va_list va_cpy;
   va_copy(va_cpy, va);
 
-#if defined(ESP8266) || defined(ESP32)    // this works only for xtensa, other platforms needs va_list to be adapted
   // iterate on fmt to extract arguments and patch them in place
   char * fmt_cpy = copyStr(fmt_P);
   if (fmt_cpy == nullptr) { return 0; }
@@ -362,9 +375,6 @@ int32_t ext_vsnprintf_P(char * buf, size_t buf_len, const char * fmt_P, va_list 
       }
     }
   }
-#else // defined(ESP8266) || defined(ESP32)
-  #error "ext_printf is not suppoerted on this platform"
-#endif // defined(ESP8266) || defined(ESP32)
   // Serial.printf("> format_final=%s\n", fmt_cpy); Serial.flush();
   int32_t ret = vsnprintf_P(buf, buf_len, fmt_cpy, va_cpy);
 
