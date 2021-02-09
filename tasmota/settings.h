@@ -472,13 +472,12 @@ struct {
 
   uint8_t       ex_interlock[4];           // 4CA MAX_INTERLOCKS = MAX_RELAYS / 2 (Legacy)
 
-  uint8_t       free_4ce[2];               // 4CE
+  // uint8_t       free_4ce[2];               // 4CE
+  uint16_t      ccs811_baseline;           // 4CE
 
   power_t       interlock[MAX_INTERLOCKS_SET];  // 4D0 MAX_INTERLOCKS = MAX_RELAYS / 2
 
-  uint8_t       free_508[39];              // 508
-
-  uint16_t      ccs811_baseline;           // 50A
+  uint8_t       free_508[41];              // 508
 
   uint8_t       ina219_mode;               // 531
   uint16_t      pulse_timer[MAX_PULSETIMERS];  // 532

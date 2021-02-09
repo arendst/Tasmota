@@ -55,7 +55,6 @@ void CCS811Detect(void)
     // restore saved baseline
     if (0 != Settings.ccs811_baseline) {
       ccs.setBaseline(Settings.ccs811_baseline);
-      AddLog(LOG_LEVEL_DEBUG, PSTR("Baseline restored: %d"), Settings.ccs811_baseline);
     }
   }
 }
