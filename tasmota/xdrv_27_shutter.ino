@@ -458,8 +458,12 @@ void ShutterPowerOff(uint8_t i) {
   switch (ShutterGlobal.position_mode) {
     case SHT_PWM_VALUE:
     char scmnd[20];
-    AddLog(LOG_LEVEL_DEBUG, PSTR("SHT: Setting PWM%d. value: %d"), i+1,Shutter[i].pwm_value);
-    snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_PWM "%d %d" ),i+1 ,Shutter[i].pwm_value); // Add device number to PWM command
+#ifdef SHUTTER_CLEAR_PWM_ONSTOP 
+    // free the PWM servo lock on stop.
+    snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_PWM "%d 0" ), i+1);
+#else
+    snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_PWM "%d %d" ), i+1,Shutter[i].pwm_value);
+#endif
     ExecuteCommand(scmnd, SRC_BUTTON);
     break;
   }
