@@ -401,9 +401,10 @@ void SendReceiveDeviceGroupMessage(struct device_group * device_group, struct de
         switch (item) {
           case DGR_ITEM_POWER:
             if (Settings.flag4.multiple_device_groups) {  // SetOption88 - Enable relays in separate device groups
-              if (device_group_index < TasmotaGlobal.devices_present) {
+              uint32_t device = Settings.device_group_device[device_group_index];
+              if (device) {
                 bool on = (value & 1);
-                if (on != (TasmotaGlobal.power & (1 << device_group_index))) ExecuteCommandPower(device_group_index + 1, (on ? POWER_ON : POWER_OFF), SRC_REMOTE);
+                if (on != ((TasmotaGlobal.power >> (device - 1)) & 1)) ExecuteCommandPower(device, (on ? POWER_ON : POWER_OFF), SRC_REMOTE);
               }
             }
             else if (XdrvMailbox.index & DGR_FLAG_LOCAL) {
