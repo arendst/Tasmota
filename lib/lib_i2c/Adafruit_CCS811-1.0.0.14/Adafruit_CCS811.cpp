@@ -114,6 +114,40 @@ uint8_t Adafruit_CCS811::readData()
 
 /**************************************************************************/
 /*!
+    @brief  get the current baseline from the sensor.
+    @returns the baseline as 16 bit integer. This value is not human readable.
+*/
+/**************************************************************************/
+uint16_t Adafruit_CCS811::getBaseline() {
+  /* baseline is not in a human readable format, the two bytes are assembled
+  to an uint16_t for easy handling/passing around */
+
+  uint8_t buf[2];
+
+  this->read(CCS811_BASELINE, buf, 2);
+
+  return ((uint16_t)buf[0] << 8) | ((uint16_t)buf[1]);
+}
+
+/**************************************************************************/
+/*!
+    @brief  set the baseline for the sensor.
+    @param baseline the baseline to be set. Has to be a value retrieved by
+    getBaseline().
+*/
+/**************************************************************************/
+void Adafruit_CCS811::setBaseline(uint16_t baseline) {
+  /* baseline is not in a human readable format, byte ordering matches
+  getBaseline() */
+
+  uint8_t buf[] = {(uint8_t)((baseline >> 8) & 0xFF),
+                   (uint8_t)(baseline & 0xFF)};
+
+  this->write(CCS811_BASELINE, buf, 2);
+}
+
+/**************************************************************************/
+/*!
     @brief  set the humidity and temperature compensation for the sensor.
     @param humidity the humidity data as a percentage. For 55% humidity, pass in integer 55.
     @param temperature the temperature in degrees C as a decimal number. For 25.5 degrees C, pass in 25.5

@@ -180,6 +180,7 @@
 #define D_JSON_TOTAL_REACTIVE "TotalReactive"
 #define D_JSON_TOTAL_START_TIME "TotalStartTime"
 #define D_JSON_TVOC "TVOC"
+#define D_JSON_BASELINE "Baseline"
 #define D_JSON_TYPE "Type"
 #define D_JSON_UID "UID"
 #define D_JSON_UPTIME "Uptime"
