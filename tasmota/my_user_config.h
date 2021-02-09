@@ -776,6 +776,7 @@
 // -- Other sensors/drivers -----------------------
 
 //#define USE_TM1638                               // Add support for TM1638 switches copying Switch1 .. Switch8 (+1k code)
+//#define USE_TM1637                               // Add support for TM1637 seven-segment display (+1k code)
 //#define USE_HX711                                // Add support for HX711 load cell (+1k5 code)
 //  #define USE_HX711_GUI                          // Add optional web GUI to HX711 as scale (+1k8 code)
 

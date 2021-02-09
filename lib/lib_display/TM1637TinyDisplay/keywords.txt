@@ -1,0 +1,65 @@
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+TM1637TinyDisplay	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+setBrightness	KEYWORD2
+setSegments	KEYWORD2
+setScrolldelay	KEYWORD2
+clear	KEYWORD2
+showNumber	KEYWORD2
+showLevel	KEYWORD2
+showString	KEYWORD2
+showString_P	KEYWORD2
+showAnimation	KEYWORD2
+showAnimation_P	KEYWORD2
+showNumberDec	KEYWORD2
+showNumberHex	KEYWORD2
+encodeDigit	KEYWORD2
+encodeASCII	KEYWORD2
+
+#######################################
+# Constants (LITERAL1)
+#######################################
+
+SEG_A	LITERAL1
+SEG_B	LITERAL1
+SEG_C	LITERAL1
+SEG_D	LITERAL1
+SEG_E	LITERAL1
+SEG_F	LITERAL1
+SEG_G	LITERAL1
+SEG_DP	LITERAL1
+
+digitToSegment	LITERAL1
+asciiToSegment	LITERAL1
+minusSegments	LITERAL1
+degreeSegments	LITERAL1
+
+BRIGHT_LOW	LITERAL1
+BRIGHT_0	LITERAL1
+BRIGHT_1	LITERAL1
+BRIGHT_2	LITERAL1
+BRIGHT_3	LITERAL1
+BRIGHT_4	LITERAL1
+BRIGHT_5	LITERAL1
+BRIGHT_6	LITERAL1
+BRIGHT_7	LITERAL1
+BRIGHT_8	LITERAL1
+BRIGHT_HIGH	LITERAL1
+
+ON	LITERAL1
+OFF	LITERAL1
+
+#######################################
+# Macros (LITERAL1)
+#######################################
+
+FRAMES	LITERAL1
+TIME_MS	LITERAL1
+TIME_S	LITERAL1

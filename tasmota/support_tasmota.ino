@@ -761,6 +761,8 @@ bool MqttShowSensor(void)
   for (uint32_t i = 0; i < MAX_SWITCHES; i++) {
 #ifdef USE_TM1638
     if (PinUsed(GPIO_SWT1, i) || (PinUsed(GPIO_TM16CLK) && PinUsed(GPIO_TM16DIO) && PinUsed(GPIO_TM16STB))) {
+#elif defined(USE_TM1637)
+    if (PinUsed(GPIO_TM1637_CLK) && PinUsed(GPIO_TM1637_DIO)) {
 #else
     if (PinUsed(GPIO_SWT1, i)) {
 #endif  // USE_TM1638

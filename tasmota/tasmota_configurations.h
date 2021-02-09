@@ -202,6 +202,7 @@
 #define USE_LMT01                                // Add support for TI LMT01 temperature sensor, count pulses on single GPIO (+0k5 code)
 //#define USE_WIEGAND                              // Add support for 24/26/32/34 bit RFID Wiegand interface (D0/D1) (+1k7 code)
 #define USE_TM1638                               // Add support for TM1638 switches copying Switch1 .. Switch8 (+1k code)
+#define USE_TM1637                               // Add support for TM1637 seven-segment display
 #define USE_HX711                                // Add support for HX711 load cell (+1k5 code)
 //#define USE_HX711_GUI                            // Add optional web GUI to HX711 as scale (+1k8 code)
 //#define USE_TX20_WIND_SENSOR                     // Add support for La Crosse TX20 anemometer (+2k6/0k8 code)
@@ -432,6 +433,7 @@
 #undef USE_MAX31855                              // Disable MAX31855 K-Type thermocouple sensor using softSPI
 #undef USE_MAX31865                              // Disable support for MAX31865 RTD sensors using softSPI
 #undef USE_TM1638                                // Disable support for TM1638 switches copying Switch1 .. Switch8
+#undef USE_TM1637                                // Disable support for TM1637 seven-segment display
 #undef USE_HX711                                 // Disable support for HX711 load cell
 #undef USE_TX20_WIND_SENSOR                      // Disable support for La Crosse TX20 anemometer
 #undef USE_TX23_WIND_SENSOR                      // Disable support for La Crosse TX23 anemometer
@@ -579,6 +581,7 @@
 #undef USE_IR_REMOTE                             // Disable IR driver
 
 #undef USE_TM1638                                // Disable support for TM1638 switches copying Switch1 .. Switch8
+#undef USE_TM1637                                // Disable support for TM1637 seven-segment display
 #undef USE_HX711                                 // Disable support for HX711 load cell
 #undef USE_TX20_WIND_SENSOR                      // Disable support for La Crosse TX20 anemometer
 #undef USE_TX23_WIND_SENSOR                      // Disable support for La Crosse TX23 anemometer
@@ -716,6 +719,7 @@
 #undef USE_IR_REMOTE                             // Disable IR driver
 
 #undef USE_TM1638                                // Disable support for TM1638 switches copying Switch1 .. Switch8
+#undef USE_TM1637                                // Disable support for TM1637 seven-segment display
 #undef USE_HX711                                 // Disable support for HX711 load cell
 #undef USE_TX20_WIND_SENSOR                      // Disable support for La Crosse TX20 anemometer
 #undef USE_TX23_WIND_SENSOR                      // Disable support for La Crosse TX23 anemometer
@@ -858,6 +862,7 @@
 #undef USE_LMT01                                 // Disable support for TI LMT01 temperature sensor, count pulses on single GPIO (+0k5 code)
 #undef USE_IR_REMOTE                             // Disable IR driver
 #undef USE_TM1638                                // Disable support for TM1638 switches copying Switch1 .. Switch8
+#undef USE_TM1637                                // Disable support for TM1637 seven-segment display
 #undef USE_HX711                                 // Disable support for HX711 load cell
 #undef USE_TX20_WIND_SENSOR                      // Disable support for La Crosse TX20 anemometer
 #undef USE_TX23_WIND_SENSOR                      // Disable support for La Crosse TX23 anemometer

@@ -1,0 +1,15 @@
+{
+  "name": "TM1637TinyDisplay",
+  "keywords": "TM1637, tiny, LED, display",
+  "description": "A simple library to display numbers, text and animation on a 4-digit 7-segment TM1637 based display module.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jasonacox/TM1637TinyDisplay.git"
+  },
+  "authors": {
+    "name": "Jason Cox",
+    "url": "https://jasonacox.com"
+  },
+  "frameworks": "arduino",
+  "platforms": "*"
+}

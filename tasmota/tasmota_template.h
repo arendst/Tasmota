@@ -53,6 +53,7 @@ enum UserSelectablePins {
   GPIO_SDM120_TX, GPIO_SDM120_RX,      // SDM120 Serial interface
   GPIO_SDM630_TX, GPIO_SDM630_RX,      // SDM630 Serial interface
   GPIO_TM16CLK, GPIO_TM16DIO, GPIO_TM16STB,  // TM1638 interface
+  GPIO_TM1637_CLK, GPIO_TM1637_DIO,    // TM1637 interface
   GPIO_MP3_DFR562,                     // RB-DFR-562, DFPlayer Mini MP3 Player
   GPIO_HX711_SCK, GPIO_HX711_DAT,      // HX711 Load Cell interface
   GPIO_TX2X_TXD_BLACK,                 // TX20/TX23 Transmission Pin
@@ -225,6 +226,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_SDM120_TX "|" D_SENSOR_SDM120_RX "|"
   D_SENSOR_SDM630_TX "|" D_SENSOR_SDM630_RX "|"
   D_SENSOR_TM1638_CLK "|" D_SENSOR_TM1638_DIO "|" D_SENSOR_TM1638_STB "|"
+  D_SENSOR_TM1637_CLK "|" D_SENSOR_TM1637_DIO "|"
   D_SENSOR_DFR562 "|"
   D_SENSOR_HX711_SCK "|" D_SENSOR_HX711_DAT "|"
   D_SENSOR_TX2X_TX "|"
@@ -528,6 +530,14 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_TM16CLK),        // TM1638 Clock
   AGPIO(GPIO_TM16DIO),        // TM1638 Data I/O
   AGPIO(GPIO_TM16STB),        // TM1638 Strobe
+#endif
+#ifdef USE_TM1637
+  AGPIO(GPIO_TM1637_CLK),        // TM1637 Clock
+  AGPIO(GPIO_TM1637_DIO),        // TM1637 Data I/O
+#endif
+#ifdef USE_TM1637
+  GPIO_TM1637_CLK,     // TM1637 Clock
+  GPIO_TM1637_DIO,     // TM1637 Data I/O
 #endif
 #ifdef USE_HX711
   AGPIO(GPIO_HX711_SCK),      // HX711 Load Cell clock
