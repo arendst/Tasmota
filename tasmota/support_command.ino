@@ -32,11 +32,11 @@ const char kTasmotaCommands[] PROGMEM = "|"  // No prefix
   D_CMND_I2CSCAN "|" D_CMND_I2CDRIVER "|"
 #endif
 #ifdef USE_DEVICE_GROUPS
-  D_CMND_DEVGROUP_DEVICE "|" D_CMND_DEVGROUP_NAME "|"
+  D_CMND_DEVGROUP_NAME "|"
 #ifdef USE_DEVICE_GROUPS_SEND
   D_CMND_DEVGROUP_SEND "|"
 #endif  // USE_DEVICE_GROUPS_SEND
-  D_CMND_DEVGROUP_SHARE "|" D_CMND_DEVGROUPSTATUS "|"
+  D_CMND_DEVGROUP_SHARE "|" D_CMND_DEVGROUPSTATUS "|" D_CMND_DEVGROUP_DEVICE "|"
 #endif  // USE_DEVICE_GROUPS
   D_CMND_SENSOR "|" D_CMND_DRIVER
 #ifdef ESP32
@@ -59,11 +59,11 @@ void (* const TasmotaCommand[])(void) PROGMEM = {
   &CmndI2cScan, CmndI2cDriver,
 #endif
 #ifdef USE_DEVICE_GROUPS
-  &CmndDevGroupDevice, &CmndDevGroupName,
+  &CmndDevGroupName,
 #ifdef USE_DEVICE_GROUPS_SEND
   &CmndDevGroupSend,
 #endif  // USE_DEVICE_GROUPS_SEND
-  &CmndDevGroupShare, &CmndDevGroupStatus,
+  &CmndDevGroupShare, &CmndDevGroupStatus, &CmndDevGroupTie,
 #endif  // USE_DEVICE_GROUPS
   &CmndSensor, &CmndDriver
 #ifdef ESP32
@@ -2052,16 +2052,6 @@ void CmndI2cDriver(void)
 #endif  // USE_I2C
 
 #ifdef USE_DEVICE_GROUPS
-void CmndDevGroupDevice(void)
-{
-  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_DEV_GROUP_NAMES)) {
-    if (XdrvMailbox.data_len > 0) {
-      Settings.device_group_device[XdrvMailbox.index - 1] = XdrvMailbox.payload;
-    }
-    ResponseCmndIdxNumber(Settings.device_group_device[XdrvMailbox.index - 1]);
-  }
-}
-
 void CmndDevGroupName(void)
 {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_DEV_GROUP_NAMES)) {
@@ -2101,6 +2091,16 @@ void CmndDevGroupShare(void)
 void CmndDevGroupStatus(void)
 {
   DeviceGroupStatus((XdrvMailbox.usridx ? XdrvMailbox.index - 1 : 0));
+}
+
+void CmndDevGroupTie(void)
+{
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_DEV_GROUP_NAMES)) {
+    if (XdrvMailbox.data_len > 0) {
+      Settings.device_group_tie[XdrvMailbox.index - 1] = XdrvMailbox.payload;
+    }
+    ResponseCmndIdxNumber(Settings.device_group_tie[XdrvMailbox.index - 1]);
+  }
 }
 #endif  // USE_DEVICE_GROUPS
 

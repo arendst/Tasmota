@@ -401,7 +401,7 @@ void SendReceiveDeviceGroupMessage(struct device_group * device_group, struct de
         switch (item) {
           case DGR_ITEM_POWER:
             if (Settings.flag4.multiple_device_groups) {  // SetOption88 - Enable relays in separate device groups
-              uint32_t device = Settings.device_group_device[device_group_index];
+              uint32_t device = Settings.device_group_tie[device_group_index];
               if (device) {
                 bool on = (value & 1);
                 if (on != ((TasmotaGlobal.power >> (device - 1)) & 1)) ExecuteCommandPower(device, (on ? POWER_ON : POWER_OFF), SRC_REMOTE);
@@ -499,7 +499,7 @@ bool _SendDeviceGroupMessage(uint32_t device, DevGroupMessageType message_type, 
     device_group_index = 0;
     if (Settings.flag4.multiple_device_groups) {  // SetOption88 - Enable relays in separate device groups
       for (; device_group_index < device_group_count; device_group_index++) {
-        if (Settings.device_group_device[device_group_index] == device) break;
+        if (Settings.device_group_tie[device_group_index] == device) break;
       }
     }
   }
@@ -537,7 +537,7 @@ bool _SendDeviceGroupMessage(uint32_t device, DevGroupMessageType message_type, 
     // Call the drivers to build the status update.
     power_t power = TasmotaGlobal.power;
     if (Settings.flag4.multiple_device_groups) {  // SetOption88 - Enable relays in separate device groups
-      power = (power >> (Settings.device_group_device[device_group_index] - 1)) & 1;
+      power = (power >> (Settings.device_group_tie[device_group_index] - 1)) & 1;
     }
     SendDeviceGroupMessage(-device_group_index, DGR_MSGTYP_PARTIAL_UPDATE, DGR_ITEM_NO_STATUS_SHARE, device_group->no_status_share, DGR_ITEM_POWER, power);
     XdrvMailbox.index = 0;

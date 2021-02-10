@@ -1233,7 +1233,7 @@ void SettingsDelta(void) {
       }
     }
     if (Settings.version < 0x09020007) {
-      *(uint32_t *)&Settings.device_group_device = 0x04030201;
+      *(uint32_t *)&Settings.device_group_tie = 0x04030201;
     }
 
     Settings.version = VERSION;

@@ -631,7 +631,7 @@ struct {
   // Only 32 bit boundary variables below
 
   uint64_t      rf_protocol_mask;          // FA8
-  uint8_t       device_group_device[4];    // FB0
+  uint8_t       device_group_tie[4];       // FB0
   SysBitfield5  flag5;                     // FB4
   uint16_t      pulse_counter_debounce_low;   // FB8
   uint16_t      pulse_counter_debounce_high;  // FBA
