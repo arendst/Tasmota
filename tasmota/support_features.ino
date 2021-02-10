@@ -321,9 +321,6 @@ void ResponseAppendFeatures(void)
 #ifdef USE_TM1638
     feature3 |= 0x80000000;  // xsns_28_tm1638.ino
 #endif
-#ifdef USE_TM1637
-    feature3 |= 0x100000000;  // xsns_85_tm1637.ino
-#endif
   }
 
   static uint32_t feature4 = 0x00000000;
@@ -714,6 +711,9 @@ void ResponseAppendFeatures(void)
 #endif
 #if defined(USE_I2C) && defined(USE_TOF10120)
     feature7 |= 0x10000000;  // xsns_84_tof10120
+#endif
+#if defined(USE_DISPLAY) && defined(USE_DISPLAY_SEVENSEG) && defined(USE_TM1637)
+    feature7 |= 0x20000000;  // xdsp_15_tm1637.ino
 #endif
 //    feature7 |= 0x20000000;
 //    feature7 |= 0x40000000;

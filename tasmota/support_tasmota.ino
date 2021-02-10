@@ -571,6 +571,9 @@ void ExecuteCommandPower(uint32_t device, uint32_t state, uint32_t source)
       interlock_mutex = false;
     }
 
+#ifdef USE_DEVICE_GROUPS
+    power_t old_power = TasmotaGlobal.power;
+#endif  // USE_DEVICE_GROUPS
     switch (state) {
     case POWER_OFF: {
       TasmotaGlobal.power &= (POWER_MASK ^ mask);
@@ -582,7 +585,7 @@ void ExecuteCommandPower(uint32_t device, uint32_t state, uint32_t source)
       TasmotaGlobal.power ^= mask;
     }
 #ifdef USE_DEVICE_GROUPS
-    if (SRC_REMOTE != source && SRC_RETRY != source) {
+    if (TasmotaGlobal.power != old_power && SRC_REMOTE != source && SRC_RETRY != source) {
       if (Settings.flag4.multiple_device_groups)  // SetOption88 - Enable relays in separate device groups
         SendDeviceGroupMessage(device - 1, DGR_MSGTYP_UPDATE, DGR_ITEM_POWER, (TasmotaGlobal.power >> (device - 1)) & 1 | 0x01000000);  // Explicitly set number of relays to one
       else
@@ -761,8 +764,6 @@ bool MqttShowSensor(void)
   for (uint32_t i = 0; i < MAX_SWITCHES; i++) {
 #ifdef USE_TM1638
     if (PinUsed(GPIO_SWT1, i) || (PinUsed(GPIO_TM16CLK) && PinUsed(GPIO_TM16DIO) && PinUsed(GPIO_TM16STB))) {
-#elif defined(USE_TM1637)
-    if (PinUsed(GPIO_TM1637_CLK) && PinUsed(GPIO_TM1637_DIO)) {
 #else
     if (PinUsed(GPIO_SWT1, i)) {
 #endif  // USE_TM1638
@@ -1651,6 +1652,7 @@ void GpioInit(void)
                      ValidSpiPinUsed(GPIO_ST7789_DC) ||  // ST7789 CS may be omitted so chk DC too
                      ValidSpiPinUsed(GPIO_ST7789_CS) ||
                      (ValidSpiPinUsed(GPIO_SSD1331_CS) && ValidSpiPinUsed(GPIO_SSD1331_DC)) ||
+                     (ValidSpiPinUsed(GPIO_TM1637_CLK) && ValidSpiPinUsed(GPIO_TM1637_DIO)) ||
                      ValidSpiPinUsed(GPIO_SDCARD_CS)
                     );
     // If SPI_CS and/or SPI_DC is used they must be valid

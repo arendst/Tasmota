@@ -635,6 +635,7 @@
 //    #define USE_DISPLAY_RA8876                   // [DisplayModel 10] [I2cDriver39] (Touch)
 //    #define USE_DISPLAY_ST7789                   // [DisplayModel 12] Enable ST7789 module
 //    #define USE_DISPLAY_SSD1331                  // [DisplayModel 14] Enable SSD1331 module
+//    #define USE_DISPLAY_TM1637                   // [DisplayModel 15] Enable TM1637 module
 //  #define USE_RC522                              // Add support for MFRC522 13.56Mhz Rfid reader (+6k code)
 //    #define USE_RC522_DATA_FUNCTION              // Add support for reading data block content (+0k4 code)
 //    #define USE_RC522_TYPE_INFORMATION           // Add support for showing card type (+0k4 code)
@@ -776,7 +777,6 @@
 // -- Other sensors/drivers -----------------------
 
 //#define USE_TM1638                               // Add support for TM1638 switches copying Switch1 .. Switch8 (+1k code)
-//#define USE_TM1637                               // Add support for TM1637 seven-segment display (+1k code)
 //#define USE_HX711                                // Add support for HX711 load cell (+1k5 code)
 //  #define USE_HX711_GUI                          // Add optional web GUI to HX711 as scale (+1k8 code)
 

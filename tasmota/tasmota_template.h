@@ -53,7 +53,6 @@ enum UserSelectablePins {
   GPIO_SDM120_TX, GPIO_SDM120_RX,      // SDM120 Serial interface
   GPIO_SDM630_TX, GPIO_SDM630_RX,      // SDM630 Serial interface
   GPIO_TM16CLK, GPIO_TM16DIO, GPIO_TM16STB,  // TM1638 interface
-  GPIO_TM1637_CLK, GPIO_TM1637_DIO,    // TM1637 interface
   GPIO_MP3_DFR562,                     // RB-DFR-562, DFPlayer Mini MP3 Player
   GPIO_HX711_SCK, GPIO_HX711_DAT,      // HX711 Load Cell interface
   GPIO_TX2X_TXD_BLACK,                 // TX20/TX23 Transmission Pin
@@ -143,6 +142,7 @@ enum UserSelectablePins {
   GPIO_RA8876_CS,
   GPIO_ST7789_CS, GPIO_ST7789_DC,
   GPIO_SSD1331_CS, GPIO_SSD1331_DC,
+  GPIO_TM1637_CLK, GPIO_TM1637_DIO,
   GPIO_SDCARD_CS,
   GPIO_ROT1A_NP, GPIO_ROT1B_NP,        // Rotary switch
   GPIO_ADC_PH,                         // Analog PH Sensor
@@ -226,7 +226,6 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_SDM120_TX "|" D_SENSOR_SDM120_RX "|"
   D_SENSOR_SDM630_TX "|" D_SENSOR_SDM630_RX "|"
   D_SENSOR_TM1638_CLK "|" D_SENSOR_TM1638_DIO "|" D_SENSOR_TM1638_STB "|"
-  D_SENSOR_TM1637_CLK "|" D_SENSOR_TM1637_DIO "|"
   D_SENSOR_DFR562 "|"
   D_SENSOR_HX711_SCK "|" D_SENSOR_HX711_DAT "|"
   D_SENSOR_TX2X_TX "|"
@@ -312,6 +311,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_RA8876_CS "|"
   D_SENSOR_ST7789_CS "|" D_SENSOR_ST7789_DC "|"
   D_SENSOR_SSD1331_CS "|" D_SENSOR_SSD1331_DC "|"
+  D_SENSOR_TM1637_CLK "|" D_SENSOR_TM1637_DIO "|"
   D_SENSOR_SDCARD_CS "|"
   D_SENSOR_ROTARY " A_n|" D_SENSOR_ROTARY " B_n|"
   D_SENSOR_ADC_PH "|"
@@ -431,6 +431,10 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_SSD1331_CS),
   AGPIO(GPIO_SSD1331_DC),
 #endif  // USE_DISPLAY_SSD1331
+#ifdef USE_DISPLAY_TM1637
+  AGPIO(GPIO_TM1637_CLK),
+  AGPIO(GPIO_TM1637_DIO),
+#endif  // USE_DISPLAY_TM1637
   AGPIO(GPIO_BACKLIGHT),      // Display backlight control
   AGPIO(GPIO_OLED_RESET),     // OLED Display Reset
 #endif
@@ -530,14 +534,6 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_TM16CLK),        // TM1638 Clock
   AGPIO(GPIO_TM16DIO),        // TM1638 Data I/O
   AGPIO(GPIO_TM16STB),        // TM1638 Strobe
-#endif
-#ifdef USE_TM1637
-  AGPIO(GPIO_TM1637_CLK),        // TM1637 Clock
-  AGPIO(GPIO_TM1637_DIO),        // TM1637 Data I/O
-#endif
-#ifdef USE_TM1637
-  GPIO_TM1637_CLK,     // TM1637 Clock
-  GPIO_TM1637_DIO,     // TM1637 Data I/O
 #endif
 #ifdef USE_HX711
   AGPIO(GPIO_HX711_SCK),      // HX711 Load Cell clock

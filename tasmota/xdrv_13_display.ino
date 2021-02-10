@@ -64,6 +64,18 @@ const uint8_t DISPLAY_LOG_ROWS = 32;           // Number of lines in display log
 #define D_CMND_DISP_WIDTH "Width"
 #define D_CMND_DISP_HEIGHT "Height"
 #define D_CMND_DISP_BLINKRATE "Blinkrate"
+#define D_CMND_DISP_CLEAR "Clear"
+#define D_CMND_DISP_NUMBER "Number"
+#define D_CMND_DISP_FLOAT "Float"
+#define D_CMND_DISP_NUMBERNC "NumberNC"              // NC - "No Clear"
+#define D_CMND_DISP_FLOATNC "FloatNC"                // NC - "No Clear"
+#define D_CMND_DISP_BRIGHTNESS "Brightness"
+#define D_CMND_DISP_RAW "Raw"
+#define D_CMND_DISP_LEVEL "Level"
+#define D_CMND_DISP_SEVENSEG_TEXT "SevensegText"
+#define D_CMND_DISP_SEVENSEG_TEXTNC "SevensegTextNC"  // NC - "No Clear"
+#define D_CMND_DISP_SCROLLDELAY "ScrollDelay"
+#define D_CMND_DISP_CLOCK "Clock"
 
 enum XdspFunctions { FUNC_DISPLAY_INIT_DRIVER, FUNC_DISPLAY_INIT, FUNC_DISPLAY_EVERY_50_MSECOND, FUNC_DISPLAY_EVERY_SECOND,
                      FUNC_DISPLAY_MODEL, FUNC_DISPLAY_MODE, FUNC_DISPLAY_POWER,
@@ -72,19 +84,27 @@ enum XdspFunctions { FUNC_DISPLAY_INIT_DRIVER, FUNC_DISPLAY_INIT, FUNC_DISPLAY_E
                      FUNC_DISPLAY_DRAW_CIRCLE, FUNC_DISPLAY_FILL_CIRCLE,
                      FUNC_DISPLAY_DRAW_RECTANGLE, FUNC_DISPLAY_FILL_RECTANGLE,
                      FUNC_DISPLAY_TEXT_SIZE, FUNC_DISPLAY_FONT_SIZE, FUNC_DISPLAY_ROTATION, FUNC_DISPLAY_DRAW_STRING,
-                     FUNC_DISPLAY_DIM, FUNC_DISPLAY_BLINKRATE };
+                     FUNC_DISPLAY_DIM, FUNC_DISPLAY_BLINKRATE, FUNC_DISPLAY_NUMBER, FUNC_DISPLAY_FLOAT,
+                     FUNC_DISPLAY_NUMBERNC, FUNC_DISPLAY_FLOATNC, FUNC_DISPLAY_BRIGHTNESS, FUNC_DISPLAY_RAW,
+                     FUNC_DISPLAY_LEVEL, FUNC_DISPLAY_SEVENSEG_TEXT, FUNC_DISPLAY_SEVENSEG_TEXTNC,
+                     FUNC_DISPLAY_SCROLLDELAY, FUNC_DISPLAY_CLOCK };
 
 enum DisplayInitModes { DISPLAY_INIT_MODE, DISPLAY_INIT_PARTIAL, DISPLAY_INIT_FULL };
 
 const char kDisplayCommands[] PROGMEM = D_PRFX_DISPLAY "|"  // Prefix
   "|" D_CMND_DISP_MODEL "|" D_CMND_DISP_WIDTH "|" D_CMND_DISP_HEIGHT "|" D_CMND_DISP_MODE "|" D_CMND_DISP_REFRESH "|"
   D_CMND_DISP_DIMMER "|" D_CMND_DISP_COLS "|" D_CMND_DISP_ROWS "|" D_CMND_DISP_SIZE "|" D_CMND_DISP_FONT "|"
-  D_CMND_DISP_ROTATE "|" D_CMND_DISP_TEXT "|" D_CMND_DISP_ADDRESS "|" D_CMND_DISP_BLINKRATE ;
+  D_CMND_DISP_ROTATE "|" D_CMND_DISP_TEXT "|" D_CMND_DISP_ADDRESS "|" D_CMND_DISP_BLINKRATE "|" D_CMND_DISP_CLEAR "|"
+  D_CMND_DISP_NUMBER "|" D_CMND_DISP_FLOAT "|" D_CMND_DISP_NUMBERNC "|" D_CMND_DISP_FLOATNC "|" D_CMND_DISP_BRIGHTNESS "|"
+  D_CMND_DISP_RAW "|" D_CMND_DISP_LEVEL "|" D_CMND_DISP_SEVENSEG_TEXT "|" D_CMND_DISP_SEVENSEG_TEXTNC "|"
+  D_CMND_DISP_SCROLLDELAY "|" D_CMND_DISP_CLOCK;
 
 void (* const DisplayCommand[])(void) PROGMEM = {
   &CmndDisplay, &CmndDisplayModel, &CmndDisplayWidth, &CmndDisplayHeight, &CmndDisplayMode, &CmndDisplayRefresh,
   &CmndDisplayDimmer, &CmndDisplayColumns, &CmndDisplayRows, &CmndDisplaySize, &CmndDisplayFont,
-  &CmndDisplayRotate, &CmndDisplayText, &CmndDisplayAddress, &CmndDisplayBlinkrate };
+  &CmndDisplayRotate, &CmndDisplayText, &CmndDisplayAddress, &CmndDisplayBlinkrate, &CmndDisplayClear, &CmndDisplayNumber,
+  &CmndDisplayFloat, &CmndDisplayNumberNC, &CmndDisplayFloatNC, &CmndDisplayBrightness, &CmndDisplayRaw,
+  &CmndDisplayLevel, &CmndDisplaySevensegText, &CmndDisplaySevensegTextNC, &CmndDisplayScrollDelay, &CmndDisplayClock };
 
 char *dsp_str;
 
@@ -1428,6 +1448,105 @@ void CmndDisplayBlinkrate(void)
 
     if (!renderer)
       XdspCall(FUNC_DISPLAY_BLINKRATE);
+  }
+  ResponseCmndNumber(XdrvMailbox.payload);
+}
+
+void CmndDisplayClear(void)
+{
+  if (!renderer)
+    XdspCall(FUNC_DISPLAY_CLEAR);
+  ResponseCmndChar(XdrvMailbox.data);
+}
+
+void CmndDisplayNumber(void)
+{
+  if (!renderer) {
+    XdspCall(FUNC_DISPLAY_NUMBER);
+  }
+  ResponseCmndChar(XdrvMailbox.data);
+}
+
+void CmndDisplayFloat(void)
+{
+  if (!renderer) {
+    XdspCall(FUNC_DISPLAY_FLOAT);
+  }
+  ResponseCmndChar(XdrvMailbox.data);
+}
+
+void CmndDisplayNumberNC(void)
+{
+  if (!renderer) {
+    XdspCall(FUNC_DISPLAY_NUMBERNC);
+  }
+  ResponseCmndChar(XdrvMailbox.data);
+}
+
+void CmndDisplayFloatNC(void)
+{
+  if (!renderer) {
+    XdspCall(FUNC_DISPLAY_FLOATNC);
+  }
+  ResponseCmndChar(XdrvMailbox.data);
+}
+
+void CmndDisplayBrightness(void)
+{
+  bool result = false;
+  if (!renderer) {
+    result = XdspCall(FUNC_DISPLAY_BRIGHTNESS);
+  }
+  if(result) ResponseCmndNumber(XdrvMailbox.payload);
+  ResponseCmndNumber(XdrvMailbox.payload);
+}
+
+void CmndDisplayRaw(void)
+{
+  if (!renderer) {
+    XdspCall(FUNC_DISPLAY_RAW);
+  }
+  ResponseCmndChar(XdrvMailbox.data);
+}
+
+void CmndDisplayLevel(void)
+{
+  bool result = false;
+  if (!renderer) {
+    result = XdspCall(FUNC_DISPLAY_LEVEL);
+  }
+  if(result) ResponseCmndNumber(XdrvMailbox.payload);
+  ResponseCmndNumber(XdrvMailbox.payload);
+}
+
+void CmndDisplaySevensegText(void)
+{
+  if (!renderer) {
+    XdspCall(FUNC_DISPLAY_SEVENSEG_TEXT);
+  }
+  ResponseCmndChar(XdrvMailbox.data);
+}
+
+void CmndDisplaySevensegTextNC(void)
+{
+  if (!renderer) {
+    XdspCall(FUNC_DISPLAY_SEVENSEG_TEXTNC);
+  }
+  ResponseCmndChar(XdrvMailbox.data);
+}
+
+void CmndDisplayScrollDelay(void)
+{
+  if (!renderer) {
+    XdspCall(FUNC_DISPLAY_SCROLLDELAY);
+  }
+  ResponseCmndNumber(XdrvMailbox.payload);
+}
+
+void CmndDisplayClock(void)
+{
+  if (!renderer) {
+    XdspCall(FUNC_DISPLAY_CLOCK);
   }
   ResponseCmndNumber(XdrvMailbox.payload);
 }
