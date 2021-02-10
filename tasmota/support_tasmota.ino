@@ -586,10 +586,11 @@ void ExecuteCommandPower(uint32_t device, uint32_t state, uint32_t source)
     }
 #ifdef USE_DEVICE_GROUPS
     if (TasmotaGlobal.power != old_power && SRC_REMOTE != source && SRC_RETRY != source) {
-      if (Settings.flag4.multiple_device_groups)  // SetOption88 - Enable relays in separate device groups
-        SendDeviceGroupMessage(device - 1, DGR_MSGTYP_UPDATE, DGR_ITEM_POWER, (TasmotaGlobal.power >> (device - 1)) & 1 | 0x01000000);  // Explicitly set number of relays to one
-      else
-        SendLocalDeviceGroupMessage(DGR_MSGTYP_UPDATE, DGR_ITEM_POWER, TasmotaGlobal.power);
+      power_t dgr_power = TasmotaGlobal.power;
+      if (Settings.flag4.multiple_device_groups) {  // SetOption88 - Enable relays in separate device groups
+        dgr_power = (dgr_power >> (device - 1)) & 1;
+      }
+      SendDeviceGroupMessage(device, DGR_MSGTYP_UPDATE, DGR_ITEM_POWER, dgr_power);
     }
 #endif  // USE_DEVICE_GROUPS
     SetDevicePower(TasmotaGlobal.power, source);
