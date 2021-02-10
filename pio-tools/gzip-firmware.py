@@ -29,6 +29,9 @@ if env["PIOPLATFORM"] != "espressif32":
         ORG_FIRMWARE_SIZE = os.stat(bin_file).st_size
         GZ_FIRMWARE_SIZE = os.stat(gzip_file).st_size
 
-        print("Compression reduced firmware size by {:.0f}% (was {} bytes, now {} bytes)".format((GZ_FIRMWARE_SIZE / ORG_FIRMWARE_SIZE) * 100, ORG_FIRMWARE_SIZE, GZ_FIRMWARE_SIZE))
-
+        if ORG_FIRMWARE_SIZE > 995326:
+            print("\u001b[31;1m!!! Tasmota firmware size is too big with {} bytes. Max size is 995326 bytes !!! \u001b[0m".format(ORG_FIRMWARE_SIZE))
+        else:
+            print("Compression reduced firmware size by {:.0f}% (was {} bytes, now {} bytes)".format((GZ_FIRMWARE_SIZE / ORG_FIRMWARE_SIZE) * 100, ORG_FIRMWARE_SIZE, GZ_FIRMWARE_SIZE))
+            
     env.AddPostAction("$BUILD_DIR/${PROGNAME}.bin", [bin_gzip])
