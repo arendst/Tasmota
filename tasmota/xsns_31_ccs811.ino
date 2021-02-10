@@ -98,7 +98,7 @@ void CCS811Show(bool json)
 {
   if (CCS811_ready) {
     if (json) {
-      ResponseAppend_P(PSTR(",\"CCS811\":{\"" D_JSON_ECO2 "\":%d}"), eCO2, TVOC);
+      ResponseAppend_P(PSTR(",\"CCS811\":{\"" D_JSON_ECO2 "\":%d,\"" D_JSON_TVOC "\":%d}"), eCO2, TVOC);
 #ifdef USE_DOMOTICZ
       if (0 == TasmotaGlobal.tele_period) DomoticzSensor(DZ_AIRQUALITY, eCO2);
 #endif  // USE_DOMOTICZ
