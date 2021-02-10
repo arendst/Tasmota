@@ -531,6 +531,96 @@ void VButton::xdrawButton(bool inverted) {
   wr_redir=0;
 }
 
+boolean VButton::didhit(int16_t x, int16_t y) {
+  return ((x >= spars.xp) && (x < (int16_t) (spars.xp + spars.xs)) &&
+          (y >= spars.yp) && (y < (int16_t) (spars.yp + spars.ys)));
+}
+
+void VButton::SliderInit(Renderer *renderer, uint16_t xp, uint16_t yp, uint16_t xs, uint16_t ys, uint16_t nelem, uint16_t bgcol, uint16_t frcol, uint16_t barcol) {
+  spars.xp = xp;
+  spars.yp = yp;
+  spars.xs = xs;
+  spars.ys = ys;
+  spars.nelem = nelem;
+  spars.bgcol = bgcol;
+  spars.frcol = frcol;
+  spars.barcol = barcol;
+  rend = renderer;
+
+  rend->fillRect(spars.xp, spars.yp, spars.xs, spars.ys, spars.bgcol);
+
+  if (xs < ys) {
+    float bxs = spars.xs - 6;
+    float bys = (float)(spars.ys - 6) / (float)nelem;
+    float bxp = xp + 3;
+    float byp = yp + 3;
+    for (uint32_t count = 0; count < spars.nelem; count++) {
+      rend->fillRect(bxp, byp, bxs, bys - 3, spars.barcol);
+      rend->drawRect(bxp, byp, bxs, bys - 3, spars.frcol);
+      byp += bys;
+    }
+  } else {
+    float bys = spars.ys - 6;
+    float bxs = (float)(spars.xs - 6) / (float)nelem;
+    float byp = yp + 3;
+    float bxp = xp + 3;
+    for (uint32_t count = 0; count < spars.nelem; count++) {
+      rend->fillRect(bxp, byp, bxs - 3 , bys, spars.barcol);
+      rend->drawRect(bxp, byp, bxs - 3, bys, spars.frcol);
+      bxp += bxs;
+    }
+  }
+}
+
+uint16_t VButton::UpdateSlider(int16_t x, int16_t y) {
+  uint16_t elems = spars.nelem + 1;
+
+  if (x < 0) {
+    x = spars.xp + (-x * spars.xs) / 100;
+    y = spars.yp + (spars.ys - (-y * spars.ys) / 100);
+  }
+
+  if (spars.xs < spars.ys) {
+    uint16_t dy = spars.ys - (y - spars.yp);
+    uint16_t limit =  elems - ((float)dy /(float)spars.ys * elems);
+    float bxs = spars.xs - 6;
+    float bys = (float)(spars.ys - 6) / (float)spars.nelem;
+    float bxp = spars.xp + 3;
+    float byp = spars.yp + 3;
+    uint16_t col;
+    for (uint32_t count = 0; count < spars.nelem; count++) {
+      if (count >= limit) {
+        col = spars.barcol;
+      } else {
+        col = spars.bgcol;
+      }
+      rend->fillRect(bxp, byp, bxs, bys - 3, col);
+      rend->drawRect(bxp, byp, bxs, bys - 3, spars.frcol);
+      byp += bys;
+    }
+    return 100 - (float(y - spars.yp) / (float)spars.ys) * 100.0;
+  } else {
+    uint16_t limit = (x - spars.xp) * elems / spars.xs;
+    float bys = spars.ys - 6;
+    float bxs = (float)(spars.xs - 6) / (float)spars.nelem;
+    float byp = spars.yp + 3;
+    float bxp = spars.xp + 3;
+    uint16_t col;
+    for (uint32_t count = 0; count < spars.nelem; count++) {
+      if (count < limit) {
+        col = spars.barcol;
+      } else {
+        col = spars.bgcol;
+      }
+      rend->fillRect(bxp, byp, bxs - 3, bys, col);
+      rend->drawRect(bxp, byp, bxs - 3 , bys, spars.frcol);
+      bxp += bxs;
+    }
+    return (float(x - spars.xp) / (float)spars.xs) * 100.0;
+  }
+
+}
+
 
 
 
