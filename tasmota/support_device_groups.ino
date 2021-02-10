@@ -604,10 +604,10 @@ bool _SendDeviceGroupMessage(uint32_t device, DevGroupMessageType message_type, 
             oper = value_ptr[1];
             value_ptr += 2;
           }
-          value = (isdigit(*value_ptr) ? strtoul((char *)value_ptr, (char **)&value_ptr, 0) : 1);
+          value = (isdigit(*value_ptr) ? strtoul((char *)value_ptr, (char **)&value_ptr, 0) : oper == '^' ? 0xffffffff : 1);
           if (oper) {
             old_value = (item <= DGR_ITEM_MAX_8BIT ? device_group->values_8bit[item] : (item <= DGR_ITEM_MAX_16BIT ? device_group->values_16bit[item - DGR_ITEM_MAX_8BIT - 1] : device_group->values_32bit[item - DGR_ITEM_MAX_16BIT - 1]));
-            value = (oper == '+' ? old_value + value : oper == '-' ? old_value - value : oper == '^' ? old_value ^ (value ? value : 0xffffffff) : oper == '|' ? old_value | value : old_value == '&' ? old_value & value : old_value);
+            value = (oper == '+' ? old_value + value : oper == '-' ? old_value - value : oper == '^' ? old_value ^ value : oper == '|' ? old_value | value : old_value == '&' ? old_value & value : old_value);
           }
           item_ptr->value = value;
         }
