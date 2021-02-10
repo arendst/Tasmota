@@ -808,7 +808,7 @@ bool RulesProcessEvent(char *json_event)
   ShowFreeMem(PSTR("RulesProcessEvent"));
 #endif
 
-//AddLog_P(LOG_LEVEL_DEBUG, PSTR("RUL: ProcessEvent |%s|"), json_event);
+  //AddLog_P(LOG_LEVEL_DEBUG, PSTR("RUL: ProcessEvent |%s|"), json_event);
 
   String event_saved = json_event;
   // json_event = {"INA219":{"Voltage":4.494,"Current":0.020,"Power":0.089}}
