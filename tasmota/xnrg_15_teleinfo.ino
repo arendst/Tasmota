@@ -413,7 +413,7 @@ void NewFrameCallback(struct _ValueList * me)
         ResponseJsonEnd();
         // Publish adding ADCO serial number into the topic
         // Need setOption4 to be enabled
-        MqttPublishPrefixTopic_P(RESULT_OR_TELE, serialNumber, false);
+        MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, serialNumber, false);
     }
 }
 
