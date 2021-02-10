@@ -1,7 +1,7 @@
 /*
   fy-NL.h - localization for Frysk - Nederland for Tasmota
 
-  Copyright (C) 2021 Christiaan Heerze
+  Copyright (C) 2021  Christiaan Heerze
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by

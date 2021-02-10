@@ -3,10 +3,13 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [9.2.0.6]
+## [9.2.0.7]
 ### Added
+- Support for Device Groups Device Map (#10898)
 - Support for Eastron SDM72D-M three phase 100A Modbus energy meter (#10862)
+- Support for Frysk language translations by Christiaan Heerze
 
+## [9.2.0.6] 20210210
 ### Changed
 - Removed migration support for versions before v8.1.0 (Doris)
 - ESP32 Increase number of switch GPIOs from 8 to 28
