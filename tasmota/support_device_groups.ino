@@ -625,9 +625,12 @@ bool _SendDeviceGroupMessage(uint32_t device, DevGroupMessageType message_type, 
             switch (item) {
               case DGR_ITEM_LIGHT_CHANNELS:
                 {
+                  bool hex = false;
                   char * endptr;
-                  value = strtoul((char *)value_ptr, &endptr, 10);
-                  bool hex = (*endptr != ',');
+                  if (*value_ptr == '#') {
+                    value_ptr++;
+                    hex = true;
+                  }
                   for (int i = 0; i < 6; i++) {
                     *out_ptr = 0;
                     if (*value_ptr != ' ') {
