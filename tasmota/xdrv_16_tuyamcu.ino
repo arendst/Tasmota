@@ -1336,13 +1336,16 @@ void TuyaSensorsShow(bool json)
             break;
         }
       }
-      if (AsModuleTuyaMS()) {
-        WSContentSend_P(PSTR("{s}" D_JSON_IRHVAC_MODE "{m}%d{e}"), Tuya.ModeSet);
-      }
 
   #endif  // USE_WEBSERVER
     }
   }
+  #ifdef USE_WEBSERVER
+  if (AsModuleTuyaMS()) {
+    WSContentSend_P(PSTR("{s}" D_JSON_IRHVAC_MODE "{m}%d{e}"), Tuya.ModeSet);
+  }
+  #endif  // USE_WEBSERVER
+
   if (RootName) { ResponseJsonEnd();}
 }
 
