@@ -1295,7 +1295,7 @@ void TuyaSensorsShow(bool json)
 
         GetTextIndexed(sname, sizeof(sname), (sensor-71), kTuyaSensors);
         ResponseAppend_P(PSTR("\"%s\":%s"), sname,
-                        (Tuya.SensorsValid[sensor-71] ? dtostrfd(Tuya.Sensors[sensor-71], res, tempval) : PSTR("null")));
+                        (Tuya.SensorsValid[sensor-71] ? dtostrfd((float)Tuya.Sensors[sensor-71] / pow(10, res), res, tempval) : PSTR("null")));
         added = true;
       }
   #ifdef USE_WEBSERVER
@@ -1303,11 +1303,11 @@ void TuyaSensorsShow(bool json)
       if (TuyaGetDpId(sensor) != 0) {
         switch (sensor) {
           case 71:
-            WSContentSend_Temp("", Tuya.Sensors[0]);
+            WSContentSend_Temp("", (float)Tuya.Sensors[0] / pow(10, Settings.flag2.temperature_resolution));
             break;
           case 72:
             WSContentSend_PD(PSTR("{s}" D_TEMPERATURE " Set{m}%s " D_UNIT_DEGREE "%c{e}"),
-                            dtostrfd(Tuya.Sensors[1], Settings.flag2.temperature_resolution, tempval), TempUnit());
+                            dtostrfd((float)Tuya.Sensors[1] / pow(10, Settings.flag2.temperature_resolution), Settings.flag2.temperature_resolution, tempval), TempUnit());
             break;
           case 73:
             WSContentSend_PD(HTTP_SNS_HUM, "", dtostrfd(Tuya.Sensors[2], Settings.flag2.temperature_resolution, tempval));
