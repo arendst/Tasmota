@@ -323,16 +323,17 @@ float TuyaAdjustedTemperature(uint8_t packetValue, uint8_t res)
     switch (res)
     {
     case 1:
-        return packetValue/10;
+        return (float)packetValue / 10;
         break;
     case 2:
-        return packetValue/100;
+        return (float)packetValue / 100;
         break;
     case 3:
-        return packetValue/1000;
+        return (float)packetValue / 1000;
         break;    
     default:
         return (float)packetValue;
+        break;
     } 
 }
 /*********************************************************************************************\
