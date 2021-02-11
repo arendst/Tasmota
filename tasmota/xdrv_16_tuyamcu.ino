@@ -318,18 +318,18 @@ int StrCmpNoCase(char const *Str1, char const *Str2) // Compare case sensistive 
   }
 }
 
-float TuyaAdjustedTemperature(uint8_t packetValue, uint8_t res)
+float TuyaAdjustedTemperature(uint16_t packetValue, uint8_t res)
 {
     switch (res)
     {
     case 1:
-        return (float)packetValue / 10;
+        return (float)packetValue / 10.0;
         break;
     case 2:
-        return (float)packetValue / 100;
+        return (float)packetValue / 100.0;
         break;
     case 3:
-        return (float)packetValue / 1000;
+        return (float)packetValue / 1000.0;
         break;    
     default:
         return (float)packetValue;
