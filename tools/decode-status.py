@@ -3,7 +3,7 @@
 """
   decode-status.py - decode status for Tasmota
 
-  Copyright (C) 2020  Theo Arends
+  Copyright (C) 2021  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -94,7 +94,7 @@ a_setoption = [[
     "(Button) Ignore hold time (s)",
     "(Wifi) Gratuitous ARP repeat time",
     "(Temperature) Over temperature threshold (celsius)",
-    "(not used) Tuya MCU max dimmer value",
+    "(Rotary) Max allowed steps",
     "(not used) Tuya MCU voltage Id",
     "(not used) Tuya MCU current Id",
     "(not used) Tuya MCU power Id",
@@ -171,8 +171,10 @@ a_setoption = [[
     "(Switch) Detach Switches from relays and enable MQTT action state for all the SwitchModes (1)",
     "(ESP32 BLE) Enable ESP32 MI32 BLE (1)",
     "(Zigbee) Disable auto-query of zigbee lights and devices (1)",
-    "",
-    "","","","",
+    "(Light) run fading at fixed duration instead of fixed slew rate",
+    "(Zigbee) Move ZbReceived from JSON message and into the subtopic replacing SENSOR default",
+    "(Zigbee) Remove the device addr from json payload, can be used with zb_topic_fname where the addr is already known from the topic",
+    "","",
     "","","","",
     "","","","",
     "","","","",
@@ -239,7 +241,16 @@ a_features = [[
     "USE_EZOORP","USE_EZORTD","USE_EZOHUM","USE_EZOEC",
     "USE_EZOCO2","USE_EZOO2","USE_EZOPRS","USE_EZOFLO",
     "USE_EZODO","USE_EZORGB","USE_EZOPMP","USE_AS608",
-    "USE_SHELLY_DIMMER","USE_RC522","","",
+    "USE_SHELLY_DIMMER","USE_RC522","USE_FTC532","USE_DISPLAY_EPAPER_42",
+    "USE_DISPLAY_ILI9488","USE_DISPLAY_SSD1351","USE_DISPLAY_RA8876","USE_DISPLAY_ST7789",
+    "USE_DISPLAY_SSD1331","USE_UFILESYS","USE_TIMEPROP","USE_PID",
+    "USE_BS814A2","USE_SEESAW_SOIL","USE_WIEGAND","USE_NEOPOOL",
+    "USE_TOF10120","USE_SDM72","",""
+    ],[
+    "","","","",
+    "","","","",
+    "","","","",
+    "","","","",
     "","","","",
     "","","","",
     "","","","",
@@ -271,7 +282,7 @@ else:
         obj = json.load(fp)
 
 def StartDecode():
-    print ("\n*** decode-status.py v20201130 by Theo Arends and Jacek Ziolkowski ***")
+    print ("\n*** decode-status.py v20210122 by Theo Arends and Jacek Ziolkowski ***")
 
 #    print("Decoding\n{}".format(obj))
 

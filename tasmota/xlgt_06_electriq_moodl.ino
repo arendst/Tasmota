@@ -1,7 +1,7 @@
 /*
   xlgt_06_moodlamp.ino - ElectriQ iQ-wifiMOODL LED support for Tasmota
 
-  Copyright (C) 2020  ianbyte and Theo Arends
+  Copyright (C) 2021  ianbyte and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -74,7 +74,7 @@ void ElectriqMoodLModuleSelected(void)
     SetSerial(9600, TS_SERIAL_8N1);
     TasmotaGlobal.light_type = LT_RGBW;
     TasmotaGlobal.light_driver = XLGT_06;
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR("LGT: ElectriQ Mood Lamp Found"));
+    AddLog(LOG_LEVEL_DEBUG, PSTR("LGT: ElectriQ Mood Lamp Found"));
   }
 }
 

@@ -1,7 +1,7 @@
 /*
   support_features.ino - feature support for Tasmota
 
-  Copyright (C) 2020  Theo Arends
+  Copyright (C) 2021  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -162,7 +162,7 @@ void ResponseAppendFeatures(void)
     feature2 |= 0x00000800;  // xdsp_05_epaper.ino
 #endif
 #if defined(USE_I2C) && defined(USE_DISPLAY) && defined(USE_DISPLAY_SH1106)
-    feature2 |= 0x00001000;  // xdsp_06_sh1106.ino
+    feature2 |= 0x00001000;  // xdsp_07_sh1106.ino
 #endif
 #ifdef USE_MP3_PLAYER
     feature2 |= 0x00002000;  // xdrv_14_mp3.ino
@@ -661,39 +661,109 @@ void ResponseAppendFeatures(void)
 #ifdef USE_AS608
     feature7 |= 0x00000800;  // xsns_79_as608.ino
 #endif
-
 #if defined(USE_SHELLY_DIMMER)
     feature7 |= 0x00001000;  // xdrv_45_shelly_dimmer.ino
 #endif
 #ifdef USE_RC522
     feature7 |= 0x00002000;  // xsns_80_mfrc522.ino
 #endif
-//    feature7 |= 0x00004000;
-//    feature7 |= 0x00008000;
-
-//    feature7 |= 0x00010000;
-//    feature7 |= 0x00020000;
-//    feature7 |= 0x00040000;
-//    feature7 |= 0x00080000;
-
-//    feature7 |= 0x00100000;
-//    feature7 |= 0x00200000;
-//    feature7 |= 0x00400000;
-//    feature7 |= 0x00800000;
-
-//    feature7 |= 0x01000000;
-//    feature7 |= 0x02000000;
-//    feature7 |= 0x04000000;
-//    feature7 |= 0x08000000;
-
-//    feature7 |= 0x10000000;
-//    feature7 |= 0x20000000;
+#ifdef USE_FTC532
+    feature7 |= 0x00004000;  // xdrv_47_ftc532.ino
+#endif
+#if defined(USE_SPI) && defined(USE_DISPLAY) && defined(USE_DISPLAY_EPAPER_42)
+    feature7 |= 0x00008000;  // xdsp_06_epaper_42.ino
+#endif
+#if defined(USE_SPI) && defined(USE_DISPLAY) && defined(USE_DISPLAY_ILI9488)
+    feature7 |= 0x00010000;  // xdsp_08_ILI9488.ino
+#endif
+#if defined(USE_SPI) && defined(USE_DISPLAY) && defined(USE_DISPLAY_SSD1351)
+    feature7 |= 0x00020000;  // xdsp_09_SSD1351.ino
+#endif
+#if defined(USE_SPI) && defined(USE_DISPLAY) && defined(USE_DISPLAY_RA8876)
+    feature7 |= 0x00040000;  // xdsp_10_RA8876.ino
+#endif
+#if defined(USE_SPI) && defined(USE_DISPLAY) && defined(USE_DISPLAY_ST7789)
+    feature7 |= 0x00080000;  // xdsp_12_ST7789.ino
+#endif
+#if defined(USE_SPI) && defined(USE_DISPLAY) && defined(USE_DISPLAY_SSD1331)
+    feature7 |= 0x00100000;  // xdsp_14_SSD1331.ino
+#endif
+#ifdef USE_UFILESYS
+    feature7 |= 0x00200000;  // xdrv_50_filesystem.ino
+#endif
+#ifdef USE_TIMEPROP
+    feature7 |= 0x00400000;  // xdrv_48_timeprop.ino
+#endif
+#ifdef USE_PID
+    feature7 |= 0x00800000;  // xdrv_49_pid.ino
+#endif
+#ifdef USE_BS814A2
+    feature7 |= 0x01000000;  // xdrv_51_bs814a2.ino
+#endif
+#if defined(USE_I2C) && defined(USE_SEESAW_SOIL)
+    feature7 |= 0x02000000;  // xsns_81_seesaw_soil.ino
+#endif
+#ifdef USE_WIEGAND
+    feature7 |= 0x04000000;  // xsns_82_wiegand.ino
+#endif
+#ifdef USE_NEOPOOL
+    feature7 |= 0x08000000;  // xsns_83_neopool.ino
+#endif
+#if defined(USE_I2C) && defined(USE_TOF10120)
+    feature7 |= 0x10000000;  // xsns_84_tof10120
+#endif
+#if defined(USE_ENERGY_SENSOR) && defined(USE_SDM72)
+    feature7 |= 0x20000000;  // xnrg_18_sdm72.ino
+#endif
 //    feature7 |= 0x40000000;
 //    feature7 |= 0x80000000;
   }
 
+  static uint32_t feature8 = 0x00000000;
+  if (!feature8) {           // Only fill this once
+//    feature8 |= 0x00000001;
+//    feature8 |= 0x00000002;
+//    feature8 |= 0x00000004;
+//    feature8 |= 0x00000008;
+
+//    feature8 |= 0x00000010;
+//    feature8 |= 0x00000020;
+//    feature8 |= 0x00000040;
+//    feature8 |= 0x00000080;
+
+//    feature8 |= 0x00000100;
+//    feature8 |= 0x00000200;
+//    feature8 |= 0x00000400;
+//    feature8 |= 0x00000800;
+
+//    feature8 |= 0x00001000;
+//    feature8 |= 0x00002000;
+//    feature8 |= 0x00004000;
+//    feature8 |= 0x00008000;
+
+//    feature8 |= 0x00010000;
+//    feature8 |= 0x00020000;
+//    feature8 |= 0x00040000;
+//    feature8 |= 0x00080000;
+
+//    feature8 |= 0x00100000;
+//    feature8 |= 0x00200000;
+//    feature8 |= 0x00400000;
+//    feature8 |= 0x00800000;
+
+//    feature8 |= 0x01000000;
+//    feature8 |= 0x02000000;
+//    feature8 |= 0x04000000;
+//    feature8 |= 0x08000000;
+
+//    feature8 |= 0x10000000;
+//    feature8 |= 0x20000000;
+//    feature8 |= 0x40000000;
+//    feature8 |= 0x80000000;
+  }
+
 /*********************************************************************************************/
 
-  ResponseAppend_P(PSTR(",\"" D_JSON_FEATURES "\":[\"%08X\",\"%08X\",\"%08X\",\"%08X\",\"%08X\",\"%08X\",\"%08X\",\"%08X\"]"),
-    LANGUAGE_LCID, feature1, feature2, feature3, feature4, feature5, feature6, feature7);
+  ResponseAppend_P(PSTR(",\"" D_JSON_FEATURES "\":[\"%08X\",\"%08X\",\"%08X\",\"%08X\",\"%08X\",\"%08X\",\"%08X\",\"%08X\",\"%08X\"]"),
+    LANGUAGE_LCID, feature1, feature2, feature3, feature4, feature5, feature6, feature7, feature8);
 }

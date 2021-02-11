@@ -1,7 +1,7 @@
 /*
   xnrg_16_iem3000.ino - Schneider Electric iEM3000 series Modbus energy meter support for Tasmota
 
-  Copyright (C) 2020  Marius Bezuidenhout
+  Copyright (C) 2021  Marius Bezuidenhout
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -76,7 +76,7 @@ void IEM3000Every250ms(void)
     AddLogBuffer(LOG_LEVEL_DEBUG_MORE, buffer, Iem3000Modbus->ReceiveCount());
 
     if (error) {
-      AddLog_P(LOG_LEVEL_DEBUG, PSTR("SDM: Iem3000 error %d"), error);
+      AddLog(LOG_LEVEL_DEBUG, PSTR("SDM: Iem3000 error %d"), error);
     } else {
       Energy.data_valid[0] = 0;
 

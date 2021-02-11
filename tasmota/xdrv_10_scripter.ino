@@ -1,7 +1,7 @@
 /*
   xdrv_10_scripter.ino - script support for Tasmota
 
-  Copyright (C) 2020  Gerhard Mutz and Theo Arends
+  Copyright (C) 2021  Gerhard Mutz and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -36,15 +36,18 @@ no math hierarchy  (costs ram and execution time, better group with brackets, an
 (will probably make math hierarchy an ifdefed option)
 keywords if then else endif, or, and are better readable for beginners (others may use {})
 
+// to doo
+remove all filesystem inititialization and gui
+adapt 3 options
+1. ufilesystem
+2. eeprom hardware and emulation
+3. compression
+
 \*********************************************************************************************/
 
 #define XDRV_10             10
-#define XI2C_37             37  // See I2CDEVICES.md
 
 #define SCRIPT_DEBUG 0
-
-#define FORMAT_SPIFFS_IF_FAILED true
-
 
 #ifndef MAXVARS
 #define MAXVARS 50
@@ -70,69 +73,50 @@ keywords if then else endif, or, and are better readable for beginners (others m
 //uint32_t EncodeLightId(uint8_t relay_id);
 //uint32_t DecodeLightId(uint32_t hue_id);
 
-#ifdef USE_UNISHOX_COMPRESSION
-#define USE_SCRIPT_COMPRESSION
-#endif
+#define SPECIAL_EEPMODE_SIZE 6200
 
-// solve conficting defines
-// highest priority
-#ifdef USE_SCRIPT_FATFS
-#undef LITTLEFS_SCRIPT_SIZE
-#undef EEP_SCRIPT_SIZE
-#undef USE_SCRIPT_COMPRESSION
+#ifdef USE_UFILESYS
 
-#if USE_SCRIPT_FATFS==-1
+#undef USE_SCRIPT_FATFS
+#define USE_SCRIPT_FATFS -1
+#pragma message "universal file system used"
 
-#ifdef ESP32
-#pragma message "script fat file option -1 used"
-#else
-#pragma message "script fat file option -1 used"
-#endif
-
-#else
-#pragma message "script fat file SDC option used"
-#endif
-#endif // USE_SCRIPT_FATFS
-
-// lfs on esp8266 spiffs on esp32
-#ifdef LITTLEFS_SCRIPT_SIZE
-#undef EEP_SCRIPT_SIZE
-#undef USE_SCRIPT_COMPRESSION
-#pragma message "script little file system option used"
-#endif // LITTLEFS_SCRIPT_SIZE
+#else // USE_UFILESYS
 
 // eeprom script
 #ifdef EEP_SCRIPT_SIZE
-#undef USE_SCRIPT_COMPRESSION
+
+#ifdef ESP32
+#error "unsupported option for ESP32"
+#endif
+
 #ifdef USE_24C256
 #pragma message "script 24c256 file option used"
 #else
-//#warning "EEP_SCRIPT_SIZE also needs USE_24C256"
-#if EEP_SCRIPT_SIZE==SPI_FLASH_SEC_SIZE
-#pragma message "internal eeprom script buffer used"
-#else
+
+#if EEP_SCRIPT_SIZE==SPECIAL_EEPMODE_SIZE
 #pragma message "internal compressed eeprom script buffer used"
+#else
+#error "unsupported eeprom option used"
 #endif
-//#define USE_24C256
-#endif
+#endif // USE_24C256
+
+#else // EEP_SCRIPT_SIZE
+
+// default
+#pragma message "script compression option used"
+
 #endif // EEP_SCRIPT_SIZE
 
-// compression last option before default
-#ifdef USE_SCRIPT_COMPRESSION
-#pragma message "script compression option used"
-#endif // USE_UNISHOX_COMPRESSION
+#endif // USE_UFILESYS
 
-
-//#ifdef USE_SCRIPT_COMPRESSION
 #include <unishox.h>
-
 #define SCRIPT_COMPRESS compressor.unishox_compress
 #define SCRIPT_DECOMPRESS compressor.unishox_decompress
 #ifndef UNISHOXRSIZE
 #define UNISHOXRSIZE 2560
 #endif
 
-//#endif // USE_SCRIPT_COMPRESSION
 
 #ifndef STASK_PRIO
 #define STASK_PRIO 1
@@ -165,26 +149,32 @@ void Script_ticker4_end(void) {
 
 // EEPROM MACROS
 // i2c eeprom
+#define EEP_WRITE(A,B,C) eeprom_writeBytes(A, B, (uint8_t*)C);
+#define EEP_READ(A,B,C) eeprom_readBytes(A, B, (uint8_t*)C);
 
-#if defined(ALT_EEPROM) && !defined(ESP32)
-#undef EEP_WRITE
-#undef EEP_READ
+#ifdef ESP8266
+#ifdef USE_24C256
 #undef EEP_INIT
-#define EEP_WRITE(A,B,C) alt_eeprom_writeBytes(A, B, (uint8_t*)C);
-#define EEP_READ(A,B,C) alt_eeprom_readBytes(A, B, (uint8_t*)C);
+#define EEP_INIT(A) eeprom_init(A)
+#else
+#undef EEP_INIT
 #define EEP_INIT(A) alt_eeprom_init(A)
-
-#if EEP_SCRIPT_SIZE>6500
-#undef EEP_SCRIPT_SIZE
-#define EEP_SCRIPT_SIZE 6500
 #endif
+#endif
+
+
+#if defined(EEP_SCRIPT_SIZE) && !defined(ESP32)
+
+// seems to be the last untouched sector, beside OTA and serial Flash
+#define SPEC_SCRIPT_FLASH 0x000F2000
 
 uint32_t eeprom_block;
 
 // these support only one 4 k block below EEPROM this steals 4k of application area
 uint32_t alt_eeprom_init(uint32_t size) {
     //EEPROM.begin(size);
-    eeprom_block = (uint32_t)&_FS_end - 0x40200000 - SPI_FLASH_SEC_SIZE;
+    //eeprom_block = (uint32_t)&_EEPROM_start - 0x40200000 - SPI_FLASH_SEC_SIZE;
+    eeprom_block = SPEC_SCRIPT_FLASH;
     return 1;
 }
 
@@ -198,62 +188,21 @@ void alt_eeprom_readBytes(uint32_t adr, uint32_t len, uint8_t *buf) {
   uint32_t *lwp=(uint32_t*)buf;
   ESP.flashRead(eeprom_block , lwp, SPI_FLASH_SEC_SIZE);
 }
-#else
-#undef EEP_WRITE
-#undef EEP_READ
-#undef EEP_INIT
-#define EEP_WRITE(A,B,C) eeprom_writeBytes(A, B, (uint8_t*)C);
-#define EEP_READ(A,B,C) eeprom_readBytes(A, B, (uint8_t*)C);
-#define EEP_INIT(A) eeprom_init(A)
-#endif // ALT_EEPROM
+#endif // EEP_SCRIPT_SIZE
 
-
-
-#if defined(LITTLEFS_SCRIPT_SIZE) || (USE_SCRIPT_FATFS==-1)
-#ifdef ESP32
 #include "FS.h"
-#ifdef LITTLEFS_SCRIPT_SIZE
-#include "SPIFFS.h"
+
+#if USE_SCRIPT_FATFS==-1
+#ifdef ESP32
+//#include "FS.h"
+//#include "FFat.h"
 #else
-#include "FFat.h"
 //#include <LittleFS.h>
 #endif
-#else
-#include <LittleFS.h>
-#endif
-FS *fsp;
+
+
 #endif // LITTLEFS_SCRIPT_SIZE
 
-
-#ifdef LITTLEFS_SCRIPT_SIZE
-void SaveFile(const char *name, const uint8_t *buf, uint32_t len) {
-  File file = fsp->open(name, "w");
-  if (!file) return;
-  file.write(buf, len);
-  file.close();
-}
-
-
-uint8_t fs_mounted=0;
-
-void LoadFile(const char *name, uint8_t *buf, uint32_t len) {
-  if (!fs_mounted) {
-#ifdef ESP32
-    if (!SPIFFS.begin(FORMAT_SPIFFS_IF_FAILED)) {
-#else
-    if (!fsp->begin()) {
-#endif
-          //Serial.println("SPIFFS Mount Failed");
-      return;
-    }
-    fs_mounted=1;
-  }
-  File file = fsp->open(name, "r");
-  if (!file) return;
-  file.read(buf, len);
-  file.close();
-}
-#endif // LITTLEFS_SCRIPT_SIZE
 
 // offsets epoch readings by 1.1.2019 00:00:00 to fit into float with second resolution
 #define EPOCH_OFFSET 1546300800
@@ -261,57 +210,19 @@ void LoadFile(const char *name, uint8_t *buf, uint32_t len) {
 enum {OPER_EQU=1,OPER_PLS,OPER_MIN,OPER_MUL,OPER_DIV,OPER_PLSEQU,OPER_MINEQU,OPER_MULEQU,OPER_DIVEQU,OPER_EQUEQU,OPER_NOTEQU,OPER_GRTEQU,OPER_LOWEQU,OPER_GRT,OPER_LOW,OPER_PERC,OPER_XOR,OPER_AND,OPER_OR,OPER_ANDEQU,OPER_OREQU,OPER_XOREQU,OPER_PERCEQU};
 enum {SCRIPT_LOGLEVEL=1,SCRIPT_TELEPERIOD,SCRIPT_EVENT_HANDLED};
 
-#ifdef USE_SCRIPT_FATFS
 
-#if USE_SCRIPT_FATFS>=0
-#include <SPI.h>
-#include <SD.h>
-#ifdef ESP32
-FS *fsp;
-#else
-SDClass *fsp;
-#endif
-#endif //USE_SCRIPT_FATFS
+#ifdef USE_UFILESYS
+extern uint8_t ufs_type;
+extern FS *ufsp;
 
-#ifndef ESP32
-// esp8266
-
-#if USE_SCRIPT_FATFS>=0
-// old fs
-#undef FILE_WRITE
-#define FILE_WRITE (sdfat::O_READ | sdfat::O_WRITE | sdfat::O_CREAT)
-#define FILE_APPEND (sdfat::O_READ | sdfat::O_WRITE | sdfat::O_CREAT | sdfat::O_APPEND)
-
-#else
-// new fs
-#undef FILE_WRITE
-#define FILE_WRITE "w"
-#undef FILE_READ
-#define FILE_READ "r"
-#undef FILE_APPEND
-#define FILE_APPEND "a"
+#ifndef UFSYS_SIZE
+#define UFSYS_SIZE 8192
 #endif
 
-#endif // USE_SCRIPT_FATFS>=0
-
-
-#ifndef FAT_SCRIPT_SIZE
-#define FAT_SCRIPT_SIZE 4096
-#endif
-
-#ifdef ESP32
-#undef FAT_SCRIPT_NAME
 #define FAT_SCRIPT_NAME "/script.txt"
-#else
-#undef FAT_SCRIPT_NAME
-#define FAT_SCRIPT_NAME "script.txt"
-#endif
 
-//#if USE_STANDARD_SPI_LIBRARY==0
-//#warning ("FATFS standard spi should be used");
-//#endif
+#endif // USE_UFILESYS
 
-#endif // USE_SCRIPT_FATFS
 
 #ifdef SUPPORT_MQTT_EVENT
   #include <LinkedList.h>                 // Import LinkedList library
@@ -326,7 +237,10 @@ SDClass *fsp;
 #ifdef USE_DISPLAY
 #ifdef USE_TOUCH_BUTTONS
 #include <renderer.h>
-extern VButton *buttons[MAXBUTTONS];
+#ifndef MAX_TOUCH_BUTTONS
+#define MAX_TOUCH_BUTTONS 16
+#endif
+extern VButton *buttons[MAX_TOUCH_BUTTONS];
 #endif
 #endif
 
@@ -414,6 +328,27 @@ typedef union {
   };
 } UDP_FLAGS;
 
+typedef union {
+  uint8_t data;
+  struct {
+      uint8_t nutu8 : 1;
+      uint8_t nutu7 : 1;
+      uint8_t nutu6 : 1;
+      uint8_t nutu5 : 1;
+      uint8_t nutu4 : 1;
+      uint8_t nutu3 : 1;
+      bool fsys : 1;
+      bool eeprom : 1;
+  };
+} FS_FLAGS;
+
+
+struct GVARS {
+  JsonParserObject *jo;
+  int16_t numind;
+  int16_t strind;
+};
+
 
 #define NUM_RES 0xfe
 #define STR_RES 0xfd
@@ -456,7 +391,7 @@ struct SCRIPT_MEM {
     uint8_t glob_error;
     uint8_t max_ssize;
     uint8_t script_loglevel;
-    uint8_t flags;
+    FS_FLAGS FLAGS;
     uint8_t si_num[3];
     uint8_t siro_num[3];
     uint8_t sind_num;
@@ -470,34 +405,22 @@ struct SCRIPT_MEM {
 #endif //USE_SCRIPT_FATFS
 #ifdef USE_SCRIPT_GLOBVARS
     UDP_FLAGS udp_flags;
-#endif
+    IPAddress last_udp_ip;
+    WiFiUDP Script_PortUdp;
+    IPAddress script_udp_remote_ip;
+#endif // USE_SCRIPT_GLOBVARS
     char web_mode;
+    uint8_t glob_script = 0;
+    uint8_t fast_script = 0;
+    uint32_t script_lastmillis;
+    bool event_handeled = false;
+#ifdef USE_BUTTON_EVENT
+    int8_t script_button[MAX_KEYS];
+#endif //USE_BUTTON_EVENT
 } glob_script_mem;
 
 
-
-bool event_handeled = false;
-
-
-#ifdef USE_SCRIPT_GLOBVARS
-IPAddress last_udp_ip;
-WiFiUDP Script_PortUdp;
-
-#ifndef USE_DEVICE_GROUPS
-char * IPAddressToString(const IPAddress& ip_address) {
-  static char ipbuffer[16];
-  sprintf_P(ipbuffer, PSTR("%u.%u.%u.%u"), ip_address[0], ip_address[1], ip_address[2], ip_address[3]);
-  return ipbuffer;
-}
-#endif //USE_DEVICE_GROUPS
-#endif //USE_SCRIPT_GLOBVARS
-
-int16_t last_findex;
-int16_t last_sindex;
 uint8_t tasm_cmd_activ=0;
-uint8_t fast_script=0;
-uint8_t glob_script=0;
-uint32_t script_lastmillis;
 
 void flt2char(float num, char *nbuff) {
   dtostrfd(num, glob_script_mem.script_dprec, nbuff);
@@ -524,22 +447,20 @@ void f2char(float num, uint32_t dprec, uint32_t lzeros, char *nbuff) {
   }
 }
 
-#ifdef USE_BUTTON_EVENT
-int8_t script_button[MAX_KEYS];
-#endif //USE_BUTTON_EVENT
 
-char *GetNumericArgument(char *lp,uint8_t lastop,float *fp, JsonParserObject *jo);
-char *GetStringArgument(char *lp,uint8_t lastop,char *cp, JsonParserObject *jo);
+
+char *GetNumericArgument(char *lp,uint8_t lastop,float *fp, struct GVARS *gv);
+char *GetStringArgument(char *lp,uint8_t lastop,char *cp, struct GVARS *gv);
 char *ForceStringVar(char *lp,char *dstr);
 void send_download(void);
-uint8_t reject(char *name);
+uint8_t UfsReject(char *name);
 
 void ScriptEverySecond(void) {
 
   if (bitRead(Settings.rule_enabled, 0)) {
     struct T_INDEX *vtp = glob_script_mem.type;
-    float delta = (millis() - script_lastmillis) / 1000.0;
-    script_lastmillis = millis();
+    float delta = (millis() - glob_script_mem.script_lastmillis) / 1000.0;
+    glob_script_mem.script_lastmillis = millis();
     for (uint8_t count=0; count<glob_script_mem.numvars; count++) {
       if (vtp[count].bits.is_timer) {
         // decrements timers
@@ -566,9 +487,6 @@ void RulesTeleperiod(void) {
   if (bitRead(Settings.rule_enabled, 0) && TasmotaGlobal.mqtt_data[0]) Run_Scripter(">T", 2, TasmotaGlobal.mqtt_data);
 }
 
-
-
-
 #define SCRIPT_SKIP_SPACES while (*lp==' ' || *lp=='\t') lp++;
 #define SCRIPT_SKIP_EOL while (*lp==SCRIPT_EOL) lp++;
 
@@ -578,7 +496,9 @@ float *Get_MFAddr(uint8_t index, uint16_t *len, uint16_t *ipos);
 int16_t Init_Scripter(void) {
 char *script;
 
+    int16_t err = 0;
     script = glob_script_mem.script_ram;
+    if (!*script) return -999;
 
     // scan lines for >DEF
     uint16_t lines = 0;
@@ -586,15 +506,56 @@ char *script;
     uint16_t svars = 0;
     uint16_t vars = 0;
     char *lp = script;
-    char vnames[MAXVARS*10];
-    char *vnames_p = vnames;
+    uint16_t imemsize = (MAXVARS*10) + 4;
+    uint8_t *imemptr = (uint8_t*)calloc(imemsize, 1);
+    if (!imemptr) {
+      return -7;
+    }
+
+    //ClaimSerial();
+    //SetSerialBaudrate(115200);
+    //Serial.printf("size %d\n",imemsize);
+    //Serial.printf("stack %d\n",GetStack());  // 2848
+    // 2896
+    //char vnames[MAXVARS*10];
+    char *vnames = (char*)imemptr;
+
     char *vnp[MAXVARS];
+    float fvalues[MAXVARS];
+    struct T_INDEX vtypes[MAXVARS];
+
+/*
+    uint32_t imemp = (uint32_t)imemptr;
+    imemp += (MAXVARS*10);
+    imemp = (imemp & 0xfffc) + 4;
+    Serial.printf(">1 %x\n",imemp);
+    char *vnp[MAXVARS];
+
+    //char **vnp = (char**)imemp;
+    imemp += (sizeof(char*)*MAXVARS);
+    imemp = (imemp & 0xfffc) + 4;
+    Serial.printf(">2 %x\n",imemp);
+
+    float fvalues[MAXVARS];
+    //float *fvalues = (float*)imemp;
+    imemp += (sizeof(float*)*MAXVARS);
+    imemp = (imemp & 0xfffc) + 4;
+    Serial.printf(">3 %x\n",imemp);
+
+    struct T_INDEX vtypes[MAXVARS];
+    //struct T_INDEX *vtypes = (struct T_INDEX*)imemp;
+*/
+
+    char *vnames_p = vnames;
     char **vnp_p = vnp;
+
     char strings[MAXSVARS*SCRIPT_MAXSSIZE];
+    char *snp[MAXSVARS];
+
     struct M_FILT mfilt[MAXFILT];
 
     char *strings_p = strings;
-    char *snp[MAXSVARS];
+
     char **snp_p = snp;
     uint8_t numperm = 0;
     uint8_t numflt = 0;
@@ -603,10 +564,6 @@ char *script;
     glob_script_mem.max_ssize = SCRIPT_SVARSIZE;
     glob_script_mem.scriptptr = 0;
 
-    if (!*script) return -999;
-
-    float fvalues[MAXVARS];
-    struct T_INDEX vtypes[MAXVARS];
     char init = 0;
     while (1) {
         // check line
@@ -674,6 +631,7 @@ char *script;
                     vtypes[vars].index = numflt;
                     numflt++;
                     if (numflt>MAXFILT) {
+                      if (imemptr) free(imemptr);
                       return -6;
                     }
                 } else {
@@ -699,6 +657,7 @@ char *script;
                     if (!vtypes[vars].bits.is_filter) vtypes[vars].index = nvars;
                     nvars++;
                     if (nvars>MAXNVARS) {
+                      if (imemptr) free(imemptr);
                       return -1;
                     }
                     if (vtypes[vars].bits.is_filter) {
@@ -731,11 +690,13 @@ char *script;
                     vtypes[vars].index = svars;
                     svars++;
                     if (svars>MAXSVARS) {
+                      if (imemptr) free(imemptr);
                       return -2;
                     }
                 }
                 vars++;
                 if (vars>MAXVARS) {
+                  if (imemptr) free(imemptr);
                   return -3;
                 }
             }
@@ -786,6 +747,7 @@ char *script;
     uint8_t *script_mem;
     script_mem = (uint8_t*)calloc(script_mem_size, 1);
     if (!script_mem) {
+      if (imemptr) free(imemptr);
       return -4;
     }
     glob_script_mem.script_mem = script_mem;
@@ -841,7 +803,6 @@ char *script;
     //memcpy(script_mem,strings,size);
     script_mem += size;
 
-
     // now must recalc memory offsets
     uint16_t index = 0;
 #ifdef SCRIPT_LARGE_VNBUFF
@@ -864,11 +825,13 @@ char *script;
         index++;
         if (index > MAXVNSIZ) {
           free(glob_script_mem.script_mem);
+          if (imemptr) free(imemptr);
           return -5;
         }
     }
+
     // variables usage info
-    AddLog_P(LOG_LEVEL_INFO, PSTR("Script: nv=%d, tv=%d, vns=%d, ram=%d"), nvars, svars, index, glob_script_mem.script_mem_size);
+    AddLog(LOG_LEVEL_INFO, PSTR("Script: nv=%d, tv=%d, vns=%d, ram=%d"), nvars, svars, index, glob_script_mem.script_mem_size);
 
     // copy string variables
     char *cp1 = glob_script_mem.glob_snp;
@@ -940,35 +903,6 @@ char *script;
       }
     }
 
-
-#ifdef USE_SCRIPT_FATFS
-    if (!glob_script_mem.script_sd_found) {
-
-#if USE_SCRIPT_FATFS>=0
-    // user sd card
-      fsp = &SD;
-      if (SD.begin(USE_SCRIPT_FATFS)) {
-#else
-    // use flash file
-#ifdef ESP32
-    //  if (SPIFFS.begin(FORMAT_SPIFFS_IF_FAILED)) {
-      if (FFat.begin(true)) {
-#else
-      if (fsp->begin()) {
-#endif // ESP32
-
-#endif // USE_SCRIPT_FATFS>=0
-
-        glob_script_mem.script_sd_found = 1;
-      } else {
-        glob_script_mem.script_sd_found = 0;
-      }
-    }
-    for (uint8_t cnt = 0; cnt<SFS_MAX; cnt++) {
-      glob_script_mem.file_flags[cnt].is_open = 0;
-    }
-#endif
-
 #if SCRIPT_DEBUG>0
     ClaimSerial();
     SetSerialBaudrate(9600);
@@ -981,76 +915,20 @@ char *script;
 #ifdef USE_SCRIPT_GLOBVARS
     if (glob_script_mem.udp_flags.udp_used) {
       Script_Init_UDP();
-      glob_script = Run_Scripter(">G", -2, 0);
+      glob_script_mem.glob_script = Run_Scripter(">G", -2, 0);
     }
 #endif //USE_SCRIPT_GLOBVARS
 
-    return 0;
-
-}
-
-#ifdef USE_SCRIPT_FATFS
-uint32_t get_fsinfo(uint32_t sel) {
-uint32_t result = 0;
-#ifdef ESP32
-#if USE_SCRIPT_FATFS >=0
-  if (sel == 0) {
-    result = SD.totalBytes()/1000;
-  } else if (sel == 1) {
-    result = (SD.totalBytes() - SD.usedBytes())/1000;
-  }
-#else
-  if (sel == 0) {
-    result = FFat.totalBytes()/1000;
-  } else if (sel == 1) {
-    result = FFat.freeBytes()/1000;
-  }
-#endif // USE_SCRIPT_FATFS>=0
-#else
-  // ESP8266
-  FSInfo64 fsinfo;
-  fsp->info64(fsinfo);
-  if (sel == 0) {
-    result = fsinfo.totalBytes/1000;
-  } else if (sel == 1) {
-    result = (fsinfo.totalBytes - fsinfo.usedBytes)/1000;
-  }
-#endif // ESP32
-  return result;
-}
-
-// format number with thousand marker
-void form1000(uint32_t number, char *dp, char sc) {
-  char str[32];
-  sprintf(str, "%d", number);
-  char *sp = str;
-  uint32_t inum = strlen(sp)/3;
-  uint32_t fnum = strlen(sp)%3;
-  if (!fnum) inum--;
-  for (uint32_t count=0; count<=inum; count++) {
-    if (fnum){
-      memcpy(dp,sp,fnum);
-      dp+=fnum;
-      sp+=fnum;
-      fnum=0;
-    } else {
-      memcpy(dp,sp,3);
-      dp+=3;
-      sp+=3;
+    if (imemptr) {
+      free(imemptr);
     }
-    if (count!=inum) {
-      *dp++=sc;
-    }
-  }
-  *dp=0;
+    return err;
 }
 
-#endif //USE_SCRIPT_FATFS
 
 #ifdef USE_SCRIPT_GLOBVARS
 #define SCRIPT_UDP_BUFFER_SIZE 128
 #define SCRIPT_UDP_PORT 1999
-IPAddress script_udp_remote_ip;
 
 void Restart_globvars(void) {
   Script_Stop_UDP();
@@ -1060,8 +938,8 @@ void Restart_globvars(void) {
 void Script_Stop_UDP(void) {
   if (!glob_script_mem.udp_flags.udp_used) return;
   if (glob_script_mem.udp_flags.udp_connected) {
-    Script_PortUdp.flush();
-    Script_PortUdp.stop();
+    glob_script_mem.Script_PortUdp.flush();
+    glob_script_mem.Script_PortUdp.stop();
     glob_script_mem.udp_flags.udp_connected  = 0;
   }
 }
@@ -1071,11 +949,11 @@ void Script_Init_UDP() {
   if (!glob_script_mem.udp_flags.udp_used) return;
   if (glob_script_mem.udp_flags.udp_connected) return;
 
-  if (Script_PortUdp.beginMulticast(WiFi.localIP(), IPAddress(239,255,255,250), SCRIPT_UDP_PORT)) {
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPNP "SCRIPT UDP started"));
+  if (glob_script_mem.Script_PortUdp.beginMulticast(WiFi.localIP(), IPAddress(239,255,255,250), SCRIPT_UDP_PORT)) {
+    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPNP "SCRIPT UDP started"));
     glob_script_mem.udp_flags.udp_connected = 1;
   } else {
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPNP "SCRIPT UDP failed"));
+    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPNP "SCRIPT UDP failed"));
     glob_script_mem.udp_flags.udp_connected  = 0;
   }
 }
@@ -1084,12 +962,13 @@ void Script_PollUdp(void) {
   if (TasmotaGlobal.global_state.network_down) return;
   if (!glob_script_mem.udp_flags.udp_used) return;
   if (glob_script_mem.udp_flags.udp_connected ) {
-    while (Script_PortUdp.parsePacket()) {
+    while (glob_script_mem.Script_PortUdp.parsePacket()) {
       char packet_buffer[SCRIPT_UDP_BUFFER_SIZE];
-      int32_t len = Script_PortUdp.read(packet_buffer, SCRIPT_UDP_BUFFER_SIZE - 1);
+      int32_t len = glob_script_mem.Script_PortUdp.read(packet_buffer, SCRIPT_UDP_BUFFER_SIZE - 1);
       packet_buffer[len] = 0;
-      script_udp_remote_ip = Script_PortUdp.remoteIP();
-      AddLog_P(LOG_LEVEL_DEBUG, PSTR("UDP: Packet %s - %d - %s"), packet_buffer, len, script_udp_remote_ip.toString().c_str());
+      glob_script_mem.script_udp_remote_ip = glob_script_mem.Script_PortUdp.remoteIP();
+      //AddLog(LOG_LEVEL_DEBUG, PSTR("UDP: Packet %s - %d - %s"), packet_buffer, len, script_udp_remote_ip.toString().c_str());
+      AddLog(LOG_LEVEL_DEBUG, PSTR("UDP: Packet %s - %d - %_I"), packet_buffer, len, (uint32_t)glob_script_mem.script_udp_remote_ip);
       char *lp=packet_buffer;
       if (!strncmp(lp,"=>", 2)) {
         lp += 2;
@@ -1108,19 +987,19 @@ void Script_PollUdp(void) {
           uint32_t index;
           uint32_t res = match_vars(vnam, &fp, &sp, &index);
           if (res == NUM_RES) {
-            AddLog_P(LOG_LEVEL_DEBUG, PSTR("num var found - %s - %d - %d"), vnam, res, index);
+            AddLog(LOG_LEVEL_DEBUG, PSTR("num var found - %s - %d - %d"), vnam, res, index);
             *fp=CharToFloat(cp + 1);
           } else if (res == STR_RES) {
-            AddLog_P(LOG_LEVEL_DEBUG, PSTR("string var found - %s - %d - %d"), vnam, res, index);
+            AddLog(LOG_LEVEL_DEBUG, PSTR("string var found - %s - %d - %d"), vnam, res, index);
             strlcpy(sp, cp + 1, SCRIPT_MAXSSIZE);
           } else {
             // error var not found
           }
           if (res) {
             // mark changed
-            last_udp_ip = Script_PortUdp.remoteIP();
+            glob_script_mem.last_udp_ip = glob_script_mem.Script_PortUdp.remoteIP();
             glob_script_mem.type[index].bits.changed = 1;
-            if (glob_script==99) {
+            if (glob_script_mem.glob_script == 99) {
               Run_Scripter(">G", 2, 0);
             }
           }
@@ -1145,15 +1024,15 @@ void script_udp_sendvar(char *vname,float *fp,char *sp) {
     char flstr[16];
     dtostrfd(*fp, 8, flstr);
     strcat(sbuf, flstr);
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR("num var updated - %s"), sbuf);
+    AddLog(LOG_LEVEL_DEBUG, PSTR("num var updated - %s"), sbuf);
   } else {
     strcat(sbuf, sp);
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR("string var updated - %s"), sbuf);
+    AddLog(LOG_LEVEL_DEBUG, PSTR("string var updated - %s"), sbuf);
   }
-  Script_PortUdp.beginPacket(IPAddress(239, 255, 255, 250), SCRIPT_UDP_PORT);
+  glob_script_mem.Script_PortUdp.beginPacket(IPAddress(239, 255, 255, 250), SCRIPT_UDP_PORT);
   //  Udp.print(String("RET UC: ") + String(recv_Packet));
-  Script_PortUdp.write((const uint8_t*)sbuf, strlen(sbuf));
-  Script_PortUdp.endPacket();
+  glob_script_mem.Script_PortUdp.write((const uint8_t*)sbuf, strlen(sbuf));
+  glob_script_mem.Script_PortUdp.endPacket();
 }
 
 #endif //USE_SCRIPT_GLOBVARS
@@ -1221,7 +1100,7 @@ float *Get_MFAddr(uint8_t index, uint16_t *len, uint16_t *ipos) {
   return 0;
 }
 
-char *isvar(char *lp, uint8_t *vtype, struct T_INDEX *tind, float *fp, char *sp, JsonParserObject *jo);
+char *isvar(char *lp, uint8_t *vtype, struct T_INDEX *tind, float *fp, char *sp, struct GVARS *gv);
 
 
 float *get_array_by_name(char *name, uint16_t *alen) {
@@ -1251,7 +1130,7 @@ float Get_MFVal(uint8_t index, int16_t bind) {
         if (bind<0) {
           return maxind;
         }
-        if (bind<1 || bind>maxind) bind = maxind;
+        if (bind < 1 || bind > maxind ) bind = 1;
         return mflp->rbuff[bind - 1];
     }
     mp += sizeof(struct M_FILT) + ((mflp->numvals & AND_FILT_MASK) - 1) * sizeof(float);
@@ -1266,10 +1145,12 @@ void Set_MFVal(uint8_t index, uint16_t bind, float val) {
     if (count==index) {
         uint16_t maxind = mflp->numvals & AND_FILT_MASK;
         if (!bind) {
+          if (val < 0 || val >= maxind) val = 0;
           mflp->index = val;
         } else {
-          if (bind<1 || bind>maxind) bind = maxind;
-          mflp->rbuff[bind-1] = val;
+          if (bind >= 1 && bind <= maxind) {
+            mflp->rbuff[bind-1] = val;
+          }
         }
         return;
     }
@@ -1551,7 +1432,7 @@ char *isargs(char *lp, uint32_t isind) {
   return lp;
 }
 
-char *isget(char *lp, char *sp, uint32_t isind) {
+char *isget(char *lp, char *sp, uint32_t isind, struct GVARS *gv) {
 float fvar;
   lp = GetNumericArgument(lp, OPER_EQU, &fvar, 0);
   SCRIPT_SKIP_SPACES
@@ -1560,7 +1441,7 @@ float fvar;
   uint8_t index = fvar;
   if (index<1) index = 1;
   index--;
-  last_sindex = index;
+  if (gv) gv->strind = index;
   glob_script_mem.sind_num = isind;
   if (glob_script_mem.last_index_string[isind]) {
     if (!glob_script_mem.si_num[isind]) {
@@ -1581,7 +1462,7 @@ float fvar;
 
 // vtype => ff=nothing found, fe=constant number,fd = constant string else bit 7 => 80 = string, 0 = number
 // no flash strings here for performance reasons!!!
-char *isvar(char *lp, uint8_t *vtype, struct T_INDEX *tind, float *fp, char *sp, JsonParserObject *jo) {
+char *isvar(char *lp, uint8_t *vtype, struct T_INDEX *tind, float *fp, char *sp, struct GVARS *gv) {
     uint16_t count,len = 0;
     uint8_t nres = 0;
     char vname[64];
@@ -1669,8 +1550,10 @@ char *isvar(char *lp, uint8_t *vtype, struct T_INDEX *tind, float *fp, char *sp,
     char dvnam[32];
     strcpy (dvnam, vname);
     uint8_t olen = len;
-    last_findex = -1;
-    last_sindex = -1;
+    if (gv) {
+      gv->numind = -1;
+      gv->strind = -1;
+    }
     char *ja = strchr(dvnam, '[');
     if (ja) {
       *ja = 0;
@@ -1690,14 +1573,15 @@ char *isvar(char *lp, uint8_t *vtype, struct T_INDEX *tind, float *fp, char *sp,
                     if (vtp[count].bits.is_filter) {
                       if (ja) {
                         lp += olen + 1;
-                        lp = GetNumericArgument(lp, OPER_EQU, &fvar, 0);
-                        last_findex = fvar;
+                        lp = GetNumericArgument(lp, OPER_EQU, &fvar, gv);
+                        if (gv) gv->numind = fvar;
                         fvar = Get_MFVal(index, fvar);
                         len = 1;
                       } else {
                         fvar = Get_MFilter(index);
                       }
                     } else {
+                      if (ja) continue;
                       fvar = glob_script_mem.fvars[index];
                     }
                     if (nres) fvar = -fvar;
@@ -1711,8 +1595,9 @@ char *isvar(char *lp, uint8_t *vtype, struct T_INDEX *tind, float *fp, char *sp,
         }
     }
 
-    if (jo) {
+    if (gv && gv->jo) {
       // look for json input
+      JsonParserObject *jpo = gv->jo;
       char jvname[64];
       strcpy(jvname, vname);
       const char* str_value;
@@ -1730,7 +1615,7 @@ char *isvar(char *lp, uint8_t *vtype, struct T_INDEX *tind, float *fp, char *sp,
         if (aindex<1 || aindex>6) aindex = 1;
         aindex--;
       }
-      if (jo->isValid()) {
+      if (jpo->isValid()) {
         char *subtype = strchr(jvname, '#');
         char *subtype2;
         if (subtype) {
@@ -1743,23 +1628,23 @@ char *isvar(char *lp, uint8_t *vtype, struct T_INDEX *tind, float *fp, char *sp,
           }
         }
         vn = jvname;
-        str_value = (*jo)[vn].getStr();
-        if ((*jo)[vn].isValid()) {
+        str_value = (*jpo)[vn].getStr();
+        if ((*jpo)[vn].isValid()) {
           if (subtype) {
-            JsonParserObject jobj1 = (*jo)[vn];
+            JsonParserObject jobj1 = (*jpo)[vn];
             if (jobj1.isValid()) {
               vn = subtype;
-              jo = &jobj1;
-              str_value = (*jo)[vn].getStr();
-              if ((*jo)[vn].isValid()) {
+              jpo = &jobj1;
+              str_value = (*jpo)[vn].getStr();
+              if ((*jpo)[vn].isValid()) {
                 // 2. stage
                 if (subtype2) {
-                  JsonParserObject jobj2 = (*jo)[vn];
-                  if ((*jo)[vn].isValid()) {
+                  JsonParserObject jobj2 = (*jpo)[vn];
+                  if ((*jpo)[vn].isValid()) {
                     vn = subtype2;
-                    jo = &jobj2;
-                    str_value = (*jo)[vn].getStr();
-                    if ((*jo)[vn].isValid()) {
+                    jpo = &jobj2;
+                    str_value = (*jpo)[vn].getStr();
+                    if ((*jpo)[vn].isValid()) {
                       goto skip;
                     } else {
                       goto chknext;
@@ -1778,10 +1663,10 @@ char *isvar(char *lp, uint8_t *vtype, struct T_INDEX *tind, float *fp, char *sp,
           skip:
           if (ja) {
             // json array
-            str_value = (*jo)[vn].getArray()[aindex].getStr();
+            str_value = (*jpo)[vn].getArray()[aindex].getStr();
           }
           if (str_value && *str_value) {
-            if ((*jo)[vn].isStr()) {
+            if ((*jpo)[vn].isStr()) {
               if (!strncmp(str_value, "ON", 2)) {
                 if (fp) *fp = 1;
                 goto nexit;
@@ -1820,14 +1705,14 @@ chknext:
       case 'a':
 #ifdef USE_ANGLE_FUNC
         if (!strncmp(vname, "acos(", 5)) {
-          lp=GetNumericArgument(lp + 5, OPER_EQU, &fvar, 0);
+          lp=GetNumericArgument(lp + 5, OPER_EQU, &fvar, gv);
           fvar = acosf(fvar);
           lp++;
           len = 0;
           goto exit;
         }
         if (!strncmp(vname, "abs(", 4)) {
-          lp=GetNumericArgument(lp + 4, OPER_EQU, &fvar, 0);
+          lp=GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
           fvar = fabs(fvar);
           lp++;
           len = 0;
@@ -1836,18 +1721,18 @@ chknext:
 #endif
         if (!strncmp(vname, "asc(", 4)) {
           char str[SCRIPT_MAXSSIZE];
-          lp = GetStringArgument(lp + 4, OPER_EQU, str, 0);
+          lp = GetStringArgument(lp + 4, OPER_EQU, str, gv);
           fvar = str[0];
           lp++;
           len = 0;
           goto exit;
         }
         if (!strncmp(vname, "adc(", 4)) {
-          lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, 0);
+          lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
           while (*lp==' ') lp++;
           float fvar1 = 1;
           if (*lp!=')') {
-            lp = GetNumericArgument(lp, OPER_EQU, &fvar1, 0);
+            lp = GetNumericArgument(lp, OPER_EQU, &fvar1, gv);
             if (fvar1<32 || fvar1>39) fvar1 = 32;
           }
           lp++;
@@ -1883,11 +1768,11 @@ chknext:
 #ifdef USE_BUTTON_EVENT
         if (!strncmp(vname, "bt[", 3)) {
           // tasmota button state
-          GetNumericArgument(vname+3, OPER_EQU, &fvar, 0);
+          GetNumericArgument(vname+3, OPER_EQU, &fvar, gv);
           uint32_t index = fvar;
           if (index<1 || index>MAX_KEYS) index = 1;
-          fvar=script_button[index - 1];
-          script_button[index - 1] |= 0x80;
+          fvar = glob_script_mem.script_button[index - 1];
+          glob_script_mem.script_button[index - 1] |= 0x80;
           len++;
           goto exit;
         }
@@ -1898,7 +1783,7 @@ chknext:
           // var changed
           struct T_INDEX ind;
           uint8_t vtype;
-          isvar(vname + 4, &vtype, &ind, 0, 0, 0);
+          isvar(vname + 4, &vtype, &ind, 0, 0, gv);
           if (!ind.bits.constant) {
             uint8_t index = glob_script_mem.type[ind.index].index;
             if (glob_script_mem.fvars[index] != glob_script_mem.s_fvars[index]) {
@@ -1921,10 +1806,10 @@ chknext:
         }
 #ifdef USE_M5STACK_CORE2
         if (!strncmp(vname, "c2ps(", 5)) {
-          lp = GetNumericArgument(lp + 5, OPER_EQU, &fvar, 0);
+          lp = GetNumericArgument(lp + 5, OPER_EQU, &fvar, gv);
           while (*lp==' ') lp++;
           float fvar1;
-          lp = GetNumericArgument(lp, OPER_EQU, &fvar1, 0);
+          lp = GetNumericArgument(lp, OPER_EQU, &fvar1, gv);
           fvar = core2_setaxppin(fvar, fvar1);
           lp++;
           len=0;
@@ -1934,16 +1819,16 @@ chknext:
 
 #ifdef USE_SCRIPT_TASK
         if (!strncmp(vname, "ct(", 3)) {
-          lp = GetNumericArgument(lp + 3, OPER_EQU, &fvar, 0);
+          lp = GetNumericArgument(lp + 3, OPER_EQU, &fvar, gv);
           while (*lp==' ') lp++;
           float fvar1;
-          lp = GetNumericArgument(lp, OPER_EQU, &fvar1, 0);
+          lp = GetNumericArgument(lp, OPER_EQU, &fvar1, gv);
           while (*lp==' ') lp++;
           float fvar2;
-          lp = GetNumericArgument(lp, OPER_EQU, &fvar2, 0);
+          lp = GetNumericArgument(lp, OPER_EQU, &fvar2, gv);
           float prio = STASK_PRIO;
           if (*lp!=')') {
-            lp = GetNumericArgument(lp, OPER_EQU, &prio, 0);
+            lp = GetNumericArgument(lp, OPER_EQU, &prio, gv);
           }
           lp++;
           fvar = scripter_create_task(fvar, fvar1, fvar2, prio);
@@ -1958,6 +1843,10 @@ chknext:
           fvar = RtcTime.day_of_month;
           goto exit;
         }
+        if (!strncmp(vname, "dvnm", 4)) {
+          if (sp) strlcpy(sp, SettingsText(SET_DEVICENAME), glob_script_mem.max_ssize);
+          goto strexit;
+        }
         break;
       case 'e':
         if (!strncmp(vname, "epoch", 5)) {
@@ -1965,13 +1854,13 @@ chknext:
           goto exit;
         }
         if (!strncmp(vname, "eres", 4)) {
-          fvar = event_handeled;
+          fvar = glob_script_mem.event_handeled;
           tind->index = SCRIPT_EVENT_HANDLED;
           goto exit_settable;
         }
 #ifdef USE_ENERGY_SENSOR
         if (!strncmp(vname, "enrg[", 5)) {
-          lp=GetNumericArgument(lp + 5, OPER_EQU, &fvar, 0);
+          lp=GetNumericArgument(lp + 5, OPER_EQU, &fvar, gv);
           while (*lp==' ') lp++;
           switch ((uint32_t)fvar) {
             case 0:
@@ -2010,6 +1899,9 @@ chknext:
             case 11:
               fvar = Energy.daily;
               break;
+            case 12:
+              fvar = (float)Settings.energy_kWhyesterday/100000.0;
+              break;
 
             default:
               fvar = 99999;
@@ -2043,7 +1935,7 @@ chknext:
             }
             lp++;
           } else {
-            lp = GetNumericArgument(lp, OPER_EQU, &fvar, 0);
+            lp = GetNumericArgument(lp, OPER_EQU, &fvar, gv);
             mode = fvar;
           }
           fvar = -1;
@@ -2051,9 +1943,9 @@ chknext:
             if (!glob_script_mem.file_flags[cnt].is_open) {
               if (mode==0) {
 #ifdef DEBUG_FS
-                AddLog_P(LOG_LEVEL_INFO, PSTR("open file for read %d"), cnt);
+                AddLog(LOG_LEVEL_INFO, PSTR("open file for read %d"), cnt);
 #endif
-                glob_script_mem.files[cnt] = fsp->open(str, FILE_READ);
+                glob_script_mem.files[cnt] = ufsp->open(str, FS_FILE_READ);
                 if (glob_script_mem.files[cnt].isDirectory()) {
                   glob_script_mem.files[cnt].rewindDirectory();
                   glob_script_mem.file_flags[cnt].is_dir = 1;
@@ -2063,14 +1955,14 @@ chknext:
               }
               else {
                 if (mode==1) {
-                  glob_script_mem.files[cnt] = fsp->open(str,FILE_WRITE);
+                  glob_script_mem.files[cnt] = ufsp->open(str,FS_FILE_WRITE);
 #ifdef DEBUG_FS
-                  AddLog_P(LOG_LEVEL_INFO, PSTR("open file for write %d"), cnt);
+                  AddLog(LOG_LEVEL_INFO, PSTR("open file for write %d"), cnt);
 #endif
                 } else {
-                  glob_script_mem.files[cnt] = fsp->open(str,FILE_APPEND);
+                  glob_script_mem.files[cnt] = ufsp->open(str,FS_FILE_APPEND);
 #ifdef DEBUG_FS
-                  AddLog_P(LOG_LEVEL_INFO, PSTR("open file for append %d"), cnt);
+                  AddLog(LOG_LEVEL_INFO, PSTR("open file for append %d"), cnt);
 #endif
                 }
               }
@@ -2078,7 +1970,7 @@ chknext:
                 fvar = cnt;
                 glob_script_mem.file_flags[cnt].is_open = 1;
               } else {
-                AddLog_P(LOG_LEVEL_INFO, PSTR("file open failed"));
+                AddLog(LOG_LEVEL_INFO, PSTR("file open failed"));
               }
               break;
             }
@@ -2088,12 +1980,12 @@ chknext:
           goto exit;
         }
         if (!strncmp(vname, "fc(", 3)) {
-          lp = GetNumericArgument(lp + 3, OPER_EQU, &fvar, 0);
+          lp = GetNumericArgument(lp + 3, OPER_EQU, &fvar, gv);
           if (fvar>=0) {
             uint8_t ind = fvar;
             if (ind>=SFS_MAX) ind = SFS_MAX - 1;
 #ifdef DEBUG_FS
-            AddLog_P(LOG_LEVEL_INFO, PSTR("closing file %d"), ind);
+            AddLog(LOG_LEVEL_INFO, PSTR("closing file %d"), ind);
 #endif
             glob_script_mem.files[ind].close();
             glob_script_mem.file_flags[ind].is_open = 0;
@@ -2104,7 +1996,7 @@ chknext:
           goto exit;
         }
         if (!strncmp(vname, "ff(", 3)) {
-          lp = GetNumericArgument(lp + 3, OPER_EQU, &fvar, 0);
+          lp = GetNumericArgument(lp + 3, OPER_EQU, &fvar, gv);
           uint8_t ind = fvar;
           if (ind>=SFS_MAX) ind = SFS_MAX - 1;
           glob_script_mem.files[ind].flush();
@@ -2117,7 +2009,7 @@ chknext:
           char str[SCRIPT_MAXSSIZE];
           lp = ForceStringVar(lp + 3, str);
           while (*lp==' ') lp++;
-          lp = GetNumericArgument(lp, OPER_EQU, &fvar, 0);
+          lp = GetNumericArgument(lp, OPER_EQU, &fvar, gv);
           uint8_t ind = fvar;
           if (ind>=SFS_MAX) ind = SFS_MAX - 1;
           if (glob_script_mem.file_flags[ind].is_open) {
@@ -2133,7 +2025,7 @@ chknext:
           struct T_INDEX ind;
           uint8_t vtype;
           uint8_t sindex = 0;
-          lp = isvar(lp + 3, &vtype, &ind, 0, 0, 0);
+          lp = isvar(lp + 3, &vtype, &ind, 0, 0, gv);
           if (vtype!=VAR_NV) {
             // found variable as result
             if ((vtype&STYPE)==0) {
@@ -2150,7 +2042,7 @@ chknext:
               goto exit;
           }
           while (*lp==' ') lp++;
-          lp = GetNumericArgument(lp, OPER_EQU, &fvar, 0);
+          lp = GetNumericArgument(lp, OPER_EQU, &fvar, gv);
           uint8_t find = fvar;
           if (find>=SFS_MAX) find = SFS_MAX - 1;
           uint8_t index = 0;
@@ -2161,7 +2053,7 @@ chknext:
               while (true) {
                 File entry = glob_script_mem.files[find].openNextFile();
                 if (entry) {
-                  if (!reject((char*)entry.name())) {
+                  if (!UfsReject((char*)entry.name())) {
                     char *ep = (char*)entry.name();
                     if (*ep=='/') ep++;
                     char *lcp = strrchr(ep,'/');
@@ -2205,17 +2097,17 @@ chknext:
         if (!strncmp(vname, "fd(", 3)) {
           char str[glob_script_mem.max_ssize + 1];
           lp = GetStringArgument(lp + 3, OPER_EQU, str, 0);
-          fsp->remove(str);
+          ufsp->remove(str);
           lp++;
           len = 0;
           goto exit;
         }
 #if defined(ESP32) && defined(USE_WEBCAM)
         if (!strncmp(vname, "fwp(", 4)) {
-          lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, 0);
+          lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
           while (*lp==' ') lp++;
           float fvar1;
-          lp = GetNumericArgument(lp, OPER_EQU, &fvar1, 0);
+          lp = GetNumericArgument(lp, OPER_EQU, &fvar1, gv);
           uint8_t ind = fvar1;
           if (ind>=SFS_MAX) ind = SFS_MAX - 1;
           if (glob_script_mem.file_flags[ind].is_open) {
@@ -2229,7 +2121,7 @@ chknext:
             } else {
               fvar = 0;
             }
-            //AddLog_P(LOG_LEVEL_INFO, PSTR("picture save: %d"), len);
+            //AddLog(LOG_LEVEL_INFO, PSTR("picture save: %d"), len);
           } else {
             fvar = 0;
           }
@@ -2243,7 +2135,7 @@ chknext:
           char str[glob_script_mem.max_ssize + 1];
           lp = GetStringArgument(lp + 3, OPER_EQU, str, 0);
           // execute script
-          File ef = fsp->open(str, FILE_READ);
+          File ef = ufsp->open(str, FS_FILE_READ);
           if (ef) {
             uint16_t fsiz = ef.size();
             if (fsiz<2048) {
@@ -2264,7 +2156,7 @@ chknext:
         if (!strncmp(vname, "fmd(", 4)) {
           char str[glob_script_mem.max_ssize + 1];
           lp = GetStringArgument(lp + 4, OPER_EQU, str, 0);
-          fvar = fsp->mkdir(str);
+          fvar = ufsp->mkdir(str);
           lp++;
           len = 0;
           goto exit;
@@ -2272,7 +2164,7 @@ chknext:
         if (!strncmp(vname, "frd(", 4)) {
           char str[glob_script_mem.max_ssize + 1];
           lp = GetStringArgument(lp + 4, OPER_EQU, str, 0);
-          fvar = fsp->rmdir(str);
+          fvar = ufsp->rmdir(str);
           lp++;
           len = 0;
           goto exit;
@@ -2280,7 +2172,7 @@ chknext:
         if (!strncmp(vname, "fx(", 3)) {
           char str[glob_script_mem.max_ssize + 1];
           lp = GetStringArgument(lp + 3, OPER_EQU, str, 0);
-          if (fsp->exists(str)) fvar = 1;
+          if (ufsp->exists(str)) fvar = 1;
           else fvar = 0;
           lp++;
           len = 0;
@@ -2288,8 +2180,8 @@ chknext:
         }
 
         if (!strncmp(vname, "fsi(", 4)) {
-          lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, 0);
-          fvar = get_fsinfo(fvar);
+          lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
+          fvar = UfsInfo(fvar, 0);
           lp++;
           len = 0;
           goto exit;
@@ -2298,7 +2190,7 @@ chknext:
         if (!strncmp(vname, "fwa(", 4)) {
           struct T_INDEX ind;
           uint8_t vtype;
-          lp = isvar(lp + 4, &vtype, &ind, 0, 0, 0);
+          lp = isvar(lp + 4, &vtype, &ind, 0, 0, gv);
           if (vtype!=VAR_NV && (vtype&STYPE)==0 && glob_script_mem.type[ind.index].bits.is_filter) {
             // found array as result
 
@@ -2309,7 +2201,7 @@ chknext:
           }
 
           while (*lp==' ') lp++;
-          lp = GetNumericArgument(lp, OPER_EQU, &fvar, 0);
+          lp = GetNumericArgument(lp, OPER_EQU, &fvar, gv);
           uint8_t index = fvar;
           if (index>=SFS_MAX) index = SFS_MAX - 1;
           if (glob_script_mem.file_flags[index].is_open) {
@@ -2337,7 +2229,7 @@ chknext:
         if (!strncmp(vname, "fra(", 4)) {
           struct T_INDEX ind;
           uint8_t vtype;
-          lp = isvar(lp + 4, &vtype, &ind, 0, 0, 0);
+          lp = isvar(lp + 4, &vtype, &ind, 0, 0, gv);
           if (vtype!=VAR_NV && (vtype&STYPE)==0 && glob_script_mem.type[ind.index].bits.is_filter) {
             // found array as result
 
@@ -2348,7 +2240,7 @@ chknext:
           }
 
           while (*lp==' ') lp++;
-          lp = GetNumericArgument(lp, OPER_EQU, &fvar, 0);
+          lp = GetNumericArgument(lp, OPER_EQU, &fvar, gv);
           uint8_t find = fvar;
           if (find>=SFS_MAX) find = SFS_MAX - 1;
           char str[glob_script_mem.max_ssize + 1];
@@ -2407,7 +2299,12 @@ chknext:
 #endif
           goto exit;
         }
+        if (!strncmp(vname, "frnm", 4)) {
+          if (sp) strlcpy(sp, SettingsText(SET_FRIENDLYNAME1), glob_script_mem.max_ssize);
+          goto strexit;
+        }
         break;
+
       case 'g':
         if (!strncmp(vname, "gtmp", 4)) {
           fvar = TasmotaGlobal.temperature_celsius;
@@ -2425,6 +2322,73 @@ chknext:
           if (sp) strlcpy(sp, SettingsText(SET_MQTT_GRP_TOPIC), glob_script_mem.max_ssize);
           goto strexit;
         }
+#ifdef USE_WEBSEND_RESPONSE
+        if (!strncmp(vname, "gwr(", 4)) {
+          char delim[SCRIPT_MAXSSIZE];
+          lp = GetStringArgument(lp + 4, OPER_EQU, delim, 0);
+          SCRIPT_SKIP_SPACES
+          lp = GetNumericArgument(lp, OPER_EQU, &fvar, gv);
+          SCRIPT_SKIP_SPACES
+          char rstring[SCRIPT_MAXSSIZE];
+          rstring[0] = 0;
+          int8_t index = fvar;
+          char *wd = TasmotaGlobal.mqtt_data;
+          strlcpy(rstring, wd, glob_script_mem.max_ssize);
+          if (index) {
+            if (strlen(wd) && index) {
+              if (index<0) {
+                // assume val=xxx
+                rstring[0] = 0;
+                char *cp = strstr(wd, delim);
+                if (cp) {
+                    cp = strchr(cp, '=');
+                    if (cp) {
+                      cp++;
+                      for (uint32_t cnt = 0; cnt < glob_script_mem.max_ssize; cnt++) {
+                        if (*cp==',' || *cp==':' || *cp==0) {
+                          rstring[cnt] = 0;
+                          break;
+                        }
+                        rstring[cnt] = *cp++;
+                      }
+                    }
+                }
+              } else {
+                // preserve mqtt_data
+                char *mqd = (char*)malloc(MESSZ+2);
+                if (mqd) {
+                  strlcpy(mqd, TasmotaGlobal.mqtt_data, MESSZ);
+                  wd = mqd;
+                  char *lwd = wd;
+                  while (index) {
+                    char *cp = strstr(wd, delim);
+                    if (cp) {
+                      index--;
+                      if (!index) {
+                        // take this substring
+                        *cp = 0;
+                        strlcpy(rstring, lwd, glob_script_mem.max_ssize);
+                      } else {
+                        wd = cp + strlen(delim);
+                        lwd = wd;
+                      }
+                    } else {
+                      // fail or last string
+                      strlcpy(rstring, lwd, glob_script_mem.max_ssize);
+                      break;
+                    }
+                  }
+                  free(mqd);
+                }
+              }
+            }
+          }
+          if (sp) strlcpy(sp, rstring, glob_script_mem.max_ssize);
+          lp++;
+          len = 0;
+          goto strexit;
+        }
+#endif
 
 #ifdef SCRIPT_GET_HTTPS_JP
         if (!strncmp(vname, "gjp(", 4)) {
@@ -2450,7 +2414,7 @@ chknext:
           goto exit;
         }
         if (!strncmp(vname, "hn(", 3)) {
-          lp = GetNumericArgument(lp + 3, OPER_EQU, &fvar, 0);
+          lp = GetNumericArgument(lp + 3, OPER_EQU, &fvar, gv);
           if (fvar<0 || fvar>255) fvar = 0;
           lp++;
           len = 0;
@@ -2460,7 +2424,7 @@ chknext:
           goto strexit;
         }
         if (!strncmp(vname, "hx(", 3)) {
-          lp = GetNumericArgument(lp + 3, OPER_EQU, &fvar, 0);
+          lp = GetNumericArgument(lp + 3, OPER_EQU, &fvar, gv);
           lp++;
           len = 0;
           if (sp) {
@@ -2476,19 +2440,31 @@ chknext:
           len = 0;
           goto exit;
         }
+        if (!strncmp(vname, "http(", 5)) {
+          char host[SCRIPT_MAXSSIZE];
+          lp = GetStringArgument(lp + 5, OPER_EQU, host, 0);
+          SCRIPT_SKIP_SPACES
+          char request[SCRIPT_MAXSSIZE];
+          lp = GetStringArgument(lp, OPER_EQU, request, 0);
+          SCRIPT_SKIP_SPACES
+          fvar = http_req(host, request);
+          lp++;
+          len = 0;
+          goto exit;
+        }
 #ifdef USE_LIGHT
         if (!strncmp(vname, "hsvrgb(", 7)) {
-          lp = GetNumericArgument(lp + 7, OPER_EQU, &fvar, 0);
+          lp = GetNumericArgument(lp + 7, OPER_EQU, &fvar, gv);
           if (fvar<0 || fvar>360) fvar = 0;
           SCRIPT_SKIP_SPACES
           // arg2
           float fvar2;
-          lp = GetNumericArgument(lp, OPER_EQU, &fvar2, 0);
+          lp = GetNumericArgument(lp, OPER_EQU, &fvar2, gv);
           if (fvar2<0 || fvar2>100) fvar2 = 0;
           SCRIPT_SKIP_SPACES
           // arg3
           float fvar3;
-          lp = GetNumericArgument(lp, OPER_EQU, &fvar3, 0);
+          lp = GetNumericArgument(lp, OPER_EQU, &fvar3, gv);
           if (fvar3<0 || fvar3>100) fvar3 = 0;
 
           fvar = HSVToRGB(fvar, fvar2, fvar3);
@@ -2500,7 +2476,7 @@ chknext:
         break;
       case 'i':
         if (!strncmp(vname, "int(", 4)) {
-          lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, 0);
+          lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
           fvar = floor(fvar);
           lp++;
           len = 0;
@@ -2525,17 +2501,17 @@ chknext:
           goto exit;
         }
         if (!strncmp(vname, "is[", 3)) {
-          lp = isget(lp + 3, sp, 0);
+          lp = isget(lp + 3, sp, 0, gv);
           len = 0;
           goto strexit;
         }
         if (!strncmp(vname, "is1[", 4)) {
-          lp = isget(lp + 4, sp, 1);
+          lp = isget(lp + 4, sp, 1, gv);
           len = 0;
           goto strexit;
         }
         if (!strncmp(vname, "is2[", 4)) {
-          lp = isget(lp + 4, sp, 2);
+          lp = isget(lp + 4, sp, 2, gv);
           len = 0;
           goto strexit;
         }
@@ -2547,7 +2523,7 @@ chknext:
         }
 #ifdef USE_SCRIPT_GLOBVARS
         if (!strncmp(vname, "luip", 4)) {
-          if (sp) strlcpy(sp, IPAddressToString(last_udp_ip), glob_script_mem.max_ssize);
+          if (sp) strlcpy(sp, glob_script_mem.last_udp_ip.toString().c_str(), glob_script_mem.max_ssize);
           goto strexit;
         }
 #endif //USE_SCRIPT_GLOBVARS
@@ -2565,11 +2541,11 @@ chknext:
       case 'm':
         if (!strncmp(vname, "med(", 4)) {
           float fvar1;
-          lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar1, 0);
+          lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar1, gv);
           SCRIPT_SKIP_SPACES
           // arg2
           float fvar2;
-          lp = GetNumericArgument(lp, OPER_EQU, &fvar2, 0);
+          lp = GetNumericArgument(lp, OPER_EQU, &fvar2, gv);
           fvar = DoMedian5(fvar1, fvar2);
           lp++;
           len = 0;
@@ -2577,7 +2553,7 @@ chknext:
         }
 #ifdef USE_ANGLE_FUNC
         if (!strncmp(vname, "mpt(", 4)) {
-          lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, 0);
+          lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
           fvar = MeasurePulseTime(fvar);
           lp++;
           len = 0;
@@ -2620,13 +2596,13 @@ chknext:
         }
         if (!strncmp(vname, "mp(", 3)) {
           float fvar1;
-          lp = GetNumericArgument(lp + 3, OPER_EQU, &fvar1, 0);
+          lp = GetNumericArgument(lp + 3, OPER_EQU, &fvar1, gv);
           SCRIPT_SKIP_SPACES
           while (*lp!=')') {
             char *opp = lp;
             lp++;
             float fvar2;
-            lp = GetNumericArgument(lp, OPER_EQU, &fvar2, 0);
+            lp = GetNumericArgument(lp, OPER_EQU, &fvar2, gv);
             SCRIPT_SKIP_SPACES
             fvar = fvar1;
             if ((*opp=='<' && fvar1<fvar2) ||
@@ -2634,7 +2610,7 @@ chknext:
                 (*opp=='=' && fvar1==fvar2)) {
                   if (*lp!='<' && *lp!='>' && *lp!='=' && *lp!=')' && *lp!=SCRIPT_EOL) {
                     float fvar3;
-                    lp = GetNumericArgument(lp, OPER_EQU, &fvar3, 0);
+                    lp = GetNumericArgument(lp, OPER_EQU, &fvar3, gv);
                     SCRIPT_SKIP_SPACES
                     fvar=fvar3;
                   } else {
@@ -2650,10 +2626,10 @@ chknext:
 #ifdef USE_MORITZ
         if (!strncmp(vname, "mo(", 3)) {
           float fvar1;
-          lp = GetNumericArgument(lp + 3, OPER_EQU, &fvar1, 0);
+          lp = GetNumericArgument(lp + 3, OPER_EQU, &fvar1, gv);
           SCRIPT_SKIP_SPACES
           float fvar2;
-          lp = GetNumericArgument(lp, OPER_EQU, &fvar2, 0);
+          lp = GetNumericArgument(lp, OPER_EQU, &fvar2, gv);
           SCRIPT_SKIP_SPACES
           char rbuff[64];
           fvar = mo_getvars(fvar1, fvar2, rbuff);
@@ -2667,14 +2643,14 @@ chknext:
       case 'p':
         if (!strncmp(vname, "pin[", 4)) {
           // raw pin level
-          GetNumericArgument(vname + 4, OPER_EQU, &fvar, 0);
+          GetNumericArgument(vname + 4, OPER_EQU, &fvar, gv);
           fvar = digitalRead((uint8_t)fvar);
           // skip ] bracket
           len++;
           goto exit;
         }
         if (!strncmp(vname, "pn[", 3)) {
-          GetNumericArgument(vname + 3, OPER_EQU, &fvar, 0);
+          GetNumericArgument(vname + 3, OPER_EQU, &fvar, gv);
           fvar = Pin(fvar);
           // skip ] bracket
           len++;
@@ -2691,7 +2667,7 @@ chknext:
         }
 #endif // USE_I2S_AUDIO
         if (!strncmp(vname, "pd[", 3)) {
-          GetNumericArgument(vname + 3, OPER_EQU, &fvar, 0);
+          GetNumericArgument(vname + 3, OPER_EQU, &fvar, gv);
           uint8_t gpiopin = fvar;
 /*
           for (uint8_t i=0;i<GPIO_SENSOR_END;i++) {
@@ -2734,18 +2710,18 @@ chknext:
         if (!strncmp(vname, "pow(", 4)) {
           // arg1
           float fvar1;
-          lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar1, 0);
+          lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar1, gv);
           SCRIPT_SKIP_SPACES
           // arg2
           float fvar2;
-          lp = GetNumericArgument(lp, OPER_EQU, &fvar2, 0);
+          lp = GetNumericArgument(lp, OPER_EQU, &fvar2, gv);
           lp++;
           fvar = FastPrecisePowf(fvar1, fvar2);
           len = 0;
           goto exit;
         }
         if (!strncmp(vname, "pwr[", 4)) {
-          GetNumericArgument(vname + 4, OPER_EQU, &fvar, 0);
+          GetNumericArgument(vname + 4, OPER_EQU, &fvar, gv);
           uint8_t index = fvar;
           if (index<=TasmotaGlobal.devices_present) {
             fvar = bitRead(TasmotaGlobal.power, index - 1);
@@ -2756,13 +2732,14 @@ chknext:
           goto exit;
         }
         if (!strncmp(vname, "pc[", 3)) {
-          GetNumericArgument(vname + 3, OPER_EQU, &fvar, 0);
+          GetNumericArgument(vname + 3, OPER_EQU, &fvar, gv);
           uint8_t index = fvar;
           if (index<1 || index>MAX_COUNTERS) index = 1;
           fvar = RtcSettings.pulse_counter[index - 1];
           len += 1;
           goto exit;
         }
+
         break;
 
       case 'r':
@@ -2772,7 +2749,7 @@ chknext:
         }
         if (!strncmp(vname, "rnd(", 4)) {
           // tasmota switch state
-          GetNumericArgument(vname + 4, OPER_EQU, &fvar, 0);
+          GetNumericArgument(vname + 4, OPER_EQU, &fvar, gv);
           if (fvar<0) {
             randomSeed(-fvar);
             fvar = 0;
@@ -2783,6 +2760,17 @@ chknext:
           len++;
           goto exit;
         }
+#if  defined(ESP32) && (defined(USE_M5STACK_CORE2))
+        if (!strncmp(vname, "rec(", 4)) {
+          char str[SCRIPT_MAXSSIZE];
+          lp = GetStringArgument(lp + 4, OPER_EQU, str, 0);
+          SCRIPT_SKIP_SPACES
+          lp = GetNumericArgument(lp, OPER_EQU, &fvar, gv);
+          fvar = i2s_record(str, fvar);
+          len++;
+          goto exit;
+        }
+#endif
         break;
       case 's':
         if (!strncmp(vname, "secs", 4)) {
@@ -2791,7 +2779,7 @@ chknext:
         }
         if (!strncmp(vname, "sw[", 3)) {
           // tasmota switch state
-          GetNumericArgument(vname + 3, OPER_EQU, &fvar, 0);
+          GetNumericArgument(vname + 3, OPER_EQU, &fvar, gv);
           fvar = SwitchLastState((uint32_t)fvar);
           // skip ] bracket
           len++;
@@ -2801,6 +2789,12 @@ chknext:
           fvar = GetStack();
           goto exit;
         }
+#ifdef ESP32
+        if (!strncmp(vname, "stkwm", 5)) {
+          fvar = uxTaskGetStackHighWaterMark(NULL);
+          goto exit;
+        }
+#endif // ESP32
         if (!strncmp(vname, "slen", 4)) {
           fvar = strlen(glob_script_mem.script_ram);
           goto exit;
@@ -2818,10 +2812,10 @@ chknext:
           lp = GetStringArgument(lp + 3, OPER_EQU, str, 0);
           SCRIPT_SKIP_SPACES
           float fvar1;
-          lp = GetNumericArgument(lp, OPER_EQU, &fvar1, 0);
+          lp = GetNumericArgument(lp, OPER_EQU, &fvar1, gv);
           SCRIPT_SKIP_SPACES
           float fvar2;
-          lp = GetNumericArgument(lp, OPER_EQU, &fvar2, 0);
+          lp = GetNumericArgument(lp, OPER_EQU, &fvar2, gv);
           lp++;
           len = 0;
           if (fvar1<0) {
@@ -2839,7 +2833,7 @@ chknext:
           token[0] = *lp++;
           token[1] = 0;
           while (*lp==' ') lp++;
-          lp = GetNumericArgument(lp, OPER_EQU, &fvar, 0);
+          lp = GetNumericArgument(lp, OPER_EQU, &fvar, gv);
           // skip ) bracket
           lp++;
           len = 0;
@@ -2865,7 +2859,7 @@ chknext:
           goto strexit;
         }
         if (!strncmp(vname, "s(", 2)) {
-          lp = GetNumericArgument(lp + 2, OPER_EQU, &fvar, 0);
+          lp = GetNumericArgument(lp + 2, OPER_EQU, &fvar, gv);
           char str[glob_script_mem.max_ssize + 1];
           f2char(fvar, glob_script_mem.script_dprec, glob_script_mem.script_lzero, str);
           if (sp) strlcpy(sp, str, glob_script_mem.max_ssize);
@@ -2886,7 +2880,7 @@ chknext:
 
 #ifdef ESP32
         if (!strncmp(vname, "sf(", 3)) {
-          lp = GetNumericArgument(lp + 3, OPER_EQU, &fvar, 0);
+          lp = GetNumericArgument(lp + 3, OPER_EQU, &fvar, gv);
           if (fvar<80) fvar = 80;
           if (fvar>240) fvar = 240;
           setCpuFrequencyMhz(fvar);
@@ -2898,7 +2892,7 @@ chknext:
 #endif //ESP32
 #ifdef USE_TTGO_WATCH
         if (!strncmp(vname, "slp(", 4)) {
-          lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, 0);
+          lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
           SCRIPT_SKIP_SPACES
           TTGO_Sleep(fvar);
           lp++;
@@ -2919,7 +2913,7 @@ chknext:
 
 #ifdef USE_SHUTTER
         if (!strncmp(vname, "sht[", 4)) {
-          GetNumericArgument(vname + 4, OPER_EQU, &fvar, 0);
+          GetNumericArgument(vname + 4, OPER_EQU, &fvar, gv);
           uint8_t index = fvar;
           if (index<=TasmotaGlobal.shutters_present) {
             fvar = Settings.shutter_position[index - 1];
@@ -2932,14 +2926,14 @@ chknext:
 #endif //USE_SHUTTER
 #ifdef USE_ANGLE_FUNC
         if (!strncmp(vname, "sin(", 4)) {
-          lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, 0);
+          lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
           fvar = sinf(fvar);
           lp++;
           len = 0;
           goto exit;
         }
         if (!strncmp(vname, "sqrt(", 5)) {
-          lp = GetNumericArgument(lp + 5, OPER_EQU, &fvar, 0);
+          lp = GetNumericArgument(lp + 5, OPER_EQU, &fvar, gv);
           fvar = sqrtf(fvar);
           lp++;
           len = 0;
@@ -2949,7 +2943,7 @@ chknext:
 
 #if defined(USE_SML_M) && defined (USE_SML_SCRIPT_CMD)
         if (!strncmp(vname, "sml[", 4)) {
-          lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, 0);
+          lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
           SCRIPT_SKIP_SPACES
           fvar = SML_GetVal(fvar);
           lp++;
@@ -2958,14 +2952,14 @@ chknext:
         }
         if (!strncmp(vname, "sml(", 4)) {
           float fvar1;
-          lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar1, 0);
+          lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar1, gv);
           SCRIPT_SKIP_SPACES
           float fvar2;
-          lp = GetNumericArgument(lp, OPER_EQU, &fvar2, 0);
+          lp = GetNumericArgument(lp, OPER_EQU, &fvar2, gv);
           SCRIPT_SKIP_SPACES
           if (fvar2==0) {
             float fvar3;
-            lp = GetNumericArgument(lp, OPER_EQU, &fvar3, 0);
+            lp = GetNumericArgument(lp, OPER_EQU, &fvar3, gv);
             fvar = SML_SetBaud(fvar1, fvar3);
           } else if (fvar2==1) {
             char str[SCRIPT_MAXSSIZE];
@@ -3021,7 +3015,7 @@ chknext:
         }
 #ifdef USE_SCRIPT_TIMER
         if (!strncmp(vname, "ts1(", 4)) {
-          lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, 0);
+          lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
           if (fvar<10) fvar = 10;
           Script_ticker1.attach_ms(fvar, Script_ticker1_end);
           lp++;
@@ -3029,7 +3023,7 @@ chknext:
           goto exit;
         }
         if (!strncmp(vname, "ts2(", 4)) {
-          lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, 0);
+          lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
           if (fvar<10) fvar = 10;
           Script_ticker2.attach_ms(fvar, Script_ticker2_end);
           lp++;
@@ -3037,7 +3031,7 @@ chknext:
           goto exit;
         }
         if (!strncmp(vname, "ts3(", 4)) {
-          lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, 0);
+          lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
           if (fvar<10) fvar = 10;
           Script_ticker3.attach_ms(fvar, Script_ticker3_end);
           lp++;
@@ -3045,7 +3039,7 @@ chknext:
           goto exit;
         }
         if (!strncmp(vname, "ts4(", 4)) {
-          lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, 0);
+          lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
           if (fvar<10) fvar = 10;
           Script_ticker4.attach_ms(fvar, Script_ticker4_end);
           lp++;
@@ -3057,9 +3051,9 @@ chknext:
 #ifdef USE_DISPLAY
 #ifdef USE_TOUCH_BUTTONS
         if (!strncmp(vname, "tbut[", 5)) {
-          GetNumericArgument(vname + 5, OPER_EQU, &fvar, 0);
+          GetNumericArgument(vname + 5, OPER_EQU, &fvar, gv);
           uint8_t index = fvar;
-          if (index<1 || index>MAXBUTTONS) index = 1;
+          if (index<1 || index>MAX_TOUCH_BUTTONS) index = 1;
           index--;
           if (buttons[index]) {
             fvar = buttons[index]->vpower.on_off;
@@ -3072,6 +3066,30 @@ chknext:
 
 #endif //USE_TOUCH_BUTTONS
 #endif //USE_DISPLAY
+#if 0
+        if (!strncmp(vname, "test(", 5)) {
+          lp = GetNumericArgument(lp + 5, OPER_EQU, &fvar, gv);
+          uint32_t cycles;
+          uint64_t accu=0;
+          char sbuffer[32];
+          // PSTR performance test
+          // this is best case since everything will be in cache
+          // PSTR at least 3 times slower here, will be much slower if cache missed
+          for (uint16 cnt=0; cnt<1000; cnt++) {
+            cycles=ESP.getCycleCount();
+            if (fvar>0) {
+              snprintf_P(sbuffer, sizeof(sbuffer), PSTR("1234"));
+            } else {
+              snprintf(sbuffer, sizeof(sbuffer), "1234");
+            }
+            accu += ESP.getCycleCount()-cycles;
+          }
+          lp++;
+          len = 0;
+          fvar = accu / 1000;
+          goto exit;
+        }
+#endif
         break;
       case 'u':
         if (!strncmp(vname, "uptime", 6)) {
@@ -3086,7 +3104,7 @@ chknext:
           // var was updated
           struct T_INDEX ind;
           uint8_t vtype;
-          isvar(vname + 4, &vtype, &ind, 0, 0, 0);
+          isvar(vname + 4, &vtype, &ind, 0, 0, gv);
           if (!ind.bits.constant) {
             if (!ind.bits.changed) {
               fvar = 0;
@@ -3107,26 +3125,26 @@ chknext:
 #if defined(ESP32) && defined(USE_WEBCAM)
         if (!strncmp(vname, "wc(", 3)) {
           float fvar1;
-          lp = GetNumericArgument(lp + 3, OPER_EQU, &fvar1, 0);
+          lp = GetNumericArgument(lp + 3, OPER_EQU, &fvar1, gv);
           SCRIPT_SKIP_SPACES
           switch ((uint32)fvar1) {
             case 0:
               { float fvar2;
-                lp = GetNumericArgument(lp, OPER_EQU, &fvar2, 0);
+                lp = GetNumericArgument(lp, OPER_EQU, &fvar2, gv);
                 fvar = WcSetup(fvar2);
               }
               break;
             case 1:
               { float fvar2;
-                lp = GetNumericArgument(lp, OPER_EQU, &fvar2, 0);
+                lp = GetNumericArgument(lp, OPER_EQU, &fvar2, gv);
                 fvar = WcGetFrame(fvar2);
               }
               break;
             case 2:
               { float fvar2,fvar3;
-                lp = GetNumericArgument(lp, OPER_EQU, &fvar2, 0);
+                lp = GetNumericArgument(lp, OPER_EQU, &fvar2, gv);
                 SCRIPT_SKIP_SPACES
-                lp = GetNumericArgument(lp, OPER_EQU, &fvar3, 0);
+                lp = GetNumericArgument(lp, OPER_EQU, &fvar3, gv);
                 fvar = WcSetOptions(fvar2, fvar3);
               }
               break;
@@ -3138,20 +3156,20 @@ chknext:
               break;
             case 5:
               { float fvar2;
-                lp = GetNumericArgument(lp, OPER_EQU, &fvar2, 0);
+                lp = GetNumericArgument(lp, OPER_EQU, &fvar2, gv);
                 fvar = WcSetStreamserver(fvar2);
               }
               break;
             case 6:
               { float fvar2;
-                lp = GetNumericArgument(lp, OPER_EQU, &fvar2, 0);
+                lp = GetNumericArgument(lp, OPER_EQU, &fvar2, gv);
                 fvar = WcSetMotionDetect(fvar2);
               }
               break;
 #ifdef USE_FACE_DETECT
             case 7:
               { float fvar2;
-                lp = GetNumericArgument(lp, OPER_EQU, &fvar2, 0);
+                lp = GetNumericArgument(lp, OPER_EQU, &fvar2, gv);
                 fvar = WcSetFaceDetect(fvar2);
               }
               break;
@@ -3176,7 +3194,7 @@ chknext:
 #endif // USE_TTGO_WATCH
 #if defined(USE_FT5206)
         if (!strncmp(vname, "wtch(", 5)) {
-          lp = GetNumericArgument(lp + 5, OPER_EQU, &fvar, 0);
+          lp = GetNumericArgument(lp + 5, OPER_EQU, &fvar, gv);
           fvar = Touch_Status(fvar);
           lp++;
           len = 0;
@@ -3373,14 +3391,14 @@ uint16_t GetStack(void) {
 }
 #endif //ESP8266
 
-char *GetStringArgument(char *lp, uint8_t lastop, char *cp, JsonParserObject *jo) {
+char *GetStringArgument(char *lp, uint8_t lastop, char *cp, struct GVARS *gv) {
   uint8_t operand = 0;
   uint8_t vtype;
   char *slp;
   struct T_INDEX ind;
   char str[SCRIPT_MAXSSIZE],str1[SCRIPT_MAXSSIZE];
   while (1) {
-    lp=isvar(lp, &vtype, &ind, 0, str1, jo);
+    lp=isvar(lp, &vtype, &ind, 0, str1, gv);
     if (vtype!=STR_RES && !(vtype & STYPE)) {
       // numeric type
       glob_script_mem.glob_error = 1;
@@ -3419,7 +3437,7 @@ char *GetStringArgument(char *lp, uint8_t lastop, char *cp, JsonParserObject *jo
   return lp;
 }
 
-char *GetNumericArgument(char *lp, uint8_t lastop, float *fp, JsonParserObject *jo) {
+char *GetNumericArgument(char *lp, uint8_t lastop, float *fp, struct GVARS *gv) {
 uint8_t operand = 0;
 float fvar1,fvar;
 char *slp;
@@ -3429,11 +3447,11 @@ struct T_INDEX ind;
         // get 1. value
         if (*lp=='(') {
             lp++;
-            lp = GetNumericArgument(lp, OPER_EQU, &fvar1, jo);
+            lp = GetNumericArgument(lp, OPER_EQU, &fvar1, gv);
             lp++;
             //if (*lp==')') lp++;
         } else {
-            lp = isvar(lp, &vtype, &ind, &fvar1, 0, jo);
+            lp = isvar(lp, &vtype, &ind, &fvar1, 0, gv);
             if ((vtype!=NUM_RES) && (vtype&STYPE)) {
               // string type
               glob_script_mem.glob_error = 1;
@@ -3607,7 +3625,7 @@ void Replace_Cmd_Vars(char *srcbuf, uint32_t srcsize, char *dstbuf, uint32_t dst
 
 void toLog(const char *str) {
   if (!str) return;
-  AddLog_P(LOG_LEVEL_INFO, str);
+  AddLog(LOG_LEVEL_INFO, str);
 }
 
 
@@ -3622,7 +3640,8 @@ void toLogN(const char *cp, uint8_t len) {
 void toLogEOL(const char *s1,const char *str) {
   if (!str) return;
   uint8_t index = 0;
-  char *cp = TasmotaGlobal.log_data;
+  char log_data[MAX_LOGSZ];
+  char *cp = log_data;
   strcpy(cp, s1);
   cp += strlen(s1);
   while (*str) {
@@ -3630,7 +3649,7 @@ void toLogEOL(const char *s1,const char *str) {
     *cp++ = *str++;
   }
   *cp = 0;
-  AddLog(LOG_LEVEL_INFO);
+  AddLogData(LOG_LEVEL_INFO, log_data);
 }
 
 
@@ -3644,7 +3663,7 @@ void toSLog(const char *str) {
 #endif
 }
 
-char *Evaluate_expression(char *lp, uint8_t and_or, uint8_t *result, JsonParserObject *jo) {
+char *Evaluate_expression(char *lp, uint8_t and_or, uint8_t *result, struct GVARS *gv) {
   float fvar,*dfvar,fvar1;
   uint8_t numeric;
   struct T_INDEX ind;
@@ -3661,7 +3680,7 @@ char *Evaluate_expression(char *lp, uint8_t and_or, uint8_t *result, JsonParserO
 
 loop:
     SCRIPT_SKIP_SPACES
-    lp = Evaluate_expression(lp, xand_or, &res, jo);
+    lp = Evaluate_expression(lp, xand_or, &res, gv);
     if (*lp==')') {
       lp++;
       goto exit0;
@@ -3694,18 +3713,18 @@ exit0:
   glob_script_mem.glob_error = 0;
   slp = lp;
   numeric = 1;
-  lp = GetNumericArgument(lp, OPER_EQU, dfvar, 0);
+  lp = GetNumericArgument(lp, OPER_EQU, dfvar, gv);
   if (glob_script_mem.glob_error==1) {
     // was string, not number
 	  char cmpstr[SCRIPT_MAXSSIZE];
     lp = slp;
     numeric = 0;
     // get the string
-    lp = isvar(lp, &vtype, &ind, 0, cmpstr, 0);
+    lp = isvar(lp, &vtype, &ind, 0, cmpstr, gv);
 	  lp = getop(lp, &lastop);
     // compare string
     char str[SCRIPT_MAXSSIZE];
-    lp = GetStringArgument(lp, OPER_EQU, str, jo);
+    lp = GetStringArgument(lp, OPER_EQU, str, gv);
     if (lastop==OPER_EQUEQU || lastop==OPER_NOTEQU) {
       res = strcmp(cmpstr, str);
       if (lastop==OPER_EQUEQU) res=!res;
@@ -3716,7 +3735,7 @@ exit0:
     // numeric
     // evaluate operand
     lp = getop(lp, &lastop);
-    lp = GetNumericArgument(lp, OPER_EQU, &fvar1, jo);
+    lp = GetNumericArgument(lp, OPER_EQU, &fvar1, gv);
     switch (lastop) {
       case OPER_EQUEQU:
           res = (*dfvar==fvar1);
@@ -3799,9 +3818,10 @@ void esp32_beep(int32_t freq ,uint32_t len) {
 uint8_t pwmpin[5];
 
 void esp_pwm(int32_t value, uint32 freq, uint32_t channel) {
-  if (channel < 1 || channel > 3) channel = 1;
+
 #ifdef ESP32
-  channel+=7;
+  if (channel < 1 || channel > 8) channel = 1;
+  channel += 7;
   if (value < 0) {
     if (value <= -64) value = 0;
     // set range to 10 bit
@@ -3816,6 +3836,7 @@ void esp_pwm(int32_t value, uint32 freq, uint32_t channel) {
   }
 #else
   // esp8266 default to range 0-1023
+  if (channel < 1 || channel > 5) channel = 1;
   channel-=1;
   if (value < 0) {
     if (value <= -64) value = 0;
@@ -3859,6 +3880,8 @@ char *scripter_sub(char *lp, uint8_t fromscriptcmd) {
   return lp;
 }
 
+int16_t Run_script_sub(const char *type, int8_t tlen, struct GVARS *gv);
+
 #define IF_NEST 8
 // execute section of scripter
 int16_t Run_Scripter(const char *type, int8_t tlen, char *js) {
@@ -3870,20 +3893,25 @@ int16_t retval;
 
     if (tasm_cmd_activ && tlen>0) return 0;
 
+    struct GVARS gv;
+
     JsonParserObject jo;
+
     if (js) {
       //String jss = js;    // copy the string to a new buffer, not sure we can change the original buffer
       //JsonParser parser((char*)jss.c_str());
       JsonParser parser(js);
       jo = parser.getRootObject();
-      retval = Run_script_sub(type, tlen, &jo);
+      gv.jo = &jo;
+      retval = Run_script_sub(type, tlen, &gv);
     } else {
-      retval = Run_script_sub(type, tlen, 0);
+      gv.jo = 0;
+      retval = Run_script_sub(type, tlen, &gv);
     }
     return retval;
 }
 
-int16_t Run_script_sub(const char *type, int8_t tlen, JsonParserObject *jo) {
+int16_t Run_script_sub(const char *type, int8_t tlen, struct GVARS *gv) {
     uint8_t vtype=0,sindex,xflg,floop=0,globvindex,fromscriptcmd=0;
     char *lp_next;
     int16_t globaindex,saindex;
@@ -4013,7 +4041,7 @@ int16_t Run_script_sub(const char *type, int8_t tlen, JsonParserObject *jo) {
               lp += 3;
               SCRIPT_SKIP_SPACES
               lp_next = 0;
-              lp = isvar(lp, &vtype, &ind, 0, 0, 0);
+              lp = isvar(lp, &vtype, &ind, 0, 0, gv);
               if ((vtype!=VAR_NV) && (vtype&STYPE)==0) {
                   // numeric var
                   uint8_t index = glob_script_mem.type[ind.index].index;
@@ -4072,7 +4100,7 @@ int16_t Run_script_sub(const char *type, int8_t tlen, JsonParserObject *jo) {
                 // was string, not number
                 lp = slp;
                 // get the string
-                lp = isvar(lp, &vtype, &ind, 0, cmpstr, 0);
+                lp = isvar(lp, &vtype, &ind, 0, cmpstr, gv);
                 swflg = 0x81;
               } else {
                 swflg = 1;
@@ -4209,11 +4237,11 @@ int16_t Run_script_sub(const char *type, int8_t tlen, JsonParserObject *jo) {
               Restart_globvars();
               goto next_line;
             }
-#endif
+#endif // USE_SCRIPT_GLOBVARS
 #ifdef USE_LIGHT
 #ifdef USE_WS2812
             else if (!strncmp(lp, "ws2812(", 7)) {
-              lp = isvar(lp + 7, &vtype, &ind, 0, 0, 0);
+              lp = isvar(lp + 7, &vtype, &ind, 0, 0, gv);
               if (vtype!=VAR_NV) {
                 SCRIPT_SKIP_SPACES
                 if (*lp!=')') {
@@ -4253,10 +4281,14 @@ int16_t Run_script_sub(const char *type, int8_t tlen, JsonParserObject *jo) {
               lp += 3;
               uint8_t channel = 1;
               if (*(lp+1)=='(') {
-                channel = *lp & 7;
-                if (channel > 5) {
-                  channel = 5;
-                }
+                channel = *lp & 0x0f;
+#ifdef ESP8266
+                if (channel > 5) {channel = 5;}
+#endif // ESP8266
+#ifdef ESP32
+                if (channel > 8) {channel = 8;}
+#endif // ESP32
+                if (channel < 1) {channel = 1;}
                 lp += 2;
               } else {
                 if (*lp=='(') {
@@ -4312,7 +4344,7 @@ int16_t Run_script_sub(const char *type, int8_t tlen, JsonParserObject *jo) {
                     }
                     cmd[count] = *lp++;
                   }
-                  //AddLog_P(LOG_LEVEL_INFO, tmp);
+                  //AddLog(LOG_LEVEL_INFO, tmp);
                   // replace vars in cmd
                   char *tmp = cmdmem + SCRIPT_CMDMEM / 2;
                   Replace_Cmd_Vars(cmd, 0, tmp, SCRIPT_CMDMEM / 2);
@@ -4324,7 +4356,7 @@ int16_t Run_script_sub(const char *type, int8_t tlen, JsonParserObject *jo) {
                   } else {
                     if (!sflag) {
                       tasm_cmd_activ = 1;
-                      AddLog_P(glob_script_mem.script_loglevel&0x7f, PSTR("Script: performs \"%s\""), tmp);
+                      AddLog(glob_script_mem.script_loglevel&0x7f, PSTR("Script: performs \"%s\""), tmp);
                     } else if (sflag==2) {
                       // allow recursive call
                     } else {
@@ -4359,14 +4391,14 @@ int16_t Run_script_sub(const char *type, int8_t tlen, JsonParserObject *jo) {
                 char *svd_sp = glob_script_mem.scriptptr;
                 strcat(str, "\n#");
                 glob_script_mem.scriptptr = str;
-                Run_script_sub(">", 1, jo);
+                Run_script_sub(">", 1, gv);
                 glob_script_mem.scriptptr = svd_sp;
             }
 
             // check for variable result
             if (if_state[ifstck]==1) {
               // evaluate exxpression
-              lp = Evaluate_expression(lp, and_or, &if_result[ifstck], jo);
+              lp = Evaluate_expression(lp, and_or, &if_result[ifstck], gv);
               SCRIPT_SKIP_SPACES
               if (*lp=='{' && if_state[ifstck]==1) {
                 lp += 1; // then
@@ -4376,7 +4408,7 @@ int16_t Run_script_sub(const char *type, int8_t tlen, JsonParserObject *jo) {
               goto next_line;
             } else {
               char *vnp = lp;
-              lp = isvar(lp, &vtype, &ind, &sysvar, 0, 0);
+              lp = isvar(lp, &vtype, &ind, &sysvar, 0, gv);
               if (vtype!=VAR_NV) {
 #ifdef USE_SCRIPT_GLOBVARS
                   char varname[16];
@@ -4387,7 +4419,7 @@ int16_t Run_script_sub(const char *type, int8_t tlen, JsonParserObject *jo) {
 
                   // found variable as result
                   globvindex = ind.index; // save destination var index here
-                  globaindex = last_findex;
+                  if (gv) globaindex = gv->numind;
                   uint8_t index = glob_script_mem.type[ind.index].index;
                   if ((vtype&STYPE)==0) {
                       // numeric result
@@ -4407,17 +4439,17 @@ int16_t Run_script_sub(const char *type, int8_t tlen, JsonParserObject *jo) {
                       lp = getop(lp, &lastop);
                       char *slp = lp;
                       glob_script_mem.glob_error = 0;
-                      lp = GetNumericArgument(lp, OPER_EQU, &fvar, jo);
+                      lp = GetNumericArgument(lp, OPER_EQU, &fvar, gv);
                       if (glob_script_mem.glob_error==1) {
                         // mismatch was string, not number
                         // get the string and convert to number
-                        lp = isvar(slp, &vtype, &ind, 0, cmpstr, jo);
+                        lp = isvar(slp, &vtype, &ind, 0, cmpstr, gv);
                         fvar = CharToFloat(cmpstr);
                       }
                       switch (lastop) {
                           case OPER_EQU:
                               if (glob_script_mem.var_not_found) {
-                                if (!jo) toLogEOL("var not found: ",lp);
+                                if (!gv || !gv->jo) toLogEOL("var not found: ",lp);
                                 goto next_line;
                               }
                               *dfvar = fvar;
@@ -4476,7 +4508,7 @@ int16_t Run_script_sub(const char *type, int8_t tlen, JsonParserObject *jo) {
                             Settings.tele_period = *dfvar;
                             break;
                           case SCRIPT_EVENT_HANDLED:
-                            event_handeled = *dfvar;
+                            glob_script_mem.event_handeled = *dfvar;
                             break;
                         }
                         sysv_type = 0;
@@ -4485,14 +4517,14 @@ int16_t Run_script_sub(const char *type, int8_t tlen, JsonParserObject *jo) {
                     // string result
                     numeric = 0;
                     sindex = index;
-                    saindex = last_sindex;
+                    saindex = gv->strind;
                     // string result
                     char str[SCRIPT_MAXSSIZE];
                     lp = getop(lp, &lastop);
                     char *slp = lp;
                     glob_script_mem.glob_error = 0;
-                    lp = GetStringArgument(lp, OPER_EQU, str, jo);
-                    if (!jo && glob_script_mem.glob_error) {
+                    lp = GetStringArgument(lp, OPER_EQU, str, gv);
+                    if ((!gv || !gv->jo) && glob_script_mem.glob_error) {
                       // mismatch
                       lp = GetNumericArgument(slp, OPER_EQU, &fvar, 0);
                       dtostrfd(fvar, 6, str);
@@ -4513,7 +4545,7 @@ int16_t Run_script_sub(const char *type, int8_t tlen, JsonParserObject *jo) {
                         } else if (lastop==OPER_PLSEQU) {
                           strncat(glob_script_mem.last_index_string[glob_script_mem.sind_num] + (saindex * glob_script_mem.max_ssize), str, glob_script_mem.max_ssize);
                         }
-                        last_sindex = -1;
+                        gv->strind = -1;
                       } else {
                         if (lastop==OPER_EQU) {
                           strlcpy(glob_script_mem.glob_snp + (sindex * glob_script_mem.max_ssize), str, glob_script_mem.max_ssize);
@@ -4554,53 +4586,59 @@ int16_t Run_script_sub(const char *type, int8_t tlen, JsonParserObject *jo) {
                 if (*ctype=='#') {
                   // check for parameter
                   ctype += tlen;
-                  if (*ctype=='(' && *(lp+tlen)=='(') {
-                    float fparam;
-                    numeric = 1;
-                    glob_script_mem.glob_error = 0;
-                    GetNumericArgument((char*)ctype, OPER_EQU, &fparam, 0);
-                    if (glob_script_mem.glob_error==1) {
-                      // was string, not number
-                      numeric = 0;
-                      // get the string
-                      GetStringArgument((char*)ctype + 1, OPER_EQU, cmpstr, 0);
-                    }
-                    lp += tlen;
-                    if (*lp=='(') {
-                      // fetch destination
-                      lp++;
-                      lp = isvar(lp, &vtype, &ind, 0, 0, 0);
-                      if (vtype!=VAR_NV) {
-                        // found variable as result
-                        uint8_t index = glob_script_mem.type[ind.index].index;
-                        if ((vtype&STYPE)==0) {
-                            // numeric result
-                            dfvar = &glob_script_mem.fvars[index];
-                            if (numeric) {
-                              *dfvar = fparam;
-                            } else {
-                              // mismatch
-                              *dfvar = CharToFloat(cmpstr);
-                            }
-                        } else {
-                            // string result
-                            sindex = index;
-                            if (!numeric) {
-                              strlcpy(glob_script_mem.glob_snp + (sindex * glob_script_mem.max_ssize), cmpstr, glob_script_mem.max_ssize);
-                            } else {
-                              // mismatch
-                              dtostrfd(fparam, 6, glob_script_mem.glob_snp + (sindex * glob_script_mem.max_ssize));
-                            }
+                  char nxttok = '(';
+                  char *argptr = ctype+tlen;
+
+                  lp += tlen;
+                  do {
+                    if (*ctype==nxttok && *lp==nxttok) {
+                      float fparam;
+                      numeric = 1;
+                      glob_script_mem.glob_error = 0;
+                      argptr = GetNumericArgument((char*)ctype + 1, OPER_EQU, &fparam, 0);
+                      if (glob_script_mem.glob_error==1) {
+                        // was string, not number
+                        numeric = 0;
+                        // get the string
+                        argptr = GetStringArgument((char*)ctype + 1, OPER_EQU, cmpstr, 0);
+                      }
+                      if (*lp==nxttok) {
+                        // fetch destination
+                        lp++;
+                        lp = isvar(lp, &vtype, &ind, 0, 0, gv);
+                        if (vtype!=VAR_NV) {
+                          // found variable as result
+                          uint8_t index = glob_script_mem.type[ind.index].index;
+                          if ((vtype&STYPE)==0) {
+                              // numeric result
+                              dfvar = &glob_script_mem.fvars[index];
+                              if (numeric) {
+                                *dfvar = fparam;
+                              } else {
+                                // mismatch
+                                *dfvar = CharToFloat(cmpstr);
+                              }
+                          } else {
+                              // string result
+                              sindex = index;
+                              if (!numeric) {
+                                strlcpy(glob_script_mem.glob_snp + (sindex * glob_script_mem.max_ssize), cmpstr, glob_script_mem.max_ssize);
+                              } else {
+                                // mismatch
+                                dtostrfd(fparam, 6, glob_script_mem.glob_snp + (sindex * glob_script_mem.max_ssize));
+                              }
+                          }
                         }
                       }
+                    } else {
+                      if (*ctype==nxttok || (*lp!=SCRIPT_EOL && *lp!='?')) {
+                        // revert
+                        section = 0;
+                      }
                     }
-                  } else {
-                    lp += tlen;
-                    if (*ctype=='(' || (*lp!=SCRIPT_EOL && *lp!='?')) {
-                      // revert
-                      section = 0;
-                    }
-                  }
+                    nxttok = ' ';
+                    ctype = argptr;
+                  } while (*lp==' ' && (section == 1) );
                 }
             }
         }
@@ -4641,7 +4679,7 @@ void ScripterEvery100ms(void) {
     }
   }
   if (Settings.rule_enabled) {
-    if (fast_script==99) Run_Scripter(">F", 2, 0);
+    if (glob_script_mem.fast_script == 99) Run_Scripter(">F", 2, 0);
   }
 }
 
@@ -4797,47 +4835,14 @@ const char HTTP_SCRIPT_FORM_END[] PROGMEM =
 #ifdef USE_SCRIPT_FATFS
 const char HTTP_FORM_SCRIPT1c[] PROGMEM =
     "<button name='d%d' type='submit' class='button bgrn'>" D_SCRIPT_DOWNLOAD " '%s'</button>";
-#ifdef SDCARD_DIR
-const char HTTP_FORM_SCRIPT1d[] PROGMEM =
-    "<button method='post' name='upl' type='submit' class='button bgrn'>" D_SDCARD_DIR "</button>";
-#else
+
+
 const char HTTP_FORM_SCRIPT1d[] PROGMEM =
     "<button method='post' name='upl' type='submit' class='button bgrn'>" D_SCRIPT_UPLOAD_FILES "</button>";
-#endif
 
-#ifdef SDCARD_DIR
-const char S_SCRIPT_FILE_UPLOAD[] PROGMEM = D_SDCARD_DIR;
-#else
 const char S_SCRIPT_FILE_UPLOAD[] PROGMEM = D_SDCARD_UPLOAD;
-#endif
 
-const char HTTP_FORM_FILE_UPLOAD[] PROGMEM =
-"<div id='f1' name='f1' style='display:block;'>"
-"<fieldset><legend><b>&nbsp;%s"  "&nbsp;</b></legend>";
-const char HTTP_FORM_FILE_UPG[] PROGMEM =
-"<form method='post' action='u13' enctype='multipart/form-data'>"
-"<br/><input type='file' name='u13'><br/>"
-"<br/><button type='submit' onclick='eb(\"f1\").style.display=\"none\";eb(\"f2\").style.display=\"block\";this.form.submit();'>" D_START " %s</button></form>";
-
-const char HTTP_FORM_FILE_UPGb[] PROGMEM =
-"</fieldset>"
-"</div>"
-"<div id='f2' name='f2' style='display:none;text-align:center;'><b>" D_UPLOAD_STARTED " ...</b></div>";
-
-const char HTTP_FORM_FILE_UPGc[] PROGMEM =
-"<div style='text-align:left;color:green;'>total size: %s kB - free: %s kB</div>";
-
-const char HTTP_FORM_SDC_DIRa[] PROGMEM =
-"<div style='text-align:left'>";
-const char HTTP_FORM_SDC_DIRb[] PROGMEM =
- "<pre><a href='%s' file='%s'>%s</a>     %s : %8d</pre>";
-const char HTTP_FORM_SDC_DIRd[] PROGMEM =
-"<pre><a href='%s' file='%s'>%s</a></pre>";
-const char HTTP_FORM_SDC_DIRc[] PROGMEM =
-"</div>";
-const char HTTP_FORM_SDC_HREF[] PROGMEM =
-"http://%s/upl?download=%s/%s";
-#endif
+#endif // USE_SCRIPT_FATFS
 
 
 uint8_t *script_ex_ptr;
@@ -4847,13 +4852,13 @@ uint8_t sc_state;
 // upload script and start immediately
 void script_upload_start(void) {
 
-  //AddLog_P(LOG_LEVEL_INFO, PSTR("HTP: file upload execute"));
+  //AddLog(LOG_LEVEL_INFO, PSTR("HTP: file upload execute"));
 
   HTTPUpload& upload = Webserver->upload();
   if (upload.status == UPLOAD_FILE_START) {
-    //AddLog_P(LOG_LEVEL_INFO, PSTR("HTP: upload start"));
+    //AddLog(LOG_LEVEL_INFO, PSTR("HTP: upload start"));
     script_ex_ptr = (uint8_t*)glob_script_mem.script_ram;
-    //AddLog_P(LOG_LEVEL_INFO, PSTR("HTP: upload file %s, %d"),upload.filename.c_str(),upload.totalSize);
+    //AddLog(LOG_LEVEL_INFO, PSTR("HTP: upload file %s, %d"),upload.filename.c_str(),upload.totalSize);
 
     if (strcmp(upload.filename.c_str(), "execute_script")) {
       Web.upload_error = 1;
@@ -4871,7 +4876,7 @@ void script_upload_start(void) {
     bitWrite(Settings.rule_enabled, 0, 0);
 
   } else if(upload.status == UPLOAD_FILE_WRITE) {
-    //AddLog_P(LOG_LEVEL_INFO, PSTR("HTP: upload write"));
+    //AddLog(LOG_LEVEL_INFO, PSTR("HTP: upload write"));
     uint32_t csiz = upload.currentSize;
     uint32_t tsiz = glob_script_mem.script_size - 1;
     if (uplsize<tsiz) {
@@ -4885,20 +4890,20 @@ void script_upload_start(void) {
         script_ex_ptr += csiz;
         uplsize += csiz;
       }
-      //AddLog_P(LOG_LEVEL_INFO, PSTR("HTP: write %d - %d"),csiz,uplsize);
+      //AddLog(LOG_LEVEL_INFO, PSTR("HTP: write %d - %d"),csiz,uplsize);
     }
 
     //if (upload_file) upload_file.write(upload.buf,upload.currentSize);
   } else if(upload.status == UPLOAD_FILE_END) {
     //if (upload_file) upload_file.close();
     if (Web.upload_error) {
-      AddLog_P(LOG_LEVEL_INFO, PSTR("HTP: upload error"));
+      AddLog(LOG_LEVEL_INFO, PSTR("HTP: upload error"));
     } else {
       *script_ex_ptr = 0;
       bitWrite(Settings.rule_enabled, 0, sc_state);
       SaveScript();
       SaveScriptEnd();
-      //AddLog_P(LOG_LEVEL_INFO, PSTR("HTP: upload success"));
+      //AddLog(LOG_LEVEL_INFO, PSTR("HTP: upload success"));
     }
   } else {
     Web.upload_error = 1;
@@ -4913,196 +4918,18 @@ void ScriptExecuteUploadSuccess(void) {
 
 #ifdef USE_SCRIPT_FATFS
 
-#if USE_LONG_FILE_NAMES>0
-#undef REJCMPL
-#define REJCMPL 6
-#else
-#undef REJCMPL
-#define REJCMPL 8
-#endif
-
-uint8_t reject(char *name) {
-
-  char *lcp = strrchr(name,'/');
-  if (lcp) {
-    name = lcp + 1;
-  }
-
-  while (*name=='/') name++;
-  if (*name=='_') return 1;
-  if (*name=='.') return 1;
-
-  if (!strncasecmp(name, "SPOTLI~1", REJCMPL)) return 1;
-  if (!strncasecmp(name, "TRASHE~1", REJCMPL)) return 1;
-  if (!strncasecmp(name, "FSEVEN~1", REJCMPL)) return 1;
-  if (!strncasecmp(name, "SYSTEM~1", REJCMPL)) return 1;
-  if (!strncasecmp(name, "System Volume", 13)) return 1;
-  return 0;
-}
-
-void ListDir(char *path, uint8_t depth) {
-  char name[32];
-  char npath[128];
-  char format[12];
-  sprintf(format, "%%-%ds", 24 - depth);
-
-  File dir = fsp->open(path, FILE_READ);
-  if (dir) {
-    dir.rewindDirectory();
-    if (strlen(path)>1) {
-      snprintf_P(npath, sizeof(npath), PSTR("http://%s/upl?download=%s"), WiFi.localIP().toString().c_str(),path);
-      for (uint8_t cnt = strlen(npath) - 1; cnt>0; cnt--) {
-        if (npath[cnt]=='/') {
-          if (npath[cnt - 1]=='=') npath[cnt + 1] = 0;
-          else npath[cnt] = 0;
-          break;
-        }
-      }
-      WSContentSend_P(HTTP_FORM_SDC_DIRd, npath,path, "..");
-    }
-    char *ep;
-    while (true) {
-      File entry = dir.openNextFile();
-      if (!entry) {
-        break;
-      }
-      // esp32 returns path here, shorten to filename
-      ep = (char*)entry.name();
-      if (*ep=='/') ep++;
-      char *lcp = strrchr(ep,'/');
-      if (lcp) {
-        ep = lcp + 1;
-      }
-      //AddLog_P(LOG_LEVEL_INFO, PSTR("entry: %s"),ep);
-      time_t tm = entry.getLastWrite();
-      char tstr[24];
-      strftime(tstr, 22, "%d-%m-%Y - %H:%M:%S ", localtime(&tm));
-
-      char *pp = path;
-      if (!*(pp + 1)) pp++;
-      char *cp = name;
-      // osx formatted disks contain a lot of stuff we dont want
-      if (reject((char*)ep)) goto fclose;
-
-      for (uint8_t cnt = 0; cnt<depth; cnt++) {
-        *cp++ = '-';
-      }
-
-      sprintf(cp, format, ep);
-      if (entry.isDirectory()) {
-        snprintf_P(npath, sizeof(npath), HTTP_FORM_SDC_HREF, WiFi.localIP().toString().c_str(), pp,ep);
-        WSContentSend_P(HTTP_FORM_SDC_DIRd, npath,ep,name);
-        uint8_t plen = strlen(path);
-        if (plen>1) {
-          strcat(path, "/");
-        }
-        strcat(path, ep);
-        ListDir(path, depth + 4);
-        path[plen] = 0;
-      } else {
-          snprintf_P(npath, sizeof(npath), HTTP_FORM_SDC_HREF, WiFi.localIP().toString().c_str(), pp,ep);
-          WSContentSend_P(HTTP_FORM_SDC_DIRb, npath, ep, name, tstr, entry.size());
-      }
-      fclose:
-      entry.close();
-    }
-    dir.close();
-  }
-}
-
-char path[48];
-
-void Script_FileUploadConfiguration(void) {
-  uint8_t depth = 0;
-
-  strcpy(path, "/");
-
-  if (!HttpCheckPriviledgedAccess()) { return; }
-
-  if (Webserver->hasArg("download")) {
-    String stmp = Webserver->arg("download");
-    char *cp = (char*)stmp.c_str();
-    if (DownloadFile(cp)) {
-      // is directory
-      strcpy(path, cp);
-    }
-  }
-
-  WSContentStart_P(S_SCRIPT_FILE_UPLOAD);
-  WSContentSendStyle();
-  WSContentSend_P(HTTP_FORM_FILE_UPLOAD,D_SDCARD_DIR);
-  WSContentSend_P(HTTP_FORM_FILE_UPG, D_SCRIPT_UPLOAD);
-#ifdef SDCARD_DIR
-  char ts[16];
-  char fs[16];
-  form1000(get_fsinfo(0), ts, '.');
-  form1000(get_fsinfo(1), fs, '.');
-  WSContentSend_P(HTTP_FORM_FILE_UPGc, ts, fs);
-  WSContentSend_P(HTTP_FORM_SDC_DIRa);
-  if (glob_script_mem.script_sd_found) {
-    ListDir(path, depth);
-  }
-  WSContentSend_P(HTTP_FORM_SDC_DIRc);
-#endif
-  WSContentSend_P(HTTP_FORM_FILE_UPGb);
-  WSContentSpaceButton(BUTTON_CONFIGURATION);
-  WSContentStop();
-  Web.upload_error = 0;
-}
-
-void ScriptFileUploadSuccess(void) {
-  WSContentStart_P(PSTR(D_INFORMATION));
-  WSContentSendStyle();
-  WSContentSend_P(PSTR("<div style='text-align:center;'><b>" D_UPLOAD " <font color='#"));
-  WSContentSend_P(PSTR("%06x'>" D_SUCCESSFUL "</font></b><br/>"), WebColor(COL_TEXT_SUCCESS));
-  WSContentSend_P(PSTR("</div><br/>"));
-  WSContentSend_P(PSTR("<p><form action='%s' method='get'><button>%s</button></form></p>"),"/upl",D_UPL_DONE);
-  //WSContentSpaceButton(BUTTON_MAIN);
-  WSContentStop();
-}
-
-
-File upload_file;
-
-void script_upload(void) {
-  //AddLog_P(LOG_LEVEL_INFO, PSTR("HTP: file upload"));
-  HTTPUpload& upload = Webserver->upload();
-  if (upload.status == UPLOAD_FILE_START) {
-    char npath[48];
-#if defined(ESP32) && defined(USE_SCRIPT_FATFS) && USE_SCRIPT_FATFS==-1
-    //sprintf(npath,"/%s",upload.filename.c_str());
-    sprintf(npath, "%s/%s", path, upload.filename.c_str());
-#else
-    sprintf(npath, "%s/%s", path, upload.filename.c_str());
-#endif
-    fsp->remove(npath);
-    upload_file = fsp->open(npath, FILE_WRITE);
-    if (!upload_file) Web.upload_error = 1;
-  } else if(upload.status == UPLOAD_FILE_WRITE) {
-    if (upload_file) upload_file.write(upload.buf, upload.currentSize);
-  } else if(upload.status == UPLOAD_FILE_END) {
-    if (upload_file) upload_file.close();
-    if (Web.upload_error) {
-      AddLog_P(LOG_LEVEL_INFO, PSTR("HTP: upload error"));
-    }
-  } else {
-    Web.upload_error=1;
-    Webserver->send(500, "text/plain", "500: couldn't create file");
-  }
-}
-
 uint8_t DownloadFile(char *file) {
   File download_file;
   WiFiClient download_Client;
 
-    if (!fsp->exists(file)) {
-      AddLog_P(LOG_LEVEL_INFO,PSTR("file not found"));
+    if (!ufsp->exists(file)) {
+      AddLog(LOG_LEVEL_INFO,PSTR("file not found"));
       return 0;
     }
 
-    download_file = fsp->open(file, FILE_READ);
+    download_file = ufsp->open(file, FS_FILE_READ);
     if (!download_file) {
-      AddLog_P(LOG_LEVEL_INFO,PSTR("could not open file"));
+      AddLog(LOG_LEVEL_INFO,PSTR("could not open file"));
       return 0;
     }
 
@@ -5126,7 +4953,7 @@ uint8_t DownloadFile(char *file) {
     }
     snprintf_P(attachment, sizeof(attachment), PSTR("attachment; filename=%s"), cp);
     Webserver->sendHeader(F("Content-Disposition"), attachment);
-    WSSend(200, CT_STREAM, "");
+    WSSend(200, CT_APP_STREAM, "");
 
     uint8_t buff[512];
     uint16_t bread;
@@ -5151,7 +4978,7 @@ uint8_t DownloadFile(char *file) {
     return 0;
 }
 
-#endif
+#endif // USE_SCRIPT_FATFS
 
 
 void HandleScriptTextareaConfiguration(void) {
@@ -5169,7 +4996,7 @@ void HandleScriptConfiguration(void) {
 
     if (!HttpCheckPriviledgedAccess()) { return; }
 
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_CONFIGURE_SCRIPT));
+    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_CONFIGURE_SCRIPT));
 
 #ifdef USE_SCRIPT_FATFS
     if (Webserver->hasArg("d1")) {
@@ -5178,10 +5005,7 @@ void HandleScriptConfiguration(void) {
     if (Webserver->hasArg("d2")) {
       DownloadFile(glob_script_mem.flink[1]);
     }
-    if (Webserver->hasArg("upl")) {
-      Script_FileUploadConfiguration();
-    }
-#endif
+#endif // USE_SCRIPT_FATFS
 
     WSContentStart_P(PSTR(D_CONFIGURE_SCRIPT));
     WSContentSendStyle();
@@ -5191,13 +5015,14 @@ void HandleScriptConfiguration(void) {
 #ifdef xSCRIPT_STRIP_COMMENTS
     uint16_t ssize = glob_script_mem.script_size;
     if (bitRead(Settings.rule_enabled, 1)) ssize *= 2;
-    WSContentSend_P(HTTP_FORM_SCRIPT1,1,1,bitRead(Settings.rule_enabled,0) ? " checked" : "",ssize);
+    WSContentSend_P(HTTP_FORM_SCRIPT1,1,1,bitRead(Settings.rule_enabled,0) ? PSTR(" checked") : "",ssize);
 #else
-    WSContentSend_P(HTTP_FORM_SCRIPT1,1,1,bitRead(Settings.rule_enabled,0) ? " checked" : "",glob_script_mem.script_size);
-#endif
+    WSContentSend_P(HTTP_FORM_SCRIPT1,1,1,bitRead(Settings.rule_enabled,0) ? PSTR(" checked") : "",glob_script_mem.script_size);
+#endif // xSCRIPT_STRIP_COMMENTS
 
-    // script is to larg for WSContentSend_P
+    // script is to large for WSContentSend_P
     if (glob_script_mem.script_ram[0]) {
+      WSContentFlush();
       _WSContentSend(glob_script_mem.script_ram);
     }
     WSContentSend_P(HTTP_FORM_SCRIPT1b);
@@ -5217,35 +5042,40 @@ void HandleScriptConfiguration(void) {
 
 void SaveScript(void) {
 
-#ifdef EEP_SCRIPT_SIZE
-  if (glob_script_mem.flags&1) {
-#if EEP_SCRIPT_SIZE==SPI_FLASH_SEC_SIZE
-    EEP_WRITE(0, EEP_SCRIPT_SIZE, glob_script_mem.script_ram);
-#else
-    char *ucs;
-    ucs = (char*)calloc(SPI_FLASH_SEC_SIZE + 4, 1);
-    if (!script_compress(ucs,EEP_SCRIPT_SIZE-1)) {
-      EEP_WRITE(0, EEP_SCRIPT_SIZE, ucs);
-    }
-    if (ucs) free(ucs);
-#endif
+
+#ifdef USE_UFILESYS
+  if (glob_script_mem.FLAGS.fsys == true) {
+    ufsp->remove(FAT_SCRIPT_NAME);
+    File file = ufsp->open(FAT_SCRIPT_NAME, FS_FILE_WRITE);
+    file.write((const uint8_t*)glob_script_mem.script_ram, strlen(glob_script_mem.script_ram));
+    file.close();
+  } else {
+    // fallback to compressed mode
+    script_compress(Settings.rules[0],MAX_SCRIPT_SIZE-1);
   }
+#else // USE_UFILESYS
+
+#ifdef EEP_SCRIPT_SIZE
+  // here we handle EEPROM modes
+  if (glob_script_mem.FLAGS.eeprom == true) {
+    if (EEP_SCRIPT_SIZE!=SPECIAL_EEPMODE_SIZE) {
+      EEP_WRITE(0, EEP_SCRIPT_SIZE, glob_script_mem.script_ram);
+    } else {
+      uint8_t *ucs;
+      ucs = (uint8_t*)calloc(SPI_FLASH_SEC_SIZE + 4, 1);
+      if (!script_compress((char*)ucs,EEP_SCRIPT_SIZE-1)) {
+        alt_eeprom_writeBytes(0, EEP_SCRIPT_SIZE, ucs);
+      }
+      if (ucs) free(ucs);
+    }
+  }
+#else
+    // default mode is compression
+    script_compress(Settings.rules[0],MAX_SCRIPT_SIZE-1);
 #endif // EEP_SCRIPT_SIZE
 
-#ifdef USE_SCRIPT_FATFS
-  if (glob_script_mem.flags & 1) {
-    fsp->remove(FAT_SCRIPT_NAME);
-    File file = fsp->open(FAT_SCRIPT_NAME, FILE_WRITE);
-    file.write((const uint8_t*)glob_script_mem.script_ram, FAT_SCRIPT_SIZE);
-    file.close();
-  }
-#endif // USE_SCRIPT_FATFS
 
-#ifdef LITTLEFS_SCRIPT_SIZE
-  if (glob_script_mem.flags&1) {
-    SaveFile("/script.txt", (uint8_t*)glob_script_mem.script_ram, LITTLEFS_SCRIPT_SIZE);
-  }
-#endif // LITTLEFS_SCRIPT_SIZE
+#endif // USE_UFILESYS
 }
 
 void ScriptSaveSettings(void) {
@@ -5256,7 +5086,6 @@ void ScriptSaveSettings(void) {
     bitWrite(Settings.rule_enabled, 0, 0);
   }
 
-
   String str = Webserver->arg("t1");
 
   if (*str.c_str()) {
@@ -5264,42 +5093,10 @@ void ScriptSaveSettings(void) {
     str.replace("\r\n", "\n");
     str.replace("\r", "\n");
 
-#ifdef xSCRIPT_STRIP_COMMENTS
-    if (bitRead(Settings.rule_enabled, 1)) {
-      char *sp = (char*)str.c_str();
-      char *sp1 = sp;
-      char *dp = sp;
-      uint8_t flg = 0;
-      while (*sp) {
-        while (*sp==' ') sp++;
-        sp1 = sp;
-        sp = strchr(sp,'\n');
-        if (!sp) {
-          flg = 1;
-        } else {
-          *sp = 0;
-        }
-        if (*sp1!=';') {
-          uint8_t slen = strlen(sp1);
-          if (slen) {
-            strcpy(dp, sp1);
-            dp += slen;
-            *dp++ = '\n';
-          }
-        }
-        if (flg) {
-          *dp = 0;
-          break;
-        }
-        sp++;
-      }
-    }
-#endif //xSCRIPT_STRIP_COMMENTS
-
     strlcpy(glob_script_mem.script_ram, str.c_str(), glob_script_mem.script_size);
 
     if (glob_script_mem.script_ram[0]!='>' && glob_script_mem.script_ram[1]!='D') {
-      AddLog_P(LOG_LEVEL_INFO, PSTR("script error: must start with >D"));
+      AddLog(LOG_LEVEL_INFO, PSTR("script error: must start with >D"));
       bitWrite(Settings.rule_enabled, 0, 0);
     }
 
@@ -5312,14 +5109,14 @@ void ScriptSaveSettings(void) {
 
 //
 uint32_t script_compress(char *dest, uint32_t size) {
-  //AddLog_P(LOG_LEVEL_INFO,PSTR("in string: %s len = %d"),glob_script_mem.script_ram,strlen(glob_script_mem.script_ram));
+  //AddLog(LOG_LEVEL_INFO,PSTR("in string: %s len = %d"),glob_script_mem.script_ram,strlen(glob_script_mem.script_ram));
   uint32_t len_compressed = SCRIPT_COMPRESS(glob_script_mem.script_ram, strlen(glob_script_mem.script_ram), dest, size);
   if (len_compressed > 0) {
     dest[len_compressed] = 0;
-    AddLog_P(LOG_LEVEL_INFO,PSTR("script compressed to %d bytes = %d %%"),len_compressed,len_compressed * 100 / strlen(glob_script_mem.script_ram));
+    AddLog(LOG_LEVEL_INFO,PSTR("script compressed to %d bytes = %d %%"),len_compressed,len_compressed * 100 / strlen(glob_script_mem.script_ram));
     return 0;
   } else {
-    AddLog_P(LOG_LEVEL_INFO, PSTR("script compress error: %d"), len_compressed);
+    AddLog(LOG_LEVEL_INFO, PSTR("script compress error: %d"), len_compressed);
     return 1;
   }
 }
@@ -5338,22 +5135,18 @@ void SaveScriptEnd(void) {
     glob_script_mem.script_mem_size = 0;
   }
 
-#ifdef USE_SCRIPT_COMPRESSION
-  script_compress(Settings.rules[0],MAX_SCRIPT_SIZE-1);
-#endif // USE_SCRIPT_COMPRESSION
-
   if (bitRead(Settings.rule_enabled, 0)) {
 
     int16_t res = Init_Scripter();
     if (res) {
-      AddLog_P(LOG_LEVEL_INFO, PSTR("script init error: %d"), res);
+      AddLog(LOG_LEVEL_INFO, PSTR("script init error: %d"), res);
       return;
     }
 
     Run_Scripter(">B\n", 3, 0);
     Run_Scripter(">BS", 3, 0);
 
-    fast_script = Run_Scripter(">F", -2, 0);
+    glob_script_mem.fast_script = Run_Scripter(">F", -2, 0);
   }
 }
 
@@ -5672,7 +5465,7 @@ void Script_Check_Hue(String *response) {
         }
         *response += String(EncodeLightId(hue_devs + TasmotaGlobal.devices_present + 1))+"\":";
         Script_HueStatus(response, hue_devs);
-        //AddLog_P(LOG_LEVEL_INFO, PSTR("Hue: %s - %d "),response->c_str(), hue_devs);
+        //AddLog(LOG_LEVEL_INFO, PSTR("Hue: %s - %d "),response->c_str(), hue_devs);
       }
 
       hue_devs++;
@@ -5687,10 +5480,10 @@ void Script_Check_Hue(String *response) {
   }
 #if 0
   if (response) {
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR("Hue: %d"), hue_devs);
+    AddLog(LOG_LEVEL_DEBUG, PSTR("Hue: %d"), hue_devs);
     toLog(">>>>");
     toLog(response->c_str());
-    toLog(response->c_str()+LOGSZ);
+    toLog(response->c_str()+MAX_LOGSZ);
   }
 #endif
 }
@@ -5770,8 +5563,8 @@ void Script_Handle_Hue(String *path) {
       String x_str = tok_x.getStr();
       String y_str = tok_y.getStr();
       uint8_t rr,gg,bb;
-      LightStateClass::XyToRgb(x, y, &rr, &gg, &bb);
-      LightStateClass::RgbToHsb(rr, gg, bb, &hue, &sat, nullptr);
+      XyToRgb(x, y, &rr, &gg, &bb);
+      RgbToHsb(rr, gg, bb, &hue, &sat, nullptr);
       if (resp) { response += ","; }
       response += FPSTR(sHUE_LIGHT_RESPONSE_JSON);
       response.replace("{id", String(device));
@@ -5832,8 +5625,8 @@ void Script_Handle_Hue(String *path) {
   } else {
     response = FPSTR(sHUE_ERROR_JSON);
   }
-  AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_HTTP D_HUE " Result (%s)"), response.c_str());
-  WSSend(code, CT_JSON, response);
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_HTTP D_HUE " Result (%s)"), response.c_str());
+  WSSend(code, CT_APP_JSON, response);
   if (resp) {
     Run_Scripter(">E", 2, 0);
   }
@@ -5846,7 +5639,7 @@ bool Script_SubCmd(void) {
   if (!bitRead(Settings.rule_enabled, 0)) return false;
 
   if (tasm_cmd_activ) return false;
-  //AddLog_P(LOG_LEVEL_INFO,PSTR(">> %s, %s, %d, %d "),XdrvMailbox.topic, XdrvMailbox.data, XdrvMailbox.payload, XdrvMailbox.index);
+  //AddLog(LOG_LEVEL_INFO,PSTR(">> %s, %s, %d, %d "),XdrvMailbox.topic, XdrvMailbox.data, XdrvMailbox.payload, XdrvMailbox.index);
 
   char command[CMDSZ];
   strlcpy(command, XdrvMailbox.topic, CMDSZ);
@@ -5874,7 +5667,7 @@ bool Script_SubCmd(void) {
   }
   //toLog(cmdbuff);
   uint32_t res = Run_Scripter(cmdbuff, tlen + 1, 0);
-  //AddLog_P(LOG_LEVEL_INFO,">>%d",res);
+  //AddLog(LOG_LEVEL_INFO,">>%d",res);
   if (res) {
     return false;
   }
@@ -5902,9 +5695,13 @@ void execute_script(char *script) {
 #define D_CMND_SUBSCRIBE "Subscribe"
 #define D_CMND_UNSUBSCRIBE "Unsubscribe"
 
-enum ScriptCommands { CMND_SCRIPT,CMND_SUBSCRIBE, CMND_UNSUBSCRIBE };
-const char kScriptCommands[] PROGMEM = D_CMND_SCRIPT "|" D_CMND_SUBSCRIBE "|" D_CMND_UNSUBSCRIBE;
 
+enum ScriptCommands { CMND_SCRIPT,CMND_SUBSCRIBE, CMND_UNSUBSCRIBE, CMND_SUBTEST};
+const char kScriptCommands[] PROGMEM = D_CMND_SCRIPT "|" D_CMND_SUBSCRIBE "|" D_CMND_UNSUBSCRIBE
+#ifdef DEBUG_MQTT_EVENT
+  "|" "SUBTEST"
+#endif
+;
 bool ScriptCommand(void) {
   char command[CMDSZ];
   bool serviced = true;
@@ -5971,8 +5768,14 @@ bool ScriptCommand(void) {
     } else if (CMND_UNSUBSCRIBE == command_code) {			//MQTT Un-subscribe command. UnSubscribe <Event>
       String result = ScriptUnsubscribe(XdrvMailbox.data, XdrvMailbox.data_len);
       Response_P(S_JSON_COMMAND_SVALUE, command, result.c_str());
+#ifdef DEBUG_MQTT_EVENT
+    } else if (CMND_SUBTEST == command_code) {
+      XdrvMailbox.topic = (char*)"tele";
+      ScriptMqttData();
+      serviced = true;
+#endif
 #endif //SUPPORT_MQTT_EVENT
-  }
+    }
   return serviced;
 }
 
@@ -5999,12 +5802,88 @@ void dateTime(uint16_t* date, uint16_t* time) {
 
 #ifdef SUPPORT_MQTT_EVENT
 
+//#define DEBUG_MQTT_EVENT
+
+uint32_t JsonParsePath(JsonParserObject *jobj, const char *spath, char delim, float *nres, char *sres, uint32_t slen) {
+  uint32_t res = 0;
+  const char *cp = spath;
+#ifdef DEBUG_MQTT_EVENT
+//  AddLog(LOG_LEVEL_INFO, PSTR("Script: parsing json key: %s from json: %s"), cp, jpath);
+#endif
+  JsonParserObject obj = *jobj;
+  JsonParserObject lastobj = obj;
+  char selem[32];
+  uint8_t aindex = 0;
+  String value = "";
+  while (1) {
+    // read next element
+    for (uint32_t sp=0; sp<sizeof(selem)-1; sp++) {
+      if (!*cp || *cp==delim) {
+        selem[sp] = 0;
+        cp++;
+        break;
+      }
+      selem[sp] = *cp++;
+    }
+#ifdef DEBUG_MQTT_EVENT
+    AddLog(LOG_LEVEL_INFO, PSTR("Script: cmp current key: %s"), selem);
+#endif
+    // check for array
+    char *sp = strchr(selem,'[');
+    if (sp) {
+      *sp = 0;
+      aindex = atoi(sp+1);
+    }
+
+    // now check element
+    obj = obj[selem];
+    if (!obj.isValid()) {
+#ifdef DEBUG_MQTT_EVENT
+      AddLog(LOG_LEVEL_INFO, PSTR("Script: obj invalid: %s"), selem);
+#endif
+      JsonParserToken tok = lastobj[selem];
+      if (tok.isValid()) {
+        if (tok.isArray()) {
+          JsonParserArray array = JsonParserArray(tok);
+          value = array[aindex].getStr();
+          if (array.isNum()) {
+            if (nres) *nres=tok.getFloat();
+            res = 1;
+          } else {
+            res = 2;
+          }
+        } else {
+          value = tok.getStr();
+          if (tok.isNum()) {
+            if (nres) *nres=tok.getFloat();
+            res = 1;
+          } else {
+            res = 2;
+          }
+        }
+
+      }
+#ifdef DEBUG_MQTT_EVENT
+      AddLog(LOG_LEVEL_INFO, PSTR("Script: token invalid: %s"), selem);
+#endif
+      break;
+    }
+    if (obj.isObject()) {
+      lastobj = obj;
+      continue;
+    }
+    if (!*cp) break;
+  }
+  strlcpy(sres,value.c_str(),slen);
+  return res;
+
+}
+
 #ifndef MQTT_EVENT_MSIZE
 #define MQTT_EVENT_MSIZE 256
-#endif
-#ifndef MQTT_EVENT_JSIZE
-#define MQTT_EVENT_JSIZE 400
-#endif //SUPPORT_MQTT_EVENT
+#endif // MQTT_EVENT_MSIZE
+
+
 
 /********************************************************************************************/
 /*
@@ -6026,13 +5905,20 @@ bool ScriptMqttData(void)
   }
   String sTopic = XdrvMailbox.topic;
   String sData = XdrvMailbox.data;
-  //AddLog_P(LOG_LEVEL_DEBUG, PSTR("Script: MQTT Topic %s, Event %s"), XdrvMailbox.topic, XdrvMailbox.data);
+
+#ifdef DEBUG_MQTT_EVENT
+    AddLog(LOG_LEVEL_INFO, PSTR("Script: MQTT Topic %s, Event %s"), XdrvMailbox.topic, XdrvMailbox.data);
+#endif
+
   MQTT_Subscription event_item;
   //Looking for matched topic
   for (uint32_t index = 0; index < subscriptions.size(); index++) {
     event_item = subscriptions.get(index);
+    uint8_t json_valid = 0;
 
-    //AddLog_P(LOG_LEVEL_DEBUG, PSTR("Script: Match MQTT message Topic %s with subscription topic %s"), sTopic.c_str(), event_item.Topic.c_str());
+#ifdef DEBUG_MQTT_EVENT
+    AddLog(LOG_LEVEL_INFO, PSTR("Script: Match MQTT message Topic %s with subscription topic %s and key %s"), sTopic.c_str(), event_item.Topic.c_str(),event_item.Key.c_str());
+#endif
     if (sTopic.startsWith(event_item.Topic)) {
       //This topic is subscribed by us, so serve it
       serviced = true;
@@ -6040,7 +5926,11 @@ bool ScriptMqttData(void)
       String lkey;
       if (event_item.Key.length() == 0) {   //If did not specify Key
         value = sData;
+        json_valid = 1;
       } else {      //If specified Key, need to parse Key/Value from JSON data
+
+
+#ifndef SUPPORT_MQTT_EVENT_MORE
         JsonParser parser((char*)sData.c_str());
         JsonParserObject jsonData = parser.getRootObject();
         String key1 = event_item.Key;
@@ -6054,24 +5944,42 @@ bool ScriptMqttData(void)
           JsonParserToken val = jsonData[key1.c_str()].getObject()[key2.c_str()];
           if (!val) break;   //Failed to get the key/value, ignore this message.
           value = val.getStr();
+          json_valid = 1;
         } else {
           JsonParserToken val = jsonData[key1.c_str()];
           if (!val) break;
           value = val.getStr();
           lkey = key1;
+          json_valid = 1;
+        }
+#else
+
+        JsonParser parser((char*)sData.c_str());
+        JsonParserObject obj = parser.getRootObject();
+        char sres[64];
+        uint32_t res = JsonParsePath(&obj, event_item.Key.c_str(), '.', NULL, sres, sizeof(sres));
+        if (res) {
+          json_valid = 1;
+          value = sres;
+        }
+#endif // SUPPORT_MQTT_EVENT_MORE
+        if (json_valid) {
+          value.trim();
+          char sbuffer[128];
+
+          if (!strncmp(lkey.c_str(), "Epoch", 5)) {
+            uint32_t ep = atoi(value.c_str()) - (uint32_t)EPOCH_OFFSET;
+            snprintf_P(sbuffer, sizeof(sbuffer), PSTR(">%s=%d\n"), event_item.Event.c_str(), ep);
+          } else {
+            snprintf_P(sbuffer, sizeof(sbuffer), PSTR(">%s=\"%s\"\n"), event_item.Event.c_str(), value.c_str());
+          }
+#ifdef DEBUG_MQTT_EVENT
+          AddLog(LOG_LEVEL_INFO, PSTR("Script: setting script var %s"), sbuffer);
+#endif
+          //toLog(sbuffer);
+          execute_script(sbuffer);
         }
       }
-      value.trim();
-      char sbuffer[128];
-
-      if (!strncmp(lkey.c_str(), "Epoch", 5)) {
-        uint32_t ep = atoi(value.c_str()) - (uint32_t)EPOCH_OFFSET;
-        snprintf_P(sbuffer, sizeof(sbuffer), PSTR(">%s=%d\n"), event_item.Event.c_str(), ep);
-      } else {
-        snprintf_P(sbuffer, sizeof(sbuffer), PSTR(">%s=\"%s\"\n"), event_item.Event.c_str(), value.c_str());
-      }
-      //toLog(sbuffer);
-      execute_script(sbuffer);
     }
   }
   return serviced;
@@ -6115,7 +6023,7 @@ String ScriptSubscribe(const char *data, int data_len)
         }
       }
     }
-    //AddLog_P(LOG_LEVEL_DEBUG, PSTR("Script: Subscribe command with parameters: %s, %s, %s."), event_name.c_str(), topic.c_str(), key.c_str());
+    //AddLog(LOG_LEVEL_DEBUG, PSTR("Script: Subscribe command with parameters: %s, %s, %s."), event_name.c_str(), topic.c_str(), key.c_str());
     //event_name.toUpperCase();
     if (event_name.length() > 0 && topic.length() > 0) {
       //Search all subscriptions
@@ -6136,7 +6044,7 @@ String ScriptSubscribe(const char *data, int data_len)
           topic.concat("/#");
         }
       }
-      //AddLog_P(LOG_LEVEL_DEBUG, PSTR("Script: New topic: %s."), topic.c_str());
+      // AddLog(LOG_LEVEL_DEBUG, PSTR("Script: New topic: %s."), topic.c_str());
       //MQTT Subscribe
       subscription_item.Event = event_name;
       subscription_item.Topic = topic.substring(0, topic.length() - 2);   //Remove "/#" so easy to match
@@ -6294,7 +6202,7 @@ void ScriptGetSDCard(void) {
       SendFile(cp);
       return;
     } else {
-      if (fsp->exists(cp)) {
+      if (ufsp->exists(cp)) {
         SendFile(cp);
         return;
       }
@@ -6377,7 +6285,7 @@ char buff[512];
     }
 #endif // USE_DISPLAY_DUMP
   } else {
-    File file = fsp->open(fname,FILE_READ);
+    File file = ufsp->open(fname,FS_FILE_READ);
     uint32_t siz = file.size();
     uint32_t len = sizeof(buff);
     while (siz > 0) {
@@ -6405,7 +6313,7 @@ void ScriptFullWebpage(void) {
       WSContentBegin(200, CT_HTML);
       ScriptWebShow('w');
       WSContentEnd();
-      Serial.printf("fwp update sv %s\n",stmp.c_str() );
+      //Serial.printf("fwp update sv %s\n",stmp.c_str() );
       return; //goto redraw;
 //    } else {
   //    Serial.printf("fwp update %s\n",stmp.c_str() );
@@ -6413,7 +6321,7 @@ void ScriptFullWebpage(void) {
 
     return;
   } else {
-    Serial.printf("fwp other %s\n",stmp.c_str() );
+    //Serial.printf("fwp other %s\n",stmp.c_str() );
   }
 
   WSContentBegin(200, CT_HTML);
@@ -6441,7 +6349,7 @@ void Script_Check_HTML_Setvars(void) {
 
   if (Webserver->hasArg("sv")) {
     String stmp = Webserver->arg("sv");
-    Serial.printf("fwp has arg dv %s\n", stmp.c_str());
+    //Serial.printf("fwp has arg dv %s\n", stmp.c_str());
     char cmdbuf[64];
     memset(cmdbuf, 0, sizeof(cmdbuf));
     char *cp = cmdbuf;
@@ -7087,7 +6995,8 @@ exgc:
                   char *cp = &label[3];
                   //todflg=atoi(&label[3]);
                   todflg = strtol(cp, &cp, 10);
-                  if (todflg>=entries) todflg = entries - 1;
+                  if (todflg >= entries) todflg = entries - 1;
+                  if (todflg < 0) todflg = 0;
                   if (*cp=='/') {
                     cp++;
                     divflg = strtol(cp, &cp, 10);
@@ -7308,7 +7217,7 @@ bool RulesProcessEvent(char *json_event) {
 #ifdef USE_SCRIPT_TASK
 
 #ifndef STASK_STACK
-#define STASK_STACK 8192
+#define STASK_STACK 8192-2048
 #endif
 
 #if 1
@@ -7406,6 +7315,47 @@ uint32_t scripter_create_task(uint32_t num, uint32_t time, uint32_t core, uint32
 #endif // USE_SCRIPT_TASK
 #endif // ESP32
 
+
+int32_t http_req(char *host, char *request) {
+  HTTPClient http;
+  int32_t httpCode = 0;
+  uint8_t mode = 0;
+  char hbuff[128];
+  strcpy(hbuff, "http://");
+  strcat(hbuff, host);
+
+  if (*request == '_') {
+    mode = 1;
+    request++;
+  }
+
+  if (!mode) {
+    // GET
+    strcat(hbuff, request);
+    //AddLog(LOG_LEVEL_INFO, PSTR("HTTP GET %s"),hbuff);
+    http.begin(hbuff);
+    httpCode = http.GET();
+  } else {
+    // POST
+    //AddLog(LOG_LEVEL_INFO, PSTR("HTTP POST %s - %s"),hbuff, request);
+    http.begin(hbuff);
+    http.addHeader("Content-Type", "text/plain");
+    httpCode = http.POST(request);
+  }
+
+#ifdef USE_WEBSEND_RESPONSE
+  strlcpy(TasmotaGlobal.mqtt_data, http.getString().c_str(), MESSZ);
+  //AddLog(LOG_LEVEL_INFO, PSTR("HTTP RESULT %s"), TasmotaGlobal.mqtt_data);
+  Run_Scripter(">E", 2, TasmotaGlobal.mqtt_data);
+  glob_script_mem.glob_error = 0;
+#endif
+
+  http.end();
+
+  return httpCode;
+}
+
+
 #ifdef SCRIPT_GET_HTTPS_JP
 #ifdef ESP8266
 #include "WiFiClientSecureLightBearSSL.h"
@@ -7426,6 +7376,7 @@ uint32_t call2https(const char *host, const char *path) {
 #endif
 
   httpsClient->setTimeout(1500);
+  httpsClient->setInsecure();
 
   uint32_t retry = 0;
   while ((!httpsClient->connect(host, 443)) && (retry < 5)) {
@@ -7478,25 +7429,108 @@ void cpy2lf(char *dst, uint32_t dstlen, char *src) {
 \*********************************************************************************************/
 //const esp_partition_t *esp32_part;
 
+
+
 bool Xdrv10(uint8_t function)
 {
   bool result = false;
-  event_handeled = false;
+  glob_script_mem.event_handeled = false;
   char *sprt;
 
   switch (function) {
-    case FUNC_PRE_INIT:
+    //case FUNC_PRE_INIT:
+    case FUNC_INIT:
       // set defaults to rules memory
       //bitWrite(Settings.rule_enabled,0,0);
       glob_script_mem.script_ram = Settings.rules[0];
       glob_script_mem.script_size = MAX_SCRIPT_SIZE;
-      glob_script_mem.flags = 0;
+      glob_script_mem.FLAGS.fsys = false;
+      glob_script_mem.FLAGS.eeprom = false;
       glob_script_mem.script_pram = (uint8_t*)Settings.script_pram[0];
       glob_script_mem.script_pram_size = PMEM_SIZE;
 
-      // indicates scripter enabled (use rules[][] as single array)
-      bitWrite(Settings.rule_once, 7, 1);
-#ifdef USE_SCRIPT_COMPRESSION
+#ifdef USE_UFILESYS
+      if (ufs_type) {
+        // we have a file system
+        AddLog(LOG_LEVEL_INFO,PSTR("UFILESYSTEM OK!"));
+        char *script;
+        script = (char*)calloc(UFSYS_SIZE + 4, 1);
+        if (!script) break;
+        glob_script_mem.script_ram = script;
+        glob_script_mem.script_size = UFSYS_SIZE;
+        if (ufsp->exists(FAT_SCRIPT_NAME)) {
+          File file = ufsp->open(FAT_SCRIPT_NAME, FS_FILE_READ);
+          file.read((uint8_t*)script, UFSYS_SIZE);
+          file.close();
+        }
+        script[UFSYS_SIZE - 1] = 0;
+        // use rules storage for permanent vars
+        glob_script_mem.script_pram = (uint8_t*)Settings.rules[0];
+        glob_script_mem.script_pram_size = MAX_SCRIPT_SIZE;
+        glob_script_mem.FLAGS.fsys = true;
+        // indicates scripter use no compression
+        bitWrite(Settings.rule_once, 6, 0);
+      } else {
+        AddLog(LOG_LEVEL_INFO,PSTR("UFILESYSTEM fail, using compression!"));
+        int32_t len_decompressed;
+        sprt = (char*)calloc(UNISHOXRSIZE + 8,1);
+        if (!sprt) { break; }
+        glob_script_mem.script_ram = sprt;
+        glob_script_mem.script_size = UNISHOXRSIZE;
+        len_decompressed = SCRIPT_DECOMPRESS(Settings.rules[0], strlen(Settings.rules[0]), glob_script_mem.script_ram, glob_script_mem.script_size);
+        if (len_decompressed>0) glob_script_mem.script_ram[len_decompressed] = 0;
+        // indicates scripter use compression
+        bitWrite(Settings.rule_once, 6, 1);
+      }
+#else // USE_UFILESYS
+
+#ifdef EEP_SCRIPT_SIZE
+
+      if (EEP_INIT(EEP_SCRIPT_SIZE)) {
+          // found 32kb eeprom,
+          char *script;
+          if (EEP_SCRIPT_SIZE!=SPECIAL_EEPMODE_SIZE) {
+            script = (char*)calloc(EEP_SCRIPT_SIZE + 4, 1);
+            if (!script) break;
+            glob_script_mem.script_ram = script;
+            glob_script_mem.script_size = EEP_SCRIPT_SIZE;
+            EEP_READ(0, EEP_SCRIPT_SIZE, script);
+            if (*script==0xff) {
+              memset(script, EEP_SCRIPT_SIZE, 0);
+            }
+            script[EEP_SCRIPT_SIZE - 1] = 0;
+          } else {
+            uint8_t *ucs;
+            ucs = (uint8_t*)calloc(SPI_FLASH_SEC_SIZE + 4, 1);
+            if (!ucs) break;
+            alt_eeprom_readBytes(0, SPI_FLASH_SEC_SIZE, ucs);
+            if (*ucs==0xff) {
+              memset(ucs, SPI_FLASH_SEC_SIZE, 0);
+            }
+            ucs[SPI_FLASH_SEC_SIZE - 1] = 0;
+
+            script = (char*)calloc(EEP_SCRIPT_SIZE + 4, 1);
+            if (!script) break;
+            glob_script_mem.script_ram = script;
+            glob_script_mem.script_size = EEP_SCRIPT_SIZE;
+
+            int32_t len_decompressed;
+            len_decompressed = SCRIPT_DECOMPRESS((char*)ucs, strlen((char*)ucs), glob_script_mem.script_ram, glob_script_mem.script_size);
+            if (len_decompressed>0) glob_script_mem.script_ram[len_decompressed] = 0;
+
+            if (ucs) free(ucs);
+
+          }
+
+          // use rules storage for permanent vars
+          glob_script_mem.script_pram = (uint8_t*)Settings.rules[0];
+          glob_script_mem.script_pram_size = MAX_SCRIPT_SIZE;
+
+          glob_script_mem.FLAGS.eeprom = true;
+      }
+#else // EEP_SCRIPT_SIZE
+
+      // default mode is compression
       int32_t len_decompressed;
       sprt = (char*)calloc(UNISHOXRSIZE + 8,1);
       if (!sprt) { break; }
@@ -7506,147 +7540,28 @@ bool Xdrv10(uint8_t function)
       if (len_decompressed>0) glob_script_mem.script_ram[len_decompressed] = 0;
       // indicates scripter use compression
       bitWrite(Settings.rule_once, 6, 1);
-      //AddLog_P(LOG_LEVEL_INFO, PSTR("decompressed script len %d"),len_decompressed);
-#else  // USE_SCRIPT_COMPRESSION
-      // indicates scripter does not use compression
-      bitWrite(Settings.rule_once, 6, 0);
-#endif // USE_SCRIPT_COMPRESSION
+
+#endif
+
+#endif // USE_UFILESYS
+
+
+// indicates scripter enabled (use rules[][] as single array)
+      bitWrite(Settings.rule_once, 7, 1);
 
 #ifdef USE_BUTTON_EVENT
       for (uint32_t cnt = 0; cnt < MAX_KEYS; cnt++) {
-        script_button[cnt] = -1;
+        glob_script_mem.script_button[cnt] = -1;
       }
 #endif //USE_BUTTON_EVENT
 
-#ifdef EEP_SCRIPT_SIZE
-      if (EEP_INIT(EEP_SCRIPT_SIZE)) {
-          // found 32kb eeprom,
-          char *script;
-#if EEP_SCRIPT_SIZE==SPI_FLASH_SEC_SIZE
-          script = (char*)calloc(EEP_SCRIPT_SIZE + 4, 1);
-          if (!script) break;
-          glob_script_mem.script_ram = script;
-          glob_script_mem.script_size = EEP_SCRIPT_SIZE;
-          EEP_READ(0, EEP_SCRIPT_SIZE, script);
-          if (*script==0xff) {
-            memset(script, EEP_SCRIPT_SIZE, 0);
-          }
-          script[EEP_SCRIPT_SIZE - 1] = 0;
-#else
-          char *ucs;
-          ucs = (char*)calloc(SPI_FLASH_SEC_SIZE + 4, 1);
-          if (!ucs) break;
-          EEP_READ(0, SPI_FLASH_SEC_SIZE, ucs);
-          if (*ucs==0xff) {
-            memset(ucs, SPI_FLASH_SEC_SIZE, 0);
-          }
-          ucs[SPI_FLASH_SEC_SIZE - 1] = 0;
-
-          script = (char*)calloc(EEP_SCRIPT_SIZE + 4, 1);
-          if (!script) break;
-          glob_script_mem.script_ram = script;
-          glob_script_mem.script_size = EEP_SCRIPT_SIZE;
-
-          int32_t len_decompressed;
-          len_decompressed = SCRIPT_DECOMPRESS(ucs, strlen(ucs), glob_script_mem.script_ram, glob_script_mem.script_size);
-          if (len_decompressed>0) glob_script_mem.script_ram[len_decompressed] = 0;
-
-          if (ucs) free(ucs);
-
-#endif
-          // use rules storage for permanent vars
-          glob_script_mem.script_pram = (uint8_t*)Settings.rules[0];
-          glob_script_mem.script_pram_size = MAX_SCRIPT_SIZE;
-
-          glob_script_mem.flags = 1;
+      // a valid script MUST start with >D
+      if (glob_script_mem.script_ram[0]!='>' && glob_script_mem.script_ram[1]!='D') {
+        // clr all
+        memset(glob_script_mem.script_ram, 0 ,glob_script_mem.script_size);
+        strcpy_P(glob_script_mem.script_ram, PSTR(">D\nscript error must start with >D"));
+        bitWrite(Settings.rule_enabled, 0, 0);
       }
-#endif // EEP_SCRIPT_SIZE
-
-
-#ifdef USE_SCRIPT_FATFS
-
-#if USE_SCRIPT_FATFS>=0
-      // fs on SD card
-#ifdef ESP32
-      if (PinUsed(GPIO_SPI_MOSI) && PinUsed(GPIO_SPI_MISO) && PinUsed(GPIO_SPI_CLK)) {
-          SPI.begin(Pin(GPIO_SPI_CLK), Pin(GPIO_SPI_MISO), Pin(GPIO_SPI_MOSI), -1);
-      }
-#endif // ESP32
-      fsp = &SD;
-      if (SD.begin(USE_SCRIPT_FATFS)) {
-#else
-    // flash file system
-#ifdef ESP32
-      //fsp = &SPIFFS;
-      //if (SPIFFS.begin(FORMAT_SPIFFS_IF_FAILED)) {
-      fsp = &FFat;
-      if (FFat.begin(true)) {
-#else
-        // fs on flash
-      fsp = &LittleFS;
-      if (fsp->begin()) {
-#endif // ESP
-
-#endif // USE_SCRIPT_FATFS>=0
-        AddLog_P(LOG_LEVEL_INFO,PSTR("FATFS mount OK!"));
-        //fsp->dateTimeCallback(dateTime);
-        glob_script_mem.script_sd_found = 1;
-        char *script;
-        script = (char*)calloc(FAT_SCRIPT_SIZE + 4, 1);
-        if (!script) break;
-        glob_script_mem.script_ram = script;
-        glob_script_mem.script_size = FAT_SCRIPT_SIZE;
-        if (fsp->exists(FAT_SCRIPT_NAME)) {
-          File file = fsp->open(FAT_SCRIPT_NAME, FILE_READ);
-          file.read((uint8_t*)script, FAT_SCRIPT_SIZE);
-          file.close();
-        }
-        script[FAT_SCRIPT_SIZE - 1] = 0;
-        // use rules storage for permanent vars
-        glob_script_mem.script_pram = (uint8_t*)Settings.rules[0];
-        glob_script_mem.script_pram_size = MAX_SCRIPT_SIZE;
-
-        glob_script_mem.flags = 1;
-
-      } else {
-        AddLog_P(LOG_LEVEL_INFO,PSTR("FATFS mount failed!"));
-        glob_script_mem.script_sd_found = 0;
-      }
-#endif // USE_SCRIPT_FATFS
-
-
-#ifdef LITTLEFS_SCRIPT_SIZE
-
-#ifdef ESP32
-    // spiffs on esp32
-    fsp = &SPIFFS;
-    //esp32_part = esp_partition_find_first(ESP_PARTITION_TYPE_DATA,ESP_PARTITION_SUBTYPE_DATA_SPIFFS,NULL);
-    //Serial.printf("address %d - %d - %s\n",esp32_part->address,esp32_part->size, esp32_part->label);
-#else
-    // lfs on esp8266
-    fsp = &LittleFS;
-#endif //ESP32
-    char *script;
-    script = (char*)calloc(LITTLEFS_SCRIPT_SIZE + 4, 1);
-    if (!script) break;
-    LoadFile("/script.txt", (uint8_t*)script, LITTLEFS_SCRIPT_SIZE);
-
-    glob_script_mem.script_ram = script;
-    glob_script_mem.script_size = LITTLEFS_SCRIPT_SIZE;
-    script[LITTLEFS_SCRIPT_SIZE-1] = 0;
-    // use rules storage for permanent vars
-    glob_script_mem.script_pram = (uint8_t*)Settings.rules[0];
-    glob_script_mem.script_pram_size = MAX_SCRIPT_SIZE;
-    glob_script_mem.flags = 1;
-#endif // LITTLEFS_SCRIPT_SIZE
-
-    // a valid script MUST start with >D
-    if (glob_script_mem.script_ram[0]!='>' && glob_script_mem.script_ram[1]!='D') {
-      // clr all
-      memset(glob_script_mem.script_ram, 0 ,glob_script_mem.script_size);
-      strcpy_P(glob_script_mem.script_ram, PSTR(">D\nscript error must start with >D"));
-      bitWrite(Settings.rule_enabled, 0, 0);
-    }
 
       // assure permanent memory is 4 byte aligned
       { uint32_t ptr = (uint32_t)glob_script_mem.script_pram;
@@ -7657,11 +7572,12 @@ bool Xdrv10(uint8_t function)
       }
 
       if (bitRead(Settings.rule_enabled, 0)) Init_Scripter();
-      break;
-    case FUNC_INIT:
+
+    //  break;
+    //case FUNC_INIT:
       if (bitRead(Settings.rule_enabled, 0)) {
         Run_Scripter(">B\n", 3, 0);
-        fast_script = Run_Scripter(">F", -2, 0);
+        glob_script_mem.fast_script = Run_Scripter(">F", -2, 0);
 #if defined(USE_SCRIPT_HUE) && defined(USE_WEBSERVER) && defined(USE_EMULATION) && defined(USE_EMULATION_HUE) && defined(USE_LIGHT)
         Script_Check_Hue(0);
 #endif //USE_SCRIPT_HUE
@@ -7682,14 +7598,14 @@ bool Xdrv10(uint8_t function)
 #else
       if (bitRead(Settings.rule_enabled, 0)) {
         Run_Scripter(">E", 2, 0);
-        result = event_handeled;
+        result = glob_script_mem.event_handeled;
       }
 #endif //SCRIPT_POWER_SECTION
       break;
     case FUNC_RULES_PROCESS:
       if (bitRead(Settings.rule_enabled, 0)) {
         Run_Scripter(">E", 2, TasmotaGlobal.mqtt_data);
-        result = event_handeled;
+        result = glob_script_mem.event_handeled;
       }
       break;
 #ifdef USE_WEBSERVER
@@ -7707,9 +7623,6 @@ bool Xdrv10(uint8_t function)
             cpy2lf(bname, sizeof(bname), glob_script_mem.section_ptr + 3);
             WSContentSend_PD(HTTP_WEB_FULL_DISPLAY, bname);
             Webserver->on("/sfd", ScriptFullWebpage);
-#ifdef USE_SCRIPT_FATFS
-            Webserver->onNotFound(ScriptGetSDCard);
-#endif
         }
 #endif // SCRIPT_FULL_WEBPAGE
       }
@@ -7720,12 +7633,6 @@ bool Xdrv10(uint8_t function)
       Webserver->on("/ta",HTTP_POST, HandleScriptTextareaConfiguration);
       Webserver->on("/exs", HTTP_POST,[]() { Webserver->sendHeader("Location","/exs");Webserver->send(303);}, script_upload_start);
       Webserver->on("/exs", HTTP_GET, ScriptExecuteUploadSuccess);
-
-#ifdef USE_SCRIPT_FATFS
-      Webserver->on("/u13", HTTP_POST,[]() { Webserver->sendHeader("Location","/u13");Webserver->send(303);}, script_upload);
-      Webserver->on("/u13", HTTP_GET, ScriptFileUploadSuccess);
-      Webserver->on("/upl", HTTP_GET, Script_FileUploadConfiguration);
-#endif //USE_SCRIPT_FATFS
       break;
 #endif // USE_WEBSERVER
     case FUNC_SAVE_BEFORE_RESTART:
@@ -7763,8 +7670,8 @@ bool Xdrv10(uint8_t function)
 #ifdef USE_BUTTON_EVENT
     case FUNC_BUTTON_PRESSED:
       if (bitRead(Settings.rule_enabled, 0)) {
-        if ((script_button[XdrvMailbox.index]&1)!=(XdrvMailbox.payload&1)) {
-          script_button[XdrvMailbox.index] = XdrvMailbox.payload;
+        if ((glob_script_mem.script_button[XdrvMailbox.index]&1)!=(XdrvMailbox.payload&1)) {
+          glob_script_mem.script_button[XdrvMailbox.index] = XdrvMailbox.payload;
           Run_Scripter(">b", 2, 0);
         }
       }

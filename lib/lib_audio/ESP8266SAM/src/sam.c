@@ -2,7 +2,7 @@
 #include <string.h> // strlen()
 //#include <stdlib.h>
 #include <stddef.h> // define NULL
-#include "debug.h"
+#include "samdebug.h"
 #include "sam.h"
 #include "render.h"
 #include "SamTabs.h"

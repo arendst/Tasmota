@@ -1,6 +1,6 @@
 ---
-name: Problem report
-about: Create a report to help us improve
+name: Problem Report
+about: Create a Report to help us improve
 ---
 
 <!-- Thanks for reporting a problem for this project. READ THIS FIRST:
@@ -29,36 +29,34 @@ _Make sure your have performed every step and checked the applicable boxes befor
 
 - [ ] Read the [Contributing Guide and Policy](https://github.com/arendst/Tasmota/blob/development/CONTRIBUTING.md) and [the Code of Conduct](https://github.com/arendst/Tasmota/blob/development/CODE_OF_CONDUCT.md)
 - [ ] Searched the problem in [issues](https://github.com/arendst/Tasmota/issues)
+- [ ] Searched the problem in [discussions](https://github.com/arendst/Tasmota/discussions)
 - [ ] Searched the problem in the [docs](https://tasmota.github.io/docs/FAQ)
-- [ ] Searched the problem in the [forum](https://groups.google.com/d/forum/sonoffusers)
 - [ ] Searched the problem in the [chat](https://discord.gg/Ks2Kzd4)
 - [ ] Device used (e.g., Sonoff Basic): _____
 - [ ] Tasmota binary firmware version number used: _____
   - [ ] Pre-compiled
   - [ ] Self-compiled
-    - [ ] IDE / Compiler used: _____
 - [ ] Flashing tools used: _____
 - [ ] Provide the output of command: `Backlog Template; Module; GPIO 255`:
-```
+```lua
   Configuration output here:
 
 
 ```
 - [ ] If using rules, provide the output of this command: `Backlog Rule1; Rule2; Rule3`:
-```
+```lua
   Rules output here:
 
 
 ```
 - [ ] Provide the output of this command: `Status 0`:
-```
+```lua
   STATUS 0 output here:
 
 
 ```
-- [ ] Provide the output of the Console log output when you experience your issue; if applicable:
-  _(Please use_ `weblog 4` _for more debug information)_
-```
+- [ ] Set `weblog` to 4 and then, when you experience your issue, provide the output of the Console log:
+```lua
   Console output here:
 
 

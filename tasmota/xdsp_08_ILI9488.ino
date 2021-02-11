@@ -1,7 +1,7 @@
 /*
   xdsp_08_ILI9488.ino - Display ILI9488 support for Tasmota
 
-  Copyright (C) 2020  Theo Arends, Gerhard Mutz
+  Copyright (C) 2021  Theo Arends, Gerhard Mutz
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -34,6 +34,7 @@
 
 #include <ILI9488.h>
 uint8_t ili9488_ctouch_counter = 0;
+bool ili9488_init_done = false;
 
 // currently fixed
 #define BACKPLANE_PIN 2
@@ -45,13 +46,10 @@ extern const uint16_t picture[];
 
 /*********************************************************************************************/
 
-void ILI9488_InitDriver()
-{
-  if (!Settings.display_model) {
-    Settings.display_model = XDSP_08;
-  }
+void ILI9488_InitDriver(void) {
+  if (PinUsed(GPIO_ILI9488_CS) && (TasmotaGlobal.spi_enabled & SPI_MOSI)) {
 
-  if (XDSP_08 == Settings.display_model) {
+    Settings.display_model = XDSP_08;
 
     if (Settings.display_width != ILI9488_TFTWIDTH) {
       Settings.display_width = ILI9488_TFTWIDTH;
@@ -61,44 +59,19 @@ void ILI9488_InitDriver()
     }
 
     // disable screen buffer
-    buffer=NULL;
+    buffer = NULL;
 
     // default colors
     fg_color = ILI9488_WHITE;
     bg_color = ILI9488_BLACK;
 
-    uint8_t bppin=BACKPLANE_PIN;
-    if  (PinUsed(GPIO_BACKLIGHT)) {
-      bppin=Pin(GPIO_BACKLIGHT);
+    uint8_t bppin = BACKPLANE_PIN;
+    if (PinUsed(GPIO_BACKLIGHT)) {
+      bppin = Pin(GPIO_BACKLIGHT);
     }
-
-#ifdef ESP8266
-#undef HW_SPI_MOSI
-#define HW_SPI_MOSI 13
-#undef HW_SPI_MISO
-#define HW_SPI_MISO 12
-#undef HW_SPI_CLK
-#define HW_SPI_CLK 14
-#endif  // ESP8266
-#ifdef ESP32
-#undef HW_SPI_MOSI
-#define HW_SPI_MOSI 23
-#undef HW_SPI_MISO
-#define HW_SPI_MISO 19
-#undef HW_SPI_CLK
-#define HW_SPI_CLK 18
-#endif  // ESP32
 
     // init renderer, must use hardware spi
-    if (PinUsed(GPIO_SSPI_CS) && (Pin(GPIO_SSPI_MOSI)==HW_SPI_MOSI) && (Pin(GPIO_SSPI_SCLK)==HW_SPI_CLK)) {
-        ili9488  = new ILI9488(Pin(GPIO_SSPI_CS),Pin(GPIO_SSPI_MOSI),Pin(GPIO_SSPI_SCLK),bppin);
-    } else {
-      if (PinUsed(GPIO_SPI_CS) && (Pin(GPIO_SPI_MOSI)==HW_SPI_MOSI) && (Pin(GPIO_SPI_CLK)==HW_SPI_CLK)) {
-        ili9488  = new ILI9488(Pin(GPIO_SPI_CS),Pin(GPIO_SPI_MOSI),Pin(GPIO_SPI_CLK),bppin);
-      } else {
-        return;
-      }
-    }
+    ili9488  = new ILI9488(Pin(GPIO_ILI9488_CS), Pin(GPIO_SPI_MOSI), Pin(GPIO_SPI_CLK), bppin);
 
     ili9488->begin();
     renderer = ili9488;
@@ -120,6 +93,9 @@ void ILI9488_InitDriver()
 #ifdef USE_FT5206
     Touch_Init(Wire);
 #endif
+
+    ili9488_init_done = true;
+    AddLog(LOG_LEVEL_INFO, PSTR("DSP: ILI9488"));
   }
 }
 
@@ -170,25 +146,23 @@ bool Xdsp08(uint8_t function)
 {
   bool result = false;
 
-    if (FUNC_DISPLAY_INIT_DRIVER == function) {
-      ILI9488_InitDriver();
-    }
-    else if (XDSP_08 == Settings.display_model) {
-
-      switch (function) {
-        case FUNC_DISPLAY_MODEL:
-          result = true;
-          break;
-        case FUNC_DISPLAY_EVERY_50_MSECOND:
+  if (FUNC_DISPLAY_INIT_DRIVER == function) {
+    ILI9488_InitDriver();
+  }
+  else if (ili9488_init_done && (XDSP_08 == Settings.display_model)) {
+    switch (function) {
+      case FUNC_DISPLAY_MODEL:
+        result = true;
+        break;
+      case FUNC_DISPLAY_EVERY_50_MSECOND:
 #ifdef USE_TOUCH_BUTTONS
-          if (FT5206_found) {
-            ILI9488_CheckTouch();
-          }
+        if (FT5206_found) {
+          ILI9488_CheckTouch();
+        }
 #endif
-          break;
-      }
+        break;
     }
-  //}
+  }
   return result;
 }
 

@@ -1,7 +1,7 @@
 /*
   tasmota_version.h - Version header file for Tasmota
 
-  Copyright (C) 2020  Theo Arends
+  Copyright (C) 2021  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -20,6 +20,6 @@
 #ifndef _TASMOTA_VERSION_H_
 #define _TASMOTA_VERSION_H_
 
-const uint32_t VERSION = 0x09020000;
+const uint32_t VERSION = 0x09030000;
 
 #endif  // _TASMOTA_VERSION_H_

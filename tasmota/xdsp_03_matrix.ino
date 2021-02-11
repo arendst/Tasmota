@@ -1,7 +1,7 @@
 /*
   xdsp_03_matrix.ino - Display 8x8 matrix support for Tasmota
 
-  Copyright (C) 2020  Theo Arends and Adafruit
+  Copyright (C) 2021  Theo Arends and Adafruit
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -95,7 +95,7 @@ void MatrixScrollLeft(char* txt, int loop)
     // Horiz. position of text -- starts off right edge
     mtx_x = 8 * mtx_matrices;
 
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "[%s]"), txt);
+    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "[%s]"), txt);
 
     disp_refresh = Settings.display_refresh;
   case 2:
@@ -265,7 +265,7 @@ void MatrixPrintLog(uint8_t direction)
         i++;
       }
 
-      AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION "[%s]"), mtx_buffer);
+      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION "[%s]"), mtx_buffer);
 
       mtx_done = 1;
     }

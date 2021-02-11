@@ -1,7 +1,7 @@
 /*
   xlgt_03_sm16716.ino - sm16716 three channel led support for Tasmota
 
-  Copyright (C) 2020  Theo Arends
+  Copyright (C) 2021  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -21,7 +21,7 @@
 #ifdef USE_SM16716
 /*********************************************************************************************\
  * SM16716 - Controlling RGB over a synchronous serial line
- * Copyright (C) 2020  Gabor Simon
+ * Copyright (C) 2021  Gabor Simon
  *
  * Source: https://community.home-assistant.io/t/cheap-uk-wifi-bulbs-with-tasmota-teardown-help-tywe3s/40508/27
 \*********************************************************************************************/
@@ -123,7 +123,7 @@ bool Sm16716SetChannels(void)
   // handle any PWM pins, skipping the first 3 values for sm16716
   for (uint32_t i = 3; i < Light.subtype; i++) {
     if (PinUsed(GPIO_PWM1, i-3)) {
-      //AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION "Cur_Col%d 10 bits %d, Pwm%d %d"), i, cur_col[i], i+1, curcol);
+      //AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION "Cur_Col%d 10 bits %d, Pwm%d %d"), i, cur_col[i], i+1, curcol);
       analogWrite(Pin(GPIO_PWM1, i-3), bitRead(TasmotaGlobal.pwm_inverted, i-3) ? Settings.pwm_range - cur_col_10bits[i] : cur_col_10bits[i]);
     }
   }
@@ -177,7 +177,7 @@ void Sm16716ModuleSelected(void)
     LightPwmOffset(LST_RGB);  // Handle any PWM pins, skipping the first 3 color values for sm16716
     TasmotaGlobal.light_type += LST_RGB;    // Add RGB to be controlled by sm16716
     TasmotaGlobal.light_driver = XLGT_03;
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR("DBG: SM16716 Found"));
+    AddLog(LOG_LEVEL_DEBUG, PSTR("DBG: SM16716 Found"));
   }
 }
 

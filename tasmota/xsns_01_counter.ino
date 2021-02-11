@@ -1,7 +1,7 @@
 /*
   xsns_01_counter.ino - Counter sensors (water meters, electricity meters etc.) sensor support for Tasmota
 
-  Copyright (C) 2020  Maarten Damen and Theo Arends
+  Copyright (C) 2021  Maarten Damen and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -264,7 +264,7 @@ void SyncACDimmer(void)
 #ifdef ESP32
           analogWrite(Pin(GPIO_PWM1, i), 5);
 #endif  // ESP32
-          //AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("CNT: [%d] dimm_time_CCs %d, current_cycle_CC: %d, timelag %lu, lastcc %lu, currentSteps %d, curr %d"), i, ac_zero_cross_dimmer.dimm_timeClockCycles,ac_zero_cross_dimmer.current_cycle_ClockCycles , timelag_ClockCycles, ac_zero_cross_dimmer.currentCycleCount, ac_zero_cross_dimmer.currentSteps, Light.fade_cur_10[i]);
+          //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("CNT: [%d] dimm_time_CCs %d, current_cycle_CC: %d, timelag %lu, lastcc %lu, currentSteps %d, curr %d"), i, ac_zero_cross_dimmer.dimm_timeClockCycles,ac_zero_cross_dimmer.current_cycle_ClockCycles , timelag_ClockCycles, ac_zero_cross_dimmer.currentCycleCount, ac_zero_cross_dimmer.currentSteps, Light.fade_cur_10[i]);
       }
     }
   }

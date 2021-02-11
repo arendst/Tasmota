@@ -1,7 +1,7 @@
 /*
   xsns_42_scd30.ino - SC30 CO2 sensor support for Tasmota
 
-  Copyright (C) 2020 Frogmore42
+  Copyright (C) 2021  Frogmore42
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -93,7 +93,7 @@ void Scd30Detect(void)
   I2cSetActiveFound(SCD30_ADDRESS, "SCD30");
   scd30Found = true;
 
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR("SCD: FW v%d.%d"), major, minor);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("SCD: FW v%d.%d"), major, minor);
 }
 
 // gets data from the sensor every 3 seconds or so to give the sensor time to gather new data

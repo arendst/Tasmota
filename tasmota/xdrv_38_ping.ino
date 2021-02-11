@@ -1,7 +1,7 @@
 /*
   xdrv_38_ping.ino - support for ICMP Ping
 
-  Copyright (C) 2020  Theo Arends and Stephan Hadinger
+  Copyright (C) 2021  Theo Arends and Stephan Hadinger
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -303,7 +303,7 @@ void PingResponsePoll(void) {
                       ",\"AvgTime\":%d"
                       "}}}"),
                       ping->hostname.c_str(),
-                      success ? "true" : "false",
+                      success ? PSTR("true") : PSTR("false"),
                       ip & 0xFF, (ip >> 8) & 0xFF, (ip >> 16) & 0xFF, ip >> 24,
                       success,
                       ping->timeout_count,

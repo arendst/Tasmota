@@ -1,7 +1,7 @@
 /*
   xdrv_23_zigbee_4a_eeprom.ino - zigbee support for Tasmota - nano filesystem for EEPROM, with anti-weavering
 
-  Copyright (C) 2020  Theo Arends and Stephan Hadinger
+  Copyright (C) 2021  Theo Arends and Stephan Hadinger
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -20,7 +20,7 @@
 #ifdef USE_ZIGBEE
 #ifdef USE_ZIGBEE_EZSP
 
-#define Z_EEPROM_DEBUG
+// #define Z_EEPROM_DEBUG
 
 // The EEPROM is 64KB in size with individually writable bytes.
 // They are conveniently organized in pages of 128 bytes to accelerate
@@ -93,9 +93,9 @@
 //  - only file size actually changes
 
 /*********************************************************************************************\
- * 
+ *
  * Constants
- * 
+ *
 \*********************************************************************************************/
 const size_t ZFS_BLOCK_SIZE      = 256;
 const size_t ZFS_ENTRY_SIZE      = 8;    // each entry is 32 bytes
@@ -124,7 +124,7 @@ public:
     blk_start(0),
     reserved(0)
     {}
-  
+
   inline static bool validIdx(uint8_t blk_start) { return ((blk_start != 0x00) && (blk_start != 0x01) && (blk_start != 0xFF)); };
   static uint16_t getAddress(uint8_t entry_idx);
   void read(uint8_t entry_idx);
@@ -190,9 +190,9 @@ public:
 };
 
 /*********************************************************************************************\
- * 
+ *
  * Formatting implementations
- * 
+ *
 \*********************************************************************************************/
 
 void ZFS_Dir_Block::format(void) {
@@ -229,9 +229,9 @@ void ZFS_Map::format(void) {
 }
 
 /*********************************************************************************************\
- * 
+ *
  * Writing a file
- * 
+ *
 \*********************************************************************************************/
 
 class ZFS_Write_File {
@@ -256,9 +256,9 @@ protected:
 
 
 /*********************************************************************************************\
- * 
+ *
  * Check that the EEPROM is formatted
- * 
+ *
 \*********************************************************************************************/
 
 // Main class for the Zigbee filesystem
@@ -277,9 +277,9 @@ public:
 };
 
 /*********************************************************************************************\
- * 
+ *
  * Check that the EEPROM is formatted
- * 
+ *
 \*********************************************************************************************/
 
 bool ZFS::findFileEntry(uint32_t name, ZFS_File_Entry & entry, uint8_t * _entry_idx) {
@@ -291,7 +291,7 @@ bool ZFS::findFileEntry(uint32_t name, ZFS_File_Entry & entry, uint8_t * _entry_
 #ifdef Z_EEPROM_DEBUG
     // {
     //   char hex_char[(sizeof(ZFS_File_Entry) * 2) + 2];
-    //   AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Read entry %d at address 0x%04X contains %s"), entry_idx, entry_addr, ToHex_P((uint8_t*)&entry, sizeof(entry), hex_char, sizeof(hex_char)));
+    //   AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Read entry %d at address 0x%04X contains %*_H"), entry_idx, entry_addr, sizeof(entry), &entry);
     // }
 #endif
     if (entry.name == name) {
@@ -317,9 +317,9 @@ void ZFS::erase(void) {
 }
 
 /*********************************************************************************************\
- * 
+ *
  * Reading a file
- * 
+ *
 \*********************************************************************************************/
 int32_t ZFS::readBytes(uint32_t name, void* buffer, size_t buffer_len, uint16_t read_start, uint16_t read_len) {
   if (!zigbee.eeprom_ready) { return -1; }
@@ -349,9 +349,9 @@ int32_t ZFS::readBytes(uint32_t name, void* buffer, size_t buffer_len, uint16_t 
 }
 
 /*********************************************************************************************\
- * 
+ *
  * Check that the EEPROM is formatted
- * 
+ *
 \*********************************************************************************************/
 
 void ZFS::initOrFormat(void) {
@@ -386,7 +386,7 @@ void ZFS::initOrFormat(void) {
     format();
   }
   delete dir;
-  
+
   zigbee.eeprom_ready = true;
 }
 
@@ -408,7 +408,7 @@ void ZFS::format(void) {
   zigbee.eeprom.writeBytes(0x0100, 256, (byte*) map);
   delete map;
 
-  // Dir 
+  // Dir
   ZFS_Dir_Block * dir = new ZFS_Dir_Block();
   dir->format();
   zigbee.eeprom.writeBytes(0x0000, 256, (byte*) dir);

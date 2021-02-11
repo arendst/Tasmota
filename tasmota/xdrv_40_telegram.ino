@@ -1,7 +1,7 @@
 /*
   xdrv_40_telegram.ino - telegram for Tasmota
 
-  Copyright (C) 2020  Theo Arends
+  Copyright (C) 2021  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -99,7 +99,7 @@ bool TelegramInit(void) {
       Telegram.next_update_id = 0;    // Code of last read Message
       Telegram.message[0].text = "";
 
-      AddLog_P(LOG_LEVEL_INFO, PSTR("TGM: Started"));
+      AddLog(LOG_LEVEL_INFO, PSTR("TGM: Started"));
     }
     init_done = true;
   }
@@ -115,7 +115,7 @@ String TelegramConnectToTelegram(String command) {
   uint32_t tls_connect_time = millis();
   if (telegramClient->connect("api.telegram.org", 443)) {
 
-//    AddLog_P(LOG_LEVEL_DEBUG, PSTR("TGM: Connected in %d ms, max ThunkStack used %d"), millis() - tls_connect_time, telegramClient->getMaxThunkStackUse());
+//    AddLog(LOG_LEVEL_DEBUG, PSTR("TGM: Connected in %d ms, max ThunkStack used %d"), millis() - tls_connect_time, telegramClient->getMaxThunkStackUse());
 
     telegramClient->println("GET /"+command);
 
@@ -144,7 +144,7 @@ String TelegramConnectToTelegram(String command) {
 }
 
 void TelegramGetUpdates(uint32_t offset) {
-  AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("TGM: getUpdates"));
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("TGM: getUpdates"));
 
   if (!TelegramInit()) { return; }
 
@@ -241,28 +241,28 @@ void TelegramGetUpdates(uint32_t offset) {
         AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("TGM: Parsed update_id %d, chat_id %d, text \"%s\""), Telegram.message[i].update_id, Telegram.message[i].chat_id, Telegram.message[i].text.c_str());
       }
     } else {
-//      AddLog_P(LOG_LEVEL_DEBUG, PSTR("TGM: No new messages"));
+//      AddLog(LOG_LEVEL_DEBUG, PSTR("TGM: No new messages"));
     }
   } else {
-//    AddLog_P(LOG_LEVEL_DEBUG, PSTR("TGM: Failed to update"));
+//    AddLog(LOG_LEVEL_DEBUG, PSTR("TGM: Failed to update"));
   }
 }
 
 bool TelegramSendMessage(int32_t chat_id, String text) {
-  AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("TGM: sendMessage"));
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("TGM: sendMessage"));
 
   if (!TelegramInit()) { return false; }
 
   bool sent = false;
   if (text != "") {
     String _token = SettingsText(SET_TELEGRAM_TOKEN);
-    String command = "bot" + _token + "/sendMessage?chat_id=" + String(chat_id) + "&text=" + text;
+    String command = "bot" + _token + "/sendMessage?chat_id=" + String(chat_id) + "&text=" + UrlEncode(text);
     String response = TelegramConnectToTelegram(command);
 
 //    AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("TGM: Response %s"), response.c_str());
 
     if (response.startsWith("{\"ok\":true")) {
-//      AddLog_P(LOG_LEVEL_DEBUG, PSTR("TGM: Message sent"));
+//      AddLog(LOG_LEVEL_DEBUG, PSTR("TGM: Message sent"));
       sent = true;
     }
   }
@@ -272,7 +272,7 @@ bool TelegramSendMessage(int32_t chat_id, String text) {
 
 /*
 void TelegramSendGetMe(void) {
-  AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("TGM: getMe"));
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("TGM: getMe"));
 
   if (!TelegramInit()) { return; }
 
@@ -289,37 +289,29 @@ void TelegramSendGetMe(void) {
 String TelegramExecuteCommand(const char *svalue) {
   String response = "";
 
-  uint32_t curridx = TasmotaGlobal.web_log_index;
+  uint32_t curridx = TasmotaGlobal.log_buffer_pointer;
+  TasmotaGlobal.templog_level = LOG_LEVEL_INFO;
   ExecuteCommand(svalue, SRC_CHAT);
-  if (TasmotaGlobal.web_log_index != curridx) {
-    uint32_t counter = curridx;
-    response = F("{");
-    bool cflg = false;
-    do {
-      char* tmp;
-      size_t len;
-      GetLog(counter, &tmp, &len);
-      if (len) {
-        // [14:49:36 MQTT: stat/wemos5/RESULT = {"POWER":"OFF"}] > [{"POWER":"OFF"}]
-        char* JSON = (char*)memchr(tmp, '{', len);
-        if (JSON) { // Is it a JSON message (and not only [15:26:08 MQT: stat/wemos5/POWER = O])
-          size_t JSONlen = len - (JSON - tmp);
-          if (JSONlen > sizeof(TasmotaGlobal.mqtt_data)) { JSONlen = sizeof(TasmotaGlobal.mqtt_data); }
-          char stemp[JSONlen];
-          strlcpy(stemp, JSON +1, JSONlen -2);
-          if (cflg) { response += F(","); }
-          response += stemp;
-          cflg = true;
-        }
-      }
-      counter++;
-      counter &= 0xFF;
-      if (!counter) counter++;  // Skip 0 as it is not allowed
-    } while (counter != TasmotaGlobal.web_log_index);
-    response += F("}");
-  } else {
-    response = F("{\"" D_RSLT_WARNING "\":\"" D_ENABLE_WEBLOG_FOR_RESPONSE "\"}");
+  response = F("{");
+  bool cflg = false;
+  uint32_t index = curridx;
+  char* line;
+  size_t len;
+  while (GetLog(TasmotaGlobal.templog_level, &index, &line, &len)) {
+    // [14:49:36.123 MQTT: stat/wemos5/RESULT = {"POWER":"OFF"}] > [{"POWER":"OFF"}]
+    char* JSON = (char*)memchr(line, '{', len);
+    if (JSON) {  // Is it a JSON message (and not only [15:26:08 MQT: stat/wemos5/POWER = O])
+      size_t JSONlen = len - (JSON - line);
+      if (JSONlen > sizeof(TasmotaGlobal.mqtt_data)) { JSONlen = sizeof(TasmotaGlobal.mqtt_data); }
+      char stemp[JSONlen];
+      strlcpy(stemp, JSON +1, JSONlen -2);
+      if (cflg) { response += F(","); }
+      response += stemp;
+      cflg = true;
+    }
   }
+  response += F("}");
+  TasmotaGlobal.templog_level = 0;
 
   return response;
 }
@@ -442,14 +434,14 @@ void CmndTmChatId(void) {
 
 void CmndTmSend(void) {
   if (!Telegram.send_enable || !strlen(SettingsText(SET_TELEGRAM_CHATID))) {
-    ResponseCmndChar(D_JSON_FAILED);
+    ResponseCmndChar(PSTR(D_JSON_FAILED));
     return;
   }
   if (XdrvMailbox.data_len > 0) {
     String message = XdrvMailbox.data;
     String chat_id = SettingsText(SET_TELEGRAM_CHATID);
     if (!TelegramSendMessage(chat_id.toInt(), message)) {
-      ResponseCmndChar(D_JSON_FAILED);
+      ResponseCmndChar(PSTR(D_JSON_FAILED));
       return;
     }
   }

@@ -1,7 +1,7 @@
 /*
   xsns_75_prometheus.ino - Web based information for Tasmota
 
-  Copyright (C) 2020  Theo Arends
+  Copyright (C) 2021  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -26,67 +26,46 @@
 
 const char *UnitfromType(const char *type)  // find unit for measurment type
 {
-  if (strcmp(type, "time") == 0)
-  {
-    return "_seconds";
+  if (strcmp(type, "time") == 0) {
+    return "seconds";
   }
-  if (strcmp(type, "temperature") == 0 || strcmp(type, "dewpoint") == 0)
-  {
-    return "_celsius";
+  if (strcmp(type, "temperature") == 0 || strcmp(type, "dewpoint") == 0) {
+    return "celsius";
   }
-  if (strcmp(type, "pressure") == 0)
-  {
-    return "_hpa";
+  if (strcmp(type, "pressure") == 0) {
+    return "hpa";
   }
-  if (strcmp(type, "voltage") == 0)
-  {
-    return "_volts";
+  if (strcmp(type, "voltage") == 0) {
+    return "volts";
   }
-  if (strcmp(type, "current") == 0)
-  {
-    return "_amperes";
+  if (strcmp(type, "current") == 0) {
+    return "amperes";
   }
-  if (strcmp(type, "mass") == 0)
-  {
-    return "_grams";
+  if (strcmp(type, "mass") == 0) {
+    return "grams";
   }
-  if (strcmp(type, "carbondioxide") == 0)
-  {
-    return "_ppm";
+  if (strcmp(type, "carbondioxide") == 0) {
+    return "ppm";
   }
-  if (strcmp(type, "humidity") == 0)
-  {
-    return "_percentage";
+  if (strcmp(type, "humidity") == 0) {
+    return "percentage";
   }
   return "";
 }
 
-const char *FormatMetricName(const char *metric)  // cleanup spaces and uppercases for Prmetheus metrics conventions
-{
-  char *formated = (char *)malloc(strlen(metric)+1);
-  uint32_t cnt = 0;
-  for (cnt; cnt < strlen(metric)+1; cnt++)
-  {
-    if (metric[cnt] == ' ')
-    { 
-      formated[cnt] = '_';
-    }
-    else
-    {
-      formated[cnt] = tolower(metric[cnt]);
-    }
-  }
-  return formated;
+String FormatMetricName(const char *metric) {  // cleanup spaces and uppercases for Prmetheus metrics conventions
+  String formatted = metric;
+  formatted.toLowerCase();
+  formatted.replace(" ", "_");
+  return formatted;
 }
 
-void HandleMetrics(void)
-{
+void HandleMetrics(void) {
   if (!HttpCheckPriviledgedAccess()) { return; }
 
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP "Prometheus"));
+  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP "Prometheus"));
 
   WSContentBegin(200, CT_PLAIN);
-
 
   char parameter[FLOATSZ];
 
@@ -142,52 +121,43 @@ void HandleMetrics(void)
   String jsonStr = json;
   JsonParser parser((char *)jsonStr.c_str());
   JsonParserObject root = parser.getRootObject();
-  if (root)
-  { // did JSON parsing went ok?
-    for (auto key1 : root)
-    {
+  if (root) { // did JSON parsing went ok?
+    for (auto key1 : root) {
       JsonParserToken value1 = key1.getValue();
-      if (value1.isObject())
-      {
+      if (value1.isObject()) {
         JsonParserObject Object2 = value1.getObject();
-        for (auto key2 : Object2)
-        {
+        for (auto key2 : Object2) {
           JsonParserToken value2 = key2.getValue();
-          if (value2.isObject())
-          {
+          if (value2.isObject()) {
             JsonParserObject Object3 = value2.getObject();
-            for (auto key3 : Object3)
-            {
+            for (auto key3 : Object3) {
               const char *value = key3.getValue().getStr(nullptr);
-              if (value != nullptr && isdigit(value[0]))
-              {
-                const char *sensor = FormatMetricName(key2.getStr());                                                                                        //cleanup sensor name
-                const char *type = FormatMetricName(key3.getStr());                                                                                          //cleanup sensor type
-                const char *unit = UnitfromType(type);                                                                                                       //grab base unit corresponding to type
-                WSContentSend_P(PSTR("# TYPE tasmota_sensors_%s%s gauge\ntasmota_sensors_%s%s{sensor=\"%s\"} %s\n"), type, unit, type, unit, sensor, value); //build metric as "# TYPE tasmota_sensors_%type%_%unit% gauge\ntasmotasensors_%type%_%unit%{sensor=%sensor%"} %value%""
+              if (value != nullptr && isdigit(value[0])) {
+                String sensor = FormatMetricName(key2.getStr());
+                String type = FormatMetricName(key3.getStr());
+                const char *unit = UnitfromType(type.c_str());                     //grab base unit corresponding to type
+                WSContentSend_P(PSTR("# TYPE tasmota_sensors_%s_%s gauge\ntasmota_sensors_%s_%s{sensor=\"%s\"} %s\n"),
+                  type.c_str(), unit, type.c_str(), unit, sensor.c_str(), value);  //build metric as "# TYPE tasmota_sensors_%type%_%unit% gauge\ntasmotasensors_%type%_%unit%{sensor=%sensor%"} %value%""
+              }
+            }
+          } else {
+            const char *value = value2.getStr(nullptr);
+            if (value != nullptr && isdigit(value[0])) {
+              String sensor = FormatMetricName(key1.getStr());
+              String type = FormatMetricName(key2.getStr());
+              const char *unit = UnitfromType(type.c_str());
+              if (strcmp(type.c_str(), "totalstarttime") != 0) {  // this metric causes prometheus of fail
+                WSContentSend_P(PSTR("# TYPE tasmota_sensors_%s_%s gauge\ntasmota_sensors_%s_%s{sensor=\"%s\"} %s\n"),
+                  type.c_str(), unit, type.c_str(), unit, sensor.c_str(), value);
               }
             }
           }
-          else
-          {
-            const char *value = value2.getStr(nullptr);
-            if (value != nullptr && isdigit(value[0]))
-            {
-              const char *sensor = FormatMetricName(key1.getStr());
-              const char *type = FormatMetricName(key2.getStr());
-              const char *unit = UnitfromType(type);
-              WSContentSend_P(PSTR("# TYPE tasmota_sensors_%s%s gauge\ntasmota_sensors_%s%s{sensor=\"%s\"} %s\n"), type, unit, type, unit, sensor, value);
-            }
-          }
         }
-      }
-      else
-      {
+      } else {
         const char *value = value1.getStr(nullptr);
-        if (value != nullptr && isdigit(value[0] && strcmp(key1.getStr(), "Time") != 0))  //remove false 'time' metric
-        { 
-          const char *sensor = FormatMetricName(key1.getStr());
-          WSContentSend_P(PSTR("# TYPE tasmota_sensors_%s gauge\ntasmota_sensors{sensor=\"%s\"} %s\n"), sensor, sensor, value);
+        String sensor = FormatMetricName(key1.getStr());
+        if (value != nullptr && isdigit(value[0] && strcmp(sensor.c_str(), "time") != 0)) {  //remove false 'time' metric
+          WSContentSend_P(PSTR("# TYPE tasmota_sensors_%s gauge\ntasmota_sensors{sensor=\"%s\"} %s\n"), sensor.c_str(), sensor.c_str(), value);
         }
       }
     }
@@ -200,8 +170,7 @@ void HandleMetrics(void)
  * Interface
 \*********************************************************************************************/
 
-bool Xsns75(uint8_t function)
-{
+bool Xsns75(uint8_t function) {
   bool result = false;
 
   switch (function) {

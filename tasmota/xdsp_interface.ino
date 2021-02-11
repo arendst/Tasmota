@@ -1,7 +1,7 @@
 /*
   xdsp_interface.ino - Display interface support for Tasmota
 
-  Copyright (C) 2020  Theo Arends
+  Copyright (C) 2021  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -87,7 +87,71 @@ bool (* const xdsp_func_ptr[])(uint8_t) = {   // Display Function Pointers
 #endif
 
 #ifdef XDSP_16
-  &Xdsp16
+  &Xdsp16,
+#endif
+
+#ifdef XDSP_17
+  &Xdsp17,
+#endif
+
+#ifdef XDSP_18
+  &Xdsp18,
+#endif
+
+#ifdef XDSP_19
+  &Xdsp19,
+#endif
+
+#ifdef XDSP_20
+  &Xdsp20,
+#endif
+
+#ifdef XDSP_21
+  &Xdsp21,
+#endif
+
+#ifdef XDSP_22
+  &Xdsp22,
+#endif
+
+#ifdef XDSP_23
+  &Xdsp23,
+#endif
+
+#ifdef XDSP_24
+  &Xdsp24,
+#endif
+
+#ifdef XDSP_25
+  &Xdsp25,
+#endif
+
+#ifdef XDSP_26
+  &Xdsp26,
+#endif
+
+#ifdef XDSP_27
+  &Xdsp27,
+#endif
+
+#ifdef XDSP_28
+  &Xdsp28,
+#endif
+
+#ifdef XDSP_29
+  &Xdsp29,
+#endif
+
+#ifdef XDSP_30
+  &Xdsp30,
+#endif
+
+#ifdef XDSP_31
+  &Xdsp31,
+#endif
+
+#ifdef XDSP_32
+  &Xdsp32
 #endif
 };
 

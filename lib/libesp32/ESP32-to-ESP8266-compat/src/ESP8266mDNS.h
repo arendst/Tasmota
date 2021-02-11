@@ -1,4 +1,4 @@
 //
 // Compat with ESP32
 //
-#include <mDNS.h>
+#include <ESPmDNS.h>

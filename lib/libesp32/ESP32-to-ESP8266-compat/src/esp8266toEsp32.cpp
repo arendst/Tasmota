@@ -15,9 +15,22 @@
  */
 //
 #include "Arduino.h"
-#include "lwip/apps/sntp.h"
+//#include "lwip/apps/sntp.h"
 #include <nvs.h>
-#include <rom/rtc.h>
+
+// See libraries\ESP32\examples\ResetReason.ino
+#if ESP_IDF_VERSION_MAJOR > 3      // IDF 4+
+  #if CONFIG_IDF_TARGET_ESP32      // ESP32/PICO-D4
+    #include "esp32/rom/rtc.h"
+  #elif CONFIG_IDF_TARGET_ESP32S2  // ESP32-S2
+    #include "esp32s2/rom/rtc.h"
+  #else
+    #error Target CONFIG_IDF_TARGET is not supported
+  #endif
+#else // ESP32 Before IDF 4.0
+  #include "rom/rtc.h"
+#endif
+
 #include <ESP8266WiFi.h>
 #include "esp8266toEsp32.h"
 

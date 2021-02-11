@@ -1,7 +1,7 @@
 /*
   xdsp_02_ssd1306.ino - Display Oled SSD1306 support for Tasmota
 
-  Copyright (C) 2020  Theo Arends and Adafruit
+  Copyright (C) 2021  Theo Arends and Adafruit
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -124,7 +124,7 @@ void Ssd1306PrintLog(void)
       strlcpy(disp_screen_buffer[last_row], txt, disp_screen_buffer_cols);
       DisplayFillScreen(last_row);
 
-      AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "[%s]"), disp_screen_buffer[last_row]);
+      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "[%s]"), disp_screen_buffer[last_row]);
 
       renderer->println(disp_screen_buffer[last_row]);
       renderer->Updateframe();

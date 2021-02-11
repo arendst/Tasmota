@@ -1,7 +1,7 @@
 /*
   support_float.ino - Small floating point support for Tasmota
 
-  Copyright (C) 2020  Theo Arends and Stephan Hadinger
+  Copyright (C) 2021  Theo Arends and Stephan Hadinger
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -136,7 +136,7 @@ double TaylorLog(double x)
   dtostrfd(log1, 8, log1s);
   char log2s[33];
   dtostrfd(totalValue, 8, log2s);
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR("input %s, log %s, taylor %s"), logxs, log1s, log2s);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("input %s, log %s, taylor %s"), logxs, log1s, log2s);
 */
   return totalValue;
 }

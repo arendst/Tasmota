@@ -1,7 +1,7 @@
 /*
   support_switch.ino - switch support for Tasmota
 
-  Copyright (C) 2020  Theo Arends
+  Copyright (C) 2021  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -25,8 +25,8 @@
  * Inspired by (https://github.com/OLIMEX/olimex-iot-firmware-esp8266/blob/master/olimex/user/user_switch2.c)
 \*********************************************************************************************/
 
-const uint8_t SWITCH_PROBE_INTERVAL = 10;   // Time in milliseconds between switch input probe
-const uint8_t SWITCH_FAST_PROBE_INTERVAL =2;// Time in milliseconds between switch input probe for AC detection
+const uint8_t SWITCH_PROBE_INTERVAL = 10;      // Time in milliseconds between switch input probe
+const uint8_t SWITCH_FAST_PROBE_INTERVAL = 2;  // Time in milliseconds between switch input probe for AC detection
 const uint8_t AC_PERIOD = (20 + SWITCH_FAST_PROBE_INTERVAL - 1) / SWITCH_FAST_PROBE_INTERVAL;   // Duration of an AC wave in probe intervals
 
 // Switch Mode definietions
@@ -45,7 +45,7 @@ Ticker TickerSwitch;
 
 struct SWITCH {
   uint32_t debounce = 0;                     // Switch debounce timer
-  uint16_t no_pullup_mask = 0;               // Switch pull-up bitmask flags
+  uint32_t no_pullup_mask = 0;               // Switch pull-up bitmask flags
   uint8_t state[MAX_SWITCHES] = { 0 };
   uint8_t last_state[MAX_SWITCHES];          // Last wall switch states
   uint8_t hold_timer[MAX_SWITCHES] = { 0 };  // Timer for wallswitch push button hold
@@ -89,7 +89,6 @@ void SwitchProbe(void) {
   if (TasmotaGlobal.uptime < 4) { return; }                  // Block GPIO for 4 seconds after poweron to workaround Wemos D1 / Obi RTS circuit
 
   uint32_t state_filter;
-  uint32_t switch_probe_interval;
   uint32_t first_change = Switch.first_change;
   uint32_t debounce_flags = Settings.switch_debounce % 10;
   bool force_high = (debounce_flags &1);                     // 51, 101, 151 etc
@@ -97,7 +96,6 @@ void SwitchProbe(void) {
   bool ac_detect = (debounce_flags == 9);
 
   if (ac_detect) {
-    switch_probe_interval = SWITCH_FAST_PROBE_INTERVAL;
     if (Settings.switch_debounce < 2 * AC_PERIOD * SWITCH_FAST_PROBE_INTERVAL + 9) {
       state_filter = 2 * AC_PERIOD;
     } else if (Settings.switch_debounce > (0x7f - 2 * AC_PERIOD) * SWITCH_FAST_PROBE_INTERVAL) {
@@ -106,89 +104,87 @@ void SwitchProbe(void) {
       state_filter = (Settings.switch_debounce - 9) / SWITCH_FAST_PROBE_INTERVAL;
     }
   } else {
-    switch_probe_interval = SWITCH_PROBE_INTERVAL;
     state_filter = Settings.switch_debounce / SWITCH_PROBE_INTERVAL;	// 5, 10, 15
   }
 
   for (uint32_t i = 0; i < MAX_SWITCHES; i++) {
-    if (PinUsed(GPIO_SWT1, i)) {
-      // Olimex user_switch2.c code to fix 50Hz induced pulses
-      if (1 == digitalRead(Pin(GPIO_SWT1, i))) {
+    if (!PinUsed(GPIO_SWT1, i)) { continue; }
 
-        if (ac_detect) {                                     // Enabled with SwitchDebounce x9
-          Switch.state[i] |= 0x80;
-          if (Switch.state[i] > 0x80) {
-            Switch.state[i]--;
-            if (0x80 == Switch.state[i]) {
-              Switch.virtual_state[i] = 0;
+    // Olimex user_switch2.c code to fix 50Hz induced pulses
+    if (1 == digitalRead(Pin(GPIO_SWT1, i))) {
+
+      if (ac_detect) {                                     // Enabled with SwitchDebounce x9
+        Switch.state[i] |= 0x80;
+        if (Switch.state[i] > 0x80) {
+          Switch.state[i]--;
+          if (0x80 == Switch.state[i]) {
+            Switch.virtual_state[i] = 0;
+            Switch.first_change = false;
+          }
+        }
+      } else {
+
+        if (force_high) {                                  // Enabled with SwitchDebounce x1
+          if (1 == Switch.virtual_state[i]) {
+            Switch.state[i] = state_filter;                // With noisy input keep current state 1 unless constant 0
+          }
+        }
+
+        if (Switch.state[i] < state_filter) {
+          Switch.state[i]++;
+          if (state_filter == Switch.state[i]) {
+            Switch.virtual_state[i] = 1;
+          }
+        }
+      }
+    } else {
+
+      if (ac_detect) {                                     // Enabled with SwitchDebounce x9
+        /*
+          * Moes MS-104B and similar devices using an AC detection circuitry
+          * on their switch inputs generating an ~4 ms long low pulse every
+          * AC wave. We start the time measurement on the falling edge.
+          *
+          * state: bit7: previous state, bit6..0: counter
+          */
+        if (Switch.state[i] & 0x80) {
+          Switch.state[i] &= 0x7f;
+          if (Switch.state[i] < state_filter - 2 * AC_PERIOD) {
+            Switch.state[i] += 2 * AC_PERIOD;
+          } else {
+            Switch.state[i] = state_filter;
+            Switch.virtual_state[i] = 1;
+            if (first_change) {
+              Switch.last_state[i] = 1;
               Switch.first_change = false;
             }
           }
         } else {
-
-          if (force_high) {                                  // Enabled with SwitchDebounce x1
-            if (1 == Switch.virtual_state[i]) {
-              Switch.state[i] = state_filter;                // With noisy input keep current state 1 unless constant 0
-            }
-          }
-
-          if (Switch.state[i] < state_filter) {
-            Switch.state[i]++;
-            if (state_filter == Switch.state[i]) {
-              Switch.virtual_state[i] = 1;
+          if (Switch.state[i] > 0x00) {
+            Switch.state[i]--;
+            if (0x00 == Switch.state[i]) {
+              Switch.virtual_state[i] = 0;
+              Switch.first_change = false;
             }
           }
         }
       } else {
 
-        if (ac_detect) {                                     // Enabled with SwitchDebounce x9
-          /*
-           * Moes MS-104B and similar devices using an AC detection circuitry
-           * on their switch inputs generating an ~4 ms long low pulse every
-           * AC wave. We start the time measurement on the falling edge.
-           *
-           * state: bit7: previous state, bit6..0: counter
-           */
-          if (Switch.state[i] & 0x80) {
-            Switch.state[i] &= 0x7f;
-            if (Switch.state[i] < state_filter - 2 * AC_PERIOD) {
-              Switch.state[i] += 2 * AC_PERIOD;
-            } else {
-              Switch.state[i] = state_filter;
-              Switch.virtual_state[i] = 1;
-              if (first_change) {
-                Switch.last_state[i] = 1;
-                Switch.first_change = false;
-              }
-            }
-          } else {
-            if (Switch.state[i] > 0x00) {
-              Switch.state[i]--;
-              if (0x00 == Switch.state[i]) {
-                Switch.virtual_state[i] = 0;
-                Switch.first_change = false;
-              }
-            }
+        if (force_low) {                                   // Enabled with SwitchDebounce x2
+          if (0 == Switch.virtual_state[i]) {
+            Switch.state[i] = 0;                           // With noisy input keep current state 0 unless constant 1
           }
-        } else {
+        }
 
-          if (force_low) {                                   // Enabled with SwitchDebounce x2
-            if (0 == Switch.virtual_state[i]) {
-              Switch.state[i] = 0;                           // With noisy input keep current state 0 unless constant 1
-            }
-          }
-
-          if (Switch.state[i] > 0) {
-            Switch.state[i]--;
-            if (0 == Switch.state[i]) {
-              Switch.virtual_state[i] = 0;
-            }
+        if (Switch.state[i] > 0) {
+          Switch.state[i]--;
+          if (0 == Switch.state[i]) {
+            Switch.virtual_state[i] = 0;
           }
         }
       }
     }
   }
-  TickerSwitch.attach_ms(switch_probe_interval, SwitchProbe);  // Re-arm as core 2.3.0 does only support ONCE mode
 }
 
 void SwitchInit(void) {
@@ -215,12 +211,8 @@ void SwitchInit(void) {
     Switch.virtual_state[i] = Switch.last_state[i];
   }
   if (Switch.present) {
-    if (ac_detect) {
-      TickerSwitch.attach_ms(SWITCH_FAST_PROBE_INTERVAL, SwitchProbe);
-      Switch.first_change = true;
-    } else {
-      TickerSwitch.attach_ms(SWITCH_PROBE_INTERVAL, SwitchProbe);
-    }
+    Switch.first_change = true;
+    TickerSwitch.attach_ms((ac_detect) ? SWITCH_FAST_PROBE_INTERVAL : SWITCH_PROBE_INTERVAL, SwitchProbe);
   }
 }
 
@@ -238,19 +230,20 @@ void SwitchHandler(uint32_t mode) {
       uint32_t button = Switch.virtual_state[i];
       uint32_t switchflag = POWER_TOGGLE +1;
       uint32_t mqtt_action = POWER_NONE;
+      uint32_t switchmode = Settings.switchmode[i];
 
-      if (Switch.hold_timer[i] & (((Settings.switchmode[i] == PUSHHOLDMULTI) | (Settings.switchmode[i] == PUSHHOLDMULTI_INV)) ? SM_TIMER_MASK: SM_NO_TIMER_MASK)) {
+      if (Switch.hold_timer[i] & (((switchmode == PUSHHOLDMULTI) | (switchmode == PUSHHOLDMULTI_INV)) ? SM_TIMER_MASK: SM_NO_TIMER_MASK)) {
         Switch.hold_timer[i]--;
         if ((Switch.hold_timer[i] & SM_TIMER_MASK) == loops_per_second * Settings.param[P_HOLD_TIME] / 25) {
-          if ((Settings.switchmode[i] == PUSHHOLDMULTI) & (NOT_PRESSED == Switch.last_state[i])) {
+          if ((switchmode == PUSHHOLDMULTI) & (NOT_PRESSED == Switch.last_state[i])) {
             SendKey(KEY_SWITCH, i +1, POWER_INCREMENT);      // Execute command via MQTT
           }
-          if ((Settings.switchmode[i] == PUSHHOLDMULTI_INV) & (PRESSED == Switch.last_state[i])) {
+          if ((switchmode == PUSHHOLDMULTI_INV) & (PRESSED == Switch.last_state[i])) {
             SendKey(KEY_SWITCH, i +1, POWER_INCREMENT);      // Execute command via MQTT
           }
         }
-        if (0 == (Switch.hold_timer[i] & (((Settings.switchmode[i] == PUSHHOLDMULTI) | (Settings.switchmode[i] == PUSHHOLDMULTI_INV)) ? SM_TIMER_MASK: SM_NO_TIMER_MASK))) {
-          switch (Settings.switchmode[i]) {
+        if (0 == (Switch.hold_timer[i] & (((switchmode == PUSHHOLDMULTI) | (switchmode == PUSHHOLDMULTI_INV)) ? SM_TIMER_MASK: SM_NO_TIMER_MASK))) {
+          switch (switchmode) {
             case TOGGLEMULTI:
               switchflag = POWER_TOGGLE;                     // Toggle after hold
               break;
@@ -292,7 +285,7 @@ void SwitchHandler(uint32_t mode) {
       }
 
       if (button != Switch.last_state[i]) {  // This implies if ((PRESSED == button) then (NOT_PRESSED == Switch.last_state[i]))
-        switch (Settings.switchmode[i]) {
+        switch (switchmode) {
         case TOGGLE:
         case PUSHBUTTON_TOGGLE:
           switchflag = POWER_TOGGLE;         // Toggle

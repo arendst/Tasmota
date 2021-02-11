@@ -1,7 +1,7 @@
 /*
   xdrv_05_irremote.ino - infra red support for Tasmota
 
-  Copyright (C) 2020  Heiko Krupp, Lazar Obradovic and Theo Arends
+  Copyright (C) 2021  Heiko Krupp, Lazar Obradovic and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -62,6 +62,12 @@ def ir_expand(ir_compact):
 #include <IRremoteESP8266.h>
 #include <IRutils.h>
 
+// Receiving IR while sending at the same time (i.e. receiving your own signal) was dsiabled in #10041
+// At the demand of @pilaGit, you can `#define IR_RCV_WHILE_SENDING 1` to bring back this behavior
+#ifndef IR_RCV_WHILE_SENDING
+#define IR_RCV_WHILE_SENDING  0
+#endif
+
 enum IrErrors { IE_NO_ERROR, IE_INVALID_RAWDATA, IE_INVALID_JSON, IE_SYNTAX_IRSEND, IE_PROTO_UNSUPPORTED };
 
 const char kIrRemoteCommands[] PROGMEM = "|" D_CMND_IRSEND ;
@@ -69,6 +75,44 @@ const char kIrRemoteCommands[] PROGMEM = "|" D_CMND_IRSEND ;
 // Keep below IrRemoteCommand lines exactly as below as otherwise Arduino IDE prototyping will fail (#6982)
 void (* const IrRemoteCommand[])(void) PROGMEM = {
   &CmndIrSend };
+
+char* ulltoa(unsigned long long value, char *str, int radix)
+{
+  char digits[64];
+  char *dst = str;
+  int i = 0;
+
+//  if (radix < 2 || radix > 36) { radix = 10; }
+
+  do {
+    int n = value % radix;
+    digits[i++] = (n < 10) ? (char)n+'0' : (char)n-10+'A';
+    value /= radix;
+  } while (value != 0);
+
+  while (i > 0) { *dst++ = digits[--i]; }
+
+  *dst = 0;
+  return str;
+}
+
+char* Uint64toHex(uint64_t value, char *str, uint16_t bits)
+{
+  ulltoa(value, str, 16);  // Get 64bit value
+
+  int fill = 8;
+  if ((bits > 3) && (bits < 65)) {
+    fill = bits / 4;  // Max 16
+    if (bits % 4) { fill++; }
+  }
+  int len = strlen(str);
+  fill -= len;
+  if (fill > 0) {
+    memmove(str + fill, str, len +1);
+    memset(str, '0', fill);
+  }
+  return str;
+}
 
 /*********************************************************************************************\
  * Class used to make a compact IR Raw format.
@@ -122,7 +166,7 @@ IRsend *irsend = nullptr;
 
 void IrSendInit(void)
 {
-  irsend = new IRsend(Pin(GPIO_IRSEND)); // an IR led is at GPIO_IRSEND
+  irsend = new IRsend(Pin(GPIO_IRSEND), IR_SEND_INVERTED, IR_SEND_USE_MODULATION); // an IR led is at GPIO_IRSEND
   irsend->begin();
 }
 
@@ -155,7 +199,7 @@ void IrReceiveInit(void)
   irrecv->setUnknownThreshold(Settings.param[P_IR_UNKNOW_THRESHOLD]);
   irrecv->enableIRIn();                  // Start the receiver
 
-  //  AddLog_P(LOG_LEVEL_DEBUG, PSTR("IrReceive initialized"));
+  //  AddLog(LOG_LEVEL_DEBUG, PSTR("IrReceive initialized"));
 }
 
 void IrReceiveCheck(void)
@@ -184,7 +228,7 @@ void IrReceiveCheck(void)
       Uint64toHex(results.value, hvalue, 32);  // UNKNOWN is always 32 bits hash
     }
 
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_IRR "RawLen %d, Overflow %d, Bits %d, Value 0x%s, Decode %d"),
+    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_IRR "RawLen %d, Overflow %d, Bits %d, Value 0x%s, Decode %d"),
               results.rawlen, results.overflow, results.bits, hvalue, results.decode_type);
 
     unsigned long now = millis();
@@ -285,13 +329,13 @@ uint32_t IrRemoteCmndIrSendJson(void)
   char protocol_text[20];
   int protocol_code = GetCommandCode(protocol_text, sizeof(protocol_text), protocol, kIrRemoteProtocols);
 
-  char dvalue[64];
-  char hvalue[20];
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR("IRS: protocol_text %s, protocol %s, bits %d, data %s (0x%s), repeat %d, protocol_code %d"),
-    protocol_text, protocol, bits, ulltoa(data, dvalue, 10), Uint64toHex(data, hvalue, bits), repeat, protocol_code);
+  // char dvalue[64];
+  // char hvalue[20];
+  // AddLog(LOG_LEVEL_DEBUG, PSTR("IRS: protocol_text %s, protocol %s, bits %d, data %s (0x%s), repeat %d, protocol_code %d"),
+  //   protocol_text, protocol, bits, ulltoa(data, dvalue, 10), Uint64toHex(data, hvalue, bits), repeat, protocol_code);
 
 #ifdef USE_IR_RECEIVE
-  if (irrecv != nullptr) { irrecv->disableIRIn(); }
+  if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->disableIRIn(); }
 #endif  // USE_IR_RECEIVE
 
   switch (protocol_code) {  // Equals IRremoteESP8266.h enum decode_type_t
@@ -309,12 +353,12 @@ uint32_t IrRemoteCmndIrSendJson(void)
 #endif
     default:
 #ifdef USE_IR_RECEIVE
-      if (irrecv != nullptr) { irrecv->enableIRIn(); }
+      if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->enableIRIn(); }
 #endif  // USE_IR_RECEIVE
       return IE_PROTO_UNSUPPORTED;
   }
 #ifdef USE_IR_RECEIVE
-  if (irrecv != nullptr) { irrecv->enableIRIn(); }
+  if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->enableIRIn(); }
 #endif  // USE_IR_RECEIVE
 
   return IE_NO_ERROR;

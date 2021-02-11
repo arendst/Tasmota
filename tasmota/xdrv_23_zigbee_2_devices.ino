@@ -1,7 +1,7 @@
 /*
   xdrv_23_zigbee.ino - zigbee support for Tasmota
 
-  Copyright (C) 2020  Theo Arends and Stephan Hadinger
+  Copyright (C) 2021  Theo Arends and Stephan Hadinger
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -235,7 +235,12 @@ public:
   inline void setCT(uint16_t _ct)               { ct = _ct; }
   inline void setX(uint16_t _x)                 { x = _x; }
   inline void setY(uint16_t _y)                 { y = _y; }
-  
+
+  void toRGBAttributes(Z_attribute_list & attr_list) const ;
+  static void toRGBAttributesHSB(Z_attribute_list & attr_list, uint16_t hue, uint8_t sat, uint8_t brightness);
+  static void toRGBAttributesXYB(Z_attribute_list & attr_list, uint16_t x, uint16_t y, uint8_t brightness);
+  static void toRGBAttributesRGBb(Z_attribute_list & attr_list, uint8_t r, uint8_t g, uint8_t b, uint8_t brightness);
+
   static const Z_Data_Type type = Z_Data_Type::Z_Light;
   // 12 bytes
   uint8_t               colormode;      // 0x00: Hue/Sat, 0x01: XY, 0x02: CT | 0xFF not set, default 0x01
@@ -248,7 +253,7 @@ public:
 
 /*********************************************************************************************\
  * Device specific: PIR
- * 
+ *
   // List of occupancy time-outs:
   // 0xF = default (90 s)
   // 0x0 = no time-out
@@ -274,7 +279,7 @@ public:
 
   inline uint8_t  getOccupancy(void)    const { return occupancy; }
   inline uint16_t getIlluminance(void)  const { return illuminance; }
-  
+
   inline void setOccupancy(uint8_t _occupancy)          { occupancy = _occupancy; }
   inline void setIlluminance(uint16_t _illuminance)     { illuminance = _illuminance; }
 
@@ -429,7 +434,7 @@ public:
   }
 
   void convertZoneStatus(Z_attribute_list & attr_list, uint16_t val) const;
-  
+
   // 4 bytes
   uint16_t              zone_status;      // last known state for sensor 1 & 2
   uint16_t              zone_type;        // mapped to the Zigbee standard
@@ -503,7 +508,7 @@ void Z_Data_Alarm::convertZoneStatus(Z_attribute_list & attr_list, uint16_t val)
 
 /*********************************************************************************************\
  * Mode
- * 
+ *
   // List of modes
   // 0x1 = Tuya Zigbee mode
   // 0xF (default) = ZCL standard mode
@@ -524,7 +529,7 @@ public:
 };
 
 /*********************************************************************************************\
- * 
+ *
 \*********************************************************************************************/
 const uint8_t Z_Data_Type_len[] PROGMEM = {
   0,                        // 0x00 Z_Data_Type::Z_Unknown
@@ -556,9 +561,9 @@ size_t Z_Data::DataTypeToLength(Z_Data_Type t) {
 
 
 /*********************************************************************************************\
- * 
+ *
  * Device specific Linked List
- * 
+ *
 \*********************************************************************************************/
 class Z_Data_Set : public LList<Z_Data> {
 public:
@@ -632,7 +637,7 @@ Z_Data & Z_Data_Set::getByType(Z_Data_Type type, uint8_t ep) {
 // Byte 3: Power
 Z_Data & Z_Data_Set::createFromBuffer(const SBuffer & buf, uint32_t start, uint32_t len) {
   if (len < sizeof(Z_Data)) {
-    AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Invalid len (<4) %d"), len);
+    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Invalid len (<4) %d"), len);
     return *(Z_Data*)nullptr;
   }
 
@@ -646,7 +651,7 @@ Z_Data & Z_Data_Set::createFromBuffer(const SBuffer & buf, uint32_t start, uint3
     memcpy(&elt, buf.buf(start), len);
   } else {
     memcpy(&elt, buf.buf(start), sizeof(Z_Data));
-    AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "buffer len overflow %d > %d"), len, expected_len);
+    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "buffer len overflow %d > %d"), len, expected_len);
   }
   return elt;
 }
@@ -730,6 +735,11 @@ public:
   uint8_t               lqi;            // lqi from last message, 0xFF means unknown
   uint8_t               batterypercent; // battery percentage (0..100), 0xFF means unknwon
   uint16_t              reserved_for_alignment;
+  // Debounce informmation when receiving commands
+  // If we receive the same ZCL transaction number from the same device and the same endpoint within 300ms
+  // then discard the second packet
+  uint8_t               debounce_endpoint;  // endpoint of the last received packet, or 0 if not active (expired)
+  uint8_t               debounce_transact;  // ZCL transaction number of the last packet
   // END OF DEVICE WIDE DATA
 
   // Constructor with all defaults
@@ -750,7 +760,9 @@ public:
     last_seen(0),
     lqi(0xFF),
     batterypercent(0xFF),
-    reserved_for_alignment(0xFFFF)
+    reserved_for_alignment(0xFFFF),
+    debounce_endpoint(0),
+    debounce_transact(0)
     { };
 
   inline bool valid(void)               const { return BAD_SHORTADDR != shortaddr; }    // is the device known, valid and found?
@@ -847,6 +859,9 @@ typedef enum Z_Def_Category {
   Z_CAT_BIND,                 // send auto-binding to coordinator
   Z_CAT_CONFIG_ATTR,          // send a config attribute reporting request
   Z_CAT_READ_ATTRIBUTE,       // read a single attribute
+  Z_CAT_DEBOUNCE_CMD,         // debounce incoming commands
+  Z_CAT_CIE_ATTRIBUTE,        // write CIE address
+  Z_CAT_CIE_ENROLL,           // enroll CIE zone
 } Z_Def_Category;
 
 const uint32_t Z_CAT_REACHABILITY_TIMEOUT = 2000;     // 1000 ms or 1s
@@ -884,7 +899,7 @@ public:
   Z_Device & isKnownLongAddrDevice(uint64_t  longaddr) const;
   Z_Device & isKnownIndexDevice(uint32_t index) const;
   Z_Device & isKnownFriendlyNameDevice(const char * name) const;
-  
+
   Z_Device & findShortAddr(uint16_t shortaddr);
   const Z_Device & findShortAddr(uint16_t shortaddr) const;
   Z_Device & findLongAddr(uint64_t longaddr);
@@ -950,6 +965,7 @@ public:
   Z_Device & devicesAt(size_t i) const;
 
   // Remove device from list
+  void clearDeviceRouterInfo(void);           // reset all router flags, done just before ZbMap
   bool removeDevice(uint16_t shortaddr);
 
   // Mark data as 'dirty' and requiring to save in Flash

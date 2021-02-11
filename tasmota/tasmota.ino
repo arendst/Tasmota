@@ -1,7 +1,7 @@
 /*
   tasmota.ino - Tasmota firmware for iTead Sonoff, Wemos and NodeMCU hardware
 
-  Copyright (C) 2020  Theo Arends
+  Copyright (C) 2021  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -52,6 +52,8 @@
 #include <ESP8266HTTPClient.h>              // Ota
 #include <ESP8266httpUpdate.h>              // Ota
 #include <StreamString.h>                   // Webserver, Updater
+#include <ext_printf.h>
+#include <SBuffer.hpp>
 #include <JsonParser.h>
 #include <JsonGenerator.h>
 #ifdef USE_ARDUINO_OTA
@@ -67,8 +69,27 @@
   #include <Wire.h>                         // I2C support library
 //#endif  // USE_I2C
 #ifdef USE_SPI
-  #include <SPI.h>                          // SPI support, TFT
+  #include <SPI.h>                          // SPI support, TFT, SDcard
 #endif  // USE_SPI
+
+#ifdef USE_UFILESYS
+#ifdef ESP8266
+#include <LittleFS.h>
+#include <SPI.h>
+#ifdef USE_SDCARD
+#include <SD.h>
+#include <SDFAT.h>
+#endif  // USE_SDCARD
+#endif  // ESP8266
+#ifdef ESP32
+#include <LITTLEFS.h>
+#ifdef USE_SDCARD
+#include <SD.h>
+#endif  // USE_SDCARD
+#include "FFat.h"
+#include "FS.h"
+#endif  // ESP32
+#endif  // USE_UFILESYS
 
 // Structs
 #include "settings.h"
@@ -86,8 +107,10 @@ struct {
   uint32_t blink_timer;                     // Power cycle timer
   uint32_t backlog_timer;                   // Timer for next command in backlog
   uint32_t loop_load_avg;                   // Indicative loop load average
-  uint32_t web_log_index;                   // Index in Web log buffer
+  uint32_t log_buffer_pointer;              // Index in log buffer
   uint32_t uptime;                          // Counting every second until 4294967295 = 130 year
+  GpioOptionABits gpio_optiona;             // GPIO Option_A flags
+  void *log_buffer_mutex;                   // Control access to log buffer
 
   power_t power;                            // Current copy of Settings.power
   power_t rel_inverted;                     // Relay inverted flag (1 = (0 = On, 1 = Off))
@@ -118,15 +141,15 @@ struct {
   bool blinkstate;                          // LED state
   bool pwm_present;                         // Any PWM channel configured with SetOption15 0
   bool i2c_enabled;                         // I2C configured
-  bool spi_enabled;                         // SPI configured
-  bool soft_spi_enabled;                    // Software SPI configured
   bool ntp_force_sync;                      // Force NTP sync
-  bool is_8285;                             // Hardware device ESP8266EX (0) or ESP8285 (1)
   bool skip_light_fade;                     // Temporarily skip light fading
   bool restart_halt;                        // Do not restart but stay in wait loop
   bool module_changed;                      // Indicate module changed since last restart
+  bool wifi_stay_asleep;                    // Allow sleep only incase of ESP32 BLE
 
   StateBitfield global_state;               // Global states (currently Wifi and Mqtt) (8 bits)
+  uint8_t spi_enabled;                      // SPI configured
+  uint8_t soft_spi_enabled;                 // Software SPI configured
   uint8_t blinks;                           // Number of LED blinks
   uint8_t restart_flag;                     // Tasmota restart flag
   uint8_t ota_state_flag;                   // OTA state flag
@@ -150,10 +173,11 @@ struct {
   uint8_t masterlog_level;                  // Master log level used to override set log level
   uint8_t seriallog_level;                  // Current copy of Settings.seriallog_level
   uint8_t syslog_level;                     // Current copy of Settings.syslog_level
+  uint8_t templog_level;                    // Temporary log level to be used by HTTP cm and Telegram
   uint8_t module_type;                      // Current copy of Settings.module or user template type
   uint8_t last_source;                      // Last command source
   uint8_t shutters_present;                 // Number of actual define shutters
-  uint8_t prepped_loglevel;                 // Delayed log level message
+//  uint8_t prepped_loglevel;                 // Delayed log level message
 
 #ifndef SUPPORT_IF_STATEMENT
   uint8_t backlog_index;                    // Command backlog index
@@ -168,8 +192,7 @@ struct {
   char mqtt_client[99];                     // Composed MQTT Clientname
   char mqtt_topic[TOPSZ];                   // Composed MQTT topic
   char mqtt_data[MESSZ];                    // MQTT publish buffer and web page ajax buffer
-  char log_data[LOGSZ];                     // Logging
-  char web_log[WEB_LOG_SIZE];               // Web log buffer
+  char log_buffer[LOG_BUFFER_SIZE];         // Web log buffer
 } TasmotaGlobal;
 
 #ifdef SUPPORT_IF_STATEMENT
@@ -190,6 +213,9 @@ void setup(void) {
   DisableBrownout();      // Workaround possible weak LDO resulting in brownout detection during Wifi connection
 #endif
 #endif
+
+  RtcPreInit();
+  SettingsInit();
 
   memset(&TasmotaGlobal, 0, sizeof(TasmotaGlobal));
   TasmotaGlobal.baudrate = APP_BAUDRATE;
@@ -216,7 +242,7 @@ void setup(void) {
 #endif
   RtcRebootSave();
 
-  if (RtcSettingsLoad()) {
+  if (RtcSettingsLoad(0)) {
     uint32_t baudrate = (RtcSettings.baudrate / 300) * 300;  // Make it a valid baudrate
     if (baudrate) { TasmotaGlobal.baudrate = baudrate; }
   }
@@ -224,6 +250,10 @@ void setup(void) {
   Serial.println();
 //  Serial.setRxBufferSize(INPUT_BUFFER_SIZE);  // Default is 256 chars
   TasmotaGlobal.seriallog_level = LOG_LEVEL_INFO;  // Allow specific serial messages until config loaded
+
+#ifdef USE_UFILESYS
+  UfsInit();  // xdrv_50_filesystem.ino
+#endif
 
   SettingsLoad();
   SettingsDelta();
@@ -283,7 +313,7 @@ void setup(void) {
         Settings.module = Settings.fallback_module;  // Reset module to fallback module
 //        Settings.last_module = Settings.fallback_module;
       }
-      AddLog_P(LOG_LEVEL_INFO, PSTR("FRC: " D_LOG_SOME_SETTINGS_RESET " (%d)"), RtcReboot.fast_reboot_count);
+      AddLog(LOG_LEVEL_INFO, PSTR("FRC: " D_LOG_SOME_SETTINGS_RESET " (%d)"), RtcReboot.fast_reboot_count);
     }
   }
 
@@ -292,7 +322,7 @@ void setup(void) {
     snprintf_P(TasmotaGlobal.version, sizeof(TasmotaGlobal.version), PSTR("%s.%d"), TasmotaGlobal.version, VERSION & 0xff);
   }
   // Thehackbox inserts "release" or "commit number" before compiling using sed -i -e 's/PSTR("(%s)")/PSTR("(85cff52-%s)")/g' tasmota.ino
-  snprintf_P(TasmotaGlobal.image_name, sizeof(TasmotaGlobal.image_name), PSTR("(%s)"), CODE_IMAGE_STR);  // Results in (85cff52-tasmota) or (release-tasmota)
+  snprintf_P(TasmotaGlobal.image_name, sizeof(TasmotaGlobal.image_name), PSTR("(%s)"), PSTR(CODE_IMAGE_STR));  // Results in (85cff52-tasmota) or (release-tasmota)
 
   Format(TasmotaGlobal.mqtt_client, SettingsText(SET_MQTT_CLIENT), sizeof(TasmotaGlobal.mqtt_client));
   Format(TasmotaGlobal.mqtt_topic, SettingsText(SET_MQTT_TOPIC), sizeof(TasmotaGlobal.mqtt_topic));
@@ -303,20 +333,17 @@ void setup(void) {
     snprintf_P(TasmotaGlobal.hostname, sizeof(TasmotaGlobal.hostname)-1, SettingsText(SET_HOSTNAME));
   }
 
-  GetEspHardwareType();
   GpioInit();
 
   WifiConnect();
 
   SetPowerOnState();
 
-  AddLog_P(LOG_LEVEL_INFO, PSTR(D_PROJECT " %s %s " D_VERSION " %s%s-" ARDUINO_CORE_RELEASE "(%s)"),
-    PROJECT, SettingsText(SET_DEVICENAME), TasmotaGlobal.version, TasmotaGlobal.image_name, GetBuildDateAndTime().c_str());
+  AddLog(LOG_LEVEL_INFO, PSTR(D_PROJECT " %s %s " D_VERSION " %s%s-" ARDUINO_CORE_RELEASE "(%s)"),
+    PSTR(PROJECT), SettingsText(SET_DEVICENAME), TasmotaGlobal.version, TasmotaGlobal.image_name, GetBuildDateAndTime().c_str());
 #ifdef FIRMWARE_MINIMAL
-  AddLog_P(LOG_LEVEL_INFO, PSTR(D_WARNING_MINIMAL_VERSION));
+  AddLog(LOG_LEVEL_INFO, PSTR(D_WARNING_MINIMAL_VERSION));
 #endif  // FIRMWARE_MINIMAL
-
-  memcpy_P(TasmotaGlobal.log_data, VERSION_MARKER, 1);  // Dummy for compiler saving VERSION_MARKER
 
   RtcInit();
 
@@ -365,23 +392,32 @@ void BacklogLoop(void) {
 
 void SleepDelay(uint32_t mseconds) {
   if (mseconds) {
-    for (uint32_t wait = 0; wait < mseconds; wait++) {
+    uint32_t wait = millis() + mseconds;
+    while (!TimeReached(wait) && !Serial.available()) {  // We need to service serial buffer ASAP as otherwise we get uart buffer overrun
       delay(1);
-      if (Serial.available()) { break; }  // We need to service serial buffer ASAP as otherwise we get uart buffer overrun
     }
   } else {
     delay(0);
   }
 }
 
-void loop(void) {
-  uint32_t my_sleep = millis();
-
+void Scheduler(void) {
   XdrvCall(FUNC_LOOP);
   XsnsCall(FUNC_LOOP);
 
-  OsWatchLoop();
+// check LEAmDNS.h
+// MDNS.update() needs to be called in main loop
+#ifdef ESP8266                     // Not needed with esp32 mdns
+#ifdef USE_DISCOVERY
+#ifdef USE_WEBSERVER
+#ifdef WEBSERVER_ADVERTISE
+  MdnsUpdate();
+#endif  // WEBSERVER_ADVERTISE
+#endif  // USE_WEBSERVER
+#endif  // USE_DISCOVERY
+#endif  // ESP8266
 
+  OsWatchLoop();
   ButtonLoop();
   SwitchLoop();
 #ifdef USE_DEVICE_GROUPS
@@ -389,7 +425,7 @@ void loop(void) {
 #endif  // USE_DEVICE_GROUPS
   BacklogLoop();
 
-  static uint32_t state_50msecond = 0;               // State 50msecond timer
+  static uint32_t state_50msecond = 0;             // State 50msecond timer
   if (TimeReached(state_50msecond)) {
     SetNextTimeInterval(state_50msecond, 50);
 #ifdef ROTARY_V1
@@ -399,7 +435,7 @@ void loop(void) {
     XsnsCall(FUNC_EVERY_50_MSECOND);
   }
 
-  static uint32_t state_100msecond = 0;              // State 100msecond timer
+  static uint32_t state_100msecond = 0;            // State 100msecond timer
   if (TimeReached(state_100msecond)) {
     SetNextTimeInterval(state_100msecond, 100);
     Every100mSeconds();
@@ -407,7 +443,7 @@ void loop(void) {
     XsnsCall(FUNC_EVERY_100_MSECOND);
   }
 
-  static uint32_t state_250msecond = 0;              // State 250msecond timer
+  static uint32_t state_250msecond = 0;            // State 250msecond timer
   if (TimeReached(state_250msecond)) {
     SetNextTimeInterval(state_250msecond, 250);
     Every250mSeconds();
@@ -415,7 +451,7 @@ void loop(void) {
     XsnsCall(FUNC_EVERY_250_MSECOND);
   }
 
-  static uint32_t state_second = 0;                  // State second timer
+  static uint32_t state_second = 0;                // State second timer
   if (TimeReached(state_second)) {
     SetNextTimeInterval(state_second, 1000);
     PerformEverySecond();
@@ -428,12 +464,18 @@ void loop(void) {
 #ifdef USE_ARDUINO_OTA
   ArduinoOtaLoop();
 #endif  // USE_ARDUINO_OTA
+}
+
+void loop(void) {
+  uint32_t my_sleep = millis();
+
+  Scheduler();
 
   uint32_t my_activity = millis() - my_sleep;
 
   if (Settings.flag3.sleep_normal) {               // SetOption60 - Enable normal sleep instead of dynamic sleep
     //  yield();                                   // yield == delay(0), delay contains yield, auto yield in loop
-    SleepDelay(TasmotaGlobal.sleep);                            // https://github.com/esp8266/Arduino/issues/2021
+    SleepDelay(TasmotaGlobal.sleep);               // https://github.com/esp8266/Arduino/issues/2021
   } else {
     if (my_activity < (uint32_t)TasmotaGlobal.sleep) {
       SleepDelay((uint32_t)TasmotaGlobal.sleep - my_activity);  // Provide time for background tasks like wifi

@@ -472,7 +472,7 @@ class RA8876 : public Renderer {
   int getCursorY(void);
 
   void setAddrWindow(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1);
-  void pushColors(uint16_t *data, uint8_t len, boolean first);
+  void pushColors(uint16_t *data, uint16_t len, boolean first);
 
   // Text
   void selectInternalFont(enum FontSize size, enum FontEncoding enc = RA8876_FONT_ENCODING_8859_1);

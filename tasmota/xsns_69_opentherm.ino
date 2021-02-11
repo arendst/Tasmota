@@ -1,7 +1,7 @@
 /*
   xsns_69_opentherm.ino - OpenTherm protocol support for Tasmota
 
-  Copyright (C) 2020 Yuriy Sannikov
+  Copyright (C) 2021  Yuriy Sannikov
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -35,7 +35,7 @@
 // Seconds before OT will make an attempt to connect to the boiler after connection error
 #define SNS_OT_DISCONNECT_COOLDOWN_SECONDS 4
 
-// Number of consecutive timeouts which are accepted before entering disconnect state 
+// Number of consecutive timeouts which are accepted before entering disconnect state
 #define SNS_OT_MAX_TIMEOUTS_BEFORE_DISCONNECT 3
 
 // Count of the OpenThermSettingsFlags
@@ -165,7 +165,7 @@ void ICACHE_RAM_ATTR sns_opentherm_handleInterrupt()
 void sns_opentherm_processResponseCallback(unsigned long response, int st)
 {
     OpenThermResponseStatus status = (OpenThermResponseStatus)st;
-    AddLog_P(LOG_LEVEL_DEBUG_MORE,
+    AddLog(LOG_LEVEL_DEBUG_MORE,
               PSTR("[OTH]: Processing response. Status=%s, Response=0x%lX"),
               sns_ot_master->statusToString(status), response);
 
@@ -311,7 +311,7 @@ void sns_ot_start_handshake()
         return;
     }
 
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR("[OTH]: perform handshake"));
+    AddLog(LOG_LEVEL_DEBUG, PSTR("[OTH]: perform handshake"));
 
     sns_ot_master->sendRequestAync(
         OpenTherm::buildRequest(OpenThermMessageType::READ_DATA, OpenThermMessageID::SConfigSMemberIDcode, 0));
@@ -325,14 +325,14 @@ void sns_ot_process_handshake(unsigned long response, int st)
 
     if (status != OpenThermResponseStatus::SUCCESS || !sns_ot_master->isValidResponse(response))
     {
-        AddLog_P(LOG_LEVEL_ERROR,
+        AddLog(LOG_LEVEL_ERROR,
                   PSTR("[OTH]: getSlaveConfiguration failed. Status=%s"),
                   sns_ot_master->statusToString(status));
         sns_ot_connection_status = OpenThermConnectionStatus::OTC_DISCONNECTED;
         return;
     }
 
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR("[OTH]: getLastResponseStatus SUCCESS. Slave Cfg: %lX"), response);
+    AddLog(LOG_LEVEL_DEBUG, PSTR("[OTH]: getLastResponseStatus SUCCESS. Slave Cfg: %lX"), response);
 
     sns_ot_boiler_status.m_slave_flags = (response & 0xFF00) >> 8;
 

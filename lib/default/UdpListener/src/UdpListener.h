@@ -1,7 +1,7 @@
 /*
   UdpListener.h - webserver for Tasmota
 
-  Copyright (C) 2020  Theo Arends & Stephan Hadinger
+  Copyright (C) 2021  Theo Arends & Stephan Hadinger
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by

@@ -1,7 +1,7 @@
 /*
   xsns_19_mgs.ino - Xadow and Grove Mutichannel Gas sensor support for Tasmota
 
-  Copyright (C) 2020  Palich2000 and Theo Arends
+  Copyright (C) 2021  Palich2000 and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by

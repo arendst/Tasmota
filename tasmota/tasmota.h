@@ -1,7 +1,7 @@
 /*
   tasmota.h - Master header file for Tasmota
 
-  Copyright (C) 2020  Theo Arends
+  Copyright (C) 2021  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -48,12 +48,22 @@ const uint32_t POWER_MASK = 0xffffffffUL;   // Power (Relay) full mask
  * Constants
 \*********************************************************************************************/
 
+#ifdef ESP8266
+const uint8_t MAX_RELAYS = 8;               // Max number of relays (up to 28)
+const uint8_t MAX_INTERLOCKS = 4;           // Max number of interlock groups (up to MAX_INTERLOCKS_SET)
+const uint8_t MAX_SWITCHES = 8;             // Max number of switches (up to MAX_SWITCHES_SET)
+#endif  // ESP8266
+#ifdef ESP32
+const uint8_t MAX_RELAYS = 28;              // Max number of relays (up to 28)
+const uint8_t MAX_INTERLOCKS = 14;          // Max number of interlock groups (up to MAX_INTERLOCKS_SET)
+const uint8_t MAX_SWITCHES = 28;            // Max number of switches (up to MAX_SWITCHES_SET)
+#endif  // ESP32
+const uint8_t MAX_KEYS = 8;                 // Max number of keys or buttons (up to 28)
+
 // Changes to the following MAX_ defines will impact settings layout
-const uint8_t MAX_SWITCHES = 8;             // Max number of switches
-const uint8_t MAX_RELAYS = 8;               // Max number of relays
-const uint8_t MAX_INTERLOCKS = 4;           // Max number of interlock groups (MAX_RELAYS / 2)
+const uint8_t MAX_INTERLOCKS_SET = 14;      // Max number of interlock groups (MAX_RELAYS / 2)
+const uint8_t MAX_SWITCHES_SET = 28;        // Max number of switches
 const uint8_t MAX_LEDS = 4;                 // Max number of leds
-const uint8_t MAX_KEYS = 4;                 // Max number of keys or buttons
 const uint8_t MAX_PWMS = 5;                 // Max number of PWM channels
 const uint8_t MAX_COUNTERS = 4;             // Max number of counter sensors
 const uint8_t MAX_TIMERS = 16;              // Max number of Timers
@@ -68,6 +78,8 @@ const uint8_t MAX_XDRV_DRIVERS = 96;        // Max number of allowed driver driv
 const uint8_t MAX_XSNS_DRIVERS = 96;        // Max number of allowed sensor drivers
 const uint8_t MAX_I2C_DRIVERS = 96;         // Max number of allowed i2c drivers
 const uint8_t MAX_SHUTTERS = 4;             // Max number of shutters
+const uint8_t MAX_SHUTTER_RELAYS = 8;       // Max number of shutter relays
+const uint8_t MAX_SHUTTER_KEYS = 4;         // Max number of shutter keys or buttons
 const uint8_t MAX_PCF8574 = 4;              // Max number of PCF8574 devices
 const uint8_t MAX_RULE_SETS = 3;            // Max number of rule sets of size 512 characters
 const uint16_t MAX_RULE_SIZE = 512;         // Max number of characters in rules
@@ -84,9 +96,11 @@ const uint8_t MAX_GROUP_TOPICS = 4;         // Max number of Group Topics
 const uint8_t MAX_DEV_GROUP_NAMES = 4;      // Max number of Device Group names
 #ifdef ESP8266
 const uint8_t MAX_ADCS = 1;                 // Max number of ESP8266 ADC pins
+const uint8_t MAX_SWITCHES_TXT = 8;         // Max number of switches user text
 #endif  // ESP8266
 #ifdef ESP32
 const uint8_t MAX_ADCS = 8;                 // Max number of ESP32 ADC pins (ADC2 pins are unusable with Wifi enabled)
+const uint8_t MAX_SWITCHES_TXT = 28;        // Max number of switches user text
 #endif  // ESP32
 
 const uint8_t MAX_HUE_DEVICES = 15;         // Max number of Philips Hue device per emulation
@@ -112,7 +126,11 @@ const uint32_t PWM_RANGE = 1023;            // 255..1023 needs to be devisible b
 //const uint16_t PWM_FREQ = 1000;             // 100..1000 Hz led refresh
 //const uint16_t PWM_FREQ = 910;              // 100..1000 Hz led refresh (iTead value)
 const uint16_t PWM_FREQ = 977;              // 100..4000 Hz led refresh
+#ifdef ESP32
+const uint16_t PWM_MAX = 50000;              // [PWM_MAX] Maximum frequency for ESP32 - Default: 4000
+#else
 const uint16_t PWM_MAX = 4000;              // [PWM_MAX] Maximum frequency - Default: 4000
+#endif
 const uint16_t PWM_MIN = 40;                // [PWM_MIN] Minimum frequency - Default: 40
                                             //    For Dimmers use double of your mains AC frequecy (100 for 50Hz and 120 for 60Hz)
                                             //    For Controlling Servos use 50 and also set PWM_FREQ as 50 (DO NOT USE THESE VALUES FOR DIMMERS)
@@ -135,7 +153,8 @@ const uint16_t INPUT_BUFFER_SIZE = 520;     // Max number of characters in seria
 const uint16_t FLOATSZ = 16;                // Max number of characters in float result from dtostrfd (max 32)
 const uint16_t CMDSZ = 24;                  // Max number of characters in command
 const uint16_t TOPSZ = 151;                 // Max number of characters in topic string
-const uint16_t LOGSZ = 700;                 // Max number of characters in log
+const uint16_t LOGSZ = 128;                 // Max number of characters in AddLog_P log
+const uint16_t MAX_LOGSZ = 700;             // Max number of characters in log
 const uint16_t MIN_MESSZ = 1040;            // Min number of characters in MQTT message (1200 - TOPSZ - 9 header bytes)
 
 const uint8_t SENSOR_MAX_MISS = 5;          // Max number of missed sensor reads before deciding it's offline
@@ -183,6 +202,7 @@ const uint32_t LOOP_SLEEP_DELAY = 50;       // Lowest number of milliseconds to 
 #define NEO_HW_SK6812          2            // NeoPixelBus hardware SK6812
 #define NEO_HW_LC8812          2            // NeoPixelBus hardware LC8812
 #define NEO_HW_APA106          3            // NeoPixelBus hardware APA106
+#define NEO_HW_P9813           4            // NeoPixelBus hardware P9813
 
 #define MQTT_PUBSUBCLIENT      1            // Mqtt PubSubClient library
 #define MQTT_TASMOTAMQTT       2            // Mqtt TasmotaMqtt library based on esp-mqtt-arduino - soon obsolete
@@ -252,7 +272,7 @@ enum Shortcuts { SC_CLEAR, SC_DEFAULT, SC_USER };
 
 enum SettingsParamIndex { P_HOLD_TIME, P_MAX_POWER_RETRY, P_BACKLOG_DELAY, P_MDNS_DELAYED_START, P_BOOT_LOOP_OFFSET, P_RGB_REMAP, P_IR_UNKNOW_THRESHOLD,  // SetOption32 .. SetOption38
                           P_CSE7766_INVALID_POWER, P_HOLD_IGNORE, P_ARP_GRATUITOUS, P_OVER_TEMP,  // SetOption39 .. SetOption42
-                          P_ex_DIMMER_MAX, P_ex_TUYA_VOLTAGE_ID, P_ex_TUYA_CURRENT_ID, P_ex_TUYA_POWER_ID,  // SetOption43 .. SetOption46
+                          P_ROTARY_MAX_STEP, P_ex_TUYA_VOLTAGE_ID, P_ex_TUYA_CURRENT_ID, P_ex_TUYA_POWER_ID,  // SetOption43 .. SetOption46
                           P_ex_ENERGY_TARIFF1, P_ex_ENERGY_TARIFF2,  // SetOption47 .. SetOption48
                           P_MAX_PARAM8 };  // Max is PARAM8_SIZE (18) - SetOption32 until SetOption49
 
@@ -268,13 +288,14 @@ enum LightTypes    { LT_BASIC, LT_PWM1,    LT_PWM2,      LT_PWM3,   LT_PWM4,  LT
 
 enum XsnsFunctions {FUNC_SETTINGS_OVERRIDE, FUNC_PIN_STATE, FUNC_MODULE_INIT, FUNC_PRE_INIT, FUNC_INIT,
                     FUNC_LOOP, FUNC_EVERY_50_MSECOND, FUNC_EVERY_100_MSECOND, FUNC_EVERY_200_MSECOND, FUNC_EVERY_250_MSECOND, FUNC_EVERY_SECOND,
-                    FUNC_SAVE_AT_MIDNIGHT, FUNC_SAVE_BEFORE_RESTART,
+                    FUNC_SAVE_SETTINGS, FUNC_SAVE_AT_MIDNIGHT, FUNC_SAVE_BEFORE_RESTART,
                     FUNC_AFTER_TELEPERIOD, FUNC_JSON_APPEND, FUNC_WEB_SENSOR, FUNC_COMMAND, FUNC_COMMAND_SENSOR, FUNC_COMMAND_DRIVER,
                     FUNC_MQTT_SUBSCRIBE, FUNC_MQTT_INIT, FUNC_MQTT_DATA,
                     FUNC_SET_POWER, FUNC_SET_DEVICE_POWER, FUNC_SHOW_SENSOR, FUNC_ANY_KEY,
                     FUNC_ENERGY_EVERY_SECOND, FUNC_ENERGY_RESET,
                     FUNC_RULES_PROCESS, FUNC_SERIAL, FUNC_FREE_MEM, FUNC_BUTTON_PRESSED,
-                    FUNC_WEB_ADD_BUTTON, FUNC_WEB_ADD_MAIN_BUTTON, FUNC_WEB_ADD_HANDLER, FUNC_SET_CHANNELS, FUNC_SET_SCHEME, FUNC_HOTPLUG_SCAN,
+                    FUNC_WEB_ADD_BUTTON, FUNC_WEB_ADD_MANAGEMENT_BUTTON, FUNC_WEB_ADD_MAIN_BUTTON,
+                    FUNC_WEB_ADD_HANDLER, FUNC_SET_CHANNELS, FUNC_SET_SCHEME, FUNC_HOTPLUG_SCAN,
                     FUNC_DEVICE_GROUP_ITEM };
 
 enum AddressConfigSteps { ADDR_IDLE, ADDR_RECEIVE, ADDR_SEND };
@@ -304,13 +325,19 @@ enum SettingsTextIndex { SET_OTAURL,
                          SET_TELEGRAM_TOKEN, SET_TELEGRAM_CHATID,
 #ifdef ESP8266
                          SET_ADC_PARAM1,
+                         SET_SWITCH_TXT1, SET_SWITCH_TXT2, SET_SWITCH_TXT3, SET_SWITCH_TXT4, SET_SWITCH_TXT5, SET_SWITCH_TXT6, SET_SWITCH_TXT7, SET_SWITCH_TXT8,  // MAX_SWITCHES_TXT
 #endif  // ESP8266
 #ifdef ESP32
                          SET_ADC_PARAM1, SET_ADC_PARAM2, SET_ADC_PARAM3, SET_ADC_PARAM4, SET_ADC_PARAM5, SET_ADC_PARAM6, SET_ADC_PARAM7, SET_ADC_PARAM8,  // MAX_ADCS
+                         SET_SWITCH_TXT1, SET_SWITCH_TXT2, SET_SWITCH_TXT3, SET_SWITCH_TXT4, SET_SWITCH_TXT5, SET_SWITCH_TXT6, SET_SWITCH_TXT7, SET_SWITCH_TXT8,  // MAX_SWITCHES_TXT
+                         SET_SWITCH_TXT9, SET_SWITCH_TXT10, SET_SWITCH_TXT11, SET_SWITCH_TXT12, SET_SWITCH_TXT13, SET_SWITCH_TXT14, SET_SWITCH_TXT15, SET_SWITCH_TXT16,  // MAX_SWITCHES_TXT
+                         SET_SWITCH_TXT17, SET_SWITCH_TXT18, SET_SWITCH_TXT19, SET_SWITCH_TXT20, SET_SWITCH_TXT21, SET_SWITCH_TXT22, SET_SWITCH_TXT23, SET_SWITCH_TXT24,  // MAX_SWITCHES_TXT
+                         SET_SWITCH_TXT25, SET_SWITCH_TXT26, SET_SWITCH_TXT27, SET_SWITCH_TXT28,  // MAX_SWITCHES_TXT
 #endif  // ESP32
-                         SET_SWITCH_TXT1, SET_SWITCH_TXT2, SET_SWITCH_TXT3, SET_SWITCH_TXT4, SET_SWITCH_TXT5, SET_SWITCH_TXT6, SET_SWITCH_TXT7, SET_SWITCH_TXT8,  // MAX_SWITCHES
                          SET_SHD_PARAM,
                          SET_MAX };
+
+enum SpiInterfaces { SPI_NONE, SPI_MOSI, SPI_MISO, SPI_MOSI_MISO };
 
 enum DevGroupMessageType { DGR_MSGTYP_FULL_STATUS, DGR_MSGTYP_PARTIAL_UPDATE, DGR_MSGTYP_UPDATE, DGR_MSGTYP_UPDATE_MORE_TO_COME, DGR_MSGTYP_UPDATE_DIRECT, DGR_MSGTYPE_UPDATE_COMMAND, DGR_MSGTYPFLAG_WITH_LOCAL = 128 };
 
@@ -324,13 +351,15 @@ enum DevGroupItem { DGR_ITEM_EOL, DGR_ITEM_STATUS, DGR_ITEM_FLAGS,
                     //DGR_ITEM_ANALOG1, DGR_ITEM_ANALOG2, DGR_ITEM_ANALOG3, DGR_ITEM_ANALOG4, DGR_ITEM_ANALOG5,
                     // Add new 16-bit items before this line
                     DGR_ITEM_LAST_16BIT, DGR_ITEM_MAX_16BIT = 127,
-                    DGR_ITEM_POWER,
+                    DGR_ITEM_POWER, DGR_ITEM_NO_STATUS_SHARE,
                     // Add new 32-bit items before this line
                     DGR_ITEM_LAST_32BIT, DGR_ITEM_MAX_32BIT = 191,
                     DGR_ITEM_EVENT, DGR_ITEM_COMMAND,
                     // Add new string items before this line
                     DGR_ITEM_LAST_STRING, DGR_ITEM_MAX_STRING = 223,
                     DGR_ITEM_LIGHT_CHANNELS };
+
+enum DevGroupItemFlag { DGR_ITEM_FLAG_NO_SHARE = 1 };
 
 enum DevGroupShareItem { DGR_SHARE_POWER = 1, DGR_SHARE_LIGHT_BRI = 2, DGR_SHARE_LIGHT_FADE = 4, DGR_SHARE_LIGHT_SCHEME = 8,
                          DGR_SHARE_LIGHT_COLOR = 16, DGR_SHARE_DIMMER_SETTINGS = 32, DGR_SHARE_EVENT = 64 };

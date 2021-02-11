@@ -1,7 +1,7 @@
 /*
   xnrg_11_ddsu666.ino - Chint DDSU666-Modbus energy meter support for Tasmota
 
-  Copyright (C) 2020  Pablo Zerón and Theo Arends
+  Copyright (C) 2021  Pablo Zerón and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -67,7 +67,7 @@ void DDSU666Every250ms(void)
     AddLogBuffer(LOG_LEVEL_DEBUG_MORE, buffer, Ddsu666Modbus->ReceiveCount());
 
     if (error) {
-      AddLog_P(LOG_LEVEL_DEBUG, PSTR("SDM: Ddsu666 error %d"), error);
+      AddLog(LOG_LEVEL_DEBUG, PSTR("SDM: Ddsu666 error %d"), error);
     } else {
       Energy.data_valid[0] = 0;
 

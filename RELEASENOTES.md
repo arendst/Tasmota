@@ -4,6 +4,8 @@
 
 ## Migration Information
 
+This version removes migration support for versions before v8.1.0 (Doris)
+
 See [migration path](https://tasmota.github.io/docs/Upgrading#migration-path) for instructions how to migrate to a major version. Pay attention to the following version breaks due to dynamic settings updates:
 
 1. Migrate to **Sonoff-Tasmota 3.9.x**
@@ -56,71 +58,86 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 
 [Complete list](BUILDS.md) of available feature and sensors.
 
-## Changelog v9.2.0 Julie
+## Changelog v9.3.0 Kenneth
 ### Added
-- Command ``SetOption115 1`` to enable ESP32 MiBle
-- Command ``SetOption116 1`` to disable auto-query of zigbee light devices (avoids network storms with large groups)
-- Command ``SetOption117 1`` for light fading to be fixed duration instead of fixed slew rate [#10109](https://github.com/arendst/Tasmota/issues/10109)
-- Command ``RfProtocol`` to control RcSwitch receive protocols by BBBits [#10063](https://github.com/arendst/Tasmota/issues/10063)
-- Commands ``TuyaRGB``, ``TuyaEnum`` and ``TuyaEnumList`` [#9769](https://github.com/arendst/Tasmota/issues/9769)
-- Zigbee command ``ZbInfo`` and prepare support for EEPROM
-- Zigbee command ``ZbLeave`` to unpair a device
-- Zigbee support for Mi Door and Contact [#9759](https://github.com/arendst/Tasmota/issues/9759)
-- Zigbee alarm persistence [#9785](https://github.com/arendst/Tasmota/issues/9785)
-- Zigbee persistence of device/sensor data in EEPROM (only ZBBridge)
-- Zigbee better support for Tuya Protocol [#10074](https://github.com/arendst/Tasmota/issues/10074)
-- Zigbee visual map of network
-- TyuaMcu update 2/3 by Federico Leoni [#10004](https://github.com/arendst/Tasmota/issues/10004)
-- Support for additional EZO sensors by Christopher Tremblay
-- Support for AS608 optical and R503 capacitive fingerprint sensor
-- Support for Shelly Dimmer 1 and 2 by James Turton [#9854](https://github.com/arendst/Tasmota/issues/9854)
-- Support for common anode sevenseg displays by adding ``#define USE_DISPLAY_SEVENSEG_COMMON_ANODE`` by Ken Sanislo [#9963](https://github.com/arendst/Tasmota/issues/9963)
-- Support for multiple WeMo devices by Magic73 [#9208](https://github.com/arendst/Tasmota/issues/9208)
-- Support for SPI connected MFRC522 13.56MHz rfid card reader [#9916](https://github.com/arendst/Tasmota/issues/9916)
-- Support ESP32 SPIFFS for internal use
-- KNX read reply for Power (#9236, #9891)
-- Fallback NTP server from x.pool.ntp.org if no ntpservers are configured
-- Optional CCloader support for CC25xx Zigbee or CC26xx BLE by Christian Baars [#9970](https://github.com/arendst/Tasmota/issues/9970)
-- Letsencrypt R3 in addition to X3 CA [#10086](https://github.com/arendst/Tasmota/issues/10086)
+- Command ``CTRange`` to specify the visible CT range the bulb is capable of [#10311](https://github.com/arendst/Tasmota/issues/10311)
+- Command ``L1MusicSync <0|Off>|<1|On>|<2|Toggle>, 1..10, 1..100>`` to control Sonoff L1 Music Sync mode sensitivity and speed [#10722](https://github.com/arendst/Tasmota/issues/10722)
+- Command ``RuleTimer0`` to access all RuleTimers at once [#10352](https://github.com/arendst/Tasmota/issues/10352)
+- Command ``Speed2`` to control a once off fade [#10741](https://github.com/arendst/Tasmota/issues/10741)
+- Command ``VirtualCT`` to simulate or fine tune CT bulbs with 3,4,5 channels [#10311](https://github.com/arendst/Tasmota/issues/10311)
+- Command ``SetOption40 0..250`` to disable button functionality if activated for over 0.1 second re-introduced
+- Command ``SetOption43 1..255`` to control Rotary step (#10407)
+- Command ``SetOption118 1`` to move ZbReceived from JSON message and into the subtopic replacing "SENSOR" default [#10353](https://github.com/arendst/Tasmota/issues/10353)
+- Command ``SetOption119 1`` to remove the device addr from json payload, can be used with zb_topic_fname where the addr is already known from the topic [#10355](https://github.com/arendst/Tasmota/issues/10355)
+- Zigbee command ``SetOption120 1`` or ``ZbEndpointTopic 1`` to add the zigbee endpoint as suffix in topic when using ``SetOption89 1``
+- Zigbee command ``ZbScan`` to do an energy scan on each radio channel
+- Commands ``ChannelRemap``, ``MultiPWM``, ``AlexaCTRange``, ``PowerOnFade``, ``PWMCT``, ``WhiteBlend`` and ``VirtualCT`` as synonyms for ``SetOption37, 68, 82, 91, 92, 105`` and ``106``
+- Commands ``ZbNameKey``, ``ZbDeviceTopic``, ``ZbNoPrefix``, ``ZbEndpointSuffix``, ``ZbNoAutoBind`` and ``ZbNameTopic`` as synonyms for ``SetOption83, 89, 100, 101, 110`` and ``112``
+- Commands ``ZbNoAutoBind``, ``ZbReceivedTopic`` and ``ZbOmitDevice`` as synonyms for ``SetOption116, 118`` and ``119``
+- Commands ``BuzzerActive`` and ``BuzzerPwm`` as synonyms for ``SetOption67`` and ``111``
+- Milliseconds to console output [#10152](https://github.com/arendst/Tasmota/issues/10152)
+- Gpio ``Option_a1`` enabling PWM2 high impedance if powered off as used by Wyze bulbs [#10196](https://github.com/arendst/Tasmota/issues/10196)
+- Rotary No Pullup GPIO selection ``Rotary A/B_n`` [#10407](https://github.com/arendst/Tasmota/issues/10407)
+- BSSID and Signal Strength Indicator to GUI wifi scan result [#10253](https://github.com/arendst/Tasmota/issues/10253)
+- Support for P9813 RGB Led MOSFET controller [#10104](https://github.com/arendst/Tasmota/issues/10104)
+- Support for GPIO option selection
+- Support for FTC532 8-button touch controller by Peter Franck [#10222](https://github.com/arendst/Tasmota/issues/10222)
+- Support for BS814A-2 8-button touch buttons by Peter Franck [#10447](https://github.com/arendst/Tasmota/issues/10447)
+- Support for up to 4 I2C SEESAW_SOIL Capacitance & Temperature sensors by Peter Franck [#10481](https://github.com/arendst/Tasmota/issues/10481)
+- Support for TOF10120 time of flight sensor by Cyril Pawelko [#10190](https://github.com/arendst/Tasmota/issues/10190)
+- Support for Afrikaans language translations by Christiaan Heerze
+- Support for Frysk language translations by Christiaan Heerze
+- Support for IR inverted leds using ``#define IR_SEND_INVERTED true`` [#10301](https://github.com/arendst/Tasmota/issues/10301)
+- Support for disabling 38kHz IR modulation using ``#define IR_SEND_USE_MODULATION false`` [#10301](https://github.com/arendst/Tasmota/issues/10301)
+- Support for SPI display driver for ST7789 TFT by Gerhard Mutz [#9037](https://github.com/arendst/Tasmota/issues/9037)
+- Support for time proportioned (``#define USE_TIMEPROP``) and optional PID (``#define USE_PID``) relay control [#10412](https://github.com/arendst/Tasmota/issues/10412)
+- Support for 24/26/32/34 bit RFID Wiegand interface (D0/D1) by Sigurd Leuther [#3647](https://github.com/arendst/Tasmota/issues/3647)
+- Support for SM2135 current selection using GPIO ``SM2135 DAT`` index [#10634](https://github.com/arendst/Tasmota/issues/10634)
+- Support for Sugar Valley NeoPool Controller by Norbert Richter [#10637](https://github.com/arendst/Tasmota/issues/10637)
+- Support for Device Groups Device Map [#10898](https://github.com/arendst/Tasmota/issues/10898)
+- Support for Eastron SDM72D-M three phase 100A Modbus energy meter [#10862](https://github.com/arendst/Tasmota/issues/10862)
+- Support for ESP32 ``Module 3`` Odroid Go 16MB binary tasmota32-odroidgo.bin [#8630](https://github.com/arendst/Tasmota/issues/8630)
+- Support for ESP32 ``Module 5`` Wireless Tag Eth01 [#9496](https://github.com/arendst/Tasmota/issues/9496)
+- Support for ESP32 ``Module 7`` M5stack core2 16MB binary tasmota32-core2.bin [#10635](https://github.com/arendst/Tasmota/issues/10635)
+- Support rotary encoder on Shelly Dimmer [#10407](https://github.com/arendst/Tasmota/issues/10407#issuecomment-756240920)
+- Support character `#` to be replaced by `space`-character in command ``Publish`` topic [#10258](https://github.com/arendst/Tasmota/issues/10258)
+- Support trailing silence in buzzer tune [#10694](https://github.com/arendst/Tasmota/issues/10694)
+- Rule trigger string comparisons for EndsWith ``$>``, StartsWith ``$<`` and Contains ``$|`` [#10538](https://github.com/arendst/Tasmota/issues/10538)
+- SPI display driver SSD1331 Color oled by Jeroen Vermeulen [#10376](https://github.com/arendst/Tasmota/issues/10376)
+- Compile time option ``USE_MQTT_TLS_DROP_OLD_FINGERPRINT`` to drop old (less secure) TLS fingerprint
 
 ### Breaking Changed
-- KNX DPT9 (16-bit float) to DPT14 (32-bit float) by Adrian Scillato [#9811](https://github.com/arendst/Tasmota/issues/9811) [#9888](https://github.com/arendst/Tasmota/issues/9888)
+- ESP32 switch from default SPIFFS to default LittleFS file system loosing current (zigbee) files
+- Replaced MFRC522 13.56MHz rfid card reader GPIO selection from ``SPI CS`` by ``RC522 CS``
+- Replaced NRF24L01 GPIO selection from ``SPI CS`` by ``NRF24 CS`` and ``SPI DC`` by ``NRF24 DC``
+- Replaced ILI9341 GPIO selection from ``SPI CS`` by ``ILI9341 CS`` and ``SPI DC`` by ``ILI9341 DC``
+- Replaced ST7789 GPIO selection from ``SPI CS`` by ``ST7789 CS`` and ``SPI DC`` by ``ST7789 DC``
+- Replaced ILI9488 GPIO selection from ``SPI CS`` by ``ILI9488_CS``
+- Replaced EPaper29 GPIO selection from ``SPI CS`` by ``EPaper29 CS``
+- Replaced EPaper42 GPIO selection from ``SPI CS`` by ``EPaper42 CS``
+- Replaced SSD1351 GPIO selection from ``SPI CS`` by ``SSD1351 CS``
+- Replaced RA8876 GPIO selection from ``SPI CS`` by ``RA8876 CS``
 
 ### Changed
-- Core library from v2.7.4.5 to v2.7.4.9
-- IRremoteESP8266 library from v2.7.12 to v2.7.13
-- Shelly Dimmer 1 and 2 stm32 firmware from v51.4 to v51.5
-- mDNS has been disabled from all pre-compiled binaries to allow new features
-- Sonoff L1 color up scaling and color margin detection [#9545](https://github.com/arendst/Tasmota/issues/9545)
-- MQTT Wifi connection timeout from 5000 to 200 mSec [#9886](https://github.com/arendst/Tasmota/issues/9886)
-- Force bigger Thunk Stack if 4K RSA even without EC ciphers [#10075](https://github.com/arendst/Tasmota/issues/10075)
+- Removed migration support for versions before v8.1.0 (Doris)
+- Command ``Sleep 0`` removes any sleep from wifi modem except when ESP32 BLE is active
+- Logging from heap to stack freeing 700 bytes RAM
+- Disabled ``USE_LIGHT`` light support for ZBBridge saving 17.6kB [#10374](https://github.com/arendst/Tasmota/issues/10374)
+- Force initial default state ``SetOption57 1`` to scan wifi network every 44 minutes for strongest signal [#10395](https://github.com/arendst/Tasmota/issues/10395)
+- PubSubClient MQTT_SOCKET_TIMEOUT from 15 to 4 seconds
+- Domoticz fixed 2 decimals resolution by user selectable ``TempRes``, ``HumRes`` and ``PressRes`` resolutions
+- Increase number of button GPIOs from 4 to 8
+- ESP32 Increase number of switch GPIOs from 8 to 28
+- ESP32 increase number of relay GPIOs from 8 to 28
+- ESP32 Increase number of interlock groups from 4 to 14
 
 ### Fixed
-- Command ``gpio`` using non-indexed functions regression from v9.1.0 [#9962](https://github.com/arendst/Tasmota/issues/9962)
-- NTP fallback server functionality [#9739](https://github.com/arendst/Tasmota/issues/9739)
-- Telegram group chatid not supported [#9831](https://github.com/arendst/Tasmota/issues/9831)
-- KNX buttons, switches and sensors detection regression from v9.1.0 [#9811](https://github.com/arendst/Tasmota/issues/9811)
-- KNX ESP32 UDP mulicastpackage [#9811](https://github.com/arendst/Tasmota/issues/9811)
-- GUI MqttUser and MqttPassword updates when TLS is compiled in [#9825](https://github.com/arendst/Tasmota/issues/9825)
-- ESP32 TasmotaClient firmware upgrade [#9218](https://github.com/arendst/Tasmota/issues/9218)
-- Reset to defaults after 6 hours of DeepSleep [#9993](https://github.com/arendst/Tasmota/issues/9993)
-- Backlog timing wraparound [#9995](https://github.com/arendst/Tasmota/issues/9995)
-- First LED in addressable string does not fade when using scheme [#10088](https://github.com/arendst/Tasmota/issues/10088)
-- Improved Opentherm error handling [#10055](https://github.com/arendst/Tasmota/issues/10055)
-- Shutter motordelay stop issue [#10033](https://github.com/arendst/Tasmota/issues/10033)
-- Shutter fix overflow on runtime over 100 seconds [#9800](https://github.com/arendst/Tasmota/issues/9800)
-- ESP32 CC2530 heap corruption [#10121](https://github.com/arendst/Tasmota/issues/10121)
-- ESP32 Analog input div10 rule trigger [#10149](https://github.com/arendst/Tasmota/issues/10149)
-
-### Fixed Backported
+- Redesign syslog and mqttlog using log buffer [#10164](https://github.com/arendst/Tasmota/issues/10164)
 - Shutter stop issue [#10170](https://github.com/arendst/Tasmota/issues/10170)
 - Scripter script_sub_command [#10181](https://github.com/arendst/Tasmota/issues/10181)
 - Scripter JSON variable above 32 chars [#10193](https://github.com/arendst/Tasmota/issues/10193)
-- Shelly Dimmer power on state [#10182](https://github.com/arendst/Tasmota/issues/10182)
-- Wemo emulation for single devices [#10194](https://github.com/arendst/Tasmota/issues/10194)
+- Shelly Dimmer power on state [#10154](https://github.com/arendst/Tasmota/issues/10154) [#10182](https://github.com/arendst/Tasmota/issues/10182)
+- Wemo emulation for single devices [#10165](https://github.com/arendst/Tasmota/issues/10165) [#10194](https://github.com/arendst/Tasmota/issues/10194)
 - ESP32 LoadStoreError when using ``#define USER_TEMPLATE`` [#9506](https://github.com/arendst/Tasmota/issues/9506)
 - Compile error when ``#ifdef USE_IR_RECEIVE`` is disabled regression from 9.1.0.2
-
-### Removed
-- Version compatibility check
-- PN532 define USE_PN532_CAUSE_EVENTS replaced by generic rule trigger `on pn532#uid=`
+- Prometheus memory leak [#10221](https://github.com/arendst/Tasmota/issues/10221)

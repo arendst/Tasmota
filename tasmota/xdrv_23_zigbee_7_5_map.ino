@@ -1,7 +1,7 @@
 /*
   xdrv_23_zigbee_7_5_map.ino - zigbee support for Tasmota
 
-  Copyright (C) 2020  Theo Arends and Stephan Hadinger
+  Copyright (C) 2021  Theo Arends and Stephan Hadinger
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -76,7 +76,7 @@ public:
     edges()
     {}
 
-  void reset(void) { edges.reset(); }
+  void reset(void) { edges.reset(); zigbee_devices.clearDeviceRouterInfo(); }
 
   Z_Mapper_Edge & findEdge(const Z_Mapper_Edge & edge2);
   bool addEdge(const Z_Mapper_Edge & edge2);
@@ -171,7 +171,7 @@ void Z_Mapper::dumpInternals(void) const {
     char hex[8];
     snprintf(hex, sizeof(hex), PSTR("%d"), edge.lqi);
 
-    WSContentSend_P("{from:\"0x%04X\",to:\"0x%04X\",label:\"%s\",color:\"#%03X\"},",
+    WSContentSend_P(PSTR("{from:\"0x%04X\",to:\"0x%04X\",label:\"%s\",color:\"#%03X\"},"),
                 edge.node_1, edge.node_2, (edge.lqi > 0) ? hex : "", lqi_color);
   }
   WSContentSend_P(PSTR("],"));

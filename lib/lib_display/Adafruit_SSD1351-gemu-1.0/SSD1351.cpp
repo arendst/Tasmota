@@ -514,7 +514,7 @@ void SSD1351::setAddrWindow(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2) 
    if (flag) stop();
 }
 
-void SSD1351::pushColors(uint16_t *data, uint8_t len, boolean first) {
+void SSD1351::pushColors(uint16_t *data, uint16_t len, boolean first) {
   for (uint16_t b=0; b<len; b++){
     write16BitColor(*data++);
   }

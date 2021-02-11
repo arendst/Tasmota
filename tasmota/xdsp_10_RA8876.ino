@@ -1,7 +1,7 @@
 /*
   xdsp_09_SSD1351.ino - Display SSD1351 support for Tasmota
 
-  Copyright (C) 2020  Gerhard Mutz and Theo Arends
+  Copyright (C) 2021  Gerhard Mutz and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -33,19 +33,17 @@
 
 #include <RA8876.h>
 
+bool ra8876_init_done = false;
 uint8_t ra8876_ctouch_counter = 0;
 extern uint8_t *buffer;
 extern uint8_t color_type;
 RA8876 *ra8876;
 
 /*********************************************************************************************/
-void RA8876_InitDriver()
-{
-  if (!Settings.display_model) {
-    Settings.display_model = XDSP_10;
-  }
+void RA8876_InitDriver(void) {
+  if (PinUsed(GPIO_RA8876_CS) && (SPI_MOSI_MISO == TasmotaGlobal.spi_enabled)) {
 
-  if (XDSP_10 == Settings.display_model) {
+    Settings.display_model = XDSP_10;
 
     if (Settings.display_width != RA8876_TFTWIDTH) {
       Settings.display_width = RA8876_TFTWIDTH;
@@ -53,39 +51,15 @@ void RA8876_InitDriver()
     if (Settings.display_height != RA8876_TFTHEIGHT) {
       Settings.display_height = RA8876_TFTHEIGHT;
     }
-    buffer=0;
+
+    buffer = 0;
 
     // default colors
     fg_color = RA8876_WHITE;
     bg_color = RA8876_BLACK;
 
-#ifdef ESP8266
-#undef HW_SPI_MOSI
-#define HW_SPI_MOSI 13
-#undef HW_SPI_MISO
-#define HW_SPI_MISO 12
-#undef HW_SPI_CLK
-#define HW_SPI_CLK 14
-#endif  // ESP8266
-#ifdef ESP32
-#undef HW_SPI_MOSI
-#define HW_SPI_MOSI 23
-#undef HW_SPI_MISO
-#define HW_SPI_MISO 19
-#undef HW_SPI_CLK
-#define HW_SPI_CLK 18
-#endif  // ESP32
-
     // init renderer, must use hardware spi
-    if (PinUsed(GPIO_SSPI_CS) && (Pin(GPIO_SSPI_MOSI)==HW_SPI_MOSI) && (Pin(GPIO_SSPI_MISO)==HW_SPI_MISO) && (Pin(GPIO_SSPI_SCLK)==HW_SPI_CLK)) {
-      ra8876  = new RA8876(Pin(GPIO_SSPI_CS),Pin(GPIO_SSPI_MOSI),Pin(GPIO_SSPI_MISO),Pin(GPIO_SSPI_SCLK),Pin(GPIO_BACKLIGHT));
-    } else {
-      if (PinUsed(GPIO_SPI_CS) && (Pin(GPIO_SPI_MOSI)==HW_SPI_MOSI) && (Pin(GPIO_SPI_MISO)==HW_SPI_MISO) && (Pin(GPIO_SPI_CLK)==HW_SPI_CLK)) {
-        ra8876  = new RA8876(Pin(GPIO_SPI_CS),Pin(GPIO_SPI_MOSI),Pin(GPIO_SPI_MISO),Pin(GPIO_SPI_CLK),Pin(GPIO_BACKLIGHT));
-      } else {
-        return;
-      }
-    }
+    ra8876  = new RA8876(Pin(GPIO_RA8876_CS), Pin(GPIO_SPI_MOSI), Pin(GPIO_SPI_MISO), Pin(GPIO_SPI_CLK), Pin(GPIO_BACKLIGHT));
 
     ra8876->begin();
     renderer = ra8876;
@@ -107,6 +81,8 @@ void RA8876_InitDriver()
     Touch_Init(Wire);
 #endif
 
+    ra8876_init_done = true;
+    AddLog(LOG_LEVEL_INFO, PSTR("DSP: RA8876"));
   }
 }
 
@@ -329,7 +305,7 @@ bool Xdsp10(uint8_t function)
   if (FUNC_DISPLAY_INIT_DRIVER == function) {
       RA8876_InitDriver();
   }
-  else if (XDSP_10 == Settings.display_model) {
+  else if (ra8876_init_done && (XDSP_10 == Settings.display_model)) {
     switch (function) {
       case FUNC_DISPLAY_MODEL:
         result = true;

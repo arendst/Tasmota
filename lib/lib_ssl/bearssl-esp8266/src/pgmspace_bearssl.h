@@ -5,8 +5,8 @@
 //#include <sys/pgmspace.h>
 
 
-#ifndef _PGMSPACE_BEARSSL_H_
-#define _PGMSPACE_BEARSSL_H_
+#ifndef _PGMSPACE_H_
+#define _PGMSPACE_H_
 
 #include <stdint.h>
 

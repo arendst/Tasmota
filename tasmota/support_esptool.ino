@@ -1,7 +1,7 @@
 /*
   support_esptool.ino - esptool support for Tasmota
 
-  Copyright (C) 2020  Theo Arends
+  Copyright (C) 2021  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -95,6 +95,8 @@ bool EsptoolEraseSector(uint32_t sector)
 
 void EsptoolErase(uint32_t start_sector, uint32_t end_sector)
 {
+  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_ERASE " from 0x%08X to 0x%08X"), start_sector * SPI_FLASH_SEC_SIZE, (end_sector * SPI_FLASH_SEC_SIZE) -1);
+
   int next_erase_sector = start_sector;
   int remaining_erase_sector = end_sector - start_sector;
 

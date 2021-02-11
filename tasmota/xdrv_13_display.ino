@@ -1,7 +1,7 @@
 /*
   xdrv_13_display.ino - Display support for Tasmota
 
-  Copyright (C) 2020  Theo Arends
+  Copyright (C) 2021  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -28,12 +28,12 @@ Renderer *renderer;
 
 enum ColorType { COLOR_BW, COLOR_COLOR };
 
-#ifndef MAXBUTTONS
-#define MAXBUTTONS 16
+#ifndef MAX_TOUCH_BUTTONS
+#define MAX_TOUCH_BUTTONS 16
 #endif
 
 #ifdef USE_TOUCH_BUTTONS
-VButton *buttons[MAXBUTTONS];
+VButton *buttons[MAX_TOUCH_BUTTONS];
 #endif
 
 // drawing color is WHITE
@@ -41,7 +41,7 @@ VButton *buttons[MAXBUTTONS];
 uint16_t fg_color = 1;
 uint16_t bg_color = 0;
 uint8_t color_type = COLOR_BW;
-uint8_t auto_draw=1;
+uint8_t auto_draw = 1;
 
 const uint8_t DISPLAY_MAX_DRIVERS = 16;        // Max number of display drivers/models supported by xdsp_interface.ino
 const uint8_t DISPLAY_MAX_COLS = 64;           // Max number of columns allowed with command DisplayCols
@@ -63,6 +63,7 @@ const uint8_t DISPLAY_LOG_ROWS = 32;           // Number of lines in display log
 #define D_CMND_DISP_TEXT "Text"
 #define D_CMND_DISP_WIDTH "Width"
 #define D_CMND_DISP_HEIGHT "Height"
+#define D_CMND_DISP_BLINKRATE "Blinkrate"
 
 enum XdspFunctions { FUNC_DISPLAY_INIT_DRIVER, FUNC_DISPLAY_INIT, FUNC_DISPLAY_EVERY_50_MSECOND, FUNC_DISPLAY_EVERY_SECOND,
                      FUNC_DISPLAY_MODEL, FUNC_DISPLAY_MODE, FUNC_DISPLAY_POWER,
@@ -70,19 +71,20 @@ enum XdspFunctions { FUNC_DISPLAY_INIT_DRIVER, FUNC_DISPLAY_INIT, FUNC_DISPLAY_E
                      FUNC_DISPLAY_DRAW_HLINE, FUNC_DISPLAY_DRAW_VLINE, FUNC_DISPLAY_DRAW_LINE,
                      FUNC_DISPLAY_DRAW_CIRCLE, FUNC_DISPLAY_FILL_CIRCLE,
                      FUNC_DISPLAY_DRAW_RECTANGLE, FUNC_DISPLAY_FILL_RECTANGLE,
-                     FUNC_DISPLAY_TEXT_SIZE, FUNC_DISPLAY_FONT_SIZE, FUNC_DISPLAY_ROTATION, FUNC_DISPLAY_DRAW_STRING };
+                     FUNC_DISPLAY_TEXT_SIZE, FUNC_DISPLAY_FONT_SIZE, FUNC_DISPLAY_ROTATION, FUNC_DISPLAY_DRAW_STRING,
+                     FUNC_DISPLAY_DIM, FUNC_DISPLAY_BLINKRATE };
 
 enum DisplayInitModes { DISPLAY_INIT_MODE, DISPLAY_INIT_PARTIAL, DISPLAY_INIT_FULL };
 
 const char kDisplayCommands[] PROGMEM = D_PRFX_DISPLAY "|"  // Prefix
   "|" D_CMND_DISP_MODEL "|" D_CMND_DISP_WIDTH "|" D_CMND_DISP_HEIGHT "|" D_CMND_DISP_MODE "|" D_CMND_DISP_REFRESH "|"
   D_CMND_DISP_DIMMER "|" D_CMND_DISP_COLS "|" D_CMND_DISP_ROWS "|" D_CMND_DISP_SIZE "|" D_CMND_DISP_FONT "|"
-  D_CMND_DISP_ROTATE "|" D_CMND_DISP_TEXT "|" D_CMND_DISP_ADDRESS ;
+  D_CMND_DISP_ROTATE "|" D_CMND_DISP_TEXT "|" D_CMND_DISP_ADDRESS "|" D_CMND_DISP_BLINKRATE ;
 
 void (* const DisplayCommand[])(void) PROGMEM = {
   &CmndDisplay, &CmndDisplayModel, &CmndDisplayWidth, &CmndDisplayHeight, &CmndDisplayMode, &CmndDisplayRefresh,
   &CmndDisplayDimmer, &CmndDisplayColumns, &CmndDisplayRows, &CmndDisplaySize, &CmndDisplayFont,
-  &CmndDisplayRotate, &CmndDisplayText, &CmndDisplayAddress };
+  &CmndDisplayRotate, &CmndDisplayText, &CmndDisplayAddress, &CmndDisplayBlinkrate };
 
 char *dsp_str;
 
@@ -495,18 +497,18 @@ void DisplayText(void)
             cp += var;
             linebuf[fill] = 0;
             break;
-#if defined(USE_SCRIPT_FATFS) && defined(USE_SCRIPT)
+#ifdef USE_UFILESYS
           case 'P':
             { char *ep=strchr(cp,':');
              if (ep) {
                *ep=0;
                ep++;
-               Draw_RGB_Bitmap(cp,disp_xpos,disp_ypos);
+               Draw_RGB_Bitmap(cp,disp_xpos,disp_ypos, false);
                cp=ep;
              }
             }
             break;
-#endif // USE_SCRIPT_FATFS
+#endif // USE_UFILESYS
           case 'h':
             // hor line to
             var = atoiv(cp, &temp);
@@ -680,7 +682,7 @@ void DisplayText(void)
               RedrawGraph(temp,temp1);
               break;
             }
-#if defined(USE_SCRIPT_FATFS) && defined(USE_SCRIPT)
+#if (defined(USE_SCRIPT_FATFS) && defined(USE_SCRIPT)) || defined(USE_UFILESYS)
             if (*cp=='s') {
               cp++;
               var=atoiv(cp,&temp);
@@ -763,17 +765,17 @@ void DisplayText(void)
 
 #ifdef USE_TOUCH_BUTTONS
           case 'b':
-          { int16_t num,gxp,gyp,gxs,gys,outline,fill,textcolor,textsize; uint8_t dflg=1;
-            if (*cp=='e' || *cp=='d') {
+          { int16_t num, gxp, gyp, gxs, gys, outline, fill, textcolor, textsize; uint8_t dflg = 1, sbt = 0;
+            if (*cp == 'e' || *cp == 'd') {
               // enable disable
-              uint8_t dis=0;
-              if (*cp=='d') dis=1;
+              uint8_t dis = 0;
+              if (*cp == 'd') dis = 1;
               cp++;
-              var=atoiv(cp,&num);
-              num=num%MAXBUTTONS;
-              cp+=var;
+              var = atoiv(cp, &num);
+              num = num % MAX_TOUCH_BUTTONS;
+              cp += var;
               if (buttons[num]) {
-                buttons[num]->vpower.disable=dis;
+                buttons[num]->vpower.disable = dis;
                 if (!dis) {
                   if (buttons[num]->vpower.is_virtual) buttons[num]->xdrawButton(buttons[num]->vpower.on_off);
                   else buttons[num]->xdrawButton(bitRead(TasmotaGlobal.power,num));
@@ -781,15 +783,33 @@ void DisplayText(void)
               }
               break;
             }
-            if (*cp=='-') {
+            if (*cp == '-') {
               cp++;
-              dflg=0;
+              dflg = 0;
+            }
+            if (*cp == 's') {
+              cp++;
+              sbt = 1;
             }
             var=atoiv(cp,&num);
             cp+=var;
-            cp++;
             uint8_t bflags=num>>8;
-            num=num%MAXBUTTONS;
+            num=num%MAX_TOUCH_BUTTONS;
+            if (*cp == 's') {
+              cp++;
+              var=atoiv(cp,&gxp);
+              if (buttons[num]) {
+                // set slider or button
+                if (buttons[num]->vpower.slider) {
+                  buttons[num]->UpdateSlider(-gxp, -gxp);
+                } else {
+                  buttons[num]->vpower.on_off = gxp;
+                  buttons[num]->xdrawButton(buttons[num]->vpower.on_off);
+                }
+              }
+              break;
+            }
+            cp++;
             var=atoiv(cp,&gxp);
             cp+=var;
             cp++;
@@ -816,32 +836,42 @@ void DisplayText(void)
             cp++;
             // text itself
             char bbuff[32];
-            cp=get_string(bbuff,sizeof(bbuff),cp);
-
+            if (!sbt) {
+              // text itself
+              cp = get_string(bbuff, sizeof(bbuff), cp);
+            }
             if (buttons[num]) {
               delete buttons[num];
             }
             if (renderer) {
               buttons[num]= new VButton();
               if (buttons[num]) {
-                buttons[num]->initButtonUL(renderer,gxp,gyp,gxs,gys,renderer->GetColorFromIndex(outline),\
-                  renderer->GetColorFromIndex(fill),renderer->GetColorFromIndex(textcolor),bbuff,textsize);
-                if (!bflags) {
-                  // power button
-                  if (dflg) buttons[num]->xdrawButton(bitRead(TasmotaGlobal.power,num));
-                  buttons[num]->vpower.is_virtual=0;
-                } else {
-                  // virtual button
-                  buttons[num]->vpower.is_virtual=1;
-                  if (bflags==2) {
-                    // push
-                    buttons[num]->vpower.is_pushbutton=1;
+                if (!sbt) {
+                  buttons[num]->vpower.slider = 0;
+                  buttons[num]->initButtonUL(renderer, gxp, gyp, gxs, gys, renderer->GetColorFromIndex(outline),\
+                    renderer->GetColorFromIndex(fill), renderer->GetColorFromIndex(textcolor), bbuff, textsize);
+                  if (!bflags) {
+                    // power button
+                    if (dflg) buttons[num]->xdrawButton(bitRead(TasmotaGlobal.power, num));
+                    buttons[num]->vpower.is_virtual = 0;
                   } else {
-                    // toggle
-                    buttons[num]->vpower.is_pushbutton=0;
+                    // virtual button
+                    buttons[num]->vpower.is_virtual = 1;
+                    if (bflags==2) {
+                      // push
+                      buttons[num]->vpower.is_pushbutton = 1;
+                    } else {
+                      // toggle
+                      buttons[num]->vpower.is_pushbutton = 0;
+                    }
+                    if (dflg) buttons[num]->xdrawButton(buttons[num]->vpower.on_off);
+                    buttons[num]->vpower.disable = !dflg;
                   }
-                  if (dflg) buttons[num]->xdrawButton(buttons[num]->vpower.on_off);
-                  buttons[num]->vpower.disable=!dflg;
+                } else {
+                  // slider
+                  buttons[num]->vpower.slider = 1;
+                  buttons[num]->SliderInit(renderer, gxp, gyp, gxs, gys, outline, renderer->GetColorFromIndex(fill),\
+                    renderer->GetColorFromIndex(textcolor), renderer->GetColorFromIndex(textsize));
                 }
               }
             }
@@ -1043,7 +1073,7 @@ void DisplayLogBufferInit(void)
     DisplayLogBufferAdd(buffer);
     snprintf_P(buffer, sizeof(buffer), PSTR(D_JSON_MAC " %s"), NetworkMacAddress().c_str());
     DisplayLogBufferAdd(buffer);
-    snprintf_P(buffer, sizeof(buffer), PSTR("IP %s"), NetworkAddress().toString().c_str());
+    ext_snprintf_P(buffer, sizeof(buffer), PSTR("IP %_I"), (uint32_t)NetworkAddress());
     DisplayLogBufferAdd(buffer);
     if (!TasmotaGlobal.global_state.wifi_down) {
       snprintf_P(buffer, sizeof(buffer), PSTR(D_JSON_SSID " %s"), SettingsText(SET_STASSID1 + Settings.sta_active));
@@ -1282,10 +1312,12 @@ void DisplayInitDriver(void)
   if (renderer) {
     renderer->setTextFont(Settings.display_font);
     renderer->setTextSize(Settings.display_size);
+    // force opaque mode
+    renderer->setDrawMode(0);
   }
 
 
-//  AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "Display model %d"), Settings.display_model);
+//  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "Display model %d"), Settings.display_model);
 
   if (Settings.display_model) {
     TasmotaGlobal.devices_present++;
@@ -1308,7 +1340,7 @@ void DisplaySetPower(void)
 {
   disp_power = bitRead(XdrvMailbox.index, disp_device -1);
 
-//AddLog_P(LOG_LEVEL_DEBUG, PSTR("DSP: Power %d"), disp_power);
+//AddLog(LOG_LEVEL_DEBUG, PSTR("DSP: Power %d"), disp_power);
 
   if (Settings.display_model) {
     if (!renderer) {
@@ -1410,9 +1442,22 @@ void CmndDisplayDimmer(void)
     else if (!Settings.display_dimmer && disp_power) {
       ExecuteCommandPower(disp_device, POWER_OFF, SRC_DISPLAY);
     }
-    if (renderer) renderer->dim(Settings.display_dimmer);
+    if (renderer)
+      renderer->dim(Settings.display_dimmer);
+    else
+      XdspCall(FUNC_DISPLAY_DIM);
   }
   ResponseCmndNumber(Settings.display_dimmer);
+}
+
+void CmndDisplayBlinkrate(void)
+{
+  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 3)) {
+
+    if (!renderer)
+      XdspCall(FUNC_DISPLAY_BLINKRATE);
+  }
+  ResponseCmndNumber(XdrvMailbox.payload);
 }
 
 void CmndDisplaySize(void)
@@ -1525,20 +1570,43 @@ void CmndDisplayRows(void)
 /*********************************************************************************************\
  * optional drivers
 \*********************************************************************************************/
+
+#ifdef USE_TOUCH_BUTTONS
+// very limited path size, so, add .jpg
+void draw_picture(char *path, uint32_t xp, uint32_t yp, uint32_t xs, uint32_t ys, uint32_t ocol, bool inverted) {
+char ppath[16];
+  strcpy(ppath, path);
+  uint8_t plen = strlen(path) -1;
+  if (ppath[plen]=='1') {
+    // index mode
+    if (inverted) {
+      ppath[plen] = '2';
+    }
+    inverted = false;
+  }
+  if (ocol == 9) {
+    strcat(ppath, ".rgb");
+  } else {
+    strcat(ppath, ".jpg");
+  }
+  Draw_RGB_Bitmap(ppath, xp, yp, inverted);
+}
+#endif
+
+
 #ifdef ESP32
 #ifdef JPEG_PICTS
 #include "img_converters.h"
 #include "esp_jpg_decode.h"
 bool jpg2rgb888(const uint8_t *src, size_t src_len, uint8_t * out, jpg_scale_t scale);
 char get_jpeg_size(unsigned char* data, unsigned int data_size, unsigned short *width, unsigned short *height);
-void rgb888_to_565(uint8_t *in, uint16_t *out, uint32_t len);
 #endif // JPEG_PICTS
 #endif // ESP32
 
-#if defined(USE_SCRIPT_FATFS) && defined(USE_SCRIPT)
-extern FS *fsp;
+#ifdef USE_UFILESYS
+extern FS *ufsp;
 #define XBUFF_LEN 128
-void Draw_RGB_Bitmap(char *file,uint16_t xp, uint16_t yp) {
+void Draw_RGB_Bitmap(char *file,uint16_t xp, uint16_t yp, bool inverted ) {
   if (!renderer) return;
   File fp;
   char *ending = strrchr(file,'.');
@@ -1552,7 +1620,7 @@ void Draw_RGB_Bitmap(char *file,uint16_t xp, uint16_t yp) {
 
   if (!strcmp(estr,"rgb")) {
     // special rgb format
-    fp=fsp->open(file,FILE_READ);
+    fp=ufsp->open(file,FS_FILE_READ);
     if (!fp) return;
     uint16_t xsize;
     fp.read((uint8_t*)&xsize,2);
@@ -1587,34 +1655,41 @@ void Draw_RGB_Bitmap(char *file,uint16_t xp, uint16_t yp) {
     // jpeg files on ESP32 with more memory
 #ifdef ESP32
 #ifdef JPEG_PICTS
-    if (psramFound()) {
-      fp=fsp->open(file,FILE_READ);
-      if (!fp) return;
-      uint32_t size = fp.size();
-      uint8_t *mem = (uint8_t *)heap_caps_malloc(size+4, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
-      if (mem) {
-        uint8_t res=fp.read(mem, size);
-        if (res) {
-          uint16_t xsize;
-          uint16_t ysize;
-          if (mem[0]==0xff && mem[1]==0xd8) {
-            get_jpeg_size(mem, size, &xsize, &ysize);
-            //Serial.printf(" x,y %d - %d\n",xsize, ysize );
-            if (xsize && ysize) {
-              uint8_t *out_buf = (uint8_t *)heap_caps_malloc((xsize*ysize*3)+4, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
-              if (out_buf) {
+    fp=ufsp->open(file,FS_FILE_READ);
+    if (!fp) return;
+    uint32_t size = fp.size();
+    uint8_t *mem = (uint8_t *)special_malloc(size+4);
+    if (mem) {
+      uint8_t res=fp.read(mem, size);
+      if (res) {
+        uint16_t xsize;
+        uint16_t ysize;
+        if (mem[0]==0xff && mem[1]==0xd8) {
+          get_jpeg_size(mem, size, &xsize, &ysize);
+          //Serial.printf(" x,y,fs %d - %d - %d\n",xsize, ysize, size );
+          if (xsize && ysize) {
+            uint8_t *out_buf = (uint8_t *)special_malloc((xsize*ysize*3)+4);
+            if (out_buf) {
+              uint16_t *pixb = (uint16_t *)special_malloc((xsize*2)+4);
+              if (pixb) {
                 uint8_t *ob=out_buf;
-                jpg2rgb888(mem, size, out_buf, (jpg_scale_t)JPG_SCALE_NONE);
-                uint16_t pixels=xsize*ysize/XBUFF_LEN;
-                renderer->setAddrWindow(xp,yp,xp+xsize,yp+ysize);
-                for(int32_t j=0; j<pixels; j++) {
-                  uint16_t rbuff[XBUFF_LEN*2];
-                  rgb888_to_565(ob, rbuff, XBUFF_LEN);
-                  ob+=XBUFF_LEN*3;
-                  renderer->pushColors(rbuff,XBUFF_LEN,true);
-                  OsWatchLoop();
+                if (jpg2rgb888(mem, size, out_buf, (jpg_scale_t)JPG_SCALE_NONE)) {
+                  renderer->setAddrWindow(xp,yp,xp+xsize,yp+ysize);
+                  for(int32_t j=0; j<ysize; j++) {
+                    if (inverted==false) {
+                      rgb888_to_565(ob, pixb, xsize);
+                    } else {
+                      rgb888_to_565i(ob, pixb, xsize);
+                    }
+                    ob+=xsize*3;
+                    renderer->pushColors(pixb, xsize, true);
+                    OsWatchLoop();
+                  }
+                  renderer->setAddrWindow(0,0,0,0);
                 }
-                renderer->setAddrWindow(0,0,0,0);
+                free(out_buf);
+                free(pixb);
+              } else {
                 free(out_buf);
               }
             }
@@ -1628,7 +1703,7 @@ void Draw_RGB_Bitmap(char *file,uint16_t xp, uint16_t yp) {
 #endif // ESP32
   }
 }
-#endif // USE_SCRIPT_FATFS
+#endif // USE_UFILESYS
 
 #ifdef USE_AWATCH
 #define MINUTE_REDUCT 4
@@ -1873,7 +1948,7 @@ void DisplayCheckGraph() {
 }
 
 
-#if defined(USE_SCRIPT_FATFS) && defined(USE_SCRIPT)
+#if (defined(USE_SCRIPT_FATFS) && defined(USE_SCRIPT)) || defined(USE_UFILESYS)
 #ifdef ESP32
 #include <SD.h>
 #endif
@@ -1884,8 +1959,8 @@ void Save_graph(uint8_t num, char *path) {
   struct GRAPH *gp=graph[index];
   if (!gp) return;
   File fp;
-  fsp->remove(path);
-  fp=fsp->open(path,FILE_WRITE);
+  ufsp->remove(path);
+  fp=ufsp->open(path,FS_FILE_WRITE);
   if (!fp) return;
   char str[32];
   sprintf_P(str,PSTR("%d\t%d\t%d\t"),gp->xcnt,gp->xs,gp->ys);
@@ -1910,7 +1985,7 @@ void Restore_graph(uint8_t num, char *path) {
   struct GRAPH *gp=graph[index];
   if (!gp) return;
   File fp;
-  fp=fsp->open(path,FILE_READ);
+  fp=ufsp->open(path,FS_FILE_READ);
   if (!fp) return;
   char vbuff[32];
   char *cp=vbuff;
@@ -2089,8 +2164,8 @@ uint32_t Touch_Status(uint32_t sel) {
 
 
 #ifdef USE_TOUCH_BUTTONS
-void Touch_MQTT(uint8_t index, const char *cp) {
-  ResponseTime_P(PSTR(",\"FT5206\":{\"%s%d\":\"%d\"}}"), cp, index+1, buttons[index]->vpower.on_off);
+void Touch_MQTT(uint8_t index, const char *cp, uint32_t val) {
+  ResponseTime_P(PSTR(",\"FT5206\":{\"%s%d\":\"%d\"}}"), cp, index+1, val);
   MqttPublishTeleSensor();
 }
 
@@ -2099,6 +2174,10 @@ void Touch_RDW_BUTT(uint32_t count, uint32_t pwr) {
   if (pwr) buttons[count]->vpower.on_off = 1;
   else buttons[count]->vpower.on_off = 0;
 }
+
+#ifdef USE_M5STACK_CORE2
+uint8_t tbstate[3];
+#endif
 
 // check digitizer hit
 void Touch_Check(void(*rotconvert)(int16_t *x, int16_t *y)) {
@@ -2113,13 +2192,35 @@ uint8_t vbutt=0;
 
     if (renderer) {
 
+#ifdef USE_M5STACK_CORE2
+      // handle  3 built in touch buttons
+      uint16_t xcenter = 80;
+#define TDELTA 30
+#define TYPOS 275
+
+      for (uint32_t tbut = 0; tbut < 3; tbut++) {
+        if (pLoc.x>(xcenter-TDELTA) && pLoc.x<(xcenter+TDELTA) && pLoc.y>(TYPOS-TDELTA) && pLoc.y<(TYPOS+TDELTA)) {
+          // hit a button
+          if (!(tbstate[tbut] & 1)) {
+              // pressed
+              tbstate[tbut] |= 1;
+              //AddLog(LOG_LEVEL_INFO, PSTR("tbut: %d pressed"), tbut);
+              Touch_MQTT(tbut, "BIB", tbstate[tbut] & 1);
+          }
+        }
+        xcenter += 100;
+      }
+#endif
+
       rotconvert(&pLoc.x, &pLoc.y);
 
-      //AddLog_P(LOG_LEVEL_INFO, PSTR("touch %d - %d"), pLoc.x, pLoc.y);
+      //AddLog(LOG_LEVEL_INFO, PSTR("touch %d - %d"), pLoc.x, pLoc.y);
       // now must compare with defined buttons
-      for (uint8_t count=0; count<MAXBUTTONS; count++) {
-        if (buttons[count] && !buttons[count]->vpower.disable) {
-            if (buttons[count]->contains(pLoc.x, pLoc.y)) {
+      for (uint8_t count = 0; count < MAX_TOUCH_BUTTONS; count++) {
+        if (buttons[count]) {
+          if (!buttons[count]->vpower.slider) {
+            if (!buttons[count]->vpower.disable) {
+              if (buttons[count]->contains(pLoc.x, pLoc.y)) {
                 // did hit
                 buttons[count]->press(true);
                 if (buttons[count]->justPressed()) {
@@ -2142,41 +2243,61 @@ uint8_t vbutt=0;
                       cp="PBT";
                     }
                     buttons[count]->xdrawButton(buttons[count]->vpower.on_off);
-                    Touch_MQTT(count,cp);
+                    Touch_MQTT(count, cp, buttons[count]->vpower.on_off);
                   }
                 }
+              }
+              if (!buttons[count]->vpower.is_virtual) {
+                rbutt++;
+              } else {
+                vbutt++;
+              }
             }
-            if (!buttons[count]->vpower.is_virtual) {
-              rbutt++;
-            } else {
-              vbutt++;
+          } else {
+            // slider
+            if (buttons[count]->didhit(pLoc.x, pLoc.y)) {
+              uint16_t value = buttons[count]->UpdateSlider(pLoc.x, pLoc.y);
+              Touch_MQTT(count, "SLD", value);
             }
+          }
         }
       }
     }
   } else {
     // no hit
-    for (uint8_t count=0; count<MAXBUTTONS; count++) {
+#ifdef USE_M5STACK_CORE2
+    for (uint32_t tbut = 0; tbut < 3; tbut++) {
+      if (tbstate[tbut] & 1) {
+        // released
+        tbstate[tbut] &= 0xfe;
+        Touch_MQTT(tbut, "BIB", tbstate[tbut] & 1);
+        //AddLog(LOG_LEVEL_INFO, PSTR("tbut: %d released"), tbut);
+      }
+    }
+#endif
+    for (uint8_t count = 0; count < MAX_TOUCH_BUTTONS; count++) {
       if (buttons[count]) {
-        buttons[count]->press(false);
-        if (buttons[count]->justReleased()) {
-          if (buttons[count]->vpower.is_virtual) {
-            if (buttons[count]->vpower.is_pushbutton) {
-              // push button
-              buttons[count]->vpower.on_off = 0;
-              Touch_MQTT(count,"PBT");
-              buttons[count]->xdrawButton(buttons[count]->vpower.on_off);
+        if (!buttons[count]->vpower.slider) {
+          buttons[count]->press(false);
+          if (buttons[count]->justReleased()) {
+            if (buttons[count]->vpower.is_virtual) {
+              if (buttons[count]->vpower.is_pushbutton) {
+                // push button
+                buttons[count]->vpower.on_off = 0;
+                Touch_MQTT(count,"PBT", buttons[count]->vpower.on_off);
+                buttons[count]->xdrawButton(buttons[count]->vpower.on_off);
+              }
             }
           }
-        }
-        if (!buttons[count]->vpower.is_virtual) {
-          // check if power button stage changed
-          uint8_t pwr = bitRead(TasmotaGlobal.power, rbutt);
-          uint8_t vpwr = buttons[count]->vpower.on_off;
-          if (pwr != vpwr) {
-            Touch_RDW_BUTT(count, pwr);
+          if (!buttons[count]->vpower.is_virtual) {
+            // check if power button stage changed
+            uint8_t pwr = bitRead(TasmotaGlobal.power, rbutt);
+            uint8_t vpwr = buttons[count]->vpower.on_off;
+            if (pwr != vpwr) {
+              Touch_RDW_BUTT(count, pwr);
+            }
+            rbutt++;
           }
-          rbutt++;
         }
       }
     }

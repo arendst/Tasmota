@@ -1,4 +1,4 @@
-// WARNING:  This file contains code that is more than likely already 
+// WARNING:  This file contains code that is more than likely already
 // exposed from the Esp32 Arduino API.  It will be removed once integration is complete.
 //
 // Copyright 2015-2016 Espressif Systems (Shanghai) PTE LTD
@@ -16,6 +16,7 @@
 // limitations under the License.
 
 #if defined(ARDUINO_ARCH_ESP32)
+#if CONFIG_IDF_TARGET_ESP32       // ESP32/PICO-D4
 
 #include <string.h>
 #include <stdio.h>
@@ -227,7 +228,7 @@ void i2sSetDac(uint8_t bus_num, bool right, bool left) {
     I2S[bus_num].bus->conf2.camera_en = 0;
     I2S[bus_num].bus->conf.tx_msb_shift = 0;
     dac_i2s_enable();
-    
+
     if (right) {// DAC1, right channel, GPIO25
         dac_output_enable(DAC_CHANNEL_1);
     }
@@ -293,7 +294,7 @@ void i2sInit(uint8_t bus_num, uint32_t bits_per_sample, uint32_t sample_rate, i2
 // (I2S_NUM_MAX == 2)
     if (bus_num) {
         periph_module_enable(PERIPH_I2S1_MODULE);
-    } else 
+    } else
 #endif
     {
         periph_module_enable(PERIPH_I2S0_MODULE);
@@ -365,7 +366,7 @@ void i2sInit(uint8_t bus_num, uint32_t bits_per_sample, uint32_t sample_rate, i2
 
     i2sSetSampleRate(bus_num, sample_rate, bits_per_sample);
 
-    //  enable intr in cpu // 
+    //  enable intr in cpu //
     int i2sIntSource;
 
 #if !defined(CONFIG_IDF_TARGET_ESP32S2)
@@ -494,5 +495,5 @@ size_t i2sWrite(uint8_t bus_num, uint8_t* data, size_t len, bool copy, bool free
     return index;
 }
 
-
+#endif  // CONFIG_IDF_TARGET_ESP32       // ESP32/PICO-D4
 #endif

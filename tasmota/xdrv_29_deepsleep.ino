@@ -1,7 +1,7 @@
 /*
   xdrv_29_deepsleep.ino - DeepSleep support for Tasmota
 
-  Copyright (C) 2020  Stefan Bode
+  Copyright (C) 2021  Stefan Bode
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -68,7 +68,7 @@ void DeepSleepReInit(void)
     if ((RtcSettings.ultradeepsleep > DEEPSLEEP_MAX_CYCLE) && (RtcSettings.ultradeepsleep < 1700000000)) {
       // Go back to sleep after 60 minutes if requested deepsleep has not been reached
       RtcSettings.ultradeepsleep = RtcSettings.ultradeepsleep - DEEPSLEEP_MAX_CYCLE;
-      AddLog_P(LOG_LEVEL_ERROR, PSTR("DSL: Remain DeepSleep %d"), RtcSettings.ultradeepsleep);
+      AddLog(LOG_LEVEL_ERROR, PSTR("DSL: Remain DeepSleep %d"), RtcSettings.ultradeepsleep);
       RtcSettingsSave();
       RtcRebootReset();
 #ifdef ESP8266
@@ -96,7 +96,7 @@ void DeepSleepPrepare(void)
       (RtcSettings.deepsleep_slip < 9000) ||
       (RtcSettings.deepsleep_slip > 11000) ||
       (RtcSettings.nextwakeup > (UtcTime() + Settings.deepsleep))) {
-    AddLog_P(LOG_LEVEL_ERROR, PSTR("DSL: Reset wrong settings wakeup: %ld, slip %ld"), RtcSettings.nextwakeup, RtcSettings.deepsleep_slip );
+    AddLog(LOG_LEVEL_ERROR, PSTR("DSL: Reset wrong settings wakeup: %ld, slip %ld"), RtcSettings.nextwakeup, RtcSettings.deepsleep_slip );
     RtcSettings.nextwakeup = 0;
     RtcSettings.deepsleep_slip = 10000;
   }
@@ -137,11 +137,12 @@ void DeepSleepPrepare(void)
 
 void DeepSleepStart(void)
 {
-  AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION "Sleeping"));  // Won't show in GUI
+  AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION "Sleeping"));  // Won't show in GUI
 
   WifiShutdown();
   RtcSettings.ultradeepsleep = RtcSettings.nextwakeup - UtcTime();
   RtcSettingsSave();
+  RtcRebootReset();
 #ifdef ESP8266
   ESP.deepSleep(100 * RtcSettings.deepsleep_slip * deepsleep_sleeptime);
 #endif  // ESP8266
@@ -187,7 +188,7 @@ void CmndDeepsleepTime(void)
       }
     }
   }
-  Response_P(S_JSON_COMMAND_NVALUE, XdrvMailbox.command, Settings.deepsleep);
+  ResponseCmndNumber(Settings.deepsleep);
 }
 
 /*********************************************************************************************\

@@ -1,7 +1,7 @@
 /*
   support_wifi.ino - wifi support for Tasmota
 
-  Copyright (C) 2020  Theo Arends
+  Copyright (C) 2021  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -102,11 +102,11 @@ void WifiConfig(uint8_t type)
       TasmotaGlobal.restart_flag = 2;
     }
     else if (WIFI_SERIAL == Wifi.config_type) {
-      AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_WCFG_6_SERIAL " " D_ACTIVE_FOR_3_MINUTES));
+      AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_WCFG_6_SERIAL " " D_ACTIVE_FOR_3_MINUTES));
     }
 #ifdef USE_WEBSERVER
     else if (WIFI_MANAGER == Wifi.config_type || WIFI_MANAGER_RESET_ONLY == Wifi.config_type) {
-      AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_WCFG_2_WIFIMANAGER " " D_ACTIVE_FOR_3_MINUTES));
+      AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_WCFG_2_WIFIMANAGER " " D_ACTIVE_FOR_3_MINUTES));
       WifiManagerBegin(WIFI_MANAGER_RESET_ONLY == Wifi.config_type);
     }
 #endif  // USE_WEBSERVER
@@ -125,7 +125,7 @@ void WifiSetMode(WiFiMode_t wifi_mode)
 
   uint32_t retry = 2;
   while (!WiFi.mode(wifi_mode) && retry--) {
-    AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI "Retry set Mode..."));
+    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI "Retry set Mode..."));
     delay(100);
   }
 
@@ -153,17 +153,30 @@ void WiFiSetSleepMode(void)
  */
 
 // Sleep explanation: https://github.com/esp8266/Arduino/blob/3f0c601cfe81439ce17e9bd5d28994a7ed144482/libraries/ESP8266WiFi/src/ESP8266WiFiGeneric.cpp#L255
+/*
   if (TasmotaGlobal.sleep && Settings.flag3.sleep_normal) {  // SetOption60 - Enable normal sleep instead of dynamic sleep
     WiFi.setSleepMode(WIFI_LIGHT_SLEEP);        // Allow light sleep during idle times
   } else {
     WiFi.setSleepMode(WIFI_MODEM_SLEEP);        // Disable sleep (Esp8288/Arduino core and sdk default)
+  }
+*/
+  if (0 == TasmotaGlobal.sleep) {
+    if (!TasmotaGlobal.wifi_stay_asleep) {
+      WiFi.setSleepMode(WIFI_NONE_SLEEP);       // Disable sleep
+    }
+  } else {
+    if (Settings.flag3.sleep_normal) {          // SetOption60 - Enable normal sleep instead of dynamic sleep
+      WiFi.setSleepMode(WIFI_LIGHT_SLEEP);      // Allow light sleep during idle times
+    } else {
+      WiFi.setSleepMode(WIFI_MODEM_SLEEP);      // Sleep (Esp8288/Arduino core and sdk default)
+    }
   }
   WifiSetOutputPower();
 }
 
 void WifiBegin(uint8_t flag, uint8_t channel)
 {
-  const char kWifiPhyMode[] = " bgnl";
+  const static char kWifiPhyMode[] PROGMEM = " bgnl";
 
 #ifdef USE_EMULATION
   UdpDisconnect();
@@ -190,8 +203,8 @@ void WifiBegin(uint8_t flag, uint8_t channel)
   if (!strlen(SettingsText(SET_STASSID1 + Settings.sta_active))) {
     Settings.sta_active ^= 1;  // Skip empty SSID
   }
-  if (Settings.ip_address[0]) {
-    WiFi.config(Settings.ip_address[0], Settings.ip_address[1], Settings.ip_address[2], Settings.ip_address[3]);  // Set static IP
+  if (Settings.ipv4_address[0]) {
+    WiFi.config(Settings.ipv4_address[0], Settings.ipv4_address[1], Settings.ipv4_address[2], Settings.ipv4_address[3]);  // Set static IP
   }
   WiFi.hostname(TasmotaGlobal.hostname);
 
@@ -204,15 +217,15 @@ void WifiBegin(uint8_t flag, uint8_t channel)
   } else {
     WiFi.begin(SettingsText(SET_STASSID1 + Settings.sta_active), SettingsText(SET_STAPWD1 + Settings.sta_active));
   }
-  AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_CONNECTING_TO_AP "%d %s%s " D_IN_MODE " 11%c " D_AS " %s..."),
-    Settings.sta_active +1, SettingsText(SET_STASSID1 + Settings.sta_active), stemp, kWifiPhyMode[WiFi.getPhyMode() & 0x3], TasmotaGlobal.hostname);
+  AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_CONNECTING_TO_AP "%d %s%s " D_IN_MODE " 11%c " D_AS " %s..."),
+    Settings.sta_active +1, SettingsText(SET_STASSID1 + Settings.sta_active), stemp, pgm_read_byte(&kWifiPhyMode[WiFi.getPhyMode() & 0x3]), TasmotaGlobal.hostname);
 
 #if LWIP_IPV6
   for (bool configured = false; !configured;) {
     uint16_t cfgcnt = 0;
     for (auto addr : addrList) {
       if ((configured = !addr.isLocal() && addr.isV6()) || cfgcnt==30) {
-        AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI "Got IPv6 global address %s"), addr.toString().c_str());
+        AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI "Got IPv6 global address %s"), addr.toString().c_str());
         break;  // IPv6 is mandatory but stop after 15 seconds
       }
       delay(500);  // Loop until real IPv6 address is aquired or too many tries failed
@@ -247,7 +260,7 @@ void WifiBeginAfterScan(void)
     if (WiFi.scanComplete() != WIFI_SCAN_RUNNING) {
       WiFi.scanNetworks(true);                      // Start wifi scan async
       Wifi.scan_state++;
-      AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_WIFI "Network (re)scan started..."));
+      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_WIFI "Network (re)scan started..."));
       return;
     }
   }
@@ -295,7 +308,7 @@ void WifiBeginAfterScan(void)
           }
         }
         char hex_char[18];
-        AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_WIFI "Network %d, AP%c, SSId %s, Channel %d, BSSId %s, RSSI %d, Encryption %d"),
+        AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_WIFI "Network %d, AP%c, SSId %s, Channel %d, BSSId %s, RSSI %d, Encryption %d"),
           i,
           (known) ? (j) ? '2' : '1' : '-',
           ssid_scan.c_str(),
@@ -348,16 +361,6 @@ void WifiSetState(uint8_t state)
 }
 
 #if LWIP_IPV6
-bool WifiCheckIPv6(void)
-{
-  bool ipv6_global=false;
-
-  for (auto a : addrList) {
-    if(!a.isLocal() && a.isV6()) ipv6_global=true;
-  }
-  return ipv6_global;
-}
-
 String WifiGetIPv6(void)
 {
   for (auto a : addrList) {
@@ -365,35 +368,30 @@ String WifiGetIPv6(void)
   }
   return "";
 }
-
-bool WifiCheckIPAddrStatus(void)	// Return false for 169.254.x.x or fe80::/64
-{
-  bool ip_global=false;
-
-  for (auto a : addrList) {
-    if(!a.isLocal()) ip_global=true;
-  }
-  return ip_global;
-}
 #endif  // LWIP_IPV6=1
+
+// Check to see if we have any routable IP address
+inline bool WifiCheck_hasIP(IPAddress const & ip_address)
+{
+#ifdef LWIP2_IPV6
+  return !a.isLocal();
+#else
+  return static_cast<uint32_t>(ip_address) != 0;
+#endif
+}
 
 void WifiCheckIp(void)
 {
-#if LWIP_IPV6
-  if(WifiCheckIPAddrStatus()) {
-    Wifi.status = WL_CONNECTED;
-#else
-  if ((WL_CONNECTED == WiFi.status()) && (static_cast<uint32_t>(WiFi.localIP()) != 0)) {
-#endif  // LWIP_IPV6=1
+  if ((WL_CONNECTED == WiFi.status()) && WifiCheck_hasIP(WiFi.localIP())) {
     WifiSetState(1);
     Wifi.counter = WIFI_CHECK_SEC;
     Wifi.retry = Wifi.retry_init;
     if (Wifi.status != WL_CONNECTED) {
-      AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_CONNECTED));
-//      AddLog_P(LOG_LEVEL_INFO, PSTR("Wifi: Set IP addresses"));
-      Settings.ip_address[1] = (uint32_t)WiFi.gatewayIP();
-      Settings.ip_address[2] = (uint32_t)WiFi.subnetMask();
-      Settings.ip_address[3] = (uint32_t)WiFi.dnsIP();
+      AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_CONNECTED));
+//      AddLog(LOG_LEVEL_INFO, PSTR("Wifi: Set IP addresses"));
+      Settings.ipv4_address[1] = (uint32_t)WiFi.gatewayIP();
+      Settings.ipv4_address[2] = (uint32_t)WiFi.subnetMask();
+      Settings.ipv4_address[3] = (uint32_t)WiFi.dnsIP();
 
       // Save current AP parameters for quick reconnect
       Settings.wifi_channel = WiFi.channel();
@@ -401,23 +399,18 @@ void WifiCheckIp(void)
       memcpy((void*) &Settings.wifi_bssid, (void*) bssid, sizeof(Settings.wifi_bssid));
     }
     Wifi.status = WL_CONNECTED;
-#ifdef USE_DISCOVERY
-#ifdef WEBSERVER_ADVERTISE
-    MdnsUpdate();
-#endif  // USE_DISCOVERY
-#endif  // WEBSERVER_ADVERTISE
   } else {
     WifiSetState(0);
     uint8_t wifi_config_tool = Settings.sta_config;
     Wifi.status = WiFi.status();
     switch (Wifi.status) {
       case WL_CONNECTED:
-        AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_CONNECT_FAILED_NO_IP_ADDRESS));
+        AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_CONNECT_FAILED_NO_IP_ADDRESS));
         Wifi.status = 0;
         Wifi.retry = Wifi.retry_init;
         break;
       case WL_NO_SSID_AVAIL:
-        AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_CONNECT_FAILED_AP_NOT_REACHED));
+        AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_CONNECT_FAILED_AP_NOT_REACHED));
         Settings.wifi_channel = 0;  // Disable stored AP
         if (WIFI_WAIT == Settings.sta_config) {
           Wifi.retry = Wifi.retry_init;
@@ -431,7 +424,7 @@ void WifiCheckIp(void)
         }
         break;
       case WL_CONNECT_FAILED:
-        AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_CONNECT_FAILED_WRONG_PASSWORD));
+        AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_CONNECT_FAILED_WRONG_PASSWORD));
         Settings.wifi_channel = 0;  // Disable stored AP
         if (Wifi.retry > (Wifi.retry_init / 2)) {
           Wifi.retry = Wifi.retry_init / 2;
@@ -442,7 +435,7 @@ void WifiCheckIp(void)
         break;
       default:  // WL_IDLE_STATUS and WL_DISCONNECTED
         if (!Wifi.retry || ((Wifi.retry_init / 2) == Wifi.retry)) {
-          AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_CONNECT_FAILED_AP_TIMEOUT));
+          AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_CONNECT_FAILED_AP_TIMEOUT));
           Settings.wifi_channel = 0;  // Disable stored AP
         } else {
           if (!strlen(SettingsText(SET_STASSID1)) && !strlen(SettingsText(SET_STASSID2))) {
@@ -450,7 +443,7 @@ void WifiCheckIp(void)
             wifi_config_tool = WIFI_MANAGER;  // Skip empty SSIDs and start Wifi config tool
             Wifi.retry = 0;
           } else {
-            AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_WIFI D_ATTEMPTING_CONNECTION));
+            AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_WIFI D_ATTEMPTING_CONNECTION));
           }
         }
     }
@@ -498,7 +491,7 @@ void WifiCheck(uint8_t param)
             SettingsUpdateText(SET_STAPWD1, WiFi.psk().c_str());
           }
           Settings.sta_active = 0;
-          AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_WCFG_2_WIFIMANAGER D_CMND_SSID "1 %s"), SettingsText(SET_STASSID1));
+          AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_WCFG_2_WIFIMANAGER D_CMND_SSID "1 %s"), SettingsText(SET_STASSID1));
         }
       }
       if (!Wifi.config_counter) {
@@ -509,15 +502,11 @@ void WifiCheck(uint8_t param)
       if (Wifi.scan_state) { WifiBeginAfterScan(); }
 
       if (Wifi.counter <= 0) {
-        AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_WIFI D_CHECKING_CONNECTION));
+        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_WIFI D_CHECKING_CONNECTION));
         Wifi.counter = WIFI_CHECK_SEC;
         WifiCheckIp();
       }
-#if LWIP_IPV6
-      if (WifiCheckIPAddrStatus()) {
-#else
-      if ((WL_CONNECTED == WiFi.status()) && (static_cast<uint32_t>(WiFi.localIP()) != 0) && !Wifi.config_type) {
-#endif  // LWIP_IPV6=1
+      if ((WL_CONNECTED == WiFi.status()) && WifiCheck_hasIP(WiFi.localIP()) && !Wifi.config_type) {
         WifiSetState(1);
         if (Settings.flag3.use_wifi_rescan) {  // SetOption57 - Scan wifi network every 44 minutes for configured AP's
           if (!(TasmotaGlobal.uptime % (60 * WIFI_RESCAN_MINUTES))) {
@@ -595,7 +584,7 @@ void WifiConnect(void)
 
 #ifdef WIFI_RF_PRE_INIT
   if (rf_pre_init_flag) {
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_WIFI "Pre-init done"));
+    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_WIFI "Pre-init done"));
   }
 #endif  // WIFI_RF_PRE_INIT
 }
@@ -667,7 +656,7 @@ extern "C" {
 }
 
 void stationKeepAliveNow(void) {
-  AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_WIFI "Sending Gratuitous ARP"));
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_WIFI "Sending Gratuitous ARP"));
   for (netif* interface = netif_list; interface != nullptr; interface = interface->next)
     if (
           (interface->flags & NETIF_FLAG_LINK_UP)
@@ -740,6 +729,7 @@ uint32_t WifiGetNtp(void) {
   char* ntp_server;
   bool resolved_ip = false;
   for (uint32_t i = 0; i <= MAX_NTP_SERVERS; i++) {
+    if (ntp_server_id > 2) { ntp_server_id = 0; }
     if (i < MAX_NTP_SERVERS) {
       ntp_server = SettingsText(SET_NTPSERVER1 + ntp_server_id);
     } else {
@@ -752,14 +742,13 @@ uint32_t WifiGetNtp(void) {
       if (resolved_ip) { break; }
     }
     ntp_server_id++;
-    if (ntp_server_id > 2) { ntp_server_id = 0; }
   }
   if (!resolved_ip) {
-//    AddLog_P(LOG_LEVEL_DEBUG, PSTR("NTP: No server found"));
+//    AddLog(LOG_LEVEL_DEBUG, PSTR("NTP: No server found"));
     return 0;
   }
 
-//  AddLog_P(LOG_LEVEL_DEBUG, PSTR("NTP: Name %s, IP %s"), ntp_server, time_server_ip.toString().c_str());
+//  AddLog(LOG_LEVEL_DEBUG, PSTR("NTP: Name %s, IP %_I"), ntp_server, (uint32_t)time_server_ip);
 
   WiFiUDP udp;
 
@@ -790,8 +779,7 @@ uint32_t WifiGetNtp(void) {
   packet_buffer[15] = 52;
 
   if (udp.beginPacket(time_server_ip, 123) == 0) {  // NTP requests are to port 123
-    ntp_server_id++;
-    if (ntp_server_id > 2) { ntp_server_id = 0; }   // Next server next time
+    ntp_server_id++;                                // Next server next time
     udp.stop();
     return 0;
   }
@@ -810,7 +798,8 @@ uint32_t WifiGetNtp(void) {
       if ((packet_buffer[0] & 0b11000000) == 0b11000000) {
         // Leap-Indicator: unknown (clock unsynchronized)
         // See: https://github.com/letscontrolit/ESPEasy/issues/2886#issuecomment-586656384
-        AddLog_P(LOG_LEVEL_DEBUG, PSTR("NTP: IP %s unsynched"), time_server_ip.toString().c_str());
+        AddLog(LOG_LEVEL_DEBUG, PSTR("NTP: IP %_I unsynched"), (uint32_t)time_server_ip);
+        ntp_server_id++;                            // Next server next time
         return 0;
       }
 
@@ -821,6 +810,7 @@ uint32_t WifiGetNtp(void) {
       secs_since_1900 |= (uint32_t)packet_buffer[42] << 8;
       secs_since_1900 |= (uint32_t)packet_buffer[43];
       if (0 == secs_since_1900) {                   // No time stamp received
+        ntp_server_id++;                            // Next server next time
         return 0;
       }
       return secs_since_1900 - 2208988800UL;
@@ -828,8 +818,9 @@ uint32_t WifiGetNtp(void) {
     delay(10);
   }
   // Timeout.
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR("NTP: No reply"));
+  AddLog(LOG_LEVEL_DEBUG, PSTR("NTP: No reply"));
   udp.stop();
+  ntp_server_id++;                                  // Next server next time
   return 0;
 }
 

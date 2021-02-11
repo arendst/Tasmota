@@ -92,6 +92,7 @@ struct MailClientStorageType
   static const uint8_t SPIFFS = 0;
   static const uint8_t SD = 1;
   static const uint8_t FFat = 2;
+  static const uint8_t Univ = 3;
 };
 
 static const char ESP32_MAIL_STR_1[] PROGMEM = "Content-Type: multipart/mixed; boundary=\"";

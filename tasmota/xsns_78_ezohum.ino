@@ -1,7 +1,7 @@
 /*
   xsns_78_ezohum.ino - EZO HUM I2C HUM sensor support for Tasmota
 
-  Copyright (C) 2020  Christopher Tremblay
+  Copyright (C) 2021  Christopher Tremblay
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by

@@ -1,7 +1,7 @@
 /*
   xdrv_33_nrf24l01.ino - nrf24l01 support for Tasmota
 
-  Copyright (C) 2020  Christian Baars and Theo Arends
+  Copyright (C) 2021  Christian Baars and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -34,7 +34,7 @@
 /*********************************************************************************************\
 * NRF24l01(+)
 *
-* Usage: 5 SPI-data-wires plus VVC/ground, use hardware SPI, select GPIO_SPI_CS/GPIO_SPI_DC
+* Usage: 5 SPI-data-wires plus VVC/ground, use hardware SPI, select GPIO_NRF24_CS/GPIO_NRF24_DC
 \*********************************************************************************************/
 
 #define XDRV_33             33
@@ -51,45 +51,40 @@ struct {
 
 RF24 NRF24radio;
 
-bool NRF24initRadio()
-{
-  NRF24radio.begin(Pin(GPIO_SPI_CS),Pin(GPIO_SPI_DC));
+bool NRF24initRadio() {
+  NRF24radio.begin(Pin(GPIO_NRF24_CS), Pin(GPIO_NRF24_DC));
   NRF24radio.powerUp();
 
-  if(NRF24radio.isChipConnected()){
-    DEBUG_DRIVER_LOG(PSTR("NRF24 chip connected"));
+  if (NRF24radio.isChipConnected()) {
+    DEBUG_DRIVER_LOG(PSTR("NRF: Chip connected"));
     return true;
   }
-  DEBUG_DRIVER_LOG(PSTR("NRF24 chip NOT !!!! connected"));
+  DEBUG_DRIVER_LOG(PSTR("NRF: Chip NOT !!!! connected"));
   return false;
 }
 
-bool NRF24Detect(void)
-{
-  if (PinUsed(GPIO_SPI_CS) && PinUsed(GPIO_SPI_DC)) {
-    if(NRF24initRadio()){
+void NRF24Detect(void) {
+  if (PinUsed(GPIO_NRF24_CS) && PinUsed(GPIO_NRF24_DC) && TasmotaGlobal.spi_enabled) {
+    if (NRF24initRadio()) {
       NRF24.chipType = 32; // SPACE
-     AddLog_P(LOG_LEVEL_INFO,PSTR("NRF24L01 initialized"));
-      if(NRF24radio.isPVariant()){
+      AddLog(LOG_LEVEL_INFO, PSTR("NRF: Model 24L01 initialized"));
+      if (NRF24radio.isPVariant()) {
         NRF24.chipType = 43; // +
-        AddLog_P(LOG_LEVEL_INFO,PSTR("NRF24L01+ detected"));
+        AddLog(LOG_LEVEL_INFO, PSTR("NRF: Model 24L01+ detected"));
       }
-      return true;
     }
   }
-  return false;
 }
 
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
 
-bool Xdrv33(uint8_t function)
-{
+bool Xdrv33(uint8_t function) {
   bool result = false;
 
   if (FUNC_INIT == function) {
-    result = NRF24Detect();
+    NRF24Detect();
   }
   return result;
 }

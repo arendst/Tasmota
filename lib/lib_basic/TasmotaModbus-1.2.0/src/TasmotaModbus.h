@@ -1,7 +1,7 @@
 /*
   TasmotaModbus.h - Basic modbus wrapper for TasmotaSerial for Tasmota
 
-  Copyright (C) 2020  Theo Arends
+  Copyright (C) 2021  Theo Arends
 
   This library is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -31,6 +31,8 @@ class TasmotaModbus : public TasmotaSerial {
     virtual ~TasmotaModbus() {}
 
     int Begin(long speed = TM_MODBUS_BAUDRATE, int stop_bits = 1);
+
+    uint16_t CalculateCRC(uint8_t *frame, uint8_t num);
 
     void Send(uint8_t device_address, uint8_t function_code, uint16_t start_address, uint16_t register_count);
 

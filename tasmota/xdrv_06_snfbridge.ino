@@ -1,7 +1,7 @@
 /*
   xdrv_06_snfbridge.ino - sonoff RF bridge 433 support for Tasmota
 
-  Copyright (C) 2020  Theo Arends and Erik Andrén Zachrisson (fw update)
+  Copyright (C) 2021  Theo Arends and Erik Andrén Zachrisson (fw update)
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -147,7 +147,7 @@ uint32_t SnfBrUpdateFirmware(uint8_t* data, uint32_t size) {
   uint32_t error = rf_erase_flash();  // 10, 11
   if (error) { return error; }
 
-//  AddLog_P(LOG_LEVEL_DEBUG, PSTR("RFB: Erased"));
+//  AddLog(LOG_LEVEL_DEBUG, PSTR("RFB: Erased"));
 
   return rf_search_and_write(data, size);
 }

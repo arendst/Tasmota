@@ -264,6 +264,37 @@ std::string NimBLEUUID::toString() const {
  */
 bool NimBLEUUID::operator ==(const NimBLEUUID & rhs) const {
     if(m_valueSet && rhs.m_valueSet) {
+        NIMBLE_LOGD(LOG_TAG,"Comparing UUIDs; type %u to %u; UUID %s to %s",
+                            m_uuid.u.type, rhs.m_uuid.u.type,
+                            this->toString().c_str(), rhs.toString().c_str());
+
+        if(m_uuid.u.type != rhs.m_uuid.u.type) {
+            uint8_t uuidBase[16] = {
+                0xfb, 0x34, 0x9b, 0x5f, 0x80, 0x00, 0x00, 0x80,
+                0x00, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+            };
+
+            if(m_uuid.u.type == BLE_UUID_TYPE_128){
+                if(rhs.m_uuid.u.type == BLE_UUID_TYPE_16){
+                    memcpy(uuidBase+12, &rhs.m_uuid.u16.value, 2);
+                } else if (rhs.m_uuid.u.type == BLE_UUID_TYPE_32){
+                    memcpy(uuidBase+12, &rhs.m_uuid.u32.value, 4);
+                }
+                return memcmp(m_uuid.u128.value,uuidBase,16) == 0;
+
+            } else if(rhs.m_uuid.u.type == BLE_UUID_TYPE_128) {
+                if(m_uuid.u.type == BLE_UUID_TYPE_16){
+                    memcpy(uuidBase+12, &m_uuid.u16.value, 2);
+                } else if (m_uuid.u.type == BLE_UUID_TYPE_32){
+                    memcpy(uuidBase+12, &m_uuid.u32.value, 4);
+                }
+                return memcmp(rhs.m_uuid.u128.value,uuidBase,16) == 0;
+
+            } else {
+                return false;
+            }
+        }
+
         return ble_uuid_cmp(&m_uuid.u, &rhs.m_uuid.u) == 0;
     }
 

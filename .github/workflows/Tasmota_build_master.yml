@@ -34,17 +34,14 @@ jobs:
       uses: actions/setup-python@v1
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
         pip install -U platformio
-        platformio upgrade --dev
-        platformio update
     - name: Run PlatformIO
       run: |
         platformio run -e tasmota
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
-        path: ./build_output/firmware
+        path: ./build_output
 
 
   tasmota-minimal:
@@ -57,17 +54,14 @@ jobs:
       uses: actions/setup-python@v1
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
         pip install -U platformio
-        platformio upgrade --dev
-        platformio update
     - name: Run PlatformIO
       run: |
         platformio run -e tasmota-minimal
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
-        path: ./build_output/firmware
+        path: ./build_output
 
 
   tasmota-lite:
@@ -80,17 +74,14 @@ jobs:
       uses: actions/setup-python@v1
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
         pip install -U platformio
-        platformio upgrade --dev
-        platformio update
     - name: Run PlatformIO
       run: |
         platformio run -e tasmota-lite
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
-        path: ./build_output/firmware
+        path: ./build_output
 
 
   tasmota-knx:
@@ -103,17 +94,14 @@ jobs:
       uses: actions/setup-python@v1
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
         pip install -U platformio
-        platformio upgrade --dev
-        platformio update
     - name: Run PlatformIO
       run: |
         platformio run -e tasmota-knx
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
-        path: ./build_output/firmware
+        path: ./build_output
 
 
   tasmota-sensors:
@@ -126,17 +114,14 @@ jobs:
       uses: actions/setup-python@v1
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
         pip install -U platformio
-        platformio upgrade --dev
-        platformio update
     - name: Run PlatformIO
       run: |
         platformio run -e tasmota-sensors
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
-        path: ./build_output/firmware
+        path: ./build_output
 
 
   tasmota-display:
@@ -149,17 +134,14 @@ jobs:
       uses: actions/setup-python@v1
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
         pip install -U platformio
-        platformio upgrade --dev
-        platformio update
     - name: Run PlatformIO
       run: |
         platformio run -e tasmota-display
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
-        path: ./build_output/firmware
+        path: ./build_output
 
 
   tasmota-ir:
@@ -172,17 +154,14 @@ jobs:
       uses: actions/setup-python@v1
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
         pip install -U platformio
-        platformio upgrade --dev
-        platformio update
     - name: Run PlatformIO
       run: |
         platformio run -e tasmota-ir
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
-        path: ./build_output/firmware
+        path: ./build_output
 
 
   tasmota-ircustom:
@@ -195,17 +174,14 @@ jobs:
       uses: actions/setup-python@v1
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
         pip install -U platformio
-        platformio upgrade --dev
-        platformio update
     - name: Run PlatformIO
       run: |
         platformio run -e tasmota-ircustom
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
-        path: ./build_output/firmware
+        path: ./build_output
 
 
   tasmota-zbbridge:
@@ -218,17 +194,35 @@ jobs:
       uses: actions/setup-python@v1
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
         pip install -U platformio
-        platformio upgrade --dev
-        platformio update
     - name: Run PlatformIO
       run: |
         platformio run -e tasmota-zbbridge
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
-        path: ./build_output/firmware
+        path: ./build_output
+
+
+  tasmota-AF:
+    needs: tasmota_pull
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v1
+    - name: Set up Python
+      uses: actions/setup-python@v1
+    - name: Install dependencies
+      run: |
+        pip install -U platformio
+    - name: Run PlatformIO
+      run: |
+        platformio run -e tasmota-AF
+    - uses: actions/upload-artifact@v2
+      with:
+        name: firmware
+        path: ./build_output
+
 
   tasmota-BG:
     needs: tasmota_pull
@@ -240,17 +234,14 @@ jobs:
       uses: actions/setup-python@v1
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
         pip install -U platformio
-        platformio upgrade --dev
-        platformio update
     - name: Run PlatformIO
       run: |
         platformio run -e tasmota-BG
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
-        path: ./build_output/firmware
+        path: ./build_output
 
 
   tasmota-BR:
@@ -263,17 +254,14 @@ jobs:
       uses: actions/setup-python@v1
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
         pip install -U platformio
-        platformio upgrade --dev
-        platformio update
     - name: Run PlatformIO
       run: |
         platformio run -e tasmota-BR
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
-        path: ./build_output/firmware
+        path: ./build_output
 
 
   tasmota-CN:
@@ -286,17 +274,14 @@ jobs:
       uses: actions/setup-python@v1
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
         pip install -U platformio
-        platformio upgrade --dev
-        platformio update
     - name: Run PlatformIO
       run: |
         platformio run -e tasmota-CN
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
-        path: ./build_output/firmware
+        path: ./build_output
 
 
   tasmota-CZ:
@@ -309,17 +294,14 @@ jobs:
       uses: actions/setup-python@v1
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
         pip install -U platformio
-        platformio upgrade --dev
-        platformio update
     - name: Run PlatformIO
       run: |
         platformio run -e tasmota-CZ
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
-        path: ./build_output/firmware
+        path: ./build_output
 
 
   tasmota-DE:
@@ -332,17 +314,14 @@ jobs:
       uses: actions/setup-python@v1
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
         pip install -U platformio
-        platformio upgrade --dev
-        platformio update
     - name: Run PlatformIO
       run: |
         platformio run -e tasmota-DE
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
-        path: ./build_output/firmware
+        path: ./build_output
 
 
   tasmota-ES:
@@ -355,17 +334,14 @@ jobs:
       uses: actions/setup-python@v1
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
         pip install -U platformio
-        platformio upgrade --dev
-        platformio update
     - name: Run PlatformIO
       run: |
         platformio run -e tasmota-ES
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
-        path: ./build_output/firmware
+        path: ./build_output
 
 
   tasmota-FR:
@@ -378,17 +354,34 @@ jobs:
       uses: actions/setup-python@v1
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
         pip install -U platformio
-        platformio upgrade --dev
-        platformio update
     - name: Run PlatformIO
       run: |
         platformio run -e tasmota-FR
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
-        path: ./build_output/firmware
+        path: ./build_output
+
+
+  tasmota-FY:
+    needs: tasmota_pull
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v1
+    - name: Set up Python
+      uses: actions/setup-python@v1
+    - name: Install dependencies
+      run: |
+        pip install -U platformio
+    - name: Run PlatformIO
+      run: |
+        platformio run -e tasmota-FY
+    - uses: actions/upload-artifact@v2
+      with:
+        name: firmware
+        path: ./build_output
 
 
   tasmota-GR:
@@ -401,17 +394,14 @@ jobs:
       uses: actions/setup-python@v1
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
         pip install -U platformio
-        platformio upgrade --dev
-        platformio update
     - name: Run PlatformIO
       run: |
         platformio run -e tasmota-GR
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
-        path: ./build_output/firmware
+        path: ./build_output
 
 
   tasmota-HE:
@@ -424,17 +414,14 @@ jobs:
       uses: actions/setup-python@v1
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
         pip install -U platformio
-        platformio upgrade --dev
-        platformio update
     - name: Run PlatformIO
       run: |
         platformio run -e tasmota-HE
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
-        path: ./build_output/firmware
+        path: ./build_output
 
 
   tasmota-HU:
@@ -447,17 +434,14 @@ jobs:
       uses: actions/setup-python@v1
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
         pip install -U platformio
-        platformio upgrade --dev
-        platformio update
     - name: Run PlatformIO
       run: |
         platformio run -e tasmota-HU
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
-        path: ./build_output/firmware
+        path: ./build_output
 
 
   tasmota-IT:
@@ -470,17 +454,14 @@ jobs:
       uses: actions/setup-python@v1
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
         pip install -U platformio
-        platformio upgrade --dev
-        platformio update
     - name: Run PlatformIO
       run: |
         platformio run -e tasmota-IT
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
-        path: ./build_output/firmware
+        path: ./build_output
 
 
   tasmota-KO:
@@ -493,17 +474,14 @@ jobs:
       uses: actions/setup-python@v1
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
         pip install -U platformio
-        platformio upgrade --dev
-        platformio update
     - name: Run PlatformIO
       run: |
         platformio run -e tasmota-KO
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
-        path: ./build_output/firmware
+        path: ./build_output
 
 
   tasmota-NL:
@@ -516,17 +494,14 @@ jobs:
       uses: actions/setup-python@v1
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
         pip install -U platformio
-        platformio upgrade --dev
-        platformio update
     - name: Run PlatformIO
       run: |
         platformio run -e tasmota-NL
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
-        path: ./build_output/firmware
+        path: ./build_output
 
 
   tasmota-PL:
@@ -539,17 +514,14 @@ jobs:
       uses: actions/setup-python@v1
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
         pip install -U platformio
-        platformio upgrade --dev
-        platformio update
     - name: Run PlatformIO
       run: |
         platformio run -e tasmota-PL
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
-        path: ./build_output/firmware
+        path: ./build_output
 
 
   tasmota-PT:
@@ -562,17 +534,14 @@ jobs:
       uses: actions/setup-python@v1
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
         pip install -U platformio
-        platformio upgrade --dev
-        platformio update
     - name: Run PlatformIO
       run: |
         platformio run -e tasmota-PT
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
-        path: ./build_output/firmware
+        path: ./build_output
 
 
   tasmota-RO:
@@ -585,17 +554,14 @@ jobs:
       uses: actions/setup-python@v1
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
         pip install -U platformio
-        platformio upgrade --dev
-        platformio update
     - name: Run PlatformIO
       run: |
         platformio run -e tasmota-RO
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
-        path: ./build_output/firmware
+        path: ./build_output
 
 
   tasmota-RU:
@@ -608,17 +574,14 @@ jobs:
       uses: actions/setup-python@v1
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
         pip install -U platformio
-        platformio upgrade --dev
-        platformio update
     - name: Run PlatformIO
       run: |
         platformio run -e tasmota-RU
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
-        path: ./build_output/firmware
+        path: ./build_output
 
 
   tasmota-SE:
@@ -631,17 +594,14 @@ jobs:
       uses: actions/setup-python@v1
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
         pip install -U platformio
-        platformio upgrade --dev
-        platformio update
     - name: Run PlatformIO
       run: |
         platformio run -e tasmota-SE
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
-        path: ./build_output/firmware
+        path: ./build_output
 
 
   tasmota-SK:
@@ -654,17 +614,14 @@ jobs:
       uses: actions/setup-python@v1
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
         pip install -U platformio
-        platformio upgrade --dev
-        platformio update
     - name: Run PlatformIO
       run: |
         platformio run -e tasmota-SK
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
-        path: ./build_output/firmware
+        path: ./build_output
 
 
   tasmota-TR:
@@ -677,17 +634,14 @@ jobs:
       uses: actions/setup-python@v1
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
         pip install -U platformio
-        platformio upgrade --dev
-        platformio update
     - name: Run PlatformIO
       run: |
         platformio run -e tasmota-TR
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
-        path: ./build_output/firmware
+        path: ./build_output
 
 
   tasmota-TW:
@@ -700,17 +654,14 @@ jobs:
       uses: actions/setup-python@v1
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
         pip install -U platformio
-        platformio upgrade --dev
-        platformio update
     - name: Run PlatformIO
       run: |
         platformio run -e tasmota-TW
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
-        path: ./build_output/firmware
+        path: ./build_output
 
 
   tasmota-UK:
@@ -723,17 +674,14 @@ jobs:
       uses: actions/setup-python@v1
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
         pip install -U platformio
-        platformio upgrade --dev
-        platformio update
     - name: Run PlatformIO
       run: |
         platformio run -e tasmota-UK
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
-        path: ./build_output/firmware
+        path: ./build_output
 
 
   tasmota-VN:
@@ -746,17 +694,14 @@ jobs:
       uses: actions/setup-python@v1
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
         pip install -U platformio
-        platformio upgrade --dev
-        platformio update
     - name: Run PlatformIO
       run: |
         platformio run -e tasmota-VN
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
-        path: ./build_output/firmware
+        path: ./build_output
 
 
   tasmota32:
@@ -769,17 +714,14 @@ jobs:
       uses: actions/setup-python@v1
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
         pip install -U platformio
-        platformio upgrade --dev
-        platformio update
     - name: Run PlatformIO
       run: |
         platformio run -e tasmota32
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
-        path: ./build_output/firmware
+        path: ./build_output
 
 
   tasmota32-minimal:
@@ -792,17 +734,14 @@ jobs:
       uses: actions/setup-python@v1
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
         pip install -U platformio
-        platformio upgrade --dev
-        platformio update
     - name: Run PlatformIO
       run: |
         platformio run -e tasmota32-minimal
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
-        path: ./build_output/firmware
+        path: ./build_output
 
 
   tasmota32-lite:
@@ -815,17 +754,14 @@ jobs:
       uses: actions/setup-python@v1
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
         pip install -U platformio
-        platformio upgrade --dev
-        platformio update
     - name: Run PlatformIO
       run: |
         platformio run -e tasmota32-lite
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
-        path: ./build_output/firmware
+        path: ./build_output
 
 
   tasmota32-webcam:
@@ -838,17 +774,54 @@ jobs:
       uses: actions/setup-python@v1
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
         pip install -U platformio
-        platformio upgrade --dev
-        platformio update
     - name: Run PlatformIO
       run: |
         platformio run -e tasmota32-webcam
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
-        path: ./build_output/firmware
+        path: ./build_output
+
+
+  tasmota32-odroidgo:
+    needs: tasmota_pull
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v1
+    - name: Set up Python
+      uses: actions/setup-python@v1
+    - name: Install dependencies
+      run: |
+        pip install -U platformio
+    - name: Run PlatformIO
+      run: |
+        platformio run -e tasmota32-odroidgo
+    - uses: actions/upload-artifact@v2
+      with:
+        name: firmware
+        path: ./build_output
+
+
+  tasmota32-core2:
+    needs: tasmota_pull
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v1
+    - name: Set up Python
+      uses: actions/setup-python@v1
+    - name: Install dependencies
+      run: |
+        pip install -U platformio
+    - name: Run PlatformIO
+      run: |
+        platformio run -e tasmota32-core2
+    - uses: actions/upload-artifact@v2
+      with:
+        name: firmware
+        path: ./build_output
 
 
   tasmota32-knx:
@@ -861,17 +834,14 @@ jobs:
       uses: actions/setup-python@v1
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
         pip install -U platformio
-        platformio upgrade --dev
-        platformio update
     - name: Run PlatformIO
       run: |
         platformio run -e tasmota32-knx
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
-        path: ./build_output/firmware
+        path: ./build_output
 
 
   tasmota32-sensors:
@@ -884,17 +854,14 @@ jobs:
       uses: actions/setup-python@v1
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
         pip install -U platformio
-        platformio upgrade --dev
-        platformio update
     - name: Run PlatformIO
       run: |
         platformio run -e tasmota32-sensors
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
-        path: ./build_output/firmware
+        path: ./build_output
 
 
   tasmota32-display:
@@ -907,17 +874,14 @@ jobs:
       uses: actions/setup-python@v1
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
         pip install -U platformio
-        platformio upgrade --dev
-        platformio update
     - name: Run PlatformIO
       run: |
         platformio run -e tasmota32-display
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
-        path: ./build_output/firmware
+        path: ./build_output
 
 
   tasmota32-ir:
@@ -930,17 +894,14 @@ jobs:
       uses: actions/setup-python@v1
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
         pip install -U platformio
-        platformio upgrade --dev
-        platformio update
     - name: Run PlatformIO
       run: |
         platformio run -e tasmota32-ir
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
-        path: ./build_output/firmware
+        path: ./build_output
 
 
   tasmota32-ircustom:
@@ -953,17 +914,34 @@ jobs:
       uses: actions/setup-python@v1
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
         pip install -U platformio
-        platformio upgrade --dev
-        platformio update
     - name: Run PlatformIO
       run: |
         platformio run -e tasmota32-ircustom
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
-        path: ./build_output/firmware
+        path: ./build_output
+
+
+  tasmota32-AF:
+    needs: tasmota_pull
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v1
+    - name: Set up Python
+      uses: actions/setup-python@v1
+    - name: Install dependencies
+      run: |
+        pip install -U platformio
+    - name: Run PlatformIO
+      run: |
+        platformio run -e tasmota32-AF
+    - uses: actions/upload-artifact@v2
+      with:
+        name: firmware
+        path: ./build_output
 
 
   tasmota32-BG:
@@ -976,17 +954,14 @@ jobs:
       uses: actions/setup-python@v1
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
         pip install -U platformio
-        platformio upgrade --dev
-        platformio update
     - name: Run PlatformIO
       run: |
         platformio run -e tasmota32-BG
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
-        path: ./build_output/firmware
+        path: ./build_output
 
 
   tasmota32-BR:
@@ -999,17 +974,14 @@ jobs:
       uses: actions/setup-python@v1
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
         pip install -U platformio
-        platformio upgrade --dev
-        platformio update
     - name: Run PlatformIO
       run: |
         platformio run -e tasmota32-BR
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
-        path: ./build_output/firmware
+        path: ./build_output
 
 
   tasmota32-CN:
@@ -1022,17 +994,14 @@ jobs:
       uses: actions/setup-python@v1
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
         pip install -U platformio
-        platformio upgrade --dev
-        platformio update
     - name: Run PlatformIO
       run: |
         platformio run -e tasmota32-CN
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
-        path: ./build_output/firmware
+        path: ./build_output
 
 
   tasmota32-CZ:
@@ -1045,17 +1014,14 @@ jobs:
       uses: actions/setup-python@v1
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
         pip install -U platformio
-        platformio upgrade --dev
-        platformio update
     - name: Run PlatformIO
       run: |
         platformio run -e tasmota32-CZ
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
-        path: ./build_output/firmware
+        path: ./build_output
 
 
   tasmota32-DE:
@@ -1068,17 +1034,14 @@ jobs:
       uses: actions/setup-python@v1
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
         pip install -U platformio
-        platformio upgrade --dev
-        platformio update
     - name: Run PlatformIO
       run: |
         platformio run -e tasmota32-DE
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
-        path: ./build_output/firmware
+        path: ./build_output
 
 
   tasmota32-ES:
@@ -1091,17 +1054,14 @@ jobs:
       uses: actions/setup-python@v1
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
         pip install -U platformio
-        platformio upgrade --dev
-        platformio update
     - name: Run PlatformIO
       run: |
         platformio run -e tasmota32-ES
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
-        path: ./build_output/firmware
+        path: ./build_output
 
 
   tasmota32-FR:
@@ -1114,17 +1074,14 @@ jobs:
       uses: actions/setup-python@v1
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
         pip install -U platformio
-        platformio upgrade --dev
-        platformio update
     - name: Run PlatformIO
       run: |
         platformio run -e tasmota32-FR
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
-        path: ./build_output/firmware
+        path: ./build_output
 
 
   tasmota32-GR:
@@ -1137,17 +1094,14 @@ jobs:
       uses: actions/setup-python@v1
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
         pip install -U platformio
-        platformio upgrade --dev
-        platformio update
     - name: Run PlatformIO
       run: |
         platformio run -e tasmota32-GR
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
-        path: ./build_output/firmware
+        path: ./build_output
 
 
   tasmota32-HE:
@@ -1160,17 +1114,14 @@ jobs:
       uses: actions/setup-python@v1
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
         pip install -U platformio
-        platformio upgrade --dev
-        platformio update
     - name: Run PlatformIO
       run: |
         platformio run -e tasmota32-HE
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
-        path: ./build_output/firmware
+        path: ./build_output
 
 
   tasmota32-HU:
@@ -1183,17 +1134,14 @@ jobs:
       uses: actions/setup-python@v1
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
         pip install -U platformio
-        platformio upgrade --dev
-        platformio update
     - name: Run PlatformIO
       run: |
         platformio run -e tasmota32-HU
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
-        path: ./build_output/firmware
+        path: ./build_output
 
 
   tasmota32-IT:
@@ -1206,17 +1154,14 @@ jobs:
       uses: actions/setup-python@v1
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
         pip install -U platformio
-        platformio upgrade --dev
-        platformio update
     - name: Run PlatformIO
       run: |
         platformio run -e tasmota32-IT
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
-        path: ./build_output/firmware
+        path: ./build_output
 
 
   tasmota32-KO:
@@ -1229,17 +1174,14 @@ jobs:
       uses: actions/setup-python@v1
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
         pip install -U platformio
-        platformio upgrade --dev
-        platformio update
     - name: Run PlatformIO
       run: |
         platformio run -e tasmota32-KO
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
-        path: ./build_output/firmware
+        path: ./build_output
 
 
   tasmota32-NL:
@@ -1252,17 +1194,14 @@ jobs:
       uses: actions/setup-python@v1
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
         pip install -U platformio
-        platformio upgrade --dev
-        platformio update
     - name: Run PlatformIO
       run: |
         platformio run -e tasmota32-NL
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
-        path: ./build_output/firmware
+        path: ./build_output
 
 
   tasmota32-PL:
@@ -1275,17 +1214,14 @@ jobs:
       uses: actions/setup-python@v1
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
         pip install -U platformio
-        platformio upgrade --dev
-        platformio update
     - name: Run PlatformIO
       run: |
         platformio run -e tasmota32-PL
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
-        path: ./build_output/firmware
+        path: ./build_output
 
 
   tasmota32-PT:
@@ -1298,17 +1234,14 @@ jobs:
       uses: actions/setup-python@v1
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
         pip install -U platformio
-        platformio upgrade --dev
-        platformio update
     - name: Run PlatformIO
       run: |
         platformio run -e tasmota32-PT
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
-        path: ./build_output/firmware
+        path: ./build_output
 
 
   tasmota32-RO:
@@ -1321,17 +1254,14 @@ jobs:
       uses: actions/setup-python@v1
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
         pip install -U platformio
-        platformio upgrade --dev
-        platformio update
     - name: Run PlatformIO
       run: |
         platformio run -e tasmota32-RO
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
-        path: ./build_output/firmware
+        path: ./build_output
 
 
   tasmota32-RU:
@@ -1344,17 +1274,14 @@ jobs:
       uses: actions/setup-python@v1
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
         pip install -U platformio
-        platformio upgrade --dev
-        platformio update
     - name: Run PlatformIO
       run: |
         platformio run -e tasmota32-RU
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
-        path: ./build_output/firmware
+        path: ./build_output
 
 
   tasmota32-SE:
@@ -1367,17 +1294,14 @@ jobs:
       uses: actions/setup-python@v1
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
         pip install -U platformio
-        platformio upgrade --dev
-        platformio update
     - name: Run PlatformIO
       run: |
         platformio run -e tasmota32-SE
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
-        path: ./build_output/firmware
+        path: ./build_output
 
 
   tasmota32-SK:
@@ -1390,17 +1314,14 @@ jobs:
       uses: actions/setup-python@v1
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
         pip install -U platformio
-        platformio upgrade --dev
-        platformio update
     - name: Run PlatformIO
       run: |
         platformio run -e tasmota32-SK
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
-        path: ./build_output/firmware
+        path: ./build_output
 
 
   tasmota32-TR:
@@ -1413,17 +1334,14 @@ jobs:
       uses: actions/setup-python@v1
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
         pip install -U platformio
-        platformio upgrade --dev
-        platformio update
     - name: Run PlatformIO
       run: |
         platformio run -e tasmota32-TR
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
-        path: ./build_output/firmware
+        path: ./build_output
 
 
   tasmota32-TW:
@@ -1436,17 +1354,14 @@ jobs:
       uses: actions/setup-python@v1
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
         pip install -U platformio
-        platformio upgrade --dev
-        platformio update
     - name: Run PlatformIO
       run: |
         platformio run -e tasmota32-TW
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
-        path: ./build_output/firmware
+        path: ./build_output
 
 
   tasmota32-UK:
@@ -1459,17 +1374,14 @@ jobs:
       uses: actions/setup-python@v1
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
         pip install -U platformio
-        platformio upgrade --dev
-        platformio update
     - name: Run PlatformIO
       run: |
         platformio run -e tasmota32-UK
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
-        path: ./build_output/firmware
+        path: ./build_output
 
 
   tasmota32-VN:
@@ -1482,17 +1394,14 @@ jobs:
       uses: actions/setup-python@v1
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
         pip install -U platformio
-        platformio upgrade --dev
-        platformio update
     - name: Run PlatformIO
       run: |
         platformio run -e tasmota32-VN
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
-        path: ./build_output/firmware
+        path: ./build_output
 
 
   Upload:
@@ -1513,27 +1422,31 @@ jobs:
         mkdir -p ./firmware/tasmota/languages
         mkdir -p ./firmware/tasmota32/languages
         mkdir -p ./firmware/tasmota32/ESP32_needed_files/
-        [ ! -f ./mv_firmware/tasmota.* ] || mv ./mv_firmware/tasmota.* ./firmware/tasmota/
-        [ ! -f ./mv_firmware/tasmota-sensors.* ] || mv ./mv_firmware/tasmota-sensors.* ./firmware/tasmota/
-        [ ! -f ./mv_firmware/tasmota-minimal.* ] || mv ./mv_firmware/tasmota-minimal.* ./firmware/tasmota/
-        [ ! -f ./mv_firmware/tasmota-lite.* ] || mv ./mv_firmware/tasmota-lite.* ./firmware/tasmota/
-        [ ! -f ./mv_firmware/tasmota-ir*.* ] || mv ./mv_firmware/tasmota-ir*.* ./firmware/tasmota/
-        [ ! -f ./mv_firmware/tasmota-display.* ] || mv ./mv_firmware/tasmota-display.* ./firmware/tasmota/
-        [ ! -f ./mv_firmware/tasmota-knx.* ] || mv ./mv_firmware/tasmota-knx.* ./firmware/tasmota/
-        [ ! -f ./mv_firmware/tasmota-zbbridge.* ] || mv ./mv_firmware/tasmota-zbbridge.* ./firmware/tasmota/        
-        [ ! -f ./mv_firmware/tasmota32.* ] || mv ./mv_firmware/tasmota32.* ./firmware/tasmota32/
-        [ ! -f ./mv_firmware/tasmota32-sensors.* ] || mv ./mv_firmware/tasmota32-sensors.* ./firmware/tasmota32/
-        [ ! -f ./mv_firmware/tasmota32-minimal.* ] || mv ./mv_firmware/tasmota32-minimal.* ./firmware/tasmota32/
-        [ ! -f ./mv_firmware/tasmota32-lite.* ] || mv ./mv_firmware/tasmota32-lite.* ./firmware/tasmota32/
-        [ ! -f ./mv_firmware/tasmota32-ir*.* ] || mv ./mv_firmware/tasmota32-ir*.* ./firmware/tasmota32/
-        [ ! -f ./mv_firmware/tasmota32-display.* ] || mv ./mv_firmware/tasmota32-display.* ./firmware/tasmota32/
-        [ ! -f ./mv_firmware/tasmota32-web*.* ] || mv ./mv_firmware/tasmota32-web*.* ./firmware/tasmota32/
-        [ ! -f ./mv_firmware/tasmota32-knx.* ] || mv ./mv_firmware/tasmota32-knx.* ./firmware/tasmota32/
-        [ ! -f ./mv_firmware/tasmota32* ] || mv ./mv_firmware/tasmota32* ./firmware/tasmota32/languages/
-        [ ! -f ./mv_firmware/* ] || mv ./mv_firmware/* ./firmware/tasmota/languages/
-        rm ./firmware/tasmota32/*.gz
-        rm ./firmware/tasmota32/languages/*.gz
+        mkdir -p ./firmware/tasmota32/Odroid_go_needed_files/
+        mkdir -p ./firmware/map
+        [ ! -f ./mv_firmware/map/* ] || mv ./mv_firmware/map/* ./firmware/map/
+        [ ! -f ./mv_firmware/firmware/tasmota.* ] || mv ./mv_firmware/firmware/tasmota.* ./firmware/tasmota/
+        [ ! -f ./mv_firmware/firmware/tasmota-sensors.* ] || mv ./mv_firmware/firmware/tasmota-sensors.* ./firmware/tasmota/
+        [ ! -f ./mv_firmware/firmware/tasmota-minimal.* ] || mv ./mv_firmware/firmware/tasmota-minimal.* ./firmware/tasmota/
+        [ ! -f ./mv_firmware/firmware/tasmota-lite.* ] || mv ./mv_firmware/firmware/tasmota-lite.* ./firmware/tasmota/
+        [ ! -f ./mv_firmware/firmware/tasmota-ir*.* ] || mv ./mv_firmware/firmware/tasmota-ir*.* ./firmware/tasmota/
+        [ ! -f ./mv_firmware/firmware/tasmota-display.* ] || mv ./mv_firmware/firmware/tasmota-display.* ./firmware/tasmota/
+        [ ! -f ./mv_firmware/firmware/tasmota-knx.* ] || mv ./mv_firmware/firmware/tasmota-knx.* ./firmware/tasmota/
+        [ ! -f ./mv_firmware/firmware/tasmota-zbbridge.* ] || mv ./mv_firmware/firmware/tasmota-zbbridge.* ./firmware/tasmota/
+        [ ! -f ./mv_firmware/firmware/tasmota32.* ] || mv ./mv_firmware/firmware/tasmota32.* ./firmware/tasmota32/
+        [ ! -f ./mv_firmware/firmware/tasmota32-sensors.* ] || mv ./mv_firmware/firmware/tasmota32-sensors.* ./firmware/tasmota32/
+        [ ! -f ./mv_firmware/firmware/tasmota32-minimal.* ] || mv ./mv_firmware/firmware/tasmota32-minimal.* ./firmware/tasmota32/
+        [ ! -f ./mv_firmware/firmware/tasmota32-lite.* ] || mv ./mv_firmware/firmware/tasmota32-lite.* ./firmware/tasmota32/
+        [ ! -f ./mv_firmware/firmware/tasmota32-ir*.* ] || mv ./mv_firmware/firmware/tasmota32-ir*.* ./firmware/tasmota32/
+        [ ! -f ./mv_firmware/firmware/tasmota32-display.* ] || mv ./mv_firmware/firmware/tasmota32-display.* ./firmware/tasmota32/
+        [ ! -f ./mv_firmware/firmware/tasmota32-web*.* ] || mv ./mv_firmware/firmware/tasmota32-web*.* ./firmware/tasmota32/
+        [ ! -f ./mv_firmware/firmware/tasmota32-odroidgo.* ] || mv ./mv_firmware/firmware/tasmota32-odroidgo.* ./firmware/tasmota32/
+        [ ! -f ./mv_firmware/firmware/tasmota32-core2.* ] || mv ./mv_firmware/firmware/tasmota32-core2.* ./firmware/tasmota32/
+        [ ! -f ./mv_firmware/firmware/tasmota32-knx.* ] || mv ./mv_firmware/firmware/tasmota32-knx.* ./firmware/tasmota32/
+        [ ! -f ./mv_firmware/firmware/tasmota32* ] || mv ./mv_firmware/firmware/tasmota32* ./firmware/tasmota32/languages/
+        [ ! -f ./mv_firmware/firmware/* ] || mv ./mv_firmware/firmware/* ./firmware/tasmota/languages/
         [ ! -f ./tools/Esptool/ESP32/*.* ] || mv ./tools/Esptool/ESP32/*.* ./firmware/tasmota32/ESP32_needed_files/
+        [ ! -f ./tools/Esptool/Odroid_go/*.* ] || mv ./tools/Esptool/Odroid_go/*.* ./firmware/tasmota32/Odroid_go_needed_files/
         [ ! -f ./FIRMWARE.md ] || mv -f ./RELEASENOTES.md ./README.md
     - name: Commit files  # transfer the new binaries back into the repository
       run: |

@@ -1,7 +1,7 @@
 /*
   xdrv_09_timers.ino - timer support for Tasmota
 
-  Copyright (C) 2020  Theo Arends
+  Copyright (C) 2021  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -305,7 +305,7 @@ void PrepShowTimer(uint32_t index)
   char days[8] = { 0 };
   for (uint32_t i = 0; i < 7; i++) {
     uint8_t mask = 1 << i;
-    snprintf(days, sizeof(days), "%s%d", days, ((xtimer.days & mask) > 0));
+    snprintf(days, sizeof(days), PSTR("%s%d"), days, ((xtimer.days & mask) > 0));
   }
 
   char soutput[80];
@@ -839,9 +839,9 @@ void HandleTimerConfiguration(void)
 {
   if (!HttpCheckPriviledgedAccess()) { return; }
 
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_CONFIGURE_TIMER));
+  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_CONFIGURE_TIMER));
 
-  if (Webserver->hasArg("save")) {
+  if (Webserver->hasArg(F("save"))) {
     TimerSaveSettings();
     HandleConfiguration();
     return;
@@ -857,7 +857,7 @@ void HandleTimerConfiguration(void)
   WSContentSend_P(HTTP_TIMER_SCRIPT5, MAX_TIMERS, TasmotaGlobal.devices_present);
   WSContentSend_P(HTTP_TIMER_SCRIPT6, TasmotaGlobal.devices_present);
   WSContentSendStyle_P(HTTP_TIMER_STYLE, WebColor(COL_FORM));
-  WSContentSend_P(HTTP_FORM_TIMER1, (Settings.flag3.timers_enable) ? " checked" : "");  // CMND_TIMERS
+  WSContentSend_P(HTTP_FORM_TIMER1, (Settings.flag3.timers_enable) ? PSTR(" checked") : "");  // CMND_TIMERS
   for (uint32_t i = 0; i < MAX_TIMERS; i++) {
     WSContentSend_P(PSTR("%s%u"), (i > 0) ? "," : "", Settings.timer[i].data);
   }
@@ -880,11 +880,11 @@ void HandleTimerConfiguration(void)
 void TimerSaveSettings(void)
 {
   char tmp[MAX_TIMERS *12];  // Need space for MAX_TIMERS x 10 digit numbers separated by a comma
-  char message[LOGSZ];
+  char message[32 + (MAX_TIMERS *11)];  // MQT: Timers 0,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000
   Timer timer;
 
-  Settings.flag3.timers_enable = Webserver->hasArg("e0");  // CMND_TIMERS
-  WebGetArg("t0", tmp, sizeof(tmp));
+  Settings.flag3.timers_enable = Webserver->hasArg(F("e0"));  // CMND_TIMERS
+  WebGetArg(PSTR("t0"), tmp, sizeof(tmp));
   char *p = tmp;
   snprintf_P(message, sizeof(message), PSTR(D_LOG_MQTT D_CMND_TIMERS " %d"), Settings.flag3.timers_enable);  // CMND_TIMERS
   for (uint32_t i = 0; i < MAX_TIMERS; i++) {
@@ -897,7 +897,7 @@ void TimerSaveSettings(void)
     }
     snprintf_P(message, sizeof(message), PSTR("%s,0x%08X"), message, Settings.timer[i].data);
   }
-  AddLog_P(LOG_LEVEL_DEBUG, message);
+  AddLogData(LOG_LEVEL_DEBUG, message);
 }
 #endif  // USE_TIMERS_WEB
 #endif  // USE_WEBSERVER

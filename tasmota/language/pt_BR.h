@@ -1,7 +1,7 @@
 /*
   pt-BR.h - localization for Portuguese - Brazil for Tasmota
 
-  Copyright (C) 2020  Fabiano Bovo
+  Copyright (C) 2021  Fabiano Bovo
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -100,6 +100,7 @@
 #define D_FALSE "Falso"
 #define D_FILE "Arquivo"
 #define D_FLOW_RATE "Quociente de vazão"
+#define D_FRAGMENTATION "frag."      // Lower case abbreviated version of fragmentation used in "memory fragmentation"
 #define D_FREE_MEMORY "Memória livre"
 #define D_PSR_MAX_MEMORY "PS-RAM Memory"
 #define D_PSR_FREE_MEMORY "PS-RAM free Memory"
@@ -460,6 +461,32 @@
 #define D_KNX_TX_SCENE "KNX SCENE TX"
 #define D_KNX_RX_SCENE "KNX SCENE RX"
 
+// xdrv_23_zigbee
+#define D_ZIGBEE_PERMITJOIN_ACTIVE "Devices allowed to join"
+#define D_ZIGBEE_MAPPING_TITLE "Tasmota Zigbee Mapping"
+#define D_ZIGBEE_NOT_STARTED "Zigbee not started"
+#define D_ZIGBEE_MAPPING_IN_PROGRESS_SEC "Mapping in progress (%d s. remaining)"
+#define D_ZIGBEE_MAPPING_NOT_PRESENT "No mapping"
+#define D_ZIGBEE_MAP_REFRESH "Zigbee Map Refresh"
+#define D_ZIGBEE_MAP   "Zigbee Map"
+#define D_ZIGBEE_PERMITJOIN "Zigbee Permit Join"
+#define D_ZIGBEE_GENERATE_KEY "generating random Zigbee network key"
+#define D_ZIGBEE_UNKNOWN_DEVICE "Unknown device"
+#define D_ZIGBEE_UNKNOWN_ATTRIBUTE "Unknown attribute"
+#define D_ZIGBEE_INVALID_PARAM "Invalid parameter"
+#define D_ZIGBEE_MISSING_PARAM "Missing parameters"
+#define D_ZIGBEE_UNKNWON_ATTRIBUTE "Unknown attribute name (ignored): %s"
+#define D_ZIGBEE_TOO_MANY_CLUSTERS "No more than one cluster id per command"
+#define D_ZIGBEE_WRONG_DELIMITER "Wrong delimiter for payload"
+#define D_ZIGBEE_UNRECOGNIZED_COMMAND "Unrecognized zigbee command: %s"
+#define D_ZIGBEE_TOO_MANY_COMMANDS "Only 1 command allowed (%d)"
+#define D_ZIGBEE_NO_ATTRIBUTE "No attribute in list"
+#define D_ZIGBEE_UNSUPPORTED_ATTRIBUTE_TYPE "Unsupported attribute type"
+#define D_ZIGBEE_JSON_REQUIRED "Config requires JSON objects"
+#define D_ZIGBEE_RESET_1_OR_2 "1 or 2 to reset"
+#define D_ZIGBEE_EEPROM_FOUND_AT_ADDRESS "ZBBridge EEPROM found at address"
+#define D_ZIGBEE_RANDOMIZING_ZBCONFIG "Randomizing Zigbee parameters, please check with 'ZbConfig'"
+
 // xdrv_03_energy.ino
 #define D_ENERGY_TODAY "Consumo energético de hoje"
 #define D_ENERGY_YESTERDAY "Consumo energético de ontem"
@@ -561,6 +588,7 @@
 // tasmota_template.h - keep them as short as possible to be able to fit them in GUI drop down box
 #define D_SENSOR_NONE          "Nenhum"
 #define D_SENSOR_USER          "User"
+#define D_SENSOR_OPTION        "Option"
 #define D_SENSOR_DHT11         "DHT11"
 #define D_SENSOR_AM2301        "AM2301"
 #define D_SENSOR_SI7021        "SI7021"
@@ -602,6 +630,8 @@
 #define D_SENSOR_SBR_TX        "SerBr Tx"
 #define D_SENSOR_SR04_TRIG     "SR04 Tri/TX"
 #define D_SENSOR_SR04_ECHO     "SR04 Ech/RX"
+#define D_SENSOR_SDM72_TX      "SDM72 Tx"
+#define D_SENSOR_SDM72_RX      "SDM72 Rx"
 #define D_SENSOR_SDM120_TX     "SDMx20 Tx"
 #define D_SENSOR_SDM120_RX     "SDMx20 Rx"
 #define D_SENSOR_SDM630_TX     "SDM630 Tx"
@@ -613,6 +643,9 @@
 #define D_SENSOR_TM1638_STB    "TM16 STB"
 #define D_SENSOR_HX711_SCK     "HX711 SCK"
 #define D_SENSOR_HX711_DAT     "HX711 DAT"
+#define D_SENSOR_FTC532        "FTC532"
+#define D_SENSOR_BS814_CLK     "BS814 CLK"
+#define D_SENSOR_BS814_DAT     "BS814 DAT"
 #define D_SENSOR_TX2X_TX       "TX2x"
 #define D_SENSOR_RFSEND        "RFSend"
 #define D_SENSOR_RFRECV        "RFrecv"
@@ -646,6 +679,8 @@
 #define D_SENSOR_SM16716_CLK   "SM16716 CLK"
 #define D_SENSOR_SM16716_DAT   "SM16716 DAT"
 #define D_SENSOR_SM16716_POWER "SM16716 PWR"
+#define D_SENSOR_P9813_CLK     "P9813 Clk"
+#define D_SENSOR_P9813_DAT     "P9813 Dat"
 #define D_SENSOR_MY92X1_DI     "MY92x1 DI"
 #define D_SENSOR_MY92X1_DCKI   "MY92x1 DCKI"
 #define D_SENSOR_ARIRFRCV      "ALux IrRcv"
@@ -710,6 +745,7 @@
 #define D_SENSOR_ADC_RANGE     "ADC Range"
 #define D_SENSOR_ADC_CT_POWER  "ADC CT Power"
 #define D_SENSOR_ADC_JOYSTICK  "ADC Joystick"
+#define D_SENSOR_ADC_PH        "ADC pH"
 #define D_GPIO_WEBCAM_PWDN     "CAM_PWDN"
 #define D_GPIO_WEBCAM_RESET    "CAM_RESET"
 #define D_GPIO_WEBCAM_XCLK     "CAM_XCLK"
@@ -734,6 +770,26 @@
 #define D_SENSOR_SHELLY_DIMMER_BOOT0 "SHD Boot 0"
 #define D_SENSOR_SHELLY_DIMMER_RST_INV "SHD Reset"
 #define D_SENSOR_RC522_RST     "RC522 Rst"
+#define D_SENSOR_RC522_CS      "RC522 CS"
+#define D_SENSOR_NRF24_CS      "NRF24 CS"
+#define D_SENSOR_NRF24_DC      "NRF24 DC"
+#define D_SENSOR_ILI9341_CS    "ILI9341 CS"
+#define D_SENSOR_ILI9341_DC    "ILI9341 DC"
+#define D_SENSOR_ILI9488_CS    "ILI9488 CS"
+#define D_SENSOR_EPAPER29_CS   "EPaper29 CS"
+#define D_SENSOR_EPAPER42_CS   "EPaper42 CS"
+#define D_SENSOR_SSD1351_CS    "SSD1351 CS"
+#define D_SENSOR_RA8876_CS     "RA8876 CS"
+#define D_SENSOR_ST7789_CS     "ST7789 CS"
+#define D_SENSOR_ST7789_DC     "ST7789 DC"
+#define D_SENSOR_SSD1331_CS    "SSD1331 CS"
+#define D_SENSOR_SSD1331_DC    "SSD1331 DC"
+#define D_SENSOR_SDCARD_CS     "SDCard CS"
+#define D_SENSOR_WIEGAND_D0    "Wiegand D0"
+#define D_SENSOR_WIEGAND_D1    "Wiegand D1"
+#define D_SENSOR_NEOPOOL_TX    "NeoPool Tx"
+#define D_SENSOR_NEOPOOL_RX    "NeoPool Rx"
+
 
 // Units
 #define D_UNIT_AMPERE "A"
@@ -780,7 +836,9 @@
 #define D_UNIT_WATTHOUR "W/h"
 #define D_UNIT_WATT_METER_QUADRAT "W/m²"
 
-//SDM220, SDM120, LE01MR
+//SDM220, SDM120, SDM72, LE01MR
+#define D_EXPORT_POWER    "Export Power"
+#define D_IMPORT_POWER 	  "Import Power"
 #define D_PHASE_ANGLE     "Ângulo de Fase"
 #define D_IMPORT_ACTIVE   "Importar Ativo"
 #define D_EXPORT_ACTIVE   "Exportar Ativo"
@@ -819,7 +877,7 @@
 #define D_CONFIGURE_SCRIPT     "Edit script"
 #define D_SCRIPT               "edit script"
 #define D_SDCARD_UPLOAD        "file upload"
-#define D_SDCARD_DIR           "sd card directory"
+#define D_UFSDIR               "ufs directory"
 #define D_UPL_DONE             "Done"
 #define D_SCRIPT_CHARS_LEFT    "chars left"
 #define D_SCRIPT_CHARS_NO_MORE "no more chars"
@@ -827,6 +885,11 @@
 #define D_SCRIPT_ENABLE        "script enable"
 #define D_SCRIPT_UPLOAD        "Upload"
 #define D_SCRIPT_UPLOAD_FILES  "Upload files"
+
+//xdrv_50_filesystem.ino
+#define D_MANAGE_FILE_SYSTEM   "Manage File system"
+#define D_FS_SIZE              "Size"
+#define D_FS_FREE              "Free"
 
 //xsns_67_as3935.ino
 #define D_AS3935_GAIN "gain:"
@@ -899,5 +962,57 @@
 #define D_FP_ADDRCODE "Address code"           // 0x20 Address code
 #define D_FP_PASSVERIFY "Password verified"    // 0x21 Verify the fingerprint passed
 #define D_FP_UNKNOWNERROR "Error"              // Any other error
+
+// xsns_83_neopool.ino
+#define D_NEOPOOL_MACH_NONE               "NeoPool"           // Machine names
+#define D_NEOPOOL_MACH_HIDROLIFE          "Hidrolife (yellow)"
+#define D_NEOPOOL_MACH_AQUASCENIC         "Aquascenic (blue)"
+#define D_NEOPOOL_MACH_OXILIFE            "Oxilife (green)"
+#define D_NEOPOOL_MACH_BIONET             "Bionet (light blue)"
+#define D_NEOPOOL_MACH_HIDRONISER         "Hidroniser (red)"
+#define D_NEOPOOL_MACH_UVSCENIC           "UVScenic (lilac)"
+#define D_NEOPOOL_MACH_STATION            "Station (orange)"
+#define D_NEOPOOL_MACH_BRILIX             "Brilix"
+#define D_NEOPOOL_MACH_GENERIC            "Generic"
+#define D_NEOPOOL_MACH_BAYROL             "Bayrol"
+#define D_NEOPOOL_MACH_HAY                "Hay"
+#define D_NEOPOOL_FILTRATION_MANUAL       "Manual"            // Filtration modes
+#define D_NEOPOOL_FILTRATION_AUTO         "Auto"
+#define D_NEOPOOL_FILTRATION_HEATING      "Heating"
+#define D_NEOPOOL_FILTRATION_SMART        "Smart"
+#define D_NEOPOOL_FILTRATION_INTELLIGENT  "Intelligent"
+#define D_NEOPOOL_FILTRATION_BACKWASH     "Backwash"
+#define D_NEOPOOL_FILTRATION_NONE         ""                  // Filtration speed level
+#define D_NEOPOOL_FILTRATION_SLOW         "slow"
+#define D_NEOPOOL_FILTRATION_MEDIUM       "medium"
+#define D_NEOPOOL_FILTRATION_FAST         "fast"
+#define D_NEOPOOL_TYPE                    "Type"              // Sensor & relais names
+#define D_NEOPOOL_REDOX                   "Redox"
+#define D_NEOPOOL_CHLORINE                "Chlorine"
+#define D_NEOPOOL_CONDUCTIVITY            "Conductivity"
+#define D_NEOPOOL_IONIZATION              "Ionization"
+#define D_NEOPOOL_HYDROLYSIS              "Hydrolysis"
+#define D_NEOPOOL_RELAY                   "Relay"
+#define D_NEOPOOL_RELAY_FILTRATION        "Filtration"
+#define D_NEOPOOL_RELAY_LIGHT             "Light"
+#define D_NEOPOOL_RELAY_PH_ACID           "Acid pump"
+#define D_NEOPOOL_RELAY_PH_BASE           "Base pump"
+#define D_NEOPOOL_RELAY_RX                "Redox level"
+#define D_NEOPOOL_RELAY_CL                "Chlorine pump"
+#define D_NEOPOOL_RELAY_CD                "Brine pump"
+#define D_NEOPOOL_TIME                    "Time"
+#define D_NEOPOOL_FILT_MODE               "Filtration"
+#define D_NEOPOOL_POLARIZATION            "Pol"               // Sensor status
+#define D_NEOPOOL_PR_OFF                  "PrOff"
+#define D_NEOPOOL_SETPOINT_OK             "Ok"
+#define D_NEOPOOL_COVER                   "Cover"
+#define D_NEOPOOL_SHOCK                   "Shock"
+#define D_NEOPOOL_ALARM                   "! "
+#define D_NEOPOOL_LOW                     "Low"
+#define D_NEOPOOL_FLOW1                   "FL1"
+#define D_NEOPOOL_FLOW2                   "FL2"
+#define D_NEOPOOL_PH_HIGH                 "too high"          // ph Alarms
+#define D_NEOPOOL_PH_LOW                  "too low"
+#define D_NEOPOOL_PUMP_TIME_EXCEEDED      "pump time exceeded"
 
 #endif  // _LANGUAGE_PT_BR_H_

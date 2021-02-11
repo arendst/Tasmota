@@ -1,7 +1,7 @@
 /*
   xdrv_30_exs_dimmer.ino - ex-store dimmer support for Tasmota
 
-  Copyright (C) 2020  Andreas Schultz
+  Copyright (C) 2021  Andreas Schultz
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -124,13 +124,8 @@ void ExsSerialSend(const uint8_t data[] = nullptr, uint16_t len = 0)
   char rc;
 
 #ifdef EXS_DEBUG
-  snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), PSTR("EXS: Tx Packet: \""));
-  for (uint32_t i = 0; i < len; i++)
-  {
-    snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), PSTR("%s%02x"), TasmotaGlobal.log_data, data[i]);
-  }
-  snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), PSTR("%s\""), TasmotaGlobal.log_data);
-  AddLog(LOG_LEVEL_DEBUG_MORE);
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("EXS: Tx Packet:"));
+  AddLogBuffer(LOG_LEVEL_DEBUG_MORE, (uint8_t *)data, len);
 #endif
 
   while (retries)
@@ -150,7 +145,7 @@ void ExsSerialSend(const uint8_t data[] = nullptr, uint16_t len = 0)
     {
       // timeout
 #ifdef EXS_DEBUG
-      AddLog_P(LOG_LEVEL_DEBUG, PSTR("ESX: serial send timeout"));
+      AddLog(LOG_LEVEL_DEBUG, PSTR("ESX: serial send timeout"));
 #endif
       continue;
     }
@@ -220,9 +215,9 @@ void ExsSetBri(uint8_t device, uint8_t bri)
 void ExsSyncState(uint8_t device)
 {
 #ifdef EXS_DEBUG
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR("EXS: Channel %d Power Want %d, Is %d"),
+  AddLog(LOG_LEVEL_DEBUG, PSTR("EXS: Channel %d Power Want %d, Is %d"),
             device, bitRead(Exs.power, device), Exs.dimmer.channel[device].dimm);
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR("EXS: Set Channel %d Brightness Want %d, Is %d"),
+  AddLog(LOG_LEVEL_DEBUG, PSTR("EXS: Set Channel %d Brightness Want %d, Is %d"),
             device, Exs.dimm[device], Exs.dimmer.channel[device].bright_tbl);
 #endif
 
@@ -241,7 +236,7 @@ void ExsSyncState(uint8_t device)
 bool ExsSyncState()
 {
 #ifdef EXS_DEBUG
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR("EXS: Serial %p, Cmd %d"), ExsSerial, Exs.cmd_status);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("EXS: Serial %p, Cmd %d"), ExsSerial, Exs.cmd_status);
 #endif
 
   if (!ExsSerial || Exs.cmd_status != 0)
@@ -368,13 +363,8 @@ bool ExsModuleSelected(void)
 bool ExsSetChannels(void)
 {
 #ifdef EXS_DEBUG
-  snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), PSTR("EXS: SetChannels: \""));
-  for (int i = 0; i < XdrvMailbox.data_len; i++)
-  {
-    snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), PSTR("%s%02x"), TasmotaGlobal.log_data, ((uint8_t *)XdrvMailbox.data)[i]);
-  }
-  snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), PSTR("%s\""), TasmotaGlobal.log_data);
-  AddLog(LOG_LEVEL_DEBUG_MORE);
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("EXS: SetChannels:"));
+  AddLogBuffer(LOG_LEVEL_DEBUG_MORE, (uint8_t *)XdrvMailbox.data, XdrvMailbox.data_len);
 #endif
 
   Exs.dimm[0] = ((uint8_t *)XdrvMailbox.data)[0];
@@ -384,7 +374,7 @@ bool ExsSetChannels(void)
 
 bool ExsSetPower(void)
 {
-  AddLog_P(LOG_LEVEL_INFO, PSTR("EXS: Set Power, Device %d, Power 0x%02x"),
+  AddLog(LOG_LEVEL_INFO, PSTR("EXS: Set Power, Device %d, Power 0x%02x"),
             TasmotaGlobal.active_device, XdrvMailbox.index);
 
   Exs.power = XdrvMailbox.index;
@@ -396,7 +386,7 @@ void EsxMcuStart(void)
   int retries = 3;
 
 #ifdef EXS_DEBUG
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR("EXS: Request MCU configuration, PIN %d to Low"), Pin(GPIO_EXS_ENABLE));
+  AddLog(LOG_LEVEL_DEBUG, PSTR("EXS: Request MCU configuration, PIN %d to Low"), Pin(GPIO_EXS_ENABLE));
 #endif
 
   pinMode(Pin(GPIO_EXS_ENABLE), OUTPUT);
@@ -414,7 +404,7 @@ void EsxMcuStart(void)
 void ExsInit(void)
 {
 #ifdef EXS_DEBUG
-  AddLog_P(LOG_LEVEL_INFO, PSTR("EXS: Starting Tx %d Rx %d"), Pin(GPIO_TXD), Pin(GPIO_RXD));
+  AddLog(LOG_LEVEL_INFO, PSTR("EXS: Starting Tx %d Rx %d"), Pin(GPIO_TXD), Pin(GPIO_RXD));
 #endif
 
   Exs.buffer = (uint8_t *)malloc(EXS_BUFFER_SIZE);
@@ -442,7 +432,7 @@ void ExsSerialInput(void)
     yield();
     uint8_t serial_in_byte = ExsSerial->read();
 
-    AddLog_P(LOG_LEVEL_INFO, PSTR("EXS: Serial In Byte 0x%02x"), serial_in_byte);
+    AddLog(LOG_LEVEL_INFO, PSTR("EXS: Serial In Byte 0x%02x"), serial_in_byte);
 
     if (Exs.cmd_status == 0 &&
         serial_in_byte == 0x7B)
@@ -466,13 +456,8 @@ void ExsSerialInput(void)
         Exs.cmd_status = 0;
 
 #ifdef EXS_DEBUG
-        snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), PSTR("EXS: RX Packet: \""));
-        for (uint32_t i = 0; i < Exs.byte_counter; i++)
-        {
-          snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), PSTR("%s%02x"), TasmotaGlobal.log_data, Exs.buffer[i]);
-        }
-        snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), PSTR("%s\", CRC: 0x%02x"), TasmotaGlobal.log_data, crc);
-        AddLog(LOG_LEVEL_DEBUG_MORE);
+        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("EXS: CRC: 0x%02x, RX Packet:"), crc);
+        AddLogBuffer(LOG_LEVEL_DEBUG_MORE, (uint8_t *)Exs.buffer, Exs.byte_counter);
 #endif
 
         if (Exs.buffer[0] == crc)

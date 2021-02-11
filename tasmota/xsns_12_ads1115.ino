@@ -1,7 +1,7 @@
 /*
   xsns_12_ads1115_ada.ino - ADS1115 A/D Converter support for Tasmota
 
-  Copyright (C) 2020  Theo Arends
+  Copyright (C) 2021  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -245,14 +245,14 @@ void Ads1115Show(bool json)
   int16_t values[4];
 
   for (uint32_t t = 0; t < sizeof(Ads1115.addresses); t++) {
-    //AddLog_P(LOG_LEVEL_INFO, "Logging ADS1115 %02x", Ads1115.addresses[t]);
+    //AddLog(LOG_LEVEL_INFO, "Logging ADS1115 %02x", Ads1115.addresses[t]);
     if (Ads1115.found[t]) {
 
       uint8_t old_address = Ads1115.address;
       Ads1115.address = Ads1115.addresses[t];
       for (uint32_t i = 0; i < 4; i++) {
         values[i] = Ads1115GetConversion(i);
-        //AddLog_P(LOG_LEVEL_INFO, "Logging ADS1115 %02x (%i) = %i", Ads1115.address, i, values[i] );
+        //AddLog(LOG_LEVEL_INFO, "Logging ADS1115 %02x (%i) = %i", Ads1115.address, i, values[i] );
       }
       Ads1115.address = old_address;
 

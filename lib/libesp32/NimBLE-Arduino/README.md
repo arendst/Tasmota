@@ -1,5 +1,7 @@
 [Latest release ![Release Version](https://img.shields.io/github/release/h2zero/NimBLE-Arduino.svg?style=plastic)
 ![Release Date](https://img.shields.io/github/release-date/h2zero/NimBLE-Arduino.svg?style=plastic)](https://github.com/h2zero/NimBLE-Arduino/releases/latest/)  
+
+Need help? Have questions or suggestions? Join the [![Gitter](https://badges.gitter.im/NimBLE-Arduino/community.svg)](https://gitter.im/NimBLE-Arduino/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)  
 <br/>
 
 # NimBLE-Arduino
@@ -57,6 +59,8 @@ Also see [Improvements_and_updates](docs/Improvements_and_updates.md) for inform
 
 [Full API documentation and class list can be found here.](https://h2zero.github.io/esp-nimble-cpp/)  
 
+For added performance and optimizations see [Usage tips](docs/Usage_tips.md).
+
 Check the Refactored_original_examples in the examples folder for highlights of the differences with the original library.
 
 More advanced examples highlighting many available features are in examples/ NimBLE_Server, NimBLE_Client.
@@ -68,9 +72,9 @@ such as increasing max connections, default is 3, absolute maximum connections i
 <br/>
 
 # Development Status
-This Library is tracking the esp-nimble repo, nimble-1.2.0-idf master branch, currently [@95bd864.](https://github.com/espressif/esp-nimble)  
+This Library is tracking the esp-nimble repo, nimble-1.2.0-idf master branch, currently [@f4ae049.](https://github.com/espressif/esp-nimble)  
 
-Also tracking the NimBLE related changes in ESP-IDF, master branch, currently [@2ef4890.](https://github.com/espressif/esp-idf/tree/master/components/bt/host/nimble)  
+Also tracking the NimBLE related changes in ESP-IDF, master branch, currently [@3caa969.](https://github.com/espressif/esp-idf/tree/master/components/bt/host/nimble) 
 <br/>
 
 # Acknowledgments

@@ -1,7 +1,7 @@
 /*
   support_network.ino - Network support for Tasmota
 
-  Copyright (C) 2020  Theo Arends
+  Copyright (C) 2021  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -32,12 +32,13 @@ void StartMdns(void) {
   if (Settings.flag3.mdns_enabled) {  // SetOption55 - Control mDNS service
     if (!Mdns.begun) {
 //      if (mdns_delayed_start) {
-//        AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_MDNS D_ATTEMPTING_CONNECTION));
+//        AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_MDNS D_ATTEMPTING_CONNECTION));
 //        mdns_delayed_start--;
 //      } else {
 //        mdns_delayed_start = Settings.param[P_MDNS_DELAYED_START];
+        MDNS.end(); // close existing or MDNS.begin will fail
         Mdns.begun = (uint8_t)MDNS.begin(TasmotaGlobal.hostname);
-        AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_MDNS "%s"), (Mdns.begun) ? D_INITIALIZED : D_FAILED);
+        AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_MDNS "%s"), (Mdns.begun) ? PSTR(D_INITIALIZED) : PSTR(D_FAILED));
 //      }
     }
   }
@@ -50,7 +51,7 @@ void MqttDiscoverServer(void)
 
   int n = MDNS.queryService("mqtt", "tcp");  // Search for mqtt service
 
-  AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_MDNS D_QUERY_DONE " %d"), n);
+  AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_MDNS D_QUERY_DONE " %d"), n);
 
   if (n > 0) {
     uint32_t i = 0;            // If the hostname isn't set, use the first record found.
@@ -61,10 +62,10 @@ void MqttDiscoverServer(void)
       }
     }
 #endif  // MDNS_HOSTNAME
-    SettingsUpdateText(SET_MQTT_HOST, MDNS.IP(i).toString().c_str());
+    SettingsUpdateText(SET_MQTT_HOST, MDNS.hostname(i).c_str());
     Settings.mqtt_port = MDNS.port(i);
 
-    AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_MDNS D_MQTT_SERVICE_FOUND " %s, " D_IP_ADDRESS " %s, " D_PORT " %d"), MDNS.hostname(i).c_str(), SettingsText(SET_MQTT_HOST), Settings.mqtt_port);
+    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_MDNS D_MQTT_SERVICE_FOUND " %s," D_PORT " %d"), SettingsText(SET_MQTT_HOST), Settings.mqtt_port);
   }
 }
 #endif  // MQTT_HOST_DISCOVERY
@@ -78,12 +79,15 @@ void MdnsAddServiceHttp(void) {
   }
 }
 
+#ifdef ESP8266 //Not needed with esp32 mdns
 void MdnsUpdate(void) {
   if (2 == Mdns.begun) {
-    MDNS.update();
-    AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_MDNS "MDNS.update"));
+    MDNS.update(); // this is basically passpacket like a webserver
+   // being called in main loop so no logging
+   // AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_MDNS "MDNS.update"));
   }
 }
+#endif  // ESP8266
 #endif  // WEBSERVER_ADVERTISE
 #endif  // USE_DISCOVERY
 

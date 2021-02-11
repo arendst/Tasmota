@@ -1,7 +1,7 @@
 /*
   xsns_15_mhz19.ino - MH-Z19(B) CO2 sensor support for Tasmota
 
-  Copyright (C) 2020  Theo Arends
+  Copyright (C) 2021  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -200,17 +200,17 @@ void MhzEverySecond(void)
     AddLogBuffer(LOG_LEVEL_DEBUG_MORE, mhz_response, counter);
 
     if (counter < 9) {
-//      AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "MH-Z19 comms timeout"));
+//      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "MH-Z19 comms timeout"));
       return;
     }
 
     uint8_t crc = MhzCalculateChecksum(mhz_response);
     if (mhz_response[8] != crc) {
-//      AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "MH-Z19 crc error"));
+//      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "MH-Z19 crc error"));
       return;
     }
     if (0xFF != mhz_response[0] || 0x86 != mhz_response[1]) {
-//      AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "MH-Z19 bad response"));
+//      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "MH-Z19 bad response"));
       return;
     }
 
@@ -338,23 +338,22 @@ void MhzInit(void)
 void MhzShow(bool json)
 {
   char types[7] = "MHZ19B";  // MHZ19B for legacy reasons. Prefered is MHZ19
-  char temperature[33];
-  dtostrfd(mhz_temperature, Settings.flag2.temperature_resolution, temperature);
   char model[3];
   GetTextIndexed(model, sizeof(model), mhz_type -1, kMhzModels);
 
   if (json) {
-    ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_MODEL "\":\"%s\",\"" D_JSON_CO2 "\":%d,\"" D_JSON_TEMPERATURE "\":%s}"), types, model, mhz_last_ppm, temperature);
+    ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_MODEL "\":\"%s\",\"" D_JSON_CO2 "\":%d,\"" D_JSON_TEMPERATURE "\":%*_f}"),
+      types, model, mhz_last_ppm, Settings.flag2.temperature_resolution, &mhz_temperature);
 #ifdef USE_DOMOTICZ
     if (0 == TasmotaGlobal.tele_period) {
       DomoticzSensor(DZ_AIRQUALITY, mhz_last_ppm);
-      DomoticzSensor(DZ_TEMP, temperature);
+      DomoticzFloatSensor(DZ_TEMP, mhz_temperature);
     }
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
   } else {
     WSContentSend_PD(HTTP_SNS_CO2, types, mhz_last_ppm);
-    WSContentSend_PD(HTTP_SNS_TEMP, types, temperature, TempUnit());
+    WSContentSend_Temp(types, mhz_temperature);
 #endif  // USE_WEBSERVER
   }
 }

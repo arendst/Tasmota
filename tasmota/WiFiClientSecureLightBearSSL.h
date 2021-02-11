@@ -3,7 +3,7 @@
   - Mostly compatible with Arduino WiFi shield library and standard
     WiFiClient/ServerSecure (except for certificate handling).
 
-  Copyright (c) 2018 Earle F. Philhower, III
+  Copyright (C) 2021  Earle F. Philhower, III
 
   This library is free software; you can redistribute it and/or
   modify it under the terms of the GNU Lesser General Public
@@ -43,7 +43,11 @@ class WiFiClientSecure_light : public WiFiClient {
 
     uint8_t connected() override;
     size_t write(const uint8_t *buf, size_t size) override;
+  #ifdef ESP8266
     size_t write_P(PGM_P buf, size_t size) override;
+  #else
+    size_t write_P(PGM_P buf, size_t size);
+  #endif
     size_t write(const char *buf) {
       return write((const uint8_t*)buf, strlen(buf));
     }
@@ -55,11 +59,17 @@ class WiFiClientSecure_light : public WiFiClient {
     int available() override;
     int read() override;
     int peek() override;
+  #ifdef ESP8266
     size_t peekBytes(uint8_t *buffer, size_t length) override;
     bool flush(unsigned int maxWaitMs);
     bool stop(unsigned int maxWaitMs);
     void flush() override { (void)flush(0); }
     void stop() override { (void)stop(0); }
+  #else
+    size_t peekBytes(uint8_t *buffer, size_t length);
+    void flush() override;
+    void stop() override;
+  #endif
 
     // Only check SHA1 fingerprint of public key
     void setPubKeyFingerprint(const uint8_t *f1, const uint8_t *f2,

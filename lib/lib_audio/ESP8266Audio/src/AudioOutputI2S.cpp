@@ -1,7 +1,7 @@
 /*
   AudioOutputI2S
   Base class for I2S interface port
-  
+
   Copyright (C) 2017  Earle F. Philhower, III
 
   This program is free software: you can redistribute it and/or modify
@@ -48,11 +48,13 @@ AudioOutputI2S::AudioOutputI2S(int port, int output_mode, int dma_buf_count, int
     }
 
     i2s_mode_t mode = (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_TX);
+#if CONFIG_IDF_TARGET_ESP32       // ESP32/PICO-D4
     if (output_mode == INTERNAL_DAC) {
       mode = (i2s_mode_t)(mode | I2S_MODE_DAC_BUILT_IN);
     } else if (output_mode == INTERNAL_PDM) {
       mode = (i2s_mode_t)(mode | I2S_MODE_PDM);
     }
+#endif
 
     i2s_comm_format_t comm_fmt = (i2s_comm_format_t)(I2S_COMM_FORMAT_I2S | I2S_COMM_FORMAT_I2S_MSB);
     if (output_mode == INTERNAL_DAC) {
@@ -81,7 +83,7 @@ AudioOutputI2S::AudioOutputI2S(int port, int output_mode, int dma_buf_count, int
       SetPinout(26, 25, 22);
     }
     i2s_zero_dma_buffer((i2s_port_t)portNo);
-  } 
+  }
 #else
   (void) dma_buf_count;
   (void) use_apll;
@@ -138,7 +140,7 @@ bool AudioOutputI2S::SetRate(int hz)
   // TODO - have a list of allowable rates from constructor, check them
   this->hertz = hz;
 #ifdef ESP32
-  i2s_set_sample_rates((i2s_port_t)portNo, AdjustI2SRate(hz)); 
+  i2s_set_sample_rates((i2s_port_t)portNo, AdjustI2SRate(hz));
 #else
   i2s_set_rate(AdjustI2SRate(hz));
 #endif
@@ -192,7 +194,11 @@ bool AudioOutputI2S::ConsumeSample(int16_t sample[2])
   } else {
     s32 = ((Amplify(ms[RIGHTCHANNEL]))<<16) | (Amplify(ms[LEFTCHANNEL]) & 0xffff);
   }
-  return i2s_write_bytes((i2s_port_t)portNo, (const char*)&s32, sizeof(uint32_t), 0);
+// Deprecated. Use i2s_write
+//  return i2s_write_bytes((i2s_port_t)portNo, (const char*)&s32, sizeof(uint32_t), 0);
+  size_t bytes_written;
+  i2s_write((i2s_port_t)portNo, (const char*)&s32, sizeof(uint32_t), &bytes_written, 0);
+  return bytes_written;
 #else
   uint32_t s32 = ((Amplify(ms[RIGHTCHANNEL]))<<16) | (Amplify(ms[LEFTCHANNEL]) & 0xffff);
   return i2s_write_sample_nb(s32); // If we can't store it, return false.  OTW true
@@ -219,5 +225,3 @@ bool AudioOutputI2S::stop()
 #endif
   return true;
 }
-
-

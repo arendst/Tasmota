@@ -1,7 +1,7 @@
 /*
   xnrg_09_dds2382.ino - Hiking DDS238-2 Modbus energy meter support for Tasmota
 
-  Copyright (C) 2020  Matteo Campanella - based on the work of Gennaro Tortone
+  Copyright (C) 2021  Matteo Campanella - based on the work of Gennaro Tortone
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -50,7 +50,7 @@ void Dds2382EverySecond(void)
     AddLogBuffer(LOG_LEVEL_DEBUG_MORE, buffer, Dds2382Modbus->ReceiveCount());
 
     if (error) {
-      AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "DDS2382 response error %d"), error);
+      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "DDS2382 response error %d"), error);
     } else {
       Energy.data_valid[0] = 0;
 

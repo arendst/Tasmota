@@ -1,7 +1,7 @@
 /*
   xsns_05_ds18x20_esp32.ino - DS18x20 temperature sensor support for Tasmota
 
-  Copyright (C) 2020  Heiko Krupp and Theo Arends
+  Copyright (C) 2021  Heiko Krupp and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -25,6 +25,8 @@
 
 #define XSNS_05              5
 
+//#define DS18x20_USE_ID_AS_NAME      // Use last 3 bytes for naming of sensors
+
 #define DS18S20_CHIPID       0x10  // +/-0.5C 9-bit
 #define DS1822_CHIPID        0x22  // +/-2C 12-bit
 #define DS18B20_CHIPID       0x28  // +/-0.5C 12-bit
@@ -44,7 +46,7 @@ uint8_t ds18x20_address[DS18X20_MAX_SENSORS][8];
 uint8_t ds18x20_index[DS18X20_MAX_SENSORS];
 uint8_t ds18x20_valid[DS18X20_MAX_SENSORS];
 uint8_t ds18x20_sensors = 0;
-char ds18x20_types[12];
+char ds18x20_types[17];
 
 /********************************************************************************************/
 
@@ -56,7 +58,7 @@ void Ds18x20Init(void) {
   ds = new OneWire(Pin(GPIO_DSB));
 
   Ds18x20Search();
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DSB D_SENSORS_FOUND " %d"), ds18x20_sensors);
+  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DSB D_SENSORS_FOUND " %d"), ds18x20_sensors);
 }
 
 void Ds18x20Search(void) {
@@ -142,7 +144,7 @@ bool Ds18x20Read(uint8_t sensor, float &t)
       }
     }
   }
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DSB D_SENSOR_CRC_ERROR));
+  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DSB D_SENSOR_CRC_ERROR));
   return false;
 }
 
@@ -157,7 +159,15 @@ void Ds18x20Name(uint8_t sensor)
   }
   GetTextIndexed(ds18x20_types, sizeof(ds18x20_types), index, kDs18x20Types);
   if (ds18x20_sensors > 1) {
+#ifdef DS18x20_USE_ID_AS_NAME
+    char address[17];
+    for (uint32_t j = 0; j < 3; j++) {
+      sprintf(address+2*j, "%02X", ds18x20_sensor[ds18x20_sensor[sensor].index].address[3-j]);  // Only last 3 bytes
+    }
+    snprintf_P(ds18x20_types, sizeof(ds18x20_types), PSTR("%s%c%s"), ds18x20_types, IndexSeparator(), address);
+#else
     snprintf_P(ds18x20_types, sizeof(ds18x20_types), PSTR("%s%c%d"), ds18x20_types, IndexSeparator(), sensor +1);
+#endif
   }
 }
 
@@ -190,9 +200,6 @@ void Ds18x20Show(bool json)
   uint8_t dsxflg = 0;
   for (uint32_t i = 0; i < ds18x20_sensors; i++) {
     if (Ds18x20Read(i, t)) {           // Check if read failed
-      char temperature[33];
-      dtostrfd(t, Settings.flag2.temperature_resolution, temperature);
-
       Ds18x20Name(i);
 
       if (json) {
@@ -200,11 +207,12 @@ void Ds18x20Show(bool json)
         for (uint32_t j = 0; j < 6; j++) {
           sprintf(address+2*j, "%02X", ds18x20_address[ds18x20_index[i]][6-j]);  // Skip sensor type and crc
         }
-        ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_ID "\":\"%s\",\"" D_JSON_TEMPERATURE "\":%s}"), ds18x20_types, address, temperature);
+        ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_ID "\":\"%s\",\"" D_JSON_TEMPERATURE "\":%*_f}"),
+          ds18x20_types, address, Settings.flag2.temperature_resolution, &t);
         dsxflg++;
 #ifdef USE_DOMOTICZ
         if ((0 == TasmotaGlobal.tele_period) && (1 == dsxflg)) {
-          DomoticzSensor(DZ_TEMP, temperature);
+          DomoticzFloatSensor(DZ_TEMP, t);
         }
 #endif  // USE_DOMOTICZ
 #ifdef USE_KNX
@@ -214,7 +222,7 @@ void Ds18x20Show(bool json)
 #endif  // USE_KNX
 #ifdef USE_WEBSERVER
       } else {
-        WSContentSend_PD(HTTP_SNS_TEMP, ds18x20_types, temperature, TempUnit());
+        WSContentSend_Temp(ds18x20_types, t);
 #endif  // USE_WEBSERVER
       }
     }

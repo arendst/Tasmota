@@ -1,7 +1,7 @@
 /*
   xdrv_05_irremote_full.ino - complete integration of IRremoteESP8266 for Tasmota
 
-  Copyright (C) 2020  Heiko Krupp, Lazar Obradovic, Theo Arends, Stephan Hadinger
+  Copyright (C) 2021  Heiko Krupp, Lazar Obradovic, Theo Arends, Stephan Hadinger
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -64,6 +64,12 @@ def ir_expand(ir_compact):
 #include <IRrecv.h>
 #include <IRutils.h>
 #include <IRac.h>
+
+// Receiving IR while sending at the same time (i.e. receiving your own signal) was dsiabled in #10041
+// At the demand of @pilaGit, you can `#define IR_RCV_WHILE_SENDING 1` to bring back this behavior
+#ifndef IR_RCV_WHILE_SENDING
+#define IR_RCV_WHILE_SENDING  0
+#endif
 
 enum IrErrors { IE_RESPONSE_PROVIDED, IE_NO_ERROR, IE_INVALID_RAWDATA, IE_INVALID_JSON, IE_SYNTAX_IRSEND, IE_SYNTAX_IRHVAC,
                 IE_UNSUPPORTED_HVAC, IE_UNSUPPORTED_PROTOCOL, IE_MEMORY };
@@ -130,7 +136,7 @@ StateModes strToStateMode(class JsonParserToken token, StateModes def); // decla
 
 void IrSendInit(void)
 {
-  irsend = new IRsend(Pin(GPIO_IRSEND)); // an IR led is at GPIO_IRSEND
+  irsend = new IRsend(Pin(GPIO_IRSEND), IR_SEND_INVERTED, IR_SEND_USE_MODULATION); // an IR led is at GPIO_IRSEND
   irsend->begin();
 }
 
@@ -197,12 +203,11 @@ String sendACJsonState(const stdAc::state_t &state) {
   json.add(PSTR(D_JSON_IRHVAC_VENDOR), typeToString(state.protocol));
   json.add(PSTR(D_JSON_IRHVAC_MODEL), state.model);
 
-  // Home Assistant wants mode to be off if power is also off & vice-versa.
-  if (state.mode == stdAc::opmode_t::kOff || !state.power) {
-    json.add(PSTR(D_JSON_IRHVAC_MODE), IRac::opmodeToString(stdAc::opmode_t::kOff));
+  json.add(PSTR(D_JSON_IRHVAC_MODE), IRac::opmodeToString(state.mode));
+  // Home Assistant wants power to be off if mode is also off.
+  if (state.mode == stdAc::opmode_t::kOff) {
     json.add(PSTR(D_JSON_IRHVAC_POWER),  IRac::boolToString(false));
   } else {
-    json.add(PSTR(D_JSON_IRHVAC_MODE), IRac::opmodeToString(state.mode));
     json.add(PSTR(D_JSON_IRHVAC_POWER), IRac::boolToString(state.power));
   }
   json.add(PSTR(D_JSON_IRHVAC_CELSIUS), IRac::boolToString(state.celsius));
@@ -229,57 +234,36 @@ String sendACJsonState(const stdAc::state_t &state) {
   return payload;
 }
 
-String sendIRJsonState(const struct decode_results &results) {
-  String json("{");
-  json += "\"" D_JSON_IR_PROTOCOL "\":\"";
-  json += typeToString(results.decode_type);
-  json += "\",\"" D_JSON_IR_BITS "\":";
-  json += results.bits;
+void sendIRJsonState(const struct decode_results &results) {
+  ResponseAppend_P(PSTR("\"" D_JSON_IR_PROTOCOL "\":\"%s\",\"" D_JSON_IR_BITS "\":%d"),
+                  typeToString(results.decode_type).c_str(),
+                  results.bits);
 
   if (hasACState(results.decode_type)) {
-    json += ",\"" D_JSON_IR_DATA "\":\"";
-    json += resultToHexidecimal(&results);
-    json += "\"";
+    ResponseAppend_P(PSTR(",\"" D_JSON_IR_DATA "\":\"%s\""),
+                          resultToHexidecimal(&results).c_str());
   } else {
-    if (UNKNOWN != results.decode_type) {
-      json += ",\"" D_JSON_IR_DATA "\":";
-    } else {
-      json += ",\"" D_JSON_IR_HASH "\":";
-    }
+    ResponseAppend_P(PSTR(",\"%s\":"), UNKNOWN != results.decode_type ? PSTR(D_JSON_IR_DATA) : PSTR(D_JSON_IR_HASH));
     if (Settings.flag.ir_receive_decimal) {  // SetOption29 - IR receive data format
-      char svalue[32];
-      ulltoa(results.value, svalue, 10);
-      json += svalue;
+      ResponseAppend_P(PSTR("%u"), (uint32_t) results.value);
     } else {
-      char hvalue[64];
       if (UNKNOWN != results.decode_type) {
-        Uint64toHex(results.value, hvalue, results.bits);  // Get 64bit value as hex 0x00123456
-        json += "\"0x";
-        json += hvalue;
-        json += "\",\"" D_JSON_IR_DATALSB "\":\"0x";
-        Uint64toHex(reverseBitsInBytes64(results.value), hvalue, results.bits);  // Get 64bit value as hex 0x00123456, LSB
-        json += hvalue;
-        json += "\"";
+        uint64_t reverse = reverseBitsInBytes64(results.value);
+        ResponseAppend_P(PSTR("\"0x%0_X\",\"" D_JSON_IR_DATALSB "\":\"0x%0_X\""),
+                         &results.value, &reverse);
       } else {    // UNKNOWN
-        Uint64toHex(results.value, hvalue, 32);  // Unknown is always 32 bits
-        json += "\"0x";
-        json += hvalue;
-        json += "\"";
+        ResponseAppend_P(PSTR("\"0x%08X\""), (uint32_t) results.value);  // Unknown is always 32 bits
       }
     }
   }
-  json += ",\"" D_JSON_IR_REPEAT "\":";
-  json += results.repeat;
+  ResponseAppend_P(PSTR(",\"" D_JSON_IR_REPEAT "\":%d"), results.repeat);
 
   stdAc::state_t new_state;
   if (IRAcUtils::decodeToState(&results, &new_state, irhvac_stateful && irac_prev_state.protocol == results.decode_type ? &irac_prev_state : nullptr)) {
     // we have a decoded state
-    json += ",\"" D_CMND_IRHVAC "\":";
-    json += sendACJsonState(new_state);
+    ResponseAppend_P(PSTR(",\"" D_CMND_IRHVAC "\":%s"), sendACJsonState(new_state).c_str());
     irac_prev_state = new_state; // store for next time
   }
-
-  return json;
 }
 
 void IrReceiveCheck(void)
@@ -292,7 +276,8 @@ void IrReceiveCheck(void)
 //    if ((now - ir_lasttime > IR_TIME_AVOID_DUPLICATE) && (UNKNOWN != results.decode_type) && (results.bits > 0)) {
     if (now - ir_lasttime > IR_TIME_AVOID_DUPLICATE) {
       ir_lasttime = now;
-      Response_P(PSTR("{\"" D_JSON_IRRECEIVED "\":%s"), sendIRJsonState(results).c_str());
+      Response_P(PSTR("{\"" D_JSON_IRRECEIVED "\":{"));
+      sendIRJsonState(results);
 
       IRRawTable raw_table;
       bool prev_number = false;     // was the previous value a number, meaning we may need a comma prefix
@@ -440,7 +425,7 @@ uint32_t IrRemoteCmndIrHvacJson(void)
   if (val = root[PSTR(D_JSON_IRHVAC_SWINGV)]) { state.swingv = IRac::strToSwingV(val.getStr()); }
   if (val = root[PSTR(D_JSON_IRHVAC_SWINGH)]) { state.swingh = IRac::strToSwingH(val.getStr()); }
   state.degrees = root.getFloat(PSTR(D_JSON_IRHVAC_TEMP), state.degrees);
-  // AddLog_P(LOG_LEVEL_DEBUG, PSTR("model %d, mode %d, fanspeed %d, swingv %d, swingh %d"),
+  // AddLog(LOG_LEVEL_DEBUG, PSTR("model %d, mode %d, fanspeed %d, swingv %d, swingh %d"),
   //             state.model, state.mode, state.fanspeed, state.swingv, state.swingh);
 
   // if and how we should handle the state for IRremote
@@ -462,16 +447,16 @@ uint32_t IrRemoteCmndIrHvacJson(void)
   state.sleep = root.getInt(PSTR(D_JSON_IRHVAC_SLEEP), state.sleep);
   //if (json[D_JSON_IRHVAC_CLOCK]) { state.clock = json[D_JSON_IRHVAC_CLOCK]; }   // not sure it's useful to support 'clock'
 
-  if (irrecv != nullptr) { irrecv->disableIRIn(); }
+  if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->disableIRIn(); }
   if (stateMode == StateModes::SEND_ONLY || stateMode == StateModes::SEND_STORE) {
-    IRac ac(Pin(GPIO_IRSEND));
+    IRac ac(Pin(GPIO_IRSEND), IR_SEND_INVERTED, IR_SEND_USE_MODULATION);
     bool success = ac.sendAc(state, irhvac_stateful && irac_prev_state.protocol == state.protocol ? &irac_prev_state : nullptr);
     if (!success) { return IE_SYNTAX_IRHVAC; }
   }
   if (stateMode == StateModes::STORE_ONLY || stateMode == StateModes::SEND_STORE) { // store state in memory
     irac_prev_state = state;
   }
-  if (irrecv != nullptr) { irrecv->enableIRIn(); }
+  if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->enableIRIn(); }
 
   Response_P(PSTR("{\"" D_CMND_IRHVAC "\":%s}"), sendACJsonState(state).c_str());
   return IE_RESPONSE_PROVIDED;
@@ -526,12 +511,12 @@ uint32_t IrRemoteCmndIrSendJson(void)
 
   char dvalue[32];
   char hvalue[32];
-  // AddLog_P(LOG_LEVEL_DEBUG, PSTR("IRS: protocol %d, bits %d, data 0x%s (%s), repeat %d"),
+  // AddLog(LOG_LEVEL_DEBUG, PSTR("IRS: protocol %d, bits %d, data 0x%s (%s), repeat %d"),
   //   protocol, bits, ulltoa(data, dvalue, 10), Uint64toHex(data, hvalue, bits), repeat);
 
-  if (irrecv != nullptr) { irrecv->disableIRIn(); }
+  if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->disableIRIn(); }
   bool success = irsend->send(protocol, data, bits, repeat);
-  if (irrecv != nullptr) { irrecv->enableIRIn(); }
+  if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->enableIRIn(); }
 
   if (!success) {
       ResponseCmndChar(D_JSON_PROTOCOL_NOT_SUPPORTED);
@@ -554,11 +539,11 @@ uint32_t IrRemoteSendGC(char ** pp, uint32_t count, uint32_t repeat) {
     GC[i] = strtol(strtok_r(nullptr, ",", pp), nullptr, 0);
     if (!GC[i]) { return IE_INVALID_RAWDATA; }
   }
-  if (irrecv != nullptr) { irrecv->disableIRIn(); }
+  if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->disableIRIn(); }
   for (uint32_t r = 0; r <= repeat; r++) {
     irsend->sendGC(GC, count+1);
   }
-  if (irrecv != nullptr) { irrecv->enableIRIn(); }
+  if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->enableIRIn(); }
   return IE_NO_ERROR;
 }
 
@@ -609,15 +594,15 @@ uint32_t IrRemoteSendRawFormatted(char ** pp, uint32_t count, uint32_t repeat) {
         raw_array[i++] = mark;                    // Mark
       }
     }
-    if (irrecv != nullptr) { irrecv->disableIRIn(); }
+    if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->disableIRIn(); }
     for (uint32_t r = 0; r <= repeat; r++) {
-      // AddLog_P(LOG_LEVEL_DEBUG, PSTR("sendRaw count=%d, space=%d, mark=%d, freq=%d"), count, space, mark, freq);
+      // AddLog(LOG_LEVEL_DEBUG, PSTR("sendRaw count=%d, space=%d, mark=%d, freq=%d"), count, space, mark, freq);
       irsend->sendRaw(raw_array, i, freq);
       if (r < repeat) {         // if it's not the last message
         irsend->space(40000);   // since we don't know the inter-message gap, place an arbitrary 40ms gap
       }
     }
-    if (irrecv != nullptr) { irrecv->enableIRIn(); }
+    if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->enableIRIn(); }
   } else if (6 == count) {                          // NEC Protocol
     // IRsend raw,0,8620,4260,544,411,1496,010101101000111011001110000000001100110000000001100000000000000010001100
     uint16_t raw_array[strlen(*pp)*2+3];            // Header + bits + end
@@ -636,15 +621,15 @@ uint32_t IrRemoteSendRawFormatted(char ** pp, uint32_t count, uint32_t repeat) {
       }
     }
     raw_array[i++] = parm[2];                     // Trailing mark
-    if (irrecv != nullptr) { irrecv->disableIRIn(); }
+    if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->disableIRIn(); }
     for (uint32_t r = 0; r <= repeat; r++) {
-      // AddLog_P(LOG_LEVEL_DEBUG, PSTR("sendRaw %d %d %d %d %d %d"), raw_array[0], raw_array[1], raw_array[2], raw_array[3], raw_array[4], raw_array[5]);
+      // AddLog(LOG_LEVEL_DEBUG, PSTR("sendRaw %d %d %d %d %d %d"), raw_array[0], raw_array[1], raw_array[2], raw_array[3], raw_array[4], raw_array[5]);
       irsend->sendRaw(raw_array, i, freq);
       if (r < repeat) {         // if it's not the last message
         irsend->space(inter_message);   // since we don't know the inter-message gap, place an arbitrary 40ms gap
       }
     }
-    if (irrecv != nullptr) { irrecv->enableIRIn(); }
+    if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->enableIRIn(); }
   }
   else { return IE_INVALID_RAWDATA; }                   // Invalid number of parameters
   return IE_NO_ERROR;
@@ -704,20 +689,20 @@ uint32_t IrRemoteSendRawStandard(char ** pp, uint16_t freq, uint32_t count, uint
   } else {
     count++;
   }
-  // AddLog_P(LOG_LEVEL_DEBUG, PSTR("IrRemoteSendRawStandard: count_1 = %d"), count);
+  // AddLog(LOG_LEVEL_DEBUG, PSTR("IrRemoteSendRawStandard: count_1 = %d"), count);
   arr = (uint16_t*) malloc(count * sizeof(uint16_t));
   if (nullptr == arr) { return IE_MEMORY; }
 
   count = IrRemoteParseRawCompact(*pp, arr, count);
-  // AddLog_P(LOG_LEVEL_DEBUG, PSTR("IrRemoteSendRawStandard: count_2 = %d"), count);
-  // AddLog_P(LOG_LEVEL_DEBUG, PSTR("Arr %d %d %d %d %d %d %d %d"), arr[0], arr[1], arr[2], arr[3], arr[4], arr[5], arr[6], arr[7]);
+  // AddLog(LOG_LEVEL_DEBUG, PSTR("IrRemoteSendRawStandard: count_2 = %d"), count);
+  // AddLog(LOG_LEVEL_DEBUG, PSTR("Arr %d %d %d %d %d %d %d %d"), arr[0], arr[1], arr[2], arr[3], arr[4], arr[5], arr[6], arr[7]);
   if (0 == count) { return IE_INVALID_RAWDATA; }
 
-  if (irrecv != nullptr) { irrecv->disableIRIn(); }
+  if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->disableIRIn(); }
   for (uint32_t r = 0; r <= repeat; r++) {
     irsend->sendRaw(arr, count, freq);
   }
-  if (irrecv != nullptr) { irrecv->enableIRIn(); }
+  if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->enableIRIn(); }
 
   if (nullptr != arr) {
     free(arr);

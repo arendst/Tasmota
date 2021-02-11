@@ -338,7 +338,15 @@ float Adafruit_TSL2591::calculateLux(uint16_t ch0, uint16_t ch1)
 
   // Alternate lux calculation 1
   // See: https://github.com/adafruit/Adafruit_TSL2591_Library/issues/14
-  lux = ( ((float)ch0 - (float)ch1 )) * (1.0F - ((float)ch1/(float)ch0) ) / cpl;
+  if(ch0 > 0)
+  {
+    lux = ( ((float)ch0 - (float)ch1 )) * (1.0F - ((float)ch1/(float)ch0) ) / cpl;
+  }
+  else
+  {
+    lux = 0.0F;
+  }
+  
 
   // Alternate lux calculation 2
   //lux = ( (float)ch0 - ( 1.7F * (float)ch1 ) ) / cpl;

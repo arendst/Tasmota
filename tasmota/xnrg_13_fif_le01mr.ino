@@ -1,7 +1,7 @@
 /*
   xnrg_13_fif_le01mr.ino - F&F LE-01MR energy meter with Modbus interface - support for Tasmota
 
-  Copyright (C) 2020  Przemyslaw Wistuba
+  Copyright (C) 2021  Przemyslaw Wistuba
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -123,7 +123,7 @@ void FifLEEvery250ms(void)
     AddLogBuffer(LOG_LEVEL_DEBUG_MORE, buffer, FifLEModbus->ReceiveCount());
 
     if (error) {
-      AddLog_P(LOG_LEVEL_DEBUG, PSTR("FiF-LE: LE01MR Modbus error %d"), error);
+      AddLog(LOG_LEVEL_DEBUG, PSTR("FiF-LE: LE01MR Modbus error %d"), error);
     } else {
       Energy.data_valid[0] = 0;
 

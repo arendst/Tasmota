@@ -1,7 +1,7 @@
 /*
   xdrv_01_webserver.ino - webserver for Tasmota
 
-  Copyright (C) 2020  Theo Arends
+  Copyright (C) 2021  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -27,6 +27,9 @@
 
 #define XDRV_01                               1
 
+// Enable below demo feature only if defines USE_UNISHOX_COMPRESSION and USE_SCRIPT_WEB_DISPLAY are disabled
+//#define USE_WEB_SSE
+
 #ifndef WIFI_SOFT_AP_CHANNEL
 #define WIFI_SOFT_AP_CHANNEL                  1          // Soft Access Point Channel number between 1 and 11 as used by WifiManager web GUI
 #endif
@@ -45,81 +48,21 @@ const uint16_t HTTP_OTA_RESTART_RECONNECT_TIME = 10000;  // milliseconds - Allow
 #include <ESP8266WebServer.h>
 #include <DNSServer.h>
 
-enum UploadTypes { UPL_TASMOTA, UPL_SETTINGS, UPL_EFM8BB1, UPL_TASMOTACLIENT, UPL_EFR32, UPL_SHD, UPL_CCL };
+enum UploadTypes { UPL_TASMOTA, UPL_SETTINGS, UPL_EFM8BB1, UPL_TASMOTACLIENT, UPL_EFR32, UPL_SHD, UPL_CCL, UPL_UFSFILE };
 
 #ifdef USE_UNISHOX_COMPRESSION
-#ifdef USE_JAVASCRIPT_ES6
-// insert D_HTML_LANGUAGE later
-const size_t HTTP_HEADER1_SIZE = 377;
-const char HTTP_HEADER1_COMPRESSED[] PROGMEM = "\x3D\x0F\xE1\x10\x98\x1D\x19\x0C\x64\x85\x50\xD0\x8F\xC3\xD0\x55\x0D\x09\x05\x7C"
-                             "\x3C\x7C\x3F\xB2\xEC\xD7\xE6\x86\x7D\x78\xFE\xCB\xB3\x5F\x9A\x1A\x0C\x2B\xF7\x8F"
-                             "\x87\xB0\xF6\x1F\x87\xA0\xA7\x62\x1F\x87\xA0\xD7\x56\x83\x15\x7F\xF3\xA3\xE1\xF6"
-                             "\x2E\x8C\x1D\x67\x3E\x7D\x90\x21\x52\xEB\x1A\xCF\x87\xB0\xCF\x58\xF8\xCC\xFD\x1E"
-                             "\xC4\x1E\x75\x3E\xA3\xE1\xEC\x1F\xD1\x28\x51\xF0\x46\x67\xA1\xB3\xAC\x7F\x44\xA1"
-                             "\x47\x56\xF6\xD6\xD8\x47\x5F\x83\xB0\x99\xF0\xE4\x3A\x88\x5F\x9F\xCE\xBF\x07\x61"
-                             "\x58\xE0\x99\xF3\xB0\xF6\x1D\x87\xE1\xE9\x5B\x41\x33\xF0\xFA\xF2\x3A\xD1\xF5\xE3"
-                             "\xD0\xEC\x04\x19\x67\xA7\x83\xFE\x8C\xA3\xF0\xCE\xFE\x8D\x87\xCE\x16\x10\x47\x50"
-                             "\x54\x75\x56\x1D\x54\x30\xEA\x18\x19\xF0\xFB\x3E\xCF\x0C\x71\xF3\xC7\xC3\xF0\x4C"
-                             "\x0C\x58\xD7\xD4\x74\x1E\x74\x4C\x26\x35\xF5\x10\xE3\x22\xD1\x0E\xEF\x8E\xF1\xE0"
-                             "\xD5\xE0\x48\xBA\x6A\x16\xFE\x64\x5E\x61\x30\xEB\x3E\x77\x7C\x77\x8F\x1E\x18\x7C"
-                             "\xD3\xE1\xF8\xC7\x1D\xDD\x3B\xC7\x4A\x32\x18\xCF\x87\x74\x11\xA4\x1F\x0F\x87\xDD"
-                             "\x33\x65\x1F\x67\x68\xFB\x19\x7E\xF0\xFE\x7C\x43\xEC\xF3\x04\x19\xC7\x78\xF0\x3E"
-                             "\x11\xF0\xC1\xF0\xFC\x1F\xDE\x13\x07\xCE\x96\x20\x84\xCC\xDF\x51\x05\xBE\xA7\xCF"
-                             "\xE7\x74\xFB\x0B\x2C\x43\xEC\xEA\x30\x77\x8F\x06";
-#define  HTTP_HEADER1       Decompress(HTTP_HEADER1_COMPRESSED,HTTP_HEADER1_SIZE).c_str()
+  #ifdef USE_JAVASCRIPT_ES6
+    #include "./html_compressed/HTTP_HEADER1_ES6.h"
+  #else
+    #include "./html_compressed/HTTP_HEADER1_NOES6.h"
+  #endif
 #else
-const size_t HTTP_HEADER1_SIZE = 431;
-const char HTTP_HEADER1_COMPRESSED[] PROGMEM = "\x3D\x0F\xE1\x10\x98\x1D\x19\x0C\x64\x85\x50\xD0\x8F\xC3\xD0\x55\x0D\x09\x05\x7C"
-                             "\x3C\x7C\x3F\xB2\xEC\xD7\xE6\x86\x7D\x78\xFE\xCB\xB3\x5F\x9A\x1A\x0C\x2B\xF7\x8F"
-                             "\x87\xB0\xF6\x1F\x87\xA0\xA7\x62\x1F\x87\xA0\xD7\x56\x83\x15\x7F\xF3\xA3\xE1\xF6"
-                             "\x2E\x8C\x1D\x67\x3E\x7D\x90\x21\x52\xEB\x1A\xCF\x87\xB0\xCF\x58\xF8\xCC\xFD\x1E"
-                             "\xC4\x1E\x75\x3E\xA3\xE1\xEC\x1F\xD1\x28\x51\xF0\x46\x67\xA1\xB3\xAC\x7F\x44\xA1"
-                             "\x47\x56\xF6\xD6\xD8\x47\x5F\x83\xB0\x99\xF0\xE4\x3A\x88\x5F\x9F\xCE\xBF\x07\x61"
-                             "\x58\xE0\x99\xF3\xB0\xF6\x1D\x87\xE1\xE9\x5B\x41\x33\xF0\xFA\xF2\x3A\xD1\xF5\xE3"
-                             "\xD0\xEC\x04\x19\x67\xA7\x83\xFE\x8C\xA3\xF0\xCE\xFE\x8D\x87\xCE\x16\x10\x47\x50"
-                             "\x54\x75\x56\x1D\x54\x30\xEA\x18\x19\xF0\xFB\x3E\xCF\x06\x05\xF0\x75\xB9\xC9\x8E"
-                             "\x3B\xBE\x3B\xC7\xB7\xEE\x85\xFF\x90\x98\x18\xB1\xAF\xA8\xE8\x3C\xE8\x98\x4C\x6B"
-                             "\xEA\x21\xC6\x45\xA2\x1D\xDF\x1D\xE3\xC1\xEE\x04\x4C\x38\xD5\xE0\x4F\xC3\x8D\x42"
-                             "\xDF\xCC\x8B\xCC\x26\x1D\x67\xC1\x27\x0D\xF0\xC3\xBB\xA7\x78\xF6\xB1\xC7\x77\x4E"
-                             "\xF1\xD2\x8C\x86\x33\xE1\xDD\x04\x69\x07\xC3\xE1\xF7\x4C\xD9\x47\xD9\xDA\x3E\xC6"
-                             "\x5F\xBC\x3F\x9F\x10\xFB\x3C\xC1\x06\x70\x23\xE3\xE3\xE1\x1D\xD3\x07\x78\xF6\x8F"
-                             "\xEF\x09\x83\xE7\x4B\x10\x42\x66\x6F\xA8\x82\xDF\x53\xE7\xF3\xBA\x7D\x85\x96\x21"
-                             "\xF6\x75\x18\x3B\xC7\x83\xDC";
-#define  HTTP_HEADER1       Decompress(HTTP_HEADER1_COMPRESSED,HTTP_HEADER1_SIZE).c_str()
-#endif // USE_JAVASCRIPT_ES6
-#else
-const char HTTP_HEADER1[] PROGMEM =
-  "<!DOCTYPE html><html lang=\"" D_HTML_LANGUAGE "\" class=\"\">"
-  "<head>"
-  "<meta charset='utf-8'>"
-  "<meta name=\"viewport\" content=\"width=device-width,initial-scale=1,user-scalable=no\"/>"
-  "<title>%s - %s</title>"
-
-  "<script>"
-  "var x=null,lt,to,tp,pc='';"            // x=null allow for abortion
-
-#ifdef USE_JAVASCRIPT_ES6
-// Following bytes saving ES6 syntax fails on old browsers like IE 11 - https://kangax.github.io/compat-table/es6/
-  "eb=s=>document.getElementById(s);"     // Alias to save code space
-  "qs=s=>document.querySelector(s);"      // Alias to save code space
-  "sp=i=>eb(i).type=(eb(i).type==='text'?'password':'text');"  // Toggle password visibility
-  "wl=f=>window.addEventListener('load',f);" // Execute multiple window.onload
-  ;
-#else
-  "function eb(s){"
-    "return document.getElementById(s);"  // Alias to save code space
-  "}"
-  "function qs(s){"                       // Alias to save code space
-    "return document.querySelector(s);"
-  "}"
-  "function sp(i){"                       // Toggle password visibility
-    "eb(i).type=(eb(i).type==='text'?'password':'text');"
-  "}"
-  "function wl(f){"                       // Execute multiple window.onload
-    "window.addEventListener('load',f);"
-  "}";
-#endif // USE_JAVASCRIPT_ES6
-#endif //USE_UNISHOX_COMPRESSION
+  #ifdef USE_JAVASCRIPT_ES6
+    #include "./html_uncompressed/HTTP_HEADER1_ES6.h"
+  #else
+    #include "./html_uncompressed/HTTP_HEADER1_NOES6.h"
+  #endif
+#endif
 
 const char HTTP_SCRIPT_COUNTER[] PROGMEM =
   "var cn=180;"                           // seconds
@@ -133,158 +76,25 @@ const char HTTP_SCRIPT_COUNTER[] PROGMEM =
   "wl(u);";
 
 #ifdef USE_UNISHOX_COMPRESSION
-#ifdef USE_SCRIPT_WEB_DISPLAY
-const size_t HTTP_SCRIPT_ROOT_SIZE = 744;
-const char HTTP_SCRIPT_ROOT_COMPRESSED[] PROGMEM = "\x33\xBF\xAF\x98\xF0\xA3\xE1\xC8\x78\x23\x02\xF8\x3A\xDC\xE4\x15\x9D\xD1\x87\x78"
-                             "\xF6\x99\xDF\xD5\x9F\x0F\xB3\xEC\xF1\xA6\x0E\xE8\x56\x74\xBF\x8F\x0B\x1A\xFA\xBC"
-                             "\x74\x09\xF0\xF5\x0A\x3E\x1F\x0E\x43\xBC\x7B\x4A\xCF\x83\x0F\x01\x84\xEF\xE5\x5A"
-                             "\x35\xE0\xBA\x3B\xA1\x51\xDE\x3C\x1E\xED\x30\x77\x4D\x87\xF0\xF9\xC2\xC2\x08\xEF"
-                             "\x1E\xD3\x61\xD2\xC7\x67\xE8\xEE\x9D\xE3\xC1\xEE\x36\x1F\x39\x8F\xA2\x36\x10\xD2"
-                             "\x08\x85\x55\x0C\x2F\xB3\x50\xB7\xEA\x3B\xA7\x78\xF0\x6C\x3A\x67\x7D\xD8\x86\x5E"
-                             "\xAB\xA6\x18\xAB\xE1\xE6\x7C\x04\x3D\xA0\xEE\x9D\xE3\xDB\xA6\x0E\xE9\xB0\xE9\xF7"
-                             "\x62\x19\x17\xAA\xE9\x9F\x0F\x87\x30\xFD\x1F\xA2\x36\x1D\x3D\x57\x42\xFC\x7C\x3E"
-                             "\x1C\xA6\xC8\x10\x78\x07\xF1\xF0\xD8\x74\xFB\xF0\xCC\xEF\x32\xA6\x6C\xA3\xA7\xD8"
-                             "\xC0\xAC\x36\x77\x4E\xC3\xDB\x47\xB8\xEC\x1E\x3A\x8F\x61\xE9\x56\x38\x26\xBD\x46"
-                             "\x41\x33\xE1\xF6\x3F\xA2\x50\xA3\xCC\xE4\x6C\xFA\x3E\x8F\xB3\xF0\xF6\x1D\xE2\x04"
-                             "\x6C\x2B\xC0\x85\x85\x7C\xFC\x3D\x28\x50\x24\xD7\x1A\x08\x35\xCE\xCA\x14\x7E\x1E"
-                             "\x94\x20\x24\xE4\xE7\x29\x90\xC3\x61\xE0\x7C\x56\xD3\x3A\xFC\x32\xC3\x67\x9F\x60"
-                             "\xFF\xEC\x60\x25\x67\x2C\x10\xF1\xE1\x0F\xC3\xD0\xEC\xAF\x82\x4D\x90\xCF\x71\xD8"
-                             "\x3C\x75\x1E\xC3\xE8\xFA\x3E\xCF\xC3\xD0\x4D\x33\x04\x3C\xEE\x99\xB2\x8E\xBB\x0B"
-                             "\x47\xB8\xF3\x0D\xF5\x3F\x9E\x0C\x67\x51\xD6\x3E\xF4\x78\x55\x1E\x67\xB0\xEF\x1E"
-                             "\x18\xE3\xBA\x7D\x84\x72\x1F\x67\x78\xE8\x5B\xDC\xFE\x42\x8A\x88\x69\x04\x7C\xF1"
-                             "\xE0\xF7\x1E\xE3\xC6\x98\x47\x77\xE6\x3C\x28\xEF\x23\xDA\x6C\x3A\x60\xC7\xC7\x74"
-                             "\xFB\x21\xE2\x65\x47\xD9\xD4\x7D\x9D\x0E\xD0\xD3\xE1\xC8\x7D\x9D\xB2\xB3\xAA\xBE"
-                             "\x2D\x9D\xE3\xC1\xB0\xE9\xE7\xC2\x1D\xD3\xBC\x78\x0A\x8F\x9E\x74\x08\x9C\x93\xD9"
-                             "\xD4\x7D\x08\x77\x8F\x07\xB8\xF7\x02\x27\x2E\x9E\x66\x76\x77\x46\x5F\xCE\xAD\x33"
-                             "\xBF\x9D\xE3\xDA\x15\x9D\xD3\xEC\xFD\x78\xCC\xF8\x7D\x9D\xBD\x33\xBF\x9D\xB3\xEC"
-                             "\xFD\x9F\x67\x6C\x65\xFC\xEF\x1E\x01\x1B\x0D\xD0\x48\xC3\x41\x0B\x9C\x40\x53\xC5"
-                             "\x3E\x63\xC2\x8F\x87\x19\x02\x36\x36\x33\xE7\x74\xC1\xDE\x3D\xBA\x61\x1D\xD3\x07"
-                             "\x79\x1E\xD0\x50\xDE\x81\x0B\x2F\x3D\xC9\x85\xE6\x8F\x68\x26\x73\xD0\x08\x79\x81"
-                             "\xEE";
-#define  HTTP_SCRIPT_ROOT       Decompress(HTTP_SCRIPT_ROOT_COMPRESSED,HTTP_SCRIPT_ROOT_SIZE).c_str()
+  #ifdef USE_SCRIPT_WEB_DISPLAY
+    #include "./html_compressed/HTTP_SCRIPT_ROOT_WEB_DISPLAY.h"
+  #else
+    #include "./html_compressed/HTTP_SCRIPT_ROOT_NO_WEB_DISPLAY.h"
+  #endif
+  #include "./html_compressed/HTTP_SCRIPT_ROOT_PART2.h"
 #else
-const size_t HTTP_SCRIPT_ROOT_SIZE = 524;
-const char HTTP_SCRIPT_ROOT_COMPRESSED[] PROGMEM = "\x30\x2F\x83\xAD\xCE\x41\x59\xDD\x18\x77\x8F\x69\x9D\xFD\x59\xF0\xFB\x3E\xCF\x1A"
-                             "\x60\xEE\x85\x67\x4B\xF8\xF0\xB1\xAF\xAB\xC7\x40\x9F\x0F\x50\xA3\xE1\xF0\xE4\x3B"
-                             "\xC7\xB4\xAC\xF8\x30\xF0\x18\x4E\xFE\x55\xA3\x5E\x0B\xA3\xBA\x15\x1D\xE3\xC1\xEE"
-                             "\xD3\x07\x74\xD8\x7F\x0F\x9C\x2C\x20\x8E\xF1\xED\x36\x1D\x2C\x76\x7E\x8E\xE9\xDE"
-                             "\x3C\x1E\xE3\x61\xF3\x98\xFA\x23\x61\x0D\x20\x88\x55\x50\xC2\xFB\x35\x0B\x7E\xA3"
-                             "\xBA\x77\x8F\x06\xC3\xA6\x77\xDD\x88\x65\xEA\xBA\x61\x8A\xBE\x1E\x67\xC0\x43\xDA"
-                             "\x0E\xE9\xDE\x3D\xBA\x60\xEE\x9B\x0E\x9F\x76\x21\x91\x7A\xAE\x99\xF0\xF8\x73\x0F"
-                             "\xD1\xFA\x23\x61\xD3\xD5\x74\x2F\xC7\xC3\xE1\xCA\x6C\x81\x07\x80\x7F\x1F\x0D\x87"
-                             "\x4F\xBF\x0C\xCE\xF3\x2A\x2B\x66\xCA\x3A\x7D\x8C\x0A\xC3\x67\x74\xEC\x3D\xB4\x7B"
-                             "\x8E\xC1\xE3\xA8\xF6\x1E\x95\x63\x82\x6B\xD4\x64\x13\x3E\x1F\x63\xFA\x25\x0A\x3C"
-                             "\xCE\x46\xCF\xA3\xE8\xFB\x3F\x0F\x61\xDE\x20\x46\xC2\xBC\x08\x58\x57\xCF\xC3\xD2"
-                             "\x85\x02\x4D\x71\xA0\x83\x5C\xEC\xA1\x47\xE1\xE9\x42\x02\x4E\x4E\x72\x99\x0C\x36"
-                             "\x1E\x07\xC5\x6D\x33\xAF\xC3\x2C\x36\x79\xF6\x0F\xFE\xC6\x02\x56\x72\xC1\x0F\x1E"
-                             "\x10\xFC\x3D\x0E\xCA\xF8\x24\xD9\x0C\xF7\x1D\x83\xC7\x51\xEC\x3E\x8F\xA3\xEC\xFC"
-                             "\x3D\x04\xD3\x30\x43\xCE\xE9\x9B\x28\xEB\xB0\xB4\x7B\x8F\x30\xDF\x53\xF9\xE0\xC6"
-                             "\x75\x1D\x63\xEF\x47\x85\x51\xE6\x7B\x0E\xF1\xE1\x8E\x3B\xA7\xD8\x47\x21\xF6\x77"
-                             "\x8E\x85\xBD\xCF\xE4\x28\xA8\x86\x90\x47\xCF\x1E\x0F\x71\xEE\x3C\x1B\x0E\x98\x31"
-                             "\xF1\xDD\x3E\xC8\x78\x99\x51\xF6\x75\x1F\x67\x43\xB4\x34\xF8\x72\x1F\x67\x6C\xAC"
-                             "\xEA\xAF\x8B\x67\x78\xF0\x6C\x3A\x79\xF0\x87\x74\xEF\x1E\x02\xA3\xE7\x9D\x02\x27"
-                             "\x23\x96\x75\x1F\x42\x1D\xE3\xC1\xEE";
-#define  HTTP_SCRIPT_ROOT       Decompress(HTTP_SCRIPT_ROOT_COMPRESSED,HTTP_SCRIPT_ROOT_SIZE).c_str()
-#endif  // USE_SCRIPT_WEB_DISPLAY
-#else
-const char HTTP_SCRIPT_ROOT[] PROGMEM =
-#ifdef USE_SCRIPT_WEB_DISPLAY
-  "var rfsh=1;"
-  "function la(p){"
-    "var a='';"
-    "if(la.arguments.length==1){"
-      "a=p;"
-      "clearTimeout(lt);"
-    "}"
-    "if(x!=null){x.abort();}"             // Abort if no response within 2 seconds (happens on restart 1)
-    "x=new XMLHttpRequest();"
-    "x.onreadystatechange=function(){"
-      "if(x.readyState==4&&x.status==200){"
-        "var s=x.responseText.replace(/{t}/g,\"<table style='width:100%%'>\")"
-                            ".replace(/{s}/g,\"<tr><th>\")"
-//                            ".replace(/{m}/g,\"</th><td>\")"
-                            ".replace(/{m}/g,\"</th><td style='width:20px;white-space:nowrap'>\")"  // I want a right justified column with left justified text
-                            ".replace(/{e}/g,\"</td></tr>\")"
-                            ".replace(/{c}/g,\"%%'><div style='text-align:center;font-weight:\");"
-        "eb('l1').innerHTML=s;"
-      "}"
-    "};"
-    "if (rfsh) {"
-      "x.open('GET','.?m=1'+a,true);"       // ?m related to Webserver->hasArg("m")
-      "x.send();"
-      "lt=setTimeout(la,%d);"               // Settings.web_refresh
-    "}"
-  "}"
-  "function seva(par,ivar){"
-    "la('&sv='+ivar+'_'+par);"
-  "}"
-  "function siva(par,ivar){"
-    "rfsh=1;"
-    "la('&sv='+ivar+'_'+par);"
-    "rfsh=0;"
-  "}"
-  "function pr(f){"
-    "if (f) {"
-      "lt=setTimeout(la,%d);"
-      "rfsh=1;"
-    "} else {"
-      "clearTimeout(lt);"
-      "rfsh=0;"
-    "}"
-  "}";
-#else  // USE_SCRIPT_WEB_DISPLAY
-  "function la(p){"
-    "var a='';"
-    "if(la.arguments.length==1){"
-      "a=p;"
-      "clearTimeout(lt);"
-    "}"
-    "if(x!=null){x.abort();}"             // Abort if no response within 2 seconds (happens on restart 1)
-    "x=new XMLHttpRequest();"
-    "x.onreadystatechange=function(){"
-      "if(x.readyState==4&&x.status==200){"
-        "var s=x.responseText.replace(/{t}/g,\"<table style='width:100%%'>\")"
-                            ".replace(/{s}/g,\"<tr><th>\")"
-//                            ".replace(/{m}/g,\"</th><td>\")"
-                            ".replace(/{m}/g,\"</th><td style='width:20px;white-space:nowrap'>\")"  // I want a right justified column with left justified text
-                            ".replace(/{e}/g,\"</td></tr>\")"
-                            ".replace(/{c}/g,\"%%'><div style='text-align:center;font-weight:\");"
-        "eb('l1').innerHTML=s;"
-      "}"
-    "};"
-    "x.open('GET','.?m=1'+a,true);"       // ?m related to Webserver->hasArg("m")
-    "x.send();"
-    "lt=setTimeout(la,%d);"               // Settings.web_refresh
-  "}";
-#endif  // USE_SCRIPT_WEB_DISPLAY
-#endif //USE_UNISHOX_COMPRESSION
+  #ifdef USE_SCRIPT_WEB_DISPLAY
+    #include "./html_uncompressed/HTTP_SCRIPT_ROOT_WEB_DISPLAY.h"
+  #else
+    #ifdef USE_WEB_SSE
+      #include "./html_uncompressed/HTTP_SCRIPT_ROOT_SSE_NO_WEB_DISPLAY.h"
+    #else
+      #include "./html_uncompressed/HTTP_SCRIPT_ROOT_NO_WEB_DISPLAY.h"
+    #endif  // USE_WEB_SSE
+  #endif
+  #include "./html_uncompressed/HTTP_SCRIPT_ROOT_PART2.h"
+#endif
 
-#ifdef USE_UNISHOX_COMPRESSION
-const size_t HTTP_SCRIPT_ROOT_PART2_SIZE = 222;
-const char HTTP_SCRIPT_ROOT_PART2_COMPRESSED[] PROGMEM = "\x30\x2F\x83\xAD\xCE\x41\x06\x77\x4C\xCE\xAD\x3A\x86\x1D\xE3\xDB\xA6\x0E\xEB\x1C"
-                             "\x77\x4F\xBF\x1F\x67\x78\xEF\x1E\xDD\x30\x77\x4C\xCF\x87\xC3\xEC\x51\xF6\x7F\x8F"
-                             "\xF1\x99\xF0\xF8\x7D\x88\x7D\x9D\xE3\xDA\x67\x7F\x5E\x08\xF8\xC7\x1D\xD3\xEF\xC1"
-                             "\x1C\xC3\xEC\xEF\x1D\x08\xCE\xC2\x16\xCF\x2A\x01\x85\x87\x9D\x3D\x46\x41\x33\xA0"
-                             "\xEB\x0C\xD0\x7B\xF8\x2F\x84\x3E\x1F\x61\x6F\x3B\xF9\xD6\x3D\xFB\x13\x5F\x51\xDD"
-                             "\xAC\x5F\xD1\xE1\x54\x75\x7C\x78\x71\xDD\x3E\xCE\xDF\x82\x3B\x67\xD9\xF4\x7D\x1D"
-                             "\x40\x89\x14\x10\xE2\x9D\xE3\xA8\x57\x82\x3B\xA7\xD9\xDB\x04\x1D\x14\xE5\x10\x21"
-                             "\xE8\xA7\x6C\xFB\x3A\x8E\x46\xCF\xA3\xE8\xEA\xD6\x7D\x1F\x47\x78\xEF\x1F\x67\x83"
-                             "\xDC\x7B\x88\x2B\x3B\xA7\xD9\xFA\x3E\xCE\xD9\x99\xDB\xD3\xB6\x7D\x9F\x0F\xB3\xB6"
-                             "\x30\xEF\x1E\x0F\x70\xF8\x47\x74\x2B\x3B\xC7\x83";
-#define  HTTP_SCRIPT_ROOT_PART2       Decompress(HTTP_SCRIPT_ROOT_PART2_COMPRESSED,HTTP_SCRIPT_ROOT_PART2_SIZE).c_str()
-#else
-const char HTTP_SCRIPT_ROOT_PART2[] PROGMEM =
-  "function lc(v,i,p){"
-    "if(eb('s')){"                        // Check if Saturation is in DOM otherwise javascript fails on la()
-      "if(v=='h'||v=='d'){"               // Hue or Brightness changed so change Saturation colors too
-        "var sl=eb('sl4').value;"
-        "eb('s').style.background='linear-gradient(to right,rgb('+sl+'%%,'+sl+'%%,'+sl+'%%),hsl('+eb('sl2').value+',100%%,50%%))';"
-      "}"
-    "}"
-    "la('&'+v+i+'='+p);"
-  "}"
-  "wl(la);";
-#endif //USE_UNISHOX_COMPRESSION
 
 const char HTTP_SCRIPT_WIFI[] PROGMEM =
   "function c(l){"
@@ -296,189 +106,27 @@ const char HTTP_SCRIPT_RELOAD_TIME[] PROGMEM =
   "setTimeout(function(){location.href='.';},%d);";
 
 #ifdef USE_UNISHOX_COMPRESSION
-const size_t HTTP_SCRIPT_CONSOL_SIZE = 853;
-const char HTTP_SCRIPT_CONSOL_COMPRESSED[] PROGMEM = "\x33\xBF\xAF\x71\xF0\xE3\x3A\x8B\x44\x3E\x1C\x67\x82\x30\x2F\x83\xAD\xCE\x41\x1D"
-                             "\xD1\x87\x78\xF6\x99\xDF\xD0\x67\x56\x1F\x0F\xB3\xEC\xEA\xA3\xC0\x61\x3B\xF9\x56"
-                             "\x8D\x78\x2E\x8E\xE8\x54\x77\x8F\x14\x7C\x63\x8E\xE9\xF7\x47\x21\xF6\x77\x8F\x05"
-                             "\xA6\x0E\xE8\xC3\xE1\xF0\xE4\x3B\xC7\xB4\x83\x3E\x31\xC7\x74\xFB\x0C\xE4\x3E\xCE"
-                             "\xF1\xE0\xB0\xF8\x7D\x9F\xA0\xCE\x43\xE1\xF6\x76\xC9\xF0\x78\x23\x21\x65\xF2\xD2"
-                             "\x0F\x06\x8C\xCE\x7D\x47\x74\x33\xA1\x9D\x84\x2D\x9D\xE3\xC0\x21\x45\x3E\x1F\x67"
-                             "\xD9\xE2\x8E\x9E\x0F\xF8\x10\x45\x58\x30\xF8\x71\x11\xBD\x2A\x01\xF1\xEE\x3E\x02"
-                             "\x35\x13\xC1\xEE\xD3\x07\x74\x11\xA6\x1F\x87\xCF\x71\xDE\x3D\xBA\x60\xEE\x9B\x0F"
-                             "\xE1\xF3\x85\x84\x11\xDE\x3D\xA6\xC3\xA5\x8E\xCF\xD1\xDD\x3B\xC7\x83\xDC\x6C\x3E"
-                             "\x73\x1F\x44\x6C\x21\xA4\x11\x0A\xAA\x18\x5F\x66\xA1\x6F\xD4\x77\x4E\xF1\xE0\xD8"
-                             "\x74\xCE\xFB\xB1\x0C\xBD\x57\x4C\x31\x57\xC3\xCC\xF8\x08\x7C\x28\x1D\xD0\x41\xCA"
-                             "\x8E\x9F\x76\x21\x91\x7A\xAE\x99\xF0\xF8\x73\x0F\xD1\xFA\x23\x61\xD3\xD5\x74\x2F"
-                             "\xC7\xC3\xE1\xCA\x6C\x81\x07\x87\x03\x69\xD4\x21\xE0\x43\xE1\xB0\xE9\xF7\xE1\x99"
-                             "\xDE\x65\x4C\xD9\x47\x4F\x0C\x0B\x68\xEE\x9D\x87\xB8\xE4\x3B\x0E\xF1\xE0\xB4\x43"
-                             "\xE0\x87\x4F\x0A\xD3\x14\x77\x4E\xF1\xE3\x4C\x1D\xD0\x44\x92\x7C\x3E\x1C\x67\x78"
-                             "\xF6\x95\x02\x2F\x0A\x27\xB8\xDA\x09\x38\x29\xB4\xE8\x13\xE1\xEA\x14\x7E\x02\x2E"
-                             "\x06\x76\xCF\x86\xD3\xC1\xEE\x05\xDE\x1E\x4F\x71\xE0\xD8\x74\xC1\x8F\x8E\xE9\xF6"
-                             "\x43\xC4\xCA\x8F\xB3\xA8\xFB\x0F\xC7\x68\x33\x94\x7C\x3E\xCE\xD9\x68\x87\x6F\x0E"
-                             "\xAA\xF8\xB6\x77\x8F\x06\xC3\xA7\x9F\x08\x77\x4E\xF1\xE0\xF7\x05\x47\xCF\x3A\x04"
-                             "\x4E\x4A\x4E\xA3\xE8\x43\xBC\x78\xFB\xA1\x7F\xE4\x62\xC2\xF3\x3C\x1E\xE1\xF0\x8E"
-                             "\xE8\x47\x78\xF0\x67\x7F\x42\x83\x3E\x1E\xF1\xEF\x9D\x41\xF0\x23\xF2\xF4\x28\xEE"
-                             "\x9D\xE3\xDA\x08\x7C\xA2\x9D\x2C\x41\x09\x99\xBE\xA2\x0B\x7D\x4F\x9F\xCE\xE9\xF6"
-                             "\x68\xCC\x84\xC1\xFE\x3E\xCE\xA0\x44\xE2\xDD\x82\x0F\x12\xA3\x81\x13\x97\xB3\xA8"
-                             "\x33\xE3\x3A\x1A\x33\x22\x0F\x04\x67\x8D\x30\x77\x4E\x5F\xCF\x87\xC2\x0C\xFF\x1F"
-                             "\xE3\x98\xCF\x87\xC2\x0C\xEF\x1E\xD1\xC7\x4B\x17\x58\x1E\x0D\x18\x13\xA6\x7C\x3E"
-                             "\xF0\xC1\x83\xEC\xF0\x7B\x8E\x5F\xCF\x87\xC2\x0C\xED\x1D\xD3\xB6\x76\xC3\xE3\xF0"
-                             "\x50\x60\x85\xC4\x31\xFA\x3F\x47\x74\x3E\x3E\x02\x24\xB3\xBC\x75\x0E\x04\x2E\x2E"
-                             "\x85\x06\x7B\xC1\xF1\xD6\x72\x1E\xF9\xFE\x3F\xC7\xD9\xF6\x77\x8F\x3C\x67\xC3\xE1"
-                             "\x06\x76\x8E\xE9\xC6\x7E\x1D\x67\x59\x07\xC0\x83\x88\x1C\x64\x0A\x78\x41\xC9\x67"
-                             "\xC3\xE1\x06\x7E\x8F\xD1\xDD\x04\x4C\xC4\xFC\x39\x11\xFA\x3F\x44\x28\x33\xA0\xCC"
-                             "\x18\x77\x4E\xF1\xD4\x28\x33\xA0\xBE\x04\x1E\x44\x01\x0B\x1C\x3B\xC7\x50\x7C\x7C"
-                             "\x38\xCE\xF1\xEE\x3B\xC7\x83\xDC\x43\xE1\x1D\xD1\x47\x78\xF0";
-#define  HTTP_SCRIPT_CONSOL       Decompress(HTTP_SCRIPT_CONSOL_COMPRESSED,HTTP_SCRIPT_CONSOL_SIZE).c_str()
+  #include "./html_compressed/HTTP_SCRIPT_CONSOL.h"
 #else
-const char HTTP_SCRIPT_CONSOL[] PROGMEM =
-  "var sn=0,id=0;"                        // Scroll position, Get most of weblog initially
-  "function l(p){"                        // Console log and command service
-    "var c,o='',t;"
-    "clearTimeout(lt);"
-    "t=eb('t1');"
-    "if(p==1){"
-      "c=eb('c1');"                       // Console command id
-      "o='&c1='+encodeURIComponent(c.value);"
-      "c.value='';"
-      "t.scrollTop=99999;"
-      "sn=t.scrollTop;"
-    "}"
-    "if(t.scrollTop>=sn){"                // User scrolled back so no updates
-      "if(x!=null){x.abort();}"           // Abort if no response within 2 seconds (happens on restart 1)
-      "x=new XMLHttpRequest();"
-      "x.onreadystatechange=function(){"
-        "if(x.readyState==4&&x.status==200){"
-          "var z,d;"
-          "d=x.responseText.split(/}1/);"  // Field separator
-          "id=d.shift();"
-          "if(d.shift()==0){t.value='';}"
-          "z=d.shift();"
-          "if(z.length>0){t.value+=z;}"
-          "t.scrollTop=99999;"
-          "sn=t.scrollTop;"
-        "}"
-      "};"
-      "x.open('GET','cs?c2='+id+o,true);"  // Related to Webserver->hasArg("c2") and WebGetArg("c2", stmp, sizeof(stmp))
-      "x.send();"
-    "}"
-    "lt=setTimeout(l,%d);"
-    "return false;"
-  "}"
-  "wl(l);"                                // Load initial console text
+  #include "./html_uncompressed/HTTP_SCRIPT_CONSOL.h"
+#endif
 
-  // Console command history
-  "var hc=[],cn=0;"                       // hc = History commands, cn = Number of history being shown
-  "function h(){"
-//    "if(!(navigator.maxTouchPoints||'ontouchstart'in document.documentElement)){eb('c1').autocomplete='off';}"  // No touch so stop browser autocomplete
-    "eb('c1').addEventListener('keydown',function(e){"
-      "var b=eb('c1'),c=e.keyCode;"       // c1 = Console command id
-      "if(38==c||40==c){b.autocomplete='off';}"  // ArrowUp or ArrowDown must be a keyboard so stop browser autocomplete
-      "38==c?(++cn>hc.length&&(cn=hc.length),b.value=hc[cn-1]||''):"   // ArrowUp
-      "40==c?(0>--cn&&(cn=0),b.value=hc[cn-1]||''):"                   // ArrowDown
-      "13==c&&(hc.length>19&&hc.pop(),hc.unshift(b.value),cn=0)"       // Enter, 19 = Max number -1 of commands in history
-    "});"
-  "}"
-  "wl(h);";                               // Add console command key eventlistener after name has been synced with id (= wl(jd))
-#endif //USE_UNISHOX_COMPRESSION
 
 const char HTTP_MODULE_TEMPLATE_REPLACE_INDEX[] PROGMEM =
   "}2%d'>%s (%d)}3";                       // }2 and }3 are used in below os.replace
 const char HTTP_MODULE_TEMPLATE_REPLACE_NO_INDEX[] PROGMEM =
   "}2%d'>%s}3";                           // }2 and }3 are used in below os.replace
 
-#if defined(USE_UNISHOX_COMPRESSION)
-const size_t HTTP_SCRIPT_MODULE_TEMPLATE_SIZE = 602;
-const char HTTP_SCRIPT_MODULE_TEMPLATE_COMPRESSED[] PROGMEM = "\x33\xBF\xAC\xF1\xD4\x2B\xC7\x83\x02\xF8\x3A\xDC\xE4\x1B\x3B\xBA\x75\x1A\x8E\xF1"
-                             "\xED\x33\xBF\xAC\x3E\x09\x81\x8B\x1A\xFA\x8E\x81\xFD\xDD\x32\x61\x31\xAF\xA8\xEE"
-                             "\x9F\x78\x32\xB7\x38\xFB\x3B\xC7\x8C\x3A\x53\x36\x51\x07\x9D\x4F\xA8\xF9\xA7\x83"
-                             "\x51\xD2\xC6\x0C\x7C\x21\x06\x2B\x42\x10\xEE\xE1\xDE\x3C\x1E\xE0\x44\xCD\xB2\x8E"
-                             "\xE8\xF1\xD5\xE0\x41\xCD\xAC\xF9\xE3\xF4\x71\x91\xB0\xC1\x86\x71\x9D\x44\x38\xF8"
-                             "\x71\x9D\x44\x19\xD4\x30\xEA\x08\xEA\xA3\xE1\xAB\xC7\x74\xFB\x3C\x85\x1F\x67\x6C"
-                             "\x78\xEF\x1D\x42\xCF\x9E\x3F\x47\x19\x1B\x0E\x37\x08\xC1\xE0\x23\xE5\x1D\x01\x07"
-                             "\x4D\xF1\xD0\x27\xC3\xD4\x28\xF0\x63\x3E\x77\x74\xF8\x11\xE3\x4F\x1A\x75\x9D\x67"
-                             "\x78\xF6\x8C\x04\x5B\xC7\xBD\xA7\x59\xC8\x7B\xE7\x42\x19\x7F\x7D\x45\xD8\x23\x3C"
-                             "\x0C\x3A\x7D\x8D\xC3\x36\x08\x3B\x70\x24\xE0\x87\x78\xF0\x7B\x82\x3E\x0A\x04\xAC"
-                             "\xC8\xE3\x3C\x16\x9E\x81\x1E\x34\xED\x9D\xB3\xBC\x7B\x43\x3E\x0A\xF1\xEF\x69\xEF"
-                             "\x82\x17\x2A\x01\xE7\x8D\x30\x77\x6C\xF8\x7C\x0C\xEF\x1E\xD1\xC0\x89\x50\xE3\x70"
-                             "\x8C\x1E\x07\x7D\xD9\xA1\xE0\xF7\x1E\xEF\x1F\x87\xE1\xF0\xE6\x90\x21\x64\x47\x21"
-                             "\xE0\xB4\xF4\x3E\x0E\x04\x2C\x8D\x9D\xD3\xBB\xA7\xA1\xC8\xCE\xF1\xDA\x3B\xA7\xD9"
-                             "\xDC\x3E\xCE\xD9\x69\xDE\x3C\xF4\xEA\xA3\xBC\x78\x3D\xCC\x71\xDD\x3E\xC5\x1F\x67"
-                             "\x6C\x78\xEF\x1D\x0C\xEC\x21\x6C\xF8\x2C\xED\x9C\x87\x82\xA3\xA7\xA8\xC8\x26\x74"
-                             "\x33\xDF\x68\xED\x0B\x68\xC8\xF8\x77\x47\x1F\x87\x19\xDE\x3B\x47\xD9\xF6\x79\x9F"
-                             "\x64\x2B\x44\x11\xF1\xF6\x08\xDC\x58\xF8\xD0\xEE\xF8\xEA\x1E\x04\x3E\x42\xF3\xC7"
-                             "\x4F\xB1\x81\x58\x6C\xEE\x9D\x87\xB8\xE5\x1D\x84\x3C\x75\x1E\xC3\xD0\x10\x78\x4B"
-                             "\x40\x83\x9E\x9F\x67\xB0\xEF\x02\x35\xD3\x96\x76\x10\xF1\xD4\x7B\x0F\x43\xB0\x10"
-                             "\x6F\x1F\x87\xB0\xEF\x1E\x18\xE3\xBA\x7D\x8F\x1F\x67\x6C\x78\xEF\x1D\x37\xB9\xFC"
-                             "\x85\x15\x10\xD2\x08\xF9\x80\x8D\x48\x10\x72\x13\xBA\x3C\x7A\x1C\x48\xEF\x1D\xA2"
-                             "\x04\x3E\x47\x4F\x3F\x1E\x34\xC0\x20\xD0\x3D\xA0\x85\xC9\xF9\xE0\xF7\x1E\xE3";
-#define  HTTP_SCRIPT_MODULE_TEMPLATE       Decompress(HTTP_SCRIPT_MODULE_TEMPLATE_COMPRESSED,HTTP_SCRIPT_MODULE_TEMPLATE_SIZE).c_str()
-#else
-const char HTTP_SCRIPT_MODULE_TEMPLATE[] PROGMEM =
-  "var os,hs;"
-  "function ce(i,q){"                     // Create index select
-    "var o=document.createElement('option');"
-    "o.textContent=i;"
-    "q.appendChild(o);"
-  "}"
-  "function ot(g,s){"                     // g = id and name, s = value
-    "var a=s&0xffe0,b=0,c,p,l,t=qs('#h'+g),u=s&0x001f;"
-    "l=t.options.length;"                 // Remove current options
-    "for(i=l;i;i--){p=t.options[i-1].parentNode;p.removeChild(t.options[i-1]);}"
-    "l=hs.length;"                        // Find max indexes for s
-    "for(i=0;i<l;i++){c=hs[i]&0xffe0;if(a==c){b=hs[i]&0x001f;break;}}"
-    "s>>=5;"                              // Add options
-    "for(i=1;i<=b;i++){ce((i<10)?(' '+i):i,t);}"
-    "eb('h'+g).value=u+1;"                // Set selected value
-    "t.style.visibility=(b>0)?'':'hidden';"
-  "}"
-  "function sk(s,g){"                     // s = value, g = id and name
-    "var o=os.replace(/}2/g,\"<option value='\").replace(/}3/g,\"</option>\");"
-    "eb('g'+g).innerHTML=o;"
-    "eb('g'+g).value=(g<99)?s&0xffe0:s;"
-    "if(g<99){ot(g,s);}"
-  "}";
-#endif //USE_UNISHOX_COMPRESSION
+
 
 #ifdef USE_UNISHOX_COMPRESSION
-const size_t HTTP_SCRIPT_TEMPLATE_SIZE = 303;
-const char HTTP_SCRIPT_TEMPLATE_COMPRESSED[] PROGMEM = "\x30\x2F\x83\xAD\xCE\x41\x08\x77\x45\x9D\x46\x0E\xF1\xED\x33\xBF\xA3\x61\xF3\x98"
-                             "\xFA\x23\x61\x0D\x20\x88\x55\x50\xC2\xFB\x35\x0B\x7E\xA3\xBA\x77\x8F\x06\xC3\xA6"
-                             "\x77\xDD\x88\x65\xEA\xBA\x61\x8A\xBE\x1E\x67\xC0\x43\xC7\x4E\xE9\xDE\x3D\xBA\x60"
-                             "\xEE\xD0\xAD\xF1\xD3\xEE\xC4\x32\x2F\x55\xD3\x3E\x1F\x0E\x61\xFA\x3F\x45\x42\xB7"
-                             "\xC7\x4F\x55\xD0\xBF\x1F\x0F\x87\x29\xB3\xBC\x7B\x48\x10\x70\x43\xBC\x78\x3D\xC7"
-                             "\xB8\xF0\x6C\x3A\x60\xC7\xC7\x74\xFB\x21\xE2\x65\x47\xD9\xD4\x2C\xEA\xAF\x8B\x67"
-                             "\x78\xF0\x6C\x3A\x79\xF0\x87\x74\xEF\x1E\x0F\x71\x9D\xFD\x06\x78\x04\x4E\x2A\x01"
-                             "\x4D\x87\x21\xDD\x21\xC0\x83\xBF\xE9\xD4\x6B\x3A\x87\x8E\xA3\x43\xAB\x0F\x18\x7C"
-                             "\x1C\x74\xFB\xF0\xCC\xEF\x32\xA6\x6C\xA3\xA7\x86\x05\xB4\x77\x4E\xC3\xDC\x72\x1D"
-                             "\x87\x78\xF0\x46\x87\xCC\x3A\x78\x56\x98\xA3\xBA\x77\x8F\x1A\x60\xEE\xB1\xC7\x74"
-                             "\xFB\xF1\xC8\x7D\x9D\xE3\xA1\x19\xD8\x42\xD9\xF0\xF8\x7D\x9F\x67\x78\xF6\x82\x55"
-                             "\x03\x43\xC1\xEE\x1E\x04\x5C\x44\x10\xB2\x93\xEC\xEA\x3E\xCE\xF1\xE3\x3C\x7C\x3D"
-                             "\x86";
-#define  HTTP_SCRIPT_TEMPLATE       Decompress(HTTP_SCRIPT_TEMPLATE_COMPRESSED,HTTP_SCRIPT_TEMPLATE_SIZE).c_str()
+  #include "./html_compressed/HTTP_SCRIPT_MODULE_TEMPLATE.h"
+  #include "./html_compressed/HTTP_SCRIPT_TEMPLATE.h"
 #else
-const char HTTP_SCRIPT_TEMPLATE[] PROGMEM =
-  "function ld(u,f){"
-    "var x=new XMLHttpRequest();"
-    "x.onreadystatechange=function(){"
-      "if(this.readyState==4&&this.status==200){"
-        "f(this);"
-      "}"
-    "};"
-    "x.open('GET',u,true);"
-    "x.send();"
-  "}"
-  "var c;"                                // Need a global for BASE
-  "function x1(b){"
-    "var i,j,g,k,o;"
-    "o=b.responseText.split(/}1/);"       // Field separator
-    "k=o.shift();"                        // Template name
-    "if(eb('s1').value==''){"
-      "eb('s1').value=k;"                 // Set NAME if not yet set
-    "}"
-    "g=o.shift().split(',');"             // GPIO - Array separator
-    "os=\"";                              // }2'0'>None (0)}3}2'17'>Button1 (17)}3...
-#endif //USE_UNISHOX_COMPRESSION
+  #include "./html_uncompressed/HTTP_SCRIPT_MODULE_TEMPLATE.h"
+  #include "./html_uncompressed/HTTP_SCRIPT_TEMPLATE.h"
+#endif
+
 
 const char HTTP_SCRIPT_TEMPLATE2[] PROGMEM =
     "j=0;"
@@ -527,129 +175,34 @@ const char HTTP_SCRIPT_INFO_END[] PROGMEM =
   "}"
   "wl(i);";
 
-#ifdef USE_UNISHOX_COMPRESSION
-const size_t HTTP_HEAD_LAST_SCRIPT_SIZE = 226;
-const char HTTP_HEAD_LAST_SCRIPT_COMPRESSED[] PROGMEM = "\x30\x2F\x83\xAD\xCE\x46\xB1\x0E\xE9\xDE\x3D\xA6\x77\xF5\x47\xC3\x8C\xEA\x2D\x3E"
-                             "\x09\x81\x8B\x1A\xFA\x8E\x86\xA1\x6F\xE6\x45\xE6\x13\x0E\xB3\xE5\x61\x04\x77\x4F"
-                             "\xBD\xE1\x82\xE8\xEA\x1C\x2E\xAB\x38\xEA\xA6\x6C\xAB\xFB\xB3\xAB\xCC\x26\x1D\x1F"
-                             "\x67\x78\xF0\x3E\x2B\x42\x67\x77\x4E\x81\x3E\x1E\xA1\x47\xE1\xF2\x8E\xF1\xED\xD3"
-                             "\x07\x77\x4F\x7A\x8F\x7C\xEF\x1E\xDD\x3D\xEA\x3D\xF3\xDE\x3E\xFA\xC6\xB3\xEC\xF7"
-                             "\xCF\x87\x77\x4F\x7A\x8F\x7C\xE8\x2A\x2B\xFC\x57\x55\xFD\x1C\x2E\x99\xDD\x3E\xF4"
-                             "\x43\xEC\xEF\x1F\xA3\xF4\x77\x4F\xE0\x27\x57\xEB\x1A\xCF\xB3\xBC\x77\x8E\xF1\xDA"
-                             "\x04\x1C\x87\x44\x3E\xCF\x7C\xF3\x04\x7C\xB0\xF0\x7B\xA8\xED\x9D\xB3\xC1\xEE\x3D"
-                             "\xC3\xE1\x1D\xD3\x58\x87\x78\xF0\x7A\x1D\x9E\x0F\xFA\x32\x8F\xC3";
-#define  HTTP_HEAD_LAST_SCRIPT       Decompress(HTTP_HEAD_LAST_SCRIPT_COMPRESSED,HTTP_HEAD_LAST_SCRIPT_SIZE).c_str()
-#else
-const char HTTP_HEAD_LAST_SCRIPT[] PROGMEM =
-  "function jd(){"                        // Add label name='' based on provided id=''
-    "var t=0,i=document.querySelectorAll('input,button,textarea,select');"
-    "while(i.length>=t){"
-      "if(i[t]){"
-        "i[t]['name']=(i[t].hasAttribute('id')&&(!i[t].hasAttribute('name')))?i[t]['id']:i[t]['name'];"
-      "}"
-      "t++;"
-    "}"
-  "}"
-  "wl(jd);"                               // Add name='' to any id='' in input,button,textarea,select
-  "</script>";
-#endif //USE_UNISHOX_COMPRESSION
 
 #ifdef USE_UNISHOX_COMPRESSION
-const size_t HTTP_HEAD_STYLE1_SIZE = 591;
-const char HTTP_HEAD_STYLE1_COMPRESSED[] PROGMEM = "\x3D\x3D\x46\x41\x33\xF0\x4D\x33\x3A\x8C\x6B\x08\x4F\x3A\x3A\xB7\x86\x0B\xA3\xAB"
-                             "\xCC\x26\x1D\x1E\xD1\x96\x20\x9B\xC3\xC7\x99\xCD\x21\x86\xC3\xC1\x8C\xEA\x3A\xFD"
-                             "\xA6\xD6\x79\x9C\x84\xC6\x9E\x0F\x70\x21\xE1\xA7\xB4\x75\x86\x68\x3D\xFC\x17\xC2"
-                             "\x1E\x67\x91\xF4\x71\xF1\x1B\x0F\x07\xB8\x61\xED\x1B\x7F\x1E\xDE\x3C\xCE\x33\xA6"
-                             "\x93\x1A\x8E\x33\xC1\xEE\x2D\xE1\x82\xE8\xF6\x8F\xE8\x94\x28\xF3\x39\x1B\x3E\x8F"
-                             "\xA3\xC1\x0E\xC3\x61\xD7\xED\x36\xEF\x0F\x1E\x63\xB3\xE2\x3F\x9D\x63\xB0\xD8\x78"
-                             "\x3A\xC7\xD8\xE3\x4D\xA3\xAC\x14\xAD\x0D\xC3\x68\x29\x57\x04\xCD\x84\x3C\x0B\x3E"
-                             "\x08\x7B\x6E\xF0\xC1\x74\x7B\xD4\x64\x31\x9F\x03\x14\xC3\x34\x1D\x86\xC3\xDF\x04"
-                             "\x1E\x11\x41\x06\x8F\xEC\x4D\xC3\xDF\x04\x3D\xF1\x8D\x3C\x02\x0F\x03\x87\x5F\xF4"
-                             "\x78\x55\x1E\x67\x38\x86\x1B\x0F\x06\x6F\xF5\xA1\xD8\x47\x5D\x85\xA3\xDC\x79\x9D"
-                             "\x67\x21\x0C\x04\x9C\xCF\xF7\xC3\xCC\x10\xF1\xE3\x89\x1F\x47\xD1\xE0\xF7\x10\x21"
-                             "\x71\x3E\x09\x1C\x28\x82\xC7\x2A\x01\x54\xCD\x95\x7F\x76\x7B\x7E\xFD\xA6\xD6\x79"
-                             "\x82\x1E\xA0\x78\x04\x2C\xC8\xE7\xCF\xA3\xE8\xF0\x42\x9E\x8F\x0A\xA3\xCC\xE5\xCF"
-                             "\x90\xC3\x61\xE0\x11\xF8\xFA\xC3\x37\xF3\x01\x60\xF9\xE7\x62\xEB\x01\x6B\x45\x1D"
-                             "\x82\x19\x1E\xDA\x66\xCA\x04\x2E\x0A\x83\x7D\x4F\xE0\x83\xC9\xE9\x8B\x1B\xA1\x19"
-                             "\x1E\x66\x6F\xE2\x5F\x59\xD5\xEB\xEF\x1D\x7E\x7F\xD3\x2A\x01\x9B\x98\x1E\xEA\x10"
-                             "\x11\x39\x7D\x38\xC8\x61\xB0\xF0\x7B\x8D";
-#define  HTTP_HEAD_STYLE1       Decompress(HTTP_HEAD_STYLE1_COMPRESSED,HTTP_HEAD_STYLE1_SIZE).c_str()
+  #include "./html_compressed/HTTP_HEAD_LAST_SCRIPT.h"
+  #include "./html_compressed/HTTP_HEAD_STYLE1.h"
+  #include "./html_compressed/HTTP_HEAD_STYLE2.h"
 #else
-const char HTTP_HEAD_STYLE1[] PROGMEM =
-  "<style>"
-  "div,fieldset,input,select{padding:5px;font-size:1em;}"
-  "fieldset{background:#%06x;}"  // COLOR_FORM, Also update HTTP_TIMER_STYLE
-  "p{margin:0.5em 0;}"
-  "input{width:100%%;box-sizing:border-box;-webkit-box-sizing:border-box;-moz-box-sizing:border-box;background:#%06x;color:#%06x;}"  // COLOR_INPUT, COLOR_INPUT_TEXT
-  "input[type=checkbox],input[type=radio]{width:1em;margin-right:6px;vertical-align:-1px;}"
-  "input[type=range]{width:99%%;}"
-  "select{width:100%%;background:#%06x;color:#%06x;}"  // COLOR_INPUT, COLOR_INPUT_TEXT
-  "textarea{resize:vertical;width:98%%;height:318px;padding:5px;overflow:auto;background:#%06x;color:#%06x;}"  // COLOR_CONSOLE, COLOR_CONSOLE_TEXT
-  "body{text-align:center;font-family:verdana,sans-serif;background:#%06x;}"  // COLOR_BACKGROUND
-  "td{padding:0px;}";
-#endif //USE_UNISHOX_COMPRESSION
+  #include "./html_uncompressed/HTTP_HEAD_LAST_SCRIPT.h"
+  #include "./html_uncompressed/HTTP_HEAD_STYLE1.h"
+  #include "./html_uncompressed/HTTP_HEAD_STYLE2.h"
+#endif
 
-#ifdef USE_UNISHOX_COMPRESSION
-const size_t HTTP_HEAD_STYLE2_SIZE = 478;
-const char HTTP_HEAD_STYLE2_COMPRESSED[] PROGMEM = "\x1C\x2E\xAB\x38\xF6\x8E\xCF\x88\xFE\x79\x9C\x67\x82\x04\x18\xA7\x5F\xEC\x4D\x17"
-                             "\xE3\xCC\xE3\x3A\x59\x7D\x8D\x3C\x0E\xB0\xCD\x07\xBF\x82\xF8\x43\xCC\xF2\x3E\x8E"
-                             "\x3E\x23\x61\xE0\x3C\x0B\x3E\x08\x52\x02\xDE\x67\x58\xA7\xA3\xC2\xA8\xF3\x39\x47"
-                             "\x4C\x2F\xB1\xA7\x83\x19\xD4\x75\xFB\x4D\xAC\xF3\x39\x0E\x94\x5F\x63\x4F\x03\xFA"
-                             "\x25\x0A\x3C\xCE\x46\xCF\xA3\xE8\xF0\x75\x90\xFB\x1C\x69\xB4\x75\xD7\xEF\xBD\xB5"
-                             "\xB9\xC7\x58\x82\xFF\x75\xB9\xC7\x99\xC6\x74\xC2\xF1\xE0\x15\x2A\x2B\x86\x2F\xFE"
-                             "\xCF\x9E\x63\x33\x7A\x9F\xCF\x07\xB8\x10\x78\x18\x3C\xC5\x61\x9B\xF9\xED\x04\xCE"
-                             "\x2A\x01\x0F\x71\xD0\x77\xD8\x80\xA7\x50\x15\xB1\x21\xEF\xF0\x29\xD4\x05\x4C\x4A"
-                             "\xCF\x68\x23\xF0\xDF\x4C\xD9\x47\x58\x8C\x3C\x04\x2E\x06\xBB\x39\x9E\x0F\x71\xD0"
-                             "\x61\xED\x30\x16\x5D\x1E\x61\x33\x14\x08\x38\x05\x85\xA3\xDC\x08\x33\x0F\x71\xD0"
-                             "\xD4\x08\x56\xFF\xA3\xC2\x81\x22\xE0\x20\xCD\x3D\xC7\x4F\x82\x17\x20\x60\x8D\xC7"
-                             "\xD3\x1A\x78\x19\x62\x09\xBC\x3C\x79\x9C\xA2\x18\x6C\x3C\x0D\xBF\x8F\x6F\x1E\x67"
-                             "\x38\x86\x1B\x11\xCA\x21\x86\xC3\xC1\xEE";
-#define  HTTP_HEAD_STYLE2       Decompress(HTTP_HEAD_STYLE2_COMPRESSED,HTTP_HEAD_STYLE2_SIZE).c_str()
-#else
-const char HTTP_HEAD_STYLE2[] PROGMEM =
-  "button{border:0;border-radius:0.3rem;background:#%06x;color:#%06x;line-height:2.4rem;font-size:1.2rem;width:100%%;-webkit-transition-duration:0.4s;transition-duration:0.4s;cursor:pointer;}"  // COLOR_BUTTON, COLOR_BUTTON_TEXT
-  "button:hover{background:#%06x;}"  // COLOR_BUTTON_HOVER
-  ".bred{background:#%06x;}"  // COLOR_BUTTON_RESET
-  ".bred:hover{background:#%06x;}"  // COLOR_BUTTON_RESET_HOVER
-  ".bgrn{background:#%06x;}"  // COLOR_BUTTON_SAVE
-  ".bgrn:hover{background:#%06x;}"  // COLOR_BUTTON_SAVE_HOVER
-  "a{color:#%06x;text-decoration:none;}"  // COLOR_BUTTON
-  ".p{float:left;text-align:left;}"
-  ".q{float:right;text-align:right;}"
-  ".r{border-radius:0.3em;padding:2px;margin:6px 2px;}";
-#endif //USE_UNISHOX_COMPRESSION
 
 #ifdef USE_ZIGBEE
 // Styles used for Zigbee Web UI
 // Battery icon from https://css.gg/battery
 //
-#ifdef USE_UNISHOX_COMPRESSION
-
-const size_t HTTP_HEAD_STYLE_ZIGBEE_SIZE = 363;
-const char HTTP_HEAD_STYLE_ZIGBEE_COMPRESSED[] PROGMEM = "\x3A\x0E\xA3\xDA\x3B\x0D\x87\x5F\xB4\xDB\xBC\x3C\x79\x8E\xCF\x88\xFE\x75\x8E\xC3"
-                             "\x61\xE0\x66\x7B\x6B\x73\x8F\x3F\xB0\xAE\xB4\xCD\x9E\x04\xDF\x0C\x0A\xCC\x8F\x3D"
-                             "\xE0\xB7\x99\xD6\x38\x2C\x0C\xD0\xF0\x3F\xA2\x50\xA3\xCC\xE5\x32\x18\x6C\x3C\x0A"
-                             "\x7A\x3C\x2A\x2B\x8F\x33\x92\x88\x61\xB0\xF0\x08\x39\x29\xE6\x72\x88\x61\xB1\x7B"
-                             "\x02\xD1\x01\x0A\x69\xD7\xFB\x13\x45\xF8\xF3\x39\x64\x30\xD8\x78\x1B\x7F\x1E\xDE"
-                             "\x3A\xC2\x66\x28\xF3\x3A\xCE\x59\x0C\x36\x1E\xE3\xA0\xEA\x3C\xCF\x3B\x31\x4F\xE7"
-                             "\x51\xD0\x75\x1E\x67\x98\xE6\x63\x3E\xCF\x68\x79\xD4\xFA\x8F\x33\xD8\x7B\x01\x13"
-                             "\x5E\x04\x1D\x5C\x16\xB8\x14\xB1\xDE\xC0\x85\xD3\x04\x3D\xD0\xE7\x10\xC3\x61\xE0"
-                             "\x75\x86\x68\x3D\xFC\x17\xC2\x1E\x61\x8B\xFF\xDF\x51\x07\x81\x67\xCF\x15\x83\x0F"
-                             "\x33\x90\x81\x0F\x5F\x04\x2D\x53\xFA\x3C\x2A\x2B\x8F\x33\xAC\xE6\x10\x22\x70\x54"
-                             "\x08\xFC\x0C\x82\x0F\x0A\x67\x30\x81\x23\x81\x23\xDA\x08\x34\x4C\xEF\xE7\x74\xEB"
-                             "\x3A\xC7\x04\x75\x1C\x98\x43\x0D\x87\x78\xF0\x13\x31\x47\x99\xC8\x43\x0D\x87\xB8";
-
-// Raw: .bt{box-sizing:border-box;position:relative;display:inline-block;width:20px;height:12px;border:2px solid;border-radius:3px;margin-left:-3px}.bt::after,.bt::before{content:"";display:block;box-sizing:border-box;position:absolute;height:6px;background:currentColor;top:1px}.bt::before{right:-4px;border-radius:3px;width:4px}.bt::after{width:var(--bl,14px);left:1px}
-// Successfully compressed from 363 to 240 bytes (-33.9%)
-#define  HTTP_HEAD_STYLE_ZIGBEE       Decompress(HTTP_HEAD_STYLE_ZIGBEE_COMPRESSED,HTTP_HEAD_STYLE_ZIGBEE_SIZE).c_str()
-#else // USE_UNISHOX_COMPRESSION
-const char HTTP_HEAD_STYLE_ZIGBEE[] PROGMEM =
-  ".bt{box-sizing:border-box;position:relative;display:inline-block;width:20px;height:12px;border:2px solid;border-radius:3px;margin-left:-3px}"
-  ".bt::after,.bt::before{content:\"\";display:block;box-sizing:border-box;position:absolute;height:6px;background:currentColor;top:1px}"
-  ".bt::before{right:-4px;border-radius:3px;width:4px}"
-  ".bt::after{width:var(--bl,14px);left:1px}";
-#endif // USE_UNISHOX_COMPRESSION
+  #ifdef USE_UNISHOX_COMPRESSION
+    #include "./html_compressed/HTTP_HEAD_STYLE_ZIGBEE.h"
+  #else
+    #include "./html_uncompressed/HTTP_HEAD_STYLE_ZIGBEE.h"
+  #endif
 #endif // USE_ZIGBEE
+
+const char HTTP_HEAD_STYLE_SSI[] PROGMEM =
+  // Signal Strength Indicator
+  ".si{display:inline-flex;align-items:flex-end;height:15px;padding:0}"
+  ".si i{width:3px;margin-right:1px;border-radius:3px;background-color:#%06x}"
+  ".si .b0{height:25%%}.si .b1{height:50%%}.si .b2{height:75%%}.si .b3{height:100%%}.o30{opacity:.3}";
 
 const char HTTP_HEAD_STYLE3[] PROGMEM =
   "</style>"
@@ -797,8 +350,8 @@ const char kButtonAction[] PROGMEM =
   "md|wi|lg|co|tp|dl|rs";
 const char kButtonConfirm[] PROGMEM = D_CONFIRM_RESTART "|" D_CONFIRM_RESET_CONFIGURATION;
 
-enum CTypes { CT_HTML, CT_PLAIN, CT_XML, CT_JSON, CT_STREAM };
-const char kContentTypes[] PROGMEM = "text/html|text/plain|text/xml|application/json|application/octet-stream";
+enum CTypes { CT_HTML, CT_PLAIN, CT_XML, CT_STREAM, CT_APP_JSON, CT_APP_STREAM };
+const char kContentTypes[] PROGMEM = "text/html|text/plain|text/xml|text/event-stream|application/json|application/octet-stream";
 
 const char kLoggingOptions[] PROGMEM = D_SERIAL_LOG_LEVEL "|" D_WEB_LOG_LEVEL "|" D_MQTT_LOG_LEVEL "|" D_SYS_LOG_LEVEL;
 const char kLoggingLevels[] PROGMEM = D_NONE "|" D_ERROR "|" D_INFO "|" D_DEBUG "|" D_MORE_DEBUG;
@@ -816,20 +369,21 @@ ESP8266WebServer *Webserver;
 
 struct WEB {
   String chunk_buffer = "";                         // Could be max 2 * CHUNKED_BUFFER_SIZE
-  uint16_t upload_progress_dot_count;
   uint16_t upload_error = 0;
   uint8_t state = HTTP_OFF;
   uint8_t upload_file_type;
   uint8_t config_block_count = 0;
   uint8_t config_xor_on = 0;
   uint8_t config_xor_on_set = CONFIG_FILE_XOR;
+  bool upload_services_stopped = false;
   bool reset_web_log_flag = false;                  // Reset web console log
 } Web;
 
 // Helper function to avoid code duplication (saves 4k Flash)
+// arg can be in PROGMEM
 static void WebGetArg(const char* arg, char* out, size_t max)
 {
-  String s = Webserver->arg(arg);
+  String s = Webserver->arg((const __FlashStringHelper *)arg);
   strlcpy(out, s.c_str(), max);
 //  out[max-1] = '\0';  // Ensure terminating NUL
 }
@@ -842,7 +396,7 @@ void ShowWebSource(uint32_t source)
 {
   if ((source > 0) && (source < SRC_MAX)) {
     char stemp1[20];
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR("SRC: %s from %s"), GetTextIndexed(stemp1, sizeof(stemp1), source, kCommandSource), Webserver->client().remoteIP().toString().c_str());
+    AddLog(LOG_LEVEL_DEBUG, PSTR("SRC: %s from %_I"), GetTextIndexed(stemp1, sizeof(stemp1), source, kCommandSource), (uint32_t)Webserver->client().remoteIP());
   }
 }
 
@@ -911,6 +465,7 @@ void StartWebserver(int type, IPAddress ipweb)
         WebServer_on(uri, line.handler, pgm_read_byte(&line.method));
       }
       Webserver->onNotFound(HandleNotFound);
+//      Webserver->on(F("/u2"), HTTP_POST, HandleUploadDone, HandleUploadLoop);  // this call requires 2 functions so we keep a direct call
       Webserver->on("/u2", HTTP_POST, HandleUploadDone, HandleUploadLoop);  // this call requires 2 functions so we keep a direct call
 #ifndef FIRMWARE_MINIMAL
       XdrvCall(FUNC_WEB_ADD_HANDLER);
@@ -925,15 +480,15 @@ void StartWebserver(int type, IPAddress ipweb)
 #if LWIP_IPV6
     String ipv6_addr = WifiGetIPv6();
     if (ipv6_addr!="") {
-      AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_HTTP D_WEBSERVER_ACTIVE_ON " %s%s " D_WITH_IP_ADDRESS " %s and IPv6 global address %s "),
-        NetworkHostname(), (Mdns.begun) ? ".local" : "", ipweb.toString().c_str(), ipv6_addr.c_str());
+      AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_HTTP D_WEBSERVER_ACTIVE_ON " %s%s " D_WITH_IP_ADDRESS " %_I and IPv6 global address %s "),
+        NetworkHostname(), (Mdns.begun) ? PSTR(".local") : "", (uint32_t)ipweb, ipv6_addr.c_str());
     } else {
-      AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_HTTP D_WEBSERVER_ACTIVE_ON " %s%s " D_WITH_IP_ADDRESS " %s"),
-        NetworkHostname(), (Mdns.begun) ? ".local" : "", ipweb.toString().c_str());
+      AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_HTTP D_WEBSERVER_ACTIVE_ON " %s%s " D_WITH_IP_ADDRESS " %_I"),
+        NetworkHostname(), (Mdns.begun) ? PSTR(".local") : "", (uint32_t)ipweb);
     }
 #else
-    AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_HTTP D_WEBSERVER_ACTIVE_ON " %s%s " D_WITH_IP_ADDRESS " %s"),
-      NetworkHostname(), (Mdns.begun) ? ".local" : "", ipweb.toString().c_str());
+    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_HTTP D_WEBSERVER_ACTIVE_ON " %s%s " D_WITH_IP_ADDRESS " %_I"),
+      NetworkHostname(), (Mdns.begun) ? PSTR(".local") : "", (uint32_t)ipweb);
 #endif // LWIP_IPV6 = 1
     TasmotaGlobal.rules_flag.http_init = 1;
   }
@@ -945,7 +500,7 @@ void StopWebserver(void)
   if (Web.state) {
     Webserver->close();
     Web.state = HTTP_OFF;
-    AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_HTTP D_WEBSERVER_STOPPED));
+    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_HTTP D_WEBSERVER_STOPPED));
   }
 }
 
@@ -955,11 +510,11 @@ void WifiManagerBegin(bool reset_only)
   if (!TasmotaGlobal.global_state.wifi_down) {
 //    WiFi.mode(WIFI_AP_STA);
     WifiSetMode(WIFI_AP_STA);
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_WIFI D_WIFIMANAGER_SET_ACCESSPOINT_AND_STATION));
+    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_WIFI D_WIFIMANAGER_SET_ACCESSPOINT_AND_STATION));
   } else {
 //    WiFi.mode(WIFI_AP);
     WifiSetMode(WIFI_AP);
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_WIFI D_WIFIMANAGER_SET_ACCESSPOINT));
+    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_WIFI D_WIFIMANAGER_SET_ACCESSPOINT));
   }
 
   StopWebserver();
@@ -1018,6 +573,9 @@ void HttpHeaderCors(void)
 
 void WSHeaderSend(void)
 {
+  char server[32];
+  snprintf_P(server, sizeof(server), PSTR("Tasmota/%s (%s)"), TasmotaGlobal.version, GetDeviceHardware().c_str());
+  Webserver->sendHeader(F("Server"), server);
   Webserver->sendHeader(F("Cache-Control"), F("no-cache, no-store, must-revalidate"));
   Webserver->sendHeader(F("Pragma"), F("no-cache"));
   Webserver->sendHeader(F("Expires"), F("-1"));
@@ -1074,7 +632,7 @@ void _WSContentSendBuffer(void)
     return;
   }
   else if (len == sizeof(TasmotaGlobal.mqtt_data)) {
-    AddLog_P(LOG_LEVEL_INFO, PSTR("HTP: Content too large"));
+    AddLog(LOG_LEVEL_INFO, PSTR("HTP: Content too large"));
   }
   else if (len < CHUNKED_BUFFER_SIZE) {            // Append chunk buffer with small content
     Web.chunk_buffer += TasmotaGlobal.mqtt_data;
@@ -1094,7 +652,7 @@ void WSContentSend_P(const char* formatP, ...)     // Content send snprintf_P ch
   // This uses char strings. Be aware of sending %% if % is needed
   va_list arg;
   va_start(arg, formatP);
-  int len = vsnprintf_P(TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), formatP, arg);
+  int len = ext_vsnprintf_P(TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), formatP, arg);
   va_end(arg);
 
 #ifdef DEBUG_TASMOTA_CORE
@@ -1112,7 +670,7 @@ void WSContentSend_PD(const char* formatP, ...)    // Content send snprintf_P ch
   // This uses char strings. Be aware of sending %% if % is needed
   va_list arg;
   va_start(arg, formatP);
-  int len = vsnprintf_P(TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), formatP, arg);
+  int len = ext_vsnprintf_P(TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), formatP, arg);
   va_end(arg);
 
 #ifdef DEBUG_TASMOTA_CORE
@@ -1135,18 +693,14 @@ void WSContentSend_PD(const char* formatP, ...)    // Content send snprintf_P ch
 
 void WSContentStart_P(const char* title, bool auth)
 {
-  if (auth && strlen(SettingsText(SET_WEBPWD)) && !Webserver->authenticate(WEB_USERNAME, SettingsText(SET_WEBPWD))) {
+  if (auth && !WebAuthenticate()) {
     return Webserver->requestAuthentication();
   }
 
   WSContentBegin(200, CT_HTML);
 
   if (title != nullptr) {
-#ifdef USE_UNISHOX_COMPRESSION
-    WSContentSend_P(HTTP_HEADER1, D_HTML_LANGUAGE, SettingsText(SET_DEVICENAME), title);
-#else
-    WSContentSend_P(HTTP_HEADER1, SettingsText(SET_DEVICENAME), title);
-#endif //USE_UNISHOX_COMPRESSION
+    WSContentSend_P(HTTP_HEADER1, PSTR(D_HTML_LANGUAGE), SettingsText(SET_DEVICENAME), title);
   }
 }
 
@@ -1176,7 +730,7 @@ void WSContentSendStyle_P(const char* formatP, ...)
     // This uses char strings. Be aware of sending %% if % is needed
     va_list arg;
     va_start(arg, formatP);
-    int len = vsnprintf_P(TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), formatP, arg);
+    int len = ext_vsnprintf_P(TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), formatP, arg);
     va_end(arg);
 
 #ifdef DEBUG_TASMOTA_CORE
@@ -1190,16 +744,16 @@ void WSContentSendStyle_P(const char* formatP, ...)
   }
   WSContentSend_P(HTTP_HEAD_STYLE3, WebColor(COL_TEXT),
 #ifdef FIRMWARE_MINIMAL
-    WebColor(COL_TEXT_WARNING),
+  WebColor(COL_TEXT_WARNING),
 #endif
-    WebColor(COL_TITLE),
-    ModuleName().c_str(), SettingsText(SET_DEVICENAME));
+  WebColor(COL_TITLE),
+  ModuleName().c_str(), SettingsText(SET_DEVICENAME));
   if (Settings.flag3.gui_hostname_ip) {                // SetOption53 - Show hostanme and IP address in GUI main menu
     bool lip = (static_cast<uint32_t>(WiFi.localIP()) != 0);
     bool sip = (static_cast<uint32_t>(WiFi.softAPIP()) != 0);
     WSContentSend_P(PSTR("<h4>%s%s (%s%s%s)</h4>"),    // tasmota.local (192.168.2.12, 192.168.4.1)
       NetworkHostname(),
-      (Mdns.begun) ? ".local" : "",
+      (Mdns.begun) ? PSTR(".local") : "",
       (lip) ? WiFi.localIP().toString().c_str() : "",
       (lip && sip) ? ", " : "",
       (sip) ? WiFi.softAPIP().toString().c_str() : "");
@@ -1222,7 +776,7 @@ void WSContentButton(uint32_t title_index)
     WSContentSend_P(PSTR("<p><form action='%s' method='get' onsubmit='return confirm(\"%s\");'><button name='%s' class='button bred'>%s</button></form></p>"),
       GetTextIndexed(action, sizeof(action), title_index, kButtonAction),
       GetTextIndexed(confirm, sizeof(confirm), title_index, kButtonConfirm),
-      (!title_index) ? "rst" : "non",
+      (!title_index) ? PSTR("rst") : PSTR("non"),
       GetTextIndexed(title, sizeof(title), title_index, kButtonTitle));
   } else {
     WSContentSend_P(PSTR("<p><form action='%s' method='get'><button>%s</button></form></p>"),
@@ -1237,11 +791,15 @@ void WSContentSpaceButton(uint32_t title_index)
   WSContentButton(title_index);
 }
 
+void WSContentSend_Temp(const char *types, float f_temperature) {
+  WSContentSend_PD(HTTP_SNS_F_TEMP, types, Settings.flag2.temperature_resolution, &f_temperature, TempUnit());
+}
+
 void WSContentSend_THD(const char *types, float f_temperature, float f_humidity)
 {
+  WSContentSend_Temp(types, f_temperature);
+
   char parameter[FLOATSZ];
-  dtostrfd(f_temperature, Settings.flag2.temperature_resolution, parameter);
-  WSContentSend_PD(HTTP_SNS_TEMP, types, parameter, TempUnit());
   dtostrfd(f_humidity, Settings.flag2.humidity_resolution, parameter);
   WSContentSend_PD(HTTP_SNS_HUM, types, parameter);
   dtostrfd(CalcTempHumToDew(f_temperature, f_humidity), Settings.flag2.temperature_resolution, parameter);
@@ -1273,7 +831,7 @@ void WebRestart(uint32_t type)
   // type 0 = restart
   // type 1 = restart after config change
   // type 2 = restart after config change with possible ip address change too
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_RESTART));
+  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_RESTART));
 
   bool reset_only = (HTTP_MANAGER_RESET_ONLY == Web.state);
 
@@ -1321,8 +879,8 @@ void HandleWifiLogin(void)
 void WebSliderColdWarm(void)
 {
   WSContentSend_P(HTTP_MSG_SLIDER_GRADIENT,  // Cold Warm
-    "a",             // a - Unique HTML id
-    "#eff", "#f81",  // 6500k in RGB (White) to 2500k in RGB (Warm Yellow)
+    PSTR("a"),             // a - Unique HTML id
+    PSTR("#eff"), PSTR("#f81"),  // 6500k in RGB (White) to 2500k in RGB (Warm Yellow)
     1,               // sl1
     153, 500,        // Range color temperature
     LightGetColorTemp(),
@@ -1334,17 +892,17 @@ void HandleRoot(void)
 {
   if (CaptivePortal()) { return; }  // If captive portal redirect instead of displaying the page.
 
-  if (Webserver->hasArg("rst")) {
+  if (Webserver->hasArg(F("rst"))) {
     WebRestart(0);
     return;
   }
 
   if (WifiIsInManagerMode()) {
 #ifndef FIRMWARE_MINIMAL
-    if (strlen(SettingsText(SET_WEBPWD)) && !(Webserver->hasArg("USER1")) && !(Webserver->hasArg("PASS1")) && HTTP_MANAGER_RESET_ONLY != Web.state) {
+    if (strlen(SettingsText(SET_WEBPWD)) && !(Webserver->hasArg(F("USER1"))) && !(Webserver->hasArg(F("PASS1"))) && HTTP_MANAGER_RESET_ONLY != Web.state) {
       HandleWifiLogin();
     } else {
-      if (!strlen(SettingsText(SET_WEBPWD)) || (((Webserver->arg("USER1") == WEB_USERNAME ) && (Webserver->arg("PASS1") == SettingsText(SET_WEBPWD) )) || HTTP_MANAGER_RESET_ONLY == Web.state)) {
+      if (!strlen(SettingsText(SET_WEBPWD)) || (((Webserver->arg(F("USER1")) == WEB_USERNAME ) && (Webserver->arg(F("PASS1")) == SettingsText(SET_WEBPWD) )) || HTTP_MANAGER_RESET_ONLY == Web.state)) {
         HandleWifiConfiguration();
       } else {
         // wrong user and pass
@@ -1359,7 +917,7 @@ void HandleRoot(void)
     return;
   }
 
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_MAIN_MENU));
+  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_MAIN_MENU));
 
   char stemp[33];
 
@@ -1391,8 +949,8 @@ void HandleRoot(void)
           LightGetHSB(&hue, &sat, nullptr);
 
           WSContentSend_P(HTTP_MSG_SLIDER_GRADIENT,  // Hue
-            "b",             // b - Unique HTML id
-            "#800", PSTR("#f00 5%,#ff0 20%,#0f0 35%,#0ff 50%,#00f 65%,#f0f 80%,#f00 95%,#800"),  // Hue colors
+            PSTR("b"),             // b - Unique HTML id
+            PSTR("#800"), PSTR("#f00 5%,#ff0 20%,#0f0 35%,#0ff 50%,#00f 65%,#f0f 80%,#f00 95%,#800"),  // Hue colors
             2,               // sl2 - Unique range HTML id - Used as source for Saturation end color
             1, 359,          // Range valid Hue
             hue,
@@ -1402,11 +960,11 @@ void HandleRoot(void)
           char scolor[8];
           snprintf_P(scolor, sizeof(scolor), PSTR("#%02X%02X%02X"), dcolor, dcolor, dcolor);  // Saturation start color from Black to White
           uint8_t red, green, blue;
-          LightHsToRgb(hue, 255, &red, &green, &blue);
+          HsToRgb(hue, 255, &red, &green, &blue);
           snprintf_P(stemp, sizeof(stemp), PSTR("#%02X%02X%02X"), red, green, blue);  // Saturation end color
 
           WSContentSend_P(HTTP_MSG_SLIDER_GRADIENT,  // Saturation
-            "s",             // s - Unique HTML id related to eb('s').style.background='linear-gradient(to right,rgb('+sl+'%%,'+sl+'%%,'+sl+'%%),hsl('+eb('sl2').value+',100%%,50%%))';
+            PSTR("s"),             // s - Unique HTML id related to eb('s').style.background='linear-gradient(to right,rgb('+sl+'%%,'+sl+'%%,'+sl+'%%),hsl('+eb('sl2').value+',100%%,50%%))';
             scolor, stemp,   // Brightness to max current color
             3,               // sl3 - Unique range HTML id - Not used
             0, 100,          // Range 0 to 100%
@@ -1415,8 +973,8 @@ void HandleRoot(void)
         }
 
         WSContentSend_P(HTTP_MSG_SLIDER_GRADIENT,  // Brightness - Black to White
-          "c",               // c - Unique HTML id
-          "#000", "#fff",    // Black to White
+          PSTR("c"),               // c - Unique HTML id
+          PSTR("#000"), PSTR("#fff"),    // Black to White
           4,                 // sl4 - Unique range HTML id - Used as source for Saturation begin color
           Settings.flag3.slider_dimmer_stay_on, 100,  // Range 0/1 to 100% (SetOption77 - Do not power off if slider moved to far left)
           Settings.light_dimmer,
@@ -1427,8 +985,8 @@ void HandleRoot(void)
             WebSliderColdWarm();
           }
           WSContentSend_P(HTTP_MSG_SLIDER_GRADIENT,  // White brightness - Black to White
-            "f",             // f - Unique HTML id
-            "#000", "#fff",  // Black to White
+            PSTR("f"),             // f - Unique HTML id
+            PSTR("#000"), PSTR("#fff"),  // Black to White
             5,               // sl5 - Unique range HTML id - Not used
             Settings.flag3.slider_dimmer_stay_on, 100,  // Range 0/1 to 100% (SetOption77 - Do not power off if slider moved to far left)
             LightGetDimmer(2),
@@ -1442,7 +1000,7 @@ void HandleRoot(void)
 
           WSContentSend_P(HTTP_MSG_SLIDER_GRADIENT,  // Channel brightness - Black to White
             stemp,           // e1 to e5 - Unique HTML id
-            "#000", "#fff",  // Black to White
+            PSTR("#000"), PSTR("#fff"),  // Black to White
             i+1,             // sl1 to sl5 - Unique range HTML id - Not used
             1, 100,          // Range 1 to 100%
             changeUIntScale(Settings.light_color[i], 0, 255, 0, 100),
@@ -1463,7 +1021,7 @@ void HandleRoot(void)
 #ifdef USE_SONOFF_IFAN
     if (IsModuleIfan()) {
       WSContentSend_P(HTTP_DEVICE_CONTROL, 36, 1,
-        (strlen(SettingsText(SET_BUTTON1))) ? SettingsText(SET_BUTTON1) : D_BUTTON_TOGGLE,
+        (strlen(SettingsText(SET_BUTTON1))) ? SettingsText(SET_BUTTON1) : PSTR(D_BUTTON_TOGGLE),
         "");
       for (uint32_t i = 0; i < MaxFanspeed(); i++) {
         snprintf_P(stemp, sizeof(stemp), PSTR("%d"), i);
@@ -1486,7 +1044,7 @@ void HandleRoot(void)
 #endif  // USE_SHUTTER
         snprintf_P(stemp, sizeof(stemp), PSTR(" %d"), idx);
         WSContentSend_P(HTTP_DEVICE_CONTROL, 100 / TasmotaGlobal.devices_present, idx,
-          (set_button) ? SettingsText(SET_BUTTON1 + idx -1) : (TasmotaGlobal.devices_present < 5) ? D_BUTTON_TOGGLE : "",
+          (set_button) ? SettingsText(SET_BUTTON1 + idx -1) : (TasmotaGlobal.devices_present < 5) ? PSTR(D_BUTTON_TOGGLE) : "",
           (set_button) ? "" : (TasmotaGlobal.devices_present > 1) ? stemp : "");
       }
 #ifdef USE_SONOFF_IFAN
@@ -1562,7 +1120,7 @@ bool HandleRootStatusRefresh(void)
   char svalue[32];                   // Command and number parameter
   char webindex[5];                  // WebGetArg name
 
-  WebGetArg("o", tmp, sizeof(tmp));  // 1 - 16 Device number for button Toggle or Fanspeed
+  WebGetArg(PSTR("o"), tmp, sizeof(tmp));  // 1 - 16 Device number for button Toggle or Fanspeed
   if (strlen(tmp)) {
     ShowWebSource(SRC_WEBGUI);
     uint32_t device = atoi(tmp);
@@ -1608,12 +1166,12 @@ bool HandleRootStatusRefresh(void)
 #endif  // USE_TUYA_MCU
   }
 #ifdef USE_LIGHT
-  WebGetArg("d0", tmp, sizeof(tmp));  // 0 - 100 Dimmer value
+  WebGetArg(PSTR("d0"), tmp, sizeof(tmp));  // 0 - 100 Dimmer value
   if (strlen(tmp)) {
     snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_DIMMER " %s"), tmp);
     ExecuteWebCommand(svalue, SRC_WEBGUI);
   }
-  WebGetArg("w0", tmp, sizeof(tmp));  // 0 - 100 White value
+  WebGetArg(PSTR("w0"), tmp, sizeof(tmp));  // 0 - 100 White value
   if (strlen(tmp)) {
     snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_WHITE " %s"), tmp);
     ExecuteWebCommand(svalue, SRC_WEBGUI);
@@ -1628,17 +1186,17 @@ bool HandleRootStatusRefresh(void)
       ExecuteWebCommand(svalue, SRC_WEBGUI);
     }
   }
-  WebGetArg("t0", tmp, sizeof(tmp));  // 153 - 500 Color temperature
+  WebGetArg(PSTR("t0"), tmp, sizeof(tmp));  // 153 - 500 Color temperature
   if (strlen(tmp)) {
     snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_COLORTEMPERATURE " %s"), tmp);
     ExecuteWebCommand(svalue, SRC_WEBGUI);
   }
-  WebGetArg("h0", tmp, sizeof(tmp));  // 0 - 359 Hue value
+  WebGetArg(PSTR("h0"), tmp, sizeof(tmp));  // 0 - 359 Hue value
   if (strlen(tmp)) {
     snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_HSBCOLOR  "1 %s"), tmp);
     ExecuteWebCommand(svalue, SRC_WEBGUI);
   }
-  WebGetArg("n0", tmp, sizeof(tmp));  // 0 - 99 Saturation value
+  WebGetArg(PSTR("n0"), tmp, sizeof(tmp));  // 0 - 99 Saturation value
   if (strlen(tmp)) {
     snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_HSBCOLOR  "2 %s"), tmp);
     ExecuteWebCommand(svalue, SRC_WEBGUI);
@@ -1655,25 +1213,31 @@ bool HandleRootStatusRefresh(void)
   }
 #endif  // USE_SHUTTER
 #ifdef USE_SONOFF_RF
-  WebGetArg("k", tmp, sizeof(tmp));  // 1 - 16 Pre defined RF keys
+  WebGetArg(PSTR("k"), tmp, sizeof(tmp));  // 1 - 16 Pre defined RF keys
   if (strlen(tmp)) {
     snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_RFKEY "%s"), tmp);
     ExecuteWebCommand(svalue, SRC_WEBGUI);
   }
 #endif  // USE_SONOFF_RF
 #ifdef USE_ZIGBEE
-  WebGetArg("zbj", tmp, sizeof(tmp));
+  WebGetArg(PSTR("zbj"), tmp, sizeof(tmp));
   if (strlen(tmp)) {
     snprintf_P(svalue, sizeof(svalue), PSTR("ZbPermitJoin"));
     ExecuteWebCommand(svalue, SRC_WEBGUI);
   }
-  WebGetArg("zbr", tmp, sizeof(tmp));
+  WebGetArg(PSTR("zbr"), tmp, sizeof(tmp));
   if (strlen(tmp)) {
     snprintf_P(svalue, sizeof(svalue), PSTR("ZbMap"));
     ExecuteWebCommand(svalue, SRC_WEBGUI);
   }
 #endif // USE_ZIGBEE
+
+#ifdef USE_WEB_SSE
+  WSContentBegin(200, CT_STREAM);
+  WSContentSend_P(PSTR("data: "));
+#else
   WSContentBegin(200, CT_HTML);
+#endif  // USE_WEB_SSE
   WSContentSend_P(PSTR("{t}"));
   XsnsCall(FUNC_WEB_SENSOR);
   XdrvCall(FUNC_WEB_SENSOR);
@@ -1685,15 +1249,15 @@ bool HandleRootStatusRefresh(void)
     uint32_t fsize = (TasmotaGlobal.devices_present < 5) ? 70 - (TasmotaGlobal.devices_present * 8) : 32;
 #ifdef USE_SONOFF_IFAN
     if (IsModuleIfan()) {
-      WSContentSend_P(HTTP_DEVICE_STATE, 36, (bitRead(TasmotaGlobal.power, 0)) ? "bold" : "normal", 54, GetStateText(bitRead(TasmotaGlobal.power, 0)));
+      WSContentSend_P(HTTP_DEVICE_STATE, 36, (bitRead(TasmotaGlobal.power, 0)) ? PSTR("bold") : PSTR("normal"), 54, GetStateText(bitRead(TasmotaGlobal.power, 0)));
       uint32_t fanspeed = GetFanspeed();
       snprintf_P(svalue, sizeof(svalue), PSTR("%d"), fanspeed);
-      WSContentSend_P(HTTP_DEVICE_STATE, 64, (fanspeed) ? "bold" : "normal", 54, (fanspeed) ? svalue : GetStateText(0));
+      WSContentSend_P(HTTP_DEVICE_STATE, 64, (fanspeed) ? PSTR("bold") : PSTR("normal"), 54, (fanspeed) ? svalue : GetStateText(0));
     } else {
 #endif  // USE_SONOFF_IFAN
       for (uint32_t idx = 1; idx <= TasmotaGlobal.devices_present; idx++) {
         snprintf_P(svalue, sizeof(svalue), PSTR("%d"), bitRead(TasmotaGlobal.power, idx -1));
-        WSContentSend_P(HTTP_DEVICE_STATE, 100 / TasmotaGlobal.devices_present, (bitRead(TasmotaGlobal.power, idx -1)) ? "bold" : "normal", fsize, (TasmotaGlobal.devices_present < 5) ? GetStateText(bitRead(TasmotaGlobal.power, idx -1)) : svalue);
+        WSContentSend_P(HTTP_DEVICE_STATE, 100 / TasmotaGlobal.devices_present, (bitRead(TasmotaGlobal.power, idx -1)) ? PSTR("bold") : PSTR("normal"), fsize, (TasmotaGlobal.devices_present < 5) ? GetStateText(bitRead(TasmotaGlobal.power, idx -1)) : svalue);
       }
 #ifdef USE_SONOFF_IFAN
     }
@@ -1701,14 +1265,7 @@ bool HandleRootStatusRefresh(void)
 
     WSContentSend_P(PSTR("</tr></table>"));
   }
-#ifdef USE_TUYA_MCU
-  if (IsModuleTuya()) {
-    uint32_t modeset = TuyaModeSet();
-    if (AsModuleTuyaMS()) {
-      WSContentSend_P(PSTR("<div style='text-align:center;font-size:25px;'>" D_JSON_IRHVAC_MODE ": %d</div>"), modeset);
-    }
-  }
-#endif  // USE_TUYA_MCU
+  WSContentSend_P(PSTR("\n\n"));  // Prep for SSE
   WSContentEnd();
 
   return true;
@@ -1738,7 +1295,7 @@ void HandleConfiguration(void)
 {
   if (!HttpCheckPriviledgedAccess()) { return; }
 
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_CONFIGURATION));
+  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_CONFIGURATION));
 
   WSContentStart_P(PSTR(D_CONFIGURATION));
   WSContentSendStyle();
@@ -1757,6 +1314,9 @@ void HandleConfiguration(void)
   WSContentButton(BUTTON_BACKUP);
   WSContentButton(BUTTON_RESTORE);
 
+  WSContentSend_P(PSTR("<div></div>"));            // 5px padding
+  XdrvCall(FUNC_WEB_ADD_MANAGEMENT_BUTTON);
+
   WSContentSpaceButton(BUTTON_MAIN);
   WSContentStop();
 }
@@ -1767,7 +1327,7 @@ void WSContentSendNiceLists(uint32_t option) {
   char stemp[30];                                             // Template number and Sensor name
   for (uint32_t i = 0; i < ARRAY_SIZE(kGpioNiceList); i++) {  // GPIO: }2'0'>None (0)}3}2'17'>Button1 (17)}3...
     if (option && (1 == i)) {
-      WSContentSend_P(HTTP_MODULE_TEMPLATE_REPLACE_NO_INDEX, AGPIO(GPIO_USER), D_SENSOR_USER);  // }2'255'>User}3
+      WSContentSend_P(HTTP_MODULE_TEMPLATE_REPLACE_NO_INDEX, AGPIO(GPIO_USER), PSTR(D_SENSOR_USER));  // }2'255'>User}3
     }
     uint32_t ridx = pgm_read_word(kGpioNiceList + i) & 0xFFE0;
     uint32_t midx = BGPIO(ridx);
@@ -1808,7 +1368,7 @@ void WSContentSendAdcNiceList(uint32_t option) {
   WSContentSend_P(PSTR("os=\""));
   for (uint32_t i = 0; i < ARRAY_SIZE(kAdcNiceList); i++) {   // GPIO: }2'0'>None}3}2'17'>Analog}3...
     if (option && (1 == i)) {
-      WSContentSend_P(HTTP_MODULE_TEMPLATE_REPLACE_NO_INDEX, AGPIO(GPIO_USER), D_SENSOR_USER);  // }2'15'>User}3
+      WSContentSend_P(HTTP_MODULE_TEMPLATE_REPLACE_NO_INDEX, AGPIO(GPIO_USER), PSTR(D_SENSOR_USER));  // }2'15'>User}3
     }
     uint32_t ridx = pgm_read_word(kAdcNiceList + i) & 0xFFE0;
     uint32_t midx = BGPIO(ridx);
@@ -1824,7 +1384,7 @@ void HandleTemplateConfiguration(void)
 {
   if (!HttpCheckPriviledgedAccess()) { return; }
 
-  if (Webserver->hasArg("save")) {
+  if (Webserver->hasArg(F("save"))) {
     TemplateSaveSettings();
     WebRestart(1);
     return;
@@ -1832,7 +1392,7 @@ void HandleTemplateConfiguration(void)
 
   char stemp[30];                                           // Template number and Sensor name
 
-  WebGetArg("t", stemp, sizeof(stemp));                     // 0 - 69 Template number
+  WebGetArg(PSTR("t"), stemp, sizeof(stemp));                     // 0 - 69 Template number
   if (strlen(stemp)) {
     uint32_t module = atoi(stemp);
     uint32_t module_save = Settings.module;
@@ -1854,7 +1414,7 @@ void HandleTemplateConfiguration(void)
     return;
   }
 
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_CONFIGURE_TEMPLATE));
+  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_CONFIGURE_TEMPLATE));
 
   WSContentStart_P(PSTR(D_CONFIGURE_TEMPLATE));
   WSContentSend_P(HTTP_SCRIPT_MODULE_TEMPLATE);
@@ -1890,8 +1450,8 @@ void HandleTemplateConfiguration(void)
   for (uint32_t i = 0; i < MAX_GPIO_PIN; i++) {
     if (!FlashPin(i)) {
       WSContentSend_P(PSTR("<tr><td><b><font color='#%06x'>" D_GPIO "%d</font></b></td><td%s><select id='g%d' onchange='ot(%d,this.value)'></select></td>"),
-        ((9==i)||(10==i)) ? WebColor(COL_TEXT_WARNING) : WebColor(COL_TEXT), i, (0==i) ? " style='width:150px'" : "", i, i);
-      WSContentSend_P(PSTR("<td style='width:50px'><select id='h%d'></select></td></tr>"), i);
+        ((9==i)||(10==i)) ? WebColor(COL_TEXT_WARNING) : WebColor(COL_TEXT), i, (0==i) ? PSTR(" style='width:146px'") : "", i, i);
+      WSContentSend_P(PSTR("<td style='width:54px'><select id='h%d'></select></td></tr>"), i);
     }
   }
   WSContentSend_P(PSTR("</table>"));
@@ -1926,7 +1486,7 @@ void TemplateSaveSettings(void)
   char tmp[TOPSZ];                                          // WebGetArg NAME and GPIO/BASE/FLAG byte value
   char svalue[300];                                         // Template command string
 
-  WebGetArg("s1", tmp, sizeof(tmp));                        // NAME
+  WebGetArg(PSTR("s1"), tmp, sizeof(tmp));                        // NAME
   snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_TEMPLATE " {\"" D_JSON_NAME "\":\"%s\",\"" D_JSON_GPIO "\":["), tmp);
 
   uint32_t j = 0;
@@ -1944,7 +1504,7 @@ void TemplateSaveSettings(void)
     uint32_t state = Webserver->hasArg(webindex) << i;      // FLAG
     flag += state;
   }
-  WebGetArg("g99", tmp, sizeof(tmp));                       // BASE
+  WebGetArg(PSTR("g99"), tmp, sizeof(tmp));                       // BASE
   uint32_t base = atoi(tmp) +1;
 
   snprintf_P(svalue, sizeof(svalue), PSTR("%s],\"" D_JSON_FLAG "\":%d,\"" D_JSON_BASE "\":%d}"), svalue, flag, base);
@@ -1957,13 +1517,13 @@ void HandleModuleConfiguration(void)
 {
   if (!HttpCheckPriviledgedAccess()) { return; }
 
-  if (Webserver->hasArg("save")) {
+  if (Webserver->hasArg(F("save"))) {
     ModuleSaveSettings();
     WebRestart(1);
     return;
   }
 
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_CONFIGURE_MODULE));
+  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_CONFIGURE_MODULE));
 
   char stemp[30];  // Sensor name
   uint32_t midx;
@@ -2009,9 +1569,9 @@ void HandleModuleConfiguration(void)
   for (uint32_t i = 0; i < ARRAY_SIZE(template_gp.io); i++) {
     if (ValidGPIO(i, template_gp.io[i])) {
       snprintf_P(stemp, 3, PINS_WEMOS +i*2);
-      WSContentSend_P(PSTR("<tr><td style='width:116px'>%s <b>" D_GPIO "%d</b></td><td style='width:150px'><select id='g%d' onchange='ot(%d,this.value)'></select></td>"),
+      WSContentSend_P(PSTR("<tr><td style='width:116px'>%s <b>" D_GPIO "%d</b></td><td style='width:146px'><select id='g%d' onchange='ot(%d,this.value)'></select></td>"),
         (WEMOS==TasmotaGlobal.module_type)?stemp:"", i, i, i);
-      WSContentSend_P(PSTR("<td style='width:50px'><select id='h%d'></select></td></tr>"), i);
+      WSContentSend_P(PSTR("<td style='width:54px'><select id='h%d'></select></td></tr>"), i);
     }
   }
   WSContentSend_P(PSTR("</table>"));
@@ -2024,7 +1584,7 @@ void ModuleSaveSettings(void)
 {
   char tmp[8];         // WebGetArg numbers only
 
-  WebGetArg("g99", tmp, sizeof(tmp));
+  WebGetArg(PSTR("g99"), tmp, sizeof(tmp));
   uint32_t new_module = (!strlen(tmp)) ? MODULE : atoi(tmp);
   Settings.last_module = Settings.module;
   Settings.module = new_module;
@@ -2038,7 +1598,7 @@ void ModuleSaveSettings(void)
     } else {
       if (ValidGPIO(i, template_gp.io[i])) {
         Settings.my_gp.io[i] = WebGetGpioArg(i);
-        gpios += F(", " D_GPIO ); gpios += String(i); gpios += F(" "); gpios += String(Settings.my_gp.io[i]);
+        gpios += F(", IO"); gpios += String(i); gpios += F(" "); gpios += String(Settings.my_gp.io[i]);
       }
     }
   }
@@ -2074,9 +1634,9 @@ void HandleWifiConfiguration(void)
 {
   if (!HttpCheckPriviledgedAccess(!WifiIsInManagerMode())) { return; }
 
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_CONFIGURE_WIFI));
+  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_CONFIGURE_WIFI));
 
-  if (Webserver->hasArg("save") && HTTP_MANAGER_RESET_ONLY != Web.state) {
+  if (Webserver->hasArg(F("save")) && HTTP_MANAGER_RESET_ONLY != Web.state) {
     WifiSaveSettings();
     WebRestart(2);
     return;
@@ -2084,18 +1644,22 @@ void HandleWifiConfiguration(void)
 
   WSContentStart_P(PSTR(D_CONFIGURE_WIFI), !WifiIsInManagerMode());
   WSContentSend_P(HTTP_SCRIPT_WIFI);
+#ifdef USE_ENHANCED_GUI_WIFI_SCAN
+  WSContentSendStyle_P(HTTP_HEAD_STYLE_SSI, WebColor(COL_TEXT));
+#else
   WSContentSendStyle();
+#endif  // USE_ENHANCED_GUI_WIFI_SCAN
 
   if (HTTP_MANAGER_RESET_ONLY != Web.state) {
-    if (Webserver->hasArg("scan")) {
+    if (Webserver->hasArg(F("scan"))) {
 #ifdef USE_EMULATION
       UdpDisconnect();
 #endif  // USE_EMULATION
       int n = WiFi.scanNetworks();
-      AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_WIFI D_SCAN_DONE));
+      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_WIFI D_SCAN_DONE));
 
       if (0 == n) {
-        AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_WIFI D_NO_NETWORKS_FOUND));
+        AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_WIFI D_NO_NETWORKS_FOUND));
         WSContentSend_P(PSTR(D_NO_NETWORKS_FOUND));
         WSContentSend_P(PSTR(". " D_REFRESH_TO_SCAN_AGAIN "."));
       } else {
@@ -2104,6 +1668,7 @@ void HandleWifiConfiguration(void)
         for (uint32_t i = 0; i < n; i++) {
           indices[i] = i;
         }
+
 
         // RSSI SORT
         for (uint32_t i = 0; i < n; i++) {
@@ -2114,11 +1679,51 @@ void HandleWifiConfiguration(void)
           }
         }
 
+#ifdef USE_ENHANCED_GUI_WIFI_SCAN
+        //display networks in page
+        for (uint32_t i = 0; i < n; i++) {
+          if (indices[i] < n) {
+            int32_t rssi = WiFi.RSSI(indices[i]);
+            String ssid = WiFi.SSID(indices[i]);
+            DEBUG_CORE_LOG(PSTR(D_LOG_WIFI D_SSID " %s, " D_BSSID " %s, " D_CHANNEL " %d, " D_RSSI " %d"),
+              ssid.c_str(), WiFi.BSSIDstr(indices[i]).c_str(), WiFi.channel(indices[i]), rssi);
+
+            // Print SSID
+            WSContentSend_P(PSTR("<div><a href='#p' onclick='c(this)'>%s</a><br>"), HtmlEscape(ssid).c_str());
+
+            String nextSSID = "";
+            // Handle all APs with the same SSID
+            for (uint32_t j = 0; j < n; j++) {
+              if ((indices[j] < n) && ((nextSSID = WiFi.SSID(indices[j])) == ssid)) {
+                // Update RSSI / quality
+                rssi = WiFi.RSSI(indices[j]);
+                uint32_t rssi_as_quality = WifiGetRssiAsQuality(rssi);
+                uint32_t num_bars = changeUIntScale(rssi_as_quality, 0, 100, 0, 4);
+
+                // Print item
+                WSContentSend_P(PSTR("<div title='%d dBm (%d%%)'>%s<span class='q'>(%d) <div class='si'>"),
+                  rssi, rssi_as_quality,
+                  WiFi.BSSIDstr(indices[j]).c_str(),
+                  WiFi.channel(indices[j])
+                );
+                // Print signal strength indicator
+                for (uint32_t k = 0; k < 4; ++k) {
+                  WSContentSend_P(PSTR("<i class='b%d%s'></i>"), k, (num_bars < k) ? PSTR(" o30") : PSTR(""));
+                }
+                WSContentSend_P(PSTR("</span></div></div>"));
+
+                indices[j] = n;
+              }
+              delay(0);
+            }
+            WSContentSend_P(PSTR("</div>"));
+          }
+        }
+#else  // No USE_ENHANCED_GUI_WIFI_SCAN
         // remove duplicates ( must be RSSI sorted )
-        String cssid;
         for (uint32_t i = 0; i < n; i++) {
           if (-1 == indices[i]) { continue; }
-          cssid = WiFi.SSID(indices[i]);
+          String cssid = WiFi.SSID(indices[i]);
           uint32_t cschn = WiFi.channel(indices[i]);
           for (uint32_t j = i + 1; j < n; j++) {
             if ((cssid == WiFi.SSID(indices[j])) && (cschn == WiFi.channel(indices[j]))) {
@@ -2135,6 +1740,7 @@ void HandleWifiConfiguration(void)
           DEBUG_CORE_LOG(PSTR(D_LOG_WIFI D_SSID " %s, " D_BSSID " %s, " D_CHANNEL " %d, " D_RSSI " %d"),
             WiFi.SSID(indices[i]).c_str(), WiFi.BSSIDstr(indices[i]).c_str(), WiFi.channel(indices[i]), rssi);
           int quality = WifiGetRssiAsQuality(rssi);
+/*
           int auth = WiFi.encryptionType(indices[i]);
           char encryption[20];
           WSContentSend_P(PSTR("<div><a href='#p' onclick='c(this)'>%s</a>&nbsp;(%d)&nbsp<span class='q'>%s %d%% (%d dBm)</span></div>"),
@@ -2143,9 +1749,17 @@ void HandleWifiConfiguration(void)
             GetTextIndexed(encryption, sizeof(encryption), auth +1, kEncryptionType),
             quality, rssi
           );
-          delay(0);
+*/
+          WSContentSend_P(PSTR("<div><a href='#p' onclick='c(this)'>%s</a>&nbsp;(%d)&nbsp<span class='q'>%d%% (%d dBm)</span></div>"),
+            HtmlEscape(WiFi.SSID(indices[i])).c_str(),
+            WiFi.channel(indices[i]),
+            quality, rssi
+          );
 
+          delay(0);
         }
+#endif  // USE_ENHANCED_GUI_WIFI_SCAN
+
         WSContentSend_P(PSTR("<br>"));
       }
     } else {
@@ -2173,20 +1787,20 @@ void WifiSaveSettings(void)
 {
   char tmp[TOPSZ];  // Max length is currently 150
 
-  WebGetArg("h", tmp, sizeof(tmp));
+  WebGetArg(PSTR("h"), tmp, sizeof(tmp));
   SettingsUpdateText(SET_HOSTNAME, (!strlen(tmp)) ? WIFI_HOSTNAME : tmp);
   if (strchr(SettingsText(SET_HOSTNAME), '%') != nullptr) {
     SettingsUpdateText(SET_HOSTNAME, WIFI_HOSTNAME);
   }
-  WebGetArg("c", tmp, sizeof(tmp));
+  WebGetArg(PSTR("c"), tmp, sizeof(tmp));
   SettingsUpdateText(SET_CORS, (!strlen(tmp)) ? CORS_DOMAIN : tmp);
-  WebGetArg("s1", tmp, sizeof(tmp));
+  WebGetArg(PSTR("s1"), tmp, sizeof(tmp));
   SettingsUpdateText(SET_STASSID1, (!strlen(tmp)) ? STA_SSID1 : tmp);
-  WebGetArg("s2", tmp, sizeof(tmp));
+  WebGetArg(PSTR("s2"), tmp, sizeof(tmp));
   SettingsUpdateText(SET_STASSID2, (!strlen(tmp)) ? STA_SSID2 : tmp);
-  WebGetArg("p1", tmp, sizeof(tmp));
+  WebGetArg(PSTR("p1"), tmp, sizeof(tmp));
   SettingsUpdateText(SET_STAPWD1, (!strlen(tmp)) ? "" : (strlen(tmp) < 5) ? SettingsText(SET_STAPWD1) : tmp);
-  WebGetArg("p2", tmp, sizeof(tmp));
+  WebGetArg(PSTR("p2"), tmp, sizeof(tmp));
   SettingsUpdateText(SET_STAPWD2, (!strlen(tmp)) ? "" : (strlen(tmp) < 5) ? SettingsText(SET_STAPWD2) : tmp);
   AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_CMND_HOSTNAME " %s, " D_CMND_SSID "1 %s, " D_CMND_SSID "2 %s, " D_CMND_CORS " %s"),
     SettingsText(SET_HOSTNAME), SettingsText(SET_STASSID1), SettingsText(SET_STASSID2), SettingsText(SET_CORS));
@@ -2198,7 +1812,7 @@ void HandleLoggingConfiguration(void)
 {
   if (!HttpCheckPriviledgedAccess()) { return; }
 
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_CONFIGURE_LOGGING));
+  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_CONFIGURE_LOGGING));
 
   if (Webserver->hasArg("save")) {
     LoggingSaveSettings();
@@ -2221,7 +1835,7 @@ void HandleLoggingConfiguration(void)
       idx);
     for (uint32_t i = LOG_LEVEL_NONE; i <= LOG_LEVEL_DEBUG_MORE; i++) {
       WSContentSend_P(PSTR("<option%s value='%d'>%d %s</option>"),
-        (i == llevel) ? " selected" : "", i, i,
+        (i == llevel) ? PSTR(" selected") : "", i, i,
         GetTextIndexed(stemp1, sizeof(stemp1), i, kLoggingLevels));
     }
     WSContentSend_P(PSTR("</select></p>"));
@@ -2236,19 +1850,19 @@ void LoggingSaveSettings(void)
 {
   char tmp[TOPSZ];  // Max length is currently 33
 
-  WebGetArg("l0", tmp, sizeof(tmp));
+  WebGetArg(PSTR("l0"), tmp, sizeof(tmp));
   SetSeriallog((!strlen(tmp)) ? SERIAL_LOG_LEVEL : atoi(tmp));
-  WebGetArg("l1", tmp, sizeof(tmp));
+  WebGetArg(PSTR("l1"), tmp, sizeof(tmp));
   Settings.weblog_level = (!strlen(tmp)) ? WEB_LOG_LEVEL : atoi(tmp);
-  WebGetArg("l2", tmp, sizeof(tmp));
+  WebGetArg(PSTR("l2"), tmp, sizeof(tmp));
   Settings.mqttlog_level = (!strlen(tmp)) ? MQTT_LOG_LEVEL : atoi(tmp);
-  WebGetArg("l3", tmp, sizeof(tmp));
+  WebGetArg(PSTR("l3"), tmp, sizeof(tmp));
   SetSyslog((!strlen(tmp)) ? SYS_LOG_LEVEL : atoi(tmp));
-  WebGetArg("lh", tmp, sizeof(tmp));
+  WebGetArg(PSTR("lh"), tmp, sizeof(tmp));
   SettingsUpdateText(SET_SYSLOG_HOST, (!strlen(tmp)) ? SYS_LOG_HOST : tmp);
-  WebGetArg("lp", tmp, sizeof(tmp));
+  WebGetArg(PSTR("lp"), tmp, sizeof(tmp));
   Settings.syslog_port = (!strlen(tmp)) ? SYS_LOG_PORT : atoi(tmp);
-  WebGetArg("lt", tmp, sizeof(tmp));
+  WebGetArg(PSTR("lt"), tmp, sizeof(tmp));
   Settings.tele_period = (!strlen(tmp)) ? TELE_PERIOD : atoi(tmp);
   if ((Settings.tele_period > 0) && (Settings.tele_period < 10)) {
     Settings.tele_period = 10;   // Do not allow periods < 10 seconds
@@ -2263,9 +1877,9 @@ void HandleOtherConfiguration(void)
 {
   if (!HttpCheckPriviledgedAccess()) { return; }
 
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_CONFIGURE_OTHER));
+  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_CONFIGURE_OTHER));
 
-  if (Webserver->hasArg("save")) {
+  if (Webserver->hasArg(F("save"))) {
     OtherSaveSettings();
     WebRestart(1);
     return;
@@ -2277,8 +1891,8 @@ void HandleOtherConfiguration(void)
   TemplateJson();
   char stemp[strlen(TasmotaGlobal.mqtt_data) +1];
   strlcpy(stemp, TasmotaGlobal.mqtt_data, sizeof(stemp));  // Get JSON template
-  WSContentSend_P(HTTP_FORM_OTHER, stemp, (USER_MODULE == Settings.module) ? " checked disabled" : "",
-    (Settings.flag.mqtt_enabled) ? " checked" : "",   // SetOption3 - Enable MQTT
+  WSContentSend_P(HTTP_FORM_OTHER, stemp, (USER_MODULE == Settings.module) ? PSTR(" checked disabled") : "",
+    (Settings.flag.mqtt_enabled) ? PSTR(" checked") : "",   // SetOption3 - Enable MQTT
     SettingsText(SET_FRIENDLYNAME1), SettingsText(SET_DEVICENAME));
 
   uint32_t maxfn = (TasmotaGlobal.devices_present > MAX_FRIENDLYNAMES) ? MAX_FRIENDLYNAMES : (!TasmotaGlobal.devices_present) ? 1 : TasmotaGlobal.devices_present;
@@ -2308,9 +1922,9 @@ void HandleOtherConfiguration(void)
     if (i < EMUL_MAX) {
       WSContentSend_P(PSTR("<input id='r%d' name='b2' type='radio' value='%d'%s><b>%s</b> %s<br>"),  // Different id only used for labels
         i, i,
-        (i == Settings.flag2.emulation) ? " checked" : "",
+        (i == Settings.flag2.emulation) ? PSTR(" checked") : "",
         GetTextIndexed(stemp, sizeof(stemp), i, kEmulationOptions),
-        (i == EMUL_NONE) ? "" : (i == EMUL_WEMO) ? D_SINGLE_DEVICE : D_MULTI_DEVICE);
+        (i == EMUL_NONE) ? "" : (i == EMUL_WEMO) ? PSTR(D_SINGLE_DEVICE) : PSTR(D_MULTI_DEVICE));
     }
   }
   WSContentSend_P(PSTR("</p></fieldset>"));
@@ -2327,17 +1941,17 @@ void OtherSaveSettings(void)
   char tmp[300];   // Needs to hold complete ESP32 template of minimal 230 chars
   char webindex[5];
   char friendlyname[TOPSZ];
-  char message[LOGSZ];
+  char message[MAX_LOGSZ];
 
-  WebGetArg("dn", tmp, sizeof(tmp));
+  WebGetArg(PSTR("dn"), tmp, sizeof(tmp));
   SettingsUpdateText(SET_DEVICENAME, (!strlen(tmp)) ? "" : (!strcmp(tmp,"1")) ? SettingsText(SET_FRIENDLYNAME1) : tmp);
-  WebGetArg("wp", tmp, sizeof(tmp));
+  WebGetArg(PSTR("wp"), tmp, sizeof(tmp));
   SettingsUpdateText(SET_WEBPWD, (!strlen(tmp)) ? "" : (strchr(tmp,'*')) ? SettingsText(SET_WEBPWD) : tmp);
-  Settings.flag.mqtt_enabled = Webserver->hasArg("b1");  // SetOption3 - Enable MQTT
+  Settings.flag.mqtt_enabled = Webserver->hasArg(F("b1"));  // SetOption3 - Enable MQTT
 #ifdef USE_EMULATION
   UdpDisconnect();
 #if defined(USE_EMULATION_WEMO) || defined(USE_EMULATION_HUE)
-  WebGetArg("b2", tmp, sizeof(tmp));
+  WebGetArg(PSTR("b2"), tmp, sizeof(tmp));
   Settings.flag2.emulation = (!strlen(tmp)) ? 0 : atoi(tmp);
 #endif  // USE_EMULATION_WEMO || USE_EMULATION_HUE
 #endif  // USE_EMULATION
@@ -2348,14 +1962,14 @@ void OtherSaveSettings(void)
     snprintf_P(webindex, sizeof(webindex), PSTR("a%d"), i);
     WebGetArg(webindex, tmp, sizeof(tmp));
     snprintf_P(friendlyname, sizeof(friendlyname), PSTR(FRIENDLY_NAME"%d"), i +1);
-    SettingsUpdateText(SET_FRIENDLYNAME1 +i, (!strlen(tmp)) ? (i) ? friendlyname : FRIENDLY_NAME : tmp);
+    SettingsUpdateText(SET_FRIENDLYNAME1 +i, (!strlen(tmp)) ? (i) ? friendlyname : PSTR(FRIENDLY_NAME) : tmp);
     snprintf_P(message, sizeof(message), PSTR("%s%s %s"), message, (i) ? "," : "", SettingsText(SET_FRIENDLYNAME1 +i));
   }
-  AddLog_P(LOG_LEVEL_INFO, message);
+  AddLogData(LOG_LEVEL_INFO, message);
 
-  WebGetArg("t1", tmp, sizeof(tmp));
+  WebGetArg(PSTR("t1"), tmp, sizeof(tmp));
   if (strlen(tmp)) {  // {"NAME":"12345678901234","GPIO":[255,255,255,255,255,255,255,255,255,255,255,255,255],"FLAG":255,"BASE":255}
-    snprintf_P(message, sizeof(message), PSTR(D_CMND_BACKLOG " " D_CMND_TEMPLATE " %s%s"), tmp, (Webserver->hasArg("t2")) ? "; " D_CMND_MODULE " 0" : "");
+    snprintf_P(message, sizeof(message), PSTR(D_CMND_BACKLOG " " D_CMND_TEMPLATE " %s%s"), tmp, (Webserver->hasArg(F("t2"))) ? PSTR("; " D_CMND_MODULE " 0") : "");
     ExecuteWebCommand(message, SRC_WEBGUI);
   }
 }
@@ -2366,7 +1980,7 @@ void HandleBackupConfiguration(void)
 {
   if (!HttpCheckPriviledgedAccess()) { return; }
 
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_BACKUP_CONFIGURATION));
+  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_BACKUP_CONFIGURATION));
 
   if (!SettingsBufferAlloc()) { return; }
 
@@ -2383,7 +1997,7 @@ void HandleBackupConfiguration(void)
 
   Webserver->sendHeader(F("Content-Disposition"), attachment);
 
-  WSSend(200, CT_STREAM, "");
+  WSSend(200, CT_APP_STREAM, "");
 
   uint32_t cfg_crc32 = Settings.cfg_crc32;
   Settings.cfg_crc32 = GetSettingsCrc32();  // Calculate crc (again) as it might be wrong when savedata = 0 (#3918)
@@ -2408,7 +2022,7 @@ void HandleResetConfiguration(void)
 {
   if (!HttpCheckPriviledgedAccess(!WifiIsInManagerMode())) { return; }
 
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_RESET_CONFIGURATION));
+  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_RESET_CONFIGURATION));
 
   WSContentStart_P(PSTR(D_RESET_CONFIGURATION), !WifiIsInManagerMode());
   WSContentSendStyle();
@@ -2426,12 +2040,12 @@ void HandleRestoreConfiguration(void)
 {
   if (!HttpCheckPriviledgedAccess()) { return; }
 
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_RESTORE_CONFIGURATION));
+  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_RESTORE_CONFIGURATION));
 
   WSContentStart_P(PSTR(D_RESTORE_CONFIGURATION));
   WSContentSendStyle();
   WSContentSend_P(HTTP_FORM_RST);
-  WSContentSend_P(HTTP_FORM_RST_UPG, D_RESTORE);
+  WSContentSend_P(HTTP_FORM_RST_UPG, PSTR(D_RESTORE));
   if (WifiIsInManagerMode()) {
     WSContentSpaceButton(BUTTON_MAIN);
   } else {
@@ -2439,7 +2053,6 @@ void HandleRestoreConfiguration(void)
   }
   WSContentStop();
 
-  Web.upload_error = 0;
   Web.upload_file_type = UPL_SETTINGS;
 }
 
@@ -2449,11 +2062,9 @@ void HandleInformation(void)
 {
   if (!HttpCheckPriviledgedAccess()) { return; }
 
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_INFORMATION));
+  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_INFORMATION));
 
   char stopic[TOPSZ];
-
-  int freeMem = ESP_getFreeHeap();
 
   WSContentStart_P(PSTR(D_INFORMATION));
   // Save 1k of code space replacing table html with javascript replace codes
@@ -2484,9 +2095,9 @@ void HandleInformation(void)
 #ifdef ESP32
 #ifdef USE_ETHERNET
   if (static_cast<uint32_t>(EthernetLocalIP()) != 0) {
-    WSContentSend_P(PSTR("}1" D_HOSTNAME "}2%s%s"), EthernetHostname(), (Mdns.begun) ? ".local" : "");
+    WSContentSend_P(PSTR("}1" D_HOSTNAME "}2%s%s"), EthernetHostname(), (Mdns.begun) ? PSTR(".local") : "");
     WSContentSend_P(PSTR("}1" D_MAC_ADDRESS "}2%s"), EthernetMacAddress().c_str());
-    WSContentSend_P(PSTR("}1" D_IP_ADDRESS " (eth)}2%s"), EthernetLocalIP().toString().c_str());
+    WSContentSend_P(PSTR("}1" D_IP_ADDRESS " (eth)}2%_I"), (uint32_t)EthernetLocalIP());
     WSContentSend_P(PSTR("}1<hr/>}2<hr/>"));
   }
 #endif
@@ -2494,7 +2105,7 @@ void HandleInformation(void)
   if (Settings.flag4.network_wifi) {
     int32_t rssi = WiFi.RSSI();
     WSContentSend_P(PSTR("}1" D_AP "%d " D_SSID " (" D_RSSI ")}2%s (%d%%, %d dBm)"), Settings.sta_active +1, HtmlEscape(SettingsText(SET_STASSID1 + Settings.sta_active)).c_str(), WifiGetRssiAsQuality(rssi), rssi);
-    WSContentSend_P(PSTR("}1" D_HOSTNAME "}2%s%s"), TasmotaGlobal.hostname, (Mdns.begun) ? ".local" : "");
+    WSContentSend_P(PSTR("}1" D_HOSTNAME "}2%s%s"), TasmotaGlobal.hostname, (Mdns.begun) ? PSTR(".local") : "");
 #if LWIP_IPV6
     String ipv6_addr = WifiGetIPv6();
     if (ipv6_addr != "") {
@@ -2503,20 +2114,20 @@ void HandleInformation(void)
 #endif
     if (static_cast<uint32_t>(WiFi.localIP()) != 0) {
       WSContentSend_P(PSTR("}1" D_MAC_ADDRESS "}2%s"), WiFi.macAddress().c_str());
-      WSContentSend_P(PSTR("}1" D_IP_ADDRESS " (wifi)}2%s"), WiFi.localIP().toString().c_str());
+      WSContentSend_P(PSTR("}1" D_IP_ADDRESS " (wifi)}2%_I"), (uint32_t)WiFi.localIP());
       WSContentSend_P(PSTR("}1<hr/>}2<hr/>"));
     }
   }
   if (!TasmotaGlobal.global_state.network_down) {
-    WSContentSend_P(PSTR("}1" D_GATEWAY "}2%s"), IPAddress(Settings.ip_address[1]).toString().c_str());
-    WSContentSend_P(PSTR("}1" D_SUBNET_MASK "}2%s"), IPAddress(Settings.ip_address[2]).toString().c_str());
-    WSContentSend_P(PSTR("}1" D_DNS_SERVER "}2%s"), IPAddress(Settings.ip_address[3]).toString().c_str());
+    WSContentSend_P(PSTR("}1" D_GATEWAY "}2%_I"), Settings.ipv4_address[1]);
+    WSContentSend_P(PSTR("}1" D_SUBNET_MASK "}2%_I"), Settings.ipv4_address[2]);
+    WSContentSend_P(PSTR("}1" D_DNS_SERVER "}2%_I"), Settings.ipv4_address[3]);
   }
   if ((WiFi.getMode() >= WIFI_AP) && (static_cast<uint32_t>(WiFi.softAPIP()) != 0)) {
     WSContentSend_P(PSTR("}1<hr/>}2<hr/>"));
     WSContentSend_P(PSTR("}1" D_MAC_ADDRESS "}2%s"), WiFi.softAPmacAddress().c_str());
-    WSContentSend_P(PSTR("}1" D_IP_ADDRESS " (AP)}2%s"), WiFi.softAPIP().toString().c_str());
-    WSContentSend_P(PSTR("}1" D_GATEWAY "}2%s"), WiFi.softAPIP().toString().c_str());
+    WSContentSend_P(PSTR("}1" D_IP_ADDRESS " (AP)}2%_I"), (uint32_t)WiFi.softAPIP());
+    WSContentSend_P(PSTR("}1" D_GATEWAY "}2%_I"), (uint32_t)WiFi.softAPIP());
   }
   WSContentSend_P(PSTR("}1}2&nbsp;"));  // Empty line
   if (Settings.flag.mqtt_enabled) {  // SetOption3 - Enable MQTT
@@ -2524,7 +2135,7 @@ void HandleInformation(void)
     WSContentSend_P(PSTR("}1" D_MQTT_PORT "}2%d"), Settings.mqtt_port);
 #ifdef USE_MQTT_TLS
     WSContentSend_P(PSTR("}1" D_MQTT_TLS_ENABLE "}2%s"), Settings.flag4.mqtt_tls ? PSTR(D_ENABLED) : PSTR(D_DISABLED));
-#endif // USE_MQTT_TLS
+#endif  // USE_MQTT_TLS
     WSContentSend_P(PSTR("}1" D_MQTT_USER "}2%s"), SettingsText(SET_MQTT_USER));
     WSContentSend_P(PSTR("}1" D_MQTT_CLIENT "}2%s"), TasmotaGlobal.mqtt_client);
     WSContentSend_P(PSTR("}1" D_MQTT_TOPIC "}2%s"), SettingsText(SET_MQTT_TOPIC));
@@ -2541,14 +2152,13 @@ void HandleInformation(void)
   } else {
     WSContentSend_P(PSTR("}1" D_MQTT "}2" D_DISABLED));
   }
-  WSContentSend_P(PSTR("}1}2&nbsp;"));  // Empty line
 
+#if defined(USE_EMULATION) || defined(USE_DISCOVERY)
+  WSContentSend_P(PSTR("}1}2&nbsp;"));  // Empty line
+#endif  // USE_EMULATION or USE_DISCOVERY
 #ifdef USE_EMULATION
   WSContentSend_P(PSTR("}1" D_EMULATION "}2%s"), GetTextIndexed(stopic, sizeof(stopic), Settings.flag2.emulation, kEmulationOptions));
-#else
-  WSContentSend_P(PSTR("}1" D_EMULATION "}2" D_DISABLED));
-#endif // USE_EMULATION
-
+#endif  // USE_EMULATION
 #ifdef USE_DISCOVERY
   WSContentSend_P(PSTR("}1" D_MDNS_DISCOVERY "}2%s"), (Settings.flag3.mdns_enabled) ? D_ENABLED : D_DISABLED);  // SetOption55 - Control mDNS service
   if (Settings.flag3.mdns_enabled) {  // SetOption55 - Control mDNS service
@@ -2556,28 +2166,29 @@ void HandleInformation(void)
     WSContentSend_P(PSTR("}1" D_MDNS_ADVERTISE "}2" D_WEB_SERVER));
 #else
     WSContentSend_P(PSTR("}1" D_MDNS_ADVERTISE "}2" D_DISABLED));
-#endif // WEBSERVER_ADVERTISE
+#endif  // WEBSERVER_ADVERTISE
   }
-#else
-  WSContentSend_P(PSTR("}1" D_MDNS_DISCOVERY "}2" D_DISABLED));
-#endif // USE_DISCOVERY
+#endif  // USE_DISCOVERY
 
   WSContentSend_P(PSTR("}1}2&nbsp;"));  // Empty line
   WSContentSend_P(PSTR("}1" D_ESP_CHIP_ID "}2%d"), ESP_getChipId());
 #ifdef ESP8266
   WSContentSend_P(PSTR("}1" D_FLASH_CHIP_ID "}20x%06X"), ESP.getFlashChipId());
 #endif
-  WSContentSend_P(PSTR("}1" D_FLASH_CHIP_SIZE "}2%dkB"), ESP.getFlashChipRealSize() / 1024);
-  WSContentSend_P(PSTR("}1" D_PROGRAM_FLASH_SIZE "}2%dkB"), ESP.getFlashChipSize() / 1024);
-  WSContentSend_P(PSTR("}1" D_PROGRAM_SIZE "}2%dkB"), ESP_getSketchSize() / 1024);
-  WSContentSend_P(PSTR("}1" D_FREE_PROGRAM_SPACE "}2%dkB"), ESP.getFreeSketchSpace() / 1024);
-  WSContentSend_P(PSTR("}1" D_FREE_MEMORY "}2%dkB"), freeMem / 1024);
+  WSContentSend_P(PSTR("}1" D_FLASH_CHIP_SIZE "}2%d kB"), ESP.getFlashChipRealSize() / 1024);
+  WSContentSend_P(PSTR("}1" D_PROGRAM_FLASH_SIZE "}2%d kB"), ESP.getFlashChipSize() / 1024);
+  WSContentSend_P(PSTR("}1" D_PROGRAM_SIZE "}2%d kB"), ESP_getSketchSize() / 1024);
+  WSContentSend_P(PSTR("}1" D_FREE_PROGRAM_SPACE "}2%d kB"), ESP.getFreeSketchSpace() / 1024);
 #ifdef ESP32
+  int32_t freeMaxMem = 100 - (int32_t)(ESP_getMaxAllocHeap() * 100 / ESP_getFreeHeap());
+  WSContentSend_P(PSTR("}1" D_FREE_MEMORY "}2%d kB (" D_FRAGMENTATION " %d%%)"), ESP_getFreeHeap1024(), freeMaxMem);
   if (psramFound()) {
-    WSContentSend_P(PSTR("}1" D_PSR_MAX_MEMORY "}2%dkB"), ESP.getPsramSize() / 1024);
-    WSContentSend_P(PSTR("}1" D_PSR_FREE_MEMORY "}2%dkB"), ESP.getFreePsram() / 1024);
+    WSContentSend_P(PSTR("}1" D_PSR_MAX_MEMORY "}2%d kB"), ESP.getPsramSize() / 1024);
+    WSContentSend_P(PSTR("}1" D_PSR_FREE_MEMORY "}2%d kB"), ESP.getFreePsram() / 1024);
   }
-#endif
+#else // ESP32
+  WSContentSend_P(PSTR("}1" D_FREE_MEMORY "}2%d kB"), ESP_getFreeHeap1024());
+#endif // ESP32
   WSContentSend_P(PSTR("</td></tr></table>"));
 
   WSContentSend_P(HTTP_SCRIPT_INFO_END);
@@ -2639,34 +2250,31 @@ uint32_t BUploadWriteBuffer(uint8_t *buf, size_t size) {
 
 #endif  // USE_WEB_FW_UPGRADE
 
-void HandleUpgradeFirmware(void)
-{
+void HandleUpgradeFirmware(void) {
   if (!HttpCheckPriviledgedAccess()) { return; }
 
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_FIRMWARE_UPGRADE));
+  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_FIRMWARE_UPGRADE));
 
   WSContentStart_P(PSTR(D_FIRMWARE_UPGRADE));
   WSContentSendStyle();
   WSContentSend_P(HTTP_FORM_UPG, SettingsText(SET_OTAURL));
-  WSContentSend_P(HTTP_FORM_RST_UPG, D_UPGRADE);
+  WSContentSend_P(HTTP_FORM_RST_UPG, PSTR(D_UPGRADE));
   WSContentSpaceButton(BUTTON_MAIN);
   WSContentStop();
 
-  Web.upload_error = 0;
   Web.upload_file_type = UPL_TASMOTA;
 }
 
-void HandleUpgradeFirmwareStart(void)
-{
+void HandleUpgradeFirmwareStart(void) {
   if (!HttpCheckPriviledgedAccess()) { return; }
 
   char command[TOPSZ + 10];  // OtaUrl
 
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_UPGRADE_STARTED));
+  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_UPGRADE_STARTED));
   WifiConfigCounter();
 
   char otaurl[TOPSZ];
-  WebGetArg("o", otaurl, sizeof(otaurl));
+  WebGetArg(PSTR("o"), otaurl, sizeof(otaurl));
   if (strlen(otaurl)) {
     snprintf_P(command, sizeof(command), PSTR(D_CMND_OTAURL " %s"), otaurl);
     ExecuteWebCommand(command, SRC_WEBGUI);
@@ -2684,8 +2292,7 @@ void HandleUpgradeFirmwareStart(void)
   ExecuteWebCommand(command, SRC_WEBGUI);
 }
 
-void HandleUploadDone(void)
-{
+void HandleUploadDone(void) {
   if (!HttpCheckPriviledgedAccess()) { return; }
 
 #if defined(USE_ZIGBEE_EZSP)
@@ -2698,16 +2305,10 @@ void HandleUploadDone(void)
   }
 #endif  // USE_ZIGBEE_EZSP
 
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_UPLOAD_DONE));
-
-  char error[100];
+  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_UPLOAD_DONE));
 
   WifiConfigCounter();
-  TasmotaGlobal.restart_flag = 0;
-  MqttRetryCounter(0);
-#ifdef USE_COUNTER
-  CounterInterruptDisable(false);
-#endif  // USE_COUNTER
+  UploadServices(1);
 
   WSContentStart_P(PSTR(D_INFORMATION));
   if (!Web.upload_error) {
@@ -2717,6 +2318,7 @@ void HandleUploadDone(void)
   WSContentSend_P(PSTR("<div style='text-align:center;'><b>" D_UPLOAD " <font color='#"));
   if (Web.upload_error) {
     WSContentSend_P(PSTR("%06x'>" D_FAILED "</font></b><br><br>"), WebColor(COL_TEXT_WARNING));
+    char error[100];
     if (Web.upload_error < 10) {
       GetTextIndexed(error, sizeof(error), Web.upload_error -1, kUploadErrors);
     } else {
@@ -2725,6 +2327,7 @@ void HandleUploadDone(void)
     WSContentSend_P(error);
     DEBUG_CORE_LOG(PSTR("UPL: %s"), error);
     TasmotaGlobal.stop_flash_rotate = Settings.flag.stop_flash_rotate;  // SetOption12 - Switch between dynamic or fixed slot flash save location
+    Web.upload_error = 0;
   } else {
     WSContentSend_P(PSTR("%06x'>" D_SUCCESSFUL "</font></b><br>"), WebColor(COL_TEXT_SUCCESS));
     TasmotaGlobal.restart_flag = 2;  // Always restart to re-enable disabled features during update
@@ -2737,14 +2340,71 @@ void HandleUploadDone(void)
   WSContentStop();
 }
 
-void HandleUploadLoop(void)
-{
+#ifdef USE_BLE_ESP32
+  // declare the fn
+  int ExtStopBLE();
+#endif
+
+void UploadServices(uint32_t start_service) {
+  if (Web.upload_services_stopped != start_service) { return; }
+  Web.upload_services_stopped = !start_service;
+
+  if (start_service) {
+//    AddLog(LOG_LEVEL_DEBUG, PSTR("UPL: Services enabled"));
+
+/*
+    MqttRetryCounter(0);
+*/
+#ifdef USE_ARILUX_RF
+    AriluxRfInit();
+#endif  // USE_ARILUX_RF
+#ifdef USE_COUNTER
+    CounterInterruptDisable(false);
+#endif  // USE_COUNTER
+#ifdef USE_EMULATION
+    UdpConnect();
+#endif  // USE_EMULATION
+
+  } else {
+//    AddLog(LOG_LEVEL_DEBUG, PSTR("UPL: Services disabled"));
+
+#ifdef USE_BLE_ESP32
+    ExtStopBLE();
+#endif
+#ifdef USE_EMULATION
+    UdpDisconnect();
+#endif  // USE_EMULATION
+#ifdef USE_COUNTER
+    CounterInterruptDisable(true);     // Prevent OTA failures on 100Hz counter interrupts
+#endif  // USE_COUNTER
+#ifdef USE_ARILUX_RF
+    AriluxRfDisable();                 // Prevent restart exception on Arilux Interrupt routine
+#endif  // USE_ARILUX_RF
+/*
+    MqttRetryCounter(60);
+    if (Settings.flag.mqtt_enabled) {  // SetOption3 - Enable MQTT
+      MqttDisconnect();
+    }
+*/
+  }
+}
+
+void HandleUploadLoop(void) {
   // Based on ESP8266HTTPUpdateServer.cpp uses ESP8266WebServer Parsing.cpp and Cores Updater.cpp (Update)
-  bool _serialoutput = (LOG_LEVEL_DEBUG <= TasmotaGlobal.seriallog_level);
+  static uint32_t upload_size;
+  static bool upload_error_signalled;
 
   if (HTTP_USER == Web.state) { return; }
+
   if (Web.upload_error) {
-    if (UPL_TASMOTA == Web.upload_file_type) { Update.end(); }
+    if (!upload_error_signalled) {
+      if (UPL_TASMOTA == Web.upload_file_type) { Update.end(); }
+      UploadServices(1);
+
+//      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPLOAD "Upload error %d"), Web.upload_error);
+
+      upload_error_signalled = true;
+    }
     return;
   }
 
@@ -2752,34 +2412,34 @@ void HandleUploadLoop(void)
 
   // ***** Step1: Start upload file
   if (UPLOAD_FILE_START == upload.status) {
-    TasmotaGlobal.restart_flag = 60;
+    Web.upload_error = 0;
+    upload_error_signalled = false;
+    upload_size = 0;
+
+    UploadServices(0);
+
     if (0 == upload.filename.c_str()[0]) {
       Web.upload_error = 1;  // No file selected
       return;
     }
     SettingsSave(1);  // Free flash for upload
-    AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_UPLOAD D_FILE " %s ..."), upload.filename.c_str());
+
+    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_UPLOAD D_FILE " %s"), upload.filename.c_str());
+
     if (UPL_SETTINGS == Web.upload_file_type) {
       if (!SettingsBufferAlloc()) {
         Web.upload_error = 2;  // Not enough space
         return;
       }
-    } else {
-      MqttRetryCounter(60);
-#ifdef USE_COUNTER
-      CounterInterruptDisable(true);  // Prevent OTA failures on 100Hz counter interrupts
-#endif  // USE_COUNTER
-#ifdef USE_EMULATION
-      UdpDisconnect();
-#endif  // USE_EMULATION
-#ifdef USE_ARILUX_RF
-      AriluxRfDisable();  // Prevent restart exception on Arilux Interrupt routine
-#endif  // USE_ARILUX_RF
-      if (Settings.flag.mqtt_enabled) {  // SetOption3 - Enable MQTT
-        MqttDisconnect();
+    }
+#ifdef USE_UFILESYS
+    else if (UPL_UFSFILE == Web.upload_file_type) {
+      if (!UfsUploadFileOpen(upload.filename.c_str())) {
+        Web.upload_error = 2;
+        return;
       }
     }
-    Web.upload_progress_dot_count = 0;
+#endif  // USE_UFILESYS
   }
 
   // ***** Step2: Write upload file
@@ -2824,11 +2484,11 @@ void HandleUploadLoop(void)
       }
 #endif  // USE_ZIGBEE_EZSP
 #endif  // USE_WEB_FW_UPGRADE
-      else if ((upload.buf[0] != 0xE9) && (upload.buf[0] != 0x1F)) {  // 0x1F is gzipped 0xE9
-        Web.upload_error = 3;      // Invalid file signature - Magic byte is not 0xE9
-        return;
-      }
-      if (UPL_TASMOTA == Web.upload_file_type) {
+      else if (UPL_TASMOTA == Web.upload_file_type) {
+        if ((upload.buf[0] != 0xE9) && (upload.buf[0] != 0x1F)) {  // 0x1F is gzipped 0xE9
+          Web.upload_error = 3;      // Invalid file signature - Magic byte is not 0xE9
+          return;
+        }
         if (0xE9 == upload.buf[0]) {
           uint32_t bin_flash_size = ESP.magicFlashChipSize((upload.buf[3] & 0xf0) >> 4);
           if (bin_flash_size > ESP.getFlashChipRealSize()) {
@@ -2843,7 +2503,7 @@ void HandleUploadLoop(void)
           return;
         }
       }
-      AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPLOAD "File type %d"), Web.upload_file_type);
+      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPLOAD "File type %d"), Web.upload_file_type);
     }  // First block received
 
     if (UPL_SETTINGS == Web.upload_file_type) {
@@ -2854,10 +2514,18 @@ void HandleUploadLoop(void)
       memcpy(settings_buffer + (Web.config_block_count * HTTP_UPLOAD_BUFLEN), upload.buf, upload.currentSize);
       Web.config_block_count++;
     }
+#ifdef USE_UFILESYS
+    else if (UPL_UFSFILE == Web.upload_file_type) {
+      if (!UfsUploadFileWrite(upload.buf, upload.currentSize)) {
+        Web.upload_error = 9;  // File too large
+        return;
+      }
+    }
+#endif  // USE_UFILESYS
 #ifdef USE_WEB_FW_UPGRADE
     else if (BUpload.active) {
       // Write a block
-//      AddLog_P(LOG_LEVEL_DEBUG, PSTR("DBG: Size %d"), upload.currentSize);
+//      AddLog(LOG_LEVEL_DEBUG, PSTR("DBG: Size %d"), upload.currentSize);
 //      AddLogBuffer(LOG_LEVEL_DEBUG, upload.buf, 32);
       Web.upload_error = BUploadWriteBuffer(upload.buf, upload.currentSize);
       if (Web.upload_error != 0) { return; }
@@ -2867,18 +2535,14 @@ void HandleUploadLoop(void)
       Web.upload_error = 5;  // Upload buffer miscompare
       return;
     }
-    if (_serialoutput) {
-      Serial.printf(".");
-      Web.upload_progress_dot_count++;
-      if (!(Web.upload_progress_dot_count % 80)) { Serial.println(); }
+    if (upload.totalSize && !(upload.totalSize % 102400)) {
+      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPLOAD "Progress %d kB"), upload.totalSize / 1024);
     }
   }
 
   // ***** Step3: Finish upload file
   else if (UPLOAD_FILE_END == upload.status) {
-    if (_serialoutput && (Web.upload_progress_dot_count % 80)) {
-      Serial.println();
-    }
+    UploadServices(1);
     if (UPL_SETTINGS == Web.upload_file_type) {
       if (Web.config_xor_on_set) {
         for (uint32_t i = 2; i < sizeof(Settings); i++) {
@@ -2919,17 +2583,22 @@ void HandleUploadLoop(void)
         return;
       }
     }
+#ifdef USE_UFILESYS
+    else if (UPL_UFSFILE == Web.upload_file_type) {
+      UfsUploadFileClose();
+    }
+#endif  // USE_UFILESYS
 #ifdef USE_WEB_FW_UPGRADE
     else if (BUpload.active) {
       // Done writing the data to SPI flash
       BUpload.active = false;
 
-      AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_UPLOAD "Transfer %u bytes"), upload.totalSize);
+      AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_UPLOAD "Transfer %u bytes"), upload.totalSize);
 
       uint8_t* data = FlashDirectAccess();
 
 //      uint32_t* values = (uint32_t*)(data);  // Only 4-byte access allowed
-//      AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPLOAD "Head 0x%08X"), values[0]);
+//      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPLOAD "Head 0x%08X"), values[0]);
 
       uint32_t error = 0;
 #ifdef USE_RF_FLASH
@@ -2958,31 +2627,30 @@ void HandleUploadLoop(void)
       }
 #endif  // USE_ZIGBEE_EZSP
       if (error != 0) {
-//        AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPLOAD "Transfer error %d"), error);
+//        AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPLOAD "Transfer error %d"), error);
         Web.upload_error = error + (100 * Web.upload_file_type);  // Add offset to discriminate transfer errors
         return;
       }
     }
 #endif  // USE_WEB_FW_UPGRADE
     else if (!Update.end(true)) { // true to set the size to the current progress
-      if (_serialoutput) { Update.printError(Serial); }
       Web.upload_error = 6;  // Upload failed. Enable logging 3
       return;
     }
-    AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_UPLOAD D_SUCCESSFUL " %u bytes"), upload.totalSize);
+    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_UPLOAD D_SUCCESSFUL " %u bytes"), upload.totalSize);
   }
 
   // ***** Step4: Abort upload file
-  else if (UPLOAD_FILE_ABORTED == upload.status) {
-    TasmotaGlobal.restart_flag = 0;
-    MqttRetryCounter(0);
-#ifdef USE_COUNTER
-    CounterInterruptDisable(false);
-#endif  // USE_COUNTER
+  else {
+    UploadServices(1);
     Web.upload_error = 7;  // Upload aborted
     if (UPL_TASMOTA == Web.upload_file_type) { Update.end(); }
   }
-  delay(0);
+  // do actually wait a little to allow ESP32 tasks to tick
+  // fixes task timeout in ESP32Solo1 style unicore code.
+  delay(10);
+  OsWatchLoop();
+//  Scheduler();          // Feed OsWatch timer to prevent restart on long uploads
 }
 
 /*-------------------------------------------------------------------------------------------*/
@@ -3001,54 +2669,48 @@ void HandleHttpCommand(void)
 {
   if (!HttpCheckPriviledgedAccess(false)) { return; }
 
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_COMMAND));
+  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_COMMAND));
 
-  if (strlen(SettingsText(SET_WEBPWD))) {
+  if (!WebAuthenticate()) {
+    // Prefer authorization via HTTP header (Basic auth), if it fails, use legacy method via GET parameters
     char tmp1[33];
-    WebGetArg("user", tmp1, sizeof(tmp1));
-    char tmp2[strlen(SettingsText(SET_WEBPWD)) +1];
-    WebGetArg("password", tmp2, sizeof(tmp2));
+    WebGetArg(PSTR("user"), tmp1, sizeof(tmp1));
+    char tmp2[strlen(SettingsText(SET_WEBPWD)) + 1];
+    WebGetArg(PSTR("password"), tmp2, sizeof(tmp2));
+
     if (!(!strcmp(tmp1, WEB_USERNAME) && !strcmp(tmp2, SettingsText(SET_WEBPWD)))) {
-      WSContentBegin(401, CT_JSON);
+      WSContentBegin(401, CT_APP_JSON);
       WSContentSend_P(PSTR("{\"" D_RSLT_WARNING "\":\"" D_NEED_USER_AND_PASSWORD "\"}"));
       WSContentEnd();
       return;
     }
   }
 
-  WSContentBegin(200, CT_JSON);
-  uint32_t curridx = TasmotaGlobal.web_log_index;
-  String svalue = Webserver->arg("cmnd");
+  WSContentBegin(200, CT_APP_JSON);
+  String svalue = Webserver->arg(F("cmnd"));
   if (svalue.length() && (svalue.length() < MQTT_MAX_PACKET_SIZE)) {
+    uint32_t curridx = TasmotaGlobal.log_buffer_pointer;
+    TasmotaGlobal.templog_level = LOG_LEVEL_INFO;
     ExecuteWebCommand((char*)svalue.c_str(), SRC_WEBCOMMAND);
-    if (TasmotaGlobal.web_log_index != curridx) {
-      uint32_t counter = curridx;
-      WSContentSend_P(PSTR("{"));
-      bool cflg = false;
-      do {
-        char* tmp;
-        size_t len;
-        GetLog(counter, &tmp, &len);
-        if (len) {
-          // [14:49:36 MQTT: stat/wemos5/RESULT = {"POWER":"OFF"}] > [{"POWER":"OFF"}]
-          char* JSON = (char*)memchr(tmp, '{', len);
-          if (JSON) { // Is it a JSON message (and not only [15:26:08 MQT: stat/wemos5/POWER = O])
-            size_t JSONlen = len - (JSON - tmp);
-            if (JSONlen > sizeof(TasmotaGlobal.mqtt_data)) { JSONlen = sizeof(TasmotaGlobal.mqtt_data); }
-            char stemp[JSONlen];
-            strlcpy(stemp, JSON +1, JSONlen -2);
-            WSContentSend_P(PSTR("%s%s"), (cflg) ? "," : "", stemp);
-            cflg = true;
-          }
-        }
-        counter++;
-        counter &= 0xFF;
-        if (!counter) counter++;  // Skip 0 as it is not allowed
-      } while (counter != TasmotaGlobal.web_log_index);
-      WSContentSend_P(PSTR("}"));
-    } else {
-      WSContentSend_P(PSTR("{\"" D_RSLT_WARNING "\":\"" D_ENABLE_WEBLOG_FOR_RESPONSE "\"}"));
+    WSContentSend_P(PSTR("{"));
+    bool cflg = false;
+    uint32_t index = curridx;
+    char* line;
+    size_t len;
+    while (GetLog(TasmotaGlobal.templog_level, &index, &line, &len)) {
+      // [14:49:36.123 MQTT: stat/wemos5/RESULT = {"POWER":"OFF"}] > [{"POWER":"OFF"}]
+      char* JSON = (char*)memchr(line, '{', len);
+      if (JSON) {  // Is it a JSON message (and not only [15:26:08 MQT: stat/wemos5/POWER = O])
+        size_t JSONlen = len - (JSON - line);
+        if (JSONlen > sizeof(TasmotaGlobal.mqtt_data)) { JSONlen = sizeof(TasmotaGlobal.mqtt_data); }
+        char stemp[JSONlen];
+        strlcpy(stemp, JSON +1, JSONlen -2);
+        WSContentSend_P(PSTR("%s%s"), (cflg) ? "," : "", stemp);
+        cflg = true;
+      }
     }
+    WSContentSend_P(PSTR("}"));
+    TasmotaGlobal.templog_level = 0;
   } else {
     WSContentSend_P(PSTR("{\"" D_RSLT_WARNING "\":\"" D_ENTER_COMMAND " cmnd=\"}"));
   }
@@ -3061,12 +2723,12 @@ void HandleConsole(void)
 {
   if (!HttpCheckPriviledgedAccess()) { return; }
 
-  if (Webserver->hasArg("c2")) {      // Console refresh requested
+  if (Webserver->hasArg(F("c2"))) {      // Console refresh requested
     HandleConsoleRefresh();
     return;
   }
 
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_CONSOLE));
+  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_CONSOLE));
 
   WSContentStart_P(PSTR(D_CONSOLE));
   WSContentSend_P(HTTP_SCRIPT_CONSOL, Settings.web_refresh);
@@ -3078,45 +2740,32 @@ void HandleConsole(void)
 
 void HandleConsoleRefresh(void)
 {
-  bool cflg = true;
-  uint32_t counter = 0;                // Initial start, should never be 0 again
-
-  String svalue = Webserver->arg("c1");
+  String svalue = Webserver->arg(F("c1"));
   if (svalue.length() && (svalue.length() < MQTT_MAX_PACKET_SIZE)) {
     AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_COMMAND "%s"), svalue.c_str());
     ExecuteWebCommand((char*)svalue.c_str(), SRC_WEBCONSOLE);
   }
 
   char stmp[8];
-  WebGetArg("c2", stmp, sizeof(stmp));
-  if (strlen(stmp)) { counter = atoi(stmp); }
+  WebGetArg(PSTR("c2"), stmp, sizeof(stmp));
+  uint32_t index = 0;                // Initial start, dump all
+  if (strlen(stmp)) { index = atoi(stmp); }
 
   WSContentBegin(200, CT_PLAIN);
-  WSContentSend_P(PSTR("%d}1%d}1"), TasmotaGlobal.web_log_index, Web.reset_web_log_flag);
+  WSContentSend_P(PSTR("%d}1%d}1"), TasmotaGlobal.log_buffer_pointer, Web.reset_web_log_flag);
   if (!Web.reset_web_log_flag) {
-    counter = 0;
+    index = 0;
     Web.reset_web_log_flag = true;
   }
-  if (counter != TasmotaGlobal.web_log_index) {
-    if (!counter) {
-      counter = TasmotaGlobal.web_log_index;
-      cflg = false;
-    }
-    do {
-      char* tmp;
-      size_t len;
-      GetLog(counter, &tmp, &len);
-      if (len) {
-        if (len > sizeof(TasmotaGlobal.mqtt_data) -2) { len = sizeof(TasmotaGlobal.mqtt_data); }
-        char stemp[len +1];
-        strlcpy(stemp, tmp, len);
-        WSContentSend_P(PSTR("%s%s"), (cflg) ? "\n" : "", stemp);
-        cflg = true;
-      }
-      counter++;
-      counter &= 0xFF;
-      if (!counter) { counter++; }  // Skip log index 0 as it is not allowed
-    } while (counter != TasmotaGlobal.web_log_index);
+  bool cflg = (index);
+  char* line;
+  size_t len;
+  while (GetLog(Settings.weblog_level, &index, &line, &len)) {
+    if (len > sizeof(TasmotaGlobal.mqtt_data) -2) { len = sizeof(TasmotaGlobal.mqtt_data); }
+    char stemp[len +1];
+    strlcpy(stemp, line, len);
+    WSContentSend_P(PSTR("%s%s"), (cflg) ? PSTR("\n") : "", stemp);
+    cflg = true;
   }
   WSContentSend_P(PSTR("}1"));
   WSContentEnd();
@@ -3126,21 +2775,21 @@ void HandleConsoleRefresh(void)
 
 void HandleNotFound(void)
 {
-//  AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP "Not found (%s)"), Webserver->uri().c_str());
+//  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP "Not found (%s)"), Webserver->uri().c_str());
 
   if (CaptivePortal()) { return; }  // If captive portal redirect instead of displaying the error page.
 
 #ifdef USE_EMULATION
 #ifdef USE_EMULATION_HUE
   String path = Webserver->uri();
-  if ((EMUL_HUE == Settings.flag2.emulation) && (path.startsWith("/api"))) {
+  if ((EMUL_HUE == Settings.flag2.emulation) && (path.startsWith(F("/api")))) {
     HandleHueApi(&path);
   } else
 #endif  // USE_EMULATION_HUE
 #endif  // USE_EMULATION
   {
     WSContentBegin(404, CT_PLAIN);
-    WSContentSend_P(PSTR(D_FILE_NOT_FOUND "\n\nURI: %s\nMethod: %s\nArguments: %d\n"), Webserver->uri().c_str(), (Webserver->method() == HTTP_GET) ? "GET" : "POST", Webserver->args());
+    WSContentSend_P(PSTR(D_FILE_NOT_FOUND "\n\nURI: %s\nMethod: %s\nArguments: %d\n"), Webserver->uri().c_str(), (Webserver->method() == HTTP_GET) ? PSTR("GET") : PSTR("POST"), Webserver->args());
     for (uint32_t i = 0; i < Webserver->args(); i++) {
       WSContentSend_P(PSTR(" %s: %s\n"), Webserver->argName(i).c_str(), Webserver->arg(i).c_str());
     }
@@ -3153,9 +2802,9 @@ bool CaptivePortal(void)
 {
   // Possible hostHeader: connectivitycheck.gstatic.com or 192.168.4.1
   if ((WifiIsInManagerMode()) && !ValidIpAddress(Webserver->hostHeader().c_str())) {
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_REDIRECTED));
+    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_REDIRECTED));
 
-    Webserver->sendHeader(F("Location"), String("http://") + Webserver->client().localIP().toString(), true);
+    Webserver->sendHeader(F("Location"), String(F("http://")) + Webserver->client().localIP().toString(), true);
     WSSend(302, CT_PLAIN, "");  // Empty content inhibits Content-length header so we have to close the socket ourselves.
     Webserver->client().stop();  // Stop is needed because we sent no content length
     return true;
@@ -3164,40 +2813,6 @@ bool CaptivePortal(void)
 }
 
 /*********************************************************************************************/
-
-String UrlEncode(const String& text)
-{
-  const char hex[] = "0123456789ABCDEF";
-
-	String encoded = "";
-	int len = text.length();
-	int i = 0;
-	while (i < len)	{
-		char decodedChar = text.charAt(i++);
-
-/*
-    if (('a' <= decodedChar && decodedChar <= 'z') ||
-        ('A' <= decodedChar && decodedChar <= 'Z') ||
-        ('0' <= decodedChar && decodedChar <= '9') ||
-        ('=' == decodedChar)) {
-      encoded += decodedChar;
-		} else {
-      encoded += '%';
-			encoded += hex[decodedChar >> 4];
-			encoded += hex[decodedChar & 0xF];
-    }
-*/
-    if ((' ' == decodedChar) || ('+' == decodedChar)) {
-      encoded += '%';
-			encoded += hex[decodedChar >> 4];
-			encoded += hex[decodedChar & 0xF];
-    } else {
-      encoded += decodedChar;
-    }
-
-	}
-	return encoded;
-}
 
 int WebSend(char *buffer)
 {
@@ -3368,8 +2983,8 @@ void CmndWebServer(void)
     Settings.webserver = XdrvMailbox.payload;
   }
   if (Settings.webserver) {
-    Response_P(PSTR("{\"" D_CMND_WEBSERVER "\":\"" D_JSON_ACTIVE_FOR " %s " D_JSON_ON_DEVICE " %s " D_JSON_WITH_IP_ADDRESS " %s\"}"),
-      (2 == Settings.webserver) ? D_ADMIN : D_USER, NetworkHostname(), NetworkAddress().toString().c_str());
+    Response_P(PSTR("{\"" D_CMND_WEBSERVER "\":\"" D_JSON_ACTIVE_FOR " %s " D_JSON_ON_DEVICE " %s " D_JSON_WITH_IP_ADDRESS " %_I\"}"),
+      (2 == Settings.webserver) ? PSTR(D_ADMIN) : PSTR(D_USER), NetworkHostname(), (uint32_t)NetworkAddress());
   } else {
     ResponseCmndStateText(0);
   }
@@ -3422,7 +3037,9 @@ void CmndWebColor(void)
       }
     }
     else {
+#ifndef FIRMWARE_MINIMAL      // if tasmota-minimal, read only and don't parse JSON
       JsonWebColor(XdrvMailbox.data);
+#endif // FIRMWARE_MINIMAL
     }
   }
   Response_P(PSTR("{\"" D_CMND_WEBCOLOR "\":["));
