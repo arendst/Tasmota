@@ -46,12 +46,13 @@
 // I prefix debug macro to be sure to use specific for THIS library
 // debugging, this should not interfere with main sketch or other
 // libraries
+void AddLog(uint32_t loglevel, PGM_P formatP, ...);
+#define TI_Errorf(...) AddLog(LOG_LEVEL_ERROR, __VA_ARGS__);
 #ifdef TI_DEBUG
   // Tasmota build
   #ifdef CODE_IMAGE_STR
-      #define TI_Debug(x)    AddLog_P2(LOG_LEVEL_DEBUG, x);
-      #define TI_Debugln(x)  AddLog_P2(LOG_LEVEL_DEBUG, x);
-      #define TI_Debugf(...) AddLog_P2(LOG_LEVEL_DEBUG, __VA_ARGS__);
+      // Only TI_Debugf() can work with Tasmota
+      #define TI_Debugf(...) AddLog(LOG_LEVEL_DEBUG, __VA_ARGS__);
       #define TI_Debugflush  {}
   #else
     #ifdef ESP8266
@@ -86,9 +87,7 @@ typedef struct _ValueList ValueList;
 struct _ValueList
 {
   ValueList *next; // next element
-//#ifdef USE_TELEINFO_STANDARD
   time_t  ts;      // TimeStamp of data if any
-//#endif
   uint8_t checksum;// checksum
   uint8_t flags;   // specific flags
   char  * name;    // LABEL of value name
@@ -120,13 +119,8 @@ enum _State_e {
 #define TINFO_FLAGS_ALERT    0x80 /* This will generate an alert */
 
 // Local buffer for one line of teleinfo
-// maximum size, I think it should be enought
-#ifdef USE_TELEINFO_STANDARD
-// Linky and standard mode may have longer lines
+// maximum size for Standard
 #define TINFO_BUFSIZE  128
-#else
-#define TINFO_BUFSIZE  64
-#endif
 
 // Teleinfo start and end of frame characters
 #define TINFO_STX 0x02
@@ -144,7 +138,7 @@ class TInfo
 {
   public:
     TInfo();
-    void          init(_Mode_e mode = TINFO_MODE_HISTORIQUE);
+    void          init(_Mode_e mode); // mode MUST be specified
     _State_e      process (char c);
     void          attachADPS(void (*_fn_ADPS)(uint8_t phase));
     void          attachData(void (*_fn_data)(ValueList * valueslist, uint8_t state));
@@ -168,6 +162,7 @@ class TInfo
     void          customLabel( char * plabel, char * pvalue, uint8_t * pflags) ;
     ValueList *   checkLine(char * pline) ;
 
+    _Mode_e   _mode; // Teleinfo mode (legacy/historique vs standard)
     _State_e  _state; // Teleinfo machine state
     ValueList _valueslist;   // Linked list of teleinfo values
     char      _recv_buff[TINFO_BUFSIZE]; // line receive buffer
