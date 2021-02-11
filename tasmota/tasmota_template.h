@@ -2379,6 +2379,7 @@ const uint8_t kModuleNiceList[] PROGMEM = {
 #endif  // USE_M5STACK_CORE2
 };
 
+// !!! Update this list in the same order as kModuleNiceList !!!
 const char kModuleNames[] PROGMEM =
   "ESP32-DevKit|"
 #ifdef USE_WEBCAM
@@ -2401,6 +2402,7 @@ const char kModuleNames[] PROGMEM =
 #endif  // USE_M5STACK_CORE2
   ;
 
+// !!! Update this list in the same order as SupportedModules !!!
 const mytmplt kModules[] PROGMEM = {
   {                              // WEMOS - Espressif ESP32-DevKitC - Any ESP32 device like WeMos and NodeMCU hardware (ESP32)
     AGPIO(GPIO_USER),            // 0       (I)O                GPIO0, ADC2_CH1, TOUCH1, RTC_GPIO11, CLK_OUT1, EMAC_TX_CLK
