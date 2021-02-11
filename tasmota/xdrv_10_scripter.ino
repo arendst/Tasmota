@@ -4317,6 +4317,23 @@ int16_t Run_script_sub(const char *type, int8_t tlen, struct GVARS *gv) {
               WSContentFlush();
               goto next_line;
             }
+            else if (!strncmp(lp, "rapp", 3)) {
+              lp+=4;
+              // skip one space after cmd
+              char tmp[256];
+              Replace_Cmd_Vars(lp ,1 , tmp, sizeof(tmp));
+              ResponseAppend_P(PSTR("%s"), tmp);
+              goto next_line;
+            }
+#ifdef USE_SENDMAIL
+            else if (!strncmp(lp, "sm", 2)) {
+              lp+=3;
+              char tmp[256];
+              Replace_Cmd_Vars(lp ,1 , tmp, sizeof(tmp));
+              SendMail(tmp);
+              goto next_line;
+            }
+#endif            
             else if (!strncmp(lp,"=>",2) || !strncmp(lp,"->",2) || !strncmp(lp,"+>",2) || !strncmp(lp,"print",5)) {
                 // execute cmd
                 uint8_t sflag = 0,pflg = 0,svmqtt,swll;
@@ -7192,8 +7209,13 @@ void ScriptJsonAppend(void) {
       }
       if (*lp!=';') {
         // send this line to mqtt
-        Replace_Cmd_Vars(lp, 1, tmp, sizeof(tmp));
-        ResponseAppend_P(PSTR("%s"), tmp);
+        if (!strncmp(lp, "%=#", 3)) {
+          // subroutine
+          lp = scripter_sub(lp + 1, 0);
+        } else {
+          Replace_Cmd_Vars(lp, 1, tmp, sizeof(tmp));
+          ResponseAppend_P(PSTR("%s"), tmp);
+        }
       }
       if (*lp==SCRIPT_EOL) {
         lp++;
