@@ -749,7 +749,7 @@ void TuyaProcessStatePacket(void) {
             } else { res = Settings.flag2.temperature_resolution; }
             GetTextIndexed(sname, sizeof(sname), (fnId-71), kTuyaSensors);
             ResponseClear(); // Clear retained message
-            Response_P(PSTR("{\"TuyaSNS\":{\"%s\":%s}}"), sname, dtostrfd(packetValue, res, tempval)); // sensor update is just on change
+            Response_P(PSTR("{\"TuyaSNS\":{\"%s\":%s}}"), sname, dtostrfd(TuyaAdjustedTemperature(packetValue, res), res, tempval)); // sensor update is just on change
             MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR(D_CMND_SENSOR));
           }
         }
