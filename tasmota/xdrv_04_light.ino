@@ -2828,6 +2828,12 @@ void CmndRgbwwTable(void)
 
 void CmndFade(void)
 {
+  if (XdrvMailbox.index == 2) {
+    // Home Assistant backwards compatibility, can be removed mid 2021
+    ResponseCmndStateText(Settings.light_fade);
+    return
+  }
+
   // Fade        - Show current Fade state
   // Fade 0      - Turn Fade Off
   // Fade On     - Turn Fade On
@@ -2858,6 +2864,7 @@ void CmndSpeed(void)
       Light.speed_once_value = XdrvMailbox.payload;
       if (!Light.fade_once_value) { Light.fade_running = false; }
     }
+    ResponseCmndNumber(Light.speed_once_value);
     return;
   }
 
