@@ -11,10 +11,11 @@ All notable changes to this project will be documented in this file.
 - Support for Device Groups Device Map (#10898)
 - Support for Eastron SDM72D-M three phase 100A Modbus energy meter (#10862)
 - Support for Frysk language translations by Christiaan Heerze
+- ESP8266 Fallback to ``*.bin.gz`` binary when OTA upload of ``*.bin`` binary fails
 
 ## [9.2.0.6] 20210210
 ### Changed
-- Removed migration support for versions before v8.1.0 (Doris)
+- Remove support for direct migration from versions before v8.1.0 (Doris)
 - ESP32 Increase number of switch GPIOs from 8 to 28
 - ESP32 Increase number of interlock groups from 4 to 14
 - Increase number of button GPIOs from 4 to 8

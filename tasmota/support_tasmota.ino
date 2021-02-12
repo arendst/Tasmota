@@ -1077,6 +1077,15 @@ void Every250mSeconds(void)
             snprintf_P(TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), PSTR("%s-" D_JSON_MINIMAL "%s"), TasmotaGlobal.mqtt_data, ota_url_type);  // Minimal filename must be filename-minimal
           }
 #endif  // FIRMWARE_MINIMAL
+#ifdef ESP8266
+          if (ota_retry_counter < OTA_ATTEMPTS / 2) {
+            if (!strcasecmp_P(TasmotaGlobal.mqtt_data, PSTR(".gz"))) {
+              ota_retry_counter = 1;
+            } else {
+              strcat_P(TasmotaGlobal.mqtt_data, PSTR(".gz"));
+            }
+          }
+#endif  // ESP8266
           AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPLOAD "%s"), TasmotaGlobal.mqtt_data);
           WiFiClient OTAclient;
           ota_result = (HTTP_UPDATE_FAILED != ESPhttpUpdate.update(OTAclient, TasmotaGlobal.mqtt_data));

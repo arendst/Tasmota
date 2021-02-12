@@ -147,7 +147,11 @@ const uint32_t BOOT_LOOP_TIME = 10;         // Number of seconds to stop detecti
 const uint32_t POWER_CYCLE_TIME = 8;        // Number of seconds to reset power cycle boot loops
 const uint16_t SYSLOG_TIMER = 600;          // Seconds to restore syslog_level
 const uint16_t SERIALLOG_TIMER = 600;       // Seconds to disable SerialLog
+#ifdef ESP8266
+const uint8_t OTA_ATTEMPTS = 10;            // Number of times to try fetching the new firmware
+#else
 const uint8_t OTA_ATTEMPTS = 5;             // Number of times to try fetching the new firmware
+#endif  // ESP8266
 
 const uint16_t INPUT_BUFFER_SIZE = 520;     // Max number of characters in serial command buffer
 const uint16_t FLOATSZ = 16;                // Max number of characters in float result from dtostrfd (max 32)

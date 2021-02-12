@@ -4,7 +4,7 @@
 
 ## Migration Information
 
-This version removes migration support for versions before v8.1.0 (Doris)
+**This version removes support for direct migration from versions before v8.1.0 (Doris)**
 
 See [migration path](https://tasmota.github.io/docs/Upgrading#migration-path) for instructions how to migrate to a major version. Pay attention to the following version breaks due to dynamic settings updates:
 
@@ -40,6 +40,7 @@ For initial configuration this release supports Webserver based **WifiManager** 
 
 ## Provided Binary Downloads
 
+### ESP8266 or ESP8285 based
 The following binary downloads have been compiled with ESP8266/Arduino library core version **2.7.4.9**.
 
 - **tasmota.bin** = The Tasmota version with most drivers. **RECOMMENDED RELEASE BINARY**
@@ -47,12 +48,31 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - **tasmota-lite.bin** = The Lite version without most drivers and sensors.
 - **tasmota-knx.bin** = The Knx version without some features but adds KNX support.
 - **tasmota-sensors.bin** = The Sensors version adds more useful sensors.
-- **tasmota-ir** = The InfraRed Receiver and transmitter version allowing all available protocols provided by library IRremoteESP8266 but without most other features.
+- **tasmota-ir.bin** = The InfraRed Receiver and transmitter version allowing all available protocols provided by library IRremoteESP8266 but without most other features.
 - **tasmota-display.bin** = The Display version without Energy Monitoring but adds display support.
 - **tasmota-zbbridge.bin** = The dedicated Sonoff Zigbee Bridge version.
 - **tasmota-minimal.bin** = The Minimal version allows intermediate OTA uploads to support larger versions and does NOT change any persistent parameter. This version **should NOT be used for initial installation**.
 
-The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota/release for ESP8266 or http://ota.tasmota.com/tasmota32/release for ESP32. The links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmota.com/tasmota/release/tasmota.bin.gz``
+Above binaries are also available as gzipped version allowing faster uploads.
+
+The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota/release. The links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmota.com/tasmota/release/tasmota.bin.gz``
+
+### ESP32 based
+The following binary downloads have been compiled with ESP32/Arduino library core version **1.0.5-rc6**.
+
+- **tasmota32.bin** = The Tasmota version with most drivers. **RECOMMENDED RELEASE BINARY**
+- **tasmota32-BG.bin** to **tasmota32-TW.bin** = The Tasmota version in different languages.
+- **tasmota32-lite.bin** = The Lite version without most drivers and sensors.
+- **tasmota32-knx.bin** = The Knx version without some features but adds KNX support.
+- **tasmota32-sensors.bin** = The Sensors version adds more useful sensors.
+- **tasmota32-ir.bin** = The InfraRed Receiver and transmitter version allowing all available protocols provided by library IRremoteESP8266 but without most other features.
+- **tasmota32-display.bin** = The Display version without Energy Monitoring but adds display support.
+- **tasmota32-webcam.bin** = The Webcam version adds webcam support.
+- **tasmota32-bluetooth.bin** = The Bluetooth version adds BLE support.
+- **tasmota32-odroidgo.bin** = The Odroid-Go version is specifically tailored to Odroid_go hardware.
+- **tasmota32-core2.bin** = The Core2 version is specifically tailored to M5Stack Core2 hardware.
+
+The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota32/release. The links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmota.com/tasmota32/release/tasmota32.bin``
 
 [List](MODULES.md) of embedded modules.
 
@@ -66,7 +86,7 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - Command ``Speed2`` to control a once off fade [#10741](https://github.com/arendst/Tasmota/issues/10741)
 - Command ``VirtualCT`` to simulate or fine tune CT bulbs with 3,4,5 channels [#10311](https://github.com/arendst/Tasmota/issues/10311)
 - Command ``SetOption40 0..250`` to disable button functionality if activated for over 0.1 second re-introduced
-- Command ``SetOption43 1..255`` to control Rotary step (#10407)
+- Command ``SetOption43 1..255`` to control Rotary step [#10407](https://github.com/arendst/Tasmota/issues/10407)
 - Command ``SetOption118 1`` to move ZbReceived from JSON message and into the subtopic replacing "SENSOR" default [#10353](https://github.com/arendst/Tasmota/issues/10353)
 - Command ``SetOption119 1`` to remove the device addr from json payload, can be used with zb_topic_fname where the addr is already known from the topic [#10355](https://github.com/arendst/Tasmota/issues/10355)
 - Zigbee command ``SetOption120 1`` or ``ZbEndpointTopic 1`` to add the zigbee endpoint as suffix in topic when using ``SetOption89 1``
@@ -105,6 +125,7 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - Rule trigger string comparisons for EndsWith ``$>``, StartsWith ``$<`` and Contains ``$|`` [#10538](https://github.com/arendst/Tasmota/issues/10538)
 - SPI display driver SSD1331 Color oled by Jeroen Vermeulen [#10376](https://github.com/arendst/Tasmota/issues/10376)
 - Compile time option ``USE_MQTT_TLS_DROP_OLD_FINGERPRINT`` to drop old (less secure) TLS fingerprint
+- ESP8266 Fallback to ``*.bin.gz`` binary when OTA upload of ``*.bin`` binary fails
 
 ### Breaking Changed
 - ESP32 switch from default SPIFFS to default LittleFS file system loosing current (zigbee) files
@@ -119,7 +140,7 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - Replaced RA8876 GPIO selection from ``SPI CS`` by ``RA8876 CS``
 
 ### Changed
-- Removed migration support for versions before v8.1.0 (Doris)
+- Remove support for direct migration from versions before v8.1.0 (Doris)
 - Command ``Sleep 0`` removes any sleep from wifi modem except when ESP32 BLE is active
 - Logging from heap to stack freeing 700 bytes RAM
 - Disabled ``USE_LIGHT`` light support for ZBBridge saving 17.6kB [#10374](https://github.com/arendst/Tasmota/issues/10374)
