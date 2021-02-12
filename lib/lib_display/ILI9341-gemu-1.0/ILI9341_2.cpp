@@ -46,7 +46,7 @@
 *
 */
 
-#ifdef ESP32
+//#ifdef ESP32
 #include "ILI9341_2.h"
 #include <limits.h>
 
@@ -58,14 +58,16 @@
 #undef ESP32_PWM_CHANNEL
 #define ESP32_PWM_CHANNEL 1
 #define ILI9341_2_HWSPI
+#else
+#define ILI9341_2_HWSPI
 #endif
 
 #if defined (ILI9341_2_HWSPI)
 #define SPI_BEGIN_TRANSACTION()    if (_hwspi)    spi2->beginTransaction(sspi2)
 #define SPI_END_TRANSACTION()      if (_hwspi)    spi2->endTransaction()
 #else
-#define SPI_BEGIN_TRANSACTION()    (void)
-#define SPI_END_TRANSACTION()      (void)
+#define SPI_BEGIN_TRANSACTION()
+#define SPI_END_TRANSACTION()
 #endif
 
 
@@ -155,8 +157,8 @@ ILI9341_2::ILI9341_2(int8_t cs, int8_t res, int8_t dc, int8_t bp) : Renderer(ILI
   _hwspi = 2;
 }
 
-#define ILI9341_2_CS_LOW digitalWrite( _cs, LOW);
-#define ILI9341_2_CS_HIGH digitalWrite( _cs, HIGH);
+#define ILI9341_2_CS_LOW if (_cs>=0) digitalWrite( _cs, LOW);
+#define ILI9341_2_CS_HIGH if (_cs>=0) digitalWrite( _cs, HIGH);
 
 
 void ILI9341_2::writecmd(uint8_t d) {
@@ -187,8 +189,13 @@ void ILI9341_2::init(uint16_t width, uint16_t height) {
   if (_hwspi==2) {
     spi2=&SPI;
   } else {
+#ifdef ESP32
     spi2 = new SPIClass(HSPI);
     spi2->begin(_sclk, _miso, _mosi, -1);
+#else
+    SPI.begin();
+    spi2=&SPI;
+#endif
   }
 
 #else
@@ -605,4 +612,4 @@ void ILI9341_2::spiwrite32(uint32_t c) {
 #endif
 }
 
-#endif
+//#endif

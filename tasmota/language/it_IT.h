@@ -1,7 +1,7 @@
 /*
   it-IT.h - localization for Italian - Italy for Tasmota
 
-  Copyright (C) 2021  Gennaro Tortone - some mods by Antonio Fragola - Updated by bovirus - rev. 12.02.2021
+  Copyright (C) 2021  Gennaro Tortone - some mods by Antonio Fragola - Updated by bovirus - rev. 04.02.2021
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -630,8 +630,8 @@
 #define D_SENSOR_SBR_TX        "SerBr - TX"
 #define D_SENSOR_SR04_TRIG     "SR04 Tri - TX"
 #define D_SENSOR_SR04_ECHO     "SR04 Ech - RX"
-#define D_SENSOR_SDM72_TX      "SDM72 - TX"
-#define D_SENSOR_SDM72_RX      "SDM72 - RX"
+#define D_SENSOR_SDM72_TX      "SDM72 Tx"
+#define D_SENSOR_SDM72_RX      "SDM72 Rx"
 #define D_SENSOR_SDM120_TX     "SDMx20 - TX"
 #define D_SENSOR_SDM120_RX     "SDMx20 - RX"
 #define D_SENSOR_SDM630_TX     "SDM630 - TX"
@@ -784,6 +784,8 @@
 #define D_SENSOR_ST7789_DC     "ST7789 - DC"
 #define D_SENSOR_SSD1331_CS    "SSD1331 - CS"
 #define D_SENSOR_SSD1331_DC    "SSD1331 - DC"
+#define D_SENSOR_ILI9341_2_CS "ILI9341-2_CS"
+#define D_SENSOR_ILI9341_2_DC "ILI9341-2_DC"
 #define D_SENSOR_SDCARD_CS     "Scheda SD - CS"
 #define D_SENSOR_WIEGAND_D0    "Wiegand - D0"
 #define D_SENSOR_WIEGAND_D1    "Wiegand - D1"
@@ -838,7 +840,7 @@
 //SDM220, SDM120, SDM72, LE01MR
 #define D_EXPORT_POWER    "Potenza esportata"
 #define D_IMPORT_POWER 	  "Potenza importata"
-#define D_PHASE_ANGLE     "Angolo fase"
+#define D_PHASE_ANGLE     "Angolo Fase"
 #define D_IMPORT_ACTIVE   "Potenza attiva importata"
 #define D_EXPORT_ACTIVE   "Potenza attiva esportata"
 #define D_IMPORT_REACTIVE "Potenza reattiva importata"
