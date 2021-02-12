@@ -2828,58 +2828,62 @@ void CmndRgbwwTable(void)
 
 void CmndFade(void)
 {
-  // Fade        - Show current Fade state
-  // Fade 0      - Turn Fade Off
-  // Fade On     - Turn Fade On
-  // Fade Toggle - Toggle Fade state
-  switch (XdrvMailbox.payload) {
-  case 0: // Off
-  case 1: // On
-    Settings.light_fade = XdrvMailbox.payload;
-    break;
-  case 2: // Toggle
-    Settings.light_fade ^= 1;
-    break;
+  if (2 == XdrvMailbox.index) {
+    // Home Assistant backwards compatibility, can be removed mid 2021
+  } else {
+    // Fade        - Show current Fade state
+    // Fade 0      - Turn Fade Off
+    // Fade On     - Turn Fade On
+    // Fade Toggle - Toggle Fade state
+    switch (XdrvMailbox.payload) {
+    case 0: // Off
+    case 1: // On
+      Settings.light_fade = XdrvMailbox.payload;
+      break;
+    case 2: // Toggle
+      Settings.light_fade ^= 1;
+      break;
+    }
+  #ifdef USE_DEVICE_GROUPS
+    if (XdrvMailbox.payload >= 0 && XdrvMailbox.payload <= 2) SendDeviceGroupMessage(Light.device, DGR_MSGTYP_UPDATE, DGR_ITEM_LIGHT_FADE, Settings.light_fade);
+  #endif  // USE_DEVICE_GROUPS
+    if (!Settings.light_fade) { Light.fade_running = false; }
   }
-#ifdef USE_DEVICE_GROUPS
-  if (XdrvMailbox.payload >= 0 && XdrvMailbox.payload <= 2) SendDeviceGroupMessage(Light.device, DGR_MSGTYP_UPDATE, DGR_ITEM_LIGHT_FADE, Settings.light_fade);
-#endif  // USE_DEVICE_GROUPS
-  if (!Settings.light_fade) { Light.fade_running = false; }
   ResponseCmndStateText(Settings.light_fade);
 }
 
 void CmndSpeed(void)
 {
-  if (XdrvMailbox.index == 2) {
+  if (2 == XdrvMailbox.index) {
     if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 40)) {
       Light.fade_once_enabled = true;
-      Light.fade_once_value = XdrvMailbox.payload > 0;
+      Light.fade_once_value = (XdrvMailbox.payload > 0);
       Light.speed_once_enabled = true;
       Light.speed_once_value = XdrvMailbox.payload;
       if (!Light.fade_once_value) { Light.fade_running = false; }
     }
-    return;
-  }
-
-  // Speed 1  - Fast
-  // Speed 40 - Very slow
-  // Speed +  - Increment Speed
-  // Speed -  - Decrement Speed
-  if (1 == XdrvMailbox.data_len) {
-    if (('+' == XdrvMailbox.data[0]) && (Settings.light_speed > 1)) {
-      XdrvMailbox.payload = Settings.light_speed - 1;
+    ResponseCmndNumber(Light.speed_once_value);
+  } else {
+    // Speed 1  - Fast
+    // Speed 40 - Very slow
+    // Speed +  - Increment Speed
+    // Speed -  - Decrement Speed
+    if (1 == XdrvMailbox.data_len) {
+      if (('+' == XdrvMailbox.data[0]) && (Settings.light_speed > 1)) {
+        XdrvMailbox.payload = Settings.light_speed - 1;
+      }
+      else if (('-' == XdrvMailbox.data[0]) && (Settings.light_speed < 40)) {
+        XdrvMailbox.payload = Settings.light_speed + 1;
+      }
     }
-    else if (('-' == XdrvMailbox.data[0]) && (Settings.light_speed < 40)) {
-      XdrvMailbox.payload = Settings.light_speed + 1;
-    }
-  }
-  if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload <= 40)) {
-    Settings.light_speed = XdrvMailbox.payload;
+    if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload <= 40)) {
+      Settings.light_speed = XdrvMailbox.payload;
 #ifdef USE_DEVICE_GROUPS
-    SendDeviceGroupMessage(Light.device, DGR_MSGTYP_UPDATE, DGR_ITEM_LIGHT_SPEED, Settings.light_speed);
+      SendDeviceGroupMessage(Light.device, DGR_MSGTYP_UPDATE, DGR_ITEM_LIGHT_SPEED, Settings.light_speed);
 #endif  // USE_DEVICE_GROUPS
+    }
+    ResponseCmndNumber(Settings.light_speed);
   }
-  ResponseCmndNumber(Settings.light_speed);
 }
 
 void CmndWakeupDuration(void)

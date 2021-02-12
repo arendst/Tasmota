@@ -117,6 +117,29 @@
 #endif  // USE_SCRIPT
 #endif  // FIRMWARE_M5STACK_CORE2
 
+/*********************************************************************************************\
+ * [tasmota32-bluetooth.bin]
+ * Provide an image with BLE support
+\*********************************************************************************************/
+
+#ifdef FIRMWARE_BLUETOOTH
+
+#undef CODE_IMAGE_STR
+#define CODE_IMAGE_STR "bluetooth"
+
+#undef MODULE
+#define MODULE                 WEMOS             // [Module] Select default module from tasmota_template.h
+#undef FALLBACK_MODULE
+#define FALLBACK_MODULE        WEMOS             // [Module2] Select default module on fast reboot where USER_MODULE is user template
+
+#define USE_UFILESYS
+#define USE_SDCARD
+  #define GUI_TRASH_FILE
+#define USE_ADC
+#define USE_BLE_ESP32                            // Enable new BLE driver
+#define USE_MI_ESP32                             // (ESP32 only) Add support for ESP32 as a BLE-bridge (+9k2 mem, +292k flash)
+#endif  // FIRMWARE_BLUETOOTH
+
 #endif  // ESP32
 
 #endif  // _TASMOTA_CONFIGURATIONS_ESP32_H_
