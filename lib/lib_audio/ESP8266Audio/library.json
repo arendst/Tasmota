@@ -20,6 +20,7 @@
         "SPI": "1.0"
     },
     "frameworks": "Arduino",
+    "platforms": ["espressif8266", "espressif32"],
     "examples": [
         "examples/*/*.ino"
     ]
