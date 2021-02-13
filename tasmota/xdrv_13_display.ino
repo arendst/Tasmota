@@ -658,9 +658,16 @@ void DisplayText(void)
             break;
           case 'f':
             // font sx
-            if (renderer) renderer->setTextFont(*cp&7);
-            else DisplaySetFont(*cp&7);
-            cp += 1;
+            { uint8_t font = *cp&7;
+              if (renderer) renderer->setTextFont(font);
+              else DisplaySetFont(font);
+              if (font) {
+                // for backward compatibility set size to 1 on non GFX fonts
+                if (renderer) renderer->setTextSize(1);
+                else DisplaySetSize(1);
+              }
+              cp += 1;
+            }
             break;
           case 'a':
             // rotation angle
