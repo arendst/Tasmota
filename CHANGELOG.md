@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 - Support for Frysk language translations by Christiaan Heerze
 - ESP8266 Fallback to ``*.bin.gz`` binary when OTA upload of ``*.bin`` binary fails
 - Berry language improved Tasmota integration
+- IRremoteESP8266 library from v2.7.14 to v2.7.15
 
 ## [9.2.0.6] 20210210
 ### Changed
