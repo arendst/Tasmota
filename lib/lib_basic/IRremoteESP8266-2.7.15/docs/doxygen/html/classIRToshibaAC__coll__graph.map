@@ -1,0 +1,5 @@
+<map id="IRToshibaAC" name="IRToshibaAC">
+<area shape="rect" id="node1" title="Class for handling detailed Toshiba A/C messages." alt="" coords="48,95,149,121"/>
+<area shape="rect" id="node2" href="$classIRsend.html" title="Class for sending all basic IR protocols." alt="" coords="5,5,72,32"/>
+<area shape="rect" id="node3" href="$unionToshibaProtocol.html" title="Native representation of a Toshiba A/C message." alt="" coords="97,5,221,32"/>
+</map>
