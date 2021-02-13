@@ -105,7 +105,8 @@ static int next(blexer *lexer)
         lr->s = s ? s : &eos;
         --lr->len;
     }
-    lexer->cursor = *lr->s++;
+    // lexer->cursor = *lr->s++;        // SH
+    lexer->cursor = pgm_read_byte(lr->s++);
     return lexer->cursor;
 }
 

@@ -8,14 +8,14 @@
 #ifndef BERRY_CONF_H
 #define BERRY_CONF_H
 
+#include <pgmspace.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-    extern void serial(const char *sp);
-    extern void serial3(const char *sp, uint32_t a, uint32_t b, uint32_t c);
-    extern void serial2s1(const char *sp, const char *a, const char *b, uint32_t c);
     extern int strncmp_PP(const char * str1P, const char * str2P, size_t size);
+    extern char * strchr_P(const char *s, int c);
 
 #ifdef __cplusplus
 }
@@ -54,7 +54,11 @@ extern "C" {
  * runtime. Enable this macro can greatly optimize RAM usage.
  * Default: 1
  **/
-#define BE_USE_PRECOMPILED_OBJECT       1
+#ifdef ESP8266
+#define BE_USE_PRECOMPILED_OBJECT       0
+#else
+#define BE_USE_PRECOMPILED_OBJECT       0           // will enable later when stabilized
+#endif
 
 /* Macro: BE_DEBUG_RUNTIME_INFO
  * Set runtime error debugging information.
@@ -157,7 +161,7 @@ extern "C" {
 #define BE_USE_OS_MODULE                0
 #define BE_USE_SYS_MODULE               0
 #define BE_USE_DEBUG_MODULE             0
-#define BE_USE_GC_MODULE                0
+#define BE_USE_GC_MODULE                1
 
 /* Macro: BE_EXPLICIT_XXX
  * If these macros are defined, the corresponding function will
