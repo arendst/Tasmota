@@ -87,6 +87,14 @@ void Renderer::Updateframe() {
 
 }
 
+
+void Renderer::setTextSize(uint8_t sf) {
+  if (sf < 1) sf = 1;
+  if (sf > 4) sf = 4;
+  tsize = sf;
+  Adafruit_GFX::setTextSize(sf);
+}
+
 /**
  *  @brief: this draws a charactor on the frame buffer but not refresh
  */
@@ -96,14 +104,25 @@ void Renderer::DrawCharAt(int16_t x, int16_t y, char ascii_char,int16_t colored)
     int i, j;
     unsigned int char_offset = (ascii_char - ' ') * xfont->Height * (xfont->Width / 8 + (xfont->Width % 8 ? 1 : 0));
     const unsigned char* ptr = &xfont->table[char_offset];
+    uint8_t sf = tsize;
 
     for (j = 0; j < xfont->Height; j++) {
         for (i = 0; i < xfont->Width; i++) {
             if (pgm_read_byte(ptr) & (0x80 >> (i % 8))) {
-                writePixel(x + i, y + j, colored);
+                if (sf == 1) {
+                  writePixel(x + i, y + j, colored);
+                } else {
+                  writeFillRect(x + i * sf, y + j * sf, sf, sf, colored);
+                }
             } else {
               // fill background
-                if (!drawmode) writePixel(x + i, y + j, textbgcolor);
+                if (!drawmode) {
+                  if (sf == 1) {
+                    writePixel(x + i, y + j, textbgcolor);
+                  } else {
+                    writeFillRect(x + i * sf, y + j * sf, sf, sf, textbgcolor);
+                  }
+                }
             }
             if (i % 8 == 7) {
                 ptr++;
@@ -146,8 +165,8 @@ void Renderer::DrawStringAt(int16_t x, int16_t y, const char* text, uint16_t col
 
 
     if (flag) {
-      x=(x-1)*xfont->Width;
-      y=(y-1)*xfont->Height;
+      x=(x-1)*xfont->Width*tsize;
+      y=(y-1)*xfont->Height*tsize;
       refcolumn = x;
     }
 
@@ -159,7 +178,7 @@ void Renderer::DrawStringAt(int16_t x, int16_t y, const char* text, uint16_t col
         /* Display one character on EPD */
         DrawCharAt(refcolumn, y, *p_text, colored);
         /* increment the column position */
-        refcolumn += xfont->Width;
+        refcolumn += xfont->Width*tsize;
         /* Point on the next character */
         p_text++;
         counter++;
@@ -527,6 +546,13 @@ void Renderer::setDrawMode(uint8_t mode) {
 void Renderer::invertDisplay(boolean i) {
 }
 
+void Renderer::setScrollMargins(uint16_t top, uint16_t bottom) {
+
+}
+void Renderer::scrollTo(uint16_t y) {
+
+}
+
 void VButton::xdrawButton(bool inverted) {
   wr_redir=1;
   drawButton(inverted);
@@ -622,6 +648,7 @@ uint16_t VButton::UpdateSlider(int16_t x, int16_t y) {
   }
 
 }
+
 
 
 
