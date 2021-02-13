@@ -34,16 +34,16 @@ ILI9341_2 *ili9341_2;
 uint8_t ili9342_ctouch_counter = 0;
 #endif // USE_FT5206
 
+bool tft_init_done = false;
 
 /*********************************************************************************************/
 
 void ILI9341_InitDriver()
 {
-  if (!Settings.display_model) {
-    Settings.display_model = XDSP_04;
-  }
+  if (PinUsed(GPIO_ILI9341_CS) || PinUsed(GPIO_ILI9341_DC) &&
+      (TasmotaGlobal.spi_enabled || TasmotaGlobal.soft_spi_enabled)) {
 
-  if (XDSP_04 == Settings.display_model) {
+    Settings.display_model = XDSP_04;
 
     if (Settings.display_width != ILI9341_TFTWIDTH) {
       Settings.display_width = ILI9341_TFTWIDTH;
@@ -53,7 +53,7 @@ void ILI9341_InitDriver()
     }
 
     // disable screen buffer
-    buffer=NULL;
+    buffer = NULL;
 
     // default colors
     fg_color = ILI9341_WHITE;
@@ -63,33 +63,42 @@ void ILI9341_InitDriver()
     // fixed pins on m5stack core2
     ili9341_2  = new ILI9341_2(5, -2, 15, -2);
 #else
+
+      // There are displays without CS
+    int8_t spi_cs_pin = -1;
+    if (PinUsed(GPIO_ILI9341_CS)) {
+      spi_cs_pin = Pin(GPIO_ILI9341_CS);
+    }
+    int8_t backlight_pin = -1;
+    if (PinUsed(GPIO_BACKLIGHT)) {
+      backlight_pin = Pin(GPIO_BACKLIGHT);
+    }
+    int8_t oled_reset_pin = -1;
+    if (PinUsed(GPIO_OLED_RESET)) {
+      oled_reset_pin = Pin(GPIO_OLED_RESET);
+    }
+
     // check for special case with 2 SPI busses (ESP32 bitcoin)
     if (TasmotaGlobal.soft_spi_enabled) {
-      // init renderer, may use hardware spi, however we use SSPI defintion because SD card uses SPI definition  (2 spi busses)
-      if (PinUsed(GPIO_SSPI_CS) && PinUsed(GPIO_OLED_RESET) && PinUsed(GPIO_BACKLIGHT) && PinUsed(GPIO_SSPI_MOSI) && PinUsed(GPIO_SSPI_MISO) && PinUsed(GPIO_SSPI_SCLK) && PinUsed(GPIO_SSPI_DC)) {
-        ili9341_2  = new ILI9341_2(Pin(GPIO_SSPI_CS), Pin(GPIO_SSPI_MOSI), Pin(GPIO_SSPI_MISO), Pin(GPIO_SSPI_SCLK), Pin(GPIO_OLED_RESET), Pin(GPIO_SSPI_DC), Pin(GPIO_BACKLIGHT), 2);
-      } else {
-        return;
+      // Init renderer, may use hardware spi, however we use SSPI defintion because SD card uses SPI definition  (2 spi busses)
+      if (PinUsed(GPIO_SSPI_MOSI) && PinUsed(GPIO_SSPI_MISO) && PinUsed(GPIO_SSPI_SCLK)) {
+        ili9341_2 = new ILI9341_2(spi_cs_pin, Pin(GPIO_SSPI_MOSI), Pin(GPIO_SSPI_MISO), Pin(GPIO_SSPI_SCLK), oled_reset_pin, Pin(GPIO_ILI9341_DC), backlight_pin, 2);
       }
     } else if (TasmotaGlobal.spi_enabled) {
-      // there are displays without CS
-      int8_t cs = -1;
-      if (PinUsed(GPIO_ILI9341_CS)) {
-        cs = Pin(GPIO_ILI9341_CS);
+      if (PinUsed(GPIO_ILI9341_DC)) {
+        ili9341_2 = new ILI9341_2(spi_cs_pin, Pin(GPIO_SPI_MOSI), Pin(GPIO_SPI_MISO), Pin(GPIO_SPI_CLK), oled_reset_pin, Pin(GPIO_ILI9341_DC), backlight_pin, 1);
       }
-      if (PinUsed(GPIO_OLED_RESET) && PinUsed(GPIO_BACKLIGHT) && PinUsed(GPIO_ILI9341_DC)) {
-        ili9341_2  = new ILI9341_2(Pin(GPIO_ILI9341_CS), Pin(GPIO_SPI_MOSI), Pin(GPIO_SPI_MISO), Pin(GPIO_SPI_CLK), Pin(GPIO_OLED_RESET), Pin(GPIO_ILI9341_DC), Pin(GPIO_BACKLIGHT), 1);
-      } else {
-        return;
-      }
-    } else {
-      return;
     }
 #endif // USE_M5STACK_CORE2
 
-    ili9341_2->init(Settings.display_width,Settings.display_height);
+    if (ili9341_2 == nullptr) {
+      AddLog(LOG_LEVEL_INFO, PSTR("DSP: ILI934x invalid GPIOs"));
+      return;
+    }
+
+    ili9341_2->init(Settings.display_width, Settings.display_height);
     renderer = ili9341_2;
-    renderer->DisplayInit(DISPLAY_INIT_MODE,Settings.display_size,Settings.display_rotate,Settings.display_font);
+    renderer->DisplayInit(DISPLAY_INIT_MODE, Settings.display_size, Settings.display_rotate, Settings.display_font);
     renderer->dim(Settings.display_dimmer);
 
 #ifdef SHOW_SPLASH
@@ -101,6 +110,13 @@ void ILI9341_InitDriver()
 #endif // SHOW_SPLASH
 
     color_type = COLOR_COLOR;
+
+#ifdef USE_DISPLAY_MODES1TO5
+    if (Settings.display_rotate) {
+      DisplayAllocScreenBuffer();
+    }
+    Ili9341InitMode();
+#endif  // USE_DISPLAY_MODES1TO5
 
 #ifdef ESP32
 #ifdef USE_FT5206
@@ -114,6 +130,7 @@ void ILI9341_InitDriver()
 #endif // USE_FT5206
 #endif // ESP32
 
+    tft_init_done = true;
 #ifdef USE_DISPLAY_ILI9341
     AddLog(LOG_LEVEL_INFO, PSTR("DSP: ILI9341"));
 #else
@@ -192,7 +209,6 @@ uint16_t tft_top = TFT_TOP;
 uint16_t tft_bottom = TFT_BOTTOM;
 uint16_t tft_scroll = TFT_TOP;
 uint16_t tft_cols = 0;
-bool tft_init_done = false;
 
 bool Ili9341Header(void) {
   if (Settings.display_cols[0] != tft_cols) {
@@ -208,6 +224,25 @@ bool Ili9341Header(void) {
     renderer->setScrollMargins(tft_top, tft_bottom);
   }
   return (tft_cols > 17);
+}
+
+void Ili9341InitMode(void) {
+//  renderer->setRotation(Settings.display_rotate);  // 0
+  renderer->invertDisplay(0);
+  renderer->fillScreen(ILI9341_BLACK);
+  renderer->setTextWrap(false);         // Allow text to run off edges
+  renderer->cp437(true);
+  if (!Settings.display_mode) {
+    renderer->setCursor(0, 0);
+    renderer->setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+    renderer->setTextSize(1);
+  } else {
+    Ili9341Header();
+    renderer->setCursor(0, 0);
+    renderer->setTextColor(ILI9341_YELLOW, ILI9341_BLACK);
+    renderer->setTextSize(2);
+//    tft->println("HEADER");
+  }
 }
 
 void Ili9341PrintLog(void) {
@@ -307,7 +342,7 @@ bool Xdsp04(uint8_t function)
   if (FUNC_DISPLAY_INIT_DRIVER == function) {
     ILI9341_InitDriver();
   }
-  else if (XDSP_04 == Settings.display_model) {
+  else if (tft_init_done && (XDSP_04 == Settings.display_model)) {
       switch (function) {
         case FUNC_DISPLAY_MODEL:
           result = true;
