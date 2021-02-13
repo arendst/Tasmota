@@ -16,44 +16,35 @@
 
 /* standard input and output */
 extern "C" {
-    void serial(const char *sp) {
-        char s[200];
-        snprintf_P(s, sizeof(s), "%s", sp);
-        Serial.printf(s);
-        Serial.flush();
+    int strncmp_PP(const char * str1P, const char * str2P, size_t size)
+    {
+        int result = 0;
+
+        while (size > 0)
+        {
+            char ch1 = pgm_read_byte(str1P++);
+            char ch2 = pgm_read_byte(str2P++);
+            result = ch1 - ch2;
+            if (result != 0 || ch2 == '\0')
+            {
+                break;
+            }
+
+            size--;
+        }
+
+        return result;
     }
-    void serial3(const char *sp, uint32_t a, uint32_t b, uint32_t c) {
-        char s[200];
-        snprintf_P(s, sizeof(s), "%s 0x%08X 0x%08X 0x%08X\n", sp, a, b, c);
-        Serial.printf(s);
-        Serial.flush();
+
+    //
+    char * strchr_P(const char *s, int c) {
+        do {
+            if (pgm_read_byte(s) == c) {
+                return (char*)s;
+            }
+        } while (pgm_read_byte(s++));
+        return (0);
     }
-    void serial2s1(const char *sp, const char * a, const char * b, uint32_t c) {
-        char s[200];
-        snprintf_P(s, sizeof(s), "%s '%s' '%s' 0x%08X\n", sp, a, b, c);
-        Serial.printf(s);
-        Serial.flush();
-    }
-
-// int strncmp_PP(const char * str1P, const char * str2P, size_t size)
-// {
-//     int result = 0;
-
-//     while (size > 0)
-//     {
-//         char ch1 = pgm_read_byte(str1P++);
-//         char ch2 = pgm_read_byte(str2P++);
-//         result = ch1 - ch2;
-//         if (result != 0 || ch2 == '\0')
-//         {
-//             break;
-//         }
-
-//         size--;
-//     }
-
-//     return result;
-// }
 }
 
 BERRY_API void be_writebuffer(const char *buffer, size_t length)

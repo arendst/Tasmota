@@ -122,16 +122,16 @@ static int binary_search(int value)
     const uint16_t *high = tab + array_count(tab) - 1;
     while (low <= high) {
         const uint16_t *mid = low + ((high - low) >> 1);
-        if (*mid == value) {
-            return mid[1];
+        if (pgm_read_word(mid) == value) {
+            return pgm_read_word(&mid[1]);
         }
-        if (*mid < value) {
+        if (pgm_read_word(mid) < value) {
             low = mid + 1;
         } else {
             high = mid - 1;
         }
     }
-    return *low;
+    return pgm_read_word(low);
 }
 
 static int nextpow(int value)
