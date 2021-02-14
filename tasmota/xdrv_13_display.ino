@@ -957,6 +957,7 @@ void DisplayText(void)
 }
 
 #ifdef USE_UFILESYS
+extern FS *ufsp;
 void Display_Text_From_File(const char *file) {
   File fp;
   fp = ufsp->open(file, FS_FILE_READ);
