@@ -407,12 +407,12 @@ void SetLedPowerAll(uint32_t state)
 
 void SetLedLink(uint32_t state)
 {
-  uint32_t led_pin = Pin(GPIO_LEDLNK);
+  int led_pin = Pin(GPIO_LEDLNK);
   uint32_t led_inv = TasmotaGlobal.ledlnk_inverted;
-  if (99 == led_pin) {                    // Legacy - LED1 is status
+  if (-1 == led_pin) {                    // Legacy - LED1 is status
     SetLedPowerIdx(0, state);
   }
-  else if (led_pin < 99) {
+  else if (led_pin > -1) {
     if (state) { state = 1; }
     digitalWrite(led_pin, (led_inv) ? !state : state);
   }
@@ -1655,7 +1655,8 @@ void GpioInit(void)
     bool valid_cs = (ValidSpiPinUsed(GPIO_SPI_CS) ||
                      ValidSpiPinUsed(GPIO_RC522_CS) ||
                      (ValidSpiPinUsed(GPIO_NRF24_CS) && ValidSpiPinUsed(GPIO_NRF24_DC)) ||
-                     (ValidSpiPinUsed(GPIO_ILI9341_CS) && ValidSpiPinUsed(GPIO_ILI9341_DC)) ||
+                     ValidSpiPinUsed(GPIO_ILI9341_CS) ||
+                     ValidSpiPinUsed(GPIO_ILI9341_DC) || // there are also boards without cs
                      ValidSpiPinUsed(GPIO_EPAPER29_CS) ||
                      ValidSpiPinUsed(GPIO_EPAPER42_CS) ||
                      ValidSpiPinUsed(GPIO_ILI9488_CS) ||

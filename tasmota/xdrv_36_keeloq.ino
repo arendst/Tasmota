@@ -54,8 +54,8 @@ struct JAROLIFT_DEVICE {
   uint64_t pack            = 0;   // Contains data to send.
   int count                = 0;
   uint32_t serial          = 0x0;
-  uint8_t port_tx;
-  uint8_t port_rx;
+  int8_t port_tx;
+  int8_t port_rx;
 } jaroliftDevice;
 
 void CmdSet(void)

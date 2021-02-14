@@ -9,6 +9,8 @@
 #define WHITE 1
 #define INVERSE 2
 
+#define MAX_INDEXCOLORS 32
+
 // depends on GFX driver
 // GFX patched
 // a. in class GFX setCursor,setTextSize => virtual
@@ -36,15 +38,19 @@ public:
   virtual void pushColors(uint16_t *data, uint16_t len, boolean first);
   virtual void setAddrWindow(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1);
   virtual void invertDisplay(boolean i);
+  virtual void setScrollMargins(uint16_t top, uint16_t bottom);
+  virtual void scrollTo(uint16_t y);
   void setDrawMode(uint8_t mode);
   uint8_t drawmode;
   virtual void FastString(uint16_t x,uint16_t y,uint16_t tcolor, const char* str);
+  void setTextSize(uint8_t s);
 private:
   void DrawCharAt(int16_t x, int16_t y, char ascii_char,int16_t colored);
   inline void drawFastVLineInternal(int16_t x, int16_t y, int16_t h, uint16_t color) __attribute__((always_inline));
   inline void drawFastHLineInternal(int16_t x, int16_t y, int16_t w, uint16_t color) __attribute__((always_inline));
   sFONT *selected_font;
   uint8_t font;
+  uint8_t tsize = 1;
 };
 
 typedef union {

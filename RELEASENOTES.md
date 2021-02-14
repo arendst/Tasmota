@@ -141,6 +141,9 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 
 ### Changed
 - Remove support for direct migration from versions before v8.1.0 (Doris)
+- IRremoteESP8266 library from v2.7.14 to v2.7.15
+- NeoPixelBus library from v2.6.0 to v2.6.1.4
+- ILI9341 library from Adafruit_ILI9341-1.2.0-Tasmota-1.0 to ILI9341-gemu-1.0
 - Command ``Sleep 0`` removes any sleep from wifi modem except when ESP32 BLE is active
 - Logging from heap to stack freeing 700 bytes RAM
 - Disabled ``USE_LIGHT`` light support for ZBBridge saving 17.6kB [#10374](https://github.com/arendst/Tasmota/issues/10374)

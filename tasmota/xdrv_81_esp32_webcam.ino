@@ -204,8 +204,8 @@ uint32_t WcSetup(int32_t fsiz) {
     config.pin_href = Pin(GPIO_WEBCAM_HREF);      // HREF_GPIO_NUM;
     config.pin_sscb_sda = Pin(GPIO_WEBCAM_SIOD);  // SIOD_GPIO_NUM;
     config.pin_sscb_scl = Pin(GPIO_WEBCAM_SIOC);  // SIOC_GPIO_NUM;
-    config.pin_pwdn = (PinUsed(GPIO_WEBCAM_PWDN)) ? Pin(GPIO_WEBCAM_PWDN) : -1;     // PWDN_GPIO_NUM;
-    config.pin_reset = (PinUsed(GPIO_WEBCAM_RESET)) ? Pin(GPIO_WEBCAM_RESET) : -1;  // RESET_GPIO_NUM;
+    config.pin_pwdn = Pin(GPIO_WEBCAM_PWDN);       // PWDN_GPIO_NUM;
+    config.pin_reset = Pin(GPIO_WEBCAM_RESET);    // RESET_GPIO_NUM;
 
     AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: User template"));
   } else {
