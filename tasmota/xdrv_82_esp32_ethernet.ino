@@ -133,7 +133,7 @@ void EthernetInit(void) {
 
   WiFi.onEvent(EthernetEvent);
 
-  int eth_power = (PinUsed(GPIO_ETH_PHY_POWER)) ? Pin(GPIO_ETH_PHY_POWER) : -1;
+  int eth_power = Pin(GPIO_ETH_PHY_POWER);
   int eth_mdc = Pin(GPIO_ETH_PHY_MDC);
   int eth_mdio = Pin(GPIO_ETH_PHY_MDIO);
   if (!ETH.begin(Settings.eth_address, eth_power, eth_mdc, eth_mdio, (eth_phy_type_t)Settings.eth_type, (eth_clock_mode_t)Settings.eth_clk_mode)) {

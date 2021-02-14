@@ -37,8 +37,8 @@ enum {
   SHT1X_CMD_SOFT_RESET    = B00011110
 };
 
-uint8_t sht_sda_pin;
-uint8_t sht_scl_pin;
+int8_t sht_sda_pin;
+int8_t sht_scl_pin;
 uint8_t sht_type = 0;
 char sht_types[] = "SHT1X";
 uint8_t sht_valid = 0;

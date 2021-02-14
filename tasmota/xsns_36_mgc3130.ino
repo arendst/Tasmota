@@ -39,8 +39,8 @@
 
 #define MGC3130_I2C_ADDR        0x42
 
-uint8_t MGC3130_xfer = 0;
-uint8_t MGC3130_reset = 0;
+int8_t MGC3130_xfer = 0;
+int8_t MGC3130_reset = 0;
 bool MGC3130_type = false;
 char MGC3130stype[] = "MGC3130";
 

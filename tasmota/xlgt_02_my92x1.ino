@@ -26,8 +26,8 @@
 #define XLGT_02             2
 
 struct MY92X1 {
-  uint8_t pdi_pin = 0;
-  uint8_t pdcki_pin = 0;
+  int8_t pdi_pin = 0;
+  int8_t pdcki_pin = 0;
   uint8_t model = 0;
 } My92x1;
 
