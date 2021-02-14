@@ -32,7 +32,7 @@ TasmotaModbus::TasmotaModbus(int receive_pin, int transmit_pin, int dir_pin) : T
   if (99 != mb_dir_pin) {
     pinMode(mb_dir_pin, OUTPUT);
     digitalWrite(mb_dir_pin, MB_DIR_READ);
-    AddLog_P(2, PSTR("Mod: Dir pin: %d"), mb_dir_pin);
+    //AddLog_P(2, PSTR("Mod: Dir pin: %d"), mb_dir_pin);
   }
 }
 

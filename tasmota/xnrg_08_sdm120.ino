@@ -80,7 +80,7 @@ void SDM120Every250ms(void)
     uint8_t buffer[14];  // At least 5 + (2 * 2) = 9
 
     uint32_t error = Sdm120Modbus->ReceiveBuffer(buffer, 2);
-    AddLogBuffer(LOG_LEVEL_DEBUG_MORE, buffer, Sdm120Modbus->ReceiveCount());
+    //AddLogBuffer(LOG_LEVEL_DEBUG_MORE, buffer, Sdm120Modbus->ReceiveCount());
 
     if (error) {
       AddLog(LOG_LEVEL_DEBUG, PSTR("SDM: SDM120 error %d"), error);
