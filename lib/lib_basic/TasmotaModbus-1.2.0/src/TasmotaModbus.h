@@ -27,7 +27,7 @@
 
 class TasmotaModbus : public TasmotaSerial {
   public:
-    TasmotaModbus(int receive_pin, int transmit_pin, int dir_pin = -1);
+    TasmotaModbus(int receive_pin, int transmit_pin, int dir_pin = 99);
     virtual ~TasmotaModbus() {}
 
     int Begin(long speed = TM_MODBUS_BAUDRATE, int stop_bits = 1);
