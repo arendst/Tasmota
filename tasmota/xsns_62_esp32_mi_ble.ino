@@ -369,8 +369,9 @@ void (*const MI32_Commands[])(void) PROGMEM = {
 #define MI_MHOC401     11
 #define MI_MHOC303     12
 #define MI_ATC         13
+#define MI_DOOR        14
 
-#define MI_MI32_TYPES    13 //count this manually
+#define MI_MI32_TYPES    14 //count this manually
 
 const uint16_t kMI32DeviceID[MI_MI32_TYPES]={
   0x0000, // Unkown
@@ -385,7 +386,8 @@ const uint16_t kMI32DeviceID[MI_MI32_TYPES]={
   0x0153, // yee-rc
   0x0387, // MHO-C401
   0x06d3, // MHO-C303
-  0x0a1c  // ATC -> this is a fake ID
+  0x0a1c,  // ATC -> this is a fake ID
+  0x098b  // door/window sensor
 };
 
 const char kMI32DeviceType0[] PROGMEM = "Unknown";
@@ -401,7 +403,8 @@ const char kMI32DeviceType9[] PROGMEM = "YEERC";
 const char kMI32DeviceType10[] PROGMEM ="MHOC401";
 const char kMI32DeviceType11[] PROGMEM ="MHOC303";
 const char kMI32DeviceType12[] PROGMEM ="ATC";
-const char * kMI32DeviceType[] PROGMEM = {kMI32DeviceType0,kMI32DeviceType1,kMI32DeviceType2,kMI32DeviceType3,kMI32DeviceType4,kMI32DeviceType5,kMI32DeviceType6,kMI32DeviceType7,kMI32DeviceType8,kMI32DeviceType9,kMI32DeviceType10,kMI32DeviceType11,kMI32DeviceType12};
+const char kMI32DeviceType13[] PROGMEM ="DOOR";
+const char * kMI32DeviceType[] PROGMEM = {kMI32DeviceType0,kMI32DeviceType1,kMI32DeviceType2,kMI32DeviceType3,kMI32DeviceType4,kMI32DeviceType5,kMI32DeviceType6,kMI32DeviceType7,kMI32DeviceType8,kMI32DeviceType9,kMI32DeviceType10,kMI32DeviceType11,kMI32DeviceType12,kMI32DeviceType13};
 
 typedef int BATREAD_FUNCTION(int slot);
 typedef int UNITWRITE_FUNCTION(int slot, int unit);
@@ -1416,6 +1419,7 @@ uint32_t MIBLEgetSensorSlot(const uint8_t *mac, uint16_t _type, uint8_t counter)
       _newSensor.feature.bat=1;
       break;
     case MI_YEERC:
+    case MI_DOOR:
       _newSensor.feature.Btn=1;
       break;
     default:
@@ -1759,6 +1763,12 @@ int MI32parseMiPayload(int _slot, struct mi_beacon_data_t *parsed){
       MIBLEsensors[_slot].eventType.NMT = 1;
       MI32.mode.shallTriggerTele = 1;
       // AddLog(LOG_LEVEL_DEBUG,PSTR("M32: Mode 17: NMT: %u seconds"), _beacon.NMT);
+    } break;
+
+    case 0x19:{
+      MIBLEsensors[_slot].Btn = uint8_t(parsed->payload.data[0]); // just an 8 bit value in a union.
+      MIBLEsensors[_slot].eventType.Btn = 1;
+      MI32.mode.shallTriggerTele = 1;
     } break;
 
     default: {
@@ -2891,7 +2901,7 @@ void MI32Show(bool json)
       if(p->bat!=0x00){
           WSContentSend_PD(HTTP_BATTERY, typeName, p->bat);
       }
-      if (p->type==MI_YEERC){
+      if (p->type==MI_YEERC || p->type==MI_DOOR){
         WSContentSend_PD(HTTP_LASTBUTTON, typeName, p->Btn);
       }
       if (p->pairing){
