@@ -630,6 +630,8 @@
 #define D_SENSOR_SBR_TX        "SerBr Tx"
 #define D_SENSOR_SR04_TRIG     "SR04 Tri/TX"
 #define D_SENSOR_SR04_ECHO     "SR04 Ech/RX"
+#define D_SENSOR_SDM72_TX      "SDM72 Tx"
+#define D_SENSOR_SDM72_RX      "SDM72 Rx"
 #define D_SENSOR_SDM120_TX     "SDMx20 Tx"
 #define D_SENSOR_SDM120_RX     "SDMx20 Rx"
 #define D_SENSOR_SDM630_TX     "SDM630 Tx"
@@ -782,8 +784,6 @@
 #define D_SENSOR_ST7789_DC     "ST7789 DC"
 #define D_SENSOR_SSD1331_CS    "SSD1331 CS"
 #define D_SENSOR_SSD1331_DC    "SSD1331 DC"
-#define D_SENSOR_TM1637_CLK    "TM1637 CLK"
-#define D_SENSOR_TM1637_DIO    "TM1637 DIO"
 #define D_SENSOR_SDCARD_CS     "SDCard CS"
 #define D_SENSOR_WIEGAND_D0    "Wiegand D0"
 #define D_SENSOR_WIEGAND_D1    "Wiegand D1"
@@ -836,7 +836,9 @@
 #define D_UNIT_WATTHOUR "Wh"
 #define D_UNIT_WATT_METER_QUADRAT "W/m²"
 
-//SDM220, SDM120, LE01MR
+//SDM220, SDM120, SDM72, LE01MR
+#define D_EXPORT_POWER    "Export Power"
+#define D_IMPORT_POWER 	  "Import Power"
 #define D_PHASE_ANGLE     "Góc pha"
 #define D_IMPORT_ACTIVE   "Import Active"
 #define D_EXPORT_ACTIVE   "Export Active"

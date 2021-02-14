@@ -142,13 +142,13 @@ enum UserSelectablePins {
   GPIO_RA8876_CS,
   GPIO_ST7789_CS, GPIO_ST7789_DC,
   GPIO_SSD1331_CS, GPIO_SSD1331_DC,
-  GPIO_TM1637_CLK, GPIO_TM1637_DIO,
   GPIO_SDCARD_CS,
   GPIO_ROT1A_NP, GPIO_ROT1B_NP,        // Rotary switch
   GPIO_ADC_PH,                         // Analog PH Sensor
   GPIO_BS814_CLK, GPIO_BS814_DAT,      // Holtek BS814A2 touch ctrlr
   GPIO_WIEGAND_D0, GPIO_WIEGAND_D1,    // Wiegand Data lines
   GPIO_NEOPOOL_TX, GPIO_NEOPOOL_RX,    // Sugar Valley RS485 interface
+  GPIO_SDM72_TX, GPIO_SDM72_RX,        // SDM72 Serial interface
   GPIO_SENSOR_END };
 
 enum ProgramSelectablePins {
@@ -311,13 +311,13 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_RA8876_CS "|"
   D_SENSOR_ST7789_CS "|" D_SENSOR_ST7789_DC "|"
   D_SENSOR_SSD1331_CS "|" D_SENSOR_SSD1331_DC "|"
-  D_SENSOR_TM1637_CLK "|" D_SENSOR_TM1637_DIO "|"
   D_SENSOR_SDCARD_CS "|"
   D_SENSOR_ROTARY " A_n|" D_SENSOR_ROTARY " B_n|"
   D_SENSOR_ADC_PH "|"
   D_SENSOR_BS814_CLK "|" D_SENSOR_BS814_DAT "|"
   D_SENSOR_WIEGAND_D0 "|" D_SENSOR_WIEGAND_D1 "|"
   D_SENSOR_NEOPOOL_TX "|" D_SENSOR_NEOPOOL_RX "|"
+  D_SENSOR_SDM72_TX "|" D_SENSOR_SDM72_RX "|"
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -431,10 +431,6 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_SSD1331_CS),
   AGPIO(GPIO_SSD1331_DC),
 #endif  // USE_DISPLAY_SSD1331
-#ifdef USE_DISPLAY_TM1637
-  AGPIO(GPIO_TM1637_CLK),
-  AGPIO(GPIO_TM1637_DIO),
-#endif  // USE_DISPLAY_TM1637
   AGPIO(GPIO_BACKLIGHT),      // Display backlight control
   AGPIO(GPIO_OLED_RESET),     // OLED Display Reset
 #endif
@@ -610,6 +606,10 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_WE517
   AGPIO(GPIO_WE517_TX),      // WE517 Serial interface
   AGPIO(GPIO_WE517_RX),      // WE517 Serial interface
+#endif
+#ifdef USE_SDM72
+  AGPIO(GPIO_SDM72_TX),      // SDM72 Serial interface
+  AGPIO(GPIO_SDM72_RX),      // SDM72 Serial interface
 #endif
 #endif  // USE_ENERGY_SENSOR
 

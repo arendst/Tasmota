@@ -57,7 +57,7 @@ typedef union {
     uint8_t spare0 : 1;
     uint8_t spare1 : 1;
     uint8_t spare2 : 1;
-    uint8_t spare3 : 1;
+    uint8_t slider : 1;
     uint8_t disable : 1;
     uint8_t on_off : 1;
     uint8_t is_pushbutton : 1;
@@ -65,10 +65,27 @@ typedef union {
   };
 } TButton_State;
 
+
+struct Slider {
+  uint16_t xp;
+  uint16_t yp;
+  uint16_t xs;
+  uint16_t ys;
+  uint16_t nelem;
+  uint16_t bgcol;
+  uint16_t frcol;
+  uint16_t barcol;
+};
+
 class VButton : public Adafruit_GFX_Button {
   public:
   TButton_State vpower;
+  struct Slider spars;
+  Renderer *rend;
   void xdrawButton(bool inverted);
+  boolean didhit(int16_t x, int16_t y);
+  uint16_t UpdateSlider(int16_t x, int16_t y);
+  void SliderInit(Renderer *rend, uint16_t xp, uint16_t yp, uint16_t xs, uint16_t ys, uint16_t nelem, uint16_t bgcol, uint16_t frcol, uint16_t barcol);
 };
 
 
