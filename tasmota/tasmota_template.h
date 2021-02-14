@@ -577,7 +577,7 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_SDM120
   AGPIO(GPIO_SDM120_TX),      // SDM120 Serial interface
   AGPIO(GPIO_SDM120_RX),      // SDM120 Serial interface
-  AGPIO(GPIO_SDM120_DIR),    // SDM120 RX485 interface direction
+  AGPIO(GPIO_SDM120_DIR),     // SDM120 Serial interface MAX485 direction pin
 #endif
 #ifdef USE_SDM630
   AGPIO(GPIO_SDM630_TX),      // SDM630 Serial interface
