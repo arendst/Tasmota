@@ -64,8 +64,8 @@ void PS16DZSerialSendUpdateCommand(void)
 {
   uint8_t light_state_dimmer = light_state.getDimmer();
   // Dimming acts odd below 10% - this mirrors the threshold set on the faceplate itself
-  light_state_dimmer = (light_state_dimmer < Settings.dimmer_hw_min) ? Settings.dimmer_hw_min : light_state_dimmer;
-  light_state_dimmer = (light_state_dimmer > Settings.dimmer_hw_max) ? Settings.dimmer_hw_max : light_state_dimmer;
+  light_state_dimmer = (light_state_dimmer < Settings.dimmer_hw_min[0]) ? Settings.dimmer_hw_min[0] : light_state_dimmer;
+  light_state_dimmer = (light_state_dimmer > Settings.dimmer_hw_max[0]) ? Settings.dimmer_hw_max[0] : light_state_dimmer;
 
   char tx_buffer[80];
   snprintf_P(tx_buffer, sizeof(tx_buffer), PSTR("AT+UPDATE=\"sequence\":\"%d%03d\",\"switch\":\"%s\",\"bright\":%d"),

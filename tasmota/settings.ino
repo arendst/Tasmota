@@ -990,8 +990,10 @@ void SettingsDefaultSet2(void) {
 //  Settings.ws_color[WS_HOUR][WS_GREEN] = 0;
 //  Settings.ws_color[WS_HOUR][WS_BLUE] = 0;
 
-  Settings.dimmer_hw_max = DEFAULT_DIMMER_MAX;
-  Settings.dimmer_hw_min = DEFAULT_DIMMER_MIN;
+  for (uint32_t i=0; i<ARRAY_SIZE(Settings.dimmer_hw_min); i++) {
+    Settings.dimmer_hw_max[i] = DEFAULT_DIMMER_MAX;
+    Settings.dimmer_hw_min[i] = DEFAULT_DIMMER_MIN;
+  }
 
   Settings.dimmer_step = DEFAULT_DIMMER_STEP;
 

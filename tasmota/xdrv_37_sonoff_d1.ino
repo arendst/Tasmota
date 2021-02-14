@@ -147,8 +147,8 @@ bool SonoffD1SendPower(void)
 bool SonoffD1SendDimmer(void)
 {
   uint8_t dimmer = LightGetDimmer(1);
-  dimmer = (dimmer < Settings.dimmer_hw_min) ? Settings.dimmer_hw_min : dimmer;
-  dimmer = (dimmer > Settings.dimmer_hw_max) ? Settings.dimmer_hw_max : dimmer;
+  dimmer = (dimmer < Settings.dimmer_hw_min[0]) ? Settings.dimmer_hw_min[0] : dimmer;
+  dimmer = (dimmer > Settings.dimmer_hw_max[0]) ? Settings.dimmer_hw_max[0] : dimmer;
   if (dimmer != SnfD1.dimmer) {
     SnfD1.dimmer = dimmer;
 

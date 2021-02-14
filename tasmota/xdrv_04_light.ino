@@ -255,8 +255,8 @@ struct LIGHT {
   bool     speed_once_enabled = false;   // override speed a single time
   uint8_t  speed_once_value = 0;         // override speed a single time
 
-  uint16_t pwm_min = 0;                  // minimum value for PWM, from DimmerRange, 0..1023
-  uint16_t pwm_max = 1023;               // maxumum value for PWM, from DimmerRange, 0..1023
+  uint16_t pwm_min[LST_MAX] = {0,0,0,0,0};                // minimum value for PWM, from DimmerRange, 0..1023
+  uint16_t pwm_max[LST_MAX] = {1023,1023,1023,1023,1023}; // maxumum value for PWM, from DimmerRange, 0..1023
 
   // Virtual CT
   uint16_t vct_ct[CT_PIVOTS];            // CT value for each segment
@@ -1073,20 +1073,22 @@ bool LightModuleInit(void)
 // compute actual PWM min/max values from DimmerRange
 // must be called when DimmerRange is changed or LedTable
 void LightCalcPWMRange(void) {
-  uint16_t pwm_min, pwm_max;
+  for (uint32_t i=0; i<LST_MAX; i++) {
+    uint16_t pwm_min, pwm_max;
 
-  pwm_min = change8to10(LightStateClass::DimmerToBri(Settings.dimmer_hw_min));   // default 0
-  pwm_max = change8to10(LightStateClass::DimmerToBri(Settings.dimmer_hw_max));   // default 100
-  if (Settings.light_correction) {
-    pwm_min = ledGamma10_10(pwm_min);       // apply gamma correction
-    pwm_max = ledGamma10_10(pwm_max);       // 0..1023
+    pwm_min = change8to10(LightStateClass::DimmerToBri(Settings.dimmer_hw_min[i]));   // default 0
+    pwm_max = change8to10(LightStateClass::DimmerToBri(Settings.dimmer_hw_max[i]));   // default 100
+    if (Settings.light_correction) {
+      pwm_min = ledGamma10_10(pwm_min);       // apply gamma correction
+      pwm_max = ledGamma10_10(pwm_max);       // 0..1023
+    }
+    pwm_min = pwm_min > 0 ? changeUIntScale(pwm_min, 1, 1023, 1, Settings.pwm_range) : 0;  // adapt range but keep zero and non-zero values
+    pwm_max = changeUIntScale(pwm_max, 1, 1023, 1, Settings.pwm_range);  // pwm_max cannot be zero
+
+    Light.pwm_min[i] = pwm_min;
+    Light.pwm_max[i] = pwm_max;
+    //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("LightCalcPWMRange %d %d - %d %d"), Settings.dimmer_hw_min, Settings.dimmer_hw_max, Light.pwm_min, Light.pwm_max);
   }
-  pwm_min = pwm_min > 0 ? changeUIntScale(pwm_min, 1, 1023, 1, Settings.pwm_range) : 0;  // adapt range but keep zero and non-zero values
-  pwm_max = changeUIntScale(pwm_max, 1, 1023, 1, Settings.pwm_range);  // pwm_max cannot be zero
-
-  Light.pwm_min = pwm_min;
-  Light.pwm_max = pwm_max;
-  //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("LightCalcPWMRange %d %d - %d %d"), Settings.dimmer_hw_min, Settings.dimmer_hw_max, Light.pwm_min, Light.pwm_max);
 }
 
 void LightInit(void)
@@ -1953,7 +1955,7 @@ void LightSetOutputs(const uint16_t *cur_col_10) {
         //AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION "Cur_Col%d 10 bits %d"), i, cur_col_10[i]);
         uint16_t cur_col = cur_col_10[i + Light.pwm_offset];
         if (!isChannelCT(i)) {   // if CT don't use pwm_min and pwm_max
-          cur_col = cur_col > 0 ? changeUIntScale(cur_col, 0, Settings.pwm_range, Light.pwm_min, Light.pwm_max) : 0;   // shrink to the range of pwm_min..pwm_max
+          cur_col = cur_col > 0 ? changeUIntScale(cur_col, 0, Settings.pwm_range, Light.pwm_min[i], Light.pwm_max[i]) : 0;   // shrink to the range of pwm_min..pwm_max
         }
         if (!Settings.flag4.zerocross_dimmer) {
           analogWrite(Pin(GPIO_PWM1, i), bitRead(TasmotaGlobal.pwm_inverted, i) ? Settings.pwm_range - cur_col : cur_col);
@@ -2751,21 +2753,29 @@ void CmndDimmerRange(void)
   // DimmerRange       - Show current dimmer range as used by Tuya and PS16DZ Dimmers
   // DimmerRange 0,100 - Set dimmer hardware range from 0 to 100 and restart
   if (XdrvMailbox.data_len > 0) {
-    uint32_t parm[2];
-    parm[0] = Settings.dimmer_hw_min;
-    parm[1] = Settings.dimmer_hw_max;
-    ParseParameters(2, parm);
-    if (parm[0] < parm[1]) {
-      Settings.dimmer_hw_min = parm[0];
-      Settings.dimmer_hw_max = parm[1];
-    } else {
-      Settings.dimmer_hw_min = parm[1];
-      Settings.dimmer_hw_max = parm[0];
+    const uint32_t parm_count = 2;
+    uint32_t parm[parm_count];
+    /* only change the dimmer range when exactly 2 parameters were found */
+    if (ParseParameters(parm_count, parm) == parm_count) {
+      uint32_t i = LST_MAX;
+      while (NextUserIndex(i)) {
+        if (parm[0] < parm[1]) {
+          Settings.dimmer_hw_min[i] = parm[0];
+          Settings.dimmer_hw_max[i] = parm[1];
+        } else {
+          Settings.dimmer_hw_min[i] = parm[1];
+          Settings.dimmer_hw_max[i] = parm[0];
+        }
+        LightCalcPWMRange();
+        Light.update = true;
+      }
     }
-    LightCalcPWMRange();
-    Light.update = true;
   }
-  Response_P(PSTR("{\"" D_CMND_DIMMER_RANGE "\":{\"Min\":%d,\"Max\":%d}}"), Settings.dimmer_hw_min, Settings.dimmer_hw_max);
+
+  const uint32_t index = ( (XdrvMailbox.index > 0) && (XdrvMailbox.index < LST_MAX) ) ?
+      (XdrvMailbox.index - 1) : 0;
+  Response_P(PSTR("{\"" D_CMND_DIMMER_RANGE "\":{\"Min\":%d,\"Max\":%d}}"),
+      Settings.dimmer_hw_min[index], Settings.dimmer_hw_max[index]);
 }
 
 void CmndDimmerStep(void)

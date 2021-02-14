@@ -561,16 +561,18 @@ struct {
   uint8_t       ot_boiler_setpoint;        // E8D
   uint8_t       ot_flags;                  // E8E
   uint8_t       ledpwm_mask;               // E8F
-  uint16_t      dimmer_hw_min;             // E90
-  uint16_t      dimmer_hw_max;             // E92
+  uint16_t      ex_dimmer_hw_min;          // E90
+  uint16_t      ex_dimmer_hw_max;          // E92
   uint32_t      deepsleep;                 // E94
   uint16_t      hass_new_discovery;        // E98  ex2_energy_power_delta on 8.4.0.3, replaced on 8.5.0.1
   uint8_t       shutter_motordelay[MAX_SHUTTERS];    // E9A
   int8_t        temp_comp;                 // E9E
   uint8_t       weight_change;             // E9F
   uint8_t       web_color2[2][3];          // EA0  Needs to be on integer / 3 distance from web_color
+  uint16_t      dimmer_hw_min[LST_MAX];    // TODO
+  uint16_t      dimmer_hw_max[LST_MAX];    // TODO
 
-  uint8_t       free_ea6[33];              // EA6
+  uint8_t       free_ea6[13];              // EA6
 
   uint8_t       sta_config;                // EC7
   uint8_t       sta_active;                // EC8
