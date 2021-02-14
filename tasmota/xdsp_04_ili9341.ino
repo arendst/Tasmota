@@ -40,8 +40,13 @@ bool tft_init_done = false;
 
 void ILI9341_InitDriver()
 {
+
+#ifdef USE_M5STACK_CORE2
+  if (TasmotaGlobal.spi_enabled) {
+#else
   if (PinUsed(GPIO_ILI9341_CS) || PinUsed(GPIO_ILI9341_DC) &&
       (TasmotaGlobal.spi_enabled || TasmotaGlobal.soft_spi_enabled)) {
+#endif
 
     Settings.display_model = XDSP_04;
 
@@ -104,8 +109,13 @@ void ILI9341_InitDriver()
 #ifdef SHOW_SPLASH
     // Welcome text
     renderer->setTextFont(2);
+    renderer->setTextSize(1);
     renderer->setTextColor(ILI9341_WHITE, ILI9341_BLACK);
-    renderer->DrawStringAt(30, (Settings.display_height/2)-12, "ILI9341 TFT!", ILI9341_WHITE, 0);
+#ifdef USE_DISPLAY_ILI9341
+    renderer->DrawStringAt(50, (Settings.display_height/2)-12, "ILI9341 TFT!", ILI9341_WHITE, 0);
+#else
+    renderer->DrawStringAt(50, (Settings.display_height/2)-12, "ILI9342 TFT!", ILI9341_WHITE, 0);
+#endif
     delay(1000);
 #endif // SHOW_SPLASH
 
@@ -228,7 +238,9 @@ bool Ili9341Header(void) {
 
 void Ili9341InitMode(void) {
 //  renderer->setRotation(Settings.display_rotate);  // 0
+#ifdef USE_DISPLAY_ILI9341
   renderer->invertDisplay(0);
+#endif
   renderer->fillScreen(ILI9341_BLACK);
   renderer->setTextWrap(false);         // Allow text to run off edges
   renderer->cp437(true);
