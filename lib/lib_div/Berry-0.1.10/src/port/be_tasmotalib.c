@@ -11,6 +11,7 @@ extern int l_cmd(bvm *vm);
 extern int l_getoption(bvm *vm);
 extern int l_millis(bvm *vm);
 extern int l_timereached(bvm *vm);
+extern int l_yield(bvm *vm);
 
 // #if !BE_USE_PRECOMPILED_OBJECT
 #if 1           // TODO we will do pre-compiled later
@@ -21,6 +22,7 @@ be_native_module_attr_table(tasmota) {
     be_native_module_function("getoption", l_getoption),
     be_native_module_function("millis", l_millis),
     be_native_module_function("timereached", l_timereached),
+    be_native_module_function("yield", l_yield),
 };
 
 be_define_native_module(tasmota, NULL);
