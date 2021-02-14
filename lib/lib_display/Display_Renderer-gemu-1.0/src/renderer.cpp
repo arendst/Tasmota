@@ -251,6 +251,7 @@ void Renderer::setTextFont(uint8_t f) {
 #else
 #ifdef USE_EPD_FONTS
   switch (font) {
+    case 1:
     selected_font = &Font12;
     break;
   case 2:
