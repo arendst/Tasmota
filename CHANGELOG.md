@@ -10,7 +10,11 @@ All notable changes to this project will be documented in this file.
 - Support for Frysk language translations by Christiaan Heerze
 - ESP8266 Fallback to ``*.bin.gz`` binary when OTA upload of ``*.bin`` binary fails
 - Berry language improved Tasmota integration
+
+### Changed
 - IRremoteESP8266 library from v2.7.14 to v2.7.15
+- NeoPixelBus library from v2.6.0 to v2.6.1.4
+- ILI9341 library from Adafruit_ILI9341-1.2.0-Tasmota-1.0 to ILI9341-gemu-1.0
 
 ## [9.2.0.6] 20210210
 ### Changed
