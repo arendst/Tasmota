@@ -21,6 +21,8 @@ ST7789_LIGHTGREY,ST7789_DARKGREY,ST7789_ORANGE,ST7789_GREENYELLOW,ST7789_PINK};
 #define ST7789_DIMMER
 #endif
 
+
+
 uint16_t Arduino_ST7789::GetColorFromIndex(uint8_t index) {
   if (index>=sizeof(ST7789_colors)/2) index=0;
   return ST7789_colors[index];
@@ -50,7 +52,7 @@ inline uint16_t swapcolor(uint16_t x) {
 }
 
 #if defined (SPI_HAS_TRANSACTION)
-  static SPISettings mySPISettings;
+  static SPISettings ST7789_SPISettings;
 #elif defined (__AVR__) || defined(CORE_TEENSY)
   static uint8_t SPCRbackup;
   static uint8_t mySPCR;
@@ -58,7 +60,7 @@ inline uint16_t swapcolor(uint16_t x) {
 
 
 #if defined (SPI_HAS_TRANSACTION)
-#define SPI_BEGIN_TRANSACTION()    if (_hwSPI)    SPI.beginTransaction(mySPISettings)
+#define SPI_BEGIN_TRANSACTION()    if (_hwSPI)    SPI.beginTransaction(ST7789_SPISettings)
 #define SPI_END_TRANSACTION()      if (_hwSPI)    SPI.endTransaction()
 #else
 #define SPI_BEGIN_TRANSACTION()    (void)
@@ -217,26 +219,28 @@ void Arduino_ST7789::displayInit(const uint8_t *addr) {
   uint16_t ms;
   //<-----------------------------------------------------------------------------------------
   DC_HIGH();
-  #if defined(USE_FAST_IO)
+  if (!_hwSPI) {
+#if defined(USE_FAST_IO)
       *clkport |=  clkpinmask;
-  #else
+#else
       digitalWrite(_sclk, HIGH);
-  #endif
+#endif
+  }
   //<-----------------------------------------------------------------------------------------
 
   numCommands = pgm_read_byte(addr++);   // Number of commands to follow
-  while(numCommands--) {                 // For each command...
+  while (numCommands--) {                 // For each command...
     writecommand(pgm_read_byte(addr++)); //   Read, issue command
     numArgs  = pgm_read_byte(addr++);    //   Number of args to follow
     ms       = numArgs & ST_CMD_DELAY;   //   If hibit set, delay follows args
     numArgs &= ~ST_CMD_DELAY;            //   Mask out delay bit
-    while(numArgs--) {                   //   For each argument...
+    while (numArgs--) {                   //   For each argument...
       writedata(pgm_read_byte(addr++));  //     Read, issue argument
     }
 
-    if(ms) {
+    if (ms) {
       ms = pgm_read_byte(addr++); // Read post-command delay time (ms)
-      if(ms == 255) ms = 500;     // If 255, delay for 500 ms
+      if (ms == 255) ms = 500;     // If 255, delay for 500 ms
       delay(ms);
     }
   }
@@ -270,16 +274,16 @@ void Arduino_ST7789::commonInit(const uint8_t *cmdList) {
   dcport    = portOutputRegister(digitalPinToPort(_dc));
   dcpinmask = digitalPinToBitMask(_dc);
   if (_cs>=0) {
-	csport    = portOutputRegister(digitalPinToPort(_cs));
-	cspinmask = digitalPinToBitMask(_cs);
+	   csport    = portOutputRegister(digitalPinToPort(_cs));
+	   cspinmask = digitalPinToBitMask(_cs);
   }
-
 #endif
 
   if(_hwSPI) { // Using hardware SPI
 #if defined (SPI_HAS_TRANSACTION)
     SPI.begin();
-    mySPISettings = SPISettings(24000000, MSBFIRST, SPI_MODE2);
+  //  ST7789_SPISettings = SPISettings(24000000, MSBFIRST, SPI_MODE2);
+    ST7789_SPISettings = SPISettings(1000000, MSBFIRST, SPI_MODE2);
 #elif defined (__AVR__) || defined(CORE_TEENSY)
     SPCRbackup = SPCR;
     SPI.begin();
@@ -318,7 +322,7 @@ void Arduino_ST7789::commonInit(const uint8_t *cmdList) {
     delay(50);
   }
 
-  if(cmdList)
+  if (cmdList)
     displayInit(cmdList);
 }
 
@@ -390,7 +394,6 @@ void Arduino_ST7789::setRotation(uint8_t m) {
 void Arduino_ST7789::setAddrWindow(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1) {
   setAddrWindow_int(x0,y0,x1-1,y1-1);
 }
-
 
 void Arduino_ST7789::setAddrWindow_int(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1) {
   uint16_t x_start = x0 + _xstart, x_end = x1 + _xstart;

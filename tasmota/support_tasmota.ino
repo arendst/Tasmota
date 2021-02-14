@@ -1655,7 +1655,8 @@ void GpioInit(void)
     bool valid_cs = (ValidSpiPinUsed(GPIO_SPI_CS) ||
                      ValidSpiPinUsed(GPIO_RC522_CS) ||
                      (ValidSpiPinUsed(GPIO_NRF24_CS) && ValidSpiPinUsed(GPIO_NRF24_DC)) ||
-                     (ValidSpiPinUsed(GPIO_ILI9341_CS) && ValidSpiPinUsed(GPIO_ILI9341_DC)) ||
+                     ValidSpiPinUsed(GPIO_ILI9341_CS) ||
+                     ValidSpiPinUsed(GPIO_ILI9341_DC) || // there are also boards without cs
                      ValidSpiPinUsed(GPIO_EPAPER29_CS) ||
                      ValidSpiPinUsed(GPIO_EPAPER42_CS) ||
                      ValidSpiPinUsed(GPIO_ILI9488_CS) ||
