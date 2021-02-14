@@ -149,6 +149,7 @@ enum UserSelectablePins {
   GPIO_WIEGAND_D0, GPIO_WIEGAND_D1,    // Wiegand Data lines
   GPIO_NEOPOOL_TX, GPIO_NEOPOOL_RX,    // Sugar Valley RS485 interface
   GPIO_SDM72_TX, GPIO_SDM72_RX,        // SDM72 Serial interface
+  GPIO_SDM120_DIR,                     // SDM120 RS485 interface direction
   GPIO_SENSOR_END };
 
 enum ProgramSelectablePins {
@@ -318,6 +319,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_WIEGAND_D0 "|" D_SENSOR_WIEGAND_D1 "|"
   D_SENSOR_NEOPOOL_TX "|" D_SENSOR_NEOPOOL_RX "|"
   D_SENSOR_SDM72_TX "|" D_SENSOR_SDM72_RX "|"
+  D_SENSOR_SDM120_DIR "|"
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -575,6 +577,7 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_SDM120
   AGPIO(GPIO_SDM120_TX),      // SDM120 Serial interface
   AGPIO(GPIO_SDM120_RX),      // SDM120 Serial interface
+  AGPIO(GPIO_SDM120_DIR),    // SDM120 RX485 interface direction
 #endif
 #ifdef USE_SDM630
   AGPIO(GPIO_SDM630_TX),      // SDM630 Serial interface

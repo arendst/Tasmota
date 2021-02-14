@@ -19,9 +19,21 @@
 
 #include "TasmotaModbus.h"
 
-TasmotaModbus::TasmotaModbus(int receive_pin, int transmit_pin) : TasmotaSerial(receive_pin, transmit_pin, 1)
+// Control MAX485 direction pins : nRE = DE = low for read, high for send
+#define MB_DIR_READ     0
+#define MB_DIR_SEND     1
+
+void AddLog_P(uint32_t loglevel, PGM_P formatP, ...);
+
+TasmotaModbus::TasmotaModbus(int receive_pin, int transmit_pin, int dir_pin) : TasmotaSerial(receive_pin, transmit_pin, 1)
 {
   mb_address = 0;
+  mb_dir_pin = dir_pin;
+  if (99 != mb_dir_pin) {
+    pinMode(mb_dir_pin, OUTPUT);
+    digitalWrite(mb_dir_pin, MB_DIR_READ);
+    AddLog_P(2, PSTR("Mod: Dir pin: %d"), mb_dir_pin);
+  }
 }
 
 uint16_t TasmotaModbus::CalculateCRC(uint8_t *frame, uint8_t num)
@@ -69,8 +81,10 @@ void TasmotaModbus::Send(uint8_t device_address, uint8_t function_code, uint16_t
   frame[6] = (uint8_t)(crc);
   frame[7] = (uint8_t)(crc >> 8);
 
-  flush();
+  if (99 != mb_dir_pin) digitalWrite(mb_dir_pin, MB_DIR_SEND);
   write(frame, sizeof(frame));
+  flush();
+  if (99 != mb_dir_pin) digitalWrite(mb_dir_pin, MB_DIR_READ);
 }
 
 bool TasmotaModbus::ReceiveReady()
