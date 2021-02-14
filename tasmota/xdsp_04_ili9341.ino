@@ -44,6 +44,7 @@ void ILI9341_InitDriver()
 #ifdef USE_M5STACK_CORE2
   if (TasmotaGlobal.spi_enabled) {
 #else
+  // There are displays without CS
   if (PinUsed(GPIO_ILI9341_CS) || PinUsed(GPIO_ILI9341_DC) &&
       (TasmotaGlobal.spi_enabled || TasmotaGlobal.soft_spi_enabled)) {
 #endif
@@ -66,11 +67,8 @@ void ILI9341_InitDriver()
 
 #ifdef USE_M5STACK_CORE2
     // fixed pins on m5stack core2
-    ili9341_2  = new ILI9341_2(5, -2, 15, -2);
+    ili9341_2 = new ILI9341_2(5, -2, 15, -2);
 #else
-
-    // There are displays without CS
-
     // check for special case with 2 SPI busses (ESP32 bitcoin)
     if (TasmotaGlobal.soft_spi_enabled) {
       // Init renderer, may use hardware spi, however we use SSPI defintion because SD card uses SPI definition  (2 spi busses)
