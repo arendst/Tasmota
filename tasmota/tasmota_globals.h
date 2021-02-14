@@ -132,6 +132,8 @@ String EthernetMacAddress(void);
 
 #define USE_UFILESYS
 
+#undef FIRMWARE_MINIMAL                            // Minimal is not supported as not needed
+
 // Hardware has no ESP32
 #undef USE_TUYA_DIMMER
 #undef USE_PWM_DIMMER

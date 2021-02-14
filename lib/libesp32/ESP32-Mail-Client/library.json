@@ -1,0 +1,8 @@
+{
+    "name": "ESP32 Mail Client",
+    "keywords": "esp32, mail, communication",
+    "description": "Mail Client Arduino Library for ESP32",
+    "version": "2.1.4",
+    "frameworks": "arduino",
+    "platforms": "espressif32"
+}

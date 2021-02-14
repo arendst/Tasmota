@@ -143,7 +143,11 @@ const uint32_t BOOT_LOOP_TIME = 10;         // Number of seconds to stop detecti
 const uint32_t POWER_CYCLE_TIME = 8;        // Number of seconds to reset power cycle boot loops
 const uint16_t SYSLOG_TIMER = 600;          // Seconds to restore syslog_level
 const uint16_t SERIALLOG_TIMER = 600;       // Seconds to disable SerialLog
+#ifdef ESP8266
+const uint8_t OTA_ATTEMPTS = 10;            // Number of times to try fetching the new firmware
+#else
 const uint8_t OTA_ATTEMPTS = 5;             // Number of times to try fetching the new firmware
+#endif  // ESP8266
 
 const uint16_t INPUT_BUFFER_SIZE = 520;     // Max number of characters in serial command buffer
 const uint16_t FLOATSZ = 16;                // Max number of characters in float result from dtostrfd (max 32)
@@ -360,10 +364,10 @@ enum DevGroupShareItem { DGR_SHARE_POWER = 1, DGR_SHARE_LIGHT_BRI = 2, DGR_SHARE
 
 enum CommandSource { SRC_IGNORE, SRC_MQTT, SRC_RESTART, SRC_BUTTON, SRC_SWITCH, SRC_BACKLOG, SRC_SERIAL, SRC_WEBGUI, SRC_WEBCOMMAND, SRC_WEBCONSOLE, SRC_PULSETIMER,
                      SRC_TIMER, SRC_RULE, SRC_MAXPOWER, SRC_MAXENERGY, SRC_OVERTEMP, SRC_LIGHT, SRC_KNX, SRC_DISPLAY, SRC_WEMO, SRC_HUE, SRC_RETRY, SRC_REMOTE, SRC_SHUTTER,
-                     SRC_THERMOSTAT, SRC_CHAT, SRC_TCL, SRC_MAX };
+                     SRC_THERMOSTAT, SRC_CHAT, SRC_TCL, SRC_BERRY, SRC_MAX };
 const char kCommandSource[] PROGMEM = "I|MQTT|Restart|Button|Switch|Backlog|Serial|WebGui|WebCommand|WebConsole|PulseTimer|"
                                       "Timer|Rule|MaxPower|MaxEnergy|Overtemp|Light|Knx|Display|Wemo|Hue|Retry|Remote|Shutter|"
-                                      "Thermostat|Chat|TCL";
+                                      "Thermostat|Chat|TCL|Berry";
 
 const uint8_t kDefaultRfCode[9] PROGMEM = { 0x21, 0x16, 0x01, 0x0E, 0x03, 0x48, 0x2E, 0x1A, 0x00 };
 

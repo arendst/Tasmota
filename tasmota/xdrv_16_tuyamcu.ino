@@ -318,6 +318,24 @@ int StrCmpNoCase(char const *Str1, char const *Str2) // Compare case sensistive 
   }
 }
 
+float TuyaAdjustedTemperature(uint16_t packetValue, uint8_t res)
+{
+    switch (res)
+    {
+    case 1:
+        return (float)packetValue / 10.0;
+        break;
+    case 2:
+        return (float)packetValue / 100.0;
+        break;
+    case 3:
+        return (float)packetValue / 1000.0;
+        break;    
+    default:
+        return (float)packetValue;
+        break;
+    } 
+}
 /*********************************************************************************************\
  * Internal Functions
 \*********************************************************************************************/
@@ -732,7 +750,7 @@ void TuyaProcessStatePacket(void) {
             } else { res = Settings.flag2.temperature_resolution; }
             GetTextIndexed(sname, sizeof(sname), (fnId-71), kTuyaSensors);
             ResponseClear(); // Clear retained message
-            Response_P(PSTR("{\"TuyaSNS\":{\"%s\":%s}}"), sname, dtostrfd(packetValue, res, tempval)); // sensor update is just on change
+            Response_P(PSTR("{\"TuyaSNS\":{\"%s\":%s}}"), sname, dtostrfd(TuyaAdjustedTemperature(packetValue, res), res, tempval)); // sensor update is just on change
             MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR(D_CMND_SENSOR));
           }
         }
@@ -1295,7 +1313,7 @@ void TuyaSensorsShow(bool json)
 
         GetTextIndexed(sname, sizeof(sname), (sensor-71), kTuyaSensors);
         ResponseAppend_P(PSTR("\"%s\":%s"), sname,
-                        (Tuya.SensorsValid[sensor-71] ? dtostrfd(Tuya.Sensors[sensor-71], res, tempval) : PSTR("null")));
+                        (Tuya.SensorsValid[sensor-71] ? dtostrfd(TuyaAdjustedTemperature(Tuya.Sensors[sensor-71], res), res, tempval) : PSTR("null")));
         added = true;
       }
   #ifdef USE_WEBSERVER
@@ -1303,11 +1321,11 @@ void TuyaSensorsShow(bool json)
       if (TuyaGetDpId(sensor) != 0) {
         switch (sensor) {
           case 71:
-            WSContentSend_Temp("", Tuya.Sensors[0]);
+            WSContentSend_Temp("", TuyaAdjustedTemperature(Tuya.Sensors[0], Settings.flag2.temperature_resolution));
             break;
           case 72:
             WSContentSend_PD(PSTR("{s}" D_TEMPERATURE " Set{m}%s " D_UNIT_DEGREE "%c{e}"),
-                            dtostrfd(Tuya.Sensors[1], Settings.flag2.temperature_resolution, tempval), TempUnit());
+                            dtostrfd(TuyaAdjustedTemperature(Tuya.Sensors[1], Settings.flag2.temperature_resolution), Settings.flag2.temperature_resolution, tempval), TempUnit());
             break;
           case 73:
             WSContentSend_PD(HTTP_SNS_HUM, "", dtostrfd(Tuya.Sensors[2], Settings.flag2.temperature_resolution, tempval));

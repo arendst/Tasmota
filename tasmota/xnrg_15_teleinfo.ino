@@ -105,6 +105,10 @@ const char kLabel[] PROGMEM =
     "|DEMAIN"
     ;
 
+#define TELEINFO_SERIAL_BUFFER_STANDARD        512      // Receive buffer size for Standard mode
+#define TELEINFO_SERIAL_BUFFER_HISTORIQUE      512      // Receive buffer size for Legacy mode
+#define TELEINFO_PROCESS_BUFFER                 32      // Local processing buffer
+
 TInfo tinfo; // Teleinfo object
 TasmotaSerial *TInfoSerial = nullptr;
 _Mode_e tinfo_mode = TINFO_MODE_HISTORIQUE;
@@ -202,19 +206,19 @@ void DataCallback(struct _ValueList * me, uint8_t  flags)
                         break;
                     }
                 }
-                AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: Tarif changed, now '%s' (%d)"), me->value, tarif);
+                AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: Tariff changed, now '%s' (%d)"), me->value, tarif);
             }
 
             // Current tariff (standard is in clear text in value)
             else if (ilabel == LABEL_LTARF)
             {
-                AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: Tarif name changed, now '%s'"), me->value);
+                AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: Tariff name changed, now '%s'"), me->value);
             }
             // Current tariff (standard index is is in clear text in value)
             else if (ilabel == LABEL_NTARF)
             {
                 tarif = atoi(me->value);
-                AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: Tarif index changed, now '%d'"), tarif);
+                AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: Tariff index changed, now '%d'"), tarif);
             }
 
 
@@ -409,7 +413,7 @@ void NewFrameCallback(struct _ValueList * me)
         ResponseJsonEnd();
         // Publish adding ADCO serial number into the topic
         // Need setOption4 to be enabled
-        MqttPublishPrefixTopic_P(RESULT_OR_TELE, serialNumber, false);
+        MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, serialNumber, false);
     }
 }
 
@@ -437,21 +441,23 @@ Comments: -
 void TInfoInit(void)
 {
     int baudrate;
+    int serial_buffer_size;
+
 
     // SetOption102 - Set Baud rate for Teleinfo serial communication (0 = 1200 or 1 = 9600)
     if (Settings.flag4.teleinfo_baudrate) {
         baudrate = 9600;
         tinfo_mode = TINFO_MODE_STANDARD;
-    }  else {
+        serial_buffer_size = TELEINFO_SERIAL_BUFFER_STANDARD;
+    } else {
         baudrate = 1200;
         tinfo_mode = TINFO_MODE_HISTORIQUE;
+        serial_buffer_size = TELEINFO_SERIAL_BUFFER_HISTORIQUE;
     }
-
-    AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: inferface speed %d bps"),baudrate);
 
     if (PinUsed(GPIO_TELEINFO_RX)) {
          uint8_t rx_pin = Pin(GPIO_TELEINFO_RX);
-         AddLog(LOG_LEVEL_INFO, PSTR("TIC: RX on GPIO%d"), rx_pin);
+         AddLog(LOG_LEVEL_INFO, PSTR("TIC: RX on GPIO%d, baudrate %d"), rx_pin, baudrate);
 
         // Enable Teleinfo pin used, control it
         if (PinUsed(GPIO_TELEINFO_ENABLE)) {
@@ -465,18 +471,20 @@ void TInfoInit(void)
 
 #ifdef ESP8266
         // Allow GPIO3 AND GPIO13 with hardware fallback to 2
-        TInfoSerial = new TasmotaSerial(rx_pin, -1, 2);
+        // Set buffer to nnn char to support 250ms loop at 9600 baud
+        TInfoSerial = new TasmotaSerial(rx_pin, -1, 2, 0, serial_buffer_size);
         //pinMode(rx_pin, INPUT_PULLUP);
 #endif  // ESP8266
 #ifdef ESP32
-        TInfoSerial = new TasmotaSerial(rx_pin, -1, 1);
+        // Set buffer to nnn char to support 250ms loop at 9600 baud
+        TInfoSerial = new TasmotaSerial(rx_pin, -1, 1, 0, serial_buffer_size);
 #endif  // ESP32
 
         // Trick here even using SERIAL_7E1 or TS_SERIAL_7E1
         // this is not working, need to call SetSerialConfig after
         if (TInfoSerial->begin(baudrate)) {
 
-
+            
 #ifdef ESP8266
             if (TInfoSerial->hardwareSerial() ) {
                 ClaimSerial();
@@ -494,6 +502,7 @@ void TInfoInit(void)
             }
 #endif  // ESP8266
 #ifdef ESP32
+            SetSerialConfig(TS_SERIAL_7E1);
             AddLog(LOG_LEVEL_INFO, PSTR("TIC: using ESP32 hardware serial"));
 #endif  // ESP32
             // Init teleinfo
@@ -510,30 +519,47 @@ void TInfoInit(void)
 }
 
 /* ======================================================================
-Function: TInfoEvery250ms
-Purpose : Tasmota callback executed every 250ms
+Function: TInfoProcess
+Purpose : Tasmota callback executed often enough to read serial
 Input   : -
 Output  : -
 Comments: -
 ====================================================================== */
-void TInfoEvery250ms(void)
+//#define MEASURE_PERF // Define to enable performance measurments
+
+void TInfoProcess(void)
 {
+    static char buff[TELEINFO_PROCESS_BUFFER];
+    #ifdef MEASURE_PERF
+    static unsigned long max_time = 0;
+    unsigned long duration = millis();
+    static int max_size = 0;
+    int tmp_size = 0;
+    #endif
+
     if (!tinfo_found) {
         return;
     }
 
-    if (TInfoSerial->available()) {
-        unsigned long start = millis();
-        char c;
-
-        // We received some data, process but never more than 100ms ?
-        while (TInfoSerial->available()>8 && millis()-start < 100) {
-            // get char
-            c = TInfoSerial->read();
+    int size = TInfoSerial->read(buff,TELEINFO_PROCESS_BUFFER);
+    while ( size ) {
+        #ifdef MEASURE_PERF
+        tmp_size += size;
+        #endif
+        // Process as many bytes as available in serial buffer
+        for(int i = 0; size; i++, size--)
+        {
+            buff[i] &= 0x7F;
             // data processing
-            tinfo.process(c & 0x7F);
+            tinfo.process(buff[i]);
         }
+        size = TInfoSerial->read(buff,TELEINFO_PROCESS_BUFFER);
     }
+    #ifdef MEASURE_PERF
+    duration = millis()-duration;
+    if (duration > max_time) { max_time = duration; AddLog(LOG_LEVEL_INFO,PSTR("TIC: max_time=%lu"), max_time); }
+    if (tmp_size > max_size) { max_size = tmp_size; AddLog(LOG_LEVEL_INFO,PSTR("TIC: max_size=%d"), max_size); }
+    #endif
 }
 
 /* ======================================================================
@@ -641,7 +667,7 @@ bool Xnrg15(uint8_t function)
     switch (function)
     {
         case FUNC_EVERY_250_MSECOND:
-            TInfoEvery250ms();
+            TInfoProcess();
             break;
         case FUNC_JSON_APPEND:
             TInfoShow(1);

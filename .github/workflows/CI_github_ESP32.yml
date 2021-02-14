@@ -84,7 +84,7 @@ jobs:
         name: firmware
         path: ./build_output
 
-  tasmota32-minimal:
+  tasmota32-bluetooth:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
@@ -98,7 +98,7 @@ jobs:
         platformio update
     - name: Run PlatformIO
       run: |
-        platformio run -e tasmota32-minimal
+        platformio run -e tasmota32-bluetooth
     - uses: actions/upload-artifact@v2
       with:
         name: firmware

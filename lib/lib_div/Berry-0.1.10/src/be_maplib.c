@@ -172,6 +172,37 @@ static int m_iter(bvm *vm)
     be_return(vm);
 }
 
+static int keys_iter_closure(bvm *vm)
+{
+    /* for better performance, we operate the upvalues
+     * directly without using by the stack. */
+    bntvclos *func = var_toobj(vm->cf->func);
+    bvalue *uv0 = be_ntvclos_upval(func, 0)->value; /* list value */
+    bvalue *uv1 = be_ntvclos_upval(func, 1)->value; /* iter value */
+    bmapiter iter = var_toobj(uv1);
+    bmapnode *next = be_map_next(var_toobj(uv0), &iter);
+    if (next == NULL) {
+        be_stop_iteration(vm);
+        be_return_nil(vm); /* will not be executed */
+    }
+    var_setobj(uv1, BE_COMPTR, iter); /* set upvale[1] (iter value) */
+    /* push next value to top */
+    var_setobj(vm->top, next->key.type, next->key.v.p);
+    be_incrtop(vm);
+    be_return(vm);
+}
+
+static int m_keys(bvm *vm)
+{
+    be_pushntvclosure(vm, keys_iter_closure, 2);
+    be_getmember(vm, 1, ".p");
+    be_setupval(vm, -2, 0);
+    be_pushiter(vm, -1);
+    be_setupval(vm, -3, 1);
+    be_pop(vm, 2);
+    be_return(vm);
+}
+
 #if !BE_USE_PRECOMPILED_OBJECT
 void be_load_maplib(bvm *vm)
 {
@@ -186,6 +217,7 @@ void be_load_maplib(bvm *vm)
         { "size", m_size },
         { "insert", m_insert },
         { "iter", m_iter },
+        { "keys", m_keys },
         { NULL, NULL }
     };
     be_regclass(vm, "map", members);
@@ -203,6 +235,7 @@ class be_class_map (scope: global, name: map) {
     size, func(m_size)
     insert, func(m_insert)
     iter, func(m_iter)
+    keys, func(m_keys)
 }
 @const_object_info_end */
 #include "../generate/be_fixed_be_class_map.h"
