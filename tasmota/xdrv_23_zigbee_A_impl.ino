@@ -1960,9 +1960,9 @@ void ZigbeeShow(bool json)
 
         WSContentSend_PD(msg[ZB_WEB_STATUS_LINE],
         shortaddr,
-        device.modelId ? device.modelId : "",
-        device.manufacturerId ? device.manufacturerId : "",
-        name, sbatt, slqi);
+        device.modelId ? EscapeHTMLString(device.modelId).c_str() : "",
+        device.manufacturerId ? EscapeHTMLString(device.manufacturerId).c_str() : "",
+        EscapeHTMLString(name).c_str(), sbatt, slqi);
 
         if(device.validLqi()) {
             for(uint32_t j = 0; j < 4; ++j) {
