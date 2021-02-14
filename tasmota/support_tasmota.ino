@@ -407,12 +407,12 @@ void SetLedPowerAll(uint32_t state)
 
 void SetLedLink(uint32_t state)
 {
-  uint32_t led_pin = Pin(GPIO_LEDLNK);
+  int led_pin = Pin(GPIO_LEDLNK);
   uint32_t led_inv = TasmotaGlobal.ledlnk_inverted;
-  if (99 == led_pin) {                    // Legacy - LED1 is status
+  if (-1 == led_pin) {                    // Legacy - LED1 is status
     SetLedPowerIdx(0, state);
   }
-  else if (led_pin < 99) {
+  else if (led_pin > -1) {
     if (state) { state = 1; }
     digitalWrite(led_pin, (led_inv) ? !state : state);
   }

@@ -1334,7 +1334,7 @@ void CmndZbScan(void) {
   buf.add32(0x07FFF800);                // standard channels 11-26
   buf.add8(0x04);                       // duration 2 ^ 4
   ZigbeeEZSPSendCmd(buf.getBuffer(), buf.len());
-  
+
 #endif // USE_ZIGBEE_EZSP
   ResponseCmndDone();
 }
@@ -1516,8 +1516,8 @@ void ZigbeeGlowPermitJoinLight(void) {
     }
 
     // change the led state
-    uint32_t led_pin = Pin(GPIO_LEDLNK);
-    if (led_pin < 99) {
+    int led_pin = Pin(GPIO_LEDLNK);
+    if (led_pin > -1) {
       analogWrite(led_pin, TasmotaGlobal.ledlnk_inverted ? 1023 - led_power : led_power);
     }
   }

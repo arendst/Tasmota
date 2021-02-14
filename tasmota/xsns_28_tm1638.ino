@@ -33,9 +33,9 @@
 #define TM1638_CLOCK_DELAY  1  // uSec
 
 uint8_t tm1638_type = 1;
-uint8_t tm1638_clock_pin = 0;
-uint8_t tm1638_data_pin = 0;
-uint8_t tm1638_strobe_pin = 0;
+int8_t tm1638_clock_pin = 0;
+int8_t tm1638_data_pin = 0;
+int8_t tm1638_strobe_pin = 0;
 uint8_t tm1638_displays = 8;
 uint8_t tm1638_active_display = 1;
 uint8_t tm1638_intensity = 0;

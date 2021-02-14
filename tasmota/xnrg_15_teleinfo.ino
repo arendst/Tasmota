@@ -456,12 +456,12 @@ void TInfoInit(void)
     }
 
     if (PinUsed(GPIO_TELEINFO_RX)) {
-         uint8_t rx_pin = Pin(GPIO_TELEINFO_RX);
+         int8_t rx_pin = Pin(GPIO_TELEINFO_RX);
          AddLog(LOG_LEVEL_INFO, PSTR("TIC: RX on GPIO%d, baudrate %d"), rx_pin, baudrate);
 
         // Enable Teleinfo pin used, control it
         if (PinUsed(GPIO_TELEINFO_ENABLE)) {
-            uint8_t en_pin = Pin(GPIO_TELEINFO_ENABLE);
+            int8_t en_pin = Pin(GPIO_TELEINFO_ENABLE);
             pinMode(en_pin, OUTPUT);
             digitalWrite(en_pin, HIGH);
             AddLog(LOG_LEVEL_INFO, PSTR("TIC: Enable with GPIO%d"), en_pin);
@@ -484,7 +484,7 @@ void TInfoInit(void)
         // this is not working, need to call SetSerialConfig after
         if (TInfoSerial->begin(baudrate)) {
 
-            
+
 #ifdef ESP8266
             if (TInfoSerial->hardwareSerial() ) {
                 ClaimSerial();

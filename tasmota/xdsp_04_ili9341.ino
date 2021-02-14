@@ -69,29 +69,17 @@ void ILI9341_InitDriver()
     ili9341_2  = new ILI9341_2(5, -2, 15, -2);
 #else
 
-      // There are displays without CS
-    int8_t spi_cs_pin = -1;
-    if (PinUsed(GPIO_ILI9341_CS)) {
-      spi_cs_pin = Pin(GPIO_ILI9341_CS);
-    }
-    int8_t backlight_pin = -1;
-    if (PinUsed(GPIO_BACKLIGHT)) {
-      backlight_pin = Pin(GPIO_BACKLIGHT);
-    }
-    int8_t oled_reset_pin = -1;
-    if (PinUsed(GPIO_OLED_RESET)) {
-      oled_reset_pin = Pin(GPIO_OLED_RESET);
-    }
+    // There are displays without CS
 
     // check for special case with 2 SPI busses (ESP32 bitcoin)
     if (TasmotaGlobal.soft_spi_enabled) {
       // Init renderer, may use hardware spi, however we use SSPI defintion because SD card uses SPI definition  (2 spi busses)
       if (PinUsed(GPIO_SSPI_MOSI) && PinUsed(GPIO_SSPI_MISO) && PinUsed(GPIO_SSPI_SCLK)) {
-        ili9341_2 = new ILI9341_2(spi_cs_pin, Pin(GPIO_SSPI_MOSI), Pin(GPIO_SSPI_MISO), Pin(GPIO_SSPI_SCLK), oled_reset_pin, Pin(GPIO_ILI9341_DC), backlight_pin, 2);
+        ili9341_2 = new ILI9341_2(Pin(GPIO_ILI9341_CS), Pin(GPIO_SSPI_MOSI), Pin(GPIO_SSPI_MISO), Pin(GPIO_SSPI_SCLK), Pin(GPIO_OLED_RESET), Pin(GPIO_ILI9341_DC), Pin(GPIO_BACKLIGHT), 2);
       }
     } else if (TasmotaGlobal.spi_enabled) {
       if (PinUsed(GPIO_ILI9341_DC)) {
-        ili9341_2 = new ILI9341_2(spi_cs_pin, Pin(GPIO_SPI_MOSI), Pin(GPIO_SPI_MISO), Pin(GPIO_SPI_CLK), oled_reset_pin, Pin(GPIO_ILI9341_DC), backlight_pin, 1);
+        ili9341_2 = new ILI9341_2(Pin(GPIO_ILI9341_CS), Pin(GPIO_SPI_MOSI), Pin(GPIO_SPI_MISO), Pin(GPIO_SPI_CLK), Pin(GPIO_OLED_RESET), Pin(GPIO_ILI9341_DC), Pin(GPIO_BACKLIGHT), 1);
       }
     }
 #endif // USE_M5STACK_CORE2

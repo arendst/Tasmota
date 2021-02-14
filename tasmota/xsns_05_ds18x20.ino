@@ -54,8 +54,8 @@ struct DS18X20STRUCT {
   float   temperature;
 } ds18x20_sensor[DS18X20_MAX_SENSORS];
 uint8_t ds18x20_sensors = 0;
-uint8_t ds18x20_pin = 0;           // Shelly GPIO3 input only
-uint8_t ds18x20_pin_out = 0;       // Shelly GPIO00 output only
+int8_t ds18x20_pin = 0;            // Shelly GPIO3 input only
+int8_t ds18x20_pin_out = 0;        // Shelly GPIO00 output only
 bool ds18x20_dual_mode = false;    // Single pin mode
 char ds18x20_types[17];
 #ifdef W1_PARASITE_POWER

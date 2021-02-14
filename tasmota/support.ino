@@ -1320,8 +1320,8 @@ void DumpConvertTable(void) {
 */
 #endif  // ESP8266
 
-uint32_t ICACHE_RAM_ATTR Pin(uint32_t gpio, uint32_t index = 0);
-uint32_t ICACHE_RAM_ATTR Pin(uint32_t gpio, uint32_t index) {
+int ICACHE_RAM_ATTR Pin(uint32_t gpio, uint32_t index = 0);
+int ICACHE_RAM_ATTR Pin(uint32_t gpio, uint32_t index) {
   uint16_t real_gpio = gpio << 5;
   uint16_t mask = 0xFFE0;
   if (index < GPIO_ANY) {
@@ -1333,12 +1333,12 @@ uint32_t ICACHE_RAM_ATTR Pin(uint32_t gpio, uint32_t index) {
       return i;              // Pin number configured for gpio
     }
   }
-  return 99;                 // No pin used for gpio
+  return -1;                 // No pin used for gpio
 }
 
 bool PinUsed(uint32_t gpio, uint32_t index = 0);
 bool PinUsed(uint32_t gpio, uint32_t index) {
-  return (Pin(gpio, index) < 99);
+  return (Pin(gpio, index) > -1);
 }
 
 uint32_t GetPin(uint32_t lpin) {
@@ -1569,7 +1569,7 @@ bool ValidSpiPinUsed(uint32_t gpio) {
   // ESP8266: If SPI pin selected chk if it's not one of the three Hardware SPI pins (12..14)
   bool result = false;
   if (PinUsed(gpio)) {
-    uint32_t pin = Pin(gpio);
+    int pin = Pin(gpio);
     result = ((pin < 12) || (pin > 14));
   }
   return result;

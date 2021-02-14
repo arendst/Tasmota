@@ -78,8 +78,8 @@ struct HX {
   uint8_t calibrate_step = HX_CAL_END;
   uint8_t calibrate_timer = 0;
   uint8_t calibrate_msg = 0;
-  uint8_t pin_sck;
-  uint8_t pin_dout;
+  int8_t pin_sck;
+  int8_t pin_dout;
   bool tare_flg = false;
   bool weight_changed = false;
   uint16_t weight_delta = 4;

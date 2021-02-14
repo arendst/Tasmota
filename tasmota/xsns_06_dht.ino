@@ -39,7 +39,7 @@ bool dht_active = true;                       // DHT configured
 bool dht_dual_mode = false;                   // Single pin mode
 
 struct DHTSTRUCT {
-  uint8_t  pin;
+  int8_t   pin;
   uint8_t  type;
   uint8_t  lastresult;
   char     stype[12];
