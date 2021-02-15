@@ -798,7 +798,7 @@ bool Xdrv50(uint8_t function) {
       if (UfsData.autoexec) {
         // Safe to execute autoexec commands here
         UfsData.autoexec = false;
-        UfsAutoexec();
+        if (!TasmotaGlobal.no_autoexec) { UfsAutoexec(); }
       }
       break;
     case FUNC_MQTT_INIT:
