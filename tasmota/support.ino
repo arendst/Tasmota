@@ -1338,7 +1338,7 @@ int ICACHE_RAM_ATTR Pin(uint32_t gpio, uint32_t index) {
 
 bool PinUsed(uint32_t gpio, uint32_t index = 0);
 bool PinUsed(uint32_t gpio, uint32_t index) {
-  return (Pin(gpio, index) > -1);
+  return (Pin(gpio, index) >= 0);
 }
 
 uint32_t GetPin(uint32_t lpin) {
