@@ -83,7 +83,11 @@ uint8_t ufs_dir;
 // 0 = None, 1 = SD, 2 = ffat, 3 = littlefs
 uint8_t ufs_type;
 uint8_t ffs_type;
-bool download_busy;
+
+struct {
+  bool download_busy;
+  bool autoexec = false;
+} UfsData;
 
 /*********************************************************************************************/
 
@@ -333,6 +337,45 @@ bool TfsDeleteFile(const char *fname) {
 }
 
 /*********************************************************************************************\
+ * Autoexec support
+\*********************************************************************************************/
+
+void UfsAutoexec(void) {
+  if (!ffs_type) { return; }
+  File file = ffsp->open(TASM_FILE_AUTOEXEC, "r");
+  if (!file) { return; }
+
+  char cmd_line[512];
+  while (file.available()) {
+    uint16_t index = 0;
+    while (file.available()) {
+      uint8_t buf[1];
+      file.read(buf, 1);
+      if ((buf[0] == '\n') || (buf[0] == '\r')) {
+        // Line terminated with linefeed or carriage return
+        break;
+      }
+      else if ((0 == index) && isspace(buf[0])) {
+        // Skip leading spaces (' ','\t','\n','\v','\f','\r')
+      } else {
+        cmd_line[index] = buf[0];
+        index++;
+        if (index >= sizeof(cmd_line) - 1) {
+          break;
+        }
+      }
+    }
+    if ((index > 0) && (cmd_line[0] != ';')) {  // Information but no comment
+      cmd_line[index] = 0;
+      ExecuteCommand(cmd_line, SRC_AUTOEXEC);
+    }
+    delay(0);
+  }
+
+  file.close();
+}
+
+/*********************************************************************************************\
  * Commands
 \*********************************************************************************************/
 
@@ -395,7 +438,6 @@ void UFSDelete(void) {
 /*********************************************************************************************\
  * Web support
 \*********************************************************************************************/
-
 
 #ifdef USE_WEBSERVER
 
@@ -654,12 +696,12 @@ uint8_t UfsDownloadFile(char *file) {
 #ifdef ESP32_DOWNLOAD_TASK
   download_file.close();
 
-  if (download_busy == true) {
+  if (UfsData.download_busy == true) {
     AddLog(LOG_LEVEL_INFO, PSTR("UFS: Download is busy"));
     return 0;
   }
 
-  download_busy = true;
+  UfsData.download_busy = true;
   char *path = (char*)malloc(128);
   strcpy(path,file);
   xTaskCreatePinnedToCore(donload_task, "DT", 6000, (void*)path, 3, NULL, 1);
@@ -710,7 +752,7 @@ void donload_task(void *path) {
   }
   download_file.close();
   download_Client.stop();
-  download_busy = false;
+  UfsData.download_busy = false;
   vTaskDelete( NULL );
 }
 #endif //  ESP32_DOWNLOAD_TASK
@@ -752,6 +794,17 @@ bool Xdrv50(uint8_t function) {
       UfsCheckSDCardInit();
       break;
 #endif // USE_SDCARD
+    case FUNC_EVERY_SECOND:
+      if (UfsData.autoexec) {
+        // Safe to execute autoexec commands here
+        UfsData.autoexec = false;
+        UfsAutoexec();
+      }
+      break;
+    case FUNC_MQTT_INIT:
+      // Do not execute autoexec commands here
+      UfsData.autoexec = true;
+      break;
     case FUNC_COMMAND:
       result = DecodeCommand(kUFSCommands, kUFSCommand);
       break;
