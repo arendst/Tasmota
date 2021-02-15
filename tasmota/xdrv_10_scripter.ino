@@ -4326,14 +4326,13 @@ int16_t Run_script_sub(const char *type, int8_t tlen, struct GVARS *gv) {
               goto next_line;
             }
 #ifdef USE_SENDMAIL
-/*
-            else if (!strncmp(lp, "sm", 2)) {
-              lp+=3;
+            else if (!strncmp(lp, "mail", 4)) {
+              lp+=5;
               char tmp[256];
               Replace_Cmd_Vars(lp ,1 , tmp, sizeof(tmp));
               SendMail(tmp);
               goto next_line;
-            }*/
+            }
 #endif
             else if (!strncmp(lp,"=>",2) || !strncmp(lp,"->",2) || !strncmp(lp,"+>",2) || !strncmp(lp,"print",5)) {
                 // execute cmd
@@ -5819,14 +5818,14 @@ void dateTime(uint16_t* date, uint16_t* time) {
 
 
 #ifdef SUPPORT_MQTT_EVENT
-
+/*
 //#define DEBUG_MQTT_EVENT
-
+// parser object, source keys, delimiter, float result or NULL, string result or NULL, string size
 uint32_t JsonParsePath(JsonParserObject *jobj, const char *spath, char delim, float *nres, char *sres, uint32_t slen) {
   uint32_t res = 0;
   const char *cp = spath;
-#ifdef DEBUG_MQTT_EVENT
-//  AddLog(LOG_LEVEL_INFO, PSTR("Script: parsing json key: %s from json: %s"), cp, jpath);
+#ifdef DEBUG_JSON_PARSE_PATH
+  AddLog(LOG_LEVEL_INFO, PSTR("JSON: parsing json key: %s from json: %s"), cp, jpath);
 #endif
   JsonParserObject obj = *jobj;
   JsonParserObject lastobj = obj;
@@ -5843,8 +5842,8 @@ uint32_t JsonParsePath(JsonParserObject *jobj, const char *spath, char delim, fl
       }
       selem[sp] = *cp++;
     }
-#ifdef DEBUG_MQTT_EVENT
-    AddLog(LOG_LEVEL_INFO, PSTR("Script: cmp current key: %s"), selem);
+#ifdef DEBUG_JSON_PARSE_PATH
+    AddLog(LOG_LEVEL_INFO, PSTR("JSON: cmp current key: %s"), selem);
 #endif
     // check for array
     char *sp = strchr(selem,'[');
@@ -5856,8 +5855,8 @@ uint32_t JsonParsePath(JsonParserObject *jobj, const char *spath, char delim, fl
     // now check element
     obj = obj[selem];
     if (!obj.isValid()) {
-#ifdef DEBUG_MQTT_EVENT
-      AddLog(LOG_LEVEL_INFO, PSTR("Script: obj invalid: %s"), selem);
+#ifdef DEBUG_JSON_PARSE_PATH
+      AddLog(LOG_LEVEL_INFO, PSTR("JSON: obj invalid: %s"), selem);
 #endif
       JsonParserToken tok = lastobj[selem];
       if (tok.isValid()) {
@@ -5881,8 +5880,8 @@ uint32_t JsonParsePath(JsonParserObject *jobj, const char *spath, char delim, fl
         }
 
       }
-#ifdef DEBUG_MQTT_EVENT
-      AddLog(LOG_LEVEL_INFO, PSTR("Script: token invalid: %s"), selem);
+#ifdef DEBUG_JSON_PARSE_PATH
+      AddLog(LOG_LEVEL_INFO, PSTR("JSON: token invalid: %s"), selem);
 #endif
       break;
     }
@@ -5892,11 +5891,13 @@ uint32_t JsonParsePath(JsonParserObject *jobj, const char *spath, char delim, fl
     }
     if (!*cp) break;
   }
-  strlcpy(sres,value.c_str(),slen);
+  if (sres) {
+    strlcpy(sres,value.c_str(), slen);
+  }
   return res;
 
 }
-
+*/
 #ifndef MQTT_EVENT_MSIZE
 #define MQTT_EVENT_MSIZE 256
 #endif // MQTT_EVENT_MSIZE
