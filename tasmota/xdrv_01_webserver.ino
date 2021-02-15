@@ -2062,6 +2062,7 @@ void HandleInformation(void)
 {
   if (!HttpCheckPriviledgedAccess()) { return; }
 
+  float freemem = ((float)ESP_getFreeHeap()) / 1024;
   AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_INFORMATION));
 
   char stopic[TOPSZ];
@@ -2181,13 +2182,13 @@ void HandleInformation(void)
   WSContentSend_P(PSTR("}1" D_FREE_PROGRAM_SPACE "}2%d kB"), ESP.getFreeSketchSpace() / 1024);
 #ifdef ESP32
   int32_t freeMaxMem = 100 - (int32_t)(ESP_getMaxAllocHeap() * 100 / ESP_getFreeHeap());
-  WSContentSend_P(PSTR("}1" D_FREE_MEMORY "}2%d kB (" D_FRAGMENTATION " %d%%)"), ESP_getFreeHeap1024(), freeMaxMem);
+  WSContentSend_P(PSTR("}1" D_FREE_MEMORY "}2%1_f kB (" D_FRAGMENTATION " %d%%)"), &freemem, freeMaxMem);
   if (psramFound()) {
     WSContentSend_P(PSTR("}1" D_PSR_MAX_MEMORY "}2%d kB"), ESP.getPsramSize() / 1024);
     WSContentSend_P(PSTR("}1" D_PSR_FREE_MEMORY "}2%d kB"), ESP.getFreePsram() / 1024);
   }
 #else // ESP32
-  WSContentSend_P(PSTR("}1" D_FREE_MEMORY "}2%d kB"), ESP_getFreeHeap1024());
+  WSContentSend_P(PSTR("}1" D_FREE_MEMORY "}2%1_f kB"), &freemem);
 #endif // ESP32
   WSContentSend_P(PSTR("</td></tr></table>"));
 
