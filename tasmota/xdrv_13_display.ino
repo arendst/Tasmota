@@ -949,7 +949,10 @@ void Display_Text_From_File(const char *file) {
 
 #ifdef USE_DT_VARS
 
+#ifndef MAX_DT_VARS
 #define MAX_DT_VARS 8
+#endif // MAX_DT_VARS
+
 #define MAX_DVTSIZE 24
 
 typedef struct {
