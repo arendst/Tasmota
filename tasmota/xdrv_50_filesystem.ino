@@ -336,6 +336,16 @@ bool TfsDeleteFile(const char *fname) {
   return true;
 }
 
+bool TfsRenameFile(const char *fname1, const char *fname2) {
+  if (!ffs_type) { return false; }
+
+  if (!ffsp->rename(fname1, fname2)) {
+    AddLog(LOG_LEVEL_INFO, PSTR("TFS: Rename failed"));
+    return false;
+  }
+  return true;
+}
+
 /*********************************************************************************************\
  * Autoexec support
 \*********************************************************************************************/
@@ -380,10 +390,10 @@ void UfsAutoexec(void) {
 \*********************************************************************************************/
 
 const char kUFSCommands[] PROGMEM = "Ufs|"  // Prefix
-  "|Type|Size|Free|Delete";
+  "|Type|Size|Free|Delete|Rename";
 
 void (* const kUFSCommand[])(void) PROGMEM = {
-  &UFSInfo, &UFSType, &UFSSize, &UFSFree, &UFSDelete};
+  &UFSInfo, &UFSType, &UFSSize, &UFSFree, &UFSDelete, &UFSRename};
 
 void UFSInfo(void) {
   Response_P(PSTR("{\"Ufs\":{\"Type\":%d,\"Size\":%d,\"Free\":%d}"), ufs_type, UfsInfo(0, 0), UfsInfo(1, 0));
@@ -426,6 +436,28 @@ void UFSDelete(void) {
       result = TfsDeleteFile(XdrvMailbox.data);
     } else {
       result = (ufs_type && ufsp->remove(XdrvMailbox.data));
+    }
+    if (!result) {
+      ResponseCmndChar(PSTR(D_JSON_FAILED));
+    } else {
+      ResponseCmndDone();
+    }
+  }
+}
+
+void UFSRename(void) {
+  // UfsRename  sdcard or flashfs file if only one of them available
+  // UfsRename2 flashfs file if available
+  if (XdrvMailbox.data_len > 0) {
+    bool result = false;
+    const char *fname1 = strtok(XdrvMailbox.data, ",");
+    const char *fname2 = strtok(nullptr, ",");
+    if (fname1 && fname2) {
+      if (ffs_type && (ffs_type != ufs_type) && (2 == XdrvMailbox.index)) {
+        result = TfsRenameFile(fname1, fname2);
+      } else {
+        result = (ufs_type && ufsp->rename(fname1, fname2));
+      }
     }
     if (!result) {
       ResponseCmndChar(PSTR(D_JSON_FAILED));

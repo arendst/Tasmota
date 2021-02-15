@@ -10,6 +10,8 @@ All notable changes to this project will be documented in this file.
 - Support for Frysk language translations by Christiaan Heerze
 - ESP8266 Fallback to ``*.bin.gz`` binary when OTA upload of ``*.bin`` binary fails
 - Berry language improved Tasmota integration
+- Filesystem commands ``Ufs``, ``UfsType``, ``UfsSize``, ``UfsFree``, ``UfsDelete`` and ``UfsRename``
+- Basic support for filesystem ``autoexec.bat``
 
 ### Changed
 - IRremoteESP8266 library from v2.7.14 to v2.7.15
