@@ -412,7 +412,7 @@ void SetLedLink(uint32_t state)
   if (-1 == led_pin) {                    // Legacy - LED1 is status
     SetLedPowerIdx(0, state);
   }
-  else if (led_pin >= 0) {
+  else if (led_pin > -1) {
     if (state) { state = 1; }
     digitalWrite(led_pin, (led_inv) ? !state : state);
   }
@@ -716,6 +716,11 @@ void MqttPublishTeleState(void)
   ResponseClear();
   MqttShowState();
   MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_STATE), MQTT_TELE_RETAIN);
+
+#ifdef USE_DT_VARS  
+  DTVarsTeleperiod();
+#endif // USE_DT_VARS
+
 #if defined(USE_RULES) || defined(USE_SCRIPT)
   RulesTeleperiod();  // Allow rule based HA messages
 #endif  // USE_SCRIPT
