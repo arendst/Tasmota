@@ -9,6 +9,8 @@
 #define WHITE 1
 #define INVERSE 2
 
+#define MAX_INDEXCOLORS 32
+
 // depends on GFX driver
 // GFX patched
 // a. in class GFX setCursor,setTextSize => virtual

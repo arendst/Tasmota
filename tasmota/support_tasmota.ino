@@ -412,7 +412,7 @@ void SetLedLink(uint32_t state)
   if (-1 == led_pin) {                    // Legacy - LED1 is status
     SetLedPowerIdx(0, state);
   }
-  else if (led_pin > -1) {
+  else if (led_pin >= 0) {
     if (state) { state = 1; }
     digitalWrite(led_pin, (led_inv) ? !state : state);
   }

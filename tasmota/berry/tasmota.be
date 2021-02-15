@@ -100,6 +100,13 @@ tasmota.exec_rules = def (ev_json)
   return ret
 end
 
+tasmota.delay = def(ms)
+  tend = tasmota.millis(ms)
+  while !tasmota.timereached(tend)
+    tasmota.yield()
+  end
+end
+
 #- Test
 #################################################################
 
@@ -153,5 +160,12 @@ end
 br def backlog(cmd_list) delay_backlog = tasmota.getoption(34) delay = 0 for cmd:cmd_list tasmota.timer(delay, /-> tasmota.cmd(cmd)) delay = delay + delay_backlog end end
 
 br backlog( [ "Power 0", "Status 4", "Power 1" ] )
+
+-#
+
+#-
+
+tasmota.delay = def(ms) tend = tasmota.millis(ms) log(str(tasmota.millis())) while !tasmota.timereached(tend) end log(str(tasmota.millis())) end
+tasmota.delay = def(ms) a=0 tend = tasmota.millis(ms) log(str(tasmota.millis())) while !tasmota.timereached(tend) a=a+1 end log(str(tasmota.millis())) log(str(a)) end
 
 -#

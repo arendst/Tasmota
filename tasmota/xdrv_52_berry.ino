@@ -25,8 +25,6 @@
 #include <berry.h>
 #include <csetjmp>
 
-const size_t BERRY_STACK =   4096;      // size for the alternate stack for continuation
-
 const char kBrCommands[] PROGMEM = D_PRFX_BR "|"    // prefix
   D_CMND_BR_RUN "|" D_CMND_BR_RESET
   ;
@@ -35,49 +33,10 @@ void (* const BerryCommand[])(void) PROGMEM = {
   CmndBrRun, CmndBrReset,
   };
 
-/*********************************************************************************************\
- * Async mode for Berry VM
- * 
- * We enhance the berry language with `yield()` and `wait(ms)` functions.
- * When called, the VM is frozen and control is given back to Tasmota. Then Tasmota
- * at next tick or when the time is reached, resumes the VM.
- * 
- * This is based on coroutines scheme, similar to the contiuation stack of ESP8266.
- * The basic concept is that Tasmota records a longjump target including current stack position
- * and return address.
- * The Berry VM is then called with an alternate stack so that we can switch from both stacks
- * and keep the callchain intact.
- * 
- * High level view:
- * - Tasmota records a return vector with `setjmp`
- * - Tasmota changes replaces the native stack with an alternate stack pre-allocated on the heap
- * - Tasmota calls the Berry VM with `be_pcall`
- * - During the flow of Berry VM, the user code calls `yield()` or `wait(ms)`
- * - Corresponding native function is called (still on alternate stack)
- * - Native function records VM resume target with `setjmp`
- * - and gives back function to Tasmota via `longjmp`.
- *   Note: `longjmp` restores at the same time the native stack.
- * 
- * Note: trampoline functions relies on global variables, since stack variable don't work anymore
- * when replacing stack.
- * 
-\*********************************************************************************************/
-
 class BerrySupport {
 public:
   bvm *vm = nullptr;                    // berry vm
   bool rules_busy = false;              // are we already processing rules, avoid infinite loop
-#ifdef USE_BERRY_ASYNC
-  // Alternate stack for the Berry VM
-  uint8_t *stack_alloc = nullptr;       // stack malloc address
-  uint8_t *stack = nullptr;             // alternate stack for continuation (top of stack)
-  // longjmp vectors to yield from Tasmota to VM and reverse
-  bool    ta_cont_ok = false;           // is the Tasmota continuation address valid?
-  bool    vm_cont_ok = false;           // is the VM continuation address valid?
-  jmp_buf ta_cont;                  // continuation structure for the longjump back to Tasmota
-  jmp_buf vm_cont;           
-  // used by trampoline to call be_pcall()
-#endif // USE_BERRY_ASYNC
   const char *fname = nullptr;    // name of berry function to call
   int32_t     fret = 0;
 };
@@ -109,6 +68,7 @@ void checkBeTop(void) {
  * tasmota.getoption(index:int) -> int
  * tasmota.millis([delay:int]) -> int
  * tasmota.timereached(timer:int) -> bool
+ * tasmota.yield() -> nil
  * 
 \*********************************************************************************************/
 extern "C" {
@@ -216,36 +176,15 @@ extern "C" {
     }
     be_return_nil(vm); // Return nil when something goes wrong
   }
-}
 
-
-
-// Berry: `printStack() -> nul`
-// print stack pointer
-// int32_t l_printStack(bvm *vm) {
-//   int r = 0;
-//   AddLog(LOG_LEVEL_INFO, PSTR("Trampo: stack = 0x%08X"), &r);
-//   be_return(vm);
-// }
-
-// Yield
-int32_t l_yield(struct bvm *vm) {
-#ifdef USE_BERRY_ASYNC
-  if (berry.ta_cont_ok) {                  // if no ta_cont address, then ignore
-    if (setjmp(berry.vm_cont) == 0) {   // record the current state
-      berry.vm_cont_ok = true;
-      longjmp(berry.ta_cont, -1);           // give back control to Tasmota
-    }
+  // Berry: `yield() -> nil`
+  // ESP object
+  int32_t l_yield(bvm *vm);
+  int32_t l_yield(bvm *vm) {
+    optimistic_yield(10);
+    be_return(vm);
   }
-  berry.vm_cont_ok = false;             // from now, berry.vm_cont is no more valid
-#endif // USE_BERRY_ASYNC
-  be_return(vm);
 }
-
-// be_native_module_attr_table(esp) {
-//   be_native_module_function("getFreeHeap", l_getFreeHeap),
-// };
-// be_define_native_module(math, nullptr);
 
 
 /*********************************************************************************************\
@@ -328,82 +267,6 @@ void callBerryFunctionVoid(const char * fname) {
   be_pop(berry.vm, 1);    // remove function or nil object
   checkBeTop();
 }
-
-void test_input(void) {
-  int i = 0;
-  AddLog(LOG_LEVEL_INFO, PSTR("test_input stack = 0x%08X"), &i);
-  callBerryFunctionVoid("noop");
-}
-
-int be_pcall_with_alt_stack() {
-  berry.fret = be_pcall(berry.vm, 0);
-  return berry.fret;
-}
-
-void printStack(void) {
-  int r = 0;
-  AddLog(LOG_LEVEL_INFO, PSTR("Trampo: stack = 0x%08X"), &r);
-}
-
-#ifdef USE_BERRY_ASYNC
-int32_t callTrampoline(void *func) {
-  // Tasmota stack active
-  // ----------------------------------
-  static int r;
-  berry.vm_cont_ok = false;
-
-  if ((r = setjmp(berry.ta_cont)) == 0) {     // capture registers
-    // Tasmota stack active
-    // ----------------------------------
-    // on the first run, we call back ourselves with the alternate stack
-
-    // we clone the return vector and change the stack pointer
-    static jmp_buf trampo;
-    memmove(trampo, berry.ta_cont, sizeof(berry.ta_cont));
-
-#if defined(ESP8266) || defined(ESP32)
-    trampo[1] = (int32_t) berry.stack;      // change stack
-#else
-    #error "Need CPU specific code for setting alternate stack"
-#endif
-    longjmp(trampo, (int)func);
-    // this part is unreachable (longjmp does not return)
-  } else if (r == -1) {
-    // Tasmota stack active
-    // ----------------------------------
-    // the call has completed normally, and `yield` was not called
-    berry.ta_cont_ok = false;
-    AddLog(LOG_LEVEL_INFO, PSTR("Trampo: old stack restored"));
-    // printStack();
-  } else {
-    // WARNING
-    // ALTERNATE stack active
-    // - DON'T USE ANY LOCAL VARIABLE HERE
-    // -----------------------------------
-    // r contains the address of the function to call
-    // AddLog(LOG_LEVEL_INFO, "Trampo: new stack reg");
-    // printStack();
-    berry.ta_cont_ok = true;          // Berry can call back Tasmota thread
-    callBerryFunctionVoid("noop");
-    AddLog(LOG_LEVEL_INFO, PSTR("Trampo: after callBerryFunctionVoid"));
-    // printStack();
-    longjmp(berry.ta_cont, -1);
-    // this part is unreachable (longjmp does not return)
-    // which protects us from accidentally using the alternate stack
-    // in regular code
-  }
-  // Tasmota stack active
-  // ----------------------------------
-}
-#endif // USE_BERRY_ASYNC
-
-// void fake_callBerryFunctionVoid(const char * fname, jmp_buf * env) {
-//   (void) setjmp(env);
-// }
-// void call_callBerryFunctionVoid(const char * fname, jmp_buf * ret_env, ) {
-//   callBerryFunctionVoid(fname);
-//   longjump(env, 1);
-// }
 
 /*********************************************************************************************\
  * Handlers for Berry calls and async
@@ -553,10 +416,16 @@ const char berry_prog[] PROGMEM =
     "end "
   "end "
 
+  // Delay function, internally calls yield() every 10ms to avoid WDT
+  "tasmota.delay = def(ms) "
+    "tend = tasmota.millis(ms) "
+    "while !tasmota.timereached(tend) "
+      "tasmota.yield() "
+    "end "
+  "end "
+
   // trigger Garbage Collector
   "gc.collect() "
-  // "n = 1;"
-  // "def every_second() n = n + 1; if (n % 100 == 10) log('foobar '+str(n)+' free_heap = '+str(tasmota.getfreeheap())) end end; "
   ;
 
 /*********************************************************************************************\
@@ -567,28 +436,17 @@ void BrReset(void) {
   if (berry.vm != nullptr) {
     be_vm_delete(berry.vm);
     berry.vm = nullptr;
-#ifdef USE_BERRY_ASYNC
-    berry.ta_cont_ok = false;           // is the Tasmota continuation address valid?
-    berry.vm_cont_ok = false;           // is the VM continuation address valid?
-#endif // USE_BERRY_ASYNC
   }
 
   int32_t ret_code1, ret_code2;
   bool berry_init_ok = false;
-  do {
-#ifdef USE_BERRY_ASYNC
-    berry.stack_alloc = (uint8_t*) malloc(BERRY_STACK);      // alternate stack
-    berry.stack = berry.stack_alloc + BERRY_STACK;      // top of stack
-#endif // USE_BERRY_ASYNC
-    
+  do {    
     uint32_t heap_before = ESP.getFreeHeap();
     berry.vm = be_vm_new(); /* create a virtual machine instance */
     AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_BERRY "Berry VM created, RAM consumed=%u (Heap=%u)"), heap_before - ESP.getFreeHeap(), ESP.getFreeHeap());
 
     // Register functions
     be_regfunc(berry.vm, PSTR("log"), l_logInfo);
-    // be_regfunc(berry.vm, "printStack", l_printStack);
-    be_regfunc(berry.vm, PSTR("yield"), l_yield);
 
     AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_BERRY "Berry function registered, RAM consumed=%u (Heap=%u)"), heap_before - ESP.getFreeHeap(), ESP.getFreeHeap());
 
@@ -608,83 +466,6 @@ void BrReset(void) {
     AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_BERRY "Berry code ran, RAM consumed=%u (Heap=%u)"), heap_before - ESP.getFreeHeap(), ESP.getFreeHeap());
     be_pop(berry.vm, 1);
 
-    // AddLog(LOG_LEVEL_INFO, PSTR("Get function"));
-    // AddLog(LOG_LEVEL_INFO, PSTR("BE_TOP = %d"), be_top(berry.vm));
-
-    // AddLog(LOG_LEVEL_INFO, PSTR("Get function"));
-    // be_getglobal(vm, PSTR("func"));
-    // be_pushint(vm, 3);
-    // be_pcall(vm, 1);
-    // be_pop(vm, 2);
-    // // AddLog(LOG_LEVEL_INFO, PSTR("BE_TOP = %d"), be_top(vm));
-
-    // be_getglobal(vm, "testreal");
-    // AddLog(LOG_LEVEL_INFO, PSTR("is_nil -1 = %d"), be_isnil(vm, -1));
-    // be_pcall(vm, 0);
-    // // AddLog(LOG_LEVEL_INFO, PSTR("is_nil -1 = %d"), be_isnil(vm, -1));
-    // AddLog(LOG_LEVEL_INFO, PSTR("to_string -1 = %s"), be_tostring(vm, -1));
-    // be_pop(vm, 1);
-    // AddLog(LOG_LEVEL_INFO, PSTR("BE_TOP = %d"), be_top(vm));
-
-    // try a non-existant function
-    // be_getglobal(vm, "doesnotexist");
-    // AddLog(LOG_LEVEL_INFO, PSTR("is_nil -1 = %d"), be_isnil(vm, -1));
-    // AddLog(LOG_LEVEL_INFO, PSTR("BE_TOP = %d"), be_top(vm));
-    // be_pop(vm, 1);
-
-    // Try
-    // callBerryFunctionVoid("noop");
-    // callBerryFunctionVoid("noop2");
-
-    // test_input();
-
-    /////////////////////////////////
-    // callTrampoline(nullptr);
-
-    // // Try coroutines
-    // int jmp_val;
-    // if ((jmp_val=setjmp(berry.ta_cont)) == 0) {
-    //   AddLog(LOG_LEVEL_INFO, "vm return address = 0x%08X", berry.ta_cont[0]);
-    //   AddLog(LOG_LEVEL_INFO, "vm stack  address = 0x%08X", berry.ta_cont[1]);
-    //   callTrampoline(nullptr);
-    //   // // call routine
-    //   // jmp_buf trampoline_env;
-    //   // fake_callBerryFunctionVoid("noop", &tasmota_env);
-    //   // trampoline_env[0] = call_callBerryFunctionVoid
-    // } else {
-    //   AddLog(LOG_LEVEL_INFO, "vm return address = 0x%08X", berry.ta_cont[0]);
-    //   // we get back control
-    // }
-
-#ifdef USE_BERRY_ASYNC
-    if (berry.vm_cont_ok) {
-      printStack();
-      AddLog(LOG_LEVEL_INFO, PSTR("Trampo: we need to complete vm exec 1"));
-      if (setjmp(berry.ta_cont) == 0) {
-        berry.ta_cont_ok = true;
-        berry.vm_cont_ok = false;
-        AddLog(LOG_LEVEL_INFO, PSTR("Trampo: call exec 1"));
-        longjmp(berry.vm_cont, 1);
-      }
-      berry.ta_cont_ok = false;
-      AddLog(LOG_LEVEL_INFO, PSTR("Trampo: returned from exec 1"));
-    }
-    printStack();
-
-    if (berry.vm_cont_ok) {
-      printStack();
-      AddLog(LOG_LEVEL_INFO, PSTR("Trampo: we need to complete vm exec 2"));
-      if (setjmp(berry.ta_cont) == 0) {
-        berry.ta_cont_ok = true;
-        berry.vm_cont_ok = false;
-        AddLog(LOG_LEVEL_INFO, PSTR("Trampo: call exec 2"));
-        longjmp(berry.vm_cont, 1);
-      }
-      berry.ta_cont_ok = false;
-      AddLog(LOG_LEVEL_INFO, PSTR("Trampo: returned from exec 2"));
-    }
-    printStack();
-#endif // USE_BERRY_ASYNC
     AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_BERRY "Berry initialized, RAM consumed=%u (Heap=%u)"), heap_before - ESP.getFreeHeap(), ESP.getFreeHeap());
     // AddLog(LOG_LEVEL_INFO, PSTR("Delete Berry VM"));
     // be_vm_delete(vm);
@@ -699,12 +480,6 @@ void BrReset(void) {
       be_vm_delete(berry.vm);
       berry.vm = nullptr;
     }
-#ifdef USE_BERRY_ASYNC
-    if (berry.stack_alloc != nullptr) {
-      free(berry.stack_alloc);
-      berry.stack_alloc = nullptr;
-    }
-#endif // USE_BERRY_ASYNC
   }
 }
 

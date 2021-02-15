@@ -168,7 +168,7 @@ void RotaryInit(void) {
         attachInterruptArg(Encoder[index].pina, RotaryIsrArg, &Encoder[index], FALLING);
       }
     }
-    Rotary.present |= (Encoder[index].pinb > -1);
+    Rotary.present |= (Encoder[index].pinb >= 0);
   }
 }
 
@@ -213,7 +213,7 @@ void RotaryHandler(void) {
 
 #ifdef USE_LIGHT
     if (!Settings.flag4.rotary_uses_rules) {   // SetOption98 - Use rules instead of light control
-      bool second_rotary = (Encoder[1].pinb > -1);
+      bool second_rotary = (Encoder[1].pinb >= 0);
       if (0 == index) {                        // Rotary1
         if (button_pressed) {
           if (second_rotary) {                 // Color RGB

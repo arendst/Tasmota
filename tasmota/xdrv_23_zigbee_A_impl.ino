@@ -1517,7 +1517,7 @@ void ZigbeeGlowPermitJoinLight(void) {
 
     // change the led state
     int led_pin = Pin(GPIO_LEDLNK);
-    if (led_pin > -1) {
+    if (led_pin >= 0) {
       analogWrite(led_pin, TasmotaGlobal.ledlnk_inverted ? 1023 - led_power : led_power);
     }
   }
@@ -1960,9 +1960,9 @@ void ZigbeeShow(bool json)
 
         WSContentSend_PD(msg[ZB_WEB_STATUS_LINE],
         shortaddr,
-        device.modelId ? device.modelId : "",
-        device.manufacturerId ? device.manufacturerId : "",
-        name, sbatt, slqi);
+        device.modelId ? EscapeHTMLString(device.modelId).c_str() : "",
+        device.manufacturerId ? EscapeHTMLString(device.manufacturerId).c_str() : "",
+        EscapeHTMLString(name).c_str(), sbatt, slqi);
 
         if(device.validLqi()) {
             for(uint32_t j = 0; j < 4; ++j) {
