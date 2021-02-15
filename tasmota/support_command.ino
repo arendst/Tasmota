@@ -309,6 +309,48 @@ void CommandHandler(char* topicBuf, char* dataBuf, uint32_t data_len)
   TasmotaGlobal.fallback_topic_flag = false;
 }
 
+/**
+ * This function can be used to iterate over all indices selected by the user.
+ * The following lines give an example implementation:
+ *   uint32_t i = MAX_ITERATION_COUNT:
+ *   while (NextUserIndex(i))
+ *     printf("%u ", i);
+ * In case a command is given without an index (e.g. "dimmer ...") this function
+ * will iterate through the following values:
+ *   {MAX_ITERATION_COUNT-1, MAX_ITERATION_COUNT-2, ..., 1, 0}
+ * Keep in mind that it will start form highest value and go to 0.
+ * In case a command is given with an index (e.g. "dimmer2 ...") this function
+ * will only iterate through one value:
+ *   {2}
+ */
+bool NextUserIndex(uint32_t& index)
+{
+  if (XdrvMailbox.usridx) {
+    /* do nothing when index is out of range.
+     * On first call is index == MAX_ITERATION_COUNT. Therefore
+     * XdrvMailbox.index would be out of range when greater then index.
+     * On second call is index == XdrvMailbox.index. Therefore later condition
+     * will take care to return false t abort the loop.
+     */
+    if ( (XdrvMailbox.index <= 0) || (XdrvMailbox.index > index) ) {
+      return false;
+    }
+
+    const uint32_t userIndex = XdrvMailbox.index - 1;
+    if (index != userIndex) {
+      index = userIndex;
+      return true;
+    }
+  } else {
+    if (index > 0) {
+      index--;
+      return true;
+    }
+  }
+
+  return false;
+}
+
 /********************************************************************************************/
 
 void CmndBacklog(void)
