@@ -363,16 +363,19 @@ void UfsAutoexec(void) {
       file.read(buf, 1);
       if ((buf[0] == '\n') || (buf[0] == '\r')) {
         // Line terminated with linefeed or carriage return
-        break;
+        if (index < sizeof(cmd_line) - 1) {
+          // Process line
+          break;
+        } else {
+          // Discard too long line and start with next line
+          index = 0;
+        }
       }
       else if ((0 == index) && isspace(buf[0])) {
         // Skip leading spaces (' ','\t','\n','\v','\f','\r')
-      } else {
-        cmd_line[index] = buf[0];
-        index++;
-        if (index >= sizeof(cmd_line) - 1) {
-          break;
-        }
+      }
+      else if (index < sizeof(cmd_line) - 2) {
+        cmd_line[index++] = buf[0];
       }
     }
     if ((index > 0) && (cmd_line[0] != ';')) {  // Information but no comment
