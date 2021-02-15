@@ -1667,6 +1667,92 @@ void TemplateJson(void)
   ResponseAppend_P(PSTR("],\"" D_JSON_FLAG "\":%d,\"" D_JSON_BASE "\":%d}"), Settings.user_template.flag, Settings.user_template_base +1);
 }
 
+#if ( defined(USE_SCRIPT) && defined(SUPPORT_MQTT_EVENT) ) || defined (USE_DT_VARS)
+
+/*********************************************************************************************\
+ * Parse json paylod with path
+\*********************************************************************************************/
+// parser object, source keys, delimiter, float result or NULL, string result or NULL, string size
+// return 1 if numeric 2 if string, else 0 = not found
+uint32_t JsonParsePath(JsonParserObject *jobj, const char *spath, char delim, float *nres, char *sres, uint32_t slen) {
+  uint32_t res = 0;
+  const char *cp = spath;
+#ifdef DEBUG_JSON_PARSE_PATH
+  AddLog(LOG_LEVEL_INFO, PSTR("JSON: parsing json key: %s from json: %s"), cp, jpath);
+#endif
+  JsonParserObject obj = *jobj;
+  JsonParserObject lastobj = obj;
+  char selem[32];
+  uint8_t aindex = 0;
+  String value = "";
+  while (1) {
+    // read next element
+    for (uint32_t sp=0; sp<sizeof(selem)-1; sp++) {
+      if (!*cp || *cp==delim) {
+        selem[sp] = 0;
+        cp++;
+        break;
+      }
+      selem[sp] = *cp++;
+    }
+#ifdef DEBUG_JSON_PARSE_PATH
+    AddLog(LOG_LEVEL_INFO, PSTR("JSON: cmp current key: %s"), selem);
+#endif
+    // check for array
+    char *sp = strchr(selem,'[');
+    if (sp) {
+      *sp = 0;
+      aindex = atoi(sp+1);
+    }
+
+    // now check element
+    obj = obj[selem];
+    if (!obj.isValid()) {
+#ifdef DEBUG_JSON_PARSE_PATH
+      AddLog(LOG_LEVEL_INFO, PSTR("JSON: obj invalid: %s"), selem);
+#endif
+      JsonParserToken tok = lastobj[selem];
+      if (tok.isValid()) {
+        if (tok.isArray()) {
+          JsonParserArray array = JsonParserArray(tok);
+          value = array[aindex].getStr();
+          if (array.isNum()) {
+            if (nres) *nres=tok.getFloat();
+            res = 1;
+          } else {
+            res = 2;
+          }
+        } else {
+          value = tok.getStr();
+          if (tok.isNum()) {
+            if (nres) *nres=tok.getFloat();
+            res = 1;
+          } else {
+            res = 2;
+          }
+        }
+
+      }
+#ifdef DEBUG_JSON_PARSE_PATH
+      AddLog(LOG_LEVEL_INFO, PSTR("JSON: token invalid: %s"), selem);
+#endif
+      break;
+    }
+    if (obj.isObject()) {
+      lastobj = obj;
+      continue;
+    }
+    if (!*cp) break;
+  }
+  if (sres) {
+    strlcpy(sres,value.c_str(), slen);
+  }
+  return res;
+
+}
+
+#endif // USE_SCRIPT
+
 /*********************************************************************************************\
  * Sleep aware time scheduler functions borrowed from ESPEasy
 \*********************************************************************************************/
@@ -2236,6 +2322,9 @@ void AddLogSpi(bool hardware, uint32_t clk, uint32_t mosi, uint32_t miso) {
       break;
   }
 }
+
+
+
 
 /*********************************************************************************************\
  * Uncompress static PROGMEM strings
