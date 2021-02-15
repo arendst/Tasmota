@@ -1081,7 +1081,14 @@ void XsnsDriverState(void)
 
 bool XdrvRulesProcess(void)
 {
+#ifdef USE_BERRY
+  // events are passed to both Rules engine AND Berry engine
+  bool rule_handled = XdrvCallDriver(10, FUNC_RULES_PROCESS);
+  bool berry_handled = XdrvCallDriver(52, FUNC_RULES_PROCESS);
+  return rule_handled || berry_handled;
+#else
   return XdrvCallDriver(10, FUNC_RULES_PROCESS);
+#endif
 }
 
 #ifdef USE_DEBUG_DRIVER

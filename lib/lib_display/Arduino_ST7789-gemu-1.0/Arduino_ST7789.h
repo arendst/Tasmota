@@ -15,6 +15,10 @@
 #include <Adafruit_GFX.h>
 #include <renderer.h>
 
+#ifdef ESP8266
+#define USE_FAST_IO
+#endif
+
 #if defined(__AVR__) || defined(CORE_TEENSY)
   #include <avr/pgmspace.h>
   #define USE_FAST_IO
@@ -177,7 +181,7 @@ class Arduino_ST7789 : public Renderer {
   int8_t  _cs, _dc, _rst, _sid, _sclk, _bp;
 
 #if defined(USE_FAST_IO)
-  volatile RwReg  *dataport, *clkport, *csport, *dcport;
+  volatile uint32_t  *dataport, *clkport, *csport, *dcport;
 
   #if defined(__AVR__) || defined(CORE_TEENSY)  // 8 bit!
     uint8_t  datapinmask, clkpinmask, cspinmask, dcpinmask;

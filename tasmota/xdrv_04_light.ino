@@ -2855,6 +2855,7 @@ void CmndFade(void)
 void CmndSpeed(void)
 {
   if (2 == XdrvMailbox.index) {
+    // Speed2 setting will be used only once, then revert to fade/speed
     if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 40)) {
       Light.fade_once_enabled = true;
       Light.fade_once_value = (XdrvMailbox.payload > 0);
@@ -2862,7 +2863,7 @@ void CmndSpeed(void)
       Light.speed_once_value = XdrvMailbox.payload;
       if (!Light.fade_once_value) { Light.fade_running = false; }
     }
-    ResponseCmndNumber(Light.speed_once_value);
+    ResponseCmndIdxNumber(Light.speed_once_value);
   } else {
     // Speed 1  - Fast
     // Speed 40 - Very slow

@@ -61,17 +61,12 @@ void SSD1331_InitDriver() {
     fg_color = SSD1331_WHITE;
     bg_color = SSD1331_BLACK;
 
-    int8_t reset = -1;
-    if (PinUsed(GPIO_OLED_RESET)) {
-      reset = Pin(GPIO_OLED_RESET);
-    }
-
     // init renderer
     if (TasmotaGlobal.soft_spi_enabled) {
-      ssd1331 = new Adafruit_SSD1331(Pin(GPIO_SSD1331_CS), Pin(GPIO_SSD1331_DC), Pin(GPIO_SSPI_MOSI), Pin(GPIO_SSPI_SCLK), reset);
+      ssd1331 = new Adafruit_SSD1331(Pin(GPIO_SSD1331_CS), Pin(GPIO_SSD1331_DC), Pin(GPIO_SSPI_MOSI), Pin(GPIO_SSPI_SCLK), Pin(GPIO_OLED_RESET));
     }
     else if (TasmotaGlobal.spi_enabled) {
-      ssd1331 = new Adafruit_SSD1331(&SPI, Pin(GPIO_SSD1331_CS), Pin(GPIO_SSD1331_DC), reset);
+      ssd1331 = new Adafruit_SSD1331(&SPI, Pin(GPIO_SSD1331_CS), Pin(GPIO_SSD1331_DC), Pin(GPIO_OLED_RESET));
     }
 
     delay(100);

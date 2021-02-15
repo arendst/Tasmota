@@ -65,7 +65,7 @@ void ILI9488_InitDriver(void) {
     fg_color = ILI9488_WHITE;
     bg_color = ILI9488_BLACK;
 
-    uint8_t bppin = BACKPLANE_PIN;
+    int8_t bppin = BACKPLANE_PIN;
     if (PinUsed(GPIO_BACKLIGHT)) {
       bppin = Pin(GPIO_BACKLIGHT);
     }
