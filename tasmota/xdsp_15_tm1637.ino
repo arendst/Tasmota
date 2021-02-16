@@ -51,27 +51,27 @@
                                Clears the display, command: "DisplayClear"
 
 
-  DisplayNumber         num [,position {0-(NUM_DIGITS-1))} [,leading_zeros {0|1} [,length {1-NUM_DIGITS}]]]
+  DisplayNumber         num [,position {0-(NUM_DIGITS-1))} [,leading_zeros {0|1} [,length {1 to NUM_DIGITS}]]]
   
                                Clears and then displays number without decimal. command e.g., "DisplayNumber 1234"
                                Control 'leading zeros', 'length' and 'position' with  "DisplayNumber 1234, <position>, <leadingZeros>, <length>"
                                'leading zeros' can be 1 or 0 (default), 'length' can be 1 to NUM_DIGITS, 'position' can be 0 (left-most) to NUM_DIGITS (right-most).
                                See function description below for more details.
 
-  DisplayNumberNC       num [,position {0-(NUM_DIGITS-1))} [,leading_zeros {0|1} [,length {1-NUM_DIGITS}]]]
+  DisplayNumberNC       num [,position {0-(NUM_DIGITS-1))} [,leading_zeros {0|1} [,length {1 to NUM_DIGITS}]]]
 
                                Display integer number as above, but without clearing first. e.g., "DisplayNumberNC 1234". Usage is same as above.
 
 
 
-  DisplayFloat          num [,position {0-(NUM_DIGITS-1)} [,precision {0-NUM_DIGITS} [,length {1-NUM_DIGITS}]]]
+  DisplayFloat          num [,position {0-(NUM_DIGITS-1)} [,precision {0-NUM_DIGITS} [,length {1 to NUM_DIGITS}]]]
 
                                Clears and then displays float (with decimal point)  command e.g., "DisplayFloat 12.34"
                                See function description below for more details.
 
 
 
-  DisplayFloatNC        num [,position {0-(NUM_DIGITS-1)} [,precision {0-NUM_DIGITS} [,length {1-NUM_DIGITS}]]]
+  DisplayFloatNC        num [,position {0-(NUM_DIGITS-1)} [,precision {0-NUM_DIGITS} [,length {1 to NUM_DIGITS}]]]
 
                                Displays float (with decimal point) as above, but without clearing first. command e.g., "DisplayFloatNC 12.34"
                                See function description below for more details.
@@ -84,7 +84,7 @@
 
 
 
-  DisplayRaw            position {0-(NUM_DIGITS-1)},length {1-NUM_DIGITS}, num1 [, num2[, num3[, num4[, ...upto NUM_DIGITS numbers]]]]]
+  DisplayRaw            position {0-(NUM_DIGITS-1)},length {1 to NUM_DIGITS}, num1 [, num2[, num3[, num4[, ...upto NUM_DIGITS numbers]]]]]
 
                                Takes upto NUM_DIGITS comma-separated integers (0-255) and displays raw segments. Each number represents a 
                                7-segment digit. Each 8-bit number represents individual segments of a digit.
@@ -92,7 +92,7 @@
 
 
 
-  DisplayText           text [, position {0-(NUM_DIGITS-1)} [,length {1-NUM_DIGITS}]]
+  DisplayText           text [, position {0-(NUM_DIGITS-1)} [,length {1 to NUM_DIGITS}]]
 
                                Clears and then displays basic text.  command e.g., "DisplayText ajith vasudevan" 
                                Control 'length' and 'position' with  "DisplayText <text>, <position>, <length>"
@@ -100,7 +100,7 @@
 
 
 
-  DisplayTextNC         text [, position {0-NUM_DIGITS-1} [,length {1-NUM_DIGITS}]]
+  DisplayTextNC         text [, position {0-NUM_DIGITS-1} [,length {1 to NUM_DIGITS}]]
 
                                Clears first, then displays text. Usage is same as above.
 
@@ -187,8 +187,8 @@ bool TM1637Init(void) {
 /*********************************************************************************************\
 * Displays number without decimal, with/without leading zeros, specifying start-position
 * and length, optionally skipping clearing display before displaying the number.
-* commands: DisplayNumber   num [,position {0-(NUM_DIGITS-1)} [,leading_zeros {0|1} [,length {1-NUM_DIGITS}]]] 
-*           DisplayNumberNC num [,position {0-(NUM_DIGITS-1)} [,leading_zeros {0|1} [,length {1-NUM_DIGITS}]]]    // "NC" --> "No Clear"
+* commands: DisplayNumber   num [,position {0-(NUM_DIGITS-1)} [,leading_zeros {0|1} [,length {1 to NUM_DIGITS}]]] 
+*           DisplayNumberNC num [,position {0-(NUM_DIGITS-1)} [,leading_zeros {0|1} [,length {1 to NUM_DIGITS}]]]    // "NC" --> "No Clear"
 \*********************************************************************************************/
 bool CmndTM1637Number(bool clear) {
   char sNum[CMD_MAX_LEN]; 
@@ -256,8 +256,8 @@ bool CmndTM1637Number(bool clear) {
 /*********************************************************************************************\
 * Displays number with decimal, specifying position, precision and length,
 * optionally skipping clearing display before displaying the number.
-* commands: DisplayFloat   num [,position {0-(NUM_DIGITS-1)} [,precision {0-NUM_DIGITS} [,length {1-NUM_DIGITS}]]] 
-*           DisplayFloatNC num [,position {0-(NUM_DIGITS-1)} [,precision {0-NUM_DIGITS} [,length {1-NUM_DIGITS}]]]    // "NC" --> "No Clear"
+* commands: DisplayFloat   num [,position {0-(NUM_DIGITS-1)} [,precision {0-NUM_DIGITS} [,length {1 to NUM_DIGITS}]]] 
+*           DisplayFloatNC num [,position {0-(NUM_DIGITS-1)} [,precision {0-NUM_DIGITS} [,length {1 to NUM_DIGITS}]]]    // "NC" --> "No Clear"
 \*********************************************************************************************/
 bool CmndTM1637Float(bool clear) {
 
@@ -448,7 +448,7 @@ bool CmndTM1637Level(void) {
 
 /*********************************************************************************************\
 * Display arbitrary data on the display module
-* Command:   DisplayRaw position {0-(NUM_DIGITS-1)},length {1-NUM_DIGITS}, a [, b[, c[, d[...upto NUM_DIGITS]]]]
+* Command:   DisplayRaw position {0-(NUM_DIGITS-1)},length {1 to NUM_DIGITS}, a [, b[, c[, d[...upto NUM_DIGITS]]]]
 * where a,b,c,d... are upto NUM_DIGITS numbers in the range 0-255, each number (byte)
 * corresponding to a single 7-segment digit. Within each byte, bit 0 is segment A, 
 * bit 1 is segment B etc. The function may either set the entire display 
@@ -530,7 +530,7 @@ bool CmndTM1637Raw(void) {
 * Display a given string. 
 * Text can be placed at arbitrary location on the display using the length and 
 * position parameters without affecting the rest of the display.
-* Command:   DisplayText text [, position {0-(NUM_DIGITS-1)} [,length {1-NUM_DIGITS}]]
+* Command:   DisplayText text [, position {0-(NUM_DIGITS-1)} [,length {1 to NUM_DIGITS}]]
 \*********************************************************************************************/
 bool CmndTM1637Text(bool clear) {
   char sString[CMD_MAX_LEN + 1]; 
