@@ -38,7 +38,7 @@ extern "C" {
  * type when the value is 2.
  * Default: 2
  */
-#define BE_INTGER_TYPE                  1
+#define BE_INTGER_TYPE                  1           // use long int = uint32_t
 
 /* Macro: BE_USE_SINGLE_FLOAT
  * Select floating point precision.
@@ -47,7 +47,7 @@ extern "C" {
  * numbers.
  * Default: 0
  **/
-#define BE_USE_SINGLE_FLOAT             1
+#define BE_USE_SINGLE_FLOAT             1           // use `float` not `double`
 
 /* Macro: BE_USE_PRECOMPILED_OBJECT
  * Use precompiled objects to avoid creating these objects at
@@ -118,14 +118,14 @@ extern "C" {
  * otherwise disable the feature.
  * Default: 1
  **/
-#define BE_USE_BYTECODE_SAVER           0
+#define BE_USE_BYTECODE_SAVER           1
 
 /* Macro: BE_USE_BYTECODE_LOADER
  * Enable load bytecode from file when BE_USE_BYTECODE_LOADER is not 0,
  * otherwise disable the feature.
  * Default: 1
  **/
-#define BE_USE_BYTECODE_LOADER          0
+#define BE_USE_BYTECODE_LOADER          1
 
 /* Macro: BE_USE_SHARED_LIB
  * Enable shared library  when BE_USE_SHARED_LIB is not 0,
@@ -160,7 +160,7 @@ extern "C" {
 #define BE_USE_TIME_MODULE              0
 #define BE_USE_OS_MODULE                0
 #define BE_USE_SYS_MODULE               0
-#define BE_USE_DEBUG_MODULE             0
+#define BE_USE_DEBUG_MODULE             1
 #define BE_USE_GC_MODULE                1
 
 /* Macro: BE_EXPLICIT_XXX
