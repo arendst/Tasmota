@@ -146,6 +146,7 @@ struct {
   bool restart_halt;                        // Do not restart but stay in wait loop
   bool module_changed;                      // Indicate module changed since last restart
   bool wifi_stay_asleep;                    // Allow sleep only incase of ESP32 BLE
+  bool no_autoexec;                         // Disable autoexec
 
   StateBitfield global_state;               // Global states (currently Wifi and Mqtt) (8 bits)
   uint8_t spi_enabled;                      // SPI configured
@@ -303,6 +304,7 @@ void setup(void) {
       }
       if (RtcReboot.fast_reboot_count > Settings.param[P_BOOT_LOOP_OFFSET] +2) {  // Restarted 4 times
         Settings.rule_enabled = 0;                  // Disable all rules
+        TasmotaGlobal.no_autoexec = true;
       }
       if (RtcReboot.fast_reboot_count > Settings.param[P_BOOT_LOOP_OFFSET] +3) {  // Restarted 5 times
         for (uint32_t i = 0; i < ARRAY_SIZE(Settings.my_gp.io); i++) {
@@ -424,6 +426,9 @@ void Scheduler(void) {
   DeviceGroupsLoop();
 #endif  // USE_DEVICE_GROUPS
   BacklogLoop();
+#ifdef USE_UFILESYS
+  FileRunLoop();
+#endif  // USE_UFILESYS
 
   static uint32_t state_50msecond = 0;             // State 50msecond timer
   if (TimeReached(state_50msecond)) {

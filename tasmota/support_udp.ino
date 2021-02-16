@@ -137,7 +137,7 @@ void PollUdp(void)
       // Simple Service Discovery Protocol (SSDP)
       if (Settings.flag2.emulation) {
 #if defined(USE_SCRIPT_HUE) || defined(USE_ZIGBEE)
-        if (TasmotaGlobal.devices_present && (strstr_P(packet_buffer, PSTR("M-SEARCH")) != nullptr)) {
+        if (strstr_P(packet_buffer, PSTR("M-SEARCH")) != nullptr) {
 #else
         if (TasmotaGlobal.devices_present && (strstr_P(packet_buffer, PSTR("M-SEARCH")) != nullptr)) {
 #endif
