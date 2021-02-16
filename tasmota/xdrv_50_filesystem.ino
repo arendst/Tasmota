@@ -353,12 +353,12 @@ bool TfsRenameFile(const char *fname1, const char *fname2) {
  * File command execute support
 \*********************************************************************************************/
 
-bool FileRunReady(void) {
+bool UfsExecuteCommandFileReady(void) {
   return (UfsData.run_file_pos < 0);   // Check file ready to disable concurrency
 }
 
-void FileRunLoop(void) {
-  if (FileRunReady() || !ffs_type) { return; }
+void UfsExecuteCommandFileLoop(void) {
+  if (UfsExecuteCommandFileReady() || !ffs_type) { return; }
 
   if (strlen(UfsData.run_file) && !UfsData.run_file_mutex) {
     File file = ffsp->open(UfsData.run_file, "r");
@@ -410,7 +410,7 @@ void FileRunLoop(void) {
 
 bool UfsExecuteCommandFile(const char *fname) {
   // Check for non-concurrency and file existance
-  if (FileRunReady() && TfsFileExists(fname)) {
+  if (UfsExecuteCommandFileReady() && TfsFileExists(fname)) {
     snprintf(UfsData.run_file, sizeof(UfsData.run_file), fname);
     UfsData.run_file_pos = 0;          // Signal start of file
     return true;
@@ -471,7 +471,7 @@ void UFSDelete(void) {
       result = (ufs_type && ufsp->remove(XdrvMailbox.data));
     }
     if (!result) {
-      ResponseCmndChar(PSTR(D_JSON_FAILED));
+      ResponseCmndFailed();
     } else {
       ResponseCmndDone();
     }
@@ -493,7 +493,7 @@ void UFSRename(void) {
       }
     }
     if (!result) {
-      ResponseCmndChar(PSTR(D_JSON_FAILED));
+      ResponseCmndFailed();
     } else {
       ResponseCmndDone();
     }
@@ -505,7 +505,7 @@ void UFSRun(void) {
     if (UfsExecuteCommandFile(XdrvMailbox.data)) {
       ResponseClear();
     } else {
-      ResponseCmndChar(PSTR(D_JSON_FAILED));
+      ResponseCmndFailed();
     }
   }
 }
@@ -864,6 +864,9 @@ bool Xdrv50(uint8_t function) {
   bool result = false;
 
   switch (function) {
+    case FUNC_LOOP:
+      UfsExecuteCommandFileLoop();
+      break;
 #ifdef USE_SDCARD
     case FUNC_PRE_INIT:
       UfsCheckSDCardInit();
