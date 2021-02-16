@@ -964,7 +964,7 @@ void Every100mSeconds(void)
 bool CommandsReady(void) {
   bool ready = BACKLOG_EMPTY ;
 #ifdef USE_UFILESYS
-  ready |= FileRunReady();
+  ready |= UfsExecuteCommandFileReady();
 #endif  // USE_UFILESYS
   return ready;
 }

@@ -353,44 +353,48 @@ bool TfsRenameFile(const char *fname1, const char *fname2) {
  * File command execute support
 \*********************************************************************************************/
 
-bool FileRunReady(void) {
-  return (UfsData.run_file_pos < 0);
+bool UfsExecuteCommandFileReady(void) {
+  return (UfsData.run_file_pos < 0);   // Check file ready to disable concurrency
 }
 
-void FileRunLoop(void) {
-  if (FileRunReady()) { return; }
-  if (!ffs_type) { return; }
+void UfsExecuteCommandFileLoop(void) {
+  if (UfsExecuteCommandFileReady() || !ffs_type) { return; }
 
   if (strlen(UfsData.run_file) && !UfsData.run_file_mutex) {
     File file = ffsp->open(UfsData.run_file, "r");
-    if (!file) { return; }
-    if (!file.seek(UfsData.run_file_pos)) { return; }
+    if (!file || !file.seek(UfsData.run_file_pos)) {
+      UfsData.run_file_pos = -1;       // Signal file ready
+      return;
+    }
 
     UfsData.run_file_mutex = true;
 
     char cmd_line[512];
-    cmd_line[0] = '\0';  // Clear in case of re-entry
+    cmd_line[0] = '\0';                // Clear in case of re-entry
     while (file.available()) {
       uint16_t index = 0;
+      bool comment = false;
       while (file.available()) {
         uint8_t buf[1];
         file.read(buf, 1);
         if ((buf[0] == '\n') || (buf[0] == '\r')) {
-          break;  // Line terminated with linefeed or carriage return
+          break;                       // End of command with linefeed or carriage return
         }
-        else if (index && (buf[0] == ';')) {
-          break;  // End of multi command line
+        else if (index && !comment && (buf[0] == ';')) {
+          break;                       // End of command on multi command line
         }
         else if ((0 == index) && isspace(buf[0])) {
-          // Skip leading spaces (' ','\t','\n','\v','\f','\r')
+                                       // Skip leading spaces (' ','\t','\n','\v','\f','\r')
         }
-        else if (index < sizeof(cmd_line) - 2) {
-          cmd_line[index++] = buf[0];
+        else if ((0 == index) && (buf[0] == ';')) {
+          comment = true;              // Ignore comment lines until linefeed or carriage return
+        }
+        else if (!comment && (index < sizeof(cmd_line) - 2)) {
+          cmd_line[index++] = buf[0];  // Build command
         }
       }
-      if ((index > 0) && (index < sizeof(cmd_line) - 1) && (cmd_line[0] != ';')) {
-        // No comment so try to execute command
-        cmd_line[index] = '\0';
+      if ((index > 0) && (index < sizeof(cmd_line) - 1)) {
+        cmd_line[index] = '\0';        // Valid command received
         break;
       }
     }
@@ -404,11 +408,14 @@ void FileRunLoop(void) {
   }
 }
 
-void UfsAutoexec(void) {
-  if (TfsFileExists(TASM_FILE_AUTOEXEC)) {
-    snprintf(UfsData.run_file, sizeof(UfsData.run_file), TASM_FILE_AUTOEXEC);
-    UfsData.run_file_pos = 0;
+bool UfsExecuteCommandFile(const char *fname) {
+  // Check for non-concurrency and file existance
+  if (UfsExecuteCommandFileReady() && TfsFileExists(fname)) {
+    snprintf(UfsData.run_file, sizeof(UfsData.run_file), fname);
+    UfsData.run_file_pos = 0;          // Signal start of file
+    return true;
   }
+  return false;
 }
 
 /*********************************************************************************************\
@@ -464,7 +471,7 @@ void UFSDelete(void) {
       result = (ufs_type && ufsp->remove(XdrvMailbox.data));
     }
     if (!result) {
-      ResponseCmndChar(PSTR(D_JSON_FAILED));
+      ResponseCmndFailed();
     } else {
       ResponseCmndDone();
     }
@@ -486,7 +493,7 @@ void UFSRename(void) {
       }
     }
     if (!result) {
-      ResponseCmndChar(PSTR(D_JSON_FAILED));
+      ResponseCmndFailed();
     } else {
       ResponseCmndDone();
     }
@@ -495,12 +502,10 @@ void UFSRename(void) {
 
 void UFSRun(void) {
   if (XdrvMailbox.data_len > 0) {
-    if (FileRunReady() && TfsFileExists(XdrvMailbox.data)) {
-      snprintf(UfsData.run_file, sizeof(UfsData.run_file), XdrvMailbox.data);
-      UfsData.run_file_pos = 0;
+    if (UfsExecuteCommandFile(XdrvMailbox.data)) {
       ResponseClear();
     } else {
-      ResponseCmndChar(PSTR(D_JSON_FAILED));
+      ResponseCmndFailed();
     }
   }
 }
@@ -859,13 +864,18 @@ bool Xdrv50(uint8_t function) {
   bool result = false;
 
   switch (function) {
+    case FUNC_LOOP:
+      UfsExecuteCommandFileLoop();
+      break;
 #ifdef USE_SDCARD
     case FUNC_PRE_INIT:
       UfsCheckSDCardInit();
       break;
 #endif // USE_SDCARD
     case FUNC_MQTT_INIT:
-      if (!TasmotaGlobal.no_autoexec) { UfsAutoexec(); }
+      if (!TasmotaGlobal.no_autoexec) {
+        UfsExecuteCommandFile(TASM_FILE_AUTOEXEC);
+      }
       break;
     case FUNC_COMMAND:
       result = DecodeCommand(kUFSCommands, kUFSCommand);
