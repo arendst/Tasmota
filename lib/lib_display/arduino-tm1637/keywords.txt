@@ -1,0 +1,56 @@
+#######################################
+# Syntax Coloring Map For SevenSegmentTM1637
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+SevenSegmentTM1637	KEYWORD1
+SevenSegmentExtended	KEYWORD1
+SevenSegmentFun	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+init	KEYWORD2
+begin	KEYWORD2
+write	KEYWORD2
+clear	KEYWORD2
+home	KEYWORD2
+setCursor	KEYWORD2
+setBacklight	KEYWORD2
+setContrast	KEYWORD2
+on	KEYWORD2
+off	KEYWORD2
+blink	KEYWORD2
+setColonOn	KEYWORD2
+getColonOn	KEYWORD2
+setPrintDelay	KEYWORD2
+encode	KEYWORD2
+shiftLeft	KEYWORD2
+printRaw	KEYWORD2
+command	KEYWORD2
+comReadByte	KEYWORD2
+comWriteByte	KEYWORD2
+comStart	KEYWORD2
+comStop	KEYWORD2
+comAck	KEYWORD2
+printTime	KEYWORD2
+printNumber	KEYWORD2
+printDualCounter	KEYWORD2
+printLevelVertical	KEYWORD2
+printLevelHorizontal	KEYWORD2
+scrollingText	KEYWORD2
+snake	KEYWORD2
+nightrider	KEYWORD2
+bombTimer	KEYWORD2
+bouchingBall	KEYWORD2
+printBall	KEYWORD2
+print4Bit	KEYWORD2
+
+
+#######################################
+# Constants (LITERAL1)
+#######################################
