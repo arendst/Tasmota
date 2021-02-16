@@ -1,5 +1,5 @@
+#ifndef ESP32
 #ifdef USE_SENDMAIL
-
 #include "sendemail_ESP8266.h"
 
 // enable serial debugging
@@ -483,3 +483,5 @@ void attach_File(char *path) {
 
 
 #endif // USE_SENDMAIL
+
+#endif // ESP32
