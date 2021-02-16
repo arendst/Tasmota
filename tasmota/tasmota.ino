@@ -426,6 +426,9 @@ void Scheduler(void) {
   DeviceGroupsLoop();
 #endif  // USE_DEVICE_GROUPS
   BacklogLoop();
+#ifdef USE_UFILESYS
+  FileRunLoop();
+#endif  // USE_UFILESYS
 
   static uint32_t state_50msecond = 0;             // State 50msecond timer
   if (TimeReached(state_50msecond)) {
