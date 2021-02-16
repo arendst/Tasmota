@@ -1,0 +1,126 @@
+######################################
+# Syntax Coloring Map ESP Mail Client
+######################################
+
+#######################################
+# Classes and Structured Type (KEYWORD1)
+#######################################
+
+MailClient  KEYWORD1
+IMAPSession KEYWORD1
+SMTPSession KEYWORD1
+SMTP_Message    KEYWORD1
+IMAP_Config KEYWORD1
+FoldersCollection   KEYWORD1
+imapStatusCallback  KEYWORD1
+IMAP_MSG_List   KEYWORD1
+SelectedFolderInfo  KEYWORD1
+ESP_Mail_Session    KEYWORD1
+smtpStatusCallback  KEYWORD1
+SMTP_Attachment KEYWORD1
+SMTP_Result KEYWORD1
+IMAP_MSG_Item   KEYWORD1
+Content_Transfer_Encoding   KEYWORD1
+MessageList   KEYWORD1
+
+###############################################
+# Methods and Functions (KEYWORD2)
+###############################################
+
+sendMail    KEYWORD2
+readMail    KEYWORD2
+setFlag KEYWORD2
+addFlag KEYWORD2
+removeFlag  KEYWORD2
+sdBegin KEYWORD2
+connect KEYWORD2
+closeSession    KEYWORD2
+debug   KEYWORD2
+getFolders  KEYWORD2
+selectFolder    KEYWORD2
+openFolder  KEYWORD2
+closeFolder KEYWORD2
+callback    KEYWORD2
+headerOnly  KEYWORD2
+data    KEYWORD2
+selectedFolder  KEYWORD2
+errorReason KEYWORD2
+empty   KEYWORD2
+resetAttachItem KEYWORD2
+clear   KEYWORD2
+clearInlineimages   KEYWORD2
+clearAttachments    KEYWORD2
+clearRFC822Messages KEYWORD2
+clearRecipients KEYWORD2
+clearCc KEYWORD2
+clearBcc    KEYWORD2
+clearHeader KEYWORD2
+addAttachment   KEYWORD2
+addParallelAttachment   KEYWORD2
+addInlineImage  KEYWORD2
+addMessage  KEYWORD2
+addRecipient    KEYWORD2
+addCc   KEYWORD2
+addBcc  KEYWORD2
+addHeader   KEYWORD2
+info    KEYWORD2
+successs    KEYWORD2
+completedCount  KEYWORD2
+failedCount KEYWORD2
+getItem KEYWORD2
+size    KEYWORD2
+flagCount   KEYWORD2
+msgCount    KEYWORD2
+nextUID KEYWORD2
+searchCount KEYWORD2
+availableMessages   KEYWORD2
+flag    KEYWORD2
+setClock    KEYWORD2
+getUnixTime KEYWORD2
+getTimestamp    KEYWORD2
+getYear KEYWORD2
+getMonth    KEYWORD2
+getDay  KEYWORD2
+getDayOfWeek    KEYWORD2
+getDayOfWeekString  KEYWORD2
+getHour KEYWORD2
+getMin  KEYWORD2
+getSecond   KEYWORD2
+getNumberOfDayThisYear  KEYWORD2
+getTotalDays    KEYWORD2
+dayofWeek   KEYWORD2
+getCurrentSecond    KEYWORD2
+getCurrentTimestamp KEYWORD2
+getTimeFromSec  KEYWORD2
+getDateTimeString   KEYWORD2
+copyMessages    KEYWORD2
+deleteMessages  KEYWORD2
+createFolder    KEYWORD2
+deleteFolder    KEYWORD2
+
+
+#######################################
+# Struct (LITERAL1)
+#######################################
+
+esp_mail_email_info_t   LITERAL1
+esp_mail_plain_body_t   LITERAL1
+esp_mail_html_body_t    LITERAL1
+esp_mail_smtp_msg_response_t    LITERAL1
+esp_mail_smtp_enable_option_t   LITERAL1
+esp_mail_email_info_t   LITERAL1
+esp_mail_folder_info_item_t LITERAL1
+esp_mail_sesson_sever_config_t  LITERAL1
+esp_mail_sesson_login_config_t  LITERAL1
+esp_mail_sesson_secure_config_t LITERAL1
+esp_mail_sesson_cert_config_t   LITERAL1
+esp_mail_imap_fetch_config_t    LITERAL1
+esp_mail_imap_search_config_t   LITERAL1
+esp_mail_imap_limit_config_t    LITERAL1
+esp_mail_imap_enable_config_t   LITERAL1
+esp_mail_imap_download_config_t LITERAL1
+esp_mail_imap_storage_config_t  LITERAL1
+
+esp_mail_file_storage_type_none LITERAL1
+esp_mail_file_storage_type_flash    LITERAL1
+esp_mail_file_storage_type_sd   LITERAL1
