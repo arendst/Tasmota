@@ -358,39 +358,43 @@ bool FileRunReady(void) {
 }
 
 void FileRunLoop(void) {
-  if (FileRunReady()) { return; }
-  if (!ffs_type) { return; }
+  if (FileRunReady() || !ffs_type) { return; }
 
   if (strlen(UfsData.run_file) && !UfsData.run_file_mutex) {
     File file = ffsp->open(UfsData.run_file, "r");
-    if (!file) { return; }
-    if (!file.seek(UfsData.run_file_pos)) { return; }
+    if (!file || !file.seek(UfsData.run_file_pos)) {
+      UfsData.run_file_pos = -1;
+      return;
+    }
 
     UfsData.run_file_mutex = true;
 
     char cmd_line[512];
-    cmd_line[0] = '\0';  // Clear in case of re-entry
+    cmd_line[0] = '\0';                // Clear in case of re-entry
     while (file.available()) {
       uint16_t index = 0;
+      bool comment = false;
       while (file.available()) {
         uint8_t buf[1];
         file.read(buf, 1);
         if ((buf[0] == '\n') || (buf[0] == '\r')) {
-          break;  // Line terminated with linefeed or carriage return
+          break;                       // End of command with linefeed or carriage return
         }
-        else if (index && (buf[0] == ';')) {
-          break;  // End of multi command line
+        else if (index && !comment && (buf[0] == ';')) {
+          break;                       // End of command on multi command line
         }
         else if ((0 == index) && isspace(buf[0])) {
-          // Skip leading spaces (' ','\t','\n','\v','\f','\r')
+                                       // Skip leading spaces (' ','\t','\n','\v','\f','\r')
         }
-        else if (index < sizeof(cmd_line) - 2) {
-          cmd_line[index++] = buf[0];
+        else if ((0 == index) && (buf[0] == ';')) {
+          comment = true;              // Ignore comment lines until linefeed or carriage return
+        }
+        else if (!comment && (index < sizeof(cmd_line) - 2)) {
+          cmd_line[index++] = buf[0];  // Build command
         }
       }
-      if ((index > 0) && (index < sizeof(cmd_line) - 1) && (cmd_line[0] != ';')) {
-        // No comment so try to execute command
-        cmd_line[index] = '\0';
+      if ((index > 0) && (index < sizeof(cmd_line) - 1)) {
+        cmd_line[index] = '\0';        // Valid command received
         break;
       }
     }
