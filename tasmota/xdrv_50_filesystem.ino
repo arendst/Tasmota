@@ -350,12 +350,15 @@ bool TfsRenameFile(const char *fname1, const char *fname2) {
 }
 
 /*********************************************************************************************\
- * Autoexec support
+ * File command execute support
 \*********************************************************************************************/
 
+bool FileRunReady(void) {
+  return (UfsData.run_file_pos < 0);
+}
 
 void FileRunLoop(void) {
-  if (UfsData.run_file_pos < 0) { return; }
+  if (FileRunReady()) { return; }
   if (!ffs_type) { return; }
 
   if (strlen(UfsData.run_file) && !UfsData.run_file_mutex) {
@@ -492,7 +495,7 @@ void UFSRename(void) {
 
 void UFSRun(void) {
   if (XdrvMailbox.data_len > 0) {
-    if ((UfsData.run_file_pos < 0) && TfsFileExists(XdrvMailbox.data)) {
+    if (FileRunReady() && TfsFileExists(XdrvMailbox.data)) {
       snprintf(UfsData.run_file, sizeof(UfsData.run_file), XdrvMailbox.data);
       UfsData.run_file_pos = 0;
       ResponseClear();
