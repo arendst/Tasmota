@@ -154,8 +154,8 @@ uint16_t SendMail(char *buffer) {
 #endif
 
 
-  smtp.debug(true);
-  //smtp.debug(false);
+  //smtp.debug(true);
+  smtp.debug(false);
 
   message.clearRecipients();
   message.clearCc();
