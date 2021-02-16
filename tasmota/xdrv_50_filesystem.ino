@@ -354,7 +354,7 @@ bool TfsRenameFile(const char *fname1, const char *fname2) {
 \*********************************************************************************************/
 
 bool FileRunReady(void) {
-  return (UfsData.run_file_pos < 0);
+  return (UfsData.run_file_pos < 0);   // Check file ready to disable concurrency
 }
 
 void FileRunLoop(void) {
@@ -363,7 +363,7 @@ void FileRunLoop(void) {
   if (strlen(UfsData.run_file) && !UfsData.run_file_mutex) {
     File file = ffsp->open(UfsData.run_file, "r");
     if (!file || !file.seek(UfsData.run_file_pos)) {
-      UfsData.run_file_pos = -1;
+      UfsData.run_file_pos = -1;       // Signal file ready
       return;
     }
 
@@ -408,11 +408,14 @@ void FileRunLoop(void) {
   }
 }
 
-void UfsAutoexec(void) {
-  if (TfsFileExists(TASM_FILE_AUTOEXEC)) {
-    snprintf(UfsData.run_file, sizeof(UfsData.run_file), TASM_FILE_AUTOEXEC);
-    UfsData.run_file_pos = 0;
+bool UfsExecuteCommandFile(const char *fname) {
+  // Check for non-concurrency and file existance
+  if (FileRunReady() && TfsFileExists(fname)) {
+    snprintf(UfsData.run_file, sizeof(UfsData.run_file), fname);
+    UfsData.run_file_pos = 0;          // Signal start of file
+    return true;
   }
+  return false;
 }
 
 /*********************************************************************************************\
@@ -499,9 +502,7 @@ void UFSRename(void) {
 
 void UFSRun(void) {
   if (XdrvMailbox.data_len > 0) {
-    if (FileRunReady() && TfsFileExists(XdrvMailbox.data)) {
-      snprintf(UfsData.run_file, sizeof(UfsData.run_file), XdrvMailbox.data);
-      UfsData.run_file_pos = 0;
+    if (UfsExecuteCommandFile(XdrvMailbox.data)) {
       ResponseClear();
     } else {
       ResponseCmndChar(PSTR(D_JSON_FAILED));
@@ -869,7 +870,9 @@ bool Xdrv50(uint8_t function) {
       break;
 #endif // USE_SDCARD
     case FUNC_MQTT_INIT:
-      if (!TasmotaGlobal.no_autoexec) { UfsAutoexec(); }
+      if (!TasmotaGlobal.no_autoexec) {
+        UfsExecuteCommandFile(TASM_FILE_AUTOEXEC);
+      }
       break;
     case FUNC_COMMAND:
       result = DecodeCommand(kUFSCommands, kUFSCommand);
