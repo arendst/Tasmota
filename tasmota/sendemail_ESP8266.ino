@@ -1,4 +1,4 @@
-#ifndef ESP32
+#ifdef ESP8266
 #ifdef USE_SENDMAIL
 #include "sendemail_ESP8266.h"
 
