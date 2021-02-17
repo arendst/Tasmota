@@ -172,13 +172,12 @@ char scrolltext[CMD_MAX_LEN];
 \*********************************************************************************************/
 bool TM1637Init(void) {
   display = new SevenSegmentTM1637(Pin(GPIO_SSPI_SCLK), Pin(GPIO_SSPI_MOSI) );
-  NUM_DIGITS = Settings.display_size ?  Settings.display_size : 4;
+  NUM_DIGITS = Settings.display_size > 3 ?  Settings.display_size : 4;
+  Settings.display_size = NUM_DIGITS;
   display->begin(NUM_DIGITS, 1);
   display->setBacklight(40);
   clearDisplay();
-  if (!Settings.display_model) {
-    Settings.display_model = XDSP_15;
-  }  
+  Settings.display_model = XDSP_15;
   AddLog(LOG_LEVEL_INFO, PSTR("DSP: TM1637 display driver initialized"));
   return true;
 }
@@ -569,7 +568,10 @@ bool CmndTM1637Text(bool clear) {
     if(i > (NUM_DIGITS-1)) break;
     if(sString[j] == 0) break;
     rawBytes[0] = display->encode(sString[j]);      
-    if(i>(NUM_DIGITS-1)) break;
+    if(sString[j+1] == '.') {
+      rawBytes[0] = rawBytes[0] | 128;
+      j++;
+    } 
     display->printRaw(rawBytes, 1, i);
   }
 
