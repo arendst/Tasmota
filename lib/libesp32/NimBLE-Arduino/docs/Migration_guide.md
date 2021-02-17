@@ -69,6 +69,8 @@ For example `BLEServer::createService(SERVICE_UUID)` will work just as it did be
 
 <a name="characteristics"></a>
 ### Characteristics
+The constructor for `(Nim)BLECharacteristic` is now private, so if you currently subclass it to add logic you should switch to use `NimBLEService::createCharacteristic` instead.  Any custom processing logic previously in a `BLECharacteristic` subclass should be moved to a `NimBLECharacteristicCallbacks` subclass instead, and passed into `NimBLECharacteristic::setCallbacks`.
+
 `BLEService::createCharacteristic` (`NimBLEService::createCharacteristic`) is used the same way as originally except the properties parameter has changed.  
 
 When creating a characteristic the properties are now set with `NIMBLE_PROPERTY::XXXX` instead of `BLECharacteristic::XXXX`.
@@ -218,10 +220,11 @@ If you wish to advertise these parameters you can still do so manually via `BLEA
 <br/>
 
 Calling `NimBLEAdvertising::setAdvertisementData` will entirely replace any data set with `NimBLEAdvertising::addServiceUUID`, or  
-`NimBLEAdvertising::setAppearance`. You should set all the data you wish to advertise within the `NimBLEAdvertisementData` instead.  
+`NimBLEAdvertising::setAppearance` or similar methods. You should set all the data you wish to advertise within the `NimBLEAdvertisementData` instead.  
 
-Calling `NimBLEAdvertising::setScanResponseData` without also calling `NimBLEAdvertising::setAdvertisementData` will have no effect.  
-When using custom scan response data you must also use custom advertisement data.  
+~~Calling `NimBLEAdvertising::setScanResponseData` without also calling `NimBLEAdvertising::setAdvertisementData` will have no effect.  
+When using custom scan response data you must also use custom advertisement data.~~  
+No longer true as of release 1.2.0 and above, custom scan response is now supported without custom advertisement data.  
 <br/>
 
 > BLEAdvertising::start (NimBLEAdvertising::start)

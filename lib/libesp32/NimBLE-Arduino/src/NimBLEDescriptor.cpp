@@ -122,11 +122,17 @@ uint8_t* NimBLEDescriptor::getValue() {
     return m_value.attr_value;
 } // getValue
 
+/**
+ * @brief Get the value of this descriptor as a string.
+ * @return A std::string instance containing a copy of the descriptor's value.
+ */
+std::string NimBLEDescriptor::getStringValue() {
+    return std::string((char *) m_value.attr_value, m_value.attr_len);
+}
 
 int NimBLEDescriptor::handleGapEvent(uint16_t conn_handle, uint16_t attr_handle,
                              struct ble_gatt_access_ctxt *ctxt,
-                             void *arg)
-{
+                                     void *arg) {
     const ble_uuid_t *uuid;
     int rc;
     NimBLEDescriptor* pDescriptor = (NimBLEDescriptor*)arg;
