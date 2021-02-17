@@ -184,6 +184,21 @@ extern "C" {
     optimistic_yield(10);
     be_return(vm);
   }
+
+  // Berry: `save(file:string, f:closure) -> bool`
+  int32_t l_save(struct bvm *vm);
+  int32_t l_save(struct bvm *vm) {
+    int32_t top = be_top(vm); // Get the number of arguments
+    if (top ==2 && be_isstring(vm, 1) && be_isclosure(vm, 2)) {  // only 1 argument of type string accepted
+      const char *fname = be_tostring(vm, 1);
+      int32_t ret = be_savecode(vm, fname);
+      be_pushint(vm, ret);
+      be_return(vm); // Return
+    }
+    be_return_nil(vm); // Return nil when something goes wrong
+  }
+
+
 }
 
 // called as a replacement to Berry `print()`
@@ -429,6 +444,31 @@ const char berry_prog[] PROGMEM =
     "end "
   "end "
 
+  // simple wrapper to load a file
+  // prefixes '/' if needed, and simpler to use than `compile()`
+  "def load(f) "
+    "try "
+      // check that the file ends with '.be' of '.bec'
+      "var fl = string.split(f,'.') "
+      "if (size(fl) <= 1 || (fl[-1] != 'be' && fl[-1] != 'bec')) "
+        "raise \"file extension is not '.be' or '.bec'\" "
+      "end "
+      "var native = f[size(f)-1] == 'c' "
+      // add prefix if needed
+      "if f[0] != '/' f = '/' + f end "
+      // load - works the same for .be and .bec
+      "var c = compile(f,'file') "
+      // save the compiled bytecode
+      "if !native "
+        "save(f+'c', c) "
+      "end "
+      // call the compiled code
+      "c() "
+    "except .. as e "
+      "log(string.format(\"BRY: could not load file '%s' - %s\",f,e)) "
+    "end "
+  "end "
+
   // try to load "/autoexec.be"
   // "try compile('/autoexec.be','file')() except .. log('BRY: no /autoexec.bat file') end "
 
@@ -455,6 +495,7 @@ void BrReset(void) {
 
     // Register functions
     be_regfunc(berry.vm, PSTR("log"), l_logInfo);
+    be_regfunc(berry.vm, PSTR("save"), l_save);
 
     AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_BERRY "Berry function registered, RAM consumed=%u (Heap=%u)"), heap_before - ESP.getFreeHeap(), ESP.getFreeHeap());
 

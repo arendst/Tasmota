@@ -64,15 +64,15 @@ BERRY_API void be_writebuffer(const char *buffer, size_t length)
     uint32_t idx = 0;
     while (idx < length) {
         int32_t cr_pos = -1;
-        // find next occurence of '\n'
+        // find next occurence of '\n' or '\r'
         for (uint32_t i = idx; i < length; i++) {
-            if (buffer[i] == '\n') {
+            if ((pgm_read_byte(&buffer[i]) == '\n') || (pgm_read_byte(&buffer[i]) == '\r')) {
                 cr_pos = i;
                 break;
             }
         }
         uint32_t chars_to_append = (cr_pos >= 0) ? cr_pos - idx : length - idx;     // note cr_pos < length
-        snprintf(log_berry_buffer, sizeof(log_berry_buffer), "%s%.*s", log_berry_buffer, chars_to_append, buffer);   // append at most `length` chars
+        snprintf(log_berry_buffer, sizeof(log_berry_buffer), "%s%.*s", log_berry_buffer, chars_to_append, &buffer[idx]);   // append at most `length` chars
         if (cr_pos >= 0) {
             // flush
             berry_log(log_berry_buffer);
