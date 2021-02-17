@@ -186,6 +186,11 @@ extern "C" {
   }
 }
 
+// called as a replacement to Berry `print()`
+void berry_log(const char * berry_buf);
+void berry_log(const char * berry_buf) {
+  AddLog(LOG_LEVEL_INFO, PSTR("%s"), berry_buf);
+}
 
 /*********************************************************************************************\
  * Handlers for Berry calls and async
@@ -302,7 +307,7 @@ const char berry_prog[] PROGMEM =
 
   // find a key in map, case insensitive, return actual key or nil if not found
   "def findkeyi(m,keyi) "
-    "keyu=string.toupper(keyi) "
+    "var keyu = string.toupper(keyi) "
     "if classof(m) == map "
       "for k:m.keys() "
         "if string.toupper(k)==keyu || keyi=='?' "
@@ -341,17 +346,17 @@ const char berry_prog[] PROGMEM =
   // # split the item when there is an operator, returns a list of (left,op,right)
   // # ex: "Dimmer>50" -> ["Dimmer",tasmota_gt,"50"]
   "tasmota.find_op = def (item) "
-    "pos = charsinstring(item, tasmota._operators) "
+    "var pos = charsinstring(item, tasmota._operators) "
     "if pos>=0 "
-      "op_split = string.split(item,pos) "
+      "var op_split = string.split(item,pos) "
       // #print(op_split)
-      "op_left = op_split[0] "
-      "op_rest = op_split[1] "
+      "var op_left = op_split[0] "
+      "var op_rest = op_split[1] "
       // # iterate through operators
       "for op:tasmota._op "
         "if string.find(op_rest,op[0]) == 0 "
-          "op_func = op[1] "
-          "op_right = string.split(op_rest,size(op[0]))[1] "
+          "var op_func = op[1] "
+          "var op_right = string.split(op_rest,size(op[0]))[1] "
           "return [op_left,op_func,op_right] "
         "end "
       "end "
@@ -362,9 +367,9 @@ const char berry_prog[] PROGMEM =
   // Rules trigger if match. return true if match, false if not
   // Note: condition is not yet managed
   "tasmota.try_rule = def (ev, rule, f) "
-    "rl_list = tasmota.find_op(rule) "
-    "e=ev "
-    "rl=string.split(rl_list[0],'#') "
+    "var rl_list = tasmota.find_op(rule) "
+    "var e=ev "
+    "var rl=string.split(rl_list[0],'#') "
     "for it:rl "
       "found=findkeyi(e,it) "
       "if found == nil "
@@ -386,8 +391,8 @@ const char berry_prog[] PROGMEM =
   // Run rules, i.e. check each individual rule
   // Returns true if at least one rule matched, false if none
   "tasmota.exec_rules = def (ev_json) "
-    "ev = json.load(ev_json) "
-    "ret = false "
+    "var ev = json.load(ev_json) "
+    "var ret = false "
     "if ev == nil "
       "log('BRY: ERROR, bad json: '+ev_json, 3) "
     "end "
@@ -404,7 +409,7 @@ const char berry_prog[] PROGMEM =
   "tasmota.timer = def (delay,f) tasmota_timers.push([tasmota.millis(delay),f]) end "
 
   "def _run_deferred() "
-    "i=0 "
+    "var i=0 "
     "while i<tasmota_timers.size() "
       "if tasmota.timereached(tasmota_timers[i][0]) "
         "f=tasmota_timers[i][1] "
@@ -418,11 +423,14 @@ const char berry_prog[] PROGMEM =
 
   // Delay function, internally calls yield() every 10ms to avoid WDT
   "tasmota.delay = def(ms) "
-    "tend = tasmota.millis(ms) "
+    "var tend = tasmota.millis(ms) "
     "while !tasmota.timereached(tend) "
       "tasmota.yield() "
     "end "
   "end "
+
+  // try to load "/autoexec.be"
+  // "try compile('/autoexec.be','file')() except .. log('BRY: no /autoexec.bat file') end "
 
   // trigger Garbage Collector
   "gc.collect() "

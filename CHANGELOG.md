@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 - Berry language improved Tasmota integration
 - Filesystem commands ``Ufs``, ``UfsType``, ``UfsSize``, ``UfsFree``, ``UfsDelete``, ``UfsRename`` and ``UfsRun``
 - Basic support for filesystem ``autoexec.bat``
+- Berry add file system support
 
 ### Changed
 - IRremoteESP8266 library from v2.7.14 to v2.7.15
