@@ -97,7 +97,8 @@
                                Clears and then displays basic text.  command e.g., "DisplayText ajith vasudevan" 
                                Control 'length' and 'position' with  "DisplayText <text>, <position>, <length>"
                                'length' can be 1 to NUM_DIGITS, 'position' can be 0 (left-most) to NUM_DIGITS-1 (right-most)
-
+                               A caret(^) symbol in the text input is dispayed as the degrees(°) symbol. This is useful for displaying Temperature!
+                               For example, the command "DisplayText 22.5^" will display "22.5°".
 
 
   DisplayTextNC         text [, position {0-NUM_DIGITS-1} [,length {1 to NUM_DIGITS}]]
@@ -157,6 +158,8 @@ bool scroll = false;
 uint32_t scrolldelay = 4;
 uint32_t scrollindex = 0;
 uint32_t iteration = 0;
+uint32_t brightness = 5;
+
 
 #define BRIGHTNESS_MIN    0   // Display OFF
 #define BRIGHTNESS_MAX    8
@@ -175,7 +178,7 @@ bool TM1637Init(void) {
   NUM_DIGITS = Settings.display_size > 3 ?  Settings.display_size : 4;
   Settings.display_size = NUM_DIGITS;
   display->begin(NUM_DIGITS, 1);
-  display->setBacklight(40);
+  display->setBacklight(brightness * 10);
   clearDisplay();
   Settings.display_model = XDSP_15;
   AddLog(LOG_LEVEL_INFO, PSTR("DSP: TM1637 display driver initialized"));
@@ -571,7 +574,9 @@ bool CmndTM1637Text(bool clear) {
     if(sString[j+1] == '.') {
       rawBytes[0] = rawBytes[0] | 128;
       j++;
-    } 
+    } else if(sString[j] == '^') {
+      rawBytes[0] = 1 | 2 | 32 | 64;
+    }
     display->printRaw(rawBytes, 1, i);
   }
 
@@ -586,13 +591,19 @@ bool CmndTM1637Text(bool clear) {
 bool CmndTM1637Brightness(void) {
 
   uint16_t val = XdrvMailbox.payload; 
+  if(ArgC() == 0) {
+    XdrvMailbox.payload = brightness;
+    return true;
+  }
 
   if((val < BRIGHTNESS_MIN) || (val > BRIGHTNESS_MAX)) {
     sprintf(msg, PSTR("Brightness should be a number in the range [%d, %d]"), BRIGHTNESS_MIN, BRIGHTNESS_MAX);
     XdrvMailbox.data = msg;
     return false;     
-  } 
-  display->setBacklight(val*10);
+  }
+  brightness = val;
+ 
+  display->setBacklight(brightness*10);
   return true;
 }
 
