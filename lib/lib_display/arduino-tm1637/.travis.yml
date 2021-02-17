@@ -1,0 +1,17 @@
+language: c
+before_install:
+  - "/sbin/start-stop-daemon --start --quiet --pidfile /tmp/custom_xvfb_1.pid --make-pidfile --background --exec /usr/bin/Xvfb -- :1 -ac -screen 0 1280x1024x16"
+  - sleep 3
+  - export DISPLAY=:1.0
+  - wget https://downloads.arduino.cc/arduino-1.8.12-linux64.tar.xz
+  - tar xf arduino-1.8.12-linux64.tar.xz
+  - sudo mv arduino-1.8.12 /usr/local/share/arduino
+  - sudo ln -s /usr/local/share/arduino/arduino /usr/local/bin/arduino
+install:
+  - ln -s $PWD /usr/local/share/arduino/libraries/SevenSegmentTM1637
+script:
+  - arduino --verify --board arduino:avr:uno --pref sketchbook.path="$PWD" $PWD/examples/Basic/Basic.ino
+notifications:
+  email:
+    on_success: change
+    on_failure: change

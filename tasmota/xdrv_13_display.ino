@@ -65,6 +65,25 @@ const uint8_t DISPLAY_LOG_ROWS = 32;           // Number of lines in display log
 #define D_CMND_DISP_HEIGHT "Height"
 #define D_CMND_DISP_BLINKRATE "Blinkrate"
 #define D_CMND_DISP_BATCH "Batch"
+#define D_CMND_DISP_CLEAR "Clear"
+#define D_CMND_DISP_NUMBER "Number"
+#define D_CMND_DISP_FLOAT "Float"
+#define D_CMND_DISP_NUMBERNC "NumberNC"              // NC - "No Clear"
+#define D_CMND_DISP_FLOATNC "FloatNC"                // NC - "No Clear"
+#define D_CMND_DISP_BRIGHTNESS "Brightness"
+#define D_CMND_DISP_RAW "Raw"
+#define D_CMND_DISP_LEVEL "Level"
+#define D_CMND_DISP_SEVENSEG_TEXT "SevensegText"
+#define D_CMND_DISP_SEVENSEG_TEXTNC "SevensegTextNC"  // NC - "No Clear"
+#define D_CMND_DISP_SCROLLDELAY "ScrollDelay"
+#define D_CMND_DISP_CLOCK "Clock"
+#define D_CMND_DISP_TEXTNC "TextNC"                   // NC - "No Clear"
+#define D_CMND_DISP_SETLEDS "SetLEDs"
+#define D_CMND_DISP_SETLED "SetLED"
+#define D_CMND_DISP_BUTTONS "Buttons"
+#define D_CMND_DISP_SCROLLTEXT "ScrollText"
+
+
 
 enum XdspFunctions { FUNC_DISPLAY_INIT_DRIVER, FUNC_DISPLAY_INIT, FUNC_DISPLAY_EVERY_50_MSECOND, FUNC_DISPLAY_EVERY_SECOND,
                      FUNC_DISPLAY_MODEL, FUNC_DISPLAY_MODE, FUNC_DISPLAY_POWER,
@@ -77,6 +96,10 @@ enum XdspFunctions { FUNC_DISPLAY_INIT_DRIVER, FUNC_DISPLAY_INIT, FUNC_DISPLAY_E
 #ifdef USE_UFILESYS
                     ,FUNC_DISPLAY_BATCH
 #endif
+                     , FUNC_DISPLAY_NUMBER, FUNC_DISPLAY_FLOAT, FUNC_DISPLAY_NUMBERNC, FUNC_DISPLAY_FLOATNC, 
+                     FUNC_DISPLAY_BRIGHTNESS, FUNC_DISPLAY_RAW, FUNC_DISPLAY_LEVEL, FUNC_DISPLAY_SEVENSEG_TEXT, FUNC_DISPLAY_SEVENSEG_TEXTNC,
+                     FUNC_DISPLAY_SCROLLDELAY, FUNC_DISPLAY_CLOCK, FUNC_DISPLAY_SETLEDS, FUNC_DISPLAY_SETLED,
+                     FUNC_DISPLAY_BUTTONS, FUNC_DISPLAY_SCROLLTEXT
                    };
 
 enum DisplayInitModes { DISPLAY_INIT_MODE, DISPLAY_INIT_PARTIAL, DISPLAY_INIT_FULL };
@@ -88,6 +111,10 @@ const char kDisplayCommands[] PROGMEM = D_PRFX_DISPLAY "|"  // Prefix
 #ifdef USE_UFILESYS
   "|" D_CMND_DISP_BATCH
 #endif
+   "|" D_CMND_DISP_CLEAR "|" D_CMND_DISP_NUMBER "|" D_CMND_DISP_FLOAT "|" D_CMND_DISP_NUMBERNC "|" D_CMND_DISP_FLOATNC "|" 
+  D_CMND_DISP_BRIGHTNESS "|" D_CMND_DISP_RAW "|" D_CMND_DISP_LEVEL "|" D_CMND_DISP_SEVENSEG_TEXT "|" D_CMND_DISP_SEVENSEG_TEXTNC "|"
+  D_CMND_DISP_SCROLLDELAY "|" D_CMND_DISP_CLOCK "|" D_CMND_DISP_TEXTNC "|" D_CMND_DISP_SETLEDS "|" D_CMND_DISP_SETLED "|"
+  D_CMND_DISP_BUTTONS "|" D_CMND_DISP_SCROLLTEXT
   ;
 
 void (* const DisplayCommand[])(void) PROGMEM = {
@@ -97,6 +124,10 @@ void (* const DisplayCommand[])(void) PROGMEM = {
 #ifdef USE_UFILESYS
   ,&CmndDisplayBatch
 #endif
+  , &CmndDisplayClear, &CmndDisplayNumber, &CmndDisplayFloat, &CmndDisplayNumberNC, &CmndDisplayFloatNC, 
+  &CmndDisplayBrightness, &CmndDisplayRaw, &CmndDisplayLevel, &CmndDisplaySevensegText, &CmndDisplaySevensegTextNC, 
+  &CmndDisplayScrollDelay, &CmndDisplayClock, &CmndDisplayTextNC, &CmndDisplaySetLEDs, &CmndDisplaySetLED,
+  &CmndDisplayButtons, &CmndDisplayScrollText
 };
 
 char *dsp_str;
@@ -1658,6 +1689,7 @@ void CmndDisplayBlinkrate(void)
   ResponseCmndNumber(XdrvMailbox.payload);
 }
 
+
 #ifdef USE_UFILESYS
 void CmndDisplayBatch(void) {
   if (XdrvMailbox.data_len > 0) {
@@ -1669,9 +1701,160 @@ void CmndDisplayBatch(void) {
 }
 #endif
 
+
+void CmndDisplayClear(void)
+{
+  if (!renderer)
+    XdspCall(FUNC_DISPLAY_CLEAR);
+  ResponseCmndChar(XdrvMailbox.data);
+}
+
+void CmndDisplayNumber(void)
+{
+  if (!renderer) {
+    XdspCall(FUNC_DISPLAY_NUMBER);
+  }
+  ResponseCmndChar(XdrvMailbox.data);
+}
+
+void CmndDisplayFloat(void)
+{
+  if (!renderer) {
+    XdspCall(FUNC_DISPLAY_FLOAT);
+  }
+  ResponseCmndChar(XdrvMailbox.data);
+}
+
+void CmndDisplayNumberNC(void)
+{
+  if (!renderer) {
+    XdspCall(FUNC_DISPLAY_NUMBERNC);
+  }
+  ResponseCmndChar(XdrvMailbox.data);
+}
+
+void CmndDisplayFloatNC(void)
+{
+  if (!renderer) {
+    XdspCall(FUNC_DISPLAY_FLOATNC);
+  }
+  ResponseCmndChar(XdrvMailbox.data);
+}
+
+void CmndDisplayBrightness(void)
+{
+  bool result = false;
+  if (!renderer) {
+    result = XdspCall(FUNC_DISPLAY_BRIGHTNESS);
+  }
+  if(result) ResponseCmndNumber(XdrvMailbox.payload);
+  else ResponseCmndChar(XdrvMailbox.data);
+}
+
+void CmndDisplayRaw(void)
+{
+  if (!renderer) {
+    XdspCall(FUNC_DISPLAY_RAW);
+  }
+  ResponseCmndChar(XdrvMailbox.data);
+}
+
+void CmndDisplayLevel(void)
+{
+  bool result = false;
+  if (!renderer) {
+    result = XdspCall(FUNC_DISPLAY_LEVEL);
+  }
+  if(result) ResponseCmndNumber(XdrvMailbox.payload);
+  else ResponseCmndChar(XdrvMailbox.data);
+}
+
+void CmndDisplaySevensegText(void)
+{
+  if (!renderer) {
+    XdspCall(FUNC_DISPLAY_SEVENSEG_TEXT);
+  }
+  ResponseCmndChar(XdrvMailbox.data);
+}
+
+void CmndDisplayTextNC(void)
+{
+  if (!renderer) {
+    XdspCall(FUNC_DISPLAY_SEVENSEG_TEXTNC);
+  }
+  ResponseCmndChar(XdrvMailbox.data);
+}
+
+void CmndDisplaySevensegTextNC(void)
+{
+  if (!renderer) {
+    XdspCall(FUNC_DISPLAY_SEVENSEG_TEXTNC);
+  }
+  ResponseCmndChar(XdrvMailbox.data);
+}
+
+void CmndDisplayScrollDelay(void)
+{
+  if (!renderer) {
+    XdspCall(FUNC_DISPLAY_SCROLLDELAY);
+  }
+  ResponseCmndNumber(XdrvMailbox.payload);
+}
+
+void CmndDisplayClock(void)
+{
+  if (!renderer) {
+    XdspCall(FUNC_DISPLAY_CLOCK);
+  }
+  ResponseCmndNumber(XdrvMailbox.payload);
+}
+
+void CmndDisplaySetLEDs(void)
+{
+  bool result = false;
+  if (!renderer) {
+    result = XdspCall(FUNC_DISPLAY_SETLEDS);
+  }
+  if(result) ResponseCmndNumber(XdrvMailbox.payload);
+  else ResponseCmndChar(XdrvMailbox.data);
+}
+
+
+void CmndDisplaySetLED(void)
+{
+  if (!renderer) {
+    XdspCall(FUNC_DISPLAY_SETLED);
+  }
+  ResponseCmndChar(XdrvMailbox.data);
+}
+
+void CmndDisplayButtons(void)
+{
+  if (!renderer) {
+    XdspCall(FUNC_DISPLAY_BUTTONS);
+  }
+  ResponseCmndNumber(XdrvMailbox.payload);
+}
+
+
+void CmndDisplayScrollText(void)
+{
+  bool result = false;
+  if (!renderer) {
+    result = XdspCall(FUNC_DISPLAY_SCROLLTEXT);
+  }
+  if(result) ResponseCmndNumber(XdrvMailbox.payload);
+  else ResponseCmndChar(XdrvMailbox.data);
+}
+
+
 void CmndDisplaySize(void)
 {
+#ifdef USE_DISPLAY_TM1637
+  if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload <= 6)) {
+#else
   if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload <= 4)) {
+#endif    
     Settings.display_size = XdrvMailbox.payload;
     if (renderer) renderer->setTextSize(Settings.display_size);
     //else DisplaySetSize(Settings.display_size);
@@ -1720,7 +1903,9 @@ void CmndDisplayText(void)
 #ifndef USE_DISPLAY_MODES1TO5
     DisplayText();
 #else
-    if (!Settings.display_mode) {
+    if(Settings.display_model == 15) {
+      XdspCall(FUNC_DISPLAY_SEVENSEG_TEXT);
+    } else if (!Settings.display_mode) {
       DisplayText();
     } else {
       DisplayLogBufferAdd(XdrvMailbox.data);
