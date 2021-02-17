@@ -73,6 +73,7 @@ public:
     bool                stop();
     void                clearResults();
     NimBLEScanResults   getResults();
+    void                setMaxResults(uint8_t maxResults);
     void                erase(const NimBLEAddress &address);
 
 
@@ -89,10 +90,10 @@ private:
     void                                (*m_scanCompleteCB)(NimBLEScanResults scanResults);
     ble_gap_disc_params                 m_scan_params;
     bool                                m_ignoreResults;
-    bool                                m_wantDuplicates;
     NimBLEScanResults                   m_scanResults;
     uint32_t                            m_duration;
     ble_task_data_t                     *m_pTaskData;
+    uint8_t                             m_maxResults;
 };
 
 #endif // #if defined(CONFIG_BT_NIMBLE_ROLE_OBSERVER)

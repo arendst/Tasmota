@@ -96,7 +96,7 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - Commands ``ZbNoAutoBind``, ``ZbReceivedTopic`` and ``ZbOmitDevice`` as synonyms for ``SetOption116, 118`` and ``119``
 - Commands ``BuzzerActive`` and ``BuzzerPwm`` as synonyms for ``SetOption67`` and ``111``
 - Filesystem commands ``Ufs``, ``UfsType``, ``UfsSize``, ``UfsFree``, ``UfsDelete``, ``UfsRename`` and ``UfsRun``
-- Basic support for filesystem ``autoexec.bat``
+- Support for filesystem ``autoexec.bat`` to execute sequential commands like backlog
 - Milliseconds to console output [#10152](https://github.com/arendst/Tasmota/issues/10152)
 - Gpio ``Option_a1`` enabling PWM2 high impedance if powered off as used by Wyze bulbs [#10196](https://github.com/arendst/Tasmota/issues/10196)
 - Rotary No Pullup GPIO selection ``Rotary A/B_n`` [#10407](https://github.com/arendst/Tasmota/issues/10407)
@@ -121,6 +121,7 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - Support for ESP32 ``Module 3`` Odroid Go 16MB binary tasmota32-odroidgo.bin [#8630](https://github.com/arendst/Tasmota/issues/8630)
 - Support for ESP32 ``Module 5`` Wireless Tag Eth01 [#9496](https://github.com/arendst/Tasmota/issues/9496)
 - Support for ESP32 ``Module 7`` M5stack core2 16MB binary tasmota32-core2.bin [#10635](https://github.com/arendst/Tasmota/issues/10635)
+- Support for Berry language on ESP32
 - Support rotary encoder on Shelly Dimmer [#10407](https://github.com/arendst/Tasmota/issues/10407#issuecomment-756240920)
 - Support character `#` to be replaced by `space`-character in command ``Publish`` topic [#10258](https://github.com/arendst/Tasmota/issues/10258)
 - Support trailing silence in buzzer tune [#10694](https://github.com/arendst/Tasmota/issues/10694)

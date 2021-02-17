@@ -44,20 +44,23 @@ class NimBLEDescriptorCallbacks;
 class NimBLEDescriptor {
 public:
     uint16_t     getHandle();
-    size_t       getLength();
     NimBLEUUID   getUUID();
-    uint8_t*     getValue();
-    void         setCallbacks(NimBLEDescriptorCallbacks* pCallbacks);
-    void         setValue(const uint8_t* data, size_t size);
-    void         setValue(const std::string &value);
     std::string  toString();
 
+    void         setCallbacks(NimBLEDescriptorCallbacks* pCallbacks);
+
+    size_t       getLength();
+    uint8_t*     getValue();
+    std::string  getStringValue();
+
+    void         setValue(const uint8_t* data, size_t size);
+    void         setValue(const std::string &value);
     /**
      * @brief Convenience template to set the descriptor value to <type\>val.
      * @param [in] s The value to set.
      */
     template<typename T>
-    void setValue(const T &s) {
+    void         setValue(const T &s) {
         setValue((uint8_t*)&s, sizeof(T));
     }
 
