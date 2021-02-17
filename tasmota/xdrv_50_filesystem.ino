@@ -279,7 +279,7 @@ bool TfsFileExists(const char *fname){
 
   bool yes = ffsp->exists(fname);
   if (!yes) {
-    AddLog(LOG_LEVEL_INFO, PSTR("TFS: File not found"));
+    AddLog(LOG_LEVEL_DEBUG, PSTR("TFS: File not found"));
   }
   return yes;
 }
