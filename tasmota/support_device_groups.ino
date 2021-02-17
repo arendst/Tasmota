@@ -480,7 +480,7 @@ cleanup:
   }
 }
 
-bool _SendDeviceGroupMessage(uint32_t device, DevGroupMessageType message_type, ...)
+bool _SendDeviceGroupMessage(int32_t device, DevGroupMessageType message_type, ...)
 {
   // If device groups is not up, ignore this request.
   if (!device_groups_up) return 1;
