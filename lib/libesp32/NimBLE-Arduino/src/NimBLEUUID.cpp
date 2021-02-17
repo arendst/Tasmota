@@ -65,29 +65,42 @@ static const char* LOG_TAG = "NimBLEUUID";
         *this = NimBLEUUID(first, second, third, (uint64_t(fourth) << 48) + fifth);
     }
     else {
-        NIMBLE_LOGE(LOG_TAG,"ERROR: UUID value not 2, 4, 16 or 36 bytes");
         m_valueSet = false;
     }
 } // NimBLEUUID(std::string)
 
 
 /**
- * @brief Create a UUID from 16 bytes of memory.
+ * @brief Create a UUID from 2, 4, 16 bytes of memory.
  * @param [in] pData The pointer to the start of the UUID.
  * @param [in] size The size of the data.
  * @param [in] msbFirst Is the MSB first in pData memory?
  */
 NimBLEUUID::NimBLEUUID(const uint8_t* pData, size_t size, bool msbFirst) {
-    if (size != 16) {
-        NIMBLE_LOGE(LOG_TAG,"ERROR: UUID length not 16 bytes");
-        return;
-    }
-    m_uuid.u.type = BLE_UUID_TYPE_128;
+    uint8_t *uuidValue = nullptr;
 
+    switch(size) {
+        case 2:
+            uuidValue = (uint8_t*)&m_uuid.u16.value;
+            m_uuid.u.type = BLE_UUID_TYPE_16;
+            break;
+        case 4:
+            uuidValue = (uint8_t*)&m_uuid.u32.value;
+            m_uuid.u.type = BLE_UUID_TYPE_32;
+            break;
+        case 16:
+            uuidValue = m_uuid.u128.value;
+            m_uuid.u.type = BLE_UUID_TYPE_128;
+            break;
+        default:
+            m_valueSet = false;
+            NIMBLE_LOGE(LOG_TAG, "Invalid UUID size");
+            return;
+    }
     if (msbFirst) {
-        std::reverse_copy(pData, pData + 16, m_uuid.u128.value);
+        std::reverse_copy(pData, pData + size, uuidValue);
     } else {
-        memcpy(m_uuid.u128.value, pData, 16);
+        memcpy(uuidValue, pData, size);
     }
     m_valueSet = true;
 } // NimBLEUUID

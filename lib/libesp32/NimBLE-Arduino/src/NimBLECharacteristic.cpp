@@ -101,9 +101,9 @@ NimBLEDescriptor* NimBLECharacteristic::createDescriptor(const NimBLEUUID &uuid,
 
 
 /**
- * @brief Return the BLE Descriptor for the given UUID if associated with this characteristic.
- * @param [in] uuid The UUID of the descriptor that we wish to retrieve.
- * @return pointer to the NimBLEDescriptor. If no such descriptor is associated with the characteristic, nullptr is returned.
+ * @brief Return the BLE Descriptor for the given UUID.
+ * @param [in] uuid The UUID of the descriptor.
+ * @return A pointer to the descriptor object or nullptr if not found.
  */
 NimBLEDescriptor* NimBLECharacteristic::getDescriptorByUUID(const char* uuid) {
     return getDescriptorByUUID(NimBLEUUID(uuid));
@@ -111,9 +111,9 @@ NimBLEDescriptor* NimBLECharacteristic::getDescriptorByUUID(const char* uuid) {
 
 
 /**
- * @brief Return the BLE Descriptor for the given UUID if associated with this characteristic.
- * @param [in] uuid The UUID of the descriptor that we wish to retrieve.
- * @return pointer to the NimBLEDescriptor. If no such descriptor is associated with the characteristic, nullptr is returned.
+ * @brief Return the BLE Descriptor for the given UUID.
+ * @param [in] uuid The UUID of the descriptor.
+ * @return A pointer to the descriptor object or nullptr if not found.
  */
 NimBLEDescriptor* NimBLECharacteristic::getDescriptorByUUID(const NimBLEUUID &uuid) {
     for (auto &it : m_dscVec) {
@@ -123,6 +123,20 @@ NimBLEDescriptor* NimBLECharacteristic::getDescriptorByUUID(const NimBLEUUID &uu
     }
     return nullptr;
 } // getDescriptorByUUID
+
+/**
+ * @brief Return the BLE Descriptor for the given handle.
+ * @param [in] handle The handle of the descriptor.
+ * @return A pointer to the descriptor object or nullptr if not found.
+ */
+NimBLEDescriptor *NimBLECharacteristic::getDescriptorByHandle(uint16_t handle) {
+    for (auto &it : m_dscVec) {
+        if (it->getHandle() == handle) {
+            return it;
+        }
+    }
+    return nullptr;
+}
 
 
 /**
