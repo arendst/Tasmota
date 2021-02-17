@@ -2835,7 +2835,8 @@ void MI32ShowTriggeredSensors(){
 
       cnt++;
       ResponseAppend_P(PSTR(","));
-      MI32GetOneSensorJson(sensor, 0);
+      // hide sensor name if HASS or option6
+      MI32GetOneSensorJson(sensor, (maxcnt == 1));
       int mlen = strlen(TasmotaGlobal.mqtt_data);
 
       // if we ran out of room, leave here.
