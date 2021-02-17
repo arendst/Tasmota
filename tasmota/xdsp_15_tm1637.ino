@@ -1,7 +1,7 @@
 /*
   xdsp_15_tm1637.ino - Support for TM1637 seven-segment display (upto 6 digits) for Tasmota
 
-  Copyright (C) 2020  Ajith Vasudevan
+  Copyright (C) 2021  Ajith Vasudevan
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -17,15 +17,15 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-
-/*
-
-  This driver enables the display of numbers (both integers and floats) and basic text 
-  on the inexpensive TM1637-based seven-segment modules (tested on both 4- and 6-digit variants). 
+#ifdef USE_DISPLAY
+#ifdef USE_DISPLAY_TM1637
+/*********************************************************************************************\
+  This driver enables the display of numbers (both integers and floats) and basic text
+  on the inexpensive TM1637-based seven-segment modules (tested on both 4- and 6-digit variants).
   Raw segments can also be displayed.
   In addition, it is also possible to set brightness (8 levels), clear the display, scroll text,  display
-  a rudimentary bar graph, and a Clock (12 hr and 24 hr). 
-  
+  a rudimentary bar graph, and a Clock (12 hr and 24 hr).
+
   To use, compile Tasmota with USE_DISPLAY and USE_DISPLAY_TM1637, or build the tasmota-display env.
 
   The pins to use are "SSPI MOSI" and "SSPI SCLK".
@@ -43,16 +43,16 @@
   DisplaySize           size {1-6}
 
                                Sets the number of digits to use. This is typically set to the actual number of digits available
-                               in the display module. command e.g., "DisplaySize 6" 
+                               in the display module. command e.g., "DisplaySize 6"
 
 
   DisplayClear
-  
+
                                Clears the display, command: "DisplayClear"
 
 
   DisplayNumber         num [,position {0-(NUM_DIGITS-1))} [,leading_zeros {0|1} [,length {1 to NUM_DIGITS}]]]
-  
+
                                Clears and then displays number without decimal. command e.g., "DisplayNumber 1234"
                                Control 'leading zeros', 'length' and 'position' with  "DisplayNumber 1234, <position>, <leadingZeros>, <length>"
                                'leading zeros' can be 1 or 0 (default), 'length' can be 1 to NUM_DIGITS, 'position' can be 0 (left-most) to NUM_DIGITS (right-most).
@@ -80,13 +80,13 @@
 
   DisplayBrightness     num {0-8}
 
-                               Set brightness (0 (off) to 8) command e.g., "DisplayBrightness 2" 
+                               Set brightness (0 (off) to 8) command e.g., "DisplayBrightness 2"
 
 
 
   DisplayRaw            position {0-(NUM_DIGITS-1)},length {1 to NUM_DIGITS}, num1 [, num2[, num3[, num4[, ...upto NUM_DIGITS numbers]]]]]
 
-                               Takes upto NUM_DIGITS comma-separated integers (0-255) and displays raw segments. Each number represents a 
+                               Takes upto NUM_DIGITS comma-separated integers (0-255) and displays raw segments. Each number represents a
                                7-segment digit. Each 8-bit number represents individual segments of a digit.
                                For example, the command "DisplayRaw 0, 4, 255, 255, 255, 255" would display "[8.8.8.8.]"
 
@@ -94,7 +94,7 @@
 
   DisplayText           text [, position {0-(NUM_DIGITS-1)} [,length {1 to NUM_DIGITS}]]
 
-                               Clears and then displays basic text.  command e.g., "DisplayText ajith vasudevan" 
+                               Clears and then displays basic text.  command e.g., "DisplayText ajith vasudevan"
                                Control 'length' and 'position' with  "DisplayText <text>, <position>, <length>"
                                'length' can be 1 to NUM_DIGITS, 'position' can be 0 (left-most) to NUM_DIGITS-1 (right-most)
                                A caret(^) symbol in the text input is dispayed as the degrees(°) symbol. This is useful for displaying Temperature!
@@ -109,7 +109,7 @@
 
   DisplayScrollText     text
 
-                              Displays scrolling text. 
+                              Displays scrolling text.
 
 
 
@@ -121,27 +121,17 @@
 
   DisplayLevel          num {0-100}
 
-                               Display a horizontal bar graph (0-100) command e.g., "DisplayLevel 50" will display [||||    ]  
+                               Display a horizontal bar graph (0-100) command e.g., "DisplayLevel 50" will display [||||    ]
 
 
 
-  DisplayClock  1|2|0          
+  DisplayClock  1|2|0
 
-                               Displays a clock. 
+                               Displays a clock.
                                Commands "DisplayClock 1"     // 12 hr format
                                         "DisplayClock 2"     // 24 hr format
                                         "DisplayClock 0"     // turn off clock
 
-
-
-*/
-
-
-
-#ifdef USE_DISPLAY
-#ifdef USE_DISPLAY_TM1637
-/*********************************************************************************************\
- * TM1637 support
 \*********************************************************************************************/
 
 #define XDSP_15                    15
@@ -189,13 +179,13 @@ bool TM1637Init(void) {
 /*********************************************************************************************\
 * Displays number without decimal, with/without leading zeros, specifying start-position
 * and length, optionally skipping clearing display before displaying the number.
-* commands: DisplayNumber   num [,position {0-(NUM_DIGITS-1)} [,leading_zeros {0|1} [,length {1 to NUM_DIGITS}]]] 
+* commands: DisplayNumber   num [,position {0-(NUM_DIGITS-1)} [,leading_zeros {0|1} [,length {1 to NUM_DIGITS}]]]
 *           DisplayNumberNC num [,position {0-(NUM_DIGITS-1)} [,leading_zeros {0|1} [,length {1 to NUM_DIGITS}]]]    // "NC" --> "No Clear"
 \*********************************************************************************************/
 bool CmndTM1637Number(bool clear) {
-  char sNum[CMD_MAX_LEN]; 
+  char sNum[CMD_MAX_LEN];
   char sLeadingzeros[CMD_MAX_LEN];
-  char sPosition[CMD_MAX_LEN]; 
+  char sPosition[CMD_MAX_LEN];
   char sLength[CMD_MAX_LEN];
   uint8_t length = 0;
   bool leadingzeros = false;
@@ -203,7 +193,7 @@ bool CmndTM1637Number(bool clear) {
 
   uint32_t num = 0;
 
-  switch (ArgC()) 
+  switch (ArgC())
   {
     case 4 :
       subStr(sLength, XdrvMailbox.data, ",", 4);
@@ -227,10 +217,10 @@ bool CmndTM1637Number(bool clear) {
   AddLog(LOG_LEVEL_DEBUG, PSTR("LOG: TM1637: leadingzeros=%d"), leadingzeros);
   AddLog(LOG_LEVEL_DEBUG, PSTR("LOG: TM1637: length=%d"), length);
 
-  if(clear) clearDisplay(); 
+  if(clear) clearDisplay();
 
   char txt[30];
-  snprintf_P(txt, sizeof(txt), PSTR("%d"), num); 
+  snprintf_P(txt, sizeof(txt), PSTR("%d"), num);
   if(!length) length = strlen(txt);
   if((length < 0) || (length > NUM_DIGITS)) length = NUM_DIGITS;
 
@@ -242,7 +232,7 @@ bool CmndTM1637Number(bool clear) {
     if(i>NUM_DIGITS) break;
     display->printRaw(rawBytes, 1, i);
   }
-  
+
   for(uint32_t j = 0; i< position + length; i++, j++) {
     if(txt[j] == 0) break;
     rawBytes[0] = display->encode(txt[j]);
@@ -258,14 +248,14 @@ bool CmndTM1637Number(bool clear) {
 /*********************************************************************************************\
 * Displays number with decimal, specifying position, precision and length,
 * optionally skipping clearing display before displaying the number.
-* commands: DisplayFloat   num [,position {0-(NUM_DIGITS-1)} [,precision {0-NUM_DIGITS} [,length {1 to NUM_DIGITS}]]] 
+* commands: DisplayFloat   num [,position {0-(NUM_DIGITS-1)} [,precision {0-NUM_DIGITS} [,length {1 to NUM_DIGITS}]]]
 *           DisplayFloatNC num [,position {0-(NUM_DIGITS-1)} [,precision {0-NUM_DIGITS} [,length {1 to NUM_DIGITS}]]]    // "NC" --> "No Clear"
 \*********************************************************************************************/
 bool CmndTM1637Float(bool clear) {
 
-  char sNum[CMD_MAX_LEN]; 
+  char sNum[CMD_MAX_LEN];
   char sPrecision[CMD_MAX_LEN];
-  char sPosition[CMD_MAX_LEN]; 
+  char sPosition[CMD_MAX_LEN];
   char sLength[CMD_MAX_LEN];
   uint8_t length = 0;
   uint8_t precision = NUM_DIGITS;
@@ -273,7 +263,7 @@ bool CmndTM1637Float(bool clear) {
 
   float fnum = 0.0f;
 
-  switch (ArgC()) 
+  switch (ArgC())
   {
     case 4 :
       subStr(sLength, XdrvMailbox.data, ",", 4);
@@ -289,32 +279,32 @@ bool CmndTM1637Float(bool clear) {
       fnum = atof(sNum);
   }
 
-  
+
   if((position < 0) || (position > (NUM_DIGITS-1))) position = 0;
   if((precision < 0) || (precision > NUM_DIGITS)) precision = NUM_DIGITS;
 
-  if(clear) clearDisplay();  
+  if(clear) clearDisplay();
 
   char txt[30];
-  ext_snprintf_P(txt, sizeof(txt), PSTR("%*_f"), precision, &fnum); 
-  
+  ext_snprintf_P(txt, sizeof(txt), PSTR("%*_f"), precision, &fnum);
+
   if(!length) length = strlen(txt);
   if((length <= 0) || (length > NUM_DIGITS)) length = NUM_DIGITS;
 
   char s[30];
-  ext_snprintf_P(s, sizeof(s), PSTR("LOG: TM1637: num=%*_f"), 4, &fnum); 
+  ext_snprintf_P(s, sizeof(s), PSTR("LOG: TM1637: num=%*_f"), 4, &fnum);
   AddLog(LOG_LEVEL_DEBUG, PSTR("%s"), s);
   AddLog(LOG_LEVEL_DEBUG, PSTR("LOG: TM1637: precision=%d"), precision);
   AddLog(LOG_LEVEL_DEBUG, PSTR("LOG: TM1637: length=%d"), length);
   uint8_t rawBytes[1];
   for(uint32_t i=0, j=0; i<length; i++, j++) {
     if(txt[i] == 0) break;
-    rawBytes[0] = display->encode(txt[i]);      
-    if(txt[i+1] == '.') { 
+    rawBytes[0] = display->encode(txt[i]);
+    if(txt[i+1] == '.') {
       rawBytes[0] = rawBytes[0] | 128;
       i++;
       length++;
-    } 
+    }
     if((j+position) > NUM_DIGITS) break;
     display->printRaw(rawBytes, 1, j+position);
    }
@@ -330,7 +320,7 @@ bool CmndTM1637Float(bool clear) {
 bool CmndTM1637Clear(void) {
   clearDisplay();
   sprintf(msg, PSTR("Cleared"));
-  XdrvMailbox.data = msg;  
+  XdrvMailbox.data = msg;
   return true;
 }
 
@@ -344,7 +334,7 @@ void clearDisplay (void) {
 
 /*********************************************************************************************\
 * Display scrolling text
-* Command:   DisplayScrollText text 
+* Command:   DisplayScrollText text
 \*********************************************************************************************/
 bool CmndTM1637ScrollText(void) {
 
@@ -372,7 +362,7 @@ bool CmndTM1637ScrollText(void) {
 \*********************************************************************************************/
 bool CmndTM1637ScrollDelay(void) {
   if(scrolldelay<0) scrolldelay=0;
-  scrolldelay = XdrvMailbox.payload; 
+  scrolldelay = XdrvMailbox.payload;
   return true;
 }
 
@@ -419,18 +409,18 @@ bool CmndTM1637Level(void) {
   uint16_t val = XdrvMailbox.payload;
   if((val < LEVEL_MIN) || (val > LEVEL_MAX)) {
     sprintf(msg, PSTR("Level should be a number in the range [%d, %d]"), LEVEL_MIN, LEVEL_MAX);
-    XdrvMailbox.data = msg;    
-    return false;     
-  } 
+    XdrvMailbox.data = msg;
+    return false;
+  }
 
   uint8_t totalBars = 2*NUM_DIGITS;
   AddLog(LOG_LEVEL_DEBUG, PSTR("LOG: TM1637: CmndTM1637Level totalBars=%d"), totalBars);
   float barsToDisplay = totalBars * val / 100.0f;
   char txt[5];
-  ext_snprintf_P(txt, sizeof(txt), PSTR("%*_f"), 1, &barsToDisplay); 
+  ext_snprintf_P(txt, sizeof(txt), PSTR("%*_f"), 1, &barsToDisplay);
   AddLog(LOG_LEVEL_DEBUG, PSTR("LOG: TM1637: CmndTM1637Level barsToDisplay=%s"), txt);
   char s[4];
-  ext_snprintf_P(s, sizeof(s), PSTR("%*_f"), 0, &barsToDisplay); 
+  ext_snprintf_P(s, sizeof(s), PSTR("%*_f"), 0, &barsToDisplay);
   uint8_t numBars = atoi(s);
   AddLog(LOG_LEVEL_DEBUG, PSTR("LOG: TM1637: CmndTM1637Level numBars=%d"), numBars);
 
@@ -452,28 +442,28 @@ bool CmndTM1637Level(void) {
 * Display arbitrary data on the display module
 * Command:   DisplayRaw position {0-(NUM_DIGITS-1)},length {1 to NUM_DIGITS}, a [, b[, c[, d[...upto NUM_DIGITS]]]]
 * where a,b,c,d... are upto NUM_DIGITS numbers in the range 0-255, each number (byte)
-* corresponding to a single 7-segment digit. Within each byte, bit 0 is segment A, 
-* bit 1 is segment B etc. The function may either set the entire display 
+* corresponding to a single 7-segment digit. Within each byte, bit 0 is segment A,
+* bit 1 is segment B etc. The function may either set the entire display
 * or any desired part using the length and position parameters.
 \*********************************************************************************************/
 bool CmndTM1637Raw(void) {
   uint8_t DATA[6] = { 0, 0, 0, 0, 0, 0 };
 
-  char as[CMD_MAX_LEN]; 
-  char bs[CMD_MAX_LEN]; 
-  char cs[CMD_MAX_LEN]; 
-  char ds[CMD_MAX_LEN]; 
-  char es[CMD_MAX_LEN]; 
-  char fs[CMD_MAX_LEN]; 
+  char as[CMD_MAX_LEN];
+  char bs[CMD_MAX_LEN];
+  char cs[CMD_MAX_LEN];
+  char ds[CMD_MAX_LEN];
+  char es[CMD_MAX_LEN];
+  char fs[CMD_MAX_LEN];
 
-  char sLength[CMD_MAX_LEN]; 
-  char sPos[CMD_MAX_LEN]; 
+  char sLength[CMD_MAX_LEN];
+  char sPos[CMD_MAX_LEN];
 
-  
+
   uint32_t position = 0;
   uint32_t length = 0;
 
-  switch (ArgC()) 
+  switch (ArgC())
   {
     case 8 :
       subStr(fs, XdrvMailbox.data, ",", 8);
@@ -519,7 +509,7 @@ bool CmndTM1637Raw(void) {
   uint8_t rawBytes[1];
   for(uint32_t i=position; i<position+length; i++ ) {
     if(i>(NUM_DIGITS-1)) break;
-    rawBytes[0] = DATA[i-position];      
+    rawBytes[0] = DATA[i-position];
     display->printRaw(rawBytes, 1, i);
   }
 
@@ -529,19 +519,19 @@ bool CmndTM1637Raw(void) {
 
 
 /*********************************************************************************************\
-* Display a given string. 
-* Text can be placed at arbitrary location on the display using the length and 
+* Display a given string.
+* Text can be placed at arbitrary location on the display using the length and
 * position parameters without affecting the rest of the display.
 * Command:   DisplayText text [, position {0-(NUM_DIGITS-1)} [,length {1 to NUM_DIGITS}]]
 \*********************************************************************************************/
 bool CmndTM1637Text(bool clear) {
-  char sString[CMD_MAX_LEN + 1]; 
-  char sPosition[CMD_MAX_LEN]; 
+  char sString[CMD_MAX_LEN + 1];
+  char sPosition[CMD_MAX_LEN];
   char sLength[CMD_MAX_LEN];
   uint8_t length = 0;
   uint8_t position = 0;
 
-  switch (ArgC()) 
+  switch (ArgC())
   {
     case 3 :
       subStr(sLength, XdrvMailbox.data, ",", 3);
@@ -560,17 +550,17 @@ bool CmndTM1637Text(bool clear) {
   AddLog(LOG_LEVEL_DEBUG, PSTR("LOG: TM1637: position=%d"), position);
   AddLog(LOG_LEVEL_DEBUG, PSTR("LOG: TM1637: length=%d"), length);
 
-  if(clear) clearDisplay(); 
+  if(clear) clearDisplay();
 
   if(!length) length = strlen(sString);
   if((length < 0) || (length > NUM_DIGITS)) length = NUM_DIGITS;
 
   uint32_t i = position;
-  uint8_t rawBytes[1];  
+  uint8_t rawBytes[1];
   for(uint32_t j = 0; i< position + length; i++, j++) {
     if(i > (NUM_DIGITS-1)) break;
     if(sString[j] == 0) break;
-    rawBytes[0] = display->encode(sString[j]);      
+    rawBytes[0] = display->encode(sString[j]);
     if(sString[j+1] == '.') {
       rawBytes[0] = rawBytes[0] | 128;
       j++;
@@ -585,12 +575,12 @@ bool CmndTM1637Text(bool clear) {
 
 
 /*********************************************************************************************\
-* Sets brightness of the display. 
+* Sets brightness of the display.
 * Command:  DisplayBrightness {0-8}    // 0 => off
 \*********************************************************************************************/
 bool CmndTM1637Brightness(void) {
 
-  uint16_t val = XdrvMailbox.payload; 
+  uint16_t val = XdrvMailbox.payload;
   if(ArgC() == 0) {
     XdrvMailbox.payload = brightness;
     return true;
@@ -599,10 +589,10 @@ bool CmndTM1637Brightness(void) {
   if((val < BRIGHTNESS_MIN) || (val > BRIGHTNESS_MAX)) {
     sprintf(msg, PSTR("Brightness should be a number in the range [%d, %d]"), BRIGHTNESS_MIN, BRIGHTNESS_MAX);
     XdrvMailbox.data = msg;
-    return false;     
+    return false;
   }
   brightness = val;
- 
+
   display->setBacklight(brightness*10);
   return true;
 }
@@ -656,9 +646,9 @@ void showTime() {
     if(mn < 10) snprintf(tm, sizeof(tm), PSTR("%d0%d"), hr, mn);
     else snprintf(tm, sizeof(tm), PSTR("%d%d"), hr, mn);
   }
-  uint8_t rawBytes[1];  
+  uint8_t rawBytes[1];
   for(uint32_t i = 0; i< 4; i++) {
-    rawBytes[0] = display->encode(tm[i]);      
+    rawBytes[0] = display->encode(tm[i]);
     if((millis() % 1000) > 500 && (i == 1)) rawBytes[0] = rawBytes[0] | 128;
     display->printRaw(rawBytes, 1, i);
   }
@@ -682,8 +672,8 @@ bool TM1637Cmd(uint8_t fn) {
 
   if(XdrvMailbox.data_len > CMD_MAX_LEN) {
     sprintf(msg, PSTR("Command text too long. Please limit it to %d characters"), CMD_MAX_LEN);
-    XdrvMailbox.data = msg;    
-    return result;      
+    XdrvMailbox.data = msg;
+    return result;
   }
 
   switch (fn) {
@@ -691,16 +681,16 @@ bool TM1637Cmd(uint8_t fn) {
       result = CmndTM1637Clear();
       break;
     case FUNC_DISPLAY_NUMBER :
-      result = CmndTM1637Number(true);                  
+      result = CmndTM1637Number(true);
       break;
     case FUNC_DISPLAY_NUMBERNC :
-      result = CmndTM1637Number(false);                  
+      result = CmndTM1637Number(false);
       break;
     case FUNC_DISPLAY_FLOAT :
-      result = CmndTM1637Float(true);                  
+      result = CmndTM1637Float(true);
       break;
     case FUNC_DISPLAY_FLOATNC :
-      result = CmndTM1637Float(false);                  
+      result = CmndTM1637Float(false);
       break;
     case FUNC_DISPLAY_BRIGHTNESS:
       result = CmndTM1637Brightness();
@@ -719,7 +709,7 @@ bool TM1637Cmd(uint8_t fn) {
       break;
     case FUNC_DISPLAY_SCROLLTEXT:
       result = CmndTM1637ScrollText();
-      break;   
+      break;
     case FUNC_DISPLAY_SCROLLDELAY:
       result = CmndTM1637ScrollDelay();
       break;
@@ -729,7 +719,7 @@ bool TM1637Cmd(uint8_t fn) {
   }
 
   return result;
-} 
+}
 
 
 /*********************************************************************************************\
@@ -741,7 +731,7 @@ bool Xdsp15(uint8_t function)
   bool result = false;
 
   if (FUNC_DISPLAY_INIT_DRIVER == function) {
-    result = TM1637Init();              // init 
+    result = TM1637Init();              // init
   }
   else if (XDSP_15 == Settings.display_model) {
     switch (function) {
@@ -773,7 +763,7 @@ bool Xdsp15(uint8_t function)
         if(showClock) {
           showTime();
         }
-        break;        
+        break;
     }
   }
   return result;

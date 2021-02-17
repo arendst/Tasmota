@@ -715,7 +715,9 @@ void ResponseAppendFeatures(void)
 #if defined(USE_ENERGY_SENSOR) && defined(USE_SDM72)
     feature7 |= 0x20000000;  // xnrg_18_sdm72.ino
 #endif
-//    feature7 |= 0x40000000;
+#if defined(USE_DISPLAY) && defined(USE_DISPLAY_TM1637)
+    feature7 |= 0x40000000;
+#endif
 //    feature7 |= 0x80000000;
   }
 
