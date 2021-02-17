@@ -1,8 +1,15 @@
 import json import string
 tasmota = module("tasmota")
 def log(m) print(m) end
+def save() end
 
 #######
+import string
+import json
+import gc
+import tasmota
+#// import alias
+import tasmota as t
 
 def charsinstring(s,c)
   for i:0..size(s)-1
@@ -108,6 +115,15 @@ tasmota.delay = def(ms)
   tend = tasmota.millis(ms)
   while !tasmota.timereached(tend)
     tasmota.yield()
+  end
+end
+
+def load(f)
+  try
+    if f[0] != '/' f = '/' + f end
+    compile(f,'file')()
+  except .. as e
+    log(string.format("BRY: could not load file '%s' - %s",f,e))
   end
 end
 
