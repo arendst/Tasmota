@@ -1,144 +1,155 @@
-/** @file 
- * 
- * IGNORE THIS FILE IF USING ESP-IDF, USE MENUCONFIG TO SET NIMBLE OPTIONS.
- *
- * The config options here are for Arduino use only.
- */
- 
-#pragma once
+ #pragma once
 
 #include "sdkconfig.h"
-
-/*
- * For ESP-IDF compatibility
- * Some versions of ESP-IDF used the config name format "CONFIG_NIMBLE_".
- * This converts them to "CONFIG_BT_NIMBLE_" format used in the latest IDF.
- */
-
-/* Detect if using ESP-IDF or Arduino (Arduino won't have these defines in sdkconfig) 
- *
- * Note: We do not use #ifdef CONFIG_BT_NIMBLE_ENABLED since we cannot enable NimBLE when using
- * Arduino as a component and the esp-nimble-compnent, so we check if other config options are defined.
- * We also need to use a config parameter that must be present and not likely defined in the command line.
- */
-#if defined(CONFIG_BT_NIMBLE_GAP_DEVICE_NAME_MAX_LEN) || defined(CONFIG_NIMBLE_GAP_DEVICE_NAME_MAX_LEN)
-
-#if defined(CONFIG_NIMBLE_ENABLED) && !defined(CONFIG_BT_NIMBLE_ENABLED)
-#define CONFIG_BT_NIMBLE_ENABLED
-#endif
-
-#if defined(CONFIG_NIMBLE_ROLE_OBSERVER) && !defined(CONFIG_BT_NIMBLE_ROLE_OBSERVER)
-#define CONFIG_BT_NIMBLE_ROLE_OBSERVER
-#endif
-
-#if defined(CONFIG_NIMBLE_ROLE_BROADCASTER) && !defined(CONFIG_BT_NIMBLE_ROLE_BROADCASTER)
-#define CONFIG_BT_NIMBLE_ROLE_BROADCASTER
-#endif
-
-#if defined(CONFIG_NIMBLE_ROLE_CENTRAL) && !defined(CONFIG_BT_NIMBLE_ROLE_CENTRAL)
-#define CONFIG_BT_NIMBLE_ROLE_CENTRAL
-#endif
-
-#if defined(CONFIG_NIMBLE_ROLE_PERIPHERAL) && !defined(CONFIG_BT_NIMBLE_ROLE_PERIPHERAL)
-#define CONFIG_BT_NIMBLE_ROLE_PERIPHERAL
-#endif
-
-#if defined(CONFIG_NIMBLE_DEBUG) && !defined(CONFIG_BT_NIMBLE_DEBUG)
-#define CONFIG_BT_NIMBLE_DEBUG
-#endif
-
-#else // Using Arduino
+#include "nimconfig_rename.h"
 
 /***********************************************
- * Arduino config options start here
+ * Arduino user-config options start here
  **********************************************/
 
-/** @brief Comment out if not using NimBLE Client functions \n
- *  Reduces flash size by approx. 7kB.
- */
-#ifndef CONFIG_BT_NIMBLE_ROLE_CENTRAL_DISABLED
-#define CONFIG_BT_NIMBLE_ROLE_CENTRAL
-#endif
+/** @brief Un-comment to change the number of simultaneous connections (esp controller max is 9) */
+// #define CONFIG_BT_NIMBLE_MAX_CONNECTIONS 3
 
-/** @brief Comment out if not using NimBLE Scan functions \n
- *  Reduces flash size by approx. 26kB.
- */
-#ifndef CONFIG_BT_NIMBLE_ROLE_OBSERVER_DISABLED
-#define CONFIG_BT_NIMBLE_ROLE_OBSERVER
-#endif
+/** @brief Un-comment to change the default MTU size */
+// #define CONFIG_BT_NIMBLE_ATT_PREFERRED_MTU 255
 
-/** @brief Comment out if not using NimBLE Server functions \n
- *  Reduces flash size by approx. 16kB.
- */
-#ifndef CONFIG_BT_NIMBLE_ROLE_PERIPHERAL_DISABLED
-#define CONFIG_BT_NIMBLE_ROLE_PERIPHERAL
-#endif
+/** @brief Un-comment to change default device name */
+// #define CONFIG_BT_NIMBLE_SVC_GAP_DEVICE_NAME "nimble"
 
-/** @brief Comment out if not using NimBLE Advertising functions \n
- *  Reduces flash size by approx. 5kB.
- */
-#ifndef CONFIG_BT_NIMBLE_ROLE_BROADCASTER_DISABLED
-#define CONFIG_BT_NIMBLE_ROLE_BROADCASTER
-#endif
-
-/*  Uncomment to see debug log messages from the NimBLE host
+/** @brief Un-comment to see debug log messages from the NimBLE host
  *  Uses approx. 32kB of flash memory.
  */
 // #define CONFIG_BT_NIMBLE_DEBUG
 
-/*  Uncomment to see NimBLE host return codes as text debug log messages.
+/** @brief Un-comment to see NimBLE host return codes as text debug log messages.
  *  Uses approx. 7kB of flash memory.
  */
 // #define CONFIG_NIMBLE_CPP_ENABLE_RETURN_CODE_TEXT
 
-/*  Uncomment to see GAP event codes as text in debug log messages.
+/** @brief Un-comment to see GAP event codes as text in debug log messages.
  *  Uses approx. 1kB of flash memory.
  */
 // #define CONFIG_NIMBLE_CPP_ENABLE_GAP_EVENT_CODE_TEXT
 
-/*  Uncomment to see advertisment types as text while scanning in debug log messages.
+/** @brief Un-comment to see advertisment types as text while scanning in debug log messages.
  *  Uses approx. 250 bytes of flash memory.
  */
 // #define CONFIG_NIMBLE_CPP_ENABLE_ADVERTISMENT_TYPE_TEXT
 
-/** @brief Sets the core NimBLE host runs on */
+/** @brief Un-comment to change the default GAP appearance */
+// #define CONFIG_BT_NIMBLE_SVC_GAP_APPEARANCE 0x0
+
+ /** @brief Un-comment if not using NimBLE Client functions \n
+ *  Reduces flash size by approx. 7kB.
+ */
+// #define CONFIG_BT_NIMBLE_ROLE_CENTRAL_DISABLED
+
+/** @brief Un-comment if not using NimBLE Scan functions \n
+ *  Reduces flash size by approx. 26kB.
+ */
+// #define CONFIG_BT_NIMBLE_ROLE_OBSERVER_DISABLED
+
+/** @brief Un-comment if not using NimBLE Server functions \n
+ *  Reduces flash size by approx. 16kB.
+ */
+// #define CONFIG_BT_NIMBLE_ROLE_PERIPHERAL_DISABLED
+
+/** @brief Un-comment if not using NimBLE Advertising functions \n
+ *  Reduces flash size by approx. 5kB.
+ */
+// #define CONFIG_BT_NIMBLE_ROLE_BROADCASTER_DISABLED
+
+/** @brief Un-comment to change the number of devices allowed to store/bond with */
+// #define CONFIG_BT_NIMBLE_MAX_BONDS 3
+
+/** @brief Un-comment to change the maximum number of CCCD subscriptions to store */
+// #define CONFIG_BT_NIMBLE_MAX_CCCDS 8
+
+/** @brief Un-comment to change the random address refresh time (in seconds) */
+// #define CONFIG_BT_NIMBLE_RPA_TIMEOUT 900
+
+/**
+ * @brief Un-comment to change the number of MSYS buffers available.
+ * @details MSYS is a system level mbuf registry. For prepare write & prepare \n
+ * responses MBUFs are allocated out of msys_1 pool. This may need to be increased if\n
+ * you are sending large blocks of data with a low MTU. E.g: 512 bytes with 23 MTU will fail.
+ */
+// #define CONFIG_BT_NIMBLE_MSYS1_BLOCK_COUNT 12
+
+/** @brief Un-comment to use external PSRAM for the NimBLE host */
+// #define CONFIG_BT_NIMBLE_MEM_ALLOC_MODE_EXTERNAL 1
+
+/** @brief Un-comment to change the core NimBLE host runs on */
+// #define CONFIG_BT_NIMBLE_PINNED_TO_CORE 0
+
+/** @brief Un-comment to change the stack size for the NimBLE host task */
+// #define CONFIG_BT_NIMBLE_TASK_STACK_SIZE 4096
+
+/**********************************
+ End Arduino user-config
+**********************************/
+
+/* This section should not be altered */
+#ifndef CONFIG_BT_NIMBLE_ROLE_CENTRAL_DISABLED
+#define CONFIG_BT_NIMBLE_ROLE_CENTRAL
+#endif
+
+#ifndef CONFIG_BT_NIMBLE_ROLE_OBSERVER_DISABLED
+#define CONFIG_BT_NIMBLE_ROLE_OBSERVER
+#endif
+
+#ifndef CONFIG_BT_NIMBLE_ROLE_PERIPHERAL_DISABLED
+#define CONFIG_BT_NIMBLE_ROLE_PERIPHERAL
+#endif
+
+#ifndef CONFIG_BT_NIMBLE_ROLE_BROADCASTER_DISABLED
+#define CONFIG_BT_NIMBLE_ROLE_BROADCASTER
+#endif
+
 #ifndef CONFIG_BT_NIMBLE_PINNED_TO_CORE
 #define CONFIG_BT_NIMBLE_PINNED_TO_CORE 0
 #endif
 
-/** @brief Sets the stack size for the NimBLE host task */
 #ifndef CONFIG_BT_NIMBLE_TASK_STACK_SIZE
 #define CONFIG_BT_NIMBLE_TASK_STACK_SIZE 4096
 #endif
 
-/**
- * @brief Sets the memory pool where NimBLE will be loaded
- * @details By default NimBLE is loaded in internal ram.\n
- * To use external PSRAM you must change this to `#define CONFIG_BT_NIMBLE_MEM_ALLOC_MODE_EXTERNAL 1`
- */
 #ifndef CONFIG_BT_NIMBLE_MEM_ALLOC_MODE_EXTERNAL
 #define CONFIG_BT_NIMBLE_MEM_ALLOC_MODE_INTERNAL 1
 #endif
 
-/** @brief Sets the number of simultaneous connections (esp controller max is 9) */
 #ifndef CONFIG_BT_NIMBLE_MAX_CONNECTIONS
 #define CONFIG_BT_NIMBLE_MAX_CONNECTIONS 3
 #endif
 
-/** @brief Sets the number of devices allowed to store/bond with */
 #ifndef CONFIG_BT_NIMBLE_MAX_BONDS
 #define CONFIG_BT_NIMBLE_MAX_BONDS 3
 #endif
 
-/** @brief Sets the maximum number of CCCD subscriptions to store */
 #ifndef CONFIG_BT_NIMBLE_MAX_CCCDS
 #define CONFIG_BT_NIMBLE_MAX_CCCDS 8
 #endif
 
-/** @brief Default device name */
 #ifndef CONFIG_BT_NIMBLE_SVC_GAP_DEVICE_NAME
 #define CONFIG_BT_NIMBLE_SVC_GAP_DEVICE_NAME "nimble"
 #endif
+
+#ifndef CONFIG_BT_NIMBLE_ATT_PREFERRED_MTU
+#define CONFIG_BT_NIMBLE_ATT_PREFERRED_MTU 255
+#endif
+
+#ifndef CONFIG_BT_NIMBLE_SVC_GAP_APPEARANCE
+#define CONFIG_BT_NIMBLE_SVC_GAP_APPEARANCE 0x0
+#endif
+
+#ifndef CONFIG_BT_NIMBLE_MSYS1_BLOCK_COUNT
+#define CONFIG_BT_NIMBLE_MSYS1_BLOCK_COUNT 12
+#endif
+
+#ifndef CONFIG_BT_NIMBLE_RPA_TIMEOUT
+#define CONFIG_BT_NIMBLE_RPA_TIMEOUT 900
+#endif
+
 
 /** @brief Set if CCCD's and bond data should be stored in NVS */
 #define CONFIG_BT_NIMBLE_NVS_PERSIST 1
@@ -151,12 +162,6 @@
 
 /** @brief Max device name length (bytes) */
 #define CONFIG_BT_NIMBLE_GAP_DEVICE_NAME_MAX_LEN 31
-
-/** @brief Default MTU size */
-#define CONFIG_BT_NIMBLE_ATT_PREFERRED_MTU 256
-
-/** @brief Default GAP appearance */
-#define CONFIG_BT_NIMBLE_SVC_GAP_APPEARANCE 0x0
 
 /** @brief ACL Buffer count */
 #define CONFIG_BT_NIMBLE_ACL_BUF_COUNT 12
@@ -173,21 +178,9 @@
 /** @brief Number of low priority HCI event buffers */
 #define CONFIG_BT_NIMBLE_HCI_EVT_LO_BUF_COUNT 8
 
-/**
- * @brief Sets the number of MSYS buffers available.
- * @details MSYS is a system level mbuf registry. For prepare write & prepare \n
- * responses MBUFs are allocated out of msys_1 pool. This may need to be increased if\n 
- * you are sending large blocks of data with a low MTU. E.g: 512 bytes with 23 MTU will fail. 
- */
-#define CONFIG_BT_NIMBLE_MSYS1_BLOCK_COUNT 12
-
-/** @brief Random address refresh time in seconds */
-#define CONFIG_BT_NIMBLE_RPA_TIMEOUT 900
-
 /** @brief Maximum number of connection oriented channels */
 #define CONFIG_BT_NIMBLE_L2CAP_COC_MAX_NUM 0
 
-/* These should not be altered */
 #define CONFIG_BT_NIMBLE_HS_FLOW_CTRL 1
 #define CONFIG_BT_NIMBLE_HS_FLOW_CTRL_ITVL 1000
 #define CONFIG_BT_NIMBLE_HS_FLOW_CTRL_THRESH 2
@@ -197,14 +190,9 @@
 #define CONFIG_BT_ENABLED
 #endif
 
+#ifndef CONFIG_BTDM_CONTROLLER_MODE_BLE_ONLY
 #define CONFIG_BTDM_CONTROLLER_MODE_BLE_ONLY
-
-#endif // #if defined(CONFIG_BT_NIMBLE_TASK_STACK_SIZE) || defined(CONFIG_NIMBLE_TASK_STACK_SIZE)
-
-/**********************************
- End Arduino config
-**********************************/
-
+#endif
 
 /* Cannot use client without scan */
 #if defined(CONFIG_BT_NIMBLE_ROLE_CENTRAL) && !defined(CONFIG_BT_NIMBLE_ROLE_OBSERVER)
@@ -216,26 +204,3 @@
 #define CONFIG_BT_NIMBLE_ROLE_BROADCASTER
 #endif
 
-
-
-#ifdef _DOXYGEN_
-/** @brief Uncomment to see debug log messages from the NimBLE host \n
- *  Uses approx. 32kB of flash memory.
- */
-#define CONFIG_BT_NIMBLE_DEBUG
-
-/** @brief Uncomment to see NimBLE host return codes as text debug log messages. \n
- *  Uses approx. 7kB of flash memory.
- */
-#define CONFIG_NIMBLE_CPP_ENABLE_RETURN_CODE_TEXT
-
-/** @brief Uncomment to see GAP event codes as text in debug log messages. \n
- *  Uses approx. 1kB of flash memory.
- */
-#define CONFIG_NIMBLE_CPP_ENABLE_GAP_EVENT_CODE_TEXT
-
-/** @brief Uncomment to see advertisment types as text while scanning in debug log messages. \n
- *  Uses approx. 250 bytes of flash memory.
- */
-#define CONFIG_NIMBLE_CPP_ENABLE_ADVERTISMENT_TYPE_TEXT
-#endif // _DOXYGEN_

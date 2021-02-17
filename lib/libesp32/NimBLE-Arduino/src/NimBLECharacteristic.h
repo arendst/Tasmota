@@ -59,6 +59,17 @@ class NimBLECharacteristicCallbacks;
  */
 class NimBLECharacteristic {
 public:
+
+    uint16_t          getHandle();
+    NimBLEUUID        getUUID();
+    std::string       toString();
+
+    void              setCallbacks(NimBLECharacteristicCallbacks* pCallbacks);
+
+    void              indicate();
+    void              notify(bool is_notification = true);
+    size_t            getSubscribedCount();
+
     NimBLEDescriptor* createDescriptor(const char* uuid,
                                        uint32_t properties =
                                        NIMBLE_PROPERTY::READ |
@@ -72,9 +83,10 @@ public:
 
     NimBLEDescriptor* getDescriptorByUUID(const char* uuid);
     NimBLEDescriptor* getDescriptorByUUID(const NimBLEUUID &uuid);
-    NimBLEUUID        getUUID();
-    std::string       getValue(time_t *timestamp = nullptr);
+    NimBLEDescriptor* getDescriptorByHandle(uint16_t handle);
 
+    std::string       getValue(time_t *timestamp = nullptr);
+    size_t            getDataLength();
     /**
      * @brief A template to convert the characteristic data to <type\>.
      * @tparam T The type to convert the data to.
@@ -92,25 +104,20 @@ public:
         return *((T *)pData);
     }
 
-    size_t            getDataLength();
-    void              indicate();
-    void              notify(bool is_notification = true);
-    void              setCallbacks(NimBLECharacteristicCallbacks* pCallbacks);
     void              setValue(const uint8_t* data, size_t size);
     void              setValue(const std::string &value);
-
     /**
      * @brief Convenience template to set the characteristic value to <type\>val.
      * @param [in] s The value to set.
      */
     template<typename T>
-    void setValue(const T &s) {
+    void              setValue(const T &s) {
         setValue((uint8_t*)&s, sizeof(T));
     }
 
-    std::string       toString();
-    uint16_t          getHandle();
-    size_t            getSubscribedCount();
+
+
+
 
 private:
 

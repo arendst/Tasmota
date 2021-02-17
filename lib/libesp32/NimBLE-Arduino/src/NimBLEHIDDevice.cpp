@@ -103,7 +103,7 @@ void NimBLEHIDDevice::manufacturer(std::string name) {
 /**
  * @brief Sets the Plug n Play characterisc value.
  * @param [in] sig The vendor ID source number.
- * @param [in[ vid The vendor ID number.
+ * @param [in] vid The vendor ID number.
  * @param [in] pid The product ID number.
  * @param [in] version The produce version number.
  */
@@ -128,8 +128,8 @@ void NimBLEHIDDevice::hidInfo(uint8_t country, uint8_t flags) {
  * @return pointer to new input report characteristic
  */
 NimBLECharacteristic* NimBLEHIDDevice::inputReport(uint8_t reportID) {
-	NimBLECharacteristic* inputReportCharacteristic = m_hidService->createCharacteristic((uint16_t) 0x2a4d, NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::NOTIFY);
-	NimBLEDescriptor* inputReportDescriptor = inputReportCharacteristic->createDescriptor((uint16_t) 0x2908);
+	NimBLECharacteristic* inputReportCharacteristic = m_hidService->createCharacteristic((uint16_t) 0x2a4d, NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::NOTIFY | NIMBLE_PROPERTY::READ_ENC);
+	NimBLEDescriptor* inputReportDescriptor = inputReportCharacteristic->createDescriptor((uint16_t) 0x2908, NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::READ_ENC);
 
 	uint8_t desc1_val[] = { reportID, 0x01 };
 	inputReportDescriptor->setValue((uint8_t*) desc1_val, 2);
@@ -144,7 +144,7 @@ NimBLECharacteristic* NimBLEHIDDevice::inputReport(uint8_t reportID) {
  */
 NimBLECharacteristic* NimBLEHIDDevice::outputReport(uint8_t reportID) {
 	NimBLECharacteristic* outputReportCharacteristic = m_hidService->createCharacteristic((uint16_t) 0x2a4d, NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::WRITE_NR | NIMBLE_PROPERTY::READ_ENC | NIMBLE_PROPERTY::WRITE_ENC);
-	NimBLEDescriptor* outputReportDescriptor = outputReportCharacteristic->createDescriptor((uint16_t) 0x2908);
+	NimBLEDescriptor* outputReportDescriptor = outputReportCharacteristic->createDescriptor((uint16_t) 0x2908, NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::READ_ENC | NIMBLE_PROPERTY::WRITE_ENC);
 
 	uint8_t desc1_val[] = { reportID, 0x02 };
 	outputReportDescriptor->setValue((uint8_t*) desc1_val, 2);
@@ -159,7 +159,7 @@ NimBLECharacteristic* NimBLEHIDDevice::outputReport(uint8_t reportID) {
  */
 NimBLECharacteristic* NimBLEHIDDevice::featureReport(uint8_t reportID) {
 	NimBLECharacteristic* featureReportCharacteristic = m_hidService->createCharacteristic((uint16_t) 0x2a4d, NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::READ_ENC | NIMBLE_PROPERTY::WRITE_ENC);
-	NimBLEDescriptor* featureReportDescriptor = featureReportCharacteristic->createDescriptor((uint16_t) 0x2908);
+	NimBLEDescriptor* featureReportDescriptor = featureReportCharacteristic->createDescriptor((uint16_t) 0x2908, NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::READ_ENC | NIMBLE_PROPERTY::WRITE_ENC);
 
 	uint8_t desc1_val[] = { reportID, 0x03 };
 	featureReportDescriptor->setValue((uint8_t*) desc1_val, 2);

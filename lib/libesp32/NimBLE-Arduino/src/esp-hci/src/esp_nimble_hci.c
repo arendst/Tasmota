@@ -523,10 +523,6 @@ esp_err_t esp_nimble_hci_and_controller_init(void)
     esp_bt_controller_mem_release(ESP_BT_MODE_CLASSIC_BT);
 
     esp_bt_controller_config_t bt_cfg = BT_CONTROLLER_INIT_CONFIG_DEFAULT();
-    /* Added to ensure BLE only mode */
-    bt_cfg.mode = ESP_BT_MODE_BLE;
-    /* Added to set max connections from nimconfig */
-    bt_cfg.ble_max_conn = CONFIG_BT_NIMBLE_MAX_CONNECTIONS;
 
     if ((ret = esp_bt_controller_init(&bt_cfg)) != ESP_OK) {
         return ret;

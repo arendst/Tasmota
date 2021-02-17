@@ -49,8 +49,9 @@ public:
     void                   startAdvertising();
     void                   stopAdvertising();
     void                   start();
-    NimBLEService*         getServiceByUUID(const char* uuid);
-    NimBLEService*         getServiceByUUID(const NimBLEUUID &uuid);
+    NimBLEService*         getServiceByUUID(const char* uuid, uint16_t instanceId = 0);
+    NimBLEService*         getServiceByUUID(const NimBLEUUID &uuid, uint16_t instanceId = 0);
+    NimBLEService*         getServiceByHandle(uint16_t handle);
     int                    disconnect(uint16_t connID,
                                       uint8_t reason = BLE_ERR_REM_USER_CONN_TERM);
     void                   updateConnParams(uint16_t conn_handle,
