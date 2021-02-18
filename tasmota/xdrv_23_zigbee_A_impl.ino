@@ -1416,13 +1416,15 @@ void CmndZbPermitJoin(void) {
   if (payload <= 0) {
     duration = 0;
   }
-
-// ZNP Version
-#ifdef USE_ZIGBEE_ZNP
   if (99 == payload) {
+    if (zigbee.zb3) {
+      ResponseCmndChar_P(PSTR("Unlimited time not supported")); return;
+    }
     duration = 0xFF;                    // unlimited time
   }
 
+// ZNP Version
+#ifdef USE_ZIGBEE_ZNP
   SBuffer buf(34);
   buf.add8(Z_SREQ | Z_ZDO);             // 25
   buf.add8(ZDO_MGMT_PERMIT_JOIN_REQ);   // 36
@@ -1437,10 +1439,6 @@ void CmndZbPermitJoin(void) {
 
 // EZSP VERSION
 #ifdef USE_ZIGBEE_EZSP
-  if (99 == payload) {
-    ResponseCmndChar_P(PSTR("Unlimited time not supported")); return;
-  }
-
   SBuffer buf(3);
   buf.add16(EZSP_permitJoining);
   buf.add8(duration);
@@ -1451,18 +1449,21 @@ void CmndZbPermitJoin(void) {
   buf.add8(duration);
   buf.add8(0x01);       // TC_Significance - This field shall always have a value of 1, indicating a request to change the Trust Center policy. If a frame is received with a value of 0, it shall be treated as having a value of 1.
   EZ_SendZDO(0xFFFC, ZDO_Mgmt_Permit_Joining_req, buf.buf(), buf.len());
-
-  // Set Timer after the end of the period, and reset a non-expired previous timer
-  if (duration > 0) {
-    // Log pairing mode enabled
-    Response_P(PSTR("{\"" D_JSON_ZIGBEE_STATE "\":{\"Status\":21,\"Message\":\"Pairing mode enabled\"}}"));
-    MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEE_STATE));
-    zigbee.permit_end_time = millis() + duration * 1000;
-  } else {
-    zigbee.permit_end_time = millis();
-  }
 #endif // USE_ZIGBEE_EZSP
 
+  // Set Timer after the end of the period, and reset a non-expired previous timer
+  if (zigbee.zb3) {
+    if (duration > 0) {
+      // Log pairing mode enabled
+      Response_P(PSTR("{\"" D_JSON_ZIGBEE_STATE "\":{\"Status\":21,\"Message\":\"Pairing mode enabled\"}}"));
+      MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEE_STATE));
+      zigbee.permit_end_time = millis() + duration * 1000;
+    } else {
+      zigbee.permit_end_time = millis();
+    }
+    if (0 == zigbee.permit_end_time) { zigbee.permit_end_time = 1; }    // avoid very rare case where timer collides with timestamp equals to zero
+  }
+  
   ResponseCmndDone();
 }
 
@@ -1498,31 +1499,40 @@ void CmndZbEZSPListen(void) {
 void ZigbeeGlowPermitJoinLight(void) {
   static const uint16_t cycle_time = 1000;    // cycle up and down in 1000 ms
   static const uint16_t half_cycle_time = cycle_time / 2;    // cycle up and down in 1000 ms
+
+  uint16_t led_power = 0;         // turn led off
   if (zigbee.permit_end_time) {
-    uint16_t led_power = 0;         // turn led off
+    uint32_t millis_to_go = millis() - zigbee.permit_end_time;
+    uint32_t sub_second = millis_to_go % cycle_time;
+    if (sub_second <= half_cycle_time) {
+      led_power = changeUIntScale(sub_second, 0, half_cycle_time, 0, 1023);
+    } else {
+      led_power = changeUIntScale(sub_second, half_cycle_time, cycle_time, 1023, 0);
+    }
+    led_power = ledGamma10_10(led_power);
+  }
+
+  // change the led state
+  int led_pin = Pin(GPIO_LEDLNK);
+  if (led_pin >= 0) {
+    analogWrite(led_pin, TasmotaGlobal.ledlnk_inverted ? 1023 - led_power : led_power);
+  }
+}
+#endif // USE_ZIGBEE_EZSP
+
+// check if the permitjoin timer has expired
+void ZigbeePermitJoinUpdate(void) {
+  if (zigbee.zb3 && zigbee.permit_end_time) {
     // permit join is ongoing
     if (TimeReached(zigbee.permit_end_time)) {
       zigbee.permit_end_time = 0;   // disable timer
       Z_PermitJoinDisable();
-    } else {
-      uint32_t millis_to_go = millis() - zigbee.permit_end_time;
-      uint32_t sub_second = millis_to_go % cycle_time;
-      if (sub_second <= half_cycle_time) {
-        led_power = changeUIntScale(sub_second, 0, half_cycle_time, 0, 1023);
-      } else {
-        led_power = changeUIntScale(sub_second, half_cycle_time, cycle_time, 1023, 0);
-      }
-      led_power = ledGamma10_10(led_power);
     }
-
-    // change the led state
-    int led_pin = Pin(GPIO_LEDLNK);
-    if (led_pin >= 0) {
-      analogWrite(led_pin, TasmotaGlobal.ledlnk_inverted ? 1023 - led_power : led_power);
-    }
+#ifdef USE_ZIGBEE_EZSP
+    ZigbeeGlowPermitJoinLight();    // update glowing light accordingly
+#endif // USE_ZIGBEE_EZSP
   }
 }
-#endif // USE_ZIGBEE_EZSP
 
 //
 // Command `ZbStatus`
@@ -2144,9 +2154,7 @@ bool Xdrv23(uint8_t function)
         if (ZigbeeSerial) {
           ZigbeeInputLoop();
           ZigbeeOutputLoop();   // send any outstanding data
-#ifdef USE_ZIGBEE_EZSP
-          ZigbeeGlowPermitJoinLight();
-#endif // USE_ZIGBEE_EZSP
+          ZigbeePermitJoinUpdate();   // timer for permit join
         }
         if (zigbee.state_machine) {
           ZigbeeStateMachine_Run();

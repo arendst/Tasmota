@@ -228,15 +228,6 @@ int32_t EZ_PermitJoinRsp(int32_t res, const SBuffer &buf) {
 }
 
 //
-// Special case: EZSP does not send an event for PermitJoin end, so we generate a synthetic one
-//
-void Z_PermitJoinDisable(void) {
-    Response_P(PSTR("{\"" D_JSON_ZIGBEE_STATE "\":{\"Status\":20,\"Message\":\"Pairing mode disabled\"}}"));
-    MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEE_STATE));
-}
-
-
-//
 // Received MessageSentHandler
 //
 // We normally ignore the message, but it's a way to sniff group ids for IKEA remote
@@ -253,6 +244,14 @@ int32_t EZ_MessageSent(int32_t res, const SBuffer &buf) {
 }
 
 #endif // USE_ZIGBEE_EZSP
+
+//
+// Special case: EZSP does not send an event for PermitJoin end, so we generate a synthetic one
+//
+void Z_PermitJoinDisable(void) {
+    Response_P(PSTR("{\"" D_JSON_ZIGBEE_STATE "\":{\"Status\":20,\"Message\":\"Pairing mode disabled\"}}"));
+    MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEE_STATE));
+}
 
 /*********************************************************************************************\
  * Handle auto-mapping
@@ -427,6 +426,10 @@ int32_t ZNP_Reboot(int32_t res, SBuffer &buf) {
   MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEE_STATE));
 
   if ((0x02 == major_rel) && ((0x06 == minor_rel) || (0x07 == minor_rel))) {
+    if (0x07 == minor_rel) {
+      zigbee.zb3 = true;        // we run Zigbee 3
+      ZNP_UpdateZStack3();      // update configuration for ZStack 3
+    }
   	return 0;	  // version 2.6.x and 2.7.x are ok
   } else {
     return ZIGBEE_LABEL_UNSUPPORTED_VERSION;  // abort
@@ -546,18 +549,18 @@ int32_t ZNP_ReceivePermitJoinStatus(int32_t res, const SBuffer &buf) {
   uint8_t     status_code;
   const char* message;
 
-  if (0xFF == duration) {
+  if (!zigbee.zb3 && (0xFF == duration)) {
     status_code = ZIGBEE_STATUS_PERMITJOIN_OPEN_XX;
     message = PSTR("Enable Pairing mode until next boot");
-    zigbee.permit_end_time = true;   // In ZNP mode, declare permitjoin open
+    zigbee.permit_end_time = -1;   // In ZNP mode, declare permitjoin open
   } else if (duration > 0) {
     status_code = ZIGBEE_STATUS_PERMITJOIN_OPEN_60;
     message = PSTR("Enable Pairing mode for %d seconds");
-    zigbee.permit_end_time = true;   // In ZNP mode, declare permitjoin open
+    zigbee.permit_end_time = -1;   // In ZNP mode, declare permitjoin open
   } else {
     status_code = ZIGBEE_STATUS_PERMITJOIN_CLOSE;
     message = PSTR("Disable Pairing mode");
-    zigbee.permit_end_time = false;   // In ZNP mode, declare permitjoin closed
+    zigbee.permit_end_time = 0;   // In ZNP mode, declare permitjoin closed
   }
   Response_P(PSTR("{\"" D_JSON_ZIGBEE_STATE "\":{"
                   "\"Status\":%d,\"Message\":\""),
