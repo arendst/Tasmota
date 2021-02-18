@@ -79,6 +79,7 @@ const uint8_t  ZIGBEE_LABEL_START_ROUTER = 13;    // Start ZNP as router
 const uint8_t  ZIGBEE_LABEL_INIT_DEVICE = 14;    // Init ZNP as end-device
 const uint8_t  ZIGBEE_LABEL_START_DEVICE = 15;    // Start ZNP as end-device
 const uint8_t  ZIGBEE_LABEL_START_ROUTER_DEVICE = 16;    // Start common to router and device
+const uint8_t  ZIGBEE_LABEL_ZB3_INIT = 17;        // check parameters for ZB3
 const uint8_t  ZIGBEE_LABEL_FACT_RESET_ROUTER_DEVICE_POST = 19;   // common post configuration for router and device
 const uint8_t  ZIGBEE_LABEL_READY = 20;   // goto label 20 for main loop
 const uint8_t  ZIGBEE_LABEL_MAIN_LOOP = 21;   // main loop
@@ -113,6 +114,11 @@ public:
   bool recv_until = false;            // ignore all messages until the received frame fully matches
   bool eeprom_present = false;        // is the ZBBridge EEPROM present?
   bool eeprom_ready = false;          // is the ZBBridge EEPROM formatted and ready?
+#ifdef USE_ZIGBEE_ZNP
+  bool zb3 = false;                   // true if ZStack 3.x, false if ZStack 1.2
+#else
+  bool zb3 = true;                    // always ZB3 with EZSP
+#endif // USE_ZIGBEE_ZNP
   // Zigbee mapping
   bool mapping_in_progress = false;   // is there a mapping in progress
   bool mapping_ready = false;         // do we have mapping information ready
@@ -131,11 +137,9 @@ public:
   // Energy scan
   int8_t energy[USE_ZIGBEE_CHANNEL_COUNT];
 
+  uint32_t permit_end_time = 0;       // timestamp when permit join ends, with ZNP 1.2, it takes only 0 (off) and -1 (on)
 #ifdef USE_ZIGBEE_EZSP
-  uint32_t permit_end_time = 0;       // timestamp when permit join ends
   uint16_t ezsp_version = 0;
-#elif defined(USE_ZIGBEE_ZNP)
-  bool permit_end_time = false;       // in ZNP mode it's only a boolean
 #endif
 
 #ifdef USE_ZIGBEE_EZSP
