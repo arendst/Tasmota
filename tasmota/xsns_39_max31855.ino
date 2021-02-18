@@ -150,7 +150,7 @@ void MAX31855_Show(bool Json) {
       sensor_name,
       Settings.flag2.temperature_resolution, &MAX31855_Result.ProbeTemperature,
       Settings.flag2.temperature_resolution, &MAX31855_Result.ReferenceTemperature,
-      MAX31855_Result.ResultingTemperature,
+      Settings.flag2.temperature_resolution, &MAX31855_Result.ResultingTemperature,
       MAX31855_Result.ErrorCode);
 #ifdef USE_DOMOTICZ
     if (0 == TasmotaGlobal.tele_period) {
