@@ -136,7 +136,7 @@ void MAX31855_GetResult(void) {
       MAX31855_Result.ProbeTemperature = NAN;    // Return NaN if MAX31855 reports an error
     } else {
       MAX31855_Result.ProbeTemperature = MAX31855_GetProbeTemperature(RawData);
-      MAX31855_Result.ResultingTemperature = MAX31855_Result.ProbeTemperature + MAX31855_Result.ReferenceTemperature
+      MAX31855_Result.ResultingTemperature = MAX31855_Result.ProbeTemperature + MAX31855_Result.ReferenceTemperature;
     }
   }
 }
