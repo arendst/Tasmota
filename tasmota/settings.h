@@ -375,8 +375,9 @@ struct {
   uint8_t       param[PARAM8_SIZE];        // 2FC  SetOption32 .. SetOption49
   int16_t       toffset[2];                // 30E
   uint8_t       display_font;              // 312
+  uint8_t       display_type;              // 313
 
-  uint8_t       free_313[44];              // 313
+  uint8_t       free_314[43];              // 314
 
   uint8_t       tuyamcu_topic;             // 33F  Manage tuyaSend topic. ex_energy_power_delta on 6.6.0.20, replaced on 8.5.0.1
   uint16_t      domoticz_update_timer;     // 340
