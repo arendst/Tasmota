@@ -153,82 +153,81 @@ ZBM(ZBS_ZNPHC, Z_SREQ | Z_SYS, SYS_OSAL_NV_READ, ZNP_HAS_CONFIGURED & 0xFF, ZNP_
 ZBM(ZBR_ZNPHC, Z_SRSP | Z_SYS, SYS_OSAL_NV_READ, Z_SUCCESS, 0x01 /* len */, 0x55)   // 6108000155
 // If not set, the response is 61-08-02-00 = Z_SRSP | Z_SYS, SYS_OSAL_NV_READ, Z_INVALIDPARAMETER, 0x00 /* len */
 
-ZBM(ZBS_PAN, Z_SREQ | Z_SAPI, SAPI_READ_CONFIGURATION, CONF_PANID )				// 260483
-ZBR(ZBR_PAN, Z_SRSP | Z_SAPI, SAPI_READ_CONFIGURATION, Z_SUCCESS, CONF_PANID, 0x02 /* len */,
-              0x00, 0x00 /* pan_id */ )				// 6604008302xxxx
+ZBM(ZBS_PAN, Z_SREQ | Z_SYS, SYS_OSAL_NV_READ, CONF_PANID,0x00, 0x00 )				// 2108830000
+ZBR(ZBR_PAN, Z_SRSP | Z_SYS, SYS_OSAL_NV_READ, Z_SUCCESS, 0x02 /* len */,
+              0x00, 0x00 /* pan_id */ )				// 61080002xxxx
 
-ZBM(ZBS_EXTPAN, Z_SREQ | Z_SAPI, SAPI_READ_CONFIGURATION, CONF_EXTENDED_PAN_ID )				// 26042D
-ZBR(ZBR_EXTPAN, Z_SRSP | Z_SAPI, SAPI_READ_CONFIGURATION, Z_SUCCESS, CONF_EXTENDED_PAN_ID,
+ZBM(ZBS_EXTPAN, Z_SREQ | Z_SYS, SYS_OSAL_NV_READ, CONF_EXTENDED_PAN_ID,0x00, 0x00 )				// 21082D0000
+ZBR(ZBR_EXTPAN, Z_SRSP | Z_SYS, SYS_OSAL_NV_READ, Z_SUCCESS,
                 0x08 /* len */,
                 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* ext_pan_id */
-                )				// 6604002D08xxxxxxxxxxxxxxxx
+                )				// 61080008xxxxxxxxxxxxxxxx
 
-ZBM(ZBS_CHANN, Z_SREQ | Z_SAPI, SAPI_READ_CONFIGURATION, CONF_CHANLIST )				// 260484
-ZBR(ZBR_CHANN, Z_SRSP | Z_SAPI, SAPI_READ_CONFIGURATION, Z_SUCCESS, CONF_CHANLIST,
+ZBM(ZBS_CHANN, Z_SREQ | Z_SYS, SYS_OSAL_NV_READ, CONF_CHANLIST,0x00, 0x00 )				// 2108840000
+ZBR(ZBR_CHANN, Z_SRSP | Z_SYS, SYS_OSAL_NV_READ, Z_SUCCESS,
                0x04 /* len */,
                Z_B0(USE_ZIGBEE_CHANNEL_MASK), Z_B1(USE_ZIGBEE_CHANNEL_MASK), Z_B2(USE_ZIGBEE_CHANNEL_MASK), Z_B3(USE_ZIGBEE_CHANNEL_MASK),
-               )				// 6604008404xxxxxxxx
+               )				// 61080004xxxxxxxx
 
-ZBM(ZBS_PFGK, Z_SREQ | Z_SAPI, SAPI_READ_CONFIGURATION, CONF_PRECFGKEY )				// 260462
-ZBR(ZBR_PFGK, Z_SRSP | Z_SAPI, SAPI_READ_CONFIGURATION, Z_SUCCESS, CONF_PRECFGKEY,
+ZBM(ZBS_PFGK, Z_SREQ | Z_SYS, SYS_OSAL_NV_READ, CONF_PRECFGKEY,0x00, 0x00 )				// 2108620000
+ZBR(ZBR_PFGK, Z_SRSP | Z_SYS, SYS_OSAL_NV_READ, Z_SUCCESS,
               0x10 /* len */,
               0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* key_l */
               0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* key_h */
               /*0x01, 0x03, 0x05, 0x07, 0x09, 0x0B, 0x0D, 0x0F,
-              0x00, 0x02, 0x04, 0x06, 0x08, 0x0A, 0x0C, 0x0D*/ )				// 660400621001030507090B0D0F00020406080A0C0D
+              0x00, 0x02, 0x04, 0x06, 0x08, 0x0A, 0x0C, 0x0D*/ )				// 6108001001030507090B0D0F00020406080A0C0D
 
-ZBM(ZBS_PFGKEN, Z_SREQ | Z_SAPI, SAPI_READ_CONFIGURATION, CONF_PRECFGKEYS_ENABLE )				// 260463
-ZBM(ZBR_PFGKEN, Z_SRSP | Z_SAPI, SAPI_READ_CONFIGURATION, Z_SUCCESS, CONF_PRECFGKEYS_ENABLE,
-                0x01 /* len */, 0x00 )				// 660400630100
+ZBM(ZBS_PFGKEN, Z_SREQ | Z_SYS, SYS_OSAL_NV_READ, CONF_PRECFGKEYS_ENABLE,0x00, 0x00 )				// 2108630000
+ZBM(ZBR_PFGKEN, Z_SRSP | Z_SYS, SYS_OSAL_NV_READ, Z_SUCCESS,
+                0x01 /* len */, 0x00 )				// 6108000100
 
-ZBM(ZBS_LOGTYPE, Z_SREQ | Z_SAPI, SAPI_READ_CONFIGURATION, CONF_LOGICAL_TYPE )				// 260487
-ZBM(ZBS_LOGTYPE_COORD,  Z_SRSP | Z_SAPI, SAPI_READ_CONFIGURATION, Z_SUCCESS, CONF_LOGICAL_TYPE,
-                0x01 /* len */, 0x00 )				// 660400870100 - coordinator
-ZBM(ZBS_LOGTYPE_ROUTER, Z_SRSP | Z_SAPI, SAPI_READ_CONFIGURATION, Z_SUCCESS, CONF_LOGICAL_TYPE,
-                0x01 /* len */, 0x01 )				// 660400870101 - router
-ZBM(ZBS_LOGTYPE_DEVICE, Z_SRSP | Z_SAPI, SAPI_READ_CONFIGURATION, Z_SUCCESS, CONF_LOGICAL_TYPE,
-                0x01 /* len */, 0x02 )				// 660400870102 - device
+ZBM(ZBS_LOGTYPE, Z_SREQ | Z_SYS, SYS_OSAL_NV_READ, CONF_LOGICAL_TYPE,0x00, 0x00 )				// 2108870000
+ZBM(ZBS_LOGTYPE_COORD,  Z_SRSP | Z_SYS, SYS_OSAL_NV_READ, Z_SUCCESS,
+                0x01 /* len */, 0x00 )				// 6108000100 - coordinator
+ZBM(ZBS_LOGTYPE_ROUTER, Z_SRSP | Z_SYS, SYS_OSAL_NV_READ, Z_SUCCESS,
+                0x01 /* len */, 0x01 )				// 6108000101 - router
+ZBM(ZBS_LOGTYPE_DEVICE, Z_SRSP | Z_SYS, SYS_OSAL_NV_READ, Z_SUCCESS,
+                0x01 /* len */, 0x02 )				// 6108000102 - device
 
 
 // commands to "format" the device
 // Write configuration - write success
-ZBM(ZBR_W_OK, Z_SRSP | Z_SAPI, SAPI_WRITE_CONFIGURATION, Z_SUCCESS )				// 660500 - Write Configuration
 ZBM(ZBR_WNV_OK, Z_SRSP | Z_SYS, SYS_OSAL_NV_WRITE, Z_SUCCESS )				// 610900 - NV Write
 ZBM(ZBR_WNV_OKE, Z_SRSP | Z_SYS, SYS_OSAL_NV_WRITE )				          // 6109xx - NV Write, OK or error
 
 // Factory reset
-ZBM(ZBS_FACTRES, Z_SREQ | Z_SAPI, SAPI_WRITE_CONFIGURATION, CONF_STARTUP_OPTION, 0x01 /* len */, 0x03 )				// 2605030103
+ZBM(ZBS_FACTRES, Z_SREQ | Z_SYS, SYS_OSAL_NV_WRITE, CONF_STARTUP_OPTION,0x00, 0x00, 0x01 /* len */, 0x03 )				// 21090300000103
 // Write PAN ID
-ZBR(ZBS_W_PAN, Z_SREQ | Z_SAPI, SAPI_WRITE_CONFIGURATION, CONF_PANID, 0x02 /* len */, 0x00, 0x00 /* pan_id */  )				// 26058302xxxx
+ZBR(ZBS_W_PAN, Z_SREQ | Z_SYS, SYS_OSAL_NV_WRITE, CONF_PANID,0x00, 0x00, 0x02 /* len */, 0x00, 0x00 /* pan_id */  )				// 210983000002xxxx
 // Write Universal PAN ID
-ZBR(ZBS_W_ALL_PAN, Z_SREQ | Z_SAPI, SAPI_WRITE_CONFIGURATION, CONF_PANID, 0x02 /* len */, Z_B0(0xFFFF), Z_B1(0xFFFF)  )				// 26058302FFFF
+ZBR(ZBS_W_ALL_PAN, Z_SREQ | Z_SYS, SYS_OSAL_NV_WRITE, CONF_PANID,0x00, 0x00, 0x02 /* len */, Z_B0(0xFFFF), Z_B1(0xFFFF)  )				// 210983000002FFFF
 // Write EXT PAN ID
-ZBR(ZBS_W_EXTPAN, Z_SREQ | Z_SAPI, SAPI_WRITE_CONFIGURATION, CONF_EXTENDED_PAN_ID, 0x08 /* len */,
+ZBR(ZBS_W_EXTPAN, Z_SREQ | Z_SYS, SYS_OSAL_NV_WRITE, CONF_EXTENDED_PAN_ID,0x00, 0x00, 0x08 /* len */,
                   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* ext_pan_id */
-                  ) // 26052D086263151D004B1200
+                  ) // 21092D0000086263151D004B1200
 // Write Channel ID
-ZBR(ZBS_W_CHANN, Z_SREQ | Z_SAPI, SAPI_WRITE_CONFIGURATION, CONF_CHANLIST, 0x04 /* len */,
+ZBR(ZBS_W_CHANN, Z_SREQ | Z_SYS, SYS_OSAL_NV_WRITE, CONF_CHANLIST,0x00, 0x00, 0x04 /* len */,
                 Z_B0(USE_ZIGBEE_CHANNEL_MASK), Z_B1(USE_ZIGBEE_CHANNEL_MASK), Z_B2(USE_ZIGBEE_CHANNEL_MASK), Z_B3(USE_ZIGBEE_CHANNEL_MASK),
-                /*0x00, 0x08, 0x00, 0x00*/ )				// 26058404xxxxxxxx
+                /*0x00, 0x08, 0x00, 0x00*/ )				// 210984000004xxxxxxxx
 // Write All Channels
 const uint32_t ZB_ALL_CHANNELS = 0x07FFF800;
-ZBR(ZBS_W_ALL_CHANN, Z_SREQ | Z_SAPI, SAPI_WRITE_CONFIGURATION, CONF_CHANLIST, 0x04 /* len */,
+ZBR(ZBS_W_ALL_CHANN, Z_SREQ | Z_SYS, SYS_OSAL_NV_WRITE, CONF_CHANLIST,0x00, 0x00, 0x04 /* len */,
                 Z_B0(ZB_ALL_CHANNELS), Z_B1(ZB_ALL_CHANNELS), Z_B2(ZB_ALL_CHANNELS), Z_B3(ZB_ALL_CHANNELS),
-                /*0x00, 0x08, 0x00, 0x00*/ )				// 2605840400F8FF7F
+                /*0x00, 0x08, 0x00, 0x00*/ )				// 21098400000400F8FF7F
 // Write Logical Type = 00 = coordinator
-ZBM(ZBS_W_LOGTYP_COORD,  Z_SREQ | Z_SAPI, SAPI_WRITE_CONFIGURATION, CONF_LOGICAL_TYPE, 0x01 /* len */, 0x00 )				// 2605870100
+ZBM(ZBS_W_LOGTYP_COORD,  Z_SREQ | Z_SYS, SYS_OSAL_NV_WRITE, CONF_LOGICAL_TYPE,0x00, 0x00, 0x01 /* len */, 0x00 )				// 21098700000100
 // Write Logical Type = 01 = router
-ZBM(ZBS_W_LOGTYP_ROUTER, Z_SREQ | Z_SAPI, SAPI_WRITE_CONFIGURATION, CONF_LOGICAL_TYPE, 0x01 /* len */, 0x01 )				// 2605870101
+ZBM(ZBS_W_LOGTYP_ROUTER, Z_SREQ | Z_SYS, SYS_OSAL_NV_WRITE, CONF_LOGICAL_TYPE,0x00, 0x00, 0x01 /* len */, 0x01 )				// 21098700000101
 // Write Logical Type = 02 = device
-ZBM(ZBS_W_LOGTYP_DEVICE, Z_SREQ | Z_SAPI, SAPI_WRITE_CONFIGURATION, CONF_LOGICAL_TYPE, 0x01 /* len */, 0x02 )				// 2605870102
+ZBM(ZBS_W_LOGTYP_DEVICE, Z_SREQ | Z_SYS, SYS_OSAL_NV_WRITE, CONF_LOGICAL_TYPE,0x00, 0x00, 0x01 /* len */, 0x02 )				// 21098700000102
 // Write precfgkey
-ZBR(ZBS_W_PFGK, Z_SREQ | Z_SAPI, SAPI_WRITE_CONFIGURATION, CONF_PRECFGKEY,
+ZBR(ZBS_W_PFGK, Z_SREQ | Z_SYS, SYS_OSAL_NV_WRITE, CONF_PRECFGKEY,0x00, 0x00,
                 0x10 /* len */,
                 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* key_l */
                 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* key_h */                /*0x01, 0x03, 0x05, 0x07, 0x09, 0x0B, 0x0D, 0x0F,
-                0x00, 0x02, 0x04, 0x06, 0x08, 0x0A, 0x0C, 0x0D*/ )				// 2605621001030507090B0D0F00020406080A0C0D
+                0x00, 0x02, 0x04, 0x06, 0x08, 0x0A, 0x0C, 0x0D*/ )				// 21096200001001030507090B0D0F00020406080A0C0D
 // Write precfgkey enable
-ZBM(ZBS_W_PFGKEN, Z_SREQ | Z_SAPI, SAPI_WRITE_CONFIGURATION, CONF_PRECFGKEYS_ENABLE, 0x01 /* len */, 0x00 )				// 2605630100
+ZBM(ZBS_W_PFGKEN, Z_SREQ | Z_SYS, SYS_OSAL_NV_WRITE, CONF_PRECFGKEYS_ENABLE,0x00, 0x00, 0x01 /* len */, 0x00 )				// 21096300000100
 // Write Security Mode
 ZBM(ZBS_WNV_SECMODE, Z_SREQ | Z_SYS, SYS_OSAL_NV_WRITE, Z_B0(CONF_TCLK_TABLE_START), Z_B1(CONF_TCLK_TABLE_START),
                       0x00 /* offset */, 0x20 /* len */,
@@ -237,7 +236,7 @@ ZBM(ZBS_WNV_SECMODE, Z_SREQ | Z_SYS, SYS_OSAL_NV_WRITE, Z_B0(CONF_TCLK_TABLE_STA
                       0x6c, 0x69, 0x61, 0x6e, 0x63, 0x65, 0x30, 0x39,
                       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00)				// 2109010100200FFFFFFFFFFFFFFFF5A6967426565416C6C69616E636530390000000000000000
 // Write Z_ZDO Direct CB
-ZBM(ZBS_W_ZDODCB, Z_SREQ | Z_SAPI, SAPI_WRITE_CONFIGURATION, CONF_ZDO_DIRECT_CB, 0x01 /* len */, 0x01 )				// 26058F0101
+ZBM(ZBS_W_ZDODCB, Z_SREQ | Z_SYS, SYS_OSAL_NV_WRITE, CONF_ZDO_DIRECT_CB,0x00, 0x00, 0x01 /* len */, 0x01 )				// 21098F00000101
 // NV Init ZNP Has Configured
 ZBM(ZBS_WNV_INITZNPHC, Z_SREQ | Z_SYS, SYS_OSAL_NV_ITEM_INIT, ZNP_HAS_CONFIGURED & 0xFF, ZNP_HAS_CONFIGURED >> 8,
                        0x01, 0x00 /* InitLen 16 bits */, 0x01 /* len */, 0x00 )  // 2107000F01000100 - 610709
@@ -321,47 +320,47 @@ ZBM(ZBR_PERMITJOIN_AREQ_RSP,  Z_AREQ | Z_ZDO, ZDO_MGMT_PERMIT_JOIN_RSP, 0x00, 0x
 void ZNP_UpdateConfig(uint8_t zb_channel, uint16_t zb_pan_id, uint64_t zb_ext_panid, uint64_t zb_precfgkey_l, uint64_t zb_precfgkey_h) {
   uint32_t zb_channel_mask = (1 << zb_channel);
 
-  ZBW(ZBR_PAN, Z_SRSP | Z_SAPI, SAPI_READ_CONFIGURATION, Z_SUCCESS, CONF_PANID, 0x02 /* len */,
-                Z_B0(zb_pan_id), Z_B1(zb_pan_id) )				// 6604008302xxxx
+  ZBW(ZBR_PAN, Z_SRSP | Z_SYS, SYS_OSAL_NV_READ, Z_SUCCESS, 0x02 /* len */,
+                Z_B0(zb_pan_id), Z_B1(zb_pan_id) )				// 61080002xxxx
 
-  ZBW(ZBR_EXTPAN, Z_SRSP | Z_SAPI, SAPI_READ_CONFIGURATION, Z_SUCCESS, CONF_EXTENDED_PAN_ID,
+  ZBW(ZBR_EXTPAN, Z_SRSP | Z_SYS, SYS_OSAL_NV_READ, Z_SUCCESS,
                   0x08 /* len */,
                   Z_B0(zb_ext_panid), Z_B1(zb_ext_panid), Z_B2(zb_ext_panid), Z_B3(zb_ext_panid),
                   Z_B4(zb_ext_panid), Z_B5(zb_ext_panid), Z_B6(zb_ext_panid), Z_B7(zb_ext_panid),
-                  )				// 6604002D08xxxxxxxxxxxxxxxx
+                  )				// 61080008xxxxxxxxxxxxxxxx
 
-  ZBW(ZBR_CHANN, Z_SRSP | Z_SAPI, SAPI_READ_CONFIGURATION, Z_SUCCESS, CONF_CHANLIST,
+  ZBW(ZBR_CHANN, Z_SRSP | Z_SYS, SYS_OSAL_NV_READ, Z_SUCCESS,
                 0x04 /* len */,
                 Z_B0(zb_channel_mask), Z_B1(zb_channel_mask), Z_B2(zb_channel_mask), Z_B3(zb_channel_mask),
-                )				// 6604008404xxxxxxxx
+                )				// 61080004xxxxxxxx
 
-  ZBW(ZBR_PFGK, Z_SRSP | Z_SAPI, SAPI_READ_CONFIGURATION, Z_SUCCESS, CONF_PRECFGKEY,
+  ZBW(ZBR_PFGK, Z_SRSP | Z_SYS, SYS_OSAL_NV_READ, Z_SUCCESS,
                 0x10 /* len */,
                 Z_B0(zb_precfgkey_l), Z_B1(zb_precfgkey_l), Z_B2(zb_precfgkey_l), Z_B3(zb_precfgkey_l),
                 Z_B4(zb_precfgkey_l), Z_B5(zb_precfgkey_l), Z_B6(zb_precfgkey_l), Z_B7(zb_precfgkey_l),
                 Z_B0(zb_precfgkey_h), Z_B1(zb_precfgkey_h), Z_B2(zb_precfgkey_h), Z_B3(zb_precfgkey_h),
                 Z_B4(zb_precfgkey_h), Z_B5(zb_precfgkey_h), Z_B6(zb_precfgkey_h), Z_B7(zb_precfgkey_h),
                 /*0x01, 0x03, 0x05, 0x07, 0x09, 0x0B, 0x0D, 0x0F,
-                0x00, 0x02, 0x04, 0x06, 0x08, 0x0A, 0x0C, 0x0D*/ )				// 660400621001030507090B0D0F00020406080A0C0D
+                0x00, 0x02, 0x04, 0x06, 0x08, 0x0A, 0x0C, 0x0D*/ )				// 6108001001030507090B0D0F00020406080A0C0D
 
-  ZBW(ZBS_W_PAN, Z_SREQ | Z_SAPI, SAPI_WRITE_CONFIGURATION, CONF_PANID, 0x02 /* len */, Z_B0(zb_pan_id), Z_B1(zb_pan_id)  )				// 26058302xxxx
+  ZBW(ZBS_W_PAN, Z_SREQ | Z_SYS, SYS_OSAL_NV_WRITE, CONF_PANID,0x00, 0x00, 0x02 /* len */, Z_B0(zb_pan_id), Z_B1(zb_pan_id)  )				// 210983000002xxxx
   // Write EXT PAN ID
-  ZBW(ZBS_W_EXTPAN, Z_SREQ | Z_SAPI, SAPI_WRITE_CONFIGURATION, CONF_EXTENDED_PAN_ID, 0x08 /* len */,
+  ZBW(ZBS_W_EXTPAN, Z_SREQ | Z_SYS, SYS_OSAL_NV_WRITE, CONF_EXTENDED_PAN_ID,0x00, 0x00, 0x08 /* len */,
                     Z_B0(zb_ext_panid), Z_B1(zb_ext_panid), Z_B2(zb_ext_panid), Z_B3(zb_ext_panid),
                     Z_B4(zb_ext_panid), Z_B5(zb_ext_panid), Z_B6(zb_ext_panid), Z_B7(zb_ext_panid)
-                    ) // 26052D086263151D004B1200
+                    ) // 21092D0000086263151D004B1200
   // Write Channel ID
-  ZBW(ZBS_W_CHANN, Z_SREQ | Z_SAPI, SAPI_WRITE_CONFIGURATION, CONF_CHANLIST, 0x04 /* len */,
+  ZBW(ZBS_W_CHANN, Z_SREQ | Z_SYS, SYS_OSAL_NV_WRITE, CONF_CHANLIST,0x00, 0x00, 0x04 /* len */,
                   Z_B0(zb_channel_mask), Z_B1(zb_channel_mask), Z_B2(zb_channel_mask), Z_B3(zb_channel_mask),
-                  /*0x00, 0x08, 0x00, 0x00*/ )				// 26058404xxxxxxxx
+                  /*0x00, 0x08, 0x00, 0x00*/ )				// 210984000004xxxxxxxx
   // Write precfgkey
-  ZBW(ZBS_W_PFGK, Z_SREQ | Z_SAPI, SAPI_WRITE_CONFIGURATION, CONF_PRECFGKEY,
+  ZBW(ZBS_W_PFGK, Z_SREQ | Z_SYS, SYS_OSAL_NV_WRITE, CONF_PRECFGKEY,0x00, 0x00,
                   0x10 /* len */,
                   Z_B0(zb_precfgkey_l), Z_B1(zb_precfgkey_l), Z_B2(zb_precfgkey_l), Z_B3(zb_precfgkey_l),
                   Z_B4(zb_precfgkey_l), Z_B5(zb_precfgkey_l), Z_B6(zb_precfgkey_l), Z_B7(zb_precfgkey_l),
                   Z_B0(zb_precfgkey_h), Z_B1(zb_precfgkey_h), Z_B2(zb_precfgkey_h), Z_B3(zb_precfgkey_h),
                   Z_B4(zb_precfgkey_h), Z_B5(zb_precfgkey_h), Z_B6(zb_precfgkey_h), Z_B7(zb_precfgkey_h),
-                  )				// 2605621001030507090B0D0F00020406080A0C0D
+                  )				// 21096200001001030507090B0D0F00020406080A0C0D
 }
 
 static const Zigbee_Instruction zb_prog[] PROGMEM = {
@@ -457,25 +456,25 @@ static const Zigbee_Instruction zb_prog[] PROGMEM = {
     //ZI_LOG(LOG_LEVEL_INFO, D_LOG_ZIGBEE "zigbee bad configuration of device, doing a factory reset")
     ZI_ON_ERROR_GOTO(ZIGBEE_LABEL_ABORT)
     ZI_SEND(ZBS_FACTRES)                          // factory reset
-    ZI_WAIT_RECV(1000, ZBR_W_OK)
+    ZI_WAIT_RECV(1000, ZBR_WNV_OK)
     ZI_SEND(ZBS_RESET)                            // reset device
     ZI_WAIT_RECV(5000, ZBR_RESET)
     ZI_SEND(ZBS_W_PAN)                            // write PAN ID
-    ZI_WAIT_RECV(1000, ZBR_W_OK)
+    ZI_WAIT_RECV(1000, ZBR_WNV_OK)
     ZI_SEND(ZBS_W_EXTPAN)                         // write EXT PAN ID
-    ZI_WAIT_RECV(1000, ZBR_W_OK)
+    ZI_WAIT_RECV(1000, ZBR_WNV_OK)
     ZI_SEND(ZBS_W_CHANN)                          // write CHANNEL
-    ZI_WAIT_RECV(1000, ZBR_W_OK)
+    ZI_WAIT_RECV(1000, ZBR_WNV_OK)
     ZI_SEND(ZBS_W_LOGTYP_COORD)                   // write Logical Type = coordinator
-    ZI_WAIT_RECV(1000, ZBR_W_OK)
+    ZI_WAIT_RECV(1000, ZBR_WNV_OK)
     ZI_SEND(ZBS_W_PFGK)                           // write PRECFGKEY
-    ZI_WAIT_RECV(1000, ZBR_W_OK)
+    ZI_WAIT_RECV(1000, ZBR_WNV_OK)
     ZI_SEND(ZBS_W_PFGKEN)                         // write PRECFGKEY Enable
-    ZI_WAIT_RECV(1000, ZBR_W_OK)
+    ZI_WAIT_RECV(1000, ZBR_WNV_OK)
     ZI_SEND(ZBS_WNV_SECMODE)                      // write Security Mode
     ZI_WAIT_RECV(1000, ZBR_WNV_OKE)               // Tolerate error for ZNP 3.x
     ZI_SEND(ZBS_W_ZDODCB)                         // write Z_ZDO Direct CB
-    ZI_WAIT_RECV(1000, ZBR_W_OK)
+    ZI_WAIT_RECV(1000, ZBR_WNV_OK)
     // Now mark the device as ready, writing 0x55 in memory slot 0x0F00
     ZI_SEND(ZBS_WNV_INITZNPHC)                    // Init NV ZNP Has Configured
     ZI_WAIT_RECV_FUNC(1000, ZBR_WNV_INIT_OK, &ZNP_CheckNVWrite)
@@ -513,16 +512,16 @@ static const Zigbee_Instruction zb_prog[] PROGMEM = {
     ZI_MQTT_STATE(ZIGBEE_STATUS_RESET_CONF, kResetting)
     ZI_ON_ERROR_GOTO(ZIGBEE_LABEL_ABORT)
     ZI_SEND(ZBS_FACTRES)                          // factory reset
-    ZI_WAIT_RECV(1000, ZBR_W_OK)
+    ZI_WAIT_RECV(1000, ZBR_WNV_OK)
     ZI_SEND(ZBS_RESET)                            // reset device
     ZI_WAIT_RECV(5000, ZBR_RESET)
     ZI_SEND(ZBS_W_LOGTYP_ROUTER)                  // write Logical Type = router
-    ZI_WAIT_RECV(1000, ZBR_W_OK)
+    ZI_WAIT_RECV(1000, ZBR_WNV_OK)
   ZI_LABEL(ZIGBEE_LABEL_FACT_RESET_ROUTER_DEVICE_POST)
     ZI_SEND(ZBS_W_ALL_PAN)                        // write universal PAN ID = 0xFFFF
-    ZI_WAIT_RECV(1000, ZBR_W_OK)
+    ZI_WAIT_RECV(1000, ZBR_WNV_OK)
     ZI_SEND(ZBS_W_ALL_CHANN)                      // write Allows all CHANNELS = 0x07FFF800, 11-26
-    ZI_WAIT_RECV(1000, ZBR_W_OK)
+    ZI_WAIT_RECV(1000, ZBR_WNV_OK)
 
     // Now mark the device as ready, writing 0x55 in memory slot 0x0F00
     ZI_SEND(ZBS_WNV_INITZNPHC)                    // Init NV ZNP Has Configured
@@ -550,11 +549,11 @@ static const Zigbee_Instruction zb_prog[] PROGMEM = {
     ZI_MQTT_STATE(ZIGBEE_STATUS_RESET_CONF, kResetting)
     ZI_ON_ERROR_GOTO(ZIGBEE_LABEL_ABORT)
     ZI_SEND(ZBS_FACTRES)                          // factory reset
-    ZI_WAIT_RECV(1000, ZBR_W_OK)
+    ZI_WAIT_RECV(1000, ZBR_WNV_OK)
     ZI_SEND(ZBS_RESET)                            // reset device
     ZI_WAIT_RECV(5000, ZBR_RESET)
     ZI_SEND(ZBS_W_LOGTYP_DEVICE)                  // write Logical Type = router
-    ZI_WAIT_RECV(1000, ZBR_W_OK)
+    ZI_WAIT_RECV(1000, ZBR_WNV_OK)
     ZI_GOTO(ZIGBEE_LABEL_FACT_RESET_ROUTER_DEVICE_POST)
 
   // Error: version of Z-Stack is not supported
