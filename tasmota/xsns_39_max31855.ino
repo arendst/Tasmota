@@ -35,6 +35,7 @@ struct MAX31855_ResultStruct {
   uint8_t ErrorCode;                  // Error Codes: 0 = No Error / 1 = TC open circuit / 2 = TC short to GND / 4 = TC short to VCC
   float ProbeTemperature;             // Measured temperature of the 'hot' TC junction (probe temp)
   float ReferenceTemperature;         // Measured temperature of the 'cold' TC junction (reference temp)
+  float ResultingTemperature;         // Probe + Reference-temperature, as the Probetemperatur is the delta to Referencetemperatur. The sum of both is the real temperature at the probe
 } MAX31855_Result;
 
 void MAX31855_Init(void) {
@@ -123,6 +124,7 @@ void MAX31855_GetResult(void) {
 
     MAX31855_Result.ErrorCode = 0;
     MAX31855_Result.ReferenceTemperature = NAN;
+    MAX31855_Result.ResultingTemperature = NAN;    
     MAX31855_Result.ProbeTemperature = ConvertTemp(0.25 * temp);
   } else {
     int32_t RawData = MAX31855_ShiftIn(32);
@@ -134,6 +136,7 @@ void MAX31855_GetResult(void) {
       MAX31855_Result.ProbeTemperature = NAN;    // Return NaN if MAX31855 reports an error
     } else {
       MAX31855_Result.ProbeTemperature = MAX31855_GetProbeTemperature(RawData);
+      MAX31855_Result.ResultingTemperature = MAX31855_Result.ProbeTemperature + MAX31855_Result.ReferenceTemperature
     }
   }
 }
@@ -143,10 +146,11 @@ void MAX31855_Show(bool Json) {
   GetTextIndexed(sensor_name, sizeof(sensor_name), Settings.flag4.max6675, kMax31855Types);
 
   if (Json) {
-    ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_TEMPERATURE "\":%*_f,\"" D_JSON_REFERENCETEMPERATURE "\":%*_f,\"" D_JSON_ERROR "\":%d}"), \
+    ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_TEMPERATURE "\":%*_f,\"" D_JSON_RESULTINGTEMPERATURE "\":%*_f,\"" D_JSON_REFERENCETEMPERATURE "\":%*_f,\"" D_JSON_ERROR "\":%d}"), \
       sensor_name,
       Settings.flag2.temperature_resolution, &MAX31855_Result.ProbeTemperature,
       Settings.flag2.temperature_resolution, &MAX31855_Result.ReferenceTemperature,
+      Settings.flag2.temperature_resolution, &MAX31855_Result.ResultingTemperature,
       MAX31855_Result.ErrorCode);
 #ifdef USE_DOMOTICZ
     if (0 == TasmotaGlobal.tele_period) {
