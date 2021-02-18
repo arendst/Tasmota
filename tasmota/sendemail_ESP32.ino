@@ -5,12 +5,14 @@
 
 #ifdef ESP8266
 #ifndef SEND_MAIL32_MINRAM
+#undef SEND_MAIL32_MINRAM
 #define SEND_MAIL32_MINRAM 13*1024
 #endif
 #endif // ESP8266
 
 #ifdef ESP32
 #ifndef SEND_MAIL32_MINRAM
+#undef SEND_MAIL32_MINRAM
 #define SEND_MAIL32_MINRAM 30*1024
 #endif
 #endif // ESP32
