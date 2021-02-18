@@ -24,7 +24,8 @@ uint8_t num_attachments;
 void script_send_email_body(void(*func)(char *));
 String html_content = "";
 SMTP_Message *email_mptr;
-SMTPSession smtp;
+SMTPSession *smtp;
+//SMTPSession smtp;
 void smtpCallback(SMTP_Status status);
 
 //#define DEBUG_EMAIL_PORT
@@ -46,7 +47,10 @@ uint16_t SendMail(char *buffer) {
   ESP_Mail_Session session;
   SMTP_Message message;
   email_mptr = &message;
-
+  smtp = new SMTPSession();
+  if (!smtp) {
+   return 4;
+  }
   // return if not enough memory
   uint32_t mem = ESP.getFreeHeap();
   //AddLog(LOG_LEVEL_INFO, PSTR("heap: %d"),mem);
@@ -169,9 +173,9 @@ uint16_t SendMail(char *buffer) {
 #endif
 
 
-  //smtp.debug(true);
-  smtp.debug(false);
-//  smtp.callback(smtpCallback);
+  //smtp->debug(true);
+  smtp->debug(false);
+//  smtp->callback(smtpCallback);
 
   message.clearRecipients();
   message.clearCc();
@@ -215,17 +219,18 @@ uint16_t SendMail(char *buffer) {
 
   /* Connect to server with the session config */
   delay(0);
-  if (!smtp.connect(&session))
+  if (!smtp->connect(&session))
     goto exit;
 
   /* Start sending the Email and close the session */
   delay(0);
 
-  if (!MailClient.sendMail(&smtp, &message, true)) {
-    Serial.println("Error sending Email, " + smtp.errorReason());
+  if (!MailClient.sendMail(smtp, &message, true)) {
+    Serial.println("Error sending Email, " + smtp->errorReason());
   }
 
 exit:
+  if (smtp) delete smtp;
   for (uint32_t cnt = 0; cnt < MAX_ATTCHMENTS; cnt++) {
     if (attachments[cnt]) {
       free(attachments[cnt]);
@@ -351,10 +356,10 @@ if (status.success())
   Serial.println("----------------\n");
   struct tm dt;
 
-  for (size_t i = 0; i < smtp.sendingResult.size(); i++)
+  for (size_t i = 0; i < smtp->sendingResult.size(); i++)
   {
     /* Get the result item */
-    SMTP_Result result = smtp.sendingResult.getItem(i);
+    SMTP_Result result = smtp->sendingResult.getItem(i);
     localtime_r(&result.timesstamp, &dt);
 
     Serial.printf("Message No: %d\n", i + 1);
