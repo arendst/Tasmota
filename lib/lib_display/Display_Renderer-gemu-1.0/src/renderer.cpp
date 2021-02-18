@@ -540,14 +540,10 @@ void Renderer::drawPixel(int16_t x, int16_t y, uint16_t color) {
 
 }
 
-extern uint16_t index_colors[MAX_INDEXCOLORS];
 
 // this is called for every driver
 void Renderer::setDrawMode(uint8_t mode) {
   drawmode=mode;
-  for (uint32_t count = 0; count < MAX_INDEXCOLORS; count++) {
-    index_colors[count] = GetColorFromIndex(count);
-  }
 }
 
 void Renderer::invertDisplay(boolean i) {

@@ -5,6 +5,7 @@
 
 
   Copyright (C) 2020  Christian Baars and Theo Arends
+  Also Simon Hailes and Robert Klauco 
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -23,6 +24,9 @@
   --------------------------------------------------------------------------------------------
   Version yyyymmdd  Action    Description
   --------------------------------------------------------------------------------------------
+  0.9.2.1 20210217  changed - make features alos depend on received data - i.e. 'unknown' devices will show what they send.
+                              Add MI32Option6 1 to switch to tele/tasmota_ble/<somename> style MQTT independent of HASS discovery.
+  -------
   0.9.2.0 20210127  changed - Officially includes as the mi driver when using USE_BLE_ESP32.
   -------
   0.9.1.9 20201226  changed - All change now.
@@ -124,6 +128,7 @@ struct {
     uint32_t ignoreBogusBattery:1;
     uint32_t minimalSummary:1;   // DEPRECATED!!
     uint32_t onlyAliased:1;      // only include sensors that are aliased
+    uint32_t MQTTType:1;
   } option;
 } MI32;
 
@@ -279,6 +284,8 @@ struct mi_sensor_t{
       uint32_t NMT:1;
       uint32_t PIR:1;
       uint32_t Btn:1;
+      uint32_t events:1;
+      uint32_t pairing:1;
     };
     uint32_t raw;
   } feature;
@@ -369,8 +376,9 @@ void (*const MI32_Commands[])(void) PROGMEM = {
 #define MI_MHOC401     11
 #define MI_MHOC303     12
 #define MI_ATC         13
+#define MI_DOOR        14
 
-#define MI_MI32_TYPES    13 //count this manually
+#define MI_MI32_TYPES    14 //count this manually
 
 const uint16_t kMI32DeviceID[MI_MI32_TYPES]={
   0x0000, // Unkown
@@ -385,7 +393,8 @@ const uint16_t kMI32DeviceID[MI_MI32_TYPES]={
   0x0153, // yee-rc
   0x0387, // MHO-C401
   0x06d3, // MHO-C303
-  0x0a1c  // ATC -> this is a fake ID
+  0x0a1c,  // ATC -> this is a fake ID
+  0x098b  // door/window sensor
 };
 
 const char kMI32DeviceType0[] PROGMEM = "Unknown";
@@ -401,7 +410,8 @@ const char kMI32DeviceType9[] PROGMEM = "YEERC";
 const char kMI32DeviceType10[] PROGMEM ="MHOC401";
 const char kMI32DeviceType11[] PROGMEM ="MHOC303";
 const char kMI32DeviceType12[] PROGMEM ="ATC";
-const char * kMI32DeviceType[] PROGMEM = {kMI32DeviceType0,kMI32DeviceType1,kMI32DeviceType2,kMI32DeviceType3,kMI32DeviceType4,kMI32DeviceType5,kMI32DeviceType6,kMI32DeviceType7,kMI32DeviceType8,kMI32DeviceType9,kMI32DeviceType10,kMI32DeviceType11,kMI32DeviceType12};
+const char kMI32DeviceType13[] PROGMEM ="DOOR";
+const char * kMI32DeviceType[] PROGMEM = {kMI32DeviceType0,kMI32DeviceType1,kMI32DeviceType2,kMI32DeviceType3,kMI32DeviceType4,kMI32DeviceType5,kMI32DeviceType6,kMI32DeviceType7,kMI32DeviceType8,kMI32DeviceType9,kMI32DeviceType10,kMI32DeviceType11,kMI32DeviceType12,kMI32DeviceType13};
 
 typedef int BATREAD_FUNCTION(int slot);
 typedef int UNITWRITE_FUNCTION(int slot, int unit);
@@ -1406,6 +1416,7 @@ uint32_t MIBLEgetSensorSlot(const uint8_t *mac, uint16_t _type, uint8_t counter)
       _newSensor.events=0x00;
       _newSensor.feature.PIR=1;
       _newSensor.feature.NMT=1;
+      _newSensor.feature.events=1;
       break;
     case MI_MJYD2S:
       _newSensor.NMT=0;
@@ -1414,8 +1425,10 @@ uint32_t MIBLEgetSensorSlot(const uint8_t *mac, uint16_t _type, uint8_t counter)
       _newSensor.feature.NMT=1;
       _newSensor.feature.lux=1;
       _newSensor.feature.bat=1;
+      _newSensor.feature.events=1;
       break;
     case MI_YEERC:
+    case MI_DOOR:
       _newSensor.feature.Btn=1;
       break;
     default:
@@ -1633,15 +1646,25 @@ int MI32parseMiPayload(int _slot, struct mi_beacon_data_t *parsed){
   char tmp[20];
   BLE_ESP32::dump(tmp, 20, (uint8_t*)&(parsed->payload), parsed->payload.size+3);
   if (BLE_ESP32::BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG_MORE,PSTR("M32: MI%d payload %s"), _slot, tmp);
+  
+  // clear this for every payload
+  MIBLEsensors[_slot].pairing = 0;
+  MIBLEsensors[_slot].eventType.PairBtn = 0;
 
   switch(parsed->payload.type){
     case 0x01: // button press
       MIBLEsensors[_slot].Btn = pld->Btn.num + (pld->Btn.longPress/2)*6;
+      MIBLEsensors[_slot].feature.Btn = 1;
       MIBLEsensors[_slot].eventType.Btn = 1;
       MI32.mode.shallTriggerTele = 1;
+      MIBLEsensors[_slot].shallSendMQTT = 1;
       break;
-    case 0x02:
-      res = 0;
+    case 0x02: // related to pair button?
+      MIBLEsensors[_slot].pairing = 1;
+      MIBLEsensors[_slot].eventType.PairBtn = 1;
+      MIBLEsensors[_slot].feature.pairing = 1;
+      MI32.mode.shallTriggerTele = 1;
+      MIBLEsensors[_slot].shallSendMQTT = 1;
       break;
     case 0x03: {// motion? 1 byte
       uint8_t motion = parsed->payload.data[0];
@@ -1651,6 +1674,7 @@ int MI32parseMiPayload(int _slot, struct mi_beacon_data_t *parsed){
       float _tempFloat=(float)(pld->temp)/10.0f;
       if(_tempFloat<60){
         MIBLEsensors[_slot].temp=_tempFloat;
+        MIBLEsensors[_slot].feature.temp = 1;
         MIBLEsensors[_slot].eventType.temp = 1;
         if (BLE_ESP32::BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG_MORE,PSTR("M32: Mode 4: temp updated"));
       } else {
@@ -1662,6 +1686,7 @@ int MI32parseMiPayload(int _slot, struct mi_beacon_data_t *parsed){
       float _tempFloat=(float)(pld->hum)/10.0f;
       if(_tempFloat<101){
         MIBLEsensors[_slot].hum=_tempFloat;
+        MIBLEsensors[_slot].feature.hum = 1;
         MIBLEsensors[_slot].eventType.hum = 1;
         if (BLE_ESP32::BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG_MORE,PSTR("M32: Mode 6: hum updated"));
       } else {
@@ -1675,17 +1700,20 @@ int MI32parseMiPayload(int _slot, struct mi_beacon_data_t *parsed){
         MIBLEsensors[_slot].eventType.noMotion  = 1;
       }
       MIBLEsensors[_slot].eventType.lux  = 1;
+      MIBLEsensors[_slot].feature.lux = 1;
       // AddLog(LOG_LEVEL_DEBUG,PSTR("M32: Mode 7: U24: %u Lux"), _beacon.lux & 0x00ffffff);
     break;
     case 0x08:
       MIBLEsensors[_slot].moisture=pld->moist;
       MIBLEsensors[_slot].eventType.moist  = 1;
+      MIBLEsensors[_slot].feature.moist = 1;
       if (BLE_ESP32::BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG_MORE,PSTR("M32: Mode 8: moisture updated"));
       // AddLog(LOG_LEVEL_DEBUG,PSTR("M32: Mode 8: U8: %u Moisture"), _beacon.moist);
     break;
     case 0x09: // 'conductivity'
       MIBLEsensors[_slot].fertility=pld->fert;
       MIBLEsensors[_slot].eventType.fert  = 1;
+      MIBLEsensors[_slot].feature.fert = 1;
       if (BLE_ESP32::BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG_MORE,PSTR("M32: Mode 9: fertility updated"));
       // AddLog(LOG_LEVEL_DEBUG,PSTR("M32: Mode 9: U16: %u Fertility"), _beacon.fert);
     break;
@@ -1696,6 +1724,7 @@ int MI32parseMiPayload(int _slot, struct mi_beacon_data_t *parsed){
           break;
         }
       }
+      MIBLEsensors[_slot].feature.bat = 1;
       if(pld->bat<101){
         MIBLEsensors[_slot].bat = pld->bat;
         MIBLEsensors[_slot].eventType.bat  = 1;
@@ -1708,6 +1737,7 @@ int MI32parseMiPayload(int _slot, struct mi_beacon_data_t *parsed){
       // AddLog(LOG_LEVEL_DEBUG,PSTR("M32: Mode a: U8: %u %%"), _beacon.bat);
     break;
     case 0x0d:{
+      MIBLEsensors[_slot].feature.tempHum = 1;
       float _tempFloat=(float)(pld->HT.temp)/10.0f;
       if(_tempFloat < 60){
         MIBLEsensors[_slot].temp = _tempFloat;
@@ -1734,6 +1764,11 @@ int MI32parseMiPayload(int _slot, struct mi_beacon_data_t *parsed){
       MIBLEsensors[_slot].eventType.lux = 1;
       MIBLEsensors[_slot].NMT = 0;
       MI32.mode.shallTriggerTele = 1;
+      MIBLEsensors[_slot].shallSendMQTT = 1;
+      MIBLEsensors[_slot].feature.lux = 1;
+      MIBLEsensors[_slot].feature.NMT = 1;
+      MIBLEsensors[_slot].feature.events=1;
+
       // AddLog(LOG_LEVEL_DEBUG,PSTR("M32: PIR: primary"),MIBLEsensors[_slot].lux );
     break;
     case 0x10:{ // 'formaldehide'
@@ -1758,7 +1793,18 @@ int MI32parseMiPayload(int _slot, struct mi_beacon_data_t *parsed){
       MIBLEsensors[_slot].NMT = pld->NMT;
       MIBLEsensors[_slot].eventType.NMT = 1;
       MI32.mode.shallTriggerTele = 1;
+      MIBLEsensors[_slot].shallSendMQTT = 1;
+      MIBLEsensors[_slot].feature.NMT = 1;
+
       // AddLog(LOG_LEVEL_DEBUG,PSTR("M32: Mode 17: NMT: %u seconds"), _beacon.NMT);
+    } break;
+
+    case 0x19:{
+      MIBLEsensors[_slot].Btn = uint8_t(parsed->payload.data[0]); // just an 8 bit value in a union.
+      MIBLEsensors[_slot].eventType.Btn = 1;
+      MI32.mode.shallTriggerTele = 1;
+      MIBLEsensors[_slot].shallSendMQTT = 1;
+      MIBLEsensors[_slot].feature.Btn = 1;
     } break;
 
     default: {
@@ -1894,10 +1940,12 @@ void MI32EverySecond(bool restart){
 //  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("M32: onesec"));
   MI32TimeoutSensors();
 
-  MI32ShowSomeSensors();
-
-  MI32DiscoveryOneMISensor();
-  MI32ShowOneMISensor();
+  if (MI32.option.MQTTType == 0){
+    MI32ShowSomeSensors();
+  } else { 
+    MI32DiscoveryOneMISensor();
+    MI32ShowOneMISensor();
+  }
 
   // read a battery if
   // MI32.batteryreader.slot < filled and !MI32.batteryreader.active
@@ -2122,16 +2170,24 @@ void CmndMi32Option(void){
   bool onOff = atoi(XdrvMailbox.data);
   switch(XdrvMailbox.index) {
     case 0:
-      MI32.option.allwaysAggregate = onOff;
+      MI32.option.allwaysAggregate = onOff;  
+      ResponseCmndIdxNumber(onOff);
+      return;
       break;
     case 1:
       MI32.option.noSummary = onOff;
+      ResponseCmndIdxNumber(onOff);
+      return;
       break;
     case 2:
       MI32.option.directBridgeMode = onOff;
+      ResponseCmndIdxNumber(onOff);
+      return;
       break;
     case 4:{
       MI32.option.ignoreBogusBattery = onOff;
+      ResponseCmndIdxNumber(onOff);
+      return;
     } break;
     case 5:{
       MI32.option.onlyAliased = onOff;
@@ -2139,9 +2195,17 @@ void CmndMi32Option(void){
         // discard all sensors for a restart
         MIBLEsensors.clear();
       }
+      ResponseCmndIdxNumber(onOff);
+      return;
     } break;
+    case 6:{
+      MI32.option.MQTTType = onOff;
+      ResponseCmndIdxNumber(onOff);
+      return;
+    } break;
+    
   }
-  ResponseCmndDone();
+  ResponseCmndIdxError();
 }
 
 void MI32KeyListResp(){
@@ -2239,7 +2303,7 @@ void CmndMi32Keys(void){
  * Presentation
 \*********************************************************************************************/
 
-const char HTTP_MI32[] PROGMEM = "{s}MI ESP32 v0920{m}%u%s / %u{e}";
+const char HTTP_MI32[] PROGMEM = "{s}MI ESP32 v0921{m}%u%s / %u{e}";
 const char HTTP_MI32_ALIAS[] PROGMEM = "{s}%s Alias {m}%s{e}";
 const char HTTP_MI32_MAC[] PROGMEM = "{s}%s %s{m}%s{e}";
 const char HTTP_RSSI[] PROGMEM = "{s}%s " D_RSSI "{m}%d dBm{e}";
@@ -2517,9 +2581,13 @@ void MI32ShowSomeSensors(){
 
   ResponseTime_P(PSTR(""));
   int cnt = 0;
-  for (; (MI32.mqttCurrentSlot < numsensors) && (cnt < 4); MI32.mqttCurrentSlot++, cnt++) {
+  int maxcnt = 4;
+  mi_sensor_t *p;
+  for (; (MI32.mqttCurrentSlot < numsensors) && (cnt < maxcnt); MI32.mqttCurrentSlot++, cnt++) {
     ResponseAppend_P(PSTR(","));
-    MI32GetOneSensorJson(MI32.mqttCurrentSlot, 0);
+    p = &MIBLEsensors[MI32.mqttCurrentSlot];
+
+    MI32GetOneSensorJson(MI32.mqttCurrentSlot, (maxcnt == 1));
     int mlen = strlen(TasmotaGlobal.mqtt_data);
 
     // if we ran out of room, leave here.
@@ -2527,6 +2595,7 @@ void MI32ShowSomeSensors(){
       MI32.mqttCurrentSlot++;
       break;
     }
+    cnt++;
   }
   ResponseAppend_P(PSTR("}"));
   MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
@@ -2557,8 +2626,13 @@ void MI32ShowOneMISensor(){
     return;
   }
 
+  if(
 #ifdef USE_HOME_ASSISTANT
-  if(Settings.flag.hass_discovery){
+    Settings.flag.hass_discovery
+    ||
+#endif //USE_HOME_ASSISTANT
+    MI32.option.MQTTType == 1
+    ){
 
     ResponseTime_P(PSTR(","));
     MI32GetOneSensorJson(MI32.mqttCurrentSingleSlot, 1);
@@ -2584,7 +2658,6 @@ void MI32ShowOneMISensor(){
     MqttPublish(SensorTopic);
     //AddLog_P(LOG_LEVEL_DEBUG,PSTR("M32: %s: show some %d %s"),D_CMND_MI32, MI32.mqttCurrentSlot, TasmotaGlobal.mqtt_data);
   }
-#endif //USE_HOME_ASSISTANT
   MI32.mqttCurrentSingleSlot++;
 }
 
@@ -2739,18 +2812,31 @@ void MI32ShowTriggeredSensors(){
 
   int sensor = 0;
 
+  int maxcnt = 4;
+  if(
+#ifdef USE_HOME_ASSISTANT
+    Settings.flag.hass_discovery
+    ||
+#endif //USE_HOME_ASSISTANT
+    MI32.option.MQTTType == 1
+    ){
+    maxcnt = 1;
+  }
+
+
   do {
     ResponseTime_P(PSTR(""));
     int cnt = 0;
-    for (; (sensor < numsensors) && (cnt < 4); sensor++) {
-      mi_sensor_t *p;
+    mi_sensor_t *p;
+    for (; (sensor < numsensors) && (cnt < maxcnt); sensor++) {
       p = &MIBLEsensors[sensor];
       if(p->eventType.raw == 0) continue;
       if(p->shallSendMQTT==0) continue;
 
       cnt++;
       ResponseAppend_P(PSTR(","));
-      MI32GetOneSensorJson(sensor, 0);
+      // hide sensor name if HASS or option6
+      MI32GetOneSensorJson(sensor, (maxcnt == 1));
       int mlen = strlen(TasmotaGlobal.mqtt_data);
 
       // if we ran out of room, leave here.
@@ -2761,7 +2847,30 @@ void MI32ShowTriggeredSensors(){
     }
     if (cnt){ // if we got one, then publish
       ResponseAppend_P(PSTR("}"));
-      MqttPublishPrefixTopic_P(STAT, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
+      if(
+    #ifdef USE_HOME_ASSISTANT
+        Settings.flag.hass_discovery
+        ||
+    #endif //USE_HOME_ASSISTANT
+        MI32.option.MQTTType == 1
+        ){
+        char SensorTopic[60];
+        char idstr[32];
+        const char *alias = BLE_ESP32::getAlias(p->MAC);
+        const char *id = idstr;
+        if (alias && *alias){
+          id = alias;
+        } else {
+          sprintf(idstr, PSTR("%s%02x%02x%02x"),
+                kMI32DeviceType[p->type-1],
+                p->MAC[3], p->MAC[4], p->MAC[5]);
+        }
+        sprintf(SensorTopic, "tele/tasmota_ble/%s",
+          id);
+        MqttPublish(SensorTopic);
+      } else {
+        MqttPublishPrefixTopic_P(STAT, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
+      }
       AddLog(LOG_LEVEL_DEBUG,PSTR("M32: %s: triggered %d %s"),D_CMND_MI32, sensor, TasmotaGlobal.mqtt_data);
 
 #ifdef USE_RULES
@@ -2877,21 +2986,25 @@ void MI32Show(bool json)
         WSContentSend_PD(HTTP_NEEDKEY, typeName, _MAC, Webserver->client().localIP().toString().c_str(), tmp );
       }
 
-      if (p->type==MI_NLIGHT || p->type==MI_MJYD2S) {
-#else
-      if (p->type==MI_NLIGHT) {
 #endif //USE_MI_DECRYPTION
+
+      if (p->feature.events){
         WSContentSend_PD(HTTP_EVENTS, typeName, p->events);
+      }
+      if (p->feature.NMT){
+        // no motion time
         if(p->NMT>0) WSContentSend_PD(HTTP_NMT, typeName, p->NMT);
       }
 
-      if (p->lux!=0x00ffffff) { // this is the error code -> no valid value
-        WSContentSend_PD(HTTP_SNS_ILLUMINANCE, typeName, p->lux);
+      if (p->feature.lux){
+        if (p->lux!=0x00ffffff) { // this is the error code -> no valid value
+          WSContentSend_PD(HTTP_SNS_ILLUMINANCE, typeName, p->lux);
+        }
       }
       if(p->bat!=0x00){
           WSContentSend_PD(HTTP_BATTERY, typeName, p->bat);
       }
-      if (p->type==MI_YEERC){
+      if (p->feature.Btn){
         WSContentSend_PD(HTTP_LASTBUTTON, typeName, p->Btn);
       }
       if (p->pairing){

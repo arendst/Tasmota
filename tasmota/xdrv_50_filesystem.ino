@@ -279,7 +279,7 @@ bool TfsFileExists(const char *fname){
 
   bool yes = ffsp->exists(fname);
   if (!yes) {
-    AddLog(LOG_LEVEL_INFO, PSTR("TFS: File not found"));
+    AddLog(LOG_LEVEL_DEBUG, PSTR("TFS: File not found"));
   }
   return yes;
 }
@@ -353,14 +353,14 @@ bool TfsRenameFile(const char *fname1, const char *fname2) {
  * File command execute support
 \*********************************************************************************************/
 
-bool FileRunReady(void) {
+bool UfsExecuteCommandFileReady(void) {
   return (UfsData.run_file_pos < 0);   // Check file ready to disable concurrency
 }
 
-void FileRunLoop(void) {
-  if (FileRunReady() || !ffs_type) { return; }
+void UfsExecuteCommandFileLoop(void) {
+  if (UfsExecuteCommandFileReady() || !ffs_type) { return; }
 
-  if (strlen(UfsData.run_file) && !UfsData.run_file_mutex) {
+  if (TimeReached(TasmotaGlobal.backlog_timer) && strlen(UfsData.run_file) && !UfsData.run_file_mutex) {
     File file = ffsp->open(UfsData.run_file, "r");
     if (!file || !file.seek(UfsData.run_file_pos)) {
       UfsData.run_file_pos = -1;       // Signal file ready
@@ -401,7 +401,11 @@ void FileRunLoop(void) {
     UfsData.run_file_pos = (file.available()) ? file.position() : -1;
     file.close();
     if (strlen(cmd_line)) {
+      bool nodelay = (!(!strncasecmp_P(cmd_line, PSTR(D_CMND_DELAY), strlen(D_CMND_DELAY))));
       ExecuteCommand(cmd_line, SRC_FILE);
+      if (nodelay) {
+        TasmotaGlobal.backlog_timer = millis();  // Reset backlog_timer which has been set by ExecuteCommand (CommandHandler)
+      }
     }
 
     UfsData.run_file_mutex = false;
@@ -410,7 +414,7 @@ void FileRunLoop(void) {
 
 bool UfsExecuteCommandFile(const char *fname) {
   // Check for non-concurrency and file existance
-  if (FileRunReady() && TfsFileExists(fname)) {
+  if (UfsExecuteCommandFileReady() && TfsFileExists(fname)) {
     snprintf(UfsData.run_file, sizeof(UfsData.run_file), fname);
     UfsData.run_file_pos = 0;          // Signal start of file
     return true;
@@ -471,7 +475,7 @@ void UFSDelete(void) {
       result = (ufs_type && ufsp->remove(XdrvMailbox.data));
     }
     if (!result) {
-      ResponseCmndChar(PSTR(D_JSON_FAILED));
+      ResponseCmndFailed();
     } else {
       ResponseCmndDone();
     }
@@ -493,7 +497,7 @@ void UFSRename(void) {
       }
     }
     if (!result) {
-      ResponseCmndChar(PSTR(D_JSON_FAILED));
+      ResponseCmndFailed();
     } else {
       ResponseCmndDone();
     }
@@ -505,8 +509,12 @@ void UFSRun(void) {
     if (UfsExecuteCommandFile(XdrvMailbox.data)) {
       ResponseClear();
     } else {
-      ResponseCmndChar(PSTR(D_JSON_FAILED));
+      ResponseCmndFailed();
     }
+  } else {
+    bool not_active = UfsExecuteCommandFileReady();
+    UfsData.run_file_pos = -1;
+    ResponseCmndChar(not_active ? PSTR(D_JSON_DONE) : PSTR(D_JSON_ABORTED));
   }
 }
 
@@ -864,6 +872,9 @@ bool Xdrv50(uint8_t function) {
   bool result = false;
 
   switch (function) {
+    case FUNC_LOOP:
+      UfsExecuteCommandFileLoop();
+      break;
 #ifdef USE_SDCARD
     case FUNC_PRE_INIT:
       UfsCheckSDCardInit();

@@ -233,9 +233,9 @@ NimBLECharacteristic* NimBLEService::createCharacteristic(const char* uuid, uint
  */
 NimBLECharacteristic* NimBLEService::createCharacteristic(const NimBLEUUID &uuid, uint32_t properties) {
     NimBLECharacteristic* pCharacteristic = new NimBLECharacteristic(uuid, properties, this);
-    // Check that we don't add the same characteristic twice.
+
     if (getCharacteristic(uuid) != nullptr) {
-        NIMBLE_LOGW(LOG_TAG, "<< Adding a duplicate characteristic with UUID: %s",
+        NIMBLE_LOGD(LOG_TAG, "<< Adding a duplicate characteristic with UUID: %s",
                              std::string(uuid).c_str());
     }
 
@@ -249,28 +249,72 @@ NimBLECharacteristic* NimBLEService::createCharacteristic(const NimBLEUUID &uuid
 /**
  * @brief Get a pointer to the characteristic object with the specified UUID.
  * @param [in] uuid The UUID of the characteristic.
+ * @param instanceId The index of the characteristic to return (used when multiple characteristics have the same UUID).
  * @return A pointer to the characteristic object or nullptr if not found.
  */
-NimBLECharacteristic* NimBLEService::getCharacteristic(const char* uuid) {
-    return getCharacteristic(NimBLEUUID(uuid));
+NimBLECharacteristic* NimBLEService::getCharacteristic(const char* uuid, uint16_t instanceId) {
+    return getCharacteristic(NimBLEUUID(uuid), instanceId);
 }
-
 
 /**
  * @brief Get a pointer to the characteristic object with the specified UUID.
  * @param [in] uuid The UUID of the characteristic.
+ * @param instanceId The index of the characteristic to return (used when multiple characteristics have the same UUID).
  * @return A pointer to the characteristic object or nullptr if not found.
  */
-NimBLECharacteristic* NimBLEService::getCharacteristic(const NimBLEUUID &uuid) {
+NimBLECharacteristic* NimBLEService::getCharacteristic(const NimBLEUUID &uuid, uint16_t instanceId) {
+    uint16_t position = 0;
     for (auto &it : m_chrVec) {
         if (it->getUUID() == uuid) {
-            return it;
+            if (position == instanceId) {
+                return it;
+            }
+            position++;
         }
     }
-
     return nullptr;
 }
 
+/**
+ * @brief Get a pointer to the characteristic object with the specified handle.
+ * @param handle The handle of the characteristic.
+ * @return A pointer to the characteristic object or nullptr if not found.
+ */
+NimBLECharacteristic *NimBLEService::getCharacteristicByHandle(uint16_t handle) {
+    for (auto &it : m_chrVec) {
+        if (it->getHandle() == handle) {
+            return it;
+        }
+    }
+    return nullptr;
+}
+
+/**
+ * @return A vector containing pointers to each characteristic associated with this service.
+ */
+std::vector<NimBLECharacteristic *> NimBLEService::getCharacteristics() {
+    return m_chrVec;
+}
+
+/**
+ * @return A vector containing pointers to each characteristic with the provided UUID associated with this service.
+ */
+std::vector<NimBLECharacteristic *> NimBLEService::getCharacteristics(const char *uuid) {
+    return getCharacteristics(NimBLEUUID(uuid));
+}
+
+/**
+ * @return A vector containing pointers to each characteristic with the provided UUID associated with this service.
+ */
+std::vector<NimBLECharacteristic *> NimBLEService::getCharacteristics(const NimBLEUUID &uuid) {
+    std::vector<NimBLECharacteristic*> result;
+    for (auto &it : m_chrVec) {
+        if (it->getUUID() == uuid) {
+            result.push_back(it);
+        }
+    }
+    return result;
+}
 
 /**
  * @brief Return a string representation of this service.
@@ -295,7 +339,7 @@ std::string NimBLEService::toString() {
  */
 NimBLEServer* NimBLEService::getServer() {
     return m_pServer;
-} // getServer
+}// getServer
 
 #endif // #if defined(CONFIG_BT_NIMBLE_ROLE_PERIPHERAL)
 #endif // CONFIG_BT_ENABLED

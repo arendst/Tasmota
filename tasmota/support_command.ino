@@ -108,6 +108,10 @@ void ResponseCmndError(void) {
   ResponseCmndChar_P(PSTR(D_JSON_ERROR));
 }
 
+void ResponseCmndFailed(void) {
+  ResponseCmndChar_P(PSTR(D_JSON_FAILED));
+}
+
 void ResponseCmndIdxChar(const char* value) {
   Response_P(S_JSON_COMMAND_INDEX_SVALUE, XdrvMailbox.command, XdrvMailbox.index, EscapeJSONString(value).c_str());
 }

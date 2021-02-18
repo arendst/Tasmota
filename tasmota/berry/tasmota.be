@@ -1,5 +1,16 @@
 import json import string
 tasmota = module("tasmota")
+def log(m) print(m) end
+def save() end
+
+#######
+import string
+import json
+import gc
+import tasmota
+#// import alias
+import tasmota as t
+
 def charsinstring(s,c)
   for i:0..size(s)-1
     for j:0..size(c)-1
@@ -32,17 +43,17 @@ tasmota._operators="=<>!|"
 # split the item when there is an operator, returns a list of (left,op,right)
 # ex: "Dimmer>50" -> ["Dimmer",tasmota_gt,"50"]
 tasmota.find_op = def (item)
-  pos = charsinstring(item, tasmota._operators)
+  var pos = charsinstring(item, tasmota._operators)
   if pos>=0
-    op_split = string.split(item,pos)
+    var op_split = string.split(item,pos)
     #print(op_split)
-    op_left = op_split[0]
-    op_rest = op_split[1]
+    var op_left = op_split[0]
+    var op_rest = op_split[1]
     # iterate through operators
     for op:tasmota._op
       if string.find(op_rest,op[0]) == 0
-        op_func = op[1]
-        op_right = string.split(op_rest,size(op[0]))[1]
+        var op_func = op[1]
+        var op_right = string.split(op_rest,size(op[0]))[1]
         return [op_left,op_func,op_right]
       end
     end
@@ -52,7 +63,7 @@ end
 
 
 def findkeyi(m,keyi)
-  keyu=string.toupper(keyi)
+  var keyu = string.toupper(keyi)
   if classof(m) == map
     for k:m.keys()
       if string.toupper(k)==keyu || keyi=='?'
@@ -64,9 +75,9 @@ end
 
 
 tasmota.try_rule = def (ev, rule, f)
-  rl_list = tasmota.find_op(rule)
-  e=ev
-  rl=string.split(rl_list[0],'#')
+  var rl_list = tasmota.find_op(rule)
+  var e=ev
+  var rl=string.split(rl_list[0],'#')
   for it:rl
     found=findkeyi(e,it)
     if found == nil
@@ -89,11 +100,11 @@ tasmota_rules={}
 tasmota.rule = def(pat,f) tasmota_rules[pat] = f end
 
 tasmota.exec_rules = def (ev_json)
-  ev = json.load(ev_json)
+  var ev = json.load(ev_json)
+  var ret = false
   if ev == nil
-    log("ERROR, bad json: "+ev_json, 3)
+    log('BRY: ERROR, bad json: '+ev_json, 3)
   end
-  ret = false
   for r:tasmota_rules.keys()
     ret = tasmota.try_rule(ev,r,tasmota_rules[r]) || ret
   end
@@ -104,6 +115,15 @@ tasmota.delay = def(ms)
   tend = tasmota.millis(ms)
   while !tasmota.timereached(tend)
     tasmota.yield()
+  end
+end
+
+def load(f)
+  try
+    if f[0] != '/' f = '/' + f end
+    compile(f,'file')()
+  except .. as e
+    log(string.format("BRY: could not load file '%s' - %s",f,e))
   end
 end
 
