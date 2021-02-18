@@ -96,7 +96,7 @@ enum XdspFunctions { FUNC_DISPLAY_INIT_DRIVER, FUNC_DISPLAY_INIT, FUNC_DISPLAY_E
 #ifdef USE_UFILESYS
                     ,FUNC_DISPLAY_BATCH
 #endif
-                     , FUNC_DISPLAY_NUMBER, FUNC_DISPLAY_FLOAT, FUNC_DISPLAY_NUMBERNC, FUNC_DISPLAY_FLOATNC, 
+                     , FUNC_DISPLAY_NUMBER, FUNC_DISPLAY_FLOAT, FUNC_DISPLAY_NUMBERNC, FUNC_DISPLAY_FLOATNC,
                      FUNC_DISPLAY_BRIGHTNESS, FUNC_DISPLAY_RAW, FUNC_DISPLAY_LEVEL, FUNC_DISPLAY_SEVENSEG_TEXT, FUNC_DISPLAY_SEVENSEG_TEXTNC,
                      FUNC_DISPLAY_SCROLLDELAY, FUNC_DISPLAY_CLOCK, FUNC_DISPLAY_SETLEDS, FUNC_DISPLAY_SETLED,
                      FUNC_DISPLAY_BUTTONS, FUNC_DISPLAY_SCROLLTEXT
@@ -111,7 +111,7 @@ const char kDisplayCommands[] PROGMEM = D_PRFX_DISPLAY "|"  // Prefix
 #ifdef USE_UFILESYS
   "|" D_CMND_DISP_BATCH
 #endif
-   "|" D_CMND_DISP_CLEAR "|" D_CMND_DISP_NUMBER "|" D_CMND_DISP_FLOAT "|" D_CMND_DISP_NUMBERNC "|" D_CMND_DISP_FLOATNC "|" 
+   "|" D_CMND_DISP_CLEAR "|" D_CMND_DISP_NUMBER "|" D_CMND_DISP_FLOAT "|" D_CMND_DISP_NUMBERNC "|" D_CMND_DISP_FLOATNC "|"
   D_CMND_DISP_BRIGHTNESS "|" D_CMND_DISP_RAW "|" D_CMND_DISP_LEVEL "|" D_CMND_DISP_SEVENSEG_TEXT "|" D_CMND_DISP_SEVENSEG_TEXTNC "|"
   D_CMND_DISP_SCROLLDELAY "|" D_CMND_DISP_CLOCK "|" D_CMND_DISP_TEXTNC "|" D_CMND_DISP_SETLEDS "|" D_CMND_DISP_SETLED "|"
   D_CMND_DISP_BUTTONS "|" D_CMND_DISP_SCROLLTEXT
@@ -124,8 +124,8 @@ void (* const DisplayCommand[])(void) PROGMEM = {
 #ifdef USE_UFILESYS
   ,&CmndDisplayBatch
 #endif
-  , &CmndDisplayClear, &CmndDisplayNumber, &CmndDisplayFloat, &CmndDisplayNumberNC, &CmndDisplayFloatNC, 
-  &CmndDisplayBrightness, &CmndDisplayRaw, &CmndDisplayLevel, &CmndDisplaySevensegText, &CmndDisplaySevensegTextNC, 
+  , &CmndDisplayClear, &CmndDisplayNumber, &CmndDisplayFloat, &CmndDisplayNumberNC, &CmndDisplayFloatNC,
+  &CmndDisplayBrightness, &CmndDisplayRaw, &CmndDisplayLevel, &CmndDisplaySevensegText, &CmndDisplaySevensegTextNC,
   &CmndDisplayScrollDelay, &CmndDisplayClock, &CmndDisplayTextNC, &CmndDisplaySetLEDs, &CmndDisplaySetLED,
   &CmndDisplayButtons, &CmndDisplayScrollText
 };
@@ -151,7 +151,8 @@ uint8_t dsp_font;
 uint8_t dsp_flag;
 uint8_t dsp_on;
 
-uint16_t index_colors[MAX_INDEXCOLORS];
+#define PREDEF_INDEXCOLORS 19
+uint16_t index_colors[MAX_INDEXCOLORS - PREDEF_INDEXCOLORS];
 
 #ifdef USE_DISPLAY_MODES1TO5
 
@@ -322,7 +323,12 @@ uint32_t decode_te(char *line) {
 
 uint16_t GetColorFromIndex(uint32_t index) {
   if (index >= MAX_INDEXCOLORS) index = 0;
-  return index_colors[index];
+
+  if (index < PREDEF_INDEXCOLORS) {
+    return renderer->GetColorFromIndex(index);
+  } else {
+    return index_colors[index - PREDEF_INDEXCOLORS];
+  }
 }
 
 void DisplayText(void)
@@ -610,49 +616,53 @@ void DisplayText(void)
               cp++;
               var = fatoiv(cp, &ftemp);
               cp += var;
-              if (temp >= MAX_INDEXCOLORS) temp = 0;
-              index_colors[temp] = ftemp;
+              if (temp >= MAX_INDEXCOLORS) temp = PREDEF_INDEXCOLORS;
+              if (temp < PREDEF_INDEXCOLORS) temp = PREDEF_INDEXCOLORS;
+              index_colors[temp - PREDEF_INDEXCOLORS] = ftemp;
               break;
             }
 #ifdef USE_DT_VARS
-            if (*cp == 'v') {
+          if (*cp == 'v') {
+            cp++;
+            { int16_t num, gxp, gyp, textbcol, textfcol, font, textsize, txlen, dp, time;
+              var=atoiv(cp,&num);
+              cp+=var;
               cp++;
-              { int16_t num, gxp, gyp, textbcol, textfcol, font, textsize, txlen, dp;
-                var=atoiv(cp,&num);
-                cp+=var;
-                cp++;
-                var=atoiv(cp,&gxp);
-                cp+=var;
-                cp++;
-                var=atoiv(cp,&gyp);
-                cp+=var;
-                cp++;
-                var=atoiv(cp,&textbcol);
-                cp+=var;
-                cp++;
-                var=atoiv(cp,&textfcol);
-                cp+=var;
-                cp++;
-                var=atoiv(cp,&font);
-                cp+=var;
-                cp++;
-                var=atoiv(cp,&textsize);
-                cp+=var;
-                cp++;
-                var=atoiv(cp,&txlen);
-                cp+=var;
-                cp++;
-                var=atoiv(cp,&dp);
-                cp+=var;
-                cp++;
-                // text itself
-                char bbuff[32];
-                cp = get_string(bbuff, sizeof(bbuff), cp);
-                char unit[4];
-                cp = get_string(unit, sizeof(unit), cp);
-                define_dt_var(num, gxp, gyp, textbcol, textfcol, font, textsize, txlen, dp, bbuff, unit);
-              }
+              var=atoiv(cp,&gxp);
+              cp+=var;
+              cp++;
+              var=atoiv(cp,&gyp);
+              cp+=var;
+              cp++;
+              var=atoiv(cp,&textbcol);
+              cp+=var;
+              cp++;
+              var=atoiv(cp,&textfcol);
+              cp+=var;
+              cp++;
+              var=atoiv(cp,&font);
+              cp+=var;
+              cp++;
+              var=atoiv(cp,&textsize);
+              cp+=var;
+              cp++;
+              var=atoiv(cp,&txlen);
+              cp+=var;
+              cp++;
+              var=atoiv(cp,&dp);
+              cp+=var;
+              cp++;
+              var=atoiv(cp,&time);
+              cp+=var;
+              cp++;
+              // text itself
+              char bbuff[32];
+              cp = get_string(bbuff, sizeof(bbuff), cp);
+              char unit[4];
+              cp = get_string(unit, sizeof(unit), cp);
+              define_dt_var(num, gxp, gyp, textbcol, textfcol, font, textsize, txlen, time, dp, bbuff, unit);
             }
+          }
 #endif // USE_DT_VARS
             // force draw grafics buffer
             if (renderer) renderer->Updateframe();
@@ -995,6 +1005,8 @@ typedef struct {
   int8_t txtlen;
   int8_t dp;
   int8_t font;
+  int8_t time;
+  int8_t timer;
   char unit[6];
   char *jstrbuf;
   char rstr[32];
@@ -1002,7 +1014,7 @@ typedef struct {
 
 DT_VARS *dt_vars[MAX_DT_VARS];
 
-void define_dt_var(uint32_t num, uint32_t xp, uint32_t yp,  uint32_t txtbcol,  uint32_t txtfcol, int32_t font, int32_t txtsiz, int32_t txtlen, int32_t dp, char *jstr, char *unit) {
+void define_dt_var(uint32_t num, uint32_t xp, uint32_t yp,  uint32_t txtbcol,  uint32_t txtfcol, int32_t font, int32_t txtsiz, int32_t txtlen, int32_t time, int32_t dp, char *jstr, char *unit) {
   if (num >= MAX_DT_VARS) return;
 
   if (dt_vars[num]) {
@@ -1022,56 +1034,86 @@ void define_dt_var(uint32_t num, uint32_t xp, uint32_t yp,  uint32_t txtbcol,  u
   dtp->txtfcol = txtfcol;
   dtp->font = font;
   dtp->txtsiz = txtsiz;
+  dtp->time = time;
   if (txtlen > MAX_DVTSIZE) {txtlen = MAX_DVTSIZE;}
   dtp->txtlen = txtlen;
   dtp->dp = dp;
-  dtp->jstrbuf = (char*)malloc(strlen(jstr + 1));
+  uint8_t jlen = strlen(jstr);
+  dtp->jstrbuf = (char*)calloc(jlen + 2,1);
   if (!dtp->jstrbuf) {
     free (dtp);
     return;
   }
+  dtp->rstr[0] = 0;
+  strcpy(dtp->unit, unit);
   strcpy(dtp->jstrbuf, jstr);
-  strcpy(dtp->unit,unit);
+  if (!time) time = 1;
+  dtp->timer = time;
 }
 
 void draw_dt_vars(void) {
   if (!renderer) return;
 
   for (uint32_t cnt = 0; cnt < MAX_DT_VARS; cnt++) {
-    if (dt_vars[cnt]) {
-      if (dt_vars[cnt]->jstrbuf) {
+    DT_VARS *dtp = dt_vars[cnt];
+    if (dtp) {
+      if (dtp->jstrbuf) {
         // draw
-        char vstr[MAX_DVTSIZE + 7];
-        memset(vstr, ' ', sizeof(vstr));
-        strcpy(vstr, dt_vars[cnt]->rstr);
-        strcat(vstr, " ");
-        strcat(vstr, dt_vars[cnt]->unit);
-        uint16_t slen = strlen(vstr);
-        vstr[slen] = ' ';
+        dtp->timer--;
+        if (!dtp->timer) {
+          dtp->timer = dtp->time;
+          char vstr[MAX_DVTSIZE + 7];
+          memset(vstr, ' ', sizeof(vstr));
+          strcpy(vstr, dtp->rstr);
+          strcat(vstr, " ");
+          strcat(vstr, dtp->unit);
+          uint16_t slen = strlen(vstr);
+          vstr[slen] = ' ';
 
-        if (!dt_vars[cnt]->txtlen) {
+          if (!dtp->txtlen) {
             vstr[slen] = 0;
-        } else {
-            vstr[abs(int(dt_vars[cnt]->txtlen))] = 0;
-        }
-        if (dt_vars[cnt]->txtlen < 0) {
-          // right align
-          alignright(vstr);
-        }
+          } else {
+            vstr[abs(int(dtp->txtlen))] = 0;
+          }
+          if (dtp->txtlen < 0) {
+            // right align
+            alignright(vstr);
+          }
 
-        if (dt_vars[cnt]->txtsiz > 0) {
-          renderer->setDrawMode(0);
-        } else {
-          renderer->setDrawMode(2);
-        }
-        renderer->setTextColor(GetColorFromIndex(dt_vars[cnt]->txtfcol),GetColorFromIndex(dt_vars[cnt]->txtbcol));
-        renderer->setTextFont(dt_vars[cnt]->font);
-        renderer->setTextSize(abs(dt_vars[cnt]->txtsiz));
-        renderer->DrawStringAt(dt_vars[cnt]->xp, dt_vars[cnt]->yp, vstr, GetColorFromIndex(dt_vars[cnt]->txtfcol), 0);
+          if (dtp->txtsiz > 0) {
+            renderer->setDrawMode(0);
+          } else {
+            renderer->setDrawMode(2);
+          }
+          renderer->setTextColor(GetColorFromIndex(dtp->txtfcol),GetColorFromIndex(dtp->txtbcol));
+          renderer->setTextFont(dtp->font);
+          renderer->setTextSize(abs(dtp->txtsiz));
 
-        // reset display vars
-        renderer->setTextColor(fg_color, bg_color);
-        renderer->setDrawMode(auto_draw);
+          if (dtp->jstrbuf[0]=='[') {
+            uint16_t s_disp_xpos = disp_xpos;
+            uint16_t s_disp_ypos = disp_ypos;
+            uint16_t s_bg_color = bg_color;
+            uint16_t s_fg_color = fg_color;
+            disp_xpos = dtp->xp;
+            disp_ypos = dtp->yp;
+            bg_color = GetColorFromIndex(dtp->txtbcol);
+            fg_color = GetColorFromIndex(dtp->txtfcol);
+            char *savmbd = XdrvMailbox.data;
+            XdrvMailbox.data = dtp->jstrbuf;
+            DisplayText();
+            XdrvMailbox.data = savmbd;
+            disp_xpos = s_disp_xpos;
+            disp_ypos = s_disp_ypos;
+            bg_color = s_bg_color;
+            fg_color = s_fg_color;
+          } else {
+            renderer->DrawStringAt(dtp->xp, dtp->yp, vstr, GetColorFromIndex(dtp->txtfcol), 0);
+          }
+
+          // restore display vars
+          renderer->setTextColor(fg_color, bg_color);
+          renderer->setDrawMode(auto_draw);
+        }
       }
     }
   }
@@ -1080,11 +1122,17 @@ void draw_dt_vars(void) {
 #define DTV_JSON_SIZE 1024
 
 void DTVarsTeleperiod(void) {
-  char *json = (char*)malloc(DTV_JSON_SIZE);
-  if (json) {
-    strlcpy(json, TasmotaGlobal.mqtt_data, DTV_JSON_SIZE);
-    get_dt_vars(json);
-    free(json);
+  if (TasmotaGlobal.mqtt_data && TasmotaGlobal.mqtt_data[0]) {
+    uint32_t jlen = strlen(TasmotaGlobal.mqtt_data);
+
+    if (jlen < DTV_JSON_SIZE) {
+      char *json = (char*)malloc(jlen + 2);
+      if (json) {
+        strlcpy(json, TasmotaGlobal.mqtt_data, jlen + 1);
+        get_dt_vars(json);
+        free(json);
+      }
+    }
   }
 }
 
@@ -1108,7 +1156,7 @@ void get_dt_vars(char *json) {
 
     for (uint32_t cnt = 0; cnt < MAX_DT_VARS; cnt++) {
       if (dt_vars[cnt]) {
-        if (dt_vars[cnt]->jstrbuf) {
+        if (dt_vars[cnt]->jstrbuf && dt_vars[cnt]->jstrbuf[0]!='[') {
           char sbuf[32];
           uint32_t res = JsonParsePath(&obj, dt_vars[cnt]->jstrbuf, '#', NULL, sbuf, sizeof(sbuf));
           if (res) {
@@ -1536,15 +1584,21 @@ void DisplayInitDriver(void)
     renderer->setTextSize(Settings.display_size);
     // force opaque mode
     renderer->setDrawMode(0);
+
+    for (uint32_t cnt = 0; cnt < (MAX_INDEXCOLORS - PREDEF_INDEXCOLORS); cnt++) {
+      index_colors[cnt] = 0;
+    }
   }
+
+#ifdef USE_DT_VARS
+  free_dt_vars();
+#endif
 
 #ifdef USE_UFILESYS
   Display_Text_From_File("/display.ini");
 #endif
 
-#ifdef USE_DT_VARS
-  free_dt_vars();
-#endif
+
 
 //  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "Display model %d"), Settings.display_model);
 
@@ -1854,7 +1908,7 @@ void CmndDisplaySize(void)
   if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload <= 6)) {
 #else
   if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload <= 4)) {
-#endif    
+#endif
     Settings.display_size = XdrvMailbox.payload;
     if (renderer) renderer->setTextSize(Settings.display_size);
     //else DisplaySetSize(Settings.display_size);
