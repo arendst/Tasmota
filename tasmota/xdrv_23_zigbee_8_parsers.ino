@@ -657,7 +657,7 @@ int32_t Z_ReceiveActiveEp(int32_t res, const SBuffer &buf) {
 
 // list of clusters that need bindings
 const uint8_t Z_bindings[] PROGMEM = {
-  Cx0001, Cx0006, Cx0008, Cx0201, Cx0300,
+  Cx0001, Cx0006, Cx0008, Cx0102, Cx0201, Cx0300,
   Cx0400, Cx0402, Cx0403, Cx0405, Cx0406,
   Cx0500,
 };
@@ -1499,6 +1499,7 @@ const Z_autoAttributeReporting_t Z_autoAttributeReporting[] PROGMEM = {
   { 0x0001, 0x0020,    60*60, USE_ZIGBEE_MAXTIME_BATT,  USE_ZIGBEE_AUTOBIND_BATTVOLTAGE },      // BatteryVoltage
   { 0x0001, 0x0021,    60*60, USE_ZIGBEE_MAXTIME_BATT,  USE_ZIGBEE_AUTOBIND_BATTPERCENT },      // BatteryPercentage
   { 0x0006, 0x0000,        1,   USE_ZIGBEE_MAXTIME_LIGHT,    0 },      // Power
+  { 0x0102, 0x0008,        1,   USE_ZIGBEE_MAXTIME_LIFT, USE_ZIGBEE_AUTOBIND_LIFT },      // CurrentPositionLiftPercentage
   { 0x0201, 0x0000,       60,   USE_ZIGBEE_MAXTIME_TRV,  USE_ZIGBEE_AUTOBIND_TEMPERATURE },      // LocalTemperature
   { 0x0201, 0x0008,       60,   USE_ZIGBEE_MAXTIME_TRV,  USE_ZIGBEE_AUTOBIND_HEATDEMAND  },      // PIHeatingDemand
   { 0x0201, 0x0012,       60,   USE_ZIGBEE_MAXTIME_TRV,  USE_ZIGBEE_AUTOBIND_TEMPERATURE },      // OccupiedHeatingSetpoint
