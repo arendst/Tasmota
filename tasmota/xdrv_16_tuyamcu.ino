@@ -62,7 +62,7 @@ struct TUYA {
   uint16_t CTMin = 153;                   // Minimum CT level allowed - When SetOption82 is enabled will default to 200
   uint16_t CTMax = 500;                   // Maximum CT level allowed - When SetOption82 is enabled will default to 380
   bool ModeSet = false;                   // Controls 0 - Single Tone light, 1 - RGB Light
-  uint16_t Sensors[14];                   // Stores the values of Sensors connected to the Tuya Device
+  int16_t Sensors[14];                    // Stores the values of Sensors connected to the Tuya Device
   bool SensorsValid[14];                  // Bool used for nullify the sensor value until a real value is received from the MCU
   bool SuspendTopic = false;              // Used to reduce the load at init time or when polling the configuraton on demand
   uint32_t ignore_topic_timeout = 0;      // Suppress the /STAT topic (if enabled) to avoid data overflow until the configuration is over
@@ -318,6 +318,24 @@ int StrCmpNoCase(char const *Str1, char const *Str2) // Compare case sensistive 
   }
 }
 
+float TuyaAdjustedTemperature(int16_t packetValue, uint8_t res)
+{
+    switch (res)
+    {
+    case 1:
+        return (float)packetValue / 10.0;
+        break;
+    case 2:
+        return (float)packetValue / 100.0;
+        break;
+    case 3:
+        return (float)packetValue / 1000.0;
+        break;    
+    default:
+        return (float)packetValue;
+        break;
+    } 
+}
 /*********************************************************************************************\
  * Internal Functions
 \*********************************************************************************************/
@@ -732,7 +750,7 @@ void TuyaProcessStatePacket(void) {
             } else { res = Settings.flag2.temperature_resolution; }
             GetTextIndexed(sname, sizeof(sname), (fnId-71), kTuyaSensors);
             ResponseClear(); // Clear retained message
-            Response_P(PSTR("{\"TuyaSNS\":{\"%s\":%s}}"), sname, dtostrfd(packetValue, res, tempval)); // sensor update is just on change
+            Response_P(PSTR("{\"TuyaSNS\":{\"%s\":%s}}"), sname, dtostrfd(TuyaAdjustedTemperature(packetValue, res), res, tempval)); // sensor update is just on change
             MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR(D_CMND_SENSOR));
           }
         }
@@ -1295,7 +1313,7 @@ void TuyaSensorsShow(bool json)
 
         GetTextIndexed(sname, sizeof(sname), (sensor-71), kTuyaSensors);
         ResponseAppend_P(PSTR("\"%s\":%s"), sname,
-                        (Tuya.SensorsValid[sensor-71] ? dtostrfd((float)Tuya.Sensors[sensor-71] / pow(10, res), res, tempval) : PSTR("null")));
+                        (Tuya.SensorsValid[sensor-71] ? dtostrfd(TuyaAdjustedTemperature(Tuya.Sensors[sensor-71], res), res, tempval) : PSTR("null")));
         added = true;
       }
   #ifdef USE_WEBSERVER
@@ -1303,11 +1321,11 @@ void TuyaSensorsShow(bool json)
       if (TuyaGetDpId(sensor) != 0) {
         switch (sensor) {
           case 71:
-            WSContentSend_Temp("", (float)Tuya.Sensors[0] / pow(10, Settings.flag2.temperature_resolution));
+            WSContentSend_Temp("", TuyaAdjustedTemperature(Tuya.Sensors[0], Settings.flag2.temperature_resolution));
             break;
           case 72:
             WSContentSend_PD(PSTR("{s}" D_TEMPERATURE " Set{m}%s " D_UNIT_DEGREE "%c{e}"),
-                            dtostrfd((float)Tuya.Sensors[1] / pow(10, Settings.flag2.temperature_resolution), Settings.flag2.temperature_resolution, tempval), TempUnit());
+                            dtostrfd(TuyaAdjustedTemperature(Tuya.Sensors[1], Settings.flag2.temperature_resolution), Settings.flag2.temperature_resolution, tempval), TempUnit());
             break;
           case 73:
             WSContentSend_PD(HTTP_SNS_HUM, "", dtostrfd(Tuya.Sensors[2], Settings.flag2.temperature_resolution, tempval));
