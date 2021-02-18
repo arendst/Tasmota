@@ -48,7 +48,7 @@
 #include <HTTPClient.h>
 #include <WiFiClientSecure.h>
 #include <FS.h>
-#include <SPIFFS.h>
+//#include <SPIFFS.h>
 #include <ETH.h>
 #include "wcs/esp32/ESP_Mail_HTTPClient32.h"
 #include "extras/ESPTimeHelper.h"

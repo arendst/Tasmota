@@ -1,6 +1,6 @@
 /*
   Customized version of WiFiClientSecure.cpp
-  
+
   WiFiClientBearSSL- SSL client/server for esp8266 using BearSSL libraries
   - Mostly compatible with Arduino WiFi shield library and standard
     WiFiClient/ServerSecure (except for certificate handling).
@@ -52,6 +52,9 @@ extern "C"
 #include <include/ClientContext.h>
 #include <c_types.h>
 #include <coredecls.h>
+
+//#define Optimistic_yield(A) optimistic_yield(A);ESP.wdtFeed();
+#define Optimistic_yield(A) optimistic_yield(A)
 
 #if !CORE_MOCK
 
@@ -315,7 +318,7 @@ namespace ESP_Mail
       // Ensure we yield if we need multiple fragments to avoid WDT
       if (sent_bytes)
       {
-        optimistic_yield(1000);
+        Optimistic_yield(1000);
       }
 
       // Get BearSSL to a state where we can send
@@ -519,7 +522,7 @@ namespace ESP_Mail
 
     for (int no_work = 0; blocking || no_work < 2;)
     {
-      optimistic_yield(100);
+      Optimistic_yield(100);
 
       if (loopTimeout)
       {
@@ -555,10 +558,10 @@ namespace ESP_Mail
 
         if (!blocking && len > availForWrite)
         {
-          /* 
+          /*
            writes on WiFiClient will block if len > availableForWrite()
            this is needed to prevent available() calls from blocking
-           on dropped connections 
+           on dropped connections
         */
           len = availForWrite;
         }
@@ -662,7 +665,7 @@ namespace ESP_Mail
       {
         _handshake_done = true;
       }
-      optimistic_yield(1000);
+      Optimistic_yield(1000);
     }
     return _handshake_done;
   }
@@ -885,7 +888,7 @@ namespace ESP_Mail
       ctx->match_fingerprint = _use_fingerprint ? _fingerprint : nullptr;
       ctx->allow_self_signed = _allow_self_signed ? 1 : 0;
     }
-    
+
 
     // Some constants uses to init the server/client contexts
     // Note that suites_P needs to be copied to RAM before use w/BearSSL!
@@ -2047,7 +2050,7 @@ namespace ESP_Mail
 
     if (!result)
     {
-      optimistic_yield(100);
+      Optimistic_yield(100);
     }
     return result;
   }
