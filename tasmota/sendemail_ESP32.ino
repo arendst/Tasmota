@@ -1,11 +1,20 @@
 #ifdef USE_ESP32MAIL
 
-
 #include <ESP_Mail_Client.h>
 
+
+#ifdef ESP8266
+#ifndef SEND_MAIL32_MINRAM
+#define SEND_MAIL32_MINRAM 13*1024
+#endif
+#endif // ESP8266
+
+#ifdef ESP32
 #ifndef SEND_MAIL32_MINRAM
 #define SEND_MAIL32_MINRAM 30*1024
 #endif
+#endif // ESP32
+
 #define xPSTR(a) a
 #define MAX_ATTCHMENTS 8
 char *attachments[MAX_ATTCHMENTS];
@@ -13,6 +22,8 @@ uint8_t num_attachments;
 void script_send_email_body(void(*func)(char *));
 String html_content = "";
 SMTP_Message *email_mptr;
+SMTPSession smtp;
+void smtpCallback(SMTP_Status status);
 
 //#define DEBUG_EMAIL_PORT
 
@@ -30,7 +41,6 @@ uint16_t SendMail(char *buffer) {
   uint16_t status = 0;
   uint16_t blen;
   char *endcmd;
-  SMTPSession smtp;
   ESP_Mail_Session session;
   SMTP_Message message;
   email_mptr = &message;
@@ -39,8 +49,11 @@ uint16_t SendMail(char *buffer) {
   uint32_t mem = ESP.getFreeHeap();
   //AddLog(LOG_LEVEL_INFO, PSTR("heap: %d"),mem);
   if (mem < SEND_MAIL32_MINRAM) {
-  //  return 4;
+    return 4;
   }
+  #ifdef DEBUG_EMAIL_PORT
+      AddLog(LOG_LEVEL_INFO, PSTR("heap: %d"),mem);
+  #endif
 
   while (*buffer==' ') buffer++;
 
@@ -156,12 +169,11 @@ uint16_t SendMail(char *buffer) {
 
   //smtp.debug(true);
   smtp.debug(false);
+//  smtp.callback(smtpCallback);
 
   message.clearRecipients();
   message.clearCc();
   message.clearBcc();
-
-  //smtp.callback(smtpCallback);
 
   session.server.host_name = mserv;
   session.server.port = port;
@@ -322,4 +334,35 @@ void attach_Data(char *name, uint8_t *buff, uint32_t len) {
   email_mptr->resetAttachItem(att);
 }
 
+/* Callback function to get the Email sending status */
+void smtpCallback(SMTP_Status status)
+{
+/* Print the current status */
+Serial.println(status.info());
+
+/* Print the sending result */
+if (status.success())
+{
+  Serial.println("----------------");
+  Serial.printf("Message sent success: %d\n", status.completedCount());
+  Serial.printf("Message sent failled: %d\n", status.failedCount());
+  Serial.println("----------------\n");
+  struct tm dt;
+
+  for (size_t i = 0; i < smtp.sendingResult.size(); i++)
+  {
+    /* Get the result item */
+    SMTP_Result result = smtp.sendingResult.getItem(i);
+    localtime_r(&result.timesstamp, &dt);
+
+    Serial.printf("Message No: %d\n", i + 1);
+    Serial.printf("Status: %s\n", result.completed ? "success" : "failed");
+    Serial.printf("Date/Time: %d/%d/%d %d:%d:%d\n", dt.tm_year + 1900, dt.tm_mon + 1, dt.tm_mday, dt.tm_hour, dt.tm_min, dt.tm_sec);
+    Serial.printf("Recipient: %s\n", result.recipients);
+    Serial.printf("Subject: %s\n", result.subject);
+  }
+  Serial.println("----------------\n");
+}
+
+}
 #endif // USE_ESP32MAIL
