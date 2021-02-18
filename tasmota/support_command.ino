@@ -108,6 +108,10 @@ void ResponseCmndError(void) {
   ResponseCmndChar_P(PSTR(D_JSON_ERROR));
 }
 
+void ResponseCmndFailed(void) {
+  ResponseCmndChar_P(PSTR(D_JSON_FAILED));
+}
+
 void ResponseCmndIdxChar(const char* value) {
   Response_P(S_JSON_COMMAND_INDEX_SVALUE, XdrvMailbox.command, XdrvMailbox.index, EscapeJSONString(value).c_str());
 }
@@ -844,35 +848,67 @@ void CmndSetoption(void) {
   CmndSetoptionBase(1);
 }
 
+// Code called by SetOption and by Berrt
+bool SetoptionDecode(uint32_t index, uint32_t *ptype, uint32_t *pindex) {
+  if (index < 146) {
+    if (index <= 31) {         // SetOption0 .. 31 = Settings.flag
+      *ptype = 2;
+      *pindex = index;          // 0 .. 31
+    }
+    else if (index <= 49) {    // SetOption32 .. 49 = Settings.param
+      *ptype = 1;
+      *pindex = index -32;      // 0 .. 17 (= PARAM8_SIZE -1)
+    }
+    else if (index <= 81) {    // SetOption50 .. 81 = Settings.flag3
+      *ptype = 3;
+      *pindex = index -50;      // 0 .. 31
+    }
+    else if (index <= 113) {    // SetOption82 .. 113 = Settings.flag4
+      *ptype = 4;
+      *pindex = index -82;      // 0 .. 31
+    }
+    else {                                 // SetOption114 .. 145 = Settings.flag5
+      *ptype = 5;
+      *pindex = index -114;     // 0 .. 31
+    }
+    return true;
+  }
+  return false;
+}
+
+uint32_t GetOption(uint32_t index) {
+  uint32_t ptype;
+  uint32_t pindex;
+  if (SetoptionDecode(index, &ptype, &pindex)) {
+    if (1 == ptype) {
+      return Settings.param[pindex];
+    } else {
+      uint32_t flag = Settings.flag.data;
+      if (3 == ptype) {
+        flag = Settings.flag3.data;
+      }
+      else if (4 == ptype) {
+        flag = Settings.flag4.data;
+      }
+      else if (5 == ptype) {
+        flag = Settings.flag5.data;
+      }
+      return bitRead(flag, pindex);
+    }
+  } else {
+    return 0;   // fallback
+  }
+}
+
 void CmndSetoptionBase(bool indexed) {
   // Allow a command to access a single SetOption by it's command name
   // indexed = 0 : No index will be returned attached to the command
   //               {"ClockDirection":"OFF"}
   // indexed = 1 : The SetOption index will be returned with the command
   //               {"SetOption16":"OFF"}
-  if (XdrvMailbox.index < 146) {
-    uint32_t ptype;
-    uint32_t pindex;
-    if (XdrvMailbox.index <= 31) {         // SetOption0 .. 31 = Settings.flag
-      ptype = 2;
-      pindex = XdrvMailbox.index;          // 0 .. 31
-    }
-    else if (XdrvMailbox.index <= 49) {    // SetOption32 .. 49 = Settings.param
-      ptype = 1;
-      pindex = XdrvMailbox.index -32;      // 0 .. 17 (= PARAM8_SIZE -1)
-    }
-    else if (XdrvMailbox.index <= 81) {    // SetOption50 .. 81 = Settings.flag3
-      ptype = 3;
-      pindex = XdrvMailbox.index -50;      // 0 .. 31
-    }
-    else if (XdrvMailbox.index <= 113) {    // SetOption82 .. 113 = Settings.flag4
-      ptype = 4;
-      pindex = XdrvMailbox.index -82;      // 0 .. 31
-    }
-    else {                                 // SetOption114 .. 145 = Settings.flag5
-      ptype = 5;
-      pindex = XdrvMailbox.index -114;     // 0 .. 31
-    }
+  uint32_t ptype;
+  uint32_t pindex;
+  if (SetoptionDecode(XdrvMailbox.index, &ptype, &pindex)) {
 
     if (XdrvMailbox.payload >= 0) {
       if (1 == ptype) {                    // SetOption32 .. 49

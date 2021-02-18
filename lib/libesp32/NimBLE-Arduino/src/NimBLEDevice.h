@@ -123,6 +123,8 @@ public:
     static bool             isIgnored(const NimBLEAddress &address);
     static void             addIgnored(const NimBLEAddress &address);
     static void             removeIgnored(const NimBLEAddress &address);
+    static void             setScanDuplicateCacheSize(uint16_t cacheSize);
+    static void             setScanFilterMode(uint8_t type);
 
 #if defined(CONFIG_BT_NIMBLE_ROLE_BROADCASTER)
     static NimBLEAdvertising* getAdvertising();
@@ -184,6 +186,8 @@ private:
     static ble_gap_event_listener     m_listener;
     static gap_event_handler          m_customGapHandler;
     static uint8_t                    m_own_addr_type;
+    static uint16_t                   m_scanDuplicateSize;
+    static uint8_t                    m_scanFilterMode;
 };
 
 

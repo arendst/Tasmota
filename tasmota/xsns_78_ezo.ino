@@ -53,7 +53,7 @@ struct EZOStruct {
   {
     // Transmit our command verbatim
     Wire.beginTransmission(addr);
-    Wire.write(cmd, len);
+    Wire.write((uint8_t*)cmd, len);
     if (Wire.endTransmission() != 0) {
       return;
     }

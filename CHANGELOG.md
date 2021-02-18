@@ -8,10 +8,21 @@ All notable changes to this project will be documented in this file.
 - Support for Device Groups Device Map (#10898)
 - Support for Eastron SDM72D-M three phase 100A Modbus energy meter (#10862)
 - Support for Frysk language translations by Christiaan Heerze
+- ESP8266 Fallback to ``*.bin.gz`` binary when OTA upload of ``*.bin`` binary fails
+- Berry language improved Tasmota integration
+- Berry file system support
+- Filesystem commands ``Ufs``, ``UfsType``, ``UfsSize``, ``UfsFree``, ``UfsDelete``, ``UfsRename`` and ``UfsRun``
+- Support for filesystem ``autoexec.bat`` to execute sequential commands like backlog
+- Support for TM1637 seven segment display by Ajith Vasudevan (#10889)
+
+### Changed
+- IRremoteESP8266 library from v2.7.14 to v2.7.15
+- NeoPixelBus library from v2.6.0 to v2.6.1.4
+- ILI9341 library from Adafruit_ILI9341-1.2.0-Tasmota-1.0 to ILI9341-gemu-1.0
 
 ## [9.2.0.6] 20210210
 ### Changed
-- Removed migration support for versions before v8.1.0 (Doris)
+- Remove support for direct migration from versions before v8.1.0 (Doris)
 - ESP32 Increase number of switch GPIOs from 8 to 28
 - ESP32 Increase number of interlock groups from 4 to 14
 - Increase number of button GPIOs from 4 to 8

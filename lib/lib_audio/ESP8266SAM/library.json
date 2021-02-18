@@ -17,6 +17,7 @@
     "version": "1.0",
     "homepage": "https://github.com/earlephilhower/ESP8266SAM",
     "frameworks": "Arduino",
+    "platforms": ["espressif8266", "espressif32"],
     "examples": [
         "examples/*/*.ino"
     ]

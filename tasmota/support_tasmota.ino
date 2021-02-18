@@ -407,12 +407,12 @@ void SetLedPowerAll(uint32_t state)
 
 void SetLedLink(uint32_t state)
 {
-  uint32_t led_pin = Pin(GPIO_LEDLNK);
+  int led_pin = Pin(GPIO_LEDLNK);
   uint32_t led_inv = TasmotaGlobal.ledlnk_inverted;
-  if (99 == led_pin) {                    // Legacy - LED1 is status
+  if (-1 == led_pin) {                    // Legacy - LED1 is status
     SetLedPowerIdx(0, state);
   }
-  else if (led_pin < 99) {
+  else if (led_pin >= 0) {
     if (state) { state = 1; }
     digitalWrite(led_pin, (led_inv) ? !state : state);
   }
@@ -716,6 +716,11 @@ void MqttPublishTeleState(void)
   ResponseClear();
   MqttShowState();
   MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_STATE), MQTT_TELE_RETAIN);
+
+#ifdef USE_DT_VARS
+  DTVarsTeleperiod();
+#endif // USE_DT_VARS
+
 #if defined(USE_RULES) || defined(USE_SCRIPT)
   RulesTeleperiod();  // Allow rule based HA messages
 #endif  // USE_SCRIPT
@@ -956,6 +961,14 @@ void Every100mSeconds(void)
   int ExtStopBLE();
 #endif  // USE_BLE_ESP32
 
+bool CommandsReady(void) {
+  bool ready = BACKLOG_EMPTY ;
+#ifdef USE_UFILESYS
+  ready |= UfsExecuteCommandFileReady();
+#endif  // USE_UFILESYS
+  return ready;
+}
+
 void Every250mSeconds(void)
 {
 // As the max amount of sleep = 250 mSec this loop should always be taken...
@@ -1016,26 +1029,26 @@ void Every250mSeconds(void)
 
   switch (TasmotaGlobal.state_250mS) {
   case 0:                                                 // Every x.0 second
-    if (TasmotaGlobal.ota_state_flag && BACKLOG_EMPTY) {
+    if (TasmotaGlobal.ota_state_flag && CommandsReady()) {
       TasmotaGlobal.ota_state_flag--;
       if (2 == TasmotaGlobal.ota_state_flag) {
-        RtcSettings.ota_loader = 0;  // Try requested image first
+        RtcSettings.ota_loader = 0;                       // Try requested image first
         ota_retry_counter = OTA_ATTEMPTS;
         ESPhttpUpdate.rebootOnUpdate(false);
-        SettingsSave(1);  // Free flash for OTA update
+        SettingsSave(1);                                  // Free flash for OTA update
       }
       if (TasmotaGlobal.ota_state_flag <= 0) {
 #ifdef USE_BLE_ESP32
         ExtStopBLE();
 #endif  // USE_BLE_ESP32
 #ifdef USE_COUNTER
-        CounterInterruptDisable(true);  // Prevent OTA failures on 100Hz counter interrupts
+        CounterInterruptDisable(true);                    // Prevent OTA failures on 100Hz counter interrupts
 #endif  // USE_COUNTER
 #ifdef USE_WEBSERVER
         if (Settings.webserver) StopWebserver();
 #endif  // USE_WEBSERVER
 #ifdef USE_ARILUX_RF
-        AriluxRfDisable();  // Prevent restart exception on Arilux Interrupt routine
+        AriluxRfDisable();                                // Prevent restart exception on Arilux Interrupt routine
 #endif  // USE_ARILUX_RF
         TasmotaGlobal.ota_state_flag = 92;
         ota_result = 0;
@@ -1043,6 +1056,7 @@ void Every250mSeconds(void)
         if (ota_retry_counter) {
           char ota_url[TOPSZ];
           strlcpy(TasmotaGlobal.mqtt_data, GetOtaUrl(ota_url, sizeof(ota_url)), sizeof(TasmotaGlobal.mqtt_data));
+#ifdef ESP8266
 #ifndef FIRMWARE_MINIMAL
           if (RtcSettings.ota_loader) {
             // OTA File too large so try OTA minimal version
@@ -1061,8 +1075,8 @@ void Every250mSeconds(void)
             // Replace http://192.168.2.17:80/api/arduino/tasmota.bin  with http://192.168.2.17:80/api/arduino/tasmota-minimal.bin
             // Replace http://192.168.2.17/api/arduino/tasmota.bin.gz  with http://192.168.2.17/api/arduino/tasmota-minimal.bin.gz
 
-            char *bch = strrchr(TasmotaGlobal.mqtt_data, '/');                       // Only consider filename after last backslash prevent change of urls having "-" in it
-            if (bch == nullptr) { bch = TasmotaGlobal.mqtt_data; }                   // No path found so use filename only
+            char *bch = strrchr(TasmotaGlobal.mqtt_data, '/');         // Only consider filename after last backslash prevent change of urls having "-" in it
+            if (bch == nullptr) { bch = TasmotaGlobal.mqtt_data; }     // No path found so use filename only
             char *ech = strchr(bch, '.');                              // Find file type in filename (none, .ino.bin, .ino.bin.gz, .bin, .bin.gz or .gz)
             if (ech == nullptr) { ech = TasmotaGlobal.mqtt_data + strlen(TasmotaGlobal.mqtt_data); }  // Point to '/0' at end of mqtt_data becoming an empty string
 
@@ -1077,6 +1091,14 @@ void Every250mSeconds(void)
             snprintf_P(TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), PSTR("%s-" D_JSON_MINIMAL "%s"), TasmotaGlobal.mqtt_data, ota_url_type);  // Minimal filename must be filename-minimal
           }
 #endif  // FIRMWARE_MINIMAL
+          if (ota_retry_counter < OTA_ATTEMPTS / 2) {
+            if (!strcasecmp_P(TasmotaGlobal.mqtt_data, PSTR(".gz"))) {
+              ota_retry_counter = 1;
+            } else {
+              strcat_P(TasmotaGlobal.mqtt_data, PSTR(".gz"));
+            }
+          }
+#endif  // ESP8266
           AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPLOAD "%s"), TasmotaGlobal.mqtt_data);
           WiFiClient OTAclient;
           ota_result = (HTTP_UPDATE_FAILED != ESPhttpUpdate.update(OTAclient, TasmotaGlobal.mqtt_data));
@@ -1084,26 +1106,28 @@ void Every250mSeconds(void)
 #ifndef FIRMWARE_MINIMAL
             int ota_error = ESPhttpUpdate.getLastError();
             DEBUG_CORE_LOG(PSTR("OTA: Error %d"), ota_error);
+#ifdef ESP8266
             if ((HTTP_UE_TOO_LESS_SPACE == ota_error) || (HTTP_UE_BIN_FOR_WRONG_FLASH == ota_error)) {
-              RtcSettings.ota_loader = 1;  // Try minimal image next
+              RtcSettings.ota_loader = 1;                 // Try minimal image next
             }
+#endif  // ESP8266
 #endif  // FIRMWARE_MINIMAL
-            TasmotaGlobal.ota_state_flag = 2;    // Upgrade failed - retry
+            TasmotaGlobal.ota_state_flag = 2;             // Upgrade failed - retry
           }
         }
       }
-      if (90 == TasmotaGlobal.ota_state_flag) {  // Allow MQTT to reconnect
+      if (90 == TasmotaGlobal.ota_state_flag) {           // Allow MQTT to reconnect
         TasmotaGlobal.ota_state_flag = 0;
         Response_P(PSTR("{\"" D_CMND_UPGRADE "\":\""));
         if (ota_result) {
-//          SetFlashModeDout();      // Force DOUT for both ESP8266 and ESP8285
+//          SetFlashModeDout();                             // Force DOUT for both ESP8266 and ESP8285
           ResponseAppend_P(PSTR(D_JSON_SUCCESSFUL ". " D_JSON_RESTARTING));
           TasmotaGlobal.restart_flag = 2;
         } else {
           ResponseAppend_P(PSTR(D_JSON_FAILED " %s"), ESPhttpUpdate.getLastErrorString().c_str());
         }
         ResponseAppend_P(PSTR("\"}"));
-//        TasmotaGlobal.restart_flag = 2;          // Restart anyway to keep memory clean webserver
+//        TasmotaGlobal.restart_flag = 2;                   // Restart anyway to keep memory clean webserver
         MqttPublishPrefixTopic_P(STAT, PSTR(D_CMND_UPGRADE));
 #ifdef USE_COUNTER
         CounterInterruptDisable(false);
@@ -1115,7 +1139,7 @@ void Every250mSeconds(void)
     if (MidnightNow()) {
       XsnsCall(FUNC_SAVE_AT_MIDNIGHT);
     }
-    if (TasmotaGlobal.save_data_counter && BACKLOG_EMPTY) {
+    if (TasmotaGlobal.save_data_counter && CommandsReady()) {
       TasmotaGlobal.save_data_counter--;
       if (TasmotaGlobal.save_data_counter <= 0) {
         if (Settings.flag.save_state) {                   // SetOption0 - Save power state and use after restart
@@ -1135,7 +1159,7 @@ void Every250mSeconds(void)
         TasmotaGlobal.save_data_counter = Settings.save_data;
       }
     }
-    if (TasmotaGlobal.restart_flag && BACKLOG_EMPTY) {
+    if (TasmotaGlobal.restart_flag && CommandsReady()) {
       if ((214 == TasmotaGlobal.restart_flag) || (215 == TasmotaGlobal.restart_flag) || (216 == TasmotaGlobal.restart_flag)) {
         // Backup current SSIDs and Passwords
         char storage_ssid1[strlen(SettingsText(SET_STASSID1)) +1];
@@ -1644,7 +1668,8 @@ void GpioInit(void)
     bool valid_cs = (ValidSpiPinUsed(GPIO_SPI_CS) ||
                      ValidSpiPinUsed(GPIO_RC522_CS) ||
                      (ValidSpiPinUsed(GPIO_NRF24_CS) && ValidSpiPinUsed(GPIO_NRF24_DC)) ||
-                     (ValidSpiPinUsed(GPIO_ILI9341_CS) && ValidSpiPinUsed(GPIO_ILI9341_DC)) ||
+                     ValidSpiPinUsed(GPIO_ILI9341_CS) ||
+                     ValidSpiPinUsed(GPIO_ILI9341_DC) || // there are also boards without cs
                      ValidSpiPinUsed(GPIO_EPAPER29_CS) ||
                      ValidSpiPinUsed(GPIO_EPAPER42_CS) ||
                      ValidSpiPinUsed(GPIO_ILI9488_CS) ||

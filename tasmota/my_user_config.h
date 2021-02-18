@@ -641,6 +641,9 @@
 
 #endif  // USE_SPI
 
+//#define USE_DISPLAY                              // Add Display support
+//  #define USE_DISPLAY_TM1637                     // [DisplayModel 15] Enable TM1637 module
+
 // -- Serial sensors ------------------------------
 //#define USE_MHZ19                                // Add support for MH-Z19 CO2 sensor (+2k code)
 //#define USE_SENSEAIR                             // Add support for SenseAir K30, K70 and S8 CO2 sensor (+2k3 code)

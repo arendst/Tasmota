@@ -491,7 +491,7 @@ void PWMDimmerHandleButton(uint32_t button_index, bool pressed)
   }
 
   // If we need to adjust the brightness, do it.
-  uint32_t negated_device_group_index = -power_button_index;
+  int32_t negated_device_group_index = -power_button_index;
   if (bri_offset) {
     int32_t bri;
 #ifdef USE_PWM_DIMMER_REMOTE
@@ -510,7 +510,7 @@ void PWMDimmerHandleButton(uint32_t button_index, bool pressed)
     }
     if (new_bri != bri) {
 #ifdef USE_DEVICE_GROUPS
-      SendDeviceGroupMessage(negated_device_group_index, (dgr_more_to_come ? DGR_MSGTYP_UPDATE_MORE_TO_COME : DGR_MSGTYP_UPDATE_DIRECT), DGR_ITEM_LIGHT_BRI, new_bri);
+      SendDeviceGroupMessage(negated_device_group_index, (dgr_more_to_come ? DGR_MSGTYP_UPDATE_MORE_TO_COME : DGR_MSGTYP_UPDATE_DIRECT), DGR_ITEM_LIGHT_BRI, new_bri, DGR_ITEM_BRI_POWER_ON, new_bri);
 #endif  // USE_DEVICE_GROUPS
 #ifdef USE_PWM_DIMMER_REMOTE
       if (active_remote_pwm_dimmer) {

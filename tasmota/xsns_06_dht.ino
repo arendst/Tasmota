@@ -39,7 +39,7 @@ bool dht_active = true;                       // DHT configured
 bool dht_dual_mode = false;                   // Single pin mode
 
 struct DHTSTRUCT {
-  uint8_t  pin;
+  int8_t   pin;
   uint8_t  type;
   uint8_t  lastresult;
   char     stype[12];
@@ -157,14 +157,33 @@ bool DhtRead(uint32_t sensor)
   float temperature = NAN;
   float humidity = NAN;
   switch (Dht[sensor].type) {
-    case GPIO_DHT11:
+    case GPIO_DHT11:                                    // DHT11
       humidity = dht_data[0];
+/*
+      // DHT11 no negative temp:
       temperature = dht_data[2] + ((float)dht_data[3] * 0.1f);  // Issue #3164
+*/
+      // DHT11 (Adafruit):
+      temperature = dht_data[2];
+      if (dht_data[3] & 0x80) {
+        temperature = -1 - temperature;
+      }
+      temperature += (dht_data[3] & 0x0f) * 0.1f;
+/*
+      // DHT12 (Adafruit):
+      temperature = dht_data[2];
+      temperature += (dht_data[3] & 0x0f) * 0.1f;
+      if (dht_data[2] & 0x80) {
+        temperature *= -1;
+      }
+*/
       break;
-    case GPIO_DHT22:
-    case GPIO_SI7021:
+    case GPIO_DHT22:                                    // DHT21, DHT22, AM2301, AM2302, AM2321
+    case GPIO_SI7021:                                   // iTead SI7021
       humidity = ((dht_data[0] << 8) | dht_data[1]) * 0.1;
-      temperature = (((dht_data[2] & 0x7F) << 8 ) | dht_data[3]) * 0.1;
+      // DHT21/22 (Adafruit):
+      temperature = ((int16_t)(dht_data[2] & 0x7F) << 8 ) | dht_data[3];
+      temperature *= 0.1f;
       if (dht_data[2] & 0x80) {
         temperature *= -1;
       }
