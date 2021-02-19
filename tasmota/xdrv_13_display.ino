@@ -1803,7 +1803,6 @@ void CmndDisplayBrightness(void)
     result = XdspCall(FUNC_DISPLAY_BRIGHTNESS);
   }
   if(result) ResponseCmndNumber(XdrvMailbox.payload);
-  else ResponseCmndChar(XdrvMailbox.data);
 }
 
 void CmndDisplayRaw(void)
@@ -1821,7 +1820,6 @@ void CmndDisplayLevel(void)
     result = XdspCall(FUNC_DISPLAY_LEVEL);
   }
   if(result) ResponseCmndNumber(XdrvMailbox.payload);
-  else ResponseCmndChar(XdrvMailbox.data);
 }
 
 void CmndDisplaySevensegText(void)
@@ -1871,7 +1869,6 @@ void CmndDisplaySetLEDs(void)
     result = XdspCall(FUNC_DISPLAY_SETLEDS);
   }
   if(result) ResponseCmndNumber(XdrvMailbox.payload);
-  else ResponseCmndChar(XdrvMailbox.data);
 }
 
 
@@ -1882,26 +1879,24 @@ void CmndDisplaySetLED(void)
     result = XdspCall(FUNC_DISPLAY_SETLED);
   }
   if(result) ResponseCmndNumber(XdrvMailbox.payload);
-  else ResponseCmndChar(XdrvMailbox.data);
 }
 
 void CmndDisplayButtons(void)
 {
   bool result = false;
   if (!renderer) {
-    result = XdspCall(FUNC_DISPLAY_BUTTONS);
+    XdspCall(FUNC_DISPLAY_BUTTONS);
   }
-  if(result) ResponseCmndNumber(XdrvMailbox.payload);
-  else ResponseCmndChar(XdrvMailbox.data);  
 }
 
 
 void CmndDisplayScrollText(void)
 {
+  bool result = false;
   if (!renderer) {
-    XdspCall(FUNC_DISPLAY_SCROLLTEXT);
+    result = XdspCall(FUNC_DISPLAY_SCROLLTEXT);
   }
-  ResponseCmndChar(XdrvMailbox.data);
+  if(result) ResponseCmndChar(XdrvMailbox.data);
 }
 
 

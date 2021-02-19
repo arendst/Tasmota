@@ -21,7 +21,9 @@
 #ifdef USE_DISPLAY_TM1637
 /*********************************************************************************************\
   This driver enables the display of numbers (both integers and floats) and basic text
-  on the inexpensive TM1637- and TM1638-based seven-segment modules.
+  on the inexpensive TM1637- and TM1638-based seven-segment modules. Additionally, for the TM1638, 
+  it allows the TM1638 LEDs to be toggled using its buttons. 
+  Useful STAT messages are also sent when the TM1638 buttons are pressed.
   
   Raw segments can also be displayed.
   
@@ -164,11 +166,15 @@ Commands specific to TM1638
 
   DisplayButtons
 
-                                Causes the current state of the buttons to be returned as a "STAT" message of the form stat/TM1638/RESULT = {"DisplayButtons": <buttonvalue>}
-                                The button value is the decimal representation of the bit-array that constitutes the button states. For example, if the 5th button is pressed and the 
-                                DisplayButtons command is issued, the response will be stat/TM1638/RESULT = {"DisplayButtons": 16}  because 16 => 2^(5-1)
-                                if the 2nd and 3rd buttons are pressed together and the DisplayButtons command is issued, the response will be 
-                                stat/TM1638/RESULT = {"DisplayButtons": 6}  because 6 => 2^(2-1) + 2^(3-1)
+                                Causes the current state of the buttons/LEDs to be returned as a "STAT" message of the following form:
+                                stat/TM1638/RESULT = {"DisplayButtons": {"S1":<s1>, "S2":<s2>, "S3":<s3>, "S4":<s4>, "S5":<s5>, "S6":<s6>, "S7":<s7>, "S8":<s8>, "Array": [<s1>,<s2>,<s3>,<s4>,<s5>,<s6>,<s7>,<s8>], "Byte": <byte>}}
+                                where <s1>, <s2>, ... are the states of each of the buttons/LEDs, and <byte> is the decimal representation 
+                                of the bit-array that constitutes these states. 
+
+                                For example, if the 5th button is pressed to turn ON LED5, and the "DisplayButtons" command is issued, 
+                                the response STAT message will be of the form:
+                                stat/TM1638/RESULT = {"DisplayButtons": {"S1":0, "S2":0, "S3":0, "S4":0, "S5":1, "S6":0, "S7":0, "S8":0, "Array": [0,0,0,0,1,0,0,0], "Byte": 16}}
+                                because 16 => 2^(5-1)
 
 
 
@@ -177,12 +183,20 @@ Commands specific to TM1638
   When this driver is initialized with "DisplayType 2" (TM1638), the buttons on the TM1638 module can be used 
   to toggle the corresponding LEDs.
 
-  In addition, if SwitchTopic is set to some value, then for each button press, a TOGGLE for that switch number is sent.
+  In addition, for each button press, a STAT message of the following form is sent:
 
-  For example, if Topic = "TM1638" and SwitchTopic = "TEST_TM1638", and if S3 is pressed, then,
+  stat/<Topic>/RESULT = {"TM1638_BUTTON<x>":<state>}
 
-      1) a STAT message is sent  : stat/TM1638/RESULT = {"TM1638_BUTTONS":4}    // (4 = 2^(3-1))
-  and 2) a TOGGLE command is sent: cmnd/TEST/POWER3 = TOGGLE
+      where    <x> = button index (starting at 1)
+           <state> = state of the corresponding LED. It can be "ON" or "OFF" 
+
+  For example, if Button3 is pressed, LED3 would light up and a STAT message is sent as follows:
+  
+  stat/TM1638/RESULT = {"TM1638_BUTTON3":"ON"}
+
+  Pressing Button3 again would turn OFF LED3 and a STAT message is sent as follows:
+
+  stat/TM1638/RESULT = {"TM1638_BUTTON3":"OFF"}
 
 
 \*********************************************************************************************/
@@ -200,6 +214,7 @@ bool clock24 = false;
 char tm[5];
 char msg[60];
 uint8_t buttons;
+bool LED[8] = {false, false, false, false, false, false, false, false};
 uint8_t prevbuttons;
 uint32_t NUM_DIGITS = 4;
 uint32_t prev_num_digits = 4;
@@ -445,8 +460,7 @@ bool CmndScrollText(void) {
   AddLog(LOG_LEVEL_DEBUG, PSTR("LOG: %s: text=%s"), modelname, XdrvMailbox.data);
 
   if(XdrvMailbox.data_len > SCROLL_MAX_LEN) {
-    snprintf(msg, sizeof(msg), PSTR("Text too long. Length should be less than %d"), SCROLL_MAX_LEN);
-    XdrvMailbox.data = msg;
+    Response_P(PSTR("{\"Error\":\"Text too long. Length should be less than %d\"}"), SCROLL_MAX_LEN);
     return false;
   } else {
     snprintf(scrolltext, sizeof(scrolltext), PSTR("%s"), XdrvMailbox.data);
@@ -515,8 +529,7 @@ void scrollText(void) {
 bool CmndLevel(void) {
   uint16_t val = XdrvMailbox.payload;
   if((val < LEVEL_MIN) || (val > LEVEL_MAX)) {
-    sprintf(msg, PSTR("Level should be a number in the range [%d, %d]"), LEVEL_MIN, LEVEL_MAX);
-    XdrvMailbox.data = msg;
+    Response_P(PSTR("{\"Error\":\"Level should be a number in the range [%d, %d]\"}"), LEVEL_MIN, LEVEL_MAX);
     return false;
   }
 
@@ -535,10 +548,7 @@ bool CmndLevel(void) {
   uint8_t rawBytes[1];
   for(int i=1; i<=numBars; i++) {
     uint8_t digit = (i-1) / 2;
-    AddLog(LOG_LEVEL_DEBUG, PSTR("LOG: %s: CmndLevel digit=%d"), modelname, digit);
     uint8_t value = (((i%2) == 0) ? 54 : 48);
-    AddLog(LOG_LEVEL_DEBUG, PSTR("LOG: %s: CmndLevel value=%d"), modelname, value);
-
     if(displaytype == TM1637) {
       rawBytes[0] = value;
       disp37->printRaw(rawBytes, 1, digit);
@@ -722,8 +732,7 @@ bool CmndBrightness(void) {
   }
 
   if((val < BRIGHTNESS_MIN) || (val > BRIGHTNESS_MAX)) {
-    sprintf(msg, PSTR("Brightness should be a number in the range [%d, %d]"), BRIGHTNESS_MIN, BRIGHTNESS_MAX);
-    XdrvMailbox.data = msg;
+    Response_P(PSTR("{\"Error\":\"Brightness should be a number in the range [%d, %d]\"}"), BRIGHTNESS_MIN, BRIGHTNESS_MAX);
     return false;
   }
   brightness = val;
@@ -817,17 +826,16 @@ void showTime() {
 \*********************************************************************************************/
 bool CmndSetLEDs(void) {
   if(displaytype != TM1638) {
-    sprintf(msg, PSTR("Command not valid for DisplayType %d"), displaytype); 
-    XdrvMailbox.data = msg;
+    Response_P(PSTR("{\"Error\":\"Command not valid for DisplayType %d\"}"), displaytype);
     return false;     
   }
   if(ArgC() == 0) XdrvMailbox.payload = 0;
   uint16_t val = XdrvMailbox.payload; 
   if((val < LED_MIN) || (val > LED_MAX)) {
-    sprintf(msg, PSTR("Set LEDs value should be a number in the range [%d, %d]"), LED_MIN, LED_MAX);
-    XdrvMailbox.data = msg;
-    return false;     
-  } 
+    Response_P(PSTR("{\"Error\":\"Set LEDs value should be a number in the range [%d, %d]\"}"), LED_MIN, LED_MAX);
+    return false;   
+  }
+  for(uint8_t i=0; i<8; i++) LED[i] = ((val & 2^i) >> i);
   disp38->setLEDs(val << 8);
   return true;
 }
@@ -839,13 +847,11 @@ bool CmndSetLEDs(void) {
 \*********************************************************************************************/
 bool CmndSetLED(void) {
   if(displaytype != TM1638) {
-    sprintf(msg, PSTR("Command not valid for DisplayType %d"), displaytype); 
-    XdrvMailbox.data = msg;
+    Response_P(PSTR("{\"Error\":\"Command not valid for DisplayType %d\"}"), displaytype);
     return false;     
   }   
   if(ArgC() < 2) {
-    sprintf(msg, PSTR("Set LED requires two comma-separated numbers as arguments"));
-    XdrvMailbox.data = msg;
+    Response_P(PSTR("{\"Error\":\"Set LED requires two comma-separated numbers as arguments\"}"));
     return false;     
   } 
 
@@ -866,14 +872,14 @@ bool CmndSetLED(void) {
 
  
   if((position < POSITION_MIN) || (position > POSITION_MAX)) {
-    sprintf(msg, PSTR("First argument, position should be in the range [%d, %d]"), POSITION_MIN, POSITION_MAX);
-    XdrvMailbox.data = msg;
-    return false;        
+    Response_P(PSTR("{\"Error\":\"First argument, position should be in the range [%d, %d]\"}"), POSITION_MIN, POSITION_MAX);
+    return false;   
   }
 
   AddLog(LOG_LEVEL_DEBUG, PSTR("LOG: TM1638: position=%d"), position);
   AddLog(LOG_LEVEL_DEBUG, PSTR("LOG: TM1638: value=%d"), value);
 
+  LED[position] = value;
   disp38->setLED(position, value);
   return true;
 }
@@ -888,18 +894,15 @@ bool readButtons(void) {
     prevbuttons = buttons;
     if(!buttons) return true;
     if(buttons) {
-      Response_P(PSTR("{\"TM1638_BUTTONS\":%d}"), buttons);
-      MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR("BUTTONS"));
-      AddLog(LOG_LEVEL_DEBUG, PSTR("LOG: TM1638: buttons changed: %d"), buttons);
       for(int i=0; i<8; i++) {
-        if(buttons & (1<<i)) { 
-          if(SwitchGetVirtual(i)) SwitchSetVirtual(i, 0); 
-          else SwitchSetVirtual(i, 1); 
-          disp38->setLED(i, (1 + SwitchGetVirtual(i)) % 2 );
+        if(buttons & (1<<i)) {
+          AddLog(LOG_LEVEL_DEBUG, PSTR("LOG: TM1638: button pressed: %d"), i+1);
+          LED[i] = !LED[i];
+          disp38->setLED(i, LED[i]);
+          Response_P(PSTR("{\"TM1638_BUTTON%d\":\"%s\"}"), i+1, (LED[i]?PSTR("ON"):PSTR("OFF")));
+          MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR("BUTTONS"));
         }
       }
-     
-      SwitchHandler(1);
     }
   }
   return true;
@@ -911,12 +914,13 @@ bool readButtons(void) {
 \*********************************************************************************************/
 bool CmndButtons(void) {
   if(displaytype != TM1638) {
-    sprintf(msg, PSTR("Command not valid for DisplayType %d"), displaytype); 
-    XdrvMailbox.data = msg;
+    Response_P(PSTR("{\"Error\":\"Command not valid for DisplayType %d\"}"), displaytype); 
     return false;     
   }   
   AddLog(LOG_LEVEL_DEBUG, PSTR("LOG: TM1638: buttons=%d"), buttons);
-  XdrvMailbox.payload = buttons;
+  uint8_t byte = LED[0]<<0 | LED[1]<<1 | LED[2]<<2 | LED[3]<<3 | LED[4]<<4 | LED[5]<<5 | LED[6]<<6 | LED[7]<<7; 
+  Response_P(PSTR("{\"DisplayButtons\": {\"S1\":%d, \"S2\":%d, \"S3\":%d, \"S4\":%d, \"S5\":%d, \"S6\":%d, \"S7\":%d, \"S8\":%d, \"Array\": [%d,%d,%d,%d,%d,%d,%d,%d], \"Byte\": %d}}"), 
+              LED[0], LED[1], LED[2], LED[3], LED[4], LED[5], LED[6], LED[7], LED[0], LED[1], LED[2], LED[3], LED[4], LED[5], LED[6], LED[7], byte); 
   return true;
 }
 
@@ -931,9 +935,8 @@ bool MainFunc(uint8_t fn) {
   bool result = false;
 
   if(XdrvMailbox.data_len > CMD_MAX_LEN) {
-    sprintf(msg, PSTR("Command text too long. Please limit it to %d characters"), CMD_MAX_LEN);
-    XdrvMailbox.data = msg;
-    return result;
+    Response_P(PSTR("{\"Error\":\"Command text too long. Please limit it to %d characters\"}"), CMD_MAX_LEN); 
+    return false;   
   }
 
   switch (fn) {
