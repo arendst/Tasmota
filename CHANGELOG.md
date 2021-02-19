@@ -3,7 +3,7 @@ All notable changes to this project will be documented in this file.
 
 ## [Released]
 
-## [9.3.0] 20210218
+## [9.3.0] 20210219
 - Release Kenneth
 
 ## [9.2.0.7]
