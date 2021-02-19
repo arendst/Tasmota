@@ -65,7 +65,7 @@ void ILI9341_InitDriver()
 #ifdef USE_DISPLAY_ILI9341
     uint8_t dtype = 1;
 #else
-    uint8_t dtype = 2;
+    uint8_t dtype = 3; // sign ili9342 with variable spi pins
 #endif // USE_DISPLAY_ILI9341
 
     // default colors
