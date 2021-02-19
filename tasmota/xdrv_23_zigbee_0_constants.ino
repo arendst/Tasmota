@@ -901,7 +901,8 @@ enum Z_configuration {
   CONF_NWKMGR_ADDR = 0x89,
   CONF_ZDO_DIRECT_CB = 0x8F,
   CONF_TCLK_TABLE_START = 0x0101,
-  ZNP_HAS_CONFIGURED = 0xF00
+  ZNP_HAS_CONFIGURED = 0xF00,
+  ZNP_HAS_CONFIGURED3 = 0x60,    // different attribute address for ZStack 3
 };
 
 //
