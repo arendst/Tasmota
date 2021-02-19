@@ -21,7 +21,7 @@ In addition to the [release webpage](https://github.com/arendst/Tasmota/releases
 
 ## Development
 
-[![Dev Version](https://img.shields.io/badge/development%20version-v9.2.x.x-blue.svg)](https://github.com/arendst/Tasmota)
+[![Dev Version](https://img.shields.io/badge/development%20version-v9.3.x.x-blue.svg)](https://github.com/arendst/Tasmota)
 [![Download Dev](https://img.shields.io/badge/download-development-yellow.svg)](http://ota.tasmota.com/tasmota/)
 [![Tasmota CI](https://github.com/arendst/Tasmota/workflows/Tasmota%20CI/badge.svg)](https://github.com/arendst/Tasmota/actions?query=workflow%3A%22Tasmota+CI%22)
 [![Tasmota ESP32 CI](https://github.com/arendst/Tasmota/workflows/Tasmota%20ESP32%20CI/badge.svg)](https://github.com/arendst/Tasmota/actions?query=workflow%3A%22Tasmota+ESP32+CI%22)

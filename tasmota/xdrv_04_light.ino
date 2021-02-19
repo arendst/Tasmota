@@ -131,7 +131,7 @@ const uint8_t LIGHT_COLOR_SIZE = 25;   // Char array scolor size
 const char kLightCommands[] PROGMEM = "|"  // No prefix
   // SetOptions synonyms
   D_SO_CHANNELREMAP "|" D_SO_MULTIPWM "|" D_SO_ALEXACTRANGE "|" D_SO_POWERONFADE "|" D_SO_PWMCT "|"
-  D_SO_WHITEBLEND "|" D_SO_VIRTUALCT "|"
+  D_SO_WHITEBLEND "|"
   // Other commands
   D_CMND_COLOR "|" D_CMND_COLORTEMPERATURE "|" D_CMND_DIMMER "|" D_CMND_DIMMER_RANGE "|" D_CMND_DIMMER_STEP "|" D_CMND_LEDTABLE "|" D_CMND_FADE "|"
   D_CMND_RGBWWTABLE "|" D_CMND_SCHEME "|" D_CMND_SPEED "|" D_CMND_WAKEUP "|" D_CMND_WAKEUPDURATION "|"
@@ -150,7 +150,7 @@ const char kLightCommands[] PROGMEM = "|"  // No prefix
 
 SO_SYNONYMS(kLightSynonyms,
   37, 68, 82, 91, 92,
-  105, 106,
+  105,
 );
 
 void (* const LightCommand[])(void) PROGMEM = {
