@@ -28,17 +28,32 @@
  * Supported commands:
  * WcStream     = Control streaming, 0 = stop, 1 = start
  * WcResolution = Set resolution
- *     0 = FRAMESIZE_96x96,  (96x96)
- *     1 = FRAMESIZE_QQVGA2 (128x160)
- *     2 = FRAMESIZE_QCIF (176x144)
- *     3 = FRAMESIZE_HQVGA (240x176)
- *     4 = FRAMESIZE_QVGA (320x240)
- *     5 = FRAMESIZE_CIF (400x296)
- *     6 = FRAMESIZE_VGA (640x480)
- *     7 = FRAMESIZE_SVGA (800x600)
- *     8 = FRAMESIZE_XGA (1024x768)
- *     9 = FRAMESIZE_SXGA (1280x1024)
- *    10 = FRAMESIZE_UXGA (1600x1200)
+ 0 = FRAMESIZE_96X96,    // 96x96
+ 1 = FRAMESIZE_QQVGA,    // 160x120
+ 2 = FRAMESIZE_QCIF,     // 176x144
+ 3 = FRAMESIZE_HQVGA,    // 240x176
+ 4 = FRAMESIZE_240X240,  // 240x240
+ 5 = FRAMESIZE_QVGA,     // 320x240
+ 6 = FRAMESIZE_CIF,      // 400x296
+ 7 = FRAMESIZE_HVGA,     // 480x320
+ 8 = FRAMESIZE_VGA,      // 640x480
+ 9 = FRAMESIZE_SVGA,     // 800x600
+ 10 = FRAMESIZE_XGA,      // 1024x768
+ 11 = FRAMESIZE_HD,       // 1280x720
+ 12 = FRAMESIZE_SXGA,     // 1280x1024
+ 13 = FRAMESIZE_UXGA,     // 1600x1200
+ // 3MP Sensors above this no yet supported with this driver
+ 14 = FRAMESIZE_FHD,      // 1920x1080
+ 15 = FRAMESIZE_P_HD,     //  720x1280
+ 16 = FRAMESIZE_P_3MP,    //  864x1536
+ 17 = FRAMESIZE_QXGA,     // 2048x1536
+ // 5MP Sensors
+ 18 = FRAMESIZE_QHD,      // 2560x1440
+ 19 = FRAMESIZE_WQXGA,    // 2560x1600
+ 20 = FRAMESIZE_P_FHD,    // 1080x1920
+ 21 = FRAMESIZE_QSXGA,    // 2560x1920
+ 22 = FRAMESIZE_INVALID
+
  * WcMirror     = Mirror picture, 0 = no, 1 = yes
  * WcFlip       = Flip picture, 0 = no, 1 = yes
  * WcSaturation = Set picture Saturation -2 ... +2
@@ -73,6 +88,7 @@ bool HttpCheckPriviledgedAccess(bool);
 extern ESP8266WebServer *Webserver;
 
 #define BOUNDARY "e8b8c539-047d-4777-a985-fbba6edff11e"
+
 
 
 // CAMERA_MODEL_AI_THINKER default template pins
@@ -162,7 +178,7 @@ bool WcPinUsed(void) {
 }
 
 uint32_t WcSetup(int32_t fsiz) {
-  if (fsiz > 10) { fsiz = 10; }
+  if (fsiz >= FRAMESIZE_FHD) { fsiz = FRAMESIZE_FHD - 1; }
 
   Wc.stream_active = 0;
 
@@ -927,7 +943,7 @@ void WcShowStream(void) {
 void WcInit(void) {
   if (!Settings.webcam_config.data) {
     Settings.webcam_config.stream = 1;
-    Settings.webcam_config.resolution = 5;
+    Settings.webcam_config.resolution = FRAMESIZE_QVGA;
     Settings.webcam_config.flip = 0;
     Settings.webcam_config.mirror = 0;
     Settings.webcam_config.saturation = 0;  // -2
@@ -993,7 +1009,7 @@ void CmndWebcamStream(void) {
 }
 
 void CmndWebcamResolution(void) {
-  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 10)) {
+  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < FRAMESIZE_FHD)) {
     Settings.webcam_config.resolution = XdrvMailbox.payload;
     WcSetOptions(0, Settings.webcam_config.resolution);
   }
