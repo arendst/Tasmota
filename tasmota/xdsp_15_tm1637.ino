@@ -39,12 +39,17 @@
   CLK hardware pin --> "SSPI SCLK"
   STB hardware pin --> "SSPI MISO" (Only for TM1638)
 
-
-  Once the device restarts the following "Display" commands should become available:
   
-  In case you get a stat/<TOPIC>/RESULT = {"Command":"Unknown"} result for any of these commands,
-  please ensure that your DisplayModel is set to 15 using the command "DisplayModel 15"
-
+  Once the GPIO configuration is saved and the ESP8266/ESP32 module restarts, set the Display Model to 15 
+  using the command "DisplayModel 15"
+  
+  After this, depending upon your display variant, set your Display Type to 0, 1 or 2 using the command 
+     "DisplayType 0"  // for the 4-digit TM1637
+  or "DisplayType 1"  // for the 6-digit TM1637
+  or "DisplayType 2"  // for the 8-digit TM1638
+  
+  After the ESP8266/ESP32 module restarts again, the following "Display" commands can be used:
+  
 
   DisplayType           type {0|1|2}
 
@@ -1032,8 +1037,9 @@ bool Xdsp15(uint8_t function)
       case FUNC_DISPLAY_SCROLLDELAY:
       case FUNC_DISPLAY_SETLEDS:
       case FUNC_DISPLAY_SETLED:
-      case FUNC_DISPLAY_BUTTONS:      
+      case FUNC_DISPLAY_BUTTONS:
       case FUNC_DISPLAY_CLOCK:
+        showClock = false;
         result = MainFunc(function);
         break;
       case FUNC_DISPLAY_EVERY_50_MSECOND:
