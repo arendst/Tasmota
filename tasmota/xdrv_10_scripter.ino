@@ -4325,7 +4325,7 @@ int16_t Run_script_sub(const char *type, int8_t tlen, struct GVARS *gv) {
               ResponseAppend_P(PSTR("%s"), tmp);
               goto next_line;
             }
-#ifdef USE_SENDMAIL
+#if defined(USE_SENDMAIL) || defined(USE_ESP32MAIL)
             else if (!strncmp(lp, "mail", 4)) {
               lp+=5;
               char tmp[256];
@@ -4680,10 +4680,9 @@ int16_t Run_script_sub(const char *type, int8_t tlen, struct GVARS *gv) {
 
 uint8_t script_xsns_index = 0;
 
-
 void ScripterEvery100ms(void) {
 
-  if (Settings.rule_enabled && (TasmotaGlobal.uptime > 4)) {
+  if (bitRead(Settings.rule_enabled, 0) && (TasmotaGlobal.uptime > 4)) {
     ResponseClear();
     uint16_t script_tele_period_save = TasmotaGlobal.tele_period;
     TasmotaGlobal.tele_period = 2;
@@ -4695,7 +4694,7 @@ void ScripterEvery100ms(void) {
       Run_Scripter(">T", 2, TasmotaGlobal.mqtt_data);
     }
   }
-  if (Settings.rule_enabled) {
+  if (bitRead(Settings.rule_enabled, 0)) {
     if (glob_script_mem.fast_script == 99) Run_Scripter(">F", 2, 0);
   }
 }
@@ -7161,7 +7160,7 @@ nextwebline:
 #endif //USE_SCRIPT_WEB_DISPLAY
 
 
-#ifdef USE_SENDMAIL
+#if defined(USE_SENDMAIL) || defined(USE_ESP32MAIL)
 
 void script_send_email_body(void(*func)(char *)) {
 uint8_t msect = Run_Scripter(">m", -2, 0);

@@ -228,15 +228,6 @@ int32_t EZ_PermitJoinRsp(int32_t res, const SBuffer &buf) {
 }
 
 //
-// Special case: EZSP does not send an event for PermitJoin end, so we generate a synthetic one
-//
-void Z_PermitJoinDisable(void) {
-    Response_P(PSTR("{\"" D_JSON_ZIGBEE_STATE "\":{\"Status\":20,\"Message\":\"Pairing mode disabled\"}}"));
-    MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEE_STATE));
-}
-
-
-//
 // Received MessageSentHandler
 //
 // We normally ignore the message, but it's a way to sniff group ids for IKEA remote
@@ -253,6 +244,14 @@ int32_t EZ_MessageSent(int32_t res, const SBuffer &buf) {
 }
 
 #endif // USE_ZIGBEE_EZSP
+
+//
+// Special case: EZSP does not send an event for PermitJoin end, so we generate a synthetic one
+//
+void Z_PermitJoinDisable(void) {
+    Response_P(PSTR("{\"" D_JSON_ZIGBEE_STATE "\":{\"Status\":20,\"Message\":\"Pairing mode disabled\"}}"));
+    MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEE_STATE));
+}
 
 /*********************************************************************************************\
  * Handle auto-mapping
@@ -427,6 +426,10 @@ int32_t ZNP_Reboot(int32_t res, SBuffer &buf) {
   MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEE_STATE));
 
   if ((0x02 == major_rel) && ((0x06 == minor_rel) || (0x07 == minor_rel))) {
+    if (0x07 == minor_rel) {
+      zigbee.zb3 = true;        // we run Zigbee 3
+      ZNP_UpdateZStack3();      // update configuration for ZStack 3
+    }
   	return 0;	  // version 2.6.x and 2.7.x are ok
   } else {
     return ZIGBEE_LABEL_UNSUPPORTED_VERSION;  // abort
@@ -546,18 +549,18 @@ int32_t ZNP_ReceivePermitJoinStatus(int32_t res, const SBuffer &buf) {
   uint8_t     status_code;
   const char* message;
 
-  if (0xFF == duration) {
+  if (!zigbee.zb3 && (0xFF == duration)) {
     status_code = ZIGBEE_STATUS_PERMITJOIN_OPEN_XX;
     message = PSTR("Enable Pairing mode until next boot");
-    zigbee.permit_end_time = true;   // In ZNP mode, declare permitjoin open
+    zigbee.permit_end_time = -1;   // In ZNP mode, declare permitjoin open
   } else if (duration > 0) {
     status_code = ZIGBEE_STATUS_PERMITJOIN_OPEN_60;
     message = PSTR("Enable Pairing mode for %d seconds");
-    zigbee.permit_end_time = true;   // In ZNP mode, declare permitjoin open
+    zigbee.permit_end_time = -1;   // In ZNP mode, declare permitjoin open
   } else {
     status_code = ZIGBEE_STATUS_PERMITJOIN_CLOSE;
     message = PSTR("Disable Pairing mode");
-    zigbee.permit_end_time = false;   // In ZNP mode, declare permitjoin closed
+    zigbee.permit_end_time = 0;   // In ZNP mode, declare permitjoin closed
   }
   Response_P(PSTR("{\"" D_JSON_ZIGBEE_STATE "\":{"
                   "\"Status\":%d,\"Message\":\""),
@@ -657,7 +660,7 @@ int32_t Z_ReceiveActiveEp(int32_t res, const SBuffer &buf) {
 
 // list of clusters that need bindings
 const uint8_t Z_bindings[] PROGMEM = {
-  Cx0001, Cx0006, Cx0008, Cx0201, Cx0300,
+  Cx0001, Cx0006, Cx0008, Cx0102, Cx0201, Cx0300,
   Cx0400, Cx0402, Cx0403, Cx0405, Cx0406,
   Cx0500,
 };
@@ -1499,6 +1502,7 @@ const Z_autoAttributeReporting_t Z_autoAttributeReporting[] PROGMEM = {
   { 0x0001, 0x0020,    60*60, USE_ZIGBEE_MAXTIME_BATT,  USE_ZIGBEE_AUTOBIND_BATTVOLTAGE },      // BatteryVoltage
   { 0x0001, 0x0021,    60*60, USE_ZIGBEE_MAXTIME_BATT,  USE_ZIGBEE_AUTOBIND_BATTPERCENT },      // BatteryPercentage
   { 0x0006, 0x0000,        1,   USE_ZIGBEE_MAXTIME_LIGHT,    0 },      // Power
+  { 0x0102, 0x0008,        1,   USE_ZIGBEE_MAXTIME_LIFT, USE_ZIGBEE_AUTOBIND_LIFT },      // CurrentPositionLiftPercentage
   { 0x0201, 0x0000,       60,   USE_ZIGBEE_MAXTIME_TRV,  USE_ZIGBEE_AUTOBIND_TEMPERATURE },      // LocalTemperature
   { 0x0201, 0x0008,       60,   USE_ZIGBEE_MAXTIME_TRV,  USE_ZIGBEE_AUTOBIND_HEATDEMAND  },      // PIHeatingDemand
   { 0x0201, 0x0012,       60,   USE_ZIGBEE_MAXTIME_TRV,  USE_ZIGBEE_AUTOBIND_TEMPERATURE },      // OccupiedHeatingSetpoint

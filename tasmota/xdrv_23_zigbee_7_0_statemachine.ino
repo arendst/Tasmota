@@ -94,6 +94,7 @@ enum Zigbee_StateMachine_Instruction_Set {
 #define ZI_STOP(x)          { .i = { ZGB_INSTR_STOP,   (x), 0x0000} },
 
 #define ZI_CALL(f, x)       { .i = { ZGB_INSTR_CALL, (x), 0x0000} }, { .p = (const void*)(f) },
+// #define ZI_CALL2(f, x, y)   { .i = { ZGB_INSTR_CALL, (x), (y)} }, { .p = (const void*)(f) },
 #define ZI_LOG(x, m)        { .i = { ZGB_INSTR_LOG,    (x), 0x0000 } }, { .p = ((const void*)(m)) },
 #define ZI_MQTT_STATE(x, m) { .i = { ZGB_INSTR_MQTT_STATE,    (x), 0x0000 } }, { .p = ((const void*)(m)) },
 #define ZI_ON_RECV_UNEXPECTED(f) { .i = { ZGB_ON_RECV_UNEXPECTED, 0x00, 0x0000} }, { .p = (const void*)(f) },
@@ -149,7 +150,7 @@ ZBM(ZBS_VERSION, Z_SREQ | Z_SYS, SYS_VERSION )              // 2102 Z_SYS:versio
 ZBM(ZBR_VERSION, Z_SRSP | Z_SYS, SYS_VERSION )              // 6102 Z_SYS:version
 
 // Check if ZNP_HAS_CONFIGURED is set
-ZBM(ZBS_ZNPHC, Z_SREQ | Z_SYS, SYS_OSAL_NV_READ, ZNP_HAS_CONFIGURED & 0xFF, ZNP_HAS_CONFIGURED >> 8, 0x00 /* offset */ )  // 2108000F00 - 6108000155
+ZBR(ZBS_ZNPHC, Z_SREQ | Z_SYS, SYS_OSAL_NV_READ, ZNP_HAS_CONFIGURED & 0xFF, ZNP_HAS_CONFIGURED >> 8, 0x00 /* offset */ )  // 2108000F00 - 6108000155
 ZBM(ZBR_ZNPHC, Z_SRSP | Z_SYS, SYS_OSAL_NV_READ, Z_SUCCESS, 0x01 /* len */, 0x55)   // 6108000155
 // If not set, the response is 61-08-02-00 = Z_SRSP | Z_SYS, SYS_OSAL_NV_READ, Z_INVALIDPARAMETER, 0x00 /* len */
 
@@ -169,8 +170,16 @@ ZBR(ZBR_CHANN, Z_SRSP | Z_SYS, SYS_OSAL_NV_READ, Z_SUCCESS,
                Z_B0(USE_ZIGBEE_CHANNEL_MASK), Z_B1(USE_ZIGBEE_CHANNEL_MASK), Z_B2(USE_ZIGBEE_CHANNEL_MASK), Z_B3(USE_ZIGBEE_CHANNEL_MASK),
                )				// 61080004xxxxxxxx
 
-ZBM(ZBS_PFGK, Z_SREQ | Z_SYS, SYS_OSAL_NV_READ, CONF_PRECFGKEY,0x00, 0x00 )				// 2108620000
-ZBR(ZBR_PFGK, Z_SRSP | Z_SYS, SYS_OSAL_NV_READ, Z_SUCCESS,
+ZBM(ZBS_PFGK, Z_SREQ | Z_SAPI, SAPI_READ_CONFIGURATION, CONF_PRECFGKEY )				// 260462
+ZBR(ZBR_PFGK, Z_SRSP | Z_SAPI, SAPI_READ_CONFIGURATION, Z_SUCCESS, CONF_PRECFGKEY,
+              0x10 /* len */,
+              0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* key_l */
+              0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* key_h */
+              /*0x01, 0x03, 0x05, 0x07, 0x09, 0x0B, 0x0D, 0x0F,
+              0x00, 0x02, 0x04, 0x06, 0x08, 0x0A, 0x0C, 0x0D*/ )				// 660400621001030507090B0D0F00020406080A0C0D
+
+ZBM(ZBS_PFGK3, Z_SREQ | Z_SYS, SYS_OSAL_NV_READ, CONF_PRECFGKEY,0x00, 0x00 )				// 2108620000
+ZBR(ZBR_PFGK3, Z_SRSP | Z_SYS, SYS_OSAL_NV_READ, Z_SUCCESS,
               0x10 /* len */,
               0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* key_l */
               0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* key_h */
@@ -238,14 +247,14 @@ ZBM(ZBS_WNV_SECMODE, Z_SREQ | Z_SYS, SYS_OSAL_NV_WRITE, Z_B0(CONF_TCLK_TABLE_STA
 // Write Z_ZDO Direct CB
 ZBM(ZBS_W_ZDODCB, Z_SREQ | Z_SYS, SYS_OSAL_NV_WRITE, CONF_ZDO_DIRECT_CB,0x00, 0x00, 0x01 /* len */, 0x01 )				// 21098F00000101
 // NV Init ZNP Has Configured
-ZBM(ZBS_WNV_INITZNPHC, Z_SREQ | Z_SYS, SYS_OSAL_NV_ITEM_INIT, ZNP_HAS_CONFIGURED & 0xFF, ZNP_HAS_CONFIGURED >> 8,
+ZBR(ZBS_WNV_INITZNPHC, Z_SREQ | Z_SYS, SYS_OSAL_NV_ITEM_INIT, ZNP_HAS_CONFIGURED & 0xFF, ZNP_HAS_CONFIGURED >> 8,
                        0x01, 0x00 /* InitLen 16 bits */, 0x01 /* len */, 0x00 )  // 2107000F01000100 - 610709
 // Init succeeded
 //ZBM(ZBR_WNV_INIT_OK, Z_SRSP | Z_SYS, SYS_OSAL_NV_ITEM_INIT, Z_CREATED )				// 610709 - NV Write
 ZBM(ZBR_WNV_INIT_OK, Z_SRSP | Z_SYS, SYS_OSAL_NV_ITEM_INIT )				  // 6107xx, Success if 610700 or 610709 - NV Write
 
 // Write ZNP Has Configured
-ZBM(ZBS_WNV_ZNPHC, Z_SREQ | Z_SYS, SYS_OSAL_NV_WRITE, Z_B0(ZNP_HAS_CONFIGURED), Z_B1(ZNP_HAS_CONFIGURED),
+ZBR(ZBS_WNV_ZNPHC, Z_SREQ | Z_SYS, SYS_OSAL_NV_WRITE, Z_B0(ZNP_HAS_CONFIGURED), Z_B1(ZNP_HAS_CONFIGURED),
                    0x00 /* offset */, 0x01 /* len */, 0x55 )				// 2109000F000155 - 610900
 // Z_ZDO:startupFromApp
 ZBM(ZBS_STARTUPFROMAPP, Z_SREQ | Z_ZDO, ZDO_STARTUP_FROM_APP, 100, 0 /* delay */)   // 25406400
@@ -333,8 +342,17 @@ void ZNP_UpdateConfig(uint8_t zb_channel, uint16_t zb_pan_id, uint64_t zb_ext_pa
                 0x04 /* len */,
                 Z_B0(zb_channel_mask), Z_B1(zb_channel_mask), Z_B2(zb_channel_mask), Z_B3(zb_channel_mask),
                 )				// 61080004xxxxxxxx
-
-  ZBW(ZBR_PFGK, Z_SRSP | Z_SYS, SYS_OSAL_NV_READ, Z_SUCCESS,
+  // Zstack 1.2
+  ZBW(ZBR_PFGK, Z_SRSP | Z_SAPI, SAPI_READ_CONFIGURATION, Z_SUCCESS, CONF_PRECFGKEY,
+                0x10 /* len */,
+                Z_B0(zb_precfgkey_l), Z_B1(zb_precfgkey_l), Z_B2(zb_precfgkey_l), Z_B3(zb_precfgkey_l),
+                Z_B4(zb_precfgkey_l), Z_B5(zb_precfgkey_l), Z_B6(zb_precfgkey_l), Z_B7(zb_precfgkey_l),
+                Z_B0(zb_precfgkey_h), Z_B1(zb_precfgkey_h), Z_B2(zb_precfgkey_h), Z_B3(zb_precfgkey_h),
+                Z_B4(zb_precfgkey_h), Z_B5(zb_precfgkey_h), Z_B6(zb_precfgkey_h), Z_B7(zb_precfgkey_h),
+                /*0x01, 0x03, 0x05, 0x07, 0x09, 0x0B, 0x0D, 0x0F,
+                0x00, 0x02, 0x04, 0x06, 0x08, 0x0A, 0x0C, 0x0D*/ )				// 660400621001030507090B0D0F00020406080A0C0D
+  // ZStack 3
+  ZBW(ZBR_PFGK3, Z_SRSP | Z_SYS, SYS_OSAL_NV_READ, Z_SUCCESS,
                 0x10 /* len */,
                 Z_B0(zb_precfgkey_l), Z_B1(zb_precfgkey_l), Z_B2(zb_precfgkey_l), Z_B3(zb_precfgkey_l),
                 Z_B4(zb_precfgkey_l), Z_B5(zb_precfgkey_l), Z_B6(zb_precfgkey_l), Z_B7(zb_precfgkey_l),
@@ -361,6 +379,17 @@ void ZNP_UpdateConfig(uint8_t zb_channel, uint16_t zb_pan_id, uint64_t zb_ext_pa
                   Z_B0(zb_precfgkey_h), Z_B1(zb_precfgkey_h), Z_B2(zb_precfgkey_h), Z_B3(zb_precfgkey_h),
                   Z_B4(zb_precfgkey_h), Z_B5(zb_precfgkey_h), Z_B6(zb_precfgkey_h), Z_B7(zb_precfgkey_h),
                   )				// 21096200001001030507090B0D0F00020406080A0C0D
+}
+
+// Update configuration for ZStack 3
+void ZNP_UpdateZStack3(void) {
+  ZBW(ZBS_ZNPHC, Z_SREQ | Z_SYS, SYS_OSAL_NV_READ, ZNP_HAS_CONFIGURED3 & 0xFF, ZNP_HAS_CONFIGURED3 >> 8, 0x00 /* offset */ )  // 2108000F00 - 6108000155
+
+  ZBW(ZBS_WNV_INITZNPHC, Z_SREQ | Z_SYS, SYS_OSAL_NV_ITEM_INIT, ZNP_HAS_CONFIGURED3 & 0xFF, ZNP_HAS_CONFIGURED3 >> 8,
+                        0x01, 0x00 /* InitLen 16 bits */, 0x01 /* len */, 0x00 )  // 2107000F01000100 - 610709
+
+  ZBW(ZBS_WNV_ZNPHC, Z_SREQ | Z_SYS, SYS_OSAL_NV_WRITE, Z_B0(ZNP_HAS_CONFIGURED3), Z_B1(ZNP_HAS_CONFIGURED3),
+                    0x00 /* offset */, 0x01 /* len */, 0x55 )				// 2109000F000155 - 610900
 }
 
 static const Zigbee_Instruction zb_prog[] PROGMEM = {
@@ -402,10 +431,17 @@ static const Zigbee_Instruction zb_prog[] PROGMEM = {
     ZI_WAIT_RECV(1000, ZBR_EXTPAN)
     ZI_SEND(ZBS_CHANN)                        // check CHANNEL
     ZI_WAIT_RECV(1000, ZBR_CHANN)
-    ZI_SEND(ZBS_PFGK)                         // check PFGK
-    ZI_WAIT_RECV(1000, ZBR_PFGK)
     ZI_SEND(ZBS_PFGKEN)                       // check PFGKEN
     ZI_WAIT_RECV(1000, ZBR_PFGKEN)
+
+    ZI_CALL(&Z_GotoZB3, ZIGBEE_LABEL_ZB3_INIT)
+    ZI_SEND(ZBS_PFGK)                         // check PFGK on ZB1.2
+    ZI_WAIT_RECV(1000, ZBR_PFGK)
+    ZI_GOTO(ZIGBEE_LABEL_START_COORD)
+    
+  ZI_LABEL(ZIGBEE_LABEL_ZB3_INIT)
+    ZI_SEND(ZBS_PFGK3)                        // check PFGK on ZB3
+    ZI_WAIT_RECV(1000, ZBR_PFGK3)
     //ZI_LOG(LOG_LEVEL_INFO, D_LOG_ZIGBEE "zigbee configuration ok")
     // all is good, we can start
 
@@ -416,7 +452,7 @@ static const Zigbee_Instruction zb_prog[] PROGMEM = {
     //ZI_LOG(LOG_LEVEL_INFO, D_LOG_ZIGBEE "starting zigbee coordinator")
     ZI_SEND(ZBS_STARTUPFROMAPP)                       // start coordinator
     ZI_WAIT_RECV(5000, ZBR_STARTUPFROMAPP)        // wait for sync ack of command
-    ZI_WAIT_UNTIL_FUNC(10000, AREQ_STARTUPFROMAPP, &ZNP_ReceiveStateChange)      // wait for async message that coordinator started
+    ZI_WAIT_UNTIL_FUNC(20000, AREQ_STARTUPFROMAPP, &ZNP_ReceiveStateChange)      // wait for async message that coordinator started, max 20s
     ZI_SEND(ZBS_GETDEVICEINFO)                    // GetDeviceInfo
     ZI_WAIT_RECV_FUNC(2000, ZBR_GETDEVICEINFO, &ZNP_ReceiveDeviceInfo)
     //ZI_WAIT_RECV(2000, ZBR_GETDEVICEINFO)         // memorize info
@@ -1027,6 +1063,7 @@ void ZigbeeStateMachine_Run(void) {
         if (cur_ptr1) {
           uint32_t res;
           res = (*((ZB_Func)cur_ptr1))(cur_d8);
+          // res = (*((ZB_Func)cur_ptr1))(cur_d8, cur_d16);
           if (res > 0) {
             ZigbeeGotoLabel(res);
             continue;     // avoid incrementing PC after goto
@@ -1168,6 +1205,17 @@ int32_t ZigbeeProcessInput(SBuffer &buf) {
     ZigbeeGotoLabel(zigbee.on_error_goto);
   }
   return 0;  // Fix GCC 10.1 warning
+}
+
+//
+// Condiditional GOTO depending on ZB3 or not
+// Take the branch if ZB3
+int32_t Z_GotoZB3(uint8_t value) {
+  if (zigbee.zb3) {
+    return value; // take the branch
+  } else {
+    return 0;     // continue
+  }
 }
 
 #endif // USE_ZIGBEE

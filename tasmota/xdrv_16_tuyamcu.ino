@@ -62,7 +62,7 @@ struct TUYA {
   uint16_t CTMin = 153;                   // Minimum CT level allowed - When SetOption82 is enabled will default to 200
   uint16_t CTMax = 500;                   // Maximum CT level allowed - When SetOption82 is enabled will default to 380
   bool ModeSet = false;                   // Controls 0 - Single Tone light, 1 - RGB Light
-  uint16_t Sensors[14];                   // Stores the values of Sensors connected to the Tuya Device
+  int16_t Sensors[14];                    // Stores the values of Sensors connected to the Tuya Device
   bool SensorsValid[14];                  // Bool used for nullify the sensor value until a real value is received from the MCU
   bool SuspendTopic = false;              // Used to reduce the load at init time or when polling the configuraton on demand
   uint32_t ignore_topic_timeout = 0;      // Suppress the /STAT topic (if enabled) to avoid data overflow until the configuration is over
@@ -318,7 +318,7 @@ int StrCmpNoCase(char const *Str1, char const *Str2) // Compare case sensistive 
   }
 }
 
-float TuyaAdjustedTemperature(uint16_t packetValue, uint8_t res)
+float TuyaAdjustedTemperature(int16_t packetValue, uint8_t res)
 {
     switch (res)
     {

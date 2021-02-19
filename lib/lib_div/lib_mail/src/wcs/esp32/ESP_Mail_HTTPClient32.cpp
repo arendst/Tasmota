@@ -1,17 +1,17 @@
 /*
- * Customized version of ESP32 HTTPClient Library. 
- * 
+ * Customized version of ESP32 HTTPClient Library.
+ *
  * v 1.1.1
- * 
+ *
  * The MIT License (MIT)
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
- * 
+ *
  * HTTPClient Arduino library for ESP32
  *
  * Copyright (c) 2015 Markus Sattler. All rights reserved.
  * This file is part of the HTTPClient for Arduino.
- * Port to ESP32 by Evandro Luis Copercini (2017), 
- * changed fingerprints to CA verification. 	
+ * Port to ESP32 by Evandro Luis Copercini (2017),
+ * changed fingerprints to CA verification.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -205,8 +205,9 @@ void ESP_Mail_HTTPClient32::setCertFile(const char *caCertFile, esp_mail_file_st
         bool t = false;
         _certType = 2;
 
-        if (storageType == esp_mail_file_storage_type::esp_mail_file_storage_type_flash)
-            t = SPIFFS.begin(true);
+        if (storageType == esp_mail_file_storage_type::esp_mail_file_storage_type_flash) {
+        //    t = SPIFFS.begin(true);
+        }
         else if (storageType == esp_mail_file_storage_type::esp_mail_file_storage_type_sd)
             t = SD.begin();
         if (!t)
@@ -215,8 +216,8 @@ void ESP_Mail_HTTPClient32::setCertFile(const char *caCertFile, esp_mail_file_st
         File f;
         if (storageType == esp_mail_file_storage_type::esp_mail_file_storage_type_flash)
         {
-            if (SPIFFS.exists(caCertFile))
-                f = SPIFFS.open(caCertFile, FILE_READ);
+            //if (SPIFFS.exists(caCertFile))
+              //  f = SPIFFS.open(caCertFile, FILE_READ);
         }
         else if (storageType == esp_mail_file_storage_type::esp_mail_file_storage_type_sd)
         {
