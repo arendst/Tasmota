@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased] - Development
 
 ## [9.3.0.1]
+### Changed
+- Remove the need to start filenames with a slash (/) in Ufs commands
+- Removed command ``VirtualCT`` as synonym for ``SetOption106`` (#11049)
+
 ### Fixed
 - Ili1942 driver (#11046)
 - ESP32 Mi32 driver (#11048)

@@ -426,6 +426,14 @@ bool UfsExecuteCommandFile(const char *fname) {
  * Commands
 \*********************************************************************************************/
 
+const int UFS_FILENAME_SIZE = 48;
+
+char* UfsFilename(char* fname, char* fname_in) {
+  fname_in = Trim(fname_in);  // Remove possible leading spaces
+  snprintf_P(fname, UFS_FILENAME_SIZE, PSTR("%s%s"), ('/' == fname_in[0]) ? "" : "/", fname_in);
+  return fname;
+}
+
 const char kUFSCommands[] PROGMEM = "Ufs|"  // Prefix
   "|Type|Size|Free|Delete|Rename|Run";
 
@@ -468,11 +476,13 @@ void UFSDelete(void) {
   // UfsDelete  sdcard or flashfs file if only one of them available
   // UfsDelete2 flashfs file if available
   if (XdrvMailbox.data_len > 0) {
+    char fname[UFS_FILENAME_SIZE];
+    UfsFilename(fname, XdrvMailbox.data);
     bool result = false;
     if (ffs_type && (ffs_type != ufs_type) && (2 == XdrvMailbox.index)) {
-      result = TfsDeleteFile(XdrvMailbox.data);
+      result = TfsDeleteFile(fname);
     } else {
-      result = (ufs_type && ufsp->remove(XdrvMailbox.data));
+      result = (ufs_type && ufsp->remove(fname));
     }
     if (!result) {
       ResponseCmndFailed();
@@ -487,13 +497,17 @@ void UFSRename(void) {
   // UfsRename2 flashfs file if available
   if (XdrvMailbox.data_len > 0) {
     bool result = false;
-    const char *fname1 = strtok(XdrvMailbox.data, ",");
-    const char *fname2 = strtok(nullptr, ",");
+    char *fname1 = strtok(XdrvMailbox.data, ",");
+    char *fname2 = strtok(nullptr, ",");
     if (fname1 && fname2) {
+      char fname_old[UFS_FILENAME_SIZE];
+      UfsFilename(fname_old, fname1);
+      char fname_new[UFS_FILENAME_SIZE];
+      UfsFilename(fname_new, fname2);
       if (ffs_type && (ffs_type != ufs_type) && (2 == XdrvMailbox.index)) {
-        result = TfsRenameFile(fname1, fname2);
+        result = TfsRenameFile(fname_old, fname_new);
       } else {
-        result = (ufs_type && ufsp->rename(fname1, fname2));
+        result = (ufs_type && ufsp->rename(fname_old, fname_new));
       }
     }
     if (!result) {
@@ -506,7 +520,8 @@ void UFSRename(void) {
 
 void UFSRun(void) {
   if (XdrvMailbox.data_len > 0) {
-    if (UfsExecuteCommandFile(XdrvMailbox.data)) {
+    char fname[UFS_FILENAME_SIZE];
+    if (UfsExecuteCommandFile(UfsFilename(fname, XdrvMailbox.data))) {
       ResponseClear();
     } else {
       ResponseCmndFailed();

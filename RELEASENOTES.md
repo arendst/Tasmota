@@ -79,6 +79,10 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 [Complete list](BUILDS.md) of available feature and sensors.
 
 ## Changelog v9.3.0.1
+### Changed
+- Remove the need to start filenames with a slash (/) in Ufs commands
+- Removed command ``VirtualCT`` as synonym for ``SetOption106`` [#11049](https://github.com/arendst/Tasmota/issues/11049)
+
 ### Fixed
 - Ili1942 driver [#11046](https://github.com/arendst/Tasmota/issues/11046)
 - ESP32 Mi32 driver [#11048](https://github.com/arendst/Tasmota/issues/11048)
