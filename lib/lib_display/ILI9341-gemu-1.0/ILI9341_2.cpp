@@ -189,9 +189,11 @@ void ILI9341_2::init(uint16_t width, uint16_t height) {
 
   if (_hwspi >= 2) {
     spi2 = &SPI;
+#ifdef ESP32
     if (_hwspi > 2) {
       spi2->begin(_sclk, _miso, _mosi, -1);
     }
+#endif // ESP32
   } else {
 #ifdef ESP32
     if (_spibus == 2) {
