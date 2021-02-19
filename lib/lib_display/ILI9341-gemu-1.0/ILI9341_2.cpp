@@ -136,7 +136,7 @@ static const uint8_t PROGMEM ili9342_initcmd[] = {
   0x00                                   // End of list
 };
 
-ILI9341_2::ILI9341_2(int8_t cs, int8_t mosi, int8_t miso, int8_t sclk, int8_t res, int8_t dc, int8_t bp, int8_t spibus) : Renderer(ILI9341_TFTWIDTH, ILI9341_TFTHEIGHT) {
+ILI9341_2::ILI9341_2(int8_t cs, int8_t mosi, int8_t miso, int8_t sclk, int8_t res, int8_t dc, int8_t bp, int8_t spibus, uint8_t dtype) : Renderer(ILI9341_TFTWIDTH, ILI9341_TFTHEIGHT) {
   _cs   = cs;
   _mosi  = mosi;
   _miso  = miso;
@@ -144,7 +144,7 @@ ILI9341_2::ILI9341_2(int8_t cs, int8_t mosi, int8_t miso, int8_t sclk, int8_t re
   _res = res;
   _dc = dc;
   _bp = bp;
-  _hwspi = 1;  // sign ili9341
+  _hwspi = dtype;  // sign ili9341 or 2
   _spibus = spibus;
 }
 
