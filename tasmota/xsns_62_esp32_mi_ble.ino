@@ -1937,24 +1937,25 @@ void MI32Every50mSecond(){
 
 void MI32EverySecond(bool restart){
 
-#ifdef USE_HOME_ASSISTANT
-  if(Settings.flag.hass_discovery){
-    // fixes bug introduced - just by forcing this mode.
-    MI32.option.MQTTType = 1;
-  }
-#endif
-
 //  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("M32: onesec"));
   MI32TimeoutSensors();
 
   if (MI32.option.MQTTType == 0){
     // show tas style sensor MQTT
     MI32ShowSomeSensors();
-  } else { 
+  }
+  
+  if (MI32.option.MQTTType == 1 
+#ifdef USE_HOME_ASSISTANT
+    ||
+    Settings.flag.hass_discovery
+#endif
+  ) { 
     // these two share a counter
     // discovery only sent if hass_discovery
     MI32DiscoveryOneMISensor();
     // show independent style sensor MQTT
+    // note - if !MQTTType, then this is IN ADDITION to 'normal'
     MI32ShowOneMISensor();
   }
 
