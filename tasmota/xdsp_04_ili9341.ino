@@ -42,7 +42,7 @@ bool tft_init_done = false;
 void ILI9341_InitDriver()
 {
 
-#ifdef USE_M5STACK_CORE2
+#if (defined(USE_M5STACK_CORE2) || defined(USE_M5STACK_CORE_BASIC))
   if (TasmotaGlobal.spi_enabled) {
 #else
   // There are displays without CS
@@ -72,9 +72,14 @@ void ILI9341_InitDriver()
     fg_color = ILI9341_WHITE;
     bg_color = ILI9341_BLACK;
 
+    AddLog(LOG_LEVEL_INFO, PSTR("DSP: ILI934x 0"));
+
 #ifdef USE_M5STACK_CORE2
     // fixed pins on m5stack core2
     ili9341_2 = new ILI9341_2(5, -2, 15, -2);
+#elif defined(USE_M5STACK_CORE_BASIC)
+    // int8_t cs, int8_t res, int8_t dc, int8_t bp)
+    ili9341_2 = new ILI9341_2(14, 33, 27, 32);
 #else
     // check for special case with 2 SPI busses (ESP32 bitcoin)
     if (TasmotaGlobal.soft_spi_enabled) {
@@ -93,6 +98,8 @@ void ILI9341_InitDriver()
       AddLog(LOG_LEVEL_INFO, PSTR("DSP: ILI934x invalid GPIOs"));
       return;
     }
+
+    AddLog(LOG_LEVEL_INFO, PSTR("DSP: ILI934x 1"));
 
     ili9341_2->init(Settings.display_width, Settings.display_height);
     renderer = ili9341_2;

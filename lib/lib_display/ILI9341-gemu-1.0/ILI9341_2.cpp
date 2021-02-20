@@ -411,17 +411,17 @@ void ILI9341_2::setRotation(uint8_t m) {
             _height = iheight;
             break;
         case 1:
-            m = (MADCTL_MV | MADCTL_BGR);
+            m = (MADCTL_MY | MADCTL_MV | MADCTL_BGR);
             _width  = iheight;
             _height = iwidth;
             break;
         case 2:
-            m = (MADCTL_MY | MADCTL_BGR);
+            m = (MADCTL_MY | MADCTL_MX | MADCTL_BGR);
             _width  = iwidth;
             _height = iheight;
             break;
         case 3:
-            m = (MADCTL_MX | MADCTL_MY | MADCTL_MV | MADCTL_BGR);
+            m = (MADCTL_MX | MADCTL_MV | MADCTL_BGR);
             _width  = iheight;
             _height = iwidth;
             break;
@@ -561,9 +561,11 @@ void ILI9341_2::DisplayOnff(int8_t on) {
 }
 
 void ILI9341_2::invertDisplay(boolean i) {
+  SPI_BEGIN_TRANSACTION();
   ILI9341_2_CS_LOW
   writecmd(i ? ILI9341_2_INVON : ILI9341_2_INVOFF);
   ILI9341_2_CS_HIGH
+  SPI_END_TRANSACTION();
 }
 
 void ili9342_dimm(uint8_t dim);
