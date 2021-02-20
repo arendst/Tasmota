@@ -406,10 +406,9 @@ void ShutterDecellerateForStop(uint8_t i)
     case SHT_COUNTER:
       int16_t missing_steps;
       Shutter[i].accelerator = -(ShutterGlobal.open_velocity_max / (Shutter[i].motordelay>4 ? (Shutter[i].motordelay*11)/10 : 4) );
-      while (Shutter[i].pwm_velocity > -2*Shutter[i].accelerator &&  Shutter[i].pwm_velocity > 100) {
+      while (Shutter[i].pwm_velocity > -2*Shutter[i].accelerator ||  (ShutterGlobal.position_mode == SHT_COUNTER && Shutter[i].pwm_velocity > 100) ) {
 	delay(50);
         AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Velocity %ld, Delta %d"), Shutter[i].pwm_velocity, Shutter[i].accelerator );
-        //Shutter[i].pwm_velocity = tmax(Shutter[i].pwm_velocity-Shutter[i].accelerator , 0);
         // Control will be done in RTC Ticker.
         
       }
