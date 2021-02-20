@@ -527,7 +527,7 @@ void ili9342_bpwr(uint8_t on);
 
 void ILI9341_2::DisplayOnff(int8_t on) {
 
-  if (_hwspi>=2) {
+  if ((_hwspi >= 2) && (_bp < 0)) {
     ili9342_bpwr(on);
   }
 
@@ -537,11 +537,11 @@ void ILI9341_2::DisplayOnff(int8_t on) {
     writecmd(ILI9341_2_DISPON);
     ILI9341_2_CS_HIGH
     SPI_END_TRANSACTION();
-    if (_bp>=0) {
+    if (_bp >= 0) {
 #ifdef ILI9341_2_DIMMER
-      ledcWrite(ESP32_PWM_CHANNEL,dimmer);
+      ledcWrite(ESP32_PWM_CHANNEL, dimmer);
 #else
-      digitalWrite(_bp,HIGH);
+      digitalWrite(_bp, HIGH);
 #endif
     }
   } else {
@@ -550,11 +550,11 @@ void ILI9341_2::DisplayOnff(int8_t on) {
     writecmd(ILI9341_2_DISPOFF);
     ILI9341_2_CS_HIGH
     SPI_END_TRANSACTION();
-    if (_bp>=0) {
+    if (_bp >= 0) {
 #ifdef ILI9341_2_DIMMER
-      ledcWrite(ESP32_PWM_CHANNEL,0);
+      ledcWrite(ESP32_PWM_CHANNEL, 0);
 #else
-      digitalWrite(_bp,LOW);
+      digitalWrite(_bp, LOW);
 #endif
     }
   }
