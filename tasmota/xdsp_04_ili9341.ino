@@ -72,8 +72,6 @@ void ILI9341_InitDriver()
     fg_color = ILI9341_WHITE;
     bg_color = ILI9341_BLACK;
 
-    AddLog(LOG_LEVEL_INFO, PSTR("DSP: ILI934x 0"));
-
 #ifdef USE_M5STACK_CORE2
     // fixed pins on m5stack core2
     ili9341_2 = new ILI9341_2(5, -2, 15, -2);
@@ -98,8 +96,6 @@ void ILI9341_InitDriver()
       AddLog(LOG_LEVEL_INFO, PSTR("DSP: ILI934x invalid GPIOs"));
       return;
     }
-
-    AddLog(LOG_LEVEL_INFO, PSTR("DSP: ILI934x 1"));
 
     ili9341_2->init(Settings.display_width, Settings.display_height);
     renderer = ili9341_2;
