@@ -416,11 +416,7 @@ void ShutterDecellerateForStop(uint8_t i)
       if (ShutterGlobal.position_mode == SHT_COUNTER){
         missing_steps = ((Shutter[i].target_position-Shutter[i].start_position)*Shutter[i].direction*ShutterGlobal.open_velocity_max/RESOLUTION/STEPS_PER_SECOND) - RtcSettings.pulse_counter[i];
         //prepare for stop PWM
-        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Remain steps %d, Counter %d, Freq %d"), missing_steps, RtcSettings.pulse_counter[i] ,Shutter[i].pwm_velocity);
         Shutter[i].accelerator = 0;
-        Shutter[i].pwm_velocity = Shutter[i].pwm_velocity > 250 ? 250 : Shutter[i].pwm_velocity;
-        analogWriteFreq(Shutter[i].pwm_velocity);
-        analogWrite(Pin(GPIO_PWM1, i), 50);
         Shutter[i].pwm_velocity = 0;
         while (RtcSettings.pulse_counter[i] < (uint32_t)(Shutter[i].target_position-Shutter[i].start_position)*Shutter[i].direction*ShutterGlobal.open_velocity_max/RESOLUTION/STEPS_PER_SECOND) {
         }
@@ -496,7 +492,7 @@ void ShutterUpdatePosition(void)
         Shutter[i].time, toBeAcc, current_stop_way, Shutter[i].pwm_velocity, velocity_max, Shutter[i].accelerator, min_runtime_ms, Shutter[i].real_position,
         next_possible_stop_position, Shutter[i].target_position, velocity_change_per_step_max, Shutter[i].direction);
 
-      if ( Shutter[i].real_position * Shutter[i].direction + 2*Shutter[i].pwm_velocity >= Shutter[i].target_position * Shutter[i].direction ) {
+     if ( Shutter[i].real_position * Shutter[i].direction >= Shutter[i].target_position * Shutter[i].direction || (ShutterGlobal.position_mode == SHT_COUNTER && Shutter[i].accelerator <0 && Shutter[i].pwm_velocity+Shutter[i].accelerator<=100)) {
         if (Shutter[i].direction != 0) {
           Shutter[i].lastdirection = Shutter[i].direction;
         }
