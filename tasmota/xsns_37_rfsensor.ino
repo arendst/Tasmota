@@ -272,7 +272,7 @@ void RfSnsTheoV2Show(bool json)
             sensor, GetDT(rfsns_theo_v2_t1[i].time).c_str(), voltage);
         }
       } else {
-        float temp = ConvertTemp((float)rfsns_theo_v2_t1[i].temp / 100)
+        float temp = ConvertTemp((float)rfsns_theo_v2_t1[i].temp / 100);
 
         if (json) {
           ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_TEMPERATURE "\":%*_f,\"" D_JSON_ILLUMINANCE "\":%d,\"" D_JSON_VOLTAGE "\":%s}"),

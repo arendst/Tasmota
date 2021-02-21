@@ -175,7 +175,7 @@ void ILI9341_2::writecmd(uint8_t d) {
 void ILI9341_2::init(uint16_t width, uint16_t height) {
   //sspi2 = SPISettings(2500000, MSBFIRST, SPI_MODE3);
 
-  if (_hwspi == 2) {
+  if (_hwspi >= 2) {
     iwidth = ILI9341_TFTWIDTH;
     iheight = ILI9341_TFTHEIGHT;
   } else {
@@ -187,8 +187,13 @@ void ILI9341_2::init(uint16_t width, uint16_t height) {
 
   sspi2 = SPISettings(40000000, MSBFIRST, SPI_MODE0);
 
-  if (_hwspi==2) {
-    spi2=&SPI;
+  if (_hwspi >= 2) {
+    spi2 = &SPI;
+#ifdef ESP32
+    if (_hwspi > 2) {
+      spi2->begin(_sclk, _miso, _mosi, -1);
+    }
+#endif // ESP32
   } else {
 #ifdef ESP32
     if (_spibus == 2) {
@@ -406,17 +411,17 @@ void ILI9341_2::setRotation(uint8_t m) {
             _height = iheight;
             break;
         case 1:
-            m = (MADCTL_MV | MADCTL_BGR);
+            m = (MADCTL_MY | MADCTL_MV | MADCTL_BGR);
             _width  = iheight;
             _height = iwidth;
             break;
         case 2:
-            m = (MADCTL_MY | MADCTL_BGR);
+            m = (MADCTL_MY | MADCTL_MX | MADCTL_BGR);
             _width  = iwidth;
             _height = iheight;
             break;
         case 3:
-            m = (MADCTL_MX | MADCTL_MY | MADCTL_MV | MADCTL_BGR);
+            m = (MADCTL_MX | MADCTL_MV | MADCTL_BGR);
             _width  = iheight;
             _height = iwidth;
             break;
@@ -522,7 +527,7 @@ void ili9342_bpwr(uint8_t on);
 
 void ILI9341_2::DisplayOnff(int8_t on) {
 
-  if (_hwspi==2) {
+  if ((_hwspi >= 2) && (_bp < 0)) {
     ili9342_bpwr(on);
   }
 
@@ -532,11 +537,11 @@ void ILI9341_2::DisplayOnff(int8_t on) {
     writecmd(ILI9341_2_DISPON);
     ILI9341_2_CS_HIGH
     SPI_END_TRANSACTION();
-    if (_bp>=0) {
+    if (_bp >= 0) {
 #ifdef ILI9341_2_DIMMER
-      ledcWrite(ESP32_PWM_CHANNEL,dimmer);
+      ledcWrite(ESP32_PWM_CHANNEL, dimmer);
 #else
-      digitalWrite(_bp,HIGH);
+      digitalWrite(_bp, HIGH);
 #endif
     }
   } else {
@@ -545,20 +550,22 @@ void ILI9341_2::DisplayOnff(int8_t on) {
     writecmd(ILI9341_2_DISPOFF);
     ILI9341_2_CS_HIGH
     SPI_END_TRANSACTION();
-    if (_bp>=0) {
+    if (_bp >= 0) {
 #ifdef ILI9341_2_DIMMER
-      ledcWrite(ESP32_PWM_CHANNEL,0);
+      ledcWrite(ESP32_PWM_CHANNEL, 0);
 #else
-      digitalWrite(_bp,LOW);
+      digitalWrite(_bp, LOW);
 #endif
     }
   }
 }
 
 void ILI9341_2::invertDisplay(boolean i) {
+  SPI_BEGIN_TRANSACTION();
   ILI9341_2_CS_LOW
   writecmd(i ? ILI9341_2_INVON : ILI9341_2_INVOFF);
   ILI9341_2_CS_HIGH
+  SPI_END_TRANSACTION();
 }
 
 void ili9342_dimm(uint8_t dim);
@@ -572,7 +579,7 @@ void ILI9341_2::dim(uint8_t dim) {
   if (_bp>=0) {
     ledcWrite(ESP32_PWM_CHANNEL,dimmer);
   } else {
-    if (_hwspi==2) {
+    if (_hwspi>=2) {
       ili9342_dimm(dim);
     }
   }

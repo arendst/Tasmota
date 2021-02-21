@@ -78,6 +78,17 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 
 [Complete list](BUILDS.md) of available feature and sensors.
 
+## Changelog v9.3.1 Kenneth
+### Changed
+- Remove the need to start filenames with a slash (/) in Ufs commands
+- Removed command ``VirtualCT`` as synonym for ``SetOption106`` [#11049](https://github.com/arendst/Tasmota/issues/11049)
+
+### Fixed
+- Ili1942 driver [#11046](https://github.com/arendst/Tasmota/issues/11046)
+- Shutter driver [#11055](https://github.com/arendst/Tasmota/issues/11055)
+- ESP32 Mi32 driver [#11048](https://github.com/arendst/Tasmota/issues/11048)
+- TM1637 driver now needs ``TM1637 CLK`` and ``TM1637 DIO`` to enable [#11057](https://github.com/arendst/Tasmota/issues/11057)
+
 ## Changelog v9.3.0 Kenneth
 ### Added
 - Command ``CTRange`` to specify the visible CT range the bulb is capable of [#10311](https://github.com/arendst/Tasmota/issues/10311)
@@ -142,30 +153,3 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - Replaced EPaper42 GPIO selection from ``SPI CS`` by ``EPaper42 CS``
 - Replaced SSD1351 GPIO selection from ``SPI CS`` by ``SSD1351 CS``
 - Replaced RA8876 GPIO selection from ``SPI CS`` by ``RA8876 CS``
-
-### Changed
-- Remove support for direct migration from versions before v8.1.0 (Doris)
-- IRremoteESP8266 library from v2.7.14 to v2.7.15
-- NeoPixelBus library from v2.6.0 to v2.6.1.4
-- ILI9341 library from Adafruit_ILI9341-1.2.0-Tasmota-1.0 to ILI9341-gemu-1.0
-- Command ``Sleep 0`` removes any sleep from wifi modem except when ESP32 BLE is active
-- Logging from heap to stack freeing 700 bytes RAM
-- Disabled ``USE_LIGHT`` light support for ZBBridge saving 17.6kB [#10374](https://github.com/arendst/Tasmota/issues/10374)
-- Force initial default state ``SetOption57 1`` to scan wifi network every 44 minutes for strongest signal [#10395](https://github.com/arendst/Tasmota/issues/10395)
-- PubSubClient MQTT_SOCKET_TIMEOUT from 15 to 4 seconds
-- Domoticz fixed 2 decimals resolution by user selectable ``TempRes``, ``HumRes`` and ``PressRes`` resolutions
-- Increase number of button GPIOs from 4 to 8
-- ESP32 Increase number of switch GPIOs from 8 to 28
-- ESP32 increase number of relay GPIOs from 8 to 28
-- ESP32 Increase number of interlock groups from 4 to 14
-
-### Fixed
-- Redesign syslog and mqttlog using log buffer [#10164](https://github.com/arendst/Tasmota/issues/10164)
-- Shutter stop issue [#10170](https://github.com/arendst/Tasmota/issues/10170)
-- Scripter script_sub_command [#10181](https://github.com/arendst/Tasmota/issues/10181)
-- Scripter JSON variable above 32 chars [#10193](https://github.com/arendst/Tasmota/issues/10193)
-- Shelly Dimmer power on state [#10154](https://github.com/arendst/Tasmota/issues/10154) [#10182](https://github.com/arendst/Tasmota/issues/10182)
-- Wemo emulation for single devices [#10165](https://github.com/arendst/Tasmota/issues/10165) [#10194](https://github.com/arendst/Tasmota/issues/10194)
-- ESP32 LoadStoreError when using ``#define USER_TEMPLATE`` [#9506](https://github.com/arendst/Tasmota/issues/9506)
-- Compile error when ``#ifdef USE_IR_RECEIVE`` is disabled regression from 9.1.0.2
-- Prometheus memory leak [#10221](https://github.com/arendst/Tasmota/issues/10221)
