@@ -784,7 +784,6 @@ bool CmndClock(void) {
 * refreshes the time if clock is displayed
 \*********************************************************************************************/
 void showTime() {
-  AddLog(LOG_LEVEL_DEBUG, PSTR("LOG: %s: showTime()"), modelname);
   uint8_t hr = RtcTime.hour;
   uint8_t mn = RtcTime.minute;
   // uint8_t hr = 1;
