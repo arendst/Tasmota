@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file.
 - Shutter driver (#11055)
 - ESP32 Mi32 driver (#11048)
 - TM1637 driver now needs ``TM1637 CLK`` and ``TM1637 DIO`` to enable (#11057)
+- Web request accepts wrong password (#11039)
 
 ## [Released]
 
