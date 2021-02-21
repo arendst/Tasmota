@@ -149,6 +149,7 @@ People helping to keep the show on the road:
 - Paul Diem for UDP Group communication support
 - Jörg Schüler-Maroldt for his initial ESP32 port
 - Javier Arigita for his thermostat driver
+- Simon Hailes for ESP32 Bluetooth extensions
 - Many more providing Tips, Wips, Pocs, PRs and Donations
 
 ## License
