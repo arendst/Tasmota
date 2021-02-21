@@ -505,9 +505,6 @@ class LightStateClass {
       uint8_t prev_bri = _briRGB;
       _briRGB = bri_rgb;
       if (bri_rgb > 0) { addRGBMode(); }
-#ifdef USE_PWM_DIMMER
-      if (PWM_DIMMER == TasmotaGlobal.module_type) PWMDimmerSetBrightnessLeds(-1);
-#endif  // USE_PWM_DIMMER
       return prev_bri;
     }
 
@@ -516,9 +513,6 @@ class LightStateClass {
       uint8_t prev_bri = _briCT;
       _briCT = bri_ct;
       if (bri_ct > 0) { addCTMode(); }
-#ifdef USE_PWM_DIMMER
-      if (PWM_DIMMER == TasmotaGlobal.module_type) PWMDimmerSetBrightnessLeds(-1);
-#endif  // USE_PWM_DIMMER
       return prev_bri;
     }
 
@@ -1958,6 +1952,10 @@ void LightSetOutputs(const uint16_t *cur_col_10) {
         if (!Settings.flag4.zerocross_dimmer) {
           analogWrite(Pin(GPIO_PWM1, i), bitRead(TasmotaGlobal.pwm_inverted, i) ? Settings.pwm_range - cur_col : cur_col);
         }
+#ifdef USE_PWM_DIMMER
+        // Animate brightness LEDs to follow PWM dimmer brightness
+        if (PWM_DIMMER == TasmotaGlobal.module_type) PWMDimmerSetBrightnessLeds(change10to8(cur_col));
+#endif  // USE_PWM_DIMMER
       }
     }
   }
