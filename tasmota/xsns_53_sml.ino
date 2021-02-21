@@ -465,6 +465,7 @@ double meter_vars[SML_MAX_VARS];
 double dvalues[MAX_DVARS];
 uint32_t dtimes[MAX_DVARS];
 uint8_t meters_used;
+uint8_t dvalid[SML_MAX_VARS];
 
 struct METER_DESC const *meter_desc_p;
 const uint8_t *meter_p;
@@ -494,6 +495,7 @@ char meter_id[MAX_METERS][METER_ID_SIZE];
 uint8_t sml_send_blocks;
 uint8_t sml_100ms_cnt;
 uint8_t sml_desc_cnt;
+uint8_t sml_json_enable = 1;
 
 #ifdef USE_SML_MEDIAN_FILTER
 // median filter, should be odd size
@@ -1621,6 +1623,7 @@ void SML_Decode(uint8_t index) {
 #else
           meter_vars[vindex]=dval;
 #endif
+          dvalid[vindex] = 1;
 //AddLog_P(LOG_LEVEL_INFO, PSTR(">> %s"),mp);
           // get scaling factor
           double fac=CharToDouble((char*)mp);
@@ -1778,6 +1781,8 @@ void SML_Show(boolean json) {
               uint8_t dp=atoi(cp)&0xf;
               dtostrfd(meter_vars[index],dp,tpowstr);
             }
+
+            if (!dvalid[index]) nojson = 1;
 
             if (json) {
               // json export
@@ -1953,6 +1958,7 @@ void SML_Init(void) {
 
   for (uint32_t cnt=0;cnt<SML_MAX_VARS;cnt++) {
     meter_vars[cnt]=0;
+    dvalid[cnt]=0;
   }
 
   for (uint32_t cnt=0;cnt<MAX_METERS;cnt++) {
@@ -2650,7 +2656,9 @@ bool Xsns53(byte function) {
         break;
 #endif // USE_SCRIPT
       case FUNC_JSON_APPEND:
-        SML_Show(1);
+        if (sml_json_enable) {
+          SML_Show(1);
+        }
         break;
 #ifdef USE_WEBSERVER
       case FUNC_WEB_SENSOR:
