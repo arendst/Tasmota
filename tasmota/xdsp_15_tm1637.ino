@@ -784,6 +784,7 @@ bool CmndClock(void) {
 * refreshes the time if clock is displayed
 \*********************************************************************************************/
 void showTime() {
+  AddLog(LOG_LEVEL_DEBUG, PSTR("LOG: %s: showTime()"), modelname);
   uint8_t hr = RtcTime.hour;
   uint8_t mn = RtcTime.minute;
   // uint8_t hr = 1;
@@ -1027,17 +1028,17 @@ bool Xdsp15(uint8_t function)
       case FUNC_DISPLAY_FLOAT:
       case FUNC_DISPLAY_NUMBERNC:
       case FUNC_DISPLAY_FLOATNC:
-      case FUNC_DISPLAY_BRIGHTNESS:
       case FUNC_DISPLAY_RAW:
       case FUNC_DISPLAY_LEVEL:
       case FUNC_DISPLAY_SEVENSEG_TEXTNC:
       case FUNC_DISPLAY_SCROLLTEXT:
       case FUNC_DISPLAY_SCROLLDELAY:
+      case FUNC_DISPLAY_CLOCK:
+        showClock = false;
+      case FUNC_DISPLAY_BRIGHTNESS:
       case FUNC_DISPLAY_SETLEDS:
       case FUNC_DISPLAY_SETLED:
       case FUNC_DISPLAY_BUTTONS:
-      case FUNC_DISPLAY_CLOCK:
-        showClock = false;
         result = MainFunc(function);
         break;
       case FUNC_DISPLAY_EVERY_50_MSECOND:
