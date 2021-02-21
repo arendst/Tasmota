@@ -95,9 +95,9 @@
 
 
 
-  DisplayBrightness     num {0-8}
+  DisplayBrightness     num {1-8}
 
-                               Set brightness (0 (off) to 8) command e.g., "DisplayBrightness 2"
+                               Set brightness (1 to 8) command e.g., "DisplayBrightness 2"
 
 
 
@@ -231,9 +231,8 @@ uint32_t brightness = 5;
 char modelname[8];
 enum displaytypes { TM1637, TM1638 };
 uint8_t displaytype = TM1637;
-bool modechanged = false;
 
-#define BRIGHTNESS_MIN    0   // Display OFF
+#define BRIGHTNESS_MIN    1
 #define BRIGHTNESS_MAX    8
 #define CMD_MAX_LEN   55
 #define LEVEL_MIN    0
@@ -271,7 +270,6 @@ bool DriverInit(void) {
     brightness = (Settings.display_dimmer ? Settings.display_dimmer : brightness);
     setBrightness(brightness);
     driverinited = true;
-    modechanged = false;
     AddLog(LOG_LEVEL_INFO, PSTR("DSP: %s display driver initialized with %d digits (DisplayType %d)"), modelname, NUM_DIGITS, Settings.display_type);    
   }
 
@@ -726,7 +724,7 @@ bool CmndText(bool clear) {
 
 /*********************************************************************************************\
 * Sets brightness of the display.
-* Command:  DisplayBrightness {0-8}    // 0 => off
+* Command:  DisplayBrightness {1-8}
 \*********************************************************************************************/
 bool CmndBrightness(void) {
 
@@ -751,7 +749,7 @@ void setBrightness(uint8_t val) {
   if((val < BRIGHTNESS_MIN) || (val > BRIGHTNESS_MAX)) val = 5;
   Settings.display_dimmer = val;
   if(displaytype == TM1637)  disp37->setBacklight(val*10);
-  else if(displaytype == TM1638) disp38->brightness(val);  
+  else if(displaytype == TM1638) disp38->brightness(val-1);  
 }
 
 
