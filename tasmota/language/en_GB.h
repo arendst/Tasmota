@@ -876,7 +876,7 @@
 #define D_SOLAX_ERROR_8   "Other Device Fault"
 
 //xdrv_10_scripter.ino
-#define D_CONFIGURE_SCRIPT     "Edit script"
+#define D_CONFIGURE_SCRIPT     "Edit Script"
 #define D_SCRIPT               "edit script"
 #define D_SDCARD_UPLOAD        "file upload"
 #define D_UFSDIR               "ufs directory"
@@ -884,7 +884,7 @@
 #define D_SCRIPT_CHARS_LEFT    "chars left"
 #define D_SCRIPT_CHARS_NO_MORE "no more chars"
 #define D_SCRIPT_DOWNLOAD      "Download"
-#define D_SCRIPT_ENABLE        "script enable"
+#define D_SCRIPT_ENABLE        "Script enabled"
 #define D_SCRIPT_UPLOAD        "Upload"
 #define D_SCRIPT_UPLOAD_FILES  "Upload files"
 
