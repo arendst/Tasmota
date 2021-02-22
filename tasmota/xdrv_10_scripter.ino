@@ -162,6 +162,7 @@ void Script_ticker4_end(void) {
 #endif
 #endif
 
+extern uint8_t sml_json_enable;
 
 #if defined(EEP_SCRIPT_SIZE) && !defined(ESP32)
 
@@ -208,7 +209,7 @@ void alt_eeprom_readBytes(uint32_t adr, uint32_t len, uint8_t *buf) {
 #define EPOCH_OFFSET 1546300800
 
 enum {OPER_EQU=1,OPER_PLS,OPER_MIN,OPER_MUL,OPER_DIV,OPER_PLSEQU,OPER_MINEQU,OPER_MULEQU,OPER_DIVEQU,OPER_EQUEQU,OPER_NOTEQU,OPER_GRTEQU,OPER_LOWEQU,OPER_GRT,OPER_LOW,OPER_PERC,OPER_XOR,OPER_AND,OPER_OR,OPER_ANDEQU,OPER_OREQU,OPER_XOREQU,OPER_PERCEQU};
-enum {SCRIPT_LOGLEVEL=1,SCRIPT_TELEPERIOD,SCRIPT_EVENT_HANDLED};
+enum {SCRIPT_LOGLEVEL=1,SCRIPT_TELEPERIOD,SCRIPT_EVENT_HANDLED,SML_JSON_ENABLE};
 
 
 #ifdef USE_UFILESYS
@@ -2985,6 +2986,11 @@ chknext:
           len = 0;
           goto exit;
         }
+        if (!strncmp(vname, "smlj", 4)) {
+          fvar = sml_json_enable;
+          tind->index = SML_JSON_ENABLE;
+          goto exit_settable;
+        }
 #endif //USE_SML_M
         break;
       case 't':
@@ -4527,6 +4533,11 @@ int16_t Run_script_sub(const char *type, int8_t tlen, struct GVARS *gv) {
                           case SCRIPT_EVENT_HANDLED:
                             glob_script_mem.event_handeled = *dfvar;
                             break;
+#if defined(USE_SML_M) && defined (USE_SML_SCRIPT_CMD)
+                          case SML_JSON_ENABLE:
+                            sml_json_enable = *dfvar;
+                            break;
+#endif
                         }
                         sysv_type = 0;
                       }
