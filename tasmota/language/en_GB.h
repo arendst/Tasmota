@@ -884,7 +884,7 @@
 #define D_SCRIPT_CHARS_LEFT    "chars left"
 #define D_SCRIPT_CHARS_NO_MORE "no more chars"
 #define D_SCRIPT_DOWNLOAD      "Download"
-#define D_SCRIPT_ENABLE        "Script enabled"
+#define D_SCRIPT_ENABLE        "Script enable"
 #define D_SCRIPT_UPLOAD        "Upload"
 #define D_SCRIPT_UPLOAD_FILES  "Upload files"
 
