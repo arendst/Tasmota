@@ -147,6 +147,7 @@ struct {
   bool module_changed;                      // Indicate module changed since last restart
   bool wifi_stay_asleep;                    // Allow sleep only incase of ESP32 BLE
   bool no_autoexec;                         // Disable autoexec
+  bool tm1637_enabled;                      // TM1637 driver enabled
 
   StateBitfield global_state;               // Global states (currently Wifi and Mqtt) (8 bits)
   uint8_t spi_enabled;                      // SPI configured
@@ -227,7 +228,9 @@ void setup(void) {
   TasmotaGlobal.tele_period = 9999;
   TasmotaGlobal.active_device = 1;
   TasmotaGlobal.global_state.data = 0xF;  // Init global state (wifi_down, mqtt_down) to solve possible network issues
-
+#if defined(USE_DISPLAY) &&  defined(USE_DISPLAY_TM1637)
+  TasmotaGlobal.tm1637_enabled = true;
+#endif
   RtcRebootLoad();
   if (!RtcRebootValid()) {
     RtcReboot.fast_reboot_count = 0;
