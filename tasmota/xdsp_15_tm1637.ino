@@ -751,9 +751,7 @@ bool CmndClock(void) {
 
   AddLog(LOG_LEVEL_DEBUG, PSTR("TM7: TM1637Data.show_clock %d, TM1637Data.clock_24 %d"), TM1637Data.show_clock, TM1637Data.clock_24);
 
-  if(!TM1637Data.show_clock) {
-    clearDisplay();
-  }
+  clearDisplay();
   return true;
 }
 
@@ -877,7 +875,7 @@ bool readButtons(void) {
     if(TM1637Data.buttons) {
       for(int i=0; i<8; i++) {
         if(TM1637Data.buttons & (1<<i)) {
-          AddLog(LOG_LEVEL_DEBUG, PSTR("LOG: TM1638: button pressed: %d"), i+1);
+          AddLog(LOG_LEVEL_DEBUG, PSTR("TM7: TM1638: button pressed: %d"), i+1);
           TM1637Data.LED[i] = !TM1637Data.LED[i];
           tm1638display->setLED(i, TM1637Data.LED[i]);
           Response_P(PSTR("{\"TM1638_BUTTON%d\":\"%s\"}"), i+1, (TM1637Data.LED[i]?PSTR("ON"):PSTR("OFF")));
@@ -898,7 +896,7 @@ bool CmndButtons(void) {
     Response_P(PSTR("{\"Error\":\"Command not valid for TM1637Data.display_type %d\"}"), TM1637Data.display_type); 
     return false;     
   }   
-  AddLog(LOG_LEVEL_DEBUG, PSTR("LOG: TM1638: buttons=%d"), TM1637Data.buttons);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("TM7: TM1638: buttons=%d"), TM1637Data.buttons);
   uint8_t byte = TM1637Data.LED[0]<<0 | TM1637Data.LED[1]<<1 | TM1637Data.LED[2]<<2 | TM1637Data.LED[3]<<3 | TM1637Data.LED[4]<<4 | TM1637Data.LED[5]<<5 | TM1637Data.LED[6]<<6 | TM1637Data.LED[7]<<7; 
   Response_P(PSTR("{\"DisplayButtons\": {\"S1\":%d, \"S2\":%d, \"S3\":%d, \"S4\":%d, \"S5\":%d, \"S6\":%d, \"S7\":%d, \"S8\":%d, \"Array\": [%d,%d,%d,%d,%d,%d,%d,%d], \"Byte\": %d}}"), 
               TM1637Data.LED[0], TM1637Data.LED[1], TM1637Data.LED[2], TM1637Data.LED[3], TM1637Data.LED[4], TM1637Data.LED[5], TM1637Data.LED[6], TM1637Data.LED[7], TM1637Data.LED[0], 
@@ -993,11 +991,11 @@ bool Xdsp15(uint8_t function)
         result = DriverInit();              // init 
         break;
       case FUNC_DISPLAY_INIT:
-        AddLog(LOG_LEVEL_DEBUG, PSTR("LOG: %s: FUNC_DISPLAY_INIT: Display depends on TM1637Data.display_type, currently %d"), TM1637Data.model_name, Settings.display_type);
+        AddLog(LOG_LEVEL_DEBUG, PSTR("TM7: %s: FUNC_DISPLAY_INIT: Display depends on TM1637Data.display_type, currently %d"), TM1637Data.model_name, Settings.display_type);
         result = true;  
         break;
       case FUNC_DISPLAY_TYPE:
-        AddLog(LOG_LEVEL_DEBUG, PSTR("LOG: %s: FUNC_DISPLAY_TYPE: TM1637Data.display_type set to %d, restarting to take effect ..."), TM1637Data.model_name, Settings.display_type);
+        AddLog(LOG_LEVEL_DEBUG, PSTR("TM7: %s: FUNC_DISPLAY_TYPE: TM1637Data.display_type set to %d, restarting to take effect ..."), TM1637Data.model_name, Settings.display_type);
         TasmotaGlobal.restart_flag = 2;
         break;
       case FUNC_DISPLAY_SEVENSEG_TEXT:
