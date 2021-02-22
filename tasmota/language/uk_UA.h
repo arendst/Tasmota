@@ -827,6 +827,7 @@
 #define D_UNIT_PARTS_PER_BILLION         "млрд⁻¹"
 #define D_UNIT_PARTS_PER_DECILITER       "децилітр⁻¹"
 #define D_UNIT_PARTS_PER_MILLION         "млн⁻¹"
+#define D_UNIT_MILIGRAMS_PER_LITER       "mg/L"
 #define D_UNIT_PERCENT                   "%%"
 #define D_UNIT_PRESSURE                  "гПа"
 #define D_UNIT_SECOND                    "сек"

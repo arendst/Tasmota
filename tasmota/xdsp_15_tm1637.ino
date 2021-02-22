@@ -144,7 +144,7 @@
 #define SCROLL_MAX_LEN    50
 
 #include "SevenSegmentTM1637.h"
-SevenSegmentTM1637 *display;
+SevenSegmentTM1637 *tm1637display;
 
 struct {
   char scroll_text[CMD_MAX_LEN];
@@ -166,20 +166,19 @@ struct {
 \*********************************************************************************************/
 void TM1637Init(void) {
   if (PinUsed(GPIO_TM1637CLK) && PinUsed(GPIO_TM1637DIO)) {
-    display = new SevenSegmentTM1637(Pin(GPIO_TM1637CLK), Pin(GPIO_TM1637DIO) );
-    if (display) {
+    tm1637display = new SevenSegmentTM1637(Pin(GPIO_TM1637CLK), Pin(GPIO_TM1637DIO));
+    if (tm1637display) {
       Settings.display_model = XDSP_15;
 
       TM1637Data.num_digits = Settings.display_size > 3 ?  Settings.display_size : 4;
       Settings.display_size = TM1637Data.num_digits;
-      display->begin(TM1637Data.num_digits, 1);
-      display->setBacklight(TM1637Data.brightness * 10);
+      tm1637display->begin(TM1637Data.num_digits, 1);
+      tm1637display->setBacklight(TM1637Data.brightness * 10);
       TM1637ClearDisplay();
       AddLog(LOG_LEVEL_INFO, PSTR("DSP: TM1637"));
     }
   }
 }
-
 
 /*********************************************************************************************\
 * Displays number without decimal, with/without leading zeros, specifying start-position
@@ -229,17 +228,17 @@ bool CmndTM1637Number(bool clear) {
   char pad = (leadingzeros ? '0': ' ');
   uint32_t i = position;
   uint8_t rawBytes[1];
-  rawBytes[0] = display->encode(pad);
+  rawBytes[0] = tm1637display->encode(pad);
   for(; i<position + (length - strlen(txt)); i++) {
     if(i>TM1637Data.num_digits) break;
-    display->printRaw(rawBytes, 1, i);
+    tm1637display->printRaw(rawBytes, 1, i);
   }
 
   for(uint32_t j = 0; i< position + length; i++, j++) {
     if(txt[j] == 0) break;
-    rawBytes[0] = display->encode(txt[j]);
+    rawBytes[0] = tm1637display->encode(txt[j]);
     if(i>TM1637Data.num_digits) break;
-    display->printRaw(rawBytes, 1, i);
+    tm1637display->printRaw(rawBytes, 1, i);
   }
 
   return true;
@@ -296,14 +295,14 @@ bool CmndTM1637Float(bool clear) {
   uint8_t rawBytes[1];
   for(uint32_t i=0, j=0; i<length; i++, j++) {
     if(txt[i] == 0) break;
-    rawBytes[0] = display->encode(txt[i]);
+    rawBytes[0] = tm1637display->encode(txt[i]);
     if(txt[i+1] == '.') {
       rawBytes[0] = rawBytes[0] | 128;
       i++;
       length++;
     }
     if((j+position) > TM1637Data.num_digits) break;
-    display->printRaw(rawBytes, 1, j+position);
+    tm1637display->printRaw(rawBytes, 1, j+position);
    }
 
   return true;
@@ -325,7 +324,7 @@ bool CmndTM1637Clear(void) {
 void TM1637ClearDisplay (void) {
   unsigned char arr[] =  {0};
   AddLog(LOG_LEVEL_DEBUG, PSTR("Clearing digit %d"), TM1637Data.num_digits);
-  for(int i=0; i<TM1637Data.num_digits; i++) display->printRaw(arr, 1, i);
+  for(int i=0; i<TM1637Data.num_digits; i++) tm1637display->printRaw(arr, 1, i);
 }
 
 
@@ -386,8 +385,8 @@ void TM1637ScrollText(void) {
       if(i > (TM1637Data.num_digits-1)) break;
       if(TM1637Data.scroll_text[j] == 0) {clr = true;};
       char charToDisp = (clr ? ' ' : TM1637Data.scroll_text[j]);
-      rawBytes[0] = display->encode(charToDisp);
-      display->printRaw(rawBytes, 1, i);
+      rawBytes[0] = tm1637display->encode(charToDisp);
+      tm1637display->printRaw(rawBytes, 1, i);
     }
     TM1637Data.scroll_index++;
   }
@@ -424,7 +423,7 @@ bool CmndTM1637Level(void) {
     uint8_t value = (((i%2) == 0) ? 54 : 48);
     AddLog(LOG_LEVEL_DEBUG, PSTR("TM7: CmndTM1637Level value %d"), value);
     rawBytes[0] = value;
-    display->printRaw(rawBytes, 1, digit);
+    tm1637display->printRaw(rawBytes, 1, digit);
   }
   return true;
 }
@@ -494,7 +493,7 @@ bool CmndTM1637Raw(void) {
   for(uint32_t i=position; i<position+length; i++ ) {
     if(i>(TM1637Data.num_digits-1)) break;
     rawBytes[0] = DATA[i-position];
-    display->printRaw(rawBytes, 1, i);
+    tm1637display->printRaw(rawBytes, 1, i);
   }
 
   return true;
@@ -540,14 +539,14 @@ bool CmndTM1637Text(bool clear) {
   for(uint32_t j = 0; i< position + length; i++, j++) {
     if(i > (TM1637Data.num_digits-1)) break;
     if(sString[j] == 0) break;
-    rawBytes[0] = display->encode(sString[j]);
+    rawBytes[0] = tm1637display->encode(sString[j]);
     if(sString[j+1] == '.') {
       rawBytes[0] = rawBytes[0] | 128;
       j++;
     } else if(sString[j] == '^') {
       rawBytes[0] = 1 | 2 | 32 | 64;
     }
-    display->printRaw(rawBytes, 1, i);
+    tm1637display->printRaw(rawBytes, 1, i);
   }
 
   return true;
@@ -573,7 +572,7 @@ bool CmndTM1637Brightness(void) {
   }
   TM1637Data.brightness = val;
 
-  display->setBacklight(TM1637Data.brightness*10);
+  tm1637display->setBacklight(TM1637Data.brightness*10);
   return true;
 }
 
@@ -629,9 +628,9 @@ void TM1637ShowTime() {
   }
   uint8_t rawBytes[1];
   for(uint32_t i = 0; i< 4; i++) {
-    rawBytes[0] = display->encode(tm[i]);
+    rawBytes[0] = tm1637display->encode(tm[i]);
     if((millis() % 1000) > 500 && (i == 1)) rawBytes[0] = rawBytes[0] | 128;
-    display->printRaw(rawBytes, 1, i);
+    tm1637display->printRaw(rawBytes, 1, i);
   }
 }
 
@@ -643,9 +642,9 @@ bool TM1637Cmd(uint8_t fn) {
   TM1637Data.num_digits = Settings.display_size;
   if(TM1637Data.prev_num_digits != TM1637Data.num_digits) {    // Cleck for change of display size, and re-init the library
     AddLog(LOG_LEVEL_DEBUG, PSTR("TM7: Size changed. Re-initializing library..."));
-    display = new SevenSegmentTM1637(Pin(GPIO_SSPI_SCLK), Pin(GPIO_SSPI_MOSI) );
-    display->begin(TM1637Data.num_digits, 1);
-    display->setBacklight(40);
+    tm1637display = new SevenSegmentTM1637(Pin(GPIO_TM1637CLK), Pin(GPIO_TM1637DIO));
+    tm1637display->begin(TM1637Data.num_digits, 1);
+    tm1637display->setBacklight(40);
     TM1637ClearDisplay();
     TM1637Data.prev_num_digits = TM1637Data.num_digits;
     AddLog(LOG_LEVEL_DEBUG, PSTR("TM7: Re-initialized library"));

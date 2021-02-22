@@ -46,9 +46,8 @@ struct EZOPRS : public EZOStruct {
         ResponseAppend_P(PSTR(",\"" D_JSON_PRESSUREATSEALEVEL "\":%s"), sealevelstr);
       }
       ResponseJsonEnd();
-    }
 #ifdef USE_WEBSERVER
-    else {
+    }else {
       WSContentSend_PD(HTTP_SNS_PRESSURE, name, str, PressureUnit().c_str());
       if (Settings.altitude != 0) {
         WSContentSend_PD(HTTP_SNS_SEAPRESSURE, name, sealevelstr, PressureUnit().c_str());

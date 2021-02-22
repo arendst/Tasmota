@@ -2676,7 +2676,7 @@ void HandleHttpCommand(void)
     // Prefer authorization via HTTP header (Basic auth), if it fails, use legacy method via GET parameters
     char tmp1[33];
     WebGetArg(PSTR("user"), tmp1, sizeof(tmp1));
-    char tmp2[strlen(SettingsText(SET_WEBPWD)) + 1];
+    char tmp2[strlen(SettingsText(SET_WEBPWD)) + 2];  // Need space for an entered password longer than set password
     WebGetArg(PSTR("password"), tmp2, sizeof(tmp2));
 
     if (!(!strcmp(tmp1, WEB_USERNAME) && !strcmp(tmp2, SettingsText(SET_WEBPWD)))) {
