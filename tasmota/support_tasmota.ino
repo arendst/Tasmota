@@ -990,7 +990,7 @@ void Every250mSeconds(void)
     }
     else if (Settings.flag5.ledlink_heartbeat)                   // No problems, status led wil show heartbeat if enabled
     {
-      blinkinterval = 7;
+      blinkinterval = 13;
       blinkoffinterval = 1;
       TasmotaGlobal.blinks = 201;
     }
