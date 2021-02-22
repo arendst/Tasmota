@@ -377,11 +377,17 @@ void EnergyMarginCheck(void)
     ResponseAppend_P(PSTR("\"" D_CMND_POWERDELTA "\":%s"), EnergyFormat(value_chr, power_diff_chr[0], 1));
   }
 
-  uint16_t energy_power_u = (uint16_t)(Energy.active_power[0]);
+  uint16_t energy_power_u = 0;
+  for (uint32_t phase = 0; phase < Energy.phase_count; phase++) {     // Sum up power of all channels/phases
+    energy_power_u += (uint16_t)(Energy.active_power[phase]);
+  }
 
   if (Energy.power_on && (Settings.energy_min_power || Settings.energy_max_power || Settings.energy_min_voltage || Settings.energy_max_voltage || Settings.energy_min_current || Settings.energy_max_current)) {
     uint16_t energy_voltage_u = (uint16_t)(Energy.voltage[0]);
-    uint16_t energy_current_u = (uint16_t)(Energy.current[0] * 1000);
+    uint16_t energy_current_u = 0;
+    for (uint32_t phase = 0; phase < Energy.phase_count; phase++) {   // Sum up current of all channels/phases
+       energy_current_u += (uint16_t)(Energy.current[phase] * 1000);
+    }
 
     DEBUG_DRIVER_LOG(PSTR("NRG: W %d, U %d, I %d"), energy_power_u, energy_voltage_u, energy_current_u);
 
@@ -420,7 +426,7 @@ void EnergyMarginCheck(void)
 #ifdef USE_ENERGY_POWER_LIMIT
   // Max Power
   if (Settings.energy_max_power_limit) {
-    if (Energy.active_power[0] > Settings.energy_max_power_limit) {
+    if (energy_power_u > Settings.energy_max_power_limit) {
       if (!Energy.mplh_counter) {
         Energy.mplh_counter = Settings.energy_max_power_limit_hold;
       } else {
