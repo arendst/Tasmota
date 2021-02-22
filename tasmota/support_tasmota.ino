@@ -974,7 +974,8 @@ void Every250mSeconds(void)
 // As the max amount of sleep = 250 mSec this loop should always be taken...
 
   static uint8_t blinkspeed = 1;                          // LED blink rate
-  uint32_t blinkinterval = 1;
+  uint8_t blinkinterval = 1;
+  uint8_t blinkoffinterval = 0;
 
   TasmotaGlobal.state_250mS++;
   TasmotaGlobal.state_250mS &= 0x3;
@@ -987,6 +988,11 @@ void Every250mSeconds(void)
       if (TasmotaGlobal.global_state.network_down) { blinkinterval = 3; }  // Network problem so blink every second (slow)
       TasmotaGlobal.blinks = 201;                         // Allow only a single blink in case the problem is solved
     }
+    else if (Settings.flag5.ledlink_heartbeat)                   // No problems, status led wil show heartbeat if enabled
+    {
+      blinkinterval = 7;
+      blinkoffinterval = 1;
+    }
   }
   if (TasmotaGlobal.blinks || TasmotaGlobal.restart_flag || TasmotaGlobal.ota_state_flag) {
     if (TasmotaGlobal.restart_flag || TasmotaGlobal.ota_state_flag) {  // Overrule blinks and keep led lit
@@ -996,12 +1002,16 @@ void Every250mSeconds(void)
       if (!blinkspeed) {
         blinkspeed = blinkinterval;                       // Set interval to 0.2 (default), 1 or 2 seconds
         TasmotaGlobal.blinkstate ^= 1;                                  // Blink
+        if (blinkoffinterval > 0)                         // Check if blink off time is configured
+        {
+          blinkspeed = TasmotaGlobal.blinkstate ? blinkspeed : blinkoffinterval;
+        }
       }
     }
     if ((!(Settings.ledstate &0x08)) && ((Settings.ledstate &0x06) || (TasmotaGlobal.blinks > 200) || (TasmotaGlobal.blinkstate))) {
       SetLedLink(TasmotaGlobal.blinkstate);                            // Set led on or off
     }
-    if (!TasmotaGlobal.blinkstate) {
+    if ((!TasmotaGlobal.blinkstate) && (!Settings.flag5.ledlink_heartbeat)) {
       TasmotaGlobal.blinks--;
       if (200 == TasmotaGlobal.blinks) { TasmotaGlobal.blinks = 0; }  // Disable blink
     }

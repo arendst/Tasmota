@@ -734,6 +734,7 @@ void SettingsDefaultSet2(void) {
   if (Settings.sleep < 50) {
     Settings.sleep = 50;                // Default to 50 for sleep, for now
   }
+  flag5.ledlink_heartbeat |= LEDLINK_HEARTBEAT;
 
   // Module
   flag.interlock |= APP_INTERLOCK_MODE;

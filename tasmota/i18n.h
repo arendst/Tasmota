@@ -381,6 +381,7 @@
 #define D_CMND_POWERRETAIN "PowerRetain"
 #define D_CMND_SENSORRETAIN "SensorRetain"
 #define D_CMND_PUBLISH "Publish"
+#define D_CMND_LEDLINKHEARTBEAT "LedLinkHeartbeat"
 
 // Commands xdrv_01_webserver.ino
 #define D_CMND_WEBSERVER "Webserver"

@@ -330,6 +330,7 @@
 #define ZIGBEE_FRIENDLY_NAMES  false             // [SetOption83] Enable Zigbee FriendlyNames instead of ShortAddresses when possible
 #define ZIGBEE_RMV_ZBRECEIVED  false             // [SetOption100] Remove ZbReceived form JSON message
 #define ZIGBEE_INDEX_EP        false             // [SetOption101] Add the source endpoint as suffix to attributes, ex `Power3` instead of `Power` if sent from endpoint 3
+#define LEDLINK_HEARTBEAT      false             // [LedLinkHeartbeat] Linkled will show heartbeat (false = off, true = on)
 
 /*********************************************************************************************\
  * END OF SECTION 1
