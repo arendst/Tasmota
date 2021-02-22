@@ -426,7 +426,8 @@ void CmndStatus(void)
     Response_P(PSTR("{\"" D_CMND_STATUS "\":{\"" D_CMND_MODULE "\":%d,\"" D_CMND_DEVICENAME "\":\"%s\",\"" D_CMND_FRIENDLYNAME "\":[%s],\"" D_CMND_TOPIC "\":\"%s\",\""
                           D_CMND_BUTTONTOPIC "\":\"%s\",\"" D_CMND_POWER "\":%d,\"" D_CMND_POWERONSTATE "\":%d,\"" D_CMND_LEDSTATE "\":%d,\""
                           D_CMND_LEDMASK "\":\"%04X\",\"" D_CMND_SAVEDATA "\":%d,\"" D_JSON_SAVESTATE "\":%d,\"" D_CMND_SWITCHTOPIC "\":\"%s\",\""
-                          D_CMND_SWITCHMODE "\":[%s],\"" D_CMND_BUTTONRETAIN "\":%d,\"" D_CMND_SWITCHRETAIN "\":%d,\"" D_CMND_SENSORRETAIN "\":%d,\"" D_CMND_POWERRETAIN "\":%d}}"),
+                          D_CMND_SWITCHMODE "\":[%s],\"" D_CMND_BUTTONRETAIN "\":%d,\"" D_CMND_SWITCHRETAIN "\":%d,\"" D_CMND_SENSORRETAIN "\":%d,\"" D_CMND_POWERRETAIN "\":%d,\""
+                          D_CMND_INFORETAIN "\":%d,\"" D_CMND_STATERETAIN "\":%d}}"),
                           ModuleNr(), EscapeJSONString(SettingsText(SET_DEVICENAME)).c_str(), stemp, TasmotaGlobal.mqtt_topic,
                           SettingsText(SET_MQTT_BUTTON_TOPIC), TasmotaGlobal.power, Settings.poweronstate, Settings.ledstate,
                           Settings.ledmask, Settings.save_data,
@@ -436,7 +437,9 @@ void CmndStatus(void)
                           Settings.flag.mqtt_button_retain,   // CMND_BUTTONRETAIN
                           Settings.flag.mqtt_switch_retain,   // CMND_SWITCHRETAIN
                           Settings.flag.mqtt_sensor_retain,   // CMND_SENSORRETAIN
-                          Settings.flag.mqtt_power_retain);   // CMND_POWERRETAIN
+                          Settings.flag.mqtt_power_retain,    // CMND_POWERRETAIN
+                          Settings.flag5.mqtt_info_retain,    // CMND_INFORETAIN
+                          Settings.flag5.mqtt_state_retain);  // CMND_STATERETAIN
     MqttPublishPrefixTopic_P(STAT, PSTR(D_CMND_STATUS));
   }
 
@@ -629,7 +632,7 @@ void CmndState(void)
   ResponseClear();
   MqttShowState();
   if (Settings.flag3.hass_tele_on_power) {  // SetOption59 - Send tele/%topic%/STATE in addition to stat/%topic%/RESULT
-    MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_STATE), MQTT_TELE_RETAIN);
+    MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_STATE), Settings.flag5.mqtt_state_retain);
   }
 #ifdef USE_HOME_ASSISTANT
   if (Settings.flag.hass_discovery) {       // SetOption19 - Control Home Assistantautomatic discovery (See SetOption59)
