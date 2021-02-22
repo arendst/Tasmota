@@ -40,9 +40,8 @@ struct EZOORP : public EZOStruct {
 
     if (json) {
       ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_ORP "\":%s}" ), name, str);
-    }
 #ifdef USE_WEBSERVER
-    else {
+    }else {
       WSContentSend_PD(HTTP_SNS_ORP, name, str);
 #endif  // USE_WEBSERVER
     }

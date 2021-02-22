@@ -174,8 +174,10 @@ a_setoption = [[
     "(Light) run fading at fixed duration instead of fixed slew rate",
     "(Zigbee) Move ZbReceived from JSON message and into the subtopic replacing SENSOR default",
     "(Zigbee) Remove the device addr from json payload, can be used with zb_topic_fname where the addr is already known from the topic",
-    "","",
-    "","","","",
+    "(Zigbee) Append endpoint number to topic if device dependent (use with SetOption89)",
+    "(MQTT) Retain on State",
+    "(MQTT) Retain on Info",
+    "","","",
     "","","","",
     "","","","",
     "","","","",
@@ -282,7 +284,7 @@ else:
         obj = json.load(fp)
 
 def StartDecode():
-    print ("\n*** decode-status.py v20210217 by Theo Arends and Jacek Ziolkowski ***")
+    print ("\n*** decode-status.py v20210222 by Theo Arends and Jacek Ziolkowski ***")
 
 #    print("Decoding\n{}".format(obj))
 
