@@ -32,12 +32,20 @@
 
   To use, compile Tasmota with USE_DISPLAY and USE_DISPLAY_TM1637, or build the tasmota-display env.
 
-  Connect the TM1637 or TM1638 display module's pins to any free GPIOs of the ESP8266 module
+  For TM1637:
+  Connect the TM1637 display module's pins to any free GPIOs of the ESP8266 module
   and assign the pins as follows from Tasmota's GUI:
 
-  DIO hardware pin --> "SSPI MOSI"
-  CLK hardware pin --> "SSPI SCLK"
-  STB hardware pin --> "SSPI MISO" (Only for TM1638)
+  DIO hardware pin --> "TM1637 DIO"
+  CLK hardware pin --> "TM1637 CLK"
+
+  For TM1638:
+  Connect the TM1638 display module's pins to any free GPIOs of the ESP8266 module
+  and assign the pins as follows from Tasmota's GUI:
+
+  DIO hardware pin --> "TM1638 DIO"
+  CLK hardware pin --> "TM1638 CLK"
+  STB hardware pin --> "TM1638 STB"
 
   
   Once the GPIO configuration is saved and the ESP8266/ESP32 module restarts, set the Display Model to 15 
@@ -56,7 +64,7 @@
                                Sets the display type. 0 => TM1637, 4 digit
                                                       1 => TM1637, 6 digit
                                                       2 => TM1638, 8 digit
-                               Command e.g., "DisplayType 1"   // to enable TM1637 6-digit variant
+                               Command e.g., "TM1637Data.display_type 1"   // to enable TM1637 6-digit variant
   
 
 
@@ -65,30 +73,27 @@
                                Clears the display, command: "DisplayClear"
 
 
-
-  DisplayNumber         num [,position {0-(NUM_DIGITS-1))} [,leading_zeros {0|1} [,length {1 to NUM_DIGITS}]]]
+  DisplayNumber         num [,position {0-(TM1637Data.num_digits-1))} [,leading_zeros {0|1} [,length {1 to TM1637Data.num_digits}]]]
 
                                Clears and then displays number without decimal. command e.g., "DisplayNumber 1234"
                                Control 'leading zeros', 'length' and 'position' with  "DisplayNumber 1234, <position>, <leadingZeros>, <length>"
-                               'leading zeros' can be 1 or 0 (default), 'length' can be 1 to NUM_DIGITS, 'position' can be 0 (left-most) to NUM_DIGITS (right-most).
+                               'leading zeros' can be 1 or 0 (default), 'length' can be 1 to TM1637Data.num_digits, 'position' can be 0 (left-most) to TM1637Data.num_digits (right-most).
                                See function description below for more details.
 
-
-
-  DisplayNumberNC       num [,position {0-(NUM_DIGITS-1))} [,leading_zeros {0|1} [,length {1 to NUM_DIGITS}]]]
+  DisplayNumberNC       num [,position {0-(TM1637Data.num_digits-1))} [,leading_zeros {0|1} [,length {1 to TM1637Data.num_digits}]]]
 
                                Display integer number as above, but without clearing first. e.g., "DisplayNumberNC 1234". Usage is same as above.
 
 
 
-  DisplayFloat          num [,position {0-(NUM_DIGITS-1)} [,precision {0-NUM_DIGITS} [,length {1 to NUM_DIGITS}]]]
+  DisplayFloat          num [,position {0-(TM1637Data.num_digits-1)} [,precision {0-TM1637Data.num_digits} [,length {1 to TM1637Data.num_digits}]]]
 
                                Clears and then displays float (with decimal point)  command e.g., "DisplayFloat 12.34"
                                See function description below for more details.
 
 
 
-  DisplayFloatNC        num [,position {0-(NUM_DIGITS-1)} [,precision {0-NUM_DIGITS} [,length {1 to NUM_DIGITS}]]]
+  DisplayFloatNC        num [,position {0-(TM1637Data.num_digits-1)} [,precision {0-TM1637Data.num_digits} [,length {1 to TM1637Data.num_digits}]]]
 
                                Displays float (with decimal point) as above, but without clearing first. command e.g., "DisplayFloatNC 12.34"
                                See function description below for more details.
@@ -101,26 +106,24 @@
 
 
 
-  DisplayRaw            position {0-(NUM_DIGITS-1)},length {1 to NUM_DIGITS}, num1 [, num2[, num3[, num4[, ...upto NUM_DIGITS numbers]]]]]
+  DisplayRaw            position {0-(TM1637Data.num_digits-1)},length {1 to TM1637Data.num_digits}, num1 [, num2[, num3[, num4[, ...upto TM1637Data.num_digits numbers]]]]]
 
-                               Takes upto NUM_DIGITS comma-separated integers (0-255) and displays raw segments. Each number represents a
+                               Takes upto TM1637Data.num_digits comma-separated integers (0-255) and displays raw segments. Each number represents a
                                7-segment digit. Each 8-bit number represents individual segments of a digit.
                                For example, the command "DisplayRaw 0, 4, 255, 255, 255, 255" would display "[8.8.8.8.]"
 
 
 
-  DisplayText           text [, position {0-(NUM_DIGITS-1)} [,length {1 to NUM_DIGITS}]]
+  DisplayText           text [, position {0-(TM1637Data.num_digits-1)} [,length {1 to TM1637Data.num_digits}]]
 
                                Clears and then displays basic text.  command e.g., "DisplayText ajith vasudevan"
                                Control 'length' and 'position' with  "DisplayText <text>, <position>, <length>"
-                               'length' can be 1 to NUM_DIGITS, 'position' can be 0 (left-most) to NUM_DIGITS-1 (right-most)
-
+                               'length' can be 1 to TM1637Data.num_digits, 'position' can be 0 (left-most) to TM1637Data.num_digits-1 (right-most)
                                A caret(^) symbol in the text input is dispayed as the degrees(°) symbol. This is useful for displaying Temperature!
                                For example, the command "DisplayText 22.5^" will display "22.5°".
 
 
-
-  DisplayTextNC         text [, position {0-NUM_DIGITS-1} [,length {1 to NUM_DIGITS}]]
+  DisplayTextNC         text [, position {0-TM1637Data.num_digits-1} [,length {1 to TM1637Data.num_digits}]]
 
                                Clears first, then displays text. Usage is same as above.
 
@@ -206,82 +209,85 @@ Commands specific to TM1638
 
 \*********************************************************************************************/
 
-#define XDSP_15                    15
-
-#include "SevenSegmentTM1637.h"
-#include <TM1638plus.h>
-
-SevenSegmentTM1637 *disp37;
-TM1638plus *disp38;
-bool driverinited = false;
-bool showClock = false;
-bool clock24 = false;
-char tm[5];
-char msg[60];
-uint8_t buttons;
-bool LED[8] = {false, false, false, false, false, false, false, false};
-uint8_t prevbuttons;
-uint32_t NUM_DIGITS = 4;
-uint32_t prev_num_digits = 4;
-bool scroll = false;
-uint32_t scrolldelay = 4;
-uint32_t scrollindex = 0;
-uint32_t iteration = 0;
-uint32_t brightness = 5;
-char modelname[8];
-enum displaytypes { TM1637, TM1638 };
-uint8_t displaytype = TM1637;
+#define XDSP_15           15
 
 #define BRIGHTNESS_MIN    1
 #define BRIGHTNESS_MAX    8
-#define CMD_MAX_LEN   55
-#define LEVEL_MIN    0
-#define LEVEL_MAX    100
-#define SCROLL_MAX_LEN   50
+#define CMD_MAX_LEN       55
+#define LEVEL_MIN         0
+#define LEVEL_MAX         100
+#define SCROLL_MAX_LEN    50
 #define POSITION_MIN    0
 #define POSITION_MAX    8
 #define LED_MIN      0
 #define LED_MAX      255
-char scrolltext[CMD_MAX_LEN];
+
+#include "SevenSegmentTM1637.h"
+#include <TM1638plus.h>
+
+SevenSegmentTM1637 *tm1637display;
+TM1638plus *tm1638display;
+
+enum display_types { TM1637, TM1638 };
+
+struct {
+  char scroll_text[CMD_MAX_LEN];
+  char msg[60];
+  char model_name[8];
+  uint8_t num_digits = 4;
+  uint8_t scroll_delay = 4;
+  uint8_t scroll_index = 0;
+  uint8_t iteration = 0;
+  uint8_t brightness = 5;
+  uint8_t buttons;
+  uint8_t display_type = TM1637;
+  uint8_t prev_buttons;
+
+  bool driver_inited = false;
+  bool scroll = false;
+  bool show_clock = false;
+  bool clock_24 = false;
+  bool LED[8] = {false, false, false, false, false, false, false, false};
+} TM1637Data;
+
 
 /*********************************************************************************************\
 * Init function
 \*********************************************************************************************/
 bool DriverInit(void) {
   if(Settings.display_model == XDSP_15) {
-    if(driverinited) return true;
+    if(TM1637Data.driver_inited) return true;
 
-    if(Settings.display_type == 2)      { NUM_DIGITS = 8; displaytype = TM1638; }
-    else if(Settings.display_type == 1) { NUM_DIGITS = 6; displaytype = TM1637; }
-    else                                { Settings.display_type = 0; NUM_DIGITS = 4; displaytype = TM1637; }
+    if(Settings.display_type == 2)      { TM1637Data.num_digits = 8; TM1637Data.display_type = TM1638; }
+    else if(Settings.display_type == 1) { TM1637Data.num_digits = 6; TM1637Data.display_type = TM1637; }
+    else                                { Settings.display_type = 0; TM1637Data.num_digits = 4; TM1637Data.display_type = TM1637; }
 
-    if(displaytype == TM1637) {
-      strcpy(modelname, "TM1637");
-      disp37 = new SevenSegmentTM1637(Pin(GPIO_SSPI_SCLK), Pin(GPIO_SSPI_MOSI) );
-      disp37->begin(NUM_DIGITS, 1);
-    } else if(displaytype == TM1638) {
-      strcpy(modelname, "TM1638");
-      disp38 = new TM1638plus(Pin(GPIO_SSPI_MISO), Pin(GPIO_SSPI_SCLK), Pin(GPIO_SSPI_MOSI), true );
-      NUM_DIGITS = 8;
-      disp38->displayBegin();
+    if(TM1637Data.display_type == TM1637) {
+      strcpy(TM1637Data.model_name, "TM1637");
+      tm1637display = new SevenSegmentTM1637(Pin(GPIO_TM1637CLK), Pin(GPIO_TM1637DIO));
+      tm1637display->begin(TM1637Data.num_digits, 1);
+    } else if(TM1637Data.display_type == TM1638) {
+      strcpy(TM1637Data.model_name, "TM1638");
+      tm1638display = new TM1638plus(Pin(GPIO_TM1638STB), Pin(GPIO_TM1638CLK), Pin(GPIO_TM1638DIO), true );
+      TM1637Data.num_digits = 8;
+      tm1638display->displayBegin();
     }
-    Settings.display_size = NUM_DIGITS;   // Can use to check current display size
+    Settings.display_size = TM1637Data.num_digits;   // Can use to check current display size
     clearDisplay();
-    brightness = (Settings.display_dimmer ? Settings.display_dimmer : brightness);
-    setBrightness(brightness);
-    driverinited = true;
-    AddLog(LOG_LEVEL_INFO, PSTR("DSP: %s display driver initialized with %d digits (DisplayType %d)"), modelname, NUM_DIGITS, Settings.display_type);    
+    TM1637Data.brightness = (Settings.display_dimmer ? Settings.display_dimmer : TM1637Data.brightness);
+    setBrightness(TM1637Data.brightness);
+    TM1637Data.driver_inited = true;
+    AddLog(LOG_LEVEL_INFO, PSTR("DSP: %s display driver initialized with %d digits (DisplayType %d)"), TM1637Data.model_name, TM1637Data.num_digits, Settings.display_type);    
   }
 
   return true;
 }
 
-
 /*********************************************************************************************\
 * Displays number without decimal, with/without leading zeros, specifying start-position
 * and length, optionally skipping clearing display before displaying the number.
-* commands: DisplayNumber   num [,position {0-(NUM_DIGITS-1)} [,leading_zeros {0|1} [,length {1 to NUM_DIGITS}]]]
-*           DisplayNumberNC num [,position {0-(NUM_DIGITS-1)} [,leading_zeros {0|1} [,length {1 to NUM_DIGITS}]]]    // "NC" --> "No Clear"
+* commands: DisplayNumber   num [,position {0-(TM1637Data.num_digits-1)} [,leading_zeros {0|1} [,length {1 to TM1637Data.num_digits}]]]
+*           DisplayNumberNC num [,position {0-(TM1637Data.num_digits-1)} [,leading_zeros {0|1} [,length {1 to TM1637Data.num_digits}]]]    // "NC" --> "No Clear"
 \*********************************************************************************************/
 bool CmndNumber(bool clear) {
   char sNum[CMD_MAX_LEN];
@@ -311,47 +317,42 @@ bool CmndNumber(bool clear) {
   }
 
 
-  if((position < 0) || (position > (NUM_DIGITS-1))) position = 0;
+  if((position < 0) || (position > (TM1637Data.num_digits-1))) position = 0;
 
-  AddLog(LOG_LEVEL_DEBUG, PSTR("LOG: %s: num=%d"), modelname, num);
-  AddLog(LOG_LEVEL_DEBUG, PSTR("LOG: %s: position=%d"), modelname, position);
-  AddLog(LOG_LEVEL_DEBUG, PSTR("LOG: %s: leadingzeros=%d"), modelname, leadingzeros);
-  AddLog(LOG_LEVEL_DEBUG, PSTR("LOG: %s: length=%d"), modelname, length);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("TM7: num %d, pos %d, lead %d, len %d"), num, position, leadingzeros, length);
 
   if(clear) clearDisplay();
 
   char txt[30];
   snprintf_P(txt, sizeof(txt), PSTR("%d"), num);
   if(!length) length = strlen(txt);
-  if((length < 0) || (length > NUM_DIGITS)) length = NUM_DIGITS;
+  if((length < 0) || (length > TM1637Data.num_digits)) length = TM1637Data.num_digits;
 
   char pad = (leadingzeros ? '0': ' ');
   uint32_t i = position;
   uint8_t rawBytes[1];
 
   for(; i<position + (length - strlen(txt)); i++) {
-    if(i>NUM_DIGITS) break;
-    if(displaytype == TM1637) { rawBytes[0] = disp37->encode(pad); disp37->printRaw(rawBytes, 1, i); }
-    else if(displaytype == TM1638) disp38->displayASCII(i, pad);
+    if(i>TM1637Data.num_digits) break;
+    if(TM1637Data.display_type == TM1637) { rawBytes[0] = tm1637display->encode(pad); tm1637display->printRaw(rawBytes, 1, i); }
+    else if(TM1637Data.display_type == TM1638) tm1638display->displayASCII(i, pad);
   }
 
   for(uint32_t j = 0; i< position + length; i++, j++) {
-    if(i>NUM_DIGITS) break;
+    if(i>TM1637Data.num_digits) break;
     if(txt[j] == 0) break;
-    if(displaytype == TM1637) { rawBytes[0] = disp37->encode(txt[j]);  disp37->printRaw(rawBytes, 1, i); }
-    else if(displaytype == TM1638) disp38->displayASCII(i, txt[j]);
+    if(TM1637Data.display_type == TM1637) { rawBytes[0] = tm1637display->encode(txt[j]);  tm1637display->printRaw(rawBytes, 1, i); }
+    else if(TM1637Data.display_type == TM1638) tm1638display->displayASCII(i, txt[j]);
   }
 
   return true;
 }
 
-
-
 /*********************************************************************************************\
 * Displays number with decimal, specifying position, precision and length,
 * optionally skipping clearing display before displaying the number.
-* commands: DisplayFloat   num [,position {0-(NUM_DIGITS-1)} [,precision {0-NUM_DIGITS} [,length {1 to NUM_DIGITS}]]]
-*           DisplayFloatNC num [,position {0-(NUM_DIGITS-1)} [,precision {0-NUM_DIGITS} [,length {1 to NUM_DIGITS}]]]    // "NC" --> "No Clear"
+* commands: DisplayFloat   num [,position {0-(TM1637Data.num_digits-1)} [,precision {0-TM1637Data.num_digits} [,length {1 to TM1637Data.num_digits}]]]
+*           DisplayFloatNC num [,position {0-(TM1637Data.num_digits-1)} [,precision {0-TM1637Data.num_digits} [,length {1 to TM1637Data.num_digits}]]]    // "NC" --> "No Clear"
 \*********************************************************************************************/
 bool CmndFloat(bool clear) {
 
@@ -360,7 +361,7 @@ bool CmndFloat(bool clear) {
   char sPosition[CMD_MAX_LEN];
   char sLength[CMD_MAX_LEN];
   uint8_t length = 0;
-  uint8_t precision = NUM_DIGITS;
+  uint8_t precision = TM1637Data.num_digits;
   uint8_t position = 0;
 
   float fnum = 0.0f;
@@ -382,8 +383,8 @@ bool CmndFloat(bool clear) {
   }
 
 
-  if((position < 0) || (position > (NUM_DIGITS-1))) position = 0;
-  if((precision < 0) || (precision > NUM_DIGITS)) precision = NUM_DIGITS;
+  if((position < 0) || (position > (TM1637Data.num_digits-1))) position = 0;
+  if((precision < 0) || (precision > TM1637Data.num_digits)) precision = TM1637Data.num_digits;
 
   if(clear) clearDisplay();
 
@@ -391,37 +392,33 @@ bool CmndFloat(bool clear) {
   ext_snprintf_P(txt, sizeof(txt), PSTR("%*_f"), precision, &fnum);
 
   if(!length) length = strlen(txt);
-  if((length <= 0) || (length > NUM_DIGITS)) length = NUM_DIGITS;
+  if((length <= 0) || (length > TM1637Data.num_digits)) length = TM1637Data.num_digits;
 
-  char s[30];
-  ext_snprintf_P(s, sizeof(s), PSTR("LOG: %s: num=%4_f"), modelname, &fnum);
-  AddLog(LOG_LEVEL_DEBUG, PSTR("%s"), s);
-  AddLog(LOG_LEVEL_DEBUG, PSTR("LOG: %s: precision=%d"), modelname, precision);
-  AddLog(LOG_LEVEL_DEBUG, PSTR("LOG: %s: length=%d"), modelname, length);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("TM7: num %4_f, prec %d, len %d"), &fnum, precision, length);
 
-  if(displaytype == TM1637) {
+  if(TM1637Data.display_type == TM1637) {
     uint8_t rawBytes[1];
     for(uint32_t i=0, j=0; i<length; i++, j++) {
       if(txt[i] == 0) break;
-      rawBytes[0] = disp37->encode(txt[i]);
+      rawBytes[0] = tm1637display->encode(txt[i]);
       if(txt[i+1] == '.') {
         rawBytes[0] = rawBytes[0] | 128;
         i++;
         length++;
       }
-      if((j+position) > NUM_DIGITS) break;
-      disp37->printRaw(rawBytes, 1, j+position);
+      if((j+position) > TM1637Data.num_digits) break;
+      tm1637display->printRaw(rawBytes, 1, j+position);
     }
-  } else if(displaytype == TM1638) {
+  } else if(TM1637Data.display_type == TM1638) {
     for(uint32_t i=0, j=0; i<length; i++, j++) {
       if((j+position) > 7) break;
       if(txt[i] == 0) break;
       if(txt[i+1] == '.') { 
-        disp38->displayASCIIwDot(j+position, txt[i]);
+        tm1638display->displayASCIIwDot(j+position, txt[i]);
         i++;
         length++;
       }
-      else disp38->displayASCII(j+position, txt[i]);
+      else tm1638display->displayASCII(j+position, txt[i]);
     }
   }
 
@@ -435,8 +432,8 @@ bool CmndFloat(bool clear) {
 // \*********************************************************************************************/
 bool CmndClear(void) {
   clearDisplay();
-  sprintf(msg, PSTR("Cleared"));
-  XdrvMailbox.data = msg;
+  sprintf(TM1637Data.msg, PSTR("Cleared"));
+  XdrvMailbox.data = TM1637Data.msg;
   return true;
 }
 
@@ -445,31 +442,32 @@ bool CmndClear(void) {
 // * Clears the display
 // \*********************************************************************************************/
 void clearDisplay (void) {
-  if(displaytype == TM1637) {
+  if(TM1637Data.display_type == TM1637) {
     unsigned char arr[] =  {0};
-    for(int i=0; i<NUM_DIGITS; i++) disp37->printRaw(arr, 1, i);
-  } else if(displaytype == TM1638) {
-    for(int i=0; i<NUM_DIGITS; i++) disp38->display7Seg(i, 0);
+    for(int i=0; i<TM1637Data.num_digits; i++) tm1637display->printRaw(arr, 1, i);
+  } else if(TM1637Data.display_type == TM1638) {
+    for(int i=0; i<TM1637Data.num_digits; i++) tm1638display->display7Seg(i, 0);
   }
 }
 
 
 /*********************************************************************************************\
 * Display scrolling text
-* Command:   DisplayScrollText text
+* Command:   DisplayTM1637Data.scroll_text text
 \*********************************************************************************************/
 bool CmndScrollText(void) {
 
-  AddLog(LOG_LEVEL_DEBUG, PSTR("LOG: %s: text=%s"), modelname, XdrvMailbox.data);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("TM7: Text %s"), XdrvMailbox.data);
 
   if(XdrvMailbox.data_len > SCROLL_MAX_LEN) {
-    Response_P(PSTR("{\"Error\":\"Text too long. Length should be less than %d\"}"), SCROLL_MAX_LEN);
+    snprintf(TM1637Data.msg, sizeof(TM1637Data.msg), PSTR("Text too long. Length should be less than %d"), SCROLL_MAX_LEN);
+    XdrvMailbox.data = TM1637Data.msg;
     return false;
   } else {
-    snprintf(scrolltext, sizeof(scrolltext), PSTR("%s"), XdrvMailbox.data);
-    scrolltext[XdrvMailbox.data_len] = 0;
-    scrollindex = 0;
-    scroll = true;
+    snprintf(TM1637Data.scroll_text, sizeof(TM1637Data.scroll_text), PSTR("%s"), XdrvMailbox.data);
+    TM1637Data.scroll_text[XdrvMailbox.data_len] = 0;
+    TM1637Data.scroll_index = 0;
+    TM1637Data.scroll = true;
     return true;
   }
 
@@ -479,11 +477,11 @@ bool CmndScrollText(void) {
 
 /*********************************************************************************************\
 * Sets the scroll delay for scrolling text.
-* Command:  DisplayScrollDelay delay {0-15}    // default = 4
+* Command:  DisplayTM1637Data.scroll_delay delay {0-15}    // default = 4
 \*********************************************************************************************/
 bool CmndScrollDelay(void) {
-  if(scrolldelay<0) scrolldelay=0;
-  scrolldelay = XdrvMailbox.payload;
+  if(TM1637Data.scroll_delay<0) TM1637Data.scroll_delay=0;
+  TM1637Data.scroll_delay = XdrvMailbox.payload;
   return true;
 }
 
@@ -493,37 +491,32 @@ bool CmndScrollDelay(void) {
 * Scrolls a given string. Called every 50ms
 \*********************************************************************************************/
 void scrollText(void) {
-  iteration++;
-  if(scrolldelay) iteration = iteration %  scrolldelay;
-  else iteration = 0;
-  if(iteration) return;
+  TM1637Data.iteration++;
+  if(TM1637Data.scroll_delay) TM1637Data.iteration = TM1637Data.iteration %  TM1637Data.scroll_delay;
+  else TM1637Data.iteration = 0;
+  if(TM1637Data.iteration) return;
 
-  if(scrollindex > strlen(scrolltext)) {
-    scroll = false;
-    scrollindex = 0;
+  if(TM1637Data.scroll_index > strlen(TM1637Data.scroll_text)) {
+    TM1637Data.scroll= false;
+    TM1637Data.scroll_index = 0;
     return;
   }
   bool clr = false;
   uint8_t rawBytes[1];
-  for(uint32_t i=0, j=scrollindex; i< strlen(scrolltext); i++, j++) {
-    if(i > (NUM_DIGITS-1)) break;
-    if(scrolltext[j] == 0) {clr = true;};
-    if(displaytype == TM1637) {
-      char charToDisp = (clr ? ' ' : scrolltext[j]);
-      rawBytes[0] = disp37->encode(charToDisp);
-      disp37->printRaw(rawBytes, 1, i);
-    } else if(displaytype == TM1638) {
-      disp38->displayASCII(i, (clr ? ' ' : scrolltext[j]));
+  for(uint32_t i=0, j=TM1637Data.scroll_index; i< strlen(TM1637Data.scroll_text); i++, j++) {
+    if(i > (TM1637Data.num_digits-1)) break;
+    if(TM1637Data.scroll_text[j] == 0) {clr = true;};
+    if(TM1637Data.display_type == TM1637) {
+      char charToDisp = (clr ? ' ' : TM1637Data.scroll_text[j]);
+      rawBytes[0] = tm1637display->encode(charToDisp);
+      tm1637display->printRaw(rawBytes, 1, i);
+    } else if(TM1637Data.display_type == TM1638) {
+      tm1638display->displayASCII(i, (clr ? ' ' : TM1637Data.scroll_text[j]));
     }
 
   }
-  scrollindex++;
+  TM1637Data.scroll_index++;
 }
-
-
-
-
-
 
 /*********************************************************************************************\
 * Displays a horizontal bar graph. Takes a percentage number (0-100) as input
@@ -536,38 +529,37 @@ bool CmndLevel(void) {
     return false;
   }
 
-  uint8_t totalBars = 2*NUM_DIGITS;
-  AddLog(LOG_LEVEL_DEBUG, PSTR("LOG: %s: CmndLevel totalBars=%d"), modelname, totalBars);
+  uint8_t totalBars = 2*TM1637Data.num_digits;
+  AddLog(LOG_LEVEL_DEBUG, PSTR("TM7: TM1637Data.model_name %s CmndLevel totalBars=%d"), TM1637Data.model_name, totalBars);
   float barsToDisplay = totalBars * val / 100.0f;
   char txt[5];
   ext_snprintf_P(txt, sizeof(txt), PSTR("%*_f"), 1, &barsToDisplay);
-  AddLog(LOG_LEVEL_DEBUG, PSTR("LOG: %s: CmndLevel barsToDisplay=%s"), modelname, txt);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("TM7: TM1637Data.model_name %s CmndLevel barsToDisplay=%s"), TM1637Data.model_name, txt);
   char s[4];
-  ext_snprintf_P(s, sizeof(s), PSTR("%*_f"), 0, &barsToDisplay);
+  ext_snprintf_P(s, sizeof(s), PSTR("%0_f"), &barsToDisplay);
   uint8_t numBars = atoi(s);
-  AddLog(LOG_LEVEL_DEBUG, PSTR("LOG: %s: CmndLevel numBars=%d"), modelname, numBars);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("TM7: CmndTM1637Level numBars %d"), numBars);
 
   clearDisplay();
   uint8_t rawBytes[1];
   for(int i=1; i<=numBars; i++) {
     uint8_t digit = (i-1) / 2;
     uint8_t value = (((i%2) == 0) ? 54 : 48);
-    if(displaytype == TM1637) {
+    if(TM1637Data.display_type == TM1637) {
       rawBytes[0] = value;
-      disp37->printRaw(rawBytes, 1, digit);
-    } else if(displaytype == TM1638) {
-      disp38->display7Seg(digit, value);
+      tm1637display->printRaw(rawBytes, 1, digit);
+    } else if(TM1637Data.display_type == TM1638) {
+      tm1638display->display7Seg(digit, value);
     }
 
   }
   return true;
 }
 
-
 /*********************************************************************************************\
 * Display arbitrary data on the display module
-* Command:   DisplayRaw position {0-(NUM_DIGITS-1)},length {1 to NUM_DIGITS}, a [, b[, c[, d[...upto NUM_DIGITS]]]]
-* where a,b,c,d... are upto NUM_DIGITS numbers in the range 0-255, each number (byte)
+* Command:   DisplayRaw position {0-(TM1637Data.num_digits-1)},length {1 to TM1637Data.num_digits}, a [, b[, c[, d[...upto TM1637Data.num_digits]]]]
+* where a,b,c,d... are upto TM1637Data.num_digits numbers in the range 0-255, each number (byte)
 * corresponding to a single 7-segment digit. Within each byte, bit 0 is segment A,
 * bit 1 is segment B etc. The function may either set the entire display
 * or any desired part using the length and position parameters.
@@ -618,32 +610,23 @@ bool CmndRaw(void) {
   }
 
   if(!length) length = ArgC() - 2;
-  if(length < 0 || length > NUM_DIGITS) length = NUM_DIGITS;
-  if(position < 0 || position > (NUM_DIGITS-1)) position = 0;
+  if(length < 0 || length > TM1637Data.num_digits) length = TM1637Data.num_digits;
+  if(position < 0 || position > (TM1637Data.num_digits-1)) position = 0;
 
+  AddLog(LOG_LEVEL_DEBUG, PSTR("TM7: a %d, b %d, c %d, d %d, e %d, f %d, len %d, pos %d"),
+    DATA[0], DATA[1], DATA[2], DATA[3], DATA[4], DATA[5], length, position);
 
-  AddLog(LOG_LEVEL_DEBUG, PSTR("LOG: %s: a=%d"), modelname, DATA[0]);
-  AddLog(LOG_LEVEL_DEBUG, PSTR("LOG: %s: b=%d"), modelname, DATA[1]);
-  AddLog(LOG_LEVEL_DEBUG, PSTR("LOG: %s: c=%d"), modelname, DATA[2]);
-  AddLog(LOG_LEVEL_DEBUG, PSTR("LOG: %s: d=%d"), modelname, DATA[3]);
-  AddLog(LOG_LEVEL_DEBUG, PSTR("LOG: %s: e=%d"), modelname, DATA[4]);
-  AddLog(LOG_LEVEL_DEBUG, PSTR("LOG: %s: f=%d"), modelname, DATA[5]);
-
-  AddLog(LOG_LEVEL_DEBUG, PSTR("LOG: %s: length=%d"), modelname, length);
-  AddLog(LOG_LEVEL_DEBUG, PSTR("LOG: %s: position=%d"), modelname, position);
-
-
-  if(displaytype == TM1637) {
+  if(TM1637Data.display_type == TM1637) {
     uint8_t rawBytes[1];
     for(uint32_t i=position; i<position+length; i++ ) {
-      if(i>(NUM_DIGITS-1)) break;
+      if(i>(TM1637Data.num_digits-1)) break;
       rawBytes[0] = DATA[i-position];
-      disp37->printRaw(rawBytes, 1, i);
+      tm1637display->printRaw(rawBytes, 1, i);
     }    
-  } else if(displaytype == TM1638) {
+  } else if(TM1637Data.display_type == TM1638) {
     for(uint32_t i=position; i<position+length; i++ ) {
       if(i>7) break;
-      disp38->display7Seg(i, DATA[i-position]);
+      tm1638display->display7Seg(i, DATA[i-position]);
     }
   }
 
@@ -651,13 +634,11 @@ bool CmndRaw(void) {
   return true;
 }
 
-
-
 /*********************************************************************************************\
 * Display a given string.
 * Text can be placed at arbitrary location on the display using the length and
 * position parameters without affecting the rest of the display.
-* Command:   DisplayText text [, position {0-(NUM_DIGITS-1)} [,length {1 to NUM_DIGITS}]]
+* Command:   DisplayText text [, position {0-(TM1637Data.num_digits-1)} [,length {1 to TM1637Data.num_digits}]]
 \*********************************************************************************************/
 bool CmndText(bool clear) {
   char sString[CMD_MAX_LEN + 1];
@@ -679,42 +660,40 @@ bool CmndText(bool clear) {
   }
 
 
-  if((position < 0) || (position > (NUM_DIGITS-1))) position = 0;
+  if((position < 0) || (position > (TM1637Data.num_digits-1))) position = 0;
 
-  AddLog(LOG_LEVEL_DEBUG, PSTR("LOG: %s: sString=%s"), modelname, sString);
-  AddLog(LOG_LEVEL_DEBUG, PSTR("LOG: %s: position=%d"), modelname, position);
-  AddLog(LOG_LEVEL_DEBUG, PSTR("LOG: %s: length=%d"), modelname, length);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("TM7: sString %s, pos %d, len %d"), sString, position, length);
 
   if(clear) clearDisplay();
 
   if(!length) length = strlen(sString);
-  if((length < 0) || (length > NUM_DIGITS)) length = NUM_DIGITS;
+  if((length < 0) || (length > TM1637Data.num_digits)) length = TM1637Data.num_digits;
 
   uint32_t i = position;
-  if(displaytype == TM1637) {
+  if(TM1637Data.display_type == TM1637) {
     uint8_t rawBytes[1];
     for(uint32_t j = 0; i< position + length; i++, j++) {
-      if(i > (NUM_DIGITS-1)) break;
+      if(i > (TM1637Data.num_digits-1)) break;
       if(sString[j] == 0) break;
-      rawBytes[0] = disp37->encode(sString[j]);
+      rawBytes[0] = tm1637display->encode(sString[j]);
       if(sString[j+1] == '.') {
         rawBytes[0] = rawBytes[0] | 128;
         j++;
       } else if(sString[j] == '^') {
         rawBytes[0] = 1 | 2 | 32 | 64;
       }
-      disp37->printRaw(rawBytes, 1, i);
+      tm1637display->printRaw(rawBytes, 1, i);
     }
-  } else if(displaytype == TM1638) {
+  } else if(TM1637Data.display_type == TM1638) {
     for(uint32_t j = 0; i< position + length; i++, j++) {
       if(i > 7) break;
       if(sString[j] == 0) break;
       if(sString[j+1] == '.') {
-        disp38->displayASCIIwDot(i, sString[j]);
+        tm1638display->displayASCIIwDot(i, sString[j]);
         j++;
       } else if(sString[j] == '^') {
-        disp38->display7Seg(i, (1 | 2 | 32 | 64));
-      } else disp38->displayASCII(i, sString[j]);
+        tm1638display->display7Seg(i, (1 | 2 | 32 | 64));
+      } else tm1638display->displayASCII(i, sString[j]);
     }      
   }
 
@@ -730,7 +709,7 @@ bool CmndBrightness(void) {
 
   uint16_t val = XdrvMailbox.payload;
   if(ArgC() == 0) {
-    XdrvMailbox.payload = brightness;
+    XdrvMailbox.payload = TM1637Data.brightness;
     return true;
   }
 
@@ -738,8 +717,8 @@ bool CmndBrightness(void) {
     Response_P(PSTR("{\"Error\":\"Brightness should be a number in the range [%d, %d]\"}"), BRIGHTNESS_MIN, BRIGHTNESS_MAX);
     return false;
   }
-  brightness = val;
-  setBrightness(brightness);
+  TM1637Data.brightness = val;
+  setBrightness(TM1637Data.brightness);
   return true;
 }
 
@@ -748,8 +727,8 @@ bool CmndBrightness(void) {
 void setBrightness(uint8_t val) {
   if((val < BRIGHTNESS_MIN) || (val > BRIGHTNESS_MAX)) val = 5;
   Settings.display_dimmer = val;
-  if(displaytype == TM1637)  disp37->setBacklight(val*10);
-  else if(displaytype == TM1638) disp38->brightness(val-1);  
+  if(TM1637Data.display_type == TM1637)  tm1637display->setBacklight(val*10);
+  else if(TM1637Data.display_type == TM1638) tm1638display->brightness(val-1);  
 }
 
 
@@ -764,16 +743,15 @@ void setBrightness(uint8_t val) {
 \*********************************************************************************************/
 bool CmndClock(void) {
 
-  showClock = XdrvMailbox.payload;
+  TM1637Data.show_clock = XdrvMailbox.payload;
 
   if(ArgC() == 0) XdrvMailbox.payload = 1;
-  if(XdrvMailbox.payload > 1) clock24 = true;
-  else if(XdrvMailbox.payload == 1) clock24 = false;
+  if(XdrvMailbox.payload > 1) TM1637Data.clock_24 = true;
+  else if(XdrvMailbox.payload == 1) TM1637Data.clock_24 = false;
 
-  AddLog(LOG_LEVEL_DEBUG, PSTR("LOG: %s: showClock=%d"), modelname, showClock);
-  AddLog(LOG_LEVEL_DEBUG, PSTR("LOG: %s: clock24=%d"), modelname, clock24);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("TM7: TM1637Data.show_clock %d, TM1637Data.clock_24 %d"), TM1637Data.show_clock, TM1637Data.clock_24);
 
-  if(!showClock) {
+  if(!TM1637Data.show_clock) {
     clearDisplay();
   }
   return true;
@@ -789,13 +767,14 @@ void showTime() {
   // uint8_t hr = 1;
   // uint8_t mn = 0;
   char z = ' ';
-  if(clock24) {
+  if(TM1637Data.clock_24) {
     z = '0';
   } else {
     if(hr > 12) hr -= 12;
     if(hr == 0) hr = 12;
   }
 
+  char tm[5];
   if(hr < 10) {
     if(mn < 10) snprintf(tm, sizeof(tm), PSTR("%c%d0%d"), z, hr, mn);
     else snprintf(tm, sizeof(tm), PSTR("%c%d%d"), z, hr, mn);
@@ -804,17 +783,17 @@ void showTime() {
     else snprintf(tm, sizeof(tm), PSTR("%d%d"), hr, mn);
   }
 
-  if(displaytype == TM1637) {
+  if(TM1637Data.display_type == TM1637) {
     uint8_t rawBytes[1];
     for(uint32_t i = 0; i< 4; i++) {
-      rawBytes[0] = disp37->encode(tm[i]);
+      rawBytes[0] = tm1637display->encode(tm[i]);
       if((millis() % 1000) > 500 && (i == 1)) rawBytes[0] = rawBytes[0] | 128;
-      disp37->printRaw(rawBytes, 1, i);
+      tm1637display->printRaw(rawBytes, 1, i);
     }
-  } else if(displaytype == TM1638) {
+  } else if(TM1637Data.display_type == TM1638) {
     for(uint32_t i = 0; i< 4; i++) {
-      if((millis() % 1000) > 500 && (i == 1)) disp38->displayASCIIwDot(i, tm[i]);
-      else disp38->displayASCII(i, tm[i]);
+      if((millis() % 1000) > 500 && (i == 1)) tm1638display->displayASCIIwDot(i, tm[i]);
+      else tm1638display->displayASCII(i, tm[i]);
     }
   }
 
@@ -828,8 +807,8 @@ void showTime() {
 * Command:  DisplaySetLEDs {0-255}
 \*********************************************************************************************/
 bool CmndSetLEDs(void) {
-  if(displaytype != TM1638) {
-    Response_P(PSTR("{\"Error\":\"Command not valid for DisplayType %d\"}"), displaytype);
+  if(TM1637Data.display_type != TM1638) {
+    Response_P(PSTR("{\"Error\":\"Command not valid for TM1637Data.display_type %d\"}"), TM1637Data.display_type);
     return false;     
   }
   if(ArgC() == 0) XdrvMailbox.payload = 0;
@@ -838,19 +817,19 @@ bool CmndSetLEDs(void) {
     Response_P(PSTR("{\"Error\":\"Set LEDs value should be a number in the range [%d, %d]\"}"), LED_MIN, LED_MAX);
     return false;   
   }
-  for(uint8_t i=0; i<8; i++) LED[i] = ((val & 2^i) >> i);
-  disp38->setLEDs(val << 8);
+  for(uint8_t i=0; i<8; i++) TM1637Data.LED[i] = ((val & 2^i) >> i);
+  tm1638display->setLEDs(val << 8);
   return true;
 }
 
 
 /*********************************************************************************************\
-* Sets an LED at specified position. 
+* Sets an TM1637Data.LED at specified position. 
 * Command:  DisplaySetLED position {0-7}, value {0|1}
 \*********************************************************************************************/
 bool CmndSetLED(void) {
-  if(displaytype != TM1638) {
-    Response_P(PSTR("{\"Error\":\"Command not valid for DisplayType %d\"}"), displaytype);
+  if(TM1637Data.display_type != TM1638) {
+    Response_P(PSTR("{\"Error\":\"Command not valid for TM1637Data.display_type %d\"}"), TM1637Data.display_type);
     return false;     
   }   
   if(ArgC() < 2) {
@@ -879,11 +858,10 @@ bool CmndSetLED(void) {
     return false;   
   }
 
-  AddLog(LOG_LEVEL_DEBUG, PSTR("LOG: TM1638: position=%d"), position);
-  AddLog(LOG_LEVEL_DEBUG, PSTR("LOG: TM1638: value=%d"), value);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("TM7: TM1637Data.model_name TM1638, position=%d, value %d"), position, value);
 
-  LED[position] = value;
-  disp38->setLED(position, value);
+  TM1637Data.LED[position] = value;
+  tm1638display->setLED(position, value);
   return true;
 }
 
@@ -892,17 +870,17 @@ bool CmndSetLED(void) {
 * Reads the button states. Called every 50ms
 \*********************************************************************************************/
 bool readButtons(void) {
-  buttons = disp38->readButtons();
-  if(prevbuttons != buttons) {
-    prevbuttons = buttons;
-    if(!buttons) return true;
-    if(buttons) {
+  TM1637Data.buttons = tm1638display->readButtons();
+  if(TM1637Data.prev_buttons != TM1637Data.buttons) {
+    TM1637Data.prev_buttons = TM1637Data.buttons;
+    if(!TM1637Data.buttons) return true;
+    if(TM1637Data.buttons) {
       for(int i=0; i<8; i++) {
-        if(buttons & (1<<i)) {
+        if(TM1637Data.buttons & (1<<i)) {
           AddLog(LOG_LEVEL_DEBUG, PSTR("LOG: TM1638: button pressed: %d"), i+1);
-          LED[i] = !LED[i];
-          disp38->setLED(i, LED[i]);
-          Response_P(PSTR("{\"TM1638_BUTTON%d\":\"%s\"}"), i+1, (LED[i]?PSTR("ON"):PSTR("OFF")));
+          TM1637Data.LED[i] = !TM1637Data.LED[i];
+          tm1638display->setLED(i, TM1637Data.LED[i]);
+          Response_P(PSTR("{\"TM1638_BUTTON%d\":\"%s\"}"), i+1, (TM1637Data.LED[i]?PSTR("ON"):PSTR("OFF")));
           MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR("BUTTONS"));
         }
       }
@@ -916,14 +894,15 @@ bool readButtons(void) {
 * Command: DisplayButtons
 \*********************************************************************************************/
 bool CmndButtons(void) {
-  if(displaytype != TM1638) {
-    Response_P(PSTR("{\"Error\":\"Command not valid for DisplayType %d\"}"), displaytype); 
+  if(TM1637Data.display_type != TM1638) {
+    Response_P(PSTR("{\"Error\":\"Command not valid for TM1637Data.display_type %d\"}"), TM1637Data.display_type); 
     return false;     
   }   
-  AddLog(LOG_LEVEL_DEBUG, PSTR("LOG: TM1638: buttons=%d"), buttons);
-  uint8_t byte = LED[0]<<0 | LED[1]<<1 | LED[2]<<2 | LED[3]<<3 | LED[4]<<4 | LED[5]<<5 | LED[6]<<6 | LED[7]<<7; 
+  AddLog(LOG_LEVEL_DEBUG, PSTR("LOG: TM1638: buttons=%d"), TM1637Data.buttons);
+  uint8_t byte = TM1637Data.LED[0]<<0 | TM1637Data.LED[1]<<1 | TM1637Data.LED[2]<<2 | TM1637Data.LED[3]<<3 | TM1637Data.LED[4]<<4 | TM1637Data.LED[5]<<5 | TM1637Data.LED[6]<<6 | TM1637Data.LED[7]<<7; 
   Response_P(PSTR("{\"DisplayButtons\": {\"S1\":%d, \"S2\":%d, \"S3\":%d, \"S4\":%d, \"S5\":%d, \"S6\":%d, \"S7\":%d, \"S8\":%d, \"Array\": [%d,%d,%d,%d,%d,%d,%d,%d], \"Byte\": %d}}"), 
-              LED[0], LED[1], LED[2], LED[3], LED[4], LED[5], LED[6], LED[7], LED[0], LED[1], LED[2], LED[3], LED[4], LED[5], LED[6], LED[7], byte); 
+              TM1637Data.LED[0], TM1637Data.LED[1], TM1637Data.LED[2], TM1637Data.LED[3], TM1637Data.LED[4], TM1637Data.LED[5], TM1637Data.LED[6], TM1637Data.LED[7], TM1637Data.LED[0], 
+              TM1637Data.LED[1], TM1637Data.LED[2], TM1637Data.LED[3], TM1637Data.LED[4], TM1637Data.LED[5], TM1637Data.LED[6], TM1637Data.LED[7], byte); 
   return true;
 }
 
@@ -1014,11 +993,11 @@ bool Xdsp15(uint8_t function)
         result = DriverInit();              // init 
         break;
       case FUNC_DISPLAY_INIT:
-        AddLog(LOG_LEVEL_DEBUG, PSTR("LOG: %s: FUNC_DISPLAY_INIT: Display depends on DisplayType, currently %d"), modelname, Settings.display_type);
+        AddLog(LOG_LEVEL_DEBUG, PSTR("LOG: %s: FUNC_DISPLAY_INIT: Display depends on TM1637Data.display_type, currently %d"), TM1637Data.model_name, Settings.display_type);
         result = true;  
         break;
       case FUNC_DISPLAY_TYPE:
-        AddLog(LOG_LEVEL_DEBUG, PSTR("LOG: %s: FUNC_DISPLAY_TYPE: DisplayType set to %d, restarting to take effect ..."), modelname, Settings.display_type);
+        AddLog(LOG_LEVEL_DEBUG, PSTR("LOG: %s: FUNC_DISPLAY_TYPE: TM1637Data.display_type set to %d, restarting to take effect ..."), TM1637Data.model_name, Settings.display_type);
         TasmotaGlobal.restart_flag = 2;
         break;
       case FUNC_DISPLAY_SEVENSEG_TEXT:
@@ -1033,7 +1012,7 @@ bool Xdsp15(uint8_t function)
       case FUNC_DISPLAY_SCROLLTEXT:
       case FUNC_DISPLAY_SCROLLDELAY:
       case FUNC_DISPLAY_CLOCK:
-        showClock = false;
+        TM1637Data.show_clock = false;
       case FUNC_DISPLAY_BRIGHTNESS:
       case FUNC_DISPLAY_SETLEDS:
       case FUNC_DISPLAY_SETLED:
@@ -1041,9 +1020,9 @@ bool Xdsp15(uint8_t function)
         result = MainFunc(function);
         break;
       case FUNC_DISPLAY_EVERY_50_MSECOND:
-        if(scroll) scrollText();
-        if(showClock) showTime();
-        if(displaytype == TM1638) readButtons();        
+        if(TM1637Data.scroll) scrollText();
+        if(TM1637Data.show_clock) showTime();
+        if(TM1637Data.display_type == TM1638) readButtons();        
         break;
     }
   }

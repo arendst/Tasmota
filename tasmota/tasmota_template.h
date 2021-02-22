@@ -149,6 +149,8 @@ enum UserSelectablePins {
   GPIO_WIEGAND_D0, GPIO_WIEGAND_D1,    // Wiegand Data lines
   GPIO_NEOPOOL_TX, GPIO_NEOPOOL_RX,    // Sugar Valley RS485 interface
   GPIO_SDM72_TX, GPIO_SDM72_RX,        // SDM72 Serial interface
+  GPIO_TM1637CLK, GPIO_TM1637DIO,      // TM1637 interface
+  GPIO_TM1638CLK, GPIO_TM1638DIO, GPIO_TM1638STB,     // TM1638 interface
   GPIO_SENSOR_END };
 
 enum ProgramSelectablePins {
@@ -318,6 +320,8 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_WIEGAND_D0 "|" D_SENSOR_WIEGAND_D1 "|"
   D_SENSOR_NEOPOOL_TX "|" D_SENSOR_NEOPOOL_RX "|"
   D_SENSOR_SDM72_TX "|" D_SENSOR_SDM72_RX "|"
+  D_SENSOR_TM1637_CLK "|" D_SENSOR_TM1637_DIO "|"
+  D_SENSOR_TM1638_CLK "|" D_SENSOR_TM1638_DIO "|" D_SENSOR_TM1638_STB "|"
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -431,9 +435,17 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_SSD1331_CS),
   AGPIO(GPIO_SSD1331_DC),
 #endif  // USE_DISPLAY_SSD1331
+#ifdef USE_DISPLAY_TM1637
+  AGPIO(GPIO_TM1637CLK),
+  AGPIO(GPIO_TM1637DIO),
+  AGPIO(GPIO_TM1638CLK),
+  AGPIO(GPIO_TM1638DIO),
+  AGPIO(GPIO_TM1638STB),
+#endif  // USE_DISPLAY_TM1637
   AGPIO(GPIO_BACKLIGHT),      // Display backlight control
   AGPIO(GPIO_OLED_RESET),     // OLED Display Reset
-#endif
+#endif  // USE_DISPLAY
+
 #ifdef USE_MAX31865
   AGPIO(GPIO_SSPI_MAX31865_CS1) + MAX_MAX31865S,
 #endif

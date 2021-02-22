@@ -85,4 +85,7 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 
 ### Fixed
 - Ili1942 driver [#11046](https://github.com/arendst/Tasmota/issues/11046)
+- Shutter driver [#11055](https://github.com/arendst/Tasmota/issues/11055)
 - ESP32 Mi32 driver [#11048](https://github.com/arendst/Tasmota/issues/11048)
+- TM1637 driver now needs ``TM1637 CLK`` and ``TM1637 DIO`` to enable [#11057](https://github.com/arendst/Tasmota/issues/11057)
+- Web request accepts wrong password [#11039](https://github.com/arendst/Tasmota/issues/11039)
