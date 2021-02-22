@@ -827,6 +827,7 @@
 #define D_UNIT_PARTS_PER_BILLION "ppb"
 #define D_UNIT_PARTS_PER_DECILITER "每分升"
 #define D_UNIT_PARTS_PER_MILLION "ppm"
+#define D_UNIT_MILIGRAMS_PER_LITER "mg/L"
 #define D_UNIT_PERCENT "%%"
 #define D_UNIT_PRESSURE "百帕"
 #define D_UNIT_SECOND "秒"

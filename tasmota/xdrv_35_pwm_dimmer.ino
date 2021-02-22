@@ -167,6 +167,7 @@ void PWMDimmerSetBrightnessLeds(int32_t bri)
     uint32_t level = 0;
     led = -1;
     mask = 0;
+    uint16_t pwm_led_bri = 0;
     for (uint32_t count = 0; count < leds; count++) {
       level += step;
       for (;;) {
@@ -175,7 +176,8 @@ void PWMDimmerSetBrightnessLeds(int32_t bri)
         if (!mask) mask = 1;
         if (Settings.ledmask & mask) break;
       }
-      SetLedPowerIdx(led, bri >= level);
+      pwm_led_bri = changeUIntScale((bri > level ? bri - level : 0), 0, step, 0, Settings.pwm_range);
+      analogWrite(Pin(GPIO_LED1, led), bitRead(TasmotaGlobal.led_inverted, led) ? Settings.pwm_range - pwm_led_bri : pwm_led_bri);
     }
   }
 }
@@ -193,7 +195,6 @@ void PWMDimmerSetPoweredOffLed(void)
 void PWMDimmerSetPower(void)
 {
   DigitalWrite(GPIO_REL1, 0, bitRead(TasmotaGlobal.rel_inverted, 0) ? !TasmotaGlobal.power : TasmotaGlobal.power);
-  PWMDimmerSetBrightnessLeds(-1);
   PWMDimmerSetPoweredOffLed();
 }
 

@@ -4,16 +4,22 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased] - Development
 
 ## [9.3.0.1]
+### Added
+- Animate PWM dimmer brightness LEDs during transitions and with variable brightness (#11076)
+- Commands ``StateRetain`` and ``InfoRetain`` (#11084)
+
 ### Changed
 - Remove the need to start filenames with a slash (/) in Ufs commands
 - Removed command ``VirtualCT`` as synonym for ``SetOption106`` (#11049)
 
 ### Fixed
-- Ili1942 driver (#11046)
-- Shutter driver (#11055)
-- ESP32 Mi32 driver (#11048)
-- TM1637 driver now needs ``TM1637 CLK`` and ``TM1637 DIO`` to enable (#11057)
 - Web request accepts wrong password (#11039)
+- Ili1942 driver (#11046)
+- ESP32 Mi32 driver (#11048)
+- Shutter driver (#11055)
+- TM1637 driver now needs ``TM1637 CLK`` and ``TM1637 DIO`` to enable (#11057)
+- Sml driver (#11082)
+- Ezo drivers (#11083)
 
 ## [Released]
 

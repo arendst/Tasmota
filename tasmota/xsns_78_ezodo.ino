@@ -23,7 +23,7 @@
 #define EZO_DO_READ_LATENCY   600
 
 struct EZODO : public EZOStruct {
-  EZODO(uint32_t addr) : EZOStruct(addr), DO(0) {}
+  EZODO(uint32_t addr) : EZOStruct(addr), DO(NAN) {}
 
   virtual void ProcessMeasurement(void)
   {
@@ -39,10 +39,11 @@ struct EZODO : public EZOStruct {
     dtostrfd(DO, 2, str);
 
     if (json) {
-      ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_DO "\":%d}" ), name, str);
-    }
+      ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_DO "\":%s" ), name, str);
+      ResponseJsonEnd();
+    
 #ifdef USE_WEBSERVER
-    else {
+    }else {
       WSContentSend_PD(HTTP_SNS_DO, name, str);
 #endif  // USE_WEBSERVER
     }
@@ -54,7 +55,7 @@ private:
   float DO;
 };
 
-const char EZODO::id[] PROGMEM = "D.O.";
+const char EZODO::id[] PROGMEM = "DO";
 
 #endif  // USE_EZODO
 #endif  // USE_I2C

@@ -715,7 +715,7 @@ void MqttPublishTeleState(void)
 {
   ResponseClear();
   MqttShowState();
-  MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_STATE), MQTT_TELE_RETAIN);
+  MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_STATE), Settings.flag5.mqtt_state_retain);
 
 #ifdef USE_DT_VARS
   DTVarsTeleperiod();
