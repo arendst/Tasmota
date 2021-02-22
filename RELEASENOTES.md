@@ -81,6 +81,7 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 ## Changelog v9.3.0.1
 ### Added
 - Animate PWM dimmer brightness LEDs during transitions and with variable brightness [#11076](https://github.com/arendst/Tasmota/issues/11076)
+- Commands ``StateRetain`` and ``InfoRetain`` [#11084](https://github.com/arendst/Tasmota/issues/11084)
 
 ### Changed
 - Remove the need to start filenames with a slash (/) in Ufs commands

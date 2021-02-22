@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 ## [9.3.0.1]
 ### Added
 - Animate PWM dimmer brightness LEDs during transitions and with variable brightness (#11076)
+- Commands ``StateRetain`` and ``InfoRetain`` (#11084)
 
 ### Changed
 - Remove the need to start filenames with a slash (/) in Ufs commands
