@@ -41,9 +41,8 @@ struct EZOCO2 : public EZOStruct {
   {
     if (json) {
       ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_CO2 "\":%d}" ), name, CO2);
-    }
 #ifdef USE_WEBSERVER
-    else {
+    }else {
       WSContentSend_PD(HTTP_SNS_CO2, name, CO2);
 #endif  // USE_WEBSERVER
     }
