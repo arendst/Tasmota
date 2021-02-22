@@ -250,6 +250,7 @@
 #define D_CMND_PULSETIME "PulseTime"
 #define D_CMND_BLINKTIME "BlinkTime"
 #define D_CMND_BLINKCOUNT "BlinkCount"
+#define D_CMND_LEDLINK_HEARTBEAT "LedLinkHeartbeat"
 #define D_CMND_SENSOR "Sensor"
 #define D_CMND_DRIVER "Driver"
 #define D_CMND_SAVEDATA "SaveData"
@@ -383,7 +384,6 @@
 #define D_CMND_INFORETAIN "InfoRetain"
 #define D_CMND_STATERETAIN "StateRetain"
 #define D_CMND_PUBLISH "Publish"
-#define D_CMND_LEDLINKHEARTBEAT "LedLinkHeartbeat"
 
 // Commands xdrv_01_webserver.ino
 #define D_CMND_WEBSERVER "Webserver"

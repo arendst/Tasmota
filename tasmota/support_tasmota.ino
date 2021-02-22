@@ -992,6 +992,7 @@ void Every250mSeconds(void)
     {
       blinkinterval = 7;
       blinkoffinterval = 1;
+      TasmotaGlobal.blinks = 201;
     }
   }
   if (TasmotaGlobal.blinks || TasmotaGlobal.restart_flag || TasmotaGlobal.ota_state_flag) {
