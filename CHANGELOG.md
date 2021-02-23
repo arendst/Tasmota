@@ -3,6 +3,13 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
+## [9.3.1.1]
+
+## [Released]
+
+## [9.3.1] 20210223
+- Release Kenneth
+
 ## [9.3.0.1]
 ### Added
 - Animate PWM dimmer brightness LEDs during transitions and with variable brightness (#11076)
@@ -20,8 +27,6 @@ All notable changes to this project will be documented in this file.
 - TM1637 driver now needs ``TM1637 CLK`` and ``TM1637 DIO`` to enable (#11057)
 - Sml driver (#11082)
 - Ezo drivers (#11083)
-
-## [Released]
 
 ## [9.3.0] 20210219
 - Release Kenneth
