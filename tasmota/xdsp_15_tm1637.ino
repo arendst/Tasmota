@@ -464,6 +464,7 @@ bool CmndScrollText(void) {
     XdrvMailbox.data = TM1637Data.msg;
     return false;
   } else {
+    snprintf(TM1637Data.scroll_text, sizeof(TM1637Data.scroll_text), PSTR("                                                       "));
     snprintf(TM1637Data.scroll_text, sizeof(TM1637Data.scroll_text), PSTR("%s"), XdrvMailbox.data);
     TM1637Data.scroll_text[XdrvMailbox.data_len] = 0;
     TM1637Data.scroll_index = 0;
@@ -480,6 +481,10 @@ bool CmndScrollText(void) {
 * Command:  DisplayTM1637Data.scroll_delay delay {0-15}    // default = 4
 \*********************************************************************************************/
 bool CmndScrollDelay(void) {
+  if(ArgC() == 0) {
+    XdrvMailbox.payload = TM1637Data.scroll_delay;
+    return true;
+  }
   if(TM1637Data.scroll_delay<0) TM1637Data.scroll_delay=0;
   TM1637Data.scroll_delay = XdrvMailbox.payload;
   return true;
@@ -501,17 +506,28 @@ void scrollText(void) {
     TM1637Data.scroll_index = 0;
     return;
   }
-  bool clr = false;
   uint8_t rawBytes[1];
-  for(uint32_t i=0, j=TM1637Data.scroll_index; i< strlen(TM1637Data.scroll_text); i++, j++) {
-    if(i > (TM1637Data.num_digits-1)) break;
-    if(TM1637Data.scroll_text[j] == 0) {clr = true;};
+  for(uint32_t i=0, j=TM1637Data.scroll_index; i< 1 + strlen(TM1637Data.scroll_text); i++, j++) {
+    if(i > (TM1637Data.num_digits-1)) { break; }
+    rawBytes[0] = tm1637display->encode(TM1637Data.scroll_text[j]);
+    bool dotSkipped = false;
+    if(TM1637Data.scroll_text[j+1] == '.') {
+      dotSkipped = true;
+      rawBytes[0] = rawBytes[0] | 128;
+      j++;
+    } else if(TM1637Data.scroll_text[j] == '^') {
+      rawBytes[0] = 1 | 2 | 32 | 64;
+    }
+    if(!dotSkipped && TM1637Data.scroll_text[j] == '.') {
+      j++; 
+      TM1637Data.scroll_index++; 
+      rawBytes[0] = tm1637display->encode(TM1637Data.scroll_text[j]);
+    }
+    if(TM1637Data.scroll_text[j+1] == '.') { rawBytes[0] = rawBytes[0] | 128; }
     if(TM1637Data.display_type == TM1637) {
-      char charToDisp = (clr ? ' ' : TM1637Data.scroll_text[j]);
-      rawBytes[0] = tm1637display->encode(charToDisp);
       tm1637display->printRaw(rawBytes, 1, i);
     } else if(TM1637Data.display_type == TM1638) {
-      tm1638display->displayASCII(i, (clr ? ' ' : TM1637Data.scroll_text[j]));
+      tm1638display->display7Seg(i, rawBytes[0]);
     }
 
   }
@@ -676,12 +692,15 @@ bool CmndText(bool clear) {
       if(i > (TM1637Data.num_digits-1)) break;
       if(sString[j] == 0) break;
       rawBytes[0] = tm1637display->encode(sString[j]);
+      bool dotSkipped = false;
       if(sString[j+1] == '.') {
+        dotSkipped = true;
         rawBytes[0] = rawBytes[0] | 128;
         j++;
       } else if(sString[j] == '^') {
         rawBytes[0] = 1 | 2 | 32 | 64;
       }
+      if(!dotSkipped && sString[j] == '.') rawBytes[0] = 128;
       tm1637display->printRaw(rawBytes, 1, i);
     }
   } else if(TM1637Data.display_type == TM1638) {
