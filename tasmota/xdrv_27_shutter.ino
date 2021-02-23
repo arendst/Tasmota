@@ -45,8 +45,8 @@ int32_t  velocity_change_per_step_max = 0;
 int32_t  min_runtime_ms = 0;
 int32_t  current_stop_way = 0;
 int32_t  next_possible_stop_position = 0;
-int32_t  toBeAcc = 0;
-
+int32_t  current_real_position = 0;
+int32_t  current_pwm_velocity = 0;
 
 const uint8_t MAX_MODES = 7;
 enum Shutterposition_mode {SHT_UNDEF, SHT_TIME, SHT_TIME_UP_DOWN, SHT_TIME_GARAGE, SHT_COUNTER, SHT_PWM_VALUE, SHT_PWM_TIME,};
@@ -125,8 +125,10 @@ void ShutterUpdateVelocity(uint8_t i)
 {
   // No Logging allowed. Part of RTC Timer
   // will be calles through RTC every 50ms.
-  Shutter[i].pwm_velocity += Shutter[i].accelerator;
-  Shutter[i].pwm_velocity = tmax(0,tmin(Shutter[i].direction==1 ? ShutterGlobal.open_velocity_max : Shutter[i].close_velocity_max,Shutter[i].pwm_velocity));
+  // do not allow accellerator to stop movement
+  Shutter[i].pwm_velocity = tmax(velocity_change_per_step_max, Shutter[i].pwm_velocity+Shutter[i].accelerator);
+  Shutter[i].pwm_velocity = tmin(Shutter[i].direction==1 ? ShutterGlobal.open_velocity_max : Shutter[i].close_velocity_max,Shutter[i].pwm_velocity);
+  // respect hard coded SDK limit of 100Hz on PWM frequency.
   if (ShutterGlobal.position_mode == SHT_COUNTER) {
   	Shutter[i].pwm_velocity = tmax(100,Shutter[i].pwm_velocity);
   }
@@ -376,22 +378,21 @@ void ShutterCalculateAccelerator(uint8_t i)
     switch (ShutterGlobal.position_mode) {
       case SHT_COUNTER:
       case SHT_PWM_VALUE:
+        current_real_position =  Shutter[i].real_position;
+        current_pwm_velocity = Shutter[i].pwm_velocity;
         // calculate max velocity allowed in this direction
         velocity_max = Shutter[i].direction == 1 ? ShutterGlobal.open_velocity_max : Shutter[i].close_velocity_max;
         // calculate max change of velocyty based on the defined motordelay in steps
         velocity_change_per_step_max =  velocity_max / (Shutter[i].motordelay>0 ? Shutter[i].motordelay : 1);
         // minimumtime required from current velocity to stop
-        min_runtime_ms = Shutter[i].pwm_velocity * 1000 / STEPS_PER_SECOND / velocity_change_per_step_max;
-        // decellartion way from current velocity
-        current_stop_way = (min_runtime_ms * (Shutter[i].pwm_velocity+velocity_change_per_step_max)/100 - Shutter[i].pwm_velocity)*RESOLUTION/ShutterGlobal.open_velocity_max * Shutter[i].direction ;
-        next_possible_stop_position = Shutter[i].real_position + current_stop_way ;
-        toBeAcc = 0;
+        min_runtime_ms = current_pwm_velocity * 1000 / STEPS_PER_SECOND / velocity_change_per_step_max;
+        // decellaration way from current velocity
+        current_stop_way = min_runtime_ms * STEPS_PER_SECOND * (current_pwm_velocity + velocity_change_per_step_max) * Shutter[i].direction  / 2 / ShutterGlobal.open_velocity_max - (Shutter[i].accelerator<0?Shutter[i].direction*1000*current_pwm_velocity/ShutterGlobal.open_velocity_max:0);
+        next_possible_stop_position = current_real_position + current_stop_way ;
         // ensure that the accelerotor kicks in at least one step BEFORE it is to late and a hard stop required.
-        if (Shutter[i].accelerator < 0 || (next_possible_stop_position * Shutter[i].direction) +RESOLUTION*Shutter[i].pwm_velocity/ShutterGlobal.open_velocity_max>= Shutter[i].target_position * Shutter[i].direction ) {
-            // 10 times the deviation is the p-value of this simple p-regulator
-            toBeAcc = 100+(Shutter[i].direction*(next_possible_stop_position-Shutter[i].target_position)*velocity_max/Shutter[i].pwm_velocity*10/RESOLUTION);
-            Shutter[i].accelerator = - tmin(tmax( velocity_change_per_step_max*toBeAcc/100  , (velocity_change_per_step_max*9/10)), (velocity_change_per_step_max*11/10));
-        } else if (  Shutter[i].accelerator > 0 && Shutter[i].pwm_velocity ==  velocity_max) {
+        if (next_possible_stop_position * Shutter[i].direction > Shutter[i].target_position * Shutter[i].direction ) {
+            Shutter[i].accelerator = -velocity_change_per_step_max;
+        } else if (  Shutter[i].accelerator > 0 && current_pwm_velocity == velocity_max) {
           Shutter[i].accelerator = 0;
         }
       break;
@@ -406,8 +407,9 @@ void ShutterDecellerateForStop(uint8_t i)
     case SHT_COUNTER:
       int16_t missing_steps;
       Shutter[i].accelerator = -(ShutterGlobal.open_velocity_max / (Shutter[i].motordelay>4 ? (Shutter[i].motordelay*11)/10 : 4) );
-      while (Shutter[i].pwm_velocity > -2*Shutter[i].accelerator ||  (ShutterGlobal.position_mode == SHT_COUNTER && Shutter[i].pwm_velocity > 100) ) {
-	delay(50);
+
+      while (Shutter[i].pwm_velocity > -2*Shutter[i].accelerator &&  Shutter[i].pwm_velocity != 100) {
+	      delay(50);
         AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Velocity %ld, Delta %d"), Shutter[i].pwm_velocity, Shutter[i].accelerator );
         // Control will be done in RTC Ticker.
         
@@ -421,8 +423,8 @@ void ShutterDecellerateForStop(uint8_t i)
         }
         analogWrite(Pin(GPIO_PWM1, i), 0); // removed with 8.3 because of reset caused by watchog
         Shutter[i].real_position = ShutterCalculatePosition(i);
-        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Real %d, Pulsecount %d, Start %d"), Shutter[i].real_position,RtcSettings.pulse_counter[i], Shutter[i].start_position);
-
+        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Remain steps %d"), missing_steps);
+        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Real %d, Pulsecount %d, tobe %d, Start %d"), Shutter[i].real_position,RtcSettings.pulse_counter[i],  (uint32_t)(Shutter[i].target_position-Shutter[i].start_position)*Shutter[i].direction*ShutterGlobal.open_velocity_max/RESOLUTION/STEPS_PER_SECOND, Shutter[i].start_position);
       }
       Shutter[i].direction = 0;
       Shutter[i].pwm_velocity = 0;
@@ -487,11 +489,11 @@ void ShutterUpdatePosition(void)
         XdrvRulesProcess();
         ShutterGlobal.start_reported = 1;
       }
-      AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Time %d, toBA %d, cStop %d, cVelo %d, mVelo %d, aVelo %d, mRun %d, aPos %d, nStop %d, Trgt %d, mVelo %d, Dir %d"),
-        Shutter[i].time, toBeAcc, current_stop_way, Shutter[i].pwm_velocity, velocity_max, Shutter[i].accelerator, min_runtime_ms, Shutter[i].real_position,
+      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Time %d, cStop %d, cVelo %d, mVelo %d, aVelo %d, mRun %d, aPos %d, nStop %d, Trgt %d, mVelo %d, Dir %d"),
+        Shutter[i].time, current_stop_way, current_pwm_velocity, velocity_max, Shutter[i].accelerator, min_runtime_ms, current_real_position,
         next_possible_stop_position, Shutter[i].target_position, velocity_change_per_step_max, Shutter[i].direction);
 
-     if ( Shutter[i].real_position * Shutter[i].direction >= Shutter[i].target_position * Shutter[i].direction || (ShutterGlobal.position_mode == SHT_COUNTER && Shutter[i].accelerator <0 && Shutter[i].pwm_velocity+Shutter[i].accelerator<=100)) {
+      if ( Shutter[i].real_position * Shutter[i].direction >= Shutter[i].target_position * Shutter[i].direction || (ShutterGlobal.position_mode == SHT_COUNTER && Shutter[i].accelerator <0 && Shutter[i].pwm_velocity+Shutter[i].accelerator<100)) {
         if (Shutter[i].direction != 0) {
           Shutter[i].lastdirection = Shutter[i].direction;
         }
@@ -878,7 +880,7 @@ void ShutterSetPosition(uint32_t device, uint32_t position)
 
 void ShutterToggle(bool dir)
 {
-  AddLog(LOG_LEVEL_DEBUG, PSTR("SHT: Payload toggle: %d, i %d, dir %d"), XdrvMailbox.payload, XdrvMailbox.index, dir);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("SHT: Payload toggle: %d, i %d, dir %d, lastdir %d"), XdrvMailbox.payload, XdrvMailbox.index, dir, Shutter[XdrvMailbox.index-1].lastdirection);
   if ((1 == XdrvMailbox.index) && (XdrvMailbox.payload != -99)) {
     XdrvMailbox.index = XdrvMailbox.payload;
   }
