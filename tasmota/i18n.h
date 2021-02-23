@@ -382,6 +382,7 @@
 #define D_CMND_SENSORRETAIN "SensorRetain"
 #define D_CMND_INFORETAIN "InfoRetain"
 #define D_CMND_STATERETAIN "StateRetain"
+#define D_CMND_STATUSRETAIN "StatusRetain"
 #define D_CMND_PUBLISH "Publish"
 
 // Commands xdrv_01_webserver.ino

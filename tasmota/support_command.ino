@@ -427,7 +427,7 @@ void CmndStatus(void)
                           D_CMND_BUTTONTOPIC "\":\"%s\",\"" D_CMND_POWER "\":%d,\"" D_CMND_POWERONSTATE "\":%d,\"" D_CMND_LEDSTATE "\":%d,\""
                           D_CMND_LEDMASK "\":\"%04X\",\"" D_CMND_SAVEDATA "\":%d,\"" D_JSON_SAVESTATE "\":%d,\"" D_CMND_SWITCHTOPIC "\":\"%s\",\""
                           D_CMND_SWITCHMODE "\":[%s],\"" D_CMND_BUTTONRETAIN "\":%d,\"" D_CMND_SWITCHRETAIN "\":%d,\"" D_CMND_SENSORRETAIN "\":%d,\"" D_CMND_POWERRETAIN "\":%d,\""
-                          D_CMND_INFORETAIN "\":%d,\"" D_CMND_STATERETAIN "\":%d}}"),
+                          D_CMND_INFORETAIN "\":%d,\"" D_CMND_STATERETAIN "\":%d,\"" D_CMND_STATUSRETAIN "\":%d,\"" ),
                           ModuleNr(), EscapeJSONString(SettingsText(SET_DEVICENAME)).c_str(), stemp, TasmotaGlobal.mqtt_topic,
                           SettingsText(SET_MQTT_BUTTON_TOPIC), TasmotaGlobal.power, Settings.poweronstate, Settings.ledstate,
                           Settings.ledmask, Settings.save_data,
@@ -439,8 +439,9 @@ void CmndStatus(void)
                           Settings.flag.mqtt_sensor_retain,   // CMND_SENSORRETAIN
                           Settings.flag.mqtt_power_retain,    // CMND_POWERRETAIN
                           Settings.flag5.mqtt_info_retain,    // CMND_INFORETAIN
-                          Settings.flag5.mqtt_state_retain);  // CMND_STATERETAIN
-    MqttPublishPrefixTopic_P(STAT, PSTR(D_CMND_STATUS));
+                          Settings.flag5.mqtt_state_retain,   // CMND_STATERETAIN
+                          Settings.flag5.mqtt_status_retain); // CMND_STATUSRETAIN
+    MqttPublishPrefixTopic_P(STAT, PSTR(D_CMND_STATUS),Settings.flag5.mqtt_status_retain);
   }
 
   if ((0 == payload) || (1 == payload)) {
@@ -458,7 +459,7 @@ void CmndStatus(void)
                           , GetSettingsAddress()
 #endif
                           );
-    MqttPublishPrefixTopic_P(STAT, PSTR(D_CMND_STATUS "1"));
+    MqttPublishPrefixTopic_P(STAT, PSTR(D_CMND_STATUS "1"), Settings.flag5.mqtt_status_retain);
   }
 
   if ((0 == payload) || (2 == payload)) {
@@ -476,7 +477,7 @@ void CmndStatus(void)
                           , ESP.getSdkVersion(),
                           ESP.getCpuFreqMHz(), GetDeviceHardware().c_str(),
                           GetStatistics().c_str());
-    MqttPublishPrefixTopic_P(STAT, PSTR(D_CMND_STATUS "2"));
+    MqttPublishPrefixTopic_P(STAT, PSTR(D_CMND_STATUS "2"), Settings.flag5.mqtt_status_retain);
   }
 
   if ((0 == payload) || (3 == payload)) {
@@ -487,7 +488,7 @@ void CmndStatus(void)
                           SettingsText(SET_SYSLOG_HOST), Settings.syslog_port, EscapeJSONString(SettingsText(SET_STASSID1)).c_str(), EscapeJSONString(SettingsText(SET_STASSID2)).c_str(), Settings.tele_period,
                           Settings.flag2.data, Settings.flag.data, ToHex_P((unsigned char*)Settings.param, PARAM8_SIZE, stemp2, sizeof(stemp2)),
                           Settings.flag3.data, Settings.flag4.data, Settings.flag5.data);
-    MqttPublishPrefixTopic_P(STAT, PSTR(D_CMND_STATUS "3"));
+    MqttPublishPrefixTopic_P(STAT, PSTR(D_CMND_STATUS "3"), Settings.flag5.mqtt_status_retain);
   }
 
   if ((0 == payload) || (4 == payload)) {
@@ -514,7 +515,7 @@ void CmndStatus(void)
     ResponseAppend_P(PSTR(",\"Sensors\":"));
     XsnsSensorState();
     ResponseJsonEndEnd();
-    MqttPublishPrefixTopic_P(STAT, PSTR(D_CMND_STATUS "4"));
+    MqttPublishPrefixTopic_P(STAT, PSTR(D_CMND_STATUS "4"), Settings.flag5.mqtt_status_retain);
   }
 
   if ((0 == payload) || (5 == payload)) {
@@ -524,7 +525,7 @@ void CmndStatus(void)
                           NetworkHostname(), (uint32_t)NetworkAddress(),
                           Settings.ipv4_address[1], Settings.ipv4_address[2], Settings.ipv4_address[3],
                           NetworkMacAddress().c_str(), Settings.webserver, Settings.sta_config, WifiGetOutputPower().c_str());
-    MqttPublishPrefixTopic_P(STAT, PSTR(D_CMND_STATUS "5"));
+    MqttPublishPrefixTopic_P(STAT, PSTR(D_CMND_STATUS "5"), Settings.flag5.mqtt_status_retain);
   }
 
   if (((0 == payload) || (6 == payload)) && Settings.flag.mqtt_enabled) {  // SetOption3 - Enable MQTT
@@ -532,7 +533,7 @@ void CmndStatus(void)
                           D_CMND_MQTTCLIENT "\":\"%s\",\"" D_CMND_MQTTUSER "\":\"%s\",\"" D_JSON_MQTT_COUNT "\":%d,\"MAX_PACKET_SIZE\":%d,\"KEEPALIVE\":%d}}"),
                           SettingsText(SET_MQTT_HOST), Settings.mqtt_port, EscapeJSONString(SettingsText(SET_MQTT_CLIENT)).c_str(),
                           TasmotaGlobal.mqtt_client, EscapeJSONString(SettingsText(SET_MQTT_USER)).c_str(), MqttConnectCount(), MQTT_MAX_PACKET_SIZE, MQTT_KEEPALIVE);
-    MqttPublishPrefixTopic_P(STAT, PSTR(D_CMND_STATUS "6"));
+    MqttPublishPrefixTopic_P(STAT, PSTR(D_CMND_STATUS "6"), Settings.flag5.mqtt_status_retain);
   }
 
   if ((0 == payload) || (7 == payload)) {
@@ -552,7 +553,7 @@ void CmndStatus(void)
                           GetDateAndTime(DT_UTC).c_str(), GetDateAndTime(DT_LOCALNOTZ).c_str(), GetDateAndTime(DT_DST).c_str(),
                           GetDateAndTime(DT_STD).c_str(), stemp);
 #endif  // USE_TIMERS and USE_SUNRISE
-    MqttPublishPrefixTopic_P(STAT, PSTR(D_CMND_STATUS "7"));
+    MqttPublishPrefixTopic_P(STAT, PSTR(D_CMND_STATUS "7"), Settings.flag5.mqtt_status_retain);
   }
 
 #if defined(USE_ENERGY_SENSOR) && defined(USE_ENERGY_MARGIN_DETECTION)
@@ -562,7 +563,7 @@ void CmndStatus(void)
                             D_CMND_VOLTAGELOW "\":%d,\"" D_CMND_VOLTAGEHIGH "\":%d,\"" D_CMND_CURRENTLOW "\":%d,\"" D_CMND_CURRENTHIGH "\":%d}}"),
                             Settings.energy_power_delta[0], Settings.energy_power_delta[1], Settings.energy_power_delta[2], Settings.energy_min_power, Settings.energy_max_power,
                             Settings.energy_min_voltage, Settings.energy_max_voltage, Settings.energy_min_current, Settings.energy_max_current);
-      MqttPublishPrefixTopic_P(STAT, PSTR(D_CMND_STATUS "9"));
+      MqttPublishPrefixTopic_P(STAT, PSTR(D_CMND_STATUS "9"), Settings.flag5.mqtt_status_retain);
     }
   }
 #endif  // USE_ENERGY_MARGIN_DETECTION
@@ -572,9 +573,9 @@ void CmndStatus(void)
     MqttShowSensor();
     ResponseJsonEnd();
     if (8 == payload) {
-      MqttPublishPrefixTopic_P(STAT, PSTR(D_CMND_STATUS "8"));
+      MqttPublishPrefixTopic_P(STAT, PSTR(D_CMND_STATUS "8"), Settings.flag5.mqtt_status_retain);
     } else {
-      MqttPublishPrefixTopic_P(STAT, PSTR(D_CMND_STATUS "10"));
+      MqttPublishPrefixTopic_P(STAT, PSTR(D_CMND_STATUS "10"), Settings.flag5.mqtt_status_retain);
     }
   }
 
@@ -582,7 +583,7 @@ void CmndStatus(void)
     Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS11_STATUS "\":"));
     MqttShowState();
     ResponseJsonEnd();
-    MqttPublishPrefixTopic_P(STAT, PSTR(D_CMND_STATUS "11"));
+    MqttPublishPrefixTopic_P(STAT, PSTR(D_CMND_STATUS "11"), Settings.flag5.mqtt_status_retain);
   }
 
   if (CrashFlag()) {
@@ -590,7 +591,7 @@ void CmndStatus(void)
       Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS12_STATUS "\":"));
       CrashDump();
       ResponseJsonEnd();
-      MqttPublishPrefixTopic_P(STAT, PSTR(D_CMND_STATUS "12"));
+      MqttPublishPrefixTopic_P(STAT, PSTR(D_CMND_STATUS "12"), Settings.flag5.mqtt_status_retain);
     }
   }
 
@@ -611,7 +612,7 @@ void CmndStatus(void)
                                     Settings.shutter_mode);
       }
       ResponseJsonEnd();
-      MqttPublishPrefixTopic_P(STAT, PSTR(D_CMND_STATUS "13"));
+      MqttPublishPrefixTopic_P(STAT, PSTR(D_CMND_STATUS "13"), Settings.flag5.mqtt_status_retain);
     }
   }
 #endif

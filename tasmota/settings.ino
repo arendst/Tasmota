@@ -833,6 +833,7 @@ void SettingsDefaultSet2(void) {
   flag.mqtt_sensor_retain |= MQTT_SENSOR_RETAIN;
   flag5.mqtt_info_retain |= MQTT_INFO_RETAIN;
   flag5.mqtt_state_retain |= MQTT_STATE_RETAIN;
+  flag5.mqtt_status_retain |= MQTT_STATUS_RETAIN;
 //  flag.mqtt_serial |= 0;
   flag.device_index_enable |= MQTT_POWER_FORMAT;
   flag3.time_append_timezone |= MQTT_APPEND_TIMEZONE;
