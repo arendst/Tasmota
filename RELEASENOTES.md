@@ -78,20 +78,4 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 
 [Complete list](BUILDS.md) of available feature and sensors.
 
-## Changelog v9.3.0.1
-### Added
-- Animate PWM dimmer brightness LEDs during transitions and with variable brightness [#11076](https://github.com/arendst/Tasmota/issues/11076)
-- Commands ``StateRetain`` and ``InfoRetain`` [#11084](https://github.com/arendst/Tasmota/issues/11084)
-
-### Changed
-- Remove the need to start filenames with a slash (/) in Ufs commands
-- Removed command ``VirtualCT`` as synonym for ``SetOption106`` [#11049](https://github.com/arendst/Tasmota/issues/11049)
-
-### Fixed
-- Web request accepts wrong password [#11039](https://github.com/arendst/Tasmota/issues/11039)
-- Ili1942 driver [#11046](https://github.com/arendst/Tasmota/issues/11046)
-- ESP32 Mi32 driver [#11048](https://github.com/arendst/Tasmota/issues/11048)
-- Shutter driver [#11055](https://github.com/arendst/Tasmota/issues/11055)
-- TM1637 driver now needs ``TM1637 CLK`` and ``TM1637 DIO`` to enable [#11057](https://github.com/arendst/Tasmota/issues/11057)
-- Sml driver [#11082](https://github.com/arendst/Tasmota/issues/11082)
-- Ezo drivers [#11083](https://github.com/arendst/Tasmota/issues/11083)
+## Changelog v9.3.1.1
