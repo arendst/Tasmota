@@ -645,7 +645,7 @@ bool MCP230xx_Command(void)
       return serviced;
     }
 #ifdef USE_MCP230xx_OUTPUT
-    if (Settings.mcp230xx_config[pin].pinmode >= 5) {
+    if (Settings.mcp230xx_config[pin].pinmode >= 5 && paramcount == 2) {
       uint8_t pincmd = Settings.mcp230xx_config[pin].pinmode - 5;
       uint8_t relay_no = 0;
       for (relay_no = 0; relay_no < mcp230xx_pincount ; relay_no ++) {
