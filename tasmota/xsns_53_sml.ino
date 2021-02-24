@@ -917,6 +917,7 @@ void Dump2log(void) {
             c=SML_SREAD;
             if (c==EBUS_SYNC) {
               index = 0;
+              AddLogData(LOG_LEVEL_INFO, log_data);
             }
             sprintf(&log_data[index],"%02x ",c);
             if (index<sizeof(log_data)-3) {
@@ -939,7 +940,7 @@ void Dump2log(void) {
           }
         }
       }
-      if (index>2) {
+      if (index>2 && (meter_desc_p[(dump2log&7)-1].type!='v')) {
         log_data[index]=0;
         AddLogData(LOG_LEVEL_INFO, log_data);
       }
