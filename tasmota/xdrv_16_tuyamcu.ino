@@ -622,6 +622,10 @@ void LightSerialDuty(uint16_t duty, char *hex_char, uint8_t TuyaIdx)
       dpid = TuyaGetDpId(TUYA_MCU_FUNC_CT);
       } else { dpid = TuyaGetDpId(TUYA_MCU_FUNC_DIMMER2); }
     }
+    
+    if (Tuya.ignore_dim && Tuya.ignore_dimmer_cmd_timeout < millis()) {
+      Tuya.ignore_dim = false;
+    }    
 
     if (duty > 0 && !Tuya.ignore_dim && TuyaSerial && dpid > 0) {
       if (TuyaIdx == 2 && CTLight) {
