@@ -1,26 +1,10 @@
-**Fork of RC-SWITCH by @sui77**
-
-# rc-switch
-[![Build Status](https://travis-ci.org/1technophile/rc-switch.svg?branch=master)](https://travis-ci.org/1technophile/rc-switch)
-
-Use your Arduino or Raspberry Pi to operate remote radio controlled devices
-
-## Download
-https://github.com/1technophile/rc-switch/releases/latest
-
-rc-switch is also listed in the arduino library manager.
-
-## Wiki
-https://github.com/1technophile/rc-switch/wiki
+**Modified Tasmota Fork of RC-SWITCH by @sui77 and @1technophile**
 
 ## Info
-### Send RC codes
 
-Use your Arduino or Raspberry Pi to operate remote radio controlled devices.
-This will most likely work with all popular low cost power outlet sockets. If
-yours doesn't work, you might need to adjust the pulse length.
+This will most likely work with all popular low cost power outlet sockets.
 
-All you need is a Arduino or Raspberry Pi, a 315/433MHz AM transmitter and one
+All you need is a 315/433MHz AM transmitter and one
 or more devices with one of the supported chipsets:
 
  - SC5262 / SC5272
@@ -30,14 +14,3 @@ or more devices with one of the supported chipsets:
  - Intertechno outlets
  - HT6P20X
 
-### Receive and decode RC codes
-
-Find out what codes your remote is sending. Use your remote to control your
-Arduino.
-
-All you need is an Arduino, a 315/433MHz AM receiver (altough there is no
-instruction yet, yes it is possible to hack an existing device) and a remote
-hand set.
-
-For the Raspberry Pi, clone the https://github.com/ninjablocks/433Utils project to
-compile a sniffer tool and transmission commands.
