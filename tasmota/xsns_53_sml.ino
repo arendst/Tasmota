@@ -912,6 +912,16 @@ void Dump2log(void) {
 #endif
               break;
             }
+          } else if (meter_desc_p[(dump2log&7)-1].type=='v') {
+            // vbus
+            c=SML_SREAD;
+            if (c==EBUS_SYNC) {
+              index = 0;
+            }
+            sprintf(&log_data[index],"%02x ",c);
+            if (index<sizeof(log_data)-3) {
+              index+=3;
+            }
           } else {
             // sml
             if (sml_start==0x77) {
