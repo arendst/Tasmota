@@ -490,6 +490,8 @@ uint8_t smltbuf[MAX_METERS][SML_BSIZ];
 #define METER_ID_SIZE 24
 char meter_id[MAX_METERS][METER_ID_SIZE];
 
+#define VBUS_SYNC		0xaa
+#define SML_SYNC		0x77
 #define EBUS_SYNC		0xaa
 #define EBUS_ESC    0xa9
 
@@ -823,41 +825,44 @@ uint8_t Serial_peek() {
 uint8_t sml_logindex;
 char log_data[128];
 
+#define SML_EBUS_SKIP_SYNC_DUMPS
+
 void Dump2log(void) {
-  int16_t index=0,hcnt=0;
+  int16_t index = 0, hcnt = 0;
   uint32_t d_lastms;
   uint8_t dchars[16];
+  uint8_t type = meter_desc_p[(dump2log&7) - 1].type;
 
   //if (!SML_SAVAILABLE) return;
 
   if (dump2log&8) {
     // combo mode
     while (SML_SAVAILABLE) {
-      log_data[index]=':';
+      log_data[index] = ':';
       index++;
-      log_data[index]=' ';
+      log_data[index] = ' ';
       index++;
-      d_lastms=millis();
-      while ((millis()-d_lastms)<40) {
+      d_lastms = millis();
+      while ((millis() - d_lastms) < 40) {
         if (SML_SAVAILABLE) {
-          uint8_t c=SML_SREAD;
-          sprintf(&log_data[index],"%02x ",c);
-          dchars[hcnt]=c;
-          index+=3;
+          uint8_t c = SML_SREAD;
+          sprintf(&log_data[index], "%02x ", c);
+          dchars[hcnt] = c;
+          index += 3;
           hcnt++;
-          if (hcnt>15) {
+          if (hcnt > 15) {
             // line complete, build asci chars
-            log_data[index]='=';
+            log_data[index] = '=';
             index++;
-            log_data[index]='>';
+            log_data[index] = '>';
             index++;
-            log_data[index]=' ';
+            log_data[index] = ' ';
             index++;
-            for (uint8_t ccnt=0; ccnt<16; ccnt++) {
+            for (uint8_t ccnt = 0; ccnt < 16; ccnt++) {
               if (isprint(dchars[ccnt])) {
-                log_data[index]=dchars[ccnt];
+                log_data[index] = dchars[ccnt];
               } else {
-                log_data[index]=' ';
+                log_data[index] = ' ';
               }
               index++;
             }
@@ -865,87 +870,114 @@ void Dump2log(void) {
           }
         }
       }
-      if (index>0) {
-        log_data[index]=0;
+      if (index > 0) {
+        log_data[index] = 0;
         AddLogData(LOG_LEVEL_INFO, log_data);
-        index=0;
-        hcnt=0;
+        index = 0;
+        hcnt = 0;
       }
     }
   } else {
-    if (meter_desc_p[(dump2log&7)-1].type=='o') {
+    if (type == 'o') {
       // obis
       while (SML_SAVAILABLE) {
-        char c=SML_SREAD&0x7f;
-        if (c=='\n' || c=='\r') {
-          log_data[sml_logindex]=0;
-          AddLogData(LOG_LEVEL_INFO, log_data);
-          sml_logindex=2;
-          log_data[0]=':';
-          log_data[1]=' ';
-          break;
+        char c = SML_SREAD&0x7f;
+        if (c == '\n' || c == '\r') {
+          if (sml_logindex > 2) {
+            AddLogData(LOG_LEVEL_INFO, log_data);
+            log_data[sml_logindex] = 0;
+            log_data[0] = ':';
+            log_data[1] = ' ';
+            sml_logindex = 2;
+          }
+          continue;
         }
-        log_data[sml_logindex]=c;
-        if (sml_logindex<sizeof(log_data)-2) {
+        log_data[sml_logindex] = c;
+        if (sml_logindex < sizeof(log_data) - 2) {
           sml_logindex++;
         }
       }
-    } else {
-      //while (SML_SAVAILABLE) {
-      index=0;
-      log_data[index]=':';
-      index++;
-      log_data[index]=' ';
-      index++;
-      d_lastms=millis();
-      while ((millis()-d_lastms)<40) {
-        if (SML_SAVAILABLE) {
-          unsigned char c;
-          if (meter_desc_p[(dump2log&7)-1].type=='e') {
-            // ebus
-            c=SML_SREAD;
-            sprintf(&log_data[index],"%02x ",c);
-            index+=3;
-            if (c==EBUS_SYNC) {
-#if SML_EBUS_SKIP_SYNC_DUMPS
-              index = index == 5 ? 0 : index;
-#endif
-              break;
-            }
-          } else if (meter_desc_p[(dump2log&7)-1].type=='v') {
-            // vbus
-            c=SML_SREAD;
-            if (c==EBUS_SYNC) {
-              index = 0;
-              AddLogData(LOG_LEVEL_INFO, log_data);
-            }
-            sprintf(&log_data[index],"%02x ",c);
-            if (index<sizeof(log_data)-3) {
-              index+=3;
-            }
-          } else {
-            // sml
-            if (sml_start==0x77) {
-              sml_start=0;
-            } else {
-              c=SML_SPEAK;
-              if (c==0x77) {
-                sml_start=c;
-                break;
-              }
-            }
-            c=SML_SREAD;
-            sprintf(&log_data[index],"%02x ",c);
-            index+=3;
-          }
+    } else if (type == 'v') {
+      // vbus
+      uint8_t c;
+      while (SML_SAVAILABLE) {
+        c = SML_SREAD;
+        if (c == VBUS_SYNC) {
+          AddLogData(LOG_LEVEL_INFO, log_data);
+          log_data[0] = ':';
+          log_data[1] = ' ';
+          sml_logindex = 2;
+        }
+        sprintf(&log_data[sml_logindex], "%02x ", c);
+        if (sml_logindex < sizeof(log_data) - 7) {
+          sml_logindex += 3;
         }
       }
-      if (index>2 && (meter_desc_p[(dump2log&7)-1].type!='v')) {
-        log_data[index]=0;
+    } else if (type == 'e') {
+      // ebus
+      uint8_t c, p;
+      while (SML_SAVAILABLE) {
+        c = SML_SREAD;
+        if (c == EBUS_SYNC) {
+          p = SML_SPEAK;
+          if (p != EBUS_SYNC && sml_logindex > 5) {
+            // new packet, plot last one
+            AddLogData(LOG_LEVEL_INFO, log_data);
+            strcpy(&log_data[0], ": aa ");
+            sml_logindex = 5;
+          }
+          continue;
+        }
+        sprintf(&log_data[sml_logindex], "%02x ", c);
+        if (sml_logindex < sizeof(log_data) - 7) {
+          sml_logindex += 3;
+        }
+      }
+    } else if (type == 's') {
+      // sml
+      uint8_t c;
+      while (SML_SAVAILABLE) {
+        c = SML_SREAD;
+        if (c == SML_SYNC) {
+          AddLogData(LOG_LEVEL_INFO, log_data);
+          log_data[0] = ':';
+          log_data[1] = ' ';
+          sml_logindex = 2;
+        }
+        sprintf(&log_data[sml_logindex], "%02x ", c);
+        if (sml_logindex < sizeof(log_data) - 7) {
+          sml_logindex += 3;
+        }
+      }
+    } else {
+      // raw dump
+      d_lastms = millis();
+      log_data[0] = ':';
+      log_data[1] = ' ';
+      sml_logindex = 2;
+      while ((millis() - d_lastms) < 40) {
+        while (SML_SAVAILABLE) {
+          sprintf(&log_data[sml_logindex], "%02x ", SML_SREAD);
+          sml_logindex += 3;
+        }
+      }
+      if (sml_logindex > 2) {
         AddLogData(LOG_LEVEL_INFO, log_data);
       }
     }
   }
+}
+
+void Hexdump(uint8_t *sbuff, uint32_t slen) {
+  char cbuff[slen*3+10];
+  char *cp = cbuff;
+  *cp++ = '>';
+  *cp++ = ' ';
+  for (uint32_t cnt = 0; cnt < slen; cnt ++) {
+    sprintf(cp, "%02x ", sbuff[cnt]);
+    cp += 3;
+  }
+  AddLogData(LOG_LEVEL_INFO, cbuff);
 }
 
 #ifdef ED300L
@@ -2733,6 +2765,13 @@ void SML_Send_Seq(uint32_t meter,char *seq) {
     slen+=6;
   }
   meter_ss[meter]->write(sbuff,slen);
+  if (dump2log) {
+    uint8_t type = meter_desc_p[(dump2log&7) - 1].type;
+    if (type == 'm' || type == 'M') {
+      Hexdump(sbuff, slen);
+    }
+  }
+
 }
 #endif // USE_SCRIPT
 
