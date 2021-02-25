@@ -2018,7 +2018,6 @@ void CmndDisplayRows(void)
 /*********************************************************************************************\
  * optional drivers
 \*********************************************************************************************/
-
 #ifdef USE_TOUCH_BUTTONS
 // very limited path size, so, add .jpg
 void draw_picture(char *path, uint32_t xp, uint32_t yp, uint32_t xs, uint32_t ys, uint32_t ocol, bool inverted) {
@@ -2040,7 +2039,6 @@ char ppath[16];
   Draw_RGB_Bitmap(ppath, xp, yp, inverted);
 }
 #endif
-
 
 #ifdef ESP32
 #ifdef JPEG_PICTS
@@ -2573,6 +2571,7 @@ void AddValue(uint8_t num,float fval) {
 }
 #endif // USE_GRAPH
 
+#if defined(USE_FT5206) || defined(USE_XPT2046)
 #ifdef USE_FT5206
 
 #include <FT5206.h>
@@ -2609,7 +2608,38 @@ uint32_t Touch_Status(uint32_t sel) {
     return 0;
   }
 }
+#endif
 
+#if defined(USE_XPT2046) && defined(USE_DISPLAY_ILI9341)
+#include <XPT2046_Touchscreen.h>
+
+XPT2046_Touchscreen *touchp;
+TS_Point pLoc;
+bool XPT2046_found;
+
+bool Touch_Init(uint16_t CS) {
+  touchp = new XPT2046_Touchscreen(CS);
+  XPT2046_found = touchp->begin();
+  return XPT2046_found;
+}
+
+uint32_t Touch_Status(uint32_t sel) {
+  if (XPT2046_found) {
+    switch (sel) {
+      case 0:
+        return  touchp->touched();
+      case 1:
+        return pLoc.x;
+      case 2:
+        return pLoc.y;
+    }
+    return 0;
+  } else {
+    return 0;
+  }
+}
+
+#endif
 
 #ifdef USE_TOUCH_BUTTONS
 void Touch_MQTT(uint8_t index, const char *cp, uint32_t val) {
@@ -2636,8 +2666,11 @@ uint8_t vbutt=0;
 
   if (touchp->touched()) {
     // did find a hit
+#if defined(USE_FT5206)
     pLoc = touchp->getPoint(0);
-
+#elif defined(USE_XPT2046)
+    pLoc = touchp->getPoint();
+#endif
     if (renderer) {
 
 #ifdef USE_M5STACK_CORE2

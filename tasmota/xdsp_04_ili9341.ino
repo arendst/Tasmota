@@ -29,8 +29,11 @@ extern uint8_t *buffer;
 extern uint8_t color_type;
 ILI9341_2 *ili9341_2;
 
-#ifdef USE_FT5206
+#if defined(USE_FT5206)
 #include <FT5206.h>
+uint8_t ili9342_ctouch_counter = 0;
+#elif defined(USE_XPT2046)
+#include <XPT2046_Touchscreen.h>
 uint8_t ili9342_ctouch_counter = 0;
 #endif // USE_FT5206
 
@@ -136,6 +139,10 @@ void ILI9341_InitDriver()
 #endif // USE_FT5206
 #endif // ESP32
 
+#ifdef USE_XPT2046
+	Touch_Init(Pin(GPIO_XPT2046_CS));
+#endif
+
     tft_init_done = true;
 #ifdef USE_DISPLAY_ILI9341
     AddLog(LOG_LEVEL_INFO, PSTR("DSP: ILI9341"));
@@ -160,8 +167,8 @@ void ili9342_dimm(uint8_t dim) {
 #endif
 }
 
-#ifdef ESP32
-#ifdef USE_FT5206
+//#ifdef ESP32
+#if defined(USE_FT5206) || defined(USE_XPT2046)
 #ifdef USE_TOUCH_BUTTONS
 
 void ili9342_RotConvert(int16_t *x, int16_t *y) {
@@ -201,7 +208,7 @@ ili9342_ctouch_counter++;
 }
 #endif // USE_TOUCH_BUTTONS
 #endif // USE_FT5206
-#endif // ESP32
+//#endif // ESP32
 
 
 #ifdef USE_DISPLAY_MODES1TO5
@@ -360,10 +367,15 @@ bool Xdsp04(uint8_t function)
         case DISPLAY_INIT_MODE:
           renderer->clearDisplay();
           break;
-#ifdef USE_FT5206
+#if defined(USE_FT5206) || defined(USE_XPT2046)
 #ifdef USE_TOUCH_BUTTONS
         case FUNC_DISPLAY_EVERY_50_MSECOND:
+#if defined(USE_FT5206)
           if (FT5206_found) {
+#elif defined(USE_XPT2046)
+          if (XPT2046_found) {
+#endif
+
             ili9342_CheckTouch();
           }
           break;

@@ -150,6 +150,10 @@ enum UserSelectablePins {
   GPIO_NEOPOOL_TX, GPIO_NEOPOOL_RX,    // Sugar Valley RS485 interface
   GPIO_SDM72_TX, GPIO_SDM72_RX,        // SDM72 Serial interface
   GPIO_TM1637CLK, GPIO_TM1637DIO,      // TM1637 interface
+#ifdef USE_XPT2046
+  GPIO_XPT2046_CS,                     // XPT2046 SPI Chip Select
+#endif
+  
   GPIO_SENSOR_END };
 
 enum ProgramSelectablePins {
@@ -320,6 +324,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_NEOPOOL_TX "|" D_SENSOR_NEOPOOL_RX "|"
   D_SENSOR_SDM72_TX "|" D_SENSOR_SDM72_RX "|"
   D_SENSOR_TM1637_CLK "|" D_SENSOR_TM1637_DIO "|"
+  D_SENSOR_XPT2046_CS "|"
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -409,6 +414,10 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_DISPLAY_ILI9341
   AGPIO(GPIO_ILI9341_CS),
   AGPIO(GPIO_ILI9341_DC),
+#ifdef USE_XPT2046
+  AGPIO(GPIO_XPT2046_CS),     // XPT2046 SPI Chip Select
+#endif
+  
 #endif  // USE_DISPLAY_ILI9341
 #ifdef USE_DISPLAY_ILI9488
   AGPIO(GPIO_ILI9488_CS),
