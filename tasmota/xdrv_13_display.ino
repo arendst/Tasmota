@@ -953,6 +953,7 @@ void DisplayText(void)
 extern FS *ufsp;
 void Display_Text_From_File(const char *file) {
   File fp;
+  if (!ufsp) return;
   fp = ufsp->open(file, FS_FILE_READ);
   if (fp >= 0) {
     char *savptr = XdrvMailbox.data;
