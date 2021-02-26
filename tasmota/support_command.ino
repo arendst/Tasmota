@@ -597,20 +597,20 @@ void CmndStatus(void)
 #ifdef USE_SHUTTER
   if (Settings.flag3.shutter_mode) {
     if ((0 == payload) || (13 == payload)) {
-      Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS13_SHUTTER "\":"));
+      Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS13_SHUTTER "\":{"));
       for (uint32_t i = 0; i < MAX_SHUTTERS; i++) {
         if (0 == Settings.shutter_startrelay[i]) { break; }
         if (i > 0) { ResponseAppend_P(PSTR(",")); }
-        ResponseAppend_P(PSTR("{\"" D_STATUS13_SHUTTER "%d\":{\"Relay1\":%d,\"Relay2\":%d,\"Open\":%d,\"Close\":%d,"
-                                    "\"50perc\":%d,\"Delay\":%d,\"Opt\":\"%s\","
-                                    "\"Calib\":[%d,%d,%d,%d,%d],"
-                                    "\"Mode\":\"%d\"}}"),
-                                    i, Settings.shutter_startrelay[i], Settings.shutter_startrelay[i] +1, Settings.shutter_opentime[i], Settings.shutter_closetime[i],
-                                    Settings.shutter_set50percent[i], Settings.shutter_motordelay[i], GetBinary8(Settings.shutter_options[i], 4).c_str(),
-                                    Settings.shuttercoeff[0][i], Settings.shuttercoeff[1][i], Settings.shuttercoeff[2][i], Settings.shuttercoeff[3][i], Settings.shuttercoeff[4][i],
-                                    Settings.shutter_mode);
+        ResponseAppend_P(PSTR("\"" D_STATUS13_SHUTTER "%d\":{\"Relay1\":%d,\"Relay2\":%d,\"Open\":%d,\"Close\":%d,"
+                                   "\"50perc\":%d,\"Delay\":%d,\"Opt\":\"%s\","
+                                   "\"Calib\":[%d,%d,%d,%d,%d],"
+                                   "\"Mode\":\"%d\"}"),
+                                   i, Settings.shutter_startrelay[i], Settings.shutter_startrelay[i] +1, Settings.shutter_opentime[i], Settings.shutter_closetime[i],
+                                   Settings.shutter_set50percent[i], Settings.shutter_motordelay[i], GetBinary8(Settings.shutter_options[i], 4).c_str(),
+                                   Settings.shuttercoeff[0][i], Settings.shuttercoeff[1][i], Settings.shuttercoeff[2][i], Settings.shuttercoeff[3][i], Settings.shuttercoeff[4][i],
+                                   Settings.shutter_mode);
       }
-      ResponseJsonEnd();
+      ResponseJsonEndEnd();
       MqttPublishPrefixTopic_P(STAT, PSTR(D_CMND_STATUS "13"));
     }
   }
