@@ -710,8 +710,10 @@ void ResponseAppendFeatures(void)
 #ifdef USE_NEOPOOL
     feature7 |= 0x08000000;  // xsns_83_neopool.ino
 #endif
+#ifdef USE_PROJECTOR_CTRL
+    feature7 |= 0x10000000;  // xdrv_53_projector_ctrl.ino
+#endif
 
-//    feature7 |= 0x10000000;
 //    feature7 |= 0x20000000;
 //    feature7 |= 0x40000000;
 //    feature7 |= 0x80000000;
