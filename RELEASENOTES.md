@@ -79,3 +79,17 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 [Complete list](BUILDS.md) of available feature and sensors.
 
 ## Changelog v9.3.1.1
+### Added
+- Allow MCP230xx pinmode from output to input [#11104](https://github.com/arendst/Tasmota/issues/11104)
+- SML VBUS support [#11125](https://github.com/arendst/Tasmota/issues/11125)
+- Command ``Sensor80 1 <0..7>`` to control MFRC522 RFID antenna gain from 18dB (0) to 48dB (7) [#11073](https://github.com/arendst/Tasmota/issues/11073)
+
+### Changed
+- TuyaMcu dimmer timeout [#11121](https://github.com/arendst/Tasmota/issues/11121)
+
+### Fixed
+- Refactor acceleration function for shutter stepper and servo [#11088](https://github.com/arendst/Tasmota/issues/11088)
+- LM75AD detection on different addresses [#11096](https://github.com/arendst/Tasmota/issues/11096)
+- Timer loop when console is scrolled up regression from v9.3.0 [#11108](https://github.com/arendst/Tasmota/issues/11108)
+- Display exception when no file system is present [#11125](https://github.com/arendst/Tasmota/issues/11125)
+- PN532 on ESP32 Serial flush both Tx and Rx buffers [#10910](https://github.com/arendst/Tasmota/issues/10910)
