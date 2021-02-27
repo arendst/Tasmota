@@ -39,8 +39,8 @@
 
 #define MGC3130_I2C_ADDR        0x42
 
-uint8_t MGC3130_xfer = 0;
-uint8_t MGC3130_reset = 0;
+int8_t MGC3130_xfer = 0;
+int8_t MGC3130_reset = 0;
 bool MGC3130_type = false;
 char MGC3130stype[] = "MGC3130";
 
@@ -247,31 +247,31 @@ void MGC3130_handleGesture(){
   }
   switch(MGC_data.out.gestureInfo.gestureCode){
     case MGC3130_GESTURE_GARBAGE:
-    //AddLog_P(LOG_LEVEL_DEBUG, PSTR("NONE"));
+    //AddLog(LOG_LEVEL_DEBUG, PSTR("NONE"));
     snprintf_P(MGC3130_currentGesture, sizeof(MGC3130_currentGesture), PSTR("NONE"));
     break;
     case MGC3130_FLICK_WEST_EAST:
-    //AddLog_P(LOG_LEVEL_DEBUG, PSTR("%sFL_WE"), edge);
+    //AddLog(LOG_LEVEL_DEBUG, PSTR("%sFL_WE"), edge);
     snprintf_P(MGC3130_currentGesture, sizeof(MGC3130_currentGesture), PSTR("%sFL_WE"), edge);
     break;
     case MGC3130_FLICK_EAST_WEST:
-    //AddLog_P(LOG_LEVEL_DEBUG, PSTR("%sFL_EW"), edge);
+    //AddLog(LOG_LEVEL_DEBUG, PSTR("%sFL_EW"), edge);
     snprintf_P(MGC3130_currentGesture, sizeof(MGC3130_currentGesture), PSTR("%sFL_EW"), edge);
     break;
     case MGC3130_FLICK_SOUTH_NORTH:
-    //AddLog_P(LOG_LEVEL_DEBUG, PSTR("%sFL_SN"), edge);
+    //AddLog(LOG_LEVEL_DEBUG, PSTR("%sFL_SN"), edge);
     snprintf_P(MGC3130_currentGesture, sizeof(MGC3130_currentGesture), PSTR("%sFL_SN"), edge);
     break;
     case MGC3130_FLICK_NORTH_SOUTH:
-    //AddLog_P(LOG_LEVEL_DEBUG, PSTR("%sFL_NS"), edge);
+    //AddLog(LOG_LEVEL_DEBUG, PSTR("%sFL_NS"), edge);
     snprintf_P(MGC3130_currentGesture, sizeof(MGC3130_currentGesture), PSTR("%sFL_NS"), edge);
     break;
     case MGC3130_CIRCLE_CLOCKWISE:
-    //AddLog_P(LOG_LEVEL_DEBUG, PSTR("CW"));
+    //AddLog(LOG_LEVEL_DEBUG, PSTR("CW"));
     snprintf_P(MGC3130_currentGesture, sizeof(MGC3130_currentGesture), PSTR("CW"));
     break;
     case MGC3130_CIRCLE_CCLOCKWISE:
-    //AddLog_P(LOG_LEVEL_DEBUG, PSTR("CCW"));
+    //AddLog(LOG_LEVEL_DEBUG, PSTR("CCW"));
     snprintf_P(MGC3130_currentGesture, sizeof(MGC3130_currentGesture), PSTR("CCW"));
     break;
   }
@@ -280,101 +280,101 @@ void MGC3130_handleGesture(){
 bool MGC3130_handleTouch(){
   bool success = false; // if we find a touch of higher order, we are done
     if  (MGC_data.out.touchInfo.doubleTapCentre && !success){
-    //AddLog_P(LOG_LEVEL_DEBUG, PSTR("DTAP_CENTRE"));
+    //AddLog(LOG_LEVEL_DEBUG, PSTR("DTAP_CENTRE"));
     snprintf_P(MGC3130_currentGesture, sizeof(MGC3130_currentGesture), PSTR("DT_C"));
     MGC3130_touchTimeout = 5;
     success = true;
     MGC3130_touchCounter = 1;
     }
     else if (MGC_data.out.touchInfo.doubleTapEast && !success){
-    //AddLog_P(LOG_LEVEL_DEBUG, PSTR("DTAP_EAST"));
+    //AddLog(LOG_LEVEL_DEBUG, PSTR("DTAP_EAST"));
     snprintf_P(MGC3130_currentGesture, sizeof(MGC3130_currentGesture), PSTR("DT_E"));
     MGC3130_touchTimeout = 5;
     success = true;
     MGC3130_touchCounter = 1;
     }
     else if (MGC_data.out.touchInfo.doubleTapNorth && !success){
-    //AddLog_P(LOG_LEVEL_DEBUG, PSTR("DTAP_NORTH"));
+    //AddLog(LOG_LEVEL_DEBUG, PSTR("DTAP_NORTH"));
     snprintf_P(MGC3130_currentGesture, sizeof(MGC3130_currentGesture), PSTR("DT_N"));
     MGC3130_touchTimeout = 5;
     success = true;
     MGC3130_touchCounter = 1;
     }
     else if (MGC_data.out.touchInfo.doubleTapWest && !success){
-    //AddLog_P(LOG_LEVEL_DEBUG, PSTR("DTAP_WEST"));
+    //AddLog(LOG_LEVEL_DEBUG, PSTR("DTAP_WEST"));
     snprintf_P(MGC3130_currentGesture, sizeof(MGC3130_currentGesture), PSTR("DT_W"));
     MGC3130_touchTimeout = 5;
     success = true;
     MGC3130_touchCounter = 1;
     }
     else if (MGC_data.out.touchInfo.doubleTapSouth && !success){
-    //AddLog_P(LOG_LEVEL_DEBUG, PSTR("DTAP_SOUTH"));
+    //AddLog(LOG_LEVEL_DEBUG, PSTR("DTAP_SOUTH"));
     snprintf_P(MGC3130_currentGesture, sizeof(MGC3130_currentGesture), PSTR("DT_S"));
     MGC3130_touchTimeout = 5;
     success = true;
     MGC3130_touchCounter = 1;
     }
     if (MGC_data.out.touchInfo.tapCentre && !success){
-    //AddLog_P(LOG_LEVEL_DEBUG, PSTR("TAP_CENTRE"));
+    //AddLog(LOG_LEVEL_DEBUG, PSTR("TAP_CENTRE"));
     snprintf_P(MGC3130_currentGesture, sizeof(MGC3130_currentGesture), PSTR("TP_C"));
     MGC3130_touchTimeout = 2;
     success = true;
     MGC3130_touchCounter = 1;
     }
     else if (MGC_data.out.touchInfo.tapEast && !success){
-    //AddLog_P(LOG_LEVEL_DEBUG, PSTR("TAP_EAST"));
+    //AddLog(LOG_LEVEL_DEBUG, PSTR("TAP_EAST"));
     snprintf_P(MGC3130_currentGesture, sizeof(MGC3130_currentGesture), PSTR("TP_E"));
     MGC3130_touchTimeout = 2;
     success = true;
     MGC3130_touchCounter = 1;
     }
     else if (MGC_data.out.touchInfo.tapNorth && !success){
-    //AddLog_P(LOG_LEVEL_DEBUG, PSTR("TAP_NORTH"));
+    //AddLog(LOG_LEVEL_DEBUG, PSTR("TAP_NORTH"));
     snprintf_P(MGC3130_currentGesture, sizeof(MGC3130_currentGesture), PSTR("TP_N"));
     MGC3130_touchTimeout = 2;
     success = true;
     MGC3130_touchCounter = 1;
     }
     else if (MGC_data.out.touchInfo.tapWest && !success){
-    //AddLog_P(LOG_LEVEL_DEBUG, PSTR("TAP_WEST"));
+    //AddLog(LOG_LEVEL_DEBUG, PSTR("TAP_WEST"));
     snprintf_P(MGC3130_currentGesture, sizeof(MGC3130_currentGesture), PSTR("TP_W"));
     MGC3130_touchTimeout = 2;
     success = true;
     MGC3130_touchCounter = 1;
     }
     else if (MGC_data.out.touchInfo.tapSouth && !success){
-    //AddLog_P(LOG_LEVEL_DEBUG, PSTR("TAP_SOUTH"));
+    //AddLog(LOG_LEVEL_DEBUG, PSTR("TAP_SOUTH"));
     snprintf_P(MGC3130_currentGesture, sizeof(MGC3130_currentGesture), PSTR("TP_S"));
     MGC3130_touchTimeout = 2;
     success = true;
     MGC3130_touchCounter = 1;
     }
     else if (MGC_data.out.touchInfo.touchCentre && !success){
-    //AddLog_P(LOG_LEVEL_DEBUG, PSTR("TOUCH_CENTRE"));
+    //AddLog(LOG_LEVEL_DEBUG, PSTR("TOUCH_CENTRE"));
     snprintf_P(MGC3130_currentGesture, sizeof(MGC3130_currentGesture), PSTR("TH_C"));
     success = true;
     MGC3130_touchCounter++; // This will reset to 0 after touching for approx. 1h and 50 minutes ;)
     }
     else if (MGC_data.out.touchInfo.touchEast && !success){
-    //AddLog_P(LOG_LEVEL_DEBUG, PSTR("TOUCH_EAST"));
+    //AddLog(LOG_LEVEL_DEBUG, PSTR("TOUCH_EAST"));
     snprintf_P(MGC3130_currentGesture, sizeof(MGC3130_currentGesture), PSTR("TH_E"));
     success = true;
     MGC3130_touchCounter++;
     }
     else if (MGC_data.out.touchInfo.touchNorth && !success){
-    //AddLog_P(LOG_LEVEL_DEBUG, PSTR("TOUCH_NORTH"));
+    //AddLog(LOG_LEVEL_DEBUG, PSTR("TOUCH_NORTH"));
     snprintf_P(MGC3130_currentGesture, sizeof(MGC3130_currentGesture), PSTR("TH_N"));
     success = true;
     MGC3130_touchCounter++;
     }
     else if (MGC_data.out.touchInfo.touchWest && !success){
-    //AddLog_P(LOG_LEVEL_DEBUG, PSTR("TOUCH_WEST"));
+    //AddLog(LOG_LEVEL_DEBUG, PSTR("TOUCH_WEST"));
     snprintf_P(MGC3130_currentGesture, sizeof(MGC3130_currentGesture), PSTR("TH_W"));
     success = true;
     MGC3130_touchCounter++;
     }
     else if (MGC_data.out.touchInfo.touchSouth && !success){
-    //AddLog_P(LOG_LEVEL_DEBUG, PSTR("TOUCH_SOUTH"));
+    //AddLog(LOG_LEVEL_DEBUG, PSTR("TOUCH_SOUTH"));
     snprintf_P(MGC3130_currentGesture, sizeof(MGC3130_currentGesture), PSTR("TH_S"));
     success = true;
     MGC3130_touchCounter++;
@@ -396,7 +396,7 @@ void MGC3130_handleAirWheel(){
 }
 
 void MGC3130_handleSystemStatus(){
-    AddLog_P(LOG_LEVEL_DEBUG,PSTR("MGC3130: system_status: response to ID:%02x, error code: %04x"),MGC_data.status.id, MGC_data.status.error);
+    AddLog(LOG_LEVEL_DEBUG,PSTR("MGC3130: system_status: response to ID:%02x, error code: %04x"),MGC_data.status.id, MGC_data.status.error);
 }
 
 bool MGC3130_receiveMessage(){
@@ -414,7 +414,7 @@ bool MGC3130_receiveMessage(){
           loaderVersion[1] = MGC_data.fw.loaderVersion[0];
           loaderVersion[0] = MGC_data.fw.loaderVersion[1];
           loaderPlatform = MGC_data.fw.loaderPlatform;
-          AddLog_P(LOG_LEVEL_INFO,PSTR("MGC3130: GestIC:%s"),MGC_data.fw.fwVersion);
+          AddLog(LOG_LEVEL_INFO,PSTR("MGC3130: GestIC:%s"),MGC_data.fw.fwVersion);
           break;
       }
     MGC_data.out.id  = 0;
@@ -443,7 +443,7 @@ bool MGC3130_readData()
     uint8_t _mismatch = MGC_data.out.counter - _lastCounter;
     if(_mismatch != 1){
       if(i>4 && MGC_data.out.id != MGC3130_FW_VERSION){
-        AddLog_P(LOG_LEVEL_DEBUG,PSTR("MGC3130: missed a packet, mismatch: %u"), _mismatch - 1);
+        AddLog(LOG_LEVEL_DEBUG,PSTR("MGC3130: missed a packet, mismatch: %u"), _mismatch - 1);
         AddLogBuffer(LOG_LEVEL_DEBUG,MGC_data.buffer,i);
       }
     }

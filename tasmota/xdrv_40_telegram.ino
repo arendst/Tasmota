@@ -99,7 +99,7 @@ bool TelegramInit(void) {
       Telegram.next_update_id = 0;    // Code of last read Message
       Telegram.message[0].text = "";
 
-      AddLog_P(LOG_LEVEL_INFO, PSTR("TGM: Started"));
+      AddLog(LOG_LEVEL_INFO, PSTR("TGM: Started"));
     }
     init_done = true;
   }
@@ -115,7 +115,7 @@ String TelegramConnectToTelegram(String command) {
   uint32_t tls_connect_time = millis();
   if (telegramClient->connect("api.telegram.org", 443)) {
 
-//    AddLog_P(LOG_LEVEL_DEBUG, PSTR("TGM: Connected in %d ms, max ThunkStack used %d"), millis() - tls_connect_time, telegramClient->getMaxThunkStackUse());
+//    AddLog(LOG_LEVEL_DEBUG, PSTR("TGM: Connected in %d ms, max ThunkStack used %d"), millis() - tls_connect_time, telegramClient->getMaxThunkStackUse());
 
     telegramClient->println("GET /"+command);
 
@@ -144,7 +144,7 @@ String TelegramConnectToTelegram(String command) {
 }
 
 void TelegramGetUpdates(uint32_t offset) {
-  AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("TGM: getUpdates"));
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("TGM: getUpdates"));
 
   if (!TelegramInit()) { return; }
 
@@ -241,15 +241,15 @@ void TelegramGetUpdates(uint32_t offset) {
         AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("TGM: Parsed update_id %d, chat_id %d, text \"%s\""), Telegram.message[i].update_id, Telegram.message[i].chat_id, Telegram.message[i].text.c_str());
       }
     } else {
-//      AddLog_P(LOG_LEVEL_DEBUG, PSTR("TGM: No new messages"));
+//      AddLog(LOG_LEVEL_DEBUG, PSTR("TGM: No new messages"));
     }
   } else {
-//    AddLog_P(LOG_LEVEL_DEBUG, PSTR("TGM: Failed to update"));
+//    AddLog(LOG_LEVEL_DEBUG, PSTR("TGM: Failed to update"));
   }
 }
 
 bool TelegramSendMessage(int32_t chat_id, String text) {
-  AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("TGM: sendMessage"));
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("TGM: sendMessage"));
 
   if (!TelegramInit()) { return false; }
 
@@ -262,7 +262,7 @@ bool TelegramSendMessage(int32_t chat_id, String text) {
 //    AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("TGM: Response %s"), response.c_str());
 
     if (response.startsWith("{\"ok\":true")) {
-//      AddLog_P(LOG_LEVEL_DEBUG, PSTR("TGM: Message sent"));
+//      AddLog(LOG_LEVEL_DEBUG, PSTR("TGM: Message sent"));
       sent = true;
     }
   }
@@ -272,7 +272,7 @@ bool TelegramSendMessage(int32_t chat_id, String text) {
 
 /*
 void TelegramSendGetMe(void) {
-  AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("TGM: getMe"));
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("TGM: getMe"));
 
   if (!TelegramInit()) { return; }
 
@@ -434,14 +434,14 @@ void CmndTmChatId(void) {
 
 void CmndTmSend(void) {
   if (!Telegram.send_enable || !strlen(SettingsText(SET_TELEGRAM_CHATID))) {
-    ResponseCmndChar(PSTR(D_JSON_FAILED));
+    ResponseCmndFailed();
     return;
   }
   if (XdrvMailbox.data_len > 0) {
     String message = XdrvMailbox.data;
     String chat_id = SettingsText(SET_TELEGRAM_CHATID);
     if (!TelegramSendMessage(chat_id.toInt(), message)) {
-      ResponseCmndChar(PSTR(D_JSON_FAILED));
+      ResponseCmndFailed();
       return;
     }
   }

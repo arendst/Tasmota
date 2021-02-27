@@ -2,7 +2,7 @@
 #define RECITERTABS_H
 
 #include <pgmspace.h>
-#include "debug.h"
+#include "samdebug.h"
 #if sam_debug
   #define PROGMEM
 #endif

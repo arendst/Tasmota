@@ -136,7 +136,7 @@ void TimepropSetPower(int index, float power) {
 }
 
 void TimepropInit(void) {
-  // AddLog_P(LOG_LEVEL_INFO, PSTR("TPR: Timeprop Init"));
+  // AddLog(LOG_LEVEL_INFO, PSTR("TPR: Timeprop Init"));
   int cycleTimes[TIMEPROP_NUM_OUTPUTS] = {TIMEPROP_CYCLETIMES};
   int deadTimes[TIMEPROP_NUM_OUTPUTS] = {TIMEPROP_DEADTIMES};
   int opInverts[TIMEPROP_NUM_OUTPUTS] = {TIMEPROP_OPINVERTS};
@@ -184,29 +184,26 @@ bool TimepropCommand()
   bool serviced = true;
   uint8_t ua_prefix_len = strlen(D_CMND_TIMEPROP); // to detect prefix of command
   /*
-  snprintf_P(log_data, sizeof(log_data), "Command called: "
-    "index: %d data_len: %d payload: %d topic: %s data: %s\n",
+  AddLog_P(LOG_LEVEL_INFO, PSTR("Command called: "
+    "index: %d data_len: %d payload: %d topic: %s data: %s"),
     XdrvMailbox.index,
     XdrvMailbox.data_len,
     XdrvMailbox.payload,
     (XdrvMailbox.payload >= 0 ? XdrvMailbox.topic : ""),
     (XdrvMailbox.data_len >= 0 ? XdrvMailbox.data : ""));
-
-    AddLog(LOG_LEVEL_INFO);
   */
   if (0 == strncasecmp_P(XdrvMailbox.topic, PSTR(D_CMND_TIMEPROP), ua_prefix_len)) {
     // command starts with timeprop_
     int command_code = GetCommandCode(command, sizeof(command), XdrvMailbox.topic + ua_prefix_len, kTimepropCommands);
     if (CMND_TIMEPROP_SETPOWER == command_code) {
       /*
-      snprintf_P(log_data, sizeof(log_data), "Timeprop command timeprop_setpower: "
-        "index: %d data_len: %d payload: %d topic: %s data: %s",
+      AddLog_P(LOG_LEVEL_INFO, PSTR("Timeprop command timeprop_setpower: "
+        "index: %d data_len: %d payload: %d topic: %s data: %s"),
 	      XdrvMailbox.index,
 	      XdrvMailbox.data_len,
 	      XdrvMailbox.payload,
 	      (XdrvMailbox.payload >= 0 ? XdrvMailbox.topic : ""),
 	      (XdrvMailbox.data_len >= 0 ? XdrvMailbox.data : ""));
-        AddLog(LOG_LEVEL_INFO);
       */
       if (XdrvMailbox.index >=0 && XdrvMailbox.index < TIMEPROP_NUM_OUTPUTS) {
         timeprops[XdrvMailbox.index].setPower( atof(XdrvMailbox.data), Tprop.current_time_secs );

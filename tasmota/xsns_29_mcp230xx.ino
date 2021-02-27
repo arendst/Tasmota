@@ -451,25 +451,25 @@ bool MCP230xx_Command(void)
     serviced = false;
     return serviced;
   }
-  char sub_string[XdrvMailbox.data_len];
+  char argument[XdrvMailbox.data_len];
   for (uint32_t ca=0;ca<XdrvMailbox.data_len;ca++) {
     if ((' ' == XdrvMailbox.data[ca]) || ('=' == XdrvMailbox.data[ca])) { XdrvMailbox.data[ca] = ','; }
     if (',' == XdrvMailbox.data[ca]) { paramcount++; }
   }
   UpperCase(XdrvMailbox.data,XdrvMailbox.data);
-  if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 1),"RESET"))  {  MCP230xx_Reset(1); return serviced; }
-  if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 1),"RESET1")) {  MCP230xx_Reset(1); return serviced; }
-  if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 1),"RESET2")) {  MCP230xx_Reset(2); return serviced; }
-  if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 1),"RESET3")) {  MCP230xx_Reset(3); return serviced; }
-  if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 1),"RESET4")) {  MCP230xx_Reset(4); return serviced; }
+  if (!strcmp(ArgV(argument, 1),"RESET"))  {  MCP230xx_Reset(1); return serviced; }
+  if (!strcmp(ArgV(argument, 1),"RESET1")) {  MCP230xx_Reset(1); return serviced; }
+  if (!strcmp(ArgV(argument, 1),"RESET2")) {  MCP230xx_Reset(2); return serviced; }
+  if (!strcmp(ArgV(argument, 1),"RESET3")) {  MCP230xx_Reset(3); return serviced; }
+  if (!strcmp(ArgV(argument, 1),"RESET4")) {  MCP230xx_Reset(4); return serviced; }
 #ifdef USE_MCP230xx_OUTPUT
-  if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 1),"RESET5")) {  MCP230xx_Reset(5); return serviced; }
-  if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 1),"RESET6")) {  MCP230xx_Reset(6); return serviced; }
+  if (!strcmp(ArgV(argument, 1),"RESET5")) {  MCP230xx_Reset(5); return serviced; }
+  if (!strcmp(ArgV(argument, 1),"RESET6")) {  MCP230xx_Reset(6); return serviced; }
 #endif // USE_MCP230xx_OUTPUT
 
-  if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 1),"INTPRI")) {
+  if (!strcmp(ArgV(argument, 1),"INTPRI")) {
     if (paramcount > 1) {
-      uint8_t intpri = atoi(subStr(sub_string, XdrvMailbox.data, ",", 2));
+      uint8_t intpri = atoi(ArgV(argument, 2));
       if ((intpri >= 0) && (intpri <= 20)) {
         Settings.mcp230xx_int_prio = intpri;
         Response_P(MCP230XX_INTCFG_RESPONSE,"PRI",99,Settings.mcp230xx_int_prio);  // "{\"MCP230xx_INT%s\":{\"D_%i\":%i}}";
@@ -481,9 +481,9 @@ bool MCP230xx_Command(void)
     }
   }
 
-  if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 1),"INTTIMER")) {
+  if (!strcmp(ArgV(argument, 1),"INTTIMER")) {
     if (paramcount > 1) {
-      uint8_t inttim = atoi(subStr(sub_string, XdrvMailbox.data, ",", 2));
+      uint8_t inttim = atoi(ArgV(argument, 2));
       if ((inttim >= 0) && (inttim <= 3600)) {
         Settings.mcp230xx_int_timer = inttim;
         MCP230xx_CheckForIntCounter(); // update register on whether or not we should be counting interrupts
@@ -496,25 +496,25 @@ bool MCP230xx_Command(void)
     }
   }
 
-  if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 1),"INTDEF")) {
+  if (!strcmp(ArgV(argument, 1),"INTDEF")) {
     if (paramcount > 1) {
-      uint8_t pin = atoi(subStr(sub_string, XdrvMailbox.data, ",", 2));
+      uint8_t pin = atoi(ArgV(argument, 2));
       if (pin < mcp230xx_pincount) {
         if (pin == 0) {
-          if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 2), "0")) validpin=true;
+          if (!strcmp(ArgV(argument, 2), "0")) validpin=true;
         } else {
           validpin = true;
         }
       }
       if (validpin) {
         if (paramcount > 2) {
-          uint8_t intdef = atoi(subStr(sub_string, XdrvMailbox.data, ",", 3));
+          uint8_t intdef = atoi(ArgV(argument, 3));
           if ((intdef >= 0) && (intdef <= 15)) {
             Settings.mcp230xx_config[pin].int_report_defer=intdef;
             if (Settings.mcp230xx_config[pin].int_count_en) {
               Settings.mcp230xx_config[pin].int_count_en=0;
               MCP230xx_CheckForIntCounter();
-              AddLog_P(LOG_LEVEL_INFO, PSTR("*** WARNING *** - Disabled INTCNT for pin D%i"),pin);
+              AddLog(LOG_LEVEL_INFO, PSTR("*** WARNING *** - Disabled INTCNT for pin D%i"),pin);
             }
             Response_P(MCP230XX_INTCFG_RESPONSE,"DEF",pin,Settings.mcp230xx_config[pin].int_report_defer);  // "{\"MCP230xx_INT%s\":{\"D_%i\":%i}}";
             return serviced;
@@ -535,31 +535,31 @@ bool MCP230xx_Command(void)
     }
   }
 
-  if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 1),"INTCNT")) {
+  if (!strcmp(ArgV(argument, 1),"INTCNT")) {
     if (paramcount > 1) {
-      uint8_t pin = atoi(subStr(sub_string, XdrvMailbox.data, ",", 2));
+      uint8_t pin = atoi(ArgV(argument, 2));
       if (pin < mcp230xx_pincount) {
         if (pin == 0) {
-          if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 2), "0")) validpin=true;
+          if (!strcmp(ArgV(argument, 2), "0")) validpin=true;
         } else {
           validpin = true;
         }
       }
       if (validpin) {
         if (paramcount > 2) {
-          uint8_t intcnt = atoi(subStr(sub_string, XdrvMailbox.data, ",", 3));
+          uint8_t intcnt = atoi(ArgV(argument, 3));
           if ((intcnt >= 0) && (intcnt <= 1)) {
             Settings.mcp230xx_config[pin].int_count_en=intcnt;
             if (Settings.mcp230xx_config[pin].int_report_defer) {
               Settings.mcp230xx_config[pin].int_report_defer=0;
-              AddLog_P(LOG_LEVEL_INFO, PSTR("*** WARNING *** - Disabled INTDEF for pin D%i"),pin);
+              AddLog(LOG_LEVEL_INFO, PSTR("*** WARNING *** - Disabled INTDEF for pin D%i"),pin);
             }
             if (Settings.mcp230xx_config[pin].int_report_mode < 3) {
               Settings.mcp230xx_config[pin].int_report_mode=3;
-              AddLog_P(LOG_LEVEL_INFO, PSTR("*** WARNING *** - Disabled immediate interrupt/telemetry reporting for pin D%i"),pin);
+              AddLog(LOG_LEVEL_INFO, PSTR("*** WARNING *** - Disabled immediate interrupt/telemetry reporting for pin D%i"),pin);
             }
             if ((Settings.mcp230xx_config[pin].int_count_en) && (!Settings.mcp230xx_int_timer)) {
-              AddLog_P(LOG_LEVEL_INFO, PSTR("*** WARNING *** - INTCNT enabled for pin D%i but global INTTIMER is disabled!"),pin);
+              AddLog(LOG_LEVEL_INFO, PSTR("*** WARNING *** - INTCNT enabled for pin D%i but global INTTIMER is disabled!"),pin);
             }
             MCP230xx_CheckForIntCounter(); // update register on whether or not we should be counting interrupts
             Response_P(MCP230XX_INTCFG_RESPONSE,"CNT",pin,Settings.mcp230xx_config[pin].int_count_en);  // "{\"MCP230xx_INT%s\":{\"D_%i\":%i}}";
@@ -581,19 +581,19 @@ bool MCP230xx_Command(void)
     }
   }
 
-  if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 1),"INTRETAIN")) {
+  if (!strcmp(ArgV(argument, 1),"INTRETAIN")) {
     if (paramcount > 1) {
-      uint8_t pin = atoi(subStr(sub_string, XdrvMailbox.data, ",", 2));
+      uint8_t pin = atoi(ArgV(argument, 2));
       if (pin < mcp230xx_pincount) {
         if (pin == 0) {
-          if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 2), "0")) validpin=true;
+          if (!strcmp(ArgV(argument, 2), "0")) validpin=true;
         } else {
           validpin = true;
         }
       }
       if (validpin) {
         if (paramcount > 2) {
-          uint8_t int_retain = atoi(subStr(sub_string, XdrvMailbox.data, ",", 3));
+          uint8_t int_retain = atoi(ArgV(argument, 3));
           if ((int_retain >= 0) && (int_retain <= 1)) {
             Settings.mcp230xx_config[pin].int_retain_flag=int_retain;
             Response_P(MCP230XX_INTCFG_RESPONSE,"INT_RETAIN",pin,Settings.mcp230xx_config[pin].int_retain_flag);
@@ -616,17 +616,17 @@ bool MCP230xx_Command(void)
     }
   }
 
-  uint8_t pin = atoi(subStr(sub_string, XdrvMailbox.data, ",", 1));
+  uint8_t pin = atoi(ArgV(argument, 1));
 
   if (pin < mcp230xx_pincount) {
     if (0 == pin) {
-      if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 1), "0")) validpin=true;
+      if (!strcmp(ArgV(argument, 1), "0")) validpin=true;
     } else {
       validpin=true;
     }
   }
   if (validpin && (paramcount > 1)) {
-    if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 2), "?")) {
+    if (!strcmp(ArgV(argument, 2), "?")) {
       uint8_t port = 0;
       if (pin > 7) { port = 1; }
       uint8_t portdata = MCP230xx_readGPIO(port);
@@ -645,22 +645,22 @@ bool MCP230xx_Command(void)
       return serviced;
     }
 #ifdef USE_MCP230xx_OUTPUT
-    if (Settings.mcp230xx_config[pin].pinmode >= 5) {
+    if (Settings.mcp230xx_config[pin].pinmode >= 5 && paramcount == 2) {
       uint8_t pincmd = Settings.mcp230xx_config[pin].pinmode - 5;
       uint8_t relay_no = 0;
       for (relay_no = 0; relay_no < mcp230xx_pincount ; relay_no ++) {
         if ( mcp230xx_outpinmapping[relay_no] == pin) break;
       }
       relay_no = TasmotaGlobal.devices_present - mcp230xx_oldoutpincount + relay_no +1;
-      if ((!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 2), "ON")) || (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 2), "1"))) {
+      if ((!strcmp(ArgV(argument, 2), "ON")) || (!strcmp(ArgV(argument, 2), "1"))) {
         ExecuteCommandPower(relay_no, 1, SRC_IGNORE);
         return serviced;
       }
-      if ((!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 2), "OFF")) || (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 2), "0"))) {
+      if ((!strcmp(ArgV(argument, 2), "OFF")) || (!strcmp(ArgV(argument, 2), "0"))) {
         ExecuteCommandPower(relay_no, 0, SRC_IGNORE);
         return serviced;
       }
-      if ((!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 2), "T")) || (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 2), "2")))  {
+      if ((!strcmp(ArgV(argument, 2), "T")) || (!strcmp(ArgV(argument, 2), "2")))  {
         ExecuteCommandPower(relay_no, 2, SRC_IGNORE);
         return serviced;
       }
@@ -670,13 +670,13 @@ bool MCP230xx_Command(void)
     uint8_t pullup = 0;
     uint8_t intmode = 0;
     if (paramcount > 1) {
-      pinmode = atoi(subStr(sub_string, XdrvMailbox.data, ",", 2));
+      pinmode = atoi(ArgV(argument, 2));
     }
     if (paramcount > 2) {
-      pullup = atoi(subStr(sub_string, XdrvMailbox.data, ",", 3));
+      pullup = atoi(ArgV(argument, 3));
     }
     if (paramcount > 3) {
-      intmode = atoi(subStr(sub_string, XdrvMailbox.data, ",", 4));
+      intmode = atoi(ArgV(argument, 4));
     }
 #ifdef USE_MCP230xx_OUTPUT
     if ((pin < mcp230xx_pincount) && (pinmode > 0) && (pinmode < 7) && (pullup < 2) && (paramcount > 2)) {
@@ -803,7 +803,7 @@ void MCP230xx_SwitchRelay() {
     uint8_t pin = mcp230xx_outpinmapping[i - (TasmotaGlobal.devices_present - mcp230xx_oldoutpincount)];
     uint8_t pincmd = Settings.mcp230xx_config[pin].pinmode - 5;
     uint8_t relay_state = bitRead(XdrvMailbox.index, i);
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR("MCP: relay %d pin_no %d state %d"), i,pin, relay_state);
+    AddLog(LOG_LEVEL_DEBUG, PSTR("MCP: relay %d pin_no %d state %d"), i,pin, relay_state);
     switch (relay_state) {
     case 1:
       MCP230xx_SetOutPin(pin,abs(pincmd-1));

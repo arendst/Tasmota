@@ -8,8 +8,5 @@
     "url": "https://github.com/marcoschwartz/LiquidCrystal_I2C.git"
   },
   "frameworks": "arduino",
-  "platforms":
-  [
-    "atmelavr"
-  ]
+  "platforms": ["espressif8266", "espressif32"]
 }

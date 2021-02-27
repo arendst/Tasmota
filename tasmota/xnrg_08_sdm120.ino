@@ -83,7 +83,7 @@ void SDM120Every250ms(void)
     AddLogBuffer(LOG_LEVEL_DEBUG_MORE, buffer, Sdm120Modbus->ReceiveCount());
 
     if (error) {
-      AddLog_P(LOG_LEVEL_DEBUG, PSTR("SDM: SDM120 error %d"), error);
+      AddLog(LOG_LEVEL_DEBUG, PSTR("SDM: SDM120 error %d"), error);
     } else {
       Energy.data_valid[0] = 0;
 

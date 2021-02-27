@@ -25,8 +25,7 @@ const uint16_t RTC_MEM_VALID = 0xA55A;
 
 uint32_t rtc_settings_crc = 0;
 
-uint32_t GetRtcSettingsCrc(void)
-{
+uint32_t GetRtcSettingsCrc(void) {
   uint32_t crc = 0;
   uint8_t *bytes = (uint8_t*)&RtcSettings;
 
@@ -36,8 +35,7 @@ uint32_t GetRtcSettingsCrc(void)
   return crc;
 }
 
-void RtcSettingsSave(void)
-{
+void RtcSettingsSave(void) {
   RtcSettings.baudrate = Settings.baudrate * 300;
   if (GetRtcSettingsCrc() != rtc_settings_crc) {
     RtcSettings.valid = RTC_MEM_VALID;
@@ -80,8 +78,7 @@ bool RtcSettingsLoad(uint32_t update) {
   return read_valid;
 }
 
-bool RtcSettingsValid(void)
-{
+bool RtcSettingsValid(void) {
   return (RTC_MEM_VALID == RtcSettings.valid);
 }
 
@@ -89,8 +86,7 @@ bool RtcSettingsValid(void)
 
 uint32_t rtc_reboot_crc = 0;
 
-uint32_t GetRtcRebootCrc(void)
-{
+uint32_t GetRtcRebootCrc(void) {
   uint32_t crc = 0;
   uint8_t *bytes = (uint8_t*)&RtcReboot;
 
@@ -100,8 +96,7 @@ uint32_t GetRtcRebootCrc(void)
   return crc;
 }
 
-void RtcRebootSave(void)
-{
+void RtcRebootSave(void) {
   if (GetRtcRebootCrc() != rtc_reboot_crc) {
     RtcReboot.valid = RTC_MEM_VALID;
 #ifdef ESP8266
@@ -114,14 +109,12 @@ void RtcRebootSave(void)
   }
 }
 
-void RtcRebootReset(void)
-{
+void RtcRebootReset(void) {
   RtcReboot.fast_reboot_count = 0;
   RtcRebootSave();
 }
 
-void RtcRebootLoad(void)
-{
+void RtcRebootLoad(void) {
 #ifdef ESP8266
   ESP.rtcUserMemoryRead(100 - sizeof(RtcReboot), (uint32_t*)&RtcReboot, sizeof(RtcReboot));  // 0x280
 #endif  // ESP8266
@@ -137,8 +130,7 @@ void RtcRebootLoad(void)
   rtc_reboot_crc = GetRtcRebootCrc();
 }
 
-bool RtcRebootValid(void)
-{
+bool RtcRebootValid(void) {
   return (RTC_MEM_VALID == RtcReboot.valid);
 }
 
@@ -172,7 +164,7 @@ bool RtcRebootValid(void)
  * 0x000FB000  0x001FA000  0x003FA000 - 0k, 980k or 2980k Core FS end (LittleFS)
  *             0x001FAFFF  0x003FAFFF
  *
- * 0x000FB000  0x001FB000  0x003FB000 - 4k Core EEPROM = Tasmota settings page during OTA and when no flash rotation is active (FLASH_EEPROM_START)
+ * 0x000FB000  0x001FB000  0x003FB000 - 4k Core EEPROM = Tasmota settings page during OTA and when no flash rotation is active (EEPROM_LOCATION)
  * 0x000FBFFF  0x001FBFFF  0x003FBFFF
  *
  * 0x000FC000  0x001FC000  0x003FC000 - 4k SDK - Uses first 128 bytes for phy init data mirrored by Core in RAM. See core_esp8266_phy.cpp phy_init_data[128] = Core user_rf_cal_sector
@@ -191,25 +183,25 @@ extern "C" {
 
 extern "C" uint32_t _FS_start;      // 1M = 0x402fb000, 2M = 0x40300000, 4M = 0x40300000
 const uint32_t FLASH_FS_START = (((uint32_t)&_FS_start - 0x40200000) / SPI_FLASH_SEC_SIZE);
-uint32_t SETTINGS_LOCATION = FLASH_FS_START -1;                                                    // 0xFA, 0x0FF or 0x0FF
+uint32_t SETTINGS_LOCATION = FLASH_FS_START -1;                                                 // 0xFA, 0x0FF or 0x0FF
 
 // From libraries/EEPROM/EEPROM.cpp EEPROMClass
 extern "C" uint32_t _EEPROM_start;  // 1M = 0x402FB000, 2M = 0x403FB000, 4M = 0x405FB000
-const uint32_t FLASH_EEPROM_START = ((uint32_t)&_EEPROM_start - 0x40200000) / SPI_FLASH_SEC_SIZE;  // 0xFB, 0x1FB or 0x3FB
+const uint32_t EEPROM_LOCATION = ((uint32_t)&_EEPROM_start - 0x40200000) / SPI_FLASH_SEC_SIZE;  // 0xFB, 0x1FB or 0x3FB
 
 #endif  // ESP8266
 
 #ifdef ESP32
 
 // dummy defines
-#define FLASH_EEPROM_START (SPI_FLASH_SEC_SIZE * 200)
-uint32_t SETTINGS_LOCATION = FLASH_EEPROM_START;
+#define EEPROM_LOCATION (SPI_FLASH_SEC_SIZE * 200)
+uint32_t SETTINGS_LOCATION = EEPROM_LOCATION;
 
 #endif  // ESP32
 
 const uint8_t CFG_ROTATES = 7;      // Number of flash sectors used (handles uploads)
 
-uint32_t settings_location = FLASH_EEPROM_START;
+uint32_t settings_location = EEPROM_LOCATION;
 uint32_t settings_crc32 = 0;
 uint8_t *settings_buffer = nullptr;
 
@@ -223,8 +215,7 @@ void SettingsInit(void) {
 /*
  * Based on cores/esp8266/Updater.cpp
  */
-void SetFlashModeDout(void)
-{
+void SetFlashModeDout(void) {
 #ifdef ESP8266
   uint8_t *_buffer;
   uint32_t address;
@@ -246,26 +237,23 @@ void SetFlashModeDout(void)
 #endif  // ESP8266
 }
 
-void SettingsBufferFree(void)
-{
+void SettingsBufferFree(void) {
   if (settings_buffer != nullptr) {
     free(settings_buffer);
     settings_buffer = nullptr;
   }
 }
 
-bool SettingsBufferAlloc(void)
-{
+bool SettingsBufferAlloc(void) {
   SettingsBufferFree();
   if (!(settings_buffer = (uint8_t *)malloc(sizeof(Settings)))) {
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_UPLOAD_ERR_2));  // Not enough (memory) space
+    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_UPLOAD_ERR_2));  // Not enough (memory) space
     return false;
   }
   return true;
 }
 
-uint16_t GetCfgCrc16(uint8_t *bytes, uint32_t size)
-{
+uint16_t GetCfgCrc16(uint8_t *bytes, uint32_t size) {
   uint16_t crc = 0;
 
   for (uint32_t i = 0; i < size; i++) {
@@ -274,15 +262,13 @@ uint16_t GetCfgCrc16(uint8_t *bytes, uint32_t size)
   return crc;
 }
 
-uint16_t GetSettingsCrc(void)
-{
+uint16_t GetSettingsCrc(void) {
   // Fix miscalculation if previous Settings was 3584 and current Settings is 4096 between 0x06060007 and 0x0606000A
   uint32_t size = ((Settings.version < 0x06060007) || (Settings.version > 0x0606000A)) ? 3584 : sizeof(Settings);
   return GetCfgCrc16((uint8_t*)&Settings, size);
 }
 
-uint32_t GetCfgCrc32(uint8_t *bytes, uint32_t size)
-{
+uint32_t GetCfgCrc32(uint8_t *bytes, uint32_t size) {
   // https://create.stephan-brumme.com/crc32/#bitwise
   uint32_t crc = 0;
 
@@ -295,13 +281,11 @@ uint32_t GetCfgCrc32(uint8_t *bytes, uint32_t size)
   return ~crc;
 }
 
-uint32_t GetSettingsCrc32(void)
-{
+uint32_t GetSettingsCrc32(void) {
   return GetCfgCrc32((uint8_t*)&Settings, sizeof(Settings) -4);  // Skip crc32
 }
 
-void SettingsSaveAll(void)
-{
+void SettingsSaveAll(void) {
   if (Settings.flag.save_state) {
     Settings.power = TasmotaGlobal.power;
   } else {
@@ -338,7 +322,7 @@ void UpdateQuickPowerCycle(bool update) {
     } else {
       qpc_buffer[0] = 0;
       ESP.flashWrite(qpc_location + (counter * 4), (uint32*)&qpc_buffer, 4);
-      AddLog_P(LOG_LEVEL_INFO, PSTR("QPC: Count %d"), counter);
+      AddLog(LOG_LEVEL_INFO, PSTR("QPC: Count %d"), counter);
     }
   }
   else if ((qpc_buffer[0] != QPC_SIGNATURE) || (0 == qpc_buffer[1])) {
@@ -346,7 +330,7 @@ void UpdateQuickPowerCycle(bool update) {
     // Assume flash is default all ones and setting a bit to zero does not need an erase
     if (ESP.flashEraseSector(qpc_sector)) {
       ESP.flashWrite(qpc_location, (uint32*)&qpc_buffer, 4);
-      AddLog_P(LOG_LEVEL_INFO, PSTR("QPC: Reset"));
+      AddLog(LOG_LEVEL_INFO, PSTR("QPC: Reset"));
     }
   }
 #endif  // ESP8266
@@ -363,13 +347,13 @@ void UpdateQuickPowerCycle(bool update) {
     } else {
       pc_register = 0xFFA55AF0 | counter;
       QPCWrite(&pc_register, sizeof(pc_register));
-      AddLog_P(LOG_LEVEL_INFO, PSTR("QPC: Count %d"), counter);
+      AddLog(LOG_LEVEL_INFO, PSTR("QPC: Count %d"), counter);
     }
   }
   else if (pc_register != QPC_SIGNATURE) {
     pc_register = QPC_SIGNATURE;
     QPCWrite(&pc_register, sizeof(pc_register));
-    AddLog_P(LOG_LEVEL_INFO, PSTR("QPC: Reset"));
+    AddLog(LOG_LEVEL_INFO, PSTR("QPC: Reset"));
   }
 #endif  // ESP32
 
@@ -430,12 +414,12 @@ bool SettingsUpdateText(uint32_t index, const char* replace_me) {
   uint32_t current_len = end_pos - start_pos;
   int diff = replace_len - current_len;
 
-//  AddLog_P(LOG_LEVEL_DEBUG, PSTR("TST: start %d, end %d, len %d, current %d, replace %d, diff %d"),
+//  AddLog(LOG_LEVEL_DEBUG, PSTR("TST: start %d, end %d, len %d, current %d, replace %d, diff %d"),
 //    start_pos, end_pos, char_len, current_len, replace_len, diff);
 
   int too_long = (char_len + diff) - settings_text_size;
   if (too_long > 0) {
-    AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_CONFIG "Text overflow by %d char(s)"), too_long);
+    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_CONFIG "Text overflow by %d char(s)"), too_long);
     return false;  // Replace text too long
   }
 
@@ -457,16 +441,15 @@ bool SettingsUpdateText(uint32_t index, const char* replace_me) {
   }
 
 #ifdef DEBUG_FUNC_SETTINGSUPDATETEXT
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_CONFIG "CR %d/%d, Busy %d, Id %02d = \"%s\""), GetSettingsTextLen(), settings_text_size, settings_text_busy_count, index_save, replace);
+  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_CONFIG "CR %d/%d, Busy %d, Id %02d = \"%s\""), GetSettingsTextLen(), settings_text_size, settings_text_busy_count, index_save, replace);
 #else
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_CONFIG "CR %d/%d, Busy %d"), GetSettingsTextLen(), settings_text_size, settings_text_busy_count);
+  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_CONFIG "CR %d/%d, Busy %d"), GetSettingsTextLen(), settings_text_size, settings_text_busy_count);
 #endif
 
   return true;
 }
 
-char* SettingsText(uint32_t index)
-{
+char* SettingsText(uint32_t index) {
   char* position = Settings.text_pool;
 
   if (index >= SET_MAX) {
@@ -484,19 +467,16 @@ char* SettingsText(uint32_t index)
  * Config Save - Save parameters to Flash ONLY if any parameter has changed
 \*********************************************************************************************/
 
-void UpdateBackwardCompatibility(void)
-{
+void UpdateBackwardCompatibility(void) {
   // Perform updates for backward compatibility
   strlcpy(Settings.user_template_name, SettingsText(SET_TEMPLATE_NAME), sizeof(Settings.user_template_name));
 }
 
-uint32_t GetSettingsAddress(void)
-{
+uint32_t GetSettingsAddress(void) {
   return settings_location * SPI_FLASH_SEC_SIZE;
 }
 
-void SettingsSave(uint8_t rotate)
-{
+void SettingsSave(uint8_t rotate) {
 /* Save configuration in eeprom or one of 7 slots below
  *
  * rotate 0 = Save in next flash slot
@@ -506,24 +486,24 @@ void SettingsSave(uint8_t rotate)
  * stop_flash_rotate 1 = Allow only eeprom flash slot use (SetOption12 1)
  */
 #ifndef FIRMWARE_MINIMAL
+  XsnsCall(FUNC_SAVE_SETTINGS);
+  XdrvCall(FUNC_SAVE_SETTINGS);
   UpdateBackwardCompatibility();
   if ((GetSettingsCrc32() != settings_crc32) || rotate) {
     if (1 == rotate) {                                 // Use eeprom flash slot only and disable flash rotate from now on (upgrade)
       TasmotaGlobal.stop_flash_rotate = 1;
     }
-    if (2 == rotate) {                                 // Use eeprom flash slot and erase next flash slots if stop_flash_rotate is off (default)
-      settings_location = FLASH_EEPROM_START +1;       // Decremented to correct location by settings_location--; just below
-    }
-    if (TasmotaGlobal.stop_flash_rotate) {             // SetOption12 - (Settings) Switch between dynamic (0) or fixed (1) slot flash save location
-      settings_location = FLASH_EEPROM_START;
-    } else {
-      if (settings_location == FLASH_EEPROM_START) {
+
+    if (TasmotaGlobal.stop_flash_rotate || (2 == rotate)) {  // Use eeprom flash slot and erase next flash slots if stop_flash_rotate is off (default)
+      settings_location = EEPROM_LOCATION;
+    } else {                                           // Rotate flash slots
+      if (settings_location == EEPROM_LOCATION) {
         settings_location = SETTINGS_LOCATION;
       } else {
         settings_location--;
       }
       if (settings_location <= (SETTINGS_LOCATION - CFG_ROTATES)) {
-        settings_location = FLASH_EEPROM_START;
+        settings_location = EEPROM_LOCATION;
       }
     }
 
@@ -551,11 +531,11 @@ void SettingsSave(uint8_t rotate)
         delay(1);
       }
     }
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_CONFIG D_SAVED_TO_FLASH_AT " %X, " D_COUNT " %d, " D_BYTES " %d"), settings_location, Settings.save_flag, sizeof(Settings));
+    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_CONFIG D_SAVED_TO_FLASH_AT " %X, " D_COUNT " %d, " D_BYTES " %d"), settings_location, Settings.save_flag, sizeof(Settings));
 #endif  // ESP8266
 #ifdef ESP32
     SettingsWrite(&Settings, sizeof(Settings));
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_CONFIG "Saved, " D_COUNT " %d, " D_BYTES " %d"), Settings.save_flag, sizeof(Settings));
+    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_CONFIG "Saved, " D_COUNT " %d, " D_BYTES " %d"), Settings.save_flag, sizeof(Settings));
 #endif  // ESP32
 
     settings_crc32 = Settings.cfg_crc32;
@@ -581,7 +561,7 @@ void SettingsLoad(void) {
 #endif  // USE_UFILESYS
   while (slot <= max_slots) {                                  // Read all config pages in search of valid and latest
     if (slot > 0) {
-      flash_location = (1 == slot) ? FLASH_EEPROM_START : (2 == slot) ? SETTINGS_LOCATION : flash_location -1;
+      flash_location = (1 == slot) ? EEPROM_LOCATION : (2 == slot) ? SETTINGS_LOCATION : flash_location -1;
       ESP.flashRead(flash_location * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(Settings));
     }
     if ((Settings.cfg_crc32 != 0xFFFFFFFF) && (Settings.cfg_crc32 != 0x00000000) && (Settings.cfg_crc32 == GetSettingsCrc32())) {
@@ -600,19 +580,19 @@ void SettingsLoad(void) {
 #ifdef USE_UFILESYS
     if (1 == settings_location) {
       TfsLoadFile(TASM_FILE_SETTINGS, (uint8_t*)&Settings, sizeof(Settings));
-      AddLog_P(LOG_LEVEL_NONE, PSTR(D_LOG_CONFIG "Loaded from File, " D_COUNT " %lu"), Settings.save_flag);
+      AddLog(LOG_LEVEL_NONE, PSTR(D_LOG_CONFIG "Loaded from File, " D_COUNT " %lu"), Settings.save_flag);
     } else
 #endif  // USE_UFILESYS
     {
       ESP.flashRead(settings_location * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(Settings));
-      AddLog_P(LOG_LEVEL_NONE, PSTR(D_LOG_CONFIG D_LOADED_FROM_FLASH_AT " %X, " D_COUNT " %lu"), settings_location, Settings.save_flag);
+      AddLog(LOG_LEVEL_NONE, PSTR(D_LOG_CONFIG D_LOADED_FROM_FLASH_AT " %X, " D_COUNT " %lu"), settings_location, Settings.save_flag);
     }
   }
 #endif  // ESP8266
 #ifdef ESP32
   uint32_t source = SettingsRead(&Settings, sizeof(Settings));
   if (source) { settings_location = 1; }
-  AddLog_P(LOG_LEVEL_NONE, PSTR(D_LOG_CONFIG "Loaded from %s, " D_COUNT " %lu"), (source)?"File":"Nvm", Settings.save_flag);
+  AddLog(LOG_LEVEL_NONE, PSTR(D_LOG_CONFIG "Loaded from %s, " D_COUNT " %lu"), (source)?"File":"Nvm", Settings.save_flag);
 #endif  // ESP32
 
 #ifndef FIRMWARE_MINIMAL
@@ -620,7 +600,7 @@ void SettingsLoad(void) {
 #ifdef USE_UFILESYS
     if (TfsLoadFile(TASM_FILE_SETTINGS_LKG, (uint8_t*)&Settings, sizeof(Settings)) && (Settings.cfg_crc32 == GetSettingsCrc32())) {
       settings_location = 1;
-      AddLog_P(LOG_LEVEL_NONE, PSTR(D_LOG_CONFIG "Loaded from LKG File, " D_COUNT " %lu"), Settings.save_flag);
+      AddLog(LOG_LEVEL_NONE, PSTR(D_LOG_CONFIG "Loaded from LKG File, " D_COUNT " %lu"), Settings.save_flag);
     } else
 #endif  // USE_UFILESYS
     {
@@ -639,8 +619,7 @@ uint32_t CfgTime(void) {
 }
 
 #ifdef ESP8266
-void SettingsErase(uint8_t type)
-{
+void SettingsErase(uint8_t type) {
   /*
     For Arduino core and SDK:
     Erase only works from flash start address to SDK recognized flash end address (flashchip->chip_size = ESP.getFlashChipSize).
@@ -672,7 +651,7 @@ void SettingsErase(uint8_t type)
 #endif
 */
     EsptoolErase(_sectorStart, FLASH_FS_START);
-    _sectorStart = FLASH_EEPROM_START;
+    _sectorStart = EEPROM_LOCATION;
     _sectorEnd = ESP.getFlashChipSize() / SPI_FLASH_SEC_SIZE;  // Flash size as seen by SDK
   }
   else if (3 == type) {    // QPC Reached = QPC and Tasmota and SDK parameter area (0x0F3xxx - 0x0FFFFF)
@@ -680,11 +659,11 @@ void SettingsErase(uint8_t type)
     TfsDeleteFile(TASM_FILE_SETTINGS);
 #endif
     EsptoolErase(SETTINGS_LOCATION - CFG_ROTATES, SETTINGS_LOCATION +1);
-    _sectorStart = FLASH_EEPROM_START;
+    _sectorStart = EEPROM_LOCATION;
     _sectorEnd = ESP.getFlashChipSize() / SPI_FLASH_SEC_SIZE;  // Flash size as seen by SDK
   }
   else if (4 == type) {    // WIFI_FORCE_RF_CAL_ERASE = SDK wifi calibration
-    _sectorStart = FLASH_EEPROM_START +1;                      // SDK phy area and Core calibration sector (0x0XFC000)
+    _sectorStart = EEPROM_LOCATION +1;                         // SDK phy area and Core calibration sector (0x0XFC000)
     _sectorEnd = _sectorStart +1;                              // SDK end of phy area and Core calibration sector (0x0XFCFFF)
   }
 
@@ -693,8 +672,7 @@ void SettingsErase(uint8_t type)
 }
 #endif  // ESP8266
 
-void SettingsSdkErase(void)
-{
+void SettingsSdkErase(void) {
   WiFi.disconnect(false);  // Delete SDK wifi config
   SettingsErase(1);
   delay(1000);
@@ -702,16 +680,14 @@ void SettingsSdkErase(void)
 
 /********************************************************************************************/
 
-void SettingsDefault(void)
-{
-  AddLog_P(LOG_LEVEL_NONE, PSTR(D_LOG_CONFIG D_USE_DEFAULTS));
+void SettingsDefault(void) {
+  AddLog(LOG_LEVEL_NONE, PSTR(D_LOG_CONFIG D_USE_DEFAULTS));
   SettingsDefaultSet1();
   SettingsDefaultSet2();
   SettingsSave(2);
 }
 
-void SettingsDefaultSet1(void)
-{
+void SettingsDefaultSet1(void) {
   memset(&Settings, 0x00, sizeof(Settings));
 
   Settings.cfg_holder = (uint16_t)CFG_HOLDER;
@@ -726,8 +702,7 @@ void SettingsDefaultSet1(void)
 const uint8_t default_fingerprint1[] PROGMEM = { MQTT_FINGERPRINT1 };
 const uint8_t default_fingerprint2[] PROGMEM = { MQTT_FINGERPRINT2 };
 
-void SettingsDefaultSet2(void)
-{
+void SettingsDefaultSet2(void) {
   memset((char*)&Settings +16, 0x00, sizeof(Settings) -16);
 
   // this little trick allows GCC to optimize the assignment by grouping values and doing only ORs
@@ -803,7 +778,7 @@ void SettingsDefaultSet2(void)
 #ifdef ESP32
   Settings.eth_type = ETH_TYPE;
   Settings.eth_clk_mode = ETH_CLKMODE;
-  Settings.eth_address = ETH_ADDR;
+  Settings.eth_address = ETH_ADDRESS;
 #endif  // ESP32
 
   // Wifi
@@ -846,7 +821,7 @@ void SettingsDefaultSet2(void)
   Settings.param[P_HOLD_TIME] = KEY_HOLD_TIME;  // Default 4 seconds hold time
 
   // Switch
-  for (uint32_t i = 0; i < MAX_SWITCHES; i++) { Settings.switchmode[i] = SWITCH_MODE; }
+  for (uint32_t i = 0; i < MAX_SWITCHES_SET; i++) { Settings.switchmode[i] = SWITCH_MODE; }
 
   // MQTT
   flag.mqtt_enabled |= MQTT_USE;
@@ -856,6 +831,8 @@ void SettingsDefaultSet2(void)
   flag.mqtt_button_retain |= MQTT_BUTTON_RETAIN;
   flag.mqtt_switch_retain |= MQTT_SWITCH_RETAIN;
   flag.mqtt_sensor_retain |= MQTT_SENSOR_RETAIN;
+  flag5.mqtt_info_retain |= MQTT_INFO_RETAIN;
+  flag5.mqtt_state_retain |= MQTT_STATE_RETAIN;
 //  flag.mqtt_serial |= 0;
   flag.device_index_enable |= MQTT_POWER_FORMAT;
   flag3.time_append_timezone |= MQTT_APPEND_TIMEZONE;
@@ -1099,8 +1076,7 @@ void SettingsDefaultSet2(void)
 
 /********************************************************************************************/
 
-void SettingsResetStd(void)
-{
+void SettingsResetStd(void) {
   Settings.tflag[0].hemis = TIME_STD_HEMISPHERE;
   Settings.tflag[0].week = TIME_STD_WEEK;
   Settings.tflag[0].dow = TIME_STD_DAY;
@@ -1109,8 +1085,7 @@ void SettingsResetStd(void)
   Settings.toffset[0] = TIME_STD_OFFSET;
 }
 
-void SettingsResetDst(void)
-{
+void SettingsResetDst(void) {
   Settings.tflag[1].hemis = TIME_DST_HEMISPHERE;
   Settings.tflag[1].week = TIME_DST_WEEK;
   Settings.tflag[1].dow = TIME_DST_DAY;
@@ -1119,16 +1094,14 @@ void SettingsResetDst(void)
   Settings.toffset[1] = TIME_DST_OFFSET;
 }
 
-void SettingsDefaultWebColor(void)
-{
+void SettingsDefaultWebColor(void) {
   char scolor[10];
   for (uint32_t i = 0; i < COL_LAST; i++) {
     WebHexCode(i, GetTextIndexed(scolor, sizeof(scolor), i, kWebColors));
   }
 }
 
-void SettingsEnableAllI2cDrivers(void)
-{
+void SettingsEnableAllI2cDrivers(void) {
   Settings.i2c_drivers[0] = 0xFFFFFFFF;
   Settings.i2c_drivers[1] = 0xFFFFFFFF;
   Settings.i2c_drivers[2] = 0xFFFFFFFF;
@@ -1136,118 +1109,13 @@ void SettingsEnableAllI2cDrivers(void)
 
 /********************************************************************************************/
 
-void SettingsDelta(void)
-{
+void SettingsDelta(void) {
   if (Settings.version != VERSION) {      // Fix version dependent changes
 
 #ifdef ESP8266
 #ifndef UPGRADE_V8_MIN
-    if (Settings.version < 0x07000002) {
-      Settings.web_color2[0][0] = Settings.web_color[0][0];
-      Settings.web_color2[0][1] = Settings.web_color[0][1];
-      Settings.web_color2[0][2] = Settings.web_color[0][2];
-    }
-    if (Settings.version < 0x07000003) {
-      SettingsEnableAllI2cDrivers();
-    }
-    if (Settings.version < 0x07000004) {
-      Settings.ex_wifi_output_power = 170;
-    }
-    if (Settings.version < 0x07010202) {
-      Settings.ex_serial_config = TS_SERIAL_8N1;
-    }
-    if (Settings.version < 0x07010204) {
-      if (Settings.flag3.mqtt_buttons == 1) {
-        strlcpy(Settings.ex_cors_domain, CORS_ENABLED_ALL, sizeof(Settings.ex_cors_domain));
-      } else {
-        Settings.ex_cors_domain[0] = 0;
-      }
-    }
-    if (Settings.version < 0x07010205) {
-      Settings.seriallog_level = Settings.ex_seriallog_level;  // 09E -> 452
-      Settings.sta_config = Settings.ex_sta_config;            // 09F -> EC7
-      Settings.sta_active = Settings.ex_sta_active;            // 0A0 -> EC8
-      memcpy((char*)&Settings.rule_stop, (char*)&Settings.ex_rule_stop, 47);  // 1A7 -> EC9
-    }
-    if (Settings.version < 0x07010206) {
-      Settings.flag4 = Settings.ex_flag4;                      // 1E0 -> EF8
-      Settings.mqtt_port = Settings.ex_mqtt_port;              // 20A -> EFC
-      memcpy((char*)&Settings.serial_config, (char*)&Settings.ex_serial_config, 5);  // 1E4 -> EFE
-    }
+    // Although no direct upgrade is supported try to make a viable environment
     if (Settings.version < 0x08000000) {
-      char temp[strlen(Settings.text_pool) +1];           strncpy(temp, Settings.text_pool, sizeof(temp));  // Was ota_url
-      char temp21[strlen(Settings.ex_mqtt_prefix[0]) +1]; strncpy(temp21, Settings.ex_mqtt_prefix[0], sizeof(temp21));
-      char temp22[strlen(Settings.ex_mqtt_prefix[1]) +1]; strncpy(temp22, Settings.ex_mqtt_prefix[1], sizeof(temp22));
-      char temp23[strlen(Settings.ex_mqtt_prefix[2]) +1]; strncpy(temp23, Settings.ex_mqtt_prefix[2], sizeof(temp23));
-      char temp31[strlen(Settings.ex_sta_ssid[0]) +1];    strncpy(temp31, Settings.ex_sta_ssid[0], sizeof(temp31));
-      char temp32[strlen(Settings.ex_sta_ssid[1]) +1];    strncpy(temp32, Settings.ex_sta_ssid[1], sizeof(temp32));
-      char temp41[strlen(Settings.ex_sta_pwd[0]) +1];     strncpy(temp41, Settings.ex_sta_pwd[0], sizeof(temp41));
-      char temp42[strlen(Settings.ex_sta_pwd[1]) +1];     strncpy(temp42, Settings.ex_sta_pwd[1], sizeof(temp42));
-      char temp5[strlen(Settings.ex_hostname) +1];        strncpy(temp5, Settings.ex_hostname, sizeof(temp5));
-      char temp6[strlen(Settings.ex_syslog_host) +1];     strncpy(temp6, Settings.ex_syslog_host, sizeof(temp6));
-      char temp7[strlen(Settings.ex_mqtt_host) +1];       strncpy(temp7, Settings.ex_mqtt_host, sizeof(temp7));
-      char temp8[strlen(Settings.ex_mqtt_client) +1];     strncpy(temp8, Settings.ex_mqtt_client, sizeof(temp8));
-      char temp9[strlen(Settings.ex_mqtt_user) +1];       strncpy(temp9, Settings.ex_mqtt_user, sizeof(temp9));
-      char temp10[strlen(Settings.ex_mqtt_pwd) +1];       strncpy(temp10, Settings.ex_mqtt_pwd, sizeof(temp10));
-      char temp11[strlen(Settings.ex_mqtt_topic) +1];     strncpy(temp11, Settings.ex_mqtt_topic, sizeof(temp11));
-      char temp12[strlen(Settings.ex_button_topic) +1];   strncpy(temp12, Settings.ex_button_topic, sizeof(temp12));
-      char temp13[strlen(Settings.ex_mqtt_grptopic) +1];  strncpy(temp13, Settings.ex_mqtt_grptopic, sizeof(temp13));
-
-      memset(Settings.text_pool, 0x00, settings_text_size);
-      SettingsUpdateText(SET_OTAURL, temp);
-      SettingsUpdateText(SET_MQTTPREFIX1, temp21);
-      SettingsUpdateText(SET_MQTTPREFIX2, temp22);
-      SettingsUpdateText(SET_MQTTPREFIX3, temp23);
-      SettingsUpdateText(SET_STASSID1, temp31);
-      SettingsUpdateText(SET_STASSID2, temp32);
-      SettingsUpdateText(SET_STAPWD1, temp41);
-      SettingsUpdateText(SET_STAPWD2, temp42);
-      SettingsUpdateText(SET_HOSTNAME, temp5);
-      SettingsUpdateText(SET_SYSLOG_HOST, temp6);
-#if defined(USE_MQTT_TLS) && defined(USE_MQTT_AWS_IOT)
-      if (!strlen(Settings.ex_mqtt_user)) {
-        SettingsUpdateText(SET_MQTT_HOST, temp7);
-        SettingsUpdateText(SET_MQTT_USER, temp9);
-      } else {
-        char aws_mqtt_host[66];
-        snprintf_P(aws_mqtt_host, sizeof(aws_mqtt_host), PSTR("%s%s"), temp9, temp7);
-        SettingsUpdateText(SET_MQTT_HOST, aws_mqtt_host);
-        SettingsUpdateText(SET_MQTT_USER, "");
-      }
-#else
-      SettingsUpdateText(SET_MQTT_HOST, temp7);
-      SettingsUpdateText(SET_MQTT_USER, temp9);
-#endif
-      SettingsUpdateText(SET_MQTT_CLIENT, temp8);
-      SettingsUpdateText(SET_MQTT_PWD, temp10);
-      SettingsUpdateText(SET_MQTT_TOPIC, temp11);
-      SettingsUpdateText(SET_MQTT_BUTTON_TOPIC, temp12);
-      SettingsUpdateText(SET_MQTT_GRP_TOPIC, temp13);
-
-      SettingsUpdateText(SET_WEBPWD, Settings.ex_web_password);
-      SettingsUpdateText(SET_CORS, Settings.ex_cors_domain);
-      SettingsUpdateText(SET_MQTT_FULLTOPIC, Settings.ex_mqtt_fulltopic);
-//      SettingsUpdateText(SET_MQTT_SWITCH_TOPIC, Settings.ex_switch_topic);
-      SettingsUpdateText(SET_STATE_TXT1, Settings.ex_state_text[0]);
-      SettingsUpdateText(SET_STATE_TXT2, Settings.ex_state_text[1]);
-      SettingsUpdateText(SET_STATE_TXT3, Settings.ex_state_text[2]);
-      SettingsUpdateText(SET_STATE_TXT4, Settings.ex_state_text[3]);
-      SettingsUpdateText(SET_NTPSERVER1, Settings.ex_ntp_server[0]);
-      SettingsUpdateText(SET_NTPSERVER2, Settings.ex_ntp_server[1]);
-      SettingsUpdateText(SET_NTPSERVER3, Settings.ex_ntp_server[2]);
-      SettingsUpdateText(SET_MEM1, Settings.script_pram[0]);
-      SettingsUpdateText(SET_MEM2, Settings.script_pram[1]);
-      SettingsUpdateText(SET_MEM3, Settings.script_pram[2]);
-      SettingsUpdateText(SET_MEM4, Settings.script_pram[3]);
-      SettingsUpdateText(SET_MEM5, Settings.script_pram[4]);
-//      SettingsUpdateText(SET_FRIENDLYNAME1, Settings.ex_friendlyname[0]);
-//      SettingsUpdateText(SET_FRIENDLYNAME2, Settings.ex_friendlyname[1]);
-//      SettingsUpdateText(SET_FRIENDLYNAME3, Settings.ex_friendlyname[2]);
-//      SettingsUpdateText(SET_FRIENDLYNAME4, Settings.ex_friendlyname[3]);
-    }
-#else  // UPGRADE_V8_MIN
-    if (Settings.version < 0x08000000) {
-#ifdef UPGRADE_V8_MIN_KEEP_WIFI
       // Save SSIDs and Passwords
       char temp31[strlen(Settings.ex_sta_ssid[0]) +1];
       strncpy(temp31, Settings.ex_sta_ssid[0], sizeof(temp31));
@@ -1257,9 +1125,7 @@ void SettingsDelta(void)
       strncpy(temp41, Settings.ex_sta_pwd[0], sizeof(temp41));
       char temp42[strlen(Settings.ex_sta_pwd[1]) +1];
       strncpy(temp42, Settings.ex_sta_pwd[1], sizeof(temp42));
-#endif  // UPGRADE_V8_MIN_KEEP_WIFI
 
-#ifdef UPGRADE_V8_MIN_KEEP_MQTT
       char temp7[strlen(Settings.ex_mqtt_host) +1];
       strncpy(temp7, Settings.ex_mqtt_host, sizeof(temp7));
       char temp9[strlen(Settings.ex_mqtt_user) +1];
@@ -1268,19 +1134,15 @@ void SettingsDelta(void)
       strncpy(temp10, Settings.ex_mqtt_pwd, sizeof(temp10));
       char temp11[strlen(Settings.ex_mqtt_topic) +1];
       strncpy(temp11, Settings.ex_mqtt_topic, sizeof(temp11));
-#endif  // UPGRADE_V8_MIN_KEEP_MQTT
 
       SettingsDefault();
 
-#ifdef UPGRADE_V8_MIN_KEEP_WIFI
       // Restore current SSIDs and Passwords
       SettingsUpdateText(SET_STASSID1, temp31);
       SettingsUpdateText(SET_STASSID2, temp32);
       SettingsUpdateText(SET_STAPWD1, temp41);
       SettingsUpdateText(SET_STAPWD2, temp42);
-#endif  // UPGRADE_V8_MIN_KEEP_WIFI
 
-#ifdef UPGRADE_V8_MIN_KEEP_MQTT
 #if defined(USE_MQTT_TLS) && defined(USE_MQTT_AWS_IOT)
       if (!strlen(Settings.ex_mqtt_user)) {
         SettingsUpdateText(SET_MQTT_HOST, temp7);
@@ -1297,9 +1159,9 @@ void SettingsDelta(void)
 #endif  // USE_MQTT_TLS and USE_MQTT_AWS_IOT
       SettingsUpdateText(SET_MQTT_PWD, temp10);
       SettingsUpdateText(SET_MQTT_TOPIC, temp11);
-#endif  // UPGRADE_V8_MIN_KEEP_MQTT
     }
 #endif  // UPGRADE_V8_MIN
+
     if (Settings.version < 0x08020003) {
       SettingsUpdateText(SET_TEMPLATE_NAME, Settings.user_template_name);
       Settings.zb_channel = 0;      // set channel to zero to force reinit of zigbee parameters
@@ -1339,7 +1201,7 @@ void SettingsDelta(void)
     if (Settings.version < 0x08030105) {
       Settings.eth_type = ETH_TYPE;
       Settings.eth_clk_mode = ETH_CLKMODE;
-      Settings.eth_address = ETH_ADDR;
+      Settings.eth_address = ETH_ADDRESS;
     }
 #endif  // ESP32
     if (Settings.version < 0x08030106) {
@@ -1363,6 +1225,17 @@ void SettingsDelta(void)
     }
     if (Settings.version < 0x09020003) {
       Settings.flag3.use_wifi_rescan = true;  // As a result of #10395
+    }
+    if (Settings.version < 0x09020006) {
+      for (uint32_t i = 0; i < MAX_SWITCHES_SET; i++) {
+        Settings.switchmode[i] = (i < 8) ? Settings.ex_switchmode[i] : SWITCH_MODE;
+      }
+      for (uint32_t i = 0; i < MAX_INTERLOCKS_SET; i++) {
+        Settings.interlock[i] = (i < 4) ? Settings.ex_interlock[i] : 0;
+      }
+    }
+    if (Settings.version < 0x09020007) {
+      *(uint32_t *)&Settings.device_group_tie = 0x04030201;
     }
 
     Settings.version = VERSION;

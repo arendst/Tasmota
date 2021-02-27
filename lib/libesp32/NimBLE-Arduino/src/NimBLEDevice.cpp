@@ -62,6 +62,8 @@ std::list <NimBLEClient*>   NimBLEDevice::m_cList;
 std::list <NimBLEAddress>   NimBLEDevice::m_ignoreList;
 NimBLESecurityCallbacks*    NimBLEDevice::m_securityCallbacks = nullptr;
 uint8_t                     NimBLEDevice::m_own_addr_type = BLE_OWN_ADDR_PUBLIC;
+uint16_t                    NimBLEDevice::m_scanDuplicateSize = CONFIG_BTDM_SCAN_DUPL_CACHE_SIZE;
+uint8_t                     NimBLEDevice::m_scanFilterMode = CONFIG_BTDM_SCAN_DUPL_TYPE;
 
 
 /**
@@ -303,7 +305,7 @@ void NimBLEDevice::stopAdvertising() {
 
 
 /**
- * @brief Set the transmission power.
+ * @brief Get the transmission power.
  * @param [in] powerType The power level to set, can be one of:
  * *   ESP_BLE_PWR_TYPE_CONN_HDL0  = 0,  For connection handle 0
  * *   ESP_BLE_PWR_TYPE_CONN_HDL1  = 1,  For connection handle 1
@@ -342,7 +344,7 @@ void NimBLEDevice::stopAdvertising() {
         default:
             return BLE_HS_ADV_TX_PWR_LVL_AUTO;
     }
-} // setPower
+} // getPower
 
 
 /**
@@ -397,6 +399,53 @@ void NimBLEDevice::stopAdvertising() {
  */
 /* STATIC */uint16_t NimBLEDevice::getMTU() {
     return ble_att_preferred_mtu();
+}
+
+
+/**
+ * @brief Set the duplicate filter cache size for filtering scanned devices.
+ * @param [in] cacheSize The number of advertisements filtered before the cache is reset.\n
+ * Range is 10-1000, a larger value will reduce how often the same devices are reported.
+ * @details Must only be called before calling NimBLEDevice::init.
+ */
+/*STATIC*/
+void NimBLEDevice::setScanDuplicateCacheSize(uint16_t cacheSize) {
+    if(initialized) {
+        NIMBLE_LOGE(LOG_TAG, "Cannot change scan cache size while initialized");
+        return;
+    } else if(cacheSize > 1000 || cacheSize <10) {
+        NIMBLE_LOGE(LOG_TAG, "Invalid scan cache size; min=10 max=1000");
+        return;
+    }
+
+    m_scanDuplicateSize = cacheSize;
+}
+
+
+/**
+ * @brief Set the duplicate filter mode for filtering scanned devices.
+ * @param [in] mode One of three possible options:
+ * * CONFIG_BTDM_SCAN_DUPL_TYPE_DEVICE (0) (default)\n
+     Filter by device address only, advertisements from the same address will be reported only once.
+ * * CONFIG_BTDM_SCAN_DUPL_TYPE_DATA (1)\n
+     Filter by data only, advertisements with the same data will only be reported once,\n
+     even from different addresses.
+ * * CONFIG_BTDM_SCAN_DUPL_TYPE_DATA_DEVICE (2)\n
+     Filter by address and data, advertisements from the same address will be reported only once,\n
+     except if the data in the advertisement has changed, then it will be reported again.
+ * @details Must only be called before calling NimBLEDevice::init.
+ */
+/*STATIC*/
+void NimBLEDevice::setScanFilterMode(uint8_t mode) {
+    if(initialized) {
+        NIMBLE_LOGE(LOG_TAG, "Cannot change scan duplicate type while initialized");
+        return;
+    } else if(mode > 2) {
+        NIMBLE_LOGE(LOG_TAG, "Invalid scan duplicate type");
+        return;
+    }
+
+    m_scanFilterMode = mode;
 }
 
 
@@ -499,8 +548,17 @@ void NimBLEDevice::stopAdvertising() {
 
         ESP_ERROR_CHECK(errRc);
 
-        ESP_ERROR_CHECK(esp_nimble_hci_and_controller_init());
+        esp_bt_controller_mem_release(ESP_BT_MODE_CLASSIC_BT);
 
+        esp_bt_controller_config_t bt_cfg = BT_CONTROLLER_INIT_CONFIG_DEFAULT();
+        bt_cfg.mode = ESP_BT_MODE_BLE;
+        bt_cfg.ble_max_conn = CONFIG_BT_NIMBLE_MAX_CONNECTIONS;
+        bt_cfg.normal_adv_size = m_scanDuplicateSize;
+        bt_cfg.scan_duplicate_type = m_scanFilterMode;
+
+        ESP_ERROR_CHECK(esp_bt_controller_init(&bt_cfg));
+        ESP_ERROR_CHECK(esp_bt_controller_enable(ESP_BT_MODE_BLE));
+        ESP_ERROR_CHECK(esp_nimble_hci_init());
         nimble_port_init();
 
         // Setup callbacks for host events

@@ -723,8 +723,6 @@ public:
 
 
   void log(void) {
-    char hex_char[_payload.len()*2+2];
-		ToHex_P((unsigned char*)_payload.getBuffer(), _payload.len(), hex_char, sizeof(hex_char));
     Response_P(PSTR("{\"" D_JSON_ZIGBEEZCL_RECEIVED "\":{"
                     "\"groupid\":%d," "\"clusterid\":\"0x%04X\"," "\"srcaddr\":\"0x%04X\","
                     "\"srcendpoint\":%d," "\"dstendpoint\":%d," "\"wasbroadcast\":%d,"
@@ -732,18 +730,18 @@ public:
                     "\"fc\":\"0x%02X\","
                     "\"frametype\":%d,\"direction\":%d,\"disableresp\":%d,"
                     "\"manuf\":\"0x%04X\",\"transact\":%d,"
-                    "\"cmdid\":\"0x%02X\",\"payload\":\"%s\"}}"),
+                    "\"cmdid\":\"0x%02X\",\"payload\":\"%_B\"}}"),
                     _groupaddr, _cluster_id, _srcaddr,
                     _srcendpoint, _dstendpoint, _wasbroadcast,
                     _linkquality, _securityuse, _seqnumber,
                     _frame_control,
                     _frame_control.b.frame_type, _frame_control.b.direction, _frame_control.b.disable_def_resp,
                     _manuf_code, _transact_seq, _cmd_id,
-                    hex_char);
+                    &_payload);
     if (Settings.flag3.tuya_serial_mqtt_publish) {
       MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR(D_RSLT_SENSOR));
     } else {
-      AddLogZ_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE "%s"), TasmotaGlobal.mqtt_data);
+      AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE "%s"), TasmotaGlobal.mqtt_data);
     }
   }
 
@@ -869,7 +867,7 @@ uint8_t toPercentageCR2032(uint32_t voltage) {
 // Adds to buf:
 // - n bytes: value (typically between 1 and 4 bytes, or bigger for strings)
 // returns number of bytes of attribute, or <0 if error
-int32_t encodeSingleAttribute(class SBuffer &buf, double val_d, const char *val_str, uint8_t attrtype) {
+int32_t encodeSingleAttribute(SBuffer &buf, double val_d, const char *val_str, uint8_t attrtype) {
   uint32_t len = Z_getDatatypeLen(attrtype);    // pre-compute length, overloaded for variable length attributes
   uint32_t u32 = val_d;
   int32_t  i32 = val_d;
@@ -1211,23 +1209,19 @@ void ZCLFrame::parseReportAttributes(Z_attribute_list& attr_list) {
   // The sensor expects the coordinator to send a Default Response to acknowledge the attribute reporting
   if (0 == _frame_control.b.disable_def_resp) {
     // the device expects a default response
-    SBuffer buf(2);
-    buf.add8(_cmd_id);
-    buf.add8(0x00);   // Status = OK
-
-    ZigbeeZCLSend_Raw(ZigbeeZCLSendMessage({
-      _srcaddr,
-      0x0000,
-      _cluster_id,
-      _srcendpoint,
-      ZCL_DEFAULT_RESPONSE,
-      _manuf_code,
-      false /* not cluster specific */,
-      false /* noresponse */,
-      true /* direct no retry */,
-      _transact_seq,  /* zcl transaction id */
-      buf.getBuffer(), buf.len()
-    }));
+    ZCLMessage zcl(2);   // message is 2 bytes
+    zcl.shortaddr = _srcaddr;
+    zcl.cluster = _cluster_id;
+    zcl.endpoint = _srcendpoint;
+    zcl.cmd = ZCL_DEFAULT_RESPONSE;
+    zcl.manuf = _manuf_code;
+    zcl.clusterSpecific = false;  /* not cluster specific */
+    zcl.needResponse = false;     /* noresponse */
+    zcl.direct = true;            /* direct no retry */
+    zcl.setTransac(_transact_seq);
+    zcl.buf.add8(_cmd_id);
+    zcl.buf.add8(0);    // Status = OK
+    zigbeeZCLSendCmd(zcl);
   }
 }
 
@@ -1348,7 +1342,7 @@ void ZCLFrame::computeSyntheticAttributes(Z_attribute_list& attr_list) {
                 brightness = changeUIntScale(light.getDimmer(), 0, 254, 0, 255);   // range is 0..255
               }
             }
-            
+
             const Z_attribute * attr_hue = attr_list.findAttribute(0x0300, 0x0000);
             const Z_attribute * attr_sat = attr_list.findAttribute(0x0300, 0x0001);
             const Z_attribute * attr_x   = attr_list.findAttribute(0x0300, 0x0003);
@@ -1656,7 +1650,7 @@ void ZCLFrame::parseClusterSpecificCommand(Z_attribute_list& attr_list) {
   Z_Device & device = zigbee_devices.getShortAddr(_srcaddr);
   if ((device.debounce_endpoint != 0) && (device.debounce_endpoint == _srcendpoint) && (device.debounce_transact == _transact_seq)) {
     // this is a duplicate, drop the packet
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE "Discarding duplicate command from 0x%04X, endpoint %d"), _srcaddr, _srcendpoint);
+    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE "Discarding duplicate command from 0x%04X, endpoint %d"), _srcaddr, _srcendpoint);
   } else {
     // reset the duplicate marker, parse the packet normally, and set a timer to reset the marker later (which will discard any existing timer for the same device/endpoint)
     device.debounce_endpoint = _srcendpoint;
@@ -1676,23 +1670,19 @@ void ZCLFrame::parseClusterSpecificCommand(Z_attribute_list& attr_list) {
   // Send Default Response to acknowledge the attribute reporting
   if (0 == _frame_control.b.disable_def_resp) {
     // the device expects a default response
-    SBuffer buf(2);
-    buf.add8(_cmd_id);
-    buf.add8(0x00);   // Status = OK
-
-    ZigbeeZCLSend_Raw(ZigbeeZCLSendMessage({
-      _srcaddr,
-      0x0000,
-      _cluster_id,
-      _srcendpoint,
-      ZCL_DEFAULT_RESPONSE,
-      _manuf_code,
-      false /* not cluster specific */,
-      false /* noresponse */,
-      true /* direct no retry */,
-      _transact_seq,  /* zcl transaction id */
-      buf.getBuffer(), buf.len()
-    }));
+    ZCLMessage zcl(2);   // message is 4 bytes
+    zcl.shortaddr = _srcaddr;
+    zcl.cluster = _cluster_id;
+    zcl.endpoint = _srcendpoint;
+    zcl.cmd = ZCL_DEFAULT_RESPONSE;
+    zcl.manuf = _manuf_code;
+    zcl.clusterSpecific = false;  /* not cluster specific */
+    zcl.needResponse = false;     /* noresponse */
+    zcl.direct = true;            /* direct no retry */
+    zcl.setTransac(_transact_seq);
+    zcl.buf.add8(_cmd_id);
+    zcl.buf.add8(0x00);   // Status = OK
+    zigbeeZCLSendCmd(zcl);
   }
 }
 

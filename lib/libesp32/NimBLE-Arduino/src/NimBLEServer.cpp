@@ -104,28 +104,47 @@ NimBLEService* NimBLEServer::createService(const NimBLEUUID &uuid, uint32_t numH
 
 /**
  * @brief Get a %BLE Service by its UUID
- * @param [in] uuid The UUID of the new service.
- * @return A reference to the service object.
+ * @param [in] uuid The UUID of the service.
+ * @param instanceId The index of the service to return (used when multiple services have the same UUID).
+ * @return A pointer to the service object or nullptr if not found.
  */
-NimBLEService* NimBLEServer::getServiceByUUID(const char* uuid) {
-    return getServiceByUUID(NimBLEUUID(uuid));
+NimBLEService* NimBLEServer::getServiceByUUID(const char* uuid, uint16_t instanceId) {
+    return getServiceByUUID(NimBLEUUID(uuid), instanceId);
 } // getServiceByUUID
 
 
 /**
  * @brief Get a %BLE Service by its UUID
- * @param [in] uuid The UUID of the new service.
- * @return A reference to the service object.
+ * @param [in] uuid The UUID of the service.
+ * @param instanceId The index of the service to return (used when multiple services have the same UUID).
+ * @return A pointer to the service object or nullptr if not found.
  */
-NimBLEService* NimBLEServer::getServiceByUUID(const NimBLEUUID &uuid) {
+NimBLEService* NimBLEServer::getServiceByUUID(const NimBLEUUID &uuid, uint16_t instanceId) {
+    uint16_t position = 0;
     for (auto &it : m_svcVec) {
         if (it->getUUID() == uuid) {
-            return it;
+            if (position == instanceId){
+                return it;
+            }
+            position++;
         }
     }
     return nullptr;
 } // getServiceByUUID
 
+/**
+ * @brief Get a %BLE Service by its handle
+ * @param handle The handle of the service.
+ * @return A pointer to the service object or nullptr if not found.
+ */
+NimBLEService *NimBLEServer::getServiceByHandle(uint16_t handle) {
+    for (auto &it : m_svcVec) {
+        if (it->getHandle() == handle) {
+            return it;
+        }
+    }
+    return nullptr;
+}
 
 /**
  * @brief Retrieve the advertising object that can be used to advertise the existence of the server.
@@ -621,7 +640,13 @@ uint16_t NimBLEServer::getPeerMTU(uint16_t conn_id) {
 
 
 /**
- * Update connection parameters can be called only after connection has been established
+ * @brief Request an Update the connection parameters:
+ * * Can only be used after a connection has been established.
+ * @param [in] conn_handle The connection handle of the peer to send the request to.
+ * @param [in] minInterval The minimum connection interval in 1.25ms units.
+ * @param [in] maxInterval The maximum connection interval in 1.25ms units.
+ * @param [in] latency The number of packets allowed to skip (extends max interval).
+ * @param [in] timeout The timeout time in 10ms units before disconnecting.
  */
 void NimBLEServer::updateConnParams(uint16_t conn_handle,
                             uint16_t minInterval, uint16_t maxInterval,
@@ -640,7 +665,7 @@ void NimBLEServer::updateConnParams(uint16_t conn_handle,
     if(rc != 0) {
         NIMBLE_LOGE(LOG_TAG, "Update params error: %d, %s", rc, NimBLEUtils::returnCodeToString(rc));
     }
-} // updateConnParams
+}// updateConnParams
 
 
 /** Default callback handlers */

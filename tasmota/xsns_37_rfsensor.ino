@@ -272,22 +272,21 @@ void RfSnsTheoV2Show(bool json)
             sensor, GetDT(rfsns_theo_v2_t1[i].time).c_str(), voltage);
         }
       } else {
-        char temperature[33];
-        dtostrfd(ConvertTemp((float)rfsns_theo_v2_t1[i].temp / 100), Settings.flag2.temperature_resolution, temperature);
+        float temp = ConvertTemp((float)rfsns_theo_v2_t1[i].temp / 100);
 
         if (json) {
-          ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_TEMPERATURE "\":%s,\"" D_JSON_ILLUMINANCE "\":%d,\"" D_JSON_VOLTAGE "\":%s}"),
-            sensor, temperature, rfsns_theo_v2_t1[i].lux, voltage);
+          ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_TEMPERATURE "\":%*_f,\"" D_JSON_ILLUMINANCE "\":%d,\"" D_JSON_VOLTAGE "\":%s}"),
+            sensor, Settings.flag2.temperature_resolution, &temp, rfsns_theo_v2_t1[i].lux, voltage);
 #ifdef USE_DOMOTICZ
           if ((0 == TasmotaGlobal.tele_period) && !sensor_once) {
-            DomoticzSensor(DZ_TEMP, temperature);
+            DomoticzFloatSensor(DZ_TEMP, temp);
             DomoticzSensor(DZ_ILLUMINANCE, rfsns_theo_v2_t1[i].lux);
             sensor_once = true;
           }
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
         } else {
-          WSContentSend_PD(HTTP_SNS_TEMP, sensor, temperature, TempUnit());
+          WSContentSend_Temp(sensor, temp);
           WSContentSend_PD(HTTP_SNS_ILLUMINANCE, sensor, rfsns_theo_v2_t1[i].lux);
 #endif  // USE_WEBSERVER
         }
@@ -619,7 +618,7 @@ void RfSnsInit(void)
 
 void RfSnsAnalyzeRawSignal(void)
 {
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR("RFS: Pulses %d"), (int)rfsns_raw_signal->Number);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("RFS: Pulses %d"), (int)rfsns_raw_signal->Number);
 
 #ifdef USE_THEO_V2
     RfSnsAnalyzeTheov2();

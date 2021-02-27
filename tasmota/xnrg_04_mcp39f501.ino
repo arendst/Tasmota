@@ -484,15 +484,15 @@ void McpSerialInput(void)
     AddLogBuffer(LOG_LEVEL_DEBUG_MORE, (uint8_t*)mcp_buffer, mcp_byte_counter);
 
     if (MCP_BUFFER_SIZE == mcp_byte_counter) {
-//      AddLog_P(LOG_LEVEL_DEBUG, PSTR("MCP: Overflow"));
+//      AddLog(LOG_LEVEL_DEBUG, PSTR("MCP: Overflow"));
     }
     else if (1 == mcp_byte_counter) {
       if (MCP_ERROR_CRC == mcp_buffer[0]) {
-//        AddLog_P(LOG_LEVEL_DEBUG, PSTR("MCP: Send " D_CHECKSUM_FAILURE));
+//        AddLog(LOG_LEVEL_DEBUG, PSTR("MCP: Send " D_CHECKSUM_FAILURE));
         mcp_timeout = 0;
       }
       else if (MCP_ERROR_NAK == mcp_buffer[0]) {
-//        AddLog_P(LOG_LEVEL_DEBUG, PSTR("MCP: NAck"));
+//        AddLog(LOG_LEVEL_DEBUG, PSTR("MCP: NAck"));
         mcp_timeout = 0;
       }
     }
@@ -500,7 +500,7 @@ void McpSerialInput(void)
       if (mcp_byte_counter == mcp_buffer[1]) {
 
         if (McpChecksum((uint8_t *)mcp_buffer) != mcp_buffer[mcp_byte_counter -1]) {
-          AddLog_P(LOG_LEVEL_DEBUG, PSTR("MCP: " D_CHECKSUM_FAILURE));
+          AddLog(LOG_LEVEL_DEBUG, PSTR("MCP: " D_CHECKSUM_FAILURE));
         } else {
           if (5 == mcp_buffer[1]) { McpAddressReceive(); }
           if (25 == mcp_buffer[1]) { McpParseData(); }

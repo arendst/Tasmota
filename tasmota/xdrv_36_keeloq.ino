@@ -54,8 +54,8 @@ struct JAROLIFT_DEVICE {
   uint64_t pack            = 0;   // Contains data to send.
   int count                = 0;
   uint32_t serial          = 0x0;
-  uint8_t port_tx;
-  uint8_t port_rx;
+  int8_t port_tx;
+  int8_t port_rx;
 } jaroliftDevice;
 
 void CmdSet(void)
@@ -97,7 +97,7 @@ void GenerateDeviceCryptKey()
   jaroliftDevice.device_key_msb = k.decrypt(jaroliftDevice.serial | 0x60000000L);
   jaroliftDevice.device_key_lsb = k.decrypt(jaroliftDevice.serial | 0x20000000L);
 
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR("generated device keys: %08x %08x"), jaroliftDevice.device_key_msb, jaroliftDevice.device_key_lsb);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("generated device keys: %08x %08x"), jaroliftDevice.device_key_msb, jaroliftDevice.device_key_lsb);
 }
 
 void CmdSendButton(void)
@@ -114,7 +114,7 @@ void CmdSendButton(void)
       DEBUG_DRIVER_LOG(LOG_LEVEL_DEBUG_MORE, PSTR("lsb: %08x"), jaroliftDevice.device_key_lsb);
       DEBUG_DRIVER_LOG(LOG_LEVEL_DEBUG_MORE, PSTR("serial: %08x"), jaroliftDevice.serial);
       DEBUG_DRIVER_LOG(LOG_LEVEL_DEBUG_MORE, PSTR("disc: %08x"), jaroliftDevice.disc);
-      AddLog_P(LOG_LEVEL_DEBUG, PSTR("KLQ: count: %08x"), jaroliftDevice.count);
+      AddLog(LOG_LEVEL_DEBUG, PSTR("KLQ: count: %08x"), jaroliftDevice.count);
 
       CreateKeeloqPacket();
       jaroliftDevice.count++;
@@ -236,8 +236,8 @@ void CreateKeeloqPacket()
   jaroliftDevice.enc = k.encrypt(result);
   jaroliftDevice.pack |= jaroliftDevice.enc;
 
-  AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("pack high: %08x"), jaroliftDevice.pack>>32);
-  AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("pack low:  %08x"), jaroliftDevice.pack);
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("pack high: %08x"), jaroliftDevice.pack>>32);
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("pack low:  %08x"), jaroliftDevice.pack);
 }
 
 void KeeloqInit()
@@ -248,7 +248,7 @@ void KeeloqInit()
   DEBUG_DRIVER_LOG(LOG_LEVEL_DEBUG_MORE, PSTR("cc1101.init()"));
   delay(100);
   cc1101.init();
-  AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("CC1101 done."));
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("CC1101 done."));
   cc1101.setSyncWord(SYNC_WORD, false);
   cc1101.setCarrierFreq(CFREQ_433);
   cc1101.disableAddressCheck();
@@ -272,7 +272,7 @@ bool Xdrv36(uint8_t function)
 
   switch (function) {
     case FUNC_COMMAND:
-      AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("calling command"));
+      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("calling command"));
       result = DecodeCommand(kJaroliftCommands, jaroliftCommand);
       break;
     case FUNC_INIT:

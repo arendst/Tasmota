@@ -86,7 +86,7 @@ void SDM630Every250ms(void)
     AddLogBuffer(LOG_LEVEL_DEBUG_MORE, buffer, Sdm630Modbus->ReceiveCount());
 
     if (error) {
-      AddLog_P(LOG_LEVEL_DEBUG, PSTR("SDM: SDM630 error %d"), error);
+      AddLog(LOG_LEVEL_DEBUG, PSTR("SDM: SDM630 error %d"), error);
     } else {
       Energy.data_valid[0] = 0;
       Energy.data_valid[1] = 0;

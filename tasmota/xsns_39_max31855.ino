@@ -139,20 +139,18 @@ void MAX31855_GetResult(void) {
 }
 
 void MAX31855_Show(bool Json) {
-  char probetemp[33];
-  char referencetemp[33];
-  dtostrfd(MAX31855_Result.ProbeTemperature, Settings.flag2.temperature_resolution, probetemp);
-  dtostrfd(MAX31855_Result.ReferenceTemperature, Settings.flag2.temperature_resolution, referencetemp);
-
   char sensor_name[10];
   GetTextIndexed(sensor_name, sizeof(sensor_name), Settings.flag4.max6675, kMax31855Types);
 
   if (Json) {
-    ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_PROBETEMPERATURE "\":%s,\"" D_JSON_REFERENCETEMPERATURE "\":%s,\"" D_JSON_ERROR "\":%d}"), \
-      sensor_name, probetemp, referencetemp, MAX31855_Result.ErrorCode);
+    ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_TEMPERATURE "\":%*_f,\"" D_JSON_REFERENCETEMPERATURE "\":%*_f,\"" D_JSON_ERROR "\":%d}"), \
+      sensor_name,
+      Settings.flag2.temperature_resolution, &MAX31855_Result.ProbeTemperature,
+      Settings.flag2.temperature_resolution, &MAX31855_Result.ReferenceTemperature,
+      MAX31855_Result.ErrorCode);
 #ifdef USE_DOMOTICZ
     if (0 == TasmotaGlobal.tele_period) {
-      DomoticzSensor(DZ_TEMP, probetemp);
+      DomoticzFloatSensor(DZ_TEMP, MAX31855_Result.ProbeTemperature);
     }
 #endif  // USE_DOMOTICZ
 #ifdef USE_KNX
@@ -162,7 +160,7 @@ void MAX31855_Show(bool Json) {
 #endif  // USE_KNX
 #ifdef USE_WEBSERVER
   } else {
-    WSContentSend_PD(HTTP_SNS_TEMP, sensor_name, probetemp, TempUnit());
+    WSContentSend_Temp(sensor_name, MAX31855_Result.ProbeTemperature);
 #endif  // USE_WEBSERVER
   }
 }

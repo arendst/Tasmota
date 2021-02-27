@@ -39,7 +39,7 @@ bool dht_active = true;                       // DHT configured
 bool dht_dual_mode = false;                   // Single pin mode
 
 struct DHTSTRUCT {
-  uint8_t  pin;
+  int8_t   pin;
   uint8_t  type;
   uint8_t  lastresult;
   char     stype[12];
@@ -52,7 +52,7 @@ bool DhtWaitState(uint32_t sensor, uint32_t level)
   unsigned long timeout = micros() + 100;
   while (digitalRead(Dht[sensor].pin) != level) {
     if (TimeReachedUsec(timeout)) {
-      AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DHT D_TIMEOUT_WAITING_FOR " %s " D_PULSE),
+      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DHT D_TIMEOUT_WAITING_FOR " %s " D_PULSE),
         (level) ? D_START_SIGNAL_HIGH : D_START_SIGNAL_LOW);
       return false;
     }
@@ -149,7 +149,7 @@ bool DhtRead(uint32_t sensor)
   uint8_t checksum = (dht_data[0] + dht_data[1] + dht_data[2] + dht_data[3]) & 0xFF;
   if (dht_data[4] != checksum) {
     char hex_char[15];
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DHT D_CHECKSUM_FAILURE " %s =? %02X"),
+    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DHT D_CHECKSUM_FAILURE " %s =? %02X"),
       ToHex_P(dht_data, 5, hex_char, sizeof(hex_char), ' '), checksum);
     return false;
   }
@@ -157,21 +157,40 @@ bool DhtRead(uint32_t sensor)
   float temperature = NAN;
   float humidity = NAN;
   switch (Dht[sensor].type) {
-    case GPIO_DHT11:
+    case GPIO_DHT11:                                    // DHT11
       humidity = dht_data[0];
+/*
+      // DHT11 no negative temp:
       temperature = dht_data[2] + ((float)dht_data[3] * 0.1f);  // Issue #3164
+*/
+      // DHT11 (Adafruit):
+      temperature = dht_data[2];
+      if (dht_data[3] & 0x80) {
+        temperature = -1 - temperature;
+      }
+      temperature += (dht_data[3] & 0x0f) * 0.1f;
+/*
+      // DHT12 (Adafruit):
+      temperature = dht_data[2];
+      temperature += (dht_data[3] & 0x0f) * 0.1f;
+      if (dht_data[2] & 0x80) {
+        temperature *= -1;
+      }
+*/
       break;
-    case GPIO_DHT22:
-    case GPIO_SI7021:
+    case GPIO_DHT22:                                    // DHT21, DHT22, AM2301, AM2302, AM2321
+    case GPIO_SI7021:                                   // iTead SI7021
       humidity = ((dht_data[0] << 8) | dht_data[1]) * 0.1;
-      temperature = (((dht_data[2] & 0x7F) << 8 ) | dht_data[3]) * 0.1;
+      // DHT21/22 (Adafruit):
+      temperature = ((int16_t)(dht_data[2] & 0x7F) << 8 ) | dht_data[3];
+      temperature *= 0.1f;
       if (dht_data[2] & 0x80) {
         temperature *= -1;
       }
       break;
   }
   if (isnan(temperature) || isnan(humidity)) {
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DHT "Invalid NAN reading"));
+    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DHT "Invalid NAN reading"));
     return false;
   }
 
@@ -220,7 +239,7 @@ void DhtInit(void)
         snprintf_P(Dht[i].stype, sizeof(Dht[i].stype), PSTR("%s%c%02d"), Dht[i].stype, IndexSeparator(), Dht[i].pin);
       }
     }
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DHT "(v5) " D_SENSORS_FOUND " %d"), dht_sensors);
+    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DHT "(v5) " D_SENSORS_FOUND " %d"), dht_sensors);
   } else {
     dht_active = false;
   }

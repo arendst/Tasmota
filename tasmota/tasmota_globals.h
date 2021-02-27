@@ -46,13 +46,13 @@ extern "C" int startWaveformClockCycles(uint8_t pin, uint32_t highCcys, uint32_t
   uint32_t runTimeCcys, int8_t alignPhase, uint32_t phaseOffsetCcys, bool autoPwm);
 
 #ifdef ESP32
-
+#if CONFIG_IDF_TARGET_ESP32       // ESP32/PICO-D4
 #ifdef USE_ETHERNET
 IPAddress EthernetLocalIP(void);
 char* EthernetHostname(void);
 String EthernetMacAddress(void);
-#endif
-
+#endif  // USE_ETHERNET
+#endif  // CONFIG_IDF_TARGET_ESP32
 #endif  // ESP32
 
 /*********************************************************************************************\
@@ -94,6 +94,29 @@ String EthernetMacAddress(void);
 
 #ifdef ESP32
 
+/*-------------------------------------------------------------------------------------------*\
+ * Start ESP32-S2 specific parameters - disable features not present in ESP32-S2
+\*-------------------------------------------------------------------------------------------*/
+
+#if CONFIG_IDF_TARGET_ESP32S2                      // ESP32-S2
+#ifdef USE_ETHERNET
+#undef USE_ETHERNET                                // ESP32-S2 does not support ethernet
+#endif
+#ifdef USE_BLE_ESP32
+#undef USE_BLE_ESP32                               // ESP32-S2 does not support BLE
+#endif
+#ifdef USE_MI_ESP32
+#undef USE_MI_ESP32                                // ESP32-S2 does not support BLE
+#endif
+#ifdef USE_IBEACON_ESP32
+#undef USE_IBEACON_ESP32                           // ESP32-S2 does not support BLE
+#endif
+#endif  // CONFIG_IDF_TARGET_ESP32S2
+
+/*-------------------------------------------------------------------------------------------*\
+ * End ESP32-S2 specific parameters
+\*-------------------------------------------------------------------------------------------*/
+
 #ifndef MODULE
 #define MODULE                      WEMOS          // [Module] Select default model
 #endif
@@ -108,6 +131,8 @@ String EthernetMacAddress(void);
 #endif  // ARDUINO_ESP32_RELEASE
 
 #define USE_UFILESYS
+
+#undef FIRMWARE_MINIMAL                            // Minimal is not supported as not needed
 
 // Hardware has no ESP32
 #undef USE_TUYA_DIMMER
@@ -233,7 +258,11 @@ const uint16_t LOG_BUFFER_SIZE = 4000;         // Max number of characters in lo
 
 #define TASM_FILE_SETTINGS          "/.settings"       // Settings binary blob
 #define TASM_FILE_SETTINGS_LKG      "/.settings.lkg"   // Last Known Good Settings binary blob
+#define TASM_FILE_DRIVER            "/.drvset%03d"
+#define TASM_FILE_SENSOR            "/.snsset%03d"
 #define TASM_FILE_ZIGBEE            "/zb"              // Zigbee settings blob as used by CC2530 on ESP32
+#define TASM_FILE_AUTOEXEC          "/autoexec.bat"    // Commands executed after restart
+#define TASM_FILE_CONFIG            "/config.sys"      // Settings executed after restart
 
 #ifndef MQTT_MAX_PACKET_SIZE
 #define MQTT_MAX_PACKET_SIZE        1200       // Bytes
@@ -446,7 +475,6 @@ const char kWebColors[] PROGMEM =
 
 #ifdef USE_DEVICE_GROUPS
 #define SendDeviceGroupMessage(DEVICE_INDEX, REQUEST_TYPE, ...) _SendDeviceGroupMessage(DEVICE_INDEX, REQUEST_TYPE, __VA_ARGS__, 0)
-#define SendLocalDeviceGroupMessage(REQUEST_TYPE, ...) _SendDeviceGroupMessage(0, REQUEST_TYPE, __VA_ARGS__, 0)
 uint8_t device_group_count = 0;
 bool first_device_group_is_local = true;
 #endif  // USE_DEVICE_GROUPS
@@ -471,6 +499,43 @@ bool first_device_group_is_local = true;
 #else
 #define DEBUG_TRACE_LOG(...)
 #endif
+
+
+/*********************************************************************************************\
+ * Macro for SetOption synonyms
+ *
+ * SetOption synonyms come first in the list of commands, right after the prefix.
+ * They don't need any matching function pointer, since they are handled internally.
+ * So don't forget to NOT put pointers in the functions pointers list.
+ *
+ * The additionnal list of unsigned bytes contains the Option numbers of each synonyms
+ * in the same order. The first byte of the list contains the number of synonyms
+ * (not including the number itself). The is the number of names to skip to find the first command.
+ *
+ * As it si cumbersome to calculate the first byte (number of synonyms), we provide the following
+ * macro `SO_SYNONYMS(<name>, <list of bytes>)`
+ *
+ * For example:
+ * ```
+ *   SO_SYNONYMS(kLightSynonyms,
+ *     37, 68, 82, 91, 92, 105,
+ *     106,
+ *   );
+ * ```
+ *
+ * is equivalent to:
+ * ```
+ *   const static uint8_t kLightSynonyms[] PROGMEM = {
+ *     7,   // number of synonyms, automatically calculated
+ *     37, 68, 82, 91, 92, 105,
+ *     106,
+ *   };
+ * ```
+ *
+ * This comes very handy if you need to adjust the number of synonyms depending on #defines
+\*********************************************************************************************/
+
+#define SO_SYNONYMS(N,...) const static uint8_t __syn_array_len_ ## N[] = { __VA_ARGS__ }; /* this first array will not be kept by linker, just used for sizeof() */ const static uint8_t N[] PROGMEM = { sizeof(__syn_array_len_ ## N), __VA_ARGS__ };
 
 /*********************************************************************************************/
 

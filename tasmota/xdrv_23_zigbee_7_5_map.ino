@@ -76,7 +76,7 @@ public:
     edges()
     {}
 
-  void reset(void) { edges.reset(); }
+  void reset(void) { edges.reset(); zigbee_devices.clearDeviceRouterInfo(); }
 
   Z_Mapper_Edge & findEdge(const Z_Mapper_Edge & edge2);
   bool addEdge(const Z_Mapper_Edge & edge2);
@@ -142,6 +142,15 @@ bool Z_Mapper::addEdge(const Z_Mapper_Edge & edge2) {
   return true;
 }
 
+String EscapeHTMLString(const char *s_P) {
+  String s((const __FlashStringHelper*) s_P);
+  s.replace(F("&"), F("&amp;"));
+  s.replace(F("\""), F("&quot;"));
+  s.replace(F("<"), F("&lt;"));
+  s.replace(F(">"), F("&gt;"));
+  return s;
+}
+
 void Z_Mapper::dumpInternals(void) const {
   WSContentSend_P(PSTR("nodes:[" "{id:\"0x0000\",label:\"Coordinator\",group:\"o\",title:\"0x0000\"}"));
   for (const auto & device : zigbee_devices.getDevices()) {
@@ -150,7 +159,7 @@ void Z_Mapper::dumpInternals(void) const {
 
     const char *fname = device.friendlyName;
     if (fname != nullptr) {
-      WSContentSend_P(PSTR("%s"), fname);
+      WSContentSend_P(PSTR("%s"), EscapeJSONString(fname).c_str());
     } else {
       WSContentSend_P(PSTR("0x%04X"), device.shortaddr);
     }

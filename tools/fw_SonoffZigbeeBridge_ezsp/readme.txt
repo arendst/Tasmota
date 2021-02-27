@@ -2,8 +2,12 @@
 
 ## EmberZNet NCP UART EZSP firmware signed for Sonoff ZBBridge
 
-- `ncp-uart-sw_6.7.6_115200.ota` - recommended stable version for EZSP v6, EZSP v7, and EZSP v8 compatible hosts.
-- `ncp-uart-sw_6.7.8_115200.ota` - release candidate, supposedly fixing IKEA battery drain issue.
+- `ncp-uart-sw_6.7.6_115200.ota` - original stable version for EZSP v8 compatible hosts, contains a bug that can cause battery of IKEA and Philips remotes to drain
+- `ncp-uart-sw-6.7.8_115200.ota` - NEW: recommended stable version for EZSP v8 compatible hosts.
+
+## Archived
+
+- `ncp-uart-sw_6.5.5_115200.ota` - legacy version for EZSP v7 compatible hosts.
 
 ## EmberZNet and EZSP Protocol Versions
 
@@ -13,6 +17,4 @@ The largest change was between EZSP v4 (first added in EmberZNet 4.7.2 SDK) and 
 
 Perhaps more important to know is that EZSP v5, v6 and v7 (EmberZNet 6.6.x.x) use the same framing format, but EmberZNet 6.7.x.x/EZSP v8 introduced new framing format and expanded command id field from 8 bits to 16 bits.
 
-## Archived Versions
-
-- `ncp-uart-sw_6.5.5_115200.ota` - legacy version for EZSP v4, EZSP v5, EZSP v6, or EZSP v7 compatible hosts.
+See Silabs [Zigbee & Thread Knowledge Base Articles List](https://silabs-prod.adobecqms.net/community/wireless/zigbee-and-thread/knowledge-base.entry.html/2020/04/01/zigbee_thread_knowledgebasearticleslist-ih5r) for background information.

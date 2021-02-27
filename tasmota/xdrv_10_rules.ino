@@ -99,8 +99,10 @@
 #define COMPARE_OPERATOR_STRING_ENDS_WITH      8
 #define COMPARE_OPERATOR_STRING_STARTS_WITH    9
 #define COMPARE_OPERATOR_STRING_CONTAINS      10
-#define MAXIMUM_COMPARE_OPERATOR              COMPARE_OPERATOR_STRING_CONTAINS
-const char kCompareOperators[] PROGMEM = "=\0>\0<\0|\0==!=>=<=$>$<$|";
+#define COMPARE_OPERATOR_STRING_NOT_EQUAL     11
+#define COMPARE_OPERATOR_STRING_NOT_CONTAINS  12
+#define MAXIMUM_COMPARE_OPERATOR              COMPARE_OPERATOR_STRING_NOT_CONTAINS
+const char kCompareOperators[] PROGMEM = "=\0>\0<\0|\0==!=>=<=$>$<$|$!$^";
 
 #ifdef USE_EXPRESSION
   #include <LinkedList.h>                 // Import LinkedList library
@@ -358,7 +360,7 @@ int32_t SetRule(uint32_t idx, const char *content, bool append = false) {
 
       len_uncompressed = strlen(Settings.rules[idx]);
       len_compressed = compressor.unishox_compress(Settings.rules[idx], len_uncompressed, nullptr /* dry-run */, MAX_RULE_SIZE + 8);
-      AddLog_P(LOG_LEVEL_INFO, PSTR("RUL: Stored uncompressed, would compress from %d to %d (-%d%%)"), len_uncompressed, len_compressed, 100 - changeUIntScale(len_compressed, 0, len_uncompressed, 0, 100));
+      AddLog(LOG_LEVEL_INFO, PSTR("RUL: Stored uncompressed, would compress from %d to %d (-%d%%)"), len_uncompressed, len_compressed, 100 - changeUIntScale(len_compressed, 0, len_uncompressed, 0, 100));
     }
 
 #endif // USE_UNISHOX_COMPRESSION
@@ -387,9 +389,9 @@ int32_t SetRule(uint32_t idx, const char *content, bool append = false) {
       Settings.rules[idx][1] = (len_in + 7) / 8;    // store original length in first bytes (4 bytes chuks)
       memcpy(&Settings.rules[idx][2], buf_out, len_compressed);
       Settings.rules[idx][len_compressed + 2] = 0;  // add NULL termination
-      AddLog_P(LOG_LEVEL_INFO, PSTR("RUL: Compressed from %d to %d (-%d%%)"), len_in, len_compressed, 100 - changeUIntScale(len_compressed, 0, len_in, 0, 100));
-      // AddLog_P(LOG_LEVEL_INFO, PSTR("RUL: First bytes: %02X%02X%02X%02X"), Settings.rules[idx][0], Settings.rules[idx][1], Settings.rules[idx][2], Settings.rules[idx][3]);
-      // AddLog_P(LOG_LEVEL_INFO, PSTR("RUL: GetRuleLenStorage = %d"), GetRuleLenStorage(idx));
+      AddLog(LOG_LEVEL_INFO, PSTR("RUL: Compressed from %d to %d (-%d%%)"), len_in, len_compressed, 100 - changeUIntScale(len_compressed, 0, len_in, 0, 100));
+      // AddLog(LOG_LEVEL_INFO, PSTR("RUL: First bytes: %02X%02X%02X%02X"), Settings.rules[idx][0], Settings.rules[idx][1], Settings.rules[idx][2], Settings.rules[idx][3]);
+      // AddLog(LOG_LEVEL_INFO, PSTR("RUL: GetRuleLenStorage = %d"), GetRuleLenStorage(idx));
     } else {
       len_compressed = -1;    // failed
       // clear rule cache, so it will be reloaded from Settings
@@ -513,7 +515,7 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule, bool stop_all
   JsonParserObject obj = parser.getRootObject();
   if (!obj) {
 //    AddLog_P(LOG_LEVEL_DEBUG, PSTR("RUL: Event too long (%d)"), event.length());
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR("RUL: No valid JSON (%s)"), buf.c_str());
+    AddLog(LOG_LEVEL_DEBUG, PSTR("RUL: No valid JSON (%s)"), buf.c_str());
     return false; // No valid JSON data
   }
   String subtype;
@@ -589,7 +591,13 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule, bool stop_all
         match = str_str_value.startsWith(rule_svalue);
         break;
       case COMPARE_OPERATOR_STRING_CONTAINS:
-        match = (str_str_value.indexOf(rule_svalue) > 0);
+        match = (str_str_value.indexOf(rule_svalue) >= 0);
+        break;
+      case  COMPARE_OPERATOR_STRING_NOT_EQUAL:
+        match = (0!=strcasecmp(str_value, rule_svalue));  // Compare strings - this also works for hexadecimals
+        break;
+      case  COMPARE_OPERATOR_STRING_NOT_CONTAINS:
+        match = (str_str_value.indexOf(rule_svalue) < 0);
         break;
       default:
         match = true;
@@ -770,7 +778,7 @@ bool RuleSetProcess(uint8_t rule_set, String &event_saved)
       char command[commands.length() +1];
       strlcpy(command, commands.c_str(), sizeof(command));
 
-      AddLog_P(LOG_LEVEL_INFO, PSTR("RUL: %s performs \"%s\""), event_trigger.c_str(), command);
+      AddLog(LOG_LEVEL_INFO, PSTR("RUL: %s performs \"%s\""), event_trigger.c_str(), command);
 
 //      Response_P(S_JSON_COMMAND_SVALUE, D_CMND_RULE, D_JSON_INITIATED);
 //      MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR(D_CMND_RULE));
@@ -1634,7 +1642,13 @@ bool evaluateComparisonExpression(const char *expression, int len)
       bResult = leftExpr.startsWith(rightExpr);
       break;
     case COMPARE_OPERATOR_STRING_CONTAINS:
-      bResult = (leftExpr.indexOf(rightExpr) > 0);
+      bResult = (leftExpr.indexOf(rightExpr) >= 0);
+      break;
+    case  COMPARE_OPERATOR_STRING_NOT_EQUAL:
+      bResult = !leftExpr.equalsIgnoreCase(rightExpr);  // Compare strings - this also works for hexadecimals
+      break;
+    case  COMPARE_OPERATOR_STRING_NOT_CONTAINS:
+      bResult = (leftExpr.indexOf(rightExpr) < 0);
       break;
   }
   return bResult;
@@ -2103,7 +2117,7 @@ void CmndRule(void)
         }
         int32_t res = SetRule(index - 1, ('"' == XdrvMailbox.data[0]) ? "" : XdrvMailbox.data, append);
         if (res < 0) {
-          AddLog_P(LOG_LEVEL_ERROR, PSTR("RUL: Not enough space"));
+          AddLog(LOG_LEVEL_ERROR, PSTR("RUL: Not enough space"));
         }
       }
       Rules.triggers[index -1] = 0;  // Reset once flag
@@ -2123,7 +2137,7 @@ void CmndRule(void)
         } else {
           last_index = rule_len;                                    // until the end of the rule
         }
-        AddLog_P(LOG_LEVEL_INFO, PSTR("RUL: Rule%d %s%s"),
+        AddLog(LOG_LEVEL_INFO, PSTR("RUL: Rule%d %s%s"),
                                         index, 0 == start_index ? PSTR("") : PSTR("+"),
                                         rule.substring(start_index, last_index).c_str());
         start_index = last_index + 1;
@@ -2177,7 +2191,7 @@ void CmndEvent(void)
   if (XdrvMailbox.data_len > 0) {
     strlcpy(Rules.event_data, XdrvMailbox.data, sizeof(Rules.event_data));
 #ifdef USE_DEVICE_GROUPS
-    SendLocalDeviceGroupMessage(DGR_MSGTYP_UPDATE, DGR_ITEM_EVENT, XdrvMailbox.data);
+    SendDeviceGroupMessage(1, DGR_MSGTYP_UPDATE, DGR_ITEM_EVENT, XdrvMailbox.data);
 #endif  // USE_DEVICE_GROUPS
   }
   if (XdrvMailbox.command) ResponseCmndDone();
@@ -2283,17 +2297,20 @@ void CmndScale(void)
 {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_RULE_VARS)) {
     if (XdrvMailbox.data_len > 0) {
-      if (strchr(XdrvMailbox.data, ',') != nullptr) {  // Process parameter entry
-        char sub_string[XdrvMailbox.data_len +1];
+      if (ArgC() == 5) {  // Process parameter entry
+        char argument[XdrvMailbox.data_len];
 
-        float valueIN = CharToFloat(subStr(sub_string, XdrvMailbox.data, ",", 1));
-        float fromLow = CharToFloat(subStr(sub_string, XdrvMailbox.data, ",", 2));
-        float fromHigh = CharToFloat(subStr(sub_string, XdrvMailbox.data, ",", 3));
-        float toLow = CharToFloat(subStr(sub_string, XdrvMailbox.data, ",", 4));
-        float toHigh = CharToFloat(subStr(sub_string, XdrvMailbox.data, ",", 5));
+        float valueIN = CharToFloat(ArgV(argument, 1));
+        float fromLow = CharToFloat(ArgV(argument, 2));
+        float fromHigh = CharToFloat(ArgV(argument, 3));
+        float toLow = CharToFloat(ArgV(argument, 4));
+        float toHigh = CharToFloat(ArgV(argument, 5));
         float value = map_double(valueIN, fromLow, fromHigh, toLow, toHigh);
         dtostrfd(value, Settings.flag2.calc_resolution, rules_vars[XdrvMailbox.index -1]);
         bitSet(Rules.vars_event, XdrvMailbox.index -1);
+      } else {
+        ResponseCmndIdxError();
+        return;
       }
     }
     ResponseCmndIdxChar(rules_vars[XdrvMailbox.index -1]);

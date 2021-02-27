@@ -71,7 +71,7 @@ uint8_t Sr04TModeDetect(void)
     }
   }
 
-  AddLog_P(LOG_LEVEL_INFO,PSTR("SR04: Mode %d"), sr04_type);
+  AddLog(LOG_LEVEL_INFO,PSTR("SR04: Mode %d"), sr04_type);
   return sr04_type;
 }
 
@@ -123,7 +123,7 @@ uint16_t Sr04TMode2Distance(void)
 
   //check crc sum
   if (crc != sonar_serial->read()) {
-    AddLog_P(LOG_LEVEL_ERROR,PSTR("SR04: Reading CRC error."));
+    AddLog(LOG_LEVEL_ERROR,PSTR("SR04: Reading CRC error."));
     return NO_ECHO;
   }
   //DEBUG_SENSOR_LOG(PSTR("SR04: Distance: %d"), distance);
@@ -156,7 +156,7 @@ void Sr04TReading(void) {
 }
 
 #ifdef USE_WEBSERVER
-const char HTTP_SNS_DISTANCE[] PROGMEM =
+const char HTTP_SNS_DISTANCE_CM[] PROGMEM =
   "{s}SR04 " D_DISTANCE "{m}%s" D_UNIT_CENTIMETER "{e}";  // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 #endif  // USE_WEBSERVER
 
@@ -176,7 +176,7 @@ void Sr04Show(bool json)
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
     } else {
-      WSContentSend_PD(HTTP_SNS_DISTANCE, distance_chr);
+      WSContentSend_PD(HTTP_SNS_DISTANCE_CM, distance_chr);
 #endif  // USE_WEBSERVER
     }
   }

@@ -75,9 +75,6 @@ void MCP9808EverySecond(void) {
 
 void MCP9808Show(bool json) {
   for (uint32_t i = 0; i < mcp9808_cfg.count; i++) {
-    char temperature[33];
-    dtostrfd(mcp9808_sensors[i].temperature, Settings.flag2.temperature_resolution, temperature);
-
     char sensor_name[11];
     strlcpy(sensor_name, mcp9808_cfg.types, sizeof(sensor_name));
     if (mcp9808_cfg.count > 1) {
@@ -85,10 +82,10 @@ void MCP9808Show(bool json) {
     }
 
     if (json) {
-      ResponseAppend_P(JSON_SNS_TEMP, sensor_name, temperature);
+      ResponseAppend_P(JSON_SNS_F_TEMP, sensor_name, Settings.flag2.temperature_resolution, &mcp9808_sensors[i].temperature);
       if ((0 == TasmotaGlobal.tele_period) && (0 == i)) {
 #ifdef USE_DOMOTICZ
-        DomoticzSensor(DZ_TEMP, temperature);
+        DomoticzFloatSensor(DZ_TEMP, mcp9808_sensors[i].temperature);
 #endif  // USE_DOMOTICZ
 #ifdef USE_KNX
         KnxSensor(KNX_TEMPERATURE, mcp9808_sensors[i].temperature);
@@ -96,7 +93,7 @@ void MCP9808Show(bool json) {
       }
 #ifdef USE_WEBSERVER
     } else {
-      WSContentSend_PD(HTTP_SNS_TEMP, sensor_name, temperature, TempUnit());
+      WSContentSend_Temp(sensor_name, mcp9808_sensors[i].temperature);
 #endif  // USE_WEBSERVER
     }
   }

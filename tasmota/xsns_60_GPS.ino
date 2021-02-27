@@ -490,7 +490,7 @@ void UBXsendHeader(void)
 {
   Webserver->setContentLength(CONTENT_LENGTH_UNKNOWN);
   Webserver->sendHeader(F("Content-Disposition"), F("attachment; filename=TASMOTA.gpx"));
-  WSSend(200, CT_STREAM, F(
+  WSSend(200, CT_APP_STREAM, F(
     "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\r\n"
     "<GPX version=\"1.1\" creator=\"TASMOTA\" xmlns=\"http://www.topografix.com/GPX/1/1\" \r\n"
     "xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\r\n"
@@ -573,17 +573,17 @@ void UBXSelectMode(uint16_t mode)
       break;
     case 4:
       Flog->startRecording(true);
-      AddLog_P(LOG_LEVEL_INFO, PSTR("UBX: start recording - appending"));
+      AddLog(LOG_LEVEL_INFO, PSTR("UBX: start recording - appending"));
       break;
     case 5:
       Flog->startRecording(false);
-      AddLog_P(LOG_LEVEL_INFO, PSTR("UBX: start recording - new log"));
+      AddLog(LOG_LEVEL_INFO, PSTR("UBX: start recording - new log"));
       break;
     case 6:
       if(Flog->recording == true){
         Flog->stopRecording();
       }
-      AddLog_P(LOG_LEVEL_INFO, PSTR("UBX: stop recording"));
+      AddLog(LOG_LEVEL_INFO, PSTR("UBX: stop recording"));
       break;
 #endif //USE_FLOG
     case 7:
@@ -689,7 +689,7 @@ void UBXHandleTIME()
       gpsTime.second = UBX.Message.navTime.sec;
       UBX.rec_buffer.values.time = MakeTime(gpsTime);
       if (UBX.mode.forceUTCupdate || Rtc.user_time_entry == false){
-        AddLog_P(LOG_LEVEL_INFO, PSTR("UBX: UTC-Time is valid, set system time"));
+        AddLog(LOG_LEVEL_INFO, PSTR("UBX: UTC-Time is valid, set system time"));
         Rtc.utc_time = UBX.rec_buffer.values.time;
       }
       Rtc.user_time_entry = true;
@@ -702,7 +702,7 @@ void UBXHandleOther(void)
   if (UBX.state.non_empty_loops>6) {  // we expect only 4-5 non-empty loops in a row, could change with other sensor speed (Hz)
     if(UBX.mode.runningVPort) return;
     UBXinitCFG();                     // this should only happen with lots of NMEA-messages, but it is only a guess!!
-    AddLog_P(LOG_LEVEL_ERROR, PSTR("UBX: possible device-reset, will re-init"));
+    AddLog(LOG_LEVEL_ERROR, PSTR("UBX: possible device-reset, will re-init"));
     UBXSerial->flush();
     UBX.state.non_empty_loops = 0;
   }

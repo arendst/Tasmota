@@ -93,8 +93,6 @@ const char kSolaxError[] PROGMEM =
 
 TasmotaSerial *solaxX1Serial;
 
-uint8_t solaxX1_Init = 1;
-
 struct SOLAXX1 {
   float temperature = 0;
   float energy_today = 0;
@@ -102,8 +100,8 @@ struct SOLAXX1 {
   float dc2_voltage = 0;
   float dc1_current = 0;
   float dc2_current = 0;
-  float energy_total = 0;
-  float runtime_total = 0;
+  uint32_t energy_total = 0;
+  uint32_t runtime_total = 0;
   float dc1_power = 0;
   float dc2_power = 0;
 
@@ -241,17 +239,17 @@ uint8_t solaxX1_ParseErrorCode(uint32_t code){
 
 /*********************************************************************************************/
 
-uint8_t solaxX1_send_retry = 0;
-uint8_t solaxX1_nodata_count = 0;
+uint8_t solaxX1_send_retry = 20;
+uint8_t solaxX1_queryData_count = 0;
 
-void solaxX1250MSecond(void) // Every Second
+void solaxX1250MSecond(void) // Every 250 milliseconds
 {
   uint8_t value[61] = {0};
   bool data_ready = solaxX1_RS485ReceiveReady();
 
-  if (protocolStatus.hasAddress && (data_ready || solaxX1_send_retry == 0))
+  if (data_ready)
   {
-    if (data_ready)
+    if (protocolStatus.hasAddress)
     {
       uint8_t error = solaxX1_RS485Receive(value);
       if (error)
@@ -260,8 +258,7 @@ void solaxX1250MSecond(void) // Every Second
       }
       else
       {
-        solaxX1_nodata_count = 0;
-        solaxX1_send_retry = 12;
+        solaxX1_send_retry = 20;
         Energy.data_valid[0] = 0;
 
         solaxX1.temperature =    (float)((value[9] << 8) | value[10]); // Temperature
@@ -275,8 +272,8 @@ void solaxX1250MSecond(void) // Every Second
         Energy.frequency[0] =    (float)((value[25] << 8) | value[26]) * 0.01f; // AC Frequency
         Energy.active_power[0] = (float)((value[27] << 8) | value[28]); // AC Power
         //temporal = (float)((value[29] << 8) | value[30]) * 0.1f; // Not Used
-        solaxX1.energy_total =   (float)((value[31] << 8) | (value[32] << 8) | (value[33] << 8) | value[34]) * 0.1f; // Energy Total
-        solaxX1.runtime_total =  (float)((value[35] << 8) | (value[36] << 8) | (value[37] << 8) | value[38]); // Work Time Total
+        solaxX1.energy_total =   ((value[31] << 24) | (value[32] << 16) | (value[33] << 8) | value[34]); // Energy Total
+        solaxX1.runtime_total =  ((value[35] << 24) | (value[36] << 16) | (value[37] << 8) | value[38]); // Work Time Total
         solaxX1.status =         (uint8_t)((value[39] << 8) | value[40]); // Work mode
         //temporal = (float)((value[41] << 8) | value[42]); // Grid voltage fault value 0.1V
         //temporal = (float)((value[43] << 8) | value[44]); // Gird frequency fault value 0.01Hz
@@ -285,53 +282,14 @@ void solaxX1250MSecond(void) // Every Second
         //temporal = (float)((value[49] << 8) | value[50]); // Pv1 voltage fault value 0.1V
         //temporal = (float)((value[51] << 8) | value[52]); // Pv2 voltage fault value 0.1V
         //temporal = (float)((value[53] << 8) | value[54]); // GFC fault value
-        solaxX1.errorCode =      (uint32_t)((value[58] << 8) | (value[57] << 8) | (value[56] << 8) | value[55]); // Error Code
+        solaxX1.errorCode =      ((value[58] << 24) | (value[57] << 16) | (value[56] << 8) | value[55]); // Error Code
 
         solaxX1.dc1_power = solaxX1.dc1_voltage * solaxX1.dc1_current;
         solaxX1.dc2_power = solaxX1.dc2_voltage * solaxX1.dc2_current;
 
-        solaxX1_QueryLiveData();
-        EnergyUpdateTotal(solaxX1.energy_total, true);  // 484.708 kWh
+        EnergyUpdateTotal((float)solaxX1.energy_total * 0.1f, true);  // 484.708 kWh
       }
-    } // End data Ready
-
-    if (0 == solaxX1_send_retry && 255 != solaxX1_nodata_count) {
-      solaxX1_send_retry = 12;
-      solaxX1_QueryLiveData();
-    }
-
-    // While the inverter has not stable ambient light, will send an address adquired but go offline again,
-    // so no data will be received when the query is send, then we start the countdown to set the inverter as offline again.
-    if (255 == solaxX1_nodata_count) {
-      solaxX1_nodata_count = 0;
-      solaxX1_send_retry = 12;
-    }
-  } // end hasAddress && (data_ready || solaxX1_send_retry == 0)
-  else
-  {
-    if ((solaxX1_nodata_count % 4) == 0) { DEBUG_SENSOR_LOG(PSTR("SX1: No Data count: %d"), solaxX1_nodata_count); }
-    if (solaxX1_nodata_count < 10 * 4) // max. seconds without data
-    {
-      solaxX1_nodata_count++;
-    }
-    else if (255 != solaxX1_nodata_count)
-    {
-      // no data from RS485, reset values to 0 and set inverter as offline
-      solaxX1_nodata_count = 255;
-      solaxX1_send_retry = 12;
-      protocolStatus.status = 0b00001000; // queryOffline
-      Energy.data_valid[0] = ENERGY_WATCHDOG;
-
-      solaxX1.temperature = solaxX1.dc1_voltage = solaxX1.dc2_voltage = solaxX1.dc1_current = solaxX1.dc2_current = solaxX1.dc1_power = 0;
-      solaxX1.dc2_power = solaxX1.status = Energy.current[0] = Energy.voltage[0] = Energy.frequency[0] = Energy.active_power[0] = 0;
-      //solaxX1.energy_today = solaxX1.energy_total = solaxX1.runtime_total = 0;
-    }
-  }
-
-  if (!protocolStatus.hasAddress && (data_ready || solaxX1_send_retry == 0))
-  {
-    if (data_ready)
-    {
+    } else { // end hasAddress
       // check address confirmation from inverter
       if (protocolStatus.inverterAddressSend)
       {
@@ -373,40 +331,56 @@ void solaxX1250MSecond(void) // Every Second
           }
         }
       }
-    } // End data ready
+    }
+  }
 
-    if (solaxX1_send_retry == 0)
-    {
-      if (protocolStatus.queryOfflineSend)
-      {
+  if (protocolStatus.hasAddress) {
+    if (solaxX1_queryData_count <= 0) {
+      solaxX1_queryData_count = 5;
+      DEBUG_SENSOR_LOG(PSTR("SX1: Send Retry count: %d"), solaxX1_send_retry);
+      solaxX1_QueryLiveData();
+    }
+    solaxX1_queryData_count--;
+  }
+
+  // request to the inverter the serial number if offline
+  if (protocolStatus.queryOffline)
+  {
+    // We sent the message to query inverters in offline status
+    source[0] = 0x01;
+    destination[1] = 0x00;
+    controlCode[0] = 0x10;
+    functionCode[0] = 0x00;
+    dataLength[0] = 0x00;
+    solaxX1_RS485Send(9);
+    protocolStatus.status = 0b00010000; // queryOfflineSend
+    solaxX1_send_retry = 20;
+    DEBUG_SENSOR_LOG(PSTR("SX1: Query Offline Send"));
+  }
+
+  if (solaxX1_send_retry == 0) {
+    if (protocolStatus.hasAddress) {
+      protocolStatus.status = 0b00001000; // queryOffline
+      Energy.data_valid[0] = ENERGY_WATCHDOG;
+
+      solaxX1.temperature = solaxX1.dc1_voltage = solaxX1.dc2_voltage = solaxX1.dc1_current = solaxX1.dc2_current = solaxX1.dc1_power = 0;
+      solaxX1.dc2_power = solaxX1.status = Energy.current[0] = Energy.voltage[0] = Energy.frequency[0] = Energy.active_power[0] = 0;
+      //solaxX1.energy_today = solaxX1.energy_total = solaxX1.runtime_total = 0;
+    } else {
+      if (protocolStatus.queryOfflineSend) {
         protocolStatus.status = 0b00001000; // queryOffline
         DEBUG_SENSOR_LOG(PSTR("SX1: Set Query Offline"));
       }
-      solaxX1_send_retry = 12;
+      solaxX1_send_retry = 20;
     }
+  }
 
-    // request to the inverter the serial number if offline
-    if (protocolStatus.queryOffline)
-    {
-      // We sent the message to query inverters in offline status
-      source[0] = 0x01;
-      destination[1] = 0x00;
-      controlCode[0] = 0x10;
-      functionCode[0] = 0x00;
-      dataLength[0] = 0x00;
-      solaxX1_RS485Send(9);
-      protocolStatus.status = 0b00010000; // queryOfflineSend
-      DEBUG_SENSOR_LOG(PSTR("SX1: Query Offline Send"));
-    }
-  } // end !hasAddress && (data_ready || solaxX1_send_retry == 0)
-
-  if (!data_ready)
-    solaxX1_send_retry--;
+  if (!data_ready && solaxX1_send_retry > 0) { solaxX1_send_retry--; }
 }
 
 void solaxX1SnsInit(void)
 {
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR("SX1: Solax X1 Inverter Init"));
+  AddLog(LOG_LEVEL_DEBUG, PSTR("SX1: Solax X1 Inverter Init"));
   DEBUG_SENSOR_LOG(PSTR("SX1: RX pin: %d, TX pin: %d"), Pin(GPIO_SOLAXX1_RX), Pin(GPIO_SOLAXX1_TX));
   protocolStatus.status = 0b00100000; // hasAddress
 
@@ -461,8 +435,6 @@ void solaxX1Show(bool json)
   char pv2_power[33];
   dtostrfd(solaxX1.dc2_power, Settings.flag2.wattage_resolution, pv2_power);
 #endif
-  char temperature[33];
-  dtostrfd(solaxX1.temperature, Settings.flag2.temperature_resolution, temperature);
   char runtime[33];
   dtostrfd(solaxX1.runtime_total, 0, runtime);
   char status[33];
@@ -476,18 +448,21 @@ void solaxX1Show(bool json)
     ResponseAppend_P(PSTR(",\"" D_JSON_PV2_VOLTAGE "\":%s,\"" D_JSON_PV2_CURRENT "\":%s,\"" D_JSON_PV2_POWER "\":%s"),
                                 pv2_voltage, pv2_current, pv2_power);
 #endif
-    ResponseAppend_P(PSTR(",\"" D_JSON_TEMPERATURE "\":%s,\"" D_JSON_RUNTIME "\":%s,\"" D_JSON_STATUS "\":\"%s\",\"" D_JSON_ERROR "\":%d"),
-                                temperature, runtime, status, solaxX1.errorCode);
+    ResponseAppend_P(PSTR(",\"" D_JSON_TEMPERATURE "\":%*_f,\"" D_JSON_RUNTIME "\":%s,\"" D_JSON_STATUS "\":\"%s\",\"" D_JSON_ERROR "\":%d"),
+                                Settings.flag2.temperature_resolution, &solaxX1.temperature, runtime, status, solaxX1.errorCode);
+
+#ifdef USE_DOMOTICZ
+    // Avoid bad temperature report at beginning of the day (spikes of 1200 celsius degrees)
+    if (0 == TasmotaGlobal.tele_period && solaxX1.temperature < 100) { DomoticzFloatSensor(DZ_TEMP, solaxX1.temperature); }
+#endif // USE_DOMOTICZ
 
 #ifdef USE_WEBSERVER
-  }
-  else
-  {
+  } else {
     WSContentSend_PD(HTTP_SNS_solaxX1_DATA1, solar_power, pv1_voltage, pv1_current, pv1_power);
 #ifdef SOLAXX1_PV2
     WSContentSend_PD(HTTP_SNS_solaxX1_DATA2, pv2_voltage, pv2_current, pv2_power);
 #endif
-    WSContentSend_PD(HTTP_SNS_TEMP, D_SOLAX_X1, temperature, TempUnit());
+    WSContentSend_Temp(D_SOLAX_X1, solaxX1.temperature);
     char errorCodeString[33];
     WSContentSend_PD(HTTP_SNS_solaxX1_DATA3, runtime, status,
       GetTextIndexed(errorCodeString, sizeof(errorCodeString), solaxX1_ParseErrorCode(solaxX1.errorCode), kSolaxError));

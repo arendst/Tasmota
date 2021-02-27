@@ -187,6 +187,7 @@ void directModeInput(IO_REG_TYPE pin)
 {
     if ( digitalPinIsValid(pin) )
     {
+#if CONFIG_IDF_TARGET_ESP32      // ESP32/PICO-D4
         uint32_t rtc_reg(rtc_gpio_desc[pin].reg);
 
         if ( rtc_reg ) // RTC pins PULL settings
@@ -194,6 +195,15 @@ void directModeInput(IO_REG_TYPE pin)
             ESP_REG(rtc_reg) = ESP_REG(rtc_reg) & ~(rtc_gpio_desc[pin].mux);
             ESP_REG(rtc_reg) = ESP_REG(rtc_reg) & ~(rtc_gpio_desc[pin].pullup | rtc_gpio_desc[pin].pulldown);
         }
+#elif CONFIG_IDF_TARGET_ESP32S2  // ESP32-S2
+        uint32_t rtc_reg(rtc_io_desc[pin].reg);
+
+        if ( rtc_reg ) // RTC pins PULL settings
+        {
+            ESP_REG(rtc_reg) = ESP_REG(rtc_reg) & ~(rtc_io_desc[pin].mux);
+            ESP_REG(rtc_reg) = ESP_REG(rtc_reg) & ~(rtc_io_desc[pin].pullup | rtc_io_desc[pin].pulldown);
+        }
+#endif
 
         if ( pin < 32 )
             GPIO.enable_w1tc = ((uint32_t)1 << pin);
@@ -215,6 +225,7 @@ void directModeOutput(IO_REG_TYPE pin)
 {
     if ( digitalPinIsValid(pin) && pin <= 33 ) // pins above 33 can be only inputs
     {
+#if CONFIG_IDF_TARGET_ESP32      // ESP32/PICO-D4
         uint32_t rtc_reg(rtc_gpio_desc[pin].reg);
 
         if ( rtc_reg ) // RTC pins PULL settings
@@ -222,6 +233,15 @@ void directModeOutput(IO_REG_TYPE pin)
             ESP_REG(rtc_reg) = ESP_REG(rtc_reg) & ~(rtc_gpio_desc[pin].mux);
             ESP_REG(rtc_reg) = ESP_REG(rtc_reg) & ~(rtc_gpio_desc[pin].pullup | rtc_gpio_desc[pin].pulldown);
         }
+#elif CONFIG_IDF_TARGET_ESP32S2  // ESP32-S2
+        uint32_t rtc_reg(rtc_io_desc[pin].reg);
+
+        if ( rtc_reg ) // RTC pins PULL settings
+        {
+            ESP_REG(rtc_reg) = ESP_REG(rtc_reg) & ~(rtc_io_desc[pin].mux);
+            ESP_REG(rtc_reg) = ESP_REG(rtc_reg) & ~(rtc_io_desc[pin].pullup | rtc_io_desc[pin].pulldown);
+        }
+#endif
 
         if ( pin < 32 )
             GPIO.enable_w1ts = ((uint32_t)1 << pin);

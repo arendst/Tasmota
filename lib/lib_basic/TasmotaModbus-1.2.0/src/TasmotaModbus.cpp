@@ -93,15 +93,18 @@ uint8_t TasmotaModbus::ReceiveBuffer(uint8_t *buffer, uint8_t register_count)
         buffer[mb_len++] = data;
         if (3 == mb_len) {
           if (buffer[1] & 0x80) {  // 01 84 02 f2 f1
+            if (0 == buffer[2]) {
+              return 3;            // 3 = Illegal Data Value,
+            }
             return buffer[2];      // 1 = Illegal Function,
-                                  // 2 = Illegal Data Address,
-                                  // 3 = Illegal Data Value,
-                                  // 4 = Slave Error
-                                  // 5 = Acknowledge but not finished (no error)
-                                  // 6 = Slave Busy
-                                  // 8 = Memory Parity error
-                                  // 10 = Gateway Path Unavailable
-                                  // 11 = Gateway Target device failed to respond
+                                   // 2 = Illegal Data Address,
+                                   // 3 = Illegal Data Value,
+                                   // 4 = Slave Error
+                                   // 5 = Acknowledge but not finished (no error)
+                                   // 6 = Slave Busy
+                                   // 8 = Memory Parity error
+                                   // 10 = Gateway Path Unavailable
+                                   // 11 = Gateway Target device failed to respond
           }
         }
       }

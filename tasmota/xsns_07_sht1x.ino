@@ -37,8 +37,8 @@ enum {
   SHT1X_CMD_SOFT_RESET    = B00011110
 };
 
-uint8_t sht_sda_pin;
-uint8_t sht_scl_pin;
+int8_t sht_sda_pin;
+int8_t sht_scl_pin;
 uint8_t sht_type = 0;
 char sht_types[] = "SHT1X";
 uint8_t sht_valid = 0;
@@ -86,7 +86,7 @@ bool ShtSendCommand(const uint8_t cmd)
   }
   if (ackerror) {
 //    sht_type = 0;
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_SHT1 D_SENSOR_DID_NOT_ACK_COMMAND));
+    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_SHT1 D_SENSOR_DID_NOT_ACK_COMMAND));
   }
   return (!ackerror);
 }
@@ -100,7 +100,7 @@ bool ShtAwaitResult(void)
     }
     delay(20);
   }
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_SHT1 D_SENSOR_BUSY));
+  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_SHT1 D_SENSOR_BUSY));
 //  sht_type = 0;
   return false;
 }
@@ -163,7 +163,7 @@ void ShtDetect(void)
   sht_scl_pin = Pin(GPIO_I2C_SCL);
   if (ShtRead()) {
     sht_type = 1;
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_I2C D_SHT1X_FOUND));
+    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_I2C D_SHT1X_FOUND));
   } else {
     Wire.begin(sht_sda_pin, sht_scl_pin);
     sht_type = 0;

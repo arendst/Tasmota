@@ -101,14 +101,14 @@ void ZigbeeInputLoop(void) {
       // in this case the first bit (lsb) is missed and Tasmota receives 0xFF instead of 0xFE
       // We forgive this mistake, and next bytes are automatically resynchronized
       if (ZIGBEE_SOF_ALT == zigbee_in_byte) {
-        AddLog_P(LOG_LEVEL_INFO, PSTR("ZbInput forgiven first byte %02X (only for statistics)"), zigbee_in_byte);
+        AddLog(LOG_LEVEL_INFO, PSTR("ZbInput forgiven first byte %02X (only for statistics)"), zigbee_in_byte);
         zigbee_in_byte = ZIGBEE_SOF;
       }
 		}
 
     if ((0 == zigbee_buffer->len()) && (ZIGBEE_SOF != zigbee_in_byte)) {
       // waiting for SOF (Start Of Frame) byte, discard anything else
-      AddLog_P(LOG_LEVEL_INFO, PSTR("ZbInput discarding byte %02X"), zigbee_in_byte);
+      AddLog(LOG_LEVEL_INFO, PSTR("ZbInput discarding byte %02X"), zigbee_in_byte);
       continue;     // discard
     }
 
@@ -134,29 +134,25 @@ void ZigbeeInputLoop(void) {
   }
 
   if (zigbee_buffer->len() && (millis() > (zigbee_polling_window + ZIGBEE_POLLING))) {
-    char hex_char[(zigbee_buffer->len() * 2) + 2];
-		ToHex_P((unsigned char*)zigbee_buffer->getBuffer(), zigbee_buffer->len(), hex_char, sizeof(hex_char));
-
     // AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_ZIGBEE "Bytes follow_read_metric = %0d"), ZigbeeSerial->getLoopReadMetric());
 		// buffer received, now check integrity
 		if (zigbee_buffer->len() != zigbee_frame_len) {
 			// Len is not correct, log and reject frame
-      AddLog_P(LOG_LEVEL_INFO, PSTR(D_JSON_ZIGBEEZNPRECEIVED ": received frame of wrong size %s, len %d, expected %d"), hex_char, zigbee_buffer->len(), zigbee_frame_len);
+      AddLog_P(LOG_LEVEL_INFO, PSTR(D_JSON_ZIGBEEZNPRECEIVED ": received frame of wrong size %_B, len %d, expected %d"), zigbee_buffer, zigbee_buffer->len(), zigbee_frame_len);
 		} else if (0x00 != fcs) {
 			// FCS is wrong, packet is corrupt, log and reject frame
-      AddLog_P(LOG_LEVEL_INFO, PSTR(D_JSON_ZIGBEEZNPRECEIVED ": received bad FCS frame %s, %d"), hex_char, fcs);
+      AddLog_P(LOG_LEVEL_INFO, PSTR(D_JSON_ZIGBEEZNPRECEIVED ": received bad FCS frame %_B, %d"), zigbee_buffer, fcs);
 		} else {
 			// frame is correct
 			//AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR(D_JSON_ZIGBEEZNPRECEIVED ": received correct frame %s"), hex_char);
 
 			SBuffer znp_buffer = zigbee_buffer->subBuffer(2, zigbee_frame_len - 3);	// remove SOF, LEN and FCS
 
-			ToHex_P((unsigned char*)znp_buffer.getBuffer(), znp_buffer.len(), hex_char, sizeof(hex_char));
-      Response_P(PSTR("{\"" D_JSON_ZIGBEEZNPRECEIVED "\":\"%s\"}"), hex_char);
+      Response_P(PSTR("{\"" D_JSON_ZIGBEEZNPRECEIVED "\":\"%_B\"}"), &znp_buffer);
       if (Settings.flag3.tuya_serial_mqtt_publish) {
         MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR(D_RSLT_SENSOR));
       } else {
-        AddLogZ_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE "%s"), TasmotaGlobal.mqtt_data);
+        AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE "%s"), TasmotaGlobal.mqtt_data);
       }
 			// now process the message
       ZigbeeProcessInput(znp_buffer);
@@ -226,9 +222,6 @@ void ZigbeeInputLoop(void) {
 
   uint32_t frame_len = zigbee_buffer->len();
   if (frame_complete || (frame_len && (millis() > (zigbee_polling_window + ZIGBEE_POLLING)))) {
-    char hex_char[frame_len * 2 + 2];
-    ToHex_P((unsigned char*)zigbee_buffer->getBuffer(), zigbee_buffer->len(), hex_char, sizeof(hex_char));
-
     // AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_ZIGBEE "Bytes follow_read_metric = %0d"), ZigbeeSerial->getLoopReadMetric());
     if ((frame_complete) && (frame_len >= 3)) {
       // frame received and has at least 3 bytes (without EOF), checking CRC
@@ -250,7 +243,7 @@ void ZigbeeInputLoop(void) {
       // remove 2 last bytes
 
       if (crc_received != crc) {
-        AddLog_P(LOG_LEVEL_INFO, PSTR(D_JSON_ZIGBEE_EZSP_RECEIVED ": bad crc (received 0x%04X, computed 0x%04X) %s"), crc_received, crc, hex_char);
+        AddLog_P(LOG_LEVEL_INFO, PSTR(D_JSON_ZIGBEE_EZSP_RECEIVED ": bad crc (received 0x%04X, computed 0x%04X) %_B"), crc_received, crc, zigbee_buffer);
       } else {
         // copy buffer
     	  SBuffer ezsp_buffer = zigbee_buffer->subBuffer(0, frame_len - 2);	// CRC
@@ -266,14 +259,13 @@ void ZigbeeInputLoop(void) {
           }
         }
 
-        ToHex_P((unsigned char*)ezsp_buffer.getBuffer(), ezsp_buffer.len(), hex_char, sizeof(hex_char));
-        AddLogZ_P(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_ZIGBEE "{\"" D_JSON_ZIGBEE_EZSP_RECEIVED "2\":\"%s\"}"), hex_char);
+        AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_ZIGBEE "{\"" D_JSON_ZIGBEE_EZSP_RECEIVED "2\":\"%_B\"}"), &ezsp_buffer);
         // now process the message
         ZigbeeProcessInputRaw(ezsp_buffer);
       }
     } else {
       // the buffer timed-out, print error and discard
-      AddLog_P(LOG_LEVEL_INFO, PSTR(D_JSON_ZIGBEE_EZSP_RECEIVED ": time-out, discarding %s, %d"), hex_char);
+      AddLog_P(LOG_LEVEL_INFO, PSTR(D_JSON_ZIGBEE_EZSP_RECEIVED ": time-out, discarding %s, %_B"), zigbee_buffer);
     }
     zigbee_buffer->setLen(0);		// empty buffer
     escape = false;
@@ -356,9 +348,7 @@ void ZigbeeZNPSend(const uint8_t *msg, size_t len) {
 		//AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("ZNPSend FCS %02X"), fcs);
   }
 	// Now send a MQTT message to report the sent message
-	char hex_char[(len * 2) + 2];
-  AddLogZ_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE D_JSON_ZIGBEEZNPSENT " %s"),
-                               		ToHex_P(msg, len, hex_char, sizeof(hex_char)));
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE D_JSON_ZIGBEEZNPSENT " %*_H"), len, msg);
 }
 
 //
@@ -490,17 +480,13 @@ void ZigbeeEZSPSendRaw(const uint8_t *msg, size_t len, bool send_cancel) {
   }
 
   // Now send a MQTT message to report the sent message
-  char hex_char[(len * 2) + 2];
-  AddLogZ_P(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_ZIGBEE D_JSON_ZIGBEE_EZSP_SENT_RAW " %s"),
-                                  ToHex_P(msg, len, hex_char, sizeof(hex_char)));
+  AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_ZIGBEE D_JSON_ZIGBEE_EZSP_SENT_RAW " %*_H"), len, msg);
 }
 
 // Send an EZSP command and data
 // Ex: Version with min v8 = 000008
 void ZigbeeEZSPSendCmd(const uint8_t *msg, size_t len) {
-  char hex_char[len*2 + 2];
-  ToHex_P(msg, len, hex_char, sizeof(hex_char));
-  AddLogZ_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE "ZbEZSPSend %s"), hex_char);
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE "ZbEZSPSend %*_H"), len, msg);
 
   SBuffer cmd(len+3);   // prefix with seq number (1 byte) and frame control bytes (2 bytes)
 
@@ -552,7 +538,7 @@ void ZigbeeEZSPSendDATA(const uint8_t *msg, size_t len) {
 }
 
 // Receive a high-level EZSP command/response, starting with 16-bits frame ID
-void ZigbeeProcessInputEZSP(class SBuffer &buf) {
+void ZigbeeProcessInputEZSP(SBuffer &buf) {
   // verify errors in first 2 bytes.
   // TODO
   // uint8_t  sequence_num = buf.get8(0);
@@ -571,11 +557,8 @@ void ZigbeeProcessInputEZSP(class SBuffer &buf) {
   }
   buf.setLen(buf.len() - 3);
 
-  char hex_char[buf.len()*2 + 2];
-
   // log message
-  ToHex_P((unsigned char*)buf.getBuffer(), buf.len(), hex_char, sizeof(hex_char));
-  Response_P(PSTR("{\"" D_JSON_ZIGBEE_EZSP_RECEIVED "\":\"%s\"}"), hex_char);
+  Response_P(PSTR("{\"" D_JSON_ZIGBEE_EZSP_RECEIVED "\":\"%_B\"}"), &buf);
   if (Settings.flag3.tuya_serial_mqtt_publish) {
     MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR(D_RSLT_SENSOR));
   } else {
@@ -587,6 +570,8 @@ void ZigbeeProcessInputEZSP(class SBuffer &buf) {
       case EZSP_setConcentrator:          // 1000
       case EZSP_networkInit:              // 1700
       case EZSP_stackStatusHandler:       // 1900
+      case EZSP_startScan:                // 1A00
+      case EZSP_scanCompleteHandler:      // 1C00
       case EZSP_formNetwork:              // 1E00
       case EZSP_permitJoining:            // 2200
       case EZSP_getEui64:                 // 2600
@@ -597,6 +582,7 @@ void ZigbeeProcessInputEZSP(class SBuffer &buf) {
       case EZSP_sendMulticast:            // 3800
       case EZSP_messageSentHandler:       // 3F00
       case EZSP_incomingMessageHandler:   // 4500
+      case EZSP_energyScanResultHandler:  // 4800
       case EZSP_setConfigurationValue:    // 5300
       case EZSP_setPolicy:                // 5500
       case 0x0059:                        // 5900 - supposedly removed by still happening
@@ -607,7 +593,7 @@ void ZigbeeProcessInputEZSP(class SBuffer &buf) {
         log_level = LOG_LEVEL_DEBUG;
         break;
     }
-    AddLogZ_P(log_level, PSTR(D_LOG_ZIGBEE "%s"), TasmotaGlobal.mqtt_data);    // TODO move to LOG_LEVEL_DEBUG when stable
+    AddLog_P(log_level, PSTR(D_LOG_ZIGBEE "%s"), TasmotaGlobal.mqtt_data);    // TODO move to LOG_LEVEL_DEBUG when stable
   }
 
   // Pass message to state machine
@@ -632,7 +618,7 @@ void EZSP_HandleAck(uint8_t new_ack) {
 }
 
 // Receive raw ASH frame (CRC was removed, data unstuffed) but still contains frame numbers
-void ZigbeeProcessInputRaw(class SBuffer &buf) {
+void ZigbeeProcessInputRaw(SBuffer &buf) {
   uint8_t control_byte = buf.get8(0);
   uint8_t ack_num = control_byte & 0x07;        // keep 3 LSB
   if (control_byte & 0x80) {  // non DATA frame
@@ -765,16 +751,17 @@ void CmndZbEZSPSend(void)
 // - msg:       pointer to byte array, payload of ZCL message (len is following), ignored if nullptr
 // - len:       length of the 'msg' payload
 // - needResponse: boolean, true = we ask the target to respond, false = the target should not respond
-// - transacId: 8-bits, transation id of message (should be incremented at each message), used both for Zigbee message number and ZCL message number
+// - transac: 8-bits, transation id of message (should be incremented at each message), used both for Zigbee message number and ZCL message number
 // Returns: None
 //
-void ZigbeeZCLSend_Raw(const ZigbeeZCLSendMessage &zcl) {
+
+void ZigbeeZCLSend_Raw(const ZCLMessage &zcl) {
+  SBuffer buf(32+zcl.buf.len());
 
 #ifdef USE_ZIGBEE_ZNP
-  SBuffer buf(32+zcl.len);
   buf.add8(Z_SREQ | Z_AF);          // 24
   buf.add8(AF_DATA_REQUEST_EXT);    // 02
-  if (BAD_SHORTADDR == zcl.shortaddr) {        // if no shortaddr we assume group address
+  if (!zcl.validShortaddr()) {        // if no shortaddr we assume group address
     buf.add8(Z_Addr_Group);         // 01
     buf.add64(zcl.groupaddr);           // group address, only 2 LSB, upper 6 MSB are discarded
     buf.add8(0xFF);                 // dest endpoint is not used for group addresses
@@ -786,28 +773,24 @@ void ZigbeeZCLSend_Raw(const ZigbeeZCLSendMessage &zcl) {
   buf.add16(0x0000);                // dest Pan ID, 0x0000 = intra-pan
   buf.add8(0x01);                   // source endpoint
   buf.add16(zcl.cluster);
-  buf.add8(zcl.transacId);              // transacId
+  buf.add8(zcl.transac);              // transac
   buf.add8(0x30);                   // 30 options
   buf.add8(0x1E);                   // 1E radius
 
-  buf.add16(3 + zcl.len + (zcl.manuf ? 2 : 0));
+  buf.add16(3 + zcl.buf.len() + (zcl.manuf ? 2 : 0));
   buf.add8((zcl.needResponse ? 0x00 : 0x10) | (zcl.clusterSpecific ? 0x01 : 0x00) | (zcl.manuf ? 0x04 : 0x00));                 // Frame Control Field
   if (zcl.manuf) {
     buf.add16(zcl.manuf);               // add Manuf Id if not null
   }
-  buf.add8(zcl.transacId);              // Transaction Sequence Number
+  buf.add8(zcl.transac);              // Transaction Sequence Number
   buf.add8(zcl.cmd);
-  if (zcl.len > 0) {
-    buf.addBuffer(zcl.msg, zcl.len);        // add the payload
-  }
+  buf.addBuffer(zcl.buf);
 
   ZigbeeZNPSend(buf.getBuffer(), buf.len());
 #endif // USE_ZIGBEE_ZNP
 
 #ifdef USE_ZIGBEE_EZSP
-  SBuffer buf(32+zcl.len);
-
-  if (BAD_SHORTADDR != zcl.shortaddr) {
+  if (zcl.validShortaddr()) {
     // send unicast message to an address
     buf.add16(EZSP_sendUnicast);          // 3400
     buf.add8(EMBER_OUTGOING_DIRECT);    // 00
@@ -823,20 +806,18 @@ void ZigbeeZCLSend_Raw(const ZigbeeZCLSendMessage &zcl) {
       buf.add16(EMBER_APS_OPTION_ENABLE_ROUTE_DISCOVERY | EMBER_APS_OPTION_RETRY);      // APS frame
     }
     buf.add16(zcl.groupaddr);               // groupId
-    buf.add8(zcl.transacId);
+    buf.add8(zcl.transac);
     // end of ApsFrame
     buf.add8(0x01);                     // tag TODO
 
-    buf.add8(3 + zcl.len + (zcl.manuf ? 2 : 0));
+    buf.add8(3 + zcl.buf.len() + (zcl.manuf ? 2 : 0));
     buf.add8((zcl.needResponse ? 0x00 : 0x10) | (zcl.clusterSpecific ? 0x01 : 0x00) | (zcl.manuf ? 0x04 : 0x00));                 // Frame Control Field
     if (zcl.manuf) {
       buf.add16(zcl.manuf);               // add Manuf Id if not null
     }
-    buf.add8(zcl.transacId);              // Transaction Sequance Number
+    buf.add8(zcl.transac);              // Transaction Sequance Number
     buf.add8(zcl.cmd);
-    if (zcl.len > 0) {
-      buf.addBuffer(zcl.msg, zcl.len);        // add the payload
-    }
+    buf.addBuffer(zcl.buf);
   } else {
     // send broadcast group address, aka groupcast
     buf.add16(EZSP_sendMulticast);      // 3800
@@ -851,22 +832,20 @@ void ZigbeeZCLSend_Raw(const ZigbeeZCLSendMessage &zcl) {
       buf.add16(EMBER_APS_OPTION_ENABLE_ROUTE_DISCOVERY | EMBER_APS_OPTION_RETRY);      // APS frame
     }
     buf.add16(zcl.groupaddr);               // groupId
-    buf.add8(zcl.transacId);
+    buf.add8(zcl.transac);
     // end of ApsFrame
     buf.add8(0);                        // hops, 0x00 = EMBER_MAX_HOPS
     buf.add8(7);                        // nonMemberRadius, 7 = infinite
     buf.add8(0x01);                     // tag TODO
 
-    buf.add8(3 + zcl.len + (zcl.manuf ? 2 : 0));
+    buf.add8(3 + zcl.buf.len() + (zcl.manuf ? 2 : 0));
     buf.add8((zcl.needResponse ? 0x00 : 0x10) | (zcl.clusterSpecific ? 0x01 : 0x00) | (zcl.manuf ? 0x04 : 0x00));                 // Frame Control Field
     if (zcl.manuf) {
       buf.add16(zcl.manuf);               // add Manuf Id if not null
     }
-    buf.add8(zcl.transacId);              // Transaction Sequance Number
+    buf.add8(zcl.transac);              // Transaction Sequance Number
     buf.add8(zcl.cmd);
-    if (zcl.len > 0) {
-      buf.addBuffer(zcl.msg, zcl.len);        // add the payload
-    }
+    buf.addBuffer(zcl.buf);
   }
 
   ZigbeeEZSPSendCmd(buf.buf(), buf.len());

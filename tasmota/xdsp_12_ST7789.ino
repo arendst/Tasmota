@@ -86,22 +86,12 @@ void ST7789_InitDriver(void) {
       bppin = Pin(GPIO_BACKLIGHT);
     }
 
-    int8_t reset = -1;
-    if (PinUsed(GPIO_OLED_RESET)) {
-      reset = Pin(GPIO_OLED_RESET);
-    }
-
-    int8_t cs = -1;
-    if (PinUsed(GPIO_ST7789_CS)) {
-      cs = Pin(GPIO_ST7789_CS);
-    }
-
     // init renderer, may use hardware spi
     if (TasmotaGlobal.soft_spi_enabled) {
-      st7789 = new Arduino_ST7789(Pin(GPIO_ST7789_DC), reset, Pin(GPIO_SSPI_MOSI), Pin(GPIO_SSPI_SCLK), cs, bppin);
+      st7789 = new Arduino_ST7789(Pin(GPIO_ST7789_DC), Pin(GPIO_OLED_RESET), Pin(GPIO_SSPI_MOSI), Pin(GPIO_SSPI_SCLK), Pin(GPIO_ST7789_CS), bppin);
     }
     else if (TasmotaGlobal.spi_enabled) {
-      st7789 = new Arduino_ST7789(Pin(GPIO_ST7789_DC), reset, cs, bppin);
+      st7789 = new Arduino_ST7789(Pin(GPIO_ST7789_DC), Pin(GPIO_OLED_RESET), Pin(GPIO_ST7789_CS), bppin);
     }
 
     st7789->init(Settings.display_width,Settings.display_height);
@@ -136,7 +126,7 @@ void ST7789_InitDriver(void) {
 #endif // ESP32
 
     st7789_init_done = true;
-    AddLog_P(LOG_LEVEL_INFO, PSTR("DSP: ST7789"));
+    AddLog(LOG_LEVEL_INFO, PSTR("DSP: ST7789"));
   }
 }
 
@@ -190,7 +180,7 @@ bool Xdsp12(uint8_t function)
 {
   bool result = false;
 
-//AddLog_P(LOG_LEVEL_INFO, PSTR("touch %d - %d"), FT5206_found, function);
+//AddLog(LOG_LEVEL_INFO, PSTR("touch %d - %d"), FT5206_found, function);
 
   if (FUNC_DISPLAY_INIT_DRIVER == function) {
     ST7789_InitDriver();

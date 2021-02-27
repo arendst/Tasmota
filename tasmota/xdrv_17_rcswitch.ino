@@ -56,7 +56,7 @@ void RfReceiveCheck(void) {
     int protocol = mySwitch.getReceivedProtocol();
     int delay = mySwitch.getReceivedDelay();
 
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR("RFR: Data 0x%lX (%u), Bits %d, Protocol %d, Delay %d"), data, data, bits, protocol, delay);
+    AddLog(LOG_LEVEL_DEBUG, PSTR("RFR: Data 0x%lX (%u), Bits %d, Protocol %d, Delay %d"), data, data, bits, protocol, delay);
 
     uint32_t now = millis();
     if ((now - rf_lasttime > RF_TIME_AVOID_DUPLICATE) && (data > 0)) {
@@ -130,7 +130,7 @@ void CmndRfProtocol(void) {
     }
   }
   mySwitch.setReceiveProtocolMask(Settings.rf_protocol_mask);
-//  AddLog_P(LOG_LEVEL_INFO, PSTR("RFR: CmndRfProtocol:: Start responce"));
+//  AddLog(LOG_LEVEL_INFO, PSTR("RFR: CmndRfProtocol:: Start responce"));
   Response_P(PSTR("{\"" D_CMND_RFPROTOCOL "\":\""));
   bool gotone = false;
   thisdat = 1;
@@ -157,7 +157,7 @@ void CmndRfSend(void)
     unsigned int bits = 24;
     int protocol = 1;
     int repeat = 10;
-    int pulse = 350;
+    int pulse = 0; // 0 leave the library use the default value depending on protocol
 
     JsonParser parser(XdrvMailbox.data);
     JsonParserObject root = parser.getRootObject();
@@ -195,8 +195,8 @@ void CmndRfSend(void)
 
     if (!protocol) { protocol = 1; }
     mySwitch.setProtocol(protocol);
-    if (!pulse) { pulse = 350; }      // Default pulse length for protocol 1
-    mySwitch.setPulseLength(pulse);
+    // if pulse is specified in the command, enforce the provided value (otherwise lib takes default)
+    if (pulse) { mySwitch.setPulseLength(pulse); }
     if (!repeat) { repeat = 10; }     // Default at init
     mySwitch.setRepeatTransmit(repeat);
     if (!bits) { bits = 24; }         // Default 24 bits

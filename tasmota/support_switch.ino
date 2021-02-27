@@ -45,7 +45,7 @@ Ticker TickerSwitch;
 
 struct SWITCH {
   uint32_t debounce = 0;                     // Switch debounce timer
-  uint16_t no_pullup_mask = 0;               // Switch pull-up bitmask flags
+  uint32_t no_pullup_mask = 0;               // Switch pull-up bitmask flags
   uint8_t state[MAX_SWITCHES] = { 0 };
   uint8_t last_state[MAX_SWITCHES];          // Last wall switch states
   uint8_t hold_timer[MAX_SWITCHES] = { 0 };  // Timer for wallswitch push button hold
@@ -230,19 +230,20 @@ void SwitchHandler(uint32_t mode) {
       uint32_t button = Switch.virtual_state[i];
       uint32_t switchflag = POWER_TOGGLE +1;
       uint32_t mqtt_action = POWER_NONE;
+      uint32_t switchmode = Settings.switchmode[i];
 
-      if (Switch.hold_timer[i] & (((Settings.switchmode[i] == PUSHHOLDMULTI) | (Settings.switchmode[i] == PUSHHOLDMULTI_INV)) ? SM_TIMER_MASK: SM_NO_TIMER_MASK)) {
+      if (Switch.hold_timer[i] & (((switchmode == PUSHHOLDMULTI) | (switchmode == PUSHHOLDMULTI_INV)) ? SM_TIMER_MASK: SM_NO_TIMER_MASK)) {
         Switch.hold_timer[i]--;
         if ((Switch.hold_timer[i] & SM_TIMER_MASK) == loops_per_second * Settings.param[P_HOLD_TIME] / 25) {
-          if ((Settings.switchmode[i] == PUSHHOLDMULTI) & (NOT_PRESSED == Switch.last_state[i])) {
+          if ((switchmode == PUSHHOLDMULTI) & (NOT_PRESSED == Switch.last_state[i])) {
             SendKey(KEY_SWITCH, i +1, POWER_INCREMENT);      // Execute command via MQTT
           }
-          if ((Settings.switchmode[i] == PUSHHOLDMULTI_INV) & (PRESSED == Switch.last_state[i])) {
+          if ((switchmode == PUSHHOLDMULTI_INV) & (PRESSED == Switch.last_state[i])) {
             SendKey(KEY_SWITCH, i +1, POWER_INCREMENT);      // Execute command via MQTT
           }
         }
-        if (0 == (Switch.hold_timer[i] & (((Settings.switchmode[i] == PUSHHOLDMULTI) | (Settings.switchmode[i] == PUSHHOLDMULTI_INV)) ? SM_TIMER_MASK: SM_NO_TIMER_MASK))) {
-          switch (Settings.switchmode[i]) {
+        if (0 == (Switch.hold_timer[i] & (((switchmode == PUSHHOLDMULTI) | (switchmode == PUSHHOLDMULTI_INV)) ? SM_TIMER_MASK: SM_NO_TIMER_MASK))) {
+          switch (switchmode) {
             case TOGGLEMULTI:
               switchflag = POWER_TOGGLE;                     // Toggle after hold
               break;
@@ -284,7 +285,7 @@ void SwitchHandler(uint32_t mode) {
       }
 
       if (button != Switch.last_state[i]) {  // This implies if ((PRESSED == button) then (NOT_PRESSED == Switch.last_state[i]))
-        switch (Settings.switchmode[i]) {
+        switch (switchmode) {
         case TOGGLE:
         case PUSHBUTTON_TOGGLE:
           switchflag = POWER_TOGGLE;         // Toggle

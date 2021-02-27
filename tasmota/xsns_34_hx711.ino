@@ -78,8 +78,8 @@ struct HX {
   uint8_t calibrate_step = HX_CAL_END;
   uint8_t calibrate_timer = 0;
   uint8_t calibrate_msg = 0;
-  uint8_t pin_sck;
-  uint8_t pin_dout;
+  int8_t pin_sck;
+  int8_t pin_dout;
   bool tare_flg = false;
   bool weight_changed = false;
   uint16_t weight_delta = 4;
@@ -193,7 +193,7 @@ bool HxCommand(void)
 {
   bool serviced = true;
   bool show_parms = false;
-  char sub_string[XdrvMailbox.data_len +1];
+  char argument[XdrvMailbox.data_len];
 
   for (uint32_t ca = 0; ca < XdrvMailbox.data_len; ca++) {
     if ((' ' == XdrvMailbox.data[ca]) || ('=' == XdrvMailbox.data[ca])) { XdrvMailbox.data[ca] = ','; }
@@ -206,7 +206,7 @@ bool HxCommand(void)
       break;
     case 2:  // Calibrate
       if (strchr(XdrvMailbox.data, ',') != nullptr) {
-        Settings.weight_reference = strtol(subStr(sub_string, XdrvMailbox.data, ",", 2), nullptr, 10);
+        Settings.weight_reference = strtol(ArgV(argument, 2), nullptr, 10);
       }
       Hx.scale = 1;
       HxReset();
@@ -216,26 +216,26 @@ bool HxCommand(void)
       break;
     case 3:  // WeightRef to user reference
       if (strchr(XdrvMailbox.data, ',') != nullptr) {
-        Settings.weight_reference = strtol(subStr(sub_string, XdrvMailbox.data, ",", 2), nullptr, 10);
+        Settings.weight_reference = strtol(ArgV(argument, 2), nullptr, 10);
       }
       show_parms = true;
       break;
     case 4:  // WeightCal to user calculated value
       if (strchr(XdrvMailbox.data, ',') != nullptr) {
-        Settings.weight_calibration = strtol(subStr(sub_string, XdrvMailbox.data, ",", 2), nullptr, 10);
+        Settings.weight_calibration = strtol(ArgV(argument, 2), nullptr, 10);
         Hx.scale = Settings.weight_calibration;
       }
       show_parms = true;
       break;
     case 5:  // WeightMax
       if (strchr(XdrvMailbox.data, ',') != nullptr) {
-        Settings.weight_max = strtol(subStr(sub_string, XdrvMailbox.data, ",", 2), nullptr, 10) / 1000;
+        Settings.weight_max = strtol(ArgV(argument, 2), nullptr, 10) / 1000;
       }
       show_parms = true;
       break;
     case 6:  // WeightItem
       if (strchr(XdrvMailbox.data, ',') != nullptr) {
-        Settings.weight_item = (unsigned long)(CharToFloat(subStr(sub_string, XdrvMailbox.data, ",", 2)) * 10);
+        Settings.weight_item = (unsigned long)(CharToFloat(ArgV(argument, 2)) * 10);
       }
       show_parms = true;
       break;
@@ -245,13 +245,13 @@ bool HxCommand(void)
       break;
     case 8:  // Json on weight change
       if (strchr(XdrvMailbox.data, ',') != nullptr) {
-        Settings.SensorBits1.hx711_json_weight_change = strtol(subStr(sub_string, XdrvMailbox.data, ",", 2), nullptr, 10) & 1;
+        Settings.SensorBits1.hx711_json_weight_change = strtol(ArgV(argument, 2), nullptr, 10) & 1;
       }
       show_parms = true;
       break;
     case 9:  // WeightDelta
       if (strchr(XdrvMailbox.data, ',') != nullptr) {
-	Settings.weight_change = strtol(subStr(sub_string, XdrvMailbox.data, ",", 2), nullptr, 10);
+	Settings.weight_change = strtol(ArgV(argument, 2), nullptr, 10);
 	SetWeightDelta();
       }
       show_parms = true;
@@ -490,7 +490,7 @@ void HandleHxAction(void)
 {
   if (!HttpCheckPriviledgedAccess()) { return; }
 
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_CONFIGURE_HX711));
+  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_CONFIGURE_HX711));
 
   if (Webserver->hasArg("save")) {
     HxSaveSettings();
@@ -549,7 +549,7 @@ void HxLogUpdates(void)
   char weigth_item_chr[33];
   dtostrfd((float)Settings.weight_item / 10000, 4, weigth_item_chr);
 
-  AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_JSON_WEIGHT_REF " %s, " D_JSON_WEIGHT_ITEM " %s"), weigth_ref_chr, weigth_item_chr);
+  AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_JSON_WEIGHT_REF " %s, " D_JSON_WEIGHT_ITEM " %s"), weigth_ref_chr, weigth_item_chr);
 }
 
 #endif  // USE_HX711_GUI

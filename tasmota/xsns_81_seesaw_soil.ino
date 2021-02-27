@@ -159,7 +159,7 @@ void seeSoilDetect(void) {                      // detect sensors
     buf = (uint8_t) Wire.read();
     if (buf != SEESAW_HW_ID_CODE) {             // check hardware id
 #ifdef DEBUG_SEESAW_SOIL
-      AddLog_P(LOG_LEVEL_DEBUG, PSTR("SEE: HWID mismatch ADDR=%X, ID=%X"), addr, buf);
+      AddLog(LOG_LEVEL_DEBUG, PSTR("SEE: HWID mismatch ADDR=%X, ID=%X"), addr, buf);
 #endif // DEBUG_SEESAW_SOIL
       continue;
     }
@@ -173,7 +173,7 @@ void seeSoilDetect(void) {                      // detect sensors
     SeeSoil.count++;
     SeeSoil.present = true;
 #ifdef DEBUG_SEESAW_SOIL
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR("SEE: FOUND sensor %u at %02X"), i, addr);
+    AddLog(LOG_LEVEL_DEBUG, PSTR("SEE: FOUND sensor %u at %02X"), i, addr);
 #endif // DEBUG_SEESAW_SOIL
   }
 }
@@ -201,7 +201,7 @@ void seeSoilCommand(uint32_t command) {         // issue commands to sensors
       break;
     default:
 #ifdef DEBUG_SEESAW_SOIL
-      AddLog_P(LOG_LEVEL_DEBUG, PSTR("SEE: ILL CMD:%02X"), command);
+      AddLog(LOG_LEVEL_DEBUG, PSTR("SEE: ILL CMD:%02X"), command);
 #endif // DEBUG_SEESAW_SOIL
       return;
   }
@@ -212,7 +212,7 @@ void seeSoilCommand(uint32_t command) {         // issue commands to sensors
     Wire.write((uint8_t) regLow);
     uint32_t err = Wire.endTransmission();
 #ifdef DEBUG_SEESAW_SOIL
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR("SEE: SNS=%u ADDR=%02X CMD=%02X ERR=%u"), i, addr, command, err);
+    AddLog(LOG_LEVEL_DEBUG, PSTR("SEE: SNS=%u ADDR=%02X CMD=%02X ERR=%u"), i, addr, command, err);
 #endif // DEBUG_SEESAW_SOIL
     }
 }
@@ -242,7 +242,7 @@ void seeSoilRead(uint32_t command) {            // read values from sensors
 #endif // SEESAW_SOIL_RAW
     }
 #ifdef DEBUG_SEESAW_SOIL
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR("SEE: READ #%u ADDR=%02X NUM=%u RET=%X"), i, SeeSoilSNS[i].address, num, ret);
+    AddLog(LOG_LEVEL_DEBUG, PSTR("SEE: READ #%u ADDR=%02X NUM=%u RET=%X"), i, SeeSoilSNS[i].address, num, ret);
 #endif // DEBUG_SEESAW_SOIL
   }
 }
@@ -272,11 +272,9 @@ void seeSoilEverySecond(void) {                 // update sensor values and publ
 #endif // SEESAW_SOIL_PUBLISH
 
 void seeSoilShow(bool json) {
-  char temperature[FLOATSZ];
   char sensor_name[sizeof(SeeSoil.name) + 3];
 
   for (uint32_t i = 0; i < SeeSoil.count; i++) {
-    dtostrfd(SeeSoilSNS[i].temperature, Settings.flag2.temperature_resolution, temperature);
     seeSoilName(i, sensor_name, sizeof(sensor_name));
     if (json) {
       ResponseAppend_P(PSTR(","));              // compose tele json
@@ -296,20 +294,20 @@ void seeSoilShow(bool json) {
       WSContentSend_PD(HTTP_SNS_ANALOG, sensor_name, 0, SeeSoilSNS[i].capacitance);
 #endif // SEESAW_SOIL_RAW
       WSContentSend_PD(HTTP_SNS_MOISTURE, sensor_name, (uint32_t) SeeSoilSNS[i].moisture);
-      WSContentSend_PD(HTTP_SNS_TEMP, sensor_name, temperature, TempUnit());
+      WSContentSend_Temp(sensor_name, SeeSoilSNS[i].temperature);
 #endif // USE_WEBSERVER
     }
   } // for each sensor connected
 }
 
 void seeSoilJson(int no) {                      // common json
-  char temperature[FLOATSZ];
   char sensor_name[sizeof(SeeSoil.name) + 3];
-
   seeSoilName(no, sensor_name, sizeof(sensor_name));
-  dtostrfd(SeeSoilSNS[no].temperature, Settings.flag2.temperature_resolution, temperature);
-  ResponseAppend_P(PSTR ("\"%s\":{\"" D_JSON_ID "\":\"%02X\",\"" D_JSON_TEMPERATURE "\":%s,\"" D_JSON_MOISTURE "\":%u}"),
-                   sensor_name, SeeSoilSNS[no].address, temperature, (uint32_t) SeeSoilSNS[no].moisture);
+
+  ResponseAppend_P(PSTR ("\"%s\":{\"" D_JSON_ID "\":\"%02X\",\"" D_JSON_TEMPERATURE "\":%*_f,\"" D_JSON_MOISTURE "\":%u}"),
+    sensor_name, SeeSoilSNS[no].address,
+    Settings.flag2.temperature_resolution, &SeeSoilSNS[no].temperature,
+    (uint32_t) SeeSoilSNS[no].moisture);
 }
 
 void seeSoilName(int no, char *name, int len)   // generates a sensor name

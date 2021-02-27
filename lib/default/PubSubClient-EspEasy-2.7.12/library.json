@@ -10,8 +10,5 @@
     "exclude": "tests",
     "examples": "examples/*/*.ino",
     "frameworks": "arduino",
-    "platforms": [
-        "atmelavr",
-        "espressif"
-    ]
+    "platforms": ["espressif8266", "espressif32"]
 }

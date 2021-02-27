@@ -74,7 +74,7 @@ const char kMhzModels[] PROGMEM = "|B";
 const char ABC_ENABLED[] = "ABC is Enabled";
 const char ABC_DISABLED[] = "ABC is Disabled";
 
-enum MhzCommands { MHZ_CMND_READPPM, MHZ_CMND_ABCENABLE, MHZ_CMND_ABCDISABLE, MHZ_CMND_ZEROPOINT, MHZ_CMND_RESET, MHZ_CMND_RANGE_1000, MHZ_CMND_RANGE_2000, MHZ_CMND_RANGE_3000, MHZ_CMND_RANGE_5000, MHZ_CMND_RANGE_10000 };
+enum MhzCommands { MHZ_CMND_READPPM, MHZ_CMND_ABCENABLE, MHZ_CMND_ABCDISABLE, MHZ_CMND_ZEROPOINT, MHZ_CMND_RESET, MHZ_CMND_RANGE_1000, MHZ_CMND_RANGE_2000, MHZ_CMND_RANGE_3000, MHZ_CMND_RANGE_5000 };
 const uint8_t kMhzCommands[][4] PROGMEM = {
 //  2     3    6    7
   {0x86,0x00,0x00,0x00},   // mhz_cmnd_read_ppm
@@ -85,8 +85,7 @@ const uint8_t kMhzCommands[][4] PROGMEM = {
   {0x99,0x00,0x03,0xE8},   // mhz_cmnd_set_range_1000
   {0x99,0x00,0x07,0xD0},   // mhz_cmnd_set_range_2000
   {0x99,0x00,0x0B,0xB8},   // mhz_cmnd_set_range_3000
-  {0x99,0x00,0x13,0x88},   // mhz_cmnd_set_range_5000
-  {0x99,0x00,0x27,0x10}};  // mhz_cmnd_set_range_10000
+  {0x99,0x00,0x13,0x88}};  // mhz_cmnd_set_range_5000
 
 uint8_t mhz_type = 1;
 uint16_t mhz_last_ppm = 0;
@@ -136,7 +135,7 @@ bool MhzCheckAndApplyFilter(uint16_t ppm, uint8_t s)
   if (1 == s) {
     return false;            // S==1 => "A" version sensor bootup, do not use values.
   }
-  if (mhz_last_ppm < 400 || mhz_last_ppm > 10000) {
+  if (mhz_last_ppm < 400 || mhz_last_ppm > 5000) {
     // Prevent unrealistic values during start-up with filtering enabled.
     // Just assume the entered value is correct.
     mhz_last_ppm = ppm;
@@ -201,17 +200,17 @@ void MhzEverySecond(void)
     AddLogBuffer(LOG_LEVEL_DEBUG_MORE, mhz_response, counter);
 
     if (counter < 9) {
-//      AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "MH-Z19 comms timeout"));
+//      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "MH-Z19 comms timeout"));
       return;
     }
 
     uint8_t crc = MhzCalculateChecksum(mhz_response);
     if (mhz_response[8] != crc) {
-//      AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "MH-Z19 crc error"));
+//      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "MH-Z19 crc error"));
       return;
     }
     if (0xFF != mhz_response[0] || 0x86 != mhz_response[1]) {
-//      AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "MH-Z19 bad response"));
+//      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "MH-Z19 bad response"));
       return;
     }
 
@@ -270,7 +269,6 @@ void MhzEverySecond(void)
 #define D_JSON_RANGE_2000 "2000 ppm range"
 #define D_JSON_RANGE_3000 "3000 ppm range"
 #define D_JSON_RANGE_5000 "5000 ppm range"
-#define D_JSON_RANGE_10000 "10000 ppm range"
 
 bool MhzCommandSensor(void)
 {
@@ -311,10 +309,6 @@ bool MhzCommandSensor(void)
       MhzSendCmd(MHZ_CMND_RANGE_5000);
       Response_P(S_JSON_SENSOR_INDEX_SVALUE, XSNS_15, D_JSON_RANGE_5000);
       break;
-    case 10000:
-      MhzSendCmd(MHZ_CMND_RANGE_10000);
-      Response_P(S_JSON_SENSOR_INDEX_SVALUE, XSNS_15, D_JSON_RANGE_10000);
-      break;
     default:
       if (!Settings.SensorBits1.mhz19b_abc_disable) {
         Response_P(S_JSON_SENSOR_INDEX_SVALUE, XSNS_15, ABC_ENABLED);
@@ -344,23 +338,22 @@ void MhzInit(void)
 void MhzShow(bool json)
 {
   char types[7] = "MHZ19B";  // MHZ19B for legacy reasons. Prefered is MHZ19
-  char temperature[33];
-  dtostrfd(mhz_temperature, Settings.flag2.temperature_resolution, temperature);
   char model[3];
   GetTextIndexed(model, sizeof(model), mhz_type -1, kMhzModels);
 
   if (json) {
-    ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_MODEL "\":\"%s\",\"" D_JSON_CO2 "\":%d,\"" D_JSON_TEMPERATURE "\":%s}"), types, model, mhz_last_ppm, temperature);
+    ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_MODEL "\":\"%s\",\"" D_JSON_CO2 "\":%d,\"" D_JSON_TEMPERATURE "\":%*_f}"),
+      types, model, mhz_last_ppm, Settings.flag2.temperature_resolution, &mhz_temperature);
 #ifdef USE_DOMOTICZ
     if (0 == TasmotaGlobal.tele_period) {
       DomoticzSensor(DZ_AIRQUALITY, mhz_last_ppm);
-      DomoticzSensor(DZ_TEMP, temperature);
+      DomoticzFloatSensor(DZ_TEMP, mhz_temperature);
     }
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
   } else {
     WSContentSend_PD(HTTP_SNS_CO2, types, mhz_last_ppm);
-    WSContentSend_PD(HTTP_SNS_TEMP, types, temperature, TempUnit());
+    WSContentSend_Temp(types, mhz_temperature);
 #endif  // USE_WEBSERVER
   }
 }

@@ -181,7 +181,7 @@ int hass_tele_period = 0;
 // NEW DISCOVERY
 
 const char HASS_DISCOVER_DEVICE[] PROGMEM =                         // Basic parameters for Discovery
-  "{\"ip\":\"%s\","                                                 // IP Address
+  "{\"ip\":\"%_I\","                                                // IP Address
   "\"dn\":\"%s\","                                                  // Device Name
   "\"fn\":[%s],"                                                    // Friendly Names
   "\"hn\":\"%s\","                                                  // Host Name
@@ -209,8 +209,8 @@ typedef struct HASS {
 void HassDiscoveryRelays(struct HASS &Hass)
 {
   Hass = {.Relay={0,0,0,0,0,0,0,0}, .RelLst={'\0'}};
-  uint16_t Shutter[8] = {0,0,0,0,0,0,0,0};  // Array to store a temp list for shutters
-  uint8_t lightidx = MAX_RELAYS + 1;        // Will store the starting position of the lights
+  uint16_t Shutter[MAX_RELAYS] = { 0 };  // Array to store a temp list for shutters
+  uint8_t lightidx = MAX_RELAYS + 1;     // Will store the starting position of the lights
   bool iFan = false;
 
   Hass.RelPst = TasmotaGlobal.devices_present > 0;
@@ -241,7 +241,7 @@ void HassDiscoveryRelays(struct HASS &Hass)
           if (0 == Settings.shutter_startrelay[k]) {
             break;
           } else {
-            if (Settings.shutter_startrelay[k] > 0 && Settings.shutter_startrelay[k] <= MAX_RELAYS) {
+            if (Settings.shutter_startrelay[k] > 0 && Settings.shutter_startrelay[k] <= MAX_SHUTTER_RELAYS) {
               Shutter[Settings.shutter_startrelay[k]-1] = Shutter[Settings.shutter_startrelay[k]] = 1;
             }
           }
@@ -336,7 +336,7 @@ void NewHAssDiscovery(void)
   // Send empty message if new discovery is disabled
   TasmotaGlobal.masterlog_level = 4;   // Hide topic on clean and remove use weblog 4 to show it
   if (!Settings.flag.hass_discovery) { // HassDiscoveryRelays(relays)
-    Response_P(HASS_DISCOVER_DEVICE, WiFi.localIP().toString().c_str(), SettingsText(SET_DEVICENAME),
+    Response_P(HASS_DISCOVER_DEVICE, (uint32_t)WiFi.localIP(), SettingsText(SET_DEVICENAME),
               stemp2, TasmotaGlobal.hostname, unique_id, ModuleName().c_str(), TuyaMod, iFanMod, GetStateText(0), GetStateText(1), GetStateText(2), GetStateText(3),
               TasmotaGlobal.version, TasmotaGlobal.mqtt_topic, SettingsText(SET_MQTT_FULLTOPIC), PSTR(SUB_PREFIX), PSTR(PUB_PREFIX), PSTR(PUB_PREFIX2), Hass.RelLst, stemp3, stemp4,
               stemp5, Settings.flag.mqtt_response, Settings.flag.button_swap, Settings.flag.button_single, Settings.flag.decimal_text, Settings.flag.not_power_linked,
@@ -429,7 +429,7 @@ void HAssAnnounceRelayLight(void)
 #ifdef USE_SHUTTER
   if (Settings.flag3.shutter_mode) {
     for (uint32_t i = 0; i < MAX_SHUTTERS; i++) {
-      if (Settings.shutter_startrelay[i] > 0 && Settings.shutter_startrelay[i] <= MAX_RELAYS) {
+      if (Settings.shutter_startrelay[i] > 0 && Settings.shutter_startrelay[i] <= MAX_SHUTTER_RELAYS) {
         bitSet(shutter_mask, Settings.shutter_startrelay[i] -1);
         bitSet(shutter_mask, Settings.shutter_startrelay[i]);
       }
@@ -957,7 +957,7 @@ void HAssAnnounceShutters(void)
     snprintf_P(unique_id, sizeof(unique_id), PSTR("%06X_SHT_%d"), ESP_getChipId(), i + 1);
     snprintf_P(stopic, sizeof(stopic), PSTR(HOME_ASSISTANT_DISCOVERY_PREFIX "/cover/%s/config"), unique_id);
 
-    if (Settings.flag.hass_discovery && Settings.flag3.shutter_mode && Settings.shutter_startrelay[i] > 0 && Settings.shutter_startrelay[i] <= MAX_RELAYS) {
+    if (Settings.flag.hass_discovery && Settings.flag3.shutter_mode && Settings.shutter_startrelay[i] > 0 && Settings.shutter_startrelay[i] <= MAX_SHUTTER_RELAYS) {
        ShowTopic = 0; // Show the new generated topic
       if (i > MAX_FRIENDLYNAMES) {
         snprintf_P(stemp1, sizeof(stemp1), PSTR("%s Shutter %d"), SettingsText(SET_DEVICENAME), i + 1);
@@ -1025,7 +1025,7 @@ void HAssAnnounceDeviceInfoAndStatusSensor(void)
 
   if (!Settings.flag.hass_discovery) {
     TasmotaGlobal.masterlog_level = 0;
-    AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_LOG "Home Assistant MQTT Discovery disabled."));
+    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_LOG "Home Assistant MQTT Discovery disabled."));
   }
 }
 
@@ -1033,10 +1033,10 @@ void HAssPublishStatus(void)
 {
   Response_P(PSTR("{\"" D_JSON_VERSION "\":\"%s%s\",\"" D_JSON_BUILDDATETIME "\":\"%s\",\"" D_CMND_MODULE " or " D_CMND_TEMPLATE"\":\"%s\","
                   "\"" D_JSON_RESTARTREASON "\":\"%s\",\"" D_JSON_UPTIME "\":\"%s\",\"" D_CMND_HOSTNAME "\":\"%s\","
-                  "\"" D_CMND_IPADDRESS "\":\"%s\",\"" D_JSON_RSSI "\":\"%d\",\"" D_JSON_SIGNAL " (dBm)""\":\"%d\","
+                  "\"" D_CMND_IPADDRESS "\":\"%_I\",\"" D_JSON_RSSI "\":\"%d\",\"" D_JSON_SIGNAL " (dBm)""\":\"%d\","
                   "\"WiFi " D_JSON_LINK_COUNT "\":%d,\"WiFi " D_JSON_DOWNTIME "\":\"%s\",\"" D_JSON_MQTT_COUNT "\":%d,\"LoadAvg\":%lu}"),
              TasmotaGlobal.version, TasmotaGlobal.image_name, GetBuildDateAndTime().c_str(), ModuleName().c_str(), GetResetReason().c_str(),
-             GetUptime().c_str(), TasmotaGlobal.hostname, WiFi.localIP().toString().c_str(), WifiGetRssiAsQuality(WiFi.RSSI()),
+             GetUptime().c_str(), TasmotaGlobal.hostname, (uint32_t)WiFi.localIP(), WifiGetRssiAsQuality(WiFi.RSSI()),
              WiFi.RSSI(), WifiLinkCount(), WifiDowntime().c_str(), MqttConnectCount(), TasmotaGlobal.loop_load_avg);
   MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_HASS_STATE));
 }

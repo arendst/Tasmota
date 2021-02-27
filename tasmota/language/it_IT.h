@@ -1,7 +1,7 @@
 /*
   it-IT.h - localization for Italian - Italy for Tasmota
 
-  Copyright (C) 2021  Gennaro Tortone - some mods by Antonio Fragola - Updated by bovirus - rev. 17.01.2021
+  Copyright (C) 2021  Gennaro Tortone - some mods by Antonio Fragola - Updated by bovirus - rev. 12.02.2021
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -100,6 +100,7 @@
 #define D_FALSE "Falso"
 #define D_FILE "File"
 #define D_FLOW_RATE "Flusso dati"
+#define D_FRAGMENTATION "framm."      // Lower case abbreviated version of fragmentation used in "memory fragmentation"
 #define D_FREE_MEMORY "Memoria libera"
 #define D_PSR_MAX_MEMORY "PS-RAM - Memoria"
 #define D_PSR_FREE_MEMORY "PS-RAM - Memoria libera"
@@ -629,15 +630,19 @@
 #define D_SENSOR_SBR_TX        "SerBr - TX"
 #define D_SENSOR_SR04_TRIG     "SR04 Tri - TX"
 #define D_SENSOR_SR04_ECHO     "SR04 Ech - RX"
+#define D_SENSOR_SDM72_TX      "SDM72 - TX"
+#define D_SENSOR_SDM72_RX      "SDM72 - RX"
 #define D_SENSOR_SDM120_TX     "SDMx20 - TX"
 #define D_SENSOR_SDM120_RX     "SDMx20 - RX"
 #define D_SENSOR_SDM630_TX     "SDM630 - TX"
 #define D_SENSOR_SDM630_RX     "SDM630 - RX"
 #define D_SENSOR_WE517_TX      "WE517 - TX"
 #define D_SENSOR_WE517_RX      "WE517 - RX"
-#define D_SENSOR_TM1638_CLK    "TM16 - CLK"
-#define D_SENSOR_TM1638_DIO    "TM16 - DIO"
-#define D_SENSOR_TM1638_STB    "TM16 - STB"
+#define D_SENSOR_TM1637_CLK    "TM1637 - CLK"
+#define D_SENSOR_TM1637_DIO    "TM1637 - DIO"
+#define D_SENSOR_TM1638_CLK    "TM1638 - CLK"
+#define D_SENSOR_TM1638_DIO    "TM1638 - DIO"
+#define D_SENSOR_TM1638_STB    "TM1638 - STB"
 #define D_SENSOR_HX711_SCK     "HX711 - SCK"
 #define D_SENSOR_HX711_DAT     "HX711 - DAT"
 #define D_SENSOR_FTC532        "FTC532"
@@ -823,6 +828,7 @@
 #define D_UNIT_PARTS_PER_BILLION "ppb"
 #define D_UNIT_PARTS_PER_DECILITER "ppd"
 #define D_UNIT_PARTS_PER_MILLION "ppm"
+#define D_UNIT_MILIGRAMS_PER_LITER "mg/L"
 #define D_UNIT_PERCENT "%%"
 #define D_UNIT_PRESSURE "hPa"
 #define D_UNIT_SECOND "sec"
@@ -834,8 +840,10 @@
 #define D_UNIT_WATTHOUR "Wh"
 #define D_UNIT_WATT_METER_QUADRAT "W/m²"
 
-//SDM220, SDM120, LE01MR
-#define D_PHASE_ANGLE     "Angolo Fase"
+//SDM220, SDM120, SDM72, LE01MR
+#define D_EXPORT_POWER    "Potenza esportata"
+#define D_IMPORT_POWER 	  "Potenza importata"
+#define D_PHASE_ANGLE     "Angolo fase"
 #define D_IMPORT_ACTIVE   "Potenza attiva importata"
 #define D_EXPORT_ACTIVE   "Potenza attiva esportata"
 #define D_IMPORT_REACTIVE "Potenza reattiva importata"
@@ -961,54 +969,54 @@
 
 // xsns_83_neopool.ino
 #define D_NEOPOOL_MACH_NONE               "NeoPool"           // Machine names
-#define D_NEOPOOL_MACH_HIDROLIFE          "Hidrolife (yellow)"
-#define D_NEOPOOL_MACH_AQUASCENIC         "Aquascenic (blue)"
-#define D_NEOPOOL_MACH_OXILIFE            "Oxilife (green)"
-#define D_NEOPOOL_MACH_BIONET             "Bionet (light blue)"
-#define D_NEOPOOL_MACH_HIDRONISER         "Hidroniser (red)"
+#define D_NEOPOOL_MACH_HIDROLIFE          "Hidrolife (giallo)"
+#define D_NEOPOOL_MACH_AQUASCENIC         "Aquascenic (blu)"
+#define D_NEOPOOL_MACH_OXILIFE            "Oxilife (verde)"
+#define D_NEOPOOL_MACH_BIONET             "Bionet (azzurro)"
+#define D_NEOPOOL_MACH_HIDRONISER         "Hidroniser (rosso)"
 #define D_NEOPOOL_MACH_UVSCENIC           "UVScenic (lilac)"
-#define D_NEOPOOL_MACH_STATION            "Station (orange)"
+#define D_NEOPOOL_MACH_STATION            "Station (arancio)"
 #define D_NEOPOOL_MACH_BRILIX             "Brilix"
-#define D_NEOPOOL_MACH_GENERIC            "Generic"
+#define D_NEOPOOL_MACH_GENERIC            "Generico"
 #define D_NEOPOOL_MACH_BAYROL             "Bayrol"
 #define D_NEOPOOL_MACH_HAY                "Hay"
-#define D_NEOPOOL_FILTRATION_MANUAL       "Manual"            // Filtration modes
-#define D_NEOPOOL_FILTRATION_AUTO         "Auto"
-#define D_NEOPOOL_FILTRATION_HEATING      "Heating"
-#define D_NEOPOOL_FILTRATION_SMART        "Smart"
-#define D_NEOPOOL_FILTRATION_INTELLIGENT  "Intelligent"
-#define D_NEOPOOL_FILTRATION_BACKWASH     "Backwash"
+#define D_NEOPOOL_FILTRATION_MANUAL       "Manuale"            // Filtration modes
+#define D_NEOPOOL_FILTRATION_AUTO         "Automatico"
+#define D_NEOPOOL_FILTRATION_HEATING      "Riscaldamento"
+#define D_NEOPOOL_FILTRATION_SMART        "Rapido"
+#define D_NEOPOOL_FILTRATION_INTELLIGENT  "Intelligente"
+#define D_NEOPOOL_FILTRATION_BACKWASH     "Contro lavaggio"
 #define D_NEOPOOL_FILTRATION_NONE         ""                  // Filtration speed level
-#define D_NEOPOOL_FILTRATION_SLOW         "slow"
-#define D_NEOPOOL_FILTRATION_MEDIUM       "medium"
-#define D_NEOPOOL_FILTRATION_FAST         "fast"
-#define D_NEOPOOL_TYPE                    "Type"              // Sensor & relais names
+#define D_NEOPOOL_FILTRATION_SLOW         "lento"
+#define D_NEOPOOL_FILTRATION_MEDIUM       "medio"
+#define D_NEOPOOL_FILTRATION_FAST         "veloce"
+#define D_NEOPOOL_TYPE                    "Tipo"              // Sensor & relais names
 #define D_NEOPOOL_REDOX                   "Redox"
-#define D_NEOPOOL_CHLORINE                "Chlorine"
-#define D_NEOPOOL_CONDUCTIVITY            "Conductivity"
-#define D_NEOPOOL_IONIZATION              "Ionization"
-#define D_NEOPOOL_HYDROLYSIS              "Hydrolysis"
+#define D_NEOPOOL_CHLORINE                "Cloro"
+#define D_NEOPOOL_CONDUCTIVITY            "Conduttività"
+#define D_NEOPOOL_IONIZATION              "Ionizzazione"
+#define D_NEOPOOL_HYDROLYSIS              "Idrolisi"
 #define D_NEOPOOL_RELAY                   "Relay"
-#define D_NEOPOOL_RELAY_FILTRATION        "Filtration"
-#define D_NEOPOOL_RELAY_LIGHT             "Light"
-#define D_NEOPOOL_RELAY_PH_ACID           "Acid pump"
-#define D_NEOPOOL_RELAY_PH_BASE           "Base pump"
-#define D_NEOPOOL_RELAY_RX                "Redox level"
-#define D_NEOPOOL_RELAY_CL                "Chlorine pump"
-#define D_NEOPOOL_RELAY_CD                "Brine pump"
-#define D_NEOPOOL_TIME                    "Time"
-#define D_NEOPOOL_FILT_MODE               "Filtration"
+#define D_NEOPOOL_RELAY_FILTRATION        "Filtrazione"
+#define D_NEOPOOL_RELAY_LIGHT             "Luce"
+#define D_NEOPOOL_RELAY_PH_ACID           "Pompa per acido"
+#define D_NEOPOOL_RELAY_PH_BASE           "Popa base"
+#define D_NEOPOOL_RELAY_RX                "Livello Redox"
+#define D_NEOPOOL_RELAY_CL                "Pompa cloro"
+#define D_NEOPOOL_RELAY_CD                "Pompa salamoia"
+#define D_NEOPOOL_TIME                    "Orario"
+#define D_NEOPOOL_FILT_MODE               "Filtrazione"
 #define D_NEOPOOL_POLARIZATION            "Pol"               // Sensor status
 #define D_NEOPOOL_PR_OFF                  "PrOff"
-#define D_NEOPOOL_SETPOINT_OK             "Ok"
-#define D_NEOPOOL_COVER                   "Cover"
+#define D_NEOPOOL_SETPOINT_OK             "OK"
+#define D_NEOPOOL_COVER                   "Copertura"
 #define D_NEOPOOL_SHOCK                   "Shock"
 #define D_NEOPOOL_ALARM                   "! "
 #define D_NEOPOOL_LOW                     "Low"
 #define D_NEOPOOL_FLOW1                   "FL1"
 #define D_NEOPOOL_FLOW2                   "FL2"
-#define D_NEOPOOL_PH_HIGH                 "too high"          // ph Alarms
-#define D_NEOPOOL_PH_LOW                  "too low"
-#define D_NEOPOOL_PUMP_TIME_EXCEEDED      "pump time exceeded"
+#define D_NEOPOOL_PH_HIGH                 "troppo alto"          // ph Alarms
+#define D_NEOPOOL_PH_LOW                  "troppo basso"
+#define D_NEOPOOL_PUMP_TIME_EXCEEDED      "tempo pompa superato"
 
 #endif  // _LANGUAGE_IT_IT_H_

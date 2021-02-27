@@ -419,7 +419,7 @@ void MINRFinit(void) {
     MINRF.option.minimalSummary = 0;
     MINRF.option.directBridgeMode = 0;
 
-    AddLog_P(LOG_LEVEL_INFO, PSTR("NRF: Started"));
+    AddLog(LOG_LEVEL_INFO, PSTR("NRF: Started"));
   }
 }
 
@@ -452,7 +452,7 @@ bool MINRFinitBLE(uint8_t _mode)
     MINRFchangePacketModeTo(_mode);
     return true;
   }
-  // AddLog_P(LOG_LEVEL_INFO,PSTR("MINRF chip NOT !!!! connected"));
+  // AddLog(LOG_LEVEL_INFO,PSTR("MINRF chip NOT !!!! connected"));
   return false;
 }
 
@@ -495,7 +495,7 @@ bool MINRFreceivePacket(void)
     MINRFswapbuf((uint8_t*)&MINRF.buffer, sizeof(MINRF.buffer) );
     // MINRF_LOG_BUFFER();
 
-    // AddLog_P(LOG_LEVEL_INFO,PSTR("NRF: _lsfrlist: %x, chan: %u, mode: %u"),_lsfrlist[MINRF.currentChan],MINRF.currentChan, MINRF.packetMode);
+    // AddLog(LOG_LEVEL_INFO,PSTR("NRF: _lsfrlist: %x, chan: %u, mode: %u"),_lsfrlist[MINRF.currentChan],MINRF.currentChan, MINRF.packetMode);
     switch (MINRF.packetMode) {
       case 0: case NLIGHT: case MJYD2S:
       MINRFwhiten((uint8_t *)&MINRF.buffer, sizeof(MINRF.buffer),  MINRF.channel[MINRF.currentChan] | 0x40); // "BEACON" mode, "NLIGHT" mode, "MJYD2S" mode
@@ -603,7 +603,7 @@ void MINRFhandleScan(void){
     MINRFscanResult.erase(std::remove_if(MINRFscanResult.begin(),
                           MINRFscanResult.end(),
                           [&i](scan_entry_t e) {
-                            if(e.showedUp>2) AddLog_P(LOG_LEVEL_INFO,PSTR("NRF: Beacon %02u: %02X%02X%02X%02X%02X%02X Cid: %04X Svc: %04X UUID: %04X"),i,e.MAC[0],e.MAC[1],e.MAC[2],e.MAC[3],e.MAC[4],e.MAC[5],e.cid,e.svc,e.uuid);
+                            if(e.showedUp>2) AddLog(LOG_LEVEL_INFO,PSTR("NRF: Beacon %02u: %02X%02X%02X%02X%02X%02X Cid: %04X Svc: %04X UUID: %04X"),i,e.MAC[0],e.MAC[1],e.MAC[2],e.MAC[3],e.MAC[4],e.MAC[5],e.cid,e.svc,e.uuid);
                             i++;
                             return ((e.showedUp < 3));
                             }),
@@ -616,7 +616,7 @@ void MINRFhandleScan(void){
   for(uint32_t i=0; i<MINRFscanResult.size(); i++){
     if(memcmp(MINRF.buffer.bleAdv.MAC,MINRFscanResult[i].MAC,sizeof(MINRF.buffer.bleAdv.MAC))==0){
       MINRFscanResult[i].showedUp++;
-      // AddLog_P(LOG_LEVEL_INFO,PSTR("NRF: ADVk: %02x %02x %02x %02x %02x %02x"),MINRF.buffer.bleAdv.MAC[0],MINRF.buffer.bleAdv.MAC[1],MINRF.buffer.bleAdv.MAC[2],MINRF.buffer.bleAdv.MAC[3],MINRF.buffer.bleAdv.MAC[4],MINRF.buffer.bleAdv.MAC[5]);
+      // AddLog(LOG_LEVEL_INFO,PSTR("NRF: ADVk: %02x %02x %02x %02x %02x %02x"),MINRF.buffer.bleAdv.MAC[0],MINRF.buffer.bleAdv.MAC[1],MINRF.buffer.bleAdv.MAC[2],MINRF.buffer.bleAdv.MAC[3],MINRF.buffer.bleAdv.MAC[4],MINRF.buffer.bleAdv.MAC[5]);
       return;
     }
   }
@@ -640,7 +640,7 @@ void MINRFhandleScan(void){
  */
 void MINRFstartBeacon(uint16_t entry){
   memcpy(MINRF.beacon.MAC,MINRFscanResult[entry].MAC,sizeof(MINRF.beacon.MAC));
-  AddLog_P(LOG_LEVEL_INFO,PSTR("NRF: Beacon activated: %02x:%02x:%02x:%02x:%02x:%02x"),MINRF.beacon.MAC[0],MINRF.beacon.MAC[1],MINRF.beacon.MAC[2],MINRF.beacon.MAC[3],MINRF.beacon.MAC[4],MINRF.beacon.MAC[5]);
+  AddLog(LOG_LEVEL_INFO,PSTR("NRF: Beacon activated: %02x:%02x:%02x:%02x:%02x:%02x"),MINRF.beacon.MAC[0],MINRF.beacon.MAC[1],MINRF.beacon.MAC[2],MINRF.beacon.MAC[3],MINRF.beacon.MAC[4],MINRF.beacon.MAC[5]);
   MINRF.beacon.time = 0;
   MINRF.beacon.active = true;
 }
@@ -665,55 +665,55 @@ bool MINRFhandleBeacon(scan_entry_t * entry, uint32_t offset){
 
   if(memcmp((uint8_t*)&_buf[2],MINRF.beacon.MAC,2)==0){ // always at least 2 undestroyed bytes left
     if(_buf[8]!=2 && _buf[9]!=1){
-      // AddLog_P(LOG_LEVEL_DEBUG,PSTR("NRF: unsupported ADV %02x %02x"), _buf[8],_buf[9]);
+      // AddLog(LOG_LEVEL_DEBUG,PSTR("NRF: unsupported ADV %02x %02x"), _buf[8],_buf[9]);
       return success;
     }
-    AddLog_P(LOG_LEVEL_DEBUG,PSTR("NRF: Beacon:____________"));
+    AddLog(LOG_LEVEL_DEBUG,PSTR("NRF: Beacon:____________"));
     for (uint32_t i = 8; i<32+offset;i++){
       uint32_t size = _buf[i];
       if (size>30) break;
       uint32_t ADtype = _buf[i+1];
-      // AddLog_P(LOG_LEVEL_DEBUG,PSTR("NRF: Size: %u AD: %x i:%u"), size, ADtype,i);
+      // AddLog(LOG_LEVEL_DEBUG,PSTR("NRF: Size: %u AD: %x i:%u"), size, ADtype,i);
       if (size+i>32+offset) size=32-i+offset-2;
       if (size>30) break;
       char _stemp[(size*2)];
       uint32_t backupSize;
       switch(ADtype){
         case 0x01:
-          AddLog_P(LOG_LEVEL_DEBUG,PSTR("NRF: Flags: %02x"), _buf[i+2]);
+          AddLog(LOG_LEVEL_DEBUG,PSTR("NRF: Flags: %02x"), _buf[i+2]);
           break;
         case 0x02: case 0x03:
           entry->uuid = _buf[i+3]*256 + _buf[i+2];
-          AddLog_P(LOG_LEVEL_DEBUG,PSTR("NRF: UUID: %04x"), entry->uuid);
+          AddLog(LOG_LEVEL_DEBUG,PSTR("NRF: UUID: %04x"), entry->uuid);
           success = true;
           break;
         case 0x08: case 0x09:
           backupSize = _buf[i+size+1];
           _buf[i+size+1] = 0;
-          AddLog_P(LOG_LEVEL_DEBUG,PSTR("NRF: Name: %s"), (char*)&_buf[i+2]);
+          AddLog(LOG_LEVEL_DEBUG,PSTR("NRF: Name: %s"), (char*)&_buf[i+2]);
           success = true;
           _buf[i+size+1] = backupSize;
           break;
         case 0x0a:
-          AddLog_P(LOG_LEVEL_DEBUG,PSTR("NRF: TxPow: %02u"), _buf[i+2]);
+          AddLog(LOG_LEVEL_DEBUG,PSTR("NRF: TxPow: %02u"), _buf[i+2]);
           break;
         case 0xff:
           entry->cid = _buf[i+3]*256 + _buf[i+2];
-          AddLog_P(LOG_LEVEL_DEBUG,PSTR("NRF: Cid: %04x"), entry->cid);
+          AddLog(LOG_LEVEL_DEBUG,PSTR("NRF: Cid: %04x"), entry->cid);
           ToHex_P((unsigned char*)&_buf+i+4,size-3,_stemp,(size*2));
-          AddLog_P(LOG_LEVEL_DEBUG,PSTR("%s"),_stemp);
+          AddLog(LOG_LEVEL_DEBUG,PSTR("%s"),_stemp);
           success = true;
           break;
         case 0x16:
           entry->svc = _buf[i+3]*256 + _buf[i+2];
-          AddLog_P(LOG_LEVEL_DEBUG,PSTR("NRF: Svc: %04x"), entry->svc);
+          AddLog(LOG_LEVEL_DEBUG,PSTR("NRF: Svc: %04x"), entry->svc);
           ToHex_P((unsigned char*)&_buf+i+4,size-3,_stemp,(size*2));
-          AddLog_P(LOG_LEVEL_DEBUG,PSTR("%s"),_stemp);
+          AddLog(LOG_LEVEL_DEBUG,PSTR("%s"),_stemp);
           success = true;
           break;
         default:
           ToHex_P((unsigned char*)&_buf+i+2,size-1,_stemp,(size*2));
-          AddLog_P(LOG_LEVEL_DEBUG,PSTR("%s"),_stemp);
+          AddLog(LOG_LEVEL_DEBUG,PSTR("%s"),_stemp);
       }
       i+=size;
     }
@@ -732,7 +732,7 @@ void MINRFbeaconCounter(void) {
 /*
     char stemp[20];
     snprintf_P(stemp, sizeof(stemp),PSTR("{%s:{\"Beacon\": %u}}"),D_CMND_NRF, MINRF.beacon.time);
-    AddLog_P(LOG_LEVEL_DEBUG, stemp);
+    AddLog(LOG_LEVEL_DEBUG, stemp);
     RulesProcessEvent(stemp);
 */
     Response_P(PSTR("{%s:{\"Beacon\":%u}}"), D_CMND_NRF, MINRF.beacon.time);
@@ -761,9 +761,9 @@ void MINRFcomputeBeaconPDU(uint8_t (&_MAC)[6], uint32_t (&PDU)[3], uint32_t offs
 #ifdef USE_MI_DECRYPTION
 int MINRFdecryptPacket(char *_buf){
   encPacket_t *packet = (encPacket_t*)_buf;
-  // AddLog_P(LOG_LEVEL_DEBUG,PSTR("to decrypt: %02x %02x %02x %02x %02x %02x %02x %02x"),(uint8_t)_buf[0],(uint8_t)_buf[1],(uint8_t)_buf[2],(uint8_t)_buf[3],(uint8_t)_buf[4],(uint8_t)_buf[5],(uint8_t)_buf[6],(uint8_t)_buf[7]);
-  // AddLog_P(LOG_LEVEL_DEBUG,PSTR("          : %02x %02x %02x %02x %02x %02x %02x %02x"),(uint8_t)_buf[8],(uint8_t)_buf[9],(uint8_t)_buf[10],(uint8_t)_buf[11],(uint8_t)_buf[12],(uint8_t)_buf[13],(uint8_t)_buf[14],(uint8_t)_buf[15]);
-  // AddLog_P(LOG_LEVEL_DEBUG,PSTR("          : %02x %02x %02x %02x %02x               "),(uint8_t)_buf[16],(uint8_t)_buf[17],(uint8_t)_buf[18],(uint8_t)_buf[19],(uint8_t)_buf[20]);
+  // AddLog(LOG_LEVEL_DEBUG,PSTR("to decrypt: %02x %02x %02x %02x %02x %02x %02x %02x"),(uint8_t)_buf[0],(uint8_t)_buf[1],(uint8_t)_buf[2],(uint8_t)_buf[3],(uint8_t)_buf[4],(uint8_t)_buf[5],(uint8_t)_buf[6],(uint8_t)_buf[7]);
+  // AddLog(LOG_LEVEL_DEBUG,PSTR("          : %02x %02x %02x %02x %02x %02x %02x %02x"),(uint8_t)_buf[8],(uint8_t)_buf[9],(uint8_t)_buf[10],(uint8_t)_buf[11],(uint8_t)_buf[12],(uint8_t)_buf[13],(uint8_t)_buf[14],(uint8_t)_buf[15]);
+  // AddLog(LOG_LEVEL_DEBUG,PSTR("          : %02x %02x %02x %02x %02x               "),(uint8_t)_buf[16],(uint8_t)_buf[17],(uint8_t)_buf[18],(uint8_t)_buf[19],(uint8_t)_buf[20]);
 
   int ret = 0;
   unsigned char output[16] = {0};
@@ -781,13 +781,13 @@ int MINRFdecryptPacket(char *_buf){
   uint8_t _bindkey[16] = {0x0};
   for(uint32_t i=0; i<MIBLEbindKeys.size(); i++){
     if(memcmp(packet->MAC,MIBLEbindKeys[i].MAC,sizeof(packet->MAC))==0){
-      // AddLog_P(LOG_LEVEL_DEBUG,PSTR("have key"));
+      // AddLog(LOG_LEVEL_DEBUG,PSTR("have key"));
       memcpy(_bindkey,MIBLEbindKeys[i].key,sizeof(_bindkey));
       break;
     }
     // else{
-    // AddLog_P(LOG_LEVEL_DEBUG,PSTR("MAC in packet: %02x  %02x  %02x  %02x  %02x  %02x"), packet->MAC[0], packet->MAC[1], packet->MAC[2], packet->MAC[3], packet->MAC[4], packet->MAC[5]);
-    // AddLog_P(LOG_LEVEL_DEBUG,PSTR("MAC in vector: %02x  %02x  %02x  %02x  %02x  %02x"), MIBLEbindKeys[i].MAC[0], MIBLEbindKeys[i].MAC[1], MIBLEbindKeys[i].MAC[2], MIBLEbindKeys[i].MAC[3], MIBLEbindKeys[i].MAC[4], MIBLEbindKeys[i].MAC[5]);
+    // AddLog(LOG_LEVEL_DEBUG,PSTR("MAC in packet: %02x  %02x  %02x  %02x  %02x  %02x"), packet->MAC[0], packet->MAC[1], packet->MAC[2], packet->MAC[3], packet->MAC[4], packet->MAC[5]);
+    // AddLog(LOG_LEVEL_DEBUG,PSTR("MAC in vector: %02x  %02x  %02x  %02x  %02x  %02x"), MIBLEbindKeys[i].MAC[0], MIBLEbindKeys[i].MAC[1], MIBLEbindKeys[i].MAC[2], MIBLEbindKeys[i].MAC[3], MIBLEbindKeys[i].MAC[4], MIBLEbindKeys[i].MAC[5]);
     // }
   }
 
@@ -804,7 +804,7 @@ int MINRFdecryptPacket(char *_buf){
   br_ccm_run(&ctx, 0, output, sizeof(packet->payload.cipher));
 
   ret = br_ccm_check_tag(&ctx, packet->payload.tag);
-  AddLog_P(LOG_LEVEL_DEBUG,PSTR("NRF: Err:%i, Decrypted : %02x  %02x  %02x  %02x  %02x "), ret, output[0],output[1],output[2],output[3],output[4]);
+  AddLog(LOG_LEVEL_DEBUG,PSTR("NRF: Err:%i, Decrypted : %02x  %02x  %02x  %02x  %02x "), ret, output[0],output[1],output[2],output[3],output[4]);
   memcpy((uint8_t*)(packet->payload.cipher)+1,output,sizeof(packet->payload.cipher));
   return ret;
 }
@@ -823,22 +823,22 @@ int MINRFdecryptMJYD2SPacket(char *_buf, uint8_t _light, char* _output){
   memcpy((uint8_t*)&nonce+6,(uint8_t*)&packet->PID,2);
   nonce[8] = packet->frameCnt;
   memcpy((uint8_t*)&nonce+9,(uint8_t*)&packet->padding[0] + packet->payloadSize + 5, 3);
-  // AddLog_P(LOG_LEVEL_DEBUG,PSTR("nonce: %02x  %02x  %02x  %02x  %02x  %02x %02x  %02x  %02x  %02x  %02x  %02x"), nonce[0], nonce[1], nonce[2], nonce[3], nonce[4], nonce[5], nonce[6], nonce[7], nonce[8], nonce[9], nonce[10], nonce[11]);
+  // AddLog(LOG_LEVEL_DEBUG,PSTR("nonce: %02x  %02x  %02x  %02x  %02x  %02x %02x  %02x  %02x  %02x  %02x  %02x"), nonce[0], nonce[1], nonce[2], nonce[3], nonce[4], nonce[5], nonce[6], nonce[7], nonce[8], nonce[9], nonce[10], nonce[11]);
 
   uint8_t _bindkey[16];
   for(uint32_t i=0; i<MIBLEbindKeys.size(); i++){
     if(memcmp(MIBLElights[_light-1].MAC,MIBLEbindKeys[i].MAC,sizeof(MIBLElights[_light-1].MAC))==0){
-      AddLog_P(LOG_LEVEL_DEBUG,PSTR("have key"));
+      AddLog(LOG_LEVEL_DEBUG,PSTR("have key"));
       memcpy(_bindkey,MIBLEbindKeys[i].key,sizeof(_bindkey));
       break;
     }
     // else{
-    // AddLog_P(LOG_LEVEL_DEBUG,PSTR("MAC in packet: %02x  %02x  %02x  %02x  %02x  %02x"), packet->MAC[0], packet->MAC[1], packet->MAC[2], packet->MAC[3], packet->MAC[4], packet->MAC[5]);
-    // AddLog_P(LOG_LEVEL_DEBUG,PSTR("MAC in vector: %02x  %02x  %02x  %02x  %02x  %02x"), MIBLEbindKeys[i].MAC[0], MIBLEbindKeys[i].MAC[1], MIBLEbindKeys[i].MAC[2], MIBLEbindKeys[i].MAC[3], MIBLEbindKeys[i].MAC[4], MIBLEbindKeys[i].MAC[5]);
+    // AddLog(LOG_LEVEL_DEBUG,PSTR("MAC in packet: %02x  %02x  %02x  %02x  %02x  %02x"), packet->MAC[0], packet->MAC[1], packet->MAC[2], packet->MAC[3], packet->MAC[4], packet->MAC[5]);
+    // AddLog(LOG_LEVEL_DEBUG,PSTR("MAC in vector: %02x  %02x  %02x  %02x  %02x  %02x"), MIBLEbindKeys[i].MAC[0], MIBLEbindKeys[i].MAC[1], MIBLEbindKeys[i].MAC[2], MIBLEbindKeys[i].MAC[3], MIBLEbindKeys[i].MAC[4], MIBLEbindKeys[i].MAC[5]);
     // }
   }
 
-  // AddLog_P(LOG_LEVEL_DEBUG,PSTR("size %u"),packet->payloadSize);
+  // AddLog(LOG_LEVEL_DEBUG,PSTR("size %u"),packet->payloadSize);
   uint32_t _size;
   int32_t _offset;
   uint32_t _tagSize;
@@ -862,9 +862,9 @@ int MINRFdecryptMJYD2SPacket(char *_buf, uint8_t _light, char* _output){
     return 0;
     break;
   }
-  // AddLog_P(LOG_LEVEL_DEBUG,PSTR("size %u , offset %u"),_size,_offset);
+  // AddLog(LOG_LEVEL_DEBUG,PSTR("size %u , offset %u"),_size,_offset);
   memcpy(_output,(uint8_t*)&packet->padding[0] + packet->payloadSize - _offset, _size);
-  // AddLog_P(LOG_LEVEL_DEBUG,PSTR("BEARSSL: Output : %02x  %02x  %02x  %02x  %02x %02x  %02x"), _output[0], _output[1],_output[2],_output[3],_output[4],_output[5],_output[6]);
+  // AddLog(LOG_LEVEL_DEBUG,PSTR("BEARSSL: Output : %02x  %02x  %02x  %02x  %02x %02x  %02x"), _output[0], _output[1],_output[2],_output[3],_output[4],_output[5],_output[6]);
 
   br_aes_small_ctrcbc_keys keyCtx;
   br_aes_small_ctrcbc_init(&keyCtx, _bindkey, sizeof(_bindkey));
@@ -875,7 +875,7 @@ int MINRFdecryptMJYD2SPacket(char *_buf, uint8_t _light, char* _output){
 	br_ccm_aad_inject(&ctx, authData, sizeof(authData));
 	br_ccm_flip(&ctx);
   br_ccm_run(&ctx, 0, _output, _size);
-  // AddLog_P(LOG_LEVEL_DEBUG,PSTR("BEARSSL: Err:%i, Decrypted : %02x  %02x  %02x  %02x  %02x %02x  %02x"), ret, _output[0], _output[1],_output[2],_output[3],_output[4],_output[5],_output[6]);
+  // AddLog(LOG_LEVEL_DEBUG,PSTR("BEARSSL: Err:%i, Decrypted : %02x  %02x  %02x  %02x  %02x %02x  %02x"), ret, _output[0], _output[1],_output[2],_output[3],_output[4],_output[5],_output[6]);
 
   br_ccm_get_tag(&ctx, tag);
   ret = memcmp(tag,(uint8_t*)&packet->padding[0] + packet->payloadSize + 8, _tagSize);
@@ -1124,7 +1124,7 @@ uint32_t MINRFgetSensorSlot(uint8_t (&_MAC)[6], uint16_t _type){
       break;
     }
   MIBLEsensors.push_back(_newSensor);
-  AddLog_P(LOG_LEVEL_INFO,PSTR("NRF: new %s at slot: %u"),kMINRFDeviceType[_type-1], MIBLEsensors.size()-1);
+  AddLog(LOG_LEVEL_INFO,PSTR("NRF: new %s at slot: %u"),kMINRFDeviceType[_type-1], MIBLEsensors.size()-1);
   return (MIBLEsensors.size()-1);
 };
 
@@ -1203,7 +1203,7 @@ void MINRFhandleMiBeaconPacket(void){
   switch(MINRF.buffer.miBeacon.type){
     case 0x1:
     if(MINRF.buffer.miBeacon.counter==_sensorVec->lastCnt) break;
-    // AddLog_P(LOG_LEVEL_INFO,PSTR("NRF: YEE-RC button: %u Long: %u"), MINRF.buffer.miBeacon.Btn.num, MINRF.buffer.miBeacon.Btn.longPress);
+    // AddLog(LOG_LEVEL_INFO,PSTR("NRF: YEE-RC button: %u Long: %u"), MINRF.buffer.miBeacon.Btn.num, MINRF.buffer.miBeacon.Btn.longPress);
     _sensorVec->lastCnt=MINRF.buffer.miBeacon.counter;
     _sensorVec->Btn=MINRF.buffer.miBeacon.Btn.num + (MINRF.buffer.miBeacon.Btn.longPress/2)*6;
     _sensorVec->eventType.Btn = 1;
@@ -1323,10 +1323,10 @@ void MINRFhandleNlightPacket(void){ // no MiBeacon
   uint32_t offset = 6;
   uint8_t _buf[32+offset];
   MINRFrecalcBuffer((uint8_t*)&_buf,offset);
-  // AddLog_P(LOG_LEVEL_INFO,PSTR("NRF: NLIGHT: %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x"),_buf[0],_buf[1],_buf[2],_buf[3],_buf[4],_buf[5],_buf[6],_buf[7],_buf[8],_buf[9],_buf[10],_buf[11],_buf[12],_buf[13],_buf[14],_buf[15],_buf[16],_buf[17],_buf[18]);
+  // AddLog(LOG_LEVEL_INFO,PSTR("NRF: NLIGHT: %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x"),_buf[0],_buf[1],_buf[2],_buf[3],_buf[4],_buf[5],_buf[6],_buf[7],_buf[8],_buf[9],_buf[10],_buf[11],_buf[12],_buf[13],_buf[14],_buf[15],_buf[16],_buf[17],_buf[18]);
   uint32_t _frame_PID = _buf[15]<<24 | _buf[16]<<16 | _buf[17]<<8 | _buf[18];
   if(_frame_PID!=0x4030dd03) return; // invalid packet
-  // AddLog_P(LOG_LEVEL_INFO,PSTR("NRF: NLIGHT:%x"),_frame_PID);
+  // AddLog(LOG_LEVEL_INFO,PSTR("NRF: NLIGHT:%x"),_frame_PID);
   uint32_t _idx = MINRF.activeLight-1;
   if((millis() - MIBLElights[_idx].lastTime)<1500) return;
   if(_buf[19]!=MIBLElights[_idx].lastCnt){
@@ -1334,7 +1334,7 @@ void MINRFhandleNlightPacket(void){ // no MiBeacon
     MIBLElights[_idx].events++;
     MIBLElights[_idx].shallSendMQTT = 1;
     MIBLElights[_idx].lastTime = millis();
-    AddLog_P(LOG_LEVEL_DEBUG,PSTR("NRF: NLIGHT %u: events: %u, Cnt:%u"), _idx,MIBLElights[_idx].events, MIBLElights[_idx].lastCnt);
+    AddLog(LOG_LEVEL_DEBUG,PSTR("NRF: NLIGHT %u: events: %u, Cnt:%u"), _idx,MIBLElights[_idx].events, MIBLElights[_idx].lastCnt);
   }
 }
 
@@ -1344,20 +1344,20 @@ void MINRFhandleMJYD2SPacket(void){ // no MiBeacon
   MINRFrecalcBuffer((uint8_t*)&_buf,offset);
   mjysd02_Packet_t *_packet = (mjysd02_Packet_t*)&_buf;
   if(_packet->PID!=0x07f6) return; // invalid packet
-  // AddLog_P(LOG_LEVEL_INFO,PSTR("NRF: MJYD2S: %02u %04x %04x %04x %02x"),_packet->payloadSize,_packet->UUID,_packet->frameCtrl,_packet->PID,_packet->frameCnt);
-  // AddLog_P(LOG_LEVEL_INFO,PSTR("NRF: PAYLOAD: %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x"),_packet->data[0],_packet->data[1],_packet->data[2],_packet->data[3],_packet->data[4],_packet->data[5],_packet->data[6],_packet->data[7],_packet->data[8],_packet->data[9],_packet->data[10],_packet->data[11],_packet->data[12],_packet->data[13],_packet->data[14],_packet->data[15],_packet->data[16],_packet->data[17]);
+  // AddLog(LOG_LEVEL_INFO,PSTR("NRF: MJYD2S: %02u %04x %04x %04x %02x"),_packet->payloadSize,_packet->UUID,_packet->frameCtrl,_packet->PID,_packet->frameCnt);
+  // AddLog(LOG_LEVEL_INFO,PSTR("NRF: PAYLOAD: %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x"),_packet->data[0],_packet->data[1],_packet->data[2],_packet->data[3],_packet->data[4],_packet->data[5],_packet->data[6],_packet->data[7],_packet->data[8],_packet->data[9],_packet->data[10],_packet->data[11],_packet->data[12],_packet->data[13],_packet->data[14],_packet->data[15],_packet->data[16],_packet->data[17]);
   uint32_t _idx = MINRF.activeLight-1;
   switch(_packet->frameCtrl){
     case 0x5910:
       if(_packet->frameCnt!=MIBLElights[_idx].lastCnt){
-        // AddLog_P(LOG_LEVEL_INFO,PSTR("NRF: MJYD2S after motion:%x"),_packet->frameCnt);
+        // AddLog(LOG_LEVEL_INFO,PSTR("NRF: MJYD2S after motion:%x"),_packet->frameCnt);
         MIBLElights[_idx].lastCnt = _packet->frameCnt;
         if(millis()-MIBLElights[_idx].lastTime>120000){
           MIBLElights[_idx].eventType = 1;
           MIBLElights[_idx].events++;
           MIBLElights[_idx].shallSendMQTT = 1;
           MIBLElights[_idx].lastTime = millis();
-          AddLog_P(LOG_LEVEL_DEBUG,PSTR("NRF: MJYD2S secondary PIR"));
+          AddLog(LOG_LEVEL_DEBUG,PSTR("NRF: MJYD2S secondary PIR"));
         }
       }
       break;
@@ -1373,7 +1373,7 @@ void MINRFhandleMJYD2SPacket(void){ // no MiBeacon
               if(millis()-MIBLElights[_idx].lastTime>1000){
                 MIBLElights[_idx].eventType = 1; //PIR
                 MIBLElights[_idx].shallSendMQTT = 1;
-                AddLog_P(LOG_LEVEL_DEBUG,PSTR("NRF: MJYD2S primary PIR"));
+                AddLog(LOG_LEVEL_DEBUG,PSTR("NRF: MJYD2S primary PIR"));
                 MIBLElights[_idx].events++;
               }
               MIBLElights[_idx].lastTime = millis();
@@ -1394,23 +1394,23 @@ void MINRFhandleMJYD2SPacket(void){ // no MiBeacon
             MIBLElights[_idx].NMT = output[6]<<24 | output[5]<<16 | output[4]<<8 | output[3];
             MIBLElights[_idx].eventType = 3; // NMT  0, 120, 300, 600, 1800, ... seconds
             MIBLElights[_idx].shallSendMQTT = 1;
-            // AddLog_P(LOG_LEVEL_DEBUG,PSTR("NRF: MJYD2S NMT: %u"), MIBLElights[_idx].NMT );
+            // AddLog(LOG_LEVEL_DEBUG,PSTR("NRF: MJYD2S NMT: %u"), MIBLElights[_idx].NMT );
             break;
         }
       }
   }
-  // AddLog_P(LOG_LEVEL_INFO,PSTR("NRF: NLIGHT:%x"),_frame_PID);
+  // AddLog(LOG_LEVEL_INFO,PSTR("NRF: NLIGHT:%x"),_frame_PID);
 }
 
 
 void MINRFhandleLightPacket(void){
   switch(MIBLElights[MINRF.activeLight-1].type){
     case NLIGHT:
-        // AddLog_P(LOG_LEVEL_INFO,PSTR("NRF: NLIGHT!!"));
+        // AddLog(LOG_LEVEL_INFO,PSTR("NRF: NLIGHT!!"));
         MINRFhandleNlightPacket();
         break;
     case MJYD2S:
-        // AddLog_P(LOG_LEVEL_INFO,PSTR("NRF: MJYD2S !!"));
+        // AddLog(LOG_LEVEL_INFO,PSTR("NRF: MJYD2S !!"));
         MINRFhandleMJYD2SPacket();
         break;
   }
@@ -1420,7 +1420,7 @@ void MINRFhandleLightPacket(void){
 void MINRFaddLight(uint8_t _MAC[], uint8_t _type){ // no MiBeacon
   for(uint32_t i=0; i<MIBLElights.size(); i++){
     if(memcmp(_MAC,MIBLElights[i].MAC,sizeof(MIBLElights[i].MAC))==0){
-      // AddLog_P(LOG_LEVEL_INFO,PSTR("NRF: NLIGHT: Known MAC!!"));
+      // AddLog(LOG_LEVEL_INFO,PSTR("NRF: NLIGHT: Known MAC!!"));
       return;
     }
   }
@@ -1434,14 +1434,14 @@ void MINRFaddLight(uint8_t _MAC[], uint8_t _type){ // no MiBeacon
   _light.bat=0;
   _light.lux=0;
   MIBLElights.push_back(_light);
-  AddLog_P(LOG_LEVEL_INFO,PSTR("NRF: new %s at slot: %u"),kMINRFDeviceType[_type-1], MIBLElights.size()-1);
+  AddLog(LOG_LEVEL_INFO,PSTR("NRF: new %s at slot: %u"),kMINRFDeviceType[_type-1], MIBLElights.size()-1);
 }
 
 void MINRFhandleATCPacket(void){
   ATCPacket_t *_packet = (ATCPacket_t*)&MINRF.buffer;
   uint32_t _slot = MINRFgetSensorSlot(_packet->MAC, 0x0a1c); // This must be a hard-coded fake ID
-  // AddLog_P(LOG_LEVEL_DEBUG,PSTR("known %s at slot %u"), kMINRFDeviceType[MIBLEsensors[_slot].type-1],_slot);
-  // AddLog_P(LOG_LEVEL_INFO,PSTR("NRF: ATC: %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x"),MINRF.buffer.raw[0],MINRF.buffer.raw[1],MINRF.buffer.raw[2],MINRF.buffer.raw[3],MINRF.buffer.raw[4],MINRF.buffer.raw[5],MINRF.buffer.raw[6],MINRF.buffer.raw[7],MINRF.buffer.raw[8],MINRF.buffer.raw[9],MINRF.buffer.raw[10],MINRF.buffer.raw[11]);
+  // AddLog(LOG_LEVEL_DEBUG,PSTR("known %s at slot %u"), kMINRFDeviceType[MIBLEsensors[_slot].type-1],_slot);
+  // AddLog(LOG_LEVEL_INFO,PSTR("NRF: ATC: %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x"),MINRF.buffer.raw[0],MINRF.buffer.raw[1],MINRF.buffer.raw[2],MINRF.buffer.raw[3],MINRF.buffer.raw[4],MINRF.buffer.raw[5],MINRF.buffer.raw[6],MINRF.buffer.raw[7],MINRF.buffer.raw[8],MINRF.buffer.raw[9],MINRF.buffer.raw[10],MINRF.buffer.raw[11]);
   if(_slot==0xff) return;
 
   MIBLEsensors[_slot].temp = (float)(__builtin_bswap16(_packet->temp))/10.0f;
@@ -1472,7 +1472,7 @@ void MINRF_EVERY_50_MSECOND() { // Every 50mseconds
       MINRF.mode.shallTriggerTele = 0;
     }
     // DEBUG_SENSOR_LOG(PSTR("NRF: nothing received"));
-    // if (MINRF.packetMode==ATC) AddLog_P(LOG_LEVEL_INFO,PSTR("no ATC.."));
+    // if (MINRF.packetMode==ATC) AddLog(LOG_LEVEL_INFO,PSTR("no ATC.."));
   }
 
   else {
@@ -1738,9 +1738,8 @@ void MINRFShow(bool json)
               ||(hass_mode==2)
 #endif //USE_HOME_ASSISTANT
             ) {
-              char temperature[FLOATSZ];
-              dtostrfd(MIBLEsensors[i].temp, Settings.flag2.temperature_resolution, temperature);
-              ResponseAppend_P(PSTR(",\"" D_JSON_TEMPERATURE "\":%s"), temperature);
+              ResponseAppend_P(PSTR(",\"" D_JSON_TEMPERATURE "\":%*_f"),
+                Settings.flag2.temperature_resolution, &MIBLEsensors[i].temp);
             }
           }
         }
@@ -1897,9 +1896,7 @@ void MINRFShow(bool json)
         if (MIBLEsensors[i].type==YEERC) continue;
         if (MIBLEsensors[i].type==FLORA){
           if(!isnan(MIBLEsensors[i].temp)){
-            char temperature[FLOATSZ];
-            dtostrfd(MIBLEsensors[i].temp, Settings.flag2.temperature_resolution, temperature);
-            WSContentSend_PD(HTTP_SNS_TEMP, kMINRFDeviceType[MIBLEsensors[i].type-1], temperature, TempUnit());
+            WSContentSend_Temp(kMINRFDeviceType[MIBLEsensors[i].type-1], MIBLEsensors[i].temp);
           }
           if(MIBLEsensors[i].lux!=0xffffffff){ // this is the error code -> no valid value
             WSContentSend_PD(HTTP_SNS_ILLUMINANCE, kMINRFDeviceType[MIBLEsensors[i].type-1], MIBLEsensors[i].lux);

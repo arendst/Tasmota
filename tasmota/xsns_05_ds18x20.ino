@@ -54,8 +54,8 @@ struct DS18X20STRUCT {
   float   temperature;
 } ds18x20_sensor[DS18X20_MAX_SENSORS];
 uint8_t ds18x20_sensors = 0;
-uint8_t ds18x20_pin = 0;           // Shelly GPIO3 input only
-uint8_t ds18x20_pin_out = 0;       // Shelly GPIO00 output only
+int8_t ds18x20_pin = 0;            // Shelly GPIO3 input only
+int8_t ds18x20_pin_out = 0;        // Shelly GPIO00 output only
 bool ds18x20_dual_mode = false;    // Single pin mode
 char ds18x20_types[17];
 #ifdef W1_PARASITE_POWER
@@ -344,7 +344,7 @@ void Ds18x20Init(void)
       }
     }
   }
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DSB D_SENSORS_FOUND " %d"), ds18x20_sensors);
+  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DSB D_SENSORS_FOUND " %d"), ds18x20_sensors);
 }
 
 void Ds18x20Convert(void)
@@ -429,7 +429,7 @@ bool Ds18x20Read(uint8_t sensor)
       }
     }
   }
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DSB D_SENSOR_CRC_ERROR));
+  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DSB D_SENSOR_CRC_ERROR));
   return false;
 }
 
@@ -499,9 +499,6 @@ void Ds18x20Show(bool json)
     uint8_t index = ds18x20_sensor[i].index;
 
     if (ds18x20_sensor[index].valid) {   // Check for valid temperature
-      char temperature[33];
-      dtostrfd(ds18x20_sensor[index].temperature, Settings.flag2.temperature_resolution, temperature);
-
       Ds18x20Name(i);
 
       if (json) {
@@ -509,10 +506,11 @@ void Ds18x20Show(bool json)
         for (uint32_t j = 0; j < 6; j++) {
           sprintf(address+2*j, "%02X", ds18x20_sensor[index].address[6-j]);  // Skip sensor type and crc
         }
-        ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_ID "\":\"%s\",\"" D_JSON_TEMPERATURE "\":%s}"), ds18x20_types, address, temperature);
+        ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_ID "\":\"%s\",\"" D_JSON_TEMPERATURE "\":%*_f}"),
+          ds18x20_types, address, Settings.flag2.temperature_resolution, &ds18x20_sensor[index].temperature);
 #ifdef USE_DOMOTICZ
         if ((0 == TasmotaGlobal.tele_period) && (0 == i)) {
-          DomoticzSensor(DZ_TEMP, temperature);
+          DomoticzFloatSensor(DZ_TEMP, ds18x20_sensor[index].temperature);
         }
 #endif  // USE_DOMOTICZ
 #ifdef USE_KNX
@@ -522,7 +520,7 @@ void Ds18x20Show(bool json)
 #endif  // USE_KNX
 #ifdef USE_WEBSERVER
       } else {
-        WSContentSend_PD(HTTP_SNS_TEMP, ds18x20_types, temperature, TempUnit());
+        WSContentSend_Temp(ds18x20_types, ds18x20_sensor[index].temperature);
 #endif  // USE_WEBSERVER
       }
     }

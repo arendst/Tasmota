@@ -46,7 +46,7 @@
 *
 */
 
-#ifdef ESP32
+//#ifdef ESP32
 #include "ILI9341_2.h"
 #include <limits.h>
 
@@ -57,25 +57,26 @@
 #define ILI9341_2_DIMMER
 #undef ESP32_PWM_CHANNEL
 #define ESP32_PWM_CHANNEL 1
-#define ILI9341_2_HWSPI
 #endif
+
+#define ILI9341_2_HWSPI
 
 #if defined (ILI9341_2_HWSPI)
 #define SPI_BEGIN_TRANSACTION()    if (_hwspi)    spi2->beginTransaction(sspi2)
 #define SPI_END_TRANSACTION()      if (_hwspi)    spi2->endTransaction()
 #else
-#define SPI_BEGIN_TRANSACTION()    (void)
-#define SPI_END_TRANSACTION()      (void)
+#define SPI_BEGIN_TRANSACTION()
+#define SPI_END_TRANSACTION()
 #endif
 
 
 
-const uint16_t ili9341_2_colors[]={ILI9341_2_BLACK,ILI9341_2_WHITE,ILI9341_2_RED,ILI9341_2_GREEN,ILI9341_2_BLUE,ILI9341_2_CYAN,ILI9341_2_MAGENTA,\
-  ILI9341_2_YELLOW,ILI9341_2_NAVY,ILI9341_2_DARKGREEN,ILI9341_2_DARKCYAN,ILI9341_2_MAROON,ILI9341_2_PURPLE,ILI9341_2_OLIVE,\
-ILI9341_2_LIGHTGREY,ILI9341_2_DARKGREY,ILI9341_2_ORANGE,ILI9341_2_GREENYELLOW,ILI9341_2_PINK};
+const uint16_t ili9341_2_colors[]={ILI9341_BLACK,ILI9341_WHITE,ILI9341_RED,ILI9341_GREEN,ILI9341_BLUE,ILI9341_CYAN,ILI9341_MAGENTA,\
+  ILI9341_YELLOW,ILI9341_NAVY,ILI9341_DARKGREEN,ILI9341_DARKCYAN,ILI9341_MAROON,ILI9341_PURPLE,ILI9341_OLIVE,\
+ILI9341_LIGHTGREY,ILI9341_DARKGREY,ILI9341_ORANGE,ILI9341_GREENYELLOW,ILI9341_PINK};
 
 uint16_t ILI9341_2::GetColorFromIndex(uint8_t index) {
-  if (index>=sizeof(ili9341_2_colors)/2) index=0;
+  if (index >= sizeof(ili9341_2_colors) / 2) index = 0;
   return ili9341_2_colors[index];
 }
 
@@ -135,7 +136,7 @@ static const uint8_t PROGMEM ili9342_initcmd[] = {
   0x00                                   // End of list
 };
 
-ILI9341_2::ILI9341_2(int8_t cs, int8_t mosi, int8_t miso, int8_t sclk, int8_t res, int8_t dc, int8_t bp) : Renderer(ILI9341_2_TFTWIDTH, ILI9341_2_TFTHEIGHT) {
+ILI9341_2::ILI9341_2(int8_t cs, int8_t mosi, int8_t miso, int8_t sclk, int8_t res, int8_t dc, int8_t bp, int8_t spibus, uint8_t dtype) : Renderer(ILI9341_TFTWIDTH, ILI9341_TFTHEIGHT) {
   _cs   = cs;
   _mosi  = mosi;
   _miso  = miso;
@@ -143,20 +144,22 @@ ILI9341_2::ILI9341_2(int8_t cs, int8_t mosi, int8_t miso, int8_t sclk, int8_t re
   _res = res;
   _dc = dc;
   _bp = bp;
-  _hwspi = 1;
+  _hwspi = dtype;  // sign ili9341 or 2
+  _spibus = spibus;
 }
 
-// special init for ILI9342
-ILI9341_2::ILI9341_2(int8_t cs, int8_t res, int8_t dc, int8_t bp) : Renderer(ILI9341_2_TFTWIDTH, ILI9341_2_TFTHEIGHT) {
+// special init for ILI9342 uses SPI1 previously defined with SDCard
+ILI9341_2::ILI9341_2(int8_t cs, int8_t res, int8_t dc, int8_t bp) : Renderer(ILI9341_TFTWIDTH, ILI9341_TFTHEIGHT) {
   _cs   = cs;
   _res = res;
   _dc = dc;
   _bp = bp;
-  _hwspi = 2;
+  _hwspi = 2; // sign ili9342
+  _spibus = 1;
 }
 
-#define ILI9341_2_CS_LOW digitalWrite( _cs, LOW);
-#define ILI9341_2_CS_HIGH digitalWrite( _cs, HIGH);
+#define ILI9341_2_CS_LOW if (_cs>=0) digitalWrite( _cs, LOW);
+#define ILI9341_2_CS_HIGH if (_cs>=0) digitalWrite( _cs, HIGH);
 
 
 void ILI9341_2::writecmd(uint8_t d) {
@@ -172,23 +175,37 @@ void ILI9341_2::writecmd(uint8_t d) {
 void ILI9341_2::init(uint16_t width, uint16_t height) {
   //sspi2 = SPISettings(2500000, MSBFIRST, SPI_MODE3);
 
-  if (_hwspi==2) {
-    iwidth=ILI9341_2_TFTWIDTH;
-    iheight=ILI9341_2_TFTHEIGHT;
+  if (_hwspi >= 2) {
+    iwidth = ILI9341_TFTWIDTH;
+    iheight = ILI9341_TFTHEIGHT;
   } else {
-    iwidth=ILI9341_2_TFTHEIGHT;
-    iheight=ILI9341_2_TFTWIDTH;
+    iwidth = ILI9341_TFTHEIGHT;
+    iheight = ILI9341_TFTWIDTH;
   }
 
 #ifdef ILI9341_2_HWSPI
 
   sspi2 = SPISettings(40000000, MSBFIRST, SPI_MODE0);
 
-  if (_hwspi==2) {
-    spi2=&SPI;
+  if (_hwspi >= 2) {
+    spi2 = &SPI;
+#ifdef ESP32
+    if (_hwspi > 2) {
+      spi2->begin(_sclk, _miso, _mosi, -1);
+    }
+#endif // ESP32
   } else {
-    spi2 = new SPIClass(HSPI);
+#ifdef ESP32
+    if (_spibus == 2) {
+      spi2 = new SPIClass(HSPI);
+    } else {
+      spi2 = &SPI;
+    }
     spi2->begin(_sclk, _miso, _mosi, -1);
+#else
+    SPI.begin();
+    spi2 = &SPI;
+#endif
   }
 
 #else
@@ -205,12 +222,12 @@ void ILI9341_2::init(uint16_t width, uint16_t height) {
   pinMode(_dc, OUTPUT);
   digitalWrite(_dc,HIGH);
 
-  if (_bp>=0) {
+  if (_bp >= 0) {
     pinMode(_bp, OUTPUT);
     digitalWrite(_bp,HIGH);
   }
 
-  if (_res>=0) {
+  if (_res >= 0) {
     pinMode(_res, OUTPUT);
     digitalWrite(_res, HIGH);
     delay(100);
@@ -227,11 +244,11 @@ void ILI9341_2::init(uint16_t width, uint16_t height) {
     delay(150);
   }
 
-  if (_bp>=0) {
+  if (_bp >= 0) {
 #ifdef ILI9341_2_DIMMER
-    ledcSetup(ESP32_PWM_CHANNEL,4000,8);
-    ledcAttachPin(_bp,ESP32_PWM_CHANNEL);
-    ledcWrite(ESP32_PWM_CHANNEL,128);
+    ledcSetup(ESP32_PWM_CHANNEL, 4000, 8);
+    ledcAttachPin(_bp, ESP32_PWM_CHANNEL);
+    ledcWrite(ESP32_PWM_CHANNEL, 128);
 #else
     pinMode(_bp, OUTPUT);
 #endif
@@ -261,11 +278,9 @@ void ILI9341_2::init(uint16_t width, uint16_t height) {
 #endif
 
       ILI9341_2_CS_HIGH
-      if(x & 0x80) delay(120);
+      if (x & 0x80) delay(120);
   }
   SPI_END_TRANSACTION();
-
-//  endWrite();
 }
 
 void ILI9341_2::DisplayInit(int8_t p,int8_t size,int8_t rot,int8_t font) {
@@ -275,9 +290,9 @@ void ILI9341_2::DisplayInit(int8_t p,int8_t size,int8_t rot,int8_t font) {
   setRotation(rot);
   setTextFont(font&3);
   setTextSize(size&7);
-  setTextColor(ILI9341_2_WHITE,ILI9341_2_BLACK);
+  setTextColor(ILI9341_WHITE,ILI9341_BLACK);
   setCursor(0,0);
-  fillScreen(ILI9341_2_BLACK);
+  fillScreen(ILI9341_BLACK);
 }
 
 void ILI9341_2::setAddrWindow(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1) {
@@ -331,21 +346,20 @@ void ILI9341_2::setAddrWindow_int(uint16_t x, uint16_t y, uint16_t w, uint16_t h
 
 void ILI9341_2::drawPixel(int16_t x, int16_t y, uint16_t color) {
 
-
   if((x < 0) ||(x >= _width) || (y < 0) || (y >= _height)) return;
-
-  ILI9341_2_CS_LOW
 
   SPI_BEGIN_TRANSACTION();
 
-  setAddrWindow_int(x,y,1,1);
+  ILI9341_2_CS_LOW
 
+  setAddrWindow_int(x,y,1,1);
 
 #ifdef ILI9341_2_HWSPI
   spi2->write16(color);
 #else
   spiwrite16(color);
 #endif
+
   ILI9341_2_CS_HIGH
 
   SPI_END_TRANSACTION();
@@ -354,7 +368,7 @@ void ILI9341_2::drawPixel(int16_t x, int16_t y, uint16_t color) {
 
 void ILI9341_2::setRotation(uint8_t m) {
 
-  if (_hwspi<2) {
+  if (_hwspi < 2) {
     rotation = m % 4; // can't be higher than 3
     switch (rotation) {
         case 0:
@@ -397,17 +411,17 @@ void ILI9341_2::setRotation(uint8_t m) {
             _height = iheight;
             break;
         case 1:
-            m = (MADCTL_MV | MADCTL_BGR);
+            m = (MADCTL_MY | MADCTL_MV | MADCTL_BGR);
             _width  = iheight;
             _height = iwidth;
             break;
         case 2:
-            m = (MADCTL_MY | MADCTL_BGR);
+            m = (MADCTL_MY | MADCTL_MX | MADCTL_BGR);
             _width  = iwidth;
             _height = iheight;
             break;
         case 3:
-            m = (MADCTL_MX | MADCTL_MY | MADCTL_MV | MADCTL_BGR);
+            m = (MADCTL_MX | MADCTL_MV | MADCTL_BGR);
             _width  = iheight;
             _height = iwidth;
             break;
@@ -425,15 +439,14 @@ void ILI9341_2::setRotation(uint8_t m) {
 void ILI9341_2::drawFastVLine(int16_t x, int16_t y, int16_t h, uint16_t color) {
 
   // Rudimentary clipping
-  if((x >= _width) || (y >= _height)) return;
-  if((y+h-1) >= _height) h = _height-y;
-
-  ILI9341_2_CS_LOW
+  if ((x >= _width) || (y >= _height)) return;
+  if ((y + h - 1) >= _height) h = _height - y;
 
   SPI_BEGIN_TRANSACTION();
 
-  setAddrWindow_int(x, y, 1, h);
+  ILI9341_2_CS_LOW
 
+  setAddrWindow_int(x, y, 1, h);
 
   while (h--) {
 #ifdef ILI9341_2_HWSPI
@@ -454,9 +467,10 @@ void ILI9341_2::drawFastHLine(int16_t x, int16_t y, int16_t w, uint16_t color) {
   if((x >= _width) || (y >= _height)) return;
   if((x+w-1) >= _width)  w = _width-x;
 
-  ILI9341_2_CS_LOW
 
   SPI_BEGIN_TRANSACTION();
+
+  ILI9341_2_CS_LOW
 
   setAddrWindow_int(x, y, w, 1);
 
@@ -486,9 +500,10 @@ void ILI9341_2::fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t co
   if((x + w - 1) >= _width)  w = _width  - x;
   if((y + h - 1) >= _height) h = _height - y;
 
-  ILI9341_2_CS_LOW
 
   SPI_BEGIN_TRANSACTION();
+
+  ILI9341_2_CS_LOW
 
   setAddrWindow_int(x, y, w, h);
 
@@ -512,7 +527,7 @@ void ili9342_bpwr(uint8_t on);
 
 void ILI9341_2::DisplayOnff(int8_t on) {
 
-  if (_hwspi==2) {
+  if ((_hwspi >= 2) && (_bp < 0)) {
     ili9342_bpwr(on);
   }
 
@@ -522,11 +537,11 @@ void ILI9341_2::DisplayOnff(int8_t on) {
     writecmd(ILI9341_2_DISPON);
     ILI9341_2_CS_HIGH
     SPI_END_TRANSACTION();
-    if (_bp>=0) {
+    if (_bp >= 0) {
 #ifdef ILI9341_2_DIMMER
-      ledcWrite(ESP32_PWM_CHANNEL,dimmer);
+      ledcWrite(ESP32_PWM_CHANNEL, dimmer);
 #else
-      digitalWrite(_bp,HIGH);
+      digitalWrite(_bp, HIGH);
 #endif
     }
   } else {
@@ -535,20 +550,22 @@ void ILI9341_2::DisplayOnff(int8_t on) {
     writecmd(ILI9341_2_DISPOFF);
     ILI9341_2_CS_HIGH
     SPI_END_TRANSACTION();
-    if (_bp>=0) {
+    if (_bp >= 0) {
 #ifdef ILI9341_2_DIMMER
-      ledcWrite(ESP32_PWM_CHANNEL,0);
+      ledcWrite(ESP32_PWM_CHANNEL, 0);
 #else
-      digitalWrite(_bp,LOW);
+      digitalWrite(_bp, LOW);
 #endif
     }
   }
 }
 
 void ILI9341_2::invertDisplay(boolean i) {
+  SPI_BEGIN_TRANSACTION();
   ILI9341_2_CS_LOW
-  writecmd(i ? ILI9341_2_INVOFF : ILI9341_2_INVON);
+  writecmd(i ? ILI9341_2_INVON : ILI9341_2_INVOFF);
   ILI9341_2_CS_HIGH
+  SPI_END_TRANSACTION();
 }
 
 void ili9342_dimm(uint8_t dim);
@@ -562,7 +579,7 @@ void ILI9341_2::dim(uint8_t dim) {
   if (_bp>=0) {
     ledcWrite(ESP32_PWM_CHANNEL,dimmer);
   } else {
-    if (_hwspi==2) {
+    if (_hwspi>=2) {
       ili9342_dimm(dim);
     }
   }
@@ -605,4 +622,25 @@ void ILI9341_2::spiwrite32(uint32_t c) {
 #endif
 }
 
-#endif
+void ILI9341_2::setScrollMargins(uint16_t top, uint16_t bottom) {
+  uint16_t height = _height - (top + bottom);
+  SPI_BEGIN_TRANSACTION();
+  ILI9341_2_CS_LOW
+  writecmd(0x33);
+
+  spiwrite16(top);
+  spiwrite16(height);
+  spiwrite16(bottom);
+  ILI9341_2_CS_HIGH
+  SPI_END_TRANSACTION();
+}
+
+
+void ILI9341_2::scrollTo(uint16_t y) {
+    SPI_BEGIN_TRANSACTION();
+    ILI9341_2_CS_LOW
+    writecmd(ILI9341_2_VSCRSADD);
+    spiwrite16(y);
+    ILI9341_2_CS_HIGH
+    SPI_END_TRANSACTION();
+}

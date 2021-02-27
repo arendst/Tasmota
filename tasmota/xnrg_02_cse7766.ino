@@ -68,7 +68,7 @@ void CseReceived(void) {
 
   uint8_t header = Cse.rx_buffer[0];
   if ((header & 0xFC) == 0xFC) {
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR("CSE: Abnormal hardware"));
+    AddLog(LOG_LEVEL_DEBUG, PSTR("CSE: Abnormal hardware"));
     return;
   }
 
@@ -165,7 +165,7 @@ void CseSerialInput(void) {
             Cse.byte_counter--;
           } while ((Cse.byte_counter > 2) && (0x5A != Cse.rx_buffer[1]));
           if (0x5A != Cse.rx_buffer[1]) {
-            AddLog_P(LOG_LEVEL_DEBUG, PSTR("CSE: " D_CHECKSUM_FAILURE));
+            AddLog(LOG_LEVEL_DEBUG, PSTR("CSE: " D_CHECKSUM_FAILURE));
             Cse.received = false;
             Cse.byte_counter = 0;
           }
@@ -208,7 +208,7 @@ void CseEverySecond(void) {
           Energy.kWhtoday_delta += delta;
         }
         else {
-          AddLog_P(LOG_LEVEL_DEBUG, PSTR("CSE: Overload"));
+          AddLog(LOG_LEVEL_DEBUG, PSTR("CSE: Overload"));
           Cse.cf_pulses_last_time = CSE_PULSES_NOT_INITIALIZED;
         }
         EnergyUpdateToday();

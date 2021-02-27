@@ -85,14 +85,11 @@ int LMT01_getPulses(void) {
 }
 
 void LMT01_Show(bool Json) {
-  char temp[33];
-  dtostrfd(lmt01_temperature, Settings.flag2.temperature_resolution, temp);
-
   if (Json) {
-    ResponseAppend_P(JSON_SNS_TEMP, "LMT01", temp);
+    ResponseAppend_P(JSON_SNS_F_TEMP, "LMT01", Settings.flag2.temperature_resolution, &lmt01_temperature);
 #ifdef USE_DOMOTICZ
     if (0 == TasmotaGlobal.tele_period) {
-      DomoticzSensor(DZ_TEMP, temp);
+      DomoticzFloatSensor(DZ_TEMP, lmt01_temperature);
     }
 #endif  // USE_DOMOTICZ
 #ifdef USE_KNX
@@ -102,7 +99,7 @@ void LMT01_Show(bool Json) {
 #endif  // USE_KNX
 #ifdef USE_WEBSERVER
   } else {
-    WSContentSend_PD(HTTP_SNS_TEMP, "LMT01", temp, TempUnit());
+    WSContentSend_Temp("LMT01", lmt01_temperature);
 #endif  // USE_WEBSERVER
   }
 }

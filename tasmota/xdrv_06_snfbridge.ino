@@ -147,7 +147,7 @@ uint32_t SnfBrUpdateFirmware(uint8_t* data, uint32_t size) {
   uint32_t error = rf_erase_flash();  // 10, 11
   if (error) { return error; }
 
-//  AddLog_P(LOG_LEVEL_DEBUG, PSTR("RFB: Erased"));
+//  AddLog(LOG_LEVEL_DEBUG, PSTR("RFB: Erased"));
 
   return rf_search_and_write(data, size);
 }

@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v9.1.0
+ * Updated until v9.2.0.4
 \*********************************************************************/
 
 //#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -100,6 +100,7 @@
 #define D_FALSE "Onwaar"
 #define D_FILE "Bestand"
 #define D_FLOW_RATE "Debiet"
+#define D_FRAGMENTATION "frag."      // Lower case abbreviated version of fragmentation used in "memory fragmentation"
 #define D_FREE_MEMORY "Vrij geheugen"
 #define D_PSR_MAX_MEMORY "PS-RAM Memory"
 #define D_PSR_FREE_MEMORY "PS-RAM free Memory"
@@ -111,7 +112,7 @@
 #define D_HOSTNAME "Hostnaam"
 #define D_HUMIDITY "Luchtvochtigheid"
 #define D_ILLUMINANCE "Verlichtingssterkte"
-#define D_IMMEDIATE "onmiddelijk"      // Button immediate
+#define D_IMMEDIATE "onmiddellijk"      // Button immediate
 #define D_INDEX "Index"
 #define D_INFO "Info"
 #define D_INFRARED "Infrarood"
@@ -243,8 +244,8 @@
 #define D_WEBSERVER_STOPPED "Webserver gestopt"
 #define D_FILE_NOT_FOUND "Bestand niet gevonden"
 #define D_REDIRECTED "Omleiding naar captive portal"
-#define D_WIFIMANAGER_SET_ACCESSPOINT_AND_STATION "Wifimanager start AccessPoint en hou Station"
-#define D_WIFIMANAGER_SET_ACCESSPOINT "Wifimanager start AccessPoint"
+#define D_WIFIMANAGER_SET_ACCESSPOINT_AND_STATION "WiFimanager start AccessPoint en hou Station"
+#define D_WIFIMANAGER_SET_ACCESSPOINT "WiFimanager start AccessPoint"
 #define D_TRYING_TO_CONNECT "Apparaat probeert te verbinden met netwerk"
 
 #define D_RESTART_IN "Herstart over"
@@ -277,8 +278,8 @@
 #define D_SERIAL_IN "Serieel In"
 #define D_SERIAL_OUT "Serieel Uit"
 
-#define D_WIFI_PARAMETERS "Wifi parameters"
-#define D_SCAN_FOR_WIFI_NETWORKS "Zoek wifi netwerken"
+#define D_WIFI_PARAMETERS "WiFi parameters"
+#define D_SCAN_FOR_WIFI_NETWORKS "Zoek WiFi netwerken"
 #define D_SCAN_DONE "Scan klaar"
 #define D_NO_NETWORKS_FOUND "Geen netwerken gevonden"
 #define D_REFRESH_TO_SCAN_AGAIN "Vernieuw om opnieuw te zoeken"
@@ -557,8 +558,8 @@
 //xsns_35_tx20.ino
 #define D_TX20_WIND_DIRECTION "Windrichting"
 #define D_TX20_WIND_SPEED "Windsnelheid"
-#define D_TX20_WIND_SPEED_MIN "Windsnelhied minimum"
-#define D_TX20_WIND_SPEED_MAX "Windsnelhied maximaal"
+#define D_TX20_WIND_SPEED_MIN "Windsnelheid minimum"
+#define D_TX20_WIND_SPEED_MAX "Windsnelheid maximaal"
 #define D_TX20_NORTH "N"
 #define D_TX20_EAST "E"
 #define D_TX20_SOUTH "S"
@@ -629,15 +630,19 @@
 #define D_SENSOR_SBR_TX        "SerBr Tx"
 #define D_SENSOR_SR04_TRIG     "SR04 Tri/TX"
 #define D_SENSOR_SR04_ECHO     "SR04 Ech/RX"
+#define D_SENSOR_SDM72_TX      "SDM72 Tx"
+#define D_SENSOR_SDM72_RX      "SDM72 Rx"
 #define D_SENSOR_SDM120_TX     "SDMx20 Tx"
 #define D_SENSOR_SDM120_RX     "SDMx20 Rx"
 #define D_SENSOR_SDM630_TX     "SDM630 Tx"
 #define D_SENSOR_SDM630_RX     "SDM630 Rx"
 #define D_SENSOR_WE517_TX      "WE517 Tx"
 #define D_SENSOR_WE517_RX      "WE517 Rx"
-#define D_SENSOR_TM1638_CLK    "TM16 CLK"
-#define D_SENSOR_TM1638_DIO    "TM16 DIO"
-#define D_SENSOR_TM1638_STB    "TM16 STB"
+#define D_SENSOR_TM1637_CLK    "TM1637 CLK"
+#define D_SENSOR_TM1637_DIO    "TM1637 DIO"
+#define D_SENSOR_TM1638_CLK    "TM1638 CLK"
+#define D_SENSOR_TM1638_DIO    "TM1638 DIO"
+#define D_SENSOR_TM1638_STB    "TM1638 STB"
 #define D_SENSOR_HX711_SCK     "HX711 SCK"
 #define D_SENSOR_HX711_DAT     "HX711 DAT"
 #define D_SENSOR_FTC532        "FTC532"
@@ -824,6 +829,7 @@
 #define D_UNIT_PARTS_PER_BILLION "ppb"
 #define D_UNIT_PARTS_PER_DECILITER "ppd"
 #define D_UNIT_PARTS_PER_MILLION "ppm"
+#define D_UNIT_MILIGRAMS_PER_LITER "mg/L"
 #define D_UNIT_PERCENT "%%"
 #define D_UNIT_PRESSURE "hPa"
 #define D_UNIT_SECOND "sec"
@@ -835,7 +841,9 @@
 #define D_UNIT_WATTHOUR "Wh"
 #define D_UNIT_WATT_METER_QUADRAT "W/m²"
 
-//SDM220, SDM120, LE01MR
+//SDM220, SDM120, SDM72, LE01MR
+#define D_EXPORT_POWER    "Export vermogen"
+#define D_IMPORT_POWER 	  "Import vermogen"
 #define D_PHASE_ANGLE     "Fase hoek"
 #define D_IMPORT_ACTIVE   "Import werkelijk"
 #define D_EXPORT_ACTIVE   "Export werkelijk"

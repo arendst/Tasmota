@@ -2,14 +2,78 @@
 
 All notable changes to this project will be documented in this file.  
 
-## [Unreleased]
+## [1.2.0] - 2021-02-08
+
+### Added
+- `NimBLECharacteristic::getDescriptorByHandle`: Return the BLE Descriptor for the given handle.
+
+- `NimBLEDescriptor::getStringValue`: Get the value of this descriptor as a string.
+
+- `NimBLEServer::getServiceByHandle`: Get a service by its handle.
+
+- `NimBLEService::getCharacteristicByHandle`: Get a pointer to the characteristic object with the specified handle.
+
+- `NimBLEService::getCharacteristics`: Get the vector containing pointers to each characteristic associated with this service.  
+Overloads to get a vector containing pointers to all the characteristics in a service with the UUID. (supports multiple same UUID's in a service)
+  - `NimBLEService::getCharacteristics(const char *uuid)`
+  - `NimBLEService::getCharacteristics(const NimBLEUUID &uuid)`
+
+- `NimBLEAdvertisementData` New methods:
+  - `NimBLEAdvertisementData::addTxPower`: Adds transmission power to the advertisement.
+  - `NimBLEAdvertisementData::setPreferredParams`: Adds connection parameters to the advertisement.
+  - `NimBLEAdvertisementData::setURI`: Adds URI data to the advertisement.
+
+- `NimBLEAdvertising` New methods:
+  - `NimBLEAdvertising::setName`: Set the name advertised.
+  - `NimBLEAdvertising::setManufacturerData`: Adds manufacturer data to the advertisement.
+  - `NimBLEAdvertising::setURI`: Adds URI data to the advertisement.
+  - `NimBLEAdvertising::setServiceData`: Adds service data to the advertisement.
+  - `NimBLEAdvertising::addTxPower`: Adds transmission power to the advertisement.
+  - `NimBLEAdvertising::reset`: Stops the current advertising and resets the advertising data to the default values.
+
+- `NimBLEDevice::setScanFilterMode`: Set the controller duplicate filter mode for filtering scanned devices.
+
+- `NimBLEDevice::setScanDuplicateCacheSize`: Sets the number of advertisements filtered before the cache is reset.
+
+- `NimBLEScan::setMaxResults`:  This allows for setting a maximum number of advertised devices stored in the results vector.
+
+- `NimBLEAdvertisedDevice` New data retrieval methods added:
+  - `haveAdvInterval/getAdvInterval`: checks if the interval is advertised / gets the advertisement interval value.
+
+  - `haveConnParams/getMinInterval/getMaxInterval`: checks if the parameters are advertised / get min value / get max value.
+
+  - `haveURI/getURI`: checks if a URI is advertised / gets the URI data.
+
+  - `haveTargetAddress/getTargetAddressCount/getTargetAddress(index)`: checks if a target address is present / gets a count of the addresses targeted / gets the address of the target at index.
+
+### Changed
+- `nimconfig.h` (Arduino) is now easier to use.
+
+- `NimBLEServer::getServiceByUUID` Now takes an extra parameter of instanceID to support multiple services with the same UUID.
+
+- `NimBLEService::getCharacteristic` Now takes an extra parameter of instanceID to support multiple characteristics with the same UUID.
+
+- `NimBLEAdvertising` Transmission power is no longer advertised by default and can be added to the advertisement by calling `NimBLEAdvertising::addTxPower`
+
+- `NimBLEAdvertising` Custom scan response data can now be used without custom advertisment.
+
+- `NimBLEScan` Now uses the controller duplicate filter.  
+
+- `NimBLEAdvertisedDevice` Has been refactored to store the complete advertisement payload and no longer parses the data from each advertisement.  
+Instead the data will be parsed on-demand when the user application asks for specific data.  
+
+### Fixed
+- `NimBLEHIDDevice` Characteristics now use encryption, this resolves an issue with communicating with devices requiring encryption for HID devices.
+
+
+## [1.1.0] - 2021-01-20
 
 ### Added
 - `NimBLEDevice::setOwnAddrType` added to enable the use of random and random-resolvable addresses, by asukiaaa  
 
 - New examples for securing and authenticating client/server connections, by mblasee.  
 
-- `NimBLEAdvertiseing::SetMinPreferred` and `NimBLEAdvertiseing::SetMinPreferred` re-added.  
+- `NimBLEAdvertising::SetMinPreferred` and `NimBLEAdvertising::SetMinPreferred` re-added.  
 
 - Conditional checks added for command line config options in `nimconfig.h` to support custom configuration in platformio.  
 
@@ -71,6 +135,7 @@ advertised them as 16/32bit but resolved them to 128bits. Both are now checked.
 
 - (Arduino) Ensure controller mode is set to BLE Only.  
 
+
 ## [1.0.2] - 2020-09-13
 
 ### Changed
@@ -83,6 +148,7 @@ Any changes to the controller max connection settings in `sdkconfig.h` will now 
 
 - (Arduino) Revert the previous change to fix the advertising start delay. Instead a replacement fix that routes all BLE controller commands from  
 a task running on core 0 (same as the controller) has been implemented. This improves response times and reliability for all BLE functions.
+
 
 ## [1.0.1] - 2020-09-02
 

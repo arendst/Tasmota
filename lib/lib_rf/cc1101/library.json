@@ -1,0 +1,8 @@
+{
+    "name": "cc1101",
+    "keywords": "rf, esp8266",
+    "description": "cc1101 library",
+    "version": "1.0",
+    "frameworks": "arduino",
+    "platforms": "espressif8266"
+}

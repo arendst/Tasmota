@@ -35,15 +35,13 @@ struct EZORTD : public EZOStruct {
 
   virtual void Show(bool json, const char *name)
   {
-    char str[10];
-    dtostrfd(ConvertTemp(temperature), Settings.flag2.temperature_resolution, str);
+    float temp = ConvertTemp(temperature);
 
     if (json) {
-      ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_TEMPERATURE "\":%s}"), name, str);
-    }
+      ResponseAppend_P(JSON_SNS_F_TEMP, name, Settings.flag2.temperature_resolution, &temp);
 #ifdef USE_WEBSERVER
-    else {
-      WSContentSend_PD(HTTP_SNS_TEMP, name, str, TempUnit());
+    }else {
+      WSContentSend_Temp(name, temp);
 #endif  // USE_WEBSERVER
     }
   }

@@ -317,7 +317,7 @@ void PAJ7620Detect(void)
 	uint8_t PAJ7620_ver = I2cRead8(PAJ7620_ADDR,2);
   if (0x7620 == PAJ7620_id) { // this device ID makes sense ;)
     I2cSetActiveFound(PAJ7620_ADDR, PAJ7620_name);
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR("PAJ: ID: 0x%x and VER: %u"), PAJ7620_id, PAJ7620_ver);
+    AddLog(LOG_LEVEL_DEBUG, PSTR("PAJ: ID: 0x%x and VER: %u"), PAJ7620_id, PAJ7620_ver);
     PAJ7620_next_job = 1; // now init
   }
   else {

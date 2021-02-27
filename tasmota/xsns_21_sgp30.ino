@@ -47,7 +47,7 @@ void sgp30_Init(void)
 
   if (sgp.begin()) {
     sgp30_type = true;
-//    AddLog_P(LOG_LEVEL_DEBUG, PSTR("SGP: Serialnumber 0x%04X-0x%04X-0x%04X"), sgp.serialnumber[0], sgp.serialnumber[1], sgp.serialnumber[2]);
+//    AddLog(LOG_LEVEL_DEBUG, PSTR("SGP: Serialnumber 0x%04X-0x%04X-0x%04X"), sgp.serialnumber[0], sgp.serialnumber[1], sgp.serialnumber[2]);
     I2cSetActiveFound(SGP30_ADDRESS, "SGP30");
   }
 }
@@ -97,7 +97,7 @@ void Sgp30Update(void)  // Perform every second to ensure proper operation of th
     uint16_t eCO2_base;
 
     if (!sgp.getIAQBaseline(&eCO2_base, &TVOC_base)) return;  // Failed to get baseline readings
-//      AddLog_P(LOG_LEVEL_DEBUG, PSTR("SGP: Baseline values eCO2 0x%04X, TVOC 0x%04X"), eCO2_base, TVOC_base);
+//      AddLog(LOG_LEVEL_DEBUG, PSTR("SGP: Baseline values eCO2 0x%04X, TVOC 0x%04X"), eCO2_base, TVOC_base);
   }
 }
 

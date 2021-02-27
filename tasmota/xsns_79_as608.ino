@@ -103,7 +103,7 @@ void As608Init(void) {
 
     if (As608Finger->verifyPassword()) {
       As608Finger->getTemplateCount();
-      AddLog_P(LOG_LEVEL_INFO, PSTR("AS6: Detected with %d fingerprint(s) stored"), As608Finger->templateCount);
+      AddLog(LOG_LEVEL_INFO, PSTR("AS6: Detected with %d fingerprint(s) stored"), As608Finger->templateCount);
       As608.selected = true;
     }
   }
@@ -147,7 +147,7 @@ void As608Loop(void) {
 //    p = As608Finger->fingerFastSearch();  // Match found - fails on R503
     p = As608Finger->fingerSearch();      // Match found
     if (p != FINGERPRINT_OK) {
-//      AddLog_P(LOG_LEVEL_DEBUG, PSTR("AS6: No matching finger"));
+//      AddLog(LOG_LEVEL_DEBUG, PSTR("AS6: No matching finger"));
       return;
     }
 

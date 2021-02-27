@@ -92,7 +92,7 @@ void EpdInitDriver29(void) {
 #endif
 
     epd_init_done = true;
-    AddLog_P(LOG_LEVEL_INFO, PSTR("DSP: E-Paper 2.9"));
+    AddLog(LOG_LEVEL_INFO, PSTR("DSP: E-Paper 2.9"));
   }
 }
 
@@ -134,7 +134,7 @@ void EpdPrintLog29(void)
       renderer->DrawStringAt(0, epd_scroll, disp_screen_buffer[last_row], COLORED, 0);
 //      EpdDisplayFrame();
 
-      AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION "[%s]"), txt);
+      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION "[%s]"), txt);
     }
   }
 }

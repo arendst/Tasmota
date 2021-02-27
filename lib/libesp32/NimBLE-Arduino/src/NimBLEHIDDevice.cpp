@@ -20,6 +20,10 @@
 #include "NimBLEHIDDevice.h"
 #include "NimBLE2904.h"
 
+/**
+ * @brief Construct a default NimBLEHIDDevice object.
+ * @param [in] server A pointer to the server instance this HID Device will use.
+ */
 NimBLEHIDDevice::NimBLEHIDDevice(NimBLEServer* server) {
 	/*
 	 * Here we create mandatory services described in bluetooth specification
@@ -61,15 +65,18 @@ NimBLEHIDDevice::NimBLEHIDDevice(NimBLEServer* server) {
 NimBLEHIDDevice::~NimBLEHIDDevice() {
 }
 
-/*
- * @brief
+/**
+ * @brief Set the report map data formatting information.
+ * @param [in] map A pointer to an array with the values to set.
+ * @param [in] size The number of values in the array.
  */
 void NimBLEHIDDevice::reportMap(uint8_t* map, uint16_t size) {
 	m_reportMapCharacteristic->setValue(map, size);
 }
 
-/*
- * @brief This function suppose to be called at the end, when we have created all characteristics we need to build HID service
+/**
+ * @brief Start the HID device services.\n
+ * This function called when all the services have been created.
  */
 void NimBLEHIDDevice::startServices() {
 	m_deviceInfoService->start();
@@ -77,46 +84,52 @@ void NimBLEHIDDevice::startServices() {
 	m_batteryService->start();
 }
 
-/*
- * @brief Create manufacturer characteristic (this characteristic is optional)
+/**
+ * @brief Create a manufacturer characteristic (this characteristic is optional).
  */
 NimBLECharacteristic* NimBLEHIDDevice::manufacturer() {
 	m_manufacturerCharacteristic = m_deviceInfoService->createCharacteristic((uint16_t) 0x2a29, NIMBLE_PROPERTY::READ);
 	return m_manufacturerCharacteristic;
 }
 
-/*
+/**
  * @brief Set manufacturer name
- * @param [in] name manufacturer name
+ * @param [in] name The manufacturer name of this HID device.
  */
 void NimBLEHIDDevice::manufacturer(std::string name) {
 	m_manufacturerCharacteristic->setValue(name);
 }
 
-/*
- * @brief
+/**
+ * @brief Sets the Plug n Play characterisc value.
+ * @param [in] sig The vendor ID source number.
+ * @param [in] vid The vendor ID number.
+ * @param [in] pid The product ID number.
+ * @param [in] version The produce version number.
  */
 void NimBLEHIDDevice::pnp(uint8_t sig, uint16_t vid, uint16_t pid, uint16_t version) {
 	uint8_t pnp[] = { sig, (uint8_t) (vid >> 8), (uint8_t) vid, (uint8_t) (pid >> 8), (uint8_t) pid, (uint8_t) (version >> 8), (uint8_t) version };
 	m_pnpCharacteristic->setValue(pnp, sizeof(pnp));
 }
 
-/*
- * @brief
+/**
+ * @brief Sets the HID Information characteristic value.
+ * @param [in] country The country code for the device.
+ * @param [in] flags The HID Class Specification release number to use.
  */
 void NimBLEHIDDevice::hidInfo(uint8_t country, uint8_t flags) {
 	uint8_t info[] = { 0x11, 0x1, country, flags };
 	m_hidInfoCharacteristic->setValue(info, sizeof(info));
 }
 
-/*
- * @brief Create input report characteristic that need to be saved as new characteristic object so can be further used
- * @param [in] reportID input report ID, the same as in report map for input object related to created characteristic
+/**
+ * @brief Create input report characteristic
+ * @param [in] reportID input report ID, the same as in report map for input object related to the characteristic
  * @return pointer to new input report characteristic
  */
 NimBLECharacteristic* NimBLEHIDDevice::inputReport(uint8_t reportID) {
-	NimBLECharacteristic* inputReportCharacteristic = m_hidService->createCharacteristic((uint16_t) 0x2a4d, NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::NOTIFY);
-	NimBLEDescriptor* inputReportDescriptor = inputReportCharacteristic->createDescriptor((uint16_t) 0x2908);
+	NimBLECharacteristic* inputReportCharacteristic = m_hidService->createCharacteristic((uint16_t) 0x2a4d, NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::NOTIFY | NIMBLE_PROPERTY::READ_ENC);
+	NimBLEDescriptor* inputReportDescriptor = inputReportCharacteristic->createDescriptor((uint16_t) 0x2908, NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::READ_ENC);
 
 	uint8_t desc1_val[] = { reportID, 0x01 };
 	inputReportDescriptor->setValue((uint8_t*) desc1_val, 2);
@@ -124,14 +137,14 @@ NimBLECharacteristic* NimBLEHIDDevice::inputReport(uint8_t reportID) {
 	return inputReportCharacteristic;
 }
 
-/*
- * @brief Create output report characteristic that need to be saved as new characteristic object so can be further used
- * @param [in] reportID Output report ID, the same as in report map for output object related to created characteristic
+/**
+ * @brief Create output report characteristic
+ * @param [in] reportID Output report ID, the same as in report map for output object related to the characteristic
  * @return Pointer to new output report characteristic
  */
 NimBLECharacteristic* NimBLEHIDDevice::outputReport(uint8_t reportID) {
 	NimBLECharacteristic* outputReportCharacteristic = m_hidService->createCharacteristic((uint16_t) 0x2a4d, NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::WRITE_NR | NIMBLE_PROPERTY::READ_ENC | NIMBLE_PROPERTY::WRITE_ENC);
-	NimBLEDescriptor* outputReportDescriptor = outputReportCharacteristic->createDescriptor((uint16_t) 0x2908);
+	NimBLEDescriptor* outputReportDescriptor = outputReportCharacteristic->createDescriptor((uint16_t) 0x2908, NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::READ_ENC | NIMBLE_PROPERTY::WRITE_ENC);
 
 	uint8_t desc1_val[] = { reportID, 0x02 };
 	outputReportDescriptor->setValue((uint8_t*) desc1_val, 2);
@@ -139,14 +152,14 @@ NimBLECharacteristic* NimBLEHIDDevice::outputReport(uint8_t reportID) {
 	return outputReportCharacteristic;
 }
 
-/*
- * @brief Create feature report characteristic that need to be saved as new characteristic object so can be further used
- * @param [in] reportID Feature report ID, the same as in report map for feature object related to created characteristic
+/**
+ * @brief Create feature report characteristic.
+ * @param [in] reportID Feature report ID, the same as in report map for feature object related to the characteristic
  * @return Pointer to new feature report characteristic
  */
 NimBLECharacteristic* NimBLEHIDDevice::featureReport(uint8_t reportID) {
 	NimBLECharacteristic* featureReportCharacteristic = m_hidService->createCharacteristic((uint16_t) 0x2a4d, NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::READ_ENC | NIMBLE_PROPERTY::WRITE_ENC);
-	NimBLEDescriptor* featureReportDescriptor = featureReportCharacteristic->createDescriptor((uint16_t) 0x2908);
+	NimBLEDescriptor* featureReportDescriptor = featureReportCharacteristic->createDescriptor((uint16_t) 0x2908, NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::READ_ENC | NIMBLE_PROPERTY::WRITE_ENC);
 
 	uint8_t desc1_val[] = { reportID, 0x03 };
 	featureReportDescriptor->setValue((uint8_t*) desc1_val, 2);
@@ -154,34 +167,38 @@ NimBLECharacteristic* NimBLEHIDDevice::featureReport(uint8_t reportID) {
 	return featureReportCharacteristic;
 }
 
-/*
- * @brief
+/**
+ * @brief Creates a keyboard boot input report characteristic
  */
 NimBLECharacteristic* NimBLEHIDDevice::bootInput() {
 	return m_hidService->createCharacteristic((uint16_t) 0x2a22, NIMBLE_PROPERTY::NOTIFY);
 }
 
-/*
- * @brief
+/**
+ * @brief Create a keyboard boot output report characteristic
  */
 NimBLECharacteristic* NimBLEHIDDevice::bootOutput() {
 	return m_hidService->createCharacteristic((uint16_t) 0x2a32, NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::WRITE_NR);
 }
 
-/*
- * @brief
+/**
+ * @brief Returns a pointer to the HID control point characteristic.
  */
 NimBLECharacteristic* NimBLEHIDDevice::hidControl() {
 	return m_hidControlCharacteristic;
 }
 
-/*
- * @brief
+/**
+ * @brief Returns a pointer to the protocol mode characteristic.
  */
 NimBLECharacteristic* NimBLEHIDDevice::protocolMode() {
 	return m_protocolModeCharacteristic;
 }
 
+/**
+ * @brief Set the battery level characteristic value.
+ * @param [in] level The battery level value.
+ */
 void NimBLEHIDDevice::setBatteryLevel(uint8_t level) {
 	m_batteryLevelCharacteristic->setValue(&level, 1);
 }
@@ -208,22 +225,23 @@ BLECharacteristic*	BLEHIDDevice::hidInfo() {
 	return m_hidInfoCharacteristic;
 }
 */
-/*
- * @brief
+
+/**
+ * @brief Returns a pointer to the device information service.
  */
 NimBLEService* NimBLEHIDDevice::deviceInfo() {
 	return m_deviceInfoService;
 }
 
-/*
- * @brief
+/**
+ * @brief Returns a pointer to the HID service.
  */
 NimBLEService* NimBLEHIDDevice::hidService() {
 	return m_hidService;
 }
 
-/*
- * @brief
+/**
+ * @brief @brief Returns a pointer to the battery service.
  */
 NimBLEService* NimBLEHIDDevice::batteryService() {
 	return m_batteryService;
