@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased] - Development
 
 ## [9.3.1.1]
+### Added
+- Allow MCP230xx pinmode from output to input (#11104)
+- SML VBUS support (#11125)
+
+### Changed
+- TuyaMcu dimmer timeout (#11121)
+
+### Fixed
+- Refactor acceleration function for shutter stepper and servo (#11088)
+- LM75AD detection on different addresses (#11096)
+- Timer loop when console is scrolled up regression from v9.3.0 (#11108)
+- Display exception when no file system is present (#11125)
+- PN532 on ESP32 Serial flush both Tx and Rx buffers (#10910)
 
 ## [Released]
 
