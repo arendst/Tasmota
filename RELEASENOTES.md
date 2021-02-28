@@ -80,9 +80,10 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 
 ## Changelog v9.3.1.1
 ### Added
-- Allow MCP230xx pinmode from output to input [#11104](https://github.com/arendst/Tasmota/issues/11104)
-- SML VBUS support [#11125](https://github.com/arendst/Tasmota/issues/11125)
 - Command ``Sensor80 1 <0..7>`` to control MFRC522 RFID antenna gain from 18dB (0) to 48dB (7) [#11073](https://github.com/arendst/Tasmota/issues/11073)
+- Support for SML VBUS [#11125](https://github.com/arendst/Tasmota/issues/11125)
+- Support for NEC and OPTOMA LCD/DLP Projector serial power control by Jan Bubík [#11145](https://github.com/arendst/Tasmota/issues/11145)
+- Allow MCP230xx pinmode from output to input [#11104](https://github.com/arendst/Tasmota/issues/11104)
 
 ### Changed
 - TuyaMcu dimmer timeout [#11121](https://github.com/arendst/Tasmota/issues/11121)

@@ -27,6 +27,10 @@
 
 #define XDRV_53			53
 
+#ifndef USE_PROJECTOR_CTRL_NEC
+#define USE_PROJECTOR_CTRL_NEC                 // Use at least one projector
+#endif
+
 #define nitems(_a)		(sizeof((_a)) / sizeof((_a)[0]))
 #define xxstr(s) xstr(s)
 #define xstr(s) #s
