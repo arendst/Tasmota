@@ -44,9 +44,9 @@ int be_eqstr(bstring *s1, bstring *s2)
     if (s1 == s2) { /* short string or the same string */
         return 1;
     }
-    slen = pgm_read_byte(&s1->slen);
+    slen = s1->slen;
     /* long string */
-    if (slen == 255 && slen == pgm_read_byte(&s2->slen)) {
+    if (slen == 255 && slen == s2->slen) {
         blstring *ls1 = cast(blstring*, s1);
         blstring *ls2 = cast(blstring*, s2);
         return ls1->llen == ls2->llen && !strcmp(lstr(ls1), lstr(ls2));
@@ -88,7 +88,7 @@ static void resize(bvm *vm, int size)
 
 static void free_sstring(bvm *vm, bstring *str)
 {
-    be_free(vm, str, sizeof(bsstring) + pgm_read_byte(&str->slen) + 1);
+    be_free(vm, str, sizeof(bsstring) + str->slen + 1);
 }
 
 /* FNV-1a Hash */
@@ -97,8 +97,7 @@ static uint32_t str_hash(const char *str, size_t len)
     uint32_t hash = 2166136261u;
     be_assert(str || len);
     while (len--) {
-        hash = (hash ^ (unsigned char)pgm_read_byte(str)) * 16777619u;
-        str++;
+        hash = (hash ^ (unsigned char)*str++) * 16777619u;
     }
     return hash;
 }
@@ -150,7 +149,7 @@ static bstring* find_conststr(const char *str, size_t len)
     uint32_t hash = str_hash(str, len);
     bcstring *s = (bcstring*)tab->table[hash % tab->size];
     for (; s != NULL; s = next(s)) {
-        if (len == pgm_read_byte(&s->slen) && !strncmp(str, s->s, len)) {
+        if (len == s->slen && !strncmp(str, s->s, len)) {
             return (bstring*)s;
         }
     }
@@ -166,7 +165,7 @@ static bstring* newshortstr(bvm *vm, const char *str, size_t len)
     bstring **list = vm->strtab.table + (hash & (size - 1));
 
     for (s = *list; s != NULL; s = next(s)) {
-        if (len == pgm_read_byte(&s->slen) && !strncmp(str, sstr(s), len)) {
+        if (len == s->slen && !strncmp(str, sstr(s), len)) {
             return s;
         }
     }
@@ -253,7 +252,7 @@ uint32_t be_strhash(const bstring *s)
         return cast(bcstring*, s)->hash;
     }
 #if BE_USE_STR_HASH_CACHE
-    if (pgm_read_byte(&s->slen) != 255) {
+    if (s->slen != 255) {
         return cast(bsstring*, s)->hash;
     }
 #endif
@@ -266,7 +265,7 @@ const char* be_str2cstr(const bstring *s)
     if (gc_isconst(s)) {
         return cstr(s);
     }
-    if (pgm_read_byte(&s->slen) == 255) {
+    if (s->slen == 255) {
         return lstr(s);
     }
     return sstr(s);
