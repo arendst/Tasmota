@@ -94,3 +94,4 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - Timer loop when console is scrolled up regression from v9.3.0 [#11108](https://github.com/arendst/Tasmota/issues/11108)
 - Display exception when no file system is present [#11125](https://github.com/arendst/Tasmota/issues/11125)
 - PN532 on ESP32 Serial flush both Tx and Rx buffers [#10910](https://github.com/arendst/Tasmota/issues/10910)
+- Light scheme related color changes [#11041](https://github.com/arendst/Tasmota/issues/11041)
