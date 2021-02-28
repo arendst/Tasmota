@@ -59,12 +59,25 @@ void SSD1351_InitDriver() {
     fg_color = SSD1351_WHITE;
     bg_color = SSD1351_BLACK;
 
+
+#ifdef SSD1351_DC
+    int8_t dcpin = SSD1351_DC;
+#else
+    int8_t dcpin = -1;
+#endif
+
+#ifdef GPIO_SSD1351_DC
+    if (PinUsed(GPIO_SSD1351_DC)) {
+      dcpin = Pin(GPIO_SSD1351_DC);
+    }
+#endif
+
     // init renderer
     if (TasmotaGlobal.soft_spi_enabled){
-      ssd1351 = new SSD1351(Pin(GPIO_SSD1351_CS), Pin(GPIO_SSPI_MOSI), Pin(GPIO_SSPI_SCLK));
+      ssd1351 = new SSD1351(Pin(GPIO_SSD1351_CS), Pin(GPIO_SSPI_MOSI), Pin(GPIO_SSPI_SCLK), dcpin);
     }
     else if (TasmotaGlobal.spi_enabled) {
-      ssd1351 = new SSD1351(Pin(GPIO_SSD1351_CS), Pin(GPIO_SPI_MOSI), Pin(GPIO_SPI_CLK));
+      ssd1351 = new SSD1351(Pin(GPIO_SSD1351_CS), Pin(GPIO_SPI_MOSI), Pin(GPIO_SPI_CLK), dcpin);
     }
 
     delay(100);
