@@ -1016,7 +1016,7 @@ NETVIP XS-SSA01              {"NAME":"XS-SSA01","GPIO":[0,0,0,0,0,0,0,0,320,32,0
 Nightlight and AC Outlet     {"NAME":"SWN03","GPIO":[32,0,0,0,0,0,1,1,416,0,0,224,0,0],"FLAG":0,"BASE":18}
 Nishica SM-PW701I            {"NAME":"SM-PW701I","GPIO":[1,1,1,1,1,1,1,1,224,288,32,1,1,1],"FLAG":0,"BASE":18}
 Nivian                       {"NAME":"Nivian Smart Socket","GPIO":[0,0,320,0,0,2688,0,0,2624,32,2656,224,0,0],"FLAG":0,"BASE":18}
-Nous A1                      {"NAME":"Nous A1","GPIO":[320,1,321,1,2656,2720,0,0,2624,32,0,224,0,0],"FLAG":0,"BASE":45}
+Nous A1                      {"NAME":"Nous A1","GPIO":[320,1,544,1,2656,2720,0,0,2624,32,0,224,0,0],"FLAG":0,"BASE":45}
 NX-SM112                     {"NAME":"NX-SM112v3","GPIO":[0,0,0,0,2720,2656,0,0,576,32,2592,224,0,0],"FLAG":0,"BASE":45}
 NX-SM200                     {"NAME":"NX-SM200","GPIO":[320,0,0,0,0,2720,0,0,224,32,2656,321,2624,0],"FLAG":0,"BASE":18}
 NX-SM210                     {"NAME":"NX-SM210","GPIO":[0,32,0,0,0,0,0,0,0,320,224,0,0,0],"FLAG":0,"BASE":18}
