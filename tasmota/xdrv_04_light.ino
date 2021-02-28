@@ -1085,11 +1085,7 @@ void LightCalcPWMRange(void) {
 
 void LightSetScheme(uint32_t scheme) {
   if (!scheme && Settings.light_scheme) {
-    if (Light.last_color[0] < 255) {
-      Light.last_color[0]++;
-    } else {
-      Light.last_color[0]--;
-    }
+    Light.update = true;
   }
   Settings.light_scheme = scheme;
 }
