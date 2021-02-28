@@ -1296,6 +1296,7 @@ void sml_shift_in(uint32_t meters,uint32_t shard) {
     }
   } else if (meter_desc_p[meters].type=='v') {
     if (iob==EBUS_SYNC) {
+      sb_counter = 0;
       SML_Decode(meters);
       smltbuf[meters][0] = iob;
       meter_spos[meters] = 1;
@@ -1322,7 +1323,7 @@ void sml_shift_in(uint32_t meters,uint32_t shard) {
             //AddLog(LOG_LEVEL_INFO, PSTR("ebus crc error"));
         }
       }
-      meter_spos[meters]=0;
+      meter_spos[meters] = 0;
       return;
     }
 		smltbuf[meters][meter_spos[meters]] = iob;
@@ -1383,18 +1384,19 @@ void SML_Decode(uint8_t index) {
   const char *mp=(const char*)meter_p;
   int8_t mindex;
   uint8_t *cp;
-  uint8_t dindex=0,vindex=0;
+  uint8_t dindex = 0, vindex = 0;
   delay(0);
+
   while (mp != NULL) {
     // check list of defines
-    if (*mp==0) break;
+    if (*mp == 0) break;
 
     // new section
-    mindex=((*mp)&7)-1;
+    mindex = ((*mp) & 7) - 1;
 
-    if (mindex<0 || mindex>=meters_used) mindex=0;
-    mp+=2;
-    if (*mp=='=' && *(mp+1)=='h') {
+    if (mindex < 0 || mindex >= meters_used) mindex = 0;
+    mp += 2;
+    if (*mp == '=' && *(mp+1) == 'h') {
       mp = strchr(mp, '|');
       if (mp) mp++;
       continue;
@@ -1403,98 +1405,103 @@ void SML_Decode(uint8_t index) {
     if (index!=mindex) goto nextsect;
 
     // start of serial source buffer
-    cp=&smltbuf[mindex][0];
+    cp = &smltbuf[mindex][0];
 
     // compare
-    if (*mp=='=') {
+    if (*mp == '=') {
       // calculated entry, check syntax
       mp++;
       // do math m 1+2+3
-      if (*mp=='m' && !sb_counter) {
+      if (*mp == 'm' && !sb_counter) {
         // only every 256 th byte
         // else it would be calculated every single serial byte
         mp++;
-        while (*mp==' ') mp++;
+        while (*mp == ' ') mp++;
         // 1. index
         double dvar;
         uint8_t opr;
-        uint32_t ind;
-        ind=atoi(mp);
-        while (*mp>='0' && *mp<='9') mp++;
-        if (ind<1 || ind>SML_MAX_VARS) ind=1;
-        dvar=meter_vars[ind-1];
-        for (uint8_t p = 0; p < 5; p++) {
-          if (*mp=='@') {
+        uint8_t mind;
+        int32_t ind;
+        mind = strtol((char*)mp, (char**)&mp, 10);
+        if (mind < 1 || mind > SML_MAX_VARS) mind = 1;
+        dvar = meter_vars[mind - 1];
+        while (*mp==' ') mp++;
+        for (uint8_t p = 0; p < 8; p++) {
+          if (*mp == '@') {
             // store result
-            meter_vars[vindex]=dvar;
+            meter_vars[vindex] = dvar;
             mp++;
-            SML_Immediate_MQTT((const char*)mp,vindex,mindex);
             break;
           }
-          opr=*mp;
+          opr = *mp;
           mp++;
-          uint8_t iflg=0;
-          if (*mp=='#') {
-            iflg=1;
+          uint8_t iflg = 0;
+          if (*mp == '#') {
+            iflg = 1;
             mp++;
           }
-          ind=atoi(mp);
-          while (*mp>='0' && *mp<='9') mp++;
-          if (ind<1 || ind>SML_MAX_VARS) ind=1;
+          ind = strtol((char*)mp, (char**)&mp, 10);
+          mind = ind;
+          if (mind < 1 || mind > SML_MAX_VARS) mind = 1;
           switch (opr) {
               case '+':
-                if (iflg) dvar+=ind;
-                else dvar+=meter_vars[ind-1];
+                if (iflg) dvar += ind;
+                else dvar += meter_vars[mind - 1];
                 break;
               case '-':
-                if (iflg) dvar-=ind;
-                else dvar-=meter_vars[ind-1];
+                if (iflg) dvar -= ind;
+                else dvar -= meter_vars[mind - 1];
                 break;
               case '*':
-                if (iflg) dvar*=ind;
-                else dvar*=meter_vars[ind-1];
+                if (iflg) dvar *= ind;
+                else dvar *= meter_vars[mind - 1];
                 break;
               case '/':
-                if (iflg) dvar/=ind;
-                else dvar/=meter_vars[ind-1];
+                if (iflg) dvar /= ind;
+                else dvar /= meter_vars[mind - 1];
                 break;
           }
           while (*mp==' ') mp++;
-          if (*mp=='@') {
+          if (*mp == '@') {
             // store result
-            meter_vars[vindex]=dvar;
+            meter_vars[vindex] = dvar;
             mp++;
-            SML_Immediate_MQTT((const char*)mp,vindex,mindex);
             break;
           }
         }
+        double fac = CharToDouble((char*)mp);
+        meter_vars[vindex] /= fac;
+        SML_Immediate_MQTT((const char*)mp, vindex, mindex);
+        // get sfac
       } else if (*mp=='d') {
         // calc deltas d ind 10 (eg every 10 secs)
-        if (dindex<MAX_DVARS) {
+        if (dindex < MAX_DVARS) {
           // only n indexes
           mp++;
-          while (*mp==' ') mp++;
-          uint8_t ind=atoi(mp);
-          while (*mp>='0' && *mp<='9') mp++;
-          if (ind<1 || ind>SML_MAX_VARS) ind=1;
-          uint32_t delay=atoi(mp)*1000;
-          uint32_t dtime=millis()-dtimes[dindex];
-          if (dtime>delay) {
+          while (*mp == ' ') mp++;
+          uint8_t ind = atoi(mp);
+          while (*mp >= '0' && *mp <= '9') mp++;
+          if (ind < 1 || ind > SML_MAX_VARS) ind = 1;
+          uint32_t delay = atoi(mp) * 1000;
+          uint32_t dtime = millis() - dtimes[dindex];
+          if (dtime > delay) {
             // calc difference
-            dtimes[dindex]=millis();
-            double vdiff = meter_vars[ind-1]-dvalues[dindex];
-            dvalues[dindex]=meter_vars[ind-1];
-            meter_vars[vindex]=(double)360000.0*vdiff/((double)dtime/10000.0);
+            dtimes[dindex] = millis();
+            double vdiff = meter_vars[ind - 1] - dvalues[dindex];
+            dvalues[dindex] = meter_vars[ind - 1];
+            meter_vars[vindex] = (double)360000.0 * vdiff / ((double)dtime / 10000.0);
 
             mp=strchr(mp,'@');
             if (mp) {
               mp++;
-              SML_Immediate_MQTT((const char*)mp,vindex,mindex);
+              double fac = CharToDouble((char*)mp);
+              meter_vars[vindex] /= fac;
+              SML_Immediate_MQTT((const char*)mp, vindex, mindex);
             }
           }
           dindex++;
         }
-      } else if (*mp=='h') {
+      } else if (*mp == 'h') {
         // skip html tag line
         mp = strchr(mp, '|');
         if (mp) mp++;
@@ -1502,27 +1509,27 @@ void SML_Decode(uint8_t index) {
       }
     } else {
       // compare value
-      uint8_t found=1;
-      double ebus_dval=99;
-      float mbus_dval=99;
-      while (*mp!='@') {
-        if (meter_desc_p[mindex].type=='o' || meter_desc_p[mindex].type=='c') {
-          if (*mp++!=*cp++) {
+      uint8_t found = 1;
+      double ebus_dval = 99;
+      float mbus_dval = 99;
+      while (*mp != '@') {
+        if (meter_desc_p[mindex].type == 'o' || meter_desc_p[mindex].type == 'c') {
+          if (*mp++ != *cp++) {
             found=0;
           }
         } else {
-          if (meter_desc_p[mindex].type=='s') {
+          if (meter_desc_p[mindex].type == 's') {
             // sml
             uint8_t val = hexnibble(*mp++) << 4;
             val |= hexnibble(*mp++);
-            if (val!=*cp++) {
+            if (val != *cp++) {
               found=0;
             }
           } else {
             // ebus mbus pzem vbus or raw
             // XXHHHHSSUU
-            if (*mp=='x') {
-              if (*(mp+1)=='x') {
+            if (*mp == 'x') {
+              if (*(mp + 1) == 'x') {
                 //ignore one byte
                 mp += 2;
                 cp++;
@@ -1824,11 +1831,11 @@ void SML_Decode(uint8_t index) {
           meter_vars[vindex]=dval;
 #endif
 
-//AddLog_P(LOG_LEVEL_INFO, PSTR(">> %s"),mp);
+          //AddLog_P(LOG_LEVEL_INFO, PSTR(">> %s"),mp);
           // get scaling factor
-          double fac=CharToDouble((char*)mp);
-          meter_vars[vindex]/=fac;
-          SML_Immediate_MQTT((const char*)mp,vindex,mindex);
+          double fac = CharToDouble((char*)mp);
+          meter_vars[vindex] /= fac;
+          SML_Immediate_MQTT((const char*)mp, vindex, mindex);
         }
       }
       dvalid[vindex] = 1;
@@ -1953,8 +1960,14 @@ void SML_Show(boolean json) {
             } else {
               mid=0;
             }
+          } else if (*cp=='b') {
+            // bit value
+#ifdef SML_BIT_TEXT
+            sprintf_P(tpowstr, PSTR("\"%s\""), (uint8_t)meter_vars[index]?D_ON:D_OFF);
+            mid = 2;
+#endif
           } else {
-            mid=0;
+            mid = 0;
           }
           // skip scaling
           cp=strchr(cp,',');
@@ -2157,7 +2170,7 @@ uint32_t SML_getscriptsize(char *lp) {
 #endif
 
 bool Gpio_used(uint8_t gpiopin) {
-  if ((gpiopin < ARRAY_SIZE(TasmotaGlobal.gpio_pin)) && (TasmotaGlobal.gpio_pin[gpiopin] > 0)) {
+  if ((gpiopin < nitems(TasmotaGlobal.gpio_pin)) && (TasmotaGlobal.gpio_pin[gpiopin] > 0)) {
     return true;
   }
   return false;
@@ -2300,9 +2313,9 @@ dddef_exit:
                 txbuff[cnt] = *lp++;
               }
               if (txlen) {
-                script_meter_desc[index].txmem = (char*)calloc(txlen+2, 1);
+                script_meter_desc[index].txmem = (char*)calloc(txlen + 2, 1);
                 if (script_meter_desc[index].txmem) {
-                  strcpy(script_meter_desc[index].txmem,txbuff);
+                  strcpy(script_meter_desc[index].txmem, txbuff);
                 }
                 script_meter_desc[index].index = 0;
                 script_meter_desc[index].max_index = tx_entries;
@@ -2721,55 +2734,59 @@ uint8_t sml_hexnibble(char chr) {
 
 // send sequence every N Seconds
 void SML_Send_Seq(uint32_t meter,char *seq) {
-  uint8_t sbuff[32];
-  uint8_t *ucp=sbuff,slen=0;
-  char *cp=seq;
+  uint8_t sbuff[48];
+  uint8_t *ucp = sbuff, slen = 0;
+  char *cp = seq;
   uint8_t rflg = 0;
-  if (*cp=='r') {
+  if (*cp == 'r') {
     rflg = 1;
     cp++;
   }
   while (*cp) {
     if (!*cp || !*(cp+1)) break;
-    if (*cp==',') break;
-    uint8_t iob=(sml_hexnibble(*cp) << 4) | sml_hexnibble(*(cp+1));
-    cp+=2;
-    *ucp++=iob;
+    if (*cp == ',') break;
+    uint8_t iob = (sml_hexnibble(*cp) << 4) | sml_hexnibble(*(cp + 1));
+    cp += 2;
+    *ucp++ = iob;
     slen++;
-    if (slen>=sizeof(sbuff)) break;
+    if (slen >= sizeof(sbuff)-6) break; // leave space for checksum
   }
-  if (script_meter_desc[meter].type=='m' || script_meter_desc[meter].type=='M') {
+  if (script_meter_desc[meter].type == 'm' || script_meter_desc[meter].type == 'M') {
     if (!rflg) {
-      *ucp++=0;
-      *ucp++=2;
-      slen+=2;
+      *ucp++ = 0;
+      *ucp++ = 2;
+      slen += 2;
     }
     // append crc
-    uint16_t crc = MBUS_calculateCRC(sbuff,slen);
-    *ucp++=lowByte(crc);
-    *ucp++=highByte(crc);
-    slen+=2;
+    uint16_t crc = MBUS_calculateCRC(sbuff, slen);
+    *ucp++ = lowByte(crc);
+    *ucp++ = highByte(crc);
+    slen += 2;
   }
-  if (script_meter_desc[meter].type=='o') {
-    for (uint32_t cnt=0;cnt<slen;cnt++) {
-      sbuff[cnt]|=(CalcEvenParity(sbuff[cnt])<<7);
+  if (script_meter_desc[meter].type == 'o') {
+    for (uint32_t cnt = 0; cnt < slen; cnt++) {
+      sbuff[cnt] |= (CalcEvenParity(sbuff[cnt]) << 7);
     }
   }
-  if (script_meter_desc[meter].type=='p') {
-    *ucp++=0xc0;
-    *ucp++=0xa8;
-    *ucp++=1;
-    *ucp++=1;
-    *ucp++=0;
-    *ucp++=SML_PzemCrc(sbuff,6);
-    slen+=6;
+  if (script_meter_desc[meter].type == 'p') {
+    *ucp++ = 0xc0;
+    *ucp++ = 0xa8;
+    *ucp++ = 1;
+    *ucp++ = 1;
+    *ucp++ = 0;
+    *ucp++ = SML_PzemCrc(sbuff, 6);
+    slen += 6;
   }
-  meter_ss[meter]->write(sbuff,slen);
+  meter_ss[meter]->write(sbuff, slen);
   if (dump2log) {
+#ifdef SML_DUMP_OUT_ALL
+    Hexdump(sbuff, slen);
+#else
     uint8_t type = meter_desc_p[(dump2log&7) - 1].type;
     if (type == 'm' || type == 'M') {
       Hexdump(sbuff, slen);
     }
+#endif
   }
 
 }

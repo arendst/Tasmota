@@ -2681,6 +2681,8 @@ uint8_t vbutt=0;
 #endif
     if (renderer) {
 
+      rotconvert(&pLoc.x, &pLoc.y);
+
 #ifdef USE_M5STACK_CORE2
       // handle  3 built in touch buttons
       uint16_t xcenter = 80;
@@ -2701,7 +2703,6 @@ uint8_t vbutt=0;
       }
 #endif
 
-      rotconvert(&pLoc.x, &pLoc.y);
 
       // AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("touch after convert %d - %d"), pLoc.x, pLoc.y);
       // now must compare with defined buttons

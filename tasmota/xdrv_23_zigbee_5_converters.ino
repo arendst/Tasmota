@@ -140,14 +140,14 @@ const uint16_t Cx_cluster[] PROGMEM = {
 };
 
 uint16_t CxToCluster(uint8_t cx) {
-  if (cx < ARRAY_SIZE(Cx_cluster)) {
+  if (cx < nitems(Cx_cluster)) {
     return pgm_read_word(&Cx_cluster[cx]);
   }
   return 0xFFFF;
 }
 
 uint8_t ClusterToCx(uint16_t cluster) {
-  for (uint32_t i=0; i<ARRAY_SIZE(Cx_cluster); i++) {
+  for (uint32_t i=0; i<nitems(Cx_cluster); i++) {
     if (pgm_read_word(&Cx_cluster[i]) == cluster) {
       return i;
     }
@@ -170,7 +170,7 @@ const int8_t Cm_multiplier[] PROGMEM = {
 
 int8_t CmToMultiplier(uint8_t cm) {
   cm = cm & 0x0F;     // get only low nibble
-  if (cm < ARRAY_SIZE(Cm_multiplier)) {
+  if (cm < nitems(Cm_multiplier)) {
     return pgm_read_byte(&Cm_multiplier[cm]);
   }
   return 1;
@@ -668,7 +668,7 @@ typedef union ZCLHeaderFrameControl_t {
 const __FlashStringHelper* zigbeeFindAttributeByName(const char *command,
                                     uint16_t *cluster, uint16_t *attribute, int8_t *multiplier,
                                     uint8_t *zigbee_type = nullptr, Z_Data_Type *data_type = nullptr, uint8_t *map_offset = nullptr) {
-  for (uint32_t i = 0; i < ARRAY_SIZE(Z_PostProcess); i++) {
+  for (uint32_t i = 0; i < nitems(Z_PostProcess); i++) {
     const Z_AttributeConverter *converter = &Z_PostProcess[i];
     if (0 == pgm_read_word(&converter->name_offset)) { continue; }         // avoid strcasecmp_P() from crashing
     if (0 == strcasecmp_P(command, Z_strings + pgm_read_word(&converter->name_offset))) {
@@ -690,7 +690,7 @@ const __FlashStringHelper* zigbeeFindAttributeByName(const char *command,
 //
 const __FlashStringHelper* zigbeeFindAttributeById(uint16_t cluster, uint16_t attr_id,
                                       uint8_t *attr_type, int8_t *multiplier) {
-  for (uint32_t i = 0; i < ARRAY_SIZE(Z_PostProcess); i++) {
+  for (uint32_t i = 0; i < nitems(Z_PostProcess); i++) {
     const Z_AttributeConverter *converter = &Z_PostProcess[i];
     uint16_t conv_cluster = CxToCluster(pgm_read_byte(&converter->cluster_short));
     uint16_t conv_attr_id = pgm_read_word(&converter->attribute);
@@ -1458,7 +1458,7 @@ void ZCLFrame::parseReadAttributes(Z_attribute_list& attr_list) {
     read_attr_ids[i/2] = attrid;
 
     // find the attribute name
-    for (uint32_t i = 0; i < ARRAY_SIZE(Z_PostProcess); i++) {
+    for (uint32_t i = 0; i < nitems(Z_PostProcess); i++) {
       const Z_AttributeConverter *converter = &Z_PostProcess[i];
       uint16_t conv_cluster = CxToCluster(pgm_read_byte(&converter->cluster_short));
       uint16_t conv_attribute = pgm_read_word(&converter->attribute);
@@ -1527,7 +1527,7 @@ void ZCLFrame::parseReadConfigAttributes(Z_attribute_list& attr_list) {
 
     // find the attribute name
     int8_t multiplier = 1;
-    for (uint32_t i = 0; i < ARRAY_SIZE(Z_PostProcess); i++) {
+    for (uint32_t i = 0; i < nitems(Z_PostProcess); i++) {
       const Z_AttributeConverter *converter = &Z_PostProcess[i];
       uint16_t conv_cluster = CxToCluster(pgm_read_byte(&converter->cluster_short));
       uint16_t conv_attribute = pgm_read_word(&converter->attribute);
@@ -1997,7 +1997,7 @@ void Z_postProcessAttributes(uint16_t shortaddr, uint16_t src_ep, class Z_attrib
       uint8_t map_offset = 0;
       uint8_t zigbee_type = Znodata;
       int8_t conv_multiplier;
-      for (uint32_t i = 0; i < ARRAY_SIZE(Z_PostProcess); i++) {
+      for (uint32_t i = 0; i < nitems(Z_PostProcess); i++) {
         const Z_AttributeConverter *converter = &Z_PostProcess[i];
         uint16_t conv_cluster = CxToCluster(pgm_read_byte(&converter->cluster_short));
         uint16_t conv_attribute = pgm_read_word(&converter->attribute);
@@ -2088,7 +2088,7 @@ void Z_postProcessAttributes(uint16_t shortaddr, uint16_t src_ep, class Z_attrib
 // Internal search function
 void Z_parseAttributeKey_inner(class Z_attribute & attr, uint16_t preferred_cluster) {
   // scan attributes to find by name, and retrieve type
-  for (uint32_t i = 0; i < ARRAY_SIZE(Z_PostProcess); i++) {
+  for (uint32_t i = 0; i < nitems(Z_PostProcess); i++) {
     const Z_AttributeConverter *converter = &Z_PostProcess[i];
     uint16_t local_attr_id = pgm_read_word(&converter->attribute);
     uint16_t local_cluster_id = CxToCluster(pgm_read_byte(&converter->cluster_short));
@@ -2177,7 +2177,7 @@ bool Z_parseAttributeKey(class Z_attribute & attr, uint16_t preferred_cluster) {
 void Z_Data::toAttributes(Z_attribute_list & attr_list) const {
   Z_Data_Type type = getType();
   // iterate through attributes to see which ones need to be exported
-  for (uint32_t i = 0; i < ARRAY_SIZE(Z_PostProcess); i++) {
+  for (uint32_t i = 0; i < nitems(Z_PostProcess); i++) {
     const Z_AttributeConverter *converter = &Z_PostProcess[i];
     uint8_t conv_export = pgm_read_byte(&converter->multiplier_idx) & Z_EXPORT_DATA;
     uint8_t conv_mapping = pgm_read_byte(&converter->mapping);

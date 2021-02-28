@@ -245,7 +245,7 @@ const br_x509_trust_anchor PROGMEM Tasmota_TA[] = {
 	}
 };
 
-const size_t Tasmota_TA_size = ARRAY_SIZE(Tasmota_TA);
+const size_t Tasmota_TA_size = nitems(Tasmota_TA);
 
 // we add a separate CA for telegram
 /*********************************************************************************************\

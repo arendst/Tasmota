@@ -622,7 +622,7 @@ void ZbSendRead(JsonParserToken val_attr, ZCLMessage & zcl) {
 
       bool found = false;
       // scan attributes to find by name, and retrieve type
-      for (uint32_t i = 0; i < ARRAY_SIZE(Z_PostProcess); i++) {
+      for (uint32_t i = 0; i < nitems(Z_PostProcess); i++) {
         const Z_AttributeConverter *converter = &Z_PostProcess[i];
         uint16_t local_attr_id = pgm_read_word(&converter->attribute);
         uint16_t local_cluster_id = CxToCluster(pgm_read_byte(&converter->cluster_short));
@@ -1463,7 +1463,7 @@ void CmndZbPermitJoin(void) {
     }
     if (0 == zigbee.permit_end_time) { zigbee.permit_end_time = 1; }    // avoid very rare case where timer collides with timestamp equals to zero
   }
-  
+
   ResponseCmndDone();
 }
 

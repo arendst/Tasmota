@@ -37,11 +37,6 @@ no math hierarchy  (costs ram and execution time, better group with brackets, an
 keywords if then else endif, or, and are better readable for beginners (others may use {})
 
 // to doo
-remove all filesystem inititialization and gui
-adapt 3 options
-1. ufilesystem
-2. eeprom hardware and emulation
-3. compression
 
 \*********************************************************************************************/
 
@@ -2681,7 +2676,7 @@ chknext:
             }
           }
 */
-          if ((gpiopin < ARRAY_SIZE(TasmotaGlobal.gpio_pin)) && (TasmotaGlobal.gpio_pin[gpiopin] > 0)) {
+          if ((gpiopin < nitems(TasmotaGlobal.gpio_pin)) && (TasmotaGlobal.gpio_pin[gpiopin] > 0)) {
             fvar = TasmotaGlobal.gpio_pin[gpiopin];
             // skip ] bracket
             len++;
@@ -5992,22 +5987,22 @@ bool ScriptMqttData(void)
           value = sres;
         }
 #endif // SUPPORT_MQTT_EVENT_MORE
-        if (json_valid) {
-          value.trim();
-          char sbuffer[128];
+      }
+      if (json_valid) {
+        value.trim();
+        char sbuffer[128];
 
-          if (!strncmp(lkey.c_str(), "Epoch", 5)) {
-            uint32_t ep = atoi(value.c_str()) - (uint32_t)EPOCH_OFFSET;
-            snprintf_P(sbuffer, sizeof(sbuffer), PSTR(">%s=%d\n"), event_item.Event.c_str(), ep);
-          } else {
-            snprintf_P(sbuffer, sizeof(sbuffer), PSTR(">%s=\"%s\"\n"), event_item.Event.c_str(), value.c_str());
-          }
-#ifdef DEBUG_MQTT_EVENT
-          AddLog(LOG_LEVEL_INFO, PSTR("Script: setting script var %s"), sbuffer);
-#endif
-          //toLog(sbuffer);
-          execute_script(sbuffer);
+        if (!strncmp(lkey.c_str(), "Epoch", 5)) {
+          uint32_t ep = atoi(value.c_str()) - (uint32_t)EPOCH_OFFSET;
+          snprintf_P(sbuffer, sizeof(sbuffer), PSTR(">%s=%d\n"), event_item.Event.c_str(), ep);
+        } else {
+          snprintf_P(sbuffer, sizeof(sbuffer), PSTR(">%s=\"%s\"\n"), event_item.Event.c_str(), value.c_str());
         }
+#ifdef DEBUG_MQTT_EVENT
+        AddLog(LOG_LEVEL_INFO, PSTR("Script: setting script var %s"), sbuffer);
+#endif
+        //toLog(sbuffer);
+        execute_script(sbuffer);
       }
     }
   }
@@ -7397,6 +7392,7 @@ int32_t http_req(char *host, char *request) {
 #include <WiFiClientSecure.h>
 #endif //ESP8266
 
+
 // get tesla powerwall info page json string
 uint32_t call2https(const char *host, const char *path) {
   if (TasmotaGlobal.global_state.wifi_down) return 1;
@@ -7409,8 +7405,28 @@ uint32_t call2https(const char *host, const char *path) {
   httpsClient = new BearSSL::WiFiClientSecure_light(1024, 1024);
 #endif
 
-  httpsClient->setTimeout(1500);
+  httpsClient->setTimeout(2000);
   httpsClient->setInsecure();
+
+#if 0
+  File file = ufsp->open("/tesla.cer", FS_FILE_READ);
+  uint16_t fsize = 0;
+  char *cert = 0;
+  if (file) {
+    fsize = file.size();
+    if (fsize) {
+      cert = (char*)malloc(fsize +2);
+      if (cert) {
+        file.read((uint8_t*)cert, fsize);
+        file.close();
+        httpsClient->setCACert(cert);
+      }
+      AddLog(LOG_LEVEL_INFO,PSTR(">>> cert %d"),fsize);
+    }
+  } else {
+    httpsClient->setCACert(root_ca);
+  }
+#endif
 
   uint32_t retry = 0;
   while ((!httpsClient->connect(host, 443)) && (retry < 5)) {
@@ -7420,11 +7436,43 @@ uint32_t call2https(const char *host, const char *path) {
   if (retry == 5) {
     return 2;
   }
-  String request = String("GET ") + path +
+  AddLog(LOG_LEVEL_INFO,PSTR("connected"));
+
+String request;
+#if 0
+
+  File file = ufsp->open("/login.txt", FS_FILE_READ);
+  uint16_t fsize = 0;
+  char *cert = 0;
+  if (file) {
+    fsize = file.size();
+    if (fsize) {
+      cert = (char*)calloc(fsize +2, 1);
+      if (cert) {
+        file.read((uint8_t*)cert, fsize);
+        file.close();
+        //httpsClient->setCACert(cert);
+      }
+      AddLog(LOG_LEVEL_INFO,PSTR(">>> cert %d"),fsize);
+    }
+  }
+
+  request = String("POST ") + "/api/login/Basic" + " HTTP/1.1\r\n" + "Host: " + host + "\r\n" + cert + "\r\n" + "Content-Type: application/json" + "\r\n";
+  httpsClient->print(request);
+  AddLog_P(LOG_LEVEL_INFO,PSTR(">>> post request %s"),(char*)request.c_str());
+
+  String line = httpsClient->readStringUntil('\n');
+  AddLog(LOG_LEVEL_INFO,PSTR(">>> post response 1a %s"),(char*)line.c_str());
+  line = httpsClient->readStringUntil('\n');
+  AddLog(LOG_LEVEL_INFO,PSTR(">>> post response 1b %s"),(char*)line.c_str());
+#endif
+
+  request = String("GET ") + path +
                     " HTTP/1.1\r\n" +
                     "Host: " + host +
                     "\r\n" + "Connection: close\r\n\r\n";
   httpsClient->print(request);
+//  AddLog_P(LOG_LEVEL_INFO,PSTR(">>> get request %s"),(char*)request.c_str());
 
   while (httpsClient->connected()) {
     String line = httpsClient->readStringUntil('\n');
@@ -7441,6 +7489,7 @@ uint32_t call2https(const char *host, const char *path) {
   }
   httpsClient->stop();
   delete httpsClient;
+//  AddLog(LOG_LEVEL_INFO,PSTR(">>> response 2 %s"),(char*)result.c_str());
   Run_Scripter(">jp", 3, (char*)result.c_str());
   return 0;
 }

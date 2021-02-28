@@ -173,7 +173,8 @@ void TasmotaSerial::flush(void) {
     Serial.flush();
 #endif  // ESP8266
 #ifdef ESP32
-    TSerial->flush();
+    TSerial->flush();  // Flushes Tx only https://github.com/espressif/arduino-esp32/pull/4263
+    while (TSerial->available()) { TSerial->read(); }
 #endif  // ESP32
   } else {
     m_in_pos = m_out_pos = 0;

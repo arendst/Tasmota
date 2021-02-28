@@ -1083,6 +1083,13 @@ void LightCalcPWMRange(void) {
   //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("LightCalcPWMRange %d %d - %d %d"), Settings.dimmer_hw_min, Settings.dimmer_hw_max, Light.pwm_min, Light.pwm_max);
 }
 
+void LightSetScheme(uint32_t scheme) {
+  if (!scheme && Settings.light_scheme) {
+    Light.update = true;
+  }
+  Settings.light_scheme = scheme;
+}
+
 void LightInit(void)
 {
   // move white blend mode from deprecated `RGBWWTable` to `SetOption105`
@@ -1149,7 +1156,7 @@ void LightInit(void)
     max_scheme = LS_POWER;
   }
   if ((LS_WAKEUP == Settings.light_scheme) || (Settings.light_scheme > max_scheme)) {
-    Settings.light_scheme = LS_POWER;
+    LightSetScheme(LS_POWER);
   }
   Light.power = 0;
   Light.update = true;
@@ -1308,7 +1315,7 @@ void LightSetSignal(uint16_t lo, uint16_t hi, uint16_t value)
     uint16_t signal = changeUIntScale(value, lo, hi, 0, 255);  // 0..255
 //    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "Light signal %d"), signal);
     light_controller.changeRGB(signal, 255 - signal, 0, true);  // keep bri
-    Settings.light_scheme = 0;
+    LightSetScheme(LS_POWER);
     if (0 == light_state.getBri()) {
       light_controller.changeBri(50);
     }
@@ -1668,7 +1675,7 @@ void LightAnimate(void)
             MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, PSTR(D_CMND_WAKEUP));
 
             Light.wakeup_active = 0;
-            Settings.light_scheme = LS_POWER;
+            LightSetScheme(LS_POWER);
           }
         }
         break;
@@ -2288,7 +2295,7 @@ void LightHandleDevGroupItem(void)
         uint32_t old_bri = light_state.getBri();
         light_controller.changeChannels(Light.entry_color);
         light_controller.changeBri(old_bri);
-        Settings.light_scheme = 0;
+        LightSetScheme(LS_POWER);
         if (!restore_power && !Light.power) {
           Light.old_power = Light.power;
           Light.power = 0xff;
@@ -2448,7 +2455,7 @@ void CmndSupportColor(void)
 #ifdef USE_LIGHT_PALETTE
         }
 #endif  // USE_LIGHT_PALETTE
-        Settings.light_scheme = 0;
+        LightSetScheme(LS_POWER);
         coldim = true;
       } else {             // Color3, 4, 5 and 6
         for (uint32_t i = 0; i < LST_RGB; i++) {
@@ -2617,7 +2624,7 @@ void CmndScheme(void)
         Light.wheel--;
 #endif  // USE_LIGHT_PALETTE
       }
-      Settings.light_scheme = XdrvMailbox.payload;
+      LightSetScheme(XdrvMailbox.payload);
       if (LS_WAKEUP == Settings.light_scheme) {
         Light.wakeup_active = 3;
       }
@@ -2640,7 +2647,7 @@ void CmndWakeup(void)
     light_controller.changeDimmer(XdrvMailbox.payload);
   }
   Light.wakeup_active = 3;
-  Settings.light_scheme = LS_WAKEUP;
+  LightSetScheme(LS_WAKEUP);
   LightPowerOn();
   ResponseCmndChar(PSTR(D_JSON_STARTED));
 }

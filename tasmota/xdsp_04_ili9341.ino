@@ -167,7 +167,6 @@ void ili9342_dimm(uint8_t dim) {
 #endif
 }
 
-//#ifdef ESP32
 #if defined(USE_FT5206) || defined(USE_XPT2046)
 #ifdef USE_TOUCH_BUTTONS
 
@@ -225,7 +224,7 @@ int16_t temp;
         *x = renderer->height() - temp;
         break;
     }
-//    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(" TS: after convert x:%d / y:%d  screen r:%d / w:%d / h:%d"), *x, *y,rot,renderer->width(),renderer->height());
+    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(" TS: after convert x:%d / y:%d  screen r:%d / w:%d / h:%d"), *x, *y,rot,renderer->width(),renderer->height());
   }
 }
 #endif
@@ -242,7 +241,6 @@ ili9342_ctouch_counter++;
 }
 #endif // USE_TOUCH_BUTTONS
 #endif // USE_FT5206
-//#endif // ESP32
 
 
 #ifdef USE_DISPLAY_MODES1TO5

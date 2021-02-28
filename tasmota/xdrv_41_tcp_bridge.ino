@@ -62,15 +62,15 @@ void TCPLoop(void)
   if ((server_tcp) && (server_tcp->hasClient())) {
     // find an empty slot
     uint32_t i;
-    for (i=0; i<ARRAY_SIZE(client_tcp); i++) {
+    for (i=0; i<nitems(client_tcp); i++) {
       WiFiClient &client = client_tcp[i];
       if (!client) {
         client = server_tcp->available();
         break;
       }
     }
-    if (i >= ARRAY_SIZE(client_tcp)) {
-      i = client_next++ % ARRAY_SIZE(client_tcp);
+    if (i >= nitems(client_tcp)) {
+      i = client_next++ % nitems(client_tcp);
       WiFiClient &client = client_tcp[i];
       client.stop();
       client = server_tcp->available();
@@ -92,14 +92,14 @@ void TCPLoop(void)
     if (buf_len > 0) {
       AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_TCP "from MCU: %*_H"), buf_len, tcp_buf);
 
-      for (uint32_t i=0; i<ARRAY_SIZE(client_tcp); i++) {
+      for (uint32_t i=0; i<nitems(client_tcp); i++) {
         WiFiClient &client = client_tcp[i];
         if (client) { client.write(tcp_buf, buf_len); }
       }
     }
 
     // handle data received from TCP
-    for (uint32_t i=0; i<ARRAY_SIZE(client_tcp); i++) {
+    for (uint32_t i=0; i<nitems(client_tcp); i++) {
       WiFiClient &client = client_tcp[i];
       buf_len = 0;
       while (client && (buf_len < TCP_BRIDGE_BUF_SIZE) && (client.available())) {
@@ -152,7 +152,7 @@ void CmndTCPStart(void) {
     delete server_tcp;
     server_tcp = nullptr;
 
-    for (uint32_t i=0; i<ARRAY_SIZE(client_tcp); i++) {
+    for (uint32_t i=0; i<nitems(client_tcp); i++) {
       WiFiClient &client = client_tcp[i];
       client.stop();
     }

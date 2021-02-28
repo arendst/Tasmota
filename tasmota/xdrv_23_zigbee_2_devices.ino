@@ -100,7 +100,7 @@ Z_Data_Type Z_Data::CharToDataType(char c) {
     if (c == '_') {
       return Z_Data_Type::Z_Device;
     } else {
-      for (uint32_t i=0; i<ARRAY_SIZE(Z_Data_Type_char); i++) {
+      for (uint32_t i=0; i<nitems(Z_Data_Type_char); i++) {
         if (pgm_read_byte(&Z_Data_Type_char[i]) == c) {
           return (Z_Data_Type) i;
         }
@@ -115,7 +115,7 @@ char Z_Data::DataTypeToChar(Z_Data_Type t) {
     return '_';
   } else {
     uint8_t tt = (uint8_t) t;
-    if (tt < ARRAY_SIZE(Z_Data_Type_char)) {
+    if (tt < nitems(Z_Data_Type_char)) {
       return pgm_read_byte(&Z_Data_Type_char[tt]);
     }
   }
@@ -418,7 +418,7 @@ public:
   inline void setZoneType(uint16_t _zone_type)  { zone_type = _zone_type; }
 
   bool update(void) {
-    for (uint32_t i=0; i<ARRAY_SIZE(Z_Alarm_Types); i++) {
+    for (uint32_t i=0; i<nitems(Z_Alarm_Types); i++) {
       Z_Alarm_Types_t conv_type;
       conv_type.i = pgm_read_word(&Z_Alarm_Types[i].i);
       if (zone_type == conv_type.t.zcl_type) {
@@ -553,7 +553,7 @@ const uint8_t Z_Data_Type_len[] PROGMEM = {
 
 size_t Z_Data::DataTypeToLength(Z_Data_Type t) {
   uint32_t tt = (uint32_t) t;
-  if (tt < ARRAY_SIZE(Z_Data_Type_len)) {
+  if (tt < nitems(Z_Data_Type_len)) {
     return pgm_read_byte(&Z_Data_Type_len[tt]);
   }
   return 0;
