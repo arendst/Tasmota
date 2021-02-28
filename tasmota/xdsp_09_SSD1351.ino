@@ -66,11 +66,9 @@ void SSD1351_InitDriver() {
     int8_t dcpin = -1;
 #endif
 
-#ifdef GPIO_SSD1351_DC
     if (PinUsed(GPIO_SSD1351_DC)) {
       dcpin = Pin(GPIO_SSD1351_DC);
     }
-#endif
 
     // init renderer
     if (TasmotaGlobal.soft_spi_enabled){
