@@ -171,7 +171,8 @@ void ili9342_dimm(uint8_t dim) {
 #if defined(USE_FT5206) || defined(USE_XPT2046)
 #ifdef USE_TOUCH_BUTTONS
 
-void ili9342_RotConvert(int16_t *x, int16_t *y) {
+#if defined(USE_FT5206)
+void TS_RotConvert(int16_t *x, int16_t *y) {
 
 int16_t temp;
   if (renderer) {
@@ -196,6 +197,38 @@ int16_t temp;
     }
   }
 }
+#elif defined(USE_XPT2046)
+void TS_RotConvert(int16_t *x, int16_t *y) {
+
+int16_t temp;
+  if (renderer) {
+    uint8_t rot = renderer->getRotation();
+//    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(" TS: before convert x:%d / y:%d  screen r:%d / w:%d / h:%d"), *x, *y,rot,renderer->width(),renderer->height());
+	temp = map(*x,XPT2046_MINX,XPT2046_MAXX, renderer->height(), 0);
+	*x = map(*y,XPT2046_MINY,XPT2046_MAXY, renderer->width(), 0);
+	*y = temp;
+    switch (rot) {
+      case 0:
+        break;
+      case 1:
+        temp = *y;
+        *y = renderer->width() - *x;
+        *x = temp;
+        break;
+      case 2:
+        *x = renderer->width() - *x;
+        *y = renderer->height() - *y;
+        break;
+      case 3:
+        temp = *y;
+        *y = *x;
+        *x = renderer->height() - temp;
+        break;
+    }
+//    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(" TS: after convert x:%d / y:%d  screen r:%d / w:%d / h:%d"), *x, *y,rot,renderer->width(),renderer->height());
+  }
+}
+#endif
 
 // check digitizer hit
 void ili9342_CheckTouch() {
@@ -203,7 +236,8 @@ ili9342_ctouch_counter++;
   if (2 == ili9342_ctouch_counter) {
     // every 100 ms should be enough
     ili9342_ctouch_counter = 0;
-    Touch_Check(ili9342_RotConvert);
+	
+    Touch_Check(TS_RotConvert);
   }
 }
 #endif // USE_TOUCH_BUTTONS

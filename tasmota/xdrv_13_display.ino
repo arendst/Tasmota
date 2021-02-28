@@ -2621,6 +2621,9 @@ bool XPT2046_found;
 bool Touch_Init(uint16_t CS) {
   touchp = new XPT2046_Touchscreen(CS);
   XPT2046_found = touchp->begin();
+  if (XPT2046_found) {
+	AddLog(LOG_LEVEL_INFO, PSTR("TS: XPT2046"));
+  }
   return XPT2046_found;
 }
 
@@ -2644,7 +2647,11 @@ uint32_t Touch_Status(uint32_t sel) {
 
 #ifdef USE_TOUCH_BUTTONS
 void Touch_MQTT(uint8_t index, const char *cp, uint32_t val) {
+#if defined(USE_FT5206)
   ResponseTime_P(PSTR(",\"FT5206\":{\"%s%d\":\"%d\"}}"), cp, index+1, val);
+#elif defined(USE_XPT2046)
+  ResponseTime_P(PSTR(",\"XPT2046\":{\"%s%d\":\"%d\"}}"), cp, index+1, val);
+#endif
   MqttPublishTeleSensor();
 }
 
@@ -2696,7 +2703,7 @@ uint8_t vbutt=0;
 
       rotconvert(&pLoc.x, &pLoc.y);
 
-      //AddLog(LOG_LEVEL_INFO, PSTR("touch %d - %d"), pLoc.x, pLoc.y);
+      // AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("touch after convert %d - %d"), pLoc.x, pLoc.y);
       // now must compare with defined buttons
       for (uint8_t count = 0; count < MAX_TOUCH_BUTTONS; count++) {
         if (buttons[count]) {
