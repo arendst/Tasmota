@@ -33,7 +33,7 @@ typedef struct {
 } bcstring;
 
 #define str_len(_s) \
-    (pgm_read_byte(&(_s)->slen) == 255 ? cast(blstring*, _s)->llen : pgm_read_byte(&(_s)->slen))
+    ((_s)->slen == 255 ? cast(blstring*, _s)->llen : (_s)->slen)
 
 #define str(_s)                 be_str2cstr(_s)
 #define str_extra(_s)           ((_s)->extra)

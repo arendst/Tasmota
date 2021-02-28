@@ -8,19 +8,6 @@
 #ifndef BERRY_CONF_H
 #define BERRY_CONF_H
 
-#include <pgmspace.h>
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-    extern int strncmp_PP(const char * str1P, const char * str2P, size_t size);
-    extern char * strchr_P(const char *s, int c);
-
-#ifdef __cplusplus
-}
-#endif
-
 #include <assert.h>
 
 /* Macro: BE_DEBUG
@@ -53,12 +40,12 @@ extern "C" {
  * Use precompiled objects to avoid creating these objects at
  * runtime. Enable this macro can greatly optimize RAM usage.
  * Default: 1
- **/
-#ifdef ESP8266
-#define BE_USE_PRECOMPILED_OBJECT       0
-#else
-#define BE_USE_PRECOMPILED_OBJECT       0           // will enable later when stabilized
-#endif
+//  **/
+// #ifdef ESP8266
+// #define BE_USE_PRECOMPILED_OBJECT       0
+// #else
+#define BE_USE_PRECOMPILED_OBJECT       1           // will enable later when stabilized
+// #endif
 
 /* Macro: BE_DEBUG_RUNTIME_INFO
  * Set runtime error debugging information.

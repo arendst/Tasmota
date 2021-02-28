@@ -20,6 +20,26 @@ def charsinstring(s,c)
   return -1
 end
 
+###
+class Tasmota
+  var _op, _operators, _rules
+  def init()
+    self._operators = "=<>!|"
+    self._op = [
+      ['==', /s1,s2-> str(s1)  == str(s2)],
+      ['!==',/s1,s2-> str(s1)  != str(s2)],
+      ['=',  /f1,f2-> real(f1) == real(f2)],
+      ['!=', /f1,f2-> real(f1) != real(f2)],
+      ['>=', /f1,f2-> real(f1) >= real(f2)],
+      ['<=', /f1,f2-> real(f1) <= real(f2)],
+      ['>',  /f1,f2-> real(f1) >  real(f2)],
+      ['<',  /f1,f2-> real(f1) <  real(f2)],
+    ]
+    self._rules = {}
+  end
+end
+###
+
 tasmota._eqstr=/s1,s2-> str(s1) == str(s2)
 tasmota._neqstr=/s1,s2-> str(s1) != str(s2)
 tasmota._eq=/f1,f2-> real(f1) == real(f2)

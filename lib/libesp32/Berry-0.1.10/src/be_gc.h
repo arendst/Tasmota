@@ -13,7 +13,7 @@
 #define BE_GCOBJECT         BE_STRING
 
 #define gc_object(o)        cast(bgcobject*, o)
-#define gc_cast(o, t, T)    ((o) && pgm_read_byte(&(o)->type) == (t) ? (T*)(o) : NULL)
+#define gc_cast(o, t, T)    ((o) && (o)->type == (t) ? (T*)(o) : NULL)
 #define cast_proto(o)       gc_cast(o, BE_PROTO, bproto)
 #define cast_closure(o)     gc_cast(o, BE_CLOSURE, bclosure)
 #define cast_ntvclos(o)     gc_cast(o, BE_NTVCLOS, bntvclos)
@@ -38,11 +38,11 @@ if (!gc_isconst(o)) { \
 #define gc_setwhite(o)      gc_setmark((o), GC_WHITE)
 #define gc_setgray(o)       gc_setmark((o), GC_GRAY)
 #define gc_setdark(o)       gc_setmark((o), GC_DARK)
-#define gc_isfixed(o)       ((pgm_read_byte(&(o)->marked) & GC_FIXED) != 0)
+#define gc_isfixed(o)       (((o)->marked & GC_FIXED) != 0)
 #define gc_setfixed(o)      ((o)->marked |= GC_FIXED)
 #define gc_clearfixed(o)    ((o)->marked &= ~GC_FIXED)
-#define gc_isconst(o)       ((pgm_read_byte(&(o)->marked) & GC_CONST) != 0)
-#define gc_exmark(o)        ((pgm_read_byte(&(o)->marked) >> 4) & 0x0F)
+#define gc_isconst(o)       (((o)->marked & GC_CONST) != 0)
+#define gc_exmark(o)        (((o)->marked >> 4) & 0x0F)
 #define gc_setexmark(o, k)  ((o)->marked |= (k) << 4)
 
 #define be_isgctype(t)      ((t) >= BE_GCOBJECT)

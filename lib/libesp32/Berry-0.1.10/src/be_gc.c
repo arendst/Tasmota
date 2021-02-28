@@ -310,7 +310,7 @@ static void free_ntvclos(bvm *vm, bgcobject *obj)
         while (count--) {
             be_free(vm, *uv++, sizeof(bupval));
         }
-        be_free(vm, f, sizeof(bntvclos));
+        be_free(vm, f, sizeof(bntvclos) + sizeof(bupval*) * f->nupvals);
     }
 }
 
