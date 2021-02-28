@@ -307,7 +307,7 @@ void setup(void) {
         TasmotaGlobal.no_autoexec = true;
       }
       if (RtcReboot.fast_reboot_count > Settings.param[P_BOOT_LOOP_OFFSET] +3) {  // Restarted 5 times
-        for (uint32_t i = 0; i < ARRAY_SIZE(Settings.my_gp.io); i++) {
+        for (uint32_t i = 0; i < nitems(Settings.my_gp.io); i++) {
           Settings.my_gp.io[i] = GPIO_NONE;         // Reset user defined GPIO disabling sensors
         }
       }

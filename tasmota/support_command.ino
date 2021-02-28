@@ -1156,7 +1156,7 @@ void CmndModule(void)
         Settings.module = XdrvMailbox.payload;
         SetModuleType();
         if (Settings.last_module != XdrvMailbox.payload) {
-          for (uint32_t i = 0; i < ARRAY_SIZE(Settings.my_gp.io); i++) {
+          for (uint32_t i = 0; i < nitems(Settings.my_gp.io); i++) {
             Settings.my_gp.io[i] = GPIO_NONE;
           }
         }
@@ -1200,12 +1200,12 @@ void CmndModules(void)
 
 void CmndGpio(void)
 {
-  if (XdrvMailbox.index < ARRAY_SIZE(Settings.my_gp.io)) {
+  if (XdrvMailbox.index < nitems(Settings.my_gp.io)) {
     myio template_gp;
     TemplateGpios(&template_gp);
     if (ValidGPIO(XdrvMailbox.index, template_gp.io[XdrvMailbox.index]) && (XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < AGPIO(GPIO_SENSOR_END))) {
       bool present = false;
-      for (uint32_t i = 0; i < ARRAY_SIZE(kGpioNiceList); i++) {
+      for (uint32_t i = 0; i < nitems(kGpioNiceList); i++) {
         uint32_t midx = pgm_read_word(kGpioNiceList + i);
         uint32_t max_midx = ((midx & 0x001F) > 0) ? midx : midx +1;
         if ((XdrvMailbox.payload >= (midx & 0xFFE0)) && (XdrvMailbox.payload < max_midx)) {
@@ -1214,7 +1214,7 @@ void CmndGpio(void)
         }
       }
       if (present) {
-        for (uint32_t i = 0; i < ARRAY_SIZE(Settings.my_gp.io); i++) {
+        for (uint32_t i = 0; i < nitems(Settings.my_gp.io); i++) {
           if (ValidGPIO(i, template_gp.io[i]) && (Settings.my_gp.io[i] == XdrvMailbox.payload)) {
             Settings.my_gp.io[i] = GPIO_NONE;
           }
@@ -1225,7 +1225,7 @@ void CmndGpio(void)
     }
     bool jsflg = false;
     bool jsflg2 = false;
-    for (uint32_t i = 0; i < ARRAY_SIZE(Settings.my_gp.io); i++) {
+    for (uint32_t i = 0; i < nitems(Settings.my_gp.io); i++) {
       if (ValidGPIO(i, template_gp.io[i]) || ((255 == XdrvMailbox.payload) && !FlashPin(i))) {
         if (!jsflg) {
           Response_P(PSTR("{"));
@@ -1243,7 +1243,7 @@ void CmndGpio(void)
         char sindex[4] = { 0 };
         uint32_t sensor_name_idx = BGPIO(sensor_type);
         uint32_t nice_list_search = sensor_type & 0xFFE0;
-        for (uint32_t j = 0; j < ARRAY_SIZE(kGpioNiceList); j++) {
+        for (uint32_t j = 0; j < nitems(kGpioNiceList); j++) {
           uint32_t nls_idx = pgm_read_word(kGpioNiceList + j);
           if (((nls_idx & 0xFFE0) == nice_list_search) && ((nls_idx & 0x001F) > 0)) {
             snprintf_P(sindex, sizeof(sindex), PSTR("%d"), (sensor_type & 0x001F) +1);
@@ -1310,10 +1310,10 @@ void CmndGpios(void)
 //    DumpConvertTable();
     ShowGpios(nullptr, GPIO_SENSOR_END, 0, lines);
   } else {
-    ShowGpios(kGpioNiceList, ARRAY_SIZE(kGpioNiceList), 0, lines);
+    ShowGpios(kGpioNiceList, nitems(kGpioNiceList), 0, lines);
 #ifdef ESP8266
 #ifndef USE_ADC_VCC
-    ShowGpios(kAdcNiceList, ARRAY_SIZE(kAdcNiceList), 1, lines);
+    ShowGpios(kAdcNiceList, nitems(kAdcNiceList), 1, lines);
 #endif  // USE_ADC_VCC
 #endif  // ESP8266
   }
@@ -1345,7 +1345,7 @@ void CmndTemplate(void)
       }
       SettingsUpdateText(SET_TEMPLATE_NAME, PSTR("Merged"));
       uint32_t j = 0;
-      for (uint32_t i = 0; i < ARRAY_SIZE(Settings.user_template.gp.io); i++) {
+      for (uint32_t i = 0; i < nitems(Settings.user_template.gp.io); i++) {
         if (6 == i) { j = 9; }
         if (8 == i) { j = 12; }
         if (TasmotaGlobal.my_module.io[j] > GPIO_NONE) {

@@ -2676,7 +2676,7 @@ chknext:
             }
           }
 */
-          if ((gpiopin < ARRAY_SIZE(TasmotaGlobal.gpio_pin)) && (TasmotaGlobal.gpio_pin[gpiopin] > 0)) {
+          if ((gpiopin < nitems(TasmotaGlobal.gpio_pin)) && (TasmotaGlobal.gpio_pin[gpiopin] > 0)) {
             fvar = TasmotaGlobal.gpio_pin[gpiopin];
             // skip ] bracket
             len++;

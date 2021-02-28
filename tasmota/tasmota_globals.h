@@ -461,13 +461,11 @@ const char kWebColors[] PROGMEM =
 #define tmin(a,b) ((a)<(b)?(a):(b))
 #define tmax(a,b) ((a)>(b)?(a):(b))
 
+#define nitems(_a) (sizeof((_a)) / sizeof((_a)[0]))
+
 #define STR_HELPER(x) #x
 #ifndef STR
 #define STR(x) STR_HELPER(x)
-#endif
-
-#ifndef ARRAY_SIZE
-#define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 #endif
 
 #define AGPIO(x) ((x)<<5)

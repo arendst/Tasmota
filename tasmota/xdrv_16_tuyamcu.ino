@@ -330,11 +330,11 @@ float TuyaAdjustedTemperature(int16_t packetValue, uint8_t res)
         break;
     case 3:
         return (float)packetValue / 1000.0;
-        break;    
+        break;
     default:
         return (float)packetValue;
         break;
-    } 
+    }
 }
 /*********************************************************************************************\
  * Internal Functions
@@ -622,10 +622,10 @@ void LightSerialDuty(uint16_t duty, char *hex_char, uint8_t TuyaIdx)
       dpid = TuyaGetDpId(TUYA_MCU_FUNC_CT);
       } else { dpid = TuyaGetDpId(TUYA_MCU_FUNC_DIMMER2); }
     }
-    
+
     if (Tuya.ignore_dim && Tuya.ignore_dimmer_cmd_timeout < millis()) {
       Tuya.ignore_dim = false;
-    }    
+    }
 
     if (duty > 0 && !Tuya.ignore_dim && TuyaSerial && dpid > 0) {
       if (TuyaIdx == 2 && CTLight) {
@@ -955,7 +955,7 @@ void TuyaNormalPowerModePacketProcess(void)
         uint8_t key1_gpio = Tuya.buffer[7];
         bool key1_set = false;
         bool led1_set = false;
-        for (uint32_t i = 0; i < ARRAY_SIZE(Settings.my_gp.io); i++) {
+        for (uint32_t i = 0; i < nitems(Settings.my_gp.io); i++) {
           if (Settings.my_gp.io[i] == AGPIO(GPIO_LED1)) led1_set = true;
           else if (Settings.my_gp.io[i] == AGPIO(GPIO_KEY1)) key1_set = true;
         }
