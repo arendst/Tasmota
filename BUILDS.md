@@ -172,6 +172,7 @@
 | USE_TASMOTA_CLIENT    | - | - | - | - | - | - | - |
 | USE_OPENTHERM         | - | - | - | - | - | - | - |
 | USE_MIEL_HVAC         | - | - | - | - | - | - | - |
+| USE_PROJECTOR_CTRL    | - | - | - | - | - | - | - |
 | USE_AS608             | - | - | - | - | - | - | - |
 | USE_TCP_BRIDGE        | - | - | - | - | - | - | - | zbbridge
 |                       |   |   |   |   |   |   |   |
