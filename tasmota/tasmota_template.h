@@ -152,9 +152,7 @@ enum UserSelectablePins {
   GPIO_TM1637CLK, GPIO_TM1637DIO,      // TM1637 interface
   GPIO_PROJECTOR_CTRL_TX, GPIO_PROJECTOR_CTRL_RX,  // LCD/DLP Projector Serial Control
   GPIO_SSD1351_DC,
-#ifdef USE_XPT2046
   GPIO_XPT2046_CS,                     // XPT2046 SPI Chip Select
-#endif
   GPIO_SENSOR_END };
 
 enum ProgramSelectablePins {
