@@ -82,6 +82,7 @@ Examples :
 #define WIFI_DNS            MY_DNS               // If not using DHCP set DNS IP address (might be equal to WIFI_GATEWAY)
 #endif
 
+// !!! Place your changes AFTER the line with "*/" !!! 
 */
 
 
