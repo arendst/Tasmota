@@ -2019,7 +2019,6 @@ void CmndDisplayRows(void)
 /*********************************************************************************************\
  * optional drivers
 \*********************************************************************************************/
-
 #ifdef USE_TOUCH_BUTTONS
 // very limited path size, so, add .jpg
 void draw_picture(char *path, uint32_t xp, uint32_t yp, uint32_t xs, uint32_t ys, uint32_t ocol, bool inverted) {
@@ -2041,7 +2040,6 @@ char ppath[16];
   Draw_RGB_Bitmap(ppath, xp, yp, inverted);
 }
 #endif
-
 
 #ifdef ESP32
 #ifdef JPEG_PICTS
@@ -2574,6 +2572,7 @@ void AddValue(uint8_t num,float fval) {
 }
 #endif // USE_GRAPH
 
+#if defined(USE_FT5206) || defined(USE_XPT2046)
 #ifdef USE_FT5206
 
 #include <FT5206.h>
@@ -2610,11 +2609,49 @@ uint32_t Touch_Status(uint32_t sel) {
     return 0;
   }
 }
+#endif
 
+#if defined(USE_XPT2046) && defined(USE_DISPLAY_ILI9341)
+#include <XPT2046_Touchscreen.h>
+
+XPT2046_Touchscreen *touchp;
+TS_Point pLoc;
+bool XPT2046_found;
+
+bool Touch_Init(uint16_t CS) {
+  touchp = new XPT2046_Touchscreen(CS);
+  XPT2046_found = touchp->begin();
+  if (XPT2046_found) {
+	AddLog(LOG_LEVEL_INFO, PSTR("TS: XPT2046"));
+  }
+  return XPT2046_found;
+}
+
+uint32_t Touch_Status(uint32_t sel) {
+  if (XPT2046_found) {
+    switch (sel) {
+      case 0:
+        return  touchp->touched();
+      case 1:
+        return pLoc.x;
+      case 2:
+        return pLoc.y;
+    }
+    return 0;
+  } else {
+    return 0;
+  }
+}
+
+#endif
 
 #ifdef USE_TOUCH_BUTTONS
 void Touch_MQTT(uint8_t index, const char *cp, uint32_t val) {
+#if defined(USE_FT5206)
   ResponseTime_P(PSTR(",\"FT5206\":{\"%s%d\":\"%d\"}}"), cp, index+1, val);
+#elif defined(USE_XPT2046)
+  ResponseTime_P(PSTR(",\"XPT2046\":{\"%s%d\":\"%d\"}}"), cp, index+1, val);
+#endif
   MqttPublishTeleSensor();
 }
 
@@ -2637,9 +2674,14 @@ uint8_t vbutt=0;
 
   if (touchp->touched()) {
     // did find a hit
+#if defined(USE_FT5206)
     pLoc = touchp->getPoint(0);
-
+#elif defined(USE_XPT2046)
+    pLoc = touchp->getPoint();
+#endif
     if (renderer) {
+
+      rotconvert(&pLoc.x, &pLoc.y);
 
 #ifdef USE_M5STACK_CORE2
       // handle  3 built in touch buttons
@@ -2661,9 +2703,8 @@ uint8_t vbutt=0;
       }
 #endif
 
-      rotconvert(&pLoc.x, &pLoc.y);
 
-      //AddLog(LOG_LEVEL_INFO, PSTR("touch %d - %d"), pLoc.x, pLoc.y);
+      // AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("touch after convert %d - %d"), pLoc.x, pLoc.y);
       // now must compare with defined buttons
       for (uint8_t count = 0; count < MAX_TOUCH_BUTTONS; count++) {
         if (buttons[count]) {

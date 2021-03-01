@@ -29,8 +29,11 @@ extern uint8_t *buffer;
 extern uint8_t color_type;
 ILI9341_2 *ili9341_2;
 
-#ifdef USE_FT5206
+#if defined(USE_FT5206)
 #include <FT5206.h>
+uint8_t ili9342_ctouch_counter = 0;
+#elif defined(USE_XPT2046)
+#include <XPT2046_Touchscreen.h>
 uint8_t ili9342_ctouch_counter = 0;
 #endif // USE_FT5206
 
@@ -136,6 +139,10 @@ void ILI9341_InitDriver()
 #endif // USE_FT5206
 #endif // ESP32
 
+#ifdef USE_XPT2046
+	Touch_Init(Pin(GPIO_XPT2046_CS));
+#endif
+
     tft_init_done = true;
 #ifdef USE_DISPLAY_ILI9341
     AddLog(LOG_LEVEL_INFO, PSTR("DSP: ILI9341"));
@@ -160,11 +167,11 @@ void ili9342_dimm(uint8_t dim) {
 #endif
 }
 
-#ifdef ESP32
-#ifdef USE_FT5206
+#if defined(USE_FT5206) || defined(USE_XPT2046)
 #ifdef USE_TOUCH_BUTTONS
 
-void ili9342_RotConvert(int16_t *x, int16_t *y) {
+#if defined(USE_FT5206)
+void TS_RotConvert(int16_t *x, int16_t *y) {
 
 int16_t temp;
   if (renderer) {
@@ -189,6 +196,38 @@ int16_t temp;
     }
   }
 }
+#elif defined(USE_XPT2046)
+void TS_RotConvert(int16_t *x, int16_t *y) {
+
+int16_t temp;
+  if (renderer) {
+    uint8_t rot = renderer->getRotation();
+//    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(" TS: before convert x:%d / y:%d  screen r:%d / w:%d / h:%d"), *x, *y,rot,renderer->width(),renderer->height());
+	temp = map(*x,XPT2046_MINX,XPT2046_MAXX, renderer->height(), 0);
+	*x = map(*y,XPT2046_MINY,XPT2046_MAXY, renderer->width(), 0);
+	*y = temp;
+    switch (rot) {
+      case 0:
+        break;
+      case 1:
+        temp = *y;
+        *y = renderer->width() - *x;
+        *x = temp;
+        break;
+      case 2:
+        *x = renderer->width() - *x;
+        *y = renderer->height() - *y;
+        break;
+      case 3:
+        temp = *y;
+        *y = *x;
+        *x = renderer->height() - temp;
+        break;
+    }
+    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(" TS: after convert x:%d / y:%d  screen r:%d / w:%d / h:%d"), *x, *y,rot,renderer->width(),renderer->height());
+  }
+}
+#endif
 
 // check digitizer hit
 void ili9342_CheckTouch() {
@@ -196,12 +235,12 @@ ili9342_ctouch_counter++;
   if (2 == ili9342_ctouch_counter) {
     // every 100 ms should be enough
     ili9342_ctouch_counter = 0;
-    Touch_Check(ili9342_RotConvert);
+	
+    Touch_Check(TS_RotConvert);
   }
 }
 #endif // USE_TOUCH_BUTTONS
 #endif // USE_FT5206
-#endif // ESP32
 
 
 #ifdef USE_DISPLAY_MODES1TO5
@@ -360,10 +399,15 @@ bool Xdsp04(uint8_t function)
         case DISPLAY_INIT_MODE:
           renderer->clearDisplay();
           break;
-#ifdef USE_FT5206
+#if defined(USE_FT5206) || defined(USE_XPT2046)
 #ifdef USE_TOUCH_BUTTONS
         case FUNC_DISPLAY_EVERY_50_MSECOND:
+#if defined(USE_FT5206)
           if (FT5206_found) {
+#elif defined(USE_XPT2046)
+          if (XPT2046_found) {
+#endif
+
             ili9342_CheckTouch();
           }
           break;

@@ -152,6 +152,7 @@ enum UserSelectablePins {
   GPIO_TM1637CLK, GPIO_TM1637DIO,      // TM1637 interface
   GPIO_PROJECTOR_CTRL_TX, GPIO_PROJECTOR_CTRL_RX,  // LCD/DLP Projector Serial Control
   GPIO_SSD1351_DC,
+  GPIO_XPT2046_CS,                     // XPT2046 SPI Chip Select
   GPIO_SENSOR_END };
 
 enum ProgramSelectablePins {
@@ -324,6 +325,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_TM1637_CLK "|" D_SENSOR_TM1637_DIO "|"
   D_SENSOR_PROJECTOR_CTRL_TX "|" D_SENSOR_PROJECTOR_CTRL_RX "|"
   D_SENSOR_SSD1351_DC "|"
+  D_SENSOR_XPT2046_CS "|"
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -413,6 +415,10 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_DISPLAY_ILI9341
   AGPIO(GPIO_ILI9341_CS),
   AGPIO(GPIO_ILI9341_DC),
+#ifdef USE_XPT2046
+  AGPIO(GPIO_XPT2046_CS),     // XPT2046 SPI Chip Select
+#endif
+  
 #endif  // USE_DISPLAY_ILI9341
 #ifdef USE_DISPLAY_ILI9488
   AGPIO(GPIO_ILI9488_CS),
