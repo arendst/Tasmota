@@ -10,37 +10,6 @@
 
 #include "berry.h"
 
-/* support for PROGMEM on ESP8266 and AVR */
-#ifdef _PGMSPACE_H_
-    #define strncmp         strncmp_PP
-    #define strcmp(str1P, str2P)          strncmp_PP((str1P), (str2P), SIZE_IRRELEVANT)
-    #define strncasecmp     strncasecmp_P
-    #define strcasecmp_P(str1, str2P)     strncasecmp_P((str1), (str2P), SIZE_IRRELEVANT)
-    #define strlen          strlen_P
-    #define strchr          strchr_P
-    #define strcat          strcat_P
-    #define strncat         strncat_P
-    #define strcpy          strcpy_P
-    #define strncpy         strncpy_P
-    #define memcpy          memcpy_P
-    #define memccpy         memccpy_P
-    #define memmove         memmove_P
-    #define memcmp          memcmp_P
-    #define memmem          memmem_P
-    #define memchr          memchr_P
-    #define sprintf         sprintf_P
-    #define snprintf        snprintf_P
-#endif 
-
-#ifndef pgm_read_byte
-#define pgm_read_byte(addr)             (*(const uint8_t*)(addr))
-#endif
-
-#ifndef pgm_read_word
-#define pgm_read_word(addr)             (*(const uint16_t*)(addr))
-#endif
-
-
 /* basic types, do not change value */
 #define BE_NONE         (-1)    /* unknow type */
 #define BE_COMPTR       (-2)    /* common pointer */

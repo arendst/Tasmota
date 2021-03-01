@@ -33,7 +33,7 @@ WiFiClient EspClient;                     // Wifi Client - non-TLS
 
 const char kMqttCommands[] PROGMEM = "|"  // No prefix
   // SetOption synonyms
-  D_SO_MQTTJSONONLY "|" 
+  D_SO_MQTTJSONONLY "|"
 #ifdef USE_MQTT_TLS
   D_SO_MQTTTLS "|"
 #endif
@@ -195,7 +195,7 @@ void MqttInit(void) {
 #endif
 
 #ifdef USE_MQTT_TLS_CA_CERT
-    tlsClient->setTrustAnchor(Tasmota_TA, ARRAY_SIZE(Tasmota_TA));
+    tlsClient->setTrustAnchor(Tasmota_TA, nitems(Tasmota_TA));
 #endif // USE_MQTT_TLS_CA_CERT
 
     MqttClient.setClient(*tlsClient);

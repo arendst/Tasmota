@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 - Allow MCP230xx pinmode from output to input (#11104)
 - SML VBUS support (#11125)
 - Command ``Sensor80 1 <0..7>`` to control MFRC522 RFID antenna gain from 18dB (0) to 48dB (7) (#11073)
+- Support for NEC and OPTOMA LCD/DLP Projector serial power control by Jan Bubík (#11145)
 
 ### Changed
 - TuyaMcu dimmer timeout (#11121)
@@ -18,6 +19,7 @@ All notable changes to this project will be documented in this file.
 - Timer loop when console is scrolled up regression from v9.3.0 (#11108)
 - Display exception when no file system is present (#11125)
 - PN532 on ESP32 Serial flush both Tx and Rx buffers (#10910)
+- Light scheme related color changes (#11041)
 
 ## [Released]
 

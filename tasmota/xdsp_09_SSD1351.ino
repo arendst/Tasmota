@@ -61,10 +61,10 @@ void SSD1351_InitDriver() {
 
     // init renderer
     if (TasmotaGlobal.soft_spi_enabled){
-      ssd1351 = new SSD1351(Pin(GPIO_SSD1351_CS), Pin(GPIO_SSPI_MOSI), Pin(GPIO_SSPI_SCLK));
+      ssd1351 = new SSD1351(Pin(GPIO_SSD1351_CS), Pin(GPIO_SSPI_MOSI), Pin(GPIO_SSPI_SCLK), Pin(GPIO_SSD1351_DC));
     }
     else if (TasmotaGlobal.spi_enabled) {
-      ssd1351 = new SSD1351(Pin(GPIO_SSD1351_CS), Pin(GPIO_SPI_MOSI), Pin(GPIO_SPI_CLK));
+      ssd1351 = new SSD1351(Pin(GPIO_SSD1351_CS), Pin(GPIO_SPI_MOSI), Pin(GPIO_SPI_CLK), Pin(GPIO_SSD1351_DC));
     }
 
     delay(100);

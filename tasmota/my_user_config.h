@@ -677,6 +677,9 @@
   #define USE_TASMOTA_CLIENT_SERIAL_SPEED 57600  // Depends on the sketch that is running on the Uno/Pro Mini
 //#define USE_OPENTHERM                            // Add support for OpenTherm (+15k code)
 //#define USE_MIEL_HVAC                            // Add support for Mitsubishi Electric HVAC serial interface (+5k code)
+//#define USE_PROJECTOR_CTRL                       // Add support for LCD/DLP Projector serial control interface (+2k code)
+//  #define USE_PROJECTOR_CTRL_NEC                 // Use codes for NEC
+//  #define USE_PROJECTOR_CTRL_OPTOMA              // Use codes for OPTOMA
 //#define USE_AS608                                // Add support for AS608 optical and R503 capacitive fingerprint sensor (+3k code)
 //  #define USE_AS608_MESSAGES                     // Add verbose error messages (+0k4 code)
 
