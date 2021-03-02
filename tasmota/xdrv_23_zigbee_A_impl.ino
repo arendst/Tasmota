@@ -235,7 +235,7 @@ void ZbApplyMultiplier(double &val_d, int8_t multiplier) {
 // Write Tuya-Moes attribute
 //
 bool ZbTuyaWrite(SBuffer & buf, const Z_attribute & attr) {
-  double val_d = attr.getFloat();
+  double val_d = attr.getOptimisticDouble();
   const char * val_str = attr.getStr();
 
   if (attr.key_is_str) { return false; }    // couldn't find attr if so skip
@@ -294,7 +294,7 @@ bool ZbTuyaWrite(SBuffer & buf, const Z_attribute & attr) {
 // Send Attribute Write, apply mutlipliers before
 //
 bool ZbAppendWriteBuf(SBuffer & buf, const Z_attribute & attr, bool prepend_status_ok) {
-  double val_d = attr.getFloat();
+  double val_d = attr.getOptimisticDouble();
   const char * val_str = attr.getStr();
 
   if (attr.key_is_str) { return false; }    // couldn't find attr if so skip
