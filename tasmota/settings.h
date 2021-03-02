@@ -327,6 +327,18 @@ typedef struct {
   uint8_t dpid = 0;
 } TuyaFnidDpidMap;
 
+typedef union {
+  uint8_t data;
+  struct {
+  uint8_t ilimode : 3;
+  uint8_t Invert : 1;
+  uint8_t spare2 : 1;
+  uint8_t spare3 : 1;
+  uint8_t spare4 : 1;
+  uint8_t spare5 : 1;
+  };
+} DisplayOptions;
+
 const uint32_t settings_text_size = 699;   // Settings.text_pool[size] = Settings.display_model (2D2) - Settings.text_pool (017)
 const uint8_t MAX_TUYA_FUNCTIONS = 16;
 
@@ -355,7 +367,6 @@ struct {
   uint8_t       text_pool_290[66];         // 290
 
   // End of single char array of 698 chars max ****************
-
   uint8_t       display_model;             // 2D2
   uint8_t       display_mode;              // 2D3
   uint8_t       display_refresh;           // 2D4
@@ -375,8 +386,9 @@ struct {
   uint8_t       param[PARAM8_SIZE];        // 2FC  SetOption32 .. SetOption49
   int16_t       toffset[2];                // 30E
   uint8_t       display_font;              // 312
+  DisplayOptions  display_options;         // 313
 
-  uint8_t       free_313[44];              // 313
+  uint8_t       free_314[43];              // 314
 
   uint8_t       tuyamcu_topic;             // 33F  Manage tuyaSend topic. ex_energy_power_delta on 6.6.0.20, replaced on 8.5.0.1
   uint16_t      domoticz_update_timer;     // 340
