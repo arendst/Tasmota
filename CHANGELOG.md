@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 - TuyaMcu dimmer timeout (#11121)
+- TasmotaSerial library from v3.2.0 to v3.3.0
 
 ### Fixed
 - Refactor acceleration function for shutter stepper and servo (#11088)

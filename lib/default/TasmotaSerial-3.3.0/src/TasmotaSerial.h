@@ -40,8 +40,7 @@ class TasmotaSerial : public Stream {
     TasmotaSerial(int receive_pin, int transmit_pin, int hardware_fallback = 0, int nwmode = 0, int buffer_size = TM_SERIAL_BUFFER_SIZE);
     virtual ~TasmotaSerial();
 
-    bool begin(long speed, int stop_bits = 1);
-    bool begin(void);
+    bool begin(uint32_t speed = TM_SERIAL_BAUDRATE, uint32_t config = SERIAL_8N1);
     bool hardwareSerial(void);
     int peek(void);
 
