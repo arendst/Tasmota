@@ -550,7 +550,7 @@
 #define D_CMND_ZIGBEE_PERMITJOIN "PermitJoin"
 #define D_CMND_ZIGBEE_STATUS "Status"
 #define D_CMND_ZIGBEE_RESET "Reset"
-  #define D_JSON_ZIGBEE_CC2530 "CC2530"
+  #define D_JSON_ZIGBEE_CC2530 "CCxxxx"
   #define D_JSON_ZIGBEE_EZSP "EZSP"
 #define D_CMND_ZIGBEEZNPRECEIVE "ZNPReceive"      // only for debug
 #define D_CMND_ZIGBEE_EZSP_RECEIVE "EZSPReceive"      // only for debug
