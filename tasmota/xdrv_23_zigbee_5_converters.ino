@@ -1739,6 +1739,10 @@ void ZCLFrame::syntheticAqaraSensor(Z_attribute_list &attr_list, class Z_attribu
           if (0x64 == attrid) {
             attr_list.addAttributePMEM(PSTR("SmokeDensity")).copyVal(attr);
           }
+        } else if (modelId.startsWith(F("lumi.sensor_wleak"))) {   // gas leak
+          if (0x64 == attrid) {
+            attr_list.addAttributePMEM(PSTR("Water")).copyVal(attr);
+          }
         } else if (modelId.startsWith(F("lumi.sensor_natgas"))) {   // gas leak
           if (0x64 == attrid) {
             attr_list.addAttributePMEM(PSTR("GasDensity")).copyVal(attr);
