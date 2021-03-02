@@ -822,8 +822,12 @@ uint8_t Serial_peek() {
   return meter_ss[num-1]->peek();
 }
 
-uint8_t sml_logindex;
-char log_data[128];
+#ifndef SML_DUMP_SIZE
+#define SML_DUMP_SIZE 128
+#endif
+
+uint16_t sml_logindex;
+char log_data[SML_DUMP_SIZE];
 
 #define SML_EBUS_SKIP_SYNC_DUMPS
 
@@ -884,8 +888,8 @@ void Dump2log(void) {
         char c = SML_SREAD&0x7f;
         if (c == '\n' || c == '\r') {
           if (sml_logindex > 2) {
-            AddLogData(LOG_LEVEL_INFO, log_data);
             log_data[sml_logindex] = 0;
+            AddLogData(LOG_LEVEL_INFO, log_data);
             log_data[0] = ':';
             log_data[1] = ' ';
             sml_logindex = 2;
@@ -903,6 +907,7 @@ void Dump2log(void) {
       while (SML_SAVAILABLE) {
         c = SML_SREAD;
         if (c == VBUS_SYNC) {
+          log_data[sml_logindex] = 0;
           AddLogData(LOG_LEVEL_INFO, log_data);
           log_data[0] = ':';
           log_data[1] = ' ';
@@ -922,6 +927,7 @@ void Dump2log(void) {
           p = SML_SPEAK;
           if (p != EBUS_SYNC && sml_logindex > 5) {
             // new packet, plot last one
+            log_data[sml_logindex] = 0;
             AddLogData(LOG_LEVEL_INFO, log_data);
             strcpy(&log_data[0], ": aa ");
             sml_logindex = 5;
@@ -939,6 +945,7 @@ void Dump2log(void) {
       while (SML_SAVAILABLE) {
         c = SML_SREAD;
         if (c == SML_SYNC) {
+          log_data[sml_logindex] = 0;
           AddLogData(LOG_LEVEL_INFO, log_data);
           log_data[0] = ':';
           log_data[1] = ' ';
@@ -962,6 +969,7 @@ void Dump2log(void) {
         }
       }
       if (sml_logindex > 2) {
+        log_data[sml_logindex] = 0;
         AddLogData(LOG_LEVEL_INFO, log_data);
       }
     }
@@ -1472,6 +1480,7 @@ void SML_Decode(uint8_t index) {
         double fac = CharToDouble((char*)mp);
         meter_vars[vindex] /= fac;
         SML_Immediate_MQTT((const char*)mp, vindex, mindex);
+        dvalid[vindex] = 1;
         // get sfac
       } else if (*mp=='d') {
         // calc deltas d ind 10 (eg every 10 secs)
@@ -1489,7 +1498,16 @@ void SML_Decode(uint8_t index) {
             dtimes[dindex] = millis();
             double vdiff = meter_vars[ind - 1] - dvalues[dindex];
             dvalues[dindex] = meter_vars[ind - 1];
-            meter_vars[vindex] = (double)360000.0 * vdiff / ((double)dtime / 10000.0);
+            double dres = (double)360000.0 * vdiff / ((double)dtime / 10000.0);
+#ifdef USE_SML_MEDIAN_FILTER
+            if (meter_desc_p[mindex].flag & 16) {
+              meter_vars[vindex] = sml_median(&sml_mf[vindex], dres);
+            } else {
+              meter_vars[vindex] = dres;
+            }
+#else
+            meter_vars[vindex] = dres;
+#endif
 
             mp=strchr(mp,'@');
             if (mp) {
@@ -1499,6 +1517,7 @@ void SML_Decode(uint8_t index) {
               SML_Immediate_MQTT((const char*)mp, vindex, mindex);
             }
           }
+          dvalid[vindex] = 1;
           dindex++;
         }
       } else if (*mp == 'h') {
@@ -1731,6 +1750,7 @@ void SML_Decode(uint8_t index) {
       }
       if (found) {
         // matches, get value
+        dvalid[vindex] = 1;
         mp++;
 #ifdef ED300L
         g_mindex=mindex;
@@ -1838,7 +1858,6 @@ void SML_Decode(uint8_t index) {
           SML_Immediate_MQTT((const char*)mp, vindex, mindex);
         }
       }
-      dvalid[vindex] = 1;
       //AddLog(LOG_LEVEL_INFO, PSTR("set valid in line %d"), vindex);
     }
 nextsect:
