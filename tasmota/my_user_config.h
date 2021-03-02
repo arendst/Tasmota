@@ -275,8 +275,11 @@
 #define KEY_SWAP_DOUBLE_PRESS  false             // [SetOption11] Swap button single and double press functionality
 #define KEY_ONLY_SINGLE_PRESS  false             // [SetOption13] Enable only single press to speed up button press recognition
 
+#define MQTT_BUTTONS           false             // [SetOption73] Detach buttons from relays and send multi-press and hold MQTT messages instead
+
 #define SWITCH_DEBOUNCE_TIME   50                // [SwitchDebounce] Number of mSeconds switch press debounce time
 #define SWITCH_MODE            TOGGLE            // [SwitchMode] TOGGLE, FOLLOW, FOLLOW_INV, PUSHBUTTON, PUSHBUTTON_INV, PUSHBUTTONHOLD, PUSHBUTTONHOLD_INV, PUSHBUTTON_TOGGLE, TOGGLEMULTI, FOLLOWMULTI, FOLLOWMULTI_INV (the wall switch state)
+#define MQTT_SWITCHES          false             // [SetOption114] Detach switches from relays and send MQTT messages instead
 
 #define TEMP_CONVERSION        false             // [SetOption8] Return temperature in (false = Celsius or true = Fahrenheit)
 #define PRESSURE_CONVERSION    false             // [SetOption24] Return pressure in (false = hPa or true = mmHg)
@@ -330,6 +333,7 @@
 #define SHUTTER_SUPPORT        false             // [SetOption80] Enable shutter support
 #define PCF8574_INVERT_PORTS   false             // [SetOption81] Invert all ports on PCF8574 devices
 #define ZIGBEE_FRIENDLY_NAMES  false             // [SetOption83] Enable Zigbee FriendlyNames instead of ShortAddresses when possible
+#define ZIGBEE_DISTINCT_TOPICS false             // [SetOption89] Enable unique device topic based on Zigbee device ShortAddr
 #define ZIGBEE_RMV_ZBRECEIVED  false             // [SetOption100] Remove ZbReceived form JSON message
 #define ZIGBEE_INDEX_EP        false             // [SetOption101] Add the source endpoint as suffix to attributes, ex `Power3` instead of `Power` if sent from endpoint 3
 
@@ -515,6 +519,9 @@
 
 // -- I2C sensors ---------------------------------
 #define USE_I2C                                  // I2C using library wire (+10k code, 0k2 mem, 124 iram)
+#define I2CDRIVERS_0_31        0xFFFFFFFF          // Enable I2CDriver0  to I2CDriver31
+#define I2CDRIVERS_32_63       0xFFFFFFFF          // Enable I2CDriver32 to I2CDriver63
+#define I2CDRIVERS_64_95       0xFFFFFFFF          // Enable I2CDriver64 to I2CDriver95
 
 #ifdef USE_I2C
 //  #define USE_SHT                                // [I2cDriver8] Enable SHT1X sensor (+1k4 code)

@@ -726,6 +726,7 @@ void SettingsDefaultSet2(void) {
   flag3.no_power_feedback |= APP_NO_RELAY_SCAN;
   flag3.fast_power_cycle_disable |= APP_DISABLE_POWERCYCLE;
   flag3.bootcount_update |= DEEPSLEEP_BOOTCOUNT;
+  flag3.mqtt_buttons |= MQTT_BUTTONS;
   Settings.save_data = SAVE_DATA;
   Settings.param[P_BACKLOG_DELAY] = MIN_BACKLOG_DELAY;
   Settings.param[P_BOOT_LOOP_OFFSET] = BOOT_LOOP_OFFSET;  // SetOption36
@@ -833,6 +834,7 @@ void SettingsDefaultSet2(void) {
   flag.mqtt_sensor_retain |= MQTT_SENSOR_RETAIN;
   flag5.mqtt_info_retain |= MQTT_INFO_RETAIN;
   flag5.mqtt_state_retain |= MQTT_STATE_RETAIN;
+  flag5.mqtt_switches |= MQTT_SWITCHES;
 //  flag.mqtt_serial |= 0;
   flag.device_index_enable |= MQTT_POWER_FORMAT;
   flag3.time_append_timezone |= MQTT_APPEND_TIMEZONE;
@@ -1058,6 +1060,7 @@ void SettingsDefaultSet2(void) {
   flag3.shutter_mode |= SHUTTER_SUPPORT;
   flag3.pcf8574_ports_inverted |= PCF8574_INVERT_PORTS;
   flag4.zigbee_use_names |= ZIGBEE_FRIENDLY_NAMES;
+  flag4.zigbee_distinct_topics |= ZIGBEE_DISTINCT_TOPICS;
   flag4.remove_zbreceived |= ZIGBEE_RMV_ZBRECEIVED;
   flag4.zb_index_ep |= ZIGBEE_INDEX_EP;
   flag4.mqtt_tls |= MQTT_TLS_ENABLED;
@@ -1072,6 +1075,7 @@ void SettingsDefaultSet2(void) {
   Settings.flag2 = flag2;
   Settings.flag3 = flag3;
   Settings.flag4 = flag4;
+  Settings.flag5 = flag5;
 }
 
 /********************************************************************************************/
@@ -1102,9 +1106,9 @@ void SettingsDefaultWebColor(void) {
 }
 
 void SettingsEnableAllI2cDrivers(void) {
-  Settings.i2c_drivers[0] = 0xFFFFFFFF;
-  Settings.i2c_drivers[1] = 0xFFFFFFFF;
-  Settings.i2c_drivers[2] = 0xFFFFFFFF;
+  Settings.i2c_drivers[0] = I2CDRIVERS_0_31;
+  Settings.i2c_drivers[1] = I2CDRIVERS_32_63;
+  Settings.i2c_drivers[2] = I2CDRIVERS_64_95;
 }
 
 /********************************************************************************************/
