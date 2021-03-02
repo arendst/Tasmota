@@ -453,9 +453,9 @@ uint32_t IrRemoteCmndIrHvacJson(void)
     bool success = ac.sendAc(state, irhvac_stateful && irac_prev_state.protocol == state.protocol ? &irac_prev_state : nullptr);
     if (!success) { return IE_SYNTAX_IRHVAC; }
   }
-  if (stateMode == StateModes::STORE_ONLY || stateMode == StateModes::SEND_STORE) { // store state in memory
-    irac_prev_state = state;
-  }
+  // store state in memory
+  irac_prev_state = state;
+
   if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->enableIRIn(); }
 
   Response_P(PSTR("{\"" D_CMND_IRHVAC "\":%s}"), sendACJsonState(state).c_str());
