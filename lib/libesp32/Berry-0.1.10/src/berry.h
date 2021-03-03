@@ -273,6 +273,14 @@ typedef void(*bntvhook)(bvm *vm, bhookinfo *info);
   #define be_assert(expr)       ((void)0)
 #endif
 
+/* Observability hook */
+
+typedef void(*beobshook)(bvm *vm, int event, ...);
+enum beobshookevents {
+  BE_OBS_GC_START,        // start of GC, arg = allocated size
+  BE_OBS_GC_END,          // end of GC, arg = allocated size
+};
+
 /* FFI functions */
 #define be_writestring(s)       be_writebuffer((s), strlen(s))
 #define be_writenewline()       be_writebuffer("\n", 1)
@@ -405,6 +413,9 @@ BERRY_API void be_regclass(bvm *vm, const char *name, const bnfuncinfo *lib);
 /* VM management APIs */
 BERRY_API bvm* be_vm_new(void);
 BERRY_API void be_vm_delete(bvm *vm);
+
+/* Observability hook */
+BERRY_API void be_set_obs_hook(bvm *vm, beobshook hook);
 
 /* code load APIs */
 BERRY_API int be_loadbuffer(bvm *vm,

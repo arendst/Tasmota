@@ -102,7 +102,7 @@ bool callBerryRule(void) {
 }
 
 bool callBerryCommand(void) {
-  const char * command = nullptr;
+  bool serviced = false;
 
   checkBeTop();
   be_getglobal(berry.vm, "_exec_cmd");
@@ -111,16 +111,21 @@ bool callBerryCommand(void) {
     be_pushint(berry.vm, XdrvMailbox.index);
     be_pushstring(berry.vm, XdrvMailbox.data);
     int ret = be_pcall(berry.vm, 3);
-    command = be_tostring(berry.vm, 3);
-    strlcpy(XdrvMailbox.topic, command, CMDSZ);
-    // AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_BERRY "Command (%s) serviced=%d"), XdrvMailbox.command, serviced);
+    // AddLog(LOG_LEVEL_INFO, "callBerryCommand: top=%d", be_top(berry.vm));
+    // AddLog(LOG_LEVEL_INFO, "callBerryCommand: type(1)=%s", be_typename(berry.vm, 1));
+    // AddLog(LOG_LEVEL_INFO, "callBerryCommand: type(2)=%s", be_typename(berry.vm, 2));
+    // AddLog(LOG_LEVEL_INFO, "callBerryCommand: type(3)=%s", be_typename(berry.vm, 3));
+    // AddLog(LOG_LEVEL_INFO, "callBerryCommand: type(4)=%s", be_typename(berry.vm, 4));
+    // AddLog(LOG_LEVEL_INFO, "callBerryCommand: type(5)=%s", be_typename(berry.vm, 5));
+    serviced = be_tobool(berry.vm, 1);    // return value is in slot 1
+    // AddLog(LOG_LEVEL_INFO, "callBerryCommand: serviced=%d", serviced);
     be_pop(berry.vm, 4);    // remove function object
   } else {
     be_pop(berry.vm, 1);    // remove nil object
   }
   checkBeTop();
 
-  return command != nullptr;     // TODO event not handled
+  return serviced;     // TODO event not handled
 }
 
 size_t callBerryGC(void) {
@@ -174,6 +179,35 @@ void callBerryFunctionVoid(const char * fname) {
 }
 
 /*********************************************************************************************\
+ * VM Observability
+\*********************************************************************************************/
+void BerryObservability(bvm *vm, int32_t event...);
+void BerryObservability(bvm *vm, int32_t event...) {
+  va_list param;
+  va_start(param, event);
+  static int32_t vm_usage = 0;
+  static uint32_t gc_time = 0;
+
+  switch (event)  {
+    case BE_OBS_GC_START:
+      {
+        gc_time = millis();
+        vm_usage = va_arg(param, int32_t);
+      }
+      break;
+    case BE_OBS_GC_END:
+      {
+        int32_t vm_usage2 = va_arg(param, int32_t);
+        uint32_t gc_elapsed = millis() - gc_time;
+        AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_BERRY "GC from %i to %i bytes (in %d ms)"), vm_usage, vm_usage2, gc_elapsed);
+      }
+      break;
+    default: break;
+  }
+  va_end(param);
+}
+
+/*********************************************************************************************\
  * VM Init
 \*********************************************************************************************/
 extern "C" {
@@ -191,6 +225,7 @@ void BrReset(void) {
   bool berry_init_ok = false;
   do {    
     berry.vm = be_vm_new(); /* create a virtual machine instance */
+    be_set_obs_hook(berry.vm, &BerryObservability);
     // AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_BERRY "Berry VM created, RAM used=%u"), be_gc_memcount(berry.vm));
 
     // Register functions
@@ -264,12 +299,12 @@ void CmndBrRun(void) {
   } while (0);
 
   if (0 == ret_code) {
+    // AddLog(LOG_LEVEL_INFO, "run: top=%d", be_top(berry.vm));
+    // AddLog(LOG_LEVEL_INFO, "run: type(1)=%s", be_typename(berry.vm, 1));
+    // AddLog(LOG_LEVEL_INFO, "run: type(2)=%s", be_typename(berry.vm, 2));
+
     // code taken from REPL, look first at top, and if nil, look at return value
-    if (be_isnil(berry.vm, 0)) {
-      ret_val = be_tostring(berry.vm, -1);
-    } else {
-      ret_val = be_tostring(berry.vm, 0);
-    }
+    ret_val = be_tostring(berry.vm, 1);
     Response_P("{\"" D_PRFX_BR "\":\"%s\"}", ret_val);    // can't use XdrvMailbox.command as it may have been overwritten by subcommand
     be_pop(berry.vm, 1);
   } else {

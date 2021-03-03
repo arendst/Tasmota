@@ -64,6 +64,12 @@
  **/
 #define BE_DEBUG_VAR_INFO               0
 
+/* Macro: BE_USE_OBSERVABILITY_HOOK
+ * Use the obshook function to report low-level actions.
+ * Default: 0
+ **/
+#define BE_USE_OBSERVABILITY_HOOK       1
+
 /* Macro: BE_STACK_TOTAL_MAX
  * Set the maximum total stack size.
  * Default: 20000
