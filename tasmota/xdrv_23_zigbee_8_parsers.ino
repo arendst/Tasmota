@@ -418,7 +418,7 @@ int32_t ZNP_Reboot(int32_t res, SBuffer &buf) {
   }
 
   Response_P(PSTR("{\"" D_JSON_ZIGBEE_STATE "\":{"
-                  "\"Status\":%d,\"Message\":\"CC2530 booted\",\"RestartReason\":\"%s\""
+                  "\"Status\":%d,\"Message\":\"CCxxxx booted\",\"RestartReason\":\"%s\""
                   ",\"MajorRel\":%d,\"MinorRel\":%d}}"),
                   ZIGBEE_STATUS_BOOT, reason_str,
                   major_rel, minor_rel);

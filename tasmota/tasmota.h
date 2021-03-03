@@ -238,6 +238,11 @@ const uint32_t LOOP_SLEEP_DELAY = 50;       // Lowest number of milliseconds to 
 #define KNX_MAX_device_param   31
 #define MAX_KNXTX_CMNDS        5
 
+// XPT2046 resistive touch driver min/max raw values
+#define	XPT2046_MINX			192
+#define XPT2046_MAXX			3895
+#define XPT2046_MINY			346
+#define	XPT2046_MAXY			3870
 /*********************************************************************************************\
  * Enumeration
 \*********************************************************************************************/

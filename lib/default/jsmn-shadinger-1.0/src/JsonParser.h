@@ -114,6 +114,9 @@ public:
   JsonParserObject getObject(void) const;
   JsonParserArray getArray(void) const;
 
+  // general parser from string to int/hex/float
+  static double json_strtof(const char* s);
+
 public:
   // the following should be 'protected' but then it can't be accessed by iterators
   const jsmntok_t   * t;

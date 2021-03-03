@@ -84,6 +84,8 @@ const uint8_t DISPLAY_LOG_ROWS = 32;           // Number of lines in display log
 #define D_CMND_DISP_SCROLLTEXT "ScrollText"
 #define D_CMND_DISP_TYPE "Type"
 
+#define D_CMND_DISP_ILIMODE "ILIMode"
+#define D_CMND_DISP_ILIINVERT "Invert"
 
 
 enum XdspFunctions { FUNC_DISPLAY_INIT_DRIVER, FUNC_DISPLAY_INIT, FUNC_DISPLAY_EVERY_50_MSECOND, FUNC_DISPLAY_EVERY_SECOND,
@@ -115,7 +117,7 @@ const char kDisplayCommands[] PROGMEM = D_PRFX_DISPLAY "|"  // Prefix
    "|" D_CMND_DISP_CLEAR "|" D_CMND_DISP_NUMBER "|" D_CMND_DISP_FLOAT "|" D_CMND_DISP_NUMBERNC "|" D_CMND_DISP_FLOATNC "|"
   D_CMND_DISP_BRIGHTNESS "|" D_CMND_DISP_RAW "|" D_CMND_DISP_LEVEL "|" D_CMND_DISP_SEVENSEG_TEXT "|" D_CMND_DISP_SEVENSEG_TEXTNC "|"
   D_CMND_DISP_SCROLLDELAY "|" D_CMND_DISP_CLOCK "|" D_CMND_DISP_TEXTNC "|" D_CMND_DISP_SETLEDS "|" D_CMND_DISP_SETLED "|"
-  D_CMND_DISP_BUTTONS "|" D_CMND_DISP_SCROLLTEXT "|" D_CMND_DISP_TYPE
+  D_CMND_DISP_BUTTONS "|" D_CMND_DISP_SCROLLTEXT "|" D_CMND_DISP_TYPE "|" D_CMND_DISP_ILIMODE "|" D_CMND_DISP_ILIINVERT
   ;
 
 void (* const DisplayCommand[])(void) PROGMEM = {
@@ -128,7 +130,7 @@ void (* const DisplayCommand[])(void) PROGMEM = {
   , &CmndDisplayClear, &CmndDisplayNumber, &CmndDisplayFloat, &CmndDisplayNumberNC, &CmndDisplayFloatNC,
   &CmndDisplayBrightness, &CmndDisplayRaw, &CmndDisplayLevel, &CmndDisplaySevensegText, &CmndDisplaySevensegTextNC,
   &CmndDisplayScrollDelay, &CmndDisplayClock, &CmndDisplayTextNC, &CmndDisplaySetLEDs, &CmndDisplaySetLED,
-  &CmndDisplayButtons, &CmndDisplayScrollText, &CmndDisplayType
+  &CmndDisplayButtons, &CmndDisplayScrollText, &CmndDisplayType,  &CmndDisplayILIMOde ,  &CmndDisplayILIInvert
 };
 
 char *dsp_str;
@@ -1904,13 +1906,13 @@ void CmndDisplayScrollText(void)
 void CmndDisplayType(void)
 {
   if(ArgC() == 0) {
-    XdrvMailbox.payload = Settings.display_type;
+    XdrvMailbox.payload = Settings.display_options.data;
   } else {
-    uint8_t prev_type = Settings.display_type;
+    uint8_t prev_type = Settings.display_options.data;
     if(prev_type != XdrvMailbox.payload) {
       if (!renderer) {
         XdspCall(FUNC_DISPLAY_TYPE);
-        Settings.display_type = XdrvMailbox.payload;
+        Settings.display_options.data = XdrvMailbox.payload;
       }
     }
   }
@@ -1941,10 +1943,29 @@ void CmndDisplayFont(void)
   ResponseCmndNumber(Settings.display_font);
 }
 
+
+void CmndDisplayILIMOde(void)
+{
+  if ((XdrvMailbox.payload >= 1) && (XdrvMailbox.payload < 16)) {
+    Settings.display_options.ilimode = XdrvMailbox.payload;
+    TasmotaGlobal.restart_flag = 2;
+  }
+  ResponseCmndNumber(Settings.display_options.ilimode);
+}
+
+void CmndDisplayILIInvert(void)
+{
+  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 1)) {
+    Settings.display_options.Invert = XdrvMailbox.payload;
+    if (renderer) renderer->invertDisplay(Settings.display_options.Invert);
+  }
+  ResponseCmndNumber(Settings.display_options.Invert);
+}
+
 void CmndDisplayRotate(void)
 {
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 4)) {
-    if (Settings.display_rotate != XdrvMailbox.payload) {
+    if ((Settings.display_rotate) != XdrvMailbox.payload) {
 /*
       // Needs font info regarding height and width
       if ((Settings.display_rotate &1) != (XdrvMailbox.payload &1)) {
@@ -2033,7 +2054,6 @@ void CmndDisplayRows(void)
 /*********************************************************************************************\
  * optional drivers
 \*********************************************************************************************/
-
 #ifdef USE_TOUCH_BUTTONS
 // very limited path size, so, add .jpg
 void draw_picture(char *path, uint32_t xp, uint32_t yp, uint32_t xs, uint32_t ys, uint32_t ocol, bool inverted) {
@@ -2588,6 +2608,7 @@ void AddValue(uint8_t num,float fval) {
 }
 #endif // USE_GRAPH
 
+#if defined(USE_FT5206) || defined(USE_XPT2046)
 #ifdef USE_FT5206
 
 #include <FT5206.h>
@@ -2624,11 +2645,49 @@ uint32_t Touch_Status(uint32_t sel) {
     return 0;
   }
 }
+#endif
 
+#if defined(USE_XPT2046) && defined(USE_DISPLAY_ILI9341)
+#include <XPT2046_Touchscreen.h>
+
+XPT2046_Touchscreen *touchp;
+TS_Point pLoc;
+bool XPT2046_found;
+
+bool Touch_Init(uint16_t CS) {
+  touchp = new XPT2046_Touchscreen(CS);
+  XPT2046_found = touchp->begin();
+  if (XPT2046_found) {
+	AddLog(LOG_LEVEL_INFO, PSTR("TS: XPT2046"));
+  }
+  return XPT2046_found;
+}
+
+uint32_t Touch_Status(uint32_t sel) {
+  if (XPT2046_found) {
+    switch (sel) {
+      case 0:
+        return  touchp->touched();
+      case 1:
+        return pLoc.x;
+      case 2:
+        return pLoc.y;
+    }
+    return 0;
+  } else {
+    return 0;
+  }
+}
+
+#endif
 
 #ifdef USE_TOUCH_BUTTONS
 void Touch_MQTT(uint8_t index, const char *cp, uint32_t val) {
+#if defined(USE_FT5206)
   ResponseTime_P(PSTR(",\"FT5206\":{\"%s%d\":\"%d\"}}"), cp, index+1, val);
+#elif defined(USE_XPT2046)
+  ResponseTime_P(PSTR(",\"XPT2046\":{\"%s%d\":\"%d\"}}"), cp, index+1, val);
+#endif
   MqttPublishTeleSensor();
 }
 
@@ -2649,10 +2708,13 @@ uint8_t rbutt=0;
 uint8_t vbutt=0;
 
 
-  if (touchp->touched()) {
+    if (touchp->touched()) {
     // did find a hit
+#if defined(USE_FT5206)
     pLoc = touchp->getPoint(0);
-
+#elif defined(USE_XPT2046)
+    pLoc = touchp->getPoint();
+#endif
     if (renderer) {
 
 #ifdef USE_M5STACK_CORE2
@@ -2677,7 +2739,7 @@ uint8_t vbutt=0;
 
       rotconvert(&pLoc.x, &pLoc.y);
 
-      //AddLog(LOG_LEVEL_INFO, PSTR("touch %d - %d"), pLoc.x, pLoc.y);
+      // AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("touch after convert %d - %d"), pLoc.x, pLoc.y);
       // now must compare with defined buttons
       for (uint8_t count = 0; count < MAX_TOUCH_BUTTONS; count++) {
         if (buttons[count]) {

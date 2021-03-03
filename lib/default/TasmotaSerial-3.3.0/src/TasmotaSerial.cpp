@@ -109,16 +109,27 @@ bool TasmotaSerial::isValidGPIOpin(int pin) {
   return (pin >= -1 && pin <= 5) || (pin >= 12 && pin <= 15);
 }
 
-bool TasmotaSerial::begin(long speed, int stop_bits) {
-  m_stop_bits = ((stop_bits -1) &1) +1;
+bool TasmotaSerial::begin(uint32_t speed, uint32_t config) {
+  if (config > 2) {
+    // Legacy support where software serial fakes two stop bits if either stop bits is 2 or parity is not None
+    m_stop_bits = ((config &0x30) >> 5) +1;
+    if ((1 == m_stop_bits) && (config &0x03)) {
+      m_stop_bits++;
+    }
+  } else {
+    m_stop_bits = ((config -1) &1) +1;
+#ifdef ESP8266
+    config = (2 == m_stop_bits) ? (uint32_t)SERIAL_8N2 : (uint32_t)SERIAL_8N1;
+#endif  // ESP8266
+#ifdef ESP32
+    config = (2 == m_stop_bits) ? SERIAL_8N2 : SERIAL_8N1;
+#endif  // ESP32
+  }
+
   if (m_hardserial) {
 #ifdef ESP8266
     Serial.flush();
-    if (2 == m_stop_bits) {
-      Serial.begin(speed, SERIAL_8N2);
-    } else {
-      Serial.begin(speed, SERIAL_8N1);
-    }
+    Serial.begin(speed, (SerialConfig)config);
     if (m_hardswap) {
       Serial.swap();
     }
@@ -131,11 +142,7 @@ bool TasmotaSerial::begin(long speed, int stop_bits) {
       m_uart = tasmota_serial_index;
       tasmota_serial_index--;
       TSerial = new HardwareSerial(m_uart);
-      if (2 == m_stop_bits) {
-        TSerial->begin(speed, SERIAL_8N2, m_rx_pin, m_tx_pin);
-      } else {
-        TSerial->begin(speed, SERIAL_8N1, m_rx_pin, m_tx_pin);
-      }
+      TSerial->begin(speed, config, m_rx_pin, m_tx_pin);
       if (serial_buffer_size > 256) {
         TSerial->setRxBufferSize(serial_buffer_size);
       }
@@ -152,10 +159,6 @@ bool TasmotaSerial::begin(long speed, int stop_bits) {
     m_very_high_speed = (speed >= 50000);
   }
   return m_valid;
-}
-
-bool TasmotaSerial::begin(void) {
-  return begin(TM_SERIAL_BAUDRATE);
 }
 
 bool TasmotaSerial::hardwareSerial(void) {

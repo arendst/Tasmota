@@ -265,7 +265,7 @@ void ZigbeeInputLoop(void) {
       }
     } else {
       // the buffer timed-out, print error and discard
-      AddLog_P(LOG_LEVEL_INFO, PSTR(D_JSON_ZIGBEE_EZSP_RECEIVED ": time-out, discarding %s, %_B"), zigbee_buffer);
+      AddLog_P(LOG_LEVEL_INFO, PSTR(D_JSON_ZIGBEE_EZSP_RECEIVED ": time-out, discarding %_B"), zigbee_buffer);
     }
     zigbee_buffer->setLen(0);		// empty buffer
     escape = false;
