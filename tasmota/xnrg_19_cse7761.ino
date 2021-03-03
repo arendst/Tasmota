@@ -136,10 +136,16 @@ uint32_t Cse7761Read(uint32_t reg) {
 
   AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("C61: Rcvd %d, Data %*_H"), rcvd, rcvd, buffer);
 
-  int result = 0;
-  uint8_t crc = 0xA5 + reg;
+#ifndef CSE7761_REMOVE_CHECKS
+  if (rcvd > 5) {
+    return 0;
+  }
+#endif
+
   rcvd--;
-  for (uint32_t i = 0; i < rcvd -1; i++) {
+  uint32_t result = 0;
+  uint8_t crc = 0xA5 + reg;
+  for (uint32_t i = 0; i < rcvd; i++) {
     result = (result << 8) | buffer[i];
     crc += buffer[i];
   }
@@ -147,7 +153,7 @@ uint32_t Cse7761Read(uint32_t reg) {
   if (crc != buffer[rcvd]) {
     AddLog(LOG_LEVEL_DEBUG, PSTR("C61: CRC error"));
 #ifndef CSE7761_REMOVE_CHECKS
-    result = 0;
+    return 0;
 #endif
   }
 
@@ -398,6 +404,7 @@ void Cse7761DrvInit(void) {
     CSE7761Data.init = 3;                       // Init setup steps
     Energy.phase_count = 2;                     // Handle two channels as two phases
     Energy.voltage_common = true;               // Use common voltage
+    Energy.frequency_common = true;             // Use common frequency
     TasmotaGlobal.energy_driver = XNRG_19;
   }
 }
