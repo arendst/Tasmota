@@ -398,6 +398,9 @@ BERRY_API bvm* be_vm_new(void)
     be_globalvar_init(vm);
     be_gc_setpause(vm, 1);
     be_loadlibs(vm);
+#if BE_USE_OBSERVABILITY_HOOK
+    vm->obshook = NULL;
+#endif
     return vm;
 }
 
@@ -1050,4 +1053,11 @@ void be_dofunc(bvm *vm, bvalue *v, int argc)
     case BE_NTVFUNC: do_ntvfunc(vm, v, argc); break;
     default: call_error(vm, v);
     }
+}
+
+BERRY_API void be_set_obs_hook(bvm *vm, beobshook hook)
+{
+#if BE_USE_OBSERVABILITY_HOOK
+    vm->obshook = hook;
+#endif
 }

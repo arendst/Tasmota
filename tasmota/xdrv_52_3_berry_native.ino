@@ -177,6 +177,17 @@ extern "C" {
     ResponseCmndFailed();
     be_return_nil(vm);
   }
+
+  // update XdrvMailbox.command with actual command
+  int32_t l_resolveCmnd(bvm *vm);
+  int32_t l_resolveCmnd(bvm *vm) {
+    int32_t top = be_top(vm); // Get the number of arguments
+    if (top == 1 && be_isstring(vm, 1)) {
+      const char *msg = be_tostring(vm, 1);
+      strlcpy(XdrvMailbox.command, msg, CMDSZ);
+    }
+    be_return_nil(vm); // Return nil when something goes wrong
+  }
 }
 
 /*********************************************************************************************\
@@ -277,6 +288,24 @@ extern "C" {
     be_return_nil(vm); // Return nil when something goes wrong
   }
 
+  // Berry: `validread(address:int, reg:int, size:int) -> int or nil`
+  int32_t b_wire_validread(struct bvm *vm);
+  int32_t b_wire_validread(struct bvm *vm) {
+    int32_t top = be_top(vm); // Get the number of arguments
+    if (top == 3 && be_isint(vm, 1) && be_isint(vm, 2) && be_isint(vm, 3)) {
+      uint8_t addr = be_toint(vm, 1);
+      uint8_t reg = be_toint(vm, 2);
+      uint8_t size = be_toint(vm, 3);
+      bool ok = I2cValidRead(addr, reg, size);
+      if (ok) {
+        be_pushint(vm, i2c_buffer);
+      } else {
+        be_pushnil(vm);
+      }
+      be_return(vm); // Return
+    }
+    be_return_nil(vm); // Return nil when something goes wrong
+  }
 }
 
 /*********************************************************************************************\

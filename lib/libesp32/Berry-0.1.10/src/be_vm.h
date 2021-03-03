@@ -86,6 +86,9 @@ struct bvm {
     bmap *ntvclass; /* native class table */
     blist *registry; /* registry list */
     struct bgc gc;
+#if BE_USE_OBSERVABILITY_HOOK
+    beobshook obshook;
+#endif
 #if BE_USE_DEBUG_HOOK
     bvalue hook;
     bbyte hookmask;

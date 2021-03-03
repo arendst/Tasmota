@@ -18,6 +18,7 @@ extern int l_respCmndStr(bvm *vm);
 extern int l_respCmndDone(bvm *vm);
 extern int l_respCmndError(bvm *vm);
 extern int l_respCmndFailed(bvm *vm);
+extern int l_resolveCmnd(bvm *vm);
 
 // #if !BE_USE_PRECOMPILED_OBJECT
 #if 1           // TODO we will do pre-compiled later
@@ -36,6 +37,7 @@ be_native_module_attr_table(tasmota_ntv) {
     be_native_module_function("respcmnd_done", l_respCmndDone),
     be_native_module_function("respcmnd_error", l_respCmndError),
     be_native_module_function("respcmnd_failed", l_respCmndFailed),
+    be_native_module_function("resolvecmnd", l_resolveCmnd),
 
     be_native_module_str("_operators",  "=<>!|"),
 };
