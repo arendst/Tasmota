@@ -25,25 +25,63 @@
  * Based on datasheet from ChipSea
 \*********************************************************************************************/
 
-#define XNRG_19             19
+#define XNRG_19                    19
 
-#define CSE7761_K1          2             // Current channel sampling resistance in milli Ohm
-#define CSE7761_K2          2             // Voltage divider resistance in 1k/1M
+#define CSE7761_REMOVE_CHECKS
 
-#define CSE7761_2POWER22    4194304
-#define CSE7761_2POWER23    8388608
-#define CSE7761_2POWER31    2147483648
+#define CSE7761_DUAL_K1            2            // Current channel sampling resistance in milli Ohm
+#define CSE7761_DUAL_K2            2            // Voltage divider resistance in 1k/1M
+#define CSE7761_DUAL_CLK1          3579545.0f   // System clock (3.579545MHz) as used in frequency calculation
 
-enum CSE7761 { RmsIAC, RmsIBC, RmsUC, PowerPAC, PowerPBC, PowerSC, EnergyAc, EnergyBC };
+#define CSE7761_2POWER22           4194304
+#define CSE7761_2POWER23           8388608
+#define CSE7761_2POWER31           2147483648
+
+#define CSE7761_REG_SYSCON         0x00         // System Control Register
+#define CSE7761_REG_EMUCON         0x01         // Metering control register
+#define CSE7761_REG_EMUCON2        0x13         // Metering control register 2
+
+#define CSE7761_REG_UFREQ          0x23         // Voltage Frequency Register
+#define CSE7761_REG_RMSIA          0x24         // The effective value of channel A current
+#define CSE7761_REG_RMSIB          0x25         // The effective value of channel B current
+#define CSE7761_REG_RMSU           0x26         // Voltage RMS
+#define CSE7761_REG_POWERPA        0x2C         // Channel A active power, update rate 27.2Hz
+#define CSE7761_REG_POWERPB        0x2D         // Channel B active power, update rate 27.2Hz
+#define CSE7761_REG_SYSSTATUS      0x43         // System status register
+
+#define CSE7761_REG_COEFFOFFSET    0x6E         // Coefficient checksum offset (0xFFFF)
+#define CSE7761_REG_COEFFCHKSUM    0x6F         // Coefficient checksum
+#define CSE7761_REG_RMSIAC         0x70         // Channel A effective current conversion coefficient
+#define CSE7761_REG_RMSIBC         0x71         // Channel B effective current conversion coefficient
+#define CSE7761_REG_RMSUC          0x72         // Effective voltage conversion coefficient
+#define CSE7761_REG_POWERPAC       0x73         // Channel A active power conversion coefficient
+#define CSE7761_REG_POWERPBC       0x74         // Channel B active power conversion coefficient
+#define CSE7761_REG_POWERSC        0x75         // Apparent power conversion coefficient
+#define CSE7761_REG_ENERGYAC       0x76         // Channel A energy conversion coefficient
+#define CSE7761_REG_ENERGYBC       0x77         // Channel B energy conversion coefficient
+
+#define CSE7761_SPECIAL_COMMAND    0xEA         // Start special command
+#define CSE7761_CMD_RESET          0x96         // Reset command, after receiving the command, the chip resets
+#define CSE7761_CMD_CHAN_A_SELECT  0x5A         // Current channel A setting command, which specifies the current used to calculate apparent power,
+                                                //   Power factor, phase angle, instantaneous active power, instantaneous apparent power and
+                                                //   The channel indicated by the signal of power overload is channel A
+#define CSE7761_CMD_CHAN_B_SELECT  0xA5         // Current channel B setting command, which specifies the current used to calculate apparent power,
+                                                //   Power factor, phase angle, instantaneous active power, instantaneous apparent power and
+                                                //   The channel indicated by the signal of power overload is channel B
+#define CSE7761_CMD_CLOSE_WRITE    0xDC         // Close write operation
+#define CSE7761_CMD_ENABLE_WRITE   0xE5         // Enable write operation
+
+enum CSE7761 { RmsIAC, RmsIBC, RmsUC, PowerPAC, PowerPBC, PowerSC, EnergyAC, EnergyBC };
 
 #include <TasmotaSerial.h>
 
 TasmotaSerial *Cse7761Serial = nullptr;
 
 struct {
+  uint32_t frequency = 0;
   uint32_t voltage_rms = 0;
   uint32_t current_rms[2] = { 0 };
-  uint32_t active_power[2] = { 0 };
+  int active_power[2] = { 0 };
   uint16_t coefficient[8] = { 0 };
   uint8_t init = 0;
   bool found = false;
@@ -74,10 +112,10 @@ void Cse7761Write(uint32_t reg, uint32_t data) {
 
   Cse7761Serial->write(buffer, len);
 
-  AddLog(LOG_LEVEL_DEBUG, PSTR("C61: Send %d, Data %*_H"), len, len, buffer);
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("C61: Send %d, Data %*_H"), len, len, buffer);
 }
 
-uint32_t Cse7761Read(uint32_t reg, uint32_t request) {
+uint32_t Cse7761Read(uint32_t reg) {
   Cse7761Serial->flush();
   Cse7761Write(reg, 0);
 
@@ -92,21 +130,25 @@ uint32_t Cse7761Read(uint32_t reg, uint32_t request) {
   }
 
   if (!rcvd) {
-    AddLog(LOG_LEVEL_DEBUG, PSTR("C61: Rcvd %d"), rcvd);
+    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("C61: Rcvd %d"), rcvd);
     return 0;
   }
 
-  AddLog(LOG_LEVEL_DEBUG, PSTR("C61: Rcvd %d, Data %*_H"), rcvd, rcvd, buffer);
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("C61: Rcvd %d, Data %*_H"), rcvd, rcvd, buffer);
 
   int result = 0;
   uint8_t crc = 0xA5 + reg;
+  rcvd--;
   for (uint32_t i = 0; i < rcvd -1; i++) {
     result = (result << 8) | buffer[i];
     crc += buffer[i];
   }
   crc = ~crc;
   if (crc != buffer[rcvd]) {
+    AddLog(LOG_LEVEL_DEBUG, PSTR("C61: CRC error"));
+#ifndef CSE7761_REMOVE_CHECKS
     result = 0;
+#endif
   }
 
   return result;
@@ -115,22 +157,23 @@ uint32_t Cse7761Read(uint32_t reg, uint32_t request) {
 bool Cse7761ChipInit(void) {
   uint16_t calc_chksum = 0xFFFF;
   for (uint32_t i = 0; i < 8; i++) {
-    CSE7761Data.coefficient[i] = Cse7761Read(0x70 + i, 2);
+    CSE7761Data.coefficient[i] = Cse7761Read(CSE7761_REG_RMSIAC + i);
     calc_chksum += CSE7761Data.coefficient[i];
   }
-  uint16_t dummy = Cse7761Read(0x6E, 2);
-  uint16_t coeff_chksum = Cse7761Read(0x6F, 2);
+  calc_chksum = ~calc_chksum;
+  uint16_t dummy = Cse7761Read(CSE7761_REG_COEFFOFFSET);
+  uint16_t coeff_chksum = Cse7761Read(CSE7761_REG_COEFFCHKSUM);
   if (calc_chksum != coeff_chksum) {
-    AddLog(LOG_LEVEL_DEBUG, PSTR("C61: Coefficients invalid"));
-//    return false;
+    AddLog(LOG_LEVEL_DEBUG, PSTR("C61: Coefficients CRC error"));
+#ifndef CSE7761_REMOVE_CHECKS
+    return false;
+#endif
   }
 
-  delay(3);
-  Cse7761Write(0xEA, 0xE5);      // Enable write operation
-  delay(5);
-  uint8_t sys_status = Cse7761Read(0x43, 1);
+  Cse7761Write(CSE7761_SPECIAL_COMMAND, CSE7761_CMD_ENABLE_WRITE);
+  delay(8);
+  uint8_t sys_status = Cse7761Read(CSE7761_REG_SYSSTATUS);
   if (sys_status & 0x10) {       // Write enable to protected registers (WREN)
-    delay(3);
 /*
     System Control Register (SYSCON)  Addr:0x00  Default value: 0x0A04
     Bit    name               Function description
@@ -140,25 +183,25 @@ bool Cse7761ChipInit(void) {
                               =0, means ADC current channel B is closed
     9      NC                 -, the default is 1.
     8-6    PGAIB[2:0]         Current channel B analog gain selection highest bit
-                              =1XX, PGA of current channel B=16
+                              =1XX, PGA of current channel B=16 (Sonoff Dual R3 Pow)
                               =011, PGA of current channel B=8
                               =010, PGA of current channel B=4
                               =001, PGA of current channel B=2
-                              =000, PGA of current channel B=1 (Sonoff Dual R3 Pow)
+                              =000, PGA of current channel B=1
     5-3    PGAU[2:0]          Highest bit of voltage channel analog gain selection
                               =1XX, PGA of current channel U=16
                               =011, PGA of current channel U=8
                               =010, PGA of current channel U=4
-                              =001, PGA of current channel U=2 (Sonoff Dual R3 Pow)
-                              =000, PGA of current channel U=1
+                              =001, PGA of current channel U=2
+                              =000, PGA of current channel U=1 (Sonoff Dual R3 Pow)
     2-0    PGAIA[2:0]         Current channel A analog gain selection highest bit
-                              =1XX, PGA of current channel A=16
+                              =1XX, PGA of current channel A=16 (Sonoff Dual R3 Pow)
                               =011, PGA of current channel A=8
                               =010, PGA of current channel A=4
                               =001, PGA of current channel A=2
-                              =000, PGA of current channel A=1 (Sonoff Dual R3 Pow)
+                              =000, PGA of current channel A=1
 */
-    Cse7761Write(0x80, 0xFF04);  // Set SYSCON
+    Cse7761Write(CSE7761_REG_SYSCON | 0x80, 0xFF04);
 /*
     Energy Measure Control Register (EMUCON)  Addr:0x01  Default value: 0x0000
     Bit    name               Function description
@@ -205,14 +248,14 @@ bool Cse7761ChipInit(void) {
                               =1, enable PFA pulse output and active energy register accumulation; (Sonoff Dual R3 Pow)
                               =0 (default), turn off PFA pulse output and active energy register accumulation.
 */
-    Cse7761Write(0x81, 0x1003);  // Set EMUCON
+    Cse7761Write(CSE7761_REG_EMUCON | 0x80, 0x1003);
 /*
     Energy Measure Control Register (EMUCON2)  Addr: 0x13  Default value: 0x0001
     Bit    name               Function description
     15-13  NC                 -
     12     SDOCmos
-                              =1, SDO pin CMOS open-drain output (Sonoff Dual R3 Pow)
-                              =0, SDO pin CMOS output
+                              =1, SDO pin CMOS open-drain output
+                              =0, SDO pin CMOS output (Sonoff Dual R3 Pow)
     11     EPB_CB             Energy_PB clear signal control, the default is 0, and it needs to be configured to 1 in UART mode.
                                 Clear after reading is not supported in UART mode
                               =1, Energy_PB will not be cleared after reading; (Sonoff Dual R3 Pow)
@@ -249,33 +292,50 @@ bool Cse7761ChipInit(void) {
                               =0, turn off the peak detection function (Sonoff Dual R3 Pow)
     0      NC                 Default is 1
 */
-    Cse7761Write(0x93, 0x0FC1);  // Set EMUCON2
+    Cse7761Write(CSE7761_REG_EMUCON2 | 0x80, 0x0FC1);
   } else {
     AddLog(LOG_LEVEL_DEBUG, PSTR("C61: Write enable failed"));
-//    return false;
+#ifndef CSE7761_REMOVE_CHECKS
+    return false;
+#endif
   }
   delay(80);
-  Cse7761Write(0xEA, 0xDC);      // Close write operation
+  Cse7761Write(CSE7761_SPECIAL_COMMAND, CSE7761_CMD_CLOSE_WRITE);
   return true;
 }
 
 void Cse7761GetData(void) {
-  CSE7761Data.voltage_rms = Cse7761Read(0x26, 3);
-  CSE7761Data.current_rms[0] = Cse7761Read(0x24, 3);
-  CSE7761Data.active_power[0] = Cse7761Read(0x2C, 4);
-  CSE7761Data.current_rms[1] = Cse7761Read(0x25, 3);
-  CSE7761Data.active_power[1] = Cse7761Read(0x2D, 4);
+  CSE7761Data.voltage_rms = Cse7761Read(CSE7761_REG_RMSU);
+  CSE7761Data.frequency = Cse7761Read(CSE7761_REG_UFREQ);
+  CSE7761Data.current_rms[0] = Cse7761Read(CSE7761_REG_RMSIA);
+  CSE7761Data.active_power[0] = Cse7761Read(CSE7761_REG_POWERPA);
+  CSE7761Data.current_rms[1] = Cse7761Read(CSE7761_REG_RMSIB);
+  CSE7761Data.active_power[1] = Cse7761Read(CSE7761_REG_POWERPB);
+
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("C61: U %d, F %d, I %d/%d, P %d/%d"),
+    CSE7761Data.voltage_rms, CSE7761Data.frequency,
+    CSE7761Data.current_rms[0], CSE7761Data.current_rms[1],
+    CSE7761Data.active_power[0], CSE7761Data.active_power[1]);
+
+  // The effective value of current and voltage Rms is a 24-bit signed number, the highest bit is 0 for valid data,
+  //   and when the highest bit is 1, the reading will be processed as zero
+  if (CSE7761Data.voltage_rms & 0x800000) { CSE7761Data.voltage_rms = 0; }
+  if (CSE7761Data.current_rms[0] & 0x800000) { CSE7761Data.current_rms[0] = 0; }
+  if (CSE7761Data.current_rms[1] & 0x800000) { CSE7761Data.current_rms[1] = 0; }
+
+  // The active power parameter PowerA/B is in two’s complement format, 32-bit data, the highest bit is Sign bit.
 
   if (Energy.power_on) {  // Powered on
-    Energy.voltage[0] = ((float)CSE7761Data.voltage_rms * ((double)CSE7761Data.coefficient[RmsUC] / (CSE7761_K2 * 2 * CSE7761_2POWER22))) / 1000;  // V
+    Energy.voltage[0] = ((float)CSE7761Data.voltage_rms * ((double)CSE7761Data.coefficient[RmsUC] / (CSE7761_DUAL_K2 * 2 * CSE7761_2POWER22))) / 1000;  // V
+    Energy.frequency[0] = CSE7761_DUAL_CLK1 / 8 / ((float)CSE7761Data.frequency + 1);
 
     for (uint32_t channel = 0; channel < 2; channel++) {
       Energy.data_valid[channel] = 0;
-      Energy.active_power[channel] = (float)CSE7761Data.active_power[channel] * ((double)CSE7761Data.coefficient[PowerPAC + channel] / (CSE7761_K1 * CSE7761_K2 * 2 * CSE7761_2POWER31));  // W
+      Energy.active_power[channel] = (float)CSE7761Data.active_power[channel] * ((double)CSE7761Data.coefficient[PowerPAC + channel] / (CSE7761_DUAL_K1 * CSE7761_DUAL_K2 * 2 * CSE7761_2POWER31));  // W
       if (0 == Energy.active_power[channel]) {
         Energy.current[channel] = 0;
       } else {
-        Energy.current[channel] = (float)CSE7761Data.current_rms[channel] * ((double)CSE7761Data.coefficient[RmsIAC + channel] / (CSE7761_K1 * 2 * CSE7761_2POWER23));  // mA
+        Energy.current[channel] = (float)CSE7761Data.current_rms[channel] * ((double)CSE7761Data.coefficient[RmsIAC + channel] / (CSE7761_DUAL_K1 * 2 * CSE7761_2POWER23));  // mA
       }
     }
 
@@ -295,13 +355,17 @@ void Cse7761GetData(void) {
 void Cse7761EverySecond(void) {
   if (CSE7761Data.init) {
     if (2 == CSE7761Data.init) {
-      Cse7761Write(0xEA, 0x96);                 // Reset chip
+      Cse7761Write(CSE7761_SPECIAL_COMMAND, CSE7761_CMD_RESET);
     }
     else if (1 == CSE7761Data.init) {
-      uint16_t syscon = Cse7761Read(0x00, 2);   // Default 0x0A04
+      uint16_t syscon = Cse7761Read(0x00);      // Default 0x0A04
+#ifndef CSE7761_REMOVE_CHECKS
       if (0x0A04 == syscon) {
         CSE7761Data.found = Cse7761ChipInit();
       }
+#else
+        CSE7761Data.found = Cse7761ChipInit();
+#endif
       if (CSE7761Data.found) {
         AddLog(LOG_LEVEL_INFO, PSTR("C61: CSE7761 found"));
       }
@@ -320,7 +384,7 @@ void Cse7761SnsInit(void) {
   Cse7761Serial = new TasmotaSerial(Pin(GPIO_CSE7761_RX), Pin(GPIO_CSE7761_TX), 1);
   if (Cse7761Serial->begin(38400, SERIAL_8E1)) {
     if (Cse7761Serial->hardwareSerial()) {
-//      SetSerial(38400, TS_SERIAL_8E1);
+      SetSerial(38400, TS_SERIAL_8E1);
       ClaimSerial();
     }
   } else {
