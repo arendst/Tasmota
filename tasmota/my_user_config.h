@@ -890,6 +890,8 @@
 //#define USE_IBEACON_ESP32
 //#define USE_WEBCAM                               // Add support for webcam
 
+#define USE_CSE7761                              // Add support for CSE7761 Energy monitor as used in Sonoff Dual R3
+
 #endif  // ESP32
 
 /*********************************************************************************************\

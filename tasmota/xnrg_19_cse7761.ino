@@ -71,21 +71,22 @@ void Cse7761Write(uint32_t reg, uint32_t data) {
     buffer[len] = ~crc;
     len++;
   }
+
   Cse7761Serial->write(buffer, len);
 
   AddLog(LOG_LEVEL_DEBUG, PSTR("C61: Send %d, Data %*_H"), len, len, buffer);
 }
 
 uint32_t Cse7761Read(uint32_t reg, uint32_t request) {
-  delay(3);
+  Cse7761Serial->flush();
   Cse7761Write(reg, 0);
 
-  uint8_t buffer[5];
+  uint8_t buffer[8];
   uint32_t rcvd = 0;
   uint32_t timeout = millis() + 3;
-  while (!TimeReached(timeout) && (rcvd <= request) && (rcvd <= sizeof(buffer))) {
+  while (!TimeReached(timeout)) {
     int value = Cse7761Serial->read();
-    if (value > -1) {
+    if ((value > -1) && (rcvd < sizeof(buffer) -1)) {
       buffer[rcvd++] = value;
     }
   }
@@ -316,7 +317,7 @@ void Cse7761EverySecond(void) {
 
 void Cse7761SnsInit(void) {
   // Software serial init needs to be done here as earlier (serial) interrupts may lead to Exceptions
-  Cse7761Serial = new TasmotaSerial(Pin(GPIO_CSE7766_RX), Pin(GPIO_CSE7766_TX), 1);
+  Cse7761Serial = new TasmotaSerial(Pin(GPIO_CSE7761_RX), Pin(GPIO_CSE7761_TX), 1);
   if (Cse7761Serial->begin(38400, SERIAL_8E1)) {
     if (Cse7761Serial->hardwareSerial()) {
 //      SetSerial(38400, TS_SERIAL_8E1);
