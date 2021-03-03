@@ -258,9 +258,9 @@ bool DriverInit(void) {
   if(Settings.display_model == XDSP_15) {
     if(TM1637Data.driver_inited) return true;
 
-    if(Settings.display_type == 2)      { TM1637Data.num_digits = 8; TM1637Data.display_type = TM1638; }
-    else if(Settings.display_type == 1) { TM1637Data.num_digits = 6; TM1637Data.display_type = TM1637; }
-    else                                { Settings.display_type = 0; TM1637Data.num_digits = 4; TM1637Data.display_type = TM1637; }
+    if(Settings.display_options.data == 2)      { TM1637Data.num_digits = 8; TM1637Data.display_type = TM1638; }
+    else if(Settings.display_options.data == 1) { TM1637Data.num_digits = 6; TM1637Data.display_type = TM1637; }
+    else                                { Settings.display_options.data = 0; TM1637Data.num_digits = 4; TM1637Data.display_type = TM1637; }
 
     if(TM1637Data.display_type == TM1637) {
       strcpy(TM1637Data.model_name, "TM1637");
@@ -277,7 +277,7 @@ bool DriverInit(void) {
     TM1637Data.brightness = (Settings.display_dimmer ? Settings.display_dimmer : TM1637Data.brightness);
     setBrightness(TM1637Data.brightness);
     TM1637Data.driver_inited = true;
-    AddLog(LOG_LEVEL_INFO, PSTR("DSP: %s display driver initialized with %d digits (DisplayType %d)"), TM1637Data.model_name, TM1637Data.num_digits, Settings.display_type);    
+    AddLog(LOG_LEVEL_INFO, PSTR("DSP: %s display driver initialized with %d digits (DisplayType %d)"), TM1637Data.model_name, TM1637Data.num_digits, Settings.display_options.data);    
   }
 
   return true;
@@ -1010,11 +1010,11 @@ bool Xdsp15(uint8_t function)
         result = DriverInit();              // init 
         break;
       case FUNC_DISPLAY_INIT:
-        AddLog(LOG_LEVEL_DEBUG, PSTR("TM7: %s: FUNC_DISPLAY_INIT: Display depends on TM1637Data.display_type, currently %d"), TM1637Data.model_name, Settings.display_type);
+        AddLog(LOG_LEVEL_DEBUG, PSTR("TM7: %s: FUNC_DISPLAY_INIT: Display depends on TM1637Data.display_type, currently %d"), TM1637Data.model_name, Settings.display_options.data);
         result = true;  
         break;
       case FUNC_DISPLAY_TYPE:
-        AddLog(LOG_LEVEL_DEBUG, PSTR("TM7: %s: FUNC_DISPLAY_TYPE: TM1637Data.display_type set to %d, restarting to take effect ..."), TM1637Data.model_name, Settings.display_type);
+        AddLog(LOG_LEVEL_DEBUG, PSTR("TM7: %s: FUNC_DISPLAY_TYPE: TM1637Data.display_type set to %d, restarting to take effect ..."), TM1637Data.model_name, Settings.display_options.data);
         TasmotaGlobal.restart_flag = 2;
         break;
       case FUNC_DISPLAY_SEVENSEG_TEXT:
