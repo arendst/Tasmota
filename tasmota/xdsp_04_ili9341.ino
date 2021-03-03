@@ -97,10 +97,6 @@ void ILI9341_InitDriver()
     renderer->DisplayInit(DISPLAY_INIT_MODE, Settings.display_size, Settings.display_rotate, Settings.display_font);
     renderer->dim(Settings.display_dimmer);
 
-    if (Settings.display_options.ilimode & 4) {
-      renderer->reverseDisplay(1);
-    }
-
 #ifdef SHOW_SPLASH
     // Welcome text
     renderer->setTextFont(2);
