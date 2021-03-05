@@ -68,6 +68,7 @@ TasmotaSerial::TasmotaSerial(int receive_pin, int transmit_pin, int hardware_fal
     m_hardswap = true;
   }
   else {
+    if ((m_rx_pin < 0) && (m_tx_pin < 0)) { return; }
     if (m_rx_pin > -1) {
       m_buffer = (uint8_t*)malloc(serial_buffer_size);
       if (m_buffer == NULL) return;
@@ -110,6 +111,7 @@ bool TasmotaSerial::isValidGPIOpin(int pin) {
 }
 
 bool TasmotaSerial::begin(uint32_t speed, uint32_t config) {
+  if (!m_valid) { return false; }
   if (config > 2) {
     // Legacy support where software serial fakes two stop bits if either stop bits is 2 or parity is not None
     m_stop_bits = ((config &0x30) >> 5) +1;
