@@ -27,13 +27,15 @@
 
 #define XNRG_19                    19
 
+//#define CSE7761_SIMULATE
+
 #define CSE7761_DUAL_K1            1            // Current channel sampling resistance in milli Ohm
 #define CSE7761_DUAL_K2            1            // Voltage divider resistance in 1k/1M
 #define CSE7761_DUAL_CLK1          3579545      // System clock (3.579545MHz) used in frequency calculation
 
-#define CSE7761_UREF               4194304      // 2^22
-#define CSE7761_IREF               8388608      // 2^23
-#define CSE7761_PREF               2147483648   // 2^31
+#define CSE7761_UREF               10000        // Gain 1 * 10000 in V
+#define CSE7761_IREF               160000       // Gain 16 * 10000 in A
+#define CSE7761_PREF               50000        // in W
 
 #define CSE7761_REG_SYSCON         0x00         // System Control Register
 #define CSE7761_REG_EMUCON         0x01         // Metering control register
@@ -171,15 +173,18 @@ bool Cse7761ChipInit(void) {
     coefficient[PowerPAC] = 0xADE1;
   }
   if (HLW_PREF_PULSE == Settings.energy_power_calibration) {
-    Settings.energy_voltage_calibration = 1000;   // Gain 1 * 1000
-    Settings.energy_frequency_calibration = 2750;
-    Settings.energy_current_calibration = 160;    // Gain 16 * 10
-    Settings.energy_power_calibration = 50000;
+//    Settings.energy_frequency_calibration = 2750;
+    Settings.energy_voltage_calibration = CSE7761_UREF;
+    Settings.energy_current_calibration = CSE7761_IREF;
+    Settings.energy_power_calibration = CSE7761_PREF;
   }
 
   Cse7761Write(CSE7761_SPECIAL_COMMAND, CSE7761_CMD_ENABLE_WRITE);
   delay(8);
   uint8_t sys_status = Cse7761Read(CSE7761_REG_SYSSTATUS);
+#ifdef CSE7761_SIMULATE
+  sys_status = 0x11;
+#endif
   if (sys_status & 0x10) {       // Write enable to protected registers (WREN)
 /*
     System Control Register (SYSCON)  Addr:0x00  Default value: 0x0A04
@@ -196,11 +201,11 @@ bool Cse7761ChipInit(void) {
                               =001, PGA of current channel B=2
                               =000, PGA of current channel B=1
     5-3    PGAU[2:0]          Highest bit of voltage channel analog gain selection
-                              =1XX, PGA of current channel U=16
-                              =011, PGA of current channel U=8
-                              =010, PGA of current channel U=4
-                              =001, PGA of current channel U=2
-                              =000, PGA of current channel U=1 (Sonoff Dual R3 Pow)
+                              =1XX, PGA of voltage U=16
+                              =011, PGA of voltage U=8
+                              =010, PGA of voltage U=4
+                              =001, PGA of voltage U=2
+                              =000, PGA of voltage U=1 (Sonoff Dual R3 Pow)
     2-0    PGAIA[2:0]         Current channel A analog gain selection highest bit
                               =1XX, PGA of current channel A=16 (Sonoff Dual R3 Pow)
                               =011, PGA of current channel A=8
@@ -309,28 +314,48 @@ bool Cse7761ChipInit(void) {
 
 void Cse7761GetData(void) {
   CSE7761Data.frequency = Cse7761Read(CSE7761_REG_UFREQ);
-  uint32_t value = Cse7761Read(CSE7761_REG_RMSU);
+#ifdef CSE7761_SIMULATE
+  CSE7761Data.frequency = 0;
+#endif
   // The effective value of current and voltage Rms is a 24-bit signed number, the highest bit is 0 for valid data,
   //   and when the highest bit is 1, the reading will be processed as zero
-  CSE7761Data.voltage_rms = (value >= 0x800000) ? 0 : value;
-  value = Cse7761Read(CSE7761_REG_RMSIA);
-  CSE7761Data.current_rms[0] = (value >= 0x800000) ? 0 : value;
-  value = Cse7761Read(CSE7761_REG_RMSIB);
-  CSE7761Data.current_rms[1] = (value >= 0x800000) ? 0 : value;
   // The active power parameter PowerA/B is in two’s complement format, 32-bit data, the highest bit is Sign bit.
-  value = Cse7761Read(CSE7761_REG_POWERPA);
-  CSE7761Data.active_power[0] = (value & 0x80000000) ? (~value) + 1 : value;
-  value = Cse7761Read(CSE7761_REG_POWERPB);
-  CSE7761Data.active_power[1] = (value & 0x80000000) ? (~value) + 1 : value;
+  uint32_t value = Cse7761Read(CSE7761_REG_RMSU);
+#ifdef CSE7761_SIMULATE
+  value = 2342160;
+#endif
+  CSE7761Data.voltage_rms = (value >= 0x800000) ? 0 : value;
 
-  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("C61: U %d, F %d, I %d/%d, P %d/%d"),
+  value = Cse7761Read(CSE7761_REG_RMSIA);
+#ifdef CSE7761_SIMULATE
+  value = 455;
+#endif
+  CSE7761Data.current_rms[0] = ((value >= 0x800000) || (value < 1600)) ? 0 : value;  // No load threshold of 10mA
+  value = Cse7761Read(CSE7761_REG_POWERPA);
+#ifdef CSE7761_SIMULATE
+  value = 217;
+#endif
+  CSE7761Data.active_power[0] = (0 == CSE7761Data.current_rms[0]) ? 0 : (value & 0x80000000) ? (~value) + 1 : value;
+
+  value = Cse7761Read(CSE7761_REG_RMSIB);
+#ifdef CSE7761_SIMULATE
+  value = 29760;
+#endif
+  CSE7761Data.current_rms[1] = ((value >= 0x800000) || (value < 1600)) ? 0 : value;  // No load threshold of 10mA
+  value = Cse7761Read(CSE7761_REG_POWERPB);
+#ifdef CSE7761_SIMULATE
+  value = 2126641;
+#endif
+  CSE7761Data.active_power[1] = (0 == CSE7761Data.current_rms[1]) ? 0 : (value & 0x80000000) ? (~value) + 1 : value;
+
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("C61: U%d, F%d, I%d/%d, P%d/%d"),
     CSE7761Data.voltage_rms, CSE7761Data.frequency,
     CSE7761Data.current_rms[0], CSE7761Data.current_rms[1],
     CSE7761Data.active_power[0], CSE7761Data.active_power[1]);
 
   if (Energy.power_on) {  // Powered on
     Energy.voltage[0] = ((float)CSE7761Data.voltage_rms / Settings.energy_voltage_calibration);  // V
-    Energy.frequency[0] = (float)Settings.energy_frequency_calibration / ((float)CSE7761Data.frequency + 1);  // Hz
+//    Energy.frequency[0] = (float)Settings.energy_frequency_calibration / ((float)CSE7761Data.frequency + 1);  // Hz
 
     for (uint32_t channel = 0; channel < 2; channel++) {
       Energy.data_valid[channel] = 0;
@@ -338,7 +363,7 @@ void Cse7761GetData(void) {
       if (0 == Energy.active_power[channel]) {
         Energy.current[channel] = 0;
       } else {
-        Energy.current[channel] = ((float)CSE7761Data.current_rms[channel] / Settings.energy_current_calibration) / 10;  // mA
+        Energy.current[channel] = (float)CSE7761Data.current_rms[channel] / Settings.energy_current_calibration;  // A
         CSE7761Data.energy[channel] += Energy.active_power[channel];
       }
     }
@@ -363,6 +388,9 @@ void Cse7761EverySecond(void) {
     }
     else if (2 == CSE7761Data.init) {
       uint16_t syscon = Cse7761Read(0x00);      // Default 0x0A04
+#ifdef CSE7761_SIMULATE
+      syscon = 0x0A04;
+#endif
       if ((0x0A04 == syscon) && Cse7761ChipInit()) {
         CSE7761Data.ready = 1;
       }
@@ -419,7 +447,19 @@ bool Cse7761Command(void) {
   uint32_t channel = (2 == XdrvMailbox.index) ? 1 : 0;
   uint32_t value = (uint32_t)(CharToFloat(XdrvMailbox.data) * 100);  // 1.23 = 123
 
-  if (CMND_POWERSET == Energy.command_code) {
+  if (CMND_POWERCAL == Energy.command_code) {
+    if (1 == XdrvMailbox.payload) { XdrvMailbox.payload = CSE7761_PREF; }
+    // Service in xdrv_03_energy.ino
+  }
+  else if (CMND_VOLTAGECAL == Energy.command_code) {
+    if (1 == XdrvMailbox.payload) { XdrvMailbox.payload = CSE7761_UREF; }
+    // Service in xdrv_03_energy.ino
+  }
+  else if (CMND_CURRENTCAL == Energy.command_code) {
+    if (1 == XdrvMailbox.payload) { XdrvMailbox.payload = CSE7761_IREF; }
+    // Service in xdrv_03_energy.ino
+  }
+  else if (CMND_POWERSET == Energy.command_code) {
     if (XdrvMailbox.data_len && CSE7761Data.active_power[channel]) {
       if ((value > 100) && (value < 200000)) {  // Between 1W and 2000W
         Settings.energy_power_calibration = (CSE7761Data.active_power[channel] * 100) / value;
@@ -435,11 +475,12 @@ bool Cse7761Command(void) {
   }
   else if (CMND_CURRENTSET == Energy.command_code) {
     if (XdrvMailbox.data_len && CSE7761Data.current_rms[channel]) {
-      if ((value > 2000) && (value < 1000000)) {  // Between 20mA and 10A
-        Settings.energy_current_calibration = (CSE7761Data.current_rms[channel] * 100) / value;
+      if ((value > 1000) && (value < 1000000)) {  // Between 10mA and 10A
+        Settings.energy_current_calibration = ((CSE7761Data.current_rms[channel] * 100) / value) * 1000;
       }
     }
   }
+/*
   else if (CMND_FREQUENCYSET == Energy.command_code) {
     if (XdrvMailbox.data_len && CSE7761Data.frequency) {
       if ((value > 4500) && (value < 6500)) {    // Between 45Hz and 65Hz
@@ -447,6 +488,7 @@ bool Cse7761Command(void) {
       }
     }
   }
+*/
   else serviced = false;  // Unknown command
 
   return serviced;

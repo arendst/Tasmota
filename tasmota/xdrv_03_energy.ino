@@ -688,7 +688,8 @@ void CmndPowerCal(void)
 {
   Energy.command_code = CMND_POWERCAL;
   if (XnrgCall(FUNC_COMMAND)) {  // microseconds
-    if ((XdrvMailbox.payload > 999) && (XdrvMailbox.payload < 32001)) {
+//    if ((XdrvMailbox.payload > 999) && (XdrvMailbox.payload < 32001)) {
+    if (XdrvMailbox.payload > 999) {
       Settings.energy_power_calibration = XdrvMailbox.payload;
     }
     ResponseCmndNumber(Settings.energy_power_calibration);
@@ -699,7 +700,8 @@ void CmndVoltageCal(void)
 {
   Energy.command_code = CMND_VOLTAGECAL;
   if (XnrgCall(FUNC_COMMAND)) {  // microseconds
-    if ((XdrvMailbox.payload > 999) && (XdrvMailbox.payload < 32001)) {
+//    if ((XdrvMailbox.payload > 999) && (XdrvMailbox.payload < 32001)) {
+    if (XdrvMailbox.payload > 999) {
       Settings.energy_voltage_calibration = XdrvMailbox.payload;
     }
     ResponseCmndNumber(Settings.energy_voltage_calibration);
@@ -710,7 +712,8 @@ void CmndCurrentCal(void)
 {
   Energy.command_code = CMND_CURRENTCAL;
   if (XnrgCall(FUNC_COMMAND)) {  // microseconds
-    if ((XdrvMailbox.payload > 999) && (XdrvMailbox.payload < 32001)) {
+//    if ((XdrvMailbox.payload > 999) && (XdrvMailbox.payload < 32001)) {
+    if (XdrvMailbox.payload > 999) {
       Settings.energy_current_calibration = XdrvMailbox.payload;
     }
     ResponseCmndNumber(Settings.energy_current_calibration);
