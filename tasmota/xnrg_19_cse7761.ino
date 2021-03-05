@@ -21,8 +21,10 @@
 #ifdef USE_CSE7761
 /*********************************************************************************************\
  * CSE7761 - Energy  (Sonoff Dual R3 Pow)
+ * {"NAME":"Sonoff Dual R3","GPIO":[0,0,1,0,0,0,3232,3200,0,0,225,0,0,0,0,0,0,0,0,0,1,7296,7328,224,0,0,0,0,160,161,0,0,0,0,0,0],"FLAG":0,"BASE":1}
  *
- * Based on datasheet from ChipSea
+ * Based on datasheet from ChipSea and analysing serial data
+ * See https://github.com/arendst/Tasmota/discussions/10793
 \*********************************************************************************************/
 
 #define XNRG_19                    19
@@ -166,7 +168,11 @@ bool Cse7761ChipInit(void) {
   }
 
   Cse7761Write(CSE7761_SPECIAL_COMMAND, CSE7761_CMD_ENABLE_WRITE);
-  delay(8);
+
+//  delay(8);  // Exception on ESP8266
+  uint32_t timeout = millis() + 8;
+  while (!TimeReached(timeout)) { }
+
   uint8_t sys_status = Cse7761Read(CSE7761_REG_SYSSTATUS);
 #ifdef CSE7761_SIMULATE
   sys_status = 0x11;
@@ -396,10 +402,12 @@ void Cse7761EverySecond(void) {
   }
   else {
     if (2 == CSE7761Data.ready) {
-      uint32_t energy_sum = ((CSE7761Data.energy[0] + CSE7761Data.energy[1]) * 1000) / CSE7761Data.energy_update;
-      if (energy_sum) {
-        Energy.kWhtoday_delta += energy_sum / 36;
-        EnergyUpdateToday();
+      if (CSE7761Data.energy_update) {
+        uint32_t energy_sum = ((CSE7761Data.energy[0] + CSE7761Data.energy[1]) * 1000) / CSE7761Data.energy_update;
+        if (energy_sum) {
+          Energy.kWhtoday_delta += energy_sum / 36;
+          EnergyUpdateToday();
+        }
       }
       CSE7761Data.energy[0] = 0;
       CSE7761Data.energy[1] = 0;
