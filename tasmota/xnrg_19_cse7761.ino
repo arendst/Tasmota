@@ -29,10 +29,6 @@
 
 //#define CSE7761_SIMULATE
 
-#define CSE7761_DUAL_K1            1            // Current channel sampling resistance in milli Ohm
-#define CSE7761_DUAL_K2            1            // Voltage divider resistance in 1k/1M
-#define CSE7761_DUAL_CLK1          3579545      // System clock (3.579545MHz) used in frequency calculation
-
 #define CSE7761_UREF               10000        // Gain 1 * 10000 in V
 #define CSE7761_IREF               160000       // Gain 16 * 10000 in A
 #define CSE7761_PREF               50000        // in W
@@ -83,6 +79,7 @@ struct {
   uint32_t current_rms[2] = { 0 };
   uint32_t energy[2] = { 0 };
   uint32_t active_power[2] = { 0 };
+  uint8_t energy_update = 0;
   uint8_t init = 4;
   uint8_t ready = 0;
 } CSE7761Data;
@@ -157,26 +154,15 @@ uint32_t Cse7761Read(uint32_t reg) {
 }
 
 bool Cse7761ChipInit(void) {
-  uint16_t coefficient[8] = { 0 };
   uint16_t calc_chksum = 0xFFFF;
   for (uint32_t i = 0; i < 8; i++) {
-    coefficient[i] = Cse7761Read(CSE7761_REG_RMSIAC + i);
-    calc_chksum += coefficient[i];
+    calc_chksum = Cse7761Read(CSE7761_REG_RMSIAC + i);
   }
   calc_chksum = ~calc_chksum;
   uint16_t dummy = Cse7761Read(CSE7761_REG_COEFFOFFSET);
   uint16_t coeff_chksum = Cse7761Read(CSE7761_REG_COEFFCHKSUM);
   if (calc_chksum != coeff_chksum) {
-    AddLog(LOG_LEVEL_DEBUG, PSTR("C61: Default coefficients"));
-    coefficient[RmsIAC] = 0xCC11;
-    coefficient[RmsUC] = 0xA643;
-    coefficient[PowerPAC] = 0xADE1;
-  }
-  if (HLW_PREF_PULSE == Settings.energy_power_calibration) {
-//    Settings.energy_frequency_calibration = 2750;
-    Settings.energy_voltage_calibration = CSE7761_UREF;
-    Settings.energy_current_calibration = CSE7761_IREF;
-    Settings.energy_power_calibration = CSE7761_PREF;
+    AddLog(LOG_LEVEL_DEBUG, PSTR("C61: Not factory calibrated"));
   }
 
   Cse7761Write(CSE7761_SPECIAL_COMMAND, CSE7761_CMD_ENABLE_WRITE);
@@ -322,7 +308,8 @@ void Cse7761GetData(void) {
   // The active power parameter PowerA/B is in two’s complement format, 32-bit data, the highest bit is Sign bit.
   uint32_t value = Cse7761Read(CSE7761_REG_RMSU);
 #ifdef CSE7761_SIMULATE
-  value = 2342160;
+//  value = 2342160;  // 234.2V
+  value = 2000000;  // 200V
 #endif
   CSE7761Data.voltage_rms = (value >= 0x800000) ? 0 : value;
 
@@ -339,12 +326,14 @@ void Cse7761GetData(void) {
 
   value = Cse7761Read(CSE7761_REG_RMSIB);
 #ifdef CSE7761_SIMULATE
-  value = 29760;
+//  value = 29760;  // 0.186A
+  value = 800000;  // 5A
 #endif
   CSE7761Data.current_rms[1] = ((value >= 0x800000) || (value < 1600)) ? 0 : value;  // No load threshold of 10mA
   value = Cse7761Read(CSE7761_REG_POWERPB);
 #ifdef CSE7761_SIMULATE
-  value = 2126641;
+//  value = 2126641;  // 42.5W
+  value = 50000000;  // 1000W
 #endif
   CSE7761Data.active_power[1] = (0 == CSE7761Data.current_rms[1]) ? 0 : (value & 0x80000000) ? (~value) + 1 : value;
 
@@ -354,8 +343,8 @@ void Cse7761GetData(void) {
     CSE7761Data.active_power[0], CSE7761Data.active_power[1]);
 
   if (Energy.power_on) {  // Powered on
-    Energy.voltage[0] = ((float)CSE7761Data.voltage_rms / Settings.energy_voltage_calibration);  // V
 //    Energy.frequency[0] = (float)Settings.energy_frequency_calibration / ((float)CSE7761Data.frequency + 1);  // Hz
+    Energy.voltage[0] = ((float)CSE7761Data.voltage_rms / Settings.energy_voltage_calibration);  // V
 
     for (uint32_t channel = 0; channel < 2; channel++) {
       Energy.data_valid[channel] = 0;
@@ -365,6 +354,7 @@ void Cse7761GetData(void) {
       } else {
         Energy.current[channel] = (float)CSE7761Data.current_rms[channel] / Settings.energy_current_calibration;  // A
         CSE7761Data.energy[channel] += Energy.active_power[channel];
+        CSE7761Data.energy_update++;
       }
     }
   } else {  // Powered off
@@ -406,13 +396,14 @@ void Cse7761EverySecond(void) {
   }
   else {
     if (2 == CSE7761Data.ready) {
-      uint32_t energy_sum = (CSE7761Data.energy[0] + CSE7761Data.energy[1]) * 1000;
+      uint32_t energy_sum = ((CSE7761Data.energy[0] + CSE7761Data.energy[1]) * 1000) / CSE7761Data.energy_update;
       if (energy_sum) {
         Energy.kWhtoday_delta += energy_sum / 36;
         EnergyUpdateToday();
-        CSE7761Data.energy[0] = 0;
-        CSE7761Data.energy[1] = 0;
       }
+      CSE7761Data.energy[0] = 0;
+      CSE7761Data.energy[1] = 0;
+      CSE7761Data.energy_update = 0;
     }
   }
 }
@@ -424,6 +415,12 @@ void Cse7761SnsInit(void) {
     if (Cse7761Serial->hardwareSerial()) {
       SetSerial(38400, TS_SERIAL_8E1);
       ClaimSerial();
+    }
+    if (HLW_PREF_PULSE == Settings.energy_power_calibration) {
+//    Settings.energy_frequency_calibration = 2750;
+      Settings.energy_voltage_calibration = CSE7761_UREF;
+      Settings.energy_current_calibration = CSE7761_IREF;
+      Settings.energy_power_calibration = CSE7761_PREF;
     }
   } else {
     TasmotaGlobal.energy_driver = ENERGY_NONE;
@@ -462,7 +459,7 @@ bool Cse7761Command(void) {
   else if (CMND_POWERSET == Energy.command_code) {
     if (XdrvMailbox.data_len && CSE7761Data.active_power[channel]) {
       if ((value > 100) && (value < 200000)) {  // Between 1W and 2000W
-        Settings.energy_power_calibration = (CSE7761Data.active_power[channel] * 100) / value;
+        Settings.energy_power_calibration = ((CSE7761Data.active_power[channel]) / value) * 100;
       }
     }
   }
