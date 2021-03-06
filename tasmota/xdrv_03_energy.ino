@@ -503,14 +503,14 @@ void EnergyEverySecond(void)
   if (TasmotaGlobal.global_update) {
     if (TasmotaGlobal.power && !isnan(TasmotaGlobal.temperature_celsius) && (TasmotaGlobal.temperature_celsius > (float)Settings.param[P_OVER_TEMP])) {  // SetOption42 Device overtemp, turn off relays
 
-      AddLog(LOG_LEVEL_DEBUG, PSTR("NRG: GlobTemp %1_f"), &TasmotaGlobal.temperature_celsius);
+      AddLog(LOG_LEVEL_DEBUG, PSTR("NRG: Temperature %1_f"), &TasmotaGlobal.temperature_celsius);
 
       SetAllPower(POWER_ALL_OFF, SRC_OVERTEMP);
     }
   }
 
   // Invalid data reset
-  if (TasmotaGlobal.uptime > 3) {
+  if (TasmotaGlobal.uptime > ENERGY_WATCHDOG) {
     uint32_t data_valid = Energy.phase_count;
     for (uint32_t i = 0; i < Energy.phase_count; i++) {
       if (Energy.data_valid[i] <= ENERGY_WATCHDOG) {
@@ -532,7 +532,7 @@ void EnergyEverySecond(void)
     }
     if (!data_valid) {
       //Energy.start_energy = 0;
-      AddLog(LOG_LEVEL_DEBUG, PSTR("NRG: Energy reset by " STR(ENERGY_WATCHDOG) " seconds invalid data"));
+      AddLog(LOG_LEVEL_DEBUG, PSTR("NRG: Energy reset by invalid data"));
 
       XnrgCall(FUNC_ENERGY_RESET);
     }

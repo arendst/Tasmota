@@ -174,9 +174,11 @@ void Ade7953GetData(void)
         Energy.current[channel] = (float)Ade7953.current_rms[channel] / (Settings.energy_current_calibration * 10);
       }
     }
+/*
   } else {  // Powered off
     Energy.data_valid[0] = ENERGY_WATCHDOG;
     Energy.data_valid[1] = ENERGY_WATCHDOG;
+*/
   }
 
   if (active_power_sum) {

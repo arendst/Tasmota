@@ -76,7 +76,6 @@ enum CSE7761 { RmsIAC, RmsIBC, RmsUC, PowerPAC, PowerPBC, PowerSC, EnergyAC, Ene
 TasmotaSerial *Cse7761Serial = nullptr;
 
 struct {
-  uint32_t frequency = 0;
   uint32_t voltage_rms = 0;
   uint32_t current_rms[2] = { 0 };
   uint32_t energy[2] = { 0 };
@@ -130,7 +129,7 @@ uint32_t Cse7761Read(uint32_t reg) {
   }
 
   if (!rcvd) {
-    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("C61: Rx %d"), rcvd);
+    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("C61: Rx none"));
     return 0;
   }
   AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("C61: Rx %*_H"), rcvd, buffer);
@@ -148,11 +147,19 @@ uint32_t Cse7761Read(uint32_t reg) {
   }
   crc = ~crc;
   if (crc != buffer[rcvd]) {
-    AddLog(LOG_LEVEL_DEBUG, PSTR("C61: Rx CRC error"));
-    return 0;
+    AddLog(LOG_LEVEL_DEBUG, PSTR("C61: Rx %*_H, CRC error %02X"), rcvd +1, buffer, crc);
+    return 1;
   }
 
   return result;
+}
+
+uint32_t Cse7761ReadFallback(uint32_t reg, uint32_t prev) {
+  uint32_t value = Cse7761Read(reg);
+  if (1 == value) {  // CRC Error so use previous value read
+    value = prev;
+  }
+  return value;
 }
 
 bool Cse7761ChipInit(void) {
@@ -161,10 +168,10 @@ bool Cse7761ChipInit(void) {
     calc_chksum = Cse7761Read(CSE7761_REG_RMSIAC + i);
   }
   calc_chksum = ~calc_chksum;
-  uint16_t dummy = Cse7761Read(CSE7761_REG_COEFFOFFSET);
+//  uint16_t dummy = Cse7761Read(CSE7761_REG_COEFFOFFSET);
   uint16_t coeff_chksum = Cse7761Read(CSE7761_REG_COEFFCHKSUM);
   if (calc_chksum != coeff_chksum) {
-    AddLog(LOG_LEVEL_DEBUG, PSTR("C61: Not factory calibrated"));
+    AddLog(LOG_LEVEL_DEBUG, PSTR("C61: Not calibrated"));
   }
 
   Cse7761Write(CSE7761_SPECIAL_COMMAND, CSE7761_CMD_ENABLE_WRITE);
@@ -298,58 +305,53 @@ bool Cse7761ChipInit(void) {
 */
     Cse7761Write(CSE7761_REG_EMUCON2 | 0x80, 0x0FC1);
   } else {
-    AddLog(LOG_LEVEL_DEBUG, PSTR("C61: Write enable failed"));
+    AddLog(LOG_LEVEL_DEBUG, PSTR("C61: Write failed"));
     return false;
   }
   return true;
 }
 
 void Cse7761GetData(void) {
-  CSE7761Data.frequency = Cse7761Read(CSE7761_REG_UFREQ);
-#ifdef CSE7761_SIMULATE
-  CSE7761Data.frequency = 0;
-#endif
   // The effective value of current and voltage Rms is a 24-bit signed number, the highest bit is 0 for valid data,
   //   and when the highest bit is 1, the reading will be processed as zero
   // The active power parameter PowerA/B is in two’s complement format, 32-bit data, the highest bit is Sign bit.
-  uint32_t value = Cse7761Read(CSE7761_REG_RMSU);
+  uint32_t value = Cse7761ReadFallback(CSE7761_REG_RMSU, CSE7761Data.voltage_rms);
 #ifdef CSE7761_SIMULATE
 //  value = 2342160;  // 234.2V
   value = 2000000;  // 200V
 #endif
   CSE7761Data.voltage_rms = (value >= 0x800000) ? 0 : value;
 
-  value = Cse7761Read(CSE7761_REG_RMSIA);
+  value = Cse7761ReadFallback(CSE7761_REG_RMSIA, CSE7761Data.current_rms[0]);
 #ifdef CSE7761_SIMULATE
   value = 455;
 #endif
   CSE7761Data.current_rms[0] = ((value >= 0x800000) || (value < 1600)) ? 0 : value;  // No load threshold of 10mA
-  value = Cse7761Read(CSE7761_REG_POWERPA);
+  value = Cse7761ReadFallback(CSE7761_REG_POWERPA, CSE7761Data.active_power[0]);
 #ifdef CSE7761_SIMULATE
   value = 217;
 #endif
   CSE7761Data.active_power[0] = (0 == CSE7761Data.current_rms[0]) ? 0 : (value & 0x80000000) ? (~value) + 1 : value;
 
-  value = Cse7761Read(CSE7761_REG_RMSIB);
+  value = Cse7761ReadFallback(CSE7761_REG_RMSIB, CSE7761Data.current_rms[1]);
 #ifdef CSE7761_SIMULATE
 //  value = 29760;  // 0.186A
   value = 800000;  // 5A
 #endif
   CSE7761Data.current_rms[1] = ((value >= 0x800000) || (value < 1600)) ? 0 : value;  // No load threshold of 10mA
-  value = Cse7761Read(CSE7761_REG_POWERPB);
+  value = Cse7761ReadFallback(CSE7761_REG_POWERPB, CSE7761Data.active_power[1]);
 #ifdef CSE7761_SIMULATE
 //  value = 2126641;  // 42.5W
   value = 50000000;  // 1000W
 #endif
   CSE7761Data.active_power[1] = (0 == CSE7761Data.current_rms[1]) ? 0 : (value & 0x80000000) ? (~value) + 1 : value;
 
-  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("C61: U%d, F%d, I%d/%d, P%d/%d"),
-    CSE7761Data.voltage_rms, CSE7761Data.frequency,
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("C61: U%d, I%d/%d, P%d/%d"),
+    CSE7761Data.voltage_rms,
     CSE7761Data.current_rms[0], CSE7761Data.current_rms[1],
     CSE7761Data.active_power[0], CSE7761Data.active_power[1]);
 
   if (Energy.power_on) {  // Powered on
-//    Energy.frequency[0] = (float)Settings.energy_frequency_calibration / ((float)CSE7761Data.frequency + 1);  // Hz
     Energy.voltage[0] = ((float)CSE7761Data.voltage_rms / Settings.energy_voltage_calibration);  // V
 
     for (uint32_t channel = 0; channel < 2; channel++) {
@@ -363,9 +365,11 @@ void Cse7761GetData(void) {
         CSE7761Data.energy_update++;
       }
     }
+/*
   } else {  // Powered off
     Energy.data_valid[0] = ENERGY_WATCHDOG;
     Energy.data_valid[1] = ENERGY_WATCHDOG;
+*/
   }
 }
 
@@ -425,7 +429,6 @@ void Cse7761SnsInit(void) {
       ClaimSerial();
     }
     if (HLW_PREF_PULSE == Settings.energy_power_calibration) {
-//    Settings.energy_frequency_calibration = 2750;
       Settings.energy_voltage_calibration = CSE7761_UREF;
       Settings.energy_current_calibration = CSE7761_IREF;
       Settings.energy_power_calibration = CSE7761_PREF;
@@ -441,7 +444,6 @@ void Cse7761DrvInit(void) {
     CSE7761Data.init = 4;                       // Init setup steps
     Energy.phase_count = 2;                     // Handle two channels as two phases
     Energy.voltage_common = true;               // Use common voltage
-    Energy.frequency_common = true;             // Use common frequency
     TasmotaGlobal.energy_driver = XNRG_19;
   }
 }
@@ -485,15 +487,6 @@ bool Cse7761Command(void) {
       }
     }
   }
-/*
-  else if (CMND_FREQUENCYSET == Energy.command_code) {
-    if (XdrvMailbox.data_len && CSE7761Data.frequency) {
-      if ((value > 4500) && (value < 6500)) {    // Between 45Hz and 65Hz
-        Settings.energy_frequency_calibration = CSE7761Data.frequency * value / 100;
-      }
-    }
-  }
-*/
   else serviced = false;  // Unknown command
 
   return serviced;
