@@ -27,7 +27,7 @@
 
 #define XDRV_53			53
 
-#ifndef USE_PROJECTOR_CTRL_NEC
+#if !defined(USE_PROJECTOR_CTRL_NEC) && !defined(USE_PROJECTOR_CTRL_OPTOMA)
 #define USE_PROJECTOR_CTRL_NEC                 // Use at least one projector
 #endif
 
