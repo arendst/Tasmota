@@ -464,8 +464,10 @@ void McpParseData(void)
     } else {
       Energy.current[0] = (float)mcp_current_rms / 10000;
     }
+/*
   } else {  // Powered off
     Energy.data_valid[0] = ENERGY_WATCHDOG;
+*/
   }
 }
 

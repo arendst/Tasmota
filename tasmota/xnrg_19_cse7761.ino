@@ -365,9 +365,11 @@ void Cse7761GetData(void) {
         CSE7761Data.energy_update++;
       }
     }
+/*
   } else {  // Powered off
     Energy.data_valid[0] = ENERGY_WATCHDOG;
     Energy.data_valid[1] = ENERGY_WATCHDOG;
+*/
   }
 }
 
