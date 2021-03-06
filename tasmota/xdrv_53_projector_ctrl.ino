@@ -328,11 +328,19 @@ projector_ctrl_loop(struct projector_ctrl_softc_s *sc)
 				break;
 			case PROJECTOR_CTRL_S_IDLE:
 				if ((oldstate==PROJECTOR_CTRL_S_QRY_PWR)&&(sc->sc_ser_result==PROJECTOR_CTRL_R_PASS)){
-					if(((sc->sc_ser_value==PROJECTOR_CTRL_QRYPWR_ON)||(sc->sc_ser_value==PROJECTOR_CTRL_QRYPWR_COOLING))&&(sc->sc_dev_state!=PROJECTOR_CTRL_DEV_PWR_ON)){
+					if((  (sc->sc_ser_value==PROJECTOR_CTRL_QRYPWR_ON)
+					    ||(sc->sc_ser_value==PROJECTOR_CTRL_QRYPWR_COOLING)
+					    ||(sc->sc_ser_value==PROJECTOR_CTRL_QRYPWR_STARTING)
+					    ||(sc->sc_ser_value==PROJECTOR_CTRL_QRYPWR_WARMING)
+					   )&&(sc->sc_dev_state!=PROJECTOR_CTRL_DEV_PWR_ON)){
 						sc->sc_dev_state=PROJECTOR_CTRL_DEV_PWR_ON;
 						ExecuteCommandPower(sc->sc_device, POWER_ON, SRC_IGNORE);
 					};
-					if(((sc->sc_ser_value!=PROJECTOR_CTRL_QRYPWR_ON)&&(sc->sc_ser_value!=PROJECTOR_CTRL_QRYPWR_COOLING))&&(sc->sc_dev_state!=PROJECTOR_CTRL_DEV_PWR_OFF)){
+					if((  (sc->sc_ser_value!=PROJECTOR_CTRL_QRYPWR_ON)
+					    &&(sc->sc_ser_value!=PROJECTOR_CTRL_QRYPWR_COOLING)
+					    &&(sc->sc_ser_value!=PROJECTOR_CTRL_QRYPWR_STARTING)
+					    &&(sc->sc_ser_value!=PROJECTOR_CTRL_QRYPWR_WARMING)
+					   )&&(sc->sc_dev_state!=PROJECTOR_CTRL_DEV_PWR_OFF)){
 						sc->sc_dev_state=PROJECTOR_CTRL_DEV_PWR_OFF;
 						ExecuteCommandPower(sc->sc_device, POWER_OFF, SRC_IGNORE);
 					};
