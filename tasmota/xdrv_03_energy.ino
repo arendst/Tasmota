@@ -510,30 +510,32 @@ void EnergyEverySecond(void)
   }
 
   // Invalid data reset
-  uint32_t data_valid = Energy.phase_count;
-  for (uint32_t i = 0; i < Energy.phase_count; i++) {
-    if (Energy.data_valid[i] <= ENERGY_WATCHDOG) {
-      Energy.data_valid[i]++;
-      if (Energy.data_valid[i] > ENERGY_WATCHDOG) {
-        // Reset energy registers
-        Energy.voltage[i] = 0;
-        Energy.current[i] = 0;
-        Energy.active_power[i] = 0;
-        if (!isnan(Energy.apparent_power[i])) { Energy.apparent_power[i] = 0; }
-        if (!isnan(Energy.reactive_power[i])) { Energy.reactive_power[i] = 0; }
-        if (!isnan(Energy.frequency[i])) { Energy.frequency[i] = 0; }
-        if (!isnan(Energy.power_factor[i])) { Energy.power_factor[i] = 0; }
-        if (!isnan(Energy.export_active[i])) { Energy.export_active[i] = 0; }
+  if (TasmotaGlobal.uptime > 3) {
+    uint32_t data_valid = Energy.phase_count;
+    for (uint32_t i = 0; i < Energy.phase_count; i++) {
+      if (Energy.data_valid[i] <= ENERGY_WATCHDOG) {
+        Energy.data_valid[i]++;
+        if (Energy.data_valid[i] > ENERGY_WATCHDOG) {
+          // Reset energy registers
+          Energy.voltage[i] = 0;
+          Energy.current[i] = 0;
+          Energy.active_power[i] = 0;
+          if (!isnan(Energy.apparent_power[i])) { Energy.apparent_power[i] = 0; }
+          if (!isnan(Energy.reactive_power[i])) { Energy.reactive_power[i] = 0; }
+          if (!isnan(Energy.frequency[i])) { Energy.frequency[i] = 0; }
+          if (!isnan(Energy.power_factor[i])) { Energy.power_factor[i] = 0; }
+          if (!isnan(Energy.export_active[i])) { Energy.export_active[i] = 0; }
 
-        data_valid--;
+          data_valid--;
+        }
       }
     }
-  }
-  if (!data_valid) {
-    //Energy.start_energy = 0;
-    AddLog(LOG_LEVEL_DEBUG, PSTR("NRG: Energy reset by " STR(ENERGY_WATCHDOG) " seconds invalid data"));
+    if (!data_valid) {
+      //Energy.start_energy = 0;
+      AddLog(LOG_LEVEL_DEBUG, PSTR("NRG: Energy reset by " STR(ENERGY_WATCHDOG) " seconds invalid data"));
 
-    XnrgCall(FUNC_ENERGY_RESET);
+      XnrgCall(FUNC_ENERGY_RESET);
+    }
   }
 
 #ifdef USE_ENERGY_MARGIN_DETECTION
