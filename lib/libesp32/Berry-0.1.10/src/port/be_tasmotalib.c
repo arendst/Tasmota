@@ -12,6 +12,7 @@ extern int l_getoption(bvm *vm);
 extern int l_millis(bvm *vm);
 extern int l_timereached(bvm *vm);
 extern int l_yield(bvm *vm);
+extern int l_delay(bvm *vm);
 
 extern int l_respCmnd(bvm *vm);
 extern int l_respCmndStr(bvm *vm);
@@ -19,6 +20,8 @@ extern int l_respCmndDone(bvm *vm);
 extern int l_respCmndError(bvm *vm);
 extern int l_respCmndFailed(bvm *vm);
 extern int l_resolveCmnd(bvm *vm);
+
+extern int l_getlight(bvm *vm);
 
 // #if !BE_USE_PRECOMPILED_OBJECT
 #if 1           // TODO we will do pre-compiled later
@@ -31,6 +34,7 @@ be_native_module_attr_table(tasmota_ntv) {
     be_native_module_function("millis", l_millis),
     be_native_module_function("timereached", l_timereached),
     be_native_module_function("yield", l_yield),
+    be_native_module_function("delay", l_delay),
 
     be_native_module_function("respcmnd", l_respCmnd),
     be_native_module_function("respcmndstr", l_respCmndStr),
@@ -38,6 +42,8 @@ be_native_module_attr_table(tasmota_ntv) {
     be_native_module_function("respcmnd_error", l_respCmndError),
     be_native_module_function("respcmnd_failed", l_respCmndFailed),
     be_native_module_function("resolvecmnd", l_resolveCmnd),
+
+    be_native_module_function("getlight", l_getlight),
 
     be_native_module_str("_operators",  "=<>!|"),
 };

@@ -23,6 +23,7 @@
 #include <berry.h>
 #include <Wire.h>
 
+const char kTypeError[] PROGMEM = "type_error";
 /*********************************************************************************************\
  * Native functions mapped to Berry functions
  * 
@@ -58,7 +59,7 @@ extern "C" {
         be_return(vm); // Return
       }
     }
-    be_return_nil(vm); // Return nil when something goes wrong
+    be_raise(vm, kTypeError, nullptr);
   }
 
   // Berry: `tasmota.cmd(command:string) -> string`
@@ -72,7 +73,7 @@ extern "C" {
       be_pushstring(vm, TasmotaGlobal.mqtt_data);
       be_return(vm); // Return
     }
-    be_return_nil(vm); // Return nil when something goes wrong
+    be_raise(vm, kTypeError, nullptr);
   }
 
   // Berry: tasmota.millis([delay:int]) -> int
@@ -89,7 +90,7 @@ extern "C" {
       be_pushint(vm, ret_millis);
       be_return(vm); // Return
     }
-    be_return_nil(vm); // Return nil when something goes wrong
+    be_raise(vm, kTypeError, nullptr);
   }
 
   // Berry: tasmota.getoption(index:int) -> int
@@ -102,7 +103,7 @@ extern "C" {
       be_pushint(vm, opt);
       be_return(vm); // Return
     }
-    be_return_nil(vm); // Return nil when something goes wrong
+    be_raise(vm, kTypeError, nullptr);
   }
 
   // Berry: tasmota.timereached(timer:int) -> bool
@@ -116,7 +117,20 @@ extern "C" {
       be_pushbool(vm, reached);
       be_return(vm); // Return
     }
-    be_return_nil(vm); // Return nil when something goes wrong
+    be_raise(vm, kTypeError, nullptr);
+  }
+
+  // Berry: tasmota.delay(timer:int) -> nil
+  //
+  int32_t l_delay(struct bvm *vm);
+  int32_t l_delay(struct bvm *vm) {
+    int32_t top = be_top(vm); // Get the number of arguments
+    if (top == 1 && be_isint(vm, 1)) {  // only 1 argument of type string accepted
+      uint32_t timer = be_toint(vm, 1);
+      delay(timer);
+      be_return_nil(vm); // Return
+    }
+    be_raise(vm, kTypeError, nullptr);
   }
 
   // Berry: `yield() -> nil`
@@ -137,7 +151,7 @@ extern "C" {
       be_pushint(vm, ret);
       be_return(vm); // Return
     }
-    be_return_nil(vm); // Return nil when something goes wrong
+    be_raise(vm, kTypeError, nullptr);
   }
 
   int32_t l_respCmnd(bvm *vm);
@@ -146,8 +160,9 @@ extern "C" {
     if (top == 1) {
       const char *msg = be_tostring(vm, 1);
       Response_P("%s", msg);
+      be_return_nil(vm); // Return nil when something goes wrong
     }
-    be_return_nil(vm); // Return nil when something goes wrong
+    be_raise(vm, kTypeError, nullptr);
   }
 
   int32_t l_respCmndStr(bvm *vm);
@@ -156,8 +171,9 @@ extern "C" {
     if (top == 1) {
       const char *msg = be_tostring(vm, 1);
       ResponseCmndChar(msg);
+      be_return_nil(vm); // Return nil when something goes wrong
     }
-    be_return_nil(vm); // Return nil when something goes wrong
+    be_raise(vm, kTypeError, nullptr);
   }
 
   int32_t l_respCmndDone(bvm *vm);
@@ -185,9 +201,139 @@ extern "C" {
     if (top == 1 && be_isstring(vm, 1)) {
       const char *msg = be_tostring(vm, 1);
       strlcpy(XdrvMailbox.command, msg, CMDSZ);
+      be_return_nil(vm); // Return nil when something goes wrong
     }
-    be_return_nil(vm); // Return nil when something goes wrong
+    be_raise(vm, kTypeError, nullptr);
   }
+
+
+  static void map_insert_int(bvm *vm, const char *key, int value)
+  {
+    be_pushstring(vm, key);
+    be_pushint(vm, value);
+    be_data_insert(vm, -3);
+    be_pop(vm, 2);
+  }
+  static void map_insert_bool(bvm *vm, const char *key, bool value)
+  {
+    be_pushstring(vm, key);
+    be_pushbool(vm, value);
+    be_data_insert(vm, -3);
+    be_pop(vm, 2);
+  }
+  static void map_insert_str(bvm *vm, const char *key, const char *value)
+  {
+    be_pushstring(vm, key);
+    be_pushstring(vm, value);
+    be_data_insert(vm, -3);
+    be_pop(vm, 2);
+  }
+
+  // get light
+  int32_t l_getlight(bvm *vm);
+  int32_t l_getlight(bvm *vm) {
+    int32_t top = be_top(vm); // Get the number of arguments
+    if (top == 0 || (top == 1 && be_isint(vm, 1))) {
+      int32_t light_num = 0;
+      if (top > 0) {
+        light_num = be_toint(vm, 1);
+      }
+      bool data_present = false;      // do we have relevant data
+      be_newobject(vm, "map");
+      // check if the light exist
+      // TasmotaGlobal.devices_present
+      // Light.device
+      // Light.subtype
+      // Light.pwm_multi_channels
+      // light_controller.isCTRGBLinked()
+
+      if (Light.device > 0) {
+        // we have a light
+        
+        uint8_t channels[LST_MAX];
+        uint8_t channelsb[LST_MAX];
+        char rgbcw[12] = {0};
+        char rgbcwb[12] = {0};
+        light_state.getChannelsRaw(channels);
+        light_state.getChannels(channelsb);
+
+        // map_insert_int(vm, "_devices_present", TasmotaGlobal.devices_present);
+        // map_insert_int(vm, "_light_device", Light.device);
+        // map_insert_int(vm, "_light_subtype", Light.subtype);
+        // map_insert_int(vm, "_light_multi", Light.pwm_multi_channels);
+        // map_insert_int(vm, "_light_linked", light_controller.isCTRGBLinked());
+
+        if (!Light.pwm_multi_channels) {
+          uint32_t subtype = Light.subtype;   // virtual sub-type, for SO37 128
+          uint32_t chanidx = 0;               // channel offset, for SO37 128
+
+
+          if (light_controller.isCTRGBLinked() && (light_num == 0)) {
+            data_present = true;    // valid combination
+          }
+          if (!light_controller.isCTRGBLinked()) {
+            if (light_num == 0) {
+              data_present = true;    // valid combination
+              if (subtype > LST_RGB) { subtype = LST_RGB; } // limit to RGB
+            }
+            if ((light_num == 1) && subtype > LST_RGB) {
+              data_present = true;    // valid combination
+              subtype = subtype - LST_RGB;
+              chanidx = 3;            // skip first 3 channels
+            }
+          }
+
+          if (data_present) {
+            // see ResponseLightState()
+            map_insert_bool(vm, "power", (bool)(Light.power & 1));
+            map_insert_int(vm, "bri", light_state.getBri());
+
+
+            if (subtype >= LST_RGB) {
+              uint16_t hue;
+              uint8_t  sat, bri;
+              light_state.getHSB(&hue, &sat, &bri);
+              map_insert_int(vm, "hue", hue);
+              map_insert_int(vm, "sat", sat);
+            }
+            if ((LST_COLDWARM == subtype) || (LST_RGBW <= subtype)) {
+              map_insert_int(vm, "ct", light_state.getCT());
+            }
+            if (subtype > LST_NONE) {
+              for (uint32_t i=0; i < subtype; i++) {
+                snprintf_P(rgbcw, sizeof(rgbcw), PSTR("%s%02X"), rgbcw, channels[i+chanidx]);
+                snprintf_P(rgbcwb, sizeof(rgbcwb), PSTR("%s%02X"), rgbcwb, channelsb[i+chanidx]);
+              }
+              map_insert_str(vm, "channels", rgbcw);
+              map_insert_str(vm, "channelsb", rgbcwb);
+              // map_insert_bool(vm, "gamma", Settings.light_correction);
+            }
+          }
+        } else { // Light.pwm_multi_channels
+          if ((light_num >= 0) && (light_num < LST_MAX)) {
+            data_present = true;
+            map_insert_bool(vm, "power", Light.power & (1 << light_num));
+            map_insert_int(vm, "bri", Light.current_color[light_num]);
+            snprintf_P(rgbcw, sizeof(rgbcw), PSTR("%02X"), channels[light_num]);
+            snprintf_P(rgbcwb, sizeof(rgbcwb), PSTR("%02X"), channelsb[light_num]);
+            map_insert_str(vm, "channels", rgbcw);
+            map_insert_str(vm, "channelsb", rgbcwb);
+          }
+        }
+
+        be_pop(vm, 1);
+        if (data_present) {
+          be_return(vm); // Return
+        } else {
+          be_return_nil(vm);    // no data, return nil instead of empty map
+        }
+      } else {
+        be_return_nil(vm);
+      }
+    }
+    be_raise(vm, kTypeError, nullptr);
+  }
+
 }
 
 /*********************************************************************************************\
@@ -208,7 +354,7 @@ extern "C" {
       Wire.beginTransmission(address);
       be_return(vm); // Return
     }
-    be_return_nil(vm); // Return nil when something goes wrong
+    be_raise(vm, kTypeError, nullptr);
   }
 
   // Berry: `endtransmission([stop:bool]) -> nil`
@@ -224,7 +370,7 @@ extern "C" {
       be_pushint(vm, ret);
       be_return(vm); // Return
     }
-    be_return_nil(vm); // Return nil when something goes wrong
+    be_raise(vm, kTypeError, nullptr);
   }
 
   // Berry: `requestfrom(address:int, quantity:int [stop:bool = true]) -> nil`
@@ -242,7 +388,7 @@ extern "C" {
       Wire.requestFrom((uint16_t)address, (uint8_t)quantity, stop);
       be_return(vm); // Return
     }
-    be_return_nil(vm); // Return nil when something goes wrong
+    be_raise(vm, kTypeError, nullptr);
   }
 
   // Berry: `available() -> bool`
@@ -254,14 +400,14 @@ extern "C" {
       be_pushint(vm, available);
       be_return(vm); // Return
     }
-    be_return_nil(vm); // Return nil when something goes wrong
+    be_raise(vm, kTypeError, nullptr);
   }
 
   // Berry: `write(value:int | s:string) -> nil`
   int32_t b_wire_write(struct bvm *vm);
   int32_t b_wire_write(struct bvm *vm) {
     int32_t top = be_top(vm); // Get the number of arguments
-    if (top == 1 && (be_isint(vm, 1) || be_isint(vm, 1))) {
+    if (top == 1 && (be_isint(vm, 1) || be_isstring(vm, 1))) {
       if (be_isint(vm, 1)) {
         int32_t value = be_toint(vm, 1);
         Wire.write(value);
@@ -273,7 +419,7 @@ extern "C" {
       }
       be_return(vm); // Return
     }
-    be_return_nil(vm); // Return nil when something goes wrong
+    be_raise(vm, kTypeError, nullptr);
   }
 
   // Berry: `read() -> int`
@@ -285,7 +431,43 @@ extern "C" {
       be_pushint(vm, value);
       be_return(vm); // Return
     }
-    be_return_nil(vm); // Return nil when something goes wrong
+    be_raise(vm, kTypeError, nullptr);
+  }
+
+  int32_t b_wire_scan(struct bvm *vm);
+  int32_t b_wire_scan(struct bvm *vm) {
+    int32_t top = be_top(vm); // Get the number of arguments
+    if (top == 0) {
+      be_newobject(vm, "list");
+      for (uint8_t address = 1; address <= 127; address++) {
+        Wire.beginTransmission(address);
+        int32_t error = Wire.endTransmission();
+        if (0 == error) {
+          be_pushint(vm, address);
+          be_data_push(vm, -2);
+          be_pop(vm, 1);
+        }
+      }
+      be_pop(vm, 1);
+      be_return(vm); // Return
+    }
+    be_raise(vm, kTypeError, nullptr);
+  }
+
+  // Berry: `validwrite(address:int, reg:int, val:int, size:int) -> bool or nil`
+  int32_t b_wire_validwrite(struct bvm *vm);
+  int32_t b_wire_validwrite(struct bvm *vm) {
+    int32_t top = be_top(vm); // Get the number of arguments
+    if (top == 4 && be_isint(vm, 1) && be_isint(vm, 2) && be_isint(vm, 3) && be_isint(vm, 4)) {
+      uint8_t addr = be_toint(vm, 1);
+      uint8_t reg = be_toint(vm, 2);
+      uint8_t val = be_toint(vm, 3);
+      uint8_t size = be_toint(vm, 4);
+      bool ok = I2cWrite(addr, reg, val, size);
+      be_pushbool(vm, ok);
+      be_return(vm); // Return
+    }
+    be_raise(vm, kTypeError, nullptr);
   }
 
   // Berry: `validread(address:int, reg:int, size:int) -> int or nil`
@@ -304,7 +486,7 @@ extern "C" {
       }
       be_return(vm); // Return
     }
-    be_return_nil(vm); // Return nil when something goes wrong
+    be_raise(vm, kTypeError, nullptr);
   }
 }
 
