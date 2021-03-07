@@ -228,7 +228,7 @@ void Pcf8574Show(bool json)
       uint8_t gpio = Pcf8574Read(idx);
       for (int pin = 0 ; pin < 8 ; ++pin, input_mask>>=1, gpio>>=1)
       {
-        //if (input_mask & 1)
+        if (input_mask & 1)
           WSContentSend_P(HTTP_SNS_PCF8574_GPIO, IndexSeparator(), idx +1, pin, gpio & 1);
       }
     }
