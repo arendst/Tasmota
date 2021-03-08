@@ -45,6 +45,7 @@ const char berry_prog[] =
     // Again, this will be eventually pre-compiled
     "var getfreeheap, publish, cmd, getoption, millis, timereached, yield "
     "var respcmnd, respcmndstr, respcmnd_done, respcmnd_error, respcmnd_failed, resolvecmnd "
+    "var getlight "
     "def init_ntv() "
       "import tasmota_ntv "
       "self.getfreeheap = tasmota_ntv.getfreeheap "
@@ -62,6 +63,8 @@ const char berry_prog[] =
       "self.respcmnd_error = tasmota_ntv.respcmnd_error "
       "self.respcmnd_failed = tasmota_ntv.respcmnd_failed "
       "self.resolvecmnd = tasmota_ntv.resolvecmnd "
+
+      "self.getlight = tasmota_ntv.getlight "
     "end "
 
     "def init() "

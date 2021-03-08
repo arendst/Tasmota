@@ -304,11 +304,15 @@ void CmndBrRun(void) {
     // AddLog(LOG_LEVEL_INFO, "run: type(2)=%s", be_typename(berry.vm, 2));
 
     // code taken from REPL, look first at top, and if nil, look at return value
-    ret_val = be_tostring(berry.vm, 1);
-    Response_P("{\"" D_PRFX_BR "\":\"%s\"}", ret_val);    // can't use XdrvMailbox.command as it may have been overwritten by subcommand
+    if (!be_isnil(berry.vm, 1)) {
+      ret_val = be_tostring(berry.vm, 1);
+    } else {
+      ret_val = be_tostring(berry.vm, 2);
+    }
+    Response_P("{\"" D_PRFX_BR "\":\"%s\"}", EscapeJSONString(ret_val).c_str());    // can't use XdrvMailbox.command as it may have been overwritten by subcommand
     be_pop(berry.vm, 1);
   } else {
-    Response_P(PSTR("{\"" D_PRFX_BR "\":\"[%s] %s\"}"), be_tostring(berry.vm, -2), be_tostring(berry.vm, -1));
+    Response_P(PSTR("{\"" D_PRFX_BR "\":\"[%s] %s\"}"), EscapeJSONString(be_tostring(berry.vm, -2)).c_str(), EscapeJSONString(be_tostring(berry.vm, -1)).c_str());
     be_pop(berry.vm, 2);
   }
 
