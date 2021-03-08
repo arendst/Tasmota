@@ -83,7 +83,6 @@ const uint8_t DISPLAY_LOG_ROWS = 32;           // Number of lines in display log
 #define D_CMND_DISP_BUTTONS "Buttons"
 #define D_CMND_DISP_SCROLLTEXT "ScrollText"
 #define D_CMND_DISP_TYPE "Type"
-
 #define D_CMND_DISP_ILIMODE "ILIMode"
 #define D_CMND_DISP_ILIINVERT "Invert"
 

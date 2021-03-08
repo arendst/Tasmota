@@ -324,7 +324,6 @@
   #define USE_DISPLAY_RA8876                     // [DisplayModel 10]
   #define USE_DISPLAY_ST7789                     // [DisplayModel 12] Enable ST7789 module
   #define USE_DISPLAY_SSD1331                    // [DisplayModel 14] Enable SSD1331 module
-  #define USE_DISPLAY_TM1637                     // [DisplayModel 15] Enable TM1637, TM1638 modules
 
 #undef DEBUG_THEO                                // Disable debug code
 #undef USE_DEBUG_DRIVER                          // Disable debug code
