@@ -27,7 +27,7 @@
 
 #define XDRV_53			53
 
-#ifndef USE_PROJECTOR_CTRL_NEC
+#if !defined(USE_PROJECTOR_CTRL_NEC) && !defined(USE_PROJECTOR_CTRL_OPTOMA)
 #define USE_PROJECTOR_CTRL_NEC                 // Use at least one projector
 #endif
 
@@ -324,15 +324,29 @@ projector_ctrl_loop(struct projector_ctrl_softc_s *sc)
         oldstate = sc->sc_ser_state;
 		switch (sc->sc_ser_state = (projector_ctrl_serial_state_e)projector_ctrl_parse(sc, serial->read())) {
 			case PROJECTOR_CTRL_S_UNCONNECTED:
-				sc->sc_dev_state=PROJECTOR_CTRL_DEV_UNKNOWN;
+				if (sc->sc_dev_state!=PROJECTOR_CTRL_DEV_UNKNOWN){
+					sc->sc_dev_state=PROJECTOR_CTRL_DEV_UNKNOWN;
+					AddLog_P(LOG_LEVEL_INFO,PSTR(PROJECTOR_CTRL_LOGNAME ": DISCONNECTED(unexpected input)"));
+				}
 				break;
 			case PROJECTOR_CTRL_S_IDLE:
 				if ((oldstate==PROJECTOR_CTRL_S_QRY_PWR)&&(sc->sc_ser_result==PROJECTOR_CTRL_R_PASS)){
-					if(((sc->sc_ser_value==PROJECTOR_CTRL_QRYPWR_ON)||(sc->sc_ser_value==PROJECTOR_CTRL_QRYPWR_COOLING))&&(sc->sc_dev_state!=PROJECTOR_CTRL_DEV_PWR_ON)){
+					if(sc->sc_dev_state==PROJECTOR_CTRL_DEV_UNKNOWN){
+						AddLog_P(LOG_LEVEL_INFO,PSTR(PROJECTOR_CTRL_LOGNAME ": CONNECTED"));
+					};
+					if((  (sc->sc_ser_value==PROJECTOR_CTRL_QRYPWR_ON)
+					    ||(sc->sc_ser_value==PROJECTOR_CTRL_QRYPWR_COOLING)
+					    ||(sc->sc_ser_value==PROJECTOR_CTRL_QRYPWR_STARTING)
+					    ||(sc->sc_ser_value==PROJECTOR_CTRL_QRYPWR_WARMING)
+					   )&&(sc->sc_dev_state!=PROJECTOR_CTRL_DEV_PWR_ON)){
 						sc->sc_dev_state=PROJECTOR_CTRL_DEV_PWR_ON;
 						ExecuteCommandPower(sc->sc_device, POWER_ON, SRC_IGNORE);
 					};
-					if(((sc->sc_ser_value!=PROJECTOR_CTRL_QRYPWR_ON)&&(sc->sc_ser_value!=PROJECTOR_CTRL_QRYPWR_COOLING))&&(sc->sc_dev_state!=PROJECTOR_CTRL_DEV_PWR_OFF)){
+					if((  (sc->sc_ser_value!=PROJECTOR_CTRL_QRYPWR_ON)
+					    &&(sc->sc_ser_value!=PROJECTOR_CTRL_QRYPWR_COOLING)
+					    &&(sc->sc_ser_value!=PROJECTOR_CTRL_QRYPWR_STARTING)
+					    &&(sc->sc_ser_value!=PROJECTOR_CTRL_QRYPWR_WARMING)
+					   )&&(sc->sc_dev_state!=PROJECTOR_CTRL_DEV_PWR_OFF)){
 						sc->sc_dev_state=PROJECTOR_CTRL_DEV_PWR_OFF;
 						ExecuteCommandPower(sc->sc_device, POWER_OFF, SRC_IGNORE);
 					};
@@ -375,7 +389,7 @@ projector_ctrl_tick(struct projector_ctrl_softc_s *sc)
 		};
 	}else if(sc->sc_ticks > sc->sc_cmd_info->timeout_ticks){
 		//current CMD has ran out of time, drop connection
-		AddLog_P(LOG_LEVEL_INFO,PSTR(PROJECTOR_CTRL_LOGNAME ": DISCONNECTED"));
+		AddLog_P(LOG_LEVEL_INFO,PSTR(PROJECTOR_CTRL_LOGNAME ": DISCONNECTED(timeout)"));
 		sc->sc_dev_state=PROJECTOR_CTRL_DEV_UNKNOWN;
 		sc->sc_ser_state=PROJECTOR_CTRL_S_UNCONNECTED;
 	};
