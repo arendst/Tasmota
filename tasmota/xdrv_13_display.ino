@@ -2842,7 +2842,7 @@ bool Xdrv13(uint8_t function)
 {
   bool result = false;
 
-  if ((TasmotaGlobal.i2c_enabled || TasmotaGlobal.spi_enabled || TasmotaGlobal.soft_spi_enabled || TasmotaGlobal.tm1637_enabled) && XdspPresent()) {
+  if ((TasmotaGlobal.i2c_enabled || TasmotaGlobal.spi_enabled || TasmotaGlobal.soft_spi_enabled) && XdspPresent()) {
     switch (function) {
       case FUNC_PRE_INIT:
         DisplayInitDriver();

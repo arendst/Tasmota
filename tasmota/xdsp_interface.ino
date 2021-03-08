@@ -17,7 +17,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#if defined(USE_I2C) || defined(USE_SPI) || defined(USE_DISPLAY_TM1637)
+#if defined(USE_I2C) || defined(USE_SPI)
 #ifdef USE_DISPLAY
 
 #ifdef XFUNC_PTR_IN_ROM
@@ -25,8 +25,6 @@ bool (* const xdsp_func_ptr[])(uint8_t) PROGMEM = {   // Display Function Pointe
 #else
 bool (* const xdsp_func_ptr[])(uint8_t) = {   // Display Function Pointers
 #endif
-
-#if defined(USE_I2C) || defined(USE_SPI)
 
 #ifdef XDSP_01
   &Xdsp01,
@@ -84,17 +82,9 @@ bool (* const xdsp_func_ptr[])(uint8_t) = {   // Display Function Pointers
   &Xdsp14,
 #endif
 
-#endif   // #if defined(USE_I2C) || defined(USE_SPI)
-
-#ifdef USE_DISPLAY_TM1637
-
 #ifdef XDSP_15
   &Xdsp15,
 #endif
-
-#endif  // USE_DISPLAY_TM1637
-
-#if defined(USE_I2C) || defined(USE_SPI)
 
 #ifdef XDSP_16
   &Xdsp16,
@@ -163,9 +153,6 @@ bool (* const xdsp_func_ptr[])(uint8_t) = {   // Display Function Pointers
 #ifdef XDSP_32
   &Xdsp32
 #endif
-
-#endif   // #if defined(USE_I2C) || defined(USE_SPI)
-
 };
 
 const uint8_t xdsp_present = sizeof(xdsp_func_ptr) / sizeof(xdsp_func_ptr[0]);  // Number of drivers found

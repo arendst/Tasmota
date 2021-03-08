@@ -268,7 +268,7 @@ bool DriverInit(void) {
       tm1637display->begin(TM1637Data.num_digits, 1);
     } else if(TM1637Data.display_type == TM1638) {
       strcpy(TM1637Data.model_name, "TM1638");
-      tm1638display = new TM1638plus(Pin(GPIO_TM1638STB), Pin(GPIO_TM1638CLK), Pin(GPIO_TM1638DIO), true );
+      tm1638display = new TM1638plus(Pin(GPIO_TM16STB), Pin(GPIO_TM16CLK), Pin(GPIO_TM16DIO), true );
       TM1637Data.num_digits = 8;
       tm1638display->displayBegin();
     }
