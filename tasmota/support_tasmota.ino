@@ -1092,7 +1092,7 @@ void Every250mSeconds(void)
           }
 #endif  // FIRMWARE_MINIMAL
           if (ota_retry_counter < OTA_ATTEMPTS / 2) {
-            if (!strcasecmp_P(TasmotaGlobal.mqtt_data, PSTR(".gz"))) {
+            if (strstr_P(TasmotaGlobal.mqtt_data, PSTR(".gz"))) {      // Might be made case insensitive...
               ota_retry_counter = 1;
             } else {
               strcat_P(TasmotaGlobal.mqtt_data, PSTR(".gz"));
