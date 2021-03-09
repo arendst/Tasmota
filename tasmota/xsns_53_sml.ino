@@ -1077,6 +1077,11 @@ double dval;
 #endif
                     break;
                 case 3:
+                  // signed 24 bit
+                  value=(int32_t)(uvalue<<8);
+                  value/=256;
+                  break;
+
                 case 4:
                     // signed 32 bit
                     value=(int32_t)uvalue;
