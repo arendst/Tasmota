@@ -36,7 +36,7 @@ const char kTasmotaCommands[] PROGMEM = "|"  // No prefix
 #ifdef USE_DEVICE_GROUPS_SEND
   D_CMND_DEVGROUP_SEND "|"
 #endif  // USE_DEVICE_GROUPS_SEND
-  D_CMND_DEVGROUP_SHARE "|" D_CMND_DEVGROUPSTATUS "|" D_CMND_DEVGROUP_DEVICE "|"
+  D_CMND_DEVGROUP_SHARE "|" D_CMND_DEVGROUPSTATUS "|" D_CMND_DEVGROUP_TIE "|"
 #endif  // USE_DEVICE_GROUPS
   D_CMND_SENSOR "|" D_CMND_DRIVER
 #ifdef ESP32
@@ -2138,7 +2138,13 @@ void CmndDevGroupTie(void)
     if (XdrvMailbox.data_len > 0) {
       Settings.device_group_tie[XdrvMailbox.index - 1] = XdrvMailbox.payload;
     }
-    ResponseCmndIdxNumber(Settings.device_group_tie[XdrvMailbox.index - 1]);
+    char * ptr = TasmotaGlobal.mqtt_data;
+    *ptr++ = '{';
+    for (uint32_t i = 0; i < MAX_DEV_GROUP_NAMES; i++) {
+      ptr += sprintf(ptr, PSTR("\"%s%u\":%u,"), D_CMND_DEVGROUP_TIE, i + 1, Settings.device_group_tie[i]);
+    }
+    *(ptr - 1) = '}';
+    *ptr = 0;
   }
 }
 #endif  // USE_DEVICE_GROUPS
