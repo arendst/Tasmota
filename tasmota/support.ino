@@ -1969,7 +1969,8 @@ int8_t I2cWriteBuffer(uint8_t addr, uint8_t reg, uint8_t *reg_data, uint16_t len
   return 0;
 }
 
-void I2cScan(char *devs, unsigned int devs_len)
+void I2cScan(char *devs, unsigned int devs_len, uint32_t bus = 0);
+void I2cScan(char *devs, unsigned int devs_len, uint32_t bus)
 {
   // Return error codes defined in twi.h and core_esp8266_si2c.c
   // I2C_OK                      0
@@ -1984,8 +1985,13 @@ void I2cScan(char *devs, unsigned int devs_len)
 
   snprintf_P(devs, devs_len, PSTR("{\"" D_CMND_I2CSCAN "\":\"" D_JSON_I2CSCAN_DEVICES_FOUND_AT));
   for (address = 1; address <= 127; address++) {
-    Wire.beginTransmission(address);
-    error = Wire.endTransmission();
+#ifdef ESP32
+    TwoWire & myWire = (bus == 0) ? Wire : Wire1;
+#else
+    TwoWire & myWire = Wire;
+#endif
+    myWire.beginTransmission(address);
+    error = myWire.endTransmission();
     if (0 == error) {
       any = 1;
       snprintf_P(devs, devs_len, PSTR("%s 0x%02x"), devs, address);

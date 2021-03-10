@@ -2071,9 +2071,14 @@ void CmndWifiPower(void)
 #ifdef USE_I2C
 void CmndI2cScan(void)
 {
-  if (TasmotaGlobal.i2c_enabled) {
+  if ((1 == XdrvMailbox.index) && (TasmotaGlobal.i2c_enabled)) {
     I2cScan(TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data));
   }
+#ifdef ESP32
+  if ((2 == XdrvMailbox.index) && (TasmotaGlobal.i2c_enabled_2)) {
+    I2cScan(TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), 1);
+  }
+#endif
 }
 
 void CmndI2cDriver(void)
