@@ -51,17 +51,21 @@ struct DS18X20STRUCT {
   uint8_t address[8];
   uint8_t index;
   uint8_t valid;
-  float   temperature;
+  float temperature;
 } ds18x20_sensor[DS18X20_MAX_SENSORS];
-uint8_t ds18x20_sensors = 0;
-int8_t ds18x20_pin = 0;            // Shelly GPIO3 input only
-int8_t ds18x20_pin_out = 0;        // Shelly GPIO00 output only
-bool ds18x20_dual_mode = false;    // Single pin mode
-char ds18x20_types[17];
+
+struct {
 #ifdef W1_PARASITE_POWER
-uint8_t ds18x20_sensor_curr = 0;
-unsigned long w1_power_until = 0;
+  uint32_t w1_power_until = 0;
+  uint8_t current_sensor = 0;
 #endif
+  char name[17];
+  uint8_t sensors = 0;
+  uint8_t input_mode = 0;    // INPUT or INPUT_PULLUP (=2)
+  int8_t pin = 0;            // Shelly GPIO3 input only
+  int8_t pin_out = 0;        // Shelly GPIO00 output only
+  bool dual_mode = false;    // Single pin mode
+} DS18X20Data;
 
 /*********************************************************************************************\
  * Embedded tuned OneWire library
@@ -77,100 +81,94 @@ unsigned char onewire_rom_id[8] = { 0 };
 
 /*------------------------------------------------------------------------------------------*/
 
-uint8_t OneWireReset(void)
-{
+uint8_t OneWireReset(void) {
   uint8_t retries = 125;
 
-  if (!ds18x20_dual_mode) {
-    pinMode(ds18x20_pin, Settings.flag3.ds18x20_internal_pullup ? INPUT_PULLUP : INPUT);  // SetOption74 - Enable internal pullup for single DS18x20 sensor
+  if (!DS18X20Data.dual_mode) {
+    pinMode(DS18X20Data.pin, DS18X20Data.input_mode);
     do {
       if (--retries == 0) {
         return 0;
       }
       delayMicroseconds(2);
-    } while (!digitalRead(ds18x20_pin));
-    pinMode(ds18x20_pin, OUTPUT);
-    digitalWrite(ds18x20_pin, LOW);
+    } while (!digitalRead(DS18X20Data.pin));
+    pinMode(DS18X20Data.pin, OUTPUT);
+    digitalWrite(DS18X20Data.pin, LOW);
     delayMicroseconds(480);
-    pinMode(ds18x20_pin, Settings.flag3.ds18x20_internal_pullup ? INPUT_PULLUP : INPUT);  // SetOption74 - Enable internal pullup for single DS18x20 sensor
+    pinMode(DS18X20Data.pin, DS18X20Data.input_mode);
     delayMicroseconds(70);
-    uint8_t r = !digitalRead(ds18x20_pin);
+    uint8_t r = !digitalRead(DS18X20Data.pin);
     delayMicroseconds(410);
     return r;
   } else {
-    digitalWrite(ds18x20_pin_out, HIGH);
+    digitalWrite(DS18X20Data.pin_out, HIGH);
     do {
       if (--retries == 0) {
         return 0;
       }
       delayMicroseconds(2);
-    } while (!digitalRead(ds18x20_pin));
-    digitalWrite(ds18x20_pin_out, LOW);
+    } while (!digitalRead(DS18X20Data.pin));
+    digitalWrite(DS18X20Data.pin_out, LOW);
     delayMicroseconds(480);
-    digitalWrite(ds18x20_pin_out, HIGH);
+    digitalWrite(DS18X20Data.pin_out, HIGH);
     delayMicroseconds(70);
-    uint8_t r = !digitalRead(ds18x20_pin);
+    uint8_t r = !digitalRead(DS18X20Data.pin);
     delayMicroseconds(410);
     return r;
   }
 }
 
-void OneWireWriteBit(uint8_t v)
-{
+void OneWireWriteBit(uint8_t v) {
   static const uint8_t delay_low[2] = { 65, 10 };
   static const uint8_t delay_high[2] = { 5, 55 };
 
   v &= 1;
-  if (!ds18x20_dual_mode) {
-    digitalWrite(ds18x20_pin, LOW);
-    pinMode(ds18x20_pin, OUTPUT);
+  if (!DS18X20Data.dual_mode) {
+    digitalWrite(DS18X20Data.pin, LOW);
+    pinMode(DS18X20Data.pin, OUTPUT);
     delayMicroseconds(delay_low[v]);
-    digitalWrite(ds18x20_pin, HIGH);
+    digitalWrite(DS18X20Data.pin, HIGH);
   } else {
-    digitalWrite(ds18x20_pin_out, LOW);
+    digitalWrite(DS18X20Data.pin_out, LOW);
     delayMicroseconds(delay_low[v]);
-    digitalWrite(ds18x20_pin_out, HIGH);
+    digitalWrite(DS18X20Data.pin_out, HIGH);
   }
   delayMicroseconds(delay_high[v]);
 }
 
-uint8_t OneWire1ReadBit(void)
-{
-  pinMode(ds18x20_pin, OUTPUT);
-  digitalWrite(ds18x20_pin, LOW);
+uint8_t OneWire1ReadBit(void) {
+  pinMode(DS18X20Data.pin, OUTPUT);
+  digitalWrite(DS18X20Data.pin, LOW);
   delayMicroseconds(3);
-  pinMode(ds18x20_pin, Settings.flag3.ds18x20_internal_pullup ? INPUT_PULLUP : INPUT);  // SetOption74 - Enable internal pullup for single DS18x20 sensor
+  pinMode(DS18X20Data.pin, DS18X20Data.input_mode);
   delayMicroseconds(10);
-  uint8_t r = digitalRead(ds18x20_pin);
+  uint8_t r = digitalRead(DS18X20Data.pin);
   delayMicroseconds(53);
   return r;
 }
 
-uint8_t OneWire2ReadBit(void)
-{
-  digitalWrite(ds18x20_pin_out, LOW);
+uint8_t OneWire2ReadBit(void) {
+  digitalWrite(DS18X20Data.pin_out, LOW);
   delayMicroseconds(3);
-  digitalWrite(ds18x20_pin_out, HIGH);
+  digitalWrite(DS18X20Data.pin_out, HIGH);
   delayMicroseconds(10);
-  uint8_t r = digitalRead(ds18x20_pin);
+  uint8_t r = digitalRead(DS18X20Data.pin);
   delayMicroseconds(53);
   return r;
 }
 
 /*------------------------------------------------------------------------------------------*/
 
-void OneWireWrite(uint8_t v)
-{
+void OneWireWrite(uint8_t v) {
   for (uint8_t bit_mask = 0x01; bit_mask; bit_mask <<= 1) {
     OneWireWriteBit((bit_mask & v) ? 1 : 0);
   }
 }
 
-uint8_t OneWireRead(void)
-{
+uint8_t OneWireRead(void) {
   uint8_t r = 0;
 
-  if (!ds18x20_dual_mode) {
+  if (!DS18X20Data.dual_mode) {
     for (uint8_t bit_mask = 0x01; bit_mask; bit_mask <<= 1) {
       if (OneWire1ReadBit()) {
         r |= bit_mask;
@@ -186,26 +184,14 @@ uint8_t OneWireRead(void)
   return r;
 }
 
-void OneWireSelect(const uint8_t rom[8])
-{
+void OneWireSelect(const uint8_t rom[8]) {
   OneWireWrite(W1_MATCH_ROM);
   for (uint32_t i = 0; i < 8; i++) {
     OneWireWrite(rom[i]);
   }
 }
 
-void OneWireResetSearch(void)
-{
-  onewire_last_discrepancy = 0;
-  onewire_last_device_flag = false;
-  onewire_last_family_discrepancy = 0;
-  for (uint32_t i = 0; i < 8; i++) {
-    onewire_rom_id[i] = 0;
-  }
-}
-
-uint8_t OneWireSearch(uint8_t *newAddr)
-{
+uint8_t OneWireSearch(uint8_t *newAddr) {
   uint8_t id_bit_number = 1;
   uint8_t last_zero = 0;
   uint8_t rom_byte_number = 0;
@@ -224,7 +210,7 @@ uint8_t OneWireSearch(uint8_t *newAddr)
     }
     OneWireWrite(W1_SEARCH_ROM);
     do {
-      if (!ds18x20_dual_mode) {
+      if (!DS18X20Data.dual_mode) {
         id_bit     = OneWire1ReadBit();
         cmp_id_bit = OneWire1ReadBit();
       } else {
@@ -283,8 +269,7 @@ uint8_t OneWireSearch(uint8_t *newAddr)
   return search_result;
 }
 
-bool OneWireCrc8(uint8_t *addr)
-{
+bool OneWireCrc8(uint8_t *addr) {
   uint8_t crc = 0;
   uint8_t len = 8;
 
@@ -304,57 +289,60 @@ bool OneWireCrc8(uint8_t *addr)
 
 /********************************************************************************************/
 
-void Ds18x20Init(void)
-{
-  uint64_t ids[DS18X20_MAX_SENSORS];
-
-  ds18x20_pin = Pin(GPIO_DSB);
+void Ds18x20Init(void) {
+  DS18X20Data.pin = Pin(GPIO_DSB);
+  DS18X20Data.input_mode = Settings.flag3.ds18x20_internal_pullup ? INPUT_PULLUP : INPUT;  // SetOption74 - Enable internal pullup for single DS18x20 sensor
 
   if (PinUsed(GPIO_DSB_OUT)) {
-    ds18x20_pin_out = Pin(GPIO_DSB_OUT);
-    ds18x20_dual_mode = true;    // Dual pins mode as used by Shelly
-    pinMode(ds18x20_pin_out, OUTPUT);
-    pinMode(ds18x20_pin, Settings.flag3.ds18x20_internal_pullup ? INPUT_PULLUP : INPUT);  // SetOption74 - Enable internal pullup for single DS18x20 sensor
+    DS18X20Data.pin_out = Pin(GPIO_DSB_OUT);
+    DS18X20Data.dual_mode = true;    // Dual pins mode as used by Shelly
+    pinMode(DS18X20Data.pin_out, OUTPUT);
+    pinMode(DS18X20Data.pin, DS18X20Data.input_mode);
   }
 
-  OneWireResetSearch();
+  onewire_last_discrepancy = 0;
+  onewire_last_device_flag = false;
+  onewire_last_family_discrepancy = 0;
+  for (uint32_t i = 0; i < 8; i++) {
+    onewire_rom_id[i] = 0;
+  }
 
-  ds18x20_sensors = 0;
-  while (ds18x20_sensors < DS18X20_MAX_SENSORS) {
-    if (!OneWireSearch(ds18x20_sensor[ds18x20_sensors].address)) {
+  uint64_t ids[DS18X20_MAX_SENSORS];
+  DS18X20Data.sensors = 0;
+  while (DS18X20Data.sensors < DS18X20_MAX_SENSORS) {
+    if (!OneWireSearch(ds18x20_sensor[DS18X20Data.sensors].address)) {
       break;
     }
-    if (OneWireCrc8(ds18x20_sensor[ds18x20_sensors].address) &&
-       ((ds18x20_sensor[ds18x20_sensors].address[0] == DS18S20_CHIPID) ||
-        (ds18x20_sensor[ds18x20_sensors].address[0] == DS1822_CHIPID) ||
-        (ds18x20_sensor[ds18x20_sensors].address[0] == DS18B20_CHIPID) ||
-        (ds18x20_sensor[ds18x20_sensors].address[0] == MAX31850_CHIPID))) {
-      ds18x20_sensor[ds18x20_sensors].index = ds18x20_sensors;
-      ids[ds18x20_sensors] = ds18x20_sensor[ds18x20_sensors].address[0];  // Chip id
+    if (OneWireCrc8(ds18x20_sensor[DS18X20Data.sensors].address) &&
+       ((ds18x20_sensor[DS18X20Data.sensors].address[0] == DS18S20_CHIPID) ||
+        (ds18x20_sensor[DS18X20Data.sensors].address[0] == DS1822_CHIPID) ||
+        (ds18x20_sensor[DS18X20Data.sensors].address[0] == DS18B20_CHIPID) ||
+        (ds18x20_sensor[DS18X20Data.sensors].address[0] == MAX31850_CHIPID))) {
+      ds18x20_sensor[DS18X20Data.sensors].index = DS18X20Data.sensors;
+      ids[DS18X20Data.sensors] = ds18x20_sensor[DS18X20Data.sensors].address[0];  // Chip id
       for (uint32_t j = 6; j > 0; j--) {
-        ids[ds18x20_sensors] = ids[ds18x20_sensors] << 8 | ds18x20_sensor[ds18x20_sensors].address[j];
+        ids[DS18X20Data.sensors] = ids[DS18X20Data.sensors] << 8 | ds18x20_sensor[DS18X20Data.sensors].address[j];
       }
-      ds18x20_sensors++;
+      DS18X20Data.sensors++;
     }
   }
-  for (uint32_t i = 0; i < ds18x20_sensors; i++) {
-    for (uint32_t j = i + 1; j < ds18x20_sensors; j++) {
+  for (uint32_t i = 0; i < DS18X20Data.sensors; i++) {
+    for (uint32_t j = i + 1; j < DS18X20Data.sensors; j++) {
       if (ids[ds18x20_sensor[i].index] > ids[ds18x20_sensor[j].index]) {  // Sort ascending
         std::swap(ds18x20_sensor[i].index, ds18x20_sensor[j].index);
       }
     }
   }
-  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DSB D_SENSORS_FOUND " %d"), ds18x20_sensors);
+  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DSB D_SENSORS_FOUND " %d"), DS18X20Data.sensors);
 }
 
-void Ds18x20Convert(void)
-{
+void Ds18x20Convert(void) {
   OneWireReset();
 #ifdef W1_PARASITE_POWER
   // With parasite power address one sensor at a time
-  if (++ds18x20_sensor_curr >= ds18x20_sensors)
-    ds18x20_sensor_curr = 0;
-  OneWireSelect(ds18x20_sensor[ds18x20_sensor_curr].address);
+  if (++DS18X20Data.current_sensor >= DS18X20Data.sensors)
+    DS18X20Data.current_sensor = 0;
+  OneWireSelect(ds18x20_sensor[DS18X20Data.current_sensor].address);
 #else
   OneWireWrite(W1_SKIP_ROM);           // Address all Sensors on Bus
 #endif
@@ -362,8 +350,7 @@ void Ds18x20Convert(void)
 //  delay(750);                          // 750ms should be enough for 12bit conv
 }
 
-bool Ds18x20Read(uint8_t sensor)
-{
+bool Ds18x20Read(uint8_t sensor) {
   uint8_t data[9];
   int8_t sign = 1;
 
@@ -379,16 +366,6 @@ bool Ds18x20Read(uint8_t sensor)
     if (OneWireCrc8(data)) {
       switch(ds18x20_sensor[index].address[0]) {
         case DS18S20_CHIPID: {
-/*
-          if (data[1] > 0x80) {
-            data[0] = (~data[0]) +1;
-            sign = -1;                     // App-Note fix possible sign error
-          }
-          float temp9 = (float)(data[0] >> 1) * sign;
-          ds18x20_sensor[index].temperature = ConvertTemp((temp9 - 0.25) + ((16.0 - data[6]) / 16.0));
-
-          Replaced by below based on issue #8777
-*/
           int16_t tempS = (((data[1] << 8) | (data[0] & 0xFE)) << 3) | ((0x10 - data[6]) & 0x0F);
           ds18x20_sensor[index].temperature = ConvertTemp(tempS * 0.0625 - 0.250);
 
@@ -408,7 +385,7 @@ bool Ds18x20Read(uint8_t sensor)
             OneWireSelect(ds18x20_sensor[index].address);
             OneWireWrite(W1_WRITE_EEPROM);  // Save scratchpad to EEPROM
 #ifdef W1_PARASITE_POWER
-            w1_power_until = millis() + 10; // 10ms specified duration for EEPROM write
+            DS18X20Data.w1_power_until = millis() + 10; // 10ms specified duration for EEPROM write
 #endif
           }
           uint16_t temp12 = (data[1] << 8) + data[0];
@@ -433,8 +410,7 @@ bool Ds18x20Read(uint8_t sensor)
   return false;
 }
 
-void Ds18x20Name(uint8_t sensor)
-{
+void Ds18x20Name(uint8_t sensor) {
   uint8_t index = sizeof(ds18x20_chipids);
   while (index) {
     if (ds18x20_sensor[ds18x20_sensor[sensor].index].address[0] == ds18x20_chipids[index]) {
@@ -442,46 +418,44 @@ void Ds18x20Name(uint8_t sensor)
     }
     index--;
   }
-  GetTextIndexed(ds18x20_types, sizeof(ds18x20_types), index, kDs18x20Types);
-  if (ds18x20_sensors > 1) {
+  GetTextIndexed(DS18X20Data.name, sizeof(DS18X20Data.name), index, kDs18x20Types);
+  if (DS18X20Data.sensors > 1) {
 #ifdef DS18x20_USE_ID_AS_NAME
     char address[17];
     for (uint32_t j = 0; j < 3; j++) {
       sprintf(address+2*j, "%02X", ds18x20_sensor[ds18x20_sensor[sensor].index].address[3-j]);  // Only last 3 bytes
     }
-    snprintf_P(ds18x20_types, sizeof(ds18x20_types), PSTR("%s%c%s"), ds18x20_types, IndexSeparator(), address);
+    snprintf_P(DS18X20Data.name, sizeof(DS18X20Data.name), PSTR("%s%c%s"), DS18X20Data.name, IndexSeparator(), address);
 #else
-    snprintf_P(ds18x20_types, sizeof(ds18x20_types), PSTR("%s%c%d"), ds18x20_types, IndexSeparator(), sensor +1);
+    snprintf_P(DS18X20Data.name, sizeof(DS18X20Data.name), PSTR("%s%c%d"), DS18X20Data.name, IndexSeparator(), sensor +1);
 #endif
   }
 }
 
 /********************************************************************************************/
 
-void Ds18x20EverySecond(void)
-{
-  if (!ds18x20_sensors) { return; }
+void Ds18x20EverySecond(void) {
+  if (!DS18X20Data.sensors) { return; }
 
 #ifdef W1_PARASITE_POWER
   // skip access if there is still an eeprom write ongoing
   unsigned long now = millis();
-  if (now < w1_power_until)
-    return;
+  if (now < DS18X20Data.w1_power_until) { return; }
 #endif
   if (TasmotaGlobal.uptime & 1
 #ifdef W1_PARASITE_POWER
       // if more than 1 sensor and only parasite power: convert every cycle
-      || ds18x20_sensors >= 2
+      || DS18X20Data.sensors >= 2
 #endif
   ) {
     // 2mS
     Ds18x20Convert();          // Start conversion, takes up to one second
   } else {
-    for (uint32_t i = 0; i < ds18x20_sensors; i++) {
+    for (uint32_t i = 0; i < DS18X20Data.sensors; i++) {
       // 12mS per device
       if (!Ds18x20Read(i)) {   // Read temperature
         Ds18x20Name(i);
-        AddLogMissed(ds18x20_types, ds18x20_sensor[ds18x20_sensor[i].index].valid);
+        AddLogMissed(DS18X20Data.name, ds18x20_sensor[ds18x20_sensor[i].index].valid);
 #ifdef USE_DS18x20_RECONFIGURE
         if (!ds18x20_sensor[ds18x20_sensor[i].index].valid) {
           memset(&ds18x20_sensor, 0, sizeof(ds18x20_sensor));
@@ -493,9 +467,8 @@ void Ds18x20EverySecond(void)
   }
 }
 
-void Ds18x20Show(bool json)
-{
-  for (uint32_t i = 0; i < ds18x20_sensors; i++) {
+void Ds18x20Show(bool json) {
+  for (uint32_t i = 0; i < DS18X20Data.sensors; i++) {
     uint8_t index = ds18x20_sensor[i].index;
 
     if (ds18x20_sensor[index].valid) {   // Check for valid temperature
@@ -507,7 +480,7 @@ void Ds18x20Show(bool json)
           sprintf(address+2*j, "%02X", ds18x20_sensor[index].address[6-j]);  // Skip sensor type and crc
         }
         ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_ID "\":\"%s\",\"" D_JSON_TEMPERATURE "\":%*_f}"),
-          ds18x20_types, address, Settings.flag2.temperature_resolution, &ds18x20_sensor[index].temperature);
+          DS18X20Data.name, address, Settings.flag2.temperature_resolution, &ds18x20_sensor[index].temperature);
 #ifdef USE_DOMOTICZ
         if ((0 == TasmotaGlobal.tele_period) && (0 == i)) {
           DomoticzFloatSensor(DZ_TEMP, ds18x20_sensor[index].temperature);
@@ -520,7 +493,7 @@ void Ds18x20Show(bool json)
 #endif  // USE_KNX
 #ifdef USE_WEBSERVER
       } else {
-        WSContentSend_Temp(ds18x20_types, ds18x20_sensor[index].temperature);
+        WSContentSend_Temp(DS18X20Data.name, ds18x20_sensor[index].temperature);
 #endif  // USE_WEBSERVER
       }
     }
@@ -531,8 +504,7 @@ void Ds18x20Show(bool json)
  * Interface
 \*********************************************************************************************/
 
-bool Xsns05(uint8_t function)
-{
+bool Xsns05(uint8_t function) {
   bool result = false;
 
   if (PinUsed(GPIO_DSB)) {

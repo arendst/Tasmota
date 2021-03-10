@@ -35,6 +35,7 @@ All notable changes to this project will be documented in this file.
 - Zigbee exception when bad frame is received (#11192)
 - ESP32 flash script for Odroid and Core2 (#11227)
 - ESP32 WS2812 bitbang support (#11248)
+- DS18x20 driver timing issue (#11270)
 
 ## [Released]
 
