@@ -386,8 +386,8 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 \*-------------------------------------------------------------------------------------------*/
 
 #ifdef USE_I2C
-  AGPIO(GPIO_I2C_SCL),                  // I2C SCL
-  AGPIO(GPIO_I2C_SDA),                  // I2C SDA
+  AGPIO(GPIO_I2C_SCL) + MAX_I2C,        // I2C SCL
+  AGPIO(GPIO_I2C_SDA) + MAX_I2C,        // I2C SDA
 #endif
 
 #ifdef USE_SPI

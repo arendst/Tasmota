@@ -201,10 +201,12 @@ void alt_eeprom_readBytes(uint32_t adr, uint32_t len, uint8_t *buf) {
 
 
 // offsets epoch readings by 1.1.2019 00:00:00 to fit into float with second resolution
+#ifndef EPOCH_OFFSET
 #define EPOCH_OFFSET 1546300800
+#endif
 
 enum {OPER_EQU=1,OPER_PLS,OPER_MIN,OPER_MUL,OPER_DIV,OPER_PLSEQU,OPER_MINEQU,OPER_MULEQU,OPER_DIVEQU,OPER_EQUEQU,OPER_NOTEQU,OPER_GRTEQU,OPER_LOWEQU,OPER_GRT,OPER_LOW,OPER_PERC,OPER_XOR,OPER_AND,OPER_OR,OPER_ANDEQU,OPER_OREQU,OPER_XOREQU,OPER_PERCEQU};
-enum {SCRIPT_LOGLEVEL=1,SCRIPT_TELEPERIOD,SCRIPT_EVENT_HANDLED,SML_JSON_ENABLE};
+enum {SCRIPT_LOGLEVEL=1,SCRIPT_TELEPERIOD,SCRIPT_EVENT_HANDLED,SML_JSON_ENABLE,SCRIPT_EPOFFS};
 
 
 #ifdef USE_UFILESYS
@@ -219,6 +221,7 @@ extern FS *ufsp;
 
 #endif // USE_UFILESYS
 
+extern "C" void homekit_main(char *);
 
 #ifdef SUPPORT_MQTT_EVENT
   #include <LinkedList.h>                 // Import LinkedList library
@@ -413,6 +416,11 @@ struct SCRIPT_MEM {
 #ifdef USE_BUTTON_EVENT
     int8_t script_button[MAX_KEYS];
 #endif //USE_BUTTON_EVENT
+
+#ifdef USE_HOMEKIT
+    bool homekit_running = false;
+#endif // USE_HOMEKIT
+    uint32_t epoch_offset = EPOCH_OFFSET;
 } glob_script_mem;
 
 
@@ -476,6 +484,19 @@ void ScriptEverySecond(void) {
       }
     }
     Run_Scripter(">S", 2, 0);
+
+#ifdef USE_HOMEKIT
+    if (glob_script_mem.homekit_running == false) {
+      uint8_t homekit_found = Run_Scripter(">h", -2, 0);
+      if (homekit_found == 99) {
+        if (!TasmotaGlobal.global_state.wifi_down) {
+          homekit_main(glob_script_mem.section_ptr);
+          glob_script_mem.homekit_running = true;
+        }
+      }
+    }
+#endif // USE_HOMEKIT
+
   }
 }
 
@@ -1680,7 +1701,7 @@ char *isvar(char *lp, uint8_t *vtype, struct T_INDEX *tind, float *fp, char *sp,
             } else {
               if (fp) {
                 if (!strncmp(vn.c_str(), "Epoch", 5)) {
-                  *fp = atoi(str_value) - (uint32_t)EPOCH_OFFSET;
+                  *fp = atoi(str_value) - (uint32_t)glob_script_mem.epoch_offset;
                 } else {
                   *fp = CharToFloat((char*)str_value);
                 }
@@ -1846,8 +1867,13 @@ chknext:
         break;
       case 'e':
         if (!strncmp(vname, "epoch", 5)) {
-          fvar = UtcTime() - (uint32_t)EPOCH_OFFSET;
+          fvar = UtcTime() - (uint32_t)glob_script_mem.epoch_offset;
           goto exit;
+        }
+        if (!strncmp(vname, "epoffs", 6)) {
+          fvar = (uint32_t)glob_script_mem.epoch_offset;
+          tind->index = SCRIPT_EPOFFS;
+          goto exit_settable;
         }
         if (!strncmp(vname, "eres", 4)) {
           fvar = glob_script_mem.event_handeled;
@@ -2469,6 +2495,19 @@ chknext:
           goto exit;
         }
 #endif //USE_LIGHT
+
+#ifdef USE_HOMEKIT
+        if (!strncmp(vname, "hki", 3)) {
+          if (!TasmotaGlobal.global_state.wifi_down) {
+            // erase nvs
+            homekit_main(0);
+            // restart homekit
+            glob_script_mem.homekit_running = false;
+          }
+          fvar = 0;
+          goto exit;
+        }
+#endif
         break;
       case 'i':
         if (!strncmp(vname, "int(", 4)) {
@@ -3529,6 +3568,40 @@ char *ForceStringVar(char *lp, char *dstr) {
   return lp;
 }
 
+extern "C" {
+  uint32_t Ext_UpdVar(char *vname, float *fvar, uint32_t mode) {
+    return UpdVar(vname, fvar, mode);
+  }
+}
+
+uint32_t UpdVar(char *vname, float *fvar, uint32_t mode) {
+  struct T_INDEX ind;
+  uint8_t vtype;
+  float res = *fvar;
+  isvar(vname, &vtype, &ind, fvar, 0, 0);
+  if (vtype != VAR_NV) {
+    // found variable as result
+    if (vtype == NUM_RES || (vtype & STYPE) == 0) {
+      if (mode) {
+        // set var
+        uint8_t index = glob_script_mem.type[ind.index].index;
+        glob_script_mem.fvars[index] = res;
+        glob_script_mem.type[index].bits.changed = 1;
+      }
+      return 0;
+    } else {
+      //  break;
+    }
+  }
+  return 1;
+}
+
+
+extern "C" {
+  void Ext_Replace_Cmd_Vars(char *srcbuf, uint32_t srcsize, char *dstbuf, uint32_t dstsize) {
+    Replace_Cmd_Vars(srcbuf, srcsize, dstbuf, dstsize);
+  }
+}
 // replace vars in cmd %var%
 void Replace_Cmd_Vars(char *srcbuf, uint32_t srcsize, char *dstbuf, uint32_t dstsize) {
     char *cp;
@@ -3623,6 +3696,7 @@ void Replace_Cmd_Vars(char *srcbuf, uint32_t srcsize, char *dstbuf, uint32_t dst
     }
     dstbuf[count] = 0;
 }
+
 
 void toLog(const char *str) {
   if (!str) return;
@@ -4527,6 +4601,9 @@ int16_t Run_script_sub(const char *type, int8_t tlen, struct GVARS *gv) {
                             break;
                           case SCRIPT_EVENT_HANDLED:
                             glob_script_mem.event_handeled = *dfvar;
+                            break;
+                          case SCRIPT_EPOFFS:
+                            glob_script_mem.epoch_offset = *dfvar;
                             break;
 #if defined(USE_SML_M) && defined (USE_SML_SCRIPT_CMD)
                           case SML_JSON_ENABLE:
@@ -5993,7 +6070,7 @@ bool ScriptMqttData(void)
         char sbuffer[128];
 
         if (!strncmp(lkey.c_str(), "Epoch", 5)) {
-          uint32_t ep = atoi(value.c_str()) - (uint32_t)EPOCH_OFFSET;
+          uint32_t ep = atoi(value.c_str()) - (uint32_t)glob_script_mem.epoch_offset;
           snprintf_P(sbuffer, sizeof(sbuffer), PSTR(">%s=%d\n"), event_item.Event.c_str(), ep);
         } else {
           snprintf_P(sbuffer, sizeof(sbuffer), PSTR(">%s=\"%s\"\n"), event_item.Event.c_str(), value.c_str());
@@ -7392,7 +7469,6 @@ int32_t http_req(char *host, char *request) {
 #include <WiFiClientSecure.h>
 #endif //ESP8266
 
-
 // get tesla powerwall info page json string
 uint32_t call2https(const char *host, const char *path) {
   if (TasmotaGlobal.global_state.wifi_down) return 1;
@@ -7770,7 +7846,6 @@ bool Xdrv10(uint8_t function)
   }
   return result;
 }
-
 
 #endif  // Do not USE_RULES
 #endif  // USE_SCRIPT
