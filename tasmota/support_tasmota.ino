@@ -1742,6 +1742,12 @@ void GpioInit(void)
   if (TasmotaGlobal.i2c_enabled) {
     Wire.begin(Pin(GPIO_I2C_SDA), Pin(GPIO_I2C_SCL));
   }
+#ifdef ESP32
+  TasmotaGlobal.i2c_enabled_2 = (PinUsed(GPIO_I2C_SCL, 1) && PinUsed(GPIO_I2C_SDA, 1));
+  if (TasmotaGlobal.i2c_enabled_2) {
+    Wire1.begin(Pin(GPIO_I2C_SDA, 1), Pin(GPIO_I2C_SCL, 1));
+  }
+#endif
 #endif  // USE_I2C
 
   TasmotaGlobal.devices_present = 0;
