@@ -40,6 +40,8 @@
  * contains:
  *  - fix for #11047 Wiegand 26/34 missed some key press if they are press at normal speed  
  *  - removed testing code for tests without attached hardware 
+ *  - added SetOption123 0-Wiegand UID decimal (default) 1-Wiegand UID hexadecimal 
+ *  - added SetOption124 0-Keypad every key a single tag (default) 1-all keys up to ending char (#) send as one tag  
 \*********************************************************************************************/
 #warning **** Wiegand interface enabled ****
 
@@ -48,6 +50,7 @@
 #define WIEGAND_CODE_GAP_FACTOR 3  // Gap between 2 complete RFID codes send by the device. (WIEGAND_CODE_GAP_FACTOR * bitTime) to detect the end of a code 
 #define WIEGAND_BIT_TIME_DEFAULT 1250  // period time of one bit (impluse + impulse_gap time) 1250µs measured by oscilloscope on my RFID Reader
 #define WIEGAND_RFID_ARRAY_SIZE 5 // storage of rfids found between 2 calls of FUNC_EVERY_100_MSECOND
+#define WIEGAND_OPTION_HEX 123 // Index of option to switch output between hex (1) an decimal (0) (default)
 
 //  using #define will save some space in the final code
 //  DEV_WIEGAND_TEST_MODE 2 : testing with hardware correctly connected.
@@ -79,18 +82,20 @@ class Wiegand {
     bool isInit = false;
 
   private:
-    uint64_t HexStringToDec(uint64_t);
+    //uint64_t HexStringToDec(uint64_t);
     uint64_t CheckAndConvertRfid(uint64_t,uint16_t);
     char translateEnterEscapeKeyPress(char);
     uint8_t CalculateParities(uint64_t, int);
-    //bool WiegandConversion (void);
     bool WiegandConversion (uint64_t , uint16_t );
+    void setOutputFormat(void); // fix output HEX format
+
     static void handleD0Interrupt(void);
     static void handleD1Interrupt(void);
     static void handleDxInterrupt(int in); // fix #11047 
 
     uint64_t rfid;
     uint8_t tagSize;
+    char outFormat;
 
     static volatile uint64_t rfidBuffer;
     static volatile uint16_t bitCount;
@@ -136,6 +141,7 @@ Wiegand::Wiegand() {
     rfid_found[i].RFID=0;
     rfid_found[i].bitCount=0;
   }
+  outFormat='u';  // standard output format decimal
 }
 
 void ICACHE_RAM_ATTR Wiegand::handleD1Interrupt() {  // Receive a 1 bit. (D0=high & D1=low)
@@ -341,6 +347,12 @@ bool Wiegand::WiegandConversion (uint64_t rfidBuffer, uint16_t bitCount) {
   return bRet;
 }
 
+void Wiegand::setOutputFormat(void)
+{
+  if (GetOption(WIEGAND_OPTION_HEX) == 0)  { outFormat = 'u';  }
+  else  {  outFormat = 'X';  }
+}
+
 void Wiegand::ScanForTag() {
   unsigned long startTime = micros();
   handleDxInterrupt(3);
@@ -349,6 +361,11 @@ void Wiegand::ScanForTag() {
     #if (DEV_WIEGAND_TEST_MODE)>0
     AddLog(LOG_LEVEL_INFO, PSTR("WIE: ScanForTag(). bitTime: %0lu lastFoundTime: %0lu RFIDS in buffer: %lu"), bitTime, lastFoundTime, currentFoundRFIDcount);
     #endif
+    // format MQTT output
+    setOutputFormat();
+    char sFormat[50];
+    snprintf( sFormat, 50, PSTR(",\"Wiegand\":{\"UID\":%%0ll%c,\"" D_JSON_SIZE "\":%%%c}}"), outFormat, outFormat);
+
     for (int i= 0; i < WIEGAND_RFID_ARRAY_SIZE; i++)
     {
       if (rfid_found[i].RFID != 0) {
@@ -361,7 +378,7 @@ void Wiegand::ScanForTag() {
           if (oldTag == rfid) {
             AddLog(LOG_LEVEL_DEBUG, PSTR("WIE: Old tag"));
           }
-          ResponseTime_P(PSTR(",\"Wiegand\":{\"UID\":%0llu,\"" D_JSON_SIZE "\":%u}}"), rfid,tagSize);
+          ResponseTime_P(sFormat, rfid,tagSize);
           MqttPublishTeleSensor();
         }
         rfid_found[i].RFID=0;
@@ -382,7 +399,11 @@ void Wiegand::ScanForTag() {
 
 #ifdef USE_WEBSERVER
 void Wiegand::Show(void) {
-  WSContentSend_PD(PSTR("{s}Wiegand UID{m}%llu {e}"), rfid);
+  setOutputFormat(); 
+  char sFormat [30];
+  snprintf( sFormat, 30,PSTR("{s}Wiegand UID{m}%%ll%c {e}"), outFormat);
+  WSContentSend_PD(sFormat, rfid);
+  //WSContentSend_PD(PSTR("{s}Wiegand UID{m}%llX {e}"), rfid);
 #if (DEV_WIEGAND_TEST_MODE)>0
   AddLog(LOG_LEVEL_INFO, PSTR("WIE: Tag %llu, Bits %u"), rfid, bitCount);
 #endif  // DEV_WIEGAND_TEST_MODE>0
