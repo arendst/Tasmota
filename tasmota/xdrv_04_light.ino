@@ -1844,6 +1844,16 @@ uint16_t fadeGammaReverse(uint32_t channel, uint16_t vg) {
   }
 }
 
+uint8_t LightGetCurFadeBri(void) {
+  uint8_t max_bri = 0;
+  uint8_t bri_i = 0;
+  for (uint8_t i = 0; i < LST_MAX; i++) {
+    bri_i = changeUIntScale(fadeGammaReverse(i, Light.fade_cur_10[i]), 4, 1023, 1, 100);
+    if (bri_i > max_bri) max_bri = bri_i ;
+  }
+  return max_bri;
+}
+
 bool LightApplyFade(void) {   // did the value chanegd and needs to be applied
   static uint32_t last_millis = 0;
   uint32_t now = millis();
@@ -2200,7 +2210,7 @@ void LightHandleDevGroupItem(void)
   static bool send_state = false;
   static bool restore_power = false;
 
-  if (Settings.device_group_tie[*XdrvMailbox.topic] != Light.device) return;
+  if (Settings.flag4.multiple_device_groups ? Settings.device_group_tie[*XdrvMailbox.topic] != Light.device : !(XdrvMailbox.index & DGR_FLAG_LOCAL)) return;
   bool more_to_come;
   uint32_t value = XdrvMailbox.payload;
   switch (XdrvMailbox.command_code) {
@@ -2711,12 +2721,18 @@ void CmndDimmer(void)
   } else {
     dimmer = light_state.getDimmer(XdrvMailbox.index);
   }
-  // Handle +/- special command
+  // Handle +/-/!/</> special commands
   if (1 == XdrvMailbox.data_len) {
     if ('+' == XdrvMailbox.data[0]) {
       XdrvMailbox.payload = (dimmer > (100 - Settings.dimmer_step - 1)) ? 100 : dimmer + Settings.dimmer_step;
     } else if ('-' == XdrvMailbox.data[0]) {
       XdrvMailbox.payload = (dimmer < (Settings.dimmer_step + 1)) ? 1 : dimmer - Settings.dimmer_step;
+    } else if ('!' == XdrvMailbox.data[0] && Light.fade_running) {
+      XdrvMailbox.payload = LightGetCurFadeBri();
+    } else if ('<' == XdrvMailbox.data[0] ) {
+      XdrvMailbox.payload = 1;
+    } else if ('>' == XdrvMailbox.data[0] ) {
+      XdrvMailbox.payload = 100;
     }
   }
   // If value is ok, change it, otherwise report old value

@@ -401,6 +401,7 @@ BERRY_API int be_pcall(bvm *vm, int argc);
 BERRY_API void be_exit(bvm *vm, int status);
 
 /* exception APIs */
+__attribute__((noreturn))
 BERRY_API void be_raise(bvm *vm, const char *except, const char *msg);
 BERRY_API int be_getexcept(bvm *vm, int code);
 BERRY_API void be_dumpvalue(bvm *vm, int index);

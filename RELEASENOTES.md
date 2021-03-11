@@ -109,3 +109,4 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - Zigbee exception when bad frame is received [#11192](https://github.com/arendst/Tasmota/issues/11192)
 - ESP32 flash script for Odroid and Core2 [#11227](https://github.com/arendst/Tasmota/issues/11227)
 - ESP32 WS2812 bitbang support [#11248](https://github.com/arendst/Tasmota/issues/11248)
+- DS18x20 driver timing issue (#11270)

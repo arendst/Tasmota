@@ -7,7 +7,10 @@
 #endif //PROJECTOR_CTRL_PWR_BY_RELAY
 
 #define PROJECTOR_CTRL_SERIAL_TIMEOUT 10 //up to 254 seconds
+
+#ifndef PROJECTOR_CTRL_SERIAL_BAUDRATE
 #define PROJECTOR_CTRL_SERIAL_BAUDRATE 9600
+#endif //PROJECTOR_CTRL_SERIAL_BAUDRATE
 
 #ifdef USE_PROJECTOR_CTRL_NEC
 /* see the serial codes in
@@ -32,6 +35,8 @@ static const struct projector_ctrl_command_info_s projector_ctrl_commands[] = {
 };
 #define PROJECTOR_CTRL_QRYPWR_ON      0x04
 #define PROJECTOR_CTRL_QRYPWR_COOLING 0x05
+#define PROJECTOR_CTRL_QRYPWR_STARTING 0x01 //undocumented state, seen on V300W
+#define PROJECTOR_CTRL_QRYPWR_WARMING 0x02  //undocumented state, seen on V300W
 
 
 #elif defined(USE_PROJECTOR_CTRL_OPTOMA)
@@ -56,6 +61,8 @@ static const struct projector_ctrl_command_info_s projector_ctrl_commands[] = {
 };
 #define PROJECTOR_CTRL_QRYPWR_ON      0x31
 #define PROJECTOR_CTRL_QRYPWR_COOLING 0x31 //placebo
+#define PROJECTOR_CTRL_QRYPWR_STARTING 0x31 //placebo
+#define PROJECTOR_CTRL_QRYPWR_WARMING 0x31 //placebo
 
 
 #else
