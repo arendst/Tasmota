@@ -999,6 +999,9 @@ void SettingsDefaultSet2(void) {
 
   Settings.dimmer_step = DEFAULT_DIMMER_STEP;
 
+  // Device Groups
+  *(uint32_t *)&Settings.device_group_tie = 0x04030201;
+
   // Display
 //  Settings.display_model = 0;
   Settings.display_mode = 1;
