@@ -17,6 +17,11 @@ All notable changes to this project will be documented in this file.
 - Extent compile time SetOptions support (#11204)
 - ESP32 Extent BLE (#11212)
 
+- ESP32 support for WS2812 hardware driver via RMT or I2S
+
+- ESP32 support for secondary I2C controller
+
+
 ### Changed
 - ESP32 core library from v1.0.5-rc6 to v1.0.5
 - TasmotaSerial library from v3.2.0 to v3.3.0

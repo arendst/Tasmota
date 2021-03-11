@@ -2210,7 +2210,7 @@ void LightHandleDevGroupItem(void)
   static bool send_state = false;
   static bool restore_power = false;
 
-  if (Settings.device_group_tie[*XdrvMailbox.topic] != Light.device) return;
+  if (Settings.flag4.multiple_device_groups ? Settings.device_group_tie[*XdrvMailbox.topic] != Light.device : !(XdrvMailbox.index & DGR_FLAG_LOCAL)) return;
   bool more_to_come;
   uint32_t value = XdrvMailbox.payload;
   switch (XdrvMailbox.command_code) {
