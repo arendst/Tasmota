@@ -1,0 +1,43 @@
+Boot OK
+WiFi connecting...
+...............
+WiFi connected, IP: 192.168.6.134
+[   1657] Keystore initialised
+[   1662] Accessory is not Paired with any controller
+[   1664] Database initialised. Accessory Device ID: 90:60:09:AB:F0:1D 
+[   1664] HAP Initialization succeeded. Version : 4.0
+[   1670] MFi auth not supported. Falling back to HAP_MFI_AUTH_NONE
+[   1675] Setup ID: ES32
+[   1681] HAP Main Loop Started
+[   1684] mDNS initialised
+[   1684] Registering HomeKit web handlers
+[   1687] Announcing _hap._tcp mDNS service
+[  10032] ######## Starting Pair Setup ########
+[  10032] Pair Setup M1 Received
+[  12073] Pair Setup M2 Successful
+[  12501] Pair Setup M3 Received
+[  14540] Using pair-setup without MFi.
+[  14540] Pair Setup M4 Successful
+[  14929] Pair Setup M5 Received
+[  15023] Pair Setup Successful for CF87DA6B-7078-44BB-AC04-27B6F2B26D37
+[  15027] Updated state number to 11
+[  15028] Cleaning Pair Setup Context
+[  15032] Re-announcing _hap._tcp mDNS service
+[  16205] ######## Starting Pair Verify ########
+[  16205] Pair Verify M1 Received
+[  16327] Pair Verify M2 Successful
+[  16385] Pair Verify M3 Received
+[  16444] HomeKit Session active
+[  16445] Pair Verify Successful for CF87DA6B-7078-44BB-AC04-27B6F2B26D37
+[  16781] Events Enabled for aid=1 iid=12
+[  16781] Events Enabled for aid=1 iid=13
+[  17080] Events Enabled for aid=1 iid=12
+[  17080] Events Enabled for aid=1 iid=13
+[  22311] ######## Starting Pair Verify ########
+[  22311] Pair Verify M1 Received
+[  22435] Pair Verify M2 Successful
+[  22470] Pair Verify M3 Received
+[  22528] HomeKit Session active
+[  22528] Pair Verify Successful for CF87DA6B-7078-44BB-AC04-27B6F2B26D37
+[  25069] Value Changed
+[  26605] Value Changed
