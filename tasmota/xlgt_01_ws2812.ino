@@ -47,81 +47,106 @@ void (* const Ws2812Command[])(void) PROGMEM = {
 
 #include <NeoPixelBus.h>
 
-#if (USE_WS2812_HARDWARE == NEO_HW_P9813)
-  typedef P9813BgrFeature selectedNeoFeatureType;
-  #undef USE_WS2812_DMA
-  #undef USE_WS2812_INVERTED
-#elif (USE_WS2812_CTYPE == NEO_GRB)
-  typedef NeoGrbFeature selectedNeoFeatureType;
-#elif (USE_WS2812_CTYPE == NEO_BRG)
-  typedef NeoBrgFeature selectedNeoFeatureType;
-#elif (USE_WS2812_CTYPE == NEO_RBG)
-  typedef NeoRbgFeature selectedNeoFeatureType;
-#elif (USE_WS2812_CTYPE == NEO_RGBW)
-  typedef NeoRgbwFeature selectedNeoFeatureType;
-#elif (USE_WS2812_CTYPE == NEO_GRBW)
-  typedef NeoGrbwFeature selectedNeoFeatureType;
-#else   // USE_WS2812_CTYPE
-  typedef NeoRgbFeature selectedNeoFeatureType;
-#endif  // USE_WS2812_CTYPE
-
-#ifdef USE_WS2812_DMA
-
-#ifdef USE_WS2812_INVERTED
 // See NeoEspDmaMethod.h for available options
-
-#if (USE_WS2812_HARDWARE == NEO_HW_WS2812X)
-  typedef NeoEsp8266DmaInvertedWs2812xMethod selectedNeoSpeedType;
-#elif (USE_WS2812_HARDWARE == NEO_HW_SK6812)
-  typedef NeoEsp8266DmaInvertedSk6812Method selectedNeoSpeedType;
-#elif (USE_WS2812_HARDWARE == NEO_HW_APA106)
-  typedef NeoEsp8266DmaInvertedApa106Method selectedNeoSpeedType;
-#else   // USE_WS2812_HARDWARE
-  typedef NeoEsp8266DmaInverted800KbpsMethod selectedNeoSpeedType;
-#endif  // USE_WS2812_HARDWARE
-
-#else  // No USE_WS2812_INVERTED
-
-#if (USE_WS2812_HARDWARE == NEO_HW_WS2812X)
-  typedef NeoEsp8266DmaWs2812xMethod selectedNeoSpeedType;
-#elif (USE_WS2812_HARDWARE == NEO_HW_SK6812)
-  typedef NeoEsp8266DmaSk6812Method selectedNeoSpeedType;
-#elif (USE_WS2812_HARDWARE == NEO_HW_APA106)
-  typedef NeoEsp8266DmaApa106Method selectedNeoSpeedType;
-#else   // USE_WS2812_HARDWARE
-  typedef NeoEsp8266Dma800KbpsMethod selectedNeoSpeedType;
-#endif  // USE_WS2812_HARDWARE
-
-#endif  // No USE_WS2812_INVERTED
-
-#else   // No USE_WS2812_DMA
-
-#ifdef USE_WS2812_INVERTED
 // See NeoEspBitBangMethod.h for available options
 
+// Build `selectedNeoFeatureType` as Neo-Rgb-Feature
+// parametrized as: NEO_FEATURE_NEO+NEO_FEATURE_TYPE+NEO_FEATURE_FEATURE
+#define CONCAT2(A,B)    CONCAT2_(A,B)   // ensures expansion first, see https://stackoverflow.com/questions/3221896/how-can-i-guarantee-full-macro-expansion-of-a-parameter-before-paste
+#define CONCAT2_(A,B)    A ## B
+#define CONCAT3(A,B,C)    CONCAT3_(A,B,C)   // ensures expansion first, see https://stackoverflow.com/questions/3221896/how-can-i-guarantee-full-macro-expansion-of-a-parameter-before-paste
+#define CONCAT3_(A,B,C)    A ## B ## C
+
+#define NEO_FEATURE_NEO       Neo
+#define NEO_FEATURE_FEATURE   Feature
+
+// select the right Neo feature based on USE_WS2812_CTYPE
+// NEO_FEATURE_TYPE can be one of: Rgb (default), Grb, Brg, Rgb, Rgbw, Grbw
+#if   (USE_WS2812_CTYPE == NEO_GRB)
+  #define NEO_FEATURE_TYPE  Grb
+#elif (USE_WS2812_CTYPE == NEO_BRG)
+  #define NEO_FEATURE_TYPE  Brg
+#elif (USE_WS2812_CTYPE == NEO_RBG)
+  #define NEO_FEATURE_TYPE  Rbg
+#elif (USE_WS2812_CTYPE == NEO_RGBW)
+  #define NEO_FEATURE_TYPE  Rbgw
+#elif (USE_WS2812_CTYPE == NEO_GRBW)
+  #define NEO_FEATURE_TYPE  Grbw
+#else
+  #define NEO_FEATURE_TYPE  Rgb
+#endif
+
+// Exception for NEO_HW_P9813
+#if (USE_WS2812_HARDWARE == NEO_HW_P9813)
+  #undef NEO_FEATURE_NEO
+  #undef NEO_FEATURE_TYPE
+  #define NEO_FEATURE_NEO     P9813   // P9813BgrFeature
+  #define NEO_FEATURE_TYPE    Bgr
+  #undef USE_WS2812_DMA
+  #undef USE_WS2812_INVERTED
+#endif  // USE_WS2812_CTYPE
+
+typedef CONCAT3(NEO_FEATURE_NEO,NEO_FEATURE_TYPE,NEO_FEATURE_FEATURE) selectedNeoFeatureType;
+
+// selectedNeoSpeedType is built as Neo+Esp8266+Dma+Inverted+Ws2812x+Method
+// Or NEO_NEO+NEO_CHIP+NEO_PROTO+NEO_INV+NEO_HW+Method
+#define CONCAT6(A,B,C,D,E,F)    CONCAT6_(A,B,C,D,E,F)   // ensures expansion first, see https://stackoverflow.com/questions/3221896/how-can-i-guarantee-full-macro-expansion-of-a-parameter-before-paste
+#define CONCAT6_(A,B,C,D,E,F)    A ## B ## C ## D ## E ## F
+
+#define NEO_NEO         Neo
+
+#ifdef ESP32
+  #define NEO_CHIP      Esp32
+#else
+  #define NEO_CHIP      Esp8266
+#endif
+
+// Proto = DMA or BigBang
+#if defined(USE_WS2812_DMA) && defined(ESP8266)
+  #define NEO_PROTO     Dma
+#elif defined(USE_WS2812_RMT) && defined(ESP32)
+  #define NEO_PROTO     CONCAT2(Rmt,USE_WS2812_RMT)
+#elif defined(USE_WS2812_I2S) && defined(ESP32)
+  #define NEO_PROTO     CONCAT2(I2s,USE_WS2812_I2S)
+#else
+  #define NEO_PROTO     BitBang
+#endif
+
+#ifdef USE_WS2812_INVERTED
+  #define NEO_INV       Inverted
+#else
+  #define NEO_INV
+#endif
+
 #if (USE_WS2812_HARDWARE == NEO_HW_WS2812X)
-  typedef NeoEsp8266BitBangWs2812xInvertedMethod selectedNeoSpeedType;
+  #define NEO_HW        Ws2812x
 #elif (USE_WS2812_HARDWARE == NEO_HW_SK6812)
-  typedef NeoEsp8266BitBangSk6812InvertedMethod selectedNeoSpeedType;
+  #define NEO_HW        Sk6812
+#elif (USE_WS2812_HARDWARE == NEO_HW_APA106)
+  #define NEO_HW        Apa106
 #else   // USE_WS2812_HARDWARE
-  typedef NeoEsp8266BitBang400KbpsInvertedMethod selectedNeoSpeedType;
+  #define NEO_HW        800Kbps
 #endif  // USE_WS2812_HARDWARE
 
-#else  // No USE_WS2812_INVERTED
 
 #if (USE_WS2812_HARDWARE == NEO_HW_P9813)
-  typedef P9813Method selectedNeoSpeedType;
-#elif (USE_WS2812_HARDWARE == NEO_HW_WS2812X)
-  typedef NeoEsp8266BitBangWs2812xMethod selectedNeoSpeedType;
-#elif (USE_WS2812_HARDWARE == NEO_HW_SK6812)
-  typedef NeoEsp8266BitBangSk6812Method selectedNeoSpeedType;
-#else   // USE_WS2812_HARDWARE
-  typedef NeoEsp8266BitBang800KbpsMethod selectedNeoSpeedType;
-#endif  // USE_WS2812_HARDWARE
+  #undef NEO_NEO
+  #define NEO_NEO
+  #undef NEO_CHIP
+  #define NEO_CHIP
+  #undef NEO_PROTO
+  #define NEO_PROTO
+  #undef NEO_INV
+  #define NEO_INV
+  #undef NEO_HW
+  #define NEO_HW      P9813       // complete driver is P9813Method
+#endif
 
-#endif  // No USE_WS2812_INVERTED
-
-#endif  // No USE_WS2812_DMA
+#if defined(ESP8266) && defined(USE_WS2812_DMA)
+typedef CONCAT6(NEO_NEO,NEO_CHIP,NEO_PROTO,NEO_INV,NEO_HW,Method)   selectedNeoSpeedType;
+#else // Dma : different naming scheme
+typedef CONCAT6(NEO_NEO,NEO_CHIP,NEO_PROTO,NEO_HW,NEO_INV,Method)   selectedNeoSpeedType;
+#endif
 
 NeoPixelBus<selectedNeoFeatureType, selectedNeoSpeedType> *strip = nullptr;
 
