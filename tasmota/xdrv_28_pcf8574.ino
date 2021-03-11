@@ -211,9 +211,10 @@ void HandlePcf8574(void)
   WSContentStop();
 }
 
-#ifdef USE_PCF8574_SENSOR
+#if defined(USE_PCF8574_SENSOR) || defined(USE_PCF8574_DISPLAYINPUT)
 void Pcf8574Show(bool json)
 {
+#ifdef USE_PCF8574_SENSOR
   if (json) {
     for (int idx = 0 ; idx < Pcf8574.max_devices ; idx++)
     {
@@ -224,8 +225,9 @@ void Pcf8574Show(bool json)
     }
     ResponseJsonEnd();
   }
+#endif // #ifdef USE_PCF8574_SENSOR
 #if defined(USE_WEBSERVER) && defined(USE_PCF8574_DISPLAYINPUT)
-  else {
+  if(!json) {
     for (int idx = 0 ; idx < Pcf8574.max_devices ; idx++)
     {
       uint8_t input_mask = ~Settings.pcf8574_config[idx]; //invert to 1 = input
@@ -237,9 +239,9 @@ void Pcf8574Show(bool json)
       }
     }
   }
-#endif // #if defined(USE_WEBSERVER) && defined(USE_PCF8574_DISPLAYINPUT)
+#endif // defined(USE_WEBSERVER) && defined(USE_PCF8574_DISPLAYINPUT)
 }
-#endif // #ifdef USE_PCF8574_SENSOR
+#endif // #if defined(USE_PCF8574_SENSOR) || defined(USE_PCF8574_DISPLAYINPUT)
 
 
 #ifdef USE_PCF8574_MQTTINPUT
