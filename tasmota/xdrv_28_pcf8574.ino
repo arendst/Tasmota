@@ -37,7 +37,9 @@ struct PCF8574 {
   uint8_t pin[64];
   uint8_t address[MAX_PCF8574];
   uint8_t pin_mask[MAX_PCF8574] = { 0 };
+#ifdef USE_PCF8574_MQTTINPUT
   uint8_t last_input[MAX_PCF8574] = { 0 };
+#endif
   uint8_t max_connected_ports = 0;        // Max numbers of devices comming from PCF8574 modules
   uint8_t max_devices = 0;                // Max numbers of PCF8574 modules
   char stype[9];
@@ -122,7 +124,9 @@ void Pcf8574Init(void)
     for (uint32_t idx = 0; idx < Pcf8574.max_devices; idx++) { // suport up to 8 boards PCF8574
       uint8_t gpio = Pcf8574Read(idx);
       Pcf8574.pin_mask[idx] = gpio;
+#ifdef USE_PCF8574_MQTTINPUT
       Pcf8574.last_input[idx] = gpio & ~Settings.pcf8574_config[idx];
+#endif // #ifdef USE_PCF8574_MQTTINPUT
       //AddLog(LOG_LEVEL_DEBUG, PSTR("PCF: PCF-%d config=0x%02x, gpio=0x%02X"), idx +1, Settings.pcf8574_config[idx], gpio);
 
       for (uint32_t i = 0; i < 8; i++, gpio>>=1) {
@@ -238,7 +242,7 @@ void Pcf8574Show(bool json)
 #endif // #ifdef USE_PCF8574_SENSOR
 
 
-#if defined(USE_PCF8574_MQTTINPUT) || defined(USE_PCF8574_EVENTINPUT)
+#ifdef USE_PCF8574_MQTTINPUT
 void Pcf8574CheckForInputChange(void)
 {
     for (int idx = 0 ; idx < Pcf8574.max_devices ; idx++)
@@ -249,25 +253,18 @@ void Pcf8574CheckForInputChange(void)
       if (input != last_input) { // don't scan bits if no change (EVERY_50_MS !)
         for (uint8_t pin = 0 ; pin < 8 ; ++pin) {
           if (bitRead(input_mask,pin) && bitRead(input,pin) != bitRead(last_input,pin)) {
-  #ifdef USE_PCF8574_MQTTINPUT
             ResponseTime_P(PSTR(",\"PCF8574%c%d_INP\":{\"D%i\":%i}}"), IndexSeparator(), idx +1, pin, bitRead(input,pin));
-            MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR("PCF8574_INP"));
+            MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, PSTR("PCF8574_INP"));
             if (Settings.flag3.hass_tele_on_power) {  // SetOption59 - Send tele/%topic%/SENSOR in addition to stat/%topic%/RESULT
                 MqttPublishSensor();
             }
-  #endif // #ifdef USE_PCF8574_MQTTINPUT
-  #ifdef USE_PCF8574_EVENTINPUT
-            char command[21]; // Theoretical max = 'event PCF8574-8_D7=1' so 20 + 1 (for the \0)
-            sprintf(command,"event PCF8574%c%d_D%i=%i", IndexSeparator(), idx +1, pin, bitRead(input,pin));
-            ExecuteCommand(command, SRC_RULE);
-  #endif // #ifdef USE_PCF8574_EVENTINPUT
           }
           Pcf8574.last_input[idx] =  input;
         }
       }
     }
 }
-#endif
+#endif //#ifdef USE_PCF8574_MQTTINPUT
 
 void Pcf8574SaveSettings(void)
 {
@@ -324,11 +321,11 @@ bool Xdrv28(uint8_t function)
       case FUNC_SET_POWER:
         Pcf8574SwitchRelay();
         break;
-#if defined(USE_PCF8574_MQTTINPUT) || defined(USE_PCF8574_EVENTINPUT)
+#ifdef USE_PCF8574_MQTTINPUT
       case FUNC_EVERY_50_MSECOND:
         Pcf8574CheckForInputChange();
         break;
-#endif // #if defined(USE_PCF8574_MQTTINPUT) || defined(USE_PCF8574_EVENTINPUT)
+#endif // #ifdef USE_PCF8574_MQTTINPUT
 #ifdef USE_PCF8574_SENSOR
       case FUNC_JSON_APPEND:
         Pcf8574Show(1);
