@@ -183,7 +183,11 @@ void MqttInit(void) {
   }
 
   if (Mqtt.mqtt_tls) {
+#ifdef ESP32
+    tlsClient = new BearSSL::WiFiClientSecure_light(2048,2048);
+#else // ESP32 - ESP8266
     tlsClient = new BearSSL::WiFiClientSecure_light(1024,1024);
+#endif
 
 #ifdef USE_MQTT_AWS_IOT
     loadTlsDir();   // load key and certificate data from Flash
