@@ -36,8 +36,7 @@ class BerrySupport {
 public:
   bvm *vm = nullptr;                    // berry vm
   bool rules_busy = false;              // are we already processing rules, avoid infinite loop
-  const char *fname = nullptr;    // name of berry function to call
-  int32_t     fret = 0;
+  bool autoexec_done = false;           // do we still need to load 'autoexec.be'
 };
 BerrySupport berry;
 
@@ -59,10 +58,6 @@ void checkBeTop(void) {
  * 
 \*********************************************************************************************/
 // // call a function (if exists) of type void -> void
-// void callBerryFunctionVoid_berry(const char * fname) {
-//   berry.fret = 0;
-//   callBerryFunctionVoid(berry.fname);
-// }
 
 bool callBerryRule(void) {
   if (berry.rules_busy) { return false; }
@@ -244,7 +239,7 @@ void BrReset(void) {
     ret_code2 = be_pcall(berry.vm, 0);
     if (ret_code1 != 0) {
       AddLog(LOG_LEVEL_ERROR, PSTR(D_LOG_BERRY "ERROR: be_pcall [%s] %s"), be_tostring(berry.vm, -2), be_tostring(berry.vm, -1));
-      be_pop(berry.vm, 2);
+      be_pop(berry.vm, 1);
       break;
     }
     // AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_BERRY "Berry code ran, RAM used=%u"), be_gc_memcount(berry.vm));
@@ -266,6 +261,32 @@ void BrReset(void) {
       berry.vm = nullptr;
     }
   }
+}
+
+
+void BrAutoexec(void) {
+  if (berry.vm == nullptr) { return; }
+
+  int32_t ret_code1, ret_code2;
+  bool berry_init_ok = false;
+
+  // load 'autoexec.be' or 'autoexec.bec'
+  ret_code1 = be_loadstring(berry.vm, berry_autoexec);
+  // be_dumpstack(berry.vm);
+  if (ret_code1 != 0) {
+    be_pop(berry.vm, 2);
+    return;
+  }
+  ret_code2 = be_pcall(berry.vm, 0);
+  // be_dumpstack(berry.vm);
+  if (ret_code1 != 0) {
+    // AddLog(LOG_LEVEL_ERROR, PSTR(D_LOG_BERRY "ERROR: be_pcall [%s] %s"), be_tostring(berry.vm, -2), be_tostring(berry.vm, -1));
+    be_pop(berry.vm, 1);
+    return;
+  }
+  // AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_BERRY "Berry code ran, RAM used=%u"), be_gc_memcount(berry.vm));
+  be_pop(berry.vm, 1);
+  // be_dumpstack(berry.vm);
 }
 
 /*********************************************************************************************\
@@ -304,11 +325,11 @@ void CmndBrRun(void) {
     // AddLog(LOG_LEVEL_INFO, "run: type(2)=%s", be_typename(berry.vm, 2));
 
     // code taken from REPL, look first at top, and if nil, look at return value
-    if (!be_isnil(berry.vm, 1)) {
+    // if (!be_isnil(berry.vm, 1)) {
       ret_val = be_tostring(berry.vm, 1);
-    } else {
-      ret_val = be_tostring(berry.vm, 2);
-    }
+    // } else {
+    //   ret_val = be_tostring(berry.vm, 2);
+    // }
     Response_P("{\"" D_PRFX_BR "\":\"%s\"}", EscapeJSONString(ret_val).c_str());    // can't use XdrvMailbox.command as it may have been overwritten by subcommand
     be_pop(berry.vm, 1);
   } else {
@@ -339,6 +360,12 @@ bool Xdrv52(uint8_t function)
     //case FUNC_PRE_INIT:
     case FUNC_INIT:
       BrReset();
+      break;
+    case FUNC_LOOP:
+      if (!berry.autoexec_done) {
+        BrAutoexec();
+        berry.autoexec_done = true;
+      }
       break;
     case FUNC_EVERY_50_MSECOND:
       callBerryFunctionVoid(PSTR("_run_deferred"));
@@ -383,8 +410,6 @@ bool Xdrv52(uint8_t function)
     case FUNC_BUTTON_PRESSED:
       break;
 
-    case FUNC_LOOP:
-      break;
 
   }
   return result;

@@ -313,6 +313,7 @@ void be_load_baselib(bvm *vm)
 extern const bclass be_class_list;
 extern const bclass be_class_map;
 extern const bclass be_class_range;
+extern const bclass be_class_bytes;
 extern int be_nfunc_open(bvm *vm);
 /* @const_object_info_begin
 vartab m_builtin (scope: local) {
@@ -337,6 +338,7 @@ vartab m_builtin (scope: local) {
     list, class(be_class_list)
     map, class(be_class_map)
     range, class(be_class_range)
+    bytes, class(be_class_bytes)
 }
 @const_object_info_end */
 #include "../generate/be_fixed_m_builtin.h"
