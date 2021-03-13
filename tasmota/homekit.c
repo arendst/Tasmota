@@ -24,6 +24,10 @@
 /* HomeKit Smart Outlet Example
 */
 
+//#define USE_HOMEKIT
+
+
+#ifdef USE_HOMEKIT
 #ifdef ESP32
 
 #include <Arduino.h>
@@ -722,3 +726,4 @@ void homekit_main(char *desc, uint32_t flag ) {
 }
 
 #endif // ESP32
+#endif // USE_HOMEKIT
