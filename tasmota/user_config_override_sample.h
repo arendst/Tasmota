@@ -20,9 +20,6 @@
 #ifndef _USER_CONFIG_OVERRIDE_H_
 #define _USER_CONFIG_OVERRIDE_H_
 
-// this flag needs to be unset otherwise settings from build variant Tasmota32 are included
-#undef FLAG_VARIANT_TASMOTA32
-
 // force the compiler to show a warning to confirm that this file is included
 #warning **** user_config_override.h: Using Settings from this File ****
 
