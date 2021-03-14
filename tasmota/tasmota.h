@@ -31,7 +31,6 @@
 \*********************************************************************************************/
 
 #define CODE_IMAGE_STR "tasmota"
-#define FLAG_VARIANT_TASMOTA32
 
 #define USE_LIGHT                           // Enable light control
 #define USE_ENERGY_SENSOR                   // Use energy sensors (+14k code)

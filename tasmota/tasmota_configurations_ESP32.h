@@ -31,7 +31,6 @@
 
 #undef CODE_IMAGE_STR
 #define CODE_IMAGE_STR "webcam"
-#undef FLAG_VARIANT_TASMOTA32
 
 #define USE_WEBCAM
 #undef  USE_MI_ESP32                             // (ESP32 only) Disable support for ESP32 as a BLE-bridge (+9k2 mem, +292k flash)
@@ -46,7 +45,6 @@
 
 #undef CODE_IMAGE_STR
 #define CODE_IMAGE_STR "odroid-go"
-#undef FLAG_VARIANT_TASMOTA32
 
 #undef MODULE
 #define MODULE                 ODROID_GO         // [Module] Select default module from tasmota_template.h
@@ -74,7 +72,6 @@
 
 #undef CODE_IMAGE_STR
 #define CODE_IMAGE_STR "core2"
-#undef FLAG_VARIANT_TASMOTA32
 
 #undef MODULE
 #define MODULE                 M5STACK_CORE2     // [Module] Select default module from tasmota_template.h
@@ -129,7 +126,6 @@
 
 #undef CODE_IMAGE_STR
 #define CODE_IMAGE_STR "bluetooth"
-#undef FLAG_VARIANT_TASMOTA32
 
 #undef MODULE
 #define MODULE                 WEMOS             // [Module] Select default module from tasmota_template.h
@@ -149,10 +145,7 @@
  * Provide an image which includes KNX and Sensors
 \*********************************************************************************************/
 
-// FLAG_VARIANT_TASMOTA32 is set for variant "Tasmota32" -> tasmota.h
-// for all other Tasmota build variants this flag needs to be undefined!!
-
-#ifdef FLAG_VARIANT_TASMOTA32
+#ifdef FIRMWARE_TASMOTA32
 
 #define USE_ENHANCED_GUI_WIFI_SCAN
 
@@ -325,7 +318,7 @@
 #define USE_KNX                                  // Enable KNX IP Protocol Support (+23k code, +3k3 mem)
 #endif
 
-#endif // FLAG_VARIANT_TASMOTA32
+#endif // FIRMWARE_TASMOTA32
 
 #endif  // ESP32
 #endif  // _TASMOTA_CONFIGURATIONS_ESP32_H_

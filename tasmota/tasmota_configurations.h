@@ -29,8 +29,6 @@
 
 #undef CODE_IMAGE_STR
 #define CODE_IMAGE_STR "sensors"
-#undef FLAG_VARIANT_TASMOTA32
-
 
 #undef USE_DISCOVERY                             // Disable mDNS (+8k code or +23.5k code with core 2_5_x, +0.3k mem)
 
@@ -233,7 +231,6 @@
 
 #undef CODE_IMAGE_STR
 #define CODE_IMAGE_STR "knx"
-#undef FLAG_VARIANT_TASMOTA32
 
 #ifndef USE_KNX
 #define USE_KNX                                  // Enable KNX IP Protocol Support (+23k code, +3k3 mem)
@@ -260,7 +257,6 @@
 
 #undef CODE_IMAGE_STR
 #define CODE_IMAGE_STR "display"
-#undef FLAG_VARIANT_TASMOTA32
 
 #undef USE_EMULATION                             // Disable Belkin WeMo and Hue Bridge emulation for Alexa (-16k code, -2k mem)
 #undef USE_EMULATION_HUE                         // Disable Hue Bridge emulation for Alexa (+14k code, +2k mem common)
@@ -342,7 +338,6 @@
 
 #undef CODE_IMAGE_STR
 #define CODE_IMAGE_STR "ir"
-#undef FLAG_VARIANT_TASMOTA32
 
 #undef USE_EMULATION
 #undef USE_EMULATION_HUE                         // Disable Hue emulation - only for lights and relays
@@ -468,7 +463,6 @@
 
 #undef CODE_IMAGE_STR
 #define CODE_IMAGE_STR "zbbridge"
-#undef FLAG_VARIANT_TASMOTA32
 
 #undef MODULE
 #define MODULE                 SONOFF_ZB_BRIDGE  // [Module] Select default module from tasmota_template.h
@@ -626,7 +620,6 @@
 
 #undef CODE_IMAGE_STR
 #define CODE_IMAGE_STR "lite"
-#undef FLAG_VARIANT_TASMOTA32
 
 #undef APP_SLEEP
 #define APP_SLEEP 1                              // Default to sleep = 1 for FIRMWARE_LITE
@@ -759,7 +752,6 @@
 
 #undef CODE_IMAGE_STR
 #define CODE_IMAGE_STR "minimal"
-#undef FLAG_VARIANT_TASMOTA32
 
 #undef FIRMWARE_LITE                             // Disable tasmota-lite with no sensors
 #undef FIRMWARE_SENSORS                          // Disable tasmota-sensors with useful sensors enabled
@@ -907,7 +899,6 @@
 
 #undef CODE_IMAGE_STR
 #define CODE_IMAGE_STR "mini-custom"
-#undef FLAG_VARIANT_TASMOTA32
 
 #undef FIRMWARE_LITE                            // Disable tasmota-lite with no sensors
 #undef FIRMWARE_SENSORS                         // Disable tasmota-sensors with useful sensors enabled
