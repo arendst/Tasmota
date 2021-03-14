@@ -1812,27 +1812,37 @@ const uint8_t I2C_RETRY_COUNTER = 3;
 uint32_t i2c_active[4] = { 0 };
 uint32_t i2c_buffer = 0;
 
+#ifdef ESP32
+bool I2cValidRead(uint8_t addr, uint8_t reg, uint8_t size, uint32_t bus = 0);
+bool I2cValidRead(uint8_t addr, uint8_t reg, uint8_t size, uint32_t bus)
+#else
 bool I2cValidRead(uint8_t addr, uint8_t reg, uint8_t size)
+#endif
 {
   uint8_t retry = I2C_RETRY_COUNTER;
   bool status = false;
+#ifdef ESP32
+  TwoWire & myWire = (bus == 0) ? Wire : Wire1;
+#else
+  TwoWire & myWire = Wire;
+#endif
 
   i2c_buffer = 0;
   while (!status && retry) {
-    Wire.beginTransmission(addr);                       // start transmission to device
-    Wire.write(reg);                                    // sends register address to read from
-    if (0 == Wire.endTransmission(false)) {             // Try to become I2C Master, send data and collect bytes, keep master status for next request...
-      Wire.requestFrom((int)addr, (int)size);           // send data n-bytes read
-      if (Wire.available() == size) {
+    myWire.beginTransmission(addr);                       // start transmission to device
+    myWire.write(reg);                                    // sends register address to read from
+    if (0 == myWire.endTransmission(false)) {             // Try to become I2C Master, send data and collect bytes, keep master status for next request...
+      myWire.requestFrom((int)addr, (int)size);           // send data n-bytes read
+      if (myWire.available() == size) {
         for (uint32_t i = 0; i < size; i++) {
-          i2c_buffer = i2c_buffer << 8 | Wire.read();   // receive DATA
+          i2c_buffer = i2c_buffer << 8 | myWire.read();   // receive DATA
         }
         status = true;
       }
     }
     retry--;
   }
-  if (!retry) Wire.endTransmission();
+  if (!retry) myWire.endTransmission();
   return status;
 }
 
@@ -1916,19 +1926,30 @@ int32_t I2cRead24(uint8_t addr, uint8_t reg)
   return i2c_buffer;
 }
 
+#ifdef ESP32
+bool I2cWrite(uint8_t addr, uint8_t reg, uint32_t val, uint8_t size, uint32_t bus = 0);
+bool I2cWrite(uint8_t addr, uint8_t reg, uint32_t val, uint8_t size, uint32_t bus)
+#else
 bool I2cWrite(uint8_t addr, uint8_t reg, uint32_t val, uint8_t size)
+#endif
 {
   uint8_t x = I2C_RETRY_COUNTER;
 
+#ifdef ESP32
+  TwoWire & myWire = (bus == 0) ? Wire : Wire1;
+#else
+  TwoWire & myWire = Wire;
+#endif
+
   do {
-    Wire.beginTransmission((uint8_t)addr);              // start transmission to device
-    Wire.write(reg);                                    // sends register address to write to
+    myWire.beginTransmission((uint8_t)addr);              // start transmission to device
+    myWire.write(reg);                                    // sends register address to write to
     uint8_t bytes = size;
     while (bytes--) {
-      Wire.write((val >> (8 * bytes)) & 0xFF);          // write data
+      myWire.write((val >> (8 * bytes)) & 0xFF);          // write data
     }
     x--;
-  } while (Wire.endTransmission(true) != 0 && x != 0);  // end transmission
+  } while (myWire.endTransmission(true) != 0 && x != 0);  // end transmission
   return (x);
 }
 
