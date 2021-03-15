@@ -338,6 +338,8 @@ void setup(void) {
     snprintf_P(TasmotaGlobal.hostname, sizeof(TasmotaGlobal.hostname)-1, SettingsText(SET_HOSTNAME));
   }
 
+  RtcInit();
+
   GpioInit();
 
   WifiConnect();
@@ -350,7 +352,7 @@ void setup(void) {
   AddLog(LOG_LEVEL_INFO, PSTR(D_WARNING_MINIMAL_VERSION));
 #endif  // FIRMWARE_MINIMAL
 
-  RtcInit();
+//  RtcInit();
 
 #ifdef USE_ARDUINO_OTA
   ArduinoOTAInit();
