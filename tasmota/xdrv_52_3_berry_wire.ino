@@ -185,7 +185,7 @@ extern "C" {
     be_raise(vm, kTypeError, nullptr);
   }
 
-  // Berry: `validwrite(address:int, reg:int, val:int, size:int) -> bool or nil`
+  // Berry: `write(address:int, reg:int, val:int, size:int) -> bool or nil`
   int32_t b_wire_validwrite(struct bvm *vm);
   int32_t b_wire_validwrite(struct bvm *vm) {
     int32_t top = be_top(vm); // Get the number of arguments
@@ -202,7 +202,7 @@ extern "C" {
     be_raise(vm, kTypeError, nullptr);
   }
 
-  // Berry: `validread(address:int, reg:int, size:int) -> int or nil`
+  // Berry: `read(address:int, reg:int, size:int) -> int or nil`
   int32_t b_wire_validread(struct bvm *vm);
   int32_t b_wire_validread(struct bvm *vm) {
     int32_t top = be_top(vm); // Get the number of arguments

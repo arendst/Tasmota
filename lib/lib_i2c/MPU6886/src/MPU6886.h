@@ -10,7 +10,6 @@
 
 #include <Wire.h>
 #include <Arduino.h>
-#include "MahonyAHRS.h"
 
 #define MPU6886_ADDRESS           0x68 
 #define MPU6886_WHOAMI            0x75
@@ -67,8 +66,15 @@ class MPU6886 {
 
       Gscale Gyscale = GFS_2000DPS;
       Ascale Acscale = AFS_8G;
+      int16_t acRange = 8000;   // 1/1000 of g
+      int16_t gyRange = 2000;   // dps - degree per second
     public:
-      MPU6886();
+      MPU6886(void) {};
+  #ifdef ESP32
+      void setBus(uint32_t _bus) { myWire = _bus ? Wire1 : Wire; };
+  #else
+      void setBus(uint32_t _bus) { myWire = Wire; };
+  #endif
       int Init(void);
       void getAccelAdc(int16_t* ax, int16_t* ay, int16_t* az);
       void getGyroAdc(int16_t* gx, int16_t* gy, int16_t* gz);
@@ -77,13 +83,17 @@ class MPU6886 {
       void getAccelData(float* ax, float* ay, float* az);
       void getGyroData(float* gx, float* gy, float* gz);
       void getTempData(float *t);
+      // int variants
+      void getAccelDataInt(int16_t* ax, int16_t* ay, int16_t* az);
+      void getGyroDataInt(int16_t* gx, int16_t* gy, int16_t* gz);
 
       void SetGyroFsr(Gscale scale);
       void SetAccelFsr(Ascale scale);
 
-      void getAhrsData(float *pitch,float *roll,float *yaw);
+      // void getAhrsData(float *pitch,float *roll,float *yaw);
 
     public:
+      TwoWire & myWire = Wire;   // default to Wire (bus 0)
       float aRes, gRes;
 
     private:
