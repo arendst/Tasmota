@@ -2053,10 +2053,19 @@ void I2cSetActive(uint32_t addr, uint32_t count = 1)
 //  AddLog(LOG_LEVEL_DEBUG, PSTR("I2C: Active %08X,%08X,%08X,%08X"), i2c_active[0], i2c_active[1], i2c_active[2], i2c_active[3]);
 }
 
-void I2cSetActiveFound(uint32_t addr, const char *types)
+void I2cSetActiveFound(uint32_t addr, const char *types, uint32_t bus = 0);
+void I2cSetActiveFound(uint32_t addr, const char *types, uint32_t bus)
 {
   I2cSetActive(addr);
+#ifdef ESP32
+  if (0 == bus) {
+    AddLog(LOG_LEVEL_INFO, S_LOG_I2C_FOUND_AT, types, addr);
+  } else {
+    AddLog(LOG_LEVEL_INFO, S_LOG_I2C_FOUND_AT_PORT, types, addr, bus);
+  }
+#else
   AddLog(LOG_LEVEL_INFO, S_LOG_I2C_FOUND_AT, types, addr);
+#endif // ESP32
 }
 
 bool I2cActive(uint32_t addr)
@@ -2068,14 +2077,24 @@ bool I2cActive(uint32_t addr)
   return false;
 }
 
+#ifdef ESP32
+bool I2cSetDevice(uint32_t addr, uint32_t bus = 0);
+bool I2cSetDevice(uint32_t addr, uint32_t bus)
+#else
 bool I2cSetDevice(uint32_t addr)
+#endif
 {
+#ifdef ESP32
+  TwoWire & myWire = (bus == 0) ? Wire : Wire1;
+#else
+  TwoWire & myWire = Wire;
+#endif
   addr &= 0x7F;         // Max I2C address is 127
   if (I2cActive(addr)) {
     return false;       // If already active report as not present;
   }
-  Wire.beginTransmission((uint8_t)addr);
-  return (0 == Wire.endTransmission());
+  myWire.beginTransmission((uint8_t)addr);
+  return (0 == myWire.endTransmission());
 }
 #endif  // USE_I2C
 

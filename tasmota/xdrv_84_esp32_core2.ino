@@ -32,15 +32,14 @@ rtc better sync
 #include <esp_system.h>
 
 #include <AXP192.h>
-#include <MPU6886.h>
 #include <BM8563_RTC.h>
 #include <soc/rtc.h>
+#include <SPI.h>
 
 #define XDRV_84          84
 
 struct CORE2_globs {
   AXP192 Axp;
-  MPU6886 Mpu;
   BM8563_RTC Rtc;
   bool ready;
   bool tset;
@@ -56,9 +55,6 @@ struct CORE2_ADC {
   float vbus_c;
   float batt_c;
   float temp;
-  int16_t x;
-  int16_t y;
-  int16_t z;
 } core2_adc;
 
 // cause SC card is needed by scripter
@@ -74,9 +70,6 @@ void CORE2_Module_Init(void) {
   core2_globs.Axp.SetAdcState(true);
   // motor voltage
   core2_globs.Axp.SetLDOVoltage(3,2000);
-
-  core2_globs.Mpu.Init();
-  I2cSetActiveFound(MPU6886_ADDRESS, "MPU6886");
 
   core2_globs.Rtc.begin();
   I2cSetActiveFound(RTC_ADRESS, "RTC");
@@ -119,12 +112,6 @@ const char HTTP_CORE2[] PROGMEM =
  "{s}BATT Voltage" "{m}%s V" "{e}"
  "{s}BATT Current" "{m}%s mA" "{e}"
  "{s}Chip Temperature" "{m}%s C" "{e}";
-#ifdef USE_MPU6886
-const char HTTP_CORE2_MPU[] PROGMEM =
- "{s}MPU x" "{m}%d mg" "{e}"
- "{s}MPU y" "{m}%d mg" "{e}"
- "{s}MPU z" "{m}%d mg" "{e}";
-#endif // USE_MPU6886
 #endif  // USE_WEBSERVER
 
 
@@ -146,18 +133,9 @@ void CORE2_WebShow(uint32_t json) {
   dtostrfd(core2_adc.temp, 2, tstring);
 
   if (json) {
-    ResponseAppend_P(PSTR(",\"CORE2\":{\"VBV\":%s,\"BV\":%s,\"VBC\":%s,\"BC\":%s,\"CT\":%s"), vstring, cstring, bvstring, bcstring, tstring);
-
-#ifdef USE_MPU6886
-    ResponseAppend_P(PSTR(",\"MPUX\":%d,\"MPUY\":%d,\"MPUZ\":%d"), core2_adc.x, core2_adc.y, core2_adc.z);
-#endif
-    ResponseJsonEnd();
+    ResponseAppend_P(PSTR(",\"CORE2\":{\"VBV\":%s,\"BV\":%s,\"VBC\":%s,\"BC\":%s,\"CT\":%s}"), vstring, cstring, bvstring, bcstring, tstring);
   } else {
     WSContentSend_PD(HTTP_CORE2, vstring, cstring, bvstring, bcstring, tstring);
-
-#ifdef USE_MPU6886
-    WSContentSend_PD(HTTP_CORE2_MPU, core2_adc.x, core2_adc.y, core2_adc.z);
-#endif // USE_MPU6886
   }
 }
 
@@ -342,15 +320,6 @@ void CORE2_GetADC(void) {
     core2_adc.batt_c = core2_globs.Axp.GetBatCurrent();
 
     core2_adc.temp = core2_globs.Axp.GetTempInAXP192();
-#ifdef USE_MPU6886
-      float x;
-      float y;
-      float z;
-      core2_globs.Mpu.getAccelData(&x, &y, &z);
-      core2_adc.x=x*1000;
-      core2_adc.y=y*1000;
-      core2_adc.z=z*1000;
-#endif // USE_MPU6886
 }
 
 /*********************************************************************************************\

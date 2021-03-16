@@ -81,12 +81,12 @@
 #define USE_M5STACK_CORE2                        // Add support for M5Stack Core2
   #define USE_I2S_SAY_TIME
   #define USE_I2S_WEBRADIO
-  #define USE_MPU6886
 #define USE_UFILESYS
 #define USE_SDCARD
   #define GUI_TRASH_FILE
 #define USE_I2C
   #define USE_BMA423
+  #define USE_MPU6886
 #define USE_SPI
   #define USE_DISPLAY
     #define USE_DISPLAY_ILI9342
