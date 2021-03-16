@@ -270,10 +270,10 @@ void NewHAssDiscovery(void)
   char stopic[TOPSZ];
   char stemp1[TOPSZ];
   char stemp2[200];
-  char stemp3[TOPSZ];
-  char stemp4[TOPSZ];
-  char stemp5[TOPSZ];
-  char stemp6[TOPSZ];
+  char switch_mode[90];
+  char switch_name[300];
+  char stemp5[90];
+  char stemp6[90];
   char unique_id[30];
   char relays[TOPSZ];
   char *state_topic = stemp1;
@@ -297,14 +297,14 @@ void NewHAssDiscovery(void)
     snprintf_P(stemp2, sizeof(stemp2), PSTR("%s%s%s"), stemp2, (i > 0 ? "," : ""), (i < maxfn) ? fname : PSTR("null"));
   }
 
-  stemp3[0] = '\0';
-  stemp4[0] = '\0';
+  switch_mode[0] = '\0';
+  switch_name[0] = '\0';
   // Enable Discovery for Switches only if SetOption114 is enabled
   for (uint32_t i = 0; i < MAX_SWITCHES; i++) {
     char sname[TOPSZ];
     snprintf_P(sname, sizeof(sname), PSTR("\"%s\""), GetSwitchText(i).c_str());
-    snprintf_P(stemp3, sizeof(stemp3), PSTR("%s%s%d"), stemp3, (i > 0 ? "," : ""), (PinUsed(GPIO_SWT1, i) & Settings.flag5.mqtt_switches) ? Settings.switchmode[i] : -1);
-    snprintf_P(stemp4, sizeof(stemp4), PSTR("%s%s%s"), stemp4, (i > 0 ? "," : ""), (PinUsed(GPIO_SWT1, i) & Settings.flag5.mqtt_switches) ? sname : PSTR("null"));
+    snprintf_P(switch_mode, sizeof(switch_mode), PSTR("%s%s%d"), switch_mode, (i > 0 ? "," : ""), (PinUsed(GPIO_SWT1, i) & Settings.flag5.mqtt_switches) ? Settings.switchmode[i] : -1);
+    snprintf_P(switch_name, sizeof(switch_name), PSTR("%s%s%s"), switch_name, (i > 0 ? "," : ""), (PinUsed(GPIO_SWT1, i) & Settings.flag5.mqtt_switches) ? sname : PSTR("null"));
   }
 
   stemp5[0] = '\0';
@@ -338,7 +338,7 @@ void NewHAssDiscovery(void)
   if (!Settings.flag.hass_discovery) { // HassDiscoveryRelays(relays)
     Response_P(HASS_DISCOVER_DEVICE, (uint32_t)WiFi.localIP(), SettingsText(SET_DEVICENAME),
               stemp2, TasmotaGlobal.hostname, unique_id, ModuleName().c_str(), TuyaMod, iFanMod, GetStateText(0), GetStateText(1), GetStateText(2), GetStateText(3),
-              TasmotaGlobal.version, TasmotaGlobal.mqtt_topic, SettingsText(SET_MQTT_FULLTOPIC), PSTR(SUB_PREFIX), PSTR(PUB_PREFIX), PSTR(PUB_PREFIX2), Hass.RelLst, stemp3, stemp4,
+              TasmotaGlobal.version, TasmotaGlobal.mqtt_topic, SettingsText(SET_MQTT_FULLTOPIC), PSTR(SUB_PREFIX), PSTR(PUB_PREFIX), PSTR(PUB_PREFIX2), Hass.RelLst, switch_mode, switch_name,
               stemp5, Settings.flag.mqtt_response, Settings.flag.button_swap, Settings.flag.button_single, Settings.flag.decimal_text, Settings.flag.not_power_linked,
               Settings.flag.hass_light, Settings.flag3.pwm_multi_channels, Settings.flag3.mqtt_buttons, Settings.flag4.alexa_ct_range, Settings.flag5.mqtt_switches,
               Settings.flag5.fade_fixed_duration, light_controller.isCTRGBLinked(), Light.subtype, stemp6);
