@@ -1,7 +1,7 @@
 /*
   pt-BR.h - localization for Portuguese - Brazil for Tasmota
 
-  Copyright (C) 2021  Fabiano Bovo
+  Copyright (C) 2021  Fabiano Bovo and Adrian Scillato
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v7.0.0.1
+ * Updated until v9.3.1.1
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -797,7 +797,9 @@
 #define D_SENSOR_WIEGAND_D1    "Wiegand D1"
 #define D_SENSOR_NEOPOOL_TX    "NeoPool Tx"
 #define D_SENSOR_NEOPOOL_RX    "NeoPool Rx"
-
+#define D_NEW_ADDRESS          "Mudança de endereço para"
+#define D_OUT_OF_RANGE         "Fora de Alcance"
+#define D_SENSOR_DETECTED      "detectou"
 
 // Units
 #define D_UNIT_AMPERE "A"
