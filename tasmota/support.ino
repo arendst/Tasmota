@@ -2128,6 +2128,15 @@ void SyslogAsync(bool refresh) {
   if (!TasmotaGlobal.syslog_level) { return; }
   if (refresh && !NeedLogRefresh(TasmotaGlobal.syslog_level, index)) { return; }
 
+  uint32_t current_hash = GetHash(SettingsText(SET_SYSLOG_HOST), strlen(SettingsText(SET_SYSLOG_HOST)));
+  if (syslog_host_hash != current_hash) {
+    IPAddress temp_syslog_host_addr;
+    int ret = WiFi.hostByName(SettingsText(SET_SYSLOG_HOST), temp_syslog_host_addr);  // If sleep enabled this might result in exception so try to do it once using hash
+    if (!ret) return; // name resolution dosn't work, too early ? or wrong name
+    syslog_host_hash = current_hash;
+    syslog_host_addr = temp_syslog_host_addr;
+  }
+
   char* line;
   size_t len;
   while (GetLog(TasmotaGlobal.syslog_level, &index, &line, &len)) {
@@ -2135,11 +2144,6 @@ void SyslogAsync(bool refresh) {
     //              HTP: Web server active on wemos5 with IP address 192.168.2.172
     uint32_t mxtime = strchr(line, ' ') - line +1;  // Remove mxtime
     if (mxtime > 0) {
-      uint32_t current_hash = GetHash(SettingsText(SET_SYSLOG_HOST), strlen(SettingsText(SET_SYSLOG_HOST)));
-      if (syslog_host_hash != current_hash) {
-        syslog_host_hash = current_hash;
-        WiFi.hostByName(SettingsText(SET_SYSLOG_HOST), syslog_host_addr);  // If sleep enabled this might result in exception so try to do it once using hash
-      }
       if (!PortUdp.beginPacket(syslog_host_addr, Settings.syslog_port)) {
         TasmotaGlobal.syslog_level = 0;
         TasmotaGlobal.syslog_timer = SYSLOG_TIMER;
