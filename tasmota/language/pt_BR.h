@@ -797,6 +797,7 @@
 #define D_SENSOR_WIEGAND_D1    "Wiegand D1"
 #define D_SENSOR_NEOPOOL_TX    "NeoPool Tx"
 #define D_SENSOR_NEOPOOL_RX    "NeoPool Rx"
+#define D_SENSOR_VL53L0X_XSHUT "VL53L0X XSHUT"
 #define D_NEW_ADDRESS          "Mudança de endereço para"
 #define D_OUT_OF_RANGE         "Fora de Alcance"
 #define D_SENSOR_DETECTED      "detectou"
