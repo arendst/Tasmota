@@ -2137,8 +2137,11 @@ void SyslogAsync(bool refresh) {
     if (mxtime > 0) {
       uint32_t current_hash = GetHash(SettingsText(SET_SYSLOG_HOST), strlen(SettingsText(SET_SYSLOG_HOST)));
       if (syslog_host_hash != current_hash) {
+        IPAddress temp_syslog_host_addr;
+        int ret = WiFi.hostByName(SettingsText(SET_SYSLOG_HOST), temp_syslog_host_addr);  // If sleep enabled this might result in exception so try to do it once using hash
+        if (!ret) return;
         syslog_host_hash = current_hash;
-        WiFi.hostByName(SettingsText(SET_SYSLOG_HOST), syslog_host_addr);  // If sleep enabled this might result in exception so try to do it once using hash
+        syslog_host_addr = temp_syslog_host_addr;
       }
       if (!PortUdp.beginPacket(syslog_host_addr, Settings.syslog_port)) {
         TasmotaGlobal.syslog_level = 0;
