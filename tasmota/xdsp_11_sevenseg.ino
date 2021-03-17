@@ -147,8 +147,9 @@ void SevensegInit(uint8_t mode)
   }
 }
 
-void SevensegInitDriver(void)
-{
+void SevensegInitDriver(void) {
+  if (!TasmotaGlobal.i2c_enabled) { return; }
+
   if (!Settings.display_model) {
     if (I2cSetDevice(Settings.display_address[0])) {
       Settings.display_model = XDSP_11;
