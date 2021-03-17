@@ -1932,7 +1932,7 @@ void CmndDisplayFont(void)
 
 void CmndDisplayILIMOde(void)
 {
-  if ((XdrvMailbox.payload >= 1) && (XdrvMailbox.payload < 16)) {
+  if ((XdrvMailbox.payload >= 1) && (XdrvMailbox.payload <= 7)) {
     Settings.display_options.ilimode = XdrvMailbox.payload;
     TasmotaGlobal.restart_flag = 2;
   }

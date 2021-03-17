@@ -23,6 +23,8 @@
 
 #define XDSP_04                4
 
+enum IliModes { ILIMODE_9341 = 1, ILIMODE_9342, ILIMODE_MAX };
+
 #include <ILI9341_2.h>
 
 extern uint8_t *buffer;
@@ -37,13 +39,10 @@ uint8_t ili9342_ctouch_counter = 0;
 uint8_t ili9342_ctouch_counter = 0;
 #endif // USE_FT5206
 
-
 bool tft_init_done = false;
 
-#define ILI9341_ID 1
-#define ILI9342_ID 2
 
-//Settings.display_options.ilimode = ILI9341_ID;
+//Settings.display_options.ilimode = ILIMODE_9341;
 
 /*********************************************************************************************/
 
@@ -66,8 +65,8 @@ void ILI9341_InitDriver()
     // disable screen buffer
     buffer = NULL;
 
-    if (!Settings.display_options.ilimode) {
-      Settings.display_options.ilimode = ILI9341_ID;
+    if (!Settings.display_options.ilimode || (Settings.display_options.ilimode >= ILIMODE_MAX)) {
+      Settings.display_options.ilimode = ILIMODE_9341;
     }
 
     // default colors
@@ -102,7 +101,7 @@ void ILI9341_InitDriver()
     renderer->setTextFont(2);
     renderer->setTextSize(1);
     renderer->setTextColor(ILI9341_WHITE, ILI9341_BLACK);
-    renderer->DrawStringAt(50, (Settings.display_height/2)-12, (Settings.display_options.ilimode & 3)==ILI9341_ID?"ILI9341 TFT!":"ILI9342 TFT!", ILI9341_WHITE, 0);
+    renderer->DrawStringAt(50, (Settings.display_height/2)-12, (Settings.display_options.ilimode & 3)==ILIMODE_9341?"ILI9341 TFT!":"ILI9342 TFT!", ILI9341_WHITE, 0);
     delay(1000);
 #endif // SHOW_SPLASH
 

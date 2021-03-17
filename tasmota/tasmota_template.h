@@ -410,11 +410,13 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_SDCARD_CS),
 #endif  // USE_SDCARD
 #endif  // USE_SPI
+
   AGPIO(GPIO_SSPI_MISO),      // Software SPI Master Input Client Output
   AGPIO(GPIO_SSPI_MOSI),      // Software SPI Master Output Client Input
   AGPIO(GPIO_SSPI_SCLK),      // Software SPI Serial Clock
   AGPIO(GPIO_SSPI_CS),        // Software SPI Chip Select
   AGPIO(GPIO_SSPI_DC),        // Software SPI Data or Command
+
 #ifdef USE_DISPLAY
 #ifdef USE_DISPLAY_ILI9341
   AGPIO(GPIO_ILI9341_CS),
@@ -422,7 +424,6 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_XPT2046
   AGPIO(GPIO_XPT2046_CS),     // XPT2046 SPI Chip Select
 #endif
-
 #endif  // USE_DISPLAY_ILI9341
 #ifdef USE_DISPLAY_ILI9488
   AGPIO(GPIO_ILI9488_CS),
