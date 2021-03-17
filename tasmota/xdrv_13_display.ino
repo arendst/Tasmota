@@ -17,7 +17,6 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#if defined(USE_I2C) || defined(USE_SPI)
 #ifdef USE_DISPLAY
 
 #define XDRV_13       13
@@ -1601,7 +1600,9 @@ void DisplayInitDriver(void)
   Display_Text_From_File("/display.ini");
 #endif
 
-
+#ifdef USE_GRAPH
+  for (uint8_t count = 0; count < NUM_GRAPHS; count++) { graph[count] = 0; }
+#endif
 
 //  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "Display model %d"), Settings.display_model);
 
@@ -1945,7 +1946,7 @@ void CmndDisplayFont(void)
 
 void CmndDisplayILIMOde(void)
 {
-  if ((XdrvMailbox.payload >= 1) && (XdrvMailbox.payload < 16)) {
+  if ((XdrvMailbox.payload >= 1) && (XdrvMailbox.payload <= 7)) {
     Settings.display_options.ilimode = XdrvMailbox.payload;
     TasmotaGlobal.restart_flag = 2;
   }
@@ -2051,8 +2052,9 @@ void CmndDisplayRows(void)
 }
 
 /*********************************************************************************************\
- * optional drivers
+ * Optional drivers
 \*********************************************************************************************/
+
 #ifdef USE_TOUCH_BUTTONS
 // very limited path size, so, add .jpg
 void draw_picture(char *path, uint32_t xp, uint32_t yp, uint32_t xs, uint32_t ys, uint32_t ocol, bool inverted) {
@@ -2073,7 +2075,7 @@ char ppath[16];
   }
   Draw_RGB_Bitmap(ppath, xp, yp, inverted);
 }
-#endif
+#endif  // USE_TOUCH_BUTTONS
 
 
 #ifdef ESP32
@@ -2187,6 +2189,10 @@ void Draw_RGB_Bitmap(char *file,uint16_t xp, uint16_t yp, bool inverted ) {
 }
 #endif // USE_UFILESYS
 
+/*********************************************************************************************\
+ * AWatch
+\*********************************************************************************************/
+
 #ifdef USE_AWATCH
 #define MINUTE_REDUCT 4
 
@@ -2224,6 +2230,9 @@ void DrawAClock(uint16_t rad) {
 }
 #endif // USE_AWATCH
 
+/*********************************************************************************************\
+ * Graphics
+\*********************************************************************************************/
 
 #ifdef USE_GRAPH
 
@@ -2263,7 +2272,6 @@ struct GRAPH {
   uint8_t color_index;
   GFLAGS flags;
 };
-
 
 struct GRAPH *graph[NUM_GRAPHS];
 
@@ -2461,6 +2469,7 @@ void Save_graph(uint8_t num, char *path) {
   fp.print("\n");
   fp.close();
 }
+
 void Restore_graph(uint8_t num, char *path) {
   if (!renderer) return;
   uint16_t index=num%NUM_GRAPHS;
@@ -2572,7 +2581,6 @@ void AddGraph(uint8_t num,uint8_t val) {
   }
 }
 
-
 // add next value
 void AddValue(uint8_t num,float fval) {
   // not yet defined ???
@@ -2607,7 +2615,12 @@ void AddValue(uint8_t num,float fval) {
 }
 #endif // USE_GRAPH
 
+/*********************************************************************************************\
+ * Touch panel control
+\*********************************************************************************************/
+
 #if defined(USE_FT5206) || defined(USE_XPT2046)
+
 #ifdef USE_FT5206
 
 #include <FT5206.h>
@@ -2644,7 +2657,7 @@ uint32_t Touch_Status(uint32_t sel) {
     return 0;
   }
 }
-#endif
+#endif  // USE_FT5206
 
 #if defined(USE_XPT2046) && defined(USE_DISPLAY_ILI9341)
 #include <XPT2046_Touchscreen.h>
@@ -2678,7 +2691,7 @@ uint32_t Touch_Status(uint32_t sel) {
   }
 }
 
-#endif
+#endif  // USE_XPT2046 && USE_DISPLAY_ILI9341
 
 #ifdef USE_TOUCH_BUTTONS
 void Touch_MQTT(uint8_t index, const char *cp, uint32_t val) {
@@ -2686,7 +2699,7 @@ void Touch_MQTT(uint8_t index, const char *cp, uint32_t val) {
   ResponseTime_P(PSTR(",\"FT5206\":{\"%s%d\":\"%d\"}}"), cp, index+1, val);
 #elif defined(USE_XPT2046)
   ResponseTime_P(PSTR(",\"XPT2046\":{\"%s%d\":\"%d\"}}"), cp, index+1, val);
-#endif
+#endif  // USE_XPT2046
   MqttPublishTeleSensor();
 }
 
@@ -2702,18 +2715,17 @@ uint8_t tbstate[3];
 
 // check digitizer hit
 void Touch_Check(void(*rotconvert)(int16_t *x, int16_t *y)) {
-uint16_t temp;
-uint8_t rbutt=0;
-uint8_t vbutt=0;
+  uint16_t temp;
+  uint8_t rbutt=0;
+  uint8_t vbutt=0;
 
-
-    if (touchp->touched()) {
+  if (touchp->touched()) {
     // did find a hit
 #if defined(USE_FT5206)
     pLoc = touchp->getPoint(0);
 #elif defined(USE_XPT2046)
     pLoc = touchp->getPoint();
-#endif
+#endif  // USE_XPT2046
     if (renderer) {
 
 #ifdef USE_M5STACK_CORE2
@@ -2734,7 +2746,7 @@ uint8_t vbutt=0;
         }
         xcenter += 100;
       }
-#endif
+#endif  // USE_M5STACK_CORE2
 
       rotconvert(&pLoc.x, &pLoc.y);
 
@@ -2798,7 +2810,7 @@ uint8_t vbutt=0;
         //AddLog(LOG_LEVEL_INFO, PSTR("tbut: %d released"), tbut);
       }
     }
-#endif
+#endif  // USE_M5STACK_CORE2
     for (uint8_t count = 0; count < MAX_TOUCH_BUTTONS; count++) {
       if (buttons[count]) {
         if (!buttons[count]->vpower.slider) {
@@ -2831,7 +2843,7 @@ uint8_t vbutt=0;
 }
 
 #endif // USE_TOUCH_BUTTONS
-#endif // USE_FT5206
+#endif // USE_FT5206 || USE_XPT2046
 
 /*********************************************************************************************\
  * Interface
@@ -2841,13 +2853,10 @@ bool Xdrv13(uint8_t function)
 {
   bool result = false;
 
-  if ((TasmotaGlobal.i2c_enabled || TasmotaGlobal.spi_enabled || TasmotaGlobal.soft_spi_enabled) && XdspPresent()) {
+  if (XdspPresent()) {
     switch (function) {
       case FUNC_PRE_INIT:
         DisplayInitDriver();
-#ifdef USE_GRAPH
-        for (uint8_t count = 0; count < NUM_GRAPHS; count++) { graph[count] = 0; }
-#endif
         break;
       case FUNC_EVERY_50_MSECOND:
         if (Settings.display_model) { XdspCall(FUNC_DISPLAY_EVERY_50_MSECOND); }
@@ -2889,4 +2898,3 @@ bool Xdrv13(uint8_t function)
 }
 
 #endif  // USE_DISPLAY
-#endif  // USE_I2C or USE_SPI

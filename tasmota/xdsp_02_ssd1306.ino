@@ -47,8 +47,9 @@ extern uint8_t *buffer;
 
 /*********************************************************************************************/
 
-void SSD1306InitDriver(void)
-{
+void SSD1306InitDriver(void) {
+  if (!TasmotaGlobal.i2c_enabled) { return; }
+
   if (!Settings.display_model) {
     if (I2cSetDevice(OLED_ADDRESS1)) {
       Settings.display_address[0] = OLED_ADDRESS1;
