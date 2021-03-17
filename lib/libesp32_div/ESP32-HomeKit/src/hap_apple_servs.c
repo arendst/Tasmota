@@ -419,6 +419,22 @@ err:
     return NULL;
 }
 
+hap_serv_t *hap_serv_wattage_create(float curr_watts)
+{
+    hap_serv_t *hs = hap_serv_create(HAP_SERV_UUID_LIGHT_SENSOR);
+    if (!hs) {
+        return NULL;
+    }
+    if (hap_serv_add_char(hs, hap_char_wattage_create(curr_watts)) != HAP_SUCCESS) {
+        goto err;
+    }
+    return hs;
+err:
+    hap_serv_delete(hs);
+    return NULL;
+}
+
+
 hap_serv_t *hap_serv_temperature_sensor_create(float curr_temp)
 {
     hap_serv_t *hs = hap_serv_create(HAP_SERV_UUID_TEMPERATURE_SENSOR);
@@ -703,4 +719,3 @@ err:
     hap_serv_delete(hs);
     return NULL;
 }
-
