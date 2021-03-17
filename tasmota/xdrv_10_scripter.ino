@@ -2515,9 +2515,12 @@ chknext:
           if (!TasmotaGlobal.global_state.wifi_down) {
             // erase nvs
             lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
+
             homekit_main(0, fvar);
-            // restart homekit
-            TasmotaGlobal.restart_flag = 2;
+            if (fvar >= 98) {
+              glob_script_mem.homekit_running == false;
+            }
+
           }
           lp++;
           len = 0;
@@ -3589,13 +3592,51 @@ extern "C" {
   uint32_t Ext_UpdVar(char *vname, float *fvar, uint32_t mode) {
     return UpdVar(vname, fvar, mode);
   }
+  void Ext_toLog(char *str) {
+    toLog(str);
+  }
+
+  char *GetFName(void) {
+    return SettingsText(SET_FRIENDLYNAME1);
+  }
 }
 
 int32_t UpdVar(char *vname, float *fvar, uint32_t mode) {
+  uint8_t type;
+  uint8_t index;
+  if (*vname == '@') {
+      vname++;
+      type = *vname;
+      vname++;
+      index = (*vname & 0x0f);
+      if (index < 1) index = 1;
+      if (index > 9) index = 9;
+      switch (type) {
+        case 'p':
+          if (mode) {
+            // set power
+            ExecuteCommandPower(index, *fvar, SRC_BUTTON);
+            return 0;
+          } else {
+            // read power
+            *fvar = bitRead(TasmotaGlobal.power,  index - 1);
+            return 1;
+          }
+          break;
+        case 's':
+          *fvar = SwitchLastState(index - 1);
+          return 1;
+          break;
+        case 'b':
+          *fvar = Button.last_state[index - 1];
+          return 1;
+          break;
+      }
+      return 0;
+  }
   struct T_INDEX ind;
   uint8_t vtype;
   float res = *fvar;
-  uint8_t index;
   isvar(vname, &vtype, &ind, fvar, 0, 0);
   if (vtype != VAR_NV) {
     // found variable as result
@@ -3604,7 +3645,7 @@ int32_t UpdVar(char *vname, float *fvar, uint32_t mode) {
         // set var
         index = glob_script_mem.type[ind.index].index;
         glob_script_mem.fvars[index] = res;
-        SetChanged(ind.index);
+        glob_script_mem.type[ind.index].bits.changed = 1;
         return 0;
       } else {
         // get var
@@ -3724,12 +3765,10 @@ void Replace_Cmd_Vars(char *srcbuf, uint32_t srcsize, char *dstbuf, uint32_t dst
     dstbuf[count] = 0;
 }
 
-
 void toLog(const char *str) {
   if (!str) return;
   AddLog(LOG_LEVEL_INFO, str);
 }
-
 
 void toLogN(const char *cp, uint8_t len) {
   if (!cp) return;
