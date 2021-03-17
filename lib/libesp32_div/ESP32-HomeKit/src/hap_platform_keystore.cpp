@@ -144,12 +144,10 @@ int hap_platform_keystore_delete_namespace(const char *part_name, const char *na
     while (true) {
       File entry = fp.openNextFile();
       if (!entry) break;
-      char fp[48];
-      strcpy(fp,path);
-      strcat(fp, "/");
-      strcat(fp, entry.name());
-      ffsp->remove(fp);
+      char p[48];
+      strcpy(p,entry.name());
       entry.close();
+      ffsp->remove(p);
     }
   }
   return 0;
@@ -157,7 +155,6 @@ int hap_platform_keystore_delete_namespace(const char *part_name, const char *na
 
 // last resort only
 int hap_platfrom_keystore_erase_partition(const char *part_name) {
-//  LITTLEFS.format();
 char path[48];
 strcpy(path, "/");
 strcat(path, part_name);
@@ -166,17 +163,23 @@ if (fp.isDirectory()) {
   while (true) {
     File entry = fp.openNextFile();
     if (!entry) break;
-    char fp[48];
-    strcpy(fp,path);
-    strcat(fp, "/");
-    strcat(fp, entry.name());
-    if (entry.isDirectory()) {
-      hap_platform_keystore_delete_namespace(part_name, entry.name());
-      ffsp->rmdir(fp);
-    } else {
-      ffsp->remove(fp);
+    const char *ep = entry.name();
+    if (*ep=='/') ep++;
+    char *lcp = strrchr(ep,'/');
+    if (lcp) {
+      ep = lcp + 1;
     }
-    entry.close();
+    char p[48];
+    strcpy(p,entry.name());
+    if (entry.isDirectory()) {
+      hap_platform_keystore_delete_namespace(part_name, ep);
+      entry.close();
+      ffsp->rmdir(p);
+    } else {
+      entry.close();
+      ffsp->remove(p);
+    }
+
   }
 }
   return 0;
