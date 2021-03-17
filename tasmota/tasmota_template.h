@@ -154,6 +154,7 @@ enum UserSelectablePins {
   GPIO_SSD1351_DC,
   GPIO_XPT2046_CS,                     // XPT2046 SPI Chip Select
   GPIO_CSE7761_TX, GPIO_CSE7761_RX,    // CSE7761 Serial interface (Dual R3)
+  GPIO_VL53L0X_XSHUT1,                 // VL53L0X_XSHUT (the max number of sensors is VL53L0X_MAX_SENSORS)- Used when connecting multiple VL53L0X
   GPIO_SENSOR_END };
 
 enum ProgramSelectablePins {
@@ -328,6 +329,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_SSD1351_DC "|"
   D_SENSOR_XPT2046_CS "|"
   D_SENSOR_CSE7761_TX "|" D_SENSOR_CSE7761_RX "|"
+  D_SENSOR_VL53L0X_XSHUT "|"
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -784,6 +786,10 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_PROJECTOR_CTRL_TX),      // LCD/DLP Projector Serial Control
   AGPIO(GPIO_PROJECTOR_CTRL_RX),      // LCD/DLP Projector Serial Control
 #endif
+#ifdef USE_VL53L0X
+  AGPIO(GPIO_VL53L0X_XSHUT1) + VL53L0X_MAX_SENSORS,  // When using multiple VL53L0X.
+#endif  
+  
 /*-------------------------------------------------------------------------------------------*\
  * ESP32 specifics
 \*-------------------------------------------------------------------------------------------*/

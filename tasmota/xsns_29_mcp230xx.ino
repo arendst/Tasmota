@@ -45,7 +45,7 @@ uint8_t MCP230xx_GPIO           = 0x09;
 
 uint8_t mcp230xx_type = 0;
 uint8_t mcp230xx_pincount = 0;
-uint8_t mcp230xx_oldoutpincount = 0;
+uint8_t mcp230xx_outpincount = 0;
 #ifdef USE_MCP230xx_OUTPUT
 uint8_t mcp230xx_outpinmapping[16];
 #endif
@@ -146,6 +146,18 @@ uint8_t MCP230xx_readGPIO(uint8_t port) {
 
 void MCP230xx_ApplySettings(void)
 {
+#ifdef USE_MCP230xx_OUTPUT
+  TasmotaGlobal.devices_present -= mcp230xx_outpincount;
+  mcp230xx_outpincount = 0;
+  for (uint32_t idx = 0; idx < mcp230xx_pincount; idx++) {
+    if (Settings.mcp230xx_config[idx].pinmode >= 5) {
+      mcp230xx_outpinmapping[mcp230xx_outpincount] = idx;
+      mcp230xx_outpincount++;
+    }
+    int_millis[idx]=millis();
+  }
+  TasmotaGlobal.devices_present += mcp230xx_outpincount;
+#endif // USE_MCP230xx_OUTPUT
   uint8_t int_en = 0;
   for (uint32_t mcp230xx_port = 0; mcp230xx_port < mcp230xx_type; mcp230xx_port++) {
     uint8_t reg_gppu = 0;
@@ -191,23 +203,17 @@ void MCP230xx_ApplySettings(void)
     }
     I2cWrite8(USE_MCP230xx_ADDR, MCP230xx_GPPU+mcp230xx_port, reg_gppu);
     I2cWrite8(USE_MCP230xx_ADDR, MCP230xx_GPINTEN+mcp230xx_port, reg_gpinten);
+#ifdef USE_MCP230xx_OUTPUT
     I2cWrite8(USE_MCP230xx_ADDR, MCP230xx_IODIR+mcp230xx_port, reg_iodir);
-#ifdef USE_MCP230xx_OUTPUT
-    I2cWrite8(USE_MCP230xx_ADDR, MCP230xx_GPIO+mcp230xx_port, reg_portpins);
-#endif // USE_MCP230xx_OUTPUT
-  }
-#ifdef USE_MCP230xx_OUTPUT
-  TasmotaGlobal.devices_present -= mcp230xx_oldoutpincount;
-  mcp230xx_oldoutpincount = 0;
-  for (uint32_t idx=0;idx<mcp230xx_pincount;idx++) {
-    if (Settings.mcp230xx_config[idx].pinmode >= 5) {
-      mcp230xx_outpinmapping[mcp230xx_oldoutpincount] = idx;
-      mcp230xx_oldoutpincount++;
+    for (uint32_t idx = 0; idx < mcp230xx_outpincount; idx++) {
+      if (mcp230xx_port ? mcp230xx_outpinmapping[idx] > 7 : mcp230xx_outpinmapping[idx] < 8) {
+        uint8_t relay_no = TasmotaGlobal.devices_present - mcp230xx_outpincount + idx + 1;
+        ExecuteCommandPower(relay_no, (reg_portpins >> (mcp230xx_outpinmapping[idx] & 7)) & 1, SRC_IGNORE);
+      }
     }
-    int_millis[idx]=millis();
-  }
-  TasmotaGlobal.devices_present += mcp230xx_oldoutpincount;
+    //I2cWrite8(USE_MCP230xx_ADDR, MCP230xx_GPIO+mcp230xx_port, reg_portpins);
 #endif // USE_MCP230xx_OUTPUT
+  }
   mcp230xx_int_en = int_en;
   MCP230xx_CheckForIntCounter();  // update register on whether or not we should be counting interrupts
   MCP230xx_CheckForIntRetainer(); // update register on whether or not we should be retaining interrupt events for teleperiod
@@ -651,7 +657,7 @@ bool MCP230xx_Command(void)
       for (relay_no = 0; relay_no < mcp230xx_pincount ; relay_no ++) {
         if ( mcp230xx_outpinmapping[relay_no] == pin) break;
       }
-      relay_no = TasmotaGlobal.devices_present - mcp230xx_oldoutpincount + relay_no +1;
+      relay_no = TasmotaGlobal.devices_present - mcp230xx_outpincount + relay_no +1;
       if ((!strcmp(ArgV(argument, 2), "ON")) || (!strcmp(ArgV(argument, 2), "1"))) {
         ExecuteCommandPower(relay_no, 1, SRC_IGNORE);
         return serviced;
@@ -799,8 +805,8 @@ void MCP230xx_Interrupt_Retain_Report(void) {
 
 #ifdef USE_MCP230xx_OUTPUT
 void MCP230xx_SwitchRelay() {
-  for (uint32_t i = TasmotaGlobal.devices_present - mcp230xx_oldoutpincount; i < TasmotaGlobal.devices_present; i++) {
-    uint8_t pin = mcp230xx_outpinmapping[i - (TasmotaGlobal.devices_present - mcp230xx_oldoutpincount)];
+  for (uint32_t i = TasmotaGlobal.devices_present - mcp230xx_outpincount; i < TasmotaGlobal.devices_present; i++) {
+    uint8_t pin = mcp230xx_outpinmapping[i - (TasmotaGlobal.devices_present - mcp230xx_outpincount)];
     uint8_t pincmd = Settings.mcp230xx_config[pin].pinmode - 5;
     uint8_t relay_state = bitRead(XdrvMailbox.index, i);
     AddLog(LOG_LEVEL_DEBUG, PSTR("MCP: relay %d pin_no %d state %d"), i,pin, relay_state);
@@ -826,7 +832,7 @@ bool Xsns29(uint8_t function)
 
   bool result = false;
 
-  if (FUNC_PRE_INIT == function) {
+  if (FUNC_INIT == function) {
       MCP230xx_Detect();
   }
   else if (mcp230xx_type) {

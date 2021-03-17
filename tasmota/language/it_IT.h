@@ -1,7 +1,7 @@
 /*
   it-IT.h - localization for Italian - Italy for Tasmota
 
-  Copyright (C) 2021  Gennaro Tortone - some mods by Antonio Fragola - Updated by bovirus - rev. 03.03.2021
+  Copyright (C) 2021  Gennaro Tortone, Antonio Fragola, Bovirus and Adrian Scillato
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v6.0.0a
+ * Updated until v9.3.1.1
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -797,6 +797,10 @@
 #define D_SENSOR_WIEGAND_D1    "Wiegand - D1"
 #define D_SENSOR_NEOPOOL_TX    "NeoPool - TX"
 #define D_SENSOR_NEOPOOL_RX    "NeoPool - RX"
+#define D_SENSOR_VL53L0X_XSHUT "VL53L0X XSHUT"
+#define D_NEW_ADDRESS          "Cambio di indirizzo a"
+#define D_OUT_OF_RANGE         "Fuori dal limite"
+#define D_SENSOR_DETECTED      "rilevato"
 
 // Units
 #define D_UNIT_AMPERE "A"
