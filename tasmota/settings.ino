@@ -864,6 +864,8 @@ void SettingsDefaultSet2(void) {
   memcpy_P(Settings.mqtt_fingerprint[1], default_fingerprint2, sizeof(default_fingerprint2));
   Settings.tele_period = TELE_PERIOD;
   Settings.mqttlog_level = MQTT_LOG_LEVEL;
+  Settings.mqtt_keepalive = MQTT_KEEPALIVE;
+  Settings.mqtt_socket_timeout = MQTT_SOCKET_TIMEOUT;
 
   // Energy
   flag.no_power_on_check |= ENERGY_VOLTAGE_ALWAYS;
@@ -1243,6 +1245,10 @@ void SettingsDelta(void) {
     }
     if (Settings.version < 0x09020007) {
       *(uint32_t *)&Settings.device_group_tie = 0x04030201;
+    }
+    if (Settings.version < 0x09030102) {
+      Settings.mqtt_keepalive = MQTT_KEEPALIVE;
+      Settings.mqtt_socket_timeout = MQTT_SOCKET_TIMEOUT;
     }
 
     Settings.version = VERSION;

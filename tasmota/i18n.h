@@ -366,6 +366,8 @@
 #define D_CMND_MQTTCLIENT "MqttClient"
 #define D_CMND_MQTTUSER "MqttUser"
 #define D_CMND_MQTTPASSWORD "MqttPassword"
+#define D_CMND_MQTTKEEPALIVE "MqttKeepAlive"
+#define D_CMND_MQTTTIMEOUT "MqttTimeout"
 #define D_CMND_TLSKEY "TLSKey"
 #define D_CMND_FULLTOPIC "FullTopic"
 #define D_CMND_PREFIX "Prefix"

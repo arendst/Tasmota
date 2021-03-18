@@ -488,7 +488,12 @@ struct {
 
   power_t       interlock[MAX_INTERLOCKS_SET];  // 4D0 MAX_INTERLOCKS = MAX_RELAYS / 2
 
-  uint8_t       free_508[41];              // 508
+  uint8_t       free_508[36];              // 508
+
+  uint16_t      mqtt_keepalive;            // 52C
+  uint16_t      mqtt_socket_timeout;       // 52E
+
+  uint8_t       free_530[1];               // 530
 
   uint8_t       ina219_mode;               // 531
   uint16_t      pulse_timer[MAX_PULSETIMERS];  // 532

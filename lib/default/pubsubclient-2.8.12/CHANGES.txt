@@ -1,3 +1,12 @@
+2.8
+   * Add setBufferSize() to override MQTT_MAX_PACKET_SIZE
+   * Add setKeepAlive() to override MQTT_KEEPALIVE
+   * Add setSocketTimeout() to overide MQTT_SOCKET_TIMEOUT
+   * Added check to prevent subscribe/unsubscribe to empty topics
+   * Declare wifi mode prior to connect in ESP example
+   * Use `strnlen` to avoid overruns
+   * Support pre-connected Client objects
+
 2.7
    * Fix remaining-length handling to prevent buffer overrun
    * Add large-payload API - beginPublish/write/publish/endPublish
