@@ -311,7 +311,7 @@ void MqttUnsubscribe(const char *topic) {
 void MqttPublishLoggingAsync(bool refresh) {
   static uint32_t index = 1;
 
-  if (!Settings.mqttlog_level || !Settings.flag.mqtt_enabled) { return; }  // SetOption3 - Enable MQTT
+  if (!Settings.mqttlog_level || !Settings.flag.mqtt_enabled || !Mqtt.connected) { return; }  // SetOption3 - Enable MQTT
   if (refresh && !NeedLogRefresh(Settings.mqttlog_level, index)) { return; }
 
   char* line;

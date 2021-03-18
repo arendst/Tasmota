@@ -2125,7 +2125,7 @@ void SyslogAsync(bool refresh) {
   static uint32_t syslog_host_hash = 0;   // Syslog host name hash
   static uint32_t index = 1;
 
-  if (!TasmotaGlobal.syslog_level) { return; }
+  if (!TasmotaGlobal.syslog_level || TasmotaGlobal.global_state.network_down) { return; }
   if (refresh && !NeedLogRefresh(TasmotaGlobal.syslog_level, index)) { return; }
 
   char* line;
