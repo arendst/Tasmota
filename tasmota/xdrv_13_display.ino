@@ -77,11 +77,7 @@ const uint8_t DISPLAY_LOG_ROWS = 32;           // Number of lines in display log
 #define D_CMND_DISP_SCROLLDELAY "ScrollDelay"
 #define D_CMND_DISP_CLOCK "Clock"
 #define D_CMND_DISP_TEXTNC "TextNC"                   // NC - "No Clear"
-#define D_CMND_DISP_SETLEDS "SetLEDs"
-#define D_CMND_DISP_SETLED "SetLED"
-#define D_CMND_DISP_BUTTONS "Buttons"
 #define D_CMND_DISP_SCROLLTEXT "ScrollText"
-#define D_CMND_DISP_TYPE "Type"
 #define D_CMND_DISP_ILIMODE "ILIMode"
 #define D_CMND_DISP_ILIINVERT "Invert"
 
@@ -99,8 +95,7 @@ enum XdspFunctions { FUNC_DISPLAY_INIT_DRIVER, FUNC_DISPLAY_INIT, FUNC_DISPLAY_E
 #endif
                      , FUNC_DISPLAY_NUMBER, FUNC_DISPLAY_FLOAT, FUNC_DISPLAY_NUMBERNC, FUNC_DISPLAY_FLOATNC,
                      FUNC_DISPLAY_BRIGHTNESS, FUNC_DISPLAY_RAW, FUNC_DISPLAY_LEVEL, FUNC_DISPLAY_SEVENSEG_TEXT, FUNC_DISPLAY_SEVENSEG_TEXTNC,
-                     FUNC_DISPLAY_SCROLLDELAY, FUNC_DISPLAY_CLOCK, FUNC_DISPLAY_SETLEDS, FUNC_DISPLAY_SETLED,
-                     FUNC_DISPLAY_BUTTONS, FUNC_DISPLAY_SCROLLTEXT, FUNC_DISPLAY_TYPE
+                     FUNC_DISPLAY_SCROLLDELAY, FUNC_DISPLAY_CLOCK, FUNC_DISPLAY_SCROLLTEXT
                    };
 
 enum DisplayInitModes { DISPLAY_INIT_MODE, DISPLAY_INIT_PARTIAL, DISPLAY_INIT_FULL };
@@ -114,8 +109,8 @@ const char kDisplayCommands[] PROGMEM = D_PRFX_DISPLAY "|"  // Prefix
 #endif
    "|" D_CMND_DISP_CLEAR "|" D_CMND_DISP_NUMBER "|" D_CMND_DISP_FLOAT "|" D_CMND_DISP_NUMBERNC "|" D_CMND_DISP_FLOATNC "|"
   D_CMND_DISP_BRIGHTNESS "|" D_CMND_DISP_RAW "|" D_CMND_DISP_LEVEL "|" D_CMND_DISP_SEVENSEG_TEXT "|" D_CMND_DISP_SEVENSEG_TEXTNC "|"
-  D_CMND_DISP_SCROLLDELAY "|" D_CMND_DISP_CLOCK "|" D_CMND_DISP_TEXTNC "|" D_CMND_DISP_SETLEDS "|" D_CMND_DISP_SETLED "|"
-  D_CMND_DISP_BUTTONS "|" D_CMND_DISP_SCROLLTEXT "|" D_CMND_DISP_TYPE "|" D_CMND_DISP_ILIMODE "|" D_CMND_DISP_ILIINVERT
+  D_CMND_DISP_SCROLLDELAY "|" D_CMND_DISP_CLOCK "|" D_CMND_DISP_TEXTNC "|" 
+  D_CMND_DISP_SCROLLTEXT "|" D_CMND_DISP_ILIMODE "|" D_CMND_DISP_ILIINVERT
   ;
 
 void (* const DisplayCommand[])(void) PROGMEM = {
@@ -127,8 +122,8 @@ void (* const DisplayCommand[])(void) PROGMEM = {
 #endif
   , &CmndDisplayClear, &CmndDisplayNumber, &CmndDisplayFloat, &CmndDisplayNumberNC, &CmndDisplayFloatNC,
   &CmndDisplayBrightness, &CmndDisplayRaw, &CmndDisplayLevel, &CmndDisplaySevensegText, &CmndDisplaySevensegTextNC,
-  &CmndDisplayScrollDelay, &CmndDisplayClock, &CmndDisplayTextNC, &CmndDisplaySetLEDs, &CmndDisplaySetLED,
-  &CmndDisplayButtons, &CmndDisplayScrollText, &CmndDisplayType,  &CmndDisplayILIMOde ,  &CmndDisplayILIInvert
+  &CmndDisplayScrollDelay, &CmndDisplayClock, &CmndDisplayTextNC,
+  &CmndDisplayScrollText, &CmndDisplayILIMOde ,  &CmndDisplayILIInvert
 };
 
 char *dsp_str;
@@ -1865,33 +1860,6 @@ void CmndDisplayClock(void)
   ResponseCmndNumber(XdrvMailbox.payload);
 }
 
-void CmndDisplaySetLEDs(void)
-{
-  bool result = false;
-  if (!renderer) {
-    result = XdspCall(FUNC_DISPLAY_SETLEDS);
-  }
-  if(result) ResponseCmndNumber(XdrvMailbox.payload);
-}
-
-
-void CmndDisplaySetLED(void)
-{
-  bool result = false;
-  if (!renderer) {
-    result = XdspCall(FUNC_DISPLAY_SETLED);
-  }
-  if(result) ResponseCmndNumber(XdrvMailbox.payload);
-}
-
-void CmndDisplayButtons(void)
-{
-  bool result = false;
-  if (!renderer) {
-    XdspCall(FUNC_DISPLAY_BUTTONS);
-  }
-}
-
 
 void CmndDisplayScrollText(void)
 {
@@ -1902,22 +1870,6 @@ void CmndDisplayScrollText(void)
   if(result) ResponseCmndChar(XdrvMailbox.data);
 }
 
-
-void CmndDisplayType(void)
-{
-  if(ArgC() == 0) {
-    XdrvMailbox.payload = Settings.display_options.data;
-  } else {
-    uint8_t prev_type = Settings.display_options.data;
-    if(prev_type != XdrvMailbox.payload) {
-      if (!renderer) {
-        XdspCall(FUNC_DISPLAY_TYPE);
-        Settings.display_options.data = XdrvMailbox.payload;
-      }
-    }
-  }
-  ResponseCmndNumber(XdrvMailbox.payload);
-}
 
 void CmndDisplaySize(void)
 {
