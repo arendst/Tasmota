@@ -366,13 +366,15 @@ void MCP230xx_Show(bool json)
       uint16_t gpiototal = ((uint16_t)gpiob << 8) | gpio;
       ResponseAppend_P(PSTR(",\"MCP230_OUT\":{"));
       char stt[7];
+      bool first = true;
       for (uint32_t pinx = 0; pinx < mcp230xx_pincount; pinx++) {
         if (Settings.mcp230xx_config[pinx].pinmode >= 5) {
           sprintf(stt, ConvertNumTxt(((gpiototal>>pinx)&1), Settings.mcp230xx_config[pinx].pinmode));
-          ResponseAppend_P(PSTR("\"OUT_D%i\":\"%s\","), pinx, stt);
+          ResponseAppend_P(PSTR("%s\"OUT_D%i\":\"%s\""), (first) ? "" : ",", pinx, stt);
+          first = false;
         }
       }
-      ResponseAppend_P(PSTR("\"END\":1}"));
+      ResponseAppend_P(PSTR("}"));
     }
 #endif  // USE_MCP230xx_OUTPUT
     ResponseJsonEnd();
@@ -778,13 +780,15 @@ void MCP230xx_OutputTelemetry(void)
 
 void MCP230xx_Interrupt_Counter_Report(void) {
   ResponseTime_P(PSTR(",\"MCP230_INTTIMER\":{"));
+  bool first = true;
   for (uint32_t pinx = 0;pinx < mcp230xx_pincount;pinx++) {
     if (Settings.mcp230xx_config[pinx].int_count_en) { // Counting is enabled for this pin so we add to report
-      ResponseAppend_P(PSTR("\"INTCNT_D%i\":%i,"),pinx,mcp230xx_int_counter[pinx]);
+      ResponseAppend_P(PSTR("%s\"INTCNT_D%i\":%i,"), (first) ? "" : "?", pinx, mcp230xx_int_counter[pinx]);
+      first = false;
       mcp230xx_int_counter[pinx]=0;
     }
   }
-  ResponseAppend_P(PSTR("\"END\":1}}"));
+  ResponseAppend_P(PSTR("}}"));
   MqttPublishTeleSensor();
   mcp230xx_int_sec_counter = 0;
 }
