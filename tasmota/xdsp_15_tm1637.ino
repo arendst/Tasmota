@@ -192,7 +192,7 @@ struct {
 \*********************************************************************************************/
 
 void TM1637Init(void) {
-  if (PinUsed(GPIO_TM16CLK) && PinUsed(GPIO_TM16DIO) && PinUsed(GPIO_TM16STB)) {
+  if (PinUsed(GPIO_TM1638CLK) && PinUsed(GPIO_TM1638DIO) && PinUsed(GPIO_TM1638STB)) {
     TM1637Data.display_type = TM1638;
     TM1637Data.num_digits = 8;
   }
@@ -210,14 +210,14 @@ void TM1637Init(void) {
 
   Settings.display_model = XDSP_15;
 
-  if (TM1637Data.display_type == TM1637) {
+  if (TM1637 == TM1637Data.display_type) {
     strcpy_P(TM1637Data.model_name, PSTR("TM1637"));
     tm1637display = new SevenSegmentTM1637(Pin(GPIO_TM1637CLK), Pin(GPIO_TM1637DIO));
     tm1637display->begin(TM1637Data.num_digits, 1);
   }
-  else if (TM1637Data.display_type == TM1638) {
+  else if (TM1638 == TM1637Data.display_type) {
     strcpy_P(TM1637Data.model_name, PSTR("TM1638"));
-    tm1638display = new TM1638plus(Pin(GPIO_TM16STB), Pin(GPIO_TM16CLK), Pin(GPIO_TM16DIO), true );
+    tm1638display = new TM1638plus(Pin(GPIO_TM1638STB), Pin(GPIO_TM1638CLK), Pin(GPIO_TM1638DIO), true );
     TM1637Data.num_digits = 8;
     tm1638display->displayBegin();
   }
@@ -832,9 +832,6 @@ bool Xdsp15(uint8_t function) {
     switch (function) {
       case FUNC_DISPLAY_MODEL:
         result = true;
-        break;
-      case FUNC_DISPLAY_INIT:
-        AddLog(LOG_LEVEL_DEBUG, PSTR("TM7: %s: FUNC_DISPLAY_INIT: Display depends on TM1637Data.display_type, currently %d"), TM1637Data.model_name, Settings.display_options.data);
         break;
       case FUNC_DISPLAY_SEVENSEG_TEXT:
       case FUNC_DISPLAY_CLEAR:

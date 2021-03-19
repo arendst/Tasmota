@@ -334,9 +334,9 @@ const uint16_t kGpioConvert[] PROGMEM = {
   AGPIO(GPIO_SDM120_RX),      // SDM120 Serial interface
   AGPIO(GPIO_SDM630_TX),      // SDM630 Serial interface
   AGPIO(GPIO_SDM630_RX),      // SDM630 Serial interface
-  AGPIO(GPIO_TM16CLK),        // TM1638 Clock
-  AGPIO(GPIO_TM16DIO),        // TM1638 Data I/O
-  AGPIO(GPIO_TM16STB),        // TM1638 Strobe
+  AGPIO(GPIO_TM1638CLK),      // TM1638 Clock
+  AGPIO(GPIO_TM1638DIO),      // TM1638 Data I/O
+  AGPIO(GPIO_TM1638STB),      // TM1638 Strobe
   AGPIO(GPIO_SWT1_NP),        // Switch no pullup
   AGPIO(GPIO_SWT1_NP) +1,
   AGPIO(GPIO_SWT1_NP) +2,
