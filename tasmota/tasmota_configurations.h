@@ -306,6 +306,7 @@
 
 #define USE_DISPLAY                              // Add Display Support (+2k code)
   #define USE_DISPLAY_TM1637                     // [DisplayModel 15] Enable TM1637 module
+  #define USE_DISPLAY_MAX7219                    // [DisplayModel 16] Enable MAX7219 7-segment module
 
 #define USE_I2C                                  // I2C using library wire (+10k code, 0k2 mem, 124 iram)
   #define USE_DISPLAY_MODES1TO5                  // Enable display mode 1 to 5 in addition to mode 0

@@ -42,7 +42,7 @@ uint16_t bg_color = 0;
 uint8_t color_type = COLOR_BW;
 uint8_t auto_draw = 1;
 
-const uint8_t DISPLAY_MAX_DRIVERS = 16;        // Max number of display drivers/models supported by xdsp_interface.ino
+const uint8_t DISPLAY_MAX_DRIVERS = 17;        // Max number of display drivers/models supported by xdsp_interface.ino
 const uint8_t DISPLAY_MAX_COLS = 64;           // Max number of columns allowed with command DisplayCols
 const uint8_t DISPLAY_MAX_ROWS = 64;           // Max number of lines allowed with command DisplayRows
 
@@ -1873,15 +1873,9 @@ void CmndDisplayScrollText(void)
 
 void CmndDisplaySize(void)
 {
-#ifdef USE_DISPLAY_TM1637
-  if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload <= 6)) {
-#else
-  if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload <= 4)) {
-#endif
-    Settings.display_size = XdrvMailbox.payload;
-    if (renderer) renderer->setTextSize(Settings.display_size);
-    //else DisplaySetSize(Settings.display_size);
-  }
+  Settings.display_size = XdrvMailbox.payload;
+  if (renderer) renderer->setTextSize(Settings.display_size);
+  //else DisplaySetSize(Settings.display_size);
   ResponseCmndNumber(Settings.display_size);
 }
 
@@ -1945,7 +1939,7 @@ void CmndDisplayText(void)
 #ifndef USE_DISPLAY_MODES1TO5
     DisplayText();
 #else
-    if(Settings.display_model == 15) {
+    if(Settings.display_model == 15 || Settings.display_model == 16) {
       XdspCall(FUNC_DISPLAY_SEVENSEG_TEXT);
     } else if (!Settings.display_mode) {
       DisplayText();
