@@ -23,6 +23,8 @@
 #define MQTT_WIFI_CLIENT_TIMEOUT   200    // Wifi TCP connection timeout (default is 5000 mSec)
 #endif
 
+#define USE_MQTT_NEW_PUBSUBCLIENT
+
 // #define DEBUG_DUMP_TLS    // allow dumping of TLS Flash keys
 
 #ifdef USE_MQTT_TLS
@@ -42,7 +44,7 @@ const char kMqttCommands[] PROGMEM = "|"  // No prefix
 #if defined(USE_MQTT_TLS) && !defined(USE_MQTT_TLS_CA_CERT)
   D_CMND_MQTTFINGERPRINT "|"
 #endif
-  D_CMND_MQTTUSER "|" D_CMND_MQTTPASSWORD "|"
+  D_CMND_MQTTUSER "|" D_CMND_MQTTPASSWORD "|" D_CMND_MQTTKEEPALIVE "|" D_CMND_MQTTTIMEOUT "|"
 #if defined(USE_MQTT_TLS) && defined(USE_MQTT_AWS_IOT)
   D_CMND_TLSKEY "|"
 #endif
@@ -68,7 +70,7 @@ void (* const MqttCommand[])(void) PROGMEM = {
 #if defined(USE_MQTT_TLS) && !defined(USE_MQTT_TLS_CA_CERT)
   &CmndMqttFingerprint,
 #endif
-  &CmndMqttUser, &CmndMqttPassword,
+  &CmndMqttUser, &CmndMqttPassword, &CmndMqttKeepAlive, &CmndMqttTimeout,
 #if defined(USE_MQTT_TLS) && defined(USE_MQTT_AWS_IOT)
   &CmndTlsKey,
 #endif
@@ -209,6 +211,9 @@ void MqttInit(void) {
 #else // USE_MQTT_TLS
   MqttClient.setClient(EspClient);
 #endif // USE_MQTT_TLS
+
+  MqttClient.setKeepAlive(Settings.mqtt_keepalive);
+  MqttClient.setSocketTimeout(Settings.mqtt_socket_timeout);
 }
 
 bool MqttIsConnected(void) {
@@ -311,7 +316,7 @@ void MqttUnsubscribe(const char *topic) {
 void MqttPublishLoggingAsync(bool refresh) {
   static uint32_t index = 1;
 
-  if (!Settings.mqttlog_level || !Settings.flag.mqtt_enabled) { return; }  // SetOption3 - Enable MQTT
+  if (!Settings.mqttlog_level || !Settings.flag.mqtt_enabled || !Mqtt.connected) { return; }  // SetOption3 - Enable MQTT
   if (refresh && !NeedLogRefresh(Settings.mqttlog_level, index)) { return; }
 
   char* line;
@@ -827,6 +832,26 @@ void CmndMqttPassword(void) {
   } else {
     Response_P(S_JSON_COMMAND_ASTERISK, XdrvMailbox.command);
   }
+}
+
+void CmndMqttKeepAlive(void) {
+  if ((XdrvMailbox.payload >= 1) && (XdrvMailbox.payload <= 100)) {
+    Settings.mqtt_keepalive = XdrvMailbox.payload;
+#ifdef USE_MQTT_NEW_PUBSUBCLIENT
+    MqttClient.setKeepAlive(Settings.mqtt_keepalive);
+#endif
+  }
+  ResponseCmndNumber(Settings.mqtt_keepalive);
+}
+
+void CmndMqttTimeout(void) {
+  if ((XdrvMailbox.payload >= 1) && (XdrvMailbox.payload <= 100)) {
+    Settings.mqtt_socket_timeout = XdrvMailbox.payload;
+#ifdef USE_MQTT_NEW_PUBSUBCLIENT
+    MqttClient.setSocketTimeout(Settings.mqtt_socket_timeout);
+#endif
+  }
+  ResponseCmndNumber(Settings.mqtt_socket_timeout);
 }
 
 void CmndMqttlog(void) {

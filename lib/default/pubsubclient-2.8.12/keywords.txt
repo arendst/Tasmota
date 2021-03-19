@@ -27,6 +27,9 @@ setServer	KEYWORD2
 setCallback	KEYWORD2
 setClient	KEYWORD2
 setStream	KEYWORD2
+setKeepAlive 	KEYWORD2
+setBufferSize 	KEYWORD2
+setSocketTimeout 	KEYWORD2
 
 #######################################
 # Constants (LITERAL1)

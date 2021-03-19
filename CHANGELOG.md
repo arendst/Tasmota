@@ -3,6 +3,13 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
+## [9.3.1.2]
+### Added
+- Commands ``MqttKeepAlive 1..100`` to set Mqtt Keep Alive timer (default 30) and ``MqttTimeout 1..100`` to set Mqtt Socket Timeout (default 4) (#5341)
+
+### Changed
+- PubSubClient library from EspEasy v2.7.12 to Tasmota v2.8.12
+
 ## [9.3.1.1]
 ### Added
 - Support for CSE7761 energy monitor as used in ESP32 based Sonoff Dual R3 Pow (#10793)
@@ -18,8 +25,7 @@ All notable changes to this project will be documented in this file.
 - ESP32 Extent BLE (#11212)
 - ESP32 support for WS2812 hardware driver via RMT or I2S
 - ESP32 support for secondary I2C controller
-- Add support for MPU6686 on primary or secondary I2C bus
-
+- Support for MPU6686 on primary or secondary I2C bus
 
 ### Changed
 - ESP32 core library from v1.0.5-rc6 to v1.0.5
