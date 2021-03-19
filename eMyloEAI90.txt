@@ -1,0 +1,5 @@
+Template TuyaMCU(54)
+
+Console:
+Backlog SetOption66 1; TuyaMCU 11,16; TuyaMCU 36,6; TuyaMCU 37,1; SetOption59 1; SetOption72 1
+Rule1 on System#Boot do RuleTimer1 10 endon on Rules#Timer=1 do backlog TuyaSend8; RuleTimer1 10 endon
