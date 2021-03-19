@@ -761,7 +761,6 @@ void TM1637ShowTime() {
 
 }
 
-
 /*********************************************************************************************\
 * This function is called for all Display functions.
 \*********************************************************************************************/
@@ -830,6 +829,12 @@ bool Xdsp15(uint8_t function) {
   }
   else if (TM1637Data.init_done && (XDSP_15 == Settings.display_model)) {
     switch (function) {
+      case FUNC_DISPLAY_EVERY_50_MSECOND:
+        if (disp_power) {
+          if (TM1637Data.scroll) { TM1637ScrollText(); }
+          if (TM1637Data.show_clock) { TM1637ShowTime(); }
+        }
+        break;
       case FUNC_DISPLAY_MODEL:
         result = true;
         break;
@@ -847,11 +852,12 @@ bool Xdsp15(uint8_t function) {
       case FUNC_DISPLAY_CLOCK:
         TM1637Data.show_clock = false;
       case FUNC_DISPLAY_BRIGHTNESS:
-        result = TM1637MainFunc(function);
+        if (disp_power) {
+          result = TM1637MainFunc(function);
+        }
         break;
-      case FUNC_DISPLAY_EVERY_50_MSECOND:
-        if(TM1637Data.scroll) TM1637ScrollText();
-        if(TM1637Data.show_clock) TM1637ShowTime();
+      case FUNC_DISPLAY_POWER:
+        if (!disp_power) { TM1637ClearDisplay(); }
         break;
     }
   }
