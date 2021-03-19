@@ -867,18 +867,12 @@ bool TM1637PrintLog(void) {
     if (txt != nullptr) {
       uint8_t last_row = Settings.display_rows -1;
 
-      for (uint32_t i = 0; i < last_row; i++) {
-        strlcpy(disp_screen_buffer[i], disp_screen_buffer[i +1], disp_screen_buffer_cols);
-        lcd->setCursor(0, i);            // Col 0, Row i
-        lcd->print(disp_screen_buffer[i +1]);
-      }
       strlcpy(disp_screen_buffer[last_row], txt, disp_screen_buffer_cols);
       DisplayFillScreen(last_row);
 
       AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "[%s]"), disp_screen_buffer[last_row]);
 
-      lcd->setCursor(0, last_row);
-      lcd->print(disp_screen_buffer[last_row]);
+      TM1637Print(disp_screen_buffer[last_row]);
 
       result = true;
     }
@@ -886,8 +880,8 @@ bool TM1637PrintLog(void) {
   return result;
 }
 */
-void TM1637Time(void)
-{
+
+void TM1637Time(void) {
   char line[Settings.display_cols[0] +1];
 
   if (Settings.display_cols[0] >= 8) {
@@ -902,18 +896,41 @@ void TM1637Time(void)
   TM1637Center(line);
 }
 
+void TM1637Date(void) {
+  char line[Settings.display_cols[0] +1];
+
+  if (Settings.display_cols[0] >= 8) {
+    snprintf_P(line, sizeof(line), PSTR("%02d-%02d-%02d"), RtcTime.day_of_month, RtcTime.month, RtcTime.year -2000);
+  }
+  else if (Settings.display_cols[0] >= 6) {
+    snprintf_P(line, sizeof(line), PSTR("%02d%02d%02d"), RtcTime.day_of_month, RtcTime.month, RtcTime.year -2000);
+  }
+  else {
+    snprintf_P(line, sizeof(line), PSTR("%02d%02d"), RtcTime.day_of_month, RtcTime.month);
+  }
+  TM1637Center(line);
+}
+
 void TM1637Refresh(void) {  // Every second
   if (Settings.display_mode) {  // Mode 0 is User text
     switch (Settings.display_mode) {
       case 1:  // Time
         TM1637Time();
         break;
+      case 2:  // Date
+        TM1637Date();
+        break;
+      case 3:  // Time
+        if (TasmotaGlobal.uptime % Settings.display_refresh) {
+          TM1637Time();
+        } else {
+          TM1637Date();
+        }
+        break;
 /*
-      case 2:  // Local
       case 4:  // Mqtt
         TM1637PrintLog();
         break;
-      case 3:  // Local
       case 5: {  // Mqtt
         if (!TM1637PrintLog()) { TM1637Time(); }
         break;
