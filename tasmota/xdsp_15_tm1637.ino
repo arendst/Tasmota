@@ -87,12 +87,6 @@
 
 
 
-  DisplayBrightness     num {1-8}
-
-                               Set brightness (1 to 8) command e.g., "DisplayBrightness 2"
-
-
-
   DisplayRaw            position {0-(Settings.display_width-1)},length {1 to Settings.display_width}, num1 [, num2[, num3[, num4[, ...upto Settings.display_width numbers]]]]]
 
                                Takes upto Settings.display_width comma-separated integers (0-255) and displays raw segments. Each number represents a
@@ -148,8 +142,6 @@
 
 #define XDSP_15           15
 
-#define BRIGHTNESS_MIN    1
-#define BRIGHTNESS_MAX    8
 #define CMD_MAX_LEN       55
 #define LEVEL_MIN         0
 #define LEVEL_MAX         100
@@ -174,7 +166,6 @@ struct {
   uint8_t scroll_delay = 4;
   uint8_t scroll_index = 0;
   uint8_t iteration = 0;
-  uint8_t brightness = 5;
   uint8_t buttons;
   uint8_t display_type = TM1637;
   uint8_t prev_buttons;
@@ -221,8 +212,7 @@ void TM1637Init(void) {
     tm1638display->displayBegin();
   }
   TM1637ClearDisplay();
-  TM1637Data.brightness = (Settings.display_dimmer ? Settings.display_dimmer : TM1637Data.brightness);
-  TM1637SetBrightness(TM1637Data.brightness);
+  TM1637Dim();
   TM1637Data.init_done = true;
   AddLog(LOG_LEVEL_INFO, PSTR("DSP: %s with %d digits"), TM1637Data.model_name, Settings.display_width);
 }
@@ -665,40 +655,6 @@ bool CmndTM1637Text(bool clear) {
 
 
 /*********************************************************************************************\
-* Sets brightness of the display.
-* Command:  DisplayBrightness {1-8}
-\*********************************************************************************************/
-bool CmndTM1637Brightness(void) {
-
-  uint16_t val = XdrvMailbox.payload;
-  if(ArgC() == 0) {
-    XdrvMailbox.payload = TM1637Data.brightness;
-    return true;
-  }
-
-  if((val < BRIGHTNESS_MIN) || (val > BRIGHTNESS_MAX)) {
-    Response_P(PSTR("{\"Error\":\"Brightness should be a number in the range [%d, %d]\"}"), BRIGHTNESS_MIN, BRIGHTNESS_MAX);
-    return false;
-  }
-  TM1637Data.brightness = val;
-  TM1637SetBrightness(TM1637Data.brightness);
-  return true;
-}
-
-
-
-void TM1637SetBrightness(uint8_t val) {
-  if((val < BRIGHTNESS_MIN) || (val > BRIGHTNESS_MAX)) val = 5;
-  Settings.display_dimmer = val;
-  if(TM1637Data.display_type == TM1637)  tm1637display->setBacklight(val*10);
-  else if(TM1637Data.display_type == TM1638) tm1638display->brightness(val-1);
-}
-
-
-
-
-
-/*********************************************************************************************\
 * Displays a clock.
 * Command: DisplayClock 1   // 12-hour format
 *          DisplayClock 2   // 24-hour format
@@ -787,9 +743,6 @@ bool TM1637MainFunc(uint8_t fn) {
     case FUNC_DISPLAY_FLOATNC :
       result = CmndTM1637Float(false);
       break;
-    case FUNC_DISPLAY_BRIGHTNESS:
-      result = CmndTM1637Brightness();
-      break;
     case FUNC_DISPLAY_RAW:
       result = CmndTM1637Raw();
       break;
@@ -816,6 +769,17 @@ bool TM1637MainFunc(uint8_t fn) {
   return result;
 }
 
+void TM1637Dim(void) {
+  // Settings.display_dimmer = 0 - 15
+  uint8_t brightness = Settings.display_dimmer >> 1;  // 0 - 7
+
+  if (TM1637 == TM1637Data.display_type) {
+    tm1637display->setBacklight(brightness * 12);  // 0 - 84
+  }
+  else if (TM1637Data.display_type == TM1638) {
+    tm1638display->brightness(brightness);  // 0 - 7
+  }
+}
 
 /*********************************************************************************************/
 
@@ -912,31 +876,31 @@ void TM1637Date(void) {
 }
 
 void TM1637Refresh(void) {  // Every second
-  if (Settings.display_mode) {  // Mode 0 is User text
-    switch (Settings.display_mode) {
-      case 1:  // Time
+  if (!disp_power || !Settings.display_mode) { return; }  // Mode 0 is User text
+
+  switch (Settings.display_mode) {
+    case 1:  // Time
+      TM1637Time();
+      break;
+    case 2:  // Date
+      TM1637Date();
+      break;
+    case 3:  // Time
+      if (TasmotaGlobal.uptime % Settings.display_refresh) {
         TM1637Time();
-        break;
-      case 2:  // Date
+      } else {
         TM1637Date();
-        break;
-      case 3:  // Time
-        if (TasmotaGlobal.uptime % Settings.display_refresh) {
-          TM1637Time();
-        } else {
-          TM1637Date();
-        }
-        break;
-/*
-      case 4:  // Mqtt
-        TM1637PrintLog();
-        break;
-      case 5: {  // Mqtt
-        if (!TM1637PrintLog()) { TM1637Time(); }
-        break;
       }
-*/
+      break;
+/*
+    case 4:  // Mqtt
+      TM1637PrintLog();
+      break;
+    case 5: {  // Mqtt
+      if (!TM1637PrintLog()) { TM1637Time(); }
+      break;
     }
+*/
   }
 }
 
@@ -980,11 +944,13 @@ bool Xdsp15(uint8_t function) {
       case FUNC_DISPLAY_SCROLLTEXT:
       case FUNC_DISPLAY_SCROLLDELAY:
       case FUNC_DISPLAY_CLOCK:
-        TM1637Data.show_clock = false;
-      case FUNC_DISPLAY_BRIGHTNESS:
         if (disp_power && !Settings.display_mode) {
+          TM1637Data.show_clock = false;
           result = TM1637MainFunc(function);
         }
+        break;
+      case FUNC_DISPLAY_DIM:
+        TM1637Dim();
         break;
       case FUNC_DISPLAY_POWER:
         if (!disp_power) { TM1637ClearDisplay(); }
