@@ -21,11 +21,11 @@
 #ifdef USE_DISPLAY_TM1637
 /*********************************************************************************************\
   This driver enables the display of numbers (both integers and floats) and basic text
-  on the inexpensive TM1637- and TM1638-based seven-segment modules. 
-  
+  on the inexpensive TM1637- and TM1638-based seven-segment modules.
+
   Raw segments can also be displayed.
-  
-  In addition, it is also possible to set brightness (8 levels), clear the display, scroll text,  
+
+  In addition, it is also possible to set brightness (8 levels), clear the display, scroll text,
   display a rudimentary bar graph, and a Clock (12 hr and 24 hr).
 
   To use, compile Tasmota with USE_DISPLAY and USE_DISPLAY_TM1637, or build the tasmota-display env.
@@ -45,15 +45,15 @@
   CLK hardware pin --> "TM1638 CLK"
   STB hardware pin --> "TM1638 STB"
 
-  
-  Once the GPIO configuration is saved and the ESP8266/ESP32 module restarts, set the Display Model to 15 
+
+  Once the GPIO configuration is saved and the ESP8266/ESP32 module restarts, set the Display Model to 15
   using the command "DisplayModel 15"
-  
-  If your display is a TM1637 with 6 digits, set Display Columns to the number of digits your 
+
+  If your display is a TM1637 with 6 digits, set Display Columns to the number of digits your
   display has, using the command "DisplayCols 6" and restart the ESP module.
-  
+
   After the ESP8266/ESP32 module restarts again, the following "Display" commands can be used:
-  
+
 
   DisplayClear
 
@@ -180,39 +180,43 @@ struct {
   uint8_t display_type = TM1637;
   uint8_t prev_buttons;
 
-  bool driver_inited = false;
+  bool init_done = false;
   bool scroll = false;
   bool show_clock = false;
   bool clock_24 = false;
   bool LED[8] = {false, false, false, false, false, false, false, false};
 } TM1637Data;
 
-
 /*********************************************************************************************\
 * Init function
 \*********************************************************************************************/
-bool TM1637Init(void) {
 
-  if(TM1637Data.driver_inited) return true;
-
-  if(PinUsed(GPIO_TM16CLK) && PinUsed(GPIO_TM16DIO) && PinUsed(GPIO_TM16STB)) {
+void TM1637Init(void) {
+  if (PinUsed(GPIO_TM16CLK) && PinUsed(GPIO_TM16DIO) && PinUsed(GPIO_TM16STB)) {
     TM1637Data.display_type = TM1638;
-    TM1637Data.num_digits = 8;  
-  } else if(PinUsed(GPIO_TM1637CLK) && PinUsed(GPIO_TM1637DIO)) { 
-    TM1637Data.display_type = TM1637; 
-    if(Settings.display_cols[0] <= 6) TM1637Data.num_digits = Settings.display_cols[0];
-    else TM1637Data.num_digits = 4;
+    TM1637Data.num_digits = 8;
   }
-  else return false;
+  else if (PinUsed(GPIO_TM1637CLK) && PinUsed(GPIO_TM1637DIO)) {
+    TM1637Data.display_type = TM1637;
+    if (Settings.display_cols[0] <= 6) {
+      TM1637Data.num_digits = Settings.display_cols[0];
+    } else {
+      TM1637Data.num_digits = 4;
+    }
+  }
+  else {
+    return;
+  }
 
   Settings.display_model == XDSP_15;
 
-  if(TM1637Data.display_type == TM1637) {
-    strcpy(TM1637Data.model_name, "TM1637");
+  if (TM1637Data.display_type == TM1637) {
+    strcpy_P(TM1637Data.model_name, PSTR("TM1637"));
     tm1637display = new SevenSegmentTM1637(Pin(GPIO_TM1637CLK), Pin(GPIO_TM1637DIO));
     tm1637display->begin(TM1637Data.num_digits, 1);
-  } else if(TM1637Data.display_type == TM1638) {
-    strcpy(TM1637Data.model_name, "TM1638");
+  }
+  else if (TM1637Data.display_type == TM1638) {
+    strcpy_P(TM1637Data.model_name, PSTR("TM1638"));
     tm1638display = new TM1638plus(Pin(GPIO_TM16STB), Pin(GPIO_TM16CLK), Pin(GPIO_TM16DIO), true );
     TM1637Data.num_digits = 8;
     tm1638display->displayBegin();
@@ -220,10 +224,8 @@ bool TM1637Init(void) {
   TM1637ClearDisplay();
   TM1637Data.brightness = (Settings.display_dimmer ? Settings.display_dimmer : TM1637Data.brightness);
   TM1637SetBrightness(TM1637Data.brightness);
-  TM1637Data.driver_inited = true;
-  AddLog(LOG_LEVEL_INFO, PSTR("DSP: %s display driver initialized with %d digits"), TM1637Data.model_name, TM1637Data.num_digits);    
-
-  return true;
+  TM1637Data.init_done = true;
+  AddLog(LOG_LEVEL_INFO, PSTR("DSP: %s with %d digits"), TM1637Data.model_name, TM1637Data.num_digits);
 }
 
 /*********************************************************************************************\
@@ -356,7 +358,7 @@ bool CmndTM1637Float(bool clear) {
     for(uint32_t i=0, j=0; i<length; i++, j++) {
       if((j+position) > 7) break;
       if(txt[i] == 0) break;
-      if(txt[i+1] == '.') { 
+      if(txt[i+1] == '.') {
         tm1638display->displayASCIIwDot(j+position, txt[i]);
         i++;
         length++;
@@ -462,8 +464,8 @@ void TM1637ScrollText(void) {
       rawBytes[0] = 1 | 2 | 32 | 64;
     }
     if(!dotSkipped && TM1637Data.scroll_text[j] == '.') {
-      j++; 
-      TM1637Data.scroll_index++; 
+      j++;
+      TM1637Data.scroll_index++;
       rawBytes[0] = tm1637display->encode(TM1637Data.scroll_text[j]);
     }
     if(TM1637Data.scroll_text[j+1] == '.') { rawBytes[0] = rawBytes[0] | 128; }
@@ -581,7 +583,7 @@ bool CmndTM1637Raw(void) {
       if(i>(TM1637Data.num_digits-1)) break;
       rawBytes[0] = DATA[i-position];
       tm1637display->printRaw(rawBytes, 1, i);
-    }    
+    }
   } else if(TM1637Data.display_type == TM1638) {
     for(uint32_t i=position; i<position+length; i++ ) {
       if(i>7) break;
@@ -656,7 +658,7 @@ bool CmndTM1637Text(bool clear) {
       } else if(sString[j] == '^') {
         tm1638display->display7Seg(i, (1 | 2 | 32 | 64));
       } else tm1638display->displayASCII(i, sString[j]);
-    }      
+    }
   }
 
   return true;
@@ -690,7 +692,7 @@ void TM1637SetBrightness(uint8_t val) {
   if((val < BRIGHTNESS_MIN) || (val > BRIGHTNESS_MAX)) val = 5;
   Settings.display_dimmer = val;
   if(TM1637Data.display_type == TM1637)  tm1637display->setBacklight(val*10);
-  else if(TM1637Data.display_type == TM1638) tm1638display->brightness(val-1);  
+  else if(TM1637Data.display_type == TM1638) tm1638display->brightness(val-1);
 }
 
 
@@ -767,8 +769,8 @@ bool TM1637MainFunc(uint8_t fn) {
   bool result = false;
 
   if(XdrvMailbox.data_len > CMD_MAX_LEN) {
-    Response_P(PSTR("{\"Error\":\"Command text too long. Please limit it to %d characters\"}"), CMD_MAX_LEN); 
-    return false;   
+    Response_P(PSTR("{\"Error\":\"Command text too long. Please limit it to %d characters\"}"), CMD_MAX_LEN);
+    return false;
   }
 
   switch (fn) {
@@ -820,22 +822,19 @@ bool TM1637MainFunc(uint8_t fn) {
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
-bool Xdsp15(uint8_t function)
-{
+bool Xdsp15(uint8_t function) {
   bool result = false;
 
-  if(function == FUNC_DISPLAY_MODEL) {
-    return true;
+  if (FUNC_DISPLAY_INIT_DRIVER == function) {
+    TM1637Init();
   }
-
-  if (Settings.display_model == XDSP_15) {
+  else if (TM1637Data.init_done && (XDSP_15 == Settings.display_model)) {
     switch (function) {
-      case FUNC_DISPLAY_INIT_DRIVER:
-        result = TM1637Init();              // init 
+      case FUNC_DISPLAY_MODEL:
+        result = true;
         break;
       case FUNC_DISPLAY_INIT:
         AddLog(LOG_LEVEL_DEBUG, PSTR("TM7: %s: FUNC_DISPLAY_INIT: Display depends on TM1637Data.display_type, currently %d"), TM1637Data.model_name, Settings.display_options.data);
-        result = true;  
         break;
       case FUNC_DISPLAY_SEVENSEG_TEXT:
       case FUNC_DISPLAY_CLEAR:

@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 ## [9.3.1.2]
 ### Added
 - Commands ``MqttKeepAlive 1..100`` to set Mqtt Keep Alive timer (default 30) and ``MqttTimeout 1..100`` to set Mqtt Socket Timeout (default 4) (#5341)
+- Support for TM1638 seven segment display by Ajith Vasudevan (#11031)
 
 ### Changed
 - PubSubClient library from EspEasy v2.7.12 to Tasmota v2.8.12
