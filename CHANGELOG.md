@@ -26,7 +26,7 @@ All notable changes to this project will be documented in this file.
 - ESP32 Extent BLE (#11212)
 - ESP32 support for WS2812 hardware driver via RMT or I2S
 - ESP32 support for secondary I2C controller
-- Support for MPU6686 on primary or secondary I2C bus
+- Support for MPU6886 on primary or secondary I2C bus
 
 ### Changed
 - ESP32 core library from v1.0.5-rc6 to v1.0.5

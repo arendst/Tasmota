@@ -44,17 +44,17 @@ struct {
 /********************************************************************************************/
 
 const char HTTP_MPU6686[] PROGMEM =
- "{s}MPU6686 acc_x" "{m}%3_f G" "{e}"
- "{s}MPU6686 acc_y" "{m}%3_f G" "{e}"
- "{s}MPU6686 acc_z" "{m}%3_f G" "{e}"
- "{s}MPU6686 gyr_x" "{m}%i dps" "{e}"
- "{s}MPU6686 gyr_y" "{m}%i dps" "{e}"
- "{s}MPU6686 gyr_z" "{m}%i dps" "{e}"
+ "{s}MPU6886 acc_x" "{m}%3_f G" "{e}"
+ "{s}MPU6886 acc_y" "{m}%3_f G" "{e}"
+ "{s}MPU6886 acc_z" "{m}%3_f G" "{e}"
+ "{s}MPU6886 gyr_x" "{m}%i dps" "{e}"
+ "{s}MPU6886 gyr_y" "{m}%i dps" "{e}"
+ "{s}MPU6886 gyr_z" "{m}%i dps" "{e}"
  ;
 
 void MPU6686_Show(uint32_t json) {
   if (json) {
-    ResponseAppend_P(PSTR(",\"MPU6686\":{\"AX\":%i,\"AY\":%i,\"AZ\":%i,\"GX\":%i,\"GY\":%i,\"GZ\":%i}"),
+    ResponseAppend_P(PSTR(",\"MPU6886\":{\"AX\":%i,\"AY\":%i,\"AZ\":%i,\"GX\":%i,\"GY\":%i,\"GZ\":%i}"),
                           mpu6886_sensor.ax, mpu6886_sensor.ay, mpu6886_sensor.az,
                           mpu6886_sensor.gyx, mpu6886_sensor.gyy, mpu6886_sensor.gyz);
   } else {
