@@ -208,7 +208,7 @@ void TM1637Init(void) {
     return;
   }
 
-  Settings.display_model == XDSP_15;
+  Settings.display_model = XDSP_15;
 
   if (TM1637Data.display_type == TM1637) {
     strcpy_P(TM1637Data.model_name, PSTR("TM1637"));
