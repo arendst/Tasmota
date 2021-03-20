@@ -71,9 +71,9 @@ class MPU6886 {
     public:
       MPU6886(void) {};
   #ifdef ESP32
-      void setBus(uint32_t _bus) { myWire = _bus ? Wire1 : Wire; };
+      void setBus(uint32_t _bus) { myWire = _bus ? &Wire1 : &Wire; };
   #else
-      void setBus(uint32_t _bus) { myWire = Wire; };
+      void setBus(uint32_t _bus) { myWire = &Wire; };
   #endif
       int Init(void);
       void getAccelAdc(int16_t* ax, int16_t* ay, int16_t* az);
@@ -93,7 +93,7 @@ class MPU6886 {
       // void getAhrsData(float *pitch,float *roll,float *yaw);
 
     public:
-      TwoWire & myWire = Wire;   // default to Wire (bus 0)
+      TwoWire * myWire = &Wire;   // default to Wire (bus 0)
       float aRes, gRes;
 
     private:

@@ -23,6 +23,8 @@
 #include <berry.h>
 #include <Wire.h>
 
+const uint32_t BERRY_MAX_LOGS = 16;   // max number of print output recorded when outside of REPL, used to avoid infinite grow of logs
+
 /*********************************************************************************************\
  * Native functions mapped to Berry functions
  * 
@@ -30,18 +32,18 @@
  * 
  * import tasmota
  * 
- * tasmota.getfreeheap() -> int
+ * tasmota.get_free_heap() -> int
  * tasmota.publish(topic:string, payload:string[, retain:bool]) -> nil
  * tasmota.cmd(command:string) -> string
- * tasmota.getoption(index:int) -> int
+ * tasmota.get_option(index:int) -> int
  * tasmota.millis([delay:int]) -> int
- * tasmota.timereached(timer:int) -> bool
+ * tasmota.time_reached(timer:int) -> bool
  * tasmota.yield() -> nil
  * 
- * tasmota.getlight([index:int = 0]) -> map
- * tasmota.getpower([index:int = 0]) -> bool
- * tasmota.setpower(idx:int, power:bool) -> bool or nil
- * tasmota.setlight(idx:int, values:map) -> map
+ * tasmota.get_light([index:int = 0]) -> map
+ * tasmota.get_power([index:int = 0]) -> bool
+ * tasmota.set_power(idx:int, power:bool) -> bool or nil
+ * tasmota.set_light(idx:int, values:map) -> map
  * 
 \*********************************************************************************************/
 extern "C" {
@@ -97,7 +99,7 @@ extern "C" {
     be_raise(vm, kTypeError, nullptr);
   }
 
-  // Berry: tasmota.getoption(index:int) -> int
+  // Berry: tasmota.get_option(index:int) -> int
   //
   int32_t l_getoption(struct bvm *vm);
   int32_t l_getoption(struct bvm *vm) {
@@ -110,7 +112,7 @@ extern "C" {
     be_raise(vm, kTypeError, nullptr);
   }
 
-  // Berry: tasmota.timereached(timer:int) -> bool
+  // Berry: tasmota.time_reached(timer:int) -> bool
   //
   int32_t l_timereached(struct bvm *vm);
   int32_t l_timereached(struct bvm *vm) {
@@ -145,7 +147,7 @@ extern "C" {
     be_return_nil(vm);
   }
 
-  // Berry: tasmota.scaleuint(int * 5) -> int
+  // Berry: tasmota.scale_uint(int * 5) -> int
   //
   int32_t l_scaleuint(struct bvm *vm);
   int32_t l_scaleuint(struct bvm *vm) {
@@ -470,6 +472,24 @@ extern "C" {
     be_raise(vm, kTypeError, nullptr);
   }
 
+#ifdef USE_I2C
+  // I2C specific
+  // Berry: `i2c_enabled(index:int) -> bool` is I2C device enabled
+  int32_t l_i2cenabled(struct bvm *vm);
+  int32_t l_i2cenabled(struct bvm *vm) {
+    int32_t top = be_top(vm); // Get the number of arguments
+    if (top == 2 && be_isint(vm, 2)) {
+      int32_t index = be_toint(vm, 2);
+      bool enabled = I2cEnabled(index);
+      be_pushbool(vm, enabled);
+      be_return(vm); // Return
+    }
+    be_raise(vm, kTypeError, nullptr);
+  }
+#else // USE_I2C
+  int32_t l_i2cenabled(struct bvm *vm) __attribute__ ((weak, alias ("b_wire_i2cmissing")));
+#endif // USE_I2C
+
 }
 
 /*********************************************************************************************\
@@ -522,6 +542,13 @@ extern "C" {
 // called as a replacement to Berry `print()`
 void berry_log(const char * berry_buf);
 void berry_log(const char * berry_buf) {
+  if (berry.repl_active) {
+    if (berry.log.log.length() >= BERRY_MAX_LOGS) {
+      berry.log.log.remove(berry.log.log.head());
+    }
+  }
+  // AddLog(LOG_LEVEL_INFO, PSTR("[Add to log] %s"), berry_buf);
+  berry.log.addString(berry_buf, nullptr, "\n");
   AddLog(LOG_LEVEL_INFO, PSTR("%s"), berry_buf);
 }
 

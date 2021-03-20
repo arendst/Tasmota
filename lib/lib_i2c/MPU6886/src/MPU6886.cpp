@@ -4,24 +4,24 @@
 
 void MPU6886::I2C_Read_NBytes(uint8_t driver_Addr, uint8_t start_Addr, uint8_t number_Bytes, uint8_t *read_Buffer){
     
-  myWire.beginTransmission(driver_Addr);
-  myWire.write(start_Addr);  
-  myWire.endTransmission(false);
+  myWire->beginTransmission(driver_Addr);
+  myWire->write(start_Addr);  
+  myWire->endTransmission(false);
   uint8_t i = 0;
-  myWire.requestFrom(driver_Addr,number_Bytes);
+  myWire->requestFrom(driver_Addr,number_Bytes);
   
   //! Put read results in the Rx buffer
-  while (myWire.available()) {
-    read_Buffer[i++] = myWire.read();
+  while (myWire->available()) {
+    read_Buffer[i++] = myWire->read();
   }        
 }
 
 void MPU6886::I2C_Write_NBytes(uint8_t driver_Addr, uint8_t start_Addr, uint8_t number_Bytes, uint8_t *write_Buffer){
 
-  myWire.beginTransmission(driver_Addr);
-  myWire.write(start_Addr);
-  myWire.write(*write_Buffer);
-  myWire.endTransmission();
+  myWire->beginTransmission(driver_Addr);
+  myWire->write(start_Addr);
+  myWire->write(*write_Buffer);
+  myWire->endTransmission();
 
 }
 
