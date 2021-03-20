@@ -42,6 +42,9 @@ uint8_t MCP230xx_GPPU           = 0x06;
 uint8_t MCP230xx_INTF           = 0x07;
 uint8_t MCP230xx_INTCAP         = 0x08;
 uint8_t MCP230xx_GPIO           = 0x09;
+#ifdef USE_MCP230xx_OUTPUT
+uint8_t MCP230xx_OLAT           = 0x0A;
+#endif // USE_MCP230xx_OUTPUT
 
 uint8_t mcp230xx_type = 0;
 uint8_t mcp230xx_pincount = 0;
@@ -69,6 +72,7 @@ const char MCP230XX_INTCFG_RESPONSE[] PROGMEM = "{\"MCP230xx_INT%s\":{\"D_%i\":%
 
 #ifdef USE_MCP230xx_OUTPUT
 const char MCP230XX_CMND_RESPONSE[] PROGMEM = "{\"S29cmnd_D%i\":{\"COMMAND\":\"%s\",\"STATE\":\"%s\"}}";
+const char MCP230XX_OUTPUT_RESPONSE[] PROGMEM = "{\"Sensor29_D%i\":{\"MODE\":%i,\"START_UP\":\"%s\",\"STATE\":\"%s\"}}";
 #endif // USE_MCP230xx_OUTPUT
 
 void MCP230xx_CheckForIntCounter(void) {
@@ -102,9 +106,17 @@ void MCP230xx_CheckForIntRetainer(void) {
   }
 }
 
-const char* ConvertNumTxt(uint8_t statu, uint8_t pinmod=0) {
 #ifdef USE_MCP230xx_OUTPUT
-if ((6 == pinmod) && (statu < 2)) { statu = abs(statu-1); }
+const char* ConvertNumTxt(uint8_t statu, uint8_t pinmod=0, uint8_t config=0) {
+#else // not USE_MCP230xx_OUTPUT
+const char* ConvertNumTxt(uint8_t statu, uint8_t pinmod=0) {
+#endif // USE_MCP230xx_OUTPUT
+#ifdef USE_MCP230xx_OUTPUT
+  if ((6 == pinmod) && (statu < 2)) { statu = 1-statu; }
+  AddLog(LOG_LEVEL_DEBUG, PSTR("MCP: ConvertNumTxt config=%d save_state=%d"),config, Settings.flag.save_state);
+  if ((config) && (Settings.flag.save_state)) {
+    return "SAVED";
+  }
 #endif // USE_MCP230xx_OUTPUT
   switch (statu) {
     case 0:
@@ -115,7 +127,15 @@ if ((6 == pinmod) && (statu < 2)) { statu = abs(statu-1); }
       break;
 #ifdef USE_MCP230xx_OUTPUT
     case 2:
-      return "TOGGLE";
+#ifdef USE_MCP230xx_OUTPUT
+      if (config) {
+        return "DEVICE";
+      } else {
+#endif // USE_MCP230xx_OUTPUT
+        return "TOGGLE";
+#ifdef USE_MCP230xx_OUTPUT
+      }
+#endif // USE_MCP230xx_OUTPUT
       break;
 #endif // USE_MCP230xx_OUTPUT
   }
@@ -166,6 +186,7 @@ void MCP230xx_ApplySettings(void)
     uint8_t reg_iodir = 0xFF;
 #ifdef USE_MCP230xx_OUTPUT
     reg_portpins[mcp230xx_port] = 0x00;
+    uint8_t reg_readpins = I2cRead8(USE_MCP230xx_ADDR, MCP230xx_OLAT + mcp230xx_port);
 #endif // USE_MCP230xx_OUTPUT
     for (uint32_t idx = 0; idx < 8; idx++) {
       switch (Settings.mcp230xx_config[idx+(mcp230xx_port*8)].pinmode) {
@@ -183,7 +204,11 @@ void MCP230xx_ApplySettings(void)
           if (Settings.flag.save_state) {  // SetOption0 - Save power state and use after restart - Firmware configuration wants us to use the last pin state
             reg_portpins[mcp230xx_port] |= (Settings.mcp230xx_config[idx+(mcp230xx_port*8)].saved_state << idx);
           } else {
-            if (Settings.mcp230xx_config[idx+(mcp230xx_port*8)].pullup) {
+            if (Settings.mcp230xx_config[idx+(mcp230xx_port*8)].keep_output) { // Read the value to use from the MCP230xx
+              AddLog(LOG_LEVEL_DEBUG, PSTR("MCP: readpins=%d or_val=%d"),reg_readpins, reg_readpins & (1 << idx));
+              reg_portpins[mcp230xx_port] |= reg_readpins & (1 << idx);
+            }
+            else if (Settings.mcp230xx_config[idx+(mcp230xx_port*8)].pullup) {
               reg_portpins[mcp230xx_port] |= (1 << idx);
             }
           }
@@ -249,6 +274,9 @@ void MCP230xx_Detect(void)
         MCP230xx_INTF           = 0x0E;
         MCP230xx_INTCAP         = 0x10;
         MCP230xx_GPIO           = 0x12;
+#ifdef USE_MCP230xx_OUTPUT
+        MCP230xx_OLAT           = 0x14;
+#endif // USE_MCP230xx_OUTPUT
         MCP230xx_ApplySettings();
       }
     }
@@ -436,20 +464,30 @@ void MCP230xx_Reset(uint8_t pinmode) {
     Settings.mcp230xx_config[pinx].int_report_defer=0; // Disabled
     Settings.mcp230xx_config[pinx].int_count_en=0;     // Disabled by default
     Settings.mcp230xx_config[pinx].int_retain_flag=0;  // Disabled by default
-    Settings.mcp230xx_config[pinx].spare13=0;
+    Settings.mcp230xx_config[pinx].keep_output=0;      // Disabled by default
     Settings.mcp230xx_config[pinx].spare14=0;
     Settings.mcp230xx_config[pinx].spare15=0;
   }
   Settings.mcp230xx_int_prio = 0; // Once per FUNC_EVERY_50_MSECOND callback
   Settings.mcp230xx_int_timer = 0;
   MCP230xx_ApplySettings();
-  char pulluptxt[7];
-  char intmodetxt[9];
-  sprintf(pulluptxt,ConvertNumTxt(pullup));
-  uint8_t intmode = 3;
-  if ((pinmode > 1) && (pinmode < 5)) { intmode = 0; }
-  sprintf(intmodetxt,IntModeTxt(intmode));
-  Response_P(MCP230XX_SENSOR_RESPONSE,99,pinmode,pulluptxt,intmodetxt,"");
+#ifdef USE_MCP230xx_OUTPUT
+  if (pinmode > 4) {
+    char startuptxt[7];
+    sprintf(startuptxt,ConvertNumTxt(pullup, 0, 1));
+    Response_P(MCP230XX_OUTPUT_RESPONSE,99,pinmode,startuptxt,startuptxt);
+  } else {
+#endif // USE_MCP230xx_OUTPUT
+    char pulluptxt[7];
+    char intmodetxt[9];
+    sprintf(pulluptxt,ConvertNumTxt(pullup));
+    uint8_t intmode = 3;
+    if ((pinmode > 1) && (pinmode < 5)) { intmode = 0; }
+    sprintf(intmodetxt,IntModeTxt(intmode));
+    Response_P(MCP230XX_SENSOR_RESPONSE,99,pinmode,pulluptxt,intmodetxt,"");
+#ifdef USE_MCP230xx_OUTPUT
+  }
+#endif // USE_MCP230xx_OUTPUT
 }
 
 bool MCP230xx_Command(void)
@@ -643,21 +681,26 @@ bool MCP230xx_Command(void)
       if (pin > 7) { port = 1; }
       uint8_t portdata = MCP230xx_readGPIO(port);
       char pulluptxtr[7],pinstatustxtr[7];
-      char intmodetxt[9];
-      sprintf(intmodetxt,IntModeTxt(Settings.mcp230xx_config[pin].int_report_mode));
-      sprintf(pulluptxtr,ConvertNumTxt(Settings.mcp230xx_config[pin].pullup));
-#ifdef USE_MCP230xx_OUTPUT
       uint8_t pinmod = Settings.mcp230xx_config[pin].pinmode;
-      sprintf(pinstatustxtr,ConvertNumTxt(portdata>>(pin-(port*8))&1,pinmod));
-      Response_P(MCP230XX_SENSOR_RESPONSE,pin,pinmod,pulluptxtr,intmodetxt,pinstatustxtr);
-#else // not USE_MCP230xx_OUTPUT
-      sprintf(pinstatustxtr,ConvertNumTxt(portdata>>(pin-(port*8))&1));
-      Response_P(MCP230XX_SENSOR_RESPONSE,pin,Settings.mcp230xx_config[pin].pinmode,pulluptxtr,intmodetxt,pinstatustxtr);
+#ifdef USE_MCP230xx_OUTPUT
+      if (pinmod > 4) {
+        sprintf(pulluptxtr,ConvertNumTxt(Settings.mcp230xx_config[pin].pullup | (Settings.mcp230xx_config[pin].keep_output << 1), 0, 1));
+        sprintf(pinstatustxtr,ConvertNumTxt(portdata>>(pin-(port*8))&1,pinmod));
+        Response_P(MCP230XX_OUTPUT_RESPONSE,pin,pinmod,pulluptxtr,pinstatustxtr);
+      } else {
+#endif //USE_MCP230xx_OUTPUT
+        char intmodetxt[9];
+        sprintf(intmodetxt,IntModeTxt(Settings.mcp230xx_config[pin].int_report_mode));
+        sprintf(pulluptxtr,ConvertNumTxt(Settings.mcp230xx_config[pin].pullup | (Settings.mcp230xx_config[pin].keep_output << 1)));
+        sprintf(pinstatustxtr,ConvertNumTxt(portdata>>(pin-(port*8))&1));
+        Response_P(MCP230XX_SENSOR_RESPONSE,pin,pinmod,pulluptxtr,intmodetxt,pinstatustxtr);
+#ifdef USE_MCP230xx_OUTPUT
+      }
 #endif //USE_MCP230xx_OUTPUT
       return serviced;
     }
 #ifdef USE_MCP230xx_OUTPUT
-    if (Settings.mcp230xx_config[pin].pinmode >= 5 && paramcount == 2) {
+    if (Settings.mcp230xx_config[pin].pinmode >= 5 && paramcount == 2) { // Changing output value
       uint8_t pincmd = Settings.mcp230xx_config[pin].pinmode - 5;
       uint8_t relay_no = 0;
       for (relay_no = 0; relay_no < mcp230xx_pincount ; relay_no ++) {
@@ -691,12 +734,13 @@ bool MCP230xx_Command(void)
       intmode = atoi(ArgV(argument, 4));
     }
 #ifdef USE_MCP230xx_OUTPUT
-    if ((pin < mcp230xx_pincount) && (pinmode > 0) && (pinmode < 7) && (pullup < 2) && (paramcount > 2)) {
+    if ((pin < mcp230xx_pincount) && (((pinmode > 0) && (pinmode < 5) && (pullup < 2)) || ((pinmode > 4) && (pinmode < 7) && (pullup < 3))) && (paramcount > 2)) {
 #else // not use OUTPUT
     if ((pin < mcp230xx_pincount) && (pinmode > 0) && (pinmode < 5) && (pullup < 2) && (paramcount > 2)) {
 #endif // USE_MCP230xx_OUTPUT
       Settings.mcp230xx_config[pin].pinmode=pinmode;
-      Settings.mcp230xx_config[pin].pullup=pullup;
+      Settings.mcp230xx_config[pin].pullup=pullup & 1;
+      Settings.mcp230xx_config[pin].keep_output=pullup >> 1;
       if ((pinmode > 1) && (pinmode < 5)) {
         if ((intmode >= 0) && (intmode <= 3)) {
           Settings.mcp230xx_config[pin].int_report_mode=intmode;
@@ -708,7 +752,28 @@ bool MCP230xx_Command(void)
       uint8_t port = 0;
       if (pin > 7) { port = 1; }
       uint8_t portdata = MCP230xx_readGPIO(port);
-      char pulluptxtc[7], pinstatustxtc[7];
+      char pulluptxtr[7],pinstatustxtr[7];
+      uint8_t pinmod = Settings.mcp230xx_config[pin].pinmode;
+#ifdef USE_MCP230xx_OUTPUT
+      if (pinmod > 4) {
+        sprintf(pulluptxtr,ConvertNumTxt(Settings.mcp230xx_config[pin].pullup | (Settings.mcp230xx_config[pin].keep_output << 1), 0, 1));
+        sprintf(pinstatustxtr,ConvertNumTxt(portdata>>(pin-(port*8))&1,pinmod));
+        Response_P(MCP230XX_OUTPUT_RESPONSE,pin,pinmod,pulluptxtr,pinstatustxtr);
+      } else {
+#endif //USE_MCP230xx_OUTPUT
+        char intmodetxt[9];
+        sprintf(intmodetxt,IntModeTxt(Settings.mcp230xx_config[pin].int_report_mode));
+        sprintf(pulluptxtr,ConvertNumTxt(Settings.mcp230xx_config[pin].pullup | (Settings.mcp230xx_config[pin].keep_output << 1)));
+        sprintf(pinstatustxtr,ConvertNumTxt(portdata>>(pin-(port*8))&1));
+        Response_P(MCP230XX_SENSOR_RESPONSE,pin,pinmod,pulluptxtr,intmodetxt,pinstatustxtr);
+#ifdef USE_MCP230xx_OUTPUT
+      }
+#endif //USE_MCP230xx_OUTPUT
+
+
+
+
+/*      char pulluptxtc[7], pinstatustxtc[7];
       char intmodetxt[9];
       sprintf(pulluptxtc,ConvertNumTxt(pullup));
       sprintf(intmodetxt,IntModeTxt(Settings.mcp230xx_config[pin].int_report_mode));
@@ -717,7 +782,7 @@ bool MCP230xx_Command(void)
 #else  // not USE_MCP230xx_OUTPUT
       sprintf(pinstatustxtc,ConvertNumTxt(portdata>>(pin-(port*8))&1));
 #endif // USE_MCP230xx_OUTPUT
-      Response_P(MCP230XX_SENSOR_RESPONSE,pin,pinmode,pulluptxtc,intmodetxt,pinstatustxtc);
+      Response_P(MCP230XX_SENSOR_RESPONSE,pin,pinmode,pulluptxtc,intmodetxt,pinstatustxtc); */
       return serviced;
     }
   } else {
@@ -727,6 +792,7 @@ bool MCP230xx_Command(void)
   return serviced;
 }
 
+#ifdef USE_MCP230xx_OUTPUT
 #ifdef USE_MCP230xx_DISPLAYOUTPUT
 
 const char HTTP_SNS_MCP230xx_OUTPUT[] PROGMEM = "{s}MCP230XX D%d{m}%s{e}"; // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
@@ -749,6 +815,7 @@ void MCP230xx_UpdateWebData(void)
 }
 
 #endif // USE_MCP230xx_DISPLAYOUTPUT
+#endif // USE_MCP230xx_OUTPUT
 
 /*
 #ifdef USE_MCP230xx_OUTPUT
