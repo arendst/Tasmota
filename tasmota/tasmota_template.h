@@ -330,7 +330,10 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_SSD1351_DC "|"
   D_SENSOR_XPT2046_CS "|"
   D_SENSOR_CSE7761_TX "|" D_SENSOR_CSE7761_RX "|"
+<<<<<<< HEAD
   D_SENSOR_VL53L0X_XSHUT "|"
+=======
+>>>>>>> TFmini+
   D_SENSOR_TFMINIPLUS_TX "|" D_SENSOR_TFMINIPLUS_RX "|"
   ;
 

@@ -105,7 +105,8 @@ void TfmpInit(void)
     {
         if (PinUsed(GPIO_TFMINIPLUS_RX) && PinUsed(GPIO_TFMINIPLUS_TX))
         {
-            TfmpSerial = new TasmotaSerial(Pin(GPIO_TFMINIPLUS_RX), Pin(GPIO_TFMINIPLUS_TX));
+#ifdef ESP8266
+            TfmpSerial = new TasmotaSerial(Pin(GPIO_TFMINIPLUS_RX), Pin(GPIO_TFMINIPLUS_TX), 1);
             if (TfmpSerial->begin(BAUDRATE))
             {
                 if (TfmpSerial->hardwareSerial())
@@ -115,6 +116,12 @@ void TfmpInit(void)
                 tfminiplus_sensor.ready = true;
                 TfmpSerial->flush();
             }
+#endif // ESP8266
+#ifdef ESP32
+            TfmpSerial = new HardwareSerial(2);
+            TfmpSerial->begin(BAUDRATE, SERIAL_8N1, Pin(GPIO_TFMINIPLUS_RX), Pin(GPIO_TFMINIPLUS_TX));
+            TfmpSerial->flush();
+#endif // ESP32
         }
     }
 }
