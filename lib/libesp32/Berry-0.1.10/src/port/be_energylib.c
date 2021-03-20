@@ -19,7 +19,7 @@ be_define_native_module(energy, NULL);
 #else
 /* @const_object_info_begin
 module tasmota (scope: global, depend: 1) {
-    getfreeheap, func(l_getFreeHeap)
+    get_free_heap, func(l_getFreeHeap)
 }
 @const_object_info_end */
 #include "../generate/be_fixed_tasmota.h"
