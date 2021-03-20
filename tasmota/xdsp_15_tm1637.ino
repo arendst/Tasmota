@@ -57,10 +57,12 @@
   set the Display Model to 15 and Display Mode to 0
   using the command "Backlog DisplayModel 15 ; DisplayMode 0"
 
-  If your display is a TM1637 with 6 digits, set Display Columns to the number of digits your
-  display has, using the command "DisplayCols 6" and restart the ESP module.
+  If your display is a TM1637 with 6 digits, set Display Width to the number of digits your
+  display has, using the command "DisplayWidth 6".
 
-  After the ESP8266/ESP32 module restarts again, the following "Display" commands can be used:
+  After the ESP8266/ESP32 module restarts again, turn ON the display with the command "Power 1"
+  
+  Now, the following "Display" commands can be used:
 
 
   DisplayClear
