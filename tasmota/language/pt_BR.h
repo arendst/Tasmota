@@ -585,6 +585,10 @@
 #define D_StL1L2L3 "Current L1+L2+L3"
 #define D_SpL1L2L3 "Voltage L1+L2+L3/3"
 
+// xsns_88_tfminiplus.ino
+#define D_SIGNALSTRENGTH "Signal Strength"
+#define D_CHIPTEMPERATURE "Chip Temperature"
+
 // tasmota_template.h - keep them as short as possible to be able to fit them in GUI drop down box
 #define D_SENSOR_NONE          "Nenhum"
 #define D_SENSOR_USER          "User"
@@ -801,6 +805,9 @@
 #define D_NEW_ADDRESS          "Mudança de endereço para"
 #define D_OUT_OF_RANGE         "Fora de Alcance"
 #define D_SENSOR_DETECTED      "detectou"
+#define D_SENSOR_TFMINIPLUS_TX  "TFmini+ TX"
+#define D_SENSOR_TFMINIPLUS_RX  "TFmini+ RX"
+
 
 // Units
 #define D_UNIT_AMPERE "A"
