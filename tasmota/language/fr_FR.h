@@ -1022,7 +1022,7 @@
 #define D_NEOPOOL_FLOW1                   "FL1"
 #define D_NEOPOOL_FLOW2                   "FL2"
 #define D_NEOPOOL_PH_HIGH                 "Trop haut"          // ph Alarms
-#define D_NEOPOOL_PH_LOW                  "too low"
-#define D_NEOPOOL_PUMP_TIME_EXCEEDED      "pump time exceeded"
+#define D_NEOPOOL_PH_LOW                  "Trop bas"
+#define D_NEOPOOL_PUMP_TIME_EXCEEDED      "durée pompage expirée"
 
 #endif  // _LANGUAGE_FR_FR_H_
