@@ -52,7 +52,7 @@ enum UserSelectablePins {
   GPIO_SR04_TRIG, GPIO_SR04_ECHO,      // SR04 interface
   GPIO_SDM120_TX, GPIO_SDM120_RX,      // SDM120 Serial interface
   GPIO_SDM630_TX, GPIO_SDM630_RX,      // SDM630 Serial interface
-  GPIO_TM16CLK, GPIO_TM16DIO, GPIO_TM16STB,  // TM1638 interface
+  GPIO_TM1638CLK, GPIO_TM1638DIO, GPIO_TM1638STB,  // TM1638 interface
   GPIO_MP3_DFR562,                     // RB-DFR-562, DFPlayer Mini MP3 Player
   GPIO_HX711_SCK, GPIO_HX711_DAT,      // HX711 Load Cell interface
   GPIO_TX2X_TXD_BLACK,                 // TX20/TX23 Transmission Pin
@@ -154,6 +154,7 @@ enum UserSelectablePins {
   GPIO_SSD1351_DC,
   GPIO_XPT2046_CS,                     // XPT2046 SPI Chip Select
   GPIO_CSE7761_TX, GPIO_CSE7761_RX,    // CSE7761 Serial interface (Dual R3)
+  GPIO_VL53L0X_XSHUT1,                 // VL53L0X_XSHUT (the max number of sensors is VL53L0X_MAX_SENSORS)- Used when connecting multiple VL53L0X
   GPIO_SENSOR_END };
 
 enum ProgramSelectablePins {
@@ -328,6 +329,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_SSD1351_DC "|"
   D_SENSOR_XPT2046_CS "|"
   D_SENSOR_CSE7761_TX "|" D_SENSOR_CSE7761_RX "|"
+  D_SENSOR_VL53L0X_XSHUT "|"
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -408,11 +410,13 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_SDCARD_CS),
 #endif  // USE_SDCARD
 #endif  // USE_SPI
+
   AGPIO(GPIO_SSPI_MISO),      // Software SPI Master Input Client Output
   AGPIO(GPIO_SSPI_MOSI),      // Software SPI Master Output Client Input
   AGPIO(GPIO_SSPI_SCLK),      // Software SPI Serial Clock
   AGPIO(GPIO_SSPI_CS),        // Software SPI Chip Select
   AGPIO(GPIO_SSPI_DC),        // Software SPI Data or Command
+
 #ifdef USE_DISPLAY
 #ifdef USE_DISPLAY_ILI9341
   AGPIO(GPIO_ILI9341_CS),
@@ -420,7 +424,6 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_XPT2046
   AGPIO(GPIO_XPT2046_CS),     // XPT2046 SPI Chip Select
 #endif
-
 #endif  // USE_DISPLAY_ILI9341
 #ifdef USE_DISPLAY_ILI9488
   AGPIO(GPIO_ILI9488_CS),
@@ -449,6 +452,9 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_DISPLAY_TM1637
   AGPIO(GPIO_TM1637CLK),
   AGPIO(GPIO_TM1637DIO),
+  AGPIO(GPIO_TM1638CLK),
+  AGPIO(GPIO_TM1638DIO),
+  AGPIO(GPIO_TM1638STB),
 #endif  // USE_DISPLAY_TM1637
   AGPIO(GPIO_BACKLIGHT),      // Display backlight control
   AGPIO(GPIO_OLED_RESET),     // OLED Display Reset
@@ -547,9 +553,9 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_SR04_ECHO),      // SR04 Ech/RXo pin
 #endif
 #ifdef USE_TM1638
-  AGPIO(GPIO_TM16CLK),        // TM1638 Clock
-  AGPIO(GPIO_TM16DIO),        // TM1638 Data I/O
-  AGPIO(GPIO_TM16STB),        // TM1638 Strobe
+  AGPIO(GPIO_TM1638CLK),      // TM1638 Clock
+  AGPIO(GPIO_TM1638DIO),      // TM1638 Data I/O
+  AGPIO(GPIO_TM1638STB),      // TM1638 Strobe
 #endif
 #ifdef USE_HX711
   AGPIO(GPIO_HX711_SCK),      // HX711 Load Cell clock
@@ -781,6 +787,10 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_PROJECTOR_CTRL_TX),      // LCD/DLP Projector Serial Control
   AGPIO(GPIO_PROJECTOR_CTRL_RX),      // LCD/DLP Projector Serial Control
 #endif
+#ifdef USE_VL53L0X
+  AGPIO(GPIO_VL53L0X_XSHUT1) + VL53L0X_MAX_SENSORS,  // When using multiple VL53L0X.
+#endif
+
 /*-------------------------------------------------------------------------------------------*\
  * ESP32 specifics
 \*-------------------------------------------------------------------------------------------*/

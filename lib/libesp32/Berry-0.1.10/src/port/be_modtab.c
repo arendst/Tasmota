@@ -20,8 +20,9 @@ be_extern_native_module(debug);
 be_extern_native_module(gc);
 
 /* Tasmota specific */
-be_extern_native_module(tasmota_ntv);
+// be_extern_native_module(tasmota_ntv);
 be_extern_native_module(wire);
+be_extern_native_module(energy);
 
 /* user-defined modules declare start */
 
@@ -56,8 +57,7 @@ BERRY_LOCAL const bntvmodule* const be_module_table[] = {
 #endif
     /* user-defined modules register start */
 
-    &be_native_module(tasmota_ntv),
-    &be_native_module(wire),
+    &be_native_module(energy),
 
     /* user-defined modules register end */
     NULL /* do not remove */

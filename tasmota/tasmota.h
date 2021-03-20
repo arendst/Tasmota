@@ -83,6 +83,7 @@ const uint8_t MAX_SHUTTER_KEYS = 4;         // Max number of shutter keys or but
 const uint8_t MAX_PCF8574 = 4;              // Max number of PCF8574 devices
 const uint8_t MAX_RULE_SETS = 3;            // Max number of rule sets of size 512 characters
 const uint16_t MAX_RULE_SIZE = 512;         // Max number of characters in rules
+const uint16_t VL53L0X_MAX_SENSORS = 8;     // Max number of VL53L0X sensors
 
 #ifdef ESP32
 const uint8_t MAX_I2C = 2;                  // Max number of I2C controllers (ESP32 = 2)
@@ -423,7 +424,7 @@ enum TuyaSupportedFunctions { TUYA_MCU_FUNC_NONE,
                                 TUYA_MCU_FUNC_REL6, TUYA_MCU_FUNC_REL7, TUYA_MCU_FUNC_REL8,
                               TUYA_MCU_FUNC_DIMMER = 21, TUYA_MCU_FUNC_DIMMER2, TUYA_MCU_FUNC_CT, TUYA_MCU_FUNC_RGB, TUYA_MCU_FUNC_WHITE,
                                 TUYA_MCU_FUNC_MODESET, TUYA_MCU_FUNC_REPORT1, TUYA_MCU_FUNC_REPORT2,
-                              TUYA_MCU_FUNC_POWER = 31, TUYA_MCU_FUNC_CURRENT, TUYA_MCU_FUNC_VOLTAGE, TUYA_MCU_FUNC_BATTERY_STATE, TUYA_MCU_FUNC_BATTERY_PERCENTAGE,
+                              TUYA_MCU_FUNC_POWER = 31, TUYA_MCU_FUNC_CURRENT, TUYA_MCU_FUNC_VOLTAGE, TUYA_MCU_FUNC_BATTERY_STATE, TUYA_MCU_FUNC_BATTERY_PERCENTAGE, TUYA_MCU_FUNC_POWER_COMBINED, TUYA_MCU_FUNC_POWER_TOTAL,
                               TUYA_MCU_FUNC_REL1_INV = 41, TUYA_MCU_FUNC_REL2_INV, TUYA_MCU_FUNC_REL3_INV, TUYA_MCU_FUNC_REL4_INV, TUYA_MCU_FUNC_REL5_INV,
                                 TUYA_MCU_FUNC_REL6_INV, TUYA_MCU_FUNC_REL7_INV, TUYA_MCU_FUNC_REL8_INV,
                               TUYA_MCU_FUNC_LOWPOWER_MODE = 51,

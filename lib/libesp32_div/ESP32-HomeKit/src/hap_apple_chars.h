@@ -142,6 +142,7 @@ extern "C" {
 #define HAP_CHAR_UUID_REMAINING_DURATION                        "D4"
 #define HAP_CHAR_UUID_VALVE_TYPE                                "D5"
 #define HAP_CHAR_UUID_IS_CONFIGURED                             "D6"
+#define HAP_CHAR_UUID_WATTAGE                                   "DC"
 #define HAP_CHAR_UUID_PRODUCT_DATA                              "220"
 
 /** Create Brightness Characteristic
@@ -1414,6 +1415,8 @@ hap_char_t *hap_char_air_particulate_density_create(float air_particulate_densit
  * @return NULL on failure
  */
 hap_char_t *hap_char_air_particulate_size_create(uint8_t air_particulate_size);
+
+hap_char_t *hap_char_wattage_create(float watts);
 
 #ifdef __cplusplus
 }

@@ -29,7 +29,11 @@
  * - https://www.dfrobot.com/wiki/index.php/Weather-proof_Ultrasonic_Sensor_SKU_:_SEN0207
 \*********************************************************************************************/
 
-#define XSNS_22              22
+#define XSNS_22                   22
+
+#ifndef SR04_MAX_SENSOR_DISTANCE
+#define SR04_MAX_SENSOR_DISTANCE  500
+#endif
 
 uint8_t sr04_type = 1;
 real64_t distance;
@@ -64,7 +68,7 @@ uint8_t Sr04TModeDetect(void)
     if (-1 == sr04_trig_pin) {
       sr04_trig_pin = Pin(GPIO_SR04_ECHO);  // if GPIO_SR04_TRIG is not configured use single PIN mode with GPIO_SR04_ECHO only
     }
-    sonar = new NewPing(sr04_trig_pin, sr04_echo_pin, 300);
+    sonar = new NewPing(sr04_trig_pin, sr04_echo_pin, SR04_MAX_SENSOR_DISTANCE);
   } else {
     if (sonar_serial->hardwareSerial()) {
       ClaimSerial();

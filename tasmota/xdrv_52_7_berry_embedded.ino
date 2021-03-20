@@ -32,60 +32,33 @@ const char berry_prog[] =
   //"def noop() log('noop before'); yield(); log('middle after'); yield(); log('noop after'); end "
   //"log(\"foobar\") "
 
+  // create a 'ntv' module to allow functions to be registered in a safe namespace
+  "ntv = module('ntv') "
+
   // auto-import modules
   // // import alias
-  "import wire "
+  "import energy "
 
   // Phase 1
-  // Prepare the super class that will be eventually in Flash
-  "class Tasmota_ntv "
-    "var _op, _operators, _rules, _timers, _cmd "
-
-    // Map all native functions to methods
-    // Again, this will be eventually pre-compiled
-    "var getfreeheap, publish, cmd, getoption, millis, timereached, yield "
-    "var respcmnd, respcmndstr, respcmnd_done, respcmnd_error, respcmnd_failed, resolvecmnd "
-    "var getlight "
-    "def init_ntv() "
-      "import tasmota_ntv "
-      "self.getfreeheap = tasmota_ntv.getfreeheap "
-      "self.publish = tasmota_ntv.publish "
-      "self.cmd = tasmota_ntv.cmd "
-      "self.getoption = tasmota_ntv.getoption "
-      "self.millis = tasmota_ntv.millis "
-      "self.timereached = tasmota_ntv.timereached "
-      "self.yield = tasmota_ntv.yield "
-      "self._operators = tasmota_ntv._operators "
-
-      "self.respcmnd = tasmota_ntv.respcmnd "
-      "self.respcmndstr = tasmota_ntv.respcmndstr "
-      "self.respcmnd_done = tasmota_ntv.respcmnd_done "
-      "self.respcmnd_error = tasmota_ntv.respcmnd_error "
-      "self.respcmnd_failed = tasmota_ntv.respcmnd_failed "
-      "self.resolvecmnd = tasmota_ntv.resolvecmnd "
-
-      "self.getlight = tasmota_ntv.getlight "
-    "end "
-
+  "class Tasmota: Tasmota_ntv "
+    // for now the variables are built, need to find a way to push in Flash
     "def init() "
-      "self._op = [ "
-        "['==', /s1,s2-> str(s1)  == str(s2)],"
-        "['!==',/s1,s2-> str(s1)  != str(s2)],"
-        "['=',  /f1,f2-> real(f1) == real(f2)],"
-        "['!=', /f1,f2-> real(f1) != real(f2)],"
-        "['>=', /f1,f2-> real(f1) >= real(f2)],"
-        "['<=', /f1,f2-> real(f1) <= real(f2)],"
-        "['>',  /f1,f2-> real(f1) >  real(f2)],"
-        "['<',  /f1,f2-> real(f1) <  real(f2)],"
+      "self._op = ['==', '!==', '=', '!=', '>=', '<=', '>', '<'] "
+      "self._opf = [ "
+        "/s1,s2-> str(s1)  == str(s2),"
+        "/s1,s2-> str(s1)  != str(s2),"
+        "/f1,f2-> real(f1) == real(f2),"
+        "/f1,f2-> real(f1) != real(f2),"
+        "/f1,f2-> real(f1) >= real(f2),"
+        "/f1,f2-> real(f1) <= real(f2),"
+        "/f1,f2-> real(f1) >  real(f2),"
+        "/f1,f2-> real(f1) <  real(f2),"
       "] "
+      "self._operators = \"=<>!|\" "
       "self._rules = {} "
       "self._timers = [] "
       "self._cmd = {} "
-      "self.init_ntv() "
     "end "
-  "end "
-
-  "class Tasmota: Tasmota_ntv "
     // add `charsinstring(s:string,c:string) -> int``
     // looks for any char in c, and return the position of the first chat
     // or -1 if not found
@@ -125,10 +98,11 @@ const char berry_prog[] =
         "var op_left = op_split[0] "
         "var op_rest = op_split[1] "
         // # iterate through operators
-        "for op: self._op "
-          "if string.find(op_rest,op[0]) == 0 "
-            "var op_func = op[1] "
-            "var op_right = string.split(op_rest,size(op[0]))[1] "
+        "for i: 0..size(self._op)-1 "
+          "var op = self._op[i] "
+          "if string.find(op_rest,op) == 0 "
+            "var op_func = self._opf[i] "
+            "var op_right = string.split(op_rest,size(op))[1] "
             "return [op_left,op_func,op_right] "
           "end "
         "end "
@@ -137,7 +111,6 @@ const char berry_prog[] =
     "end "
   
     // Rules trigger if match. return true if match, false if not
-    // Note: condition is not yet managed
     "def try_rule(ev, rule, f) "
       "import string "
       "var rl_list = self.find_op(rule) "
@@ -229,6 +202,8 @@ const char berry_prog[] =
 
   // Instantiate tasmota object
   "tasmota = Tasmota() "
+  "wire = Wire(0) "
+  "wire1 = Wire(1) "
 
   // Not sure how to run call methods from C
   "def _exec_rules(e) return tasmota.exec_rules(e) end "
@@ -253,19 +228,30 @@ const char berry_prog[] =
       "var c = compile(f,'file') "
       // save the compiled bytecode
       "if !native "
-        "save(f+'c', c) "
+        "try "
+          "save(f+'c', c) "
+        "except .. as e "
+          "log(string.format('BRY: could not save compiled file %s (%s)',f+'c',e)) "
+        "end "
       "end "
       // call the compiled code
       "c() "
+      "log(string.format(\"BRY: sucessfully loaded '%s'\",f)) "
     "except .. as e "
-      "log(string.format(\"BRY: could not load file '%s' - %s\",f,e)) "
+      "raise \"io_error\",string.format(\"Could not load file '%s'\",f) " 
     "end "
   "end "
 
   // try to load "/autoexec.be"
   // "try compile('/autoexec.be','file')() except .. log('BRY: no /autoexec.bat file') end "
-
-  // Wire
   ;
 
+const char berry_autoexec[] =
+  // load "autoexec.be" using import, which loads either .be or .bec file
+  "try "
+    "load('autoexec.be') "
+  "except .. "
+    "log(\"BRY: No 'autoexec.be' file\") " 
+  "end "
+  ;
 #endif  // USE_BERRY

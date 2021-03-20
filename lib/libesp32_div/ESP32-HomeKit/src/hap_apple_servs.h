@@ -75,6 +75,7 @@ extern "C" {
 #define HAP_SERV_UUID_VALVE                         "D0"
 #define HAP_SERV_UUID_FAUCET                        "D7"
 
+
 /** Create Accessory Information Service
  *
  * This API will create the Accessory Information Service with the mandatory
@@ -552,6 +553,9 @@ hap_serv_t *hap_serv_valve_create(uint8_t active, uint8_t in_use, uint8_t valve_
  * @return NULL on failure
  */
 hap_serv_t *hap_serv_faucet_create(uint8_t active);
+
+
+hap_serv_t *hap_serv_wattage_create(float curr_watts);
 
 #ifdef __cplusplus
 }

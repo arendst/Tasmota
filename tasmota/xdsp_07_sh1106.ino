@@ -48,8 +48,9 @@ Adafruit_SH1106 *oled1106;
 /*********************************************************************************************/
 
 
-void SH1106InitDriver()
-{
+void SH1106InitDriver() {
+  if (!TasmotaGlobal.i2c_enabled) { return; }
+
   if (!Settings.display_model) {
     if (I2cSetDevice(OLED_ADDRESS1)) {
       Settings.display_address[0] = OLED_ADDRESS1;
