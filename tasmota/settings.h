@@ -259,7 +259,7 @@ typedef union {
     uint16_t int_report_defer : 4;          // Number of interrupts to ignore until reporting (default 0, max 15)
     uint16_t int_count_en : 1;              // Enable interrupt counter for this pin
     uint16_t int_retain_flag : 1;           // Report if interrupt occured for pin in next teleperiod
-    uint16_t spare13 : 1;
+    uint16_t keep_output : 1;               // For output modes, preserve the value currently in the MCP230xx
     uint16_t spare14 : 1;
     uint16_t spare15 : 1;
   };
