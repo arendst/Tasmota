@@ -21,7 +21,7 @@
 #ifdef USE_CSE7761
 /*********************************************************************************************\
  * CSE7761 - Energy  (Sonoff Dual R3 Pow)
- * {"NAME":"Sonoff Dual R3","GPIO":[0,0,1,0,0,0,3232,3200,0,0,225,0,0,0,0,0,0,0,0,0,1,7296,7328,224,0,0,0,0,160,161,0,0,0,0,0,0],"FLAG":0,"BASE":1}
+ * {"NAME":"Sonoff Dual R3","GPIO":[32,0,0,0,0,0,0,0,0,576,225,0,0,0,0,0,0,0,0,0,0,7296,7328,224,0,0,0,0,160,161,0,0,0,0,0,0],"FLAG":0,"BASE":1}
  *
  * Based on datasheet from ChipSea and analysing serial data
  * See https://github.com/arendst/Tasmota/discussions/10793
