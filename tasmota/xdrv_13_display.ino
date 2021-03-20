@@ -1864,9 +1864,11 @@ void CmndDisplayScrollText(void)
 
 void CmndDisplaySize(void)
 {
-  Settings.display_size = XdrvMailbox.payload;
-  if (renderer) renderer->setTextSize(Settings.display_size);
-  //else DisplaySetSize(Settings.display_size);
+  if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload <= 4)) {
+    Settings.display_size = XdrvMailbox.payload;
+    if (renderer) renderer->setTextSize(Settings.display_size);
+    //else DisplaySetSize(Settings.display_size);
+  }
   ResponseCmndNumber(Settings.display_size);
 }
 
