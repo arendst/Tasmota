@@ -43,6 +43,7 @@
  *  - added SetOption123 0-Wiegand UID decimal (default) 1-Wiegand UID hexadecimal 
  *  - added SetOption124 0-all keys up to ending char (# or *) send as one tag by MQTT (default) 1-Keypad every key a single tag 
  *  - added a new realtime testing option emulating a Wiegang reader output on same GPIOs where normally reader is attached. Details below
+ *  - fix timing issue when fast glitches are detected on one on the datalines. The interbitgab was too short in that case
 \*********************************************************************************************/
 #pragma message("**** Wiegand interface enabled ****")
 
@@ -106,10 +107,12 @@ class Wiegand {
     bool WiegandConversion (uint64_t , uint16_t );
     void setOutputFormat(void); // fix output HEX format
     void HandleKeyPad(void); //handle one tag for multi key strokes
+    
 
     static void handleD0Interrupt(void);
     static void handleD1Interrupt(void);
     static void handleDxInterrupt(int in); // fix #11047 
+    static void ClearRFIDBuffer(int); 
 
     uint64_t rfid;
     uint32_t tagSize;
@@ -142,6 +145,58 @@ volatile bool Wiegand::CodeComplete;
 volatile RFID_store Wiegand::rfid_found[WIEGAND_RFID_ARRAY_SIZE];
 volatile int Wiegand::currentFoundRFIDcount;
 
+
+
+void ICACHE_RAM_ATTR Wiegand::ClearRFIDBuffer(int endIndex = WIEGAND_RFID_ARRAY_SIZE) {
+   currentFoundRFIDcount=WIEGAND_RFID_ARRAY_SIZE-endIndex; // clear all buffers
+    for (int i= 0; i < endIndex; i++) {
+      rfid_found[i].RFID=0;
+      rfid_found[i].bitCount=0;
+    }
+}
+void ICACHE_RAM_ATTR Wiegand::handleD1Interrupt() {  // Receive a 1 bit. (D0=high & D1=low)
+  handleDxInterrupt(1);
+}
+
+void ICACHE_RAM_ATTR Wiegand::handleD0Interrupt() {  // Receive a 0 bit. (D0=low & D1=high)
+  handleDxInterrupt(0);                    
+}
+
+void ICACHE_RAM_ATTR Wiegand::handleDxInterrupt(int in) {
+  unsigned long curTime = micros();  // to be sure I will use micros() instead of millis() overflow is handle by using the minus operator to compare
+  unsigned long diffTime= curTime - lastFoundTime;
+  if ( (diffTime > CodeGapTime) && (bitCount > 0)) { 
+    // previous RFID tag (key pad numer)is complete. Will be detected by the code ending gap
+    // one bit will take the time of impulse_time + impulse_gap_time. it (bitTime) will be recalculated each time an impulse is detected
+    // the devices will add some inter_code_gap_time to separate codes this will be much longer than the bit_time. (WIEGAND_CODE_GAP_FACTOR)
+    // unfortunately there's no timing defined for Wiegand. On my test reader the impulse time = 125 µs impulse gap time = 950 µs.
+    if (currentFoundRFIDcount < WIEGAND_RFID_ARRAY_SIZE) { // when reaching the end of rfid buffer we will overwrite the last one.
+      currentFoundRFIDcount++;
+    }
+    // start a new tag
+    rfidBuffer = 0; 
+    bitCount = 0;
+    FirstBitTimeStamp = 0; 
+  }
+  
+  if (in == 0) { rfidBuffer = rfidBuffer << 1; } // Receive a 0 bit. (D0=low & D1=high): Leftshift the 0 bit is now at the end of rfidBuffer
+  else if (in == 1)  {rfidBuffer = (rfidBuffer << 1) | 1; }    // Receive a 1 bit. (D0=high & D1=low): Leftshift + 1 bit
+  else { return; } // (in==3) called by ScanForTag to get the last tag, because the interrupt handler is no longer called after receiving the last bit
+
+  bitCount++; 
+  if (bitCount == 1) { // first bit was detected
+    FirstBitTimeStamp = (curTime != 0) ? curTime : 1; // accept 1µs differenct to avoid a miss the first timestamp if curTime is 0.
+  }
+  else if (bitCount == 2) { // only calculate once per RFID tag, but restrict to values, which are in within a plausible range
+    bitTime = ((diffTime > (WIEGAND_BIT_TIME_DEFAULT/4)) && (diffTime < (4*WIEGAND_BIT_TIME_DEFAULT))) ? diffTime : WIEGAND_BIT_TIME_DEFAULT;
+    CodeGapTime = WIEGAND_CODE_GAP_FACTOR * bitTime;
+  }   
+  //save current rfid in array otherwise we will never see the last found tag
+  rfid_found[currentFoundRFIDcount].RFID=rfidBuffer;
+  rfid_found[currentFoundRFIDcount].bitCount= bitCount;
+  lastFoundTime = curTime; // Last time a bit was detected
+}
+
 Wiegand::Wiegand() {
   rfid = 0;
   lastFoundTime = 0;
@@ -154,65 +209,10 @@ Wiegand::Wiegand() {
   FirstBitTimeStamp = 0;
   CodeGapTime = WIEGAND_CODE_GAP_FACTOR * bitTime;
   CodeComplete = false;
-  currentFoundRFIDcount=0;
-  for (int i=0; i < WIEGAND_RFID_ARRAY_SIZE; i++ )
-  {
-    rfid_found[i].RFID=0;
-    rfid_found[i].bitCount=0;
-  }
+  ClearRFIDBuffer();
   outFormat="u";  // standard output format decimal
   mqttRFIDKeypadBuffer = 0;
   webRFIDKeypadBuffer = 0;
-}
-
-void ICACHE_RAM_ATTR Wiegand::handleD1Interrupt() {  // Receive a 1 bit. (D0=high & D1=low)
-  handleDxInterrupt(1);
-}
-
-void ICACHE_RAM_ATTR Wiegand::handleD0Interrupt() {  // Receive a 0 bit. (D0=low & D1=high)
-  handleDxInterrupt(0);                    
-}
-
-void ICACHE_RAM_ATTR Wiegand::handleDxInterrupt(int in) {
-  
-  unsigned long curTime = micros();  // to be sure I will use micros() instead of millis() overflow is handle by using the minus operator to compare
-  unsigned long diffTime= curTime - lastFoundTime;
-  if (diffTime > 3000000 ) {  //cancel noisy bits in buffer and start a new tag
-    rfidBuffer = 0; 
-    bitCount = 0;
-    FirstBitTimeStamp = 0; 
-   } 
-  if ( (diffTime > CodeGapTime) && (bitCount > 0)) { 
-    // previous RFID tag (key pad numer)is complete. Will be detected by the code ending gap
-    // one bit will take the time of impulse_time + impulse_gap_time. it (bitTime) will be recalculated each time an impulse is detected
-    // the devices will add some inter_code_gap_time to separate codes this will be much longer than the bit_time. (WIEGAND_CODE_GAP_FACTOR)
-    // unfortunately there's no timing defined for Wiegang. On my test reader the impulse time = 125 µs impulse gap time = 950 µs.
-    if (currentFoundRFIDcount < WIEGAND_RFID_ARRAY_SIZE) { // when reaching the end of rfid buffer we will overwrite the last one.
-      currentFoundRFIDcount++;
-    }
-    // start a new tag
-    rfidBuffer = 0; 
-    bitCount = 0;
-    FirstBitTimeStamp = 0; 
-  }
-  if (in ==3) {// called by ScanForTag to get the last tag, because the interrupt handler is no longer called after receiving the last bit
-    return;
-  }
-  if (in == 0) { rfidBuffer = rfidBuffer << 1; } // Receive a 0 bit. (D0=low & D1=high): Leftshift the 0 bit is now at the end of rfidBuffer
-  else {rfidBuffer = (rfidBuffer << 1) | 1; }    // Receive a 1 bit. (D0=high & D1=low): Leftshift + 1 bit
-
-  bitCount++; 
-  if (bitCount == 1) { // first bit was detected
-    FirstBitTimeStamp = (curTime != 0) ? curTime : 1; // accept 1µs differenct to avoid a miss the first timestamp if curTime is 0.
-  }
-  else if (bitCount == 2) { // only calculate once per RFID tag
-    bitTime = diffTime;  //calc maximum current length of one bit
-    CodeGapTime = WIEGAND_CODE_GAP_FACTOR * bitTime;
-  }   
-  //save current rfid in array otherwise we will never see the last found tag
-  rfid_found[currentFoundRFIDcount].RFID=rfidBuffer;
-  rfid_found[currentFoundRFIDcount].bitCount= bitCount;
-  lastFoundTime = curTime; // Last time a bit was detected
 }
 
 void Wiegand::Init() {
@@ -400,7 +400,7 @@ void Wiegand::ScanForTag() {
         uint64_t oldTag = rfid;
         bool validKey =  WiegandConversion(rfid_found[i].RFID, rfid_found[i].bitCount);
         #if (DEV_WIEGAND_TEST_MODE)>0
-        AddLog(LOG_LEVEL_INFO, PSTR("WIE: Previous tag %llu"), oldTag);
+        AddLog(LOG_LEVEL_INFO, PSTR("WIE: ValidKey: %d Previous tag %llu"), validKey, oldTag);
         #endif  // DEV_WIEGAND_TEST_MODE>0
         if (validKey) {  // Only in case of valid key do action. Issue#10585
           HandleKeyPad();  //support one tag for multi key input 
@@ -412,15 +412,14 @@ void Wiegand::ScanForTag() {
             MqttPublishTeleSensor();
           }
         }
-        rfid_found[i].RFID=0;
-        rfid_found[i].bitCount=0;
       }
     }
     if (currentFoundRFIDcount > lastFoundRFIDcount) {
       // if that happens: we need to move the id found during the loop to top of the array
       // and correct the currentFoundRFIDcount
+      AddLog(LOG_LEVEL_INFO, PSTR("WIE: ScanForTag() %lu tags added while working on buffer"), (currentFoundRFIDcount-lastFoundRFIDcount));  
     }
-    currentFoundRFIDcount=0; //reset array  
+    ClearRFIDBuffer(); //reset array  
     #if (DEV_WIEGAND_TEST_MODE)>0
     AddLog(LOG_LEVEL_INFO, PSTR("WIE: ScanForTag() time elapsed %lu"), (micros() - startTime));  
     #endif
