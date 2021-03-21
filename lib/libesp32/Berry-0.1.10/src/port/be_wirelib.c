@@ -20,8 +20,6 @@ extern int b_wire_scan(bvm *vm);
 
 extern int b_wire_validwrite(bvm *vm);
 extern int b_wire_validread(bvm *vm);
-extern int b_wire_readbytes(bvm *vm);
-extern int b_wire_writebytes(bvm *vm);
 extern int b_wire_detect(bvm *vm);
 
 // #if !BE_USE_PRECOMPILED_OBJECT
@@ -40,13 +38,11 @@ void be_load_wirelib(bvm *vm)
         { "scan", b_wire_scan },
         { "write", b_wire_validwrite },
         { "read", b_wire_validread },
-        { "read_bytes", b_wire_validread },
-        { "write_bytes", b_wire_validread },
         { "detect", b_wire_detect },
         
         { NULL, NULL }
     };
-    be_regclass(vm, "Wire", members);
+    be_regclass(vm, "Wire_ntv", members);
 }
 #else
 /* @const_object_info_begin

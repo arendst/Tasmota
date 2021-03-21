@@ -138,7 +138,7 @@ extern "C" {
     const void * buf;
     size_t len;
     TwoWire & myWire = getWire(vm);
-    if (top == 2 && (be_isint(vm, 2) || be_isstring(vm, 2))) {
+    if (top == 2 && (be_isint(vm, 2) || be_isstring(vm, 2) || be_isinstance(vm, 2))) {
       if (be_isint(vm, 2)) {
         int32_t value = be_toint(vm, 2);
         myWire.write(value);
@@ -223,46 +223,6 @@ extern "C" {
       }
       be_return(vm); // Return
     }
-    be_raise(vm, kTypeError, nullptr);
-  }
-
-  // Berry: `read_bytes(address:int, reg:int, size:int) -> bytes() or nil`
-  int32_t b_wire_readbytes(struct bvm *vm);
-  int32_t b_wire_readbytes(struct bvm *vm) {
-  //   int32_t top = be_top(vm); // Get the number of arguments
-  //   int32_t bus = getBus(vm);
-  //   if (top == 4 && be_isint(vm, 2) && be_isint(vm, 3) && be_isint(vm, 4)) {
-  //     uint8_t addr = be_toint(vm, 2);
-  //     uint8_t reg = be_toint(vm, 3);
-  //     uint8_t size = be_toint(vm, 4);
-  //     bool ok = I2cValidRead(addr, reg, size, bus);  // TODO
-  //     if (ok) {
-  //       be_pushint(vm, i2c_buffer);
-  //     } else {
-  //       be_pushnil(vm);
-  //     }
-  //     be_return(vm); // Return
-  //   }
-    be_raise(vm, kTypeError, nullptr);
-  }
-
-  // Berry: `write_bytes(address:int, reg:int, val:bytes()) -> bool or nil`
-  int32_t b_wire_writebytes(struct bvm *vm);
-  int32_t b_wire_writebytes(struct bvm *vm) {
-  //   int32_t top = be_top(vm); // Get the number of arguments
-  //   int32_t bus = getBus(vm);
-  //   if (top == 4 && be_isint(vm, 2) && be_isint(vm, 3) && be_isint(vm, 4)) {
-  //     uint8_t addr = be_toint(vm, 2);
-  //     uint8_t reg = be_toint(vm, 3);
-  //     uint8_t size = be_toint(vm, 4);
-  //     bool ok = I2cValidRead(addr, reg, size, bus);  // TODO
-  //     if (ok) {
-  //       be_pushint(vm, i2c_buffer);
-  //     } else {
-  //       be_pushnil(vm);
-  //     }
-  //     be_return(vm); // Return
-  //   }
     be_raise(vm, kTypeError, nullptr);
   }
 
