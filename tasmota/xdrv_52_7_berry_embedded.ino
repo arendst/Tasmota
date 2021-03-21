@@ -256,6 +256,30 @@ const char berry_prog[] =
 
   // Instantiate tasmota object
   "tasmota = Tasmota() "
+
+  // Wire class
+  "class Wire : Wire_ntv "
+    // read bytes as `bytes()` object
+    "def read_bytes(addr,reg,size) "
+      "self._begin_transmission(addr) "
+      "self._write(reg) "
+      "self._end_transmission(false) "
+      "self._request_from(addr,size) "
+      "var ret=bytes(size) "
+      "while (self._available()) "
+        "ret..self._read() "
+      "end "
+      "return ret "
+    "end "
+    // write bytes from `bytes` object
+    "def write_bytes(addr,reg,b) "
+      "self._begin_transmission(addr) "
+      "self._write(reg) "
+      "self._write(b) "
+      "self._end_transmission() "
+    "end "
+  "end "
+
   "wire = Wire(0) "
   "wire1 = wire "
   "wire2 = Wire(1) "
