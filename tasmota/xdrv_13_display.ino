@@ -1643,7 +1643,7 @@ void CmndDisplay(void)
     D_CMND_DISP_MODE "\":%d,\"" D_CMND_DISP_DIMMER "\":%d,\"" D_CMND_DISP_SIZE "\":%d,\"" D_CMND_DISP_FONT "\":%d,\""
     D_CMND_DISP_ROTATE "\":%d,\"" D_CMND_DISP_REFRESH "\":%d,\"" D_CMND_DISP_COLS "\":[%d,%d],\"" D_CMND_DISP_ROWS "\":%d}}"),
     Settings.display_model, Settings.display_width, Settings.display_height,
-    Settings.display_mode, ((Settings.display_dimmer * 666) / 100) +1, Settings.display_size, Settings.display_font,
+    Settings.display_mode, changeUIntScale(Settings.display_dimmer, 0, 15, 0, 100), Settings.display_size, Settings.display_font,
     Settings.display_rotate, Settings.display_refresh, Settings.display_cols[0], Settings.display_cols[1], Settings.display_rows);
 }
 
@@ -1716,7 +1716,7 @@ void CmndDisplayMode(void)
 
 void CmndDisplayDimmer(void) {
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 100)) {
-    Settings.display_dimmer = ((XdrvMailbox.payload +1) * 100) / 666;  // Correction for Domoticz (0 - 15)
+    Settings.display_dimmer = changeUIntScale(XdrvMailbox.payload, 0, 100, 0, 15);  // Correction for Domoticz (0 - 15)
     if (Settings.display_dimmer && !(disp_power)) {
       ExecuteCommandPower(disp_device, POWER_ON, SRC_DISPLAY);
     }
@@ -1729,7 +1729,7 @@ void CmndDisplayDimmer(void) {
       XdspCall(FUNC_DISPLAY_DIM);
     }
   }
-  ResponseCmndNumber(((Settings.display_dimmer * 666) / 100) +1);
+  ResponseCmndNumber(changeUIntScale(Settings.display_dimmer, 0, 15, 0, 100));
 }
 
 void CmndDisplayBlinkrate(void)
