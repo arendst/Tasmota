@@ -48,6 +48,32 @@ void checkBeTop(void) {
 }
 
 /*********************************************************************************************\
+ * Memory handler
+ * Use PSRAM if available
+\*********************************************************************************************/
+extern "C" {
+  void *berry_malloc(uint32_t size);
+  void *berry_realloc(void *ptr, size_t size);
+#ifdef USE_BERRY_PSRAM
+  void *berry_malloc(uint32_t size) {
+    return special_malloc(size);
+  }
+  void *berry_realloc(void *ptr, size_t size) {
+    return special_realloc(ptr, size);
+  }
+#else
+  void *berry_malloc(uint32_t size) {
+    return malloc(size);
+  }
+  void *berry_realloc(void *ptr, size_t size) {
+    return realloc(ptr, size);
+  }
+#endif // USE_BERRY_PSRAM
+
+}
+
+
+/*********************************************************************************************\
  * Handlers for Berry calls and async
  * 
 \*********************************************************************************************/
@@ -564,7 +590,7 @@ void HandleBerryConsoleRefresh(void)
   if (svalue.length()) {
     berry.log.reset();          // clear all previous logs
     berry.repl_active = true;   // start recording
-    AddLog_P(LOG_LEVEL_INFO, PSTR("BRY: received command %s"), svalue.c_str());
+    // AddLog_P(LOG_LEVEL_INFO, PSTR("BRY: received command %s"), svalue.c_str());
     berry.log.addString(svalue.c_str(), nullptr, BERRY_CONSOLE_CMD_DELIMITER);
 
     // Call berry
