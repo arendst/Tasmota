@@ -34,29 +34,31 @@
 #define CSE7761_UREF               42563        // RmsUc
 #define CSE7761_IREF               52241        // RmsIAC
 #define CSE7761_PREF               44513        // PowerPAC
+#define CSE7761_FREF               3579545      // System clock (3.579545MHz) as used in frequency calculation
 
-#define CSE7761_REG_SYSCON         0x00         // System Control Register
-#define CSE7761_REG_EMUCON         0x01         // Metering control register
-#define CSE7761_REG_EMUCON2        0x13         // Metering control register 2
+#define CSE7761_REG_SYSCON         0x00         // (2) System Control Register (0x0A04)
+#define CSE7761_REG_EMUCON         0x01         // (2) Metering control register (0x0000)
+#define CSE7761_REG_EMUCON2        0x13         // (2) Metering control register 2 (0x0001)
 
-#define CSE7761_REG_UFREQ          0x23         // Voltage Frequency Register
-#define CSE7761_REG_RMSIA          0x24         // The effective value of channel A current
-#define CSE7761_REG_RMSIB          0x25         // The effective value of channel B current
-#define CSE7761_REG_RMSU           0x26         // Voltage RMS
-#define CSE7761_REG_POWERPA        0x2C         // Channel A active power, update rate 27.2Hz
-#define CSE7761_REG_POWERPB        0x2D         // Channel B active power, update rate 27.2Hz
-#define CSE7761_REG_SYSSTATUS      0x43         // System status register
+#define CSE7761_REG_UFREQ          0x23         // (2) Voltage Frequency (0x0000)
+#define CSE7761_REG_RMSIA          0x24         // (3) The effective value of channel A current (0x000000)
+#define CSE7761_REG_RMSIB          0x25         // (3) The effective value of channel B current (0x000000)
+#define CSE7761_REG_RMSU           0x26         // (3) Voltage RMS (0x000000)
+#define CSE7761_REG_POWERFACTOR    0x27         // (3) Power factor register, select by command: channel A Power factor or channel B power factor (0x7FFFFF)
+#define CSE7761_REG_POWERPA        0x2C         // (4) Channel A active power, update rate 27.2Hz (0x00000000)
+#define CSE7761_REG_POWERPB        0x2D         // (4) Channel B active power, update rate 27.2Hz (0x00000000)
+#define CSE7761_REG_SYSSTATUS      0x43         // (1) System status register
 
-#define CSE7761_REG_COEFFOFFSET    0x6E         // Coefficient checksum offset (0xFFFF)
-#define CSE7761_REG_COEFFCHKSUM    0x6F         // Coefficient checksum
-#define CSE7761_REG_RMSIAC         0x70         // Channel A effective current conversion coefficient
-#define CSE7761_REG_RMSIBC         0x71         // Channel B effective current conversion coefficient
-#define CSE7761_REG_RMSUC          0x72         // Effective voltage conversion coefficient
-#define CSE7761_REG_POWERPAC       0x73         // Channel A active power conversion coefficient
-#define CSE7761_REG_POWERPBC       0x74         // Channel B active power conversion coefficient
-#define CSE7761_REG_POWERSC        0x75         // Apparent power conversion coefficient
-#define CSE7761_REG_ENERGYAC       0x76         // Channel A energy conversion coefficient
-#define CSE7761_REG_ENERGYBC       0x77         // Channel B energy conversion coefficient
+#define CSE7761_REG_COEFFOFFSET    0x6E         // (2) Coefficient checksum offset (0xFFFF)
+#define CSE7761_REG_COEFFCHKSUM    0x6F         // (2) Coefficient checksum
+#define CSE7761_REG_RMSIAC         0x70         // (2) Channel A effective current conversion coefficient
+#define CSE7761_REG_RMSIBC         0x71         // (2) Channel B effective current conversion coefficient
+#define CSE7761_REG_RMSUC          0x72         // (2) Effective voltage conversion coefficient
+#define CSE7761_REG_POWERPAC       0x73         // (2) Channel A active power conversion coefficient
+#define CSE7761_REG_POWERPBC       0x74         // (2) Channel B active power conversion coefficient
+#define CSE7761_REG_POWERSC        0x75         // (2) Apparent power conversion coefficient
+#define CSE7761_REG_ENERGYAC       0x76         // (2) Channel A energy conversion coefficient
+#define CSE7761_REG_ENERGYBC       0x77         // (2) Channel B energy conversion coefficient
 
 #define CSE7761_SPECIAL_COMMAND    0xEA         // Start special command
 #define CSE7761_CMD_RESET          0x96         // Reset command, after receiving the command, the chip resets
@@ -76,6 +78,7 @@ enum CSE7761 { RmsIAC, RmsIBC, RmsUC, PowerPAC, PowerPBC, PowerSC, EnergyAC, Ene
 TasmotaSerial *Cse7761Serial = nullptr;
 
 struct {
+  uint32_t frequency = 0;
   uint32_t voltage_rms = 0;
   uint32_t current_rms[2] = { 0 };
   uint32_t energy[2] = { 0 };
@@ -114,7 +117,7 @@ void Cse7761Write(uint32_t reg, uint32_t data) {
   AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("C61: Tx %*_H"), len, buffer);
 }
 
-uint32_t Cse7761ReadOnce(uint32_t log_level, uint32_t reg, uint32_t size) {
+bool Cse7761ReadOnce(uint32_t log_level, uint32_t reg, uint32_t size, uint32_t* value) {
   while (Cse7761Serial->available()) { Cse7761Serial->read(); }
 
   Cse7761Write(reg, 0);
@@ -133,12 +136,12 @@ uint32_t Cse7761ReadOnce(uint32_t log_level, uint32_t reg, uint32_t size) {
 
   if (!rcvd) {
     AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("C61: Rx none"));
-    return 0;
+    return false;
   }
   AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("C61: Rx %*_H"), rcvd, buffer);
   if (rcvd > 5) {
     AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("C61: Rx overflow"));
-    return 0;
+    return false;
   }
 
   rcvd--;
@@ -151,25 +154,27 @@ uint32_t Cse7761ReadOnce(uint32_t log_level, uint32_t reg, uint32_t size) {
   crc = ~crc;
   if (crc != buffer[rcvd]) {
     AddLog(log_level, PSTR("C61: Rx %*_H, CRC error %02X"), rcvd +1, buffer, crc);
-    return 1;
+    return false;
   }
 
-  return result;
+  *value = result;
+  return true;
 }
 
 uint32_t Cse7761Read(uint32_t reg, uint32_t size) {
-  uint32_t value = 0;
-  uint32_t retry = 3;
-  while ((value < 2) && (retry)) {
+  bool result = false;  // Start loop
+  uint32_t retry = 3;   // Retry up to three times
+  uint32_t value = 0;   // Default no value
+  while (!result && retry) {
     retry--;
-    value = Cse7761ReadOnce((retry) ? LOG_LEVEL_DEBUG_MORE : LOG_LEVEL_DEBUG, reg, size);
+    result = Cse7761ReadOnce((retry) ? LOG_LEVEL_DEBUG_MORE : LOG_LEVEL_DEBUG, reg, size, &value);
   }
   return value;
 }
 
 uint32_t Cse7761ReadFallback(uint32_t reg, uint32_t prev, uint32_t size) {
   uint32_t value = Cse7761Read(reg, size);
-  if (1 == value) {  // CRC Error so use previous value read
+  if (!value) {    // Error so use previous value read
     value = prev;
   }
   return value;
@@ -202,9 +207,14 @@ bool Cse7761ChipInit(void) {
 //    CSE7761Data.coefficient[PowerPBC] = 0xADD7;
   }
   if (HLW_PREF_PULSE == Settings.energy_power_calibration) {
+    Settings.energy_frequency_calibration = CSE7761_FREF;
     Settings.energy_voltage_calibration = Cse7761Ref(RmsUC);
     Settings.energy_current_calibration = Cse7761Ref(RmsIAC);
     Settings.energy_power_calibration = Cse7761Ref(PowerPAC);
+  }
+  // Just to fix intermediate users
+  if (Settings.energy_frequency_calibration < CSE7761_FREF / 2) {
+    Settings.energy_frequency_calibration = CSE7761_FREF;
   }
 
   Cse7761Write(CSE7761_SPECIAL_COMMAND, CSE7761_CMD_ENABLE_WRITE);
@@ -320,7 +330,7 @@ bool Cse7761ChipInit(void) {
                               =1, turn on the power factor output function (Sonoff Dual R3 Pow)
                               =0, turn off the power factor output function
     5      WaveEN             Waveform data, instantaneous data output enable signal
-                              =1, turn on the waveform data output function
+                              =1, turn on the waveform data output function (Tasmota add frequency)
                               =0, turn off the waveform data output function (Sonoff Dual R3 Pow)
     4      SAGEN              Voltage drop detection enable signal, WaveEN=1 must be configured first
                               =1, turn on the voltage drop detection function
@@ -329,14 +339,15 @@ bool Cse7761ChipInit(void) {
                               =1, turn on the overvoltage, overcurrent, and overload detection functions
                               =0, turn off the overvoltage, overcurrent, and overload detection functions (Sonoff Dual R3 Pow)
     2      ZxEN               Zero-crossing detection, phase angle, voltage frequency measurement enable signal
-                              =1, turn on the zero-crossing detection, phase angle, and voltage frequency measurement functions
+                              =1, turn on the zero-crossing detection, phase angle, and voltage frequency measurement functions (Tasmota add frequency)
                               =0, disable zero-crossing detection, phase angle, voltage frequency measurement functions (Sonoff Dual R3 Pow)
     1      PeakEN             Peak detect enable signal
                               =1, turn on the peak detection function
                               =0, turn off the peak detection function (Sonoff Dual R3 Pow)
     0      NC                 Default is 1
 */
-    Cse7761Write(CSE7761_REG_EMUCON2 | 0x80, 0x0FC1);
+//    Cse7761Write(CSE7761_REG_EMUCON2 | 0x80, 0x0FC1);  // Sonoff Dual R3 Pow
+    Cse7761Write(CSE7761_REG_EMUCON2 | 0x80, 0x0FE5);  // Tasmota add Frequency
   } else {
     AddLog(LOG_LEVEL_DEBUG, PSTR("C61: Write failed"));
     return false;
@@ -353,6 +364,12 @@ void Cse7761GetData(void) {
   value = 2342160;  // 237.7V
 #endif
   CSE7761Data.voltage_rms = (value >= 0x800000) ? 0 : value;
+
+  value = Cse7761ReadFallback(CSE7761_REG_UFREQ, CSE7761Data.frequency, 2);
+#ifdef CSE7761_SIMULATE
+  value = 8948;  // 49.99Hz
+#endif
+  CSE7761Data.frequency = (value >= 0x8000) ? 0 : value;
 
   value = Cse7761ReadFallback(CSE7761_REG_RMSIA, CSE7761Data.current_rms[0], 3);
 #ifdef CSE7761_SIMULATE
@@ -376,8 +393,8 @@ void Cse7761GetData(void) {
 #endif
   CSE7761Data.active_power[1] = (0 == CSE7761Data.current_rms[1]) ? 0 : (value & 0x80000000) ? (~value) + 1 : value;
 
-  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("C61: U%d, I%d/%d, P%d/%d"),
-    CSE7761Data.voltage_rms,
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("C61: F%d, U%d, I%d/%d, P%d/%d"),
+    CSE7761Data.frequency, CSE7761Data.voltage_rms,
     CSE7761Data.current_rms[0], CSE7761Data.current_rms[1],
     CSE7761Data.active_power[0], CSE7761Data.active_power[1]);
 
@@ -385,6 +402,7 @@ void Cse7761GetData(void) {
     // Voltage = RmsU * RmsUC * 10 / 0x400000
     // Energy.voltage[0] = (float)(((uint64_t)CSE7761Data.voltage_rms * CSE7761Data.coefficient[RmsUC] * 10) >> 22) / 1000;  // V
     Energy.voltage[0] = ((float)CSE7761Data.voltage_rms / Settings.energy_voltage_calibration);  // V
+    Energy.frequency[0] = (CSE7761Data.frequency) ? ((float)Settings.energy_frequency_calibration / 8 / CSE7761Data.frequency) : 0;  // Hz
 
     for (uint32_t channel = 0; channel < 2; channel++) {
       Energy.data_valid[channel] = 0;
@@ -470,6 +488,7 @@ void Cse7761DrvInit(void) {
     CSE7761Data.init = 4;                       // Init setup steps
     Energy.phase_count = 2;                     // Handle two channels as two phases
     Energy.voltage_common = true;               // Use common voltage
+    Energy.frequency_common = true;             // Use common frequency
     TasmotaGlobal.energy_driver = XNRG_19;
   }
 }
@@ -492,6 +511,10 @@ bool Cse7761Command(void) {
     if (1 == XdrvMailbox.payload) { XdrvMailbox.payload = Cse7761Ref(RmsIAC); }
     // Service in xdrv_03_energy.ino
   }
+  else if (CMND_FREQUENCYCAL == Energy.command_code) {
+    if (1 == XdrvMailbox.payload) { XdrvMailbox.payload = CSE7761_FREF; }
+    // Service in xdrv_03_energy.ino
+  }
   else if (CMND_POWERSET == Energy.command_code) {
     if (XdrvMailbox.data_len && CSE7761Data.active_power[channel]) {
       if ((value > 100) && (value < 200000)) {  // Between 1W and 2000W
@@ -510,6 +533,13 @@ bool Cse7761Command(void) {
     if (XdrvMailbox.data_len && CSE7761Data.current_rms[channel]) {
       if ((value > 1000) && (value < 1000000)) {  // Between 10mA and 10A
         Settings.energy_current_calibration = ((CSE7761Data.current_rms[channel] * 100) / value) * 1000;
+      }
+    }
+  }
+  else if (CMND_FREQUENCYSET == Energy.command_code) {
+    if (XdrvMailbox.data_len && CSE7761Data.frequency) {
+      if ((value > 4500) && (value < 6500)) {  // Between 45.00Hz and 65.00Hz
+        Settings.energy_frequency_calibration = (CSE7761Data.frequency * 8 * value) / 100;
       }
     }
   }
