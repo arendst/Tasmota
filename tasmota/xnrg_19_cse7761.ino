@@ -114,7 +114,7 @@ void Cse7761Write(uint32_t reg, uint32_t data) {
   AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("C61: Tx %*_H"), len, buffer);
 }
 
-uint32_t Cse7761Read(uint32_t reg, uint32_t size) {
+uint32_t Cse7761ReadOnce(uint32_t log_level, uint32_t reg, uint32_t size) {
   while (Cse7761Serial->available()) { Cse7761Serial->read(); }
 
   Cse7761Write(reg, 0);
@@ -123,8 +123,8 @@ uint32_t Cse7761Read(uint32_t reg, uint32_t size) {
   uint32_t rcvd = 0;
   uint32_t timeout = millis() + 3;
 
-//  while (!TimeReached(timeout) && (rcvd <= size)) {
-  while (!TimeReached(timeout)) {
+  while (!TimeReached(timeout) && (rcvd <= size)) {
+//  while (!TimeReached(timeout)) {
     int value = Cse7761Serial->read();
     if ((value > -1) && (rcvd < sizeof(buffer) -1)) {
       buffer[rcvd++] = value;
@@ -150,11 +150,21 @@ uint32_t Cse7761Read(uint32_t reg, uint32_t size) {
   }
   crc = ~crc;
   if (crc != buffer[rcvd]) {
-    AddLog(LOG_LEVEL_DEBUG, PSTR("C61: Rx %*_H, CRC error %02X"), rcvd +1, buffer, crc);
+    AddLog(log_level, PSTR("C61: Rx %*_H, CRC error %02X"), rcvd +1, buffer, crc);
     return 1;
   }
 
   return result;
+}
+
+uint32_t Cse7761Read(uint32_t reg, uint32_t size) {
+  uint32_t value = 0;
+  uint32_t retry = 3;
+  while ((value < 2) && (retry)) {
+    retry--;
+    value = Cse7761ReadOnce((retry) ? LOG_LEVEL_DEBUG_MORE : LOG_LEVEL_DEBUG, reg, size);
+  }
+  return value;
 }
 
 uint32_t Cse7761ReadFallback(uint32_t reg, uint32_t prev, uint32_t size) {
@@ -200,8 +210,8 @@ bool Cse7761ChipInit(void) {
   Cse7761Write(CSE7761_SPECIAL_COMMAND, CSE7761_CMD_ENABLE_WRITE);
 
 //  delay(8);  // Exception on ESP8266
-  uint32_t timeout = millis() + 8;
-  while (!TimeReached(timeout)) { }
+//  uint32_t timeout = millis() + 8;
+//  while (!TimeReached(timeout)) { }
 
   uint8_t sys_status = Cse7761Read(CSE7761_REG_SYSSTATUS, 1);
 #ifdef CSE7761_SIMULATE
