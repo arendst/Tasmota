@@ -317,7 +317,7 @@ extern "C" {
     int32_t top = be_top(vm); // Get the number of arguments
     if (top == 1 || (top == 2 && be_isint(vm, 2))) {
       int32_t light_num = 0;
-      if (top > 0) {
+      if (top > 1) {
         light_num = be_toint(vm, 2);
       }
       push_getlight(vm, light_num);
