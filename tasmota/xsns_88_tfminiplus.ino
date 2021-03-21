@@ -92,12 +92,7 @@ struct xsns_88_tfminiplus
 } tfminiplus_sensor;
 
 // Software and hardware serial pointers
-#ifdef ESP8266
 TasmotaSerial *TfmpSerial = nullptr;
-#endif  // ESP8266
-#ifdef ESP32
-HardwareSerial *TfmpSerial = nullptr;
-#endif  // ESP32
 
 void TfmpInit(void)
 {
@@ -105,7 +100,6 @@ void TfmpInit(void)
     {
         if (PinUsed(GPIO_TFMINIPLUS_RX) && PinUsed(GPIO_TFMINIPLUS_TX))
         {
-#ifdef ESP8266
             TfmpSerial = new TasmotaSerial(Pin(GPIO_TFMINIPLUS_RX), Pin(GPIO_TFMINIPLUS_TX), 1);
             if (TfmpSerial->begin(BAUDRATE))
             {
@@ -116,12 +110,6 @@ void TfmpInit(void)
                 tfminiplus_sensor.ready = true;
                 TfmpSerial->flush();
             }
-#endif // ESP8266
-#ifdef ESP32
-            TfmpSerial = new HardwareSerial(2);
-            TfmpSerial->begin(BAUDRATE, SERIAL_8N1, Pin(GPIO_TFMINIPLUS_RX), Pin(GPIO_TFMINIPLUS_TX));
-            TfmpSerial->flush();
-#endif // ESP32
         }
     }
 }
@@ -170,7 +158,7 @@ void TfmpProcessSerialData (void)
         while (TfmpSerial->available() > 0) 
         {
             data = TfmpSerial->read();
-            dataReady = addData((char)data);
+            dataReady = TfmpAddData((char)data);
             if (dataReady)
             {
                 TfmpProcessData();
@@ -179,7 +167,7 @@ void TfmpProcessSerialData (void)
     }
 }
 
-bool addData(char nextChar)
+bool TfmpAddData(char nextChar)
 {  
     // Buffer position
     static uint8_t currentIndex = 0;
