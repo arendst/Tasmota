@@ -18,9 +18,9 @@
 | USE_WEBSEND_RESPONSE  | - | - | - | - | - | - | - |
 | USE_EMULATION_HUE     | - | x | x | - | x | - | - |
 | USE_EMULATION_WEMO    | - | x | x | - | x | - | - |
-| USE_DISCOVERY         | - | - | x | x | - | - | x |
+| USE_DISCOVERY         | - | - | - | - | - | - | - |
 | WEBSERVER_ADVERTISE   | - | - | x | x | - | - | x |
-| MQTT_HOST_DISCOVERY   | - | - | x | x | - | - | x |
+| MQTT_HOST_DISCOVERY   | - | - | - | - | - | - | - |
 | USE_TIMERS            | - | x | x | x | x | x | x |
 | USE_TIMERS_WEB        | - | x | x | x | x | x | x |
 | USE_SUNRISE           | - | x | x | x | x | x | x |
