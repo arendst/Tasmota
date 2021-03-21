@@ -113,7 +113,6 @@ const char* ConvertNumTxt(uint8_t statu, uint8_t pinmod=0) {
 #endif // USE_MCP230xx_OUTPUT
 #ifdef USE_MCP230xx_OUTPUT
   if ((6 == pinmod) && (statu < 2)) { statu = 1-statu; }
-  AddLog(LOG_LEVEL_DEBUG, PSTR("MCP: ConvertNumTxt config=%d save_state=%d"),config, Settings.flag.save_state);
   if ((config) && (Settings.flag.save_state)) {
     return "SAVED";
   }
@@ -205,7 +204,6 @@ void MCP230xx_ApplySettings(void)
             reg_portpins[mcp230xx_port] |= (Settings.mcp230xx_config[idx+(mcp230xx_port*8)].saved_state << idx);
           } else {
             if (Settings.mcp230xx_config[idx+(mcp230xx_port*8)].keep_output) { // Read the value to use from the MCP230xx
-              AddLog(LOG_LEVEL_DEBUG, PSTR("MCP: readpins=%d or_val=%d"),reg_readpins, reg_readpins & (1 << idx));
               reg_portpins[mcp230xx_port] |= reg_readpins & (1 << idx);
             }
             else if (Settings.mcp230xx_config[idx+(mcp230xx_port*8)].pullup) {
