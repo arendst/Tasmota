@@ -55,6 +55,10 @@
 #define USE_UFILESYS
 #define USE_SDCARD
   #define GUI_TRASH_FILE
+
+#define USE_BERRY                                // Enable Berry scripting language
+  #define USE_BERRY_PSRAM                        // Allocate Berry memory in PSRAM if PSRAM is connected - this might be slightly slower but leaves main memory intact
+
 #define USE_ADC
 #define USE_SPI
   #define USE_DISPLAY                            // Add SPI Display Support (+2k code)
@@ -84,6 +88,10 @@
 #define USE_UFILESYS
 #define USE_SDCARD
   #define GUI_TRASH_FILE
+
+#define USE_BERRY                                // Enable Berry scripting language
+  #define USE_BERRY_PSRAM                        // Allocate Berry memory in PSRAM if PSRAM is connected - this might be slightly slower but leaves main memory intact
+
 #define USE_I2C
   #define USE_BMA423
   #define USE_MPU6886
