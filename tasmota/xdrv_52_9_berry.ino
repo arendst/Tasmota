@@ -84,7 +84,7 @@ bool callBerryRule(void) {
   berry.rules_busy = true;
   char * json_event = TasmotaGlobal.mqtt_data;
   bool serviced = false;
-  serviced = callBerryEventDispatcher(PSTR("exec_rules"), nullptr, 0, TasmotaGlobal.mqtt_data);
+  serviced = callBerryEventDispatcher(PSTR("rule"), nullptr, 0, TasmotaGlobal.mqtt_data);
   berry.rules_busy = false;
   return serviced;     // TODO event not handled
 }
