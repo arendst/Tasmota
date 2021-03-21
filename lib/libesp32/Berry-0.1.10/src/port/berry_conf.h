@@ -163,8 +163,14 @@
  * The default is to use the functions in the standard library.
  **/
 #ifdef USE_BERRY_PSRAM
-  extern void *special_malloc(uint32_t size);
-  extern void *special_realloc(void *ptr, size_t size);
+#ifdef __cplusplus
+extern "C" {
+#endif
+  extern void *berry_malloc(uint32_t size);
+  extern void *berry_realloc(void *ptr, size_t size);
+#ifdef __cplusplus
+}
+#endif
   #define BE_EXPLICIT_MALLOC              special_malloc
   #define BE_EXPLICIT_REALLOC             special_realloc
 #else
