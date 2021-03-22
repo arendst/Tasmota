@@ -56,6 +56,7 @@ uint8_t hk_services;
 
 extern void Ext_Replace_Cmd_Vars(char *srcbuf, uint32_t srcsize, char *dstbuf, uint32_t dstsize);
 extern uint32_t Ext_UpdVar(char *vname, float *fvar, uint32_t mode);
+extern void Ext_toLog(char *str);
 
 #define MAX_HAP_DEFS 16
 struct HAP_DESC {
@@ -64,6 +65,7 @@ struct HAP_DESC {
   char var2_name[12];
   char var3_name[12];
   char var4_name[12];
+  char var5_name[12];
   uint8_t hap_cid;
   uint8_t type;
   hap_acc_t *accessory;
@@ -157,8 +159,8 @@ const struct HAP_CHAR_TABLE {
   {HAP_CHAR_UUID_CURRENT_RELATIVE_HUMIDITY,'f',0},
   {HAP_CHAR_UUID_CURRENT_AMBIENT_LIGHT_LEVEL,'f',0},
   {HAP_CHAR_UUID_BATTERY_LEVEL,'u',0},
-  {HAP_CHAR_UUID_STATUS_LOW_BATTERY,'b',1},
-  {HAP_CHAR_UUID_CHARGING_STATE,'b',2},
+  {HAP_CHAR_UUID_STATUS_LOW_BATTERY,'u',1},
+  {HAP_CHAR_UUID_CHARGING_STATE,'u',2},
   {HAP_CHAR_UUID_ON,'b',0},
   {HAP_CHAR_UUID_HUE,'f',1},
   {HAP_CHAR_UUID_SATURATION,'f',2},
@@ -282,7 +284,7 @@ void hap_update_from_vars(void) {
                 new_val.u = fvar;
                 hap_char_update_val(hc, &new_val);
               }
-              hc = hap_serv_get_char_by_uuid(hap_devs[cnt].service, HAP_CHAR_UUID_STATUS_LOW_BATTERY);
+              hc = hap_serv_get_char_by_uuid(hap_devs[cnt].service, HAP_CHAR_UUID_CHARGING_STATE);
               if (Ext_UpdVar(hap_devs[cnt].var3_name, &fvar, 0)) {
                 new_val.u = fvar;
                 hap_char_update_val(hc, &new_val);
@@ -331,6 +333,13 @@ void hap_update_from_vars(void) {
           if (Ext_UpdVar(hap_devs[cnt].var4_name, &fvar, 0)) {
             new_val.u = fvar;
             hap_char_update_val(hc, &new_val);
+          }
+          if (hap_devs[cnt].var5_name[0]) {
+            hc = hap_serv_get_char_by_uuid(hap_devs[cnt].service, HAP_CHAR_UUID_COLOR_TEMPERATURE);
+            if (Ext_UpdVar(hap_devs[cnt].var5_name, &fvar, 0)) {
+              new_val.u = fvar;
+              hap_char_update_val(hc, &new_val);
+            }
           }
           break;
         }
@@ -454,6 +463,7 @@ uint32_t str2c(char **sp, char *vp, uint32_t len) {
     } else {
       if (strlen(*sp)) {
         strlcpy(vp, *sp, len);
+        *sp = lp + strlen(*sp);
         return 0;
       }
     }
@@ -520,19 +530,16 @@ static void smart_outlet_thread_entry(void *p) {
       if (str2c(&lp1, hap_devs[index].var_name, sizeof(hap_devs[index].var_name))) {
         goto nextline;
       }
-      if (hap_devs[index].hap_cid == HAP_CID_LIGHTING) {
-        // get 3 add vars
-        if (str2c(&lp1, hap_devs[index].var2_name, sizeof(hap_devs[index].var2_name))) {
-          goto nextline;
-        }
-        if (str2c(&lp1, hap_devs[index].var3_name, sizeof(hap_devs[index].var3_name))) {
-          goto nextline;
-        }
-        if (str2c(&lp1, hap_devs[index].var4_name, sizeof(hap_devs[index].var4_name))) {
-          goto nextline;
-        }
-      }
 
+      hap_devs[index].var2_name[0] = 0;
+      hap_devs[index].var3_name[0] = 0;
+      hap_devs[index].var4_name[0] = 0;
+      hap_devs[index].var5_name[0] = 0;
+
+      str2c(&lp1, hap_devs[index].var2_name, sizeof(hap_devs[index].var2_name));
+      str2c(&lp1, hap_devs[index].var3_name, sizeof(hap_devs[index].var3_name));
+      str2c(&lp1, hap_devs[index].var4_name, sizeof(hap_devs[index].var4_name));
+      str2c(&lp1, hap_devs[index].var5_name, sizeof(hap_devs[index].var5_name));
 
       hap_acc_cfg_t hap_cfg;
       hap_cfg.name = hap_devs[index].hap_name;
@@ -557,12 +564,20 @@ static void smart_outlet_thread_entry(void *p) {
           { float fvar = 0;
             Ext_UpdVar(hap_devs[index].var_name, &fvar, 0);
             hap_devs[index].service = hap_serv_lightbulb_create(fvar);
-            Ext_UpdVar(hap_devs[index].var2_name, &fvar, 0);
-            ret |= hap_serv_add_char(hap_devs[index].service, hap_char_hue_create(fvar));
-            Ext_UpdVar(hap_devs[index].var3_name, &fvar, 0);
-            ret |= hap_serv_add_char(hap_devs[index].service, hap_char_saturation_create(fvar));
+            if (hap_devs[index].var2_name[0]) {
+              Ext_UpdVar(hap_devs[index].var2_name, &fvar, 0);
+              ret |= hap_serv_add_char(hap_devs[index].service, hap_char_hue_create(fvar));
+            }
+            if (hap_devs[index].var3_name[0]) {
+              Ext_UpdVar(hap_devs[index].var3_name, &fvar, 0);
+              ret |= hap_serv_add_char(hap_devs[index].service, hap_char_saturation_create(fvar));
+            }
             Ext_UpdVar(hap_devs[index].var4_name, &fvar, 0);
             ret |= hap_serv_add_char(hap_devs[index].service, hap_char_brightness_create(fvar));
+            if (hap_devs[index].var5_name[0]) {
+              Ext_UpdVar(hap_devs[index].var5_name, &fvar, 0);
+              ret |= hap_serv_add_char(hap_devs[index].service, hap_char_color_temperature_create(fvar));
+            }
           }
           break;
         case HAP_CID_OUTLET:
@@ -681,14 +696,14 @@ nextline:
     //  vTaskDelete(NULL);
       while (1) {
         delay(500);
-      //  hap_update_from_vars();
+        hap_update_from_vars();
       }
     }
 }
 
 #define HK_PASSCODE "111-11-111"
 int hap_loop_stop(void);
-extern void Ext_toLog(char *str);
+
 
 void homekit_main(char *desc, uint32_t flag ) {
   if (desc) {
