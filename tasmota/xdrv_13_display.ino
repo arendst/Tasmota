@@ -123,6 +123,48 @@ void (* const DisplayCommand[])(void) PROGMEM = {
   &CmndDisplayScrollDelay, &CmndDisplayClock, &CmndDisplayTextNC, &CmndDisplayScrollText
 };
 
+#ifdef USE_GRAPH
+
+typedef union {
+  uint8_t data;
+  struct {
+      uint8_t overlay : 1;
+      uint8_t draw : 1;
+      uint8_t nu3 : 1;
+      uint8_t nu4 : 1;
+      uint8_t nu5 : 1;
+      uint8_t nu6 : 1;
+      uint8_t nu7 : 1;
+      uint8_t nu8 : 1;
+  };
+} GFLAGS;
+
+struct GRAPH {
+  uint16_t xp;
+  uint16_t yp;
+  uint16_t xs;
+  uint16_t ys;
+  float ymin;
+  float ymax;
+  float range;
+  uint32_t x_time;       // time per x slice in milliseconds
+  uint32_t last_ms;
+  uint32_t last_ms_redrawn;
+  int16_t decimation; // decimation or graph duration in minutes
+  uint16_t dcnt;
+  uint32_t summ;
+  uint16_t xcnt;
+  uint8_t *values;
+  uint8_t xticks;
+  uint8_t yticks;
+  uint8_t last_val;
+  uint8_t color_index;
+  GFLAGS flags;
+};
+
+struct GRAPH *graph[NUM_GRAPHS];
+#endif // USE_GRAPH
+
 char *dsp_str;
 
 uint16_t dsp_x;
@@ -2140,46 +2182,9 @@ void DrawAClock(uint16_t rad) {
  * Graphics
 \*********************************************************************************************/
 
+
 #ifdef USE_GRAPH
 
-typedef union {
-  uint8_t data;
-  struct {
-      uint8_t overlay : 1;
-      uint8_t draw : 1;
-      uint8_t nu3 : 1;
-      uint8_t nu4 : 1;
-      uint8_t nu5 : 1;
-      uint8_t nu6 : 1;
-      uint8_t nu7 : 1;
-      uint8_t nu8 : 1;
-  };
-} GFLAGS;
-
-struct GRAPH {
-  uint16_t xp;
-  uint16_t yp;
-  uint16_t xs;
-  uint16_t ys;
-  float ymin;
-  float ymax;
-  float range;
-  uint32_t x_time;       // time per x slice in milliseconds
-  uint32_t last_ms;
-  uint32_t last_ms_redrawn;
-  int16_t decimation; // decimation or graph duration in minutes
-  uint16_t dcnt;
-  uint32_t summ;
-  uint16_t xcnt;
-  uint8_t *values;
-  uint8_t xticks;
-  uint8_t yticks;
-  uint8_t last_val;
-  uint8_t color_index;
-  GFLAGS flags;
-};
-
-struct GRAPH *graph[NUM_GRAPHS];
 
 #define TICKLEN 4
 void ClrGraph(uint16_t num) {
