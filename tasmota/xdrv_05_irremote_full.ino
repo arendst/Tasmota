@@ -167,7 +167,10 @@ uint64_t reverseBitsInBytes64(uint64_t b) {
 \*********************************************************************************************/
 
 const bool IR_FULL_RCV_SAVE_BUFFER = false;         // false = do not use buffer, true = use buffer for decoding
-const uint32_t IR_TIME_AVOID_DUPLICATE = 50;  // Milliseconds
+
+#ifndef IR_TIME_AVOID_DUPLICATE
+#define IR_TIME_AVOID_DUPLICATE 50           // Milliseconds
+#endif  // IR_TIME_AVOID_DUPLICATE
 
 // Below is from IRrecvDumpV2.ino
 // As this program is a special purpose capture/decoder, let us use a larger
