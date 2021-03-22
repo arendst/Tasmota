@@ -74,6 +74,10 @@ void *special_malloc(uint32_t size) {
   return malloc(size);
 }
 
+void *special_realloc(void *ptr, size_t size) {
+  return realloc(ptr, size);
+}
+
 #endif
 
 /*********************************************************************************************\
@@ -459,6 +463,13 @@ void *special_malloc(uint32_t size) {
     return heap_caps_malloc(size, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
   } else {
     return malloc(size);
+  }
+}
+void *special_realloc(void *ptr, size_t size) {
+  if (psramFound()) {
+    return heap_caps_realloc(ptr, size, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+  } else {
+    return realloc(ptr, size);
   }
 }
 

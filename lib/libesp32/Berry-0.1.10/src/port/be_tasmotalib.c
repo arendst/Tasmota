@@ -27,6 +27,8 @@ extern int l_getpower(bvm *vm);
 extern int l_setlight(bvm *vm);
 extern int l_setpower(bvm *vm);
 
+extern int l_i2cenabled(bvm *vm);
+
 // #if !BE_USE_PRECOMPILED_OBJECT
 #if 1           // TODO we will do pre-compiled later
 // Class definition
@@ -39,27 +41,30 @@ void be_load_tasmota_ntvlib(bvm *vm)
         { "_rules", NULL },
         { "_timers", NULL },
         { "_cmd", NULL },
-        { "getfreeheap", l_getFreeHeap },
+        { "_drivers", NULL },
+        { "get_free_heap", l_getFreeHeap },
         { "publish", l_publish },
         { "cmd", l_cmd },
-        { "getoption", l_getoption },
+        { "get_option", l_getoption },
         { "millis", l_millis },
-        { "timereached", l_timereached },
+        { "time_reached", l_timereached },
         { "yield", l_yield },
         { "delay", l_delay },
-        { "scaleuint", l_scaleuint },
+        { "scale_uint", l_scaleuint },
 
-        { "respcmnd", l_respCmnd },
-        { "respcmndstr", l_respCmndStr },
-        { "respcmnd_done", l_respCmndDone },
-        { "respcmnd_error", l_respCmndError },
-        { "respcmnd_failed", l_respCmndFailed },
+        { "resp_cmnd", l_respCmnd },
+        { "resp_cmnd_str", l_respCmndStr },
+        { "resp_cmnd_done", l_respCmndDone },
+        { "resp_cmnd_error", l_respCmndError },
+        { "resp_cmnd_failed", l_respCmndFailed },
         { "resolvecmnd", l_resolveCmnd },
 
-        { "getlight", l_getlight },
-        { "getpower", l_getpower },
-        { "setlight", l_setlight },
-        { "setpower", l_setpower },
+        { "get_light", l_getlight },
+        { "get_power", l_getpower },
+        { "set_light", l_setlight },
+        { "set_power", l_setpower },
+
+        { "i2c_enabled", l_i2cenabled },
         
         { NULL, NULL }
     };
@@ -69,7 +74,7 @@ void be_load_tasmota_ntvlib(bvm *vm)
 #else
 /* @const_object_info_begin
 module tasmota (scope: global, depend: 1) {
-    getfreeheap, func(l_getFreeHeap)
+    get_free_heap, func(l_getFreeHeap)
 }
 @const_object_info_end */
 #include "../generate/be_fixed_tasmota.h"

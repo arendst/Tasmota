@@ -149,7 +149,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t mqtt_state_retain : 1;        // bit 7 (v9.3.0.1)   - CMND_STATERETAIN
     uint32_t mqtt_info_retain  : 1;        // bit 8 (v9.3.0.1)   - CMND_INFORETAIN
     uint32_t wiegand_hex_output : 1;       // bit 9 (v9.3.1.1)   - SetOption123 - (Wiegand) switch tag number output to hex format (1)
-    uint32_t wiegand_keypad_to_tag : 1;    // bit 10 (v9.3.1.1)  - SetOption124 - (Wiegand) send key pad stroke as single char (0) or one tag (ending char #) (1) 
+    uint32_t wiegand_keypad_to_tag : 1;    // bit 10 (v9.3.1.1)  - SetOption124 - (Wiegand) send key pad stroke as single char (0) or one tag (ending char #) (1)
     uint32_t zigbee_hide_bridge_topic : 1; // bit 11 (v9.3.1.1)  - SetOption125 - (Zigbee) Hide bridge topic from zigbee topic (use with SetOption89) (1)
     uint32_t spare12 : 1;                  // bit 12
     uint32_t spare13 : 1;                  // bit 13
@@ -330,12 +330,12 @@ typedef struct {
 typedef union {
   uint8_t data;
   struct {
-  uint8_t ilimode : 3;
-  uint8_t Invert : 1;
-  uint8_t spare2 : 1;
-  uint8_t spare3 : 1;
+  uint8_t type : 3;
+  uint8_t invert : 1;
   uint8_t spare4 : 1;
   uint8_t spare5 : 1;
+  uint8_t spare6 : 1;
+  uint8_t spare7 : 1;
   };
 } DisplayOptions;
 

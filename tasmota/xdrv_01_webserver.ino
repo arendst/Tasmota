@@ -214,12 +214,15 @@ const char HTTP_HEAD_STYLE3[] PROGMEM =
   "<div style='text-align:center;color:#%06x;'><h3>" D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "</h3></div>"  // COLOR_TEXT_WARNING
 #endif
   "<div style='text-align:center;color:#%06x;'><noscript>" D_NOSCRIPT "<br></noscript>" // COLOR_TITLE
+/*
 #ifdef LANGUAGE_MODULE_NAME
   "<h3>" D_MODULE " %s</h3>"
 #else
   "<h3>%s " D_MODULE "</h3>"
 #endif
-  "<h2>%s</h2>";
+*/
+  "<h3>%s</h3>"    // Module name
+  "<h2>%s</h2>";   // Device name
 
 const char HTTP_MSG_SLIDER_GRADIENT[] PROGMEM =
   "<div id='%s' class='r' style='background-image:linear-gradient(to right,%s,%s);'>"

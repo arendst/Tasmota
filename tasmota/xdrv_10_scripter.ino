@@ -67,8 +67,8 @@ keywords if then else endif, or, and are better readable for beginners (others m
 
 #define MAX_SARRAY_NUM 32
 
-//uint32_t EncodeLightId(uint8_t relay_id);
-//uint32_t DecodeLightId(uint32_t hue_id);
+uint32_t EncodeLightId(uint8_t relay_id);
+uint32_t DecodeLightId(uint32_t hue_id);
 
 #define SPECIAL_EEPMODE_SIZE 6200
 
@@ -776,7 +776,7 @@ char *script;
 
     script_mem_size += 16;
     uint8_t *script_mem;
-    script_mem = (uint8_t*)calloc(script_mem_size, 1);
+    script_mem = (uint8_t*)special_malloc(script_mem_size);
     if (!script_mem) {
       if (imemptr) free(imemptr);
       return -4;
@@ -2175,7 +2175,7 @@ chknext:
           if (ef) {
             uint16_t fsiz = ef.size();
             if (fsiz<2048) {
-              char *script = (char*)calloc(fsiz + 16, 1);
+              char *script = (char*)special_malloc(fsiz + 16);
               if (script) {
                 ef.read((uint8_t*)script,fsiz);
                 execute_script(script);
@@ -3643,15 +3643,22 @@ int32_t UpdVar(char *vname, float *fvar, uint32_t mode) {
     if (vtype == NUM_RES || (vtype & STYPE) == 0) {
       if (mode) {
         // set var
+        //AddLog(LOG_LEVEL_DEBUG, PSTR("write from homekit: %s - %d"), vname, (uint32_t)res);
         index = glob_script_mem.type[ind.index].index;
         glob_script_mem.fvars[index] = res;
         glob_script_mem.type[ind.index].bits.changed = 1;
+#ifdef USE_SCRIPT_GLOBVARS
+        if (glob_script_mem.type[ind.index].bits.global) {
+          script_udp_sendvar(vname, &res, 0);
+        }
+#endif //USE_SCRIPT_GLOBVARS
         return 0;
       } else {
         // get var
         //index = glob_script_mem.type[ind.index].index;
         int32_t ret = glob_script_mem.type[ind.index].bits.hchanged;
         glob_script_mem.type[ind.index].bits.hchanged = 0;
+        //AddLog(LOG_LEVEL_DEBUG, PSTR("read from homekit: %s - %d - %d"), vname, (uint32_t)*fvar, ret);
         return ret;
       }
     } else {
@@ -6357,7 +6364,8 @@ void ScriptGetSDCard(void) {
   if (!HttpCheckPriviledgedAccess()) { return; }
 
   String stmp = Webserver->uri();
-  char *cp = strstr_P(stmp.c_str(), PSTR("/sdc/"));
+
+  char *cp = strstr_P(stmp.c_str(), PSTR("/ufs/"));
 //  if (cp) Serial.printf(">>>%s\n",cp);
   if (cp) {
 #ifdef ESP32
@@ -6365,13 +6373,15 @@ void ScriptGetSDCard(void) {
 #else
     cp += 5;
 #endif
-    if (strstr_P(cp, PSTR("scrdmp.bmp"))) {
-      SendFile(cp);
-      return;
-    } else {
-      if (ufsp->exists(cp)) {
+    if (ufsp) {
+      if (strstr_P(cp, PSTR("scrdmp.bmp"))) {
         SendFile(cp);
         return;
+      } else {
+        if (ufsp->exists(cp)) {
+          SendFile(cp);
+          return;
+        }
       }
     }
   }
@@ -6392,7 +6402,6 @@ char buff[512];
 #ifdef USE_DISPLAY_DUMP
   char *sbmp = strstr_P(fname, PSTR("scrdmp.bmp"));
   if (sbmp) {
-    mime = "image/bmp";
     sflg = 1;
   }
 #endif // USE_DISPLAY_DUMP
@@ -6419,7 +6428,7 @@ char buff[512];
     #define infoHeaderSize 40
     if (buffer) {
       uint8_t *bp = buffer;
-      uint8_t *lbuf = (uint8_t*)calloc(Settings.display_width + 2, 3);
+      uint8_t *lbuf = (uint8_t*)special_malloc(Settings.display_width + 2);
       uint8_t *lbp;
       uint8_t fileHeader[fileHeaderSize];
       createBitmapFileHeader(Settings.display_height , Settings.display_width , fileHeader);
@@ -7679,7 +7688,7 @@ bool Xdrv10(uint8_t function)
         // we have a file system
         AddLog(LOG_LEVEL_INFO,PSTR("UFILESYSTEM OK!"));
         char *script;
-        script = (char*)calloc(UFSYS_SIZE + 4, 1);
+        script = (char*)special_malloc(UFSYS_SIZE + 4);
         if (!script) break;
         glob_script_mem.script_ram = script;
         glob_script_mem.script_size = UFSYS_SIZE;
@@ -7850,6 +7859,10 @@ bool Xdrv10(uint8_t function)
             Webserver->on("/sfd", ScriptFullWebpage);
         }
 #endif // SCRIPT_FULL_WEBPAGE
+
+#ifdef USE_UFILESYS
+        Webserver->onNotFound(ScriptGetSDCard);
+#endif // USE_UFILESYS
       }
       break;
 #endif // USE_SCRIPT_WEB_DISPLAY
@@ -7858,7 +7871,6 @@ bool Xdrv10(uint8_t function)
       Webserver->on("/ta",HTTP_POST, HandleScriptTextareaConfiguration);
       Webserver->on("/exs", HTTP_POST,[]() { Webserver->sendHeader("Location","/exs");Webserver->send(303);}, script_upload_start);
       Webserver->on("/exs", HTTP_GET, ScriptExecuteUploadSuccess);
-      break;
 #endif // USE_WEBSERVER
     case FUNC_SAVE_BEFORE_RESTART:
       if (bitRead(Settings.rule_enabled, 0)) {
