@@ -332,7 +332,7 @@ typedef union {
   struct {
   uint8_t ilimode : 3;
   uint8_t Invert : 1;
-  uint8_t spare2 : 1;
+  uint8_t tm1637_variant : 1;
   uint8_t spare3 : 1;
   uint8_t spare4 : 1;
   uint8_t spare5 : 1;

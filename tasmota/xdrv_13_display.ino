@@ -80,6 +80,7 @@ const uint8_t DISPLAY_LOG_ROWS = 32;           // Number of lines in display log
 #define D_CMND_DISP_SCROLLTEXT "ScrollText"
 #define D_CMND_DISP_ILIMODE "ILIMode"
 #define D_CMND_DISP_ILIINVERT "Invert"
+#define D_CMND_DISP_TMVARIANT "TMVariant"             // `DisplayTMVariant 0` = 6 digit, standard model; `DisplayTMVariant 1` = 6 digit, "jumbled" model
 
 
 enum XdspFunctions { FUNC_DISPLAY_INIT_DRIVER, FUNC_DISPLAY_INIT, FUNC_DISPLAY_EVERY_50_MSECOND, FUNC_DISPLAY_EVERY_SECOND,
@@ -110,7 +111,7 @@ const char kDisplayCommands[] PROGMEM = D_PRFX_DISPLAY "|"  // Prefix
   D_CMND_DISP_CLEAR "|" D_CMND_DISP_NUMBER "|" D_CMND_DISP_FLOAT "|" D_CMND_DISP_NUMBERNC "|" D_CMND_DISP_FLOATNC "|"
   D_CMND_DISP_RAW "|" D_CMND_DISP_LEVEL "|" D_CMND_DISP_SEVENSEG_TEXT "|" D_CMND_DISP_SEVENSEG_TEXTNC "|"
   D_CMND_DISP_SCROLLDELAY "|" D_CMND_DISP_CLOCK "|" D_CMND_DISP_TEXTNC "|"
-  D_CMND_DISP_SCROLLTEXT "|" D_CMND_DISP_ILIMODE "|" D_CMND_DISP_ILIINVERT
+  D_CMND_DISP_SCROLLTEXT "|" D_CMND_DISP_ILIMODE "|" D_CMND_DISP_ILIINVERT "|" D_CMND_DISP_TMVARIANT
   ;
 
 void (* const DisplayCommand[])(void) PROGMEM = {
@@ -123,7 +124,7 @@ void (* const DisplayCommand[])(void) PROGMEM = {
   &CmndDisplayClear, &CmndDisplayNumber, &CmndDisplayFloat, &CmndDisplayNumberNC, &CmndDisplayFloatNC,
   &CmndDisplayRaw, &CmndDisplayLevel, &CmndDisplaySevensegText, &CmndDisplaySevensegTextNC,
   &CmndDisplayScrollDelay, &CmndDisplayClock, &CmndDisplayTextNC,
-  &CmndDisplayScrollText, &CmndDisplayILIMOde ,  &CmndDisplayILIInvert
+  &CmndDisplayScrollText, &CmndDisplayILIMOde ,  &CmndDisplayILIInvert, &CmndDisplayTMVariant
 };
 
 char *dsp_str;
@@ -1891,6 +1892,17 @@ void CmndDisplayILIMOde(void)
   }
   ResponseCmndNumber(Settings.display_options.ilimode);
 }
+
+
+void CmndDisplayTMVariant(void)
+{
+  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 2)) {
+    Settings.display_options.tm1637_variant = XdrvMailbox.payload;
+    TasmotaGlobal.restart_flag = 2;
+  }
+  ResponseCmndNumber(Settings.display_options.tm1637_variant);
+}
+
 
 void CmndDisplayILIInvert(void)
 {

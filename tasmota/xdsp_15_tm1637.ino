@@ -190,6 +190,7 @@ struct
   uint8_t scroll_index = 0;
   uint8_t iteration = 0;
   uint8_t display_type = TM1637;
+  uint8_t digit_order[6] = { 0, 1, 2, 3, 4, 5 };
 
   bool init_done = false;
   bool scroll = false;
@@ -214,7 +215,9 @@ void TM1637Init(void)
     if ((!Settings.display_width || Settings.display_width > 6))
     {
       Settings.display_width = 4;
+      Settings.display_options.tm1637_variant = 0;
     }
+    setTM1637DigitOrder();
   }
   else if (PinUsed(GPIO_MAX7219DIN) && PinUsed(GPIO_MAX7219CLK) && PinUsed(GPIO_MAX7219CS))
   {
@@ -254,6 +257,8 @@ void TM1637Init(void)
   TM1637Dim();
   TM1637Data.init_done = true;
   AddLog(LOG_LEVEL_INFO, PSTR("DSP: %s with %d digits"), TM1637Data.model_name, Settings.display_width);
+  if(TM1637 == TM1637Data.display_type)
+    AddLog(LOG_LEVEL_INFO, PSTR("DSP: TM1637 variant is %d"), Settings.display_options.tm1637_variant);
 }
 
 // Function to display specified ascii char at specified position for MAX7219
@@ -287,6 +292,20 @@ void displayMAX72197Seg(uint8_t pos, uint8_t seg)
 
   pos = 7 - pos;
   max7219display->setRow(MAX7219_ADDR, pos, seg);
+}
+
+// Function to fix order of hardware digits for different TM1637 variants
+void setTM1637DigitOrder() {
+  if(Settings.display_options.tm1637_variant == 0) {
+    for(uint8_t i=0; i<6; i++) TM1637Data.digit_order[i] = i;
+  } else if(Settings.display_options.tm1637_variant == 1) {
+    TM1637Data.digit_order[0] = 2;
+    TM1637Data.digit_order[1] = 1;
+    TM1637Data.digit_order[2] = 0;
+    TM1637Data.digit_order[3] = 5;
+    TM1637Data.digit_order[4] = 4;
+    TM1637Data.digit_order[5] = 3;
+  }
 }
 
 /*********************************************************************************************\
@@ -349,7 +368,7 @@ bool CmndTM1637Number(bool clear)
     if (TM1637 == TM1637Data.display_type)
     {
       rawBytes[0] = tm1637display->encode(pad);
-      tm1637display->printRaw(rawBytes, 1, i);
+      tm1637display->printRaw(rawBytes, 1, TM1637Data.digit_order[i]);
     }
     else if (TM1638 == TM1637Data.display_type)
       tm1638display->displayASCII(i, pad);
@@ -370,7 +389,7 @@ bool CmndTM1637Number(bool clear)
     if (TM1637 == TM1637Data.display_type)
     {
       rawBytes[0] = tm1637display->encode(txt[j]);
-      tm1637display->printRaw(rawBytes, 1, i);
+      tm1637display->printRaw(rawBytes, 1, TM1637Data.digit_order[i]);
     }
     else if (TM1638 == TM1637Data.display_type)
       tm1638display->displayASCII(i, txt[j]);
@@ -456,7 +475,7 @@ bool CmndTM1637Float(bool clear)
       }
       if ((j + position) > Settings.display_width)
         break;
-      tm1637display->printRaw(rawBytes, 1, j + position);
+      tm1637display->printRaw(rawBytes, 1, TM1637Data.digit_order[j + position] );
     }
   }
   else if (TM1638 == TM1637Data.display_type)
@@ -626,7 +645,7 @@ void TM1637ScrollText(void)
     }
     if (TM1637 == TM1637Data.display_type)
     {
-      tm1637display->printRaw(rawBytes, 1, i);
+      tm1637display->printRaw(rawBytes, 1, TM1637Data.digit_order[i]);
     }
     else if (TM1638 == TM1637Data.display_type)
     {
@@ -673,7 +692,7 @@ bool CmndTM1637Level(void)
     if (TM1637 == TM1637Data.display_type)
     {
       rawBytes[0] = value;
-      tm1637display->printRaw(rawBytes, 1, digit);
+      tm1637display->printRaw(rawBytes, 1, TM1637Data.digit_order[digit]);
     }
     else if (TM1638 == TM1637Data.display_type)
     {
@@ -758,7 +777,7 @@ bool CmndTM1637Raw(void)
       if (i > (Settings.display_width - 1))
         break;
       rawBytes[0] = DATA[i - position];
-      tm1637display->printRaw(rawBytes, 1, i);
+      tm1637display->printRaw(rawBytes, 1, TM1637Data.digit_order[i]);
     }
   }
   else if (TM1638 == TM1637Data.display_type)
@@ -845,7 +864,7 @@ bool CmndTM1637Text(bool clear)
       }
       if (!dotSkipped && sString[j] == '.')
         rawBytes[0] = 128;
-      tm1637display->printRaw(rawBytes, 1, i);
+      tm1637display->printRaw(rawBytes, 1, TM1637Data.digit_order[i]);
     }
   }
   else if (TM1638 == TM1637Data.display_type)
@@ -971,7 +990,7 @@ void TM1637ShowTime()
       rawBytes[0] = tm1637display->encode(tm[i]);
       if ((millis() % 1000) > 500 && (i == 1))
         rawBytes[0] = rawBytes[0] | 128;
-      tm1637display->printRaw(rawBytes, 1, i);
+      tm1637display->printRaw(rawBytes, 1, TM1637Data.digit_order[i]);
     }
   }
   else if (TM1638 == TM1637Data.display_type)
@@ -1084,7 +1103,7 @@ void TM1637Print(char *txt)
       uint8_t rawBytes[1];
       rawBytes[0] = tm1637display->encode(txt[i]);
       //      if ((millis() % 1000) > 500 && (i == 1)) { rawBytes[0] = rawBytes[0] | 128; }
-      tm1637display->printRaw(rawBytes, 1, i);
+      tm1637display->printRaw(rawBytes, 1, TM1637Data.digit_order[i]);
     }
     else if (TM1638 == TM1637Data.display_type)
     {
