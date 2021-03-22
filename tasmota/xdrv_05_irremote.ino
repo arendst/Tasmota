@@ -178,7 +178,7 @@ void IrSendInit(void)
 const bool IR_RCV_SAVE_BUFFER = false;         // false = do not use buffer, true = use buffer for decoding
 
 #ifndef IR_TIME_AVOID_DUPLICATE
-#define IR_TIME_AVOID_DUPLICATE = 50           // Milliseconds
+#define IR_TIME_AVOID_DUPLICATE 50           // Milliseconds
 #endif  // IR_TIME_AVOID_DUPLICATE
 
 #include <IRrecv.h>
