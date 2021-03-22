@@ -411,8 +411,8 @@ String GetHueDeviceId(uint16_t id)
 {
   String deviceid = WiFi.macAddress();
   deviceid += F(":00:11-");
-  if(id<9) deviceid += F("0");
-  deviceid += String(id);
+  if(id<0x10) deviceid += F("0");
+  deviceid += String(id,HEX);
   deviceid.toLowerCase();
   return deviceid;  // 5c:cf:7f:13:9f:3d:00:11-01
 }
