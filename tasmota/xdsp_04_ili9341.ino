@@ -42,7 +42,7 @@ uint8_t ili9342_ctouch_counter = 0;
 bool tft_init_done = false;
 
 
-//Settings.display_options.ilimode = ILIMODE_9341;
+//Settings.display_options.type = ILIMODE_9341;
 
 /*********************************************************************************************/
 
@@ -65,8 +65,8 @@ void ILI9341_InitDriver()
     // disable screen buffer
     buffer = NULL;
 
-    if (!Settings.display_options.ilimode || (Settings.display_options.ilimode >= ILIMODE_MAX)) {
-      Settings.display_options.ilimode = ILIMODE_9341;
+    if (!Settings.display_options.type || (Settings.display_options.type >= ILIMODE_MAX)) {
+      Settings.display_options.type = ILIMODE_9341;
     }
 
     // default colors
@@ -77,11 +77,11 @@ void ILI9341_InitDriver()
     if (TasmotaGlobal.soft_spi_enabled) {
       // Init renderer, may use hardware spi, however we use SSPI defintion because SD card uses SPI definition  (2 spi busses)
       if (PinUsed(GPIO_SSPI_MOSI) && PinUsed(GPIO_SSPI_MISO) && PinUsed(GPIO_SSPI_SCLK)) {
-        ili9341_2 = new ILI9341_2(Pin(GPIO_ILI9341_CS), Pin(GPIO_SSPI_MOSI), Pin(GPIO_SSPI_MISO), Pin(GPIO_SSPI_SCLK), Pin(GPIO_OLED_RESET), Pin(GPIO_ILI9341_DC), Pin(GPIO_BACKLIGHT), 2, Settings.display_options.ilimode & 3);
+        ili9341_2 = new ILI9341_2(Pin(GPIO_ILI9341_CS), Pin(GPIO_SSPI_MOSI), Pin(GPIO_SSPI_MISO), Pin(GPIO_SSPI_SCLK), Pin(GPIO_OLED_RESET), Pin(GPIO_ILI9341_DC), Pin(GPIO_BACKLIGHT), 2, Settings.display_options.type & 3);
       }
     } else if (TasmotaGlobal.spi_enabled) {
       if (PinUsed(GPIO_ILI9341_DC)) {
-        ili9341_2 = new ILI9341_2(Pin(GPIO_ILI9341_CS), Pin(GPIO_SPI_MOSI), Pin(GPIO_SPI_MISO), Pin(GPIO_SPI_CLK), Pin(GPIO_OLED_RESET), Pin(GPIO_ILI9341_DC), Pin(GPIO_BACKLIGHT), 1, Settings.display_options.ilimode & 3);
+        ili9341_2 = new ILI9341_2(Pin(GPIO_ILI9341_CS), Pin(GPIO_SPI_MOSI), Pin(GPIO_SPI_MISO), Pin(GPIO_SPI_CLK), Pin(GPIO_OLED_RESET), Pin(GPIO_ILI9341_DC), Pin(GPIO_BACKLIGHT), 1, Settings.display_options.type & 3);
       }
     }
 
@@ -101,7 +101,7 @@ void ILI9341_InitDriver()
     renderer->setTextFont(2);
     renderer->setTextSize(1);
     renderer->setTextColor(ILI9341_WHITE, ILI9341_BLACK);
-    renderer->DrawStringAt(50, (Settings.display_height/2)-12, (Settings.display_options.ilimode & 3)==ILIMODE_9341?"ILI9341 TFT!":"ILI9342 TFT!", ILI9341_WHITE, 0);
+    renderer->DrawStringAt(50, (Settings.display_height/2)-12, (Settings.display_options.type & 3)==ILIMODE_9341?"ILI9341 TFT!":"ILI9342 TFT!", ILI9341_WHITE, 0);
     delay(1000);
 #endif // SHOW_SPLASH
 
