@@ -585,7 +585,7 @@
 #define D_StL1L2L3 "Prąd suma"
 #define D_SpL1L2L3 "Prąd średni"
 
-// xsns_88_tfminiplus.ino
+// xsns_86_tfminiplus.ino
 #define D_SIGNALSTRENGTH "Signal Strength"
 #define D_CHIPTEMPERATURE "Chip Temperature"
 

@@ -585,7 +585,7 @@
 #define D_StL1L2L3 "Stroom L1+L2+L3"
 #define D_SpL1L2L3 "Spanning L1+L2+L3/3"
 
-// xsns_88_tfminiplus.ino
+// xsns_86_tfminiplus.ino
 #define D_SIGNALSTRENGTH "Signal Strength"
 #define D_CHIPTEMPERATURE "Chip Temperature"
 

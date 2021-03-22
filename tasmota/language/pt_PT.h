@@ -585,7 +585,7 @@
 #define D_StL1L2L3 "Corrente F1+F2+F3"
 #define D_SpL1L2L3 "Tensão F1+F2+F3/3"
 
-// xsns_88_tfminiplus.ino
+// xsns_86_tfminiplus.ino
 #define D_SIGNALSTRENGTH "Signal Strength"
 #define D_CHIPTEMPERATURE "Chip Temperature"
 

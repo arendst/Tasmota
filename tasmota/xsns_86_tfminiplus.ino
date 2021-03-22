@@ -1,5 +1,5 @@
 /*
-  xsns_88_tfminiplus.ino - TFmini Plus interface for Tasmota
+  xsns_86_tfminiplus.ino - TFmini Plus interface for Tasmota
 
   Created by Raphael Breiting on 12.11.2020.
 
@@ -68,7 +68,7 @@
 #include <TasmotaSerial.h>
 
 // Define driver ID
-#define XSNS_88 88
+#define XSNS_86 86
 
 // Use special no wait serial driver, should be always on
 #ifndef ESP32
@@ -83,7 +83,7 @@
 
 char Tfmp_buffer[TFMP_MAX_DATA_LEN + 1];
 
-struct xsns_88_tfminiplus
+struct xsns_86_tfminiplus
 {
     bool ready = false;
     uint16_t distance = 0;
@@ -216,30 +216,34 @@ void TfmpShow(bool json)
  * Interface
 \*********************************************************************************************/
 
-bool Xsns88(byte callback_id)
+bool Xsns86(byte callback_id)
 {
     bool result = false;
-    switch (callback_id) {
-        case FUNC_INIT:
-            TfmpInit();
-            break;
-        case FUNC_EVERY_SECOND:
-            TfmpTrigger();
-            TfmpProcessSerialData();
-            result = true;
-            break;
-        case FUNC_JSON_APPEND:
-            TfmpShow(1);
-            break;
+    if (FUNC_INIT == callback_id)
+    {
+        TfmpInit();
+    }
+    else if (TfmpSerial && tfminiplus_sensor.ready)
+    {
+        switch (callback_id) {
+            case FUNC_EVERY_SECOND:
+                TfmpTrigger();
+                TfmpProcessSerialData();
+                result = true;
+                break;
+            case FUNC_JSON_APPEND:
+                TfmpShow(1);
+                break;
 #ifdef USE_WEBSERVER
-        case FUNC_WEB_SENSOR:
-            TfmpShow(0);
-            break;
+            case FUNC_WEB_SENSOR:
+                TfmpShow(0);
+                break;
 #endif  // USE_WEBSERVER
-        case FUNC_SAVE_BEFORE_RESTART:
-            break;
-        case FUNC_COMMAND:
-            break;
+            case FUNC_SAVE_BEFORE_RESTART:
+                break;
+            case FUNC_COMMAND:
+                break;
+        }
     }
     return result;
 }

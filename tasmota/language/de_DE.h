@@ -585,7 +585,7 @@
 #define D_StL1L2L3 "Ströme L1+L2+L3"
 #define D_SpL1L2L3 "Spannung L1+L2+L3/3"
 
-// xsns_88_tfminiplus.ino
+// xsns_86_tfminiplus.ino
 #define D_SIGNALSTRENGTH "Signalstärke"
 #define D_CHIPTEMPERATURE "Chip Temperatur"
 
