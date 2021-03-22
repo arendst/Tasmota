@@ -556,17 +556,21 @@ void ExecuteCommandPower(uint32_t device, uint32_t state, uint32_t source)
         ((POWER_ON == state) || ((POWER_TOGGLE == state) && !(TasmotaGlobal.power & mask)))
        ) {
       interlock_mutex = true;                           // Clear all but masked relay in interlock group if new set requested
+      bool perform_interlock_delay = false;
       for (uint32_t i = 0; i < MAX_INTERLOCKS; i++) {
         if (Settings.interlock[i] & mask) {             // Find interlock group
           for (uint32_t j = 0; j < TasmotaGlobal.devices_present; j++) {
             power_t imask = 1 << j;
             if ((Settings.interlock[i] & imask) && (TasmotaGlobal.power & imask) && (mask != imask)) {
               ExecuteCommandPower(j +1, POWER_OFF, SRC_IGNORE);
-              delay(50);                                // Add some delay to make sure never have more than one relay on
+              perform_interlock_delay = true;
             }
           }
           break;                                        // An interlocked relay is only present in one group so quit
         }
+      }
+      if (perform_interlock_delay) {
+        delay(50);                                // Add some delay to make sure never have more than one relay on
       }
       interlock_mutex = false;
     }
