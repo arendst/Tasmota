@@ -88,7 +88,9 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - Support for XPT2046 touch screen digitizer on ILI9341 display by nonix [#11159](https://github.com/arendst/Tasmota/issues/11159)
 - Support for zigbee lumi.sensor_wleak [#11200](https://github.com/arendst/Tasmota/issues/11200)
 - Support for CSE7761 energy monitor as used in ESP32 based Sonoff Dual R3 Pow [#10793](https://github.com/arendst/Tasmota/issues/10793)
+- Support for Frequency monitoring and zero-cross detection on CSE7761 (Sonoff Dual R3)
 - Support for TM1638 seven segment display by Ajith Vasudevan [#11031](https://github.com/arendst/Tasmota/issues/11031)
+- Support for MAX7219 seven segment display by Ajith Vasudevan [#11387](https://github.com/arendst/Tasmota/issues/11387)
 - Support for MPU6886 on primary or secondary I2C bus
 - Allow MCP230xx pinmode from output to input [#11104](https://github.com/arendst/Tasmota/issues/11104)
 - Berry improvements [#11163](https://github.com/arendst/Tasmota/issues/11163)

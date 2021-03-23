@@ -109,6 +109,10 @@ struct {
   uint32_t loop_load_avg;                   // Indicative loop load average
   uint32_t log_buffer_pointer;              // Index in log buffer
   uint32_t uptime;                          // Counting every second until 4294967295 = 130 year
+  uint32_t zc_time;                         // Zero-cross moment (microseconds)
+  uint32_t zc_offset;                       // Zero cross moment offset due to monitoring chip processing (microseconds)
+  uint32_t zc_code_offset;                  // Zero cross moment offset due to executing power code (microseconds)
+  uint32_t zc_interval;                     // Zero cross interval around 8333 (60Hz) or 10000 (50Hz) (microseconds)
   GpioOptionABits gpio_optiona;             // GPIO Option_A flags
   void *log_buffer_mutex;                   // Control access to log buffer
 

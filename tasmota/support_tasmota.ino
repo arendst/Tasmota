@@ -157,6 +157,47 @@ char* GetStateText(uint32_t state)
 
 /********************************************************************************************/
 
+void ZeroCrossMomentStart(void) {
+  if (!TasmotaGlobal.zc_interval || !TasmotaGlobal.zc_time) { return; }
+
+//  uint32_t dbg_interval = TasmotaGlobal.zc_interval;
+//  uint32_t dbg_zctime = TasmotaGlobal.zc_time;
+//  uint32_t dbg_starttime = micros();
+
+  uint32_t timeout = millis() +22;  // Catch at least 2 * 50Hz pulses
+  uint32_t trigger_moment = TasmotaGlobal.zc_time + TasmotaGlobal.zc_interval - TasmotaGlobal.zc_offset - TasmotaGlobal.zc_code_offset;
+  while (!TimeReached(timeout) && !TimeReachedUsec(trigger_moment)) {}
+
+//  uint32_t dbg_endtime = micros();
+//  AddLog(LOG_LEVEL_DEBUG, PSTR("ZCR: CodeExecTime %d, StartTime %d, EndTime %d, ZcTime %d, Interval %d"),
+//    dbg_endtime - dbg_starttime, dbg_starttime, dbg_endtime, dbg_zctime, dbg_interval);
+
+  TasmotaGlobal.zc_code_offset = micros();
+}
+
+void ZeroCrossMomentEnd(void) {
+  if (!TasmotaGlobal.zc_interval || !TasmotaGlobal.zc_time) { return; }
+
+  TasmotaGlobal.zc_code_offset = (micros() - TasmotaGlobal.zc_code_offset) / 2;
+
+//  AddLog(LOG_LEVEL_DEBUG, PSTR("ZCR: CodeExecTime %d"), TasmotaGlobal.zc_code_offset * 2);
+}
+
+void ICACHE_RAM_ATTR ZeroCrossIsr(void) {
+  uint32_t time = micros();
+  TasmotaGlobal.zc_interval = time - TasmotaGlobal.zc_time;
+  TasmotaGlobal.zc_time = time;
+  if (!TasmotaGlobal.zc_time) {TasmotaGlobal.zc_time = 1; }
+}
+
+void ZeroCrossInit(uint32_t gpio, uint32_t offset) {
+  TasmotaGlobal.zc_offset = offset;
+  pinMode(gpio, INPUT_PULLUP);
+  attachInterrupt(gpio, ZeroCrossIsr, CHANGE);
+}
+
+/********************************************************************************************/
+
 void SetLatchingRelay(power_t lpower, uint32_t state)
 {
   // TasmotaGlobal.power xx00 - toggle REL1 (Off) and REL3 (Off) - device 1 Off, device 2 Off
@@ -232,6 +273,8 @@ void SetDevicePower(power_t rpower, uint32_t source)
 #endif  // ESP8266
   else
   {
+    ZeroCrossMomentStart();
+
     for (uint32_t i = 0; i < TasmotaGlobal.devices_present; i++) {
       power_t state = rpower &1;
       if (i < MAX_RELAYS) {
@@ -239,6 +282,8 @@ void SetDevicePower(power_t rpower, uint32_t source)
       }
       rpower >>= 1;
     }
+
+    ZeroCrossMomentEnd();
   }
 }
 

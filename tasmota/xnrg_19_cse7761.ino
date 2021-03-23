@@ -27,49 +27,54 @@
  * See https://github.com/arendst/Tasmota/discussions/10793
 \*********************************************************************************************/
 
-#define XNRG_19                    19
+#define XNRG_19                       19
 
-//#define CSE7761_SIMULATE
+//#define CSE7761_SIMULATE                           // Enable simulation of CSE7761
+#define CSE7761_FREQUENCY                          // Add support for frequency monitoring
+  #define CSE7761_ZEROCROSS                        // Add zero cross detection
+    #define CSE7761_ZEROCROSS_OFFSET  2200         // Zero cross offset due to chip calculation (microseconds)
+    #define CSE7761_ZEROCROSS_GPIO    4            // Sonoff Dual R3 pulse input
 
-#define CSE7761_UREF               42563        // RmsUc
-#define CSE7761_IREF               52241        // RmsIAC
-#define CSE7761_PREF               44513        // PowerPAC
-#define CSE7761_FREF               3579545      // System clock (3.579545MHz) as used in frequency calculation
+#define CSE7761_UREF                  42563        // RmsUc
+#define CSE7761_IREF                  52241        // RmsIAC
+#define CSE7761_PREF                  44513        // PowerPAC
+#define CSE7761_FREF                  3579545      // System clock (3.579545MHz) as used in frequency calculation
 
-#define CSE7761_REG_SYSCON         0x00         // (2) System Control Register (0x0A04)
-#define CSE7761_REG_EMUCON         0x01         // (2) Metering control register (0x0000)
-#define CSE7761_REG_EMUCON2        0x13         // (2) Metering control register 2 (0x0001)
+#define CSE7761_REG_SYSCON            0x00         // (2) System Control Register (0x0A04)
+#define CSE7761_REG_EMUCON            0x01         // (2) Metering control register (0x0000)
+#define CSE7761_REG_EMUCON2           0x13         // (2) Metering control register 2 (0x0001)
+#define CSE7761_REG_PULSE1SEL         0x1D         // (2) Pin function output select register (0x3210)
 
-#define CSE7761_REG_UFREQ          0x23         // (2) Voltage Frequency (0x0000)
-#define CSE7761_REG_RMSIA          0x24         // (3) The effective value of channel A current (0x000000)
-#define CSE7761_REG_RMSIB          0x25         // (3) The effective value of channel B current (0x000000)
-#define CSE7761_REG_RMSU           0x26         // (3) Voltage RMS (0x000000)
-#define CSE7761_REG_POWERFACTOR    0x27         // (3) Power factor register, select by command: channel A Power factor or channel B power factor (0x7FFFFF)
-#define CSE7761_REG_POWERPA        0x2C         // (4) Channel A active power, update rate 27.2Hz (0x00000000)
-#define CSE7761_REG_POWERPB        0x2D         // (4) Channel B active power, update rate 27.2Hz (0x00000000)
-#define CSE7761_REG_SYSSTATUS      0x43         // (1) System status register
+#define CSE7761_REG_UFREQ             0x23         // (2) Voltage Frequency (0x0000)
+#define CSE7761_REG_RMSIA             0x24         // (3) The effective value of channel A current (0x000000)
+#define CSE7761_REG_RMSIB             0x25         // (3) The effective value of channel B current (0x000000)
+#define CSE7761_REG_RMSU              0x26         // (3) Voltage RMS (0x000000)
+#define CSE7761_REG_POWERFACTOR       0x27         // (3) Power factor register, select by command: channel A Power factor or channel B power factor (0x7FFFFF)
+#define CSE7761_REG_POWERPA           0x2C         // (4) Channel A active power, update rate 27.2Hz (0x00000000)
+#define CSE7761_REG_POWERPB           0x2D         // (4) Channel B active power, update rate 27.2Hz (0x00000000)
+#define CSE7761_REG_SYSSTATUS         0x43         // (1) System status register
 
-#define CSE7761_REG_COEFFOFFSET    0x6E         // (2) Coefficient checksum offset (0xFFFF)
-#define CSE7761_REG_COEFFCHKSUM    0x6F         // (2) Coefficient checksum
-#define CSE7761_REG_RMSIAC         0x70         // (2) Channel A effective current conversion coefficient
-#define CSE7761_REG_RMSIBC         0x71         // (2) Channel B effective current conversion coefficient
-#define CSE7761_REG_RMSUC          0x72         // (2) Effective voltage conversion coefficient
-#define CSE7761_REG_POWERPAC       0x73         // (2) Channel A active power conversion coefficient
-#define CSE7761_REG_POWERPBC       0x74         // (2) Channel B active power conversion coefficient
-#define CSE7761_REG_POWERSC        0x75         // (2) Apparent power conversion coefficient
-#define CSE7761_REG_ENERGYAC       0x76         // (2) Channel A energy conversion coefficient
-#define CSE7761_REG_ENERGYBC       0x77         // (2) Channel B energy conversion coefficient
+#define CSE7761_REG_COEFFOFFSET       0x6E         // (2) Coefficient checksum offset (0xFFFF)
+#define CSE7761_REG_COEFFCHKSUM       0x6F         // (2) Coefficient checksum
+#define CSE7761_REG_RMSIAC            0x70         // (2) Channel A effective current conversion coefficient
+#define CSE7761_REG_RMSIBC            0x71         // (2) Channel B effective current conversion coefficient
+#define CSE7761_REG_RMSUC             0x72         // (2) Effective voltage conversion coefficient
+#define CSE7761_REG_POWERPAC          0x73         // (2) Channel A active power conversion coefficient
+#define CSE7761_REG_POWERPBC          0x74         // (2) Channel B active power conversion coefficient
+#define CSE7761_REG_POWERSC           0x75         // (2) Apparent power conversion coefficient
+#define CSE7761_REG_ENERGYAC          0x76         // (2) Channel A energy conversion coefficient
+#define CSE7761_REG_ENERGYBC          0x77         // (2) Channel B energy conversion coefficient
 
-#define CSE7761_SPECIAL_COMMAND    0xEA         // Start special command
-#define CSE7761_CMD_RESET          0x96         // Reset command, after receiving the command, the chip resets
-#define CSE7761_CMD_CHAN_A_SELECT  0x5A         // Current channel A setting command, which specifies the current used to calculate apparent power,
-                                                //   Power factor, phase angle, instantaneous active power, instantaneous apparent power and
-                                                //   The channel indicated by the signal of power overload is channel A
-#define CSE7761_CMD_CHAN_B_SELECT  0xA5         // Current channel B setting command, which specifies the current used to calculate apparent power,
-                                                //   Power factor, phase angle, instantaneous active power, instantaneous apparent power and
-                                                //   The channel indicated by the signal of power overload is channel B
-#define CSE7761_CMD_CLOSE_WRITE    0xDC         // Close write operation
-#define CSE7761_CMD_ENABLE_WRITE   0xE5         // Enable write operation
+#define CSE7761_SPECIAL_COMMAND       0xEA         // Start special command
+#define CSE7761_CMD_RESET             0x96         // Reset command, after receiving the command, the chip resets
+#define CSE7761_CMD_CHAN_A_SELECT     0x5A         // Current channel A setting command, which specifies the current used to calculate apparent power,
+                                                   //   Power factor, phase angle, instantaneous active power, instantaneous apparent power and
+                                                   //   The channel indicated by the signal of power overload is channel A
+#define CSE7761_CMD_CHAN_B_SELECT     0xA5         // Current channel B setting command, which specifies the current used to calculate apparent power,
+                                                   //   Power factor, phase angle, instantaneous active power, instantaneous apparent power and
+                                                   //   The channel indicated by the signal of power overload is channel B
+#define CSE7761_CMD_CLOSE_WRITE       0xDC         // Close write operation
+#define CSE7761_CMD_ENABLE_WRITE      0xE5         // Enable write operation
 
 enum CSE7761 { RmsIAC, RmsIBC, RmsUC, PowerPAC, PowerPBC, PowerSC, EnergyAC, EnergyBC };
 
@@ -88,6 +93,8 @@ struct {
   uint8_t init = 4;
   uint8_t ready = 0;
 } CSE7761Data;
+
+/********************************************************************************************/
 
 void Cse7761Write(uint32_t reg, uint32_t data) {
   uint8_t buffer[5];
@@ -180,6 +187,8 @@ uint32_t Cse7761ReadFallback(uint32_t reg, uint32_t prev, uint32_t size) {
   return value;
 }
 
+/********************************************************************************************/
+
 uint32_t Cse7761Ref(uint32_t unit) {
   switch (unit) {
     case RmsUC: return 0x400000 * 100 / CSE7761Data.coefficient[RmsUC];
@@ -256,6 +265,7 @@ bool Cse7761ChipInit(void) {
                               =000, PGA of current channel A=1
 */
     Cse7761Write(CSE7761_REG_SYSCON | 0x80, 0xFF04);
+
 /*
     Energy Measure Control Register (EMUCON)  Addr:0x01  Default value: 0x0000
     Bit    name               Function description
@@ -302,7 +312,9 @@ bool Cse7761ChipInit(void) {
                               =1, enable PFA pulse output and active energy register accumulation; (Sonoff Dual R3 Pow)
                               =0 (default), turn off PFA pulse output and active energy register accumulation.
 */
-    Cse7761Write(CSE7761_REG_EMUCON | 0x80, 0x1003);
+//    Cse7761Write(CSE7761_REG_EMUCON | 0x80, 0x1003);
+    Cse7761Write(CSE7761_REG_EMUCON | 0x80, 0x1183);  // Tasmota enable zero cross detection on both positive and negative signal
+
 /*
     Energy Measure Control Register (EMUCON2)  Addr: 0x13  Default value: 0x0001
     Bit    name               Function description
@@ -346,8 +358,46 @@ bool Cse7761ChipInit(void) {
                               =0, turn off the peak detection function (Sonoff Dual R3 Pow)
     0      NC                 Default is 1
 */
-//    Cse7761Write(CSE7761_REG_EMUCON2 | 0x80, 0x0FC1);  // Sonoff Dual R3 Pow
+#ifndef CSE7761_FREQUENCY
+    Cse7761Write(CSE7761_REG_EMUCON2 | 0x80, 0x0FC1);  // Sonoff Dual R3 Pow
+#else
     Cse7761Write(CSE7761_REG_EMUCON2 | 0x80, 0x0FE5);  // Tasmota add Frequency
+
+#ifdef CSE7761_ZEROCROSS
+/*
+    Pin function output selection register (PULSE1SEL)  Addr: 0x1D  Default value: 0x3210
+    Bit    name               Function description
+    15-13  NC                 -
+    12     SDOCmos
+                              =1, SDO pin CMOS open-drain output
+
+    15-12  NC                 NC, the default value is 4'b0011
+    11-8   NC                 NC, the default value is 4'b0010
+    7-4    P2Sel              Pulse2 Pin output function selection, see the table below
+    3-0    P1Sel              Pulse1 Pin output function selection, see the table below
+
+    Table Pulsex function output selection list
+    Pxsel  Select description
+    0000   Output of energy metering calibration pulse PFA
+    0001   The output of the energy metering calibration pulse PFB
+    0010   Comparator indication signal comp_sign
+    0011   Interrupt signal IRQ output (the default is high level, if it is an interrupt, set to 0)
+    0100   Signal indication of power overload: only PA or PB can be selected
+    0101   Channel A negative power indicator signal
+    0110   Channel B negative power indicator signal
+    0111   Instantaneous value update interrupt output
+    1000   Average update interrupt output
+    1001   Voltage channel zero-crossing signal output (Tasmota add zero-cross detection)
+    1010   Current channel A zero-crossing signal output
+    1011   Current channel B zero crossing signal output
+    1100   Voltage channel overvoltage indication signal output
+    1101   Voltage channel undervoltage indication signal output
+    1110   Current channel A overcurrent signal indication output
+    1111   Current channel B overcurrent signal indication output
+*/
+  Cse7761Write(CSE7761_REG_PULSE1SEL | 0x80, 0x3290);
+#endif  // CSE7761_ZEROCROSS
+#endif  // CSE7761_FREQUENCY
   } else {
     AddLog(LOG_LEVEL_DEBUG, PSTR("C61: Write failed"));
     return false;
@@ -365,11 +415,13 @@ void Cse7761GetData(void) {
 #endif
   CSE7761Data.voltage_rms = (value >= 0x800000) ? 0 : value;
 
+#ifdef CSE7761_FREQUENCY
   value = Cse7761ReadFallback(CSE7761_REG_UFREQ, CSE7761Data.frequency, 2);
 #ifdef CSE7761_SIMULATE
   value = 8948;  // 49.99Hz
 #endif
   CSE7761Data.frequency = (value >= 0x8000) ? 0 : value;
+#endif  // CSE7761_FREQUENCY
 
   value = Cse7761ReadFallback(CSE7761_REG_RMSIA, CSE7761Data.current_rms[0], 3);
 #ifdef CSE7761_SIMULATE
@@ -402,7 +454,9 @@ void Cse7761GetData(void) {
     // Voltage = RmsU * RmsUC * 10 / 0x400000
     // Energy.voltage[0] = (float)(((uint64_t)CSE7761Data.voltage_rms * CSE7761Data.coefficient[RmsUC] * 10) >> 22) / 1000;  // V
     Energy.voltage[0] = ((float)CSE7761Data.voltage_rms / Settings.energy_voltage_calibration);  // V
+#ifdef CSE7761_FREQUENCY
     Energy.frequency[0] = (CSE7761Data.frequency) ? ((float)Settings.energy_frequency_calibration / 8 / CSE7761Data.frequency) : 0;  // Hz
+#endif
 
     for (uint32_t channel = 0; channel < 2; channel++) {
       Energy.data_valid[channel] = 0;
@@ -423,6 +477,48 @@ void Cse7761GetData(void) {
 }
 
 /********************************************************************************************/
+/*
+void Cse7761DumpRegs(void) {
+  uint32_t registers[23] = { 0 };
+  uint32_t reg_num[23] = { 0 };
+  reg_num[0] = 0x00; registers[0] = Cse7761Read(0x00, 2);
+  reg_num[1] = 0x01; registers[1] = Cse7761Read(0x01, 2);
+  reg_num[2] = 0x02; registers[2] = Cse7761Read(0x02, 2);
+  reg_num[3] = 0x13; registers[3] = Cse7761Read(0x13, 2);
+  reg_num[4] = 0x1D; registers[4] = Cse7761Read(0x1D, 2);
+  reg_num[5] = 0x2F; registers[5] = Cse7761Read(0x2F, 3);
+  reg_num[6] = 0x40; registers[6] = Cse7761Read(0x40, 2);
+  reg_num[7] = 0x41; registers[7] = Cse7761Read(0x41, 2);
+  reg_num[8] = 0x42; registers[8] = Cse7761Read(0x42, 2);
+  reg_num[9] = 0x43; registers[9] = Cse7761Read(0x43, 1);
+  reg_num[10] = 0x44; registers[10] = Cse7761Read(0x44, 4);
+  reg_num[11] = 0x45; registers[11] = Cse7761Read(0x45, 2);
+  reg_num[12] = 0x6E; registers[12] = Cse7761Read(0x6E, 2);
+  reg_num[13] = 0x6F; registers[13] = Cse7761Read(0x6F, 2);
+  reg_num[14] = 0x70; registers[14] = Cse7761Read(0x70, 2);
+  reg_num[15] = 0x71; registers[15] = Cse7761Read(0x71, 2);
+  reg_num[16] = 0x72; registers[16] = Cse7761Read(0x72, 2);
+  reg_num[17] = 0x73; registers[17] = Cse7761Read(0x73, 2);
+  reg_num[18] = 0x74; registers[18] = Cse7761Read(0x74, 2);
+  reg_num[19] = 0x75; registers[19] = Cse7761Read(0x75, 2);
+  reg_num[20] = 0x76; registers[20] = Cse7761Read(0x76, 2);
+  reg_num[21] = 0x77; registers[21] = Cse7761Read(0x77, 2);
+  reg_num[22] = 0x7F; registers[22] = Cse7761Read(0x7F, 3);
+
+  char reg_data[320];
+  reg_data[0] = '\0';
+  for (uint32_t i = 0; i < 23; i++) {
+    snprintf_P(reg_data, sizeof(reg_data), PSTR("%s%s%8X"), reg_data, (i) ? "," : "", reg_num[i]);
+  }
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR("C61: RegDump %s"), reg_data);
+
+  reg_data[0] = '\0';
+  for (uint32_t i = 0; i < 23; i++) {
+    snprintf_P(reg_data, sizeof(reg_data), PSTR("%s%s%08X"), reg_data, (i) ? "," : "", registers[i]);
+  }
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR("C61: RegDump %s"), reg_data);
+}
+*/
 
 void Cse7761Every200ms(void) {
   if (2 == CSE7761Data.ready) {
@@ -477,6 +573,13 @@ void Cse7761SnsInit(void) {
       SetSerial(38400, TS_SERIAL_8E1);
       ClaimSerial();
     }
+
+#ifdef CSE7761_FREQUENCY
+#ifdef CSE7761_ZEROCROSS
+    ZeroCrossInit(CSE7761_ZEROCROSS_GPIO, CSE7761_ZEROCROSS_OFFSET);
+#endif  // CSE7761_ZEROCROSS
+#endif  // CSE7761_FREQUENCY
+
   } else {
     TasmotaGlobal.energy_driver = ENERGY_NONE;
   }
@@ -488,7 +591,9 @@ void Cse7761DrvInit(void) {
     CSE7761Data.init = 4;                       // Init setup steps
     Energy.phase_count = 2;                     // Handle two channels as two phases
     Energy.voltage_common = true;               // Use common voltage
+#ifdef CSE7761_FREQUENCY
     Energy.frequency_common = true;             // Use common frequency
+#endif
     TasmotaGlobal.energy_driver = XNRG_19;
   }
 }
@@ -503,24 +608,16 @@ bool Cse7761Command(void) {
     if (1 == XdrvMailbox.payload) { XdrvMailbox.payload = Cse7761Ref(PowerPAC); }
     // Service in xdrv_03_energy.ino
   }
-  else if (CMND_VOLTAGECAL == Energy.command_code) {
-    if (1 == XdrvMailbox.payload) { XdrvMailbox.payload = Cse7761Ref(RmsUC); }
-    // Service in xdrv_03_energy.ino
-  }
-  else if (CMND_CURRENTCAL == Energy.command_code) {
-    if (1 == XdrvMailbox.payload) { XdrvMailbox.payload = Cse7761Ref(RmsIAC); }
-    // Service in xdrv_03_energy.ino
-  }
-  else if (CMND_FREQUENCYCAL == Energy.command_code) {
-    if (1 == XdrvMailbox.payload) { XdrvMailbox.payload = CSE7761_FREF; }
-    // Service in xdrv_03_energy.ino
-  }
   else if (CMND_POWERSET == Energy.command_code) {
     if (XdrvMailbox.data_len && CSE7761Data.active_power[channel]) {
       if ((value > 100) && (value < 200000)) {  // Between 1W and 2000W
         Settings.energy_power_calibration = ((CSE7761Data.active_power[channel]) / value) * 100;
       }
     }
+  }
+  else if (CMND_VOLTAGECAL == Energy.command_code) {
+    if (1 == XdrvMailbox.payload) { XdrvMailbox.payload = Cse7761Ref(RmsUC); }
+    // Service in xdrv_03_energy.ino
   }
   else if (CMND_VOLTAGESET == Energy.command_code) {
     if (XdrvMailbox.data_len && CSE7761Data.voltage_rms) {
@@ -529,12 +626,21 @@ bool Cse7761Command(void) {
       }
     }
   }
+  else if (CMND_CURRENTCAL == Energy.command_code) {
+    if (1 == XdrvMailbox.payload) { XdrvMailbox.payload = Cse7761Ref(RmsIAC); }
+    // Service in xdrv_03_energy.ino
+  }
   else if (CMND_CURRENTSET == Energy.command_code) {
     if (XdrvMailbox.data_len && CSE7761Data.current_rms[channel]) {
       if ((value > 1000) && (value < 1000000)) {  // Between 10mA and 10A
         Settings.energy_current_calibration = ((CSE7761Data.current_rms[channel] * 100) / value) * 1000;
       }
     }
+  }
+#ifdef CSE7761_FREQUENCY
+  else if (CMND_FREQUENCYCAL == Energy.command_code) {
+    if (1 == XdrvMailbox.payload) { XdrvMailbox.payload = CSE7761_FREF; }
+    // Service in xdrv_03_energy.ino
   }
   else if (CMND_FREQUENCYSET == Energy.command_code) {
     if (XdrvMailbox.data_len && CSE7761Data.frequency) {
@@ -543,6 +649,7 @@ bool Cse7761Command(void) {
       }
     }
   }
+#endif
   else serviced = false;  // Unknown command
 
   return serviced;

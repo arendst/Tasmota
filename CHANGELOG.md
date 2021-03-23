@@ -8,6 +8,8 @@ All notable changes to this project will be documented in this file.
 - Commands ``MqttKeepAlive 1..100`` to set Mqtt Keep Alive timer (default 30) and ``MqttTimeout 1..100`` to set Mqtt Socket Timeout (default 4) (#5341)
 - Commands ``DisplayType`` to select sub-modules where implemented and ``DisplayInvert`` to select inverted display where implemented
 - Support for TM1638 seven segment display by Ajith Vasudevan (#11031)
+- Support for MAX7219 seven segment display by Ajith Vasudevan (#11387)
+- Support for Frequency monitoring and zero-cross detection on CSE7761 (Sonoff Dual R3)
 
 ### Changed
 - PubSubClient library from EspEasy v2.7.12 to Tasmota v2.8.12
