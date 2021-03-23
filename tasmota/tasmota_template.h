@@ -157,6 +157,7 @@ enum UserSelectablePins {
   GPIO_VL53L0X_XSHUT1,                 // VL53L0X_XSHUT (the max number of sensors is VL53L0X_MAX_SENSORS)- Used when connecting multiple VL53L0X
   GPIO_MAX7219CLK, GPIO_MAX7219DIN, GPIO_MAX7219CS, // MAX7219 interface
   GPIO_TFMINIPLUS_TX, GPIO_TFMINIPLUS_RX,  // TFmini Plus ToF sensor
+  GPIO_ZEROCROSS,
   GPIO_SENSOR_END };
 
 enum ProgramSelectablePins {
@@ -334,6 +335,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_VL53L0X_XSHUT "|"
   D_SENSOR_MAX7219_CLK "|" D_SENSOR_MAX7219_DIN "|" D_SENSOR_MAX7219_CS "|"
   D_SENSOR_TFMINIPLUS_TX "|" D_SENSOR_TFMINIPLUS_RX "|"
+  D_SENSOR_ZEROCROSS "|"
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -649,6 +651,7 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_SDM72_TX),      // SDM72 Serial interface
   AGPIO(GPIO_SDM72_RX),      // SDM72 Serial interface
 #endif
+  AGPIO(GPIO_ZEROCROSS),
 #endif  // USE_ENERGY_SENSOR
 
 /*-------------------------------------------------------------------------------------------*\

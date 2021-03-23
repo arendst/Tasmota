@@ -805,15 +805,10 @@
 #define D_SENSOR_NEOPOOL_TX    "NeoPool TX"
 #define D_SENSOR_NEOPOOL_RX    "NeoPool RX"
 #define D_SENSOR_VL53L0X_XSHUT "VL53L0X XSHUT"
-#define D_NEW_ADDRESS          "Setting address to"
-#define D_OUT_OF_RANGE         "Out of Range"
-#define D_SENSOR_DETECTED      "detected"
 #define D_SENSOR_TFMINIPLUS_TX  "TFmini+ TX"
 #define D_SENSOR_TFMINIPLUS_RX  "TFmini+ RX"
+#define D_SENSOR_ZEROCROSS     "ZC Pulse"
 
-#define D_NEW_ADDRESS          "Positionner l'adresse à"
-#define D_OUT_OF_RANGE         "Hors limites"
-#define D_SENSOR_DETECTED      "détecté"
 
 // Units
 #define D_UNIT_AMPERE "A"
@@ -860,6 +855,11 @@
 #define D_UNIT_WATT "W"
 #define D_UNIT_WATTHOUR "Wh"
 #define D_UNIT_WATT_METER_QUADRAT "W/m²"
+
+#define D_NEW_ADDRESS          "Positionner l'adresse à"
+#define D_OUT_OF_RANGE         "Hors limites"
+#define D_SENSOR_DETECTED      "détecté"
+
 //SDM220, SDM120, SDM72, LE01MR
 #define D_EXPORT_POWER    "Puissance fournie"
 #define D_IMPORT_POWER 	  "Puissance consommée"

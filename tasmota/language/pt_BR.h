@@ -810,6 +810,7 @@
 #define D_SENSOR_DETECTED      "detectou"
 #define D_SENSOR_TFMINIPLUS_TX  "TFmini+ TX"
 #define D_SENSOR_TFMINIPLUS_RX  "TFmini+ RX"
+#define D_SENSOR_ZEROCROSS     "ZC Pulse"
 
 
 // Units
@@ -857,6 +858,10 @@
 #define D_UNIT_WATT "W"
 #define D_UNIT_WATTHOUR "W/h"
 #define D_UNIT_WATT_METER_QUADRAT "W/m²"
+
+#define D_NEW_ADDRESS          "Setting address to"
+#define D_OUT_OF_RANGE         "Out of Range"
+#define D_SENSOR_DETECTED      "detected"
 
 //SDM220, SDM120, SDM72, LE01MR
 #define D_EXPORT_POWER    "Export Power"
