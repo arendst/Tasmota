@@ -331,15 +331,9 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_SSD1351_DC "|"
   D_SENSOR_XPT2046_CS "|"
   D_SENSOR_CSE7761_TX "|" D_SENSOR_CSE7761_RX "|"
-<<<<<<< HEAD
   D_SENSOR_VL53L0X_XSHUT "|"
-<<<<<<< HEAD
-=======
->>>>>>> TFmini+
   D_SENSOR_TFMINIPLUS_TX "|" D_SENSOR_TFMINIPLUS_RX "|"
-=======
   D_SENSOR_MAX7219_CLK "|" D_SENSOR_MAX7219_DIN "|" D_SENSOR_MAX7219_CS "|"
->>>>>>> upstream/development
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
