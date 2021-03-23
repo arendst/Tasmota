@@ -21,7 +21,12 @@
 #ifdef USE_CSE7761
 /*********************************************************************************************\
  * CSE7761 - Energy  (Sonoff Dual R3 Pow)
+ *
+ * Without zero-cross detection
  * {"NAME":"Sonoff Dual R3","GPIO":[32,0,0,0,0,0,0,0,0,576,225,0,0,0,0,0,0,0,0,0,0,7296,7328,224,0,0,0,0,160,161,0,0,0,0,0,0],"FLAG":0,"BASE":1}
+ *
+ * With zero-cross detection
+ * {"NAME":"Sonoff Dual R3 (ZCD)","GPIO":[32,0,0,0,7552,0,0,0,0,576,225,0,0,0,0,0,0,0,0,0,0,7296,7328,224,0,0,0,0,160,161,0,0,0,0,0,0],"FLAG":0,"BASE":1}
  *
  * Based on datasheet from ChipSea and analysing serial data
  * See https://github.com/arendst/Tasmota/discussions/10793
@@ -33,7 +38,6 @@
 #define CSE7761_FREQUENCY                          // Add support for frequency monitoring
   #define CSE7761_ZEROCROSS                        // Add zero cross detection
     #define CSE7761_ZEROCROSS_OFFSET  2200         // Zero cross offset due to chip calculation (microseconds)
-    #define CSE7761_ZEROCROSS_GPIO    4            // Sonoff Dual R3 pulse input
 
 #define CSE7761_UREF                  42563        // RmsUc
 #define CSE7761_IREF                  52241        // RmsIAC
@@ -576,7 +580,7 @@ void Cse7761SnsInit(void) {
 
 #ifdef CSE7761_FREQUENCY
 #ifdef CSE7761_ZEROCROSS
-    ZeroCrossInit(CSE7761_ZEROCROSS_GPIO, CSE7761_ZEROCROSS_OFFSET);
+    ZeroCrossInit(CSE7761_ZEROCROSS_OFFSET);
 #endif  // CSE7761_ZEROCROSS
 #endif  // CSE7761_FREQUENCY
 

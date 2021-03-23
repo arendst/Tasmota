@@ -169,7 +169,7 @@ void ZeroCrossMomentStart(void) {
   while (!TimeReached(timeout) && !TimeReachedUsec(trigger_moment)) {}
 
 //  uint32_t dbg_endtime = micros();
-//  AddLog(LOG_LEVEL_DEBUG, PSTR("ZCR: CodeExecTime %d, StartTime %d, EndTime %d, ZcTime %d, Interval %d"),
+//  AddLog(LOG_LEVEL_DEBUG, PSTR("ZCD: CodeExecTime %d, StartTime %d, EndTime %d, ZcTime %d, Interval %d"),
 //    dbg_endtime - dbg_starttime, dbg_starttime, dbg_endtime, dbg_zctime, dbg_interval);
 
   TasmotaGlobal.zc_code_offset = micros();
@@ -180,7 +180,7 @@ void ZeroCrossMomentEnd(void) {
 
   TasmotaGlobal.zc_code_offset = (micros() - TasmotaGlobal.zc_code_offset) / 2;
 
-//  AddLog(LOG_LEVEL_DEBUG, PSTR("ZCR: CodeExecTime %d"), TasmotaGlobal.zc_code_offset * 2);
+//  AddLog(LOG_LEVEL_DEBUG, PSTR("ZCD: CodeExecTime %d"), TasmotaGlobal.zc_code_offset * 2);
 }
 
 void ICACHE_RAM_ATTR ZeroCrossIsr(void) {
@@ -190,10 +190,16 @@ void ICACHE_RAM_ATTR ZeroCrossIsr(void) {
   if (!TasmotaGlobal.zc_time) {TasmotaGlobal.zc_time = 1; }
 }
 
-void ZeroCrossInit(uint32_t gpio, uint32_t offset) {
-  TasmotaGlobal.zc_offset = offset;
-  pinMode(gpio, INPUT_PULLUP);
-  attachInterrupt(gpio, ZeroCrossIsr, CHANGE);
+void ZeroCrossInit(uint32_t offset) {
+  if (PinUsed(GPIO_ZEROCROSS)) {
+    TasmotaGlobal.zc_offset = offset;
+
+    uint32_t gpio = Pin(GPIO_ZEROCROSS);
+    pinMode(gpio, INPUT_PULLUP);
+    attachInterrupt(gpio, ZeroCrossIsr, CHANGE);
+
+    AddLog(LOG_LEVEL_INFO, PSTR("ZCD: Activated"));  // Zero-cross detection activated
+  }
 }
 
 /********************************************************************************************/
