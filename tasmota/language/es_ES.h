@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v9.3.1.1
+ * Updated until v9.3.1.2
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -586,13 +586,13 @@
 #define D_SpL1L2L3 "Voltaje L1+L2+L3/3"
 
 // xsns_86_tfminiplus.ino
-#define D_SIGNALSTRENGTH "Signal Strength"
-#define D_CHIPTEMPERATURE "Chip Temperature"
+#define D_SIGNALSTRENGTH "Señal"
+#define D_CHIPTEMPERATURE "Temperatura del Chip"
 
 // tasmota_template.h - keep them as short as possible to be able to fit them in GUI drop down box
 #define D_SENSOR_NONE          "Ninguno"
 #define D_SENSOR_USER          "Por Usuario"
-#define D_SENSOR_OPTION        "Option"
+#define D_SENSOR_OPTION        "Opción"
 #define D_SENSOR_DHT11         "DHT11"
 #define D_SENSOR_AM2301        "AM2301"
 #define D_SENSOR_SI7021        "SI7021"
@@ -647,9 +647,9 @@
 #define D_SENSOR_TM1638_CLK    "TM1638 CLK"
 #define D_SENSOR_TM1638_DIO    "TM1638 DIO"
 #define D_SENSOR_TM1638_STB    "TM1638 STB"
-#define D_SENSOR_MAX7219_DIN    "MAX7219 DIN"
+#define D_SENSOR_MAX7219_DIN   "MAX7219 DIN"
 #define D_SENSOR_MAX7219_CS    "MAX7219 CS"
-#define D_SENSOR_MAX7219_CLK    "MAX7219 CLK"
+#define D_SENSOR_MAX7219_CLK   "MAX7219 CLK"
 #define D_SENSOR_HX711_SCK     "HX711 SCK"
 #define D_SENSOR_HX711_DAT     "HX711 DAT"
 #define D_SENSOR_FTC532        "FTC532"
@@ -717,8 +717,8 @@
 #define D_SENSOR_A4988_STP     "A4988 STP"
 #define D_SENSOR_A4988_ENA     "A4988 ENA"
 #define D_SENSOR_A4988_MS1     "A4988 MS1"
-#define D_SENSOR_OUTPUT_HI     "Output Hi"
-#define D_SENSOR_OUTPUT_LO     "Output Lo"
+#define D_SENSOR_OUTPUT_HI     "Fijo a ON"
+#define D_SENSOR_OUTPUT_LO     "Fijo a OFF"
 #define D_SENSOR_AS608_TX      "AS608 Tx"
 #define D_SENSOR_AS608_RX      "AS608 Rx"
 #define D_SENSOR_DDS2382_TX    "DDS238-2 Tx"
@@ -749,12 +749,12 @@
 #define D_SENSOR_TELEINFO_RX   "TInfo Rx"
 #define D_SENSOR_TELEINFO_ENABLE "TInfo EN"
 #define D_SENSOR_LMT01_PULSE   "LMT01 Pulse"
-#define D_SENSOR_ADC_INPUT     "ADC Input"
+#define D_SENSOR_ADC_INPUT     "ADC Entrada"
 #define D_SENSOR_ADC_TEMP      "ADC Temp"
-#define D_SENSOR_ADC_LIGHT     "ADC Light"
-#define D_SENSOR_ADC_BUTTON    "ADC Button"
-#define D_SENSOR_ADC_RANGE     "ADC Range"
-#define D_SENSOR_ADC_CT_POWER  "ADC CT Power"
+#define D_SENSOR_ADC_LIGHT     "ADC Luz"
+#define D_SENSOR_ADC_BUTTON    "ADC Botón"
+#define D_SENSOR_ADC_RANGE     "ADC Rango"
+#define D_SENSOR_ADC_CT_POWER  "ADC CT Potencia"
 #define D_SENSOR_ADC_JOYSTICK  "ADC Joystick"
 #define D_SENSOR_ADC_PH        "ADC pH"
 #define D_GPIO_WEBCAM_PWDN     "CAM_PWDN"
@@ -807,7 +807,7 @@
 #define D_SENSOR_VL53L0X_XSHUT "VL53L0X XSHUT"
 #define D_SENSOR_TFMINIPLUS_TX  "TFmini+ TX"
 #define D_SENSOR_TFMINIPLUS_RX  "TFmini+ RX"
-#define D_SENSOR_ZEROCROSS     "ZC Pulse"
+#define D_SENSOR_ZEROCROSS     "Cruce por cero"
 
 
 // Units
@@ -861,8 +861,8 @@
 #define D_SENSOR_DETECTED      "detectado"
 
 //SDM220, SDM120, SDM72, LE01MR
-#define D_EXPORT_POWER    "Export Power"
-#define D_IMPORT_POWER 	  "Import Power"
+#define D_EXPORT_POWER    "Pot. Exportada"
+#define D_IMPORT_POWER 	  "Pot. Importada"
 #define D_PHASE_ANGLE     "Ángulo de Fase"
 #define D_IMPORT_ACTIVE   "P. Activa Entrante"
 #define D_EXPORT_ACTIVE   "P. Activa Saliente"
@@ -989,54 +989,54 @@
 
 // xsns_83_neopool.ino
 #define D_NEOPOOL_MACH_NONE               "NeoPool"           // Machine names
-#define D_NEOPOOL_MACH_HIDROLIFE          "Hidrolife (yellow)"
-#define D_NEOPOOL_MACH_AQUASCENIC         "Aquascenic (blue)"
-#define D_NEOPOOL_MACH_OXILIFE            "Oxilife (green)"
-#define D_NEOPOOL_MACH_BIONET             "Bionet (light blue)"
-#define D_NEOPOOL_MACH_HIDRONISER         "Hidroniser (red)"
-#define D_NEOPOOL_MACH_UVSCENIC           "UVScenic (lilac)"
-#define D_NEOPOOL_MACH_STATION            "Station (orange)"
+#define D_NEOPOOL_MACH_HIDROLIFE          "Hidrolife (amarillo)"
+#define D_NEOPOOL_MACH_AQUASCENIC         "Aquascenic (azul)"
+#define D_NEOPOOL_MACH_OXILIFE            "Oxilife (verde)"
+#define D_NEOPOOL_MACH_BIONET             "Bionet (celeste)"
+#define D_NEOPOOL_MACH_HIDRONISER         "Hidroniser (rojo)"
+#define D_NEOPOOL_MACH_UVSCENIC           "UVScenic (lila)"
+#define D_NEOPOOL_MACH_STATION            "Station (naranga)"
 #define D_NEOPOOL_MACH_BRILIX             "Brilix"
-#define D_NEOPOOL_MACH_GENERIC            "Generic"
+#define D_NEOPOOL_MACH_GENERIC            "Genérico"
 #define D_NEOPOOL_MACH_BAYROL             "Bayrol"
-#define D_NEOPOOL_MACH_HAY                "Hay"
+#define D_NEOPOOL_MACH_HAY                "Heno"
 #define D_NEOPOOL_FILTRATION_MANUAL       "Manual"            // Filtration modes
 #define D_NEOPOOL_FILTRATION_AUTO         "Auto"
-#define D_NEOPOOL_FILTRATION_HEATING      "Heating"
-#define D_NEOPOOL_FILTRATION_SMART        "Smart"
-#define D_NEOPOOL_FILTRATION_INTELLIGENT  "Intelligent"
-#define D_NEOPOOL_FILTRATION_BACKWASH     "Backwash"
+#define D_NEOPOOL_FILTRATION_HEATING      "Calentando"
+#define D_NEOPOOL_FILTRATION_SMART        "Inteligente"
+#define D_NEOPOOL_FILTRATION_INTELLIGENT  "Inteligente"
+#define D_NEOPOOL_FILTRATION_BACKWASH     "Lavado"
 #define D_NEOPOOL_FILTRATION_NONE         ""                  // Filtration speed level
-#define D_NEOPOOL_FILTRATION_SLOW         "slow"
-#define D_NEOPOOL_FILTRATION_MEDIUM       "medium"
-#define D_NEOPOOL_FILTRATION_FAST         "fast"
-#define D_NEOPOOL_TYPE                    "Type"              // Sensor & relais names
+#define D_NEOPOOL_FILTRATION_SLOW         "lento"
+#define D_NEOPOOL_FILTRATION_MEDIUM       "medio"
+#define D_NEOPOOL_FILTRATION_FAST         "rápido"
+#define D_NEOPOOL_TYPE                    "Tipo"              // Sensor & relais names
 #define D_NEOPOOL_REDOX                   "Redox"
-#define D_NEOPOOL_CHLORINE                "Chlorine"
-#define D_NEOPOOL_CONDUCTIVITY            "Conductivity"
-#define D_NEOPOOL_IONIZATION              "Ionization"
-#define D_NEOPOOL_HYDROLYSIS              "Hydrolysis"
-#define D_NEOPOOL_RELAY                   "Relay"
-#define D_NEOPOOL_RELAY_FILTRATION        "Filtration"
-#define D_NEOPOOL_RELAY_LIGHT             "Light"
-#define D_NEOPOOL_RELAY_PH_ACID           "Acid pump"
-#define D_NEOPOOL_RELAY_PH_BASE           "Base pump"
-#define D_NEOPOOL_RELAY_RX                "Redox level"
-#define D_NEOPOOL_RELAY_CL                "Chlorine pump"
-#define D_NEOPOOL_RELAY_CD                "Brine pump"
-#define D_NEOPOOL_TIME                    "Time"
-#define D_NEOPOOL_FILT_MODE               "Filtration"
+#define D_NEOPOOL_CHLORINE                "Cloro"
+#define D_NEOPOOL_CONDUCTIVITY            "Conductividad"
+#define D_NEOPOOL_IONIZATION              "Ionización"
+#define D_NEOPOOL_HYDROLYSIS              "Hidrólisis"
+#define D_NEOPOOL_RELAY                   "Relé"
+#define D_NEOPOOL_RELAY_FILTRATION        "Filtrar"
+#define D_NEOPOOL_RELAY_LIGHT             "Luz"
+#define D_NEOPOOL_RELAY_PH_ACID           "Bomba de Ácido"
+#define D_NEOPOOL_RELAY_PH_BASE           "Bomba de Base"
+#define D_NEOPOOL_RELAY_RX                "Nivel Redox"
+#define D_NEOPOOL_RELAY_CL                "Bomba de Cloro"
+#define D_NEOPOOL_RELAY_CD                "Bomba de Salmuera"
+#define D_NEOPOOL_TIME                    "Tiempo"
+#define D_NEOPOOL_FILT_MODE               "Filtrado"
 #define D_NEOPOOL_POLARIZATION            "Pol"               // Sensor status
 #define D_NEOPOOL_PR_OFF                  "PrOff"
 #define D_NEOPOOL_SETPOINT_OK             "Ok"
 #define D_NEOPOOL_COVER                   "Cover"
-#define D_NEOPOOL_SHOCK                   "Shock"
+#define D_NEOPOOL_SHOCK                   "Golpe"
 #define D_NEOPOOL_ALARM                   "! "
-#define D_NEOPOOL_LOW                     "Low"
+#define D_NEOPOOL_LOW                     "Bajo"
 #define D_NEOPOOL_FLOW1                   "FL1"
 #define D_NEOPOOL_FLOW2                   "FL2"
-#define D_NEOPOOL_PH_HIGH                 "too high"          // ph Alarms
-#define D_NEOPOOL_PH_LOW                  "too low"
-#define D_NEOPOOL_PUMP_TIME_EXCEEDED      "pump time exceeded"
+#define D_NEOPOOL_PH_HIGH                 "muy alto"          // ph Alarms
+#define D_NEOPOOL_PH_LOW                  "muy bajo"
+#define D_NEOPOOL_PUMP_TIME_EXCEEDED      "tiempo de bomba excedido"
 
 #endif  // _LANGUAGE_ES_ES_H_
