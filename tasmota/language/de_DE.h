@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v9.3.1.1
+ * Updated until v9.3.1.2
 \*********************************************************************/
 
 //#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -807,7 +807,7 @@
 #define D_SENSOR_VL53L0X_XSHUT "VL53L0X XSHUT"
 #define D_SENSOR_TFMINIPLUS_TX  "TFmini+ TX"
 #define D_SENSOR_TFMINIPLUS_RX  "TFmini+ RX"
-#define D_SENSOR_ZEROCROSS     "ZC Pulse"
+#define D_SENSOR_ZEROCROSS     "ZC Puls"
 
 
 // Units
@@ -856,9 +856,9 @@
 #define D_UNIT_WATTHOUR "Wh"
 #define D_UNIT_WATT_METER_QUADRAT "W/m²"
 
-#define D_NEW_ADDRESS          "Setting address to"
-#define D_OUT_OF_RANGE         "Out of Range"
-#define D_SENSOR_DETECTED      "detected"
+#define D_NEW_ADDRESS          "Neue Addresse"
+#define D_OUT_OF_RANGE         "Außerhalb Bereich"
+#define D_SENSOR_DETECTED      "Sensor erkannt"
 
 //SDM220, SDM120, SDM72, LE01MR
 #define D_EXPORT_POWER    "Exportiere Leistung"
