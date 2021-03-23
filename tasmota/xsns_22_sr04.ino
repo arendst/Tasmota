@@ -159,11 +159,6 @@ void Sr04TReading(void) {
   return;
 }
 
-#ifdef USE_WEBSERVER
-const char HTTP_SNS_DISTANCE_CM[] PROGMEM =
-  "{s}SR04 " D_DISTANCE "{m}%s" D_UNIT_CENTIMETER "{e}";  // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
-#endif  // USE_WEBSERVER
-
 void Sr04Show(bool json)
 {
 
@@ -180,7 +175,7 @@ void Sr04Show(bool json)
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
     } else {
-      WSContentSend_PD(HTTP_SNS_DISTANCE_CM, distance_chr);
+      WSContentSend_PD(HTTP_SNS_DISTANCE_CM, "SR04", distance_chr);
 #endif  // USE_WEBSERVER
     }
   }

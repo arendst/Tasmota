@@ -1,8 +1,6 @@
 /*
   xsns_86_tfminiplus.ino - TFmini Plus interface for Tasmota
 
-  Created by Raphael Breiting on 12.11.2020.
-
   Copyright (C) 2021  Raphael Breiting and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
@@ -19,23 +17,21 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-// Conditional compilation of driver
 #ifdef USE_TFMINIPLUS
-
 /*****************************************************************************\
  * TFmini, TFmini Plus, TFmini Plus (Indoor Version), TFmini-S - LiDAR Module
  * Manufacturer: Benewake (Beijing) Co. Ltd.
  *
  * Code for Time-Of-Flight (TOF) family single-point short-range LiDAR sensor
  * modules with UART interface.
- * 
+ *
  * Connection Description for GH1.25-4P (Molex51021-0400) connector:
  *      No     Color       Corresponding PIN   Function    Comment
  *      1       RED         PIN-1               +5V         Power Supply
  *      2       WHITE       PIN-2               RxD/SDA     Receiving/Data
  *      3       GREEN       PIN-3               TxD/SCL     Transmitting/Clock
  *      4       BLACK       PIN-4               GND         Ground
- * 
+ *
  * Before connecting module to Tasmota, please prepare module with
  * the following sequence through terminal program (e.g. Termite):
  * 1. Connect sensor to USB-to-UART (TTL 3.3V)
@@ -54,32 +50,26 @@
  * 7. When point 6 returned OK, than ready to connect to Tasmota! :)
  *    When point 6 returned FAIL, start with item 1 and
  *      - check connection of RX and TX pin are not exchanged
- *      - check power supply 
+ *      - check power supply
  *          - 5V +-0,5V
  *          - 110mA average
  *          - 140mA max peak
- * 
+ *
  * References:
  * - http://en.benewake.com/product
  * - https://de.aliexpress.com/item/32852024277.html?spm=a2g0s.9042311.0.0.27424c4d5Edizk
  * - https://de.aliexpress.com/item/4001076614996.html?spm=a2g0s.9042311.0.0.27424c4d5Edizk
 \*****************************************************************************/
 
-#include <TasmotaSerial.h>
-
-// Define driver ID
 #define XSNS_86 86
 
-// Use special no wait serial driver, should be always on
-#ifndef ESP32
-#define SPECIAL_SS
-#endif
-
 // Default baudrate
-#define BAUDRATE 9600
+#define TFMP_SPEED 9600
 
 // Serial buffer length for incoming data
 #define TFMP_MAX_DATA_LEN 9
+
+#include <TasmotaSerial.h>
 
 char Tfmp_buffer[TFMP_MAX_DATA_LEN + 1];
 
@@ -101,7 +91,7 @@ void TfmpInit(void)
         if (PinUsed(GPIO_TFMINIPLUS_RX) && PinUsed(GPIO_TFMINIPLUS_TX))
         {
             TfmpSerial = new TasmotaSerial(Pin(GPIO_TFMINIPLUS_RX), Pin(GPIO_TFMINIPLUS_TX), 1);
-            if (TfmpSerial->begin(BAUDRATE))
+            if (TfmpSerial->begin(TFMP_SPEED))
             {
                 if (TfmpSerial->hardwareSerial())
                 {
@@ -155,7 +145,7 @@ void TfmpProcessSerialData (void)
     bool dataReady;
     if (TfmpSerial && tfminiplus_sensor.ready)
     {
-        while (TfmpSerial->available() > 0) 
+        while (TfmpSerial->available() > 0)
         {
             data = TfmpSerial->read();
             dataReady = TfmpAddData((char)data);
@@ -168,7 +158,7 @@ void TfmpProcessSerialData (void)
 }
 
 bool TfmpAddData(char nextChar)
-{  
+{
     // Buffer position
     static uint8_t currentIndex = 0;
     // Store data into buffer at position
@@ -187,27 +177,30 @@ bool TfmpAddData(char nextChar)
 
 #ifdef USE_WEBSERVER
 // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
-const char HTTP_SNS_DISTANCE_CM[] PROGMEM = "{s}   " D_DISTANCE "{m}%d" D_UNIT_CENTIMETER "{e}";
-const char HTTP_SNS_SIGNALSTRENGTH[] PROGMEM = "{s}   " D_SIGNALSTRENGTH "{m}%d{e}";
-const char HTTP_SNS_CHIPTEMPERATURE[] PROGMEM = "{s}   " D_CHIPTEMPERATURE "{m}%d" D_UNIT_DEGREE D_UNIT_CELSIUS "{e}";
+const char HTTP_SNS_SIGNALSTRENGTH[] PROGMEM = "{s}%s " D_SIGNALSTRENGTH "{m}%d{e}";
+const char HTTP_SNS_CHIPTEMPERATURE[] PROGMEM = "{s}%s " D_CHIPTEMPERATURE "{m}%d " D_UNIT_DEGREE "%c{e}";
 #endif  // USE_WEBSERVER
 
 void TfmpShow(bool json)
 {
+    char sensor_name[12];
+    strcpy_P(sensor_name, "TFminiPlus");
+    char distance_chr[FLOATSZ];
+    dtostrfd(tfminiplus_sensor.distance, 3, distance_chr);
+
     if (json) {
-        ResponseAppend_P(PSTR(",\"TFmini Plus\":{\"" D_JSON_DISTANCE "\":\"%d\",\"" D_JSON_SIGNALSTRENGTH "\":\"%d\",\"" D_JSON_CHIPTEMPERATURE "\":%d}"),
-            tfminiplus_sensor.distance, tfminiplus_sensor.sigstrength, tfminiplus_sensor.chiptemp);
+        ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_DISTANCE "\":\"%s\",\"" D_JSON_SIGNALSTRENGTH "\":\"%d\",\"" D_JSON_CHIPTEMPERATURE "\":%d}"),
+            sensor_name, distance_chr, tfminiplus_sensor.sigstrength, tfminiplus_sensor.chiptemp);
 #ifdef USE_DOMOTICZ
         if (0 == TasmotaGlobal.tele_period) {
-            DomoticzFloatSensor(DZ_COUNT, tfminiplus_sensor.distance);
+            DomoticzSensor(DZ_COUNT, distance_chr);
         }
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
     } else {
-        WSContentSend_P("{s}TFmini Plus");
-        WSContentSend_P(HTTP_SNS_DISTANCE_CM, tfminiplus_sensor.distance);
-        WSContentSend_P(HTTP_SNS_SIGNALSTRENGTH, tfminiplus_sensor.sigstrength);
-        WSContentSend_P(HTTP_SNS_CHIPTEMPERATURE, tfminiplus_sensor.chiptemp);
+        WSContentSend_P(HTTP_SNS_DISTANCE_CM, sensor_name, distance_chr);
+        WSContentSend_P(HTTP_SNS_SIGNALSTRENGTH, sensor_name, tfminiplus_sensor.sigstrength);
+        WSContentSend_P(HTTP_SNS_CHIPTEMPERATURE, sensor_name, tfminiplus_sensor.chiptemp, TempUnit());
 #endif  // USE_WEBSERVER
     }
 }
