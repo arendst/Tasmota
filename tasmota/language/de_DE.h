@@ -858,7 +858,7 @@
 
 #define D_NEW_ADDRESS          "Neue Addresse"
 #define D_OUT_OF_RANGE         "Außerhalb Bereich"
-#define D_SENSOR_DETECTED      "Sensor erkannt"
+#define D_SENSOR_DETECTED      "erkannt"
 
 //SDM220, SDM120, SDM72, LE01MR
 #define D_EXPORT_POWER    "Exportiere Leistung"
