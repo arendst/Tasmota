@@ -249,7 +249,7 @@ a_features = [[
     "USE_BS814A2","USE_SEESAW_SOIL","USE_WIEGAND","USE_NEOPOOL",
     "USE_TOF10120","USE_SDM72","USE_DISPLAY_TM1637","USE_PROJECTOR_CTRL"
     ],[
-    "","","","",
+    "USE_TFMINIPLUS","","","",
     "","","","",
     "","","","",
     "","","","",

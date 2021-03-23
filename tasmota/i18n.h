@@ -211,6 +211,8 @@
 #define D_JSON_IMPORT "Import"
 #define D_JSON_EXPORT "Export"
 #define D_JSON_TOTAL_ACTIVE "TotalActive"
+#define D_JSON_SIGNALSTRENGTH "SignalStrength"
+#define D_JSON_CHIPTEMPERATURE "ChipTemperature"
 
 #define D_RSLT_ENERGY "ENERGY"
 #define D_RSLT_HASS_STATE "HASS_STATE"
