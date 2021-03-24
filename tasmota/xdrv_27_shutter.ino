@@ -242,7 +242,7 @@ void ShutterInit(void)
   for (uint32_t i = 0; i < MAX_SHUTTERS; i++) {
     // set startrelay to 1 on first init, but only to shutter 1. 90% usecase
     Settings.shutter_startrelay[i] = (Settings.shutter_startrelay[i] == 0 && i ==  0? 1 : Settings.shutter_startrelay[i]);
-    if (Settings.shutter_startrelay[i] && (Settings.shutter_startrelay[i] < 31)) {
+    if (Settings.shutter_startrelay[i] && (Settings.shutter_startrelay[i] < MAX_RELAYS )) {
       TasmotaGlobal.shutters_present++;
 
       // Add the two relays to the mask to knaw they belong to shutters
