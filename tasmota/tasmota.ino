@@ -256,7 +256,7 @@ void setup(void) {
   }
   Serial.begin(TasmotaGlobal.baudrate);
   Serial.println();
-//  Serial.setRxBufferSize(INPUT_BUFFER_SIZE);  // Default is 256 chars
+  Serial.setRxBufferSize(INPUT_BUFFER_SIZE);  // Default is 256 chars
   TasmotaGlobal.seriallog_level = LOG_LEVEL_INFO;  // Allow specific serial messages until config loaded
 
 #ifdef USE_UFILESYS
