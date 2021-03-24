@@ -242,7 +242,7 @@ void ShutterInit(void)
   for (uint32_t i = 0; i < MAX_SHUTTERS; i++) {
     // set startrelay to 1 on first init, but only to shutter 1. 90% usecase
     Settings.shutter_startrelay[i] = (Settings.shutter_startrelay[i] == 0 && i ==  0? 1 : Settings.shutter_startrelay[i]);
-    if (Settings.shutter_startrelay[i] && (Settings.shutter_startrelay[i] < 9)) {
+    if (Settings.shutter_startrelay[i] && (Settings.shutter_startrelay[i] <= MAX_RELAYS )) {
       TasmotaGlobal.shutters_present++;
 
       // Add the two relays to the mask to knaw they belong to shutters
@@ -389,9 +389,21 @@ void ShutterCalculateAccelerator(uint8_t i)
         // decellaration way from current velocity
         current_stop_way = min_runtime_ms * STEPS_PER_SECOND * (current_pwm_velocity + velocity_change_per_step_max) * Shutter[i].direction  / 2 / ShutterGlobal.open_velocity_max - (Shutter[i].accelerator<0?Shutter[i].direction*1000*current_pwm_velocity/ShutterGlobal.open_velocity_max:0);
         next_possible_stop_position = current_real_position + current_stop_way ;
-        // ensure that the accelerotor kicks in at least one step BEFORE it is to late and a hard stop required.
-        if (next_possible_stop_position * Shutter[i].direction > Shutter[i].target_position * Shutter[i].direction ) {
-            Shutter[i].accelerator = -velocity_change_per_step_max;
+        // ensure that the accelerotor kicks in at the first overrun of the target position
+        if (  Shutter[i].accelerator < 0 || next_possible_stop_position * Shutter[i].direction > Shutter[i].target_position * Shutter[i].direction ) {
+            // if startet to early because of 0.05sec maximum accuracy and final position is to far away (200) accelerate a bit less
+            if (next_possible_stop_position * Shutter[i].direction+200 < Shutter[i].target_position * Shutter[i].direction) {
+              Shutter[i].accelerator = -velocity_change_per_step_max*9/10;
+            } else {
+              // in any case increase accelleration if overrun is detected during decelleration
+              if (next_possible_stop_position * Shutter[i].direction > Shutter[i].target_position * Shutter[i].direction && Shutter[i].accelerator < 0) {
+                Shutter[i].accelerator = -velocity_change_per_step_max*11/10;
+              } else {
+                // as long as the calculated end position is ok stay with proposed decelleration
+                Shutter[i].accelerator = -velocity_change_per_step_max;
+              }
+            }
+            // detect during the acceleration phase the point final speed is reached
         } else if (  Shutter[i].accelerator > 0 && current_pwm_velocity == velocity_max) {
           Shutter[i].accelerator = 0;
         }
@@ -412,7 +424,7 @@ void ShutterDecellerateForStop(uint8_t i)
 	      delay(50);
         AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Velocity %ld, Delta %d"), Shutter[i].pwm_velocity, Shutter[i].accelerator );
         // Control will be done in RTC Ticker.
-        
+
       }
       if (ShutterGlobal.position_mode == SHT_COUNTER){
         missing_steps = ((Shutter[i].target_position-Shutter[i].start_position)*Shutter[i].direction*ShutterGlobal.open_velocity_max/RESOLUTION/STEPS_PER_SECOND) - RtcSettings.pulse_counter[i];
@@ -462,7 +474,7 @@ void ShutterPowerOff(uint8_t i) {
   switch (ShutterGlobal.position_mode) {
     case SHT_PWM_VALUE:
     char scmnd[20];
-#ifdef SHUTTER_CLEAR_PWM_ONSTOP 
+#ifdef SHUTTER_CLEAR_PWM_ONSTOP
     // free the PWM servo lock on stop.
     snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_PWM "%d 0" ), i+1);
 #else
