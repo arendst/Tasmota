@@ -155,39 +155,50 @@ char* GetStateText(uint32_t state)
   return SettingsText(SET_STATE_TXT1 + state);
 }
 
-/********************************************************************************************/
+/*********************************************************************************************\
+ * Zero-cross support
+\*********************************************************************************************/
+
+//#define DEBUG_ZEROCROSS
 
 void ZeroCrossMomentStart(void) {
-  if (!TasmotaGlobal.zc_interval || !TasmotaGlobal.zc_time) { return; }
+  if (!TasmotaGlobal.zc_interval) { return; }
 
-//  uint32_t dbg_interval = TasmotaGlobal.zc_interval;
-//  uint32_t dbg_zctime = TasmotaGlobal.zc_time;
-//  uint32_t dbg_starttime = micros();
+#ifdef DEBUG_ZEROCROSS
+  uint32_t dbg_interval = TasmotaGlobal.zc_interval;
+  uint32_t dbg_zctime = TasmotaGlobal.zc_time;
+  uint32_t dbg_starttime = micros();
+#endif
 
-  uint32_t timeout = millis() +22;  // Catch at least 2 * 50Hz pulses
   uint32_t trigger_moment = TasmotaGlobal.zc_time + TasmotaGlobal.zc_interval - TasmotaGlobal.zc_offset - TasmotaGlobal.zc_code_offset;
-  while (!TimeReached(timeout) && !TimeReachedUsec(trigger_moment)) {}
+  if (TimeReachedUsec(trigger_moment)) {  // Trigger moment already passed so try next
+    trigger_moment += TasmotaGlobal.zc_interval;
+  }
+  uint32_t timeout = millis() +22;        // Catch at most 2 * 50Hz pulses
+  while (!TimeReached(timeout) && !TimeReachedUsec(trigger_moment)) {}  // Wait for trigger moment
 
-//  uint32_t dbg_endtime = micros();
-//  AddLog(LOG_LEVEL_DEBUG, PSTR("ZCD: CodeExecTime %d, StartTime %d, EndTime %d, ZcTime %d, Interval %d"),
-//    dbg_endtime - dbg_starttime, dbg_starttime, dbg_endtime, dbg_zctime, dbg_interval);
+#ifdef DEBUG_ZEROCROSS
+  uint32_t dbg_endtime = micros();
+  AddLog(LOG_LEVEL_DEBUG, PSTR("ZCD: CodeExecTime %d, StartTime %u, EndTime %u, ZcTime %u, Interval %d"),
+    dbg_endtime - dbg_starttime, dbg_starttime, dbg_endtime, dbg_zctime, dbg_interval);
+#endif
 
   TasmotaGlobal.zc_code_offset = micros();
 }
 
 void ZeroCrossMomentEnd(void) {
-  if (!TasmotaGlobal.zc_interval || !TasmotaGlobal.zc_time) { return; }
-
+  if (!TasmotaGlobal.zc_interval) { return; }
   TasmotaGlobal.zc_code_offset = (micros() - TasmotaGlobal.zc_code_offset) / 2;
 
-//  AddLog(LOG_LEVEL_DEBUG, PSTR("ZCD: CodeExecTime %d"), TasmotaGlobal.zc_code_offset * 2);
+#ifdef DEBUG_ZEROCROSS
+  AddLog(LOG_LEVEL_DEBUG, PSTR("ZCD: CodeExecTime %d"), TasmotaGlobal.zc_code_offset * 2);
+#endif
 }
 
 void ICACHE_RAM_ATTR ZeroCrossIsr(void) {
   uint32_t time = micros();
-  TasmotaGlobal.zc_interval = time - TasmotaGlobal.zc_time;
+  TasmotaGlobal.zc_interval = ((int32_t) (time - TasmotaGlobal.zc_time));
   TasmotaGlobal.zc_time = time;
-  if (!TasmotaGlobal.zc_time) {TasmotaGlobal.zc_time = 1; }
 }
 
 void ZeroCrossInit(uint32_t offset) {
