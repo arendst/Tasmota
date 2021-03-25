@@ -39,7 +39,7 @@
 #define CSE7761_FREQUENCY                          // Add support for frequency monitoring
   #define CSE7761_ZEROCROSS                        // Add zero cross detection
     #define CSE7761_ZEROCROSS_OFFSET  2200         // Zero cross offset due to chip calculation (microseconds)
-    #define CSE7761_RELAY_SWITCHTIME  15000        // Relay (Golden GI-1A-5LH 15ms max) switch time (microseconds)
+    #define CSE7761_RELAY_SWITCHTIME  3950         // Relay (Golden GI-1A-5LH 15ms max) switch power on time (microseconds)
 
 #define CSE7761_UREF                  42563        // RmsUc
 #define CSE7761_IREF                  52241        // RmsIAC
