@@ -171,11 +171,10 @@ void ZeroCrossMomentStart(void) {
 #endif
 
   uint32_t trigger_moment = TasmotaGlobal.zc_time + TasmotaGlobal.zc_interval - TasmotaGlobal.zc_offset - TasmotaGlobal.zc_code_offset;
-  if (TimeReachedUsec(trigger_moment)) {  // Trigger moment already passed so try next
+  while (TimeReachedUsec(trigger_moment)) {    // Trigger moment already passed so try next
     trigger_moment += TasmotaGlobal.zc_interval;
   }
-  uint32_t timeout = millis() +22;        // Catch at most 2 * 50Hz pulses
-  while (!TimeReached(timeout) && !TimeReachedUsec(trigger_moment)) {}  // Wait for trigger moment
+  while (!TimeReachedUsec(trigger_moment)) {}  // Wait for trigger moment
 
 #ifdef DEBUG_ZEROCROSS
   uint32_t dbg_endtime = micros();

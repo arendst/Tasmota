@@ -30,6 +30,7 @@
  *
  * Based on datasheet from ChipSea and analysing serial data
  * See https://github.com/arendst/Tasmota/discussions/10793
+ * https://goldenrelay.en.alibaba.com/product/62119012875-811845870/GOLDEN_GI_1A_5LH_SPST_5V_5A_10A_250VAC_NO_18_5_10_5_15_3mm_sealed_type_all_certificate_compliances_class_F_SPDT_Form_available.html
 \*********************************************************************************************/
 
 #define XNRG_19                       19
@@ -38,6 +39,7 @@
 #define CSE7761_FREQUENCY                          // Add support for frequency monitoring
   #define CSE7761_ZEROCROSS                        // Add zero cross detection
     #define CSE7761_ZEROCROSS_OFFSET  2200         // Zero cross offset due to chip calculation (microseconds)
+    #define CSE7761_RELAY_SWITCHTIME  15000        // Relay (Golden GI-1A-5LH 15ms max) switch time (microseconds)
 
 #define CSE7761_UREF                  42563        // RmsUc
 #define CSE7761_IREF                  52241        // RmsIAC
@@ -580,7 +582,7 @@ void Cse7761SnsInit(void) {
 
 #ifdef CSE7761_FREQUENCY
 #ifdef CSE7761_ZEROCROSS
-    ZeroCrossInit(CSE7761_ZEROCROSS_OFFSET);
+    ZeroCrossInit(CSE7761_ZEROCROSS_OFFSET + CSE7761_RELAY_SWITCHTIME);
 #endif  // CSE7761_ZEROCROSS
 #endif  // CSE7761_FREQUENCY
 
