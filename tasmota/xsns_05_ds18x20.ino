@@ -26,7 +26,12 @@
 #define XSNS_05              5
 
 //#define USE_DS18x20_RECONFIGURE    // When sensor is lost keep retrying or re-configure
-//#define DS18x20_USE_ID_AS_NAME      // Use last 3 bytes for naming of sensors
+//#define DS18x20_USE_ID_AS_NAME     // Use last 3 bytes for naming of sensors
+//#define W1_PARASITE_POWER          // Use only 2 wires to connect sensor (no VCC)
+#ifndef W1_PARASITE_POWER
+#define DS18x20_ARITH_MEAN         // non parasite power: compute arithmetic mean
+#endif
+#define DS18x20_ADD_DS2413         // add code for 1wire DS2312 2 bit IOport
 
 #define DS18S20_CHIPID       0x10  // +/-0.5C 9-bit
 #define DS1822_CHIPID        0x22  // +/-2C 12-bit
@@ -51,7 +56,11 @@ struct DS18X20STRUCT {
   uint8_t address[8];
   uint8_t index;
   uint8_t valid;
-  float temperature;
+#ifdef DS18x20_ARITH_MEAN
+  uint8_t numread;
+  float   temp_sum;
+#endif
+  float   temperature;
 } ds18x20_sensor[DS18X20_MAX_SENSORS];
 
 struct {
@@ -352,7 +361,8 @@ void Ds18x20Convert(void) {
 
 bool Ds18x20Read(uint8_t sensor) {
   uint8_t data[9];
-  int8_t sign = 1;
+  int8_t  sign = 1;
+  float   temp;
 
   uint8_t index = ds18x20_sensor[sensor].index;
   if (ds18x20_sensor[index].valid) { ds18x20_sensor[index].valid--; }
@@ -367,10 +377,8 @@ bool Ds18x20Read(uint8_t sensor) {
       switch(ds18x20_sensor[index].address[0]) {
         case DS18S20_CHIPID: {
           int16_t tempS = (((data[1] << 8) | (data[0] & 0xFE)) << 3) | ((0x10 - data[6]) & 0x0F);
-          ds18x20_sensor[index].temperature = ConvertTemp(tempS * 0.0625 - 0.250);
-
-          ds18x20_sensor[index].valid = SENSOR_MAX_MISS;
-          return true;
+          temp = ConvertTemp(tempS * 0.0625 - 0.250);
+          break;
         }
         case DS1822_CHIPID:
         case DS18B20_CHIPID: {
@@ -393,17 +401,25 @@ bool Ds18x20Read(uint8_t sensor) {
             temp12 = (~temp12) +1;
             sign = -1;
           }
-          ds18x20_sensor[index].temperature = ConvertTemp(sign * temp12 * 0.0625);  // Divide by 16
-          ds18x20_sensor[index].valid = SENSOR_MAX_MISS;
-          return true;
+          temp = ConvertTemp(sign * temp12 * 0.0625);  // Divide by 16
+          break;
         }
         case MAX31850_CHIPID: {
           int16_t temp14 = (data[1] << 8) + (data[0] & 0xFC);
-          ds18x20_sensor[index].temperature = ConvertTemp(temp14 * 0.0625);  // Divide by 16
-          ds18x20_sensor[index].valid = SENSOR_MAX_MISS;
-          return true;
+          temp = ConvertTemp(temp14 * 0.0625);  // Divide by 16
+          break;
         }
       }
+      ds18x20_sensor[index].temperature = temp;
+#ifdef DS18x20_ARITH_MEAN
+      if (ds18x20_sensor[index].numread++ == 0) {
+        ds18x20_sensor[index].temp_sum = temp;
+      } else {
+        ds18x20_sensor[index].temp_sum += temp;
+      }
+#endif
+      ds18x20_sensor[index].valid = SENSOR_MAX_MISS;
+      return true;
     }
   }
   AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DSB D_SENSOR_CRC_ERROR));
@@ -476,6 +492,12 @@ void Ds18x20Show(bool json) {
 
       if (json) {
         char address[17];
+#ifdef DS18x20_ARITH_MEAN
+        if ((0 == TasmotaGlobal.tele_period) && ds18x20_sensor[index].numread) {
+          ds18x20_sensor[index].temperature = ds18x20_sensor[index].temp_sum / ds18x20_sensor[index].numread;
+          ds18x20_sensor[index].numread = 0;
+        }
+#endif
         for (uint32_t j = 0; j < 6; j++) {
           sprintf(address+2*j, "%02X", ds18x20_sensor[index].address[6-j]);  // Skip sensor type and crc
         }
