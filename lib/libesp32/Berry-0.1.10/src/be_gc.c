@@ -120,6 +120,20 @@ void be_gc_unfix(bvm *vm, bgcobject *obj)
     }
 }
 
+bbool be_gc_fix_set(bvm *vm, bgcobject *obj, bbool fix)
+{
+    (void)vm;
+    bbool was_fixed = gc_isfixed(obj);
+    if (!gc_isconst(obj)) {
+        if (fix) {
+            gc_setfixed(obj);
+        } else {
+            gc_clearfixed(obj);
+        }
+    }
+    return was_fixed;
+}
+
 static void mark_gray(bvm *vm, bgcobject *obj)
 {
     if (obj && gc_iswhite(obj) && !gc_isconst(obj)) {
@@ -285,6 +299,9 @@ static void free_proto(bvm *vm, bgcobject *obj)
         be_free(vm, proto->code, proto->codesize * sizeof(binstruction));
 #if BE_DEBUG_RUNTIME_INFO
         be_free(vm, proto->lineinfo, proto->nlineinfo * sizeof(blineinfo));
+#endif
+#if BE_DEBUG_VAR_INFO
+        be_free(vm, proto->varinfo, proto->nvarinfo * sizeof(bvarinfo));
 #endif
         be_free(vm, proto, sizeof(bproto));
     }
@@ -489,9 +506,15 @@ static void reset_fixedlist(bvm *vm)
 
 void be_gc_auto(bvm *vm)
 {
+#if BE_USE_DEBUG_GC
+    if (vm->gc.status & GC_PAUSE) { /* force gc each time it's possible */
+        be_gc_collect(vm);
+    }
+#else
     if (vm->gc.status & GC_PAUSE && vm->gc.usage > vm->gc.threshold) {
         be_gc_collect(vm);
     }
+#endif
 }
 
 size_t be_gc_memcount(bvm *vm)
@@ -505,7 +528,8 @@ void be_gc_collect(bvm *vm)
         return; /* the GC cannot run for some reason */
     }
 #if BE_USE_OBSERVABILITY_HOOK
-    if (vm->obshook != NULL)    (*vm->obshook)(vm, BE_OBS_GC_START, vm->gc.usage);
+    if (vm->obshook != NULL)
+        (*vm->obshook)(vm, BE_OBS_GC_START, vm->gc.usage);
 #endif
     /* step 1: set root-set reference objects to unscanned */
     premark_internal(vm); /* object internal the VM */
@@ -524,6 +548,7 @@ void be_gc_collect(bvm *vm)
     /* step 5: calculate the next GC threshold */
     vm->gc.threshold = next_threshold(vm->gc);
 #if BE_USE_OBSERVABILITY_HOOK
-    if (vm->obshook != NULL)    (*vm->obshook)(vm, BE_OBS_GC_END, vm->gc.usage);
+    if (vm->obshook != NULL)
+        (*vm->obshook)(vm, BE_OBS_GC_END, vm->gc.usage);
 #endif
 }

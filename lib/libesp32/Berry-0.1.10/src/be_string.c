@@ -14,7 +14,7 @@
 #define next(_s)    cast(void*, cast(bstring*, (_s)->next))
 #define sstr(_s)    cast(char*, cast(bsstring*, _s) + 1)
 #define lstr(_s)    cast(char*, cast(blstring*, _s) + 1)
-#define cstr(_s)    (cast(bcstring*, s)->s)
+#define cstr(_s)    (cast(bcstring*, _s)->s)
 
 #define be_define_const_str(_name, _s, _hash, _extra, _len, _next) \
     BERRY_LOCAL const bcstring be_const_str_##_name = {            \
@@ -45,12 +45,25 @@ int be_eqstr(bstring *s1, bstring *s2)
         return 1;
     }
     slen = s1->slen;
+    /* discard different lengths */
+    if (slen != s2->slen) {
+        return 0;
+    }
     /* long string */
-    if (slen == 255 && slen == s2->slen) {
+    if (slen == 255) {  /* s2->slen is also 255 */
         blstring *ls1 = cast(blstring*, s1);
         blstring *ls2 = cast(blstring*, s2);
         return ls1->llen == ls2->llen && !strcmp(lstr(ls1), lstr(ls2));
     }
+    // TODO one is long const and the other is long string
+    /* const short strings */
+    if (gc_isconst(s1) || gc_isconst(s2)) { /* one of the two string is short const */
+        if (cast(bcstring*, s1)->hash && cast(bcstring*, s2)->hash) {
+            return 0; /* if they both have a hash, then we know they are different */
+        }
+        return !strcmp(str(s1), str(s2));
+    }
+
     return 0;
 }
 
@@ -249,7 +262,12 @@ void be_gcstrtab(bvm *vm)
 uint32_t be_strhash(const bstring *s)
 {
     if (gc_isconst(s)) {
-        return cast(bcstring*, s)->hash;
+        bcstring* cs = cast(bcstring*, s);
+        if (cs->hash) {  /* if hash is null we need to compute it */
+            return cs->hash;
+        } else {
+            return str_hash(cstr(s), str_len(s));
+        }
     }
 #if BE_USE_STR_HASH_CACHE
     if (s->slen != 255) {

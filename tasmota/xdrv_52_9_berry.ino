@@ -24,7 +24,9 @@
 
 #include <berry.h>
 
-#define BERRY_CONSOLE_CMD_DELIMITER   "\x01"
+extern "C" {
+  extern void be_load_custom_libs(bvm *vm);
+}
 
 const char kBrCommands[] PROGMEM = D_PRFX_BR "|"    // prefix
   D_CMND_BR_RUN "|" D_CMND_BR_RESET
@@ -179,8 +181,9 @@ int32_t callBerryEventDispatcher(const char *type, const char *cmd, int32_t idx,
       be_pushstring(berry.vm, payload != nullptr ? payload : "{}");  // empty json
       be_pcall(berry.vm, 5);   // 5 arguments
       be_pop(berry.vm, 5);
-      if (be_isint(berry.vm, -1)) {
-        ret = be_toint(berry.vm, -1);
+      if (be_isint(berry.vm, -1) || be_isbool(berry.vm, -1)) {
+        if (be_isint(berry.vm, -1)) { ret = be_toint(berry.vm, -1); }
+        if (be_isbool(berry.vm, -1)) { ret = be_tobool(berry.vm, -1); }
       }
     }
     be_pop(berry.vm, 1);  // remove method
@@ -238,11 +241,12 @@ void BrReset(void) {
   do {    
     berry.vm = be_vm_new(); /* create a virtual machine instance */
     be_set_obs_hook(berry.vm, &BerryObservability);
+    be_load_custom_libs(berry.vm);
     // AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_BERRY "Berry VM created, RAM used=%u"), be_gc_memcount(berry.vm));
 
     // Register functions
-    be_regfunc(berry.vm, PSTR("log"), l_logInfo);
-    be_regfunc(berry.vm, PSTR("save"), l_save);
+    // be_regfunc(berry.vm, PSTR("log"), l_logInfo);
+    // be_regfunc(berry.vm, PSTR("save"), l_save);
 
     // AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_BERRY "Berry function registered, RAM used=%u"), be_gc_memcount(berry.vm));
 
@@ -727,7 +731,7 @@ bool Xdrv52(uint8_t function)
       callBerryEventDispatcher(PSTR("web_add_main_button"), nullptr, 0, nullptr);
       break;
     case FUNC_WEB_ADD_HANDLER:
-      callBerryEventDispatcher(PSTR("web_add_handler"), nullptr, 0, nullptr);
+      // callBerryEventDispatcher(PSTR("web_add_handler"), nullptr, 0, nullptr);
       WebServer_on(PSTR("/bs"), HandleBerryConsole);
       break;
 #endif // USE_WEBSERVER
@@ -739,7 +743,7 @@ bool Xdrv52(uint8_t function)
       break;
 
     case FUNC_JSON_APPEND:
-      callBerryEventDispatcher(PSTR("json_aooend"), nullptr, 0, nullptr);
+      callBerryEventDispatcher(PSTR("json_append"), nullptr, 0, nullptr);
       break;
 
     case FUNC_BUTTON_PRESSED:

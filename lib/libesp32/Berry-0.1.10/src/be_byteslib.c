@@ -32,12 +32,14 @@ typedef struct buf_impl {
 **
 ** Extracted from Tasmota SBuffer lib
 ********************************************************************/
-static inline uint8_t* buf_get_buf(buf_impl* buf) {
+static inline uint8_t* buf_get_buf(buf_impl* buf)
+{
     return &buf->buf[0];
 }
 
 // shrink or increase. If increase, fill with zeores. Cannot go beyond `size`
-static void buf_set_len(buf_impl* buf, const size_t len) {
+static void buf_set_len(buf_impl* buf, const size_t len)
+{
     uint16_t old_len = buf->len;
     buf->len = (len <= buf->size) ? len : buf->size;
     if (old_len < buf->len) {
@@ -45,33 +47,41 @@ static void buf_set_len(buf_impl* buf, const size_t len) {
     }
 }
 
-
-static void buf_set1(buf_impl* buf, const size_t offset, const uint8_t data) {
+static void buf_set1(buf_impl* buf, const size_t offset, const uint8_t data)
+{
     if (offset < buf->len) {
         buf->buf[offset] = data;
     }
 }
-static size_t buf_add1(buf_impl* buf, const uint8_t data) {           // append 8 bits value
+
+static size_t buf_add1(buf_impl* buf, const uint8_t data) // append 8 bits value
+{
     if (buf->len < buf->size) {       // do we have room for 1 byte
         buf->buf[buf->len++] = data;
     }
     return buf->len;
 }
-static size_t buf_add2_le(buf_impl* buf, const uint16_t data) {           // append 16 bits value
+
+static size_t buf_add2_le(buf_impl* buf, const uint16_t data) // append 16 bits value
+{
     if (buf->len < buf->size - 1) {    // do we have room for 2 bytes
         buf->buf[buf->len++] = data;
         buf->buf[buf->len++] = data >> 8;
     }
     return buf->len;
 }
-static size_t buf_add2_be(buf_impl* buf, const uint16_t data) {           // append 16 bits value
+
+static size_t buf_add2_be(buf_impl* buf, const uint16_t data) // append 16 bits value
+{
     if (buf->len < buf->size - 1) {    // do we have room for 2 bytes
         buf->buf[buf->len++] = data >> 8;
         buf->buf[buf->len++] = data;
     }
     return buf->len;
 }
-static size_t buf_add4_le(buf_impl* buf, const uint32_t data) {           // append 32 bits value
+
+static size_t buf_add4_le(buf_impl* buf, const uint32_t data) // append 32 bits value
+{
     if (buf->len < buf->size - 3) {     // do we have room for 4 bytes
         buf->buf[buf->len++] = data;
         buf->buf[buf->len++] = data >> 8;
@@ -80,7 +90,9 @@ static size_t buf_add4_le(buf_impl* buf, const uint32_t data) {           // app
     }
     return buf->len;
 }
-size_t buf_add4_be(buf_impl* buf, const uint32_t data) {           // append 32 bits value
+
+size_t buf_add4_be(buf_impl* buf, const uint32_t data) // append 32 bits value
+{
     if (buf->len < buf->size - 3) {     // do we have room for 4 bytes
         buf->buf[buf->len++] = data >> 24;
         buf->buf[buf->len++] = data >> 16;
@@ -90,7 +102,8 @@ size_t buf_add4_be(buf_impl* buf, const uint32_t data) {           // append 32 
     return buf->len;
 }
 
-static size_t buf_add_buf(buf_impl* buf, buf_impl* buf2) {
+static size_t buf_add_buf(buf_impl* buf, buf_impl* buf2)
+{
     if (buf->len + buf2->len <= buf->size) {
         for (uint32_t i = 0; i < buf2->len; i++) {
             buf->buf[buf->len++] = buf2->buf[i];
@@ -99,32 +112,40 @@ static size_t buf_add_buf(buf_impl* buf, buf_impl* buf2) {
     return buf->len;
 }
 
-static uint8_t buf_get1(buf_impl* buf, int offset) {
+static uint8_t buf_get1(buf_impl* buf, int offset)
+{
     if ((offset >= 0) && (offset < buf->len)) {
         return buf->buf[offset];
     }
     return 0;
 }
+
 static uint16_t buf_get2_le(buf_impl* buf, int offset) {
     if ((offset >= 0) && (offset < buf->len - 1)) {
         return buf->buf[offset] | (buf->buf[offset+1] << 8);
     }
     return 0;
 }
-static uint16_t buf_get2_be(buf_impl* buf, int offset) {
+
+static uint16_t buf_get2_be(buf_impl* buf, int offset)
+{
     if (offset < buf->len - 1) {
         return buf->buf[offset+1] | (buf->buf[offset] << 8);
     }
     return 0;
 }
-static uint32_t buf_get4_le(buf_impl* buf, int offset) {
+
+static uint32_t buf_get4_le(buf_impl* buf, int offset)
+{
     if ((offset >= 0) && (offset < buf->len - 3)) {
         return buf->buf[offset] | (buf->buf[offset+1] << 8) |
             (buf->buf[offset+2] << 16) | (buf->buf[offset+3] << 24);
     }
     return 0;
 }
-static uint32_t buf_get4_be(buf_impl* buf, int offset) {
+
+static uint32_t buf_get4_be(buf_impl* buf, int offset)
+{
     if (offset < buf->len - 3) {
         return buf->buf[offset+3] | (buf->buf[offset+2] << 8) |
             (buf->buf[offset+1] << 16) | (buf->buf[offset] << 24);
@@ -133,7 +154,8 @@ static uint32_t buf_get4_be(buf_impl* buf, int offset) {
 }
 
 // nullptr accepted
-static bbool buf_equals(buf_impl* buf1, buf_impl* buf2) {
+static bbool buf_equals(buf_impl* buf1, buf_impl* buf2)
+{
     if (buf1 == buf2) { return btrue; }
     if (!buf1 || !buf2) { return bfalse; }   // at least one buf is not empty
     // we know that both buf1 and buf2 are non-null
@@ -145,7 +167,8 @@ static bbool buf_equals(buf_impl* buf1, buf_impl* buf2) {
     return btrue;
 }
 
-static uint8_t asc2byte(char chr) {
+static uint8_t asc2byte(char chr)
+{
     uint8_t rVal = 0;
     if (isdigit(chr)) { rVal = chr - '0'; }
     else if (chr >= 'A' && chr <= 'F') { rVal = chr + 10 - 'A'; }
@@ -153,7 +176,8 @@ static uint8_t asc2byte(char chr) {
     return rVal;
 }
 // does not check if there is enough room before hand, truncated if buffer too small
-static void buf_add_hex(buf_impl* buf, const char *hex, size_t len) {
+static void buf_add_hex(buf_impl* buf, const char *hex, size_t len)
+{
     uint8_t val;
     for (; len > 1; len -= 2) {
         val = asc2byte(*hex++) << 4;
@@ -166,7 +190,8 @@ static void buf_add_hex(buf_impl* buf, const char *hex, size_t len) {
 ** Wrapping into lib
 ********************************************************************/
 // typedef int (*bntvfunc)(bvm*); /* native function pointer */
-int free_bytes_buf(bvm* vm) {
+int free_bytes_buf(bvm* vm)
+{
     int argc = be_top(vm);
     if (argc > 0) {
         buf_impl * buf = (buf_impl*) be_tocomptr(vm, 1);
@@ -285,9 +310,9 @@ static int m_tostring(bvm *vm)
     size_t hex_len = len * 2 + 5 + 2 + 2 + 1;  /* reserve size for `bytes("")\0` - 9 chars */
 
     char * hex_out = be_pushbuffer(vm, hex_len);
-    size_t l = strlcpy(hex_out, "bytes('", hex_len);
+    size_t l = be_strlcpy(hex_out, "bytes('", hex_len);
     l += tohex(&hex_out[l], hex_len - l, buf_get_buf(buf), buf->len);
-    l += strlcpy(&hex_out[l], "')", hex_len - l);
+    l += be_strlcpy(&hex_out[l], "')", hex_len - l);
 
     be_pushnstring(vm, hex_out, l); /* make escape string from buffer */
     be_remove(vm, -2); /* remove buffer */
@@ -303,6 +328,7 @@ static int m_asstring(bvm *vm)
     be_pushnstring(vm, (const char*) buf_get_buf(buf), buf->len);
     be_return(vm);
 }
+
 static int m_fromstring(bvm *vm)
 {
     int argc = be_top(vm);
@@ -394,7 +420,6 @@ static int m_get(bvm *vm)
     }
     be_return_nil(vm);
 }
-
 
 static int m_setitem(bvm *vm)
 {

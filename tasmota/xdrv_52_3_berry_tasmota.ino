@@ -218,6 +218,30 @@ extern "C" {
     be_raise(vm, kTypeError, nullptr);
   }
 
+  // Response_append
+  int32_t l_respAppend(bvm *vm);
+  int32_t l_respAppend(bvm *vm) {
+    int32_t top = be_top(vm); // Get the number of arguments
+    if (top == 2 && be_isstring(vm, 2)) {
+      const char *msg = be_tostring(vm, 2);
+      ResponseAppend_P(PSTR("%s"), msg);
+      be_return_nil(vm); // Return nil when something goes wrong
+    }
+    be_raise(vm, kTypeError, nullptr);
+  }
+
+  // web append with decimal conversion
+  int32_t l_webSendDecimal(bvm *vm);
+  int32_t l_webSendDecimal(bvm *vm) {
+    int32_t top = be_top(vm); // Get the number of arguments
+    if (top == 2 && be_isstring(vm, 2)) {
+      const char *msg = be_tostring(vm, 2);
+      WSContentSend_PD(PSTR("%s"), msg);
+      be_return_nil(vm); // Return nil when something goes wrong
+    }
+    be_raise(vm, kTypeError, nullptr);
+  }
+
   // push the light status object on the vm stack
   void push_getlight(bvm *vm, uint32_t light_num) {
     bool data_present = false;      // do we have relevant data
@@ -501,17 +525,19 @@ extern "C" {
 extern "C" {
   // Berry: `log(msg:string [,log_level:int]) ->nil`
   // Logs the string at LOG_LEVEL_INFO (loglevel=2)
+  // We allow this function to be called as a method or a direct function
+  // if the first argument is an instance, we remove it
   int32_t l_logInfo(struct bvm *vm);
   int32_t l_logInfo(struct bvm *vm) {
     int32_t top = be_top(vm); // Get the number of arguments
-    if (top >= 1 && be_isstring(vm, 1)) {  // only 1 argument of type string accepted
-      const char * msg = be_tostring(vm, 1);
+    if (top >= 2 && be_isstring(vm, 2)) {  // only 1 argument of type string accepted
+      const char * msg = be_tostring(vm, 2);
       uint32_t log_level = LOG_LEVEL_INFO;
-      if (top >= 2 && be_isint(vm, 2)) {
-        log_level = be_toint(vm, 2);
+      if (top >= 3 && be_isint(vm, 3)) {
+        log_level = be_toint(vm, 3);
         if (log_level > LOG_LEVEL_DEBUG_MORE) { log_level = LOG_LEVEL_DEBUG_MORE; }
       }
-      AddLog(log_level, PSTR("%s"), msg);
+      AddLog_P(log_level, PSTR("%s"), msg);
       be_return(vm); // Return
     }
     be_return_nil(vm); // Return nil when something goes wrong
@@ -529,8 +555,8 @@ extern "C" {
   int32_t l_save(struct bvm *vm);
   int32_t l_save(struct bvm *vm) {
     int32_t top = be_top(vm); // Get the number of arguments
-    if (top == 2 && be_isstring(vm, 1) && be_isclosure(vm, 2)) {  // only 1 argument of type string accepted
-      const char *fname = be_tostring(vm, 1);
+    if (top == 3 && be_isstring(vm, 2) && be_isclosure(vm, 3)) {  // only 1 argument of type string accepted
+      const char *fname = be_tostring(vm, 2);
       int32_t ret = be_savecode(vm, fname);
       be_pushint(vm, ret);
       be_return(vm); // Return
@@ -542,14 +568,19 @@ extern "C" {
 // called as a replacement to Berry `print()`
 void berry_log(const char * berry_buf);
 void berry_log(const char * berry_buf) {
-  if (berry.repl_active) {
+  const char * pre_delimiter = nullptr;   // do we need to prepend a delimiter if no REPL command
+  if (!berry.repl_active) {
+    // if no REPL in flight, we limit the number of logs
+    if (berry.log.log.length() == 0) {
+      pre_delimiter = BERRY_CONSOLE_CMD_DELIMITER;
+    }
     if (berry.log.log.length() >= BERRY_MAX_LOGS) {
       berry.log.log.remove(berry.log.log.head());
     }
   }
   // AddLog(LOG_LEVEL_INFO, PSTR("[Add to log] %s"), berry_buf);
-  berry.log.addString(berry_buf, nullptr, "\n");
-  AddLog(LOG_LEVEL_INFO, PSTR("%s"), berry_buf);
+  berry.log.addString(berry_buf, pre_delimiter, "\n");
+  AddLog_P(LOG_LEVEL_INFO, PSTR("%s"), berry_buf);
 }
 
 

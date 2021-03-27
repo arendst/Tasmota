@@ -35,6 +35,17 @@ static void class_init(bvm *vm, bclass *c, const bnfuncinfo *lib)
             }
             ++lib;
         }
+        if (lib->function == (bntvfunc) BE_CLOSURE) {
+            /* next section is closures */
+            ++lib;
+            while (lib->name) {
+                if (lib->function) { /* method */
+                    bstring *s = be_newstr(vm, lib->name);
+                    be_closure_method_bind(vm, c, s, (bclosure*) lib->function);
+                }
+                ++lib;
+            }
+        }
         be_map_release(vm, c->members); /* clear space */
     }
 }
@@ -344,6 +355,13 @@ BERRY_API void be_pushvalue(bvm *vm, int index)
     bvalue *reg = vm->top;
     var_setval(reg, be_indexof(vm, index));
     be_incrtop(vm);
+}
+
+BERRY_API void be_pushclosure(bvm *vm, void *cl)
+{
+    bvalue *reg = be_incrtop(vm);
+    bclosure * closure = (bclosure*) cl;
+    var_setclosure(reg, closure);
 }
 
 BERRY_API void be_pushntvclosure(bvm *vm, bntvfunc f, int nupvals)

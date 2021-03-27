@@ -101,7 +101,7 @@ enum berrorcode {
 #elif defined(__GNUC__) /* in GCC */
   #define BERRY_LOCAL           __attribute__ ((visibility ("hidden")))
 #else /* other platforms */
-  #define BERRY_LOCAL
+  #define BERRY_LOCAL           static
 #endif
 
 #ifdef __cplusplus
@@ -249,6 +249,22 @@ typedef struct bntvmodule {
     }
 #endif
 
+/* support for solidified berry functions */
+/* native const strings outside of global string hash */
+#define be_define_local_const_str(_name, _s, _hash, _extra, _len, _next) \
+    BERRY_LOCAL const bcstring be_local_const_str_##_name = {            \
+        .next = (bgcobject *)NULL,                                 \
+        .type = BE_STRING,                                         \
+        .marked = GC_CONST,                                        \
+        .extra = 0,                                                \
+        .slen = _len,                                              \
+        .hash = 0,                                                 \
+        .s = _s                                                    \
+    }
+
+#define be_local_const_str(_name) (bstring*) &be_local_const_str_##_name
+
+
 /* debug hook typedefs */
 #define BE_HOOK_LINE    1
 #define BE_HOOK_CALL    2
@@ -275,7 +291,7 @@ typedef void(*bntvhook)(bvm *vm, bhookinfo *info);
 
 /* Observability hook */
 
-typedef void(*beobshook)(bvm *vm, int event, ...);
+typedef void(*bobshook)(bvm *vm, int event, ...);
 enum beobshookevents {
   BE_OBS_GC_START,        // start of GC, arg = allocated size
   BE_OBS_GC_END,          // end of GC, arg = allocated size
@@ -346,6 +362,7 @@ BERRY_API void be_pushnstring(bvm *vm, const char *str, size_t n);
 BERRY_API const char* be_pushfstring(bvm *vm, const char *format, ...);
 BERRY_API void* be_pushbuffer(bvm *vm, size_t size);
 BERRY_API void be_pushvalue(bvm *vm, int index);
+BERRY_API void be_pushclosure(bvm *vm, void *cl);
 BERRY_API void be_pushntvclosure(bvm *vm, bntvfunc f, int nupvals);
 BERRY_API void be_pushntvfunction(bvm *vm, bntvfunc f);
 BERRY_API void be_pushclass(bvm *vm, const char *name, const bnfuncinfo *lib);
@@ -416,7 +433,7 @@ BERRY_API bvm* be_vm_new(void);
 BERRY_API void be_vm_delete(bvm *vm);
 
 /* Observability hook */
-BERRY_API void be_set_obs_hook(bvm *vm, beobshook hook);
+BERRY_API void be_set_obs_hook(bvm *vm, bobshook hook);
 
 /* code load APIs */
 BERRY_API int be_loadbuffer(bvm *vm,
@@ -431,7 +448,7 @@ BERRY_API void be_module_path_set(bvm *vm, const char *path);
 
 /* bytes operations */
 BERRY_API void be_pushbytes(bvm *vm, const void *buf, size_t len);
-BERRY_API const void *be_tobytes(bvm *vm, int index, size_t *len);
+BERRY_API const void* be_tobytes(bvm *vm, int index, size_t *len);
 
 /* registry operation */
 BERRY_API int be_register(bvm *vm, int index);

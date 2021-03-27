@@ -315,7 +315,10 @@ bvalue* be_map_insertstr(bvm *vm, bmap *map, bstring *key, bvalue *value)
 {
     bvalue v;
     var_setstr(&v, key);
-    return be_map_insert(vm, map, &v, value);
+    set_fixed(key);
+    bvalue * r = be_map_insert(vm, map, &v, value);
+    restore_fixed(key);
+    return r;
 }
 
 void be_map_removestr(bvm *vm, bmap *map, bstring *key)

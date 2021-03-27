@@ -49,6 +49,9 @@ if (!gc_isconst(o)) { \
 #define be_isgcobj(o)       be_isgctype(var_type(o))
 #define be_gcnew(v, t, s)   be_newgcobj((v), (t), sizeof(s))
 
+#define set_fixed(s)        bbool _was_fixed = be_gc_fix_set(vm, cast(bgcobject*, (s)), 1)
+#define restore_fixed(s)    be_gc_fix_set(vm, cast(bgcobject*, (s)), _was_fixed);
+
 /* the GC mark uses bit4:0 of the `object->marked` field,
  * so other bits can be used for special flags (ex-mark). */
 typedef enum {
@@ -68,6 +71,7 @@ bgcobject *be_newgcobj(bvm *vm, int type, size_t size);
 bgcobject* be_gc_newstr(bvm *vm, size_t size, int islong);
 void be_gc_fix(bvm *vm, bgcobject *obj);
 void be_gc_unfix(bvm *vm, bgcobject *obj);
+bbool be_gc_fix_set(bvm *vm, bgcobject *obj, bbool fix);
 void be_gc_collect(bvm *vm);
 void be_gc_auto(bvm *vm);
 

@@ -87,7 +87,7 @@ struct bvm {
     blist *registry; /* registry list */
     struct bgc gc;
 #if BE_USE_OBSERVABILITY_HOOK
-    beobshook obshook;
+    bobshook obshook;
 #endif
 #if BE_USE_DEBUG_HOOK
     bvalue hook;
