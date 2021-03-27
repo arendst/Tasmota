@@ -29,7 +29,7 @@
 //#define DS18x20_USE_ID_AS_NAME     // Use last 3 bytes for naming of sensors
 //#define W1_PARASITE_POWER          // Use only 2 wires to connect sensor (no VCC)
 #ifndef W1_PARASITE_POWER
-//#define DS18x20_ARITH_MEAN         // non parasite power: compute arithmetic mean
+#define DS18x20_ARITH_MEAN         // non parasite power: compute arithmetic mean
 #endif
 #define DS18x20_ADD_DS2413         // add code for 1wire DS2312 2 bit IOport
 
