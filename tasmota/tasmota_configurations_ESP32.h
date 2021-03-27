@@ -33,6 +33,10 @@
 #define CODE_IMAGE_STR "webcam"
 
 #define USE_WEBCAM
+#define USE_UFILESYS
+#define USE_SDCARD
+  #define GUI_TRASH_FILE
+#define USE_SPI
 #undef  USE_MI_ESP32                             // (ESP32 only) Disable support for ESP32 as a BLE-bridge (+9k2 mem, +292k flash)
 #endif  // FIRMWARE_WEBCAM
 
