@@ -345,10 +345,9 @@ void setup(void) {
   RtcInit();
 
   GpioInit();
+  SetPowerOnState();
 
   WifiConnect();
-
-  SetPowerOnState();
 
   AddLog(LOG_LEVEL_INFO, PSTR(D_PROJECT " %s %s " D_VERSION " %s%s-" ARDUINO_CORE_RELEASE "(%s)"),
     PSTR(PROJECT), SettingsText(SET_DEVICENAME), TasmotaGlobal.version, TasmotaGlobal.image_name, GetBuildDateAndTime().c_str());

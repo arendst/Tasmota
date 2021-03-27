@@ -1863,8 +1863,8 @@ void GpioInit(void)
 
   for (uint32_t i = 0; i < MAX_RELAYS; i++) {
     if (PinUsed(GPIO_REL1, i)) {
-      pinMode(Pin(GPIO_REL1, i), OUTPUT);
       TasmotaGlobal.devices_present++;
+      pinMode(Pin(GPIO_REL1, i), OUTPUT);
 #ifdef ESP8266
       if (EXS_RELAY == TasmotaGlobal.module_type) {
         digitalWrite(Pin(GPIO_REL1, i), bitRead(TasmotaGlobal.rel_inverted, i) ? 1 : 0);
@@ -1881,8 +1881,8 @@ void GpioInit(void)
         SetPin(Pin(GPIO_LED1, i), AGPIO(GPIO_ARIRFSEL));  // Legacy support where LED4 was Arilux RF enable
       } else {
 #endif
-        pinMode(Pin(GPIO_LED1, i), OUTPUT);
         TasmotaGlobal.leds_present++;
+        pinMode(Pin(GPIO_LED1, i), OUTPUT);
         digitalWrite(Pin(GPIO_LED1, i), bitRead(TasmotaGlobal.led_inverted, i));
 #ifdef USE_ARILUX_RF
       }
