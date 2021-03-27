@@ -109,6 +109,7 @@
 #define D_GATEWAY "שער"
 #define D_GROUP "קבוצה"
 #define D_HOST "מארח"
+#define D_HALL_EFFECT "Hall Effect"
 #define D_HOSTNAME "שם מארח"
 #define D_HUMIDITY "לחות"
 #define D_ILLUMINANCE "רמת חשיפה"
@@ -808,6 +809,7 @@
 #define D_SENSOR_TFMINIPLUS_TX  "TFmini+ TX"
 #define D_SENSOR_TFMINIPLUS_RX  "TFmini+ RX"
 #define D_SENSOR_ZEROCROSS     "ZC Pulse"
+#define D_SENSOR_HALLEFFECT    "HallEffect"
 
 
 // Units

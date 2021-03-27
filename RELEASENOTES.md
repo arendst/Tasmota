@@ -98,10 +98,12 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - ESP32 Extent BLE [#11212](https://github.com/arendst/Tasmota/issues/11212)
 - ESP32 support for WS2812 hardware driver via RMT or I2S
 - ESP32 support for secondary I2C controller
+- ESP32 support for internal Hall Effect sensor connected to both GPIO36 and GPIO39 only
 
 ### Changed
 - TasmotaSerial library from v3.2.0 to v3.3.0
 - PubSubClient library from EspEasy v2.7.12 to Tasmota v2.8.12
+- IRremoteESP8266 library from v2.7.15 to v2.7.16
 - ESP32 core library from v1.0.5-rc6 to v1.0.5
 - TuyaMcu dimmer timeout [#11121](https://github.com/arendst/Tasmota/issues/11121)
 - Rename epaper 42 commands [#11222](https://github.com/arendst/Tasmota/issues/11222)

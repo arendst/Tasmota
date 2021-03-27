@@ -109,6 +109,7 @@
 #define D_GATEWAY "Geçit"
 #define D_GROUP "Grup"
 #define D_HOST "Host"
+#define D_HALL_EFFECT "Hall Effect"
 #define D_HOSTNAME "Host Adresi"
 #define D_HUMIDITY "Nem"
 #define D_ILLUMINANCE "Aydınlık"
@@ -808,6 +809,7 @@
 #define D_SENSOR_TFMINIPLUS_TX  "TFmini+ TX"
 #define D_SENSOR_TFMINIPLUS_RX  "TFmini+ RX"
 #define D_SENSOR_ZEROCROSS     "ZC Pulse"
+#define D_SENSOR_HALLEFFECT    "HallEffect"
 
 
 // Units

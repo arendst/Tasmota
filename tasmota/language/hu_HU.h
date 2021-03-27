@@ -109,6 +109,7 @@
 #define D_GATEWAY "Átjáró"
 #define D_GROUP "Csoport"
 #define D_HOST "Hoszt"
+#define D_HALL_EFFECT "Hall Effect"
 #define D_HOSTNAME "Hosztnév"
 #define D_HUMIDITY "Páratartalom"
 #define D_ILLUMINANCE "Megvilágítás"
@@ -808,6 +809,7 @@
 #define D_SENSOR_TFMINIPLUS_TX  "TFmini+ TX"
 #define D_SENSOR_TFMINIPLUS_RX  "TFmini+ RX"
 #define D_SENSOR_ZEROCROSS     "ZC Pulse"
+#define D_SENSOR_HALLEFFECT    "HallEffect"
 
 
 // Units

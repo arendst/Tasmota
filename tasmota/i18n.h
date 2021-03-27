@@ -88,6 +88,7 @@
 #define D_JSON_GATEWAY "Gateway"
 #define D_JSON_GREEN "Green"
 #define D_JSON_GROUPS "Groups"
+#define D_JSON_HALLEFFECT "HallEffect"
 #define D_JSON_HALTING "Halting"
 #define D_JSON_HEAPSIZE "Heap"
 #define D_JSON_HIGH "High"

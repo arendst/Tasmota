@@ -109,6 +109,7 @@
 #define D_GATEWAY "Výchozí brána"
 #define D_GROUP "Skupina"
 #define D_HOST "Server"
+#define D_HALL_EFFECT "Hall Effect"
 #define D_HOSTNAME "Název serveru"
 #define D_HUMIDITY "Vlhkost"
 #define D_ILLUMINANCE "Osvětlení"
@@ -808,6 +809,7 @@
 #define D_SENSOR_TFMINIPLUS_TX  "TFmini+ TX"
 #define D_SENSOR_TFMINIPLUS_RX  "TFmini+ RX"
 #define D_SENSOR_ZEROCROSS     "ZC Pulse"
+#define D_SENSOR_HALLEFFECT    "HallEffect"
 
 
 // Units

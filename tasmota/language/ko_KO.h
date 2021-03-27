@@ -109,6 +109,7 @@
 #define D_GATEWAY "게이트웨이"
 #define D_GROUP "그룹"
 #define D_HOST "호스트"
+#define D_HALL_EFFECT "Hall Effect"
 #define D_HOSTNAME "호스트이름"
 #define D_HUMIDITY "습도"
 #define D_ILLUMINANCE "조도"
@@ -808,6 +809,7 @@
 #define D_SENSOR_TFMINIPLUS_TX  "TFmini+ TX"
 #define D_SENSOR_TFMINIPLUS_RX  "TFmini+ RX"
 #define D_SENSOR_ZEROCROSS     "ZC Pulse"
+#define D_SENSOR_HALLEFFECT    "HallEffect"
 
 
 // Units

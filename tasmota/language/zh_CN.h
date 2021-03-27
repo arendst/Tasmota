@@ -109,6 +109,7 @@
 #define D_GATEWAY "网关"
 #define D_GROUP "组:"
 #define D_HOST "主机"
+#define D_HALL_EFFECT "Hall Effect"
 #define D_HOSTNAME "主机名"
 #define D_HUMIDITY "湿度"
 #define D_ILLUMINANCE "照度"
@@ -808,6 +809,7 @@
 #define D_SENSOR_TFMINIPLUS_TX  "TFmini+ TX"
 #define D_SENSOR_TFMINIPLUS_RX  "TFmini+ RX"
 #define D_SENSOR_ZEROCROSS     "ZC Pulse"
+#define D_SENSOR_HALLEFFECT    "HallEffect"
 
 
 // Units

@@ -109,6 +109,7 @@
 #define D_GATEWAY "Gateway"
 #define D_GROUP "Gruppo"
 #define D_HOST "Host"
+#define D_HALL_EFFECT "Hall Effect"
 #define D_HOSTNAME "Nome host"
 #define D_HUMIDITY "Umidità"
 #define D_ILLUMINANCE "Illuminazione"
@@ -808,6 +809,7 @@
 #define D_SENSOR_TFMINIPLUS_TX  "TFmini+ - TX"
 #define D_SENSOR_TFMINIPLUS_RX  "TFmini+ - RX"
 #define D_SENSOR_ZEROCROSS     "Impulsi ZC"
+#define D_SENSOR_HALLEFFECT    "HallEffect"
 
 
 // Units

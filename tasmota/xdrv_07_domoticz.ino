@@ -391,7 +391,7 @@ uint8_t DomoticzHumidityState(float h) {
   return (!h) ? 0 : (h < 40) ? 2 : (h > 70) ? 3 : 1;
 }
 
-void DomoticzSensor(uint8_t idx, uint32_t value) {
+void DomoticzSensor(uint8_t idx, int value) {
   char data[16];
   snprintf_P(data, sizeof(data), PSTR("%d"), value);
   DomoticzSensor(idx, data);
