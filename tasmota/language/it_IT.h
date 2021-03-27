@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Last update - 9.3.1.2 (23.03.2021)
+ * Last update - 9.3.1.1 (27.03.2021)
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -109,7 +109,7 @@
 #define D_GATEWAY "Gateway"
 #define D_GROUP "Gruppo"
 #define D_HOST "Host"
-#define D_HALL_EFFECT "Hall Effect"
+#define D_HALL_EFFECT "Effetto hall"
 #define D_HOSTNAME "Nome host"
 #define D_HUMIDITY "Umidità"
 #define D_ILLUMINANCE "Illuminazione"
@@ -212,7 +212,7 @@
 #define D_ANALOG_INPUT "Ingresso analogico"
 
 // support.ino
-#define D_OSWATCH "osWatch"
+#define D_OSWATCH "S.O. orologio"
 #define D_BLOCKED_LOOP "Ciclo bloccato"
 #define D_WPS_FAILED_WITH_STATUS "WPSconfig fallito con stato"
 #define D_ACTIVE_FOR_3_MINUTES "Attivo per 3 minuti"
@@ -297,7 +297,7 @@
 
 #define D_MQTT_PARAMETERS "Parametri MQTT"
 #define D_CLIENT "Client"
-#define D_FULL_TOPIC "Full topic"
+#define D_FULL_TOPIC "Argomento completo"
 
 #define D_LOGGING_PARAMETERS "Livelli registri eventi"
 #define D_SERIAL_LOG_LEVEL "Livello registro seriale"
@@ -809,7 +809,7 @@
 #define D_SENSOR_TFMINIPLUS_TX  "TFmini+ - TX"
 #define D_SENSOR_TFMINIPLUS_RX  "TFmini+ - RX"
 #define D_SENSOR_ZEROCROSS     "Impulsi ZC"
-#define D_SENSOR_HALLEFFECT    "HallEffect"
+#define D_SENSOR_HALLEFFECT    "Effetto hall"
 
 
 // Units
