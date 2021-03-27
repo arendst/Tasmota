@@ -46,7 +46,7 @@ static const char* opc2str(bopcode op)
     return op < array_count(opc_tab) ? opc_tab[op] : "ERROP";
 }
 
-static void print_inst(binstruction ins, int pc)
+void be_print_inst(binstruction ins, int pc)
 {
     char __lbuf[INST_BUF_SIZE];
     bopcode op = IGET_OP(ins);
@@ -145,7 +145,7 @@ void be_dumpclosure(bclosure *cl)
             logfmt("; line %d\n", (++lineinfo)->linenumber);
         }
 #endif
-        print_inst(*code++, pc);
+        be_print_inst(*code++, pc);
     }
 }
 #endif

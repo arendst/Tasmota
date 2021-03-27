@@ -22,6 +22,8 @@
 
 #include <berry.h>
 
+#define BERRY_CONSOLE_CMD_DELIMITER   "\x01"
+
 typedef LList_elt<char[0]> log_elt;   // store the string after the header to avoid double allocation if we had used char*
 
 class BerryLog {

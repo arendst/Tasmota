@@ -12,9 +12,7 @@ extern void be_load_listlib(bvm *vm);
 extern void be_load_maplib(bvm *vm);
 extern void be_load_rangelib(bvm *vm);
 extern void be_load_filelib(bvm *vm);
-
-extern void be_load_tasmota_ntvlib(bvm *vm);
-extern void be_load_wirelib(bvm *vm);
+extern void be_load_byteslib(bvm *vm);
 
 void be_loadlibs(bvm *vm)
 {
@@ -26,6 +24,4 @@ void be_loadlibs(bvm *vm)
     be_load_filelib(vm);
     be_load_byteslib(vm);
 #endif
-    be_load_tasmota_ntvlib(vm);
-    be_load_wirelib(vm);
 }
