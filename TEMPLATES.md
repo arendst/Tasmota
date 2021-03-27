@@ -339,6 +339,7 @@ Zemismart KS-7011            {"NAME":"KS-7011 Dimmer","GPIO":[1,2272,1,2304,1,1,
 
 ## Display
 ```
+LilyGO TTGO-Display          {"NAME":"ESP32-ttgo-display","GPIO":[32,1,1,1,992,6592,1,1,1,1,1,1,6624,1,896,864,0,1,1,1024,0,1,1,1,0,0,0,0,1,1,1,33,1,0,0,1],"FLAG":0,"BASE":1}
 LilyGO TTGO T-Watcher        "Not available"
 M5Stack Core2                "Not available"
 ODROID-GO Game Kit           "Not available"
