@@ -218,6 +218,28 @@ void DebugFreeMem(void)
 #endif  // ESP8266 - ESP32
 
 /*******************************************************************************************/
+/*
+  Usage:
+
+  DebugTimer(1);
+
+  Code snippit to time
+
+  DebugTimer(0);
+*/
+
+void DebugTimer(bool start) {
+  static uint32_t timer = 0;
+
+  if (start) {
+    timer = micros();
+  } else {
+    timer = ((int32_t)(micros() - timer));
+    AddLog(LOG_LEVEL_DEBUG, PSTR("DBG: ExecTime %d uS"), timer);
+  }
+}
+
+/*******************************************************************************************/
 
 void DebugRtcDump(char* parms)
 {

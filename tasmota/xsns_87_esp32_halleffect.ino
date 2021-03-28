@@ -37,8 +37,11 @@ struct {
 
 void HallEffectInit(void) {
   if (PinUsed(GPIO_HALLEFFECT) && PinUsed(GPIO_HALLEFFECT, 1)) {
-    HEData.present = (((36 == Pin(GPIO_HALLEFFECT)) && (39 == Pin(GPIO_HALLEFFECT, 1))) ||
-                      ((39 == Pin(GPIO_HALLEFFECT)) && (36 == Pin(GPIO_HALLEFFECT, 1))));
+    if (((36 == Pin(GPIO_HALLEFFECT)) && (39 == Pin(GPIO_HALLEFFECT, 1))) ||
+        ((39 == Pin(GPIO_HALLEFFECT)) && (36 == Pin(GPIO_HALLEFFECT, 1)))) {
+      HEData.present = true;
+      hallRead();
+    }
   }
 }
 
@@ -48,17 +51,11 @@ const char HTTP_SNS_HALL_EFFECT[] PROGMEM = "{s}" D_HALL_EFFECT "{m}%d{e}";
 #endif  // USE_WEBSERVER
 
 void HallEffectShow(bool json) {
-
-//  DebugStartTime();
-
   int value = 0;
   for (uint32_t i = 0; i < HALLEFFECT_SAMPLE_COUNT; i++) {
     value += hallRead();
   }
   value /= HALLEFFECT_SAMPLE_COUNT;
-
-//  DebugStopTime();
-
   if (json) {
     ResponseAppend_P(PSTR(",\"" D_JSON_HALLEFFECT "\":%d"), value);
 #ifdef USE_DOMOTICZ
