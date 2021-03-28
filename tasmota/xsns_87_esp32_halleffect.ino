@@ -21,9 +21,15 @@
 #ifdef USE_HALLEFFECT
 /*********************************************************************************************\
  * ESP32 internal Hall Effect sensor connected to both GPIO36 and GPIO39
+ *
+ * To enable set
+ * GPIO36 as HallEffect 1
+ * GPIO39 as HallEffect 2
 \*********************************************************************************************/
 
-#define XSNS_87             87
+#define XSNS_87                  87
+
+#define HALLEFFECT_SAMPLE_COUNT  32   // 32 takes about 12 mS at 80MHz CPU frequency
 
 struct {
   bool present = false;
@@ -42,7 +48,17 @@ const char HTTP_SNS_HALL_EFFECT[] PROGMEM = "{s}" D_HALL_EFFECT "{m}%d{e}";
 #endif  // USE_WEBSERVER
 
 void HallEffectShow(bool json) {
-  int value = hallRead();
+
+//  DebugStartTime();
+
+  int value = 0;
+  for (uint32_t i = 0; i < HALLEFFECT_SAMPLE_COUNT; i++) {
+    value += hallRead();
+  }
+  value /= HALLEFFECT_SAMPLE_COUNT;
+
+//  DebugStopTime();
+
   if (json) {
     ResponseAppend_P(PSTR(",\"" D_JSON_HALLEFFECT "\":%d"), value);
 #ifdef USE_DOMOTICZ
