@@ -284,6 +284,17 @@ const char berry_prog[] =
     //   "end "
     // "end "
 
+    // // tasmota.wire_scan(addr:int [, index:int]) -> wire1 or wire2 or nil
+    // // scan for the first occurrence of the addr, starting with bus1 then bus2
+    // // optional: skip if index is disabled via I2CEnable
+    // "def wire_scan(addr,idx) "
+    //   // skip if the I2C index is disabled
+    //   "if idx != nil && !self.i2c_enabled(idx) return nil end "
+    //   "if self.wire1.detect(addr) return self.wire1 end "
+    //   "if self.wire2.detect(addr) return self.wire2 end "
+    //   "return nil "
+    // "end "
+
   "end "
 
   // Instantiate tasmota object
@@ -314,12 +325,10 @@ const char berry_prog[] =
   //   "end "
   // "end "
 
-  "wire = Wire(0) "
-  "wire1 = wire "
-  "wire2 = Wire(1) "
-
-  // try to load "/autoexec.be"
-  // "try compile('/autoexec.be','file')() except .. log('BRY: no /autoexec.bat file') end "
+  "tasmota.wire1 = Wire(1) "
+  "tasmota.wire2 = Wire(2) "
+  "wire1 = tasmota.wire1 "
+  "wire2 = tasmota.wire2 "
   ;
 
 const char berry_autoexec[] =

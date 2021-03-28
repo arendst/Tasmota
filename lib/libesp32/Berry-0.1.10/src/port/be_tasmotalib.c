@@ -1843,6 +1843,104 @@ const bclosure load_closure = {
 
 /*******************************************************************/
 
+/********************************************************************
+    // tasmota.wire_scan(addr:int [, index:int]) -> wire1 or wire2 or nil
+    // scan for the first occurrence of the addr, starting with bus1 then bus2
+    // optional: skip if index is disabled via I2CEnable
+    "def wire_scan(addr,idx) "
+      // skip if the I2C index is disabled
+      "if idx != nil && !self.i2c_enabled(idx) return nil end "
+      "if self.wire1.detect(addr) return self.wire1 end "
+      "if self.wire2.detect(addr) return self.wire2 end "
+      "return nil "
+    "end "
+********************************************************************/
+/********************************************************************
+** Solidified function: wire_scan
+********************************************************************/
+
+be_define_local_const_str(wire_scan_str_name, "wire_scan", -1623691416, 0, 9, 0);
+be_define_local_const_str(wire_scan_str_source, "string", 398550328, 0, 6, 0);
+be_define_local_const_str(wire_scan_str_0, "i2c_enabled", 218388101, 0, 11, 0);
+be_define_local_const_str(wire_scan_str_1, "wire1", -1082245877, 0, 5, 0);
+be_define_local_const_str(wire_scan_str_2, "detect", 8884370, 0, 6, 0);
+be_define_local_const_str(wire_scan_str_3, "wire2", -1065468258, 0, 5, 0);
+
+static const bvalue wire_scan_ktab[4] = {
+  { { .s=be_local_const_str(wire_scan_str_0) }, BE_STRING},
+  { { .s=be_local_const_str(wire_scan_str_1) }, BE_STRING},
+  { { .s=be_local_const_str(wire_scan_str_2) }, BE_STRING},
+  { { .s=be_local_const_str(wire_scan_str_3) }, BE_STRING},
+};
+
+static const uint32_t wire_scan_code[25] = {
+  0x4C0C0000,  //  0000  LDNIL	3
+  0x200C0403,  //  0001  NE	R3	R2	R3
+  0x780E0005,  //  0002  JMPF	R3	#0009
+  0x8C0C0100,  //  0003  GETMET	R3	R0	R256
+  0x5C140400,  //  0004  MOVE	R5	R2
+  0x7C0C0400,  //  0005  CALL	R3	2
+  0x740E0001,  //  0006  JMPT	R3	#0009
+  0x4C0C0000,  //  0007  LDNIL	3
+  0x80040600,  //  0008  RET	1	R3
+  0x880C0101,  //  0009  GETMBR	R3	R0	R257
+  0x8C0C0702,  //  000A  GETMET	R3	R3	R258
+  0x5C140200,  //  000B  MOVE	R5	R1
+  0x7C0C0400,  //  000C  CALL	R3	2
+  0x780E0001,  //  000D  JMPF	R3	#0010
+  0x880C0101,  //  000E  GETMBR	R3	R0	R257
+  0x80040600,  //  000F  RET	1	R3
+  0x880C0103,  //  0010  GETMBR	R3	R0	R259
+  0x8C0C0702,  //  0011  GETMET	R3	R3	R258
+  0x5C140200,  //  0012  MOVE	R5	R1
+  0x7C0C0400,  //  0013  CALL	R3	2
+  0x780E0001,  //  0014  JMPF	R3	#0017
+  0x880C0103,  //  0015  GETMBR	R3	R0	R259
+  0x80040600,  //  0016  RET	1	R3
+  0x4C0C0000,  //  0017  LDNIL	3
+  0x80040600,  //  0018  RET	1	R3
+};
+
+static const bproto wire_scan_proto = {
+  NULL,     // bgcobject *next
+  8,       // type
+  GC_CONST,        // marked
+  6,       // nstack
+  0,       // nupvals
+  3,       // argc
+  0,       // varg
+  NULL,     // bgcobject *gray
+  NULL,     // bupvaldesc *upvals
+  (bvalue*) &wire_scan_ktab,     // ktab
+  NULL,     // bproto **ptab
+  (binstruction*) &wire_scan_code,     // code
+  be_local_const_str(wire_scan_str_name),       // name
+  25,       // codesize
+  4,       // nconst
+  0,       // nproto
+  be_local_const_str(wire_scan_str_source),     // source
+#if BE_DEBUG_RUNTIME_INFO /* debug information */
+  NULL,     // lineinfo
+  0,        // nlineinfo
+#endif
+#if BE_DEBUG_VAR_INFO
+  NULL,     // varinfo
+  0,        // nvarinfo
+#endif
+};
+
+static const bclosure wire_scan_closure = {
+  NULL,     // bgcobject *next
+  36,       // type
+  GC_CONST,        // marked
+  0,       // nupvals
+  NULL,     // bgcobject *gray
+  (bproto*) &wire_scan_proto,     // proto
+  { NULL }     // upvals
+};
+
+/*******************************************************************/
+
 
 /********************************************************************
 
@@ -1858,6 +1956,8 @@ void be_load_tasmota_ntvlib(bvm *vm)
         { "_timers", NULL },
         { "_cmd", NULL },
         { "_drivers", NULL },
+        { "wire1", NULL },
+        { "wire2", NULL },
         { "get_free_heap", l_getFreeHeap },
         { "publish", l_publish },
         { "cmd", l_cmd },
@@ -1902,6 +2002,7 @@ void be_load_tasmota_ntvlib(bvm *vm)
         { "event", (bntvfunc) &event_closure },
         { "add_driver", (bntvfunc) &add_driver_closure },
         { "load", (bntvfunc) &load_closure },
+        { "wire_scan", (bntvfunc) &wire_scan_closure },
 
         { NULL, NULL }
     };

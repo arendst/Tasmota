@@ -212,7 +212,7 @@ const bclosure write_bytes_closure = {
 void be_load_wirelib(bvm *vm)
 {
     static const bnfuncinfo members[] = {
-        { "_bus", NULL },               // bus number
+        { "bus", NULL },               // bus number
         { "init", b_wire_init },
         { "_begin_transmission", b_wire_begintransmission },
         { "_end_transmission", b_wire_endtransmission },
