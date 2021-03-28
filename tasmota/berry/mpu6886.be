@@ -14,7 +14,7 @@ class MPU6886 : Driver
     self.wire = tasmota.wire_scan(0x68, 58)
 
     if self.wire
-      var v = self.wire.read(0x68,0x75)
+      var v = self.wire.read(0x68,0x75,1)
       if v != 0x19 return end  #- wrong device -#
 
       self.wire.write(0x68, 0x6B, 0, 1)
