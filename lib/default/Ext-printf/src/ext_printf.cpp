@@ -213,7 +213,7 @@ char * copyStr(const char * str) {
 }
 
 const char ext_invalid_mem[] PROGMEM = "<--INVALID-->";
-const uint32_t min_valid_ptr = 0x3FF00000;    // addresses below this line are invalid
+const uint32_t min_valid_ptr = 0x3F000000;    // addresses below this line are invalid
 
 int32_t ext_vsnprintf_P(char * buf, size_t buf_len, const char * fmt_P, va_list va) {
   va_list va_cpy;

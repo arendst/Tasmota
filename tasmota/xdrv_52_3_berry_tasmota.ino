@@ -75,6 +75,7 @@ extern "C" {
     int32_t top = be_top(vm); // Get the number of arguments
     if (top == 2 && be_isstring(vm, 2)) {  // only 1 argument of type string accepted
       const char * command = be_tostring(vm, 2);
+      be_pop(vm, 2);    // clear the stack before calling, because of re-entrant call to Berry in a Rule
       ExecuteCommand(command, SRC_BERRY);
       be_pushstring(vm, TasmotaGlobal.mqtt_data);
       be_return(vm); // Return
@@ -294,7 +295,7 @@ extern "C" {
 
         if (data_present) {
           // see ResponseLightState()
-          map_insert_bool(vm, "power", bitRead(TasmotaGlobal.power, light_num));
+          map_insert_bool(vm, "power", bitRead(TasmotaGlobal.power, light_num + Light.device - 1));
           map_insert_int(vm, "bri", bri);
 
           if (subtype >= LST_RGB) {
@@ -364,9 +365,9 @@ extern "C" {
       // power
       if (map_find(vm, "power")) {
         bool power = be_tobool(vm, -1);
-        bool current_power = bitRead(TasmotaGlobal.power, idx);
+        bool current_power = bitRead(TasmotaGlobal.power, idx + Light.device - 1);
         if (power != current_power) {   // only send command if needed
-          ExecuteCommandPower(Light.device + idx, (power) ? POWER_ON : POWER_OFF, SRC_BERRY);
+          ExecuteCommandPower(idx + Light.device, (power) ? POWER_ON : POWER_OFF, SRC_BERRY);
         }
       }
       be_pop(vm, 1);
