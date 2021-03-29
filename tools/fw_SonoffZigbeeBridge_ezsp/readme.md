@@ -2,17 +2,13 @@
 
 ## EmberZNet NCP UART EZSP firmware signed for Sonoff ZBBridge
 
-
 ### Currently recommended versions
 
 - `ncp-uart-sw-6.7.8_115200.ota` - NEW: The current and recommended stable version for EZSP v8 compatible hosts.
 
-### No longer recommended versions
-
-- `ncp-uart-sw_6.7.6_115200.ota` - OLD: Original version for EZSP v8 compatible hosts, (contains a bug that can cause battery of IKEA and Philips remotes to drain).
-
 ### Archived versions
 
+- `ncp-uart-sw_6.7.6_115200.ota` - OLD: Original version for EZSP v8 compatible hosts, (contains a bug that can cause battery of IKEA and Philips remotes to drain).
 - `ncp-uart-sw_6.5.5_115200.ota` - LEGACY: Legacy version for older EZSP v7 compatible hosts.
 
 ## EFR32, EmberZNet and EZSP Protocol Versions
