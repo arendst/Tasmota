@@ -1336,7 +1336,7 @@ void TuyaSensorsShow(bool json)
             break;
           case 74:
             WSContentSend_PD(PSTR("{s}" D_HUMIDITY " Set{m}%s " D_UNIT_PERCENT "{e}"),
-                            dtostrfd(Tuya.Sensors[3], Settings.flag2.temperature_resolution, tempval));
+                            dtostrfd(TuyaAdjustedTemperature(Tuya.Sensors[3], Settings.flag2.temperature_resolution), Settings.flag2.temperature_resolution, tempval));
             break;
           case 75:
             WSContentSend_PD(HTTP_SNS_ILLUMINANCE, "", Tuya.Sensors[4]);
