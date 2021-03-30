@@ -104,7 +104,7 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - TasmotaSerial library from v3.2.0 to v3.3.0
 - PubSubClient library from EspEasy v2.7.12 to Tasmota v2.8.12
 - IRremoteESP8266 library from v2.7.15 to v2.7.16
-- ESP32 core library from v1.0.5-rc6 to v1.0.5
+- ESP32 core library from v1.0.5-rc6 to v1.0.6
 - TuyaMcu dimmer timeout [#11121](https://github.com/arendst/Tasmota/issues/11121)
 - Rename epaper 42 commands [#11222](https://github.com/arendst/Tasmota/issues/11222)
 - DeepSleep announcement topic [#11223](https://github.com/arendst/Tasmota/issues/11223)
@@ -120,4 +120,5 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - Zigbee exception when bad frame is received [#11192](https://github.com/arendst/Tasmota/issues/11192)
 - ESP32 flash script for Odroid and Core2 [#11227](https://github.com/arendst/Tasmota/issues/11227)
 - ESP32 WS2812 bitbang support [#11248](https://github.com/arendst/Tasmota/issues/11248)
-- DS18x20 driver timing issue (#11270)
+- DS18x20 driver timing issue [#11270](https://github.com/arendst/Tasmota/issues/11270)
+- HC-SR04 on ESP32 release serial interface if not used [#11507](https://github.com/arendst/Tasmota/issues/11507)

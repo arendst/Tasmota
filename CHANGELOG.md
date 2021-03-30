@@ -15,6 +15,10 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - PubSubClient library from EspEasy v2.7.12 to Tasmota v2.8.12
 - IRremoteESP8266 library from v2.7.15 to v2.7.16
+- ESP32 core library from v1.0.5 to v1.0.6
+
+### Fixed
+- HC-SR04 on ESP32 release serial interface if not used (#11507)
 
 ## [9.3.1.1]
 ### Added
