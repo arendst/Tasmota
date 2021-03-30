@@ -51,7 +51,7 @@ uint8_t Sr04TModeDetect(void)
   sonar_serial = new TasmotaSerial(sr04_echo_pin, sr04_trig_pin, 1);
 
   if (sonar_serial->begin(9600,1)) {
-    DEBUG_SENSOR_LOG(PSTR("SR04: Detect mode"));
+    DEBUG_SENSOR_LOG(PSTR("SR4: Detect mode"));
 
     if (sr04_trig_pin != -1) {
       sr04_type = (Sr04TMiddleValue(Sr04TMode3Distance(), Sr04TMode3Distance(), Sr04TMode3Distance()) != NO_ECHO) ? 3 : 1;
@@ -75,7 +75,7 @@ uint8_t Sr04TModeDetect(void)
     }
   }
 
-  AddLog(LOG_LEVEL_INFO,PSTR("SR04: Mode %d"), sr04_type);
+  AddLog(LOG_LEVEL_INFO,PSTR("SR4: Mode %d"), sr04_type);
   return sr04_type;
 }
 
@@ -110,7 +110,7 @@ uint16_t Sr04TMode2Distance(void)
   const char startByte = 0xff;
 
   if (!sonar_serial->find(startByte)) {
-      //DEBUG_SENSOR_LOG(PSTR("SR04: No start byte"));
+      //DEBUG_SENSOR_LOG(PSTR("SR4: No start byte"));
       return NO_ECHO;
   }
 
@@ -127,10 +127,10 @@ uint16_t Sr04TMode2Distance(void)
 
   //check crc sum
   if (crc != sonar_serial->read()) {
-    AddLog(LOG_LEVEL_ERROR,PSTR("SR04: Reading CRC error."));
+    AddLog(LOG_LEVEL_ERROR,PSTR("SR4: Reading CRC error."));
     return NO_ECHO;
   }
-  //DEBUG_SENSOR_LOG(PSTR("SR04: Distance: %d"), distance);
+  //DEBUG_SENSOR_LOG(PSTR("SR4: Distance: %d"), distance);
   return distance;
 }
 

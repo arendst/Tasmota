@@ -104,6 +104,11 @@ TasmotaSerial::~TasmotaSerial(void) {
     }
   }
 #endif  // ESP8266
+
+#ifdef ESP32
+  TSerial->end();
+  tasmota_serial_index++;
+#endif  // ESP32
 }
 
 bool TasmotaSerial::isValidGPIOpin(int pin) {
