@@ -26,12 +26,11 @@
 #define XSNS_05              5
 
 //#define USE_DS18x20_RECONFIGURE    // When sensor is lost keep retrying or re-configure
-//#define DS18x20_USE_ID_AS_NAME     // Use last 3 bytes for naming of sensors
+//#define DS18x20_USE_ID_AS_NAME      // Use last 3 bytes for naming of sensors
 //#define W1_PARASITE_POWER          // Use only 2 wires to connect sensor (no VCC)
 #ifndef W1_PARASITE_POWER
 #define DS18x20_ARITH_MEAN         // non parasite power: compute arithmetic mean
 #endif
-#define DS18x20_ADD_DS2413         // add code for 1wire DS2312 2 bit IOport
 
 #define DS18S20_CHIPID       0x10  // +/-0.5C 9-bit
 #define DS1822_CHIPID        0x22  // +/-2C 12-bit
@@ -60,7 +59,7 @@ struct DS18X20STRUCT {
   uint8_t numread;
   float   temp_sum;
 #endif
-  float   temperature;
+  float temperature;
 } ds18x20_sensor[DS18X20_MAX_SENSORS];
 
 struct {
@@ -361,7 +360,7 @@ void Ds18x20Convert(void) {
 
 bool Ds18x20Read(uint8_t sensor) {
   uint8_t data[9];
-  int8_t  sign = 1;
+  int8_t sign = 1;
   float   temp;
 
   uint8_t index = ds18x20_sensor[sensor].index;
