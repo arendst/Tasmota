@@ -95,9 +95,9 @@ struct TUYA {
 #define D_CMND_TUYA_SET_HUM "SetHum"
 #define D_CMND_TUYA_SET_TIMER "SetTimer"
 
-const char kTuyaSensors[] PROGMEM = // Lit of available sensors (can be expanded in the future)
+const char kTuyaSensors[] PROGMEM = // List of available sensors (can be expanded in the future)
   "" D_JSON_TEMPERATURE "|TempSet|" D_JSON_HUMIDITY "|HumSet|" D_JSON_ILLUMINANCE
-  "|" D_JSON_TVOC "|" D_JSON_ECO2 "|" D_JSON_CO2 "|||Timer1|Timer2|Timer3|TImer4";
+  "|" D_JSON_TVOC "|" D_JSON_ECO2 "|" D_JSON_CO2 "|" D_JSON_GAS "||Timer1|Timer2|Timer3|TImer4";
 
 const char kTuyaCommand[] PROGMEM = D_PRFX_TUYA "|"  // Prefix
   D_CMND_TUYA_MCU "|" D_CMND_TUYA_MCU_SEND_STATE "|" D_CMND_TUYARGB "|" D_CMND_TUYA_ENUM "|" D_CMND_TUYA_ENUM_LIST;
@@ -268,7 +268,7 @@ void CmndTuyaEnum(void) { // Command to control up to four type 4 Enum
         if (added) {
           ResponseAppend_P(PSTR(","));
         }
-        ResponseAppend_P(PSTR("\"Enum%d\":%d"), i + 1, Tuya.EnumState[i]); // Returns the avtual values of Enum as list
+        ResponseAppend_P(PSTR("\"Enum%d\":%d"), i + 1, Tuya.EnumState[i]); // Returns the actual values of Enum as list
         added = true;
       }
     }
@@ -392,7 +392,7 @@ inline bool TuyaFuncIdValid(uint8_t fnId) {
           (fnId >= TUYA_MCU_FUNC_MOTOR_DIR && fnId <= TUYA_MCU_FUNC_DUMMY) ||
           (fnId == TUYA_MCU_FUNC_LOWPOWER_MODE) ||
           (fnId >= TUYA_MCU_FUNC_TEMP && fnId <= TUYA_MCU_FUNC_HUMSET) ||
-          (fnId >= TUYA_MCU_FUNC_LX && fnId <= TUYA_MCU_FUNC_ECO2) ||
+          (fnId >= TUYA_MCU_FUNC_LX && fnId <= TUYA_MCU_FUNC_GAS) ||
           (fnId >= TUYA_MCU_FUNC_TIMER1 && fnId <= TUYA_MCU_FUNC_TIMER4);
 }
 uint8_t TuyaGetFuncId(uint8_t dpid) {
@@ -1380,6 +1380,9 @@ void TuyaSensorsShow(bool json)
             break;
           case 78:
             WSContentSend_PD(HTTP_SNS_CO2EAVG, "", Tuya.Sensors[7]);
+            break;
+          case 79:
+            WSContentSend_PD(HTTP_SNS_GAS, "", Tuya.Sensors[8]);
             break;
           case 81:
           case 82:
