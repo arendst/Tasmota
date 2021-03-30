@@ -7872,6 +7872,8 @@ bool Xdrv10(uint8_t function)
       Webserver->on("/exs", HTTP_POST,[]() { Webserver->sendHeader("Location","/exs");Webserver->send(303);}, script_upload_start);
       Webserver->on("/exs", HTTP_GET, ScriptExecuteUploadSuccess);
 #endif // USE_WEBSERVER
+      break;
+      
     case FUNC_SAVE_BEFORE_RESTART:
       if (bitRead(Settings.rule_enabled, 0)) {
         Run_Scripter(">R", 2, 0);
