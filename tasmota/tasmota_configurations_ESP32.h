@@ -37,6 +37,7 @@
 #define USE_SDCARD
   #define GUI_TRASH_FILE
 #define USE_SPI
+#undef USE_BERRY                                 // Disable Berry scripting language
 #undef  USE_MI_ESP32                             // (ESP32 only) Disable support for ESP32 as a BLE-bridge (+9k2 mem, +292k flash)
 #endif  // FIRMWARE_WEBCAM
 
@@ -60,8 +61,9 @@
 #define USE_SDCARD
   #define GUI_TRASH_FILE
 
-#define USE_BERRY                                // Enable Berry scripting language
+#ifdef USE_BERRY                                 // Berry scripting language
   #define USE_BERRY_PSRAM                        // Allocate Berry memory in PSRAM if PSRAM is connected - this might be slightly slower but leaves main memory intact
+#endif
 
 #define USE_ADC
 #define USE_SPI
@@ -93,8 +95,9 @@
 #define USE_SDCARD
   #define GUI_TRASH_FILE
 
-#define USE_BERRY                                // Enable Berry scripting language
+#ifdef USE_BERRY                                 // Berry scripting language
   #define USE_BERRY_PSRAM                        // Allocate Berry memory in PSRAM if PSRAM is connected - this might be slightly slower but leaves main memory intact
+#endif
 
 #define USE_I2C
   #define USE_BMA423
@@ -148,6 +151,7 @@
 #define USE_SDCARD
   #define GUI_TRASH_FILE
 #define USE_ADC
+#undef USE_BERRY                                 // Disable Berry scripting language
 #define USE_BLE_ESP32                            // Enable new BLE driver
 #define USE_MI_ESP32                             // (ESP32 only) Add support for ESP32 as a BLE-bridge (+9k2 mem, +292k flash)
 #endif  // FIRMWARE_BLUETOOTH
