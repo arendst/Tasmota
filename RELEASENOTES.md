@@ -92,6 +92,7 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - Support for TM1638 seven segment display by Ajith Vasudevan [#11031](https://github.com/arendst/Tasmota/issues/11031)
 - Support for MAX7219 seven segment display by Ajith Vasudevan [#11387](https://github.com/arendst/Tasmota/issues/11387)
 - Support for MPU6886 on primary or secondary I2C bus
+- Support for multiple CCS811 sensors with baseline control (USE_CCS811_V2) by clanganke [#10858](https://github.com/arendst/Tasmota/issues/10858)
 - Allow MCP230xx pinmode from output to input [#11104](https://github.com/arendst/Tasmota/issues/11104)
 - Berry improvements [#11163](https://github.com/arendst/Tasmota/issues/11163)
 - Extent compile time SetOptions support [#11204](https://github.com/arendst/Tasmota/issues/11204)
