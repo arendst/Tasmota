@@ -1565,6 +1565,10 @@ void SerialInput(void)
     TasmotaGlobal.serial_in_buffer[TasmotaGlobal.serial_in_byte_counter] = 0;                  // Serial data completed
     bool assume_json = (!Settings.flag.mqtt_serial_raw && (TasmotaGlobal.serial_in_buffer[0] == '{'));
 
+    if (serial_buffer_overrun) {
+      AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_COMMAND "Serial buffer overrun"));
+    }
+
     Response_P(PSTR("{\"" D_JSON_SERIALRECEIVED "\":"));
     if (assume_json) {
       ResponseAppend_P(TasmotaGlobal.serial_in_buffer);
