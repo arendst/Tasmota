@@ -334,6 +334,7 @@
 #define D_CMND_DEVGROUP_SHARE "DevGroupShare"
 #define D_CMND_DEVGROUPSTATUS "DevGroupStatus"
 #define D_CMND_DEVGROUP_TIE "DevGroupTie"
+#define D_CMND_SERIALBUFFER "SerialBuffer"
 #define D_CMND_SERIALSEND "SerialSend"
 #define D_CMND_SERIALDELIMITER "SerialDelimiter"
 #define D_CMND_BAUDRATE "Baudrate"
