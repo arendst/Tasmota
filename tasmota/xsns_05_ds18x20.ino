@@ -29,7 +29,7 @@
 //#define DS18x20_USE_ID_AS_NAME      // Use last 3 bytes for naming of sensors
 //#define W1_PARASITE_POWER          // Use only 2 wires to connect sensor (no VCC)
 #ifndef W1_PARASITE_POWER
-#define DS18x20_ARITH_MEAN         // non parasite power: compute arithmetic mean
+//#define DS18x20_ARITH_MEAN         // non parasite power: compute arithmetic mean
 #endif
 
 #define DS18S20_CHIPID       0x10  // +/-0.5C 9-bit
@@ -56,7 +56,7 @@ struct DS18X20STRUCT {
   uint8_t index;
   uint8_t valid;
 #ifdef DS18x20_ARITH_MEAN
-  uint8_t numread;
+  uint16_t numread;
   float   temp_sum;
 #endif
   float temperature;
