@@ -20,6 +20,7 @@ All notable changes to this project will be documented in this file.
 - IRremoteESP8266 library from v2.7.15 to v2.7.16
 - ESP32 core library from v1.0.5 to v1.0.6
 - Limit number of relay/button columns in GUI to 8 (#11546)
+- ADC range result from int to float using command ``FreqRes`` for decimal resolution selection (#11545)
 
 ### Fixed
 - HC-SR04 on ESP32 release serial interface if not used (#11507)

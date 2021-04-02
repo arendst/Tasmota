@@ -112,6 +112,7 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - Rename epaper 42 commands [#11222](https://github.com/arendst/Tasmota/issues/11222)
 - DeepSleep announcement topic [#11223](https://github.com/arendst/Tasmota/issues/11223)
 - Limit number of relay/button columns in GUI to 8 [#11546](https://github.com/arendst/Tasmota/issues/11546)
+- ADC range result from int to float using command ``FreqRes`` for decimal resolution selection [#11545](https://github.com/arendst/Tasmota/issues/11545)
 
 ### Fixed
 - PN532 on ESP32 Serial flush both Tx and Rx buffers [#10910](https://github.com/arendst/Tasmota/issues/10910)
