@@ -19,6 +19,8 @@
 
   --------------------------------------------------------------------------------------------
   Version yyyymmdd  Action    Description
+  -       20210402  additions expand MAC storage to 7, enables type of mac.
+                              Add bledetails4
   --------------------------------------------------------------------------------------------
 */
 
@@ -45,19 +47,67 @@
       connect/write/awaitnotify from a MAC/Service/Characteristic/NotifyCharacteristic
       connect/read/awaitnotify from a MAC/Service/Characteristic/NotifyCharacteristic
 
+    Notes on MAC addresses:
+      BLE MAC addresses come in different 'flavours'
+      Anywhere where you enter a MNAC addr, you can now use these forms:
+        AABBCCDDEEFF
+        AABBCCDDEEFF/n (n = 0..3) where n indicates the TYPE of address
+        most notably, if you wish to connect to a random address (n = 1), then you must specify,
+        else it will not connect.
+        e.g. to alias a random address to fred: 
+        BLEAlias fred=1234567890/1
+        to connect and read fred's name:
+        BLEName fred
+        BLEName 1234567890/1 - would succeed (if freds name can be read)
+        BLEName 1234567890 - would fail
+      technical changes: all MAC storage has been increased to 7 bytes, with the last byte being the type...
+
     Cmnds:
       BLEPeriod
-      BLEAdv
+        set the period for BLE tele
+      BLEAdv - unused
       BLEOp
+        advanced - perform a BLE active operation
+        mainly for debug or unsupported devices. 
       BLEMode
+        control scanning mode 
+        0 - stop BLE
+        1 - run BLE but manual scan
+        *2 - run BLE with auto scan
       BLEDetails
+        display details of adverts 
+        BLEdetails0 - no display
+        BLEdetails2 <mac|alias> - display for one device
+        BLEdetails3 - display for ALL devices
+        BLEdetails4 - display for all aliased devices
       BLEScan
+        performs a manual scan or set passive/active
+        *BLEScan0 0 - set passive scan
+        BLEScan0 1 - set active scan (you may get names)
+        BLEScan1 nn - start a manula scan for nn seconds
       BLEAlias
+        <mac>=<name> <mac>=<name> - set one or more aliases for addresses
       BLEName
+        read/write the name from a device using active read of a std characteristic
+        BLEName <mac|alias> - read the name
+        BLEName <mac|alias> <name> - write the name - few devices support this
       BLEDebug
+        enable more debug
+        BLEDebug0 - turn off
+        BLEDebug|BLEDebug1 - turn on
       BLEDevices
+        display or clear the devices list
+        BLEDevices0 - clear list
+        BLEDevices1 - publish on tele 
       BLEMaxAge
+        display or set the max age of a BLE address before being forgotten
+        BLEMaxAge - display the setting
+        BLEMaxAge nn - set to nn seconds
       BLEAddrFilter
+        *0/1/2/3 - the maximum 'type' of BLE address recevied
+      BLEEnableUnsaved
+        *0/1 - if BLE is disabled, this can be used to enable BLE without
+        it being saved - useful as the last command in autoexec.bat
 
   Other drivers can add callbacks to receive advertisements
   Other drivers can add 'operations' to be performed and receive callbacks from the operation's success or failure
@@ -89,15 +139,11 @@ i.e. the Bluetooth of the ESP can be shared without conflict.
 //#define BLE_ESP32_DEBUG
 
 #define XDRV_79                    79
-#define USE_MI_DECRYPTION
 
 #include <vector>
 #include <deque>
 #include <string.h>
 #include <cstdarg>
-#ifdef USE_MI_DECRYPTION
-#include <t_bearssl.h>
-#endif //USE_MI_DECRYPTION
 
 #include <NimBLEDevice.h>
 #include <NimBLEAdvertisedDevice.h>
@@ -108,8 +154,10 @@ i.e. the Bluetooth of the ESP can be shared without conflict.
 // from ble_gap.c
 extern "C" void ble_gap_conn_broken(uint16_t conn_handle, int reason);
 
+#ifdef BLE_ESP32_EXAMPLES
 void installExamples();
 void sendExample();
+#endif
 
 
 namespace BLE_ESP32 {
@@ -205,7 +253,7 @@ struct ble_advertisment_t {
 };
 
 struct ble_alias_t {
-  uint8_t addr[6];
+  uint8_t addr[7];
   char name[BLE_ESP32_MAXALIASLEN+1];
 };
 
@@ -1011,18 +1059,29 @@ int fromHex(uint8_t *dest, const char *src, int maxlen){
     return 0;
   }
 
+  memset(dest, 0, maxlen);
+
   for (int i = 0; i < srclen; i++){
     char t[3];
-    if (!isalnum(src[i*2])){
-      return 0;
-    }
-    if (!isalnum(src[i*2 + 1])){
-      return 0;
-    }
 
     t[0] = src[i*2];
     t[1] = src[i*2 + 1];
     t[2] = 0;
+    if (t[0] == '/'){
+      t[0] = '0';
+    }
+    if (t[1] == '/'){
+      t[1] = '0';
+    }
+
+    if (!isalnum(t[0])){
+      return 0;
+    }
+    if (!isalnum(t[1])){
+      return 0;
+    }
+
+
     t[0] |= 0x20;
     t[1] |= 0x20;
     if (isalpha(t[0])){
@@ -1042,6 +1101,14 @@ int fromHex(uint8_t *dest, const char *src, int maxlen){
   return srclen;
 }
 
+int fromMAC(uint8_t *dest, const char *src, int maxlen){
+  int len = fromHex(dest, src, maxlen);
+  if ((len == 6) && (maxlen == 7)){
+    dest[6] = 0;
+    len = 7;
+  }
+  return len;
+}
 
 /**
  * @brief Reverse an array of 6 bytes
@@ -1096,7 +1163,24 @@ void setDetails(ble_advertisment_t *ad){
   len = strlen(p);
   p += len;
   maxlen -= len;
+  if (ad->addrtype){
+    *(p++) = '/';  
+    *(p++) = 0x30+ad->addrtype;  
+  }
   *(p++) = '\"'; maxlen--;
+
+  const char *alias = BLE_ESP32::getAlias(ad->addr);
+  if (alias && (*alias)){
+    strcpy(p, ",\"a\":\"");
+    len = strlen(p);
+    p += len;
+    maxlen -= len;
+    strcpy(p, alias);
+    len = strlen(p);
+    p += len;
+    maxlen -= len;
+    *(p++) = '\"'; maxlen--;
+  }
 
   sprintf(p, ",\"RSSI\":%d", ad->RSSI);
   len = strlen(p);
@@ -1299,6 +1383,14 @@ class BLEAdvCallbacks: public NimBLEAdvertisedDeviceCallbacks {
         case 3:{ // all adverts for ALL DEVICES - may not get them all
           // ignore from here on if filtered on addrtype
           if (BLEAdvertisment.addrtype > BLEAddressFilter){
+            return;
+          }
+          setDetails(&BLEAdvertisment);
+        } break;
+        case 4:{ // all adverts for all aliased DEVICES - may not get them all
+          // ignore from here on if filtered on addrtype
+          const char *alias = BLE_ESP32::getAlias(BLEAdvertisment.addr);
+          if (!alias || !(*alias)){
             return;
           }
           setDetails(&BLEAdvertisment);
@@ -1512,10 +1604,12 @@ static void BLEInit(void) {
     }
   }
 
-  // this is only for testing, does nothin if examples are undefed
+#ifdef BLE_ESP32_EXAMPLES
+// this is only for testing, does nothin if examples are undefed
   installExamples();
   //initSafeLog();
   initSeenDevices();
+#endif
 
   uint64_t now = esp_timer_get_time();
   BLEScanLastAdvertismentAt = now; // initialise the time of the last advertisment
@@ -1958,30 +2052,28 @@ static void BLETaskRunCurrentOperation(BLE_ESP32::generic_sensor_t** pCurrentOpe
 
   } else { // connect itself failed
     newstate = GEN_STATE_FAILED_CONNECT;
-#ifdef NIMBLE_CLIENT_HAS_GETRESULT
-    int rc = pClient->getResult();
+//#define NIMBLE_CLIENT_HAS_RESULT 1
+#ifdef NIMBLE_CLIENT_HAS_RESULT
+    int rc = pClient->m_result;
 
     switch (rc){
       case (0x0200+BLE_ERR_CONN_LIMIT ):
-#ifdef BLE_ESP32_DEBUG
         AddLog(LOG_LEVEL_ERROR,PSTR("BLE: Hit connection limit? - restarting NimBLE"));
-#endif
         BLERestartNimBLE = 1;
         BLERestartBLEReason = BLE_RESTART_BLE_REASON_CONN_LIMIT;
         break;
       case (0x0200+BLE_ERR_ACL_CONN_EXISTS):
-#ifdef BLE_ESP32_DEBUG
         AddLog(LOG_LEVEL_ERROR,PSTR("BLE: Connection exists? - restarting NimBLE"));
-#endif
         BLERestartNimBLE = 1;
         BLERestartBLEReason = BLE_RESTART_BLE_REASON_CONN_EXISTS;
         break;
     }
-#endif
-
+    if (rc){
+      AddLog(LOG_LEVEL_ERROR,PSTR("BLE: failed to connect to device low level rc 0x%x"), rc);
+    }
+#else
     // failed to connect
-#ifdef BLE_ESP32_DEBUG
-    AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: failed to connect to device"));
+    AddLog(LOG_LEVEL_ERROR,PSTR("BLE: failed to connect to device"));
 #endif
   }
   op->state = newstate;
@@ -2364,13 +2456,13 @@ int addAlias( uint8_t *addr, char *name){
   // replace addr for existing name
   for (int i = 0; i < count; i++){
     if (!strcmp(aliases[i]->name, name)){
-      memcpy(aliases[i]->addr, addr, 6);
+      memcpy(aliases[i]->addr, addr, 7);
       return 2;
     }
   }
 
   BLE_ESP32::ble_alias_t *alias = new BLE_ESP32::ble_alias_t;
-  memcpy(alias->addr, addr, 6);
+  memcpy(alias->addr, addr, 7);
   strncpy(alias->name, name, sizeof(alias->name));
   alias->name[sizeof(alias->name)-1] = 0;
   aliases.push_back(alias);
@@ -2400,6 +2492,7 @@ void stripColon(char* _string){
 //////////////////////////////////////////////////
 // use this for address interpretaton from string
 // it looks for aliases, and converts AABBCCDDEEFF and AA:BB:CC:DD:EE:FF
+// it also accepts AABBCCDDEEFF/1 to indicate random
 int getAddr(uint8_t *dest, char *src){
   if (!dest || !src){
     return 0;
@@ -2407,21 +2500,22 @@ int getAddr(uint8_t *dest, char *src){
 #ifdef BLE_ESP32_ALIASES
   for (int i = 0; i < aliases.size(); i++){
     if (!strcmp(aliases[i]->name, src)){
-      memcpy(dest, aliases[i]->addr, 6);
+      memcpy(dest, aliases[i]->addr, 7);
       return 2; //was an alias
     }
   }
 #endif
 
-  char tmp[12+5+1];
-  if (strlen(src) == 12+5){
+  char tmp[12+5+1+2];
+  int srclen = strlen(src);
+  if ((srclen == 12+5) || (srclen == 12+5+2)){
     strcpy(tmp, src);
     stripColon(tmp);
     src = tmp;
   }
 
-  int len = fromHex(dest, src, 6);
-  if (len == 6){
+  int len = fromMAC(dest, src, 7);
+  if (len == 7){
     return 1;
   }
   // not found
@@ -2720,6 +2814,11 @@ void CmndBLEDetails(void){
       ResponseCmndNumber(BLEDetailsRequest);
     } break;
 
+    case 4:{
+      BLEDetailsRequest = XdrvMailbox.index;
+      ResponseCmndNumber(BLEDetailsRequest);
+    } break;
+
     default:
       ResponseCmndChar("InvalidIndex");
       break;
@@ -2745,10 +2844,10 @@ void CmndBLEAlias(void){
           break;
         }
 
-        uint8_t addr[6];
+        uint8_t addr[7];
         char *mac = p;
-        int len = fromHex(addr, p, sizeof(addr));
-        if (len != 6){
+        int len = fromMAC(addr, p, sizeof(addr));
+        if (len != 7){
           AddLog(LOG_LEVEL_ERROR,PSTR("BLE: Alias invalid mac %s"), p);
           ResponseCmndChar("invalidmac");
           return;
@@ -2811,9 +2910,9 @@ void CmndBLEName(void) {
     return;
   }
 
-  uint8_t addrbin[6];
+  uint8_t addrbin[7];
   int addrres = BLE_ESP32::getAddr(addrbin, p);
-  NimBLEAddress addr(addrbin);
+  NimBLEAddress addr(addrbin, addrbin[6]);
 
   if (addrres){
     if (addrres == 2){
@@ -2932,9 +3031,9 @@ void CmndBLEOperation(void){
       while (p){
         switch(*p | 0x20){
           case 'm':{
-            uint8_t addr[6];
+            uint8_t addr[7];
             if (getAddr(addr, p+2)){
-              prepOperation->addr = NimBLEAddress(addr);
+              prepOperation->addr = NimBLEAddress(addr, addr[6]);
             } else {
               prepOperation->addr = NimBLEAddress();
             }
@@ -3562,6 +3661,9 @@ bool Xdrv79(uint8_t function)
 
 
 
+#ifdef BLE_ESP32_EXAMPLES
+
+
 /*********************************************************************************************\
  * Example Advertisment callback
 \*********************************************************************************************/
@@ -3639,7 +3741,8 @@ void sendExample(){
 
 #endif
 }
-
+// end #ifdef BLE_ESP32_EXAMPLES
+#endif 
 
 
 #endif

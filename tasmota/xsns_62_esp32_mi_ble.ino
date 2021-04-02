@@ -336,7 +336,7 @@ struct mi_sensor_t{
 };
 
 struct MAC_t {
-  uint8_t buf[6];
+  uint8_t buf[7];
 };
 
 std::vector<mi_sensor_t> MIBLEsensors;
@@ -2082,7 +2082,7 @@ void CmndMi32Period(void) {
 }
 
 int findSlot(char *addrOrAlias){
-  uint8_t mac[6];
+  uint8_t mac[7];
   int res = BLE_ESP32::getAddr(mac, addrOrAlias);
   if (!res) return -1;
 
@@ -2330,7 +2330,7 @@ void CmndMi32Keys(void){
           break;
         }
 
-        uint8_t addr[6];
+        uint8_t addr[7];
         char *mac = p;
         int addrres = BLE_ESP32::getAddr(addr, p);
         if (!addrres){
