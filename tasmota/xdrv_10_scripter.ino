@@ -1345,7 +1345,7 @@ uint8_t pt_pin;
 
 #define MPT_DEBOUNCE 10
 
-void ICACHE_RAM_ATTR MP_Timer(void) {
+void IRAM_ATTR MP_Timer(void) {
   uint32_t level = digitalRead(pt_pin&0x3f);
   uint32_t ms = millis();
   uint32_t time;

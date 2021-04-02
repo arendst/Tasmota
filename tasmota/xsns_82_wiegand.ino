@@ -147,22 +147,22 @@ volatile int Wiegand::currentFoundRFIDcount;
 
 
 
-void ICACHE_RAM_ATTR Wiegand::ClearRFIDBuffer(int endIndex = WIEGAND_RFID_ARRAY_SIZE) {
+void IRAM_ATTR Wiegand::ClearRFIDBuffer(int endIndex = WIEGAND_RFID_ARRAY_SIZE) {
    currentFoundRFIDcount=WIEGAND_RFID_ARRAY_SIZE-endIndex; // clear all buffers
     for (int i= 0; i < endIndex; i++) {
       rfid_found[i].RFID=0;
       rfid_found[i].bitCount=0;
     }
 }
-void ICACHE_RAM_ATTR Wiegand::handleD1Interrupt() {  // Receive a 1 bit. (D0=high & D1=low)
+void IRAM_ATTR Wiegand::handleD1Interrupt() {  // Receive a 1 bit. (D0=high & D1=low)
   handleDxInterrupt(1);
 }
 
-void ICACHE_RAM_ATTR Wiegand::handleD0Interrupt() {  // Receive a 0 bit. (D0=low & D1=high)
+void IRAM_ATTR Wiegand::handleD0Interrupt() {  // Receive a 0 bit. (D0=low & D1=high)
   handleDxInterrupt(0);                    
 }
 
-void ICACHE_RAM_ATTR Wiegand::handleDxInterrupt(int in) {
+void IRAM_ATTR Wiegand::handleDxInterrupt(int in) {
   unsigned long curTime = micros();  // to be sure I will use micros() instead of millis() overflow is handle by using the minus operator to compare
   unsigned long diffTime= curTime - lastFoundTime;
   if ( (diffTime > CodeGapTime) && (bitCount > 0)) { 

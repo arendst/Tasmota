@@ -73,8 +73,8 @@ struct HLW {
 
 // Fix core 2.5.x ISR not in IRAM Exception
 #ifndef USE_WS2812_DMA  // Collides with Neopixelbus but solves exception
-void HlwCfInterrupt(void) ICACHE_RAM_ATTR;
-void HlwCf1Interrupt(void) ICACHE_RAM_ATTR;
+void HlwCfInterrupt(void) IRAM_ATTR;
+void HlwCf1Interrupt(void) IRAM_ATTR;
 #endif  // USE_WS2812_DMA
 
 void HlwCfInterrupt(void)  // Service Power

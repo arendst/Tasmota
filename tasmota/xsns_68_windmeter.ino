@@ -72,7 +72,7 @@ struct WINDMETER {
 #endif  // USE_WINDMETER_NOSTATISTICS
 } WindMeter;
 
-void ICACHE_RAM_ATTR WindMeterUpdateSpeed(void)
+void IRAM_ATTR WindMeterUpdateSpeed(void)
 {
   uint32_t time = micros();
   uint32_t time_diff = time - WindMeter.counter_time;

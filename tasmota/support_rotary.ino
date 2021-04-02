@@ -104,7 +104,7 @@ bool RotaryButtonPressed(uint32_t button_index) {
   return false;
 }
 
-void ICACHE_RAM_ATTR RotaryIsrArgMiDesk(void *arg) {
+void IRAM_ATTR RotaryIsrArgMiDesk(void *arg) {
   tEncoder* encoder = static_cast<tEncoder*>(arg);
 
   // https://github.com/PaulStoffregen/Encoder/blob/master/Encoder.h
@@ -115,7 +115,7 @@ void ICACHE_RAM_ATTR RotaryIsrArgMiDesk(void *arg) {
   encoder->state = (state >> 2);
 }
 
-void ICACHE_RAM_ATTR RotaryIsrArg(void *arg) {
+void IRAM_ATTR RotaryIsrArg(void *arg) {
   tEncoder* encoder = static_cast<tEncoder*>(arg);
 
   // Theo Arends

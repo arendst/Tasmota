@@ -61,7 +61,7 @@ struct AC_ZERO_CROSS_DIMMER {
 } ac_zero_cross_dimmer;
 #endif
 
-void ICACHE_RAM_ATTR CounterIsrArg(void *arg) {
+void IRAM_ATTR CounterIsrArg(void *arg) {
   uint32_t index = *static_cast<uint8_t*>(arg);
 
   uint32_t time = micros();

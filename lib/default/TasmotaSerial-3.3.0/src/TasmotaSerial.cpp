@@ -29,7 +29,7 @@ extern "C" {
 
 #ifdef ESP8266
 
-void ICACHE_RAM_ATTR callRxRead(void *self) { ((TasmotaSerial*)self)->rxRead(); };
+void IRAM_ATTR callRxRead(void *self) { ((TasmotaSerial*)self)->rxRead(); };
 
 // As the Arduino attachInterrupt has no parameter, lists of objects
 // and callbacks corresponding to each possible GPIO pins have to be defined
@@ -260,7 +260,7 @@ int TasmotaSerial::available(void) {
 #define TM_SERIAL_WAIT_RCV { while (ESP.getCycleCount() < (wait + start)); wait += m_bit_time; }
 #define TM_SERIAL_WAIT_RCV_LOOP { while (ESP.getCycleCount() < (wait + start)); }
 
-void ICACHE_RAM_ATTR TasmotaSerial::_fast_write(uint8_t b) {
+void IRAM_ATTR TasmotaSerial::_fast_write(uint8_t b) {
   uint32_t wait = m_bit_time;
   uint32_t start = ESP.getCycleCount();
   // Start bit;
@@ -316,7 +316,7 @@ size_t TasmotaSerial::write(uint8_t b) {
   }
 }
 
-void ICACHE_RAM_ATTR TasmotaSerial::rxRead(void) {
+void IRAM_ATTR TasmotaSerial::rxRead(void) {
   if (!m_nwmode) {
     int32_t loop_read = m_very_high_speed ? serial_buffer_size : 1;
     // Advance the starting point for the samples but compensate for the
