@@ -593,10 +593,8 @@ void TInfoShow(bool json)
             ResponseAppend_P(PSTR(",\"Load\":%d"),(int) ((Energy.current[0]*100.0f) / isousc));
         }
 
-        // add teleinfo full frame only if no teleinfo raw data setup
-        if (!Settings.flag4.teleinfo_rawdata) {
-            ResponseAppendTInfo(',');
-        }
+        // add teleinfo full frame 
+        ResponseAppendTInfo(',');
 
 
 #ifdef USE_WEBSERVER
