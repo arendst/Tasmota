@@ -594,9 +594,7 @@ void TInfoShow(bool json)
         }
 
         // add teleinfo full frame only if no teleinfo raw data setup
-        if (!Settings.flag4.teleinfo_rawdata) {
-            ResponseAppendTInfo(',');
-        }
+        ResponseAppendTInfo(',');
 
 
 #ifdef USE_WEBSERVER
