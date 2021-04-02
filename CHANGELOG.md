@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 - Commands ``MqttKeepAlive 1..100`` to set Mqtt Keep Alive timer (default 30) and ``MqttTimeout 1..100`` to set Mqtt Socket Timeout (default 4) (#5341)
 - Commands ``DisplayType`` to select sub-modules where implemented and ``DisplayInvert`` to select inverted display where implemented
 - Command ``SerialBuffer 256..520`` to change hardware serial receive buffer size from default (256) to max local buffer size (520) (#11448)
+- Command ``SetOption126 1`` to enable DS18x20 arithmetic mean over teleperiod for JSON temperature based on (#11472)
 - Support for TM1638 seven segment display by Ajith Vasudevan (#11031)
 - Support for MAX7219 seven segment display by Ajith Vasudevan (#11387)
 - Support for Frequency monitoring and zero-cross detection on CSE7761 (Sonoff Dual R3)
