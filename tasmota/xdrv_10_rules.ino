@@ -1036,7 +1036,7 @@ void RulesSetPower(void)
 void RulesTeleperiod(void)
 {
   Rules.teleperiod = true;
-  RulesProcess();
+  XdrvRulesProcess();
   Rules.teleperiod = false;
 }
 
