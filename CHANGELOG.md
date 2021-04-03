@@ -21,6 +21,8 @@ All notable changes to this project will be documented in this file.
 - ESP32 core library from v1.0.5 to v1.0.6
 - Limit number of relay/button columns in GUI to 8 (#11546)
 - ADC range result from int to float using command ``FreqRes`` for decimal resolution selection (#11545)
+- Teleinfo, if raw mode selected also return telemety values in SENSOR data
+- Teleinfo, if raw mode selected also always update total energy calculations
 
 ### Fixed
 - HC-SR04 on ESP32 release serial interface if not used (#11507)
