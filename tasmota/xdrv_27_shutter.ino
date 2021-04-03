@@ -529,8 +529,8 @@ void ShutterUpdatePosition(void)
   }
 }
 
-bool ShutterState(uint32_t device)
-{
+bool ShutterState(uint32_t device) {
+  if (device > 4) { return false; }
   device--;
   device &= 3;
   return (Settings.flag3.shutter_mode &&  // SetOption80 - Enable shutter support
