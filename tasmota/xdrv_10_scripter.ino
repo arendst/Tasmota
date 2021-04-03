@@ -511,8 +511,10 @@ void RulesTeleperiod(void) {
 
 void SetChanged(uint32_t index) {
   glob_script_mem.type[index].bits.changed = 1;
+#ifdef USE_SCRIPT_GLOBVARS
 #ifdef USE_HOMEKIT
   glob_script_mem.type[index].bits.hchanged = 1;
+#endif
 #endif
 //AddLog(LOG_LEVEL_INFO, PSTR("Change: %d"), index);
 }
@@ -1345,7 +1347,7 @@ uint8_t pt_pin;
 
 #define MPT_DEBOUNCE 10
 
-void IRAM_ATTR MP_Timer(void) {
+void ICACHE_RAM_ATTR MP_Timer(void) {
   uint32_t level = digitalRead(pt_pin&0x3f);
   uint32_t ms = millis();
   uint32_t time;
@@ -3044,6 +3046,14 @@ chknext:
           tind->index = SML_JSON_ENABLE;
           goto exit_settable;
         }
+        if (!strncmp(vname, "smld(", 5)) {
+          lp = GetNumericArgument(lp + 5, OPER_EQU, &fvar, gv);
+          if (fvar < 1) fvar = 1;
+          SML_Decode(fvar - 1);
+          lp++;
+          len = 0;
+          goto exit;
+        }
 #endif //USE_SML_M
         break;
       case 't':
@@ -3656,8 +3666,11 @@ int32_t UpdVar(char *vname, float *fvar, uint32_t mode) {
       } else {
         // get var
         //index = glob_script_mem.type[ind.index].index;
-        int32_t ret = glob_script_mem.type[ind.index].bits.hchanged;
+        int32_t ret = 0;
+#ifdef USE_SCRIPT_GLOBVARS
+        ret = glob_script_mem.type[ind.index].bits.hchanged;
         glob_script_mem.type[ind.index].bits.hchanged = 0;
+#endif
         //AddLog(LOG_LEVEL_DEBUG, PSTR("read from homekit: %s - %d - %d"), vname, (uint32_t)*fvar, ret);
         return ret;
       }
@@ -6288,71 +6301,7 @@ String ScriptUnsubscribe(const char * data, int data_len)
 
 #ifdef USE_SCRIPT_WEB_DISPLAY
 
-#ifdef SCRIPT_FULL_WEBPAGE
-const char HTTP_WEB_FULL_DISPLAY[] PROGMEM =
-  "<p><form action='" "sfd" "' method='get'><button>" "%s" "</button></form></p>";
-
-const char HTTP_SCRIPT_FULLPAGE1[] PROGMEM =
-  "<!DOCTYPE html><html lang=\"" D_HTML_LANGUAGE "\" class=\"\">"
-  "<head>"
-  "<meta charset='utf-8'>"
-  "<meta name=\"viewport\" content=\"width=device-width,initial-scale=1,user-scalable=no\"/>"
-  "<title>%s - %s</title>"
-  "<script>"
-  "var x=null,lt,to,tp,pc='';"            // x=null allow for abortion
-  "function eb(s){"
-    "return document.getElementById(s);"  // Alias to save code space
-  "}"
-  "function qs(s){"                       // Alias to save code space
-    "return document.querySelector(s);"
-  "}"
-  "function wl(f){"                       // Execute multiple window.onload
-    "window.addEventListener('load',f);"
-  "}"
-    "var rfsh=1;"
-    "function la(p){"
-      "var a='';"
-      "if(la.arguments.length==1){"
-        "a=p;"
-        "clearTimeout(lt);"
-      "}"
-      "if(x!=null){x.abort();}"             // Abort if no response within 2 seconds (happens on restart 1)
-      "x=new XMLHttpRequest();"
-      "x.onreadystatechange=function(){"
-        "if(x.readyState==4&&x.status==200){"
-          "var s=x.responseText.replace(/{t}/g,\"<table style='width:100%%'>\").replace(/{s}/g,\"<tr><th>\").replace(/{m}/g,\"</th><td>\").replace(/{e}/g,\"</td></tr>\");"
-          "eb('l1').innerHTML=s;"
-        "}"
-      "};"
-      "if (rfsh) {"
-        "x.open('GET','./sfd?m=1'+a,true);"       // ?m related to Webserver->hasArg("m")
-        "x.send();"
-        "lt=setTimeout(la,%d);"               // Settings.web_refresh
-      "}"
-    "}";
-
-const char HTTP_SCRIPT_FULLPAGE2[] PROGMEM =
-    "function seva(par,ivar){"
-      "la('&sv='+ivar+'_'+par);"
-    "}"
-    "function siva(par,ivar){"
-      "rfsh=1;"
-      "la('&sv='+ivar+'_'+par);"
-      "rfsh=0;"
-    "}"
-    "function pr(f){"
-      "if (f) {"
-        "lt=setTimeout(la,%d);"
-        "rfsh=1;"
-      "} else {"
-        "clearTimeout(lt);"
-        "rfsh=0;"
-      "}"
-    "}"
-    "</script>";
-
-
-#ifdef USE_SCRIPT_FATFS
+#ifdef USE_UFILESYS
 
 const char HTTP_SCRIPT_MIMES[] PROGMEM =
   "HTTP/1.1 200 OK\r\n"
@@ -6392,12 +6341,9 @@ extern uint8_t *buffer;
 
 void SendFile(char *fname) {
 char buff[512];
-  const char *mime;
+  const char *mime = 0;
   uint8_t sflg = 0;
-  char *jpg = strstr(fname,".jpg");
-  if (jpg) {
-    mime = "image/jpeg";
-  }
+
 
 #ifdef USE_DISPLAY_DUMP
   char *sbmp = strstr_P(fname, PSTR("scrdmp.bmp"));
@@ -6406,18 +6352,25 @@ char buff[512];
   }
 #endif // USE_DISPLAY_DUMP
 
-  char *bmp = strstr(fname, ".bmp");
+  char *jpg = strstr_P(fname, PSTR(".jpg"));
+  if (jpg) {
+    mime = "image/jpeg";
+  }
+  char *bmp = strstr_P(fname, PSTR(".bmp"));
   if (bmp) {
     mime = "image/bmp";
   }
-  char *html = strstr(fname, ".html");
+  char *html = strstr_P(fname, PSTR(".html"));
   if (html) {
     mime = "text/html";
   }
-  char *txt = strstr(fname, ".txt");
+  char *txt = strstr_P(fname, PSTR(".txt"));
   if (txt) {
     mime = "text/plain";
   }
+
+  if (!mime) return;
+
 
   WSContentSend_P(HTTP_SCRIPT_MIMES, fname, mime);
 
@@ -6428,7 +6381,8 @@ char buff[512];
     #define infoHeaderSize 40
     if (buffer) {
       uint8_t *bp = buffer;
-      uint8_t *lbuf = (uint8_t*)special_malloc(Settings.display_width + 2);
+      uint8_t *lbuf = (uint8_t*)special_malloc(Settings.display_width * 3 + 2);
+      if (!lbuf) return;
       uint8_t *lbp;
       uint8_t fileHeader[fileHeaderSize];
       createBitmapFileHeader(Settings.display_height , Settings.display_width , fileHeader);
@@ -6474,7 +6428,71 @@ char buff[512];
   }
   Webserver->client().stop();
 }
-#endif // USE_SCRIPT_FATFS
+#endif // USE_UFILESYS
+
+#ifdef SCRIPT_FULL_WEBPAGE
+const char HTTP_WEB_FULL_DISPLAY[] PROGMEM =
+  "<p><form action='" "sfd" "' method='get'><button>" "%s" "</button></form></p>";
+
+const char HTTP_SCRIPT_FULLPAGE1[] PROGMEM =
+  "<!DOCTYPE html><html lang=\"" D_HTML_LANGUAGE "\" class=\"\">"
+  "<head>"
+  "<meta charset='utf-8'>"
+  "<meta name=\"viewport\" content=\"width=device-width,initial-scale=1,user-scalable=no\"/>"
+  "<title>%s - %s</title>"
+  "<script>"
+  "var x=null,lt,to,tp,pc='';"            // x=null allow for abortion
+  "function eb(s){"
+    "return document.getElementById(s);"  // Alias to save code space
+  "}"
+  "function qs(s){"                       // Alias to save code space
+    "return document.querySelector(s);"
+  "}"
+  "function wl(f){"                       // Execute multiple window.onload
+    "window.addEventListener('load',f);"
+  "}"
+    "var rfsh=1;"
+    "function la(p){"
+      "var a='';"
+      "if(la.arguments.length==1){"
+        "a=p;"
+        "clearTimeout(lt);"
+      "}"
+      "if(x!=null){x.abort();}"             // Abort if no response within 2 seconds (happens on restart 1)
+      "x=new XMLHttpRequest();"
+      "x.onreadystatechange=function(){"
+        "if(x.readyState==4&&x.status==200){"
+          "var s=x.responseText.replace(/{t}/g,\"<table style='width:100%%'>\").replace(/{s}/g,\"<tr><th>\").replace(/{m}/g,\"</th><td>\").replace(/{e}/g,\"</td></tr>\").replace(/{c}/g,\"%%'><div style='text-align:center;font-weight:\");"
+          "eb('l1').innerHTML=s;"
+        "}"
+      "};"
+      "if (rfsh) {"
+        "x.open('GET','./sfd?m=1'+a,true);"       // ?m related to Webserver->hasArg("m")
+        "x.send();"
+        "lt=setTimeout(la,%d);"               // Settings.web_refresh
+      "}"
+    "}";
+
+const char HTTP_SCRIPT_FULLPAGE2[] PROGMEM =
+    "function seva(par,ivar){"
+      "la('&sv='+ivar+'_'+par);"
+    "}"
+    "function siva(par,ivar){"
+      "rfsh=1;"
+      "la('&sv='+ivar+'_'+par);"
+      "rfsh=0;"
+    "}"
+    "function pr(f){"
+      "if (f) {"
+        "lt=setTimeout(la,%d);"
+        "rfsh=1;"
+      "} else {"
+        "clearTimeout(lt);"
+        "rfsh=0;"
+      "}"
+    "}"
+    "</script>";
+
 
 void ScriptFullWebpage(void) {
   uint32_t fullpage_refresh=10000;
@@ -7873,7 +7891,7 @@ bool Xdrv10(uint8_t function)
       Webserver->on("/exs", HTTP_GET, ScriptExecuteUploadSuccess);
 #endif // USE_WEBSERVER
       break;
-      
+
     case FUNC_SAVE_BEFORE_RESTART:
       if (bitRead(Settings.rule_enabled, 0)) {
         Run_Scripter(">R", 2, 0);
