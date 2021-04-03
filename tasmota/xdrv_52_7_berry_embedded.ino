@@ -329,6 +329,8 @@ const char berry_prog[] =
   "tasmota.wire2 = Wire(2) "
   "wire1 = tasmota.wire1 "
   "wire2 = tasmota.wire2 "
+  // auto-import gpio
+  "import gpio "
   ;
 
 const char berry_autoexec[] =

@@ -157,6 +157,8 @@
 #define BE_USE_GC_MODULE                1
 #define BE_USE_SOLIDIFY_MODULE          1
 
+#define BE_USE_GPIO                     1
+
 /* Macro: BE_EXPLICIT_XXX
  * If these macros are defined, the corresponding function will
  * use the version defined by these macros. These macro definitions
