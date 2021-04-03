@@ -233,6 +233,7 @@ void DataCallback(struct _ValueList * me, uint8_t  flags)
             // Current I
             else if (ilabel == LABEL_IINST || ilabel == LABEL_IRMS1)
             {
+                Energy.current_available = true;
                 Energy.current[0]  = (float) atoi(me->value);
                 AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: Current %s, now %d"), me->value, (int) Energy.current[0]);
             }
@@ -276,18 +277,14 @@ void DataCallback(struct _ValueList * me, uint8_t  flags)
                     AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: HC:%u  HP:%u  Total:%u"), hc, hp, total);
                 }
 
-                if (!Settings.flag4.teleinfo_rawdata) {
-                    EnergyUpdateTotal(total/1000.0f, true);
-                }
+                EnergyUpdateTotal(total/1000.0f, true);
             }
 
             // Wh total index (standard)
             else if ( ilabel == LABEL_EAST)
             {
                 uint32_t total = atoi(me->value);
-                if (!Settings.flag4.teleinfo_rawdata) {
-                    EnergyUpdateTotal(total/1000.0f, true);
-                }
+                EnergyUpdateTotal(total/1000.0f, true);
                 AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: Total:%uWh"), total);
             }
 
