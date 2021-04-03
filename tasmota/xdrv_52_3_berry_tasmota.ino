@@ -243,6 +243,7 @@ extern "C" {
     be_raise(vm, kTypeError, nullptr);
   }
 
+#ifdef USE_LIGHT
   // push the light status object on the vm stack
   void push_getlight(bvm *vm, uint32_t light_num) {
     bool data_present = false;      // do we have relevant data
@@ -466,6 +467,10 @@ extern "C" {
     }
     be_raise(vm, kTypeError, nullptr);
   }  // TODO
+#else // #ifdef USE_LIGHT
+  int32_t l_getlight(bvm *vm) { be_raise(vm, "feature_error", "LIGHT is not enabled, use '#define USE_LIGHT'"); }
+  int32_t l_setlight(struct bvm *vm) __attribute__ ((weak, alias ("l_getlight")));
+#endif // #ifdef USE_LIGHT
 
   // get power
   int32_t l_getpower(bvm *vm);
