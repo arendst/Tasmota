@@ -14,6 +14,7 @@ All notable changes to this project will be documented in this file.
 - Support for Frequency monitoring and zero-cross detection on CSE7761 (Sonoff Dual R3)
 - ESP32 support for internal Hall Effect sensor connected to both GPIO36 and GPIO39 only
 - Support for multiple CCS811 sensors with baseline control (USE_CCS811_V2) by clanganke (#10858)
+- Berry add ``gpio`` module
 
 ### Changed
 - PubSubClient library from EspEasy v2.7.12 to Tasmota v2.8.12
