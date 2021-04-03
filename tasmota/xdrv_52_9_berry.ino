@@ -225,10 +225,6 @@ void BerryObservability(bvm *vm, int32_t event...) {
 /*********************************************************************************************\
  * VM Init
 \*********************************************************************************************/
-extern "C" {
-  extern size_t be_gc_memcount(bvm *vm);
-  extern void be_gc_collect(bvm *vm);
-}
 void BrReset(void) {
   // clean previous VM if any
   if (berry.vm != nullptr) {
@@ -265,8 +261,10 @@ void BrReset(void) {
     }
     // AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_BERRY "Berry code ran, RAM used=%u"), be_gc_memcount(berry.vm));
     be_pop(berry.vm, 1);
-
-    be_gc_collect(berry.vm);
+    
+    if (be_top(berry.vm) > 0) {
+      be_dumpstack(berry.vm);
+    }
     AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_BERRY "Berry initialized, RAM used=%u"), callBerryGC());
     // AddLog(LOG_LEVEL_INFO, PSTR("Delete Berry VM"));
     // be_vm_delete(vm);

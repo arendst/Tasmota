@@ -400,7 +400,11 @@ const bclosure find_op_closure = {
       "if !self._rules "
         "self._rules={} "
       "end "
-      "self._rules[pat] = f "
+      "if type(f) == 'function' "
+        "self._rules[pat] = f "
+      "else "
+        "raise 'value_error', 'the second argument is not a function' "
+      "end "
     "end "
 ********************************************************************/
 
@@ -411,27 +415,40 @@ const bclosure find_op_closure = {
 be_define_local_const_str(add_rule_str_name, "add_rule", 596540743, 0, 8, 0);
 be_define_local_const_str(add_rule_str_source, "string", 398550328, 0, 6, 0);
 be_define_local_const_str(add_rule_str_0, "_rules", -28750191, 0, 6, 0);
+be_define_local_const_str(add_rule_str_1, "function", -1630125495, 0, 8, 0);
+be_define_local_const_str(add_rule_str_2, "value_error", 773297791, 0, 11, 0);
+be_define_local_const_str(add_rule_str_3, "the second argument is not a function", -340392827, 0, 37, 0);
 
-static const bvalue add_rule_ktab[1] = {
+static const bvalue add_rule_ktab[4] = {
   { { .s=be_local_const_str(add_rule_str_0) }, BE_STRING},
+  { { .s=be_local_const_str(add_rule_str_1) }, BE_STRING},
+  { { .s=be_local_const_str(add_rule_str_2) }, BE_STRING},
+  { { .s=be_local_const_str(add_rule_str_3) }, BE_STRING},
 };
 
-static const uint32_t add_rule_code[8] = {
+static const uint32_t add_rule_code[15] = {
   0x880C0100,  //  0000  GETMBR R3  R0  R256
   0x740E0002,  //  0001  JMPT R3  #0005
   0x600C000B,  //  0002  GETGBL R3  G11
   0x7C0C0000,  //  0003  CALL R3  0
   0x90020003,  //  0004  SETMBR R0  R256  R3
-  0x880C0100,  //  0005  GETMBR R3  R0  R256
-  0x980C0202,  //  0006  SETIDX R3  R1  R2
-  0x80000000,  //  0007  RET  0 R0
+  0x600C0015,  //  0005  GETGBL R3  G21
+  0x5C100400,  //  0006  MOVE R4  R2
+  0x7C0C0200,  //  0007  CALL R3  1
+  0x1C0C0701,  //  0008  EQ R3  R3  R257
+  0x780E0002,  //  0009  JMPF R3  #000D
+  0x880C0100,  //  000A  GETMBR R3  R0  R256
+  0x980C0202,  //  000B  SETIDX R3  R1  R2
+  0x70020000,  //  000C  JMP    #000E
+  0xB0060503,  //  000D  RAISE  1 R258  R259
+  0x80000000,  //  000E  RET  0 R0
 };
 
 static const bproto add_rule_proto = {
   NULL,     // bgcobject *next
   8,       // type
   GC_CONST,        // marked
-  4,       // nstack
+  5,       // nstack
   0,       // nupvals
   3,       // argc
   0,       // varg
@@ -441,8 +458,8 @@ static const bproto add_rule_proto = {
   NULL,     // bproto **ptab
   (binstruction*) &add_rule_code,     // code
   be_local_const_str(add_rule_str_name),       // name
-  8,       // codesize
-  1,       // nconst
+  15,       // codesize
+  4,       // nconst
   0,       // nproto
   be_local_const_str(add_rule_str_source),     // source
 #if BE_DEBUG_RUNTIME_INFO /* debug information */
@@ -455,7 +472,7 @@ static const bproto add_rule_proto = {
 #endif
 };
 
-const bclosure add_rule_closure = {
+static const bclosure add_rule_closure = {
   NULL,     // bgcobject *next
   36,       // type
   GC_CONST,        // marked
@@ -467,46 +484,116 @@ const bclosure add_rule_closure = {
 
 /*******************************************************************/
 
+/********************************************************************
+    "def remove_rule(pat) "
+      "if self._rules "
+        "self._rules.remove(pat) "
+      "end "
+    "end "
+********************************************************************/
+
+/********************************************************************
+** Solidified function: remove_rule
+********************************************************************/
+
+be_define_local_const_str(remove_rule_str_name, "remove_rule", -838755968, 0, 11, 0);
+be_define_local_const_str(remove_rule_str_source, "string", 398550328, 0, 6, 0);
+be_define_local_const_str(remove_rule_str_0, "_rules", -28750191, 0, 6, 0);
+be_define_local_const_str(remove_rule_str_1, "remove", -611183107, 0, 6, 0);
+
+static const bvalue remove_rule_ktab[2] = {
+  { { .s=be_local_const_str(remove_rule_str_0) }, BE_STRING},
+  { { .s=be_local_const_str(remove_rule_str_1) }, BE_STRING},
+};
+
+static const uint32_t remove_rule_code[7] = {
+  0x88080100,  //  0000  GETMBR R2  R0  R256
+  0x780A0003,  //  0001  JMPF R2  #0006
+  0x88080100,  //  0002  GETMBR R2  R0  R256
+  0x8C080501,  //  0003  GETMET R2  R2  R257
+  0x5C100200,  //  0004  MOVE R4  R1
+  0x7C080400,  //  0005  CALL R2  2
+  0x80000000,  //  0006  RET  0 R0
+};
+
+static const bproto remove_rule_proto = {
+  NULL,     // bgcobject *next
+  8,       // type
+  GC_CONST,        // marked
+  5,       // nstack
+  0,       // nupvals
+  2,       // argc
+  0,       // varg
+  NULL,     // bgcobject *gray
+  NULL,     // bupvaldesc *upvals
+  (bvalue*) &remove_rule_ktab,     // ktab
+  NULL,     // bproto **ptab
+  (binstruction*) &remove_rule_code,     // code
+  be_local_const_str(remove_rule_str_name),       // name
+  7,       // codesize
+  2,       // nconst
+  0,       // nproto
+  be_local_const_str(remove_rule_str_source),     // source
+#if BE_DEBUG_RUNTIME_INFO /* debug information */
+  NULL,     // lineinfo
+  0,        // nlineinfo
+#endif
+#if BE_DEBUG_VAR_INFO
+  NULL,     // varinfo
+  0,        // nvarinfo
+#endif
+};
+
+static const bclosure remove_rule_closure = {
+  NULL,     // bgcobject *next
+  36,       // type
+  GC_CONST,        // marked
+  0,       // nupvals
+  NULL,     // bgcobject *gray
+  (bproto*) &remove_rule_proto,     // proto
+  { NULL }     // upvals
+};
+
+/*******************************************************************/
 
 
 /********************************************************************
     // Rules trigger if match. return true if match, false if not
-    "def try_rule(ev, rule, f) "
+    "def try_rule(event, rule, f) "
       "import string "
       "var rl_list = self.find_op(rule) "
-      "var e=ev "
-      "var rl=string.split(rl_list[0],'#') "
+      "var sub_event = event "
+      "var rl = string.split(rl_list[0],'#') "
       "for it:rl "
-        "found=self.find_key_i(e,it) "
+        "found=self.find_key_i(sub_event,it) "
         "if found == nil return false end "
-        "e=e[found] "
+        "sub_event = sub_event[found] "
       "end "
       "var op=rl_list[1]"
       "var op2=rl_list[2]"
       "if op "
         "if   op=='==' "
-          "if str(e) != str(op2)   return false end "
+          "if str(sub_event) != str(op2)   return false end "
         "elif op=='!==' "
-          "if str(e) == str(op2)   return false end "
+          "if str(sub_event) == str(op2)   return false end "
         "elif op=='=' "
-          "if real(e) != real(op2) return false end "
+          "if real(sub_event) != real(op2) return false end "
         "elif op=='!=' "
-          "if real(e) == real(op2) return false end "
+          "if real(sub_event) == real(op2) return false end "
         "elif op=='>' "
-          "if real(e) <= real(op2) return false end "
+          "if real(sub_event) <= real(op2) return false end "
         "elif op=='>=' "
-          "if real(e) < real(op2)  return false end "
+          "if real(sub_event) < real(op2)  return false end "
         "elif op=='<' "
-          "if real(e) >= real(op2) return false end "
+          "if real(sub_event) >= real(op2) return false end "
         "elif op=='<=' "
-          "if real(e) > real(op2)  return false end "
+          "if real(sub_event) > real(op2)  return false end "
         "end "
       "end "
-      "f(e,ev) "
+      "f(sub_event, rl_list[0], event) "
       "return true "
     "end "
 ********************************************************************/
-
 /********************************************************************
 ** Solidified function: try_rule
 ********************************************************************/
@@ -548,7 +635,7 @@ static const bvalue try_rule_ktab[17] = {
   { { .s=be_local_const_str(try_rule_str_16) }, BE_STRING},
 };
 
-static const uint32_t try_rule_code[142] = {
+static const uint32_t try_rule_code[143] = {
   0xA4120000,  //  0000  IMPORT R4  R256
   0x8C140101,  //  0001  GETMET R5  R0  R257
   0x5C1C0400,  //  0002  MOVE R7  R2
@@ -687,10 +774,11 @@ static const uint32_t try_rule_code[142] = {
   0x80041400,  //  0087  RET  1 R10
   0x5C280600,  //  0088  MOVE R10 R3
   0x5C2C0C00,  //  0089  MOVE R11 R6
-  0x5C300200,  //  008A  MOVE R12 R1
-  0x7C280400,  //  008B  CALL R10 2
-  0x50280200,  //  008C  LDBOOL R10 1 0
-  0x80041400,  //  008D  RET  1 R10
+  0x94300B03,  //  008A  GETIDX R12 R5  R259
+  0x5C340200,  //  008B  MOVE R13 R1
+  0x7C280600,  //  008C  CALL R10 3
+  0x50280200,  //  008D  LDBOOL R10 1 0
+  0x80041400,  //  008E  RET  1 R10
 };
 
 static const bproto try_rule_proto = {
@@ -707,7 +795,7 @@ static const bproto try_rule_proto = {
   NULL,     // bproto **ptab
   (binstruction*) &try_rule_code,     // code
   be_local_const_str(try_rule_str_name),       // name
-  142,       // codesize
+  143,       // codesize
   17,       // nconst
   0,       // nproto
   be_local_const_str(try_rule_str_source),     // source
@@ -721,7 +809,7 @@ static const bproto try_rule_proto = {
 #endif
 };
 
-const bclosure try_rule_closure = {
+static const bclosure try_rule_closure = {
   NULL,     // bgcobject *next
   36,       // type
   GC_CONST,        // marked
@@ -1941,6 +2029,100 @@ static const bclosure wire_scan_closure = {
 
 /*******************************************************************/
 
+/********************************************************************
+    // cmd high-level function
+    "def cmd(command) "
+      "import json "
+      "var ret = self._cmd(command) "
+      "var j = json.load(ret) "
+      "if type(j) == 'instance' "
+        "return j "
+      "else "
+        "return {'response':j} "
+      "end "
+    "end "
+********************************************************************/
+/********************************************************************
+** Solidified function: cmd
+********************************************************************/
+
+be_define_local_const_str(cmd_str_name, "cmd", -158181397, 0, 3, 0);
+be_define_local_const_str(cmd_str_source, "string", 398550328, 0, 6, 0);
+be_define_local_const_str(cmd_str_0, "json", 916562499, 0, 4, 0);
+be_define_local_const_str(cmd_str_1, "_cmd", -875145154, 0, 4, 0);
+be_define_local_const_str(cmd_str_2, "load", -435725847, 0, 4, 0);
+be_define_local_const_str(cmd_str_3, "instance", 193386898, 0, 8, 0);
+be_define_local_const_str(cmd_str_4, "response", 1499316702, 0, 8, 0);
+
+static const bvalue cmd_ktab[5] = {
+  { { .s=be_local_const_str(cmd_str_0) }, BE_STRING},
+  { { .s=be_local_const_str(cmd_str_1) }, BE_STRING},
+  { { .s=be_local_const_str(cmd_str_2) }, BE_STRING},
+  { { .s=be_local_const_str(cmd_str_3) }, BE_STRING},
+  { { .s=be_local_const_str(cmd_str_4) }, BE_STRING},
+};
+
+static const uint32_t cmd_code[19] = {
+  0xA40A0000,  //  0000  IMPORT R2  R256
+  0x8C0C0101,  //  0001  GETMET R3  R0  R257
+  0x5C140200,  //  0002  MOVE R5  R1
+  0x7C0C0400,  //  0003  CALL R3  2
+  0x8C100502,  //  0004  GETMET R4  R2  R258
+  0x5C180600,  //  0005  MOVE R6  R3
+  0x7C100400,  //  0006  CALL R4  2
+  0x60140015,  //  0007  GETGBL R5  G21
+  0x5C180800,  //  0008  MOVE R6  R4
+  0x7C140200,  //  0009  CALL R5  1
+  0x1C140B03,  //  000A  EQ R5  R5  R259
+  0x78160001,  //  000B  JMPF R5  #000E
+  0x80040800,  //  000C  RET  1 R4
+  0x70020003,  //  000D  JMP    #0012
+  0x6014000B,  //  000E  GETGBL R5  G11
+  0x7C140000,  //  000F  CALL R5  0
+  0x98160804,  //  0010  SETIDX R5  R260  R4
+  0x80040A00,  //  0011  RET  1 R5
+  0x80000000,  //  0012  RET  0 R0
+};
+
+static const bproto cmd_proto = {
+  NULL,     // bgcobject *next
+  8,       // type
+  GC_CONST,        // marked
+  7,       // nstack
+  0,       // nupvals
+  2,       // argc
+  0,       // varg
+  NULL,     // bgcobject *gray
+  NULL,     // bupvaldesc *upvals
+  (bvalue*) &cmd_ktab,     // ktab
+  NULL,     // bproto **ptab
+  (binstruction*) &cmd_code,     // code
+  be_local_const_str(cmd_str_name),       // name
+  19,       // codesize
+  5,       // nconst
+  0,       // nproto
+  be_local_const_str(cmd_str_source),     // source
+#if BE_DEBUG_RUNTIME_INFO /* debug information */
+  NULL,     // lineinfo
+  0,        // nlineinfo
+#endif
+#if BE_DEBUG_VAR_INFO
+  NULL,     // varinfo
+  0,        // nvarinfo
+#endif
+};
+
+static const bclosure cmd_closure = {
+  NULL,     // bgcobject *next
+  36,       // type
+  GC_CONST,        // marked
+  0,       // nupvals
+  NULL,     // bgcobject *gray
+  (bproto*) &cmd_proto,     // proto
+  { NULL }     // upvals
+};
+
+/*******************************************************************/
 
 /********************************************************************
 
@@ -1960,7 +2142,7 @@ void be_load_tasmota_ntvlib(bvm *vm)
         { "wire2", NULL },
         { "get_free_heap", l_getFreeHeap },
         { "publish", l_publish },
-        { "cmd", l_cmd },
+        { "_cmd", l_cmd },
         { "get_option", l_getoption },
         { "millis", l_millis },
         { "time_reached", l_timereached },
@@ -1988,6 +2170,7 @@ void be_load_tasmota_ntvlib(bvm *vm)
         { "i2c_enabled", l_i2cenabled },
         
         { NULL, (bntvfunc) BE_CLOSURE }, /* mark section for berry closures */
+        { "cmd", (bntvfunc) &cmd_closure },
         { "chars_in_string", (bntvfunc) &chars_in_string_closure },
         { "find_key_i", (bntvfunc) &find_key_i_closure },
         { "find_op", (bntvfunc) &find_op_closure },

@@ -32,6 +32,9 @@ extern "C" {
     for (uint32_t i = 1; i <= top; i++) {
       const char * tname = be_typename(vm, i);
       const char * cname = be_classname(vm, i);
+      if (be_isstring(vm, i)) {
+        cname = be_tostring(vm, i);
+      }
       AddLog(LOG_LEVEL_INFO, "BRY: stack[%d] = type='%s' (%s)", i, (tname != nullptr) ? tname : "", (cname != nullptr) ? cname : "");
     }
   }
