@@ -38,7 +38,9 @@ extern "C" {
     if (argc == 2 && be_isint(vm, 1) && be_isint(vm, 2)) {
       int32_t pin = be_toint(vm, 1);
       int32_t mode = be_toint(vm, 2);
-      pinMode(pin, mode);
+      if (pin >= 0) {
+        pinMode(pin, mode);
+      }
       be_return_nil(vm);
     }
     be_raise(vm, kTypeError, nullptr);
@@ -50,7 +52,9 @@ extern "C" {
     if (argc == 2 && be_isint(vm, 1) && be_isint(vm, 2)) {
       int32_t pin = be_toint(vm, 1);
       int32_t val = be_toint(vm, 2);
-      digitalWrite(pin, val);
+      if (pin >= 0) {
+        digitalWrite(pin, val);
+      }
       be_return_nil(vm);
     }
     be_raise(vm, kTypeError, nullptr);
@@ -61,8 +65,12 @@ extern "C" {
     int32_t argc = be_top(vm); // Get the number of arguments
     if (argc == 1 && be_isint(vm, 1)) {
       int32_t pin = be_toint(vm, 1);
-      int32_t ret = digitalRead(pin);
-      be_pushint(vm, ret);
+      if (pin >= 0) {
+        int32_t ret = digitalRead(pin);
+        be_pushint(vm, ret);
+      } else {
+        be_pushnil(vm);
+      }
       be_return(vm);
     }
     be_raise(vm, kTypeError, nullptr);
