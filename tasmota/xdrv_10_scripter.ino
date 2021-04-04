@@ -1347,7 +1347,7 @@ uint8_t pt_pin;
 
 #define MPT_DEBOUNCE 10
 
-void ICACHE_RAM_ATTR MP_Timer(void) {
+void IRAM_ATTR MP_Timer(void) {
   uint32_t level = digitalRead(pt_pin&0x3f);
   uint32_t ms = millis();
   uint32_t time;
@@ -2179,6 +2179,7 @@ chknext:
             if (fsiz<2048) {
               char *script = (char*)special_malloc(fsiz + 16);
               if (script) {
+                memset(script, 0, fsiz + 16);
                 ef.read((uint8_t*)script,fsiz);
                 execute_script(script);
                 free(script);
@@ -7708,6 +7709,7 @@ bool Xdrv10(uint8_t function)
         char *script;
         script = (char*)special_malloc(UFSYS_SIZE + 4);
         if (!script) break;
+        memset(script, 0, UFSYS_SIZE);
         glob_script_mem.script_ram = script;
         glob_script_mem.script_size = UFSYS_SIZE;
         if (ufsp->exists(FAT_SCRIPT_NAME)) {
