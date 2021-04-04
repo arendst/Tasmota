@@ -288,7 +288,7 @@ be_native_module_attr_table(gpio) {
 be_define_native_module(gpio, NULL);
 #else
 /* @const_object_info_begin
-module gpio (scope: global, depend: BE_USE_GPIO_MODULE) {
+module gpio (scope: global, depend: BE_USE_TASMOTA) {
     LOW, int(0)
     HIGH, int(1)
     

@@ -2124,6 +2124,184 @@ static const bclosure cmd_closure = {
 
 /*******************************************************************/
 
+
+/********************************************************************
+    "def get_light(l) "
+      "print('tasmota.get_light() is deprecated, use light.get()') "
+      "import light "
+      "if l != nil "
+        "return light.get(l) "
+      "else "
+        "return light.get() "
+      "end "
+    "end "
+********************************************************************/
+/********************************************************************
+** Solidified function: get_light
+********************************************************************/
+
+be_define_local_const_str(get_light_str_name, "get_light", 381930476, 0, 9, 0);
+be_define_local_const_str(get_light_str_source, "string", 398550328, 0, 6, 0);
+be_define_local_const_str(get_light_str_0, "tasmota.get_light() is deprecated, use light.get()", -769213649, 0, 50, 0);
+be_define_local_const_str(get_light_str_1, "light", -493019601, 0, 5, 0);
+be_define_local_const_str(get_light_str_2, "get", 1410115415, 0, 3, 0);
+
+static const bvalue get_light_ktab[3] = {
+  { { .s=be_local_const_str(get_light_str_0) }, BE_STRING},
+  { { .s=be_local_const_str(get_light_str_1) }, BE_STRING},
+  { { .s=be_local_const_str(get_light_str_2) }, BE_STRING},
+};
+
+static const uint32_t get_light_code[16] = {
+  0x6008000F,  //  0000  GETGBL	R2	G15
+  0x580C0000,  //  0001  LDCONST	R3	K0
+  0x7C080200,  //  0002  CALL	R2	1
+  0xA40A0200,  //  0003  IMPORT	R2	R257
+  0x4C0C0000,  //  0004  LDNIL	3
+  0x200C0203,  //  0005  NE	R3	R1	R3
+  0x780E0004,  //  0006  JMPF	R3	#000C
+  0x8C0C0502,  //  0007  GETMET	R3	R2	R258
+  0x5C140200,  //  0008  MOVE	R5	R1
+  0x7C0C0400,  //  0009  CALL	R3	2
+  0x80040600,  //  000A  RET	1	R3
+  0x70020002,  //  000B  JMP		#000F
+  0x8C0C0502,  //  000C  GETMET	R3	R2	R258
+  0x7C0C0200,  //  000D  CALL	R3	1
+  0x80040600,  //  000E  RET	1	R3
+  0x80000000,  //  000F  RET	0	R0
+};
+
+static const bproto get_light_proto = {
+  NULL,     // bgcobject *next
+  8,       // type
+  GC_CONST,        // marked
+  6,       // nstack
+  0,       // nupvals
+  2,       // argc
+  0,       // varg
+  NULL,     // bgcobject *gray
+  NULL,     // bupvaldesc *upvals
+  (bvalue*) &get_light_ktab,     // ktab
+  NULL,     // bproto **ptab
+  (binstruction*) &get_light_code,     // code
+  be_local_const_str(get_light_str_name),       // name
+  16,       // codesize
+  3,       // nconst
+  0,       // nproto
+  be_local_const_str(get_light_str_source),     // source
+#if BE_DEBUG_RUNTIME_INFO /* debug information */
+  NULL,     // lineinfo
+  0,        // nlineinfo
+#endif
+#if BE_DEBUG_VAR_INFO
+  NULL,     // varinfo
+  0,        // nvarinfo
+#endif
+};
+
+static const bclosure get_light_closure = {
+  NULL,     // bgcobject *next
+  36,       // type
+  GC_CONST,        // marked
+  0,       // nupvals
+  NULL,     // bgcobject *gray
+  (bproto*) &get_light_proto,     // proto
+  { NULL }     // upvals
+};
+
+/*******************************************************************/
+
+/********************************************************************
+
+    // set_light and get_light deprecetaion
+    "def set_light(v,l) "
+      "print('tasmota.set_light() is deprecated, use light.set()') "
+      "import light "
+      "if l != nil "
+        "return light.set(v,l) "
+      "else "
+        "return light.set(v) "
+      "end "
+    "end "
+
+********************************************************************/
+/********************************************************************
+** Solidified function: set_light
+********************************************************************/
+
+be_define_local_const_str(set_light_str_name, "set_light", -1118891144, 0, 9, 0);
+be_define_local_const_str(set_light_str_source, "string", 398550328, 0, 6, 0);
+be_define_local_const_str(set_light_str_0, "tasmota.set_light() is deprecated, use light.set()", 2124937871, 0, 50, 0);
+be_define_local_const_str(set_light_str_1, "light", -493019601, 0, 5, 0);
+be_define_local_const_str(set_light_str_2, "set", -970520829, 0, 3, 0);
+
+static const bvalue set_light_ktab[3] = {
+  { { .s=be_local_const_str(set_light_str_0) }, BE_STRING},
+  { { .s=be_local_const_str(set_light_str_1) }, BE_STRING},
+  { { .s=be_local_const_str(set_light_str_2) }, BE_STRING},
+};
+
+static const uint32_t set_light_code[18] = {
+  0x600C000F,  //  0000  GETGBL R3  G15
+  0x58100000,  //  0001  LDCONST  R4  K0
+  0x7C0C0200,  //  0002  CALL R3  1
+  0xA40E0200,  //  0003  IMPORT R3  R257
+  0x4C100000,  //  0004  LDNIL  4
+  0x20100404,  //  0005  NE R4  R2  R4
+  0x78120005,  //  0006  JMPF R4  #000D
+  0x8C100702,  //  0007  GETMET R4  R3  R258
+  0x5C180200,  //  0008  MOVE R6  R1
+  0x5C1C0400,  //  0009  MOVE R7  R2
+  0x7C100600,  //  000A  CALL R4  3
+  0x80040800,  //  000B  RET  1 R4
+  0x70020003,  //  000C  JMP    #0011
+  0x8C100702,  //  000D  GETMET R4  R3  R258
+  0x5C180200,  //  000E  MOVE R6  R1
+  0x7C100400,  //  000F  CALL R4  2
+  0x80040800,  //  0010  RET  1 R4
+  0x80000000,  //  0011  RET  0 R0
+};
+
+static const bproto set_light_proto = {
+  NULL,     // bgcobject *next
+  8,       // type
+  GC_CONST,        // marked
+  8,       // nstack
+  0,       // nupvals
+  3,       // argc
+  0,       // varg
+  NULL,     // bgcobject *gray
+  NULL,     // bupvaldesc *upvals
+  (bvalue*) &set_light_ktab,     // ktab
+  NULL,     // bproto **ptab
+  (binstruction*) &set_light_code,     // code
+  be_local_const_str(set_light_str_name),       // name
+  18,       // codesize
+  3,       // nconst
+  0,       // nproto
+  be_local_const_str(set_light_str_source),     // source
+#if BE_DEBUG_RUNTIME_INFO /* debug information */
+  NULL,     // lineinfo
+  0,        // nlineinfo
+#endif
+#if BE_DEBUG_VAR_INFO
+  NULL,     // varinfo
+  0,        // nvarinfo
+#endif
+};
+
+static const bclosure set_light_closure = {
+  NULL,     // bgcobject *next
+  36,       // type
+  GC_CONST,        // marked
+  0,       // nupvals
+  NULL,     // bgcobject *gray
+  (bproto*) &set_light_proto,     // proto
+  { NULL }     // upvals
+};
+
+/*******************************************************************/
+
 /********************************************************************
 
 ********************************************************************/
@@ -2162,9 +2340,7 @@ void be_load_tasmota_ntvlib(bvm *vm)
         { "response_append", l_respAppend },
         { "web_send_decimal", l_webSendDecimal },
 
-        { "get_light", l_getlight },
         { "get_power", l_getpower },
-        { "set_light", l_setlight },
         { "set_power", l_setpower },
 
         { "i2c_enabled", l_i2cenabled },
@@ -2186,6 +2362,10 @@ void be_load_tasmota_ntvlib(bvm *vm)
         { "add_driver", (bntvfunc) &add_driver_closure },
         { "load", (bntvfunc) &load_closure },
         { "wire_scan", (bntvfunc) &wire_scan_closure },
+
+        // deprecated
+        { "get_light", (bntvfunc) &get_light_closure },
+        { "set_light", (bntvfunc) &set_light_closure },
 
         { NULL, NULL }
     };

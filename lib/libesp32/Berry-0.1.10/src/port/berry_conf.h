@@ -158,9 +158,9 @@
 #define BE_USE_SOLIDIFY_MODULE          1
 
 // #ifdef ESP32
-#define BE_USE_GPIO_MODULE              1
+#define BE_USE_TASMOTA                  1
 // #else
-// #define BE_USE_GPIO_MODULE                     0
+// #define BE_USE_TASMOTA                     0
 // #endif
 
 /* Macro: BE_EXPLICIT_XXX

@@ -21,6 +21,7 @@ be_extern_native_module(gc);
 be_extern_native_module(solidify);
 
 /* Tasmota specific */
+be_extern_native_module(light);
 be_extern_native_module(gpio);
 be_extern_native_module(energy);
 
@@ -60,8 +61,9 @@ BERRY_LOCAL const bntvmodule* const be_module_table[] = {
 #endif
     /* user-defined modules register start */
 // #ifdef ESP32
-#if BE_USE_GPIO_MODULE
+#if BE_USE_TASMOTA
     &be_native_module(gpio),
+    &be_native_module(light),
 #endif
     &be_native_module(energy),
 // #endif // ESP32

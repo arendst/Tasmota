@@ -325,6 +325,11 @@ uint8_t ledGamma(uint8_t v) {
   return change10to8(ledGamma10(v));
 }
 
+// Reverse 10 bits
+uint16_t ledGammaReverse(uint16_t vg) {
+  return ledGammaReverse_internal(vg, gamma_table);
+}
+
 // Fast versions for Fading
 uint16_t ledGammaFast(uint16_t v) {
   return ledGamma_internal(v, gamma_table_fast);
