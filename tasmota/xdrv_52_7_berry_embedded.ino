@@ -305,6 +305,27 @@ const char berry_prog[] =
     //   "return nil "
     // "end "
 
+    // // set_light and get_light deprecetaion
+    // "def set_light(v,l) "
+    //   "print('tasmota.set_light() is deprecated, use light.set()') "
+    //   "import light "
+    //   "if l != nil "
+    //     "return light.set(v,l) "
+    //   "else "
+    //     "return light.set(v) "
+    //   "end "
+    // "end "
+
+    // "def get_light(l) "
+    //   "print('tasmota.get_light() is deprecated, use light.get()') "
+    //   "import light "
+    //   "if l != nil "
+    //     "return light.get(l) "
+    //   "else "
+    //     "return light.get() "
+    //   "end "
+    // "end "
+
     // // cmd high-level function
     // "def cmd(command) "
     //   "import json "
@@ -353,6 +374,9 @@ const char berry_prog[] =
   "wire2 = tasmota.wire2 "
   // auto-import gpio
   "import gpio "
+#ifdef USE_LIGHT
+  "import light "
+#endif // USE_LIGHT
   ;
 
 const char berry_autoexec[] =
