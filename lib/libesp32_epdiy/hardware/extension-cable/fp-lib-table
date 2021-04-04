@@ -1,0 +1,3 @@
+(fp_lib_table
+  (lib (name epaper-breakout)(type KiCad)(uri /home/vroland/dev/misc/epaper-breakout/hardware/epaper-breakout/epaper-breakout.pretty)(options "")(descr ""))
+)

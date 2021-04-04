@@ -1,0 +1,2557 @@
+%%
+%% This is file `tabu.sty',
+%% generated with the docstrip utility.
+%%
+%% The original source files were:
+%%
+%% tabu.dtx  (with options: `package')
+%% 
+%% This is a generated file.
+%% Copyright (FC) 2010-2011 - lppl
+%% 
+%% tabu : 2011/02/26 v2.8 - tabu : Flexible LaTeX tabulars
+%% 
+%% **********************************************************************************************
+%% \begin{tabu}               { preamble } => default target: \linewidth or \linegoal
+%% \begin{tabu} to     <dimen>{ preamble } => target specified
+%% \begin{tabu} spread <dimen>{ preamble } => target relative to the ``natural width''
+%% 
+%%  tabu works in text and in math modes.
+%% 
+%%  X columns: automatic width adjustment + horizontal and vertical alignment
+%%  \begin{tabu}   { X[4c] X[1c] X[-2ml]  }
+%% 
+%%  Horizontal lines and / or leaders:
+%%         \hline\hline                          => double horizontal line
+%%         \firsthline\hline                     => for nested tabulars
+%%         \lasthline\hline                      => for nested tabulars
+%%         \tabucline[line spec]{column-column}  => ``funny'' lines (dash/leader)
+%%  Automatic lines / leaders :
+%%         \everyrow{\hline\hline}
+%% 
+%%  Vertical lines and / or leaders:
+%%  \begin{tabu}   { |[3pt red] X[4c] X[1c] X[-2ml] |[3pt blue] }
+%%  \begin{tabu}   { |[3pt red] X[4c] X[1c] X[-2ml] |[3pt on 2pt off 4pt blue] }
+%% 
+%%  Fixed vertical spacing adjustment:
+%%         \extrarowheight=<dimen>     \extrarowdepth=<dimen>
+%%    or:     \extrarowsep=<dimen>               => may be prefixed by \global
+%% 
+%%  Dynamic vertical spacing adjustment:
+%%       \abovetabulinesep=<dimen>  \belowtabulinesep=<dimen>
+%%   or:      \tabulinesep=<dimen>               => may be prefixed by \global
+%% 
+%%  delarray.sty shortcuts: in math and text modes
+%%  \begin{tabu} ....        \({ preamble }\)
+%% 
+%%  Algorithms reports:
+%%            \tracingtabu=1             \tracingtabu=2
+%% 
+%% **********************************************************************************************
+%% 
+%% This work may be distributed and/or modified under the
+%% conditions of the LaTeX Project Public License, either
+%% version 1.3 of this license or (at your option) any later
+%% version. The latest version of this license is in
+%%    http://www.latex-project.org/lppl.txt
+%% 
+%% This work consists of the main source file tabu.dtx
+%% and the derived files
+%%    tabu.sty, tabu.pdf, tabu.ins
+%% 
+%% tabu : Flexible LaTeX tabulars
+%% lppl copyright 2010-2011 by FC <florent.chervet@free.fr>
+%% 
+
+\NeedsTeXFormat{LaTeX2e}[2005/12/01]
+\ProvidesPackage{tabu_doxygen}[2011/02/26 v2.8 - flexible LaTeX tabulars (FC), frozen version for doxygen]
+\RequirePackage{array}[2008/09/09]
+\RequirePackage{varwidth}[2009/03/30]
+\AtEndOfPackage{\tabu@AtEnd \let\tabu@AtEnd \@undefined}
+\let\tabu@AtEnd\@empty
+\def\TMP@EnsureCode#1={%
+    \edef\tabu@AtEnd{\tabu@AtEnd
+                     \catcode#1 \the\catcode#1}%
+    \catcode#1=%
+}% \TMP@EnsureCode
+\TMP@EnsureCode 33 = 12 % !
+\TMP@EnsureCode 58 = 12 % : (for siunitx)
+\TMP@EnsureCode124 = 12 % |
+\TMP@EnsureCode 36 =  3 % $ = math shift
+\TMP@EnsureCode 38 =  4 % & = tab alignment character
+\TMP@EnsureCode 32 = 10 % space
+\TMP@EnsureCode 94 =  7 % ^
+\TMP@EnsureCode 95 =  8 % _
+%% Constants --------------------------------------------------------
+\newcount \c@taburow        \def\thetaburow {\number\c@taburow}
+\newcount \tabu@nbcols
+\newcount \tabu@cnt
+\newcount \tabu@Xcol
+\let\tabu@start \@tempcnta
+\let\tabu@stop  \@tempcntb
+\newcount \tabu@alloc  \tabu@alloc=\m@ne
+\newcount \tabu@nested
+\def\tabu@alloc@{\global\advance\tabu@alloc \@ne \tabu@nested\tabu@alloc}
+\newdimen \tabu@target
+\newdimen \tabu@spreadtarget
+\newdimen \tabu@naturalX
+\newdimen \tabucolX
+\let\tabu@DELTA \@tempdimc
+\let\tabu@thick \@tempdima
+\let\tabu@on    \@tempdimb
+\let\tabu@off   \@tempdimc
+\newdimen \tabu@Xsum
+\newdimen \extrarowdepth
+\newdimen \abovetabulinesep
+\newdimen \belowtabulinesep
+\newdimen \tabustrutrule      \tabustrutrule \z@
+\newtoks \tabu@thebody
+\newtoks \tabu@footnotes
+\newsavebox \tabu@box
+\newsavebox \tabu@arstrutbox
+\newsavebox \tabu@hleads
+\newsavebox \tabu@vleads
+\newif \iftabu@colortbl
+\newif \iftabu@siunitx
+\newif \iftabu@measuring
+\newif \iftabu@spread
+\newif \iftabu@negcoef
+\newif \iftabu@everyrow
+\def\tabu@everyrowtrue {\global\let\iftabu@everyrow \iftrue}
+\def\tabu@everyrowfalse{\global\let\iftabu@everyrow \iffalse}
+\newif \iftabu@long
+\newif \iftabuscantokens
+\def\tabu@rescan {\tabu@verbatim \scantokens  }
+%% Utilities (for internal usage) -----------------------------------
+\def\tabu@gobblespace #1  {#1}
+\def\tabu@gobbletoken #1#2{#1}
+\def\tabu@gobbleX{\futurelet\@let@token \tabu@gobblex}
+\def\tabu@gobblex{\if ^^J\noexpand\@let@token \expandafter\@gobble
+                  \else\ifx \@sptoken\@let@token
+                    \expandafter\tabu@gobblespace\expandafter\tabu@gobbleX
+                  \fi\fi
+}% \tabu@gobblex
+\def\tabu@X{^^J}
+{\obeyspaces
+\global\let\tabu@spxiii= % saves an active space (for \ifx)
+\gdef\tabu@@spxiii{ }}
+\def\tabu@ifenvir {% only for \multicolumn
+    \expandafter\tabu@if@nvir\csname\@currenvir\endcsname
+}% \tabu@ifenvir
+\def\tabu@if@nvir #1{\csname @\ifx\tabu#1first\else
+                              \ifx\longtabu#1first\else
+                              second\fi\fi oftwo\endcsname
+}% \tabu@ifenvir
+\def\tabu@modulo #1#2{\numexpr\ifnum\numexpr#1=\z@ 0\else #1-(#1-(#2-1)/2)/(#2)*(#2)\fi}
+{\catcode`\&=3
+\gdef\tabu@strtrim  #1{% #1 = control sequence to trim
+    \ifodd 1\ifx #1\@empty \else \ifx #1\space \else 0\fi \fi
+            \let\tabu@c@l@r \@empty       \let#1\@empty
+    \else   \expandafter  \tabu@trimspaces  #1&#1\@nnil
+    \fi
+}% \tabu@strtrim
+\gdef\tabu@trimspaces #1&#2\@nnil{\let\tabu@c@l@r=#2\tabu@firstspace .#1& &#2}%
+\gdef\tabu@firstspace #1#2#3 &{\tabu@lastspace #2#3&}
+\gdef\tabu@lastspace #1&#2&#3{\def #3{#1}%
+    \ifx #3\tabu@c@l@r \def\tabu@c@l@r{\protect\color{#1}}\expandafter\remove@to@nnil \fi
+    \tabu@trimspaces #1&#3\@nnil}
+}% \catcode
+\def\tabu@sanitizearg #1#2{{%
+    \csname \ifcsname if@safe@actives\endcsname         % <babel>
+                      @safe@activestrue\else
+                      relax\fi       \endcsname
+    \edef#2{#1}\tabu@strtrim#2\@onelevel@sanitize#2%
+    \expandafter}\expandafter\def\expandafter#2\expandafter{#2}%
+}% \tabu@sanitizearg
+\def\tabu@textbar #1{\begingroup \endlinechar\m@ne \scantokens{\def\:{|}}%
+    \expandafter\endgroup \expandafter#1\:% !!! semi simple group !!!
+}% \tabu@textbar
+\def\tabu@everyrow@bgroup{\iftabu@everyrow \begingroup \else \noalign{\ifnum0=`}\fi \fi}
+\def\tabu@everyrow@egroup{%
+    \iftabu@everyrow \expandafter \endgroup \the\toks@
+    \else            \ifnum0=`{\fi}%
+    \fi
+}% \tabu@everyrow@egroup
+\def\tabu@arstrut {\global\setbox\@arstrutbox \hbox{\vrule
+    height \arraystretch \dimexpr\ht\strutbox+\extrarowheight
+    depth  \arraystretch \dimexpr\dp\strutbox+\extrarowdepth
+    width  \z@}%
+}% \tabu@arstrut
+\def\tabu@rearstrut {%
+    \@tempdima \arraystretch\dimexpr\ht\strutbox+\extrarowheight \relax
+    \@tempdimb \arraystretch\dimexpr\dp\strutbox+\extrarowdepth  \relax
+    \ifodd 1\ifdim \ht\@arstrutbox=\@tempdima
+            \ifdim \dp\@arstrutbox=\@tempdimb 0 \fi\fi
+        \tabu@mkarstrut
+    \fi
+}% \tabu@rearstrut
+\def\tabu@@DBG #1{\ifdim\tabustrutrule>\z@ \color{#1}\fi}
+\def\tabu@DBG@arstrut {\global\setbox\@arstrutbox
+    \hbox to\z@{\hbox to\z@{\hss
+    {\tabu@DBG{cyan}\vrule
+    height \arraystretch \dimexpr\ht\strutbox+\extrarowheight
+    depth  \z@
+    width  \tabustrutrule}\kern-\tabustrutrule
+    {\tabu@DBG{pink}\vrule
+    height \z@
+    depth  \arraystretch \dimexpr\dp\strutbox+\extrarowdepth
+    width \tabustrutrule}}}%
+}% \tabu@DBG@arstrut
+\def\tabu@save@decl{\toks\count@ \expandafter{\the\toks\expandafter\count@
+                                                              \@nextchar}}%
+\def\tabu@savedecl{\ifcat$\d@llarend\else
+       \let\save@decl \tabu@save@decl \fi % no inversion of tokens in text mode
+}% \tabu@savedecl
+\def\tabu@finalstrut #1{\unskip\ifhmode\nobreak\fi\vrule height\z@ depth\z@ width\z@}
+\newcommand*\tabuDisableCommands {\g@addto@macro\tabu@trialh@@k }
+\let\tabu@trialh@@k \@empty
+\def\tabu@nowrite #1#{{\afterassignment}\toks@}
+\let\tabu@write\write
+\let\tabu@immediate\immediate
+\def\tabu@WRITE{\begingroup
+   \def\immediate\write{\aftergroup\endgroup
+                  \tabu@immediate\tabu@write}%
+}% \tabu@WRITE
+\expandafter\def\expandafter\tabu@GenericError\expandafter{%
+                      \expandafter\tabu@WRITE\GenericError}
+\def\tabu@warn{\tabu@WRITE\PackageWarning{tabu}}
+\def\tabu@noxfootnote [#1]{\@gobble}
+\def\tabu@nocolor #1#{\@gobble}
+\newcommand*\tabu@norowcolor[2][]{}
+\def\tabu@maybesiunitx #1{\def\tabu@temp{#1}%
+                          \futurelet\@let@token \tabu@m@ybesiunitx}
+\def\tabu@m@ybesiunitx #1{\def\tabu@m@ybesiunitx {%
+    \ifx #1\@let@token \let\tabu@cellleft \@empty \let\tabu@cellright \@empty \fi
+    \tabu@temp}% \tabu@m@ybesiunitx
+}\expandafter\tabu@m@ybesiunitx \csname siunitx_table_collect_begin:Nn\endcsname
+\def\tabu@celllalign@def #1{\def\tabu@celllalign{\tabu@maybesiunitx{#1}}}%
+%% Fixed vertical spacing adjustment: \extrarowsep ------------------
+\newcommand*\extrarowsep{\edef\tabu@C@extra{\the\numexpr\tabu@C@extra+1}%
+    \iftabu@everyrow    \aftergroup\tabu@Gextra
+    \else               \aftergroup\tabu@n@Gextra
+    \fi
+    \@ifnextchar={\tabu@gobbletoken\tabu@extra} \tabu@extra
+}% \extrarowsep
+\def\tabu@extra {\@ifnextchar_%
+    {\tabu@gobbletoken{\tabu@setextra\extrarowheight \extrarowdepth}}
+    {\ifx ^\@let@token \def\tabu@temp{%
+            \tabu@gobbletoken{\tabu@setextra\extrarowdepth \extrarowheight}}%
+    \else   \let\tabu@temp \@empty
+            \afterassignment \tabu@setextrasep \extrarowdepth
+    \fi \tabu@temp}%
+}% \tabu@extra
+\def\tabu@setextra #1#2{\def\tabu@temp{\tabu@extr@#1#2}\afterassignment\tabu@temp#2}
+\def\tabu@extr@ #1#2{\@ifnextchar^%
+    {\tabu@gobbletoken{\tabu@setextra\extrarowdepth \extrarowheight}}
+    {\ifx _\@let@token \def\tabu@temp{%
+            \tabu@gobbletoken{\tabu@setextra\extrarowheight \extrarowdepth}}%
+    \else   \let\tabu@temp \@empty
+            \tabu@Gsave \tabu@G@extra \tabu@C@extra \extrarowheight \extrarowdepth
+    \fi \tabu@temp}%
+}% \tabu@extr@
+\def\tabu@setextrasep {\extrarowheight=\extrarowdepth
+    \tabu@Gsave \tabu@G@extra \tabu@C@extra \extrarowheight \extrarowdepth
+}% \tabu@setextrasep
+\def\tabu@Gextra{\ifx \tabu@G@extra\@empty \else {\tabu@Rextra}\fi}
+\def\tabu@n@Gextra{\ifx \tabu@G@extra\@empty \else \noalign{\tabu@Rextra}\fi}
+\def\tabu@Rextra{\tabu@Grestore \tabu@G@extra \tabu@C@extra}
+\let\tabu@C@extra \z@
+\let\tabu@G@extra \@empty
+%% Dynamic vertical spacing adjustment: \tabulinesep ----------------
+\newcommand*\tabulinesep{\edef\tabu@C@linesep{\the\numexpr\tabu@C@linesep+1}%
+    \iftabu@everyrow    \aftergroup\tabu@Glinesep
+    \else               \aftergroup\tabu@n@Glinesep
+    \fi
+    \@ifnextchar={\tabu@gobbletoken\tabu@linesep} \tabu@linesep
+}% \tabulinesep
+\def\tabu@linesep {\@ifnextchar_%
+    {\tabu@gobbletoken{\tabu@setsep\abovetabulinesep \belowtabulinesep}}
+    {\ifx ^\@let@token \def\tabu@temp{%
+            \tabu@gobbletoken{\tabu@setsep\belowtabulinesep \abovetabulinesep}}%
+     \else  \let\tabu@temp \@empty
+            \afterassignment \tabu@setlinesep \abovetabulinesep
+     \fi \tabu@temp}%
+}% \tabu@linesep
+\def\tabu@setsep #1#2{\def\tabu@temp{\tabu@sets@p#1#2}\afterassignment\tabu@temp#2}
+\def\tabu@sets@p #1#2{\@ifnextchar^%
+    {\tabu@gobbletoken{\tabu@setsep\belowtabulinesep \abovetabulinesep}}
+    {\ifx _\@let@token \def\tabu@temp{%
+            \tabu@gobbletoken{\tabu@setsep\abovetabulinesep \belowtabulinesep}}%
+    \else   \let\tabu@temp \@empty
+            \tabu@Gsave \tabu@G@linesep \tabu@C@linesep \abovetabulinesep \belowtabulinesep
+    \fi \tabu@temp}%
+}% \tabu@sets@p
+\def\tabu@setlinesep {\belowtabulinesep=\abovetabulinesep
+    \tabu@Gsave \tabu@G@linesep \tabu@C@linesep \abovetabulinesep \belowtabulinesep
+}% \tabu@setlinesep
+\def\tabu@Glinesep{\ifx \tabu@G@linesep\@empty \else {\tabu@Rlinesep}\fi}
+\def\tabu@n@Glinesep{\ifx \tabu@G@linesep\@empty \else \noalign{\tabu@Rlinesep}\fi}
+\def\tabu@Rlinesep{\tabu@Grestore \tabu@G@linesep \tabu@C@linesep}
+\let\tabu@C@linesep \z@
+\let\tabu@G@linesep \@empty
+%% \global\extrarowsep  and  \global\tabulinesep  -------------------
+\def\tabu@Gsave #1#2#3#4{\xdef#1{#1%
+    \toks#2{\toks\the\currentgrouplevel{\global#3\the#3\global#4\the#4}}}%
+}% \tabu@Gsave
+\def\tabu@Grestore#1#2{%
+    \toks#2{}#1\toks\currentgrouplevel\expandafter{\expandafter}\the\toks#2\relax
+    \ifcat$\the\toks\currentgrouplevel$\else
+        \global\let#1\@empty \global\let#2\z@
+        \the\toks\currentgrouplevel
+    \fi
+}% \tabu@Grestore
+%% Setting code for every row ---------------------------------------
+\newcommand*\everyrow{\tabu@everyrow@bgroup
+                      \tabu@start \z@ \tabu@stop \z@ \tabu@evrstartstop
+}% \everyrow
+\def\tabu@evrstartstop {\@ifnextchar^%
+    {\afterassignment \tabu@evrstartstop \tabu@stop=}%
+    {\ifx ^\@let@token
+            \afterassignment\tabu@evrstartstop \tabu@start=%
+     \else  \afterassignment\tabu@everyr@w     \toks@
+     \fi}%
+}% \tabu@evrstartstop
+\def\tabu@everyr@w {%
+    \xdef\tabu@everyrow{%
+        \noexpand\tabu@everyrowfalse
+        \let\noalign \relax
+        \noexpand\tabu@rowfontreset
+        \iftabu@colortbl \noexpand\tabu@rc@ \fi % \taburowcolors
+        \let\noexpand\tabu@docline \noexpand\tabu@docline@evr
+        \the\toks@
+        \noexpand\tabu@evrh@@k
+        \noexpand\tabu@rearstrut
+        \global\advance\c@taburow \@ne}%
+    \iftabu@everyrow \toks@\expandafter
+        {\expandafter\def\expandafter\tabu@evr@L\expandafter{\the\toks@}\ignorespaces}%
+    \else \xdef\tabu@evr@G{\the\toks@}%
+    \fi
+    \tabu@everyrow@egroup
+}% \tabu@everyr@w
+\def\tabu@evr {\def\tabu@evrh@@k}         % for internal use only
+\tabu@evr{}
+%% line style and leaders -------------------------------------------
+\newcommand*\newtabulinestyle [1]{%
+    {\@for \@tempa :=#1\do{\expandafter\tabu@newlinestyle \@tempa==\@nil}}%
+}% \newtabulinestyle
+\def\tabu@newlinestyle #1=#2=#3\@nil{\tabu@getline {#2}%
+    \tabu@sanitizearg {#1}\@tempa
+    \ifodd 1\ifx \@tempa\@empty \ifdefined\tabu@linestyle@ 0 \fi\fi
+    \global\expandafter\let
+        \csname tabu@linestyle@\@tempa \endcsname =\tabu@thestyle \fi
+}% \tabu@newlinestyle
+\newcommand*\tabulinestyle [1]{\tabu@everyrow@bgroup \tabu@getline{#1}%
+    \iftabu@everyrow
+        \toks@\expandafter{\expandafter \def \expandafter
+                    \tabu@ls@L\expandafter{\tabu@thestyle}\ignorespaces}%
+        \gdef\tabu@ls@{\tabu@ls@L}%
+    \else
+        \global\let\tabu@ls@G \tabu@thestyle
+        \gdef\tabu@ls@{\tabu@ls@G}%
+    \fi
+    \tabu@everyrow@egroup
+}% \tabulinestyle
+\newcommand*\taburulecolor{\tabu@everyrow@bgroup \tabu@textbar \tabu@rulecolor}
+\def\tabu@rulecolor #1{\toks@{}%
+    \def\tabu@temp #1##1#1{\tabu@ruledrsc{##1}}\@ifnextchar #1%
+                                                    \tabu@temp
+                                                 \tabu@rulearc
+}% \tabu@rulecolor
+\def\tabu@ruledrsc #1{\edef\tabu@temp{#1}\tabu@strtrim\tabu@temp
+    \ifx \tabu@temp\@empty \def\tabu@temp{\tabu@rule@drsc@ {}{}}%
+    \else \edef\tabu@temp{\noexpand\tabu@rule@drsc@ {}{\tabu@temp}}%
+    \fi
+    \tabu@temp
+}% \tabu@ruledrsc@
+\def\tabu@ruledrsc@   #1#{\tabu@rule@drsc@ {#1}}
+\def\tabu@rule@drsc@ #1#2{%
+    \iftabu@everyrow
+        \ifx \\#1#2\\\toks@{\let\CT@drsc@ \relax}%
+        \else        \toks@{\def\CT@drsc@{\color #1{#2}}}%
+        \fi
+    \else
+        \ifx \\#1#2\\\global\let\CT@drsc@ \relax
+        \else        \gdef\CT@drsc@{\color #1{#2}}%
+        \fi
+    \fi
+    \tabu@rulearc
+}% \tabu@rule@drsc@
+\def\tabu@rulearc    #1#{\tabu@rule@arc@ {#1}}
+\def\tabu@rule@arc@ #1#2{%
+    \iftabu@everyrow
+        \ifx \\#1#2\\\toks@\expandafter{\the\toks@ \def\CT@arc@{}}%
+        \else        \toks@\expandafter{\the\toks@ \def\CT@arc@{\color #1{#2}}}%
+        \fi
+        \toks@\expandafter{\the\toks@
+            \let\tabu@arc@L  \CT@arc@
+            \let\tabu@drsc@L \CT@drsc@
+            \ignorespaces}%
+    \else
+        \ifx \\#1#2\\\gdef\CT@arc@{}%
+        \else        \gdef\CT@arc@{\color #1{#2}}%
+        \fi
+        \global\let\tabu@arc@G  \CT@arc@
+        \global\let\tabu@drsc@G \CT@drsc@
+    \fi
+    \tabu@everyrow@egroup
+}% \tabu@rule@arc@
+\def\taburowcolors {\tabu@everyrow@bgroup \@testopt \tabu@rowcolors 1}
+\def\tabu@rowcolors [#1]#2#{\tabu@rowc@lors{#1}{#2}}
+\def\tabu@rowc@lors #1#2#3{%
+    \toks@{}\@defaultunits \count@      =\number0#2\relax \@nnil
+            \@defaultunits \tabu@start  =\number0#1\relax \@nnil
+    \ifnum \count@<\tw@ \count@=\tw@ \fi
+    \advance\tabu@start \m@ne
+    \ifnum \tabu@start<\z@ \tabu@start \z@ \fi
+    \tabu@rowcolorseries #3\in@..\in@ \@nnil
+}% \tabu@rowcolors
+\def\tabu@rowcolorseries #1..#2\in@ #3\@nnil {%
+    \ifx \in@#1\relax
+        \iftabu@everyrow \toks@{\def\tabu@rc@{}\let\tabu@rc@L \tabu@rc@}%
+        \else   \gdef\tabu@rc@{}\global\let\tabu@rc@G \tabu@rc@
+        \fi
+    \else
+        \ifx \\#2\\\tabu@rowcolorserieserror \fi
+        \tabu@sanitizearg{#1}\tabu@temp
+        \tabu@sanitizearg{#2}\@tempa
+        \advance\count@ \m@ne
+    \iftabu@everyrow
+        \def\tabu@rc@ ##1##2##3##4{\def\tabu@rc@{%
+            \ifnum ##2=\c@taburow
+                \definecolorseries{tabu@rcseries@\the\tabu@nested}{rgb}{last}{##3}{##4}\fi
+            \ifnum \c@taburow<##2 \else
+                \ifnum \tabu@modulo {\c@taburow-##2}{##1+1}=\z@
+                    \resetcolorseries[{##1}]{tabu@rcseries@\the\tabu@nested}\fi
+                \xglobal\colorlet{tabu@rc@\the\tabu@nested}{tabu@rcseries@\the\tabu@nested!!+}%
+                \rowcolor{tabu@rc@\the\tabu@nested}\fi}%
+        }\edef\x{\noexpand\tabu@rc@           {\the\count@}
+                                          {\the\tabu@start}
+                                               {\tabu@temp}
+                                                  {\@tempa}%
+                }\x
+        \toks@\expandafter{\expandafter\def\expandafter\tabu@rc@\expandafter{\tabu@rc@}}%
+        \toks@\expandafter{\the\toks@ \let\tabu@rc@L \tabu@rc@ \ignorespaces}%
+    \else   % inside \noalign
+        \definecolorseries{tabu@rcseries@\the\tabu@nested}{rgb}{last}{\tabu@temp}{\@tempa}%
+        \expandafter\resetcolorseries\expandafter[\the\count@]{tabu@rcseries@\the\tabu@nested}%
+        \xglobal\colorlet{tabu@rc@\the\tabu@nested}{tabu@rcseries@\the\tabu@nested!!+}%
+        \let\noalign \relax \rowcolor{tabu@rc@\the\tabu@nested}%
+        \def\tabu@rc@ ##1##2{\gdef\tabu@rc@{%
+            \ifnum \tabu@modulo {\c@taburow-##2}{##1+1}=\@ne
+                \resetcolorseries[{##1}]{tabu@rcseries@\the\tabu@nested}\fi
+            \xglobal\colorlet{tabu@rc@\the\tabu@nested}{tabu@rcseries@\the\tabu@nested!!+}%
+            \rowcolor{tabu@rc@\the\tabu@nested}}%
+        }\edef\x{\noexpand\tabu@rc@{\the\count@}{\the\c@taburow}}\x
+        \global\let\tabu@rc@G \tabu@rc@
+    \fi
+    \fi
+    \tabu@everyrow@egroup
+}% \tabu@rowcolorseries
+\tabuDisableCommands {\let\tabu@rc@ \@empty }
+\def\tabu@rowcolorserieserror {\PackageError{tabu}
+    {Invalid syntax for \string\taburowcolors
+    \MessageBreak Please look at the documentation!}\@ehd
+}% \tabu@rowcolorserieserror
+\newcommand*\tabureset {%
+    \tabulinesep=\z@ \extrarowsep=\z@ \extratabsurround=\z@
+    \tabulinestyle{}\everyrow{}\taburulecolor||{}\taburowcolors{}%
+}% \tabureset
+%% Parsing the line styles ------------------------------------------
+\def\tabu@getline #1{\begingroup
+    \csname \ifcsname if@safe@actives\endcsname         % <babel>
+                      @safe@activestrue\else
+                      relax\fi       \endcsname
+    \edef\tabu@temp{#1}\tabu@sanitizearg{#1}\@tempa
+    \let\tabu@thestyle \relax
+    \ifcsname tabu@linestyle@\@tempa \endcsname
+            \edef\tabu@thestyle{\endgroup
+                \def\tabu@thestyle{\expandafter\noexpand
+                    \csname tabu@linestyle@\@tempa\endcsname}%
+            }\tabu@thestyle
+    \else   \expandafter\tabu@definestyle \tabu@temp \@nil
+    \fi
+}% \tabu@getline
+\def\tabu@definestyle #1#2\@nil {\endlinechar \m@ne \makeatletter
+    \tabu@thick \maxdimen  \tabu@on \maxdimen   \tabu@off \maxdimen
+    \let\tabu@c@lon \@undefined  \let\tabu@c@loff \@undefined
+    \ifodd 1\ifcat .#1\else\ifcat\relax #1\else 0\fi\fi % catcode 12 or non expandable cs
+            \def\tabu@temp{\tabu@getparam{thick}}%
+    \else   \def\tabu@temp{\tabu@getparam{thick}\maxdimen}%
+    \fi
+    {%
+        \let\tabu@ \relax
+        \def\:{\obeyspaces \tabu@oXIII \tabu@commaXIII \edef\:}% (space active \: happy ;-))
+        \scantokens{\:{\tabu@temp #1#2 \tabu@\tabu@}}%
+                        \expandafter}\expandafter
+                                \def\expandafter\:\expandafter{\:}% line spec rewritten now ;-)
+    \def\;{\def\:}%
+    \scantokens\expandafter{\expandafter\;\expandafter{\:}}% space is now inactive (catcode 10)
+    \let\tabu@ \tabu@getcolor    \:%    all arguments are ready now ;-)
+    \ifdefined\tabu@c@lon \else \let\tabu@c@lon\@empty \fi
+    \ifx \tabu@c@lon\@empty \def\tabu@c@lon{\CT@arc@}\fi
+    \ifdefined\tabu@c@loff \else \let\tabu@c@loff \@empty        \fi
+    \ifdim \tabu@on=\maxdimen \ifdim \tabu@off<\maxdimen
+                                  \tabu@on \tabulineon        \fi\fi
+    \ifdim \tabu@off=\maxdimen \ifdim \tabu@on<\maxdimen
+                                  \tabu@off \tabulineoff      \fi\fi
+    \ifodd 1\ifdim \tabu@off=\maxdimen \ifdim \tabu@on=\maxdimen 0 \fi\fi
+            \in@true    % <leaders>
+    \else   \in@false   % <rule>
+    \fi
+    \ifdim\tabu@thick=\maxdimen \def\tabu@thick{\arrayrulewidth}%
+    \else                       \edef\tabu@thick{\the\tabu@thick}%
+    \fi
+    \edef \tabu@thestyle ##1##2{\endgroup
+        \def\tabu@thestyle{%
+            \ifin@  \noexpand\tabu@leadersstyle {\tabu@thick}
+                                                {\the\tabu@on}{##1}
+                                                {\the\tabu@off}{##2}%
+            \else   \noexpand\tabu@rulesstyle
+                            {##1\vrule width \tabu@thick}%
+                            {##1\leaders \hrule height \tabu@thick \hfil}%
+            \fi}%
+    }\expandafter \expandafter
+        \expandafter \tabu@thestyle \expandafter
+            \expandafter \expandafter
+                {\expandafter\tabu@c@lon\expandafter}\expandafter{\tabu@c@loff}%
+}% \tabu@definestyle
+{\catcode`\O=\active \lccode`\O=`\o \catcode`\,=\active
+    \lowercase{\gdef\tabu@oXIII {\catcode`\o=\active \let O=\tabu@oxiii}}
+    \gdef\tabu@commaXIII {\catcode`\,=\active \let ,=\space}
+}% \catcode
+\def\tabu@oxiii #1{%
+    \ifcase  \ifx n#1\z@ \else
+             \ifx f#1\@ne\else
+             \tw@       \fi\fi
+          \expandafter\tabu@onxiii
+    \or   \expandafter\tabu@ofxiii
+    \else o%
+    \fi#1}%
+\def\tabu@onxiii #1#2{%
+    \ifcase  \ifx  !#2\tw@          \else
+             \ifcat.\noexpand#2\z@  \else
+             \ifx \tabu@spxiii#2\@ne\else
+             \tw@               \fi\fi\fi
+          \tabu@getparam{on}#2\expandafter\@gobble
+    \or   \expandafter\tabu@onxiii    % (space is active)
+    \else o\expandafter\@firstofone
+    \fi{#1#2}}%
+\def\tabu@ofxiii #1#2{%
+    \ifx #2f\expandafter\tabu@offxiii
+    \else   o\expandafter\@firstofone
+    \fi{#1#2}}
+\def\tabu@offxiii #1#2{%
+    \ifcase \ifx  !#2\tw@           \else
+            \ifcat.\noexpand#2\z@   \else
+            \ifx\tabu@spxiii#2\@ne  \else
+            \tw@                \fi\fi\fi
+          \tabu@getparam{off}#2\expandafter\@gobble
+    \or   \expandafter\tabu@offxiii   % (space is active)
+    \else o\expandafter\@firstofone
+    \fi{#1#2}}
+\def\tabu@getparam #1{\tabu@ \csname tabu@#1\endcsname=}
+\def\tabu@getcolor #1{% \tabu@ <- \tabu@getcolor after \edef
+    \ifx \tabu@#1\else   % no more spec
+        \let\tabu@theparam=#1\afterassignment \tabu@getc@l@r #1\fi
+}% \tabu@getcolor
+\def\tabu@getc@l@r #1\tabu@ {%
+    \def\tabu@temp{#1}\tabu@strtrim \tabu@temp
+    \ifx \tabu@temp\@empty
+    \else%\ifcsname \string\color@\tabu@temp \endcsname  % if the color exists
+        \ifx \tabu@theparam \tabu@off   \let\tabu@c@loff \tabu@c@l@r
+        \else                           \let\tabu@c@lon  \tabu@c@l@r
+        \fi
+    %\else \tabu@warncolour{\tabu@temp}%
+    \fi%\fi
+    \tabu@ % next spec
+}% \tabu@getc@l@r
+\def\tabu@warncolour #1{\PackageWarning{tabu}
+    {Color #1 is not defined. Default color used}%
+}% \tabu@warncolour
+\def\tabu@leadersstyle #1#2#3#4#5{\def\tabu@leaders{{#1}{#2}{#3}{#4}{#5}}%
+    \ifx \tabu@leaders\tabu@leaders@G \else
+                \tabu@LEADERS{#1}{#2}{#3}{#4}{#5}\fi
+}% \tabu@leadersstyle
+\def\tabu@rulesstyle #1#2{\let\tabu@leaders \@undefined
+        \gdef\tabu@thevrule{#1}\gdef\tabu@thehrule{#2}%
+}% \tabu@rulesstyle
+%% The leaders boxes ------------------------------------------------
+\def\tabu@LEADERS #1#2#3#4#5{%% width, dash, dash color, gap, gap color
+    {\let\color \tabu@color % => during trials ->  \color = \tabu@nocolor
+    {%                      %    but the leaders boxes should have colors !
+    \def\@therule{\vrule}\def\@thick{height}\def\@length{width}%
+    \def\@box{\hbox}\def\@unbox{\unhbox}\def\@elt{\wd}%
+    \def\@skip{\hskip}\def\@ss{\hss}\def\tabu@leads{\tabu@hleads}%
+    \tabu@l@@d@rs {#1}{#2}{#3}{#4}{#5}%
+    \global\let\tabu@thehleaders \tabu@theleaders
+    }%
+    {%
+    \def\@therule{\hrule}\def\@thick{width}\def\@length{height}%
+    \def\@box{\vbox}\def\@unbox{\unvbox}\def\@elt{\ht}%
+    \def\@skip{\vskip}\def\@ss{\vss}\def\tabu@leads{\tabu@vleads}%
+    \tabu@l@@d@rs {#1}{#2}{#3}{#4}{#5}%
+    \global\let\tabu@thevleaders \tabu@theleaders
+    }%
+    \gdef\tabu@leaders@G{{#1}{#2}{#3}{#4}{#5}}%
+    }%
+}% \tabu@LEADERS
+\def\tabu@therule #1#2{\@therule \@thick#1\@length\dimexpr#2/2 \@depth\z@}
+\def\tabu@l@@d@rs #1#2#3#4#5{%% width, dash, dash color, gap, gap color
+    \global\setbox \tabu@leads=\@box{%
+        {#3\tabu@therule{#1}{#2}}%
+        \ifx\\#5\\\@skip#4\else{#5\tabu@therule{#1}{#4*2}}\fi
+        {#3\tabu@therule{#1}{#2}}}%
+    \global\setbox\tabu@leads=\@box to\@elt\tabu@leads{\@ss
+        {#3\tabu@therule{#1}{#2}}\@unbox\tabu@leads}%
+    \edef\tabu@theleaders ##1{\def\noexpand\tabu@theleaders {%
+        {##1\tabu@therule{#1}{#2}}%
+        \xleaders \copy\tabu@leads \@ss
+        \tabu@therule{0pt}{-#2}{##1\tabu@therule{#1}{#2}}}%
+    }\tabu@theleaders{#3}%
+}% \tabu@l@@d@rs
+%% \tabu \endtabu \tabu* \longtabu \endlongtabu \longtabu* ----------
+\newcommand*\tabu {\tabu@longfalse
+    \ifmmode \def\tabu@ {\array}\def\endtabu {\endarray}%
+    \else  \def\tabu@ {\tabu@tabular}\def\endtabu {\endtabular}\fi
+    \expandafter\let\csname tabu*\endcsname \tabu
+    \expandafter\def\csname endtabu*\endcsname{\endtabu}%
+    \tabu@spreadfalse \tabu@negcoeffalse \tabu@settarget
+}% {tabu}
+\let\tabu@tabular \tabular % <For LyX: some users redefine \tabular...>
+\expandafter\def\csname tabu*\endcsname{\tabuscantokenstrue \tabu}
+\newcommand*\longtabu {\tabu@longtrue
+   \ifmmode\PackageError{tabu}{longtabu not allowed in math mode}\fi
+   \def\tabu@{\longtable}\def\endlongtabu{\endlongtable}%
+   \LTchunksize=\@M
+   \expandafter\let\csname tabu*\endcsname \tabu
+   \expandafter\def\csname endlongtabu*\endcsname{\endlongtabu}%
+   \let\LT@startpbox \tabu@LT@startpbox % \everypar{ array struts }
+   \tabu@spreadfalse \tabu@negcoeffalse \tabu@settarget
+}% {longtabu}
+\expandafter\def\csname longtabu*\endcsname{\tabuscantokenstrue \longtabu}
+\def\tabu@nolongtabu{\PackageError{tabu}
+   {longtabu requires the longtable package}\@ehd}
+%% Read the target and  then : \tabular or \@array ------------------
+\def\tabu@settarget {\futurelet\@let@token \tabu@sett@rget }
+\def\tabu@sett@rget {\tabu@target \z@
+   \ifcase \ifx \bgroup\@let@token   \z@  \else
+           \ifx \@sptoken\@let@token \@ne \else
+           \if t\@let@token          \tw@ \else
+           \if s\@let@token          \thr@@\else
+           \z@\fi\fi\fi\fi
+         \expandafter\tabu@begin
+   \or   \expandafter\tabu@gobblespace\expandafter\tabu@settarget
+   \or   \expandafter\tabu@to
+   \or   \expandafter\tabu@spread
+   \fi
+}% \tabu@sett@rget
+\def\tabu@to to{\def\tabu@halignto{to}\tabu@gettarget}
+\def\tabu@spread spread{\tabu@spreadtrue\def\tabu@halignto{spread}\tabu@gettarget}
+\def\tabu@gettarget {\afterassignment\tabu@linegoaltarget \tabu@target }
+\def\tabu@linegoaltarget {\futurelet\tabu@temp \tabu@linegoalt@rget }
+\def\tabu@linegoalt@rget {%
+   \ifx \tabu@temp\LNGL@setlinegoal
+        \LNGL@setlinegoal \expandafter \@firstoftwo \fi % @gobbles \LNGL@setlinegoal
+   \tabu@begin
+}% \tabu@linegoalt@rget
+\def\tabu@begin #1#{%
+    \iftabu@measuring \expandafter\tabu@nestedmeasure \fi
+    \ifdim \tabu@target=\z@ \let\tabu@halignto \@empty
+    \else                   \edef\tabu@halignto{\tabu@halignto\the\tabu@target}%
+    \fi
+    \@testopt \tabu@tabu@ \tabu@aligndefault #1\@nil
+}% \tabu@begin
+\long\def\tabu@tabu@ [#1]#2\@nil #3{\tabu@setup
+   \def\tabu@align {#1}\def\tabu@savedpream{\NC@find #3}%
+   \tabu@ [\tabu@align ]#2{#3\tabu@rewritefirst }%
+}% \tabu@tabu@
+\def\tabu@nestedmeasure {%
+    \ifodd 1\iftabu@spread \else \ifdim\tabu@target=\z@ \else 0 \fi\fi\relax
+            \tabu@spreadtrue
+    \else   \begingroup \iffalse{\fi \ifnum0=`}\fi
+            \toks@{}\def\tabu@stack{b}%
+            \expandafter\tabu@collectbody\expandafter\tabu@quickrule
+                                         \expandafter\endgroup
+    \fi
+}% \tabu@nestedmeasure
+\def\tabu@quickrule {\indent\vrule height\z@ depth\z@ width\tabu@target}
+%% \tabu@setup  \tabu@init  \tabu@indent
+\def\tabu@setup{\tabu@alloc@
+    \ifcase \tabu@nested
+        \ifmmode \else \iftabu@spread\else \ifdim\tabu@target=\z@
+            \let\tabu@afterendpar \par
+        \fi\fi\fi
+        \def\tabu@aligndefault{c}\tabu@init \tabu@indent
+    \else       % <nested tabu>
+        \def\tabu@aligndefault{t}\let\tabudefaulttarget \linewidth
+    \fi
+    \let\tabu@thetarget \tabudefaulttarget \let\tabu@restored \@undefined
+    \edef\tabu@NC@list{\the\NC@list}\NC@list{\NC@do \tabu@rewritefirst}%
+    \everycr{}\let\@startpbox \tabu@startpbox % for nested tabu inside longtabu...
+              \let\@endpbox   \tabu@endpbox   % idem "    "    "    "    "    "
+              \let\@tabarray  \tabu@tabarray  % idem "    "    "    "    "    "
+    \tabu@setcleanup \tabu@setreset
+}% \tabu@setup
+\def\tabu@init{\tabu@starttimer \tabu@measuringfalse
+    \edef\tabu@hfuzz  {\the\dimexpr\hfuzz+1sp}\global\tabu@footnotes{}%
+    \let\firsthline    \tabu@firsthline   \let\lasthline      \tabu@lasthline
+    \let\firstline     \tabu@firstline    \let\lastline       \tabu@lastline
+    \let\hline         \tabu@hline        \let\@xhline        \tabu@xhline
+    \let\color         \tabu@color        \let\@arstrutbox    \tabu@arstrutbox
+    \iftabu@colortbl\else\let\LT@@hline   \tabu@LT@@hline \fi
+    \tabu@trivlist     %<restore \\=\@normalcr inside lists>
+    \let\@footnotetext \tabu@footnotetext \let\@xfootnotetext \tabu@xfootnotetext
+    \let\@xfootnote    \tabu@xfootnote    \let\centering      \tabu@centering
+    \let\raggedright   \tabu@raggedright  \let\raggedleft     \tabu@raggedleft
+    \let\tabudecimal   \tabu@tabudecimal  \let\Centering      \tabu@Centering
+    \let\RaggedRight   \tabu@RaggedRight  \let\RaggedLeft     \tabu@RaggedLeft
+    \let\justifying    \tabu@justifying   \let\rowfont        \tabu@rowfont
+    \let\fbox          \tabu@fbox         \let\color@b@x      \tabu@color@b@x
+    \let\tabu@@everycr \everycr           \let\tabu@@everypar \everypar
+    \let\tabu@prepnext@tokORI \prepnext@tok\let\prepnext@tok  \tabu@prepnext@tok
+    \let\tabu@multicolumnORI\multicolumn  \let\multicolumn    \tabu@multicolumn
+    \let\tabu@startpbox \@startpbox      % for nested tabu inside longtabu pfff !!!
+    \let\tabu@endpbox   \@endpbox        % idem  "    "    "    "    "    "    "
+    \let\tabu@tabarray  \@tabarray       % idem  "    "    "    "    "    "    "
+    \tabu@adl@fix      \let\endarray      \tabu@endarray % <fix> colortbl & arydshln (delarray)
+    \iftabu@colortbl\CT@everycr\expandafter{\expandafter\iftabu@everyrow \the\CT@everycr \fi}\fi
+}% \tabu@init
+\def\tabu@indent{% correction for indentation
+    \ifdim \parindent>\z@\ifx \linewidth\tabudefaulttarget
+    \everypar\expandafter{%
+        \the\everypar\everypar\expandafter{\the\everypar}%
+            \setbox\z@=\lastbox
+            \ifdim\wd\z@>\z@ \edef\tabu@thetarget
+                {\the\dimexpr -\wd\z@+\tabudefaulttarget}\fi
+            \box\z@}%
+    \fi\fi
+}% \tabu@indent
+\def\tabu@setcleanup {% saves last global assignments
+    \ifodd 1\ifmmode \else \iftabu@long \else 0\fi\fi\relax
+        \def\tabu@aftergroupcleanup{%
+                \def\tabu@aftergroupcleanup{\aftergroup\tabu@cleanup}}%
+    \else
+        \def\tabu@aftergroupcleanup{%
+                \aftergroup\aftergroup\aftergroup\tabu@cleanup
+                \let\tabu@aftergroupcleanup \relax}%
+    \fi
+    \let\tabu@arc@Gsave         \tabu@arc@G
+    \let\tabu@arc@G             \tabu@arc@L   % <init>
+    \let\tabu@drsc@Gsave        \tabu@drsc@G
+    \let\tabu@drsc@G            \tabu@drsc@L  % <init>
+    \let\tabu@ls@Gsave          \tabu@ls@G
+    \let\tabu@ls@G              \tabu@ls@L    % <init>
+    \let\tabu@rc@Gsave          \tabu@rc@G
+    \let\tabu@rc@G              \tabu@rc@L    % <init>
+    \let\tabu@evr@Gsave         \tabu@evr@G
+    \let\tabu@evr@G             \tabu@evr@L   % <init>
+    \let\tabu@celllalign@save   \tabu@celllalign
+    \let\tabu@cellralign@save   \tabu@cellralign
+    \let\tabu@cellleft@save     \tabu@cellleft
+    \let\tabu@cellright@save    \tabu@cellright
+    \let\tabu@@celllalign@save  \tabu@@celllalign
+    \let\tabu@@cellralign@save  \tabu@@cellralign
+    \let\tabu@@cellleft@save    \tabu@@cellleft
+    \let\tabu@@cellright@save   \tabu@@cellright
+    \let\tabu@rowfontreset@save \tabu@rowfontreset
+    \let\tabu@@rowfontreset@save\tabu@@rowfontreset
+    \let\tabu@rowfontreset      \@empty
+    \edef\tabu@alloc@save      {\the\tabu@alloc}%   restore at \tabu@reset
+    \edef\c@taburow@save       {\the\c@taburow}%
+    \edef\tabu@naturalX@save   {\the\tabu@naturalX}%
+    \let\tabu@naturalXmin@save  \tabu@naturalXmin
+    \let\tabu@naturalXmax@save  \tabu@naturalXmax
+    \let\tabu@mkarstrut@save    \tabu@mkarstrut
+    \edef\tabu@clarstrut{%
+        \extrarowheight \the\dimexpr \ht\@arstrutbox-\ht\strutbox \relax
+        \extrarowdepth \the\dimexpr \dp\@arstrutbox-\dp\strutbox \relax
+        \let\noexpand\@arraystretch \@ne \noexpand\tabu@rearstrut}%
+}% \tabu@setcleanup
+\def\tabu@cleanup {\begingroup
+    \globaldefs\@ne         \tabu@everyrowtrue
+    \let\tabu@arc@G         \tabu@arc@Gsave
+    \let\CT@arc@            \tabu@arc@G
+    \let\tabu@drsc@G        \tabu@drsc@Gsave
+    \let\CT@drsc@           \tabu@drsc@G
+    \let\tabu@ls@G          \tabu@ls@Gsave
+    \let\tabu@ls@           \tabu@ls@G
+    \let\tabu@rc@G          \tabu@rc@Gsave
+    \let\tabu@rc@           \tabu@rc@G
+    \let\CT@do@color        \relax
+    \let\tabu@evr@G         \tabu@evr@Gsave
+    \let\tabu@celllalign    \tabu@celllalign@save
+    \let\tabu@cellralign    \tabu@cellralign@save
+    \let\tabu@cellleft      \tabu@cellleft@save
+    \let\tabu@cellright     \tabu@cellright@save
+    \let\tabu@@celllalign   \tabu@@celllalign@save
+    \let\tabu@@cellralign   \tabu@@cellralign@save
+    \let\tabu@@cellleft     \tabu@@cellleft@save
+    \let\tabu@@cellright    \tabu@@cellright@save
+    \let\tabu@rowfontreset  \tabu@rowfontreset@save
+    \let\tabu@@rowfontreset \tabu@@rowfontreset@save
+    \tabu@naturalX         =\tabu@naturalX@save
+    \let\tabu@naturalXmax   \tabu@naturalXmax@save
+    \let\tabu@naturalXmin   \tabu@naturalXmin@save
+    \let\tabu@mkarstrut     \tabu@mkarstrut@save
+    \c@taburow             =\c@taburow@save
+    \ifcase \tabu@nested    \tabu@alloc \m@ne\fi
+    \endgroup               % <end of \globaldefs>
+    \ifcase \tabu@nested
+        \the\tabu@footnotes \global\tabu@footnotes{}%
+        \tabu@afterendpar   \tabu@elapsedtime
+    \fi
+    \tabu@clarstrut
+    \everyrow\expandafter   {\tabu@evr@G}%
+}% \tabu@cleanup
+\let\tabu@afterendpar \relax
+\def\tabu@setreset {%
+    \edef\tabu@savedparams {%         \relax for \tabu@message@save
+        \ifmmode \col@sep \the\arraycolsep
+        \else    \col@sep \the\tabcolsep \fi    \relax
+        \arrayrulewidth   \the\arrayrulewidth   \relax
+        \doublerulesep    \the\doublerulesep    \relax
+        \extratabsurround \the\extratabsurround \relax
+        \extrarowheight   \the\extrarowheight   \relax
+        \extrarowdepth    \the\extrarowdepth    \relax
+        \abovetabulinesep \the\abovetabulinesep \relax
+        \belowtabulinesep \the\belowtabulinesep \relax
+        \def\noexpand\arraystretch{\arraystretch}%
+        \ifdefined\minrowclearance \minrowclearance\the\minrowclearance\relax\fi}%
+    \begingroup
+        \@temptokena\expandafter{\tabu@savedparams}% => only for \savetabu / \usetabu
+        \ifx \tabu@arc@L\relax  \else \tabu@setsave \tabu@arc@L \fi
+        \ifx \tabu@drsc@L\relax \else \tabu@setsave \tabu@drsc@L \fi
+        \tabu@setsave \tabu@ls@L      \tabu@setsave \tabu@evr@L
+        \expandafter \endgroup \expandafter
+            \def\expandafter\tabu@saved@ \expandafter{\the\@temptokena
+                \let\tabu@arc@G  \tabu@arc@L
+                \let\tabu@drsc@G \tabu@drsc@L
+                \let\tabu@ls@G   \tabu@ls@L
+                \let\tabu@rc@G   \tabu@rc@L
+                \let\tabu@evr@G  \tabu@evr@L}%
+    \def\tabu@reset{\tabu@savedparams
+        \tabu@everyrowtrue  \c@taburow \z@
+        \let\CT@arc@        \tabu@arc@L
+        \let\CT@drsc@       \tabu@drsc@L
+        \let\tabu@ls@       \tabu@ls@L
+        \let\tabu@rc@       \tabu@rc@L
+        \global\tabu@alloc  \tabu@alloc@save
+        \everyrow\expandafter{\tabu@evr@L}}%
+}% \tabu@reset
+\def\tabu@setsave #1{\expandafter\tabu@sets@ve #1\@nil{#1}}
+\long\def\tabu@sets@ve #1\@nil #2{\@temptokena\expandafter{\the\@temptokena \def#2{#1}}}
+%% The Rewriting Process -------------------------------------------
+\def\tabu@newcolumntype #1{%
+    \expandafter\tabu@new@columntype
+        \csname NC@find@\string#1\expandafter\endcsname
+        \csname NC@rewrite@\string#1\endcsname
+        {#1}%
+}% \tabu@newcolumntype
+\def\tabu@new@columntype #1#2#3{%
+    \def#1##1#3{\NC@{##1}}%
+    \let#2\relax \newcommand*#2%
+}% \tabu@new@columntype
+\def\tabu@privatecolumntype #1{%
+    \expandafter\tabu@private@columntype
+        \csname NC@find@\string#1\expandafter\endcsname
+        \csname NC@rewrite@\string#1\expandafter\endcsname
+        \csname tabu@NC@find@\string#1\expandafter\endcsname
+        \csname tabu@NC@rewrite@\string#1\endcsname
+        {#1}%
+}% \tabu@privatecolumntype
+\def\tabu@private@columntype#1#2#3#4{%
+    \g@addto@macro\tabu@privatecolumns{\let#1#3\let#2#4}%
+    \tabu@new@columntype#3#4%
+}% \tabu@private@columntype
+\let\tabu@privatecolumns \@empty
+\newcommand*\tabucolumn [1]{\expandafter \def \expandafter
+    \tabu@highprioritycolumns\expandafter{\tabu@highprioritycolumns
+                                          \NC@do #1}}%
+\let\tabu@highprioritycolumns \@empty
+%% The  |  ``column'' : rewriting process --------------------------
+\tabu@privatecolumntype |{\tabu@rewritevline}
+\newcommand*\tabu@rewritevline[1][]{\tabu@vlinearg{#1}%
+                \expandafter \NC@find \tabu@rewritten}
+\def\tabu@lines #1{%
+    \ifx|#1\else \tabu@privatecolumntype #1{\tabu@rewritevline}\fi
+    \NC@list\expandafter{\the\NC@list \NC@do #1}%
+}% \tabu@lines@
+\def\tabu@vlinearg #1{%
+    \ifx\\#1\\\def\tabu@thestyle {\tabu@ls@}%
+    \else\tabu@getline {#1}%
+    \fi
+    \def\tabu@rewritten ##1{\def\tabu@rewritten{!{##1\tabu@thevline}}%
+    }\expandafter\tabu@rewritten\expandafter{\tabu@thestyle}%
+    \expandafter \tabu@keepls \tabu@thestyle \@nil
+}% \tabu@vlinearg
+\def\tabu@keepls #1\@nil{%
+    \ifcat $\@cdr #1\@nil $%
+    \ifx \relax#1\else
+    \ifx \tabu@ls@#1\else
+        \let#1\relax
+        \xdef\tabu@mkpreambuffer{\tabu@mkpreambuffer
+                \tabu@savels\noexpand#1}\fi\fi\fi
+}% \tabu@keepls
+\def\tabu@thevline {\begingroup
+    \ifdefined\tabu@leaders
+        \setbox\@tempboxa=\vtop to\dimexpr
+                      \ht\@arstrutbox+\dp\@arstrutbox{{\tabu@thevleaders}}%
+        \ht\@tempboxa=\ht\@arstrutbox \dp\@tempboxa=\dp\@arstrutbox
+        \box\@tempboxa
+    \else
+                \tabu@thevrule
+    \fi             \endgroup
+}% \tabu@thevline
+\def\tabu@savels #1{%
+    \expandafter\let\csname\string#1\endcsname #1%
+    \expandafter\def\expandafter\tabu@reset\expandafter{\tabu@reset
+                                                    \tabu@resetls#1}}%
+\def\tabu@resetls #1{\expandafter\let\expandafter#1\csname\string#1\endcsname}%
+%% \multicolumn inside tabu environment -----------------------------
+\tabu@newcolumntype \tabu@rewritemulticolumn{%
+    \aftergroup \tabu@endrewritemulticolumn % after \@mkpream group
+    \NC@list{\NC@do *}\tabu@textbar \tabu@lines
+    \tabu@savedecl
+    \tabu@privatecolumns
+    \NC@list\expandafter{\the\expandafter\NC@list \tabu@NC@list}%
+    \let\tabu@savels \relax
+    \NC@find
+}% \tabu@rewritemulticolumn
+\def\tabu@endrewritemulticolumn{\gdef\tabu@mkpreambuffer{}\endgroup}
+\def\tabu@multicolumn{\tabu@ifenvir \tabu@multic@lumn \tabu@multicolumnORI}
+\long\def\tabu@multic@lumn #1#2#3{\multispan{#1}\begingroup
+    \tabu@everyrowtrue
+    \NC@list{\NC@do \tabu@rewritemulticolumn}%
+    \expandafter\@gobbletwo % gobbles \multispan{#1}
+         \tabu@multicolumnORI{#1}{\tabu@rewritemulticolumn #2}%
+                {\iftabuscantokens \tabu@rescan \else \expandafter\@firstofone \fi
+                {#3}}%
+}% \tabu@multic@lumn
+%% The X column(s): rewriting process -----------------------------
+\tabu@privatecolumntype X[1][]{\begingroup \tabu@siunitx{\endgroup \tabu@rewriteX {#1}}}
+\def\tabu@nosiunitx #1{#1{}{}\expandafter \NC@find \tabu@rewritten }
+\def\tabu@siunitx   #1{\@ifnextchar \bgroup
+                     {\tabu@rewriteX@Ss{#1}}
+                      {\tabu@nosiunitx{#1}}}
+\def\tabu@rewriteX@Ss #1#2{\@temptokena{}%
+    \@defaultunits \let\tabu@temp =#2\relax\@nnil
+    \ifodd 1\ifx S\tabu@temp \else \ifx s\tabu@temp \else 0 \fi\fi
+        \def\NC@find{\def\NC@find >####1####2<####3\relax{#1 {####1}{####3}%
+            }\expandafter\NC@find \the\@temptokena \relax
+        }\expandafter\NC@rewrite@S \@gobble #2\relax
+    \else \tabu@siunitxerror
+    \fi
+    \expandafter \NC@find \tabu@rewritten
+}% \tabu@rewriteX@Ss
+\def\tabu@siunitxerror {\PackageError{tabu}{Not a S nor s column !
+        \MessageBreak X column can only embed siunitx S or s columns}\@ehd
+}% \tabu@siunitxerror
+\def\tabu@rewriteX #1#2#3{\tabu@Xarg {#1}{#2}{#3}%
+    \iftabu@measuring
+    \else \tabu@measuringtrue % first X column found in the preamble
+        \let\@halignto \relax   \let\tabu@halignto \relax
+        \iftabu@spread \tabu@spreadtarget \tabu@target \tabu@target \z@
+        \else          \tabu@spreadtarget \z@ \fi
+        \ifdim \tabu@target=\z@
+                \setlength\tabu@target \tabu@thetarget
+                \tabu@message{\tabu@message@defaulttarget}%
+        \else   \tabu@message{\tabu@message@target}\fi
+    \fi
+}% \tabu@rewriteX
+\def\tabu@rewriteXrestore #1#2#3{\let\@halignto \relax
+                                \def\tabu@rewritten{l}}
+\def\tabu@Xarg #1#2#3{%
+   \advance\tabu@Xcol \@ne      \let\tabu@Xlcr  \@empty
+   \let\tabu@Xdisp    \@empty   \let\tabu@Xmath \@empty
+    \ifx\\#1\\%    <shortcut when no option>
+         \def\tabu@rewritten{p}\tabucolX \p@        % <default coef = 1>
+    \else
+         \let\tabu@rewritten \@empty   \let\tabu@temp \@empty  \tabucolX \z@
+         \tabu@Xparse {}#1\relax
+    \fi
+    \tabu@Xrewritten{#2}{#3}%
+}% \tabu@Xarg
+\def\tabu@Xparse #1{\futurelet\@let@token \tabu@Xtest}
+\expandafter\def\expandafter\tabu@Xparsespace\space{\tabu@Xparse{}}
+\def\tabu@Xtest{%
+   \ifcase \ifx \relax\@let@token \z@ \else
+           \if ,\@let@token \m@ne\else
+           \if p\@let@token 1\else
+           \if m\@let@token 2\else
+           \if b\@let@token 3\else
+           \if l\@let@token 4\else
+           \if c\@let@token 5\else
+           \if r\@let@token 6\else
+           \if j\@let@token 7\else
+           \if L\@let@token 8\else
+           \if C\@let@token 9\else
+           \if R\@let@token 10\else
+           \if J\@let@token 11\else
+           \ifx \@sptoken\@let@token 12\else
+           \if .\@let@token 13\else
+           \if -\@let@token 13\else
+           \ifcat $\@let@token 14\else
+           15\fi\fi\fi\fi\fi\fi\fi\fi\fi\fi\fi\fi\fi\fi\fi\fi\fi\relax
+   \or \tabu@Xtype {p}%
+   \or \tabu@Xtype {m}%
+   \or \tabu@Xtype {b}%
+   \or \tabu@Xalign \raggedright\relax
+   \or \tabu@Xalign \centering\relax
+   \or \tabu@Xalign \raggedleft\relax
+   \or \tabu@Xalign \tabu@justify\relax
+   \or \tabu@Xalign \RaggedRight\raggedright
+   \or \tabu@Xalign \Centering\centering
+   \or \tabu@Xalign \RaggedLeft\raggedleft
+   \or \tabu@Xalign \justifying\tabu@justify
+   \or \expandafter \tabu@Xparsespace
+   \or \expandafter \tabu@Xcoef
+   \or \expandafter \tabu@Xm@th
+   \or \tabu@Xcoef{}%
+   \else\expandafter \tabu@Xparse
+   \fi
+}% \tabu@Xtest
+\def\tabu@Xalign #1#2{%
+    \ifx \tabu@Xlcr\@empty \else \PackageWarning{tabu}
+       {Duplicate horizontal alignment specification}\fi
+    \ifdefined#1\def\tabu@Xlcr{#1}\let#1\relax
+    \else       \def\tabu@Xlcr{#2}\let#2\relax\fi
+    \expandafter\tabu@Xparse
+}% \tabu@Xalign
+\def\tabu@Xtype #1{%
+    \ifx \tabu@rewritten\@empty \else \PackageWarning{tabu}
+            {Duplicate vertical alignment specification}\fi
+    \def\tabu@rewritten{#1}\expandafter\tabu@Xparse
+}% \tabu@Xtype
+\def\tabu@Xcoef#1{\edef\tabu@temp{\tabu@temp#1}%
+    \afterassignment\tabu@Xc@ef \tabu@cnt\number\if-#10\fi
+}% \tabu@Xcoef
+\def\tabu@Xc@ef{\advance\tabucolX \tabu@temp\the\tabu@cnt\p@
+    \tabu@Xparse{}%
+}% \tabu@Xc@ef
+\def\tabu@Xm@th #1{\futurelet \@let@token \tabu@Xd@sp}
+\def\tabu@Xd@sp{\let\tabu@Xmath=$%
+    \ifx $\@let@token \def\tabu@Xdisp{\displaystyle}%
+            \expandafter\tabu@Xparse
+    \else   \expandafter\tabu@Xparse\expandafter{\expandafter}%
+    \fi
+}% \tabu@Xd@sp
+\def\tabu@Xrewritten {%
+   \ifx  \tabu@rewritten\@empty \def\tabu@rewritten{p}\fi
+   \ifdim \tabucolX<\z@         \tabu@negcoeftrue
+   \else\ifdim \tabucolX=\z@    \tabucolX \p@
+   \fi\fi
+   \edef\tabu@temp{{\the\tabu@Xcol}{\tabu@strippt\tabucolX}}%
+   \edef\tabu@Xcoefs{\tabu@Xcoefs    \tabu@      \tabu@temp}%
+   \edef\tabu@rewritten ##1##2{\def\noexpand\tabu@rewritten{%
+        >{\tabu@Xlcr \ifx$\tabu@Xmath$\tabu@Xdisp\fi ##1}%
+                    \tabu@rewritten {\tabu@hsize \tabu@temp}%
+        <{##2\ifx$\tabu@Xmath$\fi}}%
+   }\tabu@rewritten
+}% \tabu@Xrewritten
+\def\tabu@hsize #1#2{%
+    \ifdim #2\p@<\z@
+        \ifdim \tabucolX=\maxdimen \tabu@wd{#1}\else
+        \ifdim \tabu@wd{#1}<-#2\tabucolX \tabu@wd{#1}\else -#2\tabucolX\fi
+        \fi
+   \else #2\tabucolX
+   \fi
+}% \tabu@hsize
+%% \usetabu  and  \preamble: rewriting process ---------------------
+\tabu@privatecolumntype \usetabu [1]{%
+    \ifx\\#1\\\tabu@saveerr{}\else
+        \@ifundefined{tabu@saved@\string#1}
+            {\tabu@saveerr{#1}}
+            {\let\tabu@rewriteX \tabu@rewriteXrestore
+             \csname tabu@saved@\string#1\expandafter\endcsname\expandafter\@ne}%
+    \fi
+}% \NC@rewrite@\usetabu
+\tabu@privatecolumntype \preamble [1]{%
+    \ifx\\#1\\\tabu@saveerr{}\else
+        \@ifundefined{tabu@saved@\string#1}
+            {\tabu@saveerr{#1}}
+            {\csname tabu@saved@\string#1\expandafter\endcsname\expandafter\z@}%
+    \fi
+}% \NC@rewrite@\preamble
+%% Controlling the rewriting process -------------------------------
+\tabu@newcolumntype \tabu@rewritefirst{%
+    \iftabu@long    \aftergroup \tabu@longpream  % <the whole implementation is here !>
+    \else           \aftergroup \tabu@pream
+    \fi
+    \let\tabu@          \relax      \let\tabu@hsize     \relax
+    \let\tabu@Xcoefs    \@empty     \let\tabu@savels    \relax
+    \tabu@Xcol          \z@         \tabu@cnt           \tw@
+    \gdef\tabu@mkpreambuffer{\tabu@{}}\tabu@measuringfalse
+    \global\setbox\@arstrutbox \box\@arstrutbox
+    \NC@list{\NC@do *}\tabu@textbar \tabu@lines
+    \NC@list\expandafter{\the\NC@list \NC@do X}%
+    \iftabu@siunitx     % <siunitx S and s columns>
+            \NC@list\expandafter{\the\NC@list \NC@do S\NC@do s}\fi
+    \NC@list\expandafter{\the\expandafter\NC@list \tabu@highprioritycolumns}%
+    \expandafter\def\expandafter\tabu@NC@list\expandafter{%
+                    \the\expandafter\NC@list \tabu@NC@list}%    % * | X S <original>
+    \NC@list\expandafter{\expandafter \NC@do \expandafter\usetabu
+                         \expandafter \NC@do \expandafter\preamble
+                         \the\NC@list \NC@do \tabu@rewritemiddle
+                                      \NC@do \tabu@rewritelast}%
+    \tabu@savedecl
+    \tabu@privatecolumns
+    \edef\tabu@prev{\the\@temptokena}\NC@find \tabu@rewritemiddle
+}% NC@rewrite@\tabu@rewritefirst
+\tabu@newcolumntype \tabu@rewritemiddle{%
+    \edef\tabu@temp{\the\@temptokena}\NC@find \tabu@rewritelast
+}% \NC@rewrite@\tabu@rewritemiddle
+\tabu@newcolumntype \tabu@rewritelast{%
+    \ifx \tabu@temp\tabu@prev   \advance\tabu@cnt \m@ne
+            \NC@list\expandafter{\tabu@NC@list \NC@do \tabu@rewritemiddle
+                                               \NC@do \tabu@rewritelast}%
+    \else \let\tabu@prev\tabu@temp
+    \fi
+    \ifcase \tabu@cnt   \expandafter\tabu@endrewrite
+    \else               \expandafter\NC@find \expandafter\tabu@rewritemiddle
+    \fi
+}% \NC@rewrite@\tabu@rewritelast
+%% Choosing the strategy --------------------------------------------
+\def\tabu@endrewrite {%
+    \let\tabu@temp \NC@find
+    \ifx \@arrayright\relax \let\@arrayright \@empty  \fi
+    \count@=%
+        \ifx \@finalstrut\tabu@finalstrut \z@ % outer in mode 0 print
+             \iftabu@measuring
+                \xdef\tabu@mkpreambuffer{\tabu@mkpreambuffer
+                    \tabu@target        \csname tabu@\the\tabu@nested.T\endcsname
+                    \tabucolX           \csname tabu@\the\tabu@nested.X\endcsname
+                    \edef\@halignto {\ifx\@arrayright\@empty to\tabu@target\fi}}%
+             \fi
+        \else\iftabu@measuring        4       % X columns
+                \xdef\tabu@mkpreambuffer{\tabu@{\tabu@mkpreambuffer
+                    \tabu@target        \the\tabu@target
+                    \tabu@spreadtarget  \the\tabu@spreadtarget}%
+                    \def\noexpand\tabu@Xcoefs{\tabu@Xcoefs}%
+                    \edef\tabu@halignto{\ifx \@arrayright\@empty to\tabu@target\fi}}%
+                 \let\tabu@Xcoefs \relax
+             \else\ifcase\tabu@nested \thr@@  % outer, no X
+                                      \global\let\tabu@afterendpar \relax
+                  \else               \@ne    % inner, no X, outer in mode 1 or 2
+                  \fi
+                  \ifdefined\tabu@usetabu
+                  \else \ifdim\tabu@target=\z@
+                  \else \let\tabu@temp \tabu@extracolsep
+                  \fi\fi
+             \fi
+        \fi
+    \xdef\tabu@mkpreambuffer{\count@ \the\count@ \tabu@mkpreambuffer}%
+    \tabu@temp
+}% \tabu@endrewrite
+\def\tabu@extracolsep{\@defaultunits    \expandafter\let
+    \expandafter\tabu@temp \expandafter=\the\@temptokena \relax\@nnil
+    \ifx \tabu@temp\@sptoken
+        \expandafter\tabu@gobblespace \expandafter\tabu@extracolsep
+    \else
+        \edef\tabu@temp{\noexpand\NC@find
+            \if |\noexpand\tabu@temp        @%
+            \else\if !\noexpand\tabu@temp   @%
+            \else                           !%
+            \fi\fi
+            {\noexpand\extracolsep\noexpand\@flushglue}}%
+    \fi
+    \tabu@temp
+}% \tabu@extrac@lsep
+%% Implementing the strategy ----------------------------------------
+\long\def\tabu@pream #1\@preamble {%
+    \let\tabu@ \tabu@@  \tabu@mkpreambuffer     \tabu@aftergroupcleanup
+    \NC@list\expandafter {\tabu@NC@list}%    in case of nesting...
+    \ifdefined\tabu@usetabu \tabu@usetabu \tabu@target \z@ \fi
+    \let\tabu@savedpreamble \@preamble
+    \global\let\tabu@elapsedtime \relax
+    \tabu@thebody ={#1\tabu@aftergroupcleanup}%
+    \tabu@thebody =\expandafter{\the\expandafter\tabu@thebody
+                                                \@preamble}%
+    \edef\tabuthepreamble {\the\tabu@thebody}% ( no @ allowed for \scantokens )
+    \tabu@select
+}% \tabu@pream
+\long\def\tabu@longpream #1\LT@bchunk #2\LT@bchunk{%
+    \let\tabu@ \tabu@@  \tabu@mkpreambuffer     \tabu@aftergroupcleanup
+    \NC@list\expandafter {\tabu@NC@list}%    in case of nesting...
+    \let\tabu@savedpreamble \@preamble
+    \global\let\tabu@elapsedtime \relax
+    \tabu@thebody ={#1\LT@bchunk #2\tabu@aftergroupcleanup \LT@bchunk}%
+    \edef\tabuthepreamble {\the\tabu@thebody}% ( no @ allowed for \scantokens )
+    \tabu@select
+}% \tabu@longpream
+\def\tabu@select {%
+    \ifnum\tabu@nested>\z@ \tabuscantokensfalse \fi
+    \ifnum \count@=\@ne \iftabu@measuring \count@=\tw@ \fi\fi
+    \ifcase \count@
+        \global\let\tabu@elapsedtime \relax
+        \tabu@seteverycr
+        \expandafter \tabuthepreamble       % vertical adjustment (inherited from outer)
+    \or      % exit in vertical measure + struts per cell because no X and outer in mode 3
+        \tabu@evr{\tabu@verticalinit}\tabu@celllalign@def{\tabu@verticalmeasure}%
+        \def\tabu@cellralign{\tabu@verticalspacing}%
+        \tabu@seteverycr
+        \expandafter \tabuthepreamble
+    \or                            % exit without measure because no X and outer in mode 4
+        \tabu@evr{}\tabu@celllalign@def{}\let\tabu@cellralign \@empty
+        \tabu@seteverycr
+        \expandafter \tabuthepreamble
+    \else                                   % needs trials
+        \tabu@evr{}\tabu@celllalign@def{}\let\tabu@cellralign \@empty
+        \tabu@savecounters
+        \expandafter \tabu@setstrategy
+    \fi
+}% \tabu@select
+\def\tabu@@ {\gdef\tabu@mkpreambuffer}
+%% Protections to set up before trials ------------------------------
+\def\tabu@setstrategy {\begingroup  % <trials group>
+    \tabu@trialh@@k    \tabu@cnt    \z@  % number of trials
+    \hbadness          \@M          \let\hbadness          \@tempcnta
+    \hfuzz             \maxdimen    \let\hfuzz             \@tempdima
+    \let\write         \tabu@nowrite\let\GenericError      \tabu@GenericError
+    \let\savetabu      \@gobble     \let\tabudefaulttarget \linewidth
+    \let\@footnotetext \@gobble     \let\@xfootnote        \tabu@xfootnote
+    \let\color         \tabu@nocolor\let\rowcolor          \tabu@norowcolor
+    \let\tabu@aftergroupcleanup \relax % only after the last trial
+    \tabu@mkpreambuffer
+    \ifnum \count@>\thr@@ \let\@halignto \@empty  \tabucolX@init
+                          \def\tabu@lasttry{\m@ne\p@}\fi
+    \begingroup \iffalse{\fi \ifnum0=`}\fi
+        \toks@{}\def\tabu@stack{b}\iftabuscantokens \endlinechar=10 \obeyspaces \fi %
+                                  \tabu@collectbody \tabu@strategy %
+}% \tabu@setstrategy
+\def\tabu@savecounters{%
+    \def\@elt ##1{\csname c@##1\endcsname\the\csname c@##1\endcsname}%
+    \edef\tabu@clckpt {\begingroup \globaldefs=\@ne \cl@@ckpt \endgroup}\let\@elt \relax
+}% \tabu@savecounters
+\def\tabucolX@init {%  \tabucolX <= \tabu@target / (sum coefs > 0)
+    \dimen@ \z@ \tabu@Xsum \z@ \tabucolX \z@ \let\tabu@ \tabu@Xinit \tabu@Xcoefs
+    \ifdim \dimen@>\z@
+        \@tempdima \dimexpr \tabu@target *\p@/\dimen@ + \tabu@hfuzz\relax
+        \ifdim \tabucolX<\@tempdima \tabucolX \@tempdima \fi
+    \fi
+}% \tabucolX@init
+\def\tabu@Xinit #1#2{\tabu@Xcol #1 \advance \tabu@Xsum
+    \ifdim #2\p@>\z@ #2\p@  \advance\dimen@ #2\p@
+    \else           -#2\p@  \tabu@negcoeftrue
+                            \@tempdima \dimexpr \tabu@target*\p@/\dimexpr-#2\p@\relax \relax
+                            \ifdim \tabucolX<\@tempdima \tabucolX \@tempdima \fi
+                            \tabu@wddef{#1}{0pt}%
+    \fi
+}% \tabu@Xinit
+%% Collecting the environment body ----------------------------------
+\long\def\tabu@collectbody #1#2\end #3{%
+    \edef\tabu@stack{\tabu@pushbegins #2\begin\end\expandafter\@gobble\tabu@stack}%
+    \ifx \tabu@stack\@empty
+        \toks@\expandafter{\expandafter\tabu@thebody\expandafter{\the\toks@ #2}%
+                \def\tabu@end@envir{\end{#3}}%
+                \iftabuscantokens
+                    \iftabu@long \def\tabu@endenvir {\end{#3}\tabu@gobbleX}%
+                    \else        \def\tabu@endenvir {\let\endarray \@empty
+                                                     \end{#3}\tabu@gobbleX}%
+                    \fi
+                \else           \def\tabu@endenvir  {\end{#3}}\fi}%
+        \let\tabu@collectbody \tabu@endofcollect
+    \else\def\tabu@temp{#3}%
+        \ifx \tabu@temp\@empty \toks@\expandafter{\the\toks@ #2\end }%
+        \else \ifx\tabu@temp\tabu@@spxiii \toks@\expandafter{\the\toks@ #2\end #3}%
+        \else \ifx\tabu@temp\tabu@X \toks@\expandafter{\the\toks@ #2\end #3}%
+        \else \toks@\expandafter{\the\toks@ #2\end{#3}}%
+        \fi\fi\fi
+    \fi
+    \tabu@collectbody{#1}%
+}% \tabu@collectbody
+\long\def\tabu@pushbegins#1\begin#2{\ifx\end#2\else b\expandafter\tabu@pushbegins\fi}%
+\def\tabu@endofcollect #1{\ifnum0=`{}\fi
+                          \expandafter\endgroup \the\toks@  #1%
+}% \tabu@endofcollect
+%% The trials: switching between strategies -------------------------
+\def\tabu@strategy {\relax  % stops \count@ assignment !
+    \ifcase\count@          % case 0 = print with vertical adjustment (outer is finished)
+        \expandafter \tabu@endoftrials
+    \or                     % case 1 = exit in vertical measure (outer in mode 3)
+        \expandafter\xdef\csname tabu@\the\tabu@nested.T\endcsname{\the\tabu@target}%
+        \expandafter\xdef\csname tabu@\the\tabu@nested.X\endcsname{\the\tabucolX}%
+        \expandafter \tabu@endoftrials
+    \or                     % case 2 = exit with a rule replacing the table (outer in mode 4)
+        \expandafter \tabu@quickend
+    \or                     % case 3 = outer is in mode 3 because of no X
+        \begingroup
+            \tabu@evr{\tabu@verticalinit}\tabu@celllalign@def{\tabu@verticalmeasure}%
+            \def\tabu@cellralign{\tabu@verticalspacing}%
+            \expandafter \tabu@measuring
+    \else                   % case 4 = horizontal measure
+        \begingroup
+            \global\let\tabu@elapsedtime \tabu@message@etime
+            \long\def\multicolumn##1##2##3{\multispan{##1}}%
+            \let\tabu@startpboxORI \@startpbox
+            \iftabu@spread
+                    \def\tabu@naturalXmax {\z@}%
+                    \let\tabu@naturalXmin \tabu@naturalXmax
+                    \tabu@evr{\global\tabu@naturalX \z@}%
+                    \let\@startpbox \tabu@startpboxmeasure
+            \else\iftabu@negcoef
+                    \let\@startpbox \tabu@startpboxmeasure
+            \else   \let\@startpbox \tabu@startpboxquick
+            \fi\fi
+            \expandafter \tabu@measuring
+    \fi
+}% \tabu@strategy
+\def\tabu@measuring{\expandafter \tabu@trial \expandafter
+                                                \count@ \the\count@ \tabu@endtrial
+}% \tabu@measuring
+\def\tabu@trial{\iftabu@long \tabu@longtrial \else \tabu@shorttrial \fi}
+\def\tabu@shorttrial {\setbox\tabu@box \hbox\bgroup \tabu@seteverycr
+    \ifx \tabu@savecounters\relax \else
+                \let\tabu@savecounters \relax \tabu@clckpt \fi
+    $\iftabuscantokens \tabu@rescan \else \expandafter\@secondoftwo \fi
+       \expandafter{\expandafter \tabuthepreamble
+                         \the\tabu@thebody
+                         \csname tabu@adl@endtrial\endcsname
+                         \endarray}$\egroup             % got \tabu@box
+}% \tabu@shorttrial
+\def\tabu@longtrial {\setbox\tabu@box \hbox\bgroup \tabu@seteverycr
+    \ifx \tabu@savecounters\relax \else
+                \let\tabu@savecounters \relax \tabu@clckpt \fi
+    \iftabuscantokens \tabu@rescan \else \expandafter\@secondoftwo \fi
+       \expandafter{\expandafter \tabuthepreamble
+                         \the\tabu@thebody
+                         \tabuendlongtrial}\egroup      % got \tabu@box
+}% \tabu@longtrial
+\def\tabuendlongtrial{% no @ allowed for \scantokens
+    \LT@echunk  \global\setbox\@ne \hbox{\unhbox\@ne}\kern\wd\@ne
+                \LT@get@widths
+}% \tabuendlongtrial
+\def\tabu@adl@endtrial{% <arydshln in nested trials - problem for global column counters!>
+    \crcr \noalign{\global\adl@ncol \tabu@nbcols}}% anything global is crap, junky and fails !
+\def\tabu@seteverycr {\tabu@reset
+    \everycr \expandafter{\the\everycr  \tabu@everycr}%
+    \let\everycr \tabu@noeverycr                      % <for ialign>
+}% \tabu@seteverycr
+\def\tabu@noeverycr{{\aftergroup\tabu@restoreeverycr \afterassignment}\toks@}
+\def\tabu@restoreeverycr {\let\everycr \tabu@@everycr}
+\def\tabu@everycr {\iftabu@everyrow \noalign{\tabu@everyrow}\fi}
+\def\tabu@endoftrials {%
+    \iftabuscantokens   \expandafter\@firstoftwo
+    \else               \expandafter\@secondoftwo
+    \fi
+        {\expandafter \tabu@closetrialsgroup \expandafter
+         \tabu@rescan \expandafter{%
+                    \expandafter\tabuthepreamble
+                        \the\expandafter\tabu@thebody
+                                    \iftabu@long \else \endarray \fi}}
+        {\expandafter\tabu@closetrialsgroup \expandafter
+                    \tabuthepreamble
+                        \the\tabu@thebody}%
+                                        \tabu@endenvir      % Finish !
+}% \tabu@endoftrials
+\def\tabu@closetrialsgroup {%
+    \toks@\expandafter{\tabu@endenvir}%
+    \edef\tabu@bufferX{\endgroup
+        \tabucolX       \the\tabucolX
+        \tabu@target    \the\tabu@target
+        \tabu@cnt       \the\tabu@cnt
+        \def\noexpand\tabu@endenvir{\the\toks@}%
+        %Quid de \@halignto = \tabu@halignto ??
+    }% \tabu@bufferX
+    \tabu@bufferX
+    \ifcase\tabu@nested % print out (outer in mode 0)
+        \global\tabu@cnt \tabu@cnt
+        \tabu@evr{\tabu@verticaldynamicadjustment}%
+        \tabu@celllalign@def{\everypar{}}\let\tabu@cellralign \@empty
+        \let\@finalstrut \tabu@finalstrut
+    \else               % vertical measure of nested tabu
+        \tabu@evr{\tabu@verticalinit}%
+        \tabu@celllalign@def{\tabu@verticalmeasure}%
+        \def\tabu@cellralign{\tabu@verticalspacing}%
+    \fi
+    \tabu@clckpt \let\@halignto \tabu@halignto
+    \let\@halignto \@empty
+    \tabu@seteverycr
+    \ifdim \tabustrutrule>\z@ \ifnum\tabu@nested=\z@
+        \setbox\@arstrutbox \box\voidb@x % force \@arstrutbox to be rebuilt (visible struts)
+    \fi\fi
+}% \tabu@closetrialsgroup
+\def\tabu@quickend {\expandafter \endgroup \expandafter
+                        \tabu@target \the\tabu@target \tabu@quickrule
+                        \let\endarray \relax \tabu@endenvir
+}% \tabu@quickend
+\def\tabu@endtrial {\relax      % stops \count@ assignment !
+    \ifcase \count@ \tabu@err   % case 0 = impossible here
+    \or             \tabu@err   % case 1 = impossible here
+    \or             \tabu@err   % case 2 = impossible here
+    \or                         % case 3 = outer goes into mode 0
+        \def\tabu@bufferX{\endgroup}\count@ \z@
+    \else                       % case 4 = outer goes into mode 3
+        \iftabu@spread  \tabu@spreadarith % inner into mode 1 (outer in mode 3)
+        \else           \tabu@arith       %              or 2 (outer in mode 4)
+        \fi
+        \count@=%
+            \ifcase\tabu@nested     \thr@@  % outer goes into mode 3
+            \else\iftabu@measuring  \tw@    % outer is in mode 4
+            \else                   \@ne    % outer is in mode 3
+            \fi\fi
+        \edef\tabu@bufferX{\endgroup
+                           \tabucolX        \the\tabucolX
+                           \tabu@target     \the\tabu@target}%
+    \fi
+    \expandafter \tabu@bufferX \expandafter
+                                    \count@ \the\count@  \tabu@strategy
+}% \tabu@endtrial
+\def\tabu@err{\errmessage{(tabu) Internal impossible error! (\count@=\the\count@)}}
+%% The algorithms: compute the widths / stop or go on ---------------
+\def\tabu@arithnegcoef {%
+    \@tempdima \z@ \dimen@ \z@ \let\tabu@ \tabu@arith@negcoef \tabu@Xcoefs
+}% \tabu@arithnegcoef
+\def\tabu@arith@negcoef #1#2{%
+    \ifdim #2\p@>\z@    \advance\dimen@     #2\p@       % saturated by definition
+                        \advance\@tempdima  #2\tabucolX
+    \else
+        \ifdim -#2\tabucolX <\tabu@wd{#1}% c_i X < natural width <= \tabu@target-> saturated
+                        \advance\dimen@     -#2\p@
+                        \advance\@tempdima  -#2\tabucolX
+        \else
+                        \advance\@tempdima \tabu@wd{#1}% natural width <= c_i X => neutralised
+                        \ifdim \tabu@wd{#1}<\tabu@target \else % neutralised
+                        \advance\dimen@     -#2\p@ % saturated (natural width = tabu@target)
+                        \fi
+        \fi
+    \fi
+}% \tabu@arith@negcoef
+\def\tabu@givespace #1#2{% here \tabu@DELTA < \z@
+    \ifdim \@tempdima=\z@
+        \tabu@wddef{#1}{\the\dimexpr -\tabu@DELTA*\p@/\tabu@Xsum}%
+    \else
+        \tabu@wddef{#1}{\the\dimexpr \tabu@hsize{#1}{#2}
+                    *(\p@ -\tabu@DELTA*\p@/\@tempdima)/\p@\relax}%
+    \fi
+}% \tabu@givespace
+\def\tabu@arith {\advance\tabu@cnt \@ne
+    \ifnum \tabu@cnt=\@ne \tabu@message{\tabu@titles}\fi
+    \tabu@arithnegcoef
+    \@tempdimb \dimexpr \wd\tabu@box -\@tempdima \relax % <incompressible material>
+    \tabu@DELTA = \dimexpr \wd\tabu@box - \tabu@target \relax
+    \tabu@message{\tabu@message@arith}%
+    \ifdim \tabu@DELTA <\tabu@hfuzz
+        \ifdim \tabu@DELTA<\z@          % wd (tabu)<\tabu@target ?
+            \let\tabu@ \tabu@givespace \tabu@Xcoefs
+            \advance\@tempdima \@tempdimb \advance\@tempdima -\tabu@DELTA % for message
+        \else   % already converged: nothing to do but nearly impossible...
+        \fi
+        \tabucolX \maxdimen
+        \tabu@measuringfalse
+    \else                               % need for narrower X columns
+        \tabucolX =\dimexpr (\@tempdima -\tabu@DELTA) *\p@/\tabu@Xsum \relax
+        \tabu@measuringtrue
+        \@whilesw \iftabu@measuring\fi {%
+            \advance\tabu@cnt \@ne
+            \tabu@arithnegcoef
+            \tabu@DELTA =\dimexpr \@tempdima+\@tempdimb -\tabu@target \relax % always < 0 here
+            \tabu@message{\tabu@header
+                \tabu@msgalign \tabucolX { }{ }{ }{ }{ }\@@
+                \tabu@msgalign \@tempdima+\@tempdimb { }{ }{ }{ }{ }\@@
+                \tabu@msgalign \tabu@target { }{ }{ }{ }{ }\@@
+                \tabu@msgalign@PT \dimen@ { }{}{}{}{}{}{}\@@
+                \ifdim -\tabu@DELTA<\tabu@hfuzz \tabu@spaces target ok\else
+                \tabu@msgalign \dimexpr -\tabu@DELTA *\p@/\dimen@ {}{}{}{}{}\@@
+                \fi}%
+            \ifdim -\tabu@DELTA<\tabu@hfuzz
+                \advance\@tempdima \@tempdimb % for message
+                \tabu@measuringfalse
+            \else
+                \advance\tabucolX \dimexpr -\tabu@DELTA *\p@/\dimen@ \relax
+            \fi
+        }%
+    \fi
+    \tabu@message{\tabu@message@reached}%
+    \edef\tabu@bufferX{\endgroup \tabu@cnt    \the\tabu@cnt
+                                 \tabucolX    \the\tabucolX
+                                 \tabu@target \the\tabu@target}%
+}% \tabu@arith
+\def\tabu@spreadarith {%
+    \dimen@ \z@ \@tempdima \tabu@naturalXmax \let\tabu@ \tabu@spread@arith \tabu@Xcoefs
+    \edef\tabu@naturalXmin {\the\dimexpr\tabu@naturalXmin*\dimen@/\p@}%
+    \@tempdimc =\dimexpr \wd\tabu@box -\tabu@naturalXmax+\tabu@naturalXmin \relax
+    \iftabu@measuring
+        \tabu@target =\dimexpr \@tempdimc+\tabu@spreadtarget \relax
+        \edef\tabu@bufferX{\endgroup \tabucolX \the\tabucolX \tabu@target\the\tabu@target}%
+    \else
+        \tabu@message{\tabu@message@spreadarith}%
+        \ifdim \dimexpr \@tempdimc+\tabu@spreadtarget >\tabu@target
+            \tabu@message{(tabu) spread
+                \ifdim \@tempdimc>\tabu@target useless here: default target used%
+                \else too large: reduced to fit default target\fi.}%
+        \else
+            \tabu@target =\dimexpr \@tempdimc+\tabu@spreadtarget \relax
+            \tabu@message{(tabu) spread: New target set to \the\tabu@target^^J}%
+        \fi
+        \begingroup \let\tabu@wddef \@gobbletwo
+            \@tempdimb \@tempdima
+            \tabucolX@init
+            \tabu@arithnegcoef
+            \wd\tabu@box =\dimexpr \wd\tabu@box +\@tempdima-\@tempdimb \relax
+        \expandafter\endgroup \expandafter\tabucolX \the\tabucolX
+        \tabu@arith
+    \fi
+}% \tabu@spreadarith
+\def\tabu@spread@arith #1#2{%
+    \ifdim #2\p@>\z@ \advance\dimen@ #2\p@
+    \else            \advance\@tempdima \tabu@wd{#1}\relax
+    \fi
+}% \tabu@spread@arith
+%% Reporting in the .log file ---------------------------------------
+\def\tabu@message@defaulttarget{%
+    \ifnum\tabu@nested=\z@^^J(tabu) Default target:
+    \ifx\tabudefaulttarget\linewidth    \string\linewidth
+        \ifdim \tabu@thetarget=\linewidth \else
+            -\the\dimexpr\linewidth-\tabu@thetarget\fi  =
+    \else\ifx\tabudefaulttarget\linegoal\string\linegoal=
+    \fi\fi
+    \else (tabu) Default target (nested): \fi
+    \the\tabu@target \on@line
+    \ifnum\tabu@nested=\z@ , page \the\c@page\fi}
+\def\tabu@message@target {^^J(tabu) Target specified:
+   \the\tabu@target \on@line, page \the\c@page}
+\def\tabu@message@arith {\tabu@header
+    \tabu@msgalign \tabucolX { }{ }{ }{ }{ }\@@
+    \tabu@msgalign \wd\tabu@box { }{ }{ }{ }{ }\@@
+    \tabu@msgalign \tabu@target { }{ }{ }{ }{ }\@@
+    \tabu@msgalign@PT \dimen@ { }{}{}{}{}{}{}\@@
+    \ifdim \tabu@DELTA<\tabu@hfuzz giving space\else
+    \tabu@msgalign \dimexpr (\@tempdima-\tabu@DELTA) *\p@/\tabu@Xsum -\tabucolX {}{}{}{}{}\@@
+    \fi
+}% \tabu@message@arith
+\def\tabu@message@spreadarith {\tabu@spreadheader
+   \tabu@msgalign \tabu@spreadtarget { }{ }{ }{ }{}\@@
+   \tabu@msgalign \wd\tabu@box { }{ }{ }{ }{}\@@
+   \tabu@msgalign -\tabu@naturalXmax { }{}{}{}{}\@@
+   \tabu@msgalign \tabu@naturalXmin { }{ }{ }{ }{}\@@
+   \tabu@msgalign \ifdim \dimexpr\@tempdimc>\tabu@target \tabu@target
+                  \else  \@tempdimc+\tabu@spreadtarget \fi
+                  {}{}{}{}{}\@@}
+\def\tabu@message@negcoef #1#2{
+    \tabu@spaces\tabu@spaces\space * #1. X[\rem@pt#2]:
+    \space width = \tabu@wd {#1}
+        \expandafter\string\csname tabu@\the\tabu@nested.W\number#1\endcsname
+    \ifdim -\tabu@pt#2\tabucolX<\tabu@target
+    < \number-\rem@pt#2 X
+    = \the\dimexpr -\tabu@pt#2\tabucolX \relax
+    \else
+    <= \the\tabu@target\space < \number-\rem@pt#2 X\fi}
+\def\tabu@message@reached{\tabu@header
+     ******* Reached Target:
+            hfuzz = \tabu@hfuzz\on@line\space *******}
+\def\tabu@message@etime{\edef\tabu@stoptime{\the\pdfelapsedtime}%
+    \tabu@message{(tabu)\tabu@spaces Time elapsed during measure:
+    \the\numexpr(\tabu@stoptime-\tabu@starttime-32767)/65536\relax sec
+    \the\numexpr\numexpr(\tabu@stoptime-\tabu@starttime)
+    -\numexpr(\tabu@stoptime-\tabu@starttime-32767)/65536\relax*65536\relax
+    *1000/65536\relax ms \tabu@spaces(\the\tabu@cnt\space
+                                        cycle\ifnum\tabu@cnt>\@ne s\fi)^^J^^J}}
+\def\tabu@message@verticalsp {%
+    \ifdim \@tempdima>\tabu@ht
+        \ifdim \@tempdimb>\tabu@dp
+        \expandafter\expandafter\expandafter\string\tabu@ht =
+            \tabu@msgalign \@tempdima { }{ }{ }{ }{ }\@@
+        \expandafter\expandafter\expandafter\string\tabu@dp =
+            \tabu@msgalign \@tempdimb { }{ }{ }{ }{ }\@@^^J%
+        \else
+        \expandafter\expandafter\expandafter\string\tabu@ht =
+            \tabu@msgalign \@tempdima { }{ }{ }{ }{ }\@@^^J%
+        \fi
+    \else\ifdim \@tempdimb>\tabu@dp
+        \tabu@spaces\tabu@spaces\tabu@spaces
+        \expandafter\expandafter\expandafter\string\tabu@dp =
+            \tabu@msgalign \@tempdimb { }{ }{ }{ }{ }\@@^^J\fi
+    \fi
+}% \tabu@message@verticalsp
+\edef\tabu@spaces{\@spaces}
+\def\tabu@strippt{\expandafter\tabu@pt\the}
+{\@makeother\P \@makeother\T\lowercase{\gdef\tabu@pt #1PT{#1}}}
+\def\tabu@msgalign{\expandafter\tabu@msg@align\the\dimexpr}
+\def\tabu@msgalign@PT{\expandafter\tabu@msg@align\romannumeral-`\0\tabu@strippt}
+\def\do #1{%
+    \def\tabu@msg@align##1.##2##3##4##5##6##7##8##9\@@{%
+    \ifnum##1<10 #1 #1\else
+    \ifnum##1<100 #1 \else
+    \ifnum##1<\@m #1\fi\fi\fi
+    ##1.##2##3##4##5##6##7##8#1}%
+    \def\tabu@header{(tabu) \ifnum\tabu@cnt<10 #1\fi\the\tabu@cnt) }%
+    \def\tabu@titles{\ifnum \tabu@nested=\z@
+      (tabu) Try#1 #1 tabu X #1 #1 #1tabu Width #1 #1 Target
+                  #1 #1 #1 Coefs #1 #1 #1 Update^^J\fi}%
+    \def\tabu@spreadheader{%
+      (tabu) Try#1 #1 Spread #1 #1 tabu Width #1 #1 #1 Nat. X #1 #1 #1 #1Nat. Min.
+                                                      #1 New Target^^J%
+      (tabu) sprd}
+    \def\tabu@message@save {\begingroup
+        \def\x ####1{\tabu@msg@align ####1{ }{ }{ }{ }{}\@@}
+        \def\z ####1{\expandafter\x\expandafter{\romannumeral-`\0\tabu@strippt
+                                                     \dimexpr####1\p@{ }{ }}}%
+        \let\color \relax \def\tabu@rulesstyle ####1####2{\detokenize{####1}}%
+        \let\CT@arc@ \relax \let\@preamble \@gobble
+        \let\tabu@savedpream  \@firstofone
+        \let\tabu@savedparams \@firstofone
+        \def\tabu@target ####1\relax   {(tabu) target #1 #1 #1 #1 #1 = \x{####1}^^J}%
+        \def\tabucolX ####1\relax      {(tabu) X columns width#1 = \x{####1}^^J}%
+        \def\tabu@nbcols ####1\relax   {(tabu) Number of columns: \z{####1}^^J}%
+        \def\tabu@aligndefault    ####1{(tabu) Default alignment: #1 #1 ####1^^J}%
+        \def\col@sep ####1\relax       {(tabu) column sep #1 #1 #1 = \x{####1}^^J}%
+        \def\arrayrulewidth ####1\relax{(tabu) arrayrulewidth #1 = \x{####1}}%
+        \def\doublerulesep ####1\relax { doublerulesep = \x{####1}^^J}%
+        \def\extratabsurround####1\relax{(tabu) extratabsurround = \x{####1}^^J}%
+        \def\extrarowheight ####1\relax{(tabu) extrarowheight #1 = \x{####1}}%
+        \def\extrarowdepth ####1\relax {extrarowdepth = \x{####1}^^J}%
+        \def\abovetabulinesep####1\relax{(tabu) abovetabulinesep=\x{####1} }%
+        \def\belowtabulinesep####1\relax{ belowtabulinesep=\x{####1}^^J}%
+        \def\arraystretch         ####1{(tabu) arraystretch #1 #1 = \z{####1}^^J}%
+        \def\minrowclearance####1\relax{(tabu) minrowclearance #1 = \x{####1}^^J}%
+        \def\tabu@arc@L           ####1{(tabu) taburulecolor #1 #1 = ####1^^J}%
+        \def\tabu@drsc@L          ####1{(tabu) tabudoublerulecolor=  ####1^^J}%
+        \def\tabu@evr@L           ####1{(tabu) everyrow #1 #1 #1 #1 = \detokenize{####1}^^J}%
+        \def\tabu@ls@L            ####1{(tabu) line style = \detokenize{####1}^^J}%
+        \def\NC@find ####1\@nil{(tabu) tabu preamble#1 #1 = \detokenize{####1}^^J}%
+        \def\tabu@wddef####1####2{(tabu) Natural width ####1 = \x{####2}^^J}%
+        \let\edef \@gobbletwo \let\def \@empty \let\let \@gobbletwo
+        \tabu@message{%
+         (tabu) \string\savetabu{\tabu@temp}: \on@line^^J%
+         \tabu@usetabu \@nil^^J}%
+        \endgroup}
+}\do{ }
+%% Measuring the natural width (varwidth) - store the results -------
+\def\tabu@startpboxmeasure #1{\bgroup   % entering \vtop
+    \edef\tabu@temp{\expandafter\@secondoftwo \ifx\tabu@hsize #1\else\relax\fi}%
+    \ifodd 1\ifx \tabu@temp\@empty 0 \else      % starts with \tabu@hsize ?
+            \iftabu@spread           \else      % if spread -> measure
+            \ifdim \tabu@temp\p@>\z@ 0 \fi\fi\fi% if coef>0 -> do not measure
+        \let\@startpbox \tabu@startpboxORI      % restore immediately (nesting)
+        \tabu@measuringtrue                     % for the quick option...
+        \tabu@Xcol =\expandafter\@firstoftwo\ifx\tabu@hsize #1\fi
+        \ifdim \tabu@temp\p@>\z@ \ifdim \tabu@temp\tabucolX<\tabu@target
+                                        \tabu@target=\tabu@temp\tabucolX \fi\fi
+        \setbox\tabu@box  \hbox \bgroup
+            \begin{varwidth}\tabu@target
+                \let\FV@ListProcessLine \tabu@FV@ListProcessLine  % \hbox to natural width...
+                \narrowragged \arraybackslash \parfillskip \@flushglue
+                \ifdefined\pdfadjustspacing \pdfadjustspacing\z@ \fi
+                \bgroup \aftergroup\tabu@endpboxmeasure
+                \ifdefined \cellspacetoplimit \tabu@cellspacepatch \fi
+    \else \expandafter\@gobble
+                            \tabu@startpboxquick{#1}% \@gobble \bgroup
+    \fi
+}% \tabu@startpboxmeasure
+\def\tabu@cellspacepatch{\def\bcolumn##1\@nil{}\let\ecolumn\@empty
+                                          \bgroup\color@begingroup}
+\def\tabu@endpboxmeasure {%
+    \@finalstrut \@arstrutbox
+                    \end{varwidth}\egroup    % <got my \tabu@box>
+    \ifdim \tabu@temp\p@ <\z@   % neg coef
+        \ifdim \tabu@wd\tabu@Xcol <\wd\tabu@box
+            \tabu@wddef\tabu@Xcol {\the\wd\tabu@box}%
+            \tabu@debug{\tabu@message@endpboxmeasure}%
+        \fi
+    \else                       % spread coef>0
+        \global\advance \tabu@naturalX \wd\tabu@box
+        \@tempdima =\dimexpr \wd\tabu@box *\p@/\dimexpr \tabu@temp\p@\relax \relax
+        \ifdim \tabu@naturalXmax <\tabu@naturalX
+            \xdef\tabu@naturalXmax {\the\tabu@naturalX}\fi
+        \ifdim \tabu@naturalXmin <\@tempdima
+            \xdef\tabu@naturalXmin {\the\@tempdima}\fi
+    \fi
+   \box\tabu@box \egroup % end of \vtop (measure) restore \tabu@target
+}% \tabu@endpboxmeasure
+\def\tabu@wddef #1{\expandafter\xdef
+                   \csname tabu@\the\tabu@nested.W\number#1\endcsname}
+\def\tabu@wd    #1{\csname tabu@\the\tabu@nested.W\number#1\endcsname}
+\def\tabu@message@endpboxmeasure{\tabu@spaces\tabu@spaces<-> % <-> save natural wd
+    \the\tabu@Xcol. X[\tabu@temp]:
+    target = \the\tabucolX \space
+    \expandafter\expandafter\expandafter\string\tabu@wd\tabu@Xcol
+    =\tabu@wd\tabu@Xcol
+}% \tabu@message@endpboxmeasure
+\def\tabu@startpboxquick {\bgroup
+    \let\@startpbox \tabu@startpboxORI  % restore immediately
+    \let\tabu \tabu@quick               % \begin is expanded before...
+    \expandafter\@gobble \@startpbox    % gobbles \bgroup
+}% \tabu@startpboxquick
+\def\tabu@quick {\begingroup \iffalse{\fi \ifnum0=`}\fi
+    \toks@{}\def\tabu@stack{b}\tabu@collectbody \tabu@endquick
+}% \tabu@quick
+\def\tabu@endquick {%
+    \ifodd 1\ifx\tabu@end@envir\tabu@endtabu  \else
+            \ifx\tabu@end@envir\tabu@endtabus \else 0\fi\fi\relax
+            \endgroup
+    \else   \let\endtabu \relax
+            \tabu@end@envir
+    \fi
+}% \tabu@quick
+\def\tabu@endtabu   {\end{tabu}}
+\def\tabu@endtabus  {\end{tabu*}}
+%% Measuring the heights and depths - store the results -------------
+\def\tabu@verticalmeasure{\everypar{}%
+    \ifnum \currentgrouptype>12         % 14=semi-simple, 15=math shift group
+        \setbox\tabu@box =\hbox\bgroup
+            \let\tabu@verticalspacing \tabu@verticalsp@lcr
+            \d@llarbegin                % after \hbox ...
+    \else
+        \edef\tabu@temp{\ifnum\currentgrouptype=5\vtop
+                        \else\ifnum\currentgrouptype=12\vcenter
+                        \else\vbox\fi\fi}%
+        \setbox\tabu@box \hbox\bgroup$\tabu@temp \bgroup
+            \let\tabu@verticalspacing \tabu@verticalsp@pmb
+    \fi
+}% \tabu@verticalmeasure
+\def\tabu@verticalsp@lcr{%
+    \d@llarend \egroup       % <got my \tabu@box>
+    \@tempdima \dimexpr \ht\tabu@box+\abovetabulinesep
+    \@tempdimb \dimexpr \dp\tabu@box+\belowtabulinesep \relax
+        \ifdim\tabustrutrule>\z@ \tabu@debug{\tabu@message@verticalsp}\fi
+    \ifdim \tabu@ht<\@tempdima    \tabu@htdef{\the\@tempdima}\fi
+    \ifdim \tabu@dp<\@tempdimb    \tabu@dpdef{\the\@tempdimb}\fi
+    \noindent\vrule height\@tempdima depth\@tempdimb
+}% \tabu@verticalsp@lcr
+\def\tabu@verticalsp@pmb{% inserts struts as needed
+    \par \expandafter\egroup
+            \expandafter$\expandafter
+                    \egroup \expandafter
+                            \@tempdimc \the\prevdepth
+    \@tempdima \dimexpr \ht\tabu@box+\abovetabulinesep
+    \@tempdimb \dimexpr \dp\tabu@box+\belowtabulinesep \relax
+        \ifdim\tabustrutrule>\z@ \tabu@debug{\tabu@message@verticalsp}\fi
+    \ifdim \tabu@ht<\@tempdima    \tabu@htdef{\the\@tempdima}\fi
+    \ifdim \tabu@dp<\@tempdimb    \tabu@dpdef{\the\@tempdimb}\fi
+    \let\@finalstrut \@gobble
+    \hrule height\@tempdima depth\@tempdimb width\hsize
+%%    \box\tabu@box
+}% \tabu@verticalsp@pmb
+
+\def\tabu@verticalinit{%
+    \ifnum \c@taburow=\z@ \tabu@rearstrut \fi       % after \tabu@reset !
+    \advance\c@taburow \@ne
+    \tabu@htdef{\the\ht\@arstrutbox}\tabu@dpdef{\the\dp\@arstrutbox}%
+    \advance\c@taburow \m@ne
+}% \tabu@verticalinit
+\def\tabu@htdef {\expandafter\xdef \csname tabu@\the\tabu@nested.H\the\c@taburow\endcsname}
+\def\tabu@ht                      {\csname tabu@\the\tabu@nested.H\the\c@taburow\endcsname}
+\def\tabu@dpdef {\expandafter\xdef \csname tabu@\the\tabu@nested.D\the\c@taburow\endcsname}
+\def\tabu@dp                      {\csname tabu@\the\tabu@nested.D\the\c@taburow\endcsname}
+\def\tabu@verticaldynamicadjustment {%
+    \advance\c@taburow \@ne
+        \extrarowheight \dimexpr\tabu@ht - \ht\strutbox
+        \extrarowdepth  \dimexpr\tabu@dp - \dp\strutbox
+        \let\arraystretch \@empty
+    \advance\c@taburow \m@ne
+}% \tabu@verticaldynamicadjustment
+\def\tabuphantomline{\crcr \noalign{%
+    {\globaldefs \@ne
+        \setbox\@arstrutbox     \box\voidb@x
+        \let\tabu@@celllalign   \tabu@celllalign
+        \let\tabu@@cellralign   \tabu@cellralign
+        \let\tabu@@cellleft     \tabu@cellleft
+        \let\tabu@@cellright    \tabu@cellright
+        \let\tabu@@thevline     \tabu@thevline
+        \let\tabu@celllalign    \@empty
+        \let\tabu@cellralign    \@empty
+        \let\tabu@cellright     \@empty
+        \let\tabu@cellleft      \@empty
+        \let\tabu@thevline      \relax}%
+    \edef\tabu@temp{\tabu@multispan \tabu@nbcols{\noindent &}}%
+    \toks@\expandafter{\tabu@temp \noindent\tabu@everyrowfalse \cr
+        \noalign{\tabu@rearstrut
+            {\globaldefs\@ne
+                \let\tabu@celllalign \tabu@@celllalign
+                \let\tabu@cellralign \tabu@@cellralign
+                \let\tabu@cellleft   \tabu@@cellleft
+                \let\tabu@cellright  \tabu@@cellright
+                \let\tabu@thevline   \tabu@@thevline}}}%
+    \expandafter}\the\toks@
+}% \tabuphantomline
+%% \firsthline and \lasthline corrections ---------------------------
+\def\tabu@firstline {\tabu@hlineAZ  \tabu@firsthlinecorrection     {}}
+\def\tabu@firsthline{\tabu@hlineAZ  \tabu@firsthlinecorrection \hline}
+\def\tabu@lastline  {\tabu@hlineAZ  \tabu@lasthlinecorrection      {}}
+\def\tabu@lasthline {\tabu@hlineAZ  \tabu@lasthlinecorrection  \hline}
+\def\tabu@hline {% replaces \hline if no colortbl (see \AtBeginDocument)
+    \noalign{\ifnum0=`}\fi
+    {\CT@arc@\hrule height\arrayrulewidth}%
+    \futurelet \tabu@temp \tabu@xhline
+}% \tabu@hline
+\def\tabu@xhline{%
+    \ifx \tabu@temp \hline
+        {\ifx \CT@drsc@\relax \vskip
+         \else\ifx \CT@drsc@\@empty \vskip
+         \else \CT@drsc@\hrule height
+         \fi\fi
+         \doublerulesep}%
+    \fi
+    \ifnum0=`{\fi}%
+}% \tabu@xhline
+\def\tabu@hlineAZ #1#2{\noalign{\ifnum0=`}\fi \dimen@ \z@ \count@ \z@
+    \toks@{}\def\tabu@hlinecorrection{#1}\def\tabu@temp{#2}%
+    \tabu@hlineAZsurround
+}% \tabu@hlineAZ
+\newcommand*\tabu@hlineAZsurround[1][\extratabsurround]{%
+    \extratabsurround #1\let\tabucline \tabucline@scan
+    \let\hline     \tabu@hlinescan \let\firsthline \hline
+    \let\cline     \tabu@clinescan \let\lasthline  \hline
+    \expandafter \futurelet \expandafter \tabu@temp
+                \expandafter \tabu@nexthlineAZ \tabu@temp
+}% \tabu@hlineAZsurround
+\def\tabu@hlinescan   {\tabu@thick \arrayrulewidth \tabu@xhlineAZ \hline}
+\def\tabu@clinescan #1{\tabu@thick \arrayrulewidth \tabu@xhlineAZ {\cline{#1}}}
+\def\tabucline@scan{\@testopt \tabucline@sc@n {}}
+\def\tabucline@sc@n #1[#2]{\tabu@xhlineAZ {\tabucline[{#1}]{#2}}}
+\def\tabu@nexthlineAZ{%
+    \ifx \tabu@temp\hline \else
+    \ifx \tabu@temp\cline \else
+    \ifx \tabu@temp\tabucline \else
+         \tabu@hlinecorrection
+    \fi\fi\fi
+}% \tabu@nexthlineAZ
+\def\tabu@xhlineAZ #1{%
+    \toks@\expandafter{\the\toks@ #1}%
+    \@tempdimc \tabu@thick                  % The last line width
+    \ifcase\count@ \@tempdimb \tabu@thick   % The first line width
+    \else \advance\dimen@ \dimexpr \tabu@thick+\doublerulesep \relax
+    \fi
+    \advance\count@ \@ne    \futurelet \tabu@temp \tabu@nexthlineAZ
+}% \tabu@xhlineAZ
+\def\tabu@firsthlinecorrection{% \count@ = number of \hline -1
+    \@tempdima \dimexpr \ht\@arstrutbox+\dimen@
+    \edef\firsthline{%      <local in \noalign>
+        \omit \hbox to\z@{\hss{\noexpand\tabu@DBG{yellow}\vrule
+                    height \the\dimexpr\@tempdima+\extratabsurround
+                    depth  \dp\@arstrutbox
+                    width  \tabustrutrule}\hss}\cr
+        \noalign{\vskip -\the\dimexpr   \@tempdima+\@tempdimb
+                                        +\dp\@arstrutbox \relax}%
+        \the\toks@
+   }\ifnum0=`{\fi
+            \expandafter}\firsthline % we are then !
+}% \tabu@firsthlinecorrection
+\def\tabu@lasthlinecorrection{%
+    \@tempdima \dimexpr  \dp\@arstrutbox+\dimen@+\@tempdimb+\@tempdimc
+    \edef\lasthline{%   <local in \noalign>
+        \the\toks@
+        \noalign{\vskip -\the\dimexpr\dimen@+\@tempdimb+\dp\@arstrutbox}%
+        \omit \hbox to\z@{\hss{\noexpand\tabu@DBG{yellow}\vrule
+                    depth \the\dimexpr \dp\@arstrutbox+\@tempdimb+\dimen@
+                                       +\extratabsurround-\@tempdimc
+                    height \z@
+                    width \tabustrutrule}\hss}\cr
+    }\ifnum0=`{\fi
+            \expandafter}\lasthline % we are then !
+}% \tabu@lasthlinecorrection
+\def\tabu@LT@@hline{%
+    \ifx\LT@next\hline
+        \global\let\LT@next \@gobble
+        \ifx \CT@drsc@\relax
+            \gdef\CT@LT@sep{%
+                \noalign{\penalty-\@medpenalty\vskip\doublerulesep}}%
+        \else
+            \gdef\CT@LT@sep{%
+                \multispan\LT@cols{%
+                \CT@drsc@\leaders\hrule\@height\doublerulesep\hfill}\cr}%
+        \fi
+    \else
+        \global\let\LT@next\empty
+        \gdef\CT@LT@sep{%
+            \noalign{\penalty-\@lowpenalty\vskip-\arrayrulewidth}}%
+    \fi
+    \ifnum0=`{\fi}%
+    \multispan\LT@cols
+        {\CT@arc@\leaders\hrule\@height\arrayrulewidth\hfill}\cr
+    \CT@LT@sep
+    \multispan\LT@cols
+        {\CT@arc@\leaders\hrule\@height\arrayrulewidth\hfill}\cr
+    \noalign{\penalty\@M}%
+    \LT@next
+}% \tabu@LT@@hline
+%% Horizontal lines : \tabucline ------------------------------------
+\let\tabu@start \@tempcnta
+\let\tabu@stop  \@tempcntb
+\newcommand*\tabucline{\noalign{\ifnum0=`}\fi \tabu@cline}
+\newcommand*\tabu@cline[2][]{\tabu@startstop{#2}%
+   \ifnum \tabu@stop<\z@   \toks@{}%
+   \else \tabu@clinearg{#1}\tabu@thestyle
+        \edef\tabucline{\toks@{%
+            \ifnum \tabu@start>\z@ \omit
+                  \tabu@multispan\tabu@start {\span\omit}&\fi
+            \omit \tabu@multispan\tabu@stop {\span\omit}%
+                                        \tabu@thehline\cr
+        }}\tabucline
+        \tabu@tracinglines{(tabu:tabucline) Style: #1^^J\the\toks@^^J^^J}%
+    \fi
+    \futurelet \tabu@temp \tabu@xcline
+}% \tabu@cline
+\def\tabu@clinearg #1{%
+    \ifx\\#1\\\let\tabu@thestyle \tabu@ls@
+    \else \@defaultunits \expandafter\let\expandafter\@tempa
+                                    \romannumeral-`\0#1\relax \@nnil
+        \ifx \hbox\@tempa           \tabu@clinebox{#1}%
+        \else\ifx \box\@tempa       \tabu@clinebox{#1}%
+        \else\ifx \vbox\@tempa      \tabu@clinebox{#1}%
+        \else\ifx \vtop\@tempa      \tabu@clinebox{#1}%
+        \else\ifx \copy\@tempa      \tabu@clinebox{#1}%
+        \else\ifx \leaders\@tempa   \tabu@clineleads{#1}%
+        \else\ifx \cleaders\@tempa  \tabu@clineleads{#1}%
+        \else\ifx \xleaders\@tempa  \tabu@clineleads{#1}%
+        \else\tabu@getline {#1}%
+        \fi\fi\fi\fi\fi\fi\fi\fi
+    \fi
+}% \tabu@clinearg
+\def\tabu@clinebox #1{\tabu@clineleads{\xleaders#1\hss}}
+\def\tabu@clineleads #1{%
+    \let\tabu@thestyle \relax \let\tabu@leaders \@undefined
+    \gdef\tabu@thehrule{#1}}
+\def\tabu@thehline{\begingroup
+    \ifdefined\tabu@leaders
+            \noexpand\tabu@thehleaders
+    \else   \noexpand\tabu@thehrule
+    \fi            \endgroup
+}% \tabu@thehline
+\def\tabu@xcline{%
+    \ifx \tabu@temp\tabucline
+        \toks@\expandafter{\the\toks@ \noalign
+        {\ifx\CT@drsc@\relax \vskip
+         \else \CT@drsc@\hrule height
+         \fi
+         \doublerulesep}}%
+    \fi
+    \tabu@docline
+}% \tabu@xcline
+\def\tabu@docline {\ifnum0=`{\fi \expandafter}\the\toks@}
+\def\tabu@docline@evr {\xdef\tabu@doclineafter{\the\toks@}%
+              \ifnum0=`{\fi}\aftergroup\tabu@doclineafter}
+\def\tabu@multispan #1#2{%
+    \ifnum\numexpr#1>\@ne #2\expandafter\tabu@multispan
+    \else                   \expandafter\@gobbletwo
+    \fi  {#1-1}{#2}%
+}% \tabu@multispan
+\def\tabu@startstop #1{\tabu@start@stop #1\relax 1-\tabu@nbcols \@nnil}
+\def\tabu@start@stop #1-#2\@nnil{%
+   \@defaultunits   \tabu@start\number 0#1\relax    \@nnil
+   \@defaultunits   \tabu@stop \number 0#2\relax    \@nnil
+   \tabu@stop   \ifnum \tabu@start>\tabu@nbcols     \m@ne
+                \else\ifnum \tabu@stop=\z@          \tabu@nbcols
+                \else\ifnum \tabu@stop>\tabu@nbcols \tabu@nbcols
+                \else                               \tabu@stop
+                \fi\fi\fi
+   \advance\tabu@start \m@ne
+   \ifnum \tabu@start>\z@ \advance\tabu@stop -\tabu@start \fi
+}% \tabu@start@stop
+%% Numbers: siunitx S columns  (and \tabudecimal) -------------------
+\def\tabu@tabudecimal #1{%
+    \def\tabu@decimal{#1}\@temptokena{}%
+    \let\tabu@getdecimal@ \tabu@getdecimal@ignorespaces
+    \tabu@scandecimal
+}% \tabu@tabudecimal
+\def\tabu@scandecimal{\futurelet \tabu@temp \tabu@getdecimal@}
+\def\tabu@skipdecimal#1{#1\tabu@scandecimal}
+\def\tabu@getdecimal@ignorespaces{%
+    \ifcase 0\ifx\tabu@temp\ignorespaces\else
+             \ifx\tabu@temp\@sptoken1\else
+             2\fi\fi\relax
+            \let\tabu@getdecimal@ \tabu@getdecimal
+            \expandafter\tabu@skipdecimal
+    \or     \expandafter\tabu@gobblespace\expandafter\tabu@scandecimal
+    \else   \expandafter\tabu@skipdecimal
+    \fi
+}% \tabu@getdecimal@ignorespaces
+\def\tabu@get@decimal#1{\@temptokena\expandafter{\the\@temptokena #1}%
+                        \tabu@scandecimal}
+\def\do#1{%
+    \def\tabu@get@decimalspace#1{%
+        \@temptokena\expandafter{\the\@temptokena #1}\tabu@scandecimal}%
+}\do{ }
+\let\tabu@@tabudecimal \tabu@tabudecimal
+\def\tabu@getdecimal{%
+   \ifcase    0\ifx 0\tabu@temp\else
+               \ifx 1\tabu@temp\else
+               \ifx 2\tabu@temp\else
+               \ifx 3\tabu@temp\else
+               \ifx 4\tabu@temp\else
+               \ifx 5\tabu@temp\else
+               \ifx 6\tabu@temp\else
+               \ifx 7\tabu@temp\else
+               \ifx 8\tabu@temp\else
+               \ifx 9\tabu@temp\else
+               \ifx .\tabu@temp\else
+               \ifx ,\tabu@temp\else
+               \ifx -\tabu@temp\else
+               \ifx +\tabu@temp\else
+               \ifx e\tabu@temp\else
+               \ifx E\tabu@temp\else
+               \ifx\tabu@cellleft\tabu@temp1\else
+               \ifx\ignorespaces\tabu@temp1\else
+               \ifx\@sptoken\tabu@temp2\else
+            3\fi\fi\fi\fi\fi\fi\fi\fi\fi\fi\fi\fi\fi\fi\fi\fi\fi\fi\fi\relax
+       \expandafter\tabu@get@decimal
+   \or \expandafter\tabu@skipdecimal
+   \or \expandafter\tabu@get@decimalspace
+   \else\expandafter\tabu@printdecimal
+   \fi
+}% \tabu@getdecimal
+\def\tabu@printdecimal{%
+    \edef\tabu@temp{\the\@temptokena}%
+    \ifx\tabu@temp\@empty\else
+    \ifx\tabu@temp\space\else
+        \expandafter\tabu@decimal\expandafter{\the\@temptokena}%
+    \fi\fi
+}% \tabu@printdecimal
+%% Verbatim inside X columns ----------------------------------------
+\def\tabu@verbatim{%
+    \let\verb \tabu@verb
+    \let\FV@DefineCheckEnd \tabu@FV@DefineCheckEnd
+}% \tabu@verbatim
+\let\tabu@ltx@verb \verb
+\def\tabu@verb{\@ifstar {\tabu@ltx@verb*} \tabu@ltx@verb}
+\def\tabu@fancyvrb {%
+    \def\tabu@FV@DefineCheckEnd ##1{%
+        \def\tabu@FV@DefineCheckEnd{%
+            ##1% <original definition (if fancyvrb is loaded)>
+            \let\FV@CheckEnd     \tabu@FV@CheckEnd
+            \let\FV@@CheckEnd    \tabu@FV@@CheckEnd
+            \let\FV@@@CheckEnd   \tabu@FV@@@CheckEnd
+            \edef\FV@EndScanning{%
+            \def\noexpand\next{\noexpand\end{\FV@EnvironName}}%
+                \global\let\noexpand\FV@EnvironName\relax
+                \noexpand\next}%
+            \xdef\FV@EnvironName{\detokenize\expandafter{\FV@EnvironName}}}%
+    }\expandafter\tabu@FV@DefineCheckEnd\expandafter{\FV@DefineCheckEnd}
+}% \tabu@fancyvrb
+\def\tabu@FV@CheckEnd  #1{\expandafter\FV@@CheckEnd \detokenize{#1\end{}}\@nil}
+\edef\tabu@FV@@@CheckEnd {\detokenize{\end{}}}
+\begingroup
+\catcode`\[1      \catcode`\]2
+\@makeother\{     \@makeother\}
+   \edef\x[\endgroup
+      \def\noexpand\tabu@FV@@CheckEnd ##1\detokenize[\end{]##2\detokenize[}]##3%
+   ]\x               \@nil{\def\@tempa{#2}\def\@tempb{#3}}
+\def\tabu@FV@ListProcessLine #1{%
+  \hbox {%to \hsize{%
+    \kern\leftmargin
+    \hbox {%to \linewidth{%
+      \FV@LeftListNumber
+      \FV@LeftListFrame
+      \FancyVerbFormatLine{#1}\hss
+%% DG/SR modification begin - Jan. 28, 1998 (for numbers=right add-on)
+%%      \FV@RightListFrame}%
+      \FV@RightListFrame
+      \FV@RightListNumber}%
+%% DG/SR modification end
+    \hss}}
+%% \savetabu --------------------------------------------------------
+\newcommand*\savetabu[1]{\noalign{%
+    \tabu@sanitizearg{#1}\tabu@temp
+    \ifx \tabu@temp\@empty  \tabu@savewarn{}{The tabu will not be saved}\else
+        \@ifundefined{tabu@saved@\tabu@temp}{}{\tabu@savewarn{#1}{Overwriting}}%
+        \ifdefined\tabu@restored \expandafter\let
+            \csname tabu@saved@\tabu@temp \endcsname \tabu@restored
+        \else {\tabu@save}%
+        \fi
+    \fi}%
+}% \savetabu
+\def\tabu@save {%
+    \toks0\expandafter{\tabu@saved@}%
+    \iftabu@negcoef
+        \let\tabu@wddef \relax \let\tabu@ \tabu@savewd \edef\tabu@savewd{\tabu@Xcoefs}%
+        \toks0\expandafter{\the\toks\expandafter0\tabu@savewd}\fi
+    \toks1\expandafter{\tabu@savedpream}%
+    \toks2\expandafter{\tabu@savedpreamble}%
+    \let\@preamble \relax
+    \let\tabu@savedpream \relax \let\tabu@savedparams \relax
+    \edef\tabu@preamble{%
+        \def\noexpand\tabu@aligndefault{\tabu@align}%
+        \def\tabu@savedparams {\noexpand\the\toks0}%
+        \def\tabu@savedpream  {\noexpand\the\toks1}}%
+    \edef\tabu@usetabu{%
+        \def\@preamble {\noexpand\the\toks2}%
+        \tabu@target \the\tabu@target \relax
+        \tabucolX    \the\tabucolX    \relax
+        \tabu@nbcols \the\tabu@nbcols \relax
+        \def\noexpand\tabu@aligndefault{\tabu@align}%
+        \def\tabu@savedparams {\noexpand\the\toks0}%
+        \def\tabu@savedpream  {\noexpand\the\toks1}}%
+    \let\tabu@aligndefault \relax \let\@sharp \relax
+    \edef\@tempa{\noexpand\tabu@s@ved
+                          {\tabu@usetabu}
+                         {\tabu@preamble}
+                            {\the\toks1}}\@tempa
+    \tabu@message@save
+}% \tabu@save
+\long\def\tabu@s@ved #1#2#3{%
+    \def\tabu@usetabu{#1}% <for \tabu@message@save>
+    \expandafter\gdef\csname tabu@saved@\tabu@temp\endcsname ##1{%
+        \ifodd ##1%     \usetabu
+            \tabu@measuringfalse \tabu@spreadfalse  % Just in case...
+            \gdef\tabu@usetabu {%
+                \ifdim \tabu@target>\z@ \tabu@warn@usetabu \fi
+                \global\let\tabu@usetabu \@undefined
+                \def\@halignto {to\tabu@target}%
+                #1%
+                \ifx \tabu@align\tabu@aligndefault@text
+                \ifnum \tabu@nested=\z@
+                       \let\tabu@align \tabu@aligndefault \fi\fi}%
+        \else     %     \preamble
+            \gdef\tabu@preamble {%
+                \global\let\tabu@preamble \@undefined
+                #2%
+                \ifx \tabu@align\tabu@aligndefault@text
+                \ifnum \tabu@nested=\z@
+                       \let\tabu@align \tabu@aligndefault \fi\fi}%
+        \fi
+        #3}%
+}% \tabu@s@ved
+\def\tabu@aligndefault@text {\tabu@aligndefault}%
+\def\tabu@warn@usetabu {\PackageWarning{tabu}
+    {Specifying a target with \string\usetabu\space is useless
+    \MessageBreak The target cannot be changed!}}
+\def\tabu@savewd #1#2{\ifdim #2\p@<\z@ \tabu@wddef{#1}{\tabu@wd{#1}}\fi}
+\def\tabu@savewarn#1#2{\PackageInfo{tabu}
+    {User-name `#1' already used for \string\savetabu
+    \MessageBreak #2}}%
+\def\tabu@saveerr#1{\PackageError{tabu}
+    {User-name `#1' is unknown for \string\usetabu
+    \MessageBreak I cannot restore an unknown preamble!}\@ehd}
+%% \rowfont ---------------------------------------------------------
+\newskip \tabu@cellskip
+\def\tabu@rowfont{\ifdim \baselineskip=\z@\noalign\fi
+                    {\ifnum0=`}\fi    \tabu@row@font}
+\newcommand*\tabu@row@font[2][]{%
+    \ifnum7=\currentgrouptype
+        \global\let\tabu@@cellleft    \tabu@cellleft
+        \global\let\tabu@@cellright   \tabu@cellright
+        \global\let\tabu@@celllalign  \tabu@celllalign
+        \global\let\tabu@@cellralign  \tabu@cellralign
+        \global\let\tabu@@rowfontreset\tabu@rowfontreset
+    \fi
+    \global\let\tabu@rowfontreset \tabu@rowfont@reset
+    \expandafter\gdef\expandafter\tabu@cellleft\expandafter{\tabu@cellleft #2}%
+    \ifcsname tabu@cell@#1\endcsname       % row alignment
+            \csname tabu@cell@#1\endcsname \fi
+    \ifnum0=`{\fi}% end of group / noalign group
+}% \rowfont
+\def\tabu@ifcolorleavevmode #1{\let\color \tabu@leavevmodecolor #1\let\color\tabu@color}%
+\def\tabu@rowfont@reset{%
+    \global\let\tabu@rowfontreset \tabu@@rowfontreset
+    \global\let\tabu@cellleft     \tabu@@cellleft
+    \global\let\tabu@cellright    \tabu@@cellright
+    \global\let\tabu@cellfont     \@empty
+    \global\let\tabu@celllalign   \tabu@@celllalign
+    \global\let\tabu@cellralign   \tabu@@cellralign
+}% \tabu@@rowfontreset
+\let\tabu@rowfontreset \@empty     % overwritten \AtBeginDocument if colortbl
+%% \tabu@prepnext@tok -----------------------------------------------
+\newif \iftabu@cellright
+\def\tabu@prepnext@tok{%
+    \ifnum \count@<\z@   % <first initialisation>
+            \@tempcnta  \@M   % <not initialized by array.sty>
+            \tabu@nbcols\z@
+            \let\tabu@fornoopORI \@fornoop
+            \tabu@cellrightfalse
+    \else
+        \ifcase \numexpr \count@-\@tempcnta \relax % (case 0): prev. token is left
+                \advance \tabu@nbcols \@ne
+                \iftabu@cellright % before-previous token is right and is finished
+                    \tabu@cellrightfalse % <only once>
+                    \tabu@righttok
+                \fi
+                \tabu@lefttok
+        \or                     % (case 1) previous token is right
+                \tabu@cellrighttrue \let\@fornoop \tabu@lastnoop
+        \else % special column: do not change the token
+                \iftabu@cellright    % before-previous token is right
+                    \tabu@cellrightfalse
+                    \tabu@righttok
+                \fi
+        \fi % \ifcase
+    \fi
+    \tabu@prepnext@tokORI
+}% \tabu@prepnext@tok
+\long\def\tabu@lastnoop#1\@@#2#3{\tabu@lastn@@p #2\@nextchar \in@\in@@}
+\def\tabu@lastn@@p #1\@nextchar #2#3\in@@{%
+    \ifx \in@#2\else
+        \let\@fornoop \tabu@fornoopORI
+        \xdef\tabu@mkpreambuffer{\tabu@nbcols\the\tabu@nbcols \tabu@mkpreambuffer}%
+        \toks0\expandafter{\expandafter\tabu@everyrowtrue \the\toks0}%
+        \expandafter\prepnext@tok
+    \fi
+}% \tabu@lastnoop
+\def\tabu@righttok{%
+    \advance \count@ \m@ne
+    \toks\count@\expandafter {\the\toks\count@ \tabu@cellright \tabu@cellralign}%
+    \advance \count@ \@ne
+}% \tabu@righttok
+\def\tabu@lefttok{\toks\count@\expandafter{\expandafter\tabu@celllalign
+                                    \the\toks\count@ \tabu@cellleft}% after because of $
+}% \tabu@lefttok
+%% Neutralisation of glues ------------------------------------------
+\let\tabu@cellleft   \@empty
+\let\tabu@cellright  \@empty
+\tabu@celllalign@def{\tabu@cellleft}%
+\let\tabu@cellralign \@empty
+\def\tabu@cell@align #1#2#3{%
+    \let\tabu@maybesiunitx \toks@ \tabu@celllalign
+    \global \expandafter \tabu@celllalign@def \expandafter {\the\toks@ #1}%
+    \toks@\expandafter{\tabu@cellralign #2}%
+    \xdef\tabu@cellralign{\the\toks@}%
+    \toks@\expandafter{\tabu@cellleft #3}%
+    \xdef\tabu@cellleft{\the\toks@}%
+}% \tabu@cell@align
+\def\tabu@cell@l{% force alignment to left
+   \tabu@cell@align
+      {\tabu@removehfil \raggedright \tabu@cellleft}% left
+      {\tabu@flush1\tabu@ignorehfil}%                 right
+      \raggedright
+}% \tabu@cell@l
+\def\tabu@cell@c{% force alignment to center
+   \tabu@cell@align
+      {\tabu@removehfil \centering \tabu@flush{.5}\tabu@cellleft}
+      {\tabu@flush{.5}\tabu@ignorehfil}
+      \centering
+}% \tabu@cell@c
+\def\tabu@cell@r{% force alignment to right
+   \tabu@cell@align
+      {\tabu@removehfil \raggedleft \tabu@flush1\tabu@cellleft}
+      \tabu@ignorehfil
+      \raggedleft
+}% \tabu@cell@r
+\def\tabu@cell@j{% force justification (for p, m, b columns)
+      \tabu@cell@align
+         {\tabu@justify\tabu@cellleft}
+         {}
+         \tabu@justify
+}% \tabu@cell@j
+\def\tabu@justify{%
+   \leftskip\z@skip \@rightskip\leftskip \rightskip\@rightskip
+   \parfillskip\@flushglue
+}% \tabu@justify
+%% ragged2e settings
+\def\tabu@cell@L{% force alignment to left (ragged2e)
+   \tabu@cell@align
+      {\tabu@removehfil \RaggedRight \tabu@cellleft}
+      {\tabu@flush 1\tabu@ignorehfil}
+      \RaggedRight
+}% \tabu@cell@L
+\def\tabu@cell@C{% force alignment to center (ragged2e)
+   \tabu@cell@align
+      {\tabu@removehfil \Centering \tabu@flush{.5}\tabu@cellleft}
+      {\tabu@flush{.5}\tabu@ignorehfil}
+      \Centering
+}% \tabu@cell@C
+\def\tabu@cell@R{% force alignment to right (ragged2e)
+   \tabu@cell@align
+      {\tabu@removehfil \RaggedLeft \tabu@flush 1\tabu@cellleft}
+      \tabu@ignorehfil
+      \RaggedLeft
+}% \tabu@cell@R
+\def\tabu@cell@J{% force justification (ragged2e)
+   \tabu@cell@align
+      {\justifying \tabu@cellleft}
+      {}
+      \justifying
+}% \tabu@cell@J
+\def\tabu@flush#1{%
+    \iftabu@colortbl      % colortbl uses \hfill rather than \hfil
+        \hskip \ifnum13<\currentgrouptype \stretch{#1}%
+        \else  \ifdim#1pt<\p@ \tabu@cellskip
+        \else  \stretch{#1}
+        \fi\fi \relax
+    \else                % array.sty
+        \ifnum 13<\currentgrouptype
+                \hfil \hskip1sp \relax  \fi
+    \fi
+}% \tabu@flush
+\let\tabu@hfil  \hfil
+\let\tabu@hfill \hfill
+\let\tabu@hskip \hskip
+\def\tabu@removehfil{%
+    \iftabu@colortbl
+        \unkern \tabu@cellskip =\lastskip
+        \ifnum\gluestretchorder\tabu@cellskip =\tw@ \hskip-\tabu@cellskip
+        \else \tabu@cellskip \z@skip
+        \fi
+    \else
+        \ifdim\lastskip=1sp\unskip\fi
+        \ifnum\gluestretchorder\lastskip =\@ne
+            \hfilneg % \hfilneg for array.sty but not for colortbl...
+        \fi
+    \fi
+}% \tabu@removehfil
+\def\tabu@ignorehfil{\aftergroup \tabu@nohfil}
+\def\tabu@nohfil{% \hfil -> do nothing + restore original \hfil
+   \def\hfil{\let\hfil \tabu@hfil}%   local to (alignment template) group
+}% \tabu@nohfil
+\def\tabu@colortblalignments {% if colortbl
+    \def\tabu@nohfil{%
+        \def\hfil  {\let\hfil \tabu@hfil}% local to (alignment template) group
+        \def\hfill {\let\hfill \tabu@hfill}% (colortbl uses \hfill) pfff...
+        \def\hskip ####1\relax{\let\hskip \tabu@hskip}}% local
+}% \tabu@colortblalignments
+%% Taking care of footnotes and hyperfootnotes ----------------------
+\long\def\tabu@footnotetext #1{%
+   \edef\@tempa{\the\tabu@footnotes
+      \noexpand\footnotetext [\the\csname c@\@mpfn\endcsname]}%
+   \global\tabu@footnotes\expandafter{\@tempa {#1}}}%
+\long\def\tabu@xfootnotetext [#1]#2{%
+   \global\tabu@footnotes\expandafter{\the\tabu@footnotes
+                               \footnotetext [{#1}]{#2}}}
+\let\tabu@xfootnote \@xfootnote
+\long\def\tabu@Hy@ftntext{\tabu@Hy@ftntxt {\the \c@footnote }}
+\long\def\tabu@Hy@xfootnote [#1]{%
+   \begingroup
+      \value\@mpfn #1\relax
+      \protected@xdef \@thefnmark  {\thempfn}%
+   \endgroup
+   \@footnotemark \tabu@Hy@ftntxt {#1}%
+}% \tabu@Hy@xfootnote
+\long\def\tabu@Hy@ftntxt #1#2{%
+    \edef\@tempa{%
+        \the\tabu@footnotes
+        \begingroup
+            \value\@mpfn #1\relax
+            \noexpand\protected@xdef\noexpand\@thefnmark {\noexpand\thempfn}%
+            \expandafter \noexpand \expandafter
+                \tabu@Hy@footnotetext \expandafter{\Hy@footnote@currentHref}%
+    }%
+    \global\tabu@footnotes\expandafter{\@tempa {#2}%
+                                         \endgroup}%
+}% \tabu@Hy@ftntxt
+\long\def\tabu@Hy@footnotetext #1#2{%
+    \H@@footnotetext{%
+        \ifHy@nesting
+            \hyper@@anchor {#1}{#2}%
+        \else
+            \Hy@raisedlink{%
+                \hyper@@anchor {#1}{\relax}%
+            }%
+            \def\@currentHref {#1}%
+            \let\@currentlabelname \@empty
+            #2%
+        \fi
+    }%
+}% \tabu@Hy@footnotetext
+%% No need for \arraybackslash ! ------------------------------------
+\def\tabu@latextwoe {%
+\def\tabu@temp##1##2##3{{\toks@\expandafter{##2##3}\xdef##1{\the\toks@}}}
+\tabu@temp \tabu@centering   \centering   \arraybackslash
+\tabu@temp \tabu@raggedleft  \raggedleft  \arraybackslash
+\tabu@temp \tabu@raggedright \raggedright \arraybackslash
+}% \tabu@latextwoe
+\def\tabu@raggedtwoe {%
+\def\tabu@temp ##1##2##3{{\toks@\expandafter{##2##3}\xdef##1{\the\toks@}}}
+\tabu@temp \tabu@Centering   \Centering   \arraybackslash
+\tabu@temp \tabu@RaggedLeft  \RaggedLeft  \arraybackslash
+\tabu@temp \tabu@RaggedRight \RaggedRight \arraybackslash
+\tabu@temp \tabu@justifying  \justifying  \arraybackslash
+}% \tabu@raggedtwoe
+\def\tabu@normalcrbackslash{\let\\\@normalcr}
+\def\tabu@trivlist{\expandafter\def\expandafter\@trivlist\expandafter{%
+                       \expandafter\tabu@normalcrbackslash \@trivlist}}
+%% Utilities: \fbox  \fcolorbox  and \tabudecimal -------------------
+\def\tabu@fbox      {\leavevmode\afterassignment\tabu@beginfbox \setbox\@tempboxa\hbox}
+\def\tabu@beginfbox {\bgroup \kern\fboxsep
+                     \bgroup\aftergroup\tabu@endfbox}
+\def\tabu@endfbox   {\kern\fboxsep\egroup\egroup
+                     \@frameb@x\relax}
+\def\tabu@color@b@x #1#2{\leavevmode \bgroup
+    \def\tabu@docolor@b@x{#1{#2\color@block{\wd\z@}{\ht\z@}{\dp\z@}\box\z@}}%
+    \afterassignment\tabu@begincolor@b@x \setbox\z@ \hbox
+}% \tabu@color@b@x
+\def\tabu@begincolor@b@x {\kern\fboxsep \bgroup
+       \aftergroup\tabu@endcolor@b@x \set@color}
+\def\tabu@endcolor@b@x {\kern\fboxsep \egroup
+    \dimen@\ht\z@ \advance\dimen@ \fboxsep \ht\z@ \dimen@
+    \dimen@\dp\z@ \advance\dimen@ \fboxsep \dp\z@ \dimen@
+    \tabu@docolor@b@x \egroup
+}% \tabu@endcolor@b@x
+%% Corrections (arydshln, delarray, colortbl) -----------------------
+\def\tabu@fix@arrayright {%% \@arrayright is missing from \endarray
+    \iftabu@colortbl
+        \ifdefined\adl@array  % <colortbl + arydshln>
+        \def\tabu@endarray{%
+            \adl@endarray \egroup \adl@arrayrestore \CT@end \egroup %<original>
+            \@arrayright      % <FC>
+            \gdef\@preamble{}}% <FC>
+        \else                 % <colortbl / no arydshln>
+        \def\tabu@endarray{%
+            \crcr \egroup \egroup    %<original>
+            \@arrayright             % <FC>
+            \gdef\@preamble{}\CT@end}%
+        \fi
+    \else
+        \ifdefined\adl@array  % <arydshln / no colortbl>
+        \def\tabu@endarray{%
+            \adl@endarray \egroup \adl@arrayrestore \egroup %<original>
+            \@arrayright      % <FC>
+            \gdef\@preamble{}}% <FC>
+    \else                   % <no arydshln / no colotbl + \@arrayright missing>
+        \PackageWarning{tabu}
+        {\string\@arrayright\space is missing from the
+        \MessageBreak definition of \string\endarray.
+        \MessageBreak Compatibility with delarray.sty is broken.}%
+    \fi\fi
+}% \tabu@fix@arrayright
+\def\tabu@adl@xarraydashrule #1#2#3{%
+     \ifnum\@lastchclass=\adl@class@start\else
+     \ifnum\@lastchclass=\@ne\else
+     \ifnum\@lastchclass=5 \else % <FC> @-arg (class 5) and !-arg (class 1)
+             \adl@leftrulefalse \fi\fi           % must be treated the same
+     \fi
+     \ifadl@zwvrule\else \ifadl@inactive\else
+             \@addtopreamble{\vrule\@width\arrayrulewidth
+                     \@height\z@ \@depth\z@}\fi \fi
+     \ifadl@leftrule
+             \@addtopreamble{\adl@vlineL{\CT@arc@}{\adl@dashgapcolor}%
+                     {\number#1}#3}%
+     \else   \@addtopreamble{\adl@vlineR{\CT@arc@}{\adl@dashgapcolor}%
+                     {\number#2}#3}
+     \fi
+}% \tabu@adl@xarraydashrule
+\def\tabu@adl@act@endpbox {%
+    \unskip \ifhmode \nobreak \fi    \@finalstrut \@arstrutbox
+    \egroup \egroup
+    \adl@colhtdp \box\adl@box \hfil
+}% \tabu@adl@act@endpbox
+\def\tabu@adl@fix {%
+    \let\adl@xarraydashrule \tabu@adl@xarraydashrule % <fix> arydshln
+    \let\adl@act@endpbox    \tabu@adl@act@endpbox    % <fix> arydshln
+    \let\adl@act@@endpbox   \tabu@adl@act@endpbox    % <fix> arydshln
+    \let\@preamerror        \@preamerr               % <fix> arydshln
+}% \tabu@adl@fix
+%% Correction for longtable' \@startbox definition ------------------
+%%    => \everypar is ``missing'' : TeX should be in vertical mode
+\def\tabu@LT@startpbox #1{%
+    \bgroup
+        \let\@footnotetext\LT@p@ftntext
+        \setlength\hsize{#1}%
+        \@arrayparboxrestore
+        \everypar{%
+            \vrule \@height \ht\@arstrutbox \@width \z@
+            \everypar{}}%
+}% \tabu@LT@startpbox
+%% \tracingtabu  and  the package options ------------------
+\DeclareOption{delarray}{\AtEndOfPackage{\RequirePackage{delarray}}}
+\DeclareOption{linegoal}{%
+   \AtEndOfPackage{%
+      \RequirePackage{linegoal}[2010/12/07]%
+      \let\tabudefaulttarget \linegoal% \linegoal is \linewidth if not pdfTeX
+}}
+\DeclareOption{scantokens}{\tabuscantokenstrue}
+\DeclareOption{debugshow}{\AtEndOfPackage{\tracingtabu=\tw@}}
+\def\tracingtabu {\begingroup\@ifnextchar=%
+    {\afterassignment\tabu@tracing\count@}
+    {\afterassignment\tabu@tracing\count@1\relax}}
+\def\tabu@tracing{\expandafter\endgroup
+    \expandafter\tabu@tr@cing \the\count@ \relax
+}% \tabu@tracing
+\def\tabu@tr@cing #1\relax {%
+    \ifnum#1>\thr@@ \let\tabu@tracinglines\message
+    \else           \let\tabu@tracinglines\@gobble
+    \fi
+    \ifnum#1>\tw@   \let\tabu@DBG        \tabu@@DBG
+                    \def\tabu@mkarstrut {\tabu@DBG@arstrut}%
+                    \tabustrutrule      1.5\p@
+    \else           \let\tabu@DBG        \@gobble
+                    \def\tabu@mkarstrut {\tabu@arstrut}%
+                    \tabustrutrule      \z@
+    \fi
+    \ifnum#1>\@ne   \let\tabu@debug      \message
+    \else           \let\tabu@debug      \@gobble
+    \fi
+    \ifnum#1>\z@
+        \let\tabu@message             \message
+        \let\tabu@tracing@save        \tabu@message@save
+        \let\tabu@starttimer          \tabu@pdftimer
+    \else
+        \let\tabu@message             \@gobble
+        \let\tabu@tracing@save        \@gobble
+        \let\tabu@starttimer          \relax
+    \fi
+}% \tabu@tr@cing
+%% Setup \AtBeginDocument
+\AtBeginDocument{\tabu@AtBeginDocument}
+\def\tabu@AtBeginDocument{\let\tabu@AtBeginDocument \@undefined
+    \ifdefined\arrayrulecolor   \tabu@colortbltrue       % <colortbl>
+                                \tabu@colortblalignments % different glues are used
+    \else                       \tabu@colortblfalse \fi
+    \ifdefined\CT@arc@ \else \let\CT@arc@  \relax \fi
+    \ifdefined\CT@drsc@\else \let\CT@drsc@ \relax \fi
+    \let\tabu@arc@L \CT@arc@ \let\tabu@drsc@L \CT@drsc@
+    \ifodd 1\ifcsname siunitx_table_collect_begin:Nn\endcsname   % <siunitx: ok>
+            \expandafter\ifx
+                \csname siunitx_table_collect_begin:Nn\endcsname\relax 0\fi\fi\relax
+            \tabu@siunitxtrue
+    \else   \let\tabu@maybesiunitx   \@firstofone                % <not siunitx: setup>
+            \let\tabu@siunitx        \tabu@nosiunitx
+            \tabu@siunitxfalse
+    \fi
+    \ifdefined\adl@array        % <arydshln>
+    \else     \let\tabu@adl@fix \relax
+              \let\tabu@adl@endtrial \@empty \fi
+    \ifdefined\longtable        % <longtable>
+    \else     \let\longtabu \tabu@nolongtabu \fi
+    \ifdefined\cellspacetoplimit \tabu@warn@cellspace\fi
+    \csname\ifcsname ifHy@hyperfootnotes\endcsname % <hyperfootnotes>
+            ifHy@hyperfootnotes\else iffalse\fi\endcsname
+        \let\tabu@footnotetext \tabu@Hy@ftntext
+        \let\tabu@xfootnote    \tabu@Hy@xfootnote \fi
+    \ifdefined\FV@DefineCheckEnd% <fancyvrb>
+            \tabu@fancyvrb  \fi
+    \ifdefined\color            % <color / xcolor>
+        \let\tabu@color \color
+        \def\tabu@leavevmodecolor ##1{%
+            \def\tabu@leavevmodecolor {\leavevmode ##1}%
+        }\expandafter\tabu@leavevmodecolor\expandafter{\color}%
+    \else
+        \let\tabu@color           \tabu@nocolor
+        \let\tabu@leavevmodecolor \@firstofone \fi
+    \tabu@latextwoe
+    \ifdefined\@raggedtwoe@everyselectfont    % <ragged2e>
+        \tabu@raggedtwoe
+    \else
+        \let\tabu@cell@L \tabu@cell@l
+        \let\tabu@cell@R \tabu@cell@r
+        \let\tabu@cell@C \tabu@cell@c
+        \let\tabu@cell@J \tabu@cell@j   \fi
+    \expandafter\in@ \expandafter\@arrayright \expandafter{\endarray}%
+    \ifin@ \let\tabu@endarray \endarray
+    \else  \tabu@fix@arrayright \fi% <fix for colortbl & arydshln (delarray)>
+    \everyrow{}%
+}% \tabu@AtBeginDocument
+\def\tabu@warn@cellspace{%
+    \PackageWarning{tabu}{%
+                  Package cellspace has some limitations
+    \MessageBreak And redefines some macros of array.sty.
+    \MessageBreak Please use \string\tabulinesep\space to control
+    \MessageBreak vertical spacing of lines inside tabu environment}%
+}% \tabu@warn@cellspace
+%% tabu Package initialisation
+\tabuscantokensfalse
+\let\tabu@arc@G         \relax
+\let\tabu@drsc@G        \relax
+\let\tabu@evr@G         \@empty
+\let\tabu@rc@G          \@empty
+\def\tabu@ls@G          {\tabu@linestyle@}%
+\let\tabu@@rowfontreset \@empty % <init>
+\let\tabu@@celllalign   \@empty
+\let\tabu@@cellralign   \@empty
+\let\tabu@@cellleft     \@empty
+\let\tabu@@cellright    \@empty
+\def\tabu@naturalXmin   {\z@}
+\def\tabu@naturalXmax   {\z@}
+\let\tabu@rowfontreset  \@empty
+\def\tabulineon {4pt}\let\tabulineoff \tabulineon
+\tabu@everyrowtrue
+\ifdefined\pdfelapsedtime                   % <pdfTeX>
+        \def\tabu@pdftimer {\xdef\tabu@starttime{\the\pdfelapsedtime}}%
+\else   \let\tabu@pdftimer \relax \let\tabu@message@etime \relax
+\fi
+\tracingtabu=\z@
+\newtabulinestyle {=\maxdimen}% creates the 'factory' settings \tabu@linestyle@
+\tabulinestyle{}
+\taburowcolors{}
+\let\tabudefaulttarget  \linewidth
+\ProcessOptions*                % \ProcessOptions* is quicker !
+\endinput
+%%
+%% End of file `tabu.sty'.

@@ -1,0 +1,257 @@
+EESchema Schematic File Version 4
+EELAYER 30 0
+EELAYER END
+$Descr A4 11693 8268
+encoding utf-8
+Sheet 1 1
+Title ""
+Date ""
+Rev ""
+Comp ""
+Comment1 ""
+Comment2 ""
+Comment3 ""
+Comment4 ""
+$EndDescr
+$Comp
+L epd_breakout:ED133UT2 J2
+U 1 1 5F0D6E6B
+P 8900 1650
+F 0 "J2" H 9278 -379 50  0000 L CNN
+F 1 "ED133UT2" H 9278 -470 50  0000 L CNN
+F 2 "epaper-breakout:HRS_FH26W-39S-0.3SHW(60)" H 8900 1650 50  0001 C CNN
+F 3 "" H 8900 1650 50  0001 C CNN
+	1    8900 1650
+	1    0    0    -1  
+$EndComp
+$Comp
+L epd_breakout:XF2M-3315-1A J1
+U 1 1 5F0D0FB0
+P 5900 2100
+F 0 "J1" H 6550 2743 60  0000 C CNN
+F 1 "XF2M-3315-1A" H 6550 2637 60  0000 C CNN
+F 2 "epaper-breakout:CONN_ED097OC4_mirrored" H 6550 2531 60  0000 C CNN
+F 3 "" H 5900 2100 60  0000 C CNN
+	1    5900 2100
+	-1   0    0    -1  
+$EndComp
+Wire Wire Line
+	5900 1900 7400 1900
+Wire Wire Line
+	7400 1900 7400 1800
+Wire Wire Line
+	7400 1800 8600 1800
+Wire Wire Line
+	5900 2100 7500 2100
+Wire Wire Line
+	7500 2100 7500 1900
+Wire Wire Line
+	7500 1900 8600 1900
+Wire Wire Line
+	8600 2100 7700 2100
+Wire Wire Line
+	7700 2100 7700 2500
+Wire Wire Line
+	7700 2500 5900 2500
+Wire Wire Line
+	8600 2200 7800 2200
+Wire Wire Line
+	7800 2200 7800 2600
+Wire Wire Line
+	7800 2600 5900 2600
+Wire Wire Line
+	5900 2700 7900 2700
+Wire Wire Line
+	7900 2700 7900 2300
+Wire Wire Line
+	7900 2300 8600 2300
+Wire Wire Line
+	8600 2400 8000 2400
+Wire Wire Line
+	8000 2400 8000 2800
+Wire Wire Line
+	8000 2800 5900 2800
+Wire Wire Line
+	8100 2800 8600 2800
+Wire Wire Line
+	6300 3000 6300 2900
+Wire Wire Line
+	6300 2900 8100 2900
+Wire Wire Line
+	5900 3000 6300 3000
+Wire Wire Line
+	8100 2900 8100 2800
+Wire Wire Line
+	5900 3100 6400 3100
+Wire Wire Line
+	6400 3100 6400 2950
+Wire Wire Line
+	6400 2950 8200 2950
+Wire Wire Line
+	8200 2950 8200 2900
+Wire Wire Line
+	8200 2900 8600 2900
+Wire Wire Line
+	5900 3200 6500 3200
+Wire Wire Line
+	6500 3200 6500 3000
+Wire Wire Line
+	6500 3000 8600 3000
+Wire Wire Line
+	5900 3300 6600 3300
+Wire Wire Line
+	6600 3300 6600 3100
+Wire Wire Line
+	6600 3100 8600 3100
+Wire Wire Line
+	5900 3400 6700 3400
+Wire Wire Line
+	6700 3400 6700 3200
+Wire Wire Line
+	6700 3200 8600 3200
+Wire Wire Line
+	5900 3500 6800 3500
+Wire Wire Line
+	6800 3500 6800 3300
+Wire Wire Line
+	6800 3300 8600 3300
+Wire Wire Line
+	5900 3600 6900 3600
+Wire Wire Line
+	6900 3600 6900 3400
+Wire Wire Line
+	6900 3400 8600 3400
+Wire Wire Line
+	5900 3700 7000 3700
+Wire Wire Line
+	7000 3700 7000 3500
+Wire Wire Line
+	7000 3500 8600 3500
+Wire Wire Line
+	5900 3800 7100 3800
+Wire Wire Line
+	7100 3800 7100 3600
+Wire Wire Line
+	7100 3600 8600 3600
+Wire Wire Line
+	5900 4000 7250 4000
+Wire Wire Line
+	7250 4000 7250 3900
+Wire Wire Line
+	7250 3900 8600 3900
+Wire Wire Line
+	5900 4200 7400 4200
+Wire Wire Line
+	7400 4200 7400 4000
+Wire Wire Line
+	7400 4000 8600 4000
+Wire Wire Line
+	5900 4400 7550 4400
+Wire Wire Line
+	7550 4400 7550 4100
+Wire Wire Line
+	7550 4100 8600 4100
+Wire Wire Line
+	8600 4500 6700 4500
+Wire Wire Line
+	6700 4500 6700 4600
+Wire Wire Line
+	6700 4600 6150 4600
+Wire Wire Line
+	6150 4600 6150 4700
+Wire Wire Line
+	6150 4700 5900 4700
+Connection ~ 6150 4600
+Wire Wire Line
+	6150 4600 5900 4600
+Wire Wire Line
+	8600 4900 5900 4900
+Wire Wire Line
+	5900 5000 8600 5000
+Wire Wire Line
+	5900 5100 8600 5100
+Text Label 5900 2300 0    50   ~ 0
+GND
+Text Label 8600 2000 2    50   ~ 0
+GND
+Text Label 8600 2500 2    50   ~ 0
+GND
+Text Label 8600 2600 2    50   ~ 0
+GND
+Text Label 8600 3700 2    50   ~ 0
+GND
+Text Label 8600 4600 2    50   ~ 0
+GND
+Text Label 8600 4700 2    50   ~ 0
+GND
+Text Label 8600 4800 2    50   ~ 0
+GND
+Text Label 8600 5200 2    50   ~ 0
+GND
+Text Label 8600 5300 2    50   ~ 0
+GND
+Text Label 8600 5400 2    50   ~ 0
+GND
+Text Label 8600 5500 2    50   ~ 0
+GND
+Text Label 8600 5600 2    50   ~ 0
+GND
+Text Label 6350 5700 0    50   ~ 0
+GND
+$Comp
+L power:GND #PWR0101
+U 1 1 5F0FE899
+P 6600 5800
+F 0 "#PWR0101" H 6600 5550 50  0001 C CNN
+F 1 "GND" H 6605 5627 50  0000 C CNN
+F 2 "" H 6600 5800 50  0001 C CNN
+F 3 "" H 6600 5800 50  0001 C CNN
+	1    6600 5800
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	6350 5700 6600 5700
+Wire Wire Line
+	6600 5700 6600 5800
+NoConn ~ 5900 4800
+NoConn ~ 5900 2900
+NoConn ~ 4600 5350
+NoConn ~ 4600 5250
+$Comp
+L Mechanical:MountingHole H1
+U 1 1 5F106C0E
+P 7100 5850
+F 0 "H1" H 7200 5896 50  0000 L CNN
+F 1 "MountingHole" H 7200 5805 50  0000 L CNN
+F 2 "MountingHole:MountingHole_2.2mm_M2" H 7100 5850 50  0001 C CNN
+F 3 "~" H 7100 5850 50  0001 C CNN
+	1    7100 5850
+	1    0    0    -1  
+$EndComp
+$Comp
+L Mechanical:MountingHole H2
+U 1 1 5F1075EC
+P 7100 6100
+F 0 "H2" H 7200 6146 50  0000 L CNN
+F 1 "MountingHole" H 7200 6055 50  0000 L CNN
+F 2 "MountingHole:MountingHole_2.2mm_M2" H 7100 6100 50  0001 C CNN
+F 3 "~" H 7100 6100 50  0001 C CNN
+	1    7100 6100
+	1    0    0    -1  
+$EndComp
+Text Label 4500 6000 3    50   ~ 0
+GND
+Text Label 8200 3900 0    50   ~ 0
+VCOM
+$Comp
+L Connector:TestPoint TP1
+U 1 1 5F13948E
+P 4500 6000
+F 0 "TP1" H 4558 6118 50  0000 L CNN
+F 1 "GND" H 4558 6027 50  0000 L CNN
+F 2 "TestPoint:TestPoint_Pad_D2.0mm" H 4700 6000 50  0001 C CNN
+F 3 "~" H 4700 6000 50  0001 C CNN
+	1    4500 6000
+	1    0    0    -1  
+$EndComp
+$EndSCHEMATC
