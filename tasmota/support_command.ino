@@ -623,7 +623,7 @@ void CmndStatus(void)
 #endif
 
   if (payload) {
-    XdrvRulesProcess();  // Allow rule processing on single Status command only
+    XdrvRulesProcess(0);  // Allow rule processing on single Status command only
   }
 
   ResponseClear();

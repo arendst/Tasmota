@@ -286,7 +286,7 @@ void TimerEverySecond(void)
 #if defined(USE_RULES) || defined(USE_SCRIPT)
               if (POWER_BLINK == xtimer.power) {             // Blink becomes Rule disregarding device and allowing use of Backlog commands
                 Response_P(PSTR("{\"Clock\":{\"Timer\":%d}}"), i +1);
-                XdrvRulesProcess();
+                XdrvRulesProcess(0);
               } else
 #endif  // USE_RULES
                 if (TasmotaGlobal.devices_present) { ExecuteCommandPower(xtimer.device +1, xtimer.power, SRC_TIMER); }

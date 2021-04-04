@@ -583,7 +583,7 @@ void Z_Device::jsonPublishAttrList(const char * json_prefix, const Z_attribute_l
   } else {
     MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
   }
-  XdrvRulesProcess();     // apply rules
+  XdrvRulesProcess(0);     // apply rules
 }
 
 void Z_Devices::jsonPublishFlush(uint16_t shortaddr) {

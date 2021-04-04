@@ -795,7 +795,7 @@ bool Xdrv35(uint8_t function)
 #ifdef USE_RULES
             sprintf(TasmotaGlobal.mqtt_data, PSTR("{\"Button%u\":{\"State\":3}}"), button_index + 1);
             Rules.no_execute = true;
-            if (!XdrvRulesProcess()) {
+            if (!XdrvRulesProcess(0)) {
 #endif  // USE_RULES
               PWMDimmerHandleButton(button_index, true);
               button_held[button_index] = true;

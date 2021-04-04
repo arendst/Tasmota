@@ -749,9 +749,7 @@ void MI32triggerTele(void){
     ResponseClear();
     if (MqttShowSensor()) {
       MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
-  #ifdef USE_RULES
-      RulesTeleperiod();  // Allow rule based HA messages
-  #endif  // USE_RULES
+      XdrvRulesProcess(1);  // Allow rule based HA messages
     }
 }
 
@@ -762,7 +760,7 @@ void MI32triggerTele(void){
 void MI32StatusInfo() {
   MI32.mode.shallShowStatusInfo = 0;
   Response_P(PSTR("{\"%s\":{\"found\":%u}}"), D_CMND_MI32, MIBLEsensors.size());
-  XdrvRulesProcess();
+  XdrvRulesProcess(0);
 }
 
 /*********************************************************************************************\
@@ -1731,7 +1729,7 @@ void MI32EverySecond(bool restart){
     _activeBeacons++;
     _beacon.time++;
     Response_P(PSTR("{\"Beacon%u\":{\"Time\":%u}}"), _idx, _beacon.time);
-    XdrvRulesProcess();
+    XdrvRulesProcess(0);
   }
   if(_activeBeacons==0) MI32.mode.activeBeacon = 0;
 

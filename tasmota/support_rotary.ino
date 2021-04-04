@@ -250,7 +250,7 @@ void RotaryHandler(void) {
         Encoder[index].abs_position[button_pressed] = Settings.param[P_ROTARY_MAX_STEP];      // SetOption43 - Rotary steps
       }
       Response_P(PSTR("{\"Rotary%d\":{\"Pos1\":%d,\"Pos2\":%d}}"), index +1, Encoder[index].abs_position[0], Encoder[index].abs_position[1]);
-      XdrvRulesProcess();
+      XdrvRulesProcess(0);
 #ifdef USE_LIGHT
     }
 #endif  // USE_LIGHT

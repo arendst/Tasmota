@@ -77,7 +77,7 @@ extern "C" {
 
 /*********************************************************************************************\
  * Handlers for Berry calls and async
- * 
+ *
 \*********************************************************************************************/
 // // call a function (if exists) of type void -> void
 
@@ -234,7 +234,7 @@ void BrReset(void) {
 
   int32_t ret_code1, ret_code2;
   bool berry_init_ok = false;
-  do {    
+  do {
     berry.vm = be_vm_new(); /* create a virtual machine instance */
     be_set_obs_hook(berry.vm, &BerryObservability);
     be_load_custom_libs(berry.vm);
@@ -261,7 +261,7 @@ void BrReset(void) {
     }
     // AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_BERRY "Berry code ran, RAM used=%u"), be_gc_memcount(berry.vm));
     be_pop(berry.vm, 1);
-    
+
     if (be_top(berry.vm) > 0) {
       be_dumpstack(berry.vm);
     }
@@ -381,7 +381,7 @@ void BrREPLRun(char * cmd) {
   char * cmd2 = (char*) malloc(cmd2_len);
   do {
     int32_t ret_code;
-    
+
     snprintf_P(cmd2, cmd2_len, PSTR("return (%s)"), cmd);
     ret_code = be_loadbuffer(berry.vm, PSTR("input"), cmd2, strlen(cmd2));
     // AddLog(LOG_LEVEL_INFO, PSTR(">>>> be_loadbuffer cmd2 '%s', ret=%i"), cmd2, ret_code);
@@ -424,7 +424,7 @@ const char HTTP_SCRIPT_BERRY_CONSOLE[] PROGMEM =
   "var sn=0,id=0,ft,ltm=%d;"                      // Scroll position, Get most of weblog initially
   // Console command history
   "var hc=[],cn=0;"                       // hc = History commands, cn = Number of history being shown
-  
+
   "function l(p){"                        // Console log and command service
     "var c,cc,o='';"
     "clearTimeout(lt);"
@@ -515,7 +515,7 @@ const char HTTP_SCRIPT_BERRY_CONSOLE2[] PROGMEM =
       // "13==c&&(hc.length>19&&hc.pop(),hc.unshift(b.value),cn=0)"       // Enter, 19 = Max number -1 of commands in history
     "});"
   "}"
-  "wl(h);";                               // Add console command key eventlistener after name has been synced with id (= wl(jd))  
+  "wl(h);";                               // Add console command key eventlistener after name has been synced with id (= wl(jd))
 
 const char HTTP_BERRY_STYLE_CMND[] PROGMEM =
   "<style>"
@@ -710,7 +710,7 @@ bool Xdrv52(uint8_t function)
         result = callBerryEventDispatcher(PSTR("cmd"), XdrvMailbox.topic, XdrvMailbox.index, XdrvMailbox.data);
       }
       break;
-    
+
     // Module specific events
     case FUNC_EVERY_100_MSECOND:
       callBerryEventDispatcher(PSTR("every_100ms"), nullptr, 0, nullptr);

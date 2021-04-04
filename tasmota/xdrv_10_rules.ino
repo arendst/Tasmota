@@ -1033,13 +1033,6 @@ void RulesSetPower(void)
   Rules.new_power = XdrvMailbox.index;
 }
 
-void RulesTeleperiod(void)
-{
-  Rules.teleperiod = true;
-  RulesProcess();
-  Rules.teleperiod = false;
-}
-
 #ifdef SUPPORT_MQTT_EVENT
 /********************************************************************************************/
 /*
@@ -2347,7 +2340,9 @@ bool Xdrv10(uint8_t function)
       result = DecodeCommand(kRulesCommands, RulesCommand);
       break;
     case FUNC_RULES_PROCESS:
+      Rules.teleperiod = (XdrvMailbox.index);  // Signal teleperiod event
       result = RulesProcess();
+      Rules.teleperiod = false;
       break;
     case FUNC_SAVE_BEFORE_RESTART:
       RulesSaveBeforeRestart();

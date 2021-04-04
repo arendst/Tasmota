@@ -550,7 +550,7 @@ bool SendKey(uint32_t key, uint32_t device, uint32_t state)
     result = !Settings.flag3.button_switch_force_local;  // SetOption61 - Force local operation when button/switch topic is set
   } else {
     Response_P(PSTR("{\"%s%d\":{\"State\":%d}}"), (key) ? PSTR("Switch") : PSTR("Button"), device, state);
-    result = XdrvRulesProcess();
+    result = XdrvRulesProcess(0);
   }
 #ifdef USE_PWM_DIMMER
   if (PWM_DIMMER != TasmotaGlobal.module_type || !result) {
@@ -786,9 +786,7 @@ void MqttPublishTeleState(void)
   DTVarsTeleperiod();
 #endif // USE_DT_VARS
 
-#if defined(USE_RULES) || defined(USE_SCRIPT)
-  RulesTeleperiod();  // Allow rule based HA messages
-#endif  // USE_SCRIPT
+  XdrvRulesProcess(1);  // Allow rule based HA messages
 }
 
 void TempHumDewShow(bool json, bool pass_on, const char *types, float f_temperature, float f_humidity)
@@ -945,9 +943,7 @@ void PerformEverySecond(void)
         ResponseClear();
         if (MqttShowSensor()) {
           MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);  // CMND_SENSORRETAIN
-#if defined(USE_RULES) || defined(USE_SCRIPT)
-          RulesTeleperiod();  // Allow rule based HA messages
-#endif  // USE_RULES
+          XdrvRulesProcess(1);  // Allow rule based HA messages
         }
 
         XsnsCall(FUNC_AFTER_TELEPERIOD);

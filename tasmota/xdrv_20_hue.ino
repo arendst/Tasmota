@@ -893,7 +893,7 @@ void HueLightsCommand(uint8_t device, uint32_t device_id, String &response) {
         } else {
           MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR(D_CMND_DIMMER));
         }
-        XdrvRulesProcess();
+        XdrvRulesProcess(0);
       }
       change = false;
     }

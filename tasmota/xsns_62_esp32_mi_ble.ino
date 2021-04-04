@@ -1490,7 +1490,7 @@ void MI32triggerTele(void){
 void MI32StatusInfo() {
   MI32.mode.shallShowStatusInfo = 0;
   Response_P(PSTR("{\"%s\":{\"found\":%u}}"), D_CMND_MI32, MIBLEsensors.size());
-  XdrvRulesProcess();
+  XdrvRulesProcess(0);
 }
 
 /*********************************************************************************************\
@@ -2704,9 +2704,7 @@ void MI32ShowSomeSensors(){
   MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
   //AddLog(LOG_LEVEL_DEBUG,PSTR("M32: %s: show some %d %s"),D_CMND_MI32, MI32.mqttCurrentSlot, TasmotaGlobal.mqtt_data);
 
-#ifdef USE_RULES
-  RulesTeleperiod();  // Allow rule based HA messages
-#endif  // USE_RULES
+  XdrvRulesProcess(1);  // Allow rule based HA messages
 
 #ifdef USE_HOME_ASSISTANT
   if(hass_mode==2){
@@ -3095,9 +3093,7 @@ void MI32ShowTriggeredSensors(){
       }
       AddLog(LOG_LEVEL_DEBUG,PSTR("M32: %s: triggered %d %s"),D_CMND_MI32, sensor, TasmotaGlobal.mqtt_data);
 
-#ifdef USE_RULES
-      RulesTeleperiod();  // Allow rule based HA messages
-#endif  // USE_RULES
+      XdrvRulesProcess(1);  // Allow rule based HA messages
 
     } else { // else don't and clear
       ResponseClear();

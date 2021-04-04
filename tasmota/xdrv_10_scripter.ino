@@ -505,10 +505,6 @@ void ScriptEverySecond(void) {
   }
 }
 
-void RulesTeleperiod(void) {
-  if (bitRead(Settings.rule_enabled, 0) && TasmotaGlobal.mqtt_data[0]) Run_Scripter(">T", 2, TasmotaGlobal.mqtt_data);
-}
-
 void SetChanged(uint32_t index) {
   glob_script_mem.type[index].bits.changed = 1;
 #ifdef USE_HOMEKIT
@@ -7838,8 +7834,14 @@ bool Xdrv10(uint8_t function)
       break;
     case FUNC_RULES_PROCESS:
       if (bitRead(Settings.rule_enabled, 0)) {
-        Run_Scripter(">E", 2, TasmotaGlobal.mqtt_data);
-        result = glob_script_mem.event_handeled;
+        if (XdrvMailbox.index) {  // Signal teleperiod event
+          if (TasmotaGlobal.mqtt_data[0]) {
+            Run_Scripter(">T", 2, TasmotaGlobal.mqtt_data);
+          }
+        } else {
+          Run_Scripter(">E", 2, TasmotaGlobal.mqtt_data);
+          result = glob_script_mem.event_handeled;
+        }
       }
       break;
 #ifdef USE_WEBSERVER
@@ -7873,7 +7875,7 @@ bool Xdrv10(uint8_t function)
       Webserver->on("/exs", HTTP_GET, ScriptExecuteUploadSuccess);
 #endif // USE_WEBSERVER
       break;
-      
+
     case FUNC_SAVE_BEFORE_RESTART:
       if (bitRead(Settings.rule_enabled, 0)) {
         Run_Scripter(">R", 2, 0);

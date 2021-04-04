@@ -291,7 +291,7 @@ void AdcEvery250ms(void) {
         Adc[idx].last_value = new_value;
         uint16_t value = Adc[idx].last_value / ANALOG_PERCENT;
         Response_P(PSTR("{\"ANALOG\":{\"A%ddiv10\":%d}}"), idx + offset, (value > 99) ? 100 : value);
-        XdrvRulesProcess();
+        XdrvRulesProcess(0);
       }
     }
     else if (ADC_JOY == Adc[idx].type) {
@@ -300,7 +300,7 @@ void AdcEvery250ms(void) {
         Adc[idx].last_value = new_value;
         uint16_t value = new_value / Adc[idx].param1;
         Response_P(PSTR("{\"ANALOG\":{\"Joy%s\":%d}}"), adc_idx, value);
-        XdrvRulesProcess();
+        XdrvRulesProcess(0);
       } else {
         Adc[idx].last_value = 0;
       }

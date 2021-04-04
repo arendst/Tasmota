@@ -498,7 +498,7 @@ void ShutterUpdatePosition(void)
     if (Shutter[i].direction != 0) {
       if (!ShutterGlobal.start_reported) {
         ShutterReportPosition(true, i);
-        XdrvRulesProcess();
+        XdrvRulesProcess(0);
         ShutterGlobal.start_reported = 1;
       }
       AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Time %d, cStop %d, cVelo %d, mVelo %d, aVelo %d, mRun %d, aPos %d, nStop %d, Trgt %d, mVelo %d, Dir %d"),
@@ -523,7 +523,7 @@ void ShutterUpdatePosition(void)
         MqttPublish(stopic, Settings.flag.mqtt_power_retain);  // CMND_POWERRETAIN
         ShutterReportPosition(true, i);
         TasmotaGlobal.rules_flag.shutter_moved = 1;
-        XdrvRulesProcess();
+        XdrvRulesProcess(0);
       }
     }
   }
@@ -543,7 +543,7 @@ void ShutterAllowPreStartProcedure(uint8_t i)
   uint32_t uptime_Local=0;
   AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Delay Start. var%d <99>=<%s>, max10s?"),i+i, rules_vars[i]);
   TasmotaGlobal.rules_flag.shutter_moving = 1;
-  XdrvRulesProcess();
+  XdrvRulesProcess(0);
   uptime_Local = TasmotaGlobal.uptime;
   while (uptime_Local+10 > TasmotaGlobal.uptime && (String)rules_vars[i] == "99") {
     loop();

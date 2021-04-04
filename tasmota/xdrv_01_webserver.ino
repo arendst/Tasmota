@@ -2898,7 +2898,7 @@ int WebSend(char *buffer)
 extern uint8_t tasm_cmd_activ;
           // recursive call must be possible in this case
           tasm_cmd_activ=0;
-          XdrvRulesProcess();
+          XdrvRulesProcess(0);
 #endif  // USE_SCRIPT
 #endif  // USE_WEBSEND_RESPONSE
         }

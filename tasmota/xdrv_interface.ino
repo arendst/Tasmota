@@ -1079,11 +1079,12 @@ void XsnsDriverState(void)
 
 /*********************************************************************************************/
 
-bool XdrvRulesProcess(void)
-{
+bool XdrvRulesProcess(bool teleperiod) {
+  XdrvMailbox.index = teleperiod;  // Signal teleperiod event
 #ifdef USE_BERRY
   // events are passed to both Rules engine AND Berry engine
   bool rule_handled = XdrvCallDriver(10, FUNC_RULES_PROCESS);
+  XdrvMailbox.index = teleperiod;  // Signal teleperiod event
   bool berry_handled = XdrvCallDriver(52, FUNC_RULES_PROCESS);
   return rule_handled || berry_handled;
 #else

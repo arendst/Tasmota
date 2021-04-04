@@ -424,7 +424,7 @@ void MqttPublishPrefixTopic_P(uint32_t prefix, const char* subtopic) {
 
 void MqttPublishPrefixTopicRulesProcess_P(uint32_t prefix, const char* subtopic, bool retained) {
   MqttPublishPrefixTopic_P(prefix, subtopic, retained);
-  XdrvRulesProcess();
+  XdrvRulesProcess(0);
 }
 
 void MqttPublishPrefixTopicRulesProcess_P(uint32_t prefix, const char* subtopic) {

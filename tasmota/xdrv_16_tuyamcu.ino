@@ -1190,7 +1190,7 @@ void TuyaSerialInput(void)
       } else {
         AddLog_P(LOG_LEVEL_DEBUG, TasmotaGlobal.mqtt_data);
       }
-      XdrvRulesProcess();
+      XdrvRulesProcess(0);
 
       if (dpId != 0 && Settings.tuyamcu_topic) { // Publish a /STAT Topic ready to use for any home automation system
         if (!Tuya.SuspendTopic) {

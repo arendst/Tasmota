@@ -277,9 +277,7 @@ void WindMeterTriggerTele(void)
   ResponseClear();
   if (MqttShowSensor()) {
     MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
-#ifdef USE_RULES
-    RulesTeleperiod();  // Allow rule based HA messages
-#endif  // USE_RULES
+    XdrvRulesProcess(1);  // Allow rule based HA messages
   }
 }
 
