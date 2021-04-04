@@ -409,12 +409,11 @@ const char HueConfigResponse_JSON[] PROGMEM = "\x3D\xA7\xB3\xAC\x6B\x3D\x87\x99\
 
 String GetHueDeviceId(uint16_t id)
 {
+  char s[32];
   String deviceid = WiFi.macAddress();
-  deviceid += F(":00:11-");
-  if(id<0x10) deviceid += F("0");
-  deviceid += String(id,HEX);
   deviceid.toLowerCase();
-  return deviceid;  // 5c:cf:7f:13:9f:3d:00:11-01
+  snprintf(s, sizeof(s), "%s:%02x:11-%02x", deviceid.c_str(), (id >> 8) & 0xFF, id & 0xFF);
+  return String(s);  // 5c:cf:7f:13:9f:3d:00:11-01
 }
 
 String GetHueUserId(void)
