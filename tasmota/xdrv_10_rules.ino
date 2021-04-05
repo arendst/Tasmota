@@ -174,7 +174,6 @@ struct RULES {
   uint16_t last_minute = 60;
   uint16_t vars_event = 0;   // Bitmask supporting MAX_RULE_VARS bits
   uint16_t mems_event = 0;   // Bitmask supporting MAX_RULE_MEMS bits
-  bool teleperiod = false;
   bool busy = false;
   bool no_execute = false;   // Don't actually execute rule commands
 
@@ -420,7 +419,7 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule, bool stop_all
 
   // Step1: Analyse rule
   String rule_expr = rule;                             // "TELE-INA219#CURRENT>0.100"
-  if (Rules.teleperiod) {
+  if (TasmotaGlobal.rule_teleperiod) {
     int ppos = rule_expr.indexOf(F("TELE-"));          // "TELE-INA219#CURRENT>0.100" or "INA219#CURRENT>0.100"
     if (ppos == -1) { return false; }                  // No pre-amble in rule
     rule_expr = rule.substring(5);                     // "INA219#CURRENT>0.100" or "SYSTEM#BOOT"
@@ -854,7 +853,7 @@ void RulesInit(void)
       bitWrite(Settings.rule_once, i, 0);
     }
   }
-  Rules.teleperiod = false;
+  TasmotaGlobal.rule_teleperiod = false;
 }
 
 void RulesEvery50ms(void)
@@ -2340,9 +2339,7 @@ bool Xdrv10(uint8_t function)
       result = DecodeCommand(kRulesCommands, RulesCommand);
       break;
     case FUNC_RULES_PROCESS:
-      Rules.teleperiod = (XdrvMailbox.index);  // Signal teleperiod event
       result = RulesProcess();
-      Rules.teleperiod = false;
       break;
     case FUNC_SAVE_BEFORE_RESTART:
       RulesSaveBeforeRestart();

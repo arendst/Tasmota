@@ -1080,16 +1080,15 @@ void XsnsDriverState(void)
 /*********************************************************************************************/
 
 bool XdrvRulesProcess(bool teleperiod) {
-  XdrvMailbox.index = teleperiod;  // Signal teleperiod event
+  TasmotaGlobal.rule_teleperiod = teleperiod;  // Signal teleperiod event
+  bool rule_handled = XdrvCallDriver(10, FUNC_RULES_PROCESS);
 #ifdef USE_BERRY
   // events are passed to both Rules engine AND Berry engine
-  bool rule_handled = XdrvCallDriver(10, FUNC_RULES_PROCESS);
-  XdrvMailbox.index = teleperiod;  // Signal teleperiod event
   bool berry_handled = XdrvCallDriver(52, FUNC_RULES_PROCESS);
-  return rule_handled || berry_handled;
-#else
-  return XdrvCallDriver(10, FUNC_RULES_PROCESS);
+  rule_handled |= berry_handled;
 #endif
+  TasmotaGlobal.rule_teleperiod = false;
+  return rule_handled;
 }
 
 #ifdef USE_DEBUG_DRIVER

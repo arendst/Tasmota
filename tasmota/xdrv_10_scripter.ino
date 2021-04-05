@@ -7855,7 +7855,7 @@ bool Xdrv10(uint8_t function)
       break;
     case FUNC_RULES_PROCESS:
       if (bitRead(Settings.rule_enabled, 0)) {
-        if (XdrvMailbox.index) {  // Signal teleperiod event
+        if (TasmotaGlobal.rule_teleperiod) {  // Signal teleperiod event
           if (TasmotaGlobal.mqtt_data[0]) {
             Run_Scripter(">T", 2, TasmotaGlobal.mqtt_data);
           }
