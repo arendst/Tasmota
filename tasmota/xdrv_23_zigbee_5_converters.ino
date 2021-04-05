@@ -628,6 +628,8 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   { Ztuya1,   CxEF00, 0x0174,  Z_(TuyaAutoLock),         Cm1, 0 },
   { Zint16,   CxEF00, 0x0202,  Z_(TuyaTempTarget),       Cm_10, Z_MAPPING(Z_Data_Thermo, temperature_target) },
   { Zint16,   CxEF00, 0x0203,  Z_(LocalTemperature),     Cm_10, Z_MAPPING(Z_Data_Thermo, temperature) },  // will be overwritten by actual LocalTemperature
+  { Zuint8,   CxEF00, 0x0203,  Z_(Dimmer),               Cm1, Z_MAPPING(Z_Data_Light, dimmer) },  // will be overwritten by actual LocalTemperature
+  { Zmap8,    CxEF00, 0x0203,  Z_(Occupancy),            Cm1, Z_MAPPING(Z_Data_PIR, occupancy) },  // will be overwritten by actual LocalTemperature
   { Ztuya2,   CxEF00, 0x0215,  Z_(TuyaBattery),          Cm1, 0 },   // TODO check equivalent?
   { Ztuya2,   CxEF00, 0x0266,  Z_(TuyaMinTemp),          Cm1, 0 },
   { Ztuya2,   CxEF00, 0x0267,  Z_(TuyaMaxTemp),          Cm1, 0 },
