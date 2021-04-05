@@ -2314,7 +2314,7 @@ void be_load_tasmota_ntvlib(bvm *vm)
     static const bnfuncinfo members[] = {
         { "_rules", NULL },
         { "_timers", NULL },
-        { "_cmd", NULL },
+        { "_ccmd", NULL },
         { "_drivers", NULL },
         { "wire1", NULL },
         { "wire2", NULL },
@@ -2351,6 +2351,7 @@ void be_load_tasmota_ntvlib(bvm *vm)
         { "find_key_i", (bntvfunc) &find_key_i_closure },
         { "find_op", (bntvfunc) &find_op_closure },
         { "add_rule", (bntvfunc) &add_rule_closure },
+        { "remove_rule", (bntvfunc) &remove_rule_closure },
         { "try_rule", (bntvfunc) &try_rule_closure },
         { "exec_rules", (bntvfunc) &exec_rules_closure },
         { "set_timer", (bntvfunc) &set_timer_closure },
