@@ -40,7 +40,9 @@ static void dump_module(bmodule *module)
 
 static void dump_class(bclass *class)
 {
-    dump_map(class->members);
+    if (class->members) {
+        dump_map(class->members);
+    }
 }
 
 static void dump_instanse(binstance *ins)
