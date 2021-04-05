@@ -2033,7 +2033,7 @@ static const bclosure wire_scan_closure = {
     // cmd high-level function
     "def cmd(command) "
       "import json "
-      "var ret = self._cmd(command) "
+      "var ret = self._tasmota_cmd(command) "
       "var j = json.load(ret) "
       "if type(j) == 'instance' "
         "return j "
@@ -2049,7 +2049,7 @@ static const bclosure wire_scan_closure = {
 be_define_local_const_str(cmd_str_name, "cmd", -158181397, 0, 3, 0);
 be_define_local_const_str(cmd_str_source, "string", 398550328, 0, 6, 0);
 be_define_local_const_str(cmd_str_0, "json", 916562499, 0, 4, 0);
-be_define_local_const_str(cmd_str_1, "_cmd", -875145154, 0, 4, 0);
+be_define_local_const_str(cmd_str_1, "_tasmota_cmd", -1260977274, 0, 12, 0);
 be_define_local_const_str(cmd_str_2, "load", -435725847, 0, 4, 0);
 be_define_local_const_str(cmd_str_3, "instance", 193386898, 0, 8, 0);
 be_define_local_const_str(cmd_str_4, "response", 1499316702, 0, 8, 0);
@@ -2063,25 +2063,25 @@ static const bvalue cmd_ktab[5] = {
 };
 
 static const uint32_t cmd_code[19] = {
-  0xA40A0000,  //  0000  IMPORT R2  R256
-  0x8C0C0101,  //  0001  GETMET R3  R0  R257
-  0x5C140200,  //  0002  MOVE R5  R1
-  0x7C0C0400,  //  0003  CALL R3  2
-  0x8C100502,  //  0004  GETMET R4  R2  R258
-  0x5C180600,  //  0005  MOVE R6  R3
-  0x7C100400,  //  0006  CALL R4  2
-  0x60140015,  //  0007  GETGBL R5  G21
-  0x5C180800,  //  0008  MOVE R6  R4
-  0x7C140200,  //  0009  CALL R5  1
-  0x1C140B03,  //  000A  EQ R5  R5  R259
-  0x78160001,  //  000B  JMPF R5  #000E
-  0x80040800,  //  000C  RET  1 R4
-  0x70020003,  //  000D  JMP    #0012
-  0x6014000B,  //  000E  GETGBL R5  G11
-  0x7C140000,  //  000F  CALL R5  0
-  0x98160804,  //  0010  SETIDX R5  R260  R4
-  0x80040A00,  //  0011  RET  1 R5
-  0x80000000,  //  0012  RET  0 R0
+  0xA40A0000,  //  0000  IMPORT	R2	R256
+  0x8C0C0101,  //  0001  GETMET	R3	R0	R257
+  0x5C140200,  //  0002  MOVE	R5	R1
+  0x7C0C0400,  //  0003  CALL	R3	2
+  0x8C100502,  //  0004  GETMET	R4	R2	R258
+  0x5C180600,  //  0005  MOVE	R6	R3
+  0x7C100400,  //  0006  CALL	R4	2
+  0x60140015,  //  0007  GETGBL	R5	G21
+  0x5C180800,  //  0008  MOVE	R6	R4
+  0x7C140200,  //  0009  CALL	R5	1
+  0x1C140B03,  //  000A  EQ	R5	R5	R259
+  0x78160001,  //  000B  JMPF	R5	#000E
+  0x80040800,  //  000C  RET	1	R4
+  0x70020003,  //  000D  JMP		#0012
+  0x6014000B,  //  000E  GETGBL	R5	G11
+  0x7C140000,  //  000F  CALL	R5	0
+  0x98160804,  //  0010  SETIDX	R5	R260	R4
+  0x80040A00,  //  0011  RET	1	R5
+  0x80000000,  //  0012  RET	0	R0
 };
 
 static const bproto cmd_proto = {
@@ -2320,7 +2320,7 @@ void be_load_tasmota_ntvlib(bvm *vm)
         { "wire2", NULL },
         { "get_free_heap", l_getFreeHeap },
         { "publish", l_publish },
-        { "_cmd", l_cmd },
+        { "_tasmota_cmd", l_cmd },
         { "get_option", l_getoption },
         { "millis", l_millis },
         { "time_reached", l_timereached },
@@ -2351,6 +2351,7 @@ void be_load_tasmota_ntvlib(bvm *vm)
         { "find_key_i", (bntvfunc) &find_key_i_closure },
         { "find_op", (bntvfunc) &find_op_closure },
         { "add_rule", (bntvfunc) &add_rule_closure },
+        { "remove_rule", (bntvfunc) &remove_rule_closure },
         { "try_rule", (bntvfunc) &try_rule_closure },
         { "exec_rules", (bntvfunc) &exec_rules_closure },
         { "set_timer", (bntvfunc) &set_timer_closure },

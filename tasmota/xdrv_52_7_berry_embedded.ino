@@ -329,7 +329,7 @@ const char berry_prog[] =
     // // cmd high-level function
     // "def cmd(command) "
     //   "import json "
-    //   "var ret = self._cmd(command) "
+    //   "var ret = self._tasmota_cmd(command) "
     //   "var j = json.load(ret) "
     //   "if type(j) == 'instance' "
     //     "return j "
