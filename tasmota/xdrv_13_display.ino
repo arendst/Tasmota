@@ -1157,26 +1157,28 @@ void draw_dt_vars(void) {
 
 #define DTV_JSON_SIZE 1024
 
-void DTVarsTeleperiod(void) {
-  if (TasmotaGlobal.mqtt_data && TasmotaGlobal.mqtt_data[0]) {
-    uint32_t jlen = strlen(TasmotaGlobal.mqtt_data);
+void DisplayDTVarsTeleperiod(void) {
+  ResponseClear();
+  MqttShowState();
+  uint32_t jlen = strlen(TasmotaGlobal.mqtt_data);
 
-    if (jlen < DTV_JSON_SIZE) {
-      char *json = (char*)malloc(jlen + 2);
-      if (json) {
-        strlcpy(json, TasmotaGlobal.mqtt_data, jlen + 1);
-        get_dt_vars(json);
-        free(json);
-      }
+  if (jlen < DTV_JSON_SIZE) {
+    char *json = (char*)malloc(jlen + 2);
+    if (json) {
+      strlcpy(json, TasmotaGlobal.mqtt_data, jlen + 1);
+      get_dt_vars(json);
+      free(json);
     }
   }
 }
 
 void get_dt_mqtt(void) {
+  static uint8_t xsns_index = 0;
+
   ResponseClear();
   uint16_t script_tele_period_save = TasmotaGlobal.tele_period;
   TasmotaGlobal.tele_period = 2;
-  XsnsNextCall(FUNC_JSON_APPEND, script_xsns_index);
+  XsnsNextCall(FUNC_JSON_APPEND, xsns_index);
   TasmotaGlobal.tele_period = script_tele_period_save;
   if (strlen(TasmotaGlobal.mqtt_data)) {
     TasmotaGlobal.mqtt_data[0] = '{';
@@ -2788,7 +2790,11 @@ bool Xdrv13(uint8_t function)
         if (Settings.display_model && Settings.display_mode) { XdspCall(FUNC_DISPLAY_EVERY_SECOND); }
 #endif
         break;
-
+      case FUNC_AFTER_TELEPERIOD:
+#ifdef USE_DT_VARS
+        DisplayDTVarsTeleperiod();
+#endif // USE_DT_VARS
+        break;
 #ifdef USE_DISPLAY_MODES1TO5
       case FUNC_MQTT_SUBSCRIBE:
         DisplayMqttSubscribe();

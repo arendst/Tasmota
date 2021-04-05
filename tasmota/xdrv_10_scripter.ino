@@ -4844,15 +4844,15 @@ int16_t Run_script_sub(const char *type, int8_t tlen, struct GVARS *gv) {
     return -1;
 }
 
-uint8_t script_xsns_index = 0;
 
 void ScripterEvery100ms(void) {
+  static uint8_t xsns_index = 0;
 
   if (bitRead(Settings.rule_enabled, 0) && (TasmotaGlobal.uptime > 4)) {
     ResponseClear();
     uint16_t script_tele_period_save = TasmotaGlobal.tele_period;
     TasmotaGlobal.tele_period = 2;
-    XsnsNextCall(FUNC_JSON_APPEND, script_xsns_index);
+    XsnsNextCall(FUNC_JSON_APPEND, xsns_index);
     TasmotaGlobal.tele_period = script_tele_period_save;
     if (strlen(TasmotaGlobal.mqtt_data)) {
       TasmotaGlobal.mqtt_data[0] = '{';
