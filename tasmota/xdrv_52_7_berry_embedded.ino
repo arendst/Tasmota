@@ -193,20 +193,32 @@ const char berry_prog[] =
 
     // // Add command to list
     // "def add_cmd(c,f) "
-    //   "if !self._cmd "
-    //     "self._cmd={} "
+    //   "if !self._ccmd "
+    //     "self._ccmd={} "
     //   "end "
-    //   "self._cmd[c]=f "
+    //   "if type(f) == 'function' "
+    //     "self._ccmd[c]=f "
+    //   "else "
+    //     "raise 'value_error', 'the second argument is not a function' "
+    //   "end "
     // "end "
 
+    // // Remove command from list
+    // "def remove_cmd(c) "
+    //   "if self._ccmd "
+    //     "self._ccmd.remove(c) "
+    //   "end "
+    // "end "
+
+    // // Execute custom command
     // "def exec_cmd(cmd, idx, payload) "
-    //   "if self._cmd "
+    //   "if self._ccmd "
     //     "import json "
     //     "var payload_json = json.load(payload) "
-    //     "var cmd_found = self.find_key_i(self._cmd, cmd) "
+    //     "var cmd_found = self.find_key_i(self._ccmd, cmd) "
     //     "if cmd_found != nil "
     //       "self.resolvecmnd(cmd_found) "  // set the command name in XdrvMailbox.command
-    //       "self._cmd[cmd_found](cmd_found, idx, payload, payload_json) "
+    //       "self._ccmd[cmd_found](cmd_found, idx, payload, payload_json) "
     //       "return true "
     //     "end "
     //   "end "

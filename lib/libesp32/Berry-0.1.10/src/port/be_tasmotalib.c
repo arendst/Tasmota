@@ -1,6 +1,6 @@
 /********************************************************************
  * Tasmota lib
- * 
+ *
  * To use: `import tasmota`
  *******************************************************************/
 #include "be_object.h"
@@ -841,7 +841,7 @@ static const bclosure try_rule_closure = {
       "end "
       "return false "
     "end "
-  
+
 ********************************************************************/
 
 /********************************************************************
@@ -1146,10 +1146,14 @@ const bclosure run_deferred_closure = {
 /********************************************************************
     // Add command to list
     "def add_cmd(c,f) "
-      "if !self._cmd "
-        "self._cmd={} "
+      "if !self._ccmd "
+        "self._ccmd={} "
       "end "
-      "self._cmd[c]=f "
+      "if type(f) == 'function' "
+        "self._ccmd[c]=f "
+      "else "
+        "raise 'value_error', 'the second argument is not a function' "
+      "end "
     "end "
 ********************************************************************/
 /********************************************************************
@@ -1158,28 +1162,41 @@ const bclosure run_deferred_closure = {
 
 be_define_local_const_str(add_cmd_str_name, "add_cmd", -933336417, 0, 7, 0);
 be_define_local_const_str(add_cmd_str_source, "string", 398550328, 0, 6, 0);
-be_define_local_const_str(add_cmd_str_0, "_cmd", -875145154, 0, 4, 0);
+be_define_local_const_str(add_cmd_str_0, "_ccmd", -2131545883, 0, 5, 0);
+be_define_local_const_str(add_cmd_str_1, "function", -1630125495, 0, 8, 0);
+be_define_local_const_str(add_cmd_str_2, "value_error", 773297791, 0, 11, 0);
+be_define_local_const_str(add_cmd_str_3, "the second argument is not a function", -340392827, 0, 37, 0);
 
-static const bvalue add_cmd_ktab[1] = {
+static const bvalue add_cmd_ktab[4] = {
   { { .s=be_local_const_str(add_cmd_str_0) }, BE_STRING},
+  { { .s=be_local_const_str(add_cmd_str_1) }, BE_STRING},
+  { { .s=be_local_const_str(add_cmd_str_2) }, BE_STRING},
+  { { .s=be_local_const_str(add_cmd_str_3) }, BE_STRING},
 };
 
-static const uint32_t add_cmd_code[8] = {
-  0x880C0100,  //  0000  GETMBR R3  R0  R256
-  0x740E0002,  //  0001  JMPT R3  #0005
-  0x600C000B,  //  0002  GETGBL R3  G11
-  0x7C0C0000,  //  0003  CALL R3  0
-  0x90020003,  //  0004  SETMBR R0  R256  R3
-  0x880C0100,  //  0005  GETMBR R3  R0  R256
-  0x980C0202,  //  0006  SETIDX R3  R1  R2
-  0x80000000,  //  0007  RET  0 R0
+static const uint32_t add_cmd_code[15] = {
+  0x880C0100,  //  0000  GETMBR	R3	R0	R256
+  0x740E0002,  //  0001  JMPT	R3	#0005
+  0x600C000B,  //  0002  GETGBL	R3	G11
+  0x7C0C0000,  //  0003  CALL	R3	0
+  0x90020003,  //  0004  SETMBR	R0	R256	R3
+  0x600C0015,  //  0005  GETGBL	R3	G21
+  0x5C100400,  //  0006  MOVE	R4	R2
+  0x7C0C0200,  //  0007  CALL	R3	1
+  0x1C0C0701,  //  0008  EQ	R3	R3	R257
+  0x780E0002,  //  0009  JMPF	R3	#000D
+  0x880C0100,  //  000A  GETMBR	R3	R0	R256
+  0x980C0202,  //  000B  SETIDX	R3	R1	R2
+  0x70020000,  //  000C  JMP		#000E
+  0xB0060503,  //  000D  RAISE	1	R258	R259
+  0x80000000,  //  000E  RET	0	R0
 };
 
 static const bproto add_cmd_proto = {
   NULL,     // bgcobject *next
   8,       // type
   GC_CONST,        // marked
-  4,       // nstack
+  5,       // nstack
   0,       // nupvals
   3,       // argc
   0,       // varg
@@ -1189,8 +1206,8 @@ static const bproto add_cmd_proto = {
   NULL,     // bproto **ptab
   (binstruction*) &add_cmd_code,     // code
   be_local_const_str(add_cmd_str_name),       // name
-  8,       // codesize
-  1,       // nconst
+  15,       // codesize
+  4,       // nconst
   0,       // nproto
   be_local_const_str(add_cmd_str_source),     // source
 #if BE_DEBUG_RUNTIME_INFO /* debug information */
@@ -1203,7 +1220,7 @@ static const bproto add_cmd_proto = {
 #endif
 };
 
-const bclosure add_cmd_closure = {
+static const bclosure add_cmd_closure = {
   NULL,     // bgcobject *next
   36,       // type
   GC_CONST,        // marked
@@ -1215,15 +1232,89 @@ const bclosure add_cmd_closure = {
 
 /*******************************************************************/
 
+
 /********************************************************************
+    // Remove command from list
+    "def remove_cmd(c) "
+      "if self._ccmd "
+        "self._ccmd.remove(c) "
+      "end "
+    "end "
+********************************************************************/
+/********************************************************************
+** Solidified function: remove_cmd
+********************************************************************/
+
+be_define_local_const_str(remove_cmd_str_name, "remove_cmd", -462651594, 0, 10, 0);
+be_define_local_const_str(remove_cmd_str_source, "string", 398550328, 0, 6, 0);
+be_define_local_const_str(remove_cmd_str_0, "_ccmd", -2131545883, 0, 5, 0);
+be_define_local_const_str(remove_cmd_str_1, "remove", -611183107, 0, 6, 0);
+
+static const bvalue remove_cmd_ktab[2] = {
+  { { .s=be_local_const_str(remove_cmd_str_0) }, BE_STRING},
+  { { .s=be_local_const_str(remove_cmd_str_1) }, BE_STRING},
+};
+
+static const uint32_t remove_cmd_code[7] = {
+  0x88080100,  //  0000  GETMBR	R2	R0	R256
+  0x780A0003,  //  0001  JMPF	R2	#0006
+  0x88080100,  //  0002  GETMBR	R2	R0	R256
+  0x8C080501,  //  0003  GETMET	R2	R2	R257
+  0x5C100200,  //  0004  MOVE	R4	R1
+  0x7C080400,  //  0005  CALL	R2	2
+  0x80000000,  //  0006  RET	0	R0
+};
+
+static const bproto remove_cmd_proto = {
+  NULL,     // bgcobject *next
+  8,       // type
+  GC_CONST,        // marked
+  5,       // nstack
+  0,       // nupvals
+  2,       // argc
+  0,       // varg
+  NULL,     // bgcobject *gray
+  NULL,     // bupvaldesc *upvals
+  (bvalue*) &remove_cmd_ktab,     // ktab
+  NULL,     // bproto **ptab
+  (binstruction*) &remove_cmd_code,     // code
+  be_local_const_str(remove_cmd_str_name),       // name
+  7,       // codesize
+  2,       // nconst
+  0,       // nproto
+  be_local_const_str(remove_cmd_str_source),     // source
+#if BE_DEBUG_RUNTIME_INFO /* debug information */
+  NULL,     // lineinfo
+  0,        // nlineinfo
+#endif
+#if BE_DEBUG_VAR_INFO
+  NULL,     // varinfo
+  0,        // nvarinfo
+#endif
+};
+
+static const bclosure remove_cmd_closure = {
+  NULL,     // bgcobject *next
+  36,       // type
+  GC_CONST,        // marked
+  0,       // nupvals
+  NULL,     // bgcobject *gray
+  (bproto*) &remove_cmd_proto,     // proto
+  { NULL }     // upvals
+};
+
+/*******************************************************************/
+
+/********************************************************************
+    // Execute custom command
     "def exec_cmd(cmd, idx, payload) "
-      "if self._cmd "
+      "if self._ccmd "
         "import json "
         "var payload_json = json.load(payload) "
-        "var cmd_found = self.find_key_i(self._cmd, cmd) "
+        "var cmd_found = self.find_key_i(self._ccmd, cmd) "
         "if cmd_found != nil "
           "self.resolvecmnd(cmd_found) "  // set the command name in XdrvMailbox.command
-          "self._cmd[cmd_found](cmd_found, idx, payload, payload_json) "
+          "self._ccmd[cmd_found](cmd_found, idx, payload, payload_json) "
           "return true "
         "end "
       "end "
@@ -1236,7 +1327,7 @@ const bclosure add_cmd_closure = {
 
 be_define_local_const_str(exec_cmd_str_name, "exec_cmd", 493567399, 0, 8, 0);
 be_define_local_const_str(exec_cmd_str_source, "string", 398550328, 0, 6, 0);
-be_define_local_const_str(exec_cmd_str_0, "_cmd", -875145154, 0, 4, 0);
+be_define_local_const_str(exec_cmd_str_0, "_ccmd", -2131545883, 0, 5, 0);
 be_define_local_const_str(exec_cmd_str_1, "json", 916562499, 0, 4, 0);
 be_define_local_const_str(exec_cmd_str_2, "load", -435725847, 0, 4, 0);
 be_define_local_const_str(exec_cmd_str_3, "find_key_i", 850136726, 0, 10, 0);
@@ -1251,33 +1342,33 @@ static const bvalue exec_cmd_ktab[5] = {
 };
 
 static const uint32_t exec_cmd_code[27] = {
-  0x88100100,  //  0000  GETMBR R4  R0  R256
-  0x78120016,  //  0001  JMPF R4  #0019
-  0xA4120200,  //  0002  IMPORT R4  R257
-  0x8C140902,  //  0003  GETMET R5  R4  R258
-  0x5C1C0600,  //  0004  MOVE R7  R3
-  0x7C140400,  //  0005  CALL R5  2
-  0x8C180103,  //  0006  GETMET R6  R0  R259
-  0x88200100,  //  0007  GETMBR R8  R0  R256
-  0x5C240200,  //  0008  MOVE R9  R1
-  0x7C180600,  //  0009  CALL R6  3
-  0x4C1C0000,  //  000A  LDNIL  7
-  0x201C0C07,  //  000B  NE R7  R6  R7
-  0x781E000B,  //  000C  JMPF R7  #0019
-  0x8C1C0104,  //  000D  GETMET R7  R0  R260
-  0x5C240C00,  //  000E  MOVE R9  R6
-  0x7C1C0400,  //  000F  CALL R7  2
-  0x881C0100,  //  0010  GETMBR R7  R0  R256
-  0x941C0E06,  //  0011  GETIDX R7  R7  R6
-  0x5C200C00,  //  0012  MOVE R8  R6
-  0x5C240400,  //  0013  MOVE R9  R2
-  0x5C280600,  //  0014  MOVE R10 R3
-  0x5C2C0A00,  //  0015  MOVE R11 R5
-  0x7C1C0800,  //  0016  CALL R7  4
-  0x501C0200,  //  0017  LDBOOL R7  1 0
-  0x80040E00,  //  0018  RET  1 R7
-  0x50100000,  //  0019  LDBOOL R4  0 0
-  0x80040800,  //  001A  RET  1 R4
+  0x88100100,  //  0000  GETMBR	R4	R0	R256
+  0x78120016,  //  0001  JMPF	R4	#0019
+  0xA4120200,  //  0002  IMPORT	R4	R257
+  0x8C140902,  //  0003  GETMET	R5	R4	R258
+  0x5C1C0600,  //  0004  MOVE	R7	R3
+  0x7C140400,  //  0005  CALL	R5	2
+  0x8C180103,  //  0006  GETMET	R6	R0	R259
+  0x88200100,  //  0007  GETMBR	R8	R0	R256
+  0x5C240200,  //  0008  MOVE	R9	R1
+  0x7C180600,  //  0009  CALL	R6	3
+  0x4C1C0000,  //  000A  LDNIL	7
+  0x201C0C07,  //  000B  NE	R7	R6	R7
+  0x781E000B,  //  000C  JMPF	R7	#0019
+  0x8C1C0104,  //  000D  GETMET	R7	R0	R260
+  0x5C240C00,  //  000E  MOVE	R9	R6
+  0x7C1C0400,  //  000F  CALL	R7	2
+  0x881C0100,  //  0010  GETMBR	R7	R0	R256
+  0x941C0E06,  //  0011  GETIDX	R7	R7	R6
+  0x5C200C00,  //  0012  MOVE	R8	R6
+  0x5C240400,  //  0013  MOVE	R9	R2
+  0x5C280600,  //  0014  MOVE	R10	R3
+  0x5C2C0A00,  //  0015  MOVE	R11	R5
+  0x7C1C0800,  //  0016  CALL	R7	4
+  0x501C0200,  //  0017  LDBOOL	R7	1	0
+  0x80040E00,  //  0018  RET	1	R7
+  0x50100000,  //  0019  LDBOOL	R4	0	0
+  0x80040800,  //  001A  RET	1	R4
 };
 
 static const bproto exec_cmd_proto = {
@@ -1308,7 +1399,7 @@ static const bproto exec_cmd_proto = {
 #endif
 };
 
-const bclosure exec_cmd_closure = {
+static const bclosure exec_cmd_closure = {
   NULL,     // bgcobject *next
   36,       // type
   GC_CONST,        // marked
@@ -1767,7 +1858,7 @@ const bclosure add_driver_closure = {
         "c() "
         "self.log(string.format(\"BRY: sucessfully loaded '%s'\",f)) "
       "except .. as e "
-        "raise \"io_error\",string.format(\"Could not load file '%s'\",f) " 
+        "raise \"io_error\",string.format(\"Could not load file '%s'\",f) "
       "end "
     "end "
 ********************************************************************/
@@ -2314,7 +2405,7 @@ void be_load_tasmota_ntvlib(bvm *vm)
     static const bnfuncinfo members[] = {
         { "_rules", NULL },
         { "_timers", NULL },
-        { "_cmd", NULL },
+        { "_ccmd", NULL },
         { "_drivers", NULL },
         { "wire1", NULL },
         { "wire2", NULL },
@@ -2344,18 +2435,20 @@ void be_load_tasmota_ntvlib(bvm *vm)
         { "set_power", l_setpower },
 
         { "i2c_enabled", l_i2cenabled },
-        
+
         { NULL, (bntvfunc) BE_CLOSURE }, /* mark section for berry closures */
         { "cmd", (bntvfunc) &cmd_closure },
         { "chars_in_string", (bntvfunc) &chars_in_string_closure },
         { "find_key_i", (bntvfunc) &find_key_i_closure },
         { "find_op", (bntvfunc) &find_op_closure },
         { "add_rule", (bntvfunc) &add_rule_closure },
+        { "remove_rule", (bntvfunc) &remove_rule_closure },
         { "try_rule", (bntvfunc) &try_rule_closure },
         { "exec_rules", (bntvfunc) &exec_rules_closure },
         { "set_timer", (bntvfunc) &set_timer_closure },
         { "run_deferred", (bntvfunc) &run_deferred_closure },
         { "add_cmd", (bntvfunc) &add_cmd_closure },
+        { "remove_cmd", (bntvfunc) &remove_cmd_closure },
         { "exec_cmd", (bntvfunc) &exec_cmd_closure },
         { "gc", (bntvfunc) &gc_closure },
         { "event", (bntvfunc) &event_closure },
