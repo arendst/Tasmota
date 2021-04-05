@@ -1162,12 +1162,8 @@ void MINRFconfirmSensors(void){
  *
  */
 void MINRFtriggerTele(void){
-    MINRF.mode.triggeredTele= true;
-    ResponseClear();
-    if (MqttShowSensor()) {
-      MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
-      XdrvRulesProcess(1);  // Allow rule based HA messages
-    }
+  MINRF.mode.triggeredTele = true;
+  MqttPublishTeleperiodSensor();
 }
 
 /**

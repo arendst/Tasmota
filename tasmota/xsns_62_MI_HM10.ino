@@ -1564,12 +1564,8 @@ void HM10EverySecond(bool restart){
  *
  */
 void HM10triggerTele(void){
-    HM10.mode.triggeredTele = 1;
-    ResponseClear();
-    if (MqttShowSensor()) {
-      MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
-      XdrvRulesProcess(1);  // Allow rule based HA messages
-    }
+  HM10.mode.triggeredTele = 1;
+  MqttPublishTeleperiodSensor();
 }
 
 

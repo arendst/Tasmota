@@ -858,11 +858,18 @@ bool MqttShowSensor(void)
   return json_data_available;
 }
 
-void MqttPublishSensor(void)
-{
+void MqttPublishSensor(void) {
   ResponseClear();
   if (MqttShowSensor()) {
     MqttPublishTeleSensor();
+  }
+}
+
+void MqttPublishTeleperiodSensor(void) {
+  ResponseClear();
+  if (MqttShowSensor()) {
+    MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);  // CMND_SENSORRETAIN
+    XdrvRulesProcess(1);
   }
 }
 
@@ -939,12 +946,7 @@ void PerformEverySecond(void)
         TasmotaGlobal.tele_period = 0;
 
         MqttPublishTeleState();
-
-        ResponseClear();
-        if (MqttShowSensor()) {
-          MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);  // CMND_SENSORRETAIN
-          XdrvRulesProcess(1);  // Allow rule based HA messages
-        }
+        MqttPublishTeleperiodSensor();
 
         XsnsCall(FUNC_AFTER_TELEPERIOD);
         XdrvCall(FUNC_AFTER_TELEPERIOD);

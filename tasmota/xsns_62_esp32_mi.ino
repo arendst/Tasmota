@@ -745,12 +745,8 @@ uint32_t MIBLEgetSensorSlot(uint8_t (&_MAC)[6], uint16_t _type, uint8_t counter)
  *
  */
 void MI32triggerTele(void){
-    MI32.mode.triggeredTele = 1;
-    ResponseClear();
-    if (MqttShowSensor()) {
-      MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
-      XdrvRulesProcess(1);  // Allow rule based HA messages
-    }
+  MI32.mode.triggeredTele = 1;
+  MqttPublishTeleperiodSensor();
 }
 
 /**
