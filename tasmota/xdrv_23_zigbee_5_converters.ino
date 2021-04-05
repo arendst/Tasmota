@@ -127,7 +127,7 @@ enum Cx_cluster_short {
   Cx0010, Cx0011, Cx0012, Cx0013, Cx0014, Cx001A, Cx0020, Cx0100,
   Cx0101, Cx0102, Cx0201, Cx0300, Cx0400, Cx0401, Cx0402, Cx0403,
   Cx0404, Cx0405, Cx0406, Cx0500, Cx0702, Cx0B01, Cx0B04, Cx0B05,
-  CxEF00, CxFCC0, CxFCCC,
+  CxEF00, CxFC01, CxFC40, CxFCC0, CxFCCC,
 };
 
 const uint16_t Cx_cluster[] PROGMEM = {
@@ -136,7 +136,7 @@ const uint16_t Cx_cluster[] PROGMEM = {
   0x0010, 0x0011, 0x0012, 0x0013, 0x0014, 0x001A, 0x0020, 0x0100,
   0x0101, 0x0102, 0x0201, 0x0300, 0x0400, 0x0401, 0x0402, 0x0403,
   0x0404, 0x0405, 0x0406, 0x0500, 0x0702, 0x0B01, 0x0B04, 0x0B05,
-  0xEF00, 0xFCC0, 0xFCCC,
+  0xEF00, 0xFC01, 0xFC40, 0xFCC0, 0xFCCC,
 };
 
 uint16_t CxToCluster(uint8_t cx) {
@@ -641,6 +641,14 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   { Ztuya4,   CxEF00, 0x0405,  Z_(TuyaFanMode),          Cm1, 0 },
   { Ztuya4,   CxEF00, 0x046A,  Z_(TuyaForceMode),        Cm1, 0 },
   { Ztuya4,   CxEF00, 0x046F,  Z_(TuyaWeekSelect),       Cm1, 0 },
+
+  // Legrand BTicino - Manuf code 0x1021
+  { Zdata16,  CxFC01, 0x0000,  Z_(LegrandOpt1),          Cm1, 0 },
+  { Zbool,    CxFC01, 0x0001,  Z_(LegrandOpt2),          Cm1, 0 },
+  { Zbool,    CxFC01, 0x0002,  Z_(LegrandOpt3),          Cm1, 0 },
+
+  // Legrand - Manuf code 0x1021
+  { Zenum8,   CxFC40, 0x0000,  Z_(LegrandHeatingMode),   Cm1, 0 },
 
   // Aqara Opple spacific
   { Zuint8,   CxFCC0, 0x0009,  Z_(OppleMode),            Cm1, 0 },
