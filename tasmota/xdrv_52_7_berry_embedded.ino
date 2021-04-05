@@ -191,39 +191,39 @@ const char berry_prog[] =
     //   "end "
     // "end "
 
-    // Add command to list
-    "def add_cmd(c,f) "
-      "if !self._ccmd "
-        "self._ccmd={} "
-      "end "
-      "if type(f) == 'function' "
-        "self._ccmd[c]=f "
-      "else "
-        "raise 'value_error', 'the second argument is not a function' "
-      "end "
-    "end "
+    // // Add command to list
+    // "def add_cmd(c,f) "
+    //   "if !self._ccmd "
+    //     "self._ccmd={} "
+    //   "end "
+    //   "if type(f) == 'function' "
+    //     "self._ccmd[c]=f "
+    //   "else "
+    //     "raise 'value_error', 'the second argument is not a function' "
+    //   "end "
+    // "end "
 
-    // Remove command from list
-    "def remove_cmd(pat) "
-      "if self._ccmd "
-        "self._ccmd.remove(pat) "
-      "end "
-    "end "
+    // // Remove command from list
+    // "def remove_cmd(c) "
+    //   "if self._ccmd "
+    //     "self._ccmd.remove(c) "
+    //   "end "
+    // "end "
 
-    // Execute custom command
-    "def exec_cmd(cmd, idx, payload) "
-      "if self._ccmd "
-        "import json "
-        "var payload_json = json.load(payload) "
-        "var cmd_found = self.find_key_i(self._ccmd, cmd) "
-        "if cmd_found != nil "
-          "self.resolvecmnd(cmd_found) "  // set the command name in XdrvMailbox.command
-          "self._ccmd[cmd_found](cmd_found, idx, payload, payload_json) "
-          "return true "
-        "end "
-      "end "
-      "return false "
-    "end "
+    // // Execute custom command
+    // "def exec_cmd(cmd, idx, payload) "
+    //   "if self._ccmd "
+    //     "import json "
+    //     "var payload_json = json.load(payload) "
+    //     "var cmd_found = self.find_key_i(self._ccmd, cmd) "
+    //     "if cmd_found != nil "
+    //       "self.resolvecmnd(cmd_found) "  // set the command name in XdrvMailbox.command
+    //       "self._ccmd[cmd_found](cmd_found, idx, payload, payload_json) "
+    //       "return true "
+    //     "end "
+    //   "end "
+    //   "return false "
+    // "end "
 
     // // Force gc and return allocated memory
     // "def gc() "
