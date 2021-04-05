@@ -2481,7 +2481,7 @@ void HandleUploadLoop(void) {
       }
 #endif  // USE_TASMOTA_CLIENT
 #ifdef SHELLY_FW_UPGRADE
-      else if (ShdPresent() && (0x00 == upload.buf[0]) && (0x10 == upload.buf[1])) {
+      else if (ShdPresent() && (0x00 == upload.buf[0]) && ((0x10 == upload.buf[1]) || (0x20 == upload.buf[1]))) {
         BUploadInit(UPL_SHD);
       }
 #endif  // SHELLY_FW_UPGRADE
