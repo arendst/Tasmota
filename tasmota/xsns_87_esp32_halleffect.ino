@@ -18,6 +18,7 @@
 */
 
 #ifdef ESP32
+#if CONFIG_IDF_TARGET_ESP32
 #ifdef USE_HALLEFFECT
 /*********************************************************************************************\
  * ESP32 internal Hall Effect sensor connected to both GPIO36 and GPIO39
@@ -96,4 +97,5 @@ bool Xsns87(uint8_t function) {
 }
 
 #endif  // USE_HALLEFFECT
+#endif  // CONFIG_IDF_TARGET_ESP32
 #endif  // ESP32
