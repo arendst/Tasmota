@@ -67,6 +67,7 @@ m = minimal, l = lite, t = tasmota, k = knx, s = sensors, i = ir, d = display
 | USE_ELECTRIQ_MOODL    | - | - | x / - | x | x | - | x |
 |                       |   |   |       |   |   |   |   |
 | USE_ENERGY_SENSOR     | - | x | x / x | x | x | - | - |
+| USE_ENERGY_DUMMY      | - | x | x / x | x | x | - | - |
 | USE_PZEM004T          | - | - | x / x | x | x | - | - |
 | USE_PZEM_AC           | - | - | x / x | x | x | - | - |
 | USE_PZEM_DC           | - | - | x / x | x | x | - | - |

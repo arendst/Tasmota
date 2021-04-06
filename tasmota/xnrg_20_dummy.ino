@@ -105,7 +105,7 @@ bool NrgDummyCommand(void) {
 }
 
 void NrgDummyDrvInit(void) {
-  if (TasmotaGlobal.gpio_optiona.dummy_energy) {
+  if (TasmotaGlobal.gpio_optiona.dummy_energy && TasmotaGlobal.devices_present) {
     if (HLW_PREF_PULSE == Settings.energy_power_calibration) {
       Settings.energy_frequency_calibration = NRG_DUMMY_FREF;
       Settings.energy_voltage_calibration = NRG_DUMMY_UREF;
