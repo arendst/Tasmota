@@ -344,10 +344,17 @@ void setup(void) {
   }
 
   RtcInit();
-
   GpioInit();
-  SetPowerOnState();
+  ButtonInit();
+  SwitchInit();
+#ifdef ROTARY_V1
+  RotaryInit();
+#endif  // ROTARY_V1
 
+  XdrvCall(FUNC_PRE_INIT);
+  XsnsCall(FUNC_PRE_INIT);
+
+  SetPowerOnState();
   WifiConnect();
 
   AddLog(LOG_LEVEL_INFO, PSTR(D_PROJECT " %s %s " D_VERSION " %s%s-" ARDUINO_CORE_RELEASE "(%s)"),
@@ -355,8 +362,6 @@ void setup(void) {
 #ifdef FIRMWARE_MINIMAL
   AddLog(LOG_LEVEL_INFO, PSTR(D_WARNING_MINIMAL_VERSION));
 #endif  // FIRMWARE_MINIMAL
-
-//  RtcInit();
 
 #ifdef USE_ARDUINO_OTA
   ArduinoOTAInit();

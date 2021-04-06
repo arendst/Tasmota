@@ -113,7 +113,7 @@ void NrgDummyDrvInit(void) {
       Settings.energy_power_calibration = NRG_DUMMY_PREF;
     }
 
-    Energy.phase_count = (TasmotaGlobal.devices_present < 3) ? TasmotaGlobal.devices_present : 3;
+    Energy.phase_count = (TasmotaGlobal.devices_present < ENERGY_MAX_PHASES) ? TasmotaGlobal.devices_present : ENERGY_MAX_PHASES;
     Energy.voltage_common = NRG_DUMMY_U_COMMON;    // Phase voltage = false, Common voltage = true
     Energy.frequency_common = NRG_DUMMY_F_COMMON;  // Phase frequency = false, Common frequency = true
     Energy.type_dc = NRG_DUMMY_DC;                 // AC = false, DC = true;
