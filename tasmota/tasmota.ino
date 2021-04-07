@@ -141,6 +141,7 @@ struct {
   bool rule_teleperiod;                     // Process rule based on teleperiod data using prefix TELE-
   bool serial_local;                        // Handle serial locally
   bool fallback_topic_flag;                 // Use Topic or FallbackTopic
+  bool backlog_nodelay;                     // Execute all backlog commands with no delay
   bool backlog_mutex;                       // Command backlog pending
   bool stop_flash_rotate;                   // Allow flash configuration rotation
   bool blinkstate;                          // LED state
@@ -398,10 +399,13 @@ void BacklogLoop(void) {
       if (!nodelay_detected) {
         ExecuteCommand((char*)cmd.c_str(), SRC_BACKLOG);
       }
-      if (nodelay) {
+      if (nodelay || TasmotaGlobal.backlog_nodelay) {
         TasmotaGlobal.backlog_timer = millis();  // Reset backlog_timer which has been set by ExecuteCommand (CommandHandler)
       }
       TasmotaGlobal.backlog_mutex = false;
+    }
+    if (BACKLOG_EMPTY) {
+      TasmotaGlobal.backlog_nodelay = false;
     }
   }
 }
