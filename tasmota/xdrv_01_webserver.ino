@@ -2893,13 +2893,12 @@ int WebSend(char *buffer)
             }
           }
           TasmotaGlobal.mqtt_data[j] = '\0';
-          MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR(D_CMND_WEBSEND));
 #ifdef USE_SCRIPT
-extern uint8_t tasm_cmd_activ;
+          extern uint8_t tasm_cmd_activ;
           // recursive call must be possible in this case
-          tasm_cmd_activ=0;
-          XdrvRulesProcess(0);
+          tasm_cmd_activ = 0;
 #endif  // USE_SCRIPT
+          MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, PSTR(D_CMND_WEBSEND));
 #endif  // USE_WEBSEND_RESPONSE
         }
         status = 0;                           // No error - Done

@@ -169,7 +169,7 @@ void ADPSCallback(uint8_t phase)
     ResponseJsonEnd();
 
     // Publish adding ADCO serial number into the topic
-    MqttPublishPrefixTopic_P(RESULT_OR_TELE, serialNumber, false);
+    MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, serialNumber, false);
 
     AddLog(LOG_LEVEL_INFO, PSTR("ADPS on phase %d"), phase);
 }

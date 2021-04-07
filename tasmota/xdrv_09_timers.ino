@@ -462,7 +462,7 @@ void CmndTimers(void)
   }
 
   ResponseCmndStateText(Settings.flag3.timers_enable);               // CMND_TIMERS
-  MqttPublishPrefixTopic_P(RESULT_OR_STAT, XdrvMailbox.command);
+  MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, XdrvMailbox.command);
 
   uint32_t jsflg = 0;
   uint32_t lines = 1;
@@ -476,7 +476,7 @@ void CmndTimers(void)
     PrepShowTimer(i +1);
     if (jsflg > 3) {
       ResponseJsonEndEnd();
-      MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR(D_CMND_TIMERS));
+      MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, PSTR(D_CMND_TIMERS));
       jsflg = 0;
     }
   }

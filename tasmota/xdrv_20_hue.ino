@@ -889,11 +889,10 @@ void HueLightsCommand(uint8_t device, uint32_t device_id, String &response) {
           LightSetBri(device, bri);
         }
         if (LST_COLDWARM <= local_light_subtype) {
-          MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR(D_CMND_COLOR));
+          MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, PSTR(D_CMND_COLOR));
         } else {
-          MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR(D_CMND_DIMMER));
+          MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, PSTR(D_CMND_DIMMER));
         }
-        XdrvRulesProcess(0);
       }
       change = false;
     }

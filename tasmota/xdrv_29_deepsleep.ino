@@ -129,10 +129,10 @@ void DeepSleepPrepare(void)
 
   // stat/tasmota/DEEPSLEEP = {"DeepSleep":{"Time":"2019-11-12T21:33:45","Epoch":1573590825}}
   Response_P(PSTR("{\"" D_PRFX_DEEPSLEEP "\":{\"" D_JSON_TIME "\":\"%s\",\"Epoch\":%d}}"), (char*)dt.c_str(), RtcSettings.nextwakeup);
-  MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR(D_PRFX_DEEPSLEEP));
+  MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, PSTR(D_PRFX_DEEPSLEEP));
 
 //  Response_P(S_LWT_OFFLINE);
-//  MqttPublishPrefixTopic_P(TELE, PSTR(D_LWT), true);  // Offline or remove previous retained topic
+//  MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR(D_LWT), true);  // Offline or remove previous retained topic
 }
 
 void DeepSleepStart(void)

@@ -3093,7 +3093,7 @@ void CmndUndocA(void)
   LightGetColor(scolor, true);  // force hex whatever Option 17
   scolor[6] = '\0';  // RGB only
   Response_P(PSTR("%s,%d,%d,%d,%d,%d"), scolor, Settings.light_fade, Settings.light_correction, Settings.light_scheme, Settings.light_speed, Settings.light_width);
-  MqttPublishPrefixTopic_P(STAT, XdrvMailbox.topic);
+  MqttPublishPrefixTopicRulesProcess_P(STAT, XdrvMailbox.topic);
   ResponseClear();
 }
 

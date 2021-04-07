@@ -785,8 +785,7 @@ int32_t Z_ReceiveSimpleDesc(int32_t res, const SBuffer &buf) {
       ResponseAppend_P(PSTR("\"0x%04X\""), buf.get16(numOutIndex + i*2));
     }
     ResponseAppend_P(PSTR("]}}"));
-    MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEEZCL_RECEIVED));
-    XdrvRulesProcess(0);
+    MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEEZCL_RECEIVED));
   }
 
   // If tuya protocol, change the model information

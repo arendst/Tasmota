@@ -2067,7 +2067,7 @@ void CmndRule(void)
       XdrvMailbox.index = i;
       XdrvMailbox.data[0] = data;    // Only 0 or "
       CmndRule();
-      MqttPublishPrefixTopic_P(RESULT_OR_STAT, XdrvMailbox.command);
+      MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, XdrvMailbox.command);
     }
     ResponseClear();                 // Disable further processing
     return;

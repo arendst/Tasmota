@@ -130,7 +130,7 @@ void ResponseCmndAll(uint32_t text_index, uint32_t count) {
     if ((SET_MQTT_GRP_TOPIC == text_index) && (1 == i)) { real_index = SET_MQTT_GRP_TOPIC2 -1; }
     if ((ResponseAppend_P(PSTR("%c\"%s%d\":\"%s\""), (jsflg)?',':'{', XdrvMailbox.command, i +1, EscapeJSONString(SettingsText(real_index +i)).c_str()) > (MAX_LOGSZ - TOPSZ)) || (i == count -1)) {
       ResponseJsonEnd();
-      MqttPublishPrefixTopic_P(RESULT_OR_STAT, XdrvMailbox.command);
+      MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, XdrvMailbox.command);
       ResponseClear();
       jsflg = false;
     } else {
@@ -399,6 +399,12 @@ void CmndPower(void)
   }
 }
 
+void CmndStatusResponse(uint32_t index) {
+  char cmnd_status[10];  // STATUS11
+  snprintf_P(cmnd_status, sizeof(cmnd_status), PSTR(D_CMND_STATUS "%d"), index);
+  MqttPublishPrefixTopicRulesProcess_P(STAT, cmnd_status);
+}
+
 void CmndStatus(void)
 {
   int32_t payload = XdrvMailbox.payload;
@@ -442,7 +448,7 @@ void CmndStatus(void)
                           Settings.flag.mqtt_power_retain,    // CMND_POWERRETAIN
                           Settings.flag5.mqtt_info_retain,    // CMND_INFORETAIN
                           Settings.flag5.mqtt_state_retain);  // CMND_STATERETAIN
-    MqttPublishPrefixTopic_P(STAT, PSTR(D_CMND_STATUS));
+    MqttPublishPrefixTopicRulesProcess_P(STAT, PSTR(D_CMND_STATUS));
   }
 
   if ((0 == payload) || (1 == payload)) {
@@ -460,7 +466,7 @@ void CmndStatus(void)
                           , GetSettingsAddress()
 #endif
                           );
-    MqttPublishPrefixTopic_P(STAT, PSTR(D_CMND_STATUS "1"));
+    CmndStatusResponse(1);
   }
 
   if ((0 == payload) || (2 == payload)) {
@@ -478,7 +484,7 @@ void CmndStatus(void)
                           , ESP.getSdkVersion(),
                           ESP.getCpuFreqMHz(), GetDeviceHardware().c_str(),
                           GetStatistics().c_str());
-    MqttPublishPrefixTopic_P(STAT, PSTR(D_CMND_STATUS "2"));
+    CmndStatusResponse(2);
   }
 
   if ((0 == payload) || (3 == payload)) {
@@ -489,7 +495,7 @@ void CmndStatus(void)
                           SettingsText(SET_SYSLOG_HOST), Settings.syslog_port, EscapeJSONString(SettingsText(SET_STASSID1)).c_str(), EscapeJSONString(SettingsText(SET_STASSID2)).c_str(), Settings.tele_period,
                           Settings.flag2.data, Settings.flag.data, ToHex_P((unsigned char*)Settings.param, PARAM8_SIZE, stemp2, sizeof(stemp2)),
                           Settings.flag3.data, Settings.flag4.data, Settings.flag5.data);
-    MqttPublishPrefixTopic_P(STAT, PSTR(D_CMND_STATUS "3"));
+    CmndStatusResponse(3);
   }
 
   if ((0 == payload) || (4 == payload)) {
@@ -516,7 +522,7 @@ void CmndStatus(void)
     ResponseAppend_P(PSTR(",\"Sensors\":"));
     XsnsSensorState();
     ResponseJsonEndEnd();
-    MqttPublishPrefixTopic_P(STAT, PSTR(D_CMND_STATUS "4"));
+    CmndStatusResponse(4);
   }
 
   if ((0 == payload) || (5 == payload)) {
@@ -526,7 +532,7 @@ void CmndStatus(void)
                           NetworkHostname(), (uint32_t)NetworkAddress(),
                           Settings.ipv4_address[1], Settings.ipv4_address[2], Settings.ipv4_address[3],
                           NetworkMacAddress().c_str(), Settings.webserver, Settings.sta_config, WifiGetOutputPower().c_str());
-    MqttPublishPrefixTopic_P(STAT, PSTR(D_CMND_STATUS "5"));
+    CmndStatusResponse(5);
   }
 
   if (((0 == payload) || (6 == payload)) && Settings.flag.mqtt_enabled) {  // SetOption3 - Enable MQTT
@@ -534,7 +540,7 @@ void CmndStatus(void)
                           D_CMND_MQTTCLIENT "\":\"%s\",\"" D_CMND_MQTTUSER "\":\"%s\",\"" D_JSON_MQTT_COUNT "\":%d,\"MAX_PACKET_SIZE\":%d,\"KEEPALIVE\":%d,\"SOCKET_TIMEOUT\":%d}}"),
                           SettingsText(SET_MQTT_HOST), Settings.mqtt_port, EscapeJSONString(SettingsText(SET_MQTT_CLIENT)).c_str(),
                           TasmotaGlobal.mqtt_client, EscapeJSONString(SettingsText(SET_MQTT_USER)).c_str(), MqttConnectCount(), MQTT_MAX_PACKET_SIZE, Settings.mqtt_keepalive, Settings.mqtt_socket_timeout);
-    MqttPublishPrefixTopic_P(STAT, PSTR(D_CMND_STATUS "6"));
+    CmndStatusResponse(6);
   }
 
   if ((0 == payload) || (7 == payload)) {
@@ -554,7 +560,7 @@ void CmndStatus(void)
                           GetDateAndTime(DT_UTC).c_str(), GetDateAndTime(DT_LOCALNOTZ).c_str(), GetDateAndTime(DT_DST).c_str(),
                           GetDateAndTime(DT_STD).c_str(), stemp);
 #endif  // USE_TIMERS and USE_SUNRISE
-    MqttPublishPrefixTopic_P(STAT, PSTR(D_CMND_STATUS "7"));
+    CmndStatusResponse(7);
   }
 
 #if defined(USE_ENERGY_SENSOR) && defined(USE_ENERGY_MARGIN_DETECTION)
@@ -564,7 +570,7 @@ void CmndStatus(void)
                             D_CMND_VOLTAGELOW "\":%d,\"" D_CMND_VOLTAGEHIGH "\":%d,\"" D_CMND_CURRENTLOW "\":%d,\"" D_CMND_CURRENTHIGH "\":%d}}"),
                             Settings.energy_power_delta[0], Settings.energy_power_delta[1], Settings.energy_power_delta[2], Settings.energy_min_power, Settings.energy_max_power,
                             Settings.energy_min_voltage, Settings.energy_max_voltage, Settings.energy_min_current, Settings.energy_max_current);
-      MqttPublishPrefixTopic_P(STAT, PSTR(D_CMND_STATUS "9"));
+      CmndStatusResponse(9);
     }
   }
 #endif  // USE_ENERGY_MARGIN_DETECTION
@@ -573,18 +579,14 @@ void CmndStatus(void)
     Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS10_SENSOR "\":"));
     MqttShowSensor();
     ResponseJsonEnd();
-    if (8 == payload) {
-      MqttPublishPrefixTopic_P(STAT, PSTR(D_CMND_STATUS "8"));
-    } else {
-      MqttPublishPrefixTopic_P(STAT, PSTR(D_CMND_STATUS "10"));
-    }
+    CmndStatusResponse((8 == payload) ? 8 : 10);
   }
 
   if ((0 == payload) || (11 == payload)) {
     Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS11_STATUS "\":"));
     MqttShowState();
     ResponseJsonEnd();
-    MqttPublishPrefixTopic_P(STAT, PSTR(D_CMND_STATUS "11"));
+    CmndStatusResponse(11);
   }
 
   if (CrashFlag()) {
@@ -592,7 +594,7 @@ void CmndStatus(void)
       Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS12_STATUS "\":"));
       CrashDump();
       ResponseJsonEnd();
-      MqttPublishPrefixTopic_P(STAT, PSTR(D_CMND_STATUS "12"));
+      CmndStatusResponse(12);
     }
   }
 
@@ -613,7 +615,7 @@ void CmndStatus(void)
                                    Settings.shutter_mode);
       }
       ResponseJsonEndEnd();
-      MqttPublishPrefixTopic_P(STAT, PSTR(D_CMND_STATUS "13"));
+      CmndStatusResponse(13);
     }
   }
 #endif
@@ -621,10 +623,6 @@ void CmndStatus(void)
 #ifdef USE_SCRIPT_STATUS
   if (bitRead(Settings.rule_enabled, 0)) { Run_Scripter(">U", 2, TasmotaGlobal.mqtt_data); }
 #endif
-
-  if (payload) {
-    XdrvRulesProcess(0);  // Allow rule processing on single Status command only
-  }
 
   ResponseClear();
 }
@@ -1192,7 +1190,7 @@ void CmndModules(void)
     uint32_t j = i ? midx +1 : 0;
     if ((ResponseAppend_P(PSTR("\"%d\":\"%s\""), j, AnyModuleName(midx).c_str()) > (MAX_LOGSZ - TOPSZ)) || (i == sizeof(kModuleNiceList))) {
       ResponseJsonEndEnd();
-      MqttPublishPrefixTopic_P(RESULT_OR_STAT, XdrvMailbox.command);
+      MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, XdrvMailbox.command);
       jsflg = false;
       lines++;
     }
@@ -1260,7 +1258,7 @@ void CmndGpio(void)
         char stemp1[TOPSZ];
         if ((ResponseAppend_P(PSTR("\"" D_CMND_GPIO "%d\":{\"%d\":\"%s%s\"}"), i, sensor_type, GetTextIndexed(stemp1, sizeof(stemp1), sensor_name_idx, sensor_names), sindex) > (MAX_LOGSZ - TOPSZ))) {
           ResponseJsonEnd();
-          MqttPublishPrefixTopic_P(RESULT_OR_STAT, XdrvMailbox.command);
+          MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, XdrvMailbox.command);
           ResponseClear();
           jsflg2 = true;
           jsflg = false;
@@ -1298,7 +1296,7 @@ void ShowGpios(const uint16_t *NiceList, uint32_t size, uint32_t offset, uint32_
     char stemp1[TOPSZ];
     if ((ResponseAppend_P(PSTR("\"%d\":\"%s\""), ridx, GetTextIndexed(stemp1, sizeof(stemp1), midx, kSensorNames)) > (MAX_LOGSZ - TOPSZ)) || (i == size -1)) {
       ResponseJsonEndEnd();
-      MqttPublishPrefixTopic_P(RESULT_OR_STAT, XdrvMailbox.command);
+      MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, XdrvMailbox.command);
       jsflg = false;
       lines++;
     }

@@ -394,7 +394,7 @@ void PIDRun(void) {
   char str_buf[FLOATSZ];
   dtostrfd(power, 3, str_buf);
   snprintf_P(TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), PSTR("{\"%s\":\"%s\"}"), "power", str_buf);
-  MqttPublishPrefixTopic_P(TELE, "PID", false);
+  MqttPublishPrefixTopicRulesProcess_P(TELE, "PID");
 #endif // PID_DONT_USE_PID_TOPIC
 
 #if defined PID_SHUTTER

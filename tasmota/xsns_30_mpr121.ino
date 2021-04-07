@@ -362,7 +362,7 @@ void Mpr121Show(struct mpr121 *pS, uint8_t function)
 				if ((FUNC_EVERY_50_MSECOND == function)
 				    && (BITC(i, j) != BITP(i, j))) {
 					Response_P(PSTR("{\"MPR121%c\":{\"Button%i\":%i}}"), pS->id[i], j, BITC(i, j));
-					MqttPublishPrefixTopic_P(RESULT_OR_STAT, TasmotaGlobal.mqtt_data);
+					MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, PSTR("MPR121"));
 				}
 				// Add buttons to web string
 #ifdef USE_WEBSERVER

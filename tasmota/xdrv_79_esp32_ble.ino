@@ -1265,7 +1265,7 @@ void postAdvertismentDetails(){
     // we got the data, give before MQTT call.
     localmutex.give();
     // no retain - this is present devices, not historic
-    MqttPublishPrefixTopic_P(TELE, PSTR("BLE"), 0);
+    MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR("BLE"), 0);
   } else {
   }
 }
@@ -2305,8 +2305,8 @@ static void BLEEverySecond(bool restart){
     // 2 seconds to go, post to BLE topic on MQTT our reason
     if (BLERestartTasmota == 2){
       if (!BLERestartTasmotaReason) BLERestartTasmotaReason = BLE_RESTART_TEAMOTA_REASON_UNKNOWN;
-      snprintf_P(TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), PSTR("{\"reboot\":\"%s\"}"), BLERestartTasmotaReason);
-      MqttPublishPrefixTopic_P(TELE, PSTR("BLE"), Settings.flag.mqtt_sensor_retain);
+      Response_P(PSTR("{\"reboot\":\"%s\"}"), BLERestartTasmotaReason);
+      MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR("BLE"), Settings.flag.mqtt_sensor_retain);
       AddLog(LOG_LEVEL_ERROR,PSTR("BLE: Failure! Restarting Tasmota in %d seconds because %s"), BLERestartTasmota, BLERestartTasmotaReason);
     }
 
@@ -2318,8 +2318,8 @@ static void BLEEverySecond(bool restart){
   }
 
   if (BLERestartBLEReason){ // just use the ptr as the trigger to send MQTT
-    snprintf_P(TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), PSTR("{\"blerestart\":\"%s\"}"), BLERestartBLEReason);
-    MqttPublishPrefixTopic_P(TELE, PSTR("BLE"), Settings.flag.mqtt_sensor_retain);
+    Response_P(PSTR("{\"blerestart\":\"%s\"}"), BLERestartBLEReason);
+    MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR("BLE"), Settings.flag.mqtt_sensor_retain);
     AddLog(LOG_LEVEL_ERROR,PSTR("BLE: Failure! Restarting BLE Stack because %s"), BLERestartBLEReason);
     BLERestartBLEReason = nullptr;
   }
@@ -3154,11 +3154,7 @@ static void BLEPostMQTTSeenDevices(int type) {
   do {
     remains = getSeenDevicesToJson(dest, maxlen);
     // no retain - this is present devices, not historic
-    if (type == 1){
-      MqttPublishPrefixTopic_P(TELE, PSTR("BLE"), 0);
-    } else {
-      MqttPublishPrefixTopic_P(STAT, PSTR("BLE"), 0);
-    }
+    MqttPublishPrefixTopicRulesProcess_P((1== type) ? TELE : STAT, PSTR("BLE"));
   } while (remains);
 //  }
 }
@@ -3173,8 +3169,8 @@ static void BLEPostMQTT(bool onlycompleted) {
 #endif
     if (prepOperation && !onlycompleted){
       std::string out = BLETriggerResponse(prepOperation);
-      snprintf_P(TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), PSTR("%s"), out.c_str());
-      MqttPublishPrefixTopic_P(TELE, PSTR("BLE"), Settings.flag.mqtt_sensor_retain);
+      Response_P(PSTR("%s"), out.c_str());
+      MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR("BLE"), Settings.flag.mqtt_sensor_retain);
 #ifdef BLE_ESP32_DEBUG
       if (BLEDebugMode > 0) AddLog(LOG_LEVEL_INFO,PSTR("BLE: prep sent %s"), out.c_str());
 #endif
@@ -3193,8 +3189,8 @@ static void BLEPostMQTT(bool onlycompleted) {
         } else {
           std::string out = BLETriggerResponse(toSend);
           localmutex.give();
-          snprintf_P(TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), PSTR("%s"), out.c_str());
-          MqttPublishPrefixTopic_P(TELE, PSTR("BLE"), Settings.flag.mqtt_sensor_retain);
+          Response_P(PSTR("%s"), out.c_str());
+          MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR("BLE"), Settings.flag.mqtt_sensor_retain);
 #ifdef BLE_ESP32_DEBUG
           if (BLEDebugMode > 0) AddLog(LOG_LEVEL_INFO,PSTR("BLE: queued %d sent %s"), i, out.c_str());
 #endif
@@ -3215,8 +3211,8 @@ static void BLEPostMQTT(bool onlycompleted) {
         } else {
           std::string out = BLETriggerResponse(toSend);
           localmutex.give();
-          snprintf_P(TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), PSTR("%s"), out.c_str());
-          MqttPublishPrefixTopic_P(TELE, PSTR("BLE"), Settings.flag.mqtt_sensor_retain);
+          Response_P(PSTR("%s"), out.c_str());
+          MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR("BLE"), Settings.flag.mqtt_sensor_retain);
 #ifdef BLE_ESP32_DEBUG
           if (BLEDebugMode > 0) AddLog(LOG_LEVEL_INFO,PSTR("BLE: curr %d sent %s"), i, out.c_str());
 #endif
@@ -3238,8 +3234,8 @@ static void BLEPostMQTT(bool onlycompleted) {
           if (BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: mqttOperation removed opid %d"), toSend->opid);
 #endif
           std::string out = BLETriggerResponse(toSend);
-          snprintf_P(TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), PSTR("%s"), out.c_str());
-          MqttPublishPrefixTopic_P(TELE, PSTR("BLE"), Settings.flag.mqtt_sensor_retain);
+          Response_P(PSTR("%s"), out.c_str());
+          MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR("BLE"), Settings.flag.mqtt_sensor_retain);
           // we alreayd removed this from the queues, so now delete
           delete toSend;
           //break;
@@ -3248,8 +3244,8 @@ static void BLEPostMQTT(bool onlycompleted) {
       } while (1);
     }
   } else {
-    snprintf_P(TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), PSTR("{\"BLEOperation\":{}}"));
-    MqttPublishPrefixTopic_P(TELE, PSTR("BLE"), Settings.flag.mqtt_sensor_retain);
+    Response_P(PSTR("{\"BLEOperation\":{}}"));
+    MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR("BLE"), Settings.flag.mqtt_sensor_retain);
   }
 }
 
@@ -3363,7 +3359,7 @@ static void BLEShowStats(){
   uint32_t deviceCount = seenDevices.size();
   ResponseTime_P(PSTR(""));
   ResponseAppend_P(PSTR(",\"BLE\":{\"scans\":%u,\"adverts\":%u,\"devices\":%u,\"resets\":%u}}"), BLEScanCount, totalCount, deviceCount, BLEResets);
-  MqttPublishPrefixTopic_P(TELE, PSTR("BLE"), 0);
+  MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR("BLE"), 0);
 }
 
 
@@ -3378,7 +3374,7 @@ static void BLEShowStats(){
     ResponseAppend_P(PSTR("{\"%s\":\"%s\"}"), tmp, aliases[i]->name);
   }
   ResponseAppend_P(PSTR("]}"));
-  MqttPublishPrefixTopic_P(TELE, PSTR("BLE"), Settings.flag.mqtt_sensor_retain);
+  MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR("BLE"), Settings.flag.mqtt_sensor_retain);
 }*/
 
 void BLEAliasListResp(){

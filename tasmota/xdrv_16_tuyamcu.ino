@@ -1198,7 +1198,7 @@ void TuyaSerialInput(void)
           snprintf_P(scommand, sizeof(scommand), PSTR("DpType%uId%u"), dpDataType, dpId);
           if (dpDataType != 3 && dpDataType != 5) { Response_P(PSTR("%u"), DataVal); }
           else { Response_P(PSTR("%s"), DataStr); }
-          MqttPublishPrefixTopic_P(STAT, scommand);
+          MqttPublishPrefixTopicRulesProcess_P(STAT, scommand);
         }
       }
 

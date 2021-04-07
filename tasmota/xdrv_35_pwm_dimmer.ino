@@ -620,7 +620,7 @@ void PWMDimmerHandleButton(uint32_t button_index, bool pressed)
   // If we need to publish an MQTT trigger, do it.
   if (mqtt_trigger) {
     char topic[TOPSZ];
-    sprintf_P(TasmotaGlobal.mqtt_data, PSTR("Trigger%u"), mqtt_trigger);
+    Response_P(PSTR("Trigger%u"), mqtt_trigger);
 #ifdef USE_DEVICE_GROUPS
     if (Settings.flag4.device_groups_enabled) {
       snprintf_P(topic, sizeof(topic), PSTR("cmnd/%s/EVENT"), device_groups[power_button_index].group_name);
@@ -628,7 +628,7 @@ void PWMDimmerHandleButton(uint32_t button_index, bool pressed)
     }
     else
 #endif  // USE_DEVICE_GROUPS
-      MqttPublishPrefixTopic_P(CMND, PSTR("EVENT"));
+      MqttPublishPrefixTopicRulesProcess_P(CMND, PSTR("EVENT"));
   }
 
   // If we need to send a device group update, do it.
