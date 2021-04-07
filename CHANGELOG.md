@@ -17,7 +17,7 @@ All notable changes to this project will be documented in this file.
 - Berry add ``gpio`` module
 - Berry add ``light`` module
 - Support for dummy energy monitor using user values set by commands ``VoltageSet``, ``CurrentSet``, ``PowerSet`` and ``FrequencySet``. Enable by selecting any GPIO as ``Option A2`` (#10640)
-- Command ``Backlog 1;`` to allow execution of following commands without delay
+- Command ``Backlog0`` to allow execution of following commands without delay
 
 ### Changed
 - PubSubClient library from EspEasy v2.7.12 to Tasmota v2.8.12

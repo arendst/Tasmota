@@ -318,10 +318,13 @@ void CommandHandler(char* topicBuf, char* dataBuf, uint32_t data_len)
 /********************************************************************************************/
 
 void CmndBacklog(void) {
-  // Backlog command1;command2;..    Execute commands in sequence with a delay in between set with SetOption34
-  // Backlog 1;command1;command2;..  Execute commands in sequence with no delay
+  // Backlog command1;command2;..   Execute commands in sequence with a delay in between set with SetOption34
+  // Backlog0 command1;command2;..  Execute commands in sequence with no delay
 
   if (XdrvMailbox.data_len) {
+    if (0 == XdrvMailbox.index) {
+      TasmotaGlobal.backlog_nodelay = true;
+    }
 
 #ifdef SUPPORT_IF_STATEMENT
     char *blcommand = strtok(XdrvMailbox.data, ";");
@@ -342,19 +345,15 @@ void CmndBacklog(void) {
         }
       }
       if (*blcommand != '\0') {
-        if (BACKLOG_EMPTY && ('1' == *blcommand)) {
-          TasmotaGlobal.backlog_nodelay = true;
-        } else {
 #ifdef SUPPORT_IF_STATEMENT
-          if (backlog.size() < MAX_BACKLOG) {
-            backlog.add(blcommand);
-          }
-#else
-          TasmotaGlobal.backlog[TasmotaGlobal.backlog_index] = blcommand;
-          TasmotaGlobal.backlog_index++;
-          if (TasmotaGlobal.backlog_index >= MAX_BACKLOG) TasmotaGlobal.backlog_index = 0;
-#endif
+        if (backlog.size() < MAX_BACKLOG) {
+          backlog.add(blcommand);
         }
+#else
+        TasmotaGlobal.backlog[TasmotaGlobal.backlog_index] = blcommand;
+        TasmotaGlobal.backlog_index++;
+        if (TasmotaGlobal.backlog_index >= MAX_BACKLOG) TasmotaGlobal.backlog_index = 0;
+#endif
       }
       blcommand = strtok(nullptr, ";");
     }

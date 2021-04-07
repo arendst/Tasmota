@@ -1886,7 +1886,7 @@ void LoggingSaveSettings(void)
   char tmp7[CMDSZ];
   WebGetArg(PSTR("lt"), tmp7, sizeof(tmp7));
   char command[200];
-  snprintf_P(command, sizeof(command),PSTR(D_CMND_BACKLOG " 1;" D_CMND_SERIALLOG " %s;" D_CMND_WEBLOG " %s;" D_CMND_MQTTLOG " %s;" D_CMND_SYSLOG " %s;" D_CMND_LOGHOST " %s;" D_CMND_LOGPORT " %s;" D_CMND_TELEPERIOD " %s"),
+  snprintf_P(command, sizeof(command),PSTR(D_CMND_BACKLOG "0 " D_CMND_SERIALLOG " %s;" D_CMND_WEBLOG " %s;" D_CMND_MQTTLOG " %s;" D_CMND_SYSLOG " %s;" D_CMND_LOGHOST " %s;" D_CMND_LOGPORT " %s;" D_CMND_TELEPERIOD " %s"),
     (!strlen(tmp1)) ? STR(SERIAL_LOG_LEVEL) : tmp1,
     (!strlen(tmp2)) ? STR(WEB_LOG_LEVEL) : tmp2,
     (!strlen(tmp3)) ? STR(MQTT_LOG_LEVEL) : tmp3,
