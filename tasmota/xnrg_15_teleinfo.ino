@@ -620,8 +620,8 @@ void TInfoShow(bool json)
     }
     else
     {
-        char name[32];
-        char value[32];
+        char name[33];
+        char value[33];
 
         if (tinfo_mode==TINFO_MODE_HISTORIQUE ) {
             if (getValueFromLabelIndex(LABEL_BASE, value) ) {
@@ -670,13 +670,13 @@ void TInfoShow(bool json)
             if (getValueFromLabelIndex(LABEL_SMAXSN, value) ) {
                 WSContentSend_PD(HTTP_ENERGY_PMAX_TELEINFO, atoi(value));
             }
-            if (getValueFromLabelIndex(LABEL_LTARF, name) ) {
-                WSContentSend_PD(HTTP_ENERGY_TARIF_TELEINFO, name);
+            if (getValueFromLabelIndex(LABEL_LTARF, value) ) {
+                WSContentSend_PD(HTTP_ENERGY_TARIF_TELEINFO, value);
             }
-            if (getValueFromLabelIndex(LABEL_NGTF, name) ) {
+            if (getValueFromLabelIndex(LABEL_NGTF, value) ) {
                 if (isousc) {
                     int percent = (int) ((Energy.current[0]*100.0f) / isousc) ;
-                    WSContentSend_PD(HTTP_ENERGY_CONTRAT_TELEINFO, name, isousc);
+                    WSContentSend_PD(HTTP_ENERGY_CONTRAT_TELEINFO, value, isousc);
                     WSContentSend_PD(HTTP_ENERGY_LOAD_TELEINFO,  percent);
                 }
             }
