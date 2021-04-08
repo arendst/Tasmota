@@ -233,8 +233,10 @@ int advertismentCallback(BLE_ESP32::ble_advertisment_t *pStruct)
       memcpy(UUID,oBeacon.getProximityUUID().getNative()->u128.value,16);
       ESP32BLE_ReverseStr(UUID,16);
 
-      uint16_t    Major = ENDIAN_CHANGE_U16(oBeacon.getMajor());
-      uint16_t    Minor = ENDIAN_CHANGE_U16(oBeacon.getMinor());
+//      uint16_t    Major = ENDIAN_CHANGE_U16(oBeacon.getMajor());
+//      uint16_t    Minor = ENDIAN_CHANGE_U16(oBeacon.getMinor());
+      uint16_t    Major = oBeacon.getMajor();
+      uint16_t    Minor = oBeacon.getMinor();
       uint8_t     PWR   = oBeacon.getSignalPower();
 
       DumpHex((const unsigned char*)&UUID,16,ib.UID);
