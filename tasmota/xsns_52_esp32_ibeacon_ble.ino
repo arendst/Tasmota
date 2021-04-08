@@ -337,7 +337,7 @@ uint32_t ibeacon_add(struct IBEACON *ib) {
   if (!strncmp(ib->MAC,"FFFF",4) || strncmp(ib->FACID,"00000000",8)) {
     for (uint32_t cnt=0;cnt<MAX_IBEACONS;cnt++) {
       if (ibeacons[cnt].FLAGS) {
-        if (!strncmp_P(ib->UID,PSTR("00000000000000000000000000000000"),32)) {
+//        if (!strncmp_P(ib->UID,PSTR("00000000000000000000000000000000"),32)) {
           if (!strncmp(ibeacons[cnt].MAC,ib->MAC,12)) {
             // exists
             strncpy(ibeacons[cnt].NAME,ib->NAME,sizeof(ibeacons[cnt].NAME));
@@ -350,7 +350,7 @@ uint32_t ibeacon_add(struct IBEACON *ib) {
             ibeacons[cnt].count++;
             return 2;
           }
-        } else {
+/*        } else {
           if (!strncmp(ibeacons[cnt].UID,ib->UID,32)) {
             // exists
             strncpy(ibeacons[cnt].NAME,ib->NAME,sizeof(ibeacons[cnt].NAME));
@@ -363,7 +363,7 @@ uint32_t ibeacon_add(struct IBEACON *ib) {
             ibeacons[cnt].count++;
             return 2;
           }
-        }
+        }*/
       }
     }
     for (uint32_t cnt=0;cnt<MAX_IBEACONS;cnt++) {
