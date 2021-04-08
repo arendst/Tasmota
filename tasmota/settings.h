@@ -313,6 +313,20 @@ typedef union {
   };
 } As3935Param;
 
+typedef union {
+  uint32_t data;
+  struct {
+  uint32_t raw_skip : 8;               // raw frame to skip when sending raw data (set to 2 means send 1 frame, then skip 2, ...)
+  uint32_t raw_report_changed : 1;     // Report only changed values in raw frames (only valid if raw_skip=0)
+  uint32_t raw_send : 1;               // Enable sending also real time raw data over MQTT
+  uint32_t raw_limit : 1;              // Limit raw data to minimal relevant fields (the ones moving quickly)
+  uint32_t mode_standard : 1;          // Set Linky Standard Mode (9600 bps stream) else legacy (1200 bps)
+  uint32_t spare4_1 : 4;               // Keep some spares for future uses
+  uint32_t spare8_1 : 8;               // Keep some spares for future uses
+  uint32_t spare8_2 : 8;               // Keep some spares for future uses
+  };
+} TeleinfoCfg;
+
 typedef struct {
   uint32_t usage1_kWhtotal;
   uint32_t usage2_kWhtotal;
@@ -643,10 +657,11 @@ struct {
   uint16_t      shd_warmup_brightness;     // F5C
   uint8_t       shd_warmup_time;           // F5E
 
-  uint8_t       free_f5e[72];              // F5E - Decrement if adding new Setting variables just above and below
+  uint8_t       free_f5e[68];              // F5E - Decrement if adding new Setting variables just above and below
 
   // Only 32 bit boundary variables below
 
+  TeleinfoCfg   teleinfo;                  // FA4
   uint64_t      rf_protocol_mask;          // FA8
   uint8_t       device_group_tie[4];       // FB0
   SysBitfield5  flag5;                     // FB4
