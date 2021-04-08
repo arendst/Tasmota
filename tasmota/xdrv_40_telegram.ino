@@ -66,7 +66,7 @@ typedef struct {
 //  String from_last_name;
 //  uint32_t from_id = 0;
   uint32_t update_id = 0;
-  String chat_id;
+  String chat_id  = "";
 } TelegramMessage;
 
 struct {
@@ -238,7 +238,7 @@ void TelegramGetUpdates(uint32_t offset) {
         }
         Telegram.next_update_id = Telegram.message[i].update_id +1;  // Write id of last read message
 
-        //AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("TGM: Parsed update_id %d, chat_id %d, text \"%s\""), Telegram.message[i].update_id, Telegram.message[i].chat_id, Telegram.message[i].text.c_str());
+        AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("TGM: Parsed update_id %d, chat_id %s, text \"%s\""), Telegram.message[i].update_id, Telegram.message[i].chat_id.c_str(), Telegram.message[i].text.c_str());
       }
     } else {
 //      AddLog(LOG_LEVEL_DEBUG, PSTR("TGM: No new messages"));
