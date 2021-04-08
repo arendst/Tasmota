@@ -516,7 +516,7 @@ struct {
   uint32_t      ipv4_address[4];           // 544
   unsigned long energy_kWhtotal;           // 554
 
-  uint32_t      TeleinfoCfg;               // 558
+  TeleinfoCfg   teleinfo;                  // 558
   uint8_t       free_55c[96];              // 55C
 
   SysBitfield2  flag2;                     // 5BC
