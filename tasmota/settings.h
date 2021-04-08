@@ -322,6 +322,21 @@ typedef struct {
   uint32_t last_usage_kWhtotal;
 } EnergyUsage;
 
+typedef union {
+  uint32_t data;
+  struct {
+  uint32_t raw_skip : 8;               // raw frame to skip whe,n seding raw data (set to 2 means sent 1 frame, then skip 2, ...)
+  uint32_t raw_report_changed : 1;     // Report only changed values in raw frames (only valid if raw_skip=0)
+  uint32_t raw_send : 1;               // Enable sending also real time raw data over MQTT
+  uint32_t raw_limit : 1;              // Limit raw data to minimal relevant fields (the ones moving quickly)
+  uint32_t mode_standard : 1;          // Set Linky Standard Mode (9600 bps stream) else legacy (1200 bps)
+  uint32_t spare4_1 : 4;               // Keep some spares for future uses
+  uint32_t spare8_1 : 8;               // Keep some spares for future uses
+  uint32_t spare8_2 : 8;               // Keep some spares for future uses
+  };
+} TeleinfoCfg;
+
+
 typedef struct {
   uint8_t fnid = 0;
   uint8_t dpid = 0;
@@ -501,7 +516,8 @@ struct {
   uint32_t      ipv4_address[4];           // 544
   unsigned long energy_kWhtotal;           // 554
 
-  uint8_t       free_558[100];             // 558
+  uint32_t      TeleinfoCfg;               // 558
+  uint8_t       free_55c[96];              // 55C
 
   SysBitfield2  flag2;                     // 5BC
   unsigned long pulse_counter[MAX_COUNTERS];  // 5C0
