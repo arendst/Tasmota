@@ -325,7 +325,7 @@ typedef struct {
 typedef union {
   uint32_t data;
   struct {
-  uint32_t raw_skip : 8;               // raw frame to skip whe,n seding raw data (set to 2 means sent 1 frame, then skip 2, ...)
+  uint32_t raw_skip : 8;               // raw frame to skip when sending raw data (set to 2 means send 1 frame, then skip 2, ...)
   uint32_t raw_report_changed : 1;     // Report only changed values in raw frames (only valid if raw_skip=0)
   uint32_t raw_send : 1;               // Enable sending also real time raw data over MQTT
   uint32_t raw_limit : 1;              // Limit raw data to minimal relevant fields (the ones moving quickly)
