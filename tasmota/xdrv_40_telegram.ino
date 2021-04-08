@@ -66,7 +66,8 @@ typedef struct {
 //  String from_last_name;
 //  uint32_t from_id = 0;
   uint32_t update_id = 0;
-  int32_t chat_id = 0;
+  //int64_t chat_id = 0;
+  String chat_id;
 } TelegramMessage;
 
 struct {
@@ -107,7 +108,7 @@ bool TelegramInit(void) {
 }
 
 String TelegramConnectToTelegram(String command) {
-//  AddLog_P(LOG_LEVEL_DEBUG, PSTR("TGM: Cmnd %s"), command.c_str());
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR("TGM: Cmnd %s"), command.c_str());
 
   if (!TelegramInit()) { return ""; }
 
@@ -115,7 +116,7 @@ String TelegramConnectToTelegram(String command) {
   uint32_t tls_connect_time = millis();
   if (telegramClient->connect("api.telegram.org", 443)) {
 
-//    AddLog(LOG_LEVEL_DEBUG, PSTR("TGM: Connected in %d ms, max ThunkStack used %d"), millis() - tls_connect_time, telegramClient->getMaxThunkStackUse());
+    AddLog(LOG_LEVEL_DEBUG, PSTR("TGM: Connected in %d ms, max ThunkStack used %d"), millis() - tls_connect_time, telegramClient->getMaxThunkStackUse());
 
     telegramClient->println("GET /"+command);
 
@@ -238,7 +239,7 @@ void TelegramGetUpdates(uint32_t offset) {
         }
         Telegram.next_update_id = Telegram.message[i].update_id +1;  // Write id of last read message
 
-        AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("TGM: Parsed update_id %d, chat_id %d, text \"%s\""), Telegram.message[i].update_id, Telegram.message[i].chat_id, Telegram.message[i].text.c_str());
+        //AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("TGM: Parsed update_id %d, chat_id %d, text \"%s\""), Telegram.message[i].update_id, Telegram.message[i].chat_id, Telegram.message[i].text.c_str());
       }
     } else {
 //      AddLog(LOG_LEVEL_DEBUG, PSTR("TGM: No new messages"));
@@ -248,7 +249,7 @@ void TelegramGetUpdates(uint32_t offset) {
   }
 }
 
-bool TelegramSendMessage(int32_t chat_id, String text) {
+bool TelegramSendMessage(/*int64_t*/ String chat_id, String text) {
   AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("TGM: sendMessage"));
 
   if (!TelegramInit()) { return false; }
@@ -256,13 +257,14 @@ bool TelegramSendMessage(int32_t chat_id, String text) {
   bool sent = false;
   if (text != "") {
     String _token = SettingsText(SET_TELEGRAM_TOKEN);
-    String command = "bot" + _token + "/sendMessage?chat_id=" + String(chat_id) + "&text=" + UrlEncode(text);
+    //String command = "bot" + _token + "/sendMessage?chat_id=" + String(chat_id) + "&text=" + UrlEncode(text);
+    String command = "bot" + _token + "/sendMessage?chat_id=" + chat_id + "&text=" + UrlEncode(text);
     String response = TelegramConnectToTelegram(command);
 
-//    AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("TGM: Response %s"), response.c_str());
+    AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("TGM: Response %s"), response.c_str());
 
     if (response.startsWith("{\"ok\":true")) {
-//      AddLog(LOG_LEVEL_DEBUG, PSTR("TGM: Message sent"));
+      AddLog(LOG_LEVEL_DEBUG, PSTR("TGM: Message sent"));
       sent = true;
     }
   }
@@ -440,7 +442,7 @@ void CmndTmSend(void) {
   if (XdrvMailbox.data_len > 0) {
     String message = XdrvMailbox.data;
     String chat_id = SettingsText(SET_TELEGRAM_CHATID);
-    if (!TelegramSendMessage(chat_id.toInt(), message)) {
+    if (!TelegramSendMessage(chat_id/*.toInt()*/, message)) {
       ResponseCmndFailed();
       return;
     }
