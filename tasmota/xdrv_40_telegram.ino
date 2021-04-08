@@ -66,7 +66,6 @@ typedef struct {
 //  String from_last_name;
 //  uint32_t from_id = 0;
   uint32_t update_id = 0;
-  //int64_t chat_id = 0;
   String chat_id;
 } TelegramMessage;
 
@@ -249,7 +248,7 @@ void TelegramGetUpdates(uint32_t offset) {
   }
 }
 
-bool TelegramSendMessage(/*int64_t*/ String chat_id, String text) {
+bool TelegramSendMessage(String chat_id, String text) {
   AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("TGM: sendMessage"));
 
   if (!TelegramInit()) { return false; }
@@ -257,7 +256,6 @@ bool TelegramSendMessage(/*int64_t*/ String chat_id, String text) {
   bool sent = false;
   if (text != "") {
     String _token = SettingsText(SET_TELEGRAM_TOKEN);
-    //String command = "bot" + _token + "/sendMessage?chat_id=" + String(chat_id) + "&text=" + UrlEncode(text);
     String command = "bot" + _token + "/sendMessage?chat_id=" + chat_id + "&text=" + UrlEncode(text);
     String response = TelegramConnectToTelegram(command);
 
@@ -442,7 +440,7 @@ void CmndTmSend(void) {
   if (XdrvMailbox.data_len > 0) {
     String message = XdrvMailbox.data;
     String chat_id = SettingsText(SET_TELEGRAM_CHATID);
-    if (!TelegramSendMessage(chat_id/*.toInt()*/, message)) {
+    if (!TelegramSendMessage(chat_id, message)) {
       ResponseCmndFailed();
       return;
     }
