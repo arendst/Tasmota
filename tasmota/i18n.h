@@ -306,6 +306,7 @@
   #define D_WCFG_7_WIFIMANAGER_RESET_ONLY "ManagerRst"
 #define D_CMND_DEVICENAME "DeviceName"
 #define D_CMND_FRIENDLYNAME "FriendlyName"
+#define D_CMND_FN "FN"
 #define D_CMND_SWITCHMODE "SwitchMode"
 #define D_CMND_INTERLOCK "Interlock"
 #define D_CMND_TELEPERIOD "TelePeriod"
