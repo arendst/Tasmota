@@ -323,7 +323,11 @@ void CmndBacklog(void) {
 
   if (XdrvMailbox.data_len) {
     if (0 == XdrvMailbox.index) {
+      if (!TasmotaGlobal.backlog_nodelay) {
+        TasmotaGlobal.backlog_sleep = TasmotaGlobal.sleep;
+      }
       TasmotaGlobal.backlog_nodelay = true;
+      TasmotaGlobal.sleep = 0;
     }
 
 #ifdef SUPPORT_IF_STATEMENT
