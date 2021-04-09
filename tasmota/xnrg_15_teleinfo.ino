@@ -41,12 +41,12 @@
 #define D_NAME_TELEINFO "Teleinfo"
 
 // Json Command
-const char S_JSON_TELEINFO_COMMAND_STRING[] PROGMEM = "{\"" D_NAME_TELEINFO "\":{\"%s\":%s}}";
-const char S_JSON_TELEINFO_COMMAND_NVALUE[] PROGMEM = "{\"" D_NAME_TELEINFO "\":{\"%s\":%d}}";
-const char S_JSON_TELEINFO_COMMAND_SETTINGS[] PROGMEM = "{\"TIC_Settings\":{\"Mode\":%s,\"Raw\":%s,\"Skip\":%d,\"Limit\":%d}}";
+//const char S_JSON_TELEINFO_COMMAND_STRING[] PROGMEM = "{\"" D_NAME_TELEINFO "\":{\"%s\":%s}}";
+//const char S_JSON_TELEINFO_COMMAND_NVALUE[] PROGMEM = "{\"" D_NAME_TELEINFO "\":{\"%s\":%d}}";
+const char TELEINFO_COMMAND_SETTINGS[] PROGMEM = "TIC: Settings Mode:%s, Raw:%s, Skip:%d, Limit:%d";
 
-#define MAX_TINFO_COMMAND_NAME 17 // Change this if one of the following kTInfo_Commands is higher then 16 char
-const char kTInfo_Commands[] PROGMEM  = "historique|standard|none|full|changed|skip|limit|config";
+#define MAX_TINFO_COMMAND_NAME 16+1 // Change this if one of the following kTInfo_Commands is higher then 16 char
+const char kTInfo_Commands[] PROGMEM  = "historique|standard|noraw|full|changed|skip|limit";
 
 enum TInfoCommands {            // commands for Console
   CMND_TELEINFO_HISTORIQUE=0,   // Set Legacy mode
@@ -55,8 +55,7 @@ enum TInfoCommands {            // commands for Console
   CMND_TELEINFO_RAW_FULL,       // Enable all RAW frame send
   CMND_TELEINFO_RAW_CHANGE,     // Enable only changed values RAW frame send
   CMND_TELEINFO_SKIP,           // Set number of frame to skip when raw mode is enabled
-  CMND_TELEINFO_LIMIT,          // Limit RAW frame to values subject to fast change (Power, Current, ...), TBD
-  CMND_TELEINFO_CONFIG          // Show Teleinfo current settings
+  CMND_TELEINFO_LIMIT           // Limit RAW frame to values subject to fast change (Power, Current, ...), TBD
 };
 
 
@@ -458,10 +457,6 @@ void NewFrameCallback(struct _ValueList * me)
     // send teleinfo raw data only if setup like that
     if (Settings.teleinfo.raw_send) {
         // Do we need to skip this frame
-        if (raw_skip>0) {
-            raw_skip--;
-        }
-
         if (raw_skip == 0 ) {
             Response_P(PSTR("{"));
             // send teleinfo full frame or only changed data
@@ -474,7 +469,8 @@ void NewFrameCallback(struct _ValueList * me)
             // Reset frame skip counter (if 0 it's disabled)
             raw_skip = Settings.teleinfo.raw_skip;
         } else {
-            AddLog(LOG_LEVEL_INFO, PSTR("TIC: not sending yet, will do in %d frame(s)"), raw_skip);
+            AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: not sending yet, will do in %d frame(s)"), raw_skip);
+            raw_skip--;
         }
     }
 }
@@ -597,58 +593,150 @@ Output  : -
 Comments: -
 ====================================================================== */
 bool TInfoCmd(void) {
+    bool serviced = false;
     char command[CMDSZ];
-
     uint8_t name_len = strlen(D_NAME_TELEINFO);
 
-    if (!strncasecmp_P(XdrvMailbox.topic, PSTR(D_NAME_TELEINFO), name_len)) {
+    // At least "EnergyConfig Teleinfo"
+    if (CMND_ENERGYCONFIG == Energy.command_code && XdrvMailbox.data_len >= name_len && !strncasecmp_P(XdrvMailbox.data, PSTR(D_NAME_TELEINFO), name_len) ) {
+        // Just "EnergyConfig Teleinfo" no more parameter
+        // Show Teleinfo configuration        
+        if (XdrvMailbox.data_len == name_len) {
 
-        uint32_t command_code = GetCommandCode(command, sizeof(command), XdrvMailbox.topic + name_len, kTInfo_Commands);
-        switch (command_code) {
-            case CMND_TELEINFO_STANDARD:
-            case CMND_TELEINFO_HISTORIQUE: {
-                char mode_name[MAX_TINFO_COMMAND_NAME];
-                if (XdrvMailbox.data_len) {
-                    Settings.teleinfo.mode_standard = command_code == CMND_TELEINFO_STANDARD ? 1 : 0;
-                    // Get the mode and raw name
-                    GetTextIndexed(mode_name, MAX_TINFO_COMMAND_NAME, command_code, kTInfo_Commands);
+            char mode_name[MAX_TINFO_COMMAND_NAME];
+            char raw_name[MAX_TINFO_COMMAND_NAME];
+            int index_mode = Settings.teleinfo.mode_standard ? CMND_TELEINFO_STANDARD : CMND_TELEINFO_HISTORIQUE;
+            int index_raw = Settings.teleinfo.raw_send ? CMND_TELEINFO_RAW_FULL : CMND_TELEINFO_RAW_DISABLE;
+            if (Settings.teleinfo.raw_send && Settings.teleinfo.raw_report_changed) {
+                index_raw = CMND_TELEINFO_RAW_CHANGE;
+            } 
+            // Get the mode and raw name
+            GetTextIndexed(mode_name, MAX_TINFO_COMMAND_NAME, index_mode, kTInfo_Commands);
+            GetTextIndexed(raw_name, MAX_TINFO_COMMAND_NAME, index_raw, kTInfo_Commands);
+
+            AddLog_P(LOG_LEVEL_INFO, TELEINFO_COMMAND_SETTINGS, mode_name, raw_name, Settings.teleinfo.raw_skip, Settings.teleinfo.raw_limit);
+
+            serviced = true;
+
+        // At least "EnergyConfig Teleinfo xyz" plus one space and one (or more) char 
+        // so "EnergyConfig Teleinfo 0" or "EnergyConfig Teleinfo Standard"
+        } else if (XdrvMailbox.data_len > name_len + 1 && XdrvMailbox.data[name_len] == ' ' ) {
+            // Now point on parameter
+            char *pParam = XdrvMailbox.data + name_len + 1;
+            char *p = pParam;
+            char *pValue = nullptr;
+            // Check for sub parameter ie : EnergyConfig Teleinfo Skip value
+            while(*p) {
+                if (*p == ' ') {
+                    if (*(p+1)) {
+                        // Skip parameter by emptying th string so below getcommandcode works
+                        *p++ = 0x00;
+                        // Save parameter value for later
+                        pValue = p;
+                    }
+                    break;
                 }
-                Response_P(S_JSON_TELEINFO_COMMAND_STRING, command, mode_name);
+                p++;
             }
-            break;
 
-            case CMND_TELEINFO_CONFIG: {
-                if (!XdrvMailbox.data_len) {
+            int command_code = GetCommandCode(command, sizeof(command), pParam, kTInfo_Commands);
+
+            AddLog_P(LOG_LEVEL_DEBUG, PSTR("TIC: EnergyConfig " D_NAME_TELEINFO " parameter '%s' => cmnd %d"), pParam, command_code);
+
+            switch (command_code) {
+                case CMND_TELEINFO_STANDARD:
+                case CMND_TELEINFO_HISTORIQUE: {
                     char mode_name[MAX_TINFO_COMMAND_NAME];
-                    char raw_name[MAX_TINFO_COMMAND_NAME];
 
-                    int index_mode = Settings.teleinfo.mode_standard ? CMND_TELEINFO_STANDARD : CMND_TELEINFO_HISTORIQUE;
-                    int index_raw = Settings.teleinfo.raw_send ? CMND_TELEINFO_RAW_FULL : CMND_TELEINFO_RAW_DISABLE;
+                    // Get the mode name
+                    GetTextIndexed(mode_name, MAX_TINFO_COMMAND_NAME, command_code, kTInfo_Commands);
 
-                    if (Settings.teleinfo.raw_send && Settings.teleinfo.raw_report_changed) {
-                        index_raw = CMND_TELEINFO_RAW_CHANGE;
-                    } 
+                    // Only if current settings is different than previous
+                    if ( (tinfo_mode==TINFO_MODE_STANDARD && command_code==CMND_TELEINFO_HISTORIQUE) ||
+                         (tinfo_mode==TINFO_MODE_HISTORIQUE && command_code==CMND_TELEINFO_STANDARD) ) {
 
-                    // Get the mode and raw name
-                    GetTextIndexed(mode_name, MAX_TINFO_COMMAND_NAME, index_mode, kTInfo_Commands);
-                    GetTextIndexed(raw_name, MAX_TINFO_COMMAND_NAME, index_raw, kTInfo_Commands);
+                        // Cleanup Serial not sure it will works since 
+                        // there is no end() or close() on tasmotaserial class
+                        if (TInfoSerial) {
+                            TInfoSerial->flush();
+                            //TInfoSerial->end();
+                            free(TInfoSerial);
+                        }
 
-                    Response_P(S_JSON_TELEINFO_COMMAND_SETTINGS, mode_name, raw_name, Settings.teleinfo.raw_skip, Settings.teleinfo.raw_limit );
+                        // Change mode 
+                        Settings.teleinfo.mode_standard = command_code == CMND_TELEINFO_STANDARD ? 1 : 0;
+
+                        AddLog_P(LOG_LEVEL_INFO, PSTR("TIC: Configured to '%s' mode"), mode_name);
+
+                        // Re init teleinfo (LibTeleinfo always free linked list on init)
+                        TInfoInit();
+
+                        serviced = true;
+
+                    } else {
+                        AddLog_P(LOG_LEVEL_INFO, PSTR("TIC: Already configured to '%s' mode"), mode_name);
+                    }
                 }
-            }
-            break;
-    
-            default:
-            return false;
-        }
-    
-        return true;
-    
-    } else {
-        return false;
-    }
-}
+                break;
 
+                case CMND_TELEINFO_RAW_DISABLE: 
+                case CMND_TELEINFO_RAW_FULL: 
+                case CMND_TELEINFO_RAW_CHANGE: {
+            
+                   // Enable all RAW frame send
+                   char raw_name[MAX_TINFO_COMMAND_NAME];
+
+                    // Get the raw name
+                    GetTextIndexed(raw_name, MAX_TINFO_COMMAND_NAME, command_code, kTInfo_Commands);
+
+                    if (command_code == CMND_TELEINFO_RAW_DISABLE) {
+                        // disable raw mode
+                        Settings.teleinfo.raw_send = 0;
+                    } else {
+                        // enable raw mode
+                        Settings.teleinfo.raw_send = 1;
+                        Settings.teleinfo.raw_report_changed = command_code == CMND_TELEINFO_RAW_CHANGE ? 1 : 0;
+                    }
+
+                    AddLog_P(LOG_LEVEL_INFO, PSTR("TIC: Raw mode set to '%s'"), raw_name);
+                    serviced = true;
+                }
+                break;
+
+                case CMND_TELEINFO_SKIP: {
+                    // Set Raw mode skip frame number
+                    char skip_name[MAX_TINFO_COMMAND_NAME];
+                    // Get the raw name
+                    GetTextIndexed(skip_name, MAX_TINFO_COMMAND_NAME, command_code, kTInfo_Commands);
+                    int l = strlen(skip_name);
+
+                    // At least "EnergyConfig Teleinfo skip" plus one space and one (or more) digit
+                    // so "EnergyConfig Teleinfo Skip 0" or "EnergyConfig Teleinfo Skip 123"
+                    if ( pValue ) {
+                        raw_skip = atoi(pValue);
+                        Settings.teleinfo.raw_skip = raw_skip;
+
+                        if (raw_skip ==0) {
+                            AddLog_P(LOG_LEVEL_INFO, PSTR("TIC: Raw mode set with no skiping frame"));
+                        } else {
+                            AddLog_P(LOG_LEVEL_INFO, PSTR("TIC: Raw mode sending one frame over %d"), raw_skip+1);
+                        }
+                        serviced = true;
+                    } else {
+                        AddLog_P(LOG_LEVEL_INFO, PSTR("TIC: Raw mode no skip value"));
+                    }
+                }
+                break;
+
+                default:
+                    AddLog_P(LOG_LEVEL_INFO, PSTR("TIC: incorrect command parameter '%s'"), pParam);
+                break;
+
+            }
+        }
+    }
+    return serviced ;
+}
 
 /* ======================================================================
 Function: TInfoProcess
@@ -815,7 +903,6 @@ bool Xnrg15(uint8_t function)
             TInfoProcess();
             break;
         case FUNC_COMMAND:
-            AddLog(LOG_LEVEL_INFO, PSTR("TIC: FUNC_COMMAND"));
             result = TInfoCmd();
             break;
 
