@@ -33,6 +33,7 @@
 #define NRG_DUMMY_U_COMMON  true    // Phase voltage = false, Common voltage = true
 #define NRG_DUMMY_F_COMMON  true    // Phase frequency = false, Common frequency = true
 #define NRG_DUMMY_DC        false   // AC = false, DC = true;
+#define NRG_DUMMY_OVERTEMP  true    // Use global temperature for overtemp detection
 
 #define NRG_DUMMY_UREF      24000   // Voltage 240.00 V (= P / I)
 #define NRG_DUMMY_IREF      41666   // Current 0.417 A (= P / U)
@@ -121,6 +122,7 @@ void NrgDummyDrvInit(void) {
     Energy.voltage_common = NRG_DUMMY_U_COMMON;    // Phase voltage = false, Common voltage = true
     Energy.frequency_common = NRG_DUMMY_F_COMMON;  // Phase frequency = false, Common frequency = true
     Energy.type_dc = NRG_DUMMY_DC;                 // AC = false, DC = true;
+    Energy.use_overtemp = NRG_DUMMY_OVERTEMP;      // Use global temperature for overtemp detection
 
     TasmotaGlobal.energy_driver = XNRG_20;
   }

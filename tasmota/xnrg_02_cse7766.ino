@@ -221,7 +221,7 @@ void CseSnsInit(void) {
   // Software serial init needs to be done here as earlier (serial) interrupts may lead to Exceptions
 //  CseSerial = new TasmotaSerial(Pin(GPIO_CSE7766_RX), Pin(GPIO_CSE7766_TX), 1);
   CseSerial = new TasmotaSerial(Pin(GPIO_CSE7766_RX), -1, 1);
-  if (CseSerial->begin(4800, 2)) {  // Fake Software Serial 8E1 by using two stop bits
+  if (CseSerial->begin(4800, SERIAL_8E1)) {
     if (CseSerial->hardwareSerial()) {
       SetSerial(4800, TS_SERIAL_8E1);
       ClaimSerial();
@@ -230,6 +230,7 @@ void CseSnsInit(void) {
       Settings.param[P_CSE7766_INVALID_POWER] = CSE_MAX_INVALID_POWER;  // SetOption39 1..255
     }
     Cse.power_invalid = Settings.param[P_CSE7766_INVALID_POWER];
+    Energy.use_overtemp = true;                 // Use global temperature for overtemp detection
   } else {
     TasmotaGlobal.energy_driver = ENERGY_NONE;
   }

@@ -26,6 +26,7 @@ All notable changes to this project will be documented in this file.
 - Limit number of relay/button columns in GUI to 8 (#11546)
 - ADC range result from int to float using command ``FreqRes`` for decimal resolution selection (#11545)
 - Teleinfo, if raw mode selected also return telemety values in SENSOR data
+- Removed overtemp detection on external energy monitoring devices (#11628)
 
 ### Fixed
 - HC-SR04 on ESP32 release serial interface if not used (#11507)

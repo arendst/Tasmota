@@ -102,6 +102,7 @@ struct ENERGY {
   uint8_t phase_count;                          // Number of phases active
   bool voltage_common;                          // Use single voltage
   bool frequency_common;                        // Use single frequency
+  bool use_overtemp;                            // Use global temperature as overtemp trigger on internal energy monitor hardware
   bool kWhtoday_offset_init;
 
   bool voltage_available;                       // Enable if voltage is measured
@@ -501,7 +502,7 @@ void EnergyMqttShow(void)
 void EnergyEverySecond(void)
 {
   // Overtemp check
-  if (TasmotaGlobal.global_update) {
+  if (Energy.use_overtemp && TasmotaGlobal.global_update) {
     if (TasmotaGlobal.power && !isnan(TasmotaGlobal.temperature_celsius) && (TasmotaGlobal.temperature_celsius > (float)Settings.param[P_OVER_TEMP])) {  // SetOption42 Device overtemp, turn off relays
 
       AddLog(LOG_LEVEL_DEBUG, PSTR("NRG: Temperature %1_f"), &TasmotaGlobal.temperature_celsius);
