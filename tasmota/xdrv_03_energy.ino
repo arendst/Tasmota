@@ -43,7 +43,7 @@
 
 enum EnergyCommands {
   CMND_POWERCAL, CMND_VOLTAGECAL, CMND_CURRENTCAL, CMND_FREQUENCYCAL,
-  CMND_POWERSET, CMND_VOLTAGESET, CMND_CURRENTSET, CMND_FREQUENCYSET, CMND_MODULEADDRESS };
+  CMND_POWERSET, CMND_VOLTAGESET, CMND_CURRENTSET, CMND_FREQUENCYSET, CMND_MODULEADDRESS, CMND_NRGCONFIG };
 
 const char kEnergyCommands[] PROGMEM = "|"  // No prefix
   D_CMND_POWERCAL "|" D_CMND_VOLTAGECAL "|" D_CMND_CURRENTCAL "|" D_CMND_FREQUENCYCAL "|"
@@ -56,7 +56,7 @@ const char kEnergyCommands[] PROGMEM = "|"  // No prefix
   D_CMND_SAFEPOWER "|" D_CMND_SAFEPOWERHOLD "|"  D_CMND_SAFEPOWERWINDOW "|"
 #endif  // USE_ENERGY_POWER_LIMIT
 #endif  // USE_ENERGY_MARGIN_DETECTION
-  D_CMND_ENERGYRESET "|" D_CMND_TARIFF ;
+  D_CMND_ENERGYRESET "|" D_CMND_TARIFF "|EnergyConfig";
 
 void (* const EnergyCommand[])(void) PROGMEM = {
   &CmndPowerCal, &CmndVoltageCal, &CmndCurrentCal, &CmndFrequencyCal,
@@ -69,7 +69,7 @@ void (* const EnergyCommand[])(void) PROGMEM = {
   &CmndSafePower, &CmndSafePowerHold, &CmndSafePowerWindow,
 #endif  // USE_ENERGY_POWER_LIMIT
 #endif  // USE_ENERGY_MARGIN_DETECTION
-  &CmndEnergyReset, &CmndTariff };
+  &CmndEnergyReset, &CmndTariff, &CmndEnergyConfig };
 
 const char kEnergyPhases[] PROGMEM = "|%s / %s|%s / %s / %s||[%s,%s]|[%s,%s,%s]";
 
@@ -758,6 +758,14 @@ void CmndModuleAddress(void) {
     if (XnrgCall(FUNC_COMMAND)) {  // Module address
       ResponseCmndDone();
     }
+  }
+}
+
+void CmndEnergyConfig(void) {
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR("NRG: xdrv_03 index:%d"), XdrvMailbox.index);
+  Energy.command_code = CMND_NRGCONFIG;
+  if (XnrgCall(FUNC_COMMAND)) {
+    ResponseCmndDone();
   }
 }
 
