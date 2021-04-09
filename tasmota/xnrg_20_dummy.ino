@@ -99,8 +99,9 @@ bool NrgDummyCommand(void) {
       }
     }
   }
-  else if (CMND_NRGCONFIG == Energy.command_code) {
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR("NRG: Config payload:%d, data:'%s'"), XdrvMailbox.payload, XdrvMailbox.data ? XdrvMailbox.data : "null" );
+  else if (CMND_ENERGYCONFIG == Energy.command_code) {
+    AddLog_P(LOG_LEVEL_DEBUG, PSTR("NRG: Config index %d, payload %d, data '%s'"),
+      XdrvMailbox.index, XdrvMailbox.payload, XdrvMailbox.data ? XdrvMailbox.data : "null" );
   }
   else serviced = false;  // Unknown command
 
