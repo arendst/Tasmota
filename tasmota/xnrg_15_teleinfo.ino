@@ -389,15 +389,16 @@ Function: responseDumpTInfo
 Purpose : add teleinfo values into JSON response
 Input   : 1st separator space if begining of JSON, else comma
         : select if append all data or just changed one
-Output  : -
+Output  : false if asked for changed value and none has changed else true
 Comments: -
 ====================================================================== */
-void ResponseAppendTInfo(char sep, bool all)
+bool ResponseAppendTInfo(char sep, bool all)
 {
     struct _ValueList * me = tinfo.getList();
 
     char * p ;
-    boolean isNumber ;
+    bool isNumber ;
+    bool hasValue = false;
 
     // Loop thru all the teleinfo frame but
     // always check we don't buffer overflow of MQTT data
@@ -411,6 +412,7 @@ void ResponseAppendTInfo(char sep, bool all)
             if (all || ( Settings.teleinfo.raw_report_changed && (me->flags & (TINFO_FLAGS_UPDATED | TINFO_FLAGS_ADDED | TINFO_FLAGS_ALERT) ) ) ) {
 
                 isNumber = true;
+                hasValue = true;
                 p = me->value;
 
                 // Specific treatment serial number don't convert to number later
@@ -439,6 +441,7 @@ void ResponseAppendTInfo(char sep, bool all)
             }
         }
     }
+    return hasValue;
 }
 
 /* ======================================================================
@@ -460,11 +463,15 @@ void NewFrameCallback(struct _ValueList * me)
         if (raw_skip == 0 ) {
             Response_P(PSTR("{"));
             // send teleinfo full frame or only changed data
-            ResponseAppendTInfo(' ', Settings.teleinfo.raw_report_changed ? false : true );
+            bool hasData = ResponseAppendTInfo(' ', Settings.teleinfo.raw_report_changed ? false : true );
             ResponseJsonEnd();
+            
             // Publish adding ADCO serial number into the topic
             // Need setOption4 to be enabled
-            MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, serialNumber, false);
+            // No need to send empty payload
+            if (hasData) {
+                MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, serialNumber, false);
+            }
 
             // Reset frame skip counter (if 0 it's disabled)
             raw_skip = Settings.teleinfo.raw_skip;
@@ -595,13 +602,16 @@ Comments: -
 bool TInfoCmd(void) {
     bool serviced = false;
     char command[CMDSZ];
-    uint8_t name_len = strlen(D_NAME_TELEINFO);
+    //uint8_t name_len = strlen(D_NAME_TELEINFO);
 
-    // At least "EnergyConfig Teleinfo"
-    if (CMND_ENERGYCONFIG == Energy.command_code && XdrvMailbox.data_len >= name_len && !strncasecmp_P(XdrvMailbox.data, PSTR(D_NAME_TELEINFO), name_len) ) {
-        // Just "EnergyConfig Teleinfo" no more parameter
+    // At least "EnergyConfig"
+    if (CMND_ENERGYCONFIG == Energy.command_code) {
+
+        AddLog_P(LOG_LEVEL_DEBUG, PSTR("TIC: len %d, data '%s'"), XdrvMailbox.data_len, XdrvMailbox.data ? XdrvMailbox.data : "null" );
+
+        // Just "EnergyConfig" no more parameter
         // Show Teleinfo configuration        
-        if (XdrvMailbox.data_len == name_len) {
+        if (XdrvMailbox.data_len == 0) {
 
             char mode_name[MAX_TINFO_COMMAND_NAME];
             char raw_name[MAX_TINFO_COMMAND_NAME];
@@ -618,11 +628,11 @@ bool TInfoCmd(void) {
 
             serviced = true;
 
-        // At least "EnergyConfig Teleinfo xyz" plus one space and one (or more) char 
-        // so "EnergyConfig Teleinfo 0" or "EnergyConfig Teleinfo Standard"
-        } else if (XdrvMailbox.data_len > name_len + 1 && XdrvMailbox.data[name_len] == ' ' ) {
+        // At least "EnergyConfig xyz" plus one space and one (or more) char 
+        // so "EnergyConfig 0" or "EnergyConfig Teleinfo Standard"
+        } else if (XdrvMailbox.data_len) {
             // Now point on parameter
-            char *pParam = XdrvMailbox.data + name_len + 1;
+            char *pParam = XdrvMailbox.data;
             char *p = pParam;
             char *pValue = nullptr;
             // Check for sub parameter ie : EnergyConfig Teleinfo Skip value
@@ -641,7 +651,7 @@ bool TInfoCmd(void) {
 
             int command_code = GetCommandCode(command, sizeof(command), pParam, kTInfo_Commands);
 
-            AddLog_P(LOG_LEVEL_DEBUG, PSTR("TIC: EnergyConfig " D_NAME_TELEINFO " parameter '%s' => cmnd %d"), pParam, command_code);
+            AddLog_P(LOG_LEVEL_DEBUG, PSTR("TIC: param '%s' cmnd %d"), pParam, command_code);
 
             switch (command_code) {
                 case CMND_TELEINFO_STANDARD:
@@ -666,7 +676,7 @@ bool TInfoCmd(void) {
                         // Change mode 
                         Settings.teleinfo.mode_standard = command_code == CMND_TELEINFO_STANDARD ? 1 : 0;
 
-                        AddLog_P(LOG_LEVEL_INFO, PSTR("TIC: Configured to '%s' mode"), mode_name);
+                        AddLog_P(LOG_LEVEL_INFO, PSTR("TIC: '%s' mode"), mode_name);
 
                         // Re init teleinfo (LibTeleinfo always free linked list on init)
                         TInfoInit();
@@ -674,7 +684,7 @@ bool TInfoCmd(void) {
                         serviced = true;
 
                     } else {
-                        AddLog_P(LOG_LEVEL_INFO, PSTR("TIC: Already configured to '%s' mode"), mode_name);
+                        AddLog_P(LOG_LEVEL_INFO, PSTR("TIC: No change to '%s' mode"), mode_name);
                     }
                 }
                 break;
@@ -698,7 +708,7 @@ bool TInfoCmd(void) {
                         Settings.teleinfo.raw_report_changed = command_code == CMND_TELEINFO_RAW_CHANGE ? 1 : 0;
                     }
 
-                    AddLog_P(LOG_LEVEL_INFO, PSTR("TIC: Raw mode set to '%s'"), raw_name);
+                    AddLog_P(LOG_LEVEL_INFO, PSTR("TIC: Raw to '%s'"), raw_name);
                     serviced = true;
                 }
                 break;
@@ -711,25 +721,30 @@ bool TInfoCmd(void) {
                     int l = strlen(skip_name);
 
                     // At least "EnergyConfig Teleinfo skip" plus one space and one (or more) digit
-                    // so "EnergyConfig Teleinfo Skip 0" or "EnergyConfig Teleinfo Skip 123"
+                    // so "EnergyConfig Skip 0" or "EnergyConfig Skip 123"
                     if ( pValue ) {
-                        raw_skip = atoi(pValue);
-                        Settings.teleinfo.raw_skip = raw_skip;
+                        int value = atoi(pValue);
+                        if (value >= 0 && value <= 255) {
+                            raw_skip = value;
+                            Settings.teleinfo.raw_skip = raw_skip;
 
-                        if (raw_skip ==0) {
-                            AddLog_P(LOG_LEVEL_INFO, PSTR("TIC: Raw mode set with no skiping frame"));
+                            if (raw_skip ==0) {
+                                AddLog_P(LOG_LEVEL_INFO, PSTR("TIC: Raw no skip"));
+                            } else {
+                                AddLog_P(LOG_LEVEL_INFO, PSTR("TIC: Raw each %d frame(s)"), raw_skip+1);
+                            }
+                            serviced = true;
                         } else {
-                            AddLog_P(LOG_LEVEL_INFO, PSTR("TIC: Raw mode sending one frame over %d"), raw_skip+1);
+                            AddLog_P(LOG_LEVEL_INFO, PSTR("TIC: skip can be 0 to 255"));
                         }
-                        serviced = true;
                     } else {
-                        AddLog_P(LOG_LEVEL_INFO, PSTR("TIC: Raw mode no skip value"));
+                        AddLog_P(LOG_LEVEL_INFO, PSTR("TIC: no skip value"));
                     }
                 }
                 break;
 
                 default:
-                    AddLog_P(LOG_LEVEL_INFO, PSTR("TIC: incorrect command parameter '%s'"), pParam);
+                    AddLog_P(LOG_LEVEL_INFO, PSTR("TIC: bad cmd param '%s'"), pParam);
                 break;
 
             }
