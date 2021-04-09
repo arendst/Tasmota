@@ -810,7 +810,7 @@
 #define D_SENSOR_TFMINIPLUS_RX  "TFmini+ - RX"
 #define D_SENSOR_ZEROCROSS     "Impulsi ZC"
 #define D_SENSOR_HALLEFFECT    "Effetto hall"
-
+#define D_SENSOR_EPD_DATA      "EPD - Data"
 
 // Units
 #define D_UNIT_AMPERE "A"
