@@ -421,6 +421,7 @@
 #define D_CMND_VOLTAGESET "VoltageSet"
 #define D_CMND_CURRENTSET "CurrentSet"
 #define D_CMND_FREQUENCYSET "FrequencySet"
+#define D_CMND_ENERGYCONFIG "EnergyConfig"
 #define D_CMND_MAXPOWER "MaxPower"
 #define D_CMND_MAXPOWERHOLD "MaxPowerHold"
 #define D_CMND_MAXPOWERWINDOW "MaxPowerWindow"

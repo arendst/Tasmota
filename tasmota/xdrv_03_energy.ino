@@ -43,11 +43,11 @@
 
 enum EnergyCommands {
   CMND_POWERCAL, CMND_VOLTAGECAL, CMND_CURRENTCAL, CMND_FREQUENCYCAL,
-  CMND_POWERSET, CMND_VOLTAGESET, CMND_CURRENTSET, CMND_FREQUENCYSET, CMND_MODULEADDRESS };
+  CMND_POWERSET, CMND_VOLTAGESET, CMND_CURRENTSET, CMND_FREQUENCYSET, CMND_MODULEADDRESS, CMND_ENERGYCONFIG };
 
 const char kEnergyCommands[] PROGMEM = "|"  // No prefix
   D_CMND_POWERCAL "|" D_CMND_VOLTAGECAL "|" D_CMND_CURRENTCAL "|" D_CMND_FREQUENCYCAL "|"
-  D_CMND_POWERSET "|" D_CMND_VOLTAGESET "|" D_CMND_CURRENTSET "|" D_CMND_FREQUENCYSET "|" D_CMND_MODULEADDRESS "|"
+  D_CMND_POWERSET "|" D_CMND_VOLTAGESET "|" D_CMND_CURRENTSET "|" D_CMND_FREQUENCYSET "|" D_CMND_MODULEADDRESS "|" D_CMND_ENERGYCONFIG "|"
 #ifdef USE_ENERGY_MARGIN_DETECTION
   D_CMND_POWERDELTA "|" D_CMND_POWERLOW "|" D_CMND_POWERHIGH "|" D_CMND_VOLTAGELOW "|" D_CMND_VOLTAGEHIGH "|" D_CMND_CURRENTLOW "|" D_CMND_CURRENTHIGH "|"
 #ifdef USE_ENERGY_POWER_LIMIT
@@ -56,11 +56,11 @@ const char kEnergyCommands[] PROGMEM = "|"  // No prefix
   D_CMND_SAFEPOWER "|" D_CMND_SAFEPOWERHOLD "|"  D_CMND_SAFEPOWERWINDOW "|"
 #endif  // USE_ENERGY_POWER_LIMIT
 #endif  // USE_ENERGY_MARGIN_DETECTION
-  D_CMND_ENERGYRESET "|" D_CMND_TARIFF ;
+  D_CMND_ENERGYRESET "|" D_CMND_TARIFF;
 
 void (* const EnergyCommand[])(void) PROGMEM = {
   &CmndPowerCal, &CmndVoltageCal, &CmndCurrentCal, &CmndFrequencyCal,
-  &CmndPowerSet, &CmndVoltageSet, &CmndCurrentSet, &CmndFrequencySet, &CmndModuleAddress,
+  &CmndPowerSet, &CmndVoltageSet, &CmndCurrentSet, &CmndFrequencySet, &CmndModuleAddress, &CmndEnergyConfig,
 #ifdef USE_ENERGY_MARGIN_DETECTION
   &CmndPowerDelta, &CmndPowerLow, &CmndPowerHigh, &CmndVoltageLow, &CmndVoltageHigh, &CmndCurrentLow, &CmndCurrentHigh,
 #ifdef USE_ENERGY_POWER_LIMIT
@@ -69,7 +69,7 @@ void (* const EnergyCommand[])(void) PROGMEM = {
   &CmndSafePower, &CmndSafePowerHold, &CmndSafePowerWindow,
 #endif  // USE_ENERGY_POWER_LIMIT
 #endif  // USE_ENERGY_MARGIN_DETECTION
-  &CmndEnergyReset, &CmndTariff };
+  &CmndEnergyReset, &CmndTariff};
 
 const char kEnergyPhases[] PROGMEM = "|%s / %s|%s / %s / %s||[%s,%s]|[%s,%s,%s]";
 
@@ -102,6 +102,7 @@ struct ENERGY {
   uint8_t phase_count;                          // Number of phases active
   bool voltage_common;                          // Use single voltage
   bool frequency_common;                        // Use single frequency
+  bool use_overtemp;                            // Use global temperature as overtemp trigger on internal energy monitor hardware
   bool kWhtoday_offset_init;
 
   bool voltage_available;                       // Enable if voltage is measured
@@ -501,7 +502,7 @@ void EnergyMqttShow(void)
 void EnergyEverySecond(void)
 {
   // Overtemp check
-  if (TasmotaGlobal.global_update) {
+  if (Energy.use_overtemp && TasmotaGlobal.global_update) {
     if (TasmotaGlobal.power && !isnan(TasmotaGlobal.temperature_celsius) && (TasmotaGlobal.temperature_celsius > (float)Settings.param[P_OVER_TEMP])) {  // SetOption42 Device overtemp, turn off relays
 
       AddLog(LOG_LEVEL_DEBUG, PSTR("NRG: Temperature %1_f"), &TasmotaGlobal.temperature_celsius);
@@ -758,6 +759,13 @@ void CmndModuleAddress(void) {
     if (XnrgCall(FUNC_COMMAND)) {  // Module address
       ResponseCmndDone();
     }
+  }
+}
+
+void CmndEnergyConfig(void) {
+  Energy.command_code = CMND_ENERGYCONFIG;
+  if (XnrgCall(FUNC_COMMAND)) {
+    ResponseCmndDone();
   }
 }
 

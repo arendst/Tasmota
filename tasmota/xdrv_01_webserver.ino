@@ -1505,16 +1505,16 @@ uint16_t WebGetGpioArg(uint32_t i) {
 
 void TemplateSaveSettings(void) {
   char tmp[TOPSZ];                                      // WebGetArg NAME and GPIO/BASE/FLAG byte value
-  char svalue[300];                                     // Template command string
+  char command[300];                                     // Template command string
 
   WebGetArg(PSTR("s1"), tmp, sizeof(tmp));              // NAME
-  snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_TEMPLATE " {\"" D_JSON_NAME "\":\"%s\",\"" D_JSON_GPIO "\":["), tmp);
+  snprintf_P(command, sizeof(command), PSTR(D_CMND_TEMPLATE " {\"" D_JSON_NAME "\":\"%s\",\"" D_JSON_GPIO "\":["), tmp);
 
   uint32_t j = 0;
   for (uint32_t i = 0; i < nitems(Settings.user_template.gp.io); i++) {
     if (6 == i) { j = 9; }
     if (8 == i) { j = 12; }
-    snprintf_P(svalue, sizeof(svalue), PSTR("%s%s%d"), svalue, (i>0)?",":"", WebGetGpioArg(j));
+    snprintf_P(command, sizeof(command), PSTR("%s%s%d"), command, (i>0)?",":"", WebGetGpioArg(j));
     j++;
   }
 
@@ -1528,8 +1528,8 @@ void TemplateSaveSettings(void) {
   WebGetArg(PSTR("g99"), tmp, sizeof(tmp));             // BASE
   uint32_t base = atoi(tmp) +1;
 
-  snprintf_P(svalue, sizeof(svalue), PSTR("%s],\"" D_JSON_FLAG "\":%d,\"" D_JSON_BASE "\":%d}"), svalue, flag, base);
-  ExecuteWebCommand(svalue);
+  snprintf_P(command, sizeof(command), PSTR("%s],\"" D_JSON_FLAG "\":%d,\"" D_JSON_BASE "\":%d}"), command, flag, base);
+  ExecuteWebCommand(command);
 }
 
 /*-------------------------------------------------------------------------------------------*/
@@ -1878,7 +1878,7 @@ void LoggingSaveSettings(void) {
   char tmp7[CMDSZ];
   WebGetArg(PSTR("lt"), tmp7, sizeof(tmp7));  // Teleperiod
   char command[200];
-  snprintf_P(command, sizeof(command),PSTR(D_CMND_BACKLOG "0 " D_CMND_SERIALLOG " %s;" D_CMND_WEBLOG " %s;" D_CMND_MQTTLOG " %s;" D_CMND_SYSLOG " %s;" D_CMND_LOGHOST " %s;" D_CMND_LOGPORT " %s;" D_CMND_TELEPERIOD " %s"),
+  snprintf_P(command, sizeof(command), PSTR(D_CMND_BACKLOG "0 " D_CMND_SERIALLOG " %s;" D_CMND_WEBLOG " %s;" D_CMND_MQTTLOG " %s;" D_CMND_SYSLOG " %s;" D_CMND_LOGHOST " %s;" D_CMND_LOGPORT " %s;" D_CMND_TELEPERIOD " %s"),
     (!strlen(tmp1)) ? STR(SERIAL_LOG_LEVEL) : tmp1,
     (!strlen(tmp2)) ? STR(WEB_LOG_LEVEL) : tmp2,
     (!strlen(tmp3)) ? STR(MQTT_LOG_LEVEL) : tmp3,
@@ -1958,8 +1958,8 @@ void OtherSaveSettings(void) {
   WebGetArg(PSTR("dn"), tmp1, sizeof(tmp1));  // Device name
   char tmp2[100];
   WebGetArg(PSTR("wp"), tmp2, sizeof(tmp2));  // Web password
-  char command[600];
-  snprintf_P(command, sizeof(command),PSTR(D_CMND_BACKLOG "0 " D_CMND_WEBPASSWORD "2 %s;" D_CMND_SO "3 %d;" D_CMND_DEVICENAME " %s"),
+  char command[500];
+  snprintf_P(command, sizeof(command), PSTR(D_CMND_BACKLOG "0 " D_CMND_WEBPASSWORD "2 %s;" D_CMND_SO "3 %d;" D_CMND_DEVICENAME " %s"),
     (!strlen(tmp2)) ? "\"" : (strlen(tmp2) < 5) ? "" : tmp2,
     Webserver->hasArg(F("b1")),               // SetOption3 - Enable MQTT
     (!strlen(tmp1)) ? "\"" : tmp1);

@@ -233,8 +233,10 @@ int advertismentCallback(BLE_ESP32::ble_advertisment_t *pStruct)
       memcpy(UUID,oBeacon.getProximityUUID().getNative()->u128.value,16);
       ESP32BLE_ReverseStr(UUID,16);
 
-      uint16_t    Major = ENDIAN_CHANGE_U16(oBeacon.getMajor());
-      uint16_t    Minor = ENDIAN_CHANGE_U16(oBeacon.getMinor());
+//      uint16_t    Major = ENDIAN_CHANGE_U16(oBeacon.getMajor());
+//      uint16_t    Minor = ENDIAN_CHANGE_U16(oBeacon.getMinor());
+      uint16_t    Major = oBeacon.getMajor();
+      uint16_t    Minor = oBeacon.getMinor();
       uint8_t     PWR   = oBeacon.getSignalPower();
 
       DumpHex((const unsigned char*)&UUID,16,ib.UID);
@@ -337,7 +339,7 @@ uint32_t ibeacon_add(struct IBEACON *ib) {
   if (!strncmp(ib->MAC,"FFFF",4) || strncmp(ib->FACID,"00000000",8)) {
     for (uint32_t cnt=0;cnt<MAX_IBEACONS;cnt++) {
       if (ibeacons[cnt].FLAGS) {
-        if (!strncmp_P(ib->UID,PSTR("00000000000000000000000000000000"),32)) {
+//        if (!strncmp_P(ib->UID,PSTR("00000000000000000000000000000000"),32)) {
           if (!strncmp(ibeacons[cnt].MAC,ib->MAC,12)) {
             // exists
             strncpy(ibeacons[cnt].NAME,ib->NAME,sizeof(ibeacons[cnt].NAME));
@@ -350,7 +352,7 @@ uint32_t ibeacon_add(struct IBEACON *ib) {
             ibeacons[cnt].count++;
             return 2;
           }
-        } else {
+/*        } else {
           if (!strncmp(ibeacons[cnt].UID,ib->UID,32)) {
             // exists
             strncpy(ibeacons[cnt].NAME,ib->NAME,sizeof(ibeacons[cnt].NAME));
@@ -363,7 +365,7 @@ uint32_t ibeacon_add(struct IBEACON *ib) {
             ibeacons[cnt].count++;
             return 2;
           }
-        }
+        }*/
       }
     }
     for (uint32_t cnt=0;cnt<MAX_IBEACONS;cnt++) {

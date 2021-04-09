@@ -215,6 +215,7 @@ void Ade7953DrvInit(void)
       Energy.phase_count = 2;                     // Handle two channels as two phases
       Energy.voltage_common = true;               // Use common voltage
       Energy.frequency_common = true;             // Use common frequency
+      Energy.use_overtemp = true;                 // Use global temperature for overtemp detection
       TasmotaGlobal.energy_driver = XNRG_07;
     }
   }
