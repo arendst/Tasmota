@@ -160,6 +160,7 @@ enum UserSelectablePins {
   GPIO_ZEROCROSS,
 #ifdef ESP32
   GPIO_HALLEFFECT,
+  GPIO_EPD_DATA,                       // Base connection EPD driver
 #endif
   GPIO_SENSOR_END };
 
@@ -341,6 +342,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_ZEROCROSS "|"
 #ifdef ESP32
   D_SENSOR_HALLEFFECT "|"
+  D_SENSOR_EPD_DATA "|"
 #endif
   ;
 
@@ -470,6 +472,9 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #endif  // USE_DISPLAY_TM1637
   AGPIO(GPIO_BACKLIGHT),      // Display backlight control
   AGPIO(GPIO_OLED_RESET),     // OLED Display Reset
+#ifdef ESP32
+  AGPIO(GPIO_EPD_DATA),       // Base connection EPD driver
+#endif
 #endif  // USE_DISPLAY
 
 #ifdef USE_MAX31865
