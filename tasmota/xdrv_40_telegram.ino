@@ -62,11 +62,11 @@ static const uint8_t Telegram_Fingerprint[] PROGMEM = USE_TELEGRAM_FINGERPRINT;
 
 typedef struct {
   String text;
+  String chat_id  = "";
 //  String from_first_name;
 //  String from_last_name;
 //  uint32_t from_id = 0;
   uint32_t update_id = 0;
-  String chat_id  = "";
 } TelegramMessage;
 
 struct {
