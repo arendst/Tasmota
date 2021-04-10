@@ -1041,4 +1041,12 @@
 #define D_NEOPOOL_PH_LOW                  "too low"
 #define D_NEOPOOL_PUMP_TIME_EXCEEDED      "pump time exceeded"
 
+// xdrv_79_esp32_ble
+#define D_CONFIGURE_BLE "Konfiguracja BLE"
+#define D_BLE_PARAMETERS "Ustawienia Bluetooth"
+#define D_MQTT_BLE_ENABLE "Włącz Bluetooth"
+#define D_MQTT_BLE_ACTIVESCAN "Włącz Active Scan(*)"
+#define D_BLE_DEVICES "Widoczne urządzenia"
+#define D_CONFIG_NO_STORE_INFO "items marked (*) are not stored in config"
+
 #endif  // _LANGUAGE_PL_PL_D_H_

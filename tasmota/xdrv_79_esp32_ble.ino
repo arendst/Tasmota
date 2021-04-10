@@ -54,7 +54,7 @@
         AABBCCDDEEFF/n (n = 0..3) where n indicates the TYPE of address
         most notably, if you wish to connect to a random address (n = 1), then you must specify,
         else it will not connect.
-        e.g. to alias a random address to fred: 
+        e.g. to alias a random address to fred:
         BLEAlias fred=1234567890/1
         to connect and read fred's name:
         BLEName fred
@@ -68,14 +68,14 @@
       BLEAdv - unused
       BLEOp
         advanced - perform a BLE active operation
-        mainly for debug or unsupported devices. 
+        mainly for debug or unsupported devices.
       BLEMode
-        control scanning mode 
+        control scanning mode
         0 - stop BLE
         1 - run BLE but manual scan
         *2 - run BLE with auto scan
       BLEDetails
-        display details of adverts 
+        display details of adverts
         BLEdetails0 - no display
         BLEdetails2 <mac|alias> - display for one device
         BLEdetails3 - display for ALL devices
@@ -98,7 +98,7 @@
       BLEDevices
         display or clear the devices list
         BLEDevices0 - clear list
-        BLEDevices1 - publish on tele 
+        BLEDevices1 - publish on tele
       BLEMaxAge
         display or set the max age of a BLE address before being forgotten
         BLEMaxAge - display the setting
@@ -1164,8 +1164,8 @@ void setDetails(ble_advertisment_t *ad){
   p += len;
   maxlen -= len;
   if (ad->addrtype){
-    *(p++) = '/';  
-    *(p++) = 0x30+ad->addrtype;  
+    *(p++) = '/';
+    *(p++) = 0x30+ad->addrtype;
   }
   *(p++) = '\"'; maxlen--;
 
@@ -3340,7 +3340,7 @@ static void mainThreadOpCallbacks() {
 
       // always remove from here
       completedOperations.erase(completedOperations.begin() + i);
-      // unless some callback told us not to send on MQTT, then remove from completed and 
+      // unless some callback told us not to send on MQTT, then remove from completed and
       // add to mqtt list
       if (!callbackres){
         addOperation(&mqttOperations, &op);
@@ -3481,6 +3481,7 @@ std::string BLETriggerResponse(generic_sensor_t *toSend){
 #define D_MQTT_BLE_ENABLE "Enable Bluetooth"
 #define D_MQTT_BLE_ACTIVESCAN "Enable Active Scan(*)"
 #define D_BLE_DEVICES "Devices Seen"
+#define D_CONFIG_NO_STORE_INFO "items marked (*) are not stored in config"
 
 const char HTTP_BTN_MENU_BLE[] PROGMEM =
   "<p><form action='" WEB_HANDLE_BLE "' method='get'><button>" D_CONFIGURE_BLE "</button></form></p>";
@@ -3490,7 +3491,7 @@ const char HTTP_FORM_BLE[] PROGMEM =
   "<form method='get' action='" WEB_HANDLE_BLE "'>"
   "<p><label><input id='e0' type='checkbox'%s><b>" D_MQTT_BLE_ENABLE "</b></label></p>"
   "<p><label><input id='e1' type='checkbox'%s><b>" D_MQTT_BLE_ACTIVESCAN "</b></label></p>"
-  "<p>items marked (*) are not stored in config</p>";
+  "<p>" D_CONFIG_NO_STORE_INFO "</p>";
 
 
 const char HTTP_BLE_DEV_STYLE[] PROGMEM = "th, td { padding-left:5px; }";
@@ -3595,14 +3596,14 @@ void HandleBleConfiguration(void)
 
 int ExtStopBLE(){
   AddLog(LOG_LEVEL_INFO, PSTR("BLE: Stopping if active"));
-  BLE_ESP32::BLEEnableMask = 0; 
+  BLE_ESP32::BLEEnableMask = 0;
   BLE_ESP32::stopStartBLE();
   return 0;
 }
 
 int ExtRestartBLEIfEnabled(){
   AddLog(LOG_LEVEL_INFO, PSTR("BLE: Starting if active"));
-  BLE_ESP32::BLEEnableMask = 1; 
+  BLE_ESP32::BLEEnableMask = 1;
   BLE_ESP32::stopStartBLE();
   return 0;
 }
@@ -3738,11 +3739,9 @@ void sendExample(){
 #endif
 }
 // end #ifdef BLE_ESP32_EXAMPLES
-#endif 
+#endif
 
 
 #endif
 #endif  // CONFIG_IDF_TARGET_ESP32
 #endif  // ESP32
-
-
