@@ -18,6 +18,7 @@
 */
 
 #ifdef USE_HOME_ASSISTANT
+#undef USE_TASMOTA_DISCOVERY
 
 #define XDRV_12 12
 

@@ -104,6 +104,7 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - ESP32 support for WS2812 hardware driver via RMT or I2S
 - ESP32 support for secondary I2C controller
 - ESP32 support for internal Hall Effect sensor connected to both GPIO36 and GPIO39 only
+- Tasmota discovery as alternative to Home Assistant discovery using define ``USE_TASMOTA_DISCOVERY``
 
 ### Changed
 - TasmotaSerial library from v3.2.0 to v3.3.0

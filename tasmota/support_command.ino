@@ -975,11 +975,16 @@ void CmndSetoptionBase(bool indexed) {
               TasmotaGlobal.stop_flash_rotate = XdrvMailbox.payload;
               SettingsSave(2);
             }
-  #ifdef USE_HOME_ASSISTANT
+#ifdef USE_HOME_ASSISTANT
             if ((19 == pindex) || (30 == pindex)) {
               HAssDiscover();              // Delayed execution to provide enough resources during hass_discovery or hass_light
             }
-  #endif  // USE_HOME_ASSISTANT
+#endif  // USE_HOME_ASSISTANT
+#ifdef USE_TASMOTA_DISCOVERY
+            if (19 == pindex) {
+              TasRediscover();
+            }
+#endif  // USE_TASMOTA_DISCOVERY
           }
           else if (3 == ptype) {           // SetOption50 .. 81
             bitWrite(Settings.flag3.data, pindex, XdrvMailbox.payload);
