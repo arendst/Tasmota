@@ -101,7 +101,7 @@ enum berrorcode {
 #elif defined(__GNUC__) /* in GCC */
   #define BERRY_LOCAL           __attribute__ ((visibility ("hidden")))
 #else /* other platforms */
-  #define BERRY_LOCAL           static
+  #define BERRY_LOCAL
 #endif
 
 #ifdef __cplusplus
@@ -252,7 +252,7 @@ typedef struct bntvmodule {
 /* support for solidified berry functions */
 /* native const strings outside of global string hash */
 #define be_define_local_const_str(_name, _s, _hash, _extra, _len, _next) \
-    BERRY_LOCAL const bcstring be_local_const_str_##_name = {            \
+    static const bcstring be_local_const_str_##_name = {            \
         .next = (bgcobject *)NULL,                                 \
         .type = BE_STRING,                                         \
         .marked = GC_CONST,                                        \
@@ -263,6 +263,68 @@ typedef struct bntvmodule {
     }
 
 #define be_local_const_str(_name) (bstring*) &be_local_const_str_##_name
+
+/* conditional macro see  https://stackoverflow.com/questions/11632219/c-preprocessor-macro-specialisation-based-on-an-argument */
+#define BE_IIF(cond) BE_IIF_ ## cond
+#define BE_IIF_0(t, f) f
+#define BE_IIF_1(t, f) t
+
+#if BE_DEBUG_VAR_INFO
+  #define be_local_const_upval(ins, idx) { "", ins, idx }
+#else
+  #define be_local_const_upval(ins, idx) { ins, idx }
+#endif
+
+/* conditional block in bproto depending on compilation options */
+#if BE_DEBUG_RUNTIME_INFO
+  #define PROTO_RUNTIME_BLOCK \
+    NULL,     /* varinfo */   \
+    0,        /* nvarinfo */
+#else
+  #define PROTO_RUNTIME_BLOCK
+#endif
+#if BE_DEBUG_VAR_INFO
+  #define PROTO_VAR_INFO_BLOCK\
+    NULL,     /* varinfo */   \
+    0,        /* nvarinfo */
+#else
+  #define PROTO_VAR_INFO_BLOCK
+#endif
+
+/* define bproto */
+#define be_define_local_proto(_name, _nstack, _argc, _is_const, _is_subproto, _is_upval)     \
+  static const bproto _name##_proto = {                                           \
+    NULL,                       /* bgcobject *next */                             \
+    8,                          /* type BE_PROTO */                               \
+    GC_CONST,                   /* marked outside of GC */                        \
+    (_nstack),                  /* nstack */                                      \
+    BE_IIF(_is_upval)(sizeof(_name##_upvals)/sizeof(bupvaldesc),0),/* nupvals */   \
+    (_argc),                    /* argc */                                        \
+    0,                          /* varg */                                        \
+    NULL,                       /* bgcobject *gray */                             \
+    BE_IIF(_is_upval)((bupvaldesc*)&_name##_upvals,NULL), /* bupvaldesc *upvals */  \
+    BE_IIF(_is_const)((bvalue*)&_name##_ktab,NULL), /* ktab */                    \
+    BE_IIF(_is_subproto)((struct bproto**)&_name##_subproto,NULL),/* bproto **ptab */               \
+    (binstruction*) &_name##_code,     /* code */                                 \
+    be_local_const_str(_name##_str_name),   /* name */                            \
+    sizeof(_name##_code)/sizeof(uint32_t),  /* codesize */                        \
+    BE_IIF(_is_const)(sizeof(_name##_ktab)/sizeof(bvalue),0),/* nconst */         \
+    BE_IIF(_is_subproto)(sizeof(_name##_subproto)/sizeof(bproto*),0),/* proto */  \
+    be_local_const_str(_name##_str_source),    /* source */                       \
+    PROTO_RUNTIME_BLOCK                                                           \
+    PROTO_VAR_INFO_BLOCK                                                          \
+  }
+
+#define be_define_local_closure(_name)        \
+  const bclosure _name##_closure = {          \
+    NULL,           /* bgcobject *next */     \
+    36,             /* type BE_CLOSURE */     \
+    GC_CONST,       /* marked */              \
+    0,              /* nupvals */             \
+    NULL,           /* bgcobject *gray */     \
+    (bproto*) &_name##_proto, /* proto */     \
+    { NULL }        /* upvals */              \
+  }
 
 
 /* debug hook typedefs */

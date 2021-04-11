@@ -45,46 +45,39 @@ static const char * m_type_ktab(int type)
     }
 }
 
-static void m_solidify_closure(bvm *vm, bclosure *cl, int builtins)
-{   
-    bproto *pr = cl->proto;
-    const char * func_name = str(pr->name);
+static void m_solidify_proto(bvm *vm, bproto *pr, const char * func_name, int builtins)
+{
+    // const char * func_name = str(pr->name);
     const char * func_source = str(pr->source);
-    // logfmt("// == builtin_count %i\n", builtins);
 
-    // logfmt("// type %i, ", cl->type);
-    // logfmt("// marked %i, ", cl->marked);
-    // logfmt("// nupvals %i\n", cl->nupvals);
+    if (pr->nproto > 0) {
+        for (int32_t i = 0; i < pr->nproto; i++) {
+            size_t sub_len = strlen(func_name) + 10;
+            char sub_name[sub_len];
+            snprintf(sub_name, sizeof(sub_name), "%s_%d", func_name, i);
+            m_solidify_proto(vm, pr->ptab[i], sub_name, builtins);
+        }
+    }
 
-    // logfmt("// PROTO:\n");
-    // logfmt("// type %i, ", pr->type);
-    // logfmt("// marked %i, ", pr->marked);
-    // logfmt("// nstack %i, ", pr->nstack);
-    // logfmt("// argcs %i, ", pr->argc);
-    // // logfmt("// varg %i\n", pr->varg);
+    logfmt("\n/********** Solidified proto: %s */\n", func_name);
 
-    // logfmt("// gray %p\n", (void*)pr->gray);
-    // logfmt("// upvals %p\n", (void*)pr->upvals);
-    // logfmt("// proto_tab %p (%i)\n", (void*)pr->ptab, pr->nproto);
+    if (pr->nproto > 0) {
+        logfmt("static const bproto *%s_subproto[%i] = {\n", func_name, pr->nproto);
+        for (int32_t i = 0; i < pr->nproto; i++) {
+            logfmt("  &%s_%d_proto,\n", func_name, i);
+            // logfmt("  be_local_const_upval(%i, %i),\n", pr->upvals[i].instack, pr->upvals[i].idx); TODO
+        }
+        logfmt("};\n\n");
+    }
 
-    // logfmt("// name %s\n", str(pr->name));
-    // logfmt("// source %s\n", str(pr->source));
-
-    // logfmt("\n");
-
-    // logfmt("// ktab %p (%i)\n", (void*)pr->ktab, pr->nconst);
-    // for (int i = 0; i < pr->nconst; i++) {
-    //     logfmt("// const[%i] type %i  (%s) %p", i, pr->ktab[i].type, be_vtype2str(&pr->ktab[i]), pr->ktab[i].v.p);
-    //     if (pr->ktab[i].type == BE_STRING) {
-    //         logfmt(" = '%s'", str(pr->ktab[i].v.s));
-    //     }
-    //     logfmt("\n");
-    // }
-
-    logfmt("\n");
-    logfmt("/********************************************************************\n");
-    logfmt("** Solidified function: %s\n", func_name);
-    logfmt("********************************************************************/\n\n");
+    if (pr->nupvals > 0) {
+        logfmt("static const bupvaldesc %s_upvals[%i] = {\n", func_name, pr->nupvals);
+        for (int32_t i = 0; i < pr->nupvals; i++) {
+            logfmt("  be_local_const_upval(%i, %i),\n", pr->upvals[i].instack, pr->upvals[i].idx);
+            // logfmt("// upval[%d] = { .instack = %i, .idx = %i }\n", i, pr->upvals[i].instack, pr->upvals[i].idx);
+        }
+        logfmt("};\n\n");
+    }
 
     /* create static strings for name and source */
     logfmt("be_define_local_const_str(%s_str_name, \"%s\", %i, 0, %u, 0);\n",
@@ -107,30 +100,32 @@ static void m_solidify_closure(bvm *vm, bclosure *cl, int builtins)
     }
     logfmt("\n");
 
-    logfmt("static const bvalue %s_ktab[%i] = {\n", func_name, pr->nconst);
-    for (int k = 0; k < pr->nconst; k++) {
-        int type = pr->ktab[k].type;
-        const char *type_name = m_type_ktab(type);
-        if (type_name == NULL) {
-            char error[64];
-            snprintf(error, sizeof(error), "Unsupported type in function constants: %i", type);
-            be_raise(vm, "internal_error", error);
+    if (pr->nconst > 0) {
+        logfmt("static const bvalue %s_ktab[%i] = {\n", func_name, pr->nconst);
+        for (int k = 0; k < pr->nconst; k++) {
+            int type = pr->ktab[k].type;
+            const char *type_name = m_type_ktab(type);
+            if (type_name == NULL) {
+                char error[64];
+                snprintf(error, sizeof(error), "Unsupported type in function constants: %i", type);
+                be_raise(vm, "internal_error", error);
+            }
+            if (type == BE_STRING) {
+                logfmt("  { { .s=be_local_const_str(%s_str_%i) }, %s},\n", func_name, k, type_name);
+            } else if (type == BE_INT) {
+                logfmt("  { { .i=%" BE_INT_FMTLEN "i }, %s},\n", pr->ktab[k].v.i, type_name);
+            } else if (type == BE_REAL) {
+    #if BE_USE_SINGLE_FLOAT
+                logfmt("  { { .p=(void*)0x%08X }, %s},\n", (uint32_t) pr->ktab[k].v.p, type_name);
+    #else
+                logfmt("  { { .p=(void*)0x%016llX }, %s},\n", (uint64_t) pr->ktab[k].v.p, type_name);
+    #endif
+            } else if (type == BE_BOOL) {
+                logfmt("  { { .b=%i }, %s},\n", pr->ktab[k].v.b, type_name);
+            }
         }
-        if (type == BE_STRING) {
-            logfmt("  { { .s=be_local_const_str(%s_str_%i) }, %s},\n", func_name, k, type_name);
-        } else if (type == BE_INT) {
-            logfmt("  { { .i=%" BE_INT_FMTLEN "i }, %s},\n", pr->ktab[k].v.i, type_name);
-        } else if (type == BE_REAL) {
-#if BE_USE_SINGLE_FLOAT
-            logfmt("  { { .p=(void*)0x%08X }, %s},\n", (uint32_t) pr->ktab[k].v.p, type_name);
-#else
-            logfmt("  { { .p=(void*)0x%016llX }, %s},\n", (uint64_t) pr->ktab[k].v.p, type_name);
-#endif
-        } else if (type == BE_BOOL) {
-            logfmt("  { { .b=%i }, %s},\n", pr->ktab[k].v.b, type_name);
-        }
+        logfmt("};\n\n");
     }
-    logfmt("};\n\n");
 
     logfmt("static const uint32_t %s_code[%i] = {\n", func_name, pr->codesize);
     for (int pc = 0; pc < pr->codesize; pc++) {
@@ -150,52 +145,28 @@ static void m_solidify_closure(bvm *vm, bclosure *cl, int builtins)
     }
     logfmt("};\n\n");
 
-    logfmt("static const bproto %s_proto = {\n", func_name);
-    // bcommon_header
-    logfmt("  NULL,     // bgcobject *next\n");
-    logfmt("  %i,       // type\n", pr->type);
-    logfmt("  GC_CONST,        // marked\n");
-    //
-    logfmt("  %i,       // nstack\n", pr->nstack);
-    logfmt("  %i,       // nupvals\n", pr->nupvals);
-    logfmt("  %i,       // argc\n", pr->argc);
-    logfmt("  %i,       // varg\n", pr->varg);
-    if (pr->nproto > 0) {
-        be_raise(vm, "internal_error", "unsupported non-null proto list");
+    logfmt("be_define_local_proto(%s, %d, %d, %d, %d, %d);\n",
+          func_name, pr->nstack, pr->argc, (pr->nconst > 0) ? 1 : 0, (pr->nproto > 0) ? 1 : 0, (pr->nupvals > 0) ? 1 : 0);
+}
+
+static void m_solidify_closure(bvm *vm, bclosure *cl, int builtins)
+{   
+    bproto *pr = cl->proto;
+    const char * func_name = str(pr->name);
+
+    if (cl->nupvals > 0) {
+        be_raise(vm, "internal_error", "Unsupported upvals in closure");
     }
-    logfmt("  NULL,     // bgcobject *gray\n");
-    logfmt("  NULL,     // bupvaldesc *upvals\n");
-    logfmt("  (bvalue*) &%s_ktab,     // ktab\n", func_name);
-    logfmt("  NULL,     // bproto **ptab\n");
-    logfmt("  (binstruction*) &%s_code,     // code\n", func_name);
-    logfmt("  be_local_const_str(%s_str_name),       // name\n", func_name);
-    logfmt("  %i,       // codesize\n", pr->codesize);
-    logfmt("  %i,       // nconst\n", pr->nconst);
-    logfmt("  %i,       // nproto\n", pr->nproto);
-    logfmt("  be_local_const_str(%s_str_source),     // source\n", func_name);
-    //
-    logfmt("#if BE_DEBUG_RUNTIME_INFO /* debug information */\n");
-    logfmt("  NULL,     // lineinfo\n");
-    logfmt("  0,        // nlineinfo\n");
-    logfmt("#endif\n");
-    logfmt("#if BE_DEBUG_VAR_INFO\n");
-    logfmt("  NULL,     // varinfo\n");
-    logfmt("  0,        // nvarinfo\n");
-    logfmt("#endif\n");
-    logfmt("};\n\n");
+
+    logfmt("\n");
+    logfmt("/********************************************************************\n");
+    logfmt("** Solidified function: %s\n", func_name);
+    logfmt("********************************************************************/\n");
+
+    m_solidify_proto(vm, pr, func_name, builtins);
 
     // closure
-    logfmt("static const bclosure %s_closure = {\n", func_name);
-    // bcommon_header
-    logfmt("  NULL,     // bgcobject *next\n");
-    logfmt("  %i,       // type\n", cl->type);
-    logfmt("  GC_CONST,        // marked\n");
-    //
-    logfmt("  %i,       // nupvals\n", cl->nupvals);
-    logfmt("  NULL,     // bgcobject *gray\n");
-    logfmt("  (bproto*) &%s_proto,     // proto\n", func_name);
-    logfmt("  { NULL }     // upvals\n");
-    logfmt("};\n\n");
+    logfmt("be_define_local_closure(%s);\n\n", func_name);
 
     logfmt("/*******************************************************************/\n\n");
 }

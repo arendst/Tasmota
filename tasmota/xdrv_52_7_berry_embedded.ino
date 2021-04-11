@@ -352,6 +352,15 @@ const char berry_prog[] =
 
   "end "
 
+  // // Monkey patch `Driver` class - To be continued
+  // "class Driver2 : Driver "
+  //   "def add_cmd(c, f) "
+  //     "var tasmota = self.get_tasmota() "
+  //     "tasmota.add_cmd(c, / cmd, idx, payload, payload_json -> f(self, cmd, idx, payload, payload_json)) "
+  //   "end "
+  // "end "
+  // "Driver = Driver2 "
+
   // Instantiate tasmota object
   "tasmota = Tasmota() "
   "def log(m,l) tasmota.log(m,l) end "
@@ -380,12 +389,16 @@ const char berry_prog[] =
   //   "end "
   // "end "
 
+#ifdef USE_I2C
   "tasmota.wire1 = Wire(1) "
   "tasmota.wire2 = Wire(2) "
   "wire1 = tasmota.wire1 "
   "wire2 = tasmota.wire2 "
+#endif // USE_I2C
+
   // auto-import gpio
   "import gpio "
+
 #ifdef USE_LIGHT
   "import light "
 #endif // USE_LIGHT
