@@ -83,7 +83,7 @@ void Init_uDisp(void) {
 char *ddesc = 0;
 char *fbuff;
 
-  if (1) {
+  if (TasmotaGlobal.gpio_optiona.udisplay_driver) {
     Settings.display_model = XDSP_17;
 
     fg_color = 1;
