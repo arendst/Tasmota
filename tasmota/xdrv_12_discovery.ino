@@ -22,9 +22,10 @@
 /*********************************************************************************************\
  * Tasmota discovery
  *
- * A stripped down version of xdrv_12_home_assistant to be used as alternative for TasmoManager
+ * A version of xdrv_12_home_assistant supporting the new Tasmota Discovery be used by
+ * latest versions of Home Assistant or TasmoManager.
  *
- * SetOption19 0  - Enables discovery
+ * SetOption19 0  - Enables discovery (default)
  * SetOption19 1  - Disables discovery and removes retained message from MQTT server
  * SetOption73 1  - Enable discovery for buttons
  * SetOption114 1 - Enable discovery for switches
@@ -224,6 +225,11 @@ void TasRediscover(void) {
   TasDiscoverData_init_step = 1;                               // Delayed discovery or clear retained messages
 }
 
+void TasDiscoverInit(void) {
+  TasDiscoverData_init_step = 10;                              // Delayed discovery
+  Settings.flag.hass_discovery = 0;                            // SetOption19 - Enable Tasmota discovery and Disable legacy Hass discovery
+}
+
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
@@ -242,7 +248,7 @@ bool Xdrv12(uint8_t function) {
       }
       break;
     case FUNC_MQTT_INIT:
-      TasDiscoverData_init_step = 10;                          // Delayed discovery
+      TasDiscoverInit();
       break;
     }
   }
