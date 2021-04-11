@@ -22,7 +22,7 @@
 
 /*********************************************************************************************\
  * Handlers for Berry calls and async
- * 
+ *
 \*********************************************************************************************/
 
 const char berry_prog[] =
@@ -106,7 +106,7 @@ const char berry_prog[] =
     //     "self._rules.remove(pat) "
     //   "end "
     // "end "
-  
+
     // // Rules trigger if match. return true if match, false if not
     // "def try_rule(event, rule, f) "
     //   "import string "
@@ -161,7 +161,7 @@ const char berry_prog[] =
     //   "end "
     //   "return false "
     // "end "
-  
+
     // "def set_timer(delay,f) "
     //   "if !self._timers self._timers=[] end "
     //   "self._timers.push([self.millis(delay),f]) "
@@ -258,7 +258,7 @@ const char berry_prog[] =
     //     "c() "
     //     "self.log(string.format(\"BRY: sucessfully loaded '%s'\",f)) "
     //   "except .. as e "
-    //     "raise \"io_error\",string.format(\"Could not load file '%s'\",f) " 
+    //     "raise \"io_error\",string.format(\"Could not load file '%s'\",f) "
     //   "end "
 
     // "end "
@@ -395,8 +395,8 @@ const char berry_autoexec[] =
   // load "autoexec.be" using import, which loads either .be or .bec file
   "try "
     "load('autoexec.be') "
-  "except .. "
-    "log(\"BRY: No 'autoexec.be' file\") " 
+  "except .. as e,m "
+    "log(\"BRY: exception in autoexec '\",e,\"':\",m) "
   "end "
   ;
 #endif  // USE_BERRY
