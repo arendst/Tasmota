@@ -1243,6 +1243,16 @@ void Adafruit_GFX::setTextSize(uint8_t s_x, uint8_t s_y) {
     textsize_y = (s_y > 0) ? s_y : 1;
 }
 
+void Adafruit_GFX::setwidth(uint16_t w) {
+  WIDTH = w;
+  _width = w;
+}
+
+void Adafruit_GFX::setheight(uint16_t h) {
+  HEIGHT = h;
+  _height = h;
+}
+
 /**************************************************************************/
 /*!
     @brief      Set rotation setting for display
