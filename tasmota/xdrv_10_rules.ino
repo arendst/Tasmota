@@ -759,9 +759,7 @@ bool RuleSetProcess(uint8_t rule_set, String &event_saved)
       RulesVarReplace(commands, F("%TOPIC%"), TasmotaGlobal.mqtt_topic);
       snprintf_P(stemp, sizeof(stemp), PSTR("%06X"), ESP_getChipId());
       RulesVarReplace(commands, F("%DEVICEID%"), stemp);
-      String mac_address = WiFi.macAddress();
-      mac_address.replace(":", "");
-      RulesVarReplace(commands, F("%MACADDR%"), mac_address);
+      RulesVarReplace(commands, F("%MACADDR%"), NetworkUniqueId());
 #if defined(USE_TIMERS) && defined(USE_SUNRISE)
       RulesVarReplace(commands, F("%SUNRISE%"), String(SunMinutes(0)));
       RulesVarReplace(commands, F("%SUNSET%"), String(SunMinutes(1)));

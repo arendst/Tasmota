@@ -172,8 +172,7 @@ const char HUE_API[] PROGMEM = "\x00\x06\x3B\x37\x8C\xEC\x2D\x10\xEC\x9C\x2F\x9D
 
 String HueBridgeId(void)
 {
-  String temp = WiFi.macAddress();
-  temp.replace(":", "");
+  String temp = NetworkUniqueId();
   String bridgeid = temp.substring(0, 6);
   bridgeid += F("FFFE");
   bridgeid += temp.substring(6);
@@ -182,8 +181,7 @@ String HueBridgeId(void)
 
 String HueSerialnumber(void)
 {
-  String serial = WiFi.macAddress();
-  serial.replace(":", "");
+  String serial = NetworkUniqueId();
   serial.toLowerCase();
   return serial;  // 5ccf7f139f3d
 }
