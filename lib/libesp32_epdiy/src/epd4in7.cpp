@@ -44,9 +44,13 @@
 
 extern uint8_t *buffer;
 
-int temperature;
+int temperature = 25;
 
 EpdiyHighlevelState hl;
+
+uint16_t Epd47::GetColorFromIndex(uint8_t index) {
+  return index & 0xf;
+}
 
 Epd47::Epd47(int16_t dwidth, int16_t dheight) :  Renderer(dwidth, dheight) {
   width = dwidth;
@@ -63,10 +67,26 @@ int32_t Epd47::Init(void) {
 
 void Epd47::DisplayInit(int8_t p, int8_t size, int8_t rot, int8_t font) {
 
-  if (p ==  DISPLAY_INIT_FULL) {
+
+  if (p ==  DISPLAY_INIT_MODE) {
     epd_poweron();
     epd_clear();
     epd_poweroff();
+  }
+  if (p ==  DISPLAY_INIT_FULL) {
+    memset(hl.back_fb, 0xff, width * height / 2);
+    epd_poweron();
+    epd_clear();
+    epd_hl_update_screen(&hl, MODE_GC16, temperature);
+    epd_poweroff();
+    return;
+  }
+  if (p ==  DISPLAY_INIT_PARTIAL) {
+    memset(hl.back_fb, 0xff, width * height / 2);
+    epd_poweron();
+    epd_hl_update_screen(&hl, MODE_GL16, temperature);
+    epd_poweroff();
+    return;
   }
   setRotation(rot);
   setTextWrap(false);
@@ -94,6 +114,7 @@ void Epd47::fillScreen(uint16_t color) {
 void Epd47::drawPixel(int16_t x, int16_t y, uint16_t color) {
 uint16_t xp = x;
 uint16_t yp = y;
+uint8_t *buf_ptr;
 
   switch (getRotation()) {
     case 1:
@@ -107,14 +128,13 @@ uint16_t yp = y;
     case 3:
       _swap(xp, yp);
       yp = height - yp - 1;
+
       break;
   }
 
-    uint32_t maxsize = width * height / 2;
-    uint8_t *buf_ptr = &buffer[yp * width / 2 + xp / 2];
-    if ((uint32_t)buf_ptr >= (uint32_t)buffer + maxsize) {
-      return;
-    }
+  if (xp >= width) return;
+  if (yp >= height) return;
+  buf_ptr = &buffer[yp * width / 2 + xp / 2];
 
     if (xp % 2) {
         *buf_ptr = (*buf_ptr & 0x0F) | (color << 4);
