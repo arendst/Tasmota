@@ -916,6 +916,9 @@
 #define D_MANAGE_FILE_SYSTEM   "Verwalte Dateisystem"
 #define D_FS_SIZE              "Größe"
 #define D_FS_FREE              "Frei"
+#define D_NEW_FILE             "neue-datei.txt"
+#define D_CREATE_NEW_FILE      "Neue Datei erstellen und bearbeiten"
+#define D_EDIT_FILE            "Datei bearbeiten"
 
 //xsns_67_as3935.ino
 #define D_AS3935_GAIN "Umgebung:"
