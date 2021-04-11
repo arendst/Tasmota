@@ -1,0 +1,31 @@
+; name,xs,ys,bpp,interface, address, scl,sda,reset
+:H
+SH1106,128,64,1,I2C,3c,*,*,*
+; splash settings, font, size, fgcol, bgcol, x,y
+:S
+0,1,1,0,40,20
+; init register settings
+:I
+AE
+D5,80
+A8,3f
+D3,00
+40
+8D,14
+20,00
+A1
+C8
+DA,12
+81,CF
+D9F1
+DB,40
+A4
+A6
+AF
+; switch display off
+:o
+AE
+; switch display on
+:O
+AF
+#
