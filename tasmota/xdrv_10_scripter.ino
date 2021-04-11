@@ -65,7 +65,9 @@ keywords if then else endif, or, and are better readable for beginners (others m
 #define SCRIPT_MAXPERM (PMEM_SIZE)-4/sizeof(float)
 #define MAX_SCRIPT_SIZE MAX_RULE_SIZE*MAX_RULE_SETS
 
+#ifndef MAX_SARRAY_NUM
 #define MAX_SARRAY_NUM 32
+#endif
 
 uint32_t EncodeLightId(uint8_t relay_id);
 uint32_t DecodeLightId(uint32_t hue_id);
@@ -1413,38 +1415,42 @@ uint32_t match_vars(char *dvnam, float **fp, char **sp, uint32_t *ind) {
 }
 #endif //USE_SCRIPT_GLOBVARS
 
+#ifndef SCRIPT_IS_STRING_MAXSIZE
+#define SCRIPT_IS_STRING_MAXSIZE 256
+#endif
+
 char *isargs(char *lp, uint32_t isind) {
   float fvar;
   lp = GetNumericArgument(lp, OPER_EQU, &fvar, 0);
   SCRIPT_SKIP_SPACES
-  if (*lp!='"') {
+  if (*lp != '"') {
     return lp;
   }
   lp++;
 
-  if (glob_script_mem.si_num[isind]>0 && glob_script_mem.last_index_string[isind]) {
+  if (glob_script_mem.si_num[isind] > 0 && glob_script_mem.last_index_string[isind]) {
     free(glob_script_mem.last_index_string[isind]);
   }
   char *sstart = lp;
   uint8_t slen = 0;
-  for (uint32_t cnt = 0; cnt<256; cnt++) {
-    if (*lp=='\n' || *lp=='"' || *lp==0) {
+  for (uint32_t cnt = 0; cnt < SCRIPT_IS_STRING_MAXSIZE; cnt++) {
+    if (*lp == '\n' || *lp == '"' || *lp == 0) {
       lp++;
-      if (cnt>0 && !slen) {
+      if (cnt > 0 && !slen) {
         slen++;
       }
       glob_script_mem.siro_num[isind] = slen;
       break;
     }
-    if (*lp=='|') {
+    if (*lp == '|') {
       slen++;
     }
     lp++;
   }
 
   glob_script_mem.si_num[isind] = fvar;
-  if (glob_script_mem.si_num[isind]>0) {
-    if (glob_script_mem.si_num[isind]>MAX_SARRAY_NUM) {
+  if (glob_script_mem.si_num[isind] > 0) {
+    if (glob_script_mem.si_num[isind] > MAX_SARRAY_NUM) {
       glob_script_mem.si_num[isind] = MAX_SARRAY_NUM;
     }
 
@@ -1468,17 +1474,17 @@ float fvar;
   char str[SCRIPT_MAXSSIZE];
   str[0] = 0;
   uint8_t index = fvar;
-  if (index<1) index = 1;
+  if (index < 1) index = 1;
   index--;
   if (gv) gv->strind = index;
   glob_script_mem.sind_num = isind;
   if (glob_script_mem.last_index_string[isind]) {
     if (!glob_script_mem.si_num[isind]) {
-      if (index<=glob_script_mem.siro_num[isind]) {
+      if (index <= glob_script_mem.siro_num[isind]) {
         GetTextIndexed(str, sizeof(str), index , glob_script_mem.last_index_string[isind]);
       }
     } else {
-      if (index>glob_script_mem.si_num[isind]) {
+      if (index > glob_script_mem.si_num[isind]) {
         index = glob_script_mem.si_num[isind];
       }
       strlcpy(str,glob_script_mem.last_index_string[isind] + (index * glob_script_mem.max_ssize), glob_script_mem.max_ssize);
@@ -1866,6 +1872,15 @@ chknext:
         }
 #endif //USE_SCRIPT_TASK
 #endif //ESP32
+#ifdef USE_ANGLE_FUNC
+        if (!strncmp(vname, "cos(", 4)) {
+          lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
+          fvar = cosf(fvar);
+          lp++;
+          len = 0;
+          goto exit;
+        }
+#endif
         break;
       case 'd':
         if (!strncmp(vname, "day", 3)) {
@@ -2192,6 +2207,22 @@ chknext:
           char str[glob_script_mem.max_ssize + 1];
           lp = GetStringArgument(lp + 4, OPER_EQU, str, 0);
           fvar = ufsp->mkdir(str);
+          lp++;
+          len = 0;
+          goto exit;
+        }
+        if (!strncmp(vname, "fmt(", 4)) {
+          lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
+          if (!fvar) {
+#ifdef ESP8266
+            LittleFS.format();
+#endif
+#ifdef ESP32
+            LITTLEFS.format();
+#endif
+          } else {
+            //SD.format();
+          }
           lp++;
           len = 0;
           goto exit;
