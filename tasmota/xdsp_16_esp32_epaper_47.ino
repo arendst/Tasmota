@@ -53,7 +53,7 @@ void EpdInitDriver47(void) {
     epd47->Init();
 
     renderer = epd47;
-    renderer->DisplayInit(DISPLAY_INIT_FULL, Settings.display_size, Settings.display_rotate, Settings.display_font);
+    renderer->DisplayInit(DISPLAY_INIT_MODE, Settings.display_size, Settings.display_rotate, Settings.display_font);
     renderer->setTextColor(EPD47_BLACK, EPD47_WHITE);
 
 #ifdef SHOW_SPLASH
