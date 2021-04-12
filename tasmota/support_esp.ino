@@ -472,18 +472,8 @@ void *special_realloc(void *ptr, size_t size) {
   }
 }
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-uint8_t temprature_sens_read();  // librtc.a(rtc_analog.o)
-#ifdef __cplusplus
-}
-#endif
-
 float CpuTemperature(void) {
-//  return ConvertTemp(temperatureRead());
-  uint8_t tf = temprature_sens_read();  // Fahrenheit
-  return ConvertTemp(((float)(tf -32) / 1.8));
+  return ConvertTemp(temperatureRead());
 }
 
 #endif  // ESP32
