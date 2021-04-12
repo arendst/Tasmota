@@ -815,8 +815,6 @@ const float kSpeedConversionFactor[] = {1,            // none
 #ifdef USE_WEBSERVER
 // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 const char HTTP_SNS_F_TEMP[]        PROGMEM = "{s}%s "  D_TEMPERATURE         "{m}%*_f " D_UNIT_DEGREE            "%c{e}";
-//const char HTTP_SNS_TEMP[]          PROGMEM = "{s}%s "  D_TEMPERATURE         "{m}%s " D_UNIT_DEGREE            "%c{e}";
-
 const char HTTP_SNS_HUM[]           PROGMEM = "{s}%s "  D_HUMIDITY            "{m}%s " D_UNIT_PERCENT             "{e}";
 const char HTTP_SNS_DEW[]           PROGMEM = "{s}%s "  D_DEWPOINT            "{m}%s " D_UNIT_DEGREE            "%c{e}";
 const char HTTP_SNS_PRESSURE[]      PROGMEM = "{s}%s "  D_PRESSURE            "{m}%s "                          "%s{e}";
@@ -832,6 +830,7 @@ const char HTTP_SNS_RANGE_CHR[]     PROGMEM = "{s}%s "  D_RANGE               "{
 const char HTTP_SNS_RANGE[]         PROGMEM = "{s}%s "  D_RANGE               "{m}%d"                             "{e}";
 const char HTTP_SNS_DISTANCE[]      PROGMEM = "{s}%s "  D_DISTANCE            "{m}%d " D_UNIT_MILLIMETER          "{e}";
 const char HTTP_SNS_DISTANCE_CM[]   PROGMEM = "{s}%s "  D_DISTANCE            "{m}%s " D_UNIT_CENTIMETER          "{e}";
+const char HTTP_SNS_HALL_EFFECT[]   PROGMEM = "{s}%s "  D_HALL_EFFECT         "{m}%d"                             "{e}";
 const char HTTP_SNS_VOLTAGE[]       PROGMEM = "{s}"     D_VOLTAGE             "{m}%s " D_UNIT_VOLT                "{e}";
 const char HTTP_SNS_CURRENT[]       PROGMEM = "{s}"     D_CURRENT             "{m}%s " D_UNIT_AMPERE              "{e}";
 const char HTTP_SNS_POWER[]         PROGMEM = "{s}"     D_POWERUSAGE          "{m}%s " D_UNIT_WATT                "{e}";

@@ -19,9 +19,9 @@
 
 #ifdef ESP32
 /*********************************************************************************************\
- * ESP32 CPU Temperature
- * ESP32 internal Hall Effect sensor connected to both GPIO36 and GPIO39
+ * ESP32 CPU Temperature and optional Hall Effect sensor
  *
+ * ESP32 internal Hall Effect sensor connected to both GPIO36 and GPIO39
  * To enable set
  * GPIO36 as HallEffect 1
  * GPIO39 as HallEffect 2
@@ -47,14 +47,10 @@ void Esp32SensorInit(void) {
   }
 }
 
-#ifdef USE_WEBSERVER
-// {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
-const char HTTP_SNS_HALL_EFFECT[] PROGMEM = "{s}" D_HALL_EFFECT "{m}%d{e}";
-#endif  // USE_WEBSERVER
-
 #endif  // CONFIG_IDF_TARGET_ESP32
 
 void Esp32SensorShow(bool json) {
+  float t = CpuTemperature();
 
 #if CONFIG_IDF_TARGET_ESP32
   int value = 0;
@@ -67,7 +63,7 @@ void Esp32SensorShow(bool json) {
 #endif  // CONFIG_IDF_TARGET_ESP32
 
   if (json) {
-    float t = CpuTemperature();
+    bool temperature_present = (strstr_P(TasmotaGlobal.mqtt_data, PSTR(D_JSON_TEMPERATURE)) != nullptr);
     ResponseAppend_P(PSTR(",\"ESP32\":{\"" D_JSON_TEMPERATURE "\":%*_f"), Settings.flag2.temperature_resolution, &t);
 
 #if CONFIG_IDF_TARGET_ESP32
@@ -77,9 +73,11 @@ void Esp32SensorShow(bool json) {
 #endif  // CONFIG_IDF_TARGET_ESP32
 
     ResponseJsonEnd();
-
 #ifdef USE_DOMOTICZ
     if (0 == TasmotaGlobal.tele_period) {
+      if (!temperature_present) {  // Only send if no other sensor already did
+        DomoticzFloatSensor(DZ_TEMP, t);
+      }
 
 #if CONFIG_IDF_TARGET_ESP32
       if (HEData.present) {
@@ -91,10 +89,11 @@ void Esp32SensorShow(bool json) {
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
   } else {
+    WSContentSend_Temp("ESP32", t);
 
 #if CONFIG_IDF_TARGET_ESP32
     if (HEData.present) {
-      WSContentSend_P(HTTP_SNS_HALL_EFFECT, value);
+      WSContentSend_P(HTTP_SNS_HALL_EFFECT, "ESP32", value);
     }
 #endif  // CONFIG_IDF_TARGET_ESP32
 
@@ -121,7 +120,6 @@ bool Xsns87(uint8_t function) {
     case FUNC_INIT:
       Esp32SensorInit();
       break;
-
   }
   return result;
 }
