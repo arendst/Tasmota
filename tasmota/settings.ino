@@ -750,7 +750,11 @@ void SettingsDefaultSet2(void) {
   SettingsUpdateText(SET_FRIENDLYNAME2, PSTR(FRIENDLY_NAME"2"));
   SettingsUpdateText(SET_FRIENDLYNAME3, PSTR(FRIENDLY_NAME"3"));
   SettingsUpdateText(SET_FRIENDLYNAME4, PSTR(FRIENDLY_NAME"4"));
+  #ifdef DEVICE_NAME
+  SettingsUpdateText(SET_DEVICENAME, PSTR(DEVICE_NAME));
+  #else
   SettingsUpdateText(SET_DEVICENAME, SettingsText(SET_FRIENDLYNAME1));
+  #endif
   SettingsUpdateText(SET_OTAURL, PSTR(OTA_URL));
 
   // Power
