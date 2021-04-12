@@ -98,6 +98,8 @@
  * Global variables
 \*********************************************************************************************/
 
+const uint32_t VERSION_MARKER[] PROGMEM = { 0x5AA55AA5, 0xFFFFFFFF, 0xA55AA55A };
+
 WiFiUDP PortUdp;                            // UDP Syslog and Alexa
 
 struct {
@@ -363,6 +365,8 @@ void setup(void) {
 #ifdef FIRMWARE_MINIMAL
   AddLog(LOG_LEVEL_INFO, PSTR(D_WARNING_MINIMAL_VERSION));
 #endif  // FIRMWARE_MINIMAL
+
+  memcpy_P(TasmotaGlobal.mqtt_data, VERSION_MARKER, 1);  // Dummy for compiler saving VERSION_MARKER
 
 #ifdef USE_ARDUINO_OTA
   ArduinoOTAInit();
