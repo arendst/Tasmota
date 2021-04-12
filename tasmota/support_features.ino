@@ -737,9 +737,7 @@ void ResponseAppendFeatures(void)
 #ifdef USE_BERRY
     feature8 |= 0x00000008;  // xdrv_52_9_berry.ino
 #endif
-#ifdef USE_HALLEFFECT
-    feature8 |= 0x00000010;  // xsns_87_esp32_halleffect.ino
-#endif
+//    feature8 |= 0x00000010;
 #if defined(USE_ENERGY_SENSOR) && defined(USE_ENERGY_DUMMY)
     feature8 |= 0x00000020;
 #endif
