@@ -821,6 +821,11 @@ bool MqttShowSensor(void)
 {
   ResponseAppendTime();
 
+#ifdef ESP32
+  float t = CpuTemperature();
+  ResponseAppend_P(PSTR(",\"Cpu" D_JSON_TEMPERATURE "\":%*_f"), Settings.flag2.temperature_resolution, &t);
+#endif
+
   int json_data_start = strlen(TasmotaGlobal.mqtt_data);
   for (uint32_t i = 0; i < MAX_SWITCHES; i++) {
 #ifdef USE_TM1638
