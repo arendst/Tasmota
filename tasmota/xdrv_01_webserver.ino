@@ -1505,7 +1505,7 @@ uint16_t WebGetGpioArg(uint32_t i) {
 
 void TemplateSaveSettings(void) {
   char tmp[TOPSZ];                                      // WebGetArg NAME and GPIO/BASE/FLAG byte value
-  char command[300];                                     // Template command string
+  char command[300];                                    // Template command string
 
   WebGetArg(PSTR("s1"), tmp, sizeof(tmp));              // NAME
   snprintf_P(command, sizeof(command), PSTR(D_CMND_TEMPLATE " {\"" D_JSON_NAME "\":\"%s\",\"" D_JSON_GPIO "\":["), tmp);
@@ -1800,17 +1800,17 @@ void HandleWifiConfiguration(void) {
 }
 
 void WifiSaveSettings(void) {
-  char tmp1[CMDSZ];
+  char tmp1[TOPSZ];
   WebGetArg(PSTR("h"), tmp1, sizeof(tmp1));   // Host name
-  char tmp2[CMDSZ];
+  char tmp2[TOPSZ];
   WebGetArg(PSTR("c"), tmp2, sizeof(tmp2));   // Cors domain
-  char tmp3[CMDSZ];
+  char tmp3[TOPSZ];
   WebGetArg(PSTR("s1"), tmp3, sizeof(tmp3));  // Ssid1
-  char tmp4[CMDSZ];
+  char tmp4[TOPSZ];
   WebGetArg(PSTR("s2"), tmp4, sizeof(tmp4));  // Ssid2
-  char tmp5[CMDSZ];
+  char tmp5[TOPSZ];
   WebGetArg(PSTR("p1"), tmp5, sizeof(tmp5));  // Password1
-  char tmp6[CMDSZ];
+  char tmp6[TOPSZ];
   WebGetArg(PSTR("p2"), tmp6, sizeof(tmp6));  // Password2
   char command[300];
   snprintf_P(command, sizeof(command), PSTR(D_CMND_BACKLOG "0 " D_CMND_HOSTNAME " %s;" D_CMND_CORS " %s;" D_CMND_SSID "1 %s;" D_CMND_SSID "2 %s;" D_CMND_PASSWORD "3 %s;" D_CMND_PASSWORD "4 %s"),
@@ -1871,7 +1871,7 @@ void LoggingSaveSettings(void) {
   WebGetArg(PSTR("l2"), tmp3, sizeof(tmp3));  // Mqtt log level
   char tmp4[CMDSZ];
   WebGetArg(PSTR("l3"), tmp4, sizeof(tmp4));  // Syslog level
-  char tmp5[CMDSZ];
+  char tmp5[TOPSZ];
   WebGetArg(PSTR("lh"), tmp5, sizeof(tmp5));  // Syslog host name
   char tmp6[CMDSZ];
   WebGetArg(PSTR("lp"), tmp6, sizeof(tmp6));  // Syslog port number
@@ -1954,9 +1954,9 @@ void HandleOtherConfiguration(void) {
 }
 
 void OtherSaveSettings(void) {
-  char tmp1[300];   // Needs to hold complete ESP32 template of minimal 230 chars
+  char tmp1[300];                             // Needs to hold complete ESP32 template of minimal 230 chars
   WebGetArg(PSTR("dn"), tmp1, sizeof(tmp1));  // Device name
-  char tmp2[100];
+  char tmp2[TOPSZ];
   WebGetArg(PSTR("wp"), tmp2, sizeof(tmp2));  // Web password
   char command[500];
   snprintf_P(command, sizeof(command), PSTR(D_CMND_BACKLOG "0 " D_CMND_WEBPASSWORD "2 %s;" D_CMND_SO "3 %d;" D_CMND_DEVICENAME " %s"),
