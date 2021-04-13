@@ -1705,9 +1705,6 @@ String HtmlEscape(const String unescaped) {
   return result;
 }
 
-// Indexed by enum wl_enc_type in file wl_definitions.h starting from -1
-const char kEncryptionType[] PROGMEM = "|||" D_WPA_PSK "||" D_WPA2_PSK "|" D_WEP "||" D_NONE "|" D_AUTO;
-
 void HandleWifiConfiguration(void) {
   char tmp[TOPSZ];  // Max length is currently 150
 
@@ -1780,6 +1777,8 @@ void HandleWifiConfiguration(void) {
       limitScannedNetworks = false;
     } else {
       if (Webserver->hasArg(F("scan"))) { limitScannedNetworks = false; }
+
+      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_WIFI "Scanning..."));
 #ifdef USE_EMULATION
       UdpDisconnect();
 #endif  // USE_EMULATION
