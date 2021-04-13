@@ -868,6 +868,8 @@
 #define D_PHASE_ANGLE     "相位角"
 #define D_IMPORT_ACTIVE   "有功输入"
 #define D_EXPORT_ACTIVE   "有功输出"
+#define D_IMPORT_ACTIVE_MEM "导入已主动保存"
+#define D_EXPORT_ACTIVE_MEM "导出活动已保存"
 #define D_IMPORT_REACTIVE "无功输入"
 #define D_EXPORT_REACTIVE "无功输出"
 #define D_TOTAL_REACTIVE  "总无功功率"

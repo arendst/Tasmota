@@ -868,6 +868,8 @@
 #define D_PHASE_ANGLE     "Ângulo de Fase"
 #define D_IMPORT_ACTIVE   "Importar Ativo"
 #define D_EXPORT_ACTIVE   "Exportar Ativo"
+#define D_IMPORT_ACTIVE_MEM "Importar ativamente salvo"
+#define D_EXPORT_ACTIVE_MEM "Exportar ativamente salvo"
 #define D_IMPORT_REACTIVE "Importar Reativo"
 #define D_EXPORT_REACTIVE "Exportar Reativo"
 #define D_TOTAL_REACTIVE  "Reativo total"

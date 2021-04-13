@@ -868,6 +868,8 @@
 #define D_PHASE_ANGLE     "Unghi de fază"
 #define D_IMPORT_ACTIVE   "Import Activ"
 #define D_EXPORT_ACTIVE   "Export Activ"
+#define D_IMPORT_ACTIVE_MEM "Imported active cached"
+#define D_EXPORT_ACTIVE_MEM "Exported active cached"
 #define D_IMPORT_REACTIVE "Import Reactiv"
 #define D_EXPORT_REACTIVE "Export Reactiv"
 #define D_TOTAL_REACTIVE  "Total Reactiv"

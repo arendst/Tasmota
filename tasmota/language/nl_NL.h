@@ -868,6 +868,8 @@
 #define D_PHASE_ANGLE     "Fase hoek"
 #define D_IMPORT_ACTIVE   "Import werkelijk"
 #define D_EXPORT_ACTIVE   "Export werkelijk"
+#define D_IMPORT_ACTIVE_MEM "Import actief opgeslagen"
+#define D_EXPORT_ACTIVE_MEM "Export actief opgeslagen"
 #define D_IMPORT_REACTIVE "Import blind"
 #define D_EXPORT_REACTIVE "Export blind"
 #define D_TOTAL_REACTIVE  "Totaal blind"

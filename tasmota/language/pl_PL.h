@@ -868,6 +868,8 @@
 #define D_PHASE_ANGLE     "Przesunięcie faz"
 #define D_IMPORT_ACTIVE   "Czynna pobrana"
 #define D_EXPORT_ACTIVE   "Czynna oddana"
+#define D_IMPORT_ACTIVE_MEM "Import aktywnie zapisany"
+#define D_EXPORT_ACTIVE_MEM "Eksport został aktywnie zapisany"
 #define D_IMPORT_REACTIVE "Bierna pobrana"
 #define D_EXPORT_REACTIVE "Bierna oddana"
 #define D_TOTAL_REACTIVE  "Bierna całkowita"

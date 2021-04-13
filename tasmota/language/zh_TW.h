@@ -868,6 +868,8 @@
 #define D_PHASE_ANGLE     "相量(Phase Angle)"
 #define D_IMPORT_ACTIVE   "Import Active"
 #define D_EXPORT_ACTIVE   "Export Active"
+#define D_IMPORT_ACTIVE_MEM "Imported active cached"
+#define D_EXPORT_ACTIVE_MEM "Exported active cached"
 #define D_IMPORT_REACTIVE "Import Reactive"
 #define D_EXPORT_REACTIVE "Export Reactive"
 #define D_TOTAL_REACTIVE  "Total Reactive"

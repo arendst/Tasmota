@@ -868,6 +868,8 @@
 #define D_PHASE_ANGLE     "Fázisszög"
 #define D_IMPORT_ACTIVE   "Bejövő aktív"
 #define D_EXPORT_ACTIVE   "Kimenő aktív"
+#define D_IMPORT_ACTIVE_MEM "Az importálás aktívan mentve"
+#define D_EXPORT_ACTIVE_MEM "Exportálás aktívan mentve"
 #define D_IMPORT_REACTIVE "Bejövő reaktív"
 #define D_EXPORT_REACTIVE "Kimenő reaktív"
 #define D_TOTAL_REACTIVE  "Összes reaktív"

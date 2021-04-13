@@ -867,6 +867,8 @@
 #define D_PHASE_ANGLE     "Фазов ъгъл"
 #define D_IMPORT_ACTIVE   "Входна активна мощност"
 #define D_EXPORT_ACTIVE   "Изходна активна мощност"
+#define D_IMPORT_ACTIVE_MEM "Импортирана кеширана производителност"
+#define D_EXPORT_ACTIVE_MEM "Експортирана производителност кеширана"
 #define D_IMPORT_REACTIVE "Входна реактивна мощност"
 #define D_EXPORT_REACTIVE "Изходна реактивна мощност"
 #define D_TOTAL_REACTIVE  "Общо реактивна мощност"

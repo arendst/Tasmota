@@ -868,6 +868,8 @@
 #define D_PHASE_ANGLE     "Кут фази"
 #define D_IMPORT_ACTIVE   "Активна вхід"
 #define D_EXPORT_ACTIVE   "Активна вихід"
+#define D_IMPORT_ACTIVE_MEM "Імпорт активно збережено"
+#define D_EXPORT_ACTIVE_MEM "Експорт активно збережено"
 #define D_IMPORT_REACTIVE "Рекативна вхід"
 #define D_EXPORT_REACTIVE "Реактивна вихід"
 #define D_TOTAL_REACTIVE  "Всього реактивна"

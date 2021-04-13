@@ -868,6 +868,8 @@
 #define D_PHASE_ANGLE     "Fasvinkel"
 #define D_IMPORT_ACTIVE   "Import aktiv"
 #define D_EXPORT_ACTIVE   "Export aktiv"
+#define D_IMPORT_ACTIVE_MEM "Imported active cached"
+#define D_EXPORT_ACTIVE_MEM "Exported active cached"
 #define D_IMPORT_REACTIVE "Import reaktiv"
 #define D_EXPORT_REACTIVE "Export reaktiv"
 #define D_TOTAL_REACTIVE  "Total reaktiv"

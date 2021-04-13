@@ -83,8 +83,10 @@ struct ENERGY {
   float frequency[ENERGY_MAX_PHASES];           // 123.1 Hz
 #if defined(SDM630_IMPORT) || defined(SDM72_IMPEXP)
   float import_active[ENERGY_MAX_PHASES];       // 123.123 kWh
+  float import_active_mem;                      // Daily memory kWh All Phases 
 #endif  // SDM630_IMPORT || SDM72_IMPEXP
   float export_active[ENERGY_MAX_PHASES];       // 123.123 kWh
+  float export_active_mem;                      // Daily memory kWh All Phases
 
   float start_energy;                           // 12345.12345 kWh total previous
   float daily;                                  // 123.123 kWh
@@ -893,7 +895,11 @@ void EnergyDrvInit(void) {
 #endif  // SDM630_IMPORT || SDM72_IMPEXP
     Energy.export_active[phase] = NAN;
   }
-  Energy.phase_count = 1;              // Number of phases active
+#if defined(SDM630_IMPORT) || defined(SDM72_IMPEXP) 
+  Energy.import_active_mem = NAN;
+#endif                    // SDM630_IMPORT || SDM72_IMPEXP
+  Energy.export_active_mem = NAN;
+  Energy.phase_count = 1; // Number of phases active
   Energy.voltage_available = true;     // Enable if voltage is measured
   Energy.current_available = true;     // Enable if current is measured
   Energy.power_on = true;
@@ -937,10 +943,14 @@ const char HTTP_ENERGY_SNS2[] PROGMEM =
 
 const char HTTP_ENERGY_SNS3[] PROGMEM =
   "{s}" D_EXPORT_ACTIVE "{m}%s " D_UNIT_KILOWATTHOUR "{e}";
+const char HTTP_ENERGY_SNS5[] PROGMEM =
+    "{s}" D_EXPORT_ACTIVE_MEM "{m}%s " D_UNIT_KILOWATTHOUR "{e}";
 
 #if defined(SDM630_IMPORT) || defined(SDM72_IMPEXP)
 const char HTTP_ENERGY_SNS4[] PROGMEM =
   "{s}" D_IMPORT_ACTIVE "{m}%s " D_UNIT_KILOWATTHOUR "{e}";
+const char HTTP_ENERGY_SNS6[] PROGMEM =
+    "{s}" D_IMPORT_ACTIVE_MEM "{m}%s " D_UNIT_KILOWATTHOUR "{e}";
 #endif  // SDM630_IMPORT || SDM72_IMPEXP
 #endif  // USE_WEBSERVER
 
@@ -1019,6 +1029,12 @@ void EnergyShow(bool json)
 #endif  // SDM630_IMPORT || SDM72_IMPEXP
     dtostrfd(Energy.export_active[i], Settings.flag2.energy_resolution, export_active_chr[i]);
   }
+  char import_active_mem_chr[FLOATSZ];    // Daily memory kWh All Phases import
+#if defined(SDM630_IMPORT) || defined(SDM72_IMPEXP)
+  dtostrfd(Energy.import_active_mem, Settings.flag2.energy_resolution, import_active_mem_chr);
+#endif
+  char export_active_mem_chr[FLOATSZ];    // Daily memory kWh All Phases export
+  dtostrfd(Energy.export_active_mem, Settings.flag2.energy_resolution, export_active_mem_chr);
 
   char energy_total_chr[FLOATSZ];
   dtostrfd(Energy.total, Settings.flag2.energy_resolution, energy_total_chr);
@@ -1068,6 +1084,10 @@ void EnergyShow(bool json)
           EnergyFormatIndex(value_chr, energy_return_chr[0], json, 2));
       }
     }
+    if (!isnan(Energy.import_active_mem)) {
+      ResponseAppend_P(PSTR(",\"" D_JSON_IMPORT_ACTIVE_MEM "\":%s"),
+                       import_active_mem_chr);
+    } // Daily memory kWh All Phases import
 #endif  // SDM630_IMPORT || SDM72_IMPEXP
 
     if (!isnan(Energy.export_active[0])) {
@@ -1078,7 +1098,10 @@ void EnergyShow(bool json)
           EnergyFormatIndex(value_chr, energy_return_chr[0], json, 2));
       }
     }
-
+    if (!isnan(Energy.export_active_mem)) { 
+      ResponseAppend_P(PSTR(",\"" D_JSON_EXPORT_ACTIVE_MEM "\":%s"),
+                       export_active_mem_chr); 
+    } // Daily memory kWh All Phases export
     if (show_energy_period) {
       float energy = (float)(RtcSettings.energy_kWhtoday - Energy.period) / 100;
       Energy.period = RtcSettings.energy_kWhtoday;
@@ -1171,10 +1194,16 @@ void EnergyShow(bool json)
     if (!isnan(Energy.export_active[0])) {
       WSContentSend_PD(HTTP_ENERGY_SNS3, EnergyFormat(value_chr, export_active_chr[0], json));
     }
+    if (!isnan(Energy.export_active_mem)) {   
+      WSContentSend_PD(HTTP_ENERGY_SNS5, export_active_mem_chr); 
+    }  // Daily memory kWh All Phases export
 #if defined(SDM630_IMPORT) || defined(SDM72_IMPEXP)
     if (!isnan(Energy.import_active[0])) {
       WSContentSend_PD(HTTP_ENERGY_SNS4, EnergyFormat(value_chr, import_active_chr[0], json));
     }
+    if (!isnan(Energy.import_active_mem)) {
+      WSContentSend_PD(HTTP_ENERGY_SNS6, import_active_mem_chr); 
+    }  // Daily memory kWh All Phases import
 #endif  // SDM630_IMPORT || SDM72_IMPEXP
 
     XnrgCall(FUNC_WEB_SENSOR);

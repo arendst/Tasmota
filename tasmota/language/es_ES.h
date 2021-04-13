@@ -868,6 +868,8 @@
 #define D_PHASE_ANGLE     "Ángulo de Fase"
 #define D_IMPORT_ACTIVE   "P. Activa Entrante"
 #define D_EXPORT_ACTIVE   "P. Activa Saliente"
+#define D_IMPORT_ACTIVE_MEM "P. Aktiva enigo konservita"
+#define D_EXPORT_ACTIVE_MEM "P. Aktiva eligo konservita"
 #define D_IMPORT_REACTIVE "P. Reactiva Entrante"
 #define D_EXPORT_REACTIVE "P. Reactiva Saliente"
 #define D_TOTAL_REACTIVE  "P. Reactiva Total"

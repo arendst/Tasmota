@@ -868,6 +868,8 @@
 #define D_PHASE_ANGLE     "Fasehoek"
 #define D_IMPORT_ACTIVE   "Invoer aktief"
 #define D_EXPORT_ACTIVE   "Uitvoer aktief"
+#define D_IMPORT_ACTIVE_MEM "Ingevoerde prestasie is geberg"
+#define D_EXPORT_ACTIVE_MEM "Uitgevoerde prestasie is geberg"
 #define D_IMPORT_REACTIVE "Import reaktief"
 #define D_EXPORT_REACTIVE "Uitvoer reaktief"
 #define D_TOTAL_REACTIVE  "Totaal reaktief"

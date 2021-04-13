@@ -868,6 +868,8 @@
 #define D_PHASE_ANGLE     "Angolo fase"
 #define D_IMPORT_ACTIVE   "Potenza attiva importata"
 #define D_EXPORT_ACTIVE   "Potenza attiva esportata"
+#define D_IMPORT_ACTIVE_MEM "Importa salvato attivamente"
+#define D_EXPORT_ACTIVE_MEM "Esporta salvato attivamente"
 #define D_IMPORT_REACTIVE "Potenza reattiva importata"
 #define D_EXPORT_REACTIVE "Potenza reattiva esportata"
 #define D_TOTAL_REACTIVE  "Potenza reattiva totale"

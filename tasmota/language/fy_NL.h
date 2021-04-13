@@ -868,6 +868,8 @@
 #define D_PHASE_ANGLE     "Faze hoeke"
 #define D_IMPORT_ACTIVE   "Ymportearje echt"
 #define D_EXPORT_ACTIVE   "Eksportearje echt"
+#define D_IMPORT_ACTIVE_MEM "Import actief opgeslagen"
+#define D_EXPORT_ACTIVE_MEM "Export actief opgeslagen"
 #define D_IMPORT_REACTIVE "Blind ymportearje"
 #define D_EXPORT_REACTIVE "Blind eksportearje"
 #define D_TOTAL_REACTIVE  "Hielendal blyn"

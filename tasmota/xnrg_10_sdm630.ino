@@ -39,33 +39,35 @@
 #include <TasmotaModbus.h>
 TasmotaModbus *Sdm630Modbus;
 
-const uint16_t sdm630_start_addresses[] {
-           // 3P4 3P3 1P2 Unit Description
-  0x0000,  //  +   -   +   V    Phase 1 line to neutral volts
-  0x0002,  //  +   -   -   V    Phase 2 line to neutral volts
-  0x0004,  //  +   -   -   V    Phase 3 line to neutral volts
-  0x0006,  //  +   +   +   A    Phase 1 current
-  0x0008,  //  +   +   -   A    Phase 2 current
-  0x000A,  //  +   +   -   A    Phase 3 current
-  0x000C,  //  +   -   +   W    Phase 1 power
-  0x000E,  //  +   -   +   W    Phase 2 power
-  0x0010,  //  +   -   -   W    Phase 3 power
-  0x0018,  //  +   -   +   VAr  Phase 1 volt amps reactive
-  0x001A,  //  +   -   -   VAr  Phase 2 volt amps reactive
-  0x001C,  //  +   -   -   VAr  Phase 3 volt amps reactive
-  0x001E,  //  +   -   +        Phase 1 power factor
-  0x0020,  //  +   -   -        Phase 2 power factor
-  0x0022,  //  +   -   -        Phase 3 power factor
-  0x0046,  //  +   +   +   Hz   Frequency of supply voltages
-  0x0160,  //  +   +   +   kWh  Phase 1 export active energy
-  0x0162,  //  +   +   +   kWh  Phase 2 export active energy
-  0x0164,  //  +   +   +   kWh  Phase 3 export active energy
+const uint16_t sdm630_start_addresses[]{
+    // 3P4 3P3 1P2 Unit Description
+    0x0000, //  +   -   +   V    Phase 1 line to neutral volts
+    0x0002, //  +   -   -   V    Phase 2 line to neutral volts
+    0x0004, //  +   -   -   V    Phase 3 line to neutral volts
+    0x0006, //  +   +   +   A    Phase 1 current
+    0x0008, //  +   +   -   A    Phase 2 current
+    0x000A, //  +   +   -   A    Phase 3 current
+    0x000C, //  +   -   +   W    Phase 1 power
+    0x000E, //  +   -   +   W    Phase 2 power
+    0x0010, //  +   -   -   W    Phase 3 power
+    0x0018, //  +   -   +   VAr  Phase 1 volt amps reactive
+    0x001A, //  +   -   -   VAr  Phase 2 volt amps reactive
+    0x001C, //  +   -   -   VAr  Phase 3 volt amps reactive
+    0x001E, //  +   -   +        Phase 1 power factor
+    0x0020, //  +   -   -        Phase 2 power factor
+    0x0022, //  +   -   -        Phase 3 power factor
+    0x0046, //  +   +   +   Hz   Frequency of supply voltages
+    0x0160, //  +   +   +   kWh  Phase 1 export active energy
+    0x0162, //  +   +   +   kWh  Phase 2 export active energy
+    0x0164, //  +   +   +   kWh  Phase 3 export active energy
+    0x004A, //  +   +   +   kWh  AllPhases export Memory before Reset
 #ifdef SDM630_IMPORT
-  0x015A,  //  +   +   +   kWh  Phase 1 import active energy
-  0x015C,  //  +   +   +   kWh  Phase 2 import active energy
-  0x015E,  //  +   +   +   kWh  Phase 3 import active energy
+    0x015A, //  +   +   +   kWh  Phase 1 import active energy
+    0x015C, //  +   +   +   kWh  Phase 2 import active energy
+    0x015E, //  +   +   +   kWh  Phase 3 import active energy
+    0x0048, //  +   +   +   kWh  AllPhases import Memory before Reset
 #endif  // SDM630_IMPORT
-  0x0156   //  +   +   +   kWh  Total active energy
+    0x0156 //  +   +   +   kWh  Total active energy
 };
 
 struct SDM630 {
@@ -179,19 +181,27 @@ void SDM630Every250ms(void)
           break;
 
         case 19:
+          Energy.export_active_mem = value;    // Energy all Phases before reset
+          break;
+
+        case 20:
 #ifdef SDM630_IMPORT
           Energy.import_active[0] = value;
           break;
 
-        case 20:
+        case 21:
           Energy.import_active[1] = value;
           break;
 
-        case 21:
+        case 22:
           Energy.import_active[2] = value;
           break;
 
-        case 22:
+        case 23:
+          Energy.import_active_mem = value; // Energy all Phases before reset
+          break;
+
+        case 24:
 #endif  // SDM630_IMPORT
           EnergyUpdateTotal(value, true);
           break;

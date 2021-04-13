@@ -868,6 +868,8 @@
 #define D_PHASE_ANGLE     "Angle de phase"
 #define D_IMPORT_ACTIVE   "Énergie act conso"
 #define D_EXPORT_ACTIVE   "Énergie act fournie"
+#define D_IMPORT_ACTIVE_MEM "Importé actif enregistré"
+#define D_EXPORT_ACTIVE_MEM "Exporté actif enregistré"
 #define D_IMPORT_REACTIVE "Énergie réa conso"
 #define D_EXPORT_REACTIVE "Énergie réa fournie"
 #define D_TOTAL_REACTIVE  "Énergie réa totale"

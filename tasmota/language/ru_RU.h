@@ -868,6 +868,8 @@
 #define D_PHASE_ANGLE     "Угол фазы"
 #define D_IMPORT_ACTIVE   "Импорт активной мощности"
 #define D_EXPORT_ACTIVE   "Экспорт активной мощности"
+#define D_IMPORT_ACTIVE_MEM "Импорт активно сохранен"
+#define D_EXPORT_ACTIVE_MEM "Экспорт активно сохранен"
 #define D_IMPORT_REACTIVE "Импорт реактивной мощности"
 #define D_EXPORT_REACTIVE "Экспорт реактивной мощности"
 #define D_TOTAL_REACTIVE  "Итого реактивная мощность"
