@@ -283,17 +283,14 @@ const char HTTP_FORM_MODULE[] PROGMEM =
   "<p></p><b>" D_MODULE_TYPE "</b> (%s)<br><select id='g99'></select><br>"
   "<br><table>";
 
-const char HTTP_FORM_WIFI_INITIAL[] PROGMEM =
+const char HTTP_FORM_WIFI_PART1[] PROGMEM =
   "<fieldset><legend><b>&nbsp;" D_WIFI_PARAMETERS "&nbsp;</b></legend>"
   "<form method='get' action='wi'>"
-  "<p><b>" D_AP1_SSID "</b><br><input id='s1' placeholder=\"" D_AP1_SSID_HELP "\" value=\"%s\"></p>"  // Need \" instead of ' to be able to use ' in text (#8489)
-  "<p><label><b>" D_AP_PASSWORD "</b><input type='checkbox' onclick='sp(\"p1\")'></label><br><input id='p1' type='password' placeholder=\"" D_AP_PASSWORD_HELP "\"></p>";
+  "<p><b>" D_AP1_SSID "</b>%s<br><input id='s1' placeholder=\"" D_AP1_SSID_HELP "\" value=\"%s\"></p>"  // Need \" instead of ' to be able to use ' in text (#8489)
+  "<p><label><b>" D_AP_PASSWORD "</b><input type='checkbox' onclick='sp(\"p1\")'></label><br><input id='p1' type='password' placeholder=\"" D_AP_PASSWORD_HELP "\"";
 
-const char HTTP_FORM_WIFI[] PROGMEM =
-  "<fieldset><legend><b>&nbsp;" D_WIFI_PARAMETERS "&nbsp;</b></legend>"
-  "<form method='get' action='wi'>"
-  "<p><b>" D_AP1_SSID "</b> (" STA_SSID1 ")<br><input id='s1' placeholder=\"" D_AP1_SSID_HELP "\" value=\"%s\"></p>"  // Need \" instead of ' to be able to use ' in text (#8489)
-  "<p><label><b>" D_AP_PASSWORD "</b><input type='checkbox' onclick='sp(\"p1\")'></label><br><input id='p1' type='password' placeholder=\"" D_AP_PASSWORD_HELP "\" value=\"" D_ASTERISK_PWD "\"></p>"
+const char HTTP_FORM_WIFI_PART2[] PROGMEM =
+  " value=\"" D_ASTERISK_PWD "\"></p>"
   "<p><b>" D_AP2_SSID "</b> (" STA_SSID2 ")<br><input id='s2' placeholder=\"" D_AP2_SSID_HELP "\" value=\"%s\"></p>"
   "<p><label><b>" D_AP_PASSWORD "</b><input type='checkbox' onclick='sp(\"p2\")'></label><br><input id='p2' type='password' placeholder=\"" D_AP_PASSWORD_HELP "\" value=\"" D_ASTERISK_PWD "\"></p>"
   "<p><b>" D_HOSTNAME "</b> (%s)<br><input id='h' placeholder=\"%s\" value=\"%s\"></p>"
@@ -915,7 +912,7 @@ void WebRestart(uint32_t type)
 #endif
     }
   }
-  if (type<2) { 
+  if (type<2) {
     WSContentSend_P(HTTP_MSG_RSTRT);
     if (HTTP_MANAGER == Web.state || reset_only) {
       Web.state = HTTP_ADMIN;
@@ -991,7 +988,7 @@ void HandleRoot(void)
         if (!Web.initial_config) {
           Web.initial_config = !strlen(SettingsText(SET_STASSID1));
           if (Web.initial_config) { AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP "Blank Device - Initial Configuration")); }
-        }         
+        }
         HandleWifiConfiguration();
       } else {
         // wrong user and pass
@@ -1741,7 +1738,7 @@ void HandleWifiConfiguration(void) {
       Web.old_wificonfig = TasmotaGlobal.wifi_state_flag;
       Settings.sta_config = WIFI_MANAGER;
       TasmotaGlobal.wifi_state_flag = Settings.sta_config;
-      
+
       TasmotaGlobal.sleep = 0;                           // Disable sleep
       TasmotaGlobal.restart_flag = 0;                    // No restart
       TasmotaGlobal.ota_state_flag = 0;                  // No OTA
@@ -1761,7 +1758,7 @@ void HandleWifiConfiguration(void) {
     } else {
       // STATION MODE or MIXED
       // Save the config and restart
-      WifiSaveSettings();  
+      WifiSaveSettings();
       WebRestart(1);
     }
     return;
@@ -1872,7 +1869,7 @@ void HandleWifiConfiguration(void) {
                       WSContentSend_P(PSTR("<i class='b%d%s'></i>"), k, (num_bars < k) ? PSTR(" o30") : PSTR(""));
                     }
                     WSContentSend_P(PSTR("</span></div></div>"));
-                  }                  
+                  }
                 } else {
                   if (ssid_showed <= networksToShow ) { networksToShow++; }
                 }
@@ -1934,12 +1931,14 @@ void HandleWifiConfiguration(void) {
       WSContentSend_P(PSTR("<div><a href='/wi?scan='>" D_SCAN_FOR_WIFI_NETWORKS "</a></div><br>"));
     }
 
-    // As WIFI_HOSTNAME may contain %s-%04d it cannot be part of HTTP_FORM_WIFI where it will exception
+    WSContentSend_P(HTTP_FORM_WIFI_PART1, (WifiIsInManagerMode()) ? "" : PSTR(" (" STA_SSID1 ")"), SettingsText(SET_STASSID1));
     if (WifiIsInManagerMode()) {
-        WSContentSend_P(HTTP_FORM_WIFI_INITIAL, SettingsText(SET_STASSID1) );
+      // As WIFI_HOSTNAME may contain %s-%04d it cannot be part of HTTP_FORM_WIFI where it will exception
+      WSContentSend_P(PSTR("></p>"));
     } else {
-      WSContentSend_P(HTTP_FORM_WIFI, SettingsText(SET_STASSID1), SettingsText(SET_STASSID2), WIFI_HOSTNAME, WIFI_HOSTNAME, SettingsText(SET_HOSTNAME), SettingsText(SET_CORS));
+      WSContentSend_P(HTTP_FORM_WIFI_PART2, SettingsText(SET_STASSID2), WIFI_HOSTNAME, WIFI_HOSTNAME, SettingsText(SET_HOSTNAME), SettingsText(SET_CORS));
     }
+
     WSContentSend_P(HTTP_FORM_END);
   }
 
@@ -1949,8 +1948,8 @@ void HandleWifiConfiguration(void) {
       WSContentSend_P(PSTR("<div style='text-align:center;color:#%06x;'><h3>" D_TRYING_TO_CONNECT "<br>%s</h3></div>"),
         WebColor(COL_TEXT_WARNING),
         SettingsText(SET_STASSID1)
-      );      
-    } else if (WIFI_TEST_FINISHED_BAD == Web.wifiTest) { 
+      );
+    } else if (WIFI_TEST_FINISHED_BAD == Web.wifiTest) {
       WSContentSend_P(PSTR("<div style='text-align:center;color:#%06x;'><h3>" D_CONNECT_FAILED_TO " %s<br>" D_CHECK_CREDENTIALS "</h3></div>"),
         WebColor(COL_TEXT_WARNING),
         SettingsText(SET_STASSID1)
@@ -3304,7 +3303,7 @@ bool Xdrv01(uint8_t function)
           TasmotaGlobal.save_data_counter = Web.save_data_counter;
           Settings.save_data = Web.save_data_counter;
           SettingsSaveAll();
-#if (!RESTART_AFTER_INITIAL_WIFI_CONFIG)          
+#if (!RESTART_AFTER_INITIAL_WIFI_CONFIG)
           Web.initial_config = false;
           Web.state = HTTP_ADMIN;
 #endif
@@ -3327,7 +3326,7 @@ bool Xdrv01(uint8_t function)
           int n = WiFi.scanNetworks(); // restart scan
         }
       }
-      break;      
+      break;
     case FUNC_COMMAND:
       result = DecodeCommand(kWebCommands, WebCommand);
       break;
