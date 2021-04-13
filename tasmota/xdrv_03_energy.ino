@@ -1144,7 +1144,7 @@ void EnergyShow(bool json)
       }
       KnxSensor(KNX_ENERGY_DAILY, Energy.daily);
       KnxSensor(KNX_ENERGY_TOTAL, Energy.total);
-      KnxSensor(KNX_ENERGY_START, Energy.start_energy);
+      KnxSensor(KNX_ENERGY_YESTERDAY, (float)Settings.energy_kWhyesterday / 100000);
     }
 #endif  // USE_KNX
 #ifdef USE_WEBSERVER
