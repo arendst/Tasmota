@@ -817,20 +817,18 @@ void WSContentButton(uint32_t title_index, bool show=true)
   char action[4];
   char title[100];  // Large to accomodate UTF-16 as used by Russian
 
+  WSContentSend_P(PSTR("<p><form id=but%d style=\"display: %s;\" action='%s' method='get'"),
+    title_index,
+    show ? "block":"none",
+    GetTextIndexed(action, sizeof(action), title_index, kButtonAction));
   if (title_index <= BUTTON_RESET_CONFIGURATION) {
     char confirm[100];
-    WSContentSend_P(PSTR("<p><form id=but%d style=\"display: %s;\" action='%s' method='get' onsubmit='return confirm(\"%s\");'><button name='%s' class='button bred'>%s</button></form></p>"),
-      title_index,
-      show ? "block":"none",
-      GetTextIndexed(action, sizeof(action), title_index, kButtonAction),
+    WSContentSend_P(PSTR(" onsubmit='return confirm(\"%s\");'><button name='%s' class='button bred'>%s</button></form></p>"),
       GetTextIndexed(confirm, sizeof(confirm), title_index, kButtonConfirm),
       (!title_index) ? PSTR("rst") : PSTR("non"),
       GetTextIndexed(title, sizeof(title), title_index, kButtonTitle));
   } else {
-    WSContentSend_P(PSTR("<p><form id=but%d style=\"display: %s;\" action='%s' method='get'><button>%s</button></form></p>"),
-      title_index,
-      show ? "block":"none",
-      GetTextIndexed(action, sizeof(action), title_index, kButtonAction),
+    WSContentSend_P(PSTR("><button>%s</button></form></p>"),
       GetTextIndexed(title, sizeof(title), title_index, kButtonTitle));
   }
 }
@@ -1925,12 +1923,7 @@ void HandleWifiConfiguration(void) {
       }
     }
 
-    if (limitScannedNetworks) {
-      WSContentSend_P(PSTR("<div><a href='/wi?scan='>" D_SHOW_MORE_WIFI_NETWORKS "</a></div><br>"));
-    } else {
-      WSContentSend_P(PSTR("<div><a href='/wi?scan='>" D_SCAN_FOR_WIFI_NETWORKS "</a></div><br>"));
-    }
-
+    WSContentSend_P(PSTR("<div><a href='/wi?scan='>%s</a></div><br>"), (limitScannedNetworks) ? PSTR(D_SHOW_MORE_WIFI_NETWORKS) : PSTR(D_SCAN_FOR_WIFI_NETWORKS));
     WSContentSend_P(HTTP_FORM_WIFI_PART1, (WifiIsInManagerMode()) ? "" : PSTR(" (" STA_SSID1 ")"), SettingsText(SET_STASSID1));
     if (WifiIsInManagerMode()) {
       // As WIFI_HOSTNAME may contain %s-%04d it cannot be part of HTTP_FORM_WIFI where it will exception
@@ -1944,19 +1937,14 @@ void HandleWifiConfiguration(void) {
 
   if (WifiIsInManagerMode()) {
 #ifndef FIRMWARE_MINIMAL
+    WSContentSend_P(PSTR("<div style='text-align:center;color:#%06x;'><h3>"), WebColor(COL_TEXT_WARNING));
     if (WIFI_TESTING == Web.wifiTest) {
-      WSContentSend_P(PSTR("<div style='text-align:center;color:#%06x;'><h3>" D_TRYING_TO_CONNECT "<br>%s</h3></div>"),
-        WebColor(COL_TEXT_WARNING),
-        SettingsText(SET_STASSID1)
-      );
+      WSContentSend_P(PSTR(D_TRYING_TO_CONNECT "<br>%s</h3></div>"), SettingsText(SET_STASSID1));
     } else if (WIFI_TEST_FINISHED_BAD == Web.wifiTest) {
-      WSContentSend_P(PSTR("<div style='text-align:center;color:#%06x;'><h3>" D_CONNECT_FAILED_TO " %s<br>" D_CHECK_CREDENTIALS "</h3></div>"),
-        WebColor(COL_TEXT_WARNING),
-        SettingsText(SET_STASSID1)
-      );
+      WSContentSend_P(PSTR(D_CONNECT_FAILED_TO " %s<br>" D_CHECK_CREDENTIALS "</h3></div>"), SettingsText(SET_STASSID1));
     }
     // More Options Button
-    WSContentSend_P(PSTR("<div id=butmod style=\"display: %s;\"></div><p><form id=butmo style=\"display: %s;\"><button type='button' onclick='hidBtns()'>" D_SHOW_MORE_OPTIONS "</button></form></p>"),
+    WSContentSend_P(PSTR("<div id=butmod style=\"display:%s;\"></div><p><form id=butmo style=\"display:%s;\"><button type='button' onclick='hidBtns()'>" D_SHOW_MORE_OPTIONS "</button></form></p>"),
       (WIFI_TEST_FINISHED_BAD == Web.wifiTest) ? "none" : Web.initial_config ? "block" : "none", Web.initial_config ? "block" : "none"
     );
     WSContentSpaceButton(BUTTON_RESTORE, !Web.initial_config);
