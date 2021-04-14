@@ -645,74 +645,60 @@ void KNX_CB_Action(message_t const &msg, void *arg)
         }
       }
       else if (chan->type == KNX_ENERGY_VOLTAGE) // Reply KNX_ENERGY_VOLTAGE
-      {
-        if (Energy.data_valid[0]) {
+      {        
+        knx.answer_4byte_float(msg.received_on, Energy.voltage[0]);
+        if (Settings.flag.knx_enable_enhancement) {
           knx.answer_4byte_float(msg.received_on, Energy.voltage[0]);
-          if (Settings.flag.knx_enable_enhancement) {
-            knx.answer_4byte_float(msg.received_on, Energy.voltage[0]);
-            knx.answer_4byte_float(msg.received_on, Energy.voltage[0]);
-          }
+          knx.answer_4byte_float(msg.received_on, Energy.voltage[0]);
         }
       }
       else if (chan->type == KNX_ENERGY_CURRENT) // Reply KNX_ENERGY_CURRENT
       {
-        if (Energy.data_valid[0]) {
+        knx.answer_4byte_float(msg.received_on, Energy.current[0]);
+        if (Settings.flag.knx_enable_enhancement) {
           knx.answer_4byte_float(msg.received_on, Energy.current[0]);
-          if (Settings.flag.knx_enable_enhancement) {
-            knx.answer_4byte_float(msg.received_on, Energy.current[0]);
-            knx.answer_4byte_float(msg.received_on, Energy.current[0]);
-          }
+          knx.answer_4byte_float(msg.received_on, Energy.current[0]);
         }
       }
       else if (chan->type == KNX_ENERGY_POWER) // Reply KNX_ENERGY_POWER
       {
-        if (Energy.data_valid[0]) {
+        knx.answer_4byte_float(msg.received_on, Energy.active_power[0]);
+        if (Settings.flag.knx_enable_enhancement) {
           knx.answer_4byte_float(msg.received_on, Energy.active_power[0]);
-          if (Settings.flag.knx_enable_enhancement) {
-            knx.answer_4byte_float(msg.received_on, Energy.active_power[0]);
-            knx.answer_4byte_float(msg.received_on, Energy.active_power[0]);
-          }
+          knx.answer_4byte_float(msg.received_on, Energy.active_power[0]);
         }
       }
       else if (chan->type == KNX_ENERGY_POWERFACTOR) // Reply KNX_ENERGY_POWERFACTOR
       {
-        if (Energy.data_valid[0]) {
+        knx.answer_4byte_float(msg.received_on, Energy.power_factor[0]);
+        if (Settings.flag.knx_enable_enhancement) {
           knx.answer_4byte_float(msg.received_on, Energy.power_factor[0]);
-          if (Settings.flag.knx_enable_enhancement) {
-            knx.answer_4byte_float(msg.received_on, Energy.power_factor[0]);
-            knx.answer_4byte_float(msg.received_on, Energy.power_factor[0]);
-          }
+          knx.answer_4byte_float(msg.received_on, Energy.power_factor[0]);
         }
       }
       else if (chan->type == KNX_ENERGY_YESTERDAY) // Reply KNX_ENERGY_YESTERDAY
       {
-        if (Energy.data_valid[0]) {
-          float energy_kWhyesterday = (float)Settings.energy_kWhyesterday / 100000;
+        float energy_kWhyesterday = (float)Settings.energy_kWhyesterday / 100000;
+        knx.answer_4byte_float(msg.received_on, energy_kWhyesterday);
+        if (Settings.flag.knx_enable_enhancement) {
           knx.answer_4byte_float(msg.received_on, energy_kWhyesterday);
-          if (Settings.flag.knx_enable_enhancement) {
-            knx.answer_4byte_float(msg.received_on, energy_kWhyesterday);
-            knx.answer_4byte_float(msg.received_on, energy_kWhyesterday);
-          }
+          knx.answer_4byte_float(msg.received_on, energy_kWhyesterday);
         }
       }
       else if (chan->type == KNX_ENERGY_DAILY) // Reply KNX_ENERGY_DAILY
       {
-        if (Energy.data_valid[0]) {
+        knx.answer_4byte_float(msg.received_on, Energy.daily);
+        if (Settings.flag.knx_enable_enhancement) {
           knx.answer_4byte_float(msg.received_on, Energy.daily);
-          if (Settings.flag.knx_enable_enhancement) {
-            knx.answer_4byte_float(msg.received_on, Energy.daily);
-            knx.answer_4byte_float(msg.received_on, Energy.daily);
-          }
+          knx.answer_4byte_float(msg.received_on, Energy.daily);
         }
       }
       else if (chan->type == KNX_ENERGY_TOTAL) // Reply KNX_ENERGY_TOTAL
       {
-        if (Energy.data_valid[0]) {
+        knx.answer_4byte_float(msg.received_on, Energy.total);
+        if (Settings.flag.knx_enable_enhancement) {
           knx.answer_4byte_float(msg.received_on, Energy.total);
-          if (Settings.flag.knx_enable_enhancement) {
-            knx.answer_4byte_float(msg.received_on, Energy.total);
-            knx.answer_4byte_float(msg.received_on, Energy.total);
-          }
+          knx.answer_4byte_float(msg.received_on, Energy.total);
         }
       }
 #ifdef USE_RULES
