@@ -3,10 +3,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Released]
 
-## [9.3.1] 20210223
-- Release Kenneth
+## [9.4.0] 20210422
+- Release Leslie
 
-## [9.3.1.3]
+## [9.3.1.3] 20210422
 ### Added
 - Optional GUI file editor enabled with define ``GUI_EDIT_FILE`` by barbudor (#11668)
 - Initial support for universal display driver UDisplay by Gerhard Mutz (#11665)
@@ -88,8 +88,6 @@ All notable changes to this project will be documented in this file.
 - ESP32 flash script for Odroid and Core2 (#11227)
 - ESP32 WS2812 bitbang support (#11248)
 - DS18x20 driver timing issue (#11270)
-
-## [Released]
 
 ## [9.3.1] 20210223
 - Release Kenneth
