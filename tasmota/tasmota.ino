@@ -78,7 +78,7 @@
 #include <SPI.h>
 #ifdef USE_SDCARD
 #include <SD.h>
-#include <SDFAT.h>
+#include <SdFat.h>
 #endif  // USE_SDCARD
 #endif  // ESP8266
 #ifdef ESP32
