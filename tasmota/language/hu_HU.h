@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v5.12.0e
+ * Updated until v9.3.1.1
 \*********************************************************************/
 
 //#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -75,16 +75,16 @@
 #define D_CORS_DOMAIN "CORS Domain"
 #define D_COUNT "Szám"
 #define D_COUNTER "Számláló"
-#define D_CT_POWER "CT Power"
+#define D_CT_POWER "CT erősség"
 #define D_CURRENT "Áramerősség"          // As in Voltage and Current
 #define D_DATA "Adat"
 #define D_DARKLIGHT "Min. fényerő"
 #define D_DEBUG "Debug"
-#define D_DEWPOINT "Dew point"
+#define D_DEWPOINT "Harmatpont"
 #define D_DISABLED "Letiltva"
 #define D_DISTANCE "Távolság"
 #define D_DNS_SERVER "DNS szerver"
-#define D_DO "Disolved Oxygen"
+#define D_DO "Oldott oxygén"
 #define D_DONE "Kész"
 #define D_DST_TIME "nyári idő"
 #define D_EC "EC"
@@ -99,16 +99,17 @@
 #define D_FALLBACK_TOPIC "fallback topik"
 #define D_FALSE "Hamis"
 #define D_FILE "Fájl"
-#define D_FLOW_RATE "Flow rate"
+#define D_FLOW_RATE "Átfolyás ráta"
 #define D_FRAGMENTATION "frag."      // Lower case abbreviated version of fragmentation used in "memory fragmentation"
 #define D_FREE_MEMORY "Szabad memória"
-#define D_PSR_MAX_MEMORY "PS-RAM Memory"
-#define D_PSR_FREE_MEMORY "PS-RAM free Memory"
+#define D_PSR_MAX_MEMORY "PS-RAM memória"
+#define D_PSR_FREE_MEMORY "PS-RAM szabad memória"
 #define D_FREQUENCY "Frekvencia"
 #define D_GAS "Gáz"
 #define D_GATEWAY "Átjáró"
 #define D_GROUP "Csoport"
 #define D_HOST "Hoszt"
+#define D_HALL_EFFECT "Hall Effect"
 #define D_HOSTNAME "Hosztnév"
 #define D_HUMIDITY "Páratartalom"
 #define D_ILLUMINANCE "Megvilágítás"
@@ -122,12 +123,12 @@
 #define D_LWT "LWT"
 #define D_LQI "LQI"                  // Zigbee Link Quality Index
 #define D_MODULE "Modul"
-#define D_MOISTURE "Moisture"
+#define D_MOISTURE "Páratartalom"
 #define D_MQTT "MQTT"
-#define D_MULTI_PRESS "több lenyomás"
+#define D_MULTI_PRESS "többes lenyomás"
 #define D_NOISE "Zaj"
 #define D_NONE "nincs"
-#define D_O2 "Oxygen"
+#define D_O2 "Oxygén"
 #define D_OFF "Ki"
 #define D_OFFLINE "Offline"
 #define D_OK "OK"
@@ -148,13 +149,13 @@
 #define D_PROGRAM_SIZE "Program méret"
 #define D_PROJECT "Projekt"
 #define D_RAIN "Eső"
-#define D_RANGE "Range"
+#define D_RANGE "Tartomány"
 #define D_RECEIVED "Érkezett"
 #define D_RESTART "Újraindítás"
 #define D_RESTARTING "Újraindítás"
 #define D_RESTART_REASON "Utolsó újraindulás oka"
 #define D_RESTORE "Visszaállítás"
-#define D_RETAINED "retained"
+#define D_RETAINED "megtartott"
 #define D_RULE "Szabály"
 #define D_SAVE "Mentés"
 #define D_SENSOR "Szenzor"
@@ -164,7 +165,7 @@
 #define D_STOP "Leállítás"
 #define D_SUBNET_MASK "Alhálózati maszk"
 #define D_SUBSCRIBE_TO "Feliratkozás a(z)"
-#define D_UNSUBSCRIBE_FROM "Unsubscribe from"
+#define D_UNSUBSCRIBE_FROM "Leiratkozás a(z)"
 #define D_SUCCESSFUL "Sikeres"
 #define D_SUNRISE "Napkelte"
 #define D_SUNSET "Napnyugta"
@@ -172,7 +173,7 @@
 #define D_TO "-nak"
 #define D_TOGGLE "Megfordítás"
 #define D_TOPIC "Topic"
-#define D_TOTAL_USAGE "Total Usage"
+#define D_TOTAL_USAGE "Teljes használat"
 #define D_TRANSMIT "Továbbít"
 #define D_TRUE "Igaz"
 #define D_TVOC "TVOC"
@@ -289,10 +290,19 @@
 #define D_WEP "WEP"
 #define D_WPA_PSK "WPA PSK"
 #define D_WPA2_PSK "WPA2 PSK"
-#define D_AP1_SSID "AP1 SSID"
-#define D_AP1_PASSWORD "AP1 megosztott kulcs"
-#define D_AP2_SSID "AP2 SSID"
-#define D_AP2_PASSWORD "AP2 megosztott kulcs"
+#define D_AP1_SSID "WiFi Network"
+#define D_AP1_SSID_HELP "Type or Select your WiFi Network"
+#define D_AP2_SSID "WiFi Network 2"
+#define D_AP2_SSID_HELP "Type your Alternative WiFi Network"
+#define D_AP_PASSWORD "WiFi megosztott kulcs"
+#define D_AP_PASSWORD_HELP "Enter your WiFi Password"
+#define D_SELECT_YOUR_WIFI_NETWORK "Select your WiFi Network"
+#define D_SHOW_MORE_WIFI_NETWORKS "Scan for all WiFi Networks"
+#define D_SHOW_MORE_OPTIONS "More Options"
+#define D_CHECK_CREDENTIALS "Please, check your credentials"
+#define D_SUCCESSFUL_WIFI_CONNECTION "Successful WiFi Connection"
+#define D_NOW_YOU_CAN_CLOSE_THIS_WINDOW "Now you can close this window"
+#define D_REDIRECTING_TO_NEW_IP "Redirecting to new device's IP address"
 
 #define D_MQTT_PARAMETERS "MQTT paraméterek"
 #define D_CLIENT "Kliens"
@@ -310,8 +320,8 @@
 
 #define D_OTHER_PARAMETERS "Egyéb beállítások"
 #define D_TEMPLATE "Template"
-#define D_ACTIVATE "Activate"
-#define D_DEVICE_NAME "Device Name"
+#define D_ACTIVATE "Aktiválás"
+#define D_DEVICE_NAME "Eszköz neve"
 #define D_WEB_ADMIN_PASSWORD "Web admin jelszó"
 #define D_MQTT_ENABLE "MQTT engedélyezése"
 #define D_MQTT_TLS_ENABLE "MQTT TLS"
@@ -321,11 +331,11 @@
 #define D_SINGLE_DEVICE "single device"
 #define D_MULTI_DEVICE "multi device"
 
-#define D_CONFIGURE_TEMPLATE "Configure Template"
-#define D_TEMPLATE_PARAMETERS "Template parameters"
-#define D_TEMPLATE_NAME "Name"
-#define D_BASE_TYPE "Based on"
-#define D_TEMPLATE_FLAGS "Options"
+#define D_CONFIGURE_TEMPLATE "Template beállítása"
+#define D_TEMPLATE_PARAMETERS "Template paraméterek"
+#define D_TEMPLATE_NAME "Név"
+#define D_BASE_TYPE "Alapul ezen"
+#define D_TEMPLATE_FLAGS "Opciók"
 
 #define D_SAVE_CONFIGURATION "Beállítások mentése"
 #define D_CONFIGURATION_SAVED "Beállítások elmentve"
@@ -373,7 +383,7 @@
 #define D_UPLOAD_ERR_11 "Az RF chip törlése sikertelen"
 #define D_UPLOAD_ERR_12 "Az RF chip írása sikertelen"
 #define D_UPLOAD_ERR_13 "Az RF firmware dekódolása sikertelen"
-#define D_UPLOAD_ERR_14 "Not compatible"
+#define D_UPLOAD_ERR_14 "Nem kompatibilis"
 #define D_UPLOAD_ERROR_CODE "Feltöltési hibakód"
 
 #define D_ENTER_COMMAND "Kérem a parancsot..."
@@ -462,30 +472,30 @@
 #define D_KNX_RX_SCENE "KNX SCENE RX"
 
 // xdrv_23_zigbee
-#define D_ZIGBEE_PERMITJOIN_ACTIVE "Devices allowed to join"
-#define D_ZIGBEE_MAPPING_TITLE "Tasmota Zigbee Mapping"
-#define D_ZIGBEE_NOT_STARTED "Zigbee not started"
-#define D_ZIGBEE_MAPPING_IN_PROGRESS_SEC "Mapping in progress (%d s. remaining)"
-#define D_ZIGBEE_MAPPING_NOT_PRESENT "No mapping"
-#define D_ZIGBEE_MAP_REFRESH "Zigbee Map Refresh"
-#define D_ZIGBEE_MAP   "Zigbee Map"
-#define D_ZIGBEE_PERMITJOIN "Zigbee Permit Join"
-#define D_ZIGBEE_GENERATE_KEY "generating random Zigbee network key"
-#define D_ZIGBEE_UNKNOWN_DEVICE "Unknown device"
-#define D_ZIGBEE_UNKNOWN_ATTRIBUTE "Unknown attribute"
-#define D_ZIGBEE_INVALID_PARAM "Invalid parameter"
-#define D_ZIGBEE_MISSING_PARAM "Missing parameters"
-#define D_ZIGBEE_UNKNWON_ATTRIBUTE "Unknown attribute name (ignored): %s"
-#define D_ZIGBEE_TOO_MANY_CLUSTERS "No more than one cluster id per command"
-#define D_ZIGBEE_WRONG_DELIMITER "Wrong delimiter for payload"
-#define D_ZIGBEE_UNRECOGNIZED_COMMAND "Unrecognized zigbee command: %s"
-#define D_ZIGBEE_TOO_MANY_COMMANDS "Only 1 command allowed (%d)"
-#define D_ZIGBEE_NO_ATTRIBUTE "No attribute in list"
-#define D_ZIGBEE_UNSUPPORTED_ATTRIBUTE_TYPE "Unsupported attribute type"
-#define D_ZIGBEE_JSON_REQUIRED "Config requires JSON objects"
-#define D_ZIGBEE_RESET_1_OR_2 "1 or 2 to reset"
-#define D_ZIGBEE_EEPROM_FOUND_AT_ADDRESS "ZBBridge EEPROM found at address"
-#define D_ZIGBEE_RANDOMIZING_ZBCONFIG "Randomizing Zigbee parameters, please check with 'ZbConfig'"
+#define D_ZIGBEE_PERMITJOIN_ACTIVE "Eszközök kapcsolódhatnak"
+#define D_ZIGBEE_MAPPING_TITLE "Tasmota Zigbee leképezés"
+#define D_ZIGBEE_NOT_STARTED "Zigbee nincs elindítva"
+#define D_ZIGBEE_MAPPING_IN_PROGRESS_SEC "Leképezés folyamatban (%d mp. van hátra)"
+#define D_ZIGBEE_MAPPING_NOT_PRESENT "Nincs leképezés"
+#define D_ZIGBEE_MAP_REFRESH "Zigbee térkép frissítés"
+#define D_ZIGBEE_MAP   "Zigbee térkép"
+#define D_ZIGBEE_PERMITJOIN "Zigbee kapcsolódási engedély"
+#define D_ZIGBEE_GENERATE_KEY "véletlen Zigbee hálózati kulcs generálása"
+#define D_ZIGBEE_UNKNOWN_DEVICE "Ismeretlen eszköz"
+#define D_ZIGBEE_UNKNOWN_ATTRIBUTE "Ismeretlen tulajdonság"
+#define D_ZIGBEE_INVALID_PARAM "Érvénytelen paraméter"
+#define D_ZIGBEE_MISSING_PARAM "Hiányzó paraméter(ek)"
+#define D_ZIGBEE_UNKNWON_ATTRIBUTE "Ismeretlen tulajdonság név (kihagyva): %s"
+#define D_ZIGBEE_TOO_MANY_CLUSTERS "Egynél több klaszter id nem lehet parancsonként"
+#define D_ZIGBEE_WRONG_DELIMITER "Hibás adatcsomag elválasztó"
+#define D_ZIGBEE_UNRECOGNIZED_COMMAND "Nem értelmezhető Zigbee parancs: %s"
+#define D_ZIGBEE_TOO_MANY_COMMANDS "Csak egy parancs engedélyezett (%d)"
+#define D_ZIGBEE_NO_ATTRIBUTE "A tulajdonság nincs a listában"
+#define D_ZIGBEE_UNSUPPORTED_ATTRIBUTE_TYPE "Nem támogatott tulajdonság típus"
+#define D_ZIGBEE_JSON_REQUIRED "Beállítás JSON objektumot vár"
+#define D_ZIGBEE_RESET_1_OR_2 "1 vagy 2 a visszaállításhoz"
+#define D_ZIGBEE_EEPROM_FOUND_AT_ADDRESS "ZBBridge EEPROM található a címen"
+#define D_ZIGBEE_RANDOMIZING_ZBCONFIG "Zigbee paramétereknek véletlennek kell lenniük, ellenőrizd a 'ZbConfig'-gal"
 
 // xdrv_03_energy.ino
 #define D_ENERGY_TODAY "Mai energia"
@@ -493,17 +503,17 @@
 #define D_ENERGY_TOTAL "Összes energia"
 
 // xdrv_27_shutter.ino
-#define D_OPEN "Open"
-#define D_CLOSE "Close"
-#define D_DOMOTICZ_SHUTTER "Shutter"
+#define D_OPEN "Nyitva"
+#define D_CLOSE "Zárva"
+#define D_DOMOTICZ_SHUTTER "Redőny"
 
 // xdrv_28_pcf8574.ino
-#define D_CONFIGURE_PCF8574 "Configure PCF8574"
-#define D_PCF8574_PARAMETERS "PCF8574 parameters"
-#define D_INVERT_PORTS "Invert Ports"
-#define D_DEVICE "Device"
-#define D_DEVICE_INPUT "Input"
-#define D_DEVICE_OUTPUT "Output"
+#define D_CONFIGURE_PCF8574 "PCF8574 beállítása"
+#define D_PCF8574_PARAMETERS "PCF8574 paraméterei"
+#define D_INVERT_PORTS "Inverz portok"
+#define D_DEVICE "Eszköz"
+#define D_DEVICE_INPUT "Bemenet"
+#define D_DEVICE_OUTPUT "Kimenet"
 
 // xsns_05_ds18b20.ino
 #define D_SENSOR_BUSY "Szenzor foglalt"
@@ -528,9 +538,9 @@
 
 // xsns_27_apds9960.ino
 #define D_GESTURE "Gesztus"
-#define D_COLOR_RED "Red"
-#define D_COLOR_GREEN "Green"
-#define D_COLOR_BLUE "Blue"
+#define D_COLOR_RED "Piros (R)"
+#define D_COLOR_GREEN "Zöld (G)"
+#define D_COLOR_BLUE "Kék (B)"
 #define D_CCT "CCT"
 #define D_PROXIMITY "közelség"
 
@@ -566,24 +576,28 @@
 #define D_TX20_WEST "NY"
 
 // xsns_53_sml.ino
-#define D_TPWRIN "Energy Total-In"
-#define D_TPWROUT "Energy Total-Out"
-#define D_TPWRCURR "Active Power-In/Out"
-#define D_TPWRCURR1 "Active Power-In p1"
-#define D_TPWRCURR2 "Active Power-In p2"
-#define D_TPWRCURR3 "Active Power-In p3"
-#define D_Strom_L1 "Current L1"
-#define D_Strom_L2 "Current L2"
-#define D_Strom_L3 "Current L3"
-#define D_Spannung_L1 "Voltage L1"
-#define D_Spannung_L2 "Voltage L2"
-#define D_Spannung_L3 "Voltage L3"
+#define D_TPWRIN "Összes bejövő energia"
+#define D_TPWROUT "Összes kimenő energia"
+#define D_TPWRCURR "Aktív teljesítmény Be/Ki"
+#define D_TPWRCURR1 "Aktív teljesítmény-Be p1"
+#define D_TPWRCURR2 "Aktív teljesítmény-Be p2"
+#define D_TPWRCURR3 "Aktív teljesítmény-Be p3"
+#define D_Strom_L1 "Áramerősség L1"
+#define D_Strom_L2 "Áramerősség L2"
+#define D_Strom_L3 "Áramerősség L3"
+#define D_Spannung_L1 "Feszültség L1"
+#define D_Spannung_L2 "Feszültség L2"
+#define D_Spannung_L3 "Feszültség L3"
 #define D_METERNR "Meter_number"
 #define D_METERSID "Service ID"
-#define D_GasIN "Counter"
-#define D_H2oIN "Counter"
-#define D_StL1L2L3 "Current L1+L2+L3"
-#define D_SpL1L2L3 "Voltage L1+L2+L3/3"
+#define D_GasIN "Számláló"
+#define D_H2oIN "Számláló"
+#define D_StL1L2L3 "Áramerősség L1+L2+L3"
+#define D_SpL1L2L3 "Feszültség L1+L2+L3/3"
+
+// xsns_86_tfminiplus.ino
+#define D_SIGNALSTRENGTH "Signal Strength"
+#define D_CHIPTEMPERATURE "Chip Temperature"
 
 // tasmota_template.h - keep them as short as possible to be able to fit them in GUI drop down box
 #define D_SENSOR_NONE          "Nincs"
@@ -643,6 +657,9 @@
 #define D_SENSOR_TM1638_CLK    "TM1638 CLK"
 #define D_SENSOR_TM1638_DIO    "TM1638 DIO"
 #define D_SENSOR_TM1638_STB    "TM1638 STB"
+#define D_SENSOR_MAX7219_DIN    "MAX7219 DIN"
+#define D_SENSOR_MAX7219_CS    "MAX7219 CS"
+#define D_SENSOR_MAX7219_CLK    "MAX7219 CLK"
 #define D_SENSOR_HX711_SCK     "HX711 SCK"
 #define D_SENSOR_HX711_DAT     "HX711 DAT"
 #define D_SENSOR_FTC532        "FTC532"
@@ -674,6 +691,8 @@
 #define D_SENSOR_MCP39F5_TX    "MCP39F5 Tx"
 #define D_SENSOR_MCP39F5_RX    "MCP39F5 Rx"
 #define D_SENSOR_MCP39F5_RST   "MCP39F5 Rst"
+#define D_SENSOR_CSE7761_TX    "CSE7761 Tx"
+#define D_SENSOR_CSE7761_RX    "CSE7761 Rx"
 #define D_SENSOR_CSE7766_TX    "CSE7766 Tx"
 #define D_SENSOR_CSE7766_RX    "CSE7766 Rx"
 #define D_SENSOR_PN532_TX      "PN532 Tx"
@@ -769,18 +788,22 @@
 #define D_SENSOR_IEM3000_RX    "iEM3000 RX"
 #define D_SENSOR_MIEL_HVAC_TX  "MiEl HVAC Tx"
 #define D_SENSOR_MIEL_HVAC_RX  "MiEl HVAC Rx"
+#define D_SENSOR_PROJECTOR_CTRL_TX  "DLP Tx"
+#define D_SENSOR_PROJECTOR_CTRL_RX  "DLP Rx"
 #define D_SENSOR_SHELLY_DIMMER_BOOT0 "SHD Boot 0"
 #define D_SENSOR_SHELLY_DIMMER_RST_INV "SHD Reset"
 #define D_SENSOR_RC522_RST     "RC522 Rst"
 #define D_SENSOR_RC522_CS      "RC522 CS"
 #define D_SENSOR_NRF24_CS      "NRF24 CS"
 #define D_SENSOR_NRF24_DC      "NRF24 DC"
+#define D_SENSOR_XPT2046_CS    "XPT2046 CS"
 #define D_SENSOR_ILI9341_CS    "ILI9341 CS"
 #define D_SENSOR_ILI9341_DC    "ILI9341 DC"
 #define D_SENSOR_ILI9488_CS    "ILI9488 CS"
 #define D_SENSOR_EPAPER29_CS   "EPaper29 CS"
 #define D_SENSOR_EPAPER42_CS   "EPaper42 CS"
 #define D_SENSOR_SSD1351_CS    "SSD1351 CS"
+#define D_SENSOR_SSD1351_DC    "SSD1351 DC"
 #define D_SENSOR_RA8876_CS     "RA8876 CS"
 #define D_SENSOR_ST7789_CS     "ST7789 CS"
 #define D_SENSOR_ST7789_DC     "ST7789 DC"
@@ -791,7 +814,12 @@
 #define D_SENSOR_WIEGAND_D1    "Wiegand D1"
 #define D_SENSOR_NEOPOOL_TX    "NeoPool Tx"
 #define D_SENSOR_NEOPOOL_RX    "NeoPool Rx"
-
+#define D_SENSOR_VL53L0X_XSHUT "VL53L0X XSHUT"
+#define D_SENSOR_TFMINIPLUS_TX  "TFmini+ TX"
+#define D_SENSOR_TFMINIPLUS_RX  "TFmini+ RX"
+#define D_SENSOR_ZEROCROSS     "ZC Pulse"
+#define D_SENSOR_HALLEFFECT    "HallEffect"
+#define D_SENSOR_EPD_DATA      "EPD Data"
 
 // Units
 #define D_UNIT_AMPERE "A"
@@ -803,7 +831,7 @@
 #define D_UNIT_HOUR "h"
 #define D_UNIT_GALLONS "gal"
 #define D_UNIT_GALLONS_PER_MIN "g/m"
-#define D_UNIT_INCREMENTS "inc"
+#define D_UNIT_INCREMENTS "növ."
 #define D_UNIT_KELVIN "K"
 #define D_UNIT_KILOMETER "km"
 #define D_UNIT_KILOGRAM "kg"
@@ -839,6 +867,10 @@
 #define D_UNIT_WATTHOUR "Wh"
 #define D_UNIT_WATT_METER_QUADRAT "W/m²"
 
+#define D_NEW_ADDRESS          "Setting address to"
+#define D_OUT_OF_RANGE         "Out of Range"
+#define D_SENSOR_DETECTED      "detected"
+
 //SDM220, SDM120, SDM72, LE01MR
 #define D_EXPORT_POWER    "Export Power"
 #define D_IMPORT_POWER 	  "Import Power"
@@ -850,121 +882,124 @@
 #define D_TOTAL_REACTIVE  "Összes reaktív"
 #define D_UNIT_KWARH      "kVArh"
 #define D_UNIT_ANGLE      "fok"
-#define D_TOTAL_ACTIVE    "Total Active"
+#define D_TOTAL_ACTIVE    "Összes aktív"
 
 //SOLAXX1
-#define D_PV1_VOLTAGE     "PV1 Voltage"
-#define D_PV1_CURRENT     "PV1 Current"
-#define D_PV1_POWER       "PV1 Power"
-#define D_PV2_VOLTAGE     "PV2 Voltage"
-#define D_PV2_CURRENT     "PV2 Current"
-#define D_PV2_POWER       "PV2 Power"
-#define D_SOLAR_POWER     "Solar Power"
-#define D_INVERTER_POWER  "Inverter Power"
-#define D_STATUS          "Status"
-#define D_WAITING         "Waiting"
-#define D_CHECKING        "Checking"
-#define D_WORKING         "Working"
-#define D_FAILURE         "Failure"
-#define D_SOLAX_ERROR_0   "No Error Code"
-#define D_SOLAX_ERROR_1   "Grid Lost Fault"
-#define D_SOLAX_ERROR_2   "Grid Voltage Fault"
-#define D_SOLAX_ERROR_3   "Grid Frequency Fault"
-#define D_SOLAX_ERROR_4   "Pv Voltage Fault"
-#define D_SOLAX_ERROR_5   "Isolation Fault"
-#define D_SOLAX_ERROR_6   "Over Temperature Fault"
-#define D_SOLAX_ERROR_7   "Fan Fault"
-#define D_SOLAX_ERROR_8   "Other Device Fault"
+#define D_PV1_VOLTAGE     "PV1 feszültség"
+#define D_PV1_CURRENT     "PV1 áramerősség"
+#define D_PV1_POWER       "PV1 teljesítmény"
+#define D_PV2_VOLTAGE     "PV2 feszültség"
+#define D_PV2_CURRENT     "PV2 áramerősség"
+#define D_PV2_POWER       "PV2 teljesítmény"
+#define D_SOLAR_POWER     "Solar teljesítmény"
+#define D_INVERTER_POWER  "Inverter teljesítmény"
+#define D_STATUS          "Állapot"
+#define D_WAITING         "Várakozás"
+#define D_CHECKING        "Ellenőrzés"
+#define D_WORKING         "Folyamatban"
+#define D_FAILURE         "Hiba"
+#define D_SOLAX_ERROR_0   "Nincs hibakód"
+#define D_SOLAX_ERROR_1   "Hálózat elvesztése hiba"
+#define D_SOLAX_ERROR_2   "Hálózat feszültség hiba"
+#define D_SOLAX_ERROR_3   "Hálózat frekvencia hiba"
+#define D_SOLAX_ERROR_4   "Pv feszültség hiba"
+#define D_SOLAX_ERROR_5   "Elválasztási hiba"
+#define D_SOLAX_ERROR_6   "Túlmelegedés hiba"
+#define D_SOLAX_ERROR_7   "Ventillátor hiba"
+#define D_SOLAX_ERROR_8   "Egyéb eszközhiba"
 
 //xdrv_10_scripter.ino
-#define D_CONFIGURE_SCRIPT     "Edit script"
-#define D_SCRIPT               "edit script"
-#define D_SDCARD_UPLOAD        "file upload"
-#define D_UFSDIR               "ufs directory"
-#define D_UPL_DONE             "Done"
-#define D_SCRIPT_CHARS_LEFT    "chars left"
-#define D_SCRIPT_CHARS_NO_MORE "no more chars"
-#define D_SCRIPT_DOWNLOAD      "Download"
-#define D_SCRIPT_ENABLE        "script enable"
-#define D_SCRIPT_UPLOAD        "Upload"
-#define D_SCRIPT_UPLOAD_FILES  "Upload files"
+#define D_CONFIGURE_SCRIPT     "Script szerkesztése"
+#define D_SCRIPT               "script szerkesztése"
+#define D_SDCARD_UPLOAD        "fájl feltöltés"
+#define D_UFSDIR               "ufs mappa"
+#define D_UPL_DONE             "Kész"
+#define D_SCRIPT_CHARS_LEFT    "karakter még"
+#define D_SCRIPT_CHARS_NO_MORE "nincs több karakter"
+#define D_SCRIPT_DOWNLOAD      "Letöltés"
+#define D_SCRIPT_ENABLE        "script engedélyezés"
+#define D_SCRIPT_UPLOAD        "Feltöltés"
+#define D_SCRIPT_UPLOAD_FILES  "Fájlok feltöltése"
 
 //xdrv_50_filesystem.ino
-#define D_MANAGE_FILE_SYSTEM   "Manage File system"
-#define D_FS_SIZE              "Size"
-#define D_FS_FREE              "Free"
+#define D_MANAGE_FILE_SYSTEM   "Fájlrendszer kezelése"
+#define D_FS_SIZE              "Méret"
+#define D_FS_FREE              "Szabad"
+#define D_NEW_FILE             "newfile.txt"
+#define D_CREATE_NEW_FILE      "Create and edit new file"
+#define D_EDIT_FILE            "Edit File"
 
 //xsns_67_as3935.ino
-#define D_AS3935_GAIN "gain:"
-#define D_AS3935_ENERGY "energy:"
-#define D_AS3935_DISTANCE "distance:"
-#define D_AS3935_DISTURBER "disturber:"
+#define D_AS3935_GAIN "nyereség:"
+#define D_AS3935_ENERGY "enegia:"
+#define D_AS3935_DISTANCE "távolság:"
+#define D_AS3935_DISTURBER "zavaró:"
 #define D_AS3935_VRMS "µVrms:"
-#define D_AS3935_APRX "aprx.:"
-#define D_AS3935_AWAY "away"
-#define D_AS3935_LIGHT "lightning"
-#define D_AS3935_OUT "lightning out of range"
-#define D_AS3935_NOT "distance not determined"
-#define D_AS3935_ABOVE "lightning overhead"
-#define D_AS3935_NOISE "noise detected"
-#define D_AS3935_DISTDET "disturber detected"
-#define D_AS3935_INTNOEV "Interrupt with no Event!"
-#define D_AS3935_FLICKER "IRQ flicker!"
-#define D_AS3935_POWEROFF "Power Off"
-#define D_AS3935_NOMESS "listening..."
-#define D_AS3935_ON "On"
-#define D_AS3935_OFF "Off"
-#define D_AS3935_INDOORS "Indoors"
-#define D_AS3935_OUTDOORS "Outdoors"
-#define D_AS3935_CAL_FAIL "calibration failed"
-#define D_AS3935_CAL_OK "calibration set to:"
+#define D_AS3935_APRX "kb.:"
+#define D_AS3935_AWAY "távol"
+#define D_AS3935_LIGHT "villám"
+#define D_AS3935_OUT "villám hatókörön kívül"
+#define D_AS3935_NOT "távolság nem meghatározható"
+#define D_AS3935_ABOVE "villám felül"
+#define D_AS3935_NOISE "zaj érzékelve"
+#define D_AS3935_DISTDET "zavarás érzékelve"
+#define D_AS3935_INTNOEV "Megszakítás esemény nélkül!"
+#define D_AS3935_FLICKER "IRQ zörgés!"
+#define D_AS3935_POWEROFF "Kikapcsolva"
+#define D_AS3935_NOMESS "hallgatózás..."
+#define D_AS3935_ON "Be"
+#define D_AS3935_OFF "Ki"
+#define D_AS3935_INDOORS "Beltér"
+#define D_AS3935_OUTDOORS "Kültér"
+#define D_AS3935_CAL_FAIL "kalibráció nem sikerült"
+#define D_AS3935_CAL_OK "kalibráció beállítva:"
 
 //xsns_68_opentherm.ino
 #define D_SENSOR_BOILER_OT_RX   "OpenTherm RX"
 #define D_SENSOR_BOILER_OT_TX   "OpenTherm TX"
 
 // xnrg_15_teleinfo Denky (Teleinfo)
-#define D_CONTRACT        "Contract"
-#define D_POWER_LOAD      "Power load"
-#define D_CURRENT_TARIFF  "Current Tariff"
-#define D_TARIFF          "Tariff"
-#define D_OVERLOAD        "ADPS"
-#define D_MAX_POWER       "Max Power"
-#define D_MAX_CURRENT     "Max Current"
+#define D_CONTRACT        "Szerződés"
+#define D_POWER_LOAD      "Teljesítény"
+#define D_CURRENT_TARIFF  "Áramerősség díja"
+#define D_TARIFF          "Díj"
+#define D_OVERLOAD        "Túlterhelés"
+#define D_MAX_POWER       "Max teljesítmény"
+#define D_MAX_CURRENT     "Max áramerősség"
 
 // xsns_79_as608.ino
-#define D_FP_ENROLL_PLACEFINGER "Place finger"
-#define D_FP_ENROLL_REMOVEFINGER "Remove finger"
-#define D_FP_ENROLL_PLACESAMEFINGER "Place same finger again"
-#define D_FP_ENROLL_RETRY "Error so retry"
-#define D_FP_ENROLL_RESTART "Restart"
-#define D_FP_ENROLL_ERROR "Error"
+#define D_FP_ENROLL_PLACEFINGER "Helyezze oda az ujját"
+#define D_FP_ENROLL_REMOVEFINGER "Vegye el az ujját"
+#define D_FP_ENROLL_PLACESAMEFINGER "Ugyanazt az ujját tegye oda ismét"
+#define D_FP_ENROLL_RETRY "Hiba, próbálkozzon újra"
+#define D_FP_ENROLL_RESTART "Újrindítás"
+#define D_FP_ENROLL_ERROR "Hiba"
 #define D_FP_ENROLL_RESET "Reset"
-#define D_FP_ENROLL_ACTIVE "Active"
-#define D_FP_ENROLL_INACTIVE "Inactive"
+#define D_FP_ENROLL_ACTIVE "Aktív"
+#define D_FP_ENROLL_INACTIVE "Inaktív"
 // Indexed by Adafruit_Fingerprint.h defines
-#define D_FP_PACKETRECIEVEERR "Comms error"    // 0x01 Error when receiving data package
+#define D_FP_PACKETRECIEVEERR "Komm. hiba"    // 0x01 Error when receiving data package
 #define D_FP_NOFINGER ""                       // 0x02 No finger on the sensor
-#define D_FP_IMAGEFAIL "Imaging error"         // 0x03 Failed to enroll the finger
-#define D_FP_IMAGEMESS "Image too messy"       // 0x06 Failed to generate character file due to overly disorderly fingerprint image
-#define D_FP_FEATUREFAIL "Fingerprint too small" // 0x07 Failed to generate character file due to the lack of character point or small fingerprint image
-#define D_FP_NOMATCH "No match"                // 0x08 Finger doesn't match
-#define D_FP_NOTFOUND "Did not find a match"   // 0x09 Failed to find matching finger
-#define D_FP_ENROLLMISMATCH "Fingerprint did not match" // 0x0A Failed to combine the character files
-#define D_FP_BADLOCATION "Bad location"        // 0x0B Addressed PageID is beyond the finger library
-#define D_FP_DBRANGEFAIL "DB range error"      // 0x0C Error when reading template from library or invalid template
-#define D_FP_UPLOADFEATUREFAIL "Upload feature error" // 0x0D Error when uploading template
-#define D_FP_PACKETRESPONSEFAIL "Packet response error" // 0x0E Module failed to receive the following data packages
-#define D_FP_UPLOADFAIL "Upload error"         // 0x0F Error when uploading image
-#define D_FP_DELETEFAIL "Delete error"         // 0x10 Failed to delete the template
-#define D_FP_DBCLEARFAIL "DB Clear error"      // 0x11 Failed to clear finger library
-#define D_FP_PASSFAIL "Password error"         // 0x13 Find whether the fingerprint passed or failed
-#define D_FP_INVALIDIMAGE "Image invalid"      // 0x15 Failed to generate image because of lac of valid primary image
-#define D_FP_FLASHERR "Flash write error"      // 0x18 Error when writing flash
-#define D_FP_INVALIDREG "Invalid number"       // 0x1A Invalid register number
-#define D_FP_ADDRCODE "Address code"           // 0x20 Address code
-#define D_FP_PASSVERIFY "Password verified"    // 0x21 Verify the fingerprint passed
-#define D_FP_UNKNOWNERROR "Error"              // Any other error
+#define D_FP_IMAGEFAIL "Kép hiba"         // 0x03 Failed to enroll the finger
+#define D_FP_IMAGEMESS "Túl zajos kép"       // 0x06 Failed to generate character file due to overly disorderly fingerprint image
+#define D_FP_FEATUREFAIL "Ujjlenyomat túl kicsi" // 0x07 Failed to generate character file due to the lack of character point or small fingerprint image
+#define D_FP_NOMATCH "Nincs találat"                // 0x08 Finger doesn't match
+#define D_FP_NOTFOUND "Nincs találat"   // 0x09 Failed to find matching finger
+#define D_FP_ENROLLMISMATCH "Nincs találat" // 0x0A Failed to combine the character files
+#define D_FP_BADLOCATION "Helytelen pozíció"        // 0x0B Addressed PageID is beyond the finger library
+#define D_FP_DBRANGEFAIL "DB tartomány hiba"      // 0x0C Error when reading template from library or invalid template
+#define D_FP_UPLOADFEATUREFAIL "Feltöltési hiba" // 0x0D Error when uploading template
+#define D_FP_PACKETRESPONSEFAIL "Válaszcsomag hiba" // 0x0E Module failed to receive the following data packages
+#define D_FP_UPLOADFAIL "Feltöltési hiba"         // 0x0F Error when uploading image
+#define D_FP_DELETEFAIL "Törlési hiba"         // 0x10 Failed to delete the template
+#define D_FP_DBCLEARFAIL "Könyvtár törlési hiba"      // 0x11 Failed to clear finger library
+#define D_FP_PASSFAIL "Jelszó hiba"         // 0x13 Find whether the fingerprint passed or failed
+#define D_FP_INVALIDIMAGE "Érvénytelen kép"      // 0x15 Failed to generate image because of lac of valid primary image
+#define D_FP_FLASHERR "Flash írási hiba"      // 0x18 Error when writing flash
+#define D_FP_INVALIDREG "Érvénytelen szám"       // 0x1A Invalid register number
+#define D_FP_ADDRCODE "Cím kód"           // 0x20 Address code
+#define D_FP_PASSVERIFY "Jelszó ellenőrizve"    // 0x21 Verify the fingerprint passed
+#define D_FP_UNKNOWNERROR "Hiba"              // Any other error
 
 // xsns_83_neopool.ino
 #define D_NEOPOOL_MACH_NONE               "NeoPool"           // Machine names
@@ -989,7 +1024,7 @@
 #define D_NEOPOOL_FILTRATION_SLOW         "slow"
 #define D_NEOPOOL_FILTRATION_MEDIUM       "medium"
 #define D_NEOPOOL_FILTRATION_FAST         "fast"
-#define D_NEOPOOL_TYPE                    "Type"              // Sensor & relais names
+#define D_NEOPOOL_TYPE                    "Típus"              // Sensor & relais names
 #define D_NEOPOOL_REDOX                   "Redox"
 #define D_NEOPOOL_CHLORINE                "Chlorine"
 #define D_NEOPOOL_CONDUCTIVITY            "Conductivity"
@@ -1003,7 +1038,7 @@
 #define D_NEOPOOL_RELAY_RX                "Redox level"
 #define D_NEOPOOL_RELAY_CL                "Chlorine pump"
 #define D_NEOPOOL_RELAY_CD                "Brine pump"
-#define D_NEOPOOL_TIME                    "Time"
+#define D_NEOPOOL_TIME                    "Idő"
 #define D_NEOPOOL_FILT_MODE               "Filtration"
 #define D_NEOPOOL_POLARIZATION            "Pol"               // Sensor status
 #define D_NEOPOOL_PR_OFF                  "PrOff"

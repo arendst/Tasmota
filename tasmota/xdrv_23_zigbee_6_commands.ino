@@ -89,6 +89,8 @@ const Z_CommandConverter Z_Commands[] PROGMEM = {
   { Z_(ShutterLift),    0x0102, 0x05, 0x01,   Z_(xx) },            // Lift percentage, 0%=open, 100%=closed
   { Z_(ShutterTilt),    0x0102, 0x08, 0x01,   Z_(xx) },            // Tilt percentage
   { Z_(Shutter),        0x0102, 0xFF, 0x01,   Z_() },
+  // Legrand - Manuf 1021
+  { Z_(LegrandMode),    0xFC40, 0x00, 0x01,   Z_(xx) },
   // Blitzwolf PIR
   { Z_(Occupancy),      0xEF00, 0x01, 0x82,   Z_()},                // Specific decoder for Blitzwolf PIR, empty name means special treatment
   // Decoders only - normally not used to send, and names may be masked by previous definitions

@@ -182,7 +182,7 @@ void SonoffBridgeLearnFailed(void)
 {
   SnfBridge.learn_active = 0;
   Response_P(S_JSON_COMMAND_INDEX_SVALUE, D_CMND_RFKEY, SnfBridge.learn_key, D_JSON_LEARN_FAILED);
-  MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR(D_CMND_RFKEY));
+  MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, PSTR(D_CMND_RFKEY));
 }
 
 void SonoffBridgeReceived(void)
@@ -208,7 +208,7 @@ void SonoffBridgeReceived(void)
         Settings.rf_code[SnfBridge.learn_key][i] = TasmotaGlobal.serial_in_buffer[i +1];
       }
       Response_P(S_JSON_COMMAND_INDEX_SVALUE, D_CMND_RFKEY, SnfBridge.learn_key, D_JSON_LEARNED);
-      MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR(D_CMND_RFKEY));
+      MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, PSTR(D_CMND_RFKEY));
     } else {
       SonoffBridgeLearnFailed();
     }

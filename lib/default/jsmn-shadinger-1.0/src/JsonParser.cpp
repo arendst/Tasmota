@@ -26,18 +26,29 @@
 
 const char * k_current_json_buffer = "";
 
+// returns nibble value or -1 if not an hex digit
+static int32_t asc2byte(char chr) {
+  if (chr >= '0' && chr <= '9') { return chr - '0'; }
+  else if (chr >= 'A' && chr <= 'F') { return chr + 10 - 'A'; }
+  else if (chr >= 'a' && chr <= 'f') { return chr + 10 - 'a'; }
+  return -1;
+}
+
 /*********************************************************************************************\
  * Lightweight String to Float, because atof() or strtof() takes 10KB
  *
  * To remove code, exponents are not parsed
  * (commented out below, just in case we need them after all)
+ * 
+ * Moved to double to be able to parse 32 bits int as well without loss in accuracy
 \*********************************************************************************************/
 // Inspired from https://searchcode.com/codesearch/view/22115068/
-float json_strtof(const char* s) {
+double JsonParserToken::json_strtof(const char* s) {
   const char*  p     = s;
-  float        value = 0.;
+  double        value = 0.;
   int32_t      sign  = +1;
-  float        factor;
+  double        factor;
+  uint32_t     base = 10;   // support hex mode if start with Ox or OX
   // unsigned int expo;
 
   while (isspace(*p)){    // skip any leading white-spaces
@@ -45,22 +56,30 @@ float json_strtof(const char* s) {
   }
 
   switch (*p) {
-    case '-': sign = -1;
+    case '-': sign = -1;    // no break on purpose
     case '+': p++;
     default : break;
   }
 
-  while ((unsigned int)(*p - '0') < 10u) {
-    value = value*10 + (*p++ - '0');
+  if (p[0] == '0' && (p[1] == 'x' || p[1] == 'X')) {    // detect hex mode
+    base = 16;
+    p += 2;
+  }
+
+  int32_t v;    // temp nibble value
+  while ((v = asc2byte(*p)) >= 0) {
+    value = value * base + v;
+    p++;
   }
 
   if (*p == '.' ) {
     factor = 1.0f;
 
     p++;
-    while ((unsigned int)(*p - '0') < 10u) {
-      factor *= 0.1f;
-      value  += (*p++ - '0') * factor;
+    while ((v = asc2byte(*p)) >= 0) {
+      factor /= base;
+      value  += v * factor;
+      p++;
     }
   }
 

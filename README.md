@@ -31,7 +31,7 @@ See [CHANGELOG.md](CHANGELOG.md) for detailed change information.
 
 Unless your Tasmota powered device exhibits a problem or you need to make use of a feature that is not available in the Tasmota version currently installed on your device, leave your device alone - it works so don't make unnecessary changes! If the release version (i.e., the master branch) exhibits unexpected behaviour for your device and configuration, you should upgrade to the latest development version instead to see if your problem is resolved as some bugs in previous releases or development builds may already have been resolved.
 
-The Tasmota development codebase is checked every 1-2 hours for changes. If new commits have been merged and they compile successfuly, new binary files for every variant will be posted at http://ota.tasmota.com/tasmota/ (this web address can be used for OTA updates too). It is important to note that these binaries are based on the current development codebase. These commits are tested as much as is possible and are typically quite stable. However, it is infeasible to test on the hundreds of different types of devices with all the available configuration options permitted.
+Every commit made to the development branch, which is compiling successfuly, will post new binary files at  http://ota.tasmota.com/tasmota/ (this web address can be used for OTA updates too). It is important to note that these binaries are based on the current development codebase. These commits are tested as much as is possible and are typically quite stable. However, it is infeasible to test on the hundreds of different types of devices with all the available configuration options permitted.
 
 Note that there is a chance, as with any upgrade, that the device may not function as expected. You must always account for the possibility that you may need to flash the device via the serial programming interface if the OTA upgrade fails. Even with the master release, you should always attempt to test the device or a similar prototype before upgrading a device which is in production or is hard to reach. And, as always, make a backup of the device configuration before beginning any firmware update.
 
@@ -125,6 +125,7 @@ People helping to keep the show on the road:
 - Flexiti for his initial timer implementation
 - reloxx13 for his [TasmoAdmin](https://github.com/reloxx13/TasmoAdmin) management tool
 - Joachim Banzhaf for his TSL2561 library and driver
+- Andre Thomas for providing many drivers
 - Gijs Noorlander for his MHZ19, SenseAir and updated PubSubClient drivers
 - Erik Montnemery for his HomeAssistant Discovery concept and many code tuning tips
 - Federico Leoni for continued HomeAssistant Discovery support
@@ -136,7 +137,6 @@ People helping to keep the show on the road:
 - Gennaro Tortone for implementing and maintaining Eastron drivers
 - Raymond Mouthaan for managing Wemos Wiki information
 - Norbert Richter for his [decode-config.py](https://github.com/tasmota/decode-config) tool
-- Andre Thomas for providing [thehackbox](http://thehackbox.org/tasmota/) OTA support and daily development builds
 - Joel Stein, digiblur and Shantur Rathore for their Tuya research and driver
 - Frogmore42 for providing many issue answers
 - Jason2866 for platformio support and providing many issue answers

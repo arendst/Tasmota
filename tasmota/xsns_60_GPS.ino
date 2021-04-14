@@ -338,17 +338,6 @@ void UBXsendCFGLine(uint8_t _line)
   DEBUG_SENSOR_LOG(PSTR("UBX: send line %u of UBLOX_INIT"), _line);
 }
 
-void UBXTriggerTele(void)
-{
-  ResponseClear();
-  if (MqttShowSensor()) {
-    MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
-#ifdef USE_RULES
-    RulesTeleperiod();  // Allow rule based HA messages
-#endif  // USE_RULES
-  }
-}
-
 /********************************************************************************************/
 
 void UBXDetect(void)
@@ -380,7 +369,7 @@ void UBXDetect(void)
 
   UBX.state.log_interval = 10;  // 1 second
   UBX.mode.send_UI_only = true; // send UI data ...
-  UBXTriggerTele();             // ... once at after start
+  MqttPublishTeleperiodSensor();  // ... once at after start
 }
 
 uint32_t UBXprocessGPS()
@@ -627,7 +616,7 @@ void UBXSelectMode(uint16_t mode)
       break;
   }
   UBX.mode.send_UI_only = true;
-  UBXTriggerTele();
+  MqttPublishTeleperiodSensor();
 }
 
 /********************************************************************************************/
@@ -650,7 +639,7 @@ bool UBXHandlePOSLLH()
     UBX.state.last_vAcc = UBX.Message.navPosllh.vAcc;
     UBX.state.last_hAcc = UBX.Message.navPosllh.hAcc;
     if (UBX.mode.send_when_new) {
-      UBXTriggerTele();
+      MqttPublishTeleperiodSensor();
     }
     if (UBX.mode.runningNTP){ // after receiving pos-data at least once -> go to pure NTP-mode
       UBXsendCFGLine(7); //NAV-POSLLH off

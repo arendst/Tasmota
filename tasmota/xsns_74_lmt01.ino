@@ -42,7 +42,7 @@ void LMT01_Init(void) {
 
 volatile int lmt01_pulseCount = 0;
 
-void ICACHE_RAM_ATTR LMT01_countPulse(void) {
+void IRAM_ATTR LMT01_countPulse(void) {
   lmt01_pulseCount++;
 }
 

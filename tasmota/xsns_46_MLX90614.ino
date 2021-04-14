@@ -50,13 +50,15 @@ void MLX90614_Init(void)
 
 void MLX90614_Every_Second(void)
 {
-    mlx90614.i2c_buf = I2cRead24(I2_ADR_IRT, MLX90614_TOBJ1);
+    //mlx90614.i2c_buf = I2cRead24(I2_ADR_IRT, MLX90614_TOBJ1);
+    mlx90614.value = MLX90614_read16(I2_ADR_IRT, MLX90614_TOBJ1);
     if (mlx90614.value & 0x8000) {
       mlx90614.obj_temp = -999;
     } else {
       mlx90614.obj_temp = ((float)mlx90614.value * 0.02) - 273.15;
     }
-    mlx90614.i2c_buf = I2cRead24(I2_ADR_IRT,MLX90614_TA);
+    //mlx90614.i2c_buf = I2cRead24(I2_ADR_IRT,MLX90614_TA);
+    mlx90614.value = MLX90614_read16(I2_ADR_IRT, MLX90614_TA);
     if (mlx90614.value & 0x8000) {
       mlx90614.amb_temp = -999;
     } else {
@@ -85,6 +87,51 @@ void MLX90614_Show(uint8_t json)
 #endif
   }
 }
+
+uint16_t MLX90614_read16(uint8_t addr, uint8_t a) {
+  uint16_t ret;
+
+  Wire.beginTransmission(addr);
+  Wire.write(a);
+  Wire.endTransmission(false);
+
+  Wire.requestFrom(addr, (size_t)3);
+  uint8_t buff[5];
+  buff[0] = addr << 1;
+  buff[1] = a;
+  buff[2] = (addr << 1) | 1;
+  buff[3] = Wire.read();
+  buff[4] = Wire.read();
+  ret = buff[3] | (buff[4] << 8);
+  uint8_t pec = Wire.read();
+  uint8_t cpec = MLX90614_crc8(buff, sizeof(buff));
+  //AddLog(LOG_LEVEL_INFO,PSTR("%x - %x"),pec, cpec);
+
+  if (pec != cpec) {
+    AddLog(LOG_LEVEL_INFO,PSTR("mlx checksum error"));
+  }
+  return ret;
+}
+
+
+uint8_t MLX90614_crc8(uint8_t *addr, uint8_t len)
+// The PEC calculation includes all bits except the START, REPEATED START, STOP,
+// ACK, and NACK bits. The PEC is a CRC-8 with polynomial X8+X2+X1+1.
+{
+  uint8_t crc = 0;
+  while (len--) {
+    uint8_t inbyte = *addr++;
+    for (uint8_t i = 8; i; i--) {
+      uint8_t carry = (crc ^ inbyte) & 0x80;
+      crc <<= 1;
+      if (carry)
+        crc ^= 0x7;
+      inbyte <<= 1;
+    }
+  }
+  return crc;
+}
+
 
 /*********************************************************************************************\
  * Interface

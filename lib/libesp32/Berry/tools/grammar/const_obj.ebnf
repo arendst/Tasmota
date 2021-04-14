@@ -1,0 +1,11 @@
+block = type name ['(' {attributes} ')'] '{' {data_fields} '}';
+type = 'map' | 'class' | 'module' | 'vartab';
+
+attributes = name ':' name [','];
+data_fields = data_name ',' data_value [':' depend_macro] '\n';
+
+(* regular expression *)
+name = [_a-zA-Z]\w*;
+data_name = [\._a-zA-Z]\w*;
+data_value = [\w\()]+;
+depend_macro = [_a-zA-Z]\w*;

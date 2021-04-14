@@ -767,7 +767,7 @@ void NeoPool250ms(void)              // Every 250 mSec
     }
 #endif  // DEBUG_TASMOTA_SENSOR
 
-    ++neopool_read_state %= ARRAY_SIZE(NeoPoolReg);
+    ++neopool_read_state %= nitems(NeoPoolReg);
 #ifdef NEOPOOL_OPTIMIZE_READINGS
     if (0 == neopool_read_state) {
       neopool_first_read = false;
@@ -795,7 +795,7 @@ void NeoPool250ms(void)              // Every 250 mSec
 #ifdef DEBUG_TASMOTA_SENSOR
           AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("NEO: notify 0x%04X - addr block 0x%04X ignored"), NeoPoolGetData(MBF_NOTIFICATION), NeoPoolReg[neopool_read_state].addr);
 #endif  // DEBUG_TASMOTA_SENSOR
-          ++neopool_read_state %= ARRAY_SIZE(NeoPoolReg);
+          ++neopool_read_state %= nitems(NeoPoolReg);
         }
       }
 #endif  // NEOPOOL_OPTIMIZE_READINGS
@@ -840,7 +840,7 @@ bool NeoPoolInitData(void)
   bool res = false;
 
   neopool_error = true;
-  for(uint32_t i=0; i<ARRAY_SIZE(NeoPoolReg); i++) {
+  for(uint32_t i=0; i<nitems(NeoPoolReg); i++) {
     if (nullptr == NeoPoolReg[i].data) {
       NeoPoolReg[i].data = (uint16_t *)malloc(sizeof(uint16_t)*NeoPoolReg[i].cnt);
       if (nullptr != NeoPoolReg[i].data) {
@@ -1001,7 +1001,7 @@ uint8_t NeoPoolWriteRegister(uint16_t addr, uint16_t *data, uint16_t cnt)
 
 uint16_t NeoPoolGetData(uint16_t addr)
 {
-  for(uint32_t i=0; i<ARRAY_SIZE(NeoPoolReg); i++) {
+  for(uint32_t i=0; i<nitems(NeoPoolReg); i++) {
     if (nullptr != NeoPoolReg[i].data && addr >= NeoPoolReg[i].addr && addr < NeoPoolReg[i].addr+NeoPoolReg[i].cnt) {
       return NeoPoolReg[i].data[addr - NeoPoolReg[i].addr];
     }
@@ -1206,14 +1206,14 @@ void NeoPoolShow(bool json)
     }
 
     // Filtration mode
-    GetTextIndexed(stemp, sizeof(stemp), NeoPoolGetData(MBF_PAR_FILT_MODE) < MBV_PAR_FILT_INTELLIGENT ? NeoPoolGetData(MBF_PAR_FILT_MODE) : ARRAY_SIZE(kNeoPoolFiltrationMode)-1, kNeoPoolFiltrationMode);
+    GetTextIndexed(stemp, sizeof(stemp), NeoPoolGetData(MBF_PAR_FILT_MODE) < MBV_PAR_FILT_INTELLIGENT ? NeoPoolGetData(MBF_PAR_FILT_MODE) : nitems(kNeoPoolFiltrationMode)-1, kNeoPoolFiltrationMode);
     WSContentSend_PD(HTTP_SNS_NEOPOOL_FILT_MODE, neopool_type, stemp);
 
     // Relays
     for(uint32_t i=0; i<8; i++) {
       char sdesc[24];
-      memset(sdesc, 0, ARRAY_SIZE(sdesc));
-      memset(stemp, 0, ARRAY_SIZE(stemp));
+      memset(sdesc, 0, nitems(sdesc));
+      memset(stemp, 0, nitems(stemp));
       if (0 != NeoPoolGetData(MBF_PAR_PH_ACID_RELAY_GPIO) && i == NeoPoolGetData(MBF_PAR_PH_ACID_RELAY_GPIO)-1) {
         strncpy_P(sdesc, PSTR(D_NEOPOOL_RELAY_PH_ACID), sizeof(sdesc));
       }
@@ -1306,14 +1306,14 @@ void CmndNeopoolReadReg(void)
 {
   uint16_t addr, data[30] = { 0 }, cnt=1;
   uint32_t value[2] = { 0 };
-  uint32_t params_cnt = ParseParameters(ARRAY_SIZE(value), value);
+  uint32_t params_cnt = ParseParameters(nitems(value), value);
   bool fbits32 = !strcasecmp_P(XdrvMailbox.command, PSTR(D_PRFX_NEOPOOL  D_CMND_NP_READL));
 
   cnt = 1;
   if (2 == params_cnt) {
     cnt = value[1];
   }
-  if (params_cnt && cnt < (fbits32 ? (ARRAY_SIZE(data)/2) : ARRAY_SIZE(data))) {
+  if (params_cnt && cnt < (fbits32 ? (nitems(data)/2) : nitems(data))) {
     addr = value[0];
     if (NEOPOOL_OK != NeoPoolReadRegister(addr, data, fbits32 ? (cnt*2) : cnt)) {
       NeopoolResponseError();
@@ -1326,8 +1326,8 @@ void CmndNeopoolReadReg(void)
 void CmndNeopoolWriteReg(void)
 {
   uint16_t addr, data[20] = { 0 }, cnt;
-  uint32_t value[(ARRAY_SIZE(data)/2)+1] = { 0 };
-  uint32_t params_cnt = ParseParameters(ARRAY_SIZE(value), value);
+  uint32_t value[(nitems(data)/2)+1] = { 0 };
+  uint32_t params_cnt = ParseParameters(nitems(value), value);
   bool fbits32 = !strcasecmp_P(XdrvMailbox.command, PSTR(D_PRFX_NEOPOOL  D_CMND_NP_WRITEL));
 
   if (params_cnt > 1) {
@@ -1359,7 +1359,7 @@ void CmndNeopoolBit(void)
   uint16_t addr, data;
   int8_t bit;
   uint32_t value[3] = { 0 };
-  uint32_t params_cnt = ParseParameters(ARRAY_SIZE(value), value);
+  uint32_t params_cnt = ParseParameters(nitems(value), value);
   bool fbits32 = !strcasecmp_P(XdrvMailbox.command, PSTR(D_PRFX_NEOPOOL  D_CMND_NP_BITL));
   uint16_t tempdata[2];
 
@@ -1457,7 +1457,7 @@ void CmndNeopoolFiltrationMode(void)
     NeopoolResponseError();
     return;
   }
-  ResponseCmndChar(GetTextIndexed(stemp, sizeof(stemp), data < MBV_PAR_FILT_INTELLIGENT ? data : ARRAY_SIZE(kNeoPoolFiltrationMode)-1, kNeoPoolFiltrationMode));
+  ResponseCmndChar(GetTextIndexed(stemp, sizeof(stemp), data < MBV_PAR_FILT_INTELLIGENT ? data : nitems(kNeoPoolFiltrationMode)-1, kNeoPoolFiltrationMode));
 }
 
 void CmndNeopoolTime(void)
@@ -1508,7 +1508,7 @@ void CmndNeopoolLight(void)
     return;
   }
   if (relay >=1 && relay <=8) {
-    if (XdrvMailbox.data_len && XdrvMailbox.payload >= 0 && XdrvMailbox.payload < ARRAY_SIZE(timer_val)) {
+    if (XdrvMailbox.data_len && XdrvMailbox.payload >= 0 && XdrvMailbox.payload < nitems(timer_val)) {
       addr = MBF_PAR_TIMER_BLOCK_LIGHT_INT + MBV_TIMER_OFFMB_TIMER_ENABLE;
       data = timer_val[XdrvMailbox.payload];
       NeoPoolWriteRegister(MBF_PAR_TIMER_BLOCK_LIGHT_INT + MBV_TIMER_OFFMB_TIMER_ENABLE, &data, 1);

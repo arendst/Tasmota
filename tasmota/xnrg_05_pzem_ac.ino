@@ -121,7 +121,7 @@ void PzemAcSnsInit(void)
   uint8_t result = PzemAcModbus->Begin(9600);
   if (result) {
     if (2 == result) { ClaimSerial(); }
-    Energy.phase_count = 3;  // Start off with three phases
+    Energy.phase_count = ENERGY_MAX_PHASES;  // Start off with three phases
     PzemAc.phase = 0;
   } else {
     TasmotaGlobal.energy_driver = ENERGY_NONE;

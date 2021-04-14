@@ -157,7 +157,7 @@ void sns_opentherm_init_boiler_status()
     sns_ot_boiler_status.m_boiler_temperature_read = 0;
 }
 
-void ICACHE_RAM_ATTR sns_opentherm_handleInterrupt()
+void IRAM_ATTR sns_opentherm_handleInterrupt()
 {
     sns_ot_master->handleInterrupt();
 }

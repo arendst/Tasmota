@@ -175,7 +175,10 @@ void AHT1XShow(bool json) {
     float tem = ConvertTemp(aht1x_sensors[i].temperature);
     float hum = ConvertHumidity(aht1x_sensors[i].humidity);
     char types[11]; // AHT1X-0x38
-    snprintf_P(types, sizeof(types), PSTR("%s%c0x%02X"), aht1x_sensors[i].types, IndexSeparator(), aht1x_sensors[i].address);  // "X-0xXX"
+    strlcpy(types, aht1x_sensors[i].types, sizeof(types));
+    if (aht1x.count > 1) {
+      snprintf_P(types, sizeof(types), PSTR("%s%c%02X"), aht1x_sensors[i].types, IndexSeparator(), aht1x_sensors[i].address);  // "X-0xXX"
+    }
     TempHumDewShow(json, ((0 == TasmotaGlobal.tele_period) && (0 == i)), types, tem, hum);
   }
 }

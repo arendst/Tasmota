@@ -138,6 +138,7 @@ class ILI9341_2 : public Renderer {
   void dim(uint8_t dim);
   void pushColors(uint16_t *data, uint16_t len, boolean first);
   void invertDisplay(boolean i);
+  void reverseDisplay(boolean i);
   void spiwrite(uint8_t c);
   void spiwrite16(uint16_t c);
   void spiwrite32(uint32_t c);

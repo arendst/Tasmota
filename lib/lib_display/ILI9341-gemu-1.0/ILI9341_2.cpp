@@ -568,6 +568,28 @@ void ILI9341_2::invertDisplay(boolean i) {
   SPI_END_TRANSACTION();
 }
 
+void ILI9341_2::reverseDisplay(boolean i) {
+  SPI_BEGIN_TRANSACTION();
+  ILI9341_2_CS_LOW
+  if (i) {
+    writecmd(ILI9341_2_FRMCTR1);
+    spiwrite(0x00);
+    spiwrite(0x13);
+    writecmd(ILI9341_2_MADCTL);
+    spiwrite(0x01);
+    spiwrite(0x08);
+  } else {
+    writecmd(ILI9341_2_FRMCTR1);
+    spiwrite(0x00);
+    spiwrite(0x18);
+    writecmd(ILI9341_2_MADCTL);
+    spiwrite(0x01);
+    spiwrite(0x48);
+  }
+  ILI9341_2_CS_HIGH
+  SPI_END_TRANSACTION();
+}
+
 void ili9342_dimm(uint8_t dim);
 
 // dimmer 0-100

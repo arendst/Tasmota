@@ -104,7 +104,7 @@ bool RotaryButtonPressed(uint32_t button_index) {
   return false;
 }
 
-void ICACHE_RAM_ATTR RotaryIsrArgMiDesk(void *arg) {
+void IRAM_ATTR RotaryIsrArgMiDesk(void *arg) {
   tEncoder* encoder = static_cast<tEncoder*>(arg);
 
   // https://github.com/PaulStoffregen/Encoder/blob/master/Encoder.h
@@ -115,7 +115,7 @@ void ICACHE_RAM_ATTR RotaryIsrArgMiDesk(void *arg) {
   encoder->state = (state >> 2);
 }
 
-void ICACHE_RAM_ATTR RotaryIsrArg(void *arg) {
+void IRAM_ATTR RotaryIsrArg(void *arg) {
   tEncoder* encoder = static_cast<tEncoder*>(arg);
 
   // Theo Arends
@@ -250,7 +250,7 @@ void RotaryHandler(void) {
         Encoder[index].abs_position[button_pressed] = Settings.param[P_ROTARY_MAX_STEP];      // SetOption43 - Rotary steps
       }
       Response_P(PSTR("{\"Rotary%d\":{\"Pos1\":%d,\"Pos2\":%d}}"), index +1, Encoder[index].abs_position[0], Encoder[index].abs_position[1]);
-      XdrvRulesProcess();
+      XdrvRulesProcess(0);
 #ifdef USE_LIGHT
     }
 #endif  // USE_LIGHT

@@ -904,9 +904,7 @@ miel_hvac_publish_settings(struct miel_hvac_softc *sc)
 
 	ResponseAppend_P(PSTR("}"));
 
-	MqttPublishPrefixTopic_P(TELE, PSTR("HVACSettings"));
-
-	XdrvRulesProcess();
+	MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR("HVACSettings"));
 }
 
 static void
@@ -947,8 +945,7 @@ miel_hvac_data_response(struct miel_hvac_softc *sc,
 	Response_P(PSTR("{\"Bytes\":\"%s\"}"),
 	    ToHex_P((uint8_t *)d, sizeof(*d), hex, sizeof(hex)));
 
-	MqttPublishPrefixTopic_P(TELE, PSTR("HVACData"));
-	XdrvRulesProcess();
+	MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR("HVACData"));
 }
 
 static void

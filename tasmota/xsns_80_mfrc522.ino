@@ -127,6 +127,36 @@ void RC522Show(void) {
 #endif  // USE_WEBSERVER
 
 /*********************************************************************************************\
+ * Supported commands for Sensor80:
+ *
+ * Sensor80 1        - Show antenna gain
+ * Sensor80 1 <gain> - Set antenna gain 0..7 (default 4)
+\*********************************************************************************************/
+
+bool RC522Command(void) {
+  bool serviced = true;
+  char argument[XdrvMailbox.data_len];
+
+  for (uint32_t ca = 0; ca < XdrvMailbox.data_len; ca++) {
+    if ((' ' == XdrvMailbox.data[ca]) || ('=' == XdrvMailbox.data[ca])) { XdrvMailbox.data[ca] = ','; }
+  }
+
+  switch (XdrvMailbox.payload) {
+    case 1:  // Antenna gain
+      uint8_t gain;
+      if (strchr(XdrvMailbox.data, ',') != nullptr) {
+        gain = strtol(ArgV(argument, 2), nullptr, 10) & 0x7;
+        Mfrc522->PCD_SetAntennaGain(gain << 4);
+      }
+      gain = Mfrc522->PCD_GetAntennaGain() >> 4;  // 0..7
+      Response_P(PSTR("{\"Sensor80\":{\"Gain\":%d}}"), gain);
+      break;
+  }
+
+  return serviced;
+}
+
+/*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
 
@@ -143,6 +173,11 @@ bool Xsns80(uint8_t function) {
           Rc522.scantimer--;
         } else {
           RC522ScanForTag();
+        }
+        break;
+      case FUNC_COMMAND_SENSOR:
+        if (XSNS_80 == XdrvMailbox.index) {
+          result = RC522Command();
         }
         break;
 #ifdef USE_WEBSERVER

@@ -127,7 +127,7 @@ enum Cx_cluster_short {
   Cx0010, Cx0011, Cx0012, Cx0013, Cx0014, Cx001A, Cx0020, Cx0100,
   Cx0101, Cx0102, Cx0201, Cx0300, Cx0400, Cx0401, Cx0402, Cx0403,
   Cx0404, Cx0405, Cx0406, Cx0500, Cx0702, Cx0B01, Cx0B04, Cx0B05,
-  CxEF00, CxFCC0, CxFCCC,
+  CxEF00, CxFC01, CxFC40, CxFCC0, CxFCCC,
 };
 
 const uint16_t Cx_cluster[] PROGMEM = {
@@ -136,18 +136,18 @@ const uint16_t Cx_cluster[] PROGMEM = {
   0x0010, 0x0011, 0x0012, 0x0013, 0x0014, 0x001A, 0x0020, 0x0100,
   0x0101, 0x0102, 0x0201, 0x0300, 0x0400, 0x0401, 0x0402, 0x0403,
   0x0404, 0x0405, 0x0406, 0x0500, 0x0702, 0x0B01, 0x0B04, 0x0B05,
-  0xEF00, 0xFCC0, 0xFCCC,
+  0xEF00, 0xFC01, 0xFC40, 0xFCC0, 0xFCCC,
 };
 
 uint16_t CxToCluster(uint8_t cx) {
-  if (cx < ARRAY_SIZE(Cx_cluster)) {
+  if (cx < nitems(Cx_cluster)) {
     return pgm_read_word(&Cx_cluster[cx]);
   }
   return 0xFFFF;
 }
 
 uint8_t ClusterToCx(uint16_t cluster) {
-  for (uint32_t i=0; i<ARRAY_SIZE(Cx_cluster); i++) {
+  for (uint32_t i=0; i<nitems(Cx_cluster); i++) {
     if (pgm_read_word(&Cx_cluster[i]) == cluster) {
       return i;
     }
@@ -170,7 +170,7 @@ const int8_t Cm_multiplier[] PROGMEM = {
 
 int8_t CmToMultiplier(uint8_t cm) {
   cm = cm & 0x0F;     // get only low nibble
-  if (cm < ARRAY_SIZE(Cm_multiplier)) {
+  if (cm < nitems(Cm_multiplier)) {
     return pgm_read_byte(&Cm_multiplier[cm]);
   }
   return 1;
@@ -628,6 +628,8 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   { Ztuya1,   CxEF00, 0x0174,  Z_(TuyaAutoLock),         Cm1, 0 },
   { Zint16,   CxEF00, 0x0202,  Z_(TuyaTempTarget),       Cm_10, Z_MAPPING(Z_Data_Thermo, temperature_target) },
   { Zint16,   CxEF00, 0x0203,  Z_(LocalTemperature),     Cm_10, Z_MAPPING(Z_Data_Thermo, temperature) },  // will be overwritten by actual LocalTemperature
+  { Zuint8,   CxEF00, 0x0203,  Z_(Dimmer),               Cm1, Z_MAPPING(Z_Data_Light, dimmer) },  // will be overwritten by actual LocalTemperature
+  { Zmap8,    CxEF00, 0x0203,  Z_(Occupancy),            Cm1, Z_MAPPING(Z_Data_PIR, occupancy) },  // will be overwritten by actual LocalTemperature
   { Ztuya2,   CxEF00, 0x0215,  Z_(TuyaBattery),          Cm1, 0 },   // TODO check equivalent?
   { Ztuya2,   CxEF00, 0x0266,  Z_(TuyaMinTemp),          Cm1, 0 },
   { Ztuya2,   CxEF00, 0x0267,  Z_(TuyaMaxTemp),          Cm1, 0 },
@@ -641,6 +643,14 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   { Ztuya4,   CxEF00, 0x0405,  Z_(TuyaFanMode),          Cm1, 0 },
   { Ztuya4,   CxEF00, 0x046A,  Z_(TuyaForceMode),        Cm1, 0 },
   { Ztuya4,   CxEF00, 0x046F,  Z_(TuyaWeekSelect),       Cm1, 0 },
+
+  // Legrand BTicino - Manuf code 0x1021
+  { Zdata16,  CxFC01, 0x0000,  Z_(LegrandOpt1),          Cm1, 0 },
+  { Zbool,    CxFC01, 0x0001,  Z_(LegrandOpt2),          Cm1, 0 },
+  { Zbool,    CxFC01, 0x0002,  Z_(LegrandOpt3),          Cm1, 0 },
+
+  // Legrand - Manuf code 0x1021
+  { Zenum8,   CxFC40, 0x0000,  Z_(LegrandHeatingMode),   Cm1, 0 },
 
   // Aqara Opple spacific
   { Zuint8,   CxFCC0, 0x0009,  Z_(OppleMode),            Cm1, 0 },
@@ -668,7 +678,7 @@ typedef union ZCLHeaderFrameControl_t {
 const __FlashStringHelper* zigbeeFindAttributeByName(const char *command,
                                     uint16_t *cluster, uint16_t *attribute, int8_t *multiplier,
                                     uint8_t *zigbee_type = nullptr, Z_Data_Type *data_type = nullptr, uint8_t *map_offset = nullptr) {
-  for (uint32_t i = 0; i < ARRAY_SIZE(Z_PostProcess); i++) {
+  for (uint32_t i = 0; i < nitems(Z_PostProcess); i++) {
     const Z_AttributeConverter *converter = &Z_PostProcess[i];
     if (0 == pgm_read_word(&converter->name_offset)) { continue; }         // avoid strcasecmp_P() from crashing
     if (0 == strcasecmp_P(command, Z_strings + pgm_read_word(&converter->name_offset))) {
@@ -690,7 +700,7 @@ const __FlashStringHelper* zigbeeFindAttributeByName(const char *command,
 //
 const __FlashStringHelper* zigbeeFindAttributeById(uint16_t cluster, uint16_t attr_id,
                                       uint8_t *attr_type, int8_t *multiplier) {
-  for (uint32_t i = 0; i < ARRAY_SIZE(Z_PostProcess); i++) {
+  for (uint32_t i = 0; i < nitems(Z_PostProcess); i++) {
     const Z_AttributeConverter *converter = &Z_PostProcess[i];
     uint16_t conv_cluster = CxToCluster(pgm_read_byte(&converter->cluster_short));
     uint16_t conv_attr_id = pgm_read_word(&converter->attribute);
@@ -1458,7 +1468,7 @@ void ZCLFrame::parseReadAttributes(Z_attribute_list& attr_list) {
     read_attr_ids[i/2] = attrid;
 
     // find the attribute name
-    for (uint32_t i = 0; i < ARRAY_SIZE(Z_PostProcess); i++) {
+    for (uint32_t i = 0; i < nitems(Z_PostProcess); i++) {
       const Z_AttributeConverter *converter = &Z_PostProcess[i];
       uint16_t conv_cluster = CxToCluster(pgm_read_byte(&converter->cluster_short));
       uint16_t conv_attribute = pgm_read_word(&converter->attribute);
@@ -1527,7 +1537,7 @@ void ZCLFrame::parseReadConfigAttributes(Z_attribute_list& attr_list) {
 
     // find the attribute name
     int8_t multiplier = 1;
-    for (uint32_t i = 0; i < ARRAY_SIZE(Z_PostProcess); i++) {
+    for (uint32_t i = 0; i < nitems(Z_PostProcess); i++) {
       const Z_AttributeConverter *converter = &Z_PostProcess[i];
       uint16_t conv_cluster = CxToCluster(pgm_read_byte(&converter->cluster_short));
       uint16_t conv_attribute = pgm_read_word(&converter->attribute);
@@ -1738,6 +1748,10 @@ void ZCLFrame::syntheticAqaraSensor(Z_attribute_list &attr_list, class Z_attribu
         } else if (modelId.startsWith(F("lumi.sensor_smoke"))) {   // gas leak
           if (0x64 == attrid) {
             attr_list.addAttributePMEM(PSTR("SmokeDensity")).copyVal(attr);
+          }
+        } else if (modelId.startsWith(F("lumi.sensor_wleak"))) {   // gas leak
+          if (0x64 == attrid) {
+            attr_list.addAttributePMEM(PSTR("Water")).copyVal(attr);
           }
         } else if (modelId.startsWith(F("lumi.sensor_natgas"))) {   // gas leak
           if (0x64 == attrid) {
@@ -1997,7 +2011,7 @@ void Z_postProcessAttributes(uint16_t shortaddr, uint16_t src_ep, class Z_attrib
       uint8_t map_offset = 0;
       uint8_t zigbee_type = Znodata;
       int8_t conv_multiplier;
-      for (uint32_t i = 0; i < ARRAY_SIZE(Z_PostProcess); i++) {
+      for (uint32_t i = 0; i < nitems(Z_PostProcess); i++) {
         const Z_AttributeConverter *converter = &Z_PostProcess[i];
         uint16_t conv_cluster = CxToCluster(pgm_read_byte(&converter->cluster_short));
         uint16_t conv_attribute = pgm_read_word(&converter->attribute);
@@ -2088,7 +2102,7 @@ void Z_postProcessAttributes(uint16_t shortaddr, uint16_t src_ep, class Z_attrib
 // Internal search function
 void Z_parseAttributeKey_inner(class Z_attribute & attr, uint16_t preferred_cluster) {
   // scan attributes to find by name, and retrieve type
-  for (uint32_t i = 0; i < ARRAY_SIZE(Z_PostProcess); i++) {
+  for (uint32_t i = 0; i < nitems(Z_PostProcess); i++) {
     const Z_AttributeConverter *converter = &Z_PostProcess[i];
     uint16_t local_attr_id = pgm_read_word(&converter->attribute);
     uint16_t local_cluster_id = CxToCluster(pgm_read_byte(&converter->cluster_short));
@@ -2177,7 +2191,7 @@ bool Z_parseAttributeKey(class Z_attribute & attr, uint16_t preferred_cluster) {
 void Z_Data::toAttributes(Z_attribute_list & attr_list) const {
   Z_Data_Type type = getType();
   // iterate through attributes to see which ones need to be exported
-  for (uint32_t i = 0; i < ARRAY_SIZE(Z_PostProcess); i++) {
+  for (uint32_t i = 0; i < nitems(Z_PostProcess); i++) {
     const Z_AttributeConverter *converter = &Z_PostProcess[i];
     uint8_t conv_export = pgm_read_byte(&converter->multiplier_idx) & Z_EXPORT_DATA;
     uint8_t conv_mapping = pgm_read_byte(&converter->mapping);

@@ -1,8 +1,0 @@
-{
-    "name": "ESP32 Ethernet",
-    "keywords": "esp32, ethernet, communication",
-    "description": "Ethernet Library for ESP32",
-    "version": "1.1.0",
-    "frameworks": "arduino",
-    "platforms": "espressif32"
-}

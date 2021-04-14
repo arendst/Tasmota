@@ -174,7 +174,6 @@ struct RULES {
   uint16_t last_minute = 60;
   uint16_t vars_event = 0;   // Bitmask supporting MAX_RULE_VARS bits
   uint16_t mems_event = 0;   // Bitmask supporting MAX_RULE_MEMS bits
-  bool teleperiod = false;
   bool busy = false;
   bool no_execute = false;   // Don't actually execute rule commands
 
@@ -420,7 +419,7 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule, bool stop_all
 
   // Step1: Analyse rule
   String rule_expr = rule;                             // "TELE-INA219#CURRENT>0.100"
-  if (Rules.teleperiod) {
+  if (TasmotaGlobal.rule_teleperiod) {
     int ppos = rule_expr.indexOf(F("TELE-"));          // "TELE-INA219#CURRENT>0.100" or "INA219#CURRENT>0.100"
     if (ppos == -1) { return false; }                  // No pre-amble in rule
     rule_expr = rule.substring(5);                     // "INA219#CURRENT>0.100" or "SYSTEM#BOOT"
@@ -760,9 +759,7 @@ bool RuleSetProcess(uint8_t rule_set, String &event_saved)
       RulesVarReplace(commands, F("%TOPIC%"), TasmotaGlobal.mqtt_topic);
       snprintf_P(stemp, sizeof(stemp), PSTR("%06X"), ESP_getChipId());
       RulesVarReplace(commands, F("%DEVICEID%"), stemp);
-      String mac_address = WiFi.macAddress();
-      mac_address.replace(":", "");
-      RulesVarReplace(commands, F("%MACADDR%"), mac_address);
+      RulesVarReplace(commands, F("%MACADDR%"), NetworkUniqueId());
 #if defined(USE_TIMERS) && defined(USE_SUNRISE)
       RulesVarReplace(commands, F("%SUNRISE%"), String(SunMinutes(0)));
       RulesVarReplace(commands, F("%SUNSET%"), String(SunMinutes(1)));
@@ -854,7 +851,7 @@ void RulesInit(void)
       bitWrite(Settings.rule_once, i, 0);
     }
   }
-  Rules.teleperiod = false;
+  TasmotaGlobal.rule_teleperiod = false;
 }
 
 void RulesEvery50ms(void)
@@ -882,7 +879,7 @@ void RulesEvery50ms(void)
         // Boot time SWITCHES Status
         for (uint32_t i = 0; i < MAX_SWITCHES; i++) {
 #ifdef USE_TM1638
-          if (PinUsed(GPIO_SWT1, i) || (PinUsed(GPIO_TM16CLK) && PinUsed(GPIO_TM16DIO) && PinUsed(GPIO_TM16STB))) {
+          if (PinUsed(GPIO_SWT1, i) || (PinUsed(GPIO_TM1638CLK) && PinUsed(GPIO_TM1638DIO) && PinUsed(GPIO_TM1638STB))) {
 #else
           if (PinUsed(GPIO_SWT1, i)) {
 #endif  // USE_TM1638
@@ -975,15 +972,14 @@ void RulesEvery50ms(void)
   }
 }
 
-uint8_t rules_xsns_index = 0;
+void RulesEvery100ms(void) {
+  static uint8_t xsns_index = 0;
 
-void RulesEvery100ms(void)
-{
   if (Settings.rule_enabled && !Rules.busy && (TasmotaGlobal.uptime > 4)) {  // Any rule enabled and allow 4 seconds start-up time for sensors (#3811)
     ResponseClear();
     int tele_period_save = TasmotaGlobal.tele_period;
     TasmotaGlobal.tele_period = 2;                                   // Do not allow HA updates during next function call
-    XsnsNextCall(FUNC_JSON_APPEND, rules_xsns_index);  // ,"INA219":{"Voltage":4.494,"Current":0.020,"Power":0.089}
+    XsnsNextCall(FUNC_JSON_APPEND, xsns_index);                      // ,"INA219":{"Voltage":4.494,"Current":0.020,"Power":0.089}
     TasmotaGlobal.tele_period = tele_period_save;
     if (strlen(TasmotaGlobal.mqtt_data)) {
       TasmotaGlobal.mqtt_data[0] = '{';                              // {"INA219":{"Voltage":4.494,"Current":0.020,"Power":0.089}
@@ -1031,13 +1027,6 @@ void RulesSaveBeforeRestart(void)
 void RulesSetPower(void)
 {
   Rules.new_power = XdrvMailbox.index;
-}
-
-void RulesTeleperiod(void)
-{
-  Rules.teleperiod = true;
-  RulesProcess();
-  Rules.teleperiod = false;
 }
 
 #ifdef SUPPORT_MQTT_EVENT
@@ -2076,7 +2065,7 @@ void CmndRule(void)
       XdrvMailbox.index = i;
       XdrvMailbox.data[0] = data;    // Only 0 or "
       CmndRule();
-      MqttPublishPrefixTopic_P(RESULT_OR_STAT, XdrvMailbox.command);
+      MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, XdrvMailbox.command);
     }
     ResponseClear();                 // Disable further processing
     return;
@@ -2147,10 +2136,10 @@ void CmndRule(void)
       rule = rule.substring(0, MAX_RULE_SIZE);
       rule += F("...");
     }
-    // snprintf_P (TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), PSTR("{\"%s%d\":\"%s\",\"Once\":\"%s\",\"StopOnError\":\"%s\",\"Free\":%d,\"Rules\":\"%s\"}"),
+    // snprintf_P (TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), PSTR("{\"%s%d\":{\"State\":\"%s\",\"Once\":\"%s\",\"StopOnError\":\"%s\",\"Free\":%d,\"Rules\":\"%s\"}}"),
     //   XdrvMailbox.command, index, GetStateText(bitRead(Settings.rule_enabled, index -1)), GetStateText(bitRead(Settings.rule_once, index -1)),
     //   GetStateText(bitRead(Settings.rule_stop, index -1)), sizeof(Settings.rules[index -1]) - strlen(Settings.rules[index -1]) -1, Settings.rules[index -1]);
-    snprintf_P (TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), PSTR("{\"%s%d\":\"%s\",\"Once\":\"%s\",\"StopOnError\":\"%s\",\"Length\":%d,\"Free\":%d,\"Rules\":\"%s\"}"),
+    snprintf_P (TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), PSTR("{\"%s%d\":{\"State\":\"%s\",\"Once\":\"%s\",\"StopOnError\":\"%s\",\"Length\":%d,\"Free\":%d,\"Rules\":\"%s\"}}"),
       XdrvMailbox.command, index, GetStateText(bitRead(Settings.rule_enabled, index -1)), GetStateText(bitRead(Settings.rule_once, index -1)),
       GetStateText(bitRead(Settings.rule_stop, index -1)),
       rule_len, MAX_RULE_SIZE - GetRuleLenStorage(index - 1),

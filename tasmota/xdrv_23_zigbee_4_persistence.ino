@@ -145,7 +145,7 @@ SBuffer hibernateDevicev2(const struct Z_Device &device) {
 
   char *names[3] = { device.modelId, device.manufacturerId, device.friendlyName };
 
-  for (uint32_t i=0; i<ARRAY_SIZE(names); i++) {
+  for (uint32_t i=0; i<nitems(names); i++) {
     char *p = names[i];
     if (p) {
       size_t len = strlen(p);

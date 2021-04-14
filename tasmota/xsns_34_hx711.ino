@@ -148,7 +148,7 @@ void HxCalibrationStateTextJson(uint8_t msg_id)
   Hx.calibrate_msg = msg_id;
   Response_P(S_JSON_SENSOR_INDEX_SVALUE, XSNS_34, GetTextIndexed(cal_text, sizeof(cal_text), Hx.calibrate_msg, kHxCalibrationStates));
 
-  if (msg_id < 3) { MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR("Sensor34")); }
+  if (msg_id < 3) { MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, PSTR("Sensor34")); }
 }
 
 void SetWeightDelta()

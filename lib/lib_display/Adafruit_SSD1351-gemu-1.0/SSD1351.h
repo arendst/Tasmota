@@ -93,7 +93,7 @@ class SSD1351 : public Renderer {
 
  public:
 
-  SSD1351(int8_t cs,int8_t mosi,int8_t sclk);
+  SSD1351(int8_t cs,int8_t mosi,int8_t sclk, int8_t dc);
 
   void begin(void);
   void DisplayInit(int8_t p,int8_t size,int8_t rot,int8_t font);
@@ -119,10 +119,11 @@ class SSD1351 : public Renderer {
 
  private:
   uint8_t  tabcolor;
+  SPISettings spis;
   void fastSPIwrite(uint8_t d,uint8_t dc);
   void start(void);
   void stop(void);
-  int8_t  _cs, _mosi, _sclk, _hwspi;
+  int8_t  _cs, _mosi, _sclk, _hwspi, _dc;
 
 };
 

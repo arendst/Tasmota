@@ -144,10 +144,10 @@ uint8_t Tm1638GetButtons(void)
 void TmInit(void)
 {
   tm1638_type = 0;
-  if (PinUsed(GPIO_TM16CLK) && PinUsed(GPIO_TM16DIO) && PinUsed(GPIO_TM16STB)) {
-    tm1638_clock_pin = Pin(GPIO_TM16CLK);
-    tm1638_data_pin = Pin(GPIO_TM16DIO);
-    tm1638_strobe_pin = Pin(GPIO_TM16STB);
+  if (PinUsed(GPIO_TM1638CLK) && PinUsed(GPIO_TM1638DIO) && PinUsed(GPIO_TM1638STB)) {
+    tm1638_clock_pin = Pin(GPIO_TM1638CLK);
+    tm1638_data_pin = Pin(GPIO_TM1638DIO);
+    tm1638_strobe_pin = Pin(GPIO_TM1638STB);
 
     pinMode(tm1638_data_pin, OUTPUT);
     pinMode(tm1638_clock_pin, OUTPUT);

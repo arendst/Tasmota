@@ -110,7 +110,7 @@ void Sdm72Every250ms(void)
 #endif  //  SDM72_IMPEXP
       }
 
-      ++Sdm72.read_state %= ARRAY_SIZE(sdm72_register);
+      ++Sdm72.read_state %= nitems(sdm72_register);
       if (0 == Sdm72.read_state && !isnan(Sdm72.total_active)) {
         EnergyUpdateTotal(Sdm72.total_active, true);
       }

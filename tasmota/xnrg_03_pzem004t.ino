@@ -246,7 +246,7 @@ void PzemSnsInit(void)
     if (PzemSerial->hardwareSerial()) {
       ClaimSerial();
     }
-    Energy.phase_count = 3;  // Start off with three phases
+    Energy.phase_count = ENERGY_MAX_PHASES;  // Start off with three phases
     Pzem.phase = 0;
     Pzem.read_state = 1;
   } else {
@@ -266,7 +266,7 @@ bool PzemCommand(void)
   bool serviced = true;
 
   if (CMND_MODULEADDRESS == Energy.command_code) {
-    if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload < 4)) {
+    if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload <= ENERGY_MAX_PHASES)) {
       Pzem.address = XdrvMailbox.payload;  // Valid addresses are 1, 2 and 3
     }
   }

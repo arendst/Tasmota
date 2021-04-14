@@ -232,7 +232,7 @@ void AdsEvery250ms(void)
         }
         ResponseJsonEndEnd();
 
-        XdrvRulesProcess();
+        XdrvRulesProcess(0);
       }
 
     }

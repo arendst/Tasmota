@@ -7,8 +7,7 @@ const char HTTP_SCRIPT_ROOT[] PROGMEM =
                                      ".replace(/{s}/g,\"<tr><th>\")"
     //                                 ".replace(/{m}/g,\"</th><td>\")"
                                      ".replace(/{m}/g,\"</th><td style='width:20px;white-space:nowrap'>\")"  // I want a right justified column with left justified text
-                                     ".replace(/{e}/g,\"</td></tr>\")"
-                                     ".replace(/{c}/g,\"%%'><div style='text-align:center;font-weight:\");"
+                                     ".replace(/{e}/g,\"</td></tr>\");"
       "}"
     "}"
     "a=p||'';"

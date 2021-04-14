@@ -119,7 +119,7 @@ struct FTC532 {
 
 const char ftc532_json[] PROGMEM = "\"FTC532\":{\"KEYS\":\"";
 
-void ICACHE_RAM_ATTR ftc532_ISR(void) {   // Hardware interrupt routine, triggers on rising edge
+void IRAM_ATTR ftc532_ISR(void) {   // Hardware interrupt routine, triggers on rising edge
   uint32_t time = micros();
   uint32_t time_diff = time - Ftc532.rxtime;
   Ftc532.rxtime = time;

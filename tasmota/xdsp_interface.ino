@@ -17,7 +17,6 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#if defined(USE_I2C) || defined(USE_SPI)
 #ifdef USE_DISPLAY
 
 #ifdef XFUNC_PTR_IN_ROM
@@ -201,4 +200,3 @@ bool XdspCall(uint8_t Function)
 }
 
 #endif  // USE_DISPLAY
-#endif  // USE_I2C or USE_SPI

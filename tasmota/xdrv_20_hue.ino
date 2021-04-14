@@ -172,8 +172,7 @@ const char HUE_API[] PROGMEM = "\x00\x06\x3B\x37\x8C\xEC\x2D\x10\xEC\x9C\x2F\x9D
 
 String HueBridgeId(void)
 {
-  String temp = WiFi.macAddress();
-  temp.replace(":", "");
+  String temp = NetworkUniqueId();
   String bridgeid = temp.substring(0, 6);
   bridgeid += F("FFFE");
   bridgeid += temp.substring(6);
@@ -182,8 +181,7 @@ String HueBridgeId(void)
 
 String HueSerialnumber(void)
 {
-  String serial = WiFi.macAddress();
-  serial.replace(":", "");
+  String serial = NetworkUniqueId();
   serial.toLowerCase();
   return serial;  // 5ccf7f139f3d
 }
@@ -409,11 +407,11 @@ const char HueConfigResponse_JSON[] PROGMEM = "\x3D\xA7\xB3\xAC\x6B\x3D\x87\x99\
 
 String GetHueDeviceId(uint16_t id)
 {
+  char s[32];
   String deviceid = WiFi.macAddress();
-  deviceid += F(":00:11-");
-  deviceid += String(id);
   deviceid.toLowerCase();
-  return deviceid;  // 5c:cf:7f:13:9f:3d:00:11-1
+  snprintf(s, sizeof(s), "%s:%02x:11-%02x", deviceid.c_str(), (id >> 8) & 0xFF, id & 0xFF);
+  return String(s);  // 5c:cf:7f:13:9f:3d:00:11-01
 }
 
 String GetHueUserId(void)
@@ -889,11 +887,10 @@ void HueLightsCommand(uint8_t device, uint32_t device_id, String &response) {
           LightSetBri(device, bri);
         }
         if (LST_COLDWARM <= local_light_subtype) {
-          MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR(D_CMND_COLOR));
+          MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, PSTR(D_CMND_COLOR));
         } else {
-          MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR(D_CMND_DIMMER));
+          MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, PSTR(D_CMND_DIMMER));
         }
-        XdrvRulesProcess();
       }
       change = false;
     }

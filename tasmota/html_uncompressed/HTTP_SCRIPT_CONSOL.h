@@ -1,5 +1,5 @@
 const char HTTP_SCRIPT_CONSOL[] PROGMEM =
-  "var sn=0,id=0,ft;"                      // Scroll position, Get most of weblog initially
+  "var sn=0,id=0,ft,ltm=%d;"                      // Scroll position, Get most of weblog initially
   "function l(p){"                        // Console log and command service
     "var c,o='';"
     "clearTimeout(lt);"
@@ -26,12 +26,14 @@ const char HTTP_SCRIPT_CONSOL[] PROGMEM =
           "t.scrollTop=99999;"
           "sn=t.scrollTop;"
           "clearTimeout(ft);"
-          "lt=setTimeout(l,%d);" // webrefresh timer....
+          "lt=setTimeout(l,ltm);" // webrefresh timer....
         "}"
       "};"
       "x.open('GET','cs?c2='+id+o,true);"  // Related to Webserver->hasArg("c2") and WebGetArg("c2", stmp, sizeof(stmp))
       "x.send();"
       "ft=setTimeout(l,20000);" // fail timeout, triggered 20s after asking for XHR
+    "}else{"
+      "lt=setTimeout(l,ltm);" // webrefresh timer....
     "}"
     "return false;"
   "}"

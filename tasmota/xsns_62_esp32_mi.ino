@@ -745,14 +745,8 @@ uint32_t MIBLEgetSensorSlot(uint8_t (&_MAC)[6], uint16_t _type, uint8_t counter)
  *
  */
 void MI32triggerTele(void){
-    MI32.mode.triggeredTele = 1;
-    ResponseClear();
-    if (MqttShowSensor()) {
-      MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
-  #ifdef USE_RULES
-      RulesTeleperiod();  // Allow rule based HA messages
-  #endif  // USE_RULES
-    }
+  MI32.mode.triggeredTele = 1;
+  MqttPublishTeleperiodSensor();
 }
 
 /**
@@ -762,7 +756,7 @@ void MI32triggerTele(void){
 void MI32StatusInfo() {
   MI32.mode.shallShowStatusInfo = 0;
   Response_P(PSTR("{\"%s\":{\"found\":%u}}"), D_CMND_MI32, MIBLEsensors.size());
-  XdrvRulesProcess();
+  XdrvRulesProcess(0);
 }
 
 /*********************************************************************************************\
@@ -1731,7 +1725,7 @@ void MI32EverySecond(bool restart){
     _activeBeacons++;
     _beacon.time++;
     Response_P(PSTR("{\"Beacon%u\":{\"Time\":%u}}"), _idx, _beacon.time);
-    XdrvRulesProcess();
+    XdrvRulesProcess(0);
   }
   if(_activeBeacons==0) MI32.mode.activeBeacon = 0;
 

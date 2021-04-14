@@ -1,7 +1,7 @@
 /*
   vi-VN.h - localization for Vietnam for Tasmota
 
-  Copyright (C) 2021  translateb by Tâm.NT
+  Copyright (C) 2021  Tâm.NT
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v9.0.0.1
+ * Updated until v9.3.1.1
 \*********************************************************************/
 
 //#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -109,6 +109,7 @@
 #define D_GATEWAY "Cổng kết nối"
 #define D_GROUP "Nhóm"
 #define D_HOST "Máy chủ"
+#define D_HALL_EFFECT "Hall Effect"
 #define D_HOSTNAME "Tên máy chủ"
 #define D_HUMIDITY "Độ ẩm"
 #define D_ILLUMINANCE "Độ sáng"
@@ -289,10 +290,19 @@
 #define D_WEP "WEP"
 #define D_WPA_PSK "WPA PSK"
 #define D_WPA2_PSK "WPA2 PSK"
-#define D_AP1_SSID "Tên mạng wifi 1"
-#define D_AP1_PASSWORD "Mật khẩu mạng wifi 1"
-#define D_AP2_SSID "Tên mạng wifi 2"
-#define D_AP2_PASSWORD "Mật khẩu mạng wifi 2"
+#define D_AP1_SSID "Tên mạng WiFi"
+#define D_AP1_SSID_HELP "Type or Select your WiFi Network"
+#define D_AP2_SSID "Tên mạng WiFi 2"
+#define D_AP2_SSID_HELP "Type your Alternative WiFi Network"
+#define D_AP_PASSWORD "Mật khẩu mạng WiFi"
+#define D_AP_PASSWORD_HELP "Enter your WiFi Password"
+#define D_SELECT_YOUR_WIFI_NETWORK "Select your WiFi Network"
+#define D_SHOW_MORE_WIFI_NETWORKS "Scan for all WiFi Networks"
+#define D_SHOW_MORE_OPTIONS "More Options"
+#define D_CHECK_CREDENTIALS "Please, check your credentials"
+#define D_SUCCESSFUL_WIFI_CONNECTION "Successful WiFi Connection"
+#define D_NOW_YOU_CAN_CLOSE_THIS_WINDOW "Now you can close this window"
+#define D_REDIRECTING_TO_NEW_IP "Redirecting to new device's IP address"
 
 #define D_MQTT_PARAMETERS "Thông số MQTT"
 #define D_CLIENT "Client"
@@ -585,6 +595,10 @@
 #define D_StL1L2L3 "Dòng L1+L2+L3"
 #define D_SpL1L2L3 "Điện áp L1+L2+L3/3"
 
+// xsns_86_tfminiplus.ino
+#define D_SIGNALSTRENGTH "Signal Strength"
+#define D_CHIPTEMPERATURE "Chip Temperature"
+
 // tasmota_template.h - keep them as short as possible to be able to fit them in GUI drop down box
 #define D_SENSOR_NONE          "Không dùng"
 #define D_SENSOR_USER          "Người Dùng"
@@ -643,6 +657,9 @@
 #define D_SENSOR_TM1638_CLK    "TM1638 CLK"
 #define D_SENSOR_TM1638_DIO    "TM1638 DIO"
 #define D_SENSOR_TM1638_STB    "TM1638 STB"
+#define D_SENSOR_MAX7219_DIN    "MAX7219 DIN"
+#define D_SENSOR_MAX7219_CS    "MAX7219 CS"
+#define D_SENSOR_MAX7219_CLK    "MAX7219 CLK"
 #define D_SENSOR_HX711_SCK     "HX711 SCK"
 #define D_SENSOR_HX711_DAT     "HX711 DAT"
 #define D_SENSOR_FTC532        "FTC532"
@@ -674,6 +691,8 @@
 #define D_SENSOR_MCP39F5_TX    "MCP39F5 Tx"
 #define D_SENSOR_MCP39F5_RX    "MCP39F5 Rx"
 #define D_SENSOR_MCP39F5_RST   "MCP39F5 Rst"
+#define D_SENSOR_CSE7761_TX    "CSE7761 Tx"
+#define D_SENSOR_CSE7761_RX    "CSE7761 Rx"
 #define D_SENSOR_CSE7766_TX    "CSE7766 Tx"
 #define D_SENSOR_CSE7766_RX    "CSE7766 Rx"
 #define D_SENSOR_PN532_TX      "PN532 Tx"
@@ -769,18 +788,22 @@
 #define D_SENSOR_IEM3000_RX    "iEM3000 RX"
 #define D_SENSOR_MIEL_HVAC_TX  "MiEl HVAC Tx"
 #define D_SENSOR_MIEL_HVAC_RX  "MiEl HVAC Rx"
+#define D_SENSOR_PROJECTOR_CTRL_TX  "DLP Tx"
+#define D_SENSOR_PROJECTOR_CTRL_RX  "DLP Rx"
 #define D_SENSOR_SHELLY_DIMMER_BOOT0 "SHD Boot 0"
 #define D_SENSOR_SHELLY_DIMMER_RST_INV "SHD Reset"
 #define D_SENSOR_RC522_RST     "RC522 Rst"
 #define D_SENSOR_RC522_CS      "RC522 CS"
 #define D_SENSOR_NRF24_CS      "NRF24 CS"
 #define D_SENSOR_NRF24_DC      "NRF24 DC"
+#define D_SENSOR_XPT2046_CS    "XPT2046 CS"
 #define D_SENSOR_ILI9341_CS    "ILI9341 CS"
 #define D_SENSOR_ILI9341_DC    "ILI9341 DC"
 #define D_SENSOR_ILI9488_CS    "ILI9488 CS"
 #define D_SENSOR_EPAPER29_CS   "EPaper29 CS"
 #define D_SENSOR_EPAPER42_CS   "EPaper42 CS"
 #define D_SENSOR_SSD1351_CS    "SSD1351 CS"
+#define D_SENSOR_SSD1351_DC    "SSD1351 DC"
 #define D_SENSOR_RA8876_CS     "RA8876 CS"
 #define D_SENSOR_ST7789_CS     "ST7789 CS"
 #define D_SENSOR_ST7789_DC     "ST7789 DC"
@@ -791,7 +814,12 @@
 #define D_SENSOR_WIEGAND_D1    "Wiegand D1"
 #define D_SENSOR_NEOPOOL_TX    "NeoPool Tx"
 #define D_SENSOR_NEOPOOL_RX    "NeoPool Rx"
-
+#define D_SENSOR_VL53L0X_XSHUT "VL53L0X XSHUT"
+#define D_SENSOR_TFMINIPLUS_TX  "TFmini+ TX"
+#define D_SENSOR_TFMINIPLUS_RX  "TFmini+ RX"
+#define D_SENSOR_ZEROCROSS     "ZC Pulse"
+#define D_SENSOR_HALLEFFECT    "HallEffect"
+#define D_SENSOR_EPD_DATA      "EPD Data"
 
 // Units
 #define D_UNIT_AMPERE "A"
@@ -838,6 +866,10 @@
 #define D_UNIT_WATT "W"
 #define D_UNIT_WATTHOUR "Wh"
 #define D_UNIT_WATT_METER_QUADRAT "W/m²"
+
+#define D_NEW_ADDRESS          "Setting address to"
+#define D_OUT_OF_RANGE         "Out of Range"
+#define D_SENSOR_DETECTED      "detected"
 
 //SDM220, SDM120, SDM72, LE01MR
 #define D_EXPORT_POWER    "Export Power"
@@ -893,6 +925,9 @@
 #define D_MANAGE_FILE_SYSTEM   "Manage File system"
 #define D_FS_SIZE              "Size"
 #define D_FS_FREE              "Free"
+#define D_NEW_FILE             "newfile.txt"
+#define D_CREATE_NEW_FILE      "Create and edit new file"
+#define D_EDIT_FILE            "Edit File"
 
 //xsns_67_as3935.ino
 #define D_AS3935_GAIN "khuếch đại:"

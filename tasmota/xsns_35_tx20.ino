@@ -150,7 +150,7 @@ uint32_t tx2x_last_available = 0;
 uint32_t tx23_stage = 0;
 #endif  // USE_TX23_WIND_SENSOR
 
-void ICACHE_RAM_ATTR TX2xStartRead(void)
+void IRAM_ATTR TX2xStartRead(void)
 {
   /**
    * La Crosse TX20 Anemometer datagram every 2 seconds

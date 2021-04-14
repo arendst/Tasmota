@@ -1,0 +1,28 @@
+#######################################
+# Syntax Coloring Map For LedControl
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+LedControl	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+shutdown	KEYWORD2
+setScanLimit	KEYWORD2
+setIntensity	KEYWORD2
+clearDisplay	KEYWORD2
+setLed		KEYWORD2
+setRow		KEYWORD2
+setColumn	KEYWORD2
+setDigit	KEYWORD2
+setChar		KEYWORD2
+
+#######################################
+# Constants (LITERAL1)
+#######################################
+

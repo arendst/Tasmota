@@ -736,7 +736,7 @@ void MINRFbeaconCounter(void) {
     RulesProcessEvent(stemp);
 */
     Response_P(PSTR("{%s:{\"Beacon\":%u}}"), D_CMND_NRF, MINRF.beacon.time);
-    XdrvRulesProcess();
+    XdrvRulesProcess(0);
   }
 }
 
@@ -1162,14 +1162,8 @@ void MINRFconfirmSensors(void){
  *
  */
 void MINRFtriggerTele(void){
-    MINRF.mode.triggeredTele= true;
-    ResponseClear();
-    if (MqttShowSensor()) {
-      MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
-  #ifdef USE_RULES
-      RulesTeleperiod();  // Allow rule based HA messages
-  #endif  // USE_RULES
-    }
+  MINRF.mode.triggeredTele = true;
+  MqttPublishTeleperiodSensor();
 }
 
 /**

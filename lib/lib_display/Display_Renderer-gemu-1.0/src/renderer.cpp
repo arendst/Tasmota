@@ -549,6 +549,9 @@ void Renderer::setDrawMode(uint8_t mode) {
 void Renderer::invertDisplay(boolean i) {
 }
 
+void Renderer::reverseDisplay(boolean i) {
+}
+
 void Renderer::setScrollMargins(uint16_t top, uint16_t bottom) {
 
 }

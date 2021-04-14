@@ -557,9 +557,17 @@ void Z_Device::jsonPublishAttrList(const char * json_prefix, const Z_attribute_l
       char stemp[TOPSZ];
       strlcpy(stemp, friendlyName, sizeof(stemp));
       MakeValidMqtt(0, stemp);
-      snprintf_P(subtopic, sizeof(subtopic), PSTR("%s/%s"), TasmotaGlobal.mqtt_topic, stemp);
+      if (Settings.flag5.zigbee_hide_bridge_topic) {
+        snprintf_P(subtopic, sizeof(subtopic), PSTR("%s"), stemp);
+      } else {
+        snprintf_P(subtopic, sizeof(subtopic), PSTR("%s/%s"), TasmotaGlobal.mqtt_topic, stemp);
+      } 
     } else {
-      snprintf_P(subtopic, sizeof(subtopic), PSTR("%s/%04X"), TasmotaGlobal.mqtt_topic, shortaddr);
+      if (Settings.flag5.zigbee_hide_bridge_topic) {
+        snprintf_P(subtopic, sizeof(subtopic), PSTR("%04X"), shortaddr);
+      } else {
+        snprintf_P(subtopic, sizeof(subtopic), PSTR("%s/%04X"), TasmotaGlobal.mqtt_topic, shortaddr);
+      } 
     }
     if (Settings.flag5.zb_topic_endpoint) {
       if (attr_list.isValidSrcEp()) {
@@ -575,7 +583,7 @@ void Z_Device::jsonPublishAttrList(const char * json_prefix, const Z_attribute_l
   } else {
     MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
   }
-  XdrvRulesProcess();     // apply rules
+  XdrvRulesProcess(0);     // apply rules
 }
 
 void Z_Devices::jsonPublishFlush(uint16_t shortaddr) {

@@ -46,7 +46,7 @@ struct ARILUX {
 } Arilux;
 
 #ifndef USE_WS2812_DMA                         // Collides with Neopixelbus but solves RF misses
-void AriluxRfInterrupt(void) ICACHE_RAM_ATTR;  // As iram is tight and it works this way too
+void AriluxRfInterrupt(void) IRAM_ATTR;  // As iram is tight and it works this way too
 #endif  // USE_WS2812_DMA
 
 void AriluxRfInterrupt(void)

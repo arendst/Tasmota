@@ -344,18 +344,18 @@ void SendReceiveDeviceGroupMessage(struct device_group * device_group, struct de
           value |= *message_ptr++ << 16;
           value |= *message_ptr++ << 24;
 #ifdef USE_DEVICE_GROUPS_SEND
-          device_group->values_32bit[item - DGR_ITEM_MAX_16BIT - 1] = (item == DGR_ITEM_POWER ? value & 0xffffff : value);
+          if (item < DGR_ITEM_LAST_32BIT) device_group->values_32bit[item - DGR_ITEM_MAX_16BIT - 1] = (item == DGR_ITEM_POWER ? value & 0xffffff : value);
 #endif  // USE_DEVICE_GROUPS_SEND
         }
 #ifdef USE_DEVICE_GROUPS_SEND
         else {
-          device_group->values_16bit[item - DGR_ITEM_MAX_8BIT - 1] = value;
+          if (item < DGR_ITEM_LAST_16BIT) device_group->values_16bit[item - DGR_ITEM_MAX_8BIT - 1] = value;
         }
 #endif  // USE_DEVICE_GROUPS_SEND
       }
 #ifdef USE_DEVICE_GROUPS_SEND
       else {
-        device_group->values_8bit[item] = value;
+        if (item < DGR_ITEM_LAST_8BIT) device_group->values_8bit[item] = value;
       }
 #endif  // USE_DEVICE_GROUPS_SEND
       log_length = snprintf(log_ptr, log_remaining, PSTR("%u"), value);
@@ -402,7 +402,7 @@ void SendReceiveDeviceGroupMessage(struct device_group * device_group, struct de
           case DGR_ITEM_POWER:
             if (Settings.flag4.multiple_device_groups) {  // SetOption88 - Enable relays in separate device groups
               uint32_t device = Settings.device_group_tie[device_group_index];
-              if (device) {
+              if (device && device <= TasmotaGlobal.devices_present) {
                 bool on = (value & 1);
                 if (on != ((TasmotaGlobal.power >> (device - 1)) & 1)) ExecuteCommandPower(device, (on ? POWER_ON : POWER_OFF), SRC_REMOTE);
               }

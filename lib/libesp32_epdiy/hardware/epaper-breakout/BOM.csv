@@ -1,0 +1,44 @@
+Comment,Designator,Footprint,LCSC Part #
+4.7uF Polarized capacitor,"C1,C6",C_0603_1608Metric,C19666
+10uF Unpolarized capacitor,"C2,C3,C21",C_0603_1608Metric,C19702
+0.1uF Unpolarized capacitor,"C4,C7,C15,C16,C22,C23",C_0603_1608Metric,C14663
+4.7pF Unpolarized capacitor,"C5,C10",C_0603_1608Metric,C1669
+100pF Unpolarized capacitor,"C8,C11",C_0603_1608Metric,C14858
+1uF Unpolarized capacitor,"C9,C12,C13,C14,C18,C19,C20",C_0603_1608Metric,C15849
+100uF Unpolarized capacitor,C17,CP_EIA-3528-15_AVX-H, C16133
+"MBR0540 40V 0.5A Schottky Power Rectifier Diode, SOD-123","D1,D2,D3,D4,D5,D6",D_SOD-123,C21353
+"1N5817 20V 1A Schottky Barrier Rectifier Diode, DO-41","D7,D10",D_SOD-123, C8598
+LED GREEN Light emitting diode,D8,LED_0805_2012Metric,C2297
+LED RED Light emitting diode,D9,LED_0805_2012Metric, C84256
+"XF2M-3315-1A",J1,CONN_ED097OC4,C231420
+C10418 USB Micro Type B connector,J2,USB_Micro-B_A01SB141B1-067,C10418
+HRS_FH26W-39S-0.3SHW(60) ,J4,HRS_FH26W-39S-0.3SHW(60),C92280
+22uH Inductor,"L1,L2,L3,L4",L_6.3x6.3_H3, C206321
+"AO3401A -4.0A Id, -30V Vds, P-Channel MOSFET, SOT-23","Q1,Q2,Q5",SOT-23, C15127
+"MMBT3904 0.2A Ic, 40V Vce, Small Signal NPN Transistor, SOT-23","Q3,Q4,Q6",SOT-23,C20526
+10k Resistor,"R1,R10,R11,R13,R15,R19,R20",R_0805_2012Metric,C17414
+100k Resistor,R2,R_0805_2012Metric,C17407
+1k Resistor,"R3,R8,R12",R_0805_2012Metric,C17513
+2M Resistor,R4,R_0805_2012Metric,C26112
+120k Resistor,R5,R_0805_2012Metric, C17436
+560k Resistor,R6,R_0805_2012Metric,C15785
+39k Resistor,R7,R_0805_2012Metric,C25826
+6.8k Resistor,R9,R_0805_2012Metric, C17772
+390k Resistor,R14,R_0805_2012Metric,C17656
+300k Resistor,R16,R_0805_2012Metric,  C17616
+27k Resistor,R17,R_0805_2012Metric,C17593
+110k Resistor,R18,R_0805_2012Metric,C17422
+680k Resistor,R21,R_0805_2012Metric, C17797
+150k Resistor,R22,R_0805_2012Metric, C17470
+200k Potentiometer,RV1,EVM3ESX50B25,C11958
+"MCP1700-3302E_SOT23 250mA Low Quiscent Current LDO, 3.3V output, SOT-23",U1,SOT-23,C39051
+"LT1945 Dual Micropower DC/DC Converter with Positive and Negative Outputs, MSOP-10","U2,U3",MSOP-10_3x3mm_P0.5mm,
+"XC6206PxxxMR Positive 60-250mA Low Dropout Regulator, Fixed Output, SOT-23",U4,SOT-23, C5446
+ESP32-WROVER-B ,U5,ESP32-WROVER-B, C503591
+X05A20H34G,U6,X05A20H34G,
+"LM358 Low-Power, Dual Operational Amplifiers, DIP-8/SOIC-8/TO-99-8",U7,SOP-8_3.76x4.96mm_P1.27mm,C7950
+74HC4094 ,U8,SOIC-16_3.9x9.9mm_P1.27mm,C5651
+"MCP9700AT-ETT Low power, analog thermistor temperature sensor, ±2C accuracy, -40C to +125C, in SOT-23-3",U9,SOT-23,C127949
+ED060SC7 ,U10,AXT334124,
+TP4056 ,U11,TP4056_SOP-8-PP, C16581
+"CH340C USB serial converter, UART, SOIC-16",U12,SOIC-16_3.9x9.9mm_P1.27mm, C84681

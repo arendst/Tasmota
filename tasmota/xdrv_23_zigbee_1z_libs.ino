@@ -191,6 +191,9 @@ public:
   int32_t getInt(void) const;
   uint32_t getUInt(void) const;
   bool getBool(void) const;
+  // optimistically try to get any value as literal or in string - double to not lose precision for 32 bits
+  double getOptimisticDouble(void) const;
+  //
   const SBuffer * getRaw(void) const;
 
   // always return a point to a string, if not defined then empty string.
@@ -437,6 +440,17 @@ JsonGeneratorArray & Z_attribute::newJsonArray(void) {
 }
 
 // get num values
+double Z_attribute::getOptimisticDouble(void) const {
+  switch (type) {
+    case Za_type::Za_bool:
+    case Za_type::Za_uint:    return (double) val.uval32;
+    case Za_type::Za_int:     return (double) val.ival32;
+    case Za_type::Za_float:   return (double) val.fval;
+    case Za_type::Za_str:     return JsonParserToken::json_strtof(val.sval);
+    default:                  return 0.0;
+  }
+}
+
 float Z_attribute::getFloat(void) const {
   switch (type) {
     case Za_type::Za_bool:

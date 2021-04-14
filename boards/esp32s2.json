@@ -4,21 +4,23 @@
       "ldscript": "esp32s2_out.ld"
     },
     "core": "esp32",
-    "mcu": "esp32s2",
-    "extra_flags": "-Desp32S2_dev_module",
     "f_cpu": "240000000L",
     "f_flash": "80000000L",
-    "flash_mode": "qio",
+    "flash_mode": "dio",
     "mcu": "esp32s2",
     "variant": "esp32s2"
   },
   "connectivity": [
     "wifi"
   ],
+  "debug": {
+    "openocd_target": "esp32s2.cfg"
+  },
   "frameworks": [
+    "espidf",
     "arduino"
   ],
-  "name": "ESP32S2 Dev Module",
+  "name": "Espressif ESP32-S2-Saola-1",
   "upload": {
     "flash_size": "4MB",
     "maximum_ram_size": 327680,
@@ -26,6 +28,6 @@
     "require_upload_port": true,
     "speed": 460800
   },
-  "url": "https://espressif.com",
-  "vendor": "espressif"
+  "url": "https://docs.espressif.com/projects/esp-idf/en/latest/esp32s2/hw-reference/esp32s2/user-guide-saola-1-v1.2.html",
+  "vendor": "Espressif"
 }

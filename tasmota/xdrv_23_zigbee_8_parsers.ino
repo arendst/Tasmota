@@ -190,7 +190,7 @@ int32_t EZSP_EnergyScanComplete(int32_t res, const SBuffer &buf) {
 // Dump energu scan results
 //
 void EnergyScanResults(void) {
-  Response_P(PSTR("{\"" D_JSON_ZIGBEE_SCAN "\":["));
+  Response_P(PSTR("{\"" D_JSON_ZIGBEE_SCAN "\":{"));
   for (uint32_t i = 0; i < USE_ZIGBEE_CHANNEL_COUNT; i++) {
     int8_t energy = zigbee.energy[i];
 
@@ -207,10 +207,10 @@ void EnergyScanResults(void) {
     uint32_t bars = changeUIntScale(energy_unsigned, bar_min + 0x80, bar_max + 0x80, 0, bar_count);
     for  (uint32_t j = 0; j < bars; j++) { bar_str[j] = '#'; }
     bar_str[bars] = 0;
-    
+
     AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Channel %2d: %s"), i + USE_ZIGBEE_CHANNEL_MIN, bar_str);
   }
-  ResponseAppend_P(PSTR("]}"));
+  ResponseAppend_P(PSTR("}}"));
   MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEE_STATE));
 }
 
@@ -418,7 +418,7 @@ int32_t ZNP_Reboot(int32_t res, SBuffer &buf) {
   }
 
   Response_P(PSTR("{\"" D_JSON_ZIGBEE_STATE "\":{"
-                  "\"Status\":%d,\"Message\":\"CC2530 booted\",\"RestartReason\":\"%s\""
+                  "\"Status\":%d,\"Message\":\"CCxxxx booted\",\"RestartReason\":\"%s\""
                   ",\"MajorRel\":%d,\"MinorRel\":%d}}"),
                   ZIGBEE_STATUS_BOOT, reason_str,
                   major_rel, minor_rel);
@@ -667,7 +667,7 @@ const uint8_t Z_bindings[] PROGMEM = {
 
 int32_t Z_ClusterToCxBinding(uint16_t cluster) {
   uint8_t cx = ClusterToCx(cluster);
-  for (uint32_t i=0; i<ARRAY_SIZE(Z_bindings); i++) {
+  for (uint32_t i=0; i<nitems(Z_bindings); i++) {
     if (pgm_read_byte(&Z_bindings[i]) == cx) {
       return i;
     }
@@ -711,7 +711,7 @@ void Z_AutoBindDefer(uint16_t shortaddr, uint8_t endpoint, const SBuffer &buf,
   }
 
   // enqueue bind requests
-  for (uint32_t i=0; i<ARRAY_SIZE(Z_bindings); i++) {
+  for (uint32_t i=0; i<nitems(Z_bindings); i++) {
     if (bitRead(cluster_map, i)) {
       uint16_t cluster = CxToCluster(pgm_read_byte(&Z_bindings[i]));
       if ((cluster == 0x0001) && (!Z_BatteryReportingDeviceSpecific(shortaddr))) { continue; }
@@ -720,7 +720,7 @@ void Z_AutoBindDefer(uint16_t shortaddr, uint8_t endpoint, const SBuffer &buf,
   }
 
   // enqueue config attribute requests
-  for (uint32_t i=0; i<ARRAY_SIZE(Z_bindings); i++) {
+  for (uint32_t i=0; i<nitems(Z_bindings); i++) {
     if (bitRead(cluster_in_map, i)) {
       uint16_t cluster = CxToCluster(pgm_read_byte(&Z_bindings[i]));
       if ((cluster == 0x0001) && (!Z_BatteryReportingDeviceSpecific(shortaddr))) { continue; }
@@ -785,8 +785,7 @@ int32_t Z_ReceiveSimpleDesc(int32_t res, const SBuffer &buf) {
       ResponseAppend_P(PSTR("\"0x%04X\""), buf.get16(numOutIndex + i*2));
     }
     ResponseAppend_P(PSTR("]}}"));
-    MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEEZCL_RECEIVED));
-    XdrvRulesProcess();
+    MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEEZCL_RECEIVED));
   }
 
   // If tuya protocol, change the model information
@@ -1534,7 +1533,7 @@ void Z_AutoConfigReportingForCluster(uint16_t shortaddr, uint16_t groupaddr, uin
   Response_P(PSTR("ZbSend {\"Device\":\"0x%04X\",\"Config\":{"), shortaddr);
 
   boolean comma = false;
-  for (uint32_t i=0; i<ARRAY_SIZE(Z_autoAttributeReporting); i++) {
+  for (uint32_t i=0; i<nitems(Z_autoAttributeReporting); i++) {
     uint16_t conv_cluster = pgm_read_word(&(Z_autoAttributeReporting[i].cluster));
     uint16_t attr_id = pgm_read_word(&(Z_autoAttributeReporting[i].attr_id));
 
@@ -2000,7 +1999,7 @@ int32_t ZNP_Recv_Default(int32_t res, const SBuffer &buf) {
     // if still during initialization phase, ignore any unexpected message
   	return -1;	// ignore message
   } else {
-    for (uint32_t i = 0; i < ARRAY_SIZE(Z_DispatchTable); i++) {
+    for (uint32_t i = 0; i < nitems(Z_DispatchTable); i++) {
       if (Z_ReceiveMatchPrefix(buf, Z_DispatchTable[i].match)) {
         (*Z_DispatchTable[i].func)(res, buf);
       }
@@ -2120,7 +2119,7 @@ void ZCLFrame::autoResponder(const uint16_t *attr_list_ids, size_t attr_len) {
           LightGetHSB(&hue, &sat, nullptr);
           LightGetXY(&XY[0], &XY[1]);
           uint16_t uxy[2];
-          for (uint32_t i = 0; i < ARRAY_SIZE(XY); i++) {
+          for (uint32_t i = 0; i < nitems(XY); i++) {
             uxy[i] = XY[i] * 65536.0f;
             uxy[i] = (uxy[i] > 0xFEFF) ? uxy[i] : 0xFEFF;
           }

@@ -100,7 +100,7 @@ const char* const S_JSON_AS3935_COMMAND_CAL[] PROGMEM = {"" D_AS3935_CAL_FAIL ""
 
 const char S_JSON_AS3935_COMMAND_STRING[] PROGMEM = "{\"" D_NAME_AS3935 "\":{\"%s\":%s}}";
 const char S_JSON_AS3935_COMMAND_NVALUE[] PROGMEM = "{\"" D_NAME_AS3935 "\":{\"%s\":%d}}";
-const char S_JSON_AS3935_COMMAND_SETTINGS[] PROGMEM = "{\"AS3935_Settings\":{\"Gain\":%s,\"NFfloor\":%d,\"uVrms\":%d,\"Tunecaps\":%d,\"MinNumLight\":%d,\"Rejektion\":%d,\"Wdthreshold\":%d,\"MinNFstage\":%d,\"NFAutoTime\":%d,\"DisturberAutoTime\":%d,\"Disturber\":%s,\"NFauto\":%s,\"Disturberauto\":%s,\"NFautomax\":%s,\"Mqttlightevent\":%s,\"Mqttnoirqevent\":%s}}";
+const char S_JSON_AS3935_COMMAND_SETTINGS[] PROGMEM = "{\"AS3935_Settings\":{\"Gain\":%s,\"NFfloor\":%d,\"uVrms\":%d,\"Tunecaps\":%d,\"MinNumLight\":%d,\"Rejection\":%d,\"Wdthreshold\":%d,\"MinNFstage\":%d,\"NFAutoTime\":%d,\"DisturberAutoTime\":%d,\"Disturber\":%s,\"NFauto\":%s,\"Disturberauto\":%s,\"NFautomax\":%s,\"Mqttlightevent\":%s,\"Mqttnoirqevent\":%s}}";
 
 const char kAS3935_Commands[] PROGMEM  = "power|setnf|setminstage|setml|default|setgain|settunecaps|setrej|setwdth|disttime|nftime|disturber|autonf|autodisturber|autonfmax|lightevent|noirqevent|settings|calibrate";
 
@@ -150,7 +150,7 @@ struct {
   volatile uint32_t pulse = 0;
 } as3935_sensor;
 
-void ICACHE_RAM_ATTR AS3935Isr(void) {
+void IRAM_ATTR AS3935Isr(void) {
   as3935_sensor.detected = true;
   as3935_sensor.icount++;
 }
@@ -176,7 +176,7 @@ void AS3935WriteRegister(uint8_t reg, uint8_t mask, uint8_t shift, uint8_t data)
 
 /********************************************************************************************/
 // Autotune Caps
-void ICACHE_RAM_ATTR AS3935CountFreq(void) {
+void IRAM_ATTR AS3935CountFreq(void) {
   if (as3935_sensor.dispLCO)
     as3935_sensor.pulse++;
 }

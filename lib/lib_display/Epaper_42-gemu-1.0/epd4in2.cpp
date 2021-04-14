@@ -115,19 +115,19 @@ int Epd42::Init(void) {
     height = EPD_HEIGHT42;
 
     Reset();
-    SendCommand(POWER_SETTING);
+    SendCommand(EPD_42_POWER_SETTING);
     SendData(0x03);                  // VDS_EN, VDG_EN
     SendData(0x00);                  // VCOM_HV, VGHL_LV[1], VGHL_LV[0]
     SendData(0x2b);                  // VDH
     SendData(0x2b);                  // VDL
     SendData(0xff);                  // VDHR
-    SendCommand(BOOSTER_SOFT_START);
+    SendCommand(EPD_42_BOOSTER_SOFT_START);
     SendData(0x17);
     SendData(0x17);
     SendData(0x17);                  //07 0f 17 1f 27 2F 37 2f
-    SendCommand(POWER_ON);
+    SendCommand(EPD_42_POWER_ON);
     WaitUntilIdle();
-    SendCommand(PANEL_SETTING);
+    SendCommand(EPD_42_PANEL_SETTING);
    // SendData(0xbf);    // KW-BF   KWR-AF  BWROTP 0f
   //  SendData(0x0b);
 //	SendData(0x0F);  //300x400 Red mode, LUT from OTP
@@ -135,7 +135,7 @@ int Epd42::Init(void) {
 	SendData(0x3F); //300x400 B/W mode, LUT set by register
 //	SendData(0x2F); //300x400 Red mode, LUT set by register
 
-    SendCommand(PLL_CONTROL);
+    SendCommand(EPD_42_PLL_CONTROL);
     SendData(0x3C);        // 3A 100Hz   29 150Hz   39 200Hz    31 171Hz       3C 50Hz (default)    0B 10Hz
 	//SendData(0x0B);   //0B is 10Hz
     /* EPD hardware init end */
@@ -184,8 +184,8 @@ void Epd42::Reset(void) {
  *  @brief: transmit partial data to the SRAM.  The final parameter chooses between dtm=1 and dtm=2
  */
 void Epd42::SetPartialWindow(const unsigned char* buffer_black, int x, int y, int w, int l, int dtm) {
-    SendCommand(PARTIAL_IN);
-    SendCommand(PARTIAL_WINDOW);
+    SendCommand(EPD_42_PARTIAL_IN);
+    SendCommand(EPD_42_PARTIAL_WINDOW);
     SendData(x >> 8);
     SendData(x & 0xf8);     // x should be the multiple of 8, the last 3 bit will always be ignored
     SendData(((x & 0xf8) + w  - 1) >> 8);
@@ -196,7 +196,7 @@ void Epd42::SetPartialWindow(const unsigned char* buffer_black, int x, int y, in
     SendData((y + l - 1) & 0xff);
     SendData(0x01);         // Gates scan both inside and outside of the partial window. (default)
   //  DelayMs(2);
-    SendCommand((dtm == 1) ? DATA_START_TRANSMISSION_1 : DATA_START_TRANSMISSION_2);
+    SendCommand((dtm == 1) ? EPD_42_DATA_START_TRANSMISSION_1 : EPD_42_DATA_START_TRANSMISSION_2);
     if (buffer_black != NULL) {
         for(int i = 0; i < w  / 8 * l; i++) {
             SendData(buffer_black[i]^0xff);
@@ -207,7 +207,7 @@ void Epd42::SetPartialWindow(const unsigned char* buffer_black, int x, int y, in
         }
     }
  //   DelayMs(2);
-    SendCommand(PARTIAL_OUT);
+    SendCommand(EPD_42_PARTIAL_OUT);
 }
 
 
@@ -217,27 +217,27 @@ void Epd42::SetPartialWindow(const unsigned char* buffer_black, int x, int y, in
  */
 void Epd42::SetLut(void) {
     unsigned int count;
-    SendCommand(LUT_FOR_VCOM);                            //vcom
+    SendCommand(EPD_42_LUT_FOR_VCOM);                            //vcom
     for(count = 0; count < 44; count++) {
         SendData(pgm_read_byte(&lut_vcom0[count]));
     }
 
-    SendCommand(LUT_WHITE_TO_WHITE);                      //ww --
+    SendCommand(EPD_42_LUT_WHITE_TO_WHITE);                      //ww --
     for(count = 0; count < 42; count++) {
         SendData(pgm_read_byte(&lut_ww[count]));
     }
 
-    SendCommand(LUT_BLACK_TO_WHITE);                      //bw r
+    SendCommand(EPD_42_LUT_BLACK_TO_WHITE);                      //bw r
     for(count = 0; count < 42; count++) {
         SendData(pgm_read_byte(&lut_bw[count]));
     }
 
-    SendCommand(LUT_WHITE_TO_BLACK);                      //wb w
+    SendCommand(EPD_42_LUT_WHITE_TO_BLACK);                      //wb w
     for(count = 0; count < 42; count++) {
         SendData(pgm_read_byte(&lut_wb[count]));
     }
 
-    SendCommand(LUT_BLACK_TO_BLACK);                      //bb b
+    SendCommand(EPD_42_LUT_BLACK_TO_BLACK);                      //bb b
     for(count = 0; count < 42; count++) {
         SendData(pgm_read_byte(&lut_bb[count]));
     }
@@ -250,27 +250,27 @@ void Epd42::SetLut(void) {
 
 void Epd42::SetLutQuick(void) {
     unsigned int count;
-    SendCommand(LUT_FOR_VCOM);                            //vcom
+    SendCommand(EPD_42_LUT_FOR_VCOM);                            //vcom
     for(count = 0; count < 44; count++) {
         SendData(pgm_read_byte(&lut_vcom0_quick[count]));
     }
 
-    SendCommand(LUT_WHITE_TO_WHITE);                      //ww --
+    SendCommand(EPD_42_LUT_WHITE_TO_WHITE);                      //ww --
     for(count = 0; count < 42; count++) {
         SendData(pgm_read_byte(&lut_ww_quick[count]));
     }
 
-    SendCommand(LUT_BLACK_TO_WHITE);                      //bw r
+    SendCommand(EPD_42_LUT_BLACK_TO_WHITE);                      //bw r
     for(count = 0; count < 42; count++) {
         SendData(pgm_read_byte(&lut_bw_quick[count]));
     }
 
-    SendCommand(LUT_WHITE_TO_BLACK);                      //wb w
+    SendCommand(EPD_42_LUT_WHITE_TO_BLACK);                      //wb w
     for(count = 0; count < 42; count++) {
         SendData(pgm_read_byte(&lut_wb_quick[count]));
     }
 
-    SendCommand(LUT_BLACK_TO_BLACK);                      //bb b
+    SendCommand(EPD_42_LUT_BLACK_TO_BLACK);                      //bb b
     for(count = 0; count < 42; count++) {
         SendData(pgm_read_byte(&lut_bb_quick[count]));
     }
@@ -281,25 +281,25 @@ void Epd42::SetLutQuick(void) {
  * @brief: refresh and displays the frame
  */
 void Epd42::DisplayFrame(const unsigned char* frame_buffer) {
-    SendCommand(RESOLUTION_SETTING);
+    SendCommand(EPD_42_RESOLUTION_SETTING);
     SendData(width >> 8);
     SendData(width & 0xff);
     SendData(height >> 8);
     SendData(height & 0xff);
 
-    SendCommand(VCM_DC_SETTING);
+    SendCommand(EPD_42_VCM_DC_SETTING);
     SendData(0x12);
 
-    SendCommand(VCOM_AND_DATA_INTERVAL_SETTING);
+    SendCommand(EPD_42_VCOM_AND_DATA_INTERVAL_SETTING);
     SendCommand(0x97);    //VBDF 17|D7 VBDW 97  VBDB 57  VBDF F7  VBDW 77  VBDB 37  VBDR B7
 
     if (frame_buffer != NULL) {
-        SendCommand(DATA_START_TRANSMISSION_1);
+        SendCommand(EPD_42_DATA_START_TRANSMISSION_1);
         for(int i = 0; i < width / 8 * height; i++) {
             SendData(0xFF);      // bit set: white, bit reset: black
         }
         delay(2);
-        SendCommand(DATA_START_TRANSMISSION_2);
+        SendCommand(EPD_42_DATA_START_TRANSMISSION_2);
         for(int i = 0; i < width / 8 * height; i++) {
             SendData(pgm_read_byte(&frame_buffer[i]));
         }
@@ -308,7 +308,7 @@ void Epd42::DisplayFrame(const unsigned char* frame_buffer) {
 
     SetLut();
 
-    SendCommand(DISPLAY_REFRESH);
+    SendCommand(EPD_42_DISPLAY_REFRESH);
     delay(100);
     WaitUntilIdle();
 }
@@ -320,19 +320,19 @@ void Epd42::DisplayFrame(const unsigned char* frame_buffer) {
  * @brief: clear the frame data from the SRAM, this won't refresh the display
  */
 void Epd42::ClearFrame(void) {
-    SendCommand(RESOLUTION_SETTING);
+    SendCommand(EPD_42_RESOLUTION_SETTING);
     SendData(width >> 8);
     SendData(width & 0xff);
     SendData(height >> 8);
     SendData(height & 0xff);
 
-    SendCommand(DATA_START_TRANSMISSION_1);
+    SendCommand(EPD_42_DATA_START_TRANSMISSION_1);
     delay(2);
     for(int i = 0; i < width / 8 * height; i++) {
         SendData(0xFF);
     }
     delay(2);
-    SendCommand(DATA_START_TRANSMISSION_2);
+    SendCommand(EPD_42_DATA_START_TRANSMISSION_2);
     delay(2);
     for(int i = 0; i < width / 8 * height; i++) {
         SendData(0xFF);
@@ -347,14 +347,14 @@ void Epd42::ClearFrame(void) {
  */
 void Epd42::DisplayFrame(void) {
     SetLut();
-    SendCommand(DISPLAY_REFRESH);
+    SendCommand(EPD_42_DISPLAY_REFRESH);
     delay(100);
     WaitUntilIdle();
 }
 
 void Epd42::DisplayFrameQuick(void) {
     SetLutQuick();
-    SendCommand(DISPLAY_REFRESH);
+    SendCommand(EPD_42_DISPLAY_REFRESH);
   //  DelayMs(100);
   //  WaitUntilIdle();
 }
@@ -367,13 +367,13 @@ void Epd42::DisplayFrameQuick(void) {
  *         You can use Epd::Reset() to awaken and use Epd::Init() to initialize.
  */
 void Epd42::Sleep() {
-    SendCommand(VCOM_AND_DATA_INTERVAL_SETTING);
+    SendCommand(EPD_42_VCOM_AND_DATA_INTERVAL_SETTING);
     SendData(0x17);                       //border floating
-    SendCommand(VCM_DC_SETTING);          //VCOM to 0V
-    SendCommand(PANEL_SETTING);
+    SendCommand(EPD_42_VCM_DC_SETTING);          //VCOM to 0V
+    SendCommand(EPD_42_PANEL_SETTING);
     delay(100);
 
-    SendCommand(POWER_SETTING);           //VG&VS to 0V fast
+    SendCommand(EPD_42_POWER_SETTING);           //VG&VS to 0V fast
     SendData(0x00);
     SendData(0x00);
     SendData(0x00);
@@ -381,9 +381,9 @@ void Epd42::Sleep() {
     SendData(0x00);
     delay(100);
 
-    SendCommand(POWER_OFF);          //power off
+    SendCommand(EPD_42_POWER_OFF);          //power off
     WaitUntilIdle();
-    SendCommand(DEEP_SLEEP);         //deep sleep
+    SendCommand(EPD_42_DEEP_SLEEP);         //deep sleep
     SendData(0xA5);
 }
 

@@ -57,6 +57,7 @@ String FormatMetricName(const char *metric) {  // cleanup spaces and uppercases 
   String formatted = metric;
   formatted.toLowerCase();
   formatted.replace(" ", "_");
+  formatted.replace(".", "_");
   return formatted;
 }
 

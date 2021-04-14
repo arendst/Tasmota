@@ -438,7 +438,7 @@ static const Zigbee_Instruction zb_prog[] PROGMEM = {
     ZI_SEND(ZBS_PFGK)                         // check PFGK on ZB1.2
     ZI_WAIT_RECV(1000, ZBR_PFGK)
     ZI_GOTO(ZIGBEE_LABEL_START_COORD)
-    
+
   ZI_LABEL(ZIGBEE_LABEL_ZB3_INIT)
     ZI_SEND(ZBS_PFGK3)                        // check PFGK on ZB3
     ZI_WAIT_RECV(1000, ZBR_PFGK3)
@@ -947,7 +947,7 @@ void ZigbeeGotoLabel(uint8_t label) {
   uint8_t  cur_d8 = 0;
   uint8_t  cur_instr_len = 1;       // size of current instruction in words
 
-  for (uint32_t i = 0; i < ARRAY_SIZE(zb_prog); i += cur_instr_len) {
+  for (uint32_t i = 0; i < nitems(zb_prog); i += cur_instr_len) {
     const Zigbee_Instruction *cur_instr_line = &zb_prog[i];
     cur_instr = pgm_read_byte(&cur_instr_line->i.i);
     cur_d8    = pgm_read_byte(&cur_instr_line->i.d8);
@@ -1006,7 +1006,7 @@ void ZigbeeStateMachine_Run(void) {
     zigbee.recv_until  = false;
     zigbee.state_no_timeout = false;   // reset the no_timeout for next instruction
 
-    if (zigbee.pc > ARRAY_SIZE(zb_prog)) {
+    if (zigbee.pc > nitems(zb_prog)) {
       AddLog(LOG_LEVEL_ERROR, PSTR(D_LOG_ZIGBEE "Invalid pc: %d, aborting"), zigbee.pc);
       zigbee.pc = -1;
     }

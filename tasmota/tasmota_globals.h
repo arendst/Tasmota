@@ -260,6 +260,7 @@ const uint16_t LOG_BUFFER_SIZE = 4000;         // Max number of characters in lo
 #define TASM_FILE_SETTINGS_LKG      "/.settings.lkg"   // Last Known Good Settings binary blob
 #define TASM_FILE_DRIVER            "/.drvset%03d"
 #define TASM_FILE_SENSOR            "/.snsset%03d"
+#define TASM_FILE_TLSKEY            "/tlskey"          // TLS private key
 #define TASM_FILE_ZIGBEE            "/zb"              // Zigbee settings blob as used by CC2530 on ESP32
 #define TASM_FILE_AUTOEXEC          "/autoexec.bat"    // Commands executed after restart
 #define TASM_FILE_CONFIG            "/config.sys"      // Settings executed after restart
@@ -270,8 +271,8 @@ const uint16_t LOG_BUFFER_SIZE = 4000;         // Max number of characters in lo
 #ifndef MQTT_KEEPALIVE
 #define MQTT_KEEPALIVE              30         // Seconds
 #endif
-#ifndef MQTT_TIMEOUT
-#define MQTT_TIMEOUT                10000      // milli seconds
+#ifndef MQTT_SOCKET_TIMEOUT
+#define MQTT_SOCKET_TIMEOUT         4          // Seconds
 #endif
 #ifndef MQTT_CLEAN_SESSION
 #define MQTT_CLEAN_SESSION          1          // 0 = No clean session, 1 = Clean session (default)
@@ -461,13 +462,11 @@ const char kWebColors[] PROGMEM =
 #define tmin(a,b) ((a)<(b)?(a):(b))
 #define tmax(a,b) ((a)>(b)?(a):(b))
 
+#define nitems(_a) (sizeof((_a)) / sizeof((_a)[0]))
+
 #define STR_HELPER(x) #x
 #ifndef STR
 #define STR(x) STR_HELPER(x)
-#endif
-
-#ifndef ARRAY_SIZE
-#define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 #endif
 
 #define AGPIO(x) ((x)<<5)

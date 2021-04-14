@@ -29,7 +29,11 @@
  * - https://www.dfrobot.com/wiki/index.php/Weather-proof_Ultrasonic_Sensor_SKU_:_SEN0207
 \*********************************************************************************************/
 
-#define XSNS_22              22
+#define XSNS_22                   22
+
+#ifndef SR04_MAX_SENSOR_DISTANCE
+#define SR04_MAX_SENSOR_DISTANCE  500
+#endif
 
 uint8_t sr04_type = 1;
 real64_t distance;
@@ -47,7 +51,7 @@ uint8_t Sr04TModeDetect(void)
   sonar_serial = new TasmotaSerial(sr04_echo_pin, sr04_trig_pin, 1);
 
   if (sonar_serial->begin(9600,1)) {
-    DEBUG_SENSOR_LOG(PSTR("SR04: Detect mode"));
+    DEBUG_SENSOR_LOG(PSTR("SR4: Detect mode"));
 
     if (sr04_trig_pin != -1) {
       sr04_type = (Sr04TMiddleValue(Sr04TMode3Distance(), Sr04TMode3Distance(), Sr04TMode3Distance()) != NO_ECHO) ? 3 : 1;
@@ -64,14 +68,14 @@ uint8_t Sr04TModeDetect(void)
     if (-1 == sr04_trig_pin) {
       sr04_trig_pin = Pin(GPIO_SR04_ECHO);  // if GPIO_SR04_TRIG is not configured use single PIN mode with GPIO_SR04_ECHO only
     }
-    sonar = new NewPing(sr04_trig_pin, sr04_echo_pin, 300);
+    sonar = new NewPing(sr04_trig_pin, sr04_echo_pin, SR04_MAX_SENSOR_DISTANCE);
   } else {
     if (sonar_serial->hardwareSerial()) {
       ClaimSerial();
     }
   }
 
-  AddLog(LOG_LEVEL_INFO,PSTR("SR04: Mode %d"), sr04_type);
+  AddLog(LOG_LEVEL_INFO,PSTR("SR4: Mode %d"), sr04_type);
   return sr04_type;
 }
 
@@ -106,7 +110,7 @@ uint16_t Sr04TMode2Distance(void)
   const char startByte = 0xff;
 
   if (!sonar_serial->find(startByte)) {
-      //DEBUG_SENSOR_LOG(PSTR("SR04: No start byte"));
+      //DEBUG_SENSOR_LOG(PSTR("SR4: No start byte"));
       return NO_ECHO;
   }
 
@@ -123,10 +127,10 @@ uint16_t Sr04TMode2Distance(void)
 
   //check crc sum
   if (crc != sonar_serial->read()) {
-    AddLog(LOG_LEVEL_ERROR,PSTR("SR04: Reading CRC error."));
+    AddLog(LOG_LEVEL_ERROR,PSTR("SR4: Reading CRC error."));
     return NO_ECHO;
   }
-  //DEBUG_SENSOR_LOG(PSTR("SR04: Distance: %d"), distance);
+  //DEBUG_SENSOR_LOG(PSTR("SR4: Distance: %d"), distance);
   return distance;
 }
 
@@ -155,11 +159,6 @@ void Sr04TReading(void) {
   return;
 }
 
-#ifdef USE_WEBSERVER
-const char HTTP_SNS_DISTANCE_CM[] PROGMEM =
-  "{s}SR04 " D_DISTANCE "{m}%s" D_UNIT_CENTIMETER "{e}";  // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
-#endif  // USE_WEBSERVER
-
 void Sr04Show(bool json)
 {
 
@@ -176,7 +175,7 @@ void Sr04Show(bool json)
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
     } else {
-      WSContentSend_PD(HTTP_SNS_DISTANCE_CM, distance_chr);
+      WSContentSend_PD(HTTP_SNS_DISTANCE_CM, "SR04", distance_chr);
 #endif  // USE_WEBSERVER
     }
   }

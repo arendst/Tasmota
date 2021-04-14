@@ -48,8 +48,9 @@ Adafruit_SH1106 *oled1106;
 /*********************************************************************************************/
 
 
-void SH1106InitDriver()
-{
+void SH1106InitDriver() {
+  if (!TasmotaGlobal.i2c_enabled) { return; }
+
   if (!Settings.display_model) {
     if (I2cSetDevice(OLED_ADDRESS1)) {
       Settings.display_address[0] = OLED_ADDRESS1;
@@ -137,6 +138,7 @@ void SH1106Time(void)
   renderer->setCursor(0, 0);
   snprintf_P(line, sizeof(line), PSTR(" %02d" D_HOUR_MINUTE_SEPARATOR "%02d" D_MINUTE_SECOND_SEPARATOR "%02d"), RtcTime.hour, RtcTime.minute, RtcTime.second);  // [ 12:34:56 ]
   renderer->println(line);
+  renderer->println();
   snprintf_P(line, sizeof(line), PSTR("%02d" D_MONTH_DAY_SEPARATOR "%02d" D_YEAR_MONTH_SEPARATOR "%04d"), RtcTime.day_of_month, RtcTime.month, RtcTime.year);   // [01-02-2018]
   renderer->println(line);
   renderer->Updateframe();

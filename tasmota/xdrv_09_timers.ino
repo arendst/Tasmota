@@ -286,7 +286,7 @@ void TimerEverySecond(void)
 #if defined(USE_RULES) || defined(USE_SCRIPT)
               if (POWER_BLINK == xtimer.power) {             // Blink becomes Rule disregarding device and allowing use of Backlog commands
                 Response_P(PSTR("{\"Clock\":{\"Timer\":%d}}"), i +1);
-                XdrvRulesProcess();
+                XdrvRulesProcess(0);
               } else
 #endif  // USE_RULES
                 if (TasmotaGlobal.devices_present) { ExecuteCommandPower(xtimer.device +1, xtimer.power, SRC_TIMER); }
@@ -462,7 +462,7 @@ void CmndTimers(void)
   }
 
   ResponseCmndStateText(Settings.flag3.timers_enable);               // CMND_TIMERS
-  MqttPublishPrefixTopic_P(RESULT_OR_STAT, XdrvMailbox.command);
+  MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, XdrvMailbox.command);
 
   uint32_t jsflg = 0;
   uint32_t lines = 1;
@@ -476,7 +476,7 @@ void CmndTimers(void)
     PrepShowTimer(i +1);
     if (jsflg > 3) {
       ResponseJsonEndEnd();
-      MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR(D_CMND_TIMERS));
+      MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, PSTR(D_CMND_TIMERS));
       jsflg = 0;
     }
   }
@@ -879,14 +879,12 @@ void HandleTimerConfiguration(void)
 
 void TimerSaveSettings(void)
 {
-  char tmp[MAX_TIMERS *12];  // Need space for MAX_TIMERS x 10 digit numbers separated by a comma
-  char message[32 + (MAX_TIMERS *11)];  // MQT: Timers 0,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000
   Timer timer;
 
   Settings.flag3.timers_enable = Webserver->hasArg(F("e0"));  // CMND_TIMERS
+  char tmp[MAX_TIMERS *12];  // Need space for MAX_TIMERS x 10 digit numbers separated by a comma
   WebGetArg(PSTR("t0"), tmp, sizeof(tmp));
   char *p = tmp;
-  snprintf_P(message, sizeof(message), PSTR(D_LOG_MQTT D_CMND_TIMERS " %d"), Settings.flag3.timers_enable);  // CMND_TIMERS
   for (uint32_t i = 0; i < MAX_TIMERS; i++) {
     timer.data = strtol(p, &p, 10);
     p++;  // Skip comma
@@ -895,9 +893,10 @@ void TimerSaveSettings(void)
       Settings.timer[i].data = timer.data;
       if (flag) TimerSetRandomWindow(i);
     }
-    snprintf_P(message, sizeof(message), PSTR("%s,0x%08X"), message, Settings.timer[i].data);
   }
-  AddLogData(LOG_LEVEL_DEBUG, message);
+  char command[CMDSZ];
+  snprintf_P(command, sizeof(command), PSTR(D_CMND_TIMERS));
+  ExecuteWebCommand(command);
 }
 #endif  // USE_TIMERS_WEB
 #endif  // USE_WEBSERVER

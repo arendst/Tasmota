@@ -115,10 +115,6 @@ typedef int SerialConfig;
 //#define analogWrite(a, b)
 
 //
-// WS2812
-//
-#define NeoEsp8266BitBang800KbpsMethod NeoEsp32BitBang800KbpsMethod
-//
 // UDP
 //
 //#define PortUdp_writestr(log_data) PortUdp.write((const uint8_t *)(log_data), strlen(log_data))

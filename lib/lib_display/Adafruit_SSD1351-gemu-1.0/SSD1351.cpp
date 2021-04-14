@@ -22,11 +22,12 @@ const uint16_t ssd1351_colors[]={SSD1351_BLACK,SSD1351_WHITE,SSD1351_RED,SSD1351
 SSD1351_LIGHTGREY,SSD1351_DARKGREY,SSD1351_ORANGE,SSD1351_GREENYELLOW,SSD1351_PINK};
 
 // Constructor when using software SPI.  All output pins are configurable.
-SSD1351::SSD1351(int8_t cs,int8_t mosi,int8_t sclk) : Renderer(SSD1351_WIDTH, SSD1351_HEIGHT) {
+SSD1351::SSD1351(int8_t cs,int8_t mosi,int8_t sclk, int8_t dc) : Renderer(SSD1351_WIDTH, SSD1351_HEIGHT) {
   _cs   = cs;
   _mosi  = mosi;
   _sclk = sclk;
   _hwspi = 0;
+  _dc = dc;
 }
 
 #ifndef ESP32
@@ -70,27 +71,30 @@ uint32_t ssd1351_mtdo_prev;
 void SSD1351::spi_lcd_mode_init(void) {
 	uint32 regvalue;
 
-  ssd1351_clock_prev=SPI1CLK;
-  ssd1351_usr_prev=SPI1U;
-  ssd1351_usr1_prev=SPI1U1;
-  ssd1351_usr2_prev=SPI1U2;
-  ssd1351_spi1c_prev=SPI1C;
-  ssd1351_spi1p_prev=SPI1P;
-  //ssd1351_gpmux_prev=GPMUX;
-  ssd1351_mtdo_prev=READ_PERI_REG(PERIPHS_IO_MUX_MTDO_U);
+  if (_dc >= 0) {
+    spis = SPISettings(40000000, MSBFIRST, SPI_MODE0);
+  } else {
+    ssd1351_clock_prev=SPI1CLK;
+    ssd1351_usr_prev=SPI1U;
+    ssd1351_usr1_prev=SPI1U1;
+    ssd1351_usr2_prev=SPI1U2;
+    ssd1351_spi1c_prev=SPI1C;
+    ssd1351_spi1p_prev=SPI1P;
+    //ssd1351_gpmux_prev=GPMUX;
+    ssd1351_mtdo_prev=READ_PERI_REG(PERIPHS_IO_MUX_MTDO_U);
 
-  SPI1U = SPIUMOSI | SPIUDUPLEX | SPIUSSE;
-  SPI1U1=0;
-  SPI1C = 0;
+    SPI1U = SPIUMOSI | SPIUDUPLEX | SPIUSSE;
+    SPI1U1=0;
+    SPI1C = 0;
 
-	//bit9 of PERIPHS_IO_MUX should be cleared when HSPI clock doesn't equal CPU clock
-	//bit8 of PERIPHS_IO_MUX should be cleared when SPI clock doesn't equal CPU clock
+	   //bit9 of PERIPHS_IO_MUX should be cleared when HSPI clock doesn't equal CPU clock
+	    //bit8 of PERIPHS_IO_MUX should be cleared when SPI clock doesn't equal CPU clock
 
-	WRITE_PERI_REG(PERIPHS_IO_MUX, 0x105); //clear bit9
+	  WRITE_PERI_REG(PERIPHS_IO_MUX, 0x105); //clear bit9
 		//PIN_FUNC_SELECT(PERIPHS_IO_MUX_MTDI_U, 2);//configure miso to spi mode
-	PIN_FUNC_SELECT(PERIPHS_IO_MUX_MTCK_U, 2);//configure mosi to spi mode
-	PIN_FUNC_SELECT(PERIPHS_IO_MUX_MTMS_U, 2);//configure sclk to spi mode
-	PIN_FUNC_SELECT(PERIPHS_IO_MUX_MTDO_U, 2);//configure cs to spi mode
+	  PIN_FUNC_SELECT(PERIPHS_IO_MUX_MTCK_U, 2);//configure mosi to spi mode
+	  PIN_FUNC_SELECT(PERIPHS_IO_MUX_MTMS_U, 2);//configure sclk to spi mode
+	   PIN_FUNC_SELECT(PERIPHS_IO_MUX_MTDO_U, 2);//configure cs to spi mode
 
 // the current implementation leaves about 1 us between transfers ????
 // due to lack of documentation i could not find the reason
@@ -98,9 +102,9 @@ void SSD1351::spi_lcd_mode_init(void) {
 
 	//SET_PERI_REG_MASK(SPI_USER(1), SPI_CS_SETUP|SPI_CS_HOLD|SPI_USR_COMMAND);
 
-  SET_PERI_REG_MASK(SPI_USER(1), SPI_USR_COMMAND);
+    SET_PERI_REG_MASK(SPI_USER(1), SPI_USR_COMMAND);
 
-	CLEAR_PERI_REG_MASK(SPI_USER(1), SPI_FLASH_MODE);
+	  CLEAR_PERI_REG_MASK(SPI_USER(1), SPI_FLASH_MODE);
 	// SPI clock=CPU clock/8 => 10 Mhz
   /*
 	WRITE_PERI_REG(SPI_CLOCK(1),
@@ -110,47 +114,58 @@ void SSD1351::spi_lcd_mode_init(void) {
 					((3&SPI_CLKCNT_L)<<SPI_CLKCNT_L_S)); //clear bit 31,set SPI clock div
           */
 // will result in 80/18 = 4,4 Mhz
- SPI.setFrequency(4500000);
+    SPI.setFrequency(4500000);
 
- ssd1351_clock=SPI1CLK;
- ssd1351_usr=SPI1U;
- ssd1351_usr1=SPI1U1;
- ssd1351_usr2=SPI1U2;
- ssd1351_spi1c=SPI1C;
- ssd1351_spi1p=SPI1P;
- //ssd1351_gpmux=GPMUX;
- ssd1351_mtdo=READ_PERI_REG(PERIPHS_IO_MUX_MTDO_U);
- ssd131_start=0;
+    ssd1351_clock=SPI1CLK;
+    ssd1351_usr=SPI1U;
+    ssd1351_usr1=SPI1U1;
+    ssd1351_usr2=SPI1U2;
+    ssd1351_spi1c=SPI1C;
+    ssd1351_spi1p=SPI1P;
+    //ssd1351_gpmux=GPMUX;
+    ssd1351_mtdo=READ_PERI_REG(PERIPHS_IO_MUX_MTDO_U);
+  }
+
+  ssd131_start = 0;
 }
 
 void SSD1351::start(void) {
   if (ssd131_start) return;
   //while(SPI1CMD & SPIBUSY) {}
-  while(READ_PERI_REG(SPI_CMD(1))&SPI_USR);
-  SPI1CLK=ssd1351_clock;
-  SPI1U=ssd1351_usr;
-  SPI1U1=ssd1351_usr1;
-  SPI1U2=ssd1351_usr2;
-  SPI1C=ssd1351_spi1c;
-  SPI1P=ssd1351_spi1p;
-  //GPMUX=ssd1351_gpmux;
-  WRITE_PERI_REG(PERIPHS_IO_MUX_MTDO_U,ssd1351_mtdo);
-  ssd131_start=1;
+  if (_dc >= 0) {
+    SPI.beginTransaction(spis);
+  } else {
+    while(READ_PERI_REG(SPI_CMD(1))&SPI_USR);
+    SPI1CLK=ssd1351_clock;
+    SPI1U=ssd1351_usr;
+    SPI1U1=ssd1351_usr1;
+    SPI1U2=ssd1351_usr2;
+    SPI1C=ssd1351_spi1c;
+    SPI1P=ssd1351_spi1p;
+    //GPMUX=ssd1351_gpmux;
+    WRITE_PERI_REG(PERIPHS_IO_MUX_MTDO_U,ssd1351_mtdo);
+  }
+  ssd131_start = 1;
 }
 
 void SSD1351::stop(void) {
   if (!ssd131_start) return;
-  //while(SPI1CMD & SPIBUSY) {}
-  while(READ_PERI_REG(SPI_CMD(1))&SPI_USR);
-  SPI1CLK=ssd1351_clock_prev;
-  SPI1U=ssd1351_usr_prev;
-  SPI1U1=ssd1351_usr1_prev;
-  SPI1U2=ssd1351_usr2_prev;
-  SPI1C=ssd1351_spi1c_prev;
-  SPI1P=ssd1351_spi1p_prev;
-  //GPMUX=ssd1351_gpmux_prev;
-  WRITE_PERI_REG(PERIPHS_IO_MUX_MTDO_U,ssd1351_mtdo_prev);
-  ssd131_start=0;
+
+  if (_dc >= 0) {
+    SPI.endTransaction();
+  } else {
+    //while(SPI1CMD & SPIBUSY) {}
+    while(READ_PERI_REG(SPI_CMD(1))&SPI_USR);
+    SPI1CLK=ssd1351_clock_prev;
+    SPI1U=ssd1351_usr_prev;
+    SPI1U1=ssd1351_usr1_prev;
+    SPI1U2=ssd1351_usr2_prev;
+    SPI1C=ssd1351_spi1c_prev;
+    SPI1P=ssd1351_spi1p_prev;
+    //GPMUX=ssd1351_gpmux_prev;
+    WRITE_PERI_REG(PERIPHS_IO_MUX_MTDO_U,ssd1351_mtdo_prev);
+  }
+  ssd131_start = 0;
 }
 
 // dc = 0
@@ -158,19 +173,23 @@ void SSD1351::writecommand(uint8_t c) {
   if (_hwspi) {
     uint32_t regvalue;
     uint8_t bytetemp;
-    bytetemp=(c>>1)&0x7f;
-
     start();
-
 //#define SPI_USR_COMMAND_BITLEN 0x0000000F
 //#define SPI_USR_COMMAND_BITLEN_S 28
-
-    regvalue= ((8&SPI_USR_COMMAND_BITLEN)<<SPI_USR_COMMAND_BITLEN_S)|((uint32)bytetemp);		//configure transmission variable,9bit transmission length and first 8 command bit
-    if(c&0x01) 	regvalue|=BIT15;        //write the 9th bit
-    while(READ_PERI_REG(SPI_CMD(1))&SPI_USR);		//waiting for spi module available
-    WRITE_PERI_REG(SPI_USER2(1), regvalue);				//write  command and command length into spi reg
-    SET_PERI_REG_MASK(SPI_CMD(1), SPI_USR);		//transmission start
-  } else fastSPIwrite(c,0);
+    if (_dc >= 0) {
+      digitalWrite(_dc, LOW);
+      SPI.transfer(c);
+    } else {
+      bytetemp = (c >> 1) & 0x7f;
+      regvalue= ((8&SPI_USR_COMMAND_BITLEN)<<SPI_USR_COMMAND_BITLEN_S)|((uint32)bytetemp);		//configure transmission variable,9bit transmission length and first 8 command bit
+      if (c & 0x01) 	regvalue |= BIT15;        //write the 9th bit
+      while (READ_PERI_REG(SPI_CMD(1)) & SPI_USR);		//waiting for spi module available
+      WRITE_PERI_REG(SPI_USER2(1), regvalue);				//write  command and command length into spi reg
+      SET_PERI_REG_MASK(SPI_CMD(1), SPI_USR);		//transmission start
+    }
+  } else {
+    fastSPIwrite(c, 0);
+  }
 }
 
 // dc = 1
@@ -178,47 +197,63 @@ void SSD1351::writedata(uint8_t d) {
   if (_hwspi) {
     uint32_t regvalue;
     uint8_t bytetemp;
-    bytetemp=(d>>1)|0x80;
-
     start();
 
-    regvalue= ((8&SPI_USR_COMMAND_BITLEN)<<SPI_USR_COMMAND_BITLEN_S)|((uint32)bytetemp);		//configure transmission variable,9bit transmission length and first 8 command bit
-    if(d&0x01) 	regvalue|=BIT15;        //write the 9th bit
-    while(READ_PERI_REG(SPI_CMD(1))&SPI_USR);		//waiting for spi module available
-    WRITE_PERI_REG(SPI_USER2(1), regvalue);				//write  command and command length into spi reg
-    SET_PERI_REG_MASK(SPI_CMD(1), SPI_USR);		//transmission start
-  } else  fastSPIwrite(d,1);
+    if (_dc >= 0) {
+      digitalWrite(_dc, HIGH);
+      SPI.transfer(d);
+    } else {
+      bytetemp = (d >> 1) | 0x80;
+      regvalue= ((8&SPI_USR_COMMAND_BITLEN)<<SPI_USR_COMMAND_BITLEN_S)|((uint32)bytetemp);		//configure transmission variable,9bit transmission length and first 8 command bit
+      if(d&0x01) 	regvalue|=BIT15;        //write the 9th bit
+      while(READ_PERI_REG(SPI_CMD(1))&SPI_USR);		//waiting for spi module available
+      WRITE_PERI_REG(SPI_USER2(1), regvalue);				//write  command and command length into spi reg
+      SET_PERI_REG_MASK(SPI_CMD(1), SPI_USR);		//transmission start
+    }
+  } else {
+    fastSPIwrite(d, 1);
+  }
 }
 
 
-void ICACHE_RAM_ATTR SSD1351::fastSPIwrite(uint8_t d,uint8_t dc) {
+void ICACHE_RAM_ATTR SSD1351::fastSPIwrite(uint8_t d, uint8_t dc) {
 
-  WRITE_PERI_REG( PIN_OUT_CLEAR, 1<<_cs);
-  WRITE_PERI_REG( PIN_OUT_CLEAR, 1<<_sclk);
-  if(dc) WRITE_PERI_REG( PIN_OUT_SET, 1<<_mosi);
-  else   WRITE_PERI_REG( PIN_OUT_CLEAR, 1<<_mosi);
-  WRITE_PERI_REG( PIN_OUT_SET, 1<<_sclk);
+  WRITE_PERI_REG( PIN_OUT_CLEAR, 1 << _cs);
 
-  for(uint8_t bit = 0x80; bit; bit >>= 1) {
+  if (_dc >= 0) {
+    digitalWrite(_dc, dc);
     WRITE_PERI_REG( PIN_OUT_CLEAR, 1<<_sclk);
-    if(d&bit) WRITE_PERI_REG( PIN_OUT_SET, 1<<_mosi);
+    for(uint8_t bit = 0x80; bit; bit >>= 1) {
+      WRITE_PERI_REG( PIN_OUT_CLEAR, 1<<_sclk);
+      if(d&bit) WRITE_PERI_REG( PIN_OUT_SET, 1<<_mosi);
+      else   WRITE_PERI_REG( PIN_OUT_CLEAR, 1<<_mosi);
+      WRITE_PERI_REG( PIN_OUT_SET, 1<<_sclk);
+    }
+  } else {
+    WRITE_PERI_REG( PIN_OUT_CLEAR, 1<<_sclk);
+    if(dc) WRITE_PERI_REG( PIN_OUT_SET, 1<<_mosi);
     else   WRITE_PERI_REG( PIN_OUT_CLEAR, 1<<_mosi);
     WRITE_PERI_REG( PIN_OUT_SET, 1<<_sclk);
+    for(uint8_t bit = 0x80; bit; bit >>= 1) {
+      WRITE_PERI_REG( PIN_OUT_CLEAR, 1<<_sclk);
+      if(d&bit) WRITE_PERI_REG( PIN_OUT_SET, 1<<_mosi);
+      else   WRITE_PERI_REG( PIN_OUT_CLEAR, 1<<_mosi);
+      WRITE_PERI_REG( PIN_OUT_SET, 1<<_sclk);
+    }
   }
-  WRITE_PERI_REG( PIN_OUT_SET, 1<<_cs);
+  WRITE_PERI_REG( PIN_OUT_SET, 1 << _cs);
 }
-
 
 #else
 // ESP32 section
 uint8_t ssd131_start;
 
 void SSD1351::writedata(uint8_t d) {
-  fastSPIwrite(d,1);
+  fastSPIwrite(d, 1);
 }
 
 void SSD1351::writecommand(uint8_t c) {
-  fastSPIwrite(c,0);
+  fastSPIwrite(c, 0);
 }
 
 #include "soc/spi_reg.h"
@@ -227,12 +262,10 @@ void SSD1351::writecommand(uint8_t c) {
 #include "esp32-hal.h"
 #include "soc/spi_struct.h"
 
-SPISettings oled_spiSettings;
-
 // diconnect from spi
 void SSD1351::start(void) {
   if (ssd131_start) return;
-  SPI.beginTransaction(oled_spiSettings);
+  SPI.beginTransaction(spis);
   ssd131_start = 1;
 }
 
@@ -245,21 +278,25 @@ void SSD1351::stop(void) {
 
 // since ardunio transferBits ia completely disfunctional
 // we use our own hardware driver for 9 bit spi
-void SSD1351::fastSPIwrite(uint8_t d,uint8_t dc) {
+void SSD1351::fastSPIwrite(uint8_t d, uint8_t dc) {
+
     digitalWrite( _cs, LOW);
+    if (_dc >= 0) {
+      digitalWrite(_dc, dc);
+      SPI.transfer(d);
+    } else {
+      uint32_t regvalue = d >> 1;
+      if (dc) regvalue |= 0x80;
+      else regvalue &= 0x7f;
+      if (d & 1) regvalue |= 0x8000;
 
-    uint32_t regvalue=d>>1;
-    if (dc) regvalue|=0x80;
-    else regvalue&=0x7f;
-    if (d&1) regvalue|=0x8000;
-
-    REG_SET_BIT(SPI_USER_REG(3), SPI_USR_MOSI);
-    REG_WRITE(SPI_MOSI_DLEN_REG(3), 9 - 1);
-    uint32_t *dp=(uint32_t*)SPI_W0_REG(3);
-    *dp=regvalue;
-    REG_SET_BIT(SPI_CMD_REG(3), SPI_USR);
-    while (REG_GET_FIELD(SPI_CMD_REG(3), SPI_USR));
-
+      REG_SET_BIT(SPI_USER_REG(3), SPI_USR_MOSI);
+      REG_WRITE(SPI_MOSI_DLEN_REG(3), 9 - 1);
+      uint32_t *dp=(uint32_t*)SPI_W0_REG(3);
+      *dp = regvalue;
+      REG_SET_BIT(SPI_CMD_REG(3), SPI_USR);
+      while (REG_GET_FIELD(SPI_CMD_REG(3), SPI_USR));
+    }
     digitalWrite( _cs, HIGH);
 }
 
@@ -312,21 +349,26 @@ void SSD1351::begin(void) {
   pinMode(_mosi, OUTPUT);
   digitalWrite(_mosi, LOW);
 
+  if (_dc >= 0) {
+    pinMode(_dc, OUTPUT);
+    digitalWrite(_dc, LOW);
+  }
+
 
 #ifndef ESP32
-  if ((_sclk==14) && (_mosi==13) && (_cs==15)) {
+  if ((_sclk == 14) && (_mosi == 13) && (_cs == 15)) {
     // we use hardware spi
-      _hwspi=1;
+      _hwspi = 1;
       SPI.begin();
       spi_lcd_mode_init();
   } else {
     // we must use software spi
-      _hwspi=0;
+      _hwspi = 0;
   }
 #else
-  _hwspi=1;
-  SPI.begin(_sclk,-1,_mosi, -1);
-  oled_spiSettings = SPISettings(4500000, MSBFIRST, SPI_MODE3);
+  _hwspi = 1;
+  SPI.begin(_sclk, -1, _mosi, -1);
+  spis = SPISettings(4500000, MSBFIRST, SPI_MODE3);
 #endif
 
   const uint8_t *addr = (const uint8_t *)initList;

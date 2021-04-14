@@ -718,18 +718,29 @@ void ResponseAppendFeatures(void)
 #if defined(USE_DISPLAY) && defined(USE_DISPLAY_TM1637)
     feature7 |= 0x40000000;
 #endif
-//    feature7 |= 0x80000000;
+#ifdef USE_PROJECTOR_CTRL
+    feature7 |= 0x80000000;  // xdrv_53_projector_ctrl.ino
+#endif
   }
 
   static uint32_t feature8 = 0x00000000;
   if (!feature8) {           // Only fill this once
-//    feature8 |= 0x00000001;
-//    feature8 |= 0x00000002;
-//    feature8 |= 0x00000004;
-//    feature8 |= 0x00000008;
-
+#if defined(USE_I2C) && defined(USE_MPU6886)
+    feature8 |= 0x00000001;  // xsns_85_mpu6886.ino
+#endif
+#ifdef USE_TFMINIPLUS
+    feature8 |= 0x00000002;  // xsns_86_tfminiplus.ino
+#endif
+#if defined(USE_ENERGY_SENSOR) && defined(USE_CSE7761)
+    feature8 |= 0x00000004;  // xnrg_19_cse7761.ino
+#endif
+#ifdef USE_BERRY
+    feature8 |= 0x00000008;  // xdrv_52_9_berry.ino
+#endif
 //    feature8 |= 0x00000010;
-//    feature8 |= 0x00000020;
+#if defined(USE_ENERGY_SENSOR) && defined(USE_ENERGY_DUMMY)
+    feature8 |= 0x00000020;
+#endif
 //    feature8 |= 0x00000040;
 //    feature8 |= 0x00000080;
 

@@ -1466,7 +1466,7 @@ void HM10StatusInfo() {
   RulesProcessEvent(stemp);
 */
   Response_P(PSTR("{\"%s\":{\"found\":%u}}"), D_CMND_HM10, MIBLEsensors.size());
-  XdrvRulesProcess();
+  XdrvRulesProcess(0);
 }
 
 /**
@@ -1493,7 +1493,7 @@ void HM10EverySecond(bool restart){
     _activeBeacons++;
     _beacon.time++;
     Response_P(PSTR("{\"Beacon%u\":{\"Time\":%u}}"), _idx, _beacon.time);
-    XdrvRulesProcess();
+    XdrvRulesProcess(0);
   }
   if(_activeBeacons==0) HM10.mode.activeBeacon = 0;
 
@@ -1564,14 +1564,8 @@ void HM10EverySecond(bool restart){
  *
  */
 void HM10triggerTele(void){
-    HM10.mode.triggeredTele = 1;
-    ResponseClear();
-    if (MqttShowSensor()) {
-      MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
-  #ifdef USE_RULES
-      RulesTeleperiod();  // Allow rule based HA messages
-  #endif  // USE_RULES
-    }
+  HM10.mode.triggeredTele = 1;
+  MqttPublishTeleperiodSensor();
 }
 
 

@@ -106,7 +106,6 @@ void WifiConfig(uint8_t type)
     }
 #ifdef USE_WEBSERVER
     else if (WIFI_MANAGER == Wifi.config_type || WIFI_MANAGER_RESET_ONLY == Wifi.config_type) {
-      AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_WCFG_2_WIFIMANAGER " " D_ACTIVE_FOR_3_MINUTES));
       WifiManagerBegin(WIFI_MANAGER_RESET_ONLY == Wifi.config_type);
     }
 #endif  // USE_WEBSERVER

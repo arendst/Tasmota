@@ -118,7 +118,7 @@ void PzemDcSnsInit(void)
   if (result) {
     if (2 == result) { ClaimSerial(); }
     Energy.type_dc = true;
-    Energy.phase_count = 3;  // Start off with three channels
+    Energy.phase_count = ENERGY_MAX_PHASES;  // Start off with three channels
     PzemDc.channel = 0;
   } else {
     TasmotaGlobal.energy_driver = ENERGY_NONE;

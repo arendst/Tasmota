@@ -38,6 +38,7 @@ public:
   virtual void pushColors(uint16_t *data, uint16_t len, boolean first);
   virtual void setAddrWindow(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1);
   virtual void invertDisplay(boolean i);
+  virtual void reverseDisplay(boolean i);
   virtual void setScrollMargins(uint16_t top, uint16_t bottom);
   virtual void scrollTo(uint16_t y);
   void setDrawMode(uint8_t mode);
