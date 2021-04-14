@@ -360,7 +360,7 @@ bool UfsExecuteCommandFileReady(void) {
 void UfsExecuteCommandFileLoop(void) {
   if (UfsExecuteCommandFileReady() || !ffs_type) { return; }
 
-  if (TimeReached(TasmotaGlobal.backlog_timer) && strlen(UfsData.run_file) && !UfsData.run_file_mutex) {
+  if (BACKLOG_EMPTY && strlen(UfsData.run_file) && !UfsData.run_file_mutex) {
     File file = ffsp->open(UfsData.run_file, "r");
     if (!file || !file.seek(UfsData.run_file_pos)) {
       UfsData.run_file_pos = -1;       // Signal file ready
@@ -380,9 +380,9 @@ void UfsExecuteCommandFileLoop(void) {
         if ((buf[0] == '\n') || (buf[0] == '\r')) {
           break;                       // End of command with linefeed or carriage return
         }
-        else if (index && !comment && (buf[0] == ';')) {
-          break;                       // End of command on multi command line
-        }
+//        else if (index && !comment && (buf[0] == ';')) {
+//          break;                       // End of command on multi command line
+//        }
         else if ((0 == index) && isspace(buf[0])) {
                                        // Skip leading spaces (' ','\t','\n','\v','\f','\r')
         }
@@ -401,11 +401,7 @@ void UfsExecuteCommandFileLoop(void) {
     UfsData.run_file_pos = (file.available()) ? file.position() : -1;
     file.close();
     if (strlen(cmd_line)) {
-      bool nodelay = (!(!strncasecmp_P(cmd_line, PSTR(D_CMND_DELAY), strlen(D_CMND_DELAY))));
       ExecuteCommand(cmd_line, SRC_FILE);
-      if (nodelay) {
-        TasmotaGlobal.backlog_timer = millis();  // Reset backlog_timer which has been set by ExecuteCommand (CommandHandler)
-      }
     }
 
     UfsData.run_file_mutex = false;

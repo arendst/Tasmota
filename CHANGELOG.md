@@ -9,7 +9,7 @@ All notable changes to this project will be documented in this file.
 ## [9.3.1.3] 20210422
 ### Added
 - Optional GUI file editor enabled with define ``GUI_EDIT_FILE`` by barbudor (#11668)
-- Initial support for universal display driver UDisplay by Gerhard Mutz (#11665)
+- Initial support for universal display driver UDisplay by Gerhard Mutz. Enable by selecting any GPIO as ``Option A3`` (#11665)
 
 ### Changed
 - In tasmota-sensors.bin enabled support for VL53L0X and disabled TSL2561 (#11711)

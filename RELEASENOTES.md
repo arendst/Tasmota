@@ -102,7 +102,7 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - Extent compile time SetOptions support [#11204](https://github.com/arendst/Tasmota/issues/11204)
 - Tasmota discovery as alternative to Home Assistant discovery using define ``USE_TASMOTA_DISCOVERY``
 - Optional GUI file editor enabled with define ``GUI_EDIT_FILE`` by barbudor [#11668](https://github.com/arendst/Tasmota/issues/11668)
-- Initial support for universal display driver UDisplay by Gerhard Mutz [#11665](https://github.com/arendst/Tasmota/issues/11665)
+- Initial support for universal display driver UDisplay by Gerhard Mutz. Enable by selecting any GPIO as ``Option A3`` [#11665](https://github.com/arendst/Tasmota/issues/11665)
 - ESP32 Extent BLE [#11212](https://github.com/arendst/Tasmota/issues/11212)
 - ESP32 support for WS2812 hardware driver via RMT or I2S
 - ESP32 support for secondary I2C controller
