@@ -234,7 +234,7 @@ const uint32_t LOOP_SLEEP_DELAY = 50;       // Lowest number of milliseconds to 
 #define KNX_ENERGY_POWER       21
 #define KNX_ENERGY_POWERFACTOR 22
 #define KNX_ENERGY_DAILY       23
-#define KNX_ENERGY_START       24
+#define KNX_ENERGY_YESTERDAY   24
 #define KNX_ENERGY_TOTAL       25
 #define KNX_SLOT1              26
 #define KNX_SLOT2              27

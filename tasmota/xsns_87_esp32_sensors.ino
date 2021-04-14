@@ -1,5 +1,5 @@
 /*
-  xsns_87_esp32_halleffect.ino - ESP32 Hall Effect sensor for Tasmota
+  xsns_87_esp32_sensors.ino - ESP32 Temperature and Hall Effect sensor for Tasmota
 
   Copyright (C) 2021  Theo Arends
 
@@ -18,11 +18,10 @@
 */
 
 #ifdef ESP32
-#if CONFIG_IDF_TARGET_ESP32
-#ifdef USE_HALLEFFECT
 /*********************************************************************************************\
- * ESP32 internal Hall Effect sensor connected to both GPIO36 and GPIO39
+ * ESP32 CPU Temperature and optional Hall Effect sensor
  *
+ * ESP32 internal Hall Effect sensor connected to both GPIO36 and GPIO39
  * To enable set
  * GPIO36 as HallEffect 1
  * GPIO39 as HallEffect 2
@@ -30,13 +29,15 @@
 
 #define XSNS_87                  87
 
+#if CONFIG_IDF_TARGET_ESP32
+
 #define HALLEFFECT_SAMPLE_COUNT  32   // 32 takes about 12 mS at 80MHz CPU frequency
 
 struct {
   bool present = false;
 } HEData;
 
-void HallEffectInit(void) {
+void Esp32SensorInit(void) {
   if (PinUsed(GPIO_HALLEFFECT) && PinUsed(GPIO_HALLEFFECT, 1)) {
     if (((36 == Pin(GPIO_HALLEFFECT)) && (39 == Pin(GPIO_HALLEFFECT, 1))) ||
         ((39 == Pin(GPIO_HALLEFFECT)) && (36 == Pin(GPIO_HALLEFFECT, 1)))) {
@@ -46,27 +47,56 @@ void HallEffectInit(void) {
   }
 }
 
-#ifdef USE_WEBSERVER
-// {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
-const char HTTP_SNS_HALL_EFFECT[] PROGMEM = "{s}" D_HALL_EFFECT "{m}%d{e}";
-#endif  // USE_WEBSERVER
+#endif  // CONFIG_IDF_TARGET_ESP32
 
-void HallEffectShow(bool json) {
+void Esp32SensorShow(bool json) {
+  float t = CpuTemperature();
+
+#if CONFIG_IDF_TARGET_ESP32
   int value = 0;
-  for (uint32_t i = 0; i < HALLEFFECT_SAMPLE_COUNT; i++) {
-    value += hallRead();
+  if (HEData.present) {
+    for (uint32_t i = 0; i < HALLEFFECT_SAMPLE_COUNT; i++) {
+      value += hallRead();
+    }
+    value /= HALLEFFECT_SAMPLE_COUNT;
   }
-  value /= HALLEFFECT_SAMPLE_COUNT;
+#endif  // CONFIG_IDF_TARGET_ESP32
+
   if (json) {
-    ResponseAppend_P(PSTR(",\"" D_JSON_HALLEFFECT "\":%d"), value);
+    bool temperature_present = (strstr_P(TasmotaGlobal.mqtt_data, PSTR(D_JSON_TEMPERATURE)) != nullptr);
+    ResponseAppend_P(PSTR(",\"ESP32\":{\"" D_JSON_TEMPERATURE "\":%*_f"), Settings.flag2.temperature_resolution, &t);
+
+#if CONFIG_IDF_TARGET_ESP32
+    if (HEData.present) {
+      ResponseAppend_P(PSTR(",\"" D_JSON_HALLEFFECT "\":%d"), value);
+    }
+#endif  // CONFIG_IDF_TARGET_ESP32
+
+    ResponseJsonEnd();
 #ifdef USE_DOMOTICZ
     if (0 == TasmotaGlobal.tele_period) {
-      DomoticzSensor(DZ_COUNT, value);
+      if (!temperature_present) {  // Only send if no other sensor already did
+        DomoticzFloatSensor(DZ_TEMP, t);
+      }
+
+#if CONFIG_IDF_TARGET_ESP32
+      if (HEData.present) {
+        DomoticzSensor(DZ_COUNT, value);
+      }
+#endif  // CONFIG_IDF_TARGET_ESP32
+
     }
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
   } else {
-    WSContentSend_P(HTTP_SNS_HALL_EFFECT, value);
+    WSContentSend_Temp("ESP32", t);
+
+#if CONFIG_IDF_TARGET_ESP32
+    if (HEData.present) {
+      WSContentSend_P(HTTP_SNS_HALL_EFFECT, "ESP32", value);
+    }
+#endif  // CONFIG_IDF_TARGET_ESP32
+
 #endif  // USE_WEBSERVER
   }
 }
@@ -78,24 +108,20 @@ void HallEffectShow(bool json) {
 bool Xsns87(uint8_t function) {
   bool result = false;
 
-  if (FUNC_INIT == function) {
-    HallEffectInit();
-  }
-  else if (HEData.present) {
-    switch (function) {
-      case FUNC_JSON_APPEND:
-        HallEffectShow(1);
-        break;
+  switch (function) {
+    case FUNC_JSON_APPEND:
+      Esp32SensorShow(1);
+      break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_SENSOR:
-        HallEffectShow(0);
-        break;
+    case FUNC_WEB_SENSOR:
+      Esp32SensorShow(0);
+      break;
 #endif  // USE_WEBSERVER
-    }
+    case FUNC_INIT:
+      Esp32SensorInit();
+      break;
   }
   return result;
 }
 
-#endif  // USE_HALLEFFECT
-#endif  // CONFIG_IDF_TARGET_ESP32
 #endif  // ESP32

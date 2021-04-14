@@ -280,7 +280,8 @@ void HlwDrvInit(void)
       Energy.current_available = false;
       Energy.voltage_available = false;
     }
-
+    Energy.use_overtemp = true;            // Use global temperature for overtemp detection
+    
     TasmotaGlobal.energy_driver = XNRG_01;
   }
 }

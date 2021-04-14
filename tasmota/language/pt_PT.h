@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v9.3.1.1
+ * Updated until v9.3.1.2
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -290,10 +290,19 @@
 #define D_WEP "WEP"
 #define D_WPA_PSK "WPA PSK"
 #define D_WPA2_PSK "WPA2 PSK"
-#define D_AP1_SSID "SSId do AP1"
-#define D_AP1_PASSWORD "Palavra Chave do AP1"
-#define D_AP2_SSID "SSId do AP2"
-#define D_AP2_PASSWORD "Palavra Chave do AP2"
+#define D_AP1_SSID "Rede WiFi"
+#define D_AP1_SSID_HELP "Type or Select your WiFi Network"
+#define D_AP2_SSID "Rede WiFi 2"
+#define D_AP2_SSID_HELP "Digite ou selecione sua rede WiFi"
+#define D_AP_PASSWORD "Palavra Chave do WiFi"
+#define D_AP_PASSWORD_HELP "Digite sua Palavra Chave do WiFi"
+#define D_SELECT_YOUR_WIFI_NETWORK "Selecione sua Rede WiFi"
+#define D_SHOW_MORE_WIFI_NETWORKS "Procure todas as Redes WiFi"
+#define D_SHOW_MORE_OPTIONS "Mais Opções"
+#define D_CHECK_CREDENTIALS "Por favor, verifique suas credenciais"
+#define D_SUCCESSFUL_WIFI_CONNECTION "Conexão WiFi bem-sucedida"
+#define D_NOW_YOU_CAN_CLOSE_THIS_WINDOW "Agora você pode fechar esta janela"
+#define D_REDIRECTING_TO_NEW_IP "Redirecionando para o novo endereço IP do dispositivo"
 
 #define D_MQTT_PARAMETERS "Parametros MQTT"
 #define D_CLIENT "Cliente"
@@ -810,7 +819,7 @@
 #define D_SENSOR_TFMINIPLUS_RX  "TFmini+ RX"
 #define D_SENSOR_ZEROCROSS     "ZC Pulse"
 #define D_SENSOR_HALLEFFECT    "HallEffect"
-
+#define D_SENSOR_EPD_DATA      "EPD Data"
 
 // Units
 #define D_UNIT_AMPERE "A"
@@ -916,6 +925,9 @@
 #define D_MANAGE_FILE_SYSTEM   "Manage File system"
 #define D_FS_SIZE              "Size"
 #define D_FS_FREE              "Free"
+#define D_NEW_FILE             "newfile.txt"
+#define D_CREATE_NEW_FILE      "Create and edit new file"
+#define D_EDIT_FILE            "Edit File"
 
 //xsns_67_as3935.ino
 #define D_AS3935_GAIN "gain:"

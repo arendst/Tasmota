@@ -457,7 +457,6 @@ uint8_t* FlashDirectAccess(void) {
   return data;
 }
 
-
 void *special_malloc(uint32_t size) {
   if (psramFound()) {
     return heap_caps_malloc(size, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
@@ -471,6 +470,10 @@ void *special_realloc(void *ptr, size_t size) {
   } else {
     return realloc(ptr, size);
   }
+}
+
+float CpuTemperature(void) {
+  return ConvertTemp(temperatureRead());
 }
 
 #endif  // ESP32

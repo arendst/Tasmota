@@ -43,8 +43,7 @@ char* Format(char* output, const char* input_p, int size)
           snprintf_P(tmp, size, PSTR("%s%c0%dd"), output, '%', digits);
           snprintf_P(output, size, tmp, ESP_getChipId() & 0x1fff);            // %04d - short chip ID in dec, like in hostname
         } else {
-          String mac_address = WiFi.macAddress();
-          mac_address.replace(":", "");
+          String mac_address = NetworkUniqueId();
           if (digits > 12) { digits = 12; }
           String mac_part = mac_address.substring(12 - digits);
           snprintf_P(output, size, PSTR("%s%s"), output, mac_part.c_str());  // %01X .. %12X - mac address in hex
@@ -122,9 +121,7 @@ char* GetTopic_P(char *stopic, uint32_t prefix, char *topic, const char* subtopi
 
     fulltopic.replace(FPSTR(MQTT_TOKEN_TOPIC), (const __FlashStringHelper *)topic);
     fulltopic.replace(F("%hostname%"), TasmotaGlobal.hostname);
-    String token_id = WiFi.macAddress();
-    token_id.replace(":", "");
-    fulltopic.replace(F("%id%"), token_id);
+    fulltopic.replace(F("%id%"), NetworkUniqueId());
   }
   fulltopic.replace(F("#"), "");
   fulltopic.replace(F("//"), "/");
@@ -889,7 +886,7 @@ void PerformEverySecond(void)
     Settings.last_module = Settings.module;
 
 #ifdef USE_DEEPSLEEP
-    if (!(DeepSleepEnabled() && !Settings.flag3.bootcount_update)) {
+    if (!(DeepSleepEnabled() && !Settings.flag3.bootcount_update)) {  // SetOption76  - (Deepsleep) Enable incrementing bootcount (1) when deepsleep is enabled
 #endif
       Settings.bootcount++;              // Moved to here to stop flash writes during start-up
       AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_BOOT_COUNT " %d"), Settings.bootcount);
@@ -1308,7 +1305,7 @@ void Every250mSeconds(void)
       if (Settings.webserver) {
 
 #ifdef ESP8266
-        StartWebserver(Settings.webserver, WiFi.localIP());
+        if (!WifiIsInManagerMode()) { StartWebserver(Settings.webserver, WiFi.localIP()); }
 #endif  // ESP8266
 #ifdef ESP32
 #ifdef USE_ETHERNET

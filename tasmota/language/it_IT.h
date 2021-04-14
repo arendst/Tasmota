@@ -1,7 +1,7 @@
 /*
   it-IT.h - localization for Italian - Italy for Tasmota
 
-  Copyright (C) 2021  Gennaro Tortone, Antonio Fragola, Bovirus and Adrian Scillato
+  Copyright (C) 2021  Gennaro Tortone, Antonio Fragola, bovirus and Adrian Scillato
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Last update - 9.3.1.2 (27.03.2021)
+ * Updated until v9.3.1.2 - Last update 11.04.2021
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -290,10 +290,19 @@
 #define D_WEP "WEP"
 #define D_WPA_PSK "WPA PSK"
 #define D_WPA2_PSK "WPA2 PSK"
-#define D_AP1_SSID "AP1 - SSID"
-#define D_AP1_PASSWORD "AP1 - Password"
-#define D_AP2_SSID "AP2 - SSID"
-#define D_AP2_PASSWORD "AP2 - Password"
+#define D_AP1_SSID "Rete WiFi"
+#define D_AP1_SSID_HELP "Digita o Seleziona la tua Rete WiFi"
+#define D_AP2_SSID "Rete WiFi 2"
+#define D_AP2_SSID_HELP "Digita la tua Rete WiFi Alternativa"
+#define D_AP_PASSWORD "Password WiFi"
+#define D_AP_PASSWORD_HELP "Inserisci la tua Password WiFi"
+#define D_SELECT_YOUR_WIFI_NETWORK "Seleziona la tua Rete WiFi"
+#define D_SHOW_MORE_WIFI_NETWORKS "Cerca tutte le Reti WiFi"
+#define D_SHOW_MORE_OPTIONS "Più Opzioni"
+#define D_CHECK_CREDENTIALS "Per favore, controlla le tue Credenziali"
+#define D_SUCCESSFUL_WIFI_CONNECTION "Connessione WiFi riuscita"
+#define D_NOW_YOU_CAN_CLOSE_THIS_WINDOW "Adesso puoi chiudere questa finestra"
+#define D_REDIRECTING_TO_NEW_IP "Reindirizzamento al nuovo indirizzo IP del dispositivo"
 
 #define D_MQTT_PARAMETERS "Parametri MQTT"
 #define D_CLIENT "Client"
@@ -648,9 +657,9 @@
 #define D_SENSOR_TM1638_CLK    "TM1638 - CLK"
 #define D_SENSOR_TM1638_DIO    "TM1638 - DIO"
 #define D_SENSOR_TM1638_STB    "TM1638 - STB"
-#define D_SENSOR_MAX7219_DIN    "MAX7219 - DIN"
+#define D_SENSOR_MAX7219_DIN   "MAX7219 - DIN"
 #define D_SENSOR_MAX7219_CS    "MAX7219 - CS"
-#define D_SENSOR_MAX7219_CLK    "MAX7219 - CLK"
+#define D_SENSOR_MAX7219_CLK   "MAX7219 - CLK"
 #define D_SENSOR_HX711_SCK     "HX711 - SCK"
 #define D_SENSOR_HX711_DAT     "HX711 - DAT"
 #define D_SENSOR_FTC532        "FTC532"
@@ -806,57 +815,57 @@
 #define D_SENSOR_NEOPOOL_TX    "NeoPool - TX"
 #define D_SENSOR_NEOPOOL_RX    "NeoPool - RX"
 #define D_SENSOR_VL53L0X_XSHUT "VL53L0X XSHUT"
-#define D_SENSOR_TFMINIPLUS_TX  "TFmini+ - TX"
-#define D_SENSOR_TFMINIPLUS_RX  "TFmini+ - RX"
+#define D_SENSOR_TFMINIPLUS_TX "TFmini+ - TX"
+#define D_SENSOR_TFMINIPLUS_RX "TFmini+ - RX"
 #define D_SENSOR_ZEROCROSS     "Impulsi ZC"
 #define D_SENSOR_HALLEFFECT    "Effetto hall"
-
+#define D_SENSOR_EPD_DATA      "EPD - Dati"
 
 // Units
-#define D_UNIT_AMPERE "A"
-#define D_UNIT_CELSIUS "C"
-#define D_UNIT_CENTIMETER "cm"
-#define D_UNIT_DEGREE "°"
-#define D_UNIT_FAHRENHEIT "F"
-#define D_UNIT_HERTZ "Hz"
-#define D_UNIT_HOUR "o"
-#define D_UNIT_GALLONS "gal"
-#define D_UNIT_GALLONS_PER_MIN "g/m"
-#define D_UNIT_INCREMENTS "inc"
-#define D_UNIT_KELVIN "K"
-#define D_UNIT_KILOMETER "km"
-#define D_UNIT_KILOGRAM "kg"
-#define D_UNIT_KILOMETER_PER_HOUR "km/h"  // or "km/h"
-#define D_UNIT_KILOOHM "kΩ"
-#define D_UNIT_KILOWATTHOUR "kWh"
-#define D_UNIT_LITERS "L"
-#define D_UNIT_LITERS_PER_MIN "L/m"
-#define D_UNIT_LUX "lx"
+#define D_UNIT_AMPERE                    "A"
+#define D_UNIT_CELSIUS                   "C"
+#define D_UNIT_CENTIMETER                "cm"
+#define D_UNIT_DEGREE                    "°"
+#define D_UNIT_FAHRENHEIT                "F"
+#define D_UNIT_HERTZ                     "Hz"
+#define D_UNIT_HOUR                      "o"
+#define D_UNIT_GALLONS                   "gal"
+#define D_UNIT_GALLONS_PER_MIN           "g/m"
+#define D_UNIT_INCREMENTS                "inc"
+#define D_UNIT_KELVIN                    "K"
+#define D_UNIT_KILOMETER                 "km"
+#define D_UNIT_KILOGRAM                  "kg"
+#define D_UNIT_KILOMETER_PER_HOUR        "km/h"  // or "km/h"
+#define D_UNIT_KILOOHM                   "kΩ"
+#define D_UNIT_KILOWATTHOUR              "kWh"
+#define D_UNIT_LITERS                    "L"
+#define D_UNIT_LITERS_PER_MIN            "L/m"
+#define D_UNIT_LUX                       "lx"
 #define D_UNIT_MICROGRAM_PER_CUBIC_METER "µg/m³"
-#define D_UNIT_MICROMETER "µm"
-#define D_UNIT_MICROSECOND "µs"
-#define D_UNIT_MICROSIEMENS_PER_CM "µS/cm"
-#define D_UNIT_MILLIAMPERE "mA"
-#define D_UNIT_MILLILITERS "ml"
-#define D_UNIT_MILLIMETER "mm"
-#define D_UNIT_MILLIMETER_MERCURY "mmHg"
-#define D_UNIT_MILLISECOND "ms"
-#define D_UNIT_MILLIVOLT "mV"
-#define D_UNIT_MINUTE "Min"
-#define D_UNIT_PARTS_PER_BILLION "ppb"
-#define D_UNIT_PARTS_PER_DECILITER "ppd"
-#define D_UNIT_PARTS_PER_MILLION "ppm"
-#define D_UNIT_MILIGRAMS_PER_LITER "mg/L"
-#define D_UNIT_PERCENT "%%"
-#define D_UNIT_PRESSURE "hPa"
-#define D_UNIT_SECOND "sec"
-#define D_UNIT_SECTORS "settori"
-#define D_UNIT_VA "VA"
-#define D_UNIT_VAR "VAr"
-#define D_UNIT_VOLT "V"
-#define D_UNIT_WATT "W"
-#define D_UNIT_WATTHOUR "Wh"
-#define D_UNIT_WATT_METER_QUADRAT "W/m²"
+#define D_UNIT_MICROMETER                "µm"
+#define D_UNIT_MICROSECOND               "µs"
+#define D_UNIT_MICROSIEMENS_PER_CM       "µS/cm"
+#define D_UNIT_MILLIAMPERE               "mA"
+#define D_UNIT_MILLILITERS               "ml"
+#define D_UNIT_MILLIMETER                "mm"
+#define D_UNIT_MILLIMETER_MERCURY        "mmHg"
+#define D_UNIT_MILLISECOND               "ms"
+#define D_UNIT_MILLIVOLT                 "mV"
+#define D_UNIT_MINUTE                    "Min"
+#define D_UNIT_PARTS_PER_BILLION         "ppb"
+#define D_UNIT_PARTS_PER_DECILITER       "ppd"
+#define D_UNIT_PARTS_PER_MILLION         "ppm"
+#define D_UNIT_MILIGRAMS_PER_LITER       "mg/L"
+#define D_UNIT_PERCENT                   "%%"
+#define D_UNIT_PRESSURE                  "hPa"
+#define D_UNIT_SECOND                    "sec"
+#define D_UNIT_SECTORS                   "settori"
+#define D_UNIT_VA                        "VA"
+#define D_UNIT_VAR                       "VAr"
+#define D_UNIT_VOLT                      "V"
+#define D_UNIT_WATT                      "W"
+#define D_UNIT_WATTHOUR                  "Wh"
+#define D_UNIT_WATT_METER_QUADRAT        "W/m²"
 
 #define D_NEW_ADDRESS          "Imposta indirizzo a"
 #define D_OUT_OF_RANGE         "Fuori intervallo"
@@ -916,35 +925,38 @@
 #define D_MANAGE_FILE_SYSTEM   "Gestione File system"
 #define D_FS_SIZE              "Dimensione"
 #define D_FS_FREE              "Liberi"
+#define D_NEW_FILE             "nuovofile.txt"
+#define D_CREATE_NEW_FILE      "Crea e modifica nuovo file"
+#define D_EDIT_FILE            "Modifica file"
 
 //xsns_67_as3935.ino
-#define D_AS3935_GAIN "guadagno:"
-#define D_AS3935_ENERGY "energia:"
-#define D_AS3935_DISTANCE "distanza:"
+#define D_AS3935_GAIN      "guadagno:"
+#define D_AS3935_ENERGY    "energia:"
+#define D_AS3935_DISTANCE  "distanza:"
 #define D_AS3935_DISTURBER "disturbatore:"
-#define D_AS3935_VRMS "µVrms:"
-#define D_AS3935_APRX "appross.:"
-#define D_AS3935_AWAY "lontano"
-#define D_AS3935_LIGHT "illuminazione"
-#define D_AS3935_OUT "illuminazione fuori intervallo"
-#define D_AS3935_NOT "distanza non determinata"
-#define D_AS3935_ABOVE "illuminazione ambientale"
-#define D_AS3935_NOISE "rilevato rumore"
-#define D_AS3935_DISTDET "rilevato disturbatore"
-#define D_AS3935_INTNOEV "Interrupt senza evento!"
-#define D_AS3935_FLICKER "Flicker PIN IRQ!"
-#define D_AS3935_POWEROFF "Spegnimento"
-#define D_AS3935_NOMESS "in ascolto..."
-#define D_AS3935_ON "ON"
-#define D_AS3935_OFF "OFF"
-#define D_AS3935_INDOORS "Interno"
-#define D_AS3935_OUTDOORS "Esterno"
-#define D_AS3935_CAL_FAIL "calibrazione fallita"
-#define D_AS3935_CAL_OK "calibrazione impostata a:"
+#define D_AS3935_VRMS      "µVrms:"
+#define D_AS3935_APRX      "appross.:"
+#define D_AS3935_AWAY      "lontano"
+#define D_AS3935_LIGHT     "illuminazione"
+#define D_AS3935_OUT       "illuminazione fuori intervallo"
+#define D_AS3935_NOT       "distanza non determinata"
+#define D_AS3935_ABOVE     "illuminazione ambientale"
+#define D_AS3935_NOISE     "rilevato rumore"
+#define D_AS3935_DISTDET   "rilevato disturbatore"
+#define D_AS3935_INTNOEV   "Interrupt senza evento!"
+#define D_AS3935_FLICKER   "Flicker PIN IRQ!"
+#define D_AS3935_POWEROFF  "Spegnimento"
+#define D_AS3935_NOMESS    "in ascolto..."
+#define D_AS3935_ON        "ON"
+#define D_AS3935_OFF       "OFF"
+#define D_AS3935_INDOORS   "Interno"
+#define D_AS3935_OUTDOORS  "Esterno"
+#define D_AS3935_CAL_FAIL  "calibrazione fallita"
+#define D_AS3935_CAL_OK    "calibrazione impostata a:"
 
 //xsns_68_opentherm.ino
-#define D_SENSOR_BOILER_OT_RX   "OpenTherm - RX"
-#define D_SENSOR_BOILER_OT_TX   "OpenTherm - TX"
+#define D_SENSOR_BOILER_OT_RX  "OpenTherm - RX"
+#define D_SENSOR_BOILER_OT_TX  "OpenTherm - TX"
 
 // xnrg_15_teleinfo Denky (Teleinfo)
 #define D_CONTRACT        "Contratto"
@@ -956,41 +968,41 @@
 #define D_MAX_CURRENT     "Corrente max"
 
 // xsns_79_as608.ino
-#define D_FP_ENROLL_PLACEFINGER "Appoggia impronta"
-#define D_FP_ENROLL_REMOVEFINGER "Rimuovi impronta"
-#define D_FP_ENROLL_PLACESAMEFINGER "Appoggia di nuovo stessa impronta"
-#define D_FP_ENROLL_RETRY "Errore quindi riprova"
-#define D_FP_ENROLL_RESTART "Riavvia"
-#define D_FP_ENROLL_ERROR "Errore"
-#define D_FP_ENROLL_RESET "Ripristina"
-#define D_FP_ENROLL_ACTIVE "Attivo"
-#define D_FP_ENROLL_INACTIVE "Non attivo"
+#define D_FP_ENROLL_PLACEFINGER      "Appoggia impronta"
+#define D_FP_ENROLL_REMOVEFINGER     "Rimuovi impronta"
+#define D_FP_ENROLL_PLACESAMEFINGER  "Appoggia di nuovo stessa impronta"
+#define D_FP_ENROLL_RETRY            "Errore quindi riprova"
+#define D_FP_ENROLL_RESTART          "Riavvia"
+#define D_FP_ENROLL_ERROR            "Errore"
+#define D_FP_ENROLL_RESET            "Ripristina"
+#define D_FP_ENROLL_ACTIVE           "Attivo"
+#define D_FP_ENROLL_INACTIVE         "Non attivo"
 // Indexed by Adafruit_Fingerprint.h defines
-#define D_FP_PACKETRECIEVEERR "Errore comunicazione"        // 0x01 Error when receiving data package
-#define D_FP_NOFINGER ""                                    // 0x02 No finger on the sensor
-#define D_FP_IMAGEFAIL "Errore immagine"                    // 0x03 Failed to enroll the finger
-#define D_FP_IMAGEMESS "Immmagine troppo danneggiata"       // 0x06 Failed to generate character file due to overly disorderly fingerprint image
-#define D_FP_FEATUREFAIL "Impronta troppo piccola"          // 0x07 Failed to generate character file due to the lack of character point or small fingerprint image
-#define D_FP_NOMATCH "Nessuna corrispondenza"               // 0x08 Finger doesn't match
-#define D_FP_NOTFOUND "Corrispondenza non trovata"          // 0x09 Failed to find matching finger
-#define D_FP_ENROLLMISMATCH "L'impronta non corrisponde"    // 0x0A Failed to combine the character files
-#define D_FP_BADLOCATION "Locazione errata"                 // 0x0B Addressed PageID is beyond the finger library
-#define D_FP_DBRANGEFAIL "Errore intervallo DB"             // 0x0C Error when reading template from library or invalid template
-#define D_FP_UPLOADFEATUREFAIL "Errore funzione upload"     // 0x0D Error when uploading template
-#define D_FP_PACKETRESPONSEFAIL "Errore risposta pacchetto" // 0x0E Module failed to receive the following data packages
-#define D_FP_UPLOADFAIL "Errore upload"                     // 0x0F Error when uploading image
-#define D_FP_DELETEFAIL "Errore eliminazione"               // 0x10 Failed to delete the template
-#define D_FP_DBCLEARFAIL "Errore azzeramento DB"            // 0x11 Failed to clear finger library
-#define D_FP_PASSFAIL "Errore password"                     // 0x13 Find whether the fingerprint passed or failed
-#define D_FP_INVALIDIMAGE "Immagine non valida"             // 0x15 Failed to generate image because of lac of valid primary image
-#define D_FP_FLASHERR "Errore scrittura flash"              // 0x18 Error when writing flash
-#define D_FP_INVALIDREG "Numero non valido"                 // 0x1A Invalid register number
-#define D_FP_ADDRCODE "Codice indirizzo"                    // 0x20 Address code
-#define D_FP_PASSVERIFY "Password verificata"               // 0x21 Verify the fingerprint passed
-#define D_FP_UNKNOWNERROR "Errore"                          // Any other error
+#define D_FP_PACKETRECIEVEERR "Errore comunicazione"             // 0x01 Error when receiving data package
+#define D_FP_NOFINGER          ""                                // 0x02 No finger on the sensor
+#define D_FP_IMAGEFAIL          "Errore immagine"                // 0x03 Failed to enroll the finger
+#define D_FP_IMAGEMESS          "Immmagine troppo danneggiata"   // 0x06 Failed to generate character file due to overly disorderly fingerprint image
+#define D_FP_FEATUREFAIL        "Impronta troppo piccola"        // 0x07 Failed to generate character file due to the lack of character point or small fingerprint image
+#define D_FP_NOMATCH            "Nessuna corrispondenza"         // 0x08 Finger doesn't match
+#define D_FP_NOTFOUND           "Corrispondenza non trovata"     // 0x09 Failed to find matching finger
+#define D_FP_ENROLLMISMATCH     "L'impronta non corrisponde"     // 0x0A Failed to combine the character files
+#define D_FP_BADLOCATION        "Locazione errata"               // 0x0B Addressed PageID is beyond the finger library
+#define D_FP_DBRANGEFAIL        "Errore intervallo DB"           // 0x0C Error when reading template from library or invalid template
+#define D_FP_UPLOADFEATUREFAIL  "Errore funzione upload"         // 0x0D Error when uploading template
+#define D_FP_PACKETRESPONSEFAIL "Errore risposta pacchetto"      // 0x0E Module failed to receive the following data packages
+#define D_FP_UPLOADFAIL         "Errore upload"                  // 0x0F Error when uploading image
+#define D_FP_DELETEFAIL         "Errore eliminazione"            // 0x10 Failed to delete the template
+#define D_FP_DBCLEARFAIL        "Errore azzeramento DB"          // 0x11 Failed to clear finger library
+#define D_FP_PASSFAIL           "Errore password"                // 0x13 Find whether the fingerprint passed or failed
+#define D_FP_INVALIDIMAGE       "Immagine non valida"            // 0x15 Failed to generate image because of lac of valid primary image
+#define D_FP_FLASHERR           "Errore scrittura flash"         // 0x18 Error when writing flash
+#define D_FP_INVALIDREG         "Numero non valido"              // 0x1A Invalid register number
+#define D_FP_ADDRCODE           "Codice indirizzo"               // 0x20 Address code
+#define D_FP_PASSVERIFY         "Password verificata"            // 0x21 Verify the fingerprint passed
+#define D_FP_UNKNOWNERROR       "Errore"                         // Any other error
 
 // xsns_83_neopool.ino
-#define D_NEOPOOL_MACH_NONE               "NeoPool"           // Machine names
+#define D_NEOPOOL_MACH_NONE               "NeoPool"             // Machine names
 #define D_NEOPOOL_MACH_HIDROLIFE          "Hidrolife (giallo)"
 #define D_NEOPOOL_MACH_AQUASCENIC         "Aquascenic (blu)"
 #define D_NEOPOOL_MACH_OXILIFE            "Oxilife (verde)"
@@ -1037,7 +1049,7 @@
 #define D_NEOPOOL_LOW                     "Bassa"
 #define D_NEOPOOL_FLOW1                   "FL1"
 #define D_NEOPOOL_FLOW2                   "FL2"
-#define D_NEOPOOL_PH_HIGH                 "troppo alto"          // ph Alarms
+#define D_NEOPOOL_PH_HIGH                 "troppo alto"       // ph Alarms
 #define D_NEOPOOL_PH_LOW                  "troppo basso"
 #define D_NEOPOOL_PUMP_TIME_EXCEEDED      "tempo pompa superato"
 

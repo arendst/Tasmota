@@ -600,6 +600,7 @@ void Cse7761DrvInit(void) {
 #ifdef CSE7761_FREQUENCY
     Energy.frequency_common = true;             // Use common frequency
 #endif
+    Energy.use_overtemp = true;                 // Use global temperature for overtemp detection
     TasmotaGlobal.energy_driver = XNRG_19;
   }
 }

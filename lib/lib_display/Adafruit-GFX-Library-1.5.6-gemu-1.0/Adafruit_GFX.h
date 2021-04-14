@@ -187,6 +187,10 @@ virtual void
   /************************************************************************/
   int16_t height(void) const { return _height; }
 
+  void setwidth(uint16_t w);
+
+  void setheight(uint16_t h);
+
   /************************************************************************/
   /*!
     @brief      Get rotation setting for display

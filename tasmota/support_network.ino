@@ -127,3 +127,9 @@ String NetworkMacAddress(void) {
 #endif
   return WiFi.macAddress();
 }
+
+String NetworkUniqueId(void) {
+  String unique_id = WiFi.macAddress();
+  unique_id.replace(":", "");  // Full 12 chars MAC address as ID
+  return unique_id;
+}

@@ -80,6 +80,7 @@ const uint8_t DISPLAY_LOG_ROWS = 32;           // Number of lines in display log
 #define D_CMND_DISP_CLOCK "Clock"
 #define D_CMND_DISP_TEXTNC "TextNC"                   // NC - "No Clear"
 #define D_CMND_DISP_SCROLLTEXT "ScrollText"
+#define D_CMND_DISP_REINIT "reinit"
 
 enum XdspFunctions { FUNC_DISPLAY_INIT_DRIVER, FUNC_DISPLAY_INIT, FUNC_DISPLAY_EVERY_50_MSECOND, FUNC_DISPLAY_EVERY_SECOND,
                      FUNC_DISPLAY_MODEL, FUNC_DISPLAY_MODE, FUNC_DISPLAY_POWER,
@@ -108,7 +109,7 @@ const char kDisplayCommands[] PROGMEM = D_PRFX_DISPLAY "|"  // Prefix
 #endif
   D_CMND_DISP_CLEAR "|" D_CMND_DISP_NUMBER "|" D_CMND_DISP_FLOAT "|" D_CMND_DISP_NUMBERNC "|" D_CMND_DISP_FLOATNC "|"
   D_CMND_DISP_RAW "|" D_CMND_DISP_LEVEL "|" D_CMND_DISP_SEVENSEG_TEXT "|" D_CMND_DISP_SEVENSEG_TEXTNC "|"
-  D_CMND_DISP_SCROLLDELAY "|" D_CMND_DISP_CLOCK "|" D_CMND_DISP_TEXTNC "|" D_CMND_DISP_SCROLLTEXT
+  D_CMND_DISP_SCROLLDELAY "|" D_CMND_DISP_CLOCK "|" D_CMND_DISP_TEXTNC "|" D_CMND_DISP_SCROLLTEXT "|" D_CMND_DISP_REINIT
   ;
 
 void (* const DisplayCommand[])(void) PROGMEM = {
@@ -120,7 +121,7 @@ void (* const DisplayCommand[])(void) PROGMEM = {
 #endif
   &CmndDisplayClear, &CmndDisplayNumber, &CmndDisplayFloat, &CmndDisplayNumberNC, &CmndDisplayFloatNC,
   &CmndDisplayRaw, &CmndDisplayLevel, &CmndDisplaySevensegText, &CmndDisplaySevensegTextNC,
-  &CmndDisplayScrollDelay, &CmndDisplayClock, &CmndDisplayTextNC, &CmndDisplayScrollText
+  &CmndDisplayScrollDelay, &CmndDisplayClock, &CmndDisplayTextNC, &CmndDisplayScrollText,&DisplayReInitDriver
 };
 
 #ifdef USE_GRAPH
@@ -989,7 +990,7 @@ void Display_Text_From_File(const char *file) {
   File fp;
   if (!ufsp) return;
   fp = ufsp->open(file, FS_FILE_READ);
-  if (fp >= 0) {
+  if (fp > 0) {
     char *savptr = XdrvMailbox.data;
     char linebuff[128];
     while (fp.available()) {
@@ -1021,7 +1022,7 @@ void Display_Text_From_File(const char *file) {
     fp.close();
   }
 }
-#endif
+#endif // USE_UFILESYS
 
 
 #ifdef USE_DT_VARS
@@ -1999,6 +2000,11 @@ void CmndDisplayScrollText(void) {
     result = XdspCall(FUNC_DISPLAY_SCROLLTEXT);
   }
   if(result) ResponseCmndChar(XdrvMailbox.data);
+}
+
+void DisplayReInitDriver(void) {
+  XdspCall(FUNC_DISPLAY_INIT_DRIVER);
+  ResponseCmndDone();
 }
 
 /*********************************************************************************************\

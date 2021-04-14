@@ -361,4 +361,21 @@ void berry_log(const char * berry_buf) {
 }
 
 
+/*********************************************************************************************\
+ * Helper function for `Driver` class
+ * 
+ * get_tasmota() -> tasmota instance from globals
+ *   allows to use solidified methods refering to the global object `tasmota`
+ * 
+\*********************************************************************************************/
+extern "C" {
+
+  int32_t d_getTasmotaGlob(struct bvm *vm);
+  int32_t d_getTasmotaGlob(struct bvm *vm) {
+    be_getglobal(berry.vm, PSTR("tasmota"));
+    be_return(vm); // Return
+  }
+
+}
+
 #endif  // USE_BERRY

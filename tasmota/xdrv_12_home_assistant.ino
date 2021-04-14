@@ -18,6 +18,7 @@
 */
 
 #ifdef USE_HOME_ASSISTANT
+#undef USE_TASMOTA_DISCOVERY
 
 #define XDRV_12 12
 
@@ -328,9 +329,7 @@ void NewHAssDiscovery(void)
   ResponseClear(); // Clear retained message
 
   // Full 12 chars MAC address as ID
-  String mac_address = WiFi.macAddress();
-  mac_address.replace(":", "");
-  snprintf_P(unique_id, sizeof(unique_id), PSTR("%s"), mac_address.c_str());
+  snprintf_P(unique_id, sizeof(unique_id), PSTR("%s"), NetworkUniqueId().c_str());
   snprintf_P(stopic, sizeof(stopic), PSTR("tasmota/discovery/%s/config"), unique_id);
 
   // Send empty message if new discovery is disabled

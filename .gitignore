@@ -1,7 +1,13 @@
 ## OS specific ########
 .DS_Store
 .fuse_hidden*
+
+## Compilation artefacts ########
 *.pyc
+*.d
+*.o
+*.gcno
+*.gcda
 
 ## Project files ######
 .platformio

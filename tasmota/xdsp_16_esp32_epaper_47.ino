@@ -1,5 +1,5 @@
 /*
-  xdsp_16_epaper_47.ino -  LILIGO47 e-paper support for Tasmota
+  xdsp_16_esp32_epaper_47.ino - LILIGO47 e-paper support for Tasmota
 
   Copyright (C) 2021  Theo Arends, Gerhard Mutz and LILIGO
 
@@ -17,7 +17,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-
+#ifdef ESP32
 #ifdef USE_DISPLAY
 #ifdef USE_LILYGO47
 
@@ -37,8 +37,8 @@ extern uint16_t bg_color;
 /*********************************************************************************************/
 
 void EpdInitDriver47(void) {
+  if (PinUsed(GPIO_EPD_DATA)) {
 
-  if (1) {
     Settings.display_model = XDSP_16;
 
     if (Settings.display_width != EPD47_WIDTH) {
@@ -53,7 +53,7 @@ void EpdInitDriver47(void) {
     epd47->Init();
 
     renderer = epd47;
-    renderer->DisplayInit(DISPLAY_INIT_FULL, Settings.display_size, Settings.display_rotate, Settings.display_font);
+    renderer->DisplayInit(DISPLAY_INIT_MODE, Settings.display_size, Settings.display_rotate, Settings.display_font);
     renderer->setTextColor(EPD47_BLACK, EPD47_WHITE);
 
 #ifdef SHOW_SPLASH
@@ -96,5 +96,6 @@ bool Xdsp16(uint8_t function)
   return result;
 }
 
-#endif  // USE_DISPLAY_EPAPER
+#endif  // USE_LILYGO47
 #endif  // USE_DISPLAY
+#endif  // ESP32

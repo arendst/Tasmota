@@ -573,6 +573,7 @@ void McpSnsInit(void)
       mcp_buffer = (char*)(malloc(MCP_BUFFER_SIZE));
     }
     DigitalWrite(GPIO_MCP39F5_RST, 0, 1);  // MCP enable
+    Energy.use_overtemp = true;            // Use global temperature for overtemp detection
   } else {
     TasmotaGlobal.energy_driver = ENERGY_NONE;
   }

@@ -83,6 +83,7 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - Command ``Sensor80 1 <0..7>`` to control MFRC522 RFID antenna gain from 18dB (0) to 48dB (7) [#11073](https://github.com/arendst/Tasmota/issues/11073)
 - Command ``SerialBuffer 256..520`` to change hardware serial receive buffer size from default (256) to max local buffer size (520) [#11448](https://github.com/arendst/Tasmota/issues/11448)
 - Command ``SetOption126 1`` to enable DS18x20 arithmetic mean over teleperiod for JSON temperature based on [#11472](https://github.com/arendst/Tasmota/issues/11472)
+- Command ``Backlog0`` to allow execution of following commands without delay
 - Commands ``MqttKeepAlive 1..100`` to set Mqtt Keep Alive timer (default 30) and ``MqttTimeout 1..100`` to set Mqtt Socket Timeout (default 4) [#5341](https://github.com/arendst/Tasmota/issues/5341)
 - Commands ``DisplayType`` to select sub-modules where implemented and ``DisplayInvert`` to select inverted display where implemented
 - Support for SML VBUS [#11125](https://github.com/arendst/Tasmota/issues/11125)
@@ -103,6 +104,7 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - ESP32 support for WS2812 hardware driver via RMT or I2S
 - ESP32 support for secondary I2C controller
 - ESP32 support for internal Hall Effect sensor connected to both GPIO36 and GPIO39 only
+- Tasmota discovery as alternative to Home Assistant discovery using define ``USE_TASMOTA_DISCOVERY``
 
 ### Changed
 - TasmotaSerial library from v3.2.0 to v3.3.0
@@ -114,6 +116,7 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - DeepSleep announcement topic [#11223](https://github.com/arendst/Tasmota/issues/11223)
 - Limit number of relay/button columns in GUI to 8 [#11546](https://github.com/arendst/Tasmota/issues/11546)
 - ADC range result from int to float using command ``FreqRes`` for decimal resolution selection [#11545](https://github.com/arendst/Tasmota/issues/11545)
+- Removed overtemp detection on external energy monitoring devices [#11628](https://github.com/arendst/Tasmota/issues/11628)
 
 ### Fixed
 - PN532 on ESP32 Serial flush both Tx and Rx buffers [#10910](https://github.com/arendst/Tasmota/issues/10910)

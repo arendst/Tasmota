@@ -42,6 +42,11 @@
 //   IBEACON.PERSEC - count of adverts per sec.  USeful for detecting button press?
 //   IBEACON.MAJOR - some iBeacon related term? - only present for some
 //   IBEACON.MINOR - some iBeacon related term? - only present for some
+//
+// Note for Apple iBeacons with UUID,MAJOR,MINOR:
+// iBeacons are compared using UUID+MAJOR+MINOR as the unique id rather than MAC address.
+// so each of your beacons should have unique MAJOR+MINOR.
+// it would be 'normal' for UUID to be identical for a set of iBeacons.
 ////////////////////////////////////////
 
 
@@ -89,9 +94,13 @@ struct IBEACON {
 struct IBEACON_UID {
   char MAC[12];
   char RSSI[4];
+  //////////////////////////////
+  // DON'T CHANGE THE ORDER HERE
+  // we reference these as a single field in comparing for 'same' beacon
   char UID[32];
   char MAJOR[4];
   char MINOR[4];
+  //////////////////////////////
   uint8_t FLAGS;
   uint8_t TIME;
   uint8_t REPORTED;
@@ -233,8 +242,10 @@ int advertismentCallback(BLE_ESP32::ble_advertisment_t *pStruct)
       memcpy(UUID,oBeacon.getProximityUUID().getNative()->u128.value,16);
       ESP32BLE_ReverseStr(UUID,16);
 
-      uint16_t    Major = ENDIAN_CHANGE_U16(oBeacon.getMajor());
-      uint16_t    Minor = ENDIAN_CHANGE_U16(oBeacon.getMinor());
+//      uint16_t    Major = ENDIAN_CHANGE_U16(oBeacon.getMajor());
+//      uint16_t    Minor = ENDIAN_CHANGE_U16(oBeacon.getMinor());
+      uint16_t    Major = oBeacon.getMajor();
+      uint16_t    Minor = oBeacon.getMinor();
       uint8_t     PWR   = oBeacon.getSignalPower();
 
       DumpHex((const unsigned char*)&UUID,16,ib.UID);
@@ -340,7 +351,7 @@ uint32_t ibeacon_add(struct IBEACON *ib) {
         if (!strncmp_P(ib->UID,PSTR("00000000000000000000000000000000"),32)) {
           if (!strncmp(ibeacons[cnt].MAC,ib->MAC,12)) {
             // exists
-            strncpy(ibeacons[cnt].NAME,ib->NAME,sizeof(ibeacons[cnt].NAME));
+            memcpy(ibeacons[cnt].NAME,ib->NAME,sizeof(ibeacons[cnt].NAME));
             memcpy(ibeacons[cnt].RSSI,ib->RSSI,4);
             ibeacons[cnt].TIME=0;
             if (ibeacons[cnt].REPTIME >= IB_UPDATE_TIME) {
@@ -351,9 +362,14 @@ uint32_t ibeacon_add(struct IBEACON *ib) {
             return 2;
           }
         } else {
-          if (!strncmp(ibeacons[cnt].UID,ib->UID,32)) {
+          // iBeacons from a phone can change thier MAC frequently.
+          // but it is intended that UUID+MAJOR+MINOR are unique.
+          // so if we find the SAME UUID+MAJOR+MINOR, then update the MAC and assume the same device.
+          // NOT: THIS RELIES ON THE STRUCTURE ORDER
+          if (!strncmp(ibeacons[cnt].UID,ib->UID,sizeof(ib->UID)+sizeof(ib->MAJOR)+sizeof(ib->MINOR))) {
             // exists
-            strncpy(ibeacons[cnt].NAME,ib->NAME,sizeof(ibeacons[cnt].NAME));
+            memcpy(ibeacons[cnt].NAME,ib->NAME,sizeof(ibeacons[cnt].NAME));
+            memcpy(ibeacons[cnt].MAC,ib->MAC,12);
             memcpy(ibeacons[cnt].RSSI,ib->RSSI,4);
             ibeacons[cnt].TIME=0;
             if (ibeacons[cnt].REPTIME >= IB_UPDATE_TIME) {
@@ -368,7 +384,7 @@ uint32_t ibeacon_add(struct IBEACON *ib) {
     }
     for (uint32_t cnt=0;cnt<MAX_IBEACONS;cnt++) {
       if (!ibeacons[cnt].FLAGS) {
-        strncpy(ibeacons[cnt].NAME,ib->NAME,sizeof(ibeacons[cnt].NAME));
+        memcpy(ibeacons[cnt].NAME,ib->NAME,sizeof(ibeacons[cnt].NAME));
         memcpy(ibeacons[cnt].MAC,ib->MAC,12);
         memcpy(ibeacons[cnt].RSSI,ib->RSSI,4);
         memcpy(ibeacons[cnt].UID,ib->UID,32);
@@ -376,7 +392,6 @@ uint32_t ibeacon_add(struct IBEACON *ib) {
         memcpy(ibeacons[cnt].MINOR,ib->MINOR,4);
         ibeacons[cnt].FLAGS=1;
         ibeacons[cnt].TIME=0;
-        memcpy(ibeacons[cnt].NAME,ib->NAME,16);
         ibeacons[cnt].REPTIME = 0;
         ibeacons[cnt].REPORTED = 0;
         ibeacons[cnt].count = 0;
@@ -414,13 +429,15 @@ const char HTTP_IBEACON_HL[] PROGMEM = "{s}<hr>{m}<hr>{e}";
 const char HTTP_IBEACON_mac[] PROGMEM =
  "{s}IBEACON-MAC : %s" " {m} RSSI : %s" "{e}";
 const char HTTP_IBEACON_uid[] PROGMEM =
- "{s}IBEACON-UID : %s" " {m} RSSI : %s" "{e}";
+ "{s}IBEACON-UID : %s:%s:%s" " {m} RSSI : %s" "{e}";
 const char HTTP_IBEACON_name[] PROGMEM =
  "{s}IBEACON-NAME : %s (%s)" " {m} RSSI : %s" "{e}";
 void IBEACON_Show(void) {
   char mac[14];
   char rssi[6];
   char uid[34];
+  char major[6];
+  char minor[6];
   char name[18];
   //TasAutoMutex localmutex(&beaconmutex, "iBeacShow");
   int total = 0;
@@ -434,6 +451,10 @@ void IBEACON_Show(void) {
       rssi[4]=0;
       memcpy(uid,ibeacons[cnt].UID,32);
       uid[32]=0;
+      memcpy(major,ibeacons[cnt].MAJOR,4);
+      major[4]=0;
+      memcpy(minor,ibeacons[cnt].MINOR,4);
+      minor[4]=0;
       memcpy(name,ibeacons[cnt].NAME,16);
       name[16]=0;
       if (!strncmp_P(uid,PSTR("00000000000000000000000000000000"),32)) {
@@ -443,7 +464,7 @@ void IBEACON_Show(void) {
           WSContentSend_PD(HTTP_IBEACON_mac,mac,rssi);
         }
       } else {
-        WSContentSend_PD(HTTP_IBEACON_uid,uid,rssi);
+        WSContentSend_PD(HTTP_IBEACON_uid,uid,major,minor,rssi);
       }
     }
   }

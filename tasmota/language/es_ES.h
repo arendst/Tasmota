@@ -290,10 +290,19 @@
 #define D_WEP "WEP"
 #define D_WPA_PSK "WPA PSK"
 #define D_WPA2_PSK "WPA2 PSK"
-#define D_AP1_SSID "SSId AP1"
-#define D_AP1_PASSWORD "Clave AP1"
-#define D_AP2_SSID "SSId AP2"
-#define D_AP2_PASSWORD "Clave AP2"
+#define D_AP1_SSID "Red WiFi"
+#define D_AP1_SSID_HELP "Escriba o Seleccione su Red WiFi"
+#define D_AP2_SSID "Red WiFi Alternativa"
+#define D_AP2_SSID_HELP "Escriba el nombre de la Red WiFi Alternativa"
+#define D_AP_PASSWORD "Clave WiFi"
+#define D_AP_PASSWORD_HELP "Escriba la clave de WiFi"
+#define D_SELECT_YOUR_WIFI_NETWORK "Seleccione su Red WiFi"
+#define D_SHOW_MORE_WIFI_NETWORKS "Buscar todas las Redes WiFi"
+#define D_SHOW_MORE_OPTIONS "Mas Opciones"
+#define D_CHECK_CREDENTIALS "Por favor, revise la clave"
+#define D_SUCCESSFUL_WIFI_CONNECTION "Conexión WiFi Existosa"
+#define D_NOW_YOU_CAN_CLOSE_THIS_WINDOW "Ahora puede cerrar esta ventana"
+#define D_REDIRECTING_TO_NEW_IP "Redireccionando a la nueva dirección IP"
 
 #define D_MQTT_PARAMETERS "Parámetros MQTT"
 #define D_CLIENT "Cliente"
@@ -810,7 +819,7 @@
 #define D_SENSOR_TFMINIPLUS_RX  "TFmini+ RX"
 #define D_SENSOR_ZEROCROSS     "Cruce por cero"
 #define D_SENSOR_HALLEFFECT    "HallEffect"
-
+#define D_SENSOR_EPD_DATA      "EPD Data"
 
 // Units
 #define D_UNIT_AMPERE "A"
@@ -916,6 +925,9 @@
 #define D_MANAGE_FILE_SYSTEM   "Explorar Archivos"
 #define D_FS_SIZE              "Tamaño"
 #define D_FS_FREE              "Libre"
+#define D_NEW_FILE             "newfile.txt"
+#define D_CREATE_NEW_FILE      "Create and edit new file"
+#define D_EDIT_FILE            "Edit File"
 
 //xsns_67_as3935.ino
 #define D_AS3935_GAIN "Ganancia:"

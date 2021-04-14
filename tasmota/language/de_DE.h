@@ -291,9 +291,18 @@
 #define D_WPA_PSK "WPA-PSK"
 #define D_WPA2_PSK "WPA2-PSK"
 #define D_AP1_SSID "WLAN 1 - SSID"
-#define D_AP1_PASSWORD "WLAN 1 - Passwort"
+#define D_AP1_SSID_HELP "Type or Select your WiFi Network"
 #define D_AP2_SSID "WLAN 2 - SSID"
-#define D_AP2_PASSWORD "WLAN 2 - Passwort"
+#define D_AP2_SSID_HELP "Type your Alternative WiFi Network"
+#define D_AP_PASSWORD "WLAN - Passwort"
+#define D_AP_PASSWORD_HELP "Enter your WiFi Password"
+#define D_SELECT_YOUR_WIFI_NETWORK "Select your WiFi Network"
+#define D_SHOW_MORE_WIFI_NETWORKS "Scan for all WiFi Networks"
+#define D_SHOW_MORE_OPTIONS "More Options"
+#define D_CHECK_CREDENTIALS "Please, check your credentials"
+#define D_SUCCESSFUL_WIFI_CONNECTION "Successful WiFi Connection"
+#define D_NOW_YOU_CAN_CLOSE_THIS_WINDOW "Now you can close this window"
+#define D_REDIRECTING_TO_NEW_IP "Redirecting to new device's IP address"
 
 #define D_MQTT_PARAMETERS "MQTT-Einstellungen"
 #define D_CLIENT "client"
@@ -810,7 +819,7 @@
 #define D_SENSOR_TFMINIPLUS_RX  "TFmini+ RX"
 #define D_SENSOR_ZEROCROSS     "ZC Puls"
 #define D_SENSOR_HALLEFFECT    "HallEffect"
-
+#define D_SENSOR_EPD_DATA      "EPD Data"
 
 // Units
 #define D_UNIT_AMPERE "A"
@@ -916,6 +925,9 @@
 #define D_MANAGE_FILE_SYSTEM   "Verwalte Dateisystem"
 #define D_FS_SIZE              "Größe"
 #define D_FS_FREE              "Frei"
+#define D_NEW_FILE             "neue-datei.txt"
+#define D_CREATE_NEW_FILE      "Neue Datei erstellen und bearbeiten"
+#define D_EDIT_FILE            "Datei bearbeiten"
 
 //xsns_67_as3935.ino
 #define D_AS3935_GAIN "Umgebung:"

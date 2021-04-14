@@ -38,6 +38,27 @@
 
 #define TINFO_READ_TIMEOUT 400
 
+#define D_NAME_TELEINFO "Teleinfo"
+
+// Json Command
+//const char S_JSON_TELEINFO_COMMAND_STRING[] PROGMEM = "{\"" D_NAME_TELEINFO "\":{\"%s\":%s}}";
+//const char S_JSON_TELEINFO_COMMAND_NVALUE[] PROGMEM = "{\"" D_NAME_TELEINFO "\":{\"%s\":%d}}";
+const char TELEINFO_COMMAND_SETTINGS[] PROGMEM = "TIC: Settings Mode:%s, Raw:%s, Skip:%d, Limit:%d";
+
+#define MAX_TINFO_COMMAND_NAME 16+1 // Change this if one of the following kTInfo_Commands is higher then 16 char
+const char kTInfo_Commands[] PROGMEM  = "historique|standard|noraw|full|changed|skip|limit";
+
+enum TInfoCommands {            // commands for Console
+  CMND_TELEINFO_HISTORIQUE=0,   // Set Legacy mode
+  CMND_TELEINFO_STANDARD,       // Set Standard Mode
+  CMND_TELEINFO_RAW_DISABLE,    // Disable Raw frame sending
+  CMND_TELEINFO_RAW_FULL,       // Enable all RAW frame send
+  CMND_TELEINFO_RAW_CHANGE,     // Enable only changed values RAW frame send
+  CMND_TELEINFO_SKIP,           // Set number of frame to skip when raw mode is enabled
+  CMND_TELEINFO_LIMIT           // Limit RAW frame to values subject to fast change (Power, Current, ...), TBD
+};
+
+
 // All contract type for legacy, standard mode has in clear text
 enum TInfoContrat{
     CONTRAT_BAS = 1,  // BASE => Option Base.
@@ -126,6 +147,7 @@ bool tinfo_found = false;
 int contrat;
 int tarif;
 int isousc;
+int raw_skip;
 
 /*********************************************************************************************/
 
@@ -366,15 +388,17 @@ void DataCallback(struct _ValueList * me, uint8_t  flags)
 Function: responseDumpTInfo
 Purpose : add teleinfo values into JSON response
 Input   : 1st separator space if begining of JSON, else comma
-Output  : -
+        : select if append all data or just changed one
+Output  : false if asked for changed value and none has changed else true
 Comments: -
 ====================================================================== */
-void ResponseAppendTInfo(char sep)
+bool ResponseAppendTInfo(char sep, bool all)
 {
     struct _ValueList * me = tinfo.getList();
 
     char * p ;
-    boolean isNumber ;
+    bool isNumber ;
+    bool hasValue = false;
 
     // Loop thru all the teleinfo frame but
     // always check we don't buffer overflow of MQTT data
@@ -383,34 +407,41 @@ void ResponseAppendTInfo(char sep)
         me = me->next;
 
         if (me->name && me->value && *me->name && *me->value) {
-            isNumber = true;
-            p = me->value;
 
-            // Specific treatment serial number don't convert to number later
-            if (strcmp(me->name, "ADCO")==0 || strcmp(me->name, "ADSC")==0) {
-                isNumber = false;
-            } else {
-                // check if value is number
-                while (*p && isNumber) {
-                    if ( *p < '0' || *p > '9' ) {
-                        isNumber = false;
+            // Add values only if we want all data or if data has changed
+            if (all || ( Settings.teleinfo.raw_report_changed && (me->flags & (TINFO_FLAGS_UPDATED | TINFO_FLAGS_ADDED | TINFO_FLAGS_ALERT) ) ) ) {
+
+                isNumber = true;
+                hasValue = true;
+                p = me->value;
+
+                // Specific treatment serial number don't convert to number later
+                if (strcmp(me->name, "ADCO")==0 || strcmp(me->name, "ADSC")==0) {
+                    isNumber = false;
+                } else {
+                    // check if value is number
+                    while (*p && isNumber) {
+                        if ( *p < '0' || *p > '9' ) {
+                            isNumber = false;
+                        }
+                        p++;
                     }
-                    p++;
                 }
+
+                ResponseAppend_P( PSTR("%c\"%s\":"), sep, me->name );
+
+                if (!isNumber) {
+                    ResponseAppend_P( PSTR("\"%s\""), me->value );
+                } else {
+                    ResponseAppend_P( PSTR("%d"), atoi(me->value));
+                }
+
+                // Now JSON separator is needed
+                sep =',';
             }
-
-            ResponseAppend_P( PSTR("%c\"%s\":"), sep, me->name );
-
-            if (!isNumber) {
-                ResponseAppend_P( PSTR("\"%s\""), me->value );
-            } else {
-                ResponseAppend_P( PSTR("%d"), atoi(me->value));
-            }
-
-            // Now JSON separator is needed
-            sep =',';
         }
     }
+    return hasValue;
 }
 
 /* ======================================================================
@@ -425,15 +456,29 @@ void NewFrameCallback(struct _ValueList * me)
     // Reset Energy Watchdog
     Energy.data_valid[0] = 0;
 
-    // send teleinfo full frame only if setup like that
-    // see setOption108
-    if (Settings.flag4.teleinfo_rawdata) {
-        Response_P(PSTR("{"));
-        ResponseAppendTInfo(' ');
-        ResponseJsonEnd();
-        // Publish adding ADCO serial number into the topic
-        // Need setOption4 to be enabled
-        MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, serialNumber, false);
+    // Deprecated see setOption108
+    // send teleinfo raw data only if setup like that
+    if (Settings.teleinfo.raw_send) {
+        // Do we need to skip this frame
+        if (raw_skip == 0 ) {
+            Response_P(PSTR("{"));
+            // send teleinfo full frame or only changed data
+            bool hasData = ResponseAppendTInfo(' ', Settings.teleinfo.raw_report_changed ? false : true );
+            ResponseJsonEnd();
+            
+            // Publish adding ADCO serial number into the topic
+            // Need setOption4 to be enabled
+            // No need to send empty payload
+            if (hasData) {
+                MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, serialNumber, false);
+            }
+
+            // Reset frame skip counter (if 0 it's disabled)
+            raw_skip = Settings.teleinfo.raw_skip;
+        } else {
+            AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: not sending yet, will do in %d frame(s)"), raw_skip);
+            raw_skip--;
+        }
     }
 }
 
@@ -463,9 +508,9 @@ void TInfoInit(void)
     int baudrate;
     int serial_buffer_size;
 
-
-    // SetOption102 - Set Baud rate for Teleinfo serial communication (0 = 1200 or 1 = 9600)
-    if (Settings.flag4.teleinfo_baudrate) {
+    // Deprecated SetOption102 - Set Baud rate for Teleinfo serial communication (0 = 1200 or 1 = 9600)
+    // now set in bit field TeleinfoCfg
+    if (Settings.teleinfo.mode_standard) {
         baudrate = 9600;
         tinfo_mode = TINFO_MODE_STANDARD;
         serial_buffer_size = TELEINFO_SERIAL_BUFFER_STANDARD;
@@ -474,6 +519,7 @@ void TInfoInit(void)
         tinfo_mode = TINFO_MODE_HISTORIQUE;
         serial_buffer_size = TELEINFO_SERIAL_BUFFER_HISTORIQUE;
     }
+
 
     if (PinUsed(GPIO_TELEINFO_RX)) {
          int8_t rx_pin = Pin(GPIO_TELEINFO_RX);
@@ -533,9 +579,178 @@ void TInfoInit(void)
             tinfo.attachNewFrame(NewFrameCallback);
             tinfo_found = true;
 
+            if (Settings.teleinfo.raw_send) {
+                raw_skip = Settings.teleinfo.raw_skip;
+                AddLog(LOG_LEVEL_INFO, PSTR("TIC: Raw mode enabled"));
+                if (raw_skip) {
+                    AddLog(LOG_LEVEL_INFO, PSTR("TIC: Sending only one frame over %d "), raw_skip+1);
+                } 
+            }
             AddLog(LOG_LEVEL_INFO, PSTR("TIC: Ready"));
         }
     }
+}
+
+
+/* ======================================================================
+Function: TInfoCmd
+Purpose : Tasmota core command engine for Teleinfo commands
+Input   : -
+Output  : -
+Comments: -
+====================================================================== */
+bool TInfoCmd(void) {
+    bool serviced = false;
+    char command[CMDSZ];
+    //uint8_t name_len = strlen(D_NAME_TELEINFO);
+
+    // At least "EnergyConfig"
+    if (CMND_ENERGYCONFIG == Energy.command_code) {
+
+        AddLog_P(LOG_LEVEL_DEBUG, PSTR("TIC: len %d, data '%s'"), XdrvMailbox.data_len, XdrvMailbox.data ? XdrvMailbox.data : "null" );
+
+        // Just "EnergyConfig" no more parameter
+        // Show Teleinfo configuration        
+        if (XdrvMailbox.data_len == 0) {
+
+            char mode_name[MAX_TINFO_COMMAND_NAME];
+            char raw_name[MAX_TINFO_COMMAND_NAME];
+            int index_mode = Settings.teleinfo.mode_standard ? CMND_TELEINFO_STANDARD : CMND_TELEINFO_HISTORIQUE;
+            int index_raw = Settings.teleinfo.raw_send ? CMND_TELEINFO_RAW_FULL : CMND_TELEINFO_RAW_DISABLE;
+            if (Settings.teleinfo.raw_send && Settings.teleinfo.raw_report_changed) {
+                index_raw = CMND_TELEINFO_RAW_CHANGE;
+            } 
+            // Get the mode and raw name
+            GetTextIndexed(mode_name, MAX_TINFO_COMMAND_NAME, index_mode, kTInfo_Commands);
+            GetTextIndexed(raw_name, MAX_TINFO_COMMAND_NAME, index_raw, kTInfo_Commands);
+
+            AddLog_P(LOG_LEVEL_INFO, TELEINFO_COMMAND_SETTINGS, mode_name, raw_name, Settings.teleinfo.raw_skip, Settings.teleinfo.raw_limit);
+
+            serviced = true;
+
+        // At least "EnergyConfig xyz" plus one space and one (or more) char 
+        // so "EnergyConfig 0" or "EnergyConfig Teleinfo Standard"
+        } else if (XdrvMailbox.data_len) {
+            // Now point on parameter
+            char *pParam = XdrvMailbox.data;
+            char *p = pParam;
+            char *pValue = nullptr;
+            // Check for sub parameter ie : EnergyConfig Teleinfo Skip value
+            while(*p) {
+                if (*p == ' ') {
+                    if (*(p+1)) {
+                        // Skip parameter by emptying th string so below getcommandcode works
+                        *p++ = 0x00;
+                        // Save parameter value for later
+                        pValue = p;
+                    }
+                    break;
+                }
+                p++;
+            }
+
+            int command_code = GetCommandCode(command, sizeof(command), pParam, kTInfo_Commands);
+
+            AddLog_P(LOG_LEVEL_DEBUG, PSTR("TIC: param '%s' cmnd %d"), pParam, command_code);
+
+            switch (command_code) {
+                case CMND_TELEINFO_STANDARD:
+                case CMND_TELEINFO_HISTORIQUE: {
+                    char mode_name[MAX_TINFO_COMMAND_NAME];
+
+                    // Get the mode name
+                    GetTextIndexed(mode_name, MAX_TINFO_COMMAND_NAME, command_code, kTInfo_Commands);
+
+                    // Only if current settings is different than previous
+                    if ( (tinfo_mode==TINFO_MODE_STANDARD && command_code==CMND_TELEINFO_HISTORIQUE) ||
+                         (tinfo_mode==TINFO_MODE_HISTORIQUE && command_code==CMND_TELEINFO_STANDARD) ) {
+
+                        // Cleanup Serial not sure it will works since 
+                        // there is no end() or close() on tasmotaserial class
+                        if (TInfoSerial) {
+                            TInfoSerial->flush();
+                            //TInfoSerial->end();
+                            free(TInfoSerial);
+                        }
+
+                        // Change mode 
+                        Settings.teleinfo.mode_standard = command_code == CMND_TELEINFO_STANDARD ? 1 : 0;
+
+                        AddLog_P(LOG_LEVEL_INFO, PSTR("TIC: '%s' mode"), mode_name);
+
+                        // Re init teleinfo (LibTeleinfo always free linked list on init)
+                        TInfoInit();
+
+                        serviced = true;
+
+                    } else {
+                        AddLog_P(LOG_LEVEL_INFO, PSTR("TIC: No change to '%s' mode"), mode_name);
+                    }
+                }
+                break;
+
+                case CMND_TELEINFO_RAW_DISABLE: 
+                case CMND_TELEINFO_RAW_FULL: 
+                case CMND_TELEINFO_RAW_CHANGE: {
+            
+                   // Enable all RAW frame send
+                   char raw_name[MAX_TINFO_COMMAND_NAME];
+
+                    // Get the raw name
+                    GetTextIndexed(raw_name, MAX_TINFO_COMMAND_NAME, command_code, kTInfo_Commands);
+
+                    if (command_code == CMND_TELEINFO_RAW_DISABLE) {
+                        // disable raw mode
+                        Settings.teleinfo.raw_send = 0;
+                    } else {
+                        // enable raw mode
+                        Settings.teleinfo.raw_send = 1;
+                        Settings.teleinfo.raw_report_changed = command_code == CMND_TELEINFO_RAW_CHANGE ? 1 : 0;
+                    }
+
+                    AddLog_P(LOG_LEVEL_INFO, PSTR("TIC: Raw to '%s'"), raw_name);
+                    serviced = true;
+                }
+                break;
+
+                case CMND_TELEINFO_SKIP: {
+                    // Set Raw mode skip frame number
+                    char skip_name[MAX_TINFO_COMMAND_NAME];
+                    // Get the raw name
+                    GetTextIndexed(skip_name, MAX_TINFO_COMMAND_NAME, command_code, kTInfo_Commands);
+                    int l = strlen(skip_name);
+
+                    // At least "EnergyConfig Teleinfo skip" plus one space and one (or more) digit
+                    // so "EnergyConfig Skip 0" or "EnergyConfig Skip 123"
+                    if ( pValue ) {
+                        int value = atoi(pValue);
+                        if (value >= 0 && value <= 255) {
+                            raw_skip = value;
+                            Settings.teleinfo.raw_skip = raw_skip;
+
+                            if (raw_skip ==0) {
+                                AddLog_P(LOG_LEVEL_INFO, PSTR("TIC: Raw no skip"));
+                            } else {
+                                AddLog_P(LOG_LEVEL_INFO, PSTR("TIC: Raw each %d frame(s)"), raw_skip+1);
+                            }
+                            serviced = true;
+                        } else {
+                            AddLog_P(LOG_LEVEL_INFO, PSTR("TIC: skip can be 0 to 255"));
+                        }
+                    } else {
+                        AddLog_P(LOG_LEVEL_INFO, PSTR("TIC: no skip value"));
+                    }
+                }
+                break;
+
+                default:
+                    AddLog_P(LOG_LEVEL_INFO, PSTR("TIC: bad cmd param '%s'"), pParam);
+                break;
+
+            }
+        }
+    }
+    return serviced ;
 }
 
 /* ======================================================================
@@ -614,7 +829,7 @@ void TInfoShow(bool json)
         }
 
         // add teleinfo full frame 
-        ResponseAppendTInfo(',');
+        ResponseAppendTInfo(',', true);
 
 #ifdef USE_WEBSERVER
     }
@@ -696,11 +911,16 @@ void TInfoShow(bool json)
 \*********************************************************************************************/
 bool Xnrg15(uint8_t function)
 {
+    bool result = false;
     switch (function)
     {
         case FUNC_EVERY_250_MSECOND:
             TInfoProcess();
             break;
+        case FUNC_COMMAND:
+            result = TInfoCmd();
+            break;
+
         case FUNC_JSON_APPEND:
             TInfoShow(1);
             break;
@@ -716,7 +936,7 @@ bool Xnrg15(uint8_t function)
             TInfoDrvInit();
             break;
     }
-    return false;
+    return result;
 }
 
 #endif  // USE_TELEINFO

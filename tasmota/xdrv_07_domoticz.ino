@@ -602,36 +602,31 @@ void HandleDomoticzConfiguration(void) {
 }
 
 void DomoticzSaveSettings(void) {
-  char stemp[20];
-  char ssensor_indices[6 * MAX_DOMOTICZ_SNS_IDX];
-  char tmp[100];
-
-  for (uint32_t i = 0; i < MAX_DOMOTICZ_IDX; i++) {
-    snprintf_P(stemp, sizeof(stemp), PSTR("r%d"), i);
-    WebGetArg(stemp, tmp, sizeof(tmp));
-    Settings.domoticz_relay_idx[i] = (!strlen(tmp)) ? 0 : atoi(tmp);
-    snprintf_P(stemp, sizeof(stemp), PSTR("k%d"), i);
-    WebGetArg(stemp, tmp, sizeof(tmp));
-    Settings.domoticz_key_idx[i] = (!strlen(tmp)) ? 0 : atoi(tmp);
-    snprintf_P(stemp, sizeof(stemp), PSTR("s%d"), i);
-    WebGetArg(stemp, tmp, sizeof(tmp));
-    Settings.domoticz_switch_idx[i] = (!strlen(tmp)) ? 0 : atoi(tmp);
+  char tmp1[CMDSZ];
+  WebGetArg(PSTR("ut"), tmp1, sizeof(tmp1));
+  char command[500];
+  snprintf_P(command, sizeof(command), PSTR(D_CMND_BACKLOG "0 " D_PRFX_DOMOTICZ D_CMND_UPDATETIMER " %s"),
+    (!strlen(tmp1)) ? STR(DOMOTICZ_UPDATE_TIMER) : tmp1);
+  char arg_idx[8];
+  char tmp2[CMDSZ];
+  char tmp3[CMDSZ];
+  for (uint32_t i = 1; i <= MAX_DOMOTICZ_IDX; i++) {
+    snprintf_P(arg_idx, sizeof(arg_idx), PSTR("r%d"), i -1);
+    WebGetArg(arg_idx, tmp1, sizeof(tmp1));
+    arg_idx[0] = 'k';
+    WebGetArg(arg_idx, tmp2, sizeof(tmp2));
+    arg_idx[0] = 's';
+    WebGetArg(arg_idx, tmp3, sizeof(tmp3));
+    snprintf_P(command, sizeof(command),PSTR("%s;" D_PRFX_DOMOTICZ D_CMND_IDX "%d %s;" D_PRFX_DOMOTICZ D_CMND_KEYIDX "%d %s;" D_PRFX_DOMOTICZ D_CMND_SWITCHIDX "%d %s"),
+      command, i, (!strlen(tmp1)) ? "0" : tmp1, i, (!strlen(tmp2)) ? "0" : tmp2, i, (!strlen(tmp3)) ? "0" : tmp3);
   }
-  ssensor_indices[0] = '\0';
-  for (uint32_t i = 0; i < DZ_MAX_SENSORS; i++) {
-    snprintf_P(stemp, sizeof(stemp), PSTR("l%d"), i);
-    WebGetArg(stemp, tmp, sizeof(tmp));
-    Settings.domoticz_sensor_idx[i] = (!strlen(tmp)) ? 0 : atoi(tmp);
-    snprintf_P(ssensor_indices, sizeof(ssensor_indices), PSTR("%s%s%d"), ssensor_indices, (strlen(ssensor_indices)) ? "," : "",  Settings.domoticz_sensor_idx[i]);
+  for (uint32_t i = 1; i <= DZ_MAX_SENSORS; i++) {
+    snprintf_P(arg_idx, sizeof(arg_idx), PSTR("l%d"), i -1);
+    WebGetArg(arg_idx, tmp1, sizeof(tmp1));
+    snprintf_P(command, sizeof(command),PSTR("%s;" D_PRFX_DOMOTICZ D_CMND_SENSORIDX "%d %s"),
+      command, i, (!strlen(tmp1)) ? "0" : tmp1);
   }
-  WebGetArg(PSTR("ut"), tmp, sizeof(tmp));
-  Settings.domoticz_update_timer = (!strlen(tmp)) ? DOMOTICZ_UPDATE_TIMER : atoi(tmp);
-
-  AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_DOMOTICZ D_CMND_IDX " %d,%d,%d,%d, " D_CMND_KEYIDX " %d,%d,%d,%d, " D_CMND_SWITCHIDX " %d,%d,%d,%d, " D_CMND_SENSORIDX " %s, " D_CMND_UPDATETIMER " %d"),
-    Settings.domoticz_relay_idx[0], Settings.domoticz_relay_idx[1], Settings.domoticz_relay_idx[2], Settings.domoticz_relay_idx[3],
-    Settings.domoticz_key_idx[0], Settings.domoticz_key_idx[1], Settings.domoticz_key_idx[2], Settings.domoticz_key_idx[3],
-    Settings.domoticz_switch_idx[0], Settings.domoticz_switch_idx[1], Settings.domoticz_switch_idx[2], Settings.domoticz_switch_idx[3],
-    ssensor_indices, Settings.domoticz_update_timer);
+  ExecuteWebCommand(command);  // Note: beware of max number of commands in backlog currently 30 (MAX_BACKLOG)
 }
 #endif  // USE_WEBSERVER
 

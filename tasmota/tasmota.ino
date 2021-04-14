@@ -98,6 +98,8 @@
  * Global variables
 \*********************************************************************************************/
 
+const uint32_t VERSION_MARKER[] PROGMEM = { 0x5AA55AA5, 0xFFFFFFFF, 0xA55AA55A };
+
 WiFiUDP PortUdp;                            // UDP Syslog and Alexa
 
 struct {
@@ -141,6 +143,7 @@ struct {
   bool rule_teleperiod;                     // Process rule based on teleperiod data using prefix TELE-
   bool serial_local;                        // Handle serial locally
   bool fallback_topic_flag;                 // Use Topic or FallbackTopic
+  bool backlog_nodelay;                     // Execute all backlog commands with no delay
   bool backlog_mutex;                       // Command backlog pending
   bool stop_flash_rotate;                   // Allow flash configuration rotation
   bool blinkstate;                          // LED state
@@ -363,6 +366,8 @@ void setup(void) {
   AddLog(LOG_LEVEL_INFO, PSTR(D_WARNING_MINIMAL_VERSION));
 #endif  // FIRMWARE_MINIMAL
 
+  memcpy_P(TasmotaGlobal.mqtt_data, VERSION_MARKER, 1);  // Dummy for compiler saving VERSION_MARKER
+
 #ifdef USE_ARDUINO_OTA
   ArduinoOTAInit();
 #endif  // USE_ARDUINO_OTA
@@ -398,16 +403,19 @@ void BacklogLoop(void) {
       if (!nodelay_detected) {
         ExecuteCommand((char*)cmd.c_str(), SRC_BACKLOG);
       }
-      if (nodelay) {
+      if (nodelay || TasmotaGlobal.backlog_nodelay) {
         TasmotaGlobal.backlog_timer = millis();  // Reset backlog_timer which has been set by ExecuteCommand (CommandHandler)
       }
       TasmotaGlobal.backlog_mutex = false;
+    }
+    if (BACKLOG_EMPTY) {
+      TasmotaGlobal.backlog_nodelay = false;
     }
   }
 }
 
 void SleepDelay(uint32_t mseconds) {
-  if (mseconds) {
+  if (!TasmotaGlobal.backlog_nodelay && mseconds) {
     uint32_t wait = millis() + mseconds;
     while (!TimeReached(wait) && !Serial.available()) {  // We need to service serial buffer ASAP as otherwise we get uart buffer overrun
       delay(1);

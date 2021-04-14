@@ -879,14 +879,12 @@ void HandleTimerConfiguration(void)
 
 void TimerSaveSettings(void)
 {
-  char tmp[MAX_TIMERS *12];  // Need space for MAX_TIMERS x 10 digit numbers separated by a comma
-  char message[32 + (MAX_TIMERS *11)];  // MQT: Timers 0,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000
   Timer timer;
 
   Settings.flag3.timers_enable = Webserver->hasArg(F("e0"));  // CMND_TIMERS
+  char tmp[MAX_TIMERS *12];  // Need space for MAX_TIMERS x 10 digit numbers separated by a comma
   WebGetArg(PSTR("t0"), tmp, sizeof(tmp));
   char *p = tmp;
-  snprintf_P(message, sizeof(message), PSTR(D_LOG_MQTT D_CMND_TIMERS " %d"), Settings.flag3.timers_enable);  // CMND_TIMERS
   for (uint32_t i = 0; i < MAX_TIMERS; i++) {
     timer.data = strtol(p, &p, 10);
     p++;  // Skip comma
@@ -895,9 +893,10 @@ void TimerSaveSettings(void)
       Settings.timer[i].data = timer.data;
       if (flag) TimerSetRandomWindow(i);
     }
-    snprintf_P(message, sizeof(message), PSTR("%s,0x%08X"), message, Settings.timer[i].data);
   }
-  AddLogData(LOG_LEVEL_DEBUG, message);
+  char command[CMDSZ];
+  snprintf_P(command, sizeof(command), PSTR(D_CMND_TIMERS));
+  ExecuteWebCommand(command);
 }
 #endif  // USE_TIMERS_WEB
 #endif  // USE_WEBSERVER

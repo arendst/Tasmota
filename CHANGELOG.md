@@ -17,6 +17,8 @@ All notable changes to this project will be documented in this file.
 - Berry add ``gpio`` module
 - Berry add ``light`` module
 - Support for dummy energy monitor using user values set by commands ``VoltageSet``, ``CurrentSet``, ``PowerSet`` and ``FrequencySet``. Enable by selecting any GPIO as ``Option A2`` (#10640)
+- Command ``Backlog0`` to allow execution of following commands without delay
+- Tasmota discovery as alternative to Home Assistant discovery using define ``USE_TASMOTA_DISCOVERY``
 
 ### Changed
 - PubSubClient library from EspEasy v2.7.12 to Tasmota v2.8.12
@@ -25,6 +27,7 @@ All notable changes to this project will be documented in this file.
 - Limit number of relay/button columns in GUI to 8 (#11546)
 - ADC range result from int to float using command ``FreqRes`` for decimal resolution selection (#11545)
 - Teleinfo, if raw mode selected also return telemety values in SENSOR data
+- Removed overtemp detection on external energy monitoring devices (#11628)
 
 ### Fixed
 - HC-SR04 on ESP32 release serial interface if not used (#11507)

@@ -219,6 +219,7 @@ void Bl0940SnsInit(void) {
       Settings.energy_current_calibration = BL0940_IREF;
       Settings.energy_power_calibration = BL0940_PREF;
     }
+    Energy.use_overtemp = true;                 // Use global temperature for overtemp detection
 
     for (uint32_t i = 0; i < 5; i++) {
       for (uint32_t j = 0; j < 6; j++) {
