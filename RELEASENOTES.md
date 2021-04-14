@@ -78,7 +78,7 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 
 [Complete list](BUILDS.md) of available feature and sensors.
 
-## Changelog v9.3.1.2
+## Changelog v9.3.1.3
 ### Added
 - Command ``Sensor80 1 <0..7>`` to control MFRC522 RFID antenna gain from 18dB (0) to 48dB (7) [#11073](https://github.com/arendst/Tasmota/issues/11073)
 - Command ``SerialBuffer 256..520`` to change hardware serial receive buffer size from default (256) to max local buffer size (520) [#11448](https://github.com/arendst/Tasmota/issues/11448)
@@ -100,11 +100,13 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - Allow MCP230xx pinmode from output to input [#11104](https://github.com/arendst/Tasmota/issues/11104)
 - Berry improvements [#11163](https://github.com/arendst/Tasmota/issues/11163)
 - Extent compile time SetOptions support [#11204](https://github.com/arendst/Tasmota/issues/11204)
+- Tasmota discovery as alternative to Home Assistant discovery using define ``USE_TASMOTA_DISCOVERY``
+- Optional GUI file editor enabled with define ``GUI_EDIT_FILE`` by barbudor [#11668](https://github.com/arendst/Tasmota/issues/11668)
+- Initial support for universal display driver UDisplay by Gerhard Mutz [#11665](https://github.com/arendst/Tasmota/issues/11665)
 - ESP32 Extent BLE [#11212](https://github.com/arendst/Tasmota/issues/11212)
 - ESP32 support for WS2812 hardware driver via RMT or I2S
 - ESP32 support for secondary I2C controller
 - ESP32 support for internal Hall Effect sensor connected to both GPIO36 and GPIO39 only
-- Tasmota discovery as alternative to Home Assistant discovery using define ``USE_TASMOTA_DISCOVERY``
 
 ### Changed
 - TasmotaSerial library from v3.2.0 to v3.3.0
@@ -117,6 +119,9 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - Limit number of relay/button columns in GUI to 8 [#11546](https://github.com/arendst/Tasmota/issues/11546)
 - ADC range result from int to float using command ``FreqRes`` for decimal resolution selection [#11545](https://github.com/arendst/Tasmota/issues/11545)
 - Removed overtemp detection on external energy monitoring devices [#11628](https://github.com/arendst/Tasmota/issues/11628)
+- Redesigned initial GUI wifi configuration by Adrian Scillato [#11693](https://github.com/arendst/Tasmota/issues/11693)
+- In tasmota-sensors.bin enabled support for VL53L0X and disabled TSL2561 [#11711](https://github.com/arendst/Tasmota/issues/11711)
+- Add HLW8012/BL0937 average pulse calculation by Alex Lovett [#11722](https://github.com/arendst/Tasmota/issues/11722)
 
 ### Fixed
 - PN532 on ESP32 Serial flush both Tx and Rx buffers [#10910](https://github.com/arendst/Tasmota/issues/10910)
@@ -130,4 +135,8 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - ESP32 flash script for Odroid and Core2 [#11227](https://github.com/arendst/Tasmota/issues/11227)
 - ESP32 WS2812 bitbang support [#11248](https://github.com/arendst/Tasmota/issues/11248)
 - DS18x20 driver timing issue [#11270](https://github.com/arendst/Tasmota/issues/11270)
+- Alexa discovery in hue emulation [#11415](https://github.com/arendst/Tasmota/issues/11415)
 - HC-SR04 on ESP32 release serial interface if not used [#11507](https://github.com/arendst/Tasmota/issues/11507)
+- Alexa discovery for ZBBridge [#11576](https://github.com/arendst/Tasmota/issues/11576)
+- Telegram chat id incorrect size [#11660](https://github.com/arendst/Tasmota/issues/11660)
+- KNX energy yesterday [#11718](https://github.com/arendst/Tasmota/issues/11718)

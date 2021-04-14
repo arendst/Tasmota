@@ -3,7 +3,21 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [9.3.1.2]
+## [9.3.1.3]
+### Added
+- Optional GUI file editor enabled with define ``GUI_EDIT_FILE`` by barbudor (#11668)
+- Initial support for universal display driver UDisplay by Gerhard Mutz (#11665)
+
+### Changed
+- In tasmota-sensors.bin enabled support for VL53L0X and disabled TSL2561 (#11711)
+- Add HLW8012/BL0937 average pulse calculation by Alex Lovett (#11722)
+- Redesigned initial GUI wifi configuration by Adrian Scillato (#11693)
+
+### Fixed
+- Telegram chat id incorrect size (#11660)
+- KNX energy yesterday (#11718)
+
+## [9.3.1.2] 20210413
 ### Added
 - Commands ``MqttKeepAlive 1..100`` to set Mqtt Keep Alive timer (default 30) and ``MqttTimeout 1..100`` to set Mqtt Socket Timeout (default 4) (#5341)
 - Commands ``DisplayType`` to select sub-modules where implemented and ``DisplayInvert`` to select inverted display where implemented
@@ -32,8 +46,10 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - HC-SR04 on ESP32 release serial interface if not used (#11507)
 - Teleinfo, if raw mode selected also always update total energy calculations
+- Alexa discovery for ZBBridge (#11576)
+- Alexa discovery in hue emulation (#11415)
 
-## [9.3.1.1]
+## [9.3.1.1] 20210320
 ### Added
 - Support for CSE7761 energy monitor as used in ESP32 based Sonoff Dual R3 Pow (#10793)
 - Command ``Sensor80 1 <0..7>`` to control MFRC522 RFID antenna gain from 18dB (0) to 48dB (7) (#11073)
@@ -75,7 +91,7 @@ All notable changes to this project will be documented in this file.
 ## [9.3.1] 20210223
 - Release Kenneth
 
-## [9.3.0.1]
+## [9.3.0.1] 20210223
 ### Added
 - Animate PWM dimmer brightness LEDs during transitions and with variable brightness (#11076)
 - Commands ``StateRetain`` and ``InfoRetain`` (#11084)
