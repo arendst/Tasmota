@@ -47,7 +47,9 @@ struct HLW {
   uint32_t debug[HLW_SAMPLE_COUNT];
 #endif
   volatile uint32_t cf_pulse_length = 0;
+  volatile uint32_t cf_summed_pulse_length = 0;
   volatile uint32_t cf_pulse_last_time = 0;
+  volatile uint32_t cf_pulse_counter = 0;
   uint32_t cf_power_pulse_length  = 0;
 
   volatile uint32_t cf1_pulse_length = 0;
@@ -86,7 +88,9 @@ void HlwCfInterrupt(void)  // Service Power
     Hlw.load_off = false;
   } else {
     Hlw.cf_pulse_length = us - Hlw.cf_pulse_last_time;
+    Hlw.cf_summed_pulse_length += Hlw.cf_pulse_length;
     Hlw.cf_pulse_last_time = us;
+    Hlw.cf_pulse_counter++;
     Hlw.energy_period_counter++;
   }
   Energy.data_valid[0] = 0;
@@ -124,7 +128,14 @@ void HlwEvery200ms(void)
     Hlw.cf_pulse_length = 0;    // No load for some time
     Hlw.load_off = true;
   }
-  Hlw.cf_power_pulse_length  = Hlw.cf_pulse_length;
+  
+  if(Hlw.cf_pulse_counter){
+    Hlw.cf_power_pulse_length = Hlw.cf_summed_pulse_length/Hlw.cf_pulse_counter;
+    Hlw.cf_summed_pulse_length=0;
+    Hlw.cf_pulse_counter=0;
+  } else {
+    Hlw.cf_power_pulse_length=0;
+  }
 
   if (Hlw.cf_power_pulse_length  && Energy.power_on && !Hlw.load_off) {
     hlw_w = (Hlw.power_ratio * Settings.energy_power_calibration) / Hlw.cf_power_pulse_length ;  // W *10
