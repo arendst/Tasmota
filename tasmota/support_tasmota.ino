@@ -1155,7 +1155,7 @@ void Every250mSeconds(void)
           }
 #endif  // ESP8266
           char version[50];
-          snprintf_P(version, sizeof(version), PSTR("%s-%s"), TasmotaGlobal.image_name, TasmotaGlobal.version);
+          snprintf_P(version, sizeof(version), PSTR("%s%s"), TasmotaGlobal.version, TasmotaGlobal.image_name);
           AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPLOAD "%s %s"), TasmotaGlobal.mqtt_data, version);
           WiFiClient OTAclient;
           ota_result = (HTTP_UPDATE_FAILED != ESPhttpUpdate.update(OTAclient, TasmotaGlobal.mqtt_data, version));
