@@ -267,8 +267,8 @@
 #define D_CONFIGURE_OTHER              "Altre impostazioni"
 #define D_CONFIRM_RESET_CONFIGURATION  "Conferma ripristino impostazioni"
 #define D_RESET_CONFIGURATION          "Impostazioni predefinite"
-#define D_BACKUP_CONFIGURATION         "Backup impostazioni"
-#define D_RESTORE_CONFIGURATION        "Ripristino impostazioni"
+#define D_BACKUP_CONFIGURATION         "Salva impostazioni"
+#define D_RESTORE_CONFIGURATION        "Carica impostazioni"
 #define D_MAIN_MENU                    "Menu principale"
 
 #define D_MODULE_PARAMETERS  "Parametri modulo"
