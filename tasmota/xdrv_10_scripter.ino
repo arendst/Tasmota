@@ -1845,7 +1845,7 @@ chknext:
           while (*lp==' ') lp++;
           float fvar1;
           lp = GetNumericArgument(lp, OPER_EQU, &fvar1, gv);
-          fvar = core2_setaxppin(fvar, fvar1);
+          fvar = Core2SetAxpPin(fvar, fvar1);
           lp++;
           len=0;
           goto exit;

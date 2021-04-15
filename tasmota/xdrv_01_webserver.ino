@@ -840,6 +840,14 @@ void WSContentSend_Temp(const char *types, float f_temperature) {
   WSContentSend_PD(HTTP_SNS_F_TEMP, types, Settings.flag2.temperature_resolution, &f_temperature, TempUnit());
 }
 
+void WSContentSend_Voltage(const char *types, float f_voltage) {
+  WSContentSend_PD(HTTP_SNS_F_VOLTAGE, types, Settings.flag2.voltage_resolution, &f_voltage);
+}
+
+void WSContentSend_CurrentMA(const char *types, float f_current) {
+  WSContentSend_PD(HTTP_SNS_F_CURRENT_MA, types, Settings.flag2.current_resolution, &f_current);
+}
+
 void WSContentSend_THD(const char *types, float f_temperature, float f_humidity)
 {
   WSContentSend_Temp(types, f_temperature);

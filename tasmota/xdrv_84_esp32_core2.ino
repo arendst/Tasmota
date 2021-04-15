@@ -17,15 +17,28 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/* remaining work:
-
-i2s microphone as loudness sensor
-rtc better sync
-
-*/
-
 #ifdef ESP32
 #ifdef USE_M5STACK_CORE2
+/*********************************************************************************************\
+ * M5Stack Core2 support
+ *
+ * Module 7
+ * Template {"NAME":"M5Core2","GPIO":[1,1,1,1,6720,6368,0,0,0,1,1,6400,0,0,736,1,0,0,0,704,0,1,1,1,0,0,0,0,640,608,1,1,1,0,672,0],"FLAG":0,"BASE":7}
+ *
+ * Initial commands:
+ * - DisplayType 2
+ * - DisplayCols 27
+ * - (optional) DisplayMode 2
+ * - Power on
+ * - Voltres 3
+ * - Ampres 1
+ *
+ * Todo:
+ * - i2s microphone as loudness sensor
+ * - rtc better sync
+\*********************************************************************************************/
+
+#define XDRV_84          84
 
 #include <Esp.h>
 #include <sys/time.h>
@@ -35,8 +48,6 @@ rtc better sync
 #include <BM8563_RTC.h>
 #include <soc/rtc.h>
 #include <SPI.h>
-
-#define XDRV_84          84
 
 struct CORE2_globs {
   AXP192 Axp;
@@ -57,116 +68,9 @@ struct CORE2_ADC {
   float temp;
 } core2_adc;
 
-// cause SC card is needed by scripter
-void CORE2_Module_Init(void) {
+/*********************************************************************************************/
 
-  // m5stack uses pin 38 not selectable in tasmota
-  SPI.setFrequency(40000000);
-  SPI.begin(18, 38, 23, -1);
-  // establish power chip on wire1 SDA 21, SCL 22
-  core2_globs.Axp.begin();
-  I2cSetActiveFound(AXP_ADDR, "AXP192");
-
-  core2_globs.Axp.SetAdcState(true);
-  // motor voltage
-  core2_globs.Axp.SetLDOVoltage(3,2000);
-
-  core2_globs.Rtc.begin();
-  I2cSetActiveFound(RTC_ADRESS, "RTC");
-
-  core2_globs.ready = true;
-}
-
-
-void CORE2_Init(void) {
-
-  if (Rtc.utc_time < START_VALID_TIME) {
-    // set rtc from chip
-    Rtc.utc_time = Get_utc();
-
-    TIME_T tmpTime;
-    TasmotaGlobal.ntp_force_sync = true; //force to sync with ntp
-    BreakTime(Rtc.utc_time, tmpTime);
-    Rtc.daylight_saving_time = RuleToTime(Settings.tflag[1], RtcTime.year);
-    Rtc.standard_time = RuleToTime(Settings.tflag[0], RtcTime.year);
-    AddLog(LOG_LEVEL_INFO, PSTR("Set time from BM8563 to RTC (" D_UTC_TIME ") %s, (" D_DST_TIME ") %s, (" D_STD_TIME ") %s"),
-                GetDateAndTime(DT_UTC).c_str(), GetDateAndTime(DT_DST).c_str(), GetDateAndTime(DT_STD).c_str());
-    if (Rtc.local_time < START_VALID_TIME) {  // 2016-01-01
-      TasmotaGlobal.rules_flag.time_init = 1;
-    } else {
-      TasmotaGlobal.rules_flag.time_set = 1;
-    }
-
-  }
-
-}
-
-void CORE2_audio_power(bool power) {
-  core2_globs.Axp.SetSpkEnable(power);
-}
-
-#ifdef USE_WEBSERVER
-const char HTTP_CORE2[] PROGMEM =
- "{s}VBUS Voltage" "{m}%s V" "{e}"
- "{s}VBUS Current" "{m}%s mA" "{e}"
- "{s}BATT Voltage" "{m}%s V" "{e}"
- "{s}BATT Current" "{m}%s mA" "{e}"
- "{s}Chip Temperature" "{m}%s C" "{e}";
-#endif  // USE_WEBSERVER
-
-
-void CORE2_loop(uint32_t flg) {
-
-}
-
-void CORE2_WebShow(uint32_t json) {
-
-  char vstring[32];
-  char bvstring[32];
-  char cstring[32];
-  char bcstring[32];
-  char tstring[32];
-  dtostrfd(core2_adc.vbus_v, 3, vstring);
-  dtostrfd(core2_adc.batt_v, 3, bvstring);
-  dtostrfd(core2_adc.vbus_c, 1, cstring);
-  dtostrfd(core2_adc.batt_c, 1, bcstring);
-  dtostrfd(core2_adc.temp, 2, tstring);
-
-  if (json) {
-    ResponseAppend_P(PSTR(",\"CORE2\":{\"VBV\":%s,\"BV\":%s,\"VBC\":%s,\"BC\":%s,\"CT\":%s}"), vstring, cstring, bvstring, bcstring, tstring);
-  } else {
-    WSContentSend_PD(HTTP_CORE2, vstring, cstring, bvstring, bcstring, tstring);
-  }
-}
-
-const char CORE2_Commands[] PROGMEM = "CORE2|"
-  "SHUTDOWN";
-
-void (* const CORE2_Command[])(void) PROGMEM = {
-  &CORE2_Shutdown};
-
-
-void CORE2_Shutdown(void) {
-  char *mp = strchr(XdrvMailbox.data, ':');
-  if (mp) {
-    core2_globs.wakeup_hour = atoi(XdrvMailbox.data);
-    core2_globs.wakeup_minute = atoi(mp+1);
-    core2_globs.shutdownseconds = -1;
-    core2_globs.shutdowndelay = 10;
-    char tbuff[16];
-    sprintf(tbuff,"%02.2d:%02.2d", core2_globs.wakeup_hour, core2_globs.wakeup_minute );
-    ResponseCmndChar(tbuff);
-  } else {
-    if (XdrvMailbox.payload >= 30)  {
-      core2_globs.shutdownseconds = XdrvMailbox.payload;
-      core2_globs.shutdowndelay = 10;
-    }
-    ResponseCmndNumber(XdrvMailbox.payload);
-  }
-
-}
-
-void CORE2_DoShutdown(void) {
+void Core2DoShutdown(void) {
   SettingsSaveAll();
   RtcSettingsSave();
   core2_globs.Rtc.clearIRQ();
@@ -182,11 +86,75 @@ void CORE2_DoShutdown(void) {
   core2_globs.Axp.PowerOff();
 }
 
+void Core2GetADC(void) {
+  core2_adc.vbus_v = core2_globs.Axp.GetVBusVoltage();
+  core2_adc.batt_v = core2_globs.Axp.GetBatVoltage();
+  core2_adc.vbus_c = core2_globs.Axp.GetVinCurrent();
+  core2_adc.batt_c = core2_globs.Axp.GetBatCurrent();
+
+  core2_adc.temp = ConvertTemp(core2_globs.Axp.GetTempInAXP192());
+}
+
+void Core2GetRtc(void) {
+  RTC_TimeTypeDef RTCtime;
+  core2_globs.Rtc.GetTime(&RTCtime);
+  RtcTime.hour = RTCtime.Hours;
+  RtcTime.minute = RTCtime.Minutes;
+  RtcTime.second = RTCtime.Seconds;
+
+  RTC_DateTypeDef RTCdate;
+  core2_globs.Rtc.GetDate(&RTCdate);
+  RtcTime.day_of_week = RTCdate.WeekDay;
+  RtcTime.month = RTCdate.Month;
+  RtcTime.day_of_month = RTCdate.Date;
+  RtcTime.year = RTCdate.Year;
+
+  AddLog(LOG_LEVEL_INFO, PSTR("CR2: Set RTC %04d-%02d-%02dT%02d:%02d:%02d"),
+    RTCdate.Year, RTCdate.Month, RTCdate.Date, RTCtime.Hours, RTCtime.Minutes, RTCtime.Seconds);
+}
+
+void Core2SetUtc(uint32_t epoch_time) {
+  TIME_T tm;
+  BreakTime(epoch_time, tm);
+  RTC_TimeTypeDef RTCtime;
+  RTCtime.Hours = tm.hour;
+  RTCtime.Minutes = tm.minute;
+  RTCtime.Seconds = tm.second;
+  core2_globs.Rtc.SetTime(&RTCtime);
+  RTC_DateTypeDef RTCdate;
+  RTCdate.WeekDay = tm.day_of_week;
+  RTCdate.Month = tm.month;
+  RTCdate.Date = tm.day_of_month;
+  RTCdate.Year = tm.year + 1970;
+  core2_globs.Rtc.SetDate(&RTCdate);
+}
+
+uint32_t Core2GetUtc(void) {
+  RTC_TimeTypeDef RTCtime;
+  // 1. read has errors ???
+  core2_globs.Rtc.GetTime(&RTCtime);
+  core2_globs.Rtc.GetTime(&RTCtime);
+  RTC_DateTypeDef RTCdate;
+  core2_globs.Rtc.GetDate(&RTCdate);
+  TIME_T tm;
+  tm.second =  RTCtime.Seconds;
+  tm.minute = RTCtime.Minutes;
+  tm.hour = RTCtime.Hours;
+  tm.day_of_week = RTCdate.WeekDay;
+  tm.day_of_month = RTCdate.Date;
+  tm.month = RTCdate.Month;
+  tm.year = RTCdate.Year - 1970;
+  return MakeTime(tm);
+}
+
+/*********************************************************************************************\
+ * Called from xdrv_10_scripter.ino
+\*********************************************************************************************/
+
 extern uint8_t tbstate[3];
 
-
 // c2ps(a b)
-float core2_setaxppin(uint32_t sel, uint32_t val) {
+float Core2SetAxpPin(uint32_t sel, uint32_t val) {
   switch (sel) {
     case 0:
       core2_globs.Axp.SetLed(val);
@@ -215,91 +183,91 @@ float core2_setaxppin(uint32_t sel, uint32_t val) {
       }
       break;
     default:
-      GetRtc();
+      Core2GetRtc();
       break;
   }
   return 0;
 }
 
-void core2_disp_pwr(uint8_t on) {
+/*********************************************************************************************\
+ * Called from xdrv_42_i2s_audio.ino
+\*********************************************************************************************/
+
+void Core2AudioPower(bool power) {
+  core2_globs.Axp.SetSpkEnable(power);
+}
+
+/*********************************************************************************************\
+ * Called from xdsp_04_ili9341.ino and xdsp_17_universal.ino
+\*********************************************************************************************/
+
+void Core2DisplayPower(uint8_t on) {
   core2_globs.Axp.SetDCDC3(on);
 }
 
 // display dimmer ranges from 0-15
 // very little effect
-void core2_disp_dim(uint8_t dim) {
-uint16_t voltage = 2200;
+void Core2DisplayDim(uint8_t dim) {
+  uint16_t voltage = 2200;
 
   voltage += ((uint32_t)dim*1200)/15;
   core2_globs.Axp.SetLcdVoltage(voltage);
 
-
 //  core2_globs.Axp.ScreenBreath(dim);
+}
+
+/*********************************************************************************************/
+
+// cause SC card is needed by scripter
+void Core2ModuleInit(void) {
+  // m5stack uses pin 38 not selectable in tasmota
+  SPI.setFrequency(40000000);
+  SPI.begin(18, 38, 23, -1);
+  // establish power chip on wire1 SDA 21, SCL 22
+  core2_globs.Axp.begin();
+  I2cSetActiveFound(AXP_ADDR, "AXP192");
+
+  core2_globs.Axp.SetAdcState(true);
+  // motor voltage
+  core2_globs.Axp.SetLDOVoltage(3,2000);
+
+  core2_globs.Rtc.begin();
+  I2cSetActiveFound(RTC_ADRESS, "RTC");
+
+  core2_globs.ready = true;
+}
+
+void Core2Init(void) {
+  if (Rtc.utc_time < START_VALID_TIME) {
+    // set rtc from chip
+    Rtc.utc_time = Core2GetUtc();
+
+    TIME_T tmpTime;
+    TasmotaGlobal.ntp_force_sync = true;  // Force to sync with ntp
+    BreakTime(Rtc.utc_time, tmpTime);
+    Rtc.daylight_saving_time = RuleToTime(Settings.tflag[1], RtcTime.year);
+    Rtc.standard_time = RuleToTime(Settings.tflag[0], RtcTime.year);
+    AddLog(LOG_LEVEL_INFO, PSTR("CR2: Set time from BM8563 to RTC (" D_UTC_TIME ") %s, (" D_DST_TIME ") %s, (" D_STD_TIME ") %s"),
+                GetDateAndTime(DT_UTC).c_str(), GetDateAndTime(DT_DST).c_str(), GetDateAndTime(DT_STD).c_str());
+    if (Rtc.local_time < START_VALID_TIME) {  // 2016-01-01
+      TasmotaGlobal.rules_flag.time_init = 1;
+    } else {
+      TasmotaGlobal.rules_flag.time_set = 1;
+    }
+  }
+}
+
+void Core2Loop(uint32_t flg) {
 
 }
 
-
-void GetRtc(void) {
-  RTC_TimeTypeDef RTCtime;
-  core2_globs.Rtc.GetTime(&RTCtime);
-  RtcTime.hour = RTCtime.Hours;
-  RtcTime.minute = RTCtime.Minutes;
-  RtcTime.second = RTCtime.Seconds;
-
-
-  RTC_DateTypeDef RTCdate;
-  core2_globs.Rtc.GetDate(&RTCdate);
-  RtcTime.day_of_week = RTCdate.WeekDay;
-  RtcTime.month = RTCdate.Month;
-  RtcTime.day_of_month = RTCdate.Date;
-  RtcTime.year = RTCdate.Year;
-
-  AddLog(LOG_LEVEL_INFO, PSTR("RTC: %02d:%02d:%02d"), RTCtime.Hours, RTCtime.Minutes, RTCtime.Seconds);
-  AddLog(LOG_LEVEL_INFO, PSTR("RTC: %02d.%02d.%04d"),  RTCdate.Date, RTCdate.Month, RTCdate.Year);
-
-}
-
-void Set_utc(uint32_t epoch_time) {
-TIME_T tm;
-  BreakTime(epoch_time, tm);
-  RTC_TimeTypeDef RTCtime;
-  RTCtime.Hours = tm.hour;
-  RTCtime.Minutes = tm.minute;
-  RTCtime.Seconds = tm.second;
-  core2_globs.Rtc.SetTime(&RTCtime);
-  RTC_DateTypeDef RTCdate;
-  RTCdate.WeekDay = tm.day_of_week;
-  RTCdate.Month = tm.month;
-  RTCdate.Date = tm.day_of_month;
-  RTCdate.Year = tm.year + 1970;
-  core2_globs.Rtc.SetDate(&RTCdate);
-}
-
-uint32_t Get_utc(void) {
-  RTC_TimeTypeDef RTCtime;
-  // 1. read has errors ???
-  core2_globs.Rtc.GetTime(&RTCtime);
-  core2_globs.Rtc.GetTime(&RTCtime);
-  RTC_DateTypeDef RTCdate;
-  core2_globs.Rtc.GetDate(&RTCdate);
-  TIME_T tm;
-  tm.second =  RTCtime.Seconds;
-  tm.minute = RTCtime.Minutes;
-  tm.hour = RTCtime.Hours;
-  tm.day_of_week = RTCdate.WeekDay;
-  tm.day_of_month = RTCdate.Date;
-  tm.month = RTCdate.Month;
-  tm.year =RTCdate.Year - 1970;
-  return MakeTime(tm);
-}
-
-void CORE2_EverySecond(void) {
+void Core2EverySecond(void) {
   if (core2_globs.ready) {
-    CORE2_GetADC();
+    Core2GetADC();
 
-    if (Rtc.utc_time > START_VALID_TIME && core2_globs.tset==false && abs(Rtc.utc_time - Get_utc()) > 3) {
-      Set_utc(Rtc.utc_time);
-      AddLog(LOG_LEVEL_INFO, PSTR("Write Time TO BM8563 from NTP (" D_UTC_TIME ") %s, (" D_DST_TIME ") %s, (" D_STD_TIME ") %s"),
+    if (Rtc.utc_time > START_VALID_TIME && core2_globs.tset==false && abs(Rtc.utc_time - Core2GetUtc()) > 3) {
+      Core2SetUtc(Rtc.utc_time);
+      AddLog(LOG_LEVEL_INFO, PSTR("CR2: Write Time TO BM8563 from NTP (" D_UTC_TIME ") %s, (" D_DST_TIME ") %s, (" D_STD_TIME ") %s"),
                   GetDateAndTime(DT_UTC).c_str(), GetDateAndTime(DT_DST).c_str(), GetDateAndTime(DT_STD).c_str());
       core2_globs.tset = true;
     }
@@ -307,19 +275,56 @@ void CORE2_EverySecond(void) {
     if (core2_globs.shutdowndelay) {
       core2_globs.shutdowndelay--;
       if (!core2_globs.shutdowndelay) {
-        CORE2_DoShutdown();
+        Core2DoShutdown();
       }
     }
   }
 }
 
-void CORE2_GetADC(void) {
-    core2_adc.vbus_v = core2_globs.Axp.GetVBusVoltage();
-    core2_adc.batt_v = core2_globs.Axp.GetBatVoltage();
-    core2_adc.vbus_c = core2_globs.Axp.GetVinCurrent();
-    core2_adc.batt_c = core2_globs.Axp.GetBatCurrent();
+void Core2Show(uint32_t json) {
+  if (json) {
+    ResponseAppend_P(PSTR(",\"Core2\":{\"VBV\":%*_f,\"VBC\":%*_f,\"BV\":%*_f,\"BC\":%*_f,\"" D_JSON_TEMPERATURE "\":%*_f}"),
+      Settings.flag2.voltage_resolution, &core2_adc.vbus_v,
+      Settings.flag2.current_resolution, &core2_adc.vbus_c,
+      Settings.flag2.voltage_resolution, &core2_adc.batt_v,
+      Settings.flag2.current_resolution, &core2_adc.batt_c,
+      Settings.flag2.temperature_resolution, &core2_adc.temp);
+  } else {
+    WSContentSend_Voltage("VBus", core2_adc.vbus_v);
+    WSContentSend_CurrentMA("VBus", core2_adc.vbus_c);
+    WSContentSend_Voltage("Batt", core2_adc.batt_v);
+    WSContentSend_CurrentMA("Batt", core2_adc.batt_c);
+    WSContentSend_Temp("Core2", core2_adc.temp);
+  }
+}
 
-    core2_adc.temp = core2_globs.Axp.GetTempInAXP192();
+/*********************************************************************************************\
+ * Commands
+\*********************************************************************************************/
+
+const char kCore2Commands[] PROGMEM = "Core2|"
+  "Shutdown";
+
+void (* const Core2Command[])(void) PROGMEM = {
+  &CmndCore2Shutdown};
+
+void CmndCore2Shutdown(void) {
+  char *mp = strchr(XdrvMailbox.data, ':');
+  if (mp) {
+    core2_globs.wakeup_hour = atoi(XdrvMailbox.data);
+    core2_globs.wakeup_minute = atoi(mp+1);
+    core2_globs.shutdownseconds = -1;
+    core2_globs.shutdowndelay = 10;
+    char tbuff[16];
+    sprintf(tbuff, "%02.2d" D_HOUR_MINUTE_SEPARATOR "%02.2d", core2_globs.wakeup_hour, core2_globs.wakeup_minute );
+    ResponseCmndChar(tbuff);
+  } else {
+    if (XdrvMailbox.payload >= 30)  {
+      core2_globs.shutdownseconds = XdrvMailbox.payload;
+      core2_globs.shutdowndelay = 10;
+    }
+    ResponseCmndNumber(XdrvMailbox.payload);
+  }
 }
 
 /*********************************************************************************************\
@@ -330,31 +335,29 @@ bool Xdrv84(uint8_t function) {
   bool result = false;
 
   switch (function) {
-
-    case FUNC_WEB_SENSOR:
-#ifdef USE_WEBSERVER
-      CORE2_WebShow(0);
-#endif
-      break;
-    case FUNC_JSON_APPEND:
-      CORE2_WebShow(1);
-      break;
-    case FUNC_COMMAND:
-      result = DecodeCommand(CORE2_Commands, CORE2_Command);
-      break;
-    case FUNC_MODULE_INIT:
-      CORE2_Module_Init();
-      break;
-    case FUNC_INIT:
-      CORE2_Init();
+    case FUNC_LOOP:
+      Core2Loop(1);
       break;
     case FUNC_EVERY_SECOND:
-      CORE2_EverySecond();
+      Core2EverySecond();
       break;
-    case FUNC_LOOP:
-      CORE2_loop(1);
+    case FUNC_JSON_APPEND:
+      Core2Show(1);
       break;
-
+#ifdef USE_WEBSERVER
+    case FUNC_WEB_SENSOR:
+      Core2Show(0);
+      break;
+#endif
+    case FUNC_COMMAND:
+      result = DecodeCommand(kCore2Commands, Core2Command);
+      break;
+    case FUNC_INIT:
+      Core2Init();
+      break;
+    case FUNC_MODULE_INIT:
+      Core2ModuleInit();
+      break;
   }
   return result;
 }

@@ -260,18 +260,18 @@ char *fbuff;
 /*********************************************************************************************/
 
 
-void core2_disp_pwr(uint8_t on);
-void core2_disp_dim(uint8_t dim);
+void Core2DisplayPower(uint8_t on);
+void Core2DisplayDim(uint8_t dim);
 
 void udisp_bpwr(uint8_t on) {
 #ifdef USE_M5STACK_CORE2
-  core2_disp_pwr(on);
+  Core2DisplayPower(on);
 #endif
 }
 
 void udisp_dimm(uint8_t dim) {
 #ifdef USE_M5STACK_CORE2
-  core2_disp_dim(dim);
+  Core2DisplayDim(dim);
 #endif
 }
 
