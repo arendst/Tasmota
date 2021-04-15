@@ -104,7 +104,7 @@
   #define USE_MPU6886
 #define USE_SPI
   #define USE_DISPLAY
-    #define USE_DISPLAY_ILI9342
+    #define USE_DISPLAY_ILI9341
     #define JPEG_PICTS
     #define USE_FT5206
     #define USE_TOUCH_BUTTONS
@@ -112,7 +112,7 @@
 #define USE_SENDMAIL
 #define USE_ESP32MAIL
 
-//#define USE_SCRIPT                               // Add support for script (+17k code)
+#define USE_SCRIPT                               // Add support for script (+17k code)
 // Script related defines
 #ifdef USE_SCRIPT
   #undef USE_RULES
