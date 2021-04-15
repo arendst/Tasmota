@@ -60,6 +60,7 @@
 #define USE_UFILESYS
 #define USE_SDCARD
   #define GUI_TRASH_FILE
+  #define GUI_EDIT_FILE
 
 #ifdef USE_BERRY                                 // Berry scripting language
   #define USE_BERRY_PSRAM                        // Allocate Berry memory in PSRAM if PSRAM is connected - this might be slightly slower but leaves main memory intact
@@ -94,6 +95,7 @@
 #define USE_UFILESYS
 #define USE_SDCARD
   #define GUI_TRASH_FILE
+  #define GUI_EDIT_FILE
 
 #ifdef USE_BERRY                                 // Berry scripting language
   #define USE_BERRY_PSRAM                        // Allocate Berry memory in PSRAM if PSRAM is connected - this might be slightly slower but leaves main memory intact
@@ -150,6 +152,8 @@
 #define USE_UFILESYS
 #define USE_SDCARD
   #define GUI_TRASH_FILE
+  #define GUI_EDIT_FILE
+
 #define USE_ADC
 #undef USE_BERRY                                 // Disable Berry scripting language
 #define USE_BLE_ESP32                            // Enable new BLE driver
@@ -164,6 +168,11 @@
 #ifdef FIRMWARE_TASMOTA32
 
 #define USE_ENHANCED_GUI_WIFI_SCAN
+
+#define USE_UFILESYS
+#define USE_SDCARD
+  #define GUI_TRASH_FILE
+  #define GUI_EDIT_FILE
 
 #define ROTARY_V1                                // Add support for Rotary Encoder as used in MI Desk Lamp
 
