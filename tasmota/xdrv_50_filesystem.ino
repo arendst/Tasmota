@@ -588,15 +588,15 @@ const char UFS_FORM_SDC_HREFedit[] PROGMEM =
   "<a href=ufse?file=%s/%s>&#x1F4DD;</a>"; // 📝
 
 const char HTTP_EDITOR_FORM_START[] PROGMEM =
-    "<fieldset><legend><b>&nbsp;" D_EDIT_FILE "&nbsp;</b></legend>"
-    "<form>"
-    "<label for='name'>" D_FILE ":</label><input type='text' id='name' name='name' value='%s'><br><hr width='98%%'>"
-    "<textarea id='content' name='content' rows='8' cols='80' style='font-size: 12pt'>";
+  "<fieldset><legend><b>&nbsp;" D_EDIT_FILE "&nbsp;</b></legend>"
+  "<form>"
+  "<label for='name'>" D_FILE ":</label><input type='text' id='name' name='name' value='%s'><br><hr width='98%%'>"
+  "<textarea id='content' name='content' rows='8' cols='80' style='font-size: 12pt'>";
 
 const char HTTP_EDITOR_FORM_END[] PROGMEM =
-    "</textarea>"
-    "<button name='save' type='submit' formmethod='post' formenctype='multipart/form-data' formaction='/ufse' class='button bgrn'>" D_SAVE "</button>"
-    "</form></fieldset>";
+  "</textarea>"
+  "<button name='save' type='submit' formmethod='post' formenctype='multipart/form-data' formaction='/ufse' class='button bgrn'>" D_SAVE "</button>"
+  "</form></fieldset>";
 
 #endif  // #ifdef GUI_EDIT_FILE
 
@@ -905,7 +905,6 @@ void UfsUploadFileClose(void) {
   ufs_upload_file.close();
 }
 
-
 //******************************************************************************************
 //  File Editor
 //******************************************************************************************
@@ -917,45 +916,44 @@ void UfsEditor(void) {
 
   AddLog(LOG_LEVEL_DEBUG, PSTR("UFS: UfsEditor GET"));
 
-  String fname;
+  char fname_input[UFS_FILENAME_SIZE];
   if (Webserver->hasArg(F("file"))) {
-    fname = Webserver->arg(F("file"));
+    WebGetArg(PSTR("file"), fname_input, sizeof(fname_input));
+  } else {
+    snprintf_P(fname_input, sizeof(fname_input), PSTR(D_NEW_FILE));
   }
-  else {
-    fname = D_NEW_FILE;
-  }
-  if (fname[0] != '/') fname = "/" +fname;
+  char fname[UFS_FILENAME_SIZE];
+  UfsFilename(fname, fname_input);                  // Trim spaces and add slash
 
-  AddLog(LOG_LEVEL_DEBUG, PSTR("UFS: UfsEditor: file=%s, ffs_type=%d, TfsFileExist=%d"), fname.c_str(), ffs_type, TfsFileExists(fname.c_str()));
+  AddLog(LOG_LEVEL_DEBUG, PSTR("UFS: UfsEditor: file=%s, ffs_type=%d, TfsFileExist=%d"), fname, ffs_type, TfsFileExists(fname));
 
   WSContentStart_P(PSTR(D_EDIT_FILE));
   WSContentSendStyle();
-  WSContentSend_P(HTTP_EDITOR_FORM_START, fname.c_str());
+  char *bfname = fname +1;
+  WSContentSend_P(HTTP_EDITOR_FORM_START, bfname);  // Skip leading slash
 
-  if (ffs_type && TfsFileExists(fname.c_str())) {
-    File fp = ffsp->open(fname.c_str(), "r");
+  if (ffs_type && TfsFileExists(fname)) {
+    File fp = ffsp->open(fname, "r");
     if (!fp) {
       AddLog(LOG_LEVEL_DEBUG, PSTR("UFS: UfsEditor: file open failed"));
       WSContentSend_P(D_NEW_FILE);
+    } else {
+      uint8_t *buf = (uint8_t*)malloc(FILE_BUFFER_SIZE+1);
+      size_t filelen = fp.size();
+      AddLog(LOG_LEVEL_DEBUG, PSTR("UFS: UfsEditor: file len=%d"), filelen);
+      while (filelen > 0) {
+        size_t l = fp.read(buf, FILE_BUFFER_SIZE);
+        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("UFS: UfsEditor: read=%d"), l);
+        if (l < 0) { break; }
+        buf[l] = '\0';
+        WSContentSend_P((const char*)buf);
+        filelen -= l;
+      }
+      fp.close();
+      free(buf);
+      AddLog(LOG_LEVEL_DEBUG, PSTR("UFS: UfsEditor: read done"));
     }
-    else {
-        uint8_t *buf = (uint8_t*)malloc(FILE_BUFFER_SIZE+1);
-        size_t filelen = fp.size();
-        AddLog(LOG_LEVEL_DEBUG, PSTR("UFS: UfsEditor: file len=%d"), filelen);
-        while ( filelen > 0 ) {
-          size_t l = fp.read(buf, FILE_BUFFER_SIZE);
-          AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("UFS: UfsEditor: read=%d"), l);
-          if (l < 0) break;
-          buf[l] = '\0';
-          WSContentSend_P((const char*)buf);
-          filelen -= l;
-        }
-        fp.close();
-        free(buf);
-        AddLog(LOG_LEVEL_DEBUG, PSTR("UFS: UfsEditor: read done"));
-    }
-  }
-  else {
+  } else {
     WSContentSend_P(D_NEW_FILE);
   }
 
@@ -974,8 +972,12 @@ void UfsEditorUpload(void) {
     WSSend(400, CT_PLAIN, F("400: Bad request - no filename"));
     return;
   }
-  String name = Webserver->arg("name");
-  AddLog(LOG_LEVEL_DEBUG, PSTR("UFS: UfsEditor: file '%s'"), name.c_str());
+
+  char fname_input[UFS_FILENAME_SIZE];
+  WebGetArg(PSTR("name"), fname_input, sizeof(fname_input));
+  char fname[UFS_FILENAME_SIZE];
+  UfsFilename(fname, fname_input);                  // Trim spaces and add slash
+  AddLog(LOG_LEVEL_DEBUG, PSTR("UFS: UfsEditor: file '%s'"), fname);
 
   if (!Webserver->hasArg("content")) {
     AddLog(LOG_LEVEL_ERROR, PSTR("UFS: UfsEditor: file upload - no content"));
@@ -991,10 +993,10 @@ void UfsEditorUpload(void) {
     return;
   }
 
-  File fp = ffsp->open(name.c_str(), "w");
-  if(!fp) {
+  File fp = ffsp->open(fname, "w");
+  if (!fp) {
     Web.upload_error = 1;
-    AddLog(LOG_LEVEL_ERROR, PSTR("UFS: UfsEditor: 400: invalid file name '%s'"), name.c_str());
+    AddLog(LOG_LEVEL_ERROR, PSTR("UFS: UfsEditor: 400: invalid file name '%s'"), fname);
     WSSend(400, CT_PLAIN, F("400: bad request - invalid filename"));
     return;
   }
@@ -1005,7 +1007,7 @@ void UfsEditorUpload(void) {
   }
 
   if (!fp.print(content)) {
-    AddLog(LOG_LEVEL_ERROR, PSTR("UFS: UfsEditor: write error on '%s'"), name.c_str());
+    AddLog(LOG_LEVEL_ERROR, PSTR("UFS: UfsEditor: write error on '%s'"), fname);
   }
 
   fp.close();
@@ -1014,7 +1016,7 @@ void UfsEditorUpload(void) {
   Webserver->send(303);
 }
 
-#endif  // #ifdef GUI_EDIT_FILE
+#endif  // GUI_EDIT_FILE
 
 #endif  // USE_WEBSERVER
 
