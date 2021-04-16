@@ -661,7 +661,7 @@ void UfsDirectory(void) {
   }
   WSContentSend_P(UFS_FORM_SDC_DIRc);
   WSContentSend_P(UFS_FORM_FILE_UPGb);
-  WSContentSpaceButton(BUTTON_CONFIGURATION);
+  WSContentSpaceButton(BUTTON_MANAGEMENT);
   WSContentStop();
 
   Web.upload_file_type = UPL_UFSFILE;
@@ -1045,7 +1045,11 @@ bool Xdrv50(uint8_t function) {
 #ifdef USE_WEBSERVER
     case FUNC_WEB_ADD_MANAGEMENT_BUTTON:
       if (ufs_type) {
-        WSContentSend_PD(UFS_WEB_DIR, PSTR(D_MANAGE_FILE_SYSTEM));
+        if (XdrvMailbox.index) {
+          XdrvMailbox.index++;
+        } else {
+          WSContentSend_PD(UFS_WEB_DIR, PSTR(D_MANAGE_FILE_SYSTEM));
+        }
       }
       break;
     case FUNC_WEB_ADD_HANDLER:
