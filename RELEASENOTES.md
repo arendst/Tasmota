@@ -108,6 +108,9 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - ESP32 support for secondary I2C controller
 - ESP32 support for internal Hall Effect sensor connected to both GPIO36 and GPIO39 only
 
+### Breaking Changed
+- ESP32 partition layout changed to accomodate more file space on most and more code space on core2 and odroid-go [#11746](https://github.com/arendst/Tasmota/issues/11746)
+
 ### Changed
 - TasmotaSerial library from v3.2.0 to v3.3.0
 - PubSubClient library from EspEasy v2.7.12 to Tasmota v2.8.12
