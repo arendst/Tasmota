@@ -361,16 +361,19 @@ const char HTTP_DEVICE_STATE[] PROGMEM = "<td style='width:%d%%;text-align:cente
 
 enum ButtonTitle {
   BUTTON_RESTART, BUTTON_RESET_CONFIGURATION,
-  BUTTON_MAIN, BUTTON_CONFIGURATION, BUTTON_INFORMATION, BUTTON_FIRMWARE_UPGRADE, BUTTON_CONSOLE,
-  BUTTON_MODULE, BUTTON_WIFI, BUTTON_LOGGING, BUTTON_OTHER, BUTTON_TEMPLATE, BUTTON_BACKUP, BUTTON_RESTORE };
+  BUTTON_MAIN, BUTTON_CONFIGURATION, BUTTON_INFORMATION, BUTTON_FIRMWARE_UPGRADE, BUTTON_MANAGEMENT,
+  BUTTON_MODULE, BUTTON_WIFI, BUTTON_LOGGING, BUTTON_OTHER, BUTTON_TEMPLATE, BUTTON_BACKUP, BUTTON_RESTORE,
+  BUTTON_CONSOLE };
 const char kButtonTitle[] PROGMEM =
   D_RESTART "|" D_RESET_CONFIGURATION "|"
-  D_MAIN_MENU "|" D_CONFIGURATION "|" D_INFORMATION "|" D_FIRMWARE_UPGRADE "|" D_CONSOLE "|"
-  D_CONFIGURE_MODULE "|" D_CONFIGURE_WIFI"|" D_CONFIGURE_LOGGING "|" D_CONFIGURE_OTHER "|" D_CONFIGURE_TEMPLATE "|" D_BACKUP_CONFIGURATION "|" D_RESTORE_CONFIGURATION;
+  D_MAIN_MENU "|" D_CONFIGURATION "|" D_INFORMATION "|" D_FIRMWARE_UPGRADE "|" D_MANAGEMENT "|"
+  D_CONFIGURE_MODULE "|" D_CONFIGURE_WIFI"|" D_CONFIGURE_LOGGING "|" D_CONFIGURE_OTHER "|" D_CONFIGURE_TEMPLATE "|" D_BACKUP_CONFIGURATION "|" D_RESTORE_CONFIGURATION "|"
+  D_CONSOLE;
 const char kButtonAction[] PROGMEM =
   ".|rt|"
-  ".|cn|in|up|cs|"
-  "md|wi|lg|co|tp|dl|rs";
+  ".|cn|in|up|mn|"
+  "md|wi|lg|co|tp|dl|rs|"
+  "cs";
 const char kButtonConfirm[] PROGMEM = D_CONFIRM_RESTART "|" D_CONFIRM_RESET_CONFIGURATION;
 
 enum CTypes { CT_HTML, CT_PLAIN, CT_XML, CT_STREAM, CT_APP_JSON, CT_APP_STREAM };
@@ -452,6 +455,7 @@ const WebServerDispatch_t WebServerDispatch[] PROGMEM = {
   { "u1", HTTP_ANY, HandleUpgradeFirmwareStart },   // OTA
   { "u2", HTTP_OPTIONS, HandlePreflightRequest },
   { "u3", HTTP_ANY, HandleUploadDone },
+  { "mn", HTTP_GET, HandleManagement },
   { "cs", HTTP_GET, HandleConsole },
   { "cs", HTTP_OPTIONS, HandlePreflightRequest },
   { "cm", HTTP_ANY, HandleHttpCommand },
@@ -952,6 +956,19 @@ void HandleWifiLogin(void)
   WSContentStop();
 }
 
+uint32_t WebUseManagementSubmenu(void) {
+  static uint32_t management_count = 0;
+
+  if (!management_count) {
+    XdrvMailbox.index = 1;
+    XdrvCall(FUNC_WEB_ADD_CONSOLE_BUTTON);
+    XsnsCall(FUNC_WEB_ADD_CONSOLE_BUTTON);
+    XdrvCall(FUNC_WEB_ADD_MANAGEMENT_BUTTON);
+    management_count = XdrvMailbox.index;
+  }
+  return management_count -1;
+}
+
 uint32_t WebDeviceColumns(void) {
   const uint32_t max_columns = 8;
 
@@ -1185,12 +1202,17 @@ void HandleRoot(void)
   if (HTTP_ADMIN == Web.state) {
 #ifdef FIRMWARE_MINIMAL
     WSContentSpaceButton(BUTTON_FIRMWARE_UPGRADE);
+    WSContentButton(BUTTON_CONSOLE);
 #else
     WSContentSpaceButton(BUTTON_CONFIGURATION);
     WSContentButton(BUTTON_INFORMATION);
     WSContentButton(BUTTON_FIRMWARE_UPGRADE);
+    if (!WebUseManagementSubmenu()) {
+      WSContentButton(BUTTON_CONSOLE);
+    } else {
+      WSContentButton(BUTTON_MANAGEMENT);
+    }
 #endif  // Not FIRMWARE_MINIMAL
-    WSContentButton(BUTTON_CONSOLE);
     WSContentButton(BUTTON_RESTART);
   }
   WSContentStop();
@@ -1411,9 +1433,6 @@ void HandleConfiguration(void)
   WSContentSpaceButton(BUTTON_RESET_CONFIGURATION);
   WSContentButton(BUTTON_BACKUP);
   WSContentButton(BUTTON_RESTORE);
-
-  WSContentSend_P(PSTR("<div></div>"));            // 5px padding
-  XdrvCall(FUNC_WEB_ADD_MANAGEMENT_BUTTON);
 
   WSContentSpaceButton(BUTTON_MAIN);
   WSContentStop();
@@ -2888,6 +2907,28 @@ void HandleHttpCommand(void)
 
 /*-------------------------------------------------------------------------------------------*/
 
+void HandleManagement(void)
+{
+  if (!HttpCheckPriviledgedAccess()) { return; }
+
+  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_MANAGEMENT));
+
+  WSContentStart_P(PSTR(D_MANAGEMENT));
+  WSContentSendStyle();
+
+  WSContentButton(BUTTON_CONSOLE);
+
+  XdrvMailbox.index = 0;
+  XdrvCall(FUNC_WEB_ADD_CONSOLE_BUTTON);
+  XsnsCall(FUNC_WEB_ADD_CONSOLE_BUTTON);
+
+  WSContentSend_P(PSTR("<div></div>"));            // 5px padding
+  XdrvCall(FUNC_WEB_ADD_MANAGEMENT_BUTTON);
+
+  WSContentSpaceButton(BUTTON_MAIN);
+  WSContentStop();
+}
+
 void HandleConsole(void)
 {
   if (!HttpCheckPriviledgedAccess()) { return; }
@@ -2903,7 +2944,7 @@ void HandleConsole(void)
   WSContentSend_P(HTTP_SCRIPT_CONSOL, Settings.web_refresh);
   WSContentSendStyle();
   WSContentSend_P(HTTP_FORM_CMND);
-  WSContentSpaceButton(BUTTON_MAIN);
+  WSContentSpaceButton((WebUseManagementSubmenu()) ? BUTTON_MANAGEMENT : BUTTON_MAIN);
   WSContentStop();
 }
 

@@ -5249,7 +5249,7 @@ void HandleScriptConfiguration(void) {
 #endif //USE_SCRIPT_FATFS
 
     WSContentSend_P(HTTP_SCRIPT_FORM_END);
-    WSContentSpaceButton(BUTTON_CONFIGURATION);
+    WSContentSpaceButton(BUTTON_MANAGEMENT);
     WSContentStop();
 }
 
@@ -7897,8 +7897,12 @@ bool Xdrv10(uint8_t function)
       }
       break;
 #ifdef USE_WEBSERVER
-    case FUNC_WEB_ADD_BUTTON:
-      WSContentSend_P(HTTP_BTN_MENU_RULES);
+    case FUNC_WEB_ADD_CONSOLE_BUTTON:
+      if (XdrvMailbox.index) {
+        XdrvMailbox.index++;
+      } else {
+        WSContentSend_P(HTTP_BTN_MENU_RULES);
+      }
       break;
 #ifdef USE_SCRIPT_WEB_DISPLAY
     case FUNC_WEB_ADD_MAIN_BUTTON:
