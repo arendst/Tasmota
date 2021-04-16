@@ -1,5 +1,5 @@
 /*
-  es-ES.h - localization for Spanish - Spain for Tasmota (translation also valid for all latinamerica)
+  es-ES.h - localization for Spanish - Spain for Tasmota (International Spanish valid for all latinamerica)
 
   Copyright (C) 2021  Adrian Scillato
 
@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v9.3.1.2
+ * Updated until v9.3.1.3
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -256,7 +256,7 @@
 #define D_CONFIGURATION "Configuración"
 #define D_INFORMATION "Información"
 #define D_FIRMWARE_UPGRADE "Actualizar Firmware"
-#define D_MANAGEMENT "Consoles"
+#define D_MANAGEMENT "Consolas"
 #define D_CONSOLE "Consola"
 #define D_CONFIRM_RESTART "Confirmar Reinicio"
 
@@ -926,9 +926,9 @@
 #define D_MANAGE_FILE_SYSTEM   "Explorar Archivos"
 #define D_FS_SIZE              "Tamaño"
 #define D_FS_FREE              "Libre"
-#define D_NEW_FILE             "newfile.txt"
-#define D_CREATE_NEW_FILE      "Create and edit new file"
-#define D_EDIT_FILE            "Edit File"
+#define D_NEW_FILE             "nuevo.txt"
+#define D_CREATE_NEW_FILE      "Crear y editar un archivo nuevo"
+#define D_EDIT_FILE            "Editar Archivo"
 
 //xsns_67_as3935.ino
 #define D_AS3935_GAIN "Ganancia:"
@@ -946,7 +946,7 @@
 #define D_AS3935_DISTDET "Perturbancia detectada"
 #define D_AS3935_INTNOEV "Interrupción sin evento!"
 #define D_AS3935_FLICKER "IRQ flicker!"
-#define D_AS3935_POWEROFF "Power Off"
+#define D_AS3935_POWEROFF "Apagado"
 #define D_AS3935_NOMESS "Escuchando..."
 #define D_AS3935_ON "Encendido"
 #define D_AS3935_OFF "Apagado"
