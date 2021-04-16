@@ -2358,8 +2358,11 @@ void HandleInformation(void)
   }
 #endif  // USE_DISCOVERY
 
+
+
   WSContentSend_P(PSTR("}1}2&nbsp;"));  // Empty line
   WSContentSend_P(PSTR("}1" D_ESP_CHIP_ID "}2%d"), ESP_getChipId());
+  WSContentSend_P(PSTR("}1" D_ESP_BOARD "}2%s"), ARDUINO_BOARD);
 #ifdef ESP8266
   WSContentSend_P(PSTR("}1" D_FLASH_CHIP_ID "}20x%06X"), ESP.getFlashChipId());
 #endif

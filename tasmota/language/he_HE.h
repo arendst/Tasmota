@@ -358,6 +358,7 @@
 #define D_MDNS_DISCOVERY "mDNS זיהוי"
 #define D_MDNS_ADVERTISE "mDNS פרסום"
 #define D_ESP_CHIP_ID "ESP מס' רכיב"
+#define D_ESP_BOARD "ESP Board"
 #define D_FLASH_CHIP_ID "מס' רכיב פלאש"
 #define D_FLASH_CHIP_SIZE "גודל זיכרון פלאש"
 #define D_FREE_PROGRAM_SPACE "מקום פנוי - תוכנה"

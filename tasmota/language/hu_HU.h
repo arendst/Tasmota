@@ -358,6 +358,7 @@
 #define D_MDNS_DISCOVERY "mDNS láthatóság"
 #define D_MDNS_ADVERTISE "mDNS hirdetés"
 #define D_ESP_CHIP_ID "ESP chip ID"
+#define D_ESP_BOARD "ESP Board"
 #define D_FLASH_CHIP_ID "Flash chip ID"
 #define D_FLASH_CHIP_SIZE "Flash mérete"
 #define D_FREE_PROGRAM_SPACE "Szabad programhely"

@@ -358,6 +358,7 @@
 #define D_MDNS_DISCOVERY "mDNS 发现"
 #define D_MDNS_ADVERTISE "mDNS 广播"
 #define D_ESP_CHIP_ID "ESP 芯片 ID"
+#define D_ESP_BOARD "ESP Board"
 #define D_FLASH_CHIP_ID "Flash 芯片 ID"
 #define D_FLASH_CHIP_SIZE "Flash 大小"
 #define D_FREE_PROGRAM_SPACE "空闲程序空间"

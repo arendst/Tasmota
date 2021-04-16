@@ -358,6 +358,7 @@
 #define D_MDNS_DISCOVERY "Découverte mDNS"
 #define D_MDNS_ADVERTISE "Annonce mDNS"
 #define D_ESP_CHIP_ID "ESP Chip Id"
+#define D_ESP_BOARD "ESP Board"
 #define D_FLASH_CHIP_ID "Flash Chip Id"
 #define D_FLASH_CHIP_SIZE "Taille flash"
 #define D_FREE_PROGRAM_SPACE "Espace programme libre"

@@ -358,6 +358,7 @@
 #define D_MDNS_DISCOVERY "mDNS 探索"
 #define D_MDNS_ADVERTISE "mDNS 廣播"
 #define D_ESP_CHIP_ID "ESP晶片ID"
+#define D_ESP_BOARD "ESP Board"
 #define D_FLASH_CHIP_ID "快閃記憶體ID"
 #define D_FLASH_CHIP_SIZE "快閃記憶體大小"
 #define D_FREE_PROGRAM_SPACE "可用的程式空間"

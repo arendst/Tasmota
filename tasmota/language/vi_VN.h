@@ -358,6 +358,7 @@
 #define D_MDNS_DISCOVERY "Khám phá mDNS"
 #define D_MDNS_ADVERTISE "Thông báo mDNS"
 #define D_ESP_CHIP_ID "ESP Chip Id"
+#define D_ESP_BOARD "ESP Board"
 #define D_FLASH_CHIP_ID "Flash Chip Id"
 #define D_FLASH_CHIP_SIZE "Kích thước bộ nhớ Flash"
 #define D_FREE_PROGRAM_SPACE "Bộ nhớ chưa sử dụng"

@@ -358,6 +358,7 @@
 #define D_MDNS_DISCOVERY "mDNS Discovery"
 #define D_MDNS_ADVERTISE "mDNS Advertise"
 #define D_ESP_CHIP_ID "ESP 칩 Id"
+#define D_ESP_BOARD "ESP Board"
 #define D_FLASH_CHIP_ID "플래시 칩 Id"
 #define D_FLASH_CHIP_SIZE "플래시 용량"
 #define D_FREE_PROGRAM_SPACE "여유 프로그램 공간"

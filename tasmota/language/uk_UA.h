@@ -358,6 +358,7 @@
 #define D_MDNS_DISCOVERY "mDNS Виявлення"
 #define D_MDNS_ADVERTISE "mDNS Анонс"
 #define D_ESP_CHIP_ID "ID чипу ESP"
+#define D_ESP_BOARD "ESP Board"
 #define D_FLASH_CHIP_ID "ID чипу Flash пам'яті"
 #define D_FLASH_CHIP_SIZE "Розмір Flash пам'яті"
 #define D_FREE_PROGRAM_SPACE "Вільний простір для програм"

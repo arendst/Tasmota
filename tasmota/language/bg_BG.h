@@ -358,6 +358,7 @@
 #define D_MDNS_DISCOVERY "mDNS откриване"
 #define D_MDNS_ADVERTISE "mDNS известяване"
 #define D_ESP_CHIP_ID "ID на ESP чипа"
+#define D_ESP_BOARD "ESP Board"
 #define D_FLASH_CHIP_ID "ID на чипа на флаш паметта"
 #define D_FLASH_CHIP_SIZE "Размер на флаш паметта"
 #define D_FREE_PROGRAM_SPACE "Свободно пространство за програми"

@@ -358,6 +358,7 @@
 #define D_MDNS_DISCOVERY "Získávání mDNS"
 #define D_MDNS_ADVERTISE "Rozesílání mDNS"
 #define D_ESP_CHIP_ID "ID systému ESP"
+#define D_ESP_BOARD "ESP Board"
 #define D_FLASH_CHIP_ID "ID systému paměti flash"
 #define D_FLASH_CHIP_SIZE "Velikost flash"
 #define D_FREE_PROGRAM_SPACE "Volné místo pro program"
