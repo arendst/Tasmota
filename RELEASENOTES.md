@@ -108,6 +108,9 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - ESP32 support for secondary I2C controller
 - ESP32 support for internal Hall Effect sensor connected to both GPIO36 and GPIO39 only
 
+### Breaking Changed
+- ESP32 partition layout changed to accomodate more file space on most and more code space on core2 and odroid-go [#11746](https://github.com/arendst/Tasmota/issues/11746)
+
 ### Changed
 - TasmotaSerial library from v3.2.0 to v3.3.0
 - PubSubClient library from EspEasy v2.7.12 to Tasmota v2.8.12
@@ -120,6 +123,7 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - ADC range result from int to float using command ``FreqRes`` for decimal resolution selection [#11545](https://github.com/arendst/Tasmota/issues/11545)
 - Removed overtemp detection on external energy monitoring devices [#11628](https://github.com/arendst/Tasmota/issues/11628)
 - Redesigned initial GUI wifi configuration by Adrian Scillato [#11693](https://github.com/arendst/Tasmota/issues/11693)
+- Redesigned GUI by moving non-configuration buttons from ``Configuration`` to new submenu ``Consoles``
 - In tasmota-sensors.bin enabled support for VL53L0X and disabled TSL2561 [#11711](https://github.com/arendst/Tasmota/issues/11711)
 - Add HLW8012/BL0937 average pulse calculation by Alex Lovett [#11722](https://github.com/arendst/Tasmota/issues/11722)
 

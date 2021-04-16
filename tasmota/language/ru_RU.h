@@ -256,6 +256,7 @@
 #define D_CONFIGURATION "Конфигурация"
 #define D_INFORMATION "Информация"
 #define D_FIRMWARE_UPGRADE "Обновление прошивки"
+#define D_MANAGEMENT "Consoles"
 #define D_CONSOLE "Консоль"
 #define D_CONFIRM_RESTART "Подтвердить перезагрузку"
 

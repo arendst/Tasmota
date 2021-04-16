@@ -256,6 +256,7 @@
 #define D_CONFIGURATION "Конфигурация"
 #define D_INFORMATION "Информация"
 #define D_FIRMWARE_UPGRADE "Обновяване на фърмуера"
+#define D_MANAGEMENT "Consoles"
 #define D_CONSOLE "Конзола"
 #define D_CONFIRM_RESTART "Потвърдете рестартирането"
 

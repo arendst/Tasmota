@@ -60,6 +60,7 @@
 #define USE_UFILESYS
 #define USE_SDCARD
   #define GUI_TRASH_FILE
+  #define GUI_EDIT_FILE
 
 #ifdef USE_BERRY                                 // Berry scripting language
   #define USE_BERRY_PSRAM                        // Allocate Berry memory in PSRAM if PSRAM is connected - this might be slightly slower but leaves main memory intact
@@ -94,6 +95,7 @@
 #define USE_UFILESYS
 #define USE_SDCARD
   #define GUI_TRASH_FILE
+  #define GUI_EDIT_FILE
 
 #ifdef USE_BERRY                                 // Berry scripting language
   #define USE_BERRY_PSRAM                        // Allocate Berry memory in PSRAM if PSRAM is connected - this might be slightly slower but leaves main memory intact
@@ -104,7 +106,7 @@
   #define USE_MPU6886
 #define USE_SPI
   #define USE_DISPLAY
-    #define USE_DISPLAY_ILI9342
+    #define USE_DISPLAY_ILI9341
     #define JPEG_PICTS
     #define USE_FT5206
     #define USE_TOUCH_BUTTONS
@@ -112,7 +114,7 @@
 #define USE_SENDMAIL
 #define USE_ESP32MAIL
 
-//#define USE_SCRIPT                               // Add support for script (+17k code)
+#define USE_SCRIPT                               // Add support for script (+17k code)
 // Script related defines
 #ifdef USE_SCRIPT
   #undef USE_RULES
@@ -126,6 +128,7 @@
   #define USE_SCRIPT_GLOBVARS
   #define USE_SCRIPT_SUB_COMMAND
   #define USE_ANGLE_FUNC
+  #define USE_SCRIPT_WEB_DISPLAY
   #define SCRIPT_FULL_WEBPAGE
   #define SCRIPT_GET_HTTPS_JP
   #define USE_GOOGLE_CHARTS
@@ -150,6 +153,8 @@
 #define USE_UFILESYS
 #define USE_SDCARD
   #define GUI_TRASH_FILE
+  #define GUI_EDIT_FILE
+
 #define USE_ADC
 #undef USE_BERRY                                 // Disable Berry scripting language
 #define USE_BLE_ESP32                            // Enable new BLE driver
@@ -164,6 +169,11 @@
 #ifdef FIRMWARE_TASMOTA32
 
 #define USE_ENHANCED_GUI_WIFI_SCAN
+
+#define USE_UFILESYS
+#define USE_SDCARD
+  #define GUI_TRASH_FILE
+  #define GUI_EDIT_FILE
 
 #define ROTARY_V1                                // Add support for Rotary Encoder as used in MI Desk Lamp
 

@@ -2004,7 +2004,7 @@ static void BLETaskRunCurrentOperation(BLE_ESP32::generic_sensor_t** pCurrentOpe
               }
             }
             if (op->writelen){
-              if(pCharacteristic->canWrite()) {
+              if(pCharacteristic->canWrite() || pCharacteristic->canWriteNoResponse() ) {
                 if (!pCharacteristic->writeValue(op->dataToWrite, op->writelen, true)){
                   newstate = GEN_STATE_FAILED_WRITE;
 #ifdef BLE_ESP32_DEBUG

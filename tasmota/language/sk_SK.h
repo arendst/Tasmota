@@ -256,6 +256,7 @@
 #define D_CONFIGURATION "Nastavenia"
 #define D_INFORMATION "Informácie"
 #define D_FIRMWARE_UPGRADE "Aktualizácia firmware"
+#define D_MANAGEMENT "Consoles"
 #define D_CONSOLE "Konzola"
 #define D_CONFIRM_RESTART "Potvrdenie reštartu"
 

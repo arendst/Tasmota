@@ -11,10 +11,14 @@ All notable changes to this project will be documented in this file.
 - Optional GUI file editor enabled with define ``GUI_EDIT_FILE`` by barbudor (#11668)
 - Initial support for universal display driver UDisplay by Gerhard Mutz. Enable by selecting any GPIO as ``Option A3`` (#11665)
 
+### Breaking Changed
+- ESP32 partition layout changed to accomodate more file space on most and more code space on core2 and odroid-go (#11746)
+
 ### Changed
 - In tasmota-sensors.bin enabled support for VL53L0X and disabled TSL2561 (#11711)
 - Add HLW8012/BL0937 average pulse calculation by Alex Lovett (#11722)
 - Redesigned initial GUI wifi configuration by Adrian Scillato (#11693)
+- Redesigned GUI by moving non-configuration buttons from ``Configuration`` to new submenu ``Consoles``
 
 ### Fixed
 - Telegram chat id incorrect size (#11660)
