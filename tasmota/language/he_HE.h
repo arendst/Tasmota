@@ -256,6 +256,7 @@
 #define D_CONFIGURATION "הגדרות"
 #define D_INFORMATION "מידע"
 #define D_FIRMWARE_UPGRADE "שדרוג קושחה"
+#define D_MANAGEMENT "Consoles"
 #define D_CONSOLE "קונסול"
 #define D_CONFIRM_RESTART "אישור הפעלה מחדש"
 

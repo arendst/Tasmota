@@ -256,6 +256,7 @@
 #define D_CONFIGURATION "Configuración"
 #define D_INFORMATION "Información"
 #define D_FIRMWARE_UPGRADE "Actualizar Firmware"
+#define D_MANAGEMENT "Consoles"
 #define D_CONSOLE "Consola"
 #define D_CONFIRM_RESTART "Confirmar Reinicio"
 
