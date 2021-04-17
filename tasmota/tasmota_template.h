@@ -407,11 +407,11 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #endif
 
 #ifdef USE_SPI
-  AGPIO(GPIO_SPI_MISO),                 // SPI MISO
-  AGPIO(GPIO_SPI_MOSI),                 // SPI MOSI
-  AGPIO(GPIO_SPI_CLK),                  // SPI Clk
-  AGPIO(GPIO_SPI_CS),                   // SPI Chip Select
-  AGPIO(GPIO_SPI_DC),                   // SPI Data Direction
+  AGPIO(GPIO_SPI_MISO) + MAX_SPI,       // SPI MISO
+  AGPIO(GPIO_SPI_MOSI) + MAX_SPI,       // SPI MOSI
+  AGPIO(GPIO_SPI_CLK) + MAX_SPI,        // SPI Clk
+  AGPIO(GPIO_SPI_CS) + MAX_SPI,         // SPI Chip Select
+  AGPIO(GPIO_SPI_DC) + MAX_SPI,         // SPI Data Direction
 #ifdef USE_NRF24
   AGPIO(GPIO_NRF24_CS),
   AGPIO(GPIO_NRF24_DC),
