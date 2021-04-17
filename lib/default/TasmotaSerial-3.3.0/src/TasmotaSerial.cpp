@@ -42,6 +42,8 @@ TasmotaSerial *tms_obj_list[16];
 static int tasmota_serial_index = 2;  // Allow UART2 and UART1 only
 #elif CONFIG_IDF_TARGET_ESP32S2       // ESP32-S2
 static int tasmota_serial_index = 1;  // Allow UART1 only
+#elif CONFIG_IDF_TARGET_ESP32C3       // ESP32-C3
+static int tasmota_serial_index = 1;  // Allow UART1 only
 #endif
 
 #endif  // ESP32
