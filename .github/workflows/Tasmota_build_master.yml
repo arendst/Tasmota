@@ -1382,7 +1382,7 @@ jobs:
         mkdir -p ./firmware/tasmota/languages
         mkdir -p ./firmware/tasmota32/languages
         mkdir -p ./firmware/tasmota32/ESP32_needed_files/
-        mkdir -p ./firmware/tasmota32/Odroid_go_needed_files/
+        mkdir -p ./firmware/tasmota32/Odroid_go_and_core2_needed_files/
         mkdir -p ./firmware/map
         [ ! -f ./mv_firmware/map/* ] || mv ./mv_firmware/map/* ./firmware/map/
         [ ! -f ./mv_firmware/firmware/tasmota.* ] || mv ./mv_firmware/firmware/tasmota.* ./firmware/tasmota/
@@ -1403,7 +1403,7 @@ jobs:
         [ ! -f ./mv_firmware/firmware/tasmota32* ] || mv ./mv_firmware/firmware/tasmota32* ./firmware/tasmota32/languages/
         [ ! -f ./mv_firmware/firmware/* ] || mv ./mv_firmware/firmware/* ./firmware/tasmota/languages/
         [ ! -f ./tools/Esptool/ESP32/*.* ] || mv ./tools/Esptool/ESP32/*.* ./firmware/tasmota32/ESP32_needed_files/
-        [ ! -f ./tools/Esptool/Odroid_go/*.* ] || mv ./tools/Esptool/Odroid_go/*.* ./firmware/tasmota32/Odroid_go_needed_files/
+        [ ! -f ./tools/Esptool/Odroid_go_and_core2/*.* ] || mv ./tools/Esptool/Odroid_go_and_core2/*.* ./firmware/tasmota32/Odroid_go_and_core2_needed_files/
         [ ! -f ./FIRMWARE.md ] || mv -f ./RELEASENOTES.md ./README.md
     - name: Commit files  # transfer the new binaries back into the repository
       run: |

@@ -78,6 +78,27 @@ void *special_realloc(void *ptr, size_t size) {
   return realloc(ptr, size);
 }
 
+String GetDeviceHardware(void) {
+  char buff[10];
+  // esptool.py get_efuses
+  uint32_t efuse1 = *(uint32_t*)(0x3FF00050);
+  uint32_t efuse2 = *(uint32_t*)(0x3FF00054);
+//  uint32_t efuse3 = *(uint32_t*)(0x3FF00058);
+//  uint32_t efuse4 = *(uint32_t*)(0x3FF0005C);
+
+  bool is_8285 = ( (efuse1 & (1 << 4)) || (efuse2 & (1 << 16)) );
+  if (is_8285 && (ESP.getFlashChipRealSize() > 1048576)) {
+    is_8285 = false;  // ESP8285 can only have 1M flash
+  }
+  if (is_8285) {
+    strcpy_P(buff, PSTR("ESP8285"));
+  } else {
+    strcpy_P(buff, PSTR("ESP8266EX"));
+  }
+
+  return String(buff);
+}
+
 #endif
 
 /*********************************************************************************************\
@@ -96,6 +117,8 @@ void *special_realloc(void *ptr, size_t size) {
     #include "esp32/rom/rtc.h"
   #elif CONFIG_IDF_TARGET_ESP32S2  // ESP32-S2
     #include "esp32s2/rom/rtc.h"
+  #elif CONFIG_IDF_TARGET_ESP32C3  // ESP32-C3
+    #include "esp32c3/rom/rtc.h"
   #else
     #error Target CONFIG_IDF_TARGET is not supported
   #endif
@@ -221,6 +244,8 @@ extern "C" {
     #include "esp32/rom/spi_flash.h"
   #elif CONFIG_IDF_TARGET_ESP32S2   // ESP32-S2
     #include "esp32s2/rom/spi_flash.h"
+  #elif CONFIG_IDF_TARGET_ESP32C3   // ESP32-C3
+    #include "esp32c3/rom/spi_flash.h"
   #else
     #error Target CONFIG_IDF_TARGET is not supported
   #endif
@@ -476,42 +501,157 @@ float CpuTemperature(void) {
   return ConvertTemp(temperatureRead());
 }
 
+/*
+#if CONFIG_IDF_TARGET_ESP32S2
+#include "esp32s2/esp_efuse.h"
+#elif CONFIG_IDF_TARGET_ESP32S3
+#include "esp32s3/esp_efuse.h"
+#elif CONFIG_IDF_TARGET_ESP32C3
+#include "esp32c3/esp_efuse.h"
+#endif
+*/
+
+String GetDeviceHardware(void) {
+/*
+Source: esp-idf esp_system.h and esptool
+
+typedef enum {
+    CHIP_ESP32   = 1, //!< ESP32
+    CHIP_ESP32S2 = 2, //!< ESP32-S2
+    CHIP_ESP32S3 = 4, //!< ESP32-S3
+    CHIP_ESP32C3 = 5, //!< ESP32-C3
+} esp_chip_model_t;
+
+// Chip feature flags, used in esp_chip_info_t
+#define CHIP_FEATURE_EMB_FLASH      BIT(0)      //!< Chip has embedded flash memory
+#define CHIP_FEATURE_WIFI_BGN       BIT(1)      //!< Chip has 2.4GHz WiFi
+#define CHIP_FEATURE_BLE            BIT(4)      //!< Chip has Bluetooth LE
+#define CHIP_FEATURE_BT             BIT(5)      //!< Chip has Bluetooth Classic
+
+// The structure represents information about the chip
+typedef struct {
+    esp_chip_model_t model;  //!< chip model, one of esp_chip_model_t
+    uint32_t features;       //!< bit mask of CHIP_FEATURE_x feature flags
+    uint8_t cores;           //!< number of CPU cores
+    uint8_t revision;        //!< chip revision number
+} esp_chip_info_t;
+
+*/
+  esp_chip_info_t chip_info;
+  esp_chip_info(&chip_info);
+
+  uint32_t chip_model = chip_info.model;
+  uint32_t chip_revision = chip_info.revision;
+//  uint32_t chip_revision = ESP.getChipRevision();
+  bool rev3 = (3 == chip_revision);
+//  bool single_core = (1 == ESP.getChipCores());
+  bool single_core = (1 == chip_info.cores);
+
+  if (chip_model < 2) {  // ESP32
+#ifdef CONFIG_IDF_TARGET_ESP32
+/* esptool:
+    def get_pkg_version(self):
+        word3 = self.read_efuse(3)
+        pkg_version = (word3 >> 9) & 0x07
+        pkg_version += ((word3 >> 2) & 0x1) << 3
+        return pkg_version
+*/
+    uint32_t chip_ver = REG_GET_FIELD(EFUSE_BLK0_RDATA3_REG, EFUSE_RD_CHIP_VER_PKG);
+    uint32_t pkg_version = chip_ver & 0x7;
+
+    switch (pkg_version) {
+      case 0:
+        if (single_core) { return F("ESP32-S0WDQ6"); }
+        else {             return F("ESP32-D0WDQ6"); }
+      case 1:
+        if (single_core) { return F("ESP32-S0WD"); }
+        else {             return F("ESP32-D0WD"); }
+      case 2:              return F("ESP32-D2WD");
+      case 4:              return F("ESP32-U4WDH");
+      case 5:
+        if (rev3)        { return F("ESP32-PICO-V3"); }
+        else {             return F("ESP32-PICO-D4"); }
+      case 6:              return F("ESP32-PICO-V3-02");
+    }
+#endif  // CONFIG_IDF_TARGET_ESP32
+    return F("ESP32");
+  }
+  else if (2 == chip_model) {  // ESP32-S2
+#ifdef CONFIG_IDF_TARGET_ESP32S2
+/* esptool:
+    def get_pkg_version(self):
+        num_word = 3
+        block1_addr = self.EFUSE_BASE + 0x044
+        word3 = self.read_reg(block1_addr + (4 * num_word))
+        pkg_version = (word3 >> 21) & 0x0F
+        return pkg_version
+*/
+    uint32_t chip_ver = REG_GET_FIELD(EFUSE_RD_MAC_SPI_SYS_3_REG, EFUSE_PKG_VERSION);
+    uint32_t pkg_version = chip_ver & 0x7;
+//    uint32_t pkg_version = esp_efuse_get_pkg_ver();
+
+    switch (pkg_version) {
+      case 0:              return F("ESP32-S2");
+      case 1:              return F("ESP32-S2FH16");
+      case 2:              return F("ESP32-S2FH32");
+    }
+#endif  // CONFIG_IDF_TARGET_ESP32S2
+    return F("ESP32-S2");
+  }
+  else if (4 == chip_model) {  // ESP32-S3
+    return F("ESP32-S3");
+  }
+  else if (5 == chip_model) {  // ESP32-C3
+#ifdef CONFIG_IDF_TARGET_ESP32C3
+/* esptool:
+    def get_pkg_version(self):
+        num_word = 3
+        block1_addr = self.EFUSE_BASE + 0x044
+        word3 = self.read_reg(block1_addr + (4 * num_word))
+        pkg_version = (word3 >> 21) & 0x0F
+        return pkg_version
+*/
+    uint32_t chip_ver = REG_GET_FIELD(EFUSE_RD_MAC_SPI_SYS_3_REG, EFUSE_PKG_VERSION);
+    uint32_t pkg_version = chip_ver & 0x7;
+//    uint32_t pkg_version = esp_efuse_get_pkg_ver();
+
+    switch (pkg_version) {
+      case 0:              return F("ESP32-C3");
+    }
+#endif  // CONFIG_IDF_TARGET_ESP32C3
+    return F("ESP32-C3");
+  }
+  else if (6 == chip_model) {  // ESP32-S3(beta3)
+    return F("ESP32-S3(beta3)");
+  }
+  else if (7 == chip_model) {  // ESP32-C6
+#ifdef CONFIG_IDF_TARGET_ESP32C6
+/* esptool:
+    def get_pkg_version(self):
+        num_word = 3
+        block1_addr = self.EFUSE_BASE + 0x044
+        word3 = self.read_reg(block1_addr + (4 * num_word))
+        pkg_version = (word3 >> 21) & 0x0F
+        return pkg_version
+*/
+    uint32_t chip_ver = REG_GET_FIELD(EFUSE_RD_MAC_SPI_SYS_3_REG, EFUSE_PKG_VERSION);
+    uint32_t pkg_version = chip_ver & 0x7;
+//    uint32_t pkg_version = esp_efuse_get_pkg_ver();
+
+    switch (pkg_version) {
+      case 0:              return F("ESP32-C6");
+    }
+#endif  // CONFIG_IDF_TARGET_ESP32C6
+    return F("ESP32-C6");
+  }
+  return F("ESP32");
+}
+
 #endif  // ESP32
 
 /*********************************************************************************************\
  * ESP Support
 \*********************************************************************************************/
-
-String GetDeviceHardware(void) {
-  char buff[10];
-#ifdef ESP8266
-  // esptool.py get_efuses
-  uint32_t efuse1 = *(uint32_t*)(0x3FF00050);
-  uint32_t efuse2 = *(uint32_t*)(0x3FF00054);
-//  uint32_t efuse3 = *(uint32_t*)(0x3FF00058);
-//  uint32_t efuse4 = *(uint32_t*)(0x3FF0005C);
-
-  bool is_8285 = ( (efuse1 & (1 << 4)) || (efuse2 & (1 << 16)) );
-  if (is_8285 && (ESP.getFlashChipRealSize() > 1048576)) {
-    is_8285 = false;  // ESP8285 can only have 1M flash
-  }
-  if (is_8285) {
-    strcpy_P(buff, PSTR("ESP8285"));
-  } else {
-    strcpy_P(buff, PSTR("ESP8266EX"));
-  }
-#endif  // ESP8266
-
-#ifdef ESP32
-#if CONFIG_IDF_TARGET_ESP32S2  // ESP32-S2
-  strcpy_P(buff, PSTR("ESP32-S2"));
-#else
-  strcpy_P(buff, PSTR("ESP32"));
-#endif  // CONFIG_IDF_TARGET_ESP32S2
-#endif  // ESP32
-
-  return String(buff);
-}
 
 uint32_t ESP_getFreeHeap1024(void) {
   return ESP_getFreeHeap() / 1024;

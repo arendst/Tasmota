@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v9.3.1.3 - Last update 14.04.2021
+ * Updated until v9.3.1.3 - Last update 16.04.2021
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -256,7 +256,7 @@
 #define D_CONFIGURATION        "Impostazioni"
 #define D_INFORMATION          "Informazioni"
 #define D_FIRMWARE_UPGRADE     "Aggiorna firmware"
-#define D_MANAGEMENT "Consoles"
+#define D_MANAGEMENT           "Console"
 #define D_CONSOLE              "Console"
 #define D_CONFIRM_RESTART      "Conferma riavvio"
 
@@ -268,8 +268,8 @@
 #define D_CONFIGURE_OTHER              "Altre impostazioni"
 #define D_CONFIRM_RESET_CONFIGURATION  "Conferma ripristino impostazioni"
 #define D_RESET_CONFIGURATION          "Impostazioni predefinite"
-#define D_BACKUP_CONFIGURATION         "Backup impostazioni"
-#define D_RESTORE_CONFIGURATION        "Ripristino impostazioni"
+#define D_BACKUP_CONFIGURATION         "Salva impostazioni"
+#define D_RESTORE_CONFIGURATION        "Carica impostazioni"
 #define D_MAIN_MENU                    "Menu principale"
 
 #define D_MODULE_PARAMETERS  "Parametri modulo"
