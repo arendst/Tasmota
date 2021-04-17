@@ -126,7 +126,7 @@ void * __va_cur_ptr4(va_list &va) {
 // >>> Reading a_ptr=0x3FFFFD70 *a_ptr=6
 // >>> Reading a_ptr=0x3FFFFD74 *a_ptr=7
 // >>> Reading a_ptr=0x3FFFFD78 *a_ptr=8
-#elif defined(__RISC_V__)
+#elif CONFIG_IDF_TARGET_ESP32C3  // ESP32-C3 RISC_V
 // #define __va_argsiz_tas(t)  	(((sizeof(t) + sizeof(int) - 1) / sizeof(int)) * sizeof(int))
 #define va_cur_ptr4(va,T) ( (T*) __va_cur_ptr4(va) )
 void * __va_cur_ptr4(va_list &va) {
