@@ -17,6 +17,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifdef USE_LVGL
 #include <Arduino.h>
 #include "uDisplay_lvgl.h"
 
@@ -1579,3 +1580,4 @@ void uDisplay_lvgl::drawFastHLine_EPD(int16_t x, int16_t y, int16_t w, uint16_t 
     x++;
   }
 }
+#endif // USE_LVGL
