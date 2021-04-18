@@ -778,6 +778,8 @@ void TuyaProcessStatePacket(void) {
           } else {
             if (fnId > 74) {
               res = 0;
+            } else if (fnId == 72) {
+              res = Settings.flag5.temperature_set_resolution;
             } else { res = Settings.flag2.temperature_resolution; }
             GetTextIndexed(sname, sizeof(sname), (fnId-71), kTuyaSensors);
             ResponseClear(); // Clear retained message
@@ -1344,6 +1346,8 @@ void TuyaSensorsShow(bool json)
         }
         if (sensor > 74) {
           res = 0;
+        } else if (sensor == 72) {
+          res = Settings.flag5.temperature_set_resolution;
         } else { res = Settings.flag2.temperature_resolution; }
 
         GetTextIndexed(sname, sizeof(sname), (sensor-71), kTuyaSensors);
@@ -1360,7 +1364,7 @@ void TuyaSensorsShow(bool json)
             break;
           case 72:
             WSContentSend_PD(PSTR("{s}" D_TEMPERATURE " Set{m}%s " D_UNIT_DEGREE "%c{e}"),
-                            dtostrfd(TuyaAdjustedTemperature(Tuya.Sensors[1], Settings.flag2.temperature_resolution), Settings.flag2.temperature_resolution, tempval), TempUnit());
+                            dtostrfd(TuyaAdjustedTemperature(Tuya.Sensors[1], Settings.flag5.temperature_set_resolution), Settings.flag5.temperature_set_resolution, tempval), TempUnit());
             break;
           case 73:
             WSContentSend_PD(HTTP_SNS_HUM, "", dtostrfd(TuyaAdjustedTemperature(Tuya.Sensors[2], Settings.flag2.temperature_resolution), Settings.flag2.temperature_resolution, tempval));

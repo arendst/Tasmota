@@ -936,6 +936,7 @@ void SettingsDefaultSet2(void) {
   flag2.pressure_resolution |= PRESSURE_RESOLUTION;
   flag2.humidity_resolution |= HUMIDITY_RESOLUTION;
   flag2.temperature_resolution |= TEMP_RESOLUTION;
+  flag5.temperature_set_resolution |= TEMP_SET_RESOLUTION;
   flag3.ds18x20_internal_pullup |= DS18X20_PULL_UP;
   flag3.counter_reset_on_tele |= COUNTER_RESET;
 //  Settings.altitude = 0;
