@@ -1,5 +1,7 @@
-#ifndef _UDISP_
-#define _UDISP_
+#ifndef _UDISP_LVGL_
+#define _UDISP_LVGL_
+
+#ifdef USE_LVGL
 
 #include <Adafruit_GFX.h>
 #include <renderer.h>
@@ -185,4 +187,7 @@ class uDisplay_lvgl : public Renderer {
 
 
 
-#endif // _UDISP_
+
+#endif // USE_LVGL
+
+#endif // _UDISP_LVGL_
