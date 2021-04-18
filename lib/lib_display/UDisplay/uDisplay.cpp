@@ -20,7 +20,7 @@
 #include <Arduino.h>
 #include "uDisplay.h"
 
-#define UDSP_DEBUG
+//#define UDSP_DEBUG
 
 const uint16_t udisp_colors[]={UDISP_BLACK,UDISP_WHITE,UDISP_RED,UDISP_GREEN,UDISP_BLUE,UDISP_CYAN,UDISP_MAGENTA,\
   UDISP_YELLOW,UDISP_NAVY,UDISP_DARKGREEN,UDISP_DARKCYAN,UDISP_MAROON,UDISP_PURPLE,UDISP_OLIVE,\
@@ -48,6 +48,7 @@ uDisplay::uDisplay(char *lp) : Renderer(800, 600) {
   lutftime = 350;
   lut3time = 10;
   ep_mode = 0;
+  allcmd_mode = 0;
   startline = 0xA1;
   uint8_t section = 0;
   dsp_ncmds = 0;
@@ -70,6 +71,12 @@ uDisplay::uDisplay(char *lp) : Renderer(800, 600) {
         // id line
         lp1++;
         section = *lp1++;
+        if (section == 'I') {
+          if (*lp1 == 'C') {
+            allcmd_mode = 1;
+            lp1++;
+          }
+        }
         if (*lp1 == ',') lp1++;
       }
       if (*lp1 != ':' && *lp1 != '\n') {
@@ -413,7 +420,11 @@ Renderer *uDisplay::Init(void) {
 #ifdef UDSP_DEBUG
         Serial.printf("%02x ", iob );
 #endif
-        spi_data8(iob);
+        if (!allcmd_mode) {
+          spi_data8(iob);
+        } else {
+          spi_command(iob);
+        }
       }
       SPI_CS_HIGH
 #ifdef UDSP_DEBUG
@@ -864,11 +875,21 @@ void uDisplay::setAddrWindow_int(uint16_t x, uint16_t y, uint16_t w, uint16_t h)
         udisp_swap(x2,y2);
       }
       spi_command(saw_1);
-      spi_data8(x);
-      spi_data8(x2);
+      if (allcmd_mode) {
+        spi_data8(x);
+        spi_data8(x2);
+      } else {
+        spi_command(x);
+        spi_command(x2);
+      }
       spi_command(saw_2);
-      spi_data8(y);
-      spi_data8(y2);
+      if (allcmd_mode) {
+        spi_data8(y);
+        spi_data8(y2);
+      } else {
+        spi_command(y);
+        spi_command(y2);
+      }
       if (saw_3 != 0xff) {
         spi_command(saw_3); // write to RAM
       }
@@ -953,8 +974,14 @@ void uDisplay::setRotation(uint8_t rotation) {
     SPI_BEGIN_TRANSACTION
     SPI_CS_LOW
     spi_command(madctrl);
-    spi_data8(rot[cur_rot]);
-    if (sa_mode == 8) {
+
+    if (!allcmd_mode) {
+      spi_data8(rot[cur_rot]);
+    } else {
+      spi_command(rot[cur_rot]);
+    }
+
+    if ((sa_mode == 8) && !allcmd_mode) {
       spi_command(startline);
       spi_data8((cur_rot < 2) ? height() : 0);
     }
