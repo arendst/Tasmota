@@ -122,7 +122,7 @@
 \*********************************************************************************************/
 
 #define XDRV_04              4
- #define DEBUG_LIGHT
+// #define DEBUG_LIGHT
 
 enum LightSchemes { LS_POWER, LS_WAKEUP, LS_CYCLEUP, LS_CYCLEDN, LS_RANDOM, LS_MAX };
 
