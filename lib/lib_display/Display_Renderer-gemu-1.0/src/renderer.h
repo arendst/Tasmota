@@ -29,7 +29,7 @@ public:
   virtual void drawFastHLine(int16_t x, int16_t y, int16_t w, uint16_t color);
   virtual void drawPixel(int16_t x, int16_t y, uint16_t color);
   virtual uint16_t GetColorFromIndex(uint8_t index);
-
+  void SetRamfont(uint8_t *font);
   virtual void DisplayOnff(int8_t on);
   virtual void DisplayInit(int8_t p,int8_t size,int8_t rot,int8_t font);
   virtual void Begin(int16_t p1,int16_t p2,int16_t p3);
@@ -52,6 +52,7 @@ private:
   sFONT *selected_font;
   uint8_t font;
   uint8_t tsize = 1;
+  GFXfont *ramfont = 0;
 };
 
 typedef union {
