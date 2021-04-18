@@ -736,6 +736,7 @@
 #define D_LOG_ZIGBEE "ZIG: "       // Zigbee
 #define D_LOG_TCP "TCP: "          // TCP bridge
 #define D_LOG_BERRY "BRY: "        // Berry scripting language
+#define D_LOG_LVGL "LVG: "         // LVGL graphics engine
 
 /********************************************************************************************/
 

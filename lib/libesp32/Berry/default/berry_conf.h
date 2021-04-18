@@ -10,6 +10,11 @@
 
 #include <assert.h>
 
+#ifdef COMPILE_BERRY_LIB
+  #include "my_user_config.h"
+  #include "tasmota_configurations.h"
+#endif
+
 /* Macro: BE_DEBUG
  * Berry interpreter debug switch.
  * Default: 0
@@ -41,11 +46,7 @@
  * runtime. Enable this macro can greatly optimize RAM usage.
  * Default: 1
 //  **/
-// #ifdef ESP8266
-// #define BE_USE_PRECOMPILED_OBJECT       0
-// #else
-#define BE_USE_PRECOMPILED_OBJECT       1           // will enable later when stabilized
-// #endif
+#define BE_USE_PRECOMPILED_OBJECT       1
 
 /* Macro: BE_DEBUG_RUNTIME_INFO
  * Set runtime error debugging information.
