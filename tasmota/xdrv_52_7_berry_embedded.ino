@@ -425,13 +425,13 @@ const char berry_autoexec[] =
   // load "autoexec.be" using import, which loads either .be or .bec file
   "import string "
   "try "
-  "  load('autoexec.be') "
+    "load('autoexec.be') "
   "except .. as e,m "
-  "  if e=='io_error' && string.find(m, \"autoexec.be\")>0 "
-  "    log(\"BRY: no autoexec.be\") "
-  "  else "
-  "    log(\"BRY: exception in autoexec.be: \"+e+\": \"+m) "
-  "  end "
+    "if e=='io_error' && string.find(m, \"autoexec.be\")>0 "
+      "log(\"BRY: no autoexec.be\") "
+    "else "
+      "log(\"BRY: exception in autoexec.be: \"+e+\": \"+m) "
+    "end "
   "end "
   ;
 #endif  // USE_BERRY
