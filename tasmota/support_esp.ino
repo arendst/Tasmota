@@ -563,17 +563,23 @@ typedef struct {
 
     switch (pkg_version) {
       case 0:
-        if (single_core) { return F("ESP32-S0WDQ6"); }    // Max 240MHz, Single core, QFN 6*6
-        else {             return F("ESP32-D0WDQ6"); }    // Max 240MHz, Dual core, QFN 6*6
+        if (single_core) { return F("ESP32-S0WDQ6"); }     // Max 240MHz, Single core, QFN 6*6
+        else if (rev3)   { return F("ESP32-D0WDQ6-V3"); }  // Max 240MHz, Dual core, QFN 6*6
+        else {             return F("ESP32-D0WDQ6"); }     // Max 240MHz, Dual core, QFN 6*6
       case 1:
-        if (single_core) { return F("ESP32-S0WD"); }      // Max 160MHz, Single core, QFN 5*5, Solo 1
-        else {             return F("ESP32-D0WD"); }      // Max 240MHz, Dual core, QFN 5*5
-      case 2:              return F("ESP32-D2WD");        // Max 160MHz, Dual core, QFN 5*5, 2MB embedded flash
-      case 4:              return F("ESP32-U4WDH");       // Max 160MHz, Single core, QFN 5*5, 4MB embedded flash
+        if (single_core) { return F("ESP32-S0WD"); }       // Max 160MHz, Single core, QFN 5*5, Solo 1
+        else if (rev3)   { return F("ESP32-D0WD-V3"); }    // Max 240MHz, Dual core, QFN 5*5
+        else {             return F("ESP32-D0WD"); }       // Max 240MHz, Dual core, QFN 5*5
+      case 2:              return F("ESP32-D2WD");         // Max 160MHz, Dual core, QFN 5*5, 2MB embedded flash
+      case 3:  // To be determined but at least used in Yeelight
+        if (single_core) { return F("ESP32-S0WD"); }       // Max 160MHz, Single core, QFN 5*5, Solo 1
+        else if (rev3)   { return F("ESP32-D0WD-V3"); }    // Max 240MHz, Dual core, QFN 5*5
+        else {             return F("ESP32-D0WD"); }       // Max 240MHz, Dual core, QFN 5*5
+      case 4:              return F("ESP32-U4WDH");        // Max 160MHz, Single core, QFN 5*5, 4MB embedded flash
       case 5:
-        if (rev3)        { return F("ESP32-PICO-V3"); }   // Max 240MHz, Dual core
-        else {             return F("ESP32-PICO-D4"); }   // Max 240MHz, Dual core, 4MB embedded flash
-      case 6:              return F("ESP32-PICO-V3-02");
+        if (rev3)        { return F("ESP32-PICO-V3"); }    // Max 240MHz, Dual core, QFN 7*7
+        else {             return F("ESP32-PICO-D4"); }    // Max 240MHz, Dual core, QFN 7*7, 4MB embedded flash
+      case 6:              return F("ESP32-PICO-V3-02");   // Max 240MHz, Dual core, QFN 7*7, 4MB embedded flash, 2MB embedded PSRAM
     }
 #endif  // CONFIG_IDF_TARGET_ESP32
     return F("ESP32");
@@ -595,10 +601,10 @@ typedef struct {
     AddLog(LOG_LEVEL_DEBUG, PSTR("HDW: ESP32 Model %d, Revision %d, Core %d, Package %d"), chip_info.model, chip_revision, chip_info.cores, chip_ver);
 
     switch (pkg_version) {
-      case 0:              return F("ESP32-S2");
-      case 1:              return F("ESP32-S2FH2");       // Max 240MHz, Single core, 2MB embedded flash
-      case 2:              return F("ESP32-S2FH3");       // Max 240MHz, Single core, 4MB embedded flash
-      case 3:              return F("ESP32-S2FN4R2");     // Max 240MHz, Single core, 4MB embedded flash, 2MB embedded PSRAM
+      case 0:              return F("ESP32-S2");           // Max 240MHz, Single core, QFN 7*7
+      case 1:              return F("ESP32-S2FH2");        // Max 240MHz, Single core, QFN 7*7, 2MB embedded flash
+      case 2:              return F("ESP32-S2FH4");        // Max 240MHz, Single core, QFN 7*7, 4MB embedded flash
+      case 3:              return F("ESP32-S2FN4R2");      // Max 240MHz, Single core, QFN 7*7, 4MB embedded flash, 2MB embedded PSRAM
     }
 #endif  // CONFIG_IDF_TARGET_ESP32S2
     return F("ESP32-S2");
@@ -629,7 +635,7 @@ typedef struct {
     return F("ESP32-C3");
   }
   else if (6 == chip_model) {  // ESP32-S3(beta3)
-    return F("ESP32-S3(beta3)");
+    return F("ESP32-S3");
   }
   else if (7 == chip_model) {  // ESP32-C6
 #ifdef CONFIG_IDF_TARGET_ESP32C6
