@@ -126,18 +126,19 @@ void * __va_cur_ptr4(va_list &va) {
 // >>> Reading a_ptr=0x3FFFFD70 *a_ptr=6
 // >>> Reading a_ptr=0x3FFFFD74 *a_ptr=7
 // >>> Reading a_ptr=0x3FFFFD78 *a_ptr=8
-#elif CONFIG_IDF_TARGET_ESP32C3  // ESP32-C3 RISC_V
+
+#elif defined(__riscv)
 // #define __va_argsiz_tas(t)  	(((sizeof(t) + sizeof(int) - 1) / sizeof(int)) * sizeof(int))
 #define va_cur_ptr4(va,T) ( (T*) __va_cur_ptr4(va) )
 void * __va_cur_ptr4(va_list &va) {
   uintptr_t * va_ptr = (uintptr_t*) &va;
-  void * cur_ptr = (void*) *va_ptr;
-  *va_ptr += 4;
-  return cur_ptr;
+  int32_t * cur_ptr = (int32_t*) *va_ptr;
+  return (void*) (cur_ptr - 1);
 }
-#else   // __XTENSA__, __RISCV__
+
+#else   // __XTENSA__, __riscv
   #error "ext_printf is not suppoerted on this platform"
-#endif  // __XTENSA__, __RISCV__
+#endif  // __XTENSA__, __riscv
 
 /*********************************************************************************************\
  * Genral function to convert u64 to hex
