@@ -914,6 +914,11 @@
 
 #define USE_CSE7761                              // Add support for CSE7761 Energy monitor as used in Sonoff Dual R3
 
+// -- LVGL Graphics Library ---------------------------------
+//#define USE_LVGL                                  // LVGL Engine, requires Berry, takes 440k of Flash
+  #define USE_LVGL_BG_DEFAULT 0x000000              // Default color for the uninitialized background screen (black)
+
+
 #endif  // ESP32
 
 /*********************************************************************************************\

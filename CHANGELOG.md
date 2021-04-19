@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Optional GUI file editor enabled with define ``GUI_EDIT_FILE`` by barbudor (#11668)
 - Initial support for universal display driver UDisplay by Gerhard Mutz. Enable by selecting any GPIO as ``Option A3`` (#11665)
+- Add LVGL 7.11 support with Berry binding (ESP32 only)
 
 ### Breaking Changed
 - ESP32 partition layout changed to accomodate more file space on most and more code space on core2 and odroid-go (#11746)

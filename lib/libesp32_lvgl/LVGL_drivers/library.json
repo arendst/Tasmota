@@ -1,0 +1,14 @@
+{
+  "name":"LVGL_drivers",
+  "description":"Drivers for LVGL on ESP32",
+  "keywords":"lvgl, display",
+  "authors":
+  {
+    "name": "xx",
+    "maintainer": true
+  },
+  "version": "7.0",
+  "license": "MIT License",
+  "frameworks": "arduino",
+  "platforms": "espressif32"
+}

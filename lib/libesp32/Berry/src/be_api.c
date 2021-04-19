@@ -390,6 +390,12 @@ BERRY_API void be_pushclass(bvm *vm, const char *name, const bnfuncinfo *lib)
     var_setclass(vm->top - 1, c);
 }
 
+BERRY_API void be_pushntvclass(bvm *vm, const struct bclass * c)
+{
+    bvalue *top = be_incrtop(vm);
+    var_setclass(top, (bclass *) c);
+}
+
 BERRY_API void be_pushcomptr(bvm *vm, void *ptr)
 {
     bvalue *top = be_incrtop(vm);
