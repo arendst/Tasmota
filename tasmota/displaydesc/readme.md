@@ -1,5 +1,5 @@
 Display Descriptor files for use with universal display driver.
-2 (3) options to select a display driver
+4 (3) options to select a display driver
 
 1. file system driven if UFILESYSTEM is in place (preferred option for normal use)
   to select a display rename the file to "dispdesc.txt" and put into flash file system.

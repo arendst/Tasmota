@@ -52,6 +52,11 @@ uDisplay::uDisplay(char *lp) : Renderer(800, 600) {
   startline = 0xA1;
   uint8_t section = 0;
   dsp_ncmds = 0;
+  lut_num = 0;
+  for (uint32_t cnt = 0; cnt < 5; cnt++) {
+    lut_cnt[cnt] = 0;
+    lut_cmd[cnt] = 0xff;
+  }
   char linebuff[128];
   while (*lp) {
 
@@ -75,6 +80,12 @@ uDisplay::uDisplay(char *lp) : Renderer(800, 600) {
           if (*lp1 == 'C') {
             allcmd_mode = 1;
             lp1++;
+          }
+        } else if (section == 'L') {
+          if (*lp1 >= '1' && *lp1 <= '5') {
+            lut_num = (*lp1 & 0x07);
+            lp1+=2;
+            lut_cmd[lut_num - 1] = next_hex(&lp1);
           }
         }
         if (*lp1 == ',') lp1++;
@@ -213,13 +224,25 @@ uDisplay::uDisplay(char *lp) : Renderer(800, 600) {
             dim_op = next_hex(&lp1);
             break;
           case 'L':
-            while (1) {
-              if (!str2c(&lp1, ibuff, sizeof(ibuff))) {
-                lut_full[lutfsize++] = strtol(ibuff, 0, 16);
-              } else {
-                break;
+            if (!lut_num) {
+              while (1) {
+                if (!str2c(&lp1, ibuff, sizeof(ibuff))) {
+                  lut_full[lutfsize++] = strtol(ibuff, 0, 16);
+                } else {
+                  break;
+                }
+                if (lutfsize >= LUTMAXSIZE) break;
               }
-              if (lutfsize >= sizeof(lut_full)) break;
+            } else {
+              uint8_t index = lut_num - 1;
+              while (1) {
+                if (!str2c(&lp1, ibuff, sizeof(ibuff))) {
+                  lut_array[lut_cnt[index]++][index] = strtol(ibuff, 0, 16);
+                } else {
+                  break;
+                }
+                if (lut_cnt[index] >= LUTMAXSIZE) break;
+              }
             }
             break;
           case 'l':
@@ -229,7 +252,7 @@ uDisplay::uDisplay(char *lp) : Renderer(800, 600) {
               } else {
                 break;
               }
-              if (lutpsize >= sizeof(lut_partial)) break;
+              if (lutpsize >= LUTMAXSIZE) break;
             }
             break;
           case 'T':
@@ -250,7 +273,13 @@ uDisplay::uDisplay(char *lp) : Renderer(800, 600) {
   }
 
   if (lutfsize && lutpsize) {
+    // 2 table mode
     ep_mode = 1;
+  }
+
+  if (lut_cnt[0]>0 && lut_cnt[1]==lut_cnt[2] && lut_cnt[1]==lut_cnt[3] && lut_cnt[1]==lut_cnt[4]) {
+    // 5 table mode
+    ep_mode = 2;
   }
 
 #ifdef UDSP_DEBUG
@@ -278,9 +307,17 @@ uDisplay::uDisplay(char *lp) : Renderer(800, 600) {
 
     Serial.printf("Rot 0: %x,%x - %d - %d\n", madctrl, rot[0], x_addr_offs[0], y_addr_offs[0]);
 
-    if (ep_mode) {
+    if (ep_mode == 1) {
       Serial.printf("LUT_Partial : %d\n", lutpsize);
       Serial.printf("LUT_Full : %d\n", lutfsize);
+    }
+    if (ep_mode == 2) {
+      Serial.printf("LUT_SIZE 1: %d\n", lut_cnt[0]);
+      Serial.printf("LUT_SIZE 2: %d\n", lut_cnt[1]);
+      Serial.printf("LUT_SIZE 3: %d\n", lut_cnt[2]);
+      Serial.printf("LUT_SIZE 4: %d\n", lut_cnt[3]);
+      Serial.printf("LUT_SIZE 5: %d\n", lut_cnt[4]);
+      Serial.printf("LUT_CMDS %02x-%02x-%02x-%02x-%02x\n", lut_cmd[0], lut_cmd[1], lut_cmd[2], lut_cmd[3], lut_cmd[4]);
     }
   }
   if (interface == _UDSP_I2C) {
@@ -443,7 +480,7 @@ Renderer *uDisplay::Init(void) {
   // must init luts on epaper
   if (ep_mode) {
     Init_EPD(DISPLAY_INIT_FULL);
-    Init_EPD(DISPLAY_INIT_PARTIAL);
+    if (ep_mode == 1) Init_EPD(DISPLAY_INIT_PARTIAL);
   }
 
   return this;
@@ -451,7 +488,7 @@ Renderer *uDisplay::Init(void) {
 
 
 void uDisplay::DisplayInit(int8_t p, int8_t size, int8_t rot, int8_t font) {
-  if (p !=DISPLAY_INIT_MODE && ep_mode) {
+  if (p != DISPLAY_INIT_MODE && ep_mode) {
     if (p == DISPLAY_INIT_PARTIAL) {
       if (lutpsize) {
         SetLut(lut_partial);
@@ -463,8 +500,12 @@ void uDisplay::DisplayInit(int8_t p, int8_t size, int8_t rot, int8_t font) {
       if (lutfsize) {
         SetLut(lut_full);
         Updateframe_EPD();
-        delay(lutftime * 10);
       }
+      if (ep_mode == 2) {
+        ClearFrame_42();
+        DisplayFrame_42();
+      }
+      delay(lutftime * 10);
       return;
     }
   } else {
@@ -489,14 +530,22 @@ void uDisplay::spi_command(uint8_t val) {
 
   if (spi_dc < 0) {
     if (spi_nr > 2) {
-      write9(val, 0);
+      if (spi_nr == 3) {
+        write9(val, 0);
+      } else {
+        write9_slow(val, 0);
+      }
     } else {
       hw_write9(val, 0);
     }
   } else {
     SPI_DC_LOW
     if (spi_nr > 2) {
-      write8(val);
+      if (spi_nr == 3) {
+        write8(val);
+      } else {
+        write8_slow(val);
+      }
     } else {
       uspi->write(val);
     }
@@ -507,13 +556,21 @@ void uDisplay::spi_command(uint8_t val) {
 void uDisplay::spi_data8(uint8_t val) {
   if (spi_dc < 0) {
     if (spi_nr > 2) {
-      write9(val, 1);
+      if (spi_nr == 3) {
+        write9(val, 1);
+      } else {
+        write9_slow(val, 1);
+      }
     } else {
       hw_write9(val, 1);
     }
   } else {
     if (spi_nr > 2) {
-      write8(val);
+      if (spi_nr == 3) {
+        write8(val);
+      } else {
+        write8_slow(val);
+      }
     } else {
       uspi->write(val);
     }
@@ -827,6 +884,7 @@ for(y=h; y>0; y--) {
 
 void uDisplay::Splash(void) {
   if (ep_mode) {
+    Updateframe();
     delay(lut3time * 10);
   }
   setTextFont(splash_font);
@@ -1230,6 +1288,7 @@ void uDisplay::hw_write9(uint8_t val, uint8_t dc) {
 
 #define USECACHE ICACHE_RAM_ATTR
 
+// slow software spi needed for displays with max 10 Mhz clck
 
 void USECACHE uDisplay::write8(uint8_t val) {
   for (uint8_t bit = 0x80; bit; bit >>= 1) {
@@ -1237,6 +1296,15 @@ void USECACHE uDisplay::write8(uint8_t val) {
     if (val & bit) GPIO_SET(spi_mosi);
     else   GPIO_CLR(spi_mosi);
     GPIO_SET(spi_clk);
+  }
+}
+
+void uDisplay::write8_slow(uint8_t val) {
+  for (uint8_t bit = 0x80; bit; bit >>= 1) {
+    GPIO_CLR_SLOW(spi_clk);
+    if (val & bit) GPIO_SET_SLOW(spi_mosi);
+    else   GPIO_CLR_SLOW(spi_mosi);
+    GPIO_SET_SLOW(spi_clk);
   }
 }
 
@@ -1252,6 +1320,21 @@ void USECACHE uDisplay::write9(uint8_t val, uint8_t dc) {
     if (val & bit) GPIO_SET(spi_mosi);
     else   GPIO_CLR(spi_mosi);
     GPIO_SET(spi_clk);
+  }
+}
+
+void uDisplay::write9_slow(uint8_t val, uint8_t dc) {
+
+  GPIO_CLR_SLOW(spi_clk);
+  if (dc) GPIO_SET_SLOW(spi_mosi);
+  else  GPIO_CLR_SLOW(spi_mosi);
+  GPIO_SET_SLOW(spi_clk);
+
+  for (uint8_t bit = 0x80; bit; bit >>= 1) {
+    GPIO_CLR_SLOW(spi_clk);
+    if (val & bit) GPIO_SET_SLOW(spi_mosi);
+    else   GPIO_CLR_SLOW(spi_mosi);
+    GPIO_SET_SLOW(spi_clk);
   }
 }
 
@@ -1318,12 +1401,23 @@ void uDisplay::spi_command_EPD(uint8_t val) {
 
 void uDisplay::Init_EPD(int8_t p) {
   if (p == DISPLAY_INIT_PARTIAL) {
-    SetLut(lut_partial);
+    if (lutpsize) {
+      SetLut(lut_partial);
+    }
   } else {
-    SetLut(lut_full);
+    if (lutfsize) {
+      SetLut(lut_full);
+    }
+    if (lut_cnt[0]) {
+      SetLuts();
+    }
   }
-  ClearFrameMemory(0xFF);
-  Updateframe_EPD();
+  if (ep_mode == 1) {
+    ClearFrameMemory(0xFF);
+    Updateframe_EPD();
+  } else {
+    ClearFrame_42();
+  }
   if (p == DISPLAY_INIT_PARTIAL) {
     delay(lutptime * 10);
   } else {
@@ -1341,6 +1435,58 @@ void uDisplay::ClearFrameMemory(unsigned char color) {
     }
 }
 
+void uDisplay::SetLuts(void) {
+  uint8_t index, count;
+  for (index = 0; index < 5; index++) {
+    spi_command_EPD(lut_cmd[index]);                            //vcom
+    for (count = 0; count < lut_cnt[index]; count++) {
+        spi_data8_EPD(lut_array[count][index]);
+    }
+  }
+}
+
+void uDisplay::DisplayFrame_42(void) {
+    uint16_t Width, Height;
+    Width = (gxs % 8 == 0) ? (gxs / 8 ): (gxs / 8 + 1);
+    Height = gys;
+
+    spi_command_EPD(saw_2);
+    for (uint16_t j = 0; j < Height; j++) {
+        for (uint16_t i = 0; i < Width; i++) {
+            spi_data8_EPD(buffer[i + j * Width] ^ 0xff);
+        }
+    }
+    spi_command_EPD(saw_3);
+    delay(100);
+    //Serial.printf("EPD Diplayframe\n");
+}
+
+
+void uDisplay::ClearFrame_42(void) {
+    uint16_t Width, Height;
+    Width = (gxs % 8 == 0)? (gxs / 8 ): (gxs / 8 + 1);
+    Height = gys;
+
+    spi_command_EPD(saw_1);
+    for (uint16_t j = 0; j < Height; j++) {
+        for (uint16_t i = 0; i < Width; i++) {
+            spi_data8_EPD(0xFF);
+        }
+    }
+
+    spi_command_EPD(saw_2);
+    for (uint16_t j = 0; j < Height; j++) {
+        for (uint16_t i = 0; i < Width; i++) {
+            spi_data8_EPD(0xFF);
+        }
+    }
+
+   spi_command_EPD(saw_3);
+   delay(100);
+   //Serial.printf("EPD Clearframe\n");
+}
+
+
 void uDisplay::SetLut(const unsigned char* lut) {
     spi_command_EPD(WRITE_LUT_REGISTER);
     /* the length of look-up table is 30 bytes */
@@ -1350,11 +1496,15 @@ void uDisplay::SetLut(const unsigned char* lut) {
 }
 
 void uDisplay::Updateframe_EPD(void) {
-  SetFrameMemory(buffer, 0, 0, gxs, gys);
-  DisplayFrame();
+  if (ep_mode == 1) {
+    SetFrameMemory(buffer, 0, 0, gxs, gys);
+    DisplayFrame_29();
+  } else {
+    DisplayFrame_42();
+  }
 }
 
-void uDisplay::DisplayFrame(void) {
+void uDisplay::DisplayFrame_29(void) {
     spi_command_EPD(DISPLAY_UPDATE_CONTROL_2);
     spi_data8_EPD(0xC4);
     spi_command_EPD(MASTER_ACTIVATION);
