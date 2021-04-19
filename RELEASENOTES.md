@@ -108,6 +108,7 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - ESP32 support for WS2812 hardware driver via RMT or I2S
 - ESP32 support for secondary I2C controller
 - ESP32 support for internal Hall Effect sensor connected to both GPIO36 and GPIO39 only
+- ESP32 support for LVGL 7.11 with Berry binding by Stefan Hadinger [#11789](https://github.com/arendst/Tasmota/issues/11789)
 
 ### Breaking Changed
 - ESP32 partition layout changed to accomodate more file space on most and more code space on core2 and odroid-go [#11746](https://github.com/arendst/Tasmota/issues/11746)
