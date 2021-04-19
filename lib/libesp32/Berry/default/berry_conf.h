@@ -179,8 +179,8 @@ extern "C" {
 #ifdef __cplusplus
 }
 #endif
-  #define BE_EXPLICIT_MALLOC              special_malloc
-  #define BE_EXPLICIT_REALLOC             special_realloc
+  #define BE_EXPLICIT_MALLOC              berry_malloc
+  #define BE_EXPLICIT_REALLOC             berry_realloc
 #else
   #define BE_EXPLICIT_MALLOC              malloc
   #define BE_EXPLICIT_REALLOC             realloc
