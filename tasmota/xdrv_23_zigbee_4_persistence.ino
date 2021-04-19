@@ -182,7 +182,11 @@ SBuffer hibernateDevices(void) {
   SBuffer buf(2048);
 
   size_t devices_size = zigbee_devices.devicesSize();
+#ifdef ESP32
+  if (devices_size > 48) { devices_size = 48; }         // arbitrarily limit to 48 devices on ESP32, we will go beyond when we remove the limit of 2kb buffer
+#else
   if (devices_size > 32) { devices_size = 32; }         // arbitrarily limit to 32 devices, for now
+#endif
   buf.add8(devices_size);    // number of devices
 
   for (uint32_t i = 0; i < devices_size; i++) {
