@@ -329,6 +329,7 @@
 #define RF_DATA_RADIX          false             // [SetOption28] RF receive data format (false = hexadecimal, true = decimal)
 #define IR_DATA_RADIX          false             // [SetOption29] IR receive data format (false = hexadecimal, true = decimal)
 #define TUYA_SETOPTION_20      false             // [SetOption54] Apply SetOption20 settings to Tuya device
+#define TUYA_TEMP_SET_RES      1                 // [TuyaTempSetRes] Maximum number of decimals (0 - 3) showing sensor TemperatureSet
 #define IR_ADD_RAW_DATA        false             // [SetOption58] Add IR Raw data to JSON message
 #define BUZZER_ENABLE          false             // [SetOption67] Enable buzzer when available
 #define DS18X20_PULL_UP        false             // [SetOption74] Enable internal pullup for single DS18x20 sensor

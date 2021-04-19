@@ -100,10 +100,10 @@ const char kTuyaSensors[] PROGMEM = // List of available sensors (can be expande
   "|" D_JSON_TVOC "|" D_JSON_ECO2 "|" D_JSON_CO2 "|" D_JSON_GAS "||Timer1|Timer2|Timer3|TImer4";
 
 const char kTuyaCommand[] PROGMEM = D_PRFX_TUYA "|"  // Prefix
-  D_CMND_TUYA_MCU "|" D_CMND_TUYA_MCU_SEND_STATE "|" D_CMND_TUYARGB "|" D_CMND_TUYA_ENUM "|" D_CMND_TUYA_ENUM_LIST;
+  D_CMND_TUYA_MCU "|" D_CMND_TUYA_MCU_SEND_STATE "|" D_CMND_TUYARGB "|" D_CMND_TUYA_ENUM "|" D_CMND_TUYA_ENUM_LIST "|TempSetRes";
 
 void (* const TuyaCommand[])(void) PROGMEM = {
-  &CmndTuyaMcu, &CmndTuyaSend, &CmndTuyaRgb, &CmndTuyaEnum, &CmndTuyaEnumList
+  &CmndTuyaMcu, &CmndTuyaSend, &CmndTuyaRgb, &CmndTuyaEnum, &CmndTuyaEnumList, &CmndTuyaTempSetRes
 };
 
 /*********************************************************************************************\
@@ -242,6 +242,14 @@ void CmndTuyaRgb(void) { // Command to control the RGB format
   ResponseCmndNumber(Settings.tuya_fnid_map[230].dpid);
 }
 
+void CmndTuyaTempSetRes(void)
+{
+  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 3)) {
+    Settings.mbflag2.temperature_set_res = XdrvMailbox.payload;
+  }
+  ResponseCmndNumber(Settings.mbflag2.temperature_set_res);
+}
+
 void CmndTuyaEnum(void) { // Command to control up to four type 4 Enum
   uint16_t EnumIdx = XdrvMailbox.index;
   int32_t payload = XdrvMailbox.payload;
@@ -336,6 +344,7 @@ float TuyaAdjustedTemperature(int16_t packetValue, uint8_t res)
         break;
     }
 }
+
 /*********************************************************************************************\
  * Internal Functions
 \*********************************************************************************************/
@@ -704,7 +713,7 @@ void TuyaProcessStatePacket(void) {
     fnId = TuyaGetFuncId(Tuya.buffer[dpidStart]);
 
     AddLog(LOG_LEVEL_DEBUG, PSTR("TYA: fnId=%d is set for dpId=%d"), fnId, Tuya.buffer[dpidStart]);
-    if (Tuya.buffer[dpidStart + 1] == 0) { 
+    if (Tuya.buffer[dpidStart + 1] == 0) {
 #ifdef USE_ENERGY_SENSOR
         if (tuya_energy_enabled && fnId == TUYA_MCU_FUNC_POWER_COMBINED) {
           if (dpDataLen == 8) {
@@ -778,7 +787,11 @@ void TuyaProcessStatePacket(void) {
           } else {
             if (fnId > 74) {
               res = 0;
-            } else { res = Settings.flag2.temperature_resolution; }
+            } else if (fnId == 72) {
+              res = Settings.mbflag2.temperature_set_res;
+            } else {
+              res = Settings.flag2.temperature_resolution;
+            }
             GetTextIndexed(sname, sizeof(sname), (fnId-71), kTuyaSensors);
             ResponseClear(); // Clear retained message
             Response_P(PSTR("{\"TuyaSNS\":{\"%s\":%s}}"), sname, dtostrfd(TuyaAdjustedTemperature(packetValue, res), res, tempval)); // sensor update is just on change
@@ -892,7 +905,7 @@ void TuyaProcessStatePacket(void) {
             ExecuteCommand(scmnd, SRC_SWITCH);
           }
         }
-        
+
       }
       else if (Tuya.buffer[dpidStart + 1] == 4) {  // Data Type 4
         const unsigned char *dpData = (unsigned char*)&Tuya.buffer[dpidStart + 4];
@@ -1344,7 +1357,11 @@ void TuyaSensorsShow(bool json)
         }
         if (sensor > 74) {
           res = 0;
-        } else { res = Settings.flag2.temperature_resolution; }
+        } else if (sensor == 72) {
+          res = Settings.mbflag2.temperature_set_res;
+        } else {
+          res = Settings.flag2.temperature_resolution;
+        }
 
         GetTextIndexed(sname, sizeof(sname), (sensor-71), kTuyaSensors);
         ResponseAppend_P(PSTR("\"%s\":%s"), sname,
@@ -1360,7 +1377,7 @@ void TuyaSensorsShow(bool json)
             break;
           case 72:
             WSContentSend_PD(PSTR("{s}" D_TEMPERATURE " Set{m}%s " D_UNIT_DEGREE "%c{e}"),
-                            dtostrfd(TuyaAdjustedTemperature(Tuya.Sensors[1], Settings.flag2.temperature_resolution), Settings.flag2.temperature_resolution, tempval), TempUnit());
+                            dtostrfd(TuyaAdjustedTemperature(Tuya.Sensors[1], Settings.mbflag2.temperature_set_res), Settings.mbflag2.temperature_set_res, tempval), TempUnit());
             break;
           case 73:
             WSContentSend_PD(HTTP_SNS_HUM, "", dtostrfd(TuyaAdjustedTemperature(Tuya.Sensors[2], Settings.flag2.temperature_resolution), Settings.flag2.temperature_resolution, tempval));

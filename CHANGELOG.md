@@ -3,7 +3,11 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [9.3.1.3]
+## [9.3.1.4]
+### Added
+- Command ``TuyaTempSetRes 0..3`` to control Tuya Temperature Set Resolution (#11781)
+
+## [9.3.1.3] 20210419
 ### Added
 - Optional GUI file editor enabled with define ``GUI_EDIT_FILE`` by barbudor (#11668)
 - Initial support for universal display driver UDisplay by Gerhard Mutz. Enable by selecting any GPIO as ``Option A3`` (#11665)
