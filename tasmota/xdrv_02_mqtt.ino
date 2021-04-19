@@ -229,6 +229,8 @@ void MqttSubscribeLib(const char *topic) {
     String realTopicString = "devices/" + String(SettingsText(SET_MQTT_CLIENT));
     realTopicString += "/messages/devicebound/#";
     MqttClient.subscribe(realTopicString.c_str());
+    // TWIN updates
+    MqttClient.subscribe("$iothub/twin/res/#");
   #else
     MqttClient.subscribe(topic);
   #endif
@@ -251,17 +253,24 @@ bool MqttPublishLib(const char* topic, bool retained) {
   }
 
   #if defined(USE_MQTT_AZURE_IOT)
+    bool result = false;
     String tasmotaTopic = String(topic);
+    if (tasmotaTopic.endsWith("/STATE")) {
+      String stateTopic = "$iothub/twin/PATCH/properties/reported/?$rid=1";
+      result = MqttClient.publish(stateTopic.c_str(), TasmotaGlobal.mqtt_data, retained);
+      AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT "Upating TWIN with %s"), TasmotaGlobal.mqtt_data);
+    }
+    
     tasmotaTopic.replace("/", ".");       // can not send '/' in the property replace with '.'
     String realTopicString = "devices/" + String(SettingsText(SET_MQTT_CLIENT));
     realTopicString+= "/messages/events/tasmotaTopic=" + tasmotaTopic;
 
-    bool result = false;
     if (String(TasmotaGlobal.mqtt_data).indexOf("{") > -1) {   // only sending JSON, yet this is optional
       result = MqttClient.publish(realTopicString.c_str(), TasmotaGlobal.mqtt_data, retained);
     } else {
       result = true;
     }
+    
   #else
     bool result = MqttClient.publish(topic, TasmotaGlobal.mqtt_data, retained);
   #endif
@@ -1407,7 +1416,7 @@ const char HTTP_FORM_MQTT1[] PROGMEM =
   "<fieldset><legend><b>&nbsp;" D_MQTT_PARAMETERS "&nbsp;</b></legend>"
   "<form method='get' action='" WEB_HANDLE_MQTT "'>"
 #if defined(USE_MQTT_AZURE_IOT)
-  "<p><b>IoT Hub FQDN</b> (" MQTT_HOST ")<br><input id='mh' placeholder=\"" MQTT_HOST "\" value=\"%s\"></p>"
+  "<p><b>Azure IoT Hub FQDN</b> (" MQTT_HOST ")<br><input id='mh' placeholder=\"" MQTT_HOST "\" value=\"%s\"></p>"
   "<p><b>" D_PORT "</b> (" STR(MQTT_PORT) ")<br><input id='ml' type='hidden' placeholder='" STR(MQTT_PORT) "' value='%d'></p>"
   "<p><label><input id='b3' type='hidden' type='checkbox'%s><b>" D_MQTT_TLS_ENABLE "</b></label><br>"
   "<p><b>Azure Device Id</b> (%s)<br><input id='mc' placeholder=\"%s\" value=\"%s\"></p>";
