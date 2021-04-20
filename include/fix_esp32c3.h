@@ -1,5 +1,5 @@
 /*
-  fix_esp32c3.h - webserver for Tasmota
+  fix_esp32c3.h - fix esp32c3 toolchain
 
   Copyright (C) 2021  Theo Arends
 
