@@ -25,6 +25,8 @@
  *
  * Denky ESP32 Teleinfo Template
  * {"NAME":"Denky (Teleinfo)","GPIO":[1,1,1,1,5664,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,0,1376,1,1,0,0,0,0,1,5632,1,1,1,0,0,1],"FLAG":0,"BASE":1}
+ * Denky D4 ESP Pico V3 Teleinfo Template
+ * {"NAME":"DenkyD4","GPIO":[32,0,0,0,1,0,0,0,0,1,0,1,0,0,0,0,0,640,608,0,0,450,449,448,0,0,0,0,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":1}
  *
  * Denky (aka WifInfo) ESP8266 Teleinfo Template
  * {"NAME":"WifInfo v1.0a","GPIO":[17,255,255,255,6,5,255,255,7,210,255,255,255],"FLAG":15,"BASE":18}
@@ -120,8 +122,9 @@ enum TInfoLabel{
     LABEL_ADCO, LABEL_ADSC,
     LABEL_HCHC, LABEL_HCHP, LABEL_EAST, LABEL_EASF01, LABEL_EASF02,
     LABEL_OPTARIF, LABEL_NGTF, LABEL_ISOUSC, LABEL_PREF, LABEL_PTEC, LABEL_LTARF, LABEL_NTARF,
-    LABEL_PAPP, LABEL_SINSTS, LABEL_IINST, LABEL_IRMS1, LABEL_TENSION, LABEL_URMS1,
-    LABEL_IMAX, LABEL_PMAX, LABEL_SMAXSN,
+    LABEL_PAPP, LABEL_SINSTS, LABEL_IINST, LABEL_IINST1, LABEL_IINST2, LABEL_IINST3, LABEL_IRMS1, LABEL_IRMS2, LABEL_IRMS3,  
+    LABEL_TENSION, LABEL_URMS1, LABEL_URMS2, LABEL_URMS3,
+    LABEL_IMAX, LABEL_IMAX1, LABEL_IMAX2, LABEL_IMAX3, LABEL_PMAX, LABEL_SMAXSN,
     LABEL_DEMAIN,
     LABEL_END
 };
@@ -130,9 +133,18 @@ const char kLabel[] PROGMEM =
     "|BASE|ADCO|ADSC"
     "|HCHC|HCHP|EAST|EASF01|EASF02"
     "|OPTARIF|NGTF|ISOUSC|PREF|PTEC|LTARF|NTARF"
-    "|PAPP|SINSTS|IINST|IRMS1|TENSION|URMS1"
-    "|IMAX|PMAX|SMAXSN"
+    "|PAPP|SINSTS|IINST|IINST1|IINST2|IINST3|IRMS1|IRMS2|IRMS3"
+    "|TENSION|URMS1|URMS2|URMS3"
+    "|IMAX|IMAX1|IMAX2|IMAX3|PMAX|SMAXSN"
     "|DEMAIN"
+    ;
+
+// Blacklisted label from telemetry 
+// Each label shoud be enclosed by pipe
+const char kLabelBlacklist[] PROGMEM =
+    "|PJOURF+1"
+    "|MSG1"
+    "|"
     ;
 
 #define TELEINFO_SERIAL_BUFFER_STANDARD        512      // Receive buffer size for Standard mode
@@ -142,8 +154,10 @@ const char kLabel[] PROGMEM =
 TInfo tinfo; // Teleinfo object
 TasmotaSerial *TInfoSerial = nullptr;
 _Mode_e tinfo_mode = TINFO_MODE_HISTORIQUE;
+uint8_t tic_rx_pin = NOT_A_PIN;
 char serialNumber[13] = ""; // Serial number is 12 char long
 bool tinfo_found = false;
+int nb_phase = 1;
 int contrat;
 int tarif;
 int isousc;
@@ -175,11 +189,12 @@ Input   : phase number
             1 for ADIR1 triphase
             2 for ADIR2 triphase
             3 for ADIR3 triphase
+          label (different on Normal, 3 phases, historique or standard)
 Output  : -
 Comments: should have been initialised with a
           tinfo.attachADPSCallback(ADPSCallback())
 ====================================================================== */
-void ADPSCallback(uint8_t phase)
+void ADPSCallback(uint8_t phase, char * label)
 {
     // n = phase number 1 to 3
     if (phase == 0){
@@ -187,11 +202,11 @@ void ADPSCallback(uint8_t phase)
     }
 
     Response_P(PSTR("{"));
-    ResponseAppend_P(TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), PSTR("{\"%s\":{\"ADPS\":%i}}"), serialNumber, phase );
+    ResponseAppend_P(TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), PSTR("{\"TIC\":{\"%s\":%i}}"), label, phase );
     ResponseJsonEnd();
 
     // Publish adding ADCO serial number into the topic
-    MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, serialNumber, false);
+    MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR(D_RSLT_SENSOR), false);
 
     AddLog(LOG_LEVEL_INFO, PSTR("ADPS on phase %d"), phase);
 }
@@ -266,14 +281,28 @@ void DataCallback(struct _ValueList * me, uint8_t  flags)
                 Energy.voltage_available = true;
                 Energy.voltage[0]  = (float) atoi(me->value);
                 AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: Voltage %s, now %d"), me->value, (int) Energy.voltage[0]);
+            } else if ( ilabel == LABEL_URMS2) {
+                Energy.voltage[1]  = (float) atoi(me->value);
+                AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: Voltage %s, now %d"), me->value, (int) Energy.voltage[1]);
+            } else if ( ilabel == LABEL_URMS3) {
+                nb_phase = 3;
+                Energy.voltage[2]  = (float) atoi(me->value);
+                AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: Voltage %s, now %d"), me->value, (int) Energy.voltage[2]);
             }
 
-            // Current I
-            else if (ilabel == LABEL_IINST || ilabel == LABEL_IRMS1)
+            // Current I phase 1 to 3
+            else if (ilabel == LABEL_IINST || ilabel == LABEL_IINST1|| ilabel == LABEL_IRMS1)
             {
                 Energy.current_available = true;
                 Energy.current[0]  = (float) atoi(me->value);
                 AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: Current %s, now %d"), me->value, (int) Energy.current[0]);
+            } else if (ilabel == LABEL_IINST2 || ilabel == LABEL_IRMS2) {
+                Energy.current[1]  = (float) atoi(me->value);
+                AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: Current %s, now %d"), me->value, (int) Energy.current[1]);
+            } else if (ilabel == LABEL_IINST3 || ilabel == LABEL_IRMS3) {
+                nb_phase = 3;
+                Energy.current[2]  = (float) atoi(me->value);
+                AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: Current %s, now %d"), me->value, (int) Energy.current[2]);
             }
 
             // Power P
@@ -281,7 +310,7 @@ void DataCallback(struct _ValueList * me, uint8_t  flags)
             {
                 Energy.active_power[0]  = (float) atoi(me->value);;
                 AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: Power %s, now %d"), me->value, (int)  Energy.active_power[0]);
-            }
+            } 
 
             // Wh indexes (legacy)
             else if ( ilabel == LABEL_HCHC || ilabel == LABEL_HCHP || ilabel == LABEL_BASE)
@@ -383,6 +412,18 @@ void DataCallback(struct _ValueList * me, uint8_t  flags)
         }
     }
 }
+    
+/* ======================================================================
+Function: isBlacklistedLabel
+Purpose : check is a label is blacklisted for telemetry data
+Input   : label name
+Output  : true if blacklisted
+Comments: -
+====================================================================== */
+bool isBlacklistedLabel(char * name)
+{
+    return strstr( kLabelBlacklist, name)==nullptr ? false : true;
+}
 
 /* ======================================================================
 Function: responseDumpTInfo
@@ -408,39 +449,50 @@ bool ResponseAppendTInfo(char sep, bool all)
 
         if (me->name && me->value && *me->name && *me->value) {
 
-            // Add values only if we want all data or if data has changed
-            if (all || ( Settings.teleinfo.raw_report_changed && (me->flags & (TINFO_FLAGS_UPDATED | TINFO_FLAGS_ADDED | TINFO_FLAGS_ALERT) ) ) ) {
+            // Does this label blacklisted ?
+            if (!isBlacklistedLabel(me->name)) {
 
-                isNumber = true;
-                hasValue = true;
-                p = me->value;
+                // Add values only if we want all data or if data has changed
+                if (all || ( Settings.teleinfo.raw_report_changed && (me->flags & (TINFO_FLAGS_UPDATED | TINFO_FLAGS_ADDED | TINFO_FLAGS_ALERT) ) ) ) {
 
-                // Specific treatment serial number don't convert to number later
-                if (strcmp(me->name, "ADCO")==0 || strcmp(me->name, "ADSC")==0) {
-                    isNumber = false;
-                } else {
-                    // check if value is number
-                    while (*p && isNumber) {
-                        if ( *p < '0' || *p > '9' ) {
-                            isNumber = false;
+                    isNumber = true;
+                    hasValue = true;
+                    p = me->value;
+
+                    // Specific treatment serial number don't convert to number later
+                    if (strcmp(me->name, "ADCO")==0 || strcmp(me->name, "ADSC")==0) {
+                        isNumber = false;
+                    } else {
+                        // check if value is number
+                        while (*p && isNumber) {
+                            if ( *p < '0' || *p > '9' ) {
+                                isNumber = false;
+                            }
+                            p++;
                         }
-                        p++;
                     }
+
+                    // Avoid unneeded space
+                    if (sep == ' ') {
+                        ResponseAppend_P( PSTR("\"%s\":"), me->name );
+                    } else {
+                        ResponseAppend_P( PSTR("%c\"%s\":"), sep, me->name );
+                    }
+
+                    if (!isNumber) {
+                        ResponseAppend_P( PSTR("\"%s\""), me->value );
+                    } else {
+                        ResponseAppend_P( PSTR("%d"), atoi(me->value));
+                    }
+
+                    // Now JSON separator is needed
+                    sep =',';
                 }
-
-                ResponseAppend_P( PSTR("%c\"%s\":"), sep, me->name );
-
-                if (!isNumber) {
-                    ResponseAppend_P( PSTR("\"%s\""), me->value );
-                } else {
-                    ResponseAppend_P( PSTR("%d"), atoi(me->value));
-                }
-
-                // Now JSON separator is needed
-                sep =',';
             }
+
         }
     }
+
     return hasValue;
 }
 
@@ -461,16 +513,18 @@ void NewFrameCallback(struct _ValueList * me)
     if (Settings.teleinfo.raw_send) {
         // Do we need to skip this frame
         if (raw_skip == 0 ) {
-            Response_P(PSTR("{"));
+            Response_P(PSTR("{\"TIC\":{"));
             // send teleinfo full frame or only changed data
             bool hasData = ResponseAppendTInfo(' ', Settings.teleinfo.raw_report_changed ? false : true );
-            ResponseJsonEnd();
+            ResponseJsonEndEnd();
             
             // Publish adding ADCO serial number into the topic
             // Need setOption4 to be enabled
             // No need to send empty payload
             if (hasData) {
-                MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, serialNumber, false);
+                //MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, serialNumber, false);
+                //MqttPublishPrefixTopicRulesProcess_P(TELE, serialNumber, false);
+                MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR(D_RSLT_SENSOR), false);
             }
 
             // Reset frame skip counter (if 0 it's disabled)
@@ -490,10 +544,24 @@ Output  : -
 Comments: -
 ====================================================================== */
 void TInfoDrvInit(void) {
-  if (PinUsed(GPIO_TELEINFO_RX)) {
-    TasmotaGlobal.energy_driver = XNRG_15;
-    Energy.voltage_available = false;
-  }
+    // If one TInfo RX pin declared use it
+    if (PinUsed(GPIO_TELEINFO_RX)) {
+        tic_rx_pin = Pin(GPIO_TELEINFO_RX);
+    } else {
+        // Case we are on denky V4 board without any TInfo RX pin selected 
+        #ifdef ARDUINO_DENKY_PICOV3
+            tic_rx_pin = 8;
+            AddLog(LOG_LEVEL_INFO, PSTR("TIC: Denky D4 board, RX on GPIO%d"), tic_rx_pin);
+        #endif
+    }
+
+    // Enable teleinfo
+    if (tic_rx_pin != NOT_A_PIN) {
+        TasmotaGlobal.energy_driver = XNRG_15;
+        Energy.voltage_available = false;
+    } else {
+        AddLog(LOG_LEVEL_ERROR, PSTR("TIC: Device has no RX pin"));
+    }
 }
 
 /* ======================================================================
@@ -501,7 +569,8 @@ Function: TInfoInit
 Purpose : Tasmota core device init
 Input   : -
 Output  : -
-Comments: -
+Comments: this one is called (driver enabled) ONLY if
+          TInfoDrvInit has a valid teleinfo RX pin setup
 ====================================================================== */
 void TInfoInit(void)
 {
@@ -520,74 +589,70 @@ void TInfoInit(void)
         serial_buffer_size = TELEINFO_SERIAL_BUFFER_HISTORIQUE;
     }
 
+    AddLog(LOG_LEVEL_INFO, PSTR("TIC: RX on GPIO%d, baudrate %d"), tic_rx_pin, baudrate);
 
-    if (PinUsed(GPIO_TELEINFO_RX)) {
-         int8_t rx_pin = Pin(GPIO_TELEINFO_RX);
-         AddLog(LOG_LEVEL_INFO, PSTR("TIC: RX on GPIO%d, baudrate %d"), rx_pin, baudrate);
-
-        // Enable Teleinfo pin used, control it
-        if (PinUsed(GPIO_TELEINFO_ENABLE)) {
-            int8_t en_pin = Pin(GPIO_TELEINFO_ENABLE);
-            pinMode(en_pin, OUTPUT);
-            digitalWrite(en_pin, HIGH);
-            AddLog(LOG_LEVEL_INFO, PSTR("TIC: Enable with GPIO%d"), en_pin);
-        } else  {
-            AddLog(LOG_LEVEL_INFO, PSTR("TIC: always enabled"));
-        }
+    // Enable Teleinfo pin used, control it
+    if (PinUsed(GPIO_TELEINFO_ENABLE)) {
+        int8_t en_pin = Pin(GPIO_TELEINFO_ENABLE);
+        pinMode(en_pin, OUTPUT);
+        digitalWrite(en_pin, HIGH);
+        AddLog(LOG_LEVEL_INFO, PSTR("TIC: Enable with GPIO%d"), en_pin);
+    } else  {
+        AddLog(LOG_LEVEL_INFO, PSTR("TIC: always enabled"));
+    }
 
 #ifdef ESP8266
-        // Allow GPIO3 AND GPIO13 with hardware fallback to 2
-        // Set buffer to nnn char to support 250ms loop at 9600 baud
-        TInfoSerial = new TasmotaSerial(rx_pin, -1, 2, 0, serial_buffer_size);
-        //pinMode(rx_pin, INPUT_PULLUP);
+    // Allow GPIO3 AND GPIO13 with hardware fallback to 2
+    // Set buffer to nnn char to support 250ms loop at 9600 baud
+    TInfoSerial = new TasmotaSerial(tic_rx_pin, -1, 2, 0, serial_buffer_size);
+    //pinMode(rx_pin, INPUT_PULLUP);
 #endif  // ESP8266
 #ifdef ESP32
-        // Set buffer to nnn char to support 250ms loop at 9600 baud
-        TInfoSerial = new TasmotaSerial(rx_pin, -1, 1, 0, serial_buffer_size);
+    // Set buffer to nnn char to support 250ms loop at 9600 baud
+    TInfoSerial = new TasmotaSerial(tic_rx_pin, -1, 1, 0, serial_buffer_size);
 #endif  // ESP32
 
-        // Trick here even using SERIAL_7E1 or TS_SERIAL_7E1
-        // this is not working, need to call SetSerialConfig after
-        if (TInfoSerial->begin(baudrate)) {
+    // Trick here even using SERIAL_7E1 or TS_SERIAL_7E1
+    // this is not working, need to call SetSerialConfig after
+    if (TInfoSerial->begin(baudrate)) {
 
 
 #ifdef ESP8266
-            if (TInfoSerial->hardwareSerial() ) {
-                ClaimSerial();
+        if (TInfoSerial->hardwareSerial() ) {
+            ClaimSerial();
 
-                // This is a hack, looks like begin does not take into account
-                // the TS_SERIAL_7E1 configuration so on ESP8266 this is
-                // working only on Serial RX pin (Hardware Serial) for now
+            // This is a hack, looks like begin does not take into account
+            // the TS_SERIAL_7E1 configuration so on ESP8266 this is
+            // working only on Serial RX pin (Hardware Serial) for now
 
-                //SetSerialConfig(TS_SERIAL_7E1);
-                //TInfoSerial->setTimeout(TINFO_READ_TIMEOUT);
+            //SetSerialConfig(TS_SERIAL_7E1);
+            //TInfoSerial->setTimeout(TINFO_READ_TIMEOUT);
 
-                AddLog(LOG_LEVEL_INFO, PSTR("TIC: using hardware serial"));
-            } else {
-                AddLog(LOG_LEVEL_INFO, PSTR("TIC: using software serial"));
-            }
+            AddLog(LOG_LEVEL_INFO, PSTR("TIC: using hardware serial"));
+        } else {
+            AddLog(LOG_LEVEL_INFO, PSTR("TIC: using software serial"));
+        }
 #endif  // ESP8266
 #ifdef ESP32
-            SetSerialConfig(TS_SERIAL_7E1);
-            AddLog(LOG_LEVEL_INFO, PSTR("TIC: using ESP32 hardware serial"));
+        SetSerialConfig(TS_SERIAL_7E1);
+        AddLog(LOG_LEVEL_INFO, PSTR("TIC: using ESP32 hardware serial"));
 #endif  // ESP32
-            // Init teleinfo
-            tinfo.init(tinfo_mode);
-            // Attach needed callbacks
-            tinfo.attachADPS(ADPSCallback);
-            tinfo.attachData(DataCallback);
-            tinfo.attachNewFrame(NewFrameCallback);
-            tinfo_found = true;
+        // Init teleinfo
+        tinfo.init(tinfo_mode);
+        // Attach needed callbacks
+        tinfo.attachADPS(ADPSCallback);
+        tinfo.attachData(DataCallback);
+        tinfo.attachNewFrame(NewFrameCallback);
+        tinfo_found = true;
 
-            if (Settings.teleinfo.raw_send) {
-                raw_skip = Settings.teleinfo.raw_skip;
-                AddLog(LOG_LEVEL_INFO, PSTR("TIC: Raw mode enabled"));
-                if (raw_skip) {
-                    AddLog(LOG_LEVEL_INFO, PSTR("TIC: Sending only one frame over %d "), raw_skip+1);
-                } 
-            }
-            AddLog(LOG_LEVEL_INFO, PSTR("TIC: Ready"));
+        if (Settings.teleinfo.raw_send) {
+            raw_skip = Settings.teleinfo.raw_skip;
+            AddLog(LOG_LEVEL_INFO, PSTR("TIC: Raw mode enabled"));
+            if (raw_skip) {
+                AddLog(LOG_LEVEL_INFO, PSTR("TIC: Sending only one frame over %d "), raw_skip+1);
+            } 
         }
+        AddLog(LOG_LEVEL_INFO, PSTR("TIC: Ready"));
     }
 }
 
@@ -814,6 +879,11 @@ const char HTTP_ENERGY_CONTRAT_TELEINFO[] PROGMEM =  "{s}" D_CONTRACT "{m}%s %d"
 const char HTTP_ENERGY_LOAD_TELEINFO[] PROGMEM =  "{s}" D_POWER_LOAD "{m}%d" D_UNIT_PERCENT "{e}" ;
 const char HTTP_ENERGY_IMAX_TELEINFO[] PROGMEM =  "{s}" D_MAX_CURRENT "{m}%d" D_UNIT_AMPERE "{e}" ;
 const char HTTP_ENERGY_PMAX_TELEINFO[] PROGMEM =  "{s}" D_MAX_POWER "{m}%d" D_UNIT_WATT "{e}" ;
+const char HTTP_ENERGY_LOAD_BAR[] PROGMEM = "<tr><div style='margin:4px;padding:0px;background-color:#ddd;border-radius:4px;'>"
+                                            "<div style='font-size:0.75rem;font-weight:bold;padding:0px;text-align:center;border:1px solid #bbb;border-radius:4px;color:#444;background-color:%s;width:%d%%;'>"
+                                            "load %d%%</div>"
+                                            "</div></tr>\n";
+
 #endif  // USE_WEBSERVER
 
 void TInfoShow(bool json)
@@ -823,13 +893,17 @@ void TInfoShow(bool json)
     // Just add the raw label/values of the teleinfo frame
     if (json)
     {
-        // Calculated values
+        // Add new value (not part of TIC JSON Object)
         if (isousc) {
             ResponseAppend_P(PSTR(",\"Load\":%d"),(int) ((Energy.current[0]*100.0f) / isousc));
         }
 
+        // Add TIC JSON Object
+        ResponseAppend_P(PSTR("},\"TIC\":{"));
+        // Calculated values
         // add teleinfo full frame 
-        ResponseAppendTInfo(',', true);
+        ResponseAppendTInfo(' ', true);
+        //ResponseAppend_P(PSTR("}"));
 
 #ifdef USE_WEBSERVER
     }
@@ -837,6 +911,26 @@ void TInfoShow(bool json)
     {
         char name[33];
         char value[33];
+        int percent;
+
+        if (isousc) {
+            uint8_t hue;
+            uint8_t red, green, blue;
+            char phase_color[8];
+
+            for (int i=0; i<nb_phase ; i++ ) {
+                percent = (int) ((Energy.current[i]*100.0f) / isousc) ;
+                if (percent > 100) {
+                    percent = 100;
+                }
+                // Gradiant from green (low load), yellow, roange and ending red (high load)
+                // Hue from 128 (green) to 0 (red) so reversed from percent
+                hue = changeUIntScale(100-percent, 0, 100, 0, 128);
+                HsToRgb(hue, 128, &red, &green, &blue);
+                snprintf_P(phase_color, sizeof(phase_color), PSTR("#%02X%02X%02X"), red, green, blue);  
+                WSContentSend_PD (HTTP_ENERGY_LOAD_BAR, phase_color, percent, percent);
+            }
+        }
 
         if (tinfo_mode==TINFO_MODE_HISTORIQUE ) {
             if (getValueFromLabelIndex(LABEL_BASE, value) ) {
@@ -863,10 +957,9 @@ void TInfoShow(bool json)
                 WSContentSend_PD(HTTP_ENERGY_TARIF_TELEINFO, name);
             }
             if (contrat && isousc) {
-                int percent = (int) ((Energy.current[0]*100.0f) / isousc) ;
                 GetTextIndexed(name, sizeof(name), contrat, kContratName);
                 WSContentSend_PD(HTTP_ENERGY_CONTRAT_TELEINFO, name, isousc);
-                WSContentSend_PD(HTTP_ENERGY_LOAD_TELEINFO,  percent);
+                //WSContentSend_PD(HTTP_ENERGY_LOAD_TELEINFO,  percent);
             }
 
         } else if (tinfo_mode==TINFO_MODE_STANDARD ) {
@@ -890,7 +983,6 @@ void TInfoShow(bool json)
             }
             if (getValueFromLabelIndex(LABEL_NGTF, value) ) {
                 if (isousc) {
-                    int percent = (int) ((Energy.current[0]*100.0f) / isousc) ;
                     WSContentSend_PD(HTTP_ENERGY_CONTRAT_TELEINFO, value, isousc);
                     WSContentSend_PD(HTTP_ENERGY_LOAD_TELEINFO,  percent);
                 }
