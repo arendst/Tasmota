@@ -1967,12 +1967,7 @@ void LightSetOutputs(const uint16_t *cur_col_10) {
           cur_col = cur_col > 0 ? changeUIntScale(cur_col, 0, Settings.pwm_range, Light.pwm_min, Light.pwm_max) : 0;   // shrink to the range of pwm_min..pwm_max
         }
         if (!Settings.flag4.zerocross_dimmer) {
-          uint16_t pwm = bitRead(TasmotaGlobal.pwm_inverted, i) ? Settings.pwm_range - cur_col : cur_col;
-          #ifdef ESP32
-          if (pwm = Settings.pwm_range) pwm = Settings.pwm_range+1; // ESP32 full PWM is 1024 (1023 on ESP8266)
-          #endif
-          //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("LIT: PWM%d = %d"), i, pwm);
-          analogWrite(Pin(GPIO_PWM1, i), pwm);
+          analogWrite(Pin(GPIO_PWM1, i), bitRead(TasmotaGlobal.pwm_inverted, i) ? Settings.pwm_range - cur_col : cur_col);
         }
 #ifdef USE_PWM_DIMMER
         // Animate brightness LEDs to follow PWM dimmer brightness
