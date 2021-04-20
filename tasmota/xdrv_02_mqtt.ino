@@ -352,6 +352,8 @@ void MqttPublish(const char* topic, bool retained) {
     }
   }
 
+/*
+  // Runs out of stack space with long messages
   char log_data[MAX_LOGSZ];
   snprintf_P(log_data, sizeof(log_data), PSTR("%s%s = %s"), slog_type, (Settings.flag.mqtt_enabled) ? topic : strrchr(topic,'/')+1, TasmotaGlobal.mqtt_data);  // SetOption3 - Enable MQTT
   if (strlen(log_data) >= (sizeof(log_data) - strlen(sretained) -1)) {
@@ -360,6 +362,25 @@ void MqttPublish(const char* topic, bool retained) {
   }
   snprintf_P(log_data, sizeof(log_data), PSTR("%s%s"), log_data, sretained);
   AddLogData(LOG_LEVEL_INFO, log_data);
+*/
+
+/*
+  // Works
+  uint32_t sizeof_log_data = strlen(slog_type) + strlen(topic) + strlen(TasmotaGlobal.mqtt_data) + strlen(sretained) +4;
+  char *log_data = (char*)malloc(sizeof_log_data);
+  if (log_data) {
+    snprintf_P(log_data, sizeof_log_data, PSTR("%s%s = %s%s"),
+      slog_type, (Settings.flag.mqtt_enabled) ? topic : strrchr(topic,'/')+1, TasmotaGlobal.mqtt_data, sretained);  // SetOption3 - Enable MQTT
+    AddLogData(LOG_LEVEL_INFO, log_data);
+    free(log_data);
+  }
+*/
+  String log_data = slog_type;
+  log_data += (Settings.flag.mqtt_enabled) ? topic : strrchr(topic,'/')+1;
+  log_data += TasmotaGlobal.mqtt_data;
+  log_data += sretained;
+  AddLogData(LOG_LEVEL_INFO, log_data.c_str());
+
 
   if (Settings.ledstate &0x04) {
     TasmotaGlobal.blinks++;
