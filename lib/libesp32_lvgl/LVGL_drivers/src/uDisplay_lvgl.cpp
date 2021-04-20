@@ -53,7 +53,7 @@ uint16_t uDisplay_lvgl::GetColorFromIndex(uint8_t index) {
 extern uint8_t *buffer;
 extern uint8_t color_type;
 
-uDisplay_lvgl::uDisplay_lvgl(char *lp) : Renderer(800, 600) {
+uDisplay_lvgl::uDisplay_lvgl(char *lp) {
   // analyse decriptor
   col_mode = 16;
   sa_mode = 16;
@@ -100,9 +100,7 @@ uDisplay_lvgl::uDisplay_lvgl(char *lp) : Renderer(800, 600) {
             str2c(&lp1, dname, sizeof(dname));
             char ibuff[16];
             gxs = next_val(&lp1);
-            setwidth(gxs);
             gys = next_val(&lp1);
-            setheight(gys);
             bpp = next_val(&lp1);
             if (bpp == 1) {
               color_type = uCOLOR_BW;
@@ -679,191 +677,6 @@ void uDisplay_lvgl::Updateframe(void) {
 
 }
 
-void uDisplay_lvgl::drawFastVLine(int16_t x, int16_t y, int16_t h, uint16_t color) {
-
-  if (ep_mode) {
-    drawFastVLine_EPD(x, y, h, color);
-    return;
-  }
-
-  if (interface != _UDSP_SPI) {
-    Renderer::drawFastVLine(x, y, h, color);
-    return;
-  }
-  // Rudimentary clipping
-  if ((x >= _width) || (y >= _height)) return;
-  if ((y + h - 1) >= _height) h = _height - y;
-
-  SPI_BEGIN_TRANSACTION
-
-  SPI_CS_LOW
-
-  setAddrWindow_int(x, y, 1, h);
-
-  if (col_mode == 18) {
-    uint8_t r = (color & 0xF800) >> 11;
-    uint8_t g = (color & 0x07E0) >> 5;
-    uint8_t b = color & 0x001F;
-    r = (r * 255) / 31;
-    g = (g * 255) / 63;
-    b = (b * 255) / 31;
-
-    while (h--) {
-      spi_data8(r);
-      spi_data8(g);
-      spi_data8(b);
-    }
-  } else {
-    while (h--) {
-      WriteColor(color);
-    }
-  }
-
-  SPI_CS_HIGH
-
-  SPI_END_TRANSACTION
-}
-
-void uDisplay_lvgl::drawFastHLine(int16_t x, int16_t y, int16_t w, uint16_t color) {
-
-
-  if (ep_mode) {
-    drawFastHLine_EPD(x, y, w, color);
-    return;
-  }
-
-  if (interface != _UDSP_SPI) {
-    Renderer::drawFastHLine(x, y, w, color);
-    return;
-  }
-
-  // Rudimentary clipping
-  if((x >= _width) || (y >= _height)) return;
-  if((x+w-1) >= _width)  w = _width-x;
-
-
-  SPI_BEGIN_TRANSACTION
-
-  SPI_CS_LOW
-
-  setAddrWindow_int(x, y, w, 1);
-
-  if (col_mode == 18) {
-    uint8_t r = (color & 0xF800) >> 11;
-    uint8_t g = (color & 0x07E0) >> 5;
-    uint8_t b = color & 0x001F;
-    r = (r * 255) / 31;
-    g = (g * 255) / 63;
-    b = (b * 255) / 31;
-
-    while (w--) {
-      spi_data8(r);
-      spi_data8(g);
-      spi_data8(b);
-    }
-  } else {
-    while (w--) {
-      WriteColor(color);
-    }
-  }
-
-  SPI_CS_HIGH
-
-  SPI_END_TRANSACTION
-}
-
-void uDisplay_lvgl::fillScreen(uint16_t color) {
-  fillRect(0, 0,  gxs, gys, color);
-}
-
-// fill a rectangle
-void uDisplay_lvgl::fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color) {
-
-
-  if (ep_mode) {
-    fillRect_EPD(x, y, w, h, color);
-    return;
-  }
-
-  if (interface != _UDSP_SPI) {
-    Renderer::fillRect(x, y, w, h, color);
-    return;
-  }
-
-  if((x >= gxs) || (y >= gys)) return;
-  if((x + w - 1) >= gxs)  w = gxs  - x;
-  if((y + h - 1) >= gys) h = gys - y;
-
-
-  SPI_BEGIN_TRANSACTION
-  SPI_CS_LOW
-
-  setAddrWindow_int(x, y, w, h);
-
-  if (col_mode == 18) {
-    uint8_t r = (color & 0xF800) >> 11;
-    uint8_t g = (color & 0x07E0) >> 5;
-    uint8_t b = color & 0x001F;
-    r = (r * 255) / 31;
-    g = (g * 255) / 63;
-    b = (b * 255) / 31;
-
-    for (y = h; y > 0; y--) {
-      for (x = w; x > 0; x--) {
-        spi_data8(r);
-        spi_data8(g);
-        spi_data8(b);
-      }
-    }
-
-  } else {
-    for (y = h; y > 0; y--) {
-      for (x = w; x > 0; x--) {
-        WriteColor(color);
-      }
-    }
-  }
-  SPI_CS_HIGH
-  SPI_END_TRANSACTION
-}
-
-/*
-
-// pack RGB into uint32
-uint32_t pack_rgb(uint32_t r, uint32_t g, uint32_t b) {
-  uint32_t data;
-  data=r<<23;
-  data|=g<<14;
-  data|=b<<5;
-  data|=0b10000000010000000010000000000000;
-  return ulswap(data);
-}
-
-// init 27 bit mode
-uint32_t data=pack_rgb(r,g,b);
-REG_SET_BIT(SPI_USER_REG(3), SPI_USR_MOSI);
-REG_WRITE(SPI_MOSI_DLEN_REG(3), 27 - 1);
-uint32_t *dp=(uint32_t*)SPI_W0_REG(3);
-digitalWrite( _cs, LOW);
-for(y=h; y>0; y--) {
-  for(x=w; x>0; x--) {
-    while (REG_GET_FIELD(SPI_CMD_REG(3), SPI_USR));
-    *dp=data;
-    REG_SET_BIT(SPI_CMD_REG(3), SPI_USR);
-  }
-}
-*/
-
-
-// void uDisplay_lvgl::Splash(void) {
-//   if (ep_mode) {
-//     delay(lut3time * 10);
-//   }
-//   setTextFont(splash_font);
-//   setTextSize(splash_size);
-//   DrawStringAt(splash_xp, splash_yp, dname, fg_col, 0);
-//   Updateframe();
-// }
 
 void uDisplay_lvgl::setAddrWindow(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1) {
 
@@ -917,7 +730,7 @@ void uDisplay_lvgl::setAddrWindow_int(uint16_t x, uint16_t y, uint16_t w, uint16
 }
 
 
-void uDisplay_lvgl::pushColors(uint16_t *data, uint16_t len, boolean first) {
+void uDisplay_lvgl::pushColors(uint16_t *data, uint16_t len, bool first) {
   uint16_t color;
 
   while (len--) {
@@ -949,32 +762,32 @@ void uDisplay_lvgl::WriteColor(uint16_t color) {
 void uDisplay_lvgl::drawPixel(int16_t x, int16_t y, uint16_t color) {
 
 
-  if (ep_mode) {
-    drawPixel_EPD(x, y, color);
-    return;
-  }
+  // if (ep_mode) {
+  //   drawPixel_EPD(x, y, color);
+  //   return;
+  // }
 
-  if (interface != _UDSP_SPI) {
-    Renderer::drawPixel(x, y, color);
-    return;
-  }
-
-
-
-  if ((x < 0) || (x >= _width) || (y < 0) || (y >= _height)) return;
+  // if (interface != _UDSP_SPI) {
+  //   Renderer::drawPixel(x, y, color);
+  //   return;
+  // }
 
 
-  SPI_BEGIN_TRANSACTION
 
-  SPI_CS_LOW
+  // if ((x < 0) || (x >= _width) || (y < 0) || (y >= _height)) return;
 
-  setAddrWindow_int(x, y, 1, 1);
 
-  WriteColor(color);
+  // SPI_BEGIN_TRANSACTION
 
-  SPI_CS_HIGH
+  // SPI_CS_LOW
 
-  SPI_END_TRANSACTION
+  // setAddrWindow_int(x, y, 1, 1);
+
+  // WriteColor(color);
+
+  // SPI_CS_HIGH
+
+  // SPI_END_TRANSACTION
 }
 
 void uDisplay_lvgl::writePixels(int16_t x, int16_t y, int16_t w, int16_t h, 
@@ -1028,14 +841,14 @@ void uDisplay_lvgl::setRotation(uint8_t rotation) {
   cur_rot = rotation;
 
   if (interface != _UDSP_SPI) {
-    Renderer::setRotation(cur_rot);
+    // Renderer::setRotation(cur_rot);
     return;
   }
 
   if (interface == _UDSP_SPI) {
 
     if (ep_mode) {
-      Renderer::setRotation(cur_rot);
+      // Renderer::setRotation(cur_rot);
       return;
     }
     SPI_BEGIN_TRANSACTION
@@ -1111,7 +924,7 @@ void uDisplay_lvgl::DisplayOnff(int8_t on) {
   }
 }
 
-void uDisplay_lvgl::invertDisplay(boolean i) {
+void uDisplay_lvgl::invertDisplay(bool i) {
 
   if (ep_mode) {
     return;

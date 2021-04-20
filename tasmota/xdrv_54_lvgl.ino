@@ -20,7 +20,6 @@
 
 #ifdef USE_LVGL
 
-#include <Adafruit_SPITFT.h>
 #include <uDisplay_lvgl.h>
 #include "lvgl.h"
 
@@ -257,8 +256,8 @@ void start_lvgl(const char * uconfig) {
 
   udisp->Init();
 
-  Settings.display_width = udisp->width();
-  Settings.display_height = udisp->height();
+  // Settings.display_width = udisp->width();
+  // Settings.display_height = udisp->height();
 
   udisp->DisplayInit(0 /* DISPLAY_INIT_MODE */, Settings.display_size, Settings.display_rotate, Settings.display_font);
   udisp->dim(Settings.display_dimmer);
@@ -269,7 +268,7 @@ void start_lvgl(const char * uconfig) {
   glue = new Adafruit_LvGL_Glue();
 
   // Initialize glue, passing in address of display & touchscreen
-  LvGLStatus status = glue->begin(udisp, (TouchScreen*)nullptr);
+  LvGLStatus status = glue->begin(udisp);
   if (status != LVGL_OK) {
     AddLog(LOG_LEVEL_ERROR, PSTR("Glue error %d"), status);
     return;
