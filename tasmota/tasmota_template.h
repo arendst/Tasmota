@@ -159,7 +159,9 @@ enum UserSelectablePins {
   GPIO_TFMINIPLUS_TX, GPIO_TFMINIPLUS_RX,  // TFmini Plus ToF sensor
   GPIO_ZEROCROSS,
 #ifdef ESP32
+#if CONFIG_IDF_TARGET_ESP32
   GPIO_HALLEFFECT,
+#endif  // CONFIG_IDF_TARGET_ESP32
   GPIO_EPD_DATA,                       // Base connection EPD driver
 #endif
   GPIO_SENSOR_END };

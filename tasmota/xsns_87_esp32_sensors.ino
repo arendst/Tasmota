@@ -18,6 +18,8 @@
 */
 
 #ifdef ESP32
+// Below test to solve ESP32-C3 compilations (20210420)
+#if CONFIG_IDF_TARGET_ESP32
 /*********************************************************************************************\
  * ESP32 CPU Temperature and optional Hall Effect sensor
  *
@@ -124,4 +126,5 @@ bool Xsns87(uint8_t function) {
   return result;
 }
 
+#endif  // CONFIG_IDF_TARGET_ESP32
 #endif  // ESP32
