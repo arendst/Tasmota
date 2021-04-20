@@ -377,6 +377,7 @@ void MqttPublish(const char* topic, bool retained) {
 */
   String log_data = slog_type;
   log_data += (Settings.flag.mqtt_enabled) ? topic : strrchr(topic,'/')+1;
+  log_data += F(" = ");
   log_data += TasmotaGlobal.mqtt_data;
   log_data += sretained;
   AddLogData(LOG_LEVEL_INFO, log_data.c_str());
