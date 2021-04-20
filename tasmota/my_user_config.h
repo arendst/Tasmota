@@ -353,7 +353,7 @@
 //#define MY_LANGUAGE            af_AF           // Afrikaans in South Africa
 //#define MY_LANGUAGE            bg_BG           // Bulgarian in Bulgaria
 //#define MY_LANGUAGE            cs_CZ           // Czech in Czech
-#define MY_LANGUAGE            de_DE           // German in Germany
+//#define MY_LANGUAGE            de_DE           // German in Germany
 //#define MY_LANGUAGE            el_GR           // Greek in Greece
 //#define MY_LANGUAGE            en_GB           // English in Great Britain. Enabled by Default
 //#define MY_LANGUAGE            es_ES           // Spanish in Spain
@@ -721,7 +721,8 @@
 //#define USE_SDM120                               // Add support for Eastron SDM120-Modbus energy monitor (+1k1 code)
   #define SDM120_SPEED         2400              // SDM120-Modbus RS485 serial speed (default: 2400 baud)
 #define USE_SDM630                               // Add support for Eastron SDM630-Modbus energy monitor (+0k6 code)
-  #define SDM630_SPEED         2400              // SDM630-Modbus RS485 serial speed (default: 9600 baud)
+  #define SDM630_SPEED         9600              // SDM630-Modbus RS485 serial speed (default: 9600 baud)
+//#define SDM630_SPEED         2400              // use this for SDM530-Modbus RS485 serial speed (default SDM530: 2400 baud), all other will same as SDM630 
   #define SDM630_IMPORT                          // Show import active energy in MQTT and Web (+0k3 code)
 //#define USE_DDS2382                              // Add support for Hiking DDS2382 Modbus energy monitor (+0k6 code)
   #define DDS2382_SPEED        9600              // Hiking DDS2382 Modbus RS485 serial speed (default: 9600 baud)
