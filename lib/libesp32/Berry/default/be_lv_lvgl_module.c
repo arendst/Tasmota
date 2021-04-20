@@ -20,6 +20,7 @@ extern int lv0_layer_top(bvm *vm);
 extern int lv0_layer_sys(bvm *vm);
 extern int lv0_get_hor_res(bvm *vm);
 extern int lv0_get_ver_res(bvm *vm);
+extern int lv0_screenshot(bvm *vm);
 
 
 #if !BE_USE_PRECOMPILED_OBJECT
@@ -617,6 +618,7 @@ be_native_module_attr_table(lvgl) {
     be_native_module_function("layer_sys", lv0_layer_sys),
     be_native_module_function("get_hor_res", lv0_get_hor_res),
     be_native_module_function("get_ver_res", lv0_get_ver_res),
+    be_native_module_function("screenshot", lv0_screenshot),
 
 
 };
@@ -1152,6 +1154,7 @@ module lvgl (scope: global) {
     layer_sys, func(lv0_layer_sys)
     get_hor_res, func(lv0_get_hor_res)
     get_ver_res, func(lv0_get_ver_res)
+    screenshot, func(lv0_screenshot)
 
 
 

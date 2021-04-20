@@ -1,8 +1,6 @@
 #ifndef _UDISP_LVGL_
 #define _UDISP_LVGL_
 
-#include <Adafruit_GFX.h>
-#include <renderer.h>
 #include <Wire.h>
 #include <SPI.h>
 
@@ -60,7 +58,7 @@ enum uColorType { uCOLOR_BW, uCOLOR_COLOR };
 
 #define ESP32_PWM_CHANNEL 1
 
-class uDisplay_lvgl : public Renderer {
+class uDisplay_lvgl {
  public:
   uDisplay_lvgl(char *);
   void Init(void);
@@ -74,11 +72,13 @@ class uDisplay_lvgl : public Renderer {
   void dim(uint8_t dim);
   uint16_t GetColorFromIndex(uint8_t index);
   void setRotation(uint8_t m);
-  void fillScreen(uint16_t color);
-  void fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color);
-  void pushColors(uint16_t *data, uint16_t len, boolean first);
+  void pushColors(uint16_t *data, uint16_t len, bool first);
   void TS_RotConvert(int16_t *x, int16_t *y);
-  void invertDisplay(boolean i);
+  void invertDisplay(bool i);
+
+  inline int32_t width(void) const { return gxs; }
+  inline int32_t height(void) const { return gys; }
+  inline uint8_t getRotation(void) const { return cur_rot; }
 
  public:
   void setAddrWindow(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1);
@@ -86,8 +86,6 @@ class uDisplay_lvgl : public Renderer {
                    uint16_t *colors, uint32_t len);
  private:
    void drawPixel(int16_t x, int16_t y, uint16_t color);
-   void drawFastHLine(int16_t x, int16_t y, int16_t w, uint16_t color);
-   void drawFastVLine(int16_t x, int16_t y, int16_t h, uint16_t color);
    uint32_t str2c(char **sp, char *vp, uint32_t len);
    void i2c_command(uint8_t val);
    void spi_command(uint8_t val);
@@ -144,8 +142,8 @@ class uDisplay_lvgl : public Renderer {
   //  uint16_t splash_yp;
   //  uint16_t fg_col;
   //  uint16_t bg_col;
-   uint16_t gxs;
-   uint16_t gys;
+   uint16_t gxs, _width;
+   uint16_t gys, _height;
    int8_t spi_cs;
    int8_t spi_clk;
    int8_t spi_mosi;

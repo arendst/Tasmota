@@ -144,35 +144,6 @@ with open(in_file) as f:
           break
 
       if found: continue
-      # if func_name.startswith("lv_obj_"):
-      #   c_func_name = "lvo_" + re.sub('^lv_obj_', '', func_name)
-      #   lvo.append( [ c_func_name, c_ret, c_args, func_name ] )
-      # elif func_name.startswith("lv_label_"):
-      #   c_func_name = "lvo_label_" + re.sub('^lv_label_', '', func_name)
-      #   lvo.append( [ c_func_name, c_ret, c_args, func_name ] )
-      # elif func_name.startswith("lv_group_"):
-      #   c_func_name = "lvg_" + re.sub('^lv_group_', '', func_name)
-      #   lvg.append( [ c_func_name, c_ret, c_args, func_name ] )
-
-
-      # elif func_name.startswith("lv_arc_"):
-      #   c_func_name = "lvg_" + re.sub('^lv_arc_', '', func_name)
-      #   lvg.append( [ c_func_name, c_ret, c_args, func_name ] )
-
-
-      # if func_name.startswith("lv_style_"):
-      #   if func_name == "lv_style_init": continue   # no need for init as it would collied with native init (and called behind the scene anyways)
-      #   be_name = re.sub('^lv_style_', '', func_name)
-      #   c_func_name = "lvs_" + be_name
-      #   lvs.append( [ c_func_name, c_ret, c_args, func_name, be_name ] )
-
-      # else:
-      #   pass  # ignore for now
-      #   # be_name = re.sub('^lv_', '', func_name)
-      #   # c_func_name = "lvbe0_" + be_name
-      #   # lv0.append( [ c_func_name, c_ret, c_args, func_name, be_name ] )
-
-
 
 
 with open(module_file) as f:
@@ -305,6 +276,7 @@ extern int lv0_layer_top(bvm *vm);
 extern int lv0_layer_sys(bvm *vm);
 extern int lv0_get_hor_res(bvm *vm);
 extern int lv0_get_ver_res(bvm *vm);
+extern int lv0_screenshot(bvm *vm);
 
 extern int lco_init(bvm *vm);
 extern int lco_tostring(bvm *vm);
@@ -410,34 +382,6 @@ print("""
 sys.stdout.close()
 
 
-# for f in lvo:
-#   c_func_name = f[0]
-#   print(f"extern int {c_func_name}(bvm *vm);")
-
-# print("/********************************************************************/")
-# print()
-
-# print("/********************************************************************")
-# print(" * Generated code, don't edit")
-# print(" *******************************************************************/")
-
-# print("/* `lv_object` methods */")
-# print()
-
-# for f in lvo:
-#   c_func_name = f[0]
-#   berry_name = c_func_name
-#   berry_name = re.sub('^lvo_label_', '', berry_name)
-#   berry_name = re.sub('^lvo_', '', berry_name)
-#   print(f"        {{ \"{berry_name}\", {c_func_name} }},")
-
-# print("/********************************************************************/")
-# print()
-
-
-
-
-
 sys.stdout = open(lvgl_prefix + be_lv_lvgl_module, 'w')
 print("/********************************************************************")
 print(" * Generated code, don't edit")
@@ -462,6 +406,7 @@ extern int lv0_layer_top(bvm *vm);
 extern int lv0_layer_sys(bvm *vm);
 extern int lv0_get_hor_res(bvm *vm);
 extern int lv0_get_ver_res(bvm *vm);
+extern int lv0_screenshot(bvm *vm);
 """)
 
 for f in lv0:
@@ -578,6 +523,7 @@ print("""
     be_native_module_function("layer_sys", lv0_layer_sys),
     be_native_module_function("get_hor_res", lv0_get_hor_res),
     be_native_module_function("get_ver_res", lv0_get_ver_res),
+    be_native_module_function("screenshot", lv0_screenshot),
 """)
 
 for f in lv0:
@@ -744,6 +690,7 @@ print("""
     layer_sys, func(lv0_layer_sys)
     get_hor_res, func(lv0_get_hor_res)
     get_ver_res, func(lv0_get_ver_res)
+    screenshot, func(lv0_screenshot)
 
 """)
 
@@ -765,115 +712,3 @@ print("""
 print("/********************************************************************/")
 sys.stdout.close()
 
-
-# print("/********************************************************************")
-# print(" * Generated code, don't edit")
-# print(" *******************************************************************/")
-
-# print("/* `lv_group external functions definitions */")
-# print()
-
-# for f in lvg:
-#   c_func_name = f[0]
-#   print(f"extern int {c_func_name}(bvm *vm);")
-
-# print("/********************************************************************/")
-# print()
-
-# print("/********************************************************************")
-# print(" * Generated code, don't edit")
-# print(" *******************************************************************/")
-
-# print("/* `lv_group` methods */")
-# print()
-
-# for f in lvg:
-#   c_func_name = f[0]
-#   berry_name = c_func_name
-#   berry_name = re.sub('^lvg_', '', berry_name)
-#   print(f"        {{ \"{berry_name}\", {c_func_name} }},")
-
-# print("/********************************************************************/")
-# print()
-
-
-
-
-# print("/********************************************************************")
-# print(" * Generated code, don't edit")
-# print(" *******************************************************************/")
-
-# print("/* `lv_style methods */")
-# print()
-
-# for f in lvs:
-#   c_func_name = f[0]
-#   c_ret_type = f[1]
-#   c_argc = f[2]
-#   if c_argc is not None: c_argc = "\"" + c_argc + "\""
-#   orig_func_name = f[3]
-#   #print(f"  int {c_func_name}(bvm *vm)       \{ return (vm, be_call_c_func(void*) &")
-#   print(f"  int {c_func_name}(bvm *vm)       {{ return be_call_c_func(vm, (void*) &{orig_func_name}, \"{c_ret_type}\", { c_argc if c_argc else 'nullptr'}); }}")
-
-# print("/********************************************************************/")
-# print()
-
-
-# print("/********************************************************************")
-# print(" * Generated code, don't edit")
-# print(" *******************************************************************/")
-
-# print("/* `lv_style external functions definitions */")
-# print()
-
-# for f in lvs:
-#   c_func_name = f[0]
-#   print(f"extern int {c_func_name}(bvm *vm);")
-
-# print("/********************************************************************/")
-# print()
-
-# print("/********************************************************************")
-# print(" * Generated code, don't edit")
-# print(" *******************************************************************/")
-
-# print("/* `lv_style` methods */")
-# print()
-
-# for f in lvs:
-#   c_func_name = f[0]
-#   berry_name = c_func_name
-#   berry_name = re.sub('^lvs_', '', berry_name)
-#   print(f"        {{ \"{berry_name}\", {c_func_name} }},")
-
-# print("/********************************************************************/")
-# print()
-
-
-
-
-# print("/********************************************************************")
-# print(" * Generated code, don't edit")
-# print(" *******************************************************************/")
-
-# print("/* `lvgl` functions */")
-# print()
-
-# for f in lv:
-#   c_func_name = f[0]
-#   c_ret_type = f[1]
-#   c_argc = f[2]
-#   if c_argc is not None: c_argc = "\"" + c_argc + "\""
-#   orig_func_name = f[3]
-#   #print(f"  int {c_func_name}(bvm *vm)       \{ return (vm, be_call_c_func(void*) &")
-#   print(f"  int {c_func_name}(bvm *vm)       {{ return be_call_c_func(vm, (void*) &{orig_func_name}, \"{c_ret_type}\", { c_argc if c_argc else 'nullptr'}); }}")
-
-# print("/********************************************************************/")
-# print()
-
-
-
-  #int lv0_label_create(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_label_create, LV_OBJ_CLASS); }
-
-
-#print(lvo)

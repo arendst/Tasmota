@@ -22,9 +22,10 @@
 #ifdef USE_LVGL
 
 #include <berry.h>
-
-
 #include "lvgl.h"
+#include "Adafruit_LvGL_Glue.h"
+
+extern Adafruit_LvGL_Glue * glue;
 
 /********************************************************************
  * Generated code, don't edit
@@ -500,6 +501,29 @@ extern "C" {
     char s[32];
     snprintf(s, sizeof(s), "<instance: lv_style(0x%08X)>", style1);
     be_pushnstring(vm, s, strlen(s)); /* make escape string from buffer */
+    be_return(vm);
+  }
+  /*********************************************************************************************\
+   * Screenshot in raw format
+  \********************************************************************************************/
+  int lv0_screenshot(bvm *vm);
+  int lv0_screenshot(bvm *vm) {
+    if (!glue) { be_return_nil(vm); }
+
+    char fname[32];
+    snprintf(fname, sizeof(fname), "/screenshot-%d.raw", Rtc.utc_time);
+    File f = dfsp->open(fname, "w");
+    if (f) {
+      glue->setScreenshotFile(&f);
+
+      // redraw screen
+      lv_obj_invalidate(lv_scr_act());
+      lv_refr_now(lv_disp_get_default());            
+
+      glue->stopScreenshot();
+      f.close();
+    }
+    be_pushstring(vm, fname);
     be_return(vm);
   }
 }

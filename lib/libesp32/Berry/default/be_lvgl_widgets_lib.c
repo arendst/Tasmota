@@ -20,6 +20,7 @@ extern int lv0_layer_top(bvm *vm);
 extern int lv0_layer_sys(bvm *vm);
 extern int lv0_get_hor_res(bvm *vm);
 extern int lv0_get_ver_res(bvm *vm);
+extern int lv0_screenshot(bvm *vm);
 
 extern int lco_init(bvm *vm);
 extern int lco_tostring(bvm *vm);
