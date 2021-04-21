@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v9.3.1.2
+ * Updated until v9.4.0.1
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -620,7 +620,7 @@
 #define D_SENSOR_LED_LINK      "LedLink"    // Suffix "i"
 #define D_SENSOR_PWM           "PWM"        // Suffix "1"
 #define D_SENSOR_COUNTER       "Contador"   // Suffix "1"
-#define D_SENSOR_INPUT         "Input"
+#define D_SENSOR_INPUT         "Entrada"
 #define D_SENSOR_IRRECV        "IRrecv"
 #define D_SENSOR_MHZ_RX        "MHZ Rx"
 #define D_SENSOR_MHZ_TX        "MHZ Tx"
@@ -761,14 +761,14 @@
 #define D_SENSOR_TELEINFO_RX   "TInfo Rx"
 #define D_SENSOR_TELEINFO_ENABLE "TInfo EN"
 #define D_SENSOR_LMT01_PULSE   "LMT01 Pulse"
-#define D_SENSOR_ADC_INPUT     "ADC Input"
-#define D_SENSOR_ADC_TEMP      "ADC Temp"
-#define D_SENSOR_ADC_LIGHT     "ADC Light"
-#define D_SENSOR_ADC_BUTTON    "ADC Button"
-#define D_SENSOR_ADC_RANGE     "ADC Range"
-#define D_SENSOR_ADC_CT_POWER  "ADC CT Power"
-#define D_SENSOR_ADC_JOYSTICK  "ADC Joystick"
-#define D_SENSOR_ADC_PH        "ADC pH"
+#define D_SENSOR_ADC_INPUT     "Entrada ADC"
+#define D_SENSOR_ADC_TEMP      "Temp ADC"
+#define D_SENSOR_ADC_LIGHT     "Luz ADC"
+#define D_SENSOR_ADC_BUTTON    "Botão ADC"
+#define D_SENSOR_ADC_RANGE     "Faixa ADC"
+#define D_SENSOR_ADC_CT_POWER  "Potência do TC ADC"
+#define D_SENSOR_ADC_JOYSTICK  "Joystick ADC"
+#define D_SENSOR_ADC_PH        "pH ADC"
 #define D_GPIO_WEBCAM_PWDN     "CAM_PWDN"
 #define D_GPIO_WEBCAM_RESET    "CAM_RESET"
 #define D_GPIO_WEBCAM_XCLK     "CAM_XCLK"
@@ -820,7 +820,7 @@
 #define D_SENSOR_TFMINIPLUS_TX  "TFmini+ TX"
 #define D_SENSOR_TFMINIPLUS_RX  "TFmini+ RX"
 #define D_SENSOR_ZEROCROSS     "ZC Pulse"
-#define D_SENSOR_HALLEFFECT    "HallEffect"
+#define D_SENSOR_HALLEFFECT    "Efeito Hall"
 #define D_SENSOR_EPD_DATA      "EPD Data"
 
 // Units
