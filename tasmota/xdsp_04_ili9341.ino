@@ -217,12 +217,16 @@ ili9342_ctouch_counter++;
   if (2 == ili9342_ctouch_counter) {
     // every 100 ms should be enough
     ili9342_ctouch_counter = 0;
+#ifdef USE_FT5206
     if (FT5206_found) {
       Touch_Check(FT5206_TS_RotConvert);
     }
+#endif // USE_FT5206
+#ifdef USE_XPT2046
     if (XPT2046_found) {
       Touch_Check(XPT2046_TS_RotConvert);
     }
+#endif // USE_XPT2046
   }
 }
 #endif // USE_TOUCH_BUTTONS

@@ -42,7 +42,7 @@
 
 #define WAVEFORM EPD_BUILTIN_WAVEFORM
 
-extern uint8_t *buffer;
+uint8_t *epd47_buffer;
 
 int temperature = 25;
 
@@ -60,7 +60,7 @@ Epd47::Epd47(int16_t dwidth, int16_t dheight) :  Renderer(dwidth, dheight) {
 int32_t Epd47::Init(void) {
   epd_init(EPD_LUT_1K);
   hl = epd_hl_init(WAVEFORM);
-  buffer = epd_hl_get_framebuffer(&hl);
+  epd47_buffer = epd_hl_get_framebuffer(&hl);
 
   return 0;
 }
@@ -106,7 +106,7 @@ void Epd47::Updateframe() {
 void Epd47::fillScreen(uint16_t color) {
   color &= 0xf;
    uint8_t icol = (color << 4) | color;
-   memset(buffer, icol, width * height / 2);
+   memset(epd47_buffer, icol, width * height / 2);
 }
 
 #define _swap(a, b) { uint16_t t = a; a = b; b = t; }
@@ -134,7 +134,7 @@ uint8_t *buf_ptr;
 
   if (xp >= width) return;
   if (yp >= height) return;
-  buf_ptr = &buffer[yp * width / 2 + xp / 2];
+  buf_ptr = &epd47_buffer[yp * width / 2 + xp / 2];
 
     if (xp % 2) {
         *buf_ptr = (*buf_ptr & 0x0F) | (color << 4);
