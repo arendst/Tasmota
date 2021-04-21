@@ -60,7 +60,7 @@ struct MULTI_DISP {
   uint8_t auto_draw;
 } displays[3];
 uint8_t cur_display;
-Renderer *Init_uDisplay(const char *desc);
+Renderer *Init_uDisplay(const char *desc, int8_t cs);
 
 void Set_display(uint8_t index) {
   displays[index].display = renderer;
@@ -585,7 +585,7 @@ void DisplayText(void)
                         fp.read((uint8_t*)fdesc, size);
                         fp.close();
                         Get_display(temp);
-                        renderer = Init_uDisplay(fdesc);
+                        renderer = Init_uDisplay(fdesc, -1);
                         Set_display(temp);
                         AddLog(LOG_LEVEL_INFO, PSTR("DSP: File descriptor loaded %x"),renderer);
                       }
