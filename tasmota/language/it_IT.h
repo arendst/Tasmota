@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v9.3.1.3 - Last update 16.04.2021
+ * Updated until v9.3.1.3 - Last update 21.04.2021
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -620,7 +620,7 @@
 #define D_SENSOR_LED_LINK               "Led - Lampeggio" // Suffix "i"
 #define D_SENSOR_PWM                    "PWM"             // Suffix "1"
 #define D_SENSOR_COUNTER                "Contatore"       // Suffix "1"
-#define D_SENSOR_INPUT         "Input"
+#define D_SENSOR_INPUT                  "Ingresso"
 #define D_SENSOR_IRRECV                 "IR - RX"
 #define D_SENSOR_MHZ_RX                 "MHZ - RX"
 #define D_SENSOR_MHZ_TX                 "MHZ - TX"
