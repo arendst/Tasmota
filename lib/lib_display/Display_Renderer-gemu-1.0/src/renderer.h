@@ -41,10 +41,13 @@ public:
   virtual void reverseDisplay(boolean i);
   virtual void setScrollMargins(uint16_t top, uint16_t bottom);
   virtual void scrollTo(uint16_t y);
+  virtual void TS_RotConvert(int16_t *x, int16_t *y);
+
   void setDrawMode(uint8_t mode);
   uint8_t drawmode;
   virtual void FastString(uint16_t x,uint16_t y,uint16_t tcolor, const char* str);
   void setTextSize(uint8_t s);
+  virtual uint8_t *allocate_framebuffer(uint32_t size);
 private:
   void DrawCharAt(int16_t x, int16_t y, char ascii_char,int16_t colored);
   inline void drawFastVLineInternal(int16_t x, int16_t y, int16_t h, uint16_t color) __attribute__((always_inline));

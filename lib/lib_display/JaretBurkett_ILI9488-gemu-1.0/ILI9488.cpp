@@ -465,7 +465,6 @@ void ILI9488::begin(void) {
 	writedata(0x02);    //2-dot
 
 	writecommand(0XB6);      //Display Function Control  RGB/MCU Interface Control
-
 	writedata(0x02);    //MCU
 	writedata(0x02);    //Source,Gate scan dieection
 
