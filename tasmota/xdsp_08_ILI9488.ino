@@ -20,6 +20,7 @@
 #ifdef USE_SPI
 #ifdef USE_DISPLAY
 #ifdef USE_DISPLAY_ILI9488
+#ifdef USE_UNIVERSAL_DISPLAY
 
 #define XDSP_08                8
 
@@ -104,6 +105,7 @@ bool Xdsp08(uint8_t function)
   return result;
 }
 
+#endif // USE_UNIVERSAL_DISPLAY
 #endif  // USE_DISPLAY_ILI9488
 #endif  // USE_DISPLAY
 #endif  // USE_SPI
