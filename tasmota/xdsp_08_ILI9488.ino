@@ -39,7 +39,6 @@ bool ili9488_init_done = false;
 // currently fixed
 #define BACKPLANE_PIN 2
 
-extern uint8_t *buffer;
 extern uint8_t color_type;
 ILI9488 *ili9488;
 extern const uint16_t picture[];
@@ -57,9 +56,6 @@ void ILI9488_InitDriver(void) {
     if (Settings.display_height != ILI9488_TFTHEIGHT) {
       Settings.display_height = ILI9488_TFTHEIGHT;
     }
-
-    // disable screen buffer
-    buffer = NULL;
 
     // default colors
     fg_color = ILI9488_WHITE;
@@ -91,7 +87,7 @@ void ILI9488_InitDriver(void) {
     color_type = COLOR_COLOR;
     // start digitizer
 #ifdef USE_FT5206
-    Touch_Init(Wire);
+    FT5206_Touch_Init(Wire);
 #endif
 
     ili9488_init_done = true;

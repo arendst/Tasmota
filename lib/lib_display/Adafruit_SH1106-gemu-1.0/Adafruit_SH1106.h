@@ -133,7 +133,7 @@ class Adafruit_SH1106 : public Renderer  {
  public:
   Adafruit_SH1106(int16_t width, int16_t height);
 
-  void begin(uint8_t switchvcc = SH1106_SWITCHCAPVCC, uint8_t i2caddr = SH1106_I2C_ADDRESS, bool reset=true);
+  boolean begin(uint8_t switchvcc = SH1106_SWITCHCAPVCC, uint8_t i2caddr = SH1106_I2C_ADDRESS, bool reset=true);
   void SH1106_command(uint8_t c);
   void SH1106_data(uint8_t c);
 

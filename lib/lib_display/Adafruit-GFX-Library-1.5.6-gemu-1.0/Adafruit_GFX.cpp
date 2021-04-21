@@ -1712,7 +1712,7 @@ void GFXcanvas1::drawPixel(int16_t x, int16_t y, uint16_t color) {
         GFXclrBit[] = { 0x7F, 0xBF, 0xDF, 0xEF, 0xF7, 0xFB, 0xFD, 0xFE };
 #endif
 
-    if(buffer) {
+    if (buffer) {
         if((x < 0) || (y < 0) || (x >= _width) || (y >= _height)) return;
 
         int16_t t;
@@ -1751,7 +1751,7 @@ void GFXcanvas1::drawPixel(int16_t x, int16_t y, uint16_t color) {
 */
 /**************************************************************************/
 void GFXcanvas1::fillScreen(uint16_t color) {
-    if(buffer) {
+    if (buffer) {
         uint16_t bytes = ((WIDTH + 7) / 8) * HEIGHT;
         memset(buffer, color ? 0xFF : 0x00, bytes);
     }
@@ -1789,7 +1789,8 @@ GFXcanvas8::~GFXcanvas8(void) {
 */
 /**************************************************************************/
 void GFXcanvas8::drawPixel(int16_t x, int16_t y, uint16_t color) {
-    if(buffer) {
+
+    if (buffer) {
         if((x < 0) || (y < 0) || (x >= _width) || (y >= _height)) return;
 
         int16_t t;
@@ -1821,7 +1822,7 @@ void GFXcanvas8::drawPixel(int16_t x, int16_t y, uint16_t color) {
 */
 /**************************************************************************/
 void GFXcanvas8::fillScreen(uint16_t color) {
-    if(buffer) {
+    if (buffer) {
         memset(buffer, color, WIDTH * HEIGHT);
     }
 }

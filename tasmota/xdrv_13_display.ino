@@ -31,6 +31,11 @@ enum ColorType { COLOR_BW, COLOR_COLOR };
 #define MAX_TOUCH_BUTTONS 16
 #endif
 
+#ifdef USE_UFILESYS
+extern FS *ufsp;
+extern FS *ffsp;
+#endif
+
 #ifdef USE_TOUCH_BUTTONS
 VButton *buttons[MAX_TOUCH_BUTTONS];
 #endif
@@ -41,6 +46,45 @@ uint16_t fg_color = 1;
 uint16_t bg_color = 0;
 uint8_t color_type = COLOR_BW;
 uint8_t auto_draw = 1;
+int16_t disp_xpos = 0;
+int16_t disp_ypos = 0;
+
+#ifdef USE_MULTI_DISPLAY
+struct MULTI_DISP {
+  Renderer *display;
+  uint16_t fg_color;
+  uint16_t bg_color;
+  int16_t disp_xpos;
+  int16_t disp_ypos;
+  uint8_t color_type;
+  uint8_t auto_draw;
+} displays[3];
+uint8_t cur_display;
+Renderer *Init_uDisplay(const char *desc);
+
+void Set_display(uint8_t index) {
+  displays[index].display = renderer;
+  displays[index].fg_color = fg_color;
+  displays[index].bg_color = bg_color;
+  displays[index].color_type = color_type;
+  displays[index].auto_draw = auto_draw;
+  displays[index].disp_xpos = disp_xpos;
+  displays[index].disp_ypos = disp_ypos;
+  cur_display = index;
+}
+
+void Get_display(uint8_t index) {
+  renderer = displays[index].display;
+  fg_color = displays[index].fg_color;
+  bg_color = displays[index].bg_color;
+  color_type = displays[index].color_type;
+  auto_draw = displays[index].auto_draw;
+  disp_xpos = displays[index].disp_xpos;
+  disp_ypos = displays[index].disp_ypos;
+  if (renderer) renderer->setDrawMode(auto_draw >> 1);
+  cur_display = index;
+}
+#endif // USE_MULTI_DISPLAY
 
 const uint8_t DISPLAY_MAX_DRIVERS = 32;        // Max number of display drivers/models supported by xdsp_interface.ino
 const uint8_t DISPLAY_MAX_COLS = 64;           // Max number of columns allowed with command DisplayCols
@@ -175,8 +219,6 @@ uint16_t dsp_y2;
 uint16_t dsp_rad;
 uint16_t dsp_color;
 int16_t dsp_len;
-int16_t disp_xpos = 0;
-int16_t disp_ypos = 0;
 
 uint8_t disp_power = 0;
 uint8_t disp_device = 0;
@@ -512,6 +554,49 @@ void DisplayText(void)
              }
             }
             break;
+#ifdef USE_MULTI_DISPLAY
+          case 'S':
+            {
+              var = atoiv(cp, &temp);
+              cp += var;
+              if (temp < 1 || temp > 3) {
+                temp = 1;
+              }
+              temp--;
+              if (*cp == ':') {
+                cp++;
+                if (displays[temp].display) {
+                  Set_display(cur_display);
+                  Get_display(temp);
+                }
+              } else {
+                char *ep=strchr(cp,':');
+                if (ep) {
+                  *ep=0;
+                  ep++;
+                  File fp;
+                  if (ffsp) {
+                    AddLog(LOG_LEVEL_INFO, PSTR("DSP: File: %s"),cp);
+                    fp = ffsp->open(cp, "r");
+                    if (fp > 0) {
+                      uint32_t size = fp.size();
+                      char *fdesc = (char *)calloc(size + 4, 1);
+                      if (fdesc) {
+                        fp.read((uint8_t*)fdesc, size);
+                        fp.close();
+                        Get_display(temp);
+                        renderer = Init_uDisplay(fdesc);
+                        Set_display(temp);
+                        AddLog(LOG_LEVEL_INFO, PSTR("DSP: File descriptor loaded %x"),renderer);
+                      }
+                    }
+                  }
+                }
+                cp = ep;
+              }
+            }
+            break;
+#endif // USE_MULTI_DISPLAY
 #endif // USE_UFILESYS
           case 'h':
             // hor line to
@@ -736,7 +821,7 @@ extern FS *ffsp;
             { char *ep = strchr(cp,':');
               if (ep) {
                 static uint8_t *ram_font;
-                char fname[24];
+                char fname[32];
                 *ep = 0;
                 ep++;
                 if (*cp != '/') {
@@ -1024,7 +1109,6 @@ extern FS *ffsp;
 }
 
 #ifdef USE_UFILESYS
-extern FS *ufsp;
 void Display_Text_From_File(const char *file) {
   File fp;
   if (!ufsp) return;
@@ -1188,7 +1272,7 @@ void draw_dt_vars(void) {
 
           // restore display vars
           renderer->setTextColor(fg_color, bg_color);
-          renderer->setDrawMode(auto_draw);
+          renderer->setDrawMode(auto_draw>>1);
         }
       }
     }
@@ -1657,6 +1741,10 @@ void DisplayInitDriver(void)
 {
   XdspCall(FUNC_DISPLAY_INIT_DRIVER);
 
+#ifdef USE_MULTI_DISPLAY
+  Set_display(0);
+#endif // USE_MULTI_DISPLAY
+
   if (renderer) {
     renderer->setTextFont(Settings.display_font);
     renderer->setTextSize(Settings.display_size);
@@ -2043,6 +2131,9 @@ void CmndDisplayScrollText(void) {
 
 void DisplayReInitDriver(void) {
   XdspCall(FUNC_DISPLAY_INIT_DRIVER);
+#ifdef USE_MULTI_DISPLAY
+  Set_display(0);
+#endif // USE_MULTI_DISPLAY
   ResponseCmndDone();
 }
 
@@ -2578,70 +2669,84 @@ void AddValue(uint8_t num,float fval) {
 \*********************************************************************************************/
 
 #if defined(USE_FT5206) || defined(USE_XPT2046)
+bool FT5206_found = false;
+bool XPT2046_found = false;
+
+int16_t touch_xp;
+int16_t touch_yp;
+bool touched;
+
+#ifdef USE_M5STACK_CORE2
+uint8_t tbstate[3];
+#endif // USE_M5STACK_CORE2
 
 #ifdef USE_FT5206
-
 #include <FT5206.h>
 // touch panel controller
 #undef FT5206_address
 #define FT5206_address 0x38
 
-FT5206_Class *touchp;
-TP_Point pLoc;
-bool FT5206_found;
+FT5206_Class *FT5206_touchp;
 
-bool Touch_Init(TwoWire &i2c) {
+
+bool FT5206_Touch_Init(TwoWire &i2c) {
   FT5206_found = false;
-  touchp = new FT5206_Class();
-  if (touchp->begin(i2c, FT5206_address)) {
+  FT5206_touchp = new FT5206_Class();
+  if (FT5206_touchp->begin(i2c, FT5206_address)) {
     I2cSetActiveFound(FT5206_address, "FT5206");
     FT5206_found = true;
   }
   return FT5206_found;
 }
 
-uint32_t Touch_Status(uint32_t sel) {
-  if (FT5206_found) {
-    switch (sel) {
-      case 0:
-        return  touchp->touched();
-      case 1:
-        return pLoc.x;
-      case 2:
-        return pLoc.y;
-    }
-    return 0;
-  } else {
-    return 0;
-  }
+bool FT5206_touched() {
+  return FT5206_touchp->touched();
+}
+int16_t FT5206_x() {
+  TP_Point pLoc = FT5206_touchp->getPoint(0);
+  return pLoc.x;
+}
+int16_t FT5206_y() {
+  TP_Point pLoc = FT5206_touchp->getPoint(0);
+  return pLoc.y;
 }
 #endif  // USE_FT5206
 
-#if defined(USE_XPT2046) && defined(USE_DISPLAY_ILI9341)
+#ifdef USE_XPT2046
 #include <XPT2046_Touchscreen.h>
+XPT2046_Touchscreen *XPT2046_touchp;
 
-XPT2046_Touchscreen *touchp;
-TS_Point pLoc;
-bool XPT2046_found;
 
-bool Touch_Init(uint16_t CS) {
-  touchp = new XPT2046_Touchscreen(CS);
-  XPT2046_found = touchp->begin();
+bool XPT2046_Touch_Init(uint16_t CS) {
+  XPT2046_touchp = new XPT2046_Touchscreen(CS);
+  XPT2046_found = XPT2046_touchp->begin();
   if (XPT2046_found) {
-	AddLog(LOG_LEVEL_INFO, PSTR("TS: XPT2046"));
+	   AddLog(LOG_LEVEL_INFO, PSTR("TS: XPT2046"));
   }
   return XPT2046_found;
 }
+bool XPT2046_touched() {
+  return XPT2046_touchp->touched();
+}
+int16_t XPT2046_x() {
+  TS_Point pLoc = XPT2046_touchp->getPoint();
+  return pLoc.x;
+}
+int16_t XPT2046_y() {
+  TS_Point pLoc = XPT2046_touchp->getPoint();
+  return pLoc.y;
+}
+#endif  // USE_XPT2046
 
 uint32_t Touch_Status(uint32_t sel) {
-  if (XPT2046_found) {
+  if (FT5206_found || XPT2046_found) {
     switch (sel) {
       case 0:
-        return  touchp->touched();
+        return  touched;
       case 1:
-        return pLoc.x;
+        return touch_xp;
       case 2:
-        return pLoc.y;
+        return touch_yp;
     }
     return 0;
   } else {
@@ -2649,14 +2754,80 @@ uint32_t Touch_Status(uint32_t sel) {
   }
 }
 
-#endif  // USE_XPT2046 && USE_DISPLAY_ILI9341
+void Touch_Check(void(*rotconvert)(int16_t *x, int16_t *y)) {
+
+#ifdef USE_FT5206
+  if (FT5206_found) {
+    touch_xp = FT5206_x();
+    touch_yp = FT5206_y();
+    touched = FT5206_touched();
+  }
+#endif // USE_FT5206
+
+#ifdef USE_XPT2046
+  if (XPT2046_found) {
+    touch_xp = XPT2046_x();
+    touch_yp = XPT2046_y();
+    touched = XPT2046_touched();
+  }
+#endif // USE_XPT2046
+
+  if (touched) {
+
+#ifdef USE_TOUCH_BUTTONS
+#ifdef USE_M5STACK_CORE2
+    // handle  3 built in touch buttons
+    uint16_t xcenter = 80;
+#define TDELTA 30
+#define TYPOS 275
+    for (uint32_t tbut = 0; tbut < 3; tbut++) {
+      if (touch_xp > (xcenter - TDELTA) && touch_xp < (xcenter + TDELTA) && touch_yp > (TYPOS - TDELTA) && touch_yp < (TYPOS + TDELTA)) {
+        // hit a button
+        if (!(tbstate[tbut] & 1)) {
+          // pressed
+          tbstate[tbut] |= 1;
+          //AddLog(LOG_LEVEL_INFO, PSTR("tbut: %d pressed"), tbut);
+          Touch_MQTT(tbut, "BIB", tbstate[tbut] & 1);
+        }
+      }
+      xcenter += 100;
+    }
+#endif  // USE_M5STACK_CORE2
+#endif // USE_TOUCH_BUTTONS
+
+    rotconvert(&touch_xp, &touch_yp);
+
+#ifdef USE_TOUCH_BUTTONS
+    CheckTouchButtons(touched, touch_xp, touch_yp);
+#endif // USE_TOUCH_BUTTONS
+
+  } else {
+#ifdef USE_M5STACK_CORE2
+    for (uint32_t tbut = 0; tbut < 3; tbut++) {
+      if (tbstate[tbut] & 1) {
+        // released
+        tbstate[tbut] &= 0xfe;
+        Touch_MQTT(tbut, "BIB", tbstate[tbut] & 1);
+        //AddLog(LOG_LEVEL_INFO, PSTR("tbut: %d released"), tbut);
+      }
+    }
+#endif  // USE_M5STACK_CORE2
+
+#ifdef USE_TOUCH_BUTTONS
+    CheckTouchButtons(touched, touch_xp, touch_yp);
+#endif // USE_TOUCH_BUTTONS
+
+  }
+}
+#endif
 
 #ifdef USE_TOUCH_BUTTONS
 void Touch_MQTT(uint8_t index, const char *cp, uint32_t val) {
-#if defined(USE_FT5206)
-  ResponseTime_P(PSTR(",\"FT5206\":{\"%s%d\":\"%d\"}}"), cp, index+1, val);
-#elif defined(USE_XPT2046)
-  ResponseTime_P(PSTR(",\"XPT2046\":{\"%s%d\":\"%d\"}}"), cp, index+1, val);
+#ifdef USE_FT5206
+  if (FT5206_found) ResponseTime_P(PSTR(",\"FT5206\":{\"%s%d\":\"%d\"}}"), cp, index+1, val);
+#endif
+#ifdef USE_XPT2046
+  if (XPT2046_found) ResponseTime_P(PSTR(",\"XPT2046\":{\"%s%d\":\"%d\"}}"), cp, index+1, val);
 #endif  // USE_XPT2046
   MqttPublishTeleSensor();
 }
@@ -2667,54 +2838,22 @@ void Touch_RDW_BUTT(uint32_t count, uint32_t pwr) {
   else buttons[count]->vpower.on_off = 0;
 }
 
-#ifdef USE_M5STACK_CORE2
-uint8_t tbstate[3];
-#endif
 
-// check digitizer hit
-void Touch_Check(void(*rotconvert)(int16_t *x, int16_t *y)) {
+
+void CheckTouchButtons(bool touched, int16_t touch_x, int16_t touch_y) {
   uint16_t temp;
   uint8_t rbutt=0;
   uint8_t vbutt=0;
 
-  if (touchp->touched()) {
-    // did find a hit
-#if defined(USE_FT5206)
-    pLoc = touchp->getPoint(0);
-#elif defined(USE_XPT2046)
-    pLoc = touchp->getPoint();
-#endif  // USE_XPT2046
-    if (renderer) {
-
-#ifdef USE_M5STACK_CORE2
-      // handle  3 built in touch buttons
-      uint16_t xcenter = 80;
-#define TDELTA 30
-#define TYPOS 275
-
-      for (uint32_t tbut = 0; tbut < 3; tbut++) {
-        if (pLoc.x>(xcenter-TDELTA) && pLoc.x<(xcenter+TDELTA) && pLoc.y>(TYPOS-TDELTA) && pLoc.y<(TYPOS+TDELTA)) {
-          // hit a button
-          if (!(tbstate[tbut] & 1)) {
-              // pressed
-              tbstate[tbut] |= 1;
-              //AddLog(LOG_LEVEL_INFO, PSTR("tbut: %d pressed"), tbut);
-              Touch_MQTT(tbut, "BIB", tbstate[tbut] & 1);
-          }
-        }
-        xcenter += 100;
-      }
-#endif  // USE_M5STACK_CORE2
-
-      rotconvert(&pLoc.x, &pLoc.y);
-
+  if (!renderer) return;
+    if (touched) {
       // AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("touch after convert %d - %d"), pLoc.x, pLoc.y);
       // now must compare with defined buttons
       for (uint8_t count = 0; count < MAX_TOUCH_BUTTONS; count++) {
         if (buttons[count]) {
           if (!buttons[count]->vpower.slider) {
             if (!buttons[count]->vpower.disable) {
-              if (buttons[count]->contains(pLoc.x, pLoc.y)) {
+              if (buttons[count]->contains(touch_x, touch_y)) {
                 // did hit
                 buttons[count]->press(true);
                 if (buttons[count]->justPressed()) {
@@ -2749,26 +2888,16 @@ void Touch_Check(void(*rotconvert)(int16_t *x, int16_t *y)) {
             }
           } else {
             // slider
-            if (buttons[count]->didhit(pLoc.x, pLoc.y)) {
-              uint16_t value = buttons[count]->UpdateSlider(pLoc.x, pLoc.y);
+            if (buttons[count]->didhit(touch_x, touch_y)) {
+              uint16_t value = buttons[count]->UpdateSlider(touch_x, touch_y);
               Touch_MQTT(count, "SLD", value);
             }
           }
         }
       }
-    }
+
   } else {
     // no hit
-#ifdef USE_M5STACK_CORE2
-    for (uint32_t tbut = 0; tbut < 3; tbut++) {
-      if (tbstate[tbut] & 1) {
-        // released
-        tbstate[tbut] &= 0xfe;
-        Touch_MQTT(tbut, "BIB", tbstate[tbut] & 1);
-        //AddLog(LOG_LEVEL_INFO, PSTR("tbut: %d released"), tbut);
-      }
-    }
-#endif  // USE_M5STACK_CORE2
     for (uint8_t count = 0; count < MAX_TOUCH_BUTTONS; count++) {
       if (buttons[count]) {
         if (!buttons[count]->vpower.slider) {
@@ -2795,13 +2924,12 @@ void Touch_Check(void(*rotconvert)(int16_t *x, int16_t *y)) {
         }
       }
     }
-    pLoc.x = 0;
-    pLoc.y = 0;
+    touch_xp = 0;
+    touch_yp = 0;
   }
 }
-
 #endif // USE_TOUCH_BUTTONS
-#endif // USE_FT5206 || USE_XPT2046
+
 
 /*********************************************************************************************\
  * Interface
