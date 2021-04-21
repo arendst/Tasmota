@@ -3,7 +3,16 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [9.3.1.4]
+## [9.4.0.1]
+
+
+
+## [Released]
+
+## [9.4.0] 20210422
+- Release Leslie
+
+## [9.3.1.4] 20210422
 ### Added
 - Command ``TuyaTempSetRes 0..3`` to control Tuya Temperature Set Resolution (#11781)
 - ESP32 support for LVGL 7.11 with Berry binding by Stephan Hadinger (#11789)
@@ -95,8 +104,6 @@ All notable changes to this project will be documented in this file.
 - ESP32 flash script for Odroid and Core2 (#11227)
 - ESP32 WS2812 bitbang support (#11248)
 - DS18x20 driver timing issue (#11270)
-
-## [Released]
 
 ## [9.3.1] 20210223
 - Release Kenneth
