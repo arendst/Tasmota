@@ -1087,6 +1087,7 @@ extern const bcstring be_const_str_NEOPOOL_TX;
 extern const bcstring be_const_str_FS_RES_HW_ERR;
 extern const bcstring be_const_str_get_style_value_opa;
 extern const bcstring be_const_str_get_one_check;
+extern const bcstring be_const_str_EPD_DATA;
 extern const bcstring be_const_str_I2C;
 extern const bcstring be_const_str_get_cursor_point;
 extern const bcstring be_const_str_FS_MODE_WR;

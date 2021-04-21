@@ -1087,6 +1087,7 @@ be_define_const_str(NEOPOOL_TX, "NEOPOOL_TX", 2924925804u, 0, 10, NULL);
 be_define_const_str(FS_RES_HW_ERR, "FS_RES_HW_ERR", 1676324085u, 0, 13, NULL);
 be_define_const_str(get_style_value_opa, "get_style_value_opa", 1671026074u, 0, 19, NULL);
 be_define_const_str(get_one_check, "get_one_check", 2649478907u, 0, 13, NULL);
+be_define_const_str(EPD_DATA, "EPD_DATA", 3799141097u, 0, 8, &be_const_str_I2C);
 be_define_const_str(I2C, "I2C", 4096783347u, 0, 3, &be_const_str_get_cursor_point);
 be_define_const_str(get_cursor_point, "get_cursor_point", 2365780231u, 0, 16, NULL);
 be_define_const_str(FS_MODE_WR, "FS_MODE_WR", 2839601832u, 0, 10, &be_const_str_STATE_EDITED);
@@ -2156,7 +2157,7 @@ static const bstring* const m_string_table[] = {
     (const bstring *)&be_const_str_get_style_value_opa,
     (const bstring *)&be_const_str_get_one_check,
     NULL,
-    (const bstring *)&be_const_str_I2C,
+    (const bstring *)&be_const_str_EPD_DATA,
     (const bstring *)&be_const_str_FS_MODE_WR,
     (const bstring *)&be_const_str_set_cursor_point,
     (const bstring *)&be_const_str_del_anim_ready_cb,
@@ -2431,6 +2432,6 @@ static const bstring* const m_string_table[] = {
 
 static const struct bconststrtab m_const_string_table = {
     .size = 802,
-    .count = 1604,
+    .count = 1605,
     .table = m_string_table
 };

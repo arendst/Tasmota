@@ -6,7 +6,8 @@ All notable changes to this project will be documented in this file.
 ## [9.3.1.4]
 ### Added
 - Command ``TuyaTempSetRes 0..3`` to control Tuya Temperature Set Resolution (#11781)
-- ESP32 support for LVGL 7.11 with Berry binding by Stefan Hadinger (#11789)
+- ESP32 support for LVGL 7.11 with Berry binding by Stephan Hadinger (#11789)
+- Add ``Input`` GPIO type with no default action, to be read via Berry
 
 ## [9.3.1.3] 20210419
 ### Added

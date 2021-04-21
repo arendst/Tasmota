@@ -620,6 +620,7 @@
 #define D_SENSOR_LED_LINK               "Led - Lampeggio" // Suffix "i"
 #define D_SENSOR_PWM                    "PWM"             // Suffix "1"
 #define D_SENSOR_COUNTER                "Contatore"       // Suffix "1"
+#define D_SENSOR_INPUT         "Input"
 #define D_SENSOR_IRRECV                 "IR - RX"
 #define D_SENSOR_MHZ_RX                 "MHZ - RX"
 #define D_SENSOR_MHZ_TX                 "MHZ - TX"

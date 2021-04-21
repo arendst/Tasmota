@@ -162,6 +162,7 @@ enum UserSelectablePins {
   GPIO_HALLEFFECT,
   GPIO_EPD_DATA,                       // Base connection EPD driver
 #endif
+  GPIO_INPUT,
   GPIO_SENSOR_END };
 
 enum ProgramSelectablePins {
@@ -344,6 +345,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_HALLEFFECT "|"
   D_SENSOR_EPD_DATA "|"
 #endif
+  D_SENSOR_INPUT "|"
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -387,6 +389,9 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #endif
   AGPIO(GPIO_LEDLNK),                   // Link led
   AGPIO(GPIO_LEDLNK_INV),               // Inverted link led
+#ifdef USE_BERRY
+  AGPIO(GPIO_INPUT) + MAX_SWITCHES,     // Pure digital input to be read via Berry
+#endif
   AGPIO(GPIO_OUTPUT_HI),                // Fixed output high
   AGPIO(GPIO_OUTPUT_LO),                // Fixed output low
 #ifdef USE_FTC532
