@@ -37,7 +37,6 @@
 #include <epdpaint.h>
 
 //unsigned char image[(EPD_HEIGHT * EPD_WIDTH) / 8];
-extern uint8_t *buffer;
 uint16_t epd_scroll;
 bool epd_init_done = false;
 
@@ -58,11 +57,6 @@ void EpdInitDriver29(void) {
       Settings.display_height = EPD_HEIGHT;
     }
 
-    // allocate screen buffer
-    if (buffer) free(buffer);
-    buffer=(unsigned char*)calloc((EPD_WIDTH * EPD_HEIGHT) / 8,1);
-    if (!buffer) return;
-
     // init renderer
     epd  = new Epd(EPD_WIDTH, EPD_HEIGHT);
 
@@ -75,6 +69,7 @@ void EpdInitDriver29(void) {
     }
 
     renderer = epd;
+
     epd->Init(DISPLAY_INIT_FULL);
     epd->Init(DISPLAY_INIT_PARTIAL);
     renderer->DisplayInit(DISPLAY_INIT_MODE,Settings.display_size,Settings.display_rotate,Settings.display_font);

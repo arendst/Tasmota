@@ -34,7 +34,6 @@
 #include <SSD1351.h>
 
 bool ssd1351_init_done = false;
-extern uint8_t *buffer;
 extern uint8_t color_type;
 SSD1351 *ssd1351;
 
@@ -52,8 +51,6 @@ void SSD1351_InitDriver() {
     if (Settings.display_height != SSD1351_HEIGHT) {
       Settings.display_height = SSD1351_HEIGHT;
     }
-
-    buffer = 0;
 
     // default colors
     fg_color = SSD1351_WHITE;

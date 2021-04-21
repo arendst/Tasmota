@@ -35,8 +35,6 @@
 
 uint8_t wr_redir=0;
 
-uint8_t *buffer;
-
 #define register
 
 #define SPRINT(A) char str[32];sprintf(str,"val: %d ",A);Serial.println((char*)str);
@@ -85,6 +83,17 @@ void Renderer::Begin(int16_t p1,int16_t p2,int16_t p3) {
 
 void Renderer::Updateframe() {
 
+}
+
+void Renderer::TS_RotConvert(int16_t *x, int16_t *y) {
+
+}
+
+uint8_t *Renderer::allocate_framebuffer(uint32_t size) {
+  if (framebuffer) free(framebuffer);
+  framebuffer = (unsigned char*)calloc(size, 1);
+  if (!framebuffer) return 0;
+  return framebuffer;
 }
 
 
@@ -306,7 +315,7 @@ void Renderer::clearDisplay(void) {
 
 void Renderer::drawFastHLine(int16_t x, int16_t y, int16_t w, uint16_t color) {
   boolean bSwap = false;
-  if (!buffer) return;
+  if (!framebuffer) return;
   switch(getRotation()) {
     case 0:
       // 0 degree rotation, do nothing
@@ -358,7 +367,7 @@ void Renderer::drawFastHLineInternal(int16_t x, int16_t y, int16_t w, uint16_t c
   if(w <= 0) { return; }
 
   // set up the pointer for  movement through the buffer
-  register uint8_t *pBuf = buffer;
+  register uint8_t *pBuf = framebuffer;
   // adjust the buffer pointer for the current row
   pBuf += ((y/8) * WIDTH);
   // and offset x columns in
@@ -375,7 +384,7 @@ void Renderer::drawFastHLineInternal(int16_t x, int16_t y, int16_t w, uint16_t c
 }
 
 void Renderer::drawFastVLine(int16_t x, int16_t y, int16_t h, uint16_t color) {
-  if (!buffer) return;
+  if (!framebuffer) return;
   bool bSwap = false;
   switch(getRotation()) {
     case 0:
@@ -410,7 +419,7 @@ void Renderer::drawFastVLine(int16_t x, int16_t y, int16_t h, uint16_t color) {
 
 
 void Renderer::drawFastVLineInternal(int16_t x, int16_t __y, int16_t __h, uint16_t color) {
-
+  if (!framebuffer) return;
   // do nothing if we're off the left or right side of the screen
   if(x < 0 || x >= WIDTH) { return; }
 
@@ -438,7 +447,7 @@ void Renderer::drawFastVLineInternal(int16_t x, int16_t __y, int16_t __h, uint16
 
 
   // set up the pointer for fast movement through the buffer
-  register uint8_t *pBuf = buffer;
+  register uint8_t *pBuf = framebuffer;
   // adjust the buffer pointer for the current row
   pBuf += ((y/8) * WIDTH);
   // and offset x columns in
@@ -530,7 +539,7 @@ void Renderer::drawPixel(int16_t x, int16_t y, uint16_t color) {
 
 // the most basic function, set a single pixel
 void Renderer::drawPixel(int16_t x, int16_t y, uint16_t color) {
-  if (!buffer) return;
+  if (!framebuffer) return;
   if ((x < 0) || (x >= width()) || (y < 0) || (y >= height()))
     return;
 
@@ -553,9 +562,9 @@ void Renderer::drawPixel(int16_t x, int16_t y, uint16_t color) {
   // x is which column
     switch (color)
     {
-      case WHITE:   buffer[x+ (y/8)*WIDTH] |=  (1 << (y&7)); break;
-      case BLACK:   buffer[x+ (y/8)*WIDTH] &= ~(1 << (y&7)); break;
-      case INVERSE: buffer[x+ (y/8)*WIDTH] ^=  (1 << (y&7)); break;
+      case WHITE:   framebuffer[x+ (y/8)*WIDTH] |=  (1 << (y&7)); break;
+      case BLACK:   framebuffer[x+ (y/8)*WIDTH] &= ~(1 << (y&7)); break;
+      case INVERSE: framebuffer[x+ (y/8)*WIDTH] ^=  (1 << (y&7)); break;
     }
 
 }

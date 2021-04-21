@@ -27,8 +27,6 @@
 #include <pgmspace.h>
 #include "epdpaint.h"
 
-extern uint8_t *buffer;
-
 Paint::Paint(int16_t width, int16_t height) :
 Renderer(width,height) {
 }
@@ -66,15 +64,15 @@ void Paint::DrawAbsolutePixel(int x, int y, int16_t color) {
     }
     if (IF_INVERT_COLOR) {
         if (color) {
-            buffer[(x + y * w) / 8] |= 0x80 >> (x % 8);
+            framebuffer[(x + y * w) / 8] |= 0x80 >> (x % 8);
         } else {
-            buffer[(x + y * w) / 8] &= ~(0x80 >> (x % 8));
+            framebuffer[(x + y * w) / 8] &= ~(0x80 >> (x % 8));
         }
     } else {
         if (color) {
-            buffer[(x + y * w) / 8] &= ~(0x80 >> (x % 8));
+            framebuffer[(x + y * w) / 8] &= ~(0x80 >> (x % 8));
         } else {
-            buffer[(x + y * w) / 8] |= 0x80 >> (x % 8);
+            framebuffer[(x + y * w) / 8] |= 0x80 >> (x % 8);
         }
     }
 }
@@ -120,7 +118,7 @@ void Paint::drawPixel(int16_t x, int16_t y, uint16_t color) {
 
 
 void Paint::drawPixel(int16_t x, int16_t y, uint16_t color) {
-  if (!buffer) return;
+  if (!framebuffer) return;
   if ((x < 0) || (x >= width()) || (y < 0) || (y >= height()))
     return;
 
