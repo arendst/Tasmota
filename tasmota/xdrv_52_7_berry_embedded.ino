@@ -366,6 +366,23 @@ const char berry_prog[] =
   "def log(m,l) tasmota.log(m,l) end "
   "def load(f) tasmota.load(f) end "
 
+#ifdef USE_LVGL
+  // instanciate singleton
+  // "class lvgl : lvgl_ntv "
+  // "end "
+  // "lv = lvgl() "
+  "import lvgl as lv "
+
+  // temporarily put udisplay descriptions here (will be solidified later)
+  "udisplay = module('udisplay') "
+
+  "udisplay.ILI9341_M5Stack_Core = ':H,ILI9341,320,240,16,SPI,1,-1,-1,-1,-1,-1,-1,-1,40 :S,2,1,1,2,40,20 :I EF,3,03,80,02 CF,3,00,C1,30 ED,4,64,03,12,81 E8,3,85,00,78 CB,5,39,2C,00,34,02 F7,1,20 EA,2,00,00 C0,1,23 C1,1,10 C5,2,3e,28 C7,1,86 36,1,48 37,1,00 3A,1,55 B1,2,00,18 B6,3,08,82,27 F2,1,00 26,1,01 E0,0F,0F,31,2B,0C,0E,08,4E,F1,37,07,10,03,0E,09,00 E1,0F,00,0E,14,03,11,07,31,C1,48,08,0F,0C,31,36,0F 11,80 29,80 :o,28 :O,29 :A,2A,2B,2C :R,36 :0,08,00,00,00 :1,68,00,00,01 :2,C8,00,00,02 :3,A8,00,00,03 #' "
+  "udisplay.ILI9341 = ':H,ILI9341,240,320,16,SPI,1,-1,-1,-1,-1,-1,-1,-1,40 :S,2,1,1,0,40,20 :I EF,3,03,80,02 CF,3,00,C1,30 ED,4,64,03,12,81 E8,3,85,00,78 CB,5,39,2C,00,34,02 F7,1,20 EA,2,00,00 C0,1,23 C1,1,10 C5,2,3e,28 C7,1,86 36,1,48 37,1,00 3A,1,55 B1,2,00,18 B6,3,08,82,27 F2,1,00 26,1,01 E0,0F,0F,31,2B,0C,0E,08,4E,F1,37,07,10,03,0E,09,00 E1,0F,00,0E,14,03,11,07,31,C1,48,08,0F,0C,31,36,0F 11,80 29,80 :o,28 :O,29 :A,2A,2B,2C,16 :R,36 :0,48,00,00,00 :1,28,00,00,01 :2,88,00,00,02 :3,E8,00,00,03 :i,20,21 #' "
+  "udisplay.ILI9342 = ':H,ILI9342,320,240,16,SPI,1,-1,-1,-1,-1,-1,-1,-1,40 :S,2,1,3,0,100,100 :I EF,3,03,80,02 CF,3,00,C1,30 ED,4,64,03,12,81 E8,3,85,00,78 CB,5,39,2C,00,34,02 F7,1,20 EA,2,00,00 C0,1,23 C1,1,10 C5,2,3e,28 C7,1,86 36,1,48 37,1,00 3A,1,55 B1,2,00,18 B6,3,08,82,27 F2,1,00 26,1,01 E0,0F,0F,31,2B,0C,0E,08,4E,F1,37,07,10,03,0E,09,00 E1,0F,00,0E,14,03,11,07,31,C1,48,08,0F,0C,31,36,0F 21,80 11,80 29,80 :o,28 :O,29 :A,2A,2B,2C,16 :R,36 :0,08,00,00,00 :1,A8,00,00,01 :2,C8,00,00,02 :3,68,00,00,03 :i,21,20 :TI2,38,22,21 #' "
+  "udisplay.ILI9488 = ':H,ILI9488,480,320,16,SPI,1,-1,-1,-1,-1,-1,-1,-1,10 :S,2,1,1,0,40,20 :I E0,0F,00,03,09,08,16,0A,3F,78,4C,09,0A,08,16,1A,0F E1,0F,00,16,19,03,0F,05,32,45,46,04,0E,0D,35,37,0F C0,2,17,15 C1,1,41 C5,3,00,12,80 36,1,48 3A,1,66 B0,1,80 B1,1,A0 B4,1,02 B6,2,02,02 E9,1,00 F7,4,A9,51,2C,82 11,80 29,0 :o,28 :O,29 :A,2A,2B,2C,16 :R,36 ;:0,48,00,00,00 :0,28,00,00,01 :1,28,00,00,00 :2,E8,00,00,03 :3,88,00,00,02 :P,18 :i,20,21 :TI1,38,*,* #' "
+
+#endif // USE_LVGL
+
   // Wire class
   // "class Wire : Wire_ntv "
   //   // read bytes as `bytes()` object
@@ -406,10 +423,15 @@ const char berry_prog[] =
 
 const char berry_autoexec[] =
   // load "autoexec.be" using import, which loads either .be or .bec file
+  "import string "
   "try "
     "load('autoexec.be') "
   "except .. as e,m "
-    "log(\"BRY: exception in autoexec '\",e,\"':\",m) "
+    "if e=='io_error' && string.find(m, \"autoexec.be\")>0 "
+      "log(\"BRY: no autoexec.be\") "
+    "else "
+      "log(\"BRY: exception in autoexec.be: \"+e+\": \"+m) "
+    "end "
   "end "
   ;
 #endif  // USE_BERRY

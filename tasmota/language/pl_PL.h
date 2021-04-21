@@ -256,7 +256,7 @@
 #define D_CONFIGURATION "Konfiguracja"
 #define D_INFORMATION "Informacje"
 #define D_FIRMWARE_UPGRADE "Aktualizacja oprogramowania"
-#define D_MANAGEMENT "Consoles"
+#define D_MANAGEMENT "Konsole"
 #define D_CONSOLE "Konsola"
 #define D_CONFIRM_RESTART "Potwierdź restart"
 
@@ -292,18 +292,18 @@
 #define D_WPA_PSK "WPA PSK"
 #define D_WPA2_PSK "WPA2 PSK"
 #define D_AP1_SSID "Nazwa"
-#define D_AP1_SSID_HELP "Type or Select your WiFi Network"
+#define D_AP1_SSID_HELP "Wpisz lub wybierz swoją sieć WiFi"
 #define D_AP2_SSID "Nazwa 2"
-#define D_AP2_SSID_HELP "Type your Alternative WiFi Network"
+#define D_AP2_SSID_HELP "Wpisz alternatywną sieć WiFi"
 #define D_AP_PASSWORD "Hasło"
-#define D_AP_PASSWORD_HELP "Enter your WiFi Password"
-#define D_SELECT_YOUR_WIFI_NETWORK "Select your WiFi Network"
-#define D_SHOW_MORE_WIFI_NETWORKS "Scan for all WiFi Networks"
-#define D_SHOW_MORE_OPTIONS "More Options"
-#define D_CHECK_CREDENTIALS "Please, check your credentials"
-#define D_SUCCESSFUL_WIFI_CONNECTION "Successful WiFi Connection"
-#define D_NOW_YOU_CAN_CLOSE_THIS_WINDOW "Now you can close this window"
-#define D_REDIRECTING_TO_NEW_IP "Redirecting to new device's IP address"
+#define D_AP_PASSWORD_HELP "Wprowadź swoje hasło WiFi"
+#define D_SELECT_YOUR_WIFI_NETWORK "Wybierz swoją sieć WiFi"
+#define D_SHOW_MORE_WIFI_NETWORKS "Wyszukaj wszystkie sieci WiFi"
+#define D_SHOW_MORE_OPTIONS "Więcej opcji"
+#define D_CHECK_CREDENTIALS "Sprawdź swoje dane uwierzytelniające"
+#define D_SUCCESSFUL_WIFI_CONNECTION "Pomyślne połączenie WiFi"
+#define D_NOW_YOU_CAN_CLOSE_THIS_WINDOW "Teraz możesz zamknąć to okno"
+#define D_REDIRECTING_TO_NEW_IP "Przekierowanie na adres IP nowego urządzenia"
 
 #define D_MQTT_PARAMETERS "Parametry MQTT"
 #define D_CLIENT "Klient"
@@ -597,8 +597,8 @@
 #define D_SpL1L2L3 "Prąd średni"
 
 // xsns_86_tfminiplus.ino
-#define D_SIGNALSTRENGTH "Signal Strength"
-#define D_CHIPTEMPERATURE "Chip Temperature"
+#define D_SIGNALSTRENGTH "Siła sygnału"
+#define D_CHIPTEMPERATURE "Temperatura Chipa"
 
 // tasmota_template.h - keep them as short as possible to be able to fit them in GUI drop down box
 #define D_SENSOR_NONE          "Brak"
@@ -620,6 +620,7 @@
 #define D_SENSOR_LED_LINK      "Led link"    // Suffix "i"
 #define D_SENSOR_PWM           "Obroty"        // Suffix "1"
 #define D_SENSOR_COUNTER       "Licznik"     // Suffix "1"
+#define D_SENSOR_INPUT         "Input"
 #define D_SENSOR_IRRECV        "IRrecv"
 #define D_SENSOR_MHZ_RX        "MHZ Rx"
 #define D_SENSOR_MHZ_TX        "MHZ Tx"
@@ -709,7 +710,7 @@
 #define D_SENSOR_ARIRFSEL      "ALux IrSel"
 #define D_SENSOR_TXD           "Serial Tx"
 #define D_SENSOR_RXD           "Serial Rx"
-#define D_SENSOR_ROTARY        "Rotary"     // Suffix "1A"
+#define D_SENSOR_ROTARY        "Obroty"     // Suffix "1A"
 #define D_SENSOR_HRE_CLOCK     "HRE Zegar"
 #define D_SENSOR_HRE_DATA      "HRE Dane"
 #define D_SENSOR_ADE7953_IRQ   "ADE7953 IRQ"
@@ -819,8 +820,8 @@
 #define D_SENSOR_TFMINIPLUS_TX  "TFmini+ TX"
 #define D_SENSOR_TFMINIPLUS_RX  "TFmini+ RX"
 #define D_SENSOR_ZEROCROSS     "ZC Pulse"
-#define D_SENSOR_HALLEFFECT    "HallEffect"
-#define D_SENSOR_EPD_DATA      "EPD Data"
+#define D_SENSOR_HALLEFFECT    "Efekt Halla"
+#define D_SENSOR_EPD_DATA      "EPD Dane"
 
 // Units
 #define D_UNIT_AMPERE "A"
@@ -868,13 +869,13 @@
 #define D_UNIT_WATTHOUR "Wh"
 #define D_UNIT_WATT_METER_QUADRAT "W/m²"
 
-#define D_NEW_ADDRESS          "Setting address to"
-#define D_OUT_OF_RANGE         "Out of Range"
-#define D_SENSOR_DETECTED      "detected"
+#define D_NEW_ADDRESS          "Ustawiam adres na"
+#define D_OUT_OF_RANGE         "Poza zakresem"
+#define D_SENSOR_DETECTED      "wykryto"
 
 //SDM220, SDM120, SDM72, LE01MR
-#define D_EXPORT_POWER    "Export Power"
-#define D_IMPORT_POWER 	  "Import Power"
+#define D_EXPORT_POWER    "Moc Eksportowana"
+#define D_IMPORT_POWER 	  "Moc Inportowana"
 #define D_PHASE_ANGLE     "Przesunięcie faz"
 #define D_IMPORT_ACTIVE   "Czynna pobrana"
 #define D_EXPORT_ACTIVE   "Czynna oddana"
@@ -882,7 +883,7 @@
 #define D_EXPORT_REACTIVE "Bierna oddana"
 #define D_TOTAL_REACTIVE  "Bierna całkowita"
 #define D_UNIT_KWARH      "kVArh"
-#define D_UNIT_ANGLE      "Deg"
+#define D_UNIT_ANGLE      "Stopni"
 #define D_TOTAL_ACTIVE    "Całkowita czynna"
 
 //SOLAXX1
@@ -926,9 +927,9 @@
 #define D_MANAGE_FILE_SYSTEM   "Menadżer plików"
 #define D_FS_SIZE              "Rozmiar"
 #define D_FS_FREE              "Wolne"
-#define D_NEW_FILE             "newfile.txt"
-#define D_CREATE_NEW_FILE      "Create and edit new file"
-#define D_EDIT_FILE            "Edit File"
+#define D_NEW_FILE             "nowyplik.txt"
+#define D_CREATE_NEW_FILE      "Utwórz i edytuj nowy plik"
+#define D_EDIT_FILE            "Edytuj Plik"
 
 //xsns_67_as3935.ino
 #define D_AS3935_GAIN "wejście:"
@@ -969,38 +970,38 @@
 #define D_MAX_CURRENT     "Moc aktualna"
 
 // xsns_79_as608.ino
-#define D_FP_ENROLL_PLACEFINGER "Place finger"
-#define D_FP_ENROLL_REMOVEFINGER "Remove finger"
-#define D_FP_ENROLL_PLACESAMEFINGER "Place same finger again"
-#define D_FP_ENROLL_RETRY "Error so retry"
+#define D_FP_ENROLL_PLACEFINGER "Umieść palec"
+#define D_FP_ENROLL_REMOVEFINGER "Zabierz palec"
+#define D_FP_ENROLL_PLACESAMEFINGER "Ponownie umieść ten sam palec"
+#define D_FP_ENROLL_RETRY "Błąd, spróbuj ponownie"
 #define D_FP_ENROLL_RESTART "Restart"
-#define D_FP_ENROLL_ERROR "Error"
+#define D_FP_ENROLL_ERROR "Błąd"
 #define D_FP_ENROLL_RESET "Reset"
-#define D_FP_ENROLL_ACTIVE "Active"
-#define D_FP_ENROLL_INACTIVE "Inactive"
+#define D_FP_ENROLL_ACTIVE "Aktywny"
+#define D_FP_ENROLL_INACTIVE "Nieaktywny"
 // Indexed by Adafruit_Fingerprint.h defines
-#define D_FP_PACKETRECIEVEERR "Comms error"    // 0x01 Error when receiving data package
+#define D_FP_PACKETRECIEVEERR "Błąd komunikacji"    // 0x01 Error when receiving data package
 #define D_FP_NOFINGER ""                       // 0x02 No finger on the sensor
-#define D_FP_IMAGEFAIL "Imaging error"         // 0x03 Failed to enroll the finger
-#define D_FP_IMAGEMESS "Image too messy"       // 0x06 Failed to generate character file due to overly disorderly fingerprint image
-#define D_FP_FEATUREFAIL "Fingerprint too small" // 0x07 Failed to generate character file due to the lack of character point or small fingerprint image
-#define D_FP_NOMATCH "No match"                // 0x08 Finger doesn't match
-#define D_FP_NOTFOUND "Did not find a match"   // 0x09 Failed to find matching finger
-#define D_FP_ENROLLMISMATCH "Fingerprint did not match" // 0x0A Failed to combine the character files
-#define D_FP_BADLOCATION "Bad location"        // 0x0B Addressed PageID is beyond the finger library
-#define D_FP_DBRANGEFAIL "DB range error"      // 0x0C Error when reading template from library or invalid template
-#define D_FP_UPLOADFEATUREFAIL "Upload feature error" // 0x0D Error when uploading template
-#define D_FP_PACKETRESPONSEFAIL "Packet response error" // 0x0E Module failed to receive the following data packages
-#define D_FP_UPLOADFAIL "Upload error"         // 0x0F Error when uploading image
-#define D_FP_DELETEFAIL "Delete error"         // 0x10 Failed to delete the template
-#define D_FP_DBCLEARFAIL "DB Clear error"      // 0x11 Failed to clear finger library
-#define D_FP_PASSFAIL "Password error"         // 0x13 Find whether the fingerprint passed or failed
-#define D_FP_INVALIDIMAGE "Image invalid"      // 0x15 Failed to generate image because of lac of valid primary image
-#define D_FP_FLASHERR "Flash write error"      // 0x18 Error when writing flash
-#define D_FP_INVALIDREG "Invalid number"       // 0x1A Invalid register number
-#define D_FP_ADDRCODE "Address code"           // 0x20 Address code
-#define D_FP_PASSVERIFY "Password verified"    // 0x21 Verify the fingerprint passed
-#define D_FP_UNKNOWNERROR "Error"              // Any other error
+#define D_FP_IMAGEFAIL "Błąd obrazu"         // 0x03 Failed to enroll the finger
+#define D_FP_IMAGEMESS "Obraz zbyt zamazany"       // 0x06 Failed to generate character file due to overly disorderly fingerprint image
+#define D_FP_FEATUREFAIL "Zbyt mały odcisk palca" // 0x07 Failed to generate character file due to the lack of character point or small fingerprint image
+#define D_FP_NOMATCH "Brak dopasowania"                // 0x08 Finger doesn't match
+#define D_FP_NOTFOUND "Nie znalazłem dopasowania"   // 0x09 Failed to find matching finger
+#define D_FP_ENROLLMISMATCH "Odcisk palca nie pasuje" // 0x0A Failed to combine the character files
+#define D_FP_BADLOCATION "Zła lokalizacja"        // 0x0B Addressed PageID is beyond the finger library
+#define D_FP_DBRANGEFAIL "Błąd zakresu DB"      // 0x0C Error when reading template from library or invalid template
+#define D_FP_UPLOADFEATUREFAIL "Błąd funkcji przesyłania" // 0x0D Error when uploading template
+#define D_FP_PACKETRESPONSEFAIL "Błędny pakiet odpowiedzi" // 0x0E Module failed to receive the following data packages
+#define D_FP_UPLOADFAIL "Błąd przesyłania"         // 0x0F Error when uploading image
+#define D_FP_DELETEFAIL "Błąd usuwania"         // 0x10 Failed to delete the template
+#define D_FP_DBCLEARFAIL "Błąd czyszczenia DB"      // 0x11 Failed to clear finger library
+#define D_FP_PASSFAIL "Błąd uwierzytelniania"         // 0x13 Find whether the fingerprint passed or failed
+#define D_FP_INVALIDIMAGE "Obraz jest nieprawidłowy"      // 0x15 Failed to generate image because of lac of valid primary image
+#define D_FP_FLASHERR "Błąd zapisu Flash"      // 0x18 Error when writing flash
+#define D_FP_INVALIDREG "Nieprawidłowy numer"       // 0x1A Invalid register number
+#define D_FP_ADDRCODE "Adres kodu"           // 0x20 Address code
+#define D_FP_PASSVERIFY "Zweryfikowano poprawnie"    // 0x21 Verify the fingerprint passed
+#define D_FP_UNKNOWNERROR "Błąd"              // Any other error
 
 // xsns_83_neopool.ino
 #define D_NEOPOOL_MACH_NONE               "NeoPool"           // Machine names
@@ -1052,6 +1053,6 @@
 #define D_NEOPOOL_FLOW2                   "FL2"
 #define D_NEOPOOL_PH_HIGH                 "too high"          // ph Alarms
 #define D_NEOPOOL_PH_LOW                  "too low"
-#define D_NEOPOOL_PUMP_TIME_EXCEEDED      "pump time exceeded"
+#define D_NEOPOOL_PUMP_TIME_EXCEEDED      "czas pompowania przekroczony"
 
 #endif  // _LANGUAGE_PL_PL_D_H_

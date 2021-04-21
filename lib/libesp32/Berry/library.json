@@ -24,6 +24,7 @@
         "+<../default/*.hpp>",
         "+<*.cpp>",
         "+<*.h>"
-    ]
+    ],
+    "flags": [ "-I$PROJECT_DIR/tasmota", "-DCOMPILE_BERRY_LIB" ]
   }
 }

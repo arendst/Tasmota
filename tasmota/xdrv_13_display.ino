@@ -729,6 +729,45 @@ void DisplayText(void)
               cp += 1;
             }
             break;
+#ifdef USE_UFILESYS
+#ifdef USE_RAMFONT
+extern FS *ffsp;
+          case 'F':
+            { char *ep = strchr(cp,':');
+              if (ep) {
+                static uint8_t *ram_font;
+                char fname[24];
+                *ep = 0;
+                ep++;
+                if (*cp != '/') {
+                  fname[0] = '/';
+                  fname[1] = 0;
+                } else {
+                  fname[0] = 0;
+                }
+                strlcat(fname, cp, sizeof(fname));
+                if (!strstr(cp, ".fnt")) {
+                  strlcat(fname, ".fnt", sizeof(fname));
+                }
+                if (ffsp) {
+                  File fp;
+                  fp = ffsp->open(fname, "r");
+                  if (fp > 0) {
+                    uint32_t size = fp.size();
+                    if (ram_font) free (ram_font);
+                    ram_font = (uint8_t*)special_malloc(size + 4);
+                    fp.read((uint8_t*)ram_font, size);
+                    fp.close();
+                    if (renderer) renderer->SetRamfont(ram_font);
+                    //Serial.printf("Font loaded: %s\n",fname );
+                  }
+                }
+                cp = ep;
+              }
+            }
+            break;
+#endif // USE_RAMFONT
+#endif // USE_UFILESYS
           case 'a':
             // rotation angle
             if (renderer) renderer->setRotation(*cp&3);

@@ -120,6 +120,7 @@ enum berrorcode {
 
 typedef struct bvm bvm;        /* virtual machine structure */
 typedef int (*bntvfunc)(bvm*); /* native function pointer */
+struct bclass;
 
 /* native function information */
 typedef struct {
@@ -428,6 +429,7 @@ BERRY_API void be_pushclosure(bvm *vm, void *cl);
 BERRY_API void be_pushntvclosure(bvm *vm, bntvfunc f, int nupvals);
 BERRY_API void be_pushntvfunction(bvm *vm, bntvfunc f);
 BERRY_API void be_pushclass(bvm *vm, const char *name, const bnfuncinfo *lib);
+BERRY_API void be_pushntvclass(bvm *vm, const struct bclass * c);
 BERRY_API void be_pushcomptr(bvm *vm, void *ptr);
 BERRY_API bbool be_pushiter(bvm *vm, int index);
 

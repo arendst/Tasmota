@@ -47,6 +47,11 @@ extern "C" {
     .type = BE_REAL                                             \
 }
 
+#define be_const_str(_val) {                                    \
+    .v.s = (bstring*)(_val),                                       \
+    .type = BE_STRING                                           \
+}
+
 #define be_const_class(_class) {                                \
     .v.c = &(_class),                                           \
     .type = BE_CLASS                                            \

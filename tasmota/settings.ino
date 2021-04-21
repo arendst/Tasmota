@@ -707,10 +707,11 @@ void SettingsDefaultSet2(void) {
 
   // this little trick allows GCC to optimize the assignment by grouping values and doing only ORs
   SysBitfield   flag = { 0 };
-  SysBitfield2  flag2 = { 0 };
   SysBitfield3  flag3 = { 0 };
   SysBitfield4  flag4 = { 0 };
   SysBitfield5  flag5 = { 0 };
+  SysMBitfield1  flag2 = { 0 };
+  SysMBitfield2  mbflag2 = { 0 };
 
 #ifdef ESP8266
   Settings.gpio16_converted = 0xF5A0;
@@ -1064,6 +1065,7 @@ void SettingsDefaultSet2(void) {
   // Tuya
   flag3.tuya_apply_o20 |= TUYA_SETOPTION_20;
   flag3.tuya_serial_mqtt_publish |= MQTT_TUYA_RECEIVED;
+  mbflag2.temperature_set_res |= TUYA_TEMP_SET_RES;
 
   flag3.buzzer_enable |= BUZZER_ENABLE;
   flag3.shutter_mode |= SHUTTER_SUPPORT;
@@ -1229,7 +1231,7 @@ void SettingsDelta(void) {
     if (Settings.version < 0x09000002) {
       char parameters[32];
       snprintf_P(parameters, sizeof(parameters), PSTR("%d,%d,%d,%d,%d"),
-        Settings.ex_adc_param_type, Settings.ex_adc_param1, Settings.ex_adc_param2, Settings.ex_adc_param3, Settings.ex_adc_param4);
+        Settings.ex_adc_param_type, Settings.ex_adc_param1, Settings.ex_adc_param2, Settings.ex_adc_param3, Settings.mbflag2.data);
       SettingsUpdateText(SET_ADC_PARAM1, parameters);
     }
 #endif  // ESP8266
@@ -1253,6 +1255,9 @@ void SettingsDelta(void) {
     if (Settings.version < 0x09030102) {
       Settings.mqtt_keepalive = MQTT_KEEPALIVE;
       Settings.mqtt_socket_timeout = MQTT_SOCKET_TIMEOUT;
+    }
+    if (Settings.version < 0x09030104) {
+      Settings.mbflag2.data = 0;
     }
 
     Settings.version = VERSION;

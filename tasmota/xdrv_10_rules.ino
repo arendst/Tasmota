@@ -347,7 +347,8 @@ int32_t SetRule(uint32_t idx, const char *content, bool append = false) {
   }
 
   if (!needsCompress) {                       // the rule fits uncompressed, so just copy it
-    strlcpy(Settings.rules[idx] + offset, content, sizeof(Settings.rules[idx]));
+//    strlcpy(Settings.rules[idx] + offset, content, sizeof(Settings.rules[idx]));
+    strlcpy(Settings.rules[idx] + offset, content, sizeof(Settings.rules[idx]) - offset);
     if (0 == Settings.rules[idx][0]) {
       Settings.rules[idx][1] = 0;
     }
@@ -2120,7 +2121,7 @@ void CmndRule(void)
         size_t last_index = start_index + MAX_RULE_SIZE - 3;        // set max length to what would fit uncompressed, i.e. MAX_RULE_SIZE - 3 (first NULL + length + last NULL)
         if (last_index < rule_len) {                                // if we didn't reach the end, try to shorten to last space character
           int32_t next_index = rule.lastIndexOf(" ", last_index);
-          if (next_index > 0) {                                     // if space was found and is not at the first position (i.e. we are progressing)
+          if (next_index > start_index) {                           // if space was found and is not before start_index (i.e. we are progressing)
             last_index = next_index;                                // shrink to the last space
           }                                                         // otherwise it means there are no spaces, we need to cut somewhere even if the result cannot be entered back
         } else {

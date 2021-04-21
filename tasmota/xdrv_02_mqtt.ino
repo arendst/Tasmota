@@ -334,32 +334,23 @@ void MqttPublish(const char* topic, bool retained) {
   ShowFreeMem(PSTR("MqttPublish"));
 #endif
 
-  if (Settings.flag4.mqtt_no_retain) {
-    retained = false;   // Some brokers don't support retained, they will disconnect if received
+  if (Settings.flag4.mqtt_no_retain) {                   // SetOption104 - Disable all MQTT retained messages, some brokers don't support it: AWS IoT, Losant
+    retained = false;                                    // Some brokers don't support retained, they will disconnect if received
   }
 
-  char sretained[CMDSZ];
-  sretained[0] = '\0';
-  char slog_type[20];
-  snprintf_P(slog_type, sizeof(slog_type), PSTR(D_LOG_RESULT));
-
-  if (Settings.flag.mqtt_enabled) {  // SetOption3 - Enable MQTT
-    if (MqttPublishLib(topic, retained)) {
-      snprintf_P(slog_type, sizeof(slog_type), PSTR(D_LOG_MQTT));
-      if (retained) {
-        snprintf_P(sretained, sizeof(sretained), PSTR(" (" D_RETAINED ")"));
-      }
-    }
+  String log_data;                                       // 20210420 Moved to heap to solve tight stack resulting in exception 2
+  if (Settings.flag.mqtt_enabled && MqttPublishLib(topic, retained)) {  // SetOption3 - Enable MQTT
+    log_data = F(D_LOG_MQTT);                            // MQT:
+    log_data += topic;                                   // stat/tasmota/STATUS2
+  } else {
+    log_data = F(D_LOG_RESULT);                          // RSL:
+    log_data += strrchr(topic,'/')+1;                    // STATUS2
+    retained = false;                                    // Without MQTT enabled there is no retained message
   }
-
-  char log_data[MAX_LOGSZ];
-  snprintf_P(log_data, sizeof(log_data), PSTR("%s%s = %s"), slog_type, (Settings.flag.mqtt_enabled) ? topic : strrchr(topic,'/')+1, TasmotaGlobal.mqtt_data);  // SetOption3 - Enable MQTT
-  if (strlen(log_data) >= (sizeof(log_data) - strlen(sretained) -1)) {
-    log_data[sizeof(log_data) - strlen(sretained) -5] = '\0';
-    snprintf_P(log_data, sizeof(log_data), PSTR("%s ..."), log_data);
-  }
-  snprintf_P(log_data, sizeof(log_data), PSTR("%s%s"), log_data, sretained);
-  AddLogData(LOG_LEVEL_INFO, log_data);
+  log_data += F(" = ");                                  // =
+  log_data += TasmotaGlobal.mqtt_data;                   // {"StatusFWR":{"Version":...
+  if (retained) { log_data += F(" (" D_RETAINED ")"); }  // (retained)
+  AddLogData(LOG_LEVEL_INFO, log_data.c_str());          // MQT: stat/tasmota/STATUS2 = {"StatusFWR":{"Version":...
 
   if (Settings.ledstate &0x04) {
     TasmotaGlobal.blinks++;

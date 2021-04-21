@@ -162,6 +162,7 @@ enum UserSelectablePins {
   GPIO_HALLEFFECT,
   GPIO_EPD_DATA,                       // Base connection EPD driver
 #endif
+  GPIO_INPUT,
   GPIO_SENSOR_END };
 
 enum ProgramSelectablePins {
@@ -344,6 +345,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_HALLEFFECT "|"
   D_SENSOR_EPD_DATA "|"
 #endif
+  D_SENSOR_INPUT "|"
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -387,6 +389,9 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #endif
   AGPIO(GPIO_LEDLNK),                   // Link led
   AGPIO(GPIO_LEDLNK_INV),               // Inverted link led
+#ifdef USE_BERRY
+  AGPIO(GPIO_INPUT) + MAX_SWITCHES,     // Pure digital input to be read via Berry
+#endif
   AGPIO(GPIO_OUTPUT_HI),                // Fixed output high
   AGPIO(GPIO_OUTPUT_LO),                // Fixed output low
 #ifdef USE_FTC532
@@ -407,11 +412,11 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #endif
 
 #ifdef USE_SPI
-  AGPIO(GPIO_SPI_MISO),                 // SPI MISO
-  AGPIO(GPIO_SPI_MOSI),                 // SPI MOSI
-  AGPIO(GPIO_SPI_CLK),                  // SPI Clk
-  AGPIO(GPIO_SPI_CS),                   // SPI Chip Select
-  AGPIO(GPIO_SPI_DC),                   // SPI Data Direction
+  AGPIO(GPIO_SPI_MISO) + MAX_SPI,       // SPI MISO
+  AGPIO(GPIO_SPI_MOSI) + MAX_SPI,       // SPI MOSI
+  AGPIO(GPIO_SPI_CLK) + MAX_SPI,        // SPI Clk
+  AGPIO(GPIO_SPI_CS) + MAX_SPI,         // SPI Chip Select
+  AGPIO(GPIO_SPI_DC) + MAX_SPI,         // SPI Data Direction
 #ifdef USE_NRF24
   AGPIO(GPIO_NRF24_CS),
   AGPIO(GPIO_NRF24_DC),
@@ -431,7 +436,7 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_SSPI_CS),        // Software SPI Chip Select
   AGPIO(GPIO_SSPI_DC),        // Software SPI Data or Command
 
-#ifdef USE_DISPLAY
+#if defined(USE_DISPLAY) || defined(USE_LVGL)
 #ifdef USE_DISPLAY_ILI9341
   AGPIO(GPIO_ILI9341_CS),
   AGPIO(GPIO_ILI9341_DC),
@@ -824,7 +829,9 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 \*-------------------------------------------------------------------------------------------*/
 
 #ifdef ESP32
+#if CONFIG_IDF_TARGET_ESP32
   AGPIO(GPIO_HALLEFFECT) + 2,             // Hall effect sensor connected to GPIO36 and 39
+#endif  // CONFIG_IDF_TARGET_ESP32
 #ifdef USE_WEBCAM
   AGPIO(GPIO_WEBCAM_PWDN),
   AGPIO(GPIO_WEBCAM_RESET),

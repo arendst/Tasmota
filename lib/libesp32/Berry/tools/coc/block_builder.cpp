@@ -27,6 +27,12 @@ block_builder::block_builder(const object_block *object, const macro_table *macr
     if (depend(object, macro)) {
         m_block.type = object->type;
         m_block.attr = object->attr;
+
+        auto it = object->attr.find("name");
+        if (it != object->attr.end()) {
+            m_strtab.push_back(it->second);
+        }
+        
         for (auto i : object->data) {
             if (i.second.depend.empty() || macro->query(i.second.depend)) {
                 m_block.data[i.first] = i.second.value;

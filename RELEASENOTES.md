@@ -84,6 +84,7 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - Command ``SerialBuffer 256..520`` to change hardware serial receive buffer size from default (256) to max local buffer size (520) [#11448](https://github.com/arendst/Tasmota/issues/11448)
 - Command ``SetOption126 1`` to enable DS18x20 arithmetic mean over teleperiod for JSON temperature based on [#11472](https://github.com/arendst/Tasmota/issues/11472)
 - Command ``Backlog0`` to allow execution of following commands without delay
+- Command ``TuyaTempSetRes 0..3`` to control Tuya Temperature Set Resolution [#11781](https://github.com/arendst/Tasmota/issues/11781)
 - Commands ``MqttKeepAlive 1..100`` to set Mqtt Keep Alive timer (default 30) and ``MqttTimeout 1..100`` to set Mqtt Socket Timeout (default 4) [#5341](https://github.com/arendst/Tasmota/issues/5341)
 - Commands ``DisplayType`` to select sub-modules where implemented and ``DisplayInvert`` to select inverted display where implemented
 - Support for SML VBUS [#11125](https://github.com/arendst/Tasmota/issues/11125)
@@ -107,6 +108,7 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - ESP32 support for WS2812 hardware driver via RMT or I2S
 - ESP32 support for secondary I2C controller
 - ESP32 support for internal Hall Effect sensor connected to both GPIO36 and GPIO39 only
+- ESP32 support for LVGL 7.11 with Berry binding by Stephan Hadinger [#11789](https://github.com/arendst/Tasmota/issues/11789)
 
 ### Breaking Changed
 - ESP32 partition layout changed to accomodate more file space on most and more code space on core2 and odroid-go [#11746](https://github.com/arendst/Tasmota/issues/11746)

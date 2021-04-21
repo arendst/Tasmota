@@ -196,8 +196,8 @@ int32_t callBerryEventDispatcher(const char *type, const char *cmd, int32_t idx,
 /*********************************************************************************************\
  * VM Observability
 \*********************************************************************************************/
-void BerryObservability(bvm *vm, int32_t event...);
-void BerryObservability(bvm *vm, int32_t event...) {
+void BerryObservability(bvm *vm, int event...);
+void BerryObservability(bvm *vm, int event...) {
   va_list param;
   va_start(param, event);
   static int32_t vm_usage = 0;

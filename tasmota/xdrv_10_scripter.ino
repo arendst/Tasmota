@@ -5199,7 +5199,7 @@ void HandleScriptTextareaConfiguration(void) {
 
   if (Webserver->hasArg("save")) {
     ScriptSaveSettings();
-    HandleConfiguration();
+    HandleManagement();
     return;
   }
 }

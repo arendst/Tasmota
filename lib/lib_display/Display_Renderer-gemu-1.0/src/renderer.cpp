@@ -149,7 +149,7 @@ void Renderer::DrawStringAt(int16_t x, int16_t y, const char* text, uint16_t col
 #endif
 
 #ifndef USE_GFX_FONTS
-    if (!font) {
+    if (!font || font == 5) {
 #endif
       if (flag) {
         x=(x-1)*OLED_FONT_WIDTH*textsize_x;
@@ -200,8 +200,13 @@ sFONT RAFont = {
   12, /* Height */
 };
 
+extern uint8_t *loaded_font;
+
 void Renderer::setTextFont(uint8_t f) {
-  font=f;
+
+  font = f;
+
+  setFont(0);
 
 #ifdef USE_GFX_FONTS
   switch (f) {
@@ -269,6 +274,10 @@ void Renderer::setTextFont(uint8_t f) {
     selected_font = &Font24_7seg;
     break;
 #endif
+  case 5:
+    setFont(ramfont);
+    break;
+
   default:
     selected_font = &Font12;
     break;
@@ -277,6 +286,17 @@ void Renderer::setTextFont(uint8_t f) {
 #endif
 }
 
+
+void Renderer::SetRamfont(uint8_t *font) {
+  ramfont = (GFXfont*)font;
+  uint32_t bitmap_offset = (uint32_t)ramfont->bitmap;
+  uint32_t glyph_offset = (uint32_t)ramfont->glyph;
+
+  ramfont->bitmap = (uint8_t*)((uint32_t)font + bitmap_offset);
+  ramfont->glyph = (GFXglyph*)((uint32_t)font + glyph_offset);
+
+  setFont(ramfont);
+}
 
 void Renderer::clearDisplay(void) {
   fillScreen(BLACK);
