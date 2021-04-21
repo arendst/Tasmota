@@ -93,9 +93,11 @@ bool Xdsp08(uint8_t function)
         result = true;
         break;
       case FUNC_DISPLAY_EVERY_50_MSECOND:
-        if (FT5206_found || XPT2046_found) {
+#ifdef USE_FT5206
+        if (FT5206_found) {
           udisp_CheckTouch();
         }
+#endif
         break;
     }
   }
