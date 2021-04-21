@@ -338,50 +338,18 @@ void MqttPublish(const char* topic, bool retained) {
     retained = false;   // Some brokers don't support retained, they will disconnect if received
   }
 
-  char sretained[CMDSZ];
-  sretained[0] = '\0';
-  char slog_type[20];
-  snprintf_P(slog_type, sizeof(slog_type), PSTR(D_LOG_RESULT));
-
-  if (Settings.flag.mqtt_enabled) {  // SetOption3 - Enable MQTT
-    if (MqttPublishLib(topic, retained)) {
-      snprintf_P(slog_type, sizeof(slog_type), PSTR(D_LOG_MQTT));
-      if (retained) {
-        snprintf_P(sretained, sizeof(sretained), PSTR(" (" D_RETAINED ")"));
-      }
-    }
+  String log_data = F(D_LOG_RESULT);
+  if (Settings.flag.mqtt_enabled && MqttPublishLib(topic, retained)) {  // SetOption3 - Enable MQTT
+    log_data = F(D_LOG_MQTT);
+    log_data += topic;
+  } else {
+    log_data += strrchr(topic,'/')+1;
+    retained = false;
   }
-
-/*
-  // Runs out of stack space with long messages
-  char log_data[MAX_LOGSZ];
-  snprintf_P(log_data, sizeof(log_data), PSTR("%s%s = %s"), slog_type, (Settings.flag.mqtt_enabled) ? topic : strrchr(topic,'/')+1, TasmotaGlobal.mqtt_data);  // SetOption3 - Enable MQTT
-  if (strlen(log_data) >= (sizeof(log_data) - strlen(sretained) -1)) {
-    log_data[sizeof(log_data) - strlen(sretained) -5] = '\0';
-    snprintf_P(log_data, sizeof(log_data), PSTR("%s ..."), log_data);
-  }
-  snprintf_P(log_data, sizeof(log_data), PSTR("%s%s"), log_data, sretained);
-  AddLogData(LOG_LEVEL_INFO, log_data);
-*/
-
-/*
-  // Works
-  uint32_t sizeof_log_data = strlen(slog_type) + strlen(topic) + strlen(TasmotaGlobal.mqtt_data) + strlen(sretained) +4;
-  char *log_data = (char*)malloc(sizeof_log_data);
-  if (log_data) {
-    snprintf_P(log_data, sizeof_log_data, PSTR("%s%s = %s%s"),
-      slog_type, (Settings.flag.mqtt_enabled) ? topic : strrchr(topic,'/')+1, TasmotaGlobal.mqtt_data, sretained);  // SetOption3 - Enable MQTT
-    AddLogData(LOG_LEVEL_INFO, log_data);
-    free(log_data);
-  }
-*/
-  String log_data = slog_type;
-  log_data += (Settings.flag.mqtt_enabled) ? topic : strrchr(topic,'/')+1;
   log_data += F(" = ");
   log_data += TasmotaGlobal.mqtt_data;
-  log_data += sretained;
+  if (retained) { log_data += F(" (" D_RETAINED ")"); }
   AddLogData(LOG_LEVEL_INFO, log_data.c_str());
-
 
   if (Settings.ledstate &0x04) {
     TasmotaGlobal.blinks++;
