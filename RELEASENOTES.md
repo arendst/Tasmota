@@ -58,7 +58,7 @@ Above binaries are also available as gzipped version allowing faster uploads.
 The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota/release. The links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmota.com/tasmota/release/tasmota.bin.gz``
 
 ### ESP32 based
-The following binary downloads have been compiled with ESP32/Arduino library core version **1.0.5**.
+The following binary downloads have been compiled with ESP32/Arduino library core version **1.0.6**.
 
 - **tasmota32.bin** = The Tasmota version with most drivers. **RECOMMENDED RELEASE BINARY**
 - **tasmota32-BG.bin** to **tasmota32-TW.bin** = The Tasmota version in different languages.
