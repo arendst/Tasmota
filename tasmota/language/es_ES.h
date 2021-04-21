@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v9.3.1.3
+ * Updated until v9.4.0.1
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -109,7 +109,7 @@
 #define D_GATEWAY "Gateway"
 #define D_GROUP "Grupo"
 #define D_HOST "Host"
-#define D_HALL_EFFECT "Hall Effect"
+#define D_HALL_EFFECT "Efecto Hall"
 #define D_HOSTNAME "Hostname"
 #define D_HUMIDITY "Humedad"
 #define D_ILLUMINANCE "Luminancia"
@@ -620,7 +620,7 @@
 #define D_SENSOR_LED_LINK      "LedLink"    // Suffix "i"
 #define D_SENSOR_PWM           "PWM"        // Suffix "1"
 #define D_SENSOR_COUNTER       "Contador"   // Suffix "1"
-#define D_SENSOR_INPUT         "Input"
+#define D_SENSOR_INPUT         "Entrada"
 #define D_SENSOR_IRRECV        "IR Rx"
 #define D_SENSOR_MHZ_RX        "MHZ Rx"
 #define D_SENSOR_MHZ_TX        "MHZ Tx"
