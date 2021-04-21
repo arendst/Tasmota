@@ -146,5 +146,5 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - Telegram chat id incorrect size [#11660](https://github.com/arendst/Tasmota/issues/11660)
 - KNX energy yesterday [#11718](https://github.com/arendst/Tasmota/issues/11718)
 
-### Notes
+### Noted
 - ESP32 single core **tasmota32solo1.bin** binary can only be uploaded using the GUI as OTA upload will trigger the watchdog timer
