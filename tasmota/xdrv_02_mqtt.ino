@@ -334,22 +334,23 @@ void MqttPublish(const char* topic, bool retained) {
   ShowFreeMem(PSTR("MqttPublish"));
 #endif
 
-  if (Settings.flag4.mqtt_no_retain) {
-    retained = false;   // Some brokers don't support retained, they will disconnect if received
+  if (Settings.flag4.mqtt_no_retain) {                   // SetOption104 - Disable all MQTT retained messages, some brokers don't support it: AWS IoT, Losant
+    retained = false;                                    // Some brokers don't support retained, they will disconnect if received
   }
 
-  String log_data = F(D_LOG_RESULT);
+  String log_data;                                       // 20210420 Moved to heap to solve tight stack resulting in exception 2
   if (Settings.flag.mqtt_enabled && MqttPublishLib(topic, retained)) {  // SetOption3 - Enable MQTT
-    log_data = F(D_LOG_MQTT);
-    log_data += topic;
+    log_data = F(D_LOG_MQTT);                            // MQT:
+    log_data += topic;                                   // stat/tasmota/STATUS2
   } else {
-    log_data += strrchr(topic,'/')+1;
-    retained = false;
+    log_data = F(D_LOG_RESULT);                          // RSL:
+    log_data += strrchr(topic,'/')+1;                    // STATUS2
+    retained = false;                                    // Without MQTT enabled there is no retained message
   }
-  log_data += F(" = ");
-  log_data += TasmotaGlobal.mqtt_data;
-  if (retained) { log_data += F(" (" D_RETAINED ")"); }
-  AddLogData(LOG_LEVEL_INFO, log_data.c_str());
+  log_data += F(" = ");                                  // =
+  log_data += TasmotaGlobal.mqtt_data;                   // {"StatusFWR":{"Version":...
+  if (retained) { log_data += F(" (" D_RETAINED ")"); }  // (retained)
+  AddLogData(LOG_LEVEL_INFO, log_data.c_str());          // MQT: stat/tasmota/STATUS2 = {"StatusFWR":{"Version":...
 
   if (Settings.ledstate &0x04) {
     TasmotaGlobal.blinks++;
