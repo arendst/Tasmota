@@ -60,11 +60,9 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 ### ESP32 based
 The following binary downloads have been compiled with ESP32/Arduino library core version **1.0.6**.
 
-- **tasmota32.bin** = The Tasmota version with most drivers. **RECOMMENDED RELEASE BINARY**
+- **tasmota32.bin** = The Tasmota version with most drivers including additional sensors and KNX.  **RECOMMENDED RELEASE BINARY**
+- **tasmota32solo1.bin** = The Tasmota version with most drivers including additional sensors and KNX for single core ESP32.
 - **tasmota32-BG.bin** to **tasmota32-TW.bin** = The Tasmota version in different languages.
-- **tasmota32-lite.bin** = The Lite version without most drivers and sensors.
-- **tasmota32-knx.bin** = The Knx version without some features but adds KNX support.
-- **tasmota32-sensors.bin** = The Sensors version adds more useful sensors.
 - **tasmota32-ir.bin** = The InfraRed Receiver and transmitter version allowing all available protocols provided by library IRremoteESP8266 but without most other features.
 - **tasmota32-display.bin** = The Display version without Energy Monitoring but adds display support.
 - **tasmota32-webcam.bin** = The Webcam version adds webcam support.
@@ -128,6 +126,7 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - Redesigned GUI by moving non-configuration buttons from ``Configuration`` to new submenu ``Consoles``
 - In tasmota-sensors.bin enabled support for VL53L0X and disabled TSL2561 [#11711](https://github.com/arendst/Tasmota/issues/11711)
 - Add HLW8012/BL0937 average pulse calculation by Alex Lovett [#11722](https://github.com/arendst/Tasmota/issues/11722)
+- ESP32 **tasmota32-knx**, **tasmota32-sensors** and **tasmota32-lite** binaries consolidated in **tasmota32.bin** binary
 
 ### Fixed
 - PN532 on ESP32 Serial flush both Tx and Rx buffers [#10910](https://github.com/arendst/Tasmota/issues/10910)
@@ -146,3 +145,6 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - Alexa discovery for ZBBridge [#11576](https://github.com/arendst/Tasmota/issues/11576)
 - Telegram chat id incorrect size [#11660](https://github.com/arendst/Tasmota/issues/11660)
 - KNX energy yesterday [#11718](https://github.com/arendst/Tasmota/issues/11718)
+
+### Noted
+- ESP32 single core **tasmota32solo1.bin** binary can only be uploaded using the GUI as OTA upload will trigger the watchdog timer
