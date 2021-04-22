@@ -261,7 +261,8 @@ const uint16_t LOG_BUFFER_SIZE = 4000;         // Max number of characters in lo
 #define TASM_FILE_DRIVER            "/.drvset%03d"
 #define TASM_FILE_SENSOR            "/.snsset%03d"
 #define TASM_FILE_TLSKEY            "/tlskey"          // TLS private key
-#define TASM_FILE_ZIGBEE            "/zb"              // Zigbee settings blob as used by CC2530 on ESP32
+#define TASM_FILE_ZIGBEE            "/zb"              // Zigbee devices information blob
+#define TASM_FILE_ZIGBEE_DATA       "/zbdata"          // Zigbee last known values of devices
 #define TASM_FILE_AUTOEXEC          "/autoexec.bat"    // Commands executed after restart
 #define TASM_FILE_CONFIG            "/config.sys"      // Settings executed after restart
 
