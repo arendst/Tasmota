@@ -1288,6 +1288,8 @@ void Every250mSeconds(void)
     if (Settings.flag4.network_wifi) {
       WifiCheck(TasmotaGlobal.wifi_state_flag);
       TasmotaGlobal.wifi_state_flag = WIFI_RESTART;
+    } else {
+      WifiDisable();
     }
     break;
   case 3:                                                 // Every x.75 second
@@ -1326,7 +1328,7 @@ void Every250mSeconds(void)
         StopWebserver();
       }
 #ifdef USE_EMULATION
-    if (Settings.flag2.emulation) { UdpConnect(); }
+      if (Settings.flag2.emulation) { UdpConnect(); }
 #endif  // USE_EMULATION
 #endif  // USE_WEBSERVER
 

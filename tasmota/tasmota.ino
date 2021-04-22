@@ -288,6 +288,17 @@ void setup(void) {
     UpdateQuickPowerCycle(true);
   }
 
+  if (ResetReason() != REASON_DEEP_SLEEP_AWAKE) {
+#ifdef ESP8266
+    Settings.flag4.network_wifi = 1;           // Make sure we're in control
+#endif
+#ifdef ESP32
+    if (!Settings.flag4.network_ethernet) {
+      Settings.flag4.network_wifi = 1;         // Make sure we're in control
+    }
+#endif
+  }
+
   TasmotaGlobal.stop_flash_rotate = Settings.flag.stop_flash_rotate;  // SetOption12 - Switch between dynamic or fixed slot flash save location
   TasmotaGlobal.save_data_counter = Settings.save_data;
   TasmotaGlobal.sleep = Settings.sleep;

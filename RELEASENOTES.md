@@ -78,6 +78,7 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 
 ## Changelog v9.4.0.1
 ### Added
+- Command ``Wifi 0/1`` for ESP8266 to turn wifi Off and On. When wifi is Off it is always returned On after a restart except for a wake-up from deepsleep [#11839](https://github.com/arendst/Tasmota/issues/11839)
 
 ### Breaking Changed
 
