@@ -2166,10 +2166,8 @@ void CmndDriver(void)
 
 void CmndWifi(void)
 {
-  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 1)) {   //wifi off
+  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 1)) {
     Settings.flag4.network_wifi = XdrvMailbox.payload;
-    //WifiShutdown();             //here i get: "error: 'WifiShutdown' was not declared in this scope"
-    WifiSetMode(WIFI_OFF);
     //TasmotaGlobal.restart_flag = 2;
   }
   ResponseCmndStateText(Settings.flag4.network_wifi);

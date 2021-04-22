@@ -1296,6 +1296,9 @@ void Every250mSeconds(void)
     if (Settings.flag4.network_wifi) {
       WifiCheck(TasmotaGlobal.wifi_state_flag);
       TasmotaGlobal.wifi_state_flag = WIFI_RESTART;
+    } else {
+      WifiShutdown(false);
+      WifiSetMode(WIFI_OFF);
     }
     break;
   case 3:                                                 // Every x.75 second
@@ -1348,8 +1351,17 @@ void Every250mSeconds(void)
         knx_started = true;
       }
 #endif  // USE_KNX
-
-      MqttCheck();
+#ifdef ESP32
+#ifdef USE_ETHERNET
+      if (Settings.flag4.network_wifi || Settings.flag4.network_ethernet ) {
+        MqttCheck();
+      }
+#endif
+#else
+      if (Settings.flag4.network_wifi ) {
+        MqttCheck();
+      }
+#endif  // ESP32
     } else {
 #ifdef USE_EMULATION
       UdpDisconnect();
