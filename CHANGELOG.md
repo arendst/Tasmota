@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 ## [9.4.0.1]
 ### Changed
 - Command ``Power`` should not reset pulsetime (#11805)
+- Zigbee refactored storage for device configuration and device last known data (#11838)
 
 ## [Released]
 

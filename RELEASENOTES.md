@@ -83,6 +83,7 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 
 ### Changed
 - Command ``Power`` should not reset pulsetime [#11805](https://github.com/arendst/Tasmota/issues/11805)
+- Zigbee refactored storage for device configuration and device last known data [#11838](https://github.com/arendst/Tasmota/issues/11838)
 
 ### Fixed
 
