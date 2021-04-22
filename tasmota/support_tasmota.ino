@@ -599,7 +599,9 @@ void ExecuteCommandPower(uint32_t device, uint32_t state, uint32_t source)
   }
   TasmotaGlobal.active_device = device;
 
-  SetPulseTimer((device -1) % MAX_PULSETIMERS, 0);
+  if (state != POWER_SHOW_STATE) {
+    SetPulseTimer((device -1) % MAX_PULSETIMERS, 0);
+  }
 
   static bool interlock_mutex = false;    // Interlock power command pending
   power_t mask = 1 << (device -1);        // Device to control

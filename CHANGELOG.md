@@ -4,8 +4,8 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased] - Development
 
 ## [9.4.0.1]
-
-
+### Changed
+- Command ``Power`` should not reset pulsetime (#11805)
 
 ## [Released]
 
