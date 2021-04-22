@@ -40,8 +40,7 @@ extern FS *ffsp;
 //#define DSP_ROM_DESC
 
 /*********************************************************************************************/
-//#ifdef DSP_ROM_DESC
-#if 1
+#ifdef DSP_ROM_DESC
 /* sample descriptor */
 const char DSP_SAMPLE_DESC[] PROGMEM =
 ":H,SH1106,128,64,1,I2C,3c,*,*,*\n"
@@ -71,19 +70,20 @@ const char DSP_SAMPLE_DESC[] PROGMEM =
 
 #endif // DSP_ROM_DESC
 /*********************************************************************************************/
-Renderer *Init_uDisplay(const char *desc) {
+Renderer *Init_uDisplay(const char *desc, int8_t cs) {
 char *ddesc = 0;
 char *fbuff;
 uDisplay *udisp;
 
-  if (TasmotaGlobal.gpio_optiona.udisplay_driver) {
+  if (TasmotaGlobal.gpio_optiona.udisplay_driver || desc) {
+
     Settings.display_model = XDSP_17;
 
     fbuff = (char*)calloc(DISPDESC_SIZE, 1);
     if (!fbuff) return 0;
 
     if (desc) {
-      memcpy(fbuff, desc, DISPDESC_SIZE - 1);
+      memcpy_P(fbuff, desc, DISPDESC_SIZE - 1);
       ddesc = fbuff;
       AddLog(LOG_LEVEL_INFO, PSTR("DSP: const char descriptor used"));
     }
@@ -192,9 +192,22 @@ uDisplay *udisp;
       cp += 4;
       //; 7 params nr,cs,sclk,mosi,dc,bl,reset,miso
       //SPI,*,*,*,*,*,*,*
+      if (cs < 0) {
+        switch (*cp) {
+          case 1:
+            cs = Pin(GPIO_SPI_CS);
+            break;
+          case 2:
+            cs = Pin(GPIO_SPI_CS, 1);
+            break;
+          default:
+            cs = Pin(GPIO_SSPI_CS);
+            break;
+        }
+      }
       if (*cp == '1') {
         cp+=2;
-        replacepin(&cp, Pin(GPIO_SPI_CS));
+        replacepin(&cp, cs);
         replacepin(&cp, Pin(GPIO_SPI_CLK));
         replacepin(&cp, Pin(GPIO_SPI_MOSI));
         replacepin(&cp, Pin(GPIO_SPI_DC));
@@ -203,7 +216,7 @@ uDisplay *udisp;
         replacepin(&cp, Pin(GPIO_SPI_MISO));
       } else if (*cp == '2') {
         cp+=2;
-        replacepin(&cp, Pin(GPIO_SPI_CS, 1));
+        replacepin(&cp, cs);
         replacepin(&cp, Pin(GPIO_SPI_CLK, 1));
         replacepin(&cp, Pin(GPIO_SPI_MOSI, 1));
         replacepin(&cp, Pin(GPIO_SPI_DC, 1));
@@ -213,7 +226,7 @@ uDisplay *udisp;
       } else {
         // soft spi pins
         cp+=2;
-        replacepin(&cp, Pin(GPIO_SSPI_CS));
+        replacepin(&cp, cs);
         replacepin(&cp, Pin(GPIO_SSPI_SCLK));
         replacepin(&cp, Pin(GPIO_SSPI_MOSI));
         replacepin(&cp, Pin(GPIO_SSPI_DC));
@@ -443,7 +456,7 @@ bool Xdsp17(uint8_t function)
   bool result = false;
 
   if (FUNC_DISPLAY_INIT_DRIVER == function) {
-    Init_uDisplay(0);
+    Init_uDisplay(0, -1);
   }
   else if (udisp_init_done && (XDSP_17 == Settings.display_model)) {
     switch (function) {
