@@ -20,62 +20,119 @@
 #ifdef USE_SPI
 #ifdef USE_DISPLAY
 #ifdef USE_DISPLAY_ILI9488
-#ifdef USE_UNIVERSAL_DISPLAY
 
 #define XDSP_08                8
+#define XI2C_38                38  // See I2CDEVICES.md
 
+#define COLORED                1
+#define UNCOLORED              0
+
+// using font 8 is opional (num=3)
+// very badly readable, but may be useful for graphs
+#define USE_TINY_FONT
+
+
+#include <ILI9488.h>
+uint8_t ili9488_ctouch_counter = 0;
 bool ili9488_init_done = false;
 
-Renderer *Init_uDisplay(const char *desc, int8_t cs);
-void udisp_CheckTouch(void);
+// currently fixed
+#define BACKPLANE_PIN 2
+
+extern uint8_t color_type;
+ILI9488 *ili9488;
+extern const uint16_t picture[];
 
 /*********************************************************************************************/
-
-const char ILI9488_DESC[] PROGMEM =
-":H,ILI9488,480,320,16,SPI,1,*,*,*,*,*,*,*,10\n"
-":S,2,1,1,0,40,20\n"
-":I\n"
-"E0,0F,00,03,09,08,16,0A,3F,78,4C,09,0A,08,16,1A,0F\n"
-"E1,0F,00,16,19,03,0F,05,32,45,46,04,0E,0D,35,37,0F\n"
-"C0,2,17,15\n"
-"C1,1,41\n"
-"C5,3,00,12,80\n"
-"36,1,48\n"
-"3A,1,66\n"
-"B0,1,80\n"
-"B1,1,A0\n"
-"B4,1,02\n"
-"B6,2,02,02\n"
-"E9,1,00\n"
-"F7,4,A9,51,2C,82\n"
-"11,80\n"
-"29,0\n"
-":o,28\n"
-":O,29\n"
-":A,2A,2B,2C,16\n"
-":R,36\n"
-";:0,48,00,00,00\n"
-":0,28,00,00,01\n"
-":1,28,00,00,00\n"
-":2,E8,00,00,03\n"
-":3,88,00,00,02\n"
-":P,18\n"
-":i,20,21\n"
-":TI1,38,*,*\n"
-"#\n";
 
 void ILI9488_InitDriver(void) {
   if (PinUsed(GPIO_ILI9488_CS) && (TasmotaGlobal.spi_enabled & SPI_MOSI)) {
 
-    renderer = Init_uDisplay(ILI9488_DESC, Pin(GPIO_ILI9488_CS));
-
-    if (!renderer) return;
-
     Settings.display_model = XDSP_08;
 
+    if (Settings.display_width != ILI9488_TFTWIDTH) {
+      Settings.display_width = ILI9488_TFTWIDTH;
+    }
+    if (Settings.display_height != ILI9488_TFTHEIGHT) {
+      Settings.display_height = ILI9488_TFTHEIGHT;
+    }
+
+    // default colors
+    fg_color = ILI9488_WHITE;
+    bg_color = ILI9488_BLACK;
+
+    int8_t bppin = BACKPLANE_PIN;
+    if (PinUsed(GPIO_BACKLIGHT)) {
+      bppin = Pin(GPIO_BACKLIGHT);
+    }
+
+    // init renderer, must use hardware spi
+    ili9488  = new ILI9488(Pin(GPIO_ILI9488_CS), Pin(GPIO_SPI_MOSI), Pin(GPIO_SPI_CLK), bppin);
+
+    ili9488->begin();
+    renderer = ili9488;
+    renderer->DisplayInit(DISPLAY_INIT_MODE,Settings.display_size,Settings.display_rotate,Settings.display_font);
+    renderer->dim(Settings.display_dimmer);
+
+#ifdef SHOW_SPLASH
+    // Welcome text
+    renderer->setTextFont(2);
+    renderer->setTextColor(ILI9488_WHITE,ILI9488_BLACK);
+    renderer->DrawStringAt(50, 50, "ILI9488 TFT Display!", ILI9488_WHITE,0);
+    delay(1000);
+
+    //renderer->drawRGBBitmap(100,100, picture,51,34);
+#endif
+
+    color_type = COLOR_COLOR;
+    // start digitizer
+#ifdef USE_FT5206
+    FT5206_Touch_Init(Wire);
+#endif
+
     ili9488_init_done = true;
+    AddLog(LOG_LEVEL_INFO, PSTR("DSP: ILI9488"));
   }
 }
+
+#ifdef USE_FT5206
+#ifdef USE_TOUCH_BUTTONS
+
+void ILI9488_RotConvert(int16_t *x, int16_t *y) {
+int16_t temp;
+  if (renderer) {
+    uint8_t rot=renderer->getRotation();
+    switch (rot) {
+      case 0:
+        temp=*y;
+        *y=renderer->height()-*x;
+        *x=temp;
+        break;
+      case 1:
+        break;
+      case 2:
+        break;
+      case 3:
+        temp=*y;
+        *y=*x;
+        *x=renderer->width()-temp;
+        break;
+    }
+  }
+}
+
+// check digitizer hit
+void ILI9488_CheckTouch(void) {
+  ili9488_ctouch_counter++;
+  if (2 == ili9488_ctouch_counter) {
+    // every 100 ms should be enough
+    ili9488_ctouch_counter = 0;
+    Touch_Check(ILI9488_RotConvert);
+  }
+}
+#endif // USE_TOUCH_BUTTONS
+#endif // USE_FT5206
+
 
 /*********************************************************************************************/
 /*********************************************************************************************\
@@ -94,9 +151,9 @@ bool Xdsp08(uint8_t function)
         result = true;
         break;
       case FUNC_DISPLAY_EVERY_50_MSECOND:
-#ifdef USE_FT5206
+#ifdef USE_TOUCH_BUTTONS
         if (FT5206_found) {
-          udisp_CheckTouch();
+          ILI9488_CheckTouch();
         }
 #endif
         break;
@@ -105,7 +162,6 @@ bool Xdsp08(uint8_t function)
   return result;
 }
 
-#endif // USE_UNIVERSAL_DISPLAY
 #endif  // USE_DISPLAY_ILI9488
 #endif  // USE_DISPLAY
 #endif  // USE_SPI
