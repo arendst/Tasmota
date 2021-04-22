@@ -290,6 +290,14 @@ bool loadZigbeeDevices(void) {
   if (!f.valid() && dfsp) {
     file = dfsp->open(TASM_FILE_ZIGBEE, "r");
     if (file) {
+      uint32_t signature = 0x0000;
+      file.read((uint8_t*)&signature, 4);
+      if (signature == ZIGB_NAME2) {
+        // skip another 4 bytes
+        file.read((uint8_t*)&signature, 4);
+      } else {
+        file.seek(0);  // seek back to beginning of file
+      }
       f.init(&file);
       storage_class = PSTR("File System");
     }
