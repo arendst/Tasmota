@@ -466,6 +466,10 @@ static const Zigbee_Instruction zb_prog[] PROGMEM = {
     ZI_WAIT_RECV(1000, ZBR_AF_REGISTER)
     ZI_SEND(ZBS_AF_REGISTER0B)                    // Z_AF register for endpoint 0B, profile 0x0104 Home Automation
     ZI_WAIT_RECV(1000, ZBR_AF_REGISTER)
+    // Write again channels, see https://github.com/Koenkk/zigbee-herdsman/blob/37bea20ba04ee5d4938abc21a7569b43f831de32/src/adapter/z-stack/adapter/startZnp.ts#L244-L245
+    ZI_SEND(ZBS_W_CHANN)                          // write CHANNEL
+    ZI_WAIT_RECV(1000, ZBR_WNV_OK)
+
     // redo Z_ZDO:activeEpReq to check that Ep are available
     ZI_SEND(ZBS_ZDO_ACTIVEEPREQ)                  // Z_ZDO:activeEpReq
     ZI_WAIT_RECV(1000, ZBR_ZDO_ACTIVEEPREQ)
