@@ -1,7 +1,7 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-## [Released]
+## [Released] 
 
 ## [9.4.0] 20210423
 - Release Leslie
