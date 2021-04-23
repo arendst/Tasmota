@@ -200,21 +200,24 @@ void HueRespondToMSearch(void)
   if (PortUdp.beginPacket(udp_remote_ip, udp_remote_port)) {
     UnishoxStrings msg(HUE_RESP_MSG);
     char response[320];
-    snprintf_P(response, sizeof(response), msg[HUE_RESP_RESPONSE], WiFi.localIP().toString().c_str(), HueBridgeId().c_str());
+    snprintf_P(response, sizeof(response), msg[HUE_RESP_RESPONSE], NetworkAddress().toString().c_str(), HueBridgeId().c_str());
     int len = strlen(response);
     String uuid = HueUuid();
 
     snprintf_P(response + len, sizeof(response) - len, msg[HUE_RESP_ST1], uuid.c_str());
     PortUdp.write(response);
     PortUdp.endPacket();
+    // AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_UPNP "UDP resp=%s"), response);
 
     snprintf_P(response + len, sizeof(response) - len, msg[HUE_RESP_ST2], uuid.c_str(), uuid.c_str());
     PortUdp.write(response);
     PortUdp.endPacket();
+    // AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_UPNP "UDP resp=%s"), response);
 
     snprintf_P(response + len, sizeof(response) - len, msg[HUE_RESP_ST3], uuid.c_str());
     PortUdp.write(response);
     PortUdp.endPacket();
+    // AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_UPNP "UDP resp=%s"), response);
 
     snprintf_P(message, sizeof(message), PSTR(D_3_RESPONSE_PACKETS_SENT));
   } else {

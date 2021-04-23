@@ -239,7 +239,12 @@ void ZigbeeHandleHue(uint16_t shortaddr, uint32_t device_id, String &response) {
   if (Webserver->args()) {
     response = "[";
 
+#ifdef ESP82666   // ESP8266 memory is limited, avoid copying and modify in place
     JsonParser parser((char*) Webserver->arg((Webserver->args())-1).c_str());
+#else             // does not work on ESP32, we need to get a fresh copy of the string
+    String request_arg = Webserver->arg((Webserver->args())-1);
+    JsonParser parser((char*) request_arg.c_str());
+#endif
     JsonParserObject root = parser.getRootObject();
 
     JsonParserToken hue_on = root[PSTR("on")];
