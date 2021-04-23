@@ -140,7 +140,6 @@ struct {
   int16_t save_data_counter;                // Counter and flag for config save to Flash
   RulesBitfield rules_flag;                 // Rule state flags (16 bits)
 
-  bool rule_teleperiod;                     // Process rule based on teleperiod data using prefix TELE-
   bool serial_local;                        // Handle serial locally
   bool fallback_topic_flag;                 // Use Topic or FallbackTopic
   bool backlog_nodelay;                     // Execute all backlog commands with no delay

@@ -83,10 +83,11 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 ### Breaking Changed
 
 ### Changed
-- Command ``Power`` should not reset pulsetime [#11805](https://github.com/arendst/Tasmota/issues/11805)
 - Zigbee refactored storage for device configuration and device last known data [#11838](https://github.com/arendst/Tasmota/issues/11838)
 
 ### Fixed
+- Command ``Power`` should not reset pulsetime [#11805](https://github.com/arendst/Tasmota/issues/11805)
+- Teleperiod rule handling regression from v9.3.1.2 [#11851](https://github.com/arendst/Tasmota/issues/11851)
 
 ### Noted
 - ESP32 single core **tasmota32solo1.bin** binary can only be uploaded using the GUI as OTA upload will trigger the watchdog timer

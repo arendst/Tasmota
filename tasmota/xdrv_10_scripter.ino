@@ -7886,13 +7886,14 @@ bool Xdrv10(uint8_t function)
       break;
     case FUNC_RULES_PROCESS:
       if (bitRead(Settings.rule_enabled, 0)) {
-        if (TasmotaGlobal.rule_teleperiod) {  // Signal teleperiod event
-          if (TasmotaGlobal.mqtt_data[0]) {
-            Run_Scripter(">T", 2, TasmotaGlobal.mqtt_data);
-          }
-        } else {
-          Run_Scripter(">E", 2, TasmotaGlobal.mqtt_data);
-          result = glob_script_mem.event_handeled;
+        Run_Scripter(">E", 2, TasmotaGlobal.mqtt_data);
+        result = glob_script_mem.event_handeled;
+      }
+      break;
+    case FUNC_TELEPERIOD_RULES_PROCESS:
+      if (bitRead(Settings.rule_enabled, 0)) {
+        if (TasmotaGlobal.mqtt_data[0]) {
+          Run_Scripter(">T", 2, TasmotaGlobal.mqtt_data);
         }
       }
       break;

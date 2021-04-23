@@ -8,8 +8,11 @@ All notable changes to this project will be documented in this file.
 - Command ``Wifi 0/1`` for ESP8266 to turn wifi Off and On. When wifi is Off it is always returned On after a restart except for a wake-up from deepsleep (#11839)
 
 ### Changed
-- Command ``Power`` should not reset pulsetime (#11805)
 - Zigbee refactored storage for device configuration and device last known data (#11838)
+
+### Fixed
+- Command ``Power`` should not reset pulsetime (#11805)
+- Teleperiod rule handling regression from v9.3.1.2 (#11851)
 
 ## [Released]
 
