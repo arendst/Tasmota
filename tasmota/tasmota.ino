@@ -140,7 +140,6 @@ struct {
   int16_t save_data_counter;                // Counter and flag for config save to Flash
   RulesBitfield rules_flag;                 // Rule state flags (16 bits)
 
-  bool rule_teleperiod;                     // Process rule based on teleperiod data using prefix TELE-
   bool serial_local;                        // Handle serial locally
   bool fallback_topic_flag;                 // Use Topic or FallbackTopic
   bool backlog_nodelay;                     // Execute all backlog commands with no delay
@@ -286,6 +285,17 @@ void setup(void) {
 
   if (1 == RtcReboot.fast_reboot_count) {      // Allow setting override only when all is well
     UpdateQuickPowerCycle(true);
+  }
+
+  if (ResetReason() != REASON_DEEP_SLEEP_AWAKE) {
+#ifdef ESP8266
+    Settings.flag4.network_wifi = 1;           // Make sure we're in control
+#endif
+#ifdef ESP32
+    if (!Settings.flag4.network_ethernet) {
+      Settings.flag4.network_wifi = 1;         // Make sure we're in control
+    }
+#endif
   }
 
   TasmotaGlobal.stop_flash_rotate = Settings.flag.stop_flash_rotate;  // SetOption12 - Switch between dynamic or fixed slot flash save location

@@ -599,7 +599,9 @@ void ExecuteCommandPower(uint32_t device, uint32_t state, uint32_t source)
   }
   TasmotaGlobal.active_device = device;
 
-  SetPulseTimer((device -1) % MAX_PULSETIMERS, 0);
+  if (state != POWER_SHOW_STATE) {
+    SetPulseTimer((device -1) % MAX_PULSETIMERS, 0);
+  }
 
   static bool interlock_mutex = false;    // Interlock power command pending
   power_t mask = 1 << (device -1);        // Device to control
@@ -1286,6 +1288,8 @@ void Every250mSeconds(void)
     if (Settings.flag4.network_wifi) {
       WifiCheck(TasmotaGlobal.wifi_state_flag);
       TasmotaGlobal.wifi_state_flag = WIFI_RESTART;
+    } else {
+      WifiDisable();
     }
     break;
   case 3:                                                 // Every x.75 second
@@ -1324,7 +1328,7 @@ void Every250mSeconds(void)
         StopWebserver();
       }
 #ifdef USE_EMULATION
-    if (Settings.flag2.emulation) { UdpConnect(); }
+      if (Settings.flag2.emulation) { UdpConnect(); }
 #endif  // USE_EMULATION
 #endif  // USE_WEBSERVER
 

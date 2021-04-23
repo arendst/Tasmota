@@ -83,10 +83,11 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - Command ``SetOption126 1`` to enable DS18x20 arithmetic mean over teleperiod for JSON temperature based on [#11472](https://github.com/arendst/Tasmota/issues/11472)
 - Command ``Backlog0`` to allow execution of following commands without delay
 - Command ``TuyaTempSetRes 0..3`` to control Tuya Temperature Set Resolution [#11781](https://github.com/arendst/Tasmota/issues/11781)
+- Command ``Wifi 0/1`` for ESP8266 to turn wifi Off and On. When wifi is Off it is always returned On after a restart except for a wake-up from deepsleep [#11839](https://github.com/arendst/Tasmota/issues/11839)
 - Commands ``MqttKeepAlive 1..100`` to set Mqtt Keep Alive timer (default 30) and ``MqttTimeout 1..100`` to set Mqtt Socket Timeout (default 4) [#5341](https://github.com/arendst/Tasmota/issues/5341)
 - Commands ``DisplayType`` to select sub-modules where implemented and ``DisplayInvert`` to select inverted display where implemented
 - Support for SML VBUS [#11125](https://github.com/arendst/Tasmota/issues/11125)
-- Support for NEC and OPTOMA LCD/DLP Projector serial power control by Jan Bubík [#11145](https://github.com/arendst/Tasmota/issues/11145)
+- Support for NEC and OPTOMA LCD/DLP Projector serial power control by Jan BubÃ­k [#11145](https://github.com/arendst/Tasmota/issues/11145)
 - Support for XPT2046 touch screen digitizer on ILI9341 display by nonix [#11159](https://github.com/arendst/Tasmota/issues/11159)
 - Support for zigbee lumi.sensor_wleak [#11200](https://github.com/arendst/Tasmota/issues/11200)
 - Support for dummy energy monitor using user values set by commands ``VoltageSet``, ``CurrentSet``, ``PowerSet`` and ``FrequencySet``. Enable by selecting any GPIO as ``Option A2`` [#10640](https://github.com/arendst/Tasmota/issues/10640)
@@ -126,7 +127,7 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - Redesigned GUI by moving non-configuration buttons from ``Configuration`` to new submenu ``Consoles``
 - In tasmota-sensors.bin enabled support for VL53L0X and disabled TSL2561 [#11711](https://github.com/arendst/Tasmota/issues/11711)
 - Add HLW8012/BL0937 average pulse calculation by Alex Lovett [#11722](https://github.com/arendst/Tasmota/issues/11722)
-- ESP32 **tasmota32-knx**, **tasmota32-sensors** and **tasmota32-lite** binaries consolidated in **tasmota32.bin** binary
+- Zigbee refactored storage for device configuration and device last known data [#11838](https://github.com/arendst/Tasmota/issues/11838)
 
 ### Fixed
 - PN532 on ESP32 Serial flush both Tx and Rx buffers [#10910](https://github.com/arendst/Tasmota/issues/10910)
@@ -145,6 +146,8 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - Alexa discovery for ZBBridge [#11576](https://github.com/arendst/Tasmota/issues/11576)
 - Telegram chat id incorrect size [#11660](https://github.com/arendst/Tasmota/issues/11660)
 - KNX energy yesterday [#11718](https://github.com/arendst/Tasmota/issues/11718)
+- Command ``Power`` should not reset pulsetime [#11805](https://github.com/arendst/Tasmota/issues/11805)
+- Teleperiod rule handling regression from v9.3.1.2 [#11851](https://github.com/arendst/Tasmota/issues/11851)
 
 ### Noted
 - ESP32 single core **tasmota32solo1.bin** binary can only be uploaded using the GUI as OTA upload will trigger the watchdog timer

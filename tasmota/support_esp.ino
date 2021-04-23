@@ -79,24 +79,16 @@ void *special_realloc(void *ptr, size_t size) {
 }
 
 String GetDeviceHardware(void) {
-  char buff[10];
   // esptool.py get_efuses
   uint32_t efuse1 = *(uint32_t*)(0x3FF00050);
   uint32_t efuse2 = *(uint32_t*)(0x3FF00054);
 //  uint32_t efuse3 = *(uint32_t*)(0x3FF00058);
 //  uint32_t efuse4 = *(uint32_t*)(0x3FF0005C);
 
-  bool is_8285 = ( (efuse1 & (1 << 4)) || (efuse2 & (1 << 16)) );
-  if (is_8285 && (ESP.getFlashChipRealSize() > 1048576)) {
-    is_8285 = false;  // ESP8285 can only have 1M flash
+  if (((efuse1 & (1 << 4)) || (efuse2 & (1 << 16))) && (ESP.getFlashChipRealSize() < 1048577)) {  // ESP8285 can only have 1M flash
+    return F("ESP8285");
   }
-  if (is_8285) {
-    strcpy_P(buff, PSTR("ESP8285"));
-  } else {
-    strcpy_P(buff, PSTR("ESP8266EX"));
-  }
-
-  return String(buff);
+  return F("ESP8266EX");
 }
 
 #endif
@@ -561,7 +553,7 @@ typedef struct {
     uint32_t chip_ver = REG_GET_FIELD(EFUSE_BLK0_RDATA3_REG, EFUSE_RD_CHIP_VER_PKG);
     uint32_t pkg_version = chip_ver & 0x7;
 
-    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("HDW: ESP32 Model %d, Revision %d, Core %d, Package %d"), chip_info.model, chip_revision, chip_info.cores, chip_ver);
+//    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("HDW: ESP32 Model %d, Revision %d, Core %d, Package %d"), chip_info.model, chip_revision, chip_info.cores, chip_ver);
 
     switch (pkg_version) {
       case 0:
@@ -599,7 +591,7 @@ typedef struct {
     uint32_t pkg_version = chip_ver & 0x7;
 //    uint32_t pkg_version = esp_efuse_get_pkg_ver();
 
-    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("HDW: ESP32 Model %d, Revision %d, Core %d, Package %d"), chip_info.model, chip_revision, chip_info.cores, chip_ver);
+//    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("HDW: ESP32 Model %d, Revision %d, Core %d, Package %d"), chip_info.model, chip_revision, chip_info.cores, chip_ver);
 
     switch (pkg_version) {
       case 0:              return F("ESP32-S2");           // Max 240MHz, Single core, QFN 7*7, ESP32-S2-WROOM, ESP32-S2-WROVER, ESP32-S2-Saola-1, ESP32-S2-Kaluga-1
@@ -627,7 +619,7 @@ typedef struct {
     uint32_t pkg_version = chip_ver & 0x7;
 //    uint32_t pkg_version = esp_efuse_get_pkg_ver();
 
-    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("HDW: ESP32 Model %d, Revision %d, Core %d, Package %d"), chip_info.model, chip_revision, chip_info.cores, chip_ver);
+//    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("HDW: ESP32 Model %d, Revision %d, Core %d, Package %d"), chip_info.model, chip_revision, chip_info.cores, chip_ver);
 
     switch (pkg_version) {
       case 0:              return F("ESP32-C3");           // Max 160MHz, Single core, QFN 5*5, ESP32-C3-WROOM-02, ESP32-C3-DevKitC-02
@@ -653,7 +645,7 @@ typedef struct {
     uint32_t pkg_version = chip_ver & 0x7;
 //    uint32_t pkg_version = esp_efuse_get_pkg_ver();
 
-    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("HDW: ESP32 Model %d, Revision %d, Core %d, Package %d"), chip_info.model, chip_revision, chip_info.cores, chip_ver);
+//    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("HDW: ESP32 Model %d, Revision %d, Core %d, Package %d"), chip_info.model, chip_revision, chip_info.cores, chip_ver);
 
     switch (pkg_version) {
       case 0:              return F("ESP32-C6");

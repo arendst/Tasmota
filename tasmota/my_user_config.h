@@ -784,6 +784,7 @@
   #define USE_ZIGBEE_ZNP                         // Enable ZNP protocol, needed for CC2530 based devices
 //  #define USE_ZIGBEE_EZSP                        // Enable EZSP protocol, needed for EFR32 EmberZNet based devices, like Sonoff Zigbee bridge
                                                  // Note: USE_ZIGBEE_ZNP and USE_ZIGBEE_EZSP are mutually incompatible, you must select exactly one
+  // #define USE_ZIGBEE_EEPROM                      // Use the EEPROM from the Sonoff ZBBridge to save Zigbee configuration and data
   #define USE_ZIGBEE_CHANNEL  11                 // Zigbee Channel (11-26)
   #define USE_ZIGBEE_TXRADIO_DBM  20             // Tx Radio power in dBm (only for EZSP, EFR32 can go up to 20 dBm)
 

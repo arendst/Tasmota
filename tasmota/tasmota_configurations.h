@@ -607,6 +607,7 @@
 #define USE_ZIGBEE
 #undef USE_ZIGBEE_ZNP
 #define USE_ZIGBEE_EZSP
+#define USE_ZIGBEE_EEPROM                        // EEPROM of Sonoff ZBBridge via I2C
 #define USE_TCP_BRIDGE
   #define USE_ZIGBEE_CHANNEL  11                 // Zigbee Channel (11-26)
   #define USE_ZIGBEE_COALESCE_ATTR_TIMER 350     // timer to coalesce attribute values (in ms)

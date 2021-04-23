@@ -19,9 +19,9 @@
 
 #ifdef USE_ZIGBEE
 
-#ifdef USE_ZIGBEE_EZSP
+#ifdef USE_ZIGBEE_EEPROM
 #include "Eeprom24C512.h"
-#endif // USE_ZIGBEE_EZSP
+#endif // USE_ZIGBEE_EEPROM
 
 // channels numbers for Zigbee radio energy scan
 #define USE_ZIGBEE_CHANNEL_MIN    11
@@ -100,9 +100,9 @@ const uint8_t  ZIGBEE_LABEL_UNSUPPORTED_VERSION = 98;  // Unsupported ZNP versio
 class ZigbeeStatus {
 public:
   ZigbeeStatus()
-#ifdef USE_ZIGBEE_EZSP
+#ifdef USE_ZIGBEE_EEPROM
     : eeprom(USE_ZIGBEE_ZBBRIDGE_EEPROM)
-#endif // USE_ZIGBEE_EZSP
+#endif // USE_ZIGBEE_EEPROM
   {}
 
   bool active = true;                 // is Zigbee active for this device, i.e. GPIOs configured
@@ -142,9 +142,9 @@ public:
   uint16_t ezsp_version = 0;
 #endif
 
-#ifdef USE_ZIGBEE_EZSP
+#ifdef USE_ZIGBEE_EEPROM
   Eeprom24C512 eeprom;     // takes only 1 bytes of RAM
-#endif // USE_ZIGBEE_EZSP
+#endif // USE_ZIGBEE_EEPROM
 };
 struct ZigbeeStatus zigbee;
 SBuffer *zigbee_buffer = nullptr;
