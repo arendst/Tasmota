@@ -1,8 +1,0 @@
-{
-    "name": "NimBLE-Arduino",
-    "keywords": "esp32, bluetooth",
-    "description": "Bluetooth low energy (BLE) library for arduino-esp32 based on NimBLE",
-    "version": "1.2.0",
-    "frameworks": "arduino",
-    "platforms": "espressif32"
-}
