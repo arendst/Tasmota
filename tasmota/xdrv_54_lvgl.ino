@@ -40,9 +40,10 @@ SemaphoreHandle_t xGuiSemaphore;
 uDisplay_lvgl * udisp = nullptr;
 
 // necessary for compilation
-uint8_t color_type = 0;
-void udisp_dimm(uint8_t dim) {}
-void udisp_bpwr(uint8_t on) {}
+uint8_t color_type_lvgl = 0;
+uint8_t * buffer_lvgl = nullptr;
+void udisp_dimm_lvgl(uint8_t dim) {}
+void udisp_bpwr_lvgl(uint8_t on) {}
 
 extern "C" {
 
