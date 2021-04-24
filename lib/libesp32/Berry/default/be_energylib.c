@@ -7,6 +7,8 @@
  *******************************************************************/
 #include "be_object.h"
 
+#ifdef USE_ENERGY_SENSOR
+
 extern int b_nrg_read(bvm *vm);
 
 // #if !BE_USE_PRECOMPILED_OBJECT
@@ -24,3 +26,5 @@ module tasmota (scope: global, depend: 1) {
 @const_object_info_end */
 #include "../generate/be_fixed_tasmota.h"
 #endif
+
+#endif // USE_ENERGY_SENSOR

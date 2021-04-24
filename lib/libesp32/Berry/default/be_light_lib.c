@@ -7,7 +7,7 @@
 #include "be_string.h"
 #include "be_gc.h"
 
-
+#ifdef USE_LIGHT
 extern int l_getlight(bvm *vm);
 extern int l_setlight(bvm *vm);
 
@@ -39,3 +39,5 @@ module tasmota (scope: global, depend: 1) {
 @const_object_info_end */
 #include "../generate/be_fixed_tasmota.h"
 #endif
+
+#endif // USE_LIGHT

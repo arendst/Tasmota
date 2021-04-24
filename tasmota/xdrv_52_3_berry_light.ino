@@ -20,6 +20,8 @@
 
 #ifdef USE_BERRY
 
+#ifdef USE_LIGHT
+
 #include <berry.h>
 #include <Wire.h>
 
@@ -29,7 +31,6 @@
 \*********************************************************************************************/
 extern "C" {
 
-#ifdef USE_LIGHT
   // push the light status object on the vm stack
   void push_getlight(bvm *vm, uint32_t light_num) {
     bool data_present = false;      // do we have relevant data
@@ -295,18 +296,15 @@ extern "C" {
     }
     be_raise(vm, kTypeError, nullptr);
   }
+}
 
-#else // #ifdef USE_LIGHT
+#endif // USE_LIGHT
 
+extern "C" {
   int32_t b_light_missing(struct bvm *vm) {
     be_raise(vm, "feature_error", "LIGHT is not enabled, use '#define USE_LIGHT'");
   }
-  int32_t l_getlight(struct bvm *vm) __attribute__ ((weak, alias ("b_light_missing")));
-  int32_t l_setlight(struct bvm *vm) __attribute__ ((weak, alias ("b_light_missing")));
-  int32_t l_gamma8(struct bvm *vm) __attribute__ ((weak, alias ("b_light_missing")));
-  int32_t l_gamma10(struct bvm *vm) __attribute__ ((weak, alias ("b_light_missing")));
-  int32_t l_rev_gamma10(struct bvm *vm) __attribute__ ((weak, alias ("b_light_missing")));
-#endif // #ifdef USE_LIGHT
+
 }
 
 #endif  // USE_BERRY

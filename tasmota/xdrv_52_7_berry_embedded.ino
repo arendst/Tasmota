@@ -32,7 +32,9 @@ const char berry_prog[] =
 
   // auto-import modules
   // // import alias
+#ifdef USE_ENERGY_SENSOR
   "import energy "
+#endif
 
   // Phase 1
   "class Tasmota: Tasmota_ntv "

@@ -9,6 +9,8 @@
 #include "be_string.h"
 #include "be_gc.h"
 
+#ifdef USE_I2C
+
 extern int b_wire_init(bvm *vm);
 
 extern int b_wire_begintransmission(bvm *vm);
@@ -241,3 +243,5 @@ module tasmota (scope: global, depend: 1) {
 @const_object_info_end */
 #include "../generate/be_fixed_tasmota.h"
 #endif
+
+#endif // USE_I2C
