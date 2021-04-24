@@ -29,7 +29,7 @@ extern FS *dfsp;
 extern "C" uint32_t _FS_end;
 // Is it ok to write to bank 0x402FF000
 bool flash_valid(void) {
-  return (_FS_end > 0x40280000) && (_FS_end < 0x402FF000);
+  return (((uint32_t)&_FS_end) > 0x40280000) && (((uint32_t)&_FS_end) < 0x402FF000);
 }
 
 void hydrateSingleDevice(const SBuffer & buf_d);
