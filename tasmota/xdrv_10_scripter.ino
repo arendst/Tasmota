@@ -2621,6 +2621,15 @@ chknext:
           tind->bits.is_string = 0;
           return lp + len;
         }
+#ifdef USE_LVGL
+        if (!strncmp(vname, "lvgl(", 5)) {
+          lp = GetNumericArgument(lp + 5, OPER_EQU, &fvar, gv);
+          fvar = lvgl_test(fvar);
+          lp++;
+          len = 0;
+          goto exit;
+        }
+#endif
         break;
       case 'm':
         if (!strncmp(vname, "med(", 4)) {
@@ -7704,6 +7713,137 @@ void cpy2lf(char *dst, uint32_t dstlen, char *src) {
   }
 }
 
+#ifdef USE_LVGL
+#include <renderer.h>
+#include "lvgl.h"
+
+
+const char ili9342[] PROGMEM =
+":H,ILI9342,320,240,16,SPI,1,*,*,*,*,*,*,*,40\n"
+":S,2,1,3,0,100,100\n"
+":I\n"
+"EF,3,03,80,02\n"
+"CF,3,00,C1,30\n"
+"ED,4,64,03,12,81\n"
+"E8,3,85,00,78\n"
+"CB,5,39,2C,00,34,02\n"
+"F7,1,20\n"
+"EA,2,00,00\n"
+"C0,1,23\n"
+"C1,1,10\n"
+"C5,2,3e,28\n"
+"C7,1,86\n"
+"36,1,48\n"
+"37,1,00\n"
+"3A,1,55\n"
+"B1,2,00,18\n"
+"B6,3,08,82,27\n"
+"F2,1,00\n"
+"26,1,01\n"
+"E0,0F,0F,31,2B,0C,0E,08,4E,F1,37,07,10,03,0E,09,00\n"
+"E1,0F,00,0E,14,03,11,07,31,C1,48,08,0F,0C,31,36,0F\n"
+"21,80\n"
+"11,80\n"
+"29,80\n"
+":o,28\n"
+":O,29\n"
+":A,2A,2B,2C,16\n"
+":R,36\n"
+":0,08,00,00,00\n"
+":1,A8,00,00,01\n"
+":2,C8,00,00,02\n"
+":3,68,00,00,03\n"
+":i,21,20\n"
+":TI2,38,22,21\n"
+"#\n";
+
+
+void start_lvgl(const char * uconfig);
+
+int32_t lvgl_test(int32_t p) {
+  start_lvgl(ili9342);
+  lv_obj_clean(lv_scr_act());
+
+  lv_obj_t *label1 =  lv_label_create(lv_scr_act(), NULL);
+
+  /*Modify the Label's text*/
+  lv_label_set_text(label1, "Hello world!");
+
+    /* Align the Label to the center
+     * NULL means align on parent (which is the screen now)
+     * 0, 0 at the end means an x, y offset after alignment*/
+  lv_obj_align(label1, NULL, LV_ALIGN_CENTER, 0, 0);
+
+
+  /*Add a button*/
+   lv_obj_t *btn1 = lv_btn_create(lv_scr_act(), NULL);           /*Add to the active screen*/
+   lv_obj_set_pos(btn1, 2, 2);                                    /*Adjust the position*/
+   lv_obj_set_size(btn1, 96, 30);                                 /* set size of button */
+//   lv_btn_set_action(btn1, LV_BTN_ACTION_CLICK, my_click_action);   /*Assign a callback for clicking*/
+
+   /*Add text*/
+   lv_obj_t *label = lv_label_create(btn1, NULL);                  /*Put on 'btn1'*/
+   lv_label_set_text(label, "Click");
+
+
+  return 0;
+}
+
+/*
+
+lv_obj_t * myButton;
+lv_obj_t * myButtonLabel;
+lv_obj_t * myLabel;
+
+lv_style_t myButtonStyleREL; //relesed style
+lv_style_t myButtonStylePR; //pressed style
+
+static lv_res_t btn_click_action(lv_obj_t * btn) {
+    uint8_t id = lv_obj_get_free_num(btn); //id usefull when there are multiple buttons
+
+    if(id == 0)
+    {
+        char buffer[100];
+		sprintf(buffer, "button was clicked %i milliseconds from start", pros::millis());
+		lv_label_set_text(myLabel, buffer);
+    }
+
+    return LV_RES_OK;
+}
+
+#define LV_COLOR_MAKE lv_color_make
+
+void initialize() {
+    lv_style_copy(&myButtonStyleREL, &lv_style_plain);
+    myButtonStyleREL.body.main_color = LV_COLOR_MAKE(150, 0, 0);
+    myButtonStyleREL.body.grad_color = LV_COLOR_MAKE(0, 0, 150);
+    myButtonStyleREL.body.radius = 0;
+    myButtonStyleREL.text.color = LV_COLOR_MAKE(255, 255, 255);
+
+    lv_style_copy(&myButtonStylePR, &lv_style_plain);
+    myButtonStylePR.body.main_color = LV_COLOR_MAKE(255, 0, 0);
+    myButtonStylePR.body.grad_color = LV_COLOR_MAKE(0, 0, 255);
+    myButtonStylePR.body.radius = 0;
+    myButtonStylePR.text.color = LV_COLOR_MAKE(255, 255, 255);
+
+    myButton = lv_btn_create(lv_scr_act(), NULL); //create button, lv_scr_act() is deafult screen object
+    lv_obj_set_free_num(myButton, 0); //set button is to 0
+    lv_btn_set_action(myButton, LV_BTN_ACTION_CLICK, btn_click_action); //set function to be called on button click
+    lv_btn_set_style(myButton, LV_BTN_STYLE_REL, &myButtonStyleREL); //set the relesed style
+    lv_btn_set_style(myButton, LV_BTN_STYLE_PR, &myButtonStylePR); //set the pressed style
+    lv_obj_set_size(myButton, 200, 50); //set the button size
+    lv_obj_align(myButton, NULL, LV_ALIGN_IN_TOP_LEFT, 10, 10); //set the position to top mid
+
+    myButtonLabel = lv_label_create(myButton, NULL); //create label and puts it inside of the button
+    lv_label_set_text(myButtonLabel, "Click the Button"); //sets label text
+
+    myLabel = lv_label_create(lv_scr_act(), NULL); //create label and puts it on the screen
+    lv_label_set_text(myLabel, "Button has not been clicked yet"); //sets label text
+    lv_obj_align(myLabel, NULL, LV_ALIGN_LEFT_MID, 10, 0); //set the position to center
+}
+*/
+
+#endif
 
 /*********************************************************************************************\
  * Interface
