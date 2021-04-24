@@ -13,3 +13,9 @@ if os.path.isfile("platformio_override.ini"):
     print ("*** use provided platformio_override.ini as planned ***")
 else: 
     shutil.copy("platformio_override_sample.ini", "platformio_override.ini")
+
+# copy platformio_tasmota_cenv_sample.ini to platformio_tasmota_cenv.ini
+if os.path.isfile("platformio_tasmota_cenv.ini"):
+    print ("*** use provided platformio_tasmota_cenv.ini as planned ***")
+else: 
+    shutil.copy("platformio_tasmota_cenv_sample.ini", "platformio_tasmota_cenv.ini"
