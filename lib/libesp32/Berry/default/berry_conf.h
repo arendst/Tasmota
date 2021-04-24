@@ -158,12 +158,6 @@
 #define BE_USE_GC_MODULE                1
 #define BE_USE_SOLIDIFY_MODULE          1
 
-// #ifdef ESP32
-#define BE_USE_TASMOTA                  1
-// #else
-// #define BE_USE_TASMOTA                     0
-// #endif
-
 /* Macro: BE_EXPLICIT_XXX
  * If these macros are defined, the corresponding function will
  * use the version defined by these macros. These macro definitions
