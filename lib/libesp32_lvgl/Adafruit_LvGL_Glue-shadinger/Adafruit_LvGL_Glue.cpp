@@ -22,107 +22,15 @@ static void lv_tick_handler(void) { lv_tick_inc(lv_tick_interval_ms); }
 #define ADC_YMIN 240
 #define ADC_YMAX 840
 
+
+uint32_t Touch_Status(uint32_t sel);
+
 static bool touchscreen_read(struct _lv_indev_drv_t *indev_drv, lv_indev_data_t *data) {
-//   static lv_coord_t last_x = 0, last_y = 0;
-//   static uint8_t release_count = 0;
-
-//   // Get pointer to glue object from indev user data
-//   Adafruit_LvGL_Glue *glue = (Adafruit_LvGL_Glue *)indev_drv->user_data;
-//   uDisplay_lvgl *disp = glue->display;
-
-//   if (glue->is_adc_touch) {
-//     TouchScreen *touch = (TouchScreen *)glue->touchscreen;
-//     TSPoint p = touch->getPoint();
-//     // Serial.printf("%d %d %d\r\n", p.x, p.y, p.z);
-//     // Having an issue with spurious z=0 results from TouchScreen lib.
-//     // Since touch is polled periodically, workaround is to watch for
-//     // several successive z=0 results, and only then regard it as
-//     // a release event (otherwise still touched).
-//     if (p.z < touch->pressureThreshhold) { // A zero-ish value
-//       release_count += (release_count < 255);
-//       if (release_count >= 4) {
-//         data->state = LV_INDEV_STATE_REL; // Is REALLY RELEASED
-//       } else {
-//         data->state = LV_INDEV_STATE_PR; // Is STILL PRESSED
-//       }
-//     } else {
-//       release_count = 0;               // Reset release counter
-//       data->state = LV_INDEV_STATE_PR; // Is PRESSED
-//       switch (glue->display->getRotation()) {
-//       case 0:
-//         last_x = map(p.x, ADC_XMIN, ADC_XMAX, 0, disp->width() - 1);
-//         last_y = map(p.y, ADC_YMAX, ADC_YMIN, 0, disp->height() - 1);
-//         break;
-//       case 1:
-//         last_x = map(p.y, ADC_YMAX, ADC_YMIN, 0, disp->width() - 1);
-//         last_y = map(p.x, ADC_XMAX, ADC_XMIN, 0, disp->height() - 1);
-//         break;
-//       case 2:
-//         last_x = map(p.x, ADC_XMAX, ADC_XMIN, 0, disp->width() - 1);
-//         last_y = map(p.y, ADC_YMIN, ADC_YMAX, 0, disp->height() - 1);
-//         break;
-//       case 3:
-//         last_x = map(p.y, ADC_YMIN, ADC_YMAX, 0, disp->width() - 1);
-//         last_y = map(p.x, ADC_XMIN, ADC_XMAX, 0, disp->height() - 1);
-//         break;
-//       }
-//     }
-//     data->point.x = last_x; // Last-pressed coordinates
-//     data->point.y = last_y;
-//     return false; // No buffering of ADC touch data
-//   } else {
-//     uint8_t fifo; // Number of points in touchscreen FIFO
-//     bool moar = false;
-//     Adafruit_STMPE610 *touch = (Adafruit_STMPE610 *)glue->touchscreen;
-//     // Before accessing SPI touchscreen, wait on any in-progress
-//     // DMA screen transfer to finish (shared bus).
-//     //disp->dmaWait();
-//     // disp->endWrite();
-//     if ((fifo = touch->bufferSize())) { // 1 or more points await
-//       data->state = LV_INDEV_STATE_PR;  // Is PRESSED
-//       TS_Point p = touch->getPoint();
-//       // Serial.printf("%d %d %d\r\n", p.x, p.y, p.z);
-//       // On big TFT FeatherWing, raw X axis is flipped??
-//       if ((glue->display->width() == 480) || (glue->display->height() == 480)) {
-//         p.x = (TS_MINX + TS_MAXX) - p.x;
-//       }
-//       switch (glue->display->getRotation()) {
-//       case 0:
-//         last_x = map(p.x, TS_MAXX, TS_MINX, 0, disp->width() - 1);
-//         last_y = map(p.y, TS_MINY, TS_MAXY, 0, disp->height() - 1);
-//         break;
-//       case 1:
-//         last_x = map(p.y, TS_MINY, TS_MAXY, 0, disp->width() - 1);
-//         last_y = map(p.x, TS_MINX, TS_MAXX, 0, disp->height() - 1);
-//         break;
-//       case 2:
-//         last_x = map(p.x, TS_MINX, TS_MAXX, 0, disp->width() - 1);
-//         last_y = map(p.y, TS_MAXY, TS_MINY, 0, disp->height() - 1);
-//         break;
-//       case 3:
-//         last_x = map(p.y, TS_MAXY, TS_MINY, 0, disp->width() - 1);
-//         last_y = map(p.x, TS_MAXX, TS_MINX, 0, disp->height() - 1);
-//         break;
-//       }
-//       moar = (fifo > 1); // true if more in FIFO, false if last point
-// #if defined(NRF52_SERIES)
-//       // Not sure what's up here, but nRF doesn't seem to always poll
-//       // the FIFO size correctly, causing false release events. If it
-//       // looks like we've read the last point from the FIFO, pause
-//       // briefly to allow any more FIFO events to pile up. This
-//       // doesn't seem to be necessary on SAMD or ESP32. ???
-//       if (!moar) {
-//         delay(50);
-//       }
-// #endif
-//     } else {                            // FIFO empty
-//       data->state = LV_INDEV_STATE_REL; // Is RELEASED
-//     }
-
-//     data->point.x = last_x; // Last-pressed coordinates
-//     data->point.y = last_y;
-//     return moar;
-//   }
+  //lv_coord_t last_x = 0, last_y = 0;
+  //static uint8_t release_count = 0;
+  data->point.x = Touch_Status(1); // Last-pressed coordinates
+  data->point.y = Touch_Status(2);
+  data->state = Touch_Status(0);
   return false; /*No buffering now so no more data read*/
 }
 

@@ -7757,8 +7757,16 @@ const char ili9342[] PROGMEM =
 ":TI2,38,22,21\n"
 "#\n";
 
-
 void start_lvgl(const char * uconfig);
+
+void btn_event_cb(lv_obj_t * btn, lv_event_t event);
+void btn_event_cb(lv_obj_t * btn, lv_event_t event) {
+    if (event == LV_EVENT_CLICKED) {
+      AddLog_P(LOG_LEVEL_INFO,PSTR(">>> clicked"));
+    }
+    AddLog_P(LOG_LEVEL_INFO,PSTR(">>> clicked"));
+}
+
 
 int32_t lvgl_test(int32_t p) {
   start_lvgl(ili9342);
@@ -7775,73 +7783,120 @@ int32_t lvgl_test(int32_t p) {
   lv_obj_align(label1, NULL, LV_ALIGN_CENTER, 0, 0);
 
 
+  lvgl_setup();
+
   /*Add a button*/
    lv_obj_t *btn1 = lv_btn_create(lv_scr_act(), NULL);           /*Add to the active screen*/
    lv_obj_set_pos(btn1, 2, 2);                                    /*Adjust the position*/
    lv_obj_set_size(btn1, 96, 30);                                 /* set size of button */
-//   lv_btn_set_action(btn1, LV_BTN_ACTION_CLICK, my_click_action);   /*Assign a callback for clicking*/
+   lv_obj_set_event_cb(btn1, btn_event_cb);
 
    /*Add text*/
    lv_obj_t *label = lv_label_create(btn1, NULL);                  /*Put on 'btn1'*/
    lv_label_set_text(label, "Click");
 
 
+
   return 0;
 }
 
-/*
+lv_obj_t          *tabview,        // LittlevGL tabview object
+                  *gauge,          // Gauge object (on first of three tabs)
+                  *chart,          // Chart object (second tab)
+                  *canvas;         // Canvas object (third tab)
+uint8_t            active_tab = 0, // Index of currently-active tab (0-2)
+                   prev_tab   = 0; // Index of previously-active tab
+lv_chart_series_t *series;         // 'Series' data for the bar chart
+lv_draw_line_dsc_t draw_dsc; // Drawing style (for canvas) is similarly global
 
-lv_obj_t * myButton;
-lv_obj_t * myButtonLabel;
-lv_obj_t * myLabel;
+#define CANVAS_WIDTH  200 // Dimensions in pixels
+#define CANVAS_HEIGHT 150
 
-lv_style_t myButtonStyleREL; //relesed style
-lv_style_t myButtonStylePR; //pressed style
+void lvgl_setup(void) {
+  // Create a tabview object, by default this covers the full display.
+  tabview = lv_tabview_create(lv_disp_get_scr_act(NULL), NULL);
+  // The CLUE display has a lot of pixels and can't refresh very fast.
+  // To show off the tabview animation, let's slow it down to 1 second.
+  lv_tabview_set_anim_time(tabview, 1000);
 
-static lv_res_t btn_click_action(lv_obj_t * btn) {
-    uint8_t id = lv_obj_get_free_num(btn); //id usefull when there are multiple buttons
+  // Because they're referenced any time an object is drawn, styles need
+  // to be permanent in scope; either declared globally (outside all
+  // functions), or static. The styles used on tabs are never modified after
+  // they're used here, so let's use static on those...
+  static lv_style_t tab_style, tab_background_style, indicator_style;
 
-    if(id == 0)
-    {
-        char buffer[100];
-		sprintf(buffer, "button was clicked %i milliseconds from start", pros::millis());
-		lv_label_set_text(myLabel, buffer);
-    }
+  // This is the background style "behind" the tabs. This is what shows
+  // through for "off" (inactive) tabs -- a vertical green gradient,
+  // minimal padding around edges (zero at bottom).
+  lv_style_init(&tab_background_style);
+  lv_style_set_bg_color(&tab_background_style, LV_STATE_DEFAULT, lv_color_hex(0x408040));
+  lv_style_set_bg_grad_color(&tab_background_style, LV_STATE_DEFAULT, lv_color_hex(0x304030));
+  lv_style_set_bg_grad_dir(&tab_background_style, LV_STATE_DEFAULT, LV_GRAD_DIR_VER);
+  lv_style_set_pad_top(&tab_background_style, LV_STATE_DEFAULT, 2);
+  lv_style_set_pad_left(&tab_background_style, LV_STATE_DEFAULT, 2);
+  lv_style_set_pad_right(&tab_background_style, LV_STATE_DEFAULT, 2);
+  lv_style_set_pad_bottom(&tab_background_style, LV_STATE_DEFAULT, 0);
+  lv_obj_add_style(tabview, LV_TABVIEW_PART_TAB_BG, &tab_background_style);
 
-    return LV_RES_OK;
+  // Style for tabs. Active tab is white with opaque background, inactive
+  // tabs are transparent so the background shows through (only the white
+  // text is seen). A little top & bottom padding reduces scrunchyness.
+  lv_style_init(&tab_style);
+  lv_style_set_pad_top(&tab_style, LV_STATE_DEFAULT, 3);
+  lv_style_set_pad_bottom(&tab_style, LV_STATE_DEFAULT, 10);
+  lv_style_set_bg_color(&tab_style, LV_STATE_CHECKED, LV_COLOR_WHITE);
+  lv_style_set_bg_opa(&tab_style, LV_STATE_CHECKED, LV_OPA_100);
+  lv_style_set_text_color(&tab_style, LV_STATE_CHECKED, LV_COLOR_GRAY);
+  lv_style_set_bg_opa(&tab_style, LV_STATE_DEFAULT, LV_OPA_TRANSP);
+  lv_style_set_text_color(&tab_style, LV_STATE_DEFAULT, LV_COLOR_WHITE);
+  lv_obj_add_style(tabview, LV_TABVIEW_PART_TAB_BTN, &tab_style);
+
+  // Style for the small indicator bar that appears below the active tab.
+  lv_style_init(&indicator_style);
+  lv_style_set_bg_color(&indicator_style, LV_STATE_DEFAULT, LV_COLOR_RED);
+  lv_style_set_size(&indicator_style, LV_STATE_DEFAULT, 5);
+  lv_obj_add_style(tabview, LV_TABVIEW_PART_INDIC, &indicator_style);
+
+  // Back to creating widgets...
+
+  // Add three tabs to the tabview
+  lv_obj_t *tab1 = lv_tabview_add_tab(tabview, "Gauge");
+  lv_obj_t *tab2 = lv_tabview_add_tab(tabview, "Chart");
+  lv_obj_t *tab3 = lv_tabview_add_tab(tabview, "Canvas");
+
+  // And then add stuff in each tab...
+
+  // The first tab holds a gauge. To keep the demo simple, let's just use
+  // the default style and range (0-100). See LittlevGL docs for options.
+  gauge = lv_gauge_create(tab1, NULL);
+  lv_obj_set_size(gauge, 186, 186);
+  lv_obj_align(gauge, NULL, LV_ALIGN_CENTER, 0, 0);
+
+  // Second tab, make a chart...
+  chart = lv_chart_create(tab2, NULL);
+  lv_obj_set_size(chart, 200, 180);
+  lv_obj_align(chart, NULL, LV_ALIGN_CENTER, 0, 0);
+  lv_chart_set_type(chart, LV_CHART_TYPE_COLUMN);
+  // For simplicity, we'll stick with the chart's default 10 data points:
+  series = lv_chart_add_series(chart, LV_COLOR_RED);
+  lv_chart_init_points(chart, series, 0);
+  // Make each column shift left as new values enter on right:
+  lv_chart_set_update_mode(chart, LV_CHART_UPDATE_MODE_SHIFT);
+
+  // Third tab is a canvas, which we'll fill with random colored lines.
+  // LittlevGL draw functions only work on TRUE_COLOR canvas.
+/*  canvas = lv_canvas_create(tab3, NULL);
+  lv_canvas_set_buffer(canvas, canvas_buffer,
+    CANVAS_WIDTH, CANVAS_HEIGHT, LV_IMG_CF_TRUE_COLOR);
+  lv_obj_align(canvas, NULL, LV_ALIGN_CENTER, 0, 0);
+  lv_canvas_fill_bg(canvas, LV_COLOR_WHITE, LV_OPA_100);
+
+  // Set up canvas line-drawing style based on defaults.
+  // Later we'll change color settings when drawing each line.
+  lv_draw_line_dsc_init(&draw_dsc);
+  */
 }
 
-#define LV_COLOR_MAKE lv_color_make
-
-void initialize() {
-    lv_style_copy(&myButtonStyleREL, &lv_style_plain);
-    myButtonStyleREL.body.main_color = LV_COLOR_MAKE(150, 0, 0);
-    myButtonStyleREL.body.grad_color = LV_COLOR_MAKE(0, 0, 150);
-    myButtonStyleREL.body.radius = 0;
-    myButtonStyleREL.text.color = LV_COLOR_MAKE(255, 255, 255);
-
-    lv_style_copy(&myButtonStylePR, &lv_style_plain);
-    myButtonStylePR.body.main_color = LV_COLOR_MAKE(255, 0, 0);
-    myButtonStylePR.body.grad_color = LV_COLOR_MAKE(0, 0, 255);
-    myButtonStylePR.body.radius = 0;
-    myButtonStylePR.text.color = LV_COLOR_MAKE(255, 255, 255);
-
-    myButton = lv_btn_create(lv_scr_act(), NULL); //create button, lv_scr_act() is deafult screen object
-    lv_obj_set_free_num(myButton, 0); //set button is to 0
-    lv_btn_set_action(myButton, LV_BTN_ACTION_CLICK, btn_click_action); //set function to be called on button click
-    lv_btn_set_style(myButton, LV_BTN_STYLE_REL, &myButtonStyleREL); //set the relesed style
-    lv_btn_set_style(myButton, LV_BTN_STYLE_PR, &myButtonStylePR); //set the pressed style
-    lv_obj_set_size(myButton, 200, 50); //set the button size
-    lv_obj_align(myButton, NULL, LV_ALIGN_IN_TOP_LEFT, 10, 10); //set the position to top mid
-
-    myButtonLabel = lv_label_create(myButton, NULL); //create label and puts it inside of the button
-    lv_label_set_text(myButtonLabel, "Click the Button"); //sets label text
-
-    myLabel = lv_label_create(lv_scr_act(), NULL); //create label and puts it on the screen
-    lv_label_set_text(myLabel, "Button has not been clicked yet"); //sets label text
-    lv_obj_align(myLabel, NULL, LV_ALIGN_LEFT_MID, 10, 0); //set the position to center
-}
-*/
 
 #endif
 
@@ -8008,6 +8063,12 @@ bool Xdrv10(uint8_t function)
     case FUNC_EVERY_100_MSECOND:
       ScripterEvery100ms();
       break;
+#ifdef USE_LVGL
+    case FUNC_EVERY_50_MSECOND:
+      lv_task_handler();
+      break;
+#endif // USE_LVGL
+
     case FUNC_EVERY_SECOND:
       ScriptEverySecond();
       break;

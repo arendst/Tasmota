@@ -28,6 +28,7 @@ public:
   // LvGLStatus begin(uDisplay_lvgl *tft, TouchScreen *touch,
   //                  bool debug = false);
   LvGLStatus begin(Renderer *tft, bool debug = false);
+  LvGLStatus begin(Renderer *tft, void *touch, bool debug);
   // These items need to be public for some internal callbacks,
   // but should be avoided by user code please!
   Renderer *display; ///< Pointer to the SPITFT display instance
@@ -40,7 +41,6 @@ public:
   void stopScreenshot(void) { screenshot = nullptr; }
 
 private:
-  LvGLStatus begin(Renderer *tft, void *touch, bool debug);
   lv_disp_drv_t lv_disp_drv;
   lv_disp_buf_t lv_disp_buf;
   lv_color_t *lv_pixel_buf;

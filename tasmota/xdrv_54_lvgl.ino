@@ -243,7 +243,8 @@ static lv_fs_res_t lvbe_fs_remove(lv_fs_drv_t * drv, const char *path) {
  * display ecosystem.
  ************************************************************/
 
- Renderer *Init_uDisplay(const char *desc, int8_t cs);
+Renderer *Init_uDisplay(const char *desc, int8_t cs);
+
 
 void start_lvgl(const char * uconfig);
 void start_lvgl(const char * uconfig) {
@@ -268,7 +269,7 @@ void start_lvgl(const char * uconfig) {
   glue = new Adafruit_LvGL_Glue();
 
   // Initialize glue, passing in address of display & touchscreen
-  LvGLStatus status = glue->begin(renderer);
+  LvGLStatus status = glue->begin(renderer, (void*)1, false);
   if (status != LVGL_OK) {
     AddLog(LOG_LEVEL_ERROR, PSTR("Glue error %d"), status);
     return;
