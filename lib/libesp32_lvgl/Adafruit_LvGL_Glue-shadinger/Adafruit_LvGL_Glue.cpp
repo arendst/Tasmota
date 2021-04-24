@@ -165,7 +165,7 @@ static void lv_flush_callback(lv_disp_drv_t *disp, const lv_area_t *area, lv_col
     return; // ok
   }
 
-  uDisplay_lvgl *display = glue->display;
+  Renderer *display = glue->display;
 
   if (!glue->first_frame) {
     //display->dmaWait();  // Wait for prior DMA transfer to complete
@@ -174,11 +174,9 @@ static void lv_flush_callback(lv_disp_drv_t *disp, const lv_area_t *area, lv_col
     glue->first_frame = false;
   }
 
-  // display->startWrite();
-  // display->setAddrWindow(area->x1, area->y1, width, height);
-  display->writePixels(area->x1, area->y1, width, height,
-                       (uint16_t *)color_p, width * height);
-  // display->pushColors((uint16_t *)color_p, width * height, false);
+  display->setAddrWindow(area->x1, area->y1, area->x1+width, area->y1+height);
+  display->pushColors((uint16_t *)color_p, width * height, true);
+  display->setAddrWindow(0,0,0,0);
 
   lv_disp_flush_ready(disp);
 }
@@ -286,11 +284,11 @@ Adafruit_LvGL_Glue::~Adafruit_LvGL_Glue(void) {
  * * LVGL_ERR_TIMER : Failure to set up timers
  * * LVGL_ERR_ALLOC : Failure to allocate memory
  */
-LvGLStatus Adafruit_LvGL_Glue::begin(uDisplay_lvgl *tft, bool debug) {
+LvGLStatus Adafruit_LvGL_Glue::begin(Renderer *tft, bool debug) {
   return begin(tft, (void *)NULL, debug);
 }
 
-LvGLStatus Adafruit_LvGL_Glue::begin(uDisplay_lvgl *tft, void *touch, bool debug) {
+LvGLStatus Adafruit_LvGL_Glue::begin(Renderer *tft, void *touch, bool debug) {
 
   lv_init();
 // #if (LV_USE_LOG)

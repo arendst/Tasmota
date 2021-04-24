@@ -31,6 +31,17 @@ uint16_t uDisplay::GetColorFromIndex(uint8_t index) {
   return udisp_colors[index];
 }
 
+uint16_t uDisplay::fgcol(void) {
+  return fg_col;
+}
+uint16_t uDisplay::bgcol(void) {
+  return bg_col;
+}
+
+int8_t uDisplay::color_type(void) {
+  return col_type;
+}
+
 
 uDisplay::~uDisplay(void) {
   if (framebuffer) {
@@ -40,6 +51,8 @@ uDisplay::~uDisplay(void) {
 
 uDisplay::uDisplay(char *lp) : Renderer(800, 600) {
   // analyse decriptor
+  pwr_cbp = 0;
+  dim_cbp = 0;
   framebuffer = 0;
   col_mode = 16;
   sa_mode = 16;
@@ -915,8 +928,8 @@ void uDisplay::setAddrWindow(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1)
     SPI_CS_HIGH
     SPI_END_TRANSACTION
   } else {
-    SPI_CS_LOW
     SPI_BEGIN_TRANSACTION
+    SPI_CS_LOW
     setAddrWindow_int(x0, y0, x1 - x0, y1 - y0 );
   }
 }
@@ -1092,7 +1105,11 @@ void uDisplay::DisplayOnff(int8_t on) {
     return;
   }
 
-  udisp_bpwr(on);
+  if (pwr_cbp) {
+    pwr_cbp(on);
+  }
+
+//  udisp_bpwr(on);
 
   if (interface == _UDSP_I2C) {
     if (on) {
@@ -1162,7 +1179,10 @@ void uDisplay::dim(uint8_t dim) {
     if (bpanel >= 0) {
       ledcWrite(ESP32_PWM_CHANNEL, dimmer);
     } else {
-      udisp_dimm(dim);
+      //udisp_dimm(dim);
+      if (dim_cbp) {
+        dim_cbp(dim);
+      }
     }
 #endif
 
