@@ -254,8 +254,12 @@ void start_lvgl(const char * uconfig) {
   }
 
   if (uconfig && !renderer) {
+#ifdef USE_UNIVERSAL_DISPLAY
     renderer  = Init_uDisplay((char*)uconfig, -1);
     if (!renderer) return;
+#else
+    return;
+#endif
   }
 
   // **************************************************
