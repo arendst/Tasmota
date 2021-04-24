@@ -18,4 +18,4 @@ else:
 if os.path.isfile("platformio_tasmota_cenv.ini"):
     print ("*** use provided platformio_tasmota_cenv.ini as planned ***")
 else: 
-    shutil.copy("platformio_tasmota_cenv_sample.ini", "platformio_tasmota_cenv.ini"
+    shutil.copy("platformio_tasmota_cenv_sample.ini", "platformio_tasmota_cenv.ini")
