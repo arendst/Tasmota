@@ -79,9 +79,9 @@ class uDisplay : public Renderer {
   void DisplayOnff(int8_t on);
   void Splash(void);
   char *devname(void);
-  uint16_t fgcol(void) const { return fg_col; };
-  uint16_t bgcol(void) const { return bg_col; };
-  int8_t color_type(void) const { return col_type; };
+  uint16_t fgcol(void);
+  uint16_t bgcol(void);
+  int8_t color_type(void);
   void dim(uint8_t dim);
   uint16_t GetColorFromIndex(uint8_t index);
   void setRotation(uint8_t m);
@@ -90,6 +90,8 @@ class uDisplay : public Renderer {
   void pushColors(uint16_t *data, uint16_t len, boolean first);
   void TS_RotConvert(int16_t *x, int16_t *y);
   void invertDisplay(boolean i);
+  void SetPwrCB(pwr_cb cb) { pwr_cbp = cb; };
+  void SetDimCB(dim_cb cb) { dim_cbp = cb; };
 
  private:
    void setAddrWindow(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1);

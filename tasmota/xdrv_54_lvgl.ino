@@ -20,7 +20,7 @@
 
 #ifdef USE_LVGL
 
-#include <uDisplay_lvgl.h>
+#include <renderer.h>
 #include "lvgl.h"
 
 #define XDRV_54             54
@@ -37,7 +37,7 @@
  * you should lock on the very same semaphore! */
 
 SemaphoreHandle_t xGuiSemaphore;
-uDisplay_lvgl * udisp = nullptr;
+//uDisplay * udisp = nullptr;
 
 // necessary for compilation
 uint8_t color_type_lvgl = 0;
@@ -121,7 +121,7 @@ static void guiTask(void *pvParameter) {
 
 /************************************************************
  * Callbacks for file system access from LVGL
- * 
+ *
  * Useful to load fonts or images from file system
  ************************************************************/
 
@@ -217,7 +217,7 @@ static lv_fs_res_t lvbe_fs_seek(lv_fs_drv_t * drv, void * file_p, uint32_t pos) 
     return LV_FS_RES_OK;
   } else {
     return LV_FS_RES_UNKNOWN;
-  }  
+  }
 }
 
 static lv_fs_res_t lvbe_fs_size(lv_fs_drv_t * drv, void * file_p, uint32_t * size_p);
@@ -238,10 +238,13 @@ static lv_fs_res_t lvbe_fs_remove(lv_fs_drv_t * drv, const char *path) {
 
 /************************************************************
  * Initialize the display / touchscreen drivers then launch lvgl
- * 
+ *
  * We use Adafruit_LvGL_Glue to leverage the Adafruit
  * display ecosystem.
  ************************************************************/
+
+Renderer *Init_uDisplay(const char *desc, int8_t cs);
+
 
 void start_lvgl(const char * uconfig);
 void start_lvgl(const char * uconfig) {
@@ -251,17 +254,14 @@ void start_lvgl(const char * uconfig) {
     return;
   }
 
-  if (udisp == nullptr) {
-    udisp  = new uDisplay_lvgl((char*)uconfig);
+  if (uconfig && !renderer) {
+#ifdef USE_UNIVERSAL_DISPLAY
+    renderer  = Init_uDisplay((char*)uconfig, -1);
+    if (!renderer) return;
+#else
+    return;
+#endif
   }
-
-  udisp->Init();
-
-  // Settings.display_width = udisp->width();
-  // Settings.display_height = udisp->height();
-
-  udisp->DisplayInit(0 /* DISPLAY_INIT_MODE */, Settings.display_size, Settings.display_rotate, Settings.display_font);
-  udisp->dim(Settings.display_dimmer);
 
   // **************************************************
   // Initialize the glue between Adafruit and LVGL
@@ -269,7 +269,7 @@ void start_lvgl(const char * uconfig) {
   glue = new Adafruit_LvGL_Glue();
 
   // Initialize glue, passing in address of display & touchscreen
-  LvGLStatus status = glue->begin(udisp);
+  LvGLStatus status = glue->begin(renderer, (void*)1, false);
   if (status != LVGL_OK) {
     AddLog(LOG_LEVEL_ERROR, PSTR("Glue error %d"), status);
     return;
@@ -277,8 +277,10 @@ void start_lvgl(const char * uconfig) {
 
   // Set the default background color of the display
   // This is normally overriden by an opaque screen on top
+#ifdef USE_BERRY
   lv_obj_set_style_local_bg_color(lv_scr_act(), LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, lv_color_from_uint32(USE_LVGL_BG_DEFAULT));
   lv_obj_set_style_local_bg_opa(lv_scr_act(), LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, LV_OPA_COVER);
+#endif
 
 #if LV_USE_LOG
   lv_log_register_print_cb(lvbe_debug);
@@ -319,6 +321,8 @@ void start_lvgl(const char * uconfig) {
     * Otherwise there can be problem such as memory corruption and so on.
     * NOTE: When not using Wi-Fi nor Bluetooth you can pin the guiTask to core 0 */
   xTaskCreatePinnedToCore(guiTask, "gui", 4096*2, NULL, 0, NULL, 1);
+
+  AddLog(LOG_LEVEL_INFO, PSTR("LVGL initialized"));
 }
 
 /*********************************************************************************************\

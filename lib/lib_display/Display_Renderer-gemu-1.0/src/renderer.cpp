@@ -153,6 +153,13 @@ void Renderer::DrawStringAt(int16_t x, int16_t y, const char* text, uint16_t col
     int refcolumn = x;
     sFONT *xfont = selected_font;
 
+/*
+    if (font == 5 && !drawmode) {
+      // clear bckground
+      int16_t x1,y1;
+      uint16_t w,h;
+      Adafruit_GFX::getTextBounds(text, 0, 0, &x1, &y1, &w, &h);
+    }*/
 #ifndef USE_EPD_FONTS
     font=0;
 #endif
@@ -297,13 +304,15 @@ void Renderer::setTextFont(uint8_t f) {
 
 
 void Renderer::SetRamfont(uint8_t *font) {
+
   ramfont = (GFXfont*)font;
-  uint32_t bitmap_offset = (uint32_t)ramfont->bitmap;
-  uint32_t glyph_offset = (uint32_t)ramfont->glyph;
+  if (font) {
+    uint32_t bitmap_offset = (uint32_t)ramfont->bitmap;
+    uint32_t glyph_offset = (uint32_t)ramfont->glyph;
 
-  ramfont->bitmap = (uint8_t*)((uint32_t)font + bitmap_offset);
-  ramfont->glyph = (GFXglyph*)((uint32_t)font + glyph_offset);
-
+    ramfont->bitmap = (uint8_t*)((uint32_t)font + bitmap_offset);
+    ramfont->glyph = (GFXglyph*)((uint32_t)font + glyph_offset);
+  }
   setFont(ramfont);
 }
 
@@ -586,6 +595,33 @@ void Renderer::setScrollMargins(uint16_t top, uint16_t bottom) {
 }
 void Renderer::scrollTo(uint16_t y) {
 
+}
+
+void Renderer::SetPwrCB(pwr_cb cb) {
+
+}
+void Renderer::SetDimCB(dim_cb cb) {
+
+}
+
+uint16_t Renderer::fgcol(void) {
+  return 0;
+}
+uint16_t Renderer::bgcol(void) {
+  return 0;
+}
+int8_t Renderer::color_type(void) {
+ return 0;
+}
+
+void Renderer::Splash(void) {
+
+}
+
+const char dname[1] = {0};
+
+char *Renderer::devname(void) {
+  return (char*)dname;
 }
 
 void VButton::xdrawButton(bool inverted) {
