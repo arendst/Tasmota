@@ -61,7 +61,7 @@ int32_t Epd47::Init(void) {
   epd_init(EPD_LUT_1K);
   hl = epd_hl_init(WAVEFORM);
   epd47_buffer = epd_hl_get_framebuffer(&hl);
-
+  lvgl_param = 10;
   return 0;
 }
 
@@ -157,26 +157,42 @@ void Epd47::drawFastHLine(int16_t x, int16_t y, int16_t w, uint16_t color) {
 }
 
 void Epd47::setAddrWindow(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1) {
-  xp = x0;
-  yp = y0;
-  //setAddrWindow_int(x0,y0,x1-1,y1-1);
+
+  // just save params or update frame
+  if (!x0 && !y0 && !x1 && !y1) {
+    //Updateframe();
+  } else {
+    seta_xp1 = x0;
+    seta_xp2 = x1;
+    seta_yp1 = y0;
+    seta_yp2 = y1;
+  }
+
 }
 
 void Epd47::pushColors(uint16_t *data, uint16_t len, boolean first) {
-  uint16_t color;
-  uint16_t cxp = xp;
-  while (len--) {
-    color = *data++;
-    uint8_t red = ((color >> 11) & 0x1f) << 3;
-    uint8_t green = ((color >> 5) & 0x3f) << 2;
-    uint8_t blue = (color & 0x1f) << 3;
-    color = (red + green + blue) / 3;
-    color >>= 4;
-    drawPixel(cxp, yp, color);
-    cxp++;
-  }
-  yp++;
+    // stupid bw version
+uint16_t x1 = seta_xp1;
+uint16_t x2 = seta_xp2;
+uint16_t y1 = seta_yp1;
+uint16_t y2 = seta_yp2;
 
+    for (uint32_t y = y1; y < y2; y++) {
+      for (uint32_t x = x1; x < x2; x++) {
+        uint16_t color = *data++;
+        uint8_t red = ((color >> 11) & 0x1f) << 3;
+        uint8_t green = ((color >> 5) & 0x3f) << 2;
+        uint8_t blue = (color & 0x1f) << 3;
+        color = (red + green + blue) / 3;
+        color >>= 4;
+        drawPixel(x, y, color);
+        len--;
+        if (!len) {
+          seta_yp1 = y + 1;
+          return;
+        }
+      }
+    }
 }
 
 /* END OF FILE */

@@ -282,6 +282,9 @@ uDisplay::uDisplay(char *lp) : Renderer(800, 600) {
             lutptime = next_val(&lp1);
             lut3time = next_val(&lp1);
             break;
+          case 'B':
+            lvgl_param = next_val(&lp1);
+            break;
         }
       }
     }
@@ -927,7 +930,9 @@ void uDisplay::setAddrWindow(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1)
   if (bpp != 16) {
     // just save params or update frame
     if (!x0 && !y0 && !x1 && !y1) {
-      Updateframe();
+      if (!ep_mode) {
+        Updateframe();
+      }
     } else {
       seta_xp1 = x0;
       seta_xp2 = x1;
