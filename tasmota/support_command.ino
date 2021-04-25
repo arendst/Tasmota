@@ -326,27 +326,20 @@ void CmndBacklog(void) {
       TasmotaGlobal.backlog_nodelay = true;
     }
 
-    char *blcommand = strtok(XdrvMailbox.data, ";");
 #ifdef SUPPORT_IF_STATEMENT
+    char *blcommand = strtok(XdrvMailbox.data, ";");
     while ((blcommand != nullptr) && (backlog.size() < MAX_BACKLOG))
 #else
     uint32_t bl_pointer = (!TasmotaGlobal.backlog_pointer) ? MAX_BACKLOG -1 : TasmotaGlobal.backlog_pointer;
     bl_pointer--;
+    char *blcommand = strtok(XdrvMailbox.data, ";");
     while ((blcommand != nullptr) && (TasmotaGlobal.backlog_index != bl_pointer))
 #endif
     {
-      // Ignore ; within double quotes (") but find ; after first even quote
-      char *next = strchr(blcommand, '\0') +1;                        // Prepare for next ;
-      while ((next != nullptr) && (ChrCount(blcommand, "\"") % 2)) {  // Check for even quote count
-        next--;                                                       // Select end of line
-        *next = ';';                                                  // Restore ; removed by strtok()
-        next = strtok(nullptr, ";");                                  // Point to begin of next string up to next ; or nullptr
-      }
-      // Skip unnecessary command Backlog at start of blcommand
       while(true) {
         blcommand = Trim(blcommand);
         if (!strncasecmp_P(blcommand, PSTR(D_CMND_BACKLOG), strlen(D_CMND_BACKLOG))) {
-          blcommand += strlen(D_CMND_BACKLOG);
+          blcommand += strlen(D_CMND_BACKLOG);                                  // Skip unnecessary command Backlog
         } else {
           break;
         }
@@ -359,9 +352,7 @@ void CmndBacklog(void) {
 #else
         TasmotaGlobal.backlog[TasmotaGlobal.backlog_index] = blcommand;
         TasmotaGlobal.backlog_index++;
-        if (TasmotaGlobal.backlog_index >= MAX_BACKLOG) {
-          TasmotaGlobal.backlog_index = 0;
-        }
+        if (TasmotaGlobal.backlog_index >= MAX_BACKLOG) TasmotaGlobal.backlog_index = 0;
 #endif
       }
       blcommand = strtok(nullptr, ";");

@@ -1077,16 +1077,16 @@ void SettingsDefaultSet2(void) {
   flag4.mqtt_tls |= MQTT_TLS_ENABLED;
   flag4.mqtt_no_retain |= MQTT_NO_RETAIN;
 
+#ifdef USER_TEMPLATE
+  String user_template = USER_TEMPLATE;
+  JsonTemplate((char*)user_template.c_str());
+#endif
+
   Settings.flag = flag;
   Settings.flag2 = flag2;
   Settings.flag3 = flag3;
   Settings.flag4 = flag4;
   Settings.flag5 = flag5;
-
-#ifdef USER_TEMPLATE
-  String user_template = USER_TEMPLATE;
-  JsonTemplate((char*)user_template.c_str());
-#endif
 }
 
 /********************************************************************************************/

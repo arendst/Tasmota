@@ -2130,11 +2130,11 @@ void HandleOtherConfiguration(void) {
 }
 
 void OtherSaveSettings(void) {
-  char tmp1[400];                             // Needs to hold complete ESP32 template of minimal 230 chars
+  char tmp1[300];                             // Needs to hold complete ESP32 template of minimal 230 chars
   WebGetArg(PSTR("dn"), tmp1, sizeof(tmp1));  // Device name
   char tmp2[TOPSZ];
   WebGetArg(PSTR("wp"), tmp2, sizeof(tmp2));  // Web password
-  char command[600];
+  char command[500];
   snprintf_P(command, sizeof(command), PSTR(D_CMND_BACKLOG "0 " D_CMND_WEBPASSWORD "2 %s;" D_CMND_SO "3 %d;" D_CMND_DEVICENAME " %s"),
     (!strlen(tmp2)) ? "\"" : (strlen(tmp2) < 5) ? "" : tmp2,
     Webserver->hasArg(F("b1")),               // SetOption3 - Enable MQTT
@@ -2155,8 +2155,8 @@ void OtherSaveSettings(void) {
 #endif  // USE_EMULATION
 
   WebGetArg(PSTR("t1"), tmp1, sizeof(tmp1));  // Template
-  if (strlen(tmp1)) {  // {"NAME":"12345678901234","GPIO":[255,255,255,255,255,255,255,255,255,255,255,255,255],"FLAG":255,"BASE":255,"CMND":"SO123 1;SO99 0"}
-    snprintf_P(command, sizeof(command), PSTR("%s;%s" D_CMND_TEMPLATE " %s"), command, (Webserver->hasArg(F("t2"))) ? PSTR(D_CMND_MODULE " 0;") : "", tmp1);
+  if (strlen(tmp1)) {  // {"NAME":"12345678901234","GPIO":[255,255,255,255,255,255,255,255,255,255,255,255,255],"FLAG":255,"BASE":255}
+    snprintf_P(command, sizeof(command), PSTR("%s;" D_CMND_TEMPLATE " %s%s"), command, tmp1, (Webserver->hasArg(F("t2"))) ? PSTR("; " D_CMND_MODULE " 0") : "");
   }
   ExecuteWebCommand(command);
 }

@@ -515,14 +515,6 @@ char* UpperCase_P(char* dest, const char* source)
   return dest;
 }
 
-char* StrStr_P(const char* source, const char* search) {
-  char case_source[strlen(source) +1];
-  UpperCase_P(case_source, source);
-  char case_search[strlen(search) +1];
-  UpperCase_P(case_search, search);
-  return strstr(case_source, case_search);
-}
-
 char* Trim(char* p)
 {
   if (*p != '\0') {
@@ -1651,22 +1643,6 @@ bool JsonTemplate(char* dataBuf)
     uint32_t base = val.getUInt();
     if ((0 == base) || !ValidTemplateModule(base -1)) { base = 18; }
     Settings.user_template_base = base -1;  // Default WEMOS
-  }
-
-  val = root[PSTR(D_JSON_CMND)];
-  if (val) {
-    if ((USER_MODULE == Settings.module) || (StrStr_P(val.getStr(), PSTR(D_CMND_MODULE " 0")))) {      // Only execute if current module = USER_MODULE = this template
-      char* backup_data = XdrvMailbox.data;
-      XdrvMailbox.data = (char*)val.getStr();  // Backlog commands
-      uint32_t backup_data_len = XdrvMailbox.data_len;
-      XdrvMailbox.data_len = 1;                // Any data
-      uint32_t backup_index = XdrvMailbox.index;
-      XdrvMailbox.index = 0;                   // Backlog0 - no delay
-      CmndBacklog();
-      XdrvMailbox.index = backup_index;
-      XdrvMailbox.data_len = backup_data_len;
-      XdrvMailbox.data = backup_data;
-    }
   }
 
 //  AddLog(LOG_LEVEL_DEBUG, PSTR("TPL: Converted"));
