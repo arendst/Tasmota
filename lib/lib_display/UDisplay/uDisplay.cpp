@@ -20,6 +20,23 @@
 #include <Arduino.h>
 #include "uDisplay.h"
 
+#define GPIO_OLED_RESET     32
+#define GPIO_I2C_SCL        19
+#define GPIO_I2C_SDA        20
+#define GPIO_BACKLIGHT      31
+#define GPIO_SPI_CS         24
+#define GPIO_SPI_CLK        23
+#define GPIO_SPI_MOSI       22
+#define GPIO_SPI_DC         25
+#define GPIO_SPI_MISO       21
+#define GPIO_SSPI_CS        29
+#define GPIO_SSPI_SCLK      28
+#define GPIO_SSPI_MOSI      27
+#define GPIO_SSPI_DC        30
+#define GPIO_SSPI_MISO      26
+
+extern int Pin(uint32_t gpio, uint32_t index = 0);
+
 #define UDSP_DEBUG
 
 const uint16_t udisp_colors[]={UDISP_BLACK,UDISP_WHITE,UDISP_RED,UDISP_GREEN,UDISP_BLUE,UDISP_CYAN,UDISP_MAGENTA,\
@@ -86,6 +103,7 @@ uDisplay::uDisplay(char *lp) : Renderer(800, 600) {
 
     if (*lp1 == '#') break;
     if (*lp1 == '\n') lp1++;
+    if (*lp1 == ' ') lp1++;   // Add space char
     while (*lp1 == ' ') lp1++;
     //Serial.printf(">> %s\n",lp1);
     if (*lp1 != ';') {
@@ -108,7 +126,7 @@ uDisplay::uDisplay(char *lp) : Renderer(800, 600) {
         }
         if (*lp1 == ',') lp1++;
       }
-      if (*lp1 != ':' && *lp1 != '\n') {
+      if (*lp1 != ':' && *lp1 != '\n' && *lp1 != ' ') {   // Add space char
         switch (section) {
           case 'H':
             // header line
@@ -285,11 +303,16 @@ uDisplay::uDisplay(char *lp) : Renderer(800, 600) {
         }
       }
     }
-    if (*lp == '\n') {
+    if (*lp == '\n' || *lp == ' ') {   // Add space char
       lp++;
     } else {
       lp = strchr(lp, '\n');
-      if (!lp) break;
+      if (!lp) {
+        lp = strchr(lp, ' ');
+        if (!lp) {
+          break;
+        }
+      }
       lp++;
     }
   }
@@ -360,6 +383,25 @@ uDisplay::uDisplay(char *lp) : Renderer(800, 600) {
 
 
 Renderer *uDisplay::Init(void) {
+
+  // Check pins against configuration
+  if (reset < 0) { reset = Pin(GPIO_OLED_RESET); }
+  if (i2c_scl < 0) { i2c_scl = Pin(GPIO_I2C_SCL); }
+  if (i2c_sda < 0) { i2c_scl = Pin(GPIO_I2C_SDA); }
+  if (bpanel < 0) { spi_cs = Pin(GPIO_BACKLIGHT); }
+  if ((spi_nr == 1) || (spi_nr == 2)) { //SPI0
+    if (spi_cs < 0) { spi_cs = Pin(GPIO_SPI_CS, spi_nr - 1); }
+    if (spi_clk < 0) { spi_clk = Pin(GPIO_SPI_CLK, spi_nr - 1); }
+    if (spi_mosi < 0) { spi_mosi = Pin(GPIO_SPI_MOSI, spi_nr - 1); }
+    if (spi_dc < 0) { spi_dc = Pin(GPIO_SPI_DC, spi_nr - 1); }
+    if (spi_miso < 0) { spi_miso = Pin(GPIO_SPI_MISO, spi_nr - 1); }
+  } else {
+    if (spi_cs < 0) { spi_cs = Pin(GPIO_SSPI_CS); }
+    if (spi_clk < 0) { spi_clk = Pin(GPIO_SSPI_SCLK); }
+    if (spi_mosi < 0) { spi_mosi = Pin(GPIO_SSPI_MOSI); }
+    if (spi_dc < 0) { spi_dc = Pin(GPIO_SSPI_DC); }
+    if (spi_miso < 0) { spi_miso = Pin(GPIO_SSPI_MISO); }
+  }
 
   if (reset >= 0) {
     pinMode(reset, OUTPUT);
@@ -1257,7 +1299,7 @@ void uDisplay::TS_RotConvert(int16_t *x, int16_t *y) {
 
 uint8_t uDisplay::strlen_ln(char *str) {
   for (uint32_t cnt = 0; cnt < 256; cnt++) {
-    if (!str[cnt] || str[cnt] == '\n') return cnt;
+    if (!str[cnt] || str[cnt] == '\n' || str[cnt] == ' ') return cnt;
   }
   return 0;
 }
