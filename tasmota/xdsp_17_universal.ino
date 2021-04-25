@@ -37,6 +37,10 @@ extern FS *ffsp;
 
 #define DISPDESC_SIZE 1000
 
+
+void Core2DisplayPower(uint8_t on);
+void Core2DisplayDim(uint8_t dim);
+
 //#define DSP_ROM_DESC
 
 /*********************************************************************************************/
@@ -194,10 +198,10 @@ uDisplay *udisp;
       //SPI,*,*,*,*,*,*,*
       if (cs < 0) {
         switch (*cp) {
-          case 1:
+          case '1':
             cs = Pin(GPIO_SPI_CS);
             break;
-          case 2:
+          case '2':
             cs = Pin(GPIO_SPI_CS, 1);
             break;
           default:
@@ -309,19 +313,25 @@ uDisplay *udisp;
 
     Settings.display_width = renderer->width();
     Settings.display_height = renderer->height();
-    fg_color = udisp->fgcol();
-    bg_color = udisp->bgcol();
-    color_type = udisp->color_type();
+    fg_color = renderer->fgcol();
+    bg_color = renderer->bgcol();
+    color_type = renderer->color_type();
+
+#ifdef USE_M5STACK_CORE2
+    renderer->SetPwrCB(Core2DisplayPower);
+    renderer->SetDimCB(Core2DisplayDim);
+#endif
 
     renderer->DisplayInit(DISPLAY_INIT_MODE, Settings.display_size, Settings.display_rotate, Settings.display_font);
     renderer->dim(Settings.display_dimmer);
 
 #ifdef SHOW_SPLASH
-    udisp->Splash();
+    renderer->Splash();
 #endif
 
     udisp_init_done = true;
-    AddLog(LOG_LEVEL_INFO, PSTR("DSP: %s!"), udisp->devname());
+    AddLog(LOG_LEVEL_INFO, PSTR("DSP: %s!"), renderer->devname());
+
     return renderer;
   }
   return 0;
@@ -330,8 +340,7 @@ uDisplay *udisp;
 /*********************************************************************************************/
 
 
-void Core2DisplayPower(uint8_t on);
-void Core2DisplayDim(uint8_t dim);
+/*
 
 void udisp_bpwr(uint8_t on) {
 #ifdef USE_M5STACK_CORE2
@@ -344,6 +353,8 @@ void udisp_dimm(uint8_t dim) {
   Core2DisplayDim(dim);
 #endif
 }
+
+*/
 
 void TS_RotConvert(int16_t *x, int16_t *y) {
   if (renderer) renderer->TS_RotConvert(x, y);

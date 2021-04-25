@@ -51,6 +51,7 @@ public:
   virtual int8_t color_type(void);
   virtual void Splash(void);
   virtual char *devname(void);
+  virtual uint16_t lvgl_pars(void);
 
   void setDrawMode(uint8_t mode);
   uint8_t drawmode;
@@ -59,6 +60,7 @@ public:
   virtual uint8_t *allocate_framebuffer(uint32_t size);
   pwr_cb pwr_cbp = 0;
   dim_cb dim_cbp = 0;
+  uint16_t lvgl_param = 0;
 private:
   void DrawCharAt(int16_t x, int16_t y, char ascii_char,int16_t colored);
   inline void drawFastVLineInternal(int16_t x, int16_t y, int16_t h, uint16_t color) __attribute__((always_inline));

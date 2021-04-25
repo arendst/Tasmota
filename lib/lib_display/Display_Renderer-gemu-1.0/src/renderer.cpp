@@ -624,6 +624,10 @@ char *Renderer::devname(void) {
   return (char*)dname;
 }
 
+uint16_t Renderer::lvgl_pars(void) {
+  return lvgl_param;
+}
+
 void VButton::xdrawButton(bool inverted) {
   wr_redir=1;
   drawButton(inverted);
