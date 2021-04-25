@@ -218,10 +218,11 @@ LvGLStatus Adafruit_LvGL_Glue::begin(Renderer *tft, void *touch, bool debug) {
   // if ((lv_pixel_buf = new lv_color_t[LV_HOR_RES_MAX * LV_BUFFER_ROWS * 2])) {
 
   uint32_t lvgl_buffer_size;
+
   //lvgl_buffer_size = LV_HOR_RES_MAX * LV_BUFFER_ROWS;
   uint8_t flushlines = tft->lvgl_pars();
-  lvgl_buffer_size = tft->width() * flushlines ? flushlines:LV_BUFFER_ROWS;
-
+  lvgl_buffer_size = tft->width() * (flushlines ? flushlines:LV_BUFFER_ROWS);
+  //Serial.printf("%d\n", lvgl_buffer_size);
 
   if ((lv_pixel_buf = new lv_color_t[lvgl_buffer_size])) {
 
