@@ -1026,9 +1026,19 @@ void uDisplay::pushColors(uint16_t *data, uint16_t len, boolean first) {
     return;
   }
 
-  while (len--) {
-    color = *data++;
-    WriteColor(color);
+  if ( (col_mode != 18) && (spi_dc >= 0) && (spi_nr <= 2) ) {
+    // special version 8 bit spi I or II
+#ifdef ESP8266
+    while (len--) {
+      uspi->write(*data++);
+    }
+#else
+    uspi->writePixels(data, len * 2);
+#endif
+  } else {
+    while (len--) {
+      WriteColor(*data++);
+    }
   }
 
 }
