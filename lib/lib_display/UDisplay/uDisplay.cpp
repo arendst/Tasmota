@@ -108,7 +108,7 @@ uDisplay::uDisplay(char *lp) : Renderer(800, 600) {
         }
         if (*lp1 == ',') lp1++;
       }
-      if (*lp1 != ':' && *lp1 != '\n') {
+      if (*lp1 != ':' && *lp1 != '\n' && *lp1 != ' ') {   // Add space char
         switch (section) {
           case 'H':
             // header line
@@ -288,11 +288,16 @@ uDisplay::uDisplay(char *lp) : Renderer(800, 600) {
         }
       }
     }
-    if (*lp == '\n') {
+    if (*lp == '\n' || *lp == ' ') {   // Add space char
       lp++;
     } else {
       lp = strchr(lp, '\n');
-      if (!lp) break;
+      if (!lp) {
+        lp = strchr(lp, ' ');
+        if (!lp) {
+          break;
+        }
+      }
       lp++;
     }
   }
@@ -1262,7 +1267,7 @@ void uDisplay::TS_RotConvert(int16_t *x, int16_t *y) {
 
 uint8_t uDisplay::strlen_ln(char *str) {
   for (uint32_t cnt = 0; cnt < 256; cnt++) {
-    if (!str[cnt] || str[cnt] == '\n') return cnt;
+    if (!str[cnt] || str[cnt] == '\n' || str[cnt] == ' ') return cnt;
   }
   return 0;
 }
