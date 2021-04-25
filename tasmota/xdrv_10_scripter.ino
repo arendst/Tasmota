@@ -2629,7 +2629,7 @@ chknext:
           len = 0;
           goto exit;
         }
-#endif
+#endif // USE_LVGL
         break;
       case 'm':
         if (!strncmp(vname, "med(", 4)) {
@@ -7764,39 +7764,34 @@ void btn_event_cb(lv_obj_t * btn, lv_event_t event) {
     if (event == LV_EVENT_CLICKED) {
       AddLog_P(LOG_LEVEL_INFO,PSTR(">>> clicked"));
     }
-    AddLog_P(LOG_LEVEL_INFO,PSTR(">>> clicked"));
 }
 
 
 int32_t lvgl_test(int32_t p) {
+
   start_lvgl(ili9342);
+
   lv_obj_clean(lv_scr_act());
 
-  lv_obj_t *label1 =  lv_label_create(lv_scr_act(), NULL);
-
-  /*Modify the Label's text*/
-  lv_label_set_text(label1, "Hello world!");
-
+  if (p == 0) {
+    lv_obj_t *label1 =  lv_label_create(lv_scr_act(), NULL);
+    /*Modify the Label's text*/
+    lv_label_set_text(label1, "Hello world!");
     /* Align the Label to the center
      * NULL means align on parent (which is the screen now)
      * 0, 0 at the end means an x, y offset after alignment*/
-  lv_obj_align(label1, NULL, LV_ALIGN_CENTER, 0, 0);
-
-
-  lvgl_setup();
-
-  /*Add a button*/
-   lv_obj_t *btn1 = lv_btn_create(lv_scr_act(), NULL);           /*Add to the active screen*/
-   lv_obj_set_pos(btn1, 2, 2);                                    /*Adjust the position*/
-   lv_obj_set_size(btn1, 96, 30);                                 /* set size of button */
-   lv_obj_set_event_cb(btn1, btn_event_cb);
-
-   /*Add text*/
-   lv_obj_t *label = lv_label_create(btn1, NULL);                  /*Put on 'btn1'*/
-   lv_label_set_text(label, "Click");
-
-
-
+     lv_obj_align(label1, NULL, LV_ALIGN_CENTER, 0, 0);
+     /*Add a button*/
+     lv_obj_t *btn1 = lv_btn_create(lv_scr_act(), NULL);           /*Add to the active screen*/
+     lv_obj_set_pos(btn1, 2, 2);                                    /*Adjust the position*/
+     lv_obj_set_size(btn1, 96, 30);                                 /* set size of button */
+     lv_obj_set_event_cb(btn1, btn_event_cb);
+     /*Add text*/
+     lv_obj_t *label = lv_label_create(btn1, NULL);                  /*Put on 'btn1'*/
+     lv_label_set_text(label, "Click");
+  } else {
+    lvgl_setup();
+  }
   return 0;
 }
 
@@ -7898,7 +7893,7 @@ void lvgl_setup(void) {
 }
 
 
-#endif
+#endif // USE_LVGL
 
 /*********************************************************************************************\
  * Interface

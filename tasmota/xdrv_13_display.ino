@@ -2677,13 +2677,31 @@ void AddValue(uint8_t num,float fval) {
  * Touch panel control
 \*********************************************************************************************/
 
-#if defined(USE_FT5206) || defined(USE_XPT2046)
+
 bool FT5206_found = false;
 bool XPT2046_found = false;
-
 int16_t touch_xp;
 int16_t touch_yp;
 bool touched;
+
+uint32_t Touch_Status(uint32_t sel) {
+  if (FT5206_found || XPT2046_found) {
+    switch (sel) {
+      case 0:
+        return  touched;
+      case 1:
+        return touch_xp;
+      case 2:
+        return touch_yp;
+    }
+    return 0;
+  } else {
+    return 0;
+  }
+}
+
+#if defined(USE_FT5206) || defined(USE_XPT2046)
+
 
 #ifdef USE_M5STACK_CORE2
 uint8_t tbstate[3];
@@ -2747,21 +2765,7 @@ int16_t XPT2046_y() {
 }
 #endif  // USE_XPT2046
 
-uint32_t Touch_Status(uint32_t sel) {
-  if (FT5206_found || XPT2046_found) {
-    switch (sel) {
-      case 0:
-        return  touched;
-      case 1:
-        return touch_xp;
-      case 2:
-        return touch_yp;
-    }
-    return 0;
-  } else {
-    return 0;
-  }
-}
+
 
 void Touch_Check(void(*rotconvert)(int16_t *x, int16_t *y)) {
 
