@@ -924,6 +924,19 @@ void uDisplay::Splash(void) {
 
 void uDisplay::setAddrWindow(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1) {
 
+  if (bpp != 16) {
+    // just save params or update frame
+    if (!x0 && !y0 && !x1 && !y1) {
+      Updateframe();
+    } else {
+      seta_xp1 = x0;
+      seta_xp2 = x1;
+      seta_yp1 = y0;
+      seta_yp2 = y1;
+    }
+    return;
+  }
+
   if (!x0 && !y0 && !x1 && !y1) {
     SPI_CS_HIGH
     SPI_END_TRANSACTION
@@ -984,8 +997,29 @@ void uDisplay::setAddrWindow_int(uint16_t x, uint16_t y, uint16_t w, uint16_t h)
 }
 
 
+static inline uint8_t ulv_color_to1(uint16_t color) {
+  if (((color>>11) & 0x10) || ((color>>5) & 0x20) || (color & 0x10)) {
+      return 1;
+  }
+  else {
+      return 0;
+  }
+}
 void uDisplay::pushColors(uint16_t *data, uint16_t len, boolean first) {
   uint16_t color;
+
+  if (bpp != 16) {
+    // stupid monchrome version
+    for (uint32_t y = seta_yp1; y < seta_yp2; y++) {
+      for (uint32_t x = seta_xp1; x < seta_xp2; x++) {
+        uint16_t color = *data++;
+        drawPixel(x, y, ulv_color_to1(color));
+        len--;
+        if (!len) return;
+      }
+    }
+    return;
+  }
 
   while (len--) {
     color = *data++;

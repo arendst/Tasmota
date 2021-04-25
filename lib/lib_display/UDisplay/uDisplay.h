@@ -205,6 +205,10 @@ class uDisplay : public Renderer {
    uint8_t lut_array[LUTMAXSIZE][5];
    uint8_t lut_cnt[5];
    uint8_t lut_cmd[5];
+   uint16_t seta_xp1;
+   uint16_t seta_xp2;
+   uint16_t seta_yp1;
+   uint16_t seta_yp2;
 };
 
 
