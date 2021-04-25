@@ -31,11 +31,9 @@ uint32_t Touch_Status(uint32_t sel);
 static bool touchscreen_read(struct _lv_indev_drv_t *indev_drv, lv_indev_data_t *data) {
   //lv_coord_t last_x = 0, last_y = 0;
   //static uint8_t release_count = 0;
-#if defined(USE_FT5206) || defined(USE_XPT2046)
   data->point.x = Touch_Status(1); // Last-pressed coordinates
   data->point.y = Touch_Status(2);
   data->state = Touch_Status(0);
-#endif
   return false; /*No buffering now so no more data read*/
 }
 
