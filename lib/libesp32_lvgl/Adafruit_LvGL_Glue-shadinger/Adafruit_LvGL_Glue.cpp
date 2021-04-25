@@ -3,6 +3,8 @@
 
 // ARCHITECTURE-SPECIFIC TIMER STUFF ---------------------------------------
 
+extern void lv_flush_callback(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p);
+
 // Tick interval for LittlevGL internal timekeeping; 1 to 10 ms recommended
 static const int lv_tick_interval_ms = 10;
 
@@ -51,63 +53,63 @@ static bool touchscreen_read(struct _lv_indev_drv_t *indev_drv, lv_indev_data_t 
 #define LV_BUFFER_ROWS 60 // Most others have a bit more space
 
 
-// This is the flush function required for LittlevGL screen updates.
-// It receives a bounding rect and an array of pixel data (conveniently
-// already in 565 format, so the Earth was lucky there).
-static void lv_flush_callback(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p) {
-  // Get pointer to glue object from indev user data
-  Adafruit_LvGL_Glue *glue = (Adafruit_LvGL_Glue *)disp->user_data;
+// // This is the flush function required for LittlevGL screen updates.
+// // It receives a bounding rect and an array of pixel data (conveniently
+// // already in 565 format, so the Earth was lucky there).
+// static void lv_flush_callback(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p) {
+//   // Get pointer to glue object from indev user data
+//   Adafruit_LvGL_Glue *glue = (Adafruit_LvGL_Glue *)disp->user_data;
 
-  uint16_t width = (area->x2 - area->x1 + 1);
-  uint16_t height = (area->y2 - area->y1 + 1);
+//   uint16_t width = (area->x2 - area->x1 + 1);
+//   uint16_t height = (area->y2 - area->y1 + 1);
 
-  if (glue->getScreenshotFile() != nullptr) {
-    // save pixels to file
-    int32_t btw = (width * height * LV_COLOR_DEPTH + 7) / 8;
-    while (btw > 0) {
-      int32_t ret = glue->getScreenshotFile()->write((const uint8_t*) color_p, btw);
-      //Serial.printf(">>> btw %d, written %d\n", btw, ret);
-      if (ret >= 0) {
-        btw -= ret;
-      } else {
-        btw = 0;  // abort
-      }
-    }
-    lv_disp_flush_ready(disp);
-    return; // ok
-  }
+//   // check if we are currently doing a screenshot
+//   if (glue->getScreenshotFile() != nullptr) {
+//     // save pixels to file
+//     int32_t btw = (width * height * LV_COLOR_DEPTH + 7) / 8;
+//     while (btw > 0) {
+//       int32_t ret = glue->getScreenshotFile()->write((const uint8_t*) color_p, btw);
+//       if (ret >= 0) {
+//         btw -= ret;
+//       } else {
+//         btw = 0;  // abort
+//       }
+//     }
+//     lv_disp_flush_ready(disp);
+//     return; // ok
+// //   }
 
-  Renderer *display = glue->display;
+//   Renderer *display = glue->display;
 
-  if (!glue->first_frame) {
-      //display->dmaWait();  // Wait for prior DMA transfer to complete
-      //display->endWrite(); // End transaction from any prior call
-  } else {
-      glue->first_frame = false;
-  }
+//   if (!glue->first_frame) {
+//       //display->dmaWait();  // Wait for prior DMA transfer to complete
+//       //display->endWrite(); // End transaction from any prior call
+//   } else {
+//       glue->first_frame = false;
+//   }
 
-  display->setAddrWindow(area->x1, area->y1, area->x1+width, area->y1+height);
-  display->pushColors((uint16_t *)color_p, width * height, true);
-  display->setAddrWindow(0,0,0,0);
+//   display->setAddrWindow(area->x1, area->y1, area->x1+width, area->y1+height);
+//   display->pushColors((uint16_t *)color_p, width * height, true);
+//   display->setAddrWindow(0,0,0,0);
 
-  lv_disp_flush_ready(disp);
+//   lv_disp_flush_ready(disp);
 
-}
+// }
 
-#if (LV_USE_LOG)
-// Optional LittlevGL debug print function, writes to Serial if debug is
-// enabled when calling glue begin() function.
-static void lv_debug(lv_log_level_t level, const char *file, uint32_t line, const char *fname,
-                     const char *dsc) {
-  Serial.print(file);
-  Serial.write('@');
-  Serial.print(line);
-  Serial.print(":");
-  Serial.print(fname);
-  Serial.write("->");
-  Serial.println(dsc);
-}
-#endif
+// #if (LV_USE_LOG)
+// // Optional LittlevGL debug print function, writes to Serial if debug is
+// // enabled when calling glue begin() function.
+// static void lv_debug(lv_log_level_t level, const char *file, uint32_t line, const char *fname,
+//                      const char *dsc) {
+//   Serial.print(file);
+//   Serial.write('@');
+//   Serial.print(line);
+//   Serial.print(":");
+//   Serial.print(fname);
+//   Serial.write("->");
+//   Serial.println(dsc);
+// }
+// #endif
 
 
 // GLUE LIB FUNCTIONS ------------------------------------------------------
@@ -120,9 +122,6 @@ static void lv_debug(lv_log_level_t level, const char *file, uint32_t line, cons
  */
 Adafruit_LvGL_Glue::Adafruit_LvGL_Glue(void)
     : first_frame(true), lv_pixel_buf(NULL) {
-#if defined(ARDUINO_ARCH_SAMD)
-  zerotimer = NULL;
-#endif
 }
 
 // Destructor
@@ -133,9 +132,6 @@ Adafruit_LvGL_Glue::Adafruit_LvGL_Glue(void)
  */
 Adafruit_LvGL_Glue::~Adafruit_LvGL_Glue(void) {
   delete[] lv_pixel_buf;
-#if defined(ARDUINO_ARCH_SAMD)
-  delete zerotimer;
-#endif
   // Probably other stuff that could be deallocated here
 }
 
@@ -207,11 +203,6 @@ LvGLStatus Adafruit_LvGL_Glue::begin(Renderer *tft, void *touch, bool debug) {
 
 
   lv_init();
-// #if (LV_USE_LOG)
-//   if (debug) {
-//     lv_log_register_print_cb(lv_debug); // Register debug print function
-//   }
-// #endif
 
   // Allocate LvGL display buffer (x2 because DMA double buffering)
   LvGLStatus status = LVGL_ERR_ALLOC;
