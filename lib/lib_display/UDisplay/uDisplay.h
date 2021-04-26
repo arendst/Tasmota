@@ -5,7 +5,9 @@
 #include <renderer.h>
 #include <Wire.h>
 #include <SPI.h>
+#ifdef ESP32
 #include "driver/spi_master.h"
+#endif
 
 #define _UDSP_I2C 1
 #define _UDSP_SPI 2

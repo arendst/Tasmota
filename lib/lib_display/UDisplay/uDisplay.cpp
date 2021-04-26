@@ -1777,19 +1777,27 @@ void uDisplay::drawFastHLine_EPD(int16_t x, int16_t y, int16_t w, uint16_t color
 
 
 void uDisplay::beginTransaction(SPISettings s) {
+#ifdef ESP32
   if (lvgl_param.use_dma) {
     dmaWait();
   } else {
     uspi->beginTransaction(s);
   }
+#else
+  uspi->beginTransaction(s);
+#endif
 }
 
 void uDisplay::endTransaction(void) {
+#ifdef ESP32
   if (lvgl_param.use_dma) {
     dmaBusy();
   } else {
     uspi->endTransaction();
   }
+#else
+  uspi->endTransaction();
+#endif
 }
 
 
