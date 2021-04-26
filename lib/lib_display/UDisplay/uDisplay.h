@@ -5,6 +5,7 @@
 #include <renderer.h>
 #include <Wire.h>
 #include <SPI.h>
+#include "driver/spi_master.h"
 
 #define _UDSP_I2C 1
 #define _UDSP_SPI 2
@@ -58,8 +59,8 @@ enum uColorType { uCOLOR_BW, uCOLOR_COLOR };
 
 #endif
 
-#define SPI_BEGIN_TRANSACTION if (spi_nr <= 2) uspi->beginTransaction(spiSettings);
-#define SPI_END_TRANSACTION if (spi_nr <= 2) uspi->endTransaction();
+#define SPI_BEGIN_TRANSACTION if (spi_nr <= 2) beginTransaction(spiSettings);
+#define SPI_END_TRANSACTION if (spi_nr <= 2) endTransaction();
 #define SPI_CS_LOW if (spi_cs >= 0) GPIO_CLR(spi_cs);
 #define SPI_CS_HIGH if (spi_cs >= 0) GPIO_SET(spi_cs);
 #define SPI_DC_LOW if (spi_dc >= 0) GPIO_CLR(spi_dc);
@@ -94,6 +95,8 @@ class uDisplay : public Renderer {
   void SetDimCB(dim_cb cb) { dim_cbp = cb; };
 
  private:
+   void beginTransaction(SPISettings s);
+   void endTransaction(void);
    void setAddrWindow(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1);
    void drawPixel(int16_t x, int16_t y, uint16_t color);
    void drawFastHLine(int16_t x, int16_t y, int16_t w, uint16_t color);
@@ -209,6 +212,20 @@ class uDisplay : public Renderer {
    uint16_t seta_xp2;
    uint16_t seta_yp1;
    uint16_t seta_yp2;
+#ifdef ESP32
+   // dma section
+   bool DMA_Enabled = false;
+   uint8_t  spiBusyCheck = 0;
+   spi_transaction_t trans;
+   spi_device_handle_t dmaHAL;
+   spi_host_device_t spi_host = VSPI_HOST;
+   // spi_host_device_t spi_host = VSPI_HOST;
+   bool initDMA(bool ctrl_cs);
+   void deInitDMA(void);
+   bool dmaBusy(void);
+   void dmaWait(void);
+   void pushPixelsDMA(uint16_t* image, uint32_t len);
+#endif // ESP32
 };
 
 

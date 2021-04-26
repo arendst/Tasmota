@@ -283,7 +283,8 @@ uDisplay::uDisplay(char *lp) : Renderer(800, 600) {
             lut3time = next_val(&lp1);
             break;
           case 'B':
-            lvgl_param = next_val(&lp1);
+            lvgl_param.fluslines = next_val(&lp1);
+            lvgl_param.use_dma = next_val(&lp1);
             break;
         }
       }
@@ -462,9 +463,18 @@ Renderer *uDisplay::Init(void) {
     if (spi_nr == 1) {
       uspi = &SPI;
       uspi->begin(spi_clk, spi_miso, spi_mosi, -1);
+      if (lvgl_param.use_dma) {
+        spi_host = VSPI_HOST;
+        initDMA(spi_cs);
+      }
+
     } else if (spi_nr == 2) {
       uspi = new SPIClass(HSPI);
       uspi->begin(spi_clk, spi_miso, spi_mosi, -1);
+      if (lvgl_param.use_dma) {
+        spi_host = HSPI_HOST;
+        initDMA(spi_cs);
+      }
     } else {
       pinMode(spi_clk, OUTPUT);
       digitalWrite(spi_clk, LOW);
@@ -1018,6 +1028,8 @@ static inline uint8_t ulv_color_to1(uint16_t color) {
 void uDisplay::pushColors(uint16_t *data, uint16_t len, boolean first) {
   uint16_t color;
 
+  //Serial.printf("push %x - %d\n", (uint32_t)data, len);
+
   if (bpp != 16) {
     // stupid monchrome version
     for (uint32_t y = seta_yp1; y < seta_yp2; y++) {
@@ -1038,7 +1050,11 @@ void uDisplay::pushColors(uint16_t *data, uint16_t len, boolean first) {
       uspi->write(*data++);
     }
 #else
-    uspi->writePixels(data, len * 2);
+    if (lvgl_param.use_dma) {
+      pushPixelsDMA(data, len );
+    } else {
+      uspi->writePixels(data, len * 2);
+    }
 #endif
   } else {
     while (len--) {
@@ -1758,3 +1774,156 @@ void uDisplay::drawFastHLine_EPD(int16_t x, int16_t y, int16_t w, uint16_t color
     x++;
   }
 }
+
+
+void uDisplay::beginTransaction(SPISettings s) {
+  if (lvgl_param.use_dma) {
+    dmaWait();
+  } else {
+    uspi->beginTransaction(s);
+  }
+}
+
+void uDisplay::endTransaction(void) {
+  if (lvgl_param.use_dma) {
+    dmaBusy();
+  } else {
+    uspi->endTransaction();
+  }
+}
+
+
+// ESP 32 DMA section , derived from TFT_eSPI
+#ifdef ESP32
+
+/***************************************************************************************
+** Function name:           initDMA
+** Description:             Initialise the DMA engine - returns true if init OK
+***************************************************************************************/
+bool uDisplay::initDMA(bool ctrl_cs)
+{
+  if (DMA_Enabled) return false;
+
+  esp_err_t ret;
+  spi_bus_config_t buscfg = {
+    .mosi_io_num = spi_mosi,
+    .miso_io_num = -1,
+    .sclk_io_num = spi_clk,
+    .quadwp_io_num = -1,
+    .quadhd_io_num = -1,
+    .max_transfer_sz = width() * height() * 2 + 8, // TFT screen size
+    .flags = 0,
+    .intr_flags = 0
+  };
+
+  int8_t pin = -1;
+  if (ctrl_cs) pin = spi_cs;
+
+  spi_device_interface_config_t devcfg = {
+    .command_bits = 0,
+    .address_bits = 0,
+    .dummy_bits = 0,
+    .mode = SPI_MODE3,
+    .duty_cycle_pos = 0,
+    .cs_ena_pretrans = 0,
+    .cs_ena_posttrans = 0,
+    .clock_speed_hz = spi_speed*1000000,
+    .input_delay_ns = 0,
+    .spics_io_num = pin,
+    .flags = SPI_DEVICE_NO_DUMMY, //0,
+    .queue_size = 1,
+    .pre_cb = 0, //dc_callback, //Callback to handle D/C line
+    .post_cb = 0
+  };
+  ret = spi_bus_initialize(spi_host, &buscfg, 1);
+  ESP_ERROR_CHECK(ret);
+  ret = spi_bus_add_device(spi_host, &devcfg, &dmaHAL);
+  ESP_ERROR_CHECK(ret);
+
+  DMA_Enabled = true;
+  spiBusyCheck = 0;
+  return true;
+}
+
+/***************************************************************************************
+** Function name:           deInitDMA
+** Description:             Disconnect the DMA engine from SPI
+***************************************************************************************/
+void uDisplay::deInitDMA(void) {
+  if (!DMA_Enabled) return;
+  spi_bus_remove_device(dmaHAL);
+  spi_bus_free(spi_host);
+  DMA_Enabled = false;
+}
+
+/***************************************************************************************
+** Function name:           dmaBusy
+** Description:             Check if DMA is busy
+***************************************************************************************/
+bool uDisplay::dmaBusy(void) {
+  if (!DMA_Enabled || !spiBusyCheck) return false;
+
+  spi_transaction_t *rtrans;
+  esp_err_t ret;
+  uint8_t checks = spiBusyCheck;
+  for (int i = 0; i < checks; ++i) {
+    ret = spi_device_get_trans_result(dmaHAL, &rtrans, 0);
+    if (ret == ESP_OK) spiBusyCheck--;
+  }
+
+  //Serial.print("spiBusyCheck=");Serial.println(spiBusyCheck);
+  if (spiBusyCheck == 0) return false;
+  return true;
+}
+
+
+/***************************************************************************************
+** Function name:           dmaWait
+** Description:             Wait until DMA is over (blocking!)
+***************************************************************************************/
+void uDisplay::dmaWait(void) {
+  if (!DMA_Enabled || !spiBusyCheck) return;
+  spi_transaction_t *rtrans;
+  esp_err_t ret;
+  for (int i = 0; i < spiBusyCheck; ++i) {
+    ret = spi_device_get_trans_result(dmaHAL, &rtrans, portMAX_DELAY);
+    assert(ret == ESP_OK);
+  }
+  spiBusyCheck = 0;
+}
+
+
+/***************************************************************************************
+** Function name:           pushPixelsDMA
+** Description:             Push pixels to TFT (len must be less than 32767)
+***************************************************************************************/
+// This will byte swap the original image if setSwapBytes(true) was called by sketch.
+void uDisplay::pushPixelsDMA(uint16_t* image, uint32_t len) {
+
+  if ((len == 0) || (!DMA_Enabled)) return;
+
+  dmaWait();
+
+/*
+  if(_swapBytes) {
+    for (uint32_t i = 0; i < len; i++) (image[i] = image[i] << 8 | image[i] >> 8);
+  }*/
+
+  esp_err_t ret;
+
+  memset(&trans, 0, sizeof(spi_transaction_t));
+
+  trans.user = (void *)1;
+  trans.tx_buffer = image;  //finally send the line data
+  trans.length = len * 16;        //Data length, in bits
+  trans.flags = 0;                //SPI_TRANS_USE_TXDATA flag
+
+  ret = spi_device_queue_trans(dmaHAL, &trans, portMAX_DELAY);
+  assert(ret == ESP_OK);
+
+  spiBusyCheck++;
+}
+
+
+
+#endif // ESP32

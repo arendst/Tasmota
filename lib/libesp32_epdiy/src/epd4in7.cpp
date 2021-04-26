@@ -61,7 +61,7 @@ int32_t Epd47::Init(void) {
   epd_init(EPD_LUT_1K);
   hl = epd_hl_init(WAVEFORM);
   epd47_buffer = epd_hl_get_framebuffer(&hl);
-  lvgl_param = 10;
+  lvgl_param.fluslines = 10;
   return 0;
 }
 
