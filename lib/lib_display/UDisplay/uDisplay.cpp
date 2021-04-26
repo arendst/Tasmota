@@ -66,6 +66,9 @@ uDisplay::uDisplay(char *lp) : Renderer(800, 600) {
   lutftime = 350;
   lut3time = 10;
   ep_mode = 0;
+  fg_col = 1;
+  bg_col = 0;
+  splash_font = -1;
   allcmd_mode = 0;
   startline = 0xA1;
   uint8_t section = 0;
@@ -527,7 +530,7 @@ Renderer *uDisplay::Init(void) {
           Serial.printf("delay %d ms\n", delay_ms);
 #endif
         }
-        
+
       }
       if (index >= dsp_ncmds) break;
     }
@@ -575,8 +578,10 @@ void uDisplay::DisplayInit(int8_t p, int8_t size, int8_t rot, int8_t font) {
     setTextSize(size);
     setTextColor(fg_col, bg_col);
     setCursor(0,0);
-    fillScreen(bg_col);
-    Updateframe();
+    if (splash_font >= 0) {
+      fillScreen(bg_col);
+      Updateframe();
+    }
 
 #ifdef UDSP_DEBUG
     Serial.printf("Dsp Init complete \n");
@@ -1036,10 +1041,17 @@ static inline uint8_t ulv_color_to1(uint16_t color) {
       return 0;
   }
 }
-void uDisplay::pushColors(uint16_t *data, uint16_t len, boolean first) {
+void uDisplay::pushColors(uint16_t *data, uint16_t len, boolean not_inverted) {
   uint16_t color;
 
   //Serial.printf("push %x - %d\n", (uint32_t)data, len);
+
+#ifdef ESP32
+// reversed order for DMA, so non-DMA needs to get back to normal order
+  if (!not_inverted && !lvgl_param.use_dma) {
+    for (uint32_t i = 0; i < len; i++) (data[i] = data[i] << 8 | data[i] >> 8);
+  }
+#endif
 
   if (bpp != 16) {
     // stupid monchrome version
@@ -1064,8 +1076,6 @@ void uDisplay::pushColors(uint16_t *data, uint16_t len, boolean first) {
     if (lvgl_param.use_dma) {
       pushPixelsDMA(data, len );
     } else {
-      // reversed order for DMA, so non-DMA needs to get back to normal order
-      for (uint32_t i = 0; i < len; i++) (data[i] = data[i] << 8 | data[i] >> 8);
       uspi->writePixels(data, len * 2);
     }
 #endif

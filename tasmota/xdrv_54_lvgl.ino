@@ -162,7 +162,7 @@ void lv_flush_callback(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *c
   uint32_t pixels_len = width * height;
   uint32_t chrono_start = millis();
   display->setAddrWindow(area->x1, area->y1, area->x1+width, area->y1+height);
-  display->pushColors((uint16_t *)color_p, pixels_len, true);
+  display->pushColors((uint16_t *)color_p, pixels_len, false);
   display->setAddrWindow(0,0,0,0);
   uint32_t chrono_time = millis() - chrono_start;
 
