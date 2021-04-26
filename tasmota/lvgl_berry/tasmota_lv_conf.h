@@ -37,7 +37,7 @@
  * Useful if the display has a 8 bit interface (e.g. SPI)*/
 //  #define LV_COLOR_16_SWAP   1
 // #if defined(ADAFRUIT_PYPORTAL)
-//  #define LV_COLOR_16_SWAP   1
+#define LV_COLOR_16_SWAP   1          // needed for DMA transfer
 // #else
 //  #define LV_COLOR_16_SWAP   0
 // #endif
