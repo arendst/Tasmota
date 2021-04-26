@@ -1403,6 +1403,7 @@ bool ValidModule(uint32_t index)
 }
 
 bool ValidTemplate(const char *search) {
+/*
   char template_name[strlen(SettingsText(SET_TEMPLATE_NAME)) +1];
   char search_name[strlen(search) +1];
 
@@ -1410,6 +1411,8 @@ bool ValidTemplate(const char *search) {
   LowerCase(search_name, search);
 
   return (strstr(template_name, search_name) != nullptr);
+*/
+  return (StrStr_P(SettingsText(SET_TEMPLATE_NAME), search) != nullptr);
 }
 
 String AnyModuleName(uint32_t index)
