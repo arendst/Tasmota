@@ -79,6 +79,7 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 ## Changelog v9.4.0.2
 ### Added
 - Initial support for optional ``Template`` JSON fieldpair ``"CMND":"<any template related command>;<any template related command>;..."`` [#11788](https://github.com/arendst/Tasmota/issues/11788)
+- ESP32 pulldown buttons ``Button_d`` and ``Button_id`` [#10814](https://github.com/arendst/Tasmota/issues/10814)
 
 ### Breaking Changed
 

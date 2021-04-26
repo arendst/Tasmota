@@ -163,6 +163,9 @@ enum UserSelectablePins {
   GPIO_EPD_DATA,                       // Base connection EPD driver
 #endif
   GPIO_INPUT,
+#ifdef ESP32
+  GPIO_KEY1_PD, GPIO_KEY1_INV_PD,
+#endif
   GPIO_SENSOR_END };
 
 enum ProgramSelectablePins {
@@ -346,6 +349,9 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_EPD_DATA "|"
 #endif
   D_SENSOR_INPUT "|"
+#ifdef ESP32
+  D_SENSOR_BUTTON "_d|" D_SENSOR_BUTTON "_id|"
+#endif
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -362,9 +368,15 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_OPTION_A) + MAX_OPTIONS_A, // Device specific options
   AGPIO(GPIO_KEY1) + MAX_KEYS,          // Buttons
   AGPIO(GPIO_KEY1_NP) + MAX_KEYS,
+#ifdef ESP32
+  AGPIO(GPIO_KEY1_PD) + MAX_KEYS,
+#endif
   AGPIO(GPIO_KEY1_INV) + MAX_KEYS,
   AGPIO(GPIO_KEY1_INV_NP) + MAX_KEYS,
+#ifdef ESP32
+  AGPIO(GPIO_KEY1_INV_PD) + MAX_KEYS,
   AGPIO(GPIO_KEY1_TC) + MAX_KEYS,       // Touch button
+#endif
   AGPIO(GPIO_SWT1) + MAX_SWITCHES,      // User connected external switches
   AGPIO(GPIO_SWT1_NP) + MAX_SWITCHES,
 #ifdef ROTARY_V1

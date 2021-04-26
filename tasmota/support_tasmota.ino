@@ -1672,6 +1672,12 @@ void GpioInit(void)
         ButtonPullupFlag(mpin - AGPIO(GPIO_KEY1_NP));      //  0 .. 3
         mpin -= (AGPIO(GPIO_KEY1_NP) - AGPIO(GPIO_KEY1));
       }
+#ifdef ESP32
+      else if ((mpin >= AGPIO(GPIO_KEY1_PD)) && (mpin < (AGPIO(GPIO_KEY1_PD) + MAX_KEYS))) {
+        ButtonPulldownFlag(mpin - AGPIO(GPIO_KEY1_PD));    //  0 .. 3
+        mpin -= (AGPIO(GPIO_KEY1_PD) - AGPIO(GPIO_KEY1));
+      }
+#endif
       else if ((mpin >= AGPIO(GPIO_KEY1_INV)) && (mpin < (AGPIO(GPIO_KEY1_INV) + MAX_KEYS))) {
         ButtonInvertFlag(mpin - AGPIO(GPIO_KEY1_INV));     //  0 .. 3
         mpin -= (AGPIO(GPIO_KEY1_INV) - AGPIO(GPIO_KEY1));
@@ -1682,6 +1688,11 @@ void GpioInit(void)
         mpin -= (AGPIO(GPIO_KEY1_INV_NP) - AGPIO(GPIO_KEY1));
       }
 #ifdef ESP32
+      else if ((mpin >= AGPIO(GPIO_KEY1_INV_PD)) && (mpin < (AGPIO(GPIO_KEY1_INV_PD) + MAX_KEYS))) {
+        ButtonPulldownFlag(mpin - AGPIO(GPIO_KEY1_INV_PD));  //  0 .. 3
+        ButtonInvertFlag(mpin - AGPIO(GPIO_KEY1_INV_PD));    //  0 .. 3
+        mpin -= (AGPIO(GPIO_KEY1_INV_PD) - AGPIO(GPIO_KEY1));
+      }
       else if ((mpin >= AGPIO(GPIO_KEY1_TC)) && (mpin < (AGPIO(GPIO_KEY1_TC) + MAX_KEYS))) {
         ButtonTouchFlag(mpin - AGPIO(GPIO_KEY1_TC));  //  0 .. 3
         mpin -= (AGPIO(GPIO_KEY1_TC) - AGPIO(GPIO_KEY1));
