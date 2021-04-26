@@ -23,6 +23,12 @@
 #define MQTT_WIFI_CLIENT_TIMEOUT   200    // Wifi TCP connection timeout (default is 5000 mSec)
 #endif
 
+#if defined(USE_MQTT_AZURE_IOT)
+  #include <JsonParser.h>
+  #undef  MQTT_PORT
+  #define MQTT_PORT         8883
+#endif //USE_MQTT_AZURE_IOT
+
 #define USE_MQTT_NEW_PUBSUBCLIENT
 
 // #define DEBUG_DUMP_TLS    // allow dumping of TLS Flash keys
@@ -226,12 +232,13 @@ void MqttDisconnect(void) {
 
 void MqttSubscribeLib(const char *topic) {
   #if defined(USE_MQTT_AZURE_IOT)
+    // Azure IoT Hub currently does not support custom topics: https://docs.microsoft.com/en-us/azure/iot-hub/iot-hub-mqtt-support
     String realTopicString = "devices/" + String(SettingsText(SET_MQTT_CLIENT));
     realTopicString += "/messages/devicebound/#";
     MqttClient.subscribe(realTopicString.c_str());
-  #else
+  #else //USE_MQTT_AZURE_IOT
     MqttClient.subscribe(topic);
-  #endif
+  #endif //USE_MQTT_AZURE_IOT
   MqttClient.loop();  // Solve LmacRxBlk:1 messages
 }
 
@@ -250,21 +257,25 @@ bool MqttPublishLib(const char* topic, bool retained) {
     }
   }
 
+  bool result;
   #if defined(USE_MQTT_AZURE_IOT)
-    String tasmotaTopic = String(topic);
-    tasmotaTopic.replace("/", ".");       // can not send '/' in the property replace with '.'
-    String realTopicString = "devices/" + String(SettingsText(SET_MQTT_CLIENT));
-    realTopicString+= "/messages/events/tasmotaTopic=" + tasmotaTopic;
+    String sourceTopicString = String(topic);
+    sourceTopicString.replace("/", "%2F");
+    String topicString = "devices/" + String(SettingsText(SET_MQTT_CLIENT));
+    topicString+= "/messages/events/topic=" + sourceTopicString;
 
-    bool result = false;
-    if (String(TasmotaGlobal.mqtt_data).indexOf("{") > -1) {   // only sending JSON, yet this is optional
-      result = MqttClient.publish(realTopicString.c_str(), TasmotaGlobal.mqtt_data, retained);
+    JsonParser mqtt_message((char*) String(TasmotaGlobal.mqtt_data).c_str());
+    JsonParserObject message_object = mqtt_message.getRootObject();
+    if (message_object.isValid()) {   // only sending valid JSON, yet this is optional
+      result = MqttClient.publish(topicString.c_str(), TasmotaGlobal.mqtt_data, retained);
+      AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT "Sending '%s'"), TasmotaGlobal.mqtt_data);
     } else {
+//      AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT "Invalid JSON, '%s' for topic '%s', not sending to Azure IoT Hub"), TasmotaGlobal.mqtt_data, topic);
       result = true;
     }
-  #else
-    bool result = MqttClient.publish(topic, TasmotaGlobal.mqtt_data, retained);
-  #endif
+  #else //USE_MQTT_AZURE_IOT
+    result = MqttClient.publish(topic, TasmotaGlobal.mqtt_data, retained);
+  #endif //USE_MQTT_AZURE_IOT
   yield();  // #3313
   return result;
 }
@@ -297,26 +308,28 @@ void MqttDataHandler(char* mqtt_topic, uint8_t* mqtt_data, unsigned int data_len
   // Save MQTT data ASAP as it's data is discarded by PubSubClient with next publish as used in MQTTlog
   char topic[TOPSZ];
   #if defined(USE_MQTT_AZURE_IOT)
-    // for Azure, we read the topic as a property of the message
+    // for Azure, we read the topic from the property of the message
     String fullTopicString = String(mqtt_topic);
-    int startOfTopic = fullTopicString.indexOf("TASMOTATOPIC=");
+    int startOfTopic = fullTopicString.indexOf("TOPIC=");
     if (startOfTopic == -1){
-      AddLog(LOG_LEVEL_ERROR, PSTR(D_LOG_MQTT "Azure IoT message without the property TASMOTATOPIC"));
+      AddLog(LOG_LEVEL_ERROR, PSTR(D_LOG_MQTT "Azure IoT message without the property TOPIC, case sensitive."));
       return;
     }
-    String newTopic = fullTopicString.substring(startOfTopic + 13);
-    newTopic.replace(".", "/");
+    String newTopic = fullTopicString.substring(startOfTopic + 6);
+    newTopic.replace("%2F", "/");
     if (newTopic.indexOf("/") == -1){
-      newTopic = "/" + newTopic;      // we must have at least one '/' in the topic, else will crash
+      AddLog(LOG_LEVEL_ERROR, PSTR(D_LOG_MQTT "Invalid Topic %s"), newTopic.c_str());
+      return;
     }
     strlcpy(topic, newTopic.c_str(), sizeof(topic));
-    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_MQTT "TASMOTATOPIC=%s"), newTopic.c_str());
-  #else
+  #else //USE_MQTT_AZURE_IOT
     strlcpy(topic, mqtt_topic, sizeof(topic));
-  #endif
+  #endif //USE_MQTT_AZURE_IOT
   mqtt_data[data_len] = 0;
   char data[data_len +1];
   memcpy(data, mqtt_data, sizeof(data));
+
+  AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT "Topis is '%s'"), topic);
 
 #ifdef DEBUG_TASMOTA_CORE
   MqttDumpData(topic, data, data_len);  // Use a function to save stack space used by dump_data
@@ -745,12 +758,15 @@ void MqttReconnect(void) {
 #endif
 
 #ifdef USE_MQTT_AZURE_IOT
-  String azureMqtt_userString = String(SettingsText(SET_MQTT_HOST)) + "/";
-  azureMqtt_userString += String(TasmotaGlobal.mqtt_client); + "/?api-version=2018-06-30";
+  if (String(mqtt_pwd).indexOf("SharedAccessSignature") == -1) {
+    AddLog(LOG_LEVEL_ERROR, PSTR(D_LOG_MQTT "Azure IoT incorrect SAS Token format. Refer to https://docs.microsoft.com/en-us/azure/iot-hub/iot-hub-mqtt-support"));
+    return;
+  }
+  String azureMqtt_userString = String(SettingsText(SET_MQTT_HOST)) + "/" + String(SettingsText(SET_MQTT_CLIENT)); + "/?api-version=2018-06-30";
   if (MqttClient.connect(TasmotaGlobal.mqtt_client, azureMqtt_userString.c_str(), mqtt_pwd, stopic, 1, lwt_retain, TasmotaGlobal.mqtt_data, MQTT_CLEAN_SESSION)) {
-#else
+#else //USE_MQTT_AZURE_IOT
   if (MqttClient.connect(TasmotaGlobal.mqtt_client, mqtt_user, mqtt_pwd, stopic, 1, lwt_retain, TasmotaGlobal.mqtt_data, MQTT_CLEAN_SESSION)) {
-#endif
+#endif //USE_MQTT_AZURE_IOT
   
 #ifdef USE_MQTT_TLS
     if (Mqtt.mqtt_tls) {
@@ -1406,14 +1422,6 @@ const char HTTP_BTN_MENU_MQTT[] PROGMEM =
 const char HTTP_FORM_MQTT1[] PROGMEM =
   "<fieldset><legend><b>&nbsp;" D_MQTT_PARAMETERS "&nbsp;</b></legend>"
   "<form method='get' action='" WEB_HANDLE_MQTT "'>"
-#if defined(USE_MQTT_AZURE_IOT)
-  "<p><b>IoT Hub FQDN</b> (" MQTT_HOST ")<br><input id='mh' placeholder=\"" MQTT_HOST "\" value=\"%s\"></p>"
-  "<p><b>" D_PORT "</b> (" STR(MQTT_PORT) ")<br><input id='ml' type='hidden' placeholder='" STR(MQTT_PORT) "' value='%d'></p>"
-  "<p><label><input id='b3' type='hidden' type='checkbox'%s><b>" D_MQTT_TLS_ENABLE "</b></label><br>"
-  "<p><b>Azure Device Id</b> (%s)<br><input id='mc' placeholder=\"%s\" value=\"%s\"></p>";
-const char HTTP_FORM_MQTT2[] PROGMEM =
-  "<p><label><b>SAS Token</b><input type='checkbox' onclick='sp(\"mp\")'></label><br><input id='mp' type='password' placeholder=\"" D_PASSWORD "\" value=\"" D_ASTERISK_PWD "\"></p>";
-#else
   "<p><b>" D_HOST "</b> (" MQTT_HOST ")<br><input id='mh' placeholder=\"" MQTT_HOST "\" value=\"%s\"></p>"
   "<p><b>" D_PORT "</b> (" STR(MQTT_PORT) ")<br><input id='ml' placeholder='" STR(MQTT_PORT) "' value='%d'></p>"
   #ifdef USE_MQTT_TLS
@@ -1425,7 +1433,6 @@ const char HTTP_FORM_MQTT2[] PROGMEM =
   "<p><label><b>" D_PASSWORD "</b><input type='checkbox' onclick='sp(\"mp\")'></label><br><input id='mp' type='password' placeholder=\"" D_PASSWORD "\" value=\"" D_ASTERISK_PWD "\"></p>"
   "<p><b>" D_TOPIC "</b> = %%topic%% (%s)<br><input id='mt' placeholder=\"%s\" value=\"%s\"></p>"
   "<p><b>" D_FULL_TOPIC "</b> (%s)<br><input id='mf' placeholder=\"%s\" value=\"%s\"></p>";
-#endif
 
 void HandleMqttConfiguration(void)
 {
