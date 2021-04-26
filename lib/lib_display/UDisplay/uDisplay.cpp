@@ -514,7 +514,7 @@ Renderer *uDisplay::Init(void) {
         if (delay_ms > 0) {
           delay(delay_ms);
 #ifdef UDSP_DEBUG
-          Serial.printf("delay %s ms\n", delay_ms);
+          Serial.printf("delay %d ms\n", delay_ms);
 #endif
         }
         
