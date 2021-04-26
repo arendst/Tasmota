@@ -624,8 +624,8 @@ char *Renderer::devname(void) {
   return (char*)dname;
 }
 
-uint16_t Renderer::lvgl_pars(void) {
-  return lvgl_param;
+LVGL_PARAMS *Renderer::lvgl_pars(void) {
+  return &lvgl_param;
 }
 
 void VButton::xdrawButton(bool inverted) {
