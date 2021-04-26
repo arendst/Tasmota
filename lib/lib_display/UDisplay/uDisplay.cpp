@@ -514,9 +514,20 @@ Renderer *uDisplay::Init(void) {
 #ifdef UDSP_DEBUG
       Serial.printf("\n");
 #endif
-      if (args & 0x80) {
-        if (args&0x60) delay(500);
-        else delay(150);
+      if (args & 0x80) {  // delay after the command
+        uint32_t delay_ms = 0;
+        switch (args & 0xE0) {
+          case 0x80:  delay_ms = 150; break;
+          case 0xA0:  delay_ms =  10; break;
+          case 0xE0:  delay_ms = 500; break;
+        }
+        if (delay_ms > 0) {
+          delay(delay_ms);
+#ifdef UDSP_DEBUG
+          Serial.printf("delay %d ms\n", delay_ms);
+#endif
+        }
+        
       }
       if (index >= dsp_ncmds) break;
     }
