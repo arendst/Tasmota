@@ -1064,6 +1064,8 @@ void uDisplay::pushColors(uint16_t *data, uint16_t len, boolean first) {
     if (lvgl_param.use_dma) {
       pushPixelsDMA(data, len );
     } else {
+      // reversed order for DMA, so non-DMA needs to get back to normal order
+      for (uint32_t i = 0; i < len; i++) (data[i] = data[i] << 8 | data[i] >> 8);
       uspi->writePixels(data, len * 2);
     }
 #endif
@@ -1922,11 +1924,6 @@ void uDisplay::pushPixelsDMA(uint16_t* image, uint32_t len) {
   if ((len == 0) || (!DMA_Enabled)) return;
 
   dmaWait();
-
-/*
-  if(_swapBytes) {
-    for (uint32_t i = 0; i < len; i++) (image[i] = image[i] << 8 | image[i] >> 8);
-  }*/
 
   esp_err_t ret;
 
