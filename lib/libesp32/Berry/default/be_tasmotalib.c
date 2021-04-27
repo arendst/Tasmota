@@ -13,6 +13,8 @@ extern int l_cmd(bvm *vm);
 extern int l_getoption(bvm *vm);
 extern int l_millis(bvm *vm);
 extern int l_timereached(bvm *vm);
+extern int l_rtc(bvm *vm);
+extern int l_time_dump(bvm *vm);
 extern int l_yield(bvm *vm);
 extern int l_delay(bvm *vm);
 extern int l_scaleuint(bvm *vm);
@@ -2121,6 +2123,66 @@ static const bclosure wire_scan_closure = {
 /*******************************************************************/
 
 /********************************************************************
+  def time_str(time)
+    import string
+    var tm = self.time_dump(time)
+    return string.format("%04d-%02d-%02dT%02d:%02d:%02d", tm['year'], tm['month'], tm['day'], tm['hour'], tm['min'], tm['sec'])
+  end
+********************************************************************/
+/********************************************************************
+** Solidified function: time_str
+********************************************************************/
+
+/********** Solidified proto: time_str */
+be_define_local_const_str(time_str_str_name, "time_str", -1681139684, 0, 8, 0);
+be_define_local_const_str(time_str_str_source, "input", -103256197, 0, 5, 0);
+be_define_local_const_str(time_str_str_0, "string", 398550328, 0, 6, 0);
+be_define_local_const_str(time_str_str_1, "time_dump", -964556549, 0, 9, 0);
+be_define_local_const_str(time_str_str_2, "format", -1180859054, 0, 6, 0);
+be_define_local_const_str(time_str_str_3, "%04d-%02d-%02dT%02d:%02d:%02d", -869438695, 0, 29, 0);
+be_define_local_const_str(time_str_str_4, "year", -1367388900, 0, 4, 0);
+be_define_local_const_str(time_str_str_5, "month", -696646139, 0, 5, 0);
+be_define_local_const_str(time_str_str_6, "day", -464576003, 0, 3, 0);
+be_define_local_const_str(time_str_str_7, "hour", -1241306097, 0, 4, 0);
+be_define_local_const_str(time_str_str_8, "min", -913357481, 0, 3, 0);
+be_define_local_const_str(time_str_str_9, "sec", -1155074638, 0, 3, 0);
+
+static const bvalue time_str_ktab[10] = {
+  { { .s=be_local_const_str(time_str_str_0) }, BE_STRING},
+  { { .s=be_local_const_str(time_str_str_1) }, BE_STRING},
+  { { .s=be_local_const_str(time_str_str_2) }, BE_STRING},
+  { { .s=be_local_const_str(time_str_str_3) }, BE_STRING},
+  { { .s=be_local_const_str(time_str_str_4) }, BE_STRING},
+  { { .s=be_local_const_str(time_str_str_5) }, BE_STRING},
+  { { .s=be_local_const_str(time_str_str_6) }, BE_STRING},
+  { { .s=be_local_const_str(time_str_str_7) }, BE_STRING},
+  { { .s=be_local_const_str(time_str_str_8) }, BE_STRING},
+  { { .s=be_local_const_str(time_str_str_9) }, BE_STRING},
+};
+
+static const uint32_t time_str_code[14] = {
+  0xA40A0000,  //  0000  IMPORT	R2	R256
+  0x8C0C0101,  //  0001  GETMET	R3	R0	R257
+  0x5C140200,  //  0002  MOVE	R5	R1
+  0x7C0C0400,  //  0003  CALL	R3	2
+  0x8C100502,  //  0004  GETMET	R4	R2	R258
+  0x58180003,  //  0005  LDCONST	R6	K3
+  0x941C0704,  //  0006  GETIDX	R7	R3	R260
+  0x94200705,  //  0007  GETIDX	R8	R3	R261
+  0x94240706,  //  0008  GETIDX	R9	R3	R262
+  0x94280707,  //  0009  GETIDX	R10	R3	R263
+  0x942C0708,  //  000A  GETIDX	R11	R3	R264
+  0x94300709,  //  000B  GETIDX	R12	R3	R265
+  0x7C101000,  //  000C  CALL	R4	8
+  0x80040800,  //  000D  RET	1	R4
+};
+
+be_define_local_proto(time_str, 13, 2, 1, 0, 0);
+be_define_local_closure(time_str);
+
+/*******************************************************************/
+
+/********************************************************************
     // cmd high-level function
     "def cmd(command) "
       "import json "
@@ -2415,6 +2477,8 @@ void be_load_tasmota_ntvlib(bvm *vm)
         { "get_option", l_getoption },
         { "millis", l_millis },
         { "time_reached", l_timereached },
+        { "rtc", l_rtc },
+        { "time_dump", l_time_dump },
         { "yield", l_yield },
         { "delay", l_delay },
         { "scale_uint", l_scaleuint },
@@ -2455,6 +2519,7 @@ void be_load_tasmota_ntvlib(bvm *vm)
         { "add_driver", (bntvfunc) &add_driver_closure },
         { "load", (bntvfunc) &load_closure },
         { "wire_scan", (bntvfunc) &wire_scan_closure },
+        { "time_str", (bntvfunc) &time_str_closure },
 
         // deprecated
         { "get_light", (bntvfunc) &get_light_closure },
