@@ -1046,13 +1046,6 @@ void uDisplay::pushColors(uint16_t *data, uint16_t len, boolean not_inverted) {
 
   //Serial.printf("push %x - %d\n", (uint32_t)data, len);
 
-#ifdef ESP32
-// reversed order for DMA, so non-DMA needs to get back to normal order
-  if (!not_inverted && !lvgl_param.use_dma) {
-    for (uint32_t i = 0; i < len; i++) (data[i] = data[i] << 8 | data[i] >> 8);
-  }
-#endif
-
   if (bpp != 16) {
     // stupid monchrome version
     for (uint32_t y = seta_yp1; y < seta_yp2; y++) {
@@ -1076,7 +1069,7 @@ void uDisplay::pushColors(uint16_t *data, uint16_t len, boolean not_inverted) {
     if (lvgl_param.use_dma) {
       pushPixelsDMA(data, len );
     } else {
-      uspi->writePixels(data, len * 2);
+      uspi->writeBytes((uint8_t*)data, len * 2);
     }
 #endif
   } else {
