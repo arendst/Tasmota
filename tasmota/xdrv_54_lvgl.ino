@@ -22,6 +22,7 @@
 
 #include <renderer.h>
 #include "lvgl.h"
+#include "tasmota_lvgl_assets.h"    // force compilation of assets
 
 #define XDRV_54             54
 
