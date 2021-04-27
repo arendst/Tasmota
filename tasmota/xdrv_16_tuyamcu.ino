@@ -787,6 +787,8 @@ void TuyaProcessStatePacket(void) {
           } else {
             if (fnId > 74) {
               res = 0;
+            } else if (fnId > 72) {
+              res = Settings.flag2.humidity_resolution;
             } else if (fnId == 72) {
               res = Settings.mbflag2.temperature_set_res;
             } else {
