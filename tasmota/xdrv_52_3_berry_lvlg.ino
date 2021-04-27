@@ -226,6 +226,23 @@ extern "C" {
     be_return(vm);
   }
   
+  int lv0_load_font(bvm *vm) {
+    int argc = be_top(vm);
+    if (argc == 1 && be_isstring(vm, 1)) {
+      lv_font_t * font = lv_font_load(be_tostring(vm, 1));
+      if (font != nullptr) {
+        be_getglobal(vm, "lv_font");
+        be_pushcomptr(vm, font);
+        be_call(vm, 1);
+        be_pop(vm, 1);
+        be_return(vm);
+      } else {
+        be_return_nil(vm);
+      }
+    }
+    be_raise(vm, kTypeError, nullptr);
+  }
+
   int lv0_load_montserrat_font(bvm *vm) {
     int argc = be_top(vm);
     if (argc == 1 && be_isint(vm, 1)) {
@@ -368,6 +385,40 @@ extern "C" {
 
         default:
           break;
+      }
+
+      if (font != nullptr) {
+        be_getglobal(vm, "lv_font");
+        be_pushcomptr(vm, font);
+        be_call(vm, 1);
+        be_pop(vm, 1);
+        be_return(vm);
+      } else {
+        be_return_nil(vm);
+      }
+    }
+    be_raise(vm, kTypeError, nullptr);
+  }
+
+  int lv0_load_seg7_font(bvm *vm) {
+    int argc = be_top(vm);
+    if (argc == 1 && be_isint(vm, 1)) {
+      lv_font_t * font = nullptr;
+      int32_t   font_size = be_toindex(vm, 1);
+
+      switch (font_size) {
+        case  8: font = &seg7_8;  break;
+        case 10: font = &seg7_10; break;
+        case 12: font = &seg7_12; break;
+        case 14: font = &seg7_14; break;
+        case 16: font = &seg7_16; break;
+        case 18: font = &seg7_18; break;
+        case 20: font = &seg7_20; break;
+        case 24: font = &seg7_24; break;
+        case 28: font = &seg7_28; break;
+        case 36: font = &seg7_36; break;
+        case 48: font = &seg7_48; break;
+        default: break;
       }
 
       if (font != nullptr) {

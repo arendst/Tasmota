@@ -400,6 +400,8 @@ print("""/********************************************************************
 
 extern int lv0_start(bvm *vm);
 extern int lv0_load_montserrat_font(bvm *vm);
+extern int lv0_load_seg7_font(bvm *vm);
+extern int lv0_load_font(bvm *vm);
 
 extern int lv0_scr_act(bvm *vm);
 extern int lv0_layer_top(bvm *vm);
@@ -516,6 +518,9 @@ print("""
 
     be_native_module_function("start", lv0_start),
     be_native_module_function("montserrat_font", lv0_load_montserrat_font),
+    be_native_module_function("seg7_font", lv0_load_seg7_font),
+    be_native_module_function("load_font", lv0_load_font),
+
 
     // screen and layers
     be_native_module_function("scr_act", lv0_scr_act),
@@ -684,6 +689,8 @@ for k_v in lv_module:
 print("""
     start, func(lv0_start)
     montserrat_font, func(lv0_load_montserrat_font)
+    seg7_font, func(lv0_load_seg7_font)
+    load_font, func(lv0_load_font)
 
     scr_act, func(lv0_scr_act)
     layer_top, func(lv0_layer_top)
