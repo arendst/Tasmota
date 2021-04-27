@@ -425,8 +425,8 @@ typedef void * lv_indev_drv_user_data_t;            /*Type of user data in the i
 
 /*Pixel perfect monospace font
  * http://pelulamu.net/unscii/ */
-#define LV_FONT_UNSCII_8     0
-#define LV_FONT_UNSCII_16     0
+#define LV_FONT_UNSCII_8     1
+#define LV_FONT_UNSCII_16     1
 
 /* Optionally declare your custom fonts here.
  * You can use these fonts as default font too
@@ -434,7 +434,19 @@ typedef void * lv_indev_drv_user_data_t;            /*Type of user data in the i
  * #define LV_FONT_CUSTOM_DECLARE LV_FONT_DECLARE(my_font_1) \
  *                                LV_FONT_DECLARE(my_font_2)
  */
-#define LV_FONT_CUSTOM_DECLARE
+// Tasmota specific
+#define LV_FONT_CUSTOM_DECLARE    LV_FONT_DECLARE(seg7_8) \
+                                  LV_FONT_DECLARE(seg7_10) \
+                                  LV_FONT_DECLARE(seg7_12) \
+                                  LV_FONT_DECLARE(seg7_14) \
+                                  LV_FONT_DECLARE(seg7_16) \
+                                  LV_FONT_DECLARE(seg7_18) \
+                                  LV_FONT_DECLARE(seg7_20) \
+                                  LV_FONT_DECLARE(seg7_24) \
+                                  LV_FONT_DECLARE(seg7_28) \
+                                  LV_FONT_DECLARE(seg7_36) \
+                                  LV_FONT_DECLARE(seg7_48) \
+
 
 /* Enable it if you have fonts with a lot of characters.
  * The limit depends on the font size, font face and bpp
