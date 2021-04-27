@@ -209,7 +209,7 @@ void alt_eeprom_readBytes(uint32_t adr, uint32_t len, uint8_t *buf) {
 #define EPOCH_OFFSET 1546300800
 #endif
 
-enum {OPER_EQU=1,OPER_PLS,OPER_MIN,OPER_MUL,OPER_DIV,OPER_PLSEQU,OPER_MINEQU,OPER_MULEQU,OPER_DIVEQU,OPER_EQUEQU,OPER_NOTEQU,OPER_GRTEQU,OPER_LOWEQU,OPER_GRT,OPER_LOW,OPER_PERC,OPER_XOR,OPER_AND,OPER_OR,OPER_ANDEQU,OPER_OREQU,OPER_XOREQU,OPER_PERCEQU};
+enum {OPER_EQU=1,OPER_PLS,OPER_MIN,OPER_MUL,OPER_DIV,OPER_PLSEQU,OPER_MINEQU,OPER_MULEQU,OPER_DIVEQU,OPER_EQUEQU,OPER_NOTEQU,OPER_GRTEQU,OPER_LOWEQU,OPER_GRT,OPER_LOW,OPER_PERC,OPER_XOR,OPER_AND,OPER_OR,OPER_ANDEQU,OPER_OREQU,OPER_XOREQU,OPER_PERCEQU,OPER_SHLEQU,OPER_SHREQU,OPER_SHL,OPER_SHR};
 enum {SCRIPT_LOGLEVEL=1,SCRIPT_TELEPERIOD,SCRIPT_EVENT_HANDLED,SML_JSON_ENABLE,SCRIPT_EPOFFS};
 
 
@@ -1508,17 +1508,17 @@ char *isvar(char *lp, uint8_t *vtype, struct T_INDEX *tind, float *fp, char *sp,
     if (isdigit(*lp) || (*lp=='-' && isdigit(*(lp+1))) || *lp=='.') {
       // isnumber
         if (fp) {
-          if (*lp=='0' && *(lp+1)=='x') {
+          if (*lp == '0' && *(lp + 1) == 'x') {
             lp += 2;
-            *fp = strtol(lp, 0, 16);
+            *fp = strtol(lp, &lp, 16);
           } else {
             *fp = CharToFloat(lp);
+            if (*lp == '-') lp++;
+            while (isdigit(*lp) || *lp == '.') {
+              if (*lp == 0 || *lp == SCRIPT_EOL) break;
+              lp++;
+            }
           }
-        }
-        if (*lp=='-') lp++;
-        while (isdigit(*lp) || *lp=='.') {
-          if (*lp==0 || *lp==SCRIPT_EOL) break;
-          lp++;
         }
         tind->bits.constant = 1;
         tind->bits.is_string = 0;
@@ -2599,6 +2599,47 @@ chknext:
           len = 0;
           goto strexit;
         }
+#ifdef USE_SCRIPT_I2C
+        if (!strncmp(vname, "ia", 2)) {
+          uint8_t bus = 0;
+          lp += 2;
+          if (*lp == '2') {
+            lp++;
+            bus = 1;
+          }
+          lp = GetNumericArgument(lp + 1, OPER_EQU, &fvar, gv);
+          fvar = script_i2c(0, fvar, bus);
+          lp++;
+          len = 0;
+          goto exit;
+        }
+        if (!strncmp(vname, "iw(", 3)) {
+          lp = GetNumericArgument(lp + 3, OPER_EQU, &fvar, gv);
+          SCRIPT_SKIP_SPACES
+          // arg2
+          float fvar2;
+          lp = GetNumericArgument(lp, OPER_EQU, &fvar2, gv);
+          fvar = script_i2c(1, fvar, fvar2);
+          lp++;
+          len = 0;
+          goto exit;
+        }
+        if (!strncmp(vname, "ir", 2)) {
+          uint8_t bytes = 1;
+          lp += 2;
+          if (*lp != '(') {
+            bytes = *lp & 0xf;
+            if (bytes < 1) bytes = 1;
+            if (bytes > 4) bytes = 4;
+            lp++;
+          }
+          lp = GetNumericArgument(lp + 1, OPER_EQU, &fvar, gv);
+          fvar = script_i2c(2, fvar, bytes);
+          lp++;
+          len = 0;
+          goto exit;
+        }
+#endif // USE_SCRIPT_I2C
         break;
       case 'l':
         if (!strncmp(vname, "lip", 3)) {
@@ -3421,22 +3462,42 @@ char *getop(char *lp, uint8_t *operand) {
             }
             break;
         case '>':
-            if (*(lp + 1)=='=') {
+            if (*(lp + 1)=='>') {
+              if (*(lp + 2) == '=') {
+                *operand = OPER_SHREQU;
+                return lp + 3;
+              } else {
+                *operand = OPER_SHR;
+                return lp + 2;
+              }
+            } else {
+              if (*(lp + 1)=='=') {
                 *operand = OPER_GRTEQU;
                 return lp + 2;
-            } else {
+              } else {
                 *operand = OPER_GRT;
                 return lp + 1;
 
+              }
             }
             break;
         case '<':
-            if (*(lp + 1)=='=') {
+            if (*(lp + 1)=='<') {
+              if (*(lp + 2) == '=') {
+                *operand = OPER_SHLEQU;
+                return lp + 3;
+              } else {
+                *operand = OPER_SHL;
+                return lp + 2;
+              }
+            } else {
+              if (*(lp + 1)=='=') {
                 *operand = OPER_LOWEQU;
                 return lp + 2;
-            } else {
+              } else {
                 *operand = OPER_LOW;
                 return lp + 1;
+              }
             }
             break;
         case '%':
@@ -3590,6 +3651,12 @@ struct T_INDEX ind;
                 break;
             case OPER_OR:
                 fvar = (uint32_t)fvar | (uint32_t)fvar1;
+                break;
+            case OPER_SHL:
+                fvar = (uint32_t)fvar << (uint32_t)fvar1;
+                break;
+            case OPER_SHR:
+                fvar = (uint32_t)fvar >> (uint32_t)fvar1;
                 break;
             default:
                 break;
@@ -4692,6 +4759,12 @@ int16_t Run_script_sub(const char *type, int8_t tlen, struct GVARS *gv) {
                               break;
                           case OPER_XOREQU:
                               *dfvar = (uint32_t)*dfvar ^ (uint32_t)fvar;
+                              break;
+                          case OPER_SHLEQU:
+                              *dfvar = (uint32_t)*dfvar << (uint32_t)fvar;
+                              break;
+                          case OPER_SHREQU:
+                              *dfvar = (uint32_t)*dfvar >> (uint32_t)fvar;
                               break;
                           default:
                               // error
@@ -7712,6 +7785,46 @@ void cpy2lf(char *dst, uint32_t dstlen, char *src) {
     dst[cnt] = src[cnt];
   }
 }
+
+#ifdef USE_SCRIPT_I2C
+uint8_t script_i2c_addr;
+TwoWire *script_i2c_wire;
+uint32_t script_i2c(uint8_t sel, uint8_t val, uint8_t val1) {
+  switch (sel) {
+    case 0:
+      script_i2c_addr = val;
+#ifdef ESP32
+      if (val1 == 0) script_i2c_wire = &Wire;
+      else script_i2c_wire = &Wire1;
+#else
+      script_i2c_wire = &Wire;
+#endif
+      script_i2c_wire->beginTransmission(script_i2c_addr);
+      return (0 == script_i2c_wire->endTransmission());
+      break;
+    case 1:
+      script_i2c_wire->beginTransmission(script_i2c_addr);
+      script_i2c_wire->write(val);
+      script_i2c_wire->write(val1);
+      script_i2c_wire->endTransmission();
+      break;
+    case 2:
+      script_i2c_wire->beginTransmission(script_i2c_addr);
+      script_i2c_wire->write(val);
+      script_i2c_wire->endTransmission();
+      script_i2c_wire->requestFrom((int)script_i2c_addr, (int)val1);
+      uint32_t rval = 0;
+      for (uint8_t cnt = 0; cnt < val1; cnt++) {
+        rval <<= 8;
+        rval |= script_i2c_wire->read();
+      }
+      return rval;
+      break;
+  }
+  return 0;
+}
+#endif // USE_SCRIPT_I2C
+
 
 #ifdef USE_LVGL
 #include <renderer.h>
