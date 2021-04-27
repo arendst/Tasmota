@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Initial support for optional ``Template`` JSON fieldpair ``"CMND":"<any template related command>;<any template related command>;..."`` (#11788)
 - ESP32 pulldown buttons ``Button_d`` and ``Button_id`` (#10814)
+- Support for MQTT using Azure IoT Hub by Kevin Saye (#11906)
 
 ## [Released]
 

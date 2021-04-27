@@ -419,6 +419,7 @@
                                                    // Any valid fingerprint with the old algo will be automatically updated to the new algo.
                                                    // Enable this if you want to disable the old algo check, which should be more secure
 //  for USE_4K_RSA (support for 4096 bits certificates, instead of 2048), you need to uncommend `-DUSE_4K_RSA` in `build_flags` from `platform.ini` or `platform_override.ini`
+//  #define USE_MQTT_AZURE_IOT                     // Enable MQTT for Azure IoT Hub (+1k code)
 
 // -- Telegram Protocol ---------------------------
 //#define USE_TELEGRAM                             // Support for Telegram protocol (+49k code, +7.0k mem and +4.8k additional during connection handshake)
