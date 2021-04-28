@@ -9,6 +9,8 @@
 #include "be_string.h"
 #include "be_gc.h"
 
+// temporary work-around
+#define be_define_local_const_str2(a,b,c,d,e,f) be_define_local_const_str(a,b,c,e)
 #ifdef USE_I2C
 
 extern int b_wire_init(bvm *vm);
@@ -43,14 +45,14 @@ extern int b_wire_detect(bvm *vm);
 ** Solidified function: read_bytes
 ********************************************************************/
 
-be_define_local_const_str(read_bytes_str_name, "read_bytes", -718234123, 0, 10, 0);
-be_define_local_const_str(read_bytes_str_source, "string", 398550328, 0, 6, 0);
-be_define_local_const_str(read_bytes_str_0, "_begin_transmission", -1515506120, 0, 19, 0);
-be_define_local_const_str(read_bytes_str_1, "_write", -2079504471, 0, 6, 0);
-be_define_local_const_str(read_bytes_str_2, "_end_transmission", -1057486896, 0, 17, 0);
-be_define_local_const_str(read_bytes_str_3, "_request_from", -329818692, 0, 13, 0);
-be_define_local_const_str(read_bytes_str_4, "_available", 1306196581, 0, 10, 0);
-be_define_local_const_str(read_bytes_str_5, "_read", 346717030, 0, 5, 0);
+be_define_local_const_str2(read_bytes_str_name, "read_bytes", -718234123, 0, 10, 0);
+be_define_local_const_str2(read_bytes_str_source, "string", 398550328, 0, 6, 0);
+be_define_local_const_str2(read_bytes_str_0, "_begin_transmission", -1515506120, 0, 19, 0);
+be_define_local_const_str2(read_bytes_str_1, "_write", -2079504471, 0, 6, 0);
+be_define_local_const_str2(read_bytes_str_2, "_end_transmission", -1057486896, 0, 17, 0);
+be_define_local_const_str2(read_bytes_str_3, "_request_from", -329818692, 0, 13, 0);
+be_define_local_const_str2(read_bytes_str_4, "_available", 1306196581, 0, 10, 0);
+be_define_local_const_str2(read_bytes_str_5, "_read", 346717030, 0, 5, 0);
 
 static const bvalue read_bytes_ktab[6] = {
   { { .s=be_local_const_str(read_bytes_str_0) }, BE_STRING},
@@ -141,11 +143,11 @@ const bclosure read_bytes_closure = {
 ** Solidified function: write_bytes
 ********************************************************************/
 
-be_define_local_const_str(write_bytes_str_name, "write_bytes", 1227543792, 0, 11, 0);
-be_define_local_const_str(write_bytes_str_source, "string", 398550328, 0, 6, 0);
-be_define_local_const_str(write_bytes_str_0, "_begin_transmission", -1515506120, 0, 19, 0);
-be_define_local_const_str(write_bytes_str_1, "_write", -2079504471, 0, 6, 0);
-be_define_local_const_str(write_bytes_str_2, "_end_transmission", -1057486896, 0, 17, 0);
+be_define_local_const_str2(write_bytes_str_name, "write_bytes", 1227543792, 0, 11, 0);
+be_define_local_const_str2(write_bytes_str_source, "string", 398550328, 0, 6, 0);
+be_define_local_const_str2(write_bytes_str_0, "_begin_transmission", -1515506120, 0, 19, 0);
+be_define_local_const_str2(write_bytes_str_1, "_write", -2079504471, 0, 6, 0);
+be_define_local_const_str2(write_bytes_str_2, "_end_transmission", -1057486896, 0, 17, 0);
 
 static const bvalue write_bytes_ktab[3] = {
   { { .s=be_local_const_str(write_bytes_str_0) }, BE_STRING},
