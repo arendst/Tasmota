@@ -578,6 +578,8 @@
 
 // xsns_53_sml.ino
 #define D_TPWRIN "Totale enerzjy yn"
+#define D_TPWRIN0 "Totale enerzjy yn T0"
+#define D_TPWRIN1 "Totale enerzjy yn T1"
 #define D_TPWROUT "Totale enerzjy út"
 #define D_TPWRCURR "Eigentlike krêft In/Out"
 #define D_TPWRCURR1 "Eigentlike krêft In p1"

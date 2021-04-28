@@ -578,6 +578,8 @@
 
 // xsns_53_sml.ino
 #define D_TPWRIN "Tổng lượng vào"
+#define D_TPWRIN0 "Tổng lượng vào T0"
+#define D_TPWRIN1 "Tổng lượng vào T1"
 #define D_TPWROUT "Tổng lượng ra"
 #define D_TPWRCURR "Dòng vào/ra"
 #define D_TPWRCURR1 "Dòng vào p1"
