@@ -89,15 +89,15 @@ void HandleMetrics(void) {
 
   if (!isnan(TasmotaGlobal.temperature_celsius)) {
     dtostrfd(TasmotaGlobal.temperature_celsius, Settings.flag2.temperature_resolution, parameter);
-    WSContentSend_P(PSTR("# TYPE tasmotaglobal_temperature_celsius gauge\ntasmotaglobal_temperature_celsius %s\n"), parameter);
+    WSContentSend_P(PSTR("# TYPE tasmota_global_temperature_celsius gauge\ntasmota_global_temperature_celsius %s\n"), parameter);
   }
   if (TasmotaGlobal.humidity != 0) {
     dtostrfd(TasmotaGlobal.humidity, Settings.flag2.humidity_resolution, parameter);
-    WSContentSend_P(PSTR("# TYPE tasmotaglobal_humidity gauge\ntasmotaglobal_humidity %s\n"), parameter);
+    WSContentSend_P(PSTR("# TYPE tasmota_global_humidity gauge\ntasmota_global_humidity_percentage %s\n"), parameter);
   }
   if (TasmotaGlobal.pressure_hpa != 0) {
     dtostrfd(TasmotaGlobal.pressure_hpa, Settings.flag2.pressure_resolution, parameter);
-    WSContentSend_P(PSTR("# TYPE tasmotaglobal_pressure_hpa gauge\ntasmotaglobal_pressure_hpa %s\n"), parameter);
+    WSContentSend_P(PSTR("# TYPE tasmota_global_pressure_hpa gauge\ntasmota_global_pressure_hpa %s\n"), parameter);
   }
 
 #ifdef USE_ENERGY_SENSOR
