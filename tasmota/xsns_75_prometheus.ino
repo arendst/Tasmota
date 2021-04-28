@@ -50,6 +50,9 @@ const char *UnitfromType(const char *type)  // find unit for measurment type
   if (strcmp(type, "humidity") == 0) {
     return "percentage";
   }
+  if (strcmp(type, "id") == 0) {
+    return "untyped";
+  }
   return "";
 }
 
@@ -148,8 +151,13 @@ void HandleMetrics(void) {
               String type = FormatMetricName(key2.getStr());
               const char *unit = UnitfromType(type.c_str());
               if (strcmp(type.c_str(), "totalstarttime") != 0) {  // this metric causes prometheus of fail
-                WSContentSend_P(PSTR("# TYPE tasmota_sensors_%s_%s gauge\ntasmota_sensors_%s_%s{sensor=\"%s\"} %s\n"),
-                  type.c_str(), unit, type.c_str(), unit, sensor.c_str(), value);
+                if (strcmp(type.c_str(), "id") == 0) {            // this metric is NaN, so convert it to a label, see Wi-Fi metrics above
+                  WSContentSend_P(PSTR("# TYPE tasmota_sensors_%s_%s gauge\ntasmota_sensors_%s_%s{sensor=\"%s\",id=\"%s\"} 1\n"),
+                    type.c_str(), unit, type.c_str(), unit, sensor.c_str(), value);
+                } else {
+                  WSContentSend_P(PSTR("# TYPE tasmota_sensors_%s_%s gauge\ntasmota_sensors_%s_%s{sensor=\"%s\"} %s\n"),
+                    type.c_str(), unit, type.c_str(), unit, sensor.c_str(), value);
+                }
               }
             }
           }
