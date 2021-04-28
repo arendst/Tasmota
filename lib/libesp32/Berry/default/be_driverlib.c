@@ -30,8 +30,8 @@ static const bupvaldesc add_cmd_0_upvals[2] = {
   be_local_const_upval(1, 0),
 };
 
-be_define_local_const_str(add_cmd_0_str_name, "add_cmd_0", 607256038, 0, 8, 0);
-be_define_local_const_str(add_cmd_0_str_source, "input", -103256197, 0, 5, 0);
+be_define_local_const_str(add_cmd_0_str_name, "add_cmd_0", 607256038, 8);
+be_define_local_const_str(add_cmd_0_str_source, "input", -103256197, 5);
 
 static const uint32_t add_cmd_0_code[8] = {
   0x68100000,  //  0000  GETUPV	R4	U0
@@ -51,10 +51,10 @@ static const bproto *add_cmd_subproto[1] = {
   &add_cmd_0_proto,
 };
 
-be_define_local_const_str(add_cmd_str_name, "add_cmd", -933336417, 0, 7, 0);
-be_define_local_const_str(add_cmd_str_source, "input", -103256197, 0, 5, 0);
-be_define_local_const_str(add_cmd_str_0, "get_tasmota", 334356779, 0, 11, 0);
-be_define_local_const_str(add_cmd_str_1, "add_cmd", -933336417, 0, 7, 0);
+be_define_local_const_str(add_cmd_str_name, "add_cmd", -933336417, 7);
+be_define_local_const_str(add_cmd_str_source, "input", -103256197, 5);
+be_define_local_const_str(add_cmd_str_0, "get_tasmota", 334356779, 11);
+be_define_local_const_str(add_cmd_str_1, "add_cmd", -933336417, 7);
 
 static const bvalue add_cmd_ktab[2] = {
   { { .s=be_local_const_str(add_cmd_str_0) }, BE_STRING},

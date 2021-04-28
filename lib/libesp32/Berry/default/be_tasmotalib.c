@@ -3,9 +3,12 @@
  *
  * To use: `import tasmota`
  *******************************************************************/
-#include "be_object.h"
+#include "berry.h"
+//#include "be_object.h"
 #include "be_string.h"
-#include "be_gc.h"
+
+// temporary work-around
+#define be_define_local_const_str2(a,b,c,d,e,f) be_define_local_const_str(a,b,c,e)
 
 extern int l_getFreeHeap(bvm *vm);
 extern int l_publish(bvm *vm);
@@ -60,9 +63,9 @@ extern int l_i2cenabled(bvm *vm);
 ** Solidified function: chars_in_string
 ********************************************************************/
 
-be_define_local_const_str(chars_in_string_str_name, "chars_in_string", -1146182164, 0, 15, 0);
-be_define_local_const_str(chars_in_string_str_source, "string", 398550328, 0, 6, 0);
-be_define_local_const_str(chars_in_string_str_2, "stop_iteration", -121173395, 0, 14, 0);
+be_define_local_const_str2(chars_in_string_str_name, "chars_in_string", -1146182164, 0, 15, 0);
+be_define_local_const_str2(chars_in_string_str_source, "string", 398550328, 0, 6, 0);
+be_define_local_const_str2(chars_in_string_str_2, "stop_iteration", -121173395, 0, 14, 0);
 
 static const bvalue chars_in_string_ktab[3] = {
   { { .i=0 }, BE_INT},
@@ -120,7 +123,7 @@ static const uint32_t chars_in_string_code[44] = {
 static const bproto chars_in_string_proto = {
   NULL,     // bgcobject *next
   8,       // type
-  GC_CONST,        // marked
+  0x08,    // marked 0x08
   12,       // nstack
   0,       // nupvals
   4,       // argc
@@ -148,7 +151,7 @@ static const bproto chars_in_string_proto = {
 const bclosure chars_in_string_closure = {
   NULL,     // bgcobject *next
   36,       // type
-  GC_CONST,        // marked
+  0x08,        // marked
   0,       // nupvals
   NULL,     // bgcobject *gray
   (bproto*) &chars_in_string_proto,     // proto
@@ -176,13 +179,13 @@ end
 ** Solidified function: find_key_i
 ********************************************************************/
 
-be_define_local_const_str(find_key_i_str_name, "find_key_i", 850136726, 0, 10, 0);
-be_define_local_const_str(find_key_i_str_source, "string", 398550328, 0, 6, 0);
-be_define_local_const_str(find_key_i_str_0, "string", 398550328, 0, 6, 0);
-be_define_local_const_str(find_key_i_str_1, "toupper", -602983720, 0, 7, 0);
-be_define_local_const_str(find_key_i_str_2, "keys", -112588595, 0, 4, 0);
-be_define_local_const_str(find_key_i_str_3, "?", 973910158, 0, 1, 0);
-be_define_local_const_str(find_key_i_str_4, "stop_iteration", -121173395, 0, 14, 0);
+be_define_local_const_str2(find_key_i_str_name, "find_key_i", 850136726, 0, 10, 0);
+be_define_local_const_str2(find_key_i_str_source, "string", 398550328, 0, 6, 0);
+be_define_local_const_str2(find_key_i_str_0, "string", 398550328, 0, 6, 0);
+be_define_local_const_str2(find_key_i_str_1, "toupper", -602983720, 0, 7, 0);
+be_define_local_const_str2(find_key_i_str_2, "keys", -112588595, 0, 4, 0);
+be_define_local_const_str2(find_key_i_str_3, "?", 973910158, 0, 1, 0);
+be_define_local_const_str2(find_key_i_str_4, "stop_iteration", -121173395, 0, 14, 0);
 
 static const bvalue find_key_i_ktab[5] = {
   { { .s=be_local_const_str(find_key_i_str_0) }, BE_STRING},
@@ -229,7 +232,7 @@ static const uint32_t find_key_i_code[31] = {
 static const bproto find_key_i_proto = {
   NULL,     // bgcobject *next
   8,       // type
-  GC_CONST,        // marked
+  0x08,        // marked
   10,       // nstack
   0,       // nupvals
   3,       // argc
@@ -257,7 +260,7 @@ static const bproto find_key_i_proto = {
 const bclosure find_key_i_closure = {
   NULL,     // bgcobject *next
   36,       // type
-  GC_CONST,        // marked
+  0x08,        // marked
   0,       // nupvals
   NULL,     // bgcobject *gray
   (bproto*) &find_key_i_proto,     // proto
@@ -294,12 +297,12 @@ const bclosure find_key_i_closure = {
 ** Solidified function: find_op
 ********************************************************************/
 
-be_define_local_const_str(find_op_str_name, "find_op", -528253920, 0, 7, 0);
-be_define_local_const_str(find_op_str_source, "string", 398550328, 0, 6, 0);
-be_define_local_const_str(find_op_str_0, "string", 398550328, 0, 6, 0);
-be_define_local_const_str(find_op_str_1, "=<>!", -1630497019, 0, 4, 0);
-be_define_local_const_str(find_op_str_2, "chars_in_string", -1146182164, 0, 15, 0);
-be_define_local_const_str(find_op_str_4, "split", -2017972765, 0, 5, 0);
+be_define_local_const_str2(find_op_str_name, "find_op", -528253920, 0, 7, 0);
+be_define_local_const_str2(find_op_str_source, "string", 398550328, 0, 6, 0);
+be_define_local_const_str2(find_op_str_0, "string", 398550328, 0, 6, 0);
+be_define_local_const_str2(find_op_str_1, "=<>!", -1630497019, 0, 4, 0);
+be_define_local_const_str2(find_op_str_2, "chars_in_string", -1146182164, 0, 15, 0);
+be_define_local_const_str2(find_op_str_4, "split", -2017972765, 0, 5, 0);
 
 static const bvalue find_op_ktab[6] = {
   { { .s=be_local_const_str(find_op_str_0) }, BE_STRING},
@@ -358,7 +361,7 @@ static const uint32_t find_op_code[42] = {
 static const bproto find_op_proto = {
   NULL,     // bgcobject *next
   8,       // type
-  GC_CONST,        // marked
+  0x08,        // marked
   13,       // nstack
   0,       // nupvals
   2,       // argc
@@ -386,7 +389,7 @@ static const bproto find_op_proto = {
 const bclosure find_op_closure = {
   NULL,     // bgcobject *next
   36,       // type
-  GC_CONST,        // marked
+  0x08,        // marked
   0,       // nupvals
   NULL,     // bgcobject *gray
   (bproto*) &find_op_proto,     // proto
@@ -414,12 +417,12 @@ const bclosure find_op_closure = {
 ** Solidified function: add_rule
 ********************************************************************/
 
-be_define_local_const_str(add_rule_str_name, "add_rule", 596540743, 0, 8, 0);
-be_define_local_const_str(add_rule_str_source, "string", 398550328, 0, 6, 0);
-be_define_local_const_str(add_rule_str_0, "_rules", -28750191, 0, 6, 0);
-be_define_local_const_str(add_rule_str_1, "function", -1630125495, 0, 8, 0);
-be_define_local_const_str(add_rule_str_2, "value_error", 773297791, 0, 11, 0);
-be_define_local_const_str(add_rule_str_3, "the second argument is not a function", -340392827, 0, 37, 0);
+be_define_local_const_str2(add_rule_str_name, "add_rule", 596540743, 0, 8, 0);
+be_define_local_const_str2(add_rule_str_source, "string", 398550328, 0, 6, 0);
+be_define_local_const_str2(add_rule_str_0, "_rules", -28750191, 0, 6, 0);
+be_define_local_const_str2(add_rule_str_1, "function", -1630125495, 0, 8, 0);
+be_define_local_const_str2(add_rule_str_2, "value_error", 773297791, 0, 11, 0);
+be_define_local_const_str2(add_rule_str_3, "the second argument is not a function", -340392827, 0, 37, 0);
 
 static const bvalue add_rule_ktab[4] = {
   { { .s=be_local_const_str(add_rule_str_0) }, BE_STRING},
@@ -449,7 +452,7 @@ static const uint32_t add_rule_code[15] = {
 static const bproto add_rule_proto = {
   NULL,     // bgcobject *next
   8,       // type
-  GC_CONST,        // marked
+  0x08,        // marked
   5,       // nstack
   0,       // nupvals
   3,       // argc
@@ -477,7 +480,7 @@ static const bproto add_rule_proto = {
 static const bclosure add_rule_closure = {
   NULL,     // bgcobject *next
   36,       // type
-  GC_CONST,        // marked
+  0x08,        // marked
   0,       // nupvals
   NULL,     // bgcobject *gray
   (bproto*) &add_rule_proto,     // proto
@@ -498,10 +501,10 @@ static const bclosure add_rule_closure = {
 ** Solidified function: remove_rule
 ********************************************************************/
 
-be_define_local_const_str(remove_rule_str_name, "remove_rule", -838755968, 0, 11, 0);
-be_define_local_const_str(remove_rule_str_source, "string", 398550328, 0, 6, 0);
-be_define_local_const_str(remove_rule_str_0, "_rules", -28750191, 0, 6, 0);
-be_define_local_const_str(remove_rule_str_1, "remove", -611183107, 0, 6, 0);
+be_define_local_const_str2(remove_rule_str_name, "remove_rule", -838755968, 0, 11, 0);
+be_define_local_const_str2(remove_rule_str_source, "string", 398550328, 0, 6, 0);
+be_define_local_const_str2(remove_rule_str_0, "_rules", -28750191, 0, 6, 0);
+be_define_local_const_str2(remove_rule_str_1, "remove", -611183107, 0, 6, 0);
 
 static const bvalue remove_rule_ktab[2] = {
   { { .s=be_local_const_str(remove_rule_str_0) }, BE_STRING},
@@ -521,7 +524,7 @@ static const uint32_t remove_rule_code[7] = {
 static const bproto remove_rule_proto = {
   NULL,     // bgcobject *next
   8,       // type
-  GC_CONST,        // marked
+  0x08,        // marked
   5,       // nstack
   0,       // nupvals
   2,       // argc
@@ -549,7 +552,7 @@ static const bproto remove_rule_proto = {
 static const bclosure remove_rule_closure = {
   NULL,     // bgcobject *next
   36,       // type
-  GC_CONST,        // marked
+  0x08,        // marked
   0,       // nupvals
   NULL,     // bgcobject *gray
   (bproto*) &remove_rule_proto,     // proto
@@ -600,22 +603,22 @@ static const bclosure remove_rule_closure = {
 ** Solidified function: try_rule
 ********************************************************************/
 
-be_define_local_const_str(try_rule_str_name, "try_rule", 1986449405, 0, 8, 0);
-be_define_local_const_str(try_rule_str_source, "string", 398550328, 0, 6, 0);
-be_define_local_const_str(try_rule_str_0, "string", 398550328, 0, 6, 0);
-be_define_local_const_str(try_rule_str_1, "find_op", -528253920, 0, 7, 0);
-be_define_local_const_str(try_rule_str_2, "split", -2017972765, 0, 5, 0);
-be_define_local_const_str(try_rule_str_4, "#", 638357778, 0, 1, 0);
-be_define_local_const_str(try_rule_str_5, "find_key_i", 850136726, 0, 10, 0);
-be_define_local_const_str(try_rule_str_6, "stop_iteration", -121173395, 0, 14, 0);
-be_define_local_const_str(try_rule_str_9, "==", -1863000881, 0, 2, 0);
-be_define_local_const_str(try_rule_str_10, "!==", 559817114, 0, 3, 0);
-be_define_local_const_str(try_rule_str_11, "=", 940354920, 0, 1, 0);
-be_define_local_const_str(try_rule_str_12, "!=", -1866252285, 0, 2, 0);
-be_define_local_const_str(try_rule_str_13, ">", 990687777, 0, 1, 0);
-be_define_local_const_str(try_rule_str_14, ">=", 284975636, 0, 2, 0);
-be_define_local_const_str(try_rule_str_15, "<", 957132539, 0, 1, 0);
-be_define_local_const_str(try_rule_str_16, "<=", -1795743310, 0, 2, 0);
+be_define_local_const_str2(try_rule_str_name, "try_rule", 1986449405, 0, 8, 0);
+be_define_local_const_str2(try_rule_str_source, "string", 398550328, 0, 6, 0);
+be_define_local_const_str2(try_rule_str_0, "string", 398550328, 0, 6, 0);
+be_define_local_const_str2(try_rule_str_1, "find_op", -528253920, 0, 7, 0);
+be_define_local_const_str2(try_rule_str_2, "split", -2017972765, 0, 5, 0);
+be_define_local_const_str2(try_rule_str_4, "#", 638357778, 0, 1, 0);
+be_define_local_const_str2(try_rule_str_5, "find_key_i", 850136726, 0, 10, 0);
+be_define_local_const_str2(try_rule_str_6, "stop_iteration", -121173395, 0, 14, 0);
+be_define_local_const_str2(try_rule_str_9, "==", -1863000881, 0, 2, 0);
+be_define_local_const_str2(try_rule_str_10, "!==", 559817114, 0, 3, 0);
+be_define_local_const_str2(try_rule_str_11, "=", 940354920, 0, 1, 0);
+be_define_local_const_str2(try_rule_str_12, "!=", -1866252285, 0, 2, 0);
+be_define_local_const_str2(try_rule_str_13, ">", 990687777, 0, 1, 0);
+be_define_local_const_str2(try_rule_str_14, ">=", 284975636, 0, 2, 0);
+be_define_local_const_str2(try_rule_str_15, "<", 957132539, 0, 1, 0);
+be_define_local_const_str2(try_rule_str_16, "<=", -1795743310, 0, 2, 0);
 
 static const bvalue try_rule_ktab[17] = {
   { { .s=be_local_const_str(try_rule_str_0) }, BE_STRING},
@@ -786,7 +789,7 @@ static const uint32_t try_rule_code[143] = {
 static const bproto try_rule_proto = {
   NULL,     // bgcobject *next
   8,       // type
-  GC_CONST,        // marked
+  0x08,        // marked
   14,       // nstack
   0,       // nupvals
   4,       // argc
@@ -814,7 +817,7 @@ static const bproto try_rule_proto = {
 static const bclosure try_rule_closure = {
   NULL,     // bgcobject *next
   36,       // type
-  GC_CONST,        // marked
+  0x08,        // marked
   0,       // nupvals
   NULL,     // bgcobject *gray
   (bproto*) &try_rule_proto,     // proto
@@ -850,15 +853,15 @@ static const bclosure try_rule_closure = {
 ** Solidified function: exec_rules
 ********************************************************************/
 
-be_define_local_const_str(exec_rules_str_name, "exec_rules", 1445221092, 0, 10, 0);
-be_define_local_const_str(exec_rules_str_source, "string", 398550328, 0, 6, 0);
-be_define_local_const_str(exec_rules_str_0, "_rules", -28750191, 0, 6, 0);
-be_define_local_const_str(exec_rules_str_1, "json", 916562499, 0, 4, 0);
-be_define_local_const_str(exec_rules_str_2, "load", -435725847, 0, 4, 0);
-be_define_local_const_str(exec_rules_str_3, "BRY: ERROR, bad json: ", -1579831487, 0, 22, 0);
-be_define_local_const_str(exec_rules_str_5, "keys", -112588595, 0, 4, 0);
-be_define_local_const_str(exec_rules_str_6, "try_rule", 1986449405, 0, 8, 0);
-be_define_local_const_str(exec_rules_str_7, "stop_iteration", -121173395, 0, 14, 0);
+be_define_local_const_str2(exec_rules_str_name, "exec_rules", 1445221092, 0, 10, 0);
+be_define_local_const_str2(exec_rules_str_source, "string", 398550328, 0, 6, 0);
+be_define_local_const_str2(exec_rules_str_0, "_rules", -28750191, 0, 6, 0);
+be_define_local_const_str2(exec_rules_str_1, "json", 916562499, 0, 4, 0);
+be_define_local_const_str2(exec_rules_str_2, "load", -435725847, 0, 4, 0);
+be_define_local_const_str2(exec_rules_str_3, "BRY: ERROR, bad json: ", -1579831487, 0, 22, 0);
+be_define_local_const_str2(exec_rules_str_5, "keys", -112588595, 0, 4, 0);
+be_define_local_const_str2(exec_rules_str_6, "try_rule", 1986449405, 0, 8, 0);
+be_define_local_const_str2(exec_rules_str_7, "stop_iteration", -121173395, 0, 14, 0);
 
 static const bvalue exec_rules_ktab[8] = {
   { { .s=be_local_const_str(exec_rules_str_0) }, BE_STRING},
@@ -917,7 +920,7 @@ static const uint32_t exec_rules_code[40] = {
 static const bproto exec_rules_proto = {
   NULL,     // bgcobject *next
   8,       // type
-  GC_CONST,        // marked
+  0x08,        // marked
   12,       // nstack
   0,       // nupvals
   2,       // argc
@@ -945,7 +948,7 @@ static const bproto exec_rules_proto = {
 const bclosure exec_rules_closure = {
   NULL,     // bgcobject *next
   36,       // type
-  GC_CONST,        // marked
+  0x08,        // marked
   0,       // nupvals
   NULL,     // bgcobject *gray
   (bproto*) &exec_rules_proto,     // proto
@@ -965,11 +968,11 @@ const bclosure exec_rules_closure = {
 ** Solidified function: set_timer
 ********************************************************************/
 
-be_define_local_const_str(set_timer_str_name, "set_timer", 2135414533, 0, 9, 0);
-be_define_local_const_str(set_timer_str_source, "string", 398550328, 0, 6, 0);
-be_define_local_const_str(set_timer_str_0, "_timers", -1694866380, 0, 7, 0);
-be_define_local_const_str(set_timer_str_1, "push", -2022703139, 0, 4, 0);
-be_define_local_const_str(set_timer_str_2, "millis", 1214679063, 0, 6, 0);
+be_define_local_const_str2(set_timer_str_name, "set_timer", 2135414533, 0, 9, 0);
+be_define_local_const_str2(set_timer_str_source, "string", 398550328, 0, 6, 0);
+be_define_local_const_str2(set_timer_str_0, "_timers", -1694866380, 0, 7, 0);
+be_define_local_const_str2(set_timer_str_1, "push", -2022703139, 0, 4, 0);
+be_define_local_const_str2(set_timer_str_2, "millis", 1214679063, 0, 6, 0);
 
 static const bvalue set_timer_ktab[3] = {
   { { .s=be_local_const_str(set_timer_str_0) }, BE_STRING},
@@ -999,7 +1002,7 @@ static const uint32_t set_timer_code[16] = {
 static const bproto set_timer_proto = {
   NULL,     // bgcobject *next
   8,       // type
-  GC_CONST,        // marked
+  0x08,        // marked
   9,       // nstack
   0,       // nupvals
   3,       // argc
@@ -1027,7 +1030,7 @@ static const bproto set_timer_proto = {
 const bclosure set_timer_closure = {
   NULL,     // bgcobject *next
   36,       // type
-  GC_CONST,        // marked
+  0x08,        // marked
   0,       // nupvals
   NULL,     // bgcobject *gray
   (bproto*) &set_timer_proto,     // proto
@@ -1058,12 +1061,12 @@ const bclosure set_timer_closure = {
 ** Solidified function: run_deferred
 ********************************************************************/
 
-be_define_local_const_str(run_deferred_str_name, "run_deferred", 371594696, 0, 12, 0);
-be_define_local_const_str(run_deferred_str_source, "string", 398550328, 0, 6, 0);
-be_define_local_const_str(run_deferred_str_0, "_timers", -1694866380, 0, 7, 0);
-be_define_local_const_str(run_deferred_str_2, "size", 597743964, 0, 4, 0);
-be_define_local_const_str(run_deferred_str_3, "time_reached", 2075136773, 0, 12, 0);
-be_define_local_const_str(run_deferred_str_5, "remove", -611183107, 0, 6, 0);
+be_define_local_const_str2(run_deferred_str_name, "run_deferred", 371594696, 0, 12, 0);
+be_define_local_const_str2(run_deferred_str_source, "string", 398550328, 0, 6, 0);
+be_define_local_const_str2(run_deferred_str_0, "_timers", -1694866380, 0, 7, 0);
+be_define_local_const_str2(run_deferred_str_2, "size", 597743964, 0, 4, 0);
+be_define_local_const_str2(run_deferred_str_3, "time_reached", 2075136773, 0, 12, 0);
+be_define_local_const_str2(run_deferred_str_5, "remove", -611183107, 0, 6, 0);
 
 static const bvalue run_deferred_ktab[6] = {
   { { .s=be_local_const_str(run_deferred_str_0) }, BE_STRING},
@@ -1107,7 +1110,7 @@ static const uint32_t run_deferred_code[27] = {
 static const bproto run_deferred_proto = {
   NULL,     // bgcobject *next
   8,       // type
-  GC_CONST,        // marked
+  0x08,        // marked
   6,       // nstack
   0,       // nupvals
   1,       // argc
@@ -1135,7 +1138,7 @@ static const bproto run_deferred_proto = {
 const bclosure run_deferred_closure = {
   NULL,     // bgcobject *next
   36,       // type
-  GC_CONST,        // marked
+  0x08,        // marked
   0,       // nupvals
   NULL,     // bgcobject *gray
   (bproto*) &run_deferred_proto,     // proto
@@ -1162,12 +1165,12 @@ const bclosure run_deferred_closure = {
 ** Solidified function: add_cmd
 ********************************************************************/
 
-be_define_local_const_str(add_cmd_str_name, "add_cmd", -933336417, 0, 7, 0);
-be_define_local_const_str(add_cmd_str_source, "string", 398550328, 0, 6, 0);
-be_define_local_const_str(add_cmd_str_0, "_ccmd", -2131545883, 0, 5, 0);
-be_define_local_const_str(add_cmd_str_1, "function", -1630125495, 0, 8, 0);
-be_define_local_const_str(add_cmd_str_2, "value_error", 773297791, 0, 11, 0);
-be_define_local_const_str(add_cmd_str_3, "the second argument is not a function", -340392827, 0, 37, 0);
+be_define_local_const_str2(add_cmd_str_name, "add_cmd", -933336417, 0, 7, 0);
+be_define_local_const_str2(add_cmd_str_source, "string", 398550328, 0, 6, 0);
+be_define_local_const_str2(add_cmd_str_0, "_ccmd", -2131545883, 0, 5, 0);
+be_define_local_const_str2(add_cmd_str_1, "function", -1630125495, 0, 8, 0);
+be_define_local_const_str2(add_cmd_str_2, "value_error", 773297791, 0, 11, 0);
+be_define_local_const_str2(add_cmd_str_3, "the second argument is not a function", -340392827, 0, 37, 0);
 
 static const bvalue add_cmd_ktab[4] = {
   { { .s=be_local_const_str(add_cmd_str_0) }, BE_STRING},
@@ -1197,7 +1200,7 @@ static const uint32_t add_cmd_code[15] = {
 static const bproto add_cmd_proto = {
   NULL,     // bgcobject *next
   8,       // type
-  GC_CONST,        // marked
+  0x08,        // marked
   5,       // nstack
   0,       // nupvals
   3,       // argc
@@ -1225,7 +1228,7 @@ static const bproto add_cmd_proto = {
 static const bclosure add_cmd_closure = {
   NULL,     // bgcobject *next
   36,       // type
-  GC_CONST,        // marked
+  0x08,        // marked
   0,       // nupvals
   NULL,     // bgcobject *gray
   (bproto*) &add_cmd_proto,     // proto
@@ -1247,10 +1250,10 @@ static const bclosure add_cmd_closure = {
 ** Solidified function: remove_cmd
 ********************************************************************/
 
-be_define_local_const_str(remove_cmd_str_name, "remove_cmd", -462651594, 0, 10, 0);
-be_define_local_const_str(remove_cmd_str_source, "string", 398550328, 0, 6, 0);
-be_define_local_const_str(remove_cmd_str_0, "_ccmd", -2131545883, 0, 5, 0);
-be_define_local_const_str(remove_cmd_str_1, "remove", -611183107, 0, 6, 0);
+be_define_local_const_str2(remove_cmd_str_name, "remove_cmd", -462651594, 0, 10, 0);
+be_define_local_const_str2(remove_cmd_str_source, "string", 398550328, 0, 6, 0);
+be_define_local_const_str2(remove_cmd_str_0, "_ccmd", -2131545883, 0, 5, 0);
+be_define_local_const_str2(remove_cmd_str_1, "remove", -611183107, 0, 6, 0);
 
 static const bvalue remove_cmd_ktab[2] = {
   { { .s=be_local_const_str(remove_cmd_str_0) }, BE_STRING},
@@ -1270,7 +1273,7 @@ static const uint32_t remove_cmd_code[7] = {
 static const bproto remove_cmd_proto = {
   NULL,     // bgcobject *next
   8,       // type
-  GC_CONST,        // marked
+  0x08,        // marked
   5,       // nstack
   0,       // nupvals
   2,       // argc
@@ -1298,7 +1301,7 @@ static const bproto remove_cmd_proto = {
 static const bclosure remove_cmd_closure = {
   NULL,     // bgcobject *next
   36,       // type
-  GC_CONST,        // marked
+  0x08,        // marked
   0,       // nupvals
   NULL,     // bgcobject *gray
   (bproto*) &remove_cmd_proto,     // proto
@@ -1327,13 +1330,13 @@ static const bclosure remove_cmd_closure = {
 ** Solidified function: exec_cmd
 ********************************************************************/
 
-be_define_local_const_str(exec_cmd_str_name, "exec_cmd", 493567399, 0, 8, 0);
-be_define_local_const_str(exec_cmd_str_source, "string", 398550328, 0, 6, 0);
-be_define_local_const_str(exec_cmd_str_0, "_ccmd", -2131545883, 0, 5, 0);
-be_define_local_const_str(exec_cmd_str_1, "json", 916562499, 0, 4, 0);
-be_define_local_const_str(exec_cmd_str_2, "load", -435725847, 0, 4, 0);
-be_define_local_const_str(exec_cmd_str_3, "find_key_i", 850136726, 0, 10, 0);
-be_define_local_const_str(exec_cmd_str_4, "resolvecmnd", 993361485, 0, 11, 0);
+be_define_local_const_str2(exec_cmd_str_name, "exec_cmd", 493567399, 0, 8, 0);
+be_define_local_const_str2(exec_cmd_str_source, "string", 398550328, 0, 6, 0);
+be_define_local_const_str2(exec_cmd_str_0, "_ccmd", -2131545883, 0, 5, 0);
+be_define_local_const_str2(exec_cmd_str_1, "json", 916562499, 0, 4, 0);
+be_define_local_const_str2(exec_cmd_str_2, "load", -435725847, 0, 4, 0);
+be_define_local_const_str2(exec_cmd_str_3, "find_key_i", 850136726, 0, 10, 0);
+be_define_local_const_str2(exec_cmd_str_4, "resolvecmnd", 993361485, 0, 11, 0);
 
 static const bvalue exec_cmd_ktab[5] = {
   { { .s=be_local_const_str(exec_cmd_str_0) }, BE_STRING},
@@ -1376,7 +1379,7 @@ static const uint32_t exec_cmd_code[27] = {
 static const bproto exec_cmd_proto = {
   NULL,     // bgcobject *next
   8,       // type
-  GC_CONST,        // marked
+  0x08,        // marked
   12,       // nstack
   0,       // nupvals
   4,       // argc
@@ -1404,7 +1407,7 @@ static const bproto exec_cmd_proto = {
 static const bclosure exec_cmd_closure = {
   NULL,     // bgcobject *next
   36,       // type
-  GC_CONST,        // marked
+  0x08,        // marked
   0,       // nupvals
   NULL,     // bgcobject *gray
   (bproto*) &exec_cmd_proto,     // proto
@@ -1426,11 +1429,12 @@ static const bclosure exec_cmd_closure = {
 ** Solidified function: gc
 ********************************************************************/
 
-be_define_local_const_str(gc_str_name, "gc", 1042313471, 0, 2, 0);
-be_define_local_const_str(gc_str_source, "string", 398550328, 0, 6, 0);
-be_define_local_const_str(gc_str_0, "gc", 1042313471, 0, 2, 0);
-be_define_local_const_str(gc_str_1, "collect", -1895928271, 0, 7, 0);
-be_define_local_const_str(gc_str_2, "allocated", 429986098, 0, 9, 0);
+/********** Solidified proto: gc */
+be_define_local_const_str(gc_str_name, "gc", 1042313471, 2);
+be_define_local_const_str(gc_str_source, "string", 398550328, 6);
+be_define_local_const_str(gc_str_0, "gc", 1042313471, 2);
+be_define_local_const_str(gc_str_1, "collect", -1895928271, 7);
+be_define_local_const_str(gc_str_2, "allocated", 429986098, 9);
 
 static const bvalue gc_ktab[3] = {
   { { .s=be_local_const_str(gc_str_0) }, BE_STRING},
@@ -1439,51 +1443,16 @@ static const bvalue gc_ktab[3] = {
 };
 
 static const uint32_t gc_code[6] = {
-  0xA4060000,  //  0000  IMPORT R1  R256
-  0x8C080301,  //  0001  GETMET R2  R1  R257
-  0x7C080200,  //  0002  CALL R2  1
-  0x8C080302,  //  0003  GETMET R2  R1  R258
-  0x7C080200,  //  0004  CALL R2  1
-  0x80040400,  //  0005  RET  1 R2
+  0xA4060000,  //  0000  IMPORT	R1	R256
+  0x8C080301,  //  0001  GETMET	R2	R1	R257
+  0x7C080200,  //  0002  CALL	R2	1
+  0x8C080302,  //  0003  GETMET	R2	R1	R258
+  0x7C080200,  //  0004  CALL	R2	1
+  0x80040400,  //  0005  RET	1	R2
 };
 
-static const bproto gc_proto = {
-  NULL,     // bgcobject *next
-  8,       // type
-  GC_CONST,        // marked
-  4,       // nstack
-  0,       // nupvals
-  1,       // argc
-  0,       // varg
-  NULL,     // bgcobject *gray
-  NULL,     // bupvaldesc *upvals
-  (bvalue*) &gc_ktab,     // ktab
-  NULL,     // bproto **ptab
-  (binstruction*) &gc_code,     // code
-  be_local_const_str(gc_str_name),       // name
-  6,       // codesize
-  3,       // nconst
-  0,       // nproto
-  be_local_const_str(gc_str_source),     // source
-#if BE_DEBUG_RUNTIME_INFO /* debug information */
-  NULL,     // lineinfo
-  0,        // nlineinfo
-#endif
-#if BE_DEBUG_VAR_INFO
-  NULL,     // varinfo
-  0,        // nvarinfo
-#endif
-};
-
-const bclosure gc_closure = {
-  NULL,     // bgcobject *next
-  36,       // type
-  GC_CONST,        // marked
-  0,       // nupvals
-  NULL,     // bgcobject *gray
-  (bproto*) &gc_proto,     // proto
-  { NULL }     // upvals
-};
+be_define_local_proto(gc, 4, 1, 1, 0, 0);
+be_define_local_closure(gc);
 
 /*******************************************************************/
 
@@ -1525,30 +1494,31 @@ const bclosure gc_closure = {
 ** Solidified function: event
 ********************************************************************/
 
-be_define_local_const_str(event_str_name, "event", -30355297, 0, 5, 0);
-be_define_local_const_str(event_str_source, "string", 398550328, 0, 6, 0);
-be_define_local_const_str(event_str_0, "cmd", -158181397, 0, 3, 0);
-be_define_local_const_str(event_str_1, "exec_cmd", 493567399, 0, 8, 0);
-be_define_local_const_str(event_str_2, "rule", -64077613, 0, 4, 0);
-be_define_local_const_str(event_str_3, "exec_rules", 1445221092, 0, 10, 0);
-be_define_local_const_str(event_str_4, "mqtt_data", -1756753932, 0, 9, 0);
-be_define_local_const_str(event_str_5, "gc", 1042313471, 0, 2, 0);
-be_define_local_const_str(event_str_6, "every_50ms", -1911083288, 0, 10, 0);
-be_define_local_const_str(event_str_7, "run_deferred", 371594696, 0, 12, 0);
-be_define_local_const_str(event_str_8, "_drivers", -1034638311, 0, 8, 0);
-be_define_local_const_str(event_str_9, "every_second", 2075451465, 0, 12, 0);
-be_define_local_const_str(event_str_10, "every_100ms", 1546407804, 0, 11, 0);
-be_define_local_const_str(event_str_11, "web_add_button", -757092238, 0, 14, 0);
-be_define_local_const_str(event_str_12, "web_add_main_button", -334599632, 0, 19, 0);
-be_define_local_const_str(event_str_13, "save_before_restart", 1253239338, 0, 19, 0);
-be_define_local_const_str(event_str_14, "web_sensor", -1394870324, 0, 10, 0);
-be_define_local_const_str(event_str_15, "json_append", -1292948012, 0, 11, 0);
-be_define_local_const_str(event_str_16, "button_pressed", 1694209616, 0, 14, 0);
-be_define_local_const_str(event_str_17, "string", 398550328, 0, 6, 0);
-be_define_local_const_str(event_str_18, "log", 1062293841, 0, 3, 0);
-be_define_local_const_str(event_str_19, "format", -1180859054, 0, 6, 0);
-be_define_local_const_str(event_str_20, "BRY: exception %s - %m", -1290966132, 0, 22, 0);
-be_define_local_const_str(event_str_22, "stop_iteration", -121173395, 0, 14, 0);
+/********** Solidified proto: event */
+be_define_local_const_str(event_str_name, "event", -30355297, 5);
+be_define_local_const_str(event_str_source, "string", 398550328, 6);
+be_define_local_const_str(event_str_0, "cmd", -158181397, 3);
+be_define_local_const_str(event_str_1, "exec_cmd", 493567399, 8);
+be_define_local_const_str(event_str_2, "rule", -64077613, 4);
+be_define_local_const_str(event_str_3, "exec_rules", 1445221092, 10);
+be_define_local_const_str(event_str_4, "mqtt_data", -1756753932, 9);
+be_define_local_const_str(event_str_5, "gc", 1042313471, 2);
+be_define_local_const_str(event_str_6, "every_50ms", -1911083288, 10);
+be_define_local_const_str(event_str_7, "run_deferred", 371594696, 12);
+be_define_local_const_str(event_str_8, "_drivers", -1034638311, 8);
+be_define_local_const_str(event_str_9, "every_second", 2075451465, 12);
+be_define_local_const_str(event_str_10, "every_100ms", 1546407804, 11);
+be_define_local_const_str(event_str_11, "web_add_button", -757092238, 14);
+be_define_local_const_str(event_str_12, "web_add_main_button", -334599632, 19);
+be_define_local_const_str(event_str_13, "save_before_restart", 1253239338, 19);
+be_define_local_const_str(event_str_14, "web_sensor", -1394870324, 10);
+be_define_local_const_str(event_str_15, "json_append", -1292948012, 11);
+be_define_local_const_str(event_str_16, "button_pressed", 1694209616, 14);
+be_define_local_const_str(event_str_17, "string", 398550328, 6);
+be_define_local_const_str(event_str_18, "log", 1062293841, 3);
+be_define_local_const_str(event_str_19, "format", -1180859054, 6);
+be_define_local_const_str(event_str_20, "BRY: exception %s - %m", -1290966132, 22);
+be_define_local_const_str(event_str_22, "stop_iteration", -121173395, 14);
 
 static const bvalue event_ktab[23] = {
   { { .s=be_local_const_str(event_str_0) }, BE_STRING},
@@ -1577,176 +1547,141 @@ static const bvalue event_ktab[23] = {
 };
 
 static const uint32_t event_code[131] = {
-  0x1C140300,  //  0000  EQ R5  R1  R256
-  0x78160006,  //  0001  JMPF R5  #0009
-  0x8C140101,  //  0002  GETMET R5  R0  R257
-  0x5C1C0400,  //  0003  MOVE R7  R2
-  0x5C200600,  //  0004  MOVE R8  R3
-  0x5C240800,  //  0005  MOVE R9  R4
-  0x7C140800,  //  0006  CALL R5  4
-  0x80040A00,  //  0007  RET  1 R5
-  0x70020078,  //  0008  JMP    #0082
-  0x1C140302,  //  0009  EQ R5  R1  R258
-  0x78160004,  //  000A  JMPF R5  #0010
-  0x8C140103,  //  000B  GETMET R5  R0  R259
-  0x5C1C0800,  //  000C  MOVE R7  R4
-  0x7C140400,  //  000D  CALL R5  2
-  0x80040A00,  //  000E  RET  1 R5
-  0x70020071,  //  000F  JMP    #0082
-  0x1C140304,  //  0010  EQ R5  R1  R260
-  0x78160002,  //  0011  JMPF R5  #0015
-  0x4C140000,  //  0012  LDNIL  5
-  0x80040A00,  //  0013  RET  1 R5
-  0x7002006C,  //  0014  JMP    #0082
-  0x1C140305,  //  0015  EQ R5  R1  R261
-  0x78160003,  //  0016  JMPF R5  #001B
-  0x8C140105,  //  0017  GETMET R5  R0  R261
-  0x7C140200,  //  0018  CALL R5  1
-  0x80040A00,  //  0019  RET  1 R5
-  0x70020066,  //  001A  JMP    #0082
-  0x1C140306,  //  001B  EQ R5  R1  R262
-  0x78160003,  //  001C  JMPF R5  #0021
-  0x8C140107,  //  001D  GETMET R5  R0  R263
-  0x7C140200,  //  001E  CALL R5  1
-  0x80040A00,  //  001F  RET  1 R5
-  0x70020060,  //  0020  JMP    #0082
-  0x88140108,  //  0021  GETMBR R5  R0  R264
-  0x7816005E,  //  0022  JMPF R5  #0082
-  0x60140000,  //  0023  GETGBL R5  G0
-  0x88180108,  //  0024  GETMBR R6  R0  R264
-  0x7C140200,  //  0025  CALL R5  1
-  0xA8020057,  //  0026  EXBLK  0 #007F
-  0x5C180A00,  //  0027  MOVE R6  R5
-  0x7C180000,  //  0028  CALL R6  0
-  0xA8020048,  //  0029  EXBLK  0 #0073
-  0x1C1C0309,  //  002A  EQ R7  R1  R265
-  0x781E0006,  //  002B  JMPF R7  #0033
-  0x881C0D09,  //  002C  GETMBR R7  R6  R265
-  0x781E0004,  //  002D  JMPF R7  #0033
-  0x8C1C0D09,  //  002E  GETMET R7  R6  R265
-  0x7C1C0200,  //  002F  CALL R7  1
-  0xA8040002,  //  0030  EXBLK  1 2
-  0x80040E00,  //  0031  RET  1 R7
-  0x7002003D,  //  0032  JMP    #0071
-  0x1C1C030A,  //  0033  EQ R7  R1  R266
-  0x781E0006,  //  0034  JMPF R7  #003C
-  0x881C0D0A,  //  0035  GETMBR R7  R6  R266
-  0x781E0004,  //  0036  JMPF R7  #003C
-  0x8C1C0D0A,  //  0037  GETMET R7  R6  R266
-  0x7C1C0200,  //  0038  CALL R7  1
-  0xA8040002,  //  0039  EXBLK  1 2
-  0x80040E00,  //  003A  RET  1 R7
-  0x70020034,  //  003B  JMP    #0071
-  0x1C1C030B,  //  003C  EQ R7  R1  R267
-  0x781E0006,  //  003D  JMPF R7  #0045
-  0x881C0D0B,  //  003E  GETMBR R7  R6  R267
-  0x781E0004,  //  003F  JMPF R7  #0045
-  0x8C1C0D0B,  //  0040  GETMET R7  R6  R267
-  0x7C1C0200,  //  0041  CALL R7  1
-  0xA8040002,  //  0042  EXBLK  1 2
-  0x80040E00,  //  0043  RET  1 R7
-  0x7002002B,  //  0044  JMP    #0071
-  0x1C1C030C,  //  0045  EQ R7  R1  R268
-  0x781E0006,  //  0046  JMPF R7  #004E
-  0x881C0D0C,  //  0047  GETMBR R7  R6  R268
-  0x781E0004,  //  0048  JMPF R7  #004E
-  0x8C1C0D0C,  //  0049  GETMET R7  R6  R268
-  0x7C1C0200,  //  004A  CALL R7  1
-  0xA8040002,  //  004B  EXBLK  1 2
-  0x80040E00,  //  004C  RET  1 R7
-  0x70020022,  //  004D  JMP    #0071
-  0x1C1C030D,  //  004E  EQ R7  R1  R269
-  0x781E0006,  //  004F  JMPF R7  #0057
-  0x881C0D0D,  //  0050  GETMBR R7  R6  R269
-  0x781E0004,  //  0051  JMPF R7  #0057
-  0x8C1C0D0D,  //  0052  GETMET R7  R6  R269
-  0x7C1C0200,  //  0053  CALL R7  1
-  0xA8040002,  //  0054  EXBLK  1 2
-  0x80040E00,  //  0055  RET  1 R7
-  0x70020019,  //  0056  JMP    #0071
-  0x1C1C030E,  //  0057  EQ R7  R1  R270
-  0x781E0006,  //  0058  JMPF R7  #0060
-  0x881C0D0E,  //  0059  GETMBR R7  R6  R270
-  0x781E0004,  //  005A  JMPF R7  #0060
-  0x8C1C0D0E,  //  005B  GETMET R7  R6  R270
-  0x7C1C0200,  //  005C  CALL R7  1
-  0xA8040002,  //  005D  EXBLK  1 2
-  0x80040E00,  //  005E  RET  1 R7
-  0x70020010,  //  005F  JMP    #0071
-  0x1C1C030F,  //  0060  EQ R7  R1  R271
-  0x781E0006,  //  0061  JMPF R7  #0069
-  0x881C0D0F,  //  0062  GETMBR R7  R6  R271
-  0x781E0004,  //  0063  JMPF R7  #0069
-  0x8C1C0D0F,  //  0064  GETMET R7  R6  R271
-  0x7C1C0200,  //  0065  CALL R7  1
-  0xA8040002,  //  0066  EXBLK  1 2
-  0x80040E00,  //  0067  RET  1 R7
-  0x70020007,  //  0068  JMP    #0071
-  0x1C1C0310,  //  0069  EQ R7  R1  R272
-  0x781E0005,  //  006A  JMPF R7  #0071
-  0x881C0D10,  //  006B  GETMBR R7  R6  R272
-  0x781E0003,  //  006C  JMPF R7  #0071
-  0x8C1C0D10,  //  006D  GETMET R7  R6  R272
-  0x7C1C0200,  //  006E  CALL R7  1
-  0xA8040002,  //  006F  EXBLK  1 2
-  0x80040E00,  //  0070  RET  1 R7
-  0xA8040001,  //  0071  EXBLK  1 1
-  0x7002000A,  //  0072  JMP    #007E
-  0xAC1C0002,  //  0073  CATCH  R7  0 2
-  0x70020007,  //  0074  JMP    #007D
-  0xA4262200,  //  0075  IMPORT R9  R273
-  0x8C280112,  //  0076  GETMET R10 R0  R274
-  0x8C301313,  //  0077  GETMET R12 R9  R275
-  0x58380014,  //  0078  LDCONST  R14 K20
-  0x583C0015,  //  0079  LDCONST  R15 K21
-  0x7C300600,  //  007A  CALL R12 3
-  0x7C280400,  //  007B  CALL R10 2
-  0x70020000,  //  007C  JMP    #007E
-  0xB0080000,  //  007D  RAISE  2 R0  R0
-  0x7001FFA7,  //  007E  JMP    #0027
-  0x58140016,  //  007F  LDCONST  R5  K22
-  0xAC140200,  //  0080  CATCH  R5  1 0
-  0xB0080000,  //  0081  RAISE  2 R0  R0
-  0x80000000,  //  0082  RET  0 R0
+  0x1C140300,  //  0000  EQ	R5	R1	R256
+  0x78160006,  //  0001  JMPF	R5	#0009
+  0x8C140101,  //  0002  GETMET	R5	R0	R257
+  0x5C1C0400,  //  0003  MOVE	R7	R2
+  0x5C200600,  //  0004  MOVE	R8	R3
+  0x5C240800,  //  0005  MOVE	R9	R4
+  0x7C140800,  //  0006  CALL	R5	4
+  0x80040A00,  //  0007  RET	1	R5
+  0x70020078,  //  0008  JMP		#0082
+  0x1C140302,  //  0009  EQ	R5	R1	R258
+  0x78160004,  //  000A  JMPF	R5	#0010
+  0x8C140103,  //  000B  GETMET	R5	R0	R259
+  0x5C1C0800,  //  000C  MOVE	R7	R4
+  0x7C140400,  //  000D  CALL	R5	2
+  0x80040A00,  //  000E  RET	1	R5
+  0x70020071,  //  000F  JMP		#0082
+  0x1C140304,  //  0010  EQ	R5	R1	R260
+  0x78160002,  //  0011  JMPF	R5	#0015
+  0x4C140000,  //  0012  LDNIL	5
+  0x80040A00,  //  0013  RET	1	R5
+  0x7002006C,  //  0014  JMP		#0082
+  0x1C140305,  //  0015  EQ	R5	R1	R261
+  0x78160003,  //  0016  JMPF	R5	#001B
+  0x8C140105,  //  0017  GETMET	R5	R0	R261
+  0x7C140200,  //  0018  CALL	R5	1
+  0x80040A00,  //  0019  RET	1	R5
+  0x70020066,  //  001A  JMP		#0082
+  0x1C140306,  //  001B  EQ	R5	R1	R262
+  0x78160003,  //  001C  JMPF	R5	#0021
+  0x8C140107,  //  001D  GETMET	R5	R0	R263
+  0x7C140200,  //  001E  CALL	R5	1
+  0x80040A00,  //  001F  RET	1	R5
+  0x70020060,  //  0020  JMP		#0082
+  0x88140108,  //  0021  GETMBR	R5	R0	R264
+  0x7816005E,  //  0022  JMPF	R5	#0082
+  0x60140000,  //  0023  GETGBL	R5	G0
+  0x88180108,  //  0024  GETMBR	R6	R0	R264
+  0x7C140200,  //  0025  CALL	R5	1
+  0xA8020057,  //  0026  EXBLK	0	#007F
+  0x5C180A00,  //  0027  MOVE	R6	R5
+  0x7C180000,  //  0028  CALL	R6	0
+  0xA8020048,  //  0029  EXBLK	0	#0073
+  0x1C1C0309,  //  002A  EQ	R7	R1	R265
+  0x781E0006,  //  002B  JMPF	R7	#0033
+  0x881C0D09,  //  002C  GETMBR	R7	R6	R265
+  0x781E0004,  //  002D  JMPF	R7	#0033
+  0x8C1C0D09,  //  002E  GETMET	R7	R6	R265
+  0x7C1C0200,  //  002F  CALL	R7	1
+  0xA8040002,  //  0030  EXBLK	1	2
+  0x80040E00,  //  0031  RET	1	R7
+  0x7002003D,  //  0032  JMP		#0071
+  0x1C1C030A,  //  0033  EQ	R7	R1	R266
+  0x781E0006,  //  0034  JMPF	R7	#003C
+  0x881C0D0A,  //  0035  GETMBR	R7	R6	R266
+  0x781E0004,  //  0036  JMPF	R7	#003C
+  0x8C1C0D0A,  //  0037  GETMET	R7	R6	R266
+  0x7C1C0200,  //  0038  CALL	R7	1
+  0xA8040002,  //  0039  EXBLK	1	2
+  0x80040E00,  //  003A  RET	1	R7
+  0x70020034,  //  003B  JMP		#0071
+  0x1C1C030B,  //  003C  EQ	R7	R1	R267
+  0x781E0006,  //  003D  JMPF	R7	#0045
+  0x881C0D0B,  //  003E  GETMBR	R7	R6	R267
+  0x781E0004,  //  003F  JMPF	R7	#0045
+  0x8C1C0D0B,  //  0040  GETMET	R7	R6	R267
+  0x7C1C0200,  //  0041  CALL	R7	1
+  0xA8040002,  //  0042  EXBLK	1	2
+  0x80040E00,  //  0043  RET	1	R7
+  0x7002002B,  //  0044  JMP		#0071
+  0x1C1C030C,  //  0045  EQ	R7	R1	R268
+  0x781E0006,  //  0046  JMPF	R7	#004E
+  0x881C0D0C,  //  0047  GETMBR	R7	R6	R268
+  0x781E0004,  //  0048  JMPF	R7	#004E
+  0x8C1C0D0C,  //  0049  GETMET	R7	R6	R268
+  0x7C1C0200,  //  004A  CALL	R7	1
+  0xA8040002,  //  004B  EXBLK	1	2
+  0x80040E00,  //  004C  RET	1	R7
+  0x70020022,  //  004D  JMP		#0071
+  0x1C1C030D,  //  004E  EQ	R7	R1	R269
+  0x781E0006,  //  004F  JMPF	R7	#0057
+  0x881C0D0D,  //  0050  GETMBR	R7	R6	R269
+  0x781E0004,  //  0051  JMPF	R7	#0057
+  0x8C1C0D0D,  //  0052  GETMET	R7	R6	R269
+  0x7C1C0200,  //  0053  CALL	R7	1
+  0xA8040002,  //  0054  EXBLK	1	2
+  0x80040E00,  //  0055  RET	1	R7
+  0x70020019,  //  0056  JMP		#0071
+  0x1C1C030E,  //  0057  EQ	R7	R1	R270
+  0x781E0006,  //  0058  JMPF	R7	#0060
+  0x881C0D0E,  //  0059  GETMBR	R7	R6	R270
+  0x781E0004,  //  005A  JMPF	R7	#0060
+  0x8C1C0D0E,  //  005B  GETMET	R7	R6	R270
+  0x7C1C0200,  //  005C  CALL	R7	1
+  0xA8040002,  //  005D  EXBLK	1	2
+  0x80040E00,  //  005E  RET	1	R7
+  0x70020010,  //  005F  JMP		#0071
+  0x1C1C030F,  //  0060  EQ	R7	R1	R271
+  0x781E0006,  //  0061  JMPF	R7	#0069
+  0x881C0D0F,  //  0062  GETMBR	R7	R6	R271
+  0x781E0004,  //  0063  JMPF	R7	#0069
+  0x8C1C0D0F,  //  0064  GETMET	R7	R6	R271
+  0x7C1C0200,  //  0065  CALL	R7	1
+  0xA8040002,  //  0066  EXBLK	1	2
+  0x80040E00,  //  0067  RET	1	R7
+  0x70020007,  //  0068  JMP		#0071
+  0x1C1C0310,  //  0069  EQ	R7	R1	R272
+  0x781E0005,  //  006A  JMPF	R7	#0071
+  0x881C0D10,  //  006B  GETMBR	R7	R6	R272
+  0x781E0003,  //  006C  JMPF	R7	#0071
+  0x8C1C0D10,  //  006D  GETMET	R7	R6	R272
+  0x7C1C0200,  //  006E  CALL	R7	1
+  0xA8040002,  //  006F  EXBLK	1	2
+  0x80040E00,  //  0070  RET	1	R7
+  0xA8040001,  //  0071  EXBLK	1	1
+  0x7002000A,  //  0072  JMP		#007E
+  0xAC1C0002,  //  0073  CATCH	R7	0	2
+  0x70020007,  //  0074  JMP		#007D
+  0xA4262200,  //  0075  IMPORT	R9	R273
+  0x8C280112,  //  0076  GETMET	R10	R0	R274
+  0x8C301313,  //  0077  GETMET	R12	R9	R275
+  0x58380014,  //  0078  LDCONST	R14	K20
+  0x583C0015,  //  0079  LDCONST	R15	K21
+  0x7C300600,  //  007A  CALL	R12	3
+  0x7C280400,  //  007B  CALL	R10	2
+  0x70020000,  //  007C  JMP		#007E
+  0xB0080000,  //  007D  RAISE	2	R0	R0
+  0x7001FFA7,  //  007E  JMP		#0027
+  0x58140016,  //  007F  LDCONST	R5	K22
+  0xAC140200,  //  0080  CATCH	R5	1	0
+  0xB0080000,  //  0081  RAISE	2	R0	R0
+  0x80000000,  //  0082  RET	0	R0
 };
 
-static const bproto event_proto = {
-  NULL,     // bgcobject *next
-  8,       // type
-  GC_CONST,        // marked
-  16,       // nstack
-  0,       // nupvals
-  5,       // argc
-  0,       // varg
-  NULL,     // bgcobject *gray
-  NULL,     // bupvaldesc *upvals
-  (bvalue*) &event_ktab,     // ktab
-  NULL,     // bproto **ptab
-  (binstruction*) &event_code,     // code
-  be_local_const_str(event_str_name),       // name
-  131,       // codesize
-  23,       // nconst
-  0,       // nproto
-  be_local_const_str(event_str_source),     // source
-#if BE_DEBUG_RUNTIME_INFO /* debug information */
-  NULL,     // lineinfo
-  0,        // nlineinfo
-#endif
-#if BE_DEBUG_VAR_INFO
-  NULL,     // varinfo
-  0,        // nvarinfo
-#endif
-};
-
-static const bclosure event_closure = {
-  NULL,     // bgcobject *next
-  36,       // type
-  GC_CONST,        // marked
-  0,       // nupvals
-  NULL,     // bgcobject *gray
-  (bproto*) &event_proto,     // proto
-  { NULL }     // upvals
-};
+be_define_local_proto(event, 16, 5, 1, 0, 0);
+be_define_local_closure(event);
 
 /*******************************************************************/
 
@@ -1766,10 +1701,10 @@ static const bclosure event_closure = {
 ** Solidified function: add_driver
 ********************************************************************/
 
-be_define_local_const_str(add_driver_str_name, "add_driver", 1654458371, 0, 10, 0);
-be_define_local_const_str(add_driver_str_source, "string", 398550328, 0, 6, 0);
-be_define_local_const_str(add_driver_str_0, "_drivers", -1034638311, 0, 8, 0);
-be_define_local_const_str(add_driver_str_1, "push", -2022703139, 0, 4, 0);
+be_define_local_const_str2(add_driver_str_name, "add_driver", 1654458371, 0, 10, 0);
+be_define_local_const_str2(add_driver_str_source, "string", 398550328, 0, 6, 0);
+be_define_local_const_str2(add_driver_str_0, "_drivers", -1034638311, 0, 8, 0);
+be_define_local_const_str2(add_driver_str_1, "push", -2022703139, 0, 4, 0);
 
 static const bvalue add_driver_ktab[2] = {
   { { .s=be_local_const_str(add_driver_str_0) }, BE_STRING},
@@ -1794,7 +1729,7 @@ static const uint32_t add_driver_code[12] = {
 static const bproto add_driver_proto = {
   NULL,     // bgcobject *next
   8,       // type
-  GC_CONST,        // marked
+  0x08,        // marked
   5,       // nstack
   0,       // nupvals
   2,       // argc
@@ -1822,7 +1757,7 @@ static const bproto add_driver_proto = {
 const bclosure add_driver_closure = {
   NULL,     // bgcobject *next
   36,       // type
-  GC_CONST,        // marked
+  0x08,        // marked
   0,       // nupvals
   NULL,     // bgcobject *gray
   (bproto*) &add_driver_proto,     // proto
@@ -1868,24 +1803,24 @@ const bclosure add_driver_closure = {
 ** Solidified function: load
 ********************************************************************/
 
-be_define_local_const_str(load_str_name, "load", -435725847, 0, 4, 0);
-be_define_local_const_str(load_str_source, "string", 398550328, 0, 6, 0);
-be_define_local_const_str(load_str_0, "string", 398550328, 0, 6, 0);
-be_define_local_const_str(load_str_1, "split", -2017972765, 0, 5, 0);
-be_define_local_const_str(load_str_2, ".", 722245873, 0, 1, 0);
-be_define_local_const_str(load_str_4, "be", 942383232, 0, 2, 0);
-be_define_local_const_str(load_str_5, "bec", 1336821081, 0, 3, 0);
-be_define_local_const_str(load_str_6, "file extension is not '.be' or '.bec'", -1199247657, 0, 37, 0);
-be_define_local_const_str(load_str_7, "c", -435409838, 0, 1, 0);
-be_define_local_const_str(load_str_9, "/", 705468254, 0, 1, 0);
-be_define_local_const_str(load_str_10, "file", -1427482813, 0, 4, 0);
-be_define_local_const_str(load_str_11, "save", -855671224, 0, 4, 0);
-be_define_local_const_str(load_str_12, "log", 1062293841, 0, 3, 0);
-be_define_local_const_str(load_str_13, "format", -1180859054, 0, 6, 0);
-be_define_local_const_str(load_str_14, "BRY: could not save compiled file %s (%s)", 736659787, 0, 41, 0);
-be_define_local_const_str(load_str_15, "BRY: sucessfully loaded '%s'", -675188639, 0, 28, 0);
-be_define_local_const_str(load_str_16, "Could not load file '%s'", -708657871, 0, 24, 0);
-be_define_local_const_str(load_str_17, "io_error", 1970281036, 0, 8, 0);
+be_define_local_const_str2(load_str_name, "load", -435725847, 0, 4, 0);
+be_define_local_const_str2(load_str_source, "string", 398550328, 0, 6, 0);
+be_define_local_const_str2(load_str_0, "string", 398550328, 0, 6, 0);
+be_define_local_const_str2(load_str_1, "split", -2017972765, 0, 5, 0);
+be_define_local_const_str2(load_str_2, ".", 722245873, 0, 1, 0);
+be_define_local_const_str2(load_str_4, "be", 942383232, 0, 2, 0);
+be_define_local_const_str2(load_str_5, "bec", 1336821081, 0, 3, 0);
+be_define_local_const_str2(load_str_6, "file extension is not '.be' or '.bec'", -1199247657, 0, 37, 0);
+be_define_local_const_str2(load_str_7, "c", -435409838, 0, 1, 0);
+be_define_local_const_str2(load_str_9, "/", 705468254, 0, 1, 0);
+be_define_local_const_str2(load_str_10, "file", -1427482813, 0, 4, 0);
+be_define_local_const_str2(load_str_11, "save", -855671224, 0, 4, 0);
+be_define_local_const_str2(load_str_12, "log", 1062293841, 0, 3, 0);
+be_define_local_const_str2(load_str_13, "format", -1180859054, 0, 6, 0);
+be_define_local_const_str2(load_str_14, "BRY: could not save compiled file %s (%s)", 736659787, 0, 41, 0);
+be_define_local_const_str2(load_str_15, "BRY: sucessfully loaded '%s'", -675188639, 0, 28, 0);
+be_define_local_const_str2(load_str_16, "Could not load file '%s'", -708657871, 0, 24, 0);
+be_define_local_const_str2(load_str_17, "io_error", 1970281036, 0, 8, 0);
 
 static const bvalue load_ktab[18] = {
   { { .s=be_local_const_str(load_str_0) }, BE_STRING},
@@ -1987,7 +1922,7 @@ static const uint32_t load_code[73] = {
 static const bproto load_proto = {
   NULL,     // bgcobject *next
   8,       // type
-  GC_CONST,        // marked
+  0x08,        // marked
   14,       // nstack
   0,       // nupvals
   2,       // argc
@@ -2015,7 +1950,7 @@ static const bproto load_proto = {
 const bclosure load_closure = {
   NULL,     // bgcobject *next
   36,       // type
-  GC_CONST,        // marked
+  0x08,        // marked
   0,       // nupvals
   NULL,     // bgcobject *gray
   (bproto*) &load_proto,     // proto
@@ -2040,12 +1975,12 @@ const bclosure load_closure = {
 ** Solidified function: wire_scan
 ********************************************************************/
 
-be_define_local_const_str(wire_scan_str_name, "wire_scan", -1623691416, 0, 9, 0);
-be_define_local_const_str(wire_scan_str_source, "string", 398550328, 0, 6, 0);
-be_define_local_const_str(wire_scan_str_0, "i2c_enabled", 218388101, 0, 11, 0);
-be_define_local_const_str(wire_scan_str_1, "wire1", -1082245877, 0, 5, 0);
-be_define_local_const_str(wire_scan_str_2, "detect", 8884370, 0, 6, 0);
-be_define_local_const_str(wire_scan_str_3, "wire2", -1065468258, 0, 5, 0);
+be_define_local_const_str2(wire_scan_str_name, "wire_scan", -1623691416, 0, 9, 0);
+be_define_local_const_str2(wire_scan_str_source, "string", 398550328, 0, 6, 0);
+be_define_local_const_str2(wire_scan_str_0, "i2c_enabled", 218388101, 0, 11, 0);
+be_define_local_const_str2(wire_scan_str_1, "wire1", -1082245877, 0, 5, 0);
+be_define_local_const_str2(wire_scan_str_2, "detect", 8884370, 0, 6, 0);
+be_define_local_const_str2(wire_scan_str_3, "wire2", -1065468258, 0, 5, 0);
 
 static const bvalue wire_scan_ktab[4] = {
   { { .s=be_local_const_str(wire_scan_str_0) }, BE_STRING},
@@ -2085,7 +2020,7 @@ static const uint32_t wire_scan_code[25] = {
 static const bproto wire_scan_proto = {
   NULL,     // bgcobject *next
   8,       // type
-  GC_CONST,        // marked
+  0x08,        // marked
   6,       // nstack
   0,       // nupvals
   3,       // argc
@@ -2113,7 +2048,7 @@ static const bproto wire_scan_proto = {
 static const bclosure wire_scan_closure = {
   NULL,     // bgcobject *next
   36,       // type
-  GC_CONST,        // marked
+  0x08,        // marked
   0,       // nupvals
   NULL,     // bgcobject *gray
   (bproto*) &wire_scan_proto,     // proto
@@ -2134,18 +2069,18 @@ static const bclosure wire_scan_closure = {
 ********************************************************************/
 
 /********** Solidified proto: time_str */
-be_define_local_const_str(time_str_str_name, "time_str", -1681139684, 0, 8, 0);
-be_define_local_const_str(time_str_str_source, "input", -103256197, 0, 5, 0);
-be_define_local_const_str(time_str_str_0, "string", 398550328, 0, 6, 0);
-be_define_local_const_str(time_str_str_1, "time_dump", -964556549, 0, 9, 0);
-be_define_local_const_str(time_str_str_2, "format", -1180859054, 0, 6, 0);
-be_define_local_const_str(time_str_str_3, "%04d-%02d-%02dT%02d:%02d:%02d", -869438695, 0, 29, 0);
-be_define_local_const_str(time_str_str_4, "year", -1367388900, 0, 4, 0);
-be_define_local_const_str(time_str_str_5, "month", -696646139, 0, 5, 0);
-be_define_local_const_str(time_str_str_6, "day", -464576003, 0, 3, 0);
-be_define_local_const_str(time_str_str_7, "hour", -1241306097, 0, 4, 0);
-be_define_local_const_str(time_str_str_8, "min", -913357481, 0, 3, 0);
-be_define_local_const_str(time_str_str_9, "sec", -1155074638, 0, 3, 0);
+be_define_local_const_str(time_str_str_name, "time_str", -1681139684, 8);
+be_define_local_const_str(time_str_str_source, "input", -103256197, 5);
+be_define_local_const_str(time_str_str_0, "string", 398550328, 6);
+be_define_local_const_str(time_str_str_1, "time_dump", -964556549, 9);
+be_define_local_const_str(time_str_str_2, "format", -1180859054, 6);
+be_define_local_const_str(time_str_str_3, "%04d-%02d-%02dT%02d:%02d:%02d", -869438695, 29);
+be_define_local_const_str(time_str_str_4, "year", -1367388900, 4);
+be_define_local_const_str(time_str_str_5, "month", -696646139, 5);
+be_define_local_const_str(time_str_str_6, "day", -464576003, 3);
+be_define_local_const_str(time_str_str_7, "hour", -1241306097, 4);
+be_define_local_const_str(time_str_str_8, "min", -913357481, 3);
+be_define_local_const_str(time_str_str_9, "sec", -1155074638, 3);
 
 static const bvalue time_str_ktab[10] = {
   { { .s=be_local_const_str(time_str_str_0) }, BE_STRING},
@@ -2199,13 +2134,13 @@ be_define_local_closure(time_str);
 ** Solidified function: cmd
 ********************************************************************/
 
-be_define_local_const_str(cmd_str_name, "cmd", -158181397, 0, 3, 0);
-be_define_local_const_str(cmd_str_source, "string", 398550328, 0, 6, 0);
-be_define_local_const_str(cmd_str_0, "json", 916562499, 0, 4, 0);
-be_define_local_const_str(cmd_str_1, "_cmd", -875145154, 0, 4, 0);
-be_define_local_const_str(cmd_str_2, "load", -435725847, 0, 4, 0);
-be_define_local_const_str(cmd_str_3, "instance", 193386898, 0, 8, 0);
-be_define_local_const_str(cmd_str_4, "response", 1499316702, 0, 8, 0);
+be_define_local_const_str2(cmd_str_name, "cmd", -158181397, 0, 3, 0);
+be_define_local_const_str2(cmd_str_source, "string", 398550328, 0, 6, 0);
+be_define_local_const_str2(cmd_str_0, "json", 916562499, 0, 4, 0);
+be_define_local_const_str2(cmd_str_1, "_cmd", -875145154, 0, 4, 0);
+be_define_local_const_str2(cmd_str_2, "load", -435725847, 0, 4, 0);
+be_define_local_const_str2(cmd_str_3, "instance", 193386898, 0, 8, 0);
+be_define_local_const_str2(cmd_str_4, "response", 1499316702, 0, 8, 0);
 
 static const bvalue cmd_ktab[5] = {
   { { .s=be_local_const_str(cmd_str_0) }, BE_STRING},
@@ -2240,7 +2175,7 @@ static const uint32_t cmd_code[19] = {
 static const bproto cmd_proto = {
   NULL,     // bgcobject *next
   8,       // type
-  GC_CONST,        // marked
+  0x08,        // marked
   7,       // nstack
   0,       // nupvals
   2,       // argc
@@ -2268,7 +2203,7 @@ static const bproto cmd_proto = {
 static const bclosure cmd_closure = {
   NULL,     // bgcobject *next
   36,       // type
-  GC_CONST,        // marked
+  0x08,        // marked
   0,       // nupvals
   NULL,     // bgcobject *gray
   (bproto*) &cmd_proto,     // proto
@@ -2293,11 +2228,11 @@ static const bclosure cmd_closure = {
 ** Solidified function: get_light
 ********************************************************************/
 
-be_define_local_const_str(get_light_str_name, "get_light", 381930476, 0, 9, 0);
-be_define_local_const_str(get_light_str_source, "string", 398550328, 0, 6, 0);
-be_define_local_const_str(get_light_str_0, "tasmota.get_light() is deprecated, use light.get()", -769213649, 0, 50, 0);
-be_define_local_const_str(get_light_str_1, "light", -493019601, 0, 5, 0);
-be_define_local_const_str(get_light_str_2, "get", 1410115415, 0, 3, 0);
+be_define_local_const_str2(get_light_str_name, "get_light", 381930476, 0, 9, 0);
+be_define_local_const_str2(get_light_str_source, "string", 398550328, 0, 6, 0);
+be_define_local_const_str2(get_light_str_0, "tasmota.get_light() is deprecated, use light.get()", -769213649, 0, 50, 0);
+be_define_local_const_str2(get_light_str_1, "light", -493019601, 0, 5, 0);
+be_define_local_const_str2(get_light_str_2, "get", 1410115415, 0, 3, 0);
 
 static const bvalue get_light_ktab[3] = {
   { { .s=be_local_const_str(get_light_str_0) }, BE_STRING},
@@ -2327,7 +2262,7 @@ static const uint32_t get_light_code[16] = {
 static const bproto get_light_proto = {
   NULL,     // bgcobject *next
   8,       // type
-  GC_CONST,        // marked
+  0x08,        // marked
   6,       // nstack
   0,       // nupvals
   2,       // argc
@@ -2355,7 +2290,7 @@ static const bproto get_light_proto = {
 static const bclosure get_light_closure = {
   NULL,     // bgcobject *next
   36,       // type
-  GC_CONST,        // marked
+  0x08,        // marked
   0,       // nupvals
   NULL,     // bgcobject *gray
   (bproto*) &get_light_proto,     // proto
@@ -2382,11 +2317,11 @@ static const bclosure get_light_closure = {
 ** Solidified function: set_light
 ********************************************************************/
 
-be_define_local_const_str(set_light_str_name, "set_light", -1118891144, 0, 9, 0);
-be_define_local_const_str(set_light_str_source, "string", 398550328, 0, 6, 0);
-be_define_local_const_str(set_light_str_0, "tasmota.set_light() is deprecated, use light.set()", 2124937871, 0, 50, 0);
-be_define_local_const_str(set_light_str_1, "light", -493019601, 0, 5, 0);
-be_define_local_const_str(set_light_str_2, "set", -970520829, 0, 3, 0);
+be_define_local_const_str2(set_light_str_name, "set_light", -1118891144, 0, 9, 0);
+be_define_local_const_str2(set_light_str_source, "string", 398550328, 0, 6, 0);
+be_define_local_const_str2(set_light_str_0, "tasmota.set_light() is deprecated, use light.set()", 2124937871, 0, 50, 0);
+be_define_local_const_str2(set_light_str_1, "light", -493019601, 0, 5, 0);
+be_define_local_const_str2(set_light_str_2, "set", -970520829, 0, 3, 0);
 
 static const bvalue set_light_ktab[3] = {
   { { .s=be_local_const_str(set_light_str_0) }, BE_STRING},
@@ -2418,7 +2353,7 @@ static const uint32_t set_light_code[18] = {
 static const bproto set_light_proto = {
   NULL,     // bgcobject *next
   8,       // type
-  GC_CONST,        // marked
+  0x08,        // marked
   8,       // nstack
   0,       // nupvals
   3,       // argc
@@ -2446,7 +2381,7 @@ static const bproto set_light_proto = {
 static const bclosure set_light_closure = {
   NULL,     // bgcobject *next
   36,       // type
-  GC_CONST,        // marked
+  0x08,        // marked
   0,       // nupvals
   NULL,     // bgcobject *gray
   (bproto*) &set_light_proto,     // proto

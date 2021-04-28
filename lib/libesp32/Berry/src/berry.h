@@ -252,15 +252,15 @@ typedef struct bntvmodule {
 
 /* support for solidified berry functions */
 /* native const strings outside of global string hash */
-#define be_define_local_const_str(_name, _s, _hash, _extra, _len, _next) \
-    static const bcstring be_local_const_str_##_name = {            \
-        .next = (bgcobject *)NULL,                                 \
-        .type = BE_STRING,                                         \
-        .marked = GC_CONST,                                        \
-        .extra = 0,                                                \
-        .slen = _len,                                              \
-        .hash = 0,                                                 \
-        .s = _s                                                    \
+#define be_define_local_const_str(_name, _s, _hash, _len) \
+    static const bcstring be_local_const_str_##_name = {  \
+        .next = (bgcobject *)NULL,                        \
+        .type = BE_STRING,                                \
+        .marked = 0x08,   /* GC_CONST */                  \
+        .extra = 0,                                       \
+        .slen = _len,                                     \
+        .hash = 0,                                        \
+        .s = _s                                           \
     }
 
 #define be_local_const_str(_name) (bstring*) &be_local_const_str_##_name
@@ -297,15 +297,15 @@ typedef struct bntvmodule {
   static const bproto _name##_proto = {                                           \
     NULL,                       /* bgcobject *next */                             \
     8,                          /* type BE_PROTO */                               \
-    GC_CONST,                   /* marked outside of GC */                        \
+    0x08,                       /* marked outside of GC */                        \
     (_nstack),                  /* nstack */                                      \
-    BE_IIF(_is_upval)(sizeof(_name##_upvals)/sizeof(bupvaldesc),0),/* nupvals */   \
+    BE_IIF(_is_upval)(sizeof(_name##_upvals)/sizeof(bupvaldesc),0),/* nupvals */  \
     (_argc),                    /* argc */                                        \
     0,                          /* varg */                                        \
     NULL,                       /* bgcobject *gray */                             \
-    BE_IIF(_is_upval)((bupvaldesc*)&_name##_upvals,NULL), /* bupvaldesc *upvals */  \
+    BE_IIF(_is_upval)((bupvaldesc*)&_name##_upvals,NULL), /* bupvaldesc *upvals */\
     BE_IIF(_is_const)((bvalue*)&_name##_ktab,NULL), /* ktab */                    \
-    BE_IIF(_is_subproto)((struct bproto**)&_name##_subproto,NULL),/* bproto **ptab */               \
+    BE_IIF(_is_subproto)((struct bproto**)&_name##_subproto,NULL),/* bproto **ptab */\
     (binstruction*) &_name##_code,     /* code */                                 \
     be_local_const_str(_name##_str_name),   /* name */                            \
     sizeof(_name##_code)/sizeof(uint32_t),  /* codesize */                        \
@@ -320,7 +320,7 @@ typedef struct bntvmodule {
   const bclosure _name##_closure = {          \
     NULL,           /* bgcobject *next */     \
     36,             /* type BE_CLOSURE */     \
-    GC_CONST,       /* marked */              \
+    0x08,           /* marked GC_CONST */     \
     0,              /* nupvals */             \
     NULL,           /* bgcobject *gray */     \
     (bproto*) &_name##_proto, /* proto */     \
