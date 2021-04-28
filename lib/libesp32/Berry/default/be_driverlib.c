@@ -4,9 +4,7 @@
  * To use: `d = Driver()`
  * 
  *******************************************************************/
-#include "be_object.h"
-#include "be_string.h"
-#include "be_gc.h"
+#include "be_constobj.h"
 
 extern int d_getTasmotaGlob(bvm *vm);
 
@@ -77,10 +75,14 @@ be_define_local_closure(add_cmd);
 
 /*******************************************************************/
 
-// #if !BE_USE_PRECOMPILED_OBJECT
-#if 1           // TODO we will do pre-compiled later
-void be_load_driverlib(bvm *vm)
-{
+
+
+#if BE_USE_PRECOMPILED_OBJECT
+#include "../generate/be_fixed_be_class_tasmota_driver.h"
+#endif
+
+void be_load_driverlib(bvm *vm) {
+#if !BE_USE_PRECOMPILED_OBJECT
     static const bnfuncinfo members[] = {
         { "every_second", NULL },
         { "every_100ms", NULL },
@@ -99,12 +101,26 @@ void be_load_driverlib(bvm *vm)
         { NULL, NULL }
     };
     be_regclass(vm, "Driver", members);
-}
 #else
+    be_pushntvclass(vm, &be_class_tasmota_driver);
+    be_setglobal(vm, "Driver");
+    be_pop(vm, 1);
+#endif
+}
 /* @const_object_info_begin
-module tasmota (scope: global, depend: 1) {
-    get_free_heap, func(l_getFreeHeap)
+
+class be_class_tasmota_driver (scope: global, name: Driver) {
+    every_second, var
+    every_100ms, var
+    web_add_button, var
+    web_add_main_button, var
+    save_before_restart, var
+    web_sensor, var
+    json_append, var
+    button_pressed, var
+
+    get_tasmota, func(d_getTasmotaGlob)
+
+    add_cmd, closure(add_cmd_closure)
 }
 @const_object_info_end */
-#include "../generate/be_fixed_tasmota.h"
-#endif

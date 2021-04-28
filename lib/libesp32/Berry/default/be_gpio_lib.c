@@ -5,7 +5,7 @@
  * 
  * read power values
  *******************************************************************/
-#include "be_object.h"
+#include "be_constobj.h"
 
 // Tasmota specific
 
@@ -17,7 +17,6 @@ extern int gp_pin_used(bvm *vm);
 extern int gp_pin(bvm *vm);
 
 #if !BE_USE_PRECOMPILED_OBJECT
-// #if 1           // TODO we will do pre-compiled later
 be_native_module_attr_table(gpio) {
     // HIGH/LOW
     be_native_module_int("LOW", 0),

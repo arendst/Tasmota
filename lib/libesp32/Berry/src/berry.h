@@ -256,7 +256,7 @@ typedef struct bntvmodule {
     static const bcstring be_local_const_str_##_name = {  \
         .next = (bgcobject *)NULL,                        \
         .type = BE_STRING,                                \
-        .marked = 0x08,   /* GC_CONST */                  \
+        .marked = GC_CONST,                               \
         .extra = 0,                                       \
         .slen = _len,                                     \
         .hash = 0,                                        \
@@ -296,7 +296,7 @@ typedef struct bntvmodule {
 #define be_define_local_proto(_name, _nstack, _argc, _is_const, _is_subproto, _is_upval)     \
   static const bproto _name##_proto = {                                           \
     NULL,                       /* bgcobject *next */                             \
-    8,                          /* type BE_PROTO */                               \
+    BE_PROTO,                   /* type BE_PROTO */                               \
     0x08,                       /* marked outside of GC */                        \
     (_nstack),                  /* nstack */                                      \
     BE_IIF(_is_upval)(sizeof(_name##_upvals)/sizeof(bupvaldesc),0),/* nupvals */  \
@@ -319,8 +319,8 @@ typedef struct bntvmodule {
 #define be_define_local_closure(_name)        \
   const bclosure _name##_closure = {          \
     NULL,           /* bgcobject *next */     \
-    36,             /* type BE_CLOSURE */     \
-    0x08,           /* marked GC_CONST */     \
+    BE_CLOSURE,     /* type BE_CLOSURE */     \
+    GC_CONST,       /* marked GC_CONST */     \
     0,              /* nupvals */             \
     NULL,           /* bgcobject *gray */     \
     (bproto*) &_name##_proto, /* proto */     \
