@@ -25,6 +25,7 @@ SOFTWARE.
 #include "RA8876.h"
 #include <limits.h>
 
+uint8_t initdone;
 /* TODO
 
 font 0 x and y size with line,col cmd
@@ -123,6 +124,9 @@ uint8_t RA8876::readStatus(void) {
 void RA8876::writeReg(uint8_t reg, uint8_t x) {
   writeCmd(reg);
   writeData(x);
+  if (!initdone) {
+  //  Serial.printf("%02x, %02x\n", reg, x);
+  }
 }
 
 // Like writeReg(), but does two successive register writes of a 16-bit value, low byte first.
@@ -593,7 +597,7 @@ bool RA8876::initDisplay() {
   // TODO: Track backlight pin and turn on backlight
 
   SPI.endTransaction();
-
+initdone = 1;
   return true;
 }
 
@@ -935,7 +939,14 @@ void RA8876::setAddrWindow(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1) {
   SPI.endTransaction();
 }
 
-void RA8876::pushColors(uint16_t *data, uint16_t len, boolean first) {
+static inline void lvgl_color_swap1(uint16_t *data, uint16_t len) { for (uint32_t i = 0; i < len; i++) (data[i] = data[i] << 8 | data[i] >> 8); }
+
+void RA8876::pushColors(uint16_t *data, uint16_t len, boolean not_swapped) {
+
+  if (not_swapped == false) {
+    lvgl_color_swap1(data, len);
+  }
+
   SPI.beginTransaction(m_spiSettings);
   //RA8876_CS_LOW
   while (len--) {
