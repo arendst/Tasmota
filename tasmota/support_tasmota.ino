@@ -1149,7 +1149,7 @@ void Every250mSeconds(void)
           }
 #endif  // FIRMWARE_MINIMAL
           if (ota_retry_counter < OTA_ATTEMPTS / 2) {
-            if (StrStr_P(TasmotaGlobal.mqtt_data, PSTR(".gz"))) {
+            if (StrCaseStr_P(TasmotaGlobal.mqtt_data, PSTR(".gz"))) {
               ota_retry_counter = 1;
             } else {
               strcat_P(TasmotaGlobal.mqtt_data, PSTR(".gz"));
