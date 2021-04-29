@@ -23,9 +23,9 @@
 #define MQTT_WIFI_CLIENT_TIMEOUT   200    // Wifi TCP connection timeout (default is 5000 mSec)
 #endif
 
+#ifdef USE_MQTT_AZURE_IOT
 #include <bearssl\bearssl.h>
 #include <base64.hpp>
-#ifdef USE_MQTT_AZURE_IOT
 #include <JsonParser.h>
 #undef  MQTT_PORT
 #define MQTT_PORT         8883
@@ -224,6 +224,7 @@ void MqttInit(void) {
   MqttClient.setSocketTimeout(Settings.mqtt_socket_timeout);
 }
 
+#ifdef USE_MQTT_AZURE_IOT
 String azurePreSharedKeytoSASToken(char *iotHubFQDN, const char *deviceId, const char *preSharedKey, int sasTTL = 86400){
   int ttl = time(NULL) + sasTTL;
   String dataToSignString = urlEncodeBase64(String(iotHubFQDN) + "/devices/" + String(deviceId)) + "\n" + String(ttl);
@@ -268,6 +269,7 @@ String urlEncodeBase64(String stringToEncode){
   stringToEncode.replace("/", "%2F");
   return stringToEncode;
 }
+#endif  // USE_MQTT_AZURE_IOT
 
 bool MqttIsConnected(void) {
   return MqttClient.connected();
