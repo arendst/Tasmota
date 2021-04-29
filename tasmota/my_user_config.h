@@ -722,10 +722,9 @@
   // #define SDM72_IMPEXP                            // Show additonal import/export active energy and power in MQTT and Web (+0k5 code)
 //#define USE_SDM120                               // Add support for Eastron SDM120-Modbus energy monitor (+1k1 code)
   #define SDM120_SPEED         2400              // SDM120-Modbus RS485 serial speed (default: 2400 baud)
-#define USE_SDM630                               // Add support for Eastron SDM630-Modbus energy monitor (+0k6 code)
-  #define SDM630_SPEED         9600              // SDM630-Modbus RS485 serial speed (default: 9600 baud)
-//#define SDM630_SPEED         2400              // use this for SDM530-Modbus RS485 serial speed (default SDM530: 2400 baud), all other will same as SDM630 
-  #define SDM630_IMPORT                          // Show import active energy in MQTT and Web (+0k3 code)
+//#define USE_SDM630                               // Add support for Eastron SDM630-Modbus and SDM530-Modbus energy monitors (+0k6 code)
+  #define SDM630_SPEED         9600              // SDM630-Modbus RS485 serial speed (default: 9600 baud), use 2400 for SDM530-Modbus RS485 serial speed (default SDM530: 2400 baud), all other will same as SDM630 
+//#define SDM630_IMPORT                          // Show import active energy in MQTT and Web (+0k3 code)
 //#define USE_DDS2382                              // Add support for Hiking DDS2382 Modbus energy monitor (+0k6 code)
   #define DDS2382_SPEED        9600              // Hiking DDS2382 Modbus RS485 serial speed (default: 9600 baud)
 //#define USE_DDSU666                              // Add support for Chint DDSU666 Modbus energy monitor (+0k6 code)
