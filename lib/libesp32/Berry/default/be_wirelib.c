@@ -5,12 +5,8 @@
  * 
  * 2 wire communication - I2C
  *******************************************************************/
-#include "be_object.h"
-#include "be_string.h"
-#include "be_gc.h"
+#include "be_constobj.h"
 
-// temporary work-around
-#define be_define_local_const_str2(a,b,c,d,e,f) be_define_local_const_str(a,b,c,e)
 #ifdef USE_I2C
 
 extern int b_wire_init(bvm *vm);
@@ -45,14 +41,14 @@ extern int b_wire_detect(bvm *vm);
 ** Solidified function: read_bytes
 ********************************************************************/
 
-be_define_local_const_str2(read_bytes_str_name, "read_bytes", -718234123, 0, 10, 0);
-be_define_local_const_str2(read_bytes_str_source, "string", 398550328, 0, 6, 0);
-be_define_local_const_str2(read_bytes_str_0, "_begin_transmission", -1515506120, 0, 19, 0);
-be_define_local_const_str2(read_bytes_str_1, "_write", -2079504471, 0, 6, 0);
-be_define_local_const_str2(read_bytes_str_2, "_end_transmission", -1057486896, 0, 17, 0);
-be_define_local_const_str2(read_bytes_str_3, "_request_from", -329818692, 0, 13, 0);
-be_define_local_const_str2(read_bytes_str_4, "_available", 1306196581, 0, 10, 0);
-be_define_local_const_str2(read_bytes_str_5, "_read", 346717030, 0, 5, 0);
+be_define_local_const_str(read_bytes_str_name, "read_bytes", -718234123, 10);
+be_define_local_const_str(read_bytes_str_source, "string", 398550328, 6);
+be_define_local_const_str(read_bytes_str_0, "_begin_transmission", -1515506120, 19);
+be_define_local_const_str(read_bytes_str_1, "_write", -2079504471, 6);
+be_define_local_const_str(read_bytes_str_2, "_end_transmission", -1057486896, 17);
+be_define_local_const_str(read_bytes_str_3, "_request_from", -329818692, 13);
+be_define_local_const_str(read_bytes_str_4, "_available", 1306196581, 10);
+be_define_local_const_str(read_bytes_str_5, "_read", 346717030, 5);
 
 static const bvalue read_bytes_ktab[6] = {
   { { .s=be_local_const_str(read_bytes_str_0) }, BE_STRING},
@@ -143,11 +139,11 @@ const bclosure read_bytes_closure = {
 ** Solidified function: write_bytes
 ********************************************************************/
 
-be_define_local_const_str2(write_bytes_str_name, "write_bytes", 1227543792, 0, 11, 0);
-be_define_local_const_str2(write_bytes_str_source, "string", 398550328, 0, 6, 0);
-be_define_local_const_str2(write_bytes_str_0, "_begin_transmission", -1515506120, 0, 19, 0);
-be_define_local_const_str2(write_bytes_str_1, "_write", -2079504471, 0, 6, 0);
-be_define_local_const_str2(write_bytes_str_2, "_end_transmission", -1057486896, 0, 17, 0);
+be_define_local_const_str(write_bytes_str_name, "write_bytes", 1227543792, 11);
+be_define_local_const_str(write_bytes_str_source, "string", 398550328, 6);
+be_define_local_const_str(write_bytes_str_0, "_begin_transmission", -1515506120, 19);
+be_define_local_const_str(write_bytes_str_1, "_write", -2079504471, 6);
+be_define_local_const_str(write_bytes_str_2, "_end_transmission", -1057486896, 17);
 
 static const bvalue write_bytes_ktab[3] = {
   { { .s=be_local_const_str(write_bytes_str_0) }, BE_STRING},
@@ -210,11 +206,12 @@ const bclosure write_bytes_closure = {
 
 /*******************************************************************/
 
+#if BE_USE_PRECOMPILED_OBJECT
+#include "../generate/be_fixed_be_class_tasmota_wire.h"
+#endif
 
-// #if !BE_USE_PRECOMPILED_OBJECT
-#if 1           // TODO we will do pre-compiled later
-void be_load_wirelib(bvm *vm)
-{
+void be_load_wirelib(bvm *vm) {
+#if !BE_USE_PRECOMPILED_OBJECT
     static const bnfuncinfo members[] = {
         { "bus", NULL },               // bus number
         { "init", b_wire_init },
@@ -236,14 +233,32 @@ void be_load_wirelib(bvm *vm)
         { NULL, NULL }
     };
     be_regclass(vm, "Wire", members);
-}
 #else
+    be_pushntvclass(vm, &be_class_tasmota_wire);
+    be_setglobal(vm, "Wire");
+    be_pop(vm, 1);
+#endif
+}
 /* @const_object_info_begin
-module tasmota (scope: global, depend: 1) {
-    get_free_heap, func(l_getFreeHeap)
+
+class be_class_tasmota_wire (scope: global, name: Wire) {
+    bus, var
+
+    init, func(b_wire_init)
+    _begin_transmission, func(b_wire_begintransmission)
+    _end_transmission, func(b_wire_endtransmission)
+    _request_from, func(b_wire_requestfrom)
+    _available, func(b_wire_available)
+    _write, func(b_wire_write)
+    _read, func(b_wire_read)
+    scan, func(b_wire_scan)
+    write, func(b_wire_validwrite)
+    read, func(b_wire_validread)
+    detect, func(b_wire_detect)
+
+    read_bytes, closure(read_bytes_closure)
+    write_bytes, closure(write_bytes_closure)
 }
 @const_object_info_end */
-#include "../generate/be_fixed_tasmota.h"
-#endif
 
 #endif // USE_I2C

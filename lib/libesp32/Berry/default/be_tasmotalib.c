@@ -3,12 +3,7 @@
  *
  * To use: `import tasmota`
  *******************************************************************/
-#include "berry.h"
-//#include "be_object.h"
-#include "be_string.h"
-
-// temporary work-around
-#define be_define_local_const_str2(a,b,c,d,e,f) be_define_local_const_str(a,b,c,e)
+#include "be_constobj.h"
 
 extern int l_getFreeHeap(bvm *vm);
 extern int l_publish(bvm *vm);
@@ -63,9 +58,9 @@ extern int l_i2cenabled(bvm *vm);
 ** Solidified function: chars_in_string
 ********************************************************************/
 
-be_define_local_const_str2(chars_in_string_str_name, "chars_in_string", -1146182164, 0, 15, 0);
-be_define_local_const_str2(chars_in_string_str_source, "string", 398550328, 0, 6, 0);
-be_define_local_const_str2(chars_in_string_str_2, "stop_iteration", -121173395, 0, 14, 0);
+be_define_local_const_str(chars_in_string_str_name, "chars_in_string", -1146182164, 15);
+be_define_local_const_str(chars_in_string_str_source, "string", 398550328, 6);
+be_define_local_const_str(chars_in_string_str_2, "stop_iteration", -121173395, 14);
 
 static const bvalue chars_in_string_ktab[3] = {
   { { .i=0 }, BE_INT},
@@ -179,13 +174,13 @@ end
 ** Solidified function: find_key_i
 ********************************************************************/
 
-be_define_local_const_str2(find_key_i_str_name, "find_key_i", 850136726, 0, 10, 0);
-be_define_local_const_str2(find_key_i_str_source, "string", 398550328, 0, 6, 0);
-be_define_local_const_str2(find_key_i_str_0, "string", 398550328, 0, 6, 0);
-be_define_local_const_str2(find_key_i_str_1, "toupper", -602983720, 0, 7, 0);
-be_define_local_const_str2(find_key_i_str_2, "keys", -112588595, 0, 4, 0);
-be_define_local_const_str2(find_key_i_str_3, "?", 973910158, 0, 1, 0);
-be_define_local_const_str2(find_key_i_str_4, "stop_iteration", -121173395, 0, 14, 0);
+be_define_local_const_str(find_key_i_str_name, "find_key_i", 850136726, 10);
+be_define_local_const_str(find_key_i_str_source, "string", 398550328, 6);
+be_define_local_const_str(find_key_i_str_0, "string", 398550328, 6);
+be_define_local_const_str(find_key_i_str_1, "toupper", -602983720, 7);
+be_define_local_const_str(find_key_i_str_2, "keys", -112588595, 4);
+be_define_local_const_str(find_key_i_str_3, "?", 973910158, 1);
+be_define_local_const_str(find_key_i_str_4, "stop_iteration", -121173395, 14);
 
 static const bvalue find_key_i_ktab[5] = {
   { { .s=be_local_const_str(find_key_i_str_0) }, BE_STRING},
@@ -297,12 +292,12 @@ const bclosure find_key_i_closure = {
 ** Solidified function: find_op
 ********************************************************************/
 
-be_define_local_const_str2(find_op_str_name, "find_op", -528253920, 0, 7, 0);
-be_define_local_const_str2(find_op_str_source, "string", 398550328, 0, 6, 0);
-be_define_local_const_str2(find_op_str_0, "string", 398550328, 0, 6, 0);
-be_define_local_const_str2(find_op_str_1, "=<>!", -1630497019, 0, 4, 0);
-be_define_local_const_str2(find_op_str_2, "chars_in_string", -1146182164, 0, 15, 0);
-be_define_local_const_str2(find_op_str_4, "split", -2017972765, 0, 5, 0);
+be_define_local_const_str(find_op_str_name, "find_op", -528253920, 7);
+be_define_local_const_str(find_op_str_source, "string", 398550328, 6);
+be_define_local_const_str(find_op_str_0, "string", 398550328, 6);
+be_define_local_const_str(find_op_str_1, "=<>!", -1630497019, 4);
+be_define_local_const_str(find_op_str_2, "chars_in_string", -1146182164, 15);
+be_define_local_const_str(find_op_str_4, "split", -2017972765, 5);
 
 static const bvalue find_op_ktab[6] = {
   { { .s=be_local_const_str(find_op_str_0) }, BE_STRING},
@@ -417,12 +412,12 @@ const bclosure find_op_closure = {
 ** Solidified function: add_rule
 ********************************************************************/
 
-be_define_local_const_str2(add_rule_str_name, "add_rule", 596540743, 0, 8, 0);
-be_define_local_const_str2(add_rule_str_source, "string", 398550328, 0, 6, 0);
-be_define_local_const_str2(add_rule_str_0, "_rules", -28750191, 0, 6, 0);
-be_define_local_const_str2(add_rule_str_1, "function", -1630125495, 0, 8, 0);
-be_define_local_const_str2(add_rule_str_2, "value_error", 773297791, 0, 11, 0);
-be_define_local_const_str2(add_rule_str_3, "the second argument is not a function", -340392827, 0, 37, 0);
+be_define_local_const_str(add_rule_str_name, "add_rule", 596540743, 8);
+be_define_local_const_str(add_rule_str_source, "string", 398550328, 6);
+be_define_local_const_str(add_rule_str_0, "_rules", -28750191, 6);
+be_define_local_const_str(add_rule_str_1, "function", -1630125495, 8);
+be_define_local_const_str(add_rule_str_2, "value_error", 773297791, 11);
+be_define_local_const_str(add_rule_str_3, "the second argument is not a function", -340392827, 37);
 
 static const bvalue add_rule_ktab[4] = {
   { { .s=be_local_const_str(add_rule_str_0) }, BE_STRING},
@@ -501,10 +496,10 @@ static const bclosure add_rule_closure = {
 ** Solidified function: remove_rule
 ********************************************************************/
 
-be_define_local_const_str2(remove_rule_str_name, "remove_rule", -838755968, 0, 11, 0);
-be_define_local_const_str2(remove_rule_str_source, "string", 398550328, 0, 6, 0);
-be_define_local_const_str2(remove_rule_str_0, "_rules", -28750191, 0, 6, 0);
-be_define_local_const_str2(remove_rule_str_1, "remove", -611183107, 0, 6, 0);
+be_define_local_const_str(remove_rule_str_name, "remove_rule", -838755968, 11);
+be_define_local_const_str(remove_rule_str_source, "string", 398550328, 6);
+be_define_local_const_str(remove_rule_str_0, "_rules", -28750191, 6);
+be_define_local_const_str(remove_rule_str_1, "remove", -611183107, 6);
 
 static const bvalue remove_rule_ktab[2] = {
   { { .s=be_local_const_str(remove_rule_str_0) }, BE_STRING},
@@ -603,22 +598,22 @@ static const bclosure remove_rule_closure = {
 ** Solidified function: try_rule
 ********************************************************************/
 
-be_define_local_const_str2(try_rule_str_name, "try_rule", 1986449405, 0, 8, 0);
-be_define_local_const_str2(try_rule_str_source, "string", 398550328, 0, 6, 0);
-be_define_local_const_str2(try_rule_str_0, "string", 398550328, 0, 6, 0);
-be_define_local_const_str2(try_rule_str_1, "find_op", -528253920, 0, 7, 0);
-be_define_local_const_str2(try_rule_str_2, "split", -2017972765, 0, 5, 0);
-be_define_local_const_str2(try_rule_str_4, "#", 638357778, 0, 1, 0);
-be_define_local_const_str2(try_rule_str_5, "find_key_i", 850136726, 0, 10, 0);
-be_define_local_const_str2(try_rule_str_6, "stop_iteration", -121173395, 0, 14, 0);
-be_define_local_const_str2(try_rule_str_9, "==", -1863000881, 0, 2, 0);
-be_define_local_const_str2(try_rule_str_10, "!==", 559817114, 0, 3, 0);
-be_define_local_const_str2(try_rule_str_11, "=", 940354920, 0, 1, 0);
-be_define_local_const_str2(try_rule_str_12, "!=", -1866252285, 0, 2, 0);
-be_define_local_const_str2(try_rule_str_13, ">", 990687777, 0, 1, 0);
-be_define_local_const_str2(try_rule_str_14, ">=", 284975636, 0, 2, 0);
-be_define_local_const_str2(try_rule_str_15, "<", 957132539, 0, 1, 0);
-be_define_local_const_str2(try_rule_str_16, "<=", -1795743310, 0, 2, 0);
+be_define_local_const_str(try_rule_str_name, "try_rule", 1986449405, 8);
+be_define_local_const_str(try_rule_str_source, "string", 398550328, 6);
+be_define_local_const_str(try_rule_str_0, "string", 398550328, 6);
+be_define_local_const_str(try_rule_str_1, "find_op", -528253920, 7);
+be_define_local_const_str(try_rule_str_2, "split", -2017972765, 5);
+be_define_local_const_str(try_rule_str_4, "#", 638357778, 1);
+be_define_local_const_str(try_rule_str_5, "find_key_i", 850136726, 10);
+be_define_local_const_str(try_rule_str_6, "stop_iteration", -121173395, 14);
+be_define_local_const_str(try_rule_str_9, "==", -1863000881, 2);
+be_define_local_const_str(try_rule_str_10, "!==", 559817114, 3);
+be_define_local_const_str(try_rule_str_11, "=", 940354920, 1);
+be_define_local_const_str(try_rule_str_12, "!=", -1866252285, 2);
+be_define_local_const_str(try_rule_str_13, ">", 990687777, 1);
+be_define_local_const_str(try_rule_str_14, ">=", 284975636, 2);
+be_define_local_const_str(try_rule_str_15, "<", 957132539, 1);
+be_define_local_const_str(try_rule_str_16, "<=", -1795743310, 2);
 
 static const bvalue try_rule_ktab[17] = {
   { { .s=be_local_const_str(try_rule_str_0) }, BE_STRING},
@@ -853,15 +848,15 @@ static const bclosure try_rule_closure = {
 ** Solidified function: exec_rules
 ********************************************************************/
 
-be_define_local_const_str2(exec_rules_str_name, "exec_rules", 1445221092, 0, 10, 0);
-be_define_local_const_str2(exec_rules_str_source, "string", 398550328, 0, 6, 0);
-be_define_local_const_str2(exec_rules_str_0, "_rules", -28750191, 0, 6, 0);
-be_define_local_const_str2(exec_rules_str_1, "json", 916562499, 0, 4, 0);
-be_define_local_const_str2(exec_rules_str_2, "load", -435725847, 0, 4, 0);
-be_define_local_const_str2(exec_rules_str_3, "BRY: ERROR, bad json: ", -1579831487, 0, 22, 0);
-be_define_local_const_str2(exec_rules_str_5, "keys", -112588595, 0, 4, 0);
-be_define_local_const_str2(exec_rules_str_6, "try_rule", 1986449405, 0, 8, 0);
-be_define_local_const_str2(exec_rules_str_7, "stop_iteration", -121173395, 0, 14, 0);
+be_define_local_const_str(exec_rules_str_name, "exec_rules", 1445221092, 10);
+be_define_local_const_str(exec_rules_str_source, "string", 398550328, 6);
+be_define_local_const_str(exec_rules_str_0, "_rules", -28750191, 6);
+be_define_local_const_str(exec_rules_str_1, "json", 916562499, 4);
+be_define_local_const_str(exec_rules_str_2, "load", -435725847, 4);
+be_define_local_const_str(exec_rules_str_3, "BRY: ERROR, bad json: ", -1579831487, 22);
+be_define_local_const_str(exec_rules_str_5, "keys", -112588595, 4);
+be_define_local_const_str(exec_rules_str_6, "try_rule", 1986449405, 8);
+be_define_local_const_str(exec_rules_str_7, "stop_iteration", -121173395, 14);
 
 static const bvalue exec_rules_ktab[8] = {
   { { .s=be_local_const_str(exec_rules_str_0) }, BE_STRING},
@@ -968,11 +963,11 @@ const bclosure exec_rules_closure = {
 ** Solidified function: set_timer
 ********************************************************************/
 
-be_define_local_const_str2(set_timer_str_name, "set_timer", 2135414533, 0, 9, 0);
-be_define_local_const_str2(set_timer_str_source, "string", 398550328, 0, 6, 0);
-be_define_local_const_str2(set_timer_str_0, "_timers", -1694866380, 0, 7, 0);
-be_define_local_const_str2(set_timer_str_1, "push", -2022703139, 0, 4, 0);
-be_define_local_const_str2(set_timer_str_2, "millis", 1214679063, 0, 6, 0);
+be_define_local_const_str(set_timer_str_name, "set_timer", 2135414533, 9);
+be_define_local_const_str(set_timer_str_source, "string", 398550328, 6);
+be_define_local_const_str(set_timer_str_0, "_timers", -1694866380, 7);
+be_define_local_const_str(set_timer_str_1, "push", -2022703139, 4);
+be_define_local_const_str(set_timer_str_2, "millis", 1214679063, 6);
 
 static const bvalue set_timer_ktab[3] = {
   { { .s=be_local_const_str(set_timer_str_0) }, BE_STRING},
@@ -1061,12 +1056,12 @@ const bclosure set_timer_closure = {
 ** Solidified function: run_deferred
 ********************************************************************/
 
-be_define_local_const_str2(run_deferred_str_name, "run_deferred", 371594696, 0, 12, 0);
-be_define_local_const_str2(run_deferred_str_source, "string", 398550328, 0, 6, 0);
-be_define_local_const_str2(run_deferred_str_0, "_timers", -1694866380, 0, 7, 0);
-be_define_local_const_str2(run_deferred_str_2, "size", 597743964, 0, 4, 0);
-be_define_local_const_str2(run_deferred_str_3, "time_reached", 2075136773, 0, 12, 0);
-be_define_local_const_str2(run_deferred_str_5, "remove", -611183107, 0, 6, 0);
+be_define_local_const_str(run_deferred_str_name, "run_deferred", 371594696, 12);
+be_define_local_const_str(run_deferred_str_source, "string", 398550328, 6);
+be_define_local_const_str(run_deferred_str_0, "_timers", -1694866380, 7);
+be_define_local_const_str(run_deferred_str_2, "size", 597743964, 4);
+be_define_local_const_str(run_deferred_str_3, "time_reached", 2075136773, 12);
+be_define_local_const_str(run_deferred_str_5, "remove", -611183107, 6);
 
 static const bvalue run_deferred_ktab[6] = {
   { { .s=be_local_const_str(run_deferred_str_0) }, BE_STRING},
@@ -1165,12 +1160,12 @@ const bclosure run_deferred_closure = {
 ** Solidified function: add_cmd
 ********************************************************************/
 
-be_define_local_const_str2(add_cmd_str_name, "add_cmd", -933336417, 0, 7, 0);
-be_define_local_const_str2(add_cmd_str_source, "string", 398550328, 0, 6, 0);
-be_define_local_const_str2(add_cmd_str_0, "_ccmd", -2131545883, 0, 5, 0);
-be_define_local_const_str2(add_cmd_str_1, "function", -1630125495, 0, 8, 0);
-be_define_local_const_str2(add_cmd_str_2, "value_error", 773297791, 0, 11, 0);
-be_define_local_const_str2(add_cmd_str_3, "the second argument is not a function", -340392827, 0, 37, 0);
+be_define_local_const_str(add_cmd_str_name, "add_cmd", -933336417, 7);
+be_define_local_const_str(add_cmd_str_source, "string", 398550328, 6);
+be_define_local_const_str(add_cmd_str_0, "_ccmd", -2131545883, 5);
+be_define_local_const_str(add_cmd_str_1, "function", -1630125495, 8);
+be_define_local_const_str(add_cmd_str_2, "value_error", 773297791, 11);
+be_define_local_const_str(add_cmd_str_3, "the second argument is not a function", -340392827, 37);
 
 static const bvalue add_cmd_ktab[4] = {
   { { .s=be_local_const_str(add_cmd_str_0) }, BE_STRING},
@@ -1250,10 +1245,10 @@ static const bclosure add_cmd_closure = {
 ** Solidified function: remove_cmd
 ********************************************************************/
 
-be_define_local_const_str2(remove_cmd_str_name, "remove_cmd", -462651594, 0, 10, 0);
-be_define_local_const_str2(remove_cmd_str_source, "string", 398550328, 0, 6, 0);
-be_define_local_const_str2(remove_cmd_str_0, "_ccmd", -2131545883, 0, 5, 0);
-be_define_local_const_str2(remove_cmd_str_1, "remove", -611183107, 0, 6, 0);
+be_define_local_const_str(remove_cmd_str_name, "remove_cmd", -462651594, 10);
+be_define_local_const_str(remove_cmd_str_source, "string", 398550328, 6);
+be_define_local_const_str(remove_cmd_str_0, "_ccmd", -2131545883, 5);
+be_define_local_const_str(remove_cmd_str_1, "remove", -611183107, 6);
 
 static const bvalue remove_cmd_ktab[2] = {
   { { .s=be_local_const_str(remove_cmd_str_0) }, BE_STRING},
@@ -1330,13 +1325,13 @@ static const bclosure remove_cmd_closure = {
 ** Solidified function: exec_cmd
 ********************************************************************/
 
-be_define_local_const_str2(exec_cmd_str_name, "exec_cmd", 493567399, 0, 8, 0);
-be_define_local_const_str2(exec_cmd_str_source, "string", 398550328, 0, 6, 0);
-be_define_local_const_str2(exec_cmd_str_0, "_ccmd", -2131545883, 0, 5, 0);
-be_define_local_const_str2(exec_cmd_str_1, "json", 916562499, 0, 4, 0);
-be_define_local_const_str2(exec_cmd_str_2, "load", -435725847, 0, 4, 0);
-be_define_local_const_str2(exec_cmd_str_3, "find_key_i", 850136726, 0, 10, 0);
-be_define_local_const_str2(exec_cmd_str_4, "resolvecmnd", 993361485, 0, 11, 0);
+be_define_local_const_str(exec_cmd_str_name, "exec_cmd", 493567399, 8);
+be_define_local_const_str(exec_cmd_str_source, "string", 398550328, 6);
+be_define_local_const_str(exec_cmd_str_0, "_ccmd", -2131545883, 5);
+be_define_local_const_str(exec_cmd_str_1, "json", 916562499, 4);
+be_define_local_const_str(exec_cmd_str_2, "load", -435725847, 4);
+be_define_local_const_str(exec_cmd_str_3, "find_key_i", 850136726, 10);
+be_define_local_const_str(exec_cmd_str_4, "resolvecmnd", 993361485, 11);
 
 static const bvalue exec_cmd_ktab[5] = {
   { { .s=be_local_const_str(exec_cmd_str_0) }, BE_STRING},
@@ -1701,10 +1696,10 @@ be_define_local_closure(event);
 ** Solidified function: add_driver
 ********************************************************************/
 
-be_define_local_const_str2(add_driver_str_name, "add_driver", 1654458371, 0, 10, 0);
-be_define_local_const_str2(add_driver_str_source, "string", 398550328, 0, 6, 0);
-be_define_local_const_str2(add_driver_str_0, "_drivers", -1034638311, 0, 8, 0);
-be_define_local_const_str2(add_driver_str_1, "push", -2022703139, 0, 4, 0);
+be_define_local_const_str(add_driver_str_name, "add_driver", 1654458371, 10);
+be_define_local_const_str(add_driver_str_source, "string", 398550328, 6);
+be_define_local_const_str(add_driver_str_0, "_drivers", -1034638311, 8);
+be_define_local_const_str(add_driver_str_1, "push", -2022703139, 4);
 
 static const bvalue add_driver_ktab[2] = {
   { { .s=be_local_const_str(add_driver_str_0) }, BE_STRING},
@@ -1803,24 +1798,24 @@ const bclosure add_driver_closure = {
 ** Solidified function: load
 ********************************************************************/
 
-be_define_local_const_str2(load_str_name, "load", -435725847, 0, 4, 0);
-be_define_local_const_str2(load_str_source, "string", 398550328, 0, 6, 0);
-be_define_local_const_str2(load_str_0, "string", 398550328, 0, 6, 0);
-be_define_local_const_str2(load_str_1, "split", -2017972765, 0, 5, 0);
-be_define_local_const_str2(load_str_2, ".", 722245873, 0, 1, 0);
-be_define_local_const_str2(load_str_4, "be", 942383232, 0, 2, 0);
-be_define_local_const_str2(load_str_5, "bec", 1336821081, 0, 3, 0);
-be_define_local_const_str2(load_str_6, "file extension is not '.be' or '.bec'", -1199247657, 0, 37, 0);
-be_define_local_const_str2(load_str_7, "c", -435409838, 0, 1, 0);
-be_define_local_const_str2(load_str_9, "/", 705468254, 0, 1, 0);
-be_define_local_const_str2(load_str_10, "file", -1427482813, 0, 4, 0);
-be_define_local_const_str2(load_str_11, "save", -855671224, 0, 4, 0);
-be_define_local_const_str2(load_str_12, "log", 1062293841, 0, 3, 0);
-be_define_local_const_str2(load_str_13, "format", -1180859054, 0, 6, 0);
-be_define_local_const_str2(load_str_14, "BRY: could not save compiled file %s (%s)", 736659787, 0, 41, 0);
-be_define_local_const_str2(load_str_15, "BRY: sucessfully loaded '%s'", -675188639, 0, 28, 0);
-be_define_local_const_str2(load_str_16, "Could not load file '%s'", -708657871, 0, 24, 0);
-be_define_local_const_str2(load_str_17, "io_error", 1970281036, 0, 8, 0);
+be_define_local_const_str(load_str_name, "load", -435725847, 4);
+be_define_local_const_str(load_str_source, "string", 398550328, 6);
+be_define_local_const_str(load_str_0, "string", 398550328, 6);
+be_define_local_const_str(load_str_1, "split", -2017972765, 5);
+be_define_local_const_str(load_str_2, ".", 722245873, 1);
+be_define_local_const_str(load_str_4, "be", 942383232, 2);
+be_define_local_const_str(load_str_5, "bec", 1336821081, 3);
+be_define_local_const_str(load_str_6, "file extension is not '.be' or '.bec'", -1199247657, 37);
+be_define_local_const_str(load_str_7, "c", -435409838, 1);
+be_define_local_const_str(load_str_9, "/", 705468254, 1);
+be_define_local_const_str(load_str_10, "file", -1427482813, 4);
+be_define_local_const_str(load_str_11, "save", -855671224, 4);
+be_define_local_const_str(load_str_12, "log", 1062293841, 3);
+be_define_local_const_str(load_str_13, "format", -1180859054, 6);
+be_define_local_const_str(load_str_14, "BRY: could not save compiled file %s (%s)", 736659787, 41);
+be_define_local_const_str(load_str_15, "BRY: sucessfully loaded '%s'", -675188639, 28);
+be_define_local_const_str(load_str_16, "Could not load file '%s'", -708657871, 24);
+be_define_local_const_str(load_str_17, "io_error", 1970281036, 8);
 
 static const bvalue load_ktab[18] = {
   { { .s=be_local_const_str(load_str_0) }, BE_STRING},
@@ -1975,12 +1970,12 @@ const bclosure load_closure = {
 ** Solidified function: wire_scan
 ********************************************************************/
 
-be_define_local_const_str2(wire_scan_str_name, "wire_scan", -1623691416, 0, 9, 0);
-be_define_local_const_str2(wire_scan_str_source, "string", 398550328, 0, 6, 0);
-be_define_local_const_str2(wire_scan_str_0, "i2c_enabled", 218388101, 0, 11, 0);
-be_define_local_const_str2(wire_scan_str_1, "wire1", -1082245877, 0, 5, 0);
-be_define_local_const_str2(wire_scan_str_2, "detect", 8884370, 0, 6, 0);
-be_define_local_const_str2(wire_scan_str_3, "wire2", -1065468258, 0, 5, 0);
+be_define_local_const_str(wire_scan_str_name, "wire_scan", -1623691416, 9);
+be_define_local_const_str(wire_scan_str_source, "string", 398550328, 6);
+be_define_local_const_str(wire_scan_str_0, "i2c_enabled", 218388101, 11);
+be_define_local_const_str(wire_scan_str_1, "wire1", -1082245877, 5);
+be_define_local_const_str(wire_scan_str_2, "detect", 8884370, 6);
+be_define_local_const_str(wire_scan_str_3, "wire2", -1065468258, 5);
 
 static const bvalue wire_scan_ktab[4] = {
   { { .s=be_local_const_str(wire_scan_str_0) }, BE_STRING},
@@ -2134,13 +2129,13 @@ be_define_local_closure(time_str);
 ** Solidified function: cmd
 ********************************************************************/
 
-be_define_local_const_str2(cmd_str_name, "cmd", -158181397, 0, 3, 0);
-be_define_local_const_str2(cmd_str_source, "string", 398550328, 0, 6, 0);
-be_define_local_const_str2(cmd_str_0, "json", 916562499, 0, 4, 0);
-be_define_local_const_str2(cmd_str_1, "_cmd", -875145154, 0, 4, 0);
-be_define_local_const_str2(cmd_str_2, "load", -435725847, 0, 4, 0);
-be_define_local_const_str2(cmd_str_3, "instance", 193386898, 0, 8, 0);
-be_define_local_const_str2(cmd_str_4, "response", 1499316702, 0, 8, 0);
+be_define_local_const_str(cmd_str_name, "cmd", -158181397, 3);
+be_define_local_const_str(cmd_str_source, "string", 398550328, 6);
+be_define_local_const_str(cmd_str_0, "json", 916562499, 4);
+be_define_local_const_str(cmd_str_1, "_cmd", -875145154, 4);
+be_define_local_const_str(cmd_str_2, "load", -435725847, 4);
+be_define_local_const_str(cmd_str_3, "instance", 193386898, 8);
+be_define_local_const_str(cmd_str_4, "response", 1499316702, 8);
 
 static const bvalue cmd_ktab[5] = {
   { { .s=be_local_const_str(cmd_str_0) }, BE_STRING},
@@ -2228,11 +2223,11 @@ static const bclosure cmd_closure = {
 ** Solidified function: get_light
 ********************************************************************/
 
-be_define_local_const_str2(get_light_str_name, "get_light", 381930476, 0, 9, 0);
-be_define_local_const_str2(get_light_str_source, "string", 398550328, 0, 6, 0);
-be_define_local_const_str2(get_light_str_0, "tasmota.get_light() is deprecated, use light.get()", -769213649, 0, 50, 0);
-be_define_local_const_str2(get_light_str_1, "light", -493019601, 0, 5, 0);
-be_define_local_const_str2(get_light_str_2, "get", 1410115415, 0, 3, 0);
+be_define_local_const_str(get_light_str_name, "get_light", 381930476, 9);
+be_define_local_const_str(get_light_str_source, "string", 398550328, 6);
+be_define_local_const_str(get_light_str_0, "tasmota.get_light() is deprecated, use light.get()", -769213649, 50);
+be_define_local_const_str(get_light_str_1, "light", -493019601, 5);
+be_define_local_const_str(get_light_str_2, "get", 1410115415, 3);
 
 static const bvalue get_light_ktab[3] = {
   { { .s=be_local_const_str(get_light_str_0) }, BE_STRING},
@@ -2317,11 +2312,11 @@ static const bclosure get_light_closure = {
 ** Solidified function: set_light
 ********************************************************************/
 
-be_define_local_const_str2(set_light_str_name, "set_light", -1118891144, 0, 9, 0);
-be_define_local_const_str2(set_light_str_source, "string", 398550328, 0, 6, 0);
-be_define_local_const_str2(set_light_str_0, "tasmota.set_light() is deprecated, use light.set()", 2124937871, 0, 50, 0);
-be_define_local_const_str2(set_light_str_1, "light", -493019601, 0, 5, 0);
-be_define_local_const_str2(set_light_str_2, "set", -970520829, 0, 3, 0);
+be_define_local_const_str(set_light_str_name, "set_light", -1118891144, 9);
+be_define_local_const_str(set_light_str_source, "string", 398550328, 6);
+be_define_local_const_str(set_light_str_0, "tasmota.set_light() is deprecated, use light.set()", 2124937871, 50);
+be_define_local_const_str(set_light_str_1, "light", -493019601, 5);
+be_define_local_const_str(set_light_str_2, "set", -970520829, 3);
 
 static const bvalue set_light_ktab[3] = {
   { { .s=be_local_const_str(set_light_str_0) }, BE_STRING},
@@ -2390,15 +2385,15 @@ static const bclosure set_light_closure = {
 
 /*******************************************************************/
 
-/********************************************************************
+#if BE_USE_PRECOMPILED_OBJECT
+#include "../generate/be_fixed_be_class_tasmota.h"
+#endif
 
-********************************************************************/
 
-// #if !BE_USE_PRECOMPILED_OBJECT
-#if 1           // TODO we will do pre-compiled later
 // Class definition
 void be_load_tasmota_ntvlib(bvm *vm)
 {
+#if !BE_USE_PRECOMPILED_OBJECT
     static const bnfuncinfo members[] = {
         { "_rules", NULL },
         { "_timers", NULL },
@@ -2462,14 +2457,73 @@ void be_load_tasmota_ntvlib(bvm *vm)
 
         { NULL, NULL }
     };
-    be_regclass(vm, "Tasmota_ntv", members);
+    be_regclass(vm, "Tasmota", members);
+#else
+    be_pushntvclass(vm, &be_class_tasmota);
+    be_setglobal(vm, "Tasmota");
+    be_pop(vm, 1);
+#endif
 }
 
-#else
 /* @const_object_info_begin
-module tasmota (scope: global, depend: 1) {
+class be_class_tasmota (scope: global, name: Tasmota) {
+    _rules, var
+    _timers, var
+    _ccmd, var
+    _drivers, var
+    wire1, var
+    wire2, var
+
     get_free_heap, func(l_getFreeHeap)
+    publish, func(l_publish)
+    _cmd, func(l_cmd)
+    get_option, func(l_getoption)
+    millis, func(l_millis)
+    time_reached, func(l_timereached)
+    rtc, func(l_rtc)
+    time_dump, func(l_time_dump)
+    yield, func(l_yield)
+    delay, func(l_delay)
+    scale_uint, func(l_scaleuint)
+    log, func(l_logInfo)
+    save, func(l_save)
+
+    resp_cmnd, func(l_respCmnd)
+    resp_cmnd_str, func(l_respCmndStr)
+    resp_cmnd_done, func(l_respCmndDone)
+    resp_cmnd_error, func(l_respCmndError)
+    resp_cmnd_failed, func(l_respCmndFailed)
+    resolvecmnd, func(l_resolveCmnd)
+
+    response_append, func(l_respAppend)
+    web_send_decimal, func(l_webSendDecimal)
+
+    get_power, func(l_getpower)
+    set_power, func(l_setpower)
+
+    i2c_enabled, func(l_i2cenabled)
+
+    cmd, closure(cmd_closure)
+    chars_in_string, closure(chars_in_string_closure)
+    find_key_i, closure(find_key_i_closure)
+    find_op, closure(find_op_closure)
+    add_rule, closure(add_rule_closure)
+    remove_rule, closure(remove_rule_closure)
+    try_rule, closure(try_rule_closure)
+    exec_rules, closure(exec_rules_closure)
+    set_timer, closure(set_timer_closure)
+    run_deferred, closure(run_deferred_closure)
+    add_cmd, closure(add_cmd_closure)
+    remove_cmd, closure(remove_cmd_closure)
+    exec_cmd, closure(exec_cmd_closure)
+    gc, closure(gc_closure)
+    event, closure(event_closure)
+    add_driver, closure(add_driver_closure)
+    load, closure(load_closure)
+    wire_scan, closure(wire_scan_closure)
+    time_str, closure(time_str_closure)
+
+    get_light, closure(get_light_closure)
+    set_light, closure(set_light_closure)
 }
 @const_object_info_end */
-#include "../generate/be_fixed_tasmota.h"
-#endif

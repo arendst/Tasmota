@@ -5,14 +5,13 @@
  * 
  * read power values
  *******************************************************************/
-#include "be_object.h"
+#include "be_constobj.h"
 
 #ifdef USE_ENERGY_SENSOR
 
 extern int b_nrg_read(bvm *vm);
 
-// #if !BE_USE_PRECOMPILED_OBJECT
-#if 1           // TODO we will do pre-compiled later
+#if !BE_USE_PRECOMPILED_OBJECT
 be_native_module_attr_table(energy) {
     be_native_module_function("read", b_nrg_read),
 };
@@ -20,11 +19,11 @@ be_native_module_attr_table(energy) {
 be_define_native_module(energy, NULL);
 #else
 /* @const_object_info_begin
-module tasmota (scope: global, depend: 1) {
-    get_free_heap, func(l_getFreeHeap)
+module energy (scope: global) {
+    read, func(b_nrg_read)
 }
 @const_object_info_end */
-#include "../generate/be_fixed_tasmota.h"
+#include "../generate/be_fixed_energy.h"
 #endif
 
 #endif // USE_ENERGY_SENSOR

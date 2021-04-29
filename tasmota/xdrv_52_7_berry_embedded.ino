@@ -37,7 +37,7 @@ const char berry_prog[] =
 #endif
 
   // Phase 1
-  "class Tasmota: Tasmota_ntv "
+  // "class Tasmota: Tasmota_ntv "
     // for now the variables are built, need to find a way to push in Flash
     // "def init() "
     // "end "
@@ -352,7 +352,7 @@ const char berry_prog[] =
     //   "end "
     // "end "
 
-  "end "
+  // "end "
 
   // // Monkey patch `Driver` class - To be continued
   // "class Driver2 : Driver "
