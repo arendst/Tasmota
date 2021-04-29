@@ -496,7 +496,7 @@
 #define D_ZIGBEE_JSON_REQUIRED               "Configurazione richiede oggetti JSON"
 #define D_ZIGBEE_RESET_1_OR_2                "1 o 2 per ripristino"
 #define D_ZIGBEE_EEPROM_FOUND_AT_ADDRESS     "Trovata EEPROM ZBBridge all'indirizzo"
-#define D_ZIGBEE_RANDOMIZING_ZBCONFIG        "Randomizzazione parametri Zigbee, controlla con "ZbConfig""
+#define D_ZIGBEE_RANDOMIZING_ZBCONFIG        "Randomizzazione parametri Zigbee, controlla con \"ZbConfig\""
 
 // xdrv_03_energy.ino
 #define D_ENERGY_TODAY      "Energia - oggi"
