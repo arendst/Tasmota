@@ -100,6 +100,18 @@ void HandleMetrics(void) {
     WSContentSend_P(PSTR("# TYPE tasmota_global_pressure_hpa gauge\ntasmota_global_pressure_hpa %s\n"), parameter);
   }
 
+  // Pseudo-metric providing metadata about the free memory.
+  #ifdef ESP32
+    int32_t freeMaxMem = 100 - (int32_t)(ESP_getMaxAllocHeap() * 100 / ESP_getFreeHeap());
+    WSContentSend_PD(PSTR("# TYPE tasmota_memory_bytes gauge\ntasmota_memory_bytes{memory=\"Ram\"} %d\n"), ESP_getFreeHeap());
+    WSContentSend_PD(PSTR("# TYPE tasmota_memory_ratio gauge\ntasmota_memory_ratio{memory=\"Fragmentation\"} %d)"), freeMaxMem / 100);
+    if (psramFound()) {
+      WSContentSend_P(PSTR("# TYPE tasmota_memory_bytes gauge\ntasmota_memory_bytes{memory=\"Psram\"} %d\n"), ESP.getFreePsram() );
+    }
+  #else // ESP32
+    WSContentSend_PD(PSTR("# TYPE tasmota_memory_bytes gauge\ntasmota_memory_bytes{memory=\"ram\"} %d\n"), ESP_getFreeHeap());
+  #endif // ESP32
+
 #ifdef USE_ENERGY_SENSOR
   dtostrfd(Energy.voltage[0], Settings.flag2.voltage_resolution, parameter);
   WSContentSend_P(PSTR("# TYPE energy_voltage_volts gauge\nenergy_voltage_volts %s\n"), parameter);
