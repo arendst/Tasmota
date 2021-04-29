@@ -2865,9 +2865,15 @@ void CmndFade(void)
       Settings.light_fade ^= 1;
       break;
     }
+    if (XdrvMailbox.payload >= 0 && XdrvMailbox.payload <= 2) {
   #ifdef USE_DEVICE_GROUPS
-    if (XdrvMailbox.payload >= 0 && XdrvMailbox.payload <= 2) SendDeviceGroupMessage(Light.device, DGR_MSGTYP_UPDATE, DGR_ITEM_LIGHT_FADE, Settings.light_fade);
+      SendDeviceGroupMessage(Light.device, DGR_MSGTYP_UPDATE, DGR_ITEM_LIGHT_FADE, Settings.light_fade);
   #endif  // USE_DEVICE_GROUPS
+      // Publish state message for Hass
+      if (Settings.flag3.hass_tele_on_power) {  // SetOption59 - Send tele/%topic%/STATE in addition to stat/%topic%/RESULT
+        MqttPublishTeleState();
+      }
+    }
     if (!Settings.light_fade) { Light.fade_running = false; }
   }
   ResponseCmndStateText(Settings.light_fade);
@@ -2903,6 +2909,10 @@ void CmndSpeed(void)
 #ifdef USE_DEVICE_GROUPS
       SendDeviceGroupMessage(Light.device, DGR_MSGTYP_UPDATE, DGR_ITEM_LIGHT_SPEED, Settings.light_speed);
 #endif  // USE_DEVICE_GROUPS
+      // Publish state message for Hass
+      if (Settings.flag3.hass_tele_on_power) {  // SetOption59 - Send tele/%topic%/STATE in addition to stat/%topic%/RESULT
+        MqttPublishTeleState();
+      }
     }
     ResponseCmndNumber(Settings.light_speed);
   }
