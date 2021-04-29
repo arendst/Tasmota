@@ -122,7 +122,8 @@ uDisplay::uDisplay(char *lp) : Renderer(800, 600) {
             setwidth(gxs);
             gys = next_val(&lp1);
             setheight(gys);
-            bpp = next_val(&lp1);
+            disp_bpp = next_val(&lp1);
+            bpp = abs(disp_bpp);
             if (bpp == 1) {
               col_type = uCOLOR_BW;
             } else {
@@ -373,15 +374,7 @@ uDisplay::uDisplay(char *lp) : Renderer(800, 600) {
 
 Renderer *uDisplay::Init(void) {
 
-  if (reset >= 0) {
-    pinMode(reset, OUTPUT);
-    digitalWrite(reset, HIGH);
-    delay(50);
-    digitalWrite(reset, LOW);
-    delay(50);
-    digitalWrite(reset, HIGH);
-    delay(200);
-  }
+
 
   if (interface == _UDSP_I2C) {
     if (wire_n == 0) {
@@ -485,6 +478,16 @@ Renderer *uDisplay::Init(void) {
       digitalWrite(spi_mosi, LOW);
     }
 #endif // ESP32
+
+    if (reset >= 0) {
+      pinMode(reset, OUTPUT);
+      digitalWrite(reset, HIGH);
+      delay(50);
+      digitalWrite(reset, LOW);
+      delay(50);
+      digitalWrite(reset, HIGH);
+      delay(200);
+    }
 
     spiSettings = SPISettings((uint32_t)spi_speed*1000000, MSBFIRST, SPI_MODE3);
 
@@ -948,7 +951,7 @@ for(y=h; y>0; y--) {
 void uDisplay::Splash(void) {
 
   if (splash_font < 0) return;
-  
+
   if (ep_mode) {
     Updateframe();
     delay(lut3time * 10);

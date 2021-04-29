@@ -74,6 +74,8 @@ void Epd::DisplayInit(int8_t p,int8_t size,int8_t rot,int8_t font) {
   setTextColor(WHITE,BLACK);
   setCursor(0,0);
   fillScreen(BLACK);
+
+  disp_bpp = 1;
 }
 
 void Epd::Begin(int16_t cs,int16_t mosi,int16_t sclk) {
