@@ -69,8 +69,8 @@
 #ifdef USE_M5STACK_CORE2
 #undef AUDIO_PWR_ON
 #undef AUDIO_PWR_OFF
-#define AUDIO_PWR_ON CORE2_audio_power(true);
-#define AUDIO_PWR_OFF CORE2_audio_power(false);
+#define AUDIO_PWR_ON Core2AudioPower(true);
+#define AUDIO_PWR_OFF Core2AudioPower(false);
 #undef DAC_IIS_BCK
 #undef DAC_IIS_WS
 #undef DAC_IIS_DOUT

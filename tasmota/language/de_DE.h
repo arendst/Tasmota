@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v9.3.1.2
+ * Updated until v9.3.1.3
 \*********************************************************************/
 
 //#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -84,7 +84,7 @@
 #define D_DISABLED "deaktiviert"
 #define D_DISTANCE "Abstand"
 #define D_DNS_SERVER "DNS-Server"
-#define D_DO "Disolved Oxygen"
+#define D_DO "gelöster Sauerstoff"
 #define D_DONE "erledigt"
 #define D_DST_TIME "DST"
 #define D_EC "EC"
@@ -109,7 +109,7 @@
 #define D_GATEWAY "Gateway"
 #define D_GROUP "Gruppe"
 #define D_HOST "Host"
-#define D_HALL_EFFECT "Hall Effect"
+#define D_HALL_EFFECT "Hall Effekt"
 #define D_HOSTNAME "Hostname"
 #define D_HUMIDITY "Feuchtigkeit"
 #define D_ILLUMINANCE "Beleuchtungsstärke"
@@ -256,6 +256,7 @@
 #define D_CONFIGURATION "Einstellungen"
 #define D_INFORMATION "Informationen"
 #define D_FIRMWARE_UPGRADE "Firmware Update"
+#define D_MANAGEMENT "Konsolen"
 #define D_CONSOLE "Konsole"
 #define D_CONFIRM_RESTART "Wirklich neustarten?"
 
@@ -291,9 +292,18 @@
 #define D_WPA_PSK "WPA-PSK"
 #define D_WPA2_PSK "WPA2-PSK"
 #define D_AP1_SSID "WLAN 1 - SSID"
-#define D_AP1_PASSWORD "WLAN 1 - Passwort"
+#define D_AP1_SSID_HELP "WiFi Netzwerk auswählen oder eingeben"
 #define D_AP2_SSID "WLAN 2 - SSID"
-#define D_AP2_PASSWORD "WLAN 2 - Passwort"
+#define D_AP2_SSID_HELP "alternatives WiFi Netzwerk eingeben"
+#define D_AP_PASSWORD "WLAN - Passwort"
+#define D_AP_PASSWORD_HELP "WiFi Passwort eingeben"
+#define D_SELECT_YOUR_WIFI_NETWORK "WiFi Netzwerk auswählen"
+#define D_SHOW_MORE_WIFI_NETWORKS "Suche nach WiFi Netzwerken"
+#define D_SHOW_MORE_OPTIONS "Mehr Optionen"
+#define D_CHECK_CREDENTIALS "Bitte SSID/Passwort überprüfen"
+#define D_SUCCESSFUL_WIFI_CONNECTION "mit Wifi verbunden"
+#define D_NOW_YOU_CAN_CLOSE_THIS_WINDOW "das Fenster kann geschlossen werden"
+#define D_REDIRECTING_TO_NEW_IP "Umleitung zur neuen Geräte IP-Adresse"
 
 #define D_MQTT_PARAMETERS "MQTT-Einstellungen"
 #define D_CLIENT "client"
@@ -326,14 +336,14 @@
 #define D_TEMPLATE_PARAMETERS "Vorlage Parameter"
 #define D_TEMPLATE_NAME "Name"
 #define D_BASE_TYPE "basiert auf"
-#define D_TEMPLATE_FLAGS "Options"
+#define D_TEMPLATE_FLAGS "Optionen"
 
 #define D_SAVE_CONFIGURATION "Konfiguration speichern"
 #define D_CONFIGURATION_SAVED "Konfiguration gespeichert"
 #define D_CONFIGURATION_RESET "Konfiguration zurücksetzen"
 
 #define D_PROGRAM_VERSION "Tasmota Version"
-#define D_BUILD_DATE_AND_TIME "Build-Datum & -Uhrzeit"
+#define D_BUILD_DATE_AND_TIME "Erstellungs-Datum & -Uhrzeit"
 #define D_CORE_AND_SDK_VERSION "Core-/SDK-Version"
 #define D_FLASH_WRITE_COUNT "Anz. Flash-Schreibzyklen"
 #define D_MAC_ADDRESS "MAC-Adresse"
@@ -485,7 +495,7 @@
 #define D_ZIGBEE_UNSUPPORTED_ATTRIBUTE_TYPE "Nicht unterstützter Attribut Typ"
 #define D_ZIGBEE_JSON_REQUIRED "Konfiguration muss JSON basiert sein"
 #define D_ZIGBEE_RESET_1_OR_2 "1 oder 2 für Reset"
-#define D_ZIGBEE_EEPROM_FOUND_AT_ADDRESS "ZBBridge EEPROM gefunden auf Addresse"
+#define D_ZIGBEE_EEPROM_FOUND_AT_ADDRESS "ZBBridge EEPROM gefunden auf Adresse"
 #define D_ZIGBEE_RANDOMIZING_ZBCONFIG "Zufällige Zigbee Parameter erstellt, Überprüfung mit 'ZbConfig'"
 
 // xdrv_03_energy.ino
@@ -512,7 +522,7 @@
 #define D_SENSORS_FOUND "Sensor gefunden"
 
 // xsns_06_dht.ino
-#define D_TIMEOUT_WAITING_FOR "Timeout während Warten auf"
+#define D_TIMEOUT_WAITING_FOR "Zeitüberschreitung während Warten auf"
 #define D_START_SIGNAL_LOW "Startausschlag niedrig"
 #define D_START_SIGNAL_HIGH "Startausschlag hoch"
 #define D_PULSE "Puls"
@@ -610,6 +620,7 @@
 #define D_SENSOR_LED_LINK      "LedLink"    // Suffix "i"
 #define D_SENSOR_PWM           "PWM"        // Suffix "1"
 #define D_SENSOR_COUNTER       "Counter"    // Suffix "1"
+#define D_SENSOR_INPUT         "Input"
 #define D_SENSOR_IRRECV        "IRrecv"
 #define D_SENSOR_MHZ_RX        "MHZ Rx"
 #define D_SENSOR_MHZ_TX        "MHZ Tx"
@@ -648,9 +659,9 @@
 #define D_SENSOR_TM1638_CLK    "TM1638 CLK"
 #define D_SENSOR_TM1638_DIO    "TM1638 DIO"
 #define D_SENSOR_TM1638_STB    "TM1638 STB"
-#define D_SENSOR_MAX7219_DIN    "MAX7219 DIN"
+#define D_SENSOR_MAX7219_DIN   "MAX7219 DIN"
 #define D_SENSOR_MAX7219_CS    "MAX7219 CS"
-#define D_SENSOR_MAX7219_CLK    "MAX7219 CLK"
+#define D_SENSOR_MAX7219_CLK   "MAX7219 CLK"
 #define D_SENSOR_HX711_SCK     "HX711 SCK"
 #define D_SENSOR_HX711_DAT     "HX711 DAT"
 #define D_SENSOR_FTC532        "FTC532"
@@ -730,9 +741,9 @@
 #define D_SENSOR_SM2135_DAT    "SM2135 Dat"
 #define D_SENSOR_DEEPSLEEP     "DeepSleep"
 #define D_SENSOR_EXS_ENABLE    "EXS Enable"
-#define D_SENSOR_CLIENT_TX    "Client TX"
-#define D_SENSOR_CLIENT_RX    "Client RX"
-#define D_SENSOR_CLIENT_RESET "Client RST"
+#define D_SENSOR_CLIENT_TX     "Client TX"
+#define D_SENSOR_CLIENT_RX     "Client RX"
+#define D_SENSOR_CLIENT_RESET  "Client RST"
 #define D_SENSOR_GPS_RX        "GPS RX"
 #define D_SENSOR_GPS_TX        "GPS TX"
 #define D_SENSOR_HM10_RX       "HM10 RX"
@@ -806,8 +817,8 @@
 #define D_SENSOR_NEOPOOL_TX    "NeoPool Tx"
 #define D_SENSOR_NEOPOOL_RX    "NeoPool Rx"
 #define D_SENSOR_VL53L0X_XSHUT "VL53L0X XSHUT"
-#define D_SENSOR_TFMINIPLUS_TX  "TFmini+ TX"
-#define D_SENSOR_TFMINIPLUS_RX  "TFmini+ RX"
+#define D_SENSOR_TFMINIPLUS_TX "TFmini+ TX"
+#define D_SENSOR_TFMINIPLUS_RX "TFmini+ RX"
 #define D_SENSOR_ZEROCROSS     "ZC Puls"
 #define D_SENSOR_HALLEFFECT    "HallEffect"
 #define D_SENSOR_EPD_DATA      "EPD Data"
@@ -858,7 +869,7 @@
 #define D_UNIT_WATTHOUR "Wh"
 #define D_UNIT_WATT_METER_QUADRAT "W/m²"
 
-#define D_NEW_ADDRESS          "Neue Addresse"
+#define D_NEW_ADDRESS          "Neue Adresse"
 #define D_OUT_OF_RANGE         "Außerhalb Bereich"
 #define D_SENSOR_DETECTED      "erkannt"
 
@@ -976,7 +987,7 @@
 #define D_FP_IMAGEFAIL "Abbildungsfehler"               // 0x03 Failed to enroll the finger
 #define D_FP_IMAGEMESS "schlechtes Abbild"              // 0x06 Failed to generate character file due to overly disorderly fingerprint image
 #define D_FP_FEATUREFAIL "Fingerabdruck zu klein"       // 0x07 Failed to generate character file due to the lack of character point or small fingerprint image
-#define D_FP_NOMATCH "keine Übereinstimmung"           // 0x08 Finger doesn't match
+#define D_FP_NOMATCH "keine Übereinstimmung"            // 0x08 Finger doesn't match
 #define D_FP_NOTFOUND "keinen Eintrag gefunden"         // 0x09 Failed to find matching finger
 #define D_FP_ENROLLMISMATCH "Fingerabdruck fehlerhaft"  // 0x0A Failed to combine the character files
 #define D_FP_BADLOCATION "Eintrag Fehler"               // 0x0B Addressed PageID is beyond the finger library

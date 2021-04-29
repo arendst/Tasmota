@@ -106,7 +106,6 @@ void WifiConfig(uint8_t type)
     }
 #ifdef USE_WEBSERVER
     else if (WIFI_MANAGER == Wifi.config_type || WIFI_MANAGER_RESET_ONLY == Wifi.config_type) {
-      AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_WCFG_2_WIFIMANAGER " " D_ACTIVE_FOR_3_MINUTES));
       WifiManagerBegin(WIFI_MANAGER_RESET_ONLY == Wifi.config_type);
     }
 #endif  // USE_WEBSERVER
@@ -568,6 +567,10 @@ RF_PRE_INIT()
 }
 #endif  // WIFI_RF_PRE_INIT
 
+void WifiEnable(void) {
+  Wifi.counter = 1;
+}
+
 void WifiConnect(void)
 {
   if (!Settings.flag4.network_wifi) { return; }
@@ -622,6 +625,14 @@ void WifiShutdown(bool option = false)
     // WiFi.persistent(false);   // Do not use SDK storage of SSID/WPA parameters
   }
   delay(100);                 // Flush anything in the network buffers.
+}
+
+void WifiDisable(void) {
+  if (!TasmotaGlobal.global_state.wifi_down) {
+    WifiShutdown();
+    WifiSetMode(WIFI_OFF);
+  }
+  TasmotaGlobal.global_state.wifi_down = 1;
 }
 
 void EspRestart(void)

@@ -25,14 +25,27 @@
  * Based on source by AlexT (https://github.com/tzapu)
 \*********************************************************************************************/
 
-#define XDRV_01                               1
+#define XDRV_01                                   1
 
 // Enable below demo feature only if defines USE_UNISHOX_COMPRESSION and USE_SCRIPT_WEB_DISPLAY are disabled
 //#define USE_WEB_SSE
 
 #ifndef WIFI_SOFT_AP_CHANNEL
-#define WIFI_SOFT_AP_CHANNEL                  1          // Soft Access Point Channel number between 1 and 11 as used by WifiManager web GUI
+#define WIFI_SOFT_AP_CHANNEL                      1      // Soft Access Point Channel number between 1 and 11 as used by WifiManager web GUI
 #endif
+
+#ifndef MAX_WIFI_NETWORKS_TO_SHOW
+#define MAX_WIFI_NETWORKS_TO_SHOW                 3      // Maximum number of Wifi Networks to show in the Wifi Configuration Menu BEFORE clicking on Show More Networks.
+#endif
+
+#ifndef RESTART_AFTER_INITIAL_WIFI_CONFIG
+#define RESTART_AFTER_INITIAL_WIFI_CONFIG         true   // Restart Tasmota after initial Wifi Config of a blank device
+#endif                                                   //   If disabled, Tasmota will keep both the wifi AP and the wifi connection to the router
+                                                         //   but only until next restart.
+#ifndef AFTER_INITIAL_WIFI_CONFIG_GO_TO_NEW_IP           // If RESTART_AFTER_INITIAL_WIFI_CONFIG and AFTER_INITIAL_WIFI_CONFIG_GO_TO_NEW_IP are true,
+#define AFTER_INITIAL_WIFI_CONFIG_GO_TO_NEW_IP    true   //   the user will be redirected to the new IP of Tasmota (in the new Network).
+#endif                                                   //   If the first is true, but this is false, the device will restart but the user will see
+                                                         //   a window telling that the WiFi Configuration was Ok and that the window can be closed.
 
 const uint16_t CHUNKED_BUFFER_SIZE = (MESSZ / 2) - 100;  // Chunk buffer size (should be smaller than half mqtt_data size = MESSZ)
 
@@ -95,11 +108,21 @@ const char HTTP_SCRIPT_COUNTER[] PROGMEM =
   #include "./html_uncompressed/HTTP_SCRIPT_ROOT_PART2.h"
 #endif
 
-
 const char HTTP_SCRIPT_WIFI[] PROGMEM =
   "function c(l){"
     "eb('s1').value=l.innerText||l.textContent;"
     "eb('p1').focus();"
+  "}";
+
+const char HTTP_SCRIPT_HIDE[] PROGMEM =
+  "function hidBtns() {"
+    "eb('butmo').style.display='none';"
+    "eb('butmod').style.display='none';"
+    "eb('but0').style.display='block';"
+    "eb('but1').style.display='block';"
+    "eb('but13').style.display='block';"
+    "eb('but0d').style.display='block';"
+    "eb('but13d').style.display='block';"
   "}";
 
 const char HTTP_SCRIPT_RELOAD_TIME[] PROGMEM =
@@ -111,13 +134,10 @@ const char HTTP_SCRIPT_RELOAD_TIME[] PROGMEM =
   #include "./html_uncompressed/HTTP_SCRIPT_CONSOL.h"
 #endif
 
-
 const char HTTP_MODULE_TEMPLATE_REPLACE_INDEX[] PROGMEM =
   "}2%d'>%s (%d)}3";                       // }2 and }3 are used in below os.replace
 const char HTTP_MODULE_TEMPLATE_REPLACE_NO_INDEX[] PROGMEM =
   "}2%d'>%s}3";                           // }2 and }3 are used in below os.replace
-
-
 
 #ifdef USE_UNISHOX_COMPRESSION
   #include "./html_compressed/HTTP_SCRIPT_MODULE_TEMPLATE.h"
@@ -126,7 +146,6 @@ const char HTTP_MODULE_TEMPLATE_REPLACE_NO_INDEX[] PROGMEM =
   #include "./html_uncompressed/HTTP_SCRIPT_MODULE_TEMPLATE.h"
   #include "./html_uncompressed/HTTP_SCRIPT_TEMPLATE.h"
 #endif
-
 
 const char HTTP_SCRIPT_TEMPLATE2[] PROGMEM =
     "j=0;"
@@ -175,7 +194,6 @@ const char HTTP_SCRIPT_INFO_END[] PROGMEM =
   "}"
   "wl(i);";
 
-
 #ifdef USE_UNISHOX_COMPRESSION
   #include "./html_compressed/HTTP_HEAD_LAST_SCRIPT.h"
   #include "./html_compressed/HTTP_HEAD_STYLE1.h"
@@ -185,7 +203,6 @@ const char HTTP_SCRIPT_INFO_END[] PROGMEM =
   #include "./html_uncompressed/HTTP_HEAD_STYLE1.h"
   #include "./html_uncompressed/HTTP_HEAD_STYLE2.h"
 #endif
-
 
 #ifdef USE_ZIGBEE
 // Styles used for Zigbee Web UI
@@ -259,13 +276,16 @@ const char HTTP_FORM_MODULE[] PROGMEM =
   "<p></p><b>" D_MODULE_TYPE "</b> (%s)<br><select id='g99'></select><br>"
   "<br><table>";
 
-const char HTTP_FORM_WIFI[] PROGMEM =
+const char HTTP_FORM_WIFI_PART1[] PROGMEM =
   "<fieldset><legend><b>&nbsp;" D_WIFI_PARAMETERS "&nbsp;</b></legend>"
   "<form method='get' action='wi'>"
-  "<p><b>" D_AP1_SSID "</b> (" STA_SSID1 ")<br><input id='s1' placeholder=\"" STA_SSID1 "\" value=\"%s\"></p>"  // Need \" instead of ' to be able to use ' in text (#8489)
-  "<p><label><b>" D_AP1_PASSWORD "</b><input type='checkbox' onclick='sp(\"p1\")'></label><br><input id='p1' type='password' placeholder=\"" D_AP1_PASSWORD "\" value=\"" D_ASTERISK_PWD "\"></p>"
-  "<p><b>" D_AP2_SSID "</b> (" STA_SSID2 ")<br><input id='s2' placeholder=\"" STA_SSID2 "\" value=\"%s\"></p>"
-  "<p><label><b>" D_AP2_PASSWORD "</b><input type='checkbox' onclick='sp(\"p2\")'></label><br><input id='p2' type='password' placeholder=\"" D_AP2_PASSWORD "\" value=\"" D_ASTERISK_PWD "\"></p>"
+  "<p><b>" D_AP1_SSID "</b>%s<br><input id='s1' placeholder=\"" D_AP1_SSID_HELP "\" value=\"%s\"></p>"  // Need \" instead of ' to be able to use ' in text (#8489)
+  "<p><label><b>" D_AP_PASSWORD "</b><input type='checkbox' onclick='sp(\"p1\")'></label><br><input id='p1' type='password' placeholder=\"" D_AP_PASSWORD_HELP "\"";
+
+const char HTTP_FORM_WIFI_PART2[] PROGMEM =
+  " value=\"" D_ASTERISK_PWD "\"></p>"
+  "<p><b>" D_AP2_SSID "</b> (" STA_SSID2 ")<br><input id='s2' placeholder=\"" D_AP2_SSID_HELP "\" value=\"%s\"></p>"
+  "<p><label><b>" D_AP_PASSWORD "</b><input type='checkbox' onclick='sp(\"p2\")'></label><br><input id='p2' type='password' placeholder=\"" D_AP_PASSWORD_HELP "\" value=\"" D_ASTERISK_PWD "\"></p>"
   "<p><b>" D_HOSTNAME "</b> (%s)<br><input id='h' placeholder=\"%s\" value=\"%s\"></p>"
   "<p><b>" D_CORS_DOMAIN "</b><input id='c' placeholder=\"" CORS_DOMAIN "\" value=\"%s\"></p>";
 
@@ -341,16 +361,19 @@ const char HTTP_DEVICE_STATE[] PROGMEM = "<td style='width:%d%%;text-align:cente
 
 enum ButtonTitle {
   BUTTON_RESTART, BUTTON_RESET_CONFIGURATION,
-  BUTTON_MAIN, BUTTON_CONFIGURATION, BUTTON_INFORMATION, BUTTON_FIRMWARE_UPGRADE, BUTTON_CONSOLE,
-  BUTTON_MODULE, BUTTON_WIFI, BUTTON_LOGGING, BUTTON_OTHER, BUTTON_TEMPLATE, BUTTON_BACKUP, BUTTON_RESTORE };
+  BUTTON_MAIN, BUTTON_CONFIGURATION, BUTTON_INFORMATION, BUTTON_FIRMWARE_UPGRADE, BUTTON_MANAGEMENT,
+  BUTTON_MODULE, BUTTON_WIFI, BUTTON_LOGGING, BUTTON_OTHER, BUTTON_TEMPLATE, BUTTON_BACKUP, BUTTON_RESTORE,
+  BUTTON_CONSOLE };
 const char kButtonTitle[] PROGMEM =
   D_RESTART "|" D_RESET_CONFIGURATION "|"
-  D_MAIN_MENU "|" D_CONFIGURATION "|" D_INFORMATION "|" D_FIRMWARE_UPGRADE "|" D_CONSOLE "|"
-  D_CONFIGURE_MODULE "|" D_CONFIGURE_WIFI"|" D_CONFIGURE_LOGGING "|" D_CONFIGURE_OTHER "|" D_CONFIGURE_TEMPLATE "|" D_BACKUP_CONFIGURATION "|" D_RESTORE_CONFIGURATION;
+  D_MAIN_MENU "|" D_CONFIGURATION "|" D_INFORMATION "|" D_FIRMWARE_UPGRADE "|" D_MANAGEMENT "|"
+  D_CONFIGURE_MODULE "|" D_CONFIGURE_WIFI"|" D_CONFIGURE_LOGGING "|" D_CONFIGURE_OTHER "|" D_CONFIGURE_TEMPLATE "|" D_BACKUP_CONFIGURATION "|" D_RESTORE_CONFIGURATION "|"
+  D_CONSOLE;
 const char kButtonAction[] PROGMEM =
   ".|rt|"
-  ".|cn|in|up|cs|"
-  "md|wi|lg|co|tp|dl|rs";
+  ".|cn|in|up|mn|"
+  "md|wi|lg|co|tp|dl|rs|"
+  "cs";
 const char kButtonConfirm[] PROGMEM = D_CONFIRM_RESTART "|" D_CONFIRM_RESET_CONFIGURATION;
 
 enum CTypes { CT_HTML, CT_PLAIN, CT_XML, CT_STREAM, CT_APP_JSON, CT_APP_STREAM };
@@ -366,6 +389,7 @@ const char kUploadErrors[] PROGMEM =
 
 const uint16_t DNS_PORT = 53;
 enum HttpOptions {HTTP_OFF, HTTP_USER, HTTP_ADMIN, HTTP_MANAGER, HTTP_MANAGER_RESET_ONLY};
+enum WifiTestOptions {WIFI_NOT_TESTING, WIFI_TESTING, WIFI_TEST_FINISHED_SUCCESSFUL, WIFI_TEST_FINISHED_BAD};
 
 DNSServer *DnsServer;
 ESP8266WebServer *Webserver;
@@ -380,6 +404,11 @@ struct WEB {
   uint8_t config_xor_on_set = CONFIG_FILE_XOR;
   bool upload_services_stopped = false;
   bool reset_web_log_flag = false;                  // Reset web console log
+  bool initial_config = false;
+  uint8_t wifiTest = WIFI_NOT_TESTING;
+  uint8_t wifi_test_counter = 0;
+  uint16_t save_data_counter = 0;
+  uint8_t old_wificonfig = WIFI_MANAGER;
 } Web;
 
 // Helper function to avoid code duplication (saves 4k Flash)
@@ -426,6 +455,7 @@ const WebServerDispatch_t WebServerDispatch[] PROGMEM = {
   { "u1", HTTP_ANY, HandleUpgradeFirmwareStart },   // OTA
   { "u2", HTTP_OPTIONS, HandlePreflightRequest },
   { "u3", HTTP_ANY, HandleUploadDone },
+  { "mn", HTTP_GET, HandleManagement },
   { "cs", HTTP_GET, HandleConsole },
   { "cs", HTTP_OPTIONS, HandlePreflightRequest },
   { "cm", HTTP_ANY, HandleHttpCommand },
@@ -497,8 +527,8 @@ void StartWebserver(int type, IPAddress ipweb)
       NetworkHostname(), (Mdns.begun) ? PSTR(".local") : "", (uint32_t)ipweb);
 #endif // LWIP_IPV6 = 1
     TasmotaGlobal.rules_flag.http_init = 1;
+    Web.state = type;
   }
-  if (type) { Web.state = type; }
 }
 
 void StopWebserver(void)
@@ -513,6 +543,7 @@ void StopWebserver(void)
 void WifiManagerBegin(bool reset_only)
 {
   // setup AP
+  if (!Web.initial_config) { AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_WCFG_2_WIFIMANAGER " " D_ACTIVE_FOR_3_MINUTES)); }
   if (!TasmotaGlobal.global_state.wifi_down) {
 //    WiFi.mode(WIFI_AP_STA);
     WifiSetMode(WIFI_AP_STA);
@@ -523,7 +554,7 @@ void WifiManagerBegin(bool reset_only)
     AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_WIFI D_WIFIMANAGER_SET_ACCESSPOINT));
   }
 
-  StopWebserver();
+  //StopWebserver();
 
   DnsServer = new DNSServer();
 
@@ -717,7 +748,7 @@ void WSContentStart_P(const char* title)
 
 void WSContentSendStyle_P(const char* formatP, ...)
 {
-  if (WifiIsInManagerMode()) {
+  if ( WifiIsInManagerMode() && (!Web.initial_config) ) {
     if (WifiConfigCounter()) {
       WSContentSend_P(HTTP_SCRIPT_COUNTER);
     }
@@ -753,8 +784,14 @@ void WSContentSendStyle_P(const char* formatP, ...)
   WebColor(COL_TEXT_WARNING),
 #endif
   WebColor(COL_TITLE),
-  ModuleName().c_str(), SettingsText(SET_DEVICENAME));
-  if (Settings.flag3.gui_hostname_ip) {                // SetOption53 - Show hostanme and IP address in GUI main menu
+  (Web.initial_config) ? "" : ModuleName().c_str(), SettingsText(SET_DEVICENAME));
+
+  // SetOption53 - Show hostname and IP address in GUI main menu
+#if (RESTART_AFTER_INITIAL_WIFI_CONFIG)
+  if (Settings.flag3.gui_hostname_ip) {
+#else
+  if ( Settings.flag3.gui_hostname_ip || ( (WiFi.getMode() == WIFI_AP_STA) && (!Web.initial_config) )  ) {
+#endif
     bool lip = (static_cast<uint32_t>(WiFi.localIP()) != 0);
     bool sip = (static_cast<uint32_t>(WiFi.softAPIP()) != 0);
     WSContentSend_P(PSTR("<h4>%s%s (%s%s%s)</h4>"),    // tasmota.local (192.168.2.12, 192.168.4.1)
@@ -772,33 +809,47 @@ void WSContentSendStyle(void)
   WSContentSendStyle_P(nullptr);
 }
 
-void WSContentButton(uint32_t title_index)
+void WSContentTextCenterStart(uint32_t color) {
+  WSContentSend_P(PSTR("<div style='text-align:center;color:#%06x;'>"), color);
+}
+
+void WSContentButton(uint32_t title_index, bool show=true)
 {
   char action[4];
   char title[100];  // Large to accomodate UTF-16 as used by Russian
 
+  WSContentSend_P(PSTR("<p><form id=but%d style=\"display: %s;\" action='%s' method='get'"),
+    title_index,
+    show ? "block":"none",
+    GetTextIndexed(action, sizeof(action), title_index, kButtonAction));
   if (title_index <= BUTTON_RESET_CONFIGURATION) {
     char confirm[100];
-    WSContentSend_P(PSTR("<p><form action='%s' method='get' onsubmit='return confirm(\"%s\");'><button name='%s' class='button bred'>%s</button></form></p>"),
-      GetTextIndexed(action, sizeof(action), title_index, kButtonAction),
+    WSContentSend_P(PSTR(" onsubmit='return confirm(\"%s\");'><button name='%s' class='button bred'>%s</button></form></p>"),
       GetTextIndexed(confirm, sizeof(confirm), title_index, kButtonConfirm),
       (!title_index) ? PSTR("rst") : PSTR("non"),
       GetTextIndexed(title, sizeof(title), title_index, kButtonTitle));
   } else {
-    WSContentSend_P(PSTR("<p><form action='%s' method='get'><button>%s</button></form></p>"),
-      GetTextIndexed(action, sizeof(action), title_index, kButtonAction),
+    WSContentSend_P(PSTR("><button>%s</button></form></p>"),
       GetTextIndexed(title, sizeof(title), title_index, kButtonTitle));
   }
 }
 
-void WSContentSpaceButton(uint32_t title_index)
+void WSContentSpaceButton(uint32_t title_index, bool show=true)
 {
-  WSContentSend_P(PSTR("<div></div>"));            // 5px padding
-  WSContentButton(title_index);
+  WSContentSend_P(PSTR("<div id=but%dd style=\"display: %s;\"></div>"),title_index, show ? "block":"none");            // 5px padding
+  WSContentButton(title_index, show);
 }
 
 void WSContentSend_Temp(const char *types, float f_temperature) {
   WSContentSend_PD(HTTP_SNS_F_TEMP, types, Settings.flag2.temperature_resolution, &f_temperature, TempUnit());
+}
+
+void WSContentSend_Voltage(const char *types, float f_voltage) {
+  WSContentSend_PD(HTTP_SNS_F_VOLTAGE, types, Settings.flag2.voltage_resolution, &f_voltage);
+}
+
+void WSContentSend_CurrentMA(const char *types, float f_current) {
+  WSContentSend_PD(HTTP_SNS_F_CURRENT_MA, types, Settings.flag2.current_resolution, &f_current);
 }
 
 void WSContentSend_THD(const char *types, float f_temperature, float f_humidity)
@@ -821,7 +872,7 @@ void WSContentEnd(void)
 
 void WSContentStop(void)
 {
-  if (WifiIsInManagerMode()) {
+  if ( WifiIsInManagerMode() && (!Web.initial_config) ) {
     if (WifiConfigCounter()) {
       WSContentSend_P(HTTP_COUNTER);
     }
@@ -836,31 +887,55 @@ void WebRestart(uint32_t type)
 {
   // type 0 = restart
   // type 1 = restart after config change
-  // type 2 = restart after config change with possible ip address change too
-  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_RESTART));
-
+  // type 2 = Checking WiFi Connection - no restart, only refresh page.
+  // type 3 = restart after WiFi Connection Test Successful
   bool reset_only = (HTTP_MANAGER_RESET_ONLY == Web.state);
 
   WSContentStart_P((type) ? PSTR(D_SAVE_CONFIGURATION) : PSTR(D_RESTART), !reset_only);
-  WSContentSend_P(HTTP_SCRIPT_RELOAD_TIME, HTTP_RESTART_RECONNECT_TIME);
+#if ((RESTART_AFTER_INITIAL_WIFI_CONFIG) && (AFTER_INITIAL_WIFI_CONFIG_GO_TO_NEW_IP))
+  // In case of type 3 (New network has been configured) go to the new device's IP in the new Network
+  if (3 == type) {
+    WSContentSend_P("setTimeout(function(){location.href='http://%_I';},%d);",
+      (uint32_t)WiFi.localIP(),
+      HTTP_RESTART_RECONNECT_TIME
+    );
+  } else {
+    WSContentSend_P(HTTP_SCRIPT_RELOAD_TIME, HTTP_RESTART_RECONNECT_TIME);
+  }
+#else
+  // In case of type 3 (New network has been configured) do not refresh the page. Just halt.
+  // The IP of the device while was in AP mode, won't be the new IP of the newly configured Network.
+  if (!(3 == type)) { WSContentSend_P(HTTP_SCRIPT_RELOAD_TIME, HTTP_RESTART_RECONNECT_TIME); }
+#endif
   WSContentSendStyle();
   if (type) {
-    WSContentSend_P(PSTR("<div style='text-align:center;'><b>" D_CONFIGURATION_SAVED "</b><br>"));
-    if (2 == type) {
-      WSContentSend_P(PSTR("<br>" D_TRYING_TO_CONNECT "<br>"));
+    if (!(3 == type)) {
+      WSContentSend_P(PSTR("<div style='text-align:center;'><b>%s</b><br><br></div>"), (type==2) ? PSTR(D_TRYING_TO_CONNECT) : PSTR(D_CONFIGURATION_SAVED) );
+    } else {
+#if (AFTER_INITIAL_WIFI_CONFIG_GO_TO_NEW_IP)
+      WSContentTextCenterStart(WebColor(COL_TEXT_SUCCESS));
+      WSContentSend_P(PSTR(D_SUCCESSFUL_WIFI_CONNECTION "<br><br></div><div style='text-align:center;'>" D_REDIRECTING_TO_NEW_IP "<br><br></div>"));
+#else
+      WSContentTextCenterStart(WebColor(COL_TEXT_SUCCESS));
+      WSContentSend_P(PSTR(D_SUCCESSFUL_WIFI_CONNECTION "<br><br></div><div style='text-align:center;'>" D_NOW_YOU_CAN_CLOSE_THIS_WINDOW "<br><br></div>"));
+#endif
     }
-    WSContentSend_P(PSTR("</div>"));
   }
-  WSContentSend_P(HTTP_MSG_RSTRT);
-  if (HTTP_MANAGER == Web.state || reset_only) {
-    Web.state = HTTP_ADMIN;
-  } else {
-    WSContentSpaceButton(BUTTON_MAIN);
+  if (type<2) {
+    WSContentSend_P(HTTP_MSG_RSTRT);
+    if (HTTP_MANAGER == Web.state || reset_only) {
+      Web.state = HTTP_ADMIN;
+    } else {
+      WSContentSpaceButton(BUTTON_MAIN);
+    }
   }
   WSContentStop();
 
-  ShowWebSource(SRC_WEBGUI);
-  TasmotaGlobal.restart_flag = 2;
+  if (!(2 == type)) {
+    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_RESTART));
+    ShowWebSource(SRC_WEBGUI);
+    TasmotaGlobal.restart_flag = 2;
+  }
 }
 
 /*********************************************************************************************/
@@ -879,6 +954,19 @@ void HandleWifiLogin(void)
   }
 
   WSContentStop();
+}
+
+uint32_t WebUseManagementSubmenu(void) {
+  static uint32_t management_count = 0;
+
+  if (!management_count) {
+    XdrvMailbox.index = 1;
+    XdrvCall(FUNC_WEB_ADD_CONSOLE_BUTTON);
+    XsnsCall(FUNC_WEB_ADD_CONSOLE_BUTTON);
+    XdrvCall(FUNC_WEB_ADD_MANAGEMENT_BUTTON);
+    management_count = XdrvMailbox.index;
+  }
+  return management_count -1;
 }
 
 uint32_t WebDeviceColumns(void) {
@@ -919,6 +1007,10 @@ void HandleRoot(void)
       HandleWifiLogin();
     } else {
       if (!strlen(SettingsText(SET_WEBPWD)) || (((Webserver->arg(F("USER1")) == WEB_USERNAME ) && (Webserver->arg(F("PASS1")) == SettingsText(SET_WEBPWD) )) || HTTP_MANAGER_RESET_ONLY == Web.state)) {
+        if (!Web.initial_config) {
+          Web.initial_config = !strlen(SettingsText(SET_STASSID1));
+          if (Web.initial_config) { AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP "Blank Device - Initial Configuration")); }
+        }
         HandleWifiConfiguration();
       } else {
         // wrong user and pass
@@ -1110,12 +1202,17 @@ void HandleRoot(void)
   if (HTTP_ADMIN == Web.state) {
 #ifdef FIRMWARE_MINIMAL
     WSContentSpaceButton(BUTTON_FIRMWARE_UPGRADE);
+    WSContentButton(BUTTON_CONSOLE);
 #else
     WSContentSpaceButton(BUTTON_CONFIGURATION);
     WSContentButton(BUTTON_INFORMATION);
     WSContentButton(BUTTON_FIRMWARE_UPGRADE);
+    if (!WebUseManagementSubmenu()) {
+      WSContentButton(BUTTON_CONSOLE);
+    } else {
+      WSContentButton(BUTTON_MANAGEMENT);
+    }
 #endif  // Not FIRMWARE_MINIMAL
-    WSContentButton(BUTTON_CONSOLE);
     WSContentButton(BUTTON_RESTART);
   }
   WSContentStop();
@@ -1337,9 +1434,6 @@ void HandleConfiguration(void)
   WSContentButton(BUTTON_BACKUP);
   WSContentButton(BUTTON_RESTORE);
 
-  WSContentSend_P(PSTR("<div></div>"));            // 5px padding
-  XdrvCall(FUNC_WEB_ADD_MANAGEMENT_BUTTON);
-
   WSContentSpaceButton(BUTTON_MAIN);
   WSContentStop();
 }
@@ -1505,7 +1599,7 @@ uint16_t WebGetGpioArg(uint32_t i) {
 
 void TemplateSaveSettings(void) {
   char tmp[TOPSZ];                                      // WebGetArg NAME and GPIO/BASE/FLAG byte value
-  char command[300];                                     // Template command string
+  char command[300];                                    // Template command string
 
   WebGetArg(PSTR("s1"), tmp, sizeof(tmp));              // NAME
   snprintf_P(command, sizeof(command), PSTR(D_CMND_TEMPLATE " {\"" D_JSON_NAME "\":\"%s\",\"" D_JSON_GPIO "\":["), tmp);
@@ -1644,30 +1738,80 @@ String HtmlEscape(const String unescaped) {
   return result;
 }
 
-// Indexed by enum wl_enc_type in file wl_definitions.h starting from -1
-const char kEncryptionType[] PROGMEM = "|||" D_WPA_PSK "||" D_WPA2_PSK "|" D_WEP "||" D_NONE "|" D_AUTO;
-
 void HandleWifiConfiguration(void) {
+  char tmp[TOPSZ];  // Max length is currently 150
+
   if (!HttpCheckPriviledgedAccess(!WifiIsInManagerMode())) { return; }
 
   AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_CONFIGURE_WIFI));
 
   if (Webserver->hasArg(F("save")) && HTTP_MANAGER_RESET_ONLY != Web.state) {
-    WifiSaveSettings();
-    WebRestart(2);
+    if ( WifiIsInManagerMode() ) {
+      // Test WIFI Connection to Router
+      // As Tasmota is in this case in AP mode, a STA connection can be established too at the same time
+      Web.wifi_test_counter = 9;   // seconds to test user's proposed AP
+      Web.wifiTest = WIFI_TESTING;
+
+      Web.save_data_counter = TasmotaGlobal.save_data_counter;
+      TasmotaGlobal.save_data_counter = 0;               // Stop auto saving data - Updating Settings
+      Settings.save_data = 0;
+
+      Web.old_wificonfig = TasmotaGlobal.wifi_state_flag;
+      Settings.sta_config = WIFI_MANAGER;
+      TasmotaGlobal.wifi_state_flag = Settings.sta_config;
+
+      TasmotaGlobal.sleep = 0;                           // Disable sleep
+      TasmotaGlobal.restart_flag = 0;                    // No restart
+      TasmotaGlobal.ota_state_flag = 0;                  // No OTA
+//      TasmotaGlobal.blinks = 0;                          // Disable blinks initiated by WifiManager
+
+      WebGetArg(PSTR("s1"), tmp, sizeof(tmp));   // SSID1
+      SettingsUpdateText(SET_STASSID1, tmp);
+      WebGetArg(PSTR("p1"), tmp, sizeof(tmp));   // PASSWORD1
+      SettingsUpdateText(SET_STAPWD1, tmp);
+
+      AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_CONNECTING_TO_AP " %s " D_AS " %s ..."),
+        SettingsText(SET_STASSID1), TasmotaGlobal.hostname);
+
+      WiFi.begin(SettingsText(SET_STASSID1), SettingsText(SET_STAPWD1));
+
+      WebRestart(2);
+    } else {
+      // STATION MODE or MIXED
+      // Save the config and restart
+      WifiSaveSettings();
+      WebRestart(1);
+    }
     return;
+  }
+
+  if ( WIFI_TEST_FINISHED_SUCCESSFUL == Web.wifiTest ) {
+    Web.wifiTest = WIFI_NOT_TESTING;
+#if (RESTART_AFTER_INITIAL_WIFI_CONFIG)
+    WebRestart(3);
+#else
+    HandleRoot();
+#endif
   }
 
   WSContentStart_P(PSTR(D_CONFIGURE_WIFI), !WifiIsInManagerMode());
   WSContentSend_P(HTTP_SCRIPT_WIFI);
+  if (WifiIsInManagerMode()) { WSContentSend_P(HTTP_SCRIPT_HIDE); }
+  if (WIFI_TESTING == Web.wifiTest) { WSContentSend_P(HTTP_SCRIPT_RELOAD_TIME, HTTP_RESTART_RECONNECT_TIME); }
 #ifdef USE_ENHANCED_GUI_WIFI_SCAN
   WSContentSendStyle_P(HTTP_HEAD_STYLE_SSI, WebColor(COL_TEXT));
 #else
   WSContentSendStyle();
 #endif  // USE_ENHANCED_GUI_WIFI_SCAN
 
+  bool limitScannedNetworks = true;
   if (HTTP_MANAGER_RESET_ONLY != Web.state) {
-    if (Webserver->hasArg(F("scan"))) {
+    if (WIFI_TESTING == Web.wifiTest) {
+      limitScannedNetworks = false;
+    } else {
+      if (Webserver->hasArg(F("scan"))) { limitScannedNetworks = false; }
+
+      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_WIFI "Scanning..."));
 #ifdef USE_EMULATION
       UdpDisconnect();
 #endif  // USE_EMULATION
@@ -1677,14 +1821,13 @@ void HandleWifiConfiguration(void) {
       if (0 == n) {
         AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_WIFI D_NO_NETWORKS_FOUND));
         WSContentSend_P(PSTR(D_NO_NETWORKS_FOUND));
-        WSContentSend_P(PSTR(". " D_REFRESH_TO_SCAN_AGAIN "."));
+        limitScannedNetworks = false; // in order to show D_SCAN_FOR_WIFI_NETWORKS
       } else {
         //sort networks
         int indices[n];
         for (uint32_t i = 0; i < n; i++) {
           indices[i] = i;
         }
-
 
         // RSSI SORT
         for (uint32_t i = 0; i < n; i++) {
@@ -1695,44 +1838,68 @@ void HandleWifiConfiguration(void) {
           }
         }
 
+        uint32_t networksToShow = n;
+        if ((limitScannedNetworks) && (networksToShow > MAX_WIFI_NETWORKS_TO_SHOW)) { networksToShow = MAX_WIFI_NETWORKS_TO_SHOW; }
+
+        if (WifiIsInManagerMode()) {
+          WSContentTextCenterStart(WebColor(COL_TEXT));
+          WSContentSend_P(PSTR(D_SELECT_YOUR_WIFI_NETWORK "</div><br>"));
+        }
+
 #ifdef USE_ENHANCED_GUI_WIFI_SCAN
         //display networks in page
-        for (uint32_t i = 0; i < n; i++) {
+        bool skipduplicated;
+        int ssid_showed = 0;
+        for (uint32_t i = 0; i < networksToShow; i++) {
           if (indices[i] < n) {
             int32_t rssi = WiFi.RSSI(indices[i]);
             String ssid = WiFi.SSID(indices[i]);
             DEBUG_CORE_LOG(PSTR(D_LOG_WIFI D_SSID " %s, " D_BSSID " %s, " D_CHANNEL " %d, " D_RSSI " %d"),
               ssid.c_str(), WiFi.BSSIDstr(indices[i]).c_str(), WiFi.channel(indices[i]), rssi);
 
+            String ssid_copy = ssid;
+            if (!ssid_copy.length()) { ssid_copy = F("no_name"); }
             // Print SSID
-            WSContentSend_P(PSTR("<div><a href='#p' onclick='c(this)'>%s</a><br>"), HtmlEscape(ssid).c_str());
-
+            if (!limitScannedNetworks) {
+              WSContentSend_P(PSTR("<div><a href='#p' onclick='c(this)'>%s</a><br>"), HtmlEscape(ssid_copy).c_str());
+            }
+            skipduplicated = false;
             String nextSSID = "";
             // Handle all APs with the same SSID
             for (uint32_t j = 0; j < n; j++) {
               if ((indices[j] < n) && ((nextSSID = WiFi.SSID(indices[j])) == ssid)) {
-                // Update RSSI / quality
-                rssi = WiFi.RSSI(indices[j]);
-                uint32_t rssi_as_quality = WifiGetRssiAsQuality(rssi);
-                uint32_t num_bars = changeUIntScale(rssi_as_quality, 0, 100, 0, 4);
+                if (!skipduplicated) {
+                  // Update RSSI / quality
+                  rssi = WiFi.RSSI(indices[j]);
+                  uint32_t rssi_as_quality = WifiGetRssiAsQuality(rssi);
+                  uint32_t num_bars = changeUIntScale(rssi_as_quality, 0, 100, 0, 4);
 
-                // Print item
-                WSContentSend_P(PSTR("<div title='%d dBm (%d%%)'>%s<span class='q'>(%d) <div class='si'>"),
-                  rssi, rssi_as_quality,
-                  WiFi.BSSIDstr(indices[j]).c_str(),
-                  WiFi.channel(indices[j])
-                );
-                // Print signal strength indicator
-                for (uint32_t k = 0; k < 4; ++k) {
-                  WSContentSend_P(PSTR("<i class='b%d%s'></i>"), k, (num_bars < k) ? PSTR(" o30") : PSTR(""));
+                  WSContentSend_P(PSTR("<div title='%d dBm (%d%%)'>"), rssi, rssi_as_quality);
+                  if (limitScannedNetworks) {
+                    // Print SSID and item
+                    WSContentSend_P(PSTR("<a href='#p' onclick='c(this)'>%s</a><span class='q'><div class='si'>"), HtmlEscape(ssid_copy).c_str());
+                    ssid_showed++;
+                    skipduplicated = true; // For the simplified page, just show 1 SSID if there are many Networks with the same
+                  } else {
+                    // Print item
+                    WSContentSend_P(PSTR("%s<span class='q'>(%d) <div class='si'>"), WiFi.BSSIDstr(indices[j]).c_str(), WiFi.channel(indices[j])
+                    );
+                  }
+                  // Print signal strength indicator
+                  for (uint32_t k = 0; k < 4; ++k) {
+                    WSContentSend_P(PSTR("<i class='b%d%s'></i>"), k, (num_bars < k) ? PSTR(" o30") : PSTR(""));
+                  }
+                  WSContentSend_P(PSTR("</span></div></div>"));
+                } else {
+                  if (ssid_showed <= networksToShow ) { networksToShow++; }
                 }
-                WSContentSend_P(PSTR("</span></div></div>"));
-
                 indices[j] = n;
               }
               delay(0);
             }
-            WSContentSend_P(PSTR("</div>"));
+            if (!limitScannedNetworks) {
+              WSContentSend_P(PSTR("</div>"));
+            }
           }
         }
 #else  // No USE_ENHANCED_GUI_WIFI_SCAN
@@ -1750,24 +1917,16 @@ void HandleWifiConfiguration(void) {
         }
 
         //display networks in page
-        for (uint32_t i = 0; i < n; i++) {
+        for (uint32_t i = 0; i < networksToShow; i++) {
           if (-1 == indices[i]) { continue; }  // skip dups
           int32_t rssi = WiFi.RSSI(indices[i]);
           DEBUG_CORE_LOG(PSTR(D_LOG_WIFI D_SSID " %s, " D_BSSID " %s, " D_CHANNEL " %d, " D_RSSI " %d"),
             WiFi.SSID(indices[i]).c_str(), WiFi.BSSIDstr(indices[i]).c_str(), WiFi.channel(indices[i]), rssi);
           int quality = WifiGetRssiAsQuality(rssi);
-/*
-          int auth = WiFi.encryptionType(indices[i]);
-          char encryption[20];
-          WSContentSend_P(PSTR("<div><a href='#p' onclick='c(this)'>%s</a>&nbsp;(%d)&nbsp<span class='q'>%s %d%% (%d dBm)</span></div>"),
-            HtmlEscape(WiFi.SSID(indices[i])).c_str(),
-            WiFi.channel(indices[i]),
-            GetTextIndexed(encryption, sizeof(encryption), auth +1, kEncryptionType),
-            quality, rssi
-          );
-*/
+          String ssid_copy = WiFi.SSID(indices[i]);
+          if (!ssid_copy.length()) { ssid_copy = F("no_name"); }
           WSContentSend_P(PSTR("<div><a href='#p' onclick='c(this)'>%s</a>&nbsp;(%d)&nbsp<span class='q'>%d%% (%d dBm)</span></div>"),
-            HtmlEscape(WiFi.SSID(indices[i])).c_str(),
+            HtmlEscape(ssid_copy).c_str(),
             WiFi.channel(indices[i]),
             quality, rssi
           );
@@ -1778,21 +1937,38 @@ void HandleWifiConfiguration(void) {
 
         WSContentSend_P(PSTR("<br>"));
       }
-    } else {
-      WSContentSend_P(PSTR("<div><a href='/wi?scan='>" D_SCAN_FOR_WIFI_NETWORKS "</a></div><br>"));
     }
 
-    // As WIFI_HOSTNAME may contain %s-%04d it cannot be part of HTTP_FORM_WIFI where it will exception
-    WSContentSend_P(HTTP_FORM_WIFI, SettingsText(SET_STASSID1), SettingsText(SET_STASSID2), WIFI_HOSTNAME, WIFI_HOSTNAME, SettingsText(SET_HOSTNAME), SettingsText(SET_CORS));
+    WSContentSend_P(PSTR("<div><a href='/wi?scan='>%s</a></div><br>"), (limitScannedNetworks) ? PSTR(D_SHOW_MORE_WIFI_NETWORKS) : PSTR(D_SCAN_FOR_WIFI_NETWORKS));
+    WSContentSend_P(HTTP_FORM_WIFI_PART1, (WifiIsInManagerMode()) ? "" : PSTR(" (" STA_SSID1 ")"), SettingsText(SET_STASSID1));
+    if (WifiIsInManagerMode()) {
+      // As WIFI_HOSTNAME may contain %s-%04d it cannot be part of HTTP_FORM_WIFI where it will exception
+      WSContentSend_P(PSTR("></p>"));
+    } else {
+      WSContentSend_P(HTTP_FORM_WIFI_PART2, SettingsText(SET_STASSID2), WIFI_HOSTNAME, WIFI_HOSTNAME, SettingsText(SET_HOSTNAME), SettingsText(SET_CORS));
+    }
+
     WSContentSend_P(HTTP_FORM_END);
   }
 
   if (WifiIsInManagerMode()) {
 #ifndef FIRMWARE_MINIMAL
-    WSContentSpaceButton(BUTTON_RESTORE);
-    WSContentButton(BUTTON_RESET_CONFIGURATION);
+    WSContentTextCenterStart(WebColor(COL_TEXT_WARNING));
+    WSContentSend_P(PSTR("<h3>"));
+
+    if (WIFI_TESTING == Web.wifiTest) {
+      WSContentSend_P(PSTR(D_TRYING_TO_CONNECT "<br>%s</h3></div>"), SettingsText(SET_STASSID1));
+    } else if (WIFI_TEST_FINISHED_BAD == Web.wifiTest) {
+      WSContentSend_P(PSTR(D_CONNECT_FAILED_TO " %s<br>" D_CHECK_CREDENTIALS "</h3></div>"), SettingsText(SET_STASSID1));
+    }
+    // More Options Button
+    WSContentSend_P(PSTR("<div id=butmod style=\"display:%s;\"></div><p><form id=butmo style=\"display:%s;\"><button type='button' onclick='hidBtns()'>" D_SHOW_MORE_OPTIONS "</button></form></p>"),
+      (WIFI_TEST_FINISHED_BAD == Web.wifiTest) ? "none" : Web.initial_config ? "block" : "none", Web.initial_config ? "block" : "none"
+    );
+    WSContentSpaceButton(BUTTON_RESTORE, !Web.initial_config);
+    WSContentButton(BUTTON_RESET_CONFIGURATION, !Web.initial_config);
 #endif  // FIRMWARE_MINIMAL
-    WSContentSpaceButton(BUTTON_RESTART);
+    WSContentSpaceButton(BUTTON_RESTART, !Web.initial_config);
   } else {
     WSContentSpaceButton(BUTTON_CONFIGURATION);
   }
@@ -1800,17 +1976,17 @@ void HandleWifiConfiguration(void) {
 }
 
 void WifiSaveSettings(void) {
-  char tmp1[CMDSZ];
+  char tmp1[TOPSZ];
   WebGetArg(PSTR("h"), tmp1, sizeof(tmp1));   // Host name
-  char tmp2[CMDSZ];
+  char tmp2[TOPSZ];
   WebGetArg(PSTR("c"), tmp2, sizeof(tmp2));   // Cors domain
-  char tmp3[CMDSZ];
+  char tmp3[TOPSZ];
   WebGetArg(PSTR("s1"), tmp3, sizeof(tmp3));  // Ssid1
-  char tmp4[CMDSZ];
+  char tmp4[TOPSZ];
   WebGetArg(PSTR("s2"), tmp4, sizeof(tmp4));  // Ssid2
-  char tmp5[CMDSZ];
+  char tmp5[TOPSZ];
   WebGetArg(PSTR("p1"), tmp5, sizeof(tmp5));  // Password1
-  char tmp6[CMDSZ];
+  char tmp6[TOPSZ];
   WebGetArg(PSTR("p2"), tmp6, sizeof(tmp6));  // Password2
   char command[300];
   snprintf_P(command, sizeof(command), PSTR(D_CMND_BACKLOG "0 " D_CMND_HOSTNAME " %s;" D_CMND_CORS " %s;" D_CMND_SSID "1 %s;" D_CMND_SSID "2 %s;" D_CMND_PASSWORD "3 %s;" D_CMND_PASSWORD "4 %s"),
@@ -1871,7 +2047,7 @@ void LoggingSaveSettings(void) {
   WebGetArg(PSTR("l2"), tmp3, sizeof(tmp3));  // Mqtt log level
   char tmp4[CMDSZ];
   WebGetArg(PSTR("l3"), tmp4, sizeof(tmp4));  // Syslog level
-  char tmp5[CMDSZ];
+  char tmp5[TOPSZ];
   WebGetArg(PSTR("lh"), tmp5, sizeof(tmp5));  // Syslog host name
   char tmp6[CMDSZ];
   WebGetArg(PSTR("lp"), tmp6, sizeof(tmp6));  // Syslog port number
@@ -1954,11 +2130,11 @@ void HandleOtherConfiguration(void) {
 }
 
 void OtherSaveSettings(void) {
-  char tmp1[300];   // Needs to hold complete ESP32 template of minimal 230 chars
+  char tmp1[400];                             // Needs to hold complete ESP32 template of minimal 230 chars
   WebGetArg(PSTR("dn"), tmp1, sizeof(tmp1));  // Device name
-  char tmp2[100];
+  char tmp2[TOPSZ];
   WebGetArg(PSTR("wp"), tmp2, sizeof(tmp2));  // Web password
-  char command[500];
+  char command[600];
   snprintf_P(command, sizeof(command), PSTR(D_CMND_BACKLOG "0 " D_CMND_WEBPASSWORD "2 %s;" D_CMND_SO "3 %d;" D_CMND_DEVICENAME " %s"),
     (!strlen(tmp2)) ? "\"" : (strlen(tmp2) < 5) ? "" : tmp2,
     Webserver->hasArg(F("b1")),               // SetOption3 - Enable MQTT
@@ -1979,8 +2155,8 @@ void OtherSaveSettings(void) {
 #endif  // USE_EMULATION
 
   WebGetArg(PSTR("t1"), tmp1, sizeof(tmp1));  // Template
-  if (strlen(tmp1)) {  // {"NAME":"12345678901234","GPIO":[255,255,255,255,255,255,255,255,255,255,255,255,255],"FLAG":255,"BASE":255}
-    snprintf_P(command, sizeof(command), PSTR("%s;" D_CMND_TEMPLATE " %s%s"), command, tmp1, (Webserver->hasArg(F("t2"))) ? PSTR("; " D_CMND_MODULE " 0") : "");
+  if (strlen(tmp1)) {  // {"NAME":"12345678901234","GPIO":[255,255,255,255,255,255,255,255,255,255,255,255,255],"FLAG":255,"BASE":255,"CMND":"SO123 1;SO99 0"}
+    snprintf_P(command, sizeof(command), PSTR("%s;%s" D_CMND_TEMPLATE " %s"), command, (Webserver->hasArg(F("t2"))) ? PSTR(D_CMND_MODULE " 0;") : "", tmp1);
   }
   ExecuteWebCommand(command);
 }
@@ -2183,7 +2359,7 @@ void HandleInformation(void)
 #endif  // USE_DISCOVERY
 
   WSContentSend_P(PSTR("}1}2&nbsp;"));  // Empty line
-  WSContentSend_P(PSTR("}1" D_ESP_CHIP_ID "}2%d"), ESP_getChipId());
+  WSContentSend_P(PSTR("}1" D_ESP_CHIP_ID "}2%d (%s)"), ESP_getChipId(), GetDeviceHardware().c_str());
 #ifdef ESP8266
   WSContentSend_P(PSTR("}1" D_FLASH_CHIP_ID "}20x%06X"), ESP.getFlashChipId());
 #endif
@@ -2731,6 +2907,28 @@ void HandleHttpCommand(void)
 
 /*-------------------------------------------------------------------------------------------*/
 
+void HandleManagement(void)
+{
+  if (!HttpCheckPriviledgedAccess()) { return; }
+
+  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_MANAGEMENT));
+
+  WSContentStart_P(PSTR(D_MANAGEMENT));
+  WSContentSendStyle();
+
+  WSContentButton(BUTTON_CONSOLE);
+
+  XdrvMailbox.index = 0;
+  XdrvCall(FUNC_WEB_ADD_CONSOLE_BUTTON);
+  XsnsCall(FUNC_WEB_ADD_CONSOLE_BUTTON);
+
+  WSContentSend_P(PSTR("<div></div>"));            // 5px padding
+  XdrvCall(FUNC_WEB_ADD_MANAGEMENT_BUTTON);
+
+  WSContentSpaceButton(BUTTON_MAIN);
+  WSContentStop();
+}
+
 void HandleConsole(void)
 {
   if (!HttpCheckPriviledgedAccess()) { return; }
@@ -2746,7 +2944,7 @@ void HandleConsole(void)
   WSContentSend_P(HTTP_SCRIPT_CONSOL, Settings.web_refresh);
   WSContentSendStyle();
   WSContentSend_P(HTTP_FORM_CMND);
-  WSContentSpaceButton(BUTTON_MAIN);
+  WSContentSpaceButton((WebUseManagementSubmenu()) ? BUTTON_MANAGEMENT : BUTTON_MAIN);
   WSContentStop();
 }
 
@@ -3115,6 +3313,47 @@ bool Xdrv01(uint8_t function)
 #ifdef USE_EMULATION
       if (Settings.flag2.emulation) { PollUdp(); }
 #endif  // USE_EMULATION
+      break;
+    case FUNC_EVERY_SECOND:
+      if (Web.initial_config) {
+        Wifi.config_counter = 200;    // Do not restart the device if it has SSId Blank
+      }
+      if (Web.wifi_test_counter) {
+        Web.wifi_test_counter--;
+        AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_WIFI D_TRYING_TO_CONNECT " %s"), SettingsText(SET_STASSID1));
+        if ( WifiCheck_hasIP(WiFi.localIP()) ) {  // Got IP - Connection Established
+          Web.wifi_test_counter = 0;
+          Web.wifiTest = WIFI_TEST_FINISHED_SUCCESSFUL;
+          AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_CMND_SSID "1 %s: " D_CONNECTED " - " D_IP_ADDRESS " %_I"), SettingsText(SET_STASSID1), (uint32_t)WiFi.localIP());
+//          TasmotaGlobal.blinks = 255;                    // Signal wifi connection with blinks
+          Settings.sta_config = Web.old_wificonfig;
+          TasmotaGlobal.wifi_state_flag = Settings.sta_config;
+          TasmotaGlobal.save_data_counter = Web.save_data_counter;
+          Settings.save_data = Web.save_data_counter;
+          SettingsSaveAll();
+#if (!RESTART_AFTER_INITIAL_WIFI_CONFIG)
+          Web.initial_config = false;
+          Web.state = HTTP_ADMIN;
+#endif
+        } else if (!Web.wifi_test_counter) { // Test TimeOut
+          Web.wifi_test_counter = 0;
+          Web.wifiTest = WIFI_TEST_FINISHED_BAD;
+          switch (WiFi.status()) {
+            case WL_CONNECTED:
+              AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_CONNECT_FAILED_NO_IP_ADDRESS));
+              break;
+            case WL_NO_SSID_AVAIL:
+              AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_CONNECT_FAILED_AP_NOT_REACHED));
+              break;
+            case WL_CONNECT_FAILED:
+              AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_CONNECT_FAILED_WRONG_PASSWORD));
+              break;
+            default:  // WL_IDLE_STATUS and WL_DISCONNECTED
+              AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_CONNECT_FAILED_AP_TIMEOUT));
+          }
+          int n = WiFi.scanNetworks(); // restart scan
+        }
+      }
       break;
     case FUNC_COMMAND:
       result = DecodeCommand(kWebCommands, WebCommand);

@@ -107,7 +107,7 @@ device_parameters_t device_param[] = {
   { KNX_ENERGY_POWER   , false, false, KNX_Empty },
   { KNX_ENERGY_POWERFACTOR   , false, false, KNX_Empty },
   { KNX_ENERGY_DAILY   , false, false, KNX_Empty },
-  { KNX_ENERGY_START   , false, false, KNX_Empty },
+  { KNX_ENERGY_YESTERDAY   , false, false, KNX_Empty },
   { KNX_ENERGY_TOTAL   , false, false, KNX_Empty },
   { KNX_SLOT1 , false, false, KNX_Empty },
   { KNX_SLOT2 , false, false, KNX_Empty },
@@ -501,7 +501,7 @@ void KNX_INIT(void)
   if ( TasmotaGlobal.energy_driver != ENERGY_NONE ) {
     device_param[KNX_ENERGY_POWER-1].show = true;
     device_param[KNX_ENERGY_DAILY-1].show = true;
-    device_param[KNX_ENERGY_START-1].show = true;
+    device_param[KNX_ENERGY_YESTERDAY-1].show = true;
     device_param[KNX_ENERGY_TOTAL-1].show = true;
     device_param[KNX_ENERGY_VOLTAGE-1].show = true;
     device_param[KNX_ENERGY_CURRENT-1].show = true;
@@ -645,73 +645,60 @@ void KNX_CB_Action(message_t const &msg, void *arg)
         }
       }
       else if (chan->type == KNX_ENERGY_VOLTAGE) // Reply KNX_ENERGY_VOLTAGE
-      {
-        if (Energy.data_valid[0]) {
+      {        
+        knx.answer_4byte_float(msg.received_on, Energy.voltage[0]);
+        if (Settings.flag.knx_enable_enhancement) {
           knx.answer_4byte_float(msg.received_on, Energy.voltage[0]);
-          if (Settings.flag.knx_enable_enhancement) {
-            knx.answer_4byte_float(msg.received_on, Energy.voltage[0]);
-            knx.answer_4byte_float(msg.received_on, Energy.voltage[0]);
-          }
+          knx.answer_4byte_float(msg.received_on, Energy.voltage[0]);
         }
       }
       else if (chan->type == KNX_ENERGY_CURRENT) // Reply KNX_ENERGY_CURRENT
       {
-        if (Energy.data_valid[0]) {
+        knx.answer_4byte_float(msg.received_on, Energy.current[0]);
+        if (Settings.flag.knx_enable_enhancement) {
           knx.answer_4byte_float(msg.received_on, Energy.current[0]);
-          if (Settings.flag.knx_enable_enhancement) {
-            knx.answer_4byte_float(msg.received_on, Energy.current[0]);
-            knx.answer_4byte_float(msg.received_on, Energy.current[0]);
-          }
+          knx.answer_4byte_float(msg.received_on, Energy.current[0]);
         }
       }
       else if (chan->type == KNX_ENERGY_POWER) // Reply KNX_ENERGY_POWER
       {
-        if (Energy.data_valid[0]) {
+        knx.answer_4byte_float(msg.received_on, Energy.active_power[0]);
+        if (Settings.flag.knx_enable_enhancement) {
           knx.answer_4byte_float(msg.received_on, Energy.active_power[0]);
-          if (Settings.flag.knx_enable_enhancement) {
-            knx.answer_4byte_float(msg.received_on, Energy.active_power[0]);
-            knx.answer_4byte_float(msg.received_on, Energy.active_power[0]);
-          }
+          knx.answer_4byte_float(msg.received_on, Energy.active_power[0]);
         }
       }
       else if (chan->type == KNX_ENERGY_POWERFACTOR) // Reply KNX_ENERGY_POWERFACTOR
       {
-        if (Energy.data_valid[0]) {
+        knx.answer_4byte_float(msg.received_on, Energy.power_factor[0]);
+        if (Settings.flag.knx_enable_enhancement) {
           knx.answer_4byte_float(msg.received_on, Energy.power_factor[0]);
-          if (Settings.flag.knx_enable_enhancement) {
-            knx.answer_4byte_float(msg.received_on, Energy.power_factor[0]);
-            knx.answer_4byte_float(msg.received_on, Energy.power_factor[0]);
-          }
+          knx.answer_4byte_float(msg.received_on, Energy.power_factor[0]);
         }
       }
-      else if (chan->type == KNX_ENERGY_START) // Reply KNX_ENERGY_START
+      else if (chan->type == KNX_ENERGY_YESTERDAY) // Reply KNX_ENERGY_YESTERDAY
       {
-        if (Energy.data_valid[0]) {
-          knx.answer_4byte_float(msg.received_on, Energy.start_energy);
-          if (Settings.flag.knx_enable_enhancement) {
-            knx.answer_4byte_float(msg.received_on, Energy.start_energy);
-            knx.answer_4byte_float(msg.received_on, Energy.start_energy);
-          }
+        float energy_kWhyesterday = (float)Settings.energy_kWhyesterday / 100000;
+        knx.answer_4byte_float(msg.received_on, energy_kWhyesterday);
+        if (Settings.flag.knx_enable_enhancement) {
+          knx.answer_4byte_float(msg.received_on, energy_kWhyesterday);
+          knx.answer_4byte_float(msg.received_on, energy_kWhyesterday);
         }
       }
       else if (chan->type == KNX_ENERGY_DAILY) // Reply KNX_ENERGY_DAILY
       {
-        if (Energy.data_valid[0]) {
+        knx.answer_4byte_float(msg.received_on, Energy.daily);
+        if (Settings.flag.knx_enable_enhancement) {
           knx.answer_4byte_float(msg.received_on, Energy.daily);
-          if (Settings.flag.knx_enable_enhancement) {
-            knx.answer_4byte_float(msg.received_on, Energy.daily);
-            knx.answer_4byte_float(msg.received_on, Energy.daily);
-          }
+          knx.answer_4byte_float(msg.received_on, Energy.daily);
         }
       }
       else if (chan->type == KNX_ENERGY_TOTAL) // Reply KNX_ENERGY_TOTAL
       {
-        if (Energy.data_valid[0]) {
+        knx.answer_4byte_float(msg.received_on, Energy.total);
+        if (Settings.flag.knx_enable_enhancement) {
           knx.answer_4byte_float(msg.received_on, Energy.total);
-          if (Settings.flag.knx_enable_enhancement) {
-            knx.answer_4byte_float(msg.received_on, Energy.total);
-            knx.answer_4byte_float(msg.received_on, Energy.total);
-          }
+          knx.answer_4byte_float(msg.received_on, Energy.total);
         }
       }
 #ifdef USE_RULES
@@ -813,7 +800,7 @@ void KnxSensor(uint8_t sensor_type, float value)
       knx.write_4byte_float(KNX_addr, value);
     }
 
-    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_KNX "%s " D_SENT_TO " %d.%d.%d "),
+    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_KNX "%s " D_SENT_TO " %d.%d.%d"),
      device_param_ga[sensor_type -1],
      KNX_addr.ga.area, KNX_addr.ga.line, KNX_addr.ga.member);
 

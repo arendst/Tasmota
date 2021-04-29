@@ -23,6 +23,12 @@
 #define MQTT_WIFI_CLIENT_TIMEOUT   200    // Wifi TCP connection timeout (default is 5000 mSec)
 #endif
 
+#ifdef USE_MQTT_AZURE_IOT
+#include <JsonParser.h>
+#undef  MQTT_PORT
+#define MQTT_PORT         8883
+#endif  // USE_MQTT_AZURE_IOT
+
 #define USE_MQTT_NEW_PUBSUBCLIENT
 
 // #define DEBUG_DUMP_TLS    // allow dumping of TLS Flash keys
@@ -225,7 +231,14 @@ void MqttDisconnect(void) {
 }
 
 void MqttSubscribeLib(const char *topic) {
+#ifdef USE_MQTT_AZURE_IOT
+  // Azure IoT Hub currently does not support custom topics: https://docs.microsoft.com/en-us/azure/iot-hub/iot-hub-mqtt-support
+  String realTopicString = "devices/" + String(SettingsText(SET_MQTT_CLIENT));
+  realTopicString += "/messages/devicebound/#";
+  MqttClient.subscribe(realTopicString.c_str());
+#else
   MqttClient.subscribe(topic);
+#endif  // USE_MQTT_AZURE_IOT
   MqttClient.loop();  // Solve LmacRxBlk:1 messages
 }
 
@@ -244,7 +257,25 @@ bool MqttPublishLib(const char* topic, bool retained) {
     }
   }
 
-  bool result = MqttClient.publish(topic, TasmotaGlobal.mqtt_data, retained);
+  bool result;
+#ifdef USE_MQTT_AZURE_IOT
+  String sourceTopicString = String(topic);
+  sourceTopicString.replace("/", "%2F");
+  String topicString = "devices/" + String(SettingsText(SET_MQTT_CLIENT));
+  topicString+= "/messages/events/topic=" + sourceTopicString;
+
+  JsonParser mqtt_message((char*) String(TasmotaGlobal.mqtt_data).c_str());
+  JsonParserObject message_object = mqtt_message.getRootObject();
+  if (message_object.isValid()) {   // only sending valid JSON, yet this is optional
+    result = MqttClient.publish(topicString.c_str(), TasmotaGlobal.mqtt_data, retained);
+    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT "Sending '%s'"), TasmotaGlobal.mqtt_data);
+  } else {
+    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT "Invalid JSON, '%s' for topic '%s', not sending to Azure IoT Hub"), TasmotaGlobal.mqtt_data, topic);
+    result = true;
+  }
+#else
+  result = MqttClient.publish(topic, TasmotaGlobal.mqtt_data, retained);
+#endif  // USE_MQTT_AZURE_IOT
   yield();  // #3313
   return result;
 }
@@ -276,7 +307,24 @@ void MqttDataHandler(char* mqtt_topic, uint8_t* mqtt_data, unsigned int data_len
 
   // Save MQTT data ASAP as it's data is discarded by PubSubClient with next publish as used in MQTTlog
   char topic[TOPSZ];
+#ifdef USE_MQTT_AZURE_IOT
+  // for Azure, we read the topic from the property of the message
+  String fullTopicString = String(mqtt_topic);
+  int startOfTopic = fullTopicString.indexOf("TOPIC=");
+  if (startOfTopic == -1){
+    AddLog(LOG_LEVEL_ERROR, PSTR(D_LOG_MQTT "Azure IoT message without the property TOPIC, case sensitive."));
+    return;
+  }
+  String newTopic = fullTopicString.substring(startOfTopic + 6);
+  newTopic.replace("%2F", "/");
+  if (newTopic.indexOf("/") == -1){
+    AddLog(LOG_LEVEL_ERROR, PSTR(D_LOG_MQTT "Invalid Topic %s"), newTopic.c_str());
+    return;
+  }
+  strlcpy(topic, newTopic.c_str(), sizeof(topic));
+#else
   strlcpy(topic, mqtt_topic, sizeof(topic));
+#endif  // USE_MQTT_AZURE_IOT
   mqtt_data[data_len] = 0;
   char data[data_len +1];
   memcpy(data, mqtt_data, sizeof(data));
@@ -334,32 +382,23 @@ void MqttPublish(const char* topic, bool retained) {
   ShowFreeMem(PSTR("MqttPublish"));
 #endif
 
-  if (Settings.flag4.mqtt_no_retain) {
-    retained = false;   // Some brokers don't support retained, they will disconnect if received
+  if (Settings.flag4.mqtt_no_retain) {                   // SetOption104 - Disable all MQTT retained messages, some brokers don't support it: AWS IoT, Losant
+    retained = false;                                    // Some brokers don't support retained, they will disconnect if received
   }
 
-  char sretained[CMDSZ];
-  sretained[0] = '\0';
-  char slog_type[20];
-  snprintf_P(slog_type, sizeof(slog_type), PSTR(D_LOG_RESULT));
-
-  if (Settings.flag.mqtt_enabled) {  // SetOption3 - Enable MQTT
-    if (MqttPublishLib(topic, retained)) {
-      snprintf_P(slog_type, sizeof(slog_type), PSTR(D_LOG_MQTT));
-      if (retained) {
-        snprintf_P(sretained, sizeof(sretained), PSTR(" (" D_RETAINED ")"));
-      }
-    }
+  String log_data;                                       // 20210420 Moved to heap to solve tight stack resulting in exception 2
+  if (Settings.flag.mqtt_enabled && MqttPublishLib(topic, retained)) {  // SetOption3 - Enable MQTT
+    log_data = F(D_LOG_MQTT);                            // MQT:
+    log_data += topic;                                   // stat/tasmota/STATUS2
+  } else {
+    log_data = F(D_LOG_RESULT);                          // RSL:
+    log_data += strrchr(topic,'/')+1;                    // STATUS2
+    retained = false;                                    // Without MQTT enabled there is no retained message
   }
-
-  char log_data[MAX_LOGSZ];
-  snprintf_P(log_data, sizeof(log_data), PSTR("%s%s = %s"), slog_type, (Settings.flag.mqtt_enabled) ? topic : strrchr(topic,'/')+1, TasmotaGlobal.mqtt_data);  // SetOption3 - Enable MQTT
-  if (strlen(log_data) >= (sizeof(log_data) - strlen(sretained) -1)) {
-    log_data[sizeof(log_data) - strlen(sretained) -5] = '\0';
-    snprintf_P(log_data, sizeof(log_data), PSTR("%s ..."), log_data);
-  }
-  snprintf_P(log_data, sizeof(log_data), PSTR("%s%s"), log_data, sretained);
-  AddLogData(LOG_LEVEL_INFO, log_data);
+  log_data += F(" = ");                                  // =
+  log_data += TasmotaGlobal.mqtt_data;                   // {"StatusFWR":{"Version":...
+  if (retained) { log_data += F(" (" D_RETAINED ")"); }  // (retained)
+  AddLogData(LOG_LEVEL_INFO, log_data.c_str());          // MQT: stat/tasmota/STATUS2 = {"StatusFWR":{"Version":...
 
   if (Settings.ledstate &0x04) {
     TasmotaGlobal.blinks++;
@@ -707,7 +746,16 @@ void MqttReconnect(void) {
   }
 #endif
 
+#ifdef USE_MQTT_AZURE_IOT
+  if (String(mqtt_pwd).indexOf("SharedAccessSignature") == -1) {
+    AddLog(LOG_LEVEL_ERROR, PSTR(D_LOG_MQTT "Azure IoT incorrect SAS Token format. Refer to https://docs.microsoft.com/en-us/azure/iot-hub/iot-hub-mqtt-support"));
+    return;
+  }
+  String azureMqtt_userString = String(SettingsText(SET_MQTT_HOST)) + "/" + String(SettingsText(SET_MQTT_CLIENT)); + "/?api-version=2018-06-30";
+  if (MqttClient.connect(TasmotaGlobal.mqtt_client, azureMqtt_userString.c_str(), mqtt_pwd, stopic, 1, lwt_retain, TasmotaGlobal.mqtt_data, MQTT_CLEAN_SESSION)) {
+#else
   if (MqttClient.connect(TasmotaGlobal.mqtt_client, mqtt_user, mqtt_pwd, stopic, 1, lwt_retain, TasmotaGlobal.mqtt_data, MQTT_CLEAN_SESSION)) {
+#endif  // USE_MQTT_AZURE_IOT
 #ifdef USE_MQTT_TLS
     if (Mqtt.mqtt_tls) {
 #ifdef ESP8266

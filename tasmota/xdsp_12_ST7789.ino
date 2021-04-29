@@ -50,7 +50,6 @@
   #define BACKPLANE_PIN 5
   #endif // USE_LANBON_L8
 
-extern uint8_t *buffer;
 extern uint8_t color_type;
 Arduino_ST7789 *st7789;
 
@@ -73,9 +72,6 @@ void ST7789_InitDriver(void) {
     if (!Settings.display_height) {
       Settings.display_height = 240;
     }
-
-    // disable screen buffer
-    buffer = NULL;
 
     // default colors
     fg_color = ST7789_WHITE;
@@ -112,6 +108,8 @@ void ST7789_InitDriver(void) {
 #ifdef ESP32
 #ifdef USE_FT5206
     // start digitizer with fixed adress and pins for esp32
+    #undef SDA_2
+    #undef SCL_2
     #define SDA_2 23
     #define SCL_2 32
   #ifdef USE_LANBON_L8
@@ -121,7 +119,7 @@ void ST7789_InitDriver(void) {
     #define SCL_2 0
   #endif // USE_LANBON_L8
     Wire1.begin(SDA_2, SCL_2, 400000);
-    Touch_Init(Wire1);
+    FT5206_Touch_Init(Wire1);
 #endif // USE_FT5206
 #endif // ESP32
 

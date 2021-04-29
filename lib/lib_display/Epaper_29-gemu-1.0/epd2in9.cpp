@@ -27,7 +27,6 @@
 #include <stdlib.h>
 #include "epd2in9.h"
 
-extern uint8_t *buffer;
 
 Epd::Epd(int16_t width, int16_t height) :
 Paint(width,height) {
@@ -37,7 +36,7 @@ void Epd::DisplayOnff(int8_t on) {
 }
 
 void Epd::Updateframe() {
-  SetFrameMemory(buffer, 0, 0, EPD_WIDTH,EPD_HEIGHT);
+  SetFrameMemory(framebuffer, 0, 0, EPD_WIDTH,EPD_HEIGHT);
   DisplayFrame();
   //Serial.printf("update\n");
 }
@@ -75,6 +74,8 @@ void Epd::DisplayInit(int8_t p,int8_t size,int8_t rot,int8_t font) {
   setTextColor(WHITE,BLACK);
   setCursor(0,0);
   fillScreen(BLACK);
+
+  disp_bpp = 1;
 }
 
 void Epd::Begin(int16_t cs,int16_t mosi,int16_t sclk) {
@@ -110,6 +111,10 @@ int Epd::Init(const unsigned char* lut) {
     mosi_pin=pin[GPIO_SSPI_MOSI];
     sclk_pin=pin[GPIO_SSPI_SCLK];
 */
+
+    framebuffer = (uint8_t*)malloc(EPD_WIDTH * EPD_HEIGHT / 8);
+    if (!framebuffer) return -1;
+
     pinMode(cs_pin, OUTPUT);
     pinMode(mosi_pin, OUTPUT);
     pinMode(sclk_pin, OUTPUT);

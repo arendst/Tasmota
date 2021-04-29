@@ -1,0 +1,30 @@
+{
+  "name":"Berry",
+  "description":"Berry scripting language for Tasmota32",
+  "keywords":"berry, script",
+  "authors":
+  {
+    "name": "Guan Wenliang <skiars@qq.com>, ",
+    "maintainer": true
+  },
+  "repository":
+  {
+    "type": "git",
+    "url": "https://github.com/Skiars/berry"
+  },
+  "version": "7.0",
+  "license": "MIT License",
+  "frameworks": "*",
+  "platforms": "*",
+  "build": {
+    "srcFilter": [
+        "+<*.c>",
+        "+<../default/*.c>",
+        "+<../default/*.cpp>",
+        "+<../default/*.hpp>",
+        "+<*.cpp>",
+        "+<*.h>"
+    ],
+    "flags": [ "-I$PROJECT_DIR/tasmota", "-DCOMPILE_BERRY_LIB" ]
+  }
+}

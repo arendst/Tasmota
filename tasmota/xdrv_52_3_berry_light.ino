@@ -20,16 +20,17 @@
 
 #ifdef USE_BERRY
 
+#ifdef USE_LIGHT
+
 #include <berry.h>
 #include <Wire.h>
 
 /*********************************************************************************************\
- * 
- * 
+ *
+ *
 \*********************************************************************************************/
 extern "C" {
 
-#ifdef USE_LIGHT
   // push the light status object on the vm stack
   void push_getlight(bvm *vm, uint32_t light_num) {
     bool data_present = false;      // do we have relevant data
@@ -43,7 +44,7 @@ extern "C" {
 
     if (Light.device > 0) {
       // we have a light
-      
+
       uint8_t channels[LST_MAX];
       char s_rgb[8] = {0};         // RGB raw levels
       light_controller.calcLevels(channels);
@@ -207,7 +208,7 @@ extern "C" {
       // channels
       if (map_find(vm, "channels")) {
         if (be_isinstance(vm, -1)) {
-          be_getbuiltin(vm, "list");    // add "list" class 
+          be_getbuiltin(vm, "list");    // add "list" class
           if (be_isderived(vm, -2)) {
             be_pop(vm, 1);      // remove "list" class from top
             int32_t list_size = get_list_size(vm);
@@ -295,18 +296,15 @@ extern "C" {
     }
     be_raise(vm, kTypeError, nullptr);
   }
+}
 
-#else // #ifdef USE_LIGHT
+#endif // USE_LIGHT
 
+extern "C" {
   int32_t b_light_missing(struct bvm *vm) {
     be_raise(vm, "feature_error", "LIGHT is not enabled, use '#define USE_LIGHT'");
   }
-  int32_t l_getlight(struct bvm *vm) __attribute__ ((weak, alias ("b_light_missing")));
-  int32_t l_setlight(struct bvm *vm) __attribute__ ((weak, alias ("b_light_missing")));
-  int32_t gamma8(struct bvm *vm) __attribute__ ((weak, alias ("b_light_missing")));
-  int32_t gamma10(struct bvm *vm) __attribute__ ((weak, alias ("b_light_missing")));
-  int32_t reverse_gamma10(struct bvm *vm) __attribute__ ((weak, alias ("b_light_missing")));
-#endif // #ifdef USE_LIGHT
+
 }
 
 #endif  // USE_BERRY

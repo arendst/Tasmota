@@ -25,10 +25,10 @@
  * A version of xdrv_12_home_assistant supporting the new Tasmota Discovery be used by
  * latest versions of Home Assistant or TasmoManager.
  *
- * SetOption19 0  - Enables discovery (default)
- * SetOption19 1  - Disables discovery and removes retained message from MQTT server
- * SetOption73 1  - Enable discovery for buttons
- * SetOption114 1 - Enable discovery for switches
+ * SetOption19 0   - [DiscoverOff 0] [Discover 1] Enables discovery (default)
+ * SetOption19 1   - [DiscoverOff 1] [Discover 0] Disables discovery and removes retained message from MQTT server
+ * SetOption73 1   - [DiscoverButton] Enable discovery for buttons
+ * SetOption114 1  - [DiscoverSwitch] Enable discovery for switches
 \*********************************************************************************************/
 
 #define XDRV_12     12
@@ -226,8 +226,41 @@ void TasRediscover(void) {
 }
 
 void TasDiscoverInit(void) {
-  TasDiscoverData_init_step = 10;                              // Delayed discovery
-  Settings.flag.hass_discovery = 0;                            // SetOption19 - Enable Tasmota discovery and Disable legacy Hass discovery
+  if (ResetReason() != REASON_DEEP_SLEEP_AWAKE) {
+    Settings.flag.hass_discovery = 0;                          // SetOption19 - Enable Tasmota discovery and Disable legacy Hass discovery
+    TasDiscoverData_init_step = 10;                            // Delayed discovery
+  }
+}
+
+/*********************************************************************************************\
+ * Commands
+ *
+ * Discover 0        - Disables discovery and removes retained message from MQTT server
+ * Discover 1        - Enables discovery (default)
+ * DiscoverOff 0     - Enables discovery (default)
+ * DiscoverOff 1     - Disables discovery and removes retained message from MQTT server
+ * DiscoverButton 1  - Enable discovery for buttons
+ * DiscoverSwitch 1  - Enable discovery for switches
+\*********************************************************************************************/
+
+const char kTasDiscoverCommands[] PROGMEM = "Discover|"        // Prefix
+  // SetOption synonyms
+  "Off|Button|Switch|"
+  // Commands
+  "|";
+
+SO_SYNONYMS(kTasDiscoverSynonyms,
+  19, 73, 114 );
+
+void (* const TasDiscoverCommand[])(void) PROGMEM = {
+  &CmndTasDiscover };
+
+void CmndTasDiscover(void) {
+  if (XdrvMailbox.payload >= 0) {
+    Settings.flag.hass_discovery = !(XdrvMailbox.payload & 1);
+    TasRediscover();
+  }
+  ResponseCmndChar(GetStateText(!Settings.flag.hass_discovery));
 }
 
 /*********************************************************************************************\
@@ -246,6 +279,9 @@ bool Xdrv12(uint8_t function) {
           TasDiscovery();                                      // Send the topics for discovery
         }
       }
+      break;
+    case FUNC_COMMAND:
+      result = DecodeCommand(kTasDiscoverCommands, TasDiscoverCommand, kTasDiscoverSynonyms);
       break;
     case FUNC_MQTT_INIT:
       TasDiscoverInit();

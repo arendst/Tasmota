@@ -38,7 +38,8 @@ However, SH1106 driver don't provide several functions such as scroll commands.
 #define DISPLAY_INIT_MODE 0
 
 // the memory buffer for the LCD
-extern uint8_t *buffer;
+
+uint8_t *dbuff;
 
 Adafruit_SH1106::Adafruit_SH1106(int16_t width, int16_t height) :
 Renderer(width,height) {
@@ -59,16 +60,20 @@ void Adafruit_SH1106::Updateframe() {
 void Adafruit_SH1106::DisplayInit(int8_t p,int8_t size,int8_t rot,int8_t font) {
 // ignore update mode
   //if (p==DISPLAY_INIT_MODE) {
+  // allocate screen buffer
     setRotation(rot);
     invertDisplay(false);
     setTextWrap(false);         // Allow text to run off edges
     cp437(true);
     setTextFont(font);
     setTextSize(size);
-    setTextColor(WHITE,BLACK);
+    setTextColor(WHITE, BLACK);
     setCursor(0,0);
+    //fillScreen(BLACK);
     fillScreen(BLACK);
     Updateframe();
+
+    disp_bpp = -1;
   //}
 }
 
@@ -77,9 +82,13 @@ void Adafruit_SH1106::Begin(int16_t p1,int16_t p2,int16_t p3) {
 }
 
 
-void Adafruit_SH1106::begin(uint8_t vccstate, uint8_t i2caddr, bool reset) {
+boolean Adafruit_SH1106::begin(uint8_t vccstate, uint8_t i2caddr, bool reset) {
   _vccstate = vccstate;
   _i2caddr = i2caddr;
+
+  framebuffer = (uint8_t *)malloc(WIDTH * ((HEIGHT + 7) / 8));
+  if (!framebuffer)  return false;
+
     // I2C Init
     Wire.begin();
 
@@ -193,6 +202,9 @@ void Adafruit_SH1106::begin(uint8_t vccstate, uint8_t i2caddr, bool reset) {
   #endif
 
   SH1106_command(SH1106_DISPLAYON);//--turn on oled panel
+
+
+  return true;
 }
 
 
@@ -274,18 +286,18 @@ void Adafruit_SH1106::display(void) {
         SH1106_command(0x10 | (m_col >> 4));//set higher column address
 
         for( j = 0; j < 8; j++){
-			Wire.beginTransmission(_i2caddr);
-            Wire.write(0x40);
-            for ( k = 0; k < width; k++, p++) {
-		Wire.write(buffer[p]);
-            }
-            Wire.endTransmission();
-        	}
+          Wire.beginTransmission(_i2caddr);
+          Wire.write(0x40);
+          for ( k = 0; k < width; k++, p++) {
+		        Wire.write(framebuffer[p]);
+          }
+          Wire.endTransmission();
+        }
 	}
 
 }
 
 // clear everything
 void Adafruit_SH1106::clearDisplay(void) {
-  memset(buffer, 0, (SH1106_LCDWIDTH*SH1106_LCDHEIGHT/8));
+  memset(framebuffer, 0, (SH1106_LCDWIDTH*SH1106_LCDHEIGHT/8));
 }

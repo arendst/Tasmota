@@ -60,6 +60,7 @@
 #define USE_UFILESYS
 #define USE_SDCARD
   #define GUI_TRASH_FILE
+  #define GUI_EDIT_FILE
 
 #ifdef USE_BERRY                                 // Berry scripting language
   #define USE_BERRY_PSRAM                        // Allocate Berry memory in PSRAM if PSRAM is connected - this might be slightly slower but leaves main memory intact
@@ -94,6 +95,7 @@
 #define USE_UFILESYS
 #define USE_SDCARD
   #define GUI_TRASH_FILE
+  #define GUI_EDIT_FILE
 
 #ifdef USE_BERRY                                 // Berry scripting language
   #define USE_BERRY_PSRAM                        // Allocate Berry memory in PSRAM if PSRAM is connected - this might be slightly slower but leaves main memory intact
@@ -104,7 +106,7 @@
   #define USE_MPU6886
 #define USE_SPI
   #define USE_DISPLAY
-    #define USE_DISPLAY_ILI9342
+    #define USE_DISPLAY_ILI9341
     #define JPEG_PICTS
     #define USE_FT5206
     #define USE_TOUCH_BUTTONS
@@ -112,7 +114,7 @@
 #define USE_SENDMAIL
 #define USE_ESP32MAIL
 
-//#define USE_SCRIPT                               // Add support for script (+17k code)
+#define USE_SCRIPT                               // Add support for script (+17k code)
 // Script related defines
 #ifdef USE_SCRIPT
   #undef USE_RULES
@@ -126,6 +128,7 @@
   #define USE_SCRIPT_GLOBVARS
   #define USE_SCRIPT_SUB_COMMAND
   #define USE_ANGLE_FUNC
+  #define USE_SCRIPT_WEB_DISPLAY
   #define SCRIPT_FULL_WEBPAGE
   #define SCRIPT_GET_HTTPS_JP
   #define USE_GOOGLE_CHARTS
@@ -150,6 +153,8 @@
 #define USE_UFILESYS
 #define USE_SDCARD
   #define GUI_TRASH_FILE
+  #define GUI_EDIT_FILE
+
 #define USE_ADC
 #undef USE_BERRY                                 // Disable Berry scripting language
 #define USE_BLE_ESP32                            // Enable new BLE driver
@@ -164,6 +169,11 @@
 #ifdef FIRMWARE_TASMOTA32
 
 #define USE_ENHANCED_GUI_WIFI_SCAN
+
+#define USE_UFILESYS
+#define USE_SDCARD
+  #define GUI_TRASH_FILE
+  #define GUI_EDIT_FILE
 
 #define ROTARY_V1                                // Add support for Rotary Encoder as used in MI Desk Lamp
 
@@ -187,7 +197,6 @@
 
 #define USE_LIGHT_PALETTE                        // Add support for color palette (+0k9 code)
 
-#define USE_HALLEFFECT                           // Add support for internal Hall Effcet sensor connected to GPIO36 and GPIO39
 #define USE_DS18x20                              // Add support for DS18x20 sensors with id sort, single scan and read retry (+1k3 code)
 
 #define USE_I2C                                  // I2C using library wire (+10k code, 0k2 mem, 124 iram)
@@ -203,7 +212,7 @@
 #define USE_INA219                             // [I2cDriver14] Enable INA219 (I2C address 0x40, 0x41 0x44 or 0x45) Low voltage and current sensor (+1k code)
 //#define USE_INA226                             // [I2cDriver35] Enable INA226 (I2C address 0x40, 0x41 0x44 or 0x45) Low voltage and current sensor (+2k3 code)
 #define USE_SHT3X                              // [I2cDriver15] Enable SHT3x (I2C address 0x44 or 0x45) or SHTC3 (I2C address 0x70) sensor (+0k7 code)
-#define USE_TSL2561                            // [I2cDriver16] Enable TSL2561 sensor (I2C address 0x29, 0x39 or 0x49) using library Joba_Tsl2561 (+2k3 code)
+//#define USE_TSL2561                            // [I2cDriver16] Enable TSL2561 sensor (I2C address 0x29, 0x39 or 0x49) using library Joba_Tsl2561 (+2k3 code)
 //#define USE_TSL2591                            // [I2cDriver40] Enable TSL2591 sensor (I2C address 0x29) using library Adafruit_TSL2591 (+1k6 code)
 #define USE_MGS                                // [I2cDriver17] Enable Xadow and Grove Mutichannel Gas sensor using library Multichannel_Gas_Sensor (+10k code)
 #define USE_SGP30                              // [I2cDriver18] Enable SGP30 sensor (I2C address 0x58) (+1k1 code)
@@ -223,7 +232,7 @@
 #define USE_SCD30                              // [I2cDriver29] Enable Sensiron SCd30 CO2 sensor (I2C address 0x61) (+3k3 code)
 //#define USE_SPS30                              // [I2cDriver30] Enable Sensiron SPS30 particle sensor (I2C address 0x69) (+1.7 code)
 #define USE_ADE7953                            // [I2cDriver7] Enable ADE7953 Energy monitor as used on Shelly 2.5 (I2C address 0x38) (+1k5)
-//#define USE_VL53L0X                            // [I2cDriver31] Enable VL53L0x time of flight sensor (I2C address 0x29) (+4k code)
+#define USE_VL53L0X                            // [I2cDriver31] Enable VL53L0x time of flight sensor (I2C address 0x29) (+4k code)
 //#define USE_VL53L1X                            // [I2cDriver54] Enable VL53L1X time of flight sensor (I2C address 0x29) using Pololu VL53L1X library (+2k9 code)
 //#define USE_TOF10120                           // [I2cDriver57] Enable TOF10120 time of flight sensor (I2C address 0x52) (+0k6 code)
 //#define USE_MLX90614                           // [I2cDriver32] Enable MLX90614 ir temp sensor (I2C address 0x5a) (+0.6k code)

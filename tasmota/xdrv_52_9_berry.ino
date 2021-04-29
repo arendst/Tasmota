@@ -196,8 +196,8 @@ int32_t callBerryEventDispatcher(const char *type, const char *cmd, int32_t idx,
 /*********************************************************************************************\
  * VM Observability
 \*********************************************************************************************/
-void BerryObservability(bvm *vm, int32_t event...);
-void BerryObservability(bvm *vm, int32_t event...) {
+void BerryObservability(bvm *vm, int event...);
+void BerryObservability(bvm *vm, int event...) {
   va_list param;
   va_start(param, event);
   static int32_t vm_usage = 0;
@@ -636,7 +636,7 @@ void HandleBerryConsole(void)
   WSContentFlush();
   _WSContentSend(HTTP_BERRY_STYLE_CMND);
   _WSContentSend(HTTP_BERRY_FORM_CMND);
-  WSContentSpaceButton(BUTTON_MAIN);
+  WSContentSpaceButton(BUTTON_MANAGEMENT);
   WSContentStop();
 }
 
@@ -721,9 +721,13 @@ bool Xdrv52(uint8_t function)
     // case FUNC_SET_POWER:
     //   break;
 #ifdef USE_WEBSERVER
-    case FUNC_WEB_ADD_BUTTON:
-      WSContentSend_P(HTTP_BTN_BERRY_CONSOLE);
-      callBerryEventDispatcher(PSTR("web_add_button"), nullptr, 0, nullptr);
+    case FUNC_WEB_ADD_CONSOLE_BUTTON:
+      if (XdrvMailbox.index) {
+        XdrvMailbox.index++;
+      } else {
+        WSContentSend_P(HTTP_BTN_BERRY_CONSOLE);
+        callBerryEventDispatcher(PSTR("web_add_button"), nullptr, 0, nullptr);
+      }
       break;
     case FUNC_WEB_ADD_MAIN_BUTTON:
       callBerryEventDispatcher(PSTR("web_add_main_button"), nullptr, 0, nullptr);

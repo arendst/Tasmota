@@ -48,12 +48,15 @@ struct HLW {
 #endif
   volatile uint32_t cf_pulse_length = 0;
   volatile uint32_t cf_pulse_last_time = 0;
+  volatile uint32_t cf_summed_pulse_length = 0;
+  volatile uint32_t cf_pulse_counter = 0;
   uint32_t cf_power_pulse_length  = 0;
 
   volatile uint32_t cf1_pulse_length = 0;
   volatile uint32_t cf1_pulse_last_time = 0;
   volatile uint32_t cf1_summed_pulse_length = 0;
   volatile uint32_t cf1_pulse_counter = 0;
+
   uint32_t cf1_voltage_pulse_length  = 0;
   uint32_t cf1_current_pulse_length = 0;
 
@@ -77,8 +80,7 @@ void HlwCfInterrupt(void) IRAM_ATTR;
 void HlwCf1Interrupt(void) IRAM_ATTR;
 #endif  // USE_WS2812_DMA
 
-void HlwCfInterrupt(void)  // Service Power
-{
+void HlwCfInterrupt(void) {  // Service Power
   uint32_t us = micros();
 
   if (Hlw.load_off) {  // Restart plen measurement
@@ -87,13 +89,14 @@ void HlwCfInterrupt(void)  // Service Power
   } else {
     Hlw.cf_pulse_length = us - Hlw.cf_pulse_last_time;
     Hlw.cf_pulse_last_time = us;
+    Hlw.cf_summed_pulse_length += Hlw.cf_pulse_length;
+    Hlw.cf_pulse_counter++;
     Hlw.energy_period_counter++;
   }
   Energy.data_valid[0] = 0;
 }
 
-void HlwCf1Interrupt(void)  // Service Voltage and Current
-{
+void HlwCf1Interrupt(void) {  // Service Voltage and Current
   uint32_t us = micros();
 
   Hlw.cf1_pulse_length = us - Hlw.cf1_pulse_last_time;
@@ -113,8 +116,7 @@ void HlwCf1Interrupt(void)  // Service Voltage and Current
 
 /********************************************************************************************/
 
-void HlwEvery200ms(void)
-{
+void HlwEvery200ms(void) {
   uint32_t cf1_pulse_length = 0;
   uint32_t hlw_w = 0;
   uint32_t hlw_u = 0;
@@ -124,7 +126,12 @@ void HlwEvery200ms(void)
     Hlw.cf_pulse_length = 0;    // No load for some time
     Hlw.load_off = true;
   }
-  Hlw.cf_power_pulse_length  = Hlw.cf_pulse_length;
+  Hlw.cf_power_pulse_length = Hlw.cf_pulse_length;
+  if (Hlw.cf_pulse_counter && !Hlw.load_off) {
+    Hlw.cf_power_pulse_length = Hlw.cf_summed_pulse_length / Hlw.cf_pulse_counter;
+  }
+  Hlw.cf_summed_pulse_length = 0;
+  Hlw.cf_pulse_counter = 0;
 
   if (Hlw.cf_power_pulse_length  && Energy.power_on && !Hlw.load_off) {
     hlw_w = (Hlw.power_ratio * Settings.energy_power_calibration) / Hlw.cf_power_pulse_length ;  // W *10
@@ -195,8 +202,7 @@ void HlwEvery200ms(void)
   }
 }
 
-void HlwEverySecond(void)
-{
+void HlwEverySecond(void) {
   if (Energy.data_valid[0] > ENERGY_WATCHDOG) {
     Hlw.cf1_voltage_pulse_length  = 0;
     Hlw.cf1_current_pulse_length = 0;
@@ -215,8 +221,7 @@ void HlwEverySecond(void)
   }
 }
 
-void HlwSnsInit(void)
-{
+void HlwSnsInit(void) {
   if (!Settings.energy_power_calibration || (4975 == Settings.energy_power_calibration)) {
     Settings.energy_power_calibration = HLW_PREF_PULSE;
     Settings.energy_voltage_calibration = HLW_UREF_PULSE;
@@ -245,8 +250,7 @@ void HlwSnsInit(void)
   attachInterrupt(Pin(GPIO_HLW_CF), HlwCfInterrupt, FALLING);
 }
 
-void HlwDrvInit(void)
-{
+void HlwDrvInit(void) {
   Hlw.model_type = 0;                      // HLW8012
   if (PinUsed(GPIO_HJL_CF)) {
     SetPin(Pin(GPIO_HJL_CF), AGPIO(GPIO_HLW_CF));
@@ -270,13 +274,12 @@ void HlwDrvInit(void)
       Energy.voltage_available = false;
     }
     Energy.use_overtemp = true;            // Use global temperature for overtemp detection
-    
+
     TasmotaGlobal.energy_driver = XNRG_01;
   }
 }
 
-bool HlwCommand(void)
-{
+bool HlwCommand(void) {
   bool serviced = true;
 
   if ((CMND_POWERCAL == Energy.command_code) || (CMND_VOLTAGECAL == Energy.command_code) || (CMND_CURRENTCAL == Energy.command_code)) {
@@ -306,8 +309,7 @@ bool HlwCommand(void)
  * Interface
 \*********************************************************************************************/
 
-bool Xnrg01(uint8_t function)
-{
+bool Xnrg01(uint8_t function) {
   bool result = false;
 
   switch (function) {

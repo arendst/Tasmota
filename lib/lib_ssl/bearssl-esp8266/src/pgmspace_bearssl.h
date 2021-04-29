@@ -44,6 +44,7 @@ extern "C" {
   #define PSTR(s)            (__extension__({static const char __c[] __attribute__((__aligned__(4))) PROGMEM = (s); &__c[0];}))
 #endif
 
+#ifdef ESP8266
 // Flash memory must be read using 32 bit aligned addresses else a processor
 // exception will be triggered.
 // The order within the 32 bit values are:
@@ -86,6 +87,26 @@ static inline uint16_t pgm_read_word_inlined(const void* addr) {
     #define pgm_read_float(addr)            (*(const float*)(addr))
     #define pgm_read_ptr(addr)              (*(const void* const*)(addr))
 #endif
+
+#else // ESP8266
+
+
+#ifdef __cplusplus
+    #define pgm_read_byte(addr)             (*reinterpret_cast<const uint8_t*>(addr))
+    #define pgm_read_word(addr)             (*reinterpret_cast<const uint16_t*>(addr))
+    #define pgm_read_dword(addr)            (*reinterpret_cast<const uint32_t*>(addr))
+    #define pgm_read_float(addr)            (*reinterpret_cast<const float>(addr))
+    #define pgm_read_ptr(addr)              (*reinterpret_cast<const void* const *>(addr))
+#else
+    #define pgm_read_byte(addr)             (*(const uint8_t*)(addr))
+    #define pgm_read_word(addr)             (*(const uint16_t*)(addr))
+    #define pgm_read_dword(addr)            (*(const uint32_t*)(addr))
+    #define pgm_read_float(addr)            (*(const float)(addr))
+    #define pgm_read_ptr(addr)              (*(const void* const *)(addr))
+#endif
+
+
+#endif // ESP8266
 
 #define pgm_read_byte_near(addr)        pgm_read_byte(addr)
 #define pgm_read_word_near(addr)        pgm_read_word(addr)

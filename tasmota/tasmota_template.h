@@ -162,6 +162,10 @@ enum UserSelectablePins {
   GPIO_HALLEFFECT,
   GPIO_EPD_DATA,                       // Base connection EPD driver
 #endif
+  GPIO_INPUT,
+#ifdef ESP32
+  GPIO_KEY1_PD, GPIO_KEY1_INV_PD, GPIO_SWT1_PD,
+#endif
   GPIO_SENSOR_END };
 
 enum ProgramSelectablePins {
@@ -176,7 +180,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
   struct {                                 // GPIO Option_A1 .. Option_A32
     uint32_t pwm1_input : 1;               // bit 0 (v9.2.0.1)   - Option_A1 - (Light) Change PWM1 to input on power off and no fade running (1)
     uint32_t dummy_energy : 1;             // bit 1 (v9.3.1.2)   - Option_A2 - (Energy) Enable dummy values
-    uint32_t udisplay_driver : 1;          // bit 2 Universal display driver
+    uint32_t udisplay_driver : 1;          // bit 2 (v9.3.1.2)   - Option_A3 - (Display) Universal display driver
     uint32_t spare03 : 1;                  // bit 3
     uint32_t spare04 : 1;                  // bit 4
     uint32_t spare05 : 1;                  // bit 5
@@ -344,6 +348,10 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_HALLEFFECT "|"
   D_SENSOR_EPD_DATA "|"
 #endif
+  D_SENSOR_INPUT "|"
+#ifdef ESP32
+  D_SENSOR_BUTTON "_d|" D_SENSOR_BUTTON "_id|" D_SENSOR_SWITCH "_d|"
+#endif
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -360,11 +368,20 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_OPTION_A) + MAX_OPTIONS_A, // Device specific options
   AGPIO(GPIO_KEY1) + MAX_KEYS,          // Buttons
   AGPIO(GPIO_KEY1_NP) + MAX_KEYS,
+#ifdef ESP32
+  AGPIO(GPIO_KEY1_PD) + MAX_KEYS,
+#endif
   AGPIO(GPIO_KEY1_INV) + MAX_KEYS,
   AGPIO(GPIO_KEY1_INV_NP) + MAX_KEYS,
+#ifdef ESP32
+  AGPIO(GPIO_KEY1_INV_PD) + MAX_KEYS,
   AGPIO(GPIO_KEY1_TC) + MAX_KEYS,       // Touch button
+#endif
   AGPIO(GPIO_SWT1) + MAX_SWITCHES,      // User connected external switches
   AGPIO(GPIO_SWT1_NP) + MAX_SWITCHES,
+#ifdef ESP32
+  AGPIO(GPIO_SWT1_PD) + MAX_SWITCHES,
+#endif
 #ifdef ROTARY_V1
   AGPIO(GPIO_ROT1A) + MAX_ROTARIES,     // Rotary A Pin
   AGPIO(GPIO_ROT1B) + MAX_ROTARIES,     // Rotary B Pin
@@ -387,6 +404,9 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #endif
   AGPIO(GPIO_LEDLNK),                   // Link led
   AGPIO(GPIO_LEDLNK_INV),               // Inverted link led
+#ifdef USE_BERRY
+  AGPIO(GPIO_INPUT) + MAX_SWITCHES,     // Pure digital input to be read via Berry
+#endif
   AGPIO(GPIO_OUTPUT_HI),                // Fixed output high
   AGPIO(GPIO_OUTPUT_LO),                // Fixed output low
 #ifdef USE_FTC532
@@ -407,11 +427,11 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #endif
 
 #ifdef USE_SPI
-  AGPIO(GPIO_SPI_MISO),                 // SPI MISO
-  AGPIO(GPIO_SPI_MOSI),                 // SPI MOSI
-  AGPIO(GPIO_SPI_CLK),                  // SPI Clk
-  AGPIO(GPIO_SPI_CS),                   // SPI Chip Select
-  AGPIO(GPIO_SPI_DC),                   // SPI Data Direction
+  AGPIO(GPIO_SPI_MISO) + MAX_SPI,       // SPI MISO
+  AGPIO(GPIO_SPI_MOSI) + MAX_SPI,       // SPI MOSI
+  AGPIO(GPIO_SPI_CLK) + MAX_SPI,        // SPI Clk
+  AGPIO(GPIO_SPI_CS) + MAX_SPI,         // SPI Chip Select
+  AGPIO(GPIO_SPI_DC) + MAX_SPI,         // SPI Data Direction
 #ifdef USE_NRF24
   AGPIO(GPIO_NRF24_CS),
   AGPIO(GPIO_NRF24_DC),
@@ -431,7 +451,7 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_SSPI_CS),        // Software SPI Chip Select
   AGPIO(GPIO_SSPI_DC),        // Software SPI Data or Command
 
-#ifdef USE_DISPLAY
+#if defined(USE_DISPLAY) || defined(USE_LVGL)
 #ifdef USE_DISPLAY_ILI9341
   AGPIO(GPIO_ILI9341_CS),
   AGPIO(GPIO_ILI9341_DC),
@@ -824,7 +844,9 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 \*-------------------------------------------------------------------------------------------*/
 
 #ifdef ESP32
+#if CONFIG_IDF_TARGET_ESP32
   AGPIO(GPIO_HALLEFFECT) + 2,             // Hall effect sensor connected to GPIO36 and 39
+#endif  // CONFIG_IDF_TARGET_ESP32
 #ifdef USE_WEBCAM
   AGPIO(GPIO_WEBCAM_PWDN),
   AGPIO(GPIO_WEBCAM_RESET),

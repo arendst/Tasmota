@@ -466,6 +466,10 @@ static const Zigbee_Instruction zb_prog[] PROGMEM = {
     ZI_WAIT_RECV(1000, ZBR_AF_REGISTER)
     ZI_SEND(ZBS_AF_REGISTER0B)                    // Z_AF register for endpoint 0B, profile 0x0104 Home Automation
     ZI_WAIT_RECV(1000, ZBR_AF_REGISTER)
+    // Write again channels, see https://github.com/Koenkk/zigbee-herdsman/blob/37bea20ba04ee5d4938abc21a7569b43f831de32/src/adapter/z-stack/adapter/startZnp.ts#L244-L245
+    ZI_SEND(ZBS_W_CHANN)                          // write CHANNEL
+    ZI_WAIT_RECV(1000, ZBR_WNV_OK)
+
     // redo Z_ZDO:activeEpReq to check that Ep are available
     ZI_SEND(ZBS_ZDO_ACTIVEEPREQ)                  // Z_ZDO:activeEpReq
     ZI_WAIT_RECV(1000, ZBR_ZDO_ACTIVEEPREQ)
@@ -481,8 +485,12 @@ static const Zigbee_Instruction zb_prog[] PROGMEM = {
     ZI_MQTT_STATE(ZIGBEE_STATUS_OK, kStarted)
     ZI_LOG(LOG_LEVEL_INFO, kZigbeeStarted)
     ZI_CALL(&Z_State_Ready, 1)                    // Now accept incoming messages
+    ZI_CALL(&Z_Prepare_Storage, 0)
     ZI_CALL(&Z_Load_Devices, 0)
+    ZI_CALL(&Z_Load_Data, 0)
+    ZI_CALL(&Z_Set_Save_Data_Timer, 0)
     ZI_CALL(&Z_Query_Bulbs, 0)
+
   ZI_LABEL(ZIGBEE_LABEL_MAIN_LOOP)
     ZI_WAIT_FOREVER()
     ZI_GOTO(ZIGBEE_LABEL_READY)
@@ -907,10 +915,10 @@ static const Zigbee_Instruction zb_prog[] PROGMEM = {
     ZI_MQTT_STATE(ZIGBEE_STATUS_OK, kStarted)
     ZI_LOG(LOG_LEVEL_INFO, kZigbeeStarted)
     ZI_CALL(&Z_State_Ready, 1)                    // Now accept incoming messages
-    ZI_CALL(&Z_Prepare_EEPROM, 0)
+    ZI_CALL(&Z_Prepare_Storage, 0)
     ZI_CALL(&Z_Load_Devices, 0)
-    ZI_CALL(&Z_Load_Data_EEPROM, 0)
-    ZI_CALL(&Z_Set_Save_Data_Timer_EEPROM, 0)
+    ZI_CALL(&Z_Load_Data, 0)
+    ZI_CALL(&Z_Set_Save_Data_Timer, 0)
     ZI_CALL(&Z_Query_Bulbs, 0)
 
   ZI_LABEL(ZIGBEE_LABEL_MAIN_LOOP)
