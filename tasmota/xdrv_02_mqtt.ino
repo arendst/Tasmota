@@ -24,6 +24,8 @@
 #endif
 
 #ifdef USE_MQTT_AZURE_IOT
+#include <bearssl\bearssl.h>
+#include <base64.hpp>
 #include <JsonParser.h>
 #undef  MQTT_PORT
 #define MQTT_PORT         8883
@@ -222,6 +224,51 @@ void MqttInit(void) {
   MqttClient.setSocketTimeout(Settings.mqtt_socket_timeout);
 }
 
+String azurePreSharedKeytoSASToken(char *iotHubFQDN, const char *deviceId, const char *preSharedKey, int sasTTL = 86400){
+  int ttl = time(NULL) + sasTTL;
+  String dataToSignString = urlEncodeBase64(String(iotHubFQDN) + "/devices/" + String(deviceId)) + "\n" + String(ttl);
+  char dataToSign[dataToSignString.length() + 1];
+  dataToSignString.toCharArray(dataToSign, dataToSignString.length() + 1);
+
+  unsigned char decodedPSK[32];
+  unsigned char encryptedSignature[100];
+  unsigned char encodedSignature[100];
+  br_sha256_context sha256_context;
+  br_hmac_key_context hmac_key_context;
+  br_hmac_context hmac_context;
+
+  // need to base64 decode the Preshared key and the length
+  int base64_decoded_device_length = decode_base64((unsigned char*)preSharedKey, decodedPSK);
+  
+  // create the sha256 hmac and hash the data
+  br_sha256_init(&sha256_context);
+  br_hmac_key_init(&hmac_key_context, sha256_context.vtable, decodedPSK, base64_decoded_device_length);
+  br_hmac_init(&hmac_context, &hmac_key_context, 32);
+  br_hmac_update(&hmac_context, dataToSign, sizeof(dataToSign)-1);
+  br_hmac_out(&hmac_context, encryptedSignature);
+  
+  // base64 decode the HMAC to a char
+  encode_base64(encryptedSignature, br_hmac_size(&hmac_context), encodedSignature);
+
+  // creating the real SAS Token
+  String realSASToken = "SharedAccessSignature ";
+  realSASToken += "sr="   + urlEncodeBase64(String(iotHubFQDN) + "/devices/" + String(deviceId));
+  realSASToken += "&sig=" + urlEncodeBase64(String((char*)encodedSignature));
+  realSASToken += "&se="  + String(ttl);
+
+  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_MQTT "SASToken is '%s'"), realSASToken.c_str());
+
+  return realSASToken;
+}
+
+String urlEncodeBase64(String stringToEncode){
+  // correctly URL encoding the 64 characters of Base64 and the '=' sign
+  stringToEncode.replace("+", "%2B");
+  stringToEncode.replace("=", "%3D");
+  stringToEncode.replace("/", "%2F");
+  return stringToEncode;
+}
+
 bool MqttIsConnected(void) {
   return MqttClient.connected();
 }
@@ -259,8 +306,7 @@ bool MqttPublishLib(const char* topic, bool retained) {
 
   bool result;
 #ifdef USE_MQTT_AZURE_IOT
-  String sourceTopicString = String(topic);
-  sourceTopicString.replace("/", "%2F");
+  String sourceTopicString = urlEncodeBase64(String(topic));
   String topicString = "devices/" + String(SettingsText(SET_MQTT_CLIENT));
   topicString+= "/messages/events/topic=" + sourceTopicString;
 
@@ -268,9 +314,9 @@ bool MqttPublishLib(const char* topic, bool retained) {
   JsonParserObject message_object = mqtt_message.getRootObject();
   if (message_object.isValid()) {   // only sending valid JSON, yet this is optional
     result = MqttClient.publish(topicString.c_str(), TasmotaGlobal.mqtt_data, retained);
-    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT "Sending '%s'"), TasmotaGlobal.mqtt_data);
+    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_MQTT "Sending '%s'"), TasmotaGlobal.mqtt_data);
   } else {
-    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT "Invalid JSON, '%s' for topic '%s', not sending to Azure IoT Hub"), TasmotaGlobal.mqtt_data, topic);
+    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_MQTT "Invalid JSON, '%s' for topic '%s', not sending to Azure IoT Hub"), TasmotaGlobal.mqtt_data, topic);
     result = true;
   }
 #else
@@ -747,12 +793,14 @@ void MqttReconnect(void) {
 #endif
 
 #ifdef USE_MQTT_AZURE_IOT
-  if (String(mqtt_pwd).indexOf("SharedAccessSignature") == -1) {
-    AddLog(LOG_LEVEL_ERROR, PSTR(D_LOG_MQTT "Azure IoT incorrect SAS Token format. Refer to https://docs.microsoft.com/en-us/azure/iot-hub/iot-hub-mqtt-support"));
-    return;
+  String azureMqtt_password = SettingsText(SET_MQTT_PWD);
+  if (azureMqtt_password.indexOf("SharedAccessSignature") == -1) {
+    // assuming a PreSharedKey was provided, calculating a SAS Token into azureMqtt_password
+    azureMqtt_password = azurePreSharedKeytoSASToken(SettingsText(SET_MQTT_HOST), SettingsText(SET_MQTT_CLIENT), SettingsText(SET_MQTT_PWD));
   }
+
   String azureMqtt_userString = String(SettingsText(SET_MQTT_HOST)) + "/" + String(SettingsText(SET_MQTT_CLIENT)); + "/?api-version=2018-06-30";
-  if (MqttClient.connect(TasmotaGlobal.mqtt_client, azureMqtt_userString.c_str(), mqtt_pwd, stopic, 1, lwt_retain, TasmotaGlobal.mqtt_data, MQTT_CLEAN_SESSION)) {
+  if (MqttClient.connect(TasmotaGlobal.mqtt_client, azureMqtt_userString.c_str(), azureMqtt_password.c_str(), stopic, 1, lwt_retain, TasmotaGlobal.mqtt_data, MQTT_CLEAN_SESSION)) {
 #else
   if (MqttClient.connect(TasmotaGlobal.mqtt_client, mqtt_user, mqtt_pwd, stopic, 1, lwt_retain, TasmotaGlobal.mqtt_data, MQTT_CLEAN_SESSION)) {
 #endif  // USE_MQTT_AZURE_IOT
