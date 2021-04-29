@@ -55,18 +55,19 @@ uint16_t Epd47::GetColorFromIndex(uint8_t index) {
 Epd47::Epd47(int16_t dwidth, int16_t dheight) :  Renderer(dwidth, dheight) {
   width = dwidth;
   height = dheight;
+  disp_bpp = 4;
 }
 
 int32_t Epd47::Init(void) {
   epd_init(EPD_LUT_1K);
   hl = epd_hl_init(WAVEFORM);
   epd47_buffer = epd_hl_get_framebuffer(&hl);
+  framebuffer = epd47_buffer;
   lvgl_param.fluslines = 10;
   return 0;
 }
 
 void Epd47::DisplayInit(int8_t p, int8_t size, int8_t rot, int8_t font) {
-
 
   if (p ==  DISPLAY_INIT_MODE) {
     epd_poweron();

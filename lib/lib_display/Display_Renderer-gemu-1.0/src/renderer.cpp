@@ -49,7 +49,7 @@ Adafruit_GFX(x, y) {
 #ifdef USE_EPD_FONTS
   selected_font = &Font12;
 #endif
-
+  disp_bpp = 16;
 }
 
 uint16_t Renderer::GetColorFromIndex(uint8_t index) {
