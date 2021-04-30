@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 ## [9.4.0.3]
 ### Added
 - Make Telegram command ``TmState`` persistent (#11965)
+- Add firmware for Tube's Zigbee coordinator based on EFR32 and ESP32
 
 ## [9.4.0.2] 20210430
 ### Added
