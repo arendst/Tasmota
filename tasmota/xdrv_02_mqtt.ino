@@ -24,7 +24,7 @@
 #endif
 
 #ifdef USE_MQTT_AZURE_IOT
-#include <bearssl\bearssl.h>
+#include <t_bearssl.h>
 #include <base64.hpp>
 #include <JsonParser.h>
 #undef  MQTT_PORT
