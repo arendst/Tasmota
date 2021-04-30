@@ -2668,7 +2668,8 @@ chknext:
 #ifdef USE_LVGL
         if (!strncmp(vname, "lvgl(", 5)) {
           lp = GetNumericArgument(lp + 5, OPER_EQU, &fvar, gv);
-          fvar = lvgl_test(fvar);
+          SCRIPT_SKIP_SPACES
+          fvar = lvgl_test(&lp, fvar);
           lp++;
           len = 0;
           goto exit;
@@ -7870,82 +7871,192 @@ uint32_t script_i2c(uint8_t sel, uint8_t val, uint8_t val1) {
 #include <renderer.h>
 #include "lvgl.h"
 
-
-const char ili9342[] PROGMEM =
-":H,ILI9342,320,240,16,SPI,1,*,*,*,*,*,*,*,40\n"
-":S,2,1,3,0,100,100\n"
-":I\n"
-"EF,3,03,80,02\n"
-"CF,3,00,C1,30\n"
-"ED,4,64,03,12,81\n"
-"E8,3,85,00,78\n"
-"CB,5,39,2C,00,34,02\n"
-"F7,1,20\n"
-"EA,2,00,00\n"
-"C0,1,23\n"
-"C1,1,10\n"
-"C5,2,3e,28\n"
-"C7,1,86\n"
-"36,1,48\n"
-"37,1,00\n"
-"3A,1,55\n"
-"B1,2,00,18\n"
-"B6,3,08,82,27\n"
-"F2,1,00\n"
-"26,1,01\n"
-"E0,0F,0F,31,2B,0C,0E,08,4E,F1,37,07,10,03,0E,09,00\n"
-"E1,0F,00,0E,14,03,11,07,31,C1,48,08,0F,0C,31,36,0F\n"
-"21,80\n"
-"11,80\n"
-"29,80\n"
-":o,28\n"
-":O,29\n"
-":A,2A,2B,2C,16\n"
-":R,36\n"
-":0,08,00,00,00\n"
-":1,A8,00,00,01\n"
-":2,C8,00,00,02\n"
-":3,68,00,00,03\n"
-":i,21,20\n"
-":TI2,38,22,21\n"
-"#\n";
+#define MAX_LVGL_OBJS 8
+uint8_t lvgl_numobjs;
+lv_obj_t *lvgl_buttons[MAX_LVGL_OBJS];
 
 void start_lvgl(const char * uconfig);
+lv_event_t lvgl_last_event;
+uint8_t lvgl_last_object;
+uint8_t lvgl_last_slider;
 
-void btn_event_cb(lv_obj_t * btn, lv_event_t event);
-void btn_event_cb(lv_obj_t * btn, lv_event_t event) {
-    if (event == LV_EVENT_CLICKED) {
-      AddLog_P(LOG_LEVEL_INFO,PSTR(">>> clicked"));
+void lvgl_set_last(lv_obj_t * obj, lv_event_t event);
+void lvgl_set_last(lv_obj_t * obj, lv_event_t event) {
+  lvgl_last_event = event;
+  lvgl_last_object = 0;
+  for (uint8_t cnt = 0; cnt < MAX_LVGL_OBJS; cnt++) {
+    if (lvgl_buttons[cnt] == obj) {
+      lvgl_last_object = cnt + 1;
+      return;
     }
+  }
 }
 
 
-int32_t lvgl_test(int32_t p) {
-
-  start_lvgl(ili9342);
-
-  lv_obj_clean(lv_scr_act());
-
-  if (p == 0) {
-    lv_obj_t *label1 =  lv_label_create(lv_scr_act(), NULL);
-    /*Modify the Label's text*/
-    lv_label_set_text(label1, "Hello world!");
-    /* Align the Label to the center
-     * NULL means align on parent (which is the screen now)
-     * 0, 0 at the end means an x, y offset after alignment*/
-     lv_obj_align(label1, NULL, LV_ALIGN_CENTER, 0, 0);
-     /*Add a button*/
-     lv_obj_t *btn1 = lv_btn_create(lv_scr_act(), NULL);           /*Add to the active screen*/
-     lv_obj_set_pos(btn1, 2, 2);                                    /*Adjust the position*/
-     lv_obj_set_size(btn1, 96, 30);                                 /* set size of button */
-     lv_obj_set_event_cb(btn1, btn_event_cb);
-     /*Add text*/
-     lv_obj_t *label = lv_label_create(btn1, NULL);                  /*Put on 'btn1'*/
-     lv_label_set_text(label, "Click");
-  } else {
-    lvgl_setup();
+void btn_event_cb(lv_obj_t * btn, lv_event_t event);
+void btn_event_cb(lv_obj_t * btn, lv_event_t event) {
+  lvgl_set_last(btn, event);
+  if (event == LV_EVENT_CLICKED) {
+    Run_Scripter(">lvb", 4, 0);
   }
-  return 0;
+}
+
+void slider_event_cb(lv_obj_t * sld, lv_event_t event);
+void slider_event_cb(lv_obj_t * sld, lv_event_t event) {
+  lvgl_set_last(sld, event);
+  lvgl_last_slider = lv_slider_get_value(sld);
+  if (event == LV_EVENT_VALUE_CHANGED) {
+    Run_Scripter(">lvs", 4, 0);
+  }
+}
+
+void lvgl_StoreObj(lv_obj_t *obj);
+void lvgl_StoreObj(lv_obj_t *obj) {
+  if (lvgl_numobjs < MAX_LVGL_OBJS) {
+    lvgl_buttons[lvgl_numobjs] = obj;
+    lvgl_numobjs++;
+  }
+}
+
+int32_t lvgl_test(char **lpp, int32_t p) {
+  char *lp = *lpp;
+  lv_obj_t *obj;
+  lv_obj_t *label;
+  float xp, yp, xs, ys, min, max;
+  char str[SCRIPT_MAXSSIZE];
+  int32_t res = 0;
+
+  switch (p) {
+    case 0:
+      start_lvgl(0);
+      lvgl_numobjs = 0;
+      for (uint8_t cnt = 0; cnt < MAX_LVGL_OBJS; cnt++) {
+        lvgl_buttons[cnt] = 0;
+      }
+      break;
+
+    case 1:
+      lv_obj_clean(lv_scr_act());
+      break;
+
+    case 2:
+      // create button;
+      lp = GetNumericArgument(lp, OPER_EQU, &xp, 0);
+      SCRIPT_SKIP_SPACES
+      lp = GetNumericArgument(lp, OPER_EQU, &yp, 0);
+      SCRIPT_SKIP_SPACES
+      lp = GetNumericArgument(lp, OPER_EQU, &xs, 0);
+      SCRIPT_SKIP_SPACES
+      lp = GetNumericArgument(lp, OPER_EQU, &ys, 0);
+      SCRIPT_SKIP_SPACES
+      lp = GetStringArgument(lp, OPER_EQU, str, 0);
+      SCRIPT_SKIP_SPACES
+
+      obj = lv_btn_create(lv_scr_act(), NULL);
+      lv_obj_set_pos(obj, xp, yp);
+      lv_obj_set_size(obj, xs, ys);
+      lv_obj_set_event_cb(obj, btn_event_cb);
+      label = lv_label_create(obj, NULL);
+      lv_label_set_text(label, str);
+      lvgl_StoreObj(obj);
+      break;
+
+    case 3:
+      lp = GetNumericArgument(lp, OPER_EQU, &xp, 0);
+      SCRIPT_SKIP_SPACES
+      lp = GetNumericArgument(lp, OPER_EQU, &yp, 0);
+      SCRIPT_SKIP_SPACES
+      lp = GetNumericArgument(lp, OPER_EQU, &xs, 0);
+      SCRIPT_SKIP_SPACES
+      lp = GetNumericArgument(lp, OPER_EQU, &ys, 0);
+      SCRIPT_SKIP_SPACES
+
+      obj = lv_slider_create(lv_scr_act(), NULL);
+      lv_obj_set_pos(obj, xp, yp);
+      lv_obj_set_size(obj, xs, ys);
+      lv_obj_set_event_cb(obj, slider_event_cb);
+      lvgl_StoreObj(obj);
+      break;
+
+    case 4:
+      lp = GetNumericArgument(lp, OPER_EQU, &xp, 0);
+      SCRIPT_SKIP_SPACES
+      lp = GetNumericArgument(lp, OPER_EQU, &yp, 0);
+      SCRIPT_SKIP_SPACES
+      lp = GetNumericArgument(lp, OPER_EQU, &xs, 0);
+      SCRIPT_SKIP_SPACES
+      lp = GetNumericArgument(lp, OPER_EQU, &ys, 0);
+      SCRIPT_SKIP_SPACES
+      lp = GetNumericArgument(lp, OPER_EQU, &min, 0);
+      SCRIPT_SKIP_SPACES
+      lp = GetNumericArgument(lp, OPER_EQU, &max, 0);
+      SCRIPT_SKIP_SPACES
+
+      obj = lv_gauge_create(lv_scr_act(), NULL);
+      lv_obj_set_pos(obj, xp, yp);
+      lv_obj_set_size(obj, xs, ys);
+      lv_gauge_set_range(obj, min, max);
+      lvgl_StoreObj(obj);
+      break;
+
+    case 5:
+      lp = GetNumericArgument(lp, OPER_EQU, &min, 0);
+      SCRIPT_SKIP_SPACES
+      lp = GetNumericArgument(lp, OPER_EQU, &max, 0);
+      SCRIPT_SKIP_SPACES
+      if (lvgl_buttons[(uint8_t)min - 1]) {
+        lv_gauge_set_value(lvgl_buttons[(uint8_t)min - 1], 0, max);
+      }
+      break;
+
+    case 6:
+      // create label;
+      lp = GetNumericArgument(lp, OPER_EQU, &xp, 0);
+      SCRIPT_SKIP_SPACES
+      lp = GetNumericArgument(lp, OPER_EQU, &yp, 0);
+      SCRIPT_SKIP_SPACES
+      lp = GetNumericArgument(lp, OPER_EQU, &xs, 0);
+      SCRIPT_SKIP_SPACES
+      lp = GetNumericArgument(lp, OPER_EQU, &ys, 0);
+      SCRIPT_SKIP_SPACES
+      lp = GetStringArgument(lp, OPER_EQU, str, 0);
+      SCRIPT_SKIP_SPACES
+
+      obj = lv_label_create(lv_scr_act(), NULL);
+      lv_obj_set_pos(obj, xp, yp);
+      lv_obj_set_size(obj, xs, ys);
+      lv_label_set_text(obj, str);
+      lvgl_StoreObj(obj);
+      break;
+
+    case 7:
+      lp = GetNumericArgument(lp, OPER_EQU, &min, 0);
+      SCRIPT_SKIP_SPACES
+      lp = GetStringArgument(lp, OPER_EQU, str, 0);
+      SCRIPT_SKIP_SPACES
+      if (lvgl_buttons[(uint8_t)min - 1]) {
+        lv_label_set_text(lvgl_buttons[(uint8_t)min - 1], str);
+      }
+      break;
+
+    case 50:
+      res = lvgl_last_object;
+      break;
+    case 51:
+      res = lvgl_last_event;
+      break;
+    case 52:
+      res = lvgl_last_slider;
+      break;
+
+
+    default:
+      lvgl_setup();
+      break;
+  }
+
+  *lpp = lp;
+  return res;
 }
 
 lv_obj_t          *tabview,        // LittlevGL tabview object

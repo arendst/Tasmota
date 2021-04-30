@@ -18,7 +18,7 @@
 */
 
 
-#ifdef USE_DISPLAY
+#if defined(USE_DISPLAY) || defined(LVGL_RENDERER)
 #ifdef USE_UNIVERSAL_DISPLAY
 
 #define XDSP_17                17
@@ -27,12 +27,21 @@
 
 bool udisp_init_done = false;
 uint8_t ctouch_counter;
-extern uint8_t color_type;
-extern uint16_t fg_color;
-extern uint16_t bg_color;
+
 
 #ifdef USE_UFILESYS
 extern FS *ffsp;
+#endif
+
+#ifndef USE_DISPLAY
+uint8_t color_type;
+uint16_t fg_color;
+uint16_t bg_color;
+Renderer *renderer;
+#else
+extern uint8_t color_type;
+extern uint16_t fg_color;
+extern uint16_t bg_color;
 #endif
 
 #define DISPDESC_SIZE 1000
@@ -340,22 +349,6 @@ uDisplay *udisp;
 /*********************************************************************************************/
 
 
-/*
-
-void udisp_bpwr(uint8_t on) {
-#ifdef USE_M5STACK_CORE2
-  Core2DisplayPower(on);
-#endif
-}
-
-void udisp_dimm(uint8_t dim) {
-#ifdef USE_M5STACK_CORE2
-  Core2DisplayDim(dim);
-#endif
-}
-
-*/
-
 void TS_RotConvert(int16_t *x, int16_t *y) {
   if (renderer) renderer->TS_RotConvert(x, y);
 }
@@ -462,8 +455,8 @@ void UDISP_Refresh(void)  // Every second
  * Interface
 \*********************************************************************************************/
 
-bool Xdsp17(uint8_t function)
-{
+#ifndef LVGL_RENDERER
+bool Xdsp17(uint8_t function) {
   bool result = false;
 
   if (FUNC_DISPLAY_INIT_DRIVER == function) {
@@ -493,6 +486,7 @@ bool Xdsp17(uint8_t function)
   }
   return result;
 }
+#endif // !LVGL_RENDERER
 
 #endif  // USE_UNIVERSAL_DISPLAY
 #endif  // USE_DISPLAY

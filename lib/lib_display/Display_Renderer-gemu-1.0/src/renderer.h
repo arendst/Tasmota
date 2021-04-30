@@ -9,7 +9,19 @@
 #define WHITE 1
 #define INVERSE 2
 
+#define USE_EPD_FONTS
+//#define USE_ALL_EPD_FONTS
+//#define USE_GFX_FONTS
+#define USE_TINY_FONT
+#define USE_7SEG_FONT
+
 #define MAX_INDEXCOLORS 32
+
+//#define LVGL_RENDERER
+
+#ifdef LVGL_RENDERER
+#undef USE_EPD_FONTS
+#endif
 
 // depends on GFX driver
 // GFX patched
@@ -36,7 +48,14 @@ typedef struct LVGL_PARAMS {
 typedef void (*pwr_cb)(uint8_t);
 typedef void (*dim_cb)(uint8_t);
 
+#define USE_GFX
+
+#ifdef USE_GFX
 class Renderer : public Adafruit_GFX {
+#else
+class Renderer {
+#endif
+
   //Paint(unsigned char* image, int width, int height);
   //~Renderer();
 public:
@@ -115,6 +134,7 @@ struct Slider {
   uint16_t barcol;
 };
 
+#ifndef LVGL_RENDERER
 class VButton : public Adafruit_GFX_Button {
   public:
   TButton_State vpower;
@@ -125,6 +145,7 @@ class VButton : public Adafruit_GFX_Button {
   uint16_t UpdateSlider(int16_t x, int16_t y);
   void SliderInit(Renderer *rend, uint16_t xp, uint16_t yp, uint16_t xs, uint16_t ys, uint16_t nelem, uint16_t bgcol, uint16_t frcol, uint16_t barcol);
 };
+#endif // LVGL_RENDERER
 
 
 #endif
