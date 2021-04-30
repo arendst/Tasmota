@@ -85,9 +85,9 @@ void SH1106InitDriver() {
     renderer->Updateframe();
     renderer->DisplayOnff(1);
 #endif
-  }
 
-  AddLog(LOG_LEVEL_INFO, PSTR("DSP: SH1106"));
+    AddLog(LOG_LEVEL_INFO, PSTR("DSP: SH1106"));
+  }
 }
 
 

@@ -81,6 +81,8 @@ void LcdInitDriver(void) {
 #endif  // USE_DISPLAY_MODES1TO5
 
     LcdInitMode();
+
+    AddLog(LOG_LEVEL_INFO, PSTR("DSP: LCD"));
   }
 }
 
