@@ -706,10 +706,10 @@ void SettingsDefaultSet2(void) {
   memset((char*)&Settings +16, 0x00, sizeof(Settings) -16);
 
   // this little trick allows GCC to optimize the assignment by grouping values and doing only ORs
-  SysBitfield   flag = { 0 };
-  SysBitfield3  flag3 = { 0 };
-  SysBitfield4  flag4 = { 0 };
-  SysBitfield5  flag5 = { 0 };
+  SOBitfield   flag = { 0 };
+  SOBitfield3  flag3 = { 0 };
+  SOBitfield4  flag4 = { 0 };
+  SOBitfield5  flag5 = { 0 };
   SysMBitfield1  flag2 = { 0 };
   SysMBitfield2  mbflag2 = { 0 };
 
@@ -1258,6 +1258,9 @@ void SettingsDelta(void) {
     }
     if (Settings.version < 0x09030104) {
       Settings.mbflag2.data = 0;
+    }
+    if (Settings.version < 0x09040002) {
+      Settings.sbflag1.data = 0;
     }
 
     Settings.version = VERSION;
