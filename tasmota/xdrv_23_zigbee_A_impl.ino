@@ -2177,8 +2177,10 @@ bool Xdrv23(uint8_t function)
         result = DecodeCommand(kZbCommands, ZigbeeCommand, kZbSynonyms);
         break;
       case FUNC_SAVE_BEFORE_RESTART:
-        hibernateAllData();
-        restoreDumpAllDevices();
+        if (!zigbee.init_phase) { 
+          hibernateAllData();
+          restoreDumpAllDevices();
+        }
         break;
     }
   }
