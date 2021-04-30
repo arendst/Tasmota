@@ -220,6 +220,7 @@ bool hydrateDevicesData(void) {
 \*********************************************************************************************/
 void hibernateAllData(void) {
   if (Rtc.utc_time < START_VALID_TIME) { return; }
+  if (zigbee_devices.devicesSize() == 0) { return; }    // safe-guard, if data is empty, don't save anything
   Univ_Write_File f;
   const char * storage_class = PSTR("");
 
@@ -242,9 +243,6 @@ void hibernateAllData(void) {
 #endif
 
   if (f.valid()) {
-    // first prefix is number of devices
-    uint8_t device_num = zigbee_devices.devicesSize();
-
     for (const auto & device : zigbee_devices.getDevices()) {
       // allocte a buffer for a single device
       SBuffer buf = hibernateDeviceData(device);
