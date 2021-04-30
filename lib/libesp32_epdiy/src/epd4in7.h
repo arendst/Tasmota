@@ -57,6 +57,10 @@ private:
   uint16_t height;
   uint16_t xp;
   uint16_t yp;
+  uint16_t seta_xp1;
+  uint16_t seta_xp2;
+  uint16_t seta_yp1;
+  uint16_t seta_yp2;
 };
 
 #endif /* EPD4IN7_H */

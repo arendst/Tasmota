@@ -302,6 +302,10 @@ void ZigbeeInitSerial(void)
       pinMode(Pin(GPIO_ZIGBEE_RST), OUTPUT);
       digitalWrite(Pin(GPIO_ZIGBEE_RST), 1);
     }
+    if (PinUsed(GPIO_ZIGBEE_RST, 1)) {
+      pinMode(Pin(GPIO_ZIGBEE_RST, 1), OUTPUT);
+      digitalWrite(Pin(GPIO_ZIGBEE_RST, 1), 1);
+    }
 
     zigbee.active = true;
 		zigbee.init_phase = true;			// start the state machine

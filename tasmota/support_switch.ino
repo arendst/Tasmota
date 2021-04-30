@@ -46,6 +46,7 @@ Ticker TickerSwitch;
 struct SWITCH {
   uint32_t debounce = 0;                     // Switch debounce timer
   uint32_t no_pullup_mask = 0;               // Switch pull-up bitmask flags
+  uint32_t pulldown_mask = 0;                // Switch pull-down bitmask flags
   uint8_t state[MAX_SWITCHES] = { 0 };
   uint8_t last_state[MAX_SWITCHES];          // Last wall switch states
   uint8_t hold_timer[MAX_SWITCHES] = { 0 };  // Timer for wallswitch push button hold
@@ -58,6 +59,10 @@ struct SWITCH {
 
 void SwitchPullupFlag(uint32 switch_bit) {
   bitSet(Switch.no_pullup_mask, switch_bit);
+}
+
+void SwitchPulldownFlag(uint32 switch_bit) {
+  bitSet(Switch.pulldown_mask, switch_bit);
 }
 
 void SwitchSetVirtual(uint32_t index, uint32_t state) {
@@ -199,7 +204,7 @@ void SwitchInit(void) {
       pinMode(Pin(GPIO_SWT1, i), bitRead(Switch.no_pullup_mask, i) ? INPUT : ((16 == Pin(GPIO_SWT1, i)) ? INPUT_PULLDOWN_16 : INPUT_PULLUP));
 #endif  // ESP8266
 #ifdef ESP32
-      pinMode(Pin(GPIO_SWT1, i), bitRead(Switch.no_pullup_mask, i) ? INPUT : INPUT_PULLUP);
+      pinMode(Pin(GPIO_SWT1, i), bitRead(Switch.pulldown_mask, i) ? INPUT_PULLDOWN : bitRead(Switch.no_pullup_mask, i) ? INPUT : INPUT_PULLUP);
 #endif  // ESP32
       if (ac_detect) {
         Switch.state[i] = 0x80 + 2 * AC_PERIOD;

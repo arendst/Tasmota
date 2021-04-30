@@ -50,8 +50,8 @@ uint16_t uDisplay_lvgl::GetColorFromIndex(uint8_t index) {
   return udisp_colors[index];
 }
 
-extern uint8_t *buffer;
-extern uint8_t color_type;
+extern uint8_t *buffer_lvgl;
+extern uint8_t color_type_lvgl;
 
 uDisplay_lvgl::uDisplay_lvgl(char *lp) {
   // analyse decriptor
@@ -103,9 +103,9 @@ uDisplay_lvgl::uDisplay_lvgl(char *lp) {
             gys = next_val(&lp1);
             bpp = next_val(&lp1);
             if (bpp == 1) {
-              color_type = uCOLOR_BW;
+              color_type_lvgl = uCOLOR_BW;
             } else {
-              color_type = uCOLOR_COLOR;
+              color_type_lvgl = uCOLOR_COLOR;
             }
             str2c(&lp1, ibuff, sizeof(ibuff));
             if (!strncmp(ibuff, "I2C", 3)) {
@@ -350,14 +350,14 @@ void uDisplay_lvgl::Init(void) {
     wire = &Wire;
     wire->begin(i2c_sda, i2c_scl);
     if (bpp < 16) {
-      if (buffer) free(buffer);
+      if (buffer_lvgl) free(buffer_lvgl);
 #ifdef ESP8266
-      buffer = (uint8_t*)calloc((gxs * gys * bpp) / 8, 1);
+      buffer_lvgl = (uint8_t*)calloc((gxs * gys * bpp) / 8, 1);
 #else
       if (psramFound()) {
-        buffer = (uint8_t*)heap_caps_malloc((gxs * gys * bpp) / 8, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+        buffer_lvgl = (uint8_t*)heap_caps_malloc((gxs * gys * bpp) / 8, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
       } else {
-        buffer = (uint8_t*)calloc((gxs * gys * bpp) / 8, 1);
+        buffer_lvgl = (uint8_t*)calloc((gxs * gys * bpp) / 8, 1);
       }
 #endif
     }
@@ -377,12 +377,12 @@ void uDisplay_lvgl::Init(void) {
 
     if (ep_mode) {
   #ifdef ESP8266
-      buffer = (uint8_t*)calloc((gxs * gys * bpp) / 8, 1);
+      buffer_lvgl = (uint8_t*)calloc((gxs * gys * bpp) / 8, 1);
   #else
       if (psramFound()) {
-        buffer = (uint8_t*)heap_caps_malloc((gxs * gys * bpp) / 8, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+        buffer_lvgl = (uint8_t*)heap_caps_malloc((gxs * gys * bpp) / 8, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
       } else {
-        buffer = (uint8_t*)calloc((gxs * gys * bpp) / 8, 1);
+        buffer_lvgl = (uint8_t*)calloc((gxs * gys * bpp) / 8, 1);
       }
       #endif
     }
@@ -609,70 +609,70 @@ void uDisplay_lvgl::i2c_command(uint8_t val) {
 
 void uDisplay_lvgl::Updateframe(void) {
 
-  if (ep_mode) {
-    Updateframe_EPD();
-    return;
-  }
+//   if (ep_mode) {
+//     Updateframe_EPD();
+//     return;
+//   }
 
-  if (interface == _UDSP_I2C) {
+//   if (interface == _UDSP_I2C) {
 
-  #if 0
-    i2c_command(saw_1);
-    i2c_command(i2c_page_start);
-    i2c_command(i2c_page_end);
-    i2c_command(saw_2);
-    i2c_command(i2c_col_start);
-    i2c_command(i2c_col_end);
+//   #if 0
+//     i2c_command(saw_1);
+//     i2c_command(i2c_page_start);
+//     i2c_command(i2c_page_end);
+//     i2c_command(saw_2);
+//     i2c_command(i2c_col_start);
+//     i2c_command(i2c_col_end);
 
-    uint16_t count = gxs * ((gys + 7) / 8);
-    uint8_t *ptr   = buffer;
-    wire->beginTransmission(i2caddr);
-    i2c_command(saw_3);
-    uint8_t bytesOut = 1;
-    while (count--) {
-      if (bytesOut >= WIRE_MAX) {
-        wire->endTransmission();
-        wire->beginTransmission(i2caddr);
-        i2c_command(saw_3);
-        bytesOut = 1;
-      }
-      i2c_command(*ptr++);
-      bytesOut++;
-    }
-    wire->endTransmission();
-#else
+//     uint16_t count = gxs * ((gys + 7) / 8);
+//     uint8_t *ptr   = buffer_lvgl;
+//     wire->beginTransmission(i2caddr);
+//     i2c_command(saw_3);
+//     uint8_t bytesOut = 1;
+//     while (count--) {
+//       if (bytesOut >= WIRE_MAX) {
+//         wire->endTransmission();
+//         wire->beginTransmission(i2caddr);
+//         i2c_command(saw_3);
+//         bytesOut = 1;
+//       }
+//       i2c_command(*ptr++);
+//       bytesOut++;
+//     }
+//     wire->endTransmission();
+// #else
 
-    i2c_command(saw_1 | 0x0);  // set low col = 0, 0x00
-    i2c_command(i2c_page_start | 0x0);  // set hi col = 0, 0x10
-    i2c_command(i2c_page_end | 0x0); // set startline line #0, 0x40
+//     i2c_command(saw_1 | 0x0);  // set low col = 0, 0x00
+//     i2c_command(i2c_page_start | 0x0);  // set hi col = 0, 0x10
+//     i2c_command(i2c_page_end | 0x0); // set startline line #0, 0x40
 
-	  uint8_t ys = gys >> 3;
-	  uint8_t xs = gxs >> 3;
-    //uint8_t xs = 132 >> 3;
-	  uint8_t m_row = saw_2;
-	  uint8_t m_col = i2c_col_start;
+// 	  uint8_t ys = gys >> 3;
+// 	  uint8_t xs = gxs >> 3;
+//     //uint8_t xs = 132 >> 3;
+// 	  uint8_t m_row = saw_2;
+// 	  uint8_t m_col = i2c_col_start;
 
-	  uint16_t p = 0;
+// 	  uint16_t p = 0;
 
-	  uint8_t i, j, k = 0;
+// 	  uint8_t i, j, k = 0;
 
-	  for ( i = 0; i < ys; i++) {
-		    // send a bunch of data in one xmission
-        i2c_command(0xB0 + i + m_row); //set page address
-        i2c_command(m_col & 0xf); //set lower column address
-        i2c_command(0x10 | (m_col >> 4)); //set higher column address
+// 	  for ( i = 0; i < ys; i++) {
+// 		    // send a bunch of data in one xmission
+//         i2c_command(0xB0 + i + m_row); //set page address
+//         i2c_command(m_col & 0xf); //set lower column address
+//         i2c_command(0x10 | (m_col >> 4)); //set higher column address
 
-        for ( j = 0; j < 8; j++) {
-			      wire->beginTransmission(i2caddr);
-            wire->write(0x40);
-            for ( k = 0; k < xs; k++, p++) {
-		            wire->write(buffer[p]);
-            }
-            wire->endTransmission();
-	      }
-    }
-#endif
- }
+//         for ( j = 0; j < 8; j++) {
+// 			      wire->beginTransmission(i2caddr);
+//             wire->write(0x40);
+//             for ( k = 0; k < xs; k++, p++) {
+// 		            wire->write(buffer_lvgl[p]);
+//             }
+//             wire->endTransmission();
+// 	      }
+//     }
+// #endif
+//  }
 
 
 }
@@ -884,7 +884,7 @@ void uDisplay_lvgl::setRotation(uint8_t rotation) {
 
 }
 
-void udisp_bpwr(uint8_t on);
+void udisp_bpwr_lvgl(uint8_t on);
 
 void uDisplay_lvgl::DisplayOnff(int8_t on) {
 
@@ -892,7 +892,7 @@ void uDisplay_lvgl::DisplayOnff(int8_t on) {
     return;
   }
 
-  udisp_bpwr(on);
+  udisp_bpwr_lvgl(on);
 
   if (interface == _UDSP_I2C) {
     if (on) {
@@ -946,7 +946,7 @@ void uDisplay_lvgl::invertDisplay(bool i) {
   }
 }
 
-void udisp_dimm(uint8_t dim);
+void udisp_dimm_lvgl(uint8_t dim);
 
 void uDisplay_lvgl::dim(uint8_t dim) {
   dimmer = dim;
@@ -962,7 +962,7 @@ void uDisplay_lvgl::dim(uint8_t dim) {
     if (bpanel >= 0) {
       ledcWrite(ESP32_PWM_CHANNEL, dimmer);
     } else {
-      udisp_dimm(dim);
+      udisp_dimm_lvgl(dim);
     }
 #endif
 
@@ -1224,7 +1224,7 @@ void uDisplay_lvgl::SetLut(const unsigned char* lut) {
 }
 
 void uDisplay_lvgl::Updateframe_EPD(void) {
-  SetFrameMemory(buffer, 0, 0, gxs, gys);
+  SetFrameMemory(buffer_lvgl, 0, 0, gxs, gys);
   DisplayFrame();
 }
 
@@ -1333,21 +1333,21 @@ void uDisplay_lvgl::DrawAbsolutePixel(int x, int y, int16_t color) {
     }
     if (IF_INVERT_COLOR) {
         if (color) {
-            buffer[(x + y * w) / 8] |= 0x80 >> (x % 8);
+            buffer_lvgl[(x + y * w) / 8] |= 0x80 >> (x % 8);
         } else {
-            buffer[(x + y * w) / 8] &= ~(0x80 >> (x % 8));
+            buffer_lvgl[(x + y * w) / 8] &= ~(0x80 >> (x % 8));
         }
     } else {
         if (color) {
-            buffer[(x + y * w) / 8] &= ~(0x80 >> (x % 8));
+            buffer_lvgl[(x + y * w) / 8] &= ~(0x80 >> (x % 8));
         } else {
-            buffer[(x + y * w) / 8] |= 0x80 >> (x % 8);
+            buffer_lvgl[(x + y * w) / 8] |= 0x80 >> (x % 8);
         }
     }
 }
 
 void uDisplay_lvgl::drawPixel_EPD(int16_t x, int16_t y, uint16_t color) {
-  if (!buffer) return;
+  if (!buffer_lvgl) return;
   if ((x < 0) || (x >= width()) || (y < 0) || (y >= height()))
     return;
 

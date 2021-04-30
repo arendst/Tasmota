@@ -20,6 +20,8 @@
 
 #ifdef USE_BERRY
 
+#ifdef USE_I2C
+
 #include <berry.h>
 #include <Wire.h>
 
@@ -52,7 +54,6 @@ int32_t getBus(bvm *vm) {
  * 
 \*********************************************************************************************/
 extern "C" {
-#ifdef USE_I2C
   // Berry: `init([bus:int = 0]) -> nil
   int32_t b_wire_init(struct bvm *vm);
   int32_t b_wire_init(struct bvm *vm) {
@@ -241,28 +242,16 @@ extern "C" {
     }
     be_raise(vm, kTypeError, nullptr);
   }
-#else // USE_I2C
-  // 
+}
+
+#endif // USE_I2C
+
+extern "C" {
+  // Handle methods that require I2C to be enabled
   int32_t b_wire_i2cmissing(struct bvm *vm);
   int32_t b_wire_i2cmissing(struct bvm *vm) {
     be_raise(vm, "feature_error", "I2C is not enabled, use '#define USE_I2C'");
   }
-
-  // define weak aliases
-  int32_t b_wire_init(struct bvm *vm) __attribute__ ((weak, alias ("b_wire_i2cmissing")));
-  int32_t b_wire_begintransmission(struct bvm *vm) __attribute__ ((weak, alias ("b_wire_i2cmissing")));
-  int32_t b_wire_endtransmission(struct bvm *vm) __attribute__ ((weak, alias ("b_wire_i2cmissing")));
-  int32_t b_wire_requestfrom(struct bvm *vm) __attribute__ ((weak, alias ("b_wire_i2cmissing")));
-  int32_t b_wire_available(struct bvm *vm) __attribute__ ((weak, alias ("b_wire_i2cmissing")));
-  int32_t b_wire_write(struct bvm *vm) __attribute__ ((weak, alias ("b_wire_i2cmissing")));
-  int32_t b_wire_read(struct bvm *vm) __attribute__ ((weak, alias ("b_wire_i2cmissing")));
-  int32_t b_wire_scan(struct bvm *vm) __attribute__ ((weak, alias ("b_wire_i2cmissing")));
-  int32_t b_wire_validwrite(struct bvm *vm) __attribute__ ((weak, alias ("b_wire_i2cmissing")));
-  int32_t b_wire_validread(struct bvm *vm) __attribute__ ((weak, alias ("b_wire_i2cmissing")));
-  int32_t b_wire_readbytes(struct bvm *vm) __attribute__ ((weak, alias ("b_wire_i2cmissing")));
-  int32_t b_wire_writebytes(struct bvm *vm) __attribute__ ((weak, alias ("b_wire_i2cmissing")));
-  int32_t b_wire_detect(struct bvm *vm) __attribute__ ((weak, alias ("b_wire_i2cmissing")));
-#endif // USE_I2C
 }
 
 #endif  // USE_BERRY

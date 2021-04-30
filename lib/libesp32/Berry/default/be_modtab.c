@@ -63,15 +63,19 @@ BERRY_LOCAL const bntvmodule* const be_module_table[] = {
     &be_native_module(solidify),
 #endif
     /* user-defined modules register start */
-#if BE_USE_TASMOTA
+    
     &be_native_module(gpio),
+#ifdef USE_LIGHT
     &be_native_module(light),
+#endif
 
 #ifdef USE_LVGL
     &be_native_module(lvgl),
 #endif // USE_LVGL
+#ifdef USE_ENERGY_SENSOR
     &be_native_module(energy),
-#endif
+#endif // USE_ENERGY_SENSOR
+
 
     /* user-defined modules register end */
     NULL /* do not remove */
@@ -98,7 +102,9 @@ BERRY_API void be_load_custom_libs(bvm *vm)
     /* be_load_xxxlib(vm); */
 #endif
     be_load_tasmota_ntvlib(vm);
+#ifdef USE_I2C
     be_load_wirelib(vm);
+#endif // USE_I2C
     be_load_driverlib(vm);
 #ifdef USE_LVGL
     // LVGL

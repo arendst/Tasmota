@@ -18,7 +18,7 @@
 */
 
 
-#ifdef USE_DISPLAY
+#if defined(USE_DISPLAY) || defined(LVGL_RENDERER)
 #ifdef USE_UNIVERSAL_DISPLAY
 
 #define XDSP_17                17
@@ -27,21 +27,33 @@
 
 bool udisp_init_done = false;
 uint8_t ctouch_counter;
-extern uint8_t color_type;
-extern uint16_t fg_color;
-extern uint16_t bg_color;
+
 
 #ifdef USE_UFILESYS
 extern FS *ffsp;
 #endif
 
+#ifndef USE_DISPLAY
+uint8_t color_type;
+uint16_t fg_color;
+uint16_t bg_color;
+Renderer *renderer;
+#else
+extern uint8_t color_type;
+extern uint16_t fg_color;
+extern uint16_t bg_color;
+#endif
+
 #define DISPDESC_SIZE 1000
+
+
+void Core2DisplayPower(uint8_t on);
+void Core2DisplayDim(uint8_t dim);
 
 //#define DSP_ROM_DESC
 
 /*********************************************************************************************/
-//#ifdef DSP_ROM_DESC
-#if 1
+#ifdef DSP_ROM_DESC
 /* sample descriptor */
 const char DSP_SAMPLE_DESC[] PROGMEM =
 ":H,SH1106,128,64,1,I2C,3c,*,*,*\n"
@@ -71,19 +83,20 @@ const char DSP_SAMPLE_DESC[] PROGMEM =
 
 #endif // DSP_ROM_DESC
 /*********************************************************************************************/
-Renderer *Init_uDisplay(const char *desc) {
+Renderer *Init_uDisplay(const char *desc, int8_t cs) {
 char *ddesc = 0;
 char *fbuff;
 uDisplay *udisp;
 
-  if (TasmotaGlobal.gpio_optiona.udisplay_driver) {
+  if (TasmotaGlobal.gpio_optiona.udisplay_driver || desc) {
+
     Settings.display_model = XDSP_17;
 
     fbuff = (char*)calloc(DISPDESC_SIZE, 1);
     if (!fbuff) return 0;
 
     if (desc) {
-      memcpy(fbuff, desc, DISPDESC_SIZE - 1);
+      memcpy_P(fbuff, desc, DISPDESC_SIZE - 1);
       ddesc = fbuff;
       AddLog(LOG_LEVEL_INFO, PSTR("DSP: const char descriptor used"));
     }
@@ -192,9 +205,22 @@ uDisplay *udisp;
       cp += 4;
       //; 7 params nr,cs,sclk,mosi,dc,bl,reset,miso
       //SPI,*,*,*,*,*,*,*
+      if (cs < 0) {
+        switch (*cp) {
+          case '1':
+            cs = Pin(GPIO_SPI_CS);
+            break;
+          case '2':
+            cs = Pin(GPIO_SPI_CS, 1);
+            break;
+          default:
+            cs = Pin(GPIO_SSPI_CS);
+            break;
+        }
+      }
       if (*cp == '1') {
         cp+=2;
-        replacepin(&cp, Pin(GPIO_SPI_CS));
+        replacepin(&cp, cs);
         replacepin(&cp, Pin(GPIO_SPI_CLK));
         replacepin(&cp, Pin(GPIO_SPI_MOSI));
         replacepin(&cp, Pin(GPIO_SPI_DC));
@@ -203,7 +229,7 @@ uDisplay *udisp;
         replacepin(&cp, Pin(GPIO_SPI_MISO));
       } else if (*cp == '2') {
         cp+=2;
-        replacepin(&cp, Pin(GPIO_SPI_CS, 1));
+        replacepin(&cp, cs);
         replacepin(&cp, Pin(GPIO_SPI_CLK, 1));
         replacepin(&cp, Pin(GPIO_SPI_MOSI, 1));
         replacepin(&cp, Pin(GPIO_SPI_DC, 1));
@@ -213,7 +239,7 @@ uDisplay *udisp;
       } else {
         // soft spi pins
         cp+=2;
-        replacepin(&cp, Pin(GPIO_SSPI_CS));
+        replacepin(&cp, cs);
         replacepin(&cp, Pin(GPIO_SSPI_SCLK));
         replacepin(&cp, Pin(GPIO_SSPI_MOSI));
         replacepin(&cp, Pin(GPIO_SSPI_DC));
@@ -296,19 +322,25 @@ uDisplay *udisp;
 
     Settings.display_width = renderer->width();
     Settings.display_height = renderer->height();
-    fg_color = udisp->fgcol();
-    bg_color = udisp->bgcol();
-    color_type = udisp->color_type();
+    fg_color = renderer->fgcol();
+    bg_color = renderer->bgcol();
+    color_type = renderer->color_type();
+
+#ifdef USE_M5STACK_CORE2
+    renderer->SetPwrCB(Core2DisplayPower);
+    renderer->SetDimCB(Core2DisplayDim);
+#endif
 
     renderer->DisplayInit(DISPLAY_INIT_MODE, Settings.display_size, Settings.display_rotate, Settings.display_font);
     renderer->dim(Settings.display_dimmer);
 
 #ifdef SHOW_SPLASH
-    udisp->Splash();
+    renderer->Splash();
 #endif
 
     udisp_init_done = true;
-    AddLog(LOG_LEVEL_INFO, PSTR("DSP: %s!"), udisp->devname());
+    AddLog(LOG_LEVEL_INFO, PSTR("DSP: %s!"), renderer->devname());
+
     return renderer;
   }
   return 0;
@@ -316,21 +348,6 @@ uDisplay *udisp;
 
 /*********************************************************************************************/
 
-
-void Core2DisplayPower(uint8_t on);
-void Core2DisplayDim(uint8_t dim);
-
-void udisp_bpwr(uint8_t on) {
-#ifdef USE_M5STACK_CORE2
-  Core2DisplayPower(on);
-#endif
-}
-
-void udisp_dimm(uint8_t dim) {
-#ifdef USE_M5STACK_CORE2
-  Core2DisplayDim(dim);
-#endif
-}
 
 void TS_RotConvert(int16_t *x, int16_t *y) {
   if (renderer) renderer->TS_RotConvert(x, y);
@@ -438,12 +455,12 @@ void UDISP_Refresh(void)  // Every second
  * Interface
 \*********************************************************************************************/
 
-bool Xdsp17(uint8_t function)
-{
+#ifndef LVGL_RENDERER
+bool Xdsp17(uint8_t function) {
   bool result = false;
 
   if (FUNC_DISPLAY_INIT_DRIVER == function) {
-    Init_uDisplay(0);
+    Init_uDisplay(0, -1);
   }
   else if (udisp_init_done && (XDSP_17 == Settings.display_model)) {
     switch (function) {
@@ -469,6 +486,7 @@ bool Xdsp17(uint8_t function)
   }
   return result;
 }
+#endif // !LVGL_RENDERER
 
 #endif  // USE_UNIVERSAL_DISPLAY
 #endif  // USE_DISPLAY

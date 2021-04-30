@@ -20,8 +20,9 @@
 
 #ifdef USE_LVGL
 
-#include <uDisplay_lvgl.h>
+#include <renderer.h>
 #include "lvgl.h"
+#include "tasmota_lvgl_assets.h"    // force compilation of assets
 
 #define XDRV_54             54
 
@@ -37,12 +38,13 @@
  * you should lock on the very same semaphore! */
 
 SemaphoreHandle_t xGuiSemaphore;
-uDisplay_lvgl * udisp = nullptr;
+//uDisplay * udisp = nullptr;
 
 // necessary for compilation
-uint8_t color_type = 0;
-void udisp_dimm(uint8_t dim) {}
-void udisp_bpwr(uint8_t on) {}
+uint8_t color_type_lvgl = 0;
+uint8_t * buffer_lvgl = nullptr;
+void udisp_dimm_lvgl(uint8_t dim) {}
+void udisp_bpwr_lvgl(uint8_t on) {}
 
 extern "C" {
 
@@ -118,9 +120,68 @@ static void guiTask(void *pvParameter) {
   vTaskDelete(NULL);
 }
 
+
+/************************************************************
+ * Main screen refresh function
+ ************************************************************/
+// This is the flush function required for LittlevGL screen updates.
+// It receives a bounding rect and an array of pixel data (conveniently
+// already in 565 format, so the Earth was lucky there).
+void lv_flush_callback(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p);
+void lv_flush_callback(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p) {
+  // Get pointer to glue object from indev user data
+  Adafruit_LvGL_Glue *glue = (Adafruit_LvGL_Glue *)disp->user_data;
+
+  uint16_t width = (area->x2 - area->x1 + 1);
+  uint16_t height = (area->y2 - area->y1 + 1);
+
+  // check if we are currently doing a screenshot
+  if (glue->getScreenshotFile() != nullptr) {
+    // save pixels to file
+    int32_t btw = (width * height * LV_COLOR_DEPTH + 7) / 8;
+    while (btw > 0) {
+#if (LV_COLOR_DEPTH == 16) && (LV_COLOR_16_SWAP == 1)
+      uint16_t * pix = (uint16_t*) color_p;
+      for (uint32_t i = 0; i < btw / 2; i++) (pix[i] = pix[i] << 8 | pix[i] >> 8);
+#endif
+      int32_t ret = glue->getScreenshotFile()->write((const uint8_t*) color_p, btw);
+      if (ret >= 0) {
+        btw -= ret;
+      } else {
+        btw = 0;  // abort
+      }
+    }
+    lv_disp_flush_ready(disp);
+    return; // ok
+  }
+
+  Renderer *display = glue->display;
+
+  if (!glue->first_frame) {
+      //display->dmaWait();  // Wait for prior DMA transfer to complete
+      //display->endWrite(); // End transaction from any prior call
+  } else {
+      glue->first_frame = false;
+  }
+
+  uint32_t pixels_len = width * height;
+  uint32_t chrono_start = millis();
+  display->setAddrWindow(area->x1, area->y1, area->x1+width, area->y1+height);
+  display->pushColors((uint16_t *)color_p, pixels_len, false);
+  display->setAddrWindow(0,0,0,0);
+  uint32_t chrono_time = millis() - chrono_start;
+
+  lv_disp_flush_ready(disp);
+
+  if (pixels_len >= 10000 && (!display->lvgl_param.use_dma)) {
+    AddLog(LOG_LEVEL_DEBUG, D_LOG_LVGL "Refreshed %d pixels in %d ms (%i pix/ms)", pixels_len, chrono_time,
+            chrono_time > 0 ? pixels_len / chrono_time : -1);
+  }
+}
+
 /************************************************************
  * Callbacks for file system access from LVGL
- * 
+ *
  * Useful to load fonts or images from file system
  ************************************************************/
 
@@ -216,7 +277,7 @@ static lv_fs_res_t lvbe_fs_seek(lv_fs_drv_t * drv, void * file_p, uint32_t pos) 
     return LV_FS_RES_OK;
   } else {
     return LV_FS_RES_UNKNOWN;
-  }  
+  }
 }
 
 static lv_fs_res_t lvbe_fs_size(lv_fs_drv_t * drv, void * file_p, uint32_t * size_p);
@@ -237,10 +298,13 @@ static lv_fs_res_t lvbe_fs_remove(lv_fs_drv_t * drv, const char *path) {
 
 /************************************************************
  * Initialize the display / touchscreen drivers then launch lvgl
- * 
+ *
  * We use Adafruit_LvGL_Glue to leverage the Adafruit
  * display ecosystem.
  ************************************************************/
+
+Renderer *Init_uDisplay(const char *desc, int8_t cs);
+
 
 void start_lvgl(const char * uconfig);
 void start_lvgl(const char * uconfig) {
@@ -250,17 +314,14 @@ void start_lvgl(const char * uconfig) {
     return;
   }
 
-  if (udisp == nullptr) {
-    udisp  = new uDisplay_lvgl((char*)uconfig);
+  if (uconfig && !renderer) {
+#ifdef USE_UNIVERSAL_DISPLAY    // TODO - we will probably support only UNIV_DISPLAY
+    renderer  = Init_uDisplay((char*)uconfig, -1);
+    if (!renderer) return;
+#else
+    return;
+#endif
   }
-
-  udisp->Init();
-
-  // Settings.display_width = udisp->width();
-  // Settings.display_height = udisp->height();
-
-  udisp->DisplayInit(0 /* DISPLAY_INIT_MODE */, Settings.display_size, Settings.display_rotate, Settings.display_font);
-  udisp->dim(Settings.display_dimmer);
 
   // **************************************************
   // Initialize the glue between Adafruit and LVGL
@@ -268,7 +329,7 @@ void start_lvgl(const char * uconfig) {
   glue = new Adafruit_LvGL_Glue();
 
   // Initialize glue, passing in address of display & touchscreen
-  LvGLStatus status = glue->begin(udisp);
+  LvGLStatus status = glue->begin(renderer, (void*)1, false);
   if (status != LVGL_OK) {
     AddLog(LOG_LEVEL_ERROR, PSTR("Glue error %d"), status);
     return;
@@ -276,8 +337,10 @@ void start_lvgl(const char * uconfig) {
 
   // Set the default background color of the display
   // This is normally overriden by an opaque screen on top
+#ifdef USE_BERRY
   lv_obj_set_style_local_bg_color(lv_scr_act(), LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, lv_color_from_uint32(USE_LVGL_BG_DEFAULT));
   lv_obj_set_style_local_bg_opa(lv_scr_act(), LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, LV_OPA_COVER);
+#endif
 
 #if LV_USE_LOG
   lv_log_register_print_cb(lvbe_debug);
@@ -318,6 +381,8 @@ void start_lvgl(const char * uconfig) {
     * Otherwise there can be problem such as memory corruption and so on.
     * NOTE: When not using Wi-Fi nor Bluetooth you can pin the guiTask to core 0 */
   xTaskCreatePinnedToCore(guiTask, "gui", 4096*2, NULL, 0, NULL, 1);
+
+  AddLog(LOG_LEVEL_INFO, PSTR("LVGL initialized"));
 }
 
 /*********************************************************************************************\

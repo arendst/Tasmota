@@ -3,14 +3,33 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [9.4.0.1]
+## [9.4.0.3]
+### Added
+- Make Telegram command ``TmState`` persistent (#11965)
+- Add Zigbee firmware for Tube's Zigbee coordinator based on EFR32 and ESP32
+- Add Zigbee firmware 6.7.9 for Sonoff ZBBridge
 
-
+## [9.4.0.2] 20210430
+### Added
+- Initial support for optional ``Template`` JSON fieldpair ``"CMND":"<any template related command>|<any template related command>|..."`` (#11788)
+- ESP32 pulldown buttons ``Button_d`` and ``Button_id`` and switches ``Switch_d`` (#10814)
+- Support for MQTT using Azure IoT Hub by Kevin Saye (#11906)
 
 ## [Released]
 
-## [9.4.0] 20210422
+## [9.4.0] 20210423
 - Release Leslie
+
+## [9.4.0.1] 20210423
+### Added
+- Command ``Wifi 0/1`` for ESP8266 to turn wifi Off and On. When wifi is Off it is always returned On after a restart except for a wake-up from deepsleep (#11839)
+
+### Changed
+- Zigbee refactored storage for device configuration and device last known data (#11838)
+
+### Fixed
+- Command ``Power`` should not reset pulsetime (#11805)
+- Teleperiod rule handling regression from v9.3.1.2 (#11851)
 
 ## [9.3.1.4] 20210422
 ### Added

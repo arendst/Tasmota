@@ -221,6 +221,8 @@ void MatrixInitDriver(void) {
       Settings.display_height = 8;
 
       MatrixInitMode();
+
+      AddLog(LOG_LEVEL_INFO, PSTR("DSP: 8x8Matrix"));
     }
   }
 }

@@ -420,11 +420,10 @@ bool Ds18x20Read(uint8_t sensor) {
 
 void Ds18x20Name(uint8_t sensor) {
   uint8_t index = sizeof(ds18x20_chipids);
-  while (index) {
+  while (--index) {
     if (ds18x20_sensor[ds18x20_sensor[sensor].index].address[0] == ds18x20_chipids[index]) {
       break;
     }
-    index--;
   }
   GetTextIndexed(DS18X20Data.name, sizeof(DS18X20Data.name), index, kDs18x20Types);
   if (DS18X20Data.sensors > 1) {

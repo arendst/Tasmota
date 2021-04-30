@@ -50,6 +50,9 @@ const char *UnitfromType(const char *type)  // find unit for measurment type
   if (strcmp(type, "humidity") == 0) {
     return "percentage";
   }
+  if (strcmp(type, "id") == 0) {
+    return "untyped";
+  }
   return "";
 }
 
@@ -86,16 +89,28 @@ void HandleMetrics(void) {
 
   if (!isnan(TasmotaGlobal.temperature_celsius)) {
     dtostrfd(TasmotaGlobal.temperature_celsius, Settings.flag2.temperature_resolution, parameter);
-    WSContentSend_P(PSTR("# TYPE tasmotaglobal_temperature_celsius gauge\ntasmotaglobal_temperature_celsius %s\n"), parameter);
+    WSContentSend_P(PSTR("# TYPE tasmota_global_temperature_celsius gauge\ntasmota_global_temperature_celsius %s\n"), parameter);
   }
   if (TasmotaGlobal.humidity != 0) {
     dtostrfd(TasmotaGlobal.humidity, Settings.flag2.humidity_resolution, parameter);
-    WSContentSend_P(PSTR("# TYPE tasmotaglobal_humidity gauge\ntasmotaglobal_humidity %s\n"), parameter);
+    WSContentSend_P(PSTR("# TYPE tasmota_global_humidity gauge\ntasmota_global_humidity_percentage %s\n"), parameter);
   }
   if (TasmotaGlobal.pressure_hpa != 0) {
     dtostrfd(TasmotaGlobal.pressure_hpa, Settings.flag2.pressure_resolution, parameter);
-    WSContentSend_P(PSTR("# TYPE tasmotaglobal_pressure_hpa gauge\ntasmotaglobal_pressure_hpa %s\n"), parameter);
+    WSContentSend_P(PSTR("# TYPE tasmota_global_pressure_hpa gauge\ntasmota_global_pressure_hpa %s\n"), parameter);
   }
+
+  // Pseudo-metric providing metadata about the free memory.
+  #ifdef ESP32
+    int32_t freeMaxMem = 100 - (int32_t)(ESP_getMaxAllocHeap() * 100 / ESP_getFreeHeap());
+    WSContentSend_PD(PSTR("# TYPE tasmota_memory_bytes gauge\ntasmota_memory_bytes{memory=\"Ram\"} %d\n"), ESP_getFreeHeap());
+    WSContentSend_PD(PSTR("# TYPE tasmota_memory_ratio gauge\ntasmota_memory_ratio{memory=\"Fragmentation\"} %d)"), freeMaxMem / 100);
+    if (psramFound()) {
+      WSContentSend_P(PSTR("# TYPE tasmota_memory_bytes gauge\ntasmota_memory_bytes{memory=\"Psram\"} %d\n"), ESP.getFreePsram() );
+    }
+  #else // ESP32
+    WSContentSend_PD(PSTR("# TYPE tasmota_memory_bytes gauge\ntasmota_memory_bytes{memory=\"ram\"} %d\n"), ESP_getFreeHeap());
+  #endif // ESP32
 
 #ifdef USE_ENERGY_SENSOR
   dtostrfd(Energy.voltage[0], Settings.flag2.voltage_resolution, parameter);
@@ -148,8 +163,13 @@ void HandleMetrics(void) {
               String type = FormatMetricName(key2.getStr());
               const char *unit = UnitfromType(type.c_str());
               if (strcmp(type.c_str(), "totalstarttime") != 0) {  // this metric causes prometheus of fail
-                WSContentSend_P(PSTR("# TYPE tasmota_sensors_%s_%s gauge\ntasmota_sensors_%s_%s{sensor=\"%s\"} %s\n"),
-                  type.c_str(), unit, type.c_str(), unit, sensor.c_str(), value);
+                if (strcmp(type.c_str(), "id") == 0) {            // this metric is NaN, so convert it to a label, see Wi-Fi metrics above
+                  WSContentSend_P(PSTR("# TYPE tasmota_sensors_%s_%s gauge\ntasmota_sensors_%s_%s{sensor=\"%s\",id=\"%s\"} 1\n"),
+                    type.c_str(), unit, type.c_str(), unit, sensor.c_str(), value);
+                } else {
+                  WSContentSend_P(PSTR("# TYPE tasmota_sensors_%s_%s gauge\ntasmota_sensors_%s_%s{sensor=\"%s\"} %s\n"),
+                    type.c_str(), unit, type.c_str(), unit, sensor.c_str(), value);
+                }
               }
             }
           }

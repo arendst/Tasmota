@@ -127,6 +127,42 @@ extern "C" {
     be_raise(vm, kTypeError, nullptr);
   }
 
+  // Berry: tasmota.time_reached(timer:int) -> bool
+  //
+  int32_t l_rtc(struct bvm *vm);
+  int32_t l_rtc(struct bvm *vm) {
+    int32_t top = be_top(vm); // Get the number of arguments
+    if (top == 1) {  // no argument (instance only)
+      be_newobject(vm, "map");
+      map_insert_int(vm, "utc", Rtc.utc_time);
+      map_insert_int(vm, "local", Rtc.local_time);
+      map_insert_int(vm, "restart", Rtc.restart_time);
+      map_insert_int(vm, "timezone", Rtc.time_timezone);
+      be_pop(vm, 1);
+      be_return(vm);
+    }
+    be_raise(vm, kTypeError, nullptr);
+  }
+
+  int32_t l_time_dump(bvm *vm) {
+    int32_t top = be_top(vm); // Get the number of arguments
+    if (top == 2 && be_isint(vm, 2)) {
+      time_t ts = be_toint(vm, 2);
+      struct tm *t = gmtime(&ts);
+      be_newobject(vm, "map");
+      map_insert_int(vm, "year", t->tm_year + 1900);
+      map_insert_int(vm, "month", t->tm_mon + 1);
+      map_insert_int(vm, "day", t->tm_mday);
+      map_insert_int(vm, "hour", t->tm_hour);
+      map_insert_int(vm, "min", t->tm_min);
+      map_insert_int(vm, "sec", t->tm_sec);
+      map_insert_int(vm, "weekday", t->tm_wday);
+      be_pop(vm, 1);
+      be_return(vm);
+    }
+    be_raise(vm, kTypeError, nullptr);
+  }
+
   // Berry: tasmota.delay(timer:int) -> nil
   //
   int32_t l_delay(struct bvm *vm);

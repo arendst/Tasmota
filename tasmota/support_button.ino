@@ -35,6 +35,7 @@ const char kMultiPress[] PROGMEM =
 struct BUTTON {
   uint32_t debounce = 0;                     // Button debounce timer
   uint32_t no_pullup_mask = 0;               // key no pullup flag (1 = no pullup)
+  uint32_t pulldown_mask = 0;                // key pulldown flag (1 = pulldown)
   uint32_t inverted_mask = 0;                // Key inverted flag (1 = inverted)
 #ifdef ESP32
   uint32_t touch_mask = 0;                   // Touch flag (1 = inverted)
@@ -67,6 +68,10 @@ void ButtonPullupFlag(uint32_t button_bit) {
   bitSet(Button.no_pullup_mask, button_bit);
 }
 
+void ButtonPulldownFlag(uint32_t button_bit) {
+  bitSet(Button.pulldown_mask, button_bit);
+}
+
 void ButtonInvertFlag(uint32_t button_bit) {
   bitSet(Button.inverted_mask, button_bit);
 }
@@ -92,7 +97,7 @@ void ButtonInit(void) {
       pinMode(Pin(GPIO_KEY1, i), bitRead(Button.no_pullup_mask, i) ? INPUT : ((16 == Pin(GPIO_KEY1, i)) ? INPUT_PULLDOWN_16 : INPUT_PULLUP));
 #endif  // ESP8266
 #ifdef ESP32
-      pinMode(Pin(GPIO_KEY1, i), bitRead(Button.no_pullup_mask, i) ? INPUT : INPUT_PULLUP);
+      pinMode(Pin(GPIO_KEY1, i), bitRead(Button.pulldown_mask, i) ? INPUT_PULLDOWN : bitRead(Button.no_pullup_mask, i) ? INPUT : INPUT_PULLUP);
 #endif  // ESP32
     }
 #ifdef USE_ADC

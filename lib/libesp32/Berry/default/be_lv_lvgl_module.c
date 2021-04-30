@@ -4,9 +4,7 @@
 /********************************************************************
  * LVGL Module
  *******************************************************************/
-#include "be_object.h"
-#include "be_string.h"
-#include "be_gc.h"
+#include "be_constobj.h"
 
 #ifdef USE_LVGL
 
@@ -14,6 +12,8 @@
 
 extern int lv0_start(bvm *vm);
 extern int lv0_load_montserrat_font(bvm *vm);
+extern int lv0_load_seg7_font(bvm *vm);
+extern int lv0_load_font(bvm *vm);
 
 extern int lv0_scr_act(bvm *vm);
 extern int lv0_layer_top(bvm *vm);
@@ -611,6 +611,9 @@ be_native_module_attr_table(lvgl) {
 
     be_native_module_function("start", lv0_start),
     be_native_module_function("montserrat_font", lv0_load_montserrat_font),
+    be_native_module_function("seg7_font", lv0_load_seg7_font),
+    be_native_module_function("load_font", lv0_load_font),
+
 
     // screen and layers
     be_native_module_function("scr_act", lv0_scr_act),
@@ -627,67 +630,67 @@ be_define_native_module(lvgl, NULL);
 
 #else
 
-be_define_local_const_str(SYMBOL_AUDIO, "\xef\x80\x81", 0, 0, 3, 0);
-be_define_local_const_str(SYMBOL_VIDEO, "\xef\x80\x88", 0, 0, 3, 0);
-be_define_local_const_str(SYMBOL_LIST, "\xef\x80\x8b", 0, 0, 3, 0);
-be_define_local_const_str(SYMBOL_OK, "\xef\x80\x8c", 0, 0, 3, 0);
-be_define_local_const_str(SYMBOL_CLOSE, "\xef\x80\x8d", 0, 0, 3, 0);
-be_define_local_const_str(SYMBOL_POWER, "\xef\x80\x91", 0, 0, 3, 0);
-be_define_local_const_str(SYMBOL_SETTINGS, "\xef\x80\x93", 0, 0, 3, 0);
-be_define_local_const_str(SYMBOL_HOME, "\xef\x80\x95", 0, 0, 3, 0);
-be_define_local_const_str(SYMBOL_DOWNLOAD, "\xef\x80\x99", 0, 0, 3, 0);
-be_define_local_const_str(SYMBOL_DRIVE, "\xef\x80\x9c", 0, 0, 3, 0);
-be_define_local_const_str(SYMBOL_REFRESH, "\xef\x80\xa1", 0, 0, 3, 0);
-be_define_local_const_str(SYMBOL_MUTE, "\xef\x80\xa6", 0, 0, 3, 0);
-be_define_local_const_str(SYMBOL_VOLUME_MID, "\xef\x80\xa7", 0, 0, 3, 0);
-be_define_local_const_str(SYMBOL_VOLUME_MAX, "\xef\x80\xa8", 0, 0, 3, 0);
-be_define_local_const_str(SYMBOL_IMAGE, "\xef\x80\xbe", 0, 0, 3, 0);
-be_define_local_const_str(SYMBOL_EDIT, "\xef\x8C\x84", 0, 0, 3, 0);
-be_define_local_const_str(SYMBOL_PREV, "\xef\x81\x88", 0, 0, 3, 0);
-be_define_local_const_str(SYMBOL_PLAY, "\xef\x81\x8b", 0, 0, 3, 0);
-be_define_local_const_str(SYMBOL_PAUSE, "\xef\x81\x8c", 0, 0, 3, 0);
-be_define_local_const_str(SYMBOL_STOP, "\xef\x81\x8d", 0, 0, 3, 0);
-be_define_local_const_str(SYMBOL_NEXT, "\xef\x81\x91", 0, 0, 3, 0);
-be_define_local_const_str(SYMBOL_EJECT, "\xef\x81\x92", 0, 0, 3, 0);
-be_define_local_const_str(SYMBOL_LEFT, "\xef\x81\x93", 0, 0, 3, 0);
-be_define_local_const_str(SYMBOL_RIGHT, "\xef\x81\x94", 0, 0, 3, 0);
-be_define_local_const_str(SYMBOL_PLUS, "\xef\x81\xa7", 0, 0, 3, 0);
-be_define_local_const_str(SYMBOL_MINUS, "\xef\x81\xa8", 0, 0, 3, 0);
-be_define_local_const_str(SYMBOL_EYE_OPEN, "\xef\x81\xae", 0, 0, 3, 0);
-be_define_local_const_str(SYMBOL_EYE_CLOSE, "\xef\x81\xb0", 0, 0, 3, 0);
-be_define_local_const_str(SYMBOL_WARNING, "\xef\x81\xb1", 0, 0, 3, 0);
-be_define_local_const_str(SYMBOL_SHUFFLE, "\xef\x81\xb4", 0, 0, 3, 0);
-be_define_local_const_str(SYMBOL_UP, "\xef\x81\xb7", 0, 0, 3, 0);
-be_define_local_const_str(SYMBOL_DOWN, "\xef\x81\xb8", 0, 0, 3, 0);
-be_define_local_const_str(SYMBOL_LOOP, "\xef\x81\xb9", 0, 0, 3, 0);
-be_define_local_const_str(SYMBOL_DIRECTORY, "\xef\x81\xbb", 0, 0, 3, 0);
-be_define_local_const_str(SYMBOL_UPLOAD, "\xef\x82\x93", 0, 0, 3, 0);
-be_define_local_const_str(SYMBOL_CALL, "\xef\x82\x95", 0, 0, 3, 0);
-be_define_local_const_str(SYMBOL_CUT, "\xef\x83\x84", 0, 0, 3, 0);
-be_define_local_const_str(SYMBOL_COPY, "\xef\x83\x85", 0, 0, 3, 0);
-be_define_local_const_str(SYMBOL_SAVE, "\xef\x83\x87", 0, 0, 3, 0);
-be_define_local_const_str(SYMBOL_CHARGE, "\xef\x83\xa7", 0, 0, 3, 0);
-be_define_local_const_str(SYMBOL_PASTE, "\xef\x83\xAA", 0, 0, 3, 0);
-be_define_local_const_str(SYMBOL_BELL, "\xef\x83\xb3", 0, 0, 3, 0);
-be_define_local_const_str(SYMBOL_KEYBOARD, "\xef\x84\x9c", 0, 0, 3, 0);
-be_define_local_const_str(SYMBOL_GPS, "\xef\x84\xa4", 0, 0, 3, 0);
-be_define_local_const_str(SYMBOL_FILE, "\xef\x85\x9b", 0, 0, 3, 0);
-be_define_local_const_str(SYMBOL_WIFI, "\xef\x87\xab", 0, 0, 3, 0);
-be_define_local_const_str(SYMBOL_BATTERY_FULL, "\xef\x89\x80", 0, 0, 3, 0);
-be_define_local_const_str(SYMBOL_BATTERY_3, "\xef\x89\x81", 0, 0, 3, 0);
-be_define_local_const_str(SYMBOL_BATTERY_2, "\xef\x89\x82", 0, 0, 3, 0);
-be_define_local_const_str(SYMBOL_BATTERY_1, "\xef\x89\x83", 0, 0, 3, 0);
-be_define_local_const_str(SYMBOL_BATTERY_EMPTY, "\xef\x89\x84", 0, 0, 3, 0);
-be_define_local_const_str(SYMBOL_USB, "\xef\x8a\x87", 0, 0, 3, 0);
-be_define_local_const_str(SYMBOL_BLUETOOTH, "\xef\x8a\x93", 0, 0, 3, 0);
-be_define_local_const_str(SYMBOL_TRASH, "\xef\x8B\xAD", 0, 0, 3, 0);
-be_define_local_const_str(SYMBOL_BACKSPACE, "\xef\x95\x9A", 0, 0, 3, 0);
-be_define_local_const_str(SYMBOL_SD_CARD, "\xef\x9F\x82", 0, 0, 3, 0);
-be_define_local_const_str(SYMBOL_NEW_LINE, "\xef\xA2\xA2", 0, 0, 3, 0);
+be_define_local_const_str(SYMBOL_AUDIO, "\xef\x80\x81", 0, 3);
+be_define_local_const_str(SYMBOL_VIDEO, "\xef\x80\x88", 0, 3);
+be_define_local_const_str(SYMBOL_LIST, "\xef\x80\x8b", 0, 3);
+be_define_local_const_str(SYMBOL_OK, "\xef\x80\x8c", 0, 3);
+be_define_local_const_str(SYMBOL_CLOSE, "\xef\x80\x8d", 0, 3);
+be_define_local_const_str(SYMBOL_POWER, "\xef\x80\x91", 0, 3);
+be_define_local_const_str(SYMBOL_SETTINGS, "\xef\x80\x93", 0, 3);
+be_define_local_const_str(SYMBOL_HOME, "\xef\x80\x95", 0, 3);
+be_define_local_const_str(SYMBOL_DOWNLOAD, "\xef\x80\x99", 0, 3);
+be_define_local_const_str(SYMBOL_DRIVE, "\xef\x80\x9c", 0, 3);
+be_define_local_const_str(SYMBOL_REFRESH, "\xef\x80\xa1", 0, 3);
+be_define_local_const_str(SYMBOL_MUTE, "\xef\x80\xa6", 0, 3);
+be_define_local_const_str(SYMBOL_VOLUME_MID, "\xef\x80\xa7", 0, 3);
+be_define_local_const_str(SYMBOL_VOLUME_MAX, "\xef\x80\xa8", 0, 3);
+be_define_local_const_str(SYMBOL_IMAGE, "\xef\x80\xbe", 0, 3);
+be_define_local_const_str(SYMBOL_EDIT, "\xef\x8C\x84", 0, 3);
+be_define_local_const_str(SYMBOL_PREV, "\xef\x81\x88", 0, 3);
+be_define_local_const_str(SYMBOL_PLAY, "\xef\x81\x8b", 0, 3);
+be_define_local_const_str(SYMBOL_PAUSE, "\xef\x81\x8c", 0, 3);
+be_define_local_const_str(SYMBOL_STOP, "\xef\x81\x8d", 0, 3);
+be_define_local_const_str(SYMBOL_NEXT, "\xef\x81\x91", 0, 3);
+be_define_local_const_str(SYMBOL_EJECT, "\xef\x81\x92", 0, 3);
+be_define_local_const_str(SYMBOL_LEFT, "\xef\x81\x93", 0, 3);
+be_define_local_const_str(SYMBOL_RIGHT, "\xef\x81\x94", 0, 3);
+be_define_local_const_str(SYMBOL_PLUS, "\xef\x81\xa7", 0, 3);
+be_define_local_const_str(SYMBOL_MINUS, "\xef\x81\xa8", 0, 3);
+be_define_local_const_str(SYMBOL_EYE_OPEN, "\xef\x81\xae", 0, 3);
+be_define_local_const_str(SYMBOL_EYE_CLOSE, "\xef\x81\xb0", 0, 3);
+be_define_local_const_str(SYMBOL_WARNING, "\xef\x81\xb1", 0, 3);
+be_define_local_const_str(SYMBOL_SHUFFLE, "\xef\x81\xb4", 0, 3);
+be_define_local_const_str(SYMBOL_UP, "\xef\x81\xb7", 0, 3);
+be_define_local_const_str(SYMBOL_DOWN, "\xef\x81\xb8", 0, 3);
+be_define_local_const_str(SYMBOL_LOOP, "\xef\x81\xb9", 0, 3);
+be_define_local_const_str(SYMBOL_DIRECTORY, "\xef\x81\xbb", 0, 3);
+be_define_local_const_str(SYMBOL_UPLOAD, "\xef\x82\x93", 0, 3);
+be_define_local_const_str(SYMBOL_CALL, "\xef\x82\x95", 0, 3);
+be_define_local_const_str(SYMBOL_CUT, "\xef\x83\x84", 0, 3);
+be_define_local_const_str(SYMBOL_COPY, "\xef\x83\x85", 0, 3);
+be_define_local_const_str(SYMBOL_SAVE, "\xef\x83\x87", 0, 3);
+be_define_local_const_str(SYMBOL_CHARGE, "\xef\x83\xa7", 0, 3);
+be_define_local_const_str(SYMBOL_PASTE, "\xef\x83\xAA", 0, 3);
+be_define_local_const_str(SYMBOL_BELL, "\xef\x83\xb3", 0, 3);
+be_define_local_const_str(SYMBOL_KEYBOARD, "\xef\x84\x9c", 0, 3);
+be_define_local_const_str(SYMBOL_GPS, "\xef\x84\xa4", 0, 3);
+be_define_local_const_str(SYMBOL_FILE, "\xef\x85\x9b", 0, 3);
+be_define_local_const_str(SYMBOL_WIFI, "\xef\x87\xab", 0, 3);
+be_define_local_const_str(SYMBOL_BATTERY_FULL, "\xef\x89\x80", 0, 3);
+be_define_local_const_str(SYMBOL_BATTERY_3, "\xef\x89\x81", 0, 3);
+be_define_local_const_str(SYMBOL_BATTERY_2, "\xef\x89\x82", 0, 3);
+be_define_local_const_str(SYMBOL_BATTERY_1, "\xef\x89\x83", 0, 3);
+be_define_local_const_str(SYMBOL_BATTERY_EMPTY, "\xef\x89\x84", 0, 3);
+be_define_local_const_str(SYMBOL_USB, "\xef\x8a\x87", 0, 3);
+be_define_local_const_str(SYMBOL_BLUETOOTH, "\xef\x8a\x93", 0, 3);
+be_define_local_const_str(SYMBOL_TRASH, "\xef\x8B\xAD", 0, 3);
+be_define_local_const_str(SYMBOL_BACKSPACE, "\xef\x95\x9A", 0, 3);
+be_define_local_const_str(SYMBOL_SD_CARD, "\xef\x9F\x82", 0, 3);
+be_define_local_const_str(SYMBOL_NEW_LINE, "\xef\xA2\xA2", 0, 3);
 
-be_define_local_const_str(SYMBOL_DUMMY, "\xEF\xA3\xBF", 0, 0, 3, 0);
+be_define_local_const_str(SYMBOL_DUMMY, "\xEF\xA3\xBF", 0, 3);
 
-be_define_local_const_str(SYMBOL_BULLET, "\xE2\x80\xA2", 0, 0, 3, 0);
+be_define_local_const_str(SYMBOL_BULLET, "\xE2\x80\xA2", 0, 3);
 
 
 /* @const_object_info_begin
@@ -1148,6 +1151,8 @@ module lvgl (scope: global) {
 
     start, func(lv0_start)
     montserrat_font, func(lv0_load_montserrat_font)
+    seg7_font, func(lv0_load_seg7_font)
+    load_font, func(lv0_load_font)
 
     scr_act, func(lv0_scr_act)
     layer_top, func(lv0_layer_top)

@@ -604,6 +604,8 @@ void Adafruit_SSD1306::DisplayInit(int8_t p,int8_t size,int8_t rot,int8_t font) 
     setCursor(0,0);
     fillScreen(BLACK);
     Updateframe();
+
+    disp_bpp = -1;
   //}
 }
 

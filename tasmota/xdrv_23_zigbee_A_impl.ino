@@ -1291,12 +1291,6 @@ void CmndZbSave(void) {
     case 2:       // save only data
       hibernateAllData();
       break;
-    case -1:      // dump configuration
-      loadZigbeeDevices(true);    // dump only
-      break;
-    case -2:
-      hydrateDevicesDataFromEEPROM();
-      break;
 #ifdef Z_EEPROM_DEBUG
     case -10:
       { // reinit EEPROM
@@ -1569,7 +1563,7 @@ void CmndZbData(void) {
   if (strlen(XdrvMailbox.data) == 0) {
     // if empty, log values for all devices
     for (const auto & device : zigbee_devices.getDevices()) {
-      hibernateDeviceData(device, true);    // simple log, no mqtt
+      hibernateDeviceData(device);
     }
   } else {
     // check if parameters contain a comma ','
@@ -1588,7 +1582,7 @@ void CmndZbData(void) {
       // non-JSON, export current data
       // ZbData 0x1234
       // ZbData Device_Name
-      hibernateDeviceData(device, true);    // mqtt
+      hibernateDeviceData(device);
     }
   }
 
@@ -2183,10 +2177,10 @@ bool Xdrv23(uint8_t function)
         result = DecodeCommand(kZbCommands, ZigbeeCommand, kZbSynonyms);
         break;
       case FUNC_SAVE_BEFORE_RESTART:
-#ifdef USE_ZIGBEE_EZSP
-        hibernateAllData();
-#endif  // USE_ZIGBEE_EZSP
-        restoreDumpAllDevices();
+        if (!zigbee.init_phase) { 
+          hibernateAllData();
+          restoreDumpAllDevices();
+        }
         break;
     }
   }

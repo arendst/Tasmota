@@ -88,7 +88,7 @@ void SSD1306InitDriver(void) {
     renderer->DisplayOnff(1);
 #endif
 
-    AddLog(LOG_LEVEL_INFO, PSTR("DSP: SD1306"));
+    AddLog(LOG_LEVEL_INFO, PSTR("DSP: SSD1306"));
   }
 }
 

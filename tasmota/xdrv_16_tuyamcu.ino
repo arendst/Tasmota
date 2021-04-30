@@ -787,6 +787,8 @@ void TuyaProcessStatePacket(void) {
           } else {
             if (fnId > 74) {
               res = 0;
+            } else if (fnId > 72) {
+              res = Settings.flag2.humidity_resolution;
             } else if (fnId == 72) {
               res = Settings.mbflag2.temperature_set_res;
             } else {
@@ -1357,6 +1359,8 @@ void TuyaSensorsShow(bool json)
         }
         if (sensor > 74) {
           res = 0;
+        } else if (sensor > 72) {
+          res = Settings.flag2.humidity_resolution;
         } else if (sensor == 72) {
           res = Settings.mbflag2.temperature_set_res;
         } else {
@@ -1380,11 +1384,11 @@ void TuyaSensorsShow(bool json)
                             dtostrfd(TuyaAdjustedTemperature(Tuya.Sensors[1], Settings.mbflag2.temperature_set_res), Settings.mbflag2.temperature_set_res, tempval), TempUnit());
             break;
           case 73:
-            WSContentSend_PD(HTTP_SNS_HUM, "", dtostrfd(TuyaAdjustedTemperature(Tuya.Sensors[2], Settings.flag2.temperature_resolution), Settings.flag2.temperature_resolution, tempval));
+            WSContentSend_PD(HTTP_SNS_HUM, "", dtostrfd(TuyaAdjustedTemperature(Tuya.Sensors[2], Settings.flag2.humidity_resolution), Settings.flag2.humidity_resolution, tempval));
             break;
           case 74:
             WSContentSend_PD(PSTR("{s}" D_HUMIDITY " Set{m}%s " D_UNIT_PERCENT "{e}"),
-                            dtostrfd(TuyaAdjustedTemperature(Tuya.Sensors[3], Settings.flag2.temperature_resolution), Settings.flag2.temperature_resolution, tempval));
+                            dtostrfd(TuyaAdjustedTemperature(Tuya.Sensors[3], Settings.flag2.humidity_resolution), Settings.flag2.humidity_resolution, tempval));
             break;
           case 75:
             WSContentSend_PD(HTTP_SNS_ILLUMINANCE, "", Tuya.Sensors[4]);
