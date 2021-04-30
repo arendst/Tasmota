@@ -55,7 +55,7 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 
 Above binaries are also available as gzipped version allowing faster uploads.
 
-The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota/release. The links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmota.com/tasmota/release/tasmota.bin.gz``
+The binaries can be downloaded from either https://github.com/arendst/Tasmota/tree/release-firmware or http://ota.tasmota.com/tasmota/release. The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmota.com/tasmota/release/tasmota.bin.gz``
 
 ### ESP32 based
 The following binary downloads have been compiled with ESP32/Arduino library core version **1.0.6**.
@@ -70,7 +70,7 @@ The following binary downloads have been compiled with ESP32/Arduino library cor
 - **tasmota32-odroidgo.bin** = The Odroid-Go version is specifically tailored to Odroid_go hardware.
 - **tasmota32-core2.bin** = The Core2 version is specifically tailored to M5Stack Core2 hardware.
 
-The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota32/release. The links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmota.com/tasmota32/release/tasmota32.bin``
+The binaries can be downloaded from either https://github.com/arendst/Tasmota/tree/release-firmware or http://ota.tasmota.com/tasmota32/release. The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmota.com/tasmota32/release/tasmota32.bin``
 
 [List](MODULES.md) of embedded modules.
 
