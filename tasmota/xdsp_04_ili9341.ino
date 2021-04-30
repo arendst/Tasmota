@@ -40,6 +40,8 @@ uint8_t ili9342_ctouch_counter = 0;
 
 bool tft_init_done = false;
 
+void Core2DisplayPower(uint8_t on);
+void Core2DisplayDim(uint8_t dim);
 
 //Settings.display_options.type = ILIMODE_9341;
 
@@ -89,6 +91,11 @@ void ILI9341_InitDriver()
     ili9341_2->init(Settings.display_width, Settings.display_height);
     renderer = ili9341_2;
 
+#ifdef USE_M5STACK_CORE2
+    renderer->SetPwrCB(Core2DisplayPower);
+    renderer->SetDimCB(Core2DisplayDim);
+#endif
+
     renderer->DisplayInit(DISPLAY_INIT_MODE, Settings.display_size, Settings.display_rotate, Settings.display_font);
     renderer->dim(Settings.display_dimmer);
 
@@ -129,22 +136,6 @@ void ILI9341_InitDriver()
     tft_init_done = true;
     AddLog(LOG_LEVEL_INFO, PSTR("DSP: ILI9341"));
   }
-}
-
-
-void Core2DisplayPower(uint8_t on);
-void Core2DisplayDim(uint8_t dim);
-
-void ili9342_bpwr(uint8_t on) {
-#ifdef USE_M5STACK_CORE2
-  Core2DisplayPower(on);
-#endif
-}
-
-void ili9342_dimm(uint8_t dim) {
-#ifdef USE_M5STACK_CORE2
-  Core2DisplayDim(dim);
-#endif
 }
 
 #if defined(USE_FT5206) || defined(USE_XPT2046)
