@@ -700,7 +700,7 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_ZIGBEE
   AGPIO(GPIO_ZIGBEE_TX),      // Zigbee Serial interface
   AGPIO(GPIO_ZIGBEE_RX),      // Zigbee Serial interface
-  AGPIO(GPIO_ZIGBEE_RST),     // Zigbee reset
+  AGPIO(GPIO_ZIGBEE_RST) + 2, // Zigbee reset, pin 1 is reset, pin 2 is bootloader mode
 #endif
 #ifdef USE_MHZ19
   AGPIO(GPIO_MHZ_TXD),        // MH-Z19 Serial interface
