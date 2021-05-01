@@ -228,6 +228,7 @@ class uDisplay : public Renderer {
    bool dmaBusy(void);
    void dmaWait(void);
    void pushPixelsDMA(uint16_t* image, uint32_t len);
+   void pushPixels3DMA(uint8_t* image, uint32_t len);
 #endif // ESP32
 };
 
