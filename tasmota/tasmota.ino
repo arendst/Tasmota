@@ -391,6 +391,43 @@ void setup(void) {
 #endif
 
   TasmotaGlobal.rules_flag.system_init = 1;
+  Serial.println("rulesAfterFlash status:"+Settings.rulesAfterFlash);
+  if (!Settings.rulesAfterFlash){
+      // commands to execute at startup
+      #ifdef defaultSetting_01 
+        ExecuteCommand(defaultSetting_01, SRC_IGNORE);
+      #endif
+      #ifdef defaultSetting_02 
+        ExecuteCommand(defaultSetting_02, SRC_IGNORE);
+      #endif
+      #ifdef defaultSetting_03 
+        ExecuteCommand(defaultSetting_03, SRC_IGNORE);
+      #endif
+      #ifdef defaultSetting_04 
+        ExecuteCommand(defaultSetting_04, SRC_IGNORE);
+      #endif
+      #ifdef defaultSetting_05 
+        ExecuteCommand(defaultSetting_05, SRC_IGNORE);
+      #endif
+      #ifdef defaultSetting_06 
+        ExecuteCommand(defaultSetting_06, SRC_IGNORE);
+      #endif
+      #ifdef defaultSetting_07 
+        ExecuteCommand(defaultSetting_07, SRC_IGNORE);
+      #endif
+      #ifdef defaultSetting_08 
+        ExecuteCommand(defaultSetting_08, SRC_IGNORE);
+      #endif
+      #ifdef defaultSetting_09 
+        ExecuteCommand(defaultSetting_09, SRC_IGNORE);
+      #endif
+      Settings.rulesAfterFlash=true;
+      SettingsSave(0);
+      AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_RULES " " D_RULE_SETUP_AFTER_FLASHING));
+  }else{
+      Serial.println("\nskipping - Rules setup after flashing firmware\n");
+  }
+
 }
 
 void BacklogLoop(void) {

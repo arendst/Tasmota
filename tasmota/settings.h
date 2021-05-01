@@ -738,8 +738,10 @@ struct {
   uint8_t       shd_leading_edge;          // F5B
   uint16_t      shd_warmup_brightness;     // F5C
   uint8_t       shd_warmup_time;           // F5E
+  uint8_t       rulesAfterFlash;           // F5F - flag for running rules only once after firmare flash
 
-  uint8_t       free_f5f[65];              // F5F - Decrement if adding new Setting variables just above and below
+  uint8_t       free_f5e[64];              // F60 - Decrement if adding new Setting variables just above and below
+
 
   // Only 32 bit boundary variables below
 
@@ -762,6 +764,8 @@ struct {
   uint32_t      i2c_drivers[3];            // FEC  I2cDriver
   uint32_t      cfg_timestamp;             // FF8
   uint32_t      cfg_crc32;                 // FFC
+
+
 } Settings;
 
 typedef struct {

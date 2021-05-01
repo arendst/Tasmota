@@ -157,6 +157,7 @@
 #define D_RESTORE "restore"
 #define D_RETAINED "retained"
 #define D_RULE "Rule"
+#define D_RULE_SETUP_AFTER_FLASHING "Rules setup after flashing firmware"
 #define D_SAVE "Save"
 #define D_SENSOR "Sensor"
 #define D_SSID "SSId"
