@@ -20,7 +20,7 @@
 #include <Arduino.h>
 #include "uDisplay.h"
 
-//#define UDSP_DEBUG
+#define UDSP_DEBUG
 
 const uint16_t udisp_colors[]={UDISP_BLACK,UDISP_WHITE,UDISP_RED,UDISP_GREEN,UDISP_BLUE,UDISP_CYAN,UDISP_MAGENTA,\
   UDISP_YELLOW,UDISP_NAVY,UDISP_DARKGREEN,UDISP_DARKCYAN,UDISP_MAROON,UDISP_PURPLE,UDISP_OLIVE,\
@@ -1100,11 +1100,49 @@ void uDisplay::pushColors(uint16_t *data, uint16_t len, boolean not_swapped) {
       }
 #endif
     } else {
-      // 9 bit and others
+
+#ifdef ESP32
+      if ( (col_mode == 18) && (spi_dc >= 0) && (spi_nr <= 2) ) {
+        uint8_t *line = (uint8_t*)malloc(len * 3);
+        uint8_t *lp = line;
+        if (line) {
+          for (uint32_t cnt = 0; cnt < len; cnt++) {
+            color = *data++;
+            color = (color << 8) | (color >> 8);
+            uint8_t r = (color & 0xF800) >> 11;
+            uint8_t g = (color & 0x07E0) >> 5;
+            uint8_t b = color & 0x001F;
+            r = (r * 255) / 31;
+            g = (g * 255) / 63;
+            b = (b * 255) / 31;
+            *lp++ = r;
+            *lp++ = g;
+            *lp++ = b;
+          }
+
+          if (lvgl_param.use_dma) {
+            pushPixels3DMA(line, len );
+          } else {
+            uspi->writeBytes(line, len * 3);
+          }
+          free(line);
+        }
+
+      } else {
+        // 9 bit and others
+        lvgl_color_swap(data, len);
+        while (len--) {
+          WriteColor(*data++);
+        }
+      }
+#endif // ESP32
+
+#ifdef ESP8266
       lvgl_color_swap(data, len);
       while (len--) {
         WriteColor(*data++);
       }
+#endif
     }
   } else {
     // called from displaytext, no byte swap, currently no dma here
@@ -1985,6 +2023,32 @@ void uDisplay::pushPixelsDMA(uint16_t* image, uint32_t len) {
   trans.user = (void *)1;
   trans.tx_buffer = image;  //finally send the line data
   trans.length = len * 16;        //Data length, in bits
+  trans.flags = 0;                //SPI_TRANS_USE_TXDATA flag
+
+  ret = spi_device_queue_trans(dmaHAL, &trans, portMAX_DELAY);
+  assert(ret == ESP_OK);
+
+  spiBusyCheck++;
+}
+
+/***************************************************************************************
+** Function name:           pushPixelsDMA
+** Description:             Push pixels to TFT (len must be less than 32767)
+***************************************************************************************/
+// This will byte swap the original image if setSwapBytes(true) was called by sketch.
+void uDisplay::pushPixels3DMA(uint8_t* image, uint32_t len) {
+
+  if ((len == 0) || (!DMA_Enabled)) return;
+
+  dmaWait();
+
+  esp_err_t ret;
+
+  memset(&trans, 0, sizeof(spi_transaction_t));
+
+  trans.user = (void *)1;
+  trans.tx_buffer = image;  //finally send the line data
+  trans.length = len * 24;        //Data length, in bits
   trans.flags = 0;                //SPI_TRANS_USE_TXDATA flag
 
   ret = spi_device_queue_trans(dmaHAL, &trans, portMAX_DELAY);

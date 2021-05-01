@@ -22,7 +22,6 @@
 
 #include <renderer.h>
 #include "lvgl.h"
-#include "tasmota_lvgl_assets.h"    // force compilation of assets
 
 #define XDRV_54             54
 
@@ -140,10 +139,6 @@ void lv_flush_callback(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *c
     // save pixels to file
     int32_t btw = (width * height * LV_COLOR_DEPTH + 7) / 8;
     while (btw > 0) {
-#if (LV_COLOR_DEPTH == 16) && (LV_COLOR_16_SWAP == 1)
-      uint16_t * pix = (uint16_t*) color_p;
-      for (uint32_t i = 0; i < btw / 2; i++) (pix[i] = pix[i] << 8 | pix[i] >> 8);
-#endif
       int32_t ret = glue->getScreenshotFile()->write((const uint8_t*) color_p, btw);
       if (ret >= 0) {
         btw -= ret;
@@ -314,7 +309,7 @@ void start_lvgl(const char * uconfig) {
     return;
   }
 
-  if (uconfig && !renderer) {
+  if (!renderer || uconfig) {
 #ifdef USE_UNIVERSAL_DISPLAY    // TODO - we will probably support only UNIV_DISPLAY
     renderer  = Init_uDisplay((char*)uconfig, -1);
     if (!renderer) return;
@@ -322,6 +317,8 @@ void start_lvgl(const char * uconfig) {
     return;
 #endif
   }
+
+  renderer->DisplayOnff(true);
 
   // **************************************************
   // Initialize the glue between Adafruit and LVGL

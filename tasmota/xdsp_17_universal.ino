@@ -23,6 +23,7 @@
 
 #define XDSP_17                17
 
+
 #include <uDisplay.h>
 
 bool udisp_init_done = false;
@@ -51,6 +52,11 @@ void Core2DisplayPower(uint8_t on);
 void Core2DisplayDim(uint8_t dim);
 
 //#define DSP_ROM_DESC
+
+#ifndef DISP_DESC_FILE
+//#define DISP_DESC_FILE "/dispdesc.txt"
+#define DISP_DESC_FILE "/display.ini"
+#endif
 
 /*********************************************************************************************/
 #ifdef DSP_ROM_DESC
@@ -92,6 +98,7 @@ uDisplay *udisp;
 
     Settings.display_model = XDSP_17;
 
+
     fbuff = (char*)calloc(DISPDESC_SIZE, 1);
     if (!fbuff) return 0;
 
@@ -105,7 +112,7 @@ uDisplay *udisp;
 #ifdef USE_UFILESYS
     if (ffsp  && !TasmotaGlobal.no_autoexec && !ddesc) {
       File fp;
-      fp = ffsp->open("/dispdesc.txt", "r");
+      fp = ffsp->open(DISP_DESC_FILE, "r");
       if (fp > 0) {
         uint32_t size = fp.size();
         fp.read((uint8_t*)fbuff, size);

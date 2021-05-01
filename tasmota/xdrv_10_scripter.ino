@@ -7879,6 +7879,8 @@ void start_lvgl(const char * uconfig);
 lv_event_t lvgl_last_event;
 uint8_t lvgl_last_object;
 uint8_t lvgl_last_slider;
+static lv_obj_t * kb;
+static lv_obj_t * ta;
 
 void lvgl_set_last(lv_obj_t * obj, lv_event_t event);
 void lvgl_set_last(lv_obj_t * obj, lv_event_t event) {
@@ -7909,6 +7911,33 @@ void slider_event_cb(lv_obj_t * sld, lv_event_t event) {
     Run_Scripter(">lvs", 4, 0);
   }
 }
+
+static void kb_create(void);
+static void ta_event_cb(lv_obj_t * ta_local, lv_event_t e);
+static void kb_event_cb(lv_obj_t * keyboard, lv_event_t e);
+
+static void kb_event_cb(lv_obj_t * keyboard, lv_event_t e) {
+    lv_keyboard_def_event_cb(kb, e);
+    if(e == LV_EVENT_CANCEL) {
+        lv_keyboard_set_textarea(kb, NULL);
+        lv_obj_del(kb);
+        kb = NULL;
+    }
+}
+
+static void kb_create(void) {
+    kb = lv_keyboard_create(lv_scr_act(), NULL);
+    lv_keyboard_set_cursor_manage(kb, true);
+    lv_obj_set_event_cb(kb, kb_event_cb);
+    lv_keyboard_set_textarea(kb, ta);
+}
+
+static void ta_event_cb(lv_obj_t * ta_local, lv_event_t e) {
+    if(e == LV_EVENT_CLICKED && kb == NULL) {
+      kb_create();
+    }
+}
+
 
 void lvgl_StoreObj(lv_obj_t *obj);
 void lvgl_StoreObj(lv_obj_t *obj) {
@@ -8039,6 +8068,18 @@ int32_t lvgl_test(char **lpp, int32_t p) {
       }
       break;
 
+    case 8:
+      {
+      ta  = lv_textarea_create(lv_scr_act(), NULL);
+      lv_obj_align(ta, NULL, LV_ALIGN_IN_TOP_MID, 0, LV_DPI / 16);
+      lv_obj_set_event_cb(ta, ta_event_cb);
+      lv_textarea_set_text(ta, "");
+      lv_coord_t max_h = LV_VER_RES / 2 - LV_DPI / 8;
+      if (lv_obj_get_height(ta) > max_h) lv_obj_set_height(ta, max_h);
+      kb_create();
+      }
+      break;
+
     case 50:
       res = lvgl_last_object;
       break;
@@ -8051,6 +8092,7 @@ int32_t lvgl_test(char **lpp, int32_t p) {
 
 
     default:
+      start_lvgl(0);
       lvgl_setup();
       break;
   }
@@ -8058,6 +8100,7 @@ int32_t lvgl_test(char **lpp, int32_t p) {
   *lpp = lp;
   return res;
 }
+
 
 lv_obj_t          *tabview,        // LittlevGL tabview object
                   *gauge,          // Gauge object (on first of three tabs)

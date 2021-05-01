@@ -27,6 +27,9 @@ Renderer *renderer;
 
 enum ColorType { COLOR_BW, COLOR_COLOR };
 
+#ifndef DISP_BATCH_FILE
+#define DISP_BATCH_FILE "/display.bat"
+#endif
 
 #ifdef USE_UFILESYS
 extern FS *ufsp;
@@ -1110,6 +1113,8 @@ extern FS *ffsp;
     }
 }
 
+
+
 #ifdef USE_UFILESYS
 void Display_Text_From_File(const char *file) {
   File fp;
@@ -1763,7 +1768,7 @@ void DisplayInitDriver(void)
 #endif
 
 #ifdef USE_UFILESYS
-  Display_Text_From_File("/display.ini");
+  Display_Text_From_File(DISP_BATCH_FILE);
 #endif
 
 #ifdef USE_GRAPH
