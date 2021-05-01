@@ -892,10 +892,14 @@ ValueList * TInfo::checkLine(char * pline)
                 // this frame will for sure be updated
                 _frame_updated = true;
 
-                // Do we need to advertise user callback
-                if (_fn_data)
-                  _fn_data(me, flags);
               }
+
+              // Tasmota need to to calulation on Energy Module
+              // So always pass data value even if it's the same than previous value
+              // Do we need to advertise user callback
+              if (_fn_data)
+                _fn_data(me, flags);
+
             }
           }
           else
