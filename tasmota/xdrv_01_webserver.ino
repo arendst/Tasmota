@@ -2130,35 +2130,40 @@ void HandleOtherConfiguration(void) {
 }
 
 void OtherSaveSettings(void) {
-  char tmp1[400];                             // Needs to hold complete ESP32 template of minimal 230 chars
-  WebGetArg(PSTR("dn"), tmp1, sizeof(tmp1));  // Device name
-  char tmp2[TOPSZ];
-  WebGetArg(PSTR("wp"), tmp2, sizeof(tmp2));  // Web password
-  char command[600];
-  snprintf_P(command, sizeof(command), PSTR(D_CMND_BACKLOG "0 " D_CMND_WEBPASSWORD "2 %s;" D_CMND_SO "3 %d;" D_CMND_DEVICENAME " %s"),
-    (!strlen(tmp2)) ? "\"" : (strlen(tmp2) < 5) ? "" : tmp2,
-    Webserver->hasArg(F("b1")),               // SetOption3 - Enable MQTT
-    (!strlen(tmp1)) ? "\"" : tmp1);
+  char tmp[100];                            // Allow parameter with lenght up to 99 characters
+  String cmnd = F(D_CMND_BACKLOG "0 " D_CMND_WEBPASSWORD "2 ");
+  WebGetArg(PSTR("wp"), tmp, sizeof(tmp));  // Web password
+  cmnd += (!strlen(tmp)) ? "\"" : (strlen(tmp) < 5) ? "" : tmp;
+  cmnd += F(";" D_CMND_SO "3 ");
+  cmnd += Webserver->hasArg(F("b1"));
+  cmnd += F(";" D_CMND_DEVICENAME " ");
+  WebGetArg(PSTR("dn"), tmp, sizeof(tmp));  // Device name
+  cmnd += (!strlen(tmp)) ? "\"" : tmp;
 
   char webindex[5];
+  char tmp2[110];
   for (uint32_t i = 0; i < MAX_FRIENDLYNAMES; i++) {
     snprintf_P(webindex, sizeof(webindex), PSTR("a%d"), i);
-    WebGetArg(webindex, tmp1, sizeof(tmp1));  // Friendly name 1 to 8
-    snprintf_P(command, sizeof(command), PSTR("%s;" D_CMND_FN"%d %s"), command, i +1, (!strlen(tmp1)) ? "\"" : tmp1);
+    WebGetArg(webindex, tmp, sizeof(tmp));  // Friendly name 1 to 8
+    snprintf_P(tmp2, sizeof(tmp2), PSTR(";" D_CMND_FN "%d %s"), i +1, (!strlen(tmp)) ? "\"" : tmp);
+    cmnd += tmp2;
   }
 
 #ifdef USE_EMULATION
 #if defined(USE_EMULATION_WEMO) || defined(USE_EMULATION_HUE)
-  WebGetArg(PSTR("b2"), tmp1, sizeof(tmp1));  // Emulation
-  snprintf_P(command, sizeof(command), PSTR("%s;" D_CMND_EMULATION " %s"), command, (!strlen(tmp1)) ? "0" : tmp1);
+  WebGetArg(PSTR("b2"), tmp, sizeof(tmp));  // Emulation
+  cmnd += F(";" D_CMND_EMULATION " ");
+  cmnd += (!strlen(tmp)) ? "0" : tmp;
 #endif  // USE_EMULATION_WEMO || USE_EMULATION_HUE
 #endif  // USE_EMULATION
 
-  WebGetArg(PSTR("t1"), tmp1, sizeof(tmp1));  // Template
-  if (strlen(tmp1)) {  // {"NAME":"12345678901234","GPIO":[255,255,255,255,255,255,255,255,255,255,255,255,255],"FLAG":255,"BASE":255,"CMND":"SO123 1;SO99 0"}
-    snprintf_P(command, sizeof(command), PSTR("%s;%s" D_CMND_TEMPLATE " %s"), command, (Webserver->hasArg(F("t2"))) ? PSTR(D_CMND_MODULE " 0;") : "", tmp1);
+  String tmpl = Webserver->arg(F("t1"));    // {"NAME":"12345678901234","GPIO":[255,255,255,255,255,255,255,255,255,255,255,255,255],"FLAG":255,"BASE":255,"CMND":"SO123 1;SO99 0"}
+  if (tmpl.length() && (tmpl.length() < MQTT_MAX_PACKET_SIZE)) {
+    snprintf_P(tmp, sizeof(tmp), PSTR(";%s" D_CMND_TEMPLATE " "), (Webserver->hasArg(F("t2"))) ? PSTR(D_CMND_MODULE " 0;") : "");
+    cmnd += tmp + tmpl;
   }
-  ExecuteWebCommand(command);
+
+  ExecuteWebCommand((char*)cmnd.c_str());
 }
 
 /*-------------------------------------------------------------------------------------------*/
