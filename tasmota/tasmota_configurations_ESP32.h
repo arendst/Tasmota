@@ -106,7 +106,9 @@
   #define USE_MPU6886
 #define USE_SPI
   #define USE_DISPLAY
+  #ifndef USE_UNIVERSAL_DISPLAY
     #define USE_DISPLAY_ILI9341
+  #endif
     #define JPEG_PICTS
     #define USE_FT5206
     #define USE_TOUCH_BUTTONS
