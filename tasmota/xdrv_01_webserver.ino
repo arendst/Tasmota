@@ -1976,27 +1976,27 @@ void HandleWifiConfiguration(void) {
 }
 
 void WifiSaveSettings(void) {
-  char tmp1[TOPSZ];
-  WebGetArg(PSTR("h"), tmp1, sizeof(tmp1));   // Host name
-  char tmp2[TOPSZ];
-  WebGetArg(PSTR("c"), tmp2, sizeof(tmp2));   // Cors domain
-  char tmp3[TOPSZ];
-  WebGetArg(PSTR("s1"), tmp3, sizeof(tmp3));  // Ssid1
-  char tmp4[TOPSZ];
-  WebGetArg(PSTR("s2"), tmp4, sizeof(tmp4));  // Ssid2
-  char tmp5[TOPSZ];
-  WebGetArg(PSTR("p1"), tmp5, sizeof(tmp5));  // Password1
-  char tmp6[TOPSZ];
-  WebGetArg(PSTR("p2"), tmp6, sizeof(tmp6));  // Password2
-  char command[300];
-  snprintf_P(command, sizeof(command), PSTR(D_CMND_BACKLOG "0 " D_CMND_HOSTNAME " %s;" D_CMND_CORS " %s;" D_CMND_SSID "1 %s;" D_CMND_SSID "2 %s;" D_CMND_PASSWORD "3 %s;" D_CMND_PASSWORD "4 %s"),
-    (!strlen(tmp1)) ? "1" : tmp1,
-    (!strlen(tmp2)) ? "1" : tmp2,
-    (!strlen(tmp3)) ? "1" : tmp3,
-    (!strlen(tmp4)) ? "1" : tmp4,
-    (!strlen(tmp5)) ? "\"" : (strlen(tmp5) < 5) ? "" : tmp5,
-    (!strlen(tmp6)) ? "\"" : (strlen(tmp6) < 5) ? "" : tmp6);
-  ExecuteWebCommand(command);
+  char tmp[100];                            // Allow parameter with lenght up to 99 characters
+  String cmnd = F(D_CMND_BACKLOG "0 " D_CMND_HOSTNAME " ");
+  WebGetArg(PSTR("h"), tmp, sizeof(tmp));   // Host name
+  cmnd += (!strlen(tmp)) ? "1" : tmp;
+  cmnd += F(";" D_CMND_CORS " ");
+  WebGetArg(PSTR("c"), tmp, sizeof(tmp));   // Cors domain
+  cmnd += (!strlen(tmp)) ? "1" : tmp;
+  cmnd += F(";" D_CMND_SSID "1 ");
+  WebGetArg(PSTR("s1"), tmp, sizeof(tmp));  // Ssid1
+  cmnd += (!strlen(tmp)) ? "1" : tmp;
+  cmnd += F(";" D_CMND_SSID "2 ");
+  WebGetArg(PSTR("s2"), tmp, sizeof(tmp));  // Ssid2
+  cmnd += (!strlen(tmp)) ? "1" : tmp;
+  cmnd += F(";" D_CMND_PASSWORD "3 ");
+  WebGetArg(PSTR("p1"), tmp, sizeof(tmp));  // Password1
+  cmnd += (!strlen(tmp)) ? "\"" : (strlen(tmp) < 5) ? "" : tmp;
+  cmnd += F(";" D_CMND_PASSWORD "4 ");
+  WebGetArg(PSTR("p2"), tmp, sizeof(tmp));  // Password2
+  cmnd += (!strlen(tmp)) ? "\"" : (strlen(tmp) < 5) ? "" : tmp;
+
+  ExecuteWebCommand((char*)cmnd.c_str());
 }
 
 /*-------------------------------------------------------------------------------------------*/
@@ -2039,30 +2039,30 @@ void HandleLoggingConfiguration(void) {
 }
 
 void LoggingSaveSettings(void) {
-  char tmp1[CMDSZ];
-  WebGetArg(PSTR("l0"), tmp1, sizeof(tmp1));  // Serial log level
-  char tmp2[CMDSZ];
-  WebGetArg(PSTR("l1"), tmp2, sizeof(tmp2));  // Web log level
-  char tmp3[CMDSZ];
-  WebGetArg(PSTR("l2"), tmp3, sizeof(tmp3));  // Mqtt log level
-  char tmp4[CMDSZ];
-  WebGetArg(PSTR("l3"), tmp4, sizeof(tmp4));  // Syslog level
-  char tmp5[TOPSZ];
-  WebGetArg(PSTR("lh"), tmp5, sizeof(tmp5));  // Syslog host name
-  char tmp6[CMDSZ];
-  WebGetArg(PSTR("lp"), tmp6, sizeof(tmp6));  // Syslog port number
-  char tmp7[CMDSZ];
-  WebGetArg(PSTR("lt"), tmp7, sizeof(tmp7));  // Teleperiod
-  char command[200];
-  snprintf_P(command, sizeof(command), PSTR(D_CMND_BACKLOG "0 " D_CMND_SERIALLOG " %s;" D_CMND_WEBLOG " %s;" D_CMND_MQTTLOG " %s;" D_CMND_SYSLOG " %s;" D_CMND_LOGHOST " %s;" D_CMND_LOGPORT " %s;" D_CMND_TELEPERIOD " %s"),
-    (!strlen(tmp1)) ? STR(SERIAL_LOG_LEVEL) : tmp1,
-    (!strlen(tmp2)) ? STR(WEB_LOG_LEVEL) : tmp2,
-    (!strlen(tmp3)) ? STR(MQTT_LOG_LEVEL) : tmp3,
-    (!strlen(tmp4)) ? STR(SYS_LOG_LEVEL) : tmp4,
-    (!strlen(tmp5)) ? SYS_LOG_HOST : tmp5,
-    (!strlen(tmp6)) ? STR(SYS_LOG_PORT) : tmp6,
-    (!strlen(tmp7)) ? STR(TELE_PERIOD) : tmp7);
-  ExecuteWebCommand(command);
+  char tmp[100];                            // Allow parameter with lenght up to 99 characters
+  String cmnd = F(D_CMND_BACKLOG "0 " D_CMND_SERIALLOG " ");
+  WebGetArg(PSTR("l0"), tmp, sizeof(tmp));  // Serial log level
+  cmnd += (!strlen(tmp)) ? STR(SERIAL_LOG_LEVEL) : tmp;
+  cmnd += F(";" D_CMND_WEBLOG " ");
+  WebGetArg(PSTR("l1"), tmp, sizeof(tmp));  // Web log level
+  cmnd += (!strlen(tmp)) ? STR(WEB_LOG_LEVEL) : tmp;
+  cmnd += F(";" D_CMND_MQTTLOG " ");
+  WebGetArg(PSTR("l2"), tmp, sizeof(tmp));  // Mqtt log level
+  cmnd += (!strlen(tmp)) ? STR(MQTT_LOG_LEVEL) : tmp;
+  cmnd += F(";" D_CMND_SYSLOG " ");
+  WebGetArg(PSTR("l3"), tmp, sizeof(tmp));  // Syslog level
+  cmnd += (!strlen(tmp)) ? STR(SYS_LOG_LEVEL) : tmp;
+  cmnd += F(";" D_CMND_LOGHOST " ");
+  WebGetArg(PSTR("lh"), tmp, sizeof(tmp));  // Syslog host name
+  cmnd += (!strlen(tmp)) ? SYS_LOG_HOST : tmp;
+  cmnd += F(";" D_CMND_LOGPORT " ");
+  WebGetArg(PSTR("lp"), tmp, sizeof(tmp));  // Syslog port number
+  cmnd += (!strlen(tmp)) ? STR(SYS_LOG_PORT) : tmp;
+  cmnd += F(";" D_CMND_TELEPERIOD " ");
+  WebGetArg(PSTR("lt"), tmp, sizeof(tmp));  // Teleperiod
+  cmnd += (!strlen(tmp)) ? STR(TELE_PERIOD) : tmp;
+
+  ExecuteWebCommand((char*)cmnd.c_str());
 }
 
 /*-------------------------------------------------------------------------------------------*/
