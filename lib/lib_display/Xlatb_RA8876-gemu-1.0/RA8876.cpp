@@ -939,35 +939,44 @@ void RA8876::setAddrWindow(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1) {
   SPI.endTransaction();
 }
 
-static inline void lvgl_color_swap1(uint16_t *data, uint16_t len) { for (uint32_t i = 0; i < len; i++) (data[i] = data[i] << 8 | data[i] >> 8); }
-
+// pixel color is swapped in contrast to other controllers
 void RA8876::pushColors(uint16_t *data, uint16_t len, boolean not_swapped) {
 
   if (not_swapped == false) {
-    lvgl_color_swap1(data, len);
-  }
-
-  SPI.beginTransaction(m_spiSettings);
-  //RA8876_CS_LOW
-  while (len--) {
-
-    uint16_t color = *data++;
-
-#if 0
-    SPI.transfer(RA8876_DATA_WRITE);
-    SPI.transfer(color&0xff);
-    SPI.transfer(RA8876_DATA_WRITE);
-    SPI.transfer(color>>8);
-#else
-
-    //waitWriteFifo();
-    writeData(color&0xff);
-    //waitWriteFifo();
-    writeData(color>>8);
+    // coming from LVGL
+#ifdef ESP32
+    SPI.beginTransaction(m_spiSettings);
+    RA8876_CS_LOW
+    SPI.write(RA8876_DATA_WRITE);
+    if (lvgl_param.use_dma) {
+      // will need swapping !
+      pushPixelsDMA(data, len);
+    } else {
+      SPI.writePixels(data, len * 2);
+    }
+    RA8876_CS_HIGH
+    SPI.endTransaction();
 #endif
+  } else {
+    // coming from displaytext
+    SPI.beginTransaction(m_spiSettings);
+    RA8876_CS_LOW
+    SPI.transfer(RA8876_DATA_WRITE);
+
+#ifdef ESP32
+    SPI.writeBytes((uint8_t*)data, len * 2);
+#endif
+
+#ifdef ESP8266
+    while (len--) {
+      uint16_t color = *data++;
+      SPI.write(color&0xff);
+      SPI.write(color>>8);
+    }
+#endif
+    RA8876_CS_HIGH
+    SPI.endTransaction();
   }
-  //RA8876_CS_HIGH
-  SPI.endTransaction();
 }
 
 void RA8876::drawPixel(int16_t x, int16_t y, uint16_t color) {
@@ -1501,7 +1510,7 @@ bool RA8876::initDMA()
     .cs_ena_posttrans = 0,
     .clock_speed_hz = RA8876_SPI_SPEED,
     .input_delay_ns = 0,
-    .spics_io_num = m_csPin,
+    .spics_io_num = -1,
     .flags = SPI_DEVICE_NO_DUMMY, //0,
     .queue_size = 1,
     .pre_cb = 0, //dc_callback, //Callback to handle D/C line
