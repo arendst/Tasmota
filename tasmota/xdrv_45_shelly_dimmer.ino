@@ -99,7 +99,8 @@ struct SHD
 #ifdef USE_ENERGY_SENSOR
     uint32_t last_power_check = 0;      // Time when last power was checked
 #endif // USE_ENERGY_SENSOR
-  bool present = false;
+    bool present = false;
+    uint8_t hw_version = 0;             // Dimmer 1 = 1 Dimmer 2 = 2
 } Shd;
 
 /*********************************************************************************************\
@@ -483,8 +484,9 @@ bool ShdPacketProcess(void)
         case SHD_POLL_CMD:
             {
                 // 1 when returning fade_rate, 0 when returning wattage, brightness?
-                uint16_t unknown_0 = Shd.buffer[pos + 1] << 8 |
-                        Shd.buffer[pos + 0];
+                uint8_t hw_version_raw = Shd.buffer[pos + 0];
+
+                uint16_t unknown_0 = Shd.buffer[pos + 1];
 
                 uint16_t brightness = Shd.buffer[pos + 3] << 8 |
                         Shd.buffer[pos + 2];
@@ -518,7 +520,17 @@ bool ShdPacketProcess(void)
                 if (current_raw > 0)
                     current = 1448 / (float)current_raw;
 
+                if (hw_version_raw == 0)
+                    Shd.hw_version = 1;
+                else if (hw_version_raw == 1)
+                    Shd.hw_version = 2;
+
 #ifdef USE_ENERGY_SENSOR
+                if (Shd.hw_version == 2)
+                {
+                    Energy.current_available = true;
+                    Energy.voltage_available = true;
+                }
                 Energy.active_power[0] = wattage;
                 Energy.voltage[0] = voltage;
                 Energy.current[0] = current;
@@ -539,7 +551,7 @@ bool ShdPacketProcess(void)
                     float kWhused = (float)Energy.active_power[0] * (Rtc.utc_time - Shd.last_power_check) / 36;
 #ifdef SHELLY_DIMMER_DEBUG
                     AddLog(LOG_LEVEL_DEBUG, PSTR(SHD_LOGNAME "Adding %i mWh to todays usage from %lu to %lu"), (int)(kWhused * 10), Shd.last_power_check, Rtc.utc_time);
-#endif  // USE_ENERGY_SENSOR
+#endif  // SHELLY_DIMMER_DEBUG
                     Energy.kWhtoday += kWhused;
                     EnergyUpdateToday();
                 }
@@ -547,7 +559,7 @@ bool ShdPacketProcess(void)
 #endif  // USE_ENERGY_SENSOR
 
 #ifdef SHELLY_DIMMER_DEBUG
-                AddLog(LOG_LEVEL_DEBUG, PSTR(SHD_LOGNAME "ShdPacketProcess: Brightness:%d Power:%lu Voltage:%lu Current:%lu Fade:%d"), brightness, wattage_raw, voltage_raw, current_raw, fade_rate);
+                AddLog(LOG_LEVEL_DEBUG, PSTR(SHD_LOGNAME "ShdPacketProcess: Dimmer %d Brightness:%d Power:%lu Voltage:%lu Current:%lu Fade:%d"), Shd.hw_version, brightness, wattage_raw, voltage_raw, current_raw, fade_rate);
 #endif  // SHELLY_DIMMER_DEBUG
                 Shd.dimmer.brightness = brightness;
                 Shd.dimmer.power = wattage_raw;
@@ -840,6 +852,7 @@ bool Xnrg31(uint8_t function) {
       Energy.current_available = false;
       Energy.voltage_available = false;
 #endif // SHELLY_VOLTAGE_MON
+      Energy.use_overtemp = true;   // Use global temperature for overtemp detection
       TasmotaGlobal.energy_driver = XNRG_31;
     }
   }
