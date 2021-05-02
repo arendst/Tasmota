@@ -1086,6 +1086,37 @@ void SettingsDefaultSet2(void) {
 #ifdef USER_TEMPLATE
   String user_template = USER_TEMPLATE;
   JsonTemplate((char*)user_template.c_str());
+  user_template = (const char*) nullptr;  // Force deallocation of the String internal memory
+#endif
+
+#ifdef USE_RULES
+#ifdef USER_RULE1
+  String user_rule1 = F("Rule1 ");
+  user_rule1 += USER_RULE1;
+  ExecuteCommand((char*)user_rule1.c_str(), SRC_RESTART);
+  user_rule1 = (const char*) nullptr;     // Force deallocation of the String internal memory
+#endif
+
+#ifdef USER_RULE2
+  String user_rule2 = F("Rule2 ");
+  user_rule2 += USER_RULE2;
+  ExecuteCommand((char*)user_rule2.c_str(), SRC_RESTART);
+  user_rule2 = (const char*) nullptr;     // Force deallocation of the String internal memory
+#endif
+
+#ifdef USER_RULE3
+  String user_rule3 = F("Rule3 ");
+  user_rule3 += USER_RULE3;
+  ExecuteCommand((char*)user_rule3.c_str(), SRC_RESTART);
+  user_rule3 = (const char*) nullptr;     // Force deallocation of the String internal memory
+#endif
+#endif  // USE_RULES
+
+#ifdef USER_BACKLOG
+  String user_backlog = F("Backlog0 ");
+  user_backlog += USER_BACKLOG;
+  ExecuteCommand((char*)user_backlog.c_str(), SRC_RESTART);
+  user_backlog = (const char*) nullptr;   // Force deallocation of the String internal memory
 #endif
 }
 

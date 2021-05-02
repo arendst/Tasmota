@@ -336,11 +336,11 @@ void CmndBacklog(void) {
 #endif
     {
       // Ignore semicolon (; = end of single command) between brackets {}
-      char *next = strchr(blcommand, '\0') +1;        // Prepare for next ;
-      while ((next != nullptr) && (ChrCount(blcommand, "{") != ChrCount(blcommand, "}"))) {  // Check for valid {} count
-        next--;                                       // Select end of line
-        *next = ';';                                  // Restore ; removed by strtok()
-        next = strtok(nullptr, ";");                  // Point to begin of next string up to next ; or nullptr
+      char *next = strchr(blcommand, '\0') +1;  // Prepare for next ;
+      while ((next != nullptr) && (ChrCount(blcommand, "{") != ChrCount(blcommand, "}"))) {  // Check for valid {} pair
+        next--;                                 // Select end of line
+        *next = ';';                            // Restore ; removed by strtok()
+        next = strtok(nullptr, ";");            // Point to begin of next string up to next ; or nullptr
       }
       // Skip unnecessary command Backlog at start of blcommand
       while(true) {
@@ -747,8 +747,8 @@ void CmndSeriallog(void)
   Response_P(S_JSON_COMMAND_NVALUE_ACTIVE_NVALUE, XdrvMailbox.command, Settings.seriallog_level, TasmotaGlobal.seriallog_level);
 }
 
-void CmndRestart(void)
-{
+void CmndRestart(void) {
+  if (TasmotaGlobal.restart_flag) { return; }
   switch (XdrvMailbox.payload) {
   case 1:
     TasmotaGlobal.restart_flag = 2;
@@ -760,15 +760,19 @@ void CmndRestart(void)
     ResponseCmndChar(PSTR(D_JSON_HALTING));
     break;
   case -1:
+    TasmotaGlobal.restart_flag = 255;
     CmndCrash();    // force a crash
     break;
   case -2:
+    TasmotaGlobal.restart_flag = 255;
     CmndWDT();
     break;
   case -3:
+    TasmotaGlobal.restart_flag = 255;
     CmndBlockedLoop();
     break;
   case 99:
+    TasmotaGlobal.restart_flag = 255;
     AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION D_RESTARTING));
     EspRestart();
     break;
@@ -1863,8 +1867,8 @@ void CmndTeleperiod(void)
   ResponseCmndNumber(Settings.tele_period);
 }
 
-void CmndReset(void)
-{
+void CmndReset(void) {
+  if (TasmotaGlobal.restart_flag) { return; }
   switch (XdrvMailbox.payload) {
   case 1:
     TasmotaGlobal.restart_flag = 211;
