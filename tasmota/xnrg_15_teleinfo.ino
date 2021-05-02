@@ -309,11 +309,11 @@ void DataCallback(struct _ValueList * me, uint8_t  flags)
             // Current tariff (standard)
             else if (ilabel == LABEL_LTARF)
             {
-                if (!strcmp_P(TELEINFO_STD_TARIFF_BASE, me->value)) {
+                if (!strcmp_P(me->value, TELEINFO_STD_TARIFF_BASE)) {
                     tarif = TARIF_TH;
-                } else if (!strcmp_P(TELEINFO_STD_TARIFF_HC, me->value)) {
+                } else if (!strcmp_P(me->value, TELEINFO_STD_TARIFF_HC)) {
                     tarif = TARIF_HC;
-                } else if (!strcmp_P(TELEINFO_STD_TARIFF_HP, me->value)) {
+                } else if (!strcmp_P(me->value, TELEINFO_STD_TARIFF_HP)) {
                     tarif = TARIF_HP;
                 }
                 AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: Tariff name changed, now '%s'"), me->value);
@@ -400,9 +400,9 @@ void DataCallback(struct _ValueList * me, uint8_t  flags)
             // Contract subscribed (standard is in clear text in value)
             else if (ilabel == LABEL_NGTF)
             {
-                if (!strcmp_P(TELEINFO_STD_CONTRACT_BASE, me->value)) {
+                if (!strcmp_P(me->value, TELEINFO_STD_CONTRACT_BASE)) {
                     contrat = CONTRAT_BAS;
-                } else if (!strcmp_P(TELEINFO_STD_CONTRACT_HCHP, me->value)) {
+                } else if (!strcmp_P(me->value, TELEINFO_STD_CONTRACT_HCHP)) {
                     contrat = CONTRAT_HC;
                 }
 
