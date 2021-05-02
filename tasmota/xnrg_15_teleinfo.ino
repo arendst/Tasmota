@@ -141,12 +141,12 @@ const char kLabel[] PROGMEM =
 
 // Blacklisted label from telemetry 
 // Each label shoud be enclosed by pipe
-#ifdef ESP8266
-// dclared as progmem  for ESP8266 crash on strstr 
-const char kLabelBlacklist[]  =
-#else
-const char kLabelBlacklist[] PROGMEM =
+const char kLabelBlacklist[] 
+// declared as progmem for ESP8266 just crash and reset on strstr()
+#ifndef ESP8266
+PROGMEM 
 #endif
+    =
     "|PJOURF+1"
     "|MSG1"
     "|"
@@ -843,7 +843,6 @@ Output  : -
 Comments: -
 ====================================================================== */
 //#define MEASURE_PERF // Define to enable performance measurments
-
 void TInfoProcess(void)
 {
     static char buff[TELEINFO_PROCESS_BUFFER];
