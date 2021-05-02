@@ -1975,27 +1975,22 @@ void HandleWifiConfiguration(void) {
   WSContentStop();
 }
 
-void WifiSaveSettings(void) {
-  char tmp[100];                            // Allow parameter with lenght up to 99 characters
-  String cmnd = F(D_CMND_BACKLOG "0 " D_CMND_HOSTNAME " ");
-  WebGetArg(PSTR("h"), tmp, sizeof(tmp));   // Host name
-  cmnd += (!strlen(tmp)) ? "1" : tmp;
-  cmnd += F(";" D_CMND_CORS " ");
-  WebGetArg(PSTR("c"), tmp, sizeof(tmp));   // Cors domain
-  cmnd += (!strlen(tmp)) ? "1" : tmp;
-  cmnd += F(";" D_CMND_SSID "1 ");
-  WebGetArg(PSTR("s1"), tmp, sizeof(tmp));  // Ssid1
-  cmnd += (!strlen(tmp)) ? "1" : tmp;
-  cmnd += F(";" D_CMND_SSID "2 ");
-  WebGetArg(PSTR("s2"), tmp, sizeof(tmp));  // Ssid2
-  cmnd += (!strlen(tmp)) ? "1" : tmp;
-  cmnd += F(";" D_CMND_PASSWORD "3 ");
-  WebGetArg(PSTR("p1"), tmp, sizeof(tmp));  // Password1
-  cmnd += (!strlen(tmp)) ? "\"" : (strlen(tmp) < 5) ? "" : tmp;
-  cmnd += F(";" D_CMND_PASSWORD "4 ");
-  WebGetArg(PSTR("p2"), tmp, sizeof(tmp));  // Password2
-  cmnd += (!strlen(tmp)) ? "\"" : (strlen(tmp) < 5) ? "" : tmp;
+String AddWebCommand(const char* command, const char* webarg, const char* dflt) {
+  char arg[100];                             // Allow parameter with lenght up to 99 characters
+  WebGetArg(webarg, arg, sizeof(arg));
+  char cmnd[120];
+  snprintf_P(cmnd, sizeof(cmnd), PSTR(";%s %s"), command, (!strlen(arg)) ? dflt : (StrCaseStr_P(command, PSTR("Password")) && (strlen(arg) < 5)) ? "" : arg);
+  return String(cmnd);
+}
 
+void WifiSaveSettings(void) {
+  String cmnd = F(D_CMND_BACKLOG "0 ");
+  cmnd += AddWebCommand(PSTR(D_CMND_HOSTNAME), PSTR("h"), PSTR("1"));
+  cmnd += AddWebCommand(PSTR(D_CMND_CORS), PSTR("c"), PSTR("1"));
+  cmnd += AddWebCommand(PSTR(D_CMND_SSID "1"), PSTR("s1"), PSTR("1"));
+  cmnd += AddWebCommand(PSTR(D_CMND_SSID "2"), PSTR("s2"), PSTR("1"));
+  cmnd += AddWebCommand(PSTR(D_CMND_PASSWORD "3"), PSTR("p1"), PSTR("\""));
+  cmnd += AddWebCommand(PSTR(D_CMND_PASSWORD "4"), PSTR("p2"), PSTR("\""));
   ExecuteWebCommand((char*)cmnd.c_str());
 }
 
@@ -2039,29 +2034,14 @@ void HandleLoggingConfiguration(void) {
 }
 
 void LoggingSaveSettings(void) {
-  char tmp[100];                            // Allow parameter with lenght up to 99 characters
-  String cmnd = F(D_CMND_BACKLOG "0 " D_CMND_SERIALLOG " ");
-  WebGetArg(PSTR("l0"), tmp, sizeof(tmp));  // Serial log level
-  cmnd += (!strlen(tmp)) ? STR(SERIAL_LOG_LEVEL) : tmp;
-  cmnd += F(";" D_CMND_WEBLOG " ");
-  WebGetArg(PSTR("l1"), tmp, sizeof(tmp));  // Web log level
-  cmnd += (!strlen(tmp)) ? STR(WEB_LOG_LEVEL) : tmp;
-  cmnd += F(";" D_CMND_MQTTLOG " ");
-  WebGetArg(PSTR("l2"), tmp, sizeof(tmp));  // Mqtt log level
-  cmnd += (!strlen(tmp)) ? STR(MQTT_LOG_LEVEL) : tmp;
-  cmnd += F(";" D_CMND_SYSLOG " ");
-  WebGetArg(PSTR("l3"), tmp, sizeof(tmp));  // Syslog level
-  cmnd += (!strlen(tmp)) ? STR(SYS_LOG_LEVEL) : tmp;
-  cmnd += F(";" D_CMND_LOGHOST " ");
-  WebGetArg(PSTR("lh"), tmp, sizeof(tmp));  // Syslog host name
-  cmnd += (!strlen(tmp)) ? SYS_LOG_HOST : tmp;
-  cmnd += F(";" D_CMND_LOGPORT " ");
-  WebGetArg(PSTR("lp"), tmp, sizeof(tmp));  // Syslog port number
-  cmnd += (!strlen(tmp)) ? STR(SYS_LOG_PORT) : tmp;
-  cmnd += F(";" D_CMND_TELEPERIOD " ");
-  WebGetArg(PSTR("lt"), tmp, sizeof(tmp));  // Teleperiod
-  cmnd += (!strlen(tmp)) ? STR(TELE_PERIOD) : tmp;
-
+  String cmnd = F(D_CMND_BACKLOG "0 ");
+  cmnd += AddWebCommand(PSTR(D_CMND_SERIALLOG), PSTR("l0"), STR(SERIAL_LOG_LEVEL));
+  cmnd += AddWebCommand(PSTR(D_CMND_WEBLOG), PSTR("l1"), STR(WEB_LOG_LEVEL));
+  cmnd += AddWebCommand(PSTR(D_CMND_MQTTLOG), PSTR("l2"), STR(MQTT_LOG_LEVEL));
+  cmnd += AddWebCommand(PSTR(D_CMND_SYSLOG), PSTR("l3"), STR(SYS_LOG_LEVEL));
+  cmnd += AddWebCommand(PSTR(D_CMND_LOGHOST), PSTR("lh"), PSTR("1"));
+  cmnd += AddWebCommand(PSTR(D_CMND_LOGPORT), PSTR("lp"), PSTR("1"));
+  cmnd += AddWebCommand(PSTR(D_CMND_TELEPERIOD), PSTR("lt"), PSTR("1"));
   ExecuteWebCommand((char*)cmnd.c_str());
 }
 
@@ -2130,39 +2110,30 @@ void HandleOtherConfiguration(void) {
 }
 
 void OtherSaveSettings(void) {
-  char tmp[100];                            // Allow parameter with lenght up to 99 characters
-  String cmnd = F(D_CMND_BACKLOG "0 " D_CMND_WEBPASSWORD "2 ");
-  WebGetArg(PSTR("wp"), tmp, sizeof(tmp));  // Web password
-  cmnd += (!strlen(tmp)) ? "\"" : (strlen(tmp) < 5) ? "" : tmp;
+  String cmnd = F(D_CMND_BACKLOG "0 ");
+  cmnd += AddWebCommand(PSTR(D_CMND_WEBPASSWORD "2"), PSTR("wp"), PSTR("\""));
   cmnd += F(";" D_CMND_SO "3 ");
   cmnd += Webserver->hasArg(F("b1"));
-  cmnd += F(";" D_CMND_DEVICENAME " ");
-  WebGetArg(PSTR("dn"), tmp, sizeof(tmp));  // Device name
-  cmnd += (!strlen(tmp)) ? "\"" : tmp;
-
+  cmnd += AddWebCommand(PSTR(D_CMND_DEVICENAME), PSTR("dn"), PSTR("\""));
   char webindex[5];
-  char tmp2[110];
+  char cmnd2[24];                             // ";Module 0;Template "
   for (uint32_t i = 0; i < MAX_FRIENDLYNAMES; i++) {
     snprintf_P(webindex, sizeof(webindex), PSTR("a%d"), i);
-    WebGetArg(webindex, tmp, sizeof(tmp));  // Friendly name 1 to 8
-    snprintf_P(tmp2, sizeof(tmp2), PSTR(";" D_CMND_FN "%d %s"), i +1, (!strlen(tmp)) ? "\"" : tmp);
-    cmnd += tmp2;
+    snprintf_P(cmnd2, sizeof(cmnd2), PSTR(D_CMND_FN "%d"), i +1);
+    cmnd += AddWebCommand(cmnd2, webindex, PSTR("\""));
   }
 
 #ifdef USE_EMULATION
 #if defined(USE_EMULATION_WEMO) || defined(USE_EMULATION_HUE)
-  WebGetArg(PSTR("b2"), tmp, sizeof(tmp));  // Emulation
-  cmnd += F(";" D_CMND_EMULATION " ");
-  cmnd += (!strlen(tmp)) ? "0" : tmp;
+  cmnd += AddWebCommand(PSTR(D_CMND_EMULATION), PSTR("b2"), PSTR("0"));
 #endif  // USE_EMULATION_WEMO || USE_EMULATION_HUE
 #endif  // USE_EMULATION
 
   String tmpl = Webserver->arg(F("t1"));    // {"NAME":"12345678901234","GPIO":[255,255,255,255,255,255,255,255,255,255,255,255,255],"FLAG":255,"BASE":255,"CMND":"SO123 1;SO99 0"}
   if (tmpl.length() && (tmpl.length() < MQTT_MAX_PACKET_SIZE)) {
-    snprintf_P(tmp, sizeof(tmp), PSTR(";%s" D_CMND_TEMPLATE " "), (Webserver->hasArg(F("t2"))) ? PSTR(D_CMND_MODULE " 0;") : "");
-    cmnd += tmp + tmpl;
+    snprintf_P(cmnd2, sizeof(cmnd2), PSTR(";%s" D_CMND_TEMPLATE " "), (Webserver->hasArg(F("t2"))) ? PSTR(D_CMND_MODULE " 0;") : "");
+    cmnd += cmnd2 + tmpl;
   }
-
   ExecuteWebCommand((char*)cmnd.c_str());
 }
 

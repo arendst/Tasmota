@@ -516,9 +516,9 @@ char* UpperCase_P(char* dest, const char* source)
 }
 
 char* StrCaseStr_P(const char* source, const char* search) {
-  char case_source[strlen(source) +1];
+  char case_source[strlen_P(source) +1];
   UpperCase_P(case_source, source);
-  char case_search[strlen(search) +1];
+  char case_search[strlen_P(search) +1];
   UpperCase_P(case_search, search);
   return strstr(case_source, case_search);
 }
