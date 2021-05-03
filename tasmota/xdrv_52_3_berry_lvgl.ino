@@ -444,8 +444,11 @@ extern "C" {
   int lv0_start(bvm *vm);
   int lv0_start(bvm *vm) {
     int32_t argc = be_top(vm); // Get the number of arguments
-    if (argc == 1 && be_isstring(vm, 1)) {
-      const char * uconfig = be_tostring(vm, 1);
+    if (argc == 0 || (argc == 1 && be_isstring(vm, 1))) {
+      const char * uconfig = nullptr;
+      if (argc == 1) {
+        be_tostring(vm, 1);
+      }
       start_lvgl(uconfig);
       be_return_nil(vm);
     }
