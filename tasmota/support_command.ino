@@ -345,13 +345,14 @@ void CmndBacklog(void) {
       // Skip unnecessary command Backlog at start of blcommand
       while(true) {
         blcommand = Trim(blcommand);
-        if (!strncasecmp_P(blcommand, PSTR(D_CMND_BACKLOG), strlen(D_CMND_BACKLOG))) {
+        if (0 == strncasecmp_P(blcommand, PSTR(D_CMND_BACKLOG), strlen(D_CMND_BACKLOG))) {
           blcommand += strlen(D_CMND_BACKLOG);
         } else {
           break;
         }
       }
-      if (*blcommand != '\0') {
+      // Do not allow command Reset in backlog
+      if ((*blcommand != '\0') && (strncasecmp_P(blcommand, PSTR(D_CMND_RESET), strlen(D_CMND_RESET)) != 0))  {
 #ifdef SUPPORT_IF_STATEMENT
         if (backlog.size() < MAX_BACKLOG) {
           backlog.add(blcommand);
@@ -747,8 +748,8 @@ void CmndSeriallog(void)
   Response_P(S_JSON_COMMAND_NVALUE_ACTIVE_NVALUE, XdrvMailbox.command, Settings.seriallog_level, TasmotaGlobal.seriallog_level);
 }
 
-void CmndRestart(void) {
-  if (TasmotaGlobal.restart_flag) { return; }
+void CmndRestart(void)
+{
   switch (XdrvMailbox.payload) {
   case 1:
     TasmotaGlobal.restart_flag = 2;
@@ -760,19 +761,15 @@ void CmndRestart(void) {
     ResponseCmndChar(PSTR(D_JSON_HALTING));
     break;
   case -1:
-    TasmotaGlobal.restart_flag = 255;
     CmndCrash();    // force a crash
     break;
   case -2:
-    TasmotaGlobal.restart_flag = 255;
     CmndWDT();
     break;
   case -3:
-    TasmotaGlobal.restart_flag = 255;
     CmndBlockedLoop();
     break;
   case 99:
-    TasmotaGlobal.restart_flag = 255;
     AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION D_RESTARTING));
     EspRestart();
     break;
@@ -1867,8 +1864,8 @@ void CmndTeleperiod(void)
   ResponseCmndNumber(Settings.tele_period);
 }
 
-void CmndReset(void) {
-  if (TasmotaGlobal.restart_flag) { return; }
+void CmndReset(void)
+{
   switch (XdrvMailbox.payload) {
   case 1:
     TasmotaGlobal.restart_flag = 211;
