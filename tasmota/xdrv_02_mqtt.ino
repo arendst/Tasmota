@@ -240,14 +240,14 @@ String azurePreSharedKeytoSASToken(char *iotHubFQDN, const char *deviceId, const
 
   // need to base64 decode the Preshared key and the length
   int base64_decoded_device_length = decode_base64((unsigned char*)preSharedKey, decodedPSK);
-  
+
   // create the sha256 hmac and hash the data
   br_sha256_init(&sha256_context);
   br_hmac_key_init(&hmac_key_context, sha256_context.vtable, decodedPSK, base64_decoded_device_length);
   br_hmac_init(&hmac_context, &hmac_key_context, 32);
   br_hmac_update(&hmac_context, dataToSign, sizeof(dataToSign)-1);
   br_hmac_out(&hmac_context, encryptedSignature);
-  
+
   // base64 decode the HMAC to a char
   encode_base64(encryptedSignature, br_hmac_size(&hmac_context), encodedSignature);
 
@@ -923,11 +923,17 @@ void CmndMqttUser(void) {
 }
 
 void CmndMqttPassword(void) {
+  bool show_asterisk = (2 == XdrvMailbox.index);
   if (XdrvMailbox.data_len > 0) {
     SettingsUpdateText(SET_MQTT_PWD, (SC_CLEAR == Shortcut()) ? "" : (SC_DEFAULT == Shortcut()) ? PSTR(MQTT_PASS) : XdrvMailbox.data);
-    ResponseCmndChar(SettingsText(SET_MQTT_PWD));
+    if (!show_asterisk) {
+      ResponseCmndChar(SettingsText(SET_MQTT_PWD));
+    }
     TasmotaGlobal.restart_flag = 2;
   } else {
+    show_asterisk = true;
+  }
+  if (show_asterisk) {
     Response_P(S_JSON_COMMAND_ASTERISK, XdrvMailbox.command);
   }
 }
@@ -1504,39 +1510,20 @@ void HandleMqttConfiguration(void)
   WSContentStop();
 }
 
-void MqttSaveSettings(void)
-{
-  char tmp[TOPSZ];
-  char stemp[TOPSZ];
-  char stemp2[TOPSZ];
-
-  WebGetArg(PSTR("mt"), tmp, sizeof(tmp));
-  strlcpy(stemp, (!strlen(tmp)) ? MQTT_TOPIC : tmp, sizeof(stemp));
-  MakeValidMqtt(0, stemp);
-  WebGetArg(PSTR("mf"), tmp, sizeof(tmp));
-  strlcpy(stemp2, (!strlen(tmp)) ? MQTT_FULLTOPIC : tmp, sizeof(stemp2));
-  MakeValidMqtt(1, stemp2);
-  if ((strcmp(stemp, SettingsText(SET_MQTT_TOPIC))) || (strcmp(stemp2, SettingsText(SET_MQTT_FULLTOPIC)))) {
-    Response_P((Settings.flag.mqtt_offline) ? S_LWT_OFFLINE : "");  // SetOption10 - Control MQTT LWT message format
-    MqttPublishPrefixTopic_P(TELE, S_LWT, true);                // Offline or remove previous retained topic
-  }
-  SettingsUpdateText(SET_MQTT_TOPIC, stemp);
-  SettingsUpdateText(SET_MQTT_FULLTOPIC, stemp2);
-  WebGetArg(PSTR("mh"), tmp, sizeof(tmp));
-  SettingsUpdateText(SET_MQTT_HOST, (!strlen(tmp)) ? PSTR(MQTT_HOST) : (!strcmp(tmp,"0")) ? "" : tmp);
-  WebGetArg(PSTR("ml"), tmp, sizeof(tmp));
-  Settings.mqtt_port = (!strlen(tmp)) ? MQTT_PORT : atoi(tmp);
+void MqttSaveSettings(void) {
+  String cmnd = F(D_CMND_BACKLOG "0 ");
+  cmnd += AddWebCommand(PSTR(D_CMND_MQTTHOST), PSTR("mh"), PSTR("1"));
+  cmnd += AddWebCommand(PSTR(D_CMND_MQTTPORT), PSTR("ml"), PSTR("1"));
+  cmnd += AddWebCommand(PSTR(D_CMND_MQTTCLIENT), PSTR("mc"), PSTR("1"));
+  cmnd += AddWebCommand(PSTR(D_CMND_MQTTUSER), PSTR("mu"), PSTR("1"));
+  cmnd += AddWebCommand(PSTR(D_CMND_MQTTPASSWORD "2"), PSTR("mp"), PSTR("\""));
+  cmnd += AddWebCommand(PSTR(D_CMND_TOPIC), PSTR("mt"), PSTR("1"));
+  cmnd += AddWebCommand(PSTR(D_CMND_FULLTOPIC), PSTR("mf"), PSTR("1"));
 #ifdef USE_MQTT_TLS
-  Settings.flag4.mqtt_tls = Webserver->hasArg(F("b3"));  // SetOption102 - Enable MQTT TLS
+  cmnd += F(";" D_CMND_SO "102 ");
+  cmnd += Webserver->hasArg(F("b3"));  // SetOption102 - Enable MQTT TLS
 #endif
-  WebGetArg(PSTR("mc"), tmp, sizeof(tmp));
-  SettingsUpdateText(SET_MQTT_CLIENT, (!strlen(tmp)) ? PSTR(MQTT_CLIENT_ID) : tmp);
-  WebGetArg(PSTR("mu"), tmp, sizeof(tmp));
-  SettingsUpdateText(SET_MQTT_USER, (!strlen(tmp)) ? PSTR(MQTT_USER) : (!strcmp(tmp,"0")) ? "" : tmp);
-  WebGetArg(PSTR("mp"), tmp, sizeof(tmp));
-  SettingsUpdateText(SET_MQTT_PWD, (!strlen(tmp)) ? "" : (!strcmp(tmp, D_ASTERISK_PWD)) ? SettingsText(SET_MQTT_PWD) : tmp);
-  AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT D_CMND_MQTTHOST " %s, " D_CMND_MQTTPORT " %d, " D_CMND_MQTTCLIENT " %s, " D_CMND_MQTTUSER " %s, " D_CMND_TOPIC " %s, " D_CMND_FULLTOPIC " %s"),
-    SettingsText(SET_MQTT_HOST), Settings.mqtt_port, SettingsText(SET_MQTT_CLIENT), SettingsText(SET_MQTT_USER), SettingsText(SET_MQTT_TOPIC), SettingsText(SET_MQTT_FULLTOPIC));
+  ExecuteWebCommand((char*)cmnd.c_str());
 }
 #endif  // USE_WEBSERVER
 
