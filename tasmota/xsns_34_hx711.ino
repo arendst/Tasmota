@@ -445,7 +445,7 @@ void HxShow(bool json)
   dtostrfd(weight, Settings.flag2.weight_resolution, weight_chr);
 
   if (json) {
-    ResponseAppend_P(PSTR(",\"HX711\":{\"" D_JSON_WEIGHT "\":%s%s, \"" D_JSON_WEIGHT_RAW "\":%d}"), weight_chr, scount, Hx.raw);
+    ResponseAppend_P(PSTR(",\"HX711\":{\"" D_JSON_WEIGHT "\":%s%s,\"" D_JSON_WEIGHT_RAW "\":%d}"), weight_chr, scount, Hx.raw);
 #ifdef USE_WEBSERVER
   } else {
     WSContentSend_PD(HTTP_HX711_WEIGHT, weight_chr);
@@ -492,30 +492,32 @@ void HandleHxAction(void)
 
   AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_CONFIGURE_HX711));
 
+  char stemp1[20];
+
   if (Webserver->hasArg("save")) {
-    HxSaveSettings();
+    String cmnd = F("Sensor34 6 ");
+    WebGetArg("p2", stemp1, sizeof(stemp1));
+    cmnd += (!strlen(stemp1)) ? 0 : (unsigned long)(CharToFloat(stemp1) * 1000);
+    ExecuteWebCommand((char*)cmnd.c_str());
+
     HandleConfiguration();
     return;
   }
 
-  char stemp1[20];
-
   if (Webserver->hasArg("reset")) {
     snprintf_P(stemp1, sizeof(stemp1), PSTR("Sensor34 1"));  // Reset
-    ExecuteWebCommand(stemp1, SRC_WEBGUI);
+    ExecuteWebCommand(stemp1);
 
     HandleRoot();  // Return to main screen
     return;
   }
 
   if (Webserver->hasArg("calibrate")) {
+    String cmnd = F(D_CMND_BACKLOG "0 Sensor34 3 ");
     WebGetArg("p1", stemp1, sizeof(stemp1));
-    Settings.weight_reference = (!strlen(stemp1)) ? 0 : (unsigned long)(CharToFloat(stemp1) * 1000);
-
-    HxLogUpdates();
-
-    snprintf_P(stemp1, sizeof(stemp1), PSTR("Sensor34 2"));  // Start calibration
-    ExecuteWebCommand(stemp1, SRC_WEBGUI);
+    cmnd += (!strlen(stemp1)) ? 0 : (unsigned long)(CharToFloat(stemp1) * 1000);
+    cmnd += F(";Sensor34 2");  // Start calibration
+    ExecuteWebCommand((char*)cmnd.c_str());
 
     HandleRoot();  // Return to main screen
     return;
@@ -531,27 +533,6 @@ void HandleHxAction(void)
   WSContentSpaceButton(BUTTON_CONFIGURATION);
   WSContentStop();
 }
-
-void HxSaveSettings(void)
-{
-  char tmp[100];
-
-  WebGetArg("p2", tmp, sizeof(tmp));
-  Settings.weight_item = (!strlen(tmp)) ? 0 : (unsigned long)(CharToFloat(tmp) * 10000);
-
-  HxLogUpdates();
-}
-
-void HxLogUpdates(void)
-{
-  char weigth_ref_chr[33];
-  dtostrfd((float)Settings.weight_reference / 1000, Settings.flag2.weight_resolution, weigth_ref_chr);
-  char weigth_item_chr[33];
-  dtostrfd((float)Settings.weight_item / 10000, 4, weigth_item_chr);
-
-  AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_JSON_WEIGHT_REF " %s, " D_JSON_WEIGHT_ITEM " %s"), weigth_ref_chr, weigth_item_chr);
-}
-
 #endif  // USE_HX711_GUI
 #endif  // USE_WEBSERVER
 
