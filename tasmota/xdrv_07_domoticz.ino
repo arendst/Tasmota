@@ -602,31 +602,27 @@ void HandleDomoticzConfiguration(void) {
 }
 
 void DomoticzSaveSettings(void) {
-  char tmp1[CMDSZ];
-  WebGetArg(PSTR("ut"), tmp1, sizeof(tmp1));
-  char command[500];
-  snprintf_P(command, sizeof(command), PSTR(D_CMND_BACKLOG "0 " D_PRFX_DOMOTICZ D_CMND_UPDATETIMER " %s"),
-    (!strlen(tmp1)) ? STR(DOMOTICZ_UPDATE_TIMER) : tmp1);
-  char arg_idx[8];
-  char tmp2[CMDSZ];
-  char tmp3[CMDSZ];
+  String cmnd = F(D_CMND_BACKLOG "0 ");
+  cmnd += AddWebCommand(PSTR(D_PRFX_DOMOTICZ D_CMND_UPDATETIMER), PSTR("ut"), STR(DOMOTICZ_UPDATE_TIMER));
+  char arg_idx[5];
+  char cmnd2[24];
   for (uint32_t i = 1; i <= MAX_DOMOTICZ_IDX; i++) {
+    snprintf_P(cmnd2, sizeof(cmnd2), PSTR(D_PRFX_DOMOTICZ D_CMND_IDX "%d"), i);
     snprintf_P(arg_idx, sizeof(arg_idx), PSTR("r%d"), i -1);
-    WebGetArg(arg_idx, tmp1, sizeof(tmp1));
+    cmnd += AddWebCommand(cmnd2, arg_idx, PSTR("0"));
+    snprintf_P(cmnd2, sizeof(cmnd2), PSTR(D_PRFX_DOMOTICZ D_CMND_KEYIDX "%d"), i);
     arg_idx[0] = 'k';
-    WebGetArg(arg_idx, tmp2, sizeof(tmp2));
+    cmnd += AddWebCommand(cmnd2, arg_idx, PSTR("0"));
+    snprintf_P(cmnd2, sizeof(cmnd2), PSTR(D_PRFX_DOMOTICZ D_CMND_SWITCHIDX "%d"), i);
     arg_idx[0] = 's';
-    WebGetArg(arg_idx, tmp3, sizeof(tmp3));
-    snprintf_P(command, sizeof(command),PSTR("%s;" D_PRFX_DOMOTICZ D_CMND_IDX "%d %s;" D_PRFX_DOMOTICZ D_CMND_KEYIDX "%d %s;" D_PRFX_DOMOTICZ D_CMND_SWITCHIDX "%d %s"),
-      command, i, (!strlen(tmp1)) ? "0" : tmp1, i, (!strlen(tmp2)) ? "0" : tmp2, i, (!strlen(tmp3)) ? "0" : tmp3);
+    cmnd += AddWebCommand(cmnd2, arg_idx, PSTR("0"));
   }
   for (uint32_t i = 1; i <= DZ_MAX_SENSORS; i++) {
+    snprintf_P(cmnd2, sizeof(cmnd2), PSTR(D_PRFX_DOMOTICZ D_CMND_SENSORIDX "%d"), i);
     snprintf_P(arg_idx, sizeof(arg_idx), PSTR("l%d"), i -1);
-    WebGetArg(arg_idx, tmp1, sizeof(tmp1));
-    snprintf_P(command, sizeof(command),PSTR("%s;" D_PRFX_DOMOTICZ D_CMND_SENSORIDX "%d %s"),
-      command, i, (!strlen(tmp1)) ? "0" : tmp1);
+    cmnd += AddWebCommand(cmnd2, arg_idx, PSTR("0"));
   }
-  ExecuteWebCommand(command);  // Note: beware of max number of commands in backlog currently 30 (MAX_BACKLOG)
+  ExecuteWebCommand((char*)cmnd.c_str());  // Note: beware of max number of commands in backlog currently 30 (MAX_BACKLOG)
 }
 #endif  // USE_WEBSERVER
 

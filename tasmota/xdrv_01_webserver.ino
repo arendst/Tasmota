@@ -420,12 +420,39 @@ static void WebGetArg(const char* arg, char* out, size_t max)
 //  out[max-1] = '\0';  // Ensure terminating NUL
 }
 
-String AddWebCommand(const char* command, const char* webarg, const char* dflt) {
-  char arg[100];                             // Allow parameter with lenght up to 99 characters
-  WebGetArg(webarg, arg, sizeof(arg));
-  char cmnd[120];
-  snprintf_P(cmnd, sizeof(cmnd), PSTR(";%s %s"), command, (!strlen(arg)) ? dflt : (StrCaseStr_P(command, PSTR("Password")) && (strlen(arg) < 5)) ? "" : arg);
+String AddWebCommand(const char* command, const char* arg, const char* dflt) {
+  // OK but fixed max argument
+  char param[200];                             // Allow parameter with lenght up to 199 characters
+  WebGetArg(arg, param, sizeof(param));
+  uint32_t len = strlen(param);
+  char cmnd[232];
+  snprintf_P(cmnd, sizeof(cmnd), PSTR(";%s %s"), command, (0 == len) ? dflt : (StrCaseStr_P(command, PSTR("Password")) && (len < 5)) ? "" : param);
   return String(cmnd);
+
+/*
+  // Any argument size (within stack space) +48 bytes
+  String param = Webserver->arg((const __FlashStringHelper *)arg);
+  uint32_t len = param.length();
+//  char cmnd[len + strlen_P(command) + strlen_P(dflt) + 4];
+  char cmnd[64 + len];
+  snprintf_P(cmnd, sizeof(cmnd), PSTR(";%s %s"), command, (0 == len) ? dflt : (StrCaseStr_P(command, PSTR("Password")) && (len < 5)) ? "" : param.c_str());
+  return String(cmnd);
+*/
+/*
+  // Exception (3) +24 bytes
+  String result = F(";");
+  result += command;
+  result += F(" ");
+  String param = Webserver->arg((const __FlashStringHelper *)arg);
+  uint32_t len = param.length();
+  if (0 == len) {
+    result += dflt;
+  }
+  else if (!(StrCaseStr_P(command, PSTR("Password")) && (len < 5))) {
+    result += param;
+  }
+  return result;
+*/
 }
 
 static bool WifiIsInManagerMode(){
