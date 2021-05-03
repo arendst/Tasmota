@@ -420,6 +420,14 @@ static void WebGetArg(const char* arg, char* out, size_t max)
 //  out[max-1] = '\0';  // Ensure terminating NUL
 }
 
+String AddWebCommand(const char* command, const char* webarg, const char* dflt) {
+  char arg[100];                             // Allow parameter with lenght up to 99 characters
+  WebGetArg(webarg, arg, sizeof(arg));
+  char cmnd[120];
+  snprintf_P(cmnd, sizeof(cmnd), PSTR(";%s %s"), command, (!strlen(arg)) ? dflt : (StrCaseStr_P(command, PSTR("Password")) && (strlen(arg) < 5)) ? "" : arg);
+  return String(cmnd);
+}
+
 static bool WifiIsInManagerMode(){
   return (HTTP_MANAGER == Web.state || HTTP_MANAGER_RESET_ONLY == Web.state);
 }
@@ -1973,14 +1981,6 @@ void HandleWifiConfiguration(void) {
     WSContentSpaceButton(BUTTON_CONFIGURATION);
   }
   WSContentStop();
-}
-
-String AddWebCommand(const char* command, const char* webarg, const char* dflt) {
-  char arg[100];                             // Allow parameter with lenght up to 99 characters
-  WebGetArg(webarg, arg, sizeof(arg));
-  char cmnd[120];
-  snprintf_P(cmnd, sizeof(cmnd), PSTR(";%s %s"), command, (!strlen(arg)) ? dflt : (StrCaseStr_P(command, PSTR("Password")) && (strlen(arg) < 5)) ? "" : arg);
-  return String(cmnd);
 }
 
 void WifiSaveSettings(void) {
