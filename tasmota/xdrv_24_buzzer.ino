@@ -37,6 +37,7 @@ struct BUZZER {
   uint8_t state = 0;
   uint8_t tune_size = 0;
   uint8_t size = 0;
+  uint8_t sleep;                   // Current copy of TasmotaGlobal.sleep
 } Buzzer;
 
 /*********************************************************************************************/
@@ -93,13 +94,14 @@ void BuzzerBeep(uint32_t count, uint32_t on, uint32_t off, uint32_t tune, uint32
 
   Buzzer.enable = (Buzzer.count > 0);
   if (Buzzer.enable) {
+    Buzzer.sleep = TasmotaGlobal.sleep;
     if (Settings.sleep > PWM_MAX_SLEEP) {
       TasmotaGlobal.sleep = PWM_MAX_SLEEP;   // Set a maxumum value of 10 milliseconds to ensure that buzzer periods are a bit more accurate
     } else {
       TasmotaGlobal.sleep = Settings.sleep;  // Or keep the current sleep if it's lower than 10
     }
   } else {
-    TasmotaGlobal.sleep = Settings.sleep;    // Restore original sleep
+    TasmotaGlobal.sleep = Buzzer.sleep;      // Restore original sleep
     BuzzerSet(0);
   }
 }
@@ -165,6 +167,7 @@ void BuzzerEvery100mSec(void) {
       }
       BuzzerSet(Buzzer.state);
     } else {
+      TasmotaGlobal.sleep = Buzzer.sleep;      // Restore original sleep
       Buzzer.enable = false;
     }
   }
