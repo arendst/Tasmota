@@ -14,7 +14,7 @@
 
 // Local pointer for file managment
 #include <FS.h>
-extern FS *dfsp;
+extern FS *ufsp;
 
 /* this file contains configuration for the file system. */
 
@@ -94,9 +94,9 @@ BERRY_API char* be_readstring(char *buffer, size_t size)
 
 void* be_fopen(const char *filename, const char *modes)
 {
-    if (dfsp != nullptr && filename != nullptr && modes != nullptr) {
+    if (ufsp != nullptr && filename != nullptr && modes != nullptr) {
         // Serial.printf("be_fopen filename=%s, modes=%s\n", filename, modes);
-        File f = dfsp->open(filename, modes);       // returns an object, not a pointer
+        File f = ufsp->open(filename, modes);       // returns an object, not a pointer
         if (f) {
             File * f_ptr = new File(f);                 // copy to dynamic object
             *f_ptr = f;                                 // TODO is this necessary?
@@ -110,7 +110,7 @@ void* be_fopen(const char *filename, const char *modes)
 int be_fclose(void *hfile)
 {
     // Serial.printf("be_fclose\n");
-    if (dfsp != nullptr && hfile != nullptr) {
+    if (ufsp != nullptr && hfile != nullptr) {
         File * f_ptr = (File*) hfile;
         f_ptr->close();
         delete f_ptr;
@@ -123,7 +123,7 @@ int be_fclose(void *hfile)
 size_t be_fwrite(void *hfile, const void *buffer, size_t length)
 {
     // Serial.printf("be_fwrite %d\n", length);
-    if (dfsp != nullptr && hfile != nullptr && buffer != nullptr) {
+    if (ufsp != nullptr && hfile != nullptr && buffer != nullptr) {
         File * f_ptr = (File*) hfile;
         return f_ptr->write((const uint8_t*) buffer, length);
     }
@@ -134,7 +134,7 @@ size_t be_fwrite(void *hfile, const void *buffer, size_t length)
 size_t be_fread(void *hfile, void *buffer, size_t length)
 {
     // Serial.printf("be_fread %d\n", length);
-    if (dfsp != nullptr && hfile != nullptr && buffer != nullptr) {
+    if (ufsp != nullptr && hfile != nullptr && buffer != nullptr) {
         File * f_ptr = (File*) hfile;
         int32_t ret = f_ptr->read((uint8_t*) buffer, length);
         if (ret >= 0) {
@@ -150,7 +150,7 @@ char* be_fgets(void *hfile, void *buffer, int size)
 {
     // Serial.printf("be_fgets %d\n", size);
     uint8_t * buf = (uint8_t*) buffer;
-    if (dfsp != nullptr && hfile != nullptr && buffer != nullptr && size > 0) {
+    if (ufsp != nullptr && hfile != nullptr && buffer != nullptr && size > 0) {
         File * f_ptr = (File*) hfile;
         int ret = f_ptr->readBytesUntil('\n', buf, size - 1);
         if (ret >= 0) {
@@ -165,7 +165,7 @@ char* be_fgets(void *hfile, void *buffer, int size)
 int be_fseek(void *hfile, long offset)
 {
     // Serial.printf("be_fseek %d\n", offset);
-    if (dfsp != nullptr && hfile != nullptr) {
+    if (ufsp != nullptr && hfile != nullptr) {
         File * f_ptr = (File*) hfile;
         if (f_ptr->seek(offset)) {
             return 0;       // success
@@ -178,7 +178,7 @@ int be_fseek(void *hfile, long offset)
 long int be_ftell(void *hfile)
 {
     // Serial.printf("be_ftell\n");
-    if (dfsp != nullptr && hfile != nullptr) {
+    if (ufsp != nullptr && hfile != nullptr) {
         File * f_ptr = (File*) hfile;
         return f_ptr->position();
     }
@@ -189,7 +189,7 @@ long int be_ftell(void *hfile)
 long int be_fflush(void *hfile)
 {
     // Serial.printf("be_fflush\n");
-    if (dfsp != nullptr && hfile != nullptr) {
+    if (ufsp != nullptr && hfile != nullptr) {
         File * f_ptr = (File*) hfile;
         f_ptr->flush();
     }
@@ -200,7 +200,7 @@ long int be_fflush(void *hfile)
 size_t be_fsize(void *hfile)
 {
     // Serial.printf("be_fsize\n");
-    if (dfsp != nullptr && hfile != nullptr) {
+    if (ufsp != nullptr && hfile != nullptr) {
         File * f_ptr = (File*) hfile;
         return f_ptr->size();
     }
