@@ -25,8 +25,7 @@
   Modified 8 May 2015 by Hristo Gochkov (proper post and file upload handling)
 */
 
-#include "my_user_config.h"
-#include "tasmota_configurations.h"
+#include "tasmota_options.h"
 
 #if defined(ESP8266) && defined(USE_TLS)
 #include <stdint.h>
