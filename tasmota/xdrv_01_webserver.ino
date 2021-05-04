@@ -421,6 +421,7 @@ static void WebGetArg(const char* arg, char* out, size_t max)
 }
 
 String AddWebCommand(const char* command, const char* arg, const char* dflt) {
+/*
   // OK but fixed max argument
   char param[200];                             // Allow parameter with lenght up to 199 characters
   WebGetArg(arg, param, sizeof(param));
@@ -428,7 +429,7 @@ String AddWebCommand(const char* command, const char* arg, const char* dflt) {
   char cmnd[232];
   snprintf_P(cmnd, sizeof(cmnd), PSTR(";%s %s"), command, (0 == len) ? dflt : (StrCaseStr_P(command, PSTR("Password")) && (len < 5)) ? "" : param);
   return String(cmnd);
-
+*/
 /*
   // Any argument size (within stack space) +48 bytes
   String param = Webserver->arg((const __FlashStringHelper *)arg);
@@ -438,21 +439,30 @@ String AddWebCommand(const char* command, const char* arg, const char* dflt) {
   snprintf_P(cmnd, sizeof(cmnd), PSTR(";%s %s"), command, (0 == len) ? dflt : (StrCaseStr_P(command, PSTR("Password")) && (len < 5)) ? "" : param.c_str());
   return String(cmnd);
 */
-/*
-  // Exception (3) +24 bytes
+  // Any argument size (within heap space) +24 bytes
+  // Exception (3) if not first moved from flash to stack
+  // Exception (3) if not using __FlashStringHelper
+  // Exception (3) if not FPSTR()
+//  char rcommand[strlen_P(command) +1];
+//  snprintf_P(rcommand, sizeof(rcommand), command);
+//  char rdflt[strlen_P(dflt) +1];
+//  snprintf_P(rdflt, sizeof(rdflt), dflt);
   String result = F(";");
-  result += command;
+//  result += rcommand;
+//  result += (const __FlashStringHelper *)command;
+  result += FPSTR(command);
   result += F(" ");
-  String param = Webserver->arg((const __FlashStringHelper *)arg);
+  String param = Webserver->arg(FPSTR(arg));
   uint32_t len = param.length();
   if (0 == len) {
-    result += dflt;
+//    result += rdflt;
+//    result += (const __FlashStringHelper *)dflt;
+    result += FPSTR(dflt);
   }
   else if (!(StrCaseStr_P(command, PSTR("Password")) && (len < 5))) {
     result += param;
   }
   return result;
-*/
 }
 
 static bool WifiIsInManagerMode(){
