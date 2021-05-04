@@ -2822,17 +2822,17 @@ const char *classes[] = {
   // 7
   "", //- empty device class
   "Moisture",
-  "",
+  "%",
 
   // 8
   "", //- empty device class
   "Illuminance",
-  "",
+  "lx",
 
   // 9
   "", //- empty device class
   "Fertility",
-  "",
+  "µS/cm",
 
   // 10
   "", //- empty device class
