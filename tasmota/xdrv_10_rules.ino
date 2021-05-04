@@ -500,7 +500,7 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule, bool stop_all
   // Step2: Search rule_name
   int pos;
   int rule_name_idx = 0;
-  if ((pos = rule_name.indexOf(F("["))) > 0) {            // "SUBTYPE1#CURRENT[1]"
+  if ((pos = rule_name.indexOf(F("["))) > 0) {         // "SUBTYPE1#CURRENT[1]"
     rule_name_idx = rule_name.substring(pos +1).toInt();
     if ((rule_name_idx < 1) || (rule_name_idx > 6)) {  // Allow indexes 1 to 6
       rule_name_idx = 1;
@@ -508,10 +508,11 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule, bool stop_all
     rule_name = rule_name.substring(0, pos);           // "SUBTYPE1#CURRENT"
   }
 
-  String buf = event;   // copy the string into a new buffer that will be modified
+  String buf = event;                                  // Copy the string into a new buffer that will be modified
 
 //AddLog_P(LOG_LEVEL_DEBUG, PSTR("RUL-RM2: RulesRuleMatch |%s|"), buf.c_str());
 
+  buf.replace("\\"," ");                               // "Disable" any escaped control character
   JsonParser parser((char*)buf.c_str());
   JsonParserObject obj = parser.getRootObject();
   if (!obj) {
@@ -521,7 +522,7 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule, bool stop_all
   }
   String subtype;
   uint32_t i = 0;
-  while ((pos = rule_name.indexOf(F("#"))) > 0) {         // "SUBTYPE1#SUBTYPE2#CURRENT"
+  while ((pos = rule_name.indexOf(F("#"))) > 0) {      // "SUBTYPE1#SUBTYPE2#CURRENT"
     subtype = rule_name.substring(0, pos);
     obj = obj[subtype.c_str()].getObject();
     if (!obj) { return false; }                        // not found
