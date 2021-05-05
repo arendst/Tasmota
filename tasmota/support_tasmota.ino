@@ -1198,6 +1198,7 @@ void Every250mSeconds(void)
     if (MidnightNow()) {
       XsnsCall(FUNC_SAVE_AT_MIDNIGHT);
     }
+
     if (TasmotaGlobal.save_data_counter && CommandsReady()) {
       TasmotaGlobal.save_data_counter--;
       if (TasmotaGlobal.save_data_counter <= 0) {
@@ -1218,8 +1219,11 @@ void Every250mSeconds(void)
         TasmotaGlobal.save_data_counter = Settings.save_data;
       }
     }
+
     if (TasmotaGlobal.restart_flag && CommandsReady()) {
-      if ((214 == TasmotaGlobal.restart_flag) || (215 == TasmotaGlobal.restart_flag) || (216 == TasmotaGlobal.restart_flag)) {
+      if ((214 == TasmotaGlobal.restart_flag) ||          // Reset 4
+          (215 == TasmotaGlobal.restart_flag) ||          // Reset 5
+          (216 == TasmotaGlobal.restart_flag)) {          // Reset 6
         // Backup current SSIDs and Passwords
         char storage_ssid1[strlen(SettingsText(SET_STASSID1)) +1];
         strncpy(storage_ssid1, SettingsText(SET_STASSID1), sizeof(storage_ssid1));
@@ -1243,7 +1247,8 @@ void Every250mSeconds(void)
 //        if (216 == TasmotaGlobal.restart_flag) {
           // Backup mqtt host, port, client, username and password
 //        }
-        if ((215 == TasmotaGlobal.restart_flag) || (216 == TasmotaGlobal.restart_flag)) {
+        if ((215 == TasmotaGlobal.restart_flag) ||        // Reset 5
+            (216 == TasmotaGlobal.restart_flag)) {        // Reset 6
           SettingsErase(2);  // Erase all flash from program end to end of physical excluding optional filesystem
         }
         SettingsDefault();
@@ -1252,7 +1257,7 @@ void Every250mSeconds(void)
         SettingsUpdateText(SET_STASSID2, storage_ssid2);
         SettingsUpdateText(SET_STAPWD1, storage_pass1);
         SettingsUpdateText(SET_STAPWD2, storage_pass2);
-        if (216 == TasmotaGlobal.restart_flag) {
+        if (216 == TasmotaGlobal.restart_flag) {          // Reset 6
           // Restore the mqtt host, port, client, username and password
           SettingsUpdateText(SET_MQTT_HOST, storage_mqtthost);
           SettingsUpdateText(SET_MQTT_USER, storage_mqttuser);
@@ -1260,23 +1265,26 @@ void Every250mSeconds(void)
           SettingsUpdateText(SET_MQTT_TOPIC, storage_mqtttopic);
           Settings.mqtt_port = mqtt_port;
         }
-        TasmotaGlobal.restart_flag = 2;
+        TasmotaGlobal.restart_flag = 3;                   // Finish backlog then Restart 1
       }
-      else if (213 == TasmotaGlobal.restart_flag) {
+      else if (213 == TasmotaGlobal.restart_flag) {       // Reset 3
         SettingsSdkErase();  // Erase flash SDK parameters
-        TasmotaGlobal.restart_flag = 2;
+        TasmotaGlobal.restart_flag = 2;                   // Restart 1
       }
-      else if (212 == TasmotaGlobal.restart_flag) {
+      else if (212 == TasmotaGlobal.restart_flag) {       // Reset 2
         SettingsErase(0);    // Erase all flash from program end to end of physical flash
-        TasmotaGlobal.restart_flag = 211;
+        TasmotaGlobal.restart_flag = 211;                 // Reset 1
       }
-      if (211 == TasmotaGlobal.restart_flag) {
+
+      if (211 == TasmotaGlobal.restart_flag) {            // Reset 1
         SettingsDefault();
-        TasmotaGlobal.restart_flag = 2;
+        TasmotaGlobal.restart_flag = 3;                   // Finish backlog then Restart 1
       }
-      if (2 == TasmotaGlobal.restart_flag) {
+
+      if (2 == TasmotaGlobal.restart_flag) {              // Restart 1
         SettingsSaveAll();
       }
+
       TasmotaGlobal.restart_flag--;
       if (TasmotaGlobal.restart_flag <= 0) {
         AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION "%s"), (TasmotaGlobal.restart_halt) ? PSTR("Halted") : PSTR(D_RESTARTING));
