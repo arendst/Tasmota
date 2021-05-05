@@ -35,12 +35,22 @@
 #include <HardwareSerial.h>
 #endif
 
+#include <SoftwareSerial.h>
+
+
 class TasmotaSerial : public Stream {
   public:
-    TasmotaSerial(int receive_pin, int transmit_pin, int hardware_fallback = 0, int nwmode = 0, int buffer_size = TM_SERIAL_BUFFER_SIZE);
+    TasmotaSerial(int receive_pin,
+                  int transmit_pin,
+                  int hardware_fallback = 0,
+                  int nwmode = 0,
+                  int buffer_size = TM_SERIAL_BUFFER_SIZE
+    );
     virtual ~TasmotaSerial();
 
-    bool begin(uint32_t speed = TM_SERIAL_BAUDRATE, uint32_t config = SERIAL_8N1);
+    bool begin(uint32_t speed = TM_SERIAL_BAUDRATE,
+               uint32_t config = SERIAL_8N1
+    );
     bool hardwareSerial(void);
     int peek(void);
 
@@ -51,8 +61,8 @@ class TasmotaSerial : public Stream {
     void flush(void) override;
 
     void rxRead(void);
-
-    uint32_t getLoopReadMetric(void) const { return m_bit_follow_metric; }
+    // Not supported with EspSoftwareSerial
+    uint32_t getLoopReadMetric(void) const { return 0; }
 
 #ifdef ESP32
     uint32_t getUart(void) const { return m_uart; }
@@ -63,29 +73,18 @@ class TasmotaSerial : public Stream {
   private:
     bool isValidGPIOpin(int pin);
     size_t txWrite(uint8_t byte);
+    SoftwareSerialConfig uart_conf_to_sw_serial_conf(uint32_t tm_serial_conf);
 
     // Member variables
+    SoftwareSerial *sw_serial = nullptr;
     int m_rx_pin;
     int m_tx_pin;
-    uint32_t m_stop_bits;
-    uint32_t ss_byte;
-    uint32_t ss_bstart;
-    uint32_t ss_index;
-    uint32_t m_bit_time;
-    uint32_t m_bit_start_time;
-    uint32_t m_bit_follow_metric = 0;
-    uint32_t m_in_pos;
-    uint32_t m_out_pos;
     uint32_t serial_buffer_size;
     bool m_valid;
     bool m_nwmode;
-    bool m_hardserial;
+    // Check for sw_serial != nullptr instead
+    // bool m_hardserial;
     bool m_hardswap;
-    bool m_high_speed = false;
-    bool m_very_high_speed = false;   // above 100000 bauds
-    uint8_t *m_buffer;
-
-    void _fast_write(uint8_t b);      // IRAM minimized version
 
 #ifdef ESP32
     HardwareSerial *TSerial;

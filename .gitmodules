@@ -1,0 +1,3 @@
+[submodule "lib/default/espsoftwareserial"]
+	path = lib/default/espsoftwareserial
+	url = https://github.com/ul-gh/espsoftwareserial.git
