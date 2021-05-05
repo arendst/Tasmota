@@ -1860,7 +1860,11 @@ void CmndTeleperiod(void)
     if ((Settings.tele_period > 0) && (Settings.tele_period < 10)) Settings.tele_period = 10;   // Do not allow periods < 10 seconds
 //    TasmotaGlobal.tele_period = Settings.tele_period;
   }
-  TasmotaGlobal.tele_period = Settings.tele_period;        // Show teleperiod data also on empty command
+  TasmotaGlobal.tele_period = Settings.tele_period;        // Show teleperiod data also on empty command (Settings.tele_period>0)
+  if (Settings.tele_period = 0) {                          // Show teleperiod data also on empty command (Settings.tele_period=0)
+    MqttPublishTeleState();
+    MqttPublishTeleperiodSensor();
+  }
   ResponseCmndNumber(Settings.tele_period);
 }
 
