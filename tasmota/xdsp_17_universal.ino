@@ -18,7 +18,7 @@
 */
 
 
-#if defined(USE_DISPLAY) || defined(LVGL_RENDERER)
+#if defined(USE_DISPLAY)
 #ifdef USE_UNIVERSAL_DISPLAY
 
 #define XDSP_17                17
@@ -462,7 +462,6 @@ void UDISP_Refresh(void)  // Every second
  * Interface
 \*********************************************************************************************/
 
-#ifndef LVGL_RENDERER
 bool Xdsp17(uint8_t function) {
   bool result = false;
 
@@ -493,7 +492,6 @@ bool Xdsp17(uint8_t function) {
   }
   return result;
 }
-#endif // !LVGL_RENDERER
 
 #endif  // USE_UNIVERSAL_DISPLAY
 #endif  // USE_DISPLAY

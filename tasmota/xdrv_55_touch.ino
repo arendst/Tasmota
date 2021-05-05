@@ -21,7 +21,7 @@
 
 #if defined(USE_FT5206) || defined(USE_XPT2046) || defined(USE_LILYGO47)
 
-#ifdef LVGL_RENDERER
+#ifdef USE_DISPLAY_LVGL_ONLY
 #undef USE_TOUCH_BUTTONS
 #endif
 

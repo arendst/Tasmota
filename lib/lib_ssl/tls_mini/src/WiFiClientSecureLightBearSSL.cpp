@@ -20,8 +20,7 @@
   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#include "my_user_config.h"
-#include "tasmota_configurations.h"
+#include "tasmota_options.h"
 #if defined(USE_TLS)
 
 // #define DEBUG_TLS
