@@ -20,7 +20,6 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 */
-
 #ifdef USE_SML_M
 
 #define XSNS_53 53
@@ -2288,7 +2287,9 @@ void SML_Init(void) {
             goto next_line;
           }
           index--;
+          // Meter number
           srcpin  = strtol(lp,&lp,10);
+          // RxD GPIO
           if (Gpio_used(srcpin)) {
             AddLog(LOG_LEVEL_INFO, PSTR("gpio rx double define!"));
 dddef_exit:
@@ -2299,40 +2300,68 @@ dddef_exit:
           }
           script_meter_desc[index].srcpin = srcpin;
           if (*lp != ',') goto next_line;
-          lp++;
+          lp++; 
+          // Next is type specifier for the meter protocol, one character, see documentation..
           script_meter_desc[index].type = *lp;
           lp++;
+          // Type specifier can be followed by a detailed serial
+          // communication mode, e.g. "8E1", this is handled here.
+          //
+          // Hardware SerialConfig flag bits are LSBs: 00s1vvpo
+          // where: vv <=> character size offset for base value of 5 bits length,
+          // s <=> CSTOPB, p <=> PARENB, o <=> PARODD, 1 and 0 are fixed
+          //
           if (*lp != ',') {
+            // Start with initial size value for which the offset is added
+            auto ser_opts = static_cast<uint32_t>(SERIAL_5N1); // 0b00010000u
+            // If serial character size is specified in the script, add this
             switch (*lp) {
-              case 'N':
-                lp++;
-                script_meter_desc[index].sopt = 0x10 | (*lp & 3);
-                lp++;
-                break;
-              case 'E':
-                lp++;
-                script_meter_desc[index].sopt = 0x20 | (*lp & 3);
-                lp++;
-                break;
-              case 'O':
-                lp++;
-                script_meter_desc[index].sopt = 0x30 | (*lp & 3);
-                lp++;
-                break;
-              default:
-                script_meter_desc[index].sopt = *lp&7;
-                lp++;
+              // [[falltrough]] is portable and standard since C++17, but it seems
+              // the toolchain is not yet there, so the //fallthru comment is added
+              case '5': //fallthru [[falltrough]];
+              case '6': //fallthru [[falltrough]];
+              case '7': //fallthru [[falltrough]];
+              case '8': {auto char_size_offset = static_cast<uint32_t>(*lp - '5');
+                         ser_opts |= char_size_offset << 2;
+                         lp++;
+                         break;
+                        }
+              // If no char size is specified, set 8 bits character size
+              default:  ser_opts |= 3 << 2;
             }
+            // If parity mode is specified, add parity bits
+            switch (*lp) {
+              case 'O': ser_opts |= 0b00000001u; // Set odd parity bit (PARODD)
+                        //fallthru [[fallthrough]];
+              case 'E': ser_opts |= 0b00000010u; // (Also) set parity enable bit (PARENB)
+                        //fallthru [[fallthrough]];
+              // This is default, only increment lp.
+              case 'N': lp++;
+                        break;
+            }
+            // If number of stop bits is given, add these flag bits, too.
+            switch (*lp) {
+              // Two stopbits requested; setting CSTOPB
+              case '2': ser_opts |= 0b00100000u;
+                        //fallthru [[fallthrough]];
+              // One stop bit; not setting CSTOPB, only increment lp.
+              case '1': lp++;
+                        break;
+            }
+            // Commit serial mode settings
+            script_meter_desc[index].sopt = static_cast<uint8_t>(ser_opts);
           } else {
-            script_meter_desc[index].sopt = 0;
+              // If no special mode is specified, use most common standard mode
+              script_meter_desc[index].sopt = SERIAL_8N1;
           }
-          lp++;
+          if (*lp != ',') goto next_line;
+          lp++; // Next is the flag value, which is a positive number
           script_meter_desc[index].flag = strtol(lp, &lp, 10);
           if (*lp != ',') goto next_line;
-          lp++;
+          lp++; // Next is baud rate or other numeric parameter, can be signed.
           script_meter_desc[index].params = strtol(lp, &lp, 10);
           if (*lp != ',') goto next_line;
-          lp++;
+          lp++; // Next is JSON prefix, up to seven characters
           script_meter_desc[index].prefix[7] = 0;
           for (uint32_t cnt = 0; cnt < 8; cnt++) {
             if (*lp == SCRIPT_EOL || *lp == ',') {
@@ -2343,16 +2372,19 @@ dddef_exit:
           }
           if (*lp == ',') {
             lp++;
+            // Optional now: TxD pin followed by specification of
+            // outgoing serial data command telegram.
             script_meter_desc[index].trxpin = strtol(lp, &lp, 10);
             if (Gpio_used(script_meter_desc[index].trxpin)) {
               AddLog(LOG_LEVEL_INFO, PSTR("gpio tx double define!"));
               goto dddef_exit;
             }
             if (*lp != ',') goto next_line;
-            lp++;
+            lp++; // Interval time for outgoing data telegram in 100ms units
             script_meter_desc[index].tsecs = strtol(lp, &lp, 10);
             if (*lp == ',') {
               lp++;
+              // Next is a comma-separated list of outgoing serial data command telegrams
               char txbuff[256];
               uint32_t txlen = 0, tx_entries = 1;
               for (uint32_t cnt = 0; cnt < sizeof(txbuff); cnt++) {
@@ -2517,50 +2549,35 @@ init10:
         meter_ss[meters]->setRxBufferSize(TMSBSIZ);
 #endif  // ESP32
 #endif
-
-        SerialConfig smode = SERIAL_8N1;
-
-        if (meter_desc_p[meters].sopt & 0xf0) {
-          // new serial config
-          switch (meter_desc_p[meters].sopt >> 4) {
-            case 1:
-              if ((meter_desc_p[meters].sopt & 1) == 1) smode = SERIAL_8N1;
-              else smode = SERIAL_8N2;
-              break;
-            case 2:
-              if ((meter_desc_p[meters].sopt & 1) == 1) smode = SERIAL_8E1;
-              else smode = SERIAL_8E2;
-              break;
-            case 3:
-              if ((meter_desc_p[meters].sopt & 1) == 1) smode = SERIAL_8O1;
-              else smode = SERIAL_8O2;
-              break;
-          }
-        } else {
-          // depecated serial config
-          if (meter_desc_p[meters].sopt == 2) {
-            smode = SERIAL_8N2;
-          }
+          auto ser_opts = meter_desc_p[meters].sopt;
+          // Deprecated serial config:
+          // Uppercase "modbus" specifier means even parity is enabled.
+          // Number of stop bits is already contained in "meter_desc_p[meters].sopt"
           if (meter_desc_p[meters].type=='M') {
-            smode = SERIAL_8E1;
-            if (meter_desc_p[meters].sopt == 2) {
-              smode = SERIAL_8E2;
-            }
+            ser_opts |= 0b00000010u; // PARENB
           }
-        }
 
 #ifdef ESP8266
-        if (meter_ss[meters]->begin(meter_desc_p[meters].params)) {
+        // SoftwareSerial now supports all serial charsize, parity and stop bit modes
+        if (meter_ss[meters]->begin(meter_desc_p[meters].params,
+                                    ser_opts)
+        ) {
           meter_ss[meters]->flush();
         }
         if (meter_ss[meters]->hardwareSerial()) {
-          Serial.begin(meter_desc_p[meters].params, smode);
+          Serial.begin(meter_desc_p[meters].params,
+                       static_cast<SerialConfig>(ser_opts)
+          );
           ClaimSerial();
           //Serial.setRxBufferSize(512);
         }
 #endif  // ESP8266
 #ifdef ESP32
-        meter_ss[meters]->begin(meter_desc_p[meters].params, smode, meter_desc_p[meters].srcpin, meter_desc_p[meters].trxpin);
+        meter_ss[meters]->begin(meter_desc_p[meters].params,
+                                ser_opts,
+                                meter_desc_p[meters].srcpin,
+                                meter_desc_p[meters].trxpin
+        );
 #endif  // ESP32
     }
   }
