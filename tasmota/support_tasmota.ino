@@ -929,7 +929,7 @@ void PerformEverySecond(void)
 
   ResetGlobalValues();
 
-  if (Settings.tele_period) {
+  if (Settings.tele_period || (3601 == TasmotaGlobal.tele_period)) {
     if (TasmotaGlobal.tele_period >= 9999) {
       if (!TasmotaGlobal.global_state.network_down) {
         TasmotaGlobal.tele_period = 0;  // Allow teleperiod once wifi is connected
