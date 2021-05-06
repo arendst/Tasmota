@@ -1,3 +1,24 @@
+/*
+  Callback types:
+
+lv_group_focus_cb_t
+lv_signal_cb_t
+lv_group_style_mod_cb_t
+lv_design_cb_t
+lv_event_cb_t
+
+typedef void (*lv_group_focus_cb_t)(struct _lv_group_t *);
+typedef lv_res_t (*lv_signal_cb_t)(struct _lv_obj_t * obj, lv_signal_t sign, void * param);
+typedef void (*lv_group_style_mod_cb_t)(struct _lv_group_t *, lv_style_t *);
+typedef lv_design_res_t (*lv_design_cb_t)(struct _lv_obj_t * obj, const lv_area_t * clip_area, lv_design_mode_t mode);
+typedef void (*lv_event_cb_t)(struct _lv_obj_t * obj, lv_event_t event);
+
+
+General form of callback
+typedef uint32_t (*lvbe_callback)(struct _lv_obj_t * obj, uint32_t v1, uint32_t v2);
+ */
+
+
 // Custome Tasmota code
 void lv_img_set_tasmota_logo(lv_obj_t * img);
 
@@ -111,7 +132,7 @@ void lv_obj_set_event_cb(lv_obj_t * obj, lv_event_cb_t event_cb);
 lv_res_t lv_event_send(lv_obj_t * obj, lv_event_t event, const void * data);
 lv_res_t lv_event_send_refresh(lv_obj_t * obj);
 void lv_event_send_refresh_recursive(lv_obj_t * obj);
-lv_res_t lv_event_send_func(lv_event_cb_t event_xcb, lv_obj_t * obj, lv_event_t event, const void * data);
+// lv_res_t lv_event_send_func(lv_event_cb_t event_xcb, lv_obj_t * obj, lv_event_t event, const void * data);
 const void * lv_event_get_data(void);
 void lv_obj_set_signal_cb(lv_obj_t * obj, lv_signal_cb_t signal_cb);
 lv_res_t lv_signal_send(lv_obj_t * obj, lv_signal_t signal, void * param);
