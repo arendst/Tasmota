@@ -179,9 +179,9 @@ void SetWeightDelta()
  * Sensor34 3 <weight in gram>     - Set reference weight
  * Sensor34 4                      - Show calibrated scale value
  * Sensor34 4 <scale value>        - Set calibrated scale value
- * Sensor34 5                      - Show max weigth in gram
+ * Sensor34 5                      - Show max weight in gram
  * Sensor34 5 <weight in gram>     - Set max weight
- * Sensor34 6                      - Show item weigth in decigram
+ * Sensor34 6                      - Show item weight in decigram
  * Sensor34 6 <weight in decigram> - Set item weight
  * Sensor34 7                      - Save current weight to be used as start weight on restart
  * Sensor34 8 0                    - Disable JSON weight change message
