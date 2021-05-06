@@ -139,6 +139,146 @@ extern void start_lvgl(const char * uconfig);
 extern void lv_ex_get_started_1(void);
 
 /*********************************************************************************************\
+ * Calling any LVGL function with auto-mapping
+ * 
+\*********************************************************************************************/
+// General form of callback
+#define LVBE_MAX_CALLBACK     6   // max 6 callbackss
+
+typedef int32_t (*lvbe_callback)(struct _lv_obj_t * obj, int32_t v1, int32_t v2, int32_t v3, int32_t v4);
+int32_t lvbe_callback_x(uint32_t n, struct _lv_obj_t * obj, int32_t v1, int32_t v2, int32_t v3, int32_t v4);
+
+// We define 6 callback vectors, this may need to be raised
+int32_t lvbe_callback_0(struct _lv_obj_t * obj, int32_t v1, int32_t v2, int32_t v3, int32_t v4) {
+  return lvbe_callback_x(0, obj, v1, v2, v3, v4);
+}
+int32_t lvbe_callback_1(struct _lv_obj_t * obj, int32_t v1, int32_t v2, int32_t v3, int32_t v4) {
+  return lvbe_callback_x(1, obj, v1, v2, v3, v4);
+}
+int32_t lvbe_callback_2(struct _lv_obj_t * obj, int32_t v1, int32_t v2, int32_t v3, int32_t v4) {
+  return lvbe_callback_x(2, obj, v1, v2, v3, v4);
+}
+int32_t lvbe_callback_3(struct _lv_obj_t * obj, int32_t v1, int32_t v2, int32_t v3, int32_t v4) {
+  return lvbe_callback_x(3, obj, v1, v2, v3, v4);
+}
+int32_t lvbe_callback_4(struct _lv_obj_t * obj, int32_t v1, int32_t v2, int32_t v3, int32_t v4) {
+  return lvbe_callback_x(4, obj, v1, v2, v3, v4);
+}
+int32_t lvbe_callback_5(struct _lv_obj_t * obj, int32_t v1, int32_t v2, int32_t v3, int32_t v4) {
+  return lvbe_callback_x(5, obj, v1, v2, v3, v4);
+}
+
+const lvbe_callback lvbe_callbacks[LVBE_MAX_CALLBACK] = {
+  lvbe_callback_0,
+  lvbe_callback_1,
+  lvbe_callback_2,
+  lvbe_callback_3,
+  lvbe_callback_4,
+  lvbe_callback_5,
+};
+
+int32_t lvbe_callback_x(uint32_t n, struct _lv_obj_t * obj, int32_t v1, int32_t v2, int32_t v3, int32_t v4) {
+  berry_log_P(">>>: Callback called%d", n);
+  return 0;
+}
+
+// check input parameters, and create callbacks if needed
+// change values in place
+//
+// Format:
+// - either a lowercase character encoding for a simple type
+//   - 'b': bool
+//   - 'i': int (int32_t)
+//   - 's': string (const char *)
+//
+// - a class name surroungded by parenthesis
+//   - '(lv_button)' -> lv_button class or derived
+//
+// - a callback, only 6 callbacks supported 0..5
+//   - '&1' callback 1
+//
+void be_check_arg_type(bvm *vm, int32_t argc, const char * arg_type, int32_t p[5]);
+void be_check_arg_type(bvm *vm, int32_t argc, const char * arg_type, int32_t p[5]) {
+  bool arg_type_check = (arg_type != nullptr);      // is type checking activated
+  int32_t arg_idx = 0;    // position in arg_type string
+  char type_short_name[16];
+
+  for (uint32_t i = 0; i < argc; i++) {
+    type_short_name[0] = 0;   // clear string
+    // extract individual type
+    if (nullptr != arg_type) {
+      switch (arg_type[arg_idx]) {
+        case '.':
+        case 'a'...'z':
+          type_short_name[0] = arg_type[arg_idx];
+          type_short_name[1] = 0;
+          arg_idx++;
+          break;
+        case '&':
+          type_short_name[0] = arg_type[arg_idx+1];
+          arg_idx += 2;
+          break;
+        case '(':
+          {
+            arg_idx++;
+            uint32_t offset = 0;
+            while (arg_type[arg_idx + offset] != ')' && arg_type[arg_idx + offset] != 0) {
+              type_short_name[offset] = arg_type[arg_idx + offset];
+              type_short_name[offset+1] = 0;
+              offset++;
+            }
+            if (arg_type[arg_idx + offset] == 0) {
+              arg_type = nullptr;   // stop iterations
+            }
+            arg_idx += offset + 1;
+          }
+          break;
+        case 0:
+          arg_type = nullptr;   // stop iterations
+          break;
+      }
+    }
+    // berry_log_P(">> be_call_c_func arg %i, type %s", i, arg_type_check ? type_short_name : "<null>");
+    p[i] = be_convert_single_elt(vm, i+1, arg_type_check ? type_short_name : nullptr);
+  }
+
+  // check if we are missing arguments
+  if (arg_type != nullptr && arg_type[arg_idx] != 0) {
+    berry_log_P("Missing arguments, remaining type '%s'", &arg_type[arg_idx]);
+  }
+}
+
+typedef int32_t (*fn_any_callable)(int32_t p0, int32_t p1, int32_t p2, int32_t p3, int32_t p4);
+int be_call_c_func(bvm *vm, void * func, const char * return_type = nullptr, const char * arg_type = nullptr) {
+  int32_t p[5] = {0,0,0,0,0};
+  int32_t argc = be_top(vm); // Get the number of arguments
+
+  fn_any_callable f = (fn_any_callable) func;
+  be_check_arg_type(vm, argc, arg_type, p);
+  // AddLog(LOG_LEVEL_INFO, ">> be_call_c_func(%p) - %p,%p,%p,%p,%p - %s", f, p[0], p[1], p[2], p[3], p[4], return_type);
+  int32_t ret = (*f)(p[0], p[1], p[2], p[3], p[4]);
+  // AddLog(LOG_LEVEL_INFO, ">> be_call_c_func, ret = %p", ret);
+  if ((return_type == nullptr) || (strlen(return_type) == 0))       { be_return_nil(vm); }  // does not return
+  else if (strlen(return_type) == 1) {
+    switch (return_type[0]) {
+      case 'i':   be_pushint(vm, ret); break;
+      case 'b':   be_pushbool(vm, ret);  break;
+      case 's':   be_pushstring(vm, (const char*) ret);  break;
+      default:    be_raise(vm, "internal_error", "Unsupported return type"); break;
+    }
+    be_return(vm);
+  } else { // class name
+  // AddLog(LOG_LEVEL_INFO, ">> be_call_c_func, create_obj", ret);
+    be_getglobal(vm, return_type);  // stack = class
+    be_pushcomptr(vm, (void*) -1);         // stack = class, -1
+    be_pushcomptr(vm, (void*) ret);         // stack = class, -1, ptr
+    be_call(vm, 2);                 // instanciate with 2 arguments, stack = instance, -1, ptr
+    be_pop(vm, 2);                  // stack = instance
+    be_return(vm);
+  }
+}
+
+/*********************************************************************************************\
  * Native functions mapped to Berry functions
  * 
  * import power
@@ -496,6 +636,7 @@ extern "C" {
     be_return_nil(vm);
   }
 
+  // called programmatically
   int lvx_init_2(bvm *vm, void * func, const char * return_type, const char * arg_type = nullptr);
   int lvx_init_2(bvm *vm, void * func, const char * return_type, const char * arg_type) {
     int argc = be_top(vm);

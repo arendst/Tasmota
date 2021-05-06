@@ -28,7 +28,8 @@ extern int lv0_screenshot(bvm *vm);
 
 
 be_native_module_attr_table(lvgl) {
-    // Symbols    be_native_module_str("SYMBOL_AUDIO", "\xef\x80\x81"),
+    // Symbols    
+    be_native_module_str("SYMBOL_AUDIO", "\xef\x80\x81"),
     be_native_module_str("SYMBOL_VIDEO", "\xef\x80\x88"),
     be_native_module_str("SYMBOL_LIST", "\xef\x80\x8b"),
     be_native_module_str("SYMBOL_OK", "\xef\x80\x8c"),
