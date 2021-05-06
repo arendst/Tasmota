@@ -188,11 +188,119 @@ extern "C" {
 // general form of lv_obj_t* function, up to 4 parameters
 // We can only send 32 bits arguments (no 64 bits nor double) and we expect pointers to be 32 bits
 
+#define LVBE_MAX_CALLBACK     6   // max 6 callbackss
+#define LVBE_LVGL_CB          "_lvgl_cb"
+#define LVBE_LVGL_CB_OBJ      "_lvgl_cb_obj"        // remember which object it was linked to
+#define LVBE_LVGL_CB_DISPATCH "_lvgl_cb_dispatch"
+
+// General form of callback
+typedef int32_t (*lvbe_callback)(struct _lv_obj_t * obj, int32_t v1, int32_t v2, int32_t v3, int32_t v4);
+int32_t lvbe_callback_x(uint32_t n, struct _lv_obj_t * obj, int32_t v1, int32_t v2, int32_t v3, int32_t v4);
+
+// We define 6 callback vectors, this may need to be raised
+int32_t lvbe_callback_0(struct _lv_obj_t * obj, int32_t v1, int32_t v2, int32_t v3, int32_t v4) {
+  return lvbe_callback_x(0, obj, v1, v2, v3, v4);
+}
+int32_t lvbe_callback_1(struct _lv_obj_t * obj, int32_t v1, int32_t v2, int32_t v3, int32_t v4) {
+  return lvbe_callback_x(1, obj, v1, v2, v3, v4);
+}
+int32_t lvbe_callback_2(struct _lv_obj_t * obj, int32_t v1, int32_t v2, int32_t v3, int32_t v4) {
+  return lvbe_callback_x(2, obj, v1, v2, v3, v4);
+}
+int32_t lvbe_callback_3(struct _lv_obj_t * obj, int32_t v1, int32_t v2, int32_t v3, int32_t v4) {
+  return lvbe_callback_x(3, obj, v1, v2, v3, v4);
+}
+int32_t lvbe_callback_4(struct _lv_obj_t * obj, int32_t v1, int32_t v2, int32_t v3, int32_t v4) {
+  return lvbe_callback_x(4, obj, v1, v2, v3, v4);
+}
+int32_t lvbe_callback_5(struct _lv_obj_t * obj, int32_t v1, int32_t v2, int32_t v3, int32_t v4) {
+  return lvbe_callback_x(5, obj, v1, v2, v3, v4);
+}
+
+const lvbe_callback lvbe_callbacks[LVBE_MAX_CALLBACK] = {
+  lvbe_callback_0,
+  lvbe_callback_1,
+  lvbe_callback_2,
+  lvbe_callback_3,
+  lvbe_callback_4,
+  lvbe_callback_5,
+};
+
+int32_t lvbe_callback_x(uint32_t n, struct _lv_obj_t * obj, int32_t v1, int32_t v2, int32_t v3, int32_t v4) {
+  be_getglobal(berry.vm, LVBE_LVGL_CB_OBJ);
+  be_pushint(berry.vm, n);
+  be_pushint(berry.vm, (int32_t) obj);
+  be_pushint(berry.vm, v1);
+  be_pushint(berry.vm, v2);
+  be_pushint(berry.vm, v3);
+  be_pushint(berry.vm, v4);
+  be_pcall(berry.vm, 6);
+  int32_t ret = be_toint(berry.vm, -7);
+  be_pop(berry.vm, 7);
+  berry_log_P(">>>: Callback called%d", n);
+  return ret;
+}
+
 // read a single value at stack position idx, convert to int.
 // if object instance, get `.p` member and convert it recursively
-int32_t be_convert_single_elt(bvm *vm, int32_t idx, const char * arg_type = nullptr) {
+int32_t be_convert_single_elt(bvm *vm, int32_t idx, const char * arg_type = nullptr, int32_t lv_obj_cb = 0) {
   int32_t ret = 0;
   char provided_type = 0;
+  idx = be_absindex(vm, idx);   // make sure we have an absolute index
+  if (arg_type == nullptr) { arg_type = "."; }    // if no type provided, replace with wildchar
+  size_t arg_type_len = strlen(arg_type);
+
+  // handle callbacks first, since a wrong parameter will always yield to a crash
+  if (arg_type_len == 1 && arg_type[0] >= '0' && arg_type[0] < '0' + LVBE_MAX_CALLBACK) {
+    if (be_isclosure(vm, idx)) {
+      // we're good
+      // berry_log_P(">> closure found idx %d", idx);
+      uint32_t cb_index = arg_type[0] - '0';
+      lvbe_callback func = lvbe_callbacks[cb_index];
+      // register the object
+
+      // record the closure
+      be_getglobal(vm, LVBE_LVGL_CB);
+      be_getmember(vm, -1, ".p");
+      be_pushint(vm, cb_index);
+      be_getindex(vm, -2);
+      // be_dumpstack(vm);
+      // stack: _lvgl_cb, list.p, index, map
+      be_moveto(vm, -1, -4);
+      be_pop(vm, 3);
+      // be_dumpstack(vm);
+      // stack: map
+      be_getmember(vm, -1, ".p");
+      be_pushint(vm, lv_obj_cb);  // key - lv_obj
+      be_pushvalue(vm, idx);      // value - closure
+      // stack map, map.p, key, value
+      be_setindex(vm, -3);
+      // be_dumpstack(vm);
+      // stack map, map.p, key, value
+      be_pop(vm, 4);      // clean
+      // be_dumpstack(vm);
+
+      // record the object, it is always index #1
+      be_getglobal(vm, LVBE_LVGL_CB_OBJ);
+      be_getmember(vm, -1, ".p");
+      be_pushint(vm, cb_index);
+      be_getindex(vm, -2);
+      be_moveto(vm, -1, -4);
+      be_pop(vm, 3);
+      // stack: map
+      be_getmember(vm, -1, ".p");
+      be_pushint(vm, lv_obj_cb);  // key - lv_obj as int
+      be_pushvalue(vm, 1);  // value - lv_obj
+      // stack map, map.p, key, value
+      be_setindex(vm, -3);
+      be_pop(vm, 4);      // clean
+
+
+      return (int32_t) func;
+    } else {
+      be_raise(vm, kTypeError, "Closure expected for callback type");
+    }
+  }
 
   // first convert the value to int32
   if      (be_isint(vm, idx))     { ret = be_toint(vm, idx); provided_type = 'i'; }
@@ -202,8 +310,6 @@ int32_t be_convert_single_elt(bvm *vm, int32_t idx, const char * arg_type = null
 
   // check if simple type was a match
   if (provided_type) {
-    if (arg_type == nullptr) { return ret; }    // if no type check, return
-    size_t arg_type_len = strlen(arg_type);
     if ((arg_type_len != 1) || ((arg_type[0] != provided_type) && arg_type[0] != '.') ) {
       berry_log_P("Unexpected argument type '%c', expected '%s'", provided_type, arg_type);
     }
@@ -216,19 +322,21 @@ int32_t be_convert_single_elt(bvm *vm, int32_t idx, const char * arg_type = null
     int32_t ret = be_convert_single_elt(vm, -1, nullptr);   // recurse
     be_pop(vm, 1);
 
-    if (arg_type != nullptr) {
+    if (arg_type_len > 1) {
       // Check type
       be_classof(vm, idx);
       bool class_found = be_getglobal(vm, arg_type);
       // Stack: class_of_idx, class_of_target (or nil)
       if (class_found) {
         if (!be_isderived(vm, -2)) {
-          berry_log_P("Unexpected class type '%s', expected '%s'", be_classname(vm, -2), arg_type);
+          berry_log_P("Unexpected class type '%s', expected '%s'", be_classname(vm, idx), arg_type);
         }
       } else {
-        berry_log_P("Unable to find class '%s'", arg_type);
+        berry_log_P("Unable to find class '%s' (%d)", arg_type, arg_type_len);
       }
       be_pop(vm, 2);
+    } else if (arg_type[0] != '.') {
+      berry_log_P("Unexpected instance type '%s', expected '%s'", be_classname(vm, idx), arg_type);
     }
 
     return ret;

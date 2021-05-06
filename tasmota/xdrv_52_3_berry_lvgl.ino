@@ -142,45 +142,6 @@ extern void lv_ex_get_started_1(void);
  * Calling any LVGL function with auto-mapping
  * 
 \*********************************************************************************************/
-// General form of callback
-#define LVBE_MAX_CALLBACK     6   // max 6 callbackss
-
-typedef int32_t (*lvbe_callback)(struct _lv_obj_t * obj, int32_t v1, int32_t v2, int32_t v3, int32_t v4);
-int32_t lvbe_callback_x(uint32_t n, struct _lv_obj_t * obj, int32_t v1, int32_t v2, int32_t v3, int32_t v4);
-
-// We define 6 callback vectors, this may need to be raised
-int32_t lvbe_callback_0(struct _lv_obj_t * obj, int32_t v1, int32_t v2, int32_t v3, int32_t v4) {
-  return lvbe_callback_x(0, obj, v1, v2, v3, v4);
-}
-int32_t lvbe_callback_1(struct _lv_obj_t * obj, int32_t v1, int32_t v2, int32_t v3, int32_t v4) {
-  return lvbe_callback_x(1, obj, v1, v2, v3, v4);
-}
-int32_t lvbe_callback_2(struct _lv_obj_t * obj, int32_t v1, int32_t v2, int32_t v3, int32_t v4) {
-  return lvbe_callback_x(2, obj, v1, v2, v3, v4);
-}
-int32_t lvbe_callback_3(struct _lv_obj_t * obj, int32_t v1, int32_t v2, int32_t v3, int32_t v4) {
-  return lvbe_callback_x(3, obj, v1, v2, v3, v4);
-}
-int32_t lvbe_callback_4(struct _lv_obj_t * obj, int32_t v1, int32_t v2, int32_t v3, int32_t v4) {
-  return lvbe_callback_x(4, obj, v1, v2, v3, v4);
-}
-int32_t lvbe_callback_5(struct _lv_obj_t * obj, int32_t v1, int32_t v2, int32_t v3, int32_t v4) {
-  return lvbe_callback_x(5, obj, v1, v2, v3, v4);
-}
-
-const lvbe_callback lvbe_callbacks[LVBE_MAX_CALLBACK] = {
-  lvbe_callback_0,
-  lvbe_callback_1,
-  lvbe_callback_2,
-  lvbe_callback_3,
-  lvbe_callback_4,
-  lvbe_callback_5,
-};
-
-int32_t lvbe_callback_x(uint32_t n, struct _lv_obj_t * obj, int32_t v1, int32_t v2, int32_t v3, int32_t v4) {
-  berry_log_P(">>>: Callback called%d", n);
-  return 0;
-}
 
 // check input parameters, and create callbacks if needed
 // change values in place
@@ -216,6 +177,7 @@ void be_check_arg_type(bvm *vm, int32_t argc, const char * arg_type, int32_t p[5
           break;
         case '&':
           type_short_name[0] = arg_type[arg_idx+1];
+          type_short_name[1] = 0;
           arg_idx += 2;
           break;
         case '(':
@@ -239,7 +201,7 @@ void be_check_arg_type(bvm *vm, int32_t argc, const char * arg_type, int32_t p[5
       }
     }
     // berry_log_P(">> be_call_c_func arg %i, type %s", i, arg_type_check ? type_short_name : "<null>");
-    p[i] = be_convert_single_elt(vm, i+1, arg_type_check ? type_short_name : nullptr);
+    p[i] = be_convert_single_elt(vm, i+1, arg_type_check ? type_short_name : nullptr, p[0]);
   }
 
   // check if we are missing arguments

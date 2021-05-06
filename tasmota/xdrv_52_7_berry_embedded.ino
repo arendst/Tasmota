@@ -374,6 +374,17 @@ const char berry_prog[] =
   // "end "
   // "lv = lvgl() "
   "import lvgl as lv "
+  "_lvgl_cb = [ {}, {}, {}, {}, {}, {} ] "
+  "_lvgl_cb_obj = [ {}, {}, {}, {}, {}, {} ] "
+  "def _lvgl_cb_dispatch(idx, obj, v1, v2, v3, v4) "
+    "var func = _lvgl_cb[idx].find(obj) "
+    "var inst = _lvgl_cb_obj[idx].find(obj) "
+    "if func != nil "
+      "return func(inst, v1, v2, v3, v4) "
+    "end "
+    "return nil "
+  "end "
+  // array of 6 callback types, each with key (lv_obj pointer converted to int, closure)
 
 #endif // USE_LVGL
 
