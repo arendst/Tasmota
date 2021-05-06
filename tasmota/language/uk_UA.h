@@ -554,15 +554,15 @@
 #define D_GZ_AXIS "Орієнт Вісь-Z"
 
 // xsns_34_hx711.ino
-#define D_HX_CAL_REMOVE "Remove weigth"
-#define D_HX_CAL_REFERENCE "Load reference weigth"
+#define D_HX_CAL_REMOVE "Remove weight"
+#define D_HX_CAL_REFERENCE "Load reference weight"
 #define D_HX_CAL_DONE "Calibrated"
 #define D_HX_CAL_FAIL "Calibration failed"
 #define D_RESET_HX711 "Reset Scale"
 #define D_CONFIGURE_HX711 "Configure Scale"
 #define D_HX711_PARAMETERS "Scale parameters"
 #define D_ITEM_WEIGHT "Item weight"
-#define D_REFERENCE_WEIGHT "Reference weigth"
+#define D_REFERENCE_WEIGHT "Reference weight"
 #define D_CALIBRATE "Calibrate"
 #define D_CALIBRATION "Calibration"
 
