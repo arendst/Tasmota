@@ -204,96 +204,12 @@ const uint8_t CFG_ROTATES = 7;      // Number of flash sectors used (handles upl
 uint32_t settings_location = EEPROM_LOCATION;
 uint32_t settings_crc32 = 0;
 uint8_t *settings_buffer = nullptr;
+uint8_t config_xor_on_set = CONFIG_FILE_XOR;
 
 void SettingsInit(void) {
   if (SETTINGS_LOCATION > 0xFA) {
     SETTINGS_LOCATION = 0xFD;       // Skip empty partition part and keep in first 1M
   }
-}
-
-/********************************************************************************************/
-/*
- * Based on cores/esp8266/Updater.cpp
- */
-void SetFlashModeDout(void) {
-#ifdef ESP8266
-  uint8_t *_buffer;
-  uint32_t address;
-
-  eboot_command ebcmd;
-  eboot_command_read(&ebcmd);
-  address = ebcmd.args[0];
-  _buffer = new uint8_t[FLASH_SECTOR_SIZE];
-
-  if (ESP.flashRead(address, (uint32_t*)_buffer, FLASH_SECTOR_SIZE)) {
-    if (_buffer[2] != 3) {  // DOUT
-      _buffer[2] = 3;
-      if (ESP.flashEraseSector(address / FLASH_SECTOR_SIZE)) {
-        ESP.flashWrite(address, (uint32_t*)_buffer, FLASH_SECTOR_SIZE);
-      }
-    }
-  }
-  delete[] _buffer;
-#endif  // ESP8266
-}
-
-void SettingsBufferFree(void) {
-  if (settings_buffer != nullptr) {
-    free(settings_buffer);
-    settings_buffer = nullptr;
-  }
-}
-
-bool SettingsBufferAlloc(void) {
-  SettingsBufferFree();
-  if (!(settings_buffer = (uint8_t *)malloc(sizeof(Settings)))) {
-    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_UPLOAD_ERR_2));  // Not enough (memory) space
-    return false;
-  }
-  return true;
-}
-
-uint16_t GetCfgCrc16(uint8_t *bytes, uint32_t size) {
-  uint16_t crc = 0;
-
-  for (uint32_t i = 0; i < size; i++) {
-    if ((i < 14) || (i > 15)) { crc += bytes[i]*(i+1); }  // Skip crc
-  }
-  return crc;
-}
-
-uint16_t GetSettingsCrc(void) {
-  // Fix miscalculation if previous Settings was 3584 and current Settings is 4096 between 0x06060007 and 0x0606000A
-  uint32_t size = ((Settings.version < 0x06060007) || (Settings.version > 0x0606000A)) ? 3584 : sizeof(Settings);
-  return GetCfgCrc16((uint8_t*)&Settings, size);
-}
-
-uint32_t GetCfgCrc32(uint8_t *bytes, uint32_t size) {
-  // https://create.stephan-brumme.com/crc32/#bitwise
-  uint32_t crc = 0;
-
-  while (size--) {
-    crc ^= *bytes++;
-    for (uint32_t j = 0; j < 8; j++) {
-      crc = (crc >> 1) ^ (-int(crc & 1) & 0xEDB88320);
-    }
-  }
-  return ~crc;
-}
-
-uint32_t GetSettingsCrc32(void) {
-  return GetCfgCrc32((uint8_t*)&Settings, sizeof(Settings) -4);  // Skip crc32
-}
-
-void SettingsSaveAll(void) {
-  if (Settings.flag.save_state) {
-    Settings.power = TasmotaGlobal.power;
-  } else {
-    Settings.power = 0;
-  }
-  XsnsCall(FUNC_SAVE_BEFORE_RESTART);
-  XdrvCall(FUNC_SAVE_BEFORE_RESTART);
-  SettingsSave(0);
 }
 
 /*********************************************************************************************\
@@ -358,6 +274,150 @@ void UpdateQuickPowerCycle(bool update) {
 #endif  // ESP32
 
 #endif  // FIRMWARE_MINIMAL
+}
+
+/*********************************************************************************************\
+ * Settings services
+\*********************************************************************************************/
+
+uint16_t GetCfgCrc16(uint8_t *bytes, uint32_t size) {
+  uint16_t crc = 0;
+
+  for (uint32_t i = 0; i < size; i++) {
+    if ((i < 14) || (i > 15)) { crc += bytes[i]*(i+1); }  // Skip crc
+  }
+  return crc;
+}
+
+uint16_t GetSettingsCrc(void) {
+  // Fix miscalculation if previous Settings was 3584 and current Settings is 4096 between 0x06060007 and 0x0606000A
+  uint32_t size = ((Settings.version < 0x06060007) || (Settings.version > 0x0606000A)) ? 3584 : sizeof(Settings);
+  return GetCfgCrc16((uint8_t*)&Settings, size);
+}
+
+uint32_t GetCfgCrc32(uint8_t *bytes, uint32_t size) {
+  // https://create.stephan-brumme.com/crc32/#bitwise
+  uint32_t crc = 0;
+
+  while (size--) {
+    crc ^= *bytes++;
+    for (uint32_t j = 0; j < 8; j++) {
+      crc = (crc >> 1) ^ (-int(crc & 1) & 0xEDB88320);
+    }
+  }
+  return ~crc;
+}
+
+uint32_t GetSettingsCrc32(void) {
+  return GetCfgCrc32((uint8_t*)&Settings, sizeof(Settings) -4);  // Skip crc32
+}
+
+void SettingsSaveAll(void) {
+  if (Settings.flag.save_state) {
+    Settings.power = TasmotaGlobal.power;
+  } else {
+    Settings.power = 0;
+  }
+  XsnsCall(FUNC_SAVE_BEFORE_RESTART);
+  XdrvCall(FUNC_SAVE_BEFORE_RESTART);
+  SettingsSave(0);
+}
+
+/*********************************************************************************************\
+ * Settings backup and restore
+\*********************************************************************************************/
+
+void SettingsBufferFree(void) {
+  if (settings_buffer != nullptr) {
+    free(settings_buffer);
+    settings_buffer = nullptr;
+  }
+}
+
+bool SettingsBufferAlloc(void) {
+  SettingsBufferFree();
+  if (!(settings_buffer = (uint8_t *)malloc(sizeof(Settings)))) {
+    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_UPLOAD_ERR_2));  // Not enough (memory) space
+    return false;
+  }
+  return true;
+}
+
+String SettingsConfigFilename(void) {
+  char filename[TOPSZ];
+  char hostname[sizeof(TasmotaGlobal.hostname)];
+  snprintf_P(filename, sizeof(filename), PSTR("Config_%s_%s.dmp"), NoAlNumToUnderscore(hostname, TasmotaGlobal.hostname), TasmotaGlobal.version);
+  return String(filename);
+}
+
+uint32_t SettingsConfigBackup(void) {
+  if (!SettingsBufferAlloc()) { return 0; }
+
+  uint32_t cfg_crc32 = Settings.cfg_crc32;
+  Settings.cfg_crc32 = GetSettingsCrc32();  // Calculate crc (again) as it might be wrong when savedata = 0 (#3918)
+
+  uint32_t config_len = sizeof(Settings);
+  memcpy(settings_buffer, &Settings, config_len);
+
+  Settings.cfg_crc32 = cfg_crc32;  // Restore crc in case savedata = 0 to make sure settings will be noted as changed
+
+  if (config_xor_on_set) {
+    for (uint32_t i = 2; i < config_len; i++) {
+      settings_buffer[i] ^= (config_xor_on_set +i);
+    }
+  }
+  return config_len;
+}
+
+bool SettingsConfigRestore(void) {
+  uint32_t config_len = sizeof(Settings);
+
+  if (config_xor_on_set) {
+    for (uint32_t i = 2; i < config_len; i++) {
+      settings_buffer[i] ^= (config_xor_on_set +i);
+    }
+  }
+
+  bool valid_settings = false;
+
+  // unsigned long version;                   // 008
+  unsigned long buffer_version = settings_buffer[11] << 24 | settings_buffer[10] << 16 | settings_buffer[9] << 8 | settings_buffer[8];
+  if (buffer_version > 0x06000000) {
+    // uint16_t      cfg_size;                  // 002
+    uint32_t buffer_size = settings_buffer[3] << 8 | settings_buffer[2];
+    if (buffer_version > 0x0606000A) {
+      // uint32_t      cfg_crc32;                 // FFC
+      uint32_t buffer_crc32 = settings_buffer[4095] << 24 | settings_buffer[4094] << 16 | settings_buffer[4093] << 8 | settings_buffer[4092];
+      valid_settings = (GetCfgCrc32(settings_buffer, buffer_size -4) == buffer_crc32);
+    } else {
+      // uint16_t      cfg_crc;                   // 00E
+      uint16_t buffer_crc16 = settings_buffer[15] << 8 | settings_buffer[14];
+      valid_settings = (GetCfgCrc16(settings_buffer, buffer_size) == buffer_crc16);
+    }
+  } else {
+    valid_settings = (settings_buffer[0] == CONFIG_FILE_SIGN);
+  }
+
+  if (valid_settings) {
+#ifdef ESP8266
+    // uint8_t       config_version;            // F36
+    valid_settings = (0 == settings_buffer[0xF36]);  // Settings.config_version
+#endif  // ESP8266
+#ifdef ESP32
+    // uint8_t       config_version;            // F36
+    valid_settings = (1 == settings_buffer[0xF36]);  // Settings.config_version
+#endif  // ESP32
+  }
+
+  if (valid_settings) {
+    SettingsDefaultSet2();
+    memcpy((char*)&Settings +16, settings_buffer +16, config_len -16);
+    Settings.version = buffer_version;  // Restore version and auto upgrade after restart
+  }
+
+  SettingsBufferFree();
+
+  return valid_settings;
 }
 
 /*********************************************************************************************\

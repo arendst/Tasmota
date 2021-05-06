@@ -400,8 +400,6 @@ struct WEB {
   uint8_t state = HTTP_OFF;
   uint8_t upload_file_type;
   uint8_t config_block_count = 0;
-  uint8_t config_xor_on = 0;
-  uint8_t config_xor_on_set = CONFIG_FILE_XOR;
   bool upload_services_stopped = false;
   bool reset_web_log_flag = false;                  // Reset web console log
   bool initial_config = false;
@@ -2182,38 +2180,20 @@ void HandleBackupConfiguration(void)
 
   AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_BACKUP_CONFIGURATION));
 
-  if (!SettingsBufferAlloc()) { return; }
+  uint32_t config_len = SettingsConfigBackup();
+  if (!config_len) { return; }
 
   WiFiClient myClient = Webserver->client();
-  Webserver->setContentLength(sizeof(Settings));
+  Webserver->setContentLength(config_len);
 
   char attachment[TOPSZ];
-
-//  char friendlyname[TOPSZ];
-//  snprintf_P(attachment, sizeof(attachment), PSTR("attachment; filename=Config_%s_%s.dmp"), NoAlNumToUnderscore(friendlyname, SettingsText(SET_FRIENDLYNAME1)), TasmotaGlobal.version);
-
-  char hostname[sizeof(TasmotaGlobal.hostname)];
-  snprintf_P(attachment, sizeof(attachment), PSTR("attachment; filename=Config_%s_%s.dmp"), NoAlNumToUnderscore(hostname, TasmotaGlobal.hostname), TasmotaGlobal.version);
-
+  snprintf_P(attachment, sizeof(attachment), PSTR("attachment; filename=%s"), SettingsConfigFilename().c_str());
   Webserver->sendHeader(F("Content-Disposition"), attachment);
 
   WSSend(200, CT_APP_STREAM, "");
-
-  uint32_t cfg_crc32 = Settings.cfg_crc32;
-  Settings.cfg_crc32 = GetSettingsCrc32();  // Calculate crc (again) as it might be wrong when savedata = 0 (#3918)
-
-  memcpy(settings_buffer, &Settings, sizeof(Settings));
-  if (Web.config_xor_on_set) {
-    for (uint32_t i = 2; i < sizeof(Settings); i++) {
-      settings_buffer[i] ^= (Web.config_xor_on_set +i);
-    }
-  }
-
-  myClient.write((const char*)settings_buffer, sizeof(Settings));
+  myClient.write((const char*)settings_buffer, config_len);
 
   SettingsBufferFree();
-
-  Settings.cfg_crc32 = cfg_crc32;  // Restore crc in case savedata = 0 to make sure settings will be noted as changed
 }
 
 /*-------------------------------------------------------------------------------------------*/
@@ -2745,41 +2725,7 @@ void HandleUploadLoop(void) {
   else if (UPLOAD_FILE_END == upload.status) {
     UploadServices(1);
     if (UPL_SETTINGS == Web.upload_file_type) {
-      if (Web.config_xor_on_set) {
-        for (uint32_t i = 2; i < sizeof(Settings); i++) {
-          settings_buffer[i] ^= (Web.config_xor_on_set +i);
-        }
-      }
-      bool valid_settings = false;
-      unsigned long buffer_version = settings_buffer[11] << 24 | settings_buffer[10] << 16 | settings_buffer[9] << 8 | settings_buffer[8];
-      if (buffer_version > 0x06000000) {
-        uint32_t buffer_size = settings_buffer[3] << 8 | settings_buffer[2];
-        if (buffer_version > 0x0606000A) {
-          uint32_t buffer_crc32 = settings_buffer[4095] << 24 | settings_buffer[4094] << 16 | settings_buffer[4093] << 8 | settings_buffer[4092];
-          valid_settings = (GetCfgCrc32(settings_buffer, buffer_size -4) == buffer_crc32);
-        } else {
-          uint16_t buffer_crc16 = settings_buffer[15] << 8 | settings_buffer[14];
-          valid_settings = (GetCfgCrc16(settings_buffer, buffer_size) == buffer_crc16);
-        }
-      } else {
-        valid_settings = (settings_buffer[0] == CONFIG_FILE_SIGN);
-      }
-
-      if (valid_settings) {
-#ifdef ESP8266
-        valid_settings = (0 == settings_buffer[0xF36]);  // Settings.config_version
-#endif  // ESP8266
-#ifdef ESP32
-        valid_settings = (1 == settings_buffer[0xF36]);  // Settings.config_version
-#endif  // ESP32
-      }
-
-      if (valid_settings) {
-        SettingsDefaultSet2();
-        memcpy((char*)&Settings +16, settings_buffer +16, sizeof(Settings) -16);
-        Settings.version = buffer_version;  // Restore version and auto upgrade after restart
-        SettingsBufferFree();
-      } else {
+      if (!SettingsConfigRestore()) {
         Web.upload_error = 8;  // File invalid
         return;
       }
