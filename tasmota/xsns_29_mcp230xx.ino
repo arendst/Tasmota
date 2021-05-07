@@ -394,7 +394,7 @@ void MCP230xx_Show(bool json)
     }
     if (outputcount) {
       uint16_t gpiototal = ((uint16_t)gpiob << 8) | gpio;
-      ResponseAppend_P(PSTR(",\"MCP230_OUT\":{"));
+      ResponseAppend_P(PSTR(",\"OUT\":{"));
       char stt[7];
       bool first = true;
       for (uint32_t pinx = 0; pinx < mcp230xx_pincount; pinx++) {
