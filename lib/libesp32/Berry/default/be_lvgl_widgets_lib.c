@@ -14,6 +14,10 @@
 
 extern int lv0_start(bvm *vm);
 
+extern int lv0_init(bvm *vm);
+
+extern int lv0_add_button_encoder(bvm *vm);   // add buttons with encoder logic
+
 extern int lv0_scr_act(bvm *vm);
 extern int lv0_layer_top(bvm *vm);
 extern int lv0_layer_sys(bvm *vm);
@@ -175,6 +179,13 @@ extern int lvbe_group_get_focused(bvm *vm);
 extern int lvbe_group_get_editing(bvm *vm);
 extern int lvbe_group_get_click_focus(bvm *vm);
 extern int lvbe_group_get_wrap(bvm *vm);
+
+/* `lv_indev` external functions definitions */
+extern int lvbe_indev_get_type(bvm *vm);
+extern int lvbe_indev_enable(bvm *vm);
+extern int lvbe_indev_set_group(bvm *vm);
+extern int lvbe_indev_get_obj_act(bvm *vm);
+extern int lvbe_indev_search_obj(bvm *vm);
 
 /* `lv_obj` external functions definitions */
 extern int lvbe_obj_create(bvm *vm);
@@ -1069,6 +1080,7 @@ extern int lvbe_win_scroll_ver(bvm *vm);
 #include "../generate/be_fixed_be_class_lv_img.h"
 #include "../generate/be_fixed_be_class_lv_style.h"
 #include "../generate/be_fixed_be_class_lv_group.h"
+#include "../generate/be_fixed_be_class_lv_indev.h"
 #include "../generate/be_fixed_be_class_lv_obj.h"
 #include "../generate/be_fixed_be_class_lv_arc.h"
 #include "../generate/be_fixed_be_class_lv_bar.h"
@@ -1473,6 +1485,49 @@ class be_class_lv_group (scope: global, name: lv_group) {
     get_editing, func(lvbe_group_get_editing)
     get_click_focus, func(lvbe_group_get_click_focus)
     get_wrap, func(lvbe_group_get_wrap)
+}
+@const_object_info_end */
+
+void be_load_lv_indev_lib(bvm *vm) {
+#if !BE_USE_PRECOMPILED_OBJECT
+  static const bnfuncinfo members[] = {
+    { ".p", NULL },
+    { "init", lv0_init },
+    { "tostring", lvx_tostring },
+
+    { "get_type", lvbe_indev_get_type },
+    { "enable", lvbe_indev_enable },
+    { "set_group", lvbe_indev_set_group },
+    { "get_obj_act", lvbe_indev_get_obj_act },
+    { "search_obj", lvbe_indev_search_obj },
+
+    // { NULL, (bntvfunc) BE_CLOSURE }, /* mark section for berry closures */
+
+    { NULL, NULL }
+  };
+  be_regclass(vm, "lv_indev", members);
+
+  be_getglobal(vm, "lv_indev");
+  be_getglobal(vm, "lv_obj");
+  be_setsuper(vm, -2);
+  be_pop(vm, 2);
+#else
+    be_pushntvclass(vm, &be_class_lv_indev);
+    be_setglobal(vm, "lv_indev");
+    be_pop(vm, 1);
+#endif
+};
+
+/* @const_object_info_begin
+class be_class_lv_indev (scope: global, name: lv_indev, super: be_class_lv_obj) {
+    .p, var
+    init, func(lv0_init)
+    tostring, func(lvx_tostring)
+    get_type, func(lvbe_indev_get_type)
+    enable, func(lvbe_indev_enable)
+    set_group, func(lvbe_indev_set_group)
+    get_obj_act, func(lvbe_indev_get_obj_act)
+    search_obj, func(lvbe_indev_search_obj)
 }
 @const_object_info_end */
 

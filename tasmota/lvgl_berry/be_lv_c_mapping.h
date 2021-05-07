@@ -151,6 +151,13 @@ extern "C" {
   int lvbe_group_get_click_focus(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_group_get_click_focus, "b", "(lv_group)"); }
   int lvbe_group_get_wrap(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_group_get_wrap, "b", "(lv_group)"); }
 
+  /* `lv_indev` methods */
+  int lvbe_indev_get_type(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_indev_get_type, "i", "(lv_indev)"); }
+  int lvbe_indev_enable(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_indev_enable, "", "(lv_indev)b"); }
+  int lvbe_indev_set_group(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_indev_set_group, "", "(lv_indev)(lv_group)"); }
+  int lvbe_indev_get_obj_act(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_indev_get_obj_act, "lv_obj", ""); }
+  int lvbe_indev_search_obj(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_indev_search_obj, "lv_obj", "(lv_obj)(lv_point)"); }
+
   /* `lv_obj` methods */
   int lvbe_obj_create(bvm *vm)       { return lvx_init_2(vm, (void*) &lv_obj_create, "lv_obj", "(lv_obj)(lv_obj)"); }
   int lvbe_obj_del(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_obj_del, "i", "(lv_obj)"); }
@@ -1042,6 +1049,7 @@ extern "C" {
   extern void be_load_lv_img_lib(bvm *vm);
   extern void be_load_lv_style_lib(bvm *vm);
   extern void be_load_lv_group_lib(bvm *vm);
+  extern void be_load_lv_indev_lib(bvm *vm);
   extern void be_load_lv_obj_lib(bvm *vm);
   extern void be_load_lv_arc_lib(bvm *vm);
   extern void be_load_lv_bar_lib(bvm *vm);
@@ -1082,6 +1090,7 @@ extern "C" {
 #endif
     be_load_lv_style_lib(vm);
     be_load_lv_group_lib(vm);
+    be_load_lv_indev_lib(vm);
     be_load_lv_obj_lib(vm);
 #if BE_LV_WIDGET_ARC
     be_load_lv_arc_lib(vm);

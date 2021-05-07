@@ -76,6 +76,7 @@ return_types = {
   "lv_align_t": "i",
   "lv_keyboard_mode_t": "i",
   # "lv_group_focus_cb_t": "i",
+  "lv_indev_type_t": "i",
 
 
   "lv_obj_t *": "lv_obj",
@@ -96,7 +97,7 @@ lv_widgets = ['arc', 'bar', 'btn', 'btnmatrix', 'calendar', 'canvas', 'chart', '
              'cont', 'cpicker', 'dropdown', 'gauge', 'img', 'imgbtn', 'keyboard', 'label', 'led', 'line',
              'linemeter', 'list', 'msgbox', 'objmask', 'templ', 'page', 'roller', 'slider', 'spinbox',
              'spinner', 'switch', 'table', 'tabview', 'textarea', 'tileview', 'win']
-lv_prefix = ['obj', 'group', 'style'] + lv_widgets
+lv_prefix = ['obj', 'group', 'style', 'indev'] + lv_widgets
 
 def try_int(s):
   try:
@@ -318,6 +319,10 @@ print("""
 
 extern int lv0_start(bvm *vm);
 
+extern int lv0_init(bvm *vm);
+
+extern int lv0_add_button_encoder(bvm *vm);   // add buttons with encoder logic
+
 extern int lv0_scr_act(bvm *vm);
 extern int lv0_layer_top(bvm *vm);
 extern int lv0_layer_sys(bvm *vm);
@@ -369,7 +374,10 @@ for subtype, flv in lv.items():
     print(f"    {{ \"init\", lvs_init }},")
     print(f"    {{ \"tostring\", lvs_tostring }},")
   else:
-    print(f"    {{ \"init\", lvbe_{subtype}_create }},")
+    if subtype != 'indev':    # indev has no create
+      print(f"    {{ \"init\", lvbe_{subtype}_create }},")
+    else:
+      print(f"    {{ \"init\", lv0_init }},")
     print(f"    {{ \"tostring\", lvx_tostring }},")
 
   print()
@@ -411,7 +419,10 @@ for subtype, flv in lv.items():
     print(f"    init, func(lvs_init)")
     print(f"    tostring, func(lvs_tostring)")
   else:
-    print(f"    init, func(lvbe_{subtype}_create)")
+    if subtype != 'indev':    # indev has no create
+      print(f"    init, func(lvbe_{subtype}_create)")
+    else:
+      print(f"    init, func(lv0_init)")
     print(f"    tostring, func(lvx_tostring)")
 
   for f in flv:
@@ -444,6 +455,9 @@ print("""/********************************************************************
 #include "lvgl.h"
 
 extern int lv0_start(bvm *vm);
+
+extern int lv0_add_button_encoder(bvm *vm);   // add buttons with encoder logic
+
 extern int lv0_load_montserrat_font(bvm *vm);
 extern int lv0_load_seg7_font(bvm *vm);
 extern int lv0_load_font(bvm *vm);
@@ -563,6 +577,7 @@ for k_v in lv_module:
 print("""
 
     be_native_module_function("start", lv0_start),
+    be_native_module_function("add_button_encoder", lv0_add_button_encoder),
     be_native_module_function("montserrat_font", lv0_load_montserrat_font),
     be_native_module_function("seg7_font", lv0_load_seg7_font),
     be_native_module_function("load_font", lv0_load_font),
@@ -734,6 +749,7 @@ for k_v in lv_module:
 
 print("""
     start, func(lv0_start)
+    add_button_encoder, func(lv0_add_button_encoder)
     montserrat_font, func(lv0_load_montserrat_font)
     seg7_font, func(lv0_load_seg7_font)
     load_font, func(lv0_load_font)

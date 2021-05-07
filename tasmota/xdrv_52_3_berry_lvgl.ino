@@ -28,6 +28,63 @@
 extern Adafruit_LvGL_Glue * glue;
 
 /********************************************************************
+ * Structures used by LVGL_Berry
+ *******************************************************************/
+
+class LVBE_button {
+public:
+  bool pressed = false;       // what is the current state
+  bool inverted = false;      // false: button pressed is HIGH, true: button pressed is LOW
+  int8_t pin = -1;            // physical GPIO (-1 if unconfigured)
+
+  uint32_t millis_last_state_change = 0; // last millis() time stamp when the state changed, used for debouncing
+  const uint32_t debounce_time = 10;     // Needs to stabilize for 10ms before state change
+
+  inline void set_inverted(bool inv) { inverted = inv; }
+  inline bool get_inverted(void) const { return inverted; }
+
+  inline bool valid(void) const { return pin >= 0; }
+
+  bool read_gpio(void) const {
+    bool cur_state = digitalRead(pin);
+    if (inverted) { cur_state = !cur_state; }
+    return cur_state;
+  }
+
+  void set_gpio(int8_t _pin) {      // is the button pressed
+    pin = _pin;
+    pressed = read_gpio();
+    millis_last_state_change = millis();
+  }
+
+  bool state_changed(void) {        // do we need to report a change
+    if (!valid()) { return false; }
+    if (TimeReached(millis_last_state_change + debounce_time)) {
+      // read current state of GPIO after debounce
+      if (read_gpio() != pressed) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  bool clear_state_changed(void) {  // read and clear the state
+    pressed = read_gpio();
+    millis_last_state_change = millis();
+    return pressed;
+  }
+};
+
+class LVBE_globals {
+public:
+  lv_indev_drv_t indev_drv;
+  LList<lv_indev_t*> indev_list;
+  // input devices
+  LVBE_button btn[3];
+};
+LVBE_globals lvbe;
+
+/********************************************************************
  * Generated code, don't edit
  *******************************************************************/
  // Configuration
@@ -542,6 +599,11 @@ extern "C" {
     lv_img_set_src(img, &tasmota_logo_64_truecolor);
   }
 
+  /*********************************************************************************************\
+   * LVGL Start
+   * 
+   * Calls uDisplay and starts LVGL
+  \*********************************************************************************************/
   // lv.start(instance, instance) -> nil
   int lv0_start(bvm *vm);
   int lv0_start(bvm *vm) {
@@ -557,13 +619,97 @@ extern "C" {
     be_raise(vm, kTypeError, nullptr);
   }
 
-  // lv.demo() -> nil
-  int lv0_demo(bvm *vm);
-  int lv0_demo(bvm *vm) {
-    lv_ex_get_started_1();
-    be_return_nil(vm);
+  /*********************************************************************************************\
+   * LVGL Input Devices
+   * 
+   * Calls uDisplay and starts LVGL
+   * 
+   * lv.add_button_encoder([inv: bool]) -> nil
+  \*********************************************************************************************/
+  bool lvbe_encoder_with_keys_read(lv_indev_drv_t * drv, lv_indev_data_t*data);
+
+  int lv0_add_button_encoder(bvm *vm);   // add buttons with encoder logic
+  int lv0_add_button_encoder(bvm *vm) {
+    int32_t argc = be_top(vm); // Get the number of arguments
+    bool inverted = false;
+    // berry_log_P("lv0_add_button_encoder argc=%d inverted=%d", argc, be_tobool(vm, 1));
+    if (argc >= 1) {
+      inverted = be_tobool(vm, 1);    // get the inverted flag
+    }
+    // we need 3 buttons from the template
+    int32_t btn0 = Pin(GPIO_INPUT, 0);
+    int32_t btn1 = Pin(GPIO_INPUT, 1);
+    int32_t btn2 = Pin(GPIO_INPUT, 2);
+    if (btn0 < 0 || btn1 < 0 || btn2 < 0) {
+      be_raise(vm, "template_error", "You need to configure GPIO Inputs 1/2/3");
+    }
+    lvbe.btn[0].set_gpio(btn0);
+    lvbe.btn[0].set_inverted(inverted);
+    lvbe.btn[1].set_gpio(btn1);
+    lvbe.btn[1].set_inverted(inverted);
+    lvbe.btn[2].set_gpio(btn2);
+    lvbe.btn[2].set_inverted(inverted);
+    berry_log_P(D_LOG_LVGL "Button Rotary encoder using GPIOs %d,%d,%d%s", btn0, btn1, btn2, inverted ? " (inverted)" : "");
+
+    lv_indev_drv_init(&lvbe.indev_drv);
+    lvbe.indev_drv.type = LV_INDEV_TYPE_ENCODER;
+    lvbe.indev_drv.read_cb = lvbe_encoder_with_keys_read;
+
+    lv_indev_t * indev = lv_indev_drv_register(&lvbe.indev_drv);
+    lvbe.indev_list.addHead(indev);   // keep track of indevs
+
+    be_getglobal(vm, "lv_indev");   // create an object of class lv_indev with the pointer
+    be_pushint(vm, (int32_t) indev);
+    be_call(vm, 1);
+    be_pop(vm, 1);
+
+    be_return(vm);
   }
 
+  /*********************************************************************************************\
+   * LVGL Input Devices - callbacks
+  \*********************************************************************************************/
+
+  // typedef struct {
+  //   lv_point_t point; /**< For LV_INDEV_TYPE_POINTER the currently pressed point*/
+  //   uint32_t key;     /**< For LV_INDEV_TYPE_KEYPAD the currently pressed key*/
+  //   uint32_t btn_id;  /**< For LV_INDEV_TYPE_BUTTON the currently pressed button*/
+  //   int16_t enc_diff; /**< For LV_INDEV_TYPE_ENCODER number of steps since the previous read*/
+
+  //   lv_indev_state_t state; /**< LV_INDEV_STATE_REL or LV_INDEV_STATE_PR*/
+  // } lv_indev_data_t;
+
+  bool lvbe_encoder_with_keys_read(lv_indev_drv_t * drv, lv_indev_data_t*data){
+    // scan through buttons if we need to report something
+    uint32_t i;
+    for (i = 0; i < 3; i++) {
+      if (lvbe.btn[i].state_changed()) {
+        switch (i) {
+          case 0: data->key = LV_KEY_LEFT; break;
+          case 1: data->key = LV_KEY_ENTER; break;
+          case 2: data->key = LV_KEY_RIGHT; break;
+          default: break;
+        }
+        bool state = lvbe.btn[i].clear_state_changed();
+        data->state = state ? LV_INDEV_STATE_PR : LV_INDEV_STATE_REL;
+        // berry_log_P("Button event key %d state %d,%d", data->key, state, data->state);
+        break;
+      }
+    }
+
+    // do we have more to report?
+    bool more_to_report = false;
+    for (/* continue where we left */; i < 3; i++) {
+      if (lvbe.btn[i].state_changed()) {
+        more_to_report = true;
+      }
+    }
+    return more_to_report;
+  }
+
+  /*********************************************************************************************\
+   * Methods specific to Tasmota LVGL
+  \*********************************************************************************************/
   // lv.scr_act() -> lv_obj() instance
   int lv0_scr_act(bvm *vm)    { return lv0_lvobj__void_call(vm, &lv_scr_act); }
   int lv0_layer_top(bvm *vm)  { return lv0_lvobj__void_call(vm, &lv_layer_top); }
@@ -576,6 +722,20 @@ extern "C" {
   int lv0_get_ver_res(bvm *vm) {
     be_pushint(vm, lv_disp_get_ver_res(lv_disp_get_default()));
     be_return(vm);
+  }
+
+  /*********************************************************************************************\
+   * Support for lv_indev and objects that don't need creator
+  \*********************************************************************************************/
+  int lv0_init(bvm *vm);
+  int lv0_init(bvm *vm) {
+    void * obj = nullptr;
+    int argc = be_top(vm);
+    if (argc > 1) {
+      obj = (void*) be_convert_single_elt(vm, 2);
+    }
+    lv_init_set_member(vm, 1, obj);
+    be_return_nil(vm);
   }
 
   /*********************************************************************************************\
