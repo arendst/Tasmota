@@ -61,8 +61,6 @@ const uint16_t HTTP_OTA_RESTART_RECONNECT_TIME = 10000;  // milliseconds - Allow
 #include <ESP8266WebServer.h>
 #include <DNSServer.h>
 
-enum UploadTypes { UPL_TASMOTA, UPL_SETTINGS, UPL_EFM8BB1, UPL_TASMOTACLIENT, UPL_EFR32, UPL_SHD, UPL_CCL, UPL_UFSFILE };
-
 #ifdef USE_UNISHOX_COMPRESSION
   #ifdef USE_JAVASCRIPT_ES6
     #include "./html_compressed/HTTP_HEADER1_ES6.h"
