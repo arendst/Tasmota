@@ -1820,6 +1820,13 @@ void GpioInit(void)
     }
   }
 
+  // Digital input
+  for (uint32_t i = 0; i < MAX_SWITCHES; i++) {
+    if (PinUsed(GPIO_INPUT, i)) {
+      pinMode(Pin(GPIO_INPUT, i), INPUT);
+    }
+  }
+
 #ifdef USE_I2C
   TasmotaGlobal.i2c_enabled = (PinUsed(GPIO_I2C_SCL) && PinUsed(GPIO_I2C_SDA));
   if (TasmotaGlobal.i2c_enabled) {

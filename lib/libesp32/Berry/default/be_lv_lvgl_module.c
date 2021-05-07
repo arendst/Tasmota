@@ -11,6 +11,9 @@
 #include "lvgl.h"
 
 extern int lv0_start(bvm *vm);
+
+extern int lv0_add_button_encoder(bvm *vm);   // add buttons with encoder logic
+
 extern int lv0_load_montserrat_font(bvm *vm);
 extern int lv0_load_seg7_font(bvm *vm);
 extern int lv0_load_font(bvm *vm);
@@ -122,6 +125,16 @@ be_native_module_attr_table(lvgl) {
     be_native_module_int("ALIGN_OUT_RIGHT_TOP", 18),
     be_native_module_int("ALIGN_OUT_RIGHT_MID", 19),
     be_native_module_int("ALIGN_OUT_RIGHT_BOTTOM", 20),
+    be_native_module_int("INDEV_STATE_REL", 0),
+    be_native_module_int("INDEV_STATE_PR", 1),
+    be_native_module_int("DRAG_DIR_HOR", 1),
+    be_native_module_int("DRAG_DIR_VER", 2),
+    be_native_module_int("DRAG_DIR_BOTH", 3),
+    be_native_module_int("DRAG_DIR_ONE", 4),
+    be_native_module_int("GESTURE_DIR_TOP", 5),
+    be_native_module_int("GESTURE_DIR_BOTTOM", 6),
+    be_native_module_int("GESTURE_DIR_LEFT", 7),
+    be_native_module_int("GESTURE_DIR_RIGHT", 8),
     be_native_module_int("DISP_ROT_NONE", 0),
     be_native_module_int("DISP_ROT_90", 1),
     be_native_module_int("DISP_ROT_180", 2),
@@ -611,6 +624,7 @@ be_native_module_attr_table(lvgl) {
 
 
     be_native_module_function("start", lv0_start),
+    be_native_module_function("add_button_encoder", lv0_add_button_encoder),
     be_native_module_function("montserrat_font", lv0_load_montserrat_font),
     be_native_module_function("seg7_font", lv0_load_seg7_font),
     be_native_module_function("load_font", lv0_load_font),
@@ -785,6 +799,16 @@ module lvgl (scope: global) {
     ALIGN_OUT_RIGHT_TOP, int(18)
     ALIGN_OUT_RIGHT_MID, int(19)
     ALIGN_OUT_RIGHT_BOTTOM, int(20)
+    INDEV_STATE_REL, int(0)
+    INDEV_STATE_PR, int(1)
+    DRAG_DIR_HOR, int(1)
+    DRAG_DIR_VER, int(2)
+    DRAG_DIR_BOTH, int(3)
+    DRAG_DIR_ONE, int(4)
+    GESTURE_DIR_TOP, int(5)
+    GESTURE_DIR_BOTTOM, int(6)
+    GESTURE_DIR_LEFT, int(7)
+    GESTURE_DIR_RIGHT, int(8)
     DISP_ROT_NONE, int(0)
     DISP_ROT_90, int(1)
     DISP_ROT_180, int(2)
@@ -1151,6 +1175,7 @@ module lvgl (scope: global) {
     TEXTAREA_CURSOR_LAST, int(32767)
 
     start, func(lv0_start)
+    add_button_encoder, func(lv0_add_button_encoder)
     montserrat_font, func(lv0_load_montserrat_font)
     seg7_font, func(lv0_load_seg7_font)
     load_font, func(lv0_load_font)

@@ -384,7 +384,7 @@ void start_lvgl(const char * uconfig) {
     * NOTE: When not using Wi-Fi nor Bluetooth you can pin the guiTask to core 0 */
   xTaskCreatePinnedToCore(guiTask, "gui", 4096*2, NULL, 0, NULL, 1);
 
-  AddLog(LOG_LEVEL_INFO, PSTR("LVGL initialized"));
+  AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_LVGL "LVGL initialized"));
 }
 
 /*********************************************************************************************\
