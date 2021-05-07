@@ -384,7 +384,7 @@ bool udisp_ReadTouch(int16_t * _x, int16_t * _y, int32_t * _touched) {
   // read from xdrv_55_touch.ino
   if (_x) { *_x = touch_xp; }
   if (_y) { *_y = touch_yp; }
-  if (touched) { *_touched = touched; }
+  if (_touched) { *_touched = touched ? 1 : 0; }
   return true;
 #else
   return false;

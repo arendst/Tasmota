@@ -727,13 +727,19 @@ extern "C" {
   }
 
   bool lvbe_touch_screen_read(lv_indev_drv_t * drv, lv_indev_data_t*data){
+    static int16_t prev_x = 0;
+    static int16_t prev_y = 0;
     int16_t touchpad_x, touchpad_y;
-    int32_t touched;
+    int32_t touchpad_press;
 
-    if (udisp_ReadTouch(&touchpad_x, &touchpad_y, &touched)) {
-      data->point.x = touchpad_x;
-      data->point.y = touchpad_y;
-      data->state = touched ? LV_INDEV_STATE_PR : LV_INDEV_STATE_REL;
+    if (udisp_ReadTouch(&touchpad_x, &touchpad_y, &touchpad_press)) {
+      if (touchpad_press) {
+        prev_x = touchpad_x;
+        prev_y = touchpad_y;
+      }
+      data->point.x = prev_x;
+      data->point.y = prev_y;
+      data->state = touchpad_press ? LV_INDEV_STATE_PR : LV_INDEV_STATE_REL;
     }
     return false;   // no more event in buffer
   }
