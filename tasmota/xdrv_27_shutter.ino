@@ -541,7 +541,7 @@ void ShutterAllowPreStartProcedure(uint8_t i)
 {
 #ifdef USE_RULES
   uint32_t uptime_Local=0;
-  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Delay Start. var%d <99>=<%s>, max10s?"),i+i, rules_vars[i]);
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Delay Start. var%d <99>=<%s>, max10s?"),i+1, rules_vars[i]);
   TasmotaGlobal.rules_flag.shutter_moving = 1;
   XdrvRulesProcess(0);
   uptime_Local = TasmotaGlobal.uptime;
