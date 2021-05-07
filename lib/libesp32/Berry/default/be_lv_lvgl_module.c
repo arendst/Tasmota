@@ -12,7 +12,8 @@
 
 extern int lv0_start(bvm *vm);
 
-extern int lv0_add_button_encoder(bvm *vm);   // add buttons with encoder logic
+extern int lv0_register_button_encoder(bvm *vm);  // add buttons with encoder logic
+extern int lv0_register_touch_screen(bvm *vm);    // add touch screen
 
 extern int lv0_load_montserrat_font(bvm *vm);
 extern int lv0_load_seg7_font(bvm *vm);
@@ -624,7 +625,10 @@ be_native_module_attr_table(lvgl) {
 
 
     be_native_module_function("start", lv0_start),
-    be_native_module_function("add_button_encoder", lv0_add_button_encoder),
+
+    be_native_module_function("register_button_encoder", lv0_register_button_encoder),
+    be_native_module_function("register_touch_screen", lv0_register_touch_screen),
+
     be_native_module_function("montserrat_font", lv0_load_montserrat_font),
     be_native_module_function("seg7_font", lv0_load_seg7_font),
     be_native_module_function("load_font", lv0_load_font),
@@ -1175,7 +1179,10 @@ module lvgl (scope: global) {
     TEXTAREA_CURSOR_LAST, int(32767)
 
     start, func(lv0_start)
-    add_button_encoder, func(lv0_add_button_encoder)
+
+    register_button_encoder, func(lv0_register_button_encoder)
+    register_touch_screen, func(lv0_register_touch_screen)
+
     montserrat_font, func(lv0_load_montserrat_font)
     seg7_font, func(lv0_load_seg7_font)
     load_font, func(lv0_load_font)

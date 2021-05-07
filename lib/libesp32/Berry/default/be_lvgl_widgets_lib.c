@@ -16,7 +16,8 @@ extern int lv0_start(bvm *vm);
 
 extern int lv0_init(bvm *vm);
 
-extern int lv0_add_button_encoder(bvm *vm);   // add buttons with encoder logic
+extern int lv0_register_button_encoder(bvm *vm);    // add buttons with encoder logic
+extern int lv0_register_touch_screen(bvm *vm);      // touch screen
 
 extern int lv0_scr_act(bvm *vm);
 extern int lv0_layer_top(bvm *vm);
