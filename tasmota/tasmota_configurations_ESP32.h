@@ -108,17 +108,20 @@
   #define USE_MPU6886
 #define USE_SPI
   #define USE_DISPLAY
+
   #ifndef USE_UNIVERSAL_DISPLAY
     #define USE_DISPLAY_ILI9341
-  #endif
-    #define JPEG_PICTS
-    #define USE_FT5206
     #define USE_TOUCH_BUTTONS
       #define MAX_TOUCH_BUTTONS 16
+  #endif
+
+    #define JPEG_PICTS
+    #define USE_FT5206
+
 #define USE_SENDMAIL
 #define USE_ESP32MAIL
 
-#define USE_SCRIPT                               // Add support for script (+17k code)
+//#define USE_SCRIPT                               // Add support for script (+17k code)
 // Script related defines
 #ifdef USE_SCRIPT
   #undef USE_RULES
