@@ -907,10 +907,11 @@ public:
   // set all 5 channels at once.
   // Channels are: R G B CW WW
   // Brightness is automatically recalculated to adjust channels to the desired values
-  void changeChannels(uint8_t *channels) {
+  // if channelsmapped is true, CCT/RGB mapping has already been done
+  void changeChannels(uint8_t *channels, bool channelsmapped=false) {
     if (Light.pwm_multi_channels) {
       _state->setChannelsRaw(channels);
-    } else if (LST_COLDWARM == Light.subtype) {
+    } else if (LST_COLDWARM == Light.subtype && ! channelsmapped) {
       // remap channels 0-1 to 3-4 if cold/warm
       uint8_t remapped_channels[5] = {0,0,0,channels[0],channels[1]};
       _state->setChannels(remapped_channels);
@@ -2258,7 +2259,7 @@ void LightHandleDevGroupItem(void)
         // If a sequence offset is set, set the channels to the ones we received <SequenceOffset>
         // changes ago.
         if (Light.sequence_offset) {
-          light_controller.changeChannels(Light.channels_fifo);
+          light_controller.changeChannels(Light.channels_fifo, true);
 
           // Shift the fifo down and load the newly received channels at the end for this update and
           // any updates we missed.
@@ -2270,7 +2271,7 @@ void LightHandleDevGroupItem(void)
         }
         else
 #endif  // USE_DGR_LIGHT_SEQUENCE
-          light_controller.changeChannels((uint8_t *)XdrvMailbox.data);
+          light_controller.changeChannels((uint8_t *)XdrvMailbox.data, true);
         light_controller.changeBri(bri);
       }
       send_state = true;
