@@ -121,7 +121,7 @@
 #define USE_SENDMAIL
 #define USE_ESP32MAIL
 
-//#define USE_SCRIPT                               // Add support for script (+17k code)
+#define USE_SCRIPT                               // Add support for script (+17k code)
 // Script related defines
 #ifdef USE_SCRIPT
   #undef USE_RULES
