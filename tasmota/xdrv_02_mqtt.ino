@@ -23,9 +23,13 @@
 #define MQTT_WIFI_CLIENT_TIMEOUT   200    // Wifi TCP connection timeout (default is 5000 mSec)
 #endif
 
-#ifdef USE_MQTT_AZURE_IOT
-#include <t_bearssl.h>
+const uint32_t mqtt_file_chuck_size = 700;  // Related to base64_encode (+2 / 3 * 4) and MQTT buffer size (MIN_MESSZ = 1040)
+
 #include <base64.hpp>
+
+#ifdef USE_MQTT_AZURE_IOT
+//#include <base64.hpp>
+#include <t_bearssl.h>
 #include <JsonParser.h>
 #undef  MQTT_PORT
 #define MQTT_PORT         8883
@@ -59,7 +63,7 @@ const char kMqttCommands[] PROGMEM = "|"  // No prefix
   D_CMND_MQTTHOST "|" D_CMND_MQTTPORT "|" D_CMND_MQTTRETRY "|" D_CMND_STATETEXT "|" D_CMND_MQTTCLIENT "|"
   D_CMND_FULLTOPIC "|" D_CMND_PREFIX "|" D_CMND_GROUPTOPIC "|" D_CMND_TOPIC "|" D_CMND_PUBLISH "|" D_CMND_MQTTLOG "|"
   D_CMND_BUTTONTOPIC "|" D_CMND_SWITCHTOPIC "|" D_CMND_BUTTONRETAIN "|" D_CMND_SWITCHRETAIN "|" D_CMND_POWERRETAIN "|"
-  D_CMND_SENSORRETAIN "|" D_CMND_INFORETAIN "|" D_CMND_STATERETAIN ;
+  D_CMND_SENSORRETAIN "|" D_CMND_INFORETAIN "|" D_CMND_STATERETAIN "|" D_CMND_FILEUPLOAD "|" D_CMND_FILEDOWNLOAD ;
 
 SO_SYNONYMS(kMqttSynonyms,
   90,
@@ -85,9 +89,16 @@ void (* const MqttCommand[])(void) PROGMEM = {
   &CmndMqttHost, &CmndMqttPort, &CmndMqttRetry, &CmndStateText, &CmndMqttClient,
   &CmndFullTopic, &CmndPrefix, &CmndGroupTopic, &CmndTopic, &CmndPublish, &CmndMqttlog,
   &CmndButtonTopic, &CmndSwitchTopic, &CmndButtonRetain, &CmndSwitchRetain, &CmndPowerRetain, &CmndSensorRetain,
-  &CmndInfoRetain, &CmndStateRetain };
+  &CmndInfoRetain, &CmndStateRetain, &CmndFileUpload, &CmndFileDownload };
 
 struct MQTT {
+  uint32_t file_pos = 0;                 // MQTT file position during upload/download
+  uint32_t file_id = 0;                  // MQTT unique file id during upload/download
+  uint32_t file_type = 0;                // MQTT File type (See UploadTypes)
+  uint32_t file_size = 0;                // MQTT total file size
+  uint8_t* file_buffer = nullptr;        // MQTT file buffer
+  MD5Builder md5;                        // MQTT md5
+  String file_md5;                       // MQTT received file md5 (32 chars)
   uint16_t connect_count = 0;            // MQTT re-connect count
   uint16_t retry_counter = 1;            // MQTT connection retry counter
   uint16_t retry_counter_delay = 1;      // MQTT retry counter multiplier
@@ -101,7 +112,7 @@ struct MQTT {
 
 // This part of code is necessary to store Private Key and Cert in Flash
 #ifdef USE_MQTT_AWS_IOT
-#include <base64.hpp>
+//#include <base64.hpp>
 
 const br_ec_private_key *AWS_IoT_Private_Key = nullptr;
 const br_x509_certificate *AWS_IoT_Client_Certificate = nullptr;
@@ -1235,6 +1246,192 @@ void CmndStateRetain(void) {
     Settings.flag5.mqtt_state_retain = XdrvMailbox.payload;                                   // CMND_STATERETAIN
   }
   ResponseCmndStateText(Settings.flag5.mqtt_state_retain);                                    // CMND_STATERETAIN
+}
+
+void CmndFileUpload(void) {
+  // FileUpload 0  - Abort current upload
+  // FileUpload {"File":"Config_wemos10_9.4.0.3.dmp","Id":1620385091,"Type":2,"Size":4096,"Md5":"496fcbb433bbca89833063174d2c5747"}
+  // FileUpload {"Id":1620385091,"Data":"CRJcTQ9fYGF ... OT1BRUlNUVVZXWFk="}
+
+  const char* base64_data = nullptr;
+  uint32_t rcv_id = 0;
+
+  char* dataBuf = (char*)XdrvMailbox.data;
+  if (strlen(dataBuf) > 8) {             // Workaround exception if empty JSON like {} - Needs checks
+    JsonParser parser((char*) dataBuf);
+    JsonParserObject root = parser.getRootObject();
+    if (root) {
+      JsonParserToken val = root[PSTR("ID")];
+      if (val) { rcv_id = val.getUInt(); }
+      val = root[PSTR("TYPE")];
+      if (val) { Mqtt.file_type = val.getUInt(); }
+      val = root[PSTR("SIZE")];
+      if (val) { Mqtt.file_size = val.getUInt(); }
+      val = root[PSTR("MD5")];
+      if (val) { Mqtt.file_md5 = val.getStr(); }
+      val = root[PSTR("DATA")];
+      if (val) { base64_data = val.getStr(); }
+    }
+  }
+
+  if ((0 == Mqtt.file_id) && (rcv_id > 0) && (Mqtt.file_size > 0) && (Mqtt.file_type > 0)) {
+    // Init upload buffer
+    Mqtt.file_buffer = nullptr;
+
+    if (UPL_SETTINGS == Mqtt.file_type) {
+      if (SettingsConfigBackup()) {
+        Mqtt.file_buffer = settings_buffer;
+      }
+    }
+
+    if (!Mqtt.file_buffer) {
+      ResponseCmndChar(PSTR(D_JSON_INVALID_FILE_TYPE));
+    } else {
+      Mqtt.file_id = rcv_id;
+      Mqtt.file_pos = 0;
+
+      Mqtt.md5 = MD5Builder();
+      Mqtt.md5.begin();
+
+//      TasmotaGlobal.masterlog_level = LOG_LEVEL_DEBUG_MORE;  // Hide upload data logging
+    }
+  }
+  else if ((Mqtt.file_id > 0) && (Mqtt.file_id != rcv_id)) {
+    // Error receiving data
+
+    if (UPL_SETTINGS == Mqtt.file_type) {
+      SettingsBufferFree();
+    }
+
+    Mqtt.file_buffer = nullptr;
+    ResponseCmndChar(PSTR(D_JSON_ABORTED));
+  }
+
+  if (Mqtt.file_buffer) {
+    if (base64_data) {
+      // Save upload into buffer - Handle possible buffer overflows
+      uint32_t rcvd_bytes = decode_base64_length((unsigned char*)base64_data);
+      unsigned char decode_output[rcvd_bytes];
+      decode_base64((unsigned char*)base64_data, (unsigned char*)decode_output);
+
+      uint32_t bytes_left = Mqtt.file_size - Mqtt.file_pos;
+      uint32_t read_bytes = (bytes_left < rcvd_bytes) ? bytes_left : rcvd_bytes;
+      uint8_t* buffer = Mqtt.file_buffer + Mqtt.file_pos;
+      memcpy(buffer, decode_output, read_bytes);
+      Mqtt.md5.add(buffer, read_bytes);
+
+      Mqtt.file_pos += read_bytes;
+    }
+
+    if (Mqtt.file_pos < Mqtt.file_size) {
+      ResponseCmndChar(PSTR(D_JSON_ACK));
+    } else {
+      Mqtt.md5.calculate();
+      if (strcasecmp(Mqtt.file_md5.c_str(), Mqtt.md5.toString().c_str())) {
+        ResponseCmndChar(PSTR(D_JSON_MD5_MISMATCH));
+      } else {
+        // Process upload data en free buffer
+        ResponseCmndDone();
+
+        if (UPL_SETTINGS == Mqtt.file_type) {
+          if (!SettingsConfigRestore()) {
+            ResponseCmndFailed();
+          } else {
+            TasmotaGlobal.restart_flag = 2;  // Always restart to re-enable disabled features during update
+          }
+        }
+
+      }
+      Mqtt.file_buffer = nullptr;
+    }
+  }
+
+  if (!Mqtt.file_buffer) {
+//    TasmotaGlobal.masterlog_level = LOG_LEVEL_NONE;          // Enable logging
+    Mqtt.file_id = 0;
+    Mqtt.file_size = 0;
+    Mqtt.file_type = 0;
+  }
+  MqttPublishPrefixTopic_P(STAT, XdrvMailbox.command);       // Enforce stat/wemos10/FILEUPLOAD
+  ResponseClear();
+}
+
+void CmndFileDownload(void) {
+  // Filedownload 0  - Abort current download
+  // FileDownload 2  - Start download of settings file
+  // FileDownload    - Continue downloading data
+
+  if (Mqtt.file_id && Mqtt.file_buffer) {
+    bool finished = false;
+
+    if (0 == XdrvMailbox.payload) {   // Abort file download
+      ResponseCmndChar(PSTR(D_JSON_ABORTED));
+      finished = true;
+    }
+    else if (Mqtt.file_pos < Mqtt.file_size) {
+      uint32_t bytes_left = Mqtt.file_size - Mqtt.file_pos;
+      uint32_t write_bytes = (bytes_left < mqtt_file_chuck_size) ? bytes_left : mqtt_file_chuck_size;
+
+      uint8_t* buffer = Mqtt.file_buffer + Mqtt.file_pos;
+      Mqtt.md5.add(buffer, write_bytes);
+
+      // {"Id":1620385091,"Seq":1,"Data":"CRJcTQ9fYGF ... OT1BRUlNUVVZXWFk="}
+//      uint32_t sequence = (Mqtt.file_pos / mqtt_file_chuck_size) +1;
+//      Response_P(PSTR("{\"Id\":%u,\"Seq\":%d,\"Data\":\""), Mqtt.file_id, sequence);
+
+      // {"Id":1620385091,"Data":"CRJcTQ9fYGF ... OT1BRUlNUVVZXWFk="}
+      Response_P(PSTR("{\"Id\":%u,\"Data\":\""), Mqtt.file_id);
+      char base64_data[encode_base64_length(write_bytes)];
+      encode_base64((unsigned char*)buffer, write_bytes, (unsigned char*)base64_data);
+      ResponseAppend_P(base64_data);
+      ResponseAppend_P("\"}");
+
+      Mqtt.file_pos += write_bytes;
+    } else {
+      Mqtt.md5.calculate();
+
+      // {"Id":1620385091,"Md5":"496fcbb433bbca89833063174d2c5747"}
+      Response_P(PSTR("{\"Id\":%u,\"Md5\":\"%s\"}"), Mqtt.file_id, Mqtt.md5.toString().c_str());
+      finished = true;
+    }
+
+    if (finished) {
+      if (UPL_SETTINGS == Mqtt.file_type) {
+        SettingsBufferFree();
+      }
+
+      Mqtt.file_id = 0;
+    }
+  }
+  else if (XdrvMailbox.data_len) {
+    Mqtt.file_buffer = nullptr;
+    Mqtt.file_id = UtcTime();
+
+    if (UPL_SETTINGS == XdrvMailbox.payload) {
+      uint32_t len = SettingsConfigBackup();
+      if (len) {
+        Mqtt.file_type = UPL_SETTINGS;
+        Mqtt.file_buffer = settings_buffer;
+        Mqtt.file_size = len;
+
+        // {"File":"Config_wemos10_9.4.0.3.dmp","Id":1620385091,"Type":2,"Size":4096}
+        Response_P(PSTR("{\"File\":\"%s\",\"Id\":%u,\"Type\":%d,\"Size\":%d}"),
+          SettingsConfigFilename().c_str(), Mqtt.file_id, Mqtt.file_type, len);
+      }
+    }
+
+    if (Mqtt.file_buffer) {
+      Mqtt.file_pos = 0;
+
+      Mqtt.md5 = MD5Builder();
+      Mqtt.md5.begin();
+    } else {
+      Mqtt.file_id = 0;
+      ResponseCmndFailed();
+    }
+  }
+  MqttPublishPrefixTopic_P(STAT, XdrvMailbox.command);
+  ResponseClear();
 }
 
 /*********************************************************************************************\
