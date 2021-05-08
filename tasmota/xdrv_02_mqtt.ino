@@ -27,14 +27,6 @@ const uint32_t mqtt_file_chuck_size = 700;  // Related to base64_encode (+2 / 3 
 
 #include <base64.hpp>
 
-#ifdef USE_MQTT_AZURE_IOT
-//#include <base64.hpp>
-#include <t_bearssl.h>
-#include <JsonParser.h>
-#undef  MQTT_PORT
-#define MQTT_PORT         8883
-#endif  // USE_MQTT_AZURE_IOT
-
 #define USE_MQTT_NEW_PUBSUBCLIENT
 
 // #define DEBUG_DUMP_TLS    // allow dumping of TLS Flash keys
@@ -44,6 +36,20 @@ const uint32_t mqtt_file_chuck_size = 700;  // Related to base64_encode (+2 / 3 
   BearSSL::WiFiClientSecure_light *tlsClient;
 #endif
 WiFiClient EspClient;                     // Wifi Client - non-TLS
+
+#ifdef USE_MQTT_AZURE_IOT
+#undef  MQTT_PORT
+#define MQTT_PORT         8883
+#if defined(USE_MQTT_AZURE_DPS_SCOPEID) && defined(USE_MQTT_AZURE_DPS_PRESHAREDKEY)
+  #include <ESP8266HTTPClient.h>
+  // dedicated tlsHttpsClient for DPS as the 'tlsClient' above causes error '-1' in httpsClient after it is associated with PubSub.  It cost ~5K of heap
+  BearSSL::WiFiClientSecure_light *tlsHttpsClient = new BearSSL::WiFiClientSecure_light(1024,1024);    
+  HTTPClient httpsClient;
+  int httpsClientReturn;
+#endif // USE_MQTT_AZURE_DPS_SCOPEID
+  #include <t_bearssl.h>
+  #include <JsonParser.h>
+#endif  // USE_MQTT_AZURE_IOT
 
 const char kMqttCommands[] PROGMEM = "|"  // No prefix
   // SetOption synonyms
@@ -190,6 +196,9 @@ void MakeValidMqtt(uint32_t option, char* str) {
 PubSubClient MqttClient;
 
 void MqttInit(void) {
+#ifdef USE_MQTT_AZURE_IOT
+  Settings.mqtt_port = 8883;
+#endif //USE_MQTT_AZURE_IOT  
 #ifdef USE_MQTT_TLS
   if ((8883 == Settings.mqtt_port) || (8884 == Settings.mqtt_port)) {
     // Turn on TLS for port 8883 (TLS) and 8884 (TLS, client certificate)
@@ -236,51 +245,202 @@ void MqttInit(void) {
 }
 
 #ifdef USE_MQTT_AZURE_IOT
-String azurePreSharedKeytoSASToken(char *iotHubFQDN, const char *deviceId, const char *preSharedKey, int sasTTL = 86400){
-  int ttl = time(NULL) + sasTTL;
-  String dataToSignString = urlEncodeBase64(String(iotHubFQDN) + "/devices/" + String(deviceId)) + "\n" + String(ttl);
-  char dataToSign[dataToSignString.length() + 1];
-  dataToSignString.toCharArray(dataToSign, dataToSignString.length() + 1);
+  String Sha256Sign(String dataToSign, String preSharedKey){
+    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_MQTT "sha256 dataToSign is '%s'"), String(dataToSign).c_str());
+    char dataToSignChar[dataToSign.length() + 1];
+    dataToSign.toCharArray(dataToSignChar, dataToSign.length() + 1);
 
-  unsigned char decodedPSK[32];
-  unsigned char encryptedSignature[100];
-  unsigned char encodedSignature[100];
-  br_sha256_context sha256_context;
-  br_hmac_key_context hmac_key_context;
-  br_hmac_context hmac_context;
+    unsigned char decodedPSK[32];
+    unsigned char encryptedSignature[100];
+    unsigned char encodedSignature[100];
+    br_sha256_context sha256_context;
+    br_hmac_key_context hmac_key_context;
+    br_hmac_context hmac_context;
 
-  // need to base64 decode the Preshared key and the length
-  int base64_decoded_device_length = decode_base64((unsigned char*)preSharedKey, decodedPSK);
+    // need to base64 decode the Preshared key and the length
+    int base64_decoded_device_length = decode_base64((unsigned char*)preSharedKey.c_str(), decodedPSK);
+    
+    // create the sha256 hmac and hash the data
+    br_sha256_init(&sha256_context);
+    br_hmac_key_init(&hmac_key_context, sha256_context.vtable, decodedPSK, base64_decoded_device_length);
+    br_hmac_init(&hmac_context, &hmac_key_context, 32);
+    br_hmac_update(&hmac_context, dataToSignChar, sizeof(dataToSignChar)-1);
+    br_hmac_out(&hmac_context, encryptedSignature);
+    
+    // base64 decode the HMAC to a char
+    encode_base64(encryptedSignature, br_hmac_size(&hmac_context), encodedSignature);
 
-  // create the sha256 hmac and hash the data
-  br_sha256_init(&sha256_context);
-  br_hmac_key_init(&hmac_key_context, sha256_context.vtable, decodedPSK, base64_decoded_device_length);
-  br_hmac_init(&hmac_context, &hmac_key_context, 32);
-  br_hmac_update(&hmac_context, dataToSign, sizeof(dataToSign)-1);
-  br_hmac_out(&hmac_context, encryptedSignature);
+    // creating the real SAS Token
+    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_MQTT "sha256 signature is '%s'"), String((char*)encodedSignature).c_str());
 
-  // base64 decode the HMAC to a char
-  encode_base64(encryptedSignature, br_hmac_size(&hmac_context), encodedSignature);
+    return String((char*)encodedSignature);
+  }
 
-  // creating the real SAS Token
-  String realSASToken = "SharedAccessSignature ";
-  realSASToken += "sr="   + urlEncodeBase64(String(iotHubFQDN) + "/devices/" + String(deviceId));
-  realSASToken += "&sig=" + urlEncodeBase64(String((char*)encodedSignature));
-  realSASToken += "&se="  + String(ttl);
+  String urlEncodeBase64(String stringToEncode){
+    // correctly URL encoding the 64 characters of Base64 and the '=' sign
+    stringToEncode.replace("+", "%2B");
+    stringToEncode.replace("=", "%3D");
+    stringToEncode.replace("/", "%2F");
+    return stringToEncode;
+  }
 
-  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_MQTT "SASToken is '%s'"), realSASToken.c_str());
+  String AzurePSKtoToken(char *iotHubFQDN, const char *deviceId, const char *preSharedKey, int sasTTL = 86400){
+    int ttl = time(NULL) + sasTTL;
+    String dataToSignString = urlEncodeBase64(String(iotHubFQDN) + "/devices/" + String(deviceId)) + "\n" + String(ttl);
+    String signedData = Sha256Sign(dataToSignString, String(preSharedKey));
 
-  return realSASToken;
-}
+    // creating the real SAS Token
+    String realSASToken = "SharedAccessSignature sr="   + urlEncodeBase64(String(iotHubFQDN) + "/devices/" + String(deviceId));
+    realSASToken += "&sig=" + urlEncodeBase64(signedData) + "&se="  + String(ttl);
 
-String urlEncodeBase64(String stringToEncode){
-  // correctly URL encoding the 64 characters of Base64 and the '=' sign
-  stringToEncode.replace("+", "%2B");
-  stringToEncode.replace("=", "%3D");
-  stringToEncode.replace("/", "%2F");
-  return stringToEncode;
-}
-#endif  // USE_MQTT_AZURE_IOT
+    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_MQTT "Azure IoT Hub SAS Token is '%s'"), realSASToken.c_str());
+
+    return realSASToken;
+  }
+
+#if defined(USE_MQTT_AZURE_DPS_SCOPEID) && defined(USE_MQTT_AZURE_DPS_PRESHAREDKEY)
+  String AzureDSPPSKtoToken(String scopeId, String deviceId, const char *preSharedKey, int sasTTL = 3600){
+    int ttl = time(NULL) + sasTTL;
+    String dataToSignString = urlEncodeBase64(scopeId + "/registrations/" + deviceId) + "\n" + String(ttl);
+    String signedData = Sha256Sign(dataToSignString, String(preSharedKey));
+
+    // creating the real SAS Token
+    String realSASToken = "SharedAccessSignature sr=" + urlEncodeBase64(scopeId + "/registrations/" + deviceId);
+    realSASToken += "&sig=" + urlEncodeBase64(signedData) + "&skn=registration" + "&se="  + String(ttl);
+
+    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_MQTT "Azure DPS SAS Token is '%s'"), realSASToken.c_str());
+
+    return realSASToken;
+  }
+
+  void ProvisionAzureDPS(){
+    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT "Starting Azure DPS registration..."));  
+    // Scope and Key are derived from user_config_override.h, USE_MQTT_AZURE_DPS_SCOPE_ENDPOINT is optional
+    String dPSScopeId = USE_MQTT_AZURE_DPS_SCOPEID;
+    String dPSPreSharedKey = USE_MQTT_AZURE_DPS_PRESHAREDKEY;
+    #if defined(USE_MQTT_AZURE_DPS_SCOPE_ENDPOINT)
+      String endpoint=USE_MQTT_AZURE_DPS_SCOPE_ENDPOINT;
+    #else
+      String endpoint="https://global.azure-devices-provisioning.net/";
+    #endif //USE_MQTT_AZURE_DPS_SCOPE_ENDPOINT
+    
+    String MACAddress = WiFi.macAddress();
+    MACAddress.replace(":", "");
+
+    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_MQTT "DPS register for %s, scope %s to %s."), MACAddress.c_str(), dPSScopeId.c_str(), endpoint.c_str());  
+
+    // derive our PSK from the DPS and set the device ID
+    String devicePresharedKey = Sha256Sign(MACAddress, dPSPreSharedKey);
+    char devicePresharedKeyChar[devicePresharedKey.length() + 1];
+    devicePresharedKey.toCharArray(devicePresharedKeyChar, devicePresharedKey.length() + 1);
+    
+    // generate a SAS Token with this new derived key
+    String dPSSASToken = AzureDSPPSKtoToken(dPSScopeId, MACAddress, devicePresharedKey.c_str());
+
+    // REST to DPS to start the assigning process      
+    String dPSURL = endpoint + dPSScopeId + "/registrations/" + MACAddress + "/register?api-version=2019-03-31";
+    String dPSPutContent = "{\"registrationId\": \"" + MACAddress + "\"}";
+
+    httpsClient.setReuse(true);
+    
+    httpsClient.begin(*tlsHttpsClient, dPSURL);
+    httpsClient.addHeader("User-Agent", "Tasmota");
+    httpsClient.addHeader("Content-Type", "application/json");
+    httpsClient.addHeader("Content-Encoding", "utf-8");
+    httpsClient.addHeader("Authorization", dPSSASToken);
+    httpsClientReturn = httpsClient.PUT(dPSPutContent);
+    String dPSAssigningResponseJSON;
+
+    if (httpsClientReturn == HTTP_CODE_ACCEPTED){
+      dPSAssigningResponseJSON = httpsClient.getString();
+      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_MQTT "DPS Assigning response '%s'"), dPSAssigningResponseJSON.c_str());
+    } else {
+      dPSAssigningResponseJSON = httpsClient.getString();
+      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_MQTT "DPS Assigning response '%s'"), dPSAssigningResponseJSON.c_str());
+      AddLog(LOG_LEVEL_ERROR, PSTR(D_LOG_MQTT "Azure DPS REST assignment connection failed with code '%d'.  Restarting."), httpsClientReturn);
+      WebRestart(1);
+    }
+
+    if (dPSAssigningResponseJSON.indexOf("\"assigning\"") == -1){
+      AddLog(LOG_LEVEL_ERROR, PSTR(D_LOG_MQTT "Azure DPS assignment failed with response '%s'.  Restarting."), dPSAssigningResponseJSON.c_str());
+      WebRestart(1);
+    } else {
+      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_MQTT "Azure DPS assignment response '%s'."), dPSAssigningResponseJSON.c_str());  
+    }
+
+    httpsClient.end();
+
+    JsonParser dPSAssigningResponseParser((char*) dPSAssigningResponseJSON.c_str());
+    JsonParserObject dPSAssigningResponseRoot = dPSAssigningResponseParser.getRootObject();
+    String dPSAssigningOperationId = dPSAssigningResponseRoot.getStr("operationId");
+
+    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_MQTT "DPS operationId is '%s'."), dPSAssigningOperationId.c_str());  
+
+    bool assigned = false;
+    int assignedCounter = 1;
+    String dPSAssignedResponseJSON;
+    dPSURL = endpoint + dPSScopeId + "/registrations/" + MACAddress + "/operations/" + dPSAssigningOperationId + "?api-version=2019-03-31";
+
+    while (!assigned && assignedCounter < 5){
+      httpsClient.begin(*tlsHttpsClient, dPSURL);
+      httpsClient.addHeader("User-Agent", "Tasmota");
+      httpsClient.addHeader("Content-Type", "application/json");
+      httpsClient.addHeader("Content-Encoding", "utf-8");
+      httpsClient.addHeader("Authorization", dPSSASToken);
+      httpsClientReturn = httpsClient.GET();
+
+      if (httpsClientReturn == HTTP_CODE_OK){
+        dPSAssignedResponseJSON = httpsClient.getString();
+      } else if (httpsClientReturn !=  HTTP_CODE_ACCEPTED){
+        AddLog(LOG_LEVEL_ERROR, PSTR(D_LOG_MQTT "Azure DPS REST check connection failed with code '%d'."), httpsClientReturn);
+      }
+
+      if (dPSAssignedResponseJSON.indexOf("\"status\":\"assigned\"") > 0){
+        assigned = true;
+      } else if (httpsClientReturn !=  HTTP_CODE_ACCEPTED) {
+        AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_MQTT "DPS try %d, response '%s'."), assignedCounter, dPSAssignedResponseJSON.c_str());
+      }
+
+      delay(1000 * assignedCounter);
+      assignedCounter+=1;
+    }
+
+    httpsClient.end();
+
+    if (assigned){
+      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_MQTT "Azure DPS registration response '%s'."), dPSAssignedResponseJSON.c_str());
+
+      JsonParser parser((char*) dPSAssignedResponseJSON.c_str());
+      JsonParserObject stateObject = parser.getRootObject()[PSTR("registrationState")].getObject();
+      String deviceId = stateObject["deviceId"].getStr();
+      String iotHub = stateObject["assignedHub"].getStr();
+
+      bool newProvision = false;
+      if (String(SettingsText(SET_MQTT_PWD)) != devicePresharedKey ||
+          String(SettingsText(SET_MQTT_HOST)) != iotHub ||
+          String(SettingsText(SET_MQTT_CLIENT)) != deviceId ||
+          String(SettingsText(SET_MQTT_USER)) != deviceId) {
+        
+        newProvision = true;
+        SettingsUpdateText(SET_MQTT_PWD, devicePresharedKey.c_str());
+        SettingsUpdateText(SET_MQTT_HOST, iotHub.c_str());
+        SettingsUpdateText(SET_MQTT_CLIENT, deviceId.c_str());
+        SettingsUpdateText(SET_MQTT_USER, deviceId.c_str());
+      }
+
+      if (newProvision){  // because this is the first time we have been provisioned must reboot
+        AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT "Azure DPS registration success, changed in DPS registration, restarting."));
+        WebRestart(1);
+      } else {
+        AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT "Azure DPS registration success, no changes."));  
+      }
+
+    } else {
+      AddLog(LOG_LEVEL_ERROR, PSTR(D_LOG_MQTT "Azure DPS registration response failed with response '%s'."), dPSAssignedResponseJSON.c_str());  
+    }
+  }
+#endif // USE_MQTT_AZURE_DPS_SCOPEID
+#endif // USE_MQTT_AZURE_IOT
 
 bool MqttIsConnected(void) {
   return MqttClient.connected();
@@ -296,6 +456,8 @@ void MqttSubscribeLib(const char *topic) {
   String realTopicString = "devices/" + String(SettingsText(SET_MQTT_CLIENT));
   realTopicString += "/messages/devicebound/#";
   MqttClient.subscribe(realTopicString.c_str());
+  SettingsUpdateText(SET_MQTT_FULLTOPIC, SettingsText(SET_MQTT_CLIENT));
+  SettingsUpdateText(SET_MQTT_TOPIC, SettingsText(SET_MQTT_CLIENT));
 #else
   MqttClient.subscribe(topic);
 #endif  // USE_MQTT_AZURE_IOT
@@ -369,9 +531,11 @@ void MqttDataHandler(char* mqtt_topic, uint8_t* mqtt_data, unsigned int data_len
 #ifdef USE_MQTT_AZURE_IOT
   // for Azure, we read the topic from the property of the message
   String fullTopicString = String(mqtt_topic);
-  int startOfTopic = fullTopicString.indexOf("TOPIC=");
+  String toppicUpper = fullTopicString;
+  toppicUpper.toUpperCase();
+  int startOfTopic = toppicUpper.indexOf("TOPIC=");
   if (startOfTopic == -1){
-    AddLog(LOG_LEVEL_ERROR, PSTR(D_LOG_MQTT "Azure IoT message without the property TOPIC, case sensitive."));
+    AddLog(LOG_LEVEL_ERROR, PSTR(D_LOG_MQTT "Azure IoT message without the property topic."));
     return;
   }
   String newTopic = fullTopicString.substring(startOfTopic + 6);
@@ -694,6 +858,9 @@ void MqttReconnect(void) {
 
   Mqtt.allowed = Settings.flag.mqtt_enabled;  // SetOption3 - Enable MQTT
   if (Mqtt.allowed) {
+#if defined(USE_MQTT_AZURE_DPS_SCOPEID) && defined(USE_MQTT_AZURE_DPS_PRESHAREDKEY)
+  ProvisionAzureDPS();
+#endif      
 #ifdef USE_DISCOVERY
 #ifdef MQTT_HOST_DISCOVERY
     MqttDiscoverServer();
@@ -809,7 +976,8 @@ void MqttReconnect(void) {
   String azureMqtt_password = SettingsText(SET_MQTT_PWD);
   if (azureMqtt_password.indexOf("SharedAccessSignature") == -1) {
     // assuming a PreSharedKey was provided, calculating a SAS Token into azureMqtt_password
-    azureMqtt_password = azurePreSharedKeytoSASToken(SettingsText(SET_MQTT_HOST), SettingsText(SET_MQTT_CLIENT), SettingsText(SET_MQTT_PWD));
+    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT "Authenticating with an Azure IoT Hub Token"));
+    azureMqtt_password = AzurePSKtoToken(SettingsText(SET_MQTT_HOST), SettingsText(SET_MQTT_CLIENT), SettingsText(SET_MQTT_PWD));
   }
 
   String azureMqtt_userString = String(SettingsText(SET_MQTT_HOST)) + "/" + String(SettingsText(SET_MQTT_CLIENT)); + "/?api-version=2018-06-30";
