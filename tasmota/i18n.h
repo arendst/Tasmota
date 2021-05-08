@@ -27,6 +27,7 @@
 \*********************************************************************************************/
 
 #define D_JSON_ABORTED "Aborted"
+#define D_JSON_ACK "Ack"
 #define D_JSON_ACTIVE "Active"
 #define D_JSON_ADDRESS "Address"
 #define D_JSON_AIRQUALITY "AirQuality"
@@ -104,6 +105,7 @@
 #define D_JSON_IMPORT_POWER "ImportPower"
 #define D_JSON_IMPORT_REACTIVE "ImportReactive"
 #define D_JSON_INFRARED "Infrared"
+#define D_JSON_INVALID_FILE_TYPE "Invalid filetype or buffer"
 #define D_JSON_UNKNOWN "Unknown"
 #define D_JSON_LIGHT "Light"
 #define D_JSON_LINK_COUNT "LinkCount"
@@ -111,6 +113,7 @@
 #define D_JSON_LOW "Low"
 #define D_JSON_MAC "Mac"
 #define D_JSON_MASK "Mask"
+#define D_JSON_MD5_MISMATCH "MD5 mismatch"
 #define D_JSON_MEMORY_ERROR "Memory error"
 #define D_JSON_MINIMAL "minimal"
 #define D_JSON_MODEL "Model"

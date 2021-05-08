@@ -2773,7 +2773,7 @@ void HandleUploadLoop(void) {
 #endif  // USE_ZIGBEE_EZSP
       if (error != 0) {
 //        AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPLOAD "Transfer error %d"), error);
-        Web.upload_error = error + (100 * Web.upload_file_type);  // Add offset to discriminate transfer errors
+        Web.upload_error = error + (100 * (Web.upload_file_type -1));  // Add offset to discriminate transfer errors
         return;
       }
     }
