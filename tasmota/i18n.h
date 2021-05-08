@@ -394,6 +394,8 @@
 #define D_CMND_INFORETAIN "InfoRetain"
 #define D_CMND_STATERETAIN "StateRetain"
 #define D_CMND_PUBLISH "Publish"
+#define D_CMND_FILEUPLOAD "FileUpload"
+#define D_CMND_FILEDOWNLOAD "FileDownload"
 
 // Commands xdrv_01_webserver.ino
 #define D_CMND_WEBSERVER "Webserver"
