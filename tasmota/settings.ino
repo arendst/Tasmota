@@ -744,6 +744,7 @@ void SettingsDefault(void) {
   AddLog(LOG_LEVEL_NONE, PSTR(D_LOG_CONFIG D_USE_DEFAULTS));
   SettingsDefaultSet1();
   SettingsDefaultSet2();
+  SettingsDefaultSet3();
   SettingsSave(2);
 }
 
@@ -1142,7 +1143,9 @@ void SettingsDefaultSet2(void) {
   Settings.flag3 = flag3;
   Settings.flag4 = flag4;
   Settings.flag5 = flag5;
+}
 
+void SettingsDefaultSet3(void) {
 #ifdef USER_TEMPLATE
   String user_template = USER_TEMPLATE;
   JsonTemplate((char*)user_template.c_str());
