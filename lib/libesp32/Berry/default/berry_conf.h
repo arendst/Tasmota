@@ -168,22 +168,25 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-  extern void *berry_malloc(uint32_t size);
+  extern void *berry_malloc(size_t size);
+  extern void  berry_free(void *ptr);
   extern void *berry_realloc(void *ptr, size_t size);
 #ifdef __cplusplus
 }
 #endif
   #define BE_EXPLICIT_MALLOC              berry_malloc
+  #define BE_EXPLICIT_FREE                berry_free
   #define BE_EXPLICIT_REALLOC             berry_realloc
 #else
   #define BE_EXPLICIT_MALLOC              malloc
+  #define BE_EXPLICIT_FREE                free
   #define BE_EXPLICIT_REALLOC             realloc
 #endif // USE_BERRY_PSRAM
 
 #define BE_EXPLICIT_ABORT               abort
 #define BE_EXPLICIT_EXIT                exit
 // #define BE_EXPLICIT_MALLOC              malloc
-#define BE_EXPLICIT_FREE                free
+// #define BE_EXPLICIT_FREE                free
 // #define BE_EXPLICIT_REALLOC             realloc
 
 /* Macro: be_assert
