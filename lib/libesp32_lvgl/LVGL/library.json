@@ -7,9 +7,6 @@
 		"type": "git",
 		"url": "https://github.com/lvgl/lvgl.git"
 	},
-	"build": {
-		"includeDir": "."
-	},
 	"license": "MIT",
 	"homepage": "https://lvgl.io",
 	"frameworks": "*",

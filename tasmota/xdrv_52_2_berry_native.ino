@@ -310,7 +310,12 @@ int32_t be_convert_single_elt(bvm *vm, int32_t idx, const char * arg_type = null
 
   // check if simple type was a match
   if (provided_type) {
-    if ((arg_type_len != 1) || ((arg_type[0] != provided_type) && arg_type[0] != '.') ) {
+    bool type_ok = false;
+    type_ok = (arg_type[0] == '.');                           // any type is accepted
+    type_ok = type_ok || (arg_type[0] == provided_type);      // or type is a match
+    type_ok = type_ok || (ret == 0 && arg_type_len != 1);    // or NULL is accepted for an instance
+    
+    if (!type_ok) {
       berry_log_P("Unexpected argument type '%c', expected '%s'", provided_type, arg_type);
     }
     return ret;
