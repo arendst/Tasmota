@@ -296,6 +296,48 @@ static lv_fs_res_t lvbe_fs_remove(lv_fs_drv_t * drv, const char *path) {
 }
 #endif // USE_UFILESYS
 
+/*********************************************************************************************\
+ * Memory handler
+ * Use PSRAM if available
+\*********************************************************************************************/
+extern "C" {
+  /*
+  Use the following
+
+  extern void *lvbe_malloc(size_t size);
+  extern void  lvbe_free(void *ptr);
+  extern void *lvbe_realloc(void *ptr, size_t size);
+  extern void *lvbe_calloc(size_t num, size_t size);
+  */
+  void *lvbe_malloc(uint32_t size);
+  void *lvbe_realloc(void *ptr, size_t size);
+#ifdef USE_BERRY_PSRAM
+  void *lvbe_malloc(uint32_t size) {
+    return special_malloc(size);
+  }
+  void *lvbe_realloc(void *ptr, size_t size) {
+    return special_realloc(ptr, size);
+  }
+  void *lvbe_calloc(size_t num, size_t size) {
+    return special_calloc(num, size);
+  }
+#else // USE_BERRY_PSRAM
+  void *lvbe_malloc(uint32_t size) {
+    return malloc(size);
+  }
+  void *lvbe_realloc(void *ptr, size_t size) {
+    return realloc(ptr, size);
+  }
+  void *lvbe_calloc(size_t num, size_t size) {
+    return calloc(num, size);
+  }
+#endif // USE_BERRY_PSRAM
+
+  void lvbe_free(void *ptr) {
+    free(ptr);
+  }
+}
+
 /************************************************************
  * Initialize the display / touchscreen drivers then launch lvgl
  *

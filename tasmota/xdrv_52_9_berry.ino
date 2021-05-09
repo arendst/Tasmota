@@ -63,6 +63,9 @@ extern "C" {
   void *berry_realloc(void *ptr, size_t size) {
     return special_realloc(ptr, size);
   }
+  void *berry_calloc(size_t num, size_t size) {
+    return special_calloc(num, size);
+  }
 #else
   void *berry_malloc(uint32_t size) {
     return malloc(size);
@@ -70,8 +73,14 @@ extern "C" {
   void *berry_realloc(void *ptr, size_t size) {
     return realloc(ptr, size);
   }
+  void *berry_calloc(size_t num, size_t size) {
+    return calloc(num, size);
+  }
 #endif // USE_BERRY_PSRAM
 
+  void berry_free(void *ptr) {
+    free(ptr);
+  }
 }
 
 
