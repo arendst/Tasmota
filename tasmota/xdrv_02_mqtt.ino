@@ -43,7 +43,7 @@ WiFiClient EspClient;                     // Wifi Client - non-TLS
 #if defined(USE_MQTT_AZURE_DPS_SCOPEID) && defined(USE_MQTT_AZURE_DPS_PRESHAREDKEY)
   #include <ESP8266HTTPClient.h>
   // dedicated tlsHttpsClient for DPS as the 'tlsClient' above causes error '-1' in httpsClient after it is associated with PubSub.  It cost ~5K of heap
-  BearSSL::WiFiClientSecure_light *tlsHttpsClient = new BearSSL::WiFiClientSecure_light(1024,1024);    
+  BearSSL::WiFiClientSecure_light *tlsHttpsClient = new BearSSL::WiFiClientSecure_light(1024,1024);
   HTTPClient httpsClient;
   int httpsClientReturn;
 #endif // USE_MQTT_AZURE_DPS_SCOPEID
@@ -198,7 +198,7 @@ PubSubClient MqttClient;
 void MqttInit(void) {
 #ifdef USE_MQTT_AZURE_IOT
   Settings.mqtt_port = 8883;
-#endif //USE_MQTT_AZURE_IOT  
+#endif //USE_MQTT_AZURE_IOT
 #ifdef USE_MQTT_TLS
   if ((8883 == Settings.mqtt_port) || (8884 == Settings.mqtt_port)) {
     // Turn on TLS for port 8883 (TLS) and 8884 (TLS, client certificate)
@@ -259,14 +259,14 @@ void MqttInit(void) {
 
     // need to base64 decode the Preshared key and the length
     int base64_decoded_device_length = decode_base64((unsigned char*)preSharedKey.c_str(), decodedPSK);
-    
+
     // create the sha256 hmac and hash the data
     br_sha256_init(&sha256_context);
     br_hmac_key_init(&hmac_key_context, sha256_context.vtable, decodedPSK, base64_decoded_device_length);
     br_hmac_init(&hmac_context, &hmac_key_context, 32);
     br_hmac_update(&hmac_context, dataToSignChar, sizeof(dataToSignChar)-1);
     br_hmac_out(&hmac_context, encryptedSignature);
-    
+
     // base64 decode the HMAC to a char
     encode_base64(encryptedSignature, br_hmac_size(&hmac_context), encodedSignature);
 
@@ -314,7 +314,7 @@ void MqttInit(void) {
   }
 
   void ProvisionAzureDPS(){
-    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT "Starting Azure DPS registration..."));  
+    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT "Starting Azure DPS registration..."));
     // Scope and Key are derived from user_config_override.h, USE_MQTT_AZURE_DPS_SCOPE_ENDPOINT is optional
     String dPSScopeId = USE_MQTT_AZURE_DPS_SCOPEID;
     String dPSPreSharedKey = USE_MQTT_AZURE_DPS_PRESHAREDKEY;
@@ -323,26 +323,26 @@ void MqttInit(void) {
     #else
       String endpoint="https://global.azure-devices-provisioning.net/";
     #endif //USE_MQTT_AZURE_DPS_SCOPE_ENDPOINT
-    
+
     String MACAddress = WiFi.macAddress();
     MACAddress.replace(":", "");
 
-    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_MQTT "DPS register for %s, scope %s to %s."), MACAddress.c_str(), dPSScopeId.c_str(), endpoint.c_str());  
+    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_MQTT "DPS register for %s, scope %s to %s."), MACAddress.c_str(), dPSScopeId.c_str(), endpoint.c_str());
 
     // derive our PSK from the DPS and set the device ID
     String devicePresharedKey = Sha256Sign(MACAddress, dPSPreSharedKey);
     char devicePresharedKeyChar[devicePresharedKey.length() + 1];
     devicePresharedKey.toCharArray(devicePresharedKeyChar, devicePresharedKey.length() + 1);
-    
+
     // generate a SAS Token with this new derived key
     String dPSSASToken = AzureDSPPSKtoToken(dPSScopeId, MACAddress, devicePresharedKey.c_str());
 
-    // REST to DPS to start the assigning process      
+    // REST to DPS to start the assigning process
     String dPSURL = endpoint + dPSScopeId + "/registrations/" + MACAddress + "/register?api-version=2019-03-31";
     String dPSPutContent = "{\"registrationId\": \"" + MACAddress + "\"}";
 
     httpsClient.setReuse(true);
-    
+
     httpsClient.begin(*tlsHttpsClient, dPSURL);
     httpsClient.addHeader("User-Agent", "Tasmota");
     httpsClient.addHeader("Content-Type", "application/json");
@@ -365,7 +365,7 @@ void MqttInit(void) {
       AddLog(LOG_LEVEL_ERROR, PSTR(D_LOG_MQTT "Azure DPS assignment failed with response '%s'.  Restarting."), dPSAssigningResponseJSON.c_str());
       WebRestart(1);
     } else {
-      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_MQTT "Azure DPS assignment response '%s'."), dPSAssigningResponseJSON.c_str());  
+      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_MQTT "Azure DPS assignment response '%s'."), dPSAssigningResponseJSON.c_str());
     }
 
     httpsClient.end();
@@ -374,7 +374,7 @@ void MqttInit(void) {
     JsonParserObject dPSAssigningResponseRoot = dPSAssigningResponseParser.getRootObject();
     String dPSAssigningOperationId = dPSAssigningResponseRoot.getStr("operationId");
 
-    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_MQTT "DPS operationId is '%s'."), dPSAssigningOperationId.c_str());  
+    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_MQTT "DPS operationId is '%s'."), dPSAssigningOperationId.c_str());
 
     bool assigned = false;
     int assignedCounter = 1;
@@ -420,7 +420,7 @@ void MqttInit(void) {
           String(SettingsText(SET_MQTT_HOST)) != iotHub ||
           String(SettingsText(SET_MQTT_CLIENT)) != deviceId ||
           String(SettingsText(SET_MQTT_USER)) != deviceId) {
-        
+
         newProvision = true;
         SettingsUpdateText(SET_MQTT_PWD, devicePresharedKey.c_str());
         SettingsUpdateText(SET_MQTT_HOST, iotHub.c_str());
@@ -432,11 +432,11 @@ void MqttInit(void) {
         AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT "Azure DPS registration success, changed in DPS registration, restarting."));
         WebRestart(1);
       } else {
-        AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT "Azure DPS registration success, no changes."));  
+        AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT "Azure DPS registration success, no changes."));
       }
 
     } else {
-      AddLog(LOG_LEVEL_ERROR, PSTR(D_LOG_MQTT "Azure DPS registration response failed with response '%s'."), dPSAssignedResponseJSON.c_str());  
+      AddLog(LOG_LEVEL_ERROR, PSTR(D_LOG_MQTT "Azure DPS registration response failed with response '%s'."), dPSAssignedResponseJSON.c_str());
     }
   }
 #endif // USE_MQTT_AZURE_DPS_SCOPEID
@@ -860,7 +860,7 @@ void MqttReconnect(void) {
   if (Mqtt.allowed) {
 #if defined(USE_MQTT_AZURE_DPS_SCOPEID) && defined(USE_MQTT_AZURE_DPS_PRESHAREDKEY)
   ProvisionAzureDPS();
-#endif      
+#endif
 #ifdef USE_DISCOVERY
 #ifdef MQTT_HOST_DISCOVERY
     MqttDiscoverServer();
@@ -1417,10 +1417,14 @@ void CmndStateRetain(void) {
 }
 
 void CmndFileUpload(void) {
-  // FileUpload 0  - Abort current upload
-  // FileUpload {"File":"Config_wemos10_9.4.0.3.dmp","Id":1620385091,"Type":2,"Size":4096,"Md5":"496fcbb433bbca89833063174d2c5747"}
-  // FileUpload {"Id":1620385091,"Data":"CRJcTQ9fYGF ... OT1BRUlNUVVZXWFk="}
-
+/*
+  Upload (binary) max 700 bytes chunks of data base64 encoded with MD5 hash over base64 decoded data
+  FileUpload 0  - Abort current upload
+  FileUpload {"File":"Config_wemos10_9.4.0.3.dmp","Id":1620385091,"Type":2,"Size":4096}
+  FileUpload {"Id":1620385091,"Data":"CRJcTQ9fYGF ... OT1BRUlNUVVZXWFk="}
+  FileUpload {"Id":1620385091,"Data":" ... "}
+  FileUpload {"Id":1620385091,"Md5":"496fcbb433bbca89833063174d2c5747"}
+*/
   const char* base64_data = nullptr;
   uint32_t rcv_id = 0;
 
@@ -1476,7 +1480,7 @@ void CmndFileUpload(void) {
   }
 
   if (Mqtt.file_buffer) {
-    if (base64_data) {
+    if ((Mqtt.file_pos < Mqtt.file_size) && base64_data) {
       // Save upload into buffer - Handle possible buffer overflows
       uint32_t rcvd_bytes = decode_base64_length((unsigned char*)base64_data);
       unsigned char decode_output[rcvd_bytes];
@@ -1491,7 +1495,7 @@ void CmndFileUpload(void) {
       Mqtt.file_pos += read_bytes;
     }
 
-    if (Mqtt.file_pos < Mqtt.file_size) {
+    if ((Mqtt.file_pos < Mqtt.file_size) || (Mqtt.file_md5.length() != 32))   {
       ResponseCmndChar(PSTR(D_JSON_ACK));
     } else {
       Mqtt.md5.calculate();
@@ -1505,7 +1509,7 @@ void CmndFileUpload(void) {
           if (!SettingsConfigRestore()) {
             ResponseCmndFailed();
           } else {
-            TasmotaGlobal.restart_flag = 2;  // Always restart to re-enable disabled features during update
+            TasmotaGlobal.restart_flag = 2;                  // Always restart to re-enable disabled features during update
           }
         }
 
@@ -1519,16 +1523,20 @@ void CmndFileUpload(void) {
     Mqtt.file_id = 0;
     Mqtt.file_size = 0;
     Mqtt.file_type = 0;
+    Mqtt.file_md5 = (const char*) nullptr;                   // Force deallocation of the String internal memory
   }
   MqttPublishPrefixTopic_P(STAT, XdrvMailbox.command);       // Enforce stat/wemos10/FILEUPLOAD
   ResponseClear();
 }
 
 void CmndFileDownload(void) {
-  // Filedownload 0  - Abort current download
-  // FileDownload 2  - Start download of settings file
-  // FileDownload    - Continue downloading data
-
+/*
+  Download (binary) max 700 bytes chunks of data base64 encoded with MD5 hash over base64 decoded data
+  Currently supports Settings (file type 2)
+  Filedownload 0  - Abort current download
+  FileDownload 2  - Start download of settings file
+  FileDownload    - Continue downloading data until reception of MD5 hash
+*/
   if (Mqtt.file_id && Mqtt.file_buffer) {
     bool finished = false;
 
