@@ -6,7 +6,7 @@
 extern void lv_flush_callback(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p);
 
 // Tick interval for LittlevGL internal timekeeping; 1 to 10 ms recommended
-static const int lv_tick_interval_ms = 10;
+static const int lv_tick_interval_ms = 5;
 
 static void lv_tick_handler(void) { lv_tick_inc(lv_tick_interval_ms); }
 

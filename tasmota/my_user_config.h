@@ -923,6 +923,7 @@
 // -- LVGL Graphics Library ---------------------------------
 //#define USE_LVGL                                  // LVGL Engine, requires Berry, takes 440k of Flash
   #define USE_LVGL_PSRAM                            // Allocate LVGL memory in PSRAM if PSRAM is connected - this might be slightly slower but leaves main memory intact
+  #define USE_LVGL_MAX_SLEEP  10                    // max sleep in ms when LVGL is enabled, more than 10ms will make display less responsive
   #define USE_LVGL_BG_DEFAULT 0x000000              // Default color for the uninitialized background screen (black)
 
 

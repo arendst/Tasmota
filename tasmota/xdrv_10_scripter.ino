@@ -8365,11 +8365,6 @@ bool Xdrv10(uint8_t function)
     case FUNC_EVERY_100_MSECOND:
       ScripterEvery100ms();
       break;
-#ifdef USE_LVGL
-    case FUNC_EVERY_50_MSECOND:
-      lv_task_handler();
-      break;
-#endif // USE_LVGL
 
     case FUNC_EVERY_SECOND:
       ScriptEverySecond();

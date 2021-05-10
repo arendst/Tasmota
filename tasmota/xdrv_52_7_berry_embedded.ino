@@ -377,6 +377,7 @@ const char berry_prog[] =
   "_lvgl_cb = [ {}, {}, {}, {}, {}, {} ] "
   "_lvgl_cb_obj = [ {}, {}, {}, {}, {}, {} ] "
   "def _lvgl_cb_dispatch(idx, obj, v1, v2, v3, v4) "
+    // "import string print(string.format('>>> idx=%i obj=0x%08X v1=%i', idx, obj, v1)) "
     "var func = _lvgl_cb[idx].find(obj) "
     "var inst = _lvgl_cb_obj[idx].find(obj) "
     "if func != nil "

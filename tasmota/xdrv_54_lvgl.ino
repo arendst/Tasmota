@@ -32,52 +32,7 @@
 
 #include "Adafruit_LvGL_Glue.h"
 
-
-/* Creates a semaphore to handle concurrent call to lvgl stuff
- * If you wish to call *any* lvgl function from other threads/tasks
- * you should lock on the very same semaphore! */
-
-SemaphoreHandle_t xGuiSemaphore;
-//uDisplay * udisp = nullptr;
-
-// necessary for compilation
-uint8_t color_type_lvgl = 0;
-uint8_t * buffer_lvgl = nullptr;
-void udisp_dimm_lvgl(uint8_t dim) {}
-void udisp_bpwr_lvgl(uint8_t on) {}
-
-extern "C" {
-
-  const char task_name[] = "periodic_gui";
-    /* Create and start a periodic timer interrupt to call lv_tick_inc */
-    const esp_timer_create_args_t periodic_timer_args = {
-      &lv_tick_task,
-      nullptr,
-      ESP_TIMER_TASK,
-      task_name
-    };
-}
-
 Adafruit_LvGL_Glue * glue;
-
-/**********************
- *  STATIC PROTOTYPES
- **********************/
-
-static void guiTask(void *pvParameter);
-
-/************************************************************
- * Provide a regular tick to lvgl, every ms
- ************************************************************/
-
-#ifndef LV_TICK_PERIOD_MS
-#define LV_TICK_PERIOD_MS   1   // default to tick every 1 ms
-#endif
-
-static void lv_tick_task(void *arg) {
-  (void) arg;
-  lv_tick_inc(LV_TICK_PERIOD_MS);
-}
 
 // **************************************************
 // Logging
@@ -92,34 +47,6 @@ static void lvbe_debug(lv_log_level_t level, const char *file, uint32_t line, co
   be_writebuffer("\n", sizeof("\n"));
 }
 #endif
-
-/************************************************************
- * Maint FreeRTOS task used in a separate thread
- ************************************************************/
-static void guiTask(void *pvParameter) {
-  (void) pvParameter;
-  xGuiSemaphore = xSemaphoreCreateMutex();
-
-  /* Create and start a periodic timer interrupt to call lv_tick_inc */
-  esp_timer_handle_t periodic_timer;
-  ESP_ERROR_CHECK(esp_timer_create(&periodic_timer_args, &periodic_timer));
-  ESP_ERROR_CHECK(esp_timer_start_periodic(periodic_timer, LV_TICK_PERIOD_MS * 1000));
-
-  while (1) {
-      /* Delay 1 tick (assumes FreeRTOS tick is 10ms */
-      vTaskDelay(pdMS_TO_TICKS(10));
-
-      /* Try to take the semaphore, call lvgl related function on success */
-      if (pdTRUE == xSemaphoreTake(xGuiSemaphore, portMAX_DELAY)) {
-          lv_task_handler();
-          xSemaphoreGive(xGuiSemaphore);
-      }
-  }
-
-  /* A task should NEVER return */
-  vTaskDelete(NULL);
-}
-
 
 /************************************************************
  * Main screen refresh function
@@ -421,11 +348,6 @@ void start_lvgl(const char * uconfig) {
 
 #endif // USE_UFILESYS
 
-  /* If you want to use a task to create the graphic, you NEED to create a Pinned task
-    * Otherwise there can be problem such as memory corruption and so on.
-    * NOTE: When not using Wi-Fi nor Bluetooth you can pin the guiTask to core 0 */
-  xTaskCreatePinnedToCore(guiTask, "gui", 4096*2, NULL, 0, NULL, 1);
-
   AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_LVGL "LVGL initialized"));
 }
 
@@ -440,6 +362,12 @@ bool Xdrv54(uint8_t function)
     case FUNC_INIT:
       break;
     case FUNC_LOOP:
+      if (glue) {
+        if (TasmotaGlobal.sleep > USE_LVGL_MAX_SLEEP) {
+          TasmotaGlobal.sleep = USE_LVGL_MAX_SLEEP;   // sleep is max 10ms
+        }
+        lv_task_handler();
+      }
       break;
     case FUNC_EVERY_50_MSECOND:
       break;
