@@ -296,7 +296,9 @@ void CheckTouchButtons(bool touched, int16_t touch_x, int16_t touch_y) {
 }
 #endif // USE_TOUCH_BUTTONS
 
-void TS_RotConvert(int16_t *x, int16_t *y);
+void TS_RotConvert(int16_t *x, int16_t *y) {
+  if (renderer) renderer->TS_RotConvert(x, y);
+}
 
 /*********************************************************************************************\
  * Interface

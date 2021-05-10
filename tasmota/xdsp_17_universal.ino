@@ -354,10 +354,6 @@ uDisplay *udisp;
 
 /*********************************************************************************************/
 
-void TS_RotConvert(int16_t *x, int16_t *y) {
-  if (renderer) renderer->TS_RotConvert(x, y);
-}
-
 int8_t replacepin(char **cp, uint16_t pin) {
   int8_t res = 0;
   char *lp = *cp;
