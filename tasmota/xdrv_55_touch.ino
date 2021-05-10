@@ -21,9 +21,9 @@
 
 #if defined(USE_FT5206) || defined(USE_XPT2046) || defined(USE_LILYGO47)
 
-#ifdef USE_DISPLAY_LVGL_ONLY
-#undef USE_TOUCH_BUTTONS
-#endif
+// #ifdef USE_DISPLAY_LVGL_ONLY
+// #undef USE_TOUCH_BUTTONS
+// #endif
 
 #include <renderer.h>
 
@@ -296,6 +296,10 @@ void CheckTouchButtons(bool touched, int16_t touch_x, int16_t touch_y) {
 }
 #endif // USE_TOUCH_BUTTONS
 
+void TS_RotConvert(int16_t *x, int16_t *y) {
+  if (renderer) renderer->TS_RotConvert(x, y);
+}
+
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
@@ -306,6 +310,9 @@ bool Xdrv55(uint8_t function) {
     case FUNC_INIT:
       break;
     case FUNC_EVERY_100_MSECOND:
+      if (FT5206_found || XPT2046_found) {
+        Touch_Check(TS_RotConvert);
+      }
       break;
   }
   return result;

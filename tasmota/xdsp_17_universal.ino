@@ -23,11 +23,6 @@
 
 #define XDSP_17                17
 
-
-#if defined(USE_FT5206) || defined(USE_XPT2046)
-  #define USE_TOUCH_SCREEN
-#endif 
-
 #include <uDisplay.h>
 
 bool udisp_init_done = false;
@@ -359,38 +354,6 @@ uDisplay *udisp;
 
 /*********************************************************************************************/
 
-
-void TS_RotConvert(int16_t *x, int16_t *y) {
-  if (renderer) renderer->TS_RotConvert(x, y);
-}
-
-#ifdef USE_TOUCH_SCREEN
-void udisp_CheckTouch() {
-  ctouch_counter++;
-  if (2 == ctouch_counter) {
-    // every 100 ms should be enough
-    ctouch_counter = 0;
-    Touch_Check(TS_RotConvert);
-  }
-}
-#endif
-
-/*
- * Read the status of the Touch Screen
- * Returns true if ok, false if no touchscreen configured
- */
-bool udisp_ReadTouch(int16_t * _x, int16_t * _y, int32_t * _touched) {
-#ifdef USE_TOUCH_SCREEN
-  // read from xdrv_55_touch.ino
-  if (_x) { *_x = touch_xp; }
-  if (_y) { *_y = touch_yp; }
-  if (_touched) { *_touched = touched ? 1 : 0; }
-  return true;
-#else
-  return false;
-#endif
-}
-
 int8_t replacepin(char **cp, uint16_t pin) {
   int8_t res = 0;
   char *lp = *cp;
@@ -499,14 +462,6 @@ bool Xdsp17(uint8_t function) {
         UDISP_Refresh();
         break;
 #endif  // USE_DISPLAY_MODES1TO5
-
-#if defined(USE_TOUCH_SCREEN) && !defined(USE_DISPLAY_LVGL_ONLY)
-        case FUNC_DISPLAY_EVERY_50_MSECOND:
-          if (FT5206_found || XPT2046_found) {
-            udisp_CheckTouch();
-          }
-          break;
-#endif // USE_FT5206
 
     }
   }

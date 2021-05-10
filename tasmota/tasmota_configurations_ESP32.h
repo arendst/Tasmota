@@ -110,8 +110,7 @@
   #define USE_DISPLAY
 #ifdef USE_UNIVERSAL_DISPLAY
   #define USE_LVGL
-  #define USE_DISPLAY_LVGL_ONLY
-  #define USE_TOUCH_SCREEN
+//  #define USE_DISPLAY_LVGL_ONLY
 #else
   #define USE_DISPLAY_ILI9341                  // [DisplayModel 4] Enable ILI9341 Tft 480x320 display (+19k code)
   #define USE_DISPLAY_MODES1TO5
