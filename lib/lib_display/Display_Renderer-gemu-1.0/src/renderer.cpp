@@ -629,7 +629,7 @@ LVGL_PARAMS *Renderer::lvgl_pars(void) {
 }
 
 
-#ifndef USE_DISPLAY_LVGL_ONLY
+// #ifndef USE_DISPLAY_LVGL_ONLY
 
 void VButton::xdrawButton(bool inverted) {
   wr_redir=1;
@@ -726,7 +726,7 @@ uint16_t VButton::UpdateSlider(int16_t x, int16_t y) {
   }
 
 }
-#endif // USE_DISPLAY_LVGL_ONLY
+// #endif // USE_DISPLAY_LVGL_ONLY
 
 
 
