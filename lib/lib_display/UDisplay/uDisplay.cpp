@@ -69,6 +69,7 @@ uDisplay::uDisplay(char *lp) : Renderer(800, 600) {
   fg_col = 1;
   bg_col = 0;
   splash_font = -1;
+  rotmap_xmin = -1;
   allcmd_mode = 0;
   startline = 0xA1;
   uint8_t section = 0;
@@ -289,6 +290,12 @@ uDisplay::uDisplay(char *lp) : Renderer(800, 600) {
           case 'B':
             lvgl_param.fluslines = next_val(&lp1);
             lvgl_param.use_dma = next_val(&lp1);
+            break;
+          case 'M':
+            rotmap_xmin = next_val(&lp1);
+            rotmap_xmax = next_val(&lp1);
+            rotmap_ymin = next_val(&lp1);
+            rotmap_ymax = next_val(&lp1);
             break;
         }
       }
@@ -1372,8 +1379,12 @@ void uDisplay::dim(uint8_t dim) {
 }
 
 
+// the cases are PSEUDO_OPCODES from MODULE_DESCRIPTOR
+// and may be exapnded with more opcodes
 void uDisplay::TS_RotConvert(int16_t *x, int16_t *y) {
   int16_t temp;
+
+  // Serial.printf("RAW X: %d, Y: %d,  width: %d, height: %d\n", *x, *y, width(), height());
 
   switch (rot_t[cur_rot]) {
     case 0:
@@ -1392,7 +1403,42 @@ void uDisplay::TS_RotConvert(int16_t *x, int16_t *y) {
       *y = *x;
       *x = width() - temp;
       break;
+    case 4:
+      break;
+    case 5:
+      temp = *y;
+      *y = rotmap_xmax - *x;
+      *x = temp;
+      break;
+    case 6:
+      *x = rotmap_xmax - *x;
+      *y = rotmap_ymax - *y;
+      break;
+    case 7:
+      temp = *y;
+      *y = *x;
+      *x = rotmap_xmax - temp;
+      break;
   }
+  // Serial.printf("MAP rot: %d, case: %d, X: %d, Y: %d\n",cur_rot , rot_t[cur_rot], *x, *y);
+
+  if (rotmap_xmin >= 0) {
+    *y = map(*y, rotmap_ymin, rotmap_ymax, 0, height());
+	  *x = map(*x, rotmap_xmin, rotmap_xmax, 0, width());
+  }
+
+  if (*x < 0) {
+    *x = 0;
+  } else if (*x > width()) {
+    *x = width();
+  }
+  if (*y < 0) {
+    *y = 0;
+  } else if (*y > height()) {
+    *y = height();
+  }
+
+  // Serial.printf("ROT X: %d, Y: %d\n", *x, *y);
 }
 
 uint8_t uDisplay::strlen_ln(char *str) {
