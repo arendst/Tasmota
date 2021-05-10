@@ -1257,6 +1257,28 @@ void LightSetBri(uint8_t device, uint8_t bri) {
   }
 }
 
+void LightSetBriScaled(uint8_t bri) {
+  // change both dimmers, retain ratio between white and color channels
+  uint32_t bri_rgb = light_state.getBriRGB();
+  uint32_t bri_ct = light_state.getBriCT();
+#ifdef DEBUG_LIGHT
+  AddLog(LOG_LEVEL_DEBUG, "LightSetBri bri:%d, bri_rgb:%d, bri_ct: %d", bri, bri_rgb, bri_ct);
+#endif
+  uint32_t max_bri = light_state.getBri();
+  if (max_bri == 0) {
+    bri_rgb = bri;
+    bri_ct = bri;
+  } else {
+    bri_rgb = bri * bri_rgb / max_bri;
+    bri_ct = bri * bri_ct / max_bri;
+  }
+#ifdef DEBUG_LIGHT
+  AddLog(LOG_LEVEL_DEBUG, "LightSetBri new bri_rgb:%d, new bri_ct: %d", bri_rgb, bri_ct);
+#endif
+  light_controller.changeBriRGB(bri_rgb);
+  light_controller.changeBriCT(bri_ct);
+}
+
 void LightColorOffset(int32_t offset) {
   uint16_t hue;
   uint8_t sat;
@@ -2461,7 +2483,7 @@ void CmndSupportColor(void)
           light_controller.changeChannels(Light.entry_color);
           if (2 == XdrvMailbox.index) {
             // If Color2, set back old brightness
-            light_controller.changeBri(old_bri);
+            LightSetBriScaled(old_bri);
           }
 #ifdef USE_LIGHT_PALETTE
         }
@@ -2713,7 +2735,7 @@ void CmndDimmer(void)
     TasmotaGlobal.skip_light_fade = true;
     XdrvMailbox.index = 0;
   }
-  else if (XdrvMailbox.index > 2) {
+  else if (XdrvMailbox.index > 4) {
     XdrvMailbox.index = 1;
   }
 
@@ -2740,7 +2762,14 @@ void CmndDimmer(void)
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 100)) {
     if (light_controller.isCTRGBLinked()) {
       // normal state, linked RGB and CW
-      light_controller.changeDimmer(XdrvMailbox.payload);
+      if (4 == XdrvMailbox.index) {
+        // change both dimmers, retain ratio between white and color channels
+        uint32_t new_bri = changeUIntScale(XdrvMailbox.payload, 0, 100, 0, 255);
+        LightSetBriScaled(new_bri);
+      } else {
+        // change both dimmers
+        light_controller.changeDimmer(XdrvMailbox.payload);
+      }
       LightPreparePower();
     } else {
       if (0 != XdrvMailbox.index) {
