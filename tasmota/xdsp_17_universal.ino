@@ -354,7 +354,6 @@ uDisplay *udisp;
 
 /*********************************************************************************************/
 
-void TS_RotConvert(int16_t *x, int16_t *y);
 void TS_RotConvert(int16_t *x, int16_t *y) {
   if (renderer) renderer->TS_RotConvert(x, y);
 }
