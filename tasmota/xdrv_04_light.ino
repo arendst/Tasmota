@@ -1269,8 +1269,8 @@ void LightSetBriScaled(uint8_t bri) {
     bri_rgb = bri;
     bri_ct = bri;
   } else {
-    bri_rgb = bri * bri_rgb / max_bri;
-    bri_ct = bri * bri_ct / max_bri;
+    bri_rgb = changeUIntScale(bri_rgb, 0, max_bri, 0, bri);
+    bri_ct = changeUIntScale(bri_ct, 0, max_bri, 0, bri);
   }
 #ifdef DEBUG_LIGHT
   AddLog(LOG_LEVEL_DEBUG, "LightSetBri new bri_rgb:%d, new bri_ct: %d", bri_rgb, bri_ct);
