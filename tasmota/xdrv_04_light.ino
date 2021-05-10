@@ -171,7 +171,8 @@ void (* const LightCommand[])(void) PROGMEM = {
 
 // Light color mode, either RGB alone, or white-CT alone, or both only available if ct_rgb_linked is false
 enum LightColorModes {
-  LCM_RGB = 1, LCM_CT = 2, LCM_BOTH = 3 };
+  LCM_RGB = 1, LCM_CT = 2, LCM_BOTH = 3
+};
 
 struct LRgbColor {
   uint8_t R, G, B;
@@ -321,6 +322,7 @@ class LightStateClass {
     uint16_t _hue = 0;  // 0..359
     uint8_t  _sat = 255;  // 0..255
     uint8_t  _briRGB = 255;  // 0..255
+    uint8_t  _briRGB_orig = 255;  // 0..255
     // dimmer is same as _bri but with a range of 0%-100%
     uint8_t  _r = 255;  // 0..255
     uint8_t  _g = 255;  // 0..255
@@ -331,6 +333,7 @@ class LightStateClass {
     uint8_t  _wc = 255;  // white cold channel
     uint8_t  _ww = 0;    // white warm channel
     uint8_t  _briCT = 255;
+    uint8_t  _briCT_orig = 255;
 
     uint8_t  _color_mode = LCM_RGB; // RGB by default
 
@@ -343,7 +346,7 @@ class LightStateClass {
       _subtype = sub_type;    // set sub_type at initialization, shoudln't be changed afterwards
     }
 
-    // This function is a bit hairy, it will try to match the rerquired
+    // This function is a bit hairy, it will try to match the required
     // colormode with the features of the device:
     //   LST_NONE:      LCM_RGB
     //   LST_SINGLE:    LCM_RGB
@@ -455,6 +458,10 @@ class LightStateClass {
       return _briCT;
     }
 
+    inline uint8_t getBriCTOrig() {
+      return _briCT_orig;
+    }
+
     static inline uint8_t DimmerToBri(uint8_t dimmer) {
       return changeUIntScale(dimmer, 0, 100, 0, 255);  // 0..255
     }
@@ -518,6 +525,10 @@ class LightStateClass {
 
     inline uint8_t getBriRGB() {
       return _briRGB;
+    }
+
+    inline uint8_t getBriRGBOrig() {
+      return _briRGB_orig;
     }
 
     void setDimmer(uint8_t dimmer) {
@@ -649,6 +660,13 @@ class LightStateClass {
   void setChannels(uint8_t *channels) {
     setRGB(channels[0], channels[1], channels[2]);
     setCW(channels[3], channels[4], true);  // free range for WC and WW
+    uint8_t r = channels[0];
+    uint8_t g = channels[1];
+    uint8_t b = channels[2];
+    uint8_t cw = channels[3];
+    uint8_t ww = channels[4];
+    _briRGB_orig = (r > g && r > b) ? r : (g > b) ? g : b;
+    _briCT_orig = (cw > ww) ? cw : ww;
 #ifdef DEBUG_LIGHT
     AddLog(LOG_LEVEL_DEBUG_MORE, "LightStateClass::setChannels (%d %d %d %d %d)",
       channels[0], channels[1], channels[2], channels[3], channels[4]);
@@ -1259,12 +1277,12 @@ void LightSetBri(uint8_t device, uint8_t bri) {
 
 void LightSetBriScaled(uint8_t bri) {
   // change both dimmers, retain ratio between white and color channels
-  uint32_t bri_rgb = light_state.getBriRGB();
-  uint32_t bri_ct = light_state.getBriCT();
+  uint32_t bri_rgb = light_state.getBriRGBOrig();
+  uint32_t bri_ct = light_state.getBriCTOrig();
 #ifdef DEBUG_LIGHT
   AddLog(LOG_LEVEL_DEBUG, "LightSetBri bri:%d, bri_rgb:%d, bri_ct: %d", bri, bri_rgb, bri_ct);
 #endif
-  uint32_t max_bri = light_state.getBri();
+  uint32_t max_bri = bri_rgb > bri_ct ? bri_rgb : bri_ct;
   if (max_bri == 0) {
     bri_rgb = bri;
     bri_ct = bri;
