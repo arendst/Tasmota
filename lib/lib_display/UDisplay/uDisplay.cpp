@@ -1384,10 +1384,7 @@ void uDisplay::dim(uint8_t dim) {
 void uDisplay::TS_RotConvert(int16_t *x, int16_t *y) {
   int16_t temp;
 
-  if (rotmap_xmin >= 0) {
-    *y = map(*y, rotmap_ymin, rotmap_ymax, 0, height());
-	  *x = map(*x, rotmap_xmin, rotmap_xmax, 0, width());
-  }
+  // Serial.printf("RAW X: %d, Y: %d,  width: %d, height: %d\n", *x, *y, width(), height());
 
   switch (rot_t[cur_rot]) {
     case 0:
@@ -1406,7 +1403,50 @@ void uDisplay::TS_RotConvert(int16_t *x, int16_t *y) {
       *y = *x;
       *x = width() - temp;
       break;
+    case 4:
+      break;
+    case 5:
+    // Serial.printf("Case 1 before, X: %d, Y: %d\n", *x, *y);
+      temp = *y;
+      *y = rotmap_xmax - *x;
+      *x = temp;
+    // Serial.printf("Case 1 after,  X: %d, Y: %d\n", *x, *y);
+      break;
+    case 6:
+    // Serial.printf("Case 2 before, X: %d, Y: %d\n", *x, *y);
+      *x = rotmap_xmax - *x;
+      *y = rotmap_ymax - *y;
+    // Serial.printf("Case 2 after,  X: %d, Y: %d\n", *x, *y);
+      break;
+    case 7:
+    // Serial.printf("Case 3 before, X: %d, Y: %d\n", *x, *y);
+      temp = *y;
+      *y = *x;
+      *x = rotmap_xmax - temp;
+    // Serial.printf("Case 3 after,  X: %d, Y: %d\n", *x, *y);
+      break;
   }
+
+  // Serial.printf("MAP rot: %d, case: %d, X: %d, Y: %d\n",cur_rot , rot_t[cur_rot], *x, *y);
+
+  if (rotmap_xmin >= 0) {
+    *y = map(*y, rotmap_ymin, rotmap_ymax, 0, height());
+	  *x = map(*x, rotmap_xmin, rotmap_xmax, 0, width());
+  }
+
+  if (*x < 0) {
+    *x = 0;
+  } else if (*x > width()) {
+    *x = width();
+  }
+  if (*y < 0) {
+    *y = 0;
+  } else if (*y > height()) {
+    *y = height();
+  }
+
+  // Serial.printf("ROT X: %d, Y: %d\n", *x, *y);
+
 }
 
 uint8_t uDisplay::strlen_ln(char *str) {
