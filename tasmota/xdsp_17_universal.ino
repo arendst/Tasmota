@@ -23,11 +23,6 @@
 
 #define XDSP_17                17
 
-
-#if defined(USE_FT5206) || defined(USE_XPT2046)
-  #define USE_TOUCH_SCREEN
-#endif 
-
 #include <uDisplay.h>
 
 bool udisp_init_done = false;
@@ -359,7 +354,7 @@ uDisplay *udisp;
 
 /*********************************************************************************************/
 
-
+void TS_RotConvert(int16_t *x, int16_t *y);
 void TS_RotConvert(int16_t *x, int16_t *y) {
   if (renderer) renderer->TS_RotConvert(x, y);
 }
