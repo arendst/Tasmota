@@ -227,7 +227,8 @@ const lvbe_callback lvbe_callbacks[LVBE_MAX_CALLBACK] = {
 };
 
 int32_t lvbe_callback_x(uint32_t n, struct _lv_obj_t * obj, int32_t v1, int32_t v2, int32_t v3, int32_t v4) {
-  be_getglobal(berry.vm, LVBE_LVGL_CB_OBJ);
+  // berry_log_P(">>>: Callback called n=%i obj=0x%08X v1=%i v2=%i", n, obj, v1, v2);
+  be_getglobal(berry.vm, LVBE_LVGL_CB_DISPATCH); // stack: List
   be_pushint(berry.vm, n);
   be_pushint(berry.vm, (int32_t) obj);
   be_pushint(berry.vm, v1);
@@ -237,7 +238,7 @@ int32_t lvbe_callback_x(uint32_t n, struct _lv_obj_t * obj, int32_t v1, int32_t 
   be_pcall(berry.vm, 6);
   int32_t ret = be_toint(berry.vm, -7);
   be_pop(berry.vm, 7);
-  berry_log_P(">>>: Callback called%d", n);
+  // berry_log_P(">>>: Callback called out %d ret=%i", n, ret);
   return ret;
 }
 
