@@ -627,7 +627,6 @@ extern "C" {
    * lv.register_button_encoder([inv: bool]) -> nil
   \*********************************************************************************************/
   bool lvbe_encoder_with_keys_read(lv_indev_drv_t * drv, lv_indev_data_t*data);
-  bool lvbe_touch_screen_read(lv_indev_drv_t * drv, lv_indev_data_t*data);
 
   int lv0_register_button_encoder(bvm *vm);   // add buttons with encoder logic
   int lv0_register_button_encoder(bvm *vm) {
@@ -655,24 +654,6 @@ extern "C" {
     lv_indev_drv_init(&lvbe.indev_drv);
     lvbe.indev_drv.type = LV_INDEV_TYPE_ENCODER;
     lvbe.indev_drv.read_cb = lvbe_encoder_with_keys_read;
-
-    lv_indev_t * indev = lv_indev_drv_register(&lvbe.indev_drv);
-    lvbe.indev_list.addHead(indev);   // keep track of indevs
-
-    be_getglobal(vm, "lv_indev");   // create an object of class lv_indev with the pointer
-    be_pushint(vm, (int32_t) indev);
-    be_call(vm, 1);
-    be_pop(vm, 1);
-
-    be_return(vm);
-  }
-
-  // register a touch screen
-  int lv0_register_touch_screen(bvm *vm);   // add touch screen
-  int lv0_register_touch_screen(bvm *vm) {
-    lv_indev_drv_init(&lvbe.indev_drv);
-    lvbe.indev_drv.type = LV_INDEV_TYPE_POINTER;
-    lvbe.indev_drv.read_cb = lvbe_touch_screen_read;
 
     lv_indev_t * indev = lv_indev_drv_register(&lvbe.indev_drv);
     lvbe.indev_list.addHead(indev);   // keep track of indevs
@@ -724,24 +705,6 @@ extern "C" {
       }
     }
     return more_to_report;
-  }
-
-  bool lvbe_touch_screen_read(lv_indev_drv_t * drv, lv_indev_data_t*data){
-    static int16_t prev_x = 0;
-    static int16_t prev_y = 0;
-    int16_t touchpad_x, touchpad_y;
-    int32_t touchpad_press;
-
-    if (udisp_ReadTouch(&touchpad_x, &touchpad_y, &touchpad_press)) {
-      if (touchpad_press) {
-        prev_x = touchpad_x;
-        prev_y = touchpad_y;
-      }
-      data->point.x = prev_x;
-      data->point.y = prev_y;
-      data->state = touchpad_press ? LV_INDEV_STATE_PR : LV_INDEV_STATE_REL;
-    }
-    return false;   // no more event in buffer
   }
 
   /*********************************************************************************************\

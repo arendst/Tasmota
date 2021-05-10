@@ -18,8 +18,6 @@
 
 #define MAX_INDEXCOLORS 32
 
-//#define USE_DISPLAY_LVGL_ONLY
-
 #ifdef USE_DISPLAY_LVGL_ONLY
 #undef USE_EPD_FONTS
 #endif
@@ -135,7 +133,7 @@ struct Slider {
   uint16_t barcol;
 };
 
-#ifndef USE_DISPLAY_LVGL_ONLY
+// #ifndef USE_DISPLAY_LVGL_ONLY
 class VButton : public Adafruit_GFX_Button {
   public:
   TButton_State vpower;
@@ -146,7 +144,7 @@ class VButton : public Adafruit_GFX_Button {
   uint16_t UpdateSlider(int16_t x, int16_t y);
   void SliderInit(Renderer *rend, uint16_t xp, uint16_t yp, uint16_t xs, uint16_t ys, uint16_t nelem, uint16_t bgcol, uint16_t frcol, uint16_t barcol);
 };
-#endif // USE_DISPLAY_LVGL_ONLY
+// #endif // USE_DISPLAY_LVGL_ONLY
 
 
 #endif
