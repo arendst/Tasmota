@@ -51,8 +51,6 @@ myfiletype = 2                         # Tasmota Settings file type
 mypublish = "cmnd/"+mytopic+"/filedownload"
 mysubscribe = "stat/"+mytopic+"/FILEDOWNLOAD"  # Case sensitive
 
-# Tasmota currently supports MQTT message size of 1040 characters. Base64 adds 0.25 chars
-chucksize = 700                        # Tasmota max chunk size
 Ack_flag = False
 
 file_name = ""

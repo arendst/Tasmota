@@ -23,8 +23,6 @@
 #define MQTT_WIFI_CLIENT_TIMEOUT   200    // Wifi TCP connection timeout (default is 5000 mSec)
 #endif
 
-const uint32_t mqtt_file_chuck_size = 700;  // Related to base64_encode (+2 / 3 * 4) and MQTT buffer size (MIN_MESSZ = 1040)
-
 #include <base64.hpp>
 
 #define USE_MQTT_NEW_PUBSUBCLIENT
@@ -99,16 +97,17 @@ void (* const MqttCommand[])(void) PROGMEM = {
 
 struct MQTT {
   uint32_t file_pos = 0;                 // MQTT file position during upload/download
-  uint32_t file_id = 0;                  // MQTT unique file id during upload/download
-  uint32_t file_type = 0;                // MQTT File type (See UploadTypes)
   uint32_t file_size = 0;                // MQTT total file size
+  uint32_t file_type = 0;                // MQTT File type (See UploadTypes)
   uint8_t* file_buffer = nullptr;        // MQTT file buffer
   MD5Builder md5;                        // MQTT md5
   String file_md5;                       // MQTT received file md5 (32 chars)
   uint16_t connect_count = 0;            // MQTT re-connect count
   uint16_t retry_counter = 1;            // MQTT connection retry counter
   uint16_t retry_counter_delay = 1;      // MQTT retry counter multiplier
+  uint16_t topic_size;                   // MQTT topic length with terminating <null>
   uint8_t initial_connection_state = 2;  // MQTT connection messages state
+  uint8_t file_id = 0;                   // MQTT unique file id during upload/download
   bool connected = false;                // MQTT virtual connection status
   bool allowed = false;                  // MQTT enabled and parameters valid
   bool mqtt_tls = false;                 // MQTT TLS is enabled
@@ -548,6 +547,7 @@ void MqttDataHandler(char* mqtt_topic, uint8_t* mqtt_data, unsigned int data_len
 #else
   strlcpy(topic, mqtt_topic, sizeof(topic));
 #endif  // USE_MQTT_AZURE_IOT
+  Mqtt.topic_size = strlen(topic) + 1;
   mqtt_data[data_len] = 0;
   char data[data_len +1];
   memcpy(data, mqtt_data, sizeof(data));
@@ -1416,14 +1416,37 @@ void CmndStateRetain(void) {
   ResponseCmndStateText(Settings.flag5.mqtt_state_retain);                                    // CMND_STATERETAIN
 }
 
+/*
+  The download chunk size is the data size before it is encoded to base64.
+  It is smaller than the upload chunksize as it is bound by MESSZ
+  The download buffer with length MESSZ (1042) contains
+    - Payload ({"Id":117,"Data":"<base64 encoded mqtt_file_chuck_size>"}<null>)
+*/
+const uint32_t FileTransferHeaderSize = 21;       // {"Id":116,"Data":""}<null>
+const uint32_t mqtt_file_chuck_size = (((MESSZ - FileTransferHeaderSize) / 4) * 3) -2;
+
+uint32_t FileUploadChunckSize(void) {
+/*
+  The upload chunk size is the data size before it is encoded to base64.
+  It can be larger than the download chunksize which is bound by MESSZ
+  The PubSubClient upload buffer with length MQTT_MAX_PACKET_SIZE (1200) contains
+    - Header of 5 bytes (MQTT_MAX_HEADER_SIZE)
+    - Topic string terminated with a zero (stat/demo/FILEUPLOAD<null>)
+    - Payload ({"Id":116,"Data":"<base64 encoded FileUploadChunckSize>"}<null>)
+*/
+  const uint32_t PubSubClientHeaderSize = 5;   // MQTT_MAX_HEADER_SIZE
+
+  return (((MQTT_MAX_PACKET_SIZE - PubSubClientHeaderSize - Mqtt.topic_size - FileTransferHeaderSize) / 4) * 3) -2;
+}
+
 void CmndFileUpload(void) {
 /*
   Upload (binary) max 700 bytes chunks of data base64 encoded with MD5 hash over base64 decoded data
   FileUpload 0  - Abort current upload
-  FileUpload {"File":"Config_wemos10_9.4.0.3.dmp","Id":1620385091,"Type":2,"Size":4096}
-  FileUpload {"Id":1620385091,"Data":"CRJcTQ9fYGF ... OT1BRUlNUVVZXWFk="}
-  FileUpload {"Id":1620385091,"Data":" ... "}
-  FileUpload {"Id":1620385091,"Md5":"496fcbb433bbca89833063174d2c5747"}
+  FileUpload {"File":"Config_wemos10_9.4.0.3.dmp","Id":116,"Type":2,"Size":4096}
+  FileUpload {"Id":116,"Data":"CRJcTQ9fYGF ... OT1BRUlNUVVZXWFk="}
+  FileUpload {"Id":116,"Data":" ... "}
+  FileUpload {"Id":116,"Md5":"496fcbb433bbca89833063174d2c5747"}
 */
   const char* base64_data = nullptr;
   uint32_t rcv_id = 0;
@@ -1496,7 +1519,8 @@ void CmndFileUpload(void) {
     }
 
     if ((Mqtt.file_pos < Mqtt.file_size) || (Mqtt.file_md5.length() != 32))   {
-      ResponseCmndChar(PSTR(D_JSON_ACK));
+      // {"Id":116,"MaxSize":"765"}
+      Response_P(PSTR("{\"Id\":%d,\"MaxSize\":%d}"), Mqtt.file_id, FileUploadChunckSize());
     } else {
       Mqtt.md5.calculate();
       if (strcasecmp(Mqtt.file_md5.c_str(), Mqtt.md5.toString().c_str())) {
@@ -1537,6 +1561,7 @@ void CmndFileDownload(void) {
   FileDownload 2  - Start download of settings file
   FileDownload    - Continue downloading data until reception of MD5 hash
 */
+
   if (Mqtt.file_id && Mqtt.file_buffer) {
     bool finished = false;
 
@@ -1551,12 +1576,8 @@ void CmndFileDownload(void) {
       uint8_t* buffer = Mqtt.file_buffer + Mqtt.file_pos;
       Mqtt.md5.add(buffer, write_bytes);
 
-      // {"Id":1620385091,"Seq":1,"Data":"CRJcTQ9fYGF ... OT1BRUlNUVVZXWFk="}
-//      uint32_t sequence = (Mqtt.file_pos / mqtt_file_chuck_size) +1;
-//      Response_P(PSTR("{\"Id\":%u,\"Seq\":%d,\"Data\":\""), Mqtt.file_id, sequence);
-
-      // {"Id":1620385091,"Data":"CRJcTQ9fYGF ... OT1BRUlNUVVZXWFk="}
-      Response_P(PSTR("{\"Id\":%u,\"Data\":\""), Mqtt.file_id);
+      // {"Id":117,"Data":"CRJcTQ9fYGF ... OT1BRUlNUVVZXWFk="}
+      Response_P(PSTR("{\"Id\":%d,\"Data\":\""), Mqtt.file_id);  // FileTransferHeaderSize
       char base64_data[encode_base64_length(write_bytes)];
       encode_base64((unsigned char*)buffer, write_bytes, (unsigned char*)base64_data);
       ResponseAppend_P(base64_data);
@@ -1566,8 +1587,8 @@ void CmndFileDownload(void) {
     } else {
       Mqtt.md5.calculate();
 
-      // {"Id":1620385091,"Md5":"496fcbb433bbca89833063174d2c5747"}
-      Response_P(PSTR("{\"Id\":%u,\"Md5\":\"%s\"}"), Mqtt.file_id, Mqtt.md5.toString().c_str());
+      // {"Id":117,"Md5":"496fcbb433bbca89833063174d2c5747"}
+      Response_P(PSTR("{\"Id\":%d,\"Md5\":\"%s\"}"), Mqtt.file_id, Mqtt.md5.toString().c_str());
       finished = true;
     }
 
@@ -1581,7 +1602,7 @@ void CmndFileDownload(void) {
   }
   else if (XdrvMailbox.data_len) {
     Mqtt.file_buffer = nullptr;
-    Mqtt.file_id = UtcTime();
+    Mqtt.file_id = (UtcTime() & 0xFE) +1;  // Odd id between 1 and 255
 
     if (UPL_SETTINGS == XdrvMailbox.payload) {
       uint32_t len = SettingsConfigBackup();
@@ -1590,8 +1611,8 @@ void CmndFileDownload(void) {
         Mqtt.file_buffer = settings_buffer;
         Mqtt.file_size = len;
 
-        // {"File":"Config_wemos10_9.4.0.3.dmp","Id":1620385091,"Type":2,"Size":4096}
-        Response_P(PSTR("{\"File\":\"%s\",\"Id\":%u,\"Type\":%d,\"Size\":%d}"),
+        // {"File":"Config_wemos10_9.4.0.3.dmp","Id":117,"Type":2,"Size":4096}
+        Response_P(PSTR("{\"File\":\"%s\",\"Id\":%d,\"Type\":%d,\"Size\":%d}"),
           SettingsConfigFilename().c_str(), Mqtt.file_id, Mqtt.file_type, len);
       }
     }
