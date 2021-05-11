@@ -2616,13 +2616,21 @@ chknext:
           len = 0;
           goto exit;
         }
-        if (!strncmp(vname, "iw(", 3)) {
-          lp = GetNumericArgument(lp + 3, OPER_EQU, &fvar, gv);
+        if (!strncmp(vname, "iw", 2)) {
+          uint8_t bytes = 1;
+          lp += 2;
+          if (*lp != '(') {
+            bytes = *lp & 0xf;
+            if (bytes < 1) bytes = 1;
+            if (bytes > 4) bytes = 4;
+            lp++;
+          }
+          lp = GetNumericArgument(lp + 1, OPER_EQU, &fvar, gv);
           SCRIPT_SKIP_SPACES
           // arg2
           float fvar2;
           lp = GetNumericArgument(lp, OPER_EQU, &fvar2, gv);
-          fvar = script_i2c(1, fvar, fvar2);
+          fvar = script_i2c(9 + bytes, fvar, fvar2);
           lp++;
           len = 0;
           goto exit;
@@ -7830,7 +7838,10 @@ void cpy2lf(char *dst, uint32_t dstlen, char *src) {
 #ifdef USE_SCRIPT_I2C
 uint8_t script_i2c_addr;
 TwoWire *script_i2c_wire;
-uint32_t script_i2c(uint8_t sel, uint8_t val, uint8_t val1) {
+uint32_t script_i2c(uint8_t sel, uint32_t val, uint32_t val1) {
+  uint32_t rval = 0;
+  uint8_t bytes = 1;
+
   switch (sel) {
     case 0:
       script_i2c_addr = val;
@@ -7843,26 +7854,36 @@ uint32_t script_i2c(uint8_t sel, uint8_t val, uint8_t val1) {
       script_i2c_wire->beginTransmission(script_i2c_addr);
       return (0 == script_i2c_wire->endTransmission());
       break;
-    case 1:
-      script_i2c_wire->beginTransmission(script_i2c_addr);
-      script_i2c_wire->write(val);
-      script_i2c_wire->write(val1);
-      script_i2c_wire->endTransmission();
-      break;
     case 2:
+      // read 1..4 bytes
       script_i2c_wire->beginTransmission(script_i2c_addr);
       script_i2c_wire->write(val);
       script_i2c_wire->endTransmission();
       script_i2c_wire->requestFrom((int)script_i2c_addr, (int)val1);
-      uint32_t rval = 0;
+
       for (uint8_t cnt = 0; cnt < val1; cnt++) {
         rval <<= 8;
         rval |= script_i2c_wire->read();
       }
-      return rval;
       break;
+
+    case 10:
+    case 11:
+    case 12:
+    case 13:
+      // write 1 .. 4 bytes
+      bytes = sel - 9;
+      script_i2c_wire->beginTransmission(script_i2c_addr);
+      script_i2c_wire->write(val);
+      for (uint8_t cnt = 0; cnt < bytes; cnt++) {
+        script_i2c_wire->write(val1);
+        val1 >>= 8;
+      }
+      script_i2c_wire->endTransmission();
+      break;
+
   }
-  return 0;
+  return rval;
 }
 #endif // USE_SCRIPT_I2C
 
@@ -8365,6 +8386,11 @@ bool Xdrv10(uint8_t function)
     case FUNC_EVERY_100_MSECOND:
       ScripterEvery100ms();
       break;
+#ifdef USE_LVGL
+    case FUNC_EVERY_50_MSECOND:
+      lv_task_handler();
+      break;
+#endif // USE_LVGL
 
     case FUNC_EVERY_SECOND:
       ScriptEverySecond();
