@@ -1,5 +1,5 @@
 /*
-  xdrv_12_discovery.ino - Discovery support for Tasmota
+  xdrv_12_discovery.ino - MQTT Discovery support for Tasmota
 
   Copyright (C) 2021  Erik Montnemery, Federico Leoni and Theo Arends
 
@@ -22,7 +22,7 @@
 /*********************************************************************************************\
  * Tasmota discovery
  *
- * A version of xdrv_12_home_assistant supporting the new Tasmota Discovery be used by
+ * A version of xdrv_12_home_assistant supporting the new Tasmota Discovery used by
  * latest versions of Home Assistant or TasmoManager.
  *
  * SetOption19 0   - [DiscoverOff 0] [Discover 1] Enables discovery (default)
@@ -32,8 +32,6 @@
 \*********************************************************************************************/
 
 #define XDRV_12     12
-
-uint8_t TasDiscoverData_init_step;
 
 void TasDiscoverMessage(void) {
   Response_P(PSTR("{\"ip\":\"%_I\","                           // IP Address
@@ -222,13 +220,13 @@ void TasDiscovery(void) {
 }
 
 void TasRediscover(void) {
-  TasDiscoverData_init_step = 1;                               // Delayed discovery or clear retained messages
+  TasmotaGlobal.discovery_counter = 1;                               // Delayed discovery or clear retained messages
 }
 
 void TasDiscoverInit(void) {
   if (ResetReason() != REASON_DEEP_SLEEP_AWAKE) {
     Settings.flag.hass_discovery = 0;                          // SetOption19 - Enable Tasmota discovery and Disable legacy Hass discovery
-    TasDiscoverData_init_step = 10;                            // Delayed discovery
+    TasmotaGlobal.discovery_counter = 10;                            // Delayed discovery
   }
 }
 
@@ -273,9 +271,9 @@ bool Xdrv12(uint8_t function) {
   if (Settings.flag.mqtt_enabled) {                            // SetOption3 - Enable MQTT
     switch (function) {
     case FUNC_EVERY_SECOND:
-      if (TasDiscoverData_init_step) {
-        TasDiscoverData_init_step--;
-        if (!TasDiscoverData_init_step) {
+      if (TasmotaGlobal.discovery_counter) {
+        TasmotaGlobal.discovery_counter--;
+        if (!TasmotaGlobal.discovery_counter) {
           TasDiscovery();                                      // Send the topics for discovery
         }
       }

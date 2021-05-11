@@ -188,7 +188,7 @@ struct {
   uint8_t module_type;                      // Current copy of Settings.module or user template type
   uint8_t last_source;                      // Last command source
   uint8_t shutters_present;                 // Number of actual define shutters
-//  uint8_t prepped_loglevel;                 // Delayed log level message
+  uint8_t discovery_counter;                // Delayed discovery counter
 
 #ifndef SUPPORT_IF_STATEMENT
   uint8_t backlog_index;                    // Command backlog index
