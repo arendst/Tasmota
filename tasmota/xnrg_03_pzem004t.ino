@@ -30,6 +30,7 @@
 
 #define XNRG_03                  3
 
+#define PZEM_WATHCDOG            5
 const uint32_t PZEM_STABILIZE = 30;        // Number of seconds to stabilize configuration
 
 #include <TasmotaSerial.h>
@@ -227,13 +228,14 @@ void PzemEvery250ms(void)
       Pzem.read_state = 0;  // Set address
     }
 
-    Pzem.send_retry = 5;
+    Pzem.send_retry = PZEM_WATHCDOG;
     PzemSend(pzem_commands[Pzem.read_state]);
   }
   else {
     Pzem.send_retry--;
     if ((Energy.phase_count > 1) && (0 == Pzem.send_retry) && (TasmotaGlobal.uptime < PZEM_STABILIZE)) {
       Energy.phase_count--;  // Decrement phases if no response after retry within 30 seconds after restart
+      hass_init_step += PZEM_WATHCDOG/4 + 1; // Don't send Home Assistant discovery yet, delay by 5*250ms + 1s
     }
   }
 }

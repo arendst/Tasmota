@@ -111,6 +111,7 @@ void PzemAcEverySecond(void)
     PzemAc.send_retry--;
     if ((Energy.phase_count > 1) && (0 == PzemAc.send_retry) && (TasmotaGlobal.uptime < PZEM_AC_STABILIZE)) {
       Energy.phase_count--;  // Decrement phases if no response after retry within 30 seconds after restart
+      hass_init_step += ENERGY_WATCHDOG + 1; // Don't send Home Assistant discovery yet, delay by 4s + 1s
     }
   }
 }
