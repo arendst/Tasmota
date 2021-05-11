@@ -32,14 +32,14 @@ typedef struct LVGL_PARAMS {
   union {
     uint8_t data;
     struct {
+      uint8_t use_dma : 1;
+      uint8_t swap_color : 1;
       uint8_t resvd_0 : 1;
       uint8_t resvd_1 : 1;
       uint8_t resvd_2 : 1;
       uint8_t resvd_3 : 1;
       uint8_t resvd_4 : 1;
       uint8_t resvd_5 : 1;
-      uint8_t resvd_6 : 1;
-      uint8_t use_dma : 1;
     };
   };
 }LVGL_PARAMS;
