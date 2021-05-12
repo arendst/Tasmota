@@ -25,6 +25,11 @@
 #include "lvgl.h"
 #include "Adafruit_LvGL_Glue.h"
 
+#ifdef USE_LVGL_FREETYPE
+#include "esp_task_wdt.h"
+#include "lv_freetype.h"
+#endif
+
 extern Adafruit_LvGL_Glue * glue;
 
 /********************************************************************
@@ -400,6 +405,33 @@ extern "C" {
       }
     }
     be_raise(vm, kTypeError, nullptr);
+  }
+
+  int lv0_load_freetype_font(bvm *vm) {
+#ifdef USE_LVGL_FREETYPE
+    int argc = be_top(vm);
+    if (argc == 3 && be_isstring(vm, 1) && be_isint(vm, 2) && be_isint(vm, 3)) {
+      lv_ft_info_t info;
+      info.name = be_tostring(vm, 1);
+      info.weight = be_toint(vm, 2);
+      info.style = be_toint(vm, 3);
+      lv_ft_font_init(&info);
+      lv_font_t * font = info.font;
+
+      if (font != nullptr) {
+        be_getglobal(vm, "lv_font");
+        be_pushcomptr(vm, font);
+        be_call(vm, 1);
+        be_pop(vm, 1);
+        be_return(vm);
+      } else {
+        be_return_nil(vm);
+      }
+    }
+    be_raise(vm, kTypeError, nullptr);
+#else // USE_LVGL_FREETYPE
+    be_raise(vm, "feature_error", "FreeType fonts are not available, use '#define USE_LVGL_FREETYPE 1'");
+#endif // USE_LVGL_FREETYPE
   }
 
   int lv0_load_montserrat_font(bvm *vm) {

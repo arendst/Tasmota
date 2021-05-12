@@ -921,10 +921,16 @@
 #define USE_CSE7761                              // Add support for CSE7761 Energy monitor as used in Sonoff Dual R3
 
 // -- LVGL Graphics Library ---------------------------------
-//#define USE_LVGL                                  // LVGL Engine, requires Berry, takes 440k of Flash
-  #define USE_LVGL_PSRAM                            // Allocate LVGL memory in PSRAM if PSRAM is connected - this might be slightly slower but leaves main memory intact
-  #define USE_LVGL_MAX_SLEEP  10                    // max sleep in ms when LVGL is enabled, more than 10ms will make display less responsive
-  #define USE_LVGL_BG_DEFAULT 0x000000              // Default color for the uninitialized background screen (black)
+//#define USE_LVGL                                 // LVGL Engine, requires Berry, takes 440k of Flash
+  #define USE_LVGL_PSRAM                         // Allocate LVGL memory in PSRAM if PSRAM is connected - this might be slightly slower but leaves main memory intact
+  #define USE_LVGL_MAX_SLEEP  10                 // max sleep in ms when LVGL is enabled, more than 10ms will make display less responsive
+  //#define USE_LVGL_FREETYPE                      // Use the FreeType renderer to display fonts using native TTF files in file system (+75k flash)
+                                                 // WARNING this feature needs to increase the stack size to 32KB, for which there is no easy way right now
+    #define LV_USE_FT_CACHE_MANAGER 1            // define whether glyphs are cached by FreeType library
+    #define USE_LVGL_FREETYPE_MAX_FACES 64       // max number of FreeType faces in cache
+    #define USE_LVGL_FREETYPE_MAX_SIZES 4        // max number of sizes in cache
+    #define USE_LVGL_FREETYPE_MAX_BYTES 16*1024  // max bytes in cache
+  #define USE_LVGL_BG_DEFAULT 0x000000           // Default color for the uninitialized background screen (black)
 
 
 #endif  // ESP32
