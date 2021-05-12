@@ -63,7 +63,8 @@ uint32_t FileUploadChunckSize(void) {
 */
   const uint32_t PubSubClientHeaderSize = 5;   // MQTT_MAX_HEADER_SIZE
 
-  return (((MQTT_MAX_PACKET_SIZE - PubSubClientHeaderSize - FMqtt.topic_size - FileTransferHeaderSize) / 4) * 3) -2;
+//  return (((MQTT_MAX_PACKET_SIZE - PubSubClientHeaderSize - FMqtt.topic_size - FileTransferHeaderSize) / 4) * 3) -2;
+  return MQTT_MAX_PACKET_SIZE - PubSubClientHeaderSize - FMqtt.topic_size - FileTransferHeaderSize;
 }
 
 void CmndFileUpload(void) {
@@ -77,23 +78,33 @@ void CmndFileUpload(void) {
 */
   const char* base64_data = nullptr;
   uint32_t rcv_id = 0;
-
   char* dataBuf = (char*)XdrvMailbox.data;
-  if (strlen(dataBuf) > 8) {             // Workaround exception if empty JSON like {} - Needs checks
-    JsonParser parser((char*) dataBuf);
-    JsonParserObject root = parser.getRootObject();
-    if (root) {
-      JsonParserToken val = root[PSTR("ID")];
-      if (val) { rcv_id = val.getUInt(); }
-      val = root[PSTR("TYPE")];
-      if (val) { FMqtt.file_type = val.getUInt(); }
-      val = root[PSTR("SIZE")];
-      if (val) { FMqtt.file_size = val.getUInt(); }
-      val = root[PSTR("MD5")];
-      if (val) { FMqtt.file_md5 = val.getStr(); }
-      val = root[PSTR("DATA")];
-      if (val) { base64_data = val.getStr(); }
+
+  bool binary_data = false;
+  if (XdrvMailbox.index > 199) {                             // Check for raw data
+    XdrvMailbox.index -= 200;
+    binary_data = true;
+  }
+
+  if (!binary_data) {
+    if (strlen(dataBuf) > 8) {                               // Workaround exception if empty JSON like {} - Needs checks
+      JsonParser parser((char*) dataBuf);
+      JsonParserObject root = parser.getRootObject();
+      if (root) {
+        JsonParserToken val = root[PSTR("ID")];
+        if (val) { rcv_id = val.getUInt(); }
+        val = root[PSTR("TYPE")];
+        if (val) { FMqtt.file_type = val.getUInt(); }
+        val = root[PSTR("SIZE")];
+        if (val) { FMqtt.file_size = val.getUInt(); }
+        val = root[PSTR("MD5")];
+        if (val) { FMqtt.file_md5 = val.getStr(); }
+        val = root[PSTR("DATA")];
+        if (val) { base64_data = val.getStr(); }
+      }
     }
+  } else {
+    rcv_id = FMqtt.file_id;
   }
 
   if ((0 == FMqtt.file_id) && (rcv_id > 0) && (FMqtt.file_size > 0) && (FMqtt.file_type > 0)) {
@@ -139,24 +150,36 @@ void CmndFileUpload(void) {
   }
 
   if (FMqtt.file_buffer) {
-    if ((FMqtt.file_pos < FMqtt.file_size) && base64_data) {
+    if ((FMqtt.file_pos < FMqtt.file_size) && (binary_data || base64_data)) {
       // Save upload into buffer - Handle possible buffer overflows
-      uint32_t rcvd_bytes = decode_base64_length((unsigned char*)base64_data);
-      unsigned char decode_output[rcvd_bytes];
-      decode_base64((unsigned char*)base64_data, (unsigned char*)decode_output);
 
-      uint32_t bytes_left = FMqtt.file_size - FMqtt.file_pos;
-      uint32_t read_bytes = (bytes_left < rcvd_bytes) ? bytes_left : rcvd_bytes;
-      FMqtt.md5.add(decode_output, read_bytes);
-
-      if (UPL_TASMOTA == FMqtt.file_type) {
-        Update.write(decode_output, read_bytes);
-      } else {
-        uint8_t* buffer = FMqtt.file_buffer + FMqtt.file_pos;
-        memcpy(buffer, decode_output, read_bytes);
+      unsigned char* raw_data = (unsigned char*)XdrvMailbox.data;
+      uint32_t rcvd_bytes = XdrvMailbox.data_len;
+      if (!binary_data) {
+        raw_data = (unsigned char*)malloc(XdrvMailbox.data_len);
+        if (raw_data) {
+          rcvd_bytes = decode_base64((unsigned char*)base64_data, (unsigned char*)raw_data);
+        }
       }
 
-      FMqtt.file_pos += read_bytes;
+      if (raw_data) {
+        uint32_t bytes_left = FMqtt.file_size - FMqtt.file_pos;
+        uint32_t read_bytes = (bytes_left < rcvd_bytes) ? bytes_left : rcvd_bytes;
+        FMqtt.md5.add(raw_data, read_bytes);
+
+        if (UPL_TASMOTA == FMqtt.file_type) {
+          Update.write(raw_data, read_bytes);
+        } else {
+          uint8_t* buffer = FMqtt.file_buffer + FMqtt.file_pos;
+          memcpy(buffer, raw_data, read_bytes);
+        }
+
+        if (!binary_data) {
+          free(raw_data);
+        }
+
+        FMqtt.file_pos += read_bytes;
+      }
 
       if ((FMqtt.file_pos > rcvd_bytes) && ((FMqtt.file_pos % 102400) <= rcvd_bytes)) {
         TasmotaGlobal.masterlog_level = LOG_LEVEL_NONE;        // Enable logging
@@ -168,8 +191,12 @@ void CmndFileUpload(void) {
     if ((FMqtt.file_pos < FMqtt.file_size) || (FMqtt.file_md5.length() != 32))   {
       TasmotaGlobal.masterlog_level = LOG_LEVEL_DEBUG_MORE;  // Hide upload data logging
 
+      uint32_t chunk_size = FileUploadChunckSize();
+      if (!binary_data) {
+        chunk_size = ((chunk_size / 4) * 3) -2;              // Calculate base64 chunk size
+      }
       // {"Id":116,"MaxSize":"765"}
-      Response_P(PSTR("{\"Id\":%d,\"MaxSize\":%d}"), FMqtt.file_id, FileUploadChunckSize());
+      Response_P(PSTR("{\"Id\":%d,\"MaxSize\":%d}"), FMqtt.file_id, chunk_size);
     } else {
       FMqtt.md5.calculate();
       if (strcasecmp(FMqtt.file_md5.c_str(), FMqtt.md5.toString().c_str())) {
