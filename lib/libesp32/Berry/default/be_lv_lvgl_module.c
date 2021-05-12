@@ -17,6 +17,7 @@ extern int lv0_register_button_encoder(bvm *vm);  // add buttons with encoder lo
 extern int lv0_load_montserrat_font(bvm *vm);
 extern int lv0_load_seg7_font(bvm *vm);
 extern int lv0_load_font(bvm *vm);
+extern int lv0_load_freetype_font(bvm *vm);
 
 extern int lv0_scr_act(bvm *vm);
 extern int lv0_layer_top(bvm *vm);
@@ -630,6 +631,7 @@ be_native_module_attr_table(lvgl) {
     be_native_module_function("montserrat_font", lv0_load_montserrat_font),
     be_native_module_function("seg7_font", lv0_load_seg7_font),
     be_native_module_function("load_font", lv0_load_font),
+    be_native_module_function("load_freetype_font", lv0_load_freetype_font),
 
 
     // screen and layers
@@ -1183,6 +1185,7 @@ module lvgl (scope: global) {
     montserrat_font, func(lv0_load_montserrat_font)
     seg7_font, func(lv0_load_seg7_font)
     load_font, func(lv0_load_font)
+    load_freetype_font, func(lv0_load_freetype_font)
 
     scr_act, func(lv0_scr_act)
     layer_top, func(lv0_layer_top)

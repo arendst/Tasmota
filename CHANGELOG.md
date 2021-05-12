@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 - Zigbee firmware 6.7.9 for Sonoff ZBBridge
 - Defines ``USER_RULE1``, ``USER_RULE2`` and ``USER_RULE3`` to store rules at compile time
 - Define ``USER_BACKLOG`` to store commands at compile time to be executed at firmware load or when executing command ``reset``
+- LVGL add support for TrueType fonts via FreeType library
 
 ## [9.4.0.2] 20210430
 ### Added
