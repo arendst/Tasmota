@@ -337,7 +337,7 @@ def StartDecode():
     if "StatusMEM" in obj:
         if "Features" in obj["StatusMEM"]:
             features = []
-            maxfeatures = len(obj["StatusMEM"]["Features"])
+            maxfeatures = len(obj["StatusMEM"]["Features"]) - 1
             if maxfeatures > len(a_features):
                 print("decode-status.py too old, does not support all feature bits")
             maxfeatures = min(maxfeatures, len(a_features))
