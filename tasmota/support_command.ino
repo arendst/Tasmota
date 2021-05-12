@@ -192,11 +192,6 @@ void CommandHandler(char* topicBuf, char* dataBuf, uint32_t data_len)
   ShowFreeMem(PSTR("CommandHandler"));
 #endif
 
-  while (*dataBuf && isspace(*dataBuf)) {
-    dataBuf++;                           // Skip leading spaces in data
-    data_len--;
-  }
-
   bool grpflg = false;
   uint32_t real_index = SET_MQTT_GRP_TOPIC;
   for (uint32_t i = 0; i < MAX_GROUP_TOPICS; i++) {
@@ -237,20 +232,32 @@ void CommandHandler(char* topicBuf, char* dataBuf, uint32_t data_len)
     type[i] = '\0';
   }
 
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR("CMD: " D_GROUP " %d, " D_INDEX " %d, " D_COMMAND " \"%s\", " D_DATA " \"%s\""), grpflg, index, type, dataBuf);
+  bool binary_data = (index > 199);        // Suppose binary data on topic index > 199
+  if (!binary_data) {
+    while (*dataBuf && isspace(*dataBuf)) {
+      dataBuf++;                           // Skip leading spaces in data
+      data_len--;
+    }
+  }
+
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR("CMD: " D_GROUP " %d, " D_INDEX " %d, " D_COMMAND " \"%s\", " D_DATA " \"%s\""),
+    grpflg, index, type, (binary_data) ? PSTR("Binary") : dataBuf);
 
   if (type != nullptr) {
     Response_P(PSTR("{\"" D_JSON_COMMAND "\":\"" D_JSON_ERROR "\"}"));
 
     if (Settings.ledstate &0x02) { TasmotaGlobal.blinks++; }
 
-    if (!strcmp(dataBuf,"?")) { data_len = 0; }
+    int32_t payload = -99;
+    if (!binary_data) {
+      if (!strcmp(dataBuf,"?")) { data_len = 0; }
 
-    char *p;
-    int32_t payload = strtol(dataBuf, &p, 0);  // decimal, octal (0) or hex (0x)
-    if (p == dataBuf) { payload = -99; }
-    int temp_payload = GetStateNumber(dataBuf);
-    if (temp_payload > -1) { payload = temp_payload; }
+      char *p;
+      payload = strtol(dataBuf, &p, 0);  // decimal, octal (0) or hex (0x)
+      if (p == dataBuf) { payload = -99; }
+      int temp_payload = GetStateNumber(dataBuf);
+      if (temp_payload > -1) { payload = temp_payload; }
+    }
 
     DEBUG_CORE_LOG(PSTR("CMD: Payload %d"), payload);
 
