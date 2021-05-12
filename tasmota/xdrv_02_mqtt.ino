@@ -1473,7 +1473,12 @@ void CmndFileUpload(void) {
     // Init upload buffer
     Mqtt.file_buffer = nullptr;
 
-    if (UPL_SETTINGS == Mqtt.file_type) {
+    if (UPL_TASMOTA == Mqtt.file_type) {
+      if (Update.begin(Mqtt.file_size)) {
+        Mqtt.file_buffer = &Mqtt.file_id;  // Dummy buffer
+      }
+    }
+    else if (UPL_SETTINGS == Mqtt.file_type) {
       if (SettingsConfigBackup()) {
         Mqtt.file_buffer = settings_buffer;
       }
@@ -1488,13 +1493,17 @@ void CmndFileUpload(void) {
       Mqtt.md5 = MD5Builder();
       Mqtt.md5.begin();
 
-//      TasmotaGlobal.masterlog_level = LOG_LEVEL_DEBUG_MORE;  // Hide upload data logging
+      ResponseCmndChar(PSTR(D_JSON_STARTED));
+      MqttPublishPrefixTopic_P(STAT, XdrvMailbox.command);       // Enforce stat/wemos10/FILEUPLOAD
     }
   }
   else if ((Mqtt.file_id > 0) && (Mqtt.file_id != rcv_id)) {
     // Error receiving data
 
-    if (UPL_SETTINGS == Mqtt.file_type) {
+    if (UPL_TASMOTA == Mqtt.file_type) {
+      Update.end(true);
+    }
+    else if (UPL_SETTINGS == Mqtt.file_type) {
       SettingsBufferFree();
     }
 
@@ -1511,14 +1520,27 @@ void CmndFileUpload(void) {
 
       uint32_t bytes_left = Mqtt.file_size - Mqtt.file_pos;
       uint32_t read_bytes = (bytes_left < rcvd_bytes) ? bytes_left : rcvd_bytes;
-      uint8_t* buffer = Mqtt.file_buffer + Mqtt.file_pos;
-      memcpy(buffer, decode_output, read_bytes);
-      Mqtt.md5.add(buffer, read_bytes);
+      Mqtt.md5.add(decode_output, read_bytes);
+
+      if (UPL_TASMOTA == Mqtt.file_type) {
+        Update.write(decode_output, read_bytes);
+      } else {
+        uint8_t* buffer = Mqtt.file_buffer + Mqtt.file_pos;
+        memcpy(buffer, decode_output, read_bytes);
+      }
 
       Mqtt.file_pos += read_bytes;
+
+      if ((Mqtt.file_pos > rcvd_bytes) && ((Mqtt.file_pos % 102400) <= rcvd_bytes)) {
+        TasmotaGlobal.masterlog_level = LOG_LEVEL_NONE;        // Enable logging
+        AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPLOAD "Progress %d kB"), Mqtt.file_pos / 1024);
+        TasmotaGlobal.masterlog_level = LOG_LEVEL_DEBUG_MORE;  // Hide upload data logging
+      }
     }
 
     if ((Mqtt.file_pos < Mqtt.file_size) || (Mqtt.file_md5.length() != 32))   {
+      TasmotaGlobal.masterlog_level = LOG_LEVEL_DEBUG_MORE;  // Hide upload data logging
+
       // {"Id":116,"MaxSize":"765"}
       Response_P(PSTR("{\"Id\":%d,\"MaxSize\":%d}"), Mqtt.file_id, FileUploadChunckSize());
     } else {
@@ -1529,7 +1551,14 @@ void CmndFileUpload(void) {
         // Process upload data en free buffer
         ResponseCmndDone();
 
-        if (UPL_SETTINGS == Mqtt.file_type) {
+        if (UPL_TASMOTA == Mqtt.file_type) {
+          if (!Update.end(true)) {
+            ResponseCmndFailed();
+          } else {
+            TasmotaGlobal.restart_flag = 2;                  // Always restart to re-enable disabled features during update
+          }
+        }
+        else if (UPL_SETTINGS == Mqtt.file_type) {
           if (!SettingsConfigRestore()) {
             ResponseCmndFailed();
           } else {
@@ -1543,7 +1572,7 @@ void CmndFileUpload(void) {
   }
 
   if (!Mqtt.file_buffer) {
-//    TasmotaGlobal.masterlog_level = LOG_LEVEL_NONE;          // Enable logging
+    TasmotaGlobal.masterlog_level = LOG_LEVEL_NONE;          // Enable logging
     Mqtt.file_id = 0;
     Mqtt.file_size = 0;
     Mqtt.file_type = 0;
