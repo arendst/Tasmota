@@ -419,7 +419,14 @@
                                                    // Any valid fingerprint with the old algo will be automatically updated to the new algo.
                                                    // Enable this if you want to disable the old algo check, which should be more secure
 //  for USE_4K_RSA (support for 4096 bits certificates, instead of 2048), you need to uncommend `-DUSE_4K_RSA` in `build_flags` from `platform.ini` or `platform_override.ini`
-//  #define USE_MQTT_AZURE_IOT                     // Enable MQTT for Azure IoT Hub (+1k code)
+
+// -- MQTT - TLS - Azure IoT & IoT Central ---------
+// Starting with version v9.4.0.3 added support for both Azure IoT Hub and IoT Central
+//#define USE_MQTT_TLS                             // REQUIRED Use TLS for MQTT connection (+34.5k code, +7.0k mem and +4.8k additional during connection handshake)
+//  #define USE_MQTT_AZURE_IOT                     // REQUIRED Enable accesss to IoT Hub without DPS using a preshared key: https://tasmota.github.io/docs/Azure-IoT-Hub/  Enable MQTT for Azure IoT Hub (+1k code)
+//  #define USE_MQTT_AZURE_DPS_SCOPEID             // OPTIONAL Enables Azure Device Provisioning Service (DPS) for provision at scale, REQUIRED for IoT Central.  Uses the REST over HTTPS protocol (+4k memory)
+//  #define USE_MQTT_AZURE_DPS_PRESHAREDKEY        // OPTIONAL The Preshared Key of DPS https://github.com/tasmota/docs/blob/development/docs/Azure-IoT-Central.md
+//  #define USE_MQTT_AZURE_DPS_SCOPE_ENDPOINT      // OPTIONAL Defaults to "https://global.azure-devices-provisioning.net/", can be changed for Azure China, Azure Germany or others.
 
 // -- Telegram Protocol ---------------------------
 //#define USE_TELEGRAM                             // Support for Telegram protocol (+49k code, +7.0k mem and +4.8k additional during connection handshake)
