@@ -33,6 +33,7 @@ struct FMQTT {
   uint32_t file_size = 0;                // MQTT total file size
   uint32_t file_type = 0;                // MQTT File type (See UploadTypes)
   uint8_t* file_buffer = nullptr;        // MQTT file buffer
+  const char* file_password = nullptr;   // MQTT password
   MD5Builder md5;                        // MQTT md5
   String file_md5;                       // MQTT received file md5 (32 chars)
   uint16_t topic_size;                   // MQTT topic length with terminating <null>
@@ -62,9 +63,61 @@ uint32_t FileUploadChunckSize(void) {
     - Payload ({"Id":116,"Data":"<base64 encoded FileUploadChunckSize>"}<null>)
 */
   const uint32_t PubSubClientHeaderSize = 5;   // MQTT_MAX_HEADER_SIZE
-
-//  return (((MQTT_MAX_PACKET_SIZE - PubSubClientHeaderSize - FMqtt.topic_size - FileTransferHeaderSize) / 4) * 3) -2;
   return MQTT_MAX_PACKET_SIZE - PubSubClientHeaderSize - FMqtt.topic_size - FileTransferHeaderSize;
+}
+
+uint32_t MqttFileUploadValidate(uint32_t rcv_id) {
+  if ((0 == FMqtt.file_id) && (rcv_id > 0) && (FMqtt.file_size > 0) && (FMqtt.file_type > 0)) {
+    FMqtt.file_buffer = nullptr;                             // Init upload buffer
+
+    if (!FMqtt.file_password || (strcmp(FMqtt.file_password, SettingsText(SET_MQTT_PWD)) != 0)) {
+      return 1;                                              // Invalid password
+    }
+
+    if (UPL_SETTINGS != FMqtt.file_type) {                   // Check enough flash space for intermediate upload
+      uint32_t head_room = (FlashWriteMaxSector() - FlashWriteStartSector()) * SPI_FLASH_SEC_SIZE;
+      uint32_t rounded_size = (FMqtt.file_size + SPI_FLASH_SEC_SIZE -1) & (~(SPI_FLASH_SEC_SIZE - 1));
+      if (rounded_size > head_room) {
+        return 2;                                            // Not enough space
+      }
+    }
+
+    if (UPL_TASMOTA == FMqtt.file_type) {
+      if (Update.begin(FMqtt.file_size)) {
+        FMqtt.file_buffer = &FMqtt.file_id;                  // Dummy buffer
+        SettingsSave(1);                                     // Free flash for OTA update
+      }
+    }
+    else if (UPL_SETTINGS == FMqtt.file_type) {
+      if (SettingsConfigBackup()) {
+        FMqtt.file_buffer = settings_buffer;
+      }
+    }
+    else {
+      return 3;                                              // Invalid file type
+    }
+
+    FMqtt.file_id = rcv_id;
+    FMqtt.file_pos = 0;
+
+    FMqtt.md5 = MD5Builder();
+    FMqtt.md5.begin();
+
+    ResponseCmndChar(PSTR(D_JSON_STARTED));
+    MqttPublishPrefixTopic_P(STAT, XdrvMailbox.command);     // Enforce stat/wemos10/FILEUPLOAD
+  }
+  else if ((FMqtt.file_id > 0) && (FMqtt.file_id != rcv_id)) {
+    // Error receiving data
+
+    if (UPL_TASMOTA == FMqtt.file_type) {
+      Update.end(true);
+    }
+    else if (UPL_SETTINGS == FMqtt.file_type) {
+      SettingsBufferFree();
+    }
+    return 4;                                                // Upload aborted
+  }
+  return 0;                                                  // No error
 }
 
 void CmndFileUpload(void) {
@@ -76,6 +129,8 @@ void CmndFileUpload(void) {
   FileUpload {"Id":116,"Data":" ... "}
   FileUpload {"Id":116,"Md5":"496fcbb433bbca89833063174d2c5747"}
 */
+  if (XdrvMailbox.grpflg) { return; }
+
   const char* base64_data = nullptr;
   uint32_t rcv_id = 0;
   char* dataBuf = (char*)XdrvMailbox.data;
@@ -101,52 +156,23 @@ void CmndFileUpload(void) {
         if (val) { FMqtt.file_md5 = val.getStr(); }
         val = root[PSTR("DATA")];
         if (val) { base64_data = val.getStr(); }
+        val = root[PSTR("PASS")];
+        if (val) { FMqtt.file_password = val.getStr(); }
       }
     }
   } else {
     rcv_id = FMqtt.file_id;
   }
 
-  if ((0 == FMqtt.file_id) && (rcv_id > 0) && (FMqtt.file_size > 0) && (FMqtt.file_type > 0)) {
-    // Init upload buffer
+  uint32_t error = MqttFileUploadValidate(rcv_id);
+  if (error) {
     FMqtt.file_buffer = nullptr;
 
-    if (UPL_TASMOTA == FMqtt.file_type) {
-      if (Update.begin(FMqtt.file_size)) {
-        FMqtt.file_buffer = &FMqtt.file_id;  // Dummy buffer
-      }
-    }
-    else if (UPL_SETTINGS == FMqtt.file_type) {
-      if (SettingsConfigBackup()) {
-        FMqtt.file_buffer = settings_buffer;
-      }
-    }
+    TasmotaGlobal.masterlog_level = LOG_LEVEL_NONE;          // Enable logging
 
-    if (!FMqtt.file_buffer) {
-      ResponseCmndChar(PSTR(D_JSON_INVALID_FILE_TYPE));
-    } else {
-      FMqtt.file_id = rcv_id;
-      FMqtt.file_pos = 0;
-
-      FMqtt.md5 = MD5Builder();
-      FMqtt.md5.begin();
-
-      ResponseCmndChar(PSTR(D_JSON_STARTED));
-      MqttPublishPrefixTopic_P(STAT, XdrvMailbox.command);       // Enforce stat/wemos10/FILEUPLOAD
-    }
-  }
-  else if ((FMqtt.file_id > 0) && (FMqtt.file_id != rcv_id)) {
-    // Error receiving data
-
-    if (UPL_TASMOTA == FMqtt.file_type) {
-      Update.end(true);
-    }
-    else if (UPL_SETTINGS == FMqtt.file_type) {
-      SettingsBufferFree();
-    }
-
-    FMqtt.file_buffer = nullptr;
-    ResponseCmndChar(PSTR(D_JSON_ABORTED));
+    char error_txt[TOPSZ];
+    snprintf_P(error_txt, sizeof(error_txt), PSTR(D_JSON_ERROR " %d"), error);
+    ResponseCmndChar(error_txt);
   }
 
   if (FMqtt.file_buffer) {
@@ -182,7 +208,7 @@ void CmndFileUpload(void) {
       }
 
       if ((FMqtt.file_pos > rcvd_bytes) && ((FMqtt.file_pos % 102400) <= rcvd_bytes)) {
-        TasmotaGlobal.masterlog_level = LOG_LEVEL_NONE;        // Enable logging
+        TasmotaGlobal.masterlog_level = LOG_LEVEL_NONE;      // Enable logging
         AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPLOAD "Progress %d kB"), FMqtt.file_pos / 1024);
         TasmotaGlobal.masterlog_level = LOG_LEVEL_DEBUG_MORE;  // Hide upload data logging
       }
@@ -230,7 +256,8 @@ void CmndFileUpload(void) {
     FMqtt.file_id = 0;
     FMqtt.file_size = 0;
     FMqtt.file_type = 0;
-    FMqtt.file_md5 = (const char*) nullptr;                   // Force deallocation of the String internal memory
+    FMqtt.file_md5 = (const char*) nullptr;                  // Force deallocation of the String internal memory
+    FMqtt.file_password = nullptr;
   }
   MqttPublishPrefixTopic_P(STAT, XdrvMailbox.command);       // Enforce stat/wemos10/FILEUPLOAD
   ResponseClear();
@@ -244,6 +271,7 @@ void CmndFileDownload(void) {
   FileDownload 2  - Start download of settings file
   FileDownload    - Continue downloading data until reception of MD5 hash
 */
+  if (XdrvMailbox.grpflg) { return; }
 
   if (FMqtt.file_id && FMqtt.file_buffer) {
     bool finished = false;
