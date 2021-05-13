@@ -289,7 +289,7 @@ uDisplay::uDisplay(char *lp) : Renderer(800, 600) {
             break;
           case 'B':
             lvgl_param.fluslines = next_val(&lp1);
-            lvgl_param.use_dma = next_val(&lp1);
+            lvgl_param.data = next_val(&lp1);
             break;
           case 'M':
             rotmap_xmin = next_val(&lp1);
@@ -1083,7 +1083,11 @@ static inline void lvgl_color_swap(uint16_t *data, uint16_t len) { for (uint32_t
 void uDisplay::pushColors(uint16_t *data, uint16_t len, boolean not_swapped) {
   uint16_t color;
 
-  //Serial.printf("push %x - %d\n", (uint32_t)data, len);
+  if (lvgl_param.swap_color) {
+    not_swapped = !not_swapped;
+  }
+
+  //Serial.printf("push %x - %d - %d - %d\n", (uint32_t)data, len, not_swapped,lvgl_param.data);
   if (not_swapped == false) {
     // called from LVGL bytes are swapped
     if (bpp != 16) {
@@ -1386,7 +1390,7 @@ void uDisplay::TS_RotConvert(int16_t *x, int16_t *y) {
 
   if (rotmap_xmin >= 0) {
     *y = map(*y, rotmap_ymin, rotmap_ymax, 0, gys);
-	  *x = map(*x, rotmap_xmin, rotmap_xmax, 0, gxs);
+    *x = map(*x, rotmap_xmin, rotmap_xmax, 0, gxs);
   }
   *x = constrain(*x, 0, gxs);
   *y = constrain(*y, 0, gys);
@@ -1409,7 +1413,6 @@ void uDisplay::TS_RotConvert(int16_t *x, int16_t *y) {
       *x = width() - temp;
       break;
   }
-
 }
 
 uint8_t uDisplay::strlen_ln(char *str) {

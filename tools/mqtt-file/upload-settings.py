@@ -22,7 +22,7 @@
 Requirements:
    - Python 3.x and Pip:
       sudo apt-get install python3 python3-pip
-      pip3 install paho-mqtt
+      pip3 install paho-mqtt json
 
 Instructions:
    Edit file and change parameters in User Configuration Section
@@ -35,38 +35,55 @@ import paho.mqtt.client as mqtt
 import time
 import base64
 import hashlib
+import json
 
 # **** Start of User Configuration Section
 
 broker = "domus1"                      # MQTT broker ip address or name
 broker_port = 1883                     # MQTT broker port
 
+mypassword = ""                        # Tasmota MQTT password
 mytopic = "demo"                       # Tasmota MQTT topic
 myfile = "Config_demo_9.4.0.3.dmp"     # Tasmota Settings file name
 myfiletype = 2                         # Tasmota Settings file type
 
 # **** End of User Configuration Section
 
-# Derive from myfile
-myfilesize = 4096
-
-# Derive from time epoch
-myid = 1620484815
-
 # Derive fulltopic from broker LWT message
 mypublish = "cmnd/"+mytopic+"/fileupload"
 mysubscribe = "stat/"+mytopic+"/FILEUPLOAD"  # Case sensitive
 
-# Tasmota currently supports MQTT message size of 1040 characters. Base64 adds 0.25 chars
-chucksize = 700                        # Tasmota max chunk size
-
-# Example does use feedback Acknowledge
 Ack_flag = False
+
+use_base64 = True
+file_id = 116                          # Even id between 2 and 254
+file_chunk_size = 700                  # Default Tasmota MQTT max message size
 
 # The callback for when mysubscribe message is received
 def on_message(client, userdata, msg):
    global Ack_flag
+   global file_chunk_size
+
+   rcv_code = ""
+   rcv_id = 0
+
 #   print("Received message =",str(msg.payload.decode("utf-8")))
+
+   root = json.loads(msg.payload.decode("utf-8"))
+   if "FileUpload" in root: rcv_code = root["FileUpload"]
+   if "Error" in rcv_code:
+      print("Error: "+rcv_code)
+      return
+
+   if "Command" in root: rcv_code = root["Command"]
+   if rcv_code == "Error":
+      print("Error: Command error")
+      return
+
+   if "Id" in root: rcv_id = root["Id"]
+   if rcv_id == file_id:
+      if "MaxSize" in root: file_chunk_size = root["MaxSize"]
+
    Ack_flag = False
 
 def wait_for_ack():
@@ -90,29 +107,37 @@ client.subscribe(mysubscribe)
 time_start = time.time()
 print("Uploading file "+myfile+" to "+mytopic+" ...")
 
-client.publish(mypublish, "{\"File\":\""+myfile+"\",\"Id\":"+str(myid)+",\"Type\":"+str(myfiletype)+",\"Size\":"+str(myfilesize)+"}")
+fo = open(myfile,"rb")
+fo.seek(0, 2)  # os.SEEK_END
+file_size = fo.tell()
+fo.seek(0, 0)  # os.SEEK_SET
+
+client.publish(mypublish, "{\"Pass\":\""+mypassword+"\",\"File\":\""+myfile+"\",\"Id\":"+str("%3d"%file_id)+",\"Type\":"+str(myfiletype)+",\"Size\":"+str(file_size)+"}")
 Ack_flag = True
 
 out_hash_md5 = hashlib.md5()
 
-fo = open(myfile,"rb")
 Run_flag = True
 while Run_flag:
-   if wait_for_ack():                  # We use Ack here
+   if wait_for_ack():                   # We use Ack here
       Run_flag = False
 
    else:
-      chunk = fo.read(chucksize)
+      chunk = fo.read(file_chunk_size)
       if chunk:
-         out_hash_md5.update(chunk)    # Update hash
-         base64_encoded_data = base64.b64encode(chunk)
-         base64_data = base64_encoded_data.decode('utf-8')
-         client.publish(mypublish, "{\"Id\":"+str(myid)+",\"Data\":\""+base64_data+"\"}")
+         out_hash_md5.update(chunk)       # Update hash
+         if use_base64:
+            base64_encoded_data = base64.b64encode(chunk)
+            base64_data = base64_encoded_data.decode('utf-8')
+            # Message length used by Tasmota (FileTransferHeaderSize)
+            client.publish(mypublish, "{\"Id\":"+str("%3d"%file_id)+",\"Data\":\""+base64_data+"\"}")
+         else:
+            client.publish(mypublish+"201", chunk)
          Ack_flag = True
 
       else:
          md5_hash = out_hash_md5.hexdigest()
-         client.publish(mypublish, "{\"Id\":"+str(myid)+",\"Md5\":\""+md5_hash+"\"}")
+         client.publish(mypublish, "{\"Id\":"+str("%3d"%file_id)+",\"Md5\":\""+md5_hash+"\"}")
          Run_flag = False
 
 fo.close()
