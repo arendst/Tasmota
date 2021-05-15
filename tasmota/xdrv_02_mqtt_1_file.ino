@@ -23,10 +23,13 @@
 /*********************************************************************************************\
  * MQTT file transfer
  *
- * Supports base64 encoded binary data transfer
+ * Supports both binary and base64 encoded binary data transfer
 \*********************************************************************************************/
 
+#include <PubSubClient.h>
 #include <base64.hpp>
+
+extern PubSubClient MqttClient;
 
 struct FMQTT {
   uint32_t file_pos = 0;                 // MQTT file position during upload/download
@@ -40,10 +43,6 @@ struct FMQTT {
   uint8_t file_id = 0;                   // MQTT unique file id during upload/download
 } FMqtt;
 
-void MqttTopicSize(uint32_t topic_size) {
-  FMqtt.topic_size = topic_size +1;
-}
-
 /*
   The download chunk size is the data size before it is encoded to base64.
   It is smaller than the upload chunksize as it is bound by MESSZ
@@ -55,18 +54,20 @@ const uint32_t mqtt_file_chuck_size = (((MESSZ - FileTransferHeaderSize) / 4) * 
 
 uint32_t FileUploadChunckSize(void) {
 /*
-  The upload chunk size is the data size before it is encoded to base64.
+  The upload chunk size is the data size of the payload.
   It can be larger than the download chunksize which is bound by MESSZ
   The PubSubClient upload buffer with length MQTT_MAX_PACKET_SIZE (1200) contains
     - Header of 5 bytes (MQTT_MAX_HEADER_SIZE)
     - Topic string terminated with a zero (stat/demo/FILEUPLOAD<null>)
-    - Payload ({"Id":116,"Data":"<base64 encoded FileUploadChunckSize>"}<null>)
+    - Payload ({"Id":116,"Data":"<base64 encoded FileUploadChunckSize>"}<null>) or (<binary data>)
 */
   const uint32_t PubSubClientHeaderSize = 5;   // MQTT_MAX_HEADER_SIZE
-  return MQTT_MAX_PACKET_SIZE - PubSubClientHeaderSize - FMqtt.topic_size - FileTransferHeaderSize;
+  return MqttClient.getBufferSize() - PubSubClientHeaderSize - FMqtt.topic_size -1;
 }
 
 uint32_t MqttFileUploadValidate(uint32_t rcv_id) {
+  if (XdrvMailbox.grpflg) { return 5; }
+
   if ((0 == FMqtt.file_id) && (rcv_id > 0) && (FMqtt.file_size > 0) && (FMqtt.file_type > 0)) {
     FMqtt.file_buffer = nullptr;                             // Init upload buffer
 
@@ -74,7 +75,12 @@ uint32_t MqttFileUploadValidate(uint32_t rcv_id) {
       return 1;                                              // Invalid password
     }
 
-    if (UPL_SETTINGS != FMqtt.file_type) {                   // Check enough flash space for intermediate upload
+    // Check buffer size
+    if (UPL_SETTINGS == FMqtt.file_type) {
+      if (FMqtt.file_size > 4096) {
+        return 2;                                            // Settings supports max 4k size
+      }
+    } else {                                                 // Check enough flash space for intermediate upload
       uint32_t head_room = (FlashWriteMaxSector() - FlashWriteStartSector()) * SPI_FLASH_SEC_SIZE;
       uint32_t rounded_size = (FMqtt.file_size + SPI_FLASH_SEC_SIZE -1) & (~(SPI_FLASH_SEC_SIZE - 1));
       if (rounded_size > head_room) {
@@ -82,9 +88,11 @@ uint32_t MqttFileUploadValidate(uint32_t rcv_id) {
       }
     }
 
+    // Init file_buffer
     if (UPL_TASMOTA == FMqtt.file_type) {
       if (Update.begin(FMqtt.file_size)) {
         FMqtt.file_buffer = &FMqtt.file_id;                  // Dummy buffer
+//        TasmotaGlobal.blinkstate = true;                     // Stay lit
         SettingsSave(1);                                     // Free flash for OTA update
       }
     }
@@ -122,24 +130,31 @@ uint32_t MqttFileUploadValidate(uint32_t rcv_id) {
 
 void CmndFileUpload(void) {
 /*
-  Upload (binary) max 700 bytes chunks of data base64 encoded with MD5 hash over base64 decoded data
-  FileUpload 0  - Abort current upload
-  FileUpload {"File":"Config_wemos10_9.4.0.3.dmp","Id":116,"Type":2,"Size":4096}
-  FileUpload {"Id":116,"Data":"CRJcTQ9fYGF ... OT1BRUlNUVVZXWFk="}
-  FileUpload {"Id":116,"Data":" ... "}
-  FileUpload {"Id":116,"Md5":"496fcbb433bbca89833063174d2c5747"}
-*/
-  if (XdrvMailbox.grpflg) { return; }
+  Upload <MaxSize> bytes chunks of data either base64 encoded or binary with MD5 hash
 
+  Supported Type:
+     1 - OTA firmware
+     2 - Settings
+
+  FileUpload 0  - Abort current upload
+
+  Start an upload session:
+    FileUpload {"Password":"","File":"Config_wemos10_9.4.0.3.dmp","Id":116,"Type":2,"Size":4096}
+
+  Upload data using base64:
+    FileUpload {"Id":116,"Data":"CRJcTQ9fYGF ... OT1BRUlNUVVZXWFk="}
+    FileUpload {"Id":116,"Data":" ... "}
+  Or binary:
+    FileUpload201 <binary data>
+
+  Finish upload session:
+    FileUpload {"Id":116,"Md5":"496fcbb433bbca89833063174d2c5747"}
+*/
   const char* base64_data = nullptr;
   uint32_t rcv_id = 0;
   char* dataBuf = (char*)XdrvMailbox.data;
 
-  bool binary_data = false;
-  if (XdrvMailbox.index > 199) {                             // Check for raw data
-    XdrvMailbox.index -= 200;
-    binary_data = true;
-  }
+  bool binary_data = (XdrvMailbox.index > 199);              // Check for raw data
 
   if (!binary_data) {
     if (strlen(dataBuf) > 8) {                               // Workaround exception if empty JSON like {} - Needs checks
@@ -156,7 +171,7 @@ void CmndFileUpload(void) {
         if (val) { FMqtt.file_md5 = val.getStr(); }
         val = root[PSTR("DATA")];
         if (val) { base64_data = val.getStr(); }
-        val = root[PSTR("PASS")];
+        val = root[PSTR("PASSWORD")];
         if (val) { FMqtt.file_password = val.getStr(); }
       }
     }
@@ -170,7 +185,7 @@ void CmndFileUpload(void) {
 
     TasmotaGlobal.masterlog_level = LOG_LEVEL_NONE;          // Enable logging
 
-    char error_txt[TOPSZ];
+    char error_txt[20];
     snprintf_P(error_txt, sizeof(error_txt), PSTR(D_JSON_ERROR " %d"), error);
     ResponseCmndChar(error_txt);
   }
@@ -209,7 +224,7 @@ void CmndFileUpload(void) {
 
       if ((FMqtt.file_pos > rcvd_bytes) && ((FMqtt.file_pos % 102400) <= rcvd_bytes)) {
         TasmotaGlobal.masterlog_level = LOG_LEVEL_NONE;      // Enable logging
-        AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPLOAD "Progress %d kB"), FMqtt.file_pos / 1024);
+        AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPLOAD "Progress %d kB"), (FMqtt.file_pos / 10240) * 10);
         TasmotaGlobal.masterlog_level = LOG_LEVEL_DEBUG_MORE;  // Hide upload data logging
       }
     }
@@ -219,7 +234,7 @@ void CmndFileUpload(void) {
 
       uint32_t chunk_size = FileUploadChunckSize();
       if (!binary_data) {
-        chunk_size = ((chunk_size / 4) * 3) -2;              // Calculate base64 chunk size
+        chunk_size = (((chunk_size - FileTransferHeaderSize) / 4) * 3) -2;  // Calculate base64 chunk size
       }
       // {"Id":116,"MaxSize":"765"}
       Response_P(PSTR("{\"Id\":%d,\"MaxSize\":%d}"), FMqtt.file_id, chunk_size);
