@@ -522,6 +522,12 @@ void MqttDataHandler(char* mqtt_topic, uint8_t* mqtt_data, unsigned int data_len
     }
   }
 
+#ifdef USE_MQTT_FILE
+  FMqtt.topic_size = strlen(mqtt_topic);
+#endif  // USE_MQTT_FILE
+
+//  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_MQTT "BufferSize %d, Topic |%s|, Length %d, data_len %d"), MqttClient.getBufferSize(), mqtt_topic, strlen(mqtt_topic), data_len);
+
   // Save MQTT data ASAP as it's data is discarded by PubSubClient with next publish as used in MQTTlog
   char topic[TOPSZ];
 #ifdef USE_MQTT_AZURE_IOT
@@ -544,9 +550,6 @@ void MqttDataHandler(char* mqtt_topic, uint8_t* mqtt_data, unsigned int data_len
 #else
   strlcpy(topic, mqtt_topic, sizeof(topic));
 #endif  // USE_MQTT_AZURE_IOT
-#ifdef USE_MQTT_FILE
-  MqttTopicSize(strlen(topic));
-#endif  // USE_MQTT_FILE
   mqtt_data[data_len] = 0;
   char data[data_len +1];
   memcpy(data, mqtt_data, sizeof(data));

@@ -112,7 +112,7 @@ fo.seek(0, 2)  # os.SEEK_END
 file_size = fo.tell()
 fo.seek(0, 0)  # os.SEEK_SET
 
-client.publish(mypublish, "{\"Pass\":\""+mypassword+"\",\"File\":\""+myfile+"\",\"Id\":"+str("%3d"%file_id)+",\"Type\":"+str(myfiletype)+",\"Size\":"+str(file_size)+"}")
+client.publish(mypublish, "{\"Password\":\""+mypassword+"\",\"File\":\""+myfile+"\",\"Id\":"+str("%3d"%file_id)+",\"Type\":"+str(myfiletype)+",\"Size\":"+str(file_size)+"}")
 Ack_flag = True
 
 out_hash_md5 = hashlib.md5()

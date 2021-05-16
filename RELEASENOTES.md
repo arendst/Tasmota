@@ -76,7 +76,7 @@ The binaries can be downloaded from either https://github.com/arendst/Tasmota/tr
 
 [Complete list](BUILDS.md) of available feature and sensors.
 
-## Changelog v9.4.0.2
+## Changelog v9.4.0.4
 ### Added
 - Initial support for optional ``Template`` JSON fieldpair ``"CMND":"<any template related command>|<any template related command>|..."`` [#11788](https://github.com/arendst/Tasmota/issues/11788)
 - ESP32 pulldown buttons ``Button_d`` and ``Button_id`` and switches ``Switch_d`` [#10814](https://github.com/arendst/Tasmota/issues/10814)
@@ -86,6 +86,7 @@ The binaries can be downloaded from either https://github.com/arendst/Tasmota/tr
 - Zigbee firmware 6.7.9 for Sonoff ZBBridge
 - Defines ``USER_RULE1``, ``USER_RULE2`` and ``USER_RULE3`` to store rules at compile time
 - Define ``USER_BACKLOG`` to store commands at compile time to be executed at firmware load or when executing command ``reset``
+- LVGL support for TrueType fonts via FreeType library
 
 ### Breaking Changed
 
