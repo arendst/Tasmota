@@ -729,7 +729,7 @@ void TuyaProcessStatePacket(void) {
 
           if (RtcTime.valid) {
             if (Tuya.lastPowerCheckTime != 0 && Energy.active_power[0] > 0) {
-              Energy.kWhtoday += (float)Energy.active_power[0] * (Rtc.utc_time - Tuya.lastPowerCheckTime) / 36;
+              Energy.kWhtoday += Energy.active_power[0] * (float)(Rtc.utc_time - Tuya.lastPowerCheckTime) / 36.0;
               EnergyUpdateToday();
             }
             Tuya.lastPowerCheckTime = Rtc.utc_time;
@@ -856,12 +856,13 @@ void TuyaProcessStatePacket(void) {
           Energy.current[0] = (float)packetValue / 1000;
           AddLog(LOG_LEVEL_DEBUG, PSTR("TYA: Rx ID=%d Current=%d"), Tuya.buffer[dpidStart], packetValue);
         } else if (tuya_energy_enabled && fnId == TUYA_MCU_FUNC_POWER) {
+          uint32_t packetValue = Tuya.buffer[dpidStart + 5] << 16 |Tuya.buffer[dpidStart + 6] << 8 | Tuya.buffer[dpidStart + 7];
           Energy.active_power[0] = (float)packetValue / 10;
           AddLog(LOG_LEVEL_DEBUG, PSTR("TYA: Rx ID=%d Active_Power=%d"), Tuya.buffer[dpidStart], packetValue);
 
           if (RtcTime.valid) {
             if (Tuya.lastPowerCheckTime != 0 && Energy.active_power[0] > 0) {
-              Energy.kWhtoday += (float)Energy.active_power[0] * (Rtc.utc_time - Tuya.lastPowerCheckTime) / 36;
+              Energy.kWhtoday += Energy.active_power[0] * (float)(Rtc.utc_time - Tuya.lastPowerCheckTime) / 36.0;
               EnergyUpdateToday();
             }
             Tuya.lastPowerCheckTime = Rtc.utc_time;
