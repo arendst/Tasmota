@@ -985,7 +985,12 @@ void EnergyShow(bool json)
           if ((Energy.current[i] > 0.005) && ((difference > 15) || (difference > (uint32_t)(apparent_power * 100 / 1000)))) {
             // calculating reactive power only if current is greater than 0.005A and
             // difference between active and apparent power is greater than 1.5W or 1%
-            reactive_power = (float)(RoundSqrtInt((uint32_t)(apparent_power * apparent_power * 100) - (uint32_t)(Energy.active_power[i] * Energy.active_power[i] * 100))) / 10;
+            //reactive_power = (float)(RoundSqrtInt((uint64_t)(apparent_power * apparent_power * 100) - (uint64_t)(Energy.active_power[i] * Energy.active_power[i] * 100))) / 10;
+            float power_diff = apparent_power * apparent_power - Energy.active_power[i] * Energy.active_power[i];
+            if (power_diff < 10737418) // 2^30 / 100 (RoundSqrtInt is limited to 2^30-1)
+              reactive_power = (float)(RoundSqrtInt((uint32_t)(power_diff * 100.0))) / 10.0;
+            else
+              reactive_power = (float)(SqrtInt((uint32_t)(power_diff)));
           }
         }
 
