@@ -8410,7 +8410,15 @@ bool Xdrv10(uint8_t function)
       break;
     case FUNC_RULES_PROCESS:
       if (bitRead(Settings.rule_enabled, 0)) {
+#ifdef USE_SCRIPT_STATUS
+        if (!strncmp_P(TasmotaGlobal.mqtt_data, PSTR("{\"Status"), 8)) {
+          Run_Scripter(">U", 2, TasmotaGlobal.mqtt_data);
+        } else {
+          Run_Scripter(">E", 2, TasmotaGlobal.mqtt_data);
+        }
+#else
         Run_Scripter(">E", 2, TasmotaGlobal.mqtt_data);
+#endif
         result = glob_script_mem.event_handeled;
       }
       break;
