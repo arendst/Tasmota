@@ -535,6 +535,24 @@ char* Trim(char* p)
   return p;
 }
 
+String HexToString(uint8_t* data, uint32_t length) {
+  if (!data || !length) { return ""; }
+
+  uint32_t len = (length < 16) ? length : 16;
+  char hex_data[32];
+  ToHex_P((const unsigned char*)data, len, hex_data, sizeof(hex_data));
+  String result = hex_data;
+  result += F(" [");
+  for (uint32_t i = 0; i < len; i++) {
+    result += (isprint(data[i])) ? (char)data[i] : ' ';
+  }
+  result += F("]");
+  if (length > len) {
+    result += F(" ...");
+  }
+  return result;
+}
+
 String UrlEncode(const String& text) {
   const char hex[] = "0123456789ABCDEF";
 
@@ -566,25 +584,6 @@ String UrlEncode(const String& text) {
 	}
 	return encoded;
 }
-
-/*
-char* RemoveAllSpaces(char* p)
-{
-  // remove any white space from the base64
-  char *cursor = p;
-  uint32_t offset = 0;
-  while (1) {
-    *cursor = *(cursor + offset);
-    if ((' ' == *cursor) || ('\t' == *cursor) || ('\n' == *cursor)) {   // if space found, remove this char until end of string
-      offset++;
-    } else {
-      if (0 == *cursor) { break; }
-      cursor++;
-    }
-  }
-  return p;
-}
-*/
 
 char* NoAlNumToUnderscore(char* dest, const char* source)
 {
@@ -2404,9 +2403,6 @@ void AddLogSpi(bool hardware, uint32_t clk, uint32_t mosi, uint32_t miso) {
       break;
   }
 }
-
-
-
 
 /*********************************************************************************************\
  * Uncompress static PROGMEM strings
