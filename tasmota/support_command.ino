@@ -642,10 +642,6 @@ void CmndStatus(void)
   }
 #endif
 
-#ifdef USE_SCRIPT_STATUS
-  if (bitRead(Settings.rule_enabled, 0)) { Run_Scripter(">U", 2, TasmotaGlobal.mqtt_data); }
-#endif
-
   ResponseClear();
 }
 
