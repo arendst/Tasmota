@@ -515,12 +515,12 @@ char* UpperCase_P(char* dest, const char* source)
   return dest;
 }
 
-char* StrCaseStr_P(const char* source, const char* search) {
+bool StrCaseStr_P(const char* source, const char* search) {
   char case_source[strlen_P(source) +1];
   UpperCase_P(case_source, source);
   char case_search[strlen_P(search) +1];
   UpperCase_P(case_search, search);
-  return strstr(case_source, case_search);
+  return (strstr(case_source, case_search) != nullptr);
 }
 
 char* Trim(char* p)
@@ -1411,7 +1411,7 @@ bool ValidTemplate(const char *search) {
 
   return (strstr(template_name, search_name) != nullptr);
 */
-  return (StrCaseStr_P(SettingsText(SET_TEMPLATE_NAME), search) != nullptr);
+  return StrCaseStr_P(SettingsText(SET_TEMPLATE_NAME), search);
 }
 
 String AnyModuleName(uint32_t index)
@@ -1657,7 +1657,7 @@ bool JsonTemplate(char* dataBuf)
 
   val = root[PSTR(D_JSON_CMND)];
   if (val) {
-    if ((USER_MODULE == Settings.module) || (StrCaseStr_P(val.getStr(), PSTR(D_CMND_MODULE " 0")))) {  // Only execute if current module = USER_MODULE = this template
+    if ((USER_MODULE == Settings.module) || StrCaseStr_P(val.getStr(), PSTR(D_CMND_MODULE " 0"))) {  // Only execute if current module = USER_MODULE = this template
       char* backup_data = XdrvMailbox.data;
       XdrvMailbox.data = (char*)val.getStr();   // Backlog commands
       ReplaceChar(XdrvMailbox.data, '|', ';');  // Support '|' as command separator for JSON backwards compatibility
