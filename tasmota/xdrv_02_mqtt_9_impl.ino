@@ -179,7 +179,7 @@ void MakeValidMqtt(uint32_t option, char* str) {
  * bool MqttIsConnected()
  * void MqttDisconnect()
  * void MqttSubscribeLib(char *topic)
- * bool MqttPublishLib(const char* topic, bool retained)
+ * bool MqttPublishLib(const char* topic, const uint8_t* payload, unsigned int plength, bool retained)
 \*********************************************************************************************/
 
 #include <PubSubClient.h>
@@ -465,7 +465,7 @@ void MqttUnsubscribeLib(const char *topic) {
   MqttClient.loop();  // Solve LmacRxBlk:1 messages
 }
 
-bool MqttPublishLib(const char* topic, bool retained) {
+bool MqttPublishLib(const char* topic, const uint8_t* payload, unsigned int plength, bool retained) {
   // If Prefix1 equals Prefix2 disable next MQTT subscription to prevent loop
   if (!strcmp(SettingsText(SET_MQTTPREFIX1), SettingsText(SET_MQTTPREFIX2))) {
     char *str = strstr(topic, SettingsText(SET_MQTTPREFIX1));
@@ -475,35 +475,34 @@ bool MqttPublishLib(const char* topic, bool retained) {
     }
   }
 
-  bool result;
 #ifdef USE_MQTT_AZURE_IOT
   String sourceTopicString = urlEncodeBase64(String(topic));
   String topicString = "devices/" + String(SettingsText(SET_MQTT_CLIENT));
-  topicString+= "/messages/events/topic=" + sourceTopicString;
+  topicString += "/messages/events/topic=" + sourceTopicString;
 
-  JsonParser mqtt_message((char*) String(TasmotaGlobal.mqtt_data).c_str());
+  JsonParser mqtt_message((char*) String((const char*)payload).c_str());
   JsonParserObject message_object = mqtt_message.getRootObject();
-  if (message_object.isValid()) {   // only sending valid JSON, yet this is optional
-    result = MqttClient.publish(topicString.c_str(), TasmotaGlobal.mqtt_data, retained);
-    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_MQTT "Sending '%s'"), TasmotaGlobal.mqtt_data);
-  } else {
-    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_MQTT "Invalid JSON, '%s' for topic '%s', not sending to Azure IoT Hub"), TasmotaGlobal.mqtt_data, topic);
-    result = true;
+  if (!message_object.isValid()) {   // only sending valid JSON, yet this is optional
+    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_MQTT "Invalid JSON for topic '%s', not sending to Azure IoT Hub"), topic);
+    return true;
   }
-#else
-  result = MqttClient.publish(topic, TasmotaGlobal.mqtt_data, retained);
+  topic = topicString.c_str();
 #endif  // USE_MQTT_AZURE_IOT
-  yield();  // #3313
-  return result;
-}
 
-#ifdef DEBUG_TASMOTA_CORE
-void MqttDumpData(char* topic, char* data, uint32_t data_len) {
-  char dump_data[data_len +1];
-  memcpy(dump_data, data, sizeof(dump_data));  // Make another copy for removing optional control characters
-  DEBUG_CORE_LOG(PSTR(D_LOG_MQTT "Size %d, \"%s %s\""), data_len, topic, RemoveControlCharacter(dump_data));
+  if (!MqttClient.beginPublish(topic, plength, retained)) {
+//    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_MQTT "Connection lost or message too large"));
+    return false;
+  }
+  uint32_t written = MqttClient.write(payload, plength);
+  if (written != plength) {
+    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_MQTT "Message too large"));
+    return false;
+  }
+  MqttClient.endPublish();
+
+  yield();  // #3313
+  return true;
 }
-#endif
 
 void MqttDataHandler(char* mqtt_topic, uint8_t* mqtt_data, unsigned int data_len) {
 #ifdef USE_DEBUG_DRIVER
@@ -554,10 +553,6 @@ void MqttDataHandler(char* mqtt_topic, uint8_t* mqtt_data, unsigned int data_len
   char data[data_len +1];
   memcpy(data, mqtt_data, sizeof(data));
 
-#ifdef DEBUG_TASMOTA_CORE
-  MqttDumpData(topic, data, data_len);  // Use a function to save stack space used by dump_data
-#endif
-
   // MQTT pre-processing
   XdrvMailbox.index = strlen(topic);
   XdrvMailbox.data_len = data_len;
@@ -598,21 +593,28 @@ void MqttPublishLoggingAsync(bool refresh) {
     strlcpy(TasmotaGlobal.mqtt_data, line, len);  // No JSON and ugly!!
     char stopic[TOPSZ];
     GetTopic_P(stopic, STAT, TasmotaGlobal.mqtt_topic, PSTR("LOGGING"));
-    MqttPublishLib(stopic, false);
+    MqttPublishLib(stopic, (const uint8_t*)TasmotaGlobal.mqtt_data, strlen(TasmotaGlobal.mqtt_data), false);
   }
 }
 
-void MqttPublish(const char* topic, bool retained) {
+void MqttPublishPayload(const char* topic, const char* payload, uint32_t binary_length, bool retained) {
+  // Publish <topic> payload string or binary when binary_length set with optional retained
+
 #ifdef USE_DEBUG_DRIVER
   ShowFreeMem(PSTR("MqttPublish"));
 #endif
+
+  bool binary_data = (binary_length > 0);
+  if (!binary_data) {
+    binary_length = strlen(payload);
+  }
 
   if (Settings.flag4.mqtt_no_retain) {                   // SetOption104 - Disable all MQTT retained messages, some brokers don't support it: AWS IoT, Losant
     retained = false;                                    // Some brokers don't support retained, they will disconnect if received
   }
 
   String log_data;                                       // 20210420 Moved to heap to solve tight stack resulting in exception 2
-  if (Settings.flag.mqtt_enabled && MqttPublishLib(topic, retained)) {  // SetOption3 - Enable MQTT
+  if (Settings.flag.mqtt_enabled && MqttPublishLib(topic, (const uint8_t*)payload, binary_length, retained)) {  // SetOption3 - Enable MQTT
     log_data = F(D_LOG_MQTT);                            // MQT:
     log_data += topic;                                   // stat/tasmota/STATUS2
   } else {
@@ -621,7 +623,7 @@ void MqttPublish(const char* topic, bool retained) {
     retained = false;                                    // Without MQTT enabled there is no retained message
   }
   log_data += F(" = ");                                  // =
-  log_data += TasmotaGlobal.mqtt_data;                   // {"StatusFWR":{"Version":...
+  log_data += (binary_data) ? HexToString((uint8_t*)payload, binary_length) : payload;
   if (retained) { log_data += F(" (" D_RETAINED ")"); }  // (retained)
   AddLogData(LOG_LEVEL_INFO, log_data.c_str());          // MQT: stat/tasmota/STATUS2 = {"StatusFWR":{"Version":...
 
@@ -630,18 +632,32 @@ void MqttPublish(const char* topic, bool retained) {
   }
 }
 
+void MqttPublishPayload(const char* topic, const char* payload) {
+  // Publish <topic> payload string no retained
+  MqttPublishPayload(topic, payload, 0, false);
+}
+
+void MqttPublish(const char* topic, bool retained) {
+  // Publish <topic> default TasmotaGlobal.mqtt_data string with optional retained
+  MqttPublishPayload(topic, TasmotaGlobal.mqtt_data, 0, retained);
+}
+
 void MqttPublish(const char* topic) {
+  // Publish <topic> default TasmotaGlobal.mqtt_data string no retained
   MqttPublish(topic, false);
 }
 
-void MqttPublishPrefixTopic_P(uint32_t prefix, const char* subtopic, bool retained) {
-/* prefix 0 = cmnd using subtopic
- * prefix 1 = stat using subtopic
- * prefix 2 = tele using subtopic
- * prefix 4 = cmnd using subtopic or RESULT
- * prefix 5 = stat using subtopic or RESULT
- * prefix 6 = tele using subtopic or RESULT
- */
+void MqttPublishPayloadPrefixTopic_P(uint32_t prefix, const char* subtopic, const char* payload, uint32_t binary_length, bool retained) {
+/*
+  Publish <prefix>/<device>/<RESULT or <subtopic>> payload string or binary when binary_length set with optional retained
+
+  prefix 0 = cmnd using subtopic
+  prefix 1 = stat using subtopic
+  prefix 2 = tele using subtopic
+  prefix 4 = cmnd using subtopic or RESULT
+  prefix 5 = stat using subtopic or RESULT
+  prefix 6 = tele using subtopic or RESULT
+*/
   char romram[64];
   snprintf_P(romram, sizeof(romram), ((prefix > 3) && !Settings.flag.mqtt_response) ? S_RSLT_RESULT : subtopic);  // SetOption4 - Switch between MQTT RESULT or COMMAND
   UpperCase(romram, romram);
@@ -649,7 +665,7 @@ void MqttPublishPrefixTopic_P(uint32_t prefix, const char* subtopic, bool retain
   prefix &= 3;
   char stopic[TOPSZ];
   GetTopic_P(stopic, prefix, TasmotaGlobal.mqtt_topic, romram);
-  MqttPublish(stopic, retained);
+  MqttPublishPayload(stopic, payload, binary_length, retained);
 
 #if defined(USE_MQTT_AWS_IOT) || defined(USE_MQTT_AWS_IOT_LIGHT)
   if ((prefix > 0) && (Settings.flag4.awsiot_shadow) && (Mqtt.connected)) {    // placeholder for SetOptionXX
@@ -669,33 +685,53 @@ void MqttPublishPrefixTopic_P(uint32_t prefix, const char* subtopic, bool retain
     snprintf_P(romram, sizeof(romram), PSTR("$aws/things/%s/shadow/update"), topic2);
 
     // copy buffer
-    char *mqtt_save = (char*) malloc(strlen(TasmotaGlobal.mqtt_data)+1);
-    if (!mqtt_save) { return; }    // abort
-    strcpy(mqtt_save, TasmotaGlobal.mqtt_data);
-    snprintf_P(TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), PSTR("{\"state\":{\"reported\":%s}}"), mqtt_save);
-    free(mqtt_save);
+    String aws_payload = F("{\"state\":{\"reported\":%s}}");
+    aws_payload += payload;
 
-    bool result = MqttClient.publish(romram, TasmotaGlobal.mqtt_data, false);
+    MqttClient.publish(romram, aws_payload.c_str(), false);
+
     AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_MQTT "Updated shadow: %s"), romram);
     yield();  // #3313
   }
 #endif // USE_MQTT_AWS_IOT
 }
 
+void MqttPublishPayloadPrefixTopic_P(uint32_t prefix, const char* subtopic, const char* payload, uint32_t binary_length) {
+  // Publish <prefix>/<device>/<RESULT or <subtopic>> payload string or binary when binary_length set no retained
+  MqttPublishPayloadPrefixTopic_P(prefix, subtopic, payload, binary_length, false);
+}
+
+void MqttPublishPayloadPrefixTopic_P(uint32_t prefix, const char* subtopic, const char* payload) {
+  // Publish <prefix>/<device>/<RESULT or <subtopic>> payload string no retained
+  MqttPublishPayloadPrefixTopic_P(prefix, subtopic, payload, 0, false);
+}
+
+void MqttPublishPrefixTopic_P(uint32_t prefix, const char* subtopic, bool retained) {
+  // Publish <prefix>/<device>/<RESULT or <subtopic>> default TasmotaGlobal.mqtt_data string with optional retained
+  MqttPublishPayloadPrefixTopic_P(prefix, subtopic, TasmotaGlobal.mqtt_data, 0, retained);
+}
+
 void MqttPublishPrefixTopic_P(uint32_t prefix, const char* subtopic) {
+  // Publish <prefix>/<device>/<RESULT or <subtopic>> default TasmotaGlobal.mqtt_data string no retained
   MqttPublishPrefixTopic_P(prefix, subtopic, false);
 }
 
 void MqttPublishPrefixTopicRulesProcess_P(uint32_t prefix, const char* subtopic, bool retained) {
+  // Publish <prefix>/<device>/<RESULT or <subtopic>> default TasmotaGlobal.mqtt_data string with optional retained
+  //   then process rules
   MqttPublishPrefixTopic_P(prefix, subtopic, retained);
   XdrvRulesProcess(0);
 }
 
 void MqttPublishPrefixTopicRulesProcess_P(uint32_t prefix, const char* subtopic) {
+  // Publish <prefix>/<device>/<RESULT or <subtopic>> default TasmotaGlobal.mqtt_data string no retained
+  //   then process rules
   MqttPublishPrefixTopicRulesProcess_P(prefix, subtopic, false);
 }
 
 void MqttPublishTeleSensor(void) {
+  // Publish tele/<device>/SENSOR default TasmotaGlobal.mqtt_data string with optional retained
+  //   then process rules
   MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);  // CMND_SENSORRETAIN
 }
 

@@ -44,24 +44,27 @@ broker_port = 1883                     # MQTT broker port
 
 mypassword = ""                        # Tasmota MQTT password
 mytopic = "demo"                       # Tasmota MQTT topic
-myfile = "Config_demo_9.4.0.3.dmp"     # Tasmota Settings file name
+myfile = "Config_demo_9.4.0.4.dmp"     # Tasmota Settings file name
 myfiletype = 2                         # Tasmota Settings file type
 
 # **** End of User Configuration Section
+
+use_base64 = True
 
 # Derive fulltopic from broker LWT message
 mypublish = "cmnd/"+mytopic+"/fileupload"
 mysubscribe = "stat/"+mytopic+"/FILEUPLOAD"  # Case sensitive
 
 Ack_flag = False
+Err_flag = False
 
-use_base64 = True
 file_id = 116                          # Even id between 2 and 254
 file_chunk_size = 700                  # Default Tasmota MQTT max message size
 
 # The callback for when mysubscribe message is received
 def on_message(client, userdata, msg):
    global Ack_flag
+   global Err_flag
    global file_chunk_size
 
    rcv_code = ""
@@ -70,31 +73,35 @@ def on_message(client, userdata, msg):
 #   print("Received message =",str(msg.payload.decode("utf-8")))
 
    root = json.loads(msg.payload.decode("utf-8"))
-   if "FileUpload" in root: rcv_code = root["FileUpload"]
-   if "Error" in rcv_code:
-      print("Error: "+rcv_code)
-      return
-
-   if "Command" in root: rcv_code = root["Command"]
-   if rcv_code == "Error":
-      print("Error: Command error")
-      return
-
-   if "Id" in root: rcv_id = root["Id"]
-   if rcv_id == file_id:
-      if "MaxSize" in root: file_chunk_size = root["MaxSize"]
+   if "FileUpload" in root:
+      rcv_code = root["FileUpload"]
+      if "Started" in rcv_code:
+         return
+      if "Error" in rcv_code:
+         print("Error: "+rcv_code)
+         Err_flag = True
+         return
+   if "Command" in root:
+      rcv_code = root["Command"]
+      if rcv_code == "Error":
+         print("Error: Command error")
+         Err_flag = True
+         return
+   if "Id" in root:
+      rcv_id = root["Id"]
+      if rcv_id == file_id:
+         if "MaxSize" in root: file_chunk_size = root["MaxSize"]
 
    Ack_flag = False
 
 def wait_for_ack():
-   global Ack_flag
    timeout = 100
-   while Ack_flag and timeout > 0:
+   while Ack_flag and Err_flag == False and timeout > 0:
       time.sleep(0.01)
       timeout = timeout -1
 
-   if Ack_flag:
-      print("Error: Ack timeout")
+   if 0 == timeout:
+      print("Error: Timeout")
 
    return Ack_flag
 
@@ -119,7 +126,8 @@ out_hash_md5 = hashlib.md5()
 
 Run_flag = True
 while Run_flag:
-   if wait_for_ack():                   # We use Ack here
+   if wait_for_ack():                  # We use Ack here
+      client.publish(mypublish, "0")   # Abort any failed upload
       Run_flag = False
 
    else:

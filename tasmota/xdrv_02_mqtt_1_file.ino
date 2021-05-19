@@ -24,6 +24,8 @@
  * MQTT file transfer
  *
  * Supports both binary and base64 encoded binary data transfer
+ *
+ * See tools/mqtt-file for python ota-upload and settings-upload and download examples
 \*********************************************************************************************/
 
 #include <PubSubClient.h>
@@ -41,32 +43,13 @@ struct FMQTT {
   String file_md5;                       // MQTT received file md5 (32 chars)
   uint16_t topic_size;                   // MQTT topic length with terminating <null>
   uint8_t file_id = 0;                   // MQTT unique file id during upload/download
+  bool file_binary = false;              // MQTT binary file transfer
 } FMqtt;
 
-/*
-  The download chunk size is the data size before it is encoded to base64.
-  It is smaller than the upload chunksize as it is bound by MESSZ
-  The download buffer with length MESSZ (1042) contains
-    - Payload ({"Id":117,"Data":"<base64 encoded mqtt_file_chuck_size>"}<null>)
-*/
 const uint32_t FileTransferHeaderSize = 21;       // {"Id":116,"Data":""}<null>
-const uint32_t mqtt_file_chuck_size = (((MESSZ - FileTransferHeaderSize) / 4) * 3) -2;
-
-uint32_t FileUploadChunckSize(void) {
-/*
-  The upload chunk size is the data size of the payload.
-  It can be larger than the download chunksize which is bound by MESSZ
-  The PubSubClient upload buffer with length MQTT_MAX_PACKET_SIZE (1200) contains
-    - Header of 5 bytes (MQTT_MAX_HEADER_SIZE)
-    - Topic string terminated with a zero (stat/demo/FILEUPLOAD<null>)
-    - Payload ({"Id":116,"Data":"<base64 encoded FileUploadChunckSize>"}<null>) or (<binary data>)
-*/
-  const uint32_t PubSubClientHeaderSize = 5;   // MQTT_MAX_HEADER_SIZE
-  return MqttClient.getBufferSize() - PubSubClientHeaderSize - FMqtt.topic_size -1;
-}
 
 uint32_t MqttFileUploadValidate(uint32_t rcv_id) {
-  if (XdrvMailbox.grpflg) { return 5; }
+  if (XdrvMailbox.grpflg) { return 5; }                      // No grouptopic supported
 
   if ((0 == FMqtt.file_id) && (rcv_id > 0) && (FMqtt.file_size > 0) && (FMqtt.file_type > 0)) {
     FMqtt.file_buffer = nullptr;                             // Init upload buffer
@@ -92,7 +75,8 @@ uint32_t MqttFileUploadValidate(uint32_t rcv_id) {
     if (UPL_TASMOTA == FMqtt.file_type) {
       if (Update.begin(FMqtt.file_size)) {
         FMqtt.file_buffer = &FMqtt.file_id;                  // Dummy buffer
-//        TasmotaGlobal.blinkstate = true;                     // Stay lit
+        TasmotaGlobal.blinks = 201;
+        TasmotaGlobal.blinkstate = true;                     // Stay lit
         SettingsSave(1);                                     // Free flash for OTA update
       }
     }
@@ -114,11 +98,12 @@ uint32_t MqttFileUploadValidate(uint32_t rcv_id) {
     ResponseCmndChar(PSTR(D_JSON_STARTED));
     MqttPublishPrefixTopic_P(STAT, XdrvMailbox.command);     // Enforce stat/wemos10/FILEUPLOAD
   }
-  else if ((FMqtt.file_id > 0) && (FMqtt.file_id != rcv_id)) {
+  else if (((FMqtt.file_id > 0) && (FMqtt.file_id != rcv_id)) || (0 == XdrvMailbox.payload)) {
     // Error receiving data
 
     if (UPL_TASMOTA == FMqtt.file_type) {
       Update.end(true);
+      TasmotaGlobal.blinkstate = false;                      // Turn led off
     }
     else if (UPL_SETTINGS == FMqtt.file_type) {
       SettingsBufferFree();
@@ -126,6 +111,36 @@ uint32_t MqttFileUploadValidate(uint32_t rcv_id) {
     return 4;                                                // Upload aborted
   }
   return 0;                                                  // No error
+}
+
+void MqttFileValidate(uint32_t error) {
+  if (error) {
+    FMqtt.file_buffer = nullptr;
+
+    TasmotaGlobal.masterlog_level = LOG_LEVEL_NONE;          // Enable logging
+
+    if (4 == error) {
+      ResponseCmndChar(PSTR(D_JSON_ABORTED));
+    } else {
+      char error_txt[20];
+      snprintf_P(error_txt, sizeof(error_txt), PSTR(D_JSON_ERROR " %d"), error);
+      ResponseCmndChar(error_txt);
+    }
+  }
+}
+
+void MqttFilePublish(void) {
+  if (!FMqtt.file_buffer) {
+    TasmotaGlobal.masterlog_level = LOG_LEVEL_NONE;          // Enable logging
+    FMqtt.file_id = 0;
+    FMqtt.file_size = 0;
+    FMqtt.file_type = 0;
+    FMqtt.file_binary = false;
+    FMqtt.file_md5 = (const char*) nullptr;                  // Force deallocation of the String internal memory
+    FMqtt.file_password = nullptr;
+  }
+  MqttPublishPrefixTopic_P(STAT, XdrvMailbox.command);
+  ResponseClear();
 }
 
 void CmndFileUpload(void) {
@@ -152,13 +167,12 @@ void CmndFileUpload(void) {
 */
   const char* base64_data = nullptr;
   uint32_t rcv_id = 0;
-  char* dataBuf = (char*)XdrvMailbox.data;
 
   bool binary_data = (XdrvMailbox.index > 199);              // Check for raw data
 
   if (!binary_data) {
-    if (strlen(dataBuf) > 8) {                               // Workaround exception if empty JSON like {} - Needs checks
-      JsonParser parser((char*) dataBuf);
+    if (strlen(XdrvMailbox.data) > 8) {                      // Workaround exception if empty JSON like {} - Needs checks
+      JsonParser parser((char*) XdrvMailbox.data);
       JsonParserObject root = parser.getRootObject();
       if (root) {
         JsonParserToken val = root[PSTR("ID")];
@@ -178,17 +192,7 @@ void CmndFileUpload(void) {
   } else {
     rcv_id = FMqtt.file_id;
   }
-
-  uint32_t error = MqttFileUploadValidate(rcv_id);
-  if (error) {
-    FMqtt.file_buffer = nullptr;
-
-    TasmotaGlobal.masterlog_level = LOG_LEVEL_NONE;          // Enable logging
-
-    char error_txt[20];
-    snprintf_P(error_txt, sizeof(error_txt), PSTR(D_JSON_ERROR " %d"), error);
-    ResponseCmndChar(error_txt);
-  }
+  MqttFileValidate(MqttFileUploadValidate(rcv_id));
 
   if (FMqtt.file_buffer) {
     if ((FMqtt.file_pos < FMqtt.file_size) && (binary_data || base64_data)) {
@@ -232,7 +236,16 @@ void CmndFileUpload(void) {
     if ((FMqtt.file_pos < FMqtt.file_size) || (FMqtt.file_md5.length() != 32))   {
       TasmotaGlobal.masterlog_level = LOG_LEVEL_DEBUG_MORE;  // Hide upload data logging
 
-      uint32_t chunk_size = FileUploadChunckSize();
+      /*
+        The upload chunk size is the data size of the payload.
+        It can be larger than the download chunksize which is bound by MESSZ
+        The PubSubClient upload buffer with length MQTT_MAX_PACKET_SIZE (1200) contains
+          - Header of 5 bytes (MQTT_MAX_HEADER_SIZE)
+          - Topic string terminated with a zero (stat/demo/FILEUPLOAD<null>)
+          - Payload ({"Id":116,"Data":"<base64 encoded chunk_size>"}<null>) or (<binary data>)
+      */
+      const uint32_t PubSubClientHeaderSize = 5;             // MQTT_MAX_HEADER_SIZE
+      uint32_t chunk_size = MqttClient.getBufferSize() - PubSubClientHeaderSize - FMqtt.topic_size -1;
       if (!binary_data) {
         chunk_size = (((chunk_size - FileTransferHeaderSize) / 4) * 3) -2;  // Calculate base64 chunk size
       }
@@ -248,16 +261,17 @@ void CmndFileUpload(void) {
 
         if (UPL_TASMOTA == FMqtt.file_type) {
           if (!Update.end(true)) {
+            TasmotaGlobal.blinkstate = false;                // Turn led off
             ResponseCmndFailed();
           } else {
-            TasmotaGlobal.restart_flag = 2;                  // Always restart to re-enable disabled features during update
+            TasmotaGlobal.restart_flag = 2;                  // Restart to load new firmware
           }
         }
         else if (UPL_SETTINGS == FMqtt.file_type) {
           if (!SettingsConfigRestore()) {
             ResponseCmndFailed();
           } else {
-            TasmotaGlobal.restart_flag = 2;                  // Always restart to re-enable disabled features during update
+            TasmotaGlobal.restart_flag = 2;                  // Restart to load new settings
           }
         }
 
@@ -266,95 +280,137 @@ void CmndFileUpload(void) {
     }
   }
 
-  if (!FMqtt.file_buffer) {
-    TasmotaGlobal.masterlog_level = LOG_LEVEL_NONE;          // Enable logging
-    FMqtt.file_id = 0;
-    FMqtt.file_size = 0;
-    FMqtt.file_type = 0;
-    FMqtt.file_md5 = (const char*) nullptr;                  // Force deallocation of the String internal memory
-    FMqtt.file_password = nullptr;
+  MqttFilePublish();
+}
+
+uint32_t MqttFileDownloadValidate(void) {
+  if (XdrvMailbox.grpflg) { return 5; }                      // No grouptopic supported
+
+  if ((0 == FMqtt.file_id) && (FMqtt.file_type > 0)) {
+    FMqtt.file_buffer = nullptr;                             // Init upload buffer
+
+    if (!FMqtt.file_password || (strcmp(FMqtt.file_password, SettingsText(SET_MQTT_PWD)) != 0)) {
+      return 1;                                              // Invalid password
+    }
+
+    FMqtt.file_id = (UtcTime() & 0xFE) +1;                   // Odd id between 1 and 255
+
+    // Init file_buffer
+    if (UPL_SETTINGS == FMqtt.file_type) {
+      uint32_t len = SettingsConfigBackup();
+      if (!len) { return 2; }
+
+      FMqtt.file_type = UPL_SETTINGS;
+      FMqtt.file_buffer = settings_buffer;
+      FMqtt.file_size = len;
+
+      // {"File":"Config_wemos10_9.4.0.3.dmp","Id":117,"Type":2,"Size":4096}
+      Response_P(PSTR("{\"File\":\"%s\",\"Id\":%d,\"Type\":%d,\"Size\":%d}"),
+        SettingsConfigFilename().c_str(), FMqtt.file_id, FMqtt.file_type, len);
+    }
+    else {
+      return 3;                                              // Invalid file type
+    }
+
+    FMqtt.file_pos = 0;
+
+    FMqtt.md5 = MD5Builder();
+    FMqtt.md5.begin();
+
+    char payload[50];
+    snprintf_P(payload, sizeof(payload), S_JSON_COMMAND_SVALUE, XdrvMailbox.command, PSTR(D_JSON_STARTED));
+    MqttPublishPayloadPrefixTopic_P(STAT, XdrvMailbox.command, payload);     // Enforce stat/wemos10/FILEUPLOAD
+
+    TasmotaGlobal.masterlog_level = LOG_LEVEL_DEBUG_MORE;    // Hide upload data logging
   }
-  MqttPublishPrefixTopic_P(STAT, XdrvMailbox.command);       // Enforce stat/wemos10/FILEUPLOAD
-  ResponseClear();
+  else if (0 == XdrvMailbox.payload) {
+
+    if (UPL_SETTINGS == FMqtt.file_type) {
+      SettingsBufferFree();
+    }
+    return 4;                                                // Upload aborted
+  }
+  return 0;                                                  // No error
 }
 
 void CmndFileDownload(void) {
 /*
-  Download (binary) max 700 bytes chunks of data base64 encoded with MD5 hash over base64 decoded data
-  Currently supports Settings (file type 2)
-  Filedownload 0  - Abort current download
-  FileDownload 2  - Start download of settings file
-  FileDownload    - Continue downloading data until reception of MD5 hash
+  Download chunks of data base64 encoded with MD5 hash
+
+  Supported Type:
+     2 - Settings
+
+  FileDownload 0  - Abort current download
+
+  Start a download session:
+    FileDownload {"Password":"","Type":2}
+
+  Download data using base64 until reception of MD5 hash:
+    FileDownload
 */
-  if (XdrvMailbox.grpflg) { return; }
-
-  if (FMqtt.file_id && FMqtt.file_buffer) {
-    bool finished = false;
-
-    if (0 == XdrvMailbox.payload) {   // Abort file download
-      ResponseCmndChar(PSTR(D_JSON_ABORTED));
-      finished = true;
-    }
-    else if (FMqtt.file_pos < FMqtt.file_size) {
+  if (FMqtt.file_buffer) {
+    if (FMqtt.file_pos < FMqtt.file_size) {
       uint32_t bytes_left = FMqtt.file_size - FMqtt.file_pos;
-      uint32_t write_bytes = (bytes_left < mqtt_file_chuck_size) ? bytes_left : mqtt_file_chuck_size;
+
+      /*
+        The download chunk size is the data size before it is encoded to base64.
+        It is smaller than the upload chunksize as it is bound by MESSZ
+        The download buffer with length MESSZ (1042) contains
+          - Payload ({"Id":117,"Data":"<base64 encoded mqtt_file_chuck_size>"}<null>)
+      */
+      const uint32_t mqtt_file_chunk_size = (((MESSZ - FileTransferHeaderSize) / 4) * 3) -2;
+      uint32_t chunk_size = (FMqtt.file_binary) ? 4096 : mqtt_file_chunk_size;
+      uint32_t write_bytes = (bytes_left < chunk_size) ? bytes_left : chunk_size;
 
       uint8_t* buffer = FMqtt.file_buffer + FMqtt.file_pos;
       FMqtt.md5.add(buffer, write_bytes);
 
-      // {"Id":117,"Data":"CRJcTQ9fYGF ... OT1BRUlNUVVZXWFk="}
-      Response_P(PSTR("{\"Id\":%d,\"Data\":\""), FMqtt.file_id);  // FileTransferHeaderSize
-      char base64_data[encode_base64_length(write_bytes)];
-      encode_base64((unsigned char*)buffer, write_bytes, (unsigned char*)base64_data);
-      ResponseAppend_P(base64_data);
-      ResponseAppend_P("\"}");
-
       FMqtt.file_pos += write_bytes;
+
+      if (FMqtt.file_binary) {
+        MqttPublishPayloadPrefixTopic_P(STAT, XdrvMailbox.command, (const char*)buffer, write_bytes);
+      } else {
+        // {"Id":117,"Data":"CRJcTQ9fYGF ... OT1BRUlNUVVZXWFk="}
+        Response_P(PSTR("{\"Id\":%d,\"Data\":\""), FMqtt.file_id);  // FileTransferHeaderSize
+        char base64_data[encode_base64_length(write_bytes)];
+        encode_base64((unsigned char*)buffer, write_bytes, (unsigned char*)base64_data);
+        ResponseAppend_P(base64_data);
+        ResponseAppend_P("\"}");
+        MqttPublishPrefixTopic_P(STAT, XdrvMailbox.command);
+      }
+      ResponseClear();
+      return;
     } else {
       FMqtt.md5.calculate();
 
       // {"Id":117,"Md5":"496fcbb433bbca89833063174d2c5747"}
       Response_P(PSTR("{\"Id\":%d,\"Md5\":\"%s\"}"), FMqtt.file_id, FMqtt.md5.toString().c_str());
-      finished = true;
-    }
+      MqttPublishPrefixTopic_P(STAT, XdrvMailbox.command);   // Enforce stat/wemos10/FILEUPLOAD
+      ResponseCmndDone();
 
-    if (finished) {
       if (UPL_SETTINGS == FMqtt.file_type) {
         SettingsBufferFree();
       }
 
-      FMqtt.file_id = 0;
+      FMqtt.file_buffer = nullptr;
     }
   }
-  else if (XdrvMailbox.data_len) {
-    FMqtt.file_buffer = nullptr;
-    FMqtt.file_id = (UtcTime() & 0xFE) +1;  // Odd id between 1 and 255
 
-    if (UPL_SETTINGS == XdrvMailbox.payload) {
-      uint32_t len = SettingsConfigBackup();
-      if (len) {
-        FMqtt.file_type = UPL_SETTINGS;
-        FMqtt.file_buffer = settings_buffer;
-        FMqtt.file_size = len;
-
-        // {"File":"Config_wemos10_9.4.0.3.dmp","Id":117,"Type":2,"Size":4096}
-        Response_P(PSTR("{\"File\":\"%s\",\"Id\":%d,\"Type\":%d,\"Size\":%d}"),
-          SettingsConfigFilename().c_str(), FMqtt.file_id, FMqtt.file_type, len);
-      }
-    }
-
-    if (FMqtt.file_buffer) {
-      FMqtt.file_pos = 0;
-
-      FMqtt.md5 = MD5Builder();
-      FMqtt.md5.begin();
-    } else {
-      FMqtt.file_id = 0;
-      ResponseCmndFailed();
+  if (strlen(XdrvMailbox.data) > 8) {                        // Workaround exception if empty JSON like {} - Needs checks
+    JsonParser parser((char*) XdrvMailbox.data);
+    JsonParserObject root = parser.getRootObject();
+    if (root) {
+      JsonParserToken val = root[PSTR("TYPE")];
+      if (val) { FMqtt.file_type = val.getUInt(); }
+      val = root[PSTR("BINARY")];
+      if (val) { FMqtt.file_binary = val.getUInt(); }
+      val = root[PSTR("PASSWORD")];
+      if (val) { FMqtt.file_password = val.getStr(); }
     }
   }
-  MqttPublishPrefixTopic_P(STAT, XdrvMailbox.command);
-  ResponseClear();
+  MqttFileValidate(MqttFileDownloadValidate());
+
+  MqttFilePublish();
 }
 
 #endif  // USE_MQTT_FILE

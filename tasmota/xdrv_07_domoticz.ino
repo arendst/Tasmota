@@ -360,8 +360,9 @@ bool DomoticzSendKey(uint8_t key, uint8_t device, uint8_t state, uint8_t svalflg
 \*********************************************************************************************/
 
 void DomoticzSendData(uint32_t sensor_idx, uint32_t idx, char *data) {
+  char payload[128];
   if (DZ_AIRQUALITY == sensor_idx) {
-    Response_P(PSTR("{\"idx\":%d,\"nvalue\":%s,\"Battery\":%d,\"RSSI\":%d}"),
+    snprintf_P(payload, sizeof(payload), PSTR("{\"idx\":%d,\"nvalue\":%s,\"Battery\":%d,\"RSSI\":%d}"),
       idx, data, DomoticzBatteryQuality(), DomoticzRssiQuality());
   } else {
     uint8_t nvalue = 0;
@@ -371,19 +372,15 @@ void DomoticzSendData(uint32_t sensor_idx, uint32_t idx, char *data) {
       nvalue = position < 2 ? 0 : (position == 100 ? 1 : 2);
     }
 #endif  // USE_SHUTTER
-    Response_P(DOMOTICZ_MESSAGE,  // "{\"idx\":%d,\"nvalue\":%d,\"svalue\":\"%s\",\"Battery\":%d,\"RSSI\":%d}"
+    snprintf_P(payload, sizeof(payload), DOMOTICZ_MESSAGE,  // "{\"idx\":%d,\"nvalue\":%d,\"svalue\":\"%s\",\"Battery\":%d,\"RSSI\":%d}"
       idx, nvalue, data, DomoticzBatteryQuality(), DomoticzRssiQuality());
   }
-  MqttPublish(domoticz_in_topic);
+  MqttPublishPayload(domoticz_in_topic, payload);
 }
 
 void DomoticzSensor(uint8_t idx, char *data) {
   if (Settings.domoticz_sensor_idx[idx]) {
-    char dmess[128];  // {"idx":26700,"nvalue":0,"svalue":"22330.1;10234.4;22000.5;10243.4;1006;3000","Battery":100,"RSSI":10}
-
-    memcpy(dmess, TasmotaGlobal.mqtt_data, sizeof(dmess));
     DomoticzSendData(idx, Settings.domoticz_sensor_idx[idx], data);
-    memcpy(TasmotaGlobal.mqtt_data, dmess, sizeof(dmess));
   }
 }
 
