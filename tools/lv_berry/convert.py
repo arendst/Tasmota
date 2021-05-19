@@ -221,7 +221,7 @@ with open(lv_module_file) as f:
     if v_num is not None:
       lv_module.append( [k, v_num] )
     else:
-      lv_modile.append( [k, v] )    # keep as string
+      lv_module.append( [k, v] )    # keep as string
 
 # recursively try to match value
 # TODO
@@ -262,8 +262,62 @@ print("""
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+// table of functions per class
+// typedef struct lvbe_call_c_t {
+//     const char * name;
+//     void * func;
+//     const char * return_type;
+//     const char * arg_type;
+// } lvbe_call_c_t;
+
+// list of classes and function tables
+// typedef struct lvbe_call_c_classes_t {
+//     const char * name;
+//     const lvbe_call_c_t * func_table;
+//     size_t size;
+// } lvbe_call_c_classes_t;
+
 """)
 
+for subtype, flv in lv.items():
+  print(f"""/* `lv_{subtype}` methods */
+const lvbe_call_c_t lv_{subtype}_func[] = {{""")
+
+  func_out = {} # used to sort output
+  for f in flv:
+    c_func_name = f[0]
+    c_ret_type = f[1]
+    c_argc = f[2]
+    if c_argc is not None: c_argc = "\"" + c_argc + "\""
+    orig_func_name = f[3]
+    be_name = f[4]
+    if c_func_name.endswith("_create"):
+      c_ret_type = f"+lv_{subtype}"
+    func_out[be_name] = f"  {{ \"{be_name}\", (void*) &{orig_func_name}, \"{c_ret_type}\", { c_argc if c_argc else 'nullptr'} }},"
+
+  for be_name in sorted(func_out):
+    print(func_out[be_name])
+
+  print(f"""}};
+""")
+
+# print the global map of classes
+print(f"""
+// map of clases
+const lvbe_call_c_classes_t lv_classes[] = {{""")
+
+for subtype in sorted(lv):
+# for subtype, flv in lv.items():
+  print(f"  {{ \"lv_{subtype}\", lv_{subtype}_func, sizeof(lv_{subtype}_func) / sizeof(lv_{subtype}_func[0]) }},")
+
+print(f"""}};
+const size_t lv_classes_size = sizeof(lv_classes) / sizeof(lv_classes[0]);
+""")
+
+# previous generation calls
+
+# keep only create
 for subtype, flv in lv.items():
   print(f"  /* `lv_{subtype}` methods */")
   for f in flv:
@@ -272,10 +326,8 @@ for subtype, flv in lv.items():
     c_argc = f[2]
     if c_argc is not None: c_argc = "\"" + c_argc + "\""
     orig_func_name = f[3]
-    #print(f"  int {c_func_name}(bvm *vm)       \{ return (vm, be_call_c_func(void*) &")
     if c_func_name.endswith("_create"):
-      print(f"  int {c_func_name}(bvm *vm)       {{ return lvx_init_2(vm, (void*) &{orig_func_name}, \"lv_{subtype}\", { c_argc if c_argc else 'nullptr'}); }}")
-    else:
+      c_ret_type = f"+lv_{subtype}"
       print(f"  int {c_func_name}(bvm *vm)       {{ return be_call_c_func(vm, (void*) &{orig_func_name}, \"{c_ret_type}\", { c_argc if c_argc else 'nullptr'}); }}")
   print()
 
@@ -317,23 +369,13 @@ print("""
 
 #include "lvgl.h"
 
-extern int lv0_start(bvm *vm);
-
 extern int lv0_init(bvm *vm);
-
-extern int lv0_register_button_encoder(bvm *vm);    // add buttons with encoder logic
-
-extern int lv0_scr_act(bvm *vm);
-extern int lv0_layer_top(bvm *vm);
-extern int lv0_layer_sys(bvm *vm);
-extern int lv0_get_hor_res(bvm *vm);
-extern int lv0_get_ver_res(bvm *vm);
-extern int lv0_screenshot(bvm *vm);
 
 extern int lco_init(bvm *vm);
 extern int lco_tostring(bvm *vm);
 
 extern int lvx_init_2(bvm *vm);           // generic function
+extern int lvx_member(bvm *vm);
 extern int lvx_tostring(bvm *vm);       // generic function
 
 extern int lvs_init(bvm *vm);
@@ -379,13 +421,14 @@ for subtype, flv in lv.items():
     else:
       print(f"    {{ \"init\", lv0_init }},")
     print(f"    {{ \"tostring\", lvx_tostring }},")
+  print(f"    {{ \"member\", lvx_member }},")
 
   print()
-  for f in flv:
+  # for f in flv:
 
-    c_func_name = f[0]
-    be_name = f[4]
-    print(f"    {{ \"{be_name}\", {c_func_name} }},")
+  #   c_func_name = f[0]
+  #   be_name = f[4]
+  #   print(f"    {{ \"{be_name}\", {c_func_name} }},")
 
   print()
   print(f"    // {{ NULL, (bntvfunc) BE_CLOSURE }}, /* mark section for berry closures */")
@@ -424,11 +467,13 @@ for subtype, flv in lv.items():
     else:
       print(f"    init, func(lv0_init)")
     print(f"    tostring, func(lvx_tostring)")
+  print(f"    member, func(lvx_member)")
+  print()
 
-  for f in flv:
-    c_func_name = f[0]
-    be_name = f[4]
-    print(f"    {be_name}, func({c_func_name})")
+  # for f in flv:
+  #   c_func_name = f[0]
+  #   be_name = f[4]
+  #   print(f"    {be_name}, func({c_func_name})")
 
   print(f"}}")
   print(f"@const_object_info_end */")
@@ -454,6 +499,8 @@ print("""/********************************************************************
 
 #include "lvgl.h"
 
+extern int lv0_member(bvm *vm);     // resolve virtual members
+
 extern int lv0_start(bvm *vm);
 
 extern int lv0_register_button_encoder(bvm *vm);  // add buttons with encoder logic
@@ -469,6 +516,32 @@ extern int lv0_layer_sys(bvm *vm);
 extern int lv0_get_hor_res(bvm *vm);
 extern int lv0_get_ver_res(bvm *vm);
 extern int lv0_screenshot(bvm *vm);
+""")
+
+print("""
+
+typedef struct lvbe_constant_t {
+    const char * name;
+    int32_t      value;
+} lvbe_constant_t;
+
+const lvbe_constant_t lv0_constants[] = {
+""")
+
+lv_module2 = {}
+for k_v in lv_module:
+  (k,v) = k_v
+  if k is not None:
+    lv_module2[k] = v
+
+for k in sorted(lv_module2):
+  v = lv_module2[k]
+  print(f"    {{ \"{k}\", {v} }},")
+
+print("""
+};
+
+const size_t lv0_constants_size = sizeof(lv0_constants)/sizeof(lv0_constants[0]);
 """)
 
 for f in lv0:
@@ -545,13 +618,6 @@ be_native_module_attr_table(lvgl) {
 
     be_native_module_str("SYMBOL_BULLET", "\\xE2\\x80\\xA2"),
 
-    // connection type
-    be_native_module_int("SPI", 0),
-    be_native_module_int("I2C", 1),
-    // connection sub_type
-    be_native_module_int("HSPI", 0),
-    be_native_module_int("VSPI", 1),
-    be_native_module_int("SSPI", 2),
 """)
 
 print("/* `lvgl` module functions */")
@@ -567,16 +633,17 @@ print()
   
 #   print()
 
-for k_v in lv_module:
-  (k,v) = k_v
-  if k is None:
-    print(v)      # comment line
-    continue
+# for k_v in lv_module:
+#   (k,v) = k_v
+#   if k is None:
+#     print(v)      # comment line
+#     continue
 
-  print(f"    be_native_module_int(\"{k}\", {v}),")
+#   print(f"    be_native_module_int(\"{k}\", {v}),")
 
 print("""
 
+    be_native_module_function("member", lv0_member),
     be_native_module_function("start", lv0_start),
 
     be_native_module_function("register_button_encoder", lv0_register_button_encoder),
@@ -735,23 +802,18 @@ module lvgl (scope: global) {
     SYMBOL_DUMMY, str(&be_local_const_str_SYMBOL_DUMMY)
 
     SYMBOL_BULLET, str(&be_local_const_str_SYMBOL_BULLET)
-
-    SPI, int(0)
-    I2C, int(1)
-    HSPI, int(0)
-    VSPI, int(1)
-    SSPI, int(2)
 """)
 
 
-for k_v in lv_module:
-  (k,v) = k_v
-  if k is None:
-    continue
+# for k_v in lv_module:
+#   (k,v) = k_v
+#   if k is None:
+#     continue
 
-  print(f"    {k}, int({v})")
+#   print(f"    {k}, int({v})")
 
 print("""
+    member, func(lv0_member)
     start, func(lv0_start)
 
     register_button_encoder, func(lv0_register_button_encoder)

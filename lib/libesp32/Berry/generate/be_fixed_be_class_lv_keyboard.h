@@ -1,24 +1,15 @@
 #include "be_constobj.h"
 
 static be_define_const_map_slots(be_class_lv_keyboard_map) {
+    { be_const_key(init, 2), be_const_func(lvbe_keyboard_create) },
     { be_const_key(tostring, -1), be_const_func(lvx_tostring) },
-    { be_const_key(set_ctrl_map, 3), be_const_func(lvbe_keyboard_set_ctrl_map) },
-    { be_const_key(def_event_cb, 8), be_const_func(lvbe_keyboard_def_event_cb) },
-    { be_const_key(set_textarea, 9), be_const_func(lvbe_keyboard_set_textarea) },
-    { be_const_key(create, -1), be_const_func(lvbe_keyboard_create) },
-    { be_const_key(get_mode, 7), be_const_func(lvbe_keyboard_get_mode) },
-    { be_const_key(init, -1), be_const_func(lvbe_keyboard_create) },
-    { be_const_key(set_cursor_manage, -1), be_const_func(lvbe_keyboard_set_cursor_manage) },
-    { be_const_key(set_map, -1), be_const_func(lvbe_keyboard_set_map) },
-    { be_const_key(set_mode, -1), be_const_func(lvbe_keyboard_set_mode) },
-    { be_const_key(get_textarea, -1), be_const_func(lvbe_keyboard_get_textarea) },
-    { be_const_key(dot_p, 4), be_const_int(0) },
-    { be_const_key(get_cursor_manage, 1), be_const_func(lvbe_keyboard_get_cursor_manage) },
+    { be_const_key(dot_p, -1), be_const_int(0) },
+    { be_const_key(member, 0), be_const_func(lvx_member) },
 };
 
 static be_define_const_map(
     be_class_lv_keyboard_map,
-    13
+    4
 );
 
 BE_EXPORT_VARIABLE be_define_const_class(
