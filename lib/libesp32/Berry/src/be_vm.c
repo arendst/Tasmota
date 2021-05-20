@@ -778,7 +778,7 @@ newframe: /* a new call frame */
                 binstance *obj = var_toobj(b);
                 int type = obj_attribute(vm, b, c, a);
                 reg = vm->reg;
-                if (var_basetype(a) == BE_FUNCTION) {
+                if (basetype(type) == BE_FUNCTION) {
                     a[1] = self;
                 } else {
                     vm_error(vm, "attribute_error",
@@ -793,9 +793,23 @@ newframe: /* a new call frame */
                     var_settype(a, NOT_METHOD);
                     a[1] = *src;
                 } else {
-                    vm_error(vm, "attribute_error",
-                        "module '%s' has no method '%s'",
-                        be_module_name(module), str(attr));
+                    bvalue *member = be_module_attr(vm, module, str_literal(vm, "member"));
+                    var_setnil(a);
+                    if (member && var_basetype(member) == BE_FUNCTION) {
+                        bvalue *top = vm->top;
+                        top[0] = *member;
+                        top[1] = *c; /* move name to argv[0] */
+                        vm->top += 2;   /* prevent collection results */
+                        be_dofunc(vm, top, 1); /* call method 'method' */
+                        vm->top -= 2;
+                        var_settype(a, NOT_METHOD);
+                        a[1] = *vm->top;   /* copy result to R(A) */
+                    }
+                    if (var_basetype(a) == BE_NIL) {
+                        vm_error(vm, "attribute_error",
+                            "module '%s' has no method '%s'",
+                            be_module_name(module), str(attr));
+                    }
                 }
             } else {
                 attribute_error(vm, "method", b, c);

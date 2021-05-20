@@ -202,17 +202,26 @@ with open(lv_module_file) as f:
       lv_module.append( [ None, l_raw ] )   # if key in None then add comment line
     l_raw = re.sub('//.*$', '', l_raw) # remove trailing comments
     l_raw = re.sub('\s+', '', l_raw) # remove all spaces
+    l_raw = re.sub(',.*$', '', l_raw) # remove comma and anything after it
     if (len(l_raw) == 0): continue
 
     k_v = l_raw.split("=")
-    if len(k_v) != 2:
+    if len(k_v) > 2:
       print(f"Error: cannot match {l_raw}")
       continue
+    # extract the key name
     k = k_v[0]
+    if k.startswith("_"):
+      continue      # skip any label starting with '_'
     k = re.sub('^LV_', '', k) # remove remove any LV_ prefix
-    v = k_v[1]
-    if k is None or v is None: continue
-    v_num = try_int(eval(v))
+    if len(k_v) == 2:   # value is included
+      v = k_v[1]
+      if k is None or v is None: continue
+      v_num = try_int(eval(v))
+    else:             # no value, we use the C value instead
+      v_num = None
+      v = None
+
 
     if not k.isidentifier():
       print(f"Error: {k} is not an identifier")
@@ -221,7 +230,7 @@ with open(lv_module_file) as f:
     if v_num is not None:
       lv_module.append( [k, v_num] )
     else:
-      lv_module.append( [k, v] )    # keep as string
+      lv_module.append( [k, v] )    # keep as string or None
 
 # recursively try to match value
 # TODO
@@ -263,20 +272,6 @@ print("""
 extern "C" {
 #endif
 
-// table of functions per class
-// typedef struct lvbe_call_c_t {
-//     const char * name;
-//     void * func;
-//     const char * return_type;
-//     const char * arg_type;
-// } lvbe_call_c_t;
-
-// list of classes and function tables
-// typedef struct lvbe_call_c_classes_t {
-//     const char * name;
-//     const lvbe_call_c_t * func_table;
-//     size_t size;
-// } lvbe_call_c_classes_t;
 
 """)
 
@@ -368,6 +363,7 @@ print("""
 #ifdef USE_LVGL
 
 #include "lvgl.h"
+#include "be_lvgl.h"
 
 extern int lv0_init(bvm *vm);
 
@@ -498,6 +494,7 @@ print("""/********************************************************************
 #ifdef USE_LVGL
 
 #include "lvgl.h"
+#include "be_lvgl.h"
 
 extern int lv0_member(bvm *vm);     // resolve virtual members
 
@@ -510,12 +507,32 @@ extern int lv0_load_seg7_font(bvm *vm);
 extern int lv0_load_font(bvm *vm);
 extern int lv0_load_freetype_font(bvm *vm);
 
-extern int lv0_scr_act(bvm *vm);
-extern int lv0_layer_top(bvm *vm);
-extern int lv0_layer_sys(bvm *vm);
-extern int lv0_get_hor_res(bvm *vm);
-extern int lv0_get_ver_res(bvm *vm);
 extern int lv0_screenshot(bvm *vm);
+
+static int lv_get_hor_res(void) {
+  return lv_disp_get_hor_res(lv_disp_get_default());
+}
+static int lv_get_ver_res(bvm *vm) {
+  return lv_disp_get_ver_res(lv_disp_get_default());
+}
+
+/* `lv` methods */
+const lvbe_call_c_t lv_func[] = {
+  // resolution
+  { "get_hor_res", (void*) &lv_get_hor_res, "i", "" },
+  { "get_ver_res", (void*) &lv_get_ver_res, "i", "" },
+
+  // layers
+  { "layer_sys", (void*) &lv_layer_sys, "lv_obj", "" },
+  { "layer_top", (void*) &lv_layer_top, "lv_obj", "" },
+
+  // screens
+  { "scr_act", (void*) &lv_scr_act, "lv_obj", "" },
+  { "scr_load", (void*) &lv_scr_load, "", "(lv_obj)" },
+  { "scr_load_anim", (void*) &lv_scr_load_anim, "", "(lv_obj)iiib" },
+};
+const size_t lv_func_size = sizeof(lv_func) / sizeof(lv_func[0]);
+
 """)
 
 print("""
@@ -536,7 +553,10 @@ for k_v in lv_module:
 
 for k in sorted(lv_module2):
   v = lv_module2[k]
-  print(f"    {{ \"{k}\", {v} }},")
+  if v is not None:
+    print(f"    {{ \"{k}\", {v} }},")
+  else:
+    print(f"    {{ \"{k}\", LV_{k} }},")
 
 print("""
 };
@@ -653,13 +673,6 @@ print("""
     be_native_module_function("load_font", lv0_load_font),
     be_native_module_function("load_freetype_font", lv0_load_freetype_font),
 
-
-    // screen and layers
-    be_native_module_function("scr_act", lv0_scr_act),
-    be_native_module_function("layer_top", lv0_layer_top),
-    be_native_module_function("layer_sys", lv0_layer_sys),
-    be_native_module_function("get_hor_res", lv0_get_hor_res),
-    be_native_module_function("get_ver_res", lv0_get_ver_res),
     be_native_module_function("screenshot", lv0_screenshot),
 """)
 
@@ -823,11 +836,6 @@ print("""
     load_font, func(lv0_load_font)
     load_freetype_font, func(lv0_load_freetype_font)
 
-    scr_act, func(lv0_scr_act)
-    layer_top, func(lv0_layer_top)
-    layer_sys, func(lv0_layer_sys)
-    get_hor_res, func(lv0_get_hor_res)
-    get_ver_res, func(lv0_get_ver_res)
     screenshot, func(lv0_screenshot)
 
 """)

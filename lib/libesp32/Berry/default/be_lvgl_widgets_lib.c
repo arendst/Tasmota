@@ -11,6 +11,7 @@
 #ifdef USE_LVGL
 
 #include "lvgl.h"
+#include "be_lvgl.h"
 
 extern int lv0_init(bvm *vm);
 

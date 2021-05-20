@@ -937,6 +937,7 @@
     #define USE_LVGL_FREETYPE_MAX_FACES 64       // max number of FreeType faces in cache
     #define USE_LVGL_FREETYPE_MAX_SIZES 4        // max number of sizes in cache
     #define USE_LVGL_FREETYPE_MAX_BYTES 16*1024  // max bytes in cache
+    #define USE_LVGL_FREETYPE_MAX_BYTES_PSRAM 64*1024  // max bytes in cache when using PSRAM
   #define USE_LVGL_BG_DEFAULT 0x000000           // Default color for the uninitialized background screen (black)
 
 
