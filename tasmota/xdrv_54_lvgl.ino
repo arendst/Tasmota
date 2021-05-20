@@ -428,7 +428,7 @@ void start_lvgl(const char * uconfig) {
   // initialize the FreeType renderer
   lv_freetype_init(USE_LVGL_FREETYPE_MAX_FACES,
                    USE_LVGL_FREETYPE_MAX_SIZES,
-                   USE_LVGL_FREETYPE_MAX_BYTES);
+                   psramFound() ? USE_LVGL_FREETYPE_MAX_BYTES_PSRAM : USE_LVGL_FREETYPE_MAX_BYTES);
 #endif
 
   AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_LVGL "LVGL initialized"));

@@ -23,6 +23,7 @@
 
 #include <berry.h>
 #include "lvgl.h"
+#include "be_lvgl.h"
 #include "Adafruit_LvGL_Glue.h"
 
 #ifdef USE_LVGL_FREETYPE
@@ -352,23 +353,6 @@ extern "C" {
     return be_call_c_func(vm, func, return_type, arg_type);
   }
 
-  // table of functions per class
-  typedef struct lvbe_call_c_t {
-      const char * name;
-      void * func;
-      const char * return_type;
-      const char * arg_type;
-  } lvbe_call_c_t;
-
-  // list of classes and function tables
-  typedef struct lvbe_call_c_classes_t {
-      const char * name;
-      const lvbe_call_c_t * func_table;
-      size_t size;
-  } lvbe_call_c_classes_t;
-  extern const lvbe_call_c_classes_t lv_classes[];
-  extern const size_t lv_classes_size;
-
   // virtual method, arg1: instance, arg2: name of method
   int lvx_member(bvm *vm) {
     int32_t argc = be_top(vm); // Get the number of arguments
@@ -449,7 +433,7 @@ extern "C" {
       }
       be_return(vm);
     } else { // class name
-    // AddLog(LOG_LEVEL_INFO, ">> be_call_c_func, create_obj", ret);
+      // AddLog(LOG_LEVEL_INFO, ">> be_call_c_func, create_obj", ret);
       be_getglobal(vm, return_type);  // stack = class
       be_pushcomptr(vm, (void*) -1);         // stack = class, -1
       be_pushcomptr(vm, (void*) ret);         // stack = class, -1, ptr
@@ -800,6 +784,10 @@ extern "C" {
       int32_t      value;
   } lvbe_constant_t;
 
+
+  extern const lvbe_call_c_t lv_func[];
+  extern const size_t lv_func_size;
+
   extern const lvbe_constant_t lv0_constants[];
   extern const size_t lv0_constants_size;
 
@@ -808,27 +796,40 @@ extern "C" {
     int32_t argc = be_top(vm); // Get the number of arguments
     if (argc == 1 && be_isstring(vm, 1)) {
       const char * needle = be_tostring(vm, 1);
-      int32_t low = 0;
-      int32_t high = lv0_constants_size - 1;
-      int32_t mid = (low + high) / 2;
-      // start a dissect
-      while (low <= high) {
-        int32_t comp = strcmp(needle, lv0_constants[mid].name);
-        if (comp < 0) {
-          high = mid - 1;
-        } else if (comp > 0) {
-          low = mid + 1;
-        } else {
-          break;
-        }
-        mid = (low + high) / 2;
-      }
-      if (low <= high) {
+
+      int32_t constant_idx = bin_search(needle, &lv0_constants[0].name, sizeof(lv0_constants[0]), lv0_constants_size);
+    
+      if (constant_idx >= 0) {
         // we did have a match, low == high
-        be_pushint(vm, lv0_constants[mid].value);
+        be_pushint(vm, lv0_constants[constant_idx].value);
         be_return(vm);
       } else {
-        be_return_nil(vm);
+        // search for a method with this name
+
+        int32_t method_idx = bin_search(needle, &lv_func[0].name, sizeof(lv_func[0]), lv_func_size);
+
+        if (method_idx >= 0) {
+          const lvbe_call_c_t * method = &lv_func[method_idx];
+          // push native closure
+          be_pushntvclosure(vm, &lvx_call_c, 3);   // 3 upvals
+
+          be_pushcomptr(vm, method->func);
+          be_setupval(vm, -2, 0);
+          be_pop(vm, 1);
+
+          be_pushstring(vm, method->return_type);
+          be_setupval(vm, -2, 1);
+          be_pop(vm, 1);
+
+          be_pushstring(vm, method->arg_type);
+          be_setupval(vm, -2, 2);
+          be_pop(vm, 1);
+
+          // all good
+          be_return(vm);
+        } else {
+          be_return_nil(vm);
+        }
       }
     }
     be_raise(vm, kTypeError, nullptr);
@@ -940,23 +941,6 @@ extern "C" {
       }
     }
     return more_to_report;
-  }
-
-  /*********************************************************************************************\
-   * Methods specific to Tasmota LVGL
-  \*********************************************************************************************/
-  // lv.scr_act() -> lv_obj() instance
-  int lv0_scr_act(bvm *vm)    { return lv0_lvobj__void_call(vm, &lv_scr_act); }
-  int lv0_layer_top(bvm *vm)  { return lv0_lvobj__void_call(vm, &lv_layer_top); }
-  int lv0_layer_sys(bvm *vm)  { return lv0_lvobj__void_call(vm, &lv_layer_sys); }
-
-  int lv0_get_hor_res(bvm *vm) {
-    be_pushint(vm, lv_disp_get_hor_res(lv_disp_get_default()));
-    be_return(vm);
-  }
-  int lv0_get_ver_res(bvm *vm) {
-    be_pushint(vm, lv_disp_get_ver_res(lv_disp_get_default()));
-    be_return(vm);
   }
 
   /*********************************************************************************************\

@@ -7,20 +7,6 @@
 extern "C" {
 #endif
 
-// table of functions per class
-// typedef struct lvbe_call_c_t {
-//     const char * name;
-//     void * func;
-//     const char * return_type;
-//     const char * arg_type;
-// } lvbe_call_c_t;
-
-// list of classes and function tables
-// typedef struct lvbe_call_c_classes_t {
-//     const char * name;
-//     const lvbe_call_c_t * func_table;
-//     size_t size;
-// } lvbe_call_c_classes_t;
 
 
 /* `lv_img` methods */
