@@ -928,19 +928,52 @@
 #define USE_CSE7761                              // Add support for CSE7761 Energy monitor as used in Sonoff Dual R3
 
 // -- LVGL Graphics Library ---------------------------------
-//#define USE_LVGL                                 // LVGL Engine, requires Berry, takes 440k of Flash
+//#define USE_LVGL                                 // LVGL Engine, requires Berry (+382KB)
   #define USE_LVGL_PSRAM                         // Allocate LVGL memory in PSRAM if PSRAM is connected - this might be slightly slower but leaves main memory intact
   #define USE_LVGL_MAX_SLEEP  10                 // max sleep in ms when LVGL is enabled, more than 10ms will make display less responsive
-  #define USE_LVGL_PNG_DECODER                   // include a PNG image decoder from file system
-  //#define USE_LVGL_FREETYPE                      // Use the FreeType renderer to display fonts using native TTF files in file system (+75k flash)
-                                                 // WARNING this feature needs to increase the stack size to 32KB, for which there is no easy way right now
+  #define USE_LVGL_PNG_DECODER                   // include a PNG image decoder from file system (+16KB)
+  //#define USE_LVGL_FREETYPE                      // Use the FreeType renderer to display fonts using native TTF files in file system (+77KB flash)
     #define LV_USE_FT_CACHE_MANAGER 1            // define whether glyphs are cached by FreeType library
     #define USE_LVGL_FREETYPE_MAX_FACES 64       // max number of FreeType faces in cache
     #define USE_LVGL_FREETYPE_MAX_SIZES 4        // max number of sizes in cache
     #define USE_LVGL_FREETYPE_MAX_BYTES 16*1024  // max bytes in cache
     #define USE_LVGL_FREETYPE_MAX_BYTES_PSRAM 64*1024  // max bytes in cache when using PSRAM
   #define USE_LVGL_BG_DEFAULT 0x000000           // Default color for the uninitialized background screen (black)
-
+  // Disabling select widgets that will be rarely used in Tasmota (-13KB)
+    #define BE_LV_WIDGET_ARC 1
+    #define BE_LV_WIDGET_BAR 1
+    #define BE_LV_WIDGET_BTN 1
+    #define BE_LV_WIDGET_BTNMATRIX 1
+    #define BE_LV_WIDGET_CALENDAR 0
+    #define BE_LV_WIDGET_CANVAS 1
+    #define BE_LV_WIDGET_CHART 1
+    #define BE_LV_WIDGET_CHECKBOX 1
+    #define BE_LV_WIDGET_CONT 1
+    #define BE_LV_WIDGET_CPICKER 1
+    #define BE_LV_WIDGET_DROPDOWN 1
+    #define BE_LV_WIDGET_GAUGE 1
+    #define BE_LV_WIDGET_IMG 1
+    #define BE_LV_WIDGET_IMGBTN 1
+    #define BE_LV_WIDGET_KEYBOARD 0
+    #define BE_LV_WIDGET_LABEL 1
+    #define BE_LV_WIDGET_LED 1
+    #define BE_LV_WIDGET_LINE 1
+    #define BE_LV_WIDGET_LINEMETER 1
+    #define BE_LV_WIDGET_LIST 1
+    #define BE_LV_WIDGET_MSGBOX 1
+    #define BE_LV_WIDGET_OBJMASK 1
+    #define BE_LV_WIDGET_TEMPL 1
+    #define BE_LV_WIDGET_PAGE 1
+    #define BE_LV_WIDGET_ROLLER 1
+    #define BE_LV_WIDGET_SLIDER 1
+    #define BE_LV_WIDGET_SPINBOX 1
+    #define BE_LV_WIDGET_SPINNER 1
+    #define BE_LV_WIDGET_SWITCH 1
+    #define BE_LV_WIDGET_TABLE 1
+    #define BE_LV_WIDGET_TABVIEW 1
+    #define BE_LV_WIDGET_TEXTAREA 1
+    #define BE_LV_WIDGET_TILEVIEW 1
+    #define BE_LV_WIDGET_WIN 0
 
 #endif  // ESP32
 
