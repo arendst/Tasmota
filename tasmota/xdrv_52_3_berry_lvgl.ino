@@ -426,6 +426,7 @@ extern "C" {
     if ((return_type == nullptr) || (strlen(return_type) == 0))       { be_return_nil(vm); }  // does not return
     else if (strlen(return_type) == 1) {
       switch (return_type[0]) {
+        case '.':   // fallback next
         case 'i':   be_pushint(vm, ret); break;
         case 'b':   be_pushbool(vm, ret);  break;
         case 's':   be_pushstring(vm, (const char*) ret);  break;
