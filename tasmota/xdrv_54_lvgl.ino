@@ -445,6 +445,10 @@ void start_lvgl(const char * uconfig) {
   lv_png_init();
 #endif // USE_LVGL_PNG_DECODER
 
+  if (psramFound()) {
+    lv_img_cache_set_size(LV_IMG_CACHE_DEF_SIZE_PSRAM);
+  }
+
   AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_LVGL "LVGL initialized"));
 }
 

@@ -259,6 +259,7 @@ typedef void * lv_fs_drv_user_data_t;
  * However the opened images might consume additional RAM.
  * Set it to 0 to disable caching */
 #define LV_IMG_CACHE_DEF_SIZE       1
+#define LV_IMG_CACHE_DEF_SIZE_PSRAM 20    // special Tasmota setting when PSRAM is used
 
 /*Declare the type of the user data of image decoder (can be e.g. `void *`, `int`, `struct`)*/
 typedef void * lv_img_decoder_user_data_t;
