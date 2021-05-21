@@ -276,8 +276,10 @@ extern "C" {
 """)
 
 for subtype, flv in lv.items():
-  print(f"""/* `lv_{subtype}` methods */
-const lvbe_call_c_t lv_{subtype}_func[] = {{""")
+  print(f"/* `lv_{subtype}` methods */")
+  if subtype in lv_widgets:
+    print(f"#if BE_LV_WIDGET_{subtype.upper()}")
+  print(f"const lvbe_call_c_t lv_{subtype}_func[] = {{")
 
   func_out = {} # used to sort output
   for f in flv:
@@ -294,8 +296,10 @@ const lvbe_call_c_t lv_{subtype}_func[] = {{""")
   for be_name in sorted(func_out):
     print(func_out[be_name])
 
-  print(f"""}};
-""")
+  print(f"}};")
+  if subtype in lv_widgets:
+    print(f"#endif // BE_LV_WIDGET_{subtype.upper()}")
+  print(f"")
 
 # print the global map of classes
 print(f"""
@@ -304,7 +308,11 @@ const lvbe_call_c_classes_t lv_classes[] = {{""")
 
 for subtype in sorted(lv):
 # for subtype, flv in lv.items():
+  if subtype in lv_widgets:
+    print(f"#if BE_LV_WIDGET_{subtype.upper()}")
   print(f"  {{ \"lv_{subtype}\", lv_{subtype}_func, sizeof(lv_{subtype}_func) / sizeof(lv_{subtype}_func[0]) }},")
+  if subtype in lv_widgets:
+    print(f"#endif // BE_LV_WIDGET_{subtype.upper()}")
 
 print(f"""}};
 const size_t lv_classes_size = sizeof(lv_classes) / sizeof(lv_classes[0]);
@@ -323,7 +331,11 @@ for subtype, flv in lv.items():
     orig_func_name = f[3]
     if c_func_name.endswith("_create"):
       c_ret_type = f"+lv_{subtype}"
+      if subtype in lv_widgets:
+        print(f"#if BE_LV_WIDGET_{subtype.upper()}")
       print(f"  int {c_func_name}(bvm *vm)       {{ return be_call_c_func(vm, (void*) &{orig_func_name}, \"{c_ret_type}\", { c_argc if c_argc else 'nullptr'}); }}")
+      if subtype in lv_widgets:
+        print(f"#endif // BE_LV_WIDGET_{subtype.upper()}")
   print()
 
 print()
