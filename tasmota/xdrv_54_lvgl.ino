@@ -219,7 +219,6 @@ static lv_fs_res_t lvbe_fs_open(lv_fs_drv_t * drv, void * file_p, const char * p
   // AddLog(LOG_LEVEL_INFO, "LVG: F=%*_H", sizeof(f), &f);
   if (f) {
     File * f_ptr = new File(f);                 // copy to dynamic object
-    *f_ptr = f;                                 // TODO is this necessary?
     *((File**)file_p) = f_ptr;
     return LV_FS_RES_OK;
   } else {

@@ -148,7 +148,9 @@ lv_fs_res_t lv_fs_close(lv_fs_file_t * file_p)
 
     lv_fs_res_t res = file_p->drv->close_cb(file_p->drv, file_p->file_d);
 
-    lv_mem_free(file_p->file_d); /*Clean up*/
+    if(file_p->drv->file_size != 0) {  /*Is file_d zero size?*/
+        lv_mem_free(file_p->file_d); /*Clean up*/
+    }
     file_p->file_d = NULL;
     file_p->drv    = NULL;
 
