@@ -108,6 +108,7 @@ struct MQTT {
   bool connected = false;                // MQTT virtual connection status
   bool allowed = false;                  // MQTT enabled and parameters valid
   bool mqtt_tls = false;                 // MQTT TLS is enabled
+  bool disable_logging = false;          // Temporarly disable logging on some commands
 } Mqtt;
 
 #ifdef USE_MQTT_TLS
@@ -171,6 +172,12 @@ void MakeValidMqtt(uint32_t option, char* str) {
     }
     i++;
   }
+}
+
+void MqttDisableLogging(bool state) {
+  // Disable logging only on repeating MQTT messages
+  Mqtt.disable_logging = state;
+  TasmotaGlobal.masterlog_level = (Mqtt.disable_logging) ? LOG_LEVEL_DEBUG_MORE : LOG_LEVEL_NONE;
 }
 
 /*********************************************************************************************\
@@ -553,6 +560,10 @@ void MqttDataHandler(char* mqtt_topic, uint8_t* mqtt_data, unsigned int data_len
   char data[data_len +1];
   memcpy(data, mqtt_data, sizeof(data));
 
+  if (Mqtt.disable_logging) {
+    TasmotaGlobal.masterlog_level = LOG_LEVEL_DEBUG_MORE;  // Hide logging
+  }
+
   // MQTT pre-processing
   XdrvMailbox.index = strlen(topic);
   XdrvMailbox.data_len = data_len;
@@ -563,6 +574,10 @@ void MqttDataHandler(char* mqtt_topic, uint8_t* mqtt_data, unsigned int data_len
   ShowSource(SRC_MQTT);
 
   CommandHandler(topic, data, data_len);
+
+  if (Mqtt.disable_logging) {
+    TasmotaGlobal.masterlog_level = LOG_LEVEL_NONE;  // Enable logging
+  }
 }
 
 /*********************************************************************************************/

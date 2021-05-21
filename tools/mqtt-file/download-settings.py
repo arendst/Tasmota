@@ -67,7 +67,6 @@ file_md5 = ""
 def on_message(client, userdata, msg):
    global Ack_flag
    global Err_flag
-   global Run_flag
    global file_name
    global file_id
    global file_type
@@ -88,6 +87,10 @@ def on_message(client, userdata, msg):
       if root:
          if "FileDownload" in root:
             rcv_code = root["FileDownload"]
+            if "Aborted" in rcv_code:
+               print("Error: Aborted")
+               Err_flag = True
+               return
             if "Started" in rcv_code:
                return
             if "Error" in rcv_code:

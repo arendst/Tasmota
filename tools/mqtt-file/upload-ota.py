@@ -76,6 +76,14 @@ def on_message(client, userdata, msg):
    root = json.loads(msg.payload.decode("utf-8"))
    if "FileUpload" in root:
       rcv_code = root["FileUpload"]
+      if "Aborted" in rcv_code:
+         print("Error: Aborted")
+         Err_flag = True
+         return
+      if "MD5 mismatch" in rcv_code:
+         print("Error: MD5 mismatch")
+         Err_flag = True
+         return
       if "Started" in rcv_code:
          return
       if "Error" in rcv_code:
@@ -119,6 +127,7 @@ fo = open(myfile,"rb")
 fo.seek(0, 2)  # os.SEEK_END
 file_size = fo.tell()
 fo.seek(0, 0)  # os.SEEK_SET
+file_pos = 0
 
 client.publish(mypublish, "{\"Password\":\""+mypassword+"\",\"File\":\""+myfile+"\",\"Id\":"+str("%3d"%file_id)+",\"Type\":"+str(myfiletype)+",\"Size\":"+str(file_size)+"}")
 Ack_flag = True
@@ -142,6 +151,11 @@ while Run_flag:
             client.publish(mypublish, "{\"Id\":"+str("%3d"%file_id)+",\"Data\":\""+base64_data+"\"}")
          else:
             client.publish(mypublish+"201", chunk)
+         file_pos = file_pos + file_chunk_size
+         if file_pos % 102400 < file_chunk_size:
+            progress = round((file_pos / 10240)) * 10
+            print("Progress "+str("%d"%progress)+" kB")
+
          Ack_flag = True
 
       else:

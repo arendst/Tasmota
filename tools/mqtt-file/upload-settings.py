@@ -75,6 +75,14 @@ def on_message(client, userdata, msg):
    root = json.loads(msg.payload.decode("utf-8"))
    if "FileUpload" in root:
       rcv_code = root["FileUpload"]
+      if "Aborted" in rcv_code:
+         print("Error: Aborted")
+         Err_flag = True
+         return
+      if "MD5 mismatch" in rcv_code:
+         print("Error: MD5 mismatch")
+         Err_flag = True
+         return
       if "Started" in rcv_code:
          return
       if "Error" in rcv_code:
