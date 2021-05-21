@@ -240,8 +240,8 @@ void CommandHandler(char* topicBuf, char* dataBuf, uint32_t data_len)
     }
   }
 
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR("CMD: " D_GROUP " %d, " D_INDEX " %d, " D_COMMAND " \"%s\", " D_DATA " \"%s\""),
-    grpflg, index, type, (binary_data) ? HexToString((uint8_t*)dataBuf, data_len).c_str() : dataBuf);
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR("CMD: Grp %d, Cmnd '%s', Idx %d, Len %d, Data '%s'"),
+    grpflg, type, index, data_len, (binary_data) ? HexToString((uint8_t*)dataBuf, data_len).c_str() : dataBuf);
 
   if (type != nullptr) {
     Response_P(PSTR("{\"" D_JSON_COMMAND "\":\"" D_JSON_ERROR "\"}"));
