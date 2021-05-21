@@ -36,6 +36,7 @@ ren_day.set_width(18)
 ren_day.set_height(16)
 ren_day.set_pos(184,112)
 
+prev_day = -1
 def set_watch()
     now = tasmota.rtc()
     time_raw = now['local'] + now['timezone'] * 60
@@ -47,7 +48,10 @@ def set_watch()
     # set hours
     ren_hour.set_angle(300 * (time['hour'] % 12) + time['min'] * 5)
     # set day
-    ren_day.set_text(str(time['day']))
+    if time['day'] != prev_day
+        ren_day.set_text(str(time['day']))
+        prev_day = time['day']
+    end
 end
 
 def run_watch()
