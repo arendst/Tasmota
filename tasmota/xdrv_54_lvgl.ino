@@ -32,6 +32,10 @@
 
 #include "Adafruit_LvGL_Glue.h"
 
+#ifdef USE_LVGL_PNG_DECODER
+  #include "lv_png.h"
+#endif // USE_LVGL_PNG_DECODER
+
 Adafruit_LvGL_Glue * glue;
 
 // **************************************************
@@ -338,6 +342,14 @@ extern "C" {
   void lvbe_free(void *ptr) {
     free(ptr);
   }
+
+#ifdef USE_LVGL_PNG_DECODER
+  // for PNG decoder, use same allocators as LVGL
+  void* lodepng_malloc(size_t size) { return lvbe_malloc(size); }
+  void* lodepng_realloc(void* ptr, size_t new_size) { return lvbe_realloc(ptr, new_size); }
+  void lodepng_free(void* ptr) { lvbe_free(ptr); }
+#endif // USE_LVGL_PNG_DECODER
+
 }
 
 /************************************************************
@@ -429,6 +441,9 @@ void start_lvgl(const char * uconfig) {
                    USE_LVGL_FREETYPE_MAX_SIZES,
                    psramFound() ? USE_LVGL_FREETYPE_MAX_BYTES_PSRAM : USE_LVGL_FREETYPE_MAX_BYTES);
 #endif
+#ifdef USE_LVGL_PNG_DECODER
+  lv_png_init();
+#endif // USE_LVGL_PNG_DECODER
 
   AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_LVGL "LVGL initialized"));
 }

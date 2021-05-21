@@ -931,6 +931,7 @@
 //#define USE_LVGL                                 // LVGL Engine, requires Berry, takes 440k of Flash
   #define USE_LVGL_PSRAM                         // Allocate LVGL memory in PSRAM if PSRAM is connected - this might be slightly slower but leaves main memory intact
   #define USE_LVGL_MAX_SLEEP  10                 // max sleep in ms when LVGL is enabled, more than 10ms will make display less responsive
+  #define USE_LVGL_PNG_DECODER                   // include a PNG image decoder from file system
   //#define USE_LVGL_FREETYPE                      // Use the FreeType renderer to display fonts using native TTF files in file system (+75k flash)
                                                  // WARNING this feature needs to increase the stack size to 32KB, for which there is no easy way right now
     #define LV_USE_FT_CACHE_MANAGER 1            // define whether glyphs are cached by FreeType library

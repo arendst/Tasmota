@@ -109,6 +109,7 @@ typedef int16_t lv_coord_t;
 #  define LV_MEM_CUSTOM_INCLUDE <tasmota_lv_stdlib.h>   /*Header for the dynamic memory function*/
 #  define LV_MEM_CUSTOM_ALLOC   lvbe_malloc       /*Wrapper to malloc*/ /* PSRAM support */
 #  define LV_MEM_CUSTOM_FREE    lvbe_free         /*Wrapper to free*/
+#  define LV_MEM_CUSTOM_REALLOC   lvbe_realloc           /*Wrapper to realloc*/
 #endif     /*LV_MEM_CUSTOM*/
 
 /* Use the standard memcpy and memset instead of LVGL's own functions.
@@ -328,7 +329,7 @@ typedef void * lv_indev_drv_user_data_t;            /*Type of user data in the i
  *===============*/
 
 /*1: Enable the log module*/
-#define LV_USE_LOG      0
+#define LV_USE_LOG      1
 #if LV_USE_LOG
 /* How important log should be added:
  * LV_LOG_LEVEL_TRACE       A lot of logs to give detailed information
@@ -337,7 +338,7 @@ typedef void * lv_indev_drv_user_data_t;            /*Type of user data in the i
  * LV_LOG_LEVEL_ERROR       Only critical issue, when the system may fail
  * LV_LOG_LEVEL_NONE        Do not log anything
  */
-#  define LV_LOG_LEVEL    LV_LOG_LEVEL_WARN
+#  define LV_LOG_LEVEL    LV_LOG_LEVEL_ERROR
 
 /* 1: Print the log with 'printf';
  * 0: user need to register a callback with `lv_log_register_print_cb`*/
