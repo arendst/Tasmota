@@ -1179,6 +1179,7 @@ bool Xdrv12(uint8_t function)
     case FUNC_ANY_KEY:
       HAssAnyKey();
       break;
+/*
     case FUNC_MQTT_INIT:
       hass_mode = 0;      // Discovery only if Settings.flag.hass_discovery is set
       TasmotaGlobal.discovery_counter = 10; // Delayed discovery
@@ -1186,9 +1187,11 @@ bool Xdrv12(uint8_t function)
       //   NewHAssDiscovery();
       // }
       break;
-
+*/
     case FUNC_MQTT_SUBSCRIBE:
       HassLwtSubscribe(hasslwt);
+      hass_mode = 0;      // Discovery only if Settings.flag.hass_discovery is set
+      TasmotaGlobal.discovery_counter = (0 == Mqtt.initial_connection_state) ? 1 : 10; // Delayed discovery
       break;
     case FUNC_MQTT_DATA:
       result = HAssMqttLWT();

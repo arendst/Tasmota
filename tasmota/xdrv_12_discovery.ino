@@ -220,13 +220,13 @@ void TasDiscovery(void) {
 }
 
 void TasRediscover(void) {
-  TasmotaGlobal.discovery_counter = 1;                               // Delayed discovery or clear retained messages
+  TasmotaGlobal.discovery_counter = 1;                         // Delayed discovery or clear retained messages
 }
 
 void TasDiscoverInit(void) {
   if (ResetReason() != REASON_DEEP_SLEEP_AWAKE) {
     Settings.flag.hass_discovery = 0;                          // SetOption19 - Enable Tasmota discovery and Disable legacy Hass discovery
-    TasmotaGlobal.discovery_counter = 10;                            // Delayed discovery
+    TasmotaGlobal.discovery_counter = 10;                      // Delayed discovery
   }
 }
 
@@ -280,6 +280,11 @@ bool Xdrv12(uint8_t function) {
       break;
     case FUNC_COMMAND:
       result = DecodeCommand(kTasDiscoverCommands, TasDiscoverCommand, kTasDiscoverSynonyms);
+      break;
+    case FUNC_MQTT_SUBSCRIBE:
+      if (0 == Mqtt.initial_connection_state) {
+        TasRediscover();
+      }
       break;
     case FUNC_MQTT_INIT:
       TasDiscoverInit();
