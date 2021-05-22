@@ -23,11 +23,12 @@
  * LCD/DLP Projector Control via serial interface
  * https://www.sharpnecdisplays.eu/p/download/v/5e14a015e26cacae3ae64a422f7f8af4/cp/Products/Projectors/Shared/CommandLists/PDF-ExternalControlManual-english.pdf#page=5
  * https://www.optoma.co.uk/uploads/manuals/hd36-m-en-gb.pdf#page=56
+ * http://global-download.acer.com/GDFiles/Document/RS232%20Command%20Table/RS232%20Command%20Table_Acer_1.0_A_A.zip?acerid=636791605984811687
 \*********************************************************************************************/
 
 #define XDRV_53			53
 
-#if !defined(USE_PROJECTOR_CTRL_NEC) && !defined(USE_PROJECTOR_CTRL_OPTOMA)
+#if !defined(USE_PROJECTOR_CTRL_NEC) && !defined(USE_PROJECTOR_CTRL_OPTOMA) && !defined(USE_PROJECTOR_CTRL_ACER)
 #define USE_PROJECTOR_CTRL_NEC                 // Use at least one projector
 #endif
 

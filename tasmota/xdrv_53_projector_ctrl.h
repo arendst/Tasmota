@@ -65,6 +65,32 @@ static const struct projector_ctrl_command_info_s projector_ctrl_commands[] = {
 #define PROJECTOR_CTRL_QRYPWR_WARMING 0x31 //placebo
 
 
+#elif defined(USE_PROJECTOR_CTRL_ACER)
+/* see the serial codes in
+ * http://global-download.acer.com/GDFiles/Document/RS232%20Command%20Table/RS232%20Command%20Table_Acer_1.0_A_A.zip?acerid=636791605984811687
+ * not really tested with ACER devices
+ */
+#define PROJECTOR_CTRL_LOGNAME	"DLP[ACER]"
+static const uint8_t projector_ctrl_msg_qry_typ[] = { '*',' ','0',' ','I','R',' ','0','3','5', 0x0d }; //line50
+static const uint8_t projector_ctrl_msg_qry_pwr[] = { '*',' ','0',' ','L','a','m','p',' ','?', 0x0d }; //line97
+static const uint8_t projector_ctrl_msg_pwr_on[]  = { '*',' ','0',' ','I','R',' ','0','0','1', 0x0d }; //line18
+static const uint8_t projector_ctrl_msg_pwr_off[] = { '*',' ','0',' ','I','R',' ','0','0','2', 0x0d }; //line19
+static const struct projector_ctrl_command_info_s projector_ctrl_commands[] = {
+	{PROJECTOR_CTRL_S_QRY_TYPE, &projector_ctrl_msg_qry_typ[0], sizeof(projector_ctrl_msg_qry_typ),
+								PROJECTOR_CTRL_SERIAL_TIMEOUT, 'M', 10, 6, 4, '?', 1, 0, 1},
+	{PROJECTOR_CTRL_S_QRY_PWR,  &projector_ctrl_msg_qry_pwr[0], sizeof(projector_ctrl_msg_qry_pwr),
+								PROJECTOR_CTRL_SERIAL_TIMEOUT, 'L', 7, 5, 1, '?', 1, 0, 1},
+	{PROJECTOR_CTRL_S_PWR_ON,   &projector_ctrl_msg_pwr_on[0], sizeof(projector_ctrl_msg_pwr_on),
+								PROJECTOR_CTRL_SERIAL_TIMEOUT, 'O', 2, 0, 1, '?', 1, 0, 1},
+	{PROJECTOR_CTRL_S_PWR_OFF,  &projector_ctrl_msg_pwr_off[0], sizeof(projector_ctrl_msg_pwr_off),
+								PROJECTOR_CTRL_SERIAL_TIMEOUT, 'O', 2, 0, 1, '?', 1, 0, 1}
+};
+#define PROJECTOR_CTRL_QRYPWR_ON      '1'
+#define PROJECTOR_CTRL_QRYPWR_COOLING '1'  //placebo
+#define PROJECTOR_CTRL_QRYPWR_STARTING '1' //placebo
+#define PROJECTOR_CTRL_QRYPWR_WARMING '1'  //placebo
+
+
 #else
 #error USE_PROJECTOR_CTRL: No projector type defined
 #endif
