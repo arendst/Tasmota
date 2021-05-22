@@ -106,8 +106,15 @@ BERRY_API char* be_readstring(char *buffer, size_t size)
 void* be_fopen(const char *filename, const char *modes)
 {
     if (ufsp != nullptr && filename != nullptr && modes != nullptr) {
+        char fname2[strlen(filename) + 2];
+        if (filename[0] == '/') {
+            strcpy(fname2, filename);   // copy unchanged
+        } else {
+            fname2[0] = '/';
+            strcpy(fname2 + 1, filename);   // prepend with '/'
+        }
         // Serial.printf("be_fopen filename=%s, modes=%s\n", filename, modes);
-        File f = ufsp->open(filename, modes);       // returns an object, not a pointer
+        File f = ufsp->open(fname2, modes);       // returns an object, not a pointer
         if (f) {
             File * f_ptr = new File(f);                 // copy to dynamic object
             *f_ptr = f;                                 // TODO is this necessary?
