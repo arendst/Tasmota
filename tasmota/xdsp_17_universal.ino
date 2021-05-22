@@ -59,33 +59,7 @@ void Core2DisplayDim(uint8_t dim);
 
 /*********************************************************************************************/
 #ifdef DSP_ROM_DESC
-/* sample descriptor */
-const char DSP_SAMPLE_DESC[] PROGMEM =
-":H,SH1106,128,64,1,I2C,3c,*,*,*\n"
-":S,0,1,1,0,40,20\n"
-":I\n"
-"AE\n"
-"D5,80\n"
-"A8,3f\n"
-"D3,00\n"
-"40\n"
-"8D,14\n"
-"20,00\n"
-"A1\n"
-"C8\n"
-"DA,12\n"
-"81,CF\n"
-"D9F1\n"
-"DB,40\n"
-"A4\n"
-"A6\n"
-"AF\n"
-":o,AE\n"
-":O,AF\n"
-":A,00,10,40,00,02\n"
-":i,A6,A7\n"
-"#\n";
-
+const char DSP_SAMPLE_DESC[] PROGMEM = DSP_ROM_DESC
 #endif // DSP_ROM_DESC
 /*********************************************************************************************/
 Renderer *Init_uDisplay(const char *desc, int8_t cs) {

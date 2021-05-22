@@ -10,8 +10,36 @@ Display Descriptor files for use with universal display driver.
   copy descriptor to rule buffer number 3 but do not enable rule 3
   (descriptor may not contain ANY spaces in this mode)
 (4.) compile the descriptor into driver.
-  convert the file to a const char array and place into source xdsp_universal.ino
-  and replace the example array there + #define DSP_ROM_DESC
+  convert the file to a string and place it into your user_config.h file using #define
+
+  Example:
+    #define DSP_ROM_DESC \
+":H,SH1106,128,64,1,I2C,3c,*,*,*\n" \
+":S,0,1,1,0,40,20\n" \
+":I\n" \
+"AE\n" \
+"D5,80\n" \
+"A8,3f\n" \
+"D3,00\n" \
+"40\n" \
+"8D,14\n" \
+"20,00\n" \
+"A1\n" \
+"C8\n" \
+"DA,12\n" \
+"81,CF\n" \
+"D9F1\n" \
+"DB,40\n" \
+"A4\n" \
+"A6\n" \
+"AF\n" \
+":o,AE\n" \
+":O,AF\n" \
+":A,00,10,40,00,02\n" \
+":i,A6,A7\n" \
+"#\n"
+
+
 
 for further info about display descriptors read the tasmota docs display part.
 
