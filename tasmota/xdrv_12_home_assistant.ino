@@ -447,6 +447,11 @@ void HAssAnnounceRelayLight(void)
     TasmotaGlobal.masterlog_level = ShowTopic = 4; // Hide topic on clean and remove use weblog 4 to see it
 
     bool RelayX = PinUsed(GPIO_REL1, i-1) || (valid_relay >= i) || (TuyaRel > 0 && TuyaMod) || (TuyaRelInv > 0 && TuyaMod); // Check if the gpio is configured as Relay or force it for Sonoff DUAL R1 with MCU and Tuya MCU
+#ifdef USE_MCP230xx_OUTPUT
+    if (i <= TasmotaGlobal.devices_present){
+      RelayX = true;
+    }
+#endif //USE_MCP230xx_OUTPUT
     is_topic_light = Settings.flag.hass_light && RelayX || TasmotaGlobal.light_type && !RelayX || PwmMod || (TuyaDim > 0 && TuyaMod); // SetOption30 - Enforce HAss autodiscovery as light
     ResponseClear();  // Clear retained message
 
