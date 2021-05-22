@@ -12,6 +12,9 @@
 #include <string.h>
 #include <Arduino.h>
 
+// from https://github.com/eyalroz/cpp-static-block
+#include "static_block.hpp"
+
 // Local pointer for file managment
 #include <FS.h>
 extern FS *ufsp;
@@ -53,13 +56,21 @@ extern "C" {
 
 // We need to create a local buffer, since we might mess up mqtt_data
 #ifndef BERRY_LOGSZ
-#define BERRY_LOGSZ 128
+#define BERRY_LOGSZ 700
 #endif
-static char log_berry_buffer[BERRY_LOGSZ] = { 0, };
+extern "C" {
+    extern void *berry_malloc(size_t size);
+}
+static char * log_berry_buffer = nullptr;
+static_block {
+    log_berry_buffer = (char*) berry_malloc(BERRY_LOGSZ);
+    if (log_berry_buffer) log_berry_buffer[0] = 0;
+}
 extern void berry_log(const char * berry_buf);
 
 BERRY_API void be_writebuffer(const char *buffer, size_t length)
 {
+    if (!log_berry_buffer) return;
     if (buffer == nullptr || length == 0) { return; }
     uint32_t idx = 0;
     while (idx < length) {
@@ -72,7 +83,7 @@ BERRY_API void be_writebuffer(const char *buffer, size_t length)
             }
         }
         uint32_t chars_to_append = (cr_pos >= 0) ? cr_pos - idx : length - idx;     // note cr_pos < length
-        snprintf(log_berry_buffer, sizeof(log_berry_buffer), "%s%.*s", log_berry_buffer, chars_to_append, &buffer[idx]);   // append at most `length` chars
+        snprintf(log_berry_buffer, BERRY_LOGSZ, "%s%.*s", log_berry_buffer, chars_to_append, &buffer[idx]);   // append at most `length` chars
         if (cr_pos >= 0) {
             // flush
             berry_log(log_berry_buffer);
