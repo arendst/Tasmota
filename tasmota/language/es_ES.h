@@ -578,6 +578,8 @@
 
 // xsns_53_sml.ino
 #define D_TPWRIN "Energía Total-Entrada"
+#define D_TPWRIN0 "Energía Total-Entrada T0"
+#define D_TPWRIN1 "Energía Total-Entrada T1"
 #define D_TPWROUT "Energía Total-Salida"
 #define D_TPWRCURR "Potencia-En/Sal"
 #define D_TPWRCURR1 "Potencia-Entr p1"

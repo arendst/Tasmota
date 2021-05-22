@@ -578,6 +578,8 @@
 
 // xsns_53_sml.ino
 #define D_TPWRIN "Összes bejövő energia"
+#define D_TPWRIN0 "Összes bejövő energia T0"
+#define D_TPWRIN1 "Összes bejövő energia T1"
 #define D_TPWROUT "Összes kimenő energia"
 #define D_TPWRCURR "Aktív teljesítmény Be/Ki"
 #define D_TPWRCURR1 "Aktív teljesítmény-Be p1"

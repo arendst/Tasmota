@@ -578,6 +578,8 @@
 
 // xsns_53_sml.ino
 #define D_TPWRIN "Total-In"
+#define D_TPWRIN0 "Total-In T0"
+#define D_TPWRIN1 "Total-In T1"
 #define D_TPWROUT "Total-Out"
 #define D_TPWRCURR "Current-In/Out"
 #define D_TPWRCURR1 "Current-In p1"

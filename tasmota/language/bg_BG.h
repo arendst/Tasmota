@@ -577,6 +577,8 @@
 
 // xsns_53_sml.ino
 #define D_TPWRIN "Общо енергия - IN"
+#define D_TPWRIN0 "Общо енергия - IN T0"
+#define D_TPWRIN1 "Общо енергия - IN T1"
 #define D_TPWROUT "Общо енергия - OUT"
 #define D_TPWRCURR "Активна мощност - In/Out"
 #define D_TPWRCURR1 "Активна мощност - In p1"

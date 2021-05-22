@@ -578,6 +578,8 @@
 
 // xsns_53_sml.ino
 #define D_TPWRIN "Verbrauch"
+#define D_TPWRIN0 "Verbrauch T0"
+#define D_TPWRIN1 "Verbrauch T1"
 #define D_TPWROUT "Einspeisung"
 #define D_TPWRCURR "Aktueller Verbrauch"
 #define D_TPWRCURR1 "Verbrauch P1"

@@ -578,6 +578,8 @@
 
 //xsns_53_sml.ino
 #define D_TPWRIN "Energia-Consumo"
+#define D_TPWRIN0 "Energia-Consumo T0"
+#define D_TPWRIN1 "Energia-Consumo T1"
 #define D_TPWROUT "Energia-Geração"
 #define D_TPWRCURR "Potência Ativa-Consumo/Geração"
 #define D_TPWRCURR1 "Potência Ativa-Consumo F1"

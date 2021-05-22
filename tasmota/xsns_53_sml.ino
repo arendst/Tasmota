@@ -59,6 +59,8 @@
 // JSON Strings do not translate
 // max 23 char
 #define DJ_TPWRIN "Total_in"
+#define DJ_TPWRIN0 "Total_in_0"
+#define DJ_TPWRIN1 "Total_in_1"
 #define DJ_TPWROUT "Total_out"
 #define DJ_TPWRCURR "Power_curr"
 #define DJ_TPWRCURR1 "Power_p1"
@@ -110,6 +112,7 @@ struct METER_DESC {
 #define WGS_COMBO 13
 #define EBZD_G 14
 #define SML_NO_OP 15
+#define Q3C 16
 
 // select this meter
 // SML_NO_OP ignores hardcoded interface
@@ -441,6 +444,26 @@ const uint8_t meter[]=
 "3,=h--------------------------------";                             // letzte Zeile
 #endif
 
+
+#if METER==Q3C
+#undef METERS_USED
+#define METERS_USED 1
+struct METER_DESC const meter_desc[METERS_USED]={
+  [0]={3,'s',0,SML_BAUDRATE,"SML",-1,1,0}};
+const uint8_t meter[]=
+//0x77,0x07,0x01,0x00,0x01,0x08,0x01,0xff
+"1,77070101010800ff@1000," D_TPWRIN0 ",kWh," DJ_TPWRIN0 ",2|" // Verbrauch T0
+//0x77,0x07,0x01,0x00,0x01,0x08,0x01,0xff
+"1,77070101010801ff@1000," D_TPWRIN1 ",kWh," DJ_TPWRIN1 ",2|" // Verbrauch T1
+//0x77,0x07,0x01,0x00,0x01,0x07,0x00,0xff
+"1,77070100010700ff@1," D_TPWRCURR ",W," DJ_TPWRCURR ",0|" // Strom Gesamt 
+//0x77,0x07,0x01,0x00,0x01,0x07,0x00,0xff
+"1,77070100150700ff@1," D_TPWRCURR1 ",W," DJ_TPWRCURR1 ",0|" // Strom L1
+//0x77,0x07,0x01,0x00,0x01,0x07,0x00,0xff
+"1,77070100290700ff@1," D_TPWRCURR2 ",W," DJ_TPWRCURR2 ",0|" // Strom L2
+//0x77,0x07,0x01,0x00,0x01,0x07,0x00,0xff
+"1,770701003D0700ff@1," D_TPWRCURR3 ",W," DJ_TPWRCURR3 ",0"; // Strom L3
+#endif
 
 // this driver uses double because meter vars would not fit in float
 //=====================================================
