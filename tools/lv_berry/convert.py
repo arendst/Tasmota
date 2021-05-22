@@ -33,8 +33,8 @@ return_types = {
   "int16_t": "i",
   "uint32_t": "i",
   "int32_t": "i",
-  "void *": "i",
-  "const void *": "i",
+  "void *": ".",
+  "const void *": ".",
   "char *": "s",
   "const char *": "s",
   "lv_obj_user_data_t": "i",
@@ -202,17 +202,26 @@ with open(lv_module_file) as f:
       lv_module.append( [ None, l_raw ] )   # if key in None then add comment line
     l_raw = re.sub('//.*$', '', l_raw) # remove trailing comments
     l_raw = re.sub('\s+', '', l_raw) # remove all spaces
+    l_raw = re.sub(',.*$', '', l_raw) # remove comma and anything after it
     if (len(l_raw) == 0): continue
 
     k_v = l_raw.split("=")
-    if len(k_v) != 2:
+    if len(k_v) > 2:
       print(f"Error: cannot match {l_raw}")
       continue
+    # extract the key name
     k = k_v[0]
+    if k.startswith("_"):
+      continue      # skip any label starting with '_'
     k = re.sub('^LV_', '', k) # remove remove any LV_ prefix
-    v = k_v[1]
-    if k is None or v is None: continue
-    v_num = try_int(eval(v))
+    if len(k_v) == 2:   # value is included
+      v = k_v[1]
+      if k is None or v is None: continue
+      v_num = try_int(eval(v))
+    else:             # no value, we use the C value instead
+      v_num = None
+      v = None
+
 
     if not k.isidentifier():
       print(f"Error: {k} is not an identifier")
@@ -221,7 +230,7 @@ with open(lv_module_file) as f:
     if v_num is not None:
       lv_module.append( [k, v_num] )
     else:
-      lv_modile.append( [k, v] )    # keep as string
+      lv_module.append( [k, v] )    # keep as string or None
 
 # recursively try to match value
 # TODO
@@ -262,8 +271,56 @@ print("""
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+
 """)
 
+for subtype, flv in lv.items():
+  print(f"/* `lv_{subtype}` methods */")
+  if subtype in lv_widgets:
+    print(f"#if BE_LV_WIDGET_{subtype.upper()}")
+  print(f"const lvbe_call_c_t lv_{subtype}_func[] = {{")
+
+  func_out = {} # used to sort output
+  for f in flv:
+    c_func_name = f[0]
+    c_ret_type = f[1]
+    c_argc = f[2]
+    if c_argc is not None: c_argc = "\"" + c_argc + "\""
+    orig_func_name = f[3]
+    be_name = f[4]
+    if c_func_name.endswith("_create"):
+      c_ret_type = f"+lv_{subtype}"
+    func_out[be_name] = f"  {{ \"{be_name}\", (void*) &{orig_func_name}, \"{c_ret_type}\", { c_argc if c_argc else 'nullptr'} }},"
+
+  for be_name in sorted(func_out):
+    print(func_out[be_name])
+
+  print(f"}};")
+  if subtype in lv_widgets:
+    print(f"#endif // BE_LV_WIDGET_{subtype.upper()}")
+  print(f"")
+
+# print the global map of classes
+print(f"""
+// map of clases
+const lvbe_call_c_classes_t lv_classes[] = {{""")
+
+for subtype in sorted(lv):
+# for subtype, flv in lv.items():
+  if subtype in lv_widgets:
+    print(f"#if BE_LV_WIDGET_{subtype.upper()}")
+  print(f"  {{ \"lv_{subtype}\", lv_{subtype}_func, sizeof(lv_{subtype}_func) / sizeof(lv_{subtype}_func[0]) }},")
+  if subtype in lv_widgets:
+    print(f"#endif // BE_LV_WIDGET_{subtype.upper()}")
+
+print(f"""}};
+const size_t lv_classes_size = sizeof(lv_classes) / sizeof(lv_classes[0]);
+""")
+
+# previous generation calls
+
+# keep only create
 for subtype, flv in lv.items():
   print(f"  /* `lv_{subtype}` methods */")
   for f in flv:
@@ -272,11 +329,13 @@ for subtype, flv in lv.items():
     c_argc = f[2]
     if c_argc is not None: c_argc = "\"" + c_argc + "\""
     orig_func_name = f[3]
-    #print(f"  int {c_func_name}(bvm *vm)       \{ return (vm, be_call_c_func(void*) &")
     if c_func_name.endswith("_create"):
-      print(f"  int {c_func_name}(bvm *vm)       {{ return lvx_init_2(vm, (void*) &{orig_func_name}, \"lv_{subtype}\", { c_argc if c_argc else 'nullptr'}); }}")
-    else:
+      c_ret_type = f"+lv_{subtype}"
+      if subtype in lv_widgets:
+        print(f"#if BE_LV_WIDGET_{subtype.upper()}")
       print(f"  int {c_func_name}(bvm *vm)       {{ return be_call_c_func(vm, (void*) &{orig_func_name}, \"{c_ret_type}\", { c_argc if c_argc else 'nullptr'}); }}")
+      if subtype in lv_widgets:
+        print(f"#endif // BE_LV_WIDGET_{subtype.upper()}")
   print()
 
 print()
@@ -316,24 +375,15 @@ print("""
 #ifdef USE_LVGL
 
 #include "lvgl.h"
-
-extern int lv0_start(bvm *vm);
+#include "be_lvgl.h"
 
 extern int lv0_init(bvm *vm);
-
-extern int lv0_register_button_encoder(bvm *vm);    // add buttons with encoder logic
-
-extern int lv0_scr_act(bvm *vm);
-extern int lv0_layer_top(bvm *vm);
-extern int lv0_layer_sys(bvm *vm);
-extern int lv0_get_hor_res(bvm *vm);
-extern int lv0_get_ver_res(bvm *vm);
-extern int lv0_screenshot(bvm *vm);
 
 extern int lco_init(bvm *vm);
 extern int lco_tostring(bvm *vm);
 
 extern int lvx_init_2(bvm *vm);           // generic function
+extern int lvx_member(bvm *vm);
 extern int lvx_tostring(bvm *vm);       // generic function
 
 extern int lvs_init(bvm *vm);
@@ -379,13 +429,14 @@ for subtype, flv in lv.items():
     else:
       print(f"    {{ \"init\", lv0_init }},")
     print(f"    {{ \"tostring\", lvx_tostring }},")
+  print(f"    {{ \"member\", lvx_member }},")
 
   print()
-  for f in flv:
+  # for f in flv:
 
-    c_func_name = f[0]
-    be_name = f[4]
-    print(f"    {{ \"{be_name}\", {c_func_name} }},")
+  #   c_func_name = f[0]
+  #   be_name = f[4]
+  #   print(f"    {{ \"{be_name}\", {c_func_name} }},")
 
   print()
   print(f"    // {{ NULL, (bntvfunc) BE_CLOSURE }}, /* mark section for berry closures */")
@@ -424,11 +475,13 @@ for subtype, flv in lv.items():
     else:
       print(f"    init, func(lv0_init)")
     print(f"    tostring, func(lvx_tostring)")
+  print(f"    member, func(lvx_member)")
+  print()
 
-  for f in flv:
-    c_func_name = f[0]
-    be_name = f[4]
-    print(f"    {be_name}, func({c_func_name})")
+  # for f in flv:
+  #   c_func_name = f[0]
+  #   be_name = f[4]
+  #   print(f"    {be_name}, func({c_func_name})")
 
   print(f"}}")
   print(f"@const_object_info_end */")
@@ -453,6 +506,9 @@ print("""/********************************************************************
 #ifdef USE_LVGL
 
 #include "lvgl.h"
+#include "be_lvgl.h"
+
+extern int lv0_member(bvm *vm);     // resolve virtual members
 
 extern int lv0_start(bvm *vm);
 
@@ -463,12 +519,61 @@ extern int lv0_load_seg7_font(bvm *vm);
 extern int lv0_load_font(bvm *vm);
 extern int lv0_load_freetype_font(bvm *vm);
 
-extern int lv0_scr_act(bvm *vm);
-extern int lv0_layer_top(bvm *vm);
-extern int lv0_layer_sys(bvm *vm);
-extern int lv0_get_hor_res(bvm *vm);
-extern int lv0_get_ver_res(bvm *vm);
 extern int lv0_screenshot(bvm *vm);
+
+static int lv_get_hor_res(void) {
+  return lv_disp_get_hor_res(lv_disp_get_default());
+}
+static int lv_get_ver_res(bvm *vm) {
+  return lv_disp_get_ver_res(lv_disp_get_default());
+}
+
+/* `lv` methods */
+const lvbe_call_c_t lv_func[] = {
+  // resolution
+  { "get_hor_res", (void*) &lv_get_hor_res, "i", "" },
+  { "get_ver_res", (void*) &lv_get_ver_res, "i", "" },
+
+  // layers
+  { "layer_sys", (void*) &lv_layer_sys, "lv_obj", "" },
+  { "layer_top", (void*) &lv_layer_top, "lv_obj", "" },
+
+  // screens
+  { "scr_act", (void*) &lv_scr_act, "lv_obj", "" },
+  { "scr_load", (void*) &lv_scr_load, "", "(lv_obj)" },
+  { "scr_load_anim", (void*) &lv_scr_load_anim, "", "(lv_obj)iiib" },
+};
+const size_t lv_func_size = sizeof(lv_func) / sizeof(lv_func[0]);
+
+""")
+
+print("""
+
+typedef struct lvbe_constant_t {
+    const char * name;
+    int32_t      value;
+} lvbe_constant_t;
+
+const lvbe_constant_t lv0_constants[] = {
+""")
+
+lv_module2 = {}
+for k_v in lv_module:
+  (k,v) = k_v
+  if k is not None:
+    lv_module2[k] = v
+
+for k in sorted(lv_module2):
+  v = lv_module2[k]
+  if v is not None:
+    print(f"    {{ \"{k}\", {v} }},")
+  else:
+    print(f"    {{ \"{k}\", LV_{k} }},")
+
+print("""
+};
+
+const size_t lv0_constants_size = sizeof(lv0_constants)/sizeof(lv0_constants[0]);
 """)
 
 for f in lv0:
@@ -545,13 +650,6 @@ be_native_module_attr_table(lvgl) {
 
     be_native_module_str("SYMBOL_BULLET", "\\xE2\\x80\\xA2"),
 
-    // connection type
-    be_native_module_int("SPI", 0),
-    be_native_module_int("I2C", 1),
-    // connection sub_type
-    be_native_module_int("HSPI", 0),
-    be_native_module_int("VSPI", 1),
-    be_native_module_int("SSPI", 2),
 """)
 
 print("/* `lvgl` module functions */")
@@ -567,16 +665,17 @@ print()
   
 #   print()
 
-for k_v in lv_module:
-  (k,v) = k_v
-  if k is None:
-    print(v)      # comment line
-    continue
+# for k_v in lv_module:
+#   (k,v) = k_v
+#   if k is None:
+#     print(v)      # comment line
+#     continue
 
-  print(f"    be_native_module_int(\"{k}\", {v}),")
+#   print(f"    be_native_module_int(\"{k}\", {v}),")
 
 print("""
 
+    be_native_module_function("member", lv0_member),
     be_native_module_function("start", lv0_start),
 
     be_native_module_function("register_button_encoder", lv0_register_button_encoder),
@@ -586,13 +685,6 @@ print("""
     be_native_module_function("load_font", lv0_load_font),
     be_native_module_function("load_freetype_font", lv0_load_freetype_font),
 
-
-    // screen and layers
-    be_native_module_function("scr_act", lv0_scr_act),
-    be_native_module_function("layer_top", lv0_layer_top),
-    be_native_module_function("layer_sys", lv0_layer_sys),
-    be_native_module_function("get_hor_res", lv0_get_hor_res),
-    be_native_module_function("get_ver_res", lv0_get_ver_res),
     be_native_module_function("screenshot", lv0_screenshot),
 """)
 
@@ -735,23 +827,18 @@ module lvgl (scope: global) {
     SYMBOL_DUMMY, str(&be_local_const_str_SYMBOL_DUMMY)
 
     SYMBOL_BULLET, str(&be_local_const_str_SYMBOL_BULLET)
-
-    SPI, int(0)
-    I2C, int(1)
-    HSPI, int(0)
-    VSPI, int(1)
-    SSPI, int(2)
 """)
 
 
-for k_v in lv_module:
-  (k,v) = k_v
-  if k is None:
-    continue
+# for k_v in lv_module:
+#   (k,v) = k_v
+#   if k is None:
+#     continue
 
-  print(f"    {k}, int({v})")
+#   print(f"    {k}, int({v})")
 
 print("""
+    member, func(lv0_member)
     start, func(lv0_start)
 
     register_button_encoder, func(lv0_register_button_encoder)
@@ -761,11 +848,6 @@ print("""
     load_font, func(lv0_load_font)
     load_freetype_font, func(lv0_load_freetype_font)
 
-    scr_act, func(lv0_scr_act)
-    layer_top, func(lv0_layer_top)
-    layer_sys, func(lv0_layer_sys)
-    get_hor_res, func(lv0_get_hor_res)
-    get_ver_res, func(lv0_get_ver_res)
     screenshot, func(lv0_screenshot)
 
 """)

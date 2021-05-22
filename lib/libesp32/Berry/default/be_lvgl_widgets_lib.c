@@ -11,24 +11,15 @@
 #ifdef USE_LVGL
 
 #include "lvgl.h"
-
-extern int lv0_start(bvm *vm);
+#include "be_lvgl.h"
 
 extern int lv0_init(bvm *vm);
-
-extern int lv0_register_button_encoder(bvm *vm);    // add buttons with encoder logic
-
-extern int lv0_scr_act(bvm *vm);
-extern int lv0_layer_top(bvm *vm);
-extern int lv0_layer_sys(bvm *vm);
-extern int lv0_get_hor_res(bvm *vm);
-extern int lv0_get_ver_res(bvm *vm);
-extern int lv0_screenshot(bvm *vm);
 
 extern int lco_init(bvm *vm);
 extern int lco_tostring(bvm *vm);
 
 extern int lvx_init_2(bvm *vm);           // generic function
+extern int lvx_member(bvm *vm);
 extern int lvx_tostring(bvm *vm);       // generic function
 
 extern int lvs_init(bvm *vm);
@@ -1124,26 +1115,8 @@ void be_load_lv_img_lib(bvm *vm) {
     { ".p", NULL },
     { "init", lvbe_img_create },
     { "tostring", lvx_tostring },
+    { "member", lvx_member },
 
-    { "set_tasmota_logo", lvbe_img_set_tasmota_logo },
-    { "create", lvbe_img_create },
-    { "set_src", lvbe_img_set_src },
-    { "set_auto_size", lvbe_img_set_auto_size },
-    { "set_offset_x", lvbe_img_set_offset_x },
-    { "set_offset_y", lvbe_img_set_offset_y },
-    { "set_pivot", lvbe_img_set_pivot },
-    { "set_angle", lvbe_img_set_angle },
-    { "set_zoom", lvbe_img_set_zoom },
-    { "set_antialias", lvbe_img_set_antialias },
-    { "get_src", lvbe_img_get_src },
-    { "get_file_name", lvbe_img_get_file_name },
-    { "get_auto_size", lvbe_img_get_auto_size },
-    { "get_offset_x", lvbe_img_get_offset_x },
-    { "get_offset_y", lvbe_img_get_offset_y },
-    { "get_angle", lvbe_img_get_angle },
-    { "get_pivot", lvbe_img_get_pivot },
-    { "get_zoom", lvbe_img_get_zoom },
-    { "get_antialias", lvbe_img_get_antialias },
 
     // { NULL, (bntvfunc) BE_CLOSURE }, /* mark section for berry closures */
 
@@ -1167,25 +1140,8 @@ class be_class_lv_img (scope: global, name: lv_img, super: be_class_lv_obj) {
     .p, var
     init, func(lvbe_img_create)
     tostring, func(lvx_tostring)
-    set_tasmota_logo, func(lvbe_img_set_tasmota_logo)
-    create, func(lvbe_img_create)
-    set_src, func(lvbe_img_set_src)
-    set_auto_size, func(lvbe_img_set_auto_size)
-    set_offset_x, func(lvbe_img_set_offset_x)
-    set_offset_y, func(lvbe_img_set_offset_y)
-    set_pivot, func(lvbe_img_set_pivot)
-    set_angle, func(lvbe_img_set_angle)
-    set_zoom, func(lvbe_img_set_zoom)
-    set_antialias, func(lvbe_img_set_antialias)
-    get_src, func(lvbe_img_get_src)
-    get_file_name, func(lvbe_img_get_file_name)
-    get_auto_size, func(lvbe_img_get_auto_size)
-    get_offset_x, func(lvbe_img_get_offset_x)
-    get_offset_y, func(lvbe_img_get_offset_y)
-    get_angle, func(lvbe_img_get_angle)
-    get_pivot, func(lvbe_img_get_pivot)
-    get_zoom, func(lvbe_img_get_zoom)
-    get_antialias, func(lvbe_img_get_antialias)
+    member, func(lvx_member)
+
 }
 @const_object_info_end */
 
@@ -1195,107 +1151,8 @@ void be_load_lv_style_lib(bvm *vm) {
     { ".p", NULL },
     { "init", lvs_init },
     { "tostring", lvs_tostring },
+    { "member", lvx_member },
 
-    { "copy", lvbe_style_copy },
-    { "list_init", lvbe_style_list_init },
-    { "list_copy", lvbe_style_list_copy },
-    { "list_get_style", lvbe_style_list_get_style },
-    { "reset", lvbe_style_reset },
-    { "remove_prop", lvbe_style_remove_prop },
-    { "list_get_local_style", lvbe_style_list_get_local_style },
-    { "set_radius", lvbe_style_set_radius },
-    { "set_clip_corner", lvbe_style_set_clip_corner },
-    { "set_size", lvbe_style_set_size },
-    { "set_transform_width", lvbe_style_set_transform_width },
-    { "set_transform_height", lvbe_style_set_transform_height },
-    { "set_transform_angle", lvbe_style_set_transform_angle },
-    { "set_transform_zoom", lvbe_style_set_transform_zoom },
-    { "set_opa_scale", lvbe_style_set_opa_scale },
-    { "set_pad_top", lvbe_style_set_pad_top },
-    { "set_pad_bottom", lvbe_style_set_pad_bottom },
-    { "set_pad_left", lvbe_style_set_pad_left },
-    { "set_pad_right", lvbe_style_set_pad_right },
-    { "set_pad_inner", lvbe_style_set_pad_inner },
-    { "set_margin_top", lvbe_style_set_margin_top },
-    { "set_margin_bottom", lvbe_style_set_margin_bottom },
-    { "set_margin_left", lvbe_style_set_margin_left },
-    { "set_margin_right", lvbe_style_set_margin_right },
-    { "set_bg_blend_mode", lvbe_style_set_bg_blend_mode },
-    { "set_bg_main_stop", lvbe_style_set_bg_main_stop },
-    { "set_bg_grad_stop", lvbe_style_set_bg_grad_stop },
-    { "set_bg_grad_dir", lvbe_style_set_bg_grad_dir },
-    { "set_bg_color", lvbe_style_set_bg_color },
-    { "set_bg_grad_color", lvbe_style_set_bg_grad_color },
-    { "set_bg_opa", lvbe_style_set_bg_opa },
-    { "set_border_width", lvbe_style_set_border_width },
-    { "set_border_side", lvbe_style_set_border_side },
-    { "set_border_blend_mode", lvbe_style_set_border_blend_mode },
-    { "set_border_post", lvbe_style_set_border_post },
-    { "set_border_color", lvbe_style_set_border_color },
-    { "set_border_opa", lvbe_style_set_border_opa },
-    { "set_outline_width", lvbe_style_set_outline_width },
-    { "set_outline_pad", lvbe_style_set_outline_pad },
-    { "set_outline_blend_mode", lvbe_style_set_outline_blend_mode },
-    { "set_outline_color", lvbe_style_set_outline_color },
-    { "set_outline_opa", lvbe_style_set_outline_opa },
-    { "set_shadow_width", lvbe_style_set_shadow_width },
-    { "set_shadow_ofs_x", lvbe_style_set_shadow_ofs_x },
-    { "set_shadow_ofs_y", lvbe_style_set_shadow_ofs_y },
-    { "set_shadow_spread", lvbe_style_set_shadow_spread },
-    { "set_shadow_blend_mode", lvbe_style_set_shadow_blend_mode },
-    { "set_shadow_color", lvbe_style_set_shadow_color },
-    { "set_shadow_opa", lvbe_style_set_shadow_opa },
-    { "set_pattern_repeat", lvbe_style_set_pattern_repeat },
-    { "set_pattern_blend_mode", lvbe_style_set_pattern_blend_mode },
-    { "set_pattern_recolor", lvbe_style_set_pattern_recolor },
-    { "set_pattern_opa", lvbe_style_set_pattern_opa },
-    { "set_pattern_recolor_opa", lvbe_style_set_pattern_recolor_opa },
-    { "set_pattern_image", lvbe_style_set_pattern_image },
-    { "set_value_letter_space", lvbe_style_set_value_letter_space },
-    { "set_value_line_space", lvbe_style_set_value_line_space },
-    { "set_value_blend_mode", lvbe_style_set_value_blend_mode },
-    { "set_value_ofs_x", lvbe_style_set_value_ofs_x },
-    { "set_value_ofs_y", lvbe_style_set_value_ofs_y },
-    { "set_value_align", lvbe_style_set_value_align },
-    { "set_value_color", lvbe_style_set_value_color },
-    { "set_value_opa", lvbe_style_set_value_opa },
-    { "set_value_font", lvbe_style_set_value_font },
-    { "set_value_str", lvbe_style_set_value_str },
-    { "set_text_letter_space", lvbe_style_set_text_letter_space },
-    { "set_text_line_space", lvbe_style_set_text_line_space },
-    { "set_text_decor", lvbe_style_set_text_decor },
-    { "set_text_blend_mode", lvbe_style_set_text_blend_mode },
-    { "set_text_color", lvbe_style_set_text_color },
-    { "set_text_sel_color", lvbe_style_set_text_sel_color },
-    { "set_text_sel_bg_color", lvbe_style_set_text_sel_bg_color },
-    { "set_text_opa", lvbe_style_set_text_opa },
-    { "set_text_font", lvbe_style_set_text_font },
-    { "set_line_width", lvbe_style_set_line_width },
-    { "set_line_blend_mode", lvbe_style_set_line_blend_mode },
-    { "set_line_dash_width", lvbe_style_set_line_dash_width },
-    { "set_line_dash_gap", lvbe_style_set_line_dash_gap },
-    { "set_line_rounded", lvbe_style_set_line_rounded },
-    { "set_line_color", lvbe_style_set_line_color },
-    { "set_line_opa", lvbe_style_set_line_opa },
-    { "set_image_blend_mode", lvbe_style_set_image_blend_mode },
-    { "set_image_recolor", lvbe_style_set_image_recolor },
-    { "set_image_opa", lvbe_style_set_image_opa },
-    { "set_image_recolor_opa", lvbe_style_set_image_recolor_opa },
-    { "set_transition_time", lvbe_style_set_transition_time },
-    { "set_transition_delay", lvbe_style_set_transition_delay },
-    { "set_transition_prop_1", lvbe_style_set_transition_prop_1 },
-    { "set_transition_prop_2", lvbe_style_set_transition_prop_2 },
-    { "set_transition_prop_3", lvbe_style_set_transition_prop_3 },
-    { "set_transition_prop_4", lvbe_style_set_transition_prop_4 },
-    { "set_transition_prop_5", lvbe_style_set_transition_prop_5 },
-    { "set_transition_prop_6", lvbe_style_set_transition_prop_6 },
-    { "set_transition_path", lvbe_style_set_transition_path },
-    { "set_scale_width", lvbe_style_set_scale_width },
-    { "set_scale_border_width", lvbe_style_set_scale_border_width },
-    { "set_scale_end_border_width", lvbe_style_set_scale_end_border_width },
-    { "set_scale_end_line_width", lvbe_style_set_scale_end_line_width },
-    { "set_scale_grad_color", lvbe_style_set_scale_grad_color },
-    { "set_scale_end_color", lvbe_style_set_scale_end_color },
 
     // { NULL, (bntvfunc) BE_CLOSURE }, /* mark section for berry closures */
 
@@ -1319,106 +1176,8 @@ class be_class_lv_style (scope: global, name: lv_style, super: be_class_lv_obj) 
     .p, var
     init, func(lvs_init)
     tostring, func(lvs_tostring)
-    copy, func(lvbe_style_copy)
-    list_init, func(lvbe_style_list_init)
-    list_copy, func(lvbe_style_list_copy)
-    list_get_style, func(lvbe_style_list_get_style)
-    reset, func(lvbe_style_reset)
-    remove_prop, func(lvbe_style_remove_prop)
-    list_get_local_style, func(lvbe_style_list_get_local_style)
-    set_radius, func(lvbe_style_set_radius)
-    set_clip_corner, func(lvbe_style_set_clip_corner)
-    set_size, func(lvbe_style_set_size)
-    set_transform_width, func(lvbe_style_set_transform_width)
-    set_transform_height, func(lvbe_style_set_transform_height)
-    set_transform_angle, func(lvbe_style_set_transform_angle)
-    set_transform_zoom, func(lvbe_style_set_transform_zoom)
-    set_opa_scale, func(lvbe_style_set_opa_scale)
-    set_pad_top, func(lvbe_style_set_pad_top)
-    set_pad_bottom, func(lvbe_style_set_pad_bottom)
-    set_pad_left, func(lvbe_style_set_pad_left)
-    set_pad_right, func(lvbe_style_set_pad_right)
-    set_pad_inner, func(lvbe_style_set_pad_inner)
-    set_margin_top, func(lvbe_style_set_margin_top)
-    set_margin_bottom, func(lvbe_style_set_margin_bottom)
-    set_margin_left, func(lvbe_style_set_margin_left)
-    set_margin_right, func(lvbe_style_set_margin_right)
-    set_bg_blend_mode, func(lvbe_style_set_bg_blend_mode)
-    set_bg_main_stop, func(lvbe_style_set_bg_main_stop)
-    set_bg_grad_stop, func(lvbe_style_set_bg_grad_stop)
-    set_bg_grad_dir, func(lvbe_style_set_bg_grad_dir)
-    set_bg_color, func(lvbe_style_set_bg_color)
-    set_bg_grad_color, func(lvbe_style_set_bg_grad_color)
-    set_bg_opa, func(lvbe_style_set_bg_opa)
-    set_border_width, func(lvbe_style_set_border_width)
-    set_border_side, func(lvbe_style_set_border_side)
-    set_border_blend_mode, func(lvbe_style_set_border_blend_mode)
-    set_border_post, func(lvbe_style_set_border_post)
-    set_border_color, func(lvbe_style_set_border_color)
-    set_border_opa, func(lvbe_style_set_border_opa)
-    set_outline_width, func(lvbe_style_set_outline_width)
-    set_outline_pad, func(lvbe_style_set_outline_pad)
-    set_outline_blend_mode, func(lvbe_style_set_outline_blend_mode)
-    set_outline_color, func(lvbe_style_set_outline_color)
-    set_outline_opa, func(lvbe_style_set_outline_opa)
-    set_shadow_width, func(lvbe_style_set_shadow_width)
-    set_shadow_ofs_x, func(lvbe_style_set_shadow_ofs_x)
-    set_shadow_ofs_y, func(lvbe_style_set_shadow_ofs_y)
-    set_shadow_spread, func(lvbe_style_set_shadow_spread)
-    set_shadow_blend_mode, func(lvbe_style_set_shadow_blend_mode)
-    set_shadow_color, func(lvbe_style_set_shadow_color)
-    set_shadow_opa, func(lvbe_style_set_shadow_opa)
-    set_pattern_repeat, func(lvbe_style_set_pattern_repeat)
-    set_pattern_blend_mode, func(lvbe_style_set_pattern_blend_mode)
-    set_pattern_recolor, func(lvbe_style_set_pattern_recolor)
-    set_pattern_opa, func(lvbe_style_set_pattern_opa)
-    set_pattern_recolor_opa, func(lvbe_style_set_pattern_recolor_opa)
-    set_pattern_image, func(lvbe_style_set_pattern_image)
-    set_value_letter_space, func(lvbe_style_set_value_letter_space)
-    set_value_line_space, func(lvbe_style_set_value_line_space)
-    set_value_blend_mode, func(lvbe_style_set_value_blend_mode)
-    set_value_ofs_x, func(lvbe_style_set_value_ofs_x)
-    set_value_ofs_y, func(lvbe_style_set_value_ofs_y)
-    set_value_align, func(lvbe_style_set_value_align)
-    set_value_color, func(lvbe_style_set_value_color)
-    set_value_opa, func(lvbe_style_set_value_opa)
-    set_value_font, func(lvbe_style_set_value_font)
-    set_value_str, func(lvbe_style_set_value_str)
-    set_text_letter_space, func(lvbe_style_set_text_letter_space)
-    set_text_line_space, func(lvbe_style_set_text_line_space)
-    set_text_decor, func(lvbe_style_set_text_decor)
-    set_text_blend_mode, func(lvbe_style_set_text_blend_mode)
-    set_text_color, func(lvbe_style_set_text_color)
-    set_text_sel_color, func(lvbe_style_set_text_sel_color)
-    set_text_sel_bg_color, func(lvbe_style_set_text_sel_bg_color)
-    set_text_opa, func(lvbe_style_set_text_opa)
-    set_text_font, func(lvbe_style_set_text_font)
-    set_line_width, func(lvbe_style_set_line_width)
-    set_line_blend_mode, func(lvbe_style_set_line_blend_mode)
-    set_line_dash_width, func(lvbe_style_set_line_dash_width)
-    set_line_dash_gap, func(lvbe_style_set_line_dash_gap)
-    set_line_rounded, func(lvbe_style_set_line_rounded)
-    set_line_color, func(lvbe_style_set_line_color)
-    set_line_opa, func(lvbe_style_set_line_opa)
-    set_image_blend_mode, func(lvbe_style_set_image_blend_mode)
-    set_image_recolor, func(lvbe_style_set_image_recolor)
-    set_image_opa, func(lvbe_style_set_image_opa)
-    set_image_recolor_opa, func(lvbe_style_set_image_recolor_opa)
-    set_transition_time, func(lvbe_style_set_transition_time)
-    set_transition_delay, func(lvbe_style_set_transition_delay)
-    set_transition_prop_1, func(lvbe_style_set_transition_prop_1)
-    set_transition_prop_2, func(lvbe_style_set_transition_prop_2)
-    set_transition_prop_3, func(lvbe_style_set_transition_prop_3)
-    set_transition_prop_4, func(lvbe_style_set_transition_prop_4)
-    set_transition_prop_5, func(lvbe_style_set_transition_prop_5)
-    set_transition_prop_6, func(lvbe_style_set_transition_prop_6)
-    set_transition_path, func(lvbe_style_set_transition_path)
-    set_scale_width, func(lvbe_style_set_scale_width)
-    set_scale_border_width, func(lvbe_style_set_scale_border_width)
-    set_scale_end_border_width, func(lvbe_style_set_scale_end_border_width)
-    set_scale_end_line_width, func(lvbe_style_set_scale_end_line_width)
-    set_scale_grad_color, func(lvbe_style_set_scale_grad_color)
-    set_scale_end_color, func(lvbe_style_set_scale_end_color)
+    member, func(lvx_member)
+
 }
 @const_object_info_end */
 
@@ -1428,26 +1187,8 @@ void be_load_lv_group_lib(bvm *vm) {
     { ".p", NULL },
     { "init", lvbe_group_create },
     { "tostring", lvx_tostring },
+    { "member", lvx_member },
 
-    { "create", lvbe_group_create },
-    { "del", lvbe_group_del },
-    { "add_obj", lvbe_group_add_obj },
-    { "remove_obj", lvbe_group_remove_obj },
-    { "remove_all_objs", lvbe_group_remove_all_objs },
-    { "focus_obj", lvbe_group_focus_obj },
-    { "focus_next", lvbe_group_focus_next },
-    { "focus_prev", lvbe_group_focus_prev },
-    { "focus_freeze", lvbe_group_focus_freeze },
-    { "send_data", lvbe_group_send_data },
-    { "set_focus_cb", lvbe_group_set_focus_cb },
-    { "set_refocus_policy", lvbe_group_set_refocus_policy },
-    { "set_editing", lvbe_group_set_editing },
-    { "set_click_focus", lvbe_group_set_click_focus },
-    { "set_wrap", lvbe_group_set_wrap },
-    { "get_focused", lvbe_group_get_focused },
-    { "get_editing", lvbe_group_get_editing },
-    { "get_click_focus", lvbe_group_get_click_focus },
-    { "get_wrap", lvbe_group_get_wrap },
 
     // { NULL, (bntvfunc) BE_CLOSURE }, /* mark section for berry closures */
 
@@ -1466,25 +1207,8 @@ class be_class_lv_group (scope: global, name: lv_group) {
     .p, var
     init, func(lvbe_group_create)
     tostring, func(lvx_tostring)
-    create, func(lvbe_group_create)
-    del, func(lvbe_group_del)
-    add_obj, func(lvbe_group_add_obj)
-    remove_obj, func(lvbe_group_remove_obj)
-    remove_all_objs, func(lvbe_group_remove_all_objs)
-    focus_obj, func(lvbe_group_focus_obj)
-    focus_next, func(lvbe_group_focus_next)
-    focus_prev, func(lvbe_group_focus_prev)
-    focus_freeze, func(lvbe_group_focus_freeze)
-    send_data, func(lvbe_group_send_data)
-    set_focus_cb, func(lvbe_group_set_focus_cb)
-    set_refocus_policy, func(lvbe_group_set_refocus_policy)
-    set_editing, func(lvbe_group_set_editing)
-    set_click_focus, func(lvbe_group_set_click_focus)
-    set_wrap, func(lvbe_group_set_wrap)
-    get_focused, func(lvbe_group_get_focused)
-    get_editing, func(lvbe_group_get_editing)
-    get_click_focus, func(lvbe_group_get_click_focus)
-    get_wrap, func(lvbe_group_get_wrap)
+    member, func(lvx_member)
+
 }
 @const_object_info_end */
 
@@ -1494,12 +1218,8 @@ void be_load_lv_indev_lib(bvm *vm) {
     { ".p", NULL },
     { "init", lv0_init },
     { "tostring", lvx_tostring },
+    { "member", lvx_member },
 
-    { "get_type", lvbe_indev_get_type },
-    { "enable", lvbe_indev_enable },
-    { "set_group", lvbe_indev_set_group },
-    { "get_obj_act", lvbe_indev_get_obj_act },
-    { "search_obj", lvbe_indev_search_obj },
 
     // { NULL, (bntvfunc) BE_CLOSURE }, /* mark section for berry closures */
 
@@ -1523,11 +1243,8 @@ class be_class_lv_indev (scope: global, name: lv_indev, super: be_class_lv_obj) 
     .p, var
     init, func(lv0_init)
     tostring, func(lvx_tostring)
-    get_type, func(lvbe_indev_get_type)
-    enable, func(lvbe_indev_enable)
-    set_group, func(lvbe_indev_set_group)
-    get_obj_act, func(lvbe_indev_get_obj_act)
-    search_obj, func(lvbe_indev_search_obj)
+    member, func(lvx_member)
+
 }
 @const_object_info_end */
 
@@ -1537,307 +1254,8 @@ void be_load_lv_obj_lib(bvm *vm) {
     { ".p", NULL },
     { "init", lvbe_obj_create },
     { "tostring", lvx_tostring },
+    { "member", lvx_member },
 
-    { "create", lvbe_obj_create },
-    { "del", lvbe_obj_del },
-    { "del_anim_ready_cb", lvbe_obj_del_anim_ready_cb },
-    { "del_async", lvbe_obj_del_async },
-    { "clean", lvbe_obj_clean },
-    { "invalidate_area", lvbe_obj_invalidate_area },
-    { "invalidate", lvbe_obj_invalidate },
-    { "area_is_visible", lvbe_obj_area_is_visible },
-    { "is_visible", lvbe_obj_is_visible },
-    { "set_parent", lvbe_obj_set_parent },
-    { "move_foreground", lvbe_obj_move_foreground },
-    { "move_background", lvbe_obj_move_background },
-    { "set_pos", lvbe_obj_set_pos },
-    { "set_x", lvbe_obj_set_x },
-    { "set_y", lvbe_obj_set_y },
-    { "set_size", lvbe_obj_set_size },
-    { "set_width", lvbe_obj_set_width },
-    { "set_height", lvbe_obj_set_height },
-    { "set_width_fit", lvbe_obj_set_width_fit },
-    { "set_height_fit", lvbe_obj_set_height_fit },
-    { "set_width_margin", lvbe_obj_set_width_margin },
-    { "set_height_margin", lvbe_obj_set_height_margin },
-    { "align", lvbe_obj_align },
-    { "align_x", lvbe_obj_align_x },
-    { "align_y", lvbe_obj_align_y },
-    { "align_mid", lvbe_obj_align_mid },
-    { "align_mid_x", lvbe_obj_align_mid_x },
-    { "align_mid_y", lvbe_obj_align_mid_y },
-    { "realign", lvbe_obj_realign },
-    { "set_auto_realign", lvbe_obj_set_auto_realign },
-    { "set_ext_click_area", lvbe_obj_set_ext_click_area },
-    { "add_style", lvbe_obj_add_style },
-    { "remove_style", lvbe_obj_remove_style },
-    { "clean_style_list", lvbe_obj_clean_style_list },
-    { "reset_style_list", lvbe_obj_reset_style_list },
-    { "refresh_style", lvbe_obj_refresh_style },
-    { "report_style_mod", lvbe_obj_report_style_mod },
-    { "remove_style_local_prop", lvbe_obj_remove_style_local_prop },
-    { "set_hidden", lvbe_obj_set_hidden },
-    { "set_adv_hittest", lvbe_obj_set_adv_hittest },
-    { "set_click", lvbe_obj_set_click },
-    { "set_top", lvbe_obj_set_top },
-    { "set_drag", lvbe_obj_set_drag },
-    { "set_drag_dir", lvbe_obj_set_drag_dir },
-    { "set_drag_throw", lvbe_obj_set_drag_throw },
-    { "set_drag_parent", lvbe_obj_set_drag_parent },
-    { "set_focus_parent", lvbe_obj_set_focus_parent },
-    { "set_gesture_parent", lvbe_obj_set_gesture_parent },
-    { "set_parent_event", lvbe_obj_set_parent_event },
-    { "set_base_dir", lvbe_obj_set_base_dir },
-    { "add_protect", lvbe_obj_add_protect },
-    { "clear_protect", lvbe_obj_clear_protect },
-    { "set_state", lvbe_obj_set_state },
-    { "add_state", lvbe_obj_add_state },
-    { "clear_state", lvbe_obj_clear_state },
-    { "finish_transitions", lvbe_obj_finish_transitions },
-    { "set_event_cb", lvbe_obj_set_event_cb },
-    { "set_signal_cb", lvbe_obj_set_signal_cb },
-    { "set_design_cb", lvbe_obj_set_design_cb },
-    { "allocate_ext_attr", lvbe_obj_allocate_ext_attr },
-    { "refresh_ext_draw_pad", lvbe_obj_refresh_ext_draw_pad },
-    { "get_screen", lvbe_obj_get_screen },
-    { "get_parent", lvbe_obj_get_parent },
-    { "get_child", lvbe_obj_get_child },
-    { "get_child_back", lvbe_obj_get_child_back },
-    { "count_children", lvbe_obj_count_children },
-    { "count_children_recursive", lvbe_obj_count_children_recursive },
-    { "get_coords", lvbe_obj_get_coords },
-    { "get_inner_coords", lvbe_obj_get_inner_coords },
-    { "get_x", lvbe_obj_get_x },
-    { "get_y", lvbe_obj_get_y },
-    { "get_width", lvbe_obj_get_width },
-    { "get_height", lvbe_obj_get_height },
-    { "get_width_fit", lvbe_obj_get_width_fit },
-    { "get_height_fit", lvbe_obj_get_height_fit },
-    { "get_height_margin", lvbe_obj_get_height_margin },
-    { "get_width_margin", lvbe_obj_get_width_margin },
-    { "get_width_grid", lvbe_obj_get_width_grid },
-    { "get_height_grid", lvbe_obj_get_height_grid },
-    { "get_auto_realign", lvbe_obj_get_auto_realign },
-    { "get_ext_click_pad_left", lvbe_obj_get_ext_click_pad_left },
-    { "get_ext_click_pad_right", lvbe_obj_get_ext_click_pad_right },
-    { "get_ext_click_pad_top", lvbe_obj_get_ext_click_pad_top },
-    { "get_ext_click_pad_bottom", lvbe_obj_get_ext_click_pad_bottom },
-    { "get_ext_draw_pad", lvbe_obj_get_ext_draw_pad },
-    { "get_local_style", lvbe_obj_get_local_style },
-    { "get_hidden", lvbe_obj_get_hidden },
-    { "get_adv_hittest", lvbe_obj_get_adv_hittest },
-    { "get_click", lvbe_obj_get_click },
-    { "get_top", lvbe_obj_get_top },
-    { "get_drag", lvbe_obj_get_drag },
-    { "get_drag_dir", lvbe_obj_get_drag_dir },
-    { "get_drag_throw", lvbe_obj_get_drag_throw },
-    { "get_drag_parent", lvbe_obj_get_drag_parent },
-    { "get_focus_parent", lvbe_obj_get_focus_parent },
-    { "get_parent_event", lvbe_obj_get_parent_event },
-    { "get_gesture_parent", lvbe_obj_get_gesture_parent },
-    { "get_base_dir", lvbe_obj_get_base_dir },
-    { "get_protect", lvbe_obj_get_protect },
-    { "is_protected", lvbe_obj_is_protected },
-    { "get_state", lvbe_obj_get_state },
-    { "is_point_on_coords", lvbe_obj_is_point_on_coords },
-    { "hittest", lvbe_obj_hittest },
-    { "get_ext_attr", lvbe_obj_get_ext_attr },
-    { "get_type", lvbe_obj_get_type },
-    { "get_user_data", lvbe_obj_get_user_data },
-    { "set_user_data", lvbe_obj_set_user_data },
-    { "get_group", lvbe_obj_get_group },
-    { "is_focused", lvbe_obj_is_focused },
-    { "get_focused_obj", lvbe_obj_get_focused_obj },
-    { "handle_get_type_signal", lvbe_obj_handle_get_type_signal },
-    { "init_draw_rect_dsc", lvbe_obj_init_draw_rect_dsc },
-    { "init_draw_label_dsc", lvbe_obj_init_draw_label_dsc },
-    { "init_draw_img_dsc", lvbe_obj_init_draw_img_dsc },
-    { "init_draw_line_dsc", lvbe_obj_init_draw_line_dsc },
-    { "get_draw_rect_ext_pad_size", lvbe_obj_get_draw_rect_ext_pad_size },
-    { "fade_in", lvbe_obj_fade_in },
-    { "fade_out", lvbe_obj_fade_out },
-    { "get_style_radius", lvbe_obj_get_style_radius },
-    { "set_style_local_radius", lvbe_obj_set_style_local_radius },
-    { "get_style_clip_corner", lvbe_obj_get_style_clip_corner },
-    { "set_style_local_clip_corner", lvbe_obj_set_style_local_clip_corner },
-    { "get_style_size", lvbe_obj_get_style_size },
-    { "set_style_local_size", lvbe_obj_set_style_local_size },
-    { "get_style_transform_width", lvbe_obj_get_style_transform_width },
-    { "set_style_local_transform_width", lvbe_obj_set_style_local_transform_width },
-    { "get_style_transform_height", lvbe_obj_get_style_transform_height },
-    { "set_style_local_transform_height", lvbe_obj_set_style_local_transform_height },
-    { "get_style_transform_angle", lvbe_obj_get_style_transform_angle },
-    { "set_style_local_transform_angle", lvbe_obj_set_style_local_transform_angle },
-    { "get_style_transform_zoom", lvbe_obj_get_style_transform_zoom },
-    { "set_style_local_transform_zoom", lvbe_obj_set_style_local_transform_zoom },
-    { "get_style_opa_scale", lvbe_obj_get_style_opa_scale },
-    { "set_style_local_opa_scale", lvbe_obj_set_style_local_opa_scale },
-    { "get_style_pad_top", lvbe_obj_get_style_pad_top },
-    { "set_style_local_pad_top", lvbe_obj_set_style_local_pad_top },
-    { "get_style_pad_bottom", lvbe_obj_get_style_pad_bottom },
-    { "set_style_local_pad_bottom", lvbe_obj_set_style_local_pad_bottom },
-    { "get_style_pad_left", lvbe_obj_get_style_pad_left },
-    { "set_style_local_pad_left", lvbe_obj_set_style_local_pad_left },
-    { "get_style_pad_right", lvbe_obj_get_style_pad_right },
-    { "set_style_local_pad_right", lvbe_obj_set_style_local_pad_right },
-    { "get_style_pad_inner", lvbe_obj_get_style_pad_inner },
-    { "set_style_local_pad_inner", lvbe_obj_set_style_local_pad_inner },
-    { "get_style_margin_top", lvbe_obj_get_style_margin_top },
-    { "set_style_local_margin_top", lvbe_obj_set_style_local_margin_top },
-    { "get_style_margin_bottom", lvbe_obj_get_style_margin_bottom },
-    { "set_style_local_margin_bottom", lvbe_obj_set_style_local_margin_bottom },
-    { "get_style_margin_left", lvbe_obj_get_style_margin_left },
-    { "set_style_local_margin_left", lvbe_obj_set_style_local_margin_left },
-    { "get_style_margin_right", lvbe_obj_get_style_margin_right },
-    { "set_style_local_margin_right", lvbe_obj_set_style_local_margin_right },
-    { "get_style_bg_blend_mode", lvbe_obj_get_style_bg_blend_mode },
-    { "set_style_local_bg_blend_mode", lvbe_obj_set_style_local_bg_blend_mode },
-    { "get_style_bg_main_stop", lvbe_obj_get_style_bg_main_stop },
-    { "set_style_local_bg_main_stop", lvbe_obj_set_style_local_bg_main_stop },
-    { "get_style_bg_grad_stop", lvbe_obj_get_style_bg_grad_stop },
-    { "set_style_local_bg_grad_stop", lvbe_obj_set_style_local_bg_grad_stop },
-    { "get_style_bg_grad_dir", lvbe_obj_get_style_bg_grad_dir },
-    { "set_style_local_bg_grad_dir", lvbe_obj_set_style_local_bg_grad_dir },
-    { "get_style_bg_color", lvbe_obj_get_style_bg_color },
-    { "set_style_local_bg_color", lvbe_obj_set_style_local_bg_color },
-    { "get_style_bg_grad_color", lvbe_obj_get_style_bg_grad_color },
-    { "set_style_local_bg_grad_color", lvbe_obj_set_style_local_bg_grad_color },
-    { "get_style_bg_opa", lvbe_obj_get_style_bg_opa },
-    { "set_style_local_bg_opa", lvbe_obj_set_style_local_bg_opa },
-    { "get_style_border_width", lvbe_obj_get_style_border_width },
-    { "set_style_local_border_width", lvbe_obj_set_style_local_border_width },
-    { "get_style_border_side", lvbe_obj_get_style_border_side },
-    { "set_style_local_border_side", lvbe_obj_set_style_local_border_side },
-    { "get_style_border_blend_mode", lvbe_obj_get_style_border_blend_mode },
-    { "set_style_local_border_blend_mode", lvbe_obj_set_style_local_border_blend_mode },
-    { "get_style_border_post", lvbe_obj_get_style_border_post },
-    { "set_style_local_border_post", lvbe_obj_set_style_local_border_post },
-    { "get_style_border_color", lvbe_obj_get_style_border_color },
-    { "set_style_local_border_color", lvbe_obj_set_style_local_border_color },
-    { "get_style_border_opa", lvbe_obj_get_style_border_opa },
-    { "set_style_local_border_opa", lvbe_obj_set_style_local_border_opa },
-    { "get_style_outline_width", lvbe_obj_get_style_outline_width },
-    { "set_style_local_outline_width", lvbe_obj_set_style_local_outline_width },
-    { "get_style_outline_pad", lvbe_obj_get_style_outline_pad },
-    { "set_style_local_outline_pad", lvbe_obj_set_style_local_outline_pad },
-    { "get_style_outline_blend_mode", lvbe_obj_get_style_outline_blend_mode },
-    { "set_style_local_outline_blend_mode", lvbe_obj_set_style_local_outline_blend_mode },
-    { "get_style_outline_color", lvbe_obj_get_style_outline_color },
-    { "set_style_local_outline_color", lvbe_obj_set_style_local_outline_color },
-    { "get_style_outline_opa", lvbe_obj_get_style_outline_opa },
-    { "set_style_local_outline_opa", lvbe_obj_set_style_local_outline_opa },
-    { "get_style_shadow_width", lvbe_obj_get_style_shadow_width },
-    { "set_style_local_shadow_width", lvbe_obj_set_style_local_shadow_width },
-    { "get_style_shadow_ofs_x", lvbe_obj_get_style_shadow_ofs_x },
-    { "set_style_local_shadow_ofs_x", lvbe_obj_set_style_local_shadow_ofs_x },
-    { "get_style_shadow_ofs_y", lvbe_obj_get_style_shadow_ofs_y },
-    { "set_style_local_shadow_ofs_y", lvbe_obj_set_style_local_shadow_ofs_y },
-    { "get_style_shadow_spread", lvbe_obj_get_style_shadow_spread },
-    { "set_style_local_shadow_spread", lvbe_obj_set_style_local_shadow_spread },
-    { "get_style_shadow_blend_mode", lvbe_obj_get_style_shadow_blend_mode },
-    { "set_style_local_shadow_blend_mode", lvbe_obj_set_style_local_shadow_blend_mode },
-    { "get_style_shadow_color", lvbe_obj_get_style_shadow_color },
-    { "set_style_local_shadow_color", lvbe_obj_set_style_local_shadow_color },
-    { "get_style_shadow_opa", lvbe_obj_get_style_shadow_opa },
-    { "set_style_local_shadow_opa", lvbe_obj_set_style_local_shadow_opa },
-    { "get_style_pattern_repeat", lvbe_obj_get_style_pattern_repeat },
-    { "set_style_local_pattern_repeat", lvbe_obj_set_style_local_pattern_repeat },
-    { "get_style_pattern_blend_mode", lvbe_obj_get_style_pattern_blend_mode },
-    { "set_style_local_pattern_blend_mode", lvbe_obj_set_style_local_pattern_blend_mode },
-    { "get_style_pattern_recolor", lvbe_obj_get_style_pattern_recolor },
-    { "set_style_local_pattern_recolor", lvbe_obj_set_style_local_pattern_recolor },
-    { "get_style_pattern_opa", lvbe_obj_get_style_pattern_opa },
-    { "set_style_local_pattern_opa", lvbe_obj_set_style_local_pattern_opa },
-    { "get_style_pattern_recolor_opa", lvbe_obj_get_style_pattern_recolor_opa },
-    { "set_style_local_pattern_recolor_opa", lvbe_obj_set_style_local_pattern_recolor_opa },
-    { "get_style_pattern_image", lvbe_obj_get_style_pattern_image },
-    { "set_style_local_pattern_image", lvbe_obj_set_style_local_pattern_image },
-    { "get_style_value_letter_space", lvbe_obj_get_style_value_letter_space },
-    { "set_style_local_value_letter_space", lvbe_obj_set_style_local_value_letter_space },
-    { "get_style_value_line_space", lvbe_obj_get_style_value_line_space },
-    { "set_style_local_value_line_space", lvbe_obj_set_style_local_value_line_space },
-    { "get_style_value_blend_mode", lvbe_obj_get_style_value_blend_mode },
-    { "set_style_local_value_blend_mode", lvbe_obj_set_style_local_value_blend_mode },
-    { "get_style_value_ofs_x", lvbe_obj_get_style_value_ofs_x },
-    { "set_style_local_value_ofs_x", lvbe_obj_set_style_local_value_ofs_x },
-    { "get_style_value_ofs_y", lvbe_obj_get_style_value_ofs_y },
-    { "set_style_local_value_ofs_y", lvbe_obj_set_style_local_value_ofs_y },
-    { "get_style_value_align", lvbe_obj_get_style_value_align },
-    { "set_style_local_value_align", lvbe_obj_set_style_local_value_align },
-    { "get_style_value_color", lvbe_obj_get_style_value_color },
-    { "set_style_local_value_color", lvbe_obj_set_style_local_value_color },
-    { "get_style_value_opa", lvbe_obj_get_style_value_opa },
-    { "set_style_local_value_opa", lvbe_obj_set_style_local_value_opa },
-    { "set_style_local_value_font", lvbe_obj_set_style_local_value_font },
-    { "get_style_value_str", lvbe_obj_get_style_value_str },
-    { "set_style_local_value_str", lvbe_obj_set_style_local_value_str },
-    { "get_style_text_letter_space", lvbe_obj_get_style_text_letter_space },
-    { "set_style_local_text_letter_space", lvbe_obj_set_style_local_text_letter_space },
-    { "get_style_text_line_space", lvbe_obj_get_style_text_line_space },
-    { "set_style_local_text_line_space", lvbe_obj_set_style_local_text_line_space },
-    { "set_style_local_text_decor", lvbe_obj_set_style_local_text_decor },
-    { "get_style_text_blend_mode", lvbe_obj_get_style_text_blend_mode },
-    { "set_style_local_text_blend_mode", lvbe_obj_set_style_local_text_blend_mode },
-    { "get_style_text_color", lvbe_obj_get_style_text_color },
-    { "set_style_local_text_color", lvbe_obj_set_style_local_text_color },
-    { "get_style_text_sel_color", lvbe_obj_get_style_text_sel_color },
-    { "set_style_local_text_sel_color", lvbe_obj_set_style_local_text_sel_color },
-    { "get_style_text_sel_bg_color", lvbe_obj_get_style_text_sel_bg_color },
-    { "set_style_local_text_sel_bg_color", lvbe_obj_set_style_local_text_sel_bg_color },
-    { "get_style_text_opa", lvbe_obj_get_style_text_opa },
-    { "set_style_local_text_opa", lvbe_obj_set_style_local_text_opa },
-    { "set_style_local_text_font", lvbe_obj_set_style_local_text_font },
-    { "get_style_line_width", lvbe_obj_get_style_line_width },
-    { "set_style_local_line_width", lvbe_obj_set_style_local_line_width },
-    { "get_style_line_blend_mode", lvbe_obj_get_style_line_blend_mode },
-    { "set_style_local_line_blend_mode", lvbe_obj_set_style_local_line_blend_mode },
-    { "get_style_line_dash_width", lvbe_obj_get_style_line_dash_width },
-    { "set_style_local_line_dash_width", lvbe_obj_set_style_local_line_dash_width },
-    { "get_style_line_dash_gap", lvbe_obj_get_style_line_dash_gap },
-    { "set_style_local_line_dash_gap", lvbe_obj_set_style_local_line_dash_gap },
-    { "get_style_line_rounded", lvbe_obj_get_style_line_rounded },
-    { "set_style_local_line_rounded", lvbe_obj_set_style_local_line_rounded },
-    { "get_style_line_color", lvbe_obj_get_style_line_color },
-    { "set_style_local_line_color", lvbe_obj_set_style_local_line_color },
-    { "get_style_line_opa", lvbe_obj_get_style_line_opa },
-    { "set_style_local_line_opa", lvbe_obj_set_style_local_line_opa },
-    { "get_style_image_blend_mode", lvbe_obj_get_style_image_blend_mode },
-    { "set_style_local_image_blend_mode", lvbe_obj_set_style_local_image_blend_mode },
-    { "get_style_image_recolor", lvbe_obj_get_style_image_recolor },
-    { "set_style_local_image_recolor", lvbe_obj_set_style_local_image_recolor },
-    { "get_style_image_opa", lvbe_obj_get_style_image_opa },
-    { "set_style_local_image_opa", lvbe_obj_set_style_local_image_opa },
-    { "get_style_image_recolor_opa", lvbe_obj_get_style_image_recolor_opa },
-    { "set_style_local_image_recolor_opa", lvbe_obj_set_style_local_image_recolor_opa },
-    { "get_style_transition_time", lvbe_obj_get_style_transition_time },
-    { "set_style_local_transition_time", lvbe_obj_set_style_local_transition_time },
-    { "get_style_transition_delay", lvbe_obj_get_style_transition_delay },
-    { "set_style_local_transition_delay", lvbe_obj_set_style_local_transition_delay },
-    { "get_style_transition_prop_1", lvbe_obj_get_style_transition_prop_1 },
-    { "set_style_local_transition_prop_1", lvbe_obj_set_style_local_transition_prop_1 },
-    { "get_style_transition_prop_2", lvbe_obj_get_style_transition_prop_2 },
-    { "set_style_local_transition_prop_2", lvbe_obj_set_style_local_transition_prop_2 },
-    { "get_style_transition_prop_3", lvbe_obj_get_style_transition_prop_3 },
-    { "set_style_local_transition_prop_3", lvbe_obj_set_style_local_transition_prop_3 },
-    { "get_style_transition_prop_4", lvbe_obj_get_style_transition_prop_4 },
-    { "set_style_local_transition_prop_4", lvbe_obj_set_style_local_transition_prop_4 },
-    { "get_style_transition_prop_5", lvbe_obj_get_style_transition_prop_5 },
-    { "set_style_local_transition_prop_5", lvbe_obj_set_style_local_transition_prop_5 },
-    { "get_style_transition_prop_6", lvbe_obj_get_style_transition_prop_6 },
-    { "set_style_local_transition_prop_6", lvbe_obj_set_style_local_transition_prop_6 },
-    { "set_style_local_transition_path", lvbe_obj_set_style_local_transition_path },
-    { "get_style_scale_width", lvbe_obj_get_style_scale_width },
-    { "set_style_local_scale_width", lvbe_obj_set_style_local_scale_width },
-    { "get_style_scale_border_width", lvbe_obj_get_style_scale_border_width },
-    { "set_style_local_scale_border_width", lvbe_obj_set_style_local_scale_border_width },
-    { "get_style_scale_end_border_width", lvbe_obj_get_style_scale_end_border_width },
-    { "set_style_local_scale_end_border_width", lvbe_obj_set_style_local_scale_end_border_width },
-    { "get_style_scale_end_line_width", lvbe_obj_get_style_scale_end_line_width },
-    { "set_style_local_scale_end_line_width", lvbe_obj_set_style_local_scale_end_line_width },
-    { "get_style_scale_grad_color", lvbe_obj_get_style_scale_grad_color },
-    { "set_style_local_scale_grad_color", lvbe_obj_set_style_local_scale_grad_color },
-    { "get_style_scale_end_color", lvbe_obj_get_style_scale_end_color },
-    { "set_style_local_scale_end_color", lvbe_obj_set_style_local_scale_end_color },
 
     // { NULL, (bntvfunc) BE_CLOSURE }, /* mark section for berry closures */
 
@@ -1856,306 +1274,8 @@ class be_class_lv_obj (scope: global, name: lv_obj) {
     .p, var
     init, func(lvbe_obj_create)
     tostring, func(lvx_tostring)
-    create, func(lvbe_obj_create)
-    del, func(lvbe_obj_del)
-    del_anim_ready_cb, func(lvbe_obj_del_anim_ready_cb)
-    del_async, func(lvbe_obj_del_async)
-    clean, func(lvbe_obj_clean)
-    invalidate_area, func(lvbe_obj_invalidate_area)
-    invalidate, func(lvbe_obj_invalidate)
-    area_is_visible, func(lvbe_obj_area_is_visible)
-    is_visible, func(lvbe_obj_is_visible)
-    set_parent, func(lvbe_obj_set_parent)
-    move_foreground, func(lvbe_obj_move_foreground)
-    move_background, func(lvbe_obj_move_background)
-    set_pos, func(lvbe_obj_set_pos)
-    set_x, func(lvbe_obj_set_x)
-    set_y, func(lvbe_obj_set_y)
-    set_size, func(lvbe_obj_set_size)
-    set_width, func(lvbe_obj_set_width)
-    set_height, func(lvbe_obj_set_height)
-    set_width_fit, func(lvbe_obj_set_width_fit)
-    set_height_fit, func(lvbe_obj_set_height_fit)
-    set_width_margin, func(lvbe_obj_set_width_margin)
-    set_height_margin, func(lvbe_obj_set_height_margin)
-    align, func(lvbe_obj_align)
-    align_x, func(lvbe_obj_align_x)
-    align_y, func(lvbe_obj_align_y)
-    align_mid, func(lvbe_obj_align_mid)
-    align_mid_x, func(lvbe_obj_align_mid_x)
-    align_mid_y, func(lvbe_obj_align_mid_y)
-    realign, func(lvbe_obj_realign)
-    set_auto_realign, func(lvbe_obj_set_auto_realign)
-    set_ext_click_area, func(lvbe_obj_set_ext_click_area)
-    add_style, func(lvbe_obj_add_style)
-    remove_style, func(lvbe_obj_remove_style)
-    clean_style_list, func(lvbe_obj_clean_style_list)
-    reset_style_list, func(lvbe_obj_reset_style_list)
-    refresh_style, func(lvbe_obj_refresh_style)
-    report_style_mod, func(lvbe_obj_report_style_mod)
-    remove_style_local_prop, func(lvbe_obj_remove_style_local_prop)
-    set_hidden, func(lvbe_obj_set_hidden)
-    set_adv_hittest, func(lvbe_obj_set_adv_hittest)
-    set_click, func(lvbe_obj_set_click)
-    set_top, func(lvbe_obj_set_top)
-    set_drag, func(lvbe_obj_set_drag)
-    set_drag_dir, func(lvbe_obj_set_drag_dir)
-    set_drag_throw, func(lvbe_obj_set_drag_throw)
-    set_drag_parent, func(lvbe_obj_set_drag_parent)
-    set_focus_parent, func(lvbe_obj_set_focus_parent)
-    set_gesture_parent, func(lvbe_obj_set_gesture_parent)
-    set_parent_event, func(lvbe_obj_set_parent_event)
-    set_base_dir, func(lvbe_obj_set_base_dir)
-    add_protect, func(lvbe_obj_add_protect)
-    clear_protect, func(lvbe_obj_clear_protect)
-    set_state, func(lvbe_obj_set_state)
-    add_state, func(lvbe_obj_add_state)
-    clear_state, func(lvbe_obj_clear_state)
-    finish_transitions, func(lvbe_obj_finish_transitions)
-    set_event_cb, func(lvbe_obj_set_event_cb)
-    set_signal_cb, func(lvbe_obj_set_signal_cb)
-    set_design_cb, func(lvbe_obj_set_design_cb)
-    allocate_ext_attr, func(lvbe_obj_allocate_ext_attr)
-    refresh_ext_draw_pad, func(lvbe_obj_refresh_ext_draw_pad)
-    get_screen, func(lvbe_obj_get_screen)
-    get_parent, func(lvbe_obj_get_parent)
-    get_child, func(lvbe_obj_get_child)
-    get_child_back, func(lvbe_obj_get_child_back)
-    count_children, func(lvbe_obj_count_children)
-    count_children_recursive, func(lvbe_obj_count_children_recursive)
-    get_coords, func(lvbe_obj_get_coords)
-    get_inner_coords, func(lvbe_obj_get_inner_coords)
-    get_x, func(lvbe_obj_get_x)
-    get_y, func(lvbe_obj_get_y)
-    get_width, func(lvbe_obj_get_width)
-    get_height, func(lvbe_obj_get_height)
-    get_width_fit, func(lvbe_obj_get_width_fit)
-    get_height_fit, func(lvbe_obj_get_height_fit)
-    get_height_margin, func(lvbe_obj_get_height_margin)
-    get_width_margin, func(lvbe_obj_get_width_margin)
-    get_width_grid, func(lvbe_obj_get_width_grid)
-    get_height_grid, func(lvbe_obj_get_height_grid)
-    get_auto_realign, func(lvbe_obj_get_auto_realign)
-    get_ext_click_pad_left, func(lvbe_obj_get_ext_click_pad_left)
-    get_ext_click_pad_right, func(lvbe_obj_get_ext_click_pad_right)
-    get_ext_click_pad_top, func(lvbe_obj_get_ext_click_pad_top)
-    get_ext_click_pad_bottom, func(lvbe_obj_get_ext_click_pad_bottom)
-    get_ext_draw_pad, func(lvbe_obj_get_ext_draw_pad)
-    get_local_style, func(lvbe_obj_get_local_style)
-    get_hidden, func(lvbe_obj_get_hidden)
-    get_adv_hittest, func(lvbe_obj_get_adv_hittest)
-    get_click, func(lvbe_obj_get_click)
-    get_top, func(lvbe_obj_get_top)
-    get_drag, func(lvbe_obj_get_drag)
-    get_drag_dir, func(lvbe_obj_get_drag_dir)
-    get_drag_throw, func(lvbe_obj_get_drag_throw)
-    get_drag_parent, func(lvbe_obj_get_drag_parent)
-    get_focus_parent, func(lvbe_obj_get_focus_parent)
-    get_parent_event, func(lvbe_obj_get_parent_event)
-    get_gesture_parent, func(lvbe_obj_get_gesture_parent)
-    get_base_dir, func(lvbe_obj_get_base_dir)
-    get_protect, func(lvbe_obj_get_protect)
-    is_protected, func(lvbe_obj_is_protected)
-    get_state, func(lvbe_obj_get_state)
-    is_point_on_coords, func(lvbe_obj_is_point_on_coords)
-    hittest, func(lvbe_obj_hittest)
-    get_ext_attr, func(lvbe_obj_get_ext_attr)
-    get_type, func(lvbe_obj_get_type)
-    get_user_data, func(lvbe_obj_get_user_data)
-    set_user_data, func(lvbe_obj_set_user_data)
-    get_group, func(lvbe_obj_get_group)
-    is_focused, func(lvbe_obj_is_focused)
-    get_focused_obj, func(lvbe_obj_get_focused_obj)
-    handle_get_type_signal, func(lvbe_obj_handle_get_type_signal)
-    init_draw_rect_dsc, func(lvbe_obj_init_draw_rect_dsc)
-    init_draw_label_dsc, func(lvbe_obj_init_draw_label_dsc)
-    init_draw_img_dsc, func(lvbe_obj_init_draw_img_dsc)
-    init_draw_line_dsc, func(lvbe_obj_init_draw_line_dsc)
-    get_draw_rect_ext_pad_size, func(lvbe_obj_get_draw_rect_ext_pad_size)
-    fade_in, func(lvbe_obj_fade_in)
-    fade_out, func(lvbe_obj_fade_out)
-    get_style_radius, func(lvbe_obj_get_style_radius)
-    set_style_local_radius, func(lvbe_obj_set_style_local_radius)
-    get_style_clip_corner, func(lvbe_obj_get_style_clip_corner)
-    set_style_local_clip_corner, func(lvbe_obj_set_style_local_clip_corner)
-    get_style_size, func(lvbe_obj_get_style_size)
-    set_style_local_size, func(lvbe_obj_set_style_local_size)
-    get_style_transform_width, func(lvbe_obj_get_style_transform_width)
-    set_style_local_transform_width, func(lvbe_obj_set_style_local_transform_width)
-    get_style_transform_height, func(lvbe_obj_get_style_transform_height)
-    set_style_local_transform_height, func(lvbe_obj_set_style_local_transform_height)
-    get_style_transform_angle, func(lvbe_obj_get_style_transform_angle)
-    set_style_local_transform_angle, func(lvbe_obj_set_style_local_transform_angle)
-    get_style_transform_zoom, func(lvbe_obj_get_style_transform_zoom)
-    set_style_local_transform_zoom, func(lvbe_obj_set_style_local_transform_zoom)
-    get_style_opa_scale, func(lvbe_obj_get_style_opa_scale)
-    set_style_local_opa_scale, func(lvbe_obj_set_style_local_opa_scale)
-    get_style_pad_top, func(lvbe_obj_get_style_pad_top)
-    set_style_local_pad_top, func(lvbe_obj_set_style_local_pad_top)
-    get_style_pad_bottom, func(lvbe_obj_get_style_pad_bottom)
-    set_style_local_pad_bottom, func(lvbe_obj_set_style_local_pad_bottom)
-    get_style_pad_left, func(lvbe_obj_get_style_pad_left)
-    set_style_local_pad_left, func(lvbe_obj_set_style_local_pad_left)
-    get_style_pad_right, func(lvbe_obj_get_style_pad_right)
-    set_style_local_pad_right, func(lvbe_obj_set_style_local_pad_right)
-    get_style_pad_inner, func(lvbe_obj_get_style_pad_inner)
-    set_style_local_pad_inner, func(lvbe_obj_set_style_local_pad_inner)
-    get_style_margin_top, func(lvbe_obj_get_style_margin_top)
-    set_style_local_margin_top, func(lvbe_obj_set_style_local_margin_top)
-    get_style_margin_bottom, func(lvbe_obj_get_style_margin_bottom)
-    set_style_local_margin_bottom, func(lvbe_obj_set_style_local_margin_bottom)
-    get_style_margin_left, func(lvbe_obj_get_style_margin_left)
-    set_style_local_margin_left, func(lvbe_obj_set_style_local_margin_left)
-    get_style_margin_right, func(lvbe_obj_get_style_margin_right)
-    set_style_local_margin_right, func(lvbe_obj_set_style_local_margin_right)
-    get_style_bg_blend_mode, func(lvbe_obj_get_style_bg_blend_mode)
-    set_style_local_bg_blend_mode, func(lvbe_obj_set_style_local_bg_blend_mode)
-    get_style_bg_main_stop, func(lvbe_obj_get_style_bg_main_stop)
-    set_style_local_bg_main_stop, func(lvbe_obj_set_style_local_bg_main_stop)
-    get_style_bg_grad_stop, func(lvbe_obj_get_style_bg_grad_stop)
-    set_style_local_bg_grad_stop, func(lvbe_obj_set_style_local_bg_grad_stop)
-    get_style_bg_grad_dir, func(lvbe_obj_get_style_bg_grad_dir)
-    set_style_local_bg_grad_dir, func(lvbe_obj_set_style_local_bg_grad_dir)
-    get_style_bg_color, func(lvbe_obj_get_style_bg_color)
-    set_style_local_bg_color, func(lvbe_obj_set_style_local_bg_color)
-    get_style_bg_grad_color, func(lvbe_obj_get_style_bg_grad_color)
-    set_style_local_bg_grad_color, func(lvbe_obj_set_style_local_bg_grad_color)
-    get_style_bg_opa, func(lvbe_obj_get_style_bg_opa)
-    set_style_local_bg_opa, func(lvbe_obj_set_style_local_bg_opa)
-    get_style_border_width, func(lvbe_obj_get_style_border_width)
-    set_style_local_border_width, func(lvbe_obj_set_style_local_border_width)
-    get_style_border_side, func(lvbe_obj_get_style_border_side)
-    set_style_local_border_side, func(lvbe_obj_set_style_local_border_side)
-    get_style_border_blend_mode, func(lvbe_obj_get_style_border_blend_mode)
-    set_style_local_border_blend_mode, func(lvbe_obj_set_style_local_border_blend_mode)
-    get_style_border_post, func(lvbe_obj_get_style_border_post)
-    set_style_local_border_post, func(lvbe_obj_set_style_local_border_post)
-    get_style_border_color, func(lvbe_obj_get_style_border_color)
-    set_style_local_border_color, func(lvbe_obj_set_style_local_border_color)
-    get_style_border_opa, func(lvbe_obj_get_style_border_opa)
-    set_style_local_border_opa, func(lvbe_obj_set_style_local_border_opa)
-    get_style_outline_width, func(lvbe_obj_get_style_outline_width)
-    set_style_local_outline_width, func(lvbe_obj_set_style_local_outline_width)
-    get_style_outline_pad, func(lvbe_obj_get_style_outline_pad)
-    set_style_local_outline_pad, func(lvbe_obj_set_style_local_outline_pad)
-    get_style_outline_blend_mode, func(lvbe_obj_get_style_outline_blend_mode)
-    set_style_local_outline_blend_mode, func(lvbe_obj_set_style_local_outline_blend_mode)
-    get_style_outline_color, func(lvbe_obj_get_style_outline_color)
-    set_style_local_outline_color, func(lvbe_obj_set_style_local_outline_color)
-    get_style_outline_opa, func(lvbe_obj_get_style_outline_opa)
-    set_style_local_outline_opa, func(lvbe_obj_set_style_local_outline_opa)
-    get_style_shadow_width, func(lvbe_obj_get_style_shadow_width)
-    set_style_local_shadow_width, func(lvbe_obj_set_style_local_shadow_width)
-    get_style_shadow_ofs_x, func(lvbe_obj_get_style_shadow_ofs_x)
-    set_style_local_shadow_ofs_x, func(lvbe_obj_set_style_local_shadow_ofs_x)
-    get_style_shadow_ofs_y, func(lvbe_obj_get_style_shadow_ofs_y)
-    set_style_local_shadow_ofs_y, func(lvbe_obj_set_style_local_shadow_ofs_y)
-    get_style_shadow_spread, func(lvbe_obj_get_style_shadow_spread)
-    set_style_local_shadow_spread, func(lvbe_obj_set_style_local_shadow_spread)
-    get_style_shadow_blend_mode, func(lvbe_obj_get_style_shadow_blend_mode)
-    set_style_local_shadow_blend_mode, func(lvbe_obj_set_style_local_shadow_blend_mode)
-    get_style_shadow_color, func(lvbe_obj_get_style_shadow_color)
-    set_style_local_shadow_color, func(lvbe_obj_set_style_local_shadow_color)
-    get_style_shadow_opa, func(lvbe_obj_get_style_shadow_opa)
-    set_style_local_shadow_opa, func(lvbe_obj_set_style_local_shadow_opa)
-    get_style_pattern_repeat, func(lvbe_obj_get_style_pattern_repeat)
-    set_style_local_pattern_repeat, func(lvbe_obj_set_style_local_pattern_repeat)
-    get_style_pattern_blend_mode, func(lvbe_obj_get_style_pattern_blend_mode)
-    set_style_local_pattern_blend_mode, func(lvbe_obj_set_style_local_pattern_blend_mode)
-    get_style_pattern_recolor, func(lvbe_obj_get_style_pattern_recolor)
-    set_style_local_pattern_recolor, func(lvbe_obj_set_style_local_pattern_recolor)
-    get_style_pattern_opa, func(lvbe_obj_get_style_pattern_opa)
-    set_style_local_pattern_opa, func(lvbe_obj_set_style_local_pattern_opa)
-    get_style_pattern_recolor_opa, func(lvbe_obj_get_style_pattern_recolor_opa)
-    set_style_local_pattern_recolor_opa, func(lvbe_obj_set_style_local_pattern_recolor_opa)
-    get_style_pattern_image, func(lvbe_obj_get_style_pattern_image)
-    set_style_local_pattern_image, func(lvbe_obj_set_style_local_pattern_image)
-    get_style_value_letter_space, func(lvbe_obj_get_style_value_letter_space)
-    set_style_local_value_letter_space, func(lvbe_obj_set_style_local_value_letter_space)
-    get_style_value_line_space, func(lvbe_obj_get_style_value_line_space)
-    set_style_local_value_line_space, func(lvbe_obj_set_style_local_value_line_space)
-    get_style_value_blend_mode, func(lvbe_obj_get_style_value_blend_mode)
-    set_style_local_value_blend_mode, func(lvbe_obj_set_style_local_value_blend_mode)
-    get_style_value_ofs_x, func(lvbe_obj_get_style_value_ofs_x)
-    set_style_local_value_ofs_x, func(lvbe_obj_set_style_local_value_ofs_x)
-    get_style_value_ofs_y, func(lvbe_obj_get_style_value_ofs_y)
-    set_style_local_value_ofs_y, func(lvbe_obj_set_style_local_value_ofs_y)
-    get_style_value_align, func(lvbe_obj_get_style_value_align)
-    set_style_local_value_align, func(lvbe_obj_set_style_local_value_align)
-    get_style_value_color, func(lvbe_obj_get_style_value_color)
-    set_style_local_value_color, func(lvbe_obj_set_style_local_value_color)
-    get_style_value_opa, func(lvbe_obj_get_style_value_opa)
-    set_style_local_value_opa, func(lvbe_obj_set_style_local_value_opa)
-    set_style_local_value_font, func(lvbe_obj_set_style_local_value_font)
-    get_style_value_str, func(lvbe_obj_get_style_value_str)
-    set_style_local_value_str, func(lvbe_obj_set_style_local_value_str)
-    get_style_text_letter_space, func(lvbe_obj_get_style_text_letter_space)
-    set_style_local_text_letter_space, func(lvbe_obj_set_style_local_text_letter_space)
-    get_style_text_line_space, func(lvbe_obj_get_style_text_line_space)
-    set_style_local_text_line_space, func(lvbe_obj_set_style_local_text_line_space)
-    set_style_local_text_decor, func(lvbe_obj_set_style_local_text_decor)
-    get_style_text_blend_mode, func(lvbe_obj_get_style_text_blend_mode)
-    set_style_local_text_blend_mode, func(lvbe_obj_set_style_local_text_blend_mode)
-    get_style_text_color, func(lvbe_obj_get_style_text_color)
-    set_style_local_text_color, func(lvbe_obj_set_style_local_text_color)
-    get_style_text_sel_color, func(lvbe_obj_get_style_text_sel_color)
-    set_style_local_text_sel_color, func(lvbe_obj_set_style_local_text_sel_color)
-    get_style_text_sel_bg_color, func(lvbe_obj_get_style_text_sel_bg_color)
-    set_style_local_text_sel_bg_color, func(lvbe_obj_set_style_local_text_sel_bg_color)
-    get_style_text_opa, func(lvbe_obj_get_style_text_opa)
-    set_style_local_text_opa, func(lvbe_obj_set_style_local_text_opa)
-    set_style_local_text_font, func(lvbe_obj_set_style_local_text_font)
-    get_style_line_width, func(lvbe_obj_get_style_line_width)
-    set_style_local_line_width, func(lvbe_obj_set_style_local_line_width)
-    get_style_line_blend_mode, func(lvbe_obj_get_style_line_blend_mode)
-    set_style_local_line_blend_mode, func(lvbe_obj_set_style_local_line_blend_mode)
-    get_style_line_dash_width, func(lvbe_obj_get_style_line_dash_width)
-    set_style_local_line_dash_width, func(lvbe_obj_set_style_local_line_dash_width)
-    get_style_line_dash_gap, func(lvbe_obj_get_style_line_dash_gap)
-    set_style_local_line_dash_gap, func(lvbe_obj_set_style_local_line_dash_gap)
-    get_style_line_rounded, func(lvbe_obj_get_style_line_rounded)
-    set_style_local_line_rounded, func(lvbe_obj_set_style_local_line_rounded)
-    get_style_line_color, func(lvbe_obj_get_style_line_color)
-    set_style_local_line_color, func(lvbe_obj_set_style_local_line_color)
-    get_style_line_opa, func(lvbe_obj_get_style_line_opa)
-    set_style_local_line_opa, func(lvbe_obj_set_style_local_line_opa)
-    get_style_image_blend_mode, func(lvbe_obj_get_style_image_blend_mode)
-    set_style_local_image_blend_mode, func(lvbe_obj_set_style_local_image_blend_mode)
-    get_style_image_recolor, func(lvbe_obj_get_style_image_recolor)
-    set_style_local_image_recolor, func(lvbe_obj_set_style_local_image_recolor)
-    get_style_image_opa, func(lvbe_obj_get_style_image_opa)
-    set_style_local_image_opa, func(lvbe_obj_set_style_local_image_opa)
-    get_style_image_recolor_opa, func(lvbe_obj_get_style_image_recolor_opa)
-    set_style_local_image_recolor_opa, func(lvbe_obj_set_style_local_image_recolor_opa)
-    get_style_transition_time, func(lvbe_obj_get_style_transition_time)
-    set_style_local_transition_time, func(lvbe_obj_set_style_local_transition_time)
-    get_style_transition_delay, func(lvbe_obj_get_style_transition_delay)
-    set_style_local_transition_delay, func(lvbe_obj_set_style_local_transition_delay)
-    get_style_transition_prop_1, func(lvbe_obj_get_style_transition_prop_1)
-    set_style_local_transition_prop_1, func(lvbe_obj_set_style_local_transition_prop_1)
-    get_style_transition_prop_2, func(lvbe_obj_get_style_transition_prop_2)
-    set_style_local_transition_prop_2, func(lvbe_obj_set_style_local_transition_prop_2)
-    get_style_transition_prop_3, func(lvbe_obj_get_style_transition_prop_3)
-    set_style_local_transition_prop_3, func(lvbe_obj_set_style_local_transition_prop_3)
-    get_style_transition_prop_4, func(lvbe_obj_get_style_transition_prop_4)
-    set_style_local_transition_prop_4, func(lvbe_obj_set_style_local_transition_prop_4)
-    get_style_transition_prop_5, func(lvbe_obj_get_style_transition_prop_5)
-    set_style_local_transition_prop_5, func(lvbe_obj_set_style_local_transition_prop_5)
-    get_style_transition_prop_6, func(lvbe_obj_get_style_transition_prop_6)
-    set_style_local_transition_prop_6, func(lvbe_obj_set_style_local_transition_prop_6)
-    set_style_local_transition_path, func(lvbe_obj_set_style_local_transition_path)
-    get_style_scale_width, func(lvbe_obj_get_style_scale_width)
-    set_style_local_scale_width, func(lvbe_obj_set_style_local_scale_width)
-    get_style_scale_border_width, func(lvbe_obj_get_style_scale_border_width)
-    set_style_local_scale_border_width, func(lvbe_obj_set_style_local_scale_border_width)
-    get_style_scale_end_border_width, func(lvbe_obj_get_style_scale_end_border_width)
-    set_style_local_scale_end_border_width, func(lvbe_obj_set_style_local_scale_end_border_width)
-    get_style_scale_end_line_width, func(lvbe_obj_get_style_scale_end_line_width)
-    set_style_local_scale_end_line_width, func(lvbe_obj_set_style_local_scale_end_line_width)
-    get_style_scale_grad_color, func(lvbe_obj_get_style_scale_grad_color)
-    set_style_local_scale_grad_color, func(lvbe_obj_set_style_local_scale_grad_color)
-    get_style_scale_end_color, func(lvbe_obj_get_style_scale_end_color)
-    set_style_local_scale_end_color, func(lvbe_obj_set_style_local_scale_end_color)
+    member, func(lvx_member)
+
 }
 @const_object_info_end */
 
@@ -2165,30 +1285,8 @@ void be_load_lv_arc_lib(bvm *vm) {
     { ".p", NULL },
     { "init", lvbe_arc_create },
     { "tostring", lvx_tostring },
+    { "member", lvx_member },
 
-    { "create", lvbe_arc_create },
-    { "set_start_angle", lvbe_arc_set_start_angle },
-    { "set_end_angle", lvbe_arc_set_end_angle },
-    { "set_angles", lvbe_arc_set_angles },
-    { "set_bg_start_angle", lvbe_arc_set_bg_start_angle },
-    { "set_bg_end_angle", lvbe_arc_set_bg_end_angle },
-    { "set_bg_angles", lvbe_arc_set_bg_angles },
-    { "set_rotation", lvbe_arc_set_rotation },
-    { "set_type", lvbe_arc_set_type },
-    { "set_value", lvbe_arc_set_value },
-    { "set_range", lvbe_arc_set_range },
-    { "set_chg_rate", lvbe_arc_set_chg_rate },
-    { "set_adjustable", lvbe_arc_set_adjustable },
-    { "get_angle_start", lvbe_arc_get_angle_start },
-    { "get_angle_end", lvbe_arc_get_angle_end },
-    { "get_bg_angle_start", lvbe_arc_get_bg_angle_start },
-    { "get_bg_angle_end", lvbe_arc_get_bg_angle_end },
-    { "get_type", lvbe_arc_get_type },
-    { "get_value", lvbe_arc_get_value },
-    { "get_min_value", lvbe_arc_get_min_value },
-    { "get_max_value", lvbe_arc_get_max_value },
-    { "is_dragged", lvbe_arc_is_dragged },
-    { "get_adjustable", lvbe_arc_get_adjustable },
 
     // { NULL, (bntvfunc) BE_CLOSURE }, /* mark section for berry closures */
 
@@ -2212,29 +1310,8 @@ class be_class_lv_arc (scope: global, name: lv_arc, super: be_class_lv_obj) {
     .p, var
     init, func(lvbe_arc_create)
     tostring, func(lvx_tostring)
-    create, func(lvbe_arc_create)
-    set_start_angle, func(lvbe_arc_set_start_angle)
-    set_end_angle, func(lvbe_arc_set_end_angle)
-    set_angles, func(lvbe_arc_set_angles)
-    set_bg_start_angle, func(lvbe_arc_set_bg_start_angle)
-    set_bg_end_angle, func(lvbe_arc_set_bg_end_angle)
-    set_bg_angles, func(lvbe_arc_set_bg_angles)
-    set_rotation, func(lvbe_arc_set_rotation)
-    set_type, func(lvbe_arc_set_type)
-    set_value, func(lvbe_arc_set_value)
-    set_range, func(lvbe_arc_set_range)
-    set_chg_rate, func(lvbe_arc_set_chg_rate)
-    set_adjustable, func(lvbe_arc_set_adjustable)
-    get_angle_start, func(lvbe_arc_get_angle_start)
-    get_angle_end, func(lvbe_arc_get_angle_end)
-    get_bg_angle_start, func(lvbe_arc_get_bg_angle_start)
-    get_bg_angle_end, func(lvbe_arc_get_bg_angle_end)
-    get_type, func(lvbe_arc_get_type)
-    get_value, func(lvbe_arc_get_value)
-    get_min_value, func(lvbe_arc_get_min_value)
-    get_max_value, func(lvbe_arc_get_max_value)
-    is_dragged, func(lvbe_arc_is_dragged)
-    get_adjustable, func(lvbe_arc_get_adjustable)
+    member, func(lvx_member)
+
 }
 @const_object_info_end */
 
@@ -2244,19 +1321,8 @@ void be_load_lv_bar_lib(bvm *vm) {
     { ".p", NULL },
     { "init", lvbe_bar_create },
     { "tostring", lvx_tostring },
+    { "member", lvx_member },
 
-    { "create", lvbe_bar_create },
-    { "set_value", lvbe_bar_set_value },
-    { "set_start_value", lvbe_bar_set_start_value },
-    { "set_range", lvbe_bar_set_range },
-    { "set_type", lvbe_bar_set_type },
-    { "set_anim_time", lvbe_bar_set_anim_time },
-    { "get_value", lvbe_bar_get_value },
-    { "get_start_value", lvbe_bar_get_start_value },
-    { "get_min_value", lvbe_bar_get_min_value },
-    { "get_max_value", lvbe_bar_get_max_value },
-    { "get_type", lvbe_bar_get_type },
-    { "get_anim_time", lvbe_bar_get_anim_time },
 
     // { NULL, (bntvfunc) BE_CLOSURE }, /* mark section for berry closures */
 
@@ -2280,18 +1346,8 @@ class be_class_lv_bar (scope: global, name: lv_bar, super: be_class_lv_obj) {
     .p, var
     init, func(lvbe_bar_create)
     tostring, func(lvx_tostring)
-    create, func(lvbe_bar_create)
-    set_value, func(lvbe_bar_set_value)
-    set_start_value, func(lvbe_bar_set_start_value)
-    set_range, func(lvbe_bar_set_range)
-    set_type, func(lvbe_bar_set_type)
-    set_anim_time, func(lvbe_bar_set_anim_time)
-    get_value, func(lvbe_bar_get_value)
-    get_start_value, func(lvbe_bar_get_start_value)
-    get_min_value, func(lvbe_bar_get_min_value)
-    get_max_value, func(lvbe_bar_get_max_value)
-    get_type, func(lvbe_bar_get_type)
-    get_anim_time, func(lvbe_bar_get_anim_time)
+    member, func(lvx_member)
+
 }
 @const_object_info_end */
 
@@ -2301,22 +1357,8 @@ void be_load_lv_btn_lib(bvm *vm) {
     { ".p", NULL },
     { "init", lvbe_btn_create },
     { "tostring", lvx_tostring },
+    { "member", lvx_member },
 
-    { "create", lvbe_btn_create },
-    { "set_checkable", lvbe_btn_set_checkable },
-    { "set_state", lvbe_btn_set_state },
-    { "toggle", lvbe_btn_toggle },
-    { "set_layout", lvbe_btn_set_layout },
-    { "set_fit4", lvbe_btn_set_fit4 },
-    { "set_fit2", lvbe_btn_set_fit2 },
-    { "set_fit", lvbe_btn_set_fit },
-    { "get_state", lvbe_btn_get_state },
-    { "get_checkable", lvbe_btn_get_checkable },
-    { "get_layout", lvbe_btn_get_layout },
-    { "get_fit_left", lvbe_btn_get_fit_left },
-    { "get_fit_right", lvbe_btn_get_fit_right },
-    { "get_fit_top", lvbe_btn_get_fit_top },
-    { "get_fit_bottom", lvbe_btn_get_fit_bottom },
 
     // { NULL, (bntvfunc) BE_CLOSURE }, /* mark section for berry closures */
 
@@ -2340,21 +1382,8 @@ class be_class_lv_btn (scope: global, name: lv_btn, super: be_class_lv_obj) {
     .p, var
     init, func(lvbe_btn_create)
     tostring, func(lvx_tostring)
-    create, func(lvbe_btn_create)
-    set_checkable, func(lvbe_btn_set_checkable)
-    set_state, func(lvbe_btn_set_state)
-    toggle, func(lvbe_btn_toggle)
-    set_layout, func(lvbe_btn_set_layout)
-    set_fit4, func(lvbe_btn_set_fit4)
-    set_fit2, func(lvbe_btn_set_fit2)
-    set_fit, func(lvbe_btn_set_fit)
-    get_state, func(lvbe_btn_get_state)
-    get_checkable, func(lvbe_btn_get_checkable)
-    get_layout, func(lvbe_btn_get_layout)
-    get_fit_left, func(lvbe_btn_get_fit_left)
-    get_fit_right, func(lvbe_btn_get_fit_right)
-    get_fit_top, func(lvbe_btn_get_fit_top)
-    get_fit_bottom, func(lvbe_btn_get_fit_bottom)
+    member, func(lvx_member)
+
 }
 @const_object_info_end */
 
@@ -2364,27 +1393,8 @@ void be_load_lv_btnmatrix_lib(bvm *vm) {
     { ".p", NULL },
     { "init", lvbe_btnmatrix_create },
     { "tostring", lvx_tostring },
+    { "member", lvx_member },
 
-    { "create", lvbe_btnmatrix_create },
-    { "set_map", lvbe_btnmatrix_set_map },
-    { "set_ctrl_map", lvbe_btnmatrix_set_ctrl_map },
-    { "set_focused_btn", lvbe_btnmatrix_set_focused_btn },
-    { "set_recolor", lvbe_btnmatrix_set_recolor },
-    { "set_btn_ctrl", lvbe_btnmatrix_set_btn_ctrl },
-    { "clear_btn_ctrl", lvbe_btnmatrix_clear_btn_ctrl },
-    { "set_btn_ctrl_all", lvbe_btnmatrix_set_btn_ctrl_all },
-    { "clear_btn_ctrl_all", lvbe_btnmatrix_clear_btn_ctrl_all },
-    { "set_btn_width", lvbe_btnmatrix_set_btn_width },
-    { "set_one_check", lvbe_btnmatrix_set_one_check },
-    { "set_align", lvbe_btnmatrix_set_align },
-    { "get_recolor", lvbe_btnmatrix_get_recolor },
-    { "get_active_btn", lvbe_btnmatrix_get_active_btn },
-    { "get_active_btn_text", lvbe_btnmatrix_get_active_btn_text },
-    { "get_focused_btn", lvbe_btnmatrix_get_focused_btn },
-    { "get_btn_text", lvbe_btnmatrix_get_btn_text },
-    { "get_btn_ctrl", lvbe_btnmatrix_get_btn_ctrl },
-    { "get_one_check", lvbe_btnmatrix_get_one_check },
-    { "get_align", lvbe_btnmatrix_get_align },
 
     // { NULL, (bntvfunc) BE_CLOSURE }, /* mark section for berry closures */
 
@@ -2408,26 +1418,8 @@ class be_class_lv_btnmatrix (scope: global, name: lv_btnmatrix, super: be_class_
     .p, var
     init, func(lvbe_btnmatrix_create)
     tostring, func(lvx_tostring)
-    create, func(lvbe_btnmatrix_create)
-    set_map, func(lvbe_btnmatrix_set_map)
-    set_ctrl_map, func(lvbe_btnmatrix_set_ctrl_map)
-    set_focused_btn, func(lvbe_btnmatrix_set_focused_btn)
-    set_recolor, func(lvbe_btnmatrix_set_recolor)
-    set_btn_ctrl, func(lvbe_btnmatrix_set_btn_ctrl)
-    clear_btn_ctrl, func(lvbe_btnmatrix_clear_btn_ctrl)
-    set_btn_ctrl_all, func(lvbe_btnmatrix_set_btn_ctrl_all)
-    clear_btn_ctrl_all, func(lvbe_btnmatrix_clear_btn_ctrl_all)
-    set_btn_width, func(lvbe_btnmatrix_set_btn_width)
-    set_one_check, func(lvbe_btnmatrix_set_one_check)
-    set_align, func(lvbe_btnmatrix_set_align)
-    get_recolor, func(lvbe_btnmatrix_get_recolor)
-    get_active_btn, func(lvbe_btnmatrix_get_active_btn)
-    get_active_btn_text, func(lvbe_btnmatrix_get_active_btn_text)
-    get_focused_btn, func(lvbe_btnmatrix_get_focused_btn)
-    get_btn_text, func(lvbe_btnmatrix_get_btn_text)
-    get_btn_ctrl, func(lvbe_btnmatrix_get_btn_ctrl)
-    get_one_check, func(lvbe_btnmatrix_get_one_check)
-    get_align, func(lvbe_btnmatrix_get_align)
+    member, func(lvx_member)
+
 }
 @const_object_info_end */
 
@@ -2437,15 +1429,8 @@ void be_load_lv_calendar_lib(bvm *vm) {
     { ".p", NULL },
     { "init", lvbe_calendar_create },
     { "tostring", lvx_tostring },
+    { "member", lvx_member },
 
-    { "create", lvbe_calendar_create },
-    { "set_today_date", lvbe_calendar_set_today_date },
-    { "set_showed_date", lvbe_calendar_set_showed_date },
-    { "set_highlighted_dates", lvbe_calendar_set_highlighted_dates },
-    { "set_day_names", lvbe_calendar_set_day_names },
-    { "set_month_names", lvbe_calendar_set_month_names },
-    { "get_highlighted_dates_num", lvbe_calendar_get_highlighted_dates_num },
-    { "get_day_of_week", lvbe_calendar_get_day_of_week },
 
     // { NULL, (bntvfunc) BE_CLOSURE }, /* mark section for berry closures */
 
@@ -2469,14 +1454,8 @@ class be_class_lv_calendar (scope: global, name: lv_calendar, super: be_class_lv
     .p, var
     init, func(lvbe_calendar_create)
     tostring, func(lvx_tostring)
-    create, func(lvbe_calendar_create)
-    set_today_date, func(lvbe_calendar_set_today_date)
-    set_showed_date, func(lvbe_calendar_set_showed_date)
-    set_highlighted_dates, func(lvbe_calendar_set_highlighted_dates)
-    set_day_names, func(lvbe_calendar_set_day_names)
-    set_month_names, func(lvbe_calendar_set_month_names)
-    get_highlighted_dates_num, func(lvbe_calendar_get_highlighted_dates_num)
-    get_day_of_week, func(lvbe_calendar_get_day_of_week)
+    member, func(lvx_member)
+
 }
 @const_object_info_end */
 
@@ -2486,23 +1465,8 @@ void be_load_lv_canvas_lib(bvm *vm) {
     { ".p", NULL },
     { "init", lvbe_canvas_create },
     { "tostring", lvx_tostring },
+    { "member", lvx_member },
 
-    { "create", lvbe_canvas_create },
-    { "set_buffer", lvbe_canvas_set_buffer },
-    { "set_px", lvbe_canvas_set_px },
-    { "set_palette", lvbe_canvas_set_palette },
-    { "get_px", lvbe_canvas_get_px },
-    { "copy_buf", lvbe_canvas_copy_buf },
-    { "transform", lvbe_canvas_transform },
-    { "blur_hor", lvbe_canvas_blur_hor },
-    { "blur_ver", lvbe_canvas_blur_ver },
-    { "fill_bg", lvbe_canvas_fill_bg },
-    { "draw_rect", lvbe_canvas_draw_rect },
-    { "draw_text", lvbe_canvas_draw_text },
-    { "draw_img", lvbe_canvas_draw_img },
-    { "draw_line", lvbe_canvas_draw_line },
-    { "draw_polygon", lvbe_canvas_draw_polygon },
-    { "draw_arc", lvbe_canvas_draw_arc },
 
     // { NULL, (bntvfunc) BE_CLOSURE }, /* mark section for berry closures */
 
@@ -2526,22 +1490,8 @@ class be_class_lv_canvas (scope: global, name: lv_canvas, super: be_class_lv_obj
     .p, var
     init, func(lvbe_canvas_create)
     tostring, func(lvx_tostring)
-    create, func(lvbe_canvas_create)
-    set_buffer, func(lvbe_canvas_set_buffer)
-    set_px, func(lvbe_canvas_set_px)
-    set_palette, func(lvbe_canvas_set_palette)
-    get_px, func(lvbe_canvas_get_px)
-    copy_buf, func(lvbe_canvas_copy_buf)
-    transform, func(lvbe_canvas_transform)
-    blur_hor, func(lvbe_canvas_blur_hor)
-    blur_ver, func(lvbe_canvas_blur_ver)
-    fill_bg, func(lvbe_canvas_fill_bg)
-    draw_rect, func(lvbe_canvas_draw_rect)
-    draw_text, func(lvbe_canvas_draw_text)
-    draw_img, func(lvbe_canvas_draw_img)
-    draw_line, func(lvbe_canvas_draw_line)
-    draw_polygon, func(lvbe_canvas_draw_polygon)
-    draw_arc, func(lvbe_canvas_draw_arc)
+    member, func(lvx_member)
+
 }
 @const_object_info_end */
 
@@ -2551,41 +1501,8 @@ void be_load_lv_chart_lib(bvm *vm) {
     { ".p", NULL },
     { "init", lvbe_chart_create },
     { "tostring", lvx_tostring },
+    { "member", lvx_member },
 
-    { "create", lvbe_chart_create },
-    { "remove_series", lvbe_chart_remove_series },
-    { "clear_series", lvbe_chart_clear_series },
-    { "hide_series", lvbe_chart_hide_series },
-    { "set_div_line_count", lvbe_chart_set_div_line_count },
-    { "set_y_range", lvbe_chart_set_y_range },
-    { "set_type", lvbe_chart_set_type },
-    { "set_point_count", lvbe_chart_set_point_count },
-    { "init_points", lvbe_chart_init_points },
-    { "set_points", lvbe_chart_set_points },
-    { "set_next", lvbe_chart_set_next },
-    { "set_update_mode", lvbe_chart_set_update_mode },
-    { "set_x_tick_length", lvbe_chart_set_x_tick_length },
-    { "set_y_tick_length", lvbe_chart_set_y_tick_length },
-    { "set_secondary_y_tick_length", lvbe_chart_set_secondary_y_tick_length },
-    { "set_x_tick_texts", lvbe_chart_set_x_tick_texts },
-    { "set_secondary_y_tick_texts", lvbe_chart_set_secondary_y_tick_texts },
-    { "set_y_tick_texts", lvbe_chart_set_y_tick_texts },
-    { "set_x_start_point", lvbe_chart_set_x_start_point },
-    { "set_ext_array", lvbe_chart_set_ext_array },
-    { "set_point_id", lvbe_chart_set_point_id },
-    { "set_series_axis", lvbe_chart_set_series_axis },
-    { "set_cursor_point", lvbe_chart_set_cursor_point },
-    { "get_type", lvbe_chart_get_type },
-    { "get_point_count", lvbe_chart_get_point_count },
-    { "get_x_start_point", lvbe_chart_get_x_start_point },
-    { "get_point_id", lvbe_chart_get_point_id },
-    { "get_series_axis", lvbe_chart_get_series_axis },
-    { "get_series_area", lvbe_chart_get_series_area },
-    { "get_cursor_point", lvbe_chart_get_cursor_point },
-    { "get_nearest_index_from_coord", lvbe_chart_get_nearest_index_from_coord },
-    { "get_x_from_index", lvbe_chart_get_x_from_index },
-    { "get_y_from_index", lvbe_chart_get_y_from_index },
-    { "refresh", lvbe_chart_refresh },
 
     // { NULL, (bntvfunc) BE_CLOSURE }, /* mark section for berry closures */
 
@@ -2609,40 +1526,8 @@ class be_class_lv_chart (scope: global, name: lv_chart, super: be_class_lv_obj) 
     .p, var
     init, func(lvbe_chart_create)
     tostring, func(lvx_tostring)
-    create, func(lvbe_chart_create)
-    remove_series, func(lvbe_chart_remove_series)
-    clear_series, func(lvbe_chart_clear_series)
-    hide_series, func(lvbe_chart_hide_series)
-    set_div_line_count, func(lvbe_chart_set_div_line_count)
-    set_y_range, func(lvbe_chart_set_y_range)
-    set_type, func(lvbe_chart_set_type)
-    set_point_count, func(lvbe_chart_set_point_count)
-    init_points, func(lvbe_chart_init_points)
-    set_points, func(lvbe_chart_set_points)
-    set_next, func(lvbe_chart_set_next)
-    set_update_mode, func(lvbe_chart_set_update_mode)
-    set_x_tick_length, func(lvbe_chart_set_x_tick_length)
-    set_y_tick_length, func(lvbe_chart_set_y_tick_length)
-    set_secondary_y_tick_length, func(lvbe_chart_set_secondary_y_tick_length)
-    set_x_tick_texts, func(lvbe_chart_set_x_tick_texts)
-    set_secondary_y_tick_texts, func(lvbe_chart_set_secondary_y_tick_texts)
-    set_y_tick_texts, func(lvbe_chart_set_y_tick_texts)
-    set_x_start_point, func(lvbe_chart_set_x_start_point)
-    set_ext_array, func(lvbe_chart_set_ext_array)
-    set_point_id, func(lvbe_chart_set_point_id)
-    set_series_axis, func(lvbe_chart_set_series_axis)
-    set_cursor_point, func(lvbe_chart_set_cursor_point)
-    get_type, func(lvbe_chart_get_type)
-    get_point_count, func(lvbe_chart_get_point_count)
-    get_x_start_point, func(lvbe_chart_get_x_start_point)
-    get_point_id, func(lvbe_chart_get_point_id)
-    get_series_axis, func(lvbe_chart_get_series_axis)
-    get_series_area, func(lvbe_chart_get_series_area)
-    get_cursor_point, func(lvbe_chart_get_cursor_point)
-    get_nearest_index_from_coord, func(lvbe_chart_get_nearest_index_from_coord)
-    get_x_from_index, func(lvbe_chart_get_x_from_index)
-    get_y_from_index, func(lvbe_chart_get_y_from_index)
-    refresh, func(lvbe_chart_refresh)
+    member, func(lvx_member)
+
 }
 @const_object_info_end */
 
@@ -2652,17 +1537,8 @@ void be_load_lv_checkbox_lib(bvm *vm) {
     { ".p", NULL },
     { "init", lvbe_checkbox_create },
     { "tostring", lvx_tostring },
+    { "member", lvx_member },
 
-    { "create", lvbe_checkbox_create },
-    { "set_text", lvbe_checkbox_set_text },
-    { "set_text_static", lvbe_checkbox_set_text_static },
-    { "set_checked", lvbe_checkbox_set_checked },
-    { "set_disabled", lvbe_checkbox_set_disabled },
-    { "set_state", lvbe_checkbox_set_state },
-    { "get_text", lvbe_checkbox_get_text },
-    { "is_checked", lvbe_checkbox_is_checked },
-    { "is_inactive", lvbe_checkbox_is_inactive },
-    { "get_state", lvbe_checkbox_get_state },
 
     // { NULL, (bntvfunc) BE_CLOSURE }, /* mark section for berry closures */
 
@@ -2686,16 +1562,8 @@ class be_class_lv_checkbox (scope: global, name: lv_checkbox, super: be_class_lv
     .p, var
     init, func(lvbe_checkbox_create)
     tostring, func(lvx_tostring)
-    create, func(lvbe_checkbox_create)
-    set_text, func(lvbe_checkbox_set_text)
-    set_text_static, func(lvbe_checkbox_set_text_static)
-    set_checked, func(lvbe_checkbox_set_checked)
-    set_disabled, func(lvbe_checkbox_set_disabled)
-    set_state, func(lvbe_checkbox_set_state)
-    get_text, func(lvbe_checkbox_get_text)
-    is_checked, func(lvbe_checkbox_is_checked)
-    is_inactive, func(lvbe_checkbox_is_inactive)
-    get_state, func(lvbe_checkbox_get_state)
+    member, func(lvx_member)
+
 }
 @const_object_info_end */
 
@@ -2705,17 +1573,8 @@ void be_load_lv_cont_lib(bvm *vm) {
     { ".p", NULL },
     { "init", lvbe_cont_create },
     { "tostring", lvx_tostring },
+    { "member", lvx_member },
 
-    { "create", lvbe_cont_create },
-    { "set_layout", lvbe_cont_set_layout },
-    { "set_fit4", lvbe_cont_set_fit4 },
-    { "set_fit2", lvbe_cont_set_fit2 },
-    { "set_fit", lvbe_cont_set_fit },
-    { "get_layout", lvbe_cont_get_layout },
-    { "get_fit_left", lvbe_cont_get_fit_left },
-    { "get_fit_right", lvbe_cont_get_fit_right },
-    { "get_fit_top", lvbe_cont_get_fit_top },
-    { "get_fit_bottom", lvbe_cont_get_fit_bottom },
 
     // { NULL, (bntvfunc) BE_CLOSURE }, /* mark section for berry closures */
 
@@ -2739,16 +1598,8 @@ class be_class_lv_cont (scope: global, name: lv_cont, super: be_class_lv_obj) {
     .p, var
     init, func(lvbe_cont_create)
     tostring, func(lvx_tostring)
-    create, func(lvbe_cont_create)
-    set_layout, func(lvbe_cont_set_layout)
-    set_fit4, func(lvbe_cont_set_fit4)
-    set_fit2, func(lvbe_cont_set_fit2)
-    set_fit, func(lvbe_cont_set_fit)
-    get_layout, func(lvbe_cont_get_layout)
-    get_fit_left, func(lvbe_cont_get_fit_left)
-    get_fit_right, func(lvbe_cont_get_fit_right)
-    get_fit_top, func(lvbe_cont_get_fit_top)
-    get_fit_bottom, func(lvbe_cont_get_fit_bottom)
+    member, func(lvx_member)
+
 }
 @const_object_info_end */
 
@@ -2758,25 +1609,8 @@ void be_load_lv_cpicker_lib(bvm *vm) {
     { ".p", NULL },
     { "init", lvbe_cpicker_create },
     { "tostring", lvx_tostring },
+    { "member", lvx_member },
 
-    { "create", lvbe_cpicker_create },
-    { "set_type", lvbe_cpicker_set_type },
-    { "set_hue", lvbe_cpicker_set_hue },
-    { "set_saturation", lvbe_cpicker_set_saturation },
-    { "set_value", lvbe_cpicker_set_value },
-    { "set_hsv", lvbe_cpicker_set_hsv },
-    { "set_color", lvbe_cpicker_set_color },
-    { "set_color_mode", lvbe_cpicker_set_color_mode },
-    { "set_color_mode_fixed", lvbe_cpicker_set_color_mode_fixed },
-    { "set_knob_colored", lvbe_cpicker_set_knob_colored },
-    { "get_color_mode", lvbe_cpicker_get_color_mode },
-    { "get_color_mode_fixed", lvbe_cpicker_get_color_mode_fixed },
-    { "get_hue", lvbe_cpicker_get_hue },
-    { "get_saturation", lvbe_cpicker_get_saturation },
-    { "get_value", lvbe_cpicker_get_value },
-    { "get_hsv", lvbe_cpicker_get_hsv },
-    { "get_color", lvbe_cpicker_get_color },
-    { "get_knob_colored", lvbe_cpicker_get_knob_colored },
 
     // { NULL, (bntvfunc) BE_CLOSURE }, /* mark section for berry closures */
 
@@ -2800,24 +1634,8 @@ class be_class_lv_cpicker (scope: global, name: lv_cpicker, super: be_class_lv_o
     .p, var
     init, func(lvbe_cpicker_create)
     tostring, func(lvx_tostring)
-    create, func(lvbe_cpicker_create)
-    set_type, func(lvbe_cpicker_set_type)
-    set_hue, func(lvbe_cpicker_set_hue)
-    set_saturation, func(lvbe_cpicker_set_saturation)
-    set_value, func(lvbe_cpicker_set_value)
-    set_hsv, func(lvbe_cpicker_set_hsv)
-    set_color, func(lvbe_cpicker_set_color)
-    set_color_mode, func(lvbe_cpicker_set_color_mode)
-    set_color_mode_fixed, func(lvbe_cpicker_set_color_mode_fixed)
-    set_knob_colored, func(lvbe_cpicker_set_knob_colored)
-    get_color_mode, func(lvbe_cpicker_get_color_mode)
-    get_color_mode_fixed, func(lvbe_cpicker_get_color_mode_fixed)
-    get_hue, func(lvbe_cpicker_get_hue)
-    get_saturation, func(lvbe_cpicker_get_saturation)
-    get_value, func(lvbe_cpicker_get_value)
-    get_hsv, func(lvbe_cpicker_get_hsv)
-    get_color, func(lvbe_cpicker_get_color)
-    get_knob_colored, func(lvbe_cpicker_get_knob_colored)
+    member, func(lvx_member)
+
 }
 @const_object_info_end */
 
@@ -2827,29 +1645,8 @@ void be_load_lv_dropdown_lib(bvm *vm) {
     { ".p", NULL },
     { "init", lvbe_dropdown_create },
     { "tostring", lvx_tostring },
+    { "member", lvx_member },
 
-    { "create", lvbe_dropdown_create },
-    { "set_text", lvbe_dropdown_set_text },
-    { "clear_options", lvbe_dropdown_clear_options },
-    { "set_options", lvbe_dropdown_set_options },
-    { "set_options_static", lvbe_dropdown_set_options_static },
-    { "add_option", lvbe_dropdown_add_option },
-    { "set_selected", lvbe_dropdown_set_selected },
-    { "set_dir", lvbe_dropdown_set_dir },
-    { "set_max_height", lvbe_dropdown_set_max_height },
-    { "set_symbol", lvbe_dropdown_set_symbol },
-    { "set_show_selected", lvbe_dropdown_set_show_selected },
-    { "get_text", lvbe_dropdown_get_text },
-    { "get_options", lvbe_dropdown_get_options },
-    { "get_selected", lvbe_dropdown_get_selected },
-    { "get_option_cnt", lvbe_dropdown_get_option_cnt },
-    { "get_selected_str", lvbe_dropdown_get_selected_str },
-    { "get_max_height", lvbe_dropdown_get_max_height },
-    { "get_symbol", lvbe_dropdown_get_symbol },
-    { "get_dir", lvbe_dropdown_get_dir },
-    { "get_show_selected", lvbe_dropdown_get_show_selected },
-    { "open", lvbe_dropdown_open },
-    { "close", lvbe_dropdown_close },
 
     // { NULL, (bntvfunc) BE_CLOSURE }, /* mark section for berry closures */
 
@@ -2873,28 +1670,8 @@ class be_class_lv_dropdown (scope: global, name: lv_dropdown, super: be_class_lv
     .p, var
     init, func(lvbe_dropdown_create)
     tostring, func(lvx_tostring)
-    create, func(lvbe_dropdown_create)
-    set_text, func(lvbe_dropdown_set_text)
-    clear_options, func(lvbe_dropdown_clear_options)
-    set_options, func(lvbe_dropdown_set_options)
-    set_options_static, func(lvbe_dropdown_set_options_static)
-    add_option, func(lvbe_dropdown_add_option)
-    set_selected, func(lvbe_dropdown_set_selected)
-    set_dir, func(lvbe_dropdown_set_dir)
-    set_max_height, func(lvbe_dropdown_set_max_height)
-    set_symbol, func(lvbe_dropdown_set_symbol)
-    set_show_selected, func(lvbe_dropdown_set_show_selected)
-    get_text, func(lvbe_dropdown_get_text)
-    get_options, func(lvbe_dropdown_get_options)
-    get_selected, func(lvbe_dropdown_get_selected)
-    get_option_cnt, func(lvbe_dropdown_get_option_cnt)
-    get_selected_str, func(lvbe_dropdown_get_selected_str)
-    get_max_height, func(lvbe_dropdown_get_max_height)
-    get_symbol, func(lvbe_dropdown_get_symbol)
-    get_dir, func(lvbe_dropdown_get_dir)
-    get_show_selected, func(lvbe_dropdown_get_show_selected)
-    open, func(lvbe_dropdown_open)
-    close, func(lvbe_dropdown_close)
+    member, func(lvx_member)
+
 }
 @const_object_info_end */
 
@@ -2904,28 +1681,8 @@ void be_load_lv_gauge_lib(bvm *vm) {
     { ".p", NULL },
     { "init", lvbe_gauge_create },
     { "tostring", lvx_tostring },
+    { "member", lvx_member },
 
-    { "create", lvbe_gauge_create },
-    { "set_needle_count", lvbe_gauge_set_needle_count },
-    { "set_value", lvbe_gauge_set_value },
-    { "set_range", lvbe_gauge_set_range },
-    { "set_critical_value", lvbe_gauge_set_critical_value },
-    { "set_scale", lvbe_gauge_set_scale },
-    { "set_angle_offset", lvbe_gauge_set_angle_offset },
-    { "set_needle_img", lvbe_gauge_set_needle_img },
-    { "set_formatter_cb", lvbe_gauge_set_formatter_cb },
-    { "get_value", lvbe_gauge_get_value },
-    { "get_needle_count", lvbe_gauge_get_needle_count },
-    { "get_min_value", lvbe_gauge_get_min_value },
-    { "get_max_value", lvbe_gauge_get_max_value },
-    { "get_critical_value", lvbe_gauge_get_critical_value },
-    { "get_label_count", lvbe_gauge_get_label_count },
-    { "get_line_count", lvbe_gauge_get_line_count },
-    { "get_scale_angle", lvbe_gauge_get_scale_angle },
-    { "get_angle_offset", lvbe_gauge_get_angle_offset },
-    { "get_needle_img", lvbe_gauge_get_needle_img },
-    { "get_needle_img_pivot_x", lvbe_gauge_get_needle_img_pivot_x },
-    { "get_needle_img_pivot_y", lvbe_gauge_get_needle_img_pivot_y },
 
     // { NULL, (bntvfunc) BE_CLOSURE }, /* mark section for berry closures */
 
@@ -2949,27 +1706,8 @@ class be_class_lv_gauge (scope: global, name: lv_gauge, super: be_class_lv_obj) 
     .p, var
     init, func(lvbe_gauge_create)
     tostring, func(lvx_tostring)
-    create, func(lvbe_gauge_create)
-    set_needle_count, func(lvbe_gauge_set_needle_count)
-    set_value, func(lvbe_gauge_set_value)
-    set_range, func(lvbe_gauge_set_range)
-    set_critical_value, func(lvbe_gauge_set_critical_value)
-    set_scale, func(lvbe_gauge_set_scale)
-    set_angle_offset, func(lvbe_gauge_set_angle_offset)
-    set_needle_img, func(lvbe_gauge_set_needle_img)
-    set_formatter_cb, func(lvbe_gauge_set_formatter_cb)
-    get_value, func(lvbe_gauge_get_value)
-    get_needle_count, func(lvbe_gauge_get_needle_count)
-    get_min_value, func(lvbe_gauge_get_min_value)
-    get_max_value, func(lvbe_gauge_get_max_value)
-    get_critical_value, func(lvbe_gauge_get_critical_value)
-    get_label_count, func(lvbe_gauge_get_label_count)
-    get_line_count, func(lvbe_gauge_get_line_count)
-    get_scale_angle, func(lvbe_gauge_get_scale_angle)
-    get_angle_offset, func(lvbe_gauge_get_angle_offset)
-    get_needle_img, func(lvbe_gauge_get_needle_img)
-    get_needle_img_pivot_x, func(lvbe_gauge_get_needle_img_pivot_x)
-    get_needle_img_pivot_y, func(lvbe_gauge_get_needle_img_pivot_y)
+    member, func(lvx_member)
+
 }
 @const_object_info_end */
 
@@ -2979,14 +1717,8 @@ void be_load_lv_imgbtn_lib(bvm *vm) {
     { ".p", NULL },
     { "init", lvbe_imgbtn_create },
     { "tostring", lvx_tostring },
+    { "member", lvx_member },
 
-    { "create", lvbe_imgbtn_create },
-    { "set_src", lvbe_imgbtn_set_src },
-    { "set_state", lvbe_imgbtn_set_state },
-    { "toggle", lvbe_imgbtn_toggle },
-    { "set_checkable", lvbe_imgbtn_set_checkable },
-    { "get_src", lvbe_imgbtn_get_src },
-    { "get_state", lvbe_imgbtn_get_state },
 
     // { NULL, (bntvfunc) BE_CLOSURE }, /* mark section for berry closures */
 
@@ -3010,13 +1742,8 @@ class be_class_lv_imgbtn (scope: global, name: lv_imgbtn, super: be_class_lv_obj
     .p, var
     init, func(lvbe_imgbtn_create)
     tostring, func(lvx_tostring)
-    create, func(lvbe_imgbtn_create)
-    set_src, func(lvbe_imgbtn_set_src)
-    set_state, func(lvbe_imgbtn_set_state)
-    toggle, func(lvbe_imgbtn_toggle)
-    set_checkable, func(lvbe_imgbtn_set_checkable)
-    get_src, func(lvbe_imgbtn_get_src)
-    get_state, func(lvbe_imgbtn_get_state)
+    member, func(lvx_member)
+
 }
 @const_object_info_end */
 
@@ -3026,17 +1753,8 @@ void be_load_lv_keyboard_lib(bvm *vm) {
     { ".p", NULL },
     { "init", lvbe_keyboard_create },
     { "tostring", lvx_tostring },
+    { "member", lvx_member },
 
-    { "create", lvbe_keyboard_create },
-    { "set_textarea", lvbe_keyboard_set_textarea },
-    { "set_mode", lvbe_keyboard_set_mode },
-    { "set_cursor_manage", lvbe_keyboard_set_cursor_manage },
-    { "set_map", lvbe_keyboard_set_map },
-    { "set_ctrl_map", lvbe_keyboard_set_ctrl_map },
-    { "get_textarea", lvbe_keyboard_get_textarea },
-    { "get_mode", lvbe_keyboard_get_mode },
-    { "get_cursor_manage", lvbe_keyboard_get_cursor_manage },
-    { "def_event_cb", lvbe_keyboard_def_event_cb },
 
     // { NULL, (bntvfunc) BE_CLOSURE }, /* mark section for berry closures */
 
@@ -3060,16 +1778,8 @@ class be_class_lv_keyboard (scope: global, name: lv_keyboard, super: be_class_lv
     .p, var
     init, func(lvbe_keyboard_create)
     tostring, func(lvx_tostring)
-    create, func(lvbe_keyboard_create)
-    set_textarea, func(lvbe_keyboard_set_textarea)
-    set_mode, func(lvbe_keyboard_set_mode)
-    set_cursor_manage, func(lvbe_keyboard_set_cursor_manage)
-    set_map, func(lvbe_keyboard_set_map)
-    set_ctrl_map, func(lvbe_keyboard_set_ctrl_map)
-    get_textarea, func(lvbe_keyboard_get_textarea)
-    get_mode, func(lvbe_keyboard_get_mode)
-    get_cursor_manage, func(lvbe_keyboard_get_cursor_manage)
-    def_event_cb, func(lvbe_keyboard_def_event_cb)
+    member, func(lvx_member)
+
 }
 @const_object_info_end */
 
@@ -3079,30 +1789,8 @@ void be_load_lv_label_lib(bvm *vm) {
     { ".p", NULL },
     { "init", lvbe_label_create },
     { "tostring", lvx_tostring },
+    { "member", lvx_member },
 
-    { "create", lvbe_label_create },
-    { "set_text", lvbe_label_set_text },
-    { "set_text_fmt", lvbe_label_set_text_fmt },
-    { "set_text_static", lvbe_label_set_text_static },
-    { "set_long_mode", lvbe_label_set_long_mode },
-    { "set_align", lvbe_label_set_align },
-    { "set_recolor", lvbe_label_set_recolor },
-    { "set_anim_speed", lvbe_label_set_anim_speed },
-    { "set_text_sel_start", lvbe_label_set_text_sel_start },
-    { "set_text_sel_end", lvbe_label_set_text_sel_end },
-    { "get_text", lvbe_label_get_text },
-    { "get_long_mode", lvbe_label_get_long_mode },
-    { "get_align", lvbe_label_get_align },
-    { "get_recolor", lvbe_label_get_recolor },
-    { "get_anim_speed", lvbe_label_get_anim_speed },
-    { "get_letter_pos", lvbe_label_get_letter_pos },
-    { "get_letter_on", lvbe_label_get_letter_on },
-    { "is_char_under_pos", lvbe_label_is_char_under_pos },
-    { "get_text_sel_start", lvbe_label_get_text_sel_start },
-    { "get_text_sel_end", lvbe_label_get_text_sel_end },
-    { "ins_text", lvbe_label_ins_text },
-    { "cut_text", lvbe_label_cut_text },
-    { "refr_text", lvbe_label_refr_text },
 
     // { NULL, (bntvfunc) BE_CLOSURE }, /* mark section for berry closures */
 
@@ -3126,29 +1814,8 @@ class be_class_lv_label (scope: global, name: lv_label, super: be_class_lv_obj) 
     .p, var
     init, func(lvbe_label_create)
     tostring, func(lvx_tostring)
-    create, func(lvbe_label_create)
-    set_text, func(lvbe_label_set_text)
-    set_text_fmt, func(lvbe_label_set_text_fmt)
-    set_text_static, func(lvbe_label_set_text_static)
-    set_long_mode, func(lvbe_label_set_long_mode)
-    set_align, func(lvbe_label_set_align)
-    set_recolor, func(lvbe_label_set_recolor)
-    set_anim_speed, func(lvbe_label_set_anim_speed)
-    set_text_sel_start, func(lvbe_label_set_text_sel_start)
-    set_text_sel_end, func(lvbe_label_set_text_sel_end)
-    get_text, func(lvbe_label_get_text)
-    get_long_mode, func(lvbe_label_get_long_mode)
-    get_align, func(lvbe_label_get_align)
-    get_recolor, func(lvbe_label_get_recolor)
-    get_anim_speed, func(lvbe_label_get_anim_speed)
-    get_letter_pos, func(lvbe_label_get_letter_pos)
-    get_letter_on, func(lvbe_label_get_letter_on)
-    is_char_under_pos, func(lvbe_label_is_char_under_pos)
-    get_text_sel_start, func(lvbe_label_get_text_sel_start)
-    get_text_sel_end, func(lvbe_label_get_text_sel_end)
-    ins_text, func(lvbe_label_ins_text)
-    cut_text, func(lvbe_label_cut_text)
-    refr_text, func(lvbe_label_refr_text)
+    member, func(lvx_member)
+
 }
 @const_object_info_end */
 
@@ -3158,13 +1825,8 @@ void be_load_lv_led_lib(bvm *vm) {
     { ".p", NULL },
     { "init", lvbe_led_create },
     { "tostring", lvx_tostring },
+    { "member", lvx_member },
 
-    { "create", lvbe_led_create },
-    { "set_bright", lvbe_led_set_bright },
-    { "on", lvbe_led_on },
-    { "off", lvbe_led_off },
-    { "toggle", lvbe_led_toggle },
-    { "get_bright", lvbe_led_get_bright },
 
     // { NULL, (bntvfunc) BE_CLOSURE }, /* mark section for berry closures */
 
@@ -3188,12 +1850,8 @@ class be_class_lv_led (scope: global, name: lv_led, super: be_class_lv_obj) {
     .p, var
     init, func(lvbe_led_create)
     tostring, func(lvx_tostring)
-    create, func(lvbe_led_create)
-    set_bright, func(lvbe_led_set_bright)
-    on, func(lvbe_led_on)
-    off, func(lvbe_led_off)
-    toggle, func(lvbe_led_toggle)
-    get_bright, func(lvbe_led_get_bright)
+    member, func(lvx_member)
+
 }
 @const_object_info_end */
 
@@ -3203,13 +1861,8 @@ void be_load_lv_line_lib(bvm *vm) {
     { ".p", NULL },
     { "init", lvbe_line_create },
     { "tostring", lvx_tostring },
+    { "member", lvx_member },
 
-    { "create", lvbe_line_create },
-    { "set_points", lvbe_line_set_points },
-    { "set_auto_size", lvbe_line_set_auto_size },
-    { "set_y_invert", lvbe_line_set_y_invert },
-    { "get_auto_size", lvbe_line_get_auto_size },
-    { "get_y_invert", lvbe_line_get_y_invert },
 
     // { NULL, (bntvfunc) BE_CLOSURE }, /* mark section for berry closures */
 
@@ -3233,12 +1886,8 @@ class be_class_lv_line (scope: global, name: lv_line, super: be_class_lv_obj) {
     .p, var
     init, func(lvbe_line_create)
     tostring, func(lvx_tostring)
-    create, func(lvbe_line_create)
-    set_points, func(lvbe_line_set_points)
-    set_auto_size, func(lvbe_line_set_auto_size)
-    set_y_invert, func(lvbe_line_set_y_invert)
-    get_auto_size, func(lvbe_line_get_auto_size)
-    get_y_invert, func(lvbe_line_get_y_invert)
+    member, func(lvx_member)
+
 }
 @const_object_info_end */
 
@@ -3248,21 +1897,8 @@ void be_load_lv_linemeter_lib(bvm *vm) {
     { ".p", NULL },
     { "init", lvbe_linemeter_create },
     { "tostring", lvx_tostring },
+    { "member", lvx_member },
 
-    { "create", lvbe_linemeter_create },
-    { "set_value", lvbe_linemeter_set_value },
-    { "set_range", lvbe_linemeter_set_range },
-    { "set_scale", lvbe_linemeter_set_scale },
-    { "set_angle_offset", lvbe_linemeter_set_angle_offset },
-    { "set_mirror", lvbe_linemeter_set_mirror },
-    { "get_value", lvbe_linemeter_get_value },
-    { "get_min_value", lvbe_linemeter_get_min_value },
-    { "get_max_value", lvbe_linemeter_get_max_value },
-    { "get_line_count", lvbe_linemeter_get_line_count },
-    { "get_scale_angle", lvbe_linemeter_get_scale_angle },
-    { "get_angle_offset", lvbe_linemeter_get_angle_offset },
-    { "draw_scale", lvbe_linemeter_draw_scale },
-    { "get_mirror", lvbe_linemeter_get_mirror },
 
     // { NULL, (bntvfunc) BE_CLOSURE }, /* mark section for berry closures */
 
@@ -3286,20 +1922,8 @@ class be_class_lv_linemeter (scope: global, name: lv_linemeter, super: be_class_
     .p, var
     init, func(lvbe_linemeter_create)
     tostring, func(lvx_tostring)
-    create, func(lvbe_linemeter_create)
-    set_value, func(lvbe_linemeter_set_value)
-    set_range, func(lvbe_linemeter_set_range)
-    set_scale, func(lvbe_linemeter_set_scale)
-    set_angle_offset, func(lvbe_linemeter_set_angle_offset)
-    set_mirror, func(lvbe_linemeter_set_mirror)
-    get_value, func(lvbe_linemeter_get_value)
-    get_min_value, func(lvbe_linemeter_get_min_value)
-    get_max_value, func(lvbe_linemeter_get_max_value)
-    get_line_count, func(lvbe_linemeter_get_line_count)
-    get_scale_angle, func(lvbe_linemeter_get_scale_angle)
-    get_angle_offset, func(lvbe_linemeter_get_angle_offset)
-    draw_scale, func(lvbe_linemeter_draw_scale)
-    get_mirror, func(lvbe_linemeter_get_mirror)
+    member, func(lvx_member)
+
 }
 @const_object_info_end */
 
@@ -3309,33 +1933,8 @@ void be_load_lv_list_lib(bvm *vm) {
     { ".p", NULL },
     { "init", lvbe_list_create },
     { "tostring", lvx_tostring },
+    { "member", lvx_member },
 
-    { "create", lvbe_list_create },
-    { "clean", lvbe_list_clean },
-    { "add_btn", lvbe_list_add_btn },
-    { "remove", lvbe_list_remove },
-    { "focus_btn", lvbe_list_focus_btn },
-    { "set_scrollbar_mode", lvbe_list_set_scrollbar_mode },
-    { "set_scroll_propagation", lvbe_list_set_scroll_propagation },
-    { "set_edge_flash", lvbe_list_set_edge_flash },
-    { "set_anim_time", lvbe_list_set_anim_time },
-    { "set_layout", lvbe_list_set_layout },
-    { "get_btn_text", lvbe_list_get_btn_text },
-    { "get_btn_label", lvbe_list_get_btn_label },
-    { "get_btn_img", lvbe_list_get_btn_img },
-    { "get_prev_btn", lvbe_list_get_prev_btn },
-    { "get_next_btn", lvbe_list_get_next_btn },
-    { "get_btn_index", lvbe_list_get_btn_index },
-    { "get_size", lvbe_list_get_size },
-    { "get_btn_selected", lvbe_list_get_btn_selected },
-    { "get_layout", lvbe_list_get_layout },
-    { "get_scrollbar_mode", lvbe_list_get_scrollbar_mode },
-    { "get_scroll_propagation", lvbe_list_get_scroll_propagation },
-    { "get_edge_flash", lvbe_list_get_edge_flash },
-    { "get_anim_time", lvbe_list_get_anim_time },
-    { "up", lvbe_list_up },
-    { "down", lvbe_list_down },
-    { "focus", lvbe_list_focus },
 
     // { NULL, (bntvfunc) BE_CLOSURE }, /* mark section for berry closures */
 
@@ -3359,32 +1958,8 @@ class be_class_lv_list (scope: global, name: lv_list, super: be_class_lv_obj) {
     .p, var
     init, func(lvbe_list_create)
     tostring, func(lvx_tostring)
-    create, func(lvbe_list_create)
-    clean, func(lvbe_list_clean)
-    add_btn, func(lvbe_list_add_btn)
-    remove, func(lvbe_list_remove)
-    focus_btn, func(lvbe_list_focus_btn)
-    set_scrollbar_mode, func(lvbe_list_set_scrollbar_mode)
-    set_scroll_propagation, func(lvbe_list_set_scroll_propagation)
-    set_edge_flash, func(lvbe_list_set_edge_flash)
-    set_anim_time, func(lvbe_list_set_anim_time)
-    set_layout, func(lvbe_list_set_layout)
-    get_btn_text, func(lvbe_list_get_btn_text)
-    get_btn_label, func(lvbe_list_get_btn_label)
-    get_btn_img, func(lvbe_list_get_btn_img)
-    get_prev_btn, func(lvbe_list_get_prev_btn)
-    get_next_btn, func(lvbe_list_get_next_btn)
-    get_btn_index, func(lvbe_list_get_btn_index)
-    get_size, func(lvbe_list_get_size)
-    get_btn_selected, func(lvbe_list_get_btn_selected)
-    get_layout, func(lvbe_list_get_layout)
-    get_scrollbar_mode, func(lvbe_list_get_scrollbar_mode)
-    get_scroll_propagation, func(lvbe_list_get_scroll_propagation)
-    get_edge_flash, func(lvbe_list_get_edge_flash)
-    get_anim_time, func(lvbe_list_get_anim_time)
-    up, func(lvbe_list_up)
-    down, func(lvbe_list_down)
-    focus, func(lvbe_list_focus)
+    member, func(lvx_member)
+
 }
 @const_object_info_end */
 
@@ -3394,21 +1969,8 @@ void be_load_lv_msgbox_lib(bvm *vm) {
     { ".p", NULL },
     { "init", lvbe_msgbox_create },
     { "tostring", lvx_tostring },
+    { "member", lvx_member },
 
-    { "create", lvbe_msgbox_create },
-    { "add_btns", lvbe_msgbox_add_btns },
-    { "set_text", lvbe_msgbox_set_text },
-    { "set_text_fmt", lvbe_msgbox_set_text_fmt },
-    { "set_anim_time", lvbe_msgbox_set_anim_time },
-    { "start_auto_close", lvbe_msgbox_start_auto_close },
-    { "stop_auto_close", lvbe_msgbox_stop_auto_close },
-    { "set_recolor", lvbe_msgbox_set_recolor },
-    { "get_text", lvbe_msgbox_get_text },
-    { "get_active_btn", lvbe_msgbox_get_active_btn },
-    { "get_active_btn_text", lvbe_msgbox_get_active_btn_text },
-    { "get_anim_time", lvbe_msgbox_get_anim_time },
-    { "get_recolor", lvbe_msgbox_get_recolor },
-    { "get_btnmatrix", lvbe_msgbox_get_btnmatrix },
 
     // { NULL, (bntvfunc) BE_CLOSURE }, /* mark section for berry closures */
 
@@ -3432,20 +1994,8 @@ class be_class_lv_msgbox (scope: global, name: lv_msgbox, super: be_class_lv_obj
     .p, var
     init, func(lvbe_msgbox_create)
     tostring, func(lvx_tostring)
-    create, func(lvbe_msgbox_create)
-    add_btns, func(lvbe_msgbox_add_btns)
-    set_text, func(lvbe_msgbox_set_text)
-    set_text_fmt, func(lvbe_msgbox_set_text_fmt)
-    set_anim_time, func(lvbe_msgbox_set_anim_time)
-    start_auto_close, func(lvbe_msgbox_start_auto_close)
-    stop_auto_close, func(lvbe_msgbox_stop_auto_close)
-    set_recolor, func(lvbe_msgbox_set_recolor)
-    get_text, func(lvbe_msgbox_get_text)
-    get_active_btn, func(lvbe_msgbox_get_active_btn)
-    get_active_btn_text, func(lvbe_msgbox_get_active_btn_text)
-    get_anim_time, func(lvbe_msgbox_get_anim_time)
-    get_recolor, func(lvbe_msgbox_get_recolor)
-    get_btnmatrix, func(lvbe_msgbox_get_btnmatrix)
+    member, func(lvx_member)
+
 }
 @const_object_info_end */
 
@@ -3455,10 +2005,8 @@ void be_load_lv_objmask_lib(bvm *vm) {
     { ".p", NULL },
     { "init", lvbe_objmask_create },
     { "tostring", lvx_tostring },
+    { "member", lvx_member },
 
-    { "create", lvbe_objmask_create },
-    { "update_mask", lvbe_objmask_update_mask },
-    { "remove_mask", lvbe_objmask_remove_mask },
 
     // { NULL, (bntvfunc) BE_CLOSURE }, /* mark section for berry closures */
 
@@ -3482,9 +2030,8 @@ class be_class_lv_objmask (scope: global, name: lv_objmask, super: be_class_lv_o
     .p, var
     init, func(lvbe_objmask_create)
     tostring, func(lvx_tostring)
-    create, func(lvbe_objmask_create)
-    update_mask, func(lvbe_objmask_update_mask)
-    remove_mask, func(lvbe_objmask_remove_mask)
+    member, func(lvx_member)
+
 }
 @const_object_info_end */
 
@@ -3494,40 +2041,8 @@ void be_load_lv_page_lib(bvm *vm) {
     { ".p", NULL },
     { "init", lvbe_page_create },
     { "tostring", lvx_tostring },
+    { "member", lvx_member },
 
-    { "create", lvbe_page_create },
-    { "clean", lvbe_page_clean },
-    { "get_scrollable", lvbe_page_get_scrollable },
-    { "get_anim_time", lvbe_page_get_anim_time },
-    { "set_scrollbar_mode", lvbe_page_set_scrollbar_mode },
-    { "set_anim_time", lvbe_page_set_anim_time },
-    { "set_scroll_propagation", lvbe_page_set_scroll_propagation },
-    { "set_edge_flash", lvbe_page_set_edge_flash },
-    { "set_scrollable_fit2", lvbe_page_set_scrollable_fit2 },
-    { "set_scrollable_fit", lvbe_page_set_scrollable_fit },
-    { "set_scrl_width", lvbe_page_set_scrl_width },
-    { "set_scrl_height", lvbe_page_set_scrl_height },
-    { "set_scrl_layout", lvbe_page_set_scrl_layout },
-    { "get_scrollbar_mode", lvbe_page_get_scrollbar_mode },
-    { "get_scroll_propagation", lvbe_page_get_scroll_propagation },
-    { "get_edge_flash", lvbe_page_get_edge_flash },
-    { "get_width_fit", lvbe_page_get_width_fit },
-    { "get_height_fit", lvbe_page_get_height_fit },
-    { "get_width_grid", lvbe_page_get_width_grid },
-    { "get_height_grid", lvbe_page_get_height_grid },
-    { "get_scrl_width", lvbe_page_get_scrl_width },
-    { "get_scrl_height", lvbe_page_get_scrl_height },
-    { "get_scrl_layout", lvbe_page_get_scrl_layout },
-    { "get_scrl_fit_left", lvbe_page_get_scrl_fit_left },
-    { "get_scrl_fit_right", lvbe_page_get_scrl_fit_right },
-    { "get_scrl_fit_top", lvbe_page_get_scrl_fit_top },
-    { "get_scrl_fit_bottom", lvbe_page_get_scrl_fit_bottom },
-    { "on_edge", lvbe_page_on_edge },
-    { "glue_obj", lvbe_page_glue_obj },
-    { "focus", lvbe_page_focus },
-    { "scroll_hor", lvbe_page_scroll_hor },
-    { "scroll_ver", lvbe_page_scroll_ver },
-    { "start_edge_flash", lvbe_page_start_edge_flash },
 
     // { NULL, (bntvfunc) BE_CLOSURE }, /* mark section for berry closures */
 
@@ -3551,39 +2066,8 @@ class be_class_lv_page (scope: global, name: lv_page, super: be_class_lv_obj) {
     .p, var
     init, func(lvbe_page_create)
     tostring, func(lvx_tostring)
-    create, func(lvbe_page_create)
-    clean, func(lvbe_page_clean)
-    get_scrollable, func(lvbe_page_get_scrollable)
-    get_anim_time, func(lvbe_page_get_anim_time)
-    set_scrollbar_mode, func(lvbe_page_set_scrollbar_mode)
-    set_anim_time, func(lvbe_page_set_anim_time)
-    set_scroll_propagation, func(lvbe_page_set_scroll_propagation)
-    set_edge_flash, func(lvbe_page_set_edge_flash)
-    set_scrollable_fit2, func(lvbe_page_set_scrollable_fit2)
-    set_scrollable_fit, func(lvbe_page_set_scrollable_fit)
-    set_scrl_width, func(lvbe_page_set_scrl_width)
-    set_scrl_height, func(lvbe_page_set_scrl_height)
-    set_scrl_layout, func(lvbe_page_set_scrl_layout)
-    get_scrollbar_mode, func(lvbe_page_get_scrollbar_mode)
-    get_scroll_propagation, func(lvbe_page_get_scroll_propagation)
-    get_edge_flash, func(lvbe_page_get_edge_flash)
-    get_width_fit, func(lvbe_page_get_width_fit)
-    get_height_fit, func(lvbe_page_get_height_fit)
-    get_width_grid, func(lvbe_page_get_width_grid)
-    get_height_grid, func(lvbe_page_get_height_grid)
-    get_scrl_width, func(lvbe_page_get_scrl_width)
-    get_scrl_height, func(lvbe_page_get_scrl_height)
-    get_scrl_layout, func(lvbe_page_get_scrl_layout)
-    get_scrl_fit_left, func(lvbe_page_get_scrl_fit_left)
-    get_scrl_fit_right, func(lvbe_page_get_scrl_fit_right)
-    get_scrl_fit_top, func(lvbe_page_get_scrl_fit_top)
-    get_scrl_fit_bottom, func(lvbe_page_get_scrl_fit_bottom)
-    on_edge, func(lvbe_page_on_edge)
-    glue_obj, func(lvbe_page_glue_obj)
-    focus, func(lvbe_page_focus)
-    scroll_hor, func(lvbe_page_scroll_hor)
-    scroll_ver, func(lvbe_page_scroll_ver)
-    start_edge_flash, func(lvbe_page_start_edge_flash)
+    member, func(lvx_member)
+
 }
 @const_object_info_end */
 
@@ -3593,21 +2077,8 @@ void be_load_lv_roller_lib(bvm *vm) {
     { ".p", NULL },
     { "init", lvbe_roller_create },
     { "tostring", lvx_tostring },
+    { "member", lvx_member },
 
-    { "create", lvbe_roller_create },
-    { "set_options", lvbe_roller_set_options },
-    { "set_align", lvbe_roller_set_align },
-    { "set_selected", lvbe_roller_set_selected },
-    { "set_visible_row_count", lvbe_roller_set_visible_row_count },
-    { "set_auto_fit", lvbe_roller_set_auto_fit },
-    { "set_anim_time", lvbe_roller_set_anim_time },
-    { "get_selected", lvbe_roller_get_selected },
-    { "get_option_cnt", lvbe_roller_get_option_cnt },
-    { "get_selected_str", lvbe_roller_get_selected_str },
-    { "get_align", lvbe_roller_get_align },
-    { "get_auto_fit", lvbe_roller_get_auto_fit },
-    { "get_options", lvbe_roller_get_options },
-    { "get_anim_time", lvbe_roller_get_anim_time },
 
     // { NULL, (bntvfunc) BE_CLOSURE }, /* mark section for berry closures */
 
@@ -3631,20 +2102,8 @@ class be_class_lv_roller (scope: global, name: lv_roller, super: be_class_lv_obj
     .p, var
     init, func(lvbe_roller_create)
     tostring, func(lvx_tostring)
-    create, func(lvbe_roller_create)
-    set_options, func(lvbe_roller_set_options)
-    set_align, func(lvbe_roller_set_align)
-    set_selected, func(lvbe_roller_set_selected)
-    set_visible_row_count, func(lvbe_roller_set_visible_row_count)
-    set_auto_fit, func(lvbe_roller_set_auto_fit)
-    set_anim_time, func(lvbe_roller_set_anim_time)
-    get_selected, func(lvbe_roller_get_selected)
-    get_option_cnt, func(lvbe_roller_get_option_cnt)
-    get_selected_str, func(lvbe_roller_get_selected_str)
-    get_align, func(lvbe_roller_get_align)
-    get_auto_fit, func(lvbe_roller_get_auto_fit)
-    get_options, func(lvbe_roller_get_options)
-    get_anim_time, func(lvbe_roller_get_anim_time)
+    member, func(lvx_member)
+
 }
 @const_object_info_end */
 
@@ -3654,20 +2113,8 @@ void be_load_lv_slider_lib(bvm *vm) {
     { ".p", NULL },
     { "init", lvbe_slider_create },
     { "tostring", lvx_tostring },
+    { "member", lvx_member },
 
-    { "create", lvbe_slider_create },
-    { "set_value", lvbe_slider_set_value },
-    { "set_left_value", lvbe_slider_set_left_value },
-    { "set_range", lvbe_slider_set_range },
-    { "set_anim_time", lvbe_slider_set_anim_time },
-    { "set_type", lvbe_slider_set_type },
-    { "get_value", lvbe_slider_get_value },
-    { "get_left_value", lvbe_slider_get_left_value },
-    { "get_min_value", lvbe_slider_get_min_value },
-    { "get_max_value", lvbe_slider_get_max_value },
-    { "is_dragged", lvbe_slider_is_dragged },
-    { "get_anim_time", lvbe_slider_get_anim_time },
-    { "get_type", lvbe_slider_get_type },
 
     // { NULL, (bntvfunc) BE_CLOSURE }, /* mark section for berry closures */
 
@@ -3691,19 +2138,8 @@ class be_class_lv_slider (scope: global, name: lv_slider, super: be_class_lv_obj
     .p, var
     init, func(lvbe_slider_create)
     tostring, func(lvx_tostring)
-    create, func(lvbe_slider_create)
-    set_value, func(lvbe_slider_set_value)
-    set_left_value, func(lvbe_slider_set_left_value)
-    set_range, func(lvbe_slider_set_range)
-    set_anim_time, func(lvbe_slider_set_anim_time)
-    set_type, func(lvbe_slider_set_type)
-    get_value, func(lvbe_slider_get_value)
-    get_left_value, func(lvbe_slider_get_left_value)
-    get_min_value, func(lvbe_slider_get_min_value)
-    get_max_value, func(lvbe_slider_get_max_value)
-    is_dragged, func(lvbe_slider_is_dragged)
-    get_anim_time, func(lvbe_slider_get_anim_time)
-    get_type, func(lvbe_slider_get_type)
+    member, func(lvx_member)
+
 }
 @const_object_info_end */
 
@@ -3713,21 +2149,8 @@ void be_load_lv_spinbox_lib(bvm *vm) {
     { ".p", NULL },
     { "init", lvbe_spinbox_create },
     { "tostring", lvx_tostring },
+    { "member", lvx_member },
 
-    { "create", lvbe_spinbox_create },
-    { "set_rollover", lvbe_spinbox_set_rollover },
-    { "set_value", lvbe_spinbox_set_value },
-    { "set_digit_format", lvbe_spinbox_set_digit_format },
-    { "set_step", lvbe_spinbox_set_step },
-    { "set_range", lvbe_spinbox_set_range },
-    { "set_padding_left", lvbe_spinbox_set_padding_left },
-    { "get_rollover", lvbe_spinbox_get_rollover },
-    { "get_value", lvbe_spinbox_get_value },
-    { "get_step", lvbe_spinbox_get_step },
-    { "step_next", lvbe_spinbox_step_next },
-    { "step_prev", lvbe_spinbox_step_prev },
-    { "increment", lvbe_spinbox_increment },
-    { "decrement", lvbe_spinbox_decrement },
 
     // { NULL, (bntvfunc) BE_CLOSURE }, /* mark section for berry closures */
 
@@ -3751,20 +2174,8 @@ class be_class_lv_spinbox (scope: global, name: lv_spinbox, super: be_class_lv_o
     .p, var
     init, func(lvbe_spinbox_create)
     tostring, func(lvx_tostring)
-    create, func(lvbe_spinbox_create)
-    set_rollover, func(lvbe_spinbox_set_rollover)
-    set_value, func(lvbe_spinbox_set_value)
-    set_digit_format, func(lvbe_spinbox_set_digit_format)
-    set_step, func(lvbe_spinbox_set_step)
-    set_range, func(lvbe_spinbox_set_range)
-    set_padding_left, func(lvbe_spinbox_set_padding_left)
-    get_rollover, func(lvbe_spinbox_get_rollover)
-    get_value, func(lvbe_spinbox_get_value)
-    get_step, func(lvbe_spinbox_get_step)
-    step_next, func(lvbe_spinbox_step_next)
-    step_prev, func(lvbe_spinbox_step_prev)
-    increment, func(lvbe_spinbox_increment)
-    decrement, func(lvbe_spinbox_decrement)
+    member, func(lvx_member)
+
 }
 @const_object_info_end */
 
@@ -3774,17 +2185,8 @@ void be_load_lv_spinner_lib(bvm *vm) {
     { ".p", NULL },
     { "init", lvbe_spinner_create },
     { "tostring", lvx_tostring },
+    { "member", lvx_member },
 
-    { "create", lvbe_spinner_create },
-    { "set_arc_length", lvbe_spinner_set_arc_length },
-    { "set_spin_time", lvbe_spinner_set_spin_time },
-    { "set_type", lvbe_spinner_set_type },
-    { "set_dir", lvbe_spinner_set_dir },
-    { "get_arc_length", lvbe_spinner_get_arc_length },
-    { "get_spin_time", lvbe_spinner_get_spin_time },
-    { "get_type", lvbe_spinner_get_type },
-    { "get_dir", lvbe_spinner_get_dir },
-    { "anim_cb", lvbe_spinner_anim_cb },
 
     // { NULL, (bntvfunc) BE_CLOSURE }, /* mark section for berry closures */
 
@@ -3808,16 +2210,8 @@ class be_class_lv_spinner (scope: global, name: lv_spinner, super: be_class_lv_o
     .p, var
     init, func(lvbe_spinner_create)
     tostring, func(lvx_tostring)
-    create, func(lvbe_spinner_create)
-    set_arc_length, func(lvbe_spinner_set_arc_length)
-    set_spin_time, func(lvbe_spinner_set_spin_time)
-    set_type, func(lvbe_spinner_set_type)
-    set_dir, func(lvbe_spinner_set_dir)
-    get_arc_length, func(lvbe_spinner_get_arc_length)
-    get_spin_time, func(lvbe_spinner_get_spin_time)
-    get_type, func(lvbe_spinner_get_type)
-    get_dir, func(lvbe_spinner_get_dir)
-    anim_cb, func(lvbe_spinner_anim_cb)
+    member, func(lvx_member)
+
 }
 @const_object_info_end */
 
@@ -3827,14 +2221,8 @@ void be_load_lv_switch_lib(bvm *vm) {
     { ".p", NULL },
     { "init", lvbe_switch_create },
     { "tostring", lvx_tostring },
+    { "member", lvx_member },
 
-    { "create", lvbe_switch_create },
-    { "on", lvbe_switch_on },
-    { "off", lvbe_switch_off },
-    { "toggle", lvbe_switch_toggle },
-    { "set_anim_time", lvbe_switch_set_anim_time },
-    { "get_state", lvbe_switch_get_state },
-    { "get_anim_time", lvbe_switch_get_anim_time },
 
     // { NULL, (bntvfunc) BE_CLOSURE }, /* mark section for berry closures */
 
@@ -3858,13 +2246,8 @@ class be_class_lv_switch (scope: global, name: lv_switch, super: be_class_lv_obj
     .p, var
     init, func(lvbe_switch_create)
     tostring, func(lvx_tostring)
-    create, func(lvbe_switch_create)
-    on, func(lvbe_switch_on)
-    off, func(lvbe_switch_off)
-    toggle, func(lvbe_switch_toggle)
-    set_anim_time, func(lvbe_switch_set_anim_time)
-    get_state, func(lvbe_switch_get_state)
-    get_anim_time, func(lvbe_switch_get_anim_time)
+    member, func(lvx_member)
+
 }
 @const_object_info_end */
 
@@ -3874,26 +2257,8 @@ void be_load_lv_table_lib(bvm *vm) {
     { ".p", NULL },
     { "init", lvbe_table_create },
     { "tostring", lvx_tostring },
+    { "member", lvx_member },
 
-    { "create", lvbe_table_create },
-    { "set_cell_value", lvbe_table_set_cell_value },
-    { "set_cell_value_fmt", lvbe_table_set_cell_value_fmt },
-    { "set_row_cnt", lvbe_table_set_row_cnt },
-    { "set_col_cnt", lvbe_table_set_col_cnt },
-    { "set_col_width", lvbe_table_set_col_width },
-    { "set_cell_align", lvbe_table_set_cell_align },
-    { "set_cell_type", lvbe_table_set_cell_type },
-    { "set_cell_crop", lvbe_table_set_cell_crop },
-    { "set_cell_merge_right", lvbe_table_set_cell_merge_right },
-    { "get_cell_value", lvbe_table_get_cell_value },
-    { "get_row_cnt", lvbe_table_get_row_cnt },
-    { "get_col_cnt", lvbe_table_get_col_cnt },
-    { "get_col_width", lvbe_table_get_col_width },
-    { "get_cell_align", lvbe_table_get_cell_align },
-    { "get_cell_type", lvbe_table_get_cell_type },
-    { "get_cell_crop", lvbe_table_get_cell_crop },
-    { "get_cell_merge_right", lvbe_table_get_cell_merge_right },
-    { "get_pressed_cell", lvbe_table_get_pressed_cell },
 
     // { NULL, (bntvfunc) BE_CLOSURE }, /* mark section for berry closures */
 
@@ -3917,25 +2282,8 @@ class be_class_lv_table (scope: global, name: lv_table, super: be_class_lv_obj) 
     .p, var
     init, func(lvbe_table_create)
     tostring, func(lvx_tostring)
-    create, func(lvbe_table_create)
-    set_cell_value, func(lvbe_table_set_cell_value)
-    set_cell_value_fmt, func(lvbe_table_set_cell_value_fmt)
-    set_row_cnt, func(lvbe_table_set_row_cnt)
-    set_col_cnt, func(lvbe_table_set_col_cnt)
-    set_col_width, func(lvbe_table_set_col_width)
-    set_cell_align, func(lvbe_table_set_cell_align)
-    set_cell_type, func(lvbe_table_set_cell_type)
-    set_cell_crop, func(lvbe_table_set_cell_crop)
-    set_cell_merge_right, func(lvbe_table_set_cell_merge_right)
-    get_cell_value, func(lvbe_table_get_cell_value)
-    get_row_cnt, func(lvbe_table_get_row_cnt)
-    get_col_cnt, func(lvbe_table_get_col_cnt)
-    get_col_width, func(lvbe_table_get_col_width)
-    get_cell_align, func(lvbe_table_get_cell_align)
-    get_cell_type, func(lvbe_table_get_cell_type)
-    get_cell_crop, func(lvbe_table_get_cell_crop)
-    get_cell_merge_right, func(lvbe_table_get_cell_merge_right)
-    get_pressed_cell, func(lvbe_table_get_pressed_cell)
+    member, func(lvx_member)
+
 }
 @const_object_info_end */
 
@@ -3945,19 +2293,8 @@ void be_load_lv_tabview_lib(bvm *vm) {
     { ".p", NULL },
     { "init", lvbe_tabview_create },
     { "tostring", lvx_tostring },
+    { "member", lvx_member },
 
-    { "create", lvbe_tabview_create },
-    { "add_tab", lvbe_tabview_add_tab },
-    { "clean_tab", lvbe_tabview_clean_tab },
-    { "set_tab_act", lvbe_tabview_set_tab_act },
-    { "set_tab_name", lvbe_tabview_set_tab_name },
-    { "set_anim_time", lvbe_tabview_set_anim_time },
-    { "set_btns_pos", lvbe_tabview_set_btns_pos },
-    { "get_tab_act", lvbe_tabview_get_tab_act },
-    { "get_tab_count", lvbe_tabview_get_tab_count },
-    { "get_tab", lvbe_tabview_get_tab },
-    { "get_anim_time", lvbe_tabview_get_anim_time },
-    { "get_btns_pos", lvbe_tabview_get_btns_pos },
 
     // { NULL, (bntvfunc) BE_CLOSURE }, /* mark section for berry closures */
 
@@ -3981,18 +2318,8 @@ class be_class_lv_tabview (scope: global, name: lv_tabview, super: be_class_lv_o
     .p, var
     init, func(lvbe_tabview_create)
     tostring, func(lvx_tostring)
-    create, func(lvbe_tabview_create)
-    add_tab, func(lvbe_tabview_add_tab)
-    clean_tab, func(lvbe_tabview_clean_tab)
-    set_tab_act, func(lvbe_tabview_set_tab_act)
-    set_tab_name, func(lvbe_tabview_set_tab_name)
-    set_anim_time, func(lvbe_tabview_set_anim_time)
-    set_btns_pos, func(lvbe_tabview_set_btns_pos)
-    get_tab_act, func(lvbe_tabview_get_tab_act)
-    get_tab_count, func(lvbe_tabview_get_tab_count)
-    get_tab, func(lvbe_tabview_get_tab)
-    get_anim_time, func(lvbe_tabview_get_anim_time)
-    get_btns_pos, func(lvbe_tabview_get_btns_pos)
+    member, func(lvx_member)
+
 }
 @const_object_info_end */
 
@@ -4002,51 +2329,8 @@ void be_load_lv_textarea_lib(bvm *vm) {
     { ".p", NULL },
     { "init", lvbe_textarea_create },
     { "tostring", lvx_tostring },
+    { "member", lvx_member },
 
-    { "create", lvbe_textarea_create },
-    { "add_char", lvbe_textarea_add_char },
-    { "add_text", lvbe_textarea_add_text },
-    { "del_char", lvbe_textarea_del_char },
-    { "del_char_forward", lvbe_textarea_del_char_forward },
-    { "set_text", lvbe_textarea_set_text },
-    { "set_placeholder_text", lvbe_textarea_set_placeholder_text },
-    { "set_cursor_pos", lvbe_textarea_set_cursor_pos },
-    { "set_cursor_hidden", lvbe_textarea_set_cursor_hidden },
-    { "set_cursor_click_pos", lvbe_textarea_set_cursor_click_pos },
-    { "set_pwd_mode", lvbe_textarea_set_pwd_mode },
-    { "set_one_line", lvbe_textarea_set_one_line },
-    { "set_text_align", lvbe_textarea_set_text_align },
-    { "set_accepted_chars", lvbe_textarea_set_accepted_chars },
-    { "set_max_length", lvbe_textarea_set_max_length },
-    { "set_insert_replace", lvbe_textarea_set_insert_replace },
-    { "set_scrollbar_mode", lvbe_textarea_set_scrollbar_mode },
-    { "set_scroll_propagation", lvbe_textarea_set_scroll_propagation },
-    { "set_edge_flash", lvbe_textarea_set_edge_flash },
-    { "set_text_sel", lvbe_textarea_set_text_sel },
-    { "set_pwd_show_time", lvbe_textarea_set_pwd_show_time },
-    { "set_cursor_blink_time", lvbe_textarea_set_cursor_blink_time },
-    { "get_text", lvbe_textarea_get_text },
-    { "get_placeholder_text", lvbe_textarea_get_placeholder_text },
-    { "get_label", lvbe_textarea_get_label },
-    { "get_cursor_pos", lvbe_textarea_get_cursor_pos },
-    { "get_cursor_hidden", lvbe_textarea_get_cursor_hidden },
-    { "get_cursor_click_pos", lvbe_textarea_get_cursor_click_pos },
-    { "get_pwd_mode", lvbe_textarea_get_pwd_mode },
-    { "get_one_line", lvbe_textarea_get_one_line },
-    { "get_accepted_chars", lvbe_textarea_get_accepted_chars },
-    { "get_max_length", lvbe_textarea_get_max_length },
-    { "get_scrollbar_mode", lvbe_textarea_get_scrollbar_mode },
-    { "get_scroll_propagation", lvbe_textarea_get_scroll_propagation },
-    { "get_edge_flash", lvbe_textarea_get_edge_flash },
-    { "text_is_selected", lvbe_textarea_text_is_selected },
-    { "get_text_sel_en", lvbe_textarea_get_text_sel_en },
-    { "get_pwd_show_time", lvbe_textarea_get_pwd_show_time },
-    { "get_cursor_blink_time", lvbe_textarea_get_cursor_blink_time },
-    { "clear_selection", lvbe_textarea_clear_selection },
-    { "cursor_right", lvbe_textarea_cursor_right },
-    { "cursor_left", lvbe_textarea_cursor_left },
-    { "cursor_down", lvbe_textarea_cursor_down },
-    { "cursor_up", lvbe_textarea_cursor_up },
 
     // { NULL, (bntvfunc) BE_CLOSURE }, /* mark section for berry closures */
 
@@ -4070,50 +2354,8 @@ class be_class_lv_textarea (scope: global, name: lv_textarea, super: be_class_lv
     .p, var
     init, func(lvbe_textarea_create)
     tostring, func(lvx_tostring)
-    create, func(lvbe_textarea_create)
-    add_char, func(lvbe_textarea_add_char)
-    add_text, func(lvbe_textarea_add_text)
-    del_char, func(lvbe_textarea_del_char)
-    del_char_forward, func(lvbe_textarea_del_char_forward)
-    set_text, func(lvbe_textarea_set_text)
-    set_placeholder_text, func(lvbe_textarea_set_placeholder_text)
-    set_cursor_pos, func(lvbe_textarea_set_cursor_pos)
-    set_cursor_hidden, func(lvbe_textarea_set_cursor_hidden)
-    set_cursor_click_pos, func(lvbe_textarea_set_cursor_click_pos)
-    set_pwd_mode, func(lvbe_textarea_set_pwd_mode)
-    set_one_line, func(lvbe_textarea_set_one_line)
-    set_text_align, func(lvbe_textarea_set_text_align)
-    set_accepted_chars, func(lvbe_textarea_set_accepted_chars)
-    set_max_length, func(lvbe_textarea_set_max_length)
-    set_insert_replace, func(lvbe_textarea_set_insert_replace)
-    set_scrollbar_mode, func(lvbe_textarea_set_scrollbar_mode)
-    set_scroll_propagation, func(lvbe_textarea_set_scroll_propagation)
-    set_edge_flash, func(lvbe_textarea_set_edge_flash)
-    set_text_sel, func(lvbe_textarea_set_text_sel)
-    set_pwd_show_time, func(lvbe_textarea_set_pwd_show_time)
-    set_cursor_blink_time, func(lvbe_textarea_set_cursor_blink_time)
-    get_text, func(lvbe_textarea_get_text)
-    get_placeholder_text, func(lvbe_textarea_get_placeholder_text)
-    get_label, func(lvbe_textarea_get_label)
-    get_cursor_pos, func(lvbe_textarea_get_cursor_pos)
-    get_cursor_hidden, func(lvbe_textarea_get_cursor_hidden)
-    get_cursor_click_pos, func(lvbe_textarea_get_cursor_click_pos)
-    get_pwd_mode, func(lvbe_textarea_get_pwd_mode)
-    get_one_line, func(lvbe_textarea_get_one_line)
-    get_accepted_chars, func(lvbe_textarea_get_accepted_chars)
-    get_max_length, func(lvbe_textarea_get_max_length)
-    get_scrollbar_mode, func(lvbe_textarea_get_scrollbar_mode)
-    get_scroll_propagation, func(lvbe_textarea_get_scroll_propagation)
-    get_edge_flash, func(lvbe_textarea_get_edge_flash)
-    text_is_selected, func(lvbe_textarea_text_is_selected)
-    get_text_sel_en, func(lvbe_textarea_get_text_sel_en)
-    get_pwd_show_time, func(lvbe_textarea_get_pwd_show_time)
-    get_cursor_blink_time, func(lvbe_textarea_get_cursor_blink_time)
-    clear_selection, func(lvbe_textarea_clear_selection)
-    cursor_right, func(lvbe_textarea_cursor_right)
-    cursor_left, func(lvbe_textarea_cursor_left)
-    cursor_down, func(lvbe_textarea_cursor_down)
-    cursor_up, func(lvbe_textarea_cursor_up)
+    member, func(lvx_member)
+
 }
 @const_object_info_end */
 
@@ -4123,16 +2365,8 @@ void be_load_lv_tileview_lib(bvm *vm) {
     { ".p", NULL },
     { "init", lvbe_tileview_create },
     { "tostring", lvx_tostring },
+    { "member", lvx_member },
 
-    { "create", lvbe_tileview_create },
-    { "add_element", lvbe_tileview_add_element },
-    { "set_valid_positions", lvbe_tileview_set_valid_positions },
-    { "set_tile_act", lvbe_tileview_set_tile_act },
-    { "set_edge_flash", lvbe_tileview_set_edge_flash },
-    { "set_anim_time", lvbe_tileview_set_anim_time },
-    { "get_tile_act", lvbe_tileview_get_tile_act },
-    { "get_edge_flash", lvbe_tileview_get_edge_flash },
-    { "get_anim_time", lvbe_tileview_get_anim_time },
 
     // { NULL, (bntvfunc) BE_CLOSURE }, /* mark section for berry closures */
 
@@ -4156,15 +2390,8 @@ class be_class_lv_tileview (scope: global, name: lv_tileview, super: be_class_lv
     .p, var
     init, func(lvbe_tileview_create)
     tostring, func(lvx_tostring)
-    create, func(lvbe_tileview_create)
-    add_element, func(lvbe_tileview_add_element)
-    set_valid_positions, func(lvbe_tileview_set_valid_positions)
-    set_tile_act, func(lvbe_tileview_set_tile_act)
-    set_edge_flash, func(lvbe_tileview_set_edge_flash)
-    set_anim_time, func(lvbe_tileview_set_anim_time)
-    get_tile_act, func(lvbe_tileview_get_tile_act)
-    get_edge_flash, func(lvbe_tileview_get_edge_flash)
-    get_anim_time, func(lvbe_tileview_get_anim_time)
+    member, func(lvx_member)
+
 }
 @const_object_info_end */
 
@@ -4174,35 +2401,8 @@ void be_load_lv_win_lib(bvm *vm) {
     { ".p", NULL },
     { "init", lvbe_win_create },
     { "tostring", lvx_tostring },
+    { "member", lvx_member },
 
-    { "create", lvbe_win_create },
-    { "clean", lvbe_win_clean },
-    { "add_btn_right", lvbe_win_add_btn_right },
-    { "add_btn_left", lvbe_win_add_btn_left },
-    { "close_event_cb", lvbe_win_close_event_cb },
-    { "set_title", lvbe_win_set_title },
-    { "set_header_height", lvbe_win_set_header_height },
-    { "set_btn_width", lvbe_win_set_btn_width },
-    { "set_content_size", lvbe_win_set_content_size },
-    { "set_layout", lvbe_win_set_layout },
-    { "set_scrollbar_mode", lvbe_win_set_scrollbar_mode },
-    { "set_anim_time", lvbe_win_set_anim_time },
-    { "set_drag", lvbe_win_set_drag },
-    { "title_set_alignment", lvbe_win_title_set_alignment },
-    { "get_title", lvbe_win_get_title },
-    { "get_content", lvbe_win_get_content },
-    { "get_header_height", lvbe_win_get_header_height },
-    { "get_btn_width", lvbe_win_get_btn_width },
-    { "get_from_btn", lvbe_win_get_from_btn },
-    { "get_layout", lvbe_win_get_layout },
-    { "get_sb_mode", lvbe_win_get_sb_mode },
-    { "get_anim_time", lvbe_win_get_anim_time },
-    { "get_width", lvbe_win_get_width },
-    { "get_drag", lvbe_win_get_drag },
-    { "title_get_alignment", lvbe_win_title_get_alignment },
-    { "focus", lvbe_win_focus },
-    { "scroll_hor", lvbe_win_scroll_hor },
-    { "scroll_ver", lvbe_win_scroll_ver },
 
     // { NULL, (bntvfunc) BE_CLOSURE }, /* mark section for berry closures */
 
@@ -4226,34 +2426,8 @@ class be_class_lv_win (scope: global, name: lv_win, super: be_class_lv_obj) {
     .p, var
     init, func(lvbe_win_create)
     tostring, func(lvx_tostring)
-    create, func(lvbe_win_create)
-    clean, func(lvbe_win_clean)
-    add_btn_right, func(lvbe_win_add_btn_right)
-    add_btn_left, func(lvbe_win_add_btn_left)
-    close_event_cb, func(lvbe_win_close_event_cb)
-    set_title, func(lvbe_win_set_title)
-    set_header_height, func(lvbe_win_set_header_height)
-    set_btn_width, func(lvbe_win_set_btn_width)
-    set_content_size, func(lvbe_win_set_content_size)
-    set_layout, func(lvbe_win_set_layout)
-    set_scrollbar_mode, func(lvbe_win_set_scrollbar_mode)
-    set_anim_time, func(lvbe_win_set_anim_time)
-    set_drag, func(lvbe_win_set_drag)
-    title_set_alignment, func(lvbe_win_title_set_alignment)
-    get_title, func(lvbe_win_get_title)
-    get_content, func(lvbe_win_get_content)
-    get_header_height, func(lvbe_win_get_header_height)
-    get_btn_width, func(lvbe_win_get_btn_width)
-    get_from_btn, func(lvbe_win_get_from_btn)
-    get_layout, func(lvbe_win_get_layout)
-    get_sb_mode, func(lvbe_win_get_sb_mode)
-    get_anim_time, func(lvbe_win_get_anim_time)
-    get_width, func(lvbe_win_get_width)
-    get_drag, func(lvbe_win_get_drag)
-    title_get_alignment, func(lvbe_win_title_get_alignment)
-    focus, func(lvbe_win_focus)
-    scroll_hor, func(lvbe_win_scroll_hor)
-    scroll_ver, func(lvbe_win_scroll_ver)
+    member, func(lvx_member)
+
 }
 @const_object_info_end */
 

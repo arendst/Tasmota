@@ -21,3 +21,4 @@
 
 extern void *lvbe_malloc(size_t size);
 extern void  lvbe_free(void *ptr);
+extern void *lvbe_realloc(void *ptr, size_t size);

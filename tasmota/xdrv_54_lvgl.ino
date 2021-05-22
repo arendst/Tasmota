@@ -32,6 +32,10 @@
 
 #include "Adafruit_LvGL_Glue.h"
 
+#ifdef USE_LVGL_PNG_DECODER
+  #include "lv_png.h"
+#endif // USE_LVGL_PNG_DECODER
+
 Adafruit_LvGL_Glue * glue;
 
 // **************************************************
@@ -219,7 +223,6 @@ static lv_fs_res_t lvbe_fs_open(lv_fs_drv_t * drv, void * file_p, const char * p
   // AddLog(LOG_LEVEL_INFO, "LVG: F=%*_H", sizeof(f), &f);
   if (f) {
     File * f_ptr = new File(f);                 // copy to dynamic object
-    *f_ptr = f;                                 // TODO is this necessary?
     *((File**)file_p) = f_ptr;
     return LV_FS_RES_OK;
   } else {
@@ -339,6 +342,14 @@ extern "C" {
   void lvbe_free(void *ptr) {
     free(ptr);
   }
+
+#ifdef USE_LVGL_PNG_DECODER
+  // for PNG decoder, use same allocators as LVGL
+  void* lodepng_malloc(size_t size) { return lvbe_malloc(size); }
+  void* lodepng_realloc(void* ptr, size_t new_size) { return lvbe_realloc(ptr, new_size); }
+  void lodepng_free(void* ptr) { lvbe_free(ptr); }
+#endif // USE_LVGL_PNG_DECODER
+
 }
 
 /************************************************************
@@ -428,8 +439,15 @@ void start_lvgl(const char * uconfig) {
   // initialize the FreeType renderer
   lv_freetype_init(USE_LVGL_FREETYPE_MAX_FACES,
                    USE_LVGL_FREETYPE_MAX_SIZES,
-                   USE_LVGL_FREETYPE_MAX_BYTES);
+                   psramFound() ? USE_LVGL_FREETYPE_MAX_BYTES_PSRAM : USE_LVGL_FREETYPE_MAX_BYTES);
 #endif
+#ifdef USE_LVGL_PNG_DECODER
+  lv_png_init();
+#endif // USE_LVGL_PNG_DECODER
+
+  if (psramFound()) {
+    lv_img_cache_set_size(LV_IMG_CACHE_DEF_SIZE_PSRAM);
+  }
 
   AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_LVGL "LVGL initialized"));
 }
