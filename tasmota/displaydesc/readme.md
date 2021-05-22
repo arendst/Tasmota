@@ -1,5 +1,6 @@
-Display Descriptor files for use with universal display driver.
-4 (3) options to select a display driver
+Display Descriptor files for use with universal display driver. 
+
+Options to select a display driver:
 
 1. file system driven if UFILESYSTEM is in place (preferred option for normal use)
   to select a display rename the file to "display.ini" and put into flash file system.
@@ -9,11 +10,14 @@ Display Descriptor files for use with universal display driver.
 3. rule buffer 3 driven
   copy descriptor to rule buffer number 3 but do not enable rule 3
   (descriptor may not contain ANY spaces in this mode)
-(4.) compile the descriptor into driver.
-  convert the file to a string and place it into your user_config.h file using #define
+4. compile the descriptor into driver.
+  
+  convert the file to a string and place it into your `user_config_override.h` file
 
   Example:
-    #define DSP_ROM_DESC \
+
+```
+#define DSP_ROM_DESC \
 ":H,SH1106,128,64,1,I2C,3c,*,*,*\n" \
 ":S,0,1,1,0,40,20\n" \
 ":I\n" \
@@ -38,7 +42,7 @@ Display Descriptor files for use with universal display driver.
 ":A,00,10,40,00,02\n" \
 ":i,A6,A7\n" \
 "#\n"
-
+```
 
 
 for further info about display descriptors read the tasmota docs display part.
