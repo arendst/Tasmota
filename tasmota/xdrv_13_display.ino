@@ -777,6 +777,7 @@ void DisplayText(void)
               cp = get_string(bbuff, sizeof(bbuff), cp);
               char unit[4];
               cp = get_string(unit, sizeof(unit), cp);
+	      decode_te(unit);
               define_dt_var(num, gxp, gyp, textbcol, textfcol, font, textsize, txlen, time, dp, bbuff, unit);
             }
           }
