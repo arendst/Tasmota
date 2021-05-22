@@ -59,11 +59,11 @@ extern "C" {
 #define BERRY_LOGSZ 700
 #endif
 extern "C" {
-    extern void *lvbe_malloc(size_t size);
+    extern void *berry_malloc(size_t size);
 }
 static char * log_berry_buffer = nullptr;
 static_block {
-    log_berry_buffer = (char*) lvbe_malloc(BERRY_LOGSZ);
+    log_berry_buffer = (char*) berry_malloc(BERRY_LOGSZ);
     if (log_berry_buffer) log_berry_buffer[0] = 0;
 }
 extern void berry_log(const char * berry_buf);
