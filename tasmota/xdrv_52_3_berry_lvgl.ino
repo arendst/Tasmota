@@ -296,7 +296,7 @@ extern "C" {
     if (argc > 2) {
       obj2 = (lv_obj_t*) be_convert_single_elt(vm, 3);
     }
-    // AddLog(LOG_LEVEL_INFO, "argc %d lv_obj %p", argc, obj);
+    // AddLog(LOG_LEVEL_INFO, "argc %d obj1 %p obj2 %p", argc, obj1, obj2);
     fn_any_callable f = (fn_any_callable) func;
     // AddLog(LOG_LEVEL_INFO, ">> be_call_c_func(%p) - %p,%p,%p,%p,%p", f, p[0], p[1], p[2], p[3], p[4]);
     lv_obj_t * obj;
@@ -340,6 +340,7 @@ extern "C" {
 
   // native closure to call `be_call_c_func`
   int lvx_call_c(bvm *vm) {
+    // berry_log_C("lvx_call_c enter");
     // keep parameters unchanged
     be_getupval(vm, 0, 0);    // if index is zero, it's the current native closure
     void * func = be_tocomptr(vm, -1);
@@ -375,9 +376,8 @@ extern "C" {
         int32_t method_idx = bin_search(method_name, methods_calls, sizeof(lvbe_call_c_t), methods_size);
         if (method_idx >= 0) {
           // method found
-          // berry_log_C("lvx_member method found");
-
           const lvbe_call_c_t * method = &methods_calls[method_idx];
+          // berry_log_C("lvx_member method found func=%p return_type=%s arg_type=%s", method->func, method->return_type, method->arg_type);
           // push native closure
           be_pushntvclosure(vm, &lvx_call_c, 3);   // 3 upvals
 

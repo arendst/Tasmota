@@ -283,8 +283,8 @@ static int obj_attribute(bvm *vm, bvalue *o, bvalue *c, bvalue *dst)
             vm->top += 3;   /* prevent collection results */
             be_dofunc(vm, top, 2); /* call method 'member' */
             vm->top -= 3;
-            *o = *vm->top;   /* copy result to R(A) */
-            type = var_type(o);
+            *dst = *vm->top;   /* copy result to R(A) */
+            type = var_type(dst);
         }
     }
     if (basetype(type) == BE_NIL) {
