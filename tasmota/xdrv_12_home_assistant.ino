@@ -362,8 +362,8 @@ void TryResponseAppend_P(const char *format, ...)
   char dummy[2];
   int dlen = vsnprintf_P(dummy, 1, format, args);
 
-  int mlen = strlen(TasmotaGlobal.mqtt_data);
-  int slen = sizeof(TasmotaGlobal.mqtt_data) - 1 - mlen;
+  int mlen = ResponseLength();
+  int slen = ResponseSize() - 1 - mlen;
   if (dlen >= slen)
   {
     AddLog_P(LOG_LEVEL_ERROR, PSTR("%s (%u/%u):"), kHAssError1, dlen, slen);

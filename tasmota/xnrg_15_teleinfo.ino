@@ -206,10 +206,7 @@ void ADPSCallback(uint8_t phase, char * label)
         phase = 1;
     }
 
-    Response_P(PSTR("{"));
-    ResponseAppend_P(TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), PSTR("\"TIC\":{\"%s\":%i}"), label, phase );
-    ResponseJsonEnd();
-
+    Response_P(PSTR("{\"TIC\":{\"%s\":%i}}"), label, phase );
     // Publish adding ADCO serial number into the topic
     MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR(D_RSLT_SENSOR), false);
 

@@ -2691,10 +2691,10 @@ void MI32ShowSomeSensors(){
     p = &MIBLEsensors[MI32.mqttCurrentSlot];
 
     MI32GetOneSensorJson(MI32.mqttCurrentSlot, (maxcnt == 1));
-    int mlen = strlen(TasmotaGlobal.mqtt_data);
+    int mlen = ResponseLength();
 
     // if we ran out of room, leave here.
-    if (sizeof(TasmotaGlobal.mqtt_data) - mlen < 100){
+    if (ResponseSize() - mlen < 100){
       MI32.mqttCurrentSlot++;
       break;
     }
@@ -3055,10 +3055,10 @@ void MI32ShowTriggeredSensors(){
       ResponseAppend_P(PSTR(","));
       // hide sensor name if HASS or option6
       MI32GetOneSensorJson(sensor, (maxcnt == 1));
-      int mlen = strlen(TasmotaGlobal.mqtt_data);
+      int mlen = ResponseLength();
 
       // if we ran out of room, leave here.
-      if (sizeof(TasmotaGlobal.mqtt_data) - mlen < 100){
+      if (ResponseSize() - mlen < 100){
         sensor++;
         break;
       }

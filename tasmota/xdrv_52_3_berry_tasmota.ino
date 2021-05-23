@@ -60,7 +60,7 @@ extern "C" {
         if (top == 4) {
           retain = be_tobool(vm, 4);
         }
-        strlcpy(TasmotaGlobal.mqtt_data, payload, sizeof(TasmotaGlobal.mqtt_data));
+        Response_P(payload);
         MqttPublish(topic, retain);
         be_return(vm); // Return
       }

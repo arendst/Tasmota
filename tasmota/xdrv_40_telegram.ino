@@ -299,7 +299,7 @@ String TelegramExecuteCommand(const char *svalue) {
     char* JSON = (char*)memchr(line, '{', len);
     if (JSON) {  // Is it a JSON message (and not only [15:26:08 MQT: stat/wemos5/POWER = O])
       size_t JSONlen = len - (JSON - line);
-      if (JSONlen > sizeof(TasmotaGlobal.mqtt_data)) { JSONlen = sizeof(TasmotaGlobal.mqtt_data); }
+      if (JSONlen > ResponseSize()) { JSONlen = ResponseSize(); }
       char stemp[JSONlen];
       strlcpy(stemp, JSON +1, JSONlen -2);
       if (cflg) { response += F(","); }
@@ -401,8 +401,11 @@ void CmndTmState(void) {
       }
     }
   }
-  snprintf_P (TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), PSTR("{\"%s\":{\"Send\":\"%s\",\"Receive\":\"%s\",\"Echo\":\"%s\"}}"),
-    XdrvMailbox.command, GetStateText(Settings.sbflag1.telegram_send_enable), GetStateText(Settings.sbflag1.telegram_recv_enable), GetStateText(Settings.sbflag1.telegram_echo_enable));
+  Response_P(PSTR("{\"%s\":{\"Send\":\"%s\",\"Receive\":\"%s\",\"Echo\":\"%s\"}}"),
+    XdrvMailbox.command,
+    GetStateText(Settings.sbflag1.telegram_send_enable),
+    GetStateText(Settings.sbflag1.telegram_recv_enable),
+    GetStateText(Settings.sbflag1.telegram_echo_enable));
 }
 
 void CmndTmPoll(void) {

@@ -311,8 +311,8 @@ void CommandHandler(char* topicBuf, char* dataBuf, uint32_t data_len)
     char json_command[TOPSZ];
     snprintf_P(json_command, sizeof(json_command), PSTR("{\"" D_JSON_COMMAND "\":\"%s\","), type);
     uint32_t jc_len = strlen(json_command);
-    uint32_t mq_len = strlen(TasmotaGlobal.mqtt_data) +1;
-    if (mq_len < sizeof(TasmotaGlobal.mqtt_data) - jc_len) {
+    uint32_t mq_len = ResponseLength() +1;
+    if (mq_len < ResponseSize() - jc_len) {
       memmove(TasmotaGlobal.mqtt_data +jc_len -1, TasmotaGlobal.mqtt_data, mq_len);
       memmove(TasmotaGlobal.mqtt_data, json_command, jc_len);
     }
@@ -2141,11 +2141,11 @@ void CmndWifi(void)
 void CmndI2cScan(void)
 {
   if ((1 == XdrvMailbox.index) && (TasmotaGlobal.i2c_enabled)) {
-    I2cScan(TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data));
+    I2cScan();
   }
 #ifdef ESP32
   if ((2 == XdrvMailbox.index) && (TasmotaGlobal.i2c_enabled_2)) {
-    I2cScan(TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), 1);
+    I2cScan(1);
   }
 #endif
 }
@@ -2212,13 +2212,11 @@ void CmndDevGroupTie(void)
     if (XdrvMailbox.data_len > 0) {
       Settings.device_group_tie[XdrvMailbox.index - 1] = XdrvMailbox.payload;
     }
-    char * ptr = TasmotaGlobal.mqtt_data;
-    *ptr++ = '{';
+    Response_P(PSTR("{"));
     for (uint32_t i = 0; i < MAX_DEV_GROUP_NAMES; i++) {
-      ptr += sprintf(ptr, PSTR("\"%s%u\":%u,"), D_CMND_DEVGROUP_TIE, i + 1, Settings.device_group_tie[i]);
+      ResponseAppend_P(PSTR("%s\"%s%u\":%u"), (i)?",":"", D_CMND_DEVGROUP_TIE, i + 1, Settings.device_group_tie[i]);
     }
-    *(ptr - 1) = '}';
-    *ptr = 0;
+    ResponseJsonEnd();
   }
 }
 #endif  // USE_DEVICE_GROUPS

@@ -518,11 +518,7 @@ void sns_opentherm_flags_cmd(void)
         int mode = Settings.ot_flags & (uint8_t)mask;
         if (mode > 0)
         {
-            if (addComma)
-            {
-                snprintf_P(TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), PSTR("%s,"), TasmotaGlobal.mqtt_data);
-            }
-            snprintf_P(TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), PSTR("%s%s"), TasmotaGlobal.mqtt_data, sns_opentherm_flag_text(mode));
+            ResponseAppend_P(PSTR("%s%s"), (addComma)?",":"", sns_opentherm_flag_text(mode));
             addComma = true;
         }
     }

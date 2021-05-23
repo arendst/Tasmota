@@ -1289,12 +1289,11 @@ void CmndPublish(void) {
       strlcpy(stemp1, mqtt_part, sizeof(stemp1));
       ReplaceChar(stemp1, '#', ' ');
       if ((payload_part != nullptr) && strlen(payload_part)) {
-        strlcpy(TasmotaGlobal.mqtt_data, payload_part, sizeof(TasmotaGlobal.mqtt_data));
+        Response_P(payload_part);
       } else {
         ResponseClear();
       }
       MqttPublish(stemp1, (XdrvMailbox.index == 2));
-//      ResponseCmndDone();
       ResponseClear();
     }
   }

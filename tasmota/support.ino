@@ -1169,6 +1169,10 @@ char* ResponseGetTime(uint32_t format, char* time_str)
   return time_str;
 }
 
+uint32_t ResponseSize(void) {
+  return sizeof(TasmotaGlobal.mqtt_data);
+}
+
 uint32_t ResponseLength(void) {
   return strlen(TasmotaGlobal.mqtt_data);
 }
@@ -1186,7 +1190,7 @@ int Response_P(const char* format, ...)        // Content send snprintf_P char d
   // This uses char strings. Be aware of sending %% if % is needed
   va_list args;
   va_start(args, format);
-  int len = ext_vsnprintf_P(TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), format, args);
+  int len = ext_vsnprintf_P(TasmotaGlobal.mqtt_data, ResponseSize(), format, args);
   va_end(args);
   return len;
 }
@@ -1200,7 +1204,7 @@ int ResponseTime_P(const char* format, ...)    // Content send snprintf_P char d
   ResponseGetTime(Settings.flag2.time_format, TasmotaGlobal.mqtt_data);
 
   int mlen = ResponseLength();
-  int len = ext_vsnprintf_P(TasmotaGlobal.mqtt_data + mlen, sizeof(TasmotaGlobal.mqtt_data) - mlen, format, args);
+  int len = ext_vsnprintf_P(TasmotaGlobal.mqtt_data + mlen, ResponseSize() - mlen, format, args);
   va_end(args);
   return len + mlen;
 }
@@ -1211,7 +1215,7 @@ int ResponseAppend_P(const char* format, ...)  // Content send snprintf_P char d
   va_list args;
   va_start(args, format);
   int mlen = ResponseLength();
-  int len = ext_vsnprintf_P(TasmotaGlobal.mqtt_data + mlen, sizeof(TasmotaGlobal.mqtt_data) - mlen, format, args);
+  int len = ext_vsnprintf_P(TasmotaGlobal.mqtt_data + mlen, ResponseSize() - mlen, format, args);
   va_end(args);
   return len + mlen;
 }
@@ -1244,6 +1248,10 @@ int ResponseJsonEnd(void)
 int ResponseJsonEndEnd(void)
 {
   return ResponseAppend_P(PSTR("}}"));
+}
+
+bool ResponseContains_P(const char* needle) {
+  return (strstr_P(TasmotaGlobal.mqtt_data, needle) != nullptr);
 }
 
 /*********************************************************************************************\
@@ -2025,9 +2033,8 @@ int8_t I2cWriteBuffer(uint8_t addr, uint8_t reg, uint8_t *reg_data, uint16_t len
   return 0;
 }
 
-void I2cScan(char *devs, unsigned int devs_len, uint32_t bus = 0);
-void I2cScan(char *devs, unsigned int devs_len, uint32_t bus)
-{
+void I2cScan(uint32_t bus = 0);
+void I2cScan(uint32_t bus) {
   // Return error codes defined in twi.h and core_esp8266_si2c.c
   // I2C_OK                      0
   // I2C_SCL_HELD_LOW            1 = SCL held low by another device, no procedure available to recover
@@ -2039,7 +2046,7 @@ void I2cScan(char *devs, unsigned int devs_len, uint32_t bus)
   uint8_t address = 0;
   uint8_t any = 0;
 
-  snprintf_P(devs, devs_len, PSTR("{\"" D_CMND_I2CSCAN "\":\"" D_JSON_I2CSCAN_DEVICES_FOUND_AT));
+  Response_P(PSTR("{\"" D_CMND_I2CSCAN "\":\"" D_JSON_I2CSCAN_DEVICES_FOUND_AT));
   for (address = 1; address <= 127; address++) {
 #ifdef ESP32
     TwoWire & myWire = (bus == 0) ? Wire : Wire1;
@@ -2050,19 +2057,19 @@ void I2cScan(char *devs, unsigned int devs_len, uint32_t bus)
     error = myWire.endTransmission();
     if (0 == error) {
       any = 1;
-      snprintf_P(devs, devs_len, PSTR("%s 0x%02x"), devs, address);
+      ResponseAppend_P(PSTR(" 0x%02x"), address);
     }
     else if (error != 2) {  // Seems to happen anyway using this scan
       any = 2;
-      snprintf_P(devs, devs_len, PSTR("{\"" D_CMND_I2CSCAN "\":\"Error %d at 0x%02x"), error, address);
+      Response_P(PSTR("{\"" D_CMND_I2CSCAN "\":\"Error %d at 0x%02x"), error, address);
       break;
     }
   }
   if (any) {
-    strncat(devs, "\"}", devs_len - strlen(devs) -1);
+    ResponseAppend_P(PSTR("\"}"));
   }
   else {
-    snprintf_P(devs, devs_len, PSTR("{\"" D_CMND_I2CSCAN "\":\"" D_JSON_I2CSCAN_NO_DEVICES_FOUND "\"}"));
+    Response_P(PSTR("{\"" D_CMND_I2CSCAN "\":\"" D_JSON_I2CSCAN_NO_DEVICES_FOUND "\"}"));
   }
 }
 

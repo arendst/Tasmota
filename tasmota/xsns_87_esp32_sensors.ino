@@ -65,7 +65,7 @@ void Esp32SensorShow(bool json) {
 #endif  // CONFIG_IDF_TARGET_ESP32
 
   if (json) {
-    bool temperature_present = (strstr_P(TasmotaGlobal.mqtt_data, PSTR(D_JSON_TEMPERATURE)) != nullptr);
+    bool temperature_present = (ResponseContains_P(PSTR(D_JSON_TEMPERATURE)));
     ResponseAppend_P(PSTR(",\"ESP32\":{\"" D_JSON_TEMPERATURE "\":%*_f"), Settings.flag2.temperature_resolution, &t);
 
 #if CONFIG_IDF_TARGET_ESP32
