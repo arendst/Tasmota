@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v9.4.0.1 - Last update 21.04.2021
+ * Updated until v9.4.0.1 - Last update 23.05.2021
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -1048,12 +1048,12 @@
 #define D_NEOPOOL_PR_OFF                  "PrOff"
 #define D_NEOPOOL_SETPOINT_OK             "OK"
 #define D_NEOPOOL_COVER                   "Copertura"
-#define D_NEOPOOL_SHOCK                   "Boost"
+#define D_NEOPOOL_SHOCK                   "Guadagno"
 #define D_NEOPOOL_STATUS_ON               "ON"
 #define D_NEOPOOL_STATUS_OFF              "OFF"
-#define D_NEOPOOL_STATUS_WAIT             "WAIT"
-#define D_NEOPOOL_STATUS_TANK             "TANK"
-#define D_NEOPOOL_STATUS_FLOW             "Flow"
+#define D_NEOPOOL_STATUS_WAIT             "ATTENDI"
+#define D_NEOPOOL_STATUS_TANK             "SERBATOIO"
+#define D_NEOPOOL_STATUS_FLOW             "Flusso"
 #define D_NEOPOOL_LOW                     "Bassa"
 #define D_NEOPOOL_FLOW1                   "FL1"
 #define D_NEOPOOL_FLOW2                   "FL2"
