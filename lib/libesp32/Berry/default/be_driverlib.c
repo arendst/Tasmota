@@ -92,6 +92,7 @@ void be_load_driverlib(bvm *vm) {
         { "web_sensor", NULL },
         { "json_append", NULL },
         { "button_pressed", NULL },
+        { "display", NULL },
 
         { "get_tasmota", d_getTasmotaGlob },
 
@@ -118,6 +119,7 @@ class be_class_tasmota_driver (scope: global, name: Driver) {
     web_sensor, var
     json_append, var
     button_pressed, var
+    display, var
 
     get_tasmota, func(d_getTasmotaGlob)
 

@@ -1459,31 +1459,32 @@ be_define_local_closure(gc);
     // 3. index:int           -- index number
     // 4. payload:string      -- payload as text, analyzed as json
     //
-    "def event(type, cmd, idx, payload) "
-      "if type=='cmd' return self.exec_cmd(cmd, idx, payload) "
-      "elif type=='rule' return self.exec_rules(payload) "
-      "elif type=='mqtt_data' return nil "    // not yet implemented
-      "elif type=='gc' return self.gc() "
-      "elif type=='every_50ms' return self.run_deferred() "
-      "elif self._drivers "
-        "for d:self._drivers "
-          "try "
-            "if   type=='every_second' && d.every_second return d.every_second() "
-            "elif type=='every_100ms' && d.every_100ms return d.every_100ms() "
-            "elif type=='web_add_button' && d.web_add_button return d.web_add_button() "
-            "elif type=='web_add_main_button' && d.web_add_main_button return d.web_add_main_button() "
-            "elif type=='save_before_restart' && d.save_before_restart return d.save_before_restart() "
-            "elif type=='web_sensor' && d.web_sensor return d.web_sensor() "
-            "elif type=='json_append' && d.json_append return d.json_append() "
-            "elif type=='button_pressed' && d.button_pressed return d.button_pressed() "
-            "end "
-          "except .. as e,m "
-            "import string "
-            "self.log(string.format('BRY: exception %s - %m',3)) "
-          "end "
-        "end "
-      "end "
-    "end "
+    def event(type, cmd, idx, payload)
+      if type=='cmd' return self.exec_cmd(cmd, idx, payload)
+      elif type=='rule' return self.exec_rules(payload)
+      elif type=='mqtt_data' return nil
+      elif type=='gc' return self.gc()
+      elif type=='every_50ms' return self.run_deferred()
+      elif self._drivers
+        for d:self._drivers
+          try
+            if   type=='every_second' && d.every_second return d.every_second()
+            elif type=='every_100ms' && d.every_100ms return d.every_100ms()
+            elif type=='web_add_button' && d.web_add_button return d.web_add_button()
+            elif type=='web_add_main_button' && d.web_add_main_button return d.web_add_main_button()
+            elif type=='save_before_restart' && d.save_before_restart return d.save_before_restart()
+            elif type=='web_sensor' && d.web_sensor return d.web_sensor()
+            elif type=='json_append' && d.json_append return d.json_append()
+            elif type=='button_pressed' && d.button_pressed return d.button_pressed()
+            elif type=='display' && d.display return d.display()
+            end
+          except .. as e,m
+            import string
+            self.log(string.format('BRY: exception %s - %m',3))
+          end
+        end
+      end
+    end
 ********************************************************************/
 /********************************************************************
 ** Solidified function: event
@@ -1491,7 +1492,7 @@ be_define_local_closure(gc);
 
 /********** Solidified proto: event */
 be_define_local_const_str(event_str_name, "event", -30355297, 5);
-be_define_local_const_str(event_str_source, "string", 398550328, 6);
+be_define_local_const_str(event_str_source, "input", -103256197, 5);
 be_define_local_const_str(event_str_0, "cmd", -158181397, 3);
 be_define_local_const_str(event_str_1, "exec_cmd", 493567399, 8);
 be_define_local_const_str(event_str_2, "rule", -64077613, 4);
@@ -1509,13 +1510,14 @@ be_define_local_const_str(event_str_13, "save_before_restart", 1253239338, 19);
 be_define_local_const_str(event_str_14, "web_sensor", -1394870324, 10);
 be_define_local_const_str(event_str_15, "json_append", -1292948012, 11);
 be_define_local_const_str(event_str_16, "button_pressed", 1694209616, 14);
-be_define_local_const_str(event_str_17, "string", 398550328, 6);
-be_define_local_const_str(event_str_18, "log", 1062293841, 3);
-be_define_local_const_str(event_str_19, "format", -1180859054, 6);
-be_define_local_const_str(event_str_20, "BRY: exception %s - %m", -1290966132, 22);
-be_define_local_const_str(event_str_22, "stop_iteration", -121173395, 14);
+be_define_local_const_str(event_str_17, "display", 1164572437, 7);
+be_define_local_const_str(event_str_18, "string", 398550328, 6);
+be_define_local_const_str(event_str_19, "log", 1062293841, 3);
+be_define_local_const_str(event_str_20, "format", -1180859054, 6);
+be_define_local_const_str(event_str_21, "BRY: exception %s - %m", -1290966132, 22);
+be_define_local_const_str(event_str_23, "stop_iteration", -121173395, 14);
 
-static const bvalue event_ktab[23] = {
+static const bvalue event_ktab[24] = {
   { { .s=be_local_const_str(event_str_0) }, BE_STRING},
   { { .s=be_local_const_str(event_str_1) }, BE_STRING},
   { { .s=be_local_const_str(event_str_2) }, BE_STRING},
@@ -1537,11 +1539,12 @@ static const bvalue event_ktab[23] = {
   { { .s=be_local_const_str(event_str_18) }, BE_STRING},
   { { .s=be_local_const_str(event_str_19) }, BE_STRING},
   { { .s=be_local_const_str(event_str_20) }, BE_STRING},
+  { { .s=be_local_const_str(event_str_21) }, BE_STRING},
   { { .i=3 }, BE_INT},
-  { { .s=be_local_const_str(event_str_22) }, BE_STRING},
+  { { .s=be_local_const_str(event_str_23) }, BE_STRING},
 };
 
-static const uint32_t event_code[131] = {
+static const uint32_t event_code[140] = {
   0x1C140300,  //  0000  EQ	R5	R1	R256
   0x78160006,  //  0001  JMPF	R5	#0009
   0x8C140101,  //  0002  GETMET	R5	R0	R257
@@ -1550,40 +1553,40 @@ static const uint32_t event_code[131] = {
   0x5C240800,  //  0005  MOVE	R9	R4
   0x7C140800,  //  0006  CALL	R5	4
   0x80040A00,  //  0007  RET	1	R5
-  0x70020078,  //  0008  JMP		#0082
+  0x70020081,  //  0008  JMP		#008B
   0x1C140302,  //  0009  EQ	R5	R1	R258
   0x78160004,  //  000A  JMPF	R5	#0010
   0x8C140103,  //  000B  GETMET	R5	R0	R259
   0x5C1C0800,  //  000C  MOVE	R7	R4
   0x7C140400,  //  000D  CALL	R5	2
   0x80040A00,  //  000E  RET	1	R5
-  0x70020071,  //  000F  JMP		#0082
+  0x7002007A,  //  000F  JMP		#008B
   0x1C140304,  //  0010  EQ	R5	R1	R260
   0x78160002,  //  0011  JMPF	R5	#0015
   0x4C140000,  //  0012  LDNIL	5
   0x80040A00,  //  0013  RET	1	R5
-  0x7002006C,  //  0014  JMP		#0082
+  0x70020075,  //  0014  JMP		#008B
   0x1C140305,  //  0015  EQ	R5	R1	R261
   0x78160003,  //  0016  JMPF	R5	#001B
   0x8C140105,  //  0017  GETMET	R5	R0	R261
   0x7C140200,  //  0018  CALL	R5	1
   0x80040A00,  //  0019  RET	1	R5
-  0x70020066,  //  001A  JMP		#0082
+  0x7002006F,  //  001A  JMP		#008B
   0x1C140306,  //  001B  EQ	R5	R1	R262
   0x78160003,  //  001C  JMPF	R5	#0021
   0x8C140107,  //  001D  GETMET	R5	R0	R263
   0x7C140200,  //  001E  CALL	R5	1
   0x80040A00,  //  001F  RET	1	R5
-  0x70020060,  //  0020  JMP		#0082
+  0x70020069,  //  0020  JMP		#008B
   0x88140108,  //  0021  GETMBR	R5	R0	R264
-  0x7816005E,  //  0022  JMPF	R5	#0082
+  0x78160067,  //  0022  JMPF	R5	#008B
   0x60140000,  //  0023  GETGBL	R5	G0
   0x88180108,  //  0024  GETMBR	R6	R0	R264
   0x7C140200,  //  0025  CALL	R5	1
-  0xA8020057,  //  0026  EXBLK	0	#007F
+  0xA8020060,  //  0026  EXBLK	0	#0088
   0x5C180A00,  //  0027  MOVE	R6	R5
   0x7C180000,  //  0028  CALL	R6	0
-  0xA8020048,  //  0029  EXBLK	0	#0073
+  0xA8020051,  //  0029  EXBLK	0	#007C
   0x1C1C0309,  //  002A  EQ	R7	R1	R265
   0x781E0006,  //  002B  JMPF	R7	#0033
   0x881C0D09,  //  002C  GETMBR	R7	R6	R265
@@ -1592,7 +1595,7 @@ static const uint32_t event_code[131] = {
   0x7C1C0200,  //  002F  CALL	R7	1
   0xA8040002,  //  0030  EXBLK	1	2
   0x80040E00,  //  0031  RET	1	R7
-  0x7002003D,  //  0032  JMP		#0071
+  0x70020046,  //  0032  JMP		#007A
   0x1C1C030A,  //  0033  EQ	R7	R1	R266
   0x781E0006,  //  0034  JMPF	R7	#003C
   0x881C0D0A,  //  0035  GETMBR	R7	R6	R266
@@ -1601,7 +1604,7 @@ static const uint32_t event_code[131] = {
   0x7C1C0200,  //  0038  CALL	R7	1
   0xA8040002,  //  0039  EXBLK	1	2
   0x80040E00,  //  003A  RET	1	R7
-  0x70020034,  //  003B  JMP		#0071
+  0x7002003D,  //  003B  JMP		#007A
   0x1C1C030B,  //  003C  EQ	R7	R1	R267
   0x781E0006,  //  003D  JMPF	R7	#0045
   0x881C0D0B,  //  003E  GETMBR	R7	R6	R267
@@ -1610,7 +1613,7 @@ static const uint32_t event_code[131] = {
   0x7C1C0200,  //  0041  CALL	R7	1
   0xA8040002,  //  0042  EXBLK	1	2
   0x80040E00,  //  0043  RET	1	R7
-  0x7002002B,  //  0044  JMP		#0071
+  0x70020034,  //  0044  JMP		#007A
   0x1C1C030C,  //  0045  EQ	R7	R1	R268
   0x781E0006,  //  0046  JMPF	R7	#004E
   0x881C0D0C,  //  0047  GETMBR	R7	R6	R268
@@ -1619,7 +1622,7 @@ static const uint32_t event_code[131] = {
   0x7C1C0200,  //  004A  CALL	R7	1
   0xA8040002,  //  004B  EXBLK	1	2
   0x80040E00,  //  004C  RET	1	R7
-  0x70020022,  //  004D  JMP		#0071
+  0x7002002B,  //  004D  JMP		#007A
   0x1C1C030D,  //  004E  EQ	R7	R1	R269
   0x781E0006,  //  004F  JMPF	R7	#0057
   0x881C0D0D,  //  0050  GETMBR	R7	R6	R269
@@ -1628,7 +1631,7 @@ static const uint32_t event_code[131] = {
   0x7C1C0200,  //  0053  CALL	R7	1
   0xA8040002,  //  0054  EXBLK	1	2
   0x80040E00,  //  0055  RET	1	R7
-  0x70020019,  //  0056  JMP		#0071
+  0x70020022,  //  0056  JMP		#007A
   0x1C1C030E,  //  0057  EQ	R7	R1	R270
   0x781E0006,  //  0058  JMPF	R7	#0060
   0x881C0D0E,  //  0059  GETMBR	R7	R6	R270
@@ -1637,7 +1640,7 @@ static const uint32_t event_code[131] = {
   0x7C1C0200,  //  005C  CALL	R7	1
   0xA8040002,  //  005D  EXBLK	1	2
   0x80040E00,  //  005E  RET	1	R7
-  0x70020010,  //  005F  JMP		#0071
+  0x70020019,  //  005F  JMP		#007A
   0x1C1C030F,  //  0060  EQ	R7	R1	R271
   0x781E0006,  //  0061  JMPF	R7	#0069
   0x881C0D0F,  //  0062  GETMBR	R7	R6	R271
@@ -1646,33 +1649,42 @@ static const uint32_t event_code[131] = {
   0x7C1C0200,  //  0065  CALL	R7	1
   0xA8040002,  //  0066  EXBLK	1	2
   0x80040E00,  //  0067  RET	1	R7
-  0x70020007,  //  0068  JMP		#0071
+  0x70020010,  //  0068  JMP		#007A
   0x1C1C0310,  //  0069  EQ	R7	R1	R272
-  0x781E0005,  //  006A  JMPF	R7	#0071
+  0x781E0006,  //  006A  JMPF	R7	#0072
   0x881C0D10,  //  006B  GETMBR	R7	R6	R272
-  0x781E0003,  //  006C  JMPF	R7	#0071
+  0x781E0004,  //  006C  JMPF	R7	#0072
   0x8C1C0D10,  //  006D  GETMET	R7	R6	R272
   0x7C1C0200,  //  006E  CALL	R7	1
   0xA8040002,  //  006F  EXBLK	1	2
   0x80040E00,  //  0070  RET	1	R7
-  0xA8040001,  //  0071  EXBLK	1	1
-  0x7002000A,  //  0072  JMP		#007E
-  0xAC1C0002,  //  0073  CATCH	R7	0	2
-  0x70020007,  //  0074  JMP		#007D
-  0xA4262200,  //  0075  IMPORT	R9	R273
-  0x8C280112,  //  0076  GETMET	R10	R0	R274
-  0x8C301313,  //  0077  GETMET	R12	R9	R275
-  0x58380014,  //  0078  LDCONST	R14	K20
-  0x583C0015,  //  0079  LDCONST	R15	K21
-  0x7C300600,  //  007A  CALL	R12	3
-  0x7C280400,  //  007B  CALL	R10	2
-  0x70020000,  //  007C  JMP		#007E
-  0xB0080000,  //  007D  RAISE	2	R0	R0
-  0x7001FFA7,  //  007E  JMP		#0027
-  0x58140016,  //  007F  LDCONST	R5	K22
-  0xAC140200,  //  0080  CATCH	R5	1	0
-  0xB0080000,  //  0081  RAISE	2	R0	R0
-  0x80000000,  //  0082  RET	0	R0
+  0x70020007,  //  0071  JMP		#007A
+  0x1C1C0311,  //  0072  EQ	R7	R1	R273
+  0x781E0005,  //  0073  JMPF	R7	#007A
+  0x881C0D11,  //  0074  GETMBR	R7	R6	R273
+  0x781E0003,  //  0075  JMPF	R7	#007A
+  0x8C1C0D11,  //  0076  GETMET	R7	R6	R273
+  0x7C1C0200,  //  0077  CALL	R7	1
+  0xA8040002,  //  0078  EXBLK	1	2
+  0x80040E00,  //  0079  RET	1	R7
+  0xA8040001,  //  007A  EXBLK	1	1
+  0x7002000A,  //  007B  JMP		#0087
+  0xAC1C0002,  //  007C  CATCH	R7	0	2
+  0x70020007,  //  007D  JMP		#0086
+  0xA4262400,  //  007E  IMPORT	R9	R274
+  0x8C280113,  //  007F  GETMET	R10	R0	R275
+  0x8C301314,  //  0080  GETMET	R12	R9	R276
+  0x58380015,  //  0081  LDCONST	R14	K21
+  0x583C0016,  //  0082  LDCONST	R15	K22
+  0x7C300600,  //  0083  CALL	R12	3
+  0x7C280400,  //  0084  CALL	R10	2
+  0x70020000,  //  0085  JMP		#0087
+  0xB0080000,  //  0086  RAISE	2	R0	R0
+  0x7001FF9E,  //  0087  JMP		#0027
+  0x58140017,  //  0088  LDCONST	R5	K23
+  0xAC140200,  //  0089  CATCH	R5	1	0
+  0xB0080000,  //  008A  RAISE	2	R0	R0
+  0x80000000,  //  008B  RET	0	R0
 };
 
 be_define_local_proto(event, 16, 5, 1, 0, 0);
