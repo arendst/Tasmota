@@ -1169,8 +1169,16 @@ char* ResponseGetTime(uint32_t format, char* time_str)
   return time_str;
 }
 
+uint32_t ResponseLength(void) {
+  return strlen(TasmotaGlobal.mqtt_data);
+}
+
 void ResponseClear(void) {
   TasmotaGlobal.mqtt_data[0] = '\0';
+}
+
+void ResponseJsonStart(void) {
+  TasmotaGlobal.mqtt_data[0] = '{';
 }
 
 int Response_P(const char* format, ...)        // Content send snprintf_P char data
@@ -1191,7 +1199,7 @@ int ResponseTime_P(const char* format, ...)    // Content send snprintf_P char d
 
   ResponseGetTime(Settings.flag2.time_format, TasmotaGlobal.mqtt_data);
 
-  int mlen = strlen(TasmotaGlobal.mqtt_data);
+  int mlen = ResponseLength();
   int len = ext_vsnprintf_P(TasmotaGlobal.mqtt_data + mlen, sizeof(TasmotaGlobal.mqtt_data) - mlen, format, args);
   va_end(args);
   return len + mlen;
@@ -1202,7 +1210,7 @@ int ResponseAppend_P(const char* format, ...)  // Content send snprintf_P char d
   // This uses char strings. Be aware of sending %% if % is needed
   va_list args;
   va_start(args, format);
-  int mlen = strlen(TasmotaGlobal.mqtt_data);
+  int mlen = ResponseLength();
   int len = ext_vsnprintf_P(TasmotaGlobal.mqtt_data + mlen, sizeof(TasmotaGlobal.mqtt_data) - mlen, format, args);
   va_end(args);
   return len + mlen;

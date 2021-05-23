@@ -304,7 +304,7 @@ void CommandHandler(char* topicBuf, char* dataBuf, uint32_t data_len)
     type = (char*)stemp1;
   }
 
-  if (TasmotaGlobal.mqtt_data[0] != '\0') {
+  if (ResponseLength()) {
 /*
     // Add "Command":"POWERONSTATE", like:
     // 12:15:37 MQT: stat/wemos4/RESULT = {"Command":"POWERONSTATE","PowerOnState":3}

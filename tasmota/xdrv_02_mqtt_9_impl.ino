@@ -605,10 +605,11 @@ void MqttPublishLoggingAsync(bool refresh) {
   char* line;
   size_t len;
   while (GetLog(Settings.mqttlog_level, &index, &line, &len)) {
-    strlcpy(TasmotaGlobal.mqtt_data, line, len);  // No JSON and ugly!!
     char stopic[TOPSZ];
     GetTopic_P(stopic, STAT, TasmotaGlobal.mqtt_topic, PSTR("LOGGING"));
-    MqttPublishLib(stopic, (const uint8_t*)TasmotaGlobal.mqtt_data, strlen(TasmotaGlobal.mqtt_data), false);
+//    strlcpy(TasmotaGlobal.mqtt_data, line, len);  // No JSON and ugly!!
+//    MqttPublishLib(stopic, (const uint8_t*)TasmotaGlobal.mqtt_data, strlen(TasmotaGlobal.mqtt_data), false);
+    MqttPublishLib(stopic, (const uint8_t*)line, len -1, false);
   }
 }
 

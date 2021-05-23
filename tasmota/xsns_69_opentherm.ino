@@ -511,7 +511,7 @@ void sns_opentherm_flags_cmd(void)
         sns_opentherm_init_boiler_status();
     }
     bool addComma = false;
-    TasmotaGlobal.mqtt_data[0] = 0;
+    ResponseClear();
     for (int pos = 0; pos < OT_FLAGS_COUNT; ++pos)
     {
         int mask = 1 << pos;

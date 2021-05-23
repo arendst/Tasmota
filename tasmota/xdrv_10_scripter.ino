@@ -4979,9 +4979,9 @@ void ScripterEvery100ms(void) {
     TasmotaGlobal.tele_period = 2;
     XsnsNextCall(FUNC_JSON_APPEND, xsns_index);
     TasmotaGlobal.tele_period = script_tele_period_save;
-    if (strlen(TasmotaGlobal.mqtt_data)) {
-      TasmotaGlobal.mqtt_data[0] = '{';
-      snprintf_P(TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), PSTR("%s}"), TasmotaGlobal.mqtt_data);
+    if (ResponseLength()) {
+      ResponseJsonStart();
+      ResponseJsonEnd();
       Run_Scripter(">T", 2, TasmotaGlobal.mqtt_data);
     }
   }

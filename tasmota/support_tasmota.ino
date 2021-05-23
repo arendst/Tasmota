@@ -533,10 +533,10 @@ bool SendKey(uint32_t key, uint32_t device, uint32_t state)
           (POWER_TOGGLE == state)) {
         state = ~(TasmotaGlobal.power >> (device -1)) &1;   // POWER_OFF or POWER_ON
       }
-      snprintf_P(TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), GetStateText(state));
+      Response_P(GetStateText(state));
     }
 #ifdef USE_DOMOTICZ
-    if (!(DomoticzSendKey(key, device, state, strlen(TasmotaGlobal.mqtt_data)))) {
+    if (!(DomoticzSendKey(key, device, state, ResponseLength()))) {
 #endif  // USE_DOMOTICZ
       MqttPublish(stopic, ((key) ? Settings.flag.mqtt_switch_retain                         // CMND_SWITCHRETAIN
                                  : Settings.flag.mqtt_button_retain) &&                     // CMND_BUTTONRETAIN
@@ -823,7 +823,7 @@ bool MqttShowSensor(void)
 {
   ResponseAppendTime();
 
-  int json_data_start = strlen(TasmotaGlobal.mqtt_data);
+  int json_data_start = ResponseLength();
   for (uint32_t i = 0; i < MAX_SWITCHES; i++) {
 #ifdef USE_TM1638
     if (PinUsed(GPIO_SWT1, i) || (PinUsed(GPIO_TM1638CLK) && PinUsed(GPIO_TM1638DIO) && PinUsed(GPIO_TM1638STB))) {
@@ -836,7 +836,7 @@ bool MqttShowSensor(void)
   XsnsCall(FUNC_JSON_APPEND);
   XdrvCall(FUNC_JSON_APPEND);
 
-  bool json_data_available = (strlen(TasmotaGlobal.mqtt_data) - json_data_start);
+  bool json_data_available = (ResponseLength() - json_data_start);
   if (strstr_P(TasmotaGlobal.mqtt_data, PSTR(D_JSON_PRESSURE)) != nullptr) {
     ResponseAppend_P(PSTR(",\"" D_JSON_PRESSURE_UNIT "\":\"%s\""), PressureUnit().c_str());
   }
