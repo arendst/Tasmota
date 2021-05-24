@@ -409,15 +409,38 @@ void CmndPower(void)
   }
 }
 
+bool all_in_one = false;
+
 void CmndStatusResponse(uint32_t index) {
-  char cmnd_status[10];  // STATUS11
-  snprintf_P(cmnd_status, sizeof(cmnd_status), PSTR(D_CMND_STATUS "%d"), index);
-  MqttPublishPrefixTopicRulesProcess_P(STAT, cmnd_status);
+  static String all_status = (const char*) nullptr;
+
+  if (all_in_one) {
+    if (99 == index) {
+      all_status.replace("}{", ",");
+      char cmnd_status[10];  // STATUS11
+      snprintf_P(cmnd_status, sizeof(cmnd_status), PSTR(D_CMND_STATUS "0"));
+      MqttPublishPayloadPrefixTopic_P(STAT, cmnd_status, all_status.c_str());
+      all_status = (const char*) nullptr;
+    }
+    if (0 == index) {
+      all_status = "";
+    }
+    all_status += TasmotaGlobal.mqtt_data;
+  }
+  else if (index < 99) {
+    char cmnd_status[10];  // STATUS11
+    char number[4] = { 0 };
+    snprintf_P(cmnd_status, sizeof(cmnd_status), PSTR(D_CMND_STATUS "%s"), (index) ? itoa(index, number, 10) : "");
+    MqttPublishPrefixTopicRulesProcess_P(STAT, cmnd_status);
+  }
 }
 
 void CmndStatus(void)
 {
   int32_t payload = XdrvMailbox.payload;
+
+  all_in_one = (0 == XdrvMailbox.index);
+  if (all_in_one) { payload = 0; }
 
   if (payload > MAX_STATUS) { return; }  // {"Command":"Error"}
   if (!Settings.flag.mqtt_enabled && (6 == payload)) { return; }  // SetOption3 - Enable MQTT
@@ -458,7 +481,7 @@ void CmndStatus(void)
                           Settings.flag.mqtt_power_retain,    // CMND_POWERRETAIN
                           Settings.flag5.mqtt_info_retain,    // CMND_INFORETAIN
                           Settings.flag5.mqtt_state_retain);  // CMND_STATERETAIN
-    MqttPublishPrefixTopicRulesProcess_P(STAT, PSTR(D_CMND_STATUS));
+    CmndStatusResponse(0);
   }
 
   if ((0 == payload) || (1 == payload)) {
@@ -629,6 +652,8 @@ void CmndStatus(void)
     }
   }
 #endif
+
+  CmndStatusResponse(99);
 
   ResponseClear();
 }
