@@ -1178,10 +1178,12 @@ uint32_t ResponseLength(void) {
 }
 
 void ResponseClear(void) {
+  // Reset string length to zero
   TasmotaGlobal.mqtt_data[0] = '\0';
 }
 
 void ResponseJsonStart(void) {
+  // Insert a JSON start bracket {
   TasmotaGlobal.mqtt_data[0] = '{';
 }
 

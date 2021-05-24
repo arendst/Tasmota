@@ -259,8 +259,7 @@ void CmndFileUpload(void) {
 
       /*
         The upload chunk size is the data size of the payload.
-        It can be larger than the download chunksize which is bound by MESSZ
-        The PubSubClient upload buffer with length MQTT_MAX_PACKET_SIZE (1200) contains
+        The PubSubClient upload buffer with length MQTT_MAX_PACKET_SIZE contains
           - Header of 5 bytes (MQTT_MAX_HEADER_SIZE)
           - Topic string terminated with a zero (stat/demo/FILEUPLOAD<null>)
           - Payload ({"Id":116,"Data":"<base64 encoded chunk_size>"}<null>) or (<binary data>)
@@ -378,36 +377,40 @@ void CmndFileDownload(void) {
 */
   if (FMqtt.file_buffer) {
     if (FMqtt.file_pos < FMqtt.file_size) {
+      uint32_t chunk_size = 4096;
+      if (!FMqtt.file_binary) {
+        /*
+          The download chunk size is the data size before it is encoded to base64.
+          The download buffer contains
+            - Payload ({"Id":117,"Data":"<base64 encoded mqtt_file_chuck_size>"}<null>)
+        */
+        chunk_size = (((ResponseSize() - FileTransferHeaderSize) / 4) * 3) -2;
+      }
       uint32_t bytes_left = FMqtt.file_size - FMqtt.file_pos;
-
-      /*
-        The download chunk size is the data size before it is encoded to base64.
-        It is smaller than the upload chunksize as it is bound by MESSZ
-        The download buffer with length MESSZ (1042) contains
-          - Payload ({"Id":117,"Data":"<base64 encoded mqtt_file_chuck_size>"}<null>)
-      */
-      const uint32_t mqtt_file_chunk_size = (((MESSZ - FileTransferHeaderSize) / 4) * 3) -2;
-      uint32_t chunk_size = (FMqtt.file_binary) ? 4096 : mqtt_file_chunk_size;
       uint32_t write_bytes = (bytes_left < chunk_size) ? bytes_left : chunk_size;
-
       uint8_t* buffer = FMqtt.file_buffer + FMqtt.file_pos;
       FMqtt.md5.add(buffer, write_bytes);
-
       FMqtt.file_pos += write_bytes;
 
       if (FMqtt.file_binary) {
+        // Binary data up to 4k
         MqttPublishPayloadPrefixTopic_P(STAT, XdrvMailbox.command, (const char*)buffer, write_bytes);
       } else {
         // {"Id":117,"Data":"CRJcTQ9fYGF ... OT1BRUlNUVVZXWFk="}
-        Response_P(PSTR("{\"Id\":%d,\"Data\":\""), FMqtt.file_id);  // FileTransferHeaderSize
-        char base64_data[encode_base64_length(write_bytes)];
-        encode_base64((unsigned char*)buffer, write_bytes, (unsigned char*)base64_data);
-        ResponseAppend_P(base64_data);
-        ResponseAppend_P("\"}");
-        MqttPublishPrefixTopic_P(STAT, XdrvMailbox.command);
+        char* base64_data = (char*)malloc(encode_base64_length(write_bytes) +2);
+        if (base64_data) {
+          Response_P(PSTR("{\"Id\":%d,\"Data\":\""), FMqtt.file_id);  // FileTransferHeaderSize
+          encode_base64((unsigned char*)buffer, write_bytes, (unsigned char*)base64_data);
+          ResponseAppend_P(base64_data);
+          ResponseAppend_P("\"}");
+          MqttPublishPrefixTopic_P(STAT, XdrvMailbox.command);
+          free(base64_data);
+        } else {
+          XdrvMailbox.payload = 0;                           // Abort
+        }
       }
       ResponseClear();
-      return;
+      if (XdrvMailbox.payload != 0) { return; }              // No error
     } else {
       FMqtt.md5.calculate();
 

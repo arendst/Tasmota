@@ -512,10 +512,10 @@ void CmndCfgPoke(void)
 void CmndCfgXor(void)
 {
   if (XdrvMailbox.data_len > 0) {
-    Web.config_xor_on_set = XdrvMailbox.payload;
+    config_xor_on_set = XdrvMailbox.payload;
   }
   char temp[10];
-  snprintf_P(temp, sizeof(temp), PSTR("0x%02X"), Web.config_xor_on_set);
+  snprintf_P(temp, sizeof(temp), PSTR("0x%02X"), config_xor_on_set);
   ResponseCmndChar(temp);
 }
 #endif  // USE_WEBSERVER

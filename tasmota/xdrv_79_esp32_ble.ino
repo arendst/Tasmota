@@ -54,7 +54,7 @@
         AABBCCDDEEFF/n (n = 0..3) where n indicates the TYPE of address
         most notably, if you wish to connect to a random address (n = 1), then you must specify,
         else it will not connect.
-        e.g. to alias a random address to fred: 
+        e.g. to alias a random address to fred:
         BLEAlias fred=1234567890/1
         to connect and read fred's name:
         BLEName fred
@@ -68,14 +68,14 @@
       BLEAdv - unused
       BLEOp
         advanced - perform a BLE active operation
-        mainly for debug or unsupported devices. 
+        mainly for debug or unsupported devices.
       BLEMode
-        control scanning mode 
+        control scanning mode
         0 - stop BLE
         1 - run BLE but manual scan
         *2 - run BLE with auto scan
       BLEDetails
-        display details of adverts 
+        display details of adverts
         BLEdetails0 - no display
         BLEdetails2 <mac|alias> - display for one device
         BLEdetails3 - display for ALL devices
@@ -98,7 +98,7 @@
       BLEDevices
         display or clear the devices list
         BLEDevices0 - clear list
-        BLEDevices1 - publish on tele 
+        BLEDevices1 - publish on tele
       BLEMaxAge
         display or set the max age of a BLE address before being forgotten
         BLEMaxAge - display the setting
@@ -1164,8 +1164,8 @@ void setDetails(ble_advertisment_t *ad){
   p += len;
   maxlen -= len;
   if (ad->addrtype){
-    *(p++) = '/';  
-    *(p++) = 0x30+ad->addrtype;  
+    *(p++) = '/';
+    *(p++) = 0x30+ad->addrtype;
   }
   *(p++) = '\"'; maxlen--;
 
@@ -3145,10 +3145,9 @@ static void BLEPostMQTTSeenDevices(int type) {
   nextSeenDev = 0;
 
   memset(TasmotaGlobal.mqtt_data, 0, sizeof(TasmotaGlobal.mqtt_data));
-  ResponseTime_P(PSTR(""));
-  int timelen = strlen(TasmotaGlobal.mqtt_data);
+  int timelen = ResponseTime_P(PSTR(""));
   char *dest = TasmotaGlobal.mqtt_data + timelen;
-  int maxlen = (sizeof(TasmotaGlobal.mqtt_data)-20) - timelen;
+  int maxlen = ResponseSize() -20 -timelen;
 
 //  if (!TasmotaGlobal.ota_state_flag){
   do {
@@ -3340,7 +3339,7 @@ static void mainThreadOpCallbacks() {
 
       // always remove from here
       completedOperations.erase(completedOperations.begin() + i);
-      // unless some callback told us not to send on MQTT, then remove from completed and 
+      // unless some callback told us not to send on MQTT, then remove from completed and
       // add to mqtt list
       if (!callbackres){
         addOperation(&mqttOperations, &op);
@@ -3595,14 +3594,14 @@ void HandleBleConfiguration(void)
 
 int ExtStopBLE(){
   AddLog(LOG_LEVEL_INFO, PSTR("BLE: Stopping if active"));
-  BLE_ESP32::BLEEnableMask = 0; 
+  BLE_ESP32::BLEEnableMask = 0;
   BLE_ESP32::stopStartBLE();
   return 0;
 }
 
 int ExtRestartBLEIfEnabled(){
   AddLog(LOG_LEVEL_INFO, PSTR("BLE: Starting if active"));
-  BLE_ESP32::BLEEnableMask = 1; 
+  BLE_ESP32::BLEEnableMask = 1;
   BLE_ESP32::stopStartBLE();
   return 0;
 }
@@ -3738,7 +3737,7 @@ void sendExample(){
 #endif
 }
 // end #ifdef BLE_ESP32_EXAMPLES
-#endif 
+#endif
 
 
 #endif

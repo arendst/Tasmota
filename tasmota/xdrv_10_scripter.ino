@@ -2424,9 +2424,9 @@ chknext:
                 }
               } else {
                 // preserve mqtt_data
-                char *mqd = (char*)malloc(MESSZ+2);
+                char *mqd = (char*)malloc(ResponseSize()+2);
                 if (mqd) {
-                  strlcpy(mqd, TasmotaGlobal.mqtt_data, MESSZ);
+                  strlcpy(mqd, TasmotaGlobal.mqtt_data, ResponseSize());
                   wd = mqd;
                   char *lwd = wd;
                   while (index) {
@@ -7703,7 +7703,7 @@ int32_t http_req(char *host, char *request) {
   }
 
 #ifdef USE_WEBSEND_RESPONSE
-  strlcpy(TasmotaGlobal.mqtt_data, http.getString().c_str(), MESSZ);
+  strlcpy(TasmotaGlobal.mqtt_data, http.getString().c_str(), ResponseSize());
   //AddLog(LOG_LEVEL_INFO, PSTR("HTTP RESULT %s"), TasmotaGlobal.mqtt_data);
   Run_Scripter(">E", 2, TasmotaGlobal.mqtt_data);
   glob_script_mem.glob_error = 0;

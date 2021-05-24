@@ -984,7 +984,7 @@ void RulesEvery100ms(void) {
     TasmotaGlobal.tele_period = 2;                                   // Do not allow HA updates during next function call
     XsnsNextCall(FUNC_JSON_APPEND, xsns_index);                      // ,"INA219":{"Voltage":4.494,"Current":0.020,"Power":0.089}
     TasmotaGlobal.tele_period = tele_period_save;
-    if (strlen(TasmotaGlobal.mqtt_data)) {
+    if (ResponseLength()) {
       ResponseJsonStart();                                           // {"INA219":{"Voltage":4.494,"Current":0.020,"Power":0.089}
       ResponseJsonEnd();
       RulesProcessEvent(TasmotaGlobal.mqtt_data);

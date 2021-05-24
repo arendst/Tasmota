@@ -1292,7 +1292,7 @@ void draw_dt_vars(void) {
 void DisplayDTVarsTeleperiod(void) {
   ResponseClear();
   MqttShowState();
-  uint32_t jlen = strlen(TasmotaGlobal.mqtt_data);
+  uint32_t jlen = ResponseLength();
 
   if (jlen < DTV_JSON_SIZE) {
     char *json = (char*)malloc(jlen + 2);

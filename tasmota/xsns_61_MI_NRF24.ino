@@ -1708,7 +1708,7 @@ void MINRFShow(bool json)
 
       ResponseAppend_P(PSTR(",\"%s-%02x%02x%02x\":"),kMINRFDeviceType[MIBLEsensors[i].type-1],MIBLEsensors[i].MAC[3],MIBLEsensors[i].MAC[4],MIBLEsensors[i].MAC[5]);
 
-      uint32_t _positionCurlyBracket = strlen(TasmotaGlobal.mqtt_data); // ... this will be a ',' first, but later be replaced
+      uint32_t _positionCurlyBracket = ResponseLength(); // ... this will be a ',' first, but later be replaced
 
       if((!MINRF.mode.triggeredTele && !MINRF.option.minimalSummary)||MINRF.mode.triggeredTele){
         bool tempHumSended = false;
@@ -1811,7 +1811,7 @@ void MINRFShow(bool json)
           }
         }
       }
-      if(_positionCurlyBracket==strlen(TasmotaGlobal.mqtt_data)) ResponseAppend_P(PSTR(",")); // write some random char, to be overwritten in the next step
+      if(_positionCurlyBracket==ResponseLength()) ResponseAppend_P(PSTR(",")); // write some random char, to be overwritten in the next step
       ResponseAppend_P(PSTR("}"));
       TasmotaGlobal.mqtt_data[_positionCurlyBracket] = '{';
       MIBLEsensors[i].eventType.raw = 0;

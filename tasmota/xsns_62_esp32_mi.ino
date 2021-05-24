@@ -634,7 +634,7 @@ int MI32_decryptPacket(char *_buf, uint16_t _bufSize, uint32_t _type){
  */
 
 void MI32nullifyEndOfMQTT_DATA(){
-  char *p = TasmotaGlobal.mqtt_data + strlen(TasmotaGlobal.mqtt_data);
+  char *p = TasmotaGlobal.mqtt_data + ResponseLength();
   while(true){
     *p--;
     if(p[0]==':'){
@@ -1598,12 +1598,14 @@ void MI32addBeacon(uint8_t index, char* data){
 void MI32showScanResults(){
   size_t _size = MIBLEscanResult.size();
   ResponseAppend_P(PSTR(",\"BLEScan\":{\"Found\":%u,\"Devices\":["), _size);
+  bool add_comma = false;
   for(auto _scanResult : MIBLEscanResult){
     char _MAC[18];
     ToHex_P(_scanResult.MAC,6,_MAC,18,':');
-    ResponseAppend_P(PSTR("{\"MAC\":\"%s\",\"CID\":\"0x%04x\",\"SVC\":\"0x%04x\",\"UUID\":\"0x%04x\",\"RSSI\":%d},"), _MAC, _scanResult.CID, _scanResult.SVC, _scanResult.UUID, _scanResult.RSSI);
+    ResponseAppend_P(PSTR("%s{\"MAC\":\"%s\",\"CID\":\"0x%04x\",\"SVC\":\"0x%04x\",\"UUID\":\"0x%04x\",\"RSSI\":%d}"),
+      (add_comma)?",":"", _MAC, _scanResult.CID, _scanResult.SVC, _scanResult.UUID, _scanResult.RSSI);
+    add_comma = true;  
   }
-  if(_size != 0)TasmotaGlobal.mqtt_data[strlen(TasmotaGlobal.mqtt_data)-1] = 0; // delete last comma
   ResponseAppend_P(PSTR("]}"));
   MIBLEscanResult.clear();
   MI32.mode.shallShowScanResult = 0;
@@ -1611,12 +1613,13 @@ void MI32showScanResults(){
 
 void MI32showBlockList(){
   ResponseAppend_P(PSTR(",\"Block\":["));
+  bool add_comma = false;
   for(auto _scanResult : MIBLEBlockList){
     char _MAC[18];
     ToHex_P(_scanResult.buf,6,_MAC,18,':');
-    ResponseAppend_P(PSTR("\"%s\","), _MAC);
+    ResponseAppend_P(PSTR("%s\"%s\""), (add_comma)?",":"", _MAC);
+    add_comma = true;  
   }
-  if(MIBLEBlockList.size()!=0) TasmotaGlobal.mqtt_data[strlen(TasmotaGlobal.mqtt_data)-1] = 0; // delete last comma
   ResponseAppend_P(PSTR("]"));
   MI32.mode.shallShowBlockList = 0;
 }
@@ -2027,7 +2030,7 @@ void MI32Show(bool json)
         kMI32DeviceType[MIBLEsensors[i].type-1],
         MIBLEsensors[i].MAC[3], MIBLEsensors[i].MAC[4], MIBLEsensors[i].MAC[5]);
 
-      uint32_t _positionCurlyBracket = strlen(TasmotaGlobal.mqtt_data); // ... this will be a ',' first, but later be replaced
+      uint32_t _positionCurlyBracket = ResponseLength(); // ... this will be a ',' first, but later be replaced
 
       if((!MI32.mode.triggeredTele && !MI32.option.minimalSummary)||MI32.mode.triggeredTele){
         bool tempHumSended = false;
@@ -2158,7 +2161,7 @@ void MI32Show(bool json)
       }
       if (MI32.option.showRSSI) ResponseAppend_P(PSTR(",\"RSSI\":%d"), MIBLEsensors[i].RSSI);
 
-      if(_positionCurlyBracket==strlen(TasmotaGlobal.mqtt_data)) ResponseAppend_P(PSTR(",")); // write some random char, to be overwritten in the next step
+      if(_positionCurlyBracket==ResponseLength()) ResponseAppend_P(PSTR(",")); // write some random char, to be overwritten in the next step
       ResponseAppend_P(PSTR("}"));
       TasmotaGlobal.mqtt_data[_positionCurlyBracket] = '{';
       MIBLEsensors[i].eventType.raw = 0;

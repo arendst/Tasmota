@@ -132,7 +132,7 @@ void HandleMetrics(void) {
 
   ResponseClear();
   MqttShowSensor(); //Pull sensor data
-  char json[strlen(TasmotaGlobal.mqtt_data)+1];
+  char json[ResponseLength()+1];
   snprintf_P(json, sizeof(json), TasmotaGlobal.mqtt_data);
   String jsonStr = json;
   JsonParser parser((char *)jsonStr.c_str());

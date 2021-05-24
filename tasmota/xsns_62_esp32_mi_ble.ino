@@ -1341,7 +1341,7 @@ int MIParsePacket(const uint8_t* slotmac, struct mi_beacon_data_t *parsed, const
  */
 
 void MI32nullifyEndOfMQTT_DATA(){
-  char *p = TasmotaGlobal.mqtt_data + strlen(TasmotaGlobal.mqtt_data);
+  char *p = TasmotaGlobal.mqtt_data + ResponseLength();
   while(true){
     *p--;
     if(p[0]==':'){

@@ -305,18 +305,6 @@ void CommandHandler(char* topicBuf, char* dataBuf, uint32_t data_len)
   }
 
   if (ResponseLength()) {
-/*
-    // Add "Command":"POWERONSTATE", like:
-    // 12:15:37 MQT: stat/wemos4/RESULT = {"Command":"POWERONSTATE","PowerOnState":3}
-    char json_command[TOPSZ];
-    snprintf_P(json_command, sizeof(json_command), PSTR("{\"" D_JSON_COMMAND "\":\"%s\","), type);
-    uint32_t jc_len = strlen(json_command);
-    uint32_t mq_len = ResponseLength() +1;
-    if (mq_len < ResponseSize() - jc_len) {
-      memmove(TasmotaGlobal.mqtt_data +jc_len -1, TasmotaGlobal.mqtt_data, mq_len);
-      memmove(TasmotaGlobal.mqtt_data, json_command, jc_len);
-    }
-*/
     MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, type);
   }
   TasmotaGlobal.fallback_topic_flag = false;

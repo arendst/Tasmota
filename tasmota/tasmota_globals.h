@@ -268,6 +268,7 @@ const uint16_t LOG_BUFFER_SIZE = 4000;         // Max number of characters in lo
 
 #ifndef MQTT_MAX_PACKET_SIZE
 #define MQTT_MAX_PACKET_SIZE        1200       // Bytes
+//#define MQTT_MAX_PACKET_SIZE        2048       // Bytes
 #endif
 #ifndef MQTT_KEEPALIVE
 #define MQTT_KEEPALIVE              30         // Seconds
@@ -288,6 +289,8 @@ const uint16_t LOG_BUFFER_SIZE = 4000;         // Max number of characters in lo
 #ifndef MESSZ
 //#define MESSZ                       1040     // Max number of characters in JSON message string (Hass discovery and nice MQTT_MAX_PACKET_SIZE = 1200)
 #define MESSZ                       (MQTT_MAX_PACKET_SIZE -TOPSZ -7)  // Max number of characters in JSON message string
+//#define MESSZ                       MQTT_MAX_PACKET_SIZE // Max number of characters in JSON message string
+//#define MESSZ                       2048       // Max number of characters in JSON message string
 #endif
 
 #ifndef USE_DEVICE_GROUPS

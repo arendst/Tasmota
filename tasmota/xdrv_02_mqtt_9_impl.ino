@@ -534,7 +534,6 @@ void MqttDataHandler(char* mqtt_topic, uint8_t* mqtt_data, unsigned int data_len
 
 //  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_MQTT "BufferSize %d, Topic |%s|, Length %d, data_len %d"), MqttClient.getBufferSize(), mqtt_topic, strlen(mqtt_topic), data_len);
 
-  // Save MQTT data ASAP as it's data is discarded by PubSubClient with next publish as used in MQTTlog
   char topic[TOPSZ];
 #ifdef USE_MQTT_AZURE_IOT
   // for Azure, we read the topic from the property of the message
@@ -557,8 +556,6 @@ void MqttDataHandler(char* mqtt_topic, uint8_t* mqtt_data, unsigned int data_len
   strlcpy(topic, mqtt_topic, sizeof(topic));
 #endif  // USE_MQTT_AZURE_IOT
   mqtt_data[data_len] = 0;
-  char data[data_len +1];
-  memcpy(data, mqtt_data, sizeof(data));
 
   if (Mqtt.disable_logging) {
     TasmotaGlobal.masterlog_level = LOG_LEVEL_DEBUG_MORE;  // Hide logging
@@ -568,12 +565,12 @@ void MqttDataHandler(char* mqtt_topic, uint8_t* mqtt_data, unsigned int data_len
   XdrvMailbox.index = strlen(topic);
   XdrvMailbox.data_len = data_len;
   XdrvMailbox.topic = topic;
-  XdrvMailbox.data = (char*)data;
+  XdrvMailbox.data = (char*)mqtt_data;
   if (XdrvCall(FUNC_MQTT_DATA)) { return; }
 
   ShowSource(SRC_MQTT);
 
-  CommandHandler(topic, data, data_len);
+  CommandHandler(topic, (char*)mqtt_data, data_len);
 
   if (Mqtt.disable_logging) {
     TasmotaGlobal.masterlog_level = LOG_LEVEL_NONE;  // Enable logging
@@ -608,7 +605,7 @@ void MqttPublishLoggingAsync(bool refresh) {
     char stopic[TOPSZ];
     GetTopic_P(stopic, STAT, TasmotaGlobal.mqtt_topic, PSTR("LOGGING"));
 //    strlcpy(TasmotaGlobal.mqtt_data, line, len);  // No JSON and ugly!!
-//    MqttPublishLib(stopic, (const uint8_t*)TasmotaGlobal.mqtt_data, strlen(TasmotaGlobal.mqtt_data), false);
+//    MqttPublishLib(stopic, (const uint8_t*)TasmotaGlobal.mqtt_data, ResponseLength(), false);
     MqttPublishLib(stopic, (const uint8_t*)line, len -1, false);
   }
 }
