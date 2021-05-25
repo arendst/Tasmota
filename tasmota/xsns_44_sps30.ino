@@ -150,7 +150,7 @@ void SPS30_Detect(void)
 }
 
 #define D_UNIT_PM "ug/m3"
-#define D_UNIT_NCPM "#/m3"
+#define D_UNIT_NCPM "#/cm3"
 
 #ifdef USE_WEBSERVER
 const char HTTP_SNS_SPS30_a[] PROGMEM ="{s}SPS30 " "%s" "{m}%s " D_UNIT_PM "{e}";
