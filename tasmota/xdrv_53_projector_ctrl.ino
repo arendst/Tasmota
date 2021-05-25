@@ -154,12 +154,18 @@ projector_ctrl_write(struct projector_ctrl_softc_s *sc, const uint8_t *bytes, co
 	}
 #ifdef USE_PROJECTOR_CTRL_NEC
 	serial->write(cksum);
-#endif
 #ifdef DEBUG_PROJECTOR_CTRL
 	char hex_b[(len + 1) * 2];
 	AddLog_P(LOG_LEVEL_DEBUG,PSTR(PROJECTOR_CTRL_LOGNAME ": RAW bytes %s %02x"),
 	    ToHex_P((uint8_t *)bytes, len, hex_b, sizeof(hex_b)), cksum);
 #endif //DEBUG_PROJECTOR_CTRL
+#else  //!USE_PROJECTOR_CTRL_NEC
+#ifdef DEBUG_PROJECTOR_CTRL
+	char hex_b[(len + 1) * 2];
+	AddLog_P(LOG_LEVEL_DEBUG,PSTR(PROJECTOR_CTRL_LOGNAME ": RAW bytes %s"),
+	    ToHex_P((uint8_t *)bytes, len, hex_b, sizeof(hex_b)));
+#endif //DEBUG_PROJECTOR_CTRL
+#endif //!USE_PROJECTOR_CTRL_NEC
 
 	serial->flush();
 	return;
