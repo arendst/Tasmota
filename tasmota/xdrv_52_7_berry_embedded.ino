@@ -162,4 +162,18 @@ const char berry_autoexec[] =
     "end "
   "end "
   ;
+
+const char berry_preinit[] =
+  // load "autoexec.be" using import, which loads either .be or .bec file
+  "import string "
+  "try "
+    "load('preinit.be') "
+  "except .. as e,m "
+    "if e=='io_error' && string.find(m, \"preinit.be\")>0 "
+      "log(\"BRY: no preinit.be\") "
+    "else "
+      "log(\"BRY: exception in preinit.be: \"+e+\": \"+m) "
+    "end "
+  "end "
+  ;
 #endif  // USE_BERRY

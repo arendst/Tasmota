@@ -367,6 +367,9 @@ void setup(void) {
 #ifdef ROTARY_V1
   RotaryInit();
 #endif  // ROTARY_V1
+#ifdef USE_BERRY
+  BerryInit();
+#endif // USE_BERRY
 
   XdrvCall(FUNC_PRE_INIT);
   XsnsCall(FUNC_PRE_INIT);

@@ -29,11 +29,11 @@ extern "C" {
 }
 
 const char kBrCommands[] PROGMEM = D_PRFX_BR "|"    // prefix
-  D_CMND_BR_RUN "|" D_CMND_BR_RESET
+  D_CMND_BR_RUN
   ;
 
 void (* const BerryCommand[])(void) PROGMEM = {
-  CmndBrRun, CmndBrReset,
+  CmndBrRun,
   };
 
 //
@@ -234,7 +234,7 @@ void BerryObservability(bvm *vm, int event...) {
 /*********************************************************************************************\
  * VM Init
 \*********************************************************************************************/
-void BrReset(void) {
+void BerryInit(void) {
   // clean previous VM if any
   if (berry.vm != nullptr) {
     be_vm_delete(berry.vm);
@@ -280,6 +280,9 @@ void BrReset(void) {
     // AddLog(LOG_LEVEL_INFO, PSTR("After Berry"));
 
     berry_init_ok = true;
+
+    // Run pre-init
+    BrAutoexec(berry_preinit);    // run 'preinit.be' if present
   } while (0);
 
   if (!berry_init_ok) {
@@ -291,15 +294,22 @@ void BrReset(void) {
   }
 }
 
-
-void BrAutoexec(void) {
-  if (berry.vm == nullptr) { return; }
+/*********************************************************************************************\
+ * Execute a script in Flash file-system
+ * 
+ * Two options supported:
+ *   berry_preinit: load "preinit.be" to configure the device before driver pre-init and init
+ *                  (typically I2C drivers, and AXP192/AXP202 configuration)
+ *   berry_autoexec: load "autoexec.be" once all drivers are initialized
+\*********************************************************************************************/
+void BrAutoexec(const char * init_script) {
+  if (berry.vm == nullptr || TasmotaGlobal.no_autoexec) { return; }   // abort is berry is not running, or bootloop prevention kicked in
 
   int32_t ret_code1, ret_code2;
   bool berry_init_ok = false;
 
   // load 'autoexec.be' or 'autoexec.bec'
-  ret_code1 = be_loadstring(berry.vm, berry_autoexec);
+  ret_code1 = be_loadstring(berry.vm, init_script);
   // be_dumpstack(berry.vm);
   if (ret_code1 != 0) {
     be_pop(berry.vm, 2);
@@ -366,15 +376,6 @@ void CmndBrRun(void) {
   }
 
   checkBeTop();
-}
-
-//
-// Command `BrReset`
-//
-void CmndBrReset(void) {
-  if (berry.vm == nullptr) { ResponseCmndChar_P(PSTR(D_BR_NOT_STARTED)); return; }
-
-  BrReset();
 }
 
 /*********************************************************************************************\
@@ -692,13 +693,13 @@ bool Xdrv52(uint8_t function)
   bool result = false;
 
   switch (function) {
-    //case FUNC_PRE_INIT:
-    case FUNC_INIT:
-      BrReset();
-      break;
+    // case FUNC_PRE_INIT: // we start Berry in pre_init so that other modules can call Berry in their init methods
+    // // case FUNC_INIT:
+    //   BerryInit();
+    //   break;
     case FUNC_LOOP:
       if (!berry.autoexec_done) {
-        BrAutoexec();   // run autoexec.be at first tick, so we know all modules are initialized
+        BrAutoexec(berry_autoexec);   // run autoexec.be at first tick, so we know all modules are initialized
         berry.autoexec_done = true;
       }
       break;

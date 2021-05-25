@@ -36,6 +36,10 @@ extern FS *ufsp;
 extern FS *ffsp;
 #endif
 
+#ifdef USE_TOUCH_BUTTONS
+extern VButton *buttons[MAX_TOUCH_BUTTONS];
+#endif
+
 // drawing color is WHITE
 // on epaper the whole display buffer is transfered inverted this results in white paper
 uint16_t fg_color = 1;
