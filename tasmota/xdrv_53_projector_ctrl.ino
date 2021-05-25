@@ -23,11 +23,12 @@
  * LCD/DLP Projector Control via serial interface
  * https://www.sharpnecdisplays.eu/p/download/v/5e14a015e26cacae3ae64a422f7f8af4/cp/Products/Projectors/Shared/CommandLists/PDF-ExternalControlManual-english.pdf#page=5
  * https://www.optoma.co.uk/uploads/manuals/hd36-m-en-gb.pdf#page=56
+ * http://global-download.acer.com/GDFiles/Document/RS232%20Command%20Table/RS232%20Command%20Table_Acer_1.0_A_A.zip?acerid=636791605984811687
 \*********************************************************************************************/
 
 #define XDRV_53			53
 
-#if !defined(USE_PROJECTOR_CTRL_NEC) && !defined(USE_PROJECTOR_CTRL_OPTOMA)
+#if !defined(USE_PROJECTOR_CTRL_NEC) && !defined(USE_PROJECTOR_CTRL_OPTOMA) && !defined(USE_PROJECTOR_CTRL_ACER)
 #define USE_PROJECTOR_CTRL_NEC                 // Use at least one projector
 #endif
 
@@ -153,12 +154,18 @@ projector_ctrl_write(struct projector_ctrl_softc_s *sc, const uint8_t *bytes, co
 	}
 #ifdef USE_PROJECTOR_CTRL_NEC
 	serial->write(cksum);
-#endif
 #ifdef DEBUG_PROJECTOR_CTRL
 	char hex_b[(len + 1) * 2];
 	AddLog_P(LOG_LEVEL_DEBUG,PSTR(PROJECTOR_CTRL_LOGNAME ": RAW bytes %s %02x"),
 	    ToHex_P((uint8_t *)bytes, len, hex_b, sizeof(hex_b)), cksum);
 #endif //DEBUG_PROJECTOR_CTRL
+#else  //!USE_PROJECTOR_CTRL_NEC
+#ifdef DEBUG_PROJECTOR_CTRL
+	char hex_b[(len + 1) * 2];
+	AddLog_P(LOG_LEVEL_DEBUG,PSTR(PROJECTOR_CTRL_LOGNAME ": RAW bytes %s"),
+	    ToHex_P((uint8_t *)bytes, len, hex_b, sizeof(hex_b)));
+#endif //DEBUG_PROJECTOR_CTRL
+#endif //!USE_PROJECTOR_CTRL_NEC
 
 	serial->flush();
 	return;
