@@ -716,7 +716,7 @@
 #define D_SENSOR_HRE_DATA      "HRE Data"
 #define D_SENSOR_ADE7953_IRQ   "ADE7953 IRQ"
 #define D_SENSOR_BUZZER        "Зумер"
-#define D_SENSOR_OLED_RESET    "Нулиране OLED"
+#define D_SENSOR_DISP_RESET    "Нулиране Display"
 #define D_SENSOR_ZIGBEE_TXD    "Zigbee Tx"
 #define D_SENSOR_ZIGBEE_RXD    "Zigbee Rx"
 #define D_SENSOR_ZIGBEE_RST    "Zigbee Rst"

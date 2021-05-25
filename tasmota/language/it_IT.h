@@ -717,7 +717,7 @@
 #define D_SENSOR_HRE_DATA               "HRE - Dati"
 #define D_SENSOR_ADE7953_IRQ            "ADE7953 - IRQ"
 #define D_SENSOR_BUZZER                 "Cicalino"
-#define D_SENSOR_OLED_RESET             "OLED - RESET"
+#define D_SENSOR_DISP_RESET             "Display - RESET"
 #define D_SENSOR_ZIGBEE_TXD             "Zigbee - TX"
 #define D_SENSOR_ZIGBEE_RXD             "Zigbee - RX"
 #define D_SENSOR_ZIGBEE_RST             "Zigbee - RESET"
