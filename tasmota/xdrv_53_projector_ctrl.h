@@ -69,10 +69,12 @@ static const struct projector_ctrl_command_info_s projector_ctrl_commands[] = {
 /* see the serial codes in
  * http://global-download.acer.com/GDFiles/Document/RS232%20Command%20Table/RS232%20Command%20Table_Acer_1.0_A_A.zip?acerid=636791605984811687
  * tested with ACER P1500
+ * every command is first acknowledged by "*000\r" (success) or "*001\r" (failure) followed by an optional response
+ * most commands fail in stand-by mode
  */
 #define PROJECTOR_CTRL_LOGNAME	"DLP[ACER]"
-//static const uint8_t projector_ctrl_msg_qry_typ[] = { '*',' ','0',' ','I','R',' ','0','3','5', 0x0d }; //line50 - responds *000\rModel Model P1500E\r [fails in OFF mode]
-static const uint8_t projector_ctrl_msg_qry_typ[] = { '*',' ','0',' ','L','a','m','p',' ','?', 0x0d }; //cannot query typ, so query Lamp status instead
+//static const uint8_t projector_ctrl_msg_qry_typ[] = { '*',' ','0',' ','I','R',' ','0','3','5', 0x0d }; //line50 - responds *000\rModel Model P1500E\r [fails in stand-by mode]
+static const uint8_t projector_ctrl_msg_qry_typ[] = { '*',' ','0',' ','L','a','m','p',' ','?', 0x0d }; //cannot query type, so query Lamp status instead
 static const uint8_t projector_ctrl_msg_qry_pwr[] = { '*',' ','0',' ','L','a','m','p',' ','?', 0x0d }; //line97 - responds *000\rLamp 0\r
 static const uint8_t projector_ctrl_msg_pwr_on[]  = { '*',' ','0',' ','I','R',' ','0','0','1', 0x0d }; //line18 - responds *000\r
 static const uint8_t projector_ctrl_msg_pwr_off[] = { '*',' ','0',' ','I','R',' ','0','0','2', 0x0d }; //line19 - responds *000\r
