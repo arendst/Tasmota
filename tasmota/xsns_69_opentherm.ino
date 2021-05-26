@@ -313,6 +313,8 @@ void sns_ot_start_handshake()
 
     AddLog(LOG_LEVEL_DEBUG, PSTR("[OTH]: perform handshake"));
 
+    sns_opentherm_protocol_reset();
+
     sns_ot_master->sendRequestAync(
         OpenTherm::buildRequest(OpenThermMessageType::READ_DATA, OpenThermMessageID::SConfigSMemberIDcode, 0));
 
