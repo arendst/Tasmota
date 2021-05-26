@@ -3041,7 +3041,7 @@ int WebSend(char *buffer)
           http.addHeader("Content-Type", tmp);
           http_code = http.PUT((uint8_t *)payload, strlen(payload));
         } else {
-          http_code = http.GET(); // Start connection and send HTTP header
+          http_code = http.GET();               // Start connection and send HTTP header
         }
         if (http_code > 0) {                    // http_code will be negative on error
         if (http_code == HTTP_CODE_OK || http_code == HTTP_CODE_MOVED_PERMANENTLY) {
