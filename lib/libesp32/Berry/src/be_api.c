@@ -23,6 +23,11 @@
 
 #define retreg(vm)      ((vm)->cf->func)
 
+struct solidfuncinfo {
+    const char *name;
+    bclosure *function;
+};
+
 static void class_init(bvm *vm, bclass *c, const bnfuncinfo *lib)
 {
     if (lib) {
@@ -37,13 +42,13 @@ static void class_init(bvm *vm, bclass *c, const bnfuncinfo *lib)
         }
         if (lib->function == (bntvfunc) BE_CLOSURE) {
             /* next section is closures */
-            ++lib;
-            while (lib->name) {
-                if (lib->function) { /* method */
-                    bstring *s = be_newstr(vm, lib->name);
-                    be_closure_method_bind(vm, c, s, (bclosure*) lib->function);
+            struct solidfuncinfo *slib = (struct solidfuncinfo*)++lib;
+            while (slib->name) {
+                if (slib->function) { /* method */
+                    bstring *s = be_newstr(vm, slib->name);
+                    be_closure_method_bind(vm, c, s, slib->function);
                 }
-                ++lib;
+                ++slib;
             }
         }
         be_map_release(vm, c->members); /* clear space */

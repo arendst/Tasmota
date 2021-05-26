@@ -837,6 +837,18 @@ newframe: /* a new call frame */
                     *v = tmp;
                     dispatch();
                 }
+                /* if it failed, try 'setmeemner' */
+                bvalue *member = be_module_attr(vm, obj, str_literal(vm, "setmember"));
+                if (member && var_basetype(member) == BE_FUNCTION) {
+                    bvalue *top = vm->top;
+                    top[0] = *member;
+                    top[1] = *b; /* move name to argv[0] */
+                    top[2] = tmp; /* move value to argv[1] */
+                    vm->top += 3;   /* prevent collection results */
+                    be_dofunc(vm, top, 2); /* call method 'setmember' */
+                    vm->top -= 3;
+                    dispatch();
+                }
             }
             attribute_error(vm, "writable attribute", a, b);
             dispatch();
@@ -1016,6 +1028,17 @@ newframe: /* a new call frame */
                 push_native(vm, var, argc, mode);
                 f(vm); /* call C primitive function */
                 ret_native(vm);
+                break;
+            }
+            case BE_MODULE: {
+                bmodule *f = var_toobj(var);
+                bvalue *member = be_module_attr(vm, f, str_literal(vm, "()"));
+                if (member && var_basetype(member) == BE_FUNCTION) {
+                    *var = *member;
+                    goto recall; /* call '()' method */
+                } else {
+                    call_error(vm, var);
+                }
                 break;
             }
             default:
