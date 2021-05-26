@@ -268,6 +268,18 @@ extern "C" {
   }
 
   // web append with decimal conversion
+  int32_t l_webSend(bvm *vm);
+  int32_t l_webSend(bvm *vm) {
+    int32_t top = be_top(vm); // Get the number of arguments
+    if (top == 2 && be_isstring(vm, 2)) {
+      const char *msg = be_tostring(vm, 2);
+      WSContentSend_P(PSTR("%s"), msg);
+      be_return_nil(vm); // Return nil when something goes wrong
+    }
+    be_raise(vm, kTypeError, nullptr);
+  }
+
+  // web append with decimal conversion
   int32_t l_webSendDecimal(bvm *vm);
   int32_t l_webSendDecimal(bvm *vm) {
     int32_t top = be_top(vm); // Get the number of arguments

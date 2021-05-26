@@ -434,6 +434,7 @@ extern const bcstring be_const_str_SSPI_MISO;
 extern const bcstring be_const_str_SYMBOL_BATTERY_EMPTY;
 extern const bcstring be_const_str_PZEM016_RX;
 extern const bcstring be_const_str_tan;
+extern const bcstring be_const_str_web_send;
 extern const bcstring be_const_str_wire;
 extern const bcstring be_const_str_P9813_CLK;
 extern const bcstring be_const_str_SM2135_CLK;
