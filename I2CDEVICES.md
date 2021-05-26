@@ -92,3 +92,4 @@ Index | Define              | Driver  | Device   | Address(es) | Description
   56  | USE_SEESAW_SOIL     | xsns_81 | SEESOIL  | 0x36 - 0x39 | Adafruit seesaw soil moisture sensor
   57  | USE_TOF10120        | xsns_84 | TOF10120 | 0x52        | Time-of-flight (ToF) distance sensor
   58  | USE_MPU6886         | xsns_85 | MPU6886  | 0x68        | MPU6886 M5Stack
+  59  | USE_BM8563          | xdrv_56 | BM8563   | 0x51        | BM8563 RTC from M5Stack
