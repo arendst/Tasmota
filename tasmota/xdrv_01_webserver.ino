@@ -3002,9 +3002,9 @@ int WebSend(char *buffer)
     RemoveSpace(host);                        // host = |[192.168.178.86:80,admin:joker|
     host++;                                   // host = |192.168.178.86:80,admin:joker| - Skip [
     host = strtok_r(host, ",", &user);        // host = |192.168.178.86:80|, user = |admin:joker|
-    pu = strstr(host, "PU");           // host = |PU192.168.178.86:80,
+    pu = strstr(host, "PU");                  // host = |PU192.168.178.86:80,
     if (pu) {
-        host += 2;                     // host = |192.168.178.86:80, - SKIP PU
+        host += 2;                            // host = |192.168.178.86:80, - SKIP PU
       }
     String url = F("http://");                // url = |http://|
     url += host;                              // url = |http://192.168.178.86:80|
