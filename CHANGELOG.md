@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 ## [9.4.0.4]
 ### Added
 - Version bump to signal new features to Hass
+- Support for BM8563 RTC chip (I2C) found in M5Stack Core2 and M5StickC
 
 ## [9.4.0.3] 20210515
 ### Added
