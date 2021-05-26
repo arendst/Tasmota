@@ -100,7 +100,7 @@ void be_load_driver_i2c_lib(bvm *vm) {
 }
 /* @const_object_info_begin
 
-class be_class_tasmota_i2c_driver (scope: global, name: I2C_Driver, super: be_class_Driver) {
+class be_class_tasmota_i2c_driver (scope: global, name: I2C_Driver, super: be_class_tasmota_driver) {
     wire, var
     addr, var
     name, var

@@ -15,6 +15,7 @@ be_extern_native_module(json);
 be_extern_native_module(math);
 be_extern_native_module(time);
 be_extern_native_module(os);
+be_extern_native_module(global);
 be_extern_native_module(sys);
 be_extern_native_module(debug);
 be_extern_native_module(gc);
@@ -49,6 +50,9 @@ BERRY_LOCAL const bntvmodule* const be_module_table[] = {
 #endif
 #if BE_USE_OS_MODULE
     &be_native_module(os),
+#endif
+#if BE_USE_GLOBAL_MODULE
+    &be_native_module(global),
 #endif
 #if BE_USE_SYS_MODULE
     &be_native_module(sys),
