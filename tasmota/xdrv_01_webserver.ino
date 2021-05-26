@@ -2992,6 +2992,8 @@ int WebSend(char *buffer)
   char *user;
   char *password;
   char *command;
+  char *pu;
+  char *payload;
   int status = 1;                             // Wrong parameters
 
                                               // buffer = |  [  192.168.178.86  :  80  ,  admin  :  joker  ]    POWER1 ON   |
@@ -3000,6 +3002,10 @@ int WebSend(char *buffer)
     RemoveSpace(host);                        // host = |[192.168.178.86:80,admin:joker|
     host++;                                   // host = |192.168.178.86:80,admin:joker| - Skip [
     host = strtok_r(host, ",", &user);        // host = |192.168.178.86:80|, user = |admin:joker|
+    pu = strstr(host, "PU");           // host = |PU192.168.178.86:80,
+    if (pu) {
+        host += 2;                     // host = |192.168.178.86:80, - SKIP PU
+      }
     String url = F("http://");                // url = |http://|
     url += host;                              // url = |http://192.168.178.86:80|
 
@@ -3015,6 +3021,10 @@ int WebSend(char *buffer)
         }
       }
       url += F("cmnd=");                      // url = |http://192.168.178.86/cm?cmnd=| or |http://192.168.178.86/cm?user=admin&password=joker&cmnd=|
+    } else {
+	if (pu) {
+        command = strtok_r(command, ";", &payload); // command |/any/link/php?log=123| or |/any/link/php?log=123;PAYLOAD
+      }
     }
     url += command;                           // url = |http://192.168.178.86/cm?cmnd=POWER1 ON|
 
@@ -3023,8 +3033,17 @@ int WebSend(char *buffer)
     WiFiClient http_client;
     HTTPClient http;
     if (http.begin(http_client, UrlEncode(url))) {  // UrlEncode(url) = |http://192.168.178.86/cm?cmnd=POWER1%20ON|
-      int http_code = http.GET();             // Start connection and send HTTP header
-      if (http_code > 0) {                    // http_code will be negative on error
+      int http_code;
+        if (pu) {
+          char tmp[100];
+          // Maybe add int parameter for index in kContentTypes?
+          GetTextIndexed(tmp, sizeof(tmp), CT_APP_JSON, kContentTypes);
+          http.addHeader("Content-Type", tmp);
+          http_code = http.PUT((uint8_t *)payload, strlen(payload));
+        } else {
+          http_code = http.GET(); // Start connection and send HTTP header
+        }
+        if (http_code > 0) {                    // http_code will be negative on error
         if (http_code == HTTP_CODE_OK || http_code == HTTP_CODE_MOVED_PERMANENTLY) {
 #ifdef USE_WEBSEND_RESPONSE
           // Return received data to the user - Adds 900+ bytes to the code
