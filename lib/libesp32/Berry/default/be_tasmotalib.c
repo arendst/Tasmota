@@ -27,6 +27,7 @@ extern int l_respCmndFailed(bvm *vm);
 extern int l_resolveCmnd(bvm *vm);
 
 extern int l_respAppend(bvm *vm);
+extern int l_webSend(bvm *vm);
 extern int l_webSendDecimal(bvm *vm);
 
 extern int l_getlight(bvm *vm);
@@ -2435,6 +2436,7 @@ void be_load_tasmota_ntvlib(bvm *vm)
         { "resolvecmnd", l_resolveCmnd },
 
         { "response_append", l_respAppend },
+        { "web_send", l_webSend },
         { "web_send_decimal", l_webSendDecimal },
 
         { "get_power", l_getpower },
@@ -2508,6 +2510,7 @@ class be_class_tasmota (scope: global, name: Tasmota) {
     resolvecmnd, func(l_resolveCmnd)
 
     response_append, func(l_respAppend)
+    web_send, func(l_webSend)
     web_send_decimal, func(l_webSendDecimal)
 
     get_power, func(l_getpower)

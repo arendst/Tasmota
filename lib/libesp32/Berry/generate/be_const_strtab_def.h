@@ -433,7 +433,8 @@ be_define_const_str(super, "super", 4152230356u, 0, 5, NULL);
 be_define_const_str(SSPI_MISO, "SSPI_MISO", 2485347173u, 0, 9, &be_const_str_SYMBOL_BATTERY_EMPTY);
 be_define_const_str(SYMBOL_BATTERY_EMPTY, "SYMBOL_BATTERY_EMPTY", 3945064277u, 0, 20, NULL);
 be_define_const_str(PZEM016_RX, "PZEM016_RX", 1004012055u, 0, 10, NULL);
-be_define_const_str(tan, "tan", 2633446552u, 0, 3, &be_const_str_wire);
+be_define_const_str(tan, "tan", 2633446552u, 0, 3, &be_const_str_web_send);
+be_define_const_str(web_send, "web_send", 2989941448u, 0, 8, &be_const_str_wire);
 be_define_const_str(wire, "wire", 4082753944u, 0, 4, NULL);
 be_define_const_str(P9813_CLK, "P9813_CLK", 2455391001u, 0, 9, NULL);
 be_define_const_str(SM2135_CLK, "SM2135_CLK", 2383410011u, 0, 10, &be_const_str_wire1);
@@ -841,6 +842,6 @@ static const bstring* const m_string_table[] = {
 
 static const struct bconststrtab m_const_string_table = {
     .size = 272,
-    .count = 544,
+    .count = 545,
     .table = m_string_table
 };
