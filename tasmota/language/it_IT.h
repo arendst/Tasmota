@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v9.4.0.1 - Last update 23.05.2021
+ * Updated until v9.4.0.1 - Last update 28.05.2021
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -612,12 +612,12 @@
 #define D_SENSOR_DS18X20                "DS18x20"
 #define D_SENSOR_I2C_SCL                "I2C SCL"
 #define D_SENSOR_I2C_SDA                "I2C SDA"
-#define D_SENSOR_I2S_OUT_DATA  "I2S Out Data"
-#define D_SENSOR_I2S_OUT_CLK   "I2S Out Clk"
-#define D_SENSOR_I2S_OUT_SLCT  "I2S Out Slct"
-#define D_SENSOR_I2S_IN_DATA   "I2S In Data"
-#define D_SENSOR_I2S_IN_CLK    "I2S In Clk"
-#define D_SENSOR_I2S_IN_SLCT   "I2S In Slct"
+#define D_SENSOR_I2S_OUT_DATA           "I2S - Dati out"
+#define D_SENSOR_I2S_OUT_CLK            "I2S - Clk out"
+#define D_SENSOR_I2S_OUT_SLCT           "I2S - Sel. out"
+#define D_SENSOR_I2S_IN_DATA            "I2S - Dati in"
+#define D_SENSOR_I2S_IN_CLK             "I2S - Clk in"
+#define D_SENSOR_I2S_IN_SLCT            "I2S - Sel. in"
 #define D_SENSOR_WS2812                 "WS2812"
 #define D_SENSOR_DFR562                 "Riproduttore MP3"
 #define D_SENSOR_IRSEND                 "IR - TX"
@@ -628,7 +628,7 @@
 #define D_SENSOR_LED_LINK               "Led - Lampeggio" // Suffix "i"
 #define D_SENSOR_PWM                    "PWM"             // Suffix "1"
 #define D_SENSOR_COUNTER                "Contatore"       // Suffix "1"
-#define D_SENSOR_INTERRUPT     "Interrupt"
+#define D_SENSOR_INTERRUPT              "Interrupt"
 #define D_SENSOR_INPUT                  "Ingresso"
 #define D_SENSOR_IRRECV                 "IR - RX"
 #define D_SENSOR_MHZ_RX                 "MHZ - RX"
