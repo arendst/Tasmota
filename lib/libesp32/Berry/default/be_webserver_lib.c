@@ -9,6 +9,7 @@
 
 #ifdef USE_WEBSERVER
 
+extern int w_webserver_member(bvm *vm);
 extern int w_webserver_on(bvm *vm);
 extern int w_webserver_state(bvm *vm);
 
@@ -26,11 +27,7 @@ extern int w_webserver_has_arg(bvm *vm);
 
 #if !BE_USE_PRECOMPILED_OBJECT
 be_native_module_attr_table(webserver) {
-    be_native_module_int("HTTP_OFF", 0),
-    be_native_module_int("HTTP_USER", 1),
-    be_native_module_int("HTTP_ADMIN", 2),
-    be_native_module_int("HTTP_MANAGER", 3),
-    be_native_module_int("HTTP_MANAGER_RESET_ONLY", 4),
+    be_native_module_function("member", w_webserver_member),
 
     be_native_module_function("on", w_webserver_on),
     be_native_module_function("state", w_webserver_state),
@@ -54,11 +51,7 @@ be_define_native_module(webserver, NULL);
 #else
 /* @const_object_info_begin
 module webserver (scope: global) {
-    HTTP_OFF, int(0)
-    HTTP_USER, int(1)
-    HTTP_ADMIN, int(2)
-    HTTP_MANAGER, int(3)
-    HTTP_MANAGER_RESET_ONLY, int(4)
+    member, func(w_webserver_member)
 
     on, func(w_webserver_on)
     state, func(w_webserver_state)

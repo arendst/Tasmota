@@ -753,16 +753,10 @@ extern "C" {
    * Responds to virtual constants
   \*********************************************************************************************/
 
-  typedef struct lvbe_constant_t {
-      const char * name;
-      int32_t      value;
-  } lvbe_constant_t;
-
-
   extern const lvbe_call_c_t lv_func[];
   extern const size_t lv_func_size;
 
-  extern const lvbe_constant_t lv0_constants[];
+  extern const be_constint_t lv0_constants[];
   extern const size_t lv0_constants_size;
 
   int lv0_member(bvm *vm);

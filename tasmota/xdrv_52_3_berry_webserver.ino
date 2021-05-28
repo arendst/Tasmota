@@ -24,6 +24,44 @@
 
 #include <berry.h>
 
+/*********************************************************************************************\
+ * Int constants
+ *********************************************************************************************/
+const be_constint_t webserver_constants[] = {
+    { "BUTTON_CONFIGURATION", BUTTON_CONFIGURATION },
+    { "BUTTON_INFORMATION", BUTTON_INFORMATION },
+    { "BUTTON_MAIN", BUTTON_MAIN },
+    { "BUTTON_MANAGEMENT", BUTTON_MANAGEMENT },
+    { "BUTTON_MODULE", BUTTON_MODULE },
+    { "HTTP_ADMIN", HTTP_ADMIN },
+    { "HTTP_ANY", HTTP_ANY },
+    { "HTTP_GET", HTTP_GET },
+    { "HTTP_MANAGER", HTTP_MANAGER },
+    { "HTTP_MANAGER_RESET_ONLY", HTTP_MANAGER_RESET_ONLY },
+    { "HTTP_OFF", HTTP_OFF },
+    { "HTTP_OPTIONS", HTTP_OPTIONS },
+    { "HTTP_POST", HTTP_POST },
+    { "HTTP_USER", HTTP_USER },
+};
+
+extern "C" {
+  int w_webserver_member(bvm *vm);
+  int w_webserver_member(bvm *vm) {
+    int32_t argc = be_top(vm); // Get the number of arguments
+    if (argc == 1 && be_isstring(vm, 1)) {
+      const char * needle = be_tostring(vm, 1);
+
+      int32_t constant_idx = bin_search(needle, &webserver_constants[0].name, sizeof(webserver_constants[0]), ARRAY_SIZE(webserver_constants));
+    
+      if (constant_idx >= 0) {
+        // we did have a match, low == high
+        be_pushint(vm, webserver_constants[constant_idx].value);
+        be_return(vm);
+      }
+    }
+    be_raise(vm, kTypeError, nullptr);
+  }
+}
 
 /*********************************************************************************************\
  * Native functions mapped to Berry functions

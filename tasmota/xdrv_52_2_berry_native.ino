@@ -27,6 +27,24 @@ const char kTypeError[] PROGMEM = "type_error";
 const char kInternalError[] PROGMEM = "intenal_error";
 
 extern "C" {
+
+  /*********************************************************************************************\
+   * Support for Berry int constants
+   * as virtual members
+  \*********************************************************************************************/
+  typedef struct be_constint_t {
+      const char * name;
+      int32_t      value;
+  } be_constint_t;
+
+}
+
+/*********************************************************************************************\
+ * LVGL top level virtual members
+ * 
+ * Responds to virtual constants
+\*********************************************************************************************/
+extern "C" {
   #include "be_exec.h"
   void be_dumpstack(bvm *vm) {
     int32_t top = be_top(vm);
