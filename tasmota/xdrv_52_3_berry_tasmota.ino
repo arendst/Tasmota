@@ -26,6 +26,26 @@
 const uint32_t BERRY_MAX_LOGS = 16;   // max number of print output recorded when outside of REPL, used to avoid infinite grow of logs
 
 /*********************************************************************************************\
+ * Return C callback from index
+ * 
+\*********************************************************************************************/
+extern "C" {
+  int32_t l_get_cb(struct bvm *vm);
+  int32_t l_get_cb(struct bvm *vm) {
+    int32_t argc = be_top(vm); // Get the number of arguments
+    if (argc >= 2 && be_isint(vm, 2)) {
+      int32_t idx = be_toint(vm, 2);
+      if (idx >= 0 && idx < ARRAY_SIZE(berry_callback_array)) {
+        const berry_callback_t c_ptr = berry_callback_array[idx];
+        be_pushcomptr(vm, (void*) c_ptr);
+        be_return(vm);
+      }
+    }
+    be_raise(vm, kTypeError, nullptr);
+  }
+}
+
+/*********************************************************************************************\
  * Native functions mapped to Berry functions
  * 
  * log(msg:string [,log_level:int]) ->nil
