@@ -1057,6 +1057,9 @@ void CmndSetoptionBase(bool indexed) {
                   TasmotaGlobal.restart_flag = 2;
                 }
                 break;
+              case 31:                     // SetOption145 - Increase MQTT connection timeout
+                TasmotaGlobal.restart_flag = 2;
+                break;
             }
           }
         } else {

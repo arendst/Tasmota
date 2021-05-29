@@ -174,7 +174,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t spare28 : 1;                  // bit 28
     uint32_t spare29 : 1;                  // bit 29
     uint32_t spare30 : 1;                  // bit 30
-    uint32_t spare31 : 1;                  // bit 31
+    uint32_t mqtt_increase_timeout : 1;    // bit 31 - SetOption145 - Increase connection timeout
   };
 } SOBitfield5;
 

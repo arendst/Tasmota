@@ -22,6 +22,9 @@
 #ifndef MQTT_WIFI_CLIENT_TIMEOUT
 #define MQTT_WIFI_CLIENT_TIMEOUT   200    // Wifi TCP connection timeout (default is 5000 mSec)
 #endif
+#ifndef MQTT_MAX_WIFI_CLIENT_TIMEOUT
+#define MQTT_MAX_WIFI_CLIENT_TIMEOUT   5000    // Wifi TCP connection timeout upper limit
+#endif
 
 #define USE_MQTT_NEW_PUBSUBCLIENT
 
@@ -966,7 +969,7 @@ void MqttReconnect(void) {
   Response_P(S_LWT_OFFLINE);
 
   if (MqttClient.connected()) { MqttClient.disconnect(); }
-  EspClient.setTimeout(MQTT_WIFI_CLIENT_TIMEOUT);
+  EspClient.setTimeout(Settings.flag5.mqtt_increase_timeout ? MQTT_MAX_WIFI_CLIENT_TIMEOUT : MQTT_WIFI_CLIENT_TIMEOUT);
 #ifdef USE_MQTT_TLS
   if (Mqtt.mqtt_tls) {
     tlsClient->stop();
