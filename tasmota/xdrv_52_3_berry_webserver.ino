@@ -78,9 +78,6 @@ extern "C" {
   //
   int32_t w_webserver_on(struct bvm *vm);
   int32_t w_webserver_on(struct bvm *vm) {
-    if (!Web.state) {
-      be_raise(vm, kInternalError, "Web.state is 'HTTP_OFF'");
-    }
     int32_t argc = be_top(vm); // Get the number of arguments
     if (argc >= 2 && be_isstring(vm, 1) && be_isclosure(vm, 2) &&
         (argc < 3 || be_isint(vm, 3)) ) {    // optional third argument must be int
