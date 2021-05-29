@@ -52,7 +52,7 @@
 #endif  // UNIT_TEST
 
 // Library Version
-#define _IRREMOTEESP8266_VERSION_ "2.7.16"
+#define _IRREMOTEESP8266_VERSION_ "2.7.18"
 
 // Set the language & locale for the library. See the `locale` dir for options.
 #ifndef _IR_LOCALE_
@@ -740,6 +740,13 @@
 #define SEND_XMP            _IR_ENABLE_DEFAULT_
 #endif  // SEND_XMP
 
+#ifndef DECODE_TRUMA
+#define DECODE_TRUMA        _IR_ENABLE_DEFAULT_
+#endif  // DECODE_TRUMA
+#ifndef SEND_TRUMA
+#define SEND_TRUMA          _IR_ENABLE_DEFAULT_
+#endif  // SEND_TRUMA
+
 #if (DECODE_ARGO || DECODE_DAIKIN || DECODE_FUJITSU_AC || DECODE_GREE || \
      DECODE_KELVINATOR || DECODE_MITSUBISHI_AC || DECODE_TOSHIBA_AC || \
      DECODE_TROTEC || DECODE_HAIER_AC || DECODE_HITACHI_AC || \
@@ -891,8 +898,9 @@ enum decode_type_t {
   MILESTAG2,
   ECOCLIM,
   XMP,
+  TRUMA,  // 100
   // Add new entries before this one, and update it to point to the last entry.
-  kLastDecodeType = XMP,
+  kLastDecodeType = TRUMA,
 };
 
 // Message lengths & required repeat values
@@ -1111,6 +1119,7 @@ const uint16_t kTranscoldDefaultRepeat = kNoRepeat;
 const uint16_t kTrotecStateLength = 9;
 const uint16_t kTrotecBits = kTrotecStateLength * 8;
 const uint16_t kTrotecDefaultRepeat = kNoRepeat;
+const uint16_t kTrumaBits = 56;
 const uint16_t kWhirlpoolAcStateLength = 21;
 const uint16_t kWhirlpoolAcBits = kWhirlpoolAcStateLength * 8;
 const uint16_t kWhirlpoolAcDefaultRepeat = kNoRepeat;

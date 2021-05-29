@@ -445,6 +445,9 @@ Private Member Functions</h2></td></tr>
 <tr class="memitem:a9c7c5cdee244070d5999232a1bcdae60"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classIRrecv.html#a9c7c5cdee244070d5999232a1bcdae60">decodeXmp</a> (<a class="el" href="classdecode__results.html">decode_results</a> *results, uint16_t offset=<a class="el" href="IRrecv_8h.html#a44a836a34428f8f75b1ae566de4bb972">kStartOffset</a>, const uint16_t nbits=<a class="el" href="IRremoteESP8266_8h.html#adfcd08adae1243b1108353ef5cfe8776">kXmpBits</a>, const bool strict=true)</td></tr>
 <tr class="memdesc:a9c7c5cdee244070d5999232a1bcdae60"><td class="mdescLeft">&#160;</td><td class="mdescRight">Decode the supplied XMP packet/message. Status: BETA / Probably works.  <a href="classIRrecv.html#a9c7c5cdee244070d5999232a1bcdae60">More...</a><br /></td></tr>
 <tr class="separator:a9c7c5cdee244070d5999232a1bcdae60"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a76a85fb183cc943532bc9c589c42a17a"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classIRrecv.html#a76a85fb183cc943532bc9c589c42a17a">decodeTruma</a> (<a class="el" href="classdecode__results.html">decode_results</a> *results, uint16_t offset=<a class="el" href="IRrecv_8h.html#a44a836a34428f8f75b1ae566de4bb972">kStartOffset</a>, const uint16_t nbits=<a class="el" href="IRremoteESP8266_8h.html#aa5ba6ea5669410e37620b616c75e766f">kTrumaBits</a>, const bool strict=true)</td></tr>
+<tr class="memdesc:a76a85fb183cc943532bc9c589c42a17a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Decode the supplied Truma message. Status: STABLE / Confirmed working with real device.  <a href="classIRrecv.html#a76a85fb183cc943532bc9c589c42a17a">More...</a><br /></td></tr>
+<tr class="separator:a76a85fb183cc943532bc9c589c42a17a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pri-attribs"></a>
 Private Attributes</h2></td></tr>
@@ -5914,6 +5917,66 @@ LG 32bit protocol appears near identical to the Samsung protocol. They possibly 
 
 </div>
 </div>
+<a id="a76a85fb183cc943532bc9c589c42a17a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a76a85fb183cc943532bc9c589c42a17a">&#9670;&nbsp;</a></span>decodeTruma()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool IRrecv::decodeTruma </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classdecode__results.html">decode_results</a> *&#160;</td>
+          <td class="paramname"><em>results</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint16_t&#160;</td>
+          <td class="paramname"><em>offset</em> = <code><a class="el" href="IRrecv_8h.html#a44a836a34428f8f75b1ae566de4bb972">kStartOffset</a></code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const uint16_t&#160;</td>
+          <td class="paramname"><em>nbits</em> = <code><a class="el" href="IRremoteESP8266_8h.html#aa5ba6ea5669410e37620b616c75e766f">kTrumaBits</a></code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const bool&#160;</td>
+          <td class="paramname"><em>strict</em> = <code>true</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Decode the supplied Truma message. Status: STABLE / Confirmed working with real device. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in,out]</td><td class="paramname">results</td><td>Ptr to the data to decode &amp; where to store the decode result. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">offset</td><td>The starting index to use when attempting to decode the raw data. Typically/Defaults to kStartOffset. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">nbits</td><td>The number of data bits to expect. Typically kTrumaBits. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">strict</td><td>Flag indicating if we should perform strict matching. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>A boolean. True if it can decode it, false if it can't. </dd></dl>
+
+</div>
+</div>
 <a id="a5d48b3c91434c18c7726cca504d75b73"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a5d48b3c91434c18c7726cca504d75b73">&#9670;&nbsp;</a></span>decodeVestelAc()</h2>
 
@@ -7996,6 +8059,7 @@ LG 32bit protocol appears near identical to the Samsung protocol. They possibly 
 <li>src/<a class="el" href="ir__Toshiba_8cpp.html">ir_Toshiba.cpp</a></li>
 <li>src/<a class="el" href="ir__Transcold_8cpp.html">ir_Transcold.cpp</a></li>
 <li>src/<a class="el" href="ir__Trotec_8cpp.html">ir_Trotec.cpp</a></li>
+<li>src/<a class="el" href="ir__Truma_8cpp.html">ir_Truma.cpp</a></li>
 <li>src/<a class="el" href="ir__Vestel_8cpp.html">ir_Vestel.cpp</a></li>
 <li>src/<a class="el" href="ir__Voltas_8cpp.html">ir_Voltas.cpp</a></li>
 <li>src/<a class="el" href="ir__Whirlpool_8cpp.html">ir_Whirlpool.cpp</a></li>
