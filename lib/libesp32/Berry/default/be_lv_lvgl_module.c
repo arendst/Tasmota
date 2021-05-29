@@ -51,12 +51,12 @@ const size_t lv_func_size = sizeof(lv_func) / sizeof(lv_func[0]);
 
 
 
-typedef struct lvbe_constant_t {
+typedef struct be_constint_t {
     const char * name;
     int32_t      value;
-} lvbe_constant_t;
+} be_constint_t;
 
-const lvbe_constant_t lv0_constants[] = {
+const be_constint_t lv0_constants[] = {
 
     { "ALIGN_CENTER", LV_ALIGN_CENTER },
     { "ALIGN_IN_BOTTOM_LEFT", LV_ALIGN_IN_BOTTOM_LEFT },

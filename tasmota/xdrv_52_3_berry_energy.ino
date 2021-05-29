@@ -56,8 +56,6 @@ extern "C" {
   }
 }
 
-#endif // USE_ENERGY_SENSOR
-
 extern "C" {
   // 
   int32_t b_wire_energymissing(struct bvm *vm);
@@ -67,4 +65,5 @@ extern "C" {
 
 }
 
+#endif // USE_ENERGY_SENSOR
 #endif  // USE_BERRY

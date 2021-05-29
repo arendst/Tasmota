@@ -19,6 +19,7 @@ class Tasmota
           elif type=='web_sensor' && d.web_sensor return d.web_sensor()
           elif type=='json_append' && d.json_append return d.json_append()
           elif type=='button_pressed' && d.button_pressed return d.button_pressed()
+          elif type=='web_add_handler' && d.display return d.display()
           elif type=='display' && d.display return d.display()
           end
         except .. as e,m
@@ -28,4 +29,28 @@ class Tasmota
       end
     end
   end
+
+  #- dispatch callback number n, with parameters v0,v1,v2,v3 -#
+  def cb_dispatch(n,v0,v1,v2,v3)
+    if self._cb == nil return 0 end
+    var f = self._cb.find(n)
+    if f != nil
+      return f(v0,v1,v2,v3)
+    end
+    return 0
+  end
+
+  #- generate a new C callback and record the associated Berry closure -#
+  def gen_cb(f)
+    if self._cb == nil self._cb = {} end  # create map if not already initialized
+    for i:0..19
+      if self._cb.find(i) == nil
+        #- free slot -#
+        self._cb[i] = f
+        return self._get_cb(i)
+      end
+    end
+    raise "internal_error", "No callback available"
+  end
+
 end
