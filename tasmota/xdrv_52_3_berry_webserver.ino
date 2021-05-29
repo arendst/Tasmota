@@ -59,7 +59,7 @@ extern "C" {
         be_return(vm);
       }
     }
-    be_raise(vm, kTypeError, nullptr);
+    be_raise(vm, "attribute_error", "module 'webserver' has no such attribute");
   }
 }
 
@@ -201,8 +201,8 @@ extern "C" {
   // Berry: `webserver.args() -> int`
   //
   // Returns the number of arguments
-  int32_t w_webserver_args(struct bvm *vm);
-  int32_t w_webserver_args(struct bvm *vm) {
+  int32_t w_webserver_argsize(struct bvm *vm);
+  int32_t w_webserver_argsize(struct bvm *vm) {
     be_pushint(vm, Webserver->args());
     be_return(vm);
   }

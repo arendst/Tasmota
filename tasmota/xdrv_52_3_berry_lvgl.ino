@@ -800,7 +800,7 @@ extern "C" {
         }
       }
     }
-    be_raise(vm, kTypeError, nullptr);
+    be_raise(vm, "attribute_error", "module 'lvgl' has no such attribute");
   }
 
   /*********************************************************************************************\

@@ -21,7 +21,7 @@ extern int w_webserver_content_flush(bvm *vm);
 extern int w_webserver_content_stop(bvm *vm);
 extern int w_webserver_content_button(bvm *vm);
 
-extern int w_webserver_args(bvm *vm);
+extern int w_webserver_argsize(bvm *vm);
 extern int w_webserver_arg(bvm *vm);
 extern int w_webserver_has_arg(bvm *vm);
 
@@ -41,7 +41,7 @@ be_native_module_attr_table(webserver) {
     be_native_module_function("content_stop", w_webserver_content_stop),
     be_native_module_function("content_button", w_webserver_content_button),
 
-    be_native_module_function("args", w_webserver_args),
+    be_native_module_function("arg_size", w_webserver_argsize),
     be_native_module_function("arg", w_webserver_arg),
     be_native_module_function("has_arg", w_webserver_has_arg),
 
@@ -65,7 +65,7 @@ module webserver (scope: global) {
     content_stop, func(w_webserver_content_stop)
     content_button, func(w_webserver_content_button)
 
-    args, func(w_webserver_args)
+    arg_size, func(w_webserver_argsize)
     arg, func(w_webserver_arg)
     has_arg, func(w_webserver_has_arg)
 }

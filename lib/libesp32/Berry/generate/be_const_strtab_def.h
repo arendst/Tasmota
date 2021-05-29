@@ -93,8 +93,7 @@ be_define_const_str(classof, "classof", 1796577762u, 0, 7, &be_const_str_format)
 be_define_const_str(format, "format", 3114108242u, 0, 6, &be_const_str_pi);
 be_define_const_str(pi, "pi", 1213090802u, 0, 2, NULL);
 be_define_const_str(RC522_RST, "RC522_RST", 720511443u, 0, 9, NULL);
-be_define_const_str(SSPI_MAX31865_CS1, "SSPI_MAX31865_CS1", 1256578724u, 0, 17, &be_const_str_args);
-be_define_const_str(args, "args", 2634721084u, 0, 4, NULL);
+be_define_const_str(SSPI_MAX31865_CS1, "SSPI_MAX31865_CS1", 1256578724u, 0, 17, NULL);
 be_define_const_str(tostring, "tostring", 2299708645u, 0, 8, &be_const_str_try_rule);
 be_define_const_str(try_rule, "try_rule", 1986449405u, 0, 8, NULL);
 be_define_const_str(SM16716_DAT, "SM16716_DAT", 1905621806u, 0, 11, &be_const_str_SYMBOL_CALL);
@@ -205,6 +204,7 @@ be_define_const_str(opt_eq, "==", 2431966415u, 0, 2, &be_const_str_PZEM016_RX);
 be_define_const_str(PZEM016_RX, "PZEM016_RX", 1004012055u, 0, 10, &be_const_str_SYMBOL_LEFT);
 be_define_const_str(SYMBOL_LEFT, "SYMBOL_LEFT", 1563517575u, 0, 11, &be_const_str_SYMBOL_SETTINGS);
 be_define_const_str(SYMBOL_SETTINGS, "SYMBOL_SETTINGS", 339656335u, 0, 15, NULL);
+be_define_const_str(arg_size, "arg_size", 3310243257u, 0, 8, NULL);
 be_define_const_str(BL0940_RX, "BL0940_RX", 2908993179u, 0, 9, &be_const_str_cb_dispatch);
 be_define_const_str(cb_dispatch, "cb_dispatch", 1741510499u, 0, 11, &be_const_str_cmd);
 be_define_const_str(cmd, "cmd", 4136785899u, 0, 3, &be_const_str_get_tasmota);
@@ -679,7 +679,7 @@ static const bstring* const m_string_table[] = {
     (const bstring *)&be_const_str_INPUT_PULLUP,
     (const bstring *)&be_const_str_opt_eq,
     NULL,
-    NULL,
+    (const bstring *)&be_const_str_arg_size,
     NULL,
     (const bstring *)&be_const_str_BL0940_RX,
     (const bstring *)&be_const_str_SYMBOL_OK,
