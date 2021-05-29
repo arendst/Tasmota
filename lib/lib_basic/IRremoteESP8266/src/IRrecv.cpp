@@ -933,6 +933,11 @@ bool IRrecv::decode(decode_results *results, irparams_t *save,
     DPRINTLN("Attempting Doshisha decode");
     if (decodeDoshisha(results, offset)) return true;
 #endif  // DECODE_DOSHISHA
+#if DECODE_TRUMA
+    // Needs to happen before decodeMultibrackets() as they can appear similar.
+    DPRINTLN("Attempting Truma decode");
+    if (decodeTruma(results, offset)) return true;
+#endif  // DECODE_TRUMA
 #if DECODE_MULTIBRACKETS
     DPRINTLN("Attempting Multibrackets decode");
     if (decodeMultibrackets(results, offset)) return true;

@@ -44,6 +44,7 @@
 #include "ir_Toshiba.h"
 #include "ir_Transcold.h"
 #include "ir_Trotec.h"
+#include "ir_Truma.h"
 #include "ir_Vestel.h"
 #include "ir_Voltas.h"
 #include "ir_Whirlpool.h"
@@ -275,6 +276,9 @@ bool IRac::isProtocolSupported(const decode_type_t protocol) {
 #if SEND_TROTEC
     case decode_type_t::TROTEC:
 #endif
+#if SEND_TRUMA
+    case decode_type_t::TRUMA:
+#endif  // SEND_TRUMA
 #if SEND_VESTEL_AC
     case decode_type_t::VESTEL_AC:
 #endif
@@ -889,6 +893,7 @@ void IRac::electra(IRElectraAc *ac,
 /// @param[in] model The A/C model to use.
 /// @param[in] on The power setting.
 /// @param[in] mode The operation mode setting.
+/// @param[in] celsius Temperature units. True is Celsius, False is Fahrenheit.
 /// @param[in] degrees The temperature setting in degrees.
 /// @param[in] fan The speed setting for the fan.
 /// @param[in] swingv The vertical swing setting.
@@ -901,6 +906,7 @@ void IRac::electra(IRElectraAc *ac,
 /// @param[in] sleep Nr. of minutes for sleep mode. <= 0 is Off, > 0 is on.
 void IRac::fujitsu(IRFujitsuAC *ac, const fujitsu_ac_remote_model_t model,
                    const bool on, const stdAc::opmode_t mode,
+                   const bool celsius,
                    const float degrees, const stdAc::fanspeed_t fan,
                    const stdAc::swingv_t swingv, const stdAc::swingh_t swingh,
                    const bool quiet, const bool turbo, const bool econo,
@@ -929,7 +935,7 @@ void IRac::fujitsu(IRFujitsuAC *ac, const fujitsu_ac_remote_model_t model,
     }
     // Normal operation.
     ac->setMode(ac->convertMode(mode));
-    ac->setTemp(degrees);
+    ac->setTemp(degrees, celsius);
     ac->setFanSpeed(ac->convertFan(fan));
     uint8_t swing = kFujitsuAcSwingOff;
     if (swingv > stdAc::swingv_t::kOff) swing |= kFujitsuAcSwingVert;
@@ -1980,6 +1986,37 @@ void IRac::trotec(IRTrotecESP *ac,
 }
 #endif  // SEND_TROTEC
 
+#if SEND_TRUMA
+/// Send a Truma A/C message with the supplied settings.
+/// @param[in, out] ac A Ptr to an IRTrumaAc object to use.
+/// @param[in] on The power setting.
+/// @param[in] mode The operation mode setting.
+/// @param[in] degrees The temperature setting in degrees.
+/// @param[in] fan The speed setting for the fan.
+/// @param[in] quiet Run the device quietly if we can.
+void IRac::truma(IRTrumaAc *ac,
+                 const bool on, const stdAc::opmode_t mode,
+                 const float degrees, const stdAc::fanspeed_t fan,
+                 const bool quiet) {
+  ac->begin();
+  ac->setPower(on);
+  ac->setMode(ac->convertMode(mode));
+  ac->setTemp(degrees);
+  ac->setFan(ac->convertFan(fan));
+  ac->setQuiet(quiet);  // Only available in Cool mode.
+  // No Vertical swing setting available.
+  // No Horizontal swing setting available.
+  // No Turbo setting available.
+  // No Light setting available.
+  // No Filter setting available.
+  // No Clean setting available.
+  // No Beep setting available.
+  // No Sleep setting available.
+  // No Clock setting available.
+  ac->send();
+}
+#endif  // SEND_TRUMA
+
 #if SEND_VESTEL_AC
 /// Send a Vestel A/C message with the supplied settings.
 /// @param[in, out] ac A Ptr to an IRVestelAc object to use.
@@ -2450,7 +2487,8 @@ bool IRac::sendAc(const stdAc::state_t desired, const stdAc::state_t *prev) {
       IRFujitsuAC ac(_pin, (fujitsu_ac_remote_model_t)send.model, _inverted,
                      _modulation);
       fujitsu(&ac, (fujitsu_ac_remote_model_t)send.model, send.power, send.mode,
-              degC, send.fanspeed, send.swingv, send.swingh, send.quiet,
+              send.celsius, send.degrees, send.fanspeed,
+              send.swingv, send.swingh, send.quiet,
               send.turbo, send.econo, send.filter, send.clean);
       break;
     }
@@ -2713,6 +2751,14 @@ bool IRac::sendAc(const stdAc::state_t desired, const stdAc::state_t *prev) {
       break;
     }
 #endif  // SEND_TROTEC
+#if SEND_TRUMA
+    case TRUMA:
+    {
+      IRTrumaAc ac(_pin, _inverted, _modulation);
+      truma(&ac, send.power, send.mode, degC, send.fanspeed, send.quiet);
+      break;
+    }
+#endif  // SEND_TRUMA
 #if SEND_VESTEL_AC
     case VESTEL_AC:
     {
@@ -3298,6 +3344,13 @@ namespace IRAcUtils {
         return ac.toString();
       }
 #endif  // DECODE_TROTEC
+#if DECODE_TRUMA
+      case decode_type_t::TRUMA: {
+        IRTrumaAc ac(kGpioUnused);
+        ac.setRaw(result->value);  // Truma uses value instead of state.
+        return ac.toString();
+      }
+#endif  // DECODE_TRUMA
 #if DECODE_GOODWEATHER
       case decode_type_t::GOODWEATHER: {
         IRGoodweatherAc ac(kGpioUnused);
@@ -3817,7 +3870,7 @@ namespace IRAcUtils {
 #if DECODE_SAMSUNG_AC
       case decode_type_t::SAMSUNG_AC: {
         IRSamsungAc ac(kGpioUnused);
-        ac.setRaw(decode->state);
+        ac.setRaw(decode->state, decode->bits / 8);
         *result = ac.toCommon();
         break;
       }
@@ -3878,6 +3931,14 @@ namespace IRAcUtils {
         break;
       }
 #endif  // DECODE_TROTEC
+#if DECODE_TRUMA
+      case decode_type_t::TRUMA: {
+        IRTrumaAc ac(kGpioUnused);
+        ac.setRaw(decode->value);  // Uses value instead of state.
+        *result = ac.toCommon();
+        break;
+      }
+#endif  // DECODE_TRUMA
 #if DECODE_VESTEL_AC
       case decode_type_t::VESTEL_AC: {
         IRVestelAc ac(kGpioUnused);

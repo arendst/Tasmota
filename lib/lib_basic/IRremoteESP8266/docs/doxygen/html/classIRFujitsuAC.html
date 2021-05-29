@@ -128,12 +128,12 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a59d6739d40ebb0beaef3504de7cecbfd"><td class="memItemLeft" align="right" valign="top">uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classIRFujitsuAC.html#a59d6739d40ebb0beaef3504de7cecbfd">getCmd</a> (void) const</td></tr>
 <tr class="memdesc:a59d6739d40ebb0beaef3504de7cecbfd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the requested (special) command part for the A/C message.  <a href="classIRFujitsuAC.html#a59d6739d40ebb0beaef3504de7cecbfd">More...</a><br /></td></tr>
 <tr class="separator:a59d6739d40ebb0beaef3504de7cecbfd"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab56c02fc0311ee7f28e780948cbc6a75"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classIRFujitsuAC.html#ab56c02fc0311ee7f28e780948cbc6a75">setTemp</a> (const uint8_t temp)</td></tr>
-<tr class="memdesc:ab56c02fc0311ee7f28e780948cbc6a75"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the temperature.  <a href="classIRFujitsuAC.html#ab56c02fc0311ee7f28e780948cbc6a75">More...</a><br /></td></tr>
-<tr class="separator:ab56c02fc0311ee7f28e780948cbc6a75"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae49e4ab7bfe072da8b40fc1d33eba5e7"><td class="memItemLeft" align="right" valign="top">uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classIRFujitsuAC.html#ae49e4ab7bfe072da8b40fc1d33eba5e7">getTemp</a> (void) const</td></tr>
-<tr class="memdesc:ae49e4ab7bfe072da8b40fc1d33eba5e7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the current temperature setting.  <a href="classIRFujitsuAC.html#ae49e4ab7bfe072da8b40fc1d33eba5e7">More...</a><br /></td></tr>
-<tr class="separator:ae49e4ab7bfe072da8b40fc1d33eba5e7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:add8b65e2f16c36c6ccdf00bd19c34366"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classIRFujitsuAC.html#add8b65e2f16c36c6ccdf00bd19c34366">setTemp</a> (const float temp, const bool useCelsius=true)</td></tr>
+<tr class="memdesc:add8b65e2f16c36c6ccdf00bd19c34366"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the temperature.  <a href="classIRFujitsuAC.html#add8b65e2f16c36c6ccdf00bd19c34366">More...</a><br /></td></tr>
+<tr class="separator:add8b65e2f16c36c6ccdf00bd19c34366"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aba877f65241647ab1e59f3d68026c906"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classIRFujitsuAC.html#aba877f65241647ab1e59f3d68026c906">getTemp</a> (void) const</td></tr>
+<tr class="memdesc:aba877f65241647ab1e59f3d68026c906"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the current temperature setting.  <a href="classIRFujitsuAC.html#aba877f65241647ab1e59f3d68026c906">More...</a><br /></td></tr>
+<tr class="separator:aba877f65241647ab1e59f3d68026c906"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af0fc10ec0a606434477cb41c60eb49e5"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classIRFujitsuAC.html#af0fc10ec0a606434477cb41c60eb49e5">setFanSpeed</a> (const uint8_t fan)</td></tr>
 <tr class="memdesc:af0fc10ec0a606434477cb41c60eb49e5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the speed of the fan.  <a href="classIRFujitsuAC.html#af0fc10ec0a606434477cb41c60eb49e5">More...</a><br /></td></tr>
 <tr class="separator:af0fc10ec0a606434477cb41c60eb49e5"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -185,6 +185,12 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:af76f83d0e31fd33caf2360e4f26bdfe4"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classIRFujitsuAC.html#af76f83d0e31fd33caf2360e4f26bdfe4">getFilter</a> (void) const</td></tr>
 <tr class="memdesc:af76f83d0e31fd33caf2360e4f26bdfe4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the Filter mode status of the A/C.  <a href="classIRFujitsuAC.html#af76f83d0e31fd33caf2360e4f26bdfe4">More...</a><br /></td></tr>
 <tr class="separator:af76f83d0e31fd33caf2360e4f26bdfe4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0352fca45ddb7b05277cd3fd66b5a6ca"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classIRFujitsuAC.html#a0352fca45ddb7b05277cd3fd66b5a6ca">set10CHeat</a> (const bool <a class="el" href="classIRFujitsuAC.html#adcb24818d088c879beb7d76ada332f43">on</a>)</td></tr>
+<tr class="memdesc:a0352fca45ddb7b05277cd3fd66b5a6ca"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the 10C heat status of the A/C.  <a href="classIRFujitsuAC.html#a0352fca45ddb7b05277cd3fd66b5a6ca">More...</a><br /></td></tr>
+<tr class="separator:a0352fca45ddb7b05277cd3fd66b5a6ca"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3c096987c44aa7dcc3c682fb372f585a"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classIRFujitsuAC.html#a3c096987c44aa7dcc3c682fb372f585a">get10CHeat</a> (void) const</td></tr>
+<tr class="memdesc:a3c096987c44aa7dcc3c682fb372f585a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the 10C heat status of the A/C.  <a href="classIRFujitsuAC.html#a3c096987c44aa7dcc3c682fb372f585a">More...</a><br /></td></tr>
+<tr class="separator:a3c096987c44aa7dcc3c682fb372f585a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9a0533cba18739e52014307bf4b1ad07"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classIRFujitsuAC.html#a9a0533cba18739e52014307bf4b1ad07">setOutsideQuiet</a> (const bool <a class="el" href="classIRFujitsuAC.html#adcb24818d088c879beb7d76ada332f43">on</a>)</td></tr>
 <tr class="memdesc:a9a0533cba18739e52014307bf4b1ad07"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the Outside Quiet mode of the A/C.  <a href="classIRFujitsuAC.html#a9a0533cba18739e52014307bf4b1ad07">More...</a><br /></td></tr>
 <tr class="separator:a9a0533cba18739e52014307bf4b1ad07"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -212,6 +218,18 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:aebed4f746874057d7a8a50bbc88e74a5"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classIRFujitsuAC.html#aebed4f746874057d7a8a50bbc88e74a5">setSleepTimer</a> (const uint16_t nr_mins)</td></tr>
 <tr class="memdesc:aebed4f746874057d7a8a50bbc88e74a5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the Sleep Timer time for the A/C.  <a href="classIRFujitsuAC.html#aebed4f746874057d7a8a50bbc88e74a5">More...</a><br /></td></tr>
 <tr class="separator:aebed4f746874057d7a8a50bbc88e74a5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5f87182e0eea7bba7ed50b9942565c91"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classIRFujitsuAC.html#a5f87182e0eea7bba7ed50b9942565c91">setId</a> (const uint8_t num)</td></tr>
+<tr class="memdesc:a5f87182e0eea7bba7ed50b9942565c91"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the device's remote ID number.  <a href="classIRFujitsuAC.html#a5f87182e0eea7bba7ed50b9942565c91">More...</a><br /></td></tr>
+<tr class="separator:a5f87182e0eea7bba7ed50b9942565c91"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a51369012283f84ff52d733138a690340"><td class="memItemLeft" align="right" valign="top">uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classIRFujitsuAC.html#a51369012283f84ff52d733138a690340">getId</a> (void) const</td></tr>
+<tr class="memdesc:a51369012283f84ff52d733138a690340"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the current device's remote ID number.  <a href="classIRFujitsuAC.html#a51369012283f84ff52d733138a690340">More...</a><br /></td></tr>
+<tr class="separator:a51369012283f84ff52d733138a690340"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a29050c9b6174ac038d85ef8983fe8940"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classIRFujitsuAC.html#a29050c9b6174ac038d85ef8983fe8940">setCelsius</a> (const bool <a class="el" href="classIRFujitsuAC.html#adcb24818d088c879beb7d76ada332f43">on</a>)</td></tr>
+<tr class="memdesc:a29050c9b6174ac038d85ef8983fe8940"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the Temperature units for the A/C.  <a href="classIRFujitsuAC.html#a29050c9b6174ac038d85ef8983fe8940">More...</a><br /></td></tr>
+<tr class="separator:a29050c9b6174ac038d85ef8983fe8940"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af91371d9fc03c014dad0a6f2abb56df1"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classIRFujitsuAC.html#af91371d9fc03c014dad0a6f2abb56df1">getCelsius</a> (void) const</td></tr>
+<tr class="memdesc:af91371d9fc03c014dad0a6f2abb56df1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the Clean mode status of the A/C.  <a href="classIRFujitsuAC.html#af91371d9fc03c014dad0a6f2abb56df1">More...</a><br /></td></tr>
+<tr class="separator:af91371d9fc03c014dad0a6f2abb56df1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae878d663cdcd9f40cb3ae348b03a4cb2"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structstdAc_1_1state__t.html">stdAc::state_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classIRFujitsuAC.html#ae878d663cdcd9f40cb3ae348b03a4cb2">toCommon</a> (void) const</td></tr>
 <tr class="memdesc:ae878d663cdcd9f40cb3ae348b03a4cb2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convert the current internal state into its <a class="el" href="structstdAc_1_1state__t.html" title="Structure to hold a common A/C state.">stdAc::state_t</a> equivalent.  <a href="classIRFujitsuAC.html#ae878d663cdcd9f40cb3ae348b03a4cb2">More...</a><br /></td></tr>
 <tr class="separator:ae878d663cdcd9f40cb3ae348b03a4cb2"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -513,6 +531,48 @@ Private Attributes</h2></td></tr>
 
 </div>
 </div>
+<a id="a3c096987c44aa7dcc3c682fb372f585a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3c096987c44aa7dcc3c682fb372f585a">&#9670;&nbsp;</a></span>get10CHeat()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool IRFujitsuAC::get10CHeat </td>
+          <td>(</td>
+          <td class="paramtype">void&#160;</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Get the 10C heat status of the A/C. </p>
+<dl class="section return"><dt>Returns</dt><dd>true, the setting is on. false, the setting is off. </dd></dl>
+
+</div>
+</div>
+<a id="af91371d9fc03c014dad0a6f2abb56df1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af91371d9fc03c014dad0a6f2abb56df1">&#9670;&nbsp;</a></span>getCelsius()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool IRFujitsuAC::getCelsius </td>
+          <td>(</td>
+          <td class="paramtype">void&#160;</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Get the Clean mode status of the A/C. </p>
+<dl class="section return"><dt>Returns</dt><dd>true, the setting is on. false, the setting is off. </dd></dl>
+
+</div>
+</div>
 <a id="a8b356ce721c4b7d4845d27f43adb0e2a"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a8b356ce721c4b7d4845d27f43adb0e2a">&#9670;&nbsp;</a></span>getClean()</h2>
 
@@ -594,6 +654,27 @@ Private Attributes</h2></td></tr>
 
 <p>Get the Filter mode status of the A/C. </p>
 <dl class="section return"><dt>Returns</dt><dd>true, the setting is on. false, the setting is off. </dd></dl>
+
+</div>
+</div>
+<a id="a51369012283f84ff52d733138a690340"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a51369012283f84ff52d733138a690340">&#9670;&nbsp;</a></span>getId()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">uint8_t IRFujitsuAC::getId </td>
+          <td>(</td>
+          <td class="paramtype">void&#160;</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Get the current device's remote ID number. </p>
+<dl class="section return"><dt>Returns</dt><dd>The current device's remote ID number. </dd></dl>
 
 </div>
 </div>
@@ -786,14 +867,14 @@ Private Attributes</h2></td></tr>
 
 </div>
 </div>
-<a id="ae49e4ab7bfe072da8b40fc1d33eba5e7"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ae49e4ab7bfe072da8b40fc1d33eba5e7">&#9670;&nbsp;</a></span>getTemp()</h2>
+<a id="aba877f65241647ab1e59f3d68026c906"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aba877f65241647ab1e59f3d68026c906">&#9670;&nbsp;</a></span>getTemp()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">uint8_t IRFujitsuAC::getTemp </td>
+          <td class="memname">float IRFujitsuAC::getTemp </td>
           <td>(</td>
           <td class="paramtype">void&#160;</td>
           <td class="paramname"></td><td>)</td>
@@ -803,7 +884,7 @@ Private Attributes</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Get the current temperature setting. </p>
-<dl class="section return"><dt>Returns</dt><dd>The current setting for temp. in degrees celsius. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>The current setting for temp. in degrees of the currently set units. </dd></dl>
 
 </div>
 </div>
@@ -888,6 +969,58 @@ Private Attributes</h2></td></tr>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">repeat</td><td>Nr. of times the message will be repeated. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="a0352fca45ddb7b05277cd3fd66b5a6ca"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0352fca45ddb7b05277cd3fd66b5a6ca">&#9670;&nbsp;</a></span>set10CHeat()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void IRFujitsuAC::set10CHeat </td>
+          <td>(</td>
+          <td class="paramtype">const bool&#160;</td>
+          <td class="paramname"><em>on</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Set the 10C heat status of the A/C. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">on</td><td>true, the setting is on. false, the setting is off. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="a29050c9b6174ac038d85ef8983fe8940"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a29050c9b6174ac038d85ef8983fe8940">&#9670;&nbsp;</a></span>setCelsius()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void IRFujitsuAC::setCelsius </td>
+          <td>(</td>
+          <td class="paramtype">const bool&#160;</td>
+          <td class="paramname"><em>on</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Set the Temperature units for the A/C. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">on</td><td>true, use Celsius. false, use Fahrenheit. </td></tr>
   </table>
   </dd>
 </dl>
@@ -992,6 +1125,32 @@ Private Attributes</h2></td></tr>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">on</td><td>true, the setting is on. false, the setting is off. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="a5f87182e0eea7bba7ed50b9942565c91"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5f87182e0eea7bba7ed50b9942565c91">&#9670;&nbsp;</a></span>setId()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void IRFujitsuAC::setId </td>
+          <td>(</td>
+          <td class="paramtype">const uint8_t&#160;</td>
+          <td class="paramname"><em>num</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Set the device's remote ID number. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">num</td><td>The ID for the remote. Valid number range is 0 to 3. </td></tr>
   </table>
   </dd>
 </dl>
@@ -1279,8 +1438,8 @@ Private Attributes</h2></td></tr>
 
 </div>
 </div>
-<a id="ab56c02fc0311ee7f28e780948cbc6a75"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ab56c02fc0311ee7f28e780948cbc6a75">&#9670;&nbsp;</a></span>setTemp()</h2>
+<a id="add8b65e2f16c36c6ccdf00bd19c34366"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#add8b65e2f16c36c6ccdf00bd19c34366">&#9670;&nbsp;</a></span>setTemp()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -1288,9 +1447,19 @@ Private Attributes</h2></td></tr>
         <tr>
           <td class="memname">void IRFujitsuAC::setTemp </td>
           <td>(</td>
-          <td class="paramtype">const uint8_t&#160;</td>
-          <td class="paramname"><em>temp</em></td><td>)</td>
+          <td class="paramtype">const float&#160;</td>
+          <td class="paramname"><em>temp</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
           <td></td>
+          <td class="paramtype">const bool&#160;</td>
+          <td class="paramname"><em>useCelsius</em> = <code>true</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -1298,7 +1467,8 @@ Private Attributes</h2></td></tr>
 <p>Set the temperature. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">temp</td><td>The temperature in degrees celsius. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">temp</td><td>The temperature in degrees. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">useCelsius</td><td>Use Celsius or Fahrenheit? </td></tr>
   </table>
   </dd>
 </dl>
