@@ -87,10 +87,12 @@ The binaries can be downloaded from either https://github.com/arendst/Tasmota/tr
 - Defines ``USER_RULE1``, ``USER_RULE2`` and ``USER_RULE3`` to store rules at compile time
 - Define ``USER_BACKLOG`` to store commands at compile time to be executed at firmware load or when executing command ``reset``
 - LVGL support for TrueType fonts via FreeType library
+- Support for BM8563 RTC chip (I2C) found in M5Stack Core2 and M5StickC
 
 ### Breaking Changed
 
 ### Changed
+- IRremoteESP8266 library from v2.7.16 to v2.7.18
 
 ### Fixed
 
