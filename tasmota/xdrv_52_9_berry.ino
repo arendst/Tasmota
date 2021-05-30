@@ -296,7 +296,7 @@ void BerryInit(void) {
 
 /*********************************************************************************************\
  * Execute a script in Flash file-system
- * 
+ *
  * Two options supported:
  *   berry_preinit: load "preinit.be" to configure the device before driver pre-init and init
  *                  (typically I2C drivers, and AXP192/AXP202 configuration)
@@ -675,8 +675,12 @@ void HandleBerryConsole(void)
 //   size_t len;
 //   WSContentFlush();
 //   while (GetLog(Settings.weblog_level, &index, &line, &len)) {
-//     String stemp = (cflg) ? "\n" : "";   // Add a newline
-//     stemp.concat(line, len -1);          // Add a terminating '\0'
+//     String stemp = (cflg) ? "\n" : "";   // Add newline
+//     len--;
+//     char save_log_char = line[len];
+//     line[len] = '\0';                    // Add terminating \'0'
+//     stemp.concat(line);
+//     line[len] = save_log_char;
 //     Webserver->sendContent(stemp);
 //     cflg = true;
 //   }

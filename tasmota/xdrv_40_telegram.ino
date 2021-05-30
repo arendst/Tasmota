@@ -298,15 +298,15 @@ String TelegramExecuteCommand(const char *svalue) {
     // [14:49:36.123 MQTT: stat/wemos5/RESULT = {"POWER":"OFF"}] > [{"POWER":"OFF"}]
     char* JSON = (char*)memchr(line, '{', len);
     if (JSON) {  // Is it a JSON message (and not only [15:26:08 MQT: stat/wemos5/POWER = O])
-      size_t JSONlen = len - (JSON - line);
-      if (cflg) { response += F(","); }
+      if (cflg) { response += F(","); }  // Add a comma
 
-//      response.concat(JSON +1, JSONlen -3);
-      len -= 2;
-      char dummy = line[len];
+//      size_t JSONlen = len - (JSON - line);
+//      response.concat(JSON +1, JSONlen -3);  // Add terminating '\0' - Not supported on ESP32
+      len -= 2;                          // Skip last '}'
+      char save_log_char = line[len];
       line[len] = '\0';                  // Add terminating \'0'
-      response.concat(JSON +1);
-      line[len] = dummy;
+      response.concat(JSON +1);          // Skip first '{'
+      line[len] = save_log_char;
 
       cflg = true;
     }

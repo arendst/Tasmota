@@ -2848,15 +2848,15 @@ void HandleHttpCommand(void)
       // [14:49:36.123 MQTT: stat/wemos5/RESULT = {"POWER":"OFF"}] > [{"POWER":"OFF"}]
       char* JSON = (char*)memchr(line, '{', len);
       if (JSON) {  // Is it a JSON message (and not only [15:26:08 MQT: stat/wemos5/POWER = O])
-        String stemp = (cflg) ? "," : "";   // Add a comma
-        size_t JSONlen = len - (JSON - line);
+        String stemp = (cflg) ? "," : "";  // Add comma
 
-//        stemp.concat(JSON +1, JSONlen -3);  // Add a terminating '\0'
-        len -= 2;
-        char dummy = line[len];
-        line[len] = '\0';                    // Add terminating \'0'
-        stemp.concat(JSON +1);
-        line[len] = dummy;
+//        size_t JSONlen = len - (JSON - line);
+//        stemp.concat(JSON +1, JSONlen -3);  // Add terminating '\0' - Not supported on ESP32
+        len -= 2;                          // Skip last '}'
+        char save_log_char = line[len];
+        line[len] = '\0';                  // Add terminating \'0'
+        stemp.concat(JSON +1);             // Skip first '{'
+        line[len] = save_log_char;
 
         Webserver->sendContent(stemp);
         cflg = true;
@@ -2937,13 +2937,15 @@ void HandleConsoleRefresh(void)
   size_t len;
   WSContentFlush();
   while (GetLog(Settings.weblog_level, &index, &line, &len)) {
-    String stemp = (cflg) ? "\n" : "";   // Add a newline
+    String stemp = (cflg) ? "\n" : "";   // Add newline
+
+//    stemp.concat(line, len -1);          // Add terminating '\0' - Not supported on ESP32
     len--;
-//    stemp.concat(line, len);          // Add a terminating '\0'
-    char dummy = line[len];
+    char save_log_char = line[len];
     line[len] = '\0';                    // Add terminating \'0'
     stemp.concat(line);
-    line[len] = dummy;
+    line[len] = save_log_char;
+
     Webserver->sendContent(stemp);
     cflg = true;
   }
