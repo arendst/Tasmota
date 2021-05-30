@@ -1075,15 +1075,16 @@ void uDisplay::setAddrWindow_int(uint16_t x, uint16_t y, uint16_t w, uint16_t h)
     }
 }
 
-
-#define CNV_B1_OR  ((0x10<<11) | (0x20<<5) | 0x10)
-static inline uint8_t ulv_color_to1(uint16_t color) {
-  if (color & CNV_B1_OR) {
-      return 1;
-  }
-  else {
-      return 0;
-  }
+#define RGB16_TO_MONO       0x8410
+#define RGB16_SWAP_TO_MONO  0x1084
+// #define CNV_B1_OR  ((0x10<<11) | (0x20<<5) | 0x10)
+// static inline uint8_t ulv_color_to1(uint16_t color) {
+//   if (color & CNV_B1_OR) {
+//       return 1;
+//   }
+//   else {
+//       return 0;
+//   }
 /*
 // this needs optimization
   if (((color>>11) & 0x10) || ((color>>5) & 0x20) || (color & 0x10)) {
@@ -1092,17 +1093,21 @@ static inline uint8_t ulv_color_to1(uint16_t color) {
   else {
       return 0;
   }*/
-}
+// }
 
 // convert to mono, these are framebuffer based
-void uDisplay::pushColorsMono(uint16_t *data, uint16_t len) {
+void uDisplay::pushColorsMono(uint16_t *data, uint16_t len, bool rgb16_swap) {
+  // pixel is white if at least one of the 3 components is above 50%
+  // this is tested with a simple mask, swapped if needed
+  uint16_t rgb16_to_mono_mask = rgb16_swap ? RGB16_SWAP_TO_MONO : RGB16_TO_MONO;
+
   for (uint32_t y = seta_yp1; y < seta_yp2; y++) {
     for (uint32_t x = seta_xp1; x < seta_xp2; x++) {
       uint16_t color = *data++;
-      if (bpp == 1) color = ulv_color_to1(color);
-      drawPixel(x, y, color);
+      if (bpp == 1) color = (color & rgb16_to_mono_mask) ? 1 : 0;
+      drawPixel(x, y, color);   // todo - inline the method to save speed
       len--;
-      if (!len) return;
+      if (!len) return;         // failsafe - exist if len (pixel number) is exhausted
     }
   }
 }
@@ -1121,8 +1126,8 @@ void uDisplay::pushColors(uint16_t *data, uint16_t len, boolean not_swapped) {
   if (not_swapped == false) {
     // called from LVGL bytes are swapped
     if (bpp != 16) {
-      lvgl_color_swap(data, len);
-      pushColorsMono(data, len);
+      // lvgl_color_swap(data, len); -- no need to swap anymore, we have inverted the mask
+      pushColorsMono(data, len, true);
       return;
     }
 

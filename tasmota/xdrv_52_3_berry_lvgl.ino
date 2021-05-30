@@ -460,11 +460,12 @@ extern "C" {
   int lco_tostring(bvm *vm) {
     lv_color_t lv_color = {};
     be_getmember(vm, 1, ".p");
-    lv_color = lv_color_from_uint32(be_toint(vm, -1));
+    uint32_t ntv_color = be_toint(vm, -1);
+    lv_color = lv_color_from_uint32(ntv_color);
     uint32_t color = lv_color_to32(lv_color);
     be_pop(vm, 1);  // remove attribute
-    char s[32];
-    snprintf(s, sizeof(s), "lv_color(0x%x)", color);
+    char s[48];
+    snprintf(s, sizeof(s), "lv_color(0x%06x - native:0x%04x)", color, ntv_color);
     be_pushnstring(vm, s, strlen(s)); /* make escape string from buffer */
     be_return(vm);
   }

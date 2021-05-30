@@ -218,7 +218,7 @@ class uDisplay : public Renderer {
    int16_t rotmap_xmax;
    int16_t rotmap_ymin;
    int16_t rotmap_ymax;
-   void pushColorsMono(uint16_t *data, uint16_t len);
+   void pushColorsMono(uint16_t *data, uint16_t len, bool rgb16_swap = false);
 #ifdef ESP32
    // dma section
    bool DMA_Enabled = false;
