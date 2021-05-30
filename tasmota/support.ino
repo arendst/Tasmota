@@ -2198,6 +2198,7 @@ void SyslogAsync(bool refresh) {
         AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION D_SYSLOG_HOST_NOT_FOUND ". " D_RETRY_IN " %d " D_UNIT_SECOND), SYSLOG_TIMER);
         return;
       }
+/*
       char log_data[len +72];            // Hostname + Id + log data
       snprintf_P(log_data, sizeof(log_data), PSTR("%s ESP-"), NetworkHostname());
       uint32_t preamble_len = strlen(log_data);
@@ -2205,6 +2206,20 @@ void SyslogAsync(bool refresh) {
       strlcpy(log_data +preamble_len, line +mxtime, len);
       // wemos5 ESP-HTP: Web server active on wemos5 with IP address 192.168.2.172
       PortUdp_write(log_data, preamble_len + len);
+*/
+      String log_data = NetworkHostname();
+      log_data += F(" ESP-");
+
+//      log_data.concat(line +mxtime, len -mxtime -1);  // Add terminating \'0'
+      len--;
+      char dummy = line[len];
+      line[len] = '\0';                  // Add terminating \'0'
+      log_data.concat(line +mxtime);
+      line[len] = dummy;
+
+      // wemos5 ESP-HTP: Web server active on wemos5 with IP address 192.168.2.172
+      PortUdp.write(log_data.c_str());
+
       PortUdp.endPacket();
       delay(1);                          // Add time for UDP handling (#5512)
     }

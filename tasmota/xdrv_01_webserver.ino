@@ -2848,9 +2848,16 @@ void HandleHttpCommand(void)
       // [14:49:36.123 MQTT: stat/wemos5/RESULT = {"POWER":"OFF"}] > [{"POWER":"OFF"}]
       char* JSON = (char*)memchr(line, '{', len);
       if (JSON) {  // Is it a JSON message (and not only [15:26:08 MQT: stat/wemos5/POWER = O])
-        size_t JSONlen = len - (JSON - line);
         String stemp = (cflg) ? "," : "";   // Add a comma
-        stemp.concat(JSON +1, JSONlen -3);  // Add a terminating '\0'
+        size_t JSONlen = len - (JSON - line);
+
+//        stemp.concat(JSON +1, JSONlen -3);  // Add a terminating '\0'
+        len -= 2;
+        char dummy = line[len];
+        line[len] = '\0';                    // Add terminating \'0'
+        stemp.concat(JSON +1);
+        line[len] = dummy;
+
         Webserver->sendContent(stemp);
         cflg = true;
       }
@@ -2931,7 +2938,12 @@ void HandleConsoleRefresh(void)
   WSContentFlush();
   while (GetLog(Settings.weblog_level, &index, &line, &len)) {
     String stemp = (cflg) ? "\n" : "";   // Add a newline
-    stemp.concat(line, len -1);          // Add a terminating '\0'
+    len--;
+//    stemp.concat(line, len);          // Add a terminating '\0'
+    char dummy = line[len];
+    line[len] = '\0';                    // Add terminating \'0'
+    stemp.concat(line);
+    line[len] = dummy;
     Webserver->sendContent(stemp);
     cflg = true;
   }

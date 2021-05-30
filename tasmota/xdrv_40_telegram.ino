@@ -300,7 +300,14 @@ String TelegramExecuteCommand(const char *svalue) {
     if (JSON) {  // Is it a JSON message (and not only [15:26:08 MQT: stat/wemos5/POWER = O])
       size_t JSONlen = len - (JSON - line);
       if (cflg) { response += F(","); }
-      response.concat(JSON +1, JSONlen -3);
+
+//      response.concat(JSON +1, JSONlen -3);
+      len -= 2;
+      char dummy = line[len];
+      line[len] = '\0';                  // Add terminating \'0'
+      response.concat(JSON +1);
+      line[len] = dummy;
+
       cflg = true;
     }
   }
