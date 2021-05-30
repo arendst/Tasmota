@@ -673,11 +673,11 @@ void HandleBerryConsole(void)
 //   bool cflg = (index);
 //   char* line;
 //   size_t len;
+//   WSContentFlush();
 //   while (GetLog(Settings.weblog_level, &index, &line, &len)) {
-//     if (len > sizeof(TasmotaGlobal.mqtt_data) -2) { len = sizeof(TasmotaGlobal.mqtt_data); }
-//     char stemp[len +1];
-//     strlcpy(stemp, line, len);
-//     WSContentSend_P(PSTR("%s%s"), (cflg) ? PSTR("\n") : "", stemp);
+//     String stemp = (cflg) ? "\n" : "";   // Add a newline
+//     stemp.concat(line, len -1);          // Add a terminating '\0'
+//     Webserver->sendContent(stemp);
 //     cflg = true;
 //   }
 //   WSContentSend_P(PSTR("}1"));
