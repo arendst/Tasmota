@@ -675,36 +675,35 @@ void WSSend(int code, int ctype, const String& content)
 * HTTP Content Chunk handler
 **********************************************************************************************/
 
-void WSContentBegin(int code, int ctype)
-{
+void WSContentBegin(int code, int ctype) {
   Webserver->client().flush();
   WSHeaderSend();
   Webserver->setContentLength(CONTENT_LENGTH_UNKNOWN);
-  WSSend(code, ctype, "");                        // Signal start of chunked content
+  WSSend(code, ctype, "");                         // Signal start of chunked content
   Web.chunk_buffer = "";
 }
 
-void _WSContentSend(const String& content)        // Low level sendContent for all core versions
-{
-  size_t len = content.length();
-  Webserver->sendContent(content);
+void _WSContentSend(const char* content, size_t size) {  // Lowest level sendContent for all core versions
+  Webserver->sendContent(content, size);
 
 #ifdef USE_DEBUG_DRIVER
   ShowFreeMem(PSTR("WSContentSend"));
 #endif
-  DEBUG_CORE_LOG(PSTR("WEB: Chunk size %d/%d"), len, sizeof(TasmotaGlobal.mqtt_data));
+  DEBUG_CORE_LOG(PSTR("WEB: Chunk size %d/%d"), size, sizeof(TasmotaGlobal.mqtt_data));
 }
 
-void WSContentFlush(void)
-{
+void _WSContentSend(const String& content) {       // Low level sendContent for all core versions
+  _WSContentSend(content.c_str(), content.length());
+}
+
+void WSContentFlush(void) {
   if (Web.chunk_buffer.length() > 0) {
-    _WSContentSend(Web.chunk_buffer);                  // Flush chunk buffer
+    _WSContentSend(Web.chunk_buffer);              // Flush chunk buffer
     Web.chunk_buffer = "";
   }
 }
 
-void _WSContentSendBuffer(void)
-{
+void _WSContentSendBuffer(void) {
   int len = strlen(TasmotaGlobal.mqtt_data);
 
   if (0 == len) {                                  // No content
@@ -724,6 +723,11 @@ void _WSContentSendBuffer(void)
   if (strlen(TasmotaGlobal.mqtt_data) >= CHUNKED_BUFFER_SIZE) {  // Content is oversize
     _WSContentSend(TasmotaGlobal.mqtt_data);                     // Send content
   }
+}
+
+void WSContentSend(const char* content, size_t size) {
+  WSContentFlush();
+  _WSContentSend(content, size);
 }
 
 void WSContentSend_P(const char* formatP, ...)     // Content send snprintf_P char data
@@ -907,8 +911,7 @@ void WSContentSend_THD(const char *types, float f_temperature, float f_humidity)
 
 void WSContentEnd(void)
 {
-  WSContentFlush();                                // Flush chunk buffer
-  _WSContentSend("");                              // Signal end of chunked content
+  WSContentSend("", 0);                            // Signal end of chunked content
   Webserver->client().stop();
 }
 
@@ -2848,9 +2851,8 @@ void HandleHttpCommand(void)
       char* JSON = (char*)memchr(line, '{', len);
       if (JSON) {  // Is it a JSON message (and not only [15:26:08 MQT: stat/wemos5/POWER = O])
         if (cflg) { WSContentSend_P(PSTR(",")); }
-        WSContentFlush();
         uint32_t JSONlen = len - (JSON - line) -3;
-        Webserver->sendContent(JSON +1, JSONlen);
+        WSContentSend(JSON +1, JSONlen);
         cflg = true;
       }
     }
@@ -2929,8 +2931,7 @@ void HandleConsoleRefresh(void)
   size_t len;
   while (GetLog(Settings.weblog_level, &index, &line, &len)) {
     if (cflg) { WSContentSend_P(PSTR("\n")); }
-    WSContentFlush();
-    Webserver->sendContent(line, len -1);
+    WSContentSend(line, len -1);
     cflg = true;
   }
   WSContentSend_P(PSTR("}1"));
