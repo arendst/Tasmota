@@ -2198,20 +2198,28 @@ void SyslogAsync(bool refresh) {
         AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION D_SYSLOG_HOST_NOT_FOUND ". " D_RETRY_IN " %d " D_UNIT_SECOND), SYSLOG_TIMER);
         return;
       }
-      String log_data = NetworkHostname();
-      log_data += F(" ESP-");
 
-//      log_data.concat(line +mxtime, len -mxtime -1);  // Add terminating \'0' - Not supported on ESP32
-      len--;
-      char save_log_char = line[len];
-      line[len] = '\0';                  // Add terminating \'0'
-      log_data.concat(line +mxtime);
-      line[len] = save_log_char;
-
-      // wemos5 ESP-HTP: Web server active on wemos5 with IP address 192.168.2.172
-      PortUdp.write(log_data.c_str());
-
+      char header[64];
+      snprintf_P(header, sizeof(header), PSTR("%s ESP-"), NetworkHostname());
+      char* line_start = line +mxtime;
+#ifdef ESP8266
+      // Packets over 1460 bytes are not send
+      uint32_t line_len;
+      int32_t log_len = len -mxtime -1;
+      while (log_len > 0) {
+        PortUdp.write(header);
+        line_len = (log_len > 1460) ? 1460 : log_len;
+        PortUdp.write((uint8_t*)line_start, line_len);
+        PortUdp.endPacket();
+        log_len -= 1460;
+        line_start += 1460;
+      }
+#else
+      PortUdp.write(header);
+      PortUdp.write((uint8_t*)line_start, len -mxtime -1);
       PortUdp.endPacket();
+#endif
+
       delay(1);                          // Add time for UDP handling (#5512)
     }
   }
