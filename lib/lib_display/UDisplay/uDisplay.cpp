@@ -225,7 +225,7 @@ uDisplay::uDisplay(char *lp) : Renderer(800, 600) {
             rot_t[3] = next_hex(&lp1);
             break;
           case 'A':
-            if (interface == _UDSP_I2C) {
+            if (interface == _UDSP_I2C || bpp == 1) {
               saw_1 = next_hex(&lp1);
               i2c_page_start = next_hex(&lp1);
               i2c_page_end = next_hex(&lp1);
@@ -381,6 +381,19 @@ uDisplay::uDisplay(char *lp) : Renderer(800, 600) {
 
 Renderer *uDisplay::Init(void) {
 
+  // for any bpp below native 16 bits, we allocate a local framebuffer to copy into
+  if (ep_mode || bpp < 16) {
+    if (framebuffer) free(framebuffer);
+#ifdef ESP8266
+    framebuffer = (uint8_t*)calloc((gxs * gys * bpp) / 8, 1);
+#else
+    if (psramFound()) {
+      framebuffer = (uint8_t*)heap_caps_malloc((gxs * gys * bpp) / 8, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+    } else {
+      framebuffer = (uint8_t*)calloc((gxs * gys * bpp) / 8, 1);
+    }
+    #endif
+  }
 
 
   if (interface == _UDSP_I2C) {
@@ -392,19 +405,7 @@ Renderer *uDisplay::Init(void) {
       wire = &Wire1;
     }
 #endif
-    wire->begin(i2c_sda, i2c_scl);
-    if (bpp < 16) {
-      if (framebuffer) free(framebuffer);
-#ifdef ESP8266
-      framebuffer = (uint8_t*)calloc((gxs * gys * bpp) / 8, 1);
-#else
-      if (psramFound()) {
-        framebuffer = (uint8_t*)heap_caps_malloc((gxs * gys * bpp) / 8, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
-      } else {
-        framebuffer = (uint8_t*)calloc((gxs * gys * bpp) / 8, 1);
-      }
-#endif
-    }
+    wire->begin(i2c_sda, i2c_scl);    // TODO: aren't I2C buses already initialized? Shouldn't this be moved to display driver?
 
 #ifdef UDSP_DEBUG
     Serial.printf("I2C cmds: %d\n", dsp_ncmds);
@@ -418,18 +419,6 @@ Renderer *uDisplay::Init(void) {
 
   }
   if (interface == _UDSP_SPI) {
-
-    if (ep_mode) {
-  #ifdef ESP8266
-      framebuffer = (uint8_t*)calloc((gxs * gys * bpp) / 8, 1);
-  #else
-      if (psramFound()) {
-        framebuffer = (uint8_t*)heap_caps_malloc((gxs * gys * bpp) / 8, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
-      } else {
-        framebuffer = (uint8_t*)calloc((gxs * gys * bpp) / 8, 1);
-      }
-      #endif
-    }
 
     if (bpanel >= 0) {
 #ifdef ESP32
@@ -774,8 +763,48 @@ void uDisplay::Updateframe(void) {
 	      }
     }
 #endif
+
  }
 
+
+  if (interface == _UDSP_SPI) {
+    if (framebuffer == nullptr) { return; }
+
+    SPI_BEGIN_TRANSACTION
+    SPI_CS_LOW
+
+    // below commands are not needed for SH1107
+    // spi_command(saw_1 | 0x0);  // set low col = 0, 0x00
+    // spi_command(i2c_page_start | 0x0);  // set hi col = 0, 0x10
+    // spi_command(i2c_page_end | 0x0); // set startline line #0, 0x40
+
+	  uint8_t ys = gys >> 3;
+	  uint8_t xs = gxs >> 3;
+    //uint8_t xs = 132 >> 3;
+	  uint8_t m_row = saw_2;
+	  uint8_t m_col = i2c_col_start;
+    // Serial.printf("m_row=%d m_col=%d xs=%d ys=%d\n", m_row, m_col, xs, ys);
+
+	  uint16_t p = 0;
+
+	  uint8_t i, j, k = 0;
+	  for ( i = 0; i < ys; i++) {   // i = line from 0 to ys
+		    // send a bunch of data in one xmission
+        spi_command(0xB0 + i + m_row); //set page address
+        spi_command(m_col & 0xf); //set lower column address
+        spi_command(0x10 | (m_col >> 4)); //set higher column address
+
+        for ( j = 0; j < 8; j++) {
+            for ( k = 0; k < xs; k++, p++) {
+		            spi_data8(framebuffer[p]);
+            }
+	      }
+    }
+
+    SPI_CS_HIGH
+    SPI_END_TRANSACTION
+
+  }
 
 }
 
@@ -982,6 +1011,7 @@ void uDisplay::setAddrWindow(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1)
       seta_xp2 = x1;
       seta_yp1 = y0;
       seta_yp2 = y1;
+      // Serial.printf("xp1=%d xp2=%d yp1=%d yp2=%d\n", seta_xp1, seta_xp2, seta_yp1, seta_yp2);
     }
     return;
   }
@@ -1045,15 +1075,16 @@ void uDisplay::setAddrWindow_int(uint16_t x, uint16_t y, uint16_t w, uint16_t h)
     }
 }
 
-
-#define CNV_B1_OR  ((0x10<<11) | (0x20<<5) | 0x10)
-static inline uint8_t ulv_color_to1(uint16_t color) {
-  if (color & CNV_B1_OR) {
-      return 1;
-  }
-  else {
-      return 0;
-  }
+#define RGB16_TO_MONO       0x8410
+#define RGB16_SWAP_TO_MONO  0x1084
+// #define CNV_B1_OR  ((0x10<<11) | (0x20<<5) | 0x10)
+// static inline uint8_t ulv_color_to1(uint16_t color) {
+//   if (color & CNV_B1_OR) {
+//       return 1;
+//   }
+//   else {
+//       return 0;
+//   }
 /*
 // this needs optimization
   if (((color>>11) & 0x10) || ((color>>5) & 0x20) || (color & 0x10)) {
@@ -1062,17 +1093,21 @@ static inline uint8_t ulv_color_to1(uint16_t color) {
   else {
       return 0;
   }*/
-}
+// }
 
 // convert to mono, these are framebuffer based
-void uDisplay::pushColorsMono(uint16_t *data, uint16_t len) {
+void uDisplay::pushColorsMono(uint16_t *data, uint16_t len, bool rgb16_swap) {
+  // pixel is white if at least one of the 3 components is above 50%
+  // this is tested with a simple mask, swapped if needed
+  uint16_t rgb16_to_mono_mask = rgb16_swap ? RGB16_SWAP_TO_MONO : RGB16_TO_MONO;
+
   for (uint32_t y = seta_yp1; y < seta_yp2; y++) {
     for (uint32_t x = seta_xp1; x < seta_xp2; x++) {
       uint16_t color = *data++;
-      if (bpp == 1) color = ulv_color_to1(color);
-      drawPixel(x, y, color);
+      if (bpp == 1) color = (color & rgb16_to_mono_mask) ? 1 : 0;
+      drawPixel(x, y, color);   // todo - inline the method to save speed
       len--;
-      if (!len) return;
+      if (!len) return;         // failsafe - exist if len (pixel number) is exhausted
     }
   }
 }
@@ -1091,8 +1126,8 @@ void uDisplay::pushColors(uint16_t *data, uint16_t len, boolean not_swapped) {
   if (not_swapped == false) {
     // called from LVGL bytes are swapped
     if (bpp != 16) {
-      lvgl_color_swap(data, len);
-      pushColorsMono(data, len);
+      // lvgl_color_swap(data, len); -- no need to swap anymore, we have inverted the mask
+      pushColorsMono(data, len, true);
       return;
     }
 
@@ -1206,7 +1241,7 @@ void uDisplay::drawPixel(int16_t x, int16_t y, uint16_t color) {
     return;
   }
 
-  if (interface != _UDSP_SPI) {
+  if (interface != _UDSP_SPI || bpp < 16) {
     Renderer::drawPixel(x, y, color);
     return;
   }

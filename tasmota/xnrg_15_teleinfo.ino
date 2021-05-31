@@ -912,8 +912,9 @@ void TInfoShow(bool json)
             ResponseAppend_P(PSTR(",\"Load\":%d"),(int) ((Energy.current[0]*100.0f) / isousc));
         }
 
-        // add teleinfo full frame 
-        ResponseAppendTInfo(',', true);
+        // add teleinfo TIC object
+        ResponseAppend_P(PSTR("},\"TIC\":{"));
+        ResponseAppendTInfo(' ', true);
 
 #ifdef USE_WEBSERVER
     }

@@ -515,6 +515,7 @@ const WebServerDispatch_t WebServerDispatch[] PROGMEM = {
 };
 
 void WebServer_on(const char * prefix, void (*func)(void), uint8_t method = HTTP_ANY) {
+  if (Webserver == nullptr) { return; }
 #ifdef ESP8266
   Webserver->on((const __FlashStringHelper *) prefix, (HTTPMethod) method, func);
 #endif  // ESP8266
@@ -674,36 +675,35 @@ void WSSend(int code, int ctype, const String& content)
 * HTTP Content Chunk handler
 **********************************************************************************************/
 
-void WSContentBegin(int code, int ctype)
-{
+void WSContentBegin(int code, int ctype) {
   Webserver->client().flush();
   WSHeaderSend();
   Webserver->setContentLength(CONTENT_LENGTH_UNKNOWN);
-  WSSend(code, ctype, "");                        // Signal start of chunked content
+  WSSend(code, ctype, "");                         // Signal start of chunked content
   Web.chunk_buffer = "";
 }
 
-void _WSContentSend(const String& content)        // Low level sendContent for all core versions
-{
-  size_t len = content.length();
-  Webserver->sendContent(content);
+void _WSContentSend(const char* content, size_t size) {  // Lowest level sendContent for all core versions
+  Webserver->sendContent(content, size);
 
 #ifdef USE_DEBUG_DRIVER
   ShowFreeMem(PSTR("WSContentSend"));
 #endif
-  DEBUG_CORE_LOG(PSTR("WEB: Chunk size %d/%d"), len, sizeof(TasmotaGlobal.mqtt_data));
+  DEBUG_CORE_LOG(PSTR("WEB: Chunk size %d/%d"), size, sizeof(TasmotaGlobal.mqtt_data));
 }
 
-void WSContentFlush(void)
-{
+void _WSContentSend(const String& content) {       // Low level sendContent for all core versions
+  _WSContentSend(content.c_str(), content.length());
+}
+
+void WSContentFlush(void) {
   if (Web.chunk_buffer.length() > 0) {
-    _WSContentSend(Web.chunk_buffer);                  // Flush chunk buffer
+    _WSContentSend(Web.chunk_buffer);              // Flush chunk buffer
     Web.chunk_buffer = "";
   }
 }
 
-void _WSContentSendBuffer(void)
-{
+void _WSContentSendBuffer(void) {
   int len = strlen(TasmotaGlobal.mqtt_data);
 
   if (0 == len) {                                  // No content
@@ -723,6 +723,11 @@ void _WSContentSendBuffer(void)
   if (strlen(TasmotaGlobal.mqtt_data) >= CHUNKED_BUFFER_SIZE) {  // Content is oversize
     _WSContentSend(TasmotaGlobal.mqtt_data);                     // Send content
   }
+}
+
+void WSContentSend(const char* content, size_t size) {
+  WSContentFlush();
+  _WSContentSend(content, size);
 }
 
 void WSContentSend_P(const char* formatP, ...)     // Content send snprintf_P char data
@@ -906,8 +911,7 @@ void WSContentSend_THD(const char *types, float f_temperature, float f_humidity)
 
 void WSContentEnd(void)
 {
-  WSContentFlush();                                // Flush chunk buffer
-  _WSContentSend("");                              // Signal end of chunked content
+  WSContentSend("", 0);                            // Signal end of chunked content
   Webserver->client().stop();
 }
 
@@ -2846,11 +2850,9 @@ void HandleHttpCommand(void)
       // [14:49:36.123 MQTT: stat/wemos5/RESULT = {"POWER":"OFF"}] > [{"POWER":"OFF"}]
       char* JSON = (char*)memchr(line, '{', len);
       if (JSON) {  // Is it a JSON message (and not only [15:26:08 MQT: stat/wemos5/POWER = O])
-        size_t JSONlen = len - (JSON - line);
-        if (JSONlen > sizeof(TasmotaGlobal.mqtt_data)) { JSONlen = sizeof(TasmotaGlobal.mqtt_data); }
-        char stemp[JSONlen];
-        strlcpy(stemp, JSON +1, JSONlen -2);
-        WSContentSend_P(PSTR("%s%s"), (cflg) ? "," : "", stemp);
+        if (cflg) { WSContentSend_P(PSTR(",")); }
+        uint32_t JSONlen = len - (JSON - line) -3;
+        WSContentSend(JSON +1, JSONlen);
         cflg = true;
       }
     }
@@ -2928,10 +2930,8 @@ void HandleConsoleRefresh(void)
   char* line;
   size_t len;
   while (GetLog(Settings.weblog_level, &index, &line, &len)) {
-    if (len > sizeof(TasmotaGlobal.mqtt_data) -2) { len = sizeof(TasmotaGlobal.mqtt_data); }
-    char stemp[len +1];
-    strlcpy(stemp, line, len);
-    WSContentSend_P(PSTR("%s%s"), (cflg) ? PSTR("\n") : "", stemp);
+    if (cflg) { WSContentSend_P(PSTR("\n")); }
+    WSContentSend(line, len -1);
     cflg = true;
   }
   WSContentSend_P(PSTR("}1"));

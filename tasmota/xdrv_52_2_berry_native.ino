@@ -24,7 +24,26 @@
 #include <Wire.h>
 
 const char kTypeError[] PROGMEM = "type_error";
+const char kInternalError[] PROGMEM = "intenal_error";
 
+extern "C" {
+
+  /*********************************************************************************************\
+   * Support for Berry int constants
+   * as virtual members
+  \*********************************************************************************************/
+  typedef struct be_constint_t {
+      const char * name;
+      int32_t      value;
+  } be_constint_t;
+
+}
+
+/*********************************************************************************************\
+ * LVGL top level virtual members
+ * 
+ * Responds to virtual constants
+\*********************************************************************************************/
 extern "C" {
   #include "be_exec.h"
   void be_dumpstack(bvm *vm) {
@@ -146,6 +165,132 @@ extern "C" {
     be_pop(vm, 3);                  // stack = instance
   }
 
+}
+
+/*********************************************************************************************\
+ * Binary search for dynamic attributes
+ * 
+ * Names need to be sorted
+\*********************************************************************************************/
+// binary search within an array of sorted strings
+// the first 4 bytes are a pointer to a string
+// returns 0..total_elements-1 or -1 if not found
+extern "C" {
+  int32_t bin_search(const char * needle, const void * table, size_t elt_size, size_t total_elements) {
+    int32_t low = 0;
+    int32_t high = total_elements - 1;
+    int32_t mid = (low + high) / 2;
+    // start a dissect
+    while (low <= high) {
+      const char * elt = *(const char **) ( ((uint8_t*)table) + mid * elt_size );
+      int32_t comp = strcmp(needle, elt);
+      if (comp < 0) {
+        high = mid - 1;
+      } else if (comp > 0) {
+        low = mid + 1;
+      } else {
+        break;
+      }
+      mid = (low + high) / 2;
+    }
+    if (low <= high) {
+      return mid;
+    } else {
+      return -1;
+    }
+  }
+}
+
+/*********************************************************************************************\
+ * Generalized callbacks
+ * 
+\*********************************************************************************************/
+extern "C" {
+  
+  typedef int32_t (*berry_callback_t)(int32_t v0, int32_t v1, int32_t v2, int32_t v3);
+
+  int32_t call_berry_cb(int32_t num, int32_t v0, int32_t v1, int32_t v2, int32_t v3) {
+    // call berry cb dispatcher
+    int32_t ret = 0;
+    // get the 'tasmota' object (global) and call 'cb_dispatch'
+    be_getglobal(berry.vm, PSTR("tasmota"));
+    if (!be_isnil(berry.vm, -1)) {
+      be_getmethod(berry.vm, -1, PSTR("cb_dispatch"));
+
+      if (!be_isnil(berry.vm, -1)) {
+        be_pushvalue(berry.vm, -2); // add instance as first arg
+        // push all args as ints (may be revised)
+        be_pushint(berry.vm, num);
+        be_pushint(berry.vm, v0);
+        be_pushint(berry.vm, v1);
+        be_pushint(berry.vm, v2);
+        be_pushint(berry.vm, v3);
+
+        be_pcall(berry.vm, 6);   // 5 arguments
+        be_pop(berry.vm, 6);
+
+        if (be_isint(berry.vm, -1) || be_isnil(berry.vm, -1)) {  // sanity check
+          if (be_isint(berry.vm, -1)) {
+            ret = be_toint(berry.vm, -1);
+          }
+          // All good, we can proceed
+          be_pop(berry.vm, 2);    // remove tasmota instance and result
+          return ret;
+        }
+      }
+      be_pop(berry.vm, 1);
+    }
+    be_pop(berry.vm, 1);
+    AddLog(LOG_LEVEL_ERROR, PSTR(D_LOG_BERRY "can't call 'tasmota.cb_dispatch'"));
+    return 0;
+  }
+
+  #define BERRY_CB(n) int32_t berry_cb_##n(int32_t v0, int32_t v1, int32_t v2, int32_t v3) { return call_berry_cb(n, v0, v1, v2, v3); }
+  // list the callbacks
+  BERRY_CB(0);
+  BERRY_CB(1);
+  BERRY_CB(2);
+  BERRY_CB(3);
+  BERRY_CB(4);
+  BERRY_CB(5);
+  BERRY_CB(6);
+  BERRY_CB(7);
+  BERRY_CB(8);
+  BERRY_CB(9);
+  BERRY_CB(10);
+  BERRY_CB(11);
+  BERRY_CB(12);
+  BERRY_CB(13);
+  BERRY_CB(14);
+  BERRY_CB(15);
+  BERRY_CB(16);
+  BERRY_CB(17);
+  BERRY_CB(18);
+  BERRY_CB(19);
+
+  // array of callbacks
+  berry_callback_t berry_callback_array[] {
+    berry_cb_0,
+    berry_cb_1,
+    berry_cb_2,
+    berry_cb_3,
+    berry_cb_4,
+    berry_cb_5,
+    berry_cb_6,
+    berry_cb_7,
+    berry_cb_8,
+    berry_cb_9,
+    berry_cb_10,
+    berry_cb_11,
+    berry_cb_12,
+    berry_cb_13,
+    berry_cb_14,
+    berry_cb_15,
+    berry_cb_16,
+    berry_cb_17,
+    berry_cb_18,
+    berry_cb_19,
+  };
 }
 
 

@@ -628,7 +628,8 @@
 //  #define USE_EZORGB                             // [I2cDriver55] Enable support for EZO's RGB sensor (+0k5 code) - Shared EZO code required for any EZO device (+1k2 code)
 //  #define USE_EZOPMP                             // [I2cDriver55] Enable support for EZO's PMP sensor (+0k3 code) - Shared EZO code required for any EZO device (+1k2 code)
 //  #define USE_SEESAW_SOIL                        // [I2cDriver56] Enable Capacitice Soil Moisture & Temperature Sensor (I2C addresses 0x36 - 0x39) (+1k3 code)
-//  #define USE_MPU6886                            // [I2cDriver58] Enable MPU6886 - found in M5Stack - support 2 I2C buses on ESP32 (I2C address 0x68) (+2k code)
+//  #define USE_MPU6886                            // [I2cDriver58] Enable MPU6886 - found in M5Stack - support both I2C buses on ESP32 (I2C address 0x68) (+2k code)
+//  #define USE_BM8563                             // [I2cDriver58] Enable BM8563 RTC - found in M5Stack - support both I2C buses on ESP32 (I2C address 0x51) (+2.5k code)
 
 //  #define USE_DISPLAY                            // Add I2C Display Support (+2k code)
     #define USE_DISPLAY_MODES1TO5                // Enable display mode 1 to 5 in addition to mode 0

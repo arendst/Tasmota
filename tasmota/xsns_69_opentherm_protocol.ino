@@ -438,4 +438,16 @@ void sns_opentherm_dump_telemetry()
         add_coma = true;
     }
 }
+
+void sns_opentherm_protocol_reset()
+{
+    sns_opentherm_current_command = SNS_OT_COMMANDS_COUNT;
+    for (int i = 0; i < SNS_OT_COMMANDS_COUNT; ++i)
+    {
+        struct OpenThermCommandT *cmd = &sns_opentherm_commands[i];
+        cmd->m_flags.m_flags = 0;
+        memset(cmd->m_results, 0, sizeof(OpenThermCommandT::m_results));
+    }
+}
+
 #endif

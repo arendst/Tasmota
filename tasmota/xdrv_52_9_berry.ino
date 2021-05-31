@@ -296,7 +296,7 @@ void BerryInit(void) {
 
 /*********************************************************************************************\
  * Execute a script in Flash file-system
- * 
+ *
  * Two options supported:
  *   berry_preinit: load "preinit.be" to configure the device before driver pre-init and init
  *                  (typically I2C drivers, and AXP192/AXP202 configuration)
@@ -674,10 +674,9 @@ void HandleBerryConsole(void)
 //   char* line;
 //   size_t len;
 //   while (GetLog(Settings.weblog_level, &index, &line, &len)) {
-//     if (len > sizeof(TasmotaGlobal.mqtt_data) -2) { len = sizeof(TasmotaGlobal.mqtt_data); }
-//     char stemp[len +1];
-//     strlcpy(stemp, line, len);
-//     WSContentSend_P(PSTR("%s%s"), (cflg) ? PSTR("\n") : "", stemp);
+//     if (cflg) { WSContentSend_P(PSTR("\n")); }
+//     WSContentFlush();
+//     Webserver->sendContent(line, len -1);
 //     cflg = true;
 //   }
 //   WSContentSend_P(PSTR("}1"));
@@ -743,7 +742,7 @@ bool Xdrv52(uint8_t function)
       callBerryEventDispatcher(PSTR("web_add_main_button"), nullptr, 0, nullptr);
       break;
     case FUNC_WEB_ADD_HANDLER:
-      // callBerryEventDispatcher(PSTR("web_add_handler"), nullptr, 0, nullptr);
+      callBerryEventDispatcher(PSTR("web_add_handler"), nullptr, 0, nullptr);
       WebServer_on(PSTR("/bs"), HandleBerryConsole);
       break;
 #endif // USE_WEBSERVER

@@ -139,7 +139,7 @@ TuyaSend4 11,1 -> Sends enum (Type 4) data 1 to dpId 11 (Max data length 1 bytes
 */
 
 void CmndTuyaSend(void) {
-  if (XdrvMailbox.index > 4 && XdrvMailbox.index < 8) {
+  if (XdrvMailbox.index > 5 && XdrvMailbox.index < 8) {
     return;
   }
   if (XdrvMailbox.index == 0) {
@@ -171,6 +171,8 @@ void CmndTuyaSend(void) {
         TuyaSendValue(dpId, strtoull(data, nullptr, 0));
       } else if (3 == XdrvMailbox.index) {
         TuyaSendString(dpId, data);
+      } else if (5 == XdrvMailbox.index) {
+        TuyaSendHexString(dpId, data);
       } else if (4 == XdrvMailbox.index) {
         TuyaSendEnum(dpId, strtoul(data, nullptr, 0));
       }
@@ -486,6 +488,28 @@ void TuyaSendValue(uint8_t id, uint32_t value)
 void TuyaSendEnum(uint8_t id, uint32_t value)
 {
   TuyaSendState(id, TUYA_TYPE_ENUM, (uint8_t*)(&value));
+}
+
+void TuyaSendHexString(uint8_t id, char data[]) {
+
+  uint16_t len = strlen(data)/2;
+  uint16_t payload_len = 4 + len;
+  uint8_t payload_buffer[payload_len];
+  payload_buffer[0] = id;
+  payload_buffer[1] = TUYA_TYPE_STRING;
+  payload_buffer[2] = len >> 8;
+  payload_buffer[3] = len & 0xFF;
+
+  char hexbyte[3];
+  hexbyte[2] = 0;
+
+  for (uint16_t i = 0; i < len; i++) {
+    hexbyte[0] = data[2*i];
+    hexbyte[1] = data[2*i+1];
+    payload_buffer[4+i] = strtol(hexbyte,NULL,16);
+  }
+
+  TuyaSendCmd(TUYA_CMD_SET_DP, payload_buffer, payload_len);
 }
 
 void TuyaSendString(uint8_t id, char data[]) {

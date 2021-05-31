@@ -8,6 +8,7 @@
 extern int l_getFreeHeap(bvm *vm);
 extern int l_publish(bvm *vm);
 extern int l_cmd(bvm *vm);
+extern int l_get_cb(bvm *vm);
 extern int l_getoption(bvm *vm);
 extern int l_millis(bvm *vm);
 extern int l_timereached(bvm *vm);
@@ -1453,41 +1454,6 @@ be_define_local_closure(gc);
 /*******************************************************************/
 
 /********************************************************************
-    //
-    // Event from Tasmota is:
-    // 1. event:string        -- type of event (cmd, rule, ...)
-    // 2. cmd:string          -- name of the command to process
-    // 3. index:int           -- index number
-    // 4. payload:string      -- payload as text, analyzed as json
-    //
-    def event(type, cmd, idx, payload)
-      if type=='cmd' return self.exec_cmd(cmd, idx, payload)
-      elif type=='rule' return self.exec_rules(payload)
-      elif type=='mqtt_data' return nil
-      elif type=='gc' return self.gc()
-      elif type=='every_50ms' return self.run_deferred()
-      elif self._drivers
-        for d:self._drivers
-          try
-            if   type=='every_second' && d.every_second return d.every_second()
-            elif type=='every_100ms' && d.every_100ms return d.every_100ms()
-            elif type=='web_add_button' && d.web_add_button return d.web_add_button()
-            elif type=='web_add_main_button' && d.web_add_main_button return d.web_add_main_button()
-            elif type=='save_before_restart' && d.save_before_restart return d.save_before_restart()
-            elif type=='web_sensor' && d.web_sensor return d.web_sensor()
-            elif type=='json_append' && d.json_append return d.json_append()
-            elif type=='button_pressed' && d.button_pressed return d.button_pressed()
-            elif type=='display' && d.display return d.display()
-            end
-          except .. as e,m
-            import string
-            self.log(string.format('BRY: exception %s - %m',3))
-          end
-        end
-      end
-    end
-********************************************************************/
-/********************************************************************
 ** Solidified function: event
 ********************************************************************/
 
@@ -1508,17 +1474,18 @@ be_define_local_const_str(event_str_10, "every_100ms", 1546407804, 11);
 be_define_local_const_str(event_str_11, "web_add_button", -757092238, 14);
 be_define_local_const_str(event_str_12, "web_add_main_button", -334599632, 19);
 be_define_local_const_str(event_str_13, "save_before_restart", 1253239338, 19);
-be_define_local_const_str(event_str_14, "web_sensor", -1394870324, 10);
-be_define_local_const_str(event_str_15, "json_append", -1292948012, 11);
-be_define_local_const_str(event_str_16, "button_pressed", 1694209616, 14);
-be_define_local_const_str(event_str_17, "display", 1164572437, 7);
-be_define_local_const_str(event_str_18, "string", 398550328, 6);
-be_define_local_const_str(event_str_19, "log", 1062293841, 3);
-be_define_local_const_str(event_str_20, "format", -1180859054, 6);
-be_define_local_const_str(event_str_21, "BRY: exception %s - %m", -1290966132, 22);
-be_define_local_const_str(event_str_23, "stop_iteration", -121173395, 14);
+be_define_local_const_str(event_str_14, "web_add_handler", -304792334, 15);
+be_define_local_const_str(event_str_15, "web_sensor", -1394870324, 10);
+be_define_local_const_str(event_str_16, "json_append", -1292948012, 11);
+be_define_local_const_str(event_str_17, "button_pressed", 1694209616, 14);
+be_define_local_const_str(event_str_18, "display", 1164572437, 7);
+be_define_local_const_str(event_str_19, "string", 398550328, 6);
+be_define_local_const_str(event_str_20, "log", 1062293841, 3);
+be_define_local_const_str(event_str_21, "format", -1180859054, 6);
+be_define_local_const_str(event_str_22, "BRY: exception %s - %m", -1290966132, 22);
+be_define_local_const_str(event_str_24, "stop_iteration", -121173395, 14);
 
-static const bvalue event_ktab[24] = {
+static const bvalue event_ktab[25] = {
   { { .s=be_local_const_str(event_str_0) }, BE_STRING},
   { { .s=be_local_const_str(event_str_1) }, BE_STRING},
   { { .s=be_local_const_str(event_str_2) }, BE_STRING},
@@ -1541,11 +1508,12 @@ static const bvalue event_ktab[24] = {
   { { .s=be_local_const_str(event_str_19) }, BE_STRING},
   { { .s=be_local_const_str(event_str_20) }, BE_STRING},
   { { .s=be_local_const_str(event_str_21) }, BE_STRING},
+  { { .s=be_local_const_str(event_str_22) }, BE_STRING},
   { { .i=3 }, BE_INT},
-  { { .s=be_local_const_str(event_str_23) }, BE_STRING},
+  { { .s=be_local_const_str(event_str_24) }, BE_STRING},
 };
 
-static const uint32_t event_code[140] = {
+static const uint32_t event_code[136] = {
   0x1C140300,  //  0000  EQ	R5	R1	R256
   0x78160006,  //  0001  JMPF	R5	#0009
   0x8C140101,  //  0002  GETMET	R5	R0	R257
@@ -1554,138 +1522,134 @@ static const uint32_t event_code[140] = {
   0x5C240800,  //  0005  MOVE	R9	R4
   0x7C140800,  //  0006  CALL	R5	4
   0x80040A00,  //  0007  RET	1	R5
-  0x70020081,  //  0008  JMP		#008B
+  0x7002007D,  //  0008  JMP		#0087
   0x1C140302,  //  0009  EQ	R5	R1	R258
   0x78160004,  //  000A  JMPF	R5	#0010
   0x8C140103,  //  000B  GETMET	R5	R0	R259
   0x5C1C0800,  //  000C  MOVE	R7	R4
   0x7C140400,  //  000D  CALL	R5	2
   0x80040A00,  //  000E  RET	1	R5
-  0x7002007A,  //  000F  JMP		#008B
+  0x70020076,  //  000F  JMP		#0087
   0x1C140304,  //  0010  EQ	R5	R1	R260
   0x78160002,  //  0011  JMPF	R5	#0015
   0x4C140000,  //  0012  LDNIL	5
   0x80040A00,  //  0013  RET	1	R5
-  0x70020075,  //  0014  JMP		#008B
+  0x70020071,  //  0014  JMP		#0087
   0x1C140305,  //  0015  EQ	R5	R1	R261
   0x78160003,  //  0016  JMPF	R5	#001B
   0x8C140105,  //  0017  GETMET	R5	R0	R261
   0x7C140200,  //  0018  CALL	R5	1
   0x80040A00,  //  0019  RET	1	R5
-  0x7002006F,  //  001A  JMP		#008B
+  0x7002006B,  //  001A  JMP		#0087
   0x1C140306,  //  001B  EQ	R5	R1	R262
   0x78160003,  //  001C  JMPF	R5	#0021
   0x8C140107,  //  001D  GETMET	R5	R0	R263
   0x7C140200,  //  001E  CALL	R5	1
   0x80040A00,  //  001F  RET	1	R5
-  0x70020069,  //  0020  JMP		#008B
+  0x70020065,  //  0020  JMP		#0087
   0x88140108,  //  0021  GETMBR	R5	R0	R264
-  0x78160067,  //  0022  JMPF	R5	#008B
+  0x78160063,  //  0022  JMPF	R5	#0087
   0x60140000,  //  0023  GETGBL	R5	G0
   0x88180108,  //  0024  GETMBR	R6	R0	R264
   0x7C140200,  //  0025  CALL	R5	1
-  0xA8020060,  //  0026  EXBLK	0	#0088
+  0xA802005C,  //  0026  EXBLK	0	#0084
   0x5C180A00,  //  0027  MOVE	R6	R5
   0x7C180000,  //  0028  CALL	R6	0
-  0xA8020051,  //  0029  EXBLK	0	#007C
+  0xA802004D,  //  0029  EXBLK	0	#0078
   0x1C1C0309,  //  002A  EQ	R7	R1	R265
-  0x781E0006,  //  002B  JMPF	R7	#0033
+  0x781E0004,  //  002B  JMPF	R7	#0031
   0x881C0D09,  //  002C  GETMBR	R7	R6	R265
-  0x781E0004,  //  002D  JMPF	R7	#0033
+  0x781E0002,  //  002D  JMPF	R7	#0031
   0x8C1C0D09,  //  002E  GETMET	R7	R6	R265
   0x7C1C0200,  //  002F  CALL	R7	1
-  0xA8040002,  //  0030  EXBLK	1	2
-  0x80040E00,  //  0031  RET	1	R7
-  0x70020046,  //  0032  JMP		#007A
-  0x1C1C030A,  //  0033  EQ	R7	R1	R266
-  0x781E0006,  //  0034  JMPF	R7	#003C
-  0x881C0D0A,  //  0035  GETMBR	R7	R6	R266
-  0x781E0004,  //  0036  JMPF	R7	#003C
-  0x8C1C0D0A,  //  0037  GETMET	R7	R6	R266
-  0x7C1C0200,  //  0038  CALL	R7	1
-  0xA8040002,  //  0039  EXBLK	1	2
-  0x80040E00,  //  003A  RET	1	R7
-  0x7002003D,  //  003B  JMP		#007A
-  0x1C1C030B,  //  003C  EQ	R7	R1	R267
-  0x781E0006,  //  003D  JMPF	R7	#0045
-  0x881C0D0B,  //  003E  GETMBR	R7	R6	R267
-  0x781E0004,  //  003F  JMPF	R7	#0045
-  0x8C1C0D0B,  //  0040  GETMET	R7	R6	R267
-  0x7C1C0200,  //  0041  CALL	R7	1
-  0xA8040002,  //  0042  EXBLK	1	2
-  0x80040E00,  //  0043  RET	1	R7
-  0x70020034,  //  0044  JMP		#007A
-  0x1C1C030C,  //  0045  EQ	R7	R1	R268
-  0x781E0006,  //  0046  JMPF	R7	#004E
-  0x881C0D0C,  //  0047  GETMBR	R7	R6	R268
-  0x781E0004,  //  0048  JMPF	R7	#004E
-  0x8C1C0D0C,  //  0049  GETMET	R7	R6	R268
-  0x7C1C0200,  //  004A  CALL	R7	1
-  0xA8040002,  //  004B  EXBLK	1	2
-  0x80040E00,  //  004C  RET	1	R7
-  0x7002002B,  //  004D  JMP		#007A
-  0x1C1C030D,  //  004E  EQ	R7	R1	R269
-  0x781E0006,  //  004F  JMPF	R7	#0057
-  0x881C0D0D,  //  0050  GETMBR	R7	R6	R269
-  0x781E0004,  //  0051  JMPF	R7	#0057
-  0x8C1C0D0D,  //  0052  GETMET	R7	R6	R269
-  0x7C1C0200,  //  0053  CALL	R7	1
-  0xA8040002,  //  0054  EXBLK	1	2
-  0x80040E00,  //  0055  RET	1	R7
-  0x70020022,  //  0056  JMP		#007A
-  0x1C1C030E,  //  0057  EQ	R7	R1	R270
-  0x781E0006,  //  0058  JMPF	R7	#0060
-  0x881C0D0E,  //  0059  GETMBR	R7	R6	R270
-  0x781E0004,  //  005A  JMPF	R7	#0060
-  0x8C1C0D0E,  //  005B  GETMET	R7	R6	R270
-  0x7C1C0200,  //  005C  CALL	R7	1
-  0xA8040002,  //  005D  EXBLK	1	2
-  0x80040E00,  //  005E  RET	1	R7
-  0x70020019,  //  005F  JMP		#007A
-  0x1C1C030F,  //  0060  EQ	R7	R1	R271
-  0x781E0006,  //  0061  JMPF	R7	#0069
-  0x881C0D0F,  //  0062  GETMBR	R7	R6	R271
+  0x70020044,  //  0030  JMP		#0076
+  0x1C1C030A,  //  0031  EQ	R7	R1	R266
+  0x781E0004,  //  0032  JMPF	R7	#0038
+  0x881C0D0A,  //  0033  GETMBR	R7	R6	R266
+  0x781E0002,  //  0034  JMPF	R7	#0038
+  0x8C1C0D0A,  //  0035  GETMET	R7	R6	R266
+  0x7C1C0200,  //  0036  CALL	R7	1
+  0x7002003D,  //  0037  JMP		#0076
+  0x1C1C030B,  //  0038  EQ	R7	R1	R267
+  0x781E0004,  //  0039  JMPF	R7	#003F
+  0x881C0D0B,  //  003A  GETMBR	R7	R6	R267
+  0x781E0002,  //  003B  JMPF	R7	#003F
+  0x8C1C0D0B,  //  003C  GETMET	R7	R6	R267
+  0x7C1C0200,  //  003D  CALL	R7	1
+  0x70020036,  //  003E  JMP		#0076
+  0x1C1C030C,  //  003F  EQ	R7	R1	R268
+  0x781E0004,  //  0040  JMPF	R7	#0046
+  0x881C0D0C,  //  0041  GETMBR	R7	R6	R268
+  0x781E0002,  //  0042  JMPF	R7	#0046
+  0x8C1C0D0C,  //  0043  GETMET	R7	R6	R268
+  0x7C1C0200,  //  0044  CALL	R7	1
+  0x7002002F,  //  0045  JMP		#0076
+  0x1C1C030D,  //  0046  EQ	R7	R1	R269
+  0x781E0004,  //  0047  JMPF	R7	#004D
+  0x881C0D0D,  //  0048  GETMBR	R7	R6	R269
+  0x781E0002,  //  0049  JMPF	R7	#004D
+  0x8C1C0D0D,  //  004A  GETMET	R7	R6	R269
+  0x7C1C0200,  //  004B  CALL	R7	1
+  0x70020028,  //  004C  JMP		#0076
+  0x1C1C030E,  //  004D  EQ	R7	R1	R270
+  0x781E0004,  //  004E  JMPF	R7	#0054
+  0x881C0D0E,  //  004F  GETMBR	R7	R6	R270
+  0x781E0002,  //  0050  JMPF	R7	#0054
+  0x8C1C0D0E,  //  0051  GETMET	R7	R6	R270
+  0x7C1C0200,  //  0052  CALL	R7	1
+  0x70020021,  //  0053  JMP		#0076
+  0x1C1C030F,  //  0054  EQ	R7	R1	R271
+  0x781E0004,  //  0055  JMPF	R7	#005B
+  0x881C0D0F,  //  0056  GETMBR	R7	R6	R271
+  0x781E0002,  //  0057  JMPF	R7	#005B
+  0x8C1C0D0F,  //  0058  GETMET	R7	R6	R271
+  0x7C1C0200,  //  0059  CALL	R7	1
+  0x7002001A,  //  005A  JMP		#0076
+  0x1C1C0310,  //  005B  EQ	R7	R1	R272
+  0x781E0004,  //  005C  JMPF	R7	#0062
+  0x881C0D10,  //  005D  GETMBR	R7	R6	R272
+  0x781E0002,  //  005E  JMPF	R7	#0062
+  0x8C1C0D10,  //  005F  GETMET	R7	R6	R272
+  0x7C1C0200,  //  0060  CALL	R7	1
+  0x70020013,  //  0061  JMP		#0076
+  0x1C1C0311,  //  0062  EQ	R7	R1	R273
   0x781E0004,  //  0063  JMPF	R7	#0069
-  0x8C1C0D0F,  //  0064  GETMET	R7	R6	R271
-  0x7C1C0200,  //  0065  CALL	R7	1
-  0xA8040002,  //  0066  EXBLK	1	2
-  0x80040E00,  //  0067  RET	1	R7
-  0x70020010,  //  0068  JMP		#007A
-  0x1C1C0310,  //  0069  EQ	R7	R1	R272
-  0x781E0006,  //  006A  JMPF	R7	#0072
-  0x881C0D10,  //  006B  GETMBR	R7	R6	R272
-  0x781E0004,  //  006C  JMPF	R7	#0072
-  0x8C1C0D10,  //  006D  GETMET	R7	R6	R272
+  0x881C0D11,  //  0064  GETMBR	R7	R6	R273
+  0x781E0002,  //  0065  JMPF	R7	#0069
+  0x8C1C0D11,  //  0066  GETMET	R7	R6	R273
+  0x7C1C0200,  //  0067  CALL	R7	1
+  0x7002000C,  //  0068  JMP		#0076
+  0x1C1C030E,  //  0069  EQ	R7	R1	R270
+  0x781E0004,  //  006A  JMPF	R7	#0070
+  0x881C0D12,  //  006B  GETMBR	R7	R6	R274
+  0x781E0002,  //  006C  JMPF	R7	#0070
+  0x8C1C0D12,  //  006D  GETMET	R7	R6	R274
   0x7C1C0200,  //  006E  CALL	R7	1
-  0xA8040002,  //  006F  EXBLK	1	2
-  0x80040E00,  //  0070  RET	1	R7
-  0x70020007,  //  0071  JMP		#007A
-  0x1C1C0311,  //  0072  EQ	R7	R1	R273
-  0x781E0005,  //  0073  JMPF	R7	#007A
-  0x881C0D11,  //  0074  GETMBR	R7	R6	R273
-  0x781E0003,  //  0075  JMPF	R7	#007A
-  0x8C1C0D11,  //  0076  GETMET	R7	R6	R273
-  0x7C1C0200,  //  0077  CALL	R7	1
-  0xA8040002,  //  0078  EXBLK	1	2
-  0x80040E00,  //  0079  RET	1	R7
-  0xA8040001,  //  007A  EXBLK	1	1
-  0x7002000A,  //  007B  JMP		#0087
-  0xAC1C0002,  //  007C  CATCH	R7	0	2
-  0x70020007,  //  007D  JMP		#0086
-  0xA4262400,  //  007E  IMPORT	R9	R274
-  0x8C280113,  //  007F  GETMET	R10	R0	R275
-  0x8C301314,  //  0080  GETMET	R12	R9	R276
-  0x58380015,  //  0081  LDCONST	R14	K21
-  0x583C0016,  //  0082  LDCONST	R15	K22
-  0x7C300600,  //  0083  CALL	R12	3
-  0x7C280400,  //  0084  CALL	R10	2
-  0x70020000,  //  0085  JMP		#0087
+  0x70020005,  //  006F  JMP		#0076
+  0x1C1C0312,  //  0070  EQ	R7	R1	R274
+  0x781E0003,  //  0071  JMPF	R7	#0076
+  0x881C0D12,  //  0072  GETMBR	R7	R6	R274
+  0x781E0001,  //  0073  JMPF	R7	#0076
+  0x8C1C0D12,  //  0074  GETMET	R7	R6	R274
+  0x7C1C0200,  //  0075  CALL	R7	1
+  0xA8040001,  //  0076  EXBLK	1	1
+  0x7002000A,  //  0077  JMP		#0083
+  0xAC1C0002,  //  0078  CATCH	R7	0	2
+  0x70020007,  //  0079  JMP		#0082
+  0xA4262600,  //  007A  IMPORT	R9	R275
+  0x8C280114,  //  007B  GETMET	R10	R0	R276
+  0x8C301315,  //  007C  GETMET	R12	R9	R277
+  0x58380016,  //  007D  LDCONST	R14	K22
+  0x583C0017,  //  007E  LDCONST	R15	K23
+  0x7C300600,  //  007F  CALL	R12	3
+  0x7C280400,  //  0080  CALL	R10	2
+  0x70020000,  //  0081  JMP		#0083
+  0xB0080000,  //  0082  RAISE	2	R0	R0
+  0x7001FFA2,  //  0083  JMP		#0027
+  0x58140018,  //  0084  LDCONST	R5	K24
+  0xAC140200,  //  0085  CATCH	R5	1	0
   0xB0080000,  //  0086  RAISE	2	R0	R0
-  0x7001FF9E,  //  0087  JMP		#0027
-  0x58140017,  //  0088  LDCONST	R5	K23
-  0xAC140200,  //  0089  CATCH	R5	1	0
-  0xB0080000,  //  008A  RAISE	2	R0	R0
-  0x80000000,  //  008B  RET	0	R0
+  0x80000000,  //  0087  RET	0	R0
 };
 
 be_define_local_proto(event, 16, 5, 1, 0, 0);
@@ -1693,18 +1657,6 @@ be_define_local_closure(event);
 
 /*******************************************************************/
 
-/********************************************************************
-    //
-    // add driver to the queue of event dispatching
-    //
-    "def add_driver(d) "
-      "if self._drivers "
-        "self._drivers.push(d) "
-      "else "
-        "self._drivers = [d]"
-      "end "
-    "end "
-********************************************************************/
 /********************************************************************
 ** Solidified function: add_driver
 ********************************************************************/
@@ -2398,6 +2350,118 @@ static const bclosure set_light_closure = {
 
 /*******************************************************************/
 
+
+/********************************************************************
+** Solidified function: cb_dispatch
+********************************************************************/
+
+/********** Solidified proto: cb_dispatch */
+be_define_local_const_str(cb_dispatch_str_name, "cb_dispatch", 1741510499, 11);
+be_define_local_const_str(cb_dispatch_str_source, "input", -103256197, 5);
+be_define_local_const_str(cb_dispatch_str_0, "_cb", -251666929, 3);
+be_define_local_const_str(cb_dispatch_str_2, "find", -1108310694, 4);
+
+static const bvalue cb_dispatch_ktab[3] = {
+  { { .s=be_local_const_str(cb_dispatch_str_0) }, BE_STRING},
+  { { .i=0 }, BE_INT},
+  { { .s=be_local_const_str(cb_dispatch_str_2) }, BE_STRING},
+};
+
+static const uint32_t cb_dispatch_code[20] = {
+  0x88180100,  //  0000  GETMBR	R6	R0	R256
+  0x4C1C0000,  //  0001  LDNIL	7
+  0x1C180C07,  //  0002  EQ	R6	R6	R7
+  0x781A0000,  //  0003  JMPF	R6	#0005
+  0x80060200,  //  0004  RET	1	R257
+  0x88180100,  //  0005  GETMBR	R6	R0	R256
+  0x8C180D02,  //  0006  GETMET	R6	R6	R258
+  0x5C200200,  //  0007  MOVE	R8	R1
+  0x7C180400,  //  0008  CALL	R6	2
+  0x4C1C0000,  //  0009  LDNIL	7
+  0x201C0C07,  //  000A  NE	R7	R6	R7
+  0x781E0006,  //  000B  JMPF	R7	#0013
+  0x5C1C0C00,  //  000C  MOVE	R7	R6
+  0x5C200400,  //  000D  MOVE	R8	R2
+  0x5C240600,  //  000E  MOVE	R9	R3
+  0x5C280800,  //  000F  MOVE	R10	R4
+  0x5C2C0A00,  //  0010  MOVE	R11	R5
+  0x7C1C0800,  //  0011  CALL	R7	4
+  0x80040E00,  //  0012  RET	1	R7
+  0x80060200,  //  0013  RET	1	R257
+};
+
+be_define_local_proto(cb_dispatch, 12, 6, 1, 0, 0);
+be_define_local_closure(cb_dispatch);
+
+/*******************************************************************/
+
+/********************************************************************
+** Solidified function: gen_cb
+********************************************************************/
+
+/********** Solidified proto: gen_cb */
+be_define_local_const_str(gen_cb_str_name, "gen_cb", -1049739745, 6);
+be_define_local_const_str(gen_cb_str_source, "input", -103256197, 5);
+be_define_local_const_str(gen_cb_str_0, "_cb", -251666929, 3);
+be_define_local_const_str(gen_cb_str_2, "find", -1108310694, 4);
+be_define_local_const_str(gen_cb_str_3, "_get_cb", 1448849122, 7);
+be_define_local_const_str(gen_cb_str_4, "stop_iteration", -121173395, 14);
+be_define_local_const_str(gen_cb_str_5, "internal_error", -1775809127, 14);
+be_define_local_const_str(gen_cb_str_6, "No callback available", 633786138, 21);
+
+static const bvalue gen_cb_ktab[7] = {
+  { { .s=be_local_const_str(gen_cb_str_0) }, BE_STRING},
+  { { .i=0 }, BE_INT},
+  { { .s=be_local_const_str(gen_cb_str_2) }, BE_STRING},
+  { { .s=be_local_const_str(gen_cb_str_3) }, BE_STRING},
+  { { .s=be_local_const_str(gen_cb_str_4) }, BE_STRING},
+  { { .s=be_local_const_str(gen_cb_str_5) }, BE_STRING},
+  { { .s=be_local_const_str(gen_cb_str_6) }, BE_STRING},
+};
+
+static const uint32_t gen_cb_code[34] = {
+  0x88080100,  //  0000  GETMBR	R2	R0	R256
+  0x4C0C0000,  //  0001  LDNIL	3
+  0x1C080403,  //  0002  EQ	R2	R2	R3
+  0x780A0002,  //  0003  JMPF	R2	#0007
+  0x6008000B,  //  0004  GETGBL	R2	G11
+  0x7C080000,  //  0005  CALL	R2	0
+  0x90020002,  //  0006  SETMBR	R0	R256	R2
+  0x60080000,  //  0007  GETGBL	R2	G0
+  0x540E0012,  //  0008  LDINT	R3	19
+  0x400E0203,  //  0009  CONNECT	R3	R257	R3
+  0x7C080200,  //  000A  CALL	R2	1
+  0xA8020010,  //  000B  EXBLK	0	#001D
+  0x5C0C0400,  //  000C  MOVE	R3	R2
+  0x7C0C0000,  //  000D  CALL	R3	0
+  0x88100100,  //  000E  GETMBR	R4	R0	R256
+  0x8C100902,  //  000F  GETMET	R4	R4	R258
+  0x5C180600,  //  0010  MOVE	R6	R3
+  0x7C100400,  //  0011  CALL	R4	2
+  0x4C140000,  //  0012  LDNIL	5
+  0x1C100805,  //  0013  EQ	R4	R4	R5
+  0x78120006,  //  0014  JMPF	R4	#001C
+  0x88100100,  //  0015  GETMBR	R4	R0	R256
+  0x98100601,  //  0016  SETIDX	R4	R3	R1
+  0x8C100103,  //  0017  GETMET	R4	R0	R259
+  0x5C180600,  //  0018  MOVE	R6	R3
+  0x7C100400,  //  0019  CALL	R4	2
+  0xA8040001,  //  001A  EXBLK	1	1
+  0x80040800,  //  001B  RET	1	R4
+  0x7001FFEE,  //  001C  JMP		#000C
+  0x58080004,  //  001D  LDCONST	R2	K4
+  0xAC080200,  //  001E  CATCH	R2	1	0
+  0xB0080000,  //  001F  RAISE	2	R0	R0
+  0xB0060B06,  //  0020  RAISE	1	R261	R262
+  0x80000000,  //  0021  RET	0	R0
+};
+
+be_define_local_proto(gen_cb, 7, 2, 1, 0, 0);
+be_define_local_closure(gen_cb);
+
+/*******************************************************************/
+
+
 #if BE_USE_PRECOMPILED_OBJECT
 #include "../generate/be_fixed_be_class_tasmota.h"
 #endif
@@ -2412,11 +2476,13 @@ void be_load_tasmota_ntvlib(bvm *vm)
         { "_timers", NULL },
         { "_ccmd", NULL },
         { "_drivers", NULL },
+        { "_cb", NULL},
         { "wire1", NULL },
         { "wire2", NULL },
         { "get_free_heap", l_getFreeHeap },
         { "publish", l_publish },
         { "_cmd", l_cmd },
+        { "_get_cb", l_get_cb },
         { "get_option", l_getoption },
         { "millis", l_millis },
         { "time_reached", l_timereached },
@@ -2465,6 +2531,10 @@ void be_load_tasmota_ntvlib(bvm *vm)
         { "wire_scan", (bntvfunc) &wire_scan_closure },
         { "time_str", (bntvfunc) &time_str_closure },
 
+        // callbacks
+        { "cb_dispatch", (bntvfunc) &cb_dispatch_closure },
+        { "gen_cb", (bntvfunc) &gen_cb_closure },
+
         // deprecated
         { "get_light", (bntvfunc) &get_light_closure },
         { "set_light", (bntvfunc) &set_light_closure },
@@ -2485,12 +2555,14 @@ class be_class_tasmota (scope: global, name: Tasmota) {
     _timers, var
     _ccmd, var
     _drivers, var
+    _cb, var
     wire1, var
     wire2, var
 
     get_free_heap, func(l_getFreeHeap)
     publish, func(l_publish)
     _cmd, func(l_cmd)
+    _get_cb, func(l_get_cb)
     get_option, func(l_getoption)
     millis, func(l_millis)
     time_reached, func(l_timereached)
@@ -2537,6 +2609,9 @@ class be_class_tasmota (scope: global, name: Tasmota) {
     load, closure(load_closure)
     wire_scan, closure(wire_scan_closure)
     time_str, closure(time_str_closure)
+
+    cb_dispatch, closure(cb_dispatch_closure)
+    gen_cb, closure(gen_cb_closure)
 
     get_light, closure(get_light_closure)
     set_light, closure(set_light_closure)

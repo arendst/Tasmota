@@ -2198,14 +2198,28 @@ void SyslogAsync(bool refresh) {
         AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION D_SYSLOG_HOST_NOT_FOUND ". " D_RETRY_IN " %d " D_UNIT_SECOND), SYSLOG_TIMER);
         return;
       }
-      char log_data[len +72];            // Hostname + Id + log data
-      snprintf_P(log_data, sizeof(log_data), PSTR("%s ESP-"), NetworkHostname());
-      uint32_t preamble_len = strlen(log_data);
-      len -= mxtime;
-      strlcpy(log_data +preamble_len, line +mxtime, len);
-      // wemos5 ESP-HTP: Web server active on wemos5 with IP address 192.168.2.172
-      PortUdp_write(log_data, preamble_len + len);
+
+      char header[64];
+      snprintf_P(header, sizeof(header), PSTR("%s ESP-"), NetworkHostname());
+      char* line_start = line +mxtime;
+#ifdef ESP8266
+      // Packets over 1460 bytes are not send
+      uint32_t line_len;
+      int32_t log_len = len -mxtime -1;
+      while (log_len > 0) {
+        PortUdp.write(header);
+        line_len = (log_len > 1460) ? 1460 : log_len;
+        PortUdp.write((uint8_t*)line_start, line_len);
+        PortUdp.endPacket();
+        log_len -= 1460;
+        line_start += 1460;
+      }
+#else
+      PortUdp.write(header);
+      PortUdp.write((uint8_t*)line_start, len -mxtime -1);
       PortUdp.endPacket();
+#endif
+
       delay(1);                          // Add time for UDP handling (#5512)
     }
   }
@@ -2293,6 +2307,9 @@ void AddLogData(uint32_t loglevel, const char* log_data) {
     Serial.printf("%s%s\r\n", mxtime, log_data);
   }
 
+  uint32_t log_data_len = strlen(log_data) + strlen(mxtime) + 4;  // 4 = log_buffer_pointer + '\1' + '\0'
+  if (log_data_len > LOG_BUFFER_SIZE) { return; }                 // log_data too big for buffer - discard logging
+
   uint32_t highest_loglevel = Settings.weblog_level;
   if (Settings.mqttlog_level > highest_loglevel) { highest_loglevel = Settings.mqttlog_level; }
   if (TasmotaGlobal.syslog_level > highest_loglevel) { highest_loglevel = TasmotaGlobal.syslog_level; }
@@ -2308,7 +2325,7 @@ void AddLogData(uint32_t loglevel, const char* log_data) {
       TasmotaGlobal.log_buffer_pointer++;  // Index 0 is not allowed as it is the end of char string
     }
     while (TasmotaGlobal.log_buffer_pointer == TasmotaGlobal.log_buffer[0] ||  // If log already holds the next index, remove it
-           strlen(TasmotaGlobal.log_buffer) + strlen(log_data) + strlen(mxtime) + 4 > LOG_BUFFER_SIZE)  // 4 = log_buffer_pointer + '\1' + '\0'
+           strlen(TasmotaGlobal.log_buffer) + log_data_len > LOG_BUFFER_SIZE)
     {
       char* it = TasmotaGlobal.log_buffer;
       it++;                                // Skip log_buffer_pointer
