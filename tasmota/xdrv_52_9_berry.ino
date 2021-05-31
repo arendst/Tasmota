@@ -673,15 +673,10 @@ void HandleBerryConsole(void)
 //   bool cflg = (index);
 //   char* line;
 //   size_t len;
-//   WSContentFlush();
 //   while (GetLog(Settings.weblog_level, &index, &line, &len)) {
-//     String stemp = (cflg) ? "\n" : "";   // Add newline
-//     len--;
-//     char save_log_char = line[len];
-//     line[len] = '\0';                    // Add terminating \'0'
-//     stemp.concat(line);
-//     line[len] = save_log_char;
-//     Webserver->sendContent(stemp);
+//     if (cflg) { WSContentSend_P(PSTR("\n")); }
+//     WSContentFlush();
+//     Webserver->sendContent(line, len -1);
 //     cflg = true;
 //   }
 //   WSContentSend_P(PSTR("}1"));

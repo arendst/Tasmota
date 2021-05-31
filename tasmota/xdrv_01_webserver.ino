@@ -2843,22 +2843,14 @@ void HandleHttpCommand(void)
     uint32_t index = curridx;
     char* line;
     size_t len;
-    WSContentFlush();
     while (GetLog(TasmotaGlobal.templog_level, &index, &line, &len)) {
       // [14:49:36.123 MQTT: stat/wemos5/RESULT = {"POWER":"OFF"}] > [{"POWER":"OFF"}]
       char* JSON = (char*)memchr(line, '{', len);
       if (JSON) {  // Is it a JSON message (and not only [15:26:08 MQT: stat/wemos5/POWER = O])
-        String stemp = (cflg) ? "," : "";  // Add comma
-
-//        size_t JSONlen = len - (JSON - line);
-//        stemp.concat(JSON +1, JSONlen -3);  // Add terminating '\0' - Not supported on ESP32
-        len -= 2;                          // Skip last '}'
-        char save_log_char = line[len];
-        line[len] = '\0';                  // Add terminating \'0'
-        stemp.concat(JSON +1);             // Skip first '{'
-        line[len] = save_log_char;
-
-        Webserver->sendContent(stemp);
+        if (cflg) { WSContentSend_P(PSTR(",")); }
+        WSContentFlush();
+        uint32_t JSONlen = len - (JSON - line) -3;
+        Webserver->sendContent(JSON +1, JSONlen);
         cflg = true;
       }
     }
@@ -2935,18 +2927,10 @@ void HandleConsoleRefresh(void)
   bool cflg = (index);
   char* line;
   size_t len;
-  WSContentFlush();
   while (GetLog(Settings.weblog_level, &index, &line, &len)) {
-    String stemp = (cflg) ? "\n" : "";   // Add newline
-
-//    stemp.concat(line, len -1);          // Add terminating '\0' - Not supported on ESP32
-    len--;
-    char save_log_char = line[len];
-    line[len] = '\0';                    // Add terminating \'0'
-    stemp.concat(line);
-    line[len] = save_log_char;
-
-    Webserver->sendContent(stemp);
+    if (cflg) { WSContentSend_P(PSTR("\n")); }
+    WSContentFlush();
+    Webserver->sendContent(line, len -1);
     cflg = true;
   }
   WSContentSend_P(PSTR("}1"));
