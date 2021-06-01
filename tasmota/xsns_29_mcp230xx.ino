@@ -51,6 +51,7 @@ uint8_t mcp230xx_pincount = 0;
 uint8_t mcp230xx_outpincount = 0;
 #ifdef USE_MCP230xx_OUTPUT
 uint8_t mcp230xx_outpinmapping[16];
+uint8_t mcp230xx_keepout_no_toggle = 0;
 #endif
 uint8_t mcp230xx_int_en = 0;
 uint8_t mcp230xx_int_prio_counter = 0;
@@ -205,6 +206,7 @@ void MCP230xx_ApplySettings(void)
           } else {
             if (Settings.mcp230xx_config[idx+(mcp230xx_port*8)].keep_output) { // Read the value to use from the MCP230xx
               reg_portpins[mcp230xx_port] |= reg_readpins & (1 << idx);
+              mcp230xx_keepout_no_toggle++;
             }
             else if (Settings.mcp230xx_config[idx+(mcp230xx_port*8)].pullup) {
               reg_portpins[mcp230xx_port] |= (1 << idx);
@@ -236,6 +238,7 @@ void MCP230xx_ApplySettings(void)
     for (uint32_t idx = 0; idx < mcp230xx_outpincount; idx++) {
       if (mcp230xx_port ? mcp230xx_outpinmapping[idx] > 7 : mcp230xx_outpinmapping[idx] < 8) {
         uint8_t relay_no = TasmotaGlobal.devices_present - mcp230xx_outpincount + idx + 1;
+        if (mcp230xx_keepout_no_toggle >0) mcp230xx_keepout_no_toggle--;
         ExecuteCommandPower(relay_no, (reg_portpins[mcp230xx_port] >> (mcp230xx_outpinmapping[idx] & 7)) & 1, SRC_IGNORE);
       }
     }
@@ -882,13 +885,15 @@ void MCP230xx_SwitchRelay() {
     uint8_t pin = mcp230xx_outpinmapping[i - (TasmotaGlobal.devices_present - mcp230xx_outpincount)];
     uint8_t pincmd = Settings.mcp230xx_config[pin].pinmode - 5;
     uint8_t relay_state = bitRead(XdrvMailbox.index, i);
-    switch (relay_state) {
-    case 1:
-      MCP230xx_SetOutPin(pin,1-pincmd);
-      break;
-    case 0:
-      MCP230xx_SetOutPin(pin,pincmd);
-      break;
+    if (mcp230xx_keepout_no_toggle == 0 || !Settings.mcp230xx_config[pin].keep_output) {
+      switch (relay_state) {
+      case 1:
+        MCP230xx_SetOutPin(pin,1-pincmd);
+        break;
+      case 0:
+        MCP230xx_SetOutPin(pin,pincmd);
+        break;
+      }
     }
   }
 }
