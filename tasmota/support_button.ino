@@ -167,6 +167,7 @@ void ButtonHandler(void) {
     if (PinUsed(GPIO_KEY1, button_index)) {
       button_present = 1;
 #ifdef ESP32
+#ifndef CONFIG_IDF_TARGET_ESP32C3      
       if (bitRead(Button.touch_mask, button_index)) {          // Touch
         uint32_t _value = touchRead(Pin(GPIO_KEY1, button_index));
         button = NOT_PRESSED;
@@ -187,6 +188,7 @@ void ButtonHandler(void) {
           AddLog(LOG_LEVEL_INFO, PSTR("PLOT: %u, %u, %u,"), button_index+1, _value, Button.touch_hits[button_index]);  // Button number (1..4), value, continuous hits under threshold
         }
       } else
+#endif  // not ESP32C3
 #endif  // ESP32
       {                                                 // Normal button
         button = (digitalRead(Pin(GPIO_KEY1, button_index)) != bitRead(Button.inverted_mask, button_index));
