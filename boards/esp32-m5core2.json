@@ -25,7 +25,7 @@
   "name": "M5Stack Core2 16M Flash, 4MB PSRAM, 2944k Code/OTA, 10M SPIFFS",
   "upload": {
     "flash_size": "16MB",
-    "maximum_ram_size": 6553600,
+    "maximum_ram_size": 327680,
     "maximum_size": 16777216,
     "require_upload_port": true,
     "speed": 2000000
