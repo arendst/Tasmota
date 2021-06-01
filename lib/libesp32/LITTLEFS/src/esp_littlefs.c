@@ -63,12 +63,16 @@
 #include <sys/lock.h>
 #include <sys/param.h>
 
-#if __has_include("esp32/rom/spi_flash.h")
+#if CONFIG_IDF_TARGET_ESP32C3
+#include "esp32c3/rom/spi_flash.h"
+#elif CONFIG_IDF_TARGET_ESP32S2
+#include "esp32s2/rom/spi_flash.h"
+#elif __has_include("esp32/rom/spi_flash.h")
 //#warning("LITTLEFS: IDF 4, spi_flash.h file location different from IDF 3")
-#include "esp32/rom/spi_flash.h"
+#include "esp32/rom/spi_flash.h" //IDF 4
 #else
 //#warning("LITTLEFS: IDF 3")
-#include "rom/spi_flash.h"
+#include "rom/spi_flash.h" //IDF 3
 #endif
 
 #include "esp_system.h"
