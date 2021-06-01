@@ -10,7 +10,7 @@
     "f_flash": "80000000L",
     "flash_mode": "dio",
     "mcu": "esp32",
-    "variant": "esp32-odroid"
+    "variant": "odroid_esp32"
   },
   "connectivity": [
     "wifi",
