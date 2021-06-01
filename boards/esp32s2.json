@@ -1,7 +1,8 @@
 {
   "build": {
     "arduino":{
-      "ldscript": "esp32s2_out.ld"
+      "ldscript": "esp32s2_out.ld",
+      "partitions": "esp32_partition_app1856k_spiffs320k.csv"
     },
     "core": "esp32",
     "f_cpu": "240000000L",
