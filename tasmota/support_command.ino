@@ -412,18 +412,17 @@ void CmndPower(void)
 void CmndStatusResponse(uint32_t index) {
   static String all_status = (const char*) nullptr;
 
-  if (0 == XdrvMailbox.index) {
+  if (0 == XdrvMailbox.index) {  // Command status0
     if (99 == index) {
       all_status.replace("}{", ",");
       char cmnd_status[10];  // STATUS11
       snprintf_P(cmnd_status, sizeof(cmnd_status), PSTR(D_CMND_STATUS "0"));
       MqttPublishPayloadPrefixTopicRulesProcess_P(STAT, cmnd_status, all_status.c_str());
       all_status = (const char*) nullptr;
+    } else {
+      if (0 == index) { all_status = ""; }
+      all_status += TasmotaGlobal.mqtt_data;
     }
-    if (0 == index) {
-      all_status = "";
-    }
-    all_status += TasmotaGlobal.mqtt_data;
   }
   else if (index < 99) {
     char cmnd_status[10];  // STATUS11
