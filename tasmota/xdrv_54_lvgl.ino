@@ -317,6 +317,7 @@ extern "C" {
   */
   void *lvbe_malloc(uint32_t size);
   void *lvbe_realloc(void *ptr, size_t size);
+  void *lvbe_calloc(size_t num, size_t size);
 #ifdef USE_BERRY_PSRAM
   void *lvbe_malloc(uint32_t size) {
     return special_malloc(size);
