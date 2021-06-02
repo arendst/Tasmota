@@ -139,6 +139,7 @@ extern int lvbe_ftell(lvbe_FILE * stream);
 extern void *lvbe_malloc(size_t size);
 extern void *lvbe_realloc(void *ptr, size_t size);
 extern void *lvbe_calloc(size_t num, size_t size);
+extern void lvbe_free(void *ptr);
 
 #define ft_scalloc   lvbe_calloc
 #define ft_sfree     lvbe_free
