@@ -19,10 +19,10 @@
     "esp8266-rtos-sdk",
     "esp8266-nonos-sdk"
   ],
-  "name": "Espressif Generic ESP8266 1M sketch 1M SPIFFS",
+  "name": "Espressif Generic ESP8266 Tasmota 1M sketch 1M SPIFFS",
   "upload": {
     "maximum_ram_size": 81920,
-    "maximum_size": 1048576,
+    "maximum_size": 995326,
     "require_upload_port": true,
     "resetmethod": "ck",
     "speed": 115200
