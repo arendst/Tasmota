@@ -1,5 +1,5 @@
 /*
-  xdrv_02_mqtt_1_file.ino - mqtt file support for Tasmota
+  xdrv_02_1_mqtt_file.ino - mqtt file support for Tasmota
 
   Copyright (C) 2021  Theo Arends
 
