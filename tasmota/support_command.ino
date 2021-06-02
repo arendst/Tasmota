@@ -409,12 +409,10 @@ void CmndPower(void)
   }
 }
 
-bool all_in_one = false;
-
 void CmndStatusResponse(uint32_t index) {
   static String all_status = (const char*) nullptr;
 
-  if (all_in_one) {
+  if (0 == XdrvMailbox.index) {
     if (99 == index) {
       all_status.replace("}{", ",");
       char cmnd_status[10];  // STATUS11
@@ -439,8 +437,7 @@ void CmndStatus(void)
 {
   int32_t payload = XdrvMailbox.payload;
 
-  all_in_one = (0 == XdrvMailbox.index);
-  if (all_in_one) { payload = 0; }
+  if (0 == XdrvMailbox.index) { payload = 0; }  // All status messages in one MQTT message (status0)
 
   if (payload > MAX_STATUS) { return; }  // {"Command":"Error"}
   if (!Settings.flag.mqtt_enabled && (6 == payload)) { return; }  // SetOption3 - Enable MQTT

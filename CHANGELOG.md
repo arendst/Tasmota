@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Version bump to signal new features to Hass
 - Support for BM8563 RTC chip (I2C) found in M5Stack Core2 and M5StickC
+- Command ``Status0`` providing all status in one line
 
 ### Changed
 - IRremoteESP8266 library from v2.7.16 to v2.7.18
