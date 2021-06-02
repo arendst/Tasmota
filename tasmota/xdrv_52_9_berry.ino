@@ -93,9 +93,9 @@ extern "C" {
 bool callBerryRule(void) {
   if (berry.rules_busy) { return false; }
   berry.rules_busy = true;
-  char * json_event = TasmotaGlobal.mqtt_data;
+  char * json_event = XdrvMailbox.data;
   bool serviced = false;
-  serviced = callBerryEventDispatcher(PSTR("rule"), nullptr, 0, TasmotaGlobal.mqtt_data);
+  serviced = callBerryEventDispatcher(PSTR("rule"), nullptr, 0, XdrvMailbox.data);
   berry.rules_busy = false;
   return serviced;     // TODO event not handled
 }

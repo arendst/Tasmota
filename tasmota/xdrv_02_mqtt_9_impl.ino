@@ -719,6 +719,19 @@ void MqttPublishPayloadPrefixTopic_P(uint32_t prefix, const char* subtopic, cons
   MqttPublishPayloadPrefixTopic_P(prefix, subtopic, payload, 0, false);
 }
 
+void MqttPublishPayloadPrefixTopicRulesProcess_P(uint32_t prefix, const char* subtopic, const char* payload, bool retained) {
+  // Publish <prefix>/<device>/<RESULT or <subtopic>> payload string with optional retained
+  //   then process rules
+  MqttPublishPayloadPrefixTopic_P(prefix, subtopic, payload, 0, retained);
+  XdrvRulesProcess(0, payload);
+}
+
+void MqttPublishPayloadPrefixTopicRulesProcess_P(uint32_t prefix, const char* subtopic, const char* payload) {
+  // Publish <prefix>/<device>/<RESULT or <subtopic>> default TasmotaGlobal.mqtt_data string no retained
+  //   then process rules
+  MqttPublishPayloadPrefixTopicRulesProcess_P(prefix, subtopic, payload, false);
+}
+
 void MqttPublishPrefixTopic_P(uint32_t prefix, const char* subtopic, bool retained) {
   // Publish <prefix>/<device>/<RESULT or <subtopic>> default TasmotaGlobal.mqtt_data string with optional retained
   MqttPublishPayloadPrefixTopic_P(prefix, subtopic, TasmotaGlobal.mqtt_data, 0, retained);

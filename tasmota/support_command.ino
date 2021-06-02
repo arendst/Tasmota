@@ -419,7 +419,7 @@ void CmndStatusResponse(uint32_t index) {
       all_status.replace("}{", ",");
       char cmnd_status[10];  // STATUS11
       snprintf_P(cmnd_status, sizeof(cmnd_status), PSTR(D_CMND_STATUS "0"));
-      MqttPublishPayloadPrefixTopic_P(STAT, cmnd_status, all_status.c_str());
+      MqttPublishPayloadPrefixTopicRulesProcess_P(STAT, cmnd_status, all_status.c_str());
       all_status = (const char*) nullptr;
     }
     if (0 == index) {
