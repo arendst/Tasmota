@@ -835,9 +835,8 @@ bool RulesProcessEvent(char *json_event)
   return serviced;
 }
 
-bool RulesProcess(void)
-{
-  return RulesProcessEvent(TasmotaGlobal.mqtt_data);
+bool RulesProcess(void) {
+  return RulesProcessEvent(XdrvMailbox.data);
 }
 
 void RulesInit(void)
