@@ -1,7 +1,7 @@
 # ESP Mail Client Arduino Library for ESP32 and ESP8266
 
 
-The detail and usage of the available functions in the latest version (1.0.13) are showed below.
+The detail and usage of the available functions in the latest version (1.2.0) are showed below.
 
 
 ## Global functions
@@ -117,6 +117,25 @@ return **`boolean`** The boolean value indicates the success of operation.
 
 ```C++
 bool sdBegin(uint8_t sck, uint8_t miso, uint8_t mosi, uint8_t ss);
+```
+
+
+
+
+
+
+#### Initialize the SD_MMC card (ESP32 only).
+
+param **`mountpoint`** The mounting point.
+
+param **`mode1bit`** Allow 1 bit data line (SPI mode).
+
+param **`format_if_mount_failed`** Format SD_MMC card if mount failed.
+
+return **`Boolean`** type status indicates the success of the operation.
+
+```C++
+bool sdMMCBegin(const char *mountpoint = "/sdcard", bool mode1bit = false, bool format_if_mount_failed = false);
 ```
 
 
@@ -703,6 +722,10 @@ This property has the sub properties
 
 ###### [const char*] content - The PLAIN text content of the message.
 
+###### [esp_mail_blob_message_content_t] blob - The blob that contins PLAIN text content of the message.
+
+###### [esp_mail_file_message_content_t] file - The file that contins PLAIN text content of the message.
+
 ###### [const char*] charSet - The character transcoding of the PLAIN text content of the message.
 
 ###### [const char*] content_type - The content type of message.
@@ -721,6 +744,10 @@ esp_mail_plain_body_t text;
 This propery has the sub properties
 
 ###### [const char*] content - The HTML content of the message.
+
+###### [esp_mail_blob_message_content_t] blob - The blob that contins HTML content of the message.
+
+###### [esp_mail_file_message_content_t] file - The file that contins HTML content of the message.
 
 ###### [const char*] charSet - The character transcoding of the HTML content of the message.
 
@@ -1327,6 +1354,61 @@ sp_mail_smtp_embed_message_type_inline = 1
 
 ```C++
 esp_mail_smtp_embed_message_type type;
+```
+
+
+
+
+
+
+## esp_mail_blob_message_content_t structured data
+
+
+The following properties are available from the esp_mail_blob_message_content_t data type.
+
+This data type is used for storing the blob info of message body.
+
+
+
+
+##### [Properties] The array of content in flash memory.
+
+```C++
+const uint8_t * data;
+```
+
+
+##### [Properties] The array size in bytes.
+
+```C++
+size_t size;
+```
+
+
+
+
+
+## esp_mail_file_message_content_t structured data
+
+
+The following properties are available from the esp_mail_file_message_content_t data type.
+
+This data type is used for storing the file info of message body.
+
+
+
+
+##### [Properties] The file path include its name.
+
+```C++
+const char *name;
+```
+
+
+##### [Properties] The type of file storages.
+
+```C++
+esp_mail_file_storage_type type;
 ```
 
 

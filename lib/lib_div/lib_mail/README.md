@@ -1,4 +1,4 @@
-# Mail Client Arduino Library for ESP32 and ESP8266 v 1.0.13
+# Mail Client Arduino Library for ESP32 and ESP8266 v 1.2.0
 
 [![Join the chat at https://gitter.im/mobizt/ESP_Mail_Client](https://badges.gitter.im/mobizt/ESP_Mail_Client.svg)](https://gitter.im/mobizt/ESP_Mail_Client?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
@@ -10,7 +10,7 @@ The library was tested and work well with ESP32s and ESP8266s based modules.
 
 This library was developed to replace the deprecated ESP32 Mail Client library with more options and features, better reliability and also conforms to the RFC standards.
 
-![ESP32 Mail](/media/images/esp-mail-client.svg)
+![ESP Mail](/media/images/esp-mail-client.svg)
 
 Copyright (c) 2021 K. Suwatchai (Mobizt).
 
@@ -19,14 +19,14 @@ Copyright (c) 2021 K. Suwatchai (Mobizt).
 * Support Espressif ESP32 and ESP8266 MCUs based devices.
 * Support TCP session reusage.
 * Support PLAIN, LOGIN and XOAUTH2 authentication mechanisms.
-* Secured connection with SSL and TLS.
+* Support secured (with SSL and TLS) and non-secure ports.
 * Support mailbox selection for Email reading and searching.
 * Support the content encodings e.g. quoted-printable and base64.
 * Support the content decodings e.g. base64, UTF-8, UTF-7, quoted-printable, ISO-8859-1 (latin1) and ISO-8859-11 (Thai).
 * Support many types of embedded contents e.g. inline images, attachments, parallel media attachments and RFC822 message.
 * Support full debuging.
-* Support SPIFFS and SD card for file storages.
-* Support Ethernet (ESP32).
+* Support flash memory and SD card for file storages which can be changed in [**ESP_Mail_FS.h**](/src/ESP_Mail_FS.h).
+* Support Ethernet (ESP32 using LAN8720, TLK110 and IP101 Ethernet boards). ESP8266 Ethernet is not yet supported.
 * Customizable operating configurations (see the examples for the usages)
 
 ## Tested Devices
@@ -65,6 +65,108 @@ Go to menu **Files** -> **Examples** -> **ESP-Mail-Client-master** and choose on
 
 
 
+
+
+
+## IDE Configuaration for ESP8266 MMU - Adjust the Ratio of ICACHE to IRAM
+
+### Arduino IDE
+
+When you update the ESP8266 Arduino Core SDK to v3.0.0, the memory can be configurable from Arduino IDE board settings.
+
+By default MMU **option 1** was selected, the free Heap can be low and may not suitable for the SSL client usage in this library.
+
+To increase the Heap, choose the MMU **option 3**, 16KB cache + 48KB IRAM and 2nd Heap (shared).
+
+![Arduino IDE config](/media/images/ArduinoIDE.png)
+
+
+More about MMU settings.
+https://arduino-esp8266.readthedocs.io/en/latest/mmu.html
+
+### PlatformIO IDE
+
+When Core SDK v3.0.0 becomes available in PlatformIO,
+
+By default the balanced ratio (32KB cache + 32KB IRAM) configuration is used.
+
+To increase the heap, **PIO_FRAMEWORK_ARDUINO_MMU_CACHE16_IRAM48_SECHEAP_SHARED** build flag should be assigned in platformio.ini.
+
+At the time of writing, to update SDK to v3.0.0 you can follow these steps.
+
+1. In platformio.ini, edit the config as the following
+
+```ini
+[env:d1_mini]
+platform = https://github.com/platformio/platform-espressif8266.git
+build_flags = -D PIO_FRAMEWORK_ARDUINO_MMU_CACHE16_IRAM48_SECHEAP_SHARED
+board = d1_mini
+framework = arduino
+monitor_speed = 115200
+```
+
+2. Delete this folder **C:\Users\UserName\\.platformio\platforms\espressif8266@src-?????????????**
+3. Delete .pio and .vscode folders in your project.
+4. Clean and Compile the project.
+
+
+
+The supportedd MMU build flags in PlatformIO.
+
+- **PIO_FRAMEWORK_ARDUINO_MMU_CACHE16_IRAM48**
+
+   16KB cache + 48KB IRAM (IRAM)
+
+- **PIO_FRAMEWORK_ARDUINO_MMU_CACHE16_IRAM48_SECHEAP_SHARED**
+
+   16KB cache + 48KB IRAM and 2nd Heap (shared)
+
+- **PIO_FRAMEWORK_ARDUINO_MMU_CACHE16_IRAM32_SECHEAP_NOTSHARED**
+
+   16KB cache + 32KB IRAM + 16KB 2nd Heap (not shared)
+
+- **PIO_FRAMEWORK_ARDUINO_MMU_EXTERNAL_128K**
+
+   128K External 23LC1024
+
+- **PIO_FRAMEWORK_ARDUINO_MMU_EXTERNAL_1024K**
+
+   1M External 64 MBit PSRAM
+
+- **PIO_FRAMEWORK_ARDUINO_MMU_CUSTOM**
+
+   Disables default configuration and expects user-specified flags
+
+   
+### Test code for MMU
+
+```cpp
+
+#include <Arduino.h>
+#include <umm_malloc/umm_heap_select.h>
+
+void setup() 
+{
+  Serial.begin(74880);
+  HeapSelectIram ephemeral;
+  Serial.printf("IRAM free: %6d bytes\r\n", ESP.getFreeHeap());
+  {
+    HeapSelectDram ephemeral;
+    Serial.printf("DRAM free: %6d bytes\r\n", ESP.getFreeHeap());
+  }
+}
+
+void loop() {
+  // put your main code here, to run repeatedly:
+}
+
+```
+
+
+
+
+
+
 ## Usage
 
 
@@ -76,6 +178,31 @@ See [Function Description](/src/README.md) for all available functions.
 The following examples showed the minimum usage which many options are not configured.
 
 The examples in the examples folder provide the full options usages.
+
+## Notes
+
+The string in the function's parameters or properties of structured data is the pointer to constant char or char array.
+
+You need to assign the string literal or char array or pointer to constant char to it.
+
+#### Ex.
+
+```cpp
+message.sender.name = "My Mail";
+message.sender.email = "sender or your Email address";
+```
+
+Or using String class
+
+```cpp
+String name = "John";
+String email = "john@mail.com";
+
+message.sender.name = name.c_str();
+message.sender.email = email.c_str();
+```
+
+
 
 
 ### Send the Email
