@@ -1,30 +1,30 @@
 /**
  * Mail Client Arduino Library for Espressif's ESP32 and ESP8266
- * 
+ *
  *   Version:   1.2.0
  *   Released:  May 17, 2021
  *
  *   Updates:
  * - Add support ESP8266 Core SDK v3.x.x.
- * 
- * 
- * This library allows Espressif's ESP32 and ESP8266 devices to send and read Email 
+ *
+ *
+ * This library allows Espressif's ESP32 and ESP8266 devices to send and read Email
  * through the SMTP and IMAP servers.
- * 
+ *
  * The MIT License (MIT)
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
- * 
- * 
+ *
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
  * the Software without restriction, including without limitation the rights to
  * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
  * the Software, and to permit persons to whom the Software is furnished to do so,
  * subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
  * FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
@@ -2746,20 +2746,16 @@ bool ESP_Mail_Client::sendAttachments(SMTPSession *smtp, SMTP_Message *msg, cons
       else
       {
 
-        if (att->file.storage_type == esp_mail_file_storage_type_univ) {       
-
-        } else {
-
         if (!_sdOk && att->file.storage_type == esp_mail_file_storage_type_sd)
           _sdOk = sdTest();
 
-        if (!_flashOk && att->file.storage_type == esp_mail_file_storage_type_flash) {
+        if (!_flashOk && att->file.storage_type == esp_mail_file_storage_type_flash)
 #if defined(ESP32)
-          //_flashOk = ESP_MAIL_FLASH_FS.begin(FORMAT_FLASH);
+          _flashOk = ESP_MAIL_FLASH_FS.begin(FORMAT_FLASH);
 #elif defined(ESP8266)
-          //_flashOk = ESP_MAIL_FLASH_FS.begin();
+          _flashOk = ESP_MAIL_FLASH_FS.begin();
 #endif
-        }
+
         if ((!_sdOk && att->file.storage_type == esp_mail_file_storage_type_sd) || (!_flashOk && att->file.storage_type == esp_mail_file_storage_type_flash))
         {
 
@@ -2812,13 +2808,12 @@ bool ESP_Mail_Client::openFileRead(SMTPSession *smtp, SMTP_Message *msg, SMTP_At
 
   if (att->file.storage_type == esp_mail_file_storage_type_sd) {
     file_existed = ESP_MAIL_SD_FS.exists(filepath.c_str());
-  }  
-  else if (att->file.storage_type == esp_mail_file_storage_type_flash) {
-  } 
-  else if (att->file.storage_type == esp_mail_file_storage_type_univ) {
+  } else if (att->file.storage_type == esp_mail_file_storage_type_flash) {
     file_existed = ESP_MAIL_FLASH_FS.exists(filepath.c_str());
-  }  
-}
+  } else if (att->file.storage_type == esp_mail_file_storage_type_univ) {
+    file_existed = ufsp->exists(filepath.c_str());
+  }
+
   if (!file_existed)
   {
 
@@ -2832,12 +2827,11 @@ bool ESP_Mail_Client::openFileRead(SMTPSession *smtp, SMTP_Message *msg, SMTP_At
 
     if (att->file.storage_type == esp_mail_file_storage_type_sd) {
       file_existed = ESP_MAIL_SD_FS.exists(filepath.c_str());
-    }  
-    else if (att->file.storage_type == esp_mail_file_storage_type_flash) {
-    }
-    else if (att->file.storage_type == esp_mail_file_storage_type_univ) {
+    } else if (att->file.storage_type == esp_mail_file_storage_type_flash) {
       file_existed = ESP_MAIL_FLASH_FS.exists(filepath.c_str());
-    }  
+    } else if (att->file.storage_type == esp_mail_file_storage_type_univ) {
+      file_existed = ufsp->exists(filepath.c_str());
+    }
   }
 
   if (!file_existed)
@@ -2861,17 +2855,16 @@ bool ESP_Mail_Client::openFileRead(SMTPSession *smtp, SMTP_Message *msg, SMTP_At
 
     if (att->file.storage_type == esp_mail_file_storage_type_sd) {
       file = ESP_MAIL_SD_FS.open(filepath.c_str(), FILE_READ);
-    }  
-    else if (att->file.storage_type == esp_mail_file_storage_type_flash) {
-    }  
+    } else if (att->file.storage_type == esp_mail_file_storage_type_flash) {
 #if defined(ESP32)
-      //file = ESP_MAIL_FLASH_FS.open(filepath.c_str(), FILE_READ);
+      file = ESP_MAIL_FLASH_FS.open(filepath.c_str(), FILE_READ);
 #elif defined(ESP8266)
-      //file = ESP_MAIL_FLASH_FS.open(filepath.c_str(), "r");
+      file = ESP_MAIL_FLASH_FS.open(filepath.c_str(), "r");
 #endif
-    else if (att->file.storage_type == esp_mail_file_storage_type_univ) {
+    } else if (att->file.storage_type == esp_mail_file_storage_type_univ) {
       file = ufsp->open(filepath.c_str(), "r");
     }
+
     if (!file)
       return false;
 
@@ -2904,10 +2897,13 @@ bool ESP_Mail_Client::openFileRead2(SMTPSession *smtp, SMTP_Message *msg, File &
     filepath += path;
   }
 
-  if (storageType == esp_mail_file_storage_type_sd)
+  if (storageType == esp_mail_file_storage_type_sd) {
     file_existed = ESP_MAIL_SD_FS.exists(filepath.c_str());
-  else if (storageType == esp_mail_file_storage_type_flash)
+  } else if (storageType == esp_mail_file_storage_type_flash) {
     file_existed = ESP_MAIL_FLASH_FS.exists(filepath.c_str());
+  } else if (storageType == esp_mail_file_storage_type_univ) {
+    file_existed = ufsp->exists(filepath.c_str());
+  }
 
   if (!file_existed)
   {
@@ -3034,18 +3030,16 @@ bool ESP_Mail_Client::sendInline(SMTPSession *smtp, SMTP_Message *msg, const std
         }
         else
         {
-          if (att->file.storage_type == esp_mail_file_storage_type_univ) {
-          } else {
           if (!_sdOk && att->file.storage_type == esp_mail_file_storage_type_sd)
             _sdOk = sdTest();
 
-          if (!_flashOk && att->file.storage_type == esp_mail_file_storage_type_flash) {
+          if (!_flashOk && att->file.storage_type == esp_mail_file_storage_type_flash)
 #if defined(ESP32)
-            //_flashOk = ESP_MAIL_FLASH_FS.begin(FORMAT_FLASH);
+            _flashOk = ESP_MAIL_FLASH_FS.begin(FORMAT_FLASH);
 #elif defined(ESP8266)
-            //_flashOk = ESP_MAIL_FLASH_FS.begin();
+            _flashOk = ESP_MAIL_FLASH_FS.begin();
 #endif
-          }
+
           if ((!_sdOk && att->file.storage_type == esp_mail_file_storage_type_sd) || (!_flashOk && att->file.storage_type == esp_mail_file_storage_type_flash))
           {
 
@@ -3934,14 +3928,14 @@ void ESP_Mail_Client::splitTk(std::string &str, std::vector<std::string> &tk, co
   std::string().swap(s);
 }
 
-/** Add the soft line break to the long text line (rfc 3676) 
+/** Add the soft line break to the long text line (rfc 3676)
  * and add Format=flowed parameter in the plain text content-type header.
  * We use the existing white space as a part of this soft line break
  * and set delSp="no" parameter to the header.
- * 
+ *
  * Some servers are not rfc 3676 compliant.
  * This causes the text lines are wrapped instead of joined.
- * 
+ *
  * Some mail clients trim the space before the line break
  * which makes the soft line break cannot be seen.
 */
@@ -6072,14 +6066,17 @@ void ESP_Mail_Client::saveHeader(IMAPSession *imap)
     if (file)
       file.close();
 
-    if (imap->_storageType == esp_mail_file_storage_type_sd)
+    if (imap->_storageType == esp_mail_file_storage_type_sd) {
       file = ESP_MAIL_SD_FS.open(headerFilePath.c_str(), FILE_WRITE);
-    else if (imap->_storageType == esp_mail_file_storage_type_flash)
+    } else if (imap->_storageType == esp_mail_file_storage_type_flash) {
 #if defined(ESP32)
       file = ESP_MAIL_FLASH_FS.open(headerFilePath.c_str(), FILE_WRITE);
 #elif defined(ESP8266)
       file = ESP_MAIL_FLASH_FS.open(headerFilePath.c_str(), "w");
 #endif
+    } else if (imap->_storageType == esp_mail_file_storage_type_univ) {
+      file = ufsp->open(headerFilePath.c_str(), "w");
+    }
 
     if (file)
     {
@@ -7613,9 +7610,9 @@ bool IMAPSession::closeSession()
   if (!_tcpConnected)
     return false;
 #if defined(ESP32)
-  /** 
+  /**
    * The strange behavior in ESP8266 SSL client, BearSSLWiFiClientSecure
-   * The client disposed without memory released after the server close 
+   * The client disposed without memory released after the server close
    * the connection due to LOGOUT command, which caused the memory leaks.
   */
   if (!MailClient.imapLogout(this))
@@ -8454,9 +8451,9 @@ bool SMTPSession::closeSession()
 
 /* Sign out */
 #if defined(ESP32)
-  /** 
+  /**
    * The strange behavior in ESP8266 SSL client, BearSSLWiFiClientSecure
-   * The client disposed without memory released after the server close 
+   * The client disposed without memory released after the server close
    * the connection due to QUIT command, which caused the memory leaks.
   */
   MailClient.smtpSendP(this, esp_mail_str_7, true);

@@ -2789,10 +2789,18 @@ private:
 #endif
 };
 
+
+//#define EMAIL_DEBUG_PRINTLN Serial.println
+//#define EMAIL_DEBUG_PRINT Serial.print
+#define EMAIL_DEBUG_PRINTLN Tasmota_print
+#define EMAIL_DEBUG_PRINT Tasmota_print
+
+extern void Tasmota_print(const char *);
+
 static void __attribute__((used)) esp_mail_debug(const char *msg)
 {
   delay(0);
-  Serial.println(msg);
+  EMAIL_DEBUG_PRINTLN(msg);
 }
 
 static void __attribute__((used))
@@ -2800,11 +2808,13 @@ esp_mail_debug_line(const char *msg, bool newline)
 {
   delay(0);
   if (newline)
-    Serial.println(msg);
+    EMAIL_DEBUG_PRINTLN(msg);
   else
-    Serial.print(msg);
+    EMAIL_DEBUG_PRINT(msg);
 }
 
 extern ESP_Mail_Client MailClient;
+
+extern FS *ufsp;
 
 #endif // ESP_Mail_Client_H
