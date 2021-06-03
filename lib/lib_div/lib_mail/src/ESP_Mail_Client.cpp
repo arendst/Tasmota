@@ -2753,13 +2753,13 @@ bool ESP_Mail_Client::sendAttachments(SMTPSession *smtp, SMTP_Message *msg, cons
         if (!_sdOk && att->file.storage_type == esp_mail_file_storage_type_sd)
           _sdOk = sdTest();
 
-        if (!_flashOk && att->file.storage_type == esp_mail_file_storage_type_flash)
+        if (!_flashOk && att->file.storage_type == esp_mail_file_storage_type_flash) {
 #if defined(ESP32)
-          _flashOk = ESP_MAIL_FLASH_FS.begin(FORMAT_FLASH);
+          //_flashOk = ESP_MAIL_FLASH_FS.begin(FORMAT_FLASH);
 #elif defined(ESP8266)
-          _flashOk = ESP_MAIL_FLASH_FS.begin();
+          //_flashOk = ESP_MAIL_FLASH_FS.begin();
 #endif
-
+        }
         if ((!_sdOk && att->file.storage_type == esp_mail_file_storage_type_sd) || (!_flashOk && att->file.storage_type == esp_mail_file_storage_type_flash))
         {
 
@@ -2814,8 +2814,10 @@ bool ESP_Mail_Client::openFileRead(SMTPSession *smtp, SMTP_Message *msg, SMTP_At
     file_existed = ESP_MAIL_SD_FS.exists(filepath.c_str());
   }  
   else if (att->file.storage_type == esp_mail_file_storage_type_flash) {
-} else if (att->file.storage_type == esp_mail_file_storage_type_univ) {
+  } 
+  else if (att->file.storage_type == esp_mail_file_storage_type_univ) {
     file_existed = ESP_MAIL_FLASH_FS.exists(filepath.c_str());
+  }  
 }
   if (!file_existed)
   {
