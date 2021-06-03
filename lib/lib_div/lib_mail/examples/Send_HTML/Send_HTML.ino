@@ -11,7 +11,7 @@
  * 
  * Github: https://github.com/mobizt/ESP-Mail-Client
  * 
- * Copyright (c) 2020 mobizt
+ * Copyright (c) 2021 mobizt
  *
 */
 
@@ -24,7 +24,6 @@
 #include <ESP8266WiFi.h>
 #endif
 #include <ESP_Mail_Client.h>
-
 
 #define WIFI_SSID "################"
 #define WIFI_PASSWORD "################"
@@ -87,6 +86,39 @@ void setup()
   /* Declare the session config data */
   ESP_Mail_Session session;
 
+  /** ########################################################
+   * Some properties of SMTPSession data and parameters pass to 
+   * SMTP_Message class accept the pointer to constant char
+   * i.e. const char*. 
+   * 
+   * You may assign a string literal to that properties or function 
+   * like below example.
+   *   
+   * session.login.user_domain = "mydomain.net";
+   * session.login.user_domain = String("mydomain.net").c_str();
+   * 
+   * or
+   * 
+   * String doman = "mydomain.net";
+   * session.login.user_domain = domain.c_str();
+   * 
+   * And
+   * 
+   * String name = "Jack " + String("dawson");
+   * String email = "jack_dawson" + String(123) + "@mail.com";
+   * 
+   * message.addRecipient(name.c_str(), email.c_str());
+   * 
+   * message.addHeader(String("Message-ID: <abcde.fghij@gmail.com>").c_str());
+   * 
+   * or
+   * 
+   * String header = "Message-ID: <abcde.fghij@gmail.com>";
+   * message.addHeader(header.c_str());
+   * 
+   * ###########################################################
+  */
+
   /* Set the session config */
   session.server.host_name = SMTP_HOST;
   session.server.port = SMTP_PORT;
@@ -103,7 +135,8 @@ void setup()
   message.subject = "Test sending html Email";
   message.addRecipient("Admin", "####@#####_dot_com");
 
-  message.html.content = "<p>This is the <span style=\"color:#ff0000;\">html text</span> message.</p><p>The message was sent via ESP device.</p>";
+  String htmlMsg = "<p>This is the <span style=\"color:#ff0000;\">html text</span> message.</p><p>The message was sent via ESP device.</p>";
+  message.html.content = htmlMsg.c_str();
 
   /** The html text message character set e.g.
    * us-ascii
@@ -142,7 +175,6 @@ void setup()
 
   /* Set the custom message header */
   message.addHeader("Message-ID: <abcde.fghij@gmail.com>");
-  
 
   /* Connect to server with the session config */
   if (!smtp.connect(&session))

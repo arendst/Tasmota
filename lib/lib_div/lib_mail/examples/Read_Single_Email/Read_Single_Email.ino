@@ -6,7 +6,7 @@
  * 
  * Github: https://github.com/mobizt/ESP-Mail-Client
  * 
- * Copyright (c) 2020 mobizt
+ * Copyright (c) 2021 mobizt
  *
 */
 
@@ -109,6 +109,21 @@ void setup()
 
     /* Declare the session config data */
     ESP_Mail_Session session;
+
+    /** ########################################################
+     * Some properties of IMAP_Config and ESP_Mail_Session data
+     * accept the pointer to constant char i.e. const char*. 
+     * 
+     * You may assign a string literal to that properties like 
+     * below example.
+     *   
+     * config.storage.saved_path = String("/email_data").c_str();
+     * 
+     * String folder = "INBOX";
+     * imap.selectFolder(folder.c_str());
+     * 
+     * ###########################################################
+    */
 
     /* Set the session config */
     session.server.host_name = IMAP_HOST;

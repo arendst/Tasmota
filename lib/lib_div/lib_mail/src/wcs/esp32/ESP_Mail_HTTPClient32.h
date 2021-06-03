@@ -1,11 +1,11 @@
 /*
- * Customized version of ESP32 HTTPClient Library.
- *
- * v 1.1.1
- *
+ * Customized version of ESP32 HTTPClient Library. 
+ * 
+ * v 1.1.5
+ * 
  * The MIT License (MIT)
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
- *
+ * 
  * HTTPClient Arduino library for ESP32
  *
  * Copyright (c) 2015 Markus Sattler. All rights reserved.
@@ -39,7 +39,13 @@
 #include <FS.h>
 //#include <SPIFFS.h>
 #include <SD.h>
+#include "ESP_Mail_FS.h"
 #include "ESP_Mail_WCS32.h"
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#define ESP_MAIL_FLASH_FS ESP_Mail_DEFAULT_FLASH_FS
+#define ESP_MAIL_SD_FS ESP_Mail_DEFAULT_SD_FS
 
 #if __has_include(<WiFiEspAT.h>) || __has_include(<espduino.h>)
 #error WiFi UART bridge was not supported.
@@ -58,52 +64,6 @@ enum esp_mail_file_storage_type
   esp_mail_file_storage_type_univ
 };
 
-class ESP_Mail_TransportTraits
-{
-public:
-  virtual ~ESP_Mail_TransportTraits() {}
-
-  virtual std::unique_ptr<ESP_Mail_WCS32> create()
-  {
-    return std::unique_ptr<ESP_Mail_WCS32>(new ESP_Mail_WCS32());
-  }
-
-  virtual bool
-  verify(ESP_Mail_WCS32 &client, const char *host, bool starttls, DebugMsgCallback cb)
-  {
-    return true;
-  }
-};
-
-class ESP_Mail_TLSTraits : public ESP_Mail_TransportTraits
-{
-public:
-  ESP_Mail_TLSTraits(const char *CAcert, const char *clicert = nullptr, const char *clikey = nullptr) : _cacert(CAcert), _clicert(clicert), _clikey(clikey) {}
-
-  std::unique_ptr<ESP_Mail_WCS32> create() override
-  {
-    return std::unique_ptr<ESP_Mail_WCS32>(new ESP_Mail_WCS32());
-  }
-
-  bool verify(ESP_Mail_WCS32 &client, const char *host, bool starttls, DebugMsgCallback cb) override
-  {
-    ESP_Mail_WCS32 &wcs = static_cast<ESP_Mail_WCS32 &>(client);
-    wcs.setCACert(_cacert);
-    wcs.setCertificate(_clicert);
-    wcs.setPrivateKey(_clikey);
-    wcs.setSTARTTLS(starttls);
-    wcs.setDebugCB(cb);
-    return true;
-  }
-
-protected:
-  const char *_cacert;
-  const char *_clicert;
-  const char *_clikey;
-};
-
-typedef std::unique_ptr<ESP_Mail_TransportTraits> ESP_Mail_TransportTraitsPtr;
-
 class ESP_Mail_HTTPClient32
 {
 public:
@@ -115,7 +75,7 @@ public:
     * \param host - Host name without protocols.
     * \param port - Server's port.
     * \return True as default.
-    * If no certificate string provided, use (const char*)NULL to CAcert param
+    * If no certificate string provided, use (const char*)NULL to CAcert param 
     */
   bool begin(const char *host, uint16_t port);
 
@@ -129,7 +89,7 @@ public:
     * Establish http connection if header provided and send it, send payload if provided.
     * \param header - The header string (constant chars array).
     * \param payload - The payload string (constant chars array), optional.
-    * \return http status code, Return zero if new http connection and header and/or payload sent
+    * \return http status code, Return zero if new http connection and header and/or payload sent 
     * with no error or no header and payload provided. If obly payload provided, no new http connection was established.
     */
   int send(const char *header, const char *payload);
@@ -138,7 +98,7 @@ public:
     * Send extra header without making new http connection (if send has been called)
     * \param header - The header string (constant chars array).
     * \return True if header sending success.
-    * Need to call send with header first.
+    * Need to call send with header first. 
     */
   bool send(const char *header);
 
@@ -147,6 +107,11 @@ public:
     * \return WiFi client pointer.
     */
   WiFiClient *stream(void);
+
+  /**
+   * Set insecure mode
+  */
+  void setInsecure();
 
   ESP_Mail_WCS32 *_stream(void);
   size_t _ns_print(const char *buf);
@@ -166,9 +131,7 @@ public:
 
 protected:
   DebugMsgCallback _debugCallback = NULL;
-  ESP_Mail_TransportTraitsPtr transportTraits;
-  std::unique_ptr<ESP_Mail_WCS32> _wcs;
-  std::unique_ptr<char> _cacert;
+  std::unique_ptr<ESP_Mail_WCS32> _wcs = std::unique_ptr<ESP_Mail_WCS32>(new ESP_Mail_WCS32());
 
   std::string _host = "";
   uint16_t _port = 0;

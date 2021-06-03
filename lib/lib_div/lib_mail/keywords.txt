@@ -33,6 +33,7 @@ setFlag KEYWORD2
 addFlag KEYWORD2
 removeFlag  KEYWORD2
 sdBegin KEYWORD2
+sdMMCBegin  KEYWORD2
 connect KEYWORD2
 closeSession    KEYWORD2
 debug   KEYWORD2
@@ -100,27 +101,27 @@ deleteFolder    KEYWORD2
 
 
 #######################################
-# Struct (LITERAL1)
+# Struct (KEYWORD3)
 #######################################
 
-esp_mail_email_info_t   LITERAL1
-esp_mail_plain_body_t   LITERAL1
-esp_mail_html_body_t    LITERAL1
-esp_mail_smtp_msg_response_t    LITERAL1
-esp_mail_smtp_enable_option_t   LITERAL1
-esp_mail_email_info_t   LITERAL1
-esp_mail_folder_info_item_t LITERAL1
-esp_mail_sesson_sever_config_t  LITERAL1
-esp_mail_sesson_login_config_t  LITERAL1
-esp_mail_sesson_secure_config_t LITERAL1
-esp_mail_sesson_cert_config_t   LITERAL1
-esp_mail_imap_fetch_config_t    LITERAL1
-esp_mail_imap_search_config_t   LITERAL1
-esp_mail_imap_limit_config_t    LITERAL1
-esp_mail_imap_enable_config_t   LITERAL1
-esp_mail_imap_download_config_t LITERAL1
-esp_mail_imap_storage_config_t  LITERAL1
+esp_mail_email_info_t   KEYWORD3
+esp_mail_plain_body_t   KEYWORD3
+esp_mail_html_body_t    KEYWORD3
+esp_mail_smtp_msg_response_t    KEYWORD3
+esp_mail_smtp_enable_option_t   KEYWORD3
+esp_mail_email_info_t   KEYWORD3
+esp_mail_folder_info_item_t KEYWORD3
+esp_mail_sesson_sever_config_t  KEYWORD3
+esp_mail_sesson_login_config_t  KEYWORD3
+esp_mail_sesson_secure_config_t KEYWORD3
+esp_mail_sesson_cert_config_t   KEYWORD3
+esp_mail_imap_fetch_config_t    KEYWORD3
+esp_mail_imap_search_config_t   KEYWORD3
+esp_mail_imap_limit_config_t    KEYWORD3
+esp_mail_imap_enable_config_t   KEYWORD3
+esp_mail_imap_download_config_t KEYWORD3
+esp_mail_imap_storage_config_t  KEYWORD3
 
-esp_mail_file_storage_type_none LITERAL1
-esp_mail_file_storage_type_flash    LITERAL1
-esp_mail_file_storage_type_sd   LITERAL1
+esp_mail_file_storage_type_none KEYWORD3
+esp_mail_file_storage_type_flash    KEYWORD3
+esp_mail_file_storage_type_sd   KEYWORD3
