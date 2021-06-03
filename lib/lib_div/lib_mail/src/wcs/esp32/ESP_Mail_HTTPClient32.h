@@ -60,7 +60,8 @@ enum esp_mail_file_storage_type
 {
   esp_mail_file_storage_type_none,
   esp_mail_file_storage_type_flash,
-  esp_mail_file_storage_type_sd
+  esp_mail_file_storage_type_sd,
+  esp_mail_file_storage_type_univ
 };
 
 class ESP_Mail_HTTPClient32
