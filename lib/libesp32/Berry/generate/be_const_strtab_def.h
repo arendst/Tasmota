@@ -222,7 +222,8 @@ be_define_const_str(FALLING, "FALLING", 2851701064u, 0, 7, &be_const_str_SYMBOL_
 be_define_const_str(SYMBOL_NEXT, "SYMBOL_NEXT", 1102844455u, 0, 11, &be_const_str_lv_label);
 be_define_const_str(lv_label, "lv_label", 4199664246u, 0, 8, NULL);
 be_define_const_str(str, "str", 3259748752u, 0, 3, NULL);
-be_define_const_str(ZIGBEE_TX, "ZIGBEE_TX", 25119256u, 0, 9, NULL);
+be_define_const_str(ZIGBEE_TX, "ZIGBEE_TX", 25119256u, 0, 9, &be_const_str_erase);
+be_define_const_str(erase, "erase", 1010949589u, 0, 5, NULL);
 be_define_const_str(ILI9341_CS, "ILI9341_CS", 3519318851u, 0, 10, &be_const_str_VL53L0X_XSHUT1);
 be_define_const_str(VL53L0X_XSHUT1, "VL53L0X_XSHUT1", 2341134183u, 0, 14, &be_const_str_time_reached);
 be_define_const_str(time_reached, "time_reached", 2075136773u, 0, 12, NULL);
@@ -868,6 +869,6 @@ static const bstring* const m_string_table[] = {
 
 static const struct bconststrtab m_const_string_table = {
     .size = 281,
-    .count = 562,
+    .count = 563,
     .table = m_string_table
 };
