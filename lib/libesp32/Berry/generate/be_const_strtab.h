@@ -223,6 +223,7 @@ extern const bcstring be_const_str_SYMBOL_NEXT;
 extern const bcstring be_const_str_lv_label;
 extern const bcstring be_const_str_str;
 extern const bcstring be_const_str_ZIGBEE_TX;
+extern const bcstring be_const_str_erase;
 extern const bcstring be_const_str_ILI9341_CS;
 extern const bcstring be_const_str_VL53L0X_XSHUT1;
 extern const bcstring be_const_str_time_reached;

@@ -26,6 +26,7 @@ be_extern_native_module(light);
 be_extern_native_module(gpio);
 be_extern_native_module(energy);
 be_extern_native_module(webserver);
+be_extern_native_module(flash);
 #ifdef USE_LVGL
 be_extern_native_module(lvgl);
 #endif // USE_LVGL
@@ -83,6 +84,7 @@ BERRY_LOCAL const bntvmodule* const be_module_table[] = {
 #ifdef USE_WEBSERVER
     &be_native_module(webserver),
 #endif // USE_WEBSERVER
+    &be_native_module(flash),
 
 
     /* user-defined modules register end */
