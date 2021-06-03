@@ -703,25 +703,28 @@ void WSContentFlush(void) {
   }
 }
 
-void _WSContentSendBuffer(void) {
-  int len = strlen(TasmotaGlobal.mqtt_data);
+void _WSContentSendBuffer(const char * content = nullptr) {
+  if (content == nullptr) {
+    content = TasmotaGlobal.mqtt_data;
+  }
+  int len = strlen(content);
 
   if (0 == len) {                                  // No content
     return;
   }
-  else if (len == sizeof(TasmotaGlobal.mqtt_data)) {
-    AddLog(LOG_LEVEL_INFO, PSTR("HTP: Content too large"));
-  }
+  // else if (len == sizeof(TasmotaGlobal.mqtt_data)) {
+  //   AddLog(LOG_LEVEL_INFO, PSTR("HTP: Content too large"));
+  // }
   else if (len < CHUNKED_BUFFER_SIZE) {            // Append chunk buffer with small content
-    Web.chunk_buffer += TasmotaGlobal.mqtt_data;
+    Web.chunk_buffer += content;
     len = Web.chunk_buffer.length();
   }
 
   if (len >= CHUNKED_BUFFER_SIZE) {                // Either content or chunk buffer is oversize
     WSContentFlush();                              // Send chunk buffer before possible content oversize
   }
-  if (strlen(TasmotaGlobal.mqtt_data) >= CHUNKED_BUFFER_SIZE) {  // Content is oversize
-    _WSContentSend(TasmotaGlobal.mqtt_data);                     // Send content
+  if (strlen(content) >= CHUNKED_BUFFER_SIZE) {  // Content is oversize
+    _WSContentSend(content);                     // Send content
   }
 }
 
@@ -753,25 +756,21 @@ void WSContentSend_PD(const char* formatP, ...)    // Content send snprintf_P ch
   // This uses char strings. Be aware of sending %% if % is needed
   va_list arg;
   va_start(arg, formatP);
-  int len = ext_vsnprintf_P(TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), formatP, arg);
+  char * content = ext_vsnprintf_malloc_P(formatP, arg);
+  if (content == nullptr) { return; }   // avoid crash
+  size_t len = strlen(content);
   va_end(arg);
-
-#ifdef DEBUG_TASMOTA_CORE
-  if (len > (sizeof(TasmotaGlobal.mqtt_data) -1)) {
-    TasmotaGlobal.mqtt_data[33] = '\0';
-    DEBUG_CORE_LOG(PSTR("ERROR: WSContentSend_PD size %d > mqtt_data size %d. Start of data [%s...]"), len, sizeof(TasmotaGlobal.mqtt_data), TasmotaGlobal.mqtt_data);
-  }
-#endif
 
   if (D_DECIMAL_SEPARATOR[0] != '.') {
     for (uint32_t i = 0; i < len; i++) {
-      if ('.' == TasmotaGlobal.mqtt_data[i]) {
-        TasmotaGlobal.mqtt_data[i] = D_DECIMAL_SEPARATOR[0];
+      if ('.' == content[i]) {
+        content[i] = D_DECIMAL_SEPARATOR[0];
       }
     }
   }
 
-  _WSContentSendBuffer();
+  _WSContentSendBuffer(content);
+  free(content);
 }
 
 void WSContentStart_P(const char* title, bool auth)
