@@ -704,14 +704,27 @@ void WSContentFlush(void) {
   }
 }
 
-void _WSContentSendBuffer(const char* content) {
+void WSContentSend(const char* content, size_t size) {
+  WSContentFlush();
+  _WSContentSend(content, size);
+}
+
+void _WSContentSendBuffer(bool decimal, const char * formatP, va_list arg) {
+  char* content = ext_vsnprintf_malloc_P(formatP, arg);
   if (content == nullptr) { return; }              // Avoid crash
 
   int len = strlen(content);
-  if (0 == len) {                                  // No content
-    return;
+  if (0 == len) { return; }                        // No content
+
+  if (decimal && (D_DECIMAL_SEPARATOR[0] != '.')) {
+    for (uint32_t i = 0; i < len; i++) {
+      if ('.' == content[i]) {
+        content[i] = D_DECIMAL_SEPARATOR[0];
+      }
+    }
   }
-  else if (len < CHUNKED_BUFFER_SIZE) {            // Append chunk buffer with small content
+
+  if (len < CHUNKED_BUFFER_SIZE) {                 // Append chunk buffer with small content
     Web.chunk_buffer += content;
     len = Web.chunk_buffer.length();
   }
@@ -722,43 +735,24 @@ void _WSContentSendBuffer(const char* content) {
   if (strlen(content) >= CHUNKED_BUFFER_SIZE) {    // Content is oversize
     _WSContentSend(content);                       // Send content
   }
-}
 
-void WSContentSend(const char* content, size_t size) {
-  WSContentFlush();
-  _WSContentSend(content, size);
+  free(content);
 }
 
 void WSContentSend_P(const char* formatP, ...) {   // Content send snprintf_P char data
   // This uses char strings. Be aware of sending %% if % is needed
   va_list arg;
   va_start(arg, formatP);
-  char* content = ext_vsnprintf_malloc_P(formatP, arg);
+  _WSContentSendBuffer(false, formatP, arg);
   va_end(arg);
-
-  _WSContentSendBuffer(content);
-  free(content);
 }
 
 void WSContentSend_PD(const char* formatP, ...) {  // Content send snprintf_P char data checked for decimal separator
   // This uses char strings. Be aware of sending %% if % is needed
   va_list arg;
   va_start(arg, formatP);
-  char* content = ext_vsnprintf_malloc_P(formatP, arg);
+  _WSContentSendBuffer(true, formatP, arg);
   va_end(arg);
-
-  if (D_DECIMAL_SEPARATOR[0] != '.') {
-    if (content == nullptr) { return; }            // Avoid crash
-    size_t len = strlen(content);
-    for (uint32_t i = 0; i < len; i++) {
-      if ('.' == content[i]) {
-        content[i] = D_DECIMAL_SEPARATOR[0];
-      }
-    }
-  }
-
-  _WSContentSendBuffer(content);
-  free(content);
 }
 
 void WSContentStart_P(const char* title, bool auth)
@@ -800,11 +794,8 @@ void WSContentSendStyle_P(const char* formatP, ...)
     // This uses char strings. Be aware of sending %% if % is needed
     va_list arg;
     va_start(arg, formatP);
-    char* content = ext_vsnprintf_malloc_P(formatP, arg);
+    _WSContentSendBuffer(false, formatP, arg);
     va_end(arg);
-
-    _WSContentSendBuffer(content);
-    free(content);
   }
   WSContentSend_P(HTTP_HEAD_STYLE3, WebColor(COL_TEXT),
 #ifdef FIRMWARE_MINIMAL
