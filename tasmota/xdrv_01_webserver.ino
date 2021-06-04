@@ -1782,13 +1782,8 @@ void HandleWifiConfiguration(void) {
       TasmotaGlobal.save_data_counter = 0;               // Stop auto saving data - Updating Settings
       Settings.save_data = 0;
 
-      if (MAX_WIFI_OPTION == Web.old_wificonfig) {
-        Web.old_wificonfig = Settings.sta_config;
-        //AddLog(LOG_LEVEL_INFO,PSTR("WFM: save wificonfig %d and set to 2 (settings=%d)"), Web.old_wificonfig, Settings.sta_config);
-      } else {
-        //AddLog(LOG_LEVEL_INFO,PSTR("WFM: wificonfig already saved %d, set to 2 (settings=%d)"), Web.old_wificonfig, Settings.sta_config);
-      }
-      TasmotaGlobal.wifi_state_flag = Settings.sta_config = WIFI_MANAGER;;
+      if (MAX_WIFI_OPTION == Web.old_wificonfig) { Web.old_wificonfig = Settings.sta_config; }
+      TasmotaGlobal.wifi_state_flag = Settings.sta_config = WIFI_MANAGER;
 
       TasmotaGlobal.sleep = 0;                           // Disable sleep
       TasmotaGlobal.restart_flag = 0;                    // No restart
@@ -2271,7 +2266,7 @@ void HandleInformation(void)
 #endif
   if (Settings.flag4.network_wifi) {
     int32_t rssi = WiFi.RSSI();
-    WSContentSend_P(PSTR("}1" D_AP "%d " D_SSID " (" D_RSSI ")}2%s (%d%%, %d dBm)"), Settings.sta_active +1, HtmlEscape(SettingsText(SET_STASSID1 + Settings.sta_active)).c_str(), WifiGetRssiAsQuality(rssi), rssi);
+    WSContentSend_P(PSTR("}1" D_AP "%d " D_SSID " (" D_RSSI ")}2%s (%d%%, %d dBm) 11%c"), Settings.sta_active +1, HtmlEscape(SettingsText(SET_STASSID1 + Settings.sta_active)).c_str(), WifiGetRssiAsQuality(rssi), rssi, pgm_read_byte(&kWifiPhyMode[WiFi.getPhyMode() & 0x3]) );
     WSContentSend_P(PSTR("}1" D_HOSTNAME "}2%s%s"), TasmotaGlobal.hostname, (Mdns.begun) ? PSTR(".local") : "");
 #if LWIP_IPV6
     String ipv6_addr = WifiGetIPv6();
@@ -3268,9 +3263,6 @@ bool Xdrv01(uint8_t function)
 //          TasmotaGlobal.blinks = 255;                    // Signal wifi connection with blinks
           if (MAX_WIFI_OPTION != Web.old_wificonfig) {
             TasmotaGlobal.wifi_state_flag = Settings.sta_config = Web.old_wificonfig;
-            //AddLog(LOG_LEVEL_INFO,PSTR("WFM: Restore wificonfig %d"), Web.old_wificonfig);
-          } else {
-            //AddLog(LOG_LEVEL_INFO,PSTR("WFM: Keep wificonfig %d"), Settings.sta_config);
           }
           TasmotaGlobal.save_data_counter = Web.save_data_counter;
           Settings.save_data = Web.save_data_counter;
