@@ -21,9 +21,8 @@
 #ifdef USE_BERRY
 
 #include <berry.h>
-// #include "esp_rom/esp_rom_md5.h"
-// #include "esp_rom_md5.h"
 #include "mbedtls/md5.h"
+#include "be_mem.h"
 
 /*********************************************************************************************\
  * Md5 class
