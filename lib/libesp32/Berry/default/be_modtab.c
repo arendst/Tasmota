@@ -96,6 +96,7 @@ extern void be_load_tasmota_ntvlib(bvm *vm);
 extern void be_load_wirelib(bvm *vm);
 extern void be_load_driverlib(bvm *vm);
 extern void be_load_driver_i2c_lib(bvm *vm);
+extern void be_load_md5_lib(bvm *vm);
 
 #ifdef USE_LVGL
 extern void be_load_lvgl_color_lib(bvm *vm);
@@ -114,6 +115,7 @@ BERRY_API void be_load_custom_libs(bvm *vm)
 #endif
     be_load_tasmota_ntvlib(vm);
     be_load_driverlib(vm);
+    be_load_md5_lib(vm);
 #ifdef USE_I2C
     be_load_wirelib(vm);
     be_load_driver_i2c_lib(vm);
