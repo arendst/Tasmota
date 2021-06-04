@@ -47,7 +47,8 @@
 #endif                                                   //   If the first is true, but this is false, the device will restart but the user will see
                                                          //   a window telling that the WiFi Configuration was Ok and that the window can be closed.
 
-const uint16_t CHUNKED_BUFFER_SIZE = (MESSZ / 2) - 100;  // Chunk buffer size (should be smaller than half mqtt_data size = MESSZ)
+//const uint16_t CHUNKED_BUFFER_SIZE = (MESSZ / 2) - 100;  // Chunk buffer size (should be smaller than half mqtt_data size = MESSZ)
+const uint16_t CHUNKED_BUFFER_SIZE = 800;                // Chunk buffer size
 
 const uint16_t HTTP_REFRESH_TIME = 2345;                 // milliseconds
 const uint16_t HTTP_RESTART_RECONNECT_TIME = 10000;      // milliseconds - Allow time for restart and wifi reconnect
@@ -689,7 +690,7 @@ void _WSContentSend(const char* content, size_t size) {  // Lowest level sendCon
 #ifdef USE_DEBUG_DRIVER
   ShowFreeMem(PSTR("WSContentSend"));
 #endif
-  DEBUG_CORE_LOG(PSTR("WEB: Chunk size %d/%d"), size, sizeof(TasmotaGlobal.mqtt_data));
+  DEBUG_CORE_LOG(PSTR("WEB: Chunk size %d"), size);
 }
 
 void _WSContentSend(const String& content) {       // Low level sendContent for all core versions
@@ -703,18 +704,13 @@ void WSContentFlush(void) {
   }
 }
 
-void _WSContentSendBuffer(const char * content = nullptr) {
-  if (content == nullptr) {
-    content = TasmotaGlobal.mqtt_data;
-  }
-  int len = strlen(content);
+void _WSContentSendBuffer(const char* content) {
+  if (content == nullptr) { return; }              // Avoid crash
 
+  int len = strlen(content);
   if (0 == len) {                                  // No content
     return;
   }
-  // else if (len == sizeof(TasmotaGlobal.mqtt_data)) {
-  //   AddLog(LOG_LEVEL_INFO, PSTR("HTP: Content too large"));
-  // }
   else if (len < CHUNKED_BUFFER_SIZE) {            // Append chunk buffer with small content
     Web.chunk_buffer += content;
     len = Web.chunk_buffer.length();
@@ -723,8 +719,8 @@ void _WSContentSendBuffer(const char * content = nullptr) {
   if (len >= CHUNKED_BUFFER_SIZE) {                // Either content or chunk buffer is oversize
     WSContentFlush();                              // Send chunk buffer before possible content oversize
   }
-  if (strlen(content) >= CHUNKED_BUFFER_SIZE) {  // Content is oversize
-    _WSContentSend(content);                     // Send content
+  if (strlen(content) >= CHUNKED_BUFFER_SIZE) {    // Content is oversize
+    _WSContentSend(content);                       // Send content
   }
 }
 
@@ -733,35 +729,27 @@ void WSContentSend(const char* content, size_t size) {
   _WSContentSend(content, size);
 }
 
-void WSContentSend_P(const char* formatP, ...)     // Content send snprintf_P char data
-{
+void WSContentSend_P(const char* formatP, ...) {   // Content send snprintf_P char data
   // This uses char strings. Be aware of sending %% if % is needed
   va_list arg;
   va_start(arg, formatP);
-  int len = ext_vsnprintf_P(TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), formatP, arg);
+  char* content = ext_vsnprintf_malloc_P(formatP, arg);
   va_end(arg);
 
-#ifdef DEBUG_TASMOTA_CORE
-  if (len > (sizeof(TasmotaGlobal.mqtt_data) -1)) {
-    TasmotaGlobal.mqtt_data[33] = '\0';
-    DEBUG_CORE_LOG(PSTR("ERROR: WSContentSend_P size %d > mqtt_data size %d. Start of data [%s...]"), len, sizeof(TasmotaGlobal.mqtt_data), TasmotaGlobal.mqtt_data);
-  }
-#endif
-
-  _WSContentSendBuffer();
+  _WSContentSendBuffer(content);
+  free(content);
 }
 
-void WSContentSend_PD(const char* formatP, ...)    // Content send snprintf_P char data checked for decimal separator
-{
+void WSContentSend_PD(const char* formatP, ...) {  // Content send snprintf_P char data checked for decimal separator
   // This uses char strings. Be aware of sending %% if % is needed
   va_list arg;
   va_start(arg, formatP);
-  char * content = ext_vsnprintf_malloc_P(formatP, arg);
-  if (content == nullptr) { return; }   // avoid crash
-  size_t len = strlen(content);
+  char* content = ext_vsnprintf_malloc_P(formatP, arg);
   va_end(arg);
 
   if (D_DECIMAL_SEPARATOR[0] != '.') {
+    if (content == nullptr) { return; }            // Avoid crash
+    size_t len = strlen(content);
     for (uint32_t i = 0; i < len; i++) {
       if ('.' == content[i]) {
         content[i] = D_DECIMAL_SEPARATOR[0];
@@ -812,17 +800,11 @@ void WSContentSendStyle_P(const char* formatP, ...)
     // This uses char strings. Be aware of sending %% if % is needed
     va_list arg;
     va_start(arg, formatP);
-    int len = ext_vsnprintf_P(TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), formatP, arg);
+    char* content = ext_vsnprintf_malloc_P(formatP, arg);
     va_end(arg);
 
-#ifdef DEBUG_TASMOTA_CORE
-  if (len > (sizeof(TasmotaGlobal.mqtt_data) -1)) {
-    TasmotaGlobal.mqtt_data[33] = '\0';
-    DEBUG_CORE_LOG(PSTR("ERROR: WSContentSendStyle_P size %d > mqtt_data size %d. Start of data [%s...]"), len, sizeof(TasmotaGlobal.mqtt_data), TasmotaGlobal.mqtt_data);
-  }
-#endif
-
-    _WSContentSendBuffer();
+    _WSContentSendBuffer(content);
+    free(content);
   }
   WSContentSend_P(HTTP_HEAD_STYLE3, WebColor(COL_TEXT),
 #ifdef FIRMWARE_MINIMAL
@@ -2098,12 +2080,11 @@ void HandleOtherConfiguration(void) {
   WSContentSendStyle();
 
   TemplateJson();
-  char stemp[strlen(TasmotaGlobal.mqtt_data) +1];
-  strlcpy(stemp, TasmotaGlobal.mqtt_data, sizeof(stemp));  // Get JSON template
-  WSContentSend_P(HTTP_FORM_OTHER, stemp, (USER_MODULE == Settings.module) ? PSTR(" checked disabled") : "",
+  WSContentSend_P(HTTP_FORM_OTHER, TasmotaGlobal.mqtt_data, (USER_MODULE == Settings.module) ? PSTR(" checked disabled") : "",
     (Settings.flag.mqtt_enabled) ? PSTR(" checked") : "",   // SetOption3 - Enable MQTT
     SettingsText(SET_FRIENDLYNAME1), SettingsText(SET_DEVICENAME));
 
+  char stemp[32];
   uint32_t maxfn = (TasmotaGlobal.devices_present > MAX_FRIENDLYNAMES) ? MAX_FRIENDLYNAMES : (!TasmotaGlobal.devices_present) ? 1 : TasmotaGlobal.devices_present;
 #ifdef USE_SONOFF_IFAN
   if (IsModuleIfan()) { maxfn = 1; }
