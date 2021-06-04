@@ -200,6 +200,7 @@
 #define D_JSON_VOLUME "Volume"
 #define D_JSON_WEIGHT "Weight"
 #define D_JSON_WIFI "Wifi"
+#define D_JSON_WIFI_MODE "Mode"
 #define D_JSON_WRONG "Wrong"
 #define D_JSON_WRONG_PARAMETERS "Wrong parameters"
 #define D_JSON_YESTERDAY "Yesterday"
