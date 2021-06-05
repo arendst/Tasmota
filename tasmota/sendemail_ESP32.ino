@@ -151,7 +151,7 @@ uint16_t SendMail(char *buffer) {
 #endif
 
 #ifdef DEBUG_EMAIL_PORT
-  AddLog_P(LOG_LEVEL_INFO, PSTR("%s - %d - %s - %s"), mserv, port, user, passwd);
+  AddLog(LOG_LEVEL_INFO, PSTR("%s - %d - %s - %s"), mserv, port, user, passwd);
 #endif
 
 #ifdef EMAIL_FROM
@@ -161,7 +161,7 @@ uint16_t SendMail(char *buffer) {
 #endif
 
 #ifdef DEBUG_EMAIL_PORT
-  AddLog_P(LOG_LEVEL_INFO, PSTR("%s - %s - %s - %s"), from, to, subject, cmd);
+  AddLog(LOG_LEVEL_INFO, PSTR("%s - %s - %s - %s"), from, to, subject, cmd);
 #endif
 
 

@@ -366,7 +366,7 @@ void TryResponseAppend_P(const char *format, ...)
   int slen = ResponseSize() - 1 - mlen;
   if (dlen >= slen)
   {
-    AddLog_P(LOG_LEVEL_ERROR, PSTR("%s (%u/%u):"), kHAssError1, dlen, slen);
+    AddLog(LOG_LEVEL_ERROR, PSTR("%s (%u/%u):"), kHAssError1, dlen, slen);
     va_start(args, format);
     char log_data[MAX_LOGSZ];
     vsnprintf_P(log_data, sizeof(log_data), format, args);
@@ -469,7 +469,7 @@ void HAssAnnounceRelayLight(void)
       // suppress shutter relays
     } else if ((i < Light.device) && !RelayX) {
       err_flag = true;
-      AddLog_P(LOG_LEVEL_ERROR, PSTR("%s"), kHAssError2);
+      AddLog(LOG_LEVEL_ERROR, PSTR("%s"), kHAssError2);
     } else {
       if (Settings.flag.hass_discovery && (RelayX || (Light.device > 0) && (max_lights > 0)) && !err_flag )
       {                    // SetOption19 - Control Home Assistant automatic discovery (See SetOption59)
@@ -898,7 +898,7 @@ void HAssAnnounceSensors(void)
       JsonParserObject root = parser.getRootObject();
       if (!root)
       {
-        AddLog_P(LOG_LEVEL_ERROR, PSTR("%s '%s' (ERR1)"), kHAssError3, sensordata);
+        AddLog(LOG_LEVEL_ERROR, PSTR("%s '%s' (ERR1)"), kHAssError3, sensordata);
         continue;
       }
       for (auto sensor_key : root)
@@ -909,7 +909,7 @@ void HAssAnnounceSensors(void)
 
         if (!sensors)
         {
-          AddLog_P(LOG_LEVEL_ERROR, PSTR("%s '%s' (ERR2)"), kHAssError3, sensorname);
+          AddLog(LOG_LEVEL_ERROR, PSTR("%s '%s' (ERR2)"), kHAssError3, sensorname);
           continue;
         }
 

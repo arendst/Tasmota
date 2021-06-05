@@ -1554,7 +1554,7 @@ void SerialInput(void)
       if (serial_buffer_overrun) {
         AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_COMMAND "Serial buffer overrun"));
       } else {
-        AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_COMMAND "%s"), TasmotaGlobal.serial_in_buffer);
+        AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_COMMAND "%s"), TasmotaGlobal.serial_in_buffer);
         ExecuteCommand(TasmotaGlobal.serial_in_buffer, SRC_SERIAL);
       }
       TasmotaGlobal.serial_in_byte_counter = 0;

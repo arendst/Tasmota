@@ -1138,7 +1138,7 @@ void LightInit(void)
   }
   LightCalcPWMRange();
 #ifdef DEBUG_LIGHT
-  AddLog_P(LOG_LEVEL_DEBUG_MORE, "LightInit Light.pwm_multi_channels=%d Light.subtype=%d Light.device=%d TasmotaGlobal.devices_present=%d",
+  AddLog(LOG_LEVEL_DEBUG_MORE, "LightInit Light.pwm_multi_channels=%d Light.subtype=%d Light.device=%d TasmotaGlobal.devices_present=%d",
     Light.pwm_multi_channels, Light.subtype, Light.device, TasmotaGlobal.devices_present);
 #endif
 
@@ -1637,7 +1637,7 @@ void LightSetPower(void)
     Light.wakeup_active--;
   }
 #ifdef DEBUG_LIGHT
-  AddLog_P(LOG_LEVEL_DEBUG_MORE, "LightSetPower XdrvMailbox.index=%d Light.old_power=%d Light.power=%d mask=%d shift=%d",
+  AddLog(LOG_LEVEL_DEBUG_MORE, "LightSetPower XdrvMailbox.index=%d Light.old_power=%d Light.power=%d mask=%d shift=%d",
     XdrvMailbox.index, Light.old_power, Light.power, mask, shift);
 #endif
   if (Light.power != Light.old_power) {

@@ -132,7 +132,7 @@ void PollUdp(void)
       AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("UDP: Packet (%d/%d)"), len, pack_len);
 #endif  // ESP32
 
-      // AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("\n%s"), packet_buffer);
+      // AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("\n%s"), packet_buffer);
 
       // Simple Service Discovery Protocol (SSDP)
       if (Settings.flag2.emulation) {
@@ -151,7 +151,7 @@ void PollUdp(void)
             udp_remote_port = PortUdp.remotePort();
 #endif
 
-            // AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("UDP: M-SEARCH Packet from %_I:%d\n%s"),
+            // AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("UDP: M-SEARCH Packet from %_I:%d\n%s"),
             //   (uint32_t)udp_remote_ip, udp_remote_port, packet_buffer);
 
             LowerCase(packet_buffer, packet_buffer);

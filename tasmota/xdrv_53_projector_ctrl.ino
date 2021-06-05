@@ -103,7 +103,7 @@ projector_ctrl_pre_init(void)
 
 	sc = (struct projector_ctrl_softc_s *)malloc(sizeof(*sc));
 	if (sc == NULL) {
-		AddLog_P(LOG_LEVEL_ERROR, PSTR(PROJECTOR_CTRL_LOGNAME ": unable to allocate state"));
+		AddLog(LOG_LEVEL_ERROR, PSTR(PROJECTOR_CTRL_LOGNAME ": unable to allocate state"));
 		return;
 	}
 
@@ -113,7 +113,7 @@ projector_ctrl_pre_init(void)
 	    Pin(GPIO_PROJECTOR_CTRL_TX), 2);
 
 	if (!sc->sc_serial->begin(baudrate, 2)) {
-		AddLog_P(LOG_LEVEL_ERROR, PSTR(PROJECTOR_CTRL_LOGNAME ": unable to begin serial "
+		AddLog(LOG_LEVEL_ERROR, PSTR(PROJECTOR_CTRL_LOGNAME ": unable to begin serial "
 		    "(baudrate %d)"), baudrate);
 		goto del;
 	}
@@ -125,7 +125,7 @@ projector_ctrl_pre_init(void)
 
 	sc->sc_device = ++(TasmotaGlobal.devices_present); /* claim a POWER device slot */
 
-	AddLog_P(LOG_LEVEL_INFO, PSTR(PROJECTOR_CTRL_LOGNAME ": new RELAY%d, polling serial for Projector status"), sc->sc_device);
+	AddLog(LOG_LEVEL_INFO, PSTR(PROJECTOR_CTRL_LOGNAME ": new RELAY%d, polling serial for Projector status"), sc->sc_device);
 
 	projector_ctrl_sc = sc;
 	return;
@@ -156,13 +156,13 @@ projector_ctrl_write(struct projector_ctrl_softc_s *sc, const uint8_t *bytes, co
 	serial->write(cksum);
 #ifdef DEBUG_PROJECTOR_CTRL
 	char hex_b[(len + 1) * 2];
-	AddLog_P(LOG_LEVEL_DEBUG,PSTR(PROJECTOR_CTRL_LOGNAME ": RAW bytes %s %02x"),
+	AddLog(LOG_LEVEL_DEBUG,PSTR(PROJECTOR_CTRL_LOGNAME ": RAW bytes %s %02x"),
 	    ToHex_P((uint8_t *)bytes, len, hex_b, sizeof(hex_b)), cksum);
 #endif //DEBUG_PROJECTOR_CTRL
 #else  //!USE_PROJECTOR_CTRL_NEC
 #ifdef DEBUG_PROJECTOR_CTRL
 	char hex_b[(len + 1) * 2];
-	AddLog_P(LOG_LEVEL_DEBUG,PSTR(PROJECTOR_CTRL_LOGNAME ": RAW bytes %s"),
+	AddLog(LOG_LEVEL_DEBUG,PSTR(PROJECTOR_CTRL_LOGNAME ": RAW bytes %s"),
 	    ToHex_P((uint8_t *)bytes, len, hex_b, sizeof(hex_b)));
 #endif //DEBUG_PROJECTOR_CTRL
 #endif //!USE_PROJECTOR_CTRL_NEC
@@ -182,7 +182,7 @@ projector_ctrl_request(struct projector_ctrl_softc_s *sc, const uint8_t command)
 	if ((sc->sc_dev_state!=PROJECTOR_CTRL_DEV_UNKNOWN)&&(sc->sc_ser_state!=PROJECTOR_CTRL_S_IDLE)) {
 		if ((command!=PROJECTOR_CTRL_S_QRY_PWR)&&(command!=PROJECTOR_CTRL_S_QRY_TYPE)) {
 		sc->sc_ser_next_cmd=(projector_ctrl_serial_state_e)command;
-		AddLog_P(LOG_LEVEL_INFO, PSTR(PROJECTOR_CTRL_LOGNAME
+		AddLog(LOG_LEVEL_INFO, PSTR(PROJECTOR_CTRL_LOGNAME
 			": Serial CMD %02x already running, enqueueing next (%02x)"), sc->sc_ser_state, command);
 		};
 		return;
@@ -199,7 +199,7 @@ projector_ctrl_request(struct projector_ctrl_softc_s *sc, const uint8_t command)
 			sc->sc_ser_next_cmd=PROJECTOR_CTRL_S_UNCONNECTED;
 			sc->sc_ticks=0;
 #ifdef DEBUG_PROJECTOR_CTRL
-			AddLog_P(LOG_LEVEL_DEBUG, PSTR(PROJECTOR_CTRL_LOGNAME
+			AddLog(LOG_LEVEL_DEBUG, PSTR(PROJECTOR_CTRL_LOGNAME
 				": Sending CMD %02x"), command);
 #endif //DEBUG_PROJECTOR_CTRL
 			projector_ctrl_write(sc,e->send_codes,e->send_len);
@@ -207,7 +207,7 @@ projector_ctrl_request(struct projector_ctrl_softc_s *sc, const uint8_t command)
 		}
 	};
 #ifdef DEBUG_PROJECTOR_CTRL
-	AddLog_P(LOG_LEVEL_DEBUG, PSTR(PROJECTOR_CTRL_LOGNAME
+	AddLog(LOG_LEVEL_DEBUG, PSTR(PROJECTOR_CTRL_LOGNAME
 		": Undefined serial command %02x"), command);
 #endif //DEBUG_PROJECTOR_CTRL
 	return;
@@ -227,7 +227,7 @@ projector_ctrl_parse(struct projector_ctrl_softc_s *sc, const uint8_t byte)
 	case PROJECTOR_CTRL_S_IDLE:
 	case PROJECTOR_CTRL_S_UNCONNECTED:
 #ifdef DEBUG_PROJECTOR_CTRL
-		AddLog_P(LOG_LEVEL_DEBUG, PSTR(PROJECTOR_CTRL_LOGNAME
+		AddLog(LOG_LEVEL_DEBUG, PSTR(PROJECTOR_CTRL_LOGNAME
 			   ": Spurious input in state %02x, got %02x, going UNCONNECTED"), nstate, byte);
 #endif //DEBUG_PROJECTOR_CTRL
 		return(PROJECTOR_CTRL_S_UNCONNECTED);
@@ -239,18 +239,18 @@ projector_ctrl_parse(struct projector_ctrl_softc_s *sc, const uint8_t byte)
 			if (byte==cmd->pass_first_byte){
 				sc->sc_ser_result=PROJECTOR_CTRL_R_PASS;
 #ifdef DEBUG_PROJECTOR_CTRL
-				AddLog_P(LOG_LEVEL_DEBUG, PSTR(PROJECTOR_CTRL_LOGNAME
+				AddLog(LOG_LEVEL_DEBUG, PSTR(PROJECTOR_CTRL_LOGNAME
 				   ": CMD %02x PASS, 1st byte %02x"), nstate, byte);
 #endif //DEBUG_PROJECTOR_CTRL
 			}else if (byte==cmd->fail_first_byte){
 				sc->sc_ser_result=PROJECTOR_CTRL_R_FAIL;
 #ifdef DEBUG_PROJECTOR_CTRL
-				AddLog_P(LOG_LEVEL_DEBUG, PSTR(PROJECTOR_CTRL_LOGNAME
+				AddLog(LOG_LEVEL_DEBUG, PSTR(PROJECTOR_CTRL_LOGNAME
 				   ": CMD %02x FAIL, 1st byte %02x"), nstate, byte);
 #endif //DEBUG_PROJECTOR_CTRL
 			}else{
 #ifdef DEBUG_PROJECTOR_CTRL
-				AddLog_P(LOG_LEVEL_DEBUG, PSTR(PROJECTOR_CTRL_LOGNAME
+				AddLog(LOG_LEVEL_DEBUG, PSTR(PROJECTOR_CTRL_LOGNAME
 				   ": CMD %02x UNKNOWN, 1st byte %02x, going UNCONNECTED"), nstate, byte);
 #endif //DEBUG_PROJECTOR_CTRL
 				return(PROJECTOR_CTRL_S_UNCONNECTED);
@@ -265,7 +265,7 @@ projector_ctrl_parse(struct projector_ctrl_softc_s *sc, const uint8_t byte)
 #ifdef USE_PROJECTOR_CTRL_NEC
 				if(sc->sc_ser_sum!=byte){
 #ifdef DEBUG_PROJECTOR_CTRL
-					AddLog_P(LOG_LEVEL_DEBUG, PSTR(PROJECTOR_CTRL_LOGNAME
+					AddLog(LOG_LEVEL_DEBUG, PSTR(PROJECTOR_CTRL_LOGNAME
 						": Failed cksum for CMD %02x. Got %02x bytes, computed cksum: %02x, recevied cksum: %02x, going UNCONNECTED"),
 						nstate, sc->sc_ser_len, sc->sc_ser_sum, byte);
 #endif	//DEBUG_PROJECTOR_CTRL
@@ -274,7 +274,7 @@ projector_ctrl_parse(struct projector_ctrl_softc_s *sc, const uint8_t byte)
 #endif	//USE_PROJECTOR_CTRL_NEC
 				{
 #ifdef DEBUG_PROJECTOR_CTRL
-					AddLog_P(LOG_LEVEL_DEBUG, PSTR(PROJECTOR_CTRL_LOGNAME
+					AddLog(LOG_LEVEL_DEBUG, PSTR(PROJECTOR_CTRL_LOGNAME
 						": CMD %02x PASS, got %02x bytes, retval %02x, going IDLE"), nstate, sc->sc_ser_len, sc->sc_ser_value);
 #endif //DEBUG_PROJECTOR_CTRL
 					nstate=PROJECTOR_CTRL_S_IDLE;
@@ -291,7 +291,7 @@ projector_ctrl_parse(struct projector_ctrl_softc_s *sc, const uint8_t byte)
 #ifdef USE_PROJECTOR_CTRL_NEC
 				if(sc->sc_ser_sum!=byte){
 #ifdef DEBUG_PROJECTOR_CTRL
-					AddLog_P(LOG_LEVEL_DEBUG, PSTR(PROJECTOR_CTRL_LOGNAME
+					AddLog(LOG_LEVEL_DEBUG, PSTR(PROJECTOR_CTRL_LOGNAME
 						": Failed cksum for CMD %02x. Got %02x bytes, computed cksum: %02x, receied cksum: %02x, going UNCONNECTED"),
 						nstate, sc->sc_ser_len, sc->sc_ser_sum, byte);
 #endif	//DEBUG_PROJECTOR_CTRL
@@ -300,7 +300,7 @@ projector_ctrl_parse(struct projector_ctrl_softc_s *sc, const uint8_t byte)
 #endif	//USE_PROJECTOR_CTRL_NEC
 				{
 #ifdef DEBUG_PROJECTOR_CTRL
-					AddLog_P(LOG_LEVEL_DEBUG, PSTR(PROJECTOR_CTRL_LOGNAME
+					AddLog(LOG_LEVEL_DEBUG, PSTR(PROJECTOR_CTRL_LOGNAME
 						": CMD %02x FAIL, got %02x bytes, retval %02x, going idle"), nstate, sc->sc_ser_len, sc->sc_ser_value);
 #endif //DEBUG_PROJECTOR_CTRL
 					nstate=PROJECTOR_CTRL_S_IDLE;
@@ -333,13 +333,13 @@ projector_ctrl_loop(struct projector_ctrl_softc_s *sc)
 			case PROJECTOR_CTRL_S_UNCONNECTED:
 				if (sc->sc_dev_state!=PROJECTOR_CTRL_DEV_UNKNOWN){
 					sc->sc_dev_state=PROJECTOR_CTRL_DEV_UNKNOWN;
-					AddLog_P(LOG_LEVEL_INFO,PSTR(PROJECTOR_CTRL_LOGNAME ": DISCONNECTED(unexpected input)"));
+					AddLog(LOG_LEVEL_INFO,PSTR(PROJECTOR_CTRL_LOGNAME ": DISCONNECTED(unexpected input)"));
 				}
 				break;
 			case PROJECTOR_CTRL_S_IDLE:
 				if ((oldstate==PROJECTOR_CTRL_S_QRY_PWR)&&(sc->sc_ser_result==PROJECTOR_CTRL_R_PASS)){
 					if(sc->sc_dev_state==PROJECTOR_CTRL_DEV_UNKNOWN){
-						AddLog_P(LOG_LEVEL_INFO,PSTR(PROJECTOR_CTRL_LOGNAME ": CONNECTED"));
+						AddLog(LOG_LEVEL_INFO,PSTR(PROJECTOR_CTRL_LOGNAME ": CONNECTED"));
 					};
 					if((  (sc->sc_ser_value==PROJECTOR_CTRL_QRYPWR_ON)
 					    ||(sc->sc_ser_value==PROJECTOR_CTRL_QRYPWR_COOLING)
@@ -396,7 +396,7 @@ projector_ctrl_tick(struct projector_ctrl_softc_s *sc)
 		};
 	}else if(sc->sc_ticks > sc->sc_cmd_info->timeout_ticks){
 		//current CMD has ran out of time, drop connection
-		AddLog_P(LOG_LEVEL_INFO,PSTR(PROJECTOR_CTRL_LOGNAME ": DISCONNECTED(timeout)"));
+		AddLog(LOG_LEVEL_INFO,PSTR(PROJECTOR_CTRL_LOGNAME ": DISCONNECTED(timeout)"));
 		sc->sc_dev_state=PROJECTOR_CTRL_DEV_UNKNOWN;
 		sc->sc_ser_state=PROJECTOR_CTRL_S_UNCONNECTED;
 	};
@@ -410,7 +410,7 @@ projector_ctrl_set_power(struct projector_ctrl_softc_s *sc)
 	if (TasmotaGlobal.active_device==PROJECTOR_CTRL_PWR_BY_RELAY){
 		if ((sc->sc_dev_state == PROJECTOR_CTRL_DEV_PWR_ON) && (0==bitRead(XdrvMailbox.index, PROJECTOR_CTRL_PWR_BY_RELAY -1))) {
 			TasmotaGlobal.power = bitSet(TasmotaGlobal.power,PROJECTOR_CTRL_PWR_BY_RELAY -1);
-			AddLog_P(LOG_LEVEL_INFO,PSTR(PROJECTOR_CTRL_LOGNAME ": Keep RELAY" xxstr(PROJECTOR_CTRL_PWR_BY_RELAY) " ON"));
+			AddLog(LOG_LEVEL_INFO,PSTR(PROJECTOR_CTRL_LOGNAME ": Keep RELAY" xxstr(PROJECTOR_CTRL_PWR_BY_RELAY) " ON"));
 		} else {
 			return(false);
 		};

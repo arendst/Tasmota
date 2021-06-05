@@ -1227,7 +1227,7 @@ void TuyaSerialInput(void)
       if (Settings.flag3.tuya_serial_mqtt_publish) {  // SetOption66 - Enable TuyaMcuReceived messages over Mqtt
         MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_TUYA_MCU_RECEIVED));
       } else {
-        AddLog_P(LOG_LEVEL_DEBUG, TasmotaGlobal.mqtt_data);
+        AddLog(LOG_LEVEL_DEBUG, TasmotaGlobal.mqtt_data);
       }
       XdrvRulesProcess(0);
 

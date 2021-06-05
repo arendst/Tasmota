@@ -315,7 +315,7 @@ bool DomoticzMqttData(void) {
   }
   if (!found) { return true; }  // No command received
 
-  AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_DOMOTICZ D_RECEIVED_TOPIC " %s, " D_DATA " %s"), XdrvMailbox.topic, XdrvMailbox.data);
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_DOMOTICZ D_RECEIVED_TOPIC " %s, " D_DATA " %s"), XdrvMailbox.topic, XdrvMailbox.data);
 
   domoticz_update_flag = false;
   return false;  // Process new data

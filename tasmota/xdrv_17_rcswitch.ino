@@ -100,7 +100,7 @@ void RfInit(void) {
 void CmndRfProtocol(void) {
   if (!PinUsed(GPIO_RFRECV)) { return; }
 
-//  AddLog_P(LOG_LEVEL_INFO, PSTR("RFR:CmndRfRxProtocol:: index:%d usridx:%d data_len:%d data:\"%s\""),XdrvMailbox.index, XdrvMailbox.usridx, XdrvMailbox.data_len,XdrvMailbox.data);
+//  AddLog(LOG_LEVEL_INFO, PSTR("RFR:CmndRfRxProtocol:: index:%d usridx:%d data_len:%d data:\"%s\""),XdrvMailbox.index, XdrvMailbox.usridx, XdrvMailbox.data_len,XdrvMailbox.data);
 
   uint64_t thisdat;
   if (1 == XdrvMailbox.usridx) {

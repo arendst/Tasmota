@@ -240,7 +240,7 @@ void CommandHandler(char* topicBuf, char* dataBuf, uint32_t data_len)
     }
   }
 
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR("CMD: Grp %d, Cmnd '%s', Idx %d, Len %d, Data '%s'"),
+  AddLog(LOG_LEVEL_DEBUG, PSTR("CMD: Grp %d, Cmnd '%s', Idx %d, Len %d, Data '%s'"),
     grpflg, type, index, data_len, (binary_data) ? HexToString((uint8_t*)dataBuf, data_len).c_str() : dataBuf);
 
   if (type != nullptr) {

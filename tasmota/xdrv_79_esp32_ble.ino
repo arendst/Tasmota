@@ -974,14 +974,14 @@ int SafeAddLog_P(uint32_t loglevel, PGM_P formatP, ...) {
   vsnprintf_P(BLE_temp_log_data, maxlen, formatP, arg);
   va_end(arg);
 #ifdef USE_NATIVE_LOGGING
-  AddLog_P(loglevel, PSTR("%s"), BLE_temp_log_data);
+  AddLog(loglevel, PSTR("%s"), BLE_temp_log_data);
   return 1;
 #else
   if (thistask == TasmotaMainTask){
     loglevel = LOG_LEVEL_ERROR;
     snprintf(BLE_temp_log_data + strlen(BLE_temp_log_data), 13, "-!MAINTHREAD!");
     xSemaphoreGive(SafeLogMutex); // release mutex
-    AddLog_P(loglevel, PSTR("%s"), BLE_temp_log_data);
+    AddLog(loglevel, PSTR("%s"), BLE_temp_log_data);
     return 0;
   }
 
@@ -3395,7 +3395,7 @@ static void BLEDiag()
   uint32_t totalCount = BLEAdvertisment.totalCount;
   uint32_t deviceCount = seenDevices.size();
 #ifdef BLE_ESP32_DEBUG
-  if (BLEDebugMode > 0) AddLog_P(LOG_LEVEL_INFO,PSTR("BLE: scans:%u,advertisements:%u,devices:%u,resets:%u,BLEStop:%d,BLERunning:%d,BLERunningScan:%d,BLELoopCount:%u,BLEOpCount:%u"), BLEScanCount, totalCount, deviceCount, BLEResets, BLEStop, BLERunning, BLERunningScan, BLELoopCount, BLEOpCount);
+  if (BLEDebugMode > 0) AddLog(LOG_LEVEL_INFO,PSTR("BLE: scans:%u,advertisements:%u,devices:%u,resets:%u,BLEStop:%d,BLERunning:%d,BLERunningScan:%d,BLELoopCount:%u,BLEOpCount:%u"), BLEScanCount, totalCount, deviceCount, BLEResets, BLEStop, BLERunning, BLERunningScan, BLELoopCount, BLEOpCount);
 #endif
 }
 

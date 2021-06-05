@@ -480,7 +480,7 @@ void SetFlashMode(uint8_t mode)
 
 void CmndHelp(void)
 {
-  AddLog_P(LOG_LEVEL_INFO, PSTR("HLP: %s"), kDebugCommands);
+  AddLog(LOG_LEVEL_INFO, PSTR("HLP: %s"), kDebugCommands);
   ResponseCmndDone();
 }
 

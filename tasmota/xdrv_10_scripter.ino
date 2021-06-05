@@ -7788,7 +7788,7 @@ String request;
 
   request = String("POST ") + "/api/login/Basic" + " HTTP/1.1\r\n" + "Host: " + host + "\r\n" + cert + "\r\n" + "Content-Type: application/json" + "\r\n";
   httpsClient->print(request);
-  AddLog_P(LOG_LEVEL_INFO,PSTR(">>> post request %s"),(char*)request.c_str());
+  AddLog(LOG_LEVEL_INFO,PSTR(">>> post request %s"),(char*)request.c_str());
 
   String line = httpsClient->readStringUntil('\n');
   AddLog(LOG_LEVEL_INFO,PSTR(">>> post response 1a %s"),(char*)line.c_str());
@@ -7801,7 +7801,7 @@ String request;
                     "Host: " + host +
                     "\r\n" + "Connection: close\r\n\r\n";
   httpsClient->print(request);
-//  AddLog_P(LOG_LEVEL_INFO,PSTR(">>> get request %s"),(char*)request.c_str());
+//  AddLog(LOG_LEVEL_INFO,PSTR(">>> get request %s"),(char*)request.c_str());
 
   while (httpsClient->connected()) {
     String line = httpsClient->readStringUntil('\n');

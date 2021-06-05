@@ -2881,7 +2881,7 @@ void HandleConsoleRefresh(void)
 {
   String svalue = Webserver->arg(F("c1"));
   if (svalue.length() && (svalue.length() < MQTT_MAX_PACKET_SIZE)) {
-    AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_COMMAND "%s"), svalue.c_str());
+    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_COMMAND "%s"), svalue.c_str());
     ExecuteWebCommand((char*)svalue.c_str(), SRC_WEBCONSOLE);
   }
 
@@ -3246,11 +3246,11 @@ bool Xdrv01(uint8_t function)
       }
       if (Web.wifi_test_counter) {
         Web.wifi_test_counter--;
-        AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_WIFI D_TRYING_TO_CONNECT " %s"), SettingsText(SET_STASSID1));
+        AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_WIFI D_TRYING_TO_CONNECT " %s"), SettingsText(SET_STASSID1));
         if ( WifiCheck_hasIP(WiFi.localIP()) ) {  // Got IP - Connection Established
           Web.wifi_test_counter = 0;
           Web.wifiTest = WIFI_TEST_FINISHED_SUCCESSFUL;
-          AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_CMND_SSID "1 %s: " D_CONNECTED " - " D_IP_ADDRESS " %_I"), SettingsText(SET_STASSID1), (uint32_t)WiFi.localIP());
+          AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_CMND_SSID "1 %s: " D_CONNECTED " - " D_IP_ADDRESS " %_I"), SettingsText(SET_STASSID1), (uint32_t)WiFi.localIP());
 //          TasmotaGlobal.blinks = 255;                    // Signal wifi connection with blinks
           if (MAX_WIFI_OPTION != Web.old_wificonfig) {
             TasmotaGlobal.wifi_state_flag = Settings.sta_config = Web.old_wificonfig;

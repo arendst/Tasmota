@@ -2755,7 +2755,7 @@ void MI32ShowOneMISensor(){
       id);
 
     MqttPublish(SensorTopic);
-    //AddLog_P(LOG_LEVEL_DEBUG,PSTR("M32: %s: show some %d %s"),D_CMND_MI32, MI32.mqttCurrentSlot, TasmotaGlobal.mqtt_data);
+    //AddLog(LOG_LEVEL_DEBUG,PSTR("M32: %s: show some %d %s"),D_CMND_MI32, MI32.mqttCurrentSlot, TasmotaGlobal.mqtt_data);
   }
   MI32.mqttCurrentSingleSlot++;
 }
@@ -3011,7 +3011,7 @@ void MI32DiscoveryOneMISensor(){
       //vTaskDelay(100/ portTICK_PERIOD_MS);
     }
   } // end if hass discovery
-  //AddLog_P(LOG_LEVEL_DEBUG,PSTR("M32: %s: show some %d %s"),D_CMND_MI32, MI32.mqttCurrentSlot, TasmotaGlobal.mqtt_data);
+  //AddLog(LOG_LEVEL_DEBUG,PSTR("M32: %s: show some %d %s"),D_CMND_MI32, MI32.mqttCurrentSlot, TasmotaGlobal.mqtt_data);
 #endif //USE_HOME_ASSISTANT
 
 }

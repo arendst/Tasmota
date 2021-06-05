@@ -104,7 +104,7 @@ bool TelegramInit(void) {
 }
 
 String TelegramConnectToTelegram(String command) {
-//  AddLog_P(LOG_LEVEL_DEBUG, PSTR("TGM: Cmnd %s"), command.c_str());
+//  AddLog(LOG_LEVEL_DEBUG, PSTR("TGM: Cmnd %s"), command.c_str());
 
   if (!TelegramInit()) { return ""; }
 
@@ -201,13 +201,13 @@ void TelegramGetUpdates(uint32_t offset) {
   //  }
   // ]}
 
-  AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("TGM: Response %s"), response.c_str());
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("TGM: Response %s"), response.c_str());
 
   JsonParser parser((char*)response.c_str());
   JsonParserObject root = parser.getRootObject();
   if (root) {
 
-//    AddLog_P(LOG_LEVEL_DEBUG, PSTR("TGM: Sent Update request messages up to %s"), offset.c_str());
+//    AddLog(LOG_LEVEL_DEBUG, PSTR("TGM: Sent Update request messages up to %s"), offset.c_str());
 
     JsonParserArray arr = root[PSTR("result")];
     uint32_t max_updates = arr.size();
@@ -235,7 +235,7 @@ void TelegramGetUpdates(uint32_t offset) {
         }
         Telegram.next_update_id = Telegram.message[i].update_id +1;  // Write id of last read message
 
-        AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("TGM: Parsed update_id %d, chat_id %s, text \"%s\""), Telegram.message[i].update_id, Telegram.message[i].chat_id.c_str(), Telegram.message[i].text.c_str());
+        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("TGM: Parsed update_id %d, chat_id %s, text \"%s\""), Telegram.message[i].update_id, Telegram.message[i].chat_id.c_str(), Telegram.message[i].text.c_str());
       }
     } else {
 //      AddLog(LOG_LEVEL_DEBUG, PSTR("TGM: No new messages"));
@@ -256,7 +256,7 @@ bool TelegramSendMessage(String chat_id, String text) {
     String command = "bot" + _token + "/sendMessage?chat_id=" + chat_id + "&text=" + UrlEncode(text);
     String response = TelegramConnectToTelegram(command);
 
-//    AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("TGM: Response %s"), response.c_str());
+//    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("TGM: Response %s"), response.c_str());
 
     if (response.startsWith("{\"ok\":true")) {
 //      AddLog(LOG_LEVEL_DEBUG, PSTR("TGM: Message sent"));
@@ -279,7 +279,7 @@ void TelegramSendGetMe(void) {
 
   // {"ok":true,"result":{"id":1179906608,"is_bot":true,"first_name":"Tasmota","username":"tasmota_bot","can_join_groups":true,"can_read_all_group_messages":false,"supports_inline_queries":false}}
 
-//  AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("TGM: Response %s"), response.c_str());
+//  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("TGM: Response %s"), response.c_str());
 }
 */
 

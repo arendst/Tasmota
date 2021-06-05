@@ -434,7 +434,7 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule, bool stop_all
   // rule_param = "0.100" or "%VAR1%"
 
 #ifdef DEBUG_RULES
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR("RUL-RM1: Teleperiod %d, Expr %s, Name %s, Param %s"), Rules.teleperiod, rule_expr.c_str(), rule_name.c_str(), rule_param.c_str());
+  AddLog(LOG_LEVEL_DEBUG, PSTR("RUL-RM1: Teleperiod %d, Expr %s, Name %s, Param %s"), Rules.teleperiod, rule_expr.c_str(), rule_name.c_str(), rule_param.c_str());
 #endif
 
   char rule_svalue[80] = { 0 };
@@ -510,13 +510,13 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule, bool stop_all
 
   String buf = event;                                  // Copy the string into a new buffer that will be modified
 
-//AddLog_P(LOG_LEVEL_DEBUG, PSTR("RUL-RM2: RulesRuleMatch |%s|"), buf.c_str());
+//AddLog(LOG_LEVEL_DEBUG, PSTR("RUL-RM2: RulesRuleMatch |%s|"), buf.c_str());
 
   buf.replace("\\"," ");                               // "Disable" any escaped control character
   JsonParser parser((char*)buf.c_str());
   JsonParserObject obj = parser.getRootObject();
   if (!obj) {
-//    AddLog_P(LOG_LEVEL_DEBUG, PSTR("RUL: Event too long (%d)"), event.length());
+//    AddLog(LOG_LEVEL_DEBUG, PSTR("RUL: Event too long (%d)"), event.length());
     AddLog(LOG_LEVEL_DEBUG, PSTR("RUL: No valid JSON (%s)"), buf.c_str());
     return false; // No valid JSON data
   }
@@ -547,7 +547,7 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule, bool stop_all
   }
 
 #ifdef DEBUG_RULES
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR("RUL-RM3: Name %s, Value |%s|, TrigCnt %d, TrigSt %d, Source %s, Json |%s|"),
+  AddLog(LOG_LEVEL_DEBUG, PSTR("RUL-RM3: Name %s, Value |%s|, TrigCnt %d, TrigSt %d, Source %s, Json |%s|"),
     rule_name.c_str(), rule_svalue, Rules.trigger_count[rule_set], bitRead(Rules.triggers[rule_set],
     Rules.trigger_count[rule_set]), event.c_str(), (str_value[0] != '\0') ? str_value : "none");
 #endif
@@ -608,7 +608,7 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule, bool stop_all
 
   if (stop_all_rules) { match = false; }
 
-//AddLog_P(LOG_LEVEL_DEBUG, PSTR("RUL-RM4: Match 1 %d, Triggers %08X, TriggerCount %d"), match, Rules.triggers[rule_set], Rules.trigger_count[rule_set]);
+//AddLog(LOG_LEVEL_DEBUG, PSTR("RUL-RM4: Match 1 %d, Triggers %08X, TriggerCount %d"), match, Rules.triggers[rule_set], Rules.trigger_count[rule_set]);
 
   if (bitRead(Settings.rule_once, rule_set)) {
     if (match) {                                       // Only allow match state changes
@@ -622,7 +622,7 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule, bool stop_all
     }
   }
 
-//AddLog_P(LOG_LEVEL_DEBUG, PSTR("RUL-RM5: Match 2 %d, Triggers %08X, TriggerCount %d"), match, Rules.triggers[rule_set], Rules.trigger_count[rule_set]);
+//AddLog(LOG_LEVEL_DEBUG, PSTR("RUL-RM5: Match 2 %d, Triggers %08X, TriggerCount %d"), match, Rules.triggers[rule_set], Rules.trigger_count[rule_set]);
 
   return match;
 }
@@ -694,7 +694,7 @@ bool RuleSetProcess(uint8_t rule_set, String &event_saved)
 
   delay(0);                                               // Prohibit possible loop software watchdog
 
-//AddLog_P(LOG_LEVEL_DEBUG, PSTR("RUL-RP1: Event = %s, Rule = %s"), event_saved.c_str(), Settings.rules[rule_set]);
+//AddLog(LOG_LEVEL_DEBUG, PSTR("RUL-RP1: Event = %s, Rule = %s"), event_saved.c_str(), Settings.rules[rule_set]);
 
   String rules = GetRule(rule_set);
 
@@ -728,7 +728,7 @@ bool RuleSetProcess(uint8_t rule_set, String &event_saved)
     String event = event_saved;
 
 #ifdef DEBUG_RULES
-//    AddLog_P(LOG_LEVEL_DEBUG, PSTR("RUL-RP2: Event |%s|, Rule |%s|, Command(s) |%s|"), event.c_str(), event_trigger.c_str(), commands.c_str());
+//    AddLog(LOG_LEVEL_DEBUG, PSTR("RUL-RP2: Event |%s|, Rule |%s|, Command(s) |%s|"), event.c_str(), event_trigger.c_str(), commands.c_str());
 #endif
 
     if (RulesRuleMatch(rule_set, event, event_trigger, stop_all_rules)) {
@@ -808,7 +808,7 @@ bool RulesProcessEvent(char *json_event)
   ShowFreeMem(PSTR("RulesProcessEvent"));
 #endif
 
-//AddLog_P(LOG_LEVEL_DEBUG, PSTR("RUL: ProcessEvent |%s|"), json_event);
+//AddLog(LOG_LEVEL_DEBUG, PSTR("RUL: ProcessEvent |%s|"), json_event);
 
   String event_saved = json_event;
   // json_event = {"INA219":{"Voltage":4.494,"Current":0.020,"Power":0.089}}
@@ -822,7 +822,7 @@ bool RulesProcessEvent(char *json_event)
   }
   event_saved.toUpperCase();
 
-//AddLog_P(LOG_LEVEL_DEBUG, PSTR("RUL: Event |%s|"), event_saved.c_str());
+//AddLog(LOG_LEVEL_DEBUG, PSTR("RUL: Event |%s|"), event_saved.c_str());
 
   for (uint32_t i = 0; i < MAX_RULE_SETS; i++) {
     if (GetRuleLen(i) && bitRead(Settings.rule_enabled, i)) {
@@ -1050,13 +1050,13 @@ bool RulesMqttData(void)
   bool serviced = false;
   String sTopic = XdrvMailbox.topic;
   String sData = XdrvMailbox.data;
-  //AddLog_P(LOG_LEVEL_DEBUG, PSTR("RUL: MQTT Topic %s, Event %s"), XdrvMailbox.topic, XdrvMailbox.data);
+  //AddLog(LOG_LEVEL_DEBUG, PSTR("RUL: MQTT Topic %s, Event %s"), XdrvMailbox.topic, XdrvMailbox.data);
   MQTT_Subscription event_item;
   //Looking for matched topic
   for (uint32_t index = 0; index < subscriptions.size(); index++) {
     event_item = subscriptions.get(index);
 
-    //AddLog_P(LOG_LEVEL_DEBUG, PSTR("RUL: Match MQTT message Topic %s with subscription topic %s"), sTopic.c_str(), event_item.Topic.c_str());
+    //AddLog(LOG_LEVEL_DEBUG, PSTR("RUL: Match MQTT message Topic %s with subscription topic %s"), sTopic.c_str(), event_item.Topic.c_str());
     if (sTopic.startsWith(event_item.Topic)) {
       //This topic is subscribed by us, so serve it
       serviced = true;
@@ -1133,7 +1133,7 @@ void CmndSubscribe(void)
         }
       }
     }
-    //AddLog_P(LOG_LEVEL_DEBUG, PSTR("RUL: Subscribe command with parameters: %s, %s, %s."), event_name.c_str(), topic.c_str(), key.c_str());
+    //AddLog(LOG_LEVEL_DEBUG, PSTR("RUL: Subscribe command with parameters: %s, %s, %s."), event_name.c_str(), topic.c_str(), key.c_str());
     event_name.toUpperCase();
     if (event_name.length() > 0 && topic.length() > 0) {
       //Search all subscriptions
@@ -1154,7 +1154,7 @@ void CmndSubscribe(void)
           topic.concat("/#");
         }
       }
-      //AddLog_P(LOG_LEVEL_DEBUG, PSTR("RUL: New topic: %s."), topic.c_str());
+      //AddLog(LOG_LEVEL_DEBUG, PSTR("RUL: New topic: %s."), topic.c_str());
       //MQTT Subscribe
       subscription_item.Event = event_name;
       subscription_item.Topic = topic.substring(0, topic.length() - 2);   //Remove "/#" so easy to match
@@ -1753,7 +1753,7 @@ bool evaluateLogicalExpression(const char * expression, int len)
   memcpy(expbuff, expression, len);
   expbuff[len] = '\0';
 
-  //AddLog_P(LOG_LEVEL_DEBUG, PSTR("EvalLogic: |%s|"), expbuff);
+  //AddLog(LOG_LEVEL_DEBUG, PSTR("EvalLogic: |%s|"), expbuff);
   char * pointer = expbuff;
   LinkedList<bool> values;
   LinkedList<int8_t> logicOperators;
@@ -1879,7 +1879,7 @@ void ExecuteCommandBlock(const char * commands, int len)
   memcpy(cmdbuff, commands, len);
   cmdbuff[len] = '\0';
 
-  //AddLog_P(LOG_LEVEL_DEBUG, PSTR("ExecCmd: |%s|"), cmdbuff);
+  //AddLog(LOG_LEVEL_DEBUG, PSTR("ExecCmd: |%s|"), cmdbuff);
   char oneCommand[len + 1];     //To put one command
   int insertPosition = 0;       //When insert into backlog, we should do it by 0, 1, 2 ...
   char * pos = cmdbuff;

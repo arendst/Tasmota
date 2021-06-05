@@ -78,7 +78,7 @@ void SnfL1SendDelayed(void) {
 
 void SnfL1Send(void) {
 #ifdef SONOFF_L1_DEBUG1
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR("SL1: Send %s"), Snfl1.buffer);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("SL1: Send %s"), Snfl1.buffer);
 #endif
   Serial.print(Snfl1.buffer);
   Serial.write(0x1B);
@@ -106,7 +106,7 @@ bool SnfL1SerialInput(void) {
     // AT+UPDATE="sequence":"34906","switch":"on","light_type":1,"colorR":0,"colorG":16,"colorB":0,"bright":6,"mode":1
     // AT+UPDATE="switch":"on","light_type":1,"colorR":255,"colorG":0,"colorB":0,"bright":6,"mode":1,"speed":100,"sensitive":10
 #ifdef SONOFF_L1_DEBUG1
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR("SL1: Rcvd %s"), TasmotaGlobal.serial_in_buffer);
+    AddLog(LOG_LEVEL_DEBUG, PSTR("SL1: Rcvd %s"), TasmotaGlobal.serial_in_buffer);
 #endif
     if (!strncmp(TasmotaGlobal.serial_in_buffer +3, "RESULT", 6)) {
 #ifdef SONOFF_L1_ALLOW_REMOTE_INTERRUPT

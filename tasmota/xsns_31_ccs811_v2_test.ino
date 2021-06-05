@@ -1,5 +1,5 @@
 /*
-  xsns_31_ccs811.ino - CCS811 gas and air quality sensor support for Tasmota
+  xsns_31_ccs811_v2.ino - CCS811 gas and air quality sensor support for Tasmota
 
   Copyright (C) 2021  Gerhard Mutz and Theo Arends
 
@@ -18,7 +18,7 @@
 */
 
 #ifdef USE_I2C
-#ifdef USE_CCS811_V2
+#ifdef USE_CCS811_V2_TEST
 /*********************************************************************************************\
  * CCS811 - Gas (TVOC - Total Volatile Organic Compounds) and Air Quality (CO2)
  *
@@ -30,7 +30,7 @@
  *  - for I2C address 0x5B, connect ADDR to VCC
  * NOTE:
  * - Wake must be connected to GND (no sleep mode supported!)
- * - depending on the breakout board, SDA & SCL may require
+ * - depending on the breakout bouard, SDA & SCL may require
  *   pull-ups to VCC, e.g. 4k7R
  *
 \*********************************************************************************************/
@@ -63,20 +63,21 @@ CCS811DATA ccsd[ MAXDEVICECOUNT];
 CCS811DATA * pccsd;
 uint32_t i;
 
-#define D_PRFX_CCS811 "CCS811"
-#define D_CMND_HWVERSION "HW"
-#define D_CMND_FWAPPVERSION "FWApp"
-#define D_CMND_BASELINE "Baseline"
 
-const char kCCS811Commands[] PROGMEM = D_PRFX_CCS811 "|"  // Prefix
-  D_CMND_HWVERSION "|"
-  D_CMND_FWAPPVERSION "|"
-  D_CMND_BASELINE;
+#define D_CMND_CCS811 "CCS811"
 
-void (* const CCS811Command[])(void) PROGMEM = {
-  &CmndCCS811HwVersion,
-  &CmndCCS811FwAppVersion,
-  &CmndCCS811Baseline
+const char S_JSON_CCS811_COMMAND_XVALUE[] PROGMEM       = "{\"" D_CMND_CCS811 "%s\":0x%02x}";
+const char S_JSON_CCS811_COMMAND_NVALUE[] PROGMEM       = "{\"" D_CMND_CCS811 "%s\":%u}";
+const char S_JSON_CCS811_COMMAND_HWVERSION[] PROGMEM    = "{\"" D_CMND_CCS811 "%s\":\"%x\"}";
+const char S_JSON_CCS811_COMMAND_FWAPPVERSION[] PROGMEM = "{\"" D_CMND_CCS811 "%s\":\"%x.%x.%x\"}";
+
+const char S_JSON_CCS811_COMMAND[] PROGMEM              = "{\"" D_CMND_CCS811 "%s\"}";
+const char kCCS811_Commands[] PROGMEM                   = "HW|FWApp|Baseline";
+
+enum CCS811_Commands {         // commands useable in console or rules
+  CMND_CCS811_HW,
+  CMND_CCS811_FWAPP,
+  CMND_CCS811_BASELINE
 };
 
 /********************************************************************************************/
@@ -150,7 +151,7 @@ void CCS811ReadMailboxValue( uint8_t address, uint8_t mailbox, byte * pbuf, uint
   for (uint8_t i = 0; i < buflen; i++) {
     *(pbuf + i) = Wire.read();
 #ifdef CCS811_DEBUG
-    AddLog(LOG_LEVEL_DEBUG, PSTR( D_LOG_DEBUG D_PRFX_CCS811 " reading byte %u: 0%02x / %u"), i, *(pbuf + i), *(pbuf + i));
+    AddLog(LOG_LEVEL_DEBUG, PSTR( D_LOG_DEBUG D_CMND_CCS811 " reading byte %u: 0%02x / %u"), i, *(pbuf + i), *(pbuf + i));
 #endif
   }
 }
@@ -159,7 +160,7 @@ void CCS811WriteMailboxValue(uint8_t address, uint8_t mailbox, byte * pbuf, uint
 {
 #ifdef CCS811_DEBUG
   for (uint8_t i = 0; i < buflen; i++) {
-    AddLog(LOG_LEVEL_DEBUG, PSTR( D_LOG_DEBUG D_PRFX_CCS811 " writing byte %u: 0%02x / %u"), i, *(pbuf + i), *(pbuf + i));
+    AddLog(LOG_LEVEL_DEBUG, PSTR( D_LOG_DEBUG D_CMND_CCS811 " writing byte %u: 0%02x / %u"), i, *(pbuf + i), *(pbuf + i));
   }
 #endif
 	Wire.beginTransmission(address);
@@ -172,77 +173,93 @@ void CCS811WriteMailboxValue(uint8_t address, uint8_t mailbox, byte * pbuf, uint
  * Command Sensor31
 \*********************************************************************************************/
 
-CCS811DATA * CmndCCS811SelectDeviceFromIndex(void) {
-  CCS811DATA * pccsd_command = NULL;
-  if (XdrvMailbox.index <= CCS811_devices_found) {
+bool CCS811CommandSensor()
+{
+
+  char command[CMDSZ];
+  bool serviced = true;
+  uint8_t prefix_len = strlen(D_CMND_CCS811);
+
+  if ((!strncasecmp_P(XdrvMailbox.topic, PSTR(D_CMND_CCS811), prefix_len)) &&
+      (XdrvMailbox.index <= CCS811_devices_found)) {  // check prefix and device index
+
+    int command_code = GetCommandCode(command, sizeof(command), XdrvMailbox.topic + prefix_len, kCCS811_Commands);
+
     // select device data matching the index
+    CCS811DATA * pccsd_command;
     for (i = 0, pccsd = ccsd; i < MAXDEVICECOUNT; i++, pccsd++) {
       if  (pccsd->device_index == XdrvMailbox.index) {
         pccsd_command = pccsd;
 #ifdef CCS811_DEBUG
-        AddLog(LOG_LEVEL_DEBUG, PSTR( D_LOG_DEBUG D_PRFX_CCS811 " I2C Address: 0%02x"), pccsd_command->address);
+        AddLog(LOG_LEVEL_DEBUG, PSTR( D_LOG_DEBUG D_CMND_CCS811 " I2C Address: 0%02x"), pccsd_command->address);
 #endif
         break;
       }
     }
-  }
-  return pccsd_command;
-}
-
-
-void CmndCCS811HwVersion(void) {
-  CCS811DATA * pccsd = CmndCCS811SelectDeviceFromIndex();
-  if (pccsd) {
-    byte CCS811_hw_version;
-    CCS811ReadMailboxValue( pccsd->address,
-                            CCS811_HW_VERSION,
-                            &CCS811_hw_version,
-                            sizeof(CCS811_hw_version));
-    ResponseCmndIdxNumber(CCS811_hw_version);
-  }
-}
-
-void CmndCCS811FwAppVersion(void) {
-  pccsd = CmndCCS811SelectDeviceFromIndex();
-  if (pccsd) {
-    byte bCCS811_fw_app_version[2];
-    char CCS811_fw_app_version[16];
-    CCS811ReadMailboxValue( pccsd->address,
-                            CCS811_FW_APP_VERSION,
-                            bCCS811_fw_app_version,
-                            (sizeof(bCCS811_fw_app_version) / sizeof(byte)));
-    sprintf( CCS811_fw_app_version,
-             PSTR( "%x.%x.%x"),
-             (bCCS811_fw_app_version[0] >> 4),  // major
-             (bCCS811_fw_app_version[0] & 0xF), // minor
-             bCCS811_fw_app_version[1]);        // build
-
-    ResponseCmndIdxChar(CCS811_fw_app_version);
-  }
-}
-
-void CmndCCS811Baseline(void) {
-  pccsd = CmndCCS811SelectDeviceFromIndex();
-  if (pccsd) {
-    byte CCS811_baseline[2];
-    if (XdrvMailbox.data_len > 0) {
-      CCS811_baseline[0] = (XdrvMailbox.payload & 0xFF00) >> 8;
-      CCS811_baseline[1] =  XdrvMailbox.payload & 0xFF;
-      CCS811WriteMailboxValue( pccsd->address,
-                               CCS811_BASELINE,
-                               CCS811_baseline,
-                               (sizeof(CCS811_baseline) / sizeof(byte)));
-    } else {
-      CCS811ReadMailboxValue( pccsd->address,
-                              CCS811_BASELINE,
-                              CCS811_baseline,
-                              (sizeof(CCS811_baseline) / sizeof(byte)));
+    if (!pccsd_command) {
+      return false;
     }
-    ResponseCmndIdxNumber(((CCS811_baseline[0] << 8) + CCS811_baseline[1]));
+
+    switch (command_code) {
+
+      case CMND_CCS811_HW:
+      {
+        byte CCS811_hw_version;
+        CCS811ReadMailboxValue( pccsd_command->address,
+                                CCS811_HW_VERSION,
+                                &CCS811_hw_version,
+                                sizeof(CCS811_hw_version));
+        Response_P(S_JSON_CCS811_COMMAND_HWVERSION, command, CCS811_hw_version);
+      }
+        break;
+
+      case CMND_CCS811_FWAPP:
+      {
+        byte CCS811_fw_app_version[2];
+        CCS811ReadMailboxValue( pccsd_command->address,
+                                CCS811_FW_APP_VERSION,
+                                CCS811_fw_app_version,
+                                (sizeof(CCS811_fw_app_version) / sizeof(byte)));
+        Response_P(S_JSON_CCS811_COMMAND_FWAPPVERSION,
+                   command,
+                   (CCS811_fw_app_version[0] >> 4),  // major
+                   (CCS811_fw_app_version[0] & 0xF), // minor
+                   CCS811_fw_app_version[1]);        // build
+      }
+        break;
+
+      case CMND_CCS811_BASELINE:
+      {
+        byte CCS811_baseline[2];
+        if (XdrvMailbox.data_len > 0) {
+          CCS811_baseline[0] = (XdrvMailbox.payload & 0xFF00) >> 8;
+          CCS811_baseline[1] =  XdrvMailbox.payload & 0xFF;
+          CCS811WriteMailboxValue( pccsd_command->address,
+                                   CCS811_BASELINE,
+                                   CCS811_baseline,
+                                   (sizeof(CCS811_baseline) / sizeof(byte)));
+        } else {
+          CCS811ReadMailboxValue( pccsd_command->address,
+                                  CCS811_BASELINE,
+                                  CCS811_baseline,
+                                  (sizeof(CCS811_baseline) / sizeof(byte)));
+        }
+        Response_P(S_JSON_CCS811_COMMAND_NVALUE,
+                   command,
+                   ((CCS811_baseline[0] << 8) + CCS811_baseline[1]));
+      }
+        break;
+
+      default:
+        // else for Unknown command
+        serviced = false;
+        break;
+    }
   }
+
+  return serviced;
 }
 
-// -----------------------------------------------------------------------------
 
 const char HTTP_SNS_CCS811[] PROGMEM =
   "{s}%s " D_ECO2 "{m}%d " D_UNIT_PARTS_PER_MILLION "{e}"                // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
@@ -321,7 +338,7 @@ bool Xsns31(uint8_t function)
         CCS811Update();
         break;
       case FUNC_COMMAND:
-        result = DecodeCommand( kCCS811Commands, CCS811Command);
+        result = CCS811CommandSensor();
         break;
       case FUNC_JSON_APPEND:
         CCS811Show(1);

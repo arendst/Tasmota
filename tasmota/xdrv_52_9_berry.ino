@@ -408,7 +408,7 @@ void BrREPLRun(char * cmd) {
         if (!be_isnil(berry.vm, 1)) {
           const char * ret_val = be_tostring(berry.vm, 1);
           berry.log.addString(ret_val, nullptr, "\n");
-          // AddLog_P(LOG_LEVEL_INFO, PSTR(">>> %s"), ret_val);
+          // AddLog(LOG_LEVEL_INFO, PSTR(">>> %s"), ret_val);
         }
         be_pop(berry.vm, 1);
       }
@@ -418,7 +418,7 @@ void BrREPLRun(char * cmd) {
       char exception_s[120];
       ext_snprintf_P(exception_s, sizeof(exception_s), PSTR("%s: %s"), be_tostring(berry.vm, -2), be_tostring(berry.vm, -1));
       berry.log.addString(exception_s, nullptr, "\n");
-      // AddLog_P(LOG_LEVEL_INFO, PSTR(">>> %s"), exception_s);
+      // AddLog(LOG_LEVEL_INFO, PSTR(">>> %s"), exception_s);
       be_pop(berry.vm, 2);
     }
   } while(0);
@@ -602,7 +602,7 @@ void HandleBerryConsoleRefresh(void)
   if (svalue.length()) {
     berry.log.reset();          // clear all previous logs
     berry.repl_active = true;   // start recording
-    // AddLog_P(LOG_LEVEL_INFO, PSTR("BRY: received command %s"), svalue.c_str());
+    // AddLog(LOG_LEVEL_INFO, PSTR("BRY: received command %s"), svalue.c_str());
     berry.log.addString(svalue.c_str(), nullptr, BERRY_CONSOLE_CMD_DELIMITER);
 
     // Call berry
@@ -655,7 +655,7 @@ void HandleBerryConsole(void)
 //   String svalue = Webserver->arg(F("c1"));
 //   if (svalue.length() && (svalue.length() < MQTT_MAX_PACKET_SIZE)) {
 //     // TODO run command and store result
-//     // AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_COMMAND "%s"), svalue.c_str());
+//     // AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_COMMAND "%s"), svalue.c_str());
 //     // ExecuteWebCommand((char*)svalue.c_str(), SRC_WEBCONSOLE);
 //   }
 

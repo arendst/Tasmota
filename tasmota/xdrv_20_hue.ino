@@ -207,17 +207,17 @@ void HueRespondToMSearch(void)
     snprintf_P(response + len, sizeof(response) - len, msg[HUE_RESP_ST1], uuid.c_str());
     PortUdp.write(response);
     PortUdp.endPacket();
-    // AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_UPNP "UDP resp=%s"), response);
+    // AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_UPNP "UDP resp=%s"), response);
 
     snprintf_P(response + len, sizeof(response) - len, msg[HUE_RESP_ST2], uuid.c_str(), uuid.c_str());
     PortUdp.write(response);
     PortUdp.endPacket();
-    // AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_UPNP "UDP resp=%s"), response);
+    // AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_UPNP "UDP resp=%s"), response);
 
     snprintf_P(response + len, sizeof(response) - len, msg[HUE_RESP_ST3], uuid.c_str());
     PortUdp.write(response);
     PortUdp.endPacket();
-    // AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_UPNP "UDP resp=%s"), response);
+    // AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_UPNP "UDP resp=%s"), response);
 
     snprintf_P(message, sizeof(message), PSTR(D_3_RESPONSE_PACKETS_SENT));
   } else {
@@ -1000,7 +1000,7 @@ void HueLights(String *path)
     code = 406;
   }
   exit:
-  AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_HTTP D_HUE " Result (%s)"), response.c_str());
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_HTTP D_HUE " Result (%s)"), response.c_str());
   WSSend(code, CT_APP_JSON, response);
 }
 

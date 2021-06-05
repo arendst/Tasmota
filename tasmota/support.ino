@@ -1608,7 +1608,7 @@ bool JsonTemplate(char* dataBuf)
   // Old: {"NAME":"Shelly 2.5","GPIO":[56,0,17,0,21,83,0,0,6,82,5,22,156],"FLAG":2,"BASE":18}
   // New: {"NAME":"Shelly 2.5","GPIO":[320,0,32,0,224,193,0,0,640,192,608,225,3456,4736],"FLAG":0,"BASE":18}
 
-//  AddLog_P(LOG_LEVEL_DEBUG, PSTR("TPL: |%s|"), dataBuf);
+//  AddLog(LOG_LEVEL_DEBUG, PSTR("TPL: |%s|"), dataBuf);
 
   if (strlen(dataBuf) < 9) { return false; }  // Workaround exception if empty JSON like {} - Needs checks
 
@@ -2343,55 +2343,20 @@ void AddLogData(uint32_t loglevel, const char* log_data) {
 }
 
 void AddLog(uint32_t loglevel, PGM_P formatP, ...) {
-  // To save stack space support logging for max text length of 128 characters
-  char log_data[LOGSZ +4];
-
   va_list arg;
   va_start(arg, formatP);
-  uint32_t len = ext_vsnprintf_P(log_data, LOGSZ +1, formatP, arg);
+  char* log_data = ext_vsnprintf_malloc_P(formatP, arg);
   va_end(arg);
-  if (len > LOGSZ) { strcat(log_data, "..."); }  // Actual data is more
-
-#ifdef DEBUG_TASMOTA_CORE
-  // Profile max_len
-  static uint32_t max_len = 0;
-  if (len > max_len) {
-    max_len = len;
-    Serial.printf("PRF: AddLog %d\n", max_len);
-  }
-#endif
+  if (log_data == nullptr) { return; }
 
   AddLogData(loglevel, log_data);
-}
-
-void AddLog_P(uint32_t loglevel, PGM_P formatP, ...) {
-  // Use more stack space to support logging for max text length of 700 characters
-  char log_data[MAX_LOGSZ];
-
-  va_list arg;
-  va_start(arg, formatP);
-  uint32_t len = ext_vsnprintf_P(log_data, sizeof(log_data), formatP, arg);
-  va_end(arg);
-
-  AddLogData(loglevel, log_data);
-}
-
-void AddLog_Debug(PGM_P formatP, ...)
-{
-  char log_data[MAX_LOGSZ];
-
-  va_list arg;
-  va_start(arg, formatP);
-  uint32_t len = ext_vsnprintf_P(log_data, sizeof(log_data), formatP, arg);
-  va_end(arg);
-
-  AddLogData(LOG_LEVEL_DEBUG, log_data);
+  free(log_data);
 }
 
 void AddLogBuffer(uint32_t loglevel, uint8_t *buffer, uint32_t count)
 {
   char hex_char[(count * 3) + 2];
-  AddLog_P(loglevel, PSTR("DMP: %s"), ToHex_P(buffer, count, hex_char, sizeof(hex_char), ' '));
+  AddLog(loglevel, PSTR("DMP: %s"), ToHex_P(buffer, count, hex_char, sizeof(hex_char), ' '));
 }
 
 void AddLogSerial(uint32_t loglevel)

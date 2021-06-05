@@ -880,7 +880,7 @@ int32_t Z_Devices::deviceRestore(JsonParserObject json) {
           data.setConfig(config);
         }
       } else {
-        AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Ignoring config '%s'"), conf_str);
+        AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Ignoring config '%s'"), conf_str);
       }
     }
   }

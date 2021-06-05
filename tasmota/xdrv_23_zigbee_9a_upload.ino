@@ -77,7 +77,7 @@ char ZigbeeUploadFlashRead(void) {
   if (sector != ZbUpload.sector_counter) {
     ZbUpload.sector_counter = sector;
     ESP.flashRead(ZbUpload.sector_counter * SPI_FLASH_SEC_SIZE, (uint32_t*)ZbUpload.buffer, SPI_FLASH_SEC_SIZE);
-    // AddLog_P(LOG_LEVEL_DEBUG, "= sector %d %*_H", ZbUpload.sector_counter, 256, ZbUpload.buffer);
+    // AddLog(LOG_LEVEL_DEBUG, "= sector %d %*_H", ZbUpload.sector_counter, 256, ZbUpload.buffer);
   }
 
   char data = ZbUpload.buffer[index];

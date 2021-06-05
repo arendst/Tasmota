@@ -265,7 +265,7 @@ void ShutterInit(void)
         for (uint32_t j = 0; j < MAX_INTERLOCKS * Settings.flag.interlock; j++) {  // CMND_INTERLOCK - Enable/disable interlock
           //AddLog(LOG_LEVEL_DEBUG, PSTR("SHT: Interlock state i=%d %d, flag %d, Shuttermask %d, MaskedIL %d"),i, Settings.interlock[i], Settings.flag.interlock,ShutterGlobal.RelayShutterMask, Settings.interlock[i]&ShutterGlobal.RelayShutterMask);
           if (Settings.interlock[j] && (Settings.interlock[j] & ShutterGlobal.RelayShutterMask)) {
-            //AddLog_P(LOG_LEVEL_DEBUG, PSTR("SHT: Relay in Interlock group"));
+            //AddLog(LOG_LEVEL_DEBUG, PSTR("SHT: Relay in Interlock group"));
             relay_in_interlock = true;
           }
         }
@@ -554,7 +554,7 @@ void ShutterAllowPreStartProcedure(uint8_t i)
 
 void ShutterStartInit(uint32_t i, int32_t direction, int32_t target_pos)
 {
-  //AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: dir %d, delta1 %d, delta2 %d, grant %d"),direction, (Shutter[i].open_max - Shutter[i].real_position) / Shutter[i].close_velocity, Shutter[i].real_position / Shutter[i].close_velocity, 2+Shutter[i].motordelay);
+  //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: dir %d, delta1 %d, delta2 %d, grant %d"),direction, (Shutter[i].open_max - Shutter[i].real_position) / Shutter[i].close_velocity, Shutter[i].real_position / Shutter[i].close_velocity, 2+Shutter[i].motordelay);
   if (  ( (1 == direction) && ((Shutter[i].open_max - Shutter[i].real_position) / 100 <= 2) )
      || ( (-1 == direction) && (Shutter[i].real_position / Shutter[i].close_velocity <= 2)) ) {
     ShutterGlobal.skip_relay_change = 1;
@@ -624,7 +624,7 @@ void ShutterRelayChanged(void)
     // SRC_IGNORE added because INTERLOCK function bite causes this as last source for changing the relay.
 		//uint8   manual_relays_changed = ((ShutterGlobal.RelayCurrentMask >> (Settings.shutter_startrelay[i] -1)) & 3) && SRC_IGNORE != TasmotaGlobal.last_source && SRC_SHUTTER != TasmotaGlobal.last_source && SRC_PULSETIMER != TasmotaGlobal.last_source ;
     uint8   manual_relays_changed = ((ShutterGlobal.RelayCurrentMask >> (Settings.shutter_startrelay[i] -1)) & 3) && SRC_SHUTTER != TasmotaGlobal.last_source && SRC_PULSETIMER != TasmotaGlobal.last_source ;
-    AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Shtr%d, Source %s, Powerstate %ld, RelayMask %d, ManualChange %d"),
+    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Shtr%d, Source %s, Powerstate %ld, RelayMask %d, ManualChange %d"),
       i+1, GetTextIndexed(stemp1, sizeof(stemp1), TasmotaGlobal.last_source, kCommandSource), powerstate_local,ShutterGlobal.RelayCurrentMask,manual_relays_changed);
     if (manual_relays_changed) {
       //ShutterGlobal.skip_relay_change = true;
@@ -833,7 +833,7 @@ void ShutterButtonHandler(void)
       if (Settings.shutter_startrelay[shutter_index] && Settings.shutter_startrelay[shutter_index] <9) {
         uint8_t pos_press_index = (buttonState == SHT_PRESSED_HOLD) ? 3 : (press_index-1);
         if (pos_press_index>3) pos_press_index=3;
-        AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Shtr%d, Button %d = %d (single=1, double=2, tripple=3, hold=4)"), shutter_index+1, button_index+1, pos_press_index+1);
+        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Shtr%d, Button %d = %d (single=1, double=2, tripple=3, hold=4)"), shutter_index+1, button_index+1, pos_press_index+1);
         XdrvMailbox.index = shutter_index +1;
         TasmotaGlobal.last_source = SRC_BUTTON;
         XdrvMailbox.data_len = 0;
@@ -1020,7 +1020,7 @@ void CmndShutterStop(void)
 
 void CmndShutterIncDec(void)
 {
-  //AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Change in: payload %s (%d), payload %d, idx %d, src %d"), XdrvMailbox.data , XdrvMailbox.data_len, XdrvMailbox.payload , XdrvMailbox.index, TasmotaGlobal.last_source );
+  //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Change in: payload %s (%d), payload %d, idx %d, src %d"), XdrvMailbox.data , XdrvMailbox.data_len, XdrvMailbox.payload , XdrvMailbox.index, TasmotaGlobal.last_source );
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= TasmotaGlobal.shutters_present)) {
     if (XdrvMailbox.data_len > 0) {
       XdrvMailbox.payload =  ShutterRealToPercentPosition(Shutter[XdrvMailbox.index-1].target_position, XdrvMailbox.index-1)+XdrvMailbox.payload;

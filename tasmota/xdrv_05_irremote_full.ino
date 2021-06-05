@@ -381,7 +381,7 @@ uint32_t IrRemoteCmndIrHvacJson(void)
 {
   stdAc::state_t state;
 
-  //AddLog_P(LOG_LEVEL_DEBUG, PSTR("IRHVAC: Received %s"), XdrvMailbox.data);
+  //AddLog(LOG_LEVEL_DEBUG, PSTR("IRHVAC: Received %s"), XdrvMailbox.data);
   JsonParser parser(XdrvMailbox.data);
   JsonParserObject root = parser.getRootObject();
   if (!root) { return IE_INVALID_JSON; }

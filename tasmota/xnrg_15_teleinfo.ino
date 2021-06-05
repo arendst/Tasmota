@@ -686,7 +686,7 @@ bool TInfoCmd(void) {
     // At least "EnergyConfig"
     if (CMND_ENERGYCONFIG == Energy.command_code) {
 
-        AddLog_P(LOG_LEVEL_DEBUG, PSTR("TIC: len %d, data '%s'"), XdrvMailbox.data_len, XdrvMailbox.data ? XdrvMailbox.data : "null" );
+        AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: len %d, data '%s'"), XdrvMailbox.data_len, XdrvMailbox.data ? XdrvMailbox.data : "null" );
 
         // Just "EnergyConfig" no more parameter
         // Show Teleinfo configuration        
@@ -703,7 +703,7 @@ bool TInfoCmd(void) {
             GetTextIndexed(mode_name, MAX_TINFO_COMMAND_NAME, index_mode, kTInfo_Commands);
             GetTextIndexed(raw_name, MAX_TINFO_COMMAND_NAME, index_raw, kTInfo_Commands);
 
-            AddLog_P(LOG_LEVEL_INFO, TELEINFO_COMMAND_SETTINGS, mode_name, raw_name, Settings.teleinfo.raw_skip, Settings.teleinfo.raw_limit);
+            AddLog(LOG_LEVEL_INFO, TELEINFO_COMMAND_SETTINGS, mode_name, raw_name, Settings.teleinfo.raw_skip, Settings.teleinfo.raw_limit);
 
             serviced = true;
 
@@ -730,7 +730,7 @@ bool TInfoCmd(void) {
 
             int command_code = GetCommandCode(command, sizeof(command), pParam, kTInfo_Commands);
 
-            AddLog_P(LOG_LEVEL_DEBUG, PSTR("TIC: param '%s' cmnd %d"), pParam, command_code);
+            AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: param '%s' cmnd %d"), pParam, command_code);
 
             switch (command_code) {
                 case CMND_TELEINFO_STANDARD:
@@ -755,7 +755,7 @@ bool TInfoCmd(void) {
                         // Change mode 
                         Settings.teleinfo.mode_standard = command_code == CMND_TELEINFO_STANDARD ? 1 : 0;
 
-                        AddLog_P(LOG_LEVEL_INFO, PSTR("TIC: '%s' mode"), mode_name);
+                        AddLog(LOG_LEVEL_INFO, PSTR("TIC: '%s' mode"), mode_name);
 
                         // Re init teleinfo (LibTeleinfo always free linked list on init)
                         TInfoInit();
@@ -763,7 +763,7 @@ bool TInfoCmd(void) {
                         serviced = true;
 
                     } else {
-                        AddLog_P(LOG_LEVEL_INFO, PSTR("TIC: No change to '%s' mode"), mode_name);
+                        AddLog(LOG_LEVEL_INFO, PSTR("TIC: No change to '%s' mode"), mode_name);
                     }
                 }
                 break;
@@ -787,7 +787,7 @@ bool TInfoCmd(void) {
                         Settings.teleinfo.raw_report_changed = command_code == CMND_TELEINFO_RAW_CHANGE ? 1 : 0;
                     }
 
-                    AddLog_P(LOG_LEVEL_INFO, PSTR("TIC: Raw to '%s'"), raw_name);
+                    AddLog(LOG_LEVEL_INFO, PSTR("TIC: Raw to '%s'"), raw_name);
                     serviced = true;
                 }
                 break;
@@ -808,22 +808,22 @@ bool TInfoCmd(void) {
                             Settings.teleinfo.raw_skip = raw_skip;
 
                             if (raw_skip ==0) {
-                                AddLog_P(LOG_LEVEL_INFO, PSTR("TIC: Raw no skip"));
+                                AddLog(LOG_LEVEL_INFO, PSTR("TIC: Raw no skip"));
                             } else {
-                                AddLog_P(LOG_LEVEL_INFO, PSTR("TIC: Raw each %d frame(s)"), raw_skip+1);
+                                AddLog(LOG_LEVEL_INFO, PSTR("TIC: Raw each %d frame(s)"), raw_skip+1);
                             }
                             serviced = true;
                         } else {
-                            AddLog_P(LOG_LEVEL_INFO, PSTR("TIC: skip can be 0 to 255"));
+                            AddLog(LOG_LEVEL_INFO, PSTR("TIC: skip can be 0 to 255"));
                         }
                     } else {
-                        AddLog_P(LOG_LEVEL_INFO, PSTR("TIC: no skip value"));
+                        AddLog(LOG_LEVEL_INFO, PSTR("TIC: no skip value"));
                     }
                 }
                 break;
 
                 default:
-                    AddLog_P(LOG_LEVEL_INFO, PSTR("TIC: bad cmd param '%s'"), pParam);
+                    AddLog(LOG_LEVEL_INFO, PSTR("TIC: bad cmd param '%s'"), pParam);
                 break;
 
             }

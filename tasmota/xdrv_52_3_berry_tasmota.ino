@@ -382,7 +382,7 @@ extern "C" {
         log_level = be_toint(vm, 3);
         if (log_level > LOG_LEVEL_DEBUG_MORE) { log_level = LOG_LEVEL_DEBUG_MORE; }
       }
-      AddLog_P(log_level, PSTR("%s"), msg);
+      AddLog(log_level, PSTR("%s"), msg);
       be_return(vm); // Return
     }
     be_return_nil(vm); // Return nil when something goes wrong
@@ -425,7 +425,7 @@ void berry_log(const char * berry_buf) {
   }
   // AddLog(LOG_LEVEL_INFO, PSTR("[Add to log] %s"), berry_buf);
   berry.log.addString(berry_buf, pre_delimiter, "\n");
-  AddLog_P(LOG_LEVEL_INFO, PSTR("%s"), berry_buf);
+  AddLog(LOG_LEVEL_INFO, PSTR("%s"), berry_buf);
 }
 
 extern "C" {

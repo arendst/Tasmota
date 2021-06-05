@@ -516,13 +516,13 @@ void Cse7761DumpRegs(void) {
   for (uint32_t i = 0; i < 23; i++) {
     snprintf_P(reg_data, sizeof(reg_data), PSTR("%s%s%8X"), reg_data, (i) ? "," : "", reg_num[i]);
   }
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR("C61: RegDump %s"), reg_data);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("C61: RegDump %s"), reg_data);
 
   reg_data[0] = '\0';
   for (uint32_t i = 0; i < 23; i++) {
     snprintf_P(reg_data, sizeof(reg_data), PSTR("%s%s%08X"), reg_data, (i) ? "," : "", registers[i]);
   }
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR("C61: RegDump %s"), reg_data);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("C61: RegDump %s"), reg_data);
 }
 */
 

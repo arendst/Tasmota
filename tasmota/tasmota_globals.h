@@ -483,22 +483,22 @@ bool first_device_group_is_local = true;
 #endif  // USE_DEVICE_GROUPS
 
 #ifdef DEBUG_TASMOTA_CORE
-#define DEBUG_CORE_LOG(...) AddLog_Debug(__VA_ARGS__)
+#define DEBUG_CORE_LOG(...) AddLog(LOG_LEVEL_DEBUG, __VA_ARGS__)
 #else
 #define DEBUG_CORE_LOG(...)
 #endif
 #ifdef DEBUG_TASMOTA_DRIVER
-#define DEBUG_DRIVER_LOG(...) AddLog_Debug(__VA_ARGS__)
+#define DEBUG_DRIVER_LOG(...) AddLog(LOG_LEVEL_DEBUG, __VA_ARGS__)
 #else
 #define DEBUG_DRIVER_LOG(...)
 #endif
 #ifdef DEBUG_TASMOTA_SENSOR
-#define DEBUG_SENSOR_LOG(...) AddLog_Debug(__VA_ARGS__)
+#define DEBUG_SENSOR_LOG(...) AddLog(LOG_LEVEL_DEBUG, __VA_ARGS__)
 #else
 #define DEBUG_SENSOR_LOG(...)
 #endif
 #ifdef DEBUG_TASMOTA_TRACE
-#define DEBUG_TRACE_LOG(...) AddLog_Debug(__VA_ARGS__)
+#define DEBUG_TRACE_LOG(...) AddLog(LOG_LEVEL_DEBUG, __VA_ARGS__)
 #else
 #define DEBUG_TRACE_LOG(...)
 #endif
