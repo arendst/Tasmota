@@ -453,23 +453,7 @@ void HM10_ReverseMAC(uint8_t _mac[]){
   }
   memcpy(_mac,_reversedMAC, sizeof(_reversedMAC));
 }
-#ifdef USE_HOME_ASSISTANT
-/**
- * @brief For HASS only, changes last entry of JSON in mqtt_data to 'null'
- */
 
-void HM10nullifyEndOfMQTT_DATA(){
-  char *p = TasmotaGlobal.mqtt_data + ResponseLength();
-  while(true){
-    *p--;
-    if(p[0]==':'){
-      p[1] = 0;
-      break;
-    }
-  }
-  ResponseAppend_P(PSTR("null"));
-}
-#endif // USE_HOME_ASSISTANT
 /*********************************************************************************************\
  * chained tasks
 \*********************************************************************************************/
@@ -1058,7 +1042,7 @@ void HM10showScanResults(){
     ToHex_P(_scanResult.MAC,6,_MAC,18,':');
     ResponseAppend_P(PSTR("%s{\"MAC\":\"%s\",\"CID\":\"0x%04x\",\"SVC\":\"0x%04x\",\"UUID\":\"0x%04x\",\"RSSI\":%d}"),
       (add_comma)?",":"", _MAC, _scanResult.CID, _scanResult.SVC, _scanResult.UUID, _scanResult.RSSI);
-    add_comma = true;  
+    add_comma = true;
   }
   ResponseAppend_P(PSTR("]}"));
   MIBLEscanResult.clear();
@@ -1072,7 +1056,7 @@ void HM10showBlockList(){
     char _MAC[18];
     ToHex_P(_scanResult.buf,6,_MAC,18,':');
     ResponseAppend_P(PSTR("%s\"%s\""), (add_comma)?",":"", _MAC);
-    add_comma = true;  
+    add_comma = true;
   }
   ResponseAppend_P(PSTR("]"));
   HM10.mode.shallShowBlockList = 0;
@@ -1750,6 +1734,14 @@ const char HTTP_RSSI[] PROGMEM = "{s}%s " D_RSSI "{m}%d dBm{e}";
 const char HTTP_HM10_FLORA_DATA[] PROGMEM = "{s}%s" " Fertility" "{m}%u us/cm{e}";
 const char HTTP_HM10_HL[] PROGMEM = "{s}<hr>{m}<hr>{e}";
 
+void HM10ShowContinuation(bool *commaflg) {
+  if (*commaflg) {
+    ResponseAppend_P(PSTR(","));
+  } else {
+    *commaflg = true;
+  }
+}
+
 void HM10Show(bool json)
 {
   if (json) {
@@ -1781,11 +1773,10 @@ void HM10Show(bool json)
       if(HM10.mode.triggeredTele && MIBLEsensors[i].eventType.raw == 0) continue;
       if(HM10.mode.triggeredTele && MIBLEsensors[i].shallSendMQTT==0) continue;
 
-      ResponseAppend_P(PSTR(",\"%s-%02x%02x%02x\":"), // do not add the '{' now ...
+      bool commaflg = false;
+      ResponseAppend_P(PSTR(",\"%s-%02x%02x%02x\":{"),
         kHM10DeviceType[MIBLEsensors[i].type-1],
         MIBLEsensors[i].MAC[3], MIBLEsensors[i].MAC[4], MIBLEsensors[i].MAC[5]);
-
-      uint32_t _positionCurlyBracket = ResponseLength(); // ... this will be a ',' first, but later be replaced
 
       if((!HM10.mode.triggeredTele && !HM10.option.minimalSummary)||HM10.mode.triggeredTele){
         bool tempHumSended = false;
@@ -1796,7 +1787,7 @@ void HM10Show(bool json)
               ||(hass_mode!=-1)
 #endif //USE_HOME_ASSISTANT
             ) {
-              ResponseAppend_P(PSTR(","));
+              HM10ShowContinuation(&commaflg);
               ResponseAppendTHD(MIBLEsensors[i].temp, MIBLEsensors[i].hum);
               tempHumSended = true;
             }
@@ -1809,7 +1800,8 @@ void HM10Show(bool json)
               ||(hass_mode!=-1)
 #endif //USE_HOME_ASSISTANT
             ) {
-              ResponseAppend_P(PSTR(",\"" D_JSON_TEMPERATURE "\":%*_f"),
+              HM10ShowContinuation(&commaflg);
+              ResponseAppend_P(PSTR("\"" D_JSON_TEMPERATURE "\":%*_f"),
                 Settings.flag2.temperature_resolution, &MIBLEsensors[i].temp);
             }
           }
@@ -1823,99 +1815,124 @@ void HM10Show(bool json)
             ) {
               char hum[FLOATSZ];
               dtostrfd(MIBLEsensors[i].hum, Settings.flag2.humidity_resolution, hum);
-              ResponseAppend_P(PSTR(",\"" D_JSON_HUMIDITY "\":%s"), hum);
+              HM10ShowContinuation(&commaflg);
+              ResponseAppend_P(PSTR("\"" D_JSON_HUMIDITY "\":%s"), hum);
             }
           }
         }
         if (MIBLEsensors[i].feature.lux){
           if(MIBLEsensors[i].eventType.lux || !HM10.mode.triggeredTele || HM10.option.allwaysAggregate){
-            if (MIBLEsensors[i].lux!=0x0ffffff
 #ifdef USE_HOME_ASSISTANT
-              ||(hass_mode!=-1)
+            if ((hass_mode != -1) && (MIBLEsensors[i].lux == 0x0ffffff)) {
+              HM10ShowContinuation(&commaflg);
+              ResponseAppend_P(PSTR("\"" D_JSON_ILLUMINANCE "\":null"));
+            } else
+#endif //USE_HOME_ASSISTANT
+            if ((MIBLEsensors[i].lux != 0x0ffffff)
+#ifdef USE_HOME_ASSISTANT
+              || (hass_mode != -1)
 #endif //USE_HOME_ASSISTANT
             ) { // this is the error code -> no lux
-              ResponseAppend_P(PSTR(",\"" D_JSON_ILLUMINANCE "\":%u"), MIBLEsensors[i].lux);
-#ifdef USE_HOME_ASSISTANT
-              if (MIBLEsensors[i].lux==0x0ffffff) HM10nullifyEndOfMQTT_DATA();
-#endif //USE_HOME_ASSISTANT
+              HM10ShowContinuation(&commaflg);
+              ResponseAppend_P(PSTR("\"" D_JSON_ILLUMINANCE "\":%u"), MIBLEsensors[i].lux);
             }
           }
         }
         if (MIBLEsensors[i].feature.moist){
           if(MIBLEsensors[i].eventType.moist || !HM10.mode.triggeredTele || HM10.option.allwaysAggregate){
-            if (MIBLEsensors[i].moisture!=0xff
 #ifdef USE_HOME_ASSISTANT
-              ||(hass_mode!=-1)
+            if ((hass_mode != -1) && (MIBLEsensors[i].moisture == 0xff)) {
+              HM10ShowContinuation(&commaflg);
+              ResponseAppend_P(PSTR("\"" D_JSON_MOISTURE "\":null"));
+            } else
+#endif //USE_HOME_ASSISTANT
+            if ((MIBLEsensors[i].moisture != 0xff)
+#ifdef USE_HOME_ASSISTANT
+              || (hass_mode != -1)
 #endif //USE_HOME_ASSISTANT
             ) {
-              ResponseAppend_P(PSTR(",\"" D_JSON_MOISTURE "\":%u"), MIBLEsensors[i].moisture);
-#ifdef USE_HOME_ASSISTANT
-              if (MIBLEsensors[i].moisture==0xff) HM10nullifyEndOfMQTT_DATA();
-#endif //USE_HOME_ASSISTANT
+              HM10ShowContinuation(&commaflg);
+              ResponseAppend_P(PSTR("\"" D_JSON_MOISTURE "\":%u"), MIBLEsensors[i].moisture);
             }
           }
         }
         if (MIBLEsensors[i].feature.fert){
           if(MIBLEsensors[i].eventType.fert || !HM10.mode.triggeredTele || HM10.option.allwaysAggregate){
-            if (MIBLEsensors[i].fertility!=0xffff
 #ifdef USE_HOME_ASSISTANT
-              ||(hass_mode!=-1)
+            if ((hass_mode != -1) && (MIBLEsensors[i].fertility == 0xffff)) {
+              HM10ShowContinuation(&commaflg);
+              ResponseAppend_P(PSTR("\"Fertility\":null"));
+            } else
+#endif //USE_HOME_ASSISTANT
+            if ((MIBLEsensors[i].fertility != 0xffff)
+#ifdef USE_HOME_ASSISTANT
+              || (hass_mode != -1)
 #endif //USE_HOME_ASSISTANT
             ) {
-              ResponseAppend_P(PSTR(",\"Fertility\":%u"), MIBLEsensors[i].fertility);
-#ifdef USE_HOME_ASSISTANT
-              if (MIBLEsensors[i].fertility==0xffff) HM10nullifyEndOfMQTT_DATA();
-#endif //USE_HOME_ASSISTANT
+              HM10ShowContinuation(&commaflg);
+              ResponseAppend_P(PSTR("\"Fertility\":%u"), MIBLEsensors[i].fertility);
             }
           }
         }
         if (MIBLEsensors[i].feature.Btn){
           if(MIBLEsensors[i].eventType.Btn){
-            ResponseAppend_P(PSTR(",\"Btn\":%u"),MIBLEsensors[i].Btn);
+            HM10ShowContinuation(&commaflg);
+            ResponseAppend_P(PSTR("\"Btn\":%u"),MIBLEsensors[i].Btn);
           }
         }
       } // minimal summary
       if (MIBLEsensors[i].feature.PIR){
         if(MIBLEsensors[i].eventType.motion || !HM10.mode.triggeredTele){
-          if(HM10.mode.triggeredTele) ResponseAppend_P(PSTR(",\"PIR\":1")); // only real-time
-          ResponseAppend_P(PSTR(",\"Events\":%u"),MIBLEsensors[i].events);
+          if(HM10.mode.triggeredTele) {
+            HM10ShowContinuation(&commaflg);
+            ResponseAppend_P(PSTR("\"PIR\":1")); // only real-time
+          }
+          HM10ShowContinuation(&commaflg);
+          ResponseAppend_P(PSTR("\"Events\":%u"),MIBLEsensors[i].events);
         }
         else if(MIBLEsensors[i].eventType.noMotion && HM10.mode.triggeredTele){
-          ResponseAppend_P(PSTR(",\"PIR\":0"));
+          HM10ShowContinuation(&commaflg);
+          ResponseAppend_P(PSTR("\"PIR\":0"));
         }
       }
 
       if (MIBLEsensors[i].type == FLORA && !HM10.mode.triggeredTele) {
         if (MIBLEsensors[i].firmware[0] != '\0') { // this is the error code -> no firmware
-          ResponseAppend_P(PSTR(",\"Firmware\":\"%s\""), MIBLEsensors[i].firmware);
+          HM10ShowContinuation(&commaflg);
+          ResponseAppend_P(PSTR("\"Firmware\":\"%s\""), MIBLEsensors[i].firmware);
         }
       }
 
       if (MIBLEsensors[i].feature.NMT || !HM10.mode.triggeredTele){
         if(MIBLEsensors[i].eventType.NMT){
-          ResponseAppend_P(PSTR(",\"NMT\":%u"), MIBLEsensors[i].NMT);
+          HM10ShowContinuation(&commaflg);
+          ResponseAppend_P(PSTR("\"NMT\":%u"), MIBLEsensors[i].NMT);
         }
       }
       if (MIBLEsensors[i].feature.bat){
         if(MIBLEsensors[i].eventType.bat || !HM10.mode.triggeredTele || HM10.option.allwaysAggregate){
-          if (MIBLEsensors[i].bat != 0x00
 #ifdef USE_HOME_ASSISTANT
-              ||(hass_mode!=-1)
+          if ((hass_mode != -1) && (MIBLEsensors[i].bat == 0x00)) {
+            HM10ShowContinuation(&commaflg);
+            ResponseAppend_P(PSTR("\"Battery\":null"));
+          } else
 #endif //USE_HOME_ASSISTANT
-          ) { // this is the error code -> no battery
-          ResponseAppend_P(PSTR(",\"Battery\":%u"), MIBLEsensors[i].bat);
+          if ((MIBLEsensors[i].bat != 0x00)
 #ifdef USE_HOME_ASSISTANT
-              if (MIBLEsensors[i].bat == 0x00) HM10nullifyEndOfMQTT_DATA();
+            || (hass_mode != -1)
 #endif //USE_HOME_ASSISTANT
+          ) {
+            HM10ShowContinuation(&commaflg);
+            ResponseAppend_P(PSTR("\"Battery\":%u"), MIBLEsensors[i].bat);
           }
         }
       }
-      if (HM10.option.showRSSI) ResponseAppend_P(PSTR(",\"RSSI\":%d"), MIBLEsensors[i].rssi);
+      if (HM10.option.showRSSI) {
+        HM10ShowContinuation(&commaflg);
+        ResponseAppend_P(PSTR("\"RSSI\":%d"), MIBLEsensors[i].rssi);
+      }
+      ResponseJsonEnd();
 
-
-      if(_positionCurlyBracket==ResponseLength()) ResponseAppend_P(PSTR(",")); // write some random char, to be overwritten in the next step
-      ResponseAppend_P(PSTR("}"));
-      TasmotaGlobal.mqtt_data[_positionCurlyBracket] = '{';
       MIBLEsensors[i].eventType.raw = 0;
       if(MIBLEsensors[i].shallSendMQTT==1){
         MIBLEsensors[i].shallSendMQTT = 0;

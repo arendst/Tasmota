@@ -132,9 +132,7 @@ void HandleMetrics(void) {
 
   ResponseClear();
   MqttShowSensor(); //Pull sensor data
-  char json[ResponseLength()+1];
-  snprintf_P(json, sizeof(json), TasmotaGlobal.mqtt_data);
-  String jsonStr = json;
+  String jsonStr = TasmotaGlobal.mqtt_data;
   JsonParser parser((char *)jsonStr.c_str());
   JsonParserObject root = parser.getRootObject();
   if (root) { // did JSON parsing went ok?

@@ -1259,8 +1259,11 @@ void postAdvertismentDetails(){
 
   TasAutoMutex localmutex(&BLEOperationsRecursiveMutex, "BLEPostAdd");
   if (BLEAdvertismentDetailsJsonSet){
-    strncpy(TasmotaGlobal.mqtt_data, BLEAdvertismentDetailsJson, sizeof(TasmotaGlobal.mqtt_data));
-    TasmotaGlobal.mqtt_data[sizeof(TasmotaGlobal.mqtt_data)-1] = 0;
+
+//    strncpy(TasmotaGlobal.mqtt_data, BLEAdvertismentDetailsJson, sizeof(TasmotaGlobal.mqtt_data));
+//    TasmotaGlobal.mqtt_data[sizeof(TasmotaGlobal.mqtt_data)-1] = 0;
+    Response_P(BLEAdvertismentDetailsJson);
+
     BLEAdvertismentDetailsJsonSet = 0;
     // we got the data, give before MQTT call.
     localmutex.give();
@@ -3142,6 +3145,7 @@ void CmndBLEOperation(void){
 \*********************************************************************************************/
 static void BLEPostMQTTSeenDevices(int type) {
   int remains = 0;
+/*
   nextSeenDev = 0;
 
   memset(TasmotaGlobal.mqtt_data, 0, sizeof(TasmotaGlobal.mqtt_data));
@@ -3156,6 +3160,19 @@ static void BLEPostMQTTSeenDevices(int type) {
     MqttPublishPrefixTopicRulesProcess_P((1== type) ? TELE : STAT, PSTR("BLE"));
   } while (remains);
 //  }
+*/
+
+  // Once TasmotaGlobal.mqtt_data is changed from (limited by MESSZ) char array to (unlimited) String the below code can be simplified
+  char dest[ResponseSize()];
+  int maxlen = ResponseSize() -64;
+
+  do {
+    remains = getSeenDevicesToJson(dest, maxlen);
+    ResponseTime_P(dest);
+    // no retain - this is present devices, not historic
+    MqttPublishPrefixTopicRulesProcess_P((1== type) ? TELE : STAT, PSTR("BLE"));
+  } while (remains);
+
 }
 
 static void BLEPostMQTT(bool onlycompleted) {

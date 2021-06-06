@@ -5,7 +5,7 @@
 
 
   Copyright (C) 2020  Christian Baars and Theo Arends
-  Also Simon Hailes and Robert Klauco 
+  Also Simon Hailes and Robert Klauco
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -1332,27 +1332,6 @@ int MIParsePacket(const uint8_t* slotmac, struct mi_beacon_data_t *parsed, const
   return 1;
 }
 
-
-
-
-#ifdef USE_HOME_ASSISTANT
-/**
- * @brief For HASS only, changes last entry of JSON in mqtt_data to 'null'
- */
-
-void MI32nullifyEndOfMQTT_DATA(){
-  char *p = TasmotaGlobal.mqtt_data + ResponseLength();
-  while(true){
-    *p--;
-    if(p[0]==':'){
-      p[1] = 0;
-      break;
-    }
-  }
-  ResponseAppend_P(PSTR("null"));
-}
-#endif // USE_HOME_ASSISTANT
-
 /*********************************************************************************************\
  * common functions
 \*********************************************************************************************/
@@ -1674,7 +1653,7 @@ int MI32parseMiPayload(int _slot, struct mi_beacon_data_t *parsed){
   char tmp[20];
   BLE_ESP32::dump(tmp, 20, (uint8_t*)&(parsed->payload), parsed->payload.size+3);
   if (BLE_ESP32::BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG_MORE,PSTR("M32: MI%d payload %s"), _slot, tmp);
-  
+
   // clear this for every payload
   MIBLEsensors[_slot].pairing = 0;
   MIBLEsensors[_slot].eventType.PairBtn = 0;
@@ -1693,7 +1672,7 @@ int MI32parseMiPayload(int _slot, struct mi_beacon_data_t *parsed){
       uint8_t motion = parsed->payload.data[0];
       res = 0;
     }break;
-    case 0x000f: // 'Someone is moving (with light)' 
+    case 0x000f: // 'Someone is moving (with light)'
       MIBLEsensors[_slot].eventType.motion = 1;
       MIBLEsensors[_slot].lastTime = millis();
       MIBLEsensors[_slot].events++;
@@ -1999,13 +1978,13 @@ void MI32EverySecond(bool restart){
     // show tas style sensor MQTT
     MI32ShowSomeSensors();
   }
-  
-  if (MI32.option.MQTTType == 1 
+
+  if (MI32.option.MQTTType == 1
 #ifdef USE_HOME_ASSISTANT
     ||
     Settings.flag.hass_discovery
 #endif
-  ) { 
+  ) {
     // these two share a counter
     // discovery only sent if hass_discovery
     MI32DiscoveryOneMISensor();
@@ -2545,15 +2524,17 @@ void MI32GetOneSensorJson(int slot, int hidename){
     }
     if (p->feature.lux){
       if(p->eventType.lux || !MI32.mode.triggeredTele || MI32.option.allwaysAggregate){
-        if (p->lux!=0x0ffffff
 #ifdef USE_HOME_ASSISTANT
-          ||(hass_mode!=-1)
+        if ((hass_mode != -1) && (p->lux == 0x0ffffff)) {
+          ResponseAppend_P(PSTR(",\"" D_JSON_ILLUMINANCE "\":null"));
+        } else
+#endif //USE_HOME_ASSISTANT
+        if ((p->lux != 0x0ffffff)
+#ifdef USE_HOME_ASSISTANT
+          || (hass_mode != -1)
 #endif //USE_HOME_ASSISTANT
         ) { // this is the error code -> no lux
           ResponseAppend_P(PSTR(",\"" D_JSON_ILLUMINANCE "\":%u"), p->lux);
-#ifdef USE_HOME_ASSISTANT
-          if (p->lux==0x0ffffff) MI32nullifyEndOfMQTT_DATA();
-#endif //USE_HOME_ASSISTANT
         }
       }
     }
@@ -2568,29 +2549,33 @@ void MI32GetOneSensorJson(int slot, int hidename){
     }
     if (p->feature.moist){
       if(p->eventType.moist || !MI32.mode.triggeredTele || MI32.option.allwaysAggregate){
-        if (p->moisture!=0xff
 #ifdef USE_HOME_ASSISTANT
-          ||(hass_mode!=-1)
+        if ((hass_mode != -1) && (p->moisture == 0xff)) {
+          ResponseAppend_P(PSTR(",\"" D_JSON_MOISTURE "\":null"));
+        } else
+#endif //USE_HOME_ASSISTANT
+        if ((p->moisture != 0xff)
+#ifdef USE_HOME_ASSISTANT
+          || (hass_mode != -1)
 #endif //USE_HOME_ASSISTANT
         ) {
           ResponseAppend_P(PSTR(",\"" D_JSON_MOISTURE "\":%u"), p->moisture);
-#ifdef USE_HOME_ASSISTANT
-          if (p->moisture==0xff) MI32nullifyEndOfMQTT_DATA();
-#endif //USE_HOME_ASSISTANT
         }
       }
     }
     if (p->feature.fert){
       if(p->eventType.fert || !MI32.mode.triggeredTele || MI32.option.allwaysAggregate){
-        if (p->fertility!=0xffff
 #ifdef USE_HOME_ASSISTANT
-          ||(hass_mode!=-1)
+        if ((hass_mode != -1) && (p->fertility == 0xffff)) {
+          ResponseAppend_P(PSTR(",\"Fertility\":null"));
+        } else
+#endif //USE_HOME_ASSISTANT
+        if ((p->fertility != 0xffff)
+#ifdef USE_HOME_ASSISTANT
+          || (hass_mode != -1)
 #endif //USE_HOME_ASSISTANT
         ) {
           ResponseAppend_P(PSTR(",\"Fertility\":%u"), p->fertility);
-#ifdef USE_HOME_ASSISTANT
-          if (p->fertility==0xffff) MI32nullifyEndOfMQTT_DATA();
-#endif //USE_HOME_ASSISTANT
         }
       }
     }
@@ -2632,15 +2617,17 @@ void MI32GetOneSensorJson(int slot, int hidename){
   }
   if (p->feature.bat){
     if(p->eventType.bat || !MI32.mode.triggeredTele || MI32.option.allwaysAggregate){
-      if (p->bat != 0x00
 #ifdef USE_HOME_ASSISTANT
-          ||(hass_mode!=-1)
+      if ((hass_mode != -1) && (p->bat == 0x00)) {
+        ResponseAppend_P(PSTR(",\"Battery\":null"));
+      } else
 #endif //USE_HOME_ASSISTANT
-      ) { // this is the error code -> no battery
-      ResponseAppend_P(PSTR(",\"Battery\":%u"), p->bat);
+      if ((p->bat != 0x00)
 #ifdef USE_HOME_ASSISTANT
-          if (p->bat == 0x00) MI32nullifyEndOfMQTT_DATA();
+        || (hass_mode != -1)
 #endif //USE_HOME_ASSISTANT
+      ) {
+        ResponseAppend_P(PSTR(",\"Battery\":%u"), p->bat);
       }
     }
   }
@@ -2888,7 +2875,7 @@ void MI32DiscoveryOneMISensor(){
         return;
       }
       uint8_t isBinary = 0;
-      
+
       ResponseClear();
 
       switch(i/3){
