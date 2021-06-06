@@ -114,7 +114,7 @@ void InitTimeFromRTC(void) {
 
 void BM8563EverySecond(void) {
   if (bm8563_driver.rtc_ready) {
-    if (!bm8563_driver.ntp_time_ok && Rtc.utc_time > START_VALID_TIME && abs(Rtc.utc_time - BM8563GetUtc()) > 3) {
+    if (!bm8563_driver.ntp_time_ok && Rtc.utc_time > START_VALID_TIME && abs((int32_t)Rtc.utc_time - (int32_t)BM8563GetUtc()) > 3) {
       BM8563SetUtc(Rtc.utc_time);
       AddLog(LOG_LEVEL_INFO, PSTR("I2C: Write Time TO BM8563 from NTP (" D_UTC_TIME ") %s, (" D_DST_TIME ") %s, (" D_STD_TIME ") %s"),
                   GetDateAndTime(DT_UTC).c_str(), GetDateAndTime(DT_DST).c_str(), GetDateAndTime(DT_STD).c_str());
