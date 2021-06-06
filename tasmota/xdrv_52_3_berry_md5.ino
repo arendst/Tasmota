@@ -21,7 +21,7 @@
 #ifdef USE_BERRY
 
 #include <berry.h>
-#include "mbedtls/md5.h"
+#include "MD5Builder.h"
 #include "be_mem.h"
 
 /*********************************************************************************************\
@@ -33,7 +33,7 @@ extern "C" {
   int free_ctx(bvm* vm) {
     int argc = be_top(vm);
     if (argc > 0) {
-      mbedtls_md5_context * ctx = (mbedtls_md5_context*) be_tocomptr(vm, 1);
+      struct MD5Context * ctx = (struct MD5Context *) be_tocomptr(vm, 1);
       if (ctx != NULL) {
         be_os_free(ctx);
       }
@@ -45,12 +45,11 @@ extern "C" {
   int32_t m_md5_init(struct bvm *vm);
   int32_t m_md5_init(struct bvm *vm) {
 
-    mbedtls_md5_context * ctx = (mbedtls_md5_context*) be_os_malloc(sizeof(mbedtls_md5_context));
+    struct MD5Context * ctx = (struct MD5Context *) be_os_malloc(sizeof(struct MD5Context));
     if (!ctx) {
       be_throw(vm, BE_MALLOC_FAIL);
     }
-    mbedtls_md5_init(ctx);
-    mbedtls_md5_starts_ret(ctx);
+    MD5Init(ctx);
 
     be_newcomobj(vm, ctx, &free_ctx);
     be_setmember(vm, 1, ".p");
@@ -72,12 +71,12 @@ extern "C" {
         if (!bytes) break;
 
         be_getmember(vm, 1, ".p");
-        mbedtls_md5_context * ctx;
-        ctx = (mbedtls_md5_context*) be_tocomptr(vm, -1);
+        struct MD5Context * ctx;
+        ctx = (struct MD5Context *) be_tocomptr(vm, -1);
         if (!ctx) break;
 
         if (length > 0) {
-          mbedtls_md5_update_ret(ctx, (const uint8_t*) bytes, length);
+          MD5Update(ctx, (const uint8_t*) bytes, length);
         }
         be_return_nil(vm);
         // success
@@ -92,11 +91,11 @@ extern "C" {
   int32_t m_md5_finish(struct bvm *vm);
   int32_t m_md5_finish(struct bvm *vm) {
     be_getmember(vm, 1, ".p");
-    mbedtls_md5_context * ctx;
-    ctx = (mbedtls_md5_context*) be_tocomptr(vm, -1);
+    struct MD5Context * ctx;
+    ctx = (struct MD5Context *) be_tocomptr(vm, -1);
 
     uint8_t output[16];
-    mbedtls_md5_finish_ret(ctx, output);
+    MD5Final(output, ctx);
     be_pushbytes(vm, output, sizeof(output));
     be_return(vm);
   }
