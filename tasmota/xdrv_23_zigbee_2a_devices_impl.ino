@@ -526,9 +526,9 @@ void Z_Device::jsonPublishAttrList(const char * json_prefix, const Z_attribute_l
   // What key do we use, shortaddr or name?
   if (!Settings.flag5.zb_omit_json_addr) {
     if (use_fname) {
-      Response_P(PSTR("%s{\"%s\":"), TasmotaGlobal.mqtt_data, friendlyName);
+      ResponseAppend_P(PSTR("{\"%s\":"), friendlyName);
     } else {
-      Response_P(PSTR("%s{\"0x%04X\":"), TasmotaGlobal.mqtt_data, shortaddr);
+      ResponseAppend_P(PSTR("{\"0x%04X\":"), shortaddr);
     }
   }
   ResponseAppend_P(PSTR("{"));
@@ -561,13 +561,13 @@ void Z_Device::jsonPublishAttrList(const char * json_prefix, const Z_attribute_l
         snprintf_P(subtopic, sizeof(subtopic), PSTR("%s"), stemp);
       } else {
         snprintf_P(subtopic, sizeof(subtopic), PSTR("%s/%s"), TasmotaGlobal.mqtt_topic, stemp);
-      } 
+      }
     } else {
       if (Settings.flag5.zigbee_hide_bridge_topic) {
         snprintf_P(subtopic, sizeof(subtopic), PSTR("%04X"), shortaddr);
       } else {
         snprintf_P(subtopic, sizeof(subtopic), PSTR("%s/%04X"), TasmotaGlobal.mqtt_topic, shortaddr);
-      } 
+      }
     }
     if (Settings.flag5.zb_topic_endpoint) {
       if (attr_list.isValidSrcEp()) {

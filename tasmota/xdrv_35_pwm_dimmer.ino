@@ -793,7 +793,7 @@ bool Xdrv35(uint8_t function)
           // If hold time has arrived and no rule is enabled that handles the button hold, handle it.
           else if (button_hold_time[button_index] <= now) {
 #ifdef USE_RULES
-            sprintf(TasmotaGlobal.mqtt_data, PSTR("{\"Button%u\":{\"State\":3}}"), button_index + 1);
+            Response_P(PSTR("{\"Button%u\":{\"State\":3}}"), button_index + 1);
             Rules.no_execute = true;
             if (!XdrvRulesProcess(0)) {
 #endif  // USE_RULES
