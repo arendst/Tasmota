@@ -892,7 +892,7 @@ void HAssAnnounceSensors(void)
     strcpy(sensordata, TasmotaGlobal.mqtt_data.c_str());    // we can use strcpy since the buffer has the right size
 #else
     strcpy(sensordata, TasmotaGlobal.mqtt_data);    // we can use strcpy since the buffer has the right size
-#eindif
+#endif
 
     // ******************* JSON TEST *******************
     // char sensordata[512];
