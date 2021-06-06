@@ -155,7 +155,94 @@ OpenThermCommand sns_opentherm_commands[] = {
      .m_ot_make_request = sns_opentherm_get_generic_float,
      .m_ot_parse_response = sns_opentherm_parse_generic_float,
      .m_ot_appent_telemetry = sns_opentherm_tele_generic_float},
-
+    {// Read Number of Transparent-Slave-Parameters supported by slave
+     .m_command_name = "OT10",
+     .m_command_code = (uint8_t)OpenThermMessageID::TSP,
+     .m_flags = 0,
+     .m_results = {{.m_u8 = 0}, {.m_u8 = 0}},
+     .m_ot_make_request = sns_opentherm_get_generic_u16,
+     .m_ot_parse_response = sns_opentherm_parse_generic_u16,
+     .m_ot_appent_telemetry = sns_opentherm_tele_u8_u8},
+    {// Read Size of Fault-History-Buffer supported by slave
+     .m_command_name = "OT12",
+     .m_command_code = (uint8_t)OpenThermMessageID::FHBsize,
+     .m_flags = 0,
+     .m_results = {{.m_u8 = 0}, {.m_u8 = 0}},
+     .m_ot_make_request = sns_opentherm_get_generic_u16,
+     .m_ot_parse_response = sns_opentherm_parse_generic_u16,
+     .m_ot_appent_telemetry = sns_opentherm_tele_u8_u8},
+    {// Read Maximum relative modulation level setting (%)
+     .m_command_name = "OT14",
+     .m_command_code = (uint8_t)OpenThermMessageID::MaxRelModLevelSetting,
+     .m_flags = 0,
+     .m_results = {{.m_u8 = 0}, {.m_u8 = 0}},
+     .m_ot_make_request = sns_opentherm_get_generic_float,
+     .m_ot_parse_response = sns_opentherm_parse_generic_float,
+     .m_ot_appent_telemetry = sns_opentherm_tele_generic_float},
+    {// Read Maximum boiler capacity (kW) / Minimum boiler modulation level(%)
+     .m_command_name = "OT15",
+     .m_command_code = (uint8_t)OpenThermMessageID::MaxCapacityMinModLevel,
+     .m_flags = 0,
+     .m_results = {{.m_u8 = 0}, {.m_u8 = 0}},
+     .m_ot_make_request = sns_opentherm_get_generic_u16,
+     .m_ot_parse_response = sns_opentherm_parse_generic_u16,
+     .m_ot_appent_telemetry = sns_opentherm_tele_u8_u8},
+    {// Read Water pressure in CH circuit
+     .m_command_name = "OT18",
+     .m_command_code = (uint8_t)OpenThermMessageID::CHPressure,
+     .m_flags = 0,
+     .m_results = {{.m_u8 = 0}, {.m_u8 = 0}},
+     .m_ot_make_request = sns_opentherm_get_generic_float,
+     .m_ot_parse_response = sns_opentherm_parse_generic_float,
+     .m_ot_appent_telemetry = sns_opentherm_tele_generic_float},
+    {// Read Water flow rate in DHW circuit. (litres/minute)
+     .m_command_name = "OT19",
+     .m_command_code = (uint8_t)OpenThermMessageID::DHWFlowRate,
+     .m_flags = 0,
+     .m_results = {{.m_u8 = 0}, {.m_u8 = 0}},
+     .m_ot_make_request = sns_opentherm_get_generic_float,
+     .m_ot_parse_response = sns_opentherm_parse_generic_float,
+     .m_ot_appent_telemetry = sns_opentherm_tele_generic_float},
+    {// Boiler exhaust temperature (°C)
+     .m_command_name = "OT33",
+     .m_command_code = (uint8_t)OpenThermMessageID::Texhaust,
+     .m_flags = 0,
+     .m_results = {{.m_u8 = 0}, {.m_u8 = 0}},
+     .m_ot_make_request = sns_opentherm_get_generic_u16,
+     .m_ot_parse_response = sns_opentherm_parse_generic_u16,
+     .m_ot_appent_telemetry = sns_opentherm_tele_generic_u16},
+    {// Number of starts burner
+     .m_command_name = "OT116",
+     .m_command_code = (uint8_t)OpenThermMessageID::BurnerStarts,
+     .m_flags = 0,
+     .m_results = {{.m_u8 = 0}, {.m_u8 = 0}},
+     .m_ot_make_request = sns_opentherm_get_generic_u16,
+     .m_ot_parse_response = sns_opentherm_parse_generic_u16,
+     .m_ot_appent_telemetry = sns_opentherm_tele_generic_u16},
+    {// Number of starts CH pump
+     .m_command_name = "OT117",
+     .m_command_code = (uint8_t)OpenThermMessageID::CHPumpStarts,
+     .m_flags = 0,
+     .m_results = {{.m_u8 = 0}, {.m_u8 = 0}},
+     .m_ot_make_request = sns_opentherm_get_generic_u16,
+     .m_ot_parse_response = sns_opentherm_parse_generic_u16,
+     .m_ot_appent_telemetry = sns_opentherm_tele_generic_u16},
+    {// Number of hours that burner is in operation (i.e. flame on)
+     .m_command_name = "OT120",
+     .m_command_code = (uint8_t)OpenThermMessageID::BurnerOperationHours,
+     .m_flags = 0,
+     .m_results = {{.m_u8 = 0}, {.m_u8 = 0}},
+     .m_ot_make_request = sns_opentherm_get_generic_u16,
+     .m_ot_parse_response = sns_opentherm_parse_generic_u16,
+     .m_ot_appent_telemetry = sns_opentherm_tele_generic_u16},
+    {// Number of hours that CH pump has been running
+     .m_command_name = "OT121",
+     .m_command_code = (uint8_t)OpenThermMessageID::CHPumpOperationHours,
+     .m_flags = 0,
+     .m_results = {{.m_u8 = 0}, {.m_u8 = 0}},
+     .m_ot_make_request = sns_opentherm_get_generic_u16,
+     .m_ot_parse_response = sns_opentherm_parse_generic_u16,
+     .m_ot_appent_telemetry = sns_opentherm_tele_generic_u16},
 };
 
 /////////////////////////////////// Process Slave Status Flags & Control //////////////////////////////////////////////////
@@ -307,6 +394,18 @@ void sns_opentherm_tele_flags(struct OpenThermCommandT *self)
                      (int)self->m_results[1].m_u8);
 }
 
+void sns_opentherm_tele_u8_u8(struct OpenThermCommandT *self)
+{
+    ResponseAppend_P(PSTR("{\"lo\":%d,\"hi\":%d}"),
+                     (int)self->m_results[0].m_u8,
+                     (int)self->m_results[1].m_u8);
+}
+
+void sns_opentherm_tele_u16(struct OpenThermCommandT *self)
+{
+    ResponseAppend_P(PSTR("%d"), (int)self->m_results[0].m_u16);
+}
+
 /////////////////////////////////// OEM Diag Code //////////////////////////////////////////////////
 unsigned long sns_opentherm_get_oem_diag(struct OpenThermCommandT *self, struct OT_BOILER_STATUS_T *)
 {
@@ -343,6 +442,22 @@ void sns_opentherm_tele_generic_float(struct OpenThermCommandT *self)
     ResponseAppend_P(PSTR("%s"), str);
 }
 
+/////////////////////////////////// Generic U16 /////////////////////////////////////////////////
+unsigned long sns_opentherm_get_generic_u16(struct OpenThermCommandT *self, struct OT_BOILER_STATUS_T *)
+{
+    return OpenTherm::buildRequest(OpenThermRequestType::READ, (OpenThermMessageID)self->m_command_code, 0);
+}
+
+void sns_opentherm_parse_generic_u16(struct OpenThermCommandT *self, struct OT_BOILER_STATUS_T *boilerStatus, unsigned long response)
+{
+    self->m_results[0].m_u16 = response & 0xFFFF;
+}
+
+void sns_opentherm_tele_generic_u16(struct OpenThermCommandT *self)
+{
+    ResponseAppend_P(PSTR("%d"), self->m_results[0].m_u16);
+}
+
 /////////////////////////////////// Specific Floats Rerports to the  /////////////////////////////////////////////////
 void sns_opentherm_parse_dhw_setpoint(struct OpenThermCommandT *self, struct OT_BOILER_STATUS_T *boilerStatus, unsigned long response)
 {
@@ -377,14 +492,19 @@ unsigned long sns_opentherm_get_next_request(struct OT_BOILER_STATUS_T *boilerSt
         sns_opentherm_current_command = 0;
     }
 
-    struct OpenThermCommandT *cmd = &sns_opentherm_commands[sns_opentherm_current_command];
-    // Return error if command known as not supported
-    if (cmd->m_flags.notSupported)
+    // Select next supported command
+    while (sns_opentherm_current_command < SNS_OT_COMMANDS_COUNT)
     {
-        return -1;
+        struct OpenThermCommandT *cmd = &sns_opentherm_commands[sns_opentherm_current_command];
+        // Return error if command known as not supported
+        if (!cmd->m_flags.notSupported)
+        {
+            // Retrurn OT compatible request
+            return cmd->m_ot_make_request(cmd, boilerStatus);
+        }
+        ++sns_opentherm_current_command;
     }
-    // Retrurn OT compatible request
-    return cmd->m_ot_make_request(cmd, boilerStatus);
+    return -1;
 }
 
 void sns_opentherm_check_retry_request()
