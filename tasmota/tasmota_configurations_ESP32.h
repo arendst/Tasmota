@@ -33,6 +33,7 @@
 #define CODE_IMAGE_STR "webcam"
 
 #define USE_WEBCAM
+#define ENABLE_RTSPSERVER
 #define USE_UFILESYS
 #define USE_SDCARD
   #define GUI_TRASH_FILE
