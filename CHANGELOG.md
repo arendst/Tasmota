@@ -3,11 +3,16 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
+## [9.4.0.5]
+### Changed
+- Allow longer MQTT response messages by removing fixed memory buffer with size 1040 to heap allocated buffer
+- Command ``Timers`` layout of JSON message changed to single line
+
 ## [9.4.0.4]
 ### Added
 - Version bump to signal new features to Hass
 - Support for BM8563 RTC chip (I2C) found in M5Stack Core2 and M5StickC
-- Command ``Status0`` providing all status in one line
+- Command ``Status0`` providing all status information on a single line
 
 ### Changed
 - IRremoteESP8266 library from v2.7.16 to v2.7.18
