@@ -1137,7 +1137,7 @@ void Every250mSeconds(void)
             char *bch = strrchr(full_ota_url, '/');         // Only consider filename after last backslash prevent change of urls having "-" in it
             if (bch == nullptr) { bch = full_ota_url; }     // No path found so use filename only
             char *ech = strchr(bch, '.');                              // Find file type in filename (none, .ino.bin, .ino.bin.gz, .bin, .bin.gz or .gz)
-            if (ech == nullptr) { ech = full_ota_url + strlen(full_ota_url); }  // Point to '/0' at end of mqtt_data becoming an empty string
+            if (ech == nullptr) { ech = full_ota_url + strlen(full_ota_url); }  // Point to '/0' at end of full_ota_url becoming an empty string
 
 //AddLog(LOG_LEVEL_DEBUG, PSTR("OTA: File type [%s]"), ech);
 
@@ -1146,7 +1146,7 @@ void Every250mSeconds(void)
 
             char *pch = strrchr(bch, '-');                             // Find last dash (-) and ignore remainder - handles tasmota-DE
             if (pch == nullptr) { pch = ech; }                         // No dash so ignore filetype
-            *pch = '\0';                                               // mqtt_data = http://domus1:80/api/arduino/tasmota
+            *pch = '\0';                                               // full_ota_url = http://domus1:80/api/arduino/tasmota
             snprintf_P(full_ota_url, sizeof(full_ota_url), PSTR("%s-" D_JSON_MINIMAL "%s"), full_ota_url, ota_url_type);  // Minimal filename must be filename-minimal
           }
 #endif  // FIRMWARE_MINIMAL

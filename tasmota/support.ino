@@ -1170,36 +1170,80 @@ char* ResponseGetTime(uint32_t format, char* time_str)
 }
 
 uint32_t ResponseSize(void) {
+#ifdef MQTT_DATA_STRING
+  return MESSZ;
+#else
   return sizeof(TasmotaGlobal.mqtt_data);
+#endif
 }
 
 uint32_t ResponseLength(void) {
+#ifdef MQTT_DATA_STRING
+  return TasmotaGlobal.mqtt_data.length();
+#else
   return strlen(TasmotaGlobal.mqtt_data);
+#endif
 }
 
 void ResponseClear(void) {
   // Reset string length to zero
+#ifdef MQTT_DATA_STRING
+  TasmotaGlobal.mqtt_data = "";
+#else
   TasmotaGlobal.mqtt_data[0] = '\0';
+#endif
 }
 
 void ResponseJsonStart(void) {
   // Insert a JSON start bracket {
+#ifdef MQTT_DATA_STRING
+  TasmotaGlobal.mqtt_data.setCharAt(0,'{');
+#else
   TasmotaGlobal.mqtt_data[0] = '{';
+#endif
 }
 
 int Response_P(const char* format, ...)        // Content send snprintf_P char data
 {
   // This uses char strings. Be aware of sending %% if % is needed
+#ifdef MQTT_DATA_STRING
+  va_list arg;
+  va_start(arg, format);
+  char* mqtt_data = ext_vsnprintf_malloc_P(format, arg);
+  va_end(arg);
+  if (mqtt_data != nullptr) {
+    TasmotaGlobal.mqtt_data = mqtt_data;
+    free(mqtt_data);
+  } else {
+    TasmotaGlobal.mqtt_data = "";
+  }
+  return TasmotaGlobal.mqtt_data.length();
+#else
   va_list args;
   va_start(args, format);
   int len = ext_vsnprintf_P(TasmotaGlobal.mqtt_data, ResponseSize(), format, args);
   va_end(args);
   return len;
+#endif
 }
 
 int ResponseTime_P(const char* format, ...)    // Content send snprintf_P char data
 {
   // This uses char strings. Be aware of sending %% if % is needed
+#ifdef MQTT_DATA_STRING
+  char timestr[100];
+  TasmotaGlobal.mqtt_data = ResponseGetTime(Settings.flag2.time_format, timestr);
+
+  va_list arg;
+  va_start(arg, format);
+  char* mqtt_data = ext_vsnprintf_malloc_P(format, arg);
+  va_end(arg);
+  if (mqtt_data != nullptr) {
+    TasmotaGlobal.mqtt_data += mqtt_data;
+    free(mqtt_data);
+  }
+  return TasmotaGlobal.mqtt_data.length();
+#else
   va_list args;
   va_start(args, format);
 
@@ -1209,17 +1253,30 @@ int ResponseTime_P(const char* format, ...)    // Content send snprintf_P char d
   int len = ext_vsnprintf_P(TasmotaGlobal.mqtt_data + mlen, ResponseSize() - mlen, format, args);
   va_end(args);
   return len + mlen;
+#endif
 }
 
 int ResponseAppend_P(const char* format, ...)  // Content send snprintf_P char data
 {
   // This uses char strings. Be aware of sending %% if % is needed
+#ifdef MQTT_DATA_STRING
+  va_list arg;
+  va_start(arg, format);
+  char* mqtt_data = ext_vsnprintf_malloc_P(format, arg);
+  va_end(arg);
+  if (mqtt_data != nullptr) {
+    TasmotaGlobal.mqtt_data += mqtt_data;
+    free(mqtt_data);
+  }
+  return TasmotaGlobal.mqtt_data.length();
+#else
   va_list args;
   va_start(args, format);
   int mlen = ResponseLength();
   int len = ext_vsnprintf_P(TasmotaGlobal.mqtt_data + mlen, ResponseSize() - mlen, format, args);
   va_end(args);
   return len + mlen;
+#endif
 }
 
 int ResponseAppendTimeFormat(uint32_t format)
@@ -1253,7 +1310,11 @@ int ResponseJsonEndEnd(void)
 }
 
 bool ResponseContains_P(const char* needle) {
+#ifdef MQTT_DATA_STRING
+  return (strstr_P(TasmotaGlobal.mqtt_data.c_str(), needle) != nullptr);
+#else
   return (strstr_P(TasmotaGlobal.mqtt_data, needle) != nullptr);
+#endif
 }
 
 /*********************************************************************************************\

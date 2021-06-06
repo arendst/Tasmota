@@ -797,7 +797,7 @@ bool RuleSetProcess(uint8_t rule_set, String &event_saved)
 
 /*******************************************************************************************/
 
-bool RulesProcessEvent(char *json_event)
+bool RulesProcessEvent(const char *json_event)
 {
   if (Rules.busy) { return false; }
 
@@ -986,7 +986,11 @@ void RulesEvery100ms(void) {
     if (ResponseLength()) {
       ResponseJsonStart();                                           // {"INA219":{"Voltage":4.494,"Current":0.020,"Power":0.089}
       ResponseJsonEnd();
+#ifdef MQTT_DATA_STRING
+      RulesProcessEvent(TasmotaGlobal.mqtt_data.c_str());
+#else
       RulesProcessEvent(TasmotaGlobal.mqtt_data);
+#endif
     }
   }
 }

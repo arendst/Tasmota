@@ -2070,7 +2070,11 @@ void HandleOtherConfiguration(void) {
   WSContentSendStyle();
 
   TemplateJson();
+#ifdef MQTT_DATA_STRING
+  WSContentSend_P(HTTP_FORM_OTHER, TasmotaGlobal.mqtt_data.c_str(), (USER_MODULE == Settings.module) ? PSTR(" checked disabled") : "",
+#else
   WSContentSend_P(HTTP_FORM_OTHER, TasmotaGlobal.mqtt_data, (USER_MODULE == Settings.module) ? PSTR(" checked disabled") : "",
+#endif
     (Settings.flag.mqtt_enabled) ? PSTR(" checked") : "",   // SetOption3 - Enable MQTT
     SettingsText(SET_FRIENDLYNAME1), SettingsText(SET_DEVICENAME));
 

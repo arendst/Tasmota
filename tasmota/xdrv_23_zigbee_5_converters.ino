@@ -751,7 +751,11 @@ public:
     if (Settings.flag3.tuya_serial_mqtt_publish) {
       MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR(D_RSLT_SENSOR));
     } else {
+#ifdef MQTT_DATA_STRING
+      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE "%s"), TasmotaGlobal.mqtt_data.c_str());
+#else
       AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE "%s"), TasmotaGlobal.mqtt_data);
+#endif      
     }
   }
 

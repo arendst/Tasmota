@@ -196,13 +196,18 @@ struct {
   String backlog[MAX_BACKLOG];              // Command backlog buffer
 #endif
 
+#ifdef MQTT_DATA_STRING
+  String mqtt_data;                         // Buffer filled by Response functions
+#else
+  char mqtt_data[MESSZ];                    // MQTT publish buffer
+#endif
+
   char version[16];                         // Composed version string like 255.255.255.255
   char image_name[33];                      // Code image and/or commit
   char hostname[33];                        // Composed Wifi hostname
   char serial_in_buffer[INPUT_BUFFER_SIZE];  // Receive buffer
   char mqtt_client[99];                     // Composed MQTT Clientname
   char mqtt_topic[TOPSZ];                   // Composed MQTT topic
-  char mqtt_data[MESSZ];                    // MQTT publish buffer and web page ajax buffer
   char log_buffer[LOG_BUFFER_SIZE];         // Web log buffer
 } TasmotaGlobal;
 

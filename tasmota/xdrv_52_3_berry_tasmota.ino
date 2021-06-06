@@ -97,7 +97,11 @@ extern "C" {
       const char * command = be_tostring(vm, 2);
       be_pop(vm, 2);    // clear the stack before calling, because of re-entrant call to Berry in a Rule
       ExecuteCommand(command, SRC_BERRY);
+#ifdef MQTT_DATA_STRING
+      be_pushstring(vm, TasmotaGlobal.mqtt_data.c_str());
+#else
       be_pushstring(vm, TasmotaGlobal.mqtt_data);
+#endif
       be_return(vm); // Return
     }
     be_raise(vm, kTypeError, nullptr);

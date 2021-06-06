@@ -1093,7 +1093,11 @@ bool XdrvRulesProcess(bool teleperiod, const char* payload) {
 }
 
 bool XdrvRulesProcess(bool teleperiod) {
+#ifdef MQTT_DATA_STRING
+  return XdrvRulesProcess(teleperiod, TasmotaGlobal.mqtt_data.c_str());
+#else
   return XdrvRulesProcess(teleperiod, TasmotaGlobal.mqtt_data);
+#endif  
 }
 
 #ifdef USE_DEBUG_DRIVER

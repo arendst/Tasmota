@@ -604,8 +604,6 @@ void MqttPublishLoggingAsync(bool refresh) {
   while (GetLog(Settings.mqttlog_level, &index, &line, &len)) {
     char stopic[TOPSZ];
     GetTopic_P(stopic, STAT, TasmotaGlobal.mqtt_topic, PSTR("LOGGING"));
-//    strlcpy(TasmotaGlobal.mqtt_data, line, len);  // No JSON and ugly!!
-//    MqttPublishLib(stopic, (const uint8_t*)TasmotaGlobal.mqtt_data, ResponseLength(), false);
     MqttPublishLib(stopic, (const uint8_t*)line, len -1, false);
   }
 }
@@ -652,7 +650,11 @@ void MqttPublishPayload(const char* topic, const char* payload) {
 
 void MqttPublish(const char* topic, bool retained) {
   // Publish <topic> default TasmotaGlobal.mqtt_data string with optional retained
+#ifdef MQTT_DATA_STRING
+  MqttPublishPayload(topic, TasmotaGlobal.mqtt_data.c_str(), 0, retained);
+#else
   MqttPublishPayload(topic, TasmotaGlobal.mqtt_data, 0, retained);
+#endif
 }
 
 void MqttPublish(const char* topic) {
@@ -734,7 +736,11 @@ void MqttPublishPayloadPrefixTopicRulesProcess_P(uint32_t prefix, const char* su
 
 void MqttPublishPrefixTopic_P(uint32_t prefix, const char* subtopic, bool retained) {
   // Publish <prefix>/<device>/<RESULT or <subtopic>> default TasmotaGlobal.mqtt_data string with optional retained
+#ifdef MQTT_DATA_STRING
+  MqttPublishPayloadPrefixTopic_P(prefix, subtopic, TasmotaGlobal.mqtt_data.c_str(), 0, retained);
+#else
   MqttPublishPayloadPrefixTopic_P(prefix, subtopic, TasmotaGlobal.mqtt_data, 0, retained);
+#endif
 }
 
 void MqttPublishPrefixTopic_P(uint32_t prefix, const char* subtopic) {
@@ -1045,9 +1051,17 @@ void MqttReconnect(void) {
   }
 
   String azureMqtt_userString = String(SettingsText(SET_MQTT_HOST)) + "/" + String(SettingsText(SET_MQTT_CLIENT)); + "/?api-version=2018-06-30";
+#ifdef MQTT_DATA_STRING
+  if (MqttClient.connect(TasmotaGlobal.mqtt_client, azureMqtt_userString.c_str(), azureMqtt_password.c_str(), stopic, 1, lwt_retain, TasmotaGlobal.mqtt_data.c_str(), MQTT_CLEAN_SESSION)) {
+#else
   if (MqttClient.connect(TasmotaGlobal.mqtt_client, azureMqtt_userString.c_str(), azureMqtt_password.c_str(), stopic, 1, lwt_retain, TasmotaGlobal.mqtt_data, MQTT_CLEAN_SESSION)) {
+#endif
+#else
+#ifdef MQTT_DATA_STRING
+  if (MqttClient.connect(TasmotaGlobal.mqtt_client, mqtt_user, mqtt_pwd, stopic, 1, lwt_retain, TasmotaGlobal.mqtt_data.c_str(), MQTT_CLEAN_SESSION)) {
 #else
   if (MqttClient.connect(TasmotaGlobal.mqtt_client, mqtt_user, mqtt_pwd, stopic, 1, lwt_retain, TasmotaGlobal.mqtt_data, MQTT_CLEAN_SESSION)) {
+#endif
 #endif  // USE_MQTT_AZURE_IOT
 #ifdef USE_MQTT_TLS
     if (Mqtt.mqtt_tls) {

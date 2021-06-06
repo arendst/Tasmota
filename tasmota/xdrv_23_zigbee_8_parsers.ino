@@ -1577,7 +1577,11 @@ void Z_AutoConfigReportingForCluster(uint16_t shortaddr, uint16_t groupaddr, uin
   ResponseAppend_P(PSTR("}}"));
 
   if (buf.len() > 0) {
+#ifdef MQTT_DATA_STRING
+    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "auto-bind `%s`"), TasmotaGlobal.mqtt_data.c_str());
+#else
     AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "auto-bind `%s`"), TasmotaGlobal.mqtt_data);
+#endif
     ZCLMessage zcl(buf.len());   // message is 4 bytes
     zcl.shortaddr = shortaddr;
     zcl.cluster = cluster;

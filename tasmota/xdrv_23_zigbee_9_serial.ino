@@ -152,7 +152,11 @@ void ZigbeeInputLoop(void) {
       if (Settings.flag3.tuya_serial_mqtt_publish) {
         MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR(D_RSLT_SENSOR));
       } else {
+#ifdef MQTT_DATA_STRING
+        AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE "%s"), TasmotaGlobal.mqtt_data.c_str());
+#else
         AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE "%s"), TasmotaGlobal.mqtt_data);
+#endif        
       }
 			// now process the message
       ZigbeeProcessInput(znp_buffer);
@@ -597,7 +601,11 @@ void ZigbeeProcessInputEZSP(SBuffer &buf) {
         log_level = LOG_LEVEL_DEBUG;
         break;
     }
+#ifdef MQTT_DATA_STRING
+    AddLog(log_level, PSTR(D_LOG_ZIGBEE "%s"), TasmotaGlobal.mqtt_data.c_str());    // TODO move to LOG_LEVEL_DEBUG when stable
+#else
     AddLog(log_level, PSTR(D_LOG_ZIGBEE "%s"), TasmotaGlobal.mqtt_data);    // TODO move to LOG_LEVEL_DEBUG when stable
+#endif    
   }
 
   // Pass message to state machine

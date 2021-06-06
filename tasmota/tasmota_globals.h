@@ -266,6 +266,8 @@ const uint16_t LOG_BUFFER_SIZE = 4000;         // Max number of characters in lo
 #define TASM_FILE_AUTOEXEC          "/autoexec.bat"    // Commands executed after restart
 #define TASM_FILE_CONFIG            "/config.sys"      // Settings executed after restart
 
+#define MQTT_DATA_STRING                               // Use heap instead of fixed memory for TasmotaGlobal.mqtt_data
+
 #ifndef MQTT_MAX_PACKET_SIZE
 #define MQTT_MAX_PACKET_SIZE        1200       // Bytes
 //#define MQTT_MAX_PACKET_SIZE        2048       // Bytes
