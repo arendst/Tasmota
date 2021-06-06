@@ -4169,7 +4169,7 @@ int16_t Run_script_sub(const char *type, int8_t tlen, struct GVARS *gv);
 
 #define IF_NEST 8
 // execute section of scripter
-int16_t Run_Scripter(const char *type, int8_t tlen, char *js) {
+int16_t Run_Scripter(const char *type, int8_t tlen, const char *js) {
 int16_t retval;
 
     if (!glob_script_mem.scriptptr) {
@@ -4183,9 +4183,9 @@ int16_t retval;
     JsonParserObject jo;
 
     if (js) {
-      //String jss = js;    // copy the string to a new buffer, not sure we can change the original buffer
+      String jss = js;    // copy the string to a new buffer, not sure we can change the original buffer
       //JsonParser parser((char*)jss.c_str());
-      JsonParser parser(js);
+      JsonParser parser((char*)jss.c_str());
       jo = parser.getRootObject();
       gv.jo = &jo;
       retval = Run_script_sub(type, tlen, &gv);
