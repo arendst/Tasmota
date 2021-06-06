@@ -216,8 +216,6 @@ bool sns_opentherm_Init()
         sns_ot_master = new OpenTherm(Pin(GPIO_BOILER_OT_RX), Pin(GPIO_BOILER_OT_TX));
         sns_ot_master->begin(sns_opentherm_handleInterrupt, sns_opentherm_processResponseCallback);
         sns_ot_connection_status = OpenThermConnectionStatus::OTC_CONNECTING;
-
-        sns_opentherm_init_boiler_status();
         return true;
     }
     return false;
@@ -341,7 +339,7 @@ void sns_ot_process_handshake(unsigned long response, int st)
     sns_ot_connection_status = OpenThermConnectionStatus::OTC_READY;
 }
 
-void sns_opentherm_CheckSettings(void)
+void sns_opentherm_check_settings(void)
 {
     bool settingsValid = true;
 
@@ -547,7 +545,8 @@ bool Xsns69(uint8_t function)
     {
         if (sns_opentherm_Init())
         {
-            sns_opentherm_CheckSettings();
+            sns_opentherm_check_settings();
+            sns_opentherm_init_boiler_status();
         }
     }
 
