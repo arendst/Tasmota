@@ -258,7 +258,11 @@ unsigned long sns_opentherm_set_slave_flags(struct OpenThermCommandT *self, stru
         AddLog(LOG_LEVEL_INFO,
             PSTR("[OTH]: Central Heating transitioning from %s to %s"),
             self->m_results[1].m_bool ? "on" : "off",
-            status->m_enableCentralHeating ? "on" : "off");
+            centralHeatingIsOn ? "on" : "off");
+
+        if (centralHeatingIsOn) {
+            status->m_forceSetpointSet = true;
+        }
     }
     self->m_results[1].m_bool = centralHeatingIsOn;
 
@@ -302,14 +306,17 @@ unsigned long sns_opentherm_set_boiler_temperature(struct OpenThermCommandT *sel
     // wearing out Boiler flash memory.
     float diff = abs(status->m_boilerSetpoint - self->m_results[0].m_float);
     // Ignore small changes in the boiler setpoint temperature
-    if (diff < OPENTHERM_BOILER_SETPOINT_TOLERANCE)
+    if (diff < OPENTHERM_BOILER_SETPOINT_TOLERANCE && !status->m_forceSetpointSet)
     {
         return -1;
     }
     AddLog(LOG_LEVEL_INFO,
-              PSTR("[OTH]: Setting Boiler Temp. Old: %d, New: %d"),
+              PSTR("[OTH]: Setting Boiler Temp. Old: %d, New: %d, Force: %s"),
               (int)self->m_results[0].m_float,
-              (int)status->m_boilerSetpoint);
+              (int)status->m_boilerSetpoint,
+              status->m_forceSetpointSet ? "Y" : "N");
+
+    status->m_forceSetpointSet = false;
     self->m_results[0].m_float = status->m_boilerSetpoint;
 
     unsigned int data = OpenTherm::temperatureToData(status->m_boilerSetpoint);

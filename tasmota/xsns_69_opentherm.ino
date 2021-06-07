@@ -108,6 +108,9 @@ typedef struct OT_BOILER_STATUS_T
     // Boiler desired values
     float m_boilerSetpoint;
     float m_hotWaterSetpoint;
+    // This flag is set when Master require a CH to be on
+    // and forces the OpenThermMessageID::TSet to be sent to the boiler
+    bool m_forceSetpointSet;
 
 } OT_BOILER_STATUS;
 
@@ -594,6 +597,9 @@ bool Xsns69(uint8_t function)
         break;
     case FUNC_JSON_APPEND:
         sns_opentherm_stat(1);
+        break;
+    case FUNC_SAVE_AT_MIDNIGHT:
+        sns_opentherm_protocol_reset();
         break;
 #ifdef USE_WEBSERVER
     case FUNC_WEB_SENSOR:
