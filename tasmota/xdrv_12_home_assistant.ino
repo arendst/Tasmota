@@ -65,9 +65,11 @@ const char HASS_DISCOVER_SENSOR_LWT[] PROGMEM =
 
 const char HASS_DISCOVER_RELAY[] PROGMEM =
   ",\"cmd_t\":\"%s\","                            // cmnd/dualr2/POWER2
-  "\"val_tpl\":\"{{value_json.%s}}\","            // POWER2
   "\"pl_off\":\"%s\","                            // OFF
   "\"pl_on\":\"%s\"";                             // ON
+
+const char HASS_DISCOVER_RELAY_TEMPLATE[] PROGMEM =
+  ",\"val_tpl\":\"{{value_json.%s}}\"";           // POWER2
 
 const char HASS_DISCOVER_BIN_SWITCH[] PROGMEM =
   ",\"val_tpl\":\"{{value_json.%s}}\","           // STATE
@@ -80,6 +82,9 @@ const char HASS_DISCOVER_BIN_PIR[] PROGMEM =
   "\"frc_upd\":true,"                             // In ON/OFF case, enable force_update to make automations work
   "\"pl_on\":\"%s\","                             // ON
   "\"off_dly\":1";                                // Switchmode13 and Switchmode14 doesn't transmit an OFF state.
+
+const char HASS_DISCOVER_LIGHT_TEMPLATE[] PROGMEM =
+  ",\"stat_val_tpl\":\"{{value_json.%s}}\"";      // POWER2
 
 const char HASS_DISCOVER_BASE_LIGHT[] PROGMEM =
   ",\"bri_cmd_t\":\"%s\","                        // cmnd/led2/Dimmer
@@ -489,7 +494,12 @@ void HAssAnnounceRelayLight(void)
           GetTopic_P(availability_topic, TELE, TasmotaGlobal.mqtt_topic, S_LWT);
           Response_P(HASS_DISCOVER_BASE, name, state_topic);
           TryResponseAppend_P(HASS_DISCOVER_SENSOR_LWT, availability_topic);
-          TryResponseAppend_P(HASS_DISCOVER_RELAY, command_topic, value_template, SettingsText(SET_STATE_TXT1), SettingsText(SET_STATE_TXT2));
+          TryResponseAppend_P(HASS_DISCOVER_RELAY, command_topic, SettingsText(SET_STATE_TXT1), SettingsText(SET_STATE_TXT2));
+          if (is_topic_light) {
+            TryResponseAppend_P(HASS_DISCOVER_LIGHT_TEMPLATE, value_template);
+          } else {
+            TryResponseAppend_P(HASS_DISCOVER_RELAY_TEMPLATE, value_template);
+          }
           TryResponseAppend_P(HASS_DISCOVER_DEVICE_INFO_SHORT, unique_id, ESP_getChipId());
 
   #ifdef USE_LIGHT
