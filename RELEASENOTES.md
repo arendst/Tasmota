@@ -78,7 +78,7 @@ The binaries can be downloaded from either https://github.com/arendst/Tasmota/tr
 
 ## Changelog v9.4.0.5
 ### Added
-- Command ``Status0`` providing all status in one line
+- Command ``Status0`` providing all status information on a single line
 - Initial support for optional ``Template`` JSON fieldpair ``"CMND":"<any template related command>|<any template related command>|..."`` [#11788](https://github.com/arendst/Tasmota/issues/11788)
 - ESP32 pulldown buttons ``Button_d`` and ``Button_id`` and switches ``Switch_d`` [#10814](https://github.com/arendst/Tasmota/issues/10814)
 - Support for MQTT using Azure IoT Hub by Kevin Saye [#11906](https://github.com/arendst/Tasmota/issues/11906)
@@ -96,6 +96,7 @@ The binaries can be downloaded from either https://github.com/arendst/Tasmota/tr
 - IRremoteESP8266 library from v2.7.16 to v2.7.18
 - Allow longer MQTT response messages by removing fixed memory buffer with size 1040 to heap allocated buffer
 - Command ``Timers`` layout of JSON message changed to single line
+- Command ``Gpio`` layout of JSON message changed to single line
 
 ### Fixed
 
