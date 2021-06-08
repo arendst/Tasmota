@@ -1815,11 +1815,19 @@ void GpioInit(void)
     }
     // Set any non-used GPIO to INPUT - Related to resetPins() in support_legacy_cores.ino
     // Doing it here solves relay toggles at restart.
+#if CONFIG_IDF_TARGET_ESP32C3
+    else if (((i < 11) || (i > 17)) && (GPIO_NONE == mpin)) {  // Skip SPI flash interface
+      if (!((20 == i) || (21 == i))) {             // Skip serial
+        pinMode(i, INPUT);
+      }
+    }
+#else // CONFIG_IDF_TARGET_ESP32C3
     else if (((i < 6) || (i > 11)) && (GPIO_NONE == mpin)) {  // Skip SPI flash interface
       if (!((1 == i) || (3 == i))) {             // Skip serial
         pinMode(i, INPUT);
       }
     }
+#endif // CONFIG_IDF_TARGET_ESP32C3
   }
 
   // Digital input

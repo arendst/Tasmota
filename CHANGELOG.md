@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 - Allow longer MQTT response messages by removing fixed memory buffer with size 1040 to heap allocated buffer
 - Command ``Timers`` layout of JSON message changed to single line
 - Command ``Gpio`` layout of JSON message changed to single line
+- Add preliminary support for Esp32C3 - RiscV based
 
 ## [9.4.0.4]
 ### Added

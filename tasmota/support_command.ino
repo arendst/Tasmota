@@ -1404,8 +1404,11 @@ void CmndTemplate(void)
       SettingsUpdateText(SET_TEMPLATE_NAME, PSTR("Merged"));
       uint32_t j = 0;
       for (uint32_t i = 0; i < nitems(Settings.user_template.gp.io); i++) {
+#if defined(ESP32) && CONFIG_IDF_TARGET_ESP32C3
+#else
         if (6 == i) { j = 9; }
         if (8 == i) { j = 12; }
+#endif
         if (TasmotaGlobal.my_module.io[j] > GPIO_NONE) {
           Settings.user_template.gp.io[i] = TasmotaGlobal.my_module.io[j];
         }

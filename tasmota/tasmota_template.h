@@ -977,6 +977,17 @@ typedef struct MYTMPLT8266 {
 
 #endif  // ESP8266
 #ifdef ESP32
+#if CONFIG_IDF_TARGET_ESP32C3
+
+#define MAX_GPIO_PIN       22   // Number of supported GPIO
+#define MIN_FLASH_PINS     0    // Number of flash chip pins unusable for configuration (GPIO6, 7, 8 and 11)
+#define MAX_USER_PINS      22   // MAX_GPIO_PIN - MIN_FLASH_PINS
+#define WEMOS_MODULE       0    // Wemos module
+
+//                                  0 1 2 3 4 5 6 7 8 9101112131415161718192021
+const char PINS_WEMOS[] PROGMEM = "AOAOAOAOAOAOIOIOIOIOIOFLFLFLFLFLFLFLIOIORXTX";
+
+#else // v CONFIG_IDF_TARGET_ESP32C3 v
 
 #define MAX_GPIO_PIN       40   // Number of supported GPIO
 #define MIN_FLASH_PINS     4    // Number of flash chip pins unusable for configuration (GPIO6, 7, 8 and 11)
@@ -986,6 +997,7 @@ typedef struct MYTMPLT8266 {
 //                                  0 1 2 3 4 5 6 7 8 9101112131415161718192021222324252627282930313233343536373839
 const char PINS_WEMOS[] PROGMEM = "IOTXIORXIOIOflashcFLFLolIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOAOAOIAIAIAIAIAIA";
 
+#endif // CONFIG_IDF_TARGET_ESP32C3
 #endif  // ESP32
 
 //********************************************************************************************
@@ -2443,6 +2455,63 @@ const mytmplt8285 kModules8285[TMP_MAXMODULE_8266 - TMP_WEMOS] PROGMEM = {
 #endif  // ESP8266
 
 #ifdef ESP32
+#if CONFIG_IDF_TARGET_ESP32C3
+/********************************************************************************************\
+ * ESP32 Module templates
+\********************************************************************************************/
+
+#define USER_MODULE        255
+
+// Supported hardware modules
+enum SupportedModules {
+  WEMOS,
+  MAXMODULE };
+
+// Default module settings
+const uint8_t kModuleNiceList[] PROGMEM = {
+  WEMOS,
+};
+
+// !!! Update this list in the same order as kModuleNiceList !!!
+const char kModuleNames[] PROGMEM =
+  "ESP32C3|"
+  ;
+
+// !!! Update this list in the same order as SupportedModules !!!
+const mytmplt kModules[] PROGMEM = {
+  {                              // Generic ESP32C3 device
+    AGPIO(GPIO_USER),            // 0       IO                  GPIO0, ADC1_CH0, XTAL_32K_P
+    AGPIO(GPIO_USER),            // 1       IO                  GPIO1, ADC1_CH1, XTAL_32K_N
+    AGPIO(GPIO_USER),            // 2       IO                  GPIO2, ADC1_CH2, FSPIQ
+    AGPIO(GPIO_USER),            // 3       IO                  GPIO3, ADC1_CH3
+    AGPIO(GPIO_USER),            // 4       IO                  GPIO4, ADC1_CH4, FSPIHD, MTMS
+    AGPIO(GPIO_USER),            // 5       IO                  GPIO5, ADC2_CH0, FSPIWP, MTDI
+    AGPIO(GPIO_USER),            // 6       IO                  GPIO6, FSPICLK, MTCK
+    AGPIO(GPIO_USER),            // 7       IO                  GPIO7, FSPID, MTDO
+    AGPIO(GPIO_USER),            // 8       IO                  GPIO8
+    AGPIO(GPIO_USER),            // 9       IO                  GPIO9
+    AGPIO(GPIO_USER),            // 10      IO                  GPIO10
+    0,                           // 11      IO                  GPIO11, output power supply for flash
+    0,                           // 12      IO                  GPIO12, SPIHD
+    0,                           // 13      IO                  GPIO13, SPIWP
+    0,                           // 14      IO                  GPIO14, SPICS0
+    0,                           // 15      IO                  GPIO15, SPICLK
+    0,                           // 16      IO                  GPIO16, SPID
+    0,                           // 17      IO                  GPIO17, SPIQ
+    AGPIO(GPIO_USER),            // 18      IO                  GPIO18, USB_D
+    AGPIO(GPIO_USER),            // 19      IO                  GPIO19, USB_D+
+    AGPIO(GPIO_USER),            // 20      IO     RXD0         GPIO20, U0RXD
+    AGPIO(GPIO_USER),            // 21      IO     TXD0         GPIO21, U0TXD
+  },
+};
+
+/*********************************************************************************************\
+ Known templates
+
+
+\*********************************************************************************************/
+
+#else // CONFIG_IDF_TARGET_ESP32C3 - now ESP32
 /********************************************************************************************\
  * ESP32 Module templates
 \********************************************************************************************/
@@ -2757,6 +2826,7 @@ const mytmplt kModules[] PROGMEM = {
 
 \*********************************************************************************************/
 
+#endif // CONFIG_IDF_TARGET_ESP32C3
 #endif  // ESP32
 
 #endif  // _TASMOTA_TEMPLATE_H_
