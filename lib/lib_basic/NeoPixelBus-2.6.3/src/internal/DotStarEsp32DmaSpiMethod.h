@@ -29,6 +29,12 @@ License along with NeoPixel.  If not, see
 
 #include "driver/spi_master.h"
 
+#if defined(CONFIG_IDF_TARGET_ESP32C3)
+// HSPI_HOST depreciated in C3
+#define HSPI_HOST   SPI3_HOST
+#endif
+
+#if !defined(CONFIG_IDF_TARGET_ESP32S2) && !defined(CONFIG_IDF_TARGET_ESP32C3)
 class Esp32VspiBus
 {
 public:
@@ -36,6 +42,7 @@ public:
     const static int DmaChannel = 1;    // arbitrary assignment, but based on the fact there are only two DMA channels and two available SPI ports, we need to split them somehow
     const static int ParallelBits = 1;
 };
+#endif
 
 class Esp32HspiBus
 {
@@ -45,6 +52,7 @@ public:
     const static int ParallelBits = 1;
 };
 
+#if !defined(CONFIG_IDF_TARGET_ESP32S2) && !defined(CONFIG_IDF_TARGET_ESP32C3)
 class Esp32Vspi2BitBus
 {
 public:
@@ -52,6 +60,7 @@ public:
     const static int DmaChannel = 1;    // arbitrary assignment, but based on the fact there are only two DMA channels and two available SPI ports, we need to split them somehow
     const static int ParallelBits = 2;
 };
+#endif
 
 class Esp32Hspi2BitBus
 {
@@ -61,6 +70,7 @@ public:
     const static int ParallelBits = 2;
 };
 
+#if !defined(CONFIG_IDF_TARGET_ESP32S2) && !defined(CONFIG_IDF_TARGET_ESP32C3)
 class Esp32Vspi4BitBus
 {
 public:
@@ -68,6 +78,7 @@ public:
     const static int DmaChannel = 1;    // arbitrary assignment, but based on the fact there are only two DMA channels and two available SPI ports, we need to split them somehow
     const static int ParallelBits = 4;
 };
+#endif
 
 class Esp32Hspi4BitBus
 {
@@ -163,6 +174,7 @@ public:
     // If pins aren't specified, initialize bus with just the default SCK and MOSI pins for the SPI peripheral (no SS, no >1-bit pins)
     void Initialize()
     {
+#if !defined(CONFIG_IDF_TARGET_ESP32S2) && !defined(CONFIG_IDF_TARGET_ESP32C3)
         if (T_SPIBUS::SpiHostDevice == VSPI_HOST)
         {
             Initialize(SCK, -1, MOSI, -1, -1, -1);
@@ -171,6 +183,9 @@ public:
         {
             Initialize(14, -1, 13, -1, -1, -1);
         }
+#else
+        Initialize(SCK, -1, MOSI, -1, -1, -1);
+#endif
     }
 
     void Update(bool)
@@ -262,6 +277,7 @@ private:
     int8_t                  _ssPin;
 };
 
+#if !defined(CONFIG_IDF_TARGET_ESP32S2) && !defined(CONFIG_IDF_TARGET_ESP32C3)
 // Clock Speed and Default Definitions for DotStarEsp32DmaVspi
 typedef DotStarEsp32DmaSpiMethod<SpiSpeed40Mhz, Esp32VspiBus> DotStarEsp32DmaVspi40MhzMethod;
 typedef DotStarEsp32DmaSpiMethod<SpiSpeed20Mhz, Esp32VspiBus> DotStarEsp32DmaVspi20MhzMethod;
@@ -273,6 +289,7 @@ typedef DotStarEsp32DmaSpiMethod<SpiSpeed500Khz, Esp32VspiBus> DotStarEsp32DmaVs
 typedef DotStarEsp32DmaSpiMethod<SpiSpeedHz, Esp32VspiBus> DotStarEsp32DmaVspiHzMethod;
 
 typedef DotStarEsp32DmaVspi10MhzMethod DotStarEsp32DmaVspiMethod;
+#endif
 
 // Clock Speed and Default Definitions for DotStarEsp32DmaHspi
 typedef DotStarEsp32DmaSpiMethod<SpiSpeed40Mhz, Esp32HspiBus> DotStarEsp32DmaHspi40MhzMethod;
@@ -286,6 +303,7 @@ typedef DotStarEsp32DmaSpiMethod<SpiSpeedHz, Esp32HspiBus> DotStarEsp32DmaHspiHz
 
 typedef DotStarEsp32DmaHspi10MhzMethod DotStarEsp32DmaHspiMethod;
 
+#if !defined(CONFIG_IDF_TARGET_ESP32S2) && !defined(CONFIG_IDF_TARGET_ESP32C3)
 // Clock Speed and Default Definitions for DotStarEsp32DmaVspi2Bit
 typedef DotStarEsp32DmaSpiMethod<SpiSpeed40Mhz,Esp32Vspi2BitBus> DotStarEsp32DmaVspi2Bit40MhzMethod;
 typedef DotStarEsp32DmaSpiMethod<SpiSpeed20Mhz,Esp32Vspi2BitBus> DotStarEsp32DmaVspi2Bit20MhzMethod;
@@ -297,6 +315,7 @@ typedef DotStarEsp32DmaSpiMethod<SpiSpeed500Khz,Esp32Vspi2BitBus> DotStarEsp32Dm
 typedef DotStarEsp32DmaSpiMethod<SpiSpeedHz,Esp32Vspi2BitBus> DotStarEsp32DmaVspi2BitHzMethod;
 
 typedef DotStarEsp32DmaVspi2Bit10MhzMethod DotStarEsp32DmaVspi2BitMethod;
+#endif
 
 // Clock Speed and Default Definitions for DotStarEsp32DmaHspi2Bit
 typedef DotStarEsp32DmaSpiMethod<SpiSpeed40Mhz,Esp32Hspi2BitBus> DotStarEsp32DmaHspi2Bit40MhzMethod;
@@ -310,6 +329,7 @@ typedef DotStarEsp32DmaSpiMethod<SpiSpeedHz,Esp32Hspi2BitBus> DotStarEsp32DmaHsp
 
 typedef DotStarEsp32DmaHspi2Bit10MhzMethod DotStarEsp32DmaHspi2BitMethod;
 
+#if !defined(CONFIG_IDF_TARGET_ESP32S2) && !defined(CONFIG_IDF_TARGET_ESP32C3)
 // Clock Speed and Default Definitions for DotStarEsp32DmaVspi4Bit
 typedef DotStarEsp32DmaSpiMethod<SpiSpeed40Mhz,Esp32Vspi4BitBus> DotStarEsp32DmaVspi4Bit40MhzMethod;
 typedef DotStarEsp32DmaSpiMethod<SpiSpeed20Mhz,Esp32Vspi4BitBus> DotStarEsp32DmaVspi4Bit20MhzMethod;
@@ -321,6 +341,7 @@ typedef DotStarEsp32DmaSpiMethod<SpiSpeed500Khz,Esp32Vspi4BitBus> DotStarEsp32Dm
 typedef DotStarEsp32DmaSpiMethod<SpiSpeedHz,Esp32Vspi4BitBus> DotStarEsp32DmaVspi4BitHzMethod;
 
 typedef DotStarEsp32DmaVspi4Bit10MhzMethod DotStarEsp32DmaVspi4BitMethod;
+#endif
 
 // Clock Speed and Default Definitions for DotStarEsp32DmaHspi4Bit
 typedef DotStarEsp32DmaSpiMethod<SpiSpeed40Mhz,Esp32Hspi4BitBus> DotStarEsp32DmaHspi4Bit40MhzMethod;
