@@ -3145,7 +3145,20 @@ void CmndBLEOperation(void){
 \*********************************************************************************************/
 static void BLEPostMQTTSeenDevices(int type) {
   int remains = 0;
-/*
+#ifdef MQTT_DATA_STRING
+  ResponseTime_P(PSTR(""));
+  String response_time = TasmotaGlobal.mqtt_data;
+
+  int maxlen = 1024;
+  char dest[maxlen];
+  do {
+    Response_P(response_time.c_str());  // Keep using same time stamp
+    remains = getSeenDevicesToJson(dest, maxlen);
+    ResponseAppend_P(dest);
+    // no retain - this is present devices, not historic
+    MqttPublishPrefixTopicRulesProcess_P((1== type) ? TELE : STAT, PSTR("BLE"));
+  } while (remains);
+#else
   nextSeenDev = 0;
 
   memset(TasmotaGlobal.mqtt_data, 0, sizeof(TasmotaGlobal.mqtt_data));
@@ -3160,19 +3173,7 @@ static void BLEPostMQTTSeenDevices(int type) {
     MqttPublishPrefixTopicRulesProcess_P((1== type) ? TELE : STAT, PSTR("BLE"));
   } while (remains);
 //  }
-*/
-
-  // Once TasmotaGlobal.mqtt_data is changed from (limited by MESSZ) char array to (unlimited) String the below code can be simplified
-  char dest[ResponseSize()];
-  int maxlen = ResponseSize() -64;
-
-  do {
-    remains = getSeenDevicesToJson(dest, maxlen);
-    ResponseTime_P(dest);
-    // no retain - this is present devices, not historic
-    MqttPublishPrefixTopicRulesProcess_P((1== type) ? TELE : STAT, PSTR("BLE"));
-  } while (remains);
-
+#endif
 }
 
 static void BLEPostMQTT(bool onlycompleted) {

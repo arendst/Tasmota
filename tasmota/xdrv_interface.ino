@@ -1079,9 +1079,9 @@ void XsnsDriverState(void)
 
 /*********************************************************************************************/
 
-bool XdrvRulesProcess(bool teleperiod, const char* payload) {
+bool XdrvRulesProcess(bool teleperiod, const char* event) {
   char* data_save = XdrvMailbox.data;
-  XdrvMailbox.data = (char*)payload;
+  XdrvMailbox.data = (char*)event;
   bool rule_handled = XdrvCallDriver(10, (teleperiod) ? FUNC_TELEPERIOD_RULES_PROCESS : FUNC_RULES_PROCESS);
 #ifdef USE_BERRY
   // events are passed to both Rules engine AND Berry engine
@@ -1094,7 +1094,9 @@ bool XdrvRulesProcess(bool teleperiod, const char* payload) {
 
 bool XdrvRulesProcess(bool teleperiod) {
 #ifdef MQTT_DATA_STRING
-  return XdrvRulesProcess(teleperiod, TasmotaGlobal.mqtt_data.c_str());
+  bool result = XdrvRulesProcess(teleperiod, TasmotaGlobal.mqtt_data.c_str());
+  ResponseClear();
+  return result;
 #else
   return XdrvRulesProcess(teleperiod, TasmotaGlobal.mqtt_data);
 #endif  

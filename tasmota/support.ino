@@ -1174,7 +1174,7 @@ char* ResponseGetTime(uint32_t format, char* time_str)
 
 uint32_t ResponseSize(void) {
 #ifdef MQTT_DATA_STRING
-  return MESSZ;
+  return MAX_LOGSZ;                            // Arbitratry max length satisfying full log entry
 #else
   return sizeof(TasmotaGlobal.mqtt_data);
 #endif
@@ -1191,7 +1191,8 @@ uint32_t ResponseLength(void) {
 void ResponseClear(void) {
   // Reset string length to zero
 #ifdef MQTT_DATA_STRING
-  TasmotaGlobal.mqtt_data = "";
+//  TasmotaGlobal.mqtt_data = "";
+  TasmotaGlobal.mqtt_data = (const char*) nullptr;
 #else
   TasmotaGlobal.mqtt_data[0] = '\0';
 #endif
@@ -1347,10 +1348,6 @@ void TemplateConvert(uint8_t template8[], uint16_t template16[]) {
     template16[i] = GpioConvert(template8[i]);
   }
   template16[(sizeof(mytmplt) / 2) -2] = Adc0Convert(template8[sizeof(mytmplt8285) -1]);
-
-//  AddLog(LOG_LEVEL_DEBUG, PSTR("FNC: TemplateConvert"));
-//  AddLogBuffer(LOG_LEVEL_DEBUG, template8, sizeof(mytmplt8285));
-//  AddLogBufferSize(LOG_LEVEL_DEBUG, (uint8_t*)template16, sizeof(mytmplt) / 2, 2);
 }
 
 void ConvertGpios(void) {
@@ -1363,50 +1360,8 @@ void ConvertGpios(void) {
     }
     Settings.my_gp.io[(sizeof(myio) / 2) -1] = Adc0Convert(Settings.ex_my_adc0);
     Settings.gpio16_converted = 0xF5A0;
-
-//    AddLog(LOG_LEVEL_DEBUG, PSTR("FNC: ConvertGpios"));
-//    AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t *)&Settings.ex_my_gp8.io, sizeof(myio8));
-//    AddLogBufferSize(LOG_LEVEL_DEBUG, (uint8_t *)&Settings.my_gp.io, sizeof(myio) / 2, 2);
   }
 }
-
-/*
-void DumpConvertTable(void) {
-  bool jsflg = false;
-  uint32_t lines = 1;
-  for (uint32_t i = 0; i < nitems(kGpioConvert); i++) {
-    uint32_t data = pgm_read_word(kGpioConvert + i);
-    if (!jsflg) {
-      Response_P(PSTR("{\"GPIOConversion%d\":{"), lines);
-    } else {
-      ResponseAppend_P(PSTR(","));
-    }
-    jsflg = true;
-    if ((ResponseAppend_P(PSTR("\"%d\":\"%d\""), i, data) > (MAX_LOGSZ - TOPSZ)) || (i == nitems(kGpioConvert) -1)) {
-      ResponseJsonEndEnd();
-      MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, XdrvMailbox.command);
-      jsflg = false;
-      lines++;
-    }
-  }
-  for (uint32_t i = 0; i < nitems(kAdcNiceList); i++) {
-    uint32_t data = pgm_read_word(kAdcNiceList + i);
-    if (!jsflg) {
-      Response_P(PSTR("{\"ADC0Conversion%d\":{"), lines);
-    } else {
-      ResponseAppend_P(PSTR(","));
-    }
-    jsflg = true;
-    if ((ResponseAppend_P(PSTR("\"%d\":\"%d\""), i, data) > (MAX_LOGSZ - TOPSZ)) || (i == nitems(kAdcNiceList) -1)) {
-      ResponseJsonEndEnd();
-      MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, XdrvMailbox.command);
-      jsflg = false;
-      lines++;
-    }
-  }
-  ResponseClear();
-}
-*/
 #endif  // ESP8266
 
 int IRAM_ATTR Pin(uint32_t gpio, uint32_t index = 0);
@@ -2314,7 +2269,7 @@ bool NeedLogRefresh(uint32_t req_loglevel, uint32_t index) {
 #endif  // ESP32
 
   // Skip initial buffer fill
-  if (strlen(TasmotaGlobal.log_buffer) < LOG_BUFFER_SIZE - MAX_LOGSZ) { return false; }
+  if (strlen(TasmotaGlobal.log_buffer) < LOG_BUFFER_SIZE / 2) { return false; }
 
   char* line;
   size_t len;
@@ -2399,7 +2354,7 @@ void AddLogData(uint32_t loglevel, const char* log_data) {
     // Each entry has this format: [index][loglevel][log data]['\1']
 
     uint32_t log_data_len = strlen(log_data);
-    if (log_data_len + 64 > LOG_BUFFER_SIZE) {
+    if (log_data_len > MAX_LOGSZ) {
       sprintf_P((char*)log_data + 128, PSTR(" ... truncated %d"), log_data_len);
     }
 

@@ -193,7 +193,6 @@ String EthernetMacAddress(void);
 #ifdef USE_PID
 #define USE_TIMEPROP
 #endif
-
                                                // See https://github.com/esp8266/Arduino/pull/4889
 #undef NO_EXTRA_4K_HEAP                        // Allocate 4k heap for WPS in ESP8166/Arduino core v2.4.2 (was always allocated in previous versions)
 
@@ -244,8 +243,6 @@ String EthernetMacAddress(void);
 #define WS2812_LEDS                 30         // [Pixels] Number of LEDs
 #endif
 
-const uint16_t LOG_BUFFER_SIZE = 4000;         // Max number of characters in logbuffer used by weblog, syslog and mqttlog
-
 #if defined(ARDUINO_ESP8266_RELEASE_2_3_0) || defined(ARDUINO_ESP8266_RELEASE_2_4_0) || defined(ARDUINO_ESP8266_RELEASE_2_4_1) || defined(ARDUINO_ESP8266_RELEASE_2_4_2) || defined(ARDUINO_ESP8266_RELEASE_2_5_0) || defined(ARDUINO_ESP8266_RELEASE_2_5_1) || defined(ARDUINO_ESP8266_RELEASE_2_5_2)
   #error "Arduino ESP8266 Core versions before 2.7.1 are not supported"
 #endif
@@ -265,8 +262,6 @@ const uint16_t LOG_BUFFER_SIZE = 4000;         // Max number of characters in lo
 #define TASM_FILE_ZIGBEE_DATA       "/zbdata"          // Zigbee last known values of devices
 #define TASM_FILE_AUTOEXEC          "/autoexec.bat"    // Commands executed after restart
 #define TASM_FILE_CONFIG            "/config.sys"      // Settings executed after restart
-
-#define MQTT_DATA_STRING                               // Use heap instead of fixed memory for TasmotaGlobal.mqtt_data
 
 #ifndef MQTT_MAX_PACKET_SIZE
 #define MQTT_MAX_PACKET_SIZE        1200       // Bytes
@@ -289,10 +284,7 @@ const uint16_t LOG_BUFFER_SIZE = 4000;         // Max number of characters in lo
 #endif
 
 #ifndef MESSZ
-//#define MESSZ                       1040     // Max number of characters in JSON message string (Hass discovery and nice MQTT_MAX_PACKET_SIZE = 1200)
-#define MESSZ                       (MQTT_MAX_PACKET_SIZE -TOPSZ -7)  // Max number of characters in JSON message string
-//#define MESSZ                       MQTT_MAX_PACKET_SIZE // Max number of characters in JSON message string
-//#define MESSZ                       2048       // Max number of characters in JSON message string
+#define MESSZ                       1040       // Max number of characters in JSON message string (Hass discovery and nice MQTT_MAX_PACKET_SIZE = 1200)
 #endif
 
 #ifndef USE_DEVICE_GROUPS

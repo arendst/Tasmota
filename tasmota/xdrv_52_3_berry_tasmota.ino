@@ -432,6 +432,8 @@ void berry_log(const char * berry_buf) {
   AddLog(LOG_LEVEL_INFO, PSTR("%s"), berry_buf);
 }
 
+const uint16_t LOGSZ = 128;                 // Max number of characters in log line
+
 extern "C" {
   void berry_log_C(const char * berry_buf, ...) {
     // To save stack space support logging for max text length of 128 characters

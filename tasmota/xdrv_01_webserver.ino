@@ -47,8 +47,7 @@
 #endif                                                   //   If the first is true, but this is false, the device will restart but the user will see
                                                          //   a window telling that the WiFi Configuration was Ok and that the window can be closed.
 
-//const uint16_t CHUNKED_BUFFER_SIZE = (MESSZ / 2) - 100;  // Chunk buffer size (should be smaller than half mqtt_data size = MESSZ)
-const uint16_t CHUNKED_BUFFER_SIZE = 800;                // Chunk buffer size
+const uint16_t CHUNKED_BUFFER_SIZE = 500;                // Chunk buffer size
 
 const uint16_t HTTP_REFRESH_TIME = 2345;                 // milliseconds
 const uint16_t HTTP_RESTART_RECONNECT_TIME = 10000;      // milliseconds - Allow time for restart and wifi reconnect

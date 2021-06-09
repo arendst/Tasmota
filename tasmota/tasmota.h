@@ -25,6 +25,7 @@
 \*********************************************************************************************/
 
 #define XFUNC_PTR_IN_ROM                    // Enable for keeping tables in ROM (PROGMEM) which seem to have access issues on some flash types
+#define MQTT_DATA_STRING                    // Use heap instead of fixed memory for TasmotaGlobal.mqtt_data
 
 /*********************************************************************************************\
  * Default sensor states
@@ -171,9 +172,14 @@ const uint16_t INPUT_BUFFER_SIZE = 520;     // Max number of characters in seria
 const uint16_t FLOATSZ = 16;                // Max number of characters in float result from dtostrfd (max 32)
 const uint16_t CMDSZ = 24;                  // Max number of characters in command
 const uint16_t TOPSZ = 151;                 // Max number of characters in topic string
-const uint16_t LOGSZ = 128;                 // Max number of characters in AddLog_P log
-const uint16_t MAX_LOGSZ = 700;             // Max number of characters in log
-const uint16_t MIN_MESSZ = 1040;            // Min number of characters in MQTT message (1200 - TOPSZ - 9 header bytes)
+const uint16_t LOG_BUFFER_SIZE = 4096;      // Max number of characters in logbuffer used by weblog, syslog and mqttlog
+//const uint16_t LOG_BUFFER_SIZE = 5120;      // Max number of characters in logbuffer used by weblog, syslog and mqttlog
+//const uint16_t LOG_BUFFER_SIZE = 6144;      // Max number of characters in logbuffer used by weblog, syslog and mqttlog
+#ifdef MQTT_DATA_STRING
+const uint16_t MAX_LOGSZ = LOG_BUFFER_SIZE -96;  // Max number of characters in log line - may be overruled which will truncate log entry
+#else
+const uint16_t MAX_LOGSZ = 700;             // Max number of characters in log line
+#endif
 
 const uint8_t SENSOR_MAX_MISS = 5;          // Max number of missed sensor reads before deciding it's offline
 
