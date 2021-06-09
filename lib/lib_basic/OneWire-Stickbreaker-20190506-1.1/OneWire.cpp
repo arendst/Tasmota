@@ -150,10 +150,6 @@ sample code bearing this copyright.
 //--------------------------------------------------------------------------
 */
 
-// ESP32C3 is not supported yet
-#if defined(ARDUINO_ARCH_ESP8266) || defined(CONFIG_IDF_TARGET_ESP32) || defined(CONFIG_IDF_TARGET_ESP32S2)
-
-
 #include "OneWire.h"
 
 #ifdef ESP32
@@ -623,5 +619,3 @@ uint16_t OneWire::crc16(const uint8_t* input, uint16_t len, uint16_t crc)
 }
 #endif
 #endif
-
-#endif  // NO ESP32-C3 support yet
