@@ -1190,6 +1190,7 @@ uint32_t NeoPoolGetSpeedIndex(uint16_t speedvalue)
 #define D_NEOPOOL_JSON_COVER                  "Cover"
 #define D_NEOPOOL_JSON_SHOCK                  "Boost"
 #define D_NEOPOOL_JSON_LOW                    "Low"
+#define D_NEOPOOL_JSON_MIN                    "Min"
 #define D_NEOPOOL_JSON_MAX                    "Max"
 #define D_NEOPOOL_JSON_PHPUMP                 "Pump"
 #define D_NEOPOOL_JSON_FLOW1                  "FL1"
@@ -1236,6 +1237,8 @@ void NeoPoolShow(bool json)
       ResponseAppend_P(PSTR(",\""  D_PH  "\":{\""  D_JSON_DATA  "\":"  NEOPOOL_FMT_PH), &fvalue);
 
       // S1
+      float fphmin = (float)NeoPoolGetData(MBF_PAR_PH2)/100;
+      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_MIN  "\":"  NEOPOOL_FMT_PH), &fphmin);
       float fphmax = (float)NeoPoolGetData(MBF_PAR_PH1)/100;
       ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_MAX  "\":"  NEOPOOL_FMT_PH), &fphmax);
 
