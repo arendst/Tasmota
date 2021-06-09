@@ -2387,9 +2387,6 @@ void AddLogData(uint32_t loglevel, const char* log_data) {
     Serial.printf("%s%s\r\n", mxtime, log_data);
   }
 
-  uint32_t log_data_len = strlen(log_data) + strlen(mxtime) + 4;  // 4 = log_buffer_pointer + '\1' + '\0'
-  if (log_data_len > LOG_BUFFER_SIZE) { return; }                 // log_data too big for buffer - discard logging
-
   uint32_t highest_loglevel = Settings.weblog_level;
   if (Settings.mqttlog_level > highest_loglevel) { highest_loglevel = Settings.mqttlog_level; }
   if (TasmotaGlobal.syslog_level > highest_loglevel) { highest_loglevel = TasmotaGlobal.syslog_level; }
@@ -2400,12 +2397,18 @@ void AddLogData(uint32_t loglevel, const char* log_data) {
       (TasmotaGlobal.masterlog_level <= highest_loglevel)) {
     // Delimited, zero-terminated buffer of log lines.
     // Each entry has this format: [index][loglevel][log data]['\1']
+
+    uint32_t log_data_len = strlen(log_data);
+    if (log_data_len + 64 > LOG_BUFFER_SIZE) {
+      sprintf_P((char*)log_data + 128, PSTR(" ... truncated %d"), log_data_len);
+    }
+
     TasmotaGlobal.log_buffer_pointer &= 0xFF;
     if (!TasmotaGlobal.log_buffer_pointer) {
       TasmotaGlobal.log_buffer_pointer++;  // Index 0 is not allowed as it is the end of char string
     }
     while (TasmotaGlobal.log_buffer_pointer == TasmotaGlobal.log_buffer[0] ||  // If log already holds the next index, remove it
-           strlen(TasmotaGlobal.log_buffer) + log_data_len > LOG_BUFFER_SIZE)
+           strlen(TasmotaGlobal.log_buffer) + strlen(log_data) + strlen(mxtime) + 4 > LOG_BUFFER_SIZE)  // 4 = log_buffer_pointer + '\1' + '\0'
     {
       char* it = TasmotaGlobal.log_buffer;
       it++;                                // Skip log_buffer_pointer

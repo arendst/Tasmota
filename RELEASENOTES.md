@@ -89,6 +89,7 @@ The binaries can be downloaded from either https://github.com/arendst/Tasmota/tr
 - Define ``USER_BACKLOG`` to store commands at compile time to be executed at firmware load or when executing command ``reset``
 - LVGL support for TrueType fonts via FreeType library
 - Support for BM8563 RTC chip (I2C) found in M5Stack Core2 and M5StickC
+- Preliminary support for Esp32C3 - RiscV based
 
 ### Breaking Changed
 
@@ -97,6 +98,7 @@ The binaries can be downloaded from either https://github.com/arendst/Tasmota/tr
 - Allow longer MQTT response messages by removing fixed memory buffer with size 1040 to heap allocated buffer
 - Command ``Timers`` layout of JSON message changed to single line
 - Command ``Gpio`` layout of JSON message changed to single line
+- Command ``Modules`` layout of JSON message changed to single line
 
 ### Fixed
 
