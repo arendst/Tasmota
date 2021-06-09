@@ -146,6 +146,15 @@ const char HTTP_MODULE_TEMPLATE_REPLACE_NO_INDEX[] PROGMEM =
   #include "./html_uncompressed/HTTP_SCRIPT_TEMPLATE.h"
 #endif
 
+#if defined(ESP32) && CONFIG_IDF_TARGET_ESP32C3
+const char HTTP_SCRIPT_TEMPLATE2[] PROGMEM =
+    "j=0;"
+    "for(i=0;i<" STR(MAX_USER_PINS) ";i++){"  // Skip GPIO 11-17
+      "if(11==i){j=18;}"
+      "sk(g[i],j);"                       // Set GPIO
+      "j++;"
+    "}";
+#else // Now ESP32 and ESP8266
 const char HTTP_SCRIPT_TEMPLATE2[] PROGMEM =
     "j=0;"
     "for(i=0;i<" STR(MAX_USER_PINS) ";i++){"  // Supports 13 GPIOs
@@ -154,6 +163,7 @@ const char HTTP_SCRIPT_TEMPLATE2[] PROGMEM =
       "sk(g[i],j);"                       // Set GPIO
       "j++;"
     "}";
+#endif
 const char HTTP_SCRIPT_TEMPLATE3[] PROGMEM =
     "\";"
     "sk(g[13]," STR(ADC0_PIN) ");";       // Set ADC0
@@ -1583,7 +1593,7 @@ void HandleTemplateConfiguration(void) {
   for (uint32_t i = 0; i < MAX_GPIO_PIN; i++) {
     if (!FlashPin(i)) {
       WSContentSend_P(PSTR("<tr><td><b><font color='#%06x'>" D_GPIO "%d</font></b></td><td%s><select id='g%d' onchange='ot(%d,this.value)'></select></td>"),
-        ((9==i)||(10==i)) ? WebColor(COL_TEXT_WARNING) : WebColor(COL_TEXT), i, (0==i) ? PSTR(" style='width:146px'") : "", i, i);
+        RedPin(i) ? WebColor(COL_TEXT_WARNING) : WebColor(COL_TEXT), i, (0==i) ? PSTR(" style='width:146px'") : "", i, i);
       WSContentSend_P(PSTR("<td style='width:54px'><select id='h%d'></select></td></tr>"), i);
     }
   }

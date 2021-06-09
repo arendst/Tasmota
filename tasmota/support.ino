@@ -985,6 +985,7 @@ String GetSerialConfig(void) {
 }
 
 uint32_t GetSerialBaudrate(void) {
+  // Serial.printf(">> GetSerialBaudrate baudrate = %d\n", Serial.baudRate());
   return (Serial.baudRate() / 300) * 300;  // Fix ESP32 strange results like 115201
 }
 
@@ -1018,7 +1019,9 @@ void SetSerialBaudrate(uint32_t baudrate) {
   TasmotaGlobal.baudrate = baudrate;
   Settings.baudrate = TasmotaGlobal.baudrate / 300;
   if (GetSerialBaudrate() != TasmotaGlobal.baudrate) {
+#if defined(CONFIG_IDF_TARGET_ESP32C3) && !CONFIG_IDF_TARGET_ESP32C3    // crashes on ESP32C3 - TODO
     SetSerialBegin();
+#endif
   }
 }
 
@@ -1574,8 +1577,11 @@ void TemplateGpios(myio *gp)
 
   uint32_t j = 0;
   for (uint32_t i = 0; i < nitems(Settings.user_template.gp.io); i++) {
+#if defined(ESP32) && CONFIG_IDF_TARGET_ESP32C3
+#else
     if (6 == i) { j = 9; }
     if (8 == i) { j = 12; }
+#endif
     dest[j] = src[i];
     j++;
   }
@@ -1628,7 +1634,20 @@ void SetModuleType(void)
 
 bool FlashPin(uint32_t pin)
 {
+#if defined(ESP32) && CONFIG_IDF_TARGET_ESP32C3
+  return (pin > 10) && (pin < 18);        // ESP32C3 has GPIOs 11-17 reserved for Flash
+#else // ESP32 and ESP8266
   return (((pin > 5) && (pin < 9)) || (11 == pin));
+#endif
+}
+
+bool RedPin(uint32_t pin) // pin may be dangerous to change, display in RED in template console
+{
+#if defined(ESP32) && CONFIG_IDF_TARGET_ESP32C3
+  return false;     // no red pin on ESP32C3
+#else // ESP32 and ESP8266
+  return (9==pin)||(10==pin);
+#endif
 }
 
 uint32_t ValidPin(uint32_t pin, uint32_t gpio) {
@@ -2368,9 +2387,6 @@ void AddLogData(uint32_t loglevel, const char* log_data) {
     Serial.printf("%s%s\r\n", mxtime, log_data);
   }
 
-  uint32_t log_data_len = strlen(log_data) + strlen(mxtime) + 4;  // 4 = log_buffer_pointer + '\1' + '\0'
-  if (log_data_len > LOG_BUFFER_SIZE) { return; }                 // log_data too big for buffer - discard logging
-
   uint32_t highest_loglevel = Settings.weblog_level;
   if (Settings.mqttlog_level > highest_loglevel) { highest_loglevel = Settings.mqttlog_level; }
   if (TasmotaGlobal.syslog_level > highest_loglevel) { highest_loglevel = TasmotaGlobal.syslog_level; }
@@ -2381,12 +2397,18 @@ void AddLogData(uint32_t loglevel, const char* log_data) {
       (TasmotaGlobal.masterlog_level <= highest_loglevel)) {
     // Delimited, zero-terminated buffer of log lines.
     // Each entry has this format: [index][loglevel][log data]['\1']
+
+    uint32_t log_data_len = strlen(log_data);
+    if (log_data_len + 64 > LOG_BUFFER_SIZE) {
+      sprintf_P((char*)log_data + 128, PSTR(" ... truncated %d"), log_data_len);
+    }
+
     TasmotaGlobal.log_buffer_pointer &= 0xFF;
     if (!TasmotaGlobal.log_buffer_pointer) {
       TasmotaGlobal.log_buffer_pointer++;  // Index 0 is not allowed as it is the end of char string
     }
     while (TasmotaGlobal.log_buffer_pointer == TasmotaGlobal.log_buffer[0] ||  // If log already holds the next index, remove it
-           strlen(TasmotaGlobal.log_buffer) + log_data_len > LOG_BUFFER_SIZE)
+           strlen(TasmotaGlobal.log_buffer) + strlen(log_data) + strlen(mxtime) + 4 > LOG_BUFFER_SIZE)  // 4 = log_buffer_pointer + '\1' + '\0'
     {
       char* it = TasmotaGlobal.log_buffer;
       it++;                                // Skip log_buffer_pointer

@@ -3925,7 +3925,7 @@ void toLogN(const char *cp, uint8_t len) {
 void toLogEOL(const char *s1,const char *str) {
   if (!str) return;
   uint8_t index = 0;
-  char log_data[MAX_LOGSZ];
+  char log_data[700];   // Was MAX_LOGSZ
   char *cp = log_data;
   strcpy(cp, s1);
   cp += strlen(s1);
@@ -5802,7 +5802,7 @@ void Script_Check_Hue(String *response) {
     AddLog(LOG_LEVEL_DEBUG, PSTR("Hue: %d"), hue_devs);
     toLog(">>>>");
     toLog(response->c_str());
-    toLog(response->c_str()+MAX_LOGSZ);
+    toLog(response->c_str()+700);   // Was MAX_LOGSZ
   }
 #endif
 }
