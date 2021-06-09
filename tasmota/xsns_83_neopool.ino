@@ -697,7 +697,7 @@ const char HTTP_SNS_NEOPOOL_STATUS_ACTIVE[]    PROGMEM = "filter:invert(1)";
  *            any other value of <time> will set time as epoch
  *
  * NPLight {<state> {delay}}
- *            get/set light (state = 0|1|2|3)
+ *            get/set light (state = 0|1|2|3|4)
  *            get light state if <state> is omitted, otherwise set new state
  *              0 - switch light manual off
  *              1 - switch light manual on
