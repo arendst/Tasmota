@@ -17,8 +17,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-// ESP32C3 I2S is not supported yet
-#if defined(CONFIG_IDF_TARGET_ESP32) || defined(CONFIG_IDF_TARGET_ESP32S2)
+
+#ifdef ESP32
 #ifdef USE_DS18x20
 /*********************************************************************************************\
  * DS18B20 - Temperature - Multiple sensors
