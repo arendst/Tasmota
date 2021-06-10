@@ -2326,8 +2326,10 @@ bool GetLog(uint32_t req_loglevel, uint32_t* index_p, char** entry_pp, size_t* l
   return false;
 }
 
-void AddLogData(uint32_t loglevel, const char* log_data) {
-
+void AddLogData(uint32_t loglevel, const char* log_data, const char* log_data_payload = nullptr, const char* log_data_retained = nullptr) {
+  // Store log_data in buffer
+  // To lower heap usage log_data_payload may contain the payload data from MqttPublishPayload()
+  //  and log_data_retained may contain optional retained message from MqttPublishPayload()
 #ifdef ESP32
   // this takes the mutex, and will be release when the class is destroyed -
   // i.e. when the functon leaves  You CAN call mutex.give() to leave early.
@@ -2337,9 +2339,13 @@ void AddLogData(uint32_t loglevel, const char* log_data) {
   char mxtime[14];  // "13:45:21.999 "
   snprintf_P(mxtime, sizeof(mxtime), PSTR("%02d" D_HOUR_MINUTE_SEPARATOR "%02d" D_MINUTE_SECOND_SEPARATOR "%02d.%03d "), RtcTime.hour, RtcTime.minute, RtcTime.second, RtcMillis());
 
+  char empty[2] = { 0 };
+  if (!log_data_payload) { log_data_payload = empty; }
+  if (!log_data_retained) { log_data_retained = empty; }
+
   if ((loglevel <= TasmotaGlobal.seriallog_level) &&
       (TasmotaGlobal.masterlog_level <= TasmotaGlobal.seriallog_level)) {
-    Serial.printf("%s%s\r\n", mxtime, log_data);
+    Serial.printf("%s%s%s%s\r\n", mxtime, log_data, log_data_payload, log_data_retained);
   }
 
   uint32_t highest_loglevel = Settings.weblog_level;
@@ -2353,9 +2359,15 @@ void AddLogData(uint32_t loglevel, const char* log_data) {
     // Delimited, zero-terminated buffer of log lines.
     // Each entry has this format: [index][loglevel][log data]['\1']
 
-    uint32_t log_data_len = strlen(log_data);
+    // Truncate log messages longer than MAX_LOGSZ which is the log buffer size minus 64 spare
+    uint32_t log_data_len = strlen(log_data) + strlen(log_data_payload) + strlen(log_data_retained);
+    char too_long[TOPSZ];
     if (log_data_len > MAX_LOGSZ) {
-      sprintf_P((char*)log_data + 128, PSTR(" ... truncated %d"), log_data_len);
+      snprintf_P(too_long, sizeof(too_long) - 20, PSTR("%s%s"), log_data, log_data_payload);   // 20 = strlen("... 123456 truncated")
+      snprintf_P(too_long, sizeof(too_long), PSTR("%s... %d truncated"), too_long, log_data_len);
+      log_data = too_long;
+      log_data_payload = empty;
+      log_data_retained = empty;
     }
 
     TasmotaGlobal.log_buffer_pointer &= 0xFF;
@@ -2363,7 +2375,7 @@ void AddLogData(uint32_t loglevel, const char* log_data) {
       TasmotaGlobal.log_buffer_pointer++;  // Index 0 is not allowed as it is the end of char string
     }
     while (TasmotaGlobal.log_buffer_pointer == TasmotaGlobal.log_buffer[0] ||  // If log already holds the next index, remove it
-           strlen(TasmotaGlobal.log_buffer) + strlen(log_data) + strlen(mxtime) + 4 > LOG_BUFFER_SIZE)  // 4 = log_buffer_pointer + '\1' + '\0'
+           strlen(TasmotaGlobal.log_buffer) + strlen(log_data) + strlen(log_data_payload) + strlen(log_data_retained) + strlen(mxtime) + 4 > LOG_BUFFER_SIZE)  // 4 = log_buffer_pointer + '\1' + '\0'
     {
       char* it = TasmotaGlobal.log_buffer;
       it++;                                // Skip log_buffer_pointer
@@ -2371,8 +2383,8 @@ void AddLogData(uint32_t loglevel, const char* log_data) {
       it++;                                // Skip delimiting "\1"
       memmove(TasmotaGlobal.log_buffer, it, LOG_BUFFER_SIZE -(it-TasmotaGlobal.log_buffer));  // Move buffer forward to remove oldest log line
     }
-    snprintf_P(TasmotaGlobal.log_buffer, sizeof(TasmotaGlobal.log_buffer), PSTR("%s%c%c%s%s\1"),
-      TasmotaGlobal.log_buffer, TasmotaGlobal.log_buffer_pointer++, '0'+loglevel, mxtime, log_data);
+    snprintf_P(TasmotaGlobal.log_buffer, sizeof(TasmotaGlobal.log_buffer), PSTR("%s%c%c%s%s%s%s\1"),
+      TasmotaGlobal.log_buffer, TasmotaGlobal.log_buffer_pointer++, '0'+loglevel, mxtime, log_data, log_data_payload, log_data_retained);
     TasmotaGlobal.log_buffer_pointer &= 0xFF;
     if (!TasmotaGlobal.log_buffer_pointer) {
       TasmotaGlobal.log_buffer_pointer++;  // Index 0 is not allowed as it is the end of char string

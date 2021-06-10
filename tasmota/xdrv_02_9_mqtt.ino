@@ -187,7 +187,7 @@ void MqttDisableLogging(bool state) {
  * void MqttDisconnect()
  * void MqttSubscribeLib(char *topic)
  * bool MqttPublishLib(const char* topic, const uint8_t* payload, unsigned int plength, bool retained)
- * 
+ *
  * Change/Verify PubSubClient.h defines:
  * #define MQTT_MAX_PACKET_SIZE 1200     // Tasmota v8.1.0.8
 \*********************************************************************************************/
@@ -622,19 +622,30 @@ void MqttPublishPayload(const char* topic, const char* payload, uint32_t binary_
     retained = false;                                    // Some brokers don't support retained, they will disconnect if received
   }
 
-  String log_data;                                       // 20210420 Moved to heap to solve tight stack resulting in exception 2
+  // To lower heap usage the payload is not copied to the heap but used directly
+  String log_data_topic;                                 // 20210420 Moved to heap to solve tight stack resulting in exception 2
   if (Settings.flag.mqtt_enabled && MqttPublishLib(topic, (const uint8_t*)payload, binary_length, retained)) {  // SetOption3 - Enable MQTT
-    log_data = F(D_LOG_MQTT);                            // MQT:
-    log_data += topic;                                   // stat/tasmota/STATUS2
+    log_data_topic = F(D_LOG_MQTT);                      // MQT:
+    log_data_topic += topic;                             // stat/tasmota/STATUS2
   } else {
-    log_data = F(D_LOG_RESULT);                          // RSL:
-    log_data += strrchr(topic,'/')+1;                    // STATUS2
+    log_data_topic = F(D_LOG_RESULT);                    // RSL:
+    log_data_topic += strrchr(topic,'/')+1;              // STATUS2
     retained = false;                                    // Without MQTT enabled there is no retained message
   }
-  log_data += F(" = ");                                  // =
-  log_data += (binary_data) ? HexToString((uint8_t*)payload, binary_length) : payload;
-  if (retained) { log_data += F(" (" D_RETAINED ")"); }  // (retained)
-  AddLogData(LOG_LEVEL_INFO, log_data.c_str());          // MQT: stat/tasmota/STATUS2 = {"StatusFWR":{"Version":...
+  log_data_topic += F(" = ");                            // =
+  char* log_data_payload = (char*)payload;
+  String log_data_payload_b;
+  if (binary_data) {
+    log_data_payload_b = HexToString((uint8_t*)payload, binary_length);
+    log_data_payload = (char*)log_data_payload_b.c_str();
+  }
+  char* log_data_retained = nullptr;
+  String log_data_retained_b;
+  if (retained) {
+    log_data_retained_b = F(" (" D_RETAINED ")");        // (retained)
+    log_data_retained = (char*)log_data_retained_b.c_str();
+  }
+  AddLogData(LOG_LEVEL_INFO, log_data_topic.c_str(), log_data_payload, log_data_retained);  // MQT: stat/tasmota/STATUS2 = {"StatusFWR":{"Version":...
 
   if (Settings.ledstate &0x04) {
     TasmotaGlobal.blinks++;
