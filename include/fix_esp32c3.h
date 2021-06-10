@@ -50,5 +50,5 @@
 //alias for different chips, deprecated for the chips after esp32s2
 #define SPI_HOST    SPI1_HOST
 #define HSPI_HOST   SPI2_HOST
-#define VSPI_HOST   SPI3_HOST
+#define VSPI_HOST   SPI2_HOST  /* No SPI3_host on C3 */
 #endif
