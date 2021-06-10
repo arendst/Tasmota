@@ -54,8 +54,13 @@ enum uColorType { uCOLOR_BW, uCOLOR_COLOR };
 #undef GPIO_CLR
 #undef GPIO_SET_SLOW
 #undef GPIO_CLR_SLOW
+#if CONFIG_IDF_TARGET_ESP32C3
+#define GPIO_CLR(A) GPIO.out_w1tc.val = (1 << A)
+#define GPIO_SET(A) GPIO.out_w1ts.val = (1 << A)
+#else // plain ESP32
 #define GPIO_CLR(A) GPIO.out_w1tc = (1 << A)
 #define GPIO_SET(A) GPIO.out_w1ts = (1 << A)
+#endif
 #define GPIO_CLR_SLOW(A) digitalWrite(A, LOW)
 #define GPIO_SET_SLOW(A) digitalWrite(A, HIGH)
 
