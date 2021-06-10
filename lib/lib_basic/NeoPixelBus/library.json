@@ -1,0 +1,19 @@
+{
+  "name": "NeoPixelBus",
+  "keywords": "NeoPixel, WS2811, WS2812, WS2813, SK6812, DotStar, APA102, SK9822, APA106, LPD8806, LPD6803, P9813, TM1829, TM1814, TX1812, WS2801 RGB, RGBW",
+  "description": "A library that makes controlling NeoPixels (APA106, WS2811, WS2812, WS2813, SK6812, TM1829, TM1814, TX1812) and DotStars (APA102, LPD8806, LPD6803, SK9822, WS2801, P9813) easy.  Supports most Arduino platforms, including async hardware support for Esp8266, Esp32, and Nrf52 (Nano 33 BLE).  Support for RGBW pixels and 7 Segment LED direct driven.  Includes seperate RgbColor, RgbwColor, Rgb16Color, Rgb48Color, HslColor, and HsbColor objects.  Includes an animator class that helps create asyncronous animations. For all platforms; there are two methods of sending DotStar data, hardware SPI and software SPI.",
+  "homepage": "https://github.com/Makuna/NeoPixelBus/wiki",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Makuna/NeoPixelBus"
+  },
+  "version": "2.6.3",
+  "frameworks": "arduino",
+  "platforms": "*",
+  "dependencies": [
+    {
+      "name": "SPI"
+    }
+  ]
+}
+
