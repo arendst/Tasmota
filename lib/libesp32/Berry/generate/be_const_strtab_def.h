@@ -33,7 +33,8 @@ be_define_const_str(log10, "log10", 2346846000u, 0, 5, NULL);
 be_define_const_str(get_free_heap, "get_free_heap", 625069757u, 0, 13, &be_const_str_lv_msgbox);
 be_define_const_str(lv_msgbox, "lv_msgbox", 689085206u, 0, 9, &be_const_str_publish);
 be_define_const_str(publish, "publish", 264247304u, 0, 7, NULL);
-be_define_const_str(finish, "finish", 1494643858u, 0, 6, NULL);
+be_define_const_str(finish, "finish", 1494643858u, 0, 6, &be_const_str_memory);
+be_define_const_str(memory, "memory", 2229924270u, 0, 6, NULL);
 be_define_const_str(SYMBOL_DUMMY, "SYMBOL_DUMMY", 3621732138u, 0, 12, &be_const_str_SYMBOL_SETTINGS);
 be_define_const_str(SYMBOL_SETTINGS, "SYMBOL_SETTINGS", 339656335u, 0, 15, &be_const_str_content_button);
 be_define_const_str(content_button, "content_button", 1956476087u, 0, 14, NULL);
@@ -874,6 +875,6 @@ static const bstring* const m_string_table[] = {
 
 static const struct bconststrtab m_const_string_table = {
     .size = 283,
-    .count = 566,
+    .count = 567,
     .table = m_string_table
 };

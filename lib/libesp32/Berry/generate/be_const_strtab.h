@@ -34,6 +34,7 @@ extern const bcstring be_const_str_get_free_heap;
 extern const bcstring be_const_str_lv_msgbox;
 extern const bcstring be_const_str_publish;
 extern const bcstring be_const_str_finish;
+extern const bcstring be_const_str_memory;
 extern const bcstring be_const_str_SYMBOL_DUMMY;
 extern const bcstring be_const_str_SYMBOL_SETTINGS;
 extern const bcstring be_const_str_content_button;
