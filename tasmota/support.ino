@@ -1191,8 +1191,8 @@ uint32_t ResponseLength(void) {
 void ResponseClear(void) {
   // Reset string length to zero
 #ifdef MQTT_DATA_STRING
-//  TasmotaGlobal.mqtt_data = "";
-  TasmotaGlobal.mqtt_data = (const char*) nullptr;
+  TasmotaGlobal.mqtt_data = "";
+//  TasmotaGlobal.mqtt_data = (const char*) nullptr;  // Doesn't work on ESP32 as strlen() (in MqttPublishPayload) will fail (for obvious reasons)
 #else
   TasmotaGlobal.mqtt_data[0] = '\0';
 #endif
