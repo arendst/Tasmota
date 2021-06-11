@@ -480,7 +480,7 @@ const char HTTP_SCRIPT_BERRY_CONSOLE[] PROGMEM =
           "lt=setTimeout(l,ltm);" // webrefresh timer....
         "}"
       "};"
-      "x.open('GET','bs?c2='+id+o,true);"  // Related to Webserver->hasArg("c2") and WebGetArg("c2", stmp, sizeof(stmp))
+      "x.open('GET','bc?c2='+id+o,true);"  // Related to Webserver->hasArg("c2") and WebGetArg("c2", stmp, sizeof(stmp))
       "x.send();"
       "ft=setTimeout(l,20000);" // fail timeout, triggered 20s after asking for XHR
     "}else{"
@@ -591,7 +591,7 @@ const char HTTP_BERRY_FORM_CMND[] PROGMEM =
   "</form>";
 
 const char HTTP_BTN_BERRY_CONSOLE[] PROGMEM =
-  "<p><form action='bs' method='get'><button>Berry Scripting console</button></form></p>";
+  "<p><form action='bc' method='get'><button>Berry Scripting console</button></form></p>";
 
 
 void HandleBerryConsoleRefresh(void)
@@ -743,7 +743,7 @@ bool Xdrv52(uint8_t function)
       break;
     case FUNC_WEB_ADD_HANDLER:
       callBerryEventDispatcher(PSTR("web_add_handler"), nullptr, 0, nullptr);
-      WebServer_on(PSTR("/bs"), HandleBerryConsole);
+      WebServer_on(PSTR("/bc"), HandleBerryConsole);
       break;
 #endif // USE_WEBSERVER
     case FUNC_SAVE_BEFORE_RESTART:
