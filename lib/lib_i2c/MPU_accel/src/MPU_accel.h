@@ -5,6 +5,9 @@
  library in the Wire.h/twi.c utility file. We are also using the 400 kHz fast
  I2C mode by setting the TWI_FREQ  to 400000L /twi.h utility file.
  */
+
+// Extended to support MPU9250 and other variants
+
 #ifndef _MPU6886_H_
 #define _MPU6886_H_
 
@@ -48,7 +51,7 @@
 #define AtR    	0.0174533	
 #define Gyro_Gr	0.0010653
 
-class MPU6886 {
+class MPU_accel {
     public:
       enum Ascale {
         AFS_2G = 0,
@@ -68,14 +71,16 @@ class MPU6886 {
       Ascale Acscale = AFS_8G;
       int16_t acRange = 8000;   // 1/1000 of g
       int16_t gyRange = 2000;   // dps - degree per second
+      uint32_t model = 6886;    // MPU model number
     public:
-      MPU6886(void) {};
+      MPU_accel(void) {};
   #ifdef ESP32
       void setBus(uint32_t _bus) { myWire = _bus ? &Wire1 : &Wire; };
   #else
       void setBus(uint32_t _bus) { myWire = &Wire; };
   #endif
       int Init(void);
+      uint32_t getModel(void) const { return model; }
       void getAccelAdc(int16_t* ax, int16_t* ay, int16_t* az);
       void getGyroAdc(int16_t* gx, int16_t* gy, int16_t* gz);
       void getTempAdc(int16_t *t);

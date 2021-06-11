@@ -18,11 +18,11 @@
 */
 
 #ifdef USE_I2C
-#ifdef USE_MPU6886
+#if defined(USE_MPU6886) || defined(USE_MPU_ACCEL)    // USE_MPU6886 deprecated, prefer USE_MPU_ACCEL
 
-#include <MPU6886.h>
+#include <MPU_accel.h>
 /*********************************************************************************************\
- * MPU6886
+ * MPU6886/MPU9250
  * Internal chip found in M5Stack devices, using `Wire1` internal I2C bus
  *
  * I2C Address: 0x68
@@ -32,65 +32,70 @@
 #define XSNS_85                     85
 #define XI2C_58                     58  // See I2CDEVICES.md
 
-#define MPU6886_ADDRESS            0x68
+#define MPU_ACCEL_ADDRESS            0x68
 
 struct {
-  MPU6886   Mpu;
-  bool      ready = false;
+  MPU_accel   Mpu;
+  uint32_t  mpu_model;
   int16_t   ax=0, ay=0, az=0;  // accelerator data
   int16_t   gyx=0, gyy=0, gyz=0;  // accelerator data
-} mpu6886_sensor;
+  uint8_t   bus = 0;           // I2C bus
+  bool      ready = false;
+} mpu_sensor;
 
 /********************************************************************************************/
 
 const char HTTP_MPU6686[] PROGMEM =
- "{s}MPU6886 acc_x" "{m}%3_f G" "{e}"
- "{s}MPU6886 acc_y" "{m}%3_f G" "{e}"
- "{s}MPU6886 acc_z" "{m}%3_f G" "{e}"
- "{s}MPU6886 gyr_x" "{m}%i dps" "{e}"
- "{s}MPU6886 gyr_y" "{m}%i dps" "{e}"
- "{s}MPU6886 gyr_z" "{m}%i dps" "{e}"
+ "{s}MPU%d acc_x" "{m}%3_f G" "{e}"
+ "{s}MPU%d acc_y" "{m}%3_f G" "{e}"
+ "{s}MPU%d acc_z" "{m}%3_f G" "{e}"
+ "{s}MPU%d gyr_x" "{m}%i dps" "{e}"
+ "{s}MPU%d gyr_y" "{m}%i dps" "{e}"
+ "{s}MPU%d gyr_z" "{m}%i dps" "{e}"
  ;
 
-void MPU6686_Show(uint32_t json) {
+void MPU_Show(uint32_t json) {
   if (json) {
-    ResponseAppend_P(PSTR(",\"MPU6886\":{\"AX\":%i,\"AY\":%i,\"AZ\":%i,\"GX\":%i,\"GY\":%i,\"GZ\":%i}"),
-                          mpu6886_sensor.ax, mpu6886_sensor.ay, mpu6886_sensor.az,
-                          mpu6886_sensor.gyx, mpu6886_sensor.gyy, mpu6886_sensor.gyz);
+    ResponseAppend_P(PSTR(",\"MPU%d\":{\"AX\":%i,\"AY\":%i,\"AZ\":%i,\"GX\":%i,\"GY\":%i,\"GZ\":%i}"),
+                          mpu_sensor.mpu_model,
+                          mpu_sensor.ax, mpu_sensor.ay, mpu_sensor.az,
+                          mpu_sensor.gyx, mpu_sensor.gyy, mpu_sensor.gyz);
   } else {
-    float ax = mpu6886_sensor.ax / 1000.0f;
-    float ay = mpu6886_sensor.ay / 1000.0f;
-    float az = mpu6886_sensor.az / 1000.0f;
-    WSContentSend_PD(HTTP_MPU6686, &ax, &ay, &az,
-                                   mpu6886_sensor.gyx, mpu6886_sensor.gyy, mpu6886_sensor.gyz);
+    float ax = mpu_sensor.ax / 1000.0f;
+    float ay = mpu_sensor.ay / 1000.0f;
+    float az = mpu_sensor.az / 1000.0f;
+    WSContentSend_PD(HTTP_MPU6686, mpu_sensor.mpu_model, &ax, mpu_sensor.mpu_model, &ay, mpu_sensor.mpu_model, &az,
+                                   mpu_sensor.mpu_model, mpu_sensor.gyx, mpu_sensor.mpu_model, mpu_sensor.gyy, mpu_sensor.mpu_model, mpu_sensor.gyz);
 
   }
 }
 
-void MPU6686Detect(void) {
+void MPU_Detect(void) {
 #ifdef ESP32
-  if (!I2cSetDevice(MPU6886_ADDRESS, 0)) {
-    if (!I2cSetDevice(MPU6886_ADDRESS, 1)) { return; }        // check on bus 1
-    mpu6886_sensor.Mpu.setBus(1);                             // switch to bus 1
-    I2cSetActiveFound(MPU6886_ADDRESS, "MPU6886", 1);
-  } else {
-    I2cSetActiveFound(MPU6886_ADDRESS, "MPU6886", 0);
+  if (!I2cSetDevice(MPU_ACCEL_ADDRESS, 0)) {
+    if (!I2cSetDevice(MPU_ACCEL_ADDRESS, 1)) { return; }        // check on bus 1
+    mpu_sensor.bus = 1;
+    mpu_sensor.Mpu.setBus(mpu_sensor.bus);                      // switch to bus 1
   }
 #else
-  if (!I2cSetDevice(MPU6886_ADDRESS)) { return; }
-  I2cSetActiveFound(MPU6886_ADDRESS, "MPU6886");
+  if (!I2cSetDevice(MPU_ACCEL_ADDRESS)) { return; }
 #endif
 
-  mpu6886_sensor.Mpu.Init();
-  mpu6886_sensor.ready = true;
+  if (mpu_sensor.Mpu.Init() == 0) {
+    char model_name[16];
+    mpu_sensor.mpu_model = mpu_sensor.Mpu.getModel();
+    snprintf_P(model_name, sizeof(model_name), PSTR("MPU%04d"), mpu_sensor.mpu_model);
+    I2cSetActiveFound(MPU_ACCEL_ADDRESS, model_name, mpu_sensor.bus);
+    mpu_sensor.ready = true;
+  }
 }
 
-void MPU6886Every_Second(void) {
-  mpu6886_sensor.Mpu.getAccelDataInt(&mpu6886_sensor.ax, &mpu6886_sensor.ay, &mpu6886_sensor.az);
-  mpu6886_sensor.Mpu.getGyroDataInt(&mpu6886_sensor.gyx, &mpu6886_sensor.gyy, &mpu6886_sensor.gyz);
+void MPU_Every_Second(void) {
+  mpu_sensor.Mpu.getAccelDataInt(&mpu_sensor.ax, &mpu_sensor.ay, &mpu_sensor.az);
+  mpu_sensor.Mpu.getGyroDataInt(&mpu_sensor.gyx, &mpu_sensor.gyy, &mpu_sensor.gyz);
 
-  // AddLog(LOG_LEVEL_DEBUG, PSTR(">> Acc x=%i y=%i z=%i gx=%i gy=%i gz=%i"), mpu6886_sensor.ax, mpu6886_sensor.ay, mpu6886_sensor.az,
-  //                                                                          mpu6886_sensor.gyx, mpu6886_sensor.gyy, mpu6886_sensor.gyz);
+  // AddLog(LOG_LEVEL_DEBUG, PSTR(">> Acc x=%i y=%i z=%i gx=%i gy=%i gz=%i"), mpu_sensor.ax, mpu_sensor.ay, mpu_sensor.az,
+  //                                                                          mpu_sensor.gyx, mpu_sensor.gyy, mpu_sensor.gyz);
 
 }
 
@@ -104,19 +109,19 @@ bool Xsns85(uint8_t function) {
   bool result = false;
 
   if (FUNC_INIT == function) {
-    MPU6686Detect();
+    MPU_Detect();
   }
-  else if (mpu6886_sensor.ready) {
+  else if (mpu_sensor.ready) {
     switch (function) {
       case FUNC_EVERY_SECOND:
-        MPU6886Every_Second();
+        MPU_Every_Second();
         break;
       case FUNC_JSON_APPEND:
-        MPU6686_Show(1);
+        MPU_Show(1);
         break;
 #ifdef USE_WEBSERVER
       case FUNC_WEB_SENSOR:
-        MPU6686_Show(0);
+        MPU_Show(0);
         break;
 #endif  // USE_WEBSERVER
     }
@@ -124,5 +129,5 @@ bool Xsns85(uint8_t function) {
   return result;
 }
 
-#endif  // USE_MPU6886
+#endif  // USE_MPU6886 USE_MPU_ACCEL
 #endif  // USE_I2C
