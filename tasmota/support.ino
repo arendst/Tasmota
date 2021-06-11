@@ -2261,6 +2261,7 @@ void SyslogAsync(bool refresh) {
 }
 
 bool NeedLogRefresh(uint32_t req_loglevel, uint32_t index) {
+  if (!TasmotaGlobal.log_buffer) { return false; }  // Leave now if there is no buffer available
 
 #ifdef ESP32
   // this takes the mutex, and will be release when the class is destroyed -
@@ -2278,9 +2279,10 @@ bool NeedLogRefresh(uint32_t req_loglevel, uint32_t index) {
 }
 
 bool GetLog(uint32_t req_loglevel, uint32_t* index_p, char** entry_pp, size_t* len_p) {
-  uint32_t index = *index_p;
+  if (!TasmotaGlobal.log_buffer) { return false; }  // Leave now if there is no buffer available
+  if (TasmotaGlobal.uptime < 3) { return false; }   // Allow time to setup correct log level
 
-  if (TasmotaGlobal.uptime < 3) { return false; }  // Allow time to setup correct log level
+  uint32_t index = *index_p;
   if (!req_loglevel || (index == TasmotaGlobal.log_buffer_pointer)) { return false; }
 
 #ifdef ESP32
@@ -2348,6 +2350,8 @@ void AddLogData(uint32_t loglevel, const char* log_data, const char* log_data_pa
     Serial.printf("%s%s%s%s\r\n", mxtime, log_data, log_data_payload, log_data_retained);
   }
 
+  if (!TasmotaGlobal.log_buffer) { return; }  // Leave now if there is no buffer available
+
   uint32_t highest_loglevel = Settings.weblog_level;
   if (Settings.mqttlog_level > highest_loglevel) { highest_loglevel = Settings.mqttlog_level; }
   if (TasmotaGlobal.syslog_level > highest_loglevel) { highest_loglevel = TasmotaGlobal.syslog_level; }
@@ -2383,7 +2387,7 @@ void AddLogData(uint32_t loglevel, const char* log_data, const char* log_data_pa
       it++;                                // Skip delimiting "\1"
       memmove(TasmotaGlobal.log_buffer, it, LOG_BUFFER_SIZE -(it-TasmotaGlobal.log_buffer));  // Move buffer forward to remove oldest log line
     }
-    snprintf_P(TasmotaGlobal.log_buffer, sizeof(TasmotaGlobal.log_buffer), PSTR("%s%c%c%s%s%s%s\1"),
+    snprintf_P(TasmotaGlobal.log_buffer, LOG_BUFFER_SIZE, PSTR("%s%c%c%s%s%s%s\1"),
       TasmotaGlobal.log_buffer, TasmotaGlobal.log_buffer_pointer++, '0'+loglevel, mxtime, log_data, log_data_payload, log_data_retained);
     TasmotaGlobal.log_buffer_pointer &= 0xFF;
     if (!TasmotaGlobal.log_buffer_pointer) {

@@ -8,11 +8,13 @@ All notable changes to this project will be documented in this file.
 - Preliminary support for Esp32C3 - RiscV based
 
 ### Changed
+- NeoPixelBus library from v2.6.1.4 to v2.6.3 stage
 - Allow longer MQTT response messages by removing fixed memory buffer with size 1040 to heap allocated buffer
 - Command ``Timers`` layout of JSON message changed to single line
 - Command ``Gpio`` layout of JSON message changed to single line
 - Command ``Modules`` layout of JSON message changed to single line
 - I2C extended MPU6886 to also support MPU9250 (found in Legacy M5Stack Fire)
+- ESP32 increase log buffer from 4k to 6k to support longer messages
 
 ## [9.4.0.4]
 ### Added

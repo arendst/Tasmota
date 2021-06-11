@@ -95,10 +95,12 @@ The binaries can be downloaded from either https://github.com/arendst/Tasmota/tr
 
 ### Changed
 - IRremoteESP8266 library from v2.7.16 to v2.7.18
+- NeoPixelBus library from v2.6.1.4 to v2.6.3 stage
 - Allow longer MQTT response messages by removing fixed memory buffer with size 1040 to heap allocated buffer
 - Command ``Timers`` layout of JSON message changed to single line
 - Command ``Gpio`` layout of JSON message changed to single line
 - Command ``Modules`` layout of JSON message changed to single line
+- ESP32 increase log buffer from 4k to 6k to support longer messages
 
 ### Fixed
 

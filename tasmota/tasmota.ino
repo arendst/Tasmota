@@ -192,7 +192,16 @@ struct {
   char serial_in_buffer[INPUT_BUFFER_SIZE];  // Receive buffer
   char mqtt_client[99];                     // Composed MQTT Clientname
   char mqtt_topic[TOPSZ];                   // Composed MQTT topic
-  char log_buffer[LOG_BUFFER_SIZE];         // Web log buffer
+
+#ifdef ESP8266
+#ifdef PIO_FRAMEWORK_ARDUINO_MMU_CACHE16_IRAM48_SECHEAP_SHARED
+  char* log_buffer;                         // Log buffer in IRAM
+#else
+  char log_buffer[LOG_BUFFER_SIZE];         // Log buffer in DRAM
+#endif  // PIO_FRAMEWORK_ARDUINO_MMU_CACHE16_IRAM48_SECHEAP_SHARED
+#else   // Not ESP8266
+  char log_buffer[LOG_BUFFER_SIZE];         // Log buffer in DRAM
+#endif  // ESP8266
 } TasmotaGlobal;
 
 #ifdef SUPPORT_IF_STATEMENT
@@ -250,6 +259,20 @@ void setup(void) {
   Serial.println();
 //  Serial.setRxBufferSize(INPUT_BUFFER_SIZE);  // Default is 256 chars
   TasmotaGlobal.seriallog_level = LOG_LEVEL_INFO;  // Allow specific serial messages until config loaded
+
+#ifdef ESP8266
+#ifdef PIO_FRAMEWORK_ARDUINO_MMU_CACHE16_IRAM48_SECHEAP_SHARED
+  ESP.setIramHeap();
+  TasmotaGlobal.log_buffer = (char*)malloc(LOG_BUFFER_SIZE);    // Allocate in "new" 16k heap space
+  ESP.resetHeap();
+  if (TasmotaGlobal.log_buffer == nullptr) {
+    TasmotaGlobal.log_buffer = (char*)malloc(LOG_BUFFER_SIZE);  // Allocate in "old" heap space as fallback
+  }
+  if (TasmotaGlobal.log_buffer != nullptr) {
+    TasmotaGlobal.log_buffer[0] = '\0';
+  }
+#endif  // PIO_FRAMEWORK_ARDUINO_MMU_CACHE16_IRAM48_SECHEAP_SHARED
+#endif  // ESP8266
 
   AddLog(LOG_LEVEL_INFO, PSTR("HDW: %s"), GetDeviceHardware().c_str());
 
