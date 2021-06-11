@@ -29,9 +29,9 @@ License along with NeoPixel.  If not, see
 
 #include "driver/spi_master.h"
 
-#if defined(CONFIG_IDF_TARGET_ESP32C3)
+#if defined(CONFIG_IDF_TARGET_ESP32C3) && !defined(HSPI_HOST)
 // HSPI_HOST depreciated in C3
-#define HSPI_HOST   SPI3_HOST
+#define HSPI_HOST   SPI2_HOST
 #endif
 
 #if !defined(CONFIG_IDF_TARGET_ESP32S2) && !defined(CONFIG_IDF_TARGET_ESP32C3)
