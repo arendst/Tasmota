@@ -521,7 +521,7 @@ int32_t EZ_GotoIfResetConfig(uint8_t value) {
 // If router goto ZIGBEE_LABEL_START_ROUTER
 // If device goto ZIGBEE_LABEL_START_DEVICE
 int32_t Z_SwitchDeviceType(int32_t res, SBuffer &buf) {
-  switch (Settings.zb_pan_id) {
+  switch (Settings->zb_pan_id) {
     case 0xFFFF:    return ZIGBEE_LABEL_INIT_ROUTER;
     case 0xFFFE:    return ZIGBEE_LABEL_INIT_DEVICE;
     default:        return 0;   // continue
@@ -764,7 +764,7 @@ int32_t Z_ReceiveSimpleDesc(int32_t res, const SBuffer &buf) {
     // device is reachable
     zigbee_devices.deviceWasReached(nwkAddr);
 
-    if (!Settings.flag4.zb_disable_autobind) {
+    if (!Settings->flag4.zb_disable_autobind) {
       Z_AutoBindDefer(nwkAddr, endpoint, buf, numInIndex, numInCluster, numOutIndex, numOutCluster);
     }
 
@@ -2071,7 +2071,7 @@ void Z_Query_Bulb(uint16_t shortaddr, uint32_t &wait_ms) {
 // Send messages to query the state of each Hue emulated light
 //
 int32_t Z_Query_Bulbs(uint8_t value) {
-  if (!Settings.flag5.zb_disable_autoquery) {
+  if (!Settings->flag5.zb_disable_autoquery) {
     // Scan all devices and send deferred requests to know the state of bulbs
     uint32_t wait_ms = 1000;                  // start with 1.0 s delay
     for (uint32_t i = 0; i < zigbee_devices.devicesSize(); i++) {
@@ -2145,10 +2145,10 @@ void ZCLFrame::autoResponder(const uint16_t *attr_list_ids, size_t attr_len) {
         attr.setUInt((Rtc.utc_time > START_VALID_TIME) ? 0x02 : 0x00);
         break;
       case 0x000A0002:    // TimeZone
-        attr.setUInt(Settings.toffset[0] * 60);
+        attr.setUInt(Settings->toffset[0] * 60);
         break;
       case 0x000A0007:    // LocalTime    // TODO take DST
-        attr.setUInt(Settings.toffset[0] * 60 + ((Rtc.utc_time > START_VALID_TIME) ? Rtc.utc_time - 946684800 : Rtc.utc_time));
+        attr.setUInt(Settings->toffset[0] * 60 + ((Rtc.utc_time > START_VALID_TIME) ? Rtc.utc_time - 946684800 : Rtc.utc_time));
         break;
     }
     if (!attr.isNone()) {

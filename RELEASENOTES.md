@@ -101,6 +101,7 @@ The binaries can be downloaded from either https://github.com/arendst/Tasmota/tr
 - Command ``Gpio`` layout of JSON message changed to single line
 - Command ``Modules`` layout of JSON message changed to single line
 - ESP32 increase log buffer from 4k to 6k to support longer messages
+- Move Settings from DRAM to heap
 
 ### Fixed
 

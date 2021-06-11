@@ -99,8 +99,8 @@ void InitTimeFromRTC(void) {
     TIME_T tmpTime;
     TasmotaGlobal.ntp_force_sync = true;  // Force to sync with ntp
     BreakTime(Rtc.utc_time, tmpTime);
-    Rtc.daylight_saving_time = RuleToTime(Settings.tflag[1], RtcTime.year);
-    Rtc.standard_time = RuleToTime(Settings.tflag[0], RtcTime.year);
+    Rtc.daylight_saving_time = RuleToTime(Settings->tflag[1], RtcTime.year);
+    Rtc.standard_time = RuleToTime(Settings->tflag[0], RtcTime.year);
     AddLog(LOG_LEVEL_INFO, PSTR("I2C: Set time from BM8563 to RTC (" D_UTC_TIME ") %s, (" D_DST_TIME ") %s, (" D_STD_TIME ") %s"),
                 GetDateAndTime(DT_UTC).c_str(), GetDateAndTime(DT_DST).c_str(), GetDateAndTime(DT_STD).c_str());
     if (Rtc.local_time < START_VALID_TIME) {  // 2016-01-01

@@ -640,7 +640,7 @@ void HandleBerryConsole(void)
   AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP "Berry " D_CONSOLE));
 
   WSContentStart_P(PSTR("Berry " D_CONSOLE));
-  WSContentSend_P(HTTP_SCRIPT_BERRY_CONSOLE, Settings.web_refresh);
+  WSContentSend_P(HTTP_SCRIPT_BERRY_CONSOLE, Settings->web_refresh);
   WSContentSend_P(HTTP_SCRIPT_BERRY_CONSOLE2);
   WSContentSendStyle();
   WSContentFlush();
@@ -673,7 +673,7 @@ void HandleBerryConsole(void)
 //   bool cflg = (index);
 //   char* line;
 //   size_t len;
-//   while (GetLog(Settings.weblog_level, &index, &line, &len)) {
+//   while (GetLog(Settings->weblog_level, &index, &line, &len)) {
 //     if (cflg) { WSContentSend_P(PSTR("\n")); }
 //     WSContentFlush();
 //     Webserver->sendContent(line, len -1);

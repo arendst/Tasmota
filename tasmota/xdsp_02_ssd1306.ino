@@ -50,33 +50,33 @@ extern uint8_t *buffer;
 void SSD1306InitDriver(void) {
   if (!TasmotaGlobal.i2c_enabled) { return; }
 
-  if (!Settings.display_model) {
+  if (!Settings->display_model) {
     if (I2cSetDevice(OLED_ADDRESS1)) {
-      Settings.display_address[0] = OLED_ADDRESS1;
-      Settings.display_model = XDSP_02;
+      Settings->display_address[0] = OLED_ADDRESS1;
+      Settings->display_model = XDSP_02;
     }
     else if (I2cSetDevice(OLED_ADDRESS2)) {
-      Settings.display_address[0] = OLED_ADDRESS2;
-      Settings.display_model = XDSP_02;
+      Settings->display_address[0] = OLED_ADDRESS2;
+      Settings->display_model = XDSP_02;
     }
   }
 
-  if (XDSP_02 == Settings.display_model) {
-    I2cSetActiveFound(Settings.display_address[0], "SSD1306");
+  if (XDSP_02 == Settings->display_model) {
+    I2cSetActiveFound(Settings->display_address[0], "SSD1306");
 
-    if ((Settings.display_width != 64) && (Settings.display_width != 96) && (Settings.display_width != 128)) {
-      Settings.display_width = 128;
+    if ((Settings->display_width != 64) && (Settings->display_width != 96) && (Settings->display_width != 128)) {
+      Settings->display_width = 128;
     }
-    if ((Settings.display_height != 16) && (Settings.display_height != 32) && (Settings.display_height != 48) && (Settings.display_height != 64)) {
-      Settings.display_height = 64;
+    if ((Settings->display_height != 16) && (Settings->display_height != 32) && (Settings->display_height != 48) && (Settings->display_height != 64)) {
+      Settings->display_height = 64;
     }
 
     // init renderer
     // oled1306 = new Adafruit_SSD1306(SSD1306_LCDWIDTH,SSD1306_LCDHEIGHT);
-    oled1306 = new Adafruit_SSD1306(Settings.display_width, Settings.display_height, &Wire, Pin(GPIO_OLED_RESET));
-    oled1306->begin(SSD1306_SWITCHCAPVCC, Settings.display_address[0], Pin(GPIO_OLED_RESET) >= 0);
+    oled1306 = new Adafruit_SSD1306(Settings->display_width, Settings->display_height, &Wire, Pin(GPIO_OLED_RESET));
+    oled1306->begin(SSD1306_SWITCHCAPVCC, Settings->display_address[0], Pin(GPIO_OLED_RESET) >= 0);
     renderer = oled1306;
-    renderer->DisplayInit(DISPLAY_INIT_MODE, Settings.display_size, Settings.display_rotate, Settings.display_font);
+    renderer->DisplayInit(DISPLAY_INIT_MODE, Settings->display_size, Settings->display_rotate, Settings->display_font);
     renderer->setTextColor(1,0);
 
 #ifdef SHOW_SPLASH
@@ -99,15 +99,15 @@ void Ssd1306PrintLog(void)
 {
   disp_refresh--;
   if (!disp_refresh) {
-    disp_refresh = Settings.display_refresh;
+    disp_refresh = Settings->display_refresh;
     if (!disp_screen_buffer_cols) { DisplayAllocScreenBuffer(); }
 
     char* txt = DisplayLogBuffer('\370');
     if (txt != NULL) {
-      uint8_t last_row = Settings.display_rows -1;
+      uint8_t last_row = Settings->display_rows -1;
 
       renderer->clearDisplay();
-      renderer->setTextSize(Settings.display_size);
+      renderer->setTextSize(Settings->display_size);
       renderer->setCursor(0,0);
       for (byte i = 0; i < last_row; i++) {
         strlcpy(disp_screen_buffer[i], disp_screen_buffer[i +1], disp_screen_buffer_cols);
@@ -129,8 +129,8 @@ void Ssd1306Time(void)
   char line[12];
 
   renderer->clearDisplay();
-  renderer->setTextSize(Settings.display_size);
-  renderer->setTextFont(Settings.display_font);
+  renderer->setTextSize(Settings->display_size);
+  renderer->setTextFont(Settings->display_font);
   renderer->setCursor(0, 0);
   snprintf_P(line, sizeof(line), PSTR(" %02d" D_HOUR_MINUTE_SEPARATOR "%02d" D_MINUTE_SECOND_SEPARATOR "%02d"), RtcTime.hour, RtcTime.minute, RtcTime.second);  // [ 12:34:56 ]
   renderer->println(line);
@@ -144,8 +144,8 @@ void Ssd1306Refresh(void)  // Every second
 {
   if (!renderer) return;
 
-  if (Settings.display_mode) {  // Mode 0 is User text
-    switch (Settings.display_mode) {
+  if (Settings->display_mode) {  // Mode 0 is User text
+    switch (Settings->display_mode) {
       case 1:  // Time
         Ssd1306Time();
         break;
@@ -174,7 +174,7 @@ bool Xdsp02(byte function)
   if (FUNC_DISPLAY_INIT_DRIVER == function) {
     SSD1306InitDriver();
   }
-  else if (XDSP_02 == Settings.display_model) {
+  else if (XDSP_02 == Settings->display_model) {
     switch (function) {
 #ifdef USE_DISPLAY_MODES1TO5
       case FUNC_DISPLAY_EVERY_SECOND:

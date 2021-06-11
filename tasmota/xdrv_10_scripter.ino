@@ -61,7 +61,7 @@ keywords if then else endif, or, and are better readable for beginners (others m
 #endif
 #define SCRIPT_EOL '\n'
 #define SCRIPT_FLOAT_PRECISION 2
-#define PMEM_SIZE sizeof(Settings.script_pram)
+#define PMEM_SIZE sizeof(Settings->script_pram)
 #define SCRIPT_MAXPERM (PMEM_SIZE)-4/sizeof(float)
 #define MAX_SCRIPT_SIZE MAX_RULE_SIZE*MAX_RULE_SETS
 
@@ -471,7 +471,7 @@ uint8_t UfsReject(char *name);
 
 void ScriptEverySecond(void) {
 
-  if (bitRead(Settings.rule_enabled, 0)) {
+  if (bitRead(Settings->rule_enabled, 0)) {
     struct T_INDEX *vtp = glob_script_mem.type;
     float delta = (millis() - glob_script_mem.script_lastmillis) / 1000.0;
     glob_script_mem.script_lastmillis = millis();
@@ -1078,7 +1078,7 @@ void ws2812_set_array(float *array ,uint32_t len, uint32_t offset) {
   Ws2812ForceSuspend();
   for (uint32_t cnt = 0; cnt<len; cnt++) {
     uint32_t index = cnt + offset;
-    if (index>Settings.light_pixels) break;
+    if (index>Settings->light_pixels) break;
     uint32_t col = array[cnt];
     Ws2812SetColor(index + 1, col>>16, col>>8, col, 0);
   }
@@ -1952,7 +1952,7 @@ chknext:
               fvar = Energy.daily;
               break;
             case 12:
-              fvar = (float)Settings.energy_kWhyesterday/100000.0;
+              fvar = (float)Settings->energy_kWhyesterday/100000.0;
               break;
 
             default:
@@ -3070,7 +3070,7 @@ chknext:
           GetNumericArgument(vname + 4, OPER_EQU, &fvar, gv);
           uint8_t index = fvar;
           if (index<=TasmotaGlobal.shutters_present) {
-            fvar = Settings.shutter_position[index - 1];
+            fvar = Settings->shutter_position[index - 1];
           } else {
             fvar = -1;
           }
@@ -3160,7 +3160,7 @@ chknext:
           goto exit;
         }
         if (!strncmp(vname, "tper", 4)) {
-          fvar = Settings.tele_period;
+          fvar = Settings->tele_period;
           tind->index = SCRIPT_TELEPERIOD;
           goto exit_settable;
         }
@@ -4663,16 +4663,16 @@ int16_t Run_script_sub(const char *type, int8_t tlen, struct GVARS *gv) {
                       // allow recursive call
                     } else {
                       tasm_cmd_activ = 1;
-                      svmqtt = Settings.flag.mqtt_enabled;  // SetOption3 - Enable MQTT
-                      swll = Settings.weblog_level;
-                      Settings.flag.mqtt_enabled = 0;       // SetOption3 - Enable MQTT
-                      Settings.weblog_level = 0;
+                      svmqtt = Settings->flag.mqtt_enabled;  // SetOption3 - Enable MQTT
+                      swll = Settings->weblog_level;
+                      Settings->flag.mqtt_enabled = 0;       // SetOption3 - Enable MQTT
+                      Settings->weblog_level = 0;
                     }
                     ExecuteCommand((char*)tmp, SRC_RULE);
                     tasm_cmd_activ = 0;
                     if (sflag==1) {
-                      Settings.flag.mqtt_enabled = svmqtt;  // SetOption3  - Enable MQTT
-                      Settings.weblog_level = swll;
+                      Settings->flag.mqtt_enabled = svmqtt;  // SetOption3  - Enable MQTT
+                      Settings->weblog_level = swll;
                     }
                   }
                   if (cmdmem) free(cmdmem);
@@ -4813,7 +4813,7 @@ int16_t Run_script_sub(const char *type, int8_t tlen, struct GVARS *gv) {
                           case SCRIPT_TELEPERIOD:
                             if (*dfvar<10) *dfvar = 10;
                             if (*dfvar>300) *dfvar = 300;
-                            Settings.tele_period = *dfvar;
+                            Settings->tele_period = *dfvar;
                             break;
                           case SCRIPT_EVENT_HANDLED:
                             glob_script_mem.event_handeled = *dfvar;
@@ -4981,7 +4981,7 @@ int16_t Run_script_sub(const char *type, int8_t tlen, struct GVARS *gv) {
 void ScripterEvery100ms(void) {
   static uint8_t xsns_index = 0;
 
-  if (bitRead(Settings.rule_enabled, 0) && (TasmotaGlobal.uptime > 4)) {
+  if (bitRead(Settings->rule_enabled, 0) && (TasmotaGlobal.uptime > 4)) {
     ResponseClear();
     uint16_t script_tele_period_save = TasmotaGlobal.tele_period;
     TasmotaGlobal.tele_period = 2;
@@ -4997,7 +4997,7 @@ void ScripterEvery100ms(void) {
 #endif
     }
   }
-  if (bitRead(Settings.rule_enabled, 0)) {
+  if (bitRead(Settings->rule_enabled, 0)) {
     if (glob_script_mem.fast_script == 99) Run_Scripter(">F", 2, 0);
   }
 }
@@ -5191,8 +5191,8 @@ void script_upload_start(void) {
     }
     uplsize = 0;
 
-    sc_state = bitRead(Settings.rule_enabled, 0);
-    bitWrite(Settings.rule_enabled, 0, 0);
+    sc_state = bitRead(Settings->rule_enabled, 0);
+    bitWrite(Settings->rule_enabled, 0, 0);
 
   } else if(upload.status == UPLOAD_FILE_WRITE) {
     //AddLog(LOG_LEVEL_INFO, PSTR("HTP: upload write"));
@@ -5219,7 +5219,7 @@ void script_upload_start(void) {
       AddLog(LOG_LEVEL_INFO, PSTR("HTP: upload error"));
     } else {
       *script_ex_ptr = 0;
-      bitWrite(Settings.rule_enabled, 0, sc_state);
+      bitWrite(Settings->rule_enabled, 0, sc_state);
       SaveScript();
       SaveScriptEnd();
       //AddLog(LOG_LEVEL_INFO, PSTR("HTP: upload success"));
@@ -5333,10 +5333,10 @@ void HandleScriptConfiguration(void) {
 
 #ifdef xSCRIPT_STRIP_COMMENTS
     uint16_t ssize = glob_script_mem.script_size;
-    if (bitRead(Settings.rule_enabled, 1)) ssize *= 2;
-    WSContentSend_P(HTTP_FORM_SCRIPT1,1,1,bitRead(Settings.rule_enabled,0) ? PSTR(" checked") : "",ssize);
+    if (bitRead(Settings->rule_enabled, 1)) ssize *= 2;
+    WSContentSend_P(HTTP_FORM_SCRIPT1,1,1,bitRead(Settings->rule_enabled,0) ? PSTR(" checked") : "",ssize);
 #else
-    WSContentSend_P(HTTP_FORM_SCRIPT1,1,1,bitRead(Settings.rule_enabled,0) ? PSTR(" checked") : "",glob_script_mem.script_size);
+    WSContentSend_P(HTTP_FORM_SCRIPT1,1,1,bitRead(Settings->rule_enabled,0) ? PSTR(" checked") : "",glob_script_mem.script_size);
 #endif // xSCRIPT_STRIP_COMMENTS
 
     // script is to large for WSContentSend_P
@@ -5370,7 +5370,7 @@ void SaveScript(void) {
     file.close();
   } else {
     // fallback to compressed mode
-    script_compress(Settings.rules[0],MAX_SCRIPT_SIZE-1);
+    script_compress(Settings->rules[0],MAX_SCRIPT_SIZE-1);
   }
 #else // USE_UFILESYS
 
@@ -5390,7 +5390,7 @@ void SaveScript(void) {
   }
 #else
     // default mode is compression
-    script_compress(Settings.rules[0],MAX_SCRIPT_SIZE-1);
+    script_compress(Settings->rules[0],MAX_SCRIPT_SIZE-1);
 #endif // EEP_SCRIPT_SIZE
 
 
@@ -5400,9 +5400,9 @@ void SaveScript(void) {
 void ScriptSaveSettings(void) {
 
   if (Webserver->hasArg("c1")) {
-    bitWrite(Settings.rule_enabled, 0, 1);
+    bitWrite(Settings->rule_enabled, 0, 1);
   } else {
-    bitWrite(Settings.rule_enabled, 0, 0);
+    bitWrite(Settings->rule_enabled, 0, 0);
   }
 
   String str = Webserver->arg("t1");
@@ -5416,7 +5416,7 @@ void ScriptSaveSettings(void) {
 
     if (glob_script_mem.script_ram[0]!='>' && glob_script_mem.script_ram[1]!='D') {
       AddLog(LOG_LEVEL_INFO, PSTR("script error: must start with >D"));
-      bitWrite(Settings.rule_enabled, 0, 0);
+      bitWrite(Settings->rule_enabled, 0, 0);
     }
 
     SaveScript();
@@ -5454,7 +5454,7 @@ void SaveScriptEnd(void) {
     glob_script_mem.script_mem_size = 0;
   }
 
-  if (bitRead(Settings.rule_enabled, 0)) {
+  if (bitRead(Settings->rule_enabled, 0)) {
 
     int16_t res = Init_Scripter();
     if (res) {
@@ -5684,7 +5684,7 @@ void Script_HueStatus(String *response, uint16_t hue_devs) {
 }
 
 void Script_Check_Hue(String *response) {
-  if (!bitRead(Settings.rule_enabled, 0)) return;
+  if (!bitRead(Settings->rule_enabled, 0)) return;
 
   uint8_t hue_script_found = Run_Scripter(">H", -2, 0);
   if (hue_script_found!=99) return;
@@ -5955,7 +5955,7 @@ void Script_Handle_Hue(String *path) {
 
 #ifdef USE_SCRIPT_SUB_COMMAND
 bool Script_SubCmd(void) {
-  if (!bitRead(Settings.rule_enabled, 0)) return false;
+  if (!bitRead(Settings->rule_enabled, 0)) return false;
 
   if (tasm_cmd_activ) return false;
   //AddLog(LOG_LEVEL_INFO,PSTR(">> %s, %s, %d, %d "),XdrvMailbox.topic, XdrvMailbox.data, XdrvMailbox.payload, XdrvMailbox.index);
@@ -6038,14 +6038,14 @@ bool ScriptCommand(void) {
       switch (XdrvMailbox.payload) {
         case 0: // Off
         case 1: // On
-          bitWrite(Settings.rule_enabled, index -1, XdrvMailbox.payload);
+          bitWrite(Settings->rule_enabled, index -1, XdrvMailbox.payload);
           break;
 #ifdef xSCRIPT_STRIP_COMMENTS
         case 2:
-          bitWrite(Settings.rule_enabled, 1, 0);
+          bitWrite(Settings->rule_enabled, 1, 0);
           break;
         case 3:
-          bitWrite(Settings.rule_enabled, 1, 1);
+          bitWrite(Settings->rule_enabled, 1, 1);
           break;
 #endif //xSCRIPT_STRIP_COMMENTS
       }
@@ -6053,7 +6053,7 @@ bool ScriptCommand(void) {
       if ('>' == XdrvMailbox.data[0]) {
         // execute script
         Response_P(PSTR("{\"%s\":\"%s\"}"), command, XdrvMailbox.data);
-        if (bitRead(Settings.rule_enabled, 0)) {
+        if (bitRead(Settings->rule_enabled, 0)) {
           for (uint8_t count = 0; count<XdrvMailbox.data_len; count++) {
             if (XdrvMailbox.data[count]==';') XdrvMailbox.data[count] = '\n';
           }
@@ -6079,7 +6079,7 @@ bool ScriptCommand(void) {
       }
       return serviced;
     }
-    Response_P(PSTR("{\"%s\":\"%s\",\"Free\":%d}"), command, GetStateText(bitRead(Settings.rule_enabled, 0)), glob_script_mem.script_size - strlen(glob_script_mem.script_ram));
+    Response_P(PSTR("{\"%s\":\"%s\",\"Free\":%d}"), command, GetStateText(bitRead(Settings->rule_enabled, 0)), glob_script_mem.script_size - strlen(glob_script_mem.script_ram));
 #ifdef SUPPORT_MQTT_EVENT
   } else if (CMND_SUBSCRIBE == command_code) {			//MQTT Subscribe command. Subscribe <Event>, <Topic> [, <Key>]
       String result = ScriptSubscribe(XdrvMailbox.data, XdrvMailbox.data_len);
@@ -6516,36 +6516,36 @@ char buff[512];
 
     if (renderer && renderer->framebuffer) {
       uint8_t *bp = renderer->framebuffer;
-      uint8_t *lbuf = (uint8_t*)special_malloc(Settings.display_width * 3 + 2);
+      uint8_t *lbuf = (uint8_t*)special_malloc(Settings->display_width * 3 + 2);
       if (!lbuf) return;
       int8_t bpp = renderer->disp_bpp;
       uint8_t *lbp;
       uint8_t fileHeader[fileHeaderSize];
-      createBitmapFileHeader(Settings.display_height , Settings.display_width , fileHeader);
+      createBitmapFileHeader(Settings->display_height , Settings->display_width , fileHeader);
       Webserver->client().write((uint8_t *)fileHeader, fileHeaderSize);
       uint8_t infoHeader[infoHeaderSize];
-      createBitmapInfoHeader(Settings.display_height, Settings.display_width, infoHeader );
+      createBitmapInfoHeader(Settings->display_height, Settings->display_width, infoHeader );
       Webserver->client().write((uint8_t *)infoHeader, infoHeaderSize);
 
       if (bpp == -1) {
-        for (uint32_t lins = Settings.display_height - 1; lins >= 0 ; lins--) {
+        for (uint32_t lins = Settings->display_height - 1; lins >= 0 ; lins--) {
           lbp = lbuf;
-          for (uint32_t cols = 0; cols < Settings.display_width; cols ++) {
+          for (uint32_t cols = 0; cols < Settings->display_width; cols ++) {
             uint8_t pixel = 0;
-            if (bp[cols + (lins / 8) * Settings.display_width] & (1 << (lins & 7))) {
+            if (bp[cols + (lins / 8) * Settings->display_width] & (1 << (lins & 7))) {
               pixel = 0xff;
             }
             *lbp++ = pixel;
             *lbp++ = pixel;
             *lbp++ = pixel;
           }
-          Webserver->client().write((const char*)lbuf, Settings.display_width * 3);
+          Webserver->client().write((const char*)lbuf, Settings->display_width * 3);
         }
       } else {
-        for (uint32_t lins = 0; lins<Settings.display_height; lins++) {
-          lbp = lbuf + (Settings.display_width * 3);
+        for (uint32_t lins = 0; lins<Settings->display_height; lins++) {
+          lbp = lbuf + (Settings->display_width * 3);
           if (bpp == 4) {
-            for (uint32_t cols = 0; cols < Settings.display_width; cols += 2) {
+            for (uint32_t cols = 0; cols < Settings->display_width; cols += 2) {
               uint8_t pixel;
               for (uint32_t cnt = 0; cnt <= 1; cnt++) {
                 if (cnt & 1) {
@@ -6561,7 +6561,7 @@ char buff[512];
               bp++;
             }
           } else {
-            for (uint32_t cols = 0; cols < Settings.display_width; cols += 8) {
+            for (uint32_t cols = 0; cols < Settings->display_width; cols += 8) {
               uint8_t bits = 0x80;
               while (bits) {
                 if (!((*bp) & bits)) {
@@ -6579,7 +6579,7 @@ char buff[512];
             }
           }
         }
-        Webserver->client().write((const char*)lbuf, Settings.display_width * 3);
+        Webserver->client().write((const char*)lbuf, Settings->display_width * 3);
       }
       if (lbuf) free(lbuf);
       Webserver->client().stop();
@@ -6641,7 +6641,7 @@ const char HTTP_SCRIPT_FULLPAGE1[] PROGMEM =
       "if (rfsh) {"
         "x.open('GET','./sfd?m=1'+a,true);"       // ?m related to Webserver->hasArg("m")
         "x.send();"
-        "lt=setTimeout(la,%d);"               // Settings.web_refresh
+        "lt=setTimeout(la,%d);"               // Settings->web_refresh
       "}"
     "}";
 
@@ -7580,7 +7580,7 @@ void ScriptJsonAppend(void) {
 
 
 bool RulesProcessEvent(const char *json_event) {
-  if (bitRead(Settings.rule_enabled, 0)) Run_Scripter(">E", 2, json_event);
+  if (bitRead(Settings->rule_enabled, 0)) Run_Scripter(">E", 2, json_event);
   return true;
 }
 
@@ -7609,7 +7609,7 @@ void script_task1(void *arg) {
     //if (time<esp32_tasks[1].task_timer) {delay(time); }
     //if (time<=esp32_tasks[0].task_timer) {vTaskDelay( pdMS_TO_TICKS( time ) ); }
     delay(esp32_tasks[0].task_timer);
-    if (bitRead(Settings.rule_enabled, 0)) {
+    if (bitRead(Settings->rule_enabled, 0)) {
       Run_Scripter(">t1", 3, 0);
     }
   }
@@ -7625,7 +7625,7 @@ void script_task2(void *arg) {
     //if (time<esp32_tasks[1].task_timer) {delay(time); }
     //if (time<=esp32_tasks[1].task_timer) {vTaskDelay( pdMS_TO_TICKS( time ) ); }
     delay(esp32_tasks[1].task_timer);
-    if (bitRead(Settings.rule_enabled, 0)) {
+    if (bitRead(Settings->rule_enabled, 0)) {
       Run_Scripter(">t2", 3, 0);
     }
   }
@@ -8258,12 +8258,12 @@ bool Xdrv10(uint8_t function)
     //case FUNC_PRE_INIT:
     case FUNC_INIT:
       // set defaults to rules memory
-      //bitWrite(Settings.rule_enabled,0,0);
-      glob_script_mem.script_ram = Settings.rules[0];
+      //bitWrite(Settings->rule_enabled,0,0);
+      glob_script_mem.script_ram = Settings->rules[0];
       glob_script_mem.script_size = MAX_SCRIPT_SIZE;
       glob_script_mem.FLAGS.fsys = false;
       glob_script_mem.FLAGS.eeprom = false;
-      glob_script_mem.script_pram = (uint8_t*)Settings.script_pram[0];
+      glob_script_mem.script_pram = (uint8_t*)Settings->script_pram[0];
       glob_script_mem.script_pram_size = PMEM_SIZE;
 
 #ifdef USE_UFILESYS
@@ -8283,11 +8283,11 @@ bool Xdrv10(uint8_t function)
         }
         script[UFSYS_SIZE - 1] = 0;
         // use rules storage for permanent vars
-        glob_script_mem.script_pram = (uint8_t*)Settings.rules[0];
+        glob_script_mem.script_pram = (uint8_t*)Settings->rules[0];
         glob_script_mem.script_pram_size = MAX_SCRIPT_SIZE;
         glob_script_mem.FLAGS.fsys = true;
         // indicates scripter use no compression
-        bitWrite(Settings.rule_once, 6, 0);
+        bitWrite(Settings->rule_once, 6, 0);
       } else {
         AddLog(LOG_LEVEL_INFO,PSTR("UFILESYSTEM fail, using compression!"));
         int32_t len_decompressed;
@@ -8295,10 +8295,10 @@ bool Xdrv10(uint8_t function)
         if (!sprt) { break; }
         glob_script_mem.script_ram = sprt;
         glob_script_mem.script_size = UNISHOXRSIZE;
-        len_decompressed = SCRIPT_DECOMPRESS(Settings.rules[0], strlen(Settings.rules[0]), glob_script_mem.script_ram, glob_script_mem.script_size);
+        len_decompressed = SCRIPT_DECOMPRESS(Settings->rules[0], strlen(Settings->rules[0]), glob_script_mem.script_ram, glob_script_mem.script_size);
         if (len_decompressed>0) glob_script_mem.script_ram[len_decompressed] = 0;
         // indicates scripter use compression
-        bitWrite(Settings.rule_once, 6, 1);
+        bitWrite(Settings->rule_once, 6, 1);
       }
 #else // USE_UFILESYS
 
@@ -8341,7 +8341,7 @@ bool Xdrv10(uint8_t function)
           }
 
           // use rules storage for permanent vars
-          glob_script_mem.script_pram = (uint8_t*)Settings.rules[0];
+          glob_script_mem.script_pram = (uint8_t*)Settings->rules[0];
           glob_script_mem.script_pram_size = MAX_SCRIPT_SIZE;
 
           glob_script_mem.FLAGS.eeprom = true;
@@ -8354,10 +8354,10 @@ bool Xdrv10(uint8_t function)
       if (!sprt) { break; }
       glob_script_mem.script_ram = sprt;
       glob_script_mem.script_size = UNISHOXRSIZE;
-      len_decompressed = SCRIPT_DECOMPRESS(Settings.rules[0], strlen(Settings.rules[0]), glob_script_mem.script_ram, glob_script_mem.script_size);
+      len_decompressed = SCRIPT_DECOMPRESS(Settings->rules[0], strlen(Settings->rules[0]), glob_script_mem.script_ram, glob_script_mem.script_size);
       if (len_decompressed>0) glob_script_mem.script_ram[len_decompressed] = 0;
       // indicates scripter use compression
-      bitWrite(Settings.rule_once, 6, 1);
+      bitWrite(Settings->rule_once, 6, 1);
 
 #endif
 
@@ -8365,7 +8365,7 @@ bool Xdrv10(uint8_t function)
 
 
 // indicates scripter enabled (use rules[][] as single array)
-      bitWrite(Settings.rule_once, 7, 1);
+      bitWrite(Settings->rule_once, 7, 1);
 
 #ifdef USE_BUTTON_EVENT
       for (uint32_t cnt = 0; cnt < MAX_KEYS; cnt++) {
@@ -8378,7 +8378,7 @@ bool Xdrv10(uint8_t function)
         // clr all
         memset(glob_script_mem.script_ram, 0 ,glob_script_mem.script_size);
         strcpy_P(glob_script_mem.script_ram, PSTR(">D\nscript error must start with >D"));
-        bitWrite(Settings.rule_enabled, 0, 0);
+        bitWrite(Settings->rule_enabled, 0, 0);
       }
 
       // assure permanent memory is 4 byte aligned
@@ -8389,11 +8389,11 @@ bool Xdrv10(uint8_t function)
       glob_script_mem.script_pram_size -= 4;
       }
 
-      if (bitRead(Settings.rule_enabled, 0)) Init_Scripter();
+      if (bitRead(Settings->rule_enabled, 0)) Init_Scripter();
 
     //  break;
     //case FUNC_INIT:
-      if (bitRead(Settings.rule_enabled, 0)) {
+      if (bitRead(Settings->rule_enabled, 0)) {
         Run_Scripter(">B\n", 3, 0);
         glob_script_mem.fast_script = Run_Scripter(">F", -2, 0);
 #if defined(USE_SCRIPT_HUE) && defined(USE_WEBSERVER) && defined(USE_EMULATION) && defined(USE_EMULATION_HUE) && defined(USE_LIGHT)
@@ -8413,16 +8413,16 @@ bool Xdrv10(uint8_t function)
       break;
     case FUNC_SET_POWER:
 #ifdef SCRIPT_POWER_SECTION
-      if (bitRead(Settings.rule_enabled, 0)) Run_Scripter(">P", 2, 0);
+      if (bitRead(Settings->rule_enabled, 0)) Run_Scripter(">P", 2, 0);
 #else
-      if (bitRead(Settings.rule_enabled, 0)) {
+      if (bitRead(Settings->rule_enabled, 0)) {
         Run_Scripter(">E", 2, 0);
         result = glob_script_mem.event_handeled;
       }
 #endif //SCRIPT_POWER_SECTION
       break;
     case FUNC_RULES_PROCESS:
-      if (bitRead(Settings.rule_enabled, 0)) {
+      if (bitRead(Settings->rule_enabled, 0)) {
 #ifdef MQTT_DATA_STRING
 #ifdef USE_SCRIPT_STATUS
         if (!strncmp_P(TasmotaGlobal.mqtt_data.c_str(), PSTR("{\"Status"), 8)) {
@@ -8448,7 +8448,7 @@ bool Xdrv10(uint8_t function)
       }
       break;
     case FUNC_TELEPERIOD_RULES_PROCESS:
-      if (bitRead(Settings.rule_enabled, 0)) {
+      if (bitRead(Settings->rule_enabled, 0)) {
 #ifdef MQTT_DATA_STRING
         if (TasmotaGlobal.mqtt_data.length()) {
           Run_Scripter(">T", 2, TasmotaGlobal.mqtt_data.c_str());
@@ -8470,7 +8470,7 @@ bool Xdrv10(uint8_t function)
       break;
 #ifdef USE_SCRIPT_WEB_DISPLAY
     case FUNC_WEB_ADD_MAIN_BUTTON:
-      if (bitRead(Settings.rule_enabled, 0)) {
+      if (bitRead(Settings->rule_enabled, 0)) {
         ScriptWebShow('$');
 #ifdef SCRIPT_FULL_WEBPAGE
         uint8_t web_script = Run_Scripter(">w", -2, 0);
@@ -8497,7 +8497,7 @@ bool Xdrv10(uint8_t function)
       break;
 
     case FUNC_SAVE_BEFORE_RESTART:
-      if (bitRead(Settings.rule_enabled, 0)) {
+      if (bitRead(Settings->rule_enabled, 0)) {
         Run_Scripter(">R", 2, 0);
         Scripter_save_pvars();
       }
@@ -8507,14 +8507,14 @@ bool Xdrv10(uint8_t function)
       break;
 #ifdef SUPPORT_MQTT_EVENT
     case FUNC_MQTT_DATA:
-      if (bitRead(Settings.rule_enabled, 0)) {
+      if (bitRead(Settings->rule_enabled, 0)) {
         result = ScriptMqttData();
       }
       break;
 #endif    //SUPPORT_MQTT_EVENT
 #ifdef USE_SCRIPT_WEB_DISPLAY
     case FUNC_WEB_SENSOR:
-      if (bitRead(Settings.rule_enabled, 0)) {
+      if (bitRead(Settings->rule_enabled, 0)) {
         ScriptWebShow(0);
       }
       break;
@@ -8522,7 +8522,7 @@ bool Xdrv10(uint8_t function)
 
 #ifdef USE_SCRIPT_JSON_EXPORT
     case FUNC_JSON_APPEND:
-      if (bitRead(Settings.rule_enabled, 0)) {
+      if (bitRead(Settings->rule_enabled, 0)) {
         ScriptJsonAppend();
       }
       break;
@@ -8530,7 +8530,7 @@ bool Xdrv10(uint8_t function)
 
 #ifdef USE_BUTTON_EVENT
     case FUNC_BUTTON_PRESSED:
-      if (bitRead(Settings.rule_enabled, 0)) {
+      if (bitRead(Settings->rule_enabled, 0)) {
         if ((glob_script_mem.script_button[XdrvMailbox.index]&1)!=(XdrvMailbox.payload&1)) {
           glob_script_mem.script_button[XdrvMailbox.index] = XdrvMailbox.payload;
           Run_Scripter(">b", 2, 0);

@@ -780,7 +780,7 @@ void MI32Init(void) {
     AddLog(LOG_LEVEL_INFO,PSTR("M32: Init BLE device"));
     MI32.mode.canScan = 1;
     MI32.mode.init = 1;
-    MI32.period = Settings.tele_period;
+    MI32.period = Settings->tele_period;
 
     MI32StartScanTask(); // Let's get started !!
   }
@@ -2045,7 +2045,7 @@ void MI32Show(bool json)
             ) {
               MI32ShowContinuation(&commaflg);
               ResponseAppend_P(PSTR("\"" D_JSON_TEMPERATURE "\":%*_f"),
-                Settings.flag2.temperature_resolution, &MIBLEsensors[i].temp);
+                Settings->flag2.temperature_resolution, &MIBLEsensors[i].temp);
             }
           }
         }
@@ -2057,7 +2057,7 @@ void MI32Show(bool json)
 #endif //USE_HOME_ASSISTANT
             ) {
               char hum[FLOATSZ];
-              dtostrfd(MIBLEsensors[i].hum, Settings.flag2.humidity_resolution, hum);
+              dtostrfd(MIBLEsensors[i].hum, Settings->flag2.humidity_resolution, hum);
               MI32ShowContinuation(&commaflg);
               ResponseAppend_P(PSTR("\"" D_JSON_HUMIDITY "\":%s"), hum);
             }
@@ -2298,7 +2298,7 @@ void MI32Show(bool json)
 
 bool Xsns62(uint8_t function)
 {
-  if (!Settings.flag5.mi32_enable) { return false; }  // SetOption115 - Enable ESP32 MI32 BLE
+  if (!Settings->flag5.mi32_enable) { return false; }  // SetOption115 - Enable ESP32 MI32 BLE
 
   bool result = false;
 

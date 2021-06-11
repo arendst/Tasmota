@@ -1227,7 +1227,7 @@ void NeoPoolShow(bool json)
     // Temperature
     if (NeoPoolGetData(MBF_PAR_TEMPERATURE_ACTIVE)) {
       fvalue = ConvertTemp((float)NeoPoolGetData(MBF_MEASURE_TEMPERATURE)/10);
-      ResponseAppend_P(PSTR(",\"" D_TEMPERATURE "\":%*_f"), Settings.flag2.temperature_resolution, &fvalue);
+      ResponseAppend_P(PSTR(",\"" D_TEMPERATURE "\":%*_f"), Settings->flag2.temperature_resolution, &fvalue);
     }
 
     // pH
@@ -1368,9 +1368,9 @@ void NeoPoolShow(bool json)
   } else {
     char bg_color[10];
     snprintf_P(bg_color, sizeof(bg_color), "#%02x%02x%02x",
-      Settings.web_color[COL_BACKGROUND][0],  // R
-      Settings.web_color[COL_BACKGROUND][1],  // G
-      Settings.web_color[COL_BACKGROUND][2]   // B
+      Settings->web_color[COL_BACKGROUND][0],  // R
+      Settings->web_color[COL_BACKGROUND][1],  // G
+      Settings->web_color[COL_BACKGROUND][2]   // B
       );
 
 #ifndef NEOPOOL_OPTIMIZE_READINGS
@@ -1386,7 +1386,7 @@ void NeoPoolShow(bool json)
     // Temperature
     if (NeoPoolGetData(MBF_PAR_TEMPERATURE_ACTIVE)) {
       fvalue = ConvertTemp((float)NeoPoolGetData(MBF_MEASURE_TEMPERATURE)/10);
-      WSContentSend_PD(HTTP_SNS_F_TEMP, neopool_type, Settings.flag2.temperature_resolution, &fvalue, TempUnit());
+      WSContentSend_PD(HTTP_SNS_F_TEMP, neopool_type, Settings->flag2.temperature_resolution, &fvalue, TempUnit());
     }
 
     // Hydrolysis

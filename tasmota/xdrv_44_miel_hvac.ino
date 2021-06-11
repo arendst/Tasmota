@@ -103,12 +103,12 @@ struct miel_hvac_data {
 
 CTASSERT(sizeof(struct miel_hvac_data) == 16);
 
-CTASSERT(offsetof(struct miel_hvac_data, data.settings.power) == 3);
-CTASSERT(offsetof(struct miel_hvac_data, data.settings.mode) == 4);
-CTASSERT(offsetof(struct miel_hvac_data, data.settings.temp) == 5);
-CTASSERT(offsetof(struct miel_hvac_data, data.settings.fan) == 6);
-CTASSERT(offsetof(struct miel_hvac_data, data.settings.vane) == 7);
-CTASSERT(offsetof(struct miel_hvac_data, data.settings.widevane) == 10);
+CTASSERT(offsetof(struct miel_hvac_data, data.Settings->power) == 3);
+CTASSERT(offsetof(struct miel_hvac_data, data.Settings->mode) == 4);
+CTASSERT(offsetof(struct miel_hvac_data, data.Settings->temp) == 5);
+CTASSERT(offsetof(struct miel_hvac_data, data.Settings->fan) == 6);
+CTASSERT(offsetof(struct miel_hvac_data, data.Settings->vane) == 7);
+CTASSERT(offsetof(struct miel_hvac_data, data.Settings->widevane) == 10);
 
 CTASSERT(offsetof(struct miel_hvac_data, data.roomtemp.temp) == 3);
 
@@ -854,7 +854,7 @@ static void
 miel_hvac_publish_settings(struct miel_hvac_softc *sc)
 {
 	const struct miel_hvac_data_settings *set =
-	    &sc->sc_settings.data.settings;
+	    &sc->sc_Settings->data.settings;
 	char hex[(sizeof(sc->sc_settings) + 1) * 2];
 	char temp[33];
 	const char *name;
@@ -873,7 +873,7 @@ miel_hvac_publish_settings(struct miel_hvac_softc *sc)
 	}
 
 	dtostrfd(ConvertTemp(miel_hvac_temp2deg(set->temp)),
-	    Settings.flag2.temperature_resolution, temp);
+	    Settings->flag2.temperature_resolution, temp);
 	ResponseAppend_P(PSTR(",\"" D_JSON_IRHVAC_TEMP "\":%s"), temp);
 
 	name = miel_hvac_map_byval(set->fan,
@@ -1078,7 +1078,7 @@ miel_hvac_sensor(struct miel_hvac_softc *sc)
 		char room_temp[33];
 
 		dtostrfd(ConvertTemp(temp),
-		    Settings.flag2.temperature_resolution, room_temp);
+		    Settings->flag2.temperature_resolution, room_temp);
 		ResponseAppend_P(PSTR("\"" D_JSON_TEMPERATURE "\":%s"),
 		    room_temp);
 

@@ -2265,7 +2265,7 @@ void SML_Init(void) {
 
   }
 
-  if (bitRead(Settings.rule_enabled, 0)) {
+  if (bitRead(Settings->rule_enabled, 0)) {
 
   uint8_t meter_script=Run_Scripter(">M",-2,0);
   if (meter_script==99) {
@@ -2490,7 +2490,7 @@ init10:
   uint8_t cindex=0;
   // preloud counters
   for (byte i = 0; i < MAX_COUNTERS; i++) {
-      RtcSettings.pulse_counter[i]=Settings.pulse_counter[i];
+      RtcSettings.pulse_counter[i]=Settings->pulse_counter[i];
       sml_counters[i].sml_cnt_last_ts=millis();
   }
   uint32_t uart_index=2;
@@ -2983,7 +2983,7 @@ void InjektCounterValue(uint8_t meter,uint32_t counter) {
 
 void SML_CounterSaveState(void) {
   for (byte i = 0; i < MAX_COUNTERS; i++) {
-      Settings.pulse_counter[i] = RtcSettings.pulse_counter[i];
+      Settings->pulse_counter[i] = RtcSettings.pulse_counter[i];
   }
 }
 
@@ -3011,7 +3011,7 @@ bool Xsns53(byte function) {
     //    break;
 #ifdef USE_SCRIPT
       case FUNC_EVERY_100_MSECOND:
-        if (bitRead(Settings.rule_enabled, 0)) {
+        if (bitRead(Settings->rule_enabled, 0)) {
           SML_Check_Send();
         }
         break;

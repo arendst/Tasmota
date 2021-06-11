@@ -471,7 +471,7 @@ bool ResponseAppendTInfo(char sep, bool all)
             if (!isBlacklistedLabel(me->name)) {
 
                 // Add values only if we want all data or if data has changed
-                if (all || ( Settings.teleinfo.raw_report_changed && (me->flags & (TINFO_FLAGS_UPDATED | TINFO_FLAGS_ADDED | TINFO_FLAGS_ALERT) ) ) ) {
+                if (all || ( Settings->teleinfo.raw_report_changed && (me->flags & (TINFO_FLAGS_UPDATED | TINFO_FLAGS_ADDED | TINFO_FLAGS_ALERT) ) ) ) {
 
                     isNumber = true;
                     hasValue = true;
@@ -527,12 +527,12 @@ void NewFrameCallback(struct _ValueList * me)
 
     // Deprecated see setOption108
     // send teleinfo raw data only if setup like that
-    if (Settings.teleinfo.raw_send) {
+    if (Settings->teleinfo.raw_send) {
         // Do we need to skip this frame
         if (raw_skip == 0 ) {
             Response_P(PSTR("{\"TIC\":{"));
             // send teleinfo full frame or only changed data
-            bool hasData = ResponseAppendTInfo(' ', Settings.teleinfo.raw_report_changed ? false : true );
+            bool hasData = ResponseAppendTInfo(' ', Settings->teleinfo.raw_report_changed ? false : true );
             ResponseJsonEndEnd();
             
             // Publish adding ADCO serial number into the topic
@@ -543,7 +543,7 @@ void NewFrameCallback(struct _ValueList * me)
             }
 
             // Reset frame skip counter (if 0 it's disabled)
-            raw_skip = Settings.teleinfo.raw_skip;
+            raw_skip = Settings->teleinfo.raw_skip;
         } else {
             AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: not sending yet, will do in %d frame(s)"), raw_skip);
             raw_skip--;
@@ -593,7 +593,7 @@ void TInfoInit(void)
 
     // Deprecated SetOption102 - Set Baud rate for Teleinfo serial communication (0 = 1200 or 1 = 9600)
     // now set in bit field TeleinfoCfg
-    if (Settings.teleinfo.mode_standard) {
+    if (Settings->teleinfo.mode_standard) {
         baudrate = 9600;
         tinfo_mode = TINFO_MODE_STANDARD;
         serial_buffer_size = TELEINFO_SERIAL_BUFFER_STANDARD;
@@ -659,8 +659,8 @@ void TInfoInit(void)
         tinfo.attachNewFrame(NewFrameCallback);
         tinfo_found = true;
 
-        if (Settings.teleinfo.raw_send) {
-            raw_skip = Settings.teleinfo.raw_skip;
+        if (Settings->teleinfo.raw_send) {
+            raw_skip = Settings->teleinfo.raw_skip;
             AddLog(LOG_LEVEL_INFO, PSTR("TIC: Raw mode enabled"));
             if (raw_skip) {
                 AddLog(LOG_LEVEL_INFO, PSTR("TIC: Sending only one frame over %d "), raw_skip+1);
@@ -694,16 +694,16 @@ bool TInfoCmd(void) {
 
             char mode_name[MAX_TINFO_COMMAND_NAME];
             char raw_name[MAX_TINFO_COMMAND_NAME];
-            int index_mode = Settings.teleinfo.mode_standard ? CMND_TELEINFO_STANDARD : CMND_TELEINFO_HISTORIQUE;
-            int index_raw = Settings.teleinfo.raw_send ? CMND_TELEINFO_RAW_FULL : CMND_TELEINFO_RAW_DISABLE;
-            if (Settings.teleinfo.raw_send && Settings.teleinfo.raw_report_changed) {
+            int index_mode = Settings->teleinfo.mode_standard ? CMND_TELEINFO_STANDARD : CMND_TELEINFO_HISTORIQUE;
+            int index_raw = Settings->teleinfo.raw_send ? CMND_TELEINFO_RAW_FULL : CMND_TELEINFO_RAW_DISABLE;
+            if (Settings->teleinfo.raw_send && Settings->teleinfo.raw_report_changed) {
                 index_raw = CMND_TELEINFO_RAW_CHANGE;
             } 
             // Get the mode and raw name
             GetTextIndexed(mode_name, MAX_TINFO_COMMAND_NAME, index_mode, kTInfo_Commands);
             GetTextIndexed(raw_name, MAX_TINFO_COMMAND_NAME, index_raw, kTInfo_Commands);
 
-            AddLog(LOG_LEVEL_INFO, TELEINFO_COMMAND_SETTINGS, mode_name, raw_name, Settings.teleinfo.raw_skip, Settings.teleinfo.raw_limit);
+            AddLog(LOG_LEVEL_INFO, TELEINFO_COMMAND_SETTINGS, mode_name, raw_name, Settings->teleinfo.raw_skip, Settings->teleinfo.raw_limit);
 
             serviced = true;
 
@@ -753,7 +753,7 @@ bool TInfoCmd(void) {
                         }
 
                         // Change mode 
-                        Settings.teleinfo.mode_standard = command_code == CMND_TELEINFO_STANDARD ? 1 : 0;
+                        Settings->teleinfo.mode_standard = command_code == CMND_TELEINFO_STANDARD ? 1 : 0;
 
                         AddLog(LOG_LEVEL_INFO, PSTR("TIC: '%s' mode"), mode_name);
 
@@ -780,11 +780,11 @@ bool TInfoCmd(void) {
 
                     if (command_code == CMND_TELEINFO_RAW_DISABLE) {
                         // disable raw mode
-                        Settings.teleinfo.raw_send = 0;
+                        Settings->teleinfo.raw_send = 0;
                     } else {
                         // enable raw mode
-                        Settings.teleinfo.raw_send = 1;
-                        Settings.teleinfo.raw_report_changed = command_code == CMND_TELEINFO_RAW_CHANGE ? 1 : 0;
+                        Settings->teleinfo.raw_send = 1;
+                        Settings->teleinfo.raw_report_changed = command_code == CMND_TELEINFO_RAW_CHANGE ? 1 : 0;
                     }
 
                     AddLog(LOG_LEVEL_INFO, PSTR("TIC: Raw to '%s'"), raw_name);
@@ -805,7 +805,7 @@ bool TInfoCmd(void) {
                         int value = atoi(pValue);
                         if (value >= 0 && value <= 255) {
                             raw_skip = value;
-                            Settings.teleinfo.raw_skip = raw_skip;
+                            Settings->teleinfo.raw_skip = raw_skip;
 
                             if (raw_skip ==0) {
                                 AddLog(LOG_LEVEL_INFO, PSTR("TIC: Raw no skip"));

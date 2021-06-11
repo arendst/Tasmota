@@ -49,8 +49,8 @@ uint8_t deepsleep_flag = 0;
 
 bool DeepSleepEnabled(void)
 {
-  if ((Settings.deepsleep < 10) || (Settings.deepsleep > DEEPSLEEP_MAX)) {
-    Settings.deepsleep = 0;     // Issue #6961
+  if ((Settings->deepsleep < 10) || (Settings->deepsleep > DEEPSLEEP_MAX)) {
+    Settings->deepsleep = 0;     // Issue #6961
     return false;               // Disabled
   }
 
@@ -95,7 +95,7 @@ void DeepSleepPrepare(void)
   if ((RtcSettings.nextwakeup == 0) ||
       (RtcSettings.deepsleep_slip < 9000) ||
       (RtcSettings.deepsleep_slip > 11000) ||
-      (RtcSettings.nextwakeup > (UtcTime() + Settings.deepsleep))) {
+      (RtcSettings.nextwakeup > (UtcTime() + Settings->deepsleep))) {
     AddLog(LOG_LEVEL_ERROR, PSTR("DSL: Reset wrong settings wakeup: %ld, slip %ld"), RtcSettings.nextwakeup, RtcSettings.deepsleep_slip );
     RtcSettings.nextwakeup = 0;
     RtcSettings.deepsleep_slip = 10000;
@@ -107,19 +107,19 @@ void DeepSleepPrepare(void)
 
   // Allow 10% of deepsleep error to count as valid deepsleep; expecting 3-4%
   // if more then 10% timeslip = 0 == non valid wakeup; maybe manual
-  timeslip = (timeslip < -(int32_t)Settings.deepsleep) ? 0 : (timeslip > (int32_t)Settings.deepsleep) ? 0 : 1;
+  timeslip = (timeslip < -(int32_t)Settings->deepsleep) ? 0 : (timeslip > (int32_t)Settings->deepsleep) ? 0 : 1;
   if (timeslip) {
-    RtcSettings.deepsleep_slip = (Settings.deepsleep + RtcSettings.nextwakeup - UtcTime()) * RtcSettings.deepsleep_slip / tmax((Settings.deepsleep - (millis() / 1000)),5);
+    RtcSettings.deepsleep_slip = (Settings->deepsleep + RtcSettings.nextwakeup - UtcTime()) * RtcSettings.deepsleep_slip / tmax((Settings->deepsleep - (millis() / 1000)),5);
     // Avoid crazy numbers. Again maximum 10% deviation.
     RtcSettings.deepsleep_slip = tmin(tmax(RtcSettings.deepsleep_slip, 9000), 11000);
-    RtcSettings.nextwakeup += Settings.deepsleep;
+    RtcSettings.nextwakeup += Settings->deepsleep;
   }
 
   // It may happen that wakeup in just <5 seconds in future
   // In this case also add deepsleep to nextwakeup
   if (RtcSettings.nextwakeup <= (UtcTime() - DEEPSLEEP_MIN_TIME)) {
     // ensure nextwakeup is at least in the future
-    RtcSettings.nextwakeup += (((UtcTime() + DEEPSLEEP_MIN_TIME - RtcSettings.nextwakeup) / Settings.deepsleep) + 1) * Settings.deepsleep;
+    RtcSettings.nextwakeup += (((UtcTime() + DEEPSLEEP_MIN_TIME - RtcSettings.nextwakeup) / Settings->deepsleep) + 1) * Settings->deepsleep;
   }
 
   String dt = GetDT(RtcSettings.nextwakeup + LocalTime() - UtcTime());  // 2017-03-07T11:08:02
@@ -179,16 +179,16 @@ void CmndDeepsleepTime(void)
 {
   if ((0 == XdrvMailbox.payload) ||
      ((XdrvMailbox.payload > 10) && (XdrvMailbox.payload < DEEPSLEEP_MAX))) {
-    Settings.deepsleep = XdrvMailbox.payload;
+    Settings->deepsleep = XdrvMailbox.payload;
     RtcSettings.nextwakeup = 0;
     deepsleep_flag = (0 == XdrvMailbox.payload) ? 0 : DEEPSLEEP_START_COUNTDOWN;
     if (deepsleep_flag) {
-      if (!Settings.tele_period) {
-        Settings.tele_period = TELE_PERIOD;  // Need teleperiod to go back to sleep
+      if (!Settings->tele_period) {
+        Settings->tele_period = TELE_PERIOD;  // Need teleperiod to go back to sleep
       }
     }
   }
-  ResponseCmndNumber(Settings.deepsleep);
+  ResponseCmndNumber(Settings->deepsleep);
 }
 
 /*********************************************************************************************\
@@ -204,7 +204,7 @@ bool Xdrv29(uint8_t function)
       DeepSleepEverySecond();
       break;
     case FUNC_AFTER_TELEPERIOD:
-        if (DeepSleepEnabled() && !deepsleep_flag && (Settings.tele_period == 10 || Settings.tele_period == 300 || UpTime() > Settings.tele_period)) {
+        if (DeepSleepEnabled() && !deepsleep_flag && (Settings->tele_period == 10 || Settings->tele_period == 300 || UpTime() > Settings->tele_period)) {
         deepsleep_flag = DEEPSLEEP_START_COUNTDOWN;  // Start deepsleep in 4 seconds
       }
       break;

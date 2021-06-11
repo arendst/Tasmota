@@ -134,7 +134,7 @@ void HlwEvery200ms(void) {
   Hlw.cf_pulse_counter = 0;
 
   if (Hlw.cf_power_pulse_length  && Energy.power_on && !Hlw.load_off) {
-    hlw_w = (Hlw.power_ratio * Settings.energy_power_calibration) / Hlw.cf_power_pulse_length ;  // W *10
+    hlw_w = (Hlw.power_ratio * Settings->energy_power_calibration) / Hlw.cf_power_pulse_length ;  // W *10
     Energy.active_power[0] = (float)hlw_w / 10;
     Hlw.power_retry = 1;        // Workaround issue #5161
   } else {
@@ -179,7 +179,7 @@ void HlwEvery200ms(void) {
         Hlw.cf1_voltage_pulse_length  = cf1_pulse_length;
 
         if (Hlw.cf1_voltage_pulse_length  && Energy.power_on) {     // If powered on always provide voltage
-          hlw_u = (Hlw.voltage_ratio * Settings.energy_voltage_calibration) / Hlw.cf1_voltage_pulse_length ;  // V *10
+          hlw_u = (Hlw.voltage_ratio * Settings->energy_voltage_calibration) / Hlw.cf1_voltage_pulse_length ;  // V *10
           Energy.voltage[0] = (float)hlw_u / 10;
         } else {
           Energy.voltage[0] = 0;
@@ -189,7 +189,7 @@ void HlwEvery200ms(void) {
         Hlw.cf1_current_pulse_length = cf1_pulse_length;
 
         if (Hlw.cf1_current_pulse_length && Energy.active_power[0]) {   // No current if no power being consumed
-          hlw_i = (Hlw.current_ratio * Settings.energy_current_calibration) / Hlw.cf1_current_pulse_length;  // mA
+          hlw_i = (Hlw.current_ratio * Settings->energy_current_calibration) / Hlw.cf1_current_pulse_length;  // mA
           Energy.current[0] = (float)hlw_i / 1000;
         } else {
           Energy.current[0] = 0;
@@ -214,7 +214,7 @@ void HlwEverySecond(void) {
       hlw_len = 10000 * 100 / Hlw.energy_period_counter;  // Add *100 to fix rounding on loads at 3.6kW (#9160)
       Hlw.energy_period_counter = 0;
       if (hlw_len) {
-        Energy.kWhtoday_delta += (((Hlw.power_ratio * Settings.energy_power_calibration) / 36) * 100) / hlw_len;
+        Energy.kWhtoday_delta += (((Hlw.power_ratio * Settings->energy_power_calibration) / 36) * 100) / hlw_len;
         EnergyUpdateToday();
       }
     }
@@ -222,10 +222,10 @@ void HlwEverySecond(void) {
 }
 
 void HlwSnsInit(void) {
-  if (!Settings.energy_power_calibration || (4975 == Settings.energy_power_calibration)) {
-    Settings.energy_power_calibration = HLW_PREF_PULSE;
-    Settings.energy_voltage_calibration = HLW_UREF_PULSE;
-    Settings.energy_current_calibration = HLW_IREF_PULSE;
+  if (!Settings->energy_power_calibration || (4975 == Settings->energy_power_calibration)) {
+    Settings->energy_power_calibration = HLW_PREF_PULSE;
+    Settings->energy_voltage_calibration = HLW_UREF_PULSE;
+    Settings->energy_current_calibration = HLW_IREF_PULSE;
   }
 
   if (Hlw.model_type) {
@@ -287,17 +287,17 @@ bool HlwCommand(void) {
   }
   else if (CMND_POWERSET == Energy.command_code) {
     if (XdrvMailbox.data_len && Hlw.cf_power_pulse_length ) {
-      Settings.energy_power_calibration = ((uint32_t)(CharToFloat(XdrvMailbox.data) * 10) * Hlw.cf_power_pulse_length ) / Hlw.power_ratio;
+      Settings->energy_power_calibration = ((uint32_t)(CharToFloat(XdrvMailbox.data) * 10) * Hlw.cf_power_pulse_length ) / Hlw.power_ratio;
     }
   }
   else if (CMND_VOLTAGESET == Energy.command_code) {
     if (XdrvMailbox.data_len && Hlw.cf1_voltage_pulse_length ) {
-      Settings.energy_voltage_calibration = ((uint32_t)(CharToFloat(XdrvMailbox.data) * 10) * Hlw.cf1_voltage_pulse_length ) / Hlw.voltage_ratio;
+      Settings->energy_voltage_calibration = ((uint32_t)(CharToFloat(XdrvMailbox.data) * 10) * Hlw.cf1_voltage_pulse_length ) / Hlw.voltage_ratio;
     }
   }
   else if (CMND_CURRENTSET == Energy.command_code) {
     if (XdrvMailbox.data_len && Hlw.cf1_current_pulse_length) {
-      Settings.energy_current_calibration = ((uint32_t)(CharToFloat(XdrvMailbox.data)) * Hlw.cf1_current_pulse_length) / Hlw.current_ratio;
+      Settings->energy_current_calibration = ((uint32_t)(CharToFloat(XdrvMailbox.data)) * Hlw.cf1_current_pulse_length) / Hlw.current_ratio;
     }
   }
   else serviced = false;  // Unknown command

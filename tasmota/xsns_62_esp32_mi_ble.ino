@@ -1510,7 +1510,7 @@ void MI32Init(void) {
   //void registerForOpCallbacks(const char *tag, BLE_ESP32::OPCOMPLETE_CALLBACK* pFn);
 
   AddLog(LOG_LEVEL_INFO,PSTR("M32: init: request callbacks"));
-  MI32.period = Settings.tele_period;
+  MI32.period = Settings->tele_period;
   MI32.mode.init = 1;
   return;
 }
@@ -1982,7 +1982,7 @@ void MI32EverySecond(bool restart){
   if (MI32.option.MQTTType == 1
 #ifdef USE_HOME_ASSISTANT
     ||
-    Settings.flag.hass_discovery
+    Settings->flag.hass_discovery
 #endif
   ) {
     // these two share a counter
@@ -2505,7 +2505,7 @@ void MI32GetOneSensorJson(int slot, int hidename){
 #endif //USE_HOME_ASSISTANT
         ) {
           ResponseAppend_P(PSTR(",\"" D_JSON_TEMPERATURE "\":%*_f"),
-            Settings.flag2.temperature_resolution, &p->temp);
+            Settings->flag2.temperature_resolution, &p->temp);
         }
       }
     }
@@ -2517,7 +2517,7 @@ void MI32GetOneSensorJson(int slot, int hidename){
 #endif //USE_HOME_ASSISTANT
         ) {
           char hum[FLOATSZ];
-          dtostrfd(p->hum, Settings.flag2.humidity_resolution, hum);
+          dtostrfd(p->hum, Settings->flag2.humidity_resolution, hum);
           ResponseAppend_P(PSTR(",\"" D_JSON_HUMIDITY "\":%s"), hum);
         }
       }
@@ -2688,7 +2688,7 @@ void MI32ShowSomeSensors(){
     cnt++;
   }
   ResponseAppend_P(PSTR("}"));
-  MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
+  MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR(D_RSLT_SENSOR), Settings->flag.mqtt_sensor_retain);
 #ifdef MQTT_DATA_STRING
   //AddLog(LOG_LEVEL_DEBUG,PSTR("M32: %s: show some %d %s"),D_CMND_MI32, MI32.mqttCurrentSlot, TasmotaGlobal.mqtt_data.c_str());
 #else
@@ -2718,7 +2718,7 @@ void MI32ShowOneMISensor(){
 
   if(
 #ifdef USE_HOME_ASSISTANT
-    Settings.flag.hass_discovery
+    Settings->flag.hass_discovery
     ||
 #endif //USE_HOME_ASSISTANT
     MI32.option.MQTTType == 1
@@ -2845,7 +2845,7 @@ void MI32DiscoveryOneMISensor(){
   }
 
 #ifdef USE_HOME_ASSISTANT
-  if(Settings.flag.hass_discovery){
+  if(Settings->flag.hass_discovery){
     mi_sensor_t *p;
     p = &MIBLEsensors[MI32.mqttCurrentSingleSlot];
 
@@ -3032,7 +3032,7 @@ void MI32ShowTriggeredSensors(){
   int maxcnt = 4;
   if(
 #ifdef USE_HOME_ASSISTANT
-    Settings.flag.hass_discovery
+    Settings->flag.hass_discovery
     ||
 #endif //USE_HOME_ASSISTANT
     MI32.option.MQTTType == 1
@@ -3066,7 +3066,7 @@ void MI32ShowTriggeredSensors(){
       ResponseAppend_P(PSTR("}"));
       if(
     #ifdef USE_HOME_ASSISTANT
-        Settings.flag.hass_discovery
+        Settings->flag.hass_discovery
         ||
     #endif //USE_HOME_ASSISTANT
         MI32.option.MQTTType == 1
@@ -3086,7 +3086,7 @@ void MI32ShowTriggeredSensors(){
           id);
         MqttPublish(SensorTopic);
       } else {
-        MqttPublishPrefixTopic_P(STAT, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
+        MqttPublishPrefixTopic_P(STAT, PSTR(D_RSLT_SENSOR), Settings->flag.mqtt_sensor_retain);
       }
 #ifdef MQTT_DATA_STRING
       AddLog(LOG_LEVEL_DEBUG,PSTR("M32: %s: triggered %d %s"),D_CMND_MI32, sensor, TasmotaGlobal.mqtt_data.c_str());
@@ -3251,7 +3251,7 @@ void MI32Show(bool json)
 
 bool Xsns62(uint8_t function)
 {
-//  if (!Settings.flag5.mi32_enable) { return false; }  // SetOption115 - Enable ESP32 MI32 BLE
+//  if (!Settings->flag5.mi32_enable) { return false; }  // SetOption115 - Enable ESP32 MI32 BLE
 //  return false;
 
   bool result = false;

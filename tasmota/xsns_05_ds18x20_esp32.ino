@@ -190,7 +190,7 @@ void Ds18x20EverySecond(void) {
     for (uint32_t i = 0; i < DS18X20Data.sensors; i++) {
       // 12mS per device
       if (Ds18x20Read(i, t)) {   // Read temperature
-        if (Settings.flag5.ds18x20_mean) {
+        if (Settings->flag5.ds18x20_mean) {
           if (ds18x20_sensor[i].numread++ == 0) {
             ds18x20_sensor[i].temp_sum = 0;
           }
@@ -213,7 +213,7 @@ void Ds18x20Show(bool json) {
       Ds18x20Name(i);
 
       if (json) {
-        if (Settings.flag5.ds18x20_mean) {
+        if (Settings->flag5.ds18x20_mean) {
           if ((0 == TasmotaGlobal.tele_period) && ds18x20_sensor[i].numread) {
             t = ds18x20_sensor[i].temp_sum / ds18x20_sensor[i].numread;
             ds18x20_sensor[i].numread = 0;
@@ -224,7 +224,7 @@ void Ds18x20Show(bool json) {
           sprintf(address+2*j, "%02X", ds18x20_sensor[ds18x20_sensor[i].index].address[6-j]);  // Skip sensor type and crc
         }
         ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_ID "\":\"%s\",\"" D_JSON_TEMPERATURE "\":%*_f}"),
-          DS18X20Data.name, address, Settings.flag2.temperature_resolution, &t);
+          DS18X20Data.name, address, Settings->flag2.temperature_resolution, &t);
         dsxflg++;
 #ifdef USE_DOMOTICZ
         if ((0 == TasmotaGlobal.tele_period) && (1 == dsxflg)) {

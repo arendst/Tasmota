@@ -149,7 +149,7 @@ void ZigbeeInputLoop(void) {
 			SBuffer znp_buffer = zigbee_buffer->subBuffer(2, zigbee_frame_len - 3);	// remove SOF, LEN and FCS
 
       Response_P(PSTR("{\"" D_JSON_ZIGBEEZNPRECEIVED "\":\"%_B\"}"), &znp_buffer);
-      if (Settings.flag3.tuya_serial_mqtt_publish) {
+      if (Settings->flag3.tuya_serial_mqtt_publish) {
         MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR(D_RSLT_SENSOR));
       } else {
 #ifdef MQTT_DATA_STRING
@@ -567,7 +567,7 @@ void ZigbeeProcessInputEZSP(SBuffer &buf) {
 
   // log message
   Response_P(PSTR("{\"" D_JSON_ZIGBEE_EZSP_RECEIVED "\":\"%_B\"}"), &buf);
-  if (Settings.flag3.tuya_serial_mqtt_publish) {
+  if (Settings->flag3.tuya_serial_mqtt_publish) {
     MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR(D_RSLT_SENSOR));
   } else {
     // demote less interesting messages to LOG_LEVEL_DEBUG

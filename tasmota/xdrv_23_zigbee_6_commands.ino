@@ -439,7 +439,7 @@ void convertClusterSpecific(class Z_attribute_list &attr_list, uint16_t cluster,
       // do we send command with endpoint suffix
       char command_suffix[4] = { 0x00 };  // empty string by default
       // if SO101 and multiple endpoints, append endpoint number
-      if (Settings.flag4.zb_index_ep) {
+      if (Settings->flag4.zb_index_ep) {
         if (zigbee_devices.getShortAddr(shortaddr).countEndpoints() > 0) {
           snprintf_P(command_suffix, sizeof(command_suffix), PSTR("%d"), srcendpoint);
         }

@@ -329,9 +329,9 @@ void sns_opentherm_parse_set_boiler_temperature(struct OpenThermCommandT *self, 
 void sns_opentherm_tele_boiler_temperature(struct OpenThermCommandT *self)
 {
     char requested[FLOATSZ];
-    dtostrfd(self->m_results[0].m_float, Settings.flag2.temperature_resolution, requested);
+    dtostrfd(self->m_results[0].m_float, Settings->flag2.temperature_resolution, requested);
     char actual[FLOATSZ];
-    dtostrfd(self->m_results[1].m_float, Settings.flag2.temperature_resolution, actual);
+    dtostrfd(self->m_results[1].m_float, Settings->flag2.temperature_resolution, actual);
 
     // indicate fault if tepmerature demand and actual setpoint are greater then tolerance
     bool isFault = abs(self->m_results[1].m_float - self->m_results[0].m_float) > OPENTHERM_BOILER_SETPOINT_TOLERANCE;
@@ -369,9 +369,9 @@ void sns_opentherm_parse_boiler_dhw_temperature(struct OpenThermCommandT *self, 
 void sns_opentherm_tele_boiler_dhw_temperature(struct OpenThermCommandT *self)
 {
     char requested[FLOATSZ];
-    dtostrfd(self->m_results[0].m_float, Settings.flag2.temperature_resolution, requested);
+    dtostrfd(self->m_results[0].m_float, Settings->flag2.temperature_resolution, requested);
     char actual[FLOATSZ];
-    dtostrfd(self->m_results[1].m_float, Settings.flag2.temperature_resolution, actual);
+    dtostrfd(self->m_results[1].m_float, Settings->flag2.temperature_resolution, actual);
 
     ResponseAppend_P(PSTR("{\"REQ\":%s,\"ACT\": %s}"),
                      requested,
@@ -445,7 +445,7 @@ void sns_opentherm_parse_generic_float(struct OpenThermCommandT *self, struct OT
 void sns_opentherm_tele_generic_float(struct OpenThermCommandT *self)
 {
     char str[FLOATSZ];
-    dtostrfd(self->m_results[0].m_float, Settings.flag2.temperature_resolution, str);
+    dtostrfd(self->m_results[0].m_float, Settings->flag2.temperature_resolution, str);
     ResponseAppend_P(PSTR("%s"), str);
 }
 

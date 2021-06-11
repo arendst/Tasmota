@@ -15,6 +15,7 @@ All notable changes to this project will be documented in this file.
 - Command ``Modules`` layout of JSON message changed to single line
 - I2C extended MPU6886 to also support MPU9250 (found in Legacy M5Stack Fire)
 - ESP32 increase log buffer from 4k to 6k to support longer messages
+- Move Settings from DRAM to heap
 
 ## [9.4.0.4]
 ### Added

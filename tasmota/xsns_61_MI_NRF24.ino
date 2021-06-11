@@ -1742,7 +1742,7 @@ void MINRFShow(bool json)
             ) {
               MINRFShowContinuation(&commaflg);
               ResponseAppend_P(PSTR("\"" D_JSON_TEMPERATURE "\":%*_f"),
-                Settings.flag2.temperature_resolution, &MIBLEsensors[i].temp);
+                Settings->flag2.temperature_resolution, &MIBLEsensors[i].temp);
             }
           }
         }
@@ -1750,7 +1750,7 @@ void MINRFShow(bool json)
           if(MIBLEsensors[i].eventType.hum || !MINRF.mode.triggeredTele || MINRF.option.allwaysAggregate) {
             if (!isnan(MIBLEsensors[i].hum)) {
               char hum[FLOATSZ];
-              dtostrfd(MIBLEsensors[i].hum, Settings.flag2.humidity_resolution, hum);
+              dtostrfd(MIBLEsensors[i].hum, Settings->flag2.humidity_resolution, hum);
               MINRFShowContinuation(&commaflg);
               ResponseAppend_P(PSTR("\"" D_JSON_HUMIDITY "\":%s"), hum);
             }

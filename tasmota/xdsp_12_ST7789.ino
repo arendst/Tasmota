@@ -64,13 +64,13 @@ void ST7789_InitDriver(void) {
   if (PinUsed(GPIO_ST7789_DC) &&  // This device does not need CS which breaks SPI bus usage
      ((TasmotaGlobal.soft_spi_enabled & SPI_MOSI) || (TasmotaGlobal.spi_enabled & SPI_MOSI))) {
 
-    Settings.display_model = XDSP_12;
+    Settings->display_model = XDSP_12;
 
-    if (!Settings.display_width) {
-      Settings.display_width = 240;
+    if (!Settings->display_width) {
+      Settings->display_width = 240;
     }
-    if (!Settings.display_height) {
-      Settings.display_height = 240;
+    if (!Settings->display_height) {
+      Settings->display_height = 240;
     }
 
     // default colors
@@ -90,16 +90,16 @@ void ST7789_InitDriver(void) {
       st7789 = new Arduino_ST7789(Pin(GPIO_ST7789_DC), Pin(GPIO_OLED_RESET), Pin(GPIO_ST7789_CS), bppin);
     }
 
-    st7789->init(Settings.display_width,Settings.display_height);
+    st7789->init(Settings->display_width,Settings->display_height);
     renderer = st7789;
-    renderer->DisplayInit(DISPLAY_INIT_MODE,Settings.display_size,Settings.display_rotate,Settings.display_font);
-    renderer->dim(Settings.display_dimmer);
+    renderer->DisplayInit(DISPLAY_INIT_MODE,Settings->display_size,Settings->display_rotate,Settings->display_font);
+    renderer->dim(Settings->display_dimmer);
 
 #ifdef SHOW_SPLASH
     // Welcome text
     renderer->setTextColor(ST7789_WHITE,ST7789_BLACK);
     renderer->setTextFont(2);
-    renderer->DrawStringAt(30, (Settings.display_height-12)/2, "ST7789 TFT!", ST7789_WHITE,0);
+    renderer->DrawStringAt(30, (Settings->display_height-12)/2, "ST7789 TFT!", ST7789_WHITE,0);
     delay(1000);
 #endif
 
@@ -183,7 +183,7 @@ bool Xdsp12(uint8_t function)
   if (FUNC_DISPLAY_INIT_DRIVER == function) {
     ST7789_InitDriver();
   }
-  else if (st7789_init_done && (XDSP_12 == Settings.display_model)) {
+  else if (st7789_init_done && (XDSP_12 == Settings->display_model)) {
       switch (function) {
         case FUNC_DISPLAY_MODEL:
           result = true;

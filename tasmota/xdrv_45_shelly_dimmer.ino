@@ -429,7 +429,7 @@ bool ShdSyncState()
 #ifdef SHELLY_DIMMER_DEBUG
     AddLog(LOG_LEVEL_DEBUG, PSTR(SHD_LOGNAME "Serial %p"), ShdSerial);
     AddLog(LOG_LEVEL_DEBUG, PSTR(SHD_LOGNAME "Set Brightness Want %d, Is %d"), Shd.req_brightness, Shd.dimmer.brightness);
-    AddLog(LOG_LEVEL_DEBUG, PSTR(SHD_LOGNAME "Set Fade Want %d, Is %d"), Settings.light_speed, Shd.dimmer.fade_rate);
+    AddLog(LOG_LEVEL_DEBUG, PSTR(SHD_LOGNAME "Set Fade Want %d, Is %d"), Settings->light_speed, Shd.dimmer.fade_rate);
 #endif  // SHELLY_DIMMER_DEBUG
 
     if (!ShdSerial)
@@ -438,7 +438,7 @@ bool ShdSyncState()
 #ifdef SHELLY_HW_DIMMING
     // TODO(jamesturton): HW dimming seems to conflict with SW dimming. See how
     // we can disbale SW dimming when using HW dimming.
-    if (Settings.light_speed != Shd.dimmer.fade_rate)
+    if (Settings->light_speed != Shd.dimmer.fade_rate)
     {
         ShdSetBrightnessFade();
         ShdDebugState();
@@ -758,7 +758,7 @@ bool ShdSetChannels(void)
     uint16_t brightness = ((uint32_t *)XdrvMailbox.data)[0];
     // Use dimmer_hw_min and dimmer_hw_max to constrain our values if the light should be on
     if (brightness > 0)
-        brightness = changeUIntScale(brightness, 0, 255, Settings.dimmer_hw_min * 10, Settings.dimmer_hw_max * 10);
+        brightness = changeUIntScale(brightness, 0, 255, Settings->dimmer_hw_min * 10, Settings->dimmer_hw_max * 10);
     Shd.req_brightness = brightness;
 
     ShdDebugState();
@@ -793,7 +793,7 @@ void CmndShdLeadingEdge(void)
     if (XdrvMailbox.payload == 0 || XdrvMailbox.payload == 1)
     {
         Shd.leading_edge = 2 - XdrvMailbox.payload;
-        Settings.shd_leading_edge = XdrvMailbox.payload;
+        Settings->shd_leading_edge = XdrvMailbox.payload;
 #ifdef SHELLY_DIMMER_DEBUG
         if (Shd.leading_edge == 1)
             AddLog(LOG_LEVEL_DEBUG, PSTR(SHD_LOGNAME "Set to trailing edge"));
@@ -803,7 +803,7 @@ void CmndShdLeadingEdge(void)
         ShdSendSettings();
     }
     ShdSaveSettings();
-    ResponseCmndNumber(Settings.shd_leading_edge);
+    ResponseCmndNumber(Settings->shd_leading_edge);
 }
 
 void CmndShdWarmupBrightness(void)
@@ -811,14 +811,14 @@ void CmndShdWarmupBrightness(void)
     if ((10 <= XdrvMailbox.payload) && (XdrvMailbox.payload <= 100))
     {
         Shd.warmup_brightness = XdrvMailbox.payload * 10;
-        Settings.shd_warmup_brightness = XdrvMailbox.payload;
+        Settings->shd_warmup_brightness = XdrvMailbox.payload;
 #ifdef SHELLY_DIMMER_DEBUG
         AddLog(LOG_LEVEL_DEBUG, PSTR(SHD_LOGNAME "Set warmup brightness to %d%%"), XdrvMailbox.payload);
 #endif  // SHELLY_DIMMER_DEBUG
         ShdSendSettings();
     }
     ShdSaveSettings();
-    ResponseCmndNumber(Settings.shd_warmup_brightness);
+    ResponseCmndNumber(Settings->shd_warmup_brightness);
 }
 
 void CmndShdWarmupTime(void)
@@ -826,14 +826,14 @@ void CmndShdWarmupTime(void)
     if ((20 <= XdrvMailbox.payload) && (XdrvMailbox.payload <= 200))
     {
         Shd.warmup_time = XdrvMailbox.payload;
-        Settings.shd_warmup_time = XdrvMailbox.payload;
+        Settings->shd_warmup_time = XdrvMailbox.payload;
 #ifdef SHELLY_DIMMER_DEBUG
         AddLog(LOG_LEVEL_DEBUG, PSTR(SHD_LOGNAME "Set warmup time to %dms"), XdrvMailbox.payload);
 #endif  // SHELLY_DIMMER_DEBUG
         ShdSendSettings();
     }
     ShdSaveSettings();
-    ResponseCmndNumber(Settings.shd_warmup_time);
+    ResponseCmndNumber(Settings->shd_warmup_time);
 }
 
 #endif // SHELLY_CMDS

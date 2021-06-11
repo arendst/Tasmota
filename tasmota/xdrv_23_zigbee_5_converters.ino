@@ -748,7 +748,7 @@ public:
                     _frame_control.b.frame_type, _frame_control.b.direction, _frame_control.b.disable_def_resp,
                     _manuf_code, _transact_seq, _cmd_id,
                     &_payload);
-    if (Settings.flag3.tuya_serial_mqtt_publish) {
+    if (Settings->flag3.tuya_serial_mqtt_publish) {
       MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR(D_RSLT_SENSOR));
     } else {
 #ifdef MQTT_DATA_STRING
@@ -1374,7 +1374,7 @@ void ZCLFrame::computeSyntheticAttributes(Z_attribute_list& attr_list) {
       case 0x04030000:    // SeaPressure
         {
           int16_t pressure = attr.getInt();
-          int16_t pressure_sealevel = (pressure / FastPrecisePow(1.0 - ((float)Settings.altitude / 44330.0f), 5.255f)) - 21.6f;
+          int16_t pressure_sealevel = (pressure / FastPrecisePow(1.0 - ((float)Settings->altitude / 44330.0f), 5.255f)) - 21.6f;
           attr_list.addAttribute(0x0403, 0xFFF0).setInt(pressure_sealevel);
           // We create a synthetic attribute 0403/FFF0 to indicate sea level
         }
@@ -1672,7 +1672,7 @@ void ZCLFrame::parseClusterSpecificCommand(Z_attribute_list& attr_list) {
     zigbee_devices.setTimer(_srcaddr, 0 /* groupaddr */, USE_ZIGBEE_DEBOUNCE_COMMANDS, 0 /*clusterid*/, _srcendpoint, Z_CAT_DEBOUNCE_CMD, 0, &Z_ResetDebounce);
 
     convertClusterSpecific(attr_list, _cluster_id, _cmd_id, _frame_control.b.direction, _srcaddr, _srcendpoint, _payload);
-    if (!Settings.flag5.zb_disable_autoquery) {
+    if (!Settings->flag5.zb_disable_autoquery) {
     // read attributes unless disabled
       if (!_frame_control.b.direction) {    // only handle server->client (i.e. device->coordinator)
         if (_wasbroadcast) {                // only update for broadcast messages since we don't see unicast from device to device and we wouldn't know the target
@@ -1995,7 +1995,7 @@ void Z_postProcessAttributes(uint16_t shortaddr, uint16_t src_ep, class Z_attrib
 
   for (auto &attr : attr_list) {
     // add endpoint suffix if needed
-    if ((Settings.flag4.zb_index_ep) && (src_ep != 1) && (count_ep > 1)) {
+    if ((Settings->flag4.zb_index_ep) && (src_ep != 1) && (count_ep > 1)) {
       // we need to add suffix if the suffix is not already different from 1
       if (attr.key_suffix == 1) {
         attr.key_suffix = src_ep;

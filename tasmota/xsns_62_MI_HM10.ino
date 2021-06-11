@@ -630,7 +630,7 @@ void HM10SerialInit(void) {
     HM10_Reset();
     HM10.mode.pending_task = 1;
     HM10.mode.init = 1;
-    HM10.period = Settings.tele_period;
+    HM10.period = Settings->tele_period;
     DEBUG_SENSOR_LOG(PSTR("%s_TASK_LIST initialized, now return to main loop"),D_CMND_HM10);
 
     //test section for options
@@ -1802,7 +1802,7 @@ void HM10Show(bool json)
             ) {
               HM10ShowContinuation(&commaflg);
               ResponseAppend_P(PSTR("\"" D_JSON_TEMPERATURE "\":%*_f"),
-                Settings.flag2.temperature_resolution, &MIBLEsensors[i].temp);
+                Settings->flag2.temperature_resolution, &MIBLEsensors[i].temp);
             }
           }
         }
@@ -1814,7 +1814,7 @@ void HM10Show(bool json)
 #endif //USE_HOME_ASSISTANT
             ) {
               char hum[FLOATSZ];
-              dtostrfd(MIBLEsensors[i].hum, Settings.flag2.humidity_resolution, hum);
+              dtostrfd(MIBLEsensors[i].hum, Settings->flag2.humidity_resolution, hum);
               HM10ShowContinuation(&commaflg);
               ResponseAppend_P(PSTR("\"" D_JSON_HUMIDITY "\":%s"), hum);
             }

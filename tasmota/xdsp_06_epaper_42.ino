@@ -45,13 +45,13 @@ void EpdInitDriver42() {
   if (PinUsed(GPIO_EPAPER42_CS) &&
      ((TasmotaGlobal.soft_spi_enabled & SPI_MOSI) || (TasmotaGlobal.spi_enabled & SPI_MOSI))) {
 
-    Settings.display_model = XDSP_06;
+    Settings->display_model = XDSP_06;
 
-    if (Settings.display_width != EPD_WIDTH42) {
-      Settings.display_width = EPD_WIDTH42;
+    if (Settings->display_width != EPD_WIDTH42) {
+      Settings->display_width = EPD_WIDTH42;
     }
-    if (Settings.display_height != EPD_HEIGHT42) {
-      Settings.display_height = EPD_HEIGHT42;
+    if (Settings->display_height != EPD_HEIGHT42) {
+      Settings->display_height = EPD_HEIGHT42;
     }
 
     // init renderer
@@ -73,7 +73,7 @@ void EpdInitDriver42() {
     // whiten display with full update, takes 4 seconds
     epd42->Init(DISPLAY_INIT_FULL);
 
-    renderer->DisplayInit(DISPLAY_INIT_MODE,Settings.display_size,Settings.display_rotate,Settings.display_font);
+    renderer->DisplayInit(DISPLAY_INIT_MODE,Settings->display_size,Settings->display_rotate,Settings->display_font);
 
     epd42->ClearFrame();
     renderer->Updateframe();
@@ -104,7 +104,7 @@ void EpdInitDriver42() {
 
 void EpdRefresh42()  // Every second
 {
-  if (Settings.display_mode) {  // Mode 0 is User text
+  if (Settings->display_mode) {  // Mode 0 is User text
 
   }
 }
@@ -123,7 +123,7 @@ bool Xdsp06(uint8_t function)
   if (FUNC_DISPLAY_INIT_DRIVER == function) {
     EpdInitDriver42();
   }
-  else if (epd42_init_done && (XDSP_06 == Settings.display_model)) {
+  else if (epd42_init_done && (XDSP_06 == Settings->display_model)) {
     switch (function) {
       case FUNC_DISPLAY_MODEL:
         result = true;

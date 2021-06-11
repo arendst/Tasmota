@@ -431,7 +431,7 @@ bool Xdrv21(uint8_t function)
 {
   bool result = false;
 
-  if (TasmotaGlobal.devices_present && (EMUL_WEMO == Settings.flag2.emulation)) {
+  if (TasmotaGlobal.devices_present && (EMUL_WEMO == Settings->flag2.emulation)) {
     switch (function) {
       case FUNC_LOOP:
         for (uint32_t i = 1; i < numOfWemoSwitch; i++) { // Handle devices web server

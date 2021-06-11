@@ -139,7 +139,7 @@ void MPU_6050Detect(void)
     mpu6050.initialize();
     MPU_6050_found = mpu6050.testConnection();
 #endif //USE_MPU6050_DMP
-    Settings.flag2.axis_resolution = 2;  // Need to be services by command Sensor32
+    Settings->flag2.axis_resolution = 2;  // Need to be services by command Sensor32
   }
 
   if (MPU_6050_found) {
@@ -183,24 +183,24 @@ void MPU_6050Show(bool json)
 
   float tempConv = ConvertTemp(MPU_6050_temperature / 340.0 + 35.53);
   char axis_ax[33];
-  dtostrfd(MPU_6050_ax, Settings.flag2.axis_resolution, axis_ax);
+  dtostrfd(MPU_6050_ax, Settings->flag2.axis_resolution, axis_ax);
   char axis_ay[33];
-  dtostrfd(MPU_6050_ay, Settings.flag2.axis_resolution, axis_ay);
+  dtostrfd(MPU_6050_ay, Settings->flag2.axis_resolution, axis_ay);
   char axis_az[33];
-  dtostrfd(MPU_6050_az, Settings.flag2.axis_resolution, axis_az);
+  dtostrfd(MPU_6050_az, Settings->flag2.axis_resolution, axis_az);
   char axis_gx[33];
-  dtostrfd(MPU_6050_gx, Settings.flag2.axis_resolution, axis_gx);
+  dtostrfd(MPU_6050_gx, Settings->flag2.axis_resolution, axis_gx);
   char axis_gy[33];
-  dtostrfd(MPU_6050_gy, Settings.flag2.axis_resolution, axis_gy);
+  dtostrfd(MPU_6050_gy, Settings->flag2.axis_resolution, axis_gy);
   char axis_gz[33];
-  dtostrfd(MPU_6050_gz, Settings.flag2.axis_resolution, axis_gz);
+  dtostrfd(MPU_6050_gz, Settings->flag2.axis_resolution, axis_gz);
 #ifdef USE_MPU6050_DMP
   char axis_yaw[33];
-  dtostrfd(MPU6050_dmp.yawPitchRoll[0] / PI * 180.0, Settings.flag2.axis_resolution, axis_yaw);
+  dtostrfd(MPU6050_dmp.yawPitchRoll[0] / PI * 180.0, Settings->flag2.axis_resolution, axis_yaw);
   char axis_pitch[33];
-  dtostrfd(MPU6050_dmp.yawPitchRoll[1] / PI * 180.0, Settings.flag2.axis_resolution, axis_pitch);
+  dtostrfd(MPU6050_dmp.yawPitchRoll[1] / PI * 180.0, Settings->flag2.axis_resolution, axis_pitch);
   char axis_roll[33];
-  dtostrfd(MPU6050_dmp.yawPitchRoll[2] / PI * 180.0, Settings.flag2.axis_resolution, axis_roll);
+  dtostrfd(MPU6050_dmp.yawPitchRoll[2] / PI * 180.0, Settings->flag2.axis_resolution, axis_roll);
 #endif // USE_MPU6050_DMP
 
   if (json) {
@@ -224,11 +224,11 @@ void MPU_6050Show(bool json)
     char json_ypr_r[25];
     snprintf_P(json_ypr_r, sizeof(json_ypr_r), PSTR(",\"" D_JSON_ROLL "\":%s"), axis_roll);
     ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_TEMPERATURE "\":%*_f%s%s%s%s%s%s%s%s%s}"),
-      D_SENSOR_MPU6050, Settings.flag2.temperature_resolution, &tempConv, json_axis_ax, json_axis_ay, json_axis_az, json_axis_gx, json_axis_gy, json_axis_gz,
+      D_SENSOR_MPU6050, Settings->flag2.temperature_resolution, &tempConv, json_axis_ax, json_axis_ay, json_axis_az, json_axis_gx, json_axis_gy, json_axis_gz,
       json_ypr_y, json_ypr_p, json_ypr_r);
 #else
     ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_TEMPERATURE "\":%*_f%s%s%s%s%s%s}"),
-      D_SENSOR_MPU6050, Settings.flag2.temperature_resolution, &tempConv, json_axis_ax, json_axis_ay, json_axis_az, json_axis_gx, json_axis_gy, json_axis_gz);
+      D_SENSOR_MPU6050, Settings->flag2.temperature_resolution, &tempConv, json_axis_ax, json_axis_ay, json_axis_az, json_axis_gx, json_axis_gy, json_axis_gz);
 #endif // USE_MPU6050_DMP
 #ifdef USE_DOMOTICZ
     DomoticzFloatSensor(DZ_TEMP, tempConv);
@@ -260,7 +260,7 @@ bool Xsns32(uint8_t function)
   else if (MPU_6050_found) {
     switch (function) {
       case FUNC_EVERY_SECOND:
-        if (TasmotaGlobal.tele_period == Settings.tele_period -3) {
+        if (TasmotaGlobal.tele_period == Settings->tele_period -3) {
           MPU_6050PerformReading();
         }
         break;

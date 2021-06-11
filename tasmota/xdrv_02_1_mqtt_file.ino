@@ -60,7 +60,7 @@ uint32_t MqttFileUploadValidate(uint32_t rcv_id) {
 
     // Check buffer size
     if (UPL_SETTINGS == FMqtt.file_type) {
-      if (FMqtt.file_size > sizeof(Settings)) {
+      if (FMqtt.file_size > sizeof(TSettings)) {
         return 2;                                            // Settings supports max 4k size
       }
     } else {                                                 // Check enough flash space for intermediate upload

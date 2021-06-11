@@ -188,8 +188,8 @@ unsigned long ir_lasttime = 0;
 void IrReceiveUpdateThreshold(void)
 {
   if (irrecv != nullptr) {
-    if (Settings.param[P_IR_UNKNOW_THRESHOLD] < 6) { Settings.param[P_IR_UNKNOW_THRESHOLD] = 6; }
-    irrecv->setUnknownThreshold(Settings.param[P_IR_UNKNOW_THRESHOLD]);
+    if (Settings->param[P_IR_UNKNOW_THRESHOLD] < 6) { Settings->param[P_IR_UNKNOW_THRESHOLD] = 6; }
+    irrecv->setUnknownThreshold(Settings->param[P_IR_UNKNOW_THRESHOLD]);
   }
 }
 
@@ -197,7 +197,7 @@ void IrReceiveInit(void)
 {
   // an IR led is at GPIO_IRRECV
   irrecv = new IRrecv(Pin(GPIO_IRRECV), IR_FULL_BUFFER_SIZE, IR__FULL_RCV_TIMEOUT, IR_FULL_RCV_SAVE_BUFFER);
-  irrecv->setUnknownThreshold(Settings.param[P_IR_UNKNOW_THRESHOLD]);
+  irrecv->setUnknownThreshold(Settings->param[P_IR_UNKNOW_THRESHOLD]);
   irrecv->enableIRIn();                  // Start the receiver
 }
 
@@ -247,7 +247,7 @@ void sendIRJsonState(const struct decode_results &results) {
                           resultToHexidecimal(&results).c_str());
   } else {
     ResponseAppend_P(PSTR(",\"%s\":"), UNKNOWN != results.decode_type ? PSTR(D_JSON_IR_DATA) : PSTR(D_JSON_IR_HASH));
-    if (Settings.flag.ir_receive_decimal) {  // SetOption29 - IR receive data format
+    if (Settings->flag.ir_receive_decimal) {  // SetOption29 - IR receive data format
       ResponseAppend_P(PSTR("%u"), (uint32_t) results.value);
     } else {
       if (UNKNOWN != results.decode_type) {
@@ -286,7 +286,7 @@ void IrReceiveCheck(void)
       bool prev_number = false;     // was the previous value a number, meaning we may need a comma prefix
       bool ir_high = true;          // alternate high/low
       // Add raw data in a compact format
-      if (Settings.flag3.receive_raw) {  // SetOption58 - Add IR Raw data to JSON message
+      if (Settings->flag3.receive_raw) {  // SetOption58 - Add IR Raw data to JSON message
         ResponseAppend_P(PSTR(",\"" D_JSON_IR_RAWDATA "\":\""));
         size_t rawlen = results.rawlen;
         uint32_t i;

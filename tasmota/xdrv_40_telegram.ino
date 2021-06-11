@@ -318,7 +318,7 @@ String TelegramExecuteCommand(const char *svalue) {
 }
 
 void TelegramLoop(void) {
-  if (!TasmotaGlobal.global_state.network_down && (Settings.sbflag1.telegram_recv_enable || Settings.sbflag1.telegram_echo_enable)) {
+  if (!TasmotaGlobal.global_state.network_down && (Settings->sbflag1.telegram_recv_enable || Settings->sbflag1.telegram_echo_enable)) {
     switch (Telegram.state) {
       case 0:
         TelegramInit();
@@ -331,7 +331,7 @@ void TelegramLoop(void) {
         Telegram.state++;
         break;
       case 2:
-        if (Settings.sbflag1.telegram_echo_enable) {
+        if (Settings->sbflag1.telegram_echo_enable) {
           if (Telegram.retry && (Telegram.index < Telegram.message_count)) {
             if (TelegramSendMessage(Telegram.message[Telegram.index].chat_id, Telegram.message[Telegram.index].text)) {
               Telegram.index++;
@@ -392,24 +392,24 @@ void CmndTmState(void) {
       switch (XdrvMailbox.payload) {
       case 0: // Off
       case 1: // On
-        Settings.sbflag1.telegram_send_enable = XdrvMailbox.payload &1;
+        Settings->sbflag1.telegram_send_enable = XdrvMailbox.payload &1;
         break;
       case 2: // Off
       case 3: // On
-        Settings.sbflag1.telegram_recv_enable = XdrvMailbox.payload &1;
+        Settings->sbflag1.telegram_recv_enable = XdrvMailbox.payload &1;
         break;
       case 4: // Off
       case 5: // On
-        Settings.sbflag1.telegram_echo_enable = XdrvMailbox.payload &1;
+        Settings->sbflag1.telegram_echo_enable = XdrvMailbox.payload &1;
         break;
       }
     }
   }
   Response_P(PSTR("{\"%s\":{\"Send\":\"%s\",\"Receive\":\"%s\",\"Echo\":\"%s\"}}"),
     XdrvMailbox.command,
-    GetStateText(Settings.sbflag1.telegram_send_enable),
-    GetStateText(Settings.sbflag1.telegram_recv_enable),
-    GetStateText(Settings.sbflag1.telegram_echo_enable));
+    GetStateText(Settings->sbflag1.telegram_send_enable),
+    GetStateText(Settings->sbflag1.telegram_recv_enable),
+    GetStateText(Settings->sbflag1.telegram_echo_enable));
 }
 
 void CmndTmPoll(void) {
@@ -437,7 +437,7 @@ void CmndTmChatId(void) {
 }
 
 void CmndTmSend(void) {
-  if (!Settings.sbflag1.telegram_send_enable || !strlen(SettingsText(SET_TELEGRAM_CHATID))) {
+  if (!Settings->sbflag1.telegram_send_enable || !strlen(SettingsText(SET_TELEGRAM_CHATID))) {
     ResponseCmndFailed();
     return;
   }

@@ -58,23 +58,23 @@ void LcdInit(uint8_t mode)
 void LcdInitDriver(void) {
   if (!TasmotaGlobal.i2c_enabled) { return; }
 
-  if (!Settings.display_model) {
+  if (!Settings->display_model) {
     if (I2cSetDevice(LCD_ADDRESS1)) {
-      Settings.display_address[0] = LCD_ADDRESS1;
-      Settings.display_model = XDSP_01;
+      Settings->display_address[0] = LCD_ADDRESS1;
+      Settings->display_model = XDSP_01;
     }
     else if (I2cSetDevice(LCD_ADDRESS2)) {
-      Settings.display_address[0] = LCD_ADDRESS2;
-      Settings.display_model = XDSP_01;
+      Settings->display_address[0] = LCD_ADDRESS2;
+      Settings->display_model = XDSP_01;
     }
   }
 
-  if (XDSP_01 == Settings.display_model) {
-    I2cSetActiveFound(Settings.display_address[0], "LCD");
+  if (XDSP_01 == Settings->display_model) {
+    I2cSetActiveFound(Settings->display_address[0], "LCD");
 
-    Settings.display_width = Settings.display_cols[0];
-    Settings.display_height = Settings.display_rows;
-    lcd = new LiquidCrystal_I2C(Settings.display_address[0], Settings.display_cols[0], Settings.display_rows);
+    Settings->display_width = Settings->display_cols[0];
+    Settings->display_height = Settings->display_rows;
+    lcd = new LiquidCrystal_I2C(Settings->display_address[0], Settings->display_cols[0], Settings->display_rows);
 
 #ifdef USE_DISPLAY_MODES1TO5
     DisplayAllocScreenBuffer();
@@ -111,17 +111,17 @@ void LcdDisplayOnOff()
 
 void LcdCenter(uint8_t row, char* txt)
 {
-  char line[Settings.display_cols[0] +2];
+  char line[Settings->display_cols[0] +2];
 
   int len = strlen(txt);
   int offset = 0;
-  if (len >= Settings.display_cols[0]) {
-    len = Settings.display_cols[0];
+  if (len >= Settings->display_cols[0]) {
+    len = Settings->display_cols[0];
   } else {
-    offset = (Settings.display_cols[0] - len) / 2;
+    offset = (Settings->display_cols[0] - len) / 2;
   }
-  memset(line, 0x20, Settings.display_cols[0]);
-  line[Settings.display_cols[0]] = 0;
+  memset(line, 0x20, Settings->display_cols[0]);
+  line[Settings->display_cols[0]] = 0;
   for (uint32_t i = 0; i < len; i++) {
     line[offset +i] = txt[i];
   }
@@ -135,12 +135,12 @@ bool LcdPrintLog(void)
 
   disp_refresh--;
   if (!disp_refresh) {
-    disp_refresh = Settings.display_refresh;
+    disp_refresh = Settings->display_refresh;
     if (!disp_screen_buffer_cols) { DisplayAllocScreenBuffer(); }
 
     char* txt = DisplayLogBuffer('\337');
     if (txt != nullptr) {
-      uint8_t last_row = Settings.display_rows -1;
+      uint8_t last_row = Settings->display_rows -1;
 
       for (uint32_t i = 0; i < last_row; i++) {
         strlcpy(disp_screen_buffer[i], disp_screen_buffer[i +1], disp_screen_buffer_cols);
@@ -163,7 +163,7 @@ bool LcdPrintLog(void)
 
 void LcdTime(void)
 {
-  char line[Settings.display_cols[0] +1];
+  char line[Settings->display_cols[0] +1];
 
   snprintf_P(line, sizeof(line), PSTR("%02d" D_HOUR_MINUTE_SEPARATOR "%02d" D_MINUTE_SECOND_SEPARATOR "%02d"), RtcTime.hour, RtcTime.minute, RtcTime.second);
   LcdCenter(0, line);
@@ -173,8 +173,8 @@ void LcdTime(void)
 
 void LcdRefresh(void)  // Every second
 {
-  if (Settings.display_mode) {  // Mode 0 is User text
-    switch (Settings.display_mode) {
+  if (Settings->display_mode) {  // Mode 0 is User text
+    switch (Settings->display_mode) {
       case 1:  // Time
         LcdTime();
         break;
@@ -206,7 +206,7 @@ bool Xdsp01(uint8_t function)
   if (FUNC_DISPLAY_INIT_DRIVER == function) {
     LcdInitDriver();
   }
-  else if (XDSP_01 == Settings.display_model) {
+  else if (XDSP_01 == Settings->display_model) {
     switch (function) {
       case FUNC_DISPLAY_MODEL:
         result = true;

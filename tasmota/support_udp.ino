@@ -135,7 +135,7 @@ void PollUdp(void)
       // AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("\n%s"), packet_buffer);
 
       // Simple Service Discovery Protocol (SSDP)
-      if (Settings.flag2.emulation) {
+      if (Settings->flag2.emulation) {
 #if defined(USE_SCRIPT_HUE) || defined(USE_ZIGBEE)
         if (strstr_P(packet_buffer, PSTR("M-SEARCH")) != nullptr) {
 #else
@@ -159,7 +159,7 @@ void PollUdp(void)
 
             bool udp_proccessed = false;      // make sure we process the packet only once
 #ifdef USE_EMULATION_WEMO
-            if (!udp_proccessed && (EMUL_WEMO == Settings.flag2.emulation)) {
+            if (!udp_proccessed && (EMUL_WEMO == Settings->flag2.emulation)) {
               if (strstr_P(packet_buffer, URN_BELKIN_DEVICE) != nullptr) {     // type1 echo dot 2g, echo 1g's
                 WemoRespondToMSearch(1);
                 udp_proccessed = true;
@@ -174,7 +174,7 @@ void PollUdp(void)
 #endif  // USE_EMULATION_WEMO
 
 #ifdef USE_EMULATION_HUE
-            if (!udp_proccessed && (EMUL_HUE == Settings.flag2.emulation)) {
+            if (!udp_proccessed && (EMUL_HUE == Settings->flag2.emulation)) {
               AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("UDP: HUE"));
               if ((strstr_P(packet_buffer, PSTR(":device:basic:1")) != nullptr) ||
                   (strstr_P(packet_buffer, UPNP_ROOTDEVICE) != nullptr) ||

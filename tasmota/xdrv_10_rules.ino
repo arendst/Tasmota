@@ -228,7 +228,7 @@ String k_rules[MAX_RULE_SETS] = { String(), String(), String() };   // Strings a
 // Returns whether the rule is uncompressed, which means the first byte is not NULL
 inline bool IsRuleUncompressed(uint32_t idx) {
 #ifdef USE_UNISHOX_COMPRESSION
-  return Settings.rules[idx][0] ? true : false;      // first byte not NULL, the rule is not empty and not compressed
+  return Settings->rules[idx][0] ? true : false;      // first byte not NULL, the rule is not empty and not compressed
 #else
   return true;
 #endif
@@ -237,9 +237,9 @@ inline bool IsRuleUncompressed(uint32_t idx) {
 // Returns whether the rule is empty, which requires two consecutive NULL
 inline bool IsRuleEmpty(uint32_t idx) {
 #ifdef USE_UNISHOX_COMPRESSION
-  return (Settings.rules[idx][0] == 0) && (Settings.rules[idx][1] == 0) ? true : false;
+  return (Settings->rules[idx][0] == 0) && (Settings->rules[idx][1] == 0) ? true : false;
 #else
-  return (Settings.rules[idx][0] == 0) ? true : false;
+  return (Settings->rules[idx][0] == 0) ? true : false;
 #endif
 }
 
@@ -247,22 +247,22 @@ inline bool IsRuleEmpty(uint32_t idx) {
 size_t GetRuleLen(uint32_t idx) {
   // no need to use #ifdef USE_UNISHOX_COMPRESSION, the compiler will optimize since first test is always true
   if (IsRuleUncompressed(idx)) {
-    return strlen(Settings.rules[idx]);
+    return strlen(Settings->rules[idx]);
   } else {                        // either empty or compressed
-    return Settings.rules[idx][1] * 8;   // cheap calculation, but not byte accurate (may overshoot by 7)
+    return Settings->rules[idx][1] * 8;   // cheap calculation, but not byte accurate (may overshoot by 7)
   }
 }
 
 // Returns the actual Flash storage for the Rule, including trailing NULL
 size_t GetRuleLenStorage(uint32_t idx) {
 #ifdef USE_UNISHOX_COMPRESSION
-  if (Settings.rules[idx][0] || !Settings.rules[idx][1]) {    // if first byte is non-NULL it is uncompressed, if second byte is NULL, then it's either uncompressed or empty
-    return 1 + strlen(Settings.rules[idx]);   // uncompressed or empty
+  if (Settings->rules[idx][0] || !Settings->rules[idx][1]) {    // if first byte is non-NULL it is uncompressed, if second byte is NULL, then it's either uncompressed or empty
+    return 1 + strlen(Settings->rules[idx]);   // uncompressed or empty
   } else {
-    return 2 + strlen(&Settings.rules[idx][1]); // skip first byte and get len of the compressed rule
+    return 2 + strlen(&Settings->rules[idx][1]); // skip first byte and get len of the compressed rule
   }
 #else
-  return 1 + strlen(Settings.rules[idx]);
+  return 1 + strlen(Settings->rules[idx]);
 #endif
 }
 
@@ -282,17 +282,17 @@ void GetRule_decompress(String &rule, const char *rule_head) {
 // Returns: String() object containing a copy of the rule (rule processing is destructive and will change the String)
 String GetRule(uint32_t idx) {
   if (IsRuleUncompressed(idx)) {
-    return String(Settings.rules[idx]);
+    return String(Settings->rules[idx]);
   } else {
 #ifdef USE_UNISHOX_COMPRESSION    // we still do #ifdef to make sure we don't link unnecessary code
 
     String rule("");
-    if (Settings.rules[idx][1] == 0) { return rule; }     // the rule is empty
+    if (Settings->rules[idx][1] == 0) { return rule; }     // the rule is empty
 
     // If the cache is empty, we need to decompress from Settings
     if (0 == k_rules[idx].length() ) {
-      GetRule_decompress(rule, &Settings.rules[idx][1]);
-      if (!Settings.flag4.compress_rules_cpu) {
+      GetRule_decompress(rule, &Settings->rules[idx][1]);
+      if (!Settings->flag4.compress_rules_cpu) {
         k_rules[idx] = rule;        // keep a copy for next time
       }
     } else {
@@ -315,7 +315,7 @@ int32_t SetRule_compress(uint32_t idx, const char *in, size_t in_len, char *out,
   if (len_compressed >= 0) {                // negative means compression failed because of buffer too small, we leave the rule untouched
     // check if we need to store in cache
     k_rules[idx] = (const char*) nullptr;   // Assign the String to nullptr, clears previous string and disallocate internal buffers of String object
-    if ((!Settings.flag4.compress_rules_cpu) && out) {      // if out == nullptr, don't store cache
+    if ((!Settings->flag4.compress_rules_cpu) && out) {      // if out == nullptr, don't store cache
       // keep copy in cache
       k_rules[idx] = in;
     }
@@ -338,7 +338,7 @@ int32_t SetRule(uint32_t idx, const char *content, bool append = false) {
   }
   if (append) {
     if (IsRuleUncompressed(idx) || IsRuleEmpty(idx)) {  // if already uncompressed (so below 512) and append mode, check if it still fits uncompressed
-      offset = strlen(Settings.rules[idx]);
+      offset = strlen(Settings->rules[idx]);
       if (len_in + offset >= MAX_RULE_SIZE) {
         needsCompress = true;
       }
@@ -348,10 +348,10 @@ int32_t SetRule(uint32_t idx, const char *content, bool append = false) {
   }
 
   if (!needsCompress) {                       // the rule fits uncompressed, so just copy it
-//    strlcpy(Settings.rules[idx] + offset, content, sizeof(Settings.rules[idx]));
-    strlcpy(Settings.rules[idx] + offset, content, sizeof(Settings.rules[idx]) - offset);
-    if (0 == Settings.rules[idx][0]) {
-      Settings.rules[idx][1] = 0;
+//    strlcpy(Settings->rules[idx] + offset, content, sizeof(Settings->rules[idx]));
+    strlcpy(Settings->rules[idx] + offset, content, sizeof(Settings->rules[idx]) - offset);
+    if (0 == Settings->rules[idx][0]) {
+      Settings->rules[idx][1] = 0;
     }
 
 #ifdef USE_UNISHOX_COMPRESSION
@@ -359,8 +359,8 @@ int32_t SetRule(uint32_t idx, const char *content, bool append = false) {
       // do a dry-run compression to display how much it would be compressed
       int32_t len_compressed, len_uncompressed;
 
-      len_uncompressed = strlen(Settings.rules[idx]);
-      len_compressed = compressor.unishox_compress(Settings.rules[idx], len_uncompressed, nullptr /* dry-run */, MAX_RULE_SIZE + 8);
+      len_uncompressed = strlen(Settings->rules[idx]);
+      len_compressed = compressor.unishox_compress(Settings->rules[idx], len_uncompressed, nullptr /* dry-run */, MAX_RULE_SIZE + 8);
       AddLog(LOG_LEVEL_INFO, PSTR("RUL: Stored uncompressed, would compress from %d to %d (-%d%%)"), len_uncompressed, len_compressed, 100 - changeUIntScale(len_compressed, 0, len_uncompressed, 0, 100));
     }
 
@@ -386,12 +386,12 @@ int32_t SetRule(uint32_t idx, const char *content, bool append = false) {
 
     if ((len_compressed >= 0) && (len_compressed < MAX_RULE_SIZE - 2)) {
       // size is ok, copy to Settings
-      Settings.rules[idx][0] = 0;     // clear first byte to mark as compressed
-      Settings.rules[idx][1] = (len_in + 7) / 8;    // store original length in first bytes (4 bytes chuks)
-      memcpy(&Settings.rules[idx][2], buf_out, len_compressed);
-      Settings.rules[idx][len_compressed + 2] = 0;  // add NULL termination
+      Settings->rules[idx][0] = 0;     // clear first byte to mark as compressed
+      Settings->rules[idx][1] = (len_in + 7) / 8;    // store original length in first bytes (4 bytes chuks)
+      memcpy(&Settings->rules[idx][2], buf_out, len_compressed);
+      Settings->rules[idx][len_compressed + 2] = 0;  // add NULL termination
       AddLog(LOG_LEVEL_INFO, PSTR("RUL: Compressed from %d to %d (-%d%%)"), len_in, len_compressed, 100 - changeUIntScale(len_compressed, 0, len_in, 0, 100));
-      // AddLog(LOG_LEVEL_INFO, PSTR("RUL: First bytes: %02X%02X%02X%02X"), Settings.rules[idx][0], Settings.rules[idx][1], Settings.rules[idx][2], Settings.rules[idx][3]);
+      // AddLog(LOG_LEVEL_INFO, PSTR("RUL: First bytes: %02X%02X%02X%02X"), Settings->rules[idx][0], Settings->rules[idx][1], Settings->rules[idx][2], Settings->rules[idx][3]);
       // AddLog(LOG_LEVEL_INFO, PSTR("RUL: GetRuleLenStorage = %d"), GetRuleLenStorage(idx));
     } else {
       len_compressed = -1;    // failed
@@ -610,7 +610,7 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule, bool stop_all
 
 //AddLog(LOG_LEVEL_DEBUG, PSTR("RUL-RM4: Match 1 %d, Triggers %08X, TriggerCount %d"), match, Rules.triggers[rule_set], Rules.trigger_count[rule_set]);
 
-  if (bitRead(Settings.rule_once, rule_set)) {
+  if (bitRead(Settings->rule_once, rule_set)) {
     if (match) {                                       // Only allow match state changes
       if (!bitRead(Rules.triggers[rule_set], Rules.trigger_count[rule_set])) {
         bitSet(Rules.triggers[rule_set], Rules.trigger_count[rule_set]);
@@ -694,7 +694,7 @@ bool RuleSetProcess(uint8_t rule_set, String &event_saved)
 
   delay(0);                                               // Prohibit possible loop software watchdog
 
-//AddLog(LOG_LEVEL_DEBUG, PSTR("RUL-RP1: Event = %s, Rule = %s"), event_saved.c_str(), Settings.rules[rule_set]);
+//AddLog(LOG_LEVEL_DEBUG, PSTR("RUL-RP1: Event = %s, Rule = %s"), event_saved.c_str(), Settings->rules[rule_set]);
 
   String rules = GetRule(rule_set);
 
@@ -825,7 +825,7 @@ bool RulesProcessEvent(const char *json_event)
 //AddLog(LOG_LEVEL_DEBUG, PSTR("RUL: Event |%s|"), event_saved.c_str());
 
   for (uint32_t i = 0; i < MAX_RULE_SETS; i++) {
-    if (GetRuleLen(i) && bitRead(Settings.rule_enabled, i)) {
+    if (GetRuleLen(i) && bitRead(Settings->rule_enabled, i)) {
       if (RuleSetProcess(i, event_saved)) { serviced = true; }
     }
   }
@@ -842,15 +842,15 @@ bool RulesProcess(void) {
 void RulesInit(void)
 {
   // indicates scripter not enabled
-  bitWrite(Settings.rule_once, 7, 0);
+  bitWrite(Settings->rule_once, 7, 0);
   // and indicates scripter do not use compress
-  bitWrite(Settings.rule_once, 6, 0);
+  bitWrite(Settings->rule_once, 6, 0);
 
   TasmotaGlobal.rules_flag.data = 0;
   for (uint32_t i = 0; i < MAX_RULE_SETS; i++) {
     if (0 == GetRuleLen(i)) {
-      bitWrite(Settings.rule_enabled, i, 0);
-      bitWrite(Settings.rule_once, i, 0);
+      bitWrite(Settings->rule_enabled, i, 0);
+      bitWrite(Settings->rule_once, i, 0);
     }
   }
   Rules.teleperiod = false;
@@ -858,7 +858,7 @@ void RulesInit(void)
 
 void RulesEvery50ms(void)
 {
-  if (Settings.rule_enabled && !Rules.busy) {  // Any rule enabled
+  if (Settings->rule_enabled && !Rules.busy) {  // Any rule enabled
     char json_event[120];
 
     if (-1 == Rules.new_power) { Rules.new_power = TasmotaGlobal.power; }
@@ -892,15 +892,15 @@ void RulesEvery50ms(void)
       }
       Rules.old_power = Rules.new_power;
     }
-    else if (Rules.old_dimm != Settings.light_dimmer) {
+    else if (Rules.old_dimm != Settings->light_dimmer) {
       if (Rules.old_dimm != -1) {
-        snprintf_P(json_event, sizeof(json_event), PSTR("{\"Dimmer\":{\"State\":%d}}"), Settings.light_dimmer);
+        snprintf_P(json_event, sizeof(json_event), PSTR("{\"Dimmer\":{\"State\":%d}}"), Settings->light_dimmer);
       } else {
         // Boot time DIMMER VALUE
-        snprintf_P(json_event, sizeof(json_event), PSTR("{\"Dimmer\":{\"Boot\":%d}}"), Settings.light_dimmer);
+        snprintf_P(json_event, sizeof(json_event), PSTR("{\"Dimmer\":{\"Boot\":%d}}"), Settings->light_dimmer);
       }
       RulesProcessEvent(json_event);
-      Rules.old_dimm = Settings.light_dimmer;
+      Rules.old_dimm = Settings->light_dimmer;
     }
     else if (Rules.event_data[0]) {
       char *event;
@@ -977,7 +977,7 @@ void RulesEvery50ms(void)
 void RulesEvery100ms(void) {
   static uint8_t xsns_index = 0;
 
-  if (Settings.rule_enabled && !Rules.busy && (TasmotaGlobal.uptime > 4)) {  // Any rule enabled and allow 4 seconds start-up time for sensors (#3811)
+  if (Settings->rule_enabled && !Rules.busy && (TasmotaGlobal.uptime > 4)) {  // Any rule enabled and allow 4 seconds start-up time for sensors (#3811)
     ResponseClear();
     int tele_period_save = TasmotaGlobal.tele_period;
     TasmotaGlobal.tele_period = 2;                                   // Do not allow HA updates during next function call
@@ -998,7 +998,7 @@ void RulesEvery100ms(void) {
 void RulesEverySecond(void)
 {
   char json_event[120];
-  if (Settings.rule_enabled && !Rules.busy) {  // Any rule enabled
+  if (Settings->rule_enabled && !Rules.busy) {  // Any rule enabled
     if (RtcTime.valid) {
       if ((TasmotaGlobal.uptime > 60) && (RtcTime.minute != Rules.last_minute)) {  // Execute from one minute after restart every minute only once
         Rules.last_minute = RtcTime.minute;
@@ -1011,7 +1011,7 @@ void RulesEverySecond(void)
     if (Rules.timer[i] != 0L) {           // Timer active?
       if (TimeReached(Rules.timer[i])) {  // Timer finished?
         Rules.timer[i] = 0L;              // Turn off this timer
-        if (Settings.rule_enabled && !Rules.busy) {  // Any rule enabled
+        if (Settings->rule_enabled && !Rules.busy) {  // Any rule enabled
           snprintf_P(json_event, sizeof(json_event), PSTR("{\"Rules\":{\"Timer\":%d}}"), i +1);
           RulesProcessEvent(json_event);
         }
@@ -1022,7 +1022,7 @@ void RulesEverySecond(void)
 
 void RulesSaveBeforeRestart(void)
 {
-  if (Settings.rule_enabled && !Rules.busy) {  // Any rule enabled
+  if (Settings->rule_enabled && !Rules.busy) {  // Any rule enabled
     char json_event[32];
 
     strncpy_P(json_event, PSTR("{\"System\":{\"Save\":1}}"), sizeof(json_event));
@@ -2078,30 +2078,30 @@ void CmndRule(void)
   }
   uint8_t index = XdrvMailbox.index;
   if ((index > 0) && (index <= MAX_RULE_SETS)) {
-    // if ((XdrvMailbox.data_len > 0) && (XdrvMailbox.data_len < sizeof(Settings.rules[index -1]))) {    // TODO postpone size calculation
+    // if ((XdrvMailbox.data_len > 0) && (XdrvMailbox.data_len < sizeof(Settings->rules[index -1]))) {    // TODO postpone size calculation
     if (XdrvMailbox.data_len > 0) {    // TODO postpone size calculation
       if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 10)) {
         switch (XdrvMailbox.payload) {
         case 0: // Off
         case 1: // On
-          bitWrite(Settings.rule_enabled, index -1, XdrvMailbox.payload);
+          bitWrite(Settings->rule_enabled, index -1, XdrvMailbox.payload);
           break;
         case 2: // Toggle
-          bitWrite(Settings.rule_enabled, index -1, bitRead(Settings.rule_enabled, index -1) ^1);
+          bitWrite(Settings->rule_enabled, index -1, bitRead(Settings->rule_enabled, index -1) ^1);
           break;
         case 4: // Off
         case 5: // On
-          bitWrite(Settings.rule_once, index -1, XdrvMailbox.payload &1);
+          bitWrite(Settings->rule_once, index -1, XdrvMailbox.payload &1);
           break;
         case 6: // Toggle
-          bitWrite(Settings.rule_once, index -1, bitRead(Settings.rule_once, index -1) ^1);
+          bitWrite(Settings->rule_once, index -1, bitRead(Settings->rule_once, index -1) ^1);
           break;
         case 8: // Off
         case 9: // On
-          bitWrite(Settings.rule_stop, index -1, XdrvMailbox.payload &1);
+          bitWrite(Settings->rule_stop, index -1, XdrvMailbox.payload &1);
           break;
         case 10: // Toggle
-          bitWrite(Settings.rule_stop, index -1, bitRead(Settings.rule_stop, index -1) ^1);
+          bitWrite(Settings->rule_stop, index -1, bitRead(Settings->rule_stop, index -1) ^1);
           break;
         }
       } else {
@@ -2143,8 +2143,8 @@ void CmndRule(void)
       rule += F("...");
     }
     Response_P(PSTR("{\"%s%d\":{\"State\":\"%s\",\"Once\":\"%s\",\"StopOnError\":\"%s\",\"Length\":%d,\"Free\":%d,\"Rules\":\"%s\"}}"),
-      XdrvMailbox.command, index, GetStateText(bitRead(Settings.rule_enabled, index -1)), GetStateText(bitRead(Settings.rule_once, index -1)),
-      GetStateText(bitRead(Settings.rule_stop, index -1)),
+      XdrvMailbox.command, index, GetStateText(bitRead(Settings->rule_enabled, index -1)), GetStateText(bitRead(Settings->rule_once, index -1)),
+      GetStateText(bitRead(Settings->rule_stop, index -1)),
       rule_len, MAX_RULE_SIZE - GetRuleLenStorage(index - 1),
       EscapeJSONString(rule.c_str()).c_str());
   }
@@ -2202,7 +2202,7 @@ void CmndVariable(void)
       if (XdrvMailbox.data_len > 0) {
 #ifdef USE_EXPRESSION
         if (XdrvMailbox.data[0] == '=') {  // Spaces already been skipped in data
-          dtostrfd(evaluateExpression(XdrvMailbox.data + 1, XdrvMailbox.data_len - 1), Settings.flag2.calc_resolution, rules_vars[XdrvMailbox.index -1]);
+          dtostrfd(evaluateExpression(XdrvMailbox.data + 1, XdrvMailbox.data_len - 1), Settings->flag2.calc_resolution, rules_vars[XdrvMailbox.index -1]);
         } else {
           strlcpy(rules_vars[XdrvMailbox.index -1], ('"' == XdrvMailbox.data[0]) ? "" : XdrvMailbox.data, sizeof(rules_vars[XdrvMailbox.index -1]));
         }
@@ -2226,7 +2226,7 @@ void CmndMemory(void)
 #ifdef USE_EXPRESSION
         if (XdrvMailbox.data[0] == '=') {  // Spaces already been skipped in data
           char rules_mem[FLOATSZ];
-          dtostrfd(evaluateExpression(XdrvMailbox.data + 1, XdrvMailbox.data_len - 1), Settings.flag2.calc_resolution, rules_mem);
+          dtostrfd(evaluateExpression(XdrvMailbox.data + 1, XdrvMailbox.data_len - 1), Settings->flag2.calc_resolution, rules_mem);
           SettingsUpdateText(SET_MEM1 + XdrvMailbox.index -1, rules_mem);
         } else {
           SettingsUpdateText(SET_MEM1 + XdrvMailbox.index -1, ('"' == XdrvMailbox.data[0]) ? "" : XdrvMailbox.data);
@@ -2244,9 +2244,9 @@ void CmndMemory(void)
 void CmndCalcResolution(void)
 {
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 7)) {
-    Settings.flag2.calc_resolution = XdrvMailbox.payload;
+    Settings->flag2.calc_resolution = XdrvMailbox.payload;
   }
-  ResponseCmndNumber(Settings.flag2.calc_resolution);
+  ResponseCmndNumber(Settings->flag2.calc_resolution);
 }
 
 void CmndAddition(void)
@@ -2254,7 +2254,7 @@ void CmndAddition(void)
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_RULE_VARS)) {
     if (XdrvMailbox.data_len > 0) {
       float tempvar = CharToFloat(rules_vars[XdrvMailbox.index -1]) + CharToFloat(XdrvMailbox.data);
-      dtostrfd(tempvar, Settings.flag2.calc_resolution, rules_vars[XdrvMailbox.index -1]);
+      dtostrfd(tempvar, Settings->flag2.calc_resolution, rules_vars[XdrvMailbox.index -1]);
       bitSet(Rules.vars_event, XdrvMailbox.index -1);
     }
     ResponseCmndIdxChar(rules_vars[XdrvMailbox.index -1]);
@@ -2266,7 +2266,7 @@ void CmndSubtract(void)
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_RULE_VARS)) {
     if (XdrvMailbox.data_len > 0) {
       float tempvar = CharToFloat(rules_vars[XdrvMailbox.index -1]) - CharToFloat(XdrvMailbox.data);
-      dtostrfd(tempvar, Settings.flag2.calc_resolution, rules_vars[XdrvMailbox.index -1]);
+      dtostrfd(tempvar, Settings->flag2.calc_resolution, rules_vars[XdrvMailbox.index -1]);
       bitSet(Rules.vars_event, XdrvMailbox.index -1);
     }
     ResponseCmndIdxChar(rules_vars[XdrvMailbox.index -1]);
@@ -2278,7 +2278,7 @@ void CmndMultiply(void)
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_RULE_VARS)) {
     if (XdrvMailbox.data_len > 0) {
       float tempvar = CharToFloat(rules_vars[XdrvMailbox.index -1]) * CharToFloat(XdrvMailbox.data);
-      dtostrfd(tempvar, Settings.flag2.calc_resolution, rules_vars[XdrvMailbox.index -1]);
+      dtostrfd(tempvar, Settings->flag2.calc_resolution, rules_vars[XdrvMailbox.index -1]);
       bitSet(Rules.vars_event, XdrvMailbox.index -1);
     }
     ResponseCmndIdxChar(rules_vars[XdrvMailbox.index -1]);
@@ -2298,7 +2298,7 @@ void CmndScale(void)
         float toLow = CharToFloat(ArgV(argument, 4));
         float toHigh = CharToFloat(ArgV(argument, 5));
         float value = map_double(valueIN, fromLow, fromHigh, toLow, toHigh);
-        dtostrfd(value, Settings.flag2.calc_resolution, rules_vars[XdrvMailbox.index -1]);
+        dtostrfd(value, Settings->flag2.calc_resolution, rules_vars[XdrvMailbox.index -1]);
         bitSet(Rules.vars_event, XdrvMailbox.index -1);
       } else {
         ResponseCmndIdxError();

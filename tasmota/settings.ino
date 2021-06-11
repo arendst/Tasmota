@@ -1,5 +1,5 @@
 /*
-  settings.ino - user settings for Tasmota
+  Settings->ino - user settings for Tasmota
 
   Copyright (C) 2021  Theo Arends
 
@@ -36,7 +36,7 @@ uint32_t GetRtcSettingsCrc(void) {
 }
 
 void RtcSettingsSave(void) {
-  RtcSettings.baudrate = Settings.baudrate * 300;
+  RtcSettings.baudrate = Settings->baudrate * 300;
   if (GetRtcSettingsCrc() != rtc_settings_crc) {
     RtcSettings.valid = RTC_MEM_VALID;
 #ifdef ESP8266
@@ -62,14 +62,14 @@ bool RtcSettingsLoad(uint32_t update) {
     if (!read_valid) {
       memset(&RtcSettings, 0, sizeof(RtcSettings));
       RtcSettings.valid = RTC_MEM_VALID;
-      RtcSettings.energy_kWhtoday = Settings.energy_kWhtoday;
-      RtcSettings.energy_kWhtotal = Settings.energy_kWhtotal;
-      RtcSettings.energy_usage = Settings.energy_usage;
+      RtcSettings.energy_kWhtoday = Settings->energy_kWhtoday;
+      RtcSettings.energy_kWhtotal = Settings->energy_kWhtotal;
+      RtcSettings.energy_usage = Settings->energy_usage;
       for (uint32_t i = 0; i < MAX_COUNTERS; i++) {
-        RtcSettings.pulse_counter[i] = Settings.pulse_counter[i];
+        RtcSettings.pulse_counter[i] = Settings->pulse_counter[i];
       }
-      RtcSettings.power = Settings.power;
-  //    RtcSettings.baudrate = Settings.baudrate * 300;
+      RtcSettings.power = Settings->power;
+  //    RtcSettings.baudrate = Settings->baudrate * 300;
       RtcSettings.baudrate = APP_BAUDRATE;
       RtcSettingsSave();
     }
@@ -218,7 +218,7 @@ void SettingsInit(void) {
 
 void UpdateQuickPowerCycle(bool update) {
 #ifndef FIRMWARE_MINIMAL
-  if (Settings.flag3.fast_power_cycle_disable) { return; }  // SetOption65 - Disable fast power cycle detection for device reset
+  if (Settings->flag3.fast_power_cycle_disable) { return; }  // SetOption65 - Disable fast power cycle detection for device reset
 
   const uint32_t QPC_COUNT = 7;  // Number of Power Cycles before Settings erase
   const uint32_t QPC_SIGNATURE = 0xFFA55AFF;
@@ -291,8 +291,8 @@ uint16_t GetCfgCrc16(uint8_t *bytes, uint32_t size) {
 
 uint16_t GetSettingsCrc(void) {
   // Fix miscalculation if previous Settings was 3584 and current Settings is 4096 between 0x06060007 and 0x0606000A
-  uint32_t size = ((Settings.version < 0x06060007) || (Settings.version > 0x0606000A)) ? 3584 : sizeof(Settings);
-  return GetCfgCrc16((uint8_t*)&Settings, size);
+  uint32_t size = ((Settings->version < 0x06060007) || (Settings->version > 0x0606000A)) ? 3584 : sizeof(TSettings);
+  return GetCfgCrc16((uint8_t*)Settings, size);
 }
 
 uint32_t GetCfgCrc32(uint8_t *bytes, uint32_t size) {
@@ -309,14 +309,14 @@ uint32_t GetCfgCrc32(uint8_t *bytes, uint32_t size) {
 }
 
 uint32_t GetSettingsCrc32(void) {
-  return GetCfgCrc32((uint8_t*)&Settings, sizeof(Settings) -4);  // Skip crc32
+  return GetCfgCrc32((uint8_t*)Settings, sizeof(TSettings) -4);  // Skip crc32
 }
 
 void SettingsSaveAll(void) {
-  if (Settings.flag.save_state) {
-    Settings.power = TasmotaGlobal.power;
+  if (Settings->flag.save_state) {
+    Settings->power = TasmotaGlobal.power;
   } else {
-    Settings.power = 0;
+    Settings->power = 0;
   }
   XsnsCall(FUNC_SAVE_BEFORE_RESTART);
   XdrvCall(FUNC_SAVE_BEFORE_RESTART);
@@ -336,7 +336,7 @@ void SettingsBufferFree(void) {
 
 bool SettingsBufferAlloc(void) {
   SettingsBufferFree();
-  if (!(settings_buffer = (uint8_t *)malloc(sizeof(Settings)))) {
+  if (!(settings_buffer = (uint8_t *)malloc(sizeof(TSettings)))) {
     AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_UPLOAD_ERR_2));  // Not enough (memory) space
     return false;
   }
@@ -353,13 +353,13 @@ String SettingsConfigFilename(void) {
 uint32_t SettingsConfigBackup(void) {
   if (!SettingsBufferAlloc()) { return 0; }
 
-  uint32_t cfg_crc32 = Settings.cfg_crc32;
-  Settings.cfg_crc32 = GetSettingsCrc32();  // Calculate crc (again) as it might be wrong when savedata = 0 (#3918)
+  uint32_t cfg_crc32 = Settings->cfg_crc32;
+  Settings->cfg_crc32 = GetSettingsCrc32();  // Calculate crc (again) as it might be wrong when savedata = 0 (#3918)
 
-  uint32_t config_len = sizeof(Settings);
-  memcpy(settings_buffer, &Settings, config_len);
+  uint32_t config_len = sizeof(TSettings);
+  memcpy(settings_buffer, Settings, config_len);
 
-  Settings.cfg_crc32 = cfg_crc32;  // Restore crc in case savedata = 0 to make sure settings will be noted as changed
+  Settings->cfg_crc32 = cfg_crc32;  // Restore crc in case savedata = 0 to make sure settings will be noted as changed
 
   if (config_xor_on_set) {
     for (uint32_t i = 2; i < config_len; i++) {
@@ -370,7 +370,7 @@ uint32_t SettingsConfigBackup(void) {
 }
 
 bool SettingsConfigRestore(void) {
-  uint32_t config_len = sizeof(Settings);
+  uint32_t config_len = sizeof(TSettings);
 
   if (config_xor_on_set) {
     for (uint32_t i = 2; i < config_len; i++) {
@@ -401,18 +401,18 @@ bool SettingsConfigRestore(void) {
   if (valid_settings) {
 #ifdef ESP8266
     // uint8_t       config_version;            // F36
-    valid_settings = (0 == settings_buffer[0xF36]);  // Settings.config_version
+    valid_settings = (0 == settings_buffer[0xF36]);  // Settings->config_version
 #endif  // ESP8266
 #ifdef ESP32
     // uint8_t       config_version;            // F36
-    valid_settings = (1 == settings_buffer[0xF36]);  // Settings.config_version
+    valid_settings = (1 == settings_buffer[0xF36]);  // Settings->config_version
 #endif  // ESP32
   }
 
   if (valid_settings) {
     SettingsDefaultSet2();
-    memcpy((char*)&Settings +16, settings_buffer +16, config_len -16);
-    Settings.version = buffer_version;  // Restore version and auto upgrade after restart
+    memcpy((char*)Settings +16, settings_buffer +16, config_len -16);
+    Settings->version = buffer_version;  // Restore version and auto upgrade after restart
   }
 
   SettingsBufferFree();
@@ -421,15 +421,15 @@ bool SettingsConfigRestore(void) {
 }
 
 /*********************************************************************************************\
- * Config Settings.text char array support
+ * Config Settings->text char array support
 \*********************************************************************************************/
 
 uint32_t GetSettingsTextLen(void) {
-  char* position = Settings.text_pool;
+  char* position = Settings->text_pool;
   for (uint32_t size = 0; size < SET_MAX; size++) {
     while (*position++ != '\0') { }
   }
-  return position - Settings.text_pool;
+  return position - Settings->text_pool;
 }
 
 bool settings_text_mutex = false;
@@ -450,7 +450,7 @@ bool SettingsUpdateText(uint32_t index, const char* replace_me) {
     return false;  // Setting not supported - internal error
   }
 
-  // Make a copy first in case we use source from Settings.text
+  // Make a copy first in case we use source from Settings->text
   uint32_t replace_len = strlen_P(replace_me);
   char replace[replace_len +1];
   memcpy_P(replace, replace_me, sizeof(replace));
@@ -458,18 +458,18 @@ bool SettingsUpdateText(uint32_t index, const char* replace_me) {
 
   uint32_t start_pos = 0;
   uint32_t end_pos = 0;
-  char* position = Settings.text_pool;
+  char* position = Settings->text_pool;
   for (uint32_t size = 0; size < SET_MAX; size++) {
     while (*position++ != '\0') { }
     if (1 == index) {
-      start_pos = position - Settings.text_pool;
+      start_pos = position - Settings->text_pool;
     }
     else if (0 == index) {
-      end_pos = position - Settings.text_pool -1;
+      end_pos = position - Settings->text_pool -1;
     }
     index--;
   }
-  uint32_t char_len = position - Settings.text_pool;
+  uint32_t char_len = position - Settings->text_pool;
 
   uint32_t current_len = end_pos - start_pos;
   int diff = replace_len - current_len;
@@ -489,13 +489,13 @@ bool SettingsUpdateText(uint32_t index, const char* replace_me) {
     settings_text_mutex = true;
 
     if (diff != 0) {
-      // Shift Settings.text up or down
-      memmove_P(Settings.text_pool + start_pos + replace_len, Settings.text_pool + end_pos, char_len - end_pos);
+      // Shift Settings->text up or down
+      memmove_P(Settings->text_pool + start_pos + replace_len, Settings->text_pool + end_pos, char_len - end_pos);
     }
     // Replace text
-    memmove_P(Settings.text_pool + start_pos, replace, replace_len);
+    memmove_P(Settings->text_pool + start_pos, replace, replace_len);
     // Fill for future use
-    memset(Settings.text_pool + char_len + diff, 0x00, settings_text_size - char_len - diff);
+    memset(Settings->text_pool + char_len + diff, 0x00, settings_text_size - char_len - diff);
 
     settings_text_mutex = false;
   }
@@ -510,7 +510,7 @@ bool SettingsUpdateText(uint32_t index, const char* replace_me) {
 }
 
 char* SettingsText(uint32_t index) {
-  char* position = Settings.text_pool;
+  char* position = Settings->text_pool;
 
   if (index >= SET_MAX) {
     position += settings_text_size -1;  // Setting not supported - internal error - return empty string
@@ -529,7 +529,7 @@ char* SettingsText(uint32_t index) {
 
 void UpdateBackwardCompatibility(void) {
   // Perform updates for backward compatibility
-  strlcpy(Settings.user_template_name, SettingsText(SET_TEMPLATE_NAME), sizeof(Settings.user_template_name));
+  strlcpy(Settings->user_template_name, SettingsText(SET_TEMPLATE_NAME), sizeof(Settings->user_template_name));
 }
 
 uint32_t GetSettingsAddress(void) {
@@ -567,22 +567,22 @@ void SettingsSave(uint8_t rotate) {
       }
     }
 
-    Settings.save_flag++;
+    Settings->save_flag++;
     if (UtcTime() > START_VALID_TIME) {
-      Settings.cfg_timestamp = UtcTime();
+      Settings->cfg_timestamp = UtcTime();
     } else {
-      Settings.cfg_timestamp++;
+      Settings->cfg_timestamp++;
     }
-    Settings.cfg_size = sizeof(Settings);
-    Settings.cfg_crc = GetSettingsCrc();               // Keep for backward compatibility in case of fall-back just after upgrade
-    Settings.cfg_crc32 = GetSettingsCrc32();
+    Settings->cfg_size = sizeof(TSettings);
+    Settings->cfg_crc = GetSettingsCrc();               // Keep for backward compatibility in case of fall-back just after upgrade
+    Settings->cfg_crc32 = GetSettingsCrc32();
 
 #ifdef ESP8266
 #ifdef USE_UFILESYS
-    TfsSaveFile(TASM_FILE_SETTINGS, (const uint8_t*)&Settings, sizeof(Settings));
+    TfsSaveFile(TASM_FILE_SETTINGS, (const uint8_t*)Settings, sizeof(TSettings));
 #endif  // USE_UFILESYS
     if (ESP.flashEraseSector(settings_location)) {
-      ESP.flashWrite(settings_location * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(Settings));
+      ESP.flashWrite(settings_location * SPI_FLASH_SEC_SIZE, (uint32*)Settings, sizeof(TSettings));
     }
 
     if (!TasmotaGlobal.stop_flash_rotate && rotate) {  // SetOption12 - (Settings) Switch between dynamic (0) or fixed (1) slot flash save location
@@ -591,14 +591,14 @@ void SettingsSave(uint8_t rotate) {
         delay(1);
       }
     }
-    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_CONFIG D_SAVED_TO_FLASH_AT " %X, " D_COUNT " %d, " D_BYTES " %d"), settings_location, Settings.save_flag, sizeof(Settings));
+    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_CONFIG D_SAVED_TO_FLASH_AT " %X, " D_COUNT " %d, " D_BYTES " %d"), settings_location, Settings->save_flag, sizeof(TSettings));
 #endif  // ESP8266
 #ifdef ESP32
-    SettingsWrite(&Settings, sizeof(Settings));
-    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_CONFIG "Saved, " D_COUNT " %d, " D_BYTES " %d"), Settings.save_flag, sizeof(Settings));
+    SettingsWrite(Settings, sizeof(TSettings));
+    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_CONFIG "Saved, " D_COUNT " %d, " D_BYTES " %d"), Settings->save_flag, sizeof(TSettings));
 #endif  // ESP32
 
-    settings_crc32 = Settings.cfg_crc32;
+    settings_crc32 = Settings->cfg_crc32;
   }
 #endif  // FIRMWARE_MINIMAL
   RtcSettingsSave();
@@ -614,7 +614,7 @@ void SettingsLoad(void) {
   uint32_t flash_location;
   uint32_t slot = 1;
 #ifdef USE_UFILESYS
-  if (TfsLoadFile(TASM_FILE_SETTINGS, (uint8_t*)&Settings, sizeof(Settings))) {
+  if (TfsLoadFile(TASM_FILE_SETTINGS, (uint8_t*)Settings, sizeof(TSettings))) {
     flash_location = 1;
     slot = 0;
   }
@@ -622,13 +622,13 @@ void SettingsLoad(void) {
   while (slot <= max_slots) {                                  // Read all config pages in search of valid and latest
     if (slot > 0) {
       flash_location = (1 == slot) ? EEPROM_LOCATION : (2 == slot) ? SETTINGS_LOCATION : flash_location -1;
-      ESP.flashRead(flash_location * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(Settings));
+      ESP.flashRead(flash_location * SPI_FLASH_SEC_SIZE, (uint32*)Settings, sizeof(TSettings));
     }
-    if ((Settings.cfg_crc32 != 0xFFFFFFFF) && (Settings.cfg_crc32 != 0x00000000) && (Settings.cfg_crc32 == GetSettingsCrc32())) {
-      if (Settings.save_flag > save_flag) {                    // Find latest page based on incrementing save_flag
-        save_flag = Settings.save_flag;
+    if ((Settings->cfg_crc32 != 0xFFFFFFFF) && (Settings->cfg_crc32 != 0x00000000) && (Settings->cfg_crc32 == GetSettingsCrc32())) {
+      if (Settings->save_flag > save_flag) {                    // Find latest page based on incrementing save_flag
+        save_flag = Settings->save_flag;
         settings_location = flash_location;
-        if (Settings.flag.stop_flash_rotate && (1 == slot)) {  // Stop if only eeprom area should be used and it is valid
+        if (Settings->flag.stop_flash_rotate && (1 == slot)) {  // Stop if only eeprom area should be used and it is valid
           break;
         }
       }
@@ -639,28 +639,28 @@ void SettingsLoad(void) {
   if (settings_location > 0) {
 #ifdef USE_UFILESYS
     if (1 == settings_location) {
-      TfsLoadFile(TASM_FILE_SETTINGS, (uint8_t*)&Settings, sizeof(Settings));
-      AddLog(LOG_LEVEL_NONE, PSTR(D_LOG_CONFIG "Loaded from File, " D_COUNT " %lu"), Settings.save_flag);
+      TfsLoadFile(TASM_FILE_SETTINGS, (uint8_t*)Settings, sizeof(TSettings));
+      AddLog(LOG_LEVEL_NONE, PSTR(D_LOG_CONFIG "Loaded from File, " D_COUNT " %lu"), Settings->save_flag);
     } else
 #endif  // USE_UFILESYS
     {
-      ESP.flashRead(settings_location * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(Settings));
-      AddLog(LOG_LEVEL_NONE, PSTR(D_LOG_CONFIG D_LOADED_FROM_FLASH_AT " %X, " D_COUNT " %lu"), settings_location, Settings.save_flag);
+      ESP.flashRead(settings_location * SPI_FLASH_SEC_SIZE, (uint32*)Settings, sizeof(TSettings));
+      AddLog(LOG_LEVEL_NONE, PSTR(D_LOG_CONFIG D_LOADED_FROM_FLASH_AT " %X, " D_COUNT " %lu"), settings_location, Settings->save_flag);
     }
   }
 #endif  // ESP8266
 #ifdef ESP32
-  uint32_t source = SettingsRead(&Settings, sizeof(Settings));
+  uint32_t source = SettingsRead(Settings, sizeof(TSettings));
   if (source) { settings_location = 1; }
-  AddLog(LOG_LEVEL_NONE, PSTR(D_LOG_CONFIG "Loaded from %s, " D_COUNT " %lu"), (source)?"File":"Nvm", Settings.save_flag);
+  AddLog(LOG_LEVEL_NONE, PSTR(D_LOG_CONFIG "Loaded from %s, " D_COUNT " %lu"), (source)?"File":"Nvm", Settings->save_flag);
 #endif  // ESP32
 
 #ifndef FIRMWARE_MINIMAL
-  if ((0 == settings_location) || (Settings.cfg_holder != (uint16_t)CFG_HOLDER)) {  // Init defaults if cfg_holder differs from user settings in my_user_config.h
+  if ((0 == settings_location) || (Settings->cfg_holder != (uint16_t)CFG_HOLDER)) {  // Init defaults if cfg_holder differs from user settings in my_user_config.h
 #ifdef USE_UFILESYS
-    if (TfsLoadFile(TASM_FILE_SETTINGS_LKG, (uint8_t*)&Settings, sizeof(Settings)) && (Settings.cfg_crc32 == GetSettingsCrc32())) {
+    if (TfsLoadFile(TASM_FILE_SETTINGS_LKG, (uint8_t*)Settings, sizeof(TSettings)) && (Settings->cfg_crc32 == GetSettingsCrc32())) {
       settings_location = 1;
-      AddLog(LOG_LEVEL_NONE, PSTR(D_LOG_CONFIG "Loaded from LKG File, " D_COUNT " %lu"), Settings.save_flag);
+      AddLog(LOG_LEVEL_NONE, PSTR(D_LOG_CONFIG "Loaded from LKG File, " D_COUNT " %lu"), Settings->save_flag);
     } else
 #endif  // USE_UFILESYS
     {
@@ -675,7 +675,7 @@ void SettingsLoad(void) {
 
 // Used in TLS - returns the timestamp of the last Flash settings write
 uint32_t CfgTime(void) {
-  return Settings.cfg_timestamp;
+  return Settings->cfg_timestamp;
 }
 
 #ifdef ESP8266
@@ -749,14 +749,14 @@ void SettingsDefault(void) {
 }
 
 void SettingsDefaultSet1(void) {
-  memset(&Settings, 0x00, sizeof(Settings));
+  memset(Settings, 0x00, sizeof(TSettings));
 
-  Settings.cfg_holder = (uint16_t)CFG_HOLDER;
-  Settings.cfg_size = sizeof(Settings);
-//  Settings.save_flag = 0;
-  Settings.version = VERSION;
-//  Settings.bootcount = 0;
-//  Settings.cfg_crc = 0;
+  Settings->cfg_holder = (uint16_t)CFG_HOLDER;
+  Settings->cfg_size = sizeof(TSettings);
+//  Settings->save_flag = 0;
+  Settings->version = VERSION;
+//  Settings->bootcount = 0;
+//  Settings->cfg_crc = 0;
 }
 
 // default Fingerprints in PROGMEM
@@ -764,7 +764,7 @@ const uint8_t default_fingerprint1[] PROGMEM = { MQTT_FINGERPRINT1 };
 const uint8_t default_fingerprint2[] PROGMEM = { MQTT_FINGERPRINT2 };
 
 void SettingsDefaultSet2(void) {
-  memset((char*)&Settings +16, 0x00, sizeof(Settings) -16);
+  memset((char*)Settings +16, 0x00, sizeof(TSettings) -16);
 
   // this little trick allows GCC to optimize the assignment by grouping values and doing only ORs
   SOBitfield   flag = { 0 };
@@ -775,11 +775,11 @@ void SettingsDefaultSet2(void) {
   SysMBitfield2  mbflag2 = { 0 };
 
 #ifdef ESP8266
-  Settings.gpio16_converted = 0xF5A0;
-//  Settings.config_version = 0;  // ESP8266 (Has been 0 for long time)
+  Settings->gpio16_converted = 0xF5A0;
+//  Settings->config_version = 0;  // ESP8266 (Has been 0 for long time)
 #endif  // ESP8266
 #ifdef ESP32
-  Settings.config_version = 1;  // ESP32
+  Settings->config_version = 1;  // ESP32
 #endif  // ESP32
 
   flag.stop_flash_rotate |= APP_FLASH_CYCLE;
@@ -789,25 +789,25 @@ void SettingsDefaultSet2(void) {
   flag3.fast_power_cycle_disable |= APP_DISABLE_POWERCYCLE;
   flag3.bootcount_update |= DEEPSLEEP_BOOTCOUNT;
   flag3.mqtt_buttons |= MQTT_BUTTONS;
-  Settings.save_data = SAVE_DATA;
-  Settings.param[P_BACKLOG_DELAY] = MIN_BACKLOG_DELAY;
-  Settings.param[P_BOOT_LOOP_OFFSET] = BOOT_LOOP_OFFSET;  // SetOption36
-  Settings.param[P_RGB_REMAP] = RGB_REMAP_RGBW;
-  Settings.sleep = APP_SLEEP;
-  if (Settings.sleep < 50) {
-    Settings.sleep = 50;                // Default to 50 for sleep, for now
+  Settings->save_data = SAVE_DATA;
+  Settings->param[P_BACKLOG_DELAY] = MIN_BACKLOG_DELAY;
+  Settings->param[P_BOOT_LOOP_OFFSET] = BOOT_LOOP_OFFSET;  // SetOption36
+  Settings->param[P_RGB_REMAP] = RGB_REMAP_RGBW;
+  Settings->sleep = APP_SLEEP;
+  if (Settings->sleep < 50) {
+    Settings->sleep = 50;                // Default to 50 for sleep, for now
   }
 
   // Module
   flag.interlock |= APP_INTERLOCK_MODE;
-  Settings.interlock[0] = APP_INTERLOCK_GROUP_1;
-  Settings.interlock[1] = APP_INTERLOCK_GROUP_2;
-  Settings.interlock[2] = APP_INTERLOCK_GROUP_3;
-  Settings.interlock[3] = APP_INTERLOCK_GROUP_4;
-  Settings.module = MODULE;
-  Settings.fallback_module = FALLBACK_MODULE;
+  Settings->interlock[0] = APP_INTERLOCK_GROUP_1;
+  Settings->interlock[1] = APP_INTERLOCK_GROUP_2;
+  Settings->interlock[2] = APP_INTERLOCK_GROUP_3;
+  Settings->interlock[3] = APP_INTERLOCK_GROUP_4;
+  Settings->module = MODULE;
+  Settings->fallback_module = FALLBACK_MODULE;
   ModuleDefault(WEMOS);
-//  for (uint32_t i = 0; i < nitems(Settings.my_gp.io); i++) { Settings.my_gp.io[i] = GPIO_NONE; }
+//  for (uint32_t i = 0; i < nitems(Settings->my_gp.io); i++) { Settings->my_gp.io[i] = GPIO_NONE; }
   SettingsUpdateText(SET_FRIENDLYNAME1, PSTR(FRIENDLY_NAME));
   SettingsUpdateText(SET_FRIENDLYNAME2, PSTR(FRIENDLY_NAME"2"));
   SettingsUpdateText(SET_FRIENDLYNAME3, PSTR(FRIENDLY_NAME"3"));
@@ -821,45 +821,45 @@ void SettingsDefaultSet2(void) {
 
   // Power
   flag.save_state |= SAVE_STATE;
-  Settings.power = APP_POWER;
-  Settings.poweronstate = APP_POWERON_STATE;
-  Settings.blinktime = APP_BLINKTIME;
-  Settings.blinkcount = APP_BLINKCOUNT;
-  Settings.ledstate = APP_LEDSTATE;
-  Settings.ledmask = APP_LEDMASK;
-//  Settings.ledpwm_off = 0;
-  Settings.ledpwm_on = 255;
-//  Settings.ledpwm_mask = 0;
-  Settings.pulse_timer[0] = APP_PULSETIME;
-//  for (uint32_t i = 1; i < MAX_PULSETIMERS; i++) { Settings.pulse_timer[i] = 0; }
+  Settings->power = APP_POWER;
+  Settings->poweronstate = APP_POWERON_STATE;
+  Settings->blinktime = APP_BLINKTIME;
+  Settings->blinkcount = APP_BLINKCOUNT;
+  Settings->ledstate = APP_LEDSTATE;
+  Settings->ledmask = APP_LEDMASK;
+//  Settings->ledpwm_off = 0;
+  Settings->ledpwm_on = 255;
+//  Settings->ledpwm_mask = 0;
+  Settings->pulse_timer[0] = APP_PULSETIME;
+//  for (uint32_t i = 1; i < MAX_PULSETIMERS; i++) { Settings->pulse_timer[i] = 0; }
 
   // Serial
-  Settings.serial_config = TS_SERIAL_8N1;
-  Settings.baudrate = APP_BAUDRATE / 300;
-  Settings.sbaudrate = SOFT_BAUDRATE / 300;
-  Settings.serial_delimiter = 0xff;
-  Settings.seriallog_level = SERIAL_LOG_LEVEL;
+  Settings->serial_config = TS_SERIAL_8N1;
+  Settings->baudrate = APP_BAUDRATE / 300;
+  Settings->sbaudrate = SOFT_BAUDRATE / 300;
+  Settings->serial_delimiter = 0xff;
+  Settings->seriallog_level = SERIAL_LOG_LEVEL;
 
   // Ethernet
   flag4.network_ethernet |= 1;
 #ifdef ESP32
-  Settings.eth_type = ETH_TYPE;
-  Settings.eth_clk_mode = ETH_CLKMODE;
-  Settings.eth_address = ETH_ADDRESS;
+  Settings->eth_type = ETH_TYPE;
+  Settings->eth_clk_mode = ETH_CLKMODE;
+  Settings->eth_address = ETH_ADDRESS;
 #endif  // ESP32
 
   // Wifi
   flag4.network_wifi |= 1;
   flag3.use_wifi_scan |= WIFI_SCAN_AT_RESTART;
   flag3.use_wifi_rescan |= WIFI_SCAN_REGULARLY;
-  Settings.wifi_output_power = 170;
-  Settings.param[P_ARP_GRATUITOUS] = WIFI_ARP_INTERVAL;
-  ParseIPv4(&Settings.ipv4_address[0], PSTR(WIFI_IP_ADDRESS));
-  ParseIPv4(&Settings.ipv4_address[1], PSTR(WIFI_GATEWAY));
-  ParseIPv4(&Settings.ipv4_address[2], PSTR(WIFI_SUBNETMASK));
-  ParseIPv4(&Settings.ipv4_address[3], PSTR(WIFI_DNS));
-  Settings.sta_config = WIFI_CONFIG_TOOL;
-//  Settings.sta_active = 0;
+  Settings->wifi_output_power = 170;
+  Settings->param[P_ARP_GRATUITOUS] = WIFI_ARP_INTERVAL;
+  ParseIPv4(&Settings->ipv4_address[0], PSTR(WIFI_IP_ADDRESS));
+  ParseIPv4(&Settings->ipv4_address[1], PSTR(WIFI_GATEWAY));
+  ParseIPv4(&Settings->ipv4_address[2], PSTR(WIFI_SUBNETMASK));
+  ParseIPv4(&Settings->ipv4_address[3], PSTR(WIFI_DNS));
+  Settings->sta_config = WIFI_CONFIG_TOOL;
+//  Settings->sta_active = 0;
   SettingsUpdateText(SET_STASSID1, PSTR(STA_SSID1));
   SettingsUpdateText(SET_STASSID2, PSTR(STA_SSID2));
   SettingsUpdateText(SET_STAPWD1, PSTR(STA_PASS1));
@@ -868,16 +868,16 @@ void SettingsDefaultSet2(void) {
 
   // Syslog
   SettingsUpdateText(SET_SYSLOG_HOST, PSTR(SYS_LOG_HOST));
-  Settings.syslog_port = SYS_LOG_PORT;
-  Settings.syslog_level = SYS_LOG_LEVEL;
+  Settings->syslog_port = SYS_LOG_PORT;
+  Settings->syslog_level = SYS_LOG_LEVEL;
 
   // Webserver
   flag2.emulation |= EMULATION;
   flag4.alexa_gen_1 |= EMULATION_HUE_1ST_GEN;
   flag3.gui_hostname_ip |= GUI_SHOW_HOSTNAME;
   flag3.mdns_enabled |= MDNS_ENABLED;
-  Settings.webserver = WEB_SERVER;
-  Settings.weblog_level = WEB_LOG_LEVEL;
+  Settings->webserver = WEB_SERVER;
+  Settings->weblog_level = WEB_LOG_LEVEL;
   SettingsUpdateText(SET_WEBPWD, PSTR(WEB_PASSWORD));
   SettingsUpdateText(SET_CORS, PSTR(CORS_DOMAIN));
 
@@ -885,10 +885,10 @@ void SettingsDefaultSet2(void) {
   flag.button_restrict |= KEY_DISABLE_MULTIPRESS;
   flag.button_swap |= KEY_SWAP_DOUBLE_PRESS;
   flag.button_single |= KEY_ONLY_SINGLE_PRESS;
-  Settings.param[P_HOLD_TIME] = KEY_HOLD_TIME;  // Default 4 seconds hold time
+  Settings->param[P_HOLD_TIME] = KEY_HOLD_TIME;  // Default 4 seconds hold time
 
   // Switch
-  for (uint32_t i = 0; i < MAX_SWITCHES_SET; i++) { Settings.switchmode[i] = SWITCH_MODE; }
+  for (uint32_t i = 0; i < MAX_SWITCHES_SET; i++) { Settings->switchmode[i] = SWITCH_MODE; }
 
   // MQTT
   flag.mqtt_enabled |= MQTT_USE;
@@ -909,7 +909,7 @@ void SettingsDefaultSet2(void) {
   flag3.use_underscore |= MQTT_INDEX_SEPARATOR;
   flag3.grouptopic_mode |= MQTT_GROUPTOPIC_FORMAT;
   SettingsUpdateText(SET_MQTT_HOST, MQTT_HOST);
-  Settings.mqtt_port = MQTT_PORT;
+  Settings->mqtt_port = MQTT_PORT;
   SettingsUpdateText(SET_MQTT_CLIENT, PSTR(MQTT_CLIENT_ID));
   SettingsUpdateText(SET_MQTT_USER, PSTR(MQTT_USER));
   SettingsUpdateText(SET_MQTT_PWD, PSTR(MQTT_PASS));
@@ -918,7 +918,7 @@ void SettingsDefaultSet2(void) {
   SettingsUpdateText(SET_MQTT_SWITCH_TOPIC, PSTR(MQTT_SWITCH_TOPIC));
   SettingsUpdateText(SET_MQTT_GRP_TOPIC, PSTR(MQTT_GRPTOPIC));
   SettingsUpdateText(SET_MQTT_FULLTOPIC, PSTR(MQTT_FULLTOPIC));
-  Settings.mqtt_retry = MQTT_RETRY_SECS;
+  Settings->mqtt_retry = MQTT_RETRY_SECS;
   SettingsUpdateText(SET_MQTTPREFIX1, PSTR(SUB_PREFIX));
   SettingsUpdateText(SET_MQTTPREFIX2, PSTR(PUB_PREFIX));
   SettingsUpdateText(SET_MQTTPREFIX3, PSTR(PUB_PREFIX2));
@@ -926,12 +926,12 @@ void SettingsDefaultSet2(void) {
   SettingsUpdateText(SET_STATE_TXT2, PSTR(MQTT_STATUS_ON));
   SettingsUpdateText(SET_STATE_TXT3, PSTR(MQTT_CMND_TOGGLE));
   SettingsUpdateText(SET_STATE_TXT4, PSTR(MQTT_CMND_HOLD));
-  memcpy_P(Settings.mqtt_fingerprint[0], default_fingerprint1, sizeof(default_fingerprint1));
-  memcpy_P(Settings.mqtt_fingerprint[1], default_fingerprint2, sizeof(default_fingerprint2));
-  Settings.tele_period = TELE_PERIOD;
-  Settings.mqttlog_level = MQTT_LOG_LEVEL;
-  Settings.mqtt_keepalive = MQTT_KEEPALIVE;
-  Settings.mqtt_socket_timeout = MQTT_SOCKET_TIMEOUT;
+  memcpy_P(Settings->mqtt_fingerprint[0], default_fingerprint1, sizeof(default_fingerprint1));
+  memcpy_P(Settings->mqtt_fingerprint[1], default_fingerprint2, sizeof(default_fingerprint2));
+  Settings->tele_period = TELE_PERIOD;
+  Settings->mqttlog_level = MQTT_LOG_LEVEL;
+  Settings->mqtt_keepalive = MQTT_KEEPALIVE;
+  Settings->mqtt_socket_timeout = MQTT_SOCKET_TIMEOUT;
 
   // Energy
   flag.no_power_on_check |= ENERGY_VOLTAGE_ALWAYS;
@@ -941,55 +941,55 @@ void SettingsDefaultSet2(void) {
   flag2.energy_resolution |= ENERGY_RESOLUTION;
   flag3.dds2382_model |= ENERGY_DDS2382_MODE;
   flag3.hardware_energy_total |= ENERGY_HARDWARE_TOTALS;
-  Settings.param[P_MAX_POWER_RETRY] = MAX_POWER_RETRY;
-//  Settings.energy_power_delta[0] = 0;
-//  Settings.energy_power_delta[1] = 0;
-//  Settings.energy_power_delta[2] = 0;
-  Settings.energy_power_calibration = HLW_PREF_PULSE;
-  Settings.energy_voltage_calibration = HLW_UREF_PULSE;
-  Settings.energy_current_calibration = HLW_IREF_PULSE;
-//  Settings.energy_kWhtoday = 0;
-//  Settings.energy_kWhyesterday = 0;
-//  Settings.energy_kWhdoy = 0;
-//  Settings.energy_min_power = 0;
-//  Settings.energy_max_power = 0;
-//  Settings.energy_min_voltage = 0;
-//  Settings.energy_max_voltage = 0;
-//  Settings.energy_min_current = 0;
-//  Settings.energy_max_current = 0;
-//  Settings.energy_max_power_limit = 0;                            // MaxPowerLimit
-  Settings.energy_max_power_limit_hold = MAX_POWER_HOLD;
-  Settings.energy_max_power_limit_window = MAX_POWER_WINDOW;
-//  Settings.energy_max_power_safe_limit = 0;                       // MaxSafePowerLimit
-  Settings.energy_max_power_safe_limit_hold = SAFE_POWER_HOLD;
-  Settings.energy_max_power_safe_limit_window = SAFE_POWER_WINDOW;
-//  Settings.energy_max_energy = 0;                                 // MaxEnergy
-//  Settings.energy_max_energy_start = 0;                           // MaxEnergyStart
-//  Settings.energy_kWhtotal = 0;
+  Settings->param[P_MAX_POWER_RETRY] = MAX_POWER_RETRY;
+//  Settings->energy_power_delta[0] = 0;
+//  Settings->energy_power_delta[1] = 0;
+//  Settings->energy_power_delta[2] = 0;
+  Settings->energy_power_calibration = HLW_PREF_PULSE;
+  Settings->energy_voltage_calibration = HLW_UREF_PULSE;
+  Settings->energy_current_calibration = HLW_IREF_PULSE;
+//  Settings->energy_kWhtoday = 0;
+//  Settings->energy_kWhyesterday = 0;
+//  Settings->energy_kWhdoy = 0;
+//  Settings->energy_min_power = 0;
+//  Settings->energy_max_power = 0;
+//  Settings->energy_min_voltage = 0;
+//  Settings->energy_max_voltage = 0;
+//  Settings->energy_min_current = 0;
+//  Settings->energy_max_current = 0;
+//  Settings->energy_max_power_limit = 0;                            // MaxPowerLimit
+  Settings->energy_max_power_limit_hold = MAX_POWER_HOLD;
+  Settings->energy_max_power_limit_window = MAX_POWER_WINDOW;
+//  Settings->energy_max_power_safe_limit = 0;                       // MaxSafePowerLimit
+  Settings->energy_max_power_safe_limit_hold = SAFE_POWER_HOLD;
+  Settings->energy_max_power_safe_limit_window = SAFE_POWER_WINDOW;
+//  Settings->energy_max_energy = 0;                                 // MaxEnergy
+//  Settings->energy_max_energy_start = 0;                           // MaxEnergyStart
+//  Settings->energy_kWhtotal = 0;
   RtcSettings.energy_kWhtotal = 0;
-//  memset((char*)&Settings.energy_usage, 0x00, sizeof(Settings.energy_usage));
+//  memset((char*)&Settings->energy_usage, 0x00, sizeof(Settings->energy_usage));
   memset((char*)&RtcSettings.energy_usage, 0x00, sizeof(RtcSettings.energy_usage));
-  Settings.param[P_OVER_TEMP] = ENERGY_OVERTEMP;
+  Settings->param[P_OVER_TEMP] = ENERGY_OVERTEMP;
 
   // IRRemote
   flag.ir_receive_decimal |= IR_DATA_RADIX;
   flag3.receive_raw |= IR_ADD_RAW_DATA;
-  Settings.param[P_IR_UNKNOW_THRESHOLD] = IR_RCV_MIN_UNKNOWN_SIZE;
+  Settings->param[P_IR_UNKNOW_THRESHOLD] = IR_RCV_MIN_UNKNOWN_SIZE;
 
   // RF Bridge
   flag.rf_receive_decimal |= RF_DATA_RADIX;
-//  for (uint32_t i = 0; i < 17; i++) { Settings.rf_code[i][0] = 0; }
-  memcpy_P(Settings.rf_code[0], kDefaultRfCode, 9);
+//  for (uint32_t i = 0; i < 17; i++) { Settings->rf_code[i][0] = 0; }
+  memcpy_P(Settings->rf_code[0], kDefaultRfCode, 9);
 
   // Domoticz
-  Settings.domoticz_update_timer = DOMOTICZ_UPDATE_TIMER;
+  Settings->domoticz_update_timer = DOMOTICZ_UPDATE_TIMER;
 //  for (uint32_t i = 0; i < MAX_DOMOTICZ_IDX; i++) {
-//    Settings.domoticz_relay_idx[i] = 0;
-//    Settings.domoticz_key_idx[i] = 0;
-//    Settings.domoticz_switch_idx[i] = 0;
+//    Settings->domoticz_relay_idx[i] = 0;
+//    Settings->domoticz_key_idx[i] = 0;
+//    Settings->domoticz_switch_idx[i] = 0;
 //  }
 //  for (uint32_t i = 0; i < MAX_DOMOTICZ_SNS_IDX; i++) {
-//    Settings.domoticz_sensor_idx[i] = 0;
+//    Settings->domoticz_sensor_idx[i] = 0;
 //  }
 
   // Sensor
@@ -1000,12 +1000,12 @@ void SettingsDefaultSet2(void) {
   flag2.temperature_resolution |= TEMP_RESOLUTION;
   flag3.ds18x20_internal_pullup |= DS18X20_PULL_UP;
   flag3.counter_reset_on_tele |= COUNTER_RESET;
-//  Settings.altitude = 0;
+//  Settings->altitude = 0;
 
   // Rules
-//  Settings.rule_enabled = 0;
-//  Settings.rule_once = 0;
-//  for (uint32_t i = 1; i < MAX_RULE_SETS; i++) { Settings.rules[i][0] = '\0'; }
+//  Settings->rule_enabled = 0;
+//  Settings->rule_once = 0;
+//  for (uint32_t i = 1; i < MAX_RULE_SETS; i++) { Settings->rules[i][0] = '\0'; }
   flag2.calc_resolution |= CALC_RESOLUTION;
 
   // Timer
@@ -1034,69 +1034,69 @@ void SettingsDefaultSet2(void) {
   flag4.virtual_ct |= LIGHT_VIRTUAL_CT;
   flag4.virtual_ct_cw |= LIGHT_VIRTUAL_CT_CW;
 
-  Settings.pwm_frequency = PWM_FREQ;
-  Settings.pwm_range = PWM_RANGE;
+  Settings->pwm_frequency = PWM_FREQ;
+  Settings->pwm_range = PWM_RANGE;
   for (uint32_t i = 0; i < MAX_PWMS; i++) {
-    Settings.light_color[i] = DEFAULT_LIGHT_COMPONENT;
-//    Settings.pwm_value[i] = 0;
+    Settings->light_color[i] = DEFAULT_LIGHT_COMPONENT;
+//    Settings->pwm_value[i] = 0;
   }
-  Settings.light_correction = 1;
-  Settings.light_dimmer = DEFAULT_LIGHT_DIMMER;
-//  Settings.light_fade = 0;
-  Settings.light_speed = 1;
-//  Settings.light_scheme = 0;
-  Settings.light_width = 1;
-//  Settings.light_wakeup = 0;
-  Settings.light_pixels = WS2812_LEDS;
-//  Settings.light_rotation = 0;
-  Settings.ws_width[WS_SECOND] = 1;
-  Settings.ws_color[WS_SECOND][WS_RED] = 255;
-//  Settings.ws_color[WS_SECOND][WS_GREEN] = 0;
-  Settings.ws_color[WS_SECOND][WS_BLUE] = 255;
-  Settings.ws_width[WS_MINUTE] = 3;
-//  Settings.ws_color[WS_MINUTE][WS_RED] = 0;
-  Settings.ws_color[WS_MINUTE][WS_GREEN] = 255;
-//  Settings.ws_color[WS_MINUTE][WS_BLUE] = 0;
-  Settings.ws_width[WS_HOUR] = 5;
-  Settings.ws_color[WS_HOUR][WS_RED] = 255;
-//  Settings.ws_color[WS_HOUR][WS_GREEN] = 0;
-//  Settings.ws_color[WS_HOUR][WS_BLUE] = 0;
+  Settings->light_correction = 1;
+  Settings->light_dimmer = DEFAULT_LIGHT_DIMMER;
+//  Settings->light_fade = 0;
+  Settings->light_speed = 1;
+//  Settings->light_scheme = 0;
+  Settings->light_width = 1;
+//  Settings->light_wakeup = 0;
+  Settings->light_pixels = WS2812_LEDS;
+//  Settings->light_rotation = 0;
+  Settings->ws_width[WS_SECOND] = 1;
+  Settings->ws_color[WS_SECOND][WS_RED] = 255;
+//  Settings->ws_color[WS_SECOND][WS_GREEN] = 0;
+  Settings->ws_color[WS_SECOND][WS_BLUE] = 255;
+  Settings->ws_width[WS_MINUTE] = 3;
+//  Settings->ws_color[WS_MINUTE][WS_RED] = 0;
+  Settings->ws_color[WS_MINUTE][WS_GREEN] = 255;
+//  Settings->ws_color[WS_MINUTE][WS_BLUE] = 0;
+  Settings->ws_width[WS_HOUR] = 5;
+  Settings->ws_color[WS_HOUR][WS_RED] = 255;
+//  Settings->ws_color[WS_HOUR][WS_GREEN] = 0;
+//  Settings->ws_color[WS_HOUR][WS_BLUE] = 0;
 
-  Settings.dimmer_hw_max = DEFAULT_DIMMER_MAX;
-  Settings.dimmer_hw_min = DEFAULT_DIMMER_MIN;
+  Settings->dimmer_hw_max = DEFAULT_DIMMER_MAX;
+  Settings->dimmer_hw_min = DEFAULT_DIMMER_MIN;
 
-  Settings.dimmer_step = DEFAULT_DIMMER_STEP;
+  Settings->dimmer_step = DEFAULT_DIMMER_STEP;
 
   // Device Groups
-  *(uint32_t *)&Settings.device_group_tie = 0x04030201;
+  *(uint32_t *)&Settings->device_group_tie = 0x04030201;
 
   // Display
-//  Settings.display_model = 0;
-  Settings.display_mode = 1;
-  Settings.display_refresh = 2;
-  Settings.display_rows = 2;
-  Settings.display_cols[0] = 16;
-  Settings.display_cols[1] = 8;
-  Settings.display_dimmer = 1;
-  Settings.display_size = 1;
-  Settings.display_font = 1;
-//  Settings.display_rotate = 0;
-  Settings.display_address[0] = MTX_ADDRESS1;
-  Settings.display_address[1] = MTX_ADDRESS2;
-  Settings.display_address[2] = MTX_ADDRESS3;
-  Settings.display_address[3] = MTX_ADDRESS4;
-  Settings.display_address[4] = MTX_ADDRESS5;
-  Settings.display_address[5] = MTX_ADDRESS6;
-  Settings.display_address[6] = MTX_ADDRESS7;
-  Settings.display_address[7] = MTX_ADDRESS8;
+//  Settings->display_model = 0;
+  Settings->display_mode = 1;
+  Settings->display_refresh = 2;
+  Settings->display_rows = 2;
+  Settings->display_cols[0] = 16;
+  Settings->display_cols[1] = 8;
+  Settings->display_dimmer = 1;
+  Settings->display_size = 1;
+  Settings->display_font = 1;
+//  Settings->display_rotate = 0;
+  Settings->display_address[0] = MTX_ADDRESS1;
+  Settings->display_address[1] = MTX_ADDRESS2;
+  Settings->display_address[2] = MTX_ADDRESS3;
+  Settings->display_address[3] = MTX_ADDRESS4;
+  Settings->display_address[4] = MTX_ADDRESS5;
+  Settings->display_address[5] = MTX_ADDRESS6;
+  Settings->display_address[6] = MTX_ADDRESS7;
+  Settings->display_address[7] = MTX_ADDRESS8;
 
   // Time
   if (((APP_TIMEZONE > -14) && (APP_TIMEZONE < 15)) || (99 == APP_TIMEZONE)) {
-    Settings.timezone = APP_TIMEZONE;
-    Settings.timezone_minutes = 0;
+    Settings->timezone = APP_TIMEZONE;
+    Settings->timezone_minutes = 0;
   } else {
-    Settings.timezone = APP_TIMEZONE / 60;
-    Settings.timezone_minutes = abs(APP_TIMEZONE % 60);
+    Settings->timezone = APP_TIMEZONE / 60;
+    Settings->timezone_minutes = abs(APP_TIMEZONE % 60);
   }
   SettingsUpdateText(SET_NTPSERVER1, PSTR(NTP_SERVER1));
   SettingsUpdateText(SET_NTPSERVER2, PSTR(NTP_SERVER2));
@@ -1104,23 +1104,23 @@ void SettingsDefaultSet2(void) {
   for (uint32_t i = 0; i < MAX_NTP_SERVERS; i++) {
     SettingsUpdateText(SET_NTPSERVER1 +i, ReplaceCommaWithDot(SettingsText(SET_NTPSERVER1 +i)));
   }
-  Settings.latitude = (int)((double)LATITUDE * 1000000);
-  Settings.longitude = (int)((double)LONGITUDE * 1000000);
+  Settings->latitude = (int)((double)LATITUDE * 1000000);
+  Settings->longitude = (int)((double)LONGITUDE * 1000000);
   SettingsResetStd();
   SettingsResetDst();
 
-  Settings.button_debounce = KEY_DEBOUNCE_TIME;
-  Settings.switch_debounce = SWITCH_DEBOUNCE_TIME;
+  Settings->button_debounce = KEY_DEBOUNCE_TIME;
+  Settings->switch_debounce = SWITCH_DEBOUNCE_TIME;
 
   for (uint32_t j = 0; j < 5; j++) {
-    Settings.rgbwwTable[j] = 255;
+    Settings->rgbwwTable[j] = 255;
   }
 
-  Settings.novasds_startingoffset = STARTING_OFFSET;
+  Settings->novasds_startingoffset = STARTING_OFFSET;
 
   SettingsDefaultWebColor();
 
-  memset(&Settings.monitors, 0xFF, 20);  // Enable all possible monitors, displays and sensors
+  memset(&Settings->monitors, 0xFF, 20);  // Enable all possible monitors, displays and sensors
   SettingsEnableAllI2cDrivers();
 
   // Tuya
@@ -1138,11 +1138,11 @@ void SettingsDefaultSet2(void) {
   flag4.mqtt_tls |= MQTT_TLS_ENABLED;
   flag4.mqtt_no_retain |= MQTT_NO_RETAIN;
 
-  Settings.flag = flag;
-  Settings.flag2 = flag2;
-  Settings.flag3 = flag3;
-  Settings.flag4 = flag4;
-  Settings.flag5 = flag5;
+  Settings->flag = flag;
+  Settings->flag2 = flag2;
+  Settings->flag3 = flag3;
+  Settings->flag4 = flag4;
+  Settings->flag5 = flag5;
 }
 
 void SettingsDefaultSet3(void) {
@@ -1186,21 +1186,21 @@ void SettingsDefaultSet3(void) {
 /********************************************************************************************/
 
 void SettingsResetStd(void) {
-  Settings.tflag[0].hemis = TIME_STD_HEMISPHERE;
-  Settings.tflag[0].week = TIME_STD_WEEK;
-  Settings.tflag[0].dow = TIME_STD_DAY;
-  Settings.tflag[0].month = TIME_STD_MONTH;
-  Settings.tflag[0].hour = TIME_STD_HOUR;
-  Settings.toffset[0] = TIME_STD_OFFSET;
+  Settings->tflag[0].hemis = TIME_STD_HEMISPHERE;
+  Settings->tflag[0].week = TIME_STD_WEEK;
+  Settings->tflag[0].dow = TIME_STD_DAY;
+  Settings->tflag[0].month = TIME_STD_MONTH;
+  Settings->tflag[0].hour = TIME_STD_HOUR;
+  Settings->toffset[0] = TIME_STD_OFFSET;
 }
 
 void SettingsResetDst(void) {
-  Settings.tflag[1].hemis = TIME_DST_HEMISPHERE;
-  Settings.tflag[1].week = TIME_DST_WEEK;
-  Settings.tflag[1].dow = TIME_DST_DAY;
-  Settings.tflag[1].month = TIME_DST_MONTH;
-  Settings.tflag[1].hour = TIME_DST_HOUR;
-  Settings.toffset[1] = TIME_DST_OFFSET;
+  Settings->tflag[1].hemis = TIME_DST_HEMISPHERE;
+  Settings->tflag[1].week = TIME_DST_WEEK;
+  Settings->tflag[1].dow = TIME_DST_DAY;
+  Settings->tflag[1].month = TIME_DST_MONTH;
+  Settings->tflag[1].hour = TIME_DST_HOUR;
+  Settings->toffset[1] = TIME_DST_OFFSET;
 }
 
 void SettingsDefaultWebColor(void) {
@@ -1211,38 +1211,38 @@ void SettingsDefaultWebColor(void) {
 }
 
 void SettingsEnableAllI2cDrivers(void) {
-  Settings.i2c_drivers[0] = I2CDRIVERS_0_31;
-  Settings.i2c_drivers[1] = I2CDRIVERS_32_63;
-  Settings.i2c_drivers[2] = I2CDRIVERS_64_95;
+  Settings->i2c_drivers[0] = I2CDRIVERS_0_31;
+  Settings->i2c_drivers[1] = I2CDRIVERS_32_63;
+  Settings->i2c_drivers[2] = I2CDRIVERS_64_95;
 }
 
 /********************************************************************************************/
 
 void SettingsDelta(void) {
-  if (Settings.version != VERSION) {      // Fix version dependent changes
+  if (Settings->version != VERSION) {      // Fix version dependent changes
 
 #ifdef ESP8266
 #ifndef UPGRADE_V8_MIN
     // Although no direct upgrade is supported try to make a viable environment
-    if (Settings.version < 0x08000000) {
+    if (Settings->version < 0x08000000) {
       // Save SSIDs and Passwords
-      char temp31[strlen(Settings.ex_sta_ssid[0]) +1];
-      strncpy(temp31, Settings.ex_sta_ssid[0], sizeof(temp31));
-      char temp32[strlen(Settings.ex_sta_ssid[1]) +1];
-      strncpy(temp32, Settings.ex_sta_ssid[1], sizeof(temp32));
-      char temp41[strlen(Settings.ex_sta_pwd[0]) +1];
-      strncpy(temp41, Settings.ex_sta_pwd[0], sizeof(temp41));
-      char temp42[strlen(Settings.ex_sta_pwd[1]) +1];
-      strncpy(temp42, Settings.ex_sta_pwd[1], sizeof(temp42));
+      char temp31[strlen(Settings->ex_sta_ssid[0]) +1];
+      strncpy(temp31, Settings->ex_sta_ssid[0], sizeof(temp31));
+      char temp32[strlen(Settings->ex_sta_ssid[1]) +1];
+      strncpy(temp32, Settings->ex_sta_ssid[1], sizeof(temp32));
+      char temp41[strlen(Settings->ex_sta_pwd[0]) +1];
+      strncpy(temp41, Settings->ex_sta_pwd[0], sizeof(temp41));
+      char temp42[strlen(Settings->ex_sta_pwd[1]) +1];
+      strncpy(temp42, Settings->ex_sta_pwd[1], sizeof(temp42));
 
-      char temp7[strlen(Settings.ex_mqtt_host) +1];
-      strncpy(temp7, Settings.ex_mqtt_host, sizeof(temp7));
-      char temp9[strlen(Settings.ex_mqtt_user) +1];
-      strncpy(temp9, Settings.ex_mqtt_user, sizeof(temp9));
-      char temp10[strlen(Settings.ex_mqtt_pwd) +1];
-      strncpy(temp10, Settings.ex_mqtt_pwd, sizeof(temp10));
-      char temp11[strlen(Settings.ex_mqtt_topic) +1];
-      strncpy(temp11, Settings.ex_mqtt_topic, sizeof(temp11));
+      char temp7[strlen(Settings->ex_mqtt_host) +1];
+      strncpy(temp7, Settings->ex_mqtt_host, sizeof(temp7));
+      char temp9[strlen(Settings->ex_mqtt_user) +1];
+      strncpy(temp9, Settings->ex_mqtt_user, sizeof(temp9));
+      char temp10[strlen(Settings->ex_mqtt_pwd) +1];
+      strncpy(temp10, Settings->ex_mqtt_pwd, sizeof(temp10));
+      char temp11[strlen(Settings->ex_mqtt_topic) +1];
+      strncpy(temp11, Settings->ex_mqtt_topic, sizeof(temp11));
 
       SettingsDefault();
 
@@ -1253,7 +1253,7 @@ void SettingsDelta(void) {
       SettingsUpdateText(SET_STAPWD2, temp42);
 
 #if defined(USE_MQTT_TLS) && defined(USE_MQTT_AWS_IOT)
-      if (!strlen(Settings.ex_mqtt_user)) {
+      if (!strlen(Settings->ex_mqtt_user)) {
         SettingsUpdateText(SET_MQTT_HOST, temp7);
         SettingsUpdateText(SET_MQTT_USER, temp9);
       } else {
@@ -1271,93 +1271,93 @@ void SettingsDelta(void) {
     }
 #endif  // UPGRADE_V8_MIN
 
-    if (Settings.version < 0x08020003) {
-      SettingsUpdateText(SET_TEMPLATE_NAME, Settings.user_template_name);
-      Settings.zb_channel = 0;      // set channel to zero to force reinit of zigbee parameters
+    if (Settings->version < 0x08020003) {
+      SettingsUpdateText(SET_TEMPLATE_NAME, Settings->user_template_name);
+      Settings->zb_channel = 0;      // set channel to zero to force reinit of zigbee parameters
     }
 #endif  // ESP8266
 
-    if (Settings.version < 0x08020004) {
-      Settings.flag3.mqtt_buttons = 0;  // SetOption73 (0) - Decouple button from relay and send just mqtt topic
+    if (Settings->version < 0x08020004) {
+      Settings->flag3.mqtt_buttons = 0;  // SetOption73 (0) - Decouple button from relay and send just mqtt topic
 #ifdef ESP8266
-      Settings.config_version = 0;  // ESP8266 (Has been 0 for long time)
+      Settings->config_version = 0;  // ESP8266 (Has been 0 for long time)
 #endif  // ESP8266
 #ifdef ESP32
-      Settings.config_version = 1;  // ESP32
+      Settings->config_version = 1;  // ESP32
 #endif  // ESP32
     }
-    if (Settings.version < 0x08020006) {
+    if (Settings->version < 0x08020006) {
 #ifdef ESP32
-      Settings.module = WEMOS;
+      Settings->module = WEMOS;
       ModuleDefault(WEMOS);
 #endif  // ESP32
       // make sure the empty rules have two consecutive NULLs, to be compatible with compressed rules
-      if (Settings.rules[0][0] == 0) { Settings.rules[0][1] = 0; }
-      if (Settings.rules[1][0] == 0) { Settings.rules[1][1] = 0; }
-      if (Settings.rules[2][0] == 0) { Settings.rules[2][1] = 0; }
+      if (Settings->rules[0][0] == 0) { Settings->rules[0][1] = 0; }
+      if (Settings->rules[1][0] == 0) { Settings->rules[1][1] = 0; }
+      if (Settings->rules[2][0] == 0) { Settings->rules[2][1] = 0; }
     }
-    if (Settings.version < 0x08030002) {
+    if (Settings->version < 0x08030002) {
       SettingsUpdateText(SET_DEVICENAME, SettingsText(SET_FRIENDLYNAME1));
-      Settings.ledpwm_off = 0;
-      Settings.ledpwm_on = 255;
-      Settings.ledpwm_mask = 0;
+      Settings->ledpwm_off = 0;
+      Settings->ledpwm_on = 255;
+      Settings->ledpwm_mask = 0;
     }
-    if (Settings.version < 0x08030104) {
-      Settings.flag4.network_wifi = 1;
-      Settings.flag4.network_ethernet = 1;
+    if (Settings->version < 0x08030104) {
+      Settings->flag4.network_wifi = 1;
+      Settings->flag4.network_ethernet = 1;
     }
 #ifdef ESP32
-    if (Settings.version < 0x08030105) {
-      Settings.eth_type = ETH_TYPE;
-      Settings.eth_clk_mode = ETH_CLKMODE;
-      Settings.eth_address = ETH_ADDRESS;
+    if (Settings->version < 0x08030105) {
+      Settings->eth_type = ETH_TYPE;
+      Settings->eth_clk_mode = ETH_CLKMODE;
+      Settings->eth_address = ETH_ADDRESS;
     }
 #endif  // ESP32
-    if (Settings.version < 0x08030106) {
-      Settings.fallback_module = FALLBACK_MODULE;
+    if (Settings->version < 0x08030106) {
+      Settings->fallback_module = FALLBACK_MODULE;
     }
-    if (Settings.version < 0x08040003) {
-      Settings.energy_power_delta[0] = Settings.hass_new_discovery; // replaced ex2_energy_power_delta on 8.5.0.1
-      Settings.energy_power_delta[1] = 0;
-      Settings.energy_power_delta[2] = 0;
+    if (Settings->version < 0x08040003) {
+      Settings->energy_power_delta[0] = Settings->hass_new_discovery; // replaced ex2_energy_power_delta on 8.5.0.1
+      Settings->energy_power_delta[1] = 0;
+      Settings->energy_power_delta[2] = 0;
     }
 #ifdef ESP8266
-    if (Settings.version < 0x09000002) {
+    if (Settings->version < 0x09000002) {
       char parameters[32];
       snprintf_P(parameters, sizeof(parameters), PSTR("%d,%d,%d,%d,%d"),
-        Settings.ex_adc_param_type, Settings.ex_adc_param1, Settings.ex_adc_param2, Settings.ex_adc_param3, Settings.mbflag2.data);
+        Settings->ex_adc_param_type, Settings->ex_adc_param1, Settings->ex_adc_param2, Settings->ex_adc_param3, Settings->mbflag2.data);
       SettingsUpdateText(SET_ADC_PARAM1, parameters);
     }
 #endif  // ESP8266
-    if (Settings.version < 0x09010000) {
-      Settings.dimmer_step = DEFAULT_DIMMER_STEP;
+    if (Settings->version < 0x09010000) {
+      Settings->dimmer_step = DEFAULT_DIMMER_STEP;
     }
-    if (Settings.version < 0x09020003) {
-      Settings.flag3.use_wifi_rescan = true;  // As a result of #10395
+    if (Settings->version < 0x09020003) {
+      Settings->flag3.use_wifi_rescan = true;  // As a result of #10395
     }
-    if (Settings.version < 0x09020006) {
+    if (Settings->version < 0x09020006) {
       for (uint32_t i = 0; i < MAX_SWITCHES_SET; i++) {
-        Settings.switchmode[i] = (i < 8) ? Settings.ex_switchmode[i] : SWITCH_MODE;
+        Settings->switchmode[i] = (i < 8) ? Settings->ex_switchmode[i] : SWITCH_MODE;
       }
       for (uint32_t i = 0; i < MAX_INTERLOCKS_SET; i++) {
-        Settings.interlock[i] = (i < 4) ? Settings.ex_interlock[i] : 0;
+        Settings->interlock[i] = (i < 4) ? Settings->ex_interlock[i] : 0;
       }
     }
-    if (Settings.version < 0x09020007) {
-      *(uint32_t *)&Settings.device_group_tie = 0x04030201;
+    if (Settings->version < 0x09020007) {
+      *(uint32_t *)&Settings->device_group_tie = 0x04030201;
     }
-    if (Settings.version < 0x09030102) {
-      Settings.mqtt_keepalive = MQTT_KEEPALIVE;
-      Settings.mqtt_socket_timeout = MQTT_SOCKET_TIMEOUT;
+    if (Settings->version < 0x09030102) {
+      Settings->mqtt_keepalive = MQTT_KEEPALIVE;
+      Settings->mqtt_socket_timeout = MQTT_SOCKET_TIMEOUT;
     }
-    if (Settings.version < 0x09030104) {
-      Settings.mbflag2.data = 0;
+    if (Settings->version < 0x09030104) {
+      Settings->mbflag2.data = 0;
     }
-    if (Settings.version < 0x09040002) {
-      Settings.sbflag1.data = 0;
+    if (Settings->version < 0x09040002) {
+      Settings->sbflag1.data = 0;
     }
 
-    Settings.version = VERSION;
+    Settings->version = VERSION;
     SettingsSave(1);
   }
 

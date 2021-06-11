@@ -74,7 +74,7 @@ void ZigbeeInit(void)
 // #pragma GCC diagnostic pop
   // Check if settings in Flash are set
   if (PinUsed(GPIO_ZIGBEE_RX) && PinUsed(GPIO_ZIGBEE_TX)) {
-    if (0 == Settings.zb_channel) {
+    if (0 == Settings->zb_channel) {
       AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE D_ZIGBEE_RANDOMIZING_ZBCONFIG));
       uint64_t mac64 = 0;     // stuff mac address into 64 bits
       WiFi.macAddress((uint8_t*) &mac64);
@@ -89,17 +89,17 @@ void ZigbeeInit(void)
       uint16_t  pan_id = (mac64 & 0x3FFF);
       if (0x0000 == pan_id) { pan_id = 0x0001; }    // avoid extreme values
       if (0x3FFF == pan_id) { pan_id = 0x3FFE; }    // avoid extreme values
-      Settings.zb_pan_id = pan_id;
+      Settings->zb_pan_id = pan_id;
 
-      Settings.zb_ext_panid = 0xCCCCCCCC00000000L | (mac64 & 0x00000000FFFFFFFFL);
-      Settings.zb_precfgkey_l = (mac64 << 32) | (esp_id << 16) | flash_id;
-      Settings.zb_precfgkey_h = (mac64 << 32) | (esp_id << 16) | flash_id;
-      Settings.zb_channel = USE_ZIGBEE_CHANNEL;
-      Settings.zb_txradio_dbm = USE_ZIGBEE_TXRADIO_DBM;
+      Settings->zb_ext_panid = 0xCCCCCCCC00000000L | (mac64 & 0x00000000FFFFFFFFL);
+      Settings->zb_precfgkey_l = (mac64 << 32) | (esp_id << 16) | flash_id;
+      Settings->zb_precfgkey_h = (mac64 << 32) | (esp_id << 16) | flash_id;
+      Settings->zb_channel = USE_ZIGBEE_CHANNEL;
+      Settings->zb_txradio_dbm = USE_ZIGBEE_TXRADIO_DBM;
     }
 
-    if (Settings.zb_txradio_dbm < 0) {
-      Settings.zb_txradio_dbm = -Settings.zb_txradio_dbm;
+    if (Settings->zb_txradio_dbm < 0) {
+      Settings->zb_txradio_dbm = -Settings->zb_txradio_dbm;
 #ifdef USE_ZIGBEE_EZSP
       EZ_reset_config = true;         // force reconfigure of EZSP
 #endif
@@ -119,10 +119,10 @@ void ZigbeeInit(void)
 
   // update commands with the current settings
 #ifdef USE_ZIGBEE_ZNP
-  ZNP_UpdateConfig(Settings.zb_channel, Settings.zb_pan_id, Settings.zb_ext_panid, Settings.zb_precfgkey_l, Settings.zb_precfgkey_h);
+  ZNP_UpdateConfig(Settings->zb_channel, Settings->zb_pan_id, Settings->zb_ext_panid, Settings->zb_precfgkey_l, Settings->zb_precfgkey_h);
 #endif
 #ifdef USE_ZIGBEE_EZSP
-  EZ_UpdateConfig(Settings.zb_channel, Settings.zb_pan_id, Settings.zb_ext_panid, Settings.zb_precfgkey_l, Settings.zb_precfgkey_h, Settings.zb_txradio_dbm);
+  EZ_UpdateConfig(Settings->zb_channel, Settings->zb_pan_id, Settings->zb_ext_panid, Settings->zb_precfgkey_l, Settings->zb_precfgkey_h, Settings->zb_txradio_dbm);
 #endif
 
   ZigbeeInitSerial();
@@ -149,7 +149,7 @@ void CmndZbReset(void) {
       eraseZigbeeDevices();
       // no break - this is intended
     case 2:   // fall through
-      Settings.zb_txradio_dbm = - abs(Settings.zb_txradio_dbm);
+      Settings->zb_txradio_dbm = - abs(Settings->zb_txradio_dbm);
       TasmotaGlobal.restart_flag = 2;
 #ifdef USE_ZIGBEE_ZNP
       ResponseCmndChar_P(PSTR(D_JSON_ZIGBEE_CC2530 " " D_JSON_RESET_AND_RESTARTING));
@@ -209,7 +209,7 @@ void zigbeeZCLSendCmd(class ZCLMessage &zcl) {
 
   // now set the timer, if any, to read back the state later
   if (zcl.clusterSpecific) {
-    if (!Settings.flag5.zb_disable_autoquery) {
+    if (!Settings->flag5.zb_disable_autoquery) {
       // read back attribute value unless it is disabled
       sendHueUpdate(zcl.shortaddr, zcl.groupaddr, zcl.cluster, zcl.endpoint);
     }
@@ -1595,12 +1595,12 @@ void CmndZbData(void) {
 void CmndZbConfig(void) {
   // ZbConfig
   // ZbConfig {"Channel":11,"PanID":"0x1A63","ExtPanID":"0xCCCCCCCCCCCCCCCC","KeyL":"0x0F0D0B0907050301L","KeyH":"0x0D0C0A0806040200L"}
-  uint8_t     zb_channel     = Settings.zb_channel;
-  uint16_t    zb_pan_id      = Settings.zb_pan_id;
-  uint64_t    zb_ext_panid   = Settings.zb_ext_panid;
-  uint64_t    zb_precfgkey_l = Settings.zb_precfgkey_l;
-  uint64_t    zb_precfgkey_h = Settings.zb_precfgkey_h;
-  int8_t      zb_txradio_dbm = Settings.zb_txradio_dbm;
+  uint8_t     zb_channel     = Settings->zb_channel;
+  uint16_t    zb_pan_id      = Settings->zb_pan_id;
+  uint64_t    zb_ext_panid   = Settings->zb_ext_panid;
+  uint64_t    zb_precfgkey_l = Settings->zb_precfgkey_l;
+  uint64_t    zb_precfgkey_h = Settings->zb_precfgkey_h;
+  int8_t      zb_txradio_dbm = Settings->zb_txradio_dbm;
 
   // if (zigbee.init_phase) { ResponseCmndChar_P(PSTR(D_ZIGBEE_NOT_STARTED)); return; }
   RemoveSpace(XdrvMailbox.data);
@@ -1627,18 +1627,18 @@ void CmndZbConfig(void) {
     }
 
     // Check if a parameter was changed after all
-    if ( (zb_channel      != Settings.zb_channel) ||
-         (zb_pan_id       != Settings.zb_pan_id) ||
-         (zb_ext_panid    != Settings.zb_ext_panid) ||
-         (zb_precfgkey_l  != Settings.zb_precfgkey_l) ||
-         (zb_precfgkey_h  != Settings.zb_precfgkey_h) ||
-         (zb_txradio_dbm  != Settings.zb_txradio_dbm) ) {
-      Settings.zb_channel      = zb_channel;
-      Settings.zb_pan_id       = zb_pan_id;
-      Settings.zb_ext_panid    = zb_ext_panid;
-      Settings.zb_precfgkey_l  = zb_precfgkey_l;
-      Settings.zb_precfgkey_h  = zb_precfgkey_h;
-      Settings.zb_txradio_dbm  = zb_txradio_dbm;
+    if ( (zb_channel      != Settings->zb_channel) ||
+         (zb_pan_id       != Settings->zb_pan_id) ||
+         (zb_ext_panid    != Settings->zb_ext_panid) ||
+         (zb_precfgkey_l  != Settings->zb_precfgkey_l) ||
+         (zb_precfgkey_h  != Settings->zb_precfgkey_h) ||
+         (zb_txradio_dbm  != Settings->zb_txradio_dbm) ) {
+      Settings->zb_channel      = zb_channel;
+      Settings->zb_pan_id       = zb_pan_id;
+      Settings->zb_ext_panid    = zb_ext_panid;
+      Settings->zb_precfgkey_l  = zb_precfgkey_l;
+      Settings->zb_precfgkey_h  = zb_precfgkey_h;
+      Settings->zb_txradio_dbm  = zb_txradio_dbm;
       TasmotaGlobal.restart_flag = 2;    // save and reboot
     }
   }

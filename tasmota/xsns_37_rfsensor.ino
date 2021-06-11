@@ -276,7 +276,7 @@ void RfSnsTheoV2Show(bool json)
 
         if (json) {
           ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_TEMPERATURE "\":%*_f,\"" D_JSON_ILLUMINANCE "\":%d,\"" D_JSON_VOLTAGE "\":%s}"),
-            sensor, Settings.flag2.temperature_resolution, &temp, rfsns_theo_v2_t1[i].lux, voltage);
+            sensor, Settings->flag2.temperature_resolution, &temp, rfsns_theo_v2_t1[i].lux, voltage);
 #ifdef USE_DOMOTICZ
           if ((0 == TasmotaGlobal.tele_period) && !sensor_once) {
             DomoticzFloatSensor(DZ_TEMP, temp);

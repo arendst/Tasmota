@@ -488,7 +488,7 @@ bool ZigbeeUploadXmodem(void) {
     case ZBU_DONE: {                     // *** Clean up and restart to disable bootloader and use new firmware
       ZigbeeUploadSetBootloader(1);      // Disable bootloader and reset MCU - should happen at restart
       if (1 == TasmotaGlobal.sleep) {
-        TasmotaGlobal.sleep = Settings.sleep;         // Restore loop sleep
+        TasmotaGlobal.sleep = Settings->sleep;         // Restore loop sleep
       }
 //      TasmotaGlobal.restart_flag = 2;    // Restart to disable bootloader and use new firmware
       if (ZbUpload.buffer) { free(ZbUpload.buffer); ZbUpload.buffer = nullptr; }

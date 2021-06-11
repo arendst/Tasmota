@@ -43,7 +43,7 @@ bool tft_init_done = false;
 void Core2DisplayPower(uint8_t on);
 void Core2DisplayDim(uint8_t dim);
 
-//Settings.display_options.type = ILIMODE_9341;
+//Settings->display_options.type = ILIMODE_9341;
 
 /*********************************************************************************************/
 
@@ -54,17 +54,17 @@ void ILI9341_InitDriver()
   if (PinUsed(GPIO_ILI9341_CS) || PinUsed(GPIO_ILI9341_DC) &&
       (TasmotaGlobal.spi_enabled || TasmotaGlobal.soft_spi_enabled)) {
 
-    Settings.display_model = XDSP_04;
+    Settings->display_model = XDSP_04;
 
-    if (Settings.display_width != ILI9341_TFTWIDTH) {
-      Settings.display_width = ILI9341_TFTWIDTH;
+    if (Settings->display_width != ILI9341_TFTWIDTH) {
+      Settings->display_width = ILI9341_TFTWIDTH;
     }
-    if (Settings.display_height != ILI9341_TFTHEIGHT) {
-      Settings.display_height = ILI9341_TFTHEIGHT;
+    if (Settings->display_height != ILI9341_TFTHEIGHT) {
+      Settings->display_height = ILI9341_TFTHEIGHT;
     }
 
-    if (!Settings.display_options.type || (Settings.display_options.type >= ILIMODE_MAX)) {
-      Settings.display_options.type = ILIMODE_9341;
+    if (!Settings->display_options.type || (Settings->display_options.type >= ILIMODE_MAX)) {
+      Settings->display_options.type = ILIMODE_9341;
     }
 
     // default colors
@@ -75,11 +75,11 @@ void ILI9341_InitDriver()
     if (TasmotaGlobal.soft_spi_enabled) {
       // Init renderer, may use hardware spi, however we use SSPI defintion because SD card uses SPI definition  (2 spi busses)
       if (PinUsed(GPIO_SSPI_MOSI) && PinUsed(GPIO_SSPI_MISO) && PinUsed(GPIO_SSPI_SCLK)) {
-        ili9341_2 = new ILI9341_2(Pin(GPIO_ILI9341_CS), Pin(GPIO_SSPI_MOSI), Pin(GPIO_SSPI_MISO), Pin(GPIO_SSPI_SCLK), Pin(GPIO_OLED_RESET), Pin(GPIO_ILI9341_DC), Pin(GPIO_BACKLIGHT), 2, Settings.display_options.type & 3);
+        ili9341_2 = new ILI9341_2(Pin(GPIO_ILI9341_CS), Pin(GPIO_SSPI_MOSI), Pin(GPIO_SSPI_MISO), Pin(GPIO_SSPI_SCLK), Pin(GPIO_OLED_RESET), Pin(GPIO_ILI9341_DC), Pin(GPIO_BACKLIGHT), 2, Settings->display_options.type & 3);
       }
     } else if (TasmotaGlobal.spi_enabled) {
       if (PinUsed(GPIO_ILI9341_DC)) {
-        ili9341_2 = new ILI9341_2(Pin(GPIO_ILI9341_CS), Pin(GPIO_SPI_MOSI), Pin(GPIO_SPI_MISO), Pin(GPIO_SPI_CLK), Pin(GPIO_OLED_RESET), Pin(GPIO_ILI9341_DC), Pin(GPIO_BACKLIGHT), 1, Settings.display_options.type & 3);
+        ili9341_2 = new ILI9341_2(Pin(GPIO_ILI9341_CS), Pin(GPIO_SPI_MOSI), Pin(GPIO_SPI_MISO), Pin(GPIO_SPI_CLK), Pin(GPIO_OLED_RESET), Pin(GPIO_ILI9341_DC), Pin(GPIO_BACKLIGHT), 1, Settings->display_options.type & 3);
       }
     }
 
@@ -88,7 +88,7 @@ void ILI9341_InitDriver()
       return;
     }
 
-    ili9341_2->init(Settings.display_width, Settings.display_height);
+    ili9341_2->init(Settings->display_width, Settings->display_height);
     renderer = ili9341_2;
 
 #ifdef USE_M5STACK_CORE2
@@ -96,22 +96,22 @@ void ILI9341_InitDriver()
     renderer->SetDimCB(Core2DisplayDim);
 #endif
 
-    renderer->DisplayInit(DISPLAY_INIT_MODE, Settings.display_size, Settings.display_rotate, Settings.display_font);
-    renderer->dim(Settings.display_dimmer);
+    renderer->DisplayInit(DISPLAY_INIT_MODE, Settings->display_size, Settings->display_rotate, Settings->display_font);
+    renderer->dim(Settings->display_dimmer);
 
 #ifdef SHOW_SPLASH
     // Welcome text
     renderer->setTextFont(2);
     renderer->setTextSize(1);
     renderer->setTextColor(ILI9341_WHITE, ILI9341_BLACK);
-    renderer->DrawStringAt(50, (Settings.display_height/2)-12, (Settings.display_options.type & 3)==ILIMODE_9341?"ILI9341 TFT!":"ILI9342 TFT!", ILI9341_WHITE, 0);
+    renderer->DrawStringAt(50, (Settings->display_height/2)-12, (Settings->display_options.type & 3)==ILIMODE_9341?"ILI9341 TFT!":"ILI9342 TFT!", ILI9341_WHITE, 0);
     delay(1000);
 #endif // SHOW_SPLASH
 
     color_type = COLOR_COLOR;
 
 #ifdef USE_DISPLAY_MODES1TO5
-    if (Settings.display_rotate) {
+    if (Settings->display_rotate) {
       DisplayAllocScreenBuffer();
     }
     Ili9341InitMode();
@@ -238,8 +238,8 @@ uint16_t tft_scroll = TFT_TOP;
 uint16_t tft_cols = 0;
 
 bool Ili9341Header(void) {
-  if (Settings.display_cols[0] != tft_cols) {
-    tft_cols = Settings.display_cols[0];
+  if (Settings->display_cols[0] != tft_cols) {
+    tft_cols = Settings->display_cols[0];
     if (tft_cols > 17) {
       tft_top = TFT_TOP;
       tft_bottom = TFT_BOTTOM;
@@ -254,14 +254,14 @@ bool Ili9341Header(void) {
 }
 
 void Ili9341InitMode(void) {
-//  renderer->setRotation(Settings.display_rotate);  // 0
+//  renderer->setRotation(Settings->display_rotate);  // 0
 #ifdef USE_DISPLAY_ILI9341
 //  renderer->invertDisplay(0);
 #endif
   renderer->fillScreen(ILI9341_BLACK);
   renderer->setTextWrap(false);         // Allow text to run off edges
   renderer->cp437(true);
-  if (!Settings.display_mode) {
+  if (!Settings->display_mode) {
     renderer->setCursor(0, 0);
     renderer->setTextColor(ILI9341_WHITE, ILI9341_BLACK);
     renderer->setTextSize(1);
@@ -277,19 +277,19 @@ void Ili9341InitMode(void) {
 void Ili9341PrintLog(void) {
   disp_refresh--;
   if (!disp_refresh) {
-    disp_refresh = Settings.display_refresh;
-    if (Settings.display_rotate) {
+    disp_refresh = Settings->display_refresh;
+    if (Settings->display_rotate) {
       if (!disp_screen_buffer_cols) { DisplayAllocScreenBuffer(); }
     }
 
     char* txt = DisplayLogBuffer('\370');
     if (txt != nullptr) {
-      uint8_t size = Settings.display_size;
+      uint8_t size = Settings->display_size;
       uint16_t theight = size * TFT_FONT_HEIGTH;
 
       renderer->setTextSize(size);
       renderer->setTextColor(ILI9341_CYAN, ILI9341_BLACK);  // Add background color to solve flicker
-      if (!Settings.display_rotate) {  // Use hardware scroll
+      if (!Settings->display_rotate) {  // Use hardware scroll
         renderer->setCursor(0, tft_scroll);
         renderer->fillRect(0, tft_scroll, renderer->width(), theight, ILI9341_BLACK);  // Erase line
         renderer->print(txt);
@@ -299,7 +299,7 @@ void Ili9341PrintLog(void) {
         }
         renderer->scrollTo(tft_scroll);
       } else {
-        uint8_t last_row = Settings.display_rows -1;
+        uint8_t last_row = Settings->display_rows -1;
 
         tft_scroll = (tft_top) ? theight : 0;  // Start below header
         renderer->setCursor(0, tft_scroll);
@@ -321,18 +321,18 @@ void Ili9341PrintLog(void) {
 }
 
 void ILI9341_Refresh(void) {  // Every second
-  if (Settings.display_mode) {  // Mode 0 is User text
+  if (Settings->display_mode) {  // Mode 0 is User text
     // 24-04-2017 13:45:43 = 19 + 1 ('\0') = 20
     // 24-04-2017 13:45 = 16 + 1 ('\0') = 17
 
     if (Ili9341Header()) {
-      char tftdt[Settings.display_cols[0] +1];
+      char tftdt[Settings->display_cols[0] +1];
       char date4[11];  // 24-04-2017
-      uint8_t time_size = (Settings.display_cols[0] >= 20) ? 9 : 6;  // 13:45:43 or 13:45
-      char spaces[Settings.display_cols[0] - (8 + time_size)];
+      uint8_t time_size = (Settings->display_cols[0] >= 20) ? 9 : 6;  // 13:45:43 or 13:45
+      char spaces[Settings->display_cols[0] - (8 + time_size)];
       char time[time_size];    // 13:45:43
 
-      renderer->setTextSize(Settings.display_size);
+      renderer->setTextSize(Settings->display_size);
       renderer->setTextColor(ILI9341_YELLOW, ILI9341_RED);   // Add background color to solve flicker
       renderer->setCursor(0, 0);
 
@@ -347,7 +347,7 @@ void ILI9341_Refresh(void) {  // Every second
       renderer->setCursor(0, 0);
     }
 
-    switch (Settings.display_mode) {
+    switch (Settings->display_mode) {
       case 1:  // Text
       case 2:  // Local
       case 3:  // Local
@@ -371,7 +371,7 @@ bool Xdsp04(uint8_t function)
   if (FUNC_DISPLAY_INIT_DRIVER == function) {
     ILI9341_InitDriver();
   }
-  else if (tft_init_done && (XDSP_04 == Settings.display_model)) {
+  else if (tft_init_done && (XDSP_04 == Settings->display_model)) {
       switch (function) {
         case FUNC_DISPLAY_MODEL:
           result = true;

@@ -42,13 +42,13 @@ RA8876 *ra8876;
 void RA8876_InitDriver(void) {
   if (PinUsed(GPIO_RA8876_CS) && (SPI_MOSI_MISO == TasmotaGlobal.spi_enabled)) {
 
-    Settings.display_model = XDSP_10;
+    Settings->display_model = XDSP_10;
 
-    if (Settings.display_width != RA8876_TFTWIDTH) {
-      Settings.display_width = RA8876_TFTWIDTH;
+    if (Settings->display_width != RA8876_TFTWIDTH) {
+      Settings->display_width = RA8876_TFTWIDTH;
     }
-    if (Settings.display_height != RA8876_TFTHEIGHT) {
-      Settings.display_height = RA8876_TFTHEIGHT;
+    if (Settings->display_height != RA8876_TFTHEIGHT) {
+      Settings->display_height = RA8876_TFTHEIGHT;
     }
 
     // default colors
@@ -60,8 +60,8 @@ void RA8876_InitDriver(void) {
 
     ra8876->begin();
     renderer = ra8876;
-    renderer->DisplayInit(DISPLAY_INIT_MODE,Settings.display_size,Settings.display_rotate,Settings.display_font);
-    renderer->dim(Settings.display_dimmer);
+    renderer->DisplayInit(DISPLAY_INIT_MODE,Settings->display_size,Settings->display_rotate,Settings->display_font);
+    renderer->dim(Settings->display_dimmer);
 
     //testall();
 #ifdef SHOW_SPLASH
@@ -302,7 +302,7 @@ bool Xdsp10(uint8_t function)
   if (FUNC_DISPLAY_INIT_DRIVER == function) {
       RA8876_InitDriver();
   }
-  else if (ra8876_init_done && (XDSP_10 == Settings.display_model)) {
+  else if (ra8876_init_done && (XDSP_10 == Settings->display_model)) {
     switch (function) {
       case FUNC_DISPLAY_MODEL:
         result = true;

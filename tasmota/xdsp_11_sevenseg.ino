@@ -106,7 +106,7 @@ void SevensegLog(void)
 void SevensegDim(void)
 {
   for (uint32_t i = 0; i < sevensegs; i++) {
-    sevenseg[i]->setBrightness(Settings.display_dimmer);
+    sevenseg[i]->setBrightness(Settings->display_dimmer);
   }
 }
 
@@ -130,7 +130,7 @@ void SevensegClear(void)
 void SevensegInitMode(void)
 {
   for (uint32_t i = 0; i < sevensegs; i++) {
-    sevenseg[i]->setBrightness(Settings.display_dimmer);
+    sevenseg[i]->setBrightness(Settings->display_dimmer);
     sevenseg[i]->blinkRate(0);
   }
   SevensegClear();
@@ -150,26 +150,26 @@ void SevensegInit(uint8_t mode)
 void SevensegInitDriver(void) {
   if (!TasmotaGlobal.i2c_enabled) { return; }
 
-  if (!Settings.display_model) {
-    if (I2cSetDevice(Settings.display_address[0])) {
-      Settings.display_model = XDSP_11;
+  if (!Settings->display_model) {
+    if (I2cSetDevice(Settings->display_address[0])) {
+      Settings->display_model = XDSP_11;
     }
   }
 
-  if (XDSP_11 == Settings.display_model) {
+  if (XDSP_11 == Settings->display_model) {
     sevenseg_state = 1;
     for (sevensegs = 0; sevensegs < 8; sevensegs++) {
-        if (Settings.display_address[sevensegs]) {
-          I2cSetActiveFound(Settings.display_address[sevensegs], "SevenSeg");
+        if (Settings->display_address[sevensegs]) {
+          I2cSetActiveFound(Settings->display_address[sevensegs], "SevenSeg");
           sevenseg[sevensegs] = new Adafruit_7segment();
-          sevenseg[sevensegs]->begin(Settings.display_address[sevensegs]);
+          sevenseg[sevensegs]->begin(Settings->display_address[sevensegs]);
         } else {
             break;
         }
     }
 
-    Settings.display_width = 4;
-    Settings.display_height = sevensegs;
+    Settings->display_width = 4;
+    Settings->display_height = sevensegs;
 
     SevensegInitMode();
   }
@@ -397,8 +397,8 @@ void SevensegTime(boolean time_24)
 void SevensegRefresh(void)  // Every second
 {
   if (disp_power) {
-    if (Settings.display_mode) {  // Mode 0 is User text
-      switch (Settings.display_mode) {
+    if (Settings->display_mode) {  // Mode 0 is User text
+      switch (Settings->display_mode) {
         case 1:  // Time 12
           SevensegTime(false);
           break;
@@ -431,7 +431,7 @@ bool Xdsp11(uint8_t function)
   if (FUNC_DISPLAY_INIT_DRIVER == function) {
     SevensegInitDriver();
   }
-  else if (XDSP_11 == Settings.display_model) {
+  else if (XDSP_11 == Settings->display_model) {
     switch (function) {
       case FUNC_DISPLAY_MODEL:
         result = true;

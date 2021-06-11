@@ -167,9 +167,9 @@ bool SnfL1SerialInput(void) {
 
 //            AddLog(LOG_LEVEL_DEBUG, PSTR("SL1: Rcvd color R%d G%d B%d (R%d G%d B%d)"),
 //              Snfl1.color[0], Snfl1.color[1], Snfl1.color[2],
-//              Settings.light_color[0], Settings.light_color[1], Settings.light_color[2]);
+//              Settings->light_color[0], Settings->light_color[1], Settings->light_color[2]);
 
-            is_color_change = (Light.power && (memcmp(Snfl1.color, Settings.light_color, 3) != 0));
+            is_color_change = (Light.power && (memcmp(Snfl1.color, Settings->light_color, 3) != 0));
           }
           snprintf_P(cmnd_color, sizeof(cmnd_color), PSTR(D_CMND_COLOR "2 %02x%02x%02x"), Snfl1.color[0], Snfl1.color[1], Snfl1.color[2]);
         }
@@ -177,9 +177,9 @@ bool SnfL1SerialInput(void) {
         else if (!strncmp(token2, "\"bright\"", 8)) {
           uint8_t dimmer = atoi(token3);
 
-//          AddLog(LOG_LEVEL_DEBUG, PSTR("SL1: Rcvd dimmer %d (%d)"), dimmer, Settings.light_dimmer);
+//          AddLog(LOG_LEVEL_DEBUG, PSTR("SL1: Rcvd dimmer %d (%d)"), dimmer, Settings->light_dimmer);
 
-          is_brightness_change = (Light.power && (dimmer > 0) && (dimmer != Settings.light_dimmer));
+          is_brightness_change = (Light.power && (dimmer > 0) && (dimmer != Settings->light_dimmer));
           snprintf_P(cmnd_dimmer, sizeof(cmnd_dimmer), PSTR(D_CMND_DIMMER " %d"), dimmer);
         }
 
@@ -187,7 +187,7 @@ bool SnfL1SerialInput(void) {
       }
 
       if (is_power_change) {
-        if (Settings.light_scheme > 0) {
+        if (Settings->light_scheme > 0) {
           if (!switch_state) {  // If power off RC button pressed stop schemes
             char cmnd_scheme[20];
             snprintf_P(cmnd_scheme, sizeof(cmnd_scheme), PSTR(D_CMND_SCHEME " 0"));
@@ -201,13 +201,13 @@ bool SnfL1SerialInput(void) {
         ExecuteCommand(cmnd_dimmer, SRC_REMOTE);
       }
       else if (Light.power && is_color_change) {
-        if (0 == Settings.light_scheme) {  // Fix spurious color receptions when scheme > 0
-          if (Settings.light_fade) {  // Disable fade as RC button colors overrule and are immediate supressing ghost colors
+        if (0 == Settings->light_scheme) {  // Fix spurious color receptions when scheme > 0
+          if (Settings->light_fade) {  // Disable fade as RC button colors overrule and are immediate supressing ghost colors
             char cmnd_fade[20];
             snprintf_P(cmnd_fade, sizeof(cmnd_fade), PSTR(D_CMND_FADE " 0"));
             ExecuteCommand(cmnd_fade, SRC_REMOTE);
           }
-          if (Settings.light_correction) {  // Disable ledtable as RC button colors overrule and are immediate supressing ghost colors
+          if (Settings->light_correction) {  // Disable ledtable as RC button colors overrule and are immediate supressing ghost colors
             char cmnd_fade[20];
             snprintf_P(cmnd_fade, sizeof(cmnd_fade), PSTR(D_CMND_LEDTABLE " 0"));
             ExecuteCommand(cmnd_fade, SRC_REMOTE);

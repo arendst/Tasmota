@@ -419,12 +419,12 @@ void TasmotaClient_Init(void) {
     uint8_t len = TasmotaClient_receiveData(buffer, sizeof(buffer));  // 99 17 34 01 02 00 00 00
     if (len == sizeof(TClientSettings)) {
       memcpy(&TClientSettings, &buffer, sizeof(TClientSettings));
-      if (TASMOTA_CLIENT_LIB_VERSION == TClientSettings.features_version) {
+      if (TASMOTA_CLIENT_LIB_VERSION == TClientSettings->features_version) {
         TClient.type = true;
-        AddLog(LOG_LEVEL_INFO, PSTR("TCL: Version %u"), TClientSettings.features_version);
+        AddLog(LOG_LEVEL_INFO, PSTR("TCL: Version %u"), TClientSettings->features_version);
       } else {
-        if ((!TClient.unsupported) && (TClientSettings.features_version > 0)) {
-          AddLog(LOG_LEVEL_INFO, PSTR("TCL: Version %u not supported!"), TClientSettings.features_version);
+        if ((!TClient.unsupported) && (TClientSettings->features_version > 0)) {
+          AddLog(LOG_LEVEL_INFO, PSTR("TCL: Version %u not supported!"), TClientSettings->features_version);
           TClient.unsupported = true;
         }
       }
@@ -437,7 +437,7 @@ bool TasmotaClient_Available(void) {
 }
 
 void TasmotaClient_Show(void) {
-  if ((TClient.type) && (TClientSettings.features.func_json_append)) {
+  if ((TClient.type) && (TClientSettings->features.func_json_append)) {
     TasmotaClient_sendCmnd(CMND_JSON, 0);
 
     char buffer[100];
@@ -540,19 +540,19 @@ bool Xdrv31(uint8_t function) {
         if (TasmotaClient_Serial->available()) {
           TasmotaClient_ProcessIn();
         }
-        if (TClientSettings.features.func_every_100_msecond) {
+        if (TClientSettings->features.func_every_100_msecond) {
           TasmotaClient_sendCmnd(CMND_FUNC_EVERY_100_MSECOND, 0);
         }
       }
       break;
     case FUNC_EVERY_SECOND:
-      if ((TClient.type) && (TClientSettings.features.func_every_second)) {
+      if ((TClient.type) && (TClientSettings->features.func_every_second)) {
         TasmotaClient_sendCmnd(CMND_FUNC_EVERY_SECOND, 0);
       }
       TasmotaClient_Init();
       break;
     case FUNC_JSON_APPEND:
-      if ((TClient.type) && (TClientSettings.features.func_json_append)) {
+      if ((TClient.type) && (TClientSettings->features.func_json_append)) {
         TasmotaClient_Show();
       }
       break;

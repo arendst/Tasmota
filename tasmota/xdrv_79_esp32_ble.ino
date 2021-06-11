@@ -952,9 +952,9 @@ int SafeAddLog_P(uint32_t loglevel, PGM_P formatP, ...) {
   int added = 0;
 
   // if the log would not be output do nothing here.
-  if ((loglevel > Settings.weblog_level) &&
+  if ((loglevel > Settings->weblog_level) &&
       (loglevel > TasmotaGlobal.seriallog_level) &&
-      (loglevel > Settings.mqttlog_level) &&
+      (loglevel > Settings->mqttlog_level) &&
       (loglevel > TasmotaGlobal.syslog_level)){
     return added;
   }
@@ -2251,7 +2251,7 @@ void BLEEvery50mSecond(){
 
 static void stopStartBLE(){
   // dont start of disabled
-  uint8_t enable = (Settings.flag5.mi32_enable || BLEEnableUnsaved) && BLEEnableMask;
+  uint8_t enable = (Settings->flag5.mi32_enable || BLEEnableUnsaved) && BLEEnableMask;
 
   if (enable != BLEMasterEnable){
     if (enable){
@@ -2309,7 +2309,7 @@ static void BLEEverySecond(bool restart){
     if (BLERestartTasmota == 2){
       if (!BLERestartTasmotaReason) BLERestartTasmotaReason = BLE_RESTART_TEAMOTA_REASON_UNKNOWN;
       Response_P(PSTR("{\"reboot\":\"%s\"}"), BLERestartTasmotaReason);
-      MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR("BLE"), Settings.flag.mqtt_sensor_retain);
+      MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR("BLE"), Settings->flag.mqtt_sensor_retain);
       AddLog(LOG_LEVEL_ERROR,PSTR("BLE: Failure! Restarting Tasmota in %d seconds because %s"), BLERestartTasmota, BLERestartTasmotaReason);
     }
 
@@ -2322,7 +2322,7 @@ static void BLEEverySecond(bool restart){
 
   if (BLERestartBLEReason){ // just use the ptr as the trigger to send MQTT
     Response_P(PSTR("{\"blerestart\":\"%s\"}"), BLERestartBLEReason);
-    MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR("BLE"), Settings.flag.mqtt_sensor_retain);
+    MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR("BLE"), Settings->flag.mqtt_sensor_retain);
     AddLog(LOG_LEVEL_ERROR,PSTR("BLE: Failure! Restarting BLE Stack because %s"), BLERestartBLEReason);
     BLERestartBLEReason = nullptr;
   }
@@ -3187,7 +3187,7 @@ static void BLEPostMQTT(bool onlycompleted) {
     if (prepOperation && !onlycompleted){
       std::string out = BLETriggerResponse(prepOperation);
       Response_P(PSTR("%s"), out.c_str());
-      MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR("BLE"), Settings.flag.mqtt_sensor_retain);
+      MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR("BLE"), Settings->flag.mqtt_sensor_retain);
 #ifdef BLE_ESP32_DEBUG
       if (BLEDebugMode > 0) AddLog(LOG_LEVEL_INFO,PSTR("BLE: prep sent %s"), out.c_str());
 #endif
@@ -3207,7 +3207,7 @@ static void BLEPostMQTT(bool onlycompleted) {
           std::string out = BLETriggerResponse(toSend);
           localmutex.give();
           Response_P(PSTR("%s"), out.c_str());
-          MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR("BLE"), Settings.flag.mqtt_sensor_retain);
+          MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR("BLE"), Settings->flag.mqtt_sensor_retain);
 #ifdef BLE_ESP32_DEBUG
           if (BLEDebugMode > 0) AddLog(LOG_LEVEL_INFO,PSTR("BLE: queued %d sent %s"), i, out.c_str());
 #endif
@@ -3229,7 +3229,7 @@ static void BLEPostMQTT(bool onlycompleted) {
           std::string out = BLETriggerResponse(toSend);
           localmutex.give();
           Response_P(PSTR("%s"), out.c_str());
-          MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR("BLE"), Settings.flag.mqtt_sensor_retain);
+          MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR("BLE"), Settings->flag.mqtt_sensor_retain);
 #ifdef BLE_ESP32_DEBUG
           if (BLEDebugMode > 0) AddLog(LOG_LEVEL_INFO,PSTR("BLE: curr %d sent %s"), i, out.c_str());
 #endif
@@ -3252,7 +3252,7 @@ static void BLEPostMQTT(bool onlycompleted) {
 #endif
           std::string out = BLETriggerResponse(toSend);
           Response_P(PSTR("%s"), out.c_str());
-          MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR("BLE"), Settings.flag.mqtt_sensor_retain);
+          MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR("BLE"), Settings->flag.mqtt_sensor_retain);
           // we alreayd removed this from the queues, so now delete
           delete toSend;
           //break;
@@ -3262,7 +3262,7 @@ static void BLEPostMQTT(bool onlycompleted) {
     }
   } else {
     Response_P(PSTR("{\"BLEOperation\":{}}"));
-    MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR("BLE"), Settings.flag.mqtt_sensor_retain);
+    MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR("BLE"), Settings->flag.mqtt_sensor_retain);
   }
 }
 
@@ -3391,7 +3391,7 @@ static void BLEShowStats(){
     ResponseAppend_P(PSTR("{\"%s\":\"%s\"}"), tmp, aliases[i]->name);
   }
   ResponseAppend_P(PSTR("]}"));
-  MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR("BLE"), Settings.flag.mqtt_sensor_retain);
+  MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR("BLE"), Settings->flag.mqtt_sensor_retain);
 }*/
 
 void BLEAliasListResp(){
@@ -3548,7 +3548,7 @@ void HandleBleConfiguration(void)
 #ifdef BLE_ESP32_DEBUG
     AddLog(LOG_LEVEL_DEBUG, PSTR("BLE: SETTINGS SAVE"));
 #endif
-    Settings.flag5.mi32_enable = Webserver->hasArg("e0");  //
+    Settings->flag5.mi32_enable = Webserver->hasArg("e0");  //
     BLEScanActiveMode = (Webserver->hasArg("e1")?1:0);  //
 
     SettingsSaveAll();
@@ -3564,7 +3564,7 @@ void HandleBleConfiguration(void)
   WSContentSendStyle_P(HTTP_BLE_DEV_STYLE);
   //WSContentSendStyle();
   WSContentSend_P(HTTP_FORM_BLE,
-    (Settings.flag5.mi32_enable) ? " checked" : "",
+    (Settings->flag5.mi32_enable) ? " checked" : "",
     (BLEScanActiveMode) ? " checked" : ""
     );
   WSContentSend_P(HTTP_FORM_END);
@@ -3626,7 +3626,7 @@ int ExtRestartBLEIfEnabled(){
 
 bool Xdrv79(uint8_t function)
 {
-  //if (!Settings.flag5.mi32_enable) { return false; }  // SetOption115 - Enable ESP32 BLE BLE
+  //if (!Settings->flag5.mi32_enable) { return false; }  // SetOption115 - Enable ESP32 BLE BLE
 
   bool result = false;
 

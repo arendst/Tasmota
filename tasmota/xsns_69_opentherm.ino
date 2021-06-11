@@ -142,15 +142,15 @@ void sns_opentherm_init_boiler_status()
     memset(&sns_ot_boiler_status, 0, sizeof(OT_BOILER_STATUS));
 
     // Settings
-    sns_ot_boiler_status.m_useDiagnosticIndicationAsHeatRequest = Settings.ot_flags & (uint8_t)OpenThermSettingsFlags::EnableCentralHeatingOnDiagnostics;
-    sns_ot_boiler_status.m_enableHotWater = Settings.ot_flags & (uint8_t)OpenThermSettingsFlags::EnableHotWater;
-    sns_ot_boiler_status.m_enableCentralHeating = Settings.ot_flags & (uint8_t)OpenThermSettingsFlags::EnableCentralHeating;
-    sns_ot_boiler_status.m_enableCooling = Settings.ot_flags & (uint8_t)OpenThermSettingsFlags::EnableCooling;
-    sns_ot_boiler_status.m_enableOutsideTemperatureCompensation = Settings.ot_flags & (uint8_t)OpenThermSettingsFlags::EnableTemperatureCompensation;
-    sns_ot_boiler_status.m_enableCentralHeating2 = Settings.ot_flags & (uint8_t)OpenThermSettingsFlags::EnableCentralHeating2;
+    sns_ot_boiler_status.m_useDiagnosticIndicationAsHeatRequest = Settings->ot_flags & (uint8_t)OpenThermSettingsFlags::EnableCentralHeatingOnDiagnostics;
+    sns_ot_boiler_status.m_enableHotWater = Settings->ot_flags & (uint8_t)OpenThermSettingsFlags::EnableHotWater;
+    sns_ot_boiler_status.m_enableCentralHeating = Settings->ot_flags & (uint8_t)OpenThermSettingsFlags::EnableCentralHeating;
+    sns_ot_boiler_status.m_enableCooling = Settings->ot_flags & (uint8_t)OpenThermSettingsFlags::EnableCooling;
+    sns_ot_boiler_status.m_enableOutsideTemperatureCompensation = Settings->ot_flags & (uint8_t)OpenThermSettingsFlags::EnableTemperatureCompensation;
+    sns_ot_boiler_status.m_enableCentralHeating2 = Settings->ot_flags & (uint8_t)OpenThermSettingsFlags::EnableCentralHeating2;
 
-    sns_ot_boiler_status.m_boilerSetpoint = (float)Settings.ot_boiler_setpoint;
-    sns_ot_boiler_status.m_hotWaterSetpoint = (float)Settings.ot_hot_water_setpoint;
+    sns_ot_boiler_status.m_boilerSetpoint = (float)Settings->ot_boiler_setpoint;
+    sns_ot_boiler_status.m_hotWaterSetpoint = (float)Settings->ot_hot_water_setpoint;
 
     sns_ot_boiler_status.m_fault_code = 0;
     sns_ot_boiler_status.m_oem_fault_code = 0;
@@ -237,7 +237,7 @@ void sns_opentherm_stat(bool json)
     {
         ResponseAppend_P(PSTR(",\"OPENTHERM\":{"));
         ResponseAppend_P(PSTR("\"conn\":\"%s\","), statusStr);
-        ResponseAppend_P(PSTR("\"settings\":%d,"), Settings.ot_flags);
+        ResponseAppend_P(PSTR("\"settings\":%d,"), Settings->ot_flags);
         sns_opentherm_dump_telemetry();
         ResponseJsonEnd();
 #ifdef USE_WEBSERVER
@@ -346,16 +346,16 @@ void sns_opentherm_check_settings(void)
 {
     bool settingsValid = true;
 
-    settingsValid &= Settings.ot_hot_water_setpoint >= OT_HOT_WATER_MIN;
-    settingsValid &= Settings.ot_hot_water_setpoint <= OT_HOT_WATER_MAX;
-    settingsValid &= Settings.ot_boiler_setpoint >= OT_BOILER_MIN;
-    settingsValid &= Settings.ot_boiler_setpoint <= OT_BOILER_MAX;
+    settingsValid &= Settings->ot_hot_water_setpoint >= OT_HOT_WATER_MIN;
+    settingsValid &= Settings->ot_hot_water_setpoint <= OT_HOT_WATER_MAX;
+    settingsValid &= Settings->ot_boiler_setpoint >= OT_BOILER_MIN;
+    settingsValid &= Settings->ot_boiler_setpoint <= OT_BOILER_MAX;
 
     if (!settingsValid)
     {
-        Settings.ot_hot_water_setpoint = OT_HOT_WATER_DEFAULT;
-        Settings.ot_boiler_setpoint = OT_BOILER_DEFAULT;
-        Settings.ot_flags =
+        Settings->ot_hot_water_setpoint = OT_HOT_WATER_DEFAULT;
+        Settings->ot_boiler_setpoint = OT_BOILER_DEFAULT;
+        Settings->ot_flags =
             OpenThermSettingsFlags::EnableCentralHeatingOnDiagnostics |
             OpenThermSettingsFlags::EnableHotWater;
     }
@@ -443,7 +443,7 @@ uint8_t sns_opentherm_read_flags(char *data, uint32_t len)
 // set hot water (DHW) temperature. Do not write it in the flash memory.
 // suitable for the temporary changes
 #define D_CMND_OTHERM_DHW_SETPOINT "twater"
-// This command will save CH and DHW setpoints into the settings. Those values will be used after system restart
+// This command will save CH and DHW setpoints into the Settings-> Those values will be used after system restart
 // The reason to separate set and save is to reduce flash memory write count, especially if boiler temperature is controlled
 // by the PID thermostat
 #define D_CMND_OTHERM_SAVE_SETTINGS "save_setpoints"
@@ -458,7 +458,7 @@ uint8_t sns_opentherm_read_flags(char *data, uint32_t len)
 #define D_CMND_OTHERM_FLAGS "flags"
 
 // Get/Set boiler status m_enableCentralHeating value. It's equivalent of the EnableCentralHeating settings
-// flag value, however, this command does not update the settings.
+// flag value, however, this command does not update the Settings->
 // Usefull to buld automations
 // Please note, if you set it to "0" and EnableCentralHeatingOnDiagnostics is set
 // boiler will follow the Diagnostics bit and won't turn CH off. When Diagnostics bit cleared,
@@ -483,7 +483,7 @@ void sns_opentherm_boiler_setpoint_cmd(void)
     {
         sns_ot_boiler_status.m_boilerSetpoint = atof(XdrvMailbox.data);
     }
-    ResponseCmndFloat(sns_ot_boiler_status.m_boilerSetpoint, Settings.flag2.temperature_resolution);
+    ResponseCmndFloat(sns_ot_boiler_status.m_boilerSetpoint, Settings->flag2.temperature_resolution);
 }
 
 void sns_opentherm_hot_water_setpoint_cmd(void)
@@ -493,13 +493,13 @@ void sns_opentherm_hot_water_setpoint_cmd(void)
     {
         sns_ot_boiler_status.m_hotWaterSetpoint = atof(XdrvMailbox.data);
     }
-    ResponseCmndFloat(sns_ot_boiler_status.m_hotWaterSetpoint, Settings.flag2.temperature_resolution);
+    ResponseCmndFloat(sns_ot_boiler_status.m_hotWaterSetpoint, Settings->flag2.temperature_resolution);
 }
 
 void sns_opentherm_save_settings_cmd(void)
 {
-    Settings.ot_hot_water_setpoint = (uint8_t)sns_ot_boiler_status.m_hotWaterSetpoint;
-    Settings.ot_boiler_setpoint = (uint8_t)sns_ot_boiler_status.m_boilerSetpoint;
+    Settings->ot_hot_water_setpoint = (uint8_t)sns_ot_boiler_status.m_hotWaterSetpoint;
+    Settings->ot_boiler_setpoint = (uint8_t)sns_ot_boiler_status.m_boilerSetpoint;
     ResponseCmndDone();
 }
 
@@ -509,7 +509,7 @@ void sns_opentherm_flags_cmd(void)
     if (!query)
     {
         // Set flags value
-        Settings.ot_flags = sns_opentherm_read_flags(XdrvMailbox.data, XdrvMailbox.data_len);
+        Settings->ot_flags = sns_opentherm_read_flags(XdrvMailbox.data, XdrvMailbox.data_len);
         // Reset boiler status to apply settings
         sns_opentherm_init_boiler_status();
     }
@@ -518,7 +518,7 @@ void sns_opentherm_flags_cmd(void)
     for (int pos = 0; pos < OT_FLAGS_COUNT; ++pos)
     {
         int mask = 1 << pos;
-        int mode = Settings.ot_flags & (uint8_t)mask;
+        int mode = Settings->ot_flags & (uint8_t)mask;
         if (mode > 0)
         {
             ResponseAppend_P(PSTR("%s%s"), (addComma)?",":"", sns_opentherm_flag_text(mode));
