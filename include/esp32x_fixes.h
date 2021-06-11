@@ -1,5 +1,5 @@
 /*
-  fix_esp32c3.h - fix esp32c3 toolchain
+  esp32x_fixes.h - fix esp32x toolchain
 
   Copyright (C) 2021  Theo Arends
 
@@ -27,7 +27,7 @@
  * 
  * You need to add the following lines in `build_flags`:      
  *                            -I$PROJECT_DIR/include
- *                            -include "fix_esp32c3.h"
+ *                            -include "esp32x_fixes.h"
  */
 #ifdef __riscv
 
