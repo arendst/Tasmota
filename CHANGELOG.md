@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 - Command ``Timers`` layout of JSON message changed to single line
 - Command ``Gpio`` layout of JSON message changed to single line
 - Command ``Modules`` layout of JSON message changed to single line
+- I2C extended MPU6886 to also support MPU9250 (found in Legacy M5Stack Fire)
 
 ## [9.4.0.4]
 ### Added

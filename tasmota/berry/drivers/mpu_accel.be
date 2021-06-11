@@ -7,6 +7,7 @@
 
 class MPU6886 : Driver
   var wire          #- if wire == nil then the module is not initialized -#
+  var device
   var gres, ares
   var accel, gyro
 
@@ -15,7 +16,10 @@ class MPU6886 : Driver
 
     if self.wire
       var v = self.wire.read(0x68,0x75,1)
-      if v != 0x19 return end  #- wrong device -#
+      if   v == 0x19  self.device = 6886
+      elif v == 0x71  self.device = 9250
+      else self.wire = nil return   #- wrong device -#
+      end
 
       self.wire.write(0x68, 0x6B, 0, 1)
       tasmota.delay(10)
@@ -46,7 +50,7 @@ class MPU6886 : Driver
 
       self.gres = 2000.0/32768.0
       self.ares = 8.0/32678.0
-      print("I2C: MPU6886 detected on bus "+str(self.wire.bus))
+      print("I2C:","MPU"+str(self.device),"detected on bus",self.wire.bus)
     end
   end
 
@@ -90,13 +94,14 @@ class MPU6886 : Driver
     if !self.wire return nil end  #- exit if not initialized -#
     import string
     var msg = string.format(
-             "{s}MPU6886 acc_x{m}%.3f G{e}"..
-             "{s}MPU6886 acc_y{m}%.3f G{e}"..
-             "{s}MPU6886 acc_z{m}%.3f G{e}"..
-             "{s}MPU6886 gyr_x{m}%i dps{e}"..
-             "{s}MPU6886 gyr_y{m}%i dps{e}"..
-             "{s}MPU6886 gyr_z{m}%i dps{e}",
-              self.accel[0], self.accel[1], self.accel[2], self.gyro[0], self.gyro[1], self.gyro[2])
+             "{s}MPU%d acc_x{m}%.3f G{e}"..
+             "{s}MPU%d acc_y{m}%.3f G{e}"..
+             "{s}MPU%d acc_z{m}%.3f G{e}"..
+             "{s}MPU%d gyr_x{m}%i dps{e}"..
+             "{s}MPU%d gyr_y{m}%i dps{e}"..
+             "{s}MPU%d gyr_z{m}%i dps{e}",
+              self.device, self.accel[0], self.device, self.accel[1], self.device, self.accel[2],
+              self.device, self.gyro[0], self.device, self.gyro[1], self.device, self.gyro[2])
     tasmota.web_send_decimal(msg)
   end
 
@@ -107,11 +112,11 @@ class MPU6886 : Driver
     var ax = int(self.accel[0] * 1000)
     var ay = int(self.accel[1] * 1000)
     var az = int(self.accel[2] * 1000)
-    var msg = string.format(",\"MPU6886\":{\"AX\":%i,\"AY\":%i,\"AZ\":%i,\"GX\":%i,\"GY\":%i,\"GZ\":%i}",
-              ax, ay, az, self.gyro[0], self.gyro[1], self.gyro[2])
+    var msg = string.format(",\"MPU%d\":{\"AX\":%i,\"AY\":%i,\"AZ\":%i,\"GX\":%i,\"GY\":%i,\"GZ\":%i}",
+              self.device, ax, ay, az, self.gyro[0], self.gyro[1], self.gyro[2])
     tasmota.response_append(msg)
   end
 
 end
-mpu6886 = MPU6886()
-tasmota.add_driver(mpu6886)
+mpu_accel = MPU6886()
+tasmota.add_driver(mpu_accel)
