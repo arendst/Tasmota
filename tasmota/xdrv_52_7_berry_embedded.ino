@@ -88,7 +88,7 @@ const char berry_prog[] =
   // Instantiate tasmota object
   "tasmota = Tasmota() "
   "def log(m,l) tasmota.log(m,l) end "
-  "def load(f) tasmota.load(f) end "
+  "def load(f) return tasmota.load(f) end "
 
 #ifdef USE_LVGL
   // instanciate singleton
@@ -149,31 +149,4 @@ const char berry_prog[] =
 #endif // USE_LIGHT
   ;
 
-const char berry_autoexec[] =
-  // load "autoexec.be" using import, which loads either .be or .bec file
-  "import string "
-  "try "
-    "load('autoexec.be') "
-  "except .. as e,m "
-    "if e=='io_error' && string.find(m, \"autoexec.be\")>0 "
-      "log(\"BRY: no autoexec.be\") "
-    "else "
-      "log(\"BRY: exception in autoexec.be: \"+e+\": \"+m) "
-    "end "
-  "end "
-  ;
-
-const char berry_preinit[] =
-  // load "autoexec.be" using import, which loads either .be or .bec file
-  "import string "
-  "try "
-    "load('preinit.be') "
-  "except .. as e,m "
-    "if e=='io_error' && string.find(m, \"preinit.be\")>0 "
-      "log(\"BRY: no preinit.be\") "
-    "else "
-      "log(\"BRY: exception in preinit.be: \"+e+\": \"+m) "
-    "end "
-  "end "
-  ;
 #endif  // USE_BERRY
