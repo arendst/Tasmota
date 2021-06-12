@@ -1727,63 +1727,30 @@ const bclosure add_driver_closure = {
 
 /*******************************************************************/
 
-
-/********************************************************************
-    // simple wrapper to load a file
-    // prefixes '/' if needed, and simpler to use than `compile()`
-    "def load(f) "
-      "import string "
-      "try "
-        // check that the file ends with '.be' of '.bec'
-        "var fl = string.split(f,'.') "
-        "if (size(fl) <= 1 || (fl[-1] != 'be' && fl[-1] != 'bec')) "
-          "raise \"file extension is not '.be' or '.bec'\" "
-        "end "
-        "var native = f[size(f)-1] == 'c' "
-        // add prefix if needed
-        "if f[0] != '/' f = '/' + f end "
-        // load - works the same for .be and .bec
-        "var c = compile(f,'file') "
-        // save the compiled bytecode
-        "if !native "
-          "try "
-            "self.save(f+'c', c) "
-          "except .. as e "
-            "self.log(string.format('BRY: could not save compiled file %s (%s)',f+'c',e)) "
-          "end "
-        "end "
-        // call the compiled code
-        "c() "
-        "self.log(string.format(\"BRY: sucessfully loaded '%s'\",f)) "
-      "except .. as e "
-        "raise \"io_error\",string.format(\"Could not load file '%s'\",f) "
-      "end "
-    "end "
-********************************************************************/
 /********************************************************************
 ** Solidified function: load
 ********************************************************************/
 
+/********** Solidified proto: load */
 be_define_local_const_str(load_str_name, "load", -435725847, 4);
-be_define_local_const_str(load_str_source, "string", 398550328, 6);
+be_define_local_const_str(load_str_source, "input", -103256197, 5);
 be_define_local_const_str(load_str_0, "string", 398550328, 6);
 be_define_local_const_str(load_str_1, "split", -2017972765, 5);
 be_define_local_const_str(load_str_2, ".", 722245873, 1);
 be_define_local_const_str(load_str_4, "be", 942383232, 2);
 be_define_local_const_str(load_str_5, "bec", 1336821081, 3);
-be_define_local_const_str(load_str_6, "file extension is not '.be' or '.bec'", -1199247657, 37);
-be_define_local_const_str(load_str_7, "c", -435409838, 1);
-be_define_local_const_str(load_str_9, "/", 705468254, 1);
-be_define_local_const_str(load_str_10, "file", -1427482813, 4);
-be_define_local_const_str(load_str_11, "save", -855671224, 4);
-be_define_local_const_str(load_str_12, "log", 1062293841, 3);
-be_define_local_const_str(load_str_13, "format", -1180859054, 6);
-be_define_local_const_str(load_str_14, "BRY: could not save compiled file %s (%s)", 736659787, 41);
-be_define_local_const_str(load_str_15, "BRY: sucessfully loaded '%s'", -675188639, 28);
-be_define_local_const_str(load_str_16, "Could not load file '%s'", -708657871, 24);
-be_define_local_const_str(load_str_17, "io_error", 1970281036, 8);
+be_define_local_const_str(load_str_6, "io_error", 1970281036, 8);
+be_define_local_const_str(load_str_7, "file extension is not '.be' or '.bec'", -1199247657, 37);
+be_define_local_const_str(load_str_8, "c", -435409838, 1);
+be_define_local_const_str(load_str_9, "r", -150190315, 1);
+be_define_local_const_str(load_str_10, "close", 667630371, 5);
+be_define_local_const_str(load_str_11, "file", -1427482813, 4);
+be_define_local_const_str(load_str_12, "save", -855671224, 4);
+be_define_local_const_str(load_str_13, "log", 1062293841, 3);
+be_define_local_const_str(load_str_14, "format", -1180859054, 6);
+be_define_local_const_str(load_str_15, "BRY: could not save compiled file %s (%s)", 736659787, 41);
 
-static const bvalue load_ktab[18] = {
+static const bvalue load_ktab[16] = {
   { { .s=be_local_const_str(load_str_0) }, BE_STRING},
   { { .s=be_local_const_str(load_str_1) }, BE_STRING},
   { { .s=be_local_const_str(load_str_2) }, BE_STRING},
@@ -1792,7 +1759,7 @@ static const bvalue load_ktab[18] = {
   { { .s=be_local_const_str(load_str_5) }, BE_STRING},
   { { .s=be_local_const_str(load_str_6) }, BE_STRING},
   { { .s=be_local_const_str(load_str_7) }, BE_STRING},
-  { { .i=0 }, BE_INT},
+  { { .s=be_local_const_str(load_str_8) }, BE_STRING},
   { { .s=be_local_const_str(load_str_9) }, BE_STRING},
   { { .s=be_local_const_str(load_str_10) }, BE_STRING},
   { { .s=be_local_const_str(load_str_11) }, BE_STRING},
@@ -1800,123 +1767,81 @@ static const bvalue load_ktab[18] = {
   { { .s=be_local_const_str(load_str_13) }, BE_STRING},
   { { .s=be_local_const_str(load_str_14) }, BE_STRING},
   { { .s=be_local_const_str(load_str_15) }, BE_STRING},
-  { { .s=be_local_const_str(load_str_16) }, BE_STRING},
-  { { .s=be_local_const_str(load_str_17) }, BE_STRING},
 };
 
-static const uint32_t load_code[73] = {
-  0xA40A0000,  //  0000  IMPORT R2  R256
-  0xA802003C,  //  0001  EXBLK  0 #003F
-  0x8C0C0501,  //  0002  GETMET R3  R2  R257
-  0x5C140200,  //  0003  MOVE R5  R1
-  0x58180002,  //  0004  LDCONST  R6  K2
-  0x7C0C0600,  //  0005  CALL R3  3
-  0x60100012,  //  0006  GETGBL R4  G18
-  0x5C140600,  //  0007  MOVE R5  R3
-  0x7C100200,  //  0008  CALL R4  1
-  0x18100903,  //  0009  LE R4  R4  R259
-  0x74120007,  //  000A  JMPT R4  #0013
-  0x5411FFFE,  //  000B  LDINT  R4  -1
-  0x94100604,  //  000C  GETIDX R4  R3  R4
-  0x20100904,  //  000D  NE R4  R4  R260
-  0x78120004,  //  000E  JMPF R4  #0014
-  0x5411FFFE,  //  000F  LDINT  R4  -1
-  0x94100604,  //  0010  GETIDX R4  R3  R4
-  0x20100905,  //  0011  NE R4  R4  R261
-  0x78120000,  //  0012  JMPF R4  #0014
-  0xB0020C00,  //  0013  RAISE  0 R262  R0
-  0x60100012,  //  0014  GETGBL R4  G18
-  0x5C140200,  //  0015  MOVE R5  R1
-  0x7C100200,  //  0016  CALL R4  1
-  0x4100903,  //  0017  SUB R4  R4  R259
-  0x94100204,  //  0018  GETIDX R4  R1  R4
-  0x1C100907,  //  0019  EQ R4  R4  R263
-  0x94140308,  //  001A  GETIDX R5  R1  R264
-  0x20140B09,  //  001B  NE R5  R5  R265
-  0x78160000,  //  001C  JMPF R5  #001E
-  0x61201,  //  001D  ADD R1  R265  R1
-  0x60140005,  //  001E  GETGBL R5  G5
-  0x5C180200,  //  001F  MOVE R6  R1
-  0x581C000A,  //  0020  LDCONST  R7  K10
-  0x7C140400,  //  0021  CALL R5  2
-  0x74120011,  //  0022  JMPT R4  #0035
-  0xA8020005,  //  0023  EXBLK  0 #002A
-  0x8C18010B,  //  0024  GETMET R6  R0  R267
-  0x200307,  //  0025  ADD  R8  R1  R263
-  0x5C240A00,  //  0026  MOVE R9  R5
-  0x7C180600,  //  0027  CALL R6  3
-  0xA8040001,  //  0028  EXBLK  1 1
-  0x7002000A,  //  0029  JMP    #0035
-  0xAC180001,  //  002A  CATCH  R6  0 1
-  0x70020007,  //  002B  JMP    #0034
-  0x8C1C010C,  //  002C  GETMET R7  R0  R268
-  0x8C24050D,  //  002D  GETMET R9  R2  R269
-  0x582C000E,  //  002E  LDCONST  R11 K14
-  0x300307,  //  002F  ADD  R12 R1  R263
-  0x5C340C00,  //  0030  MOVE R13 R6
-  0x7C240800,  //  0031  CALL R9  4
-  0x7C1C0400,  //  0032  CALL R7  2
-  0x70020000,  //  0033  JMP    #0035
-  0xB0080000,  //  0034  RAISE  2 R0  R0
-  0x5C180A00,  //  0035  MOVE R6  R5
-  0x7C180000,  //  0036  CALL R6  0
-  0x8C18010C,  //  0037  GETMET R6  R0  R268
-  0x8C20050D,  //  0038  GETMET R8  R2  R269
-  0x5828000F,  //  0039  LDCONST  R10 K15
-  0x5C2C0200,  //  003A  MOVE R11 R1
-  0x7C200600,  //  003B  CALL R8  3
-  0x7C180400,  //  003C  CALL R6  2
-  0xA8040001,  //  003D  EXBLK  1 1
-  0x70020008,  //  003E  JMP    #0048
-  0xAC0C0001,  //  003F  CATCH  R3  0 1
-  0x70020005,  //  0040  JMP    #0047
-  0x8C10050D,  //  0041  GETMET R4  R2  R269
-  0x58180010,  //  0042  LDCONST  R6  K16
-  0x5C1C0200,  //  0043  MOVE R7  R1
-  0x7C100600,  //  0044  CALL R4  3
-  0xB0062204,  //  0045  RAISE  1 R273  R4
-  0x70020000,  //  0046  JMP    #0048
-  0xB0080000,  //  0047  RAISE  2 R0  R0
-  0x80000000,  //  0048  RET  0 R0
+static const uint32_t load_code[68] = {
+  0xA40A0000,  //  0000  IMPORT	R2	R256
+  0x8C0C0501,  //  0001  GETMET	R3	R2	R257
+  0x5C140200,  //  0002  MOVE	R5	R1
+  0x58180002,  //  0003  LDCONST	R6	K2
+  0x7C0C0600,  //  0004  CALL	R3	3
+  0x60100012,  //  0005  GETGBL	R4	G18
+  0x5C140600,  //  0006  MOVE	R5	R3
+  0x7C100200,  //  0007  CALL	R4	1
+  0x18100903,  //  0008  LE	R4	R4	R259
+  0x74120007,  //  0009  JMPT	R4	#0012
+  0x5411FFFE,  //  000A  LDINT	R4	-1
+  0x94100604,  //  000B  GETIDX	R4	R3	R4
+  0x20100904,  //  000C  NE	R4	R4	R260
+  0x78120004,  //  000D  JMPF	R4	#0013
+  0x5411FFFE,  //  000E  LDINT	R4	-1
+  0x94100604,  //  000F  GETIDX	R4	R3	R4
+  0x20100905,  //  0010  NE	R4	R4	R261
+  0x78120000,  //  0011  JMPF	R4	#0013
+  0xB0060D07,  //  0012  RAISE	1	R262	R263
+  0x60100012,  //  0013  GETGBL	R4	G18
+  0x5C140200,  //  0014  MOVE	R5	R1
+  0x7C100200,  //  0015  CALL	R4	1
+  0x4100903,  //  0016  SUB	R4	R4	R259
+  0x94100204,  //  0017  GETIDX	R4	R1	R4
+  0x1C100908,  //  0018  EQ	R4	R4	R264
+  0xA8020007,  //  0019  EXBLK	0	#0022
+  0x6014000E,  //  001A  GETGBL	R5	G14
+  0x5C180200,  //  001B  MOVE	R6	R1
+  0x581C0009,  //  001C  LDCONST	R7	K9
+  0x7C140400,  //  001D  CALL	R5	2
+  0x8C180B0A,  //  001E  GETMET	R6	R5	R266
+  0x7C180200,  //  001F  CALL	R6	1
+  0xA8040001,  //  0020  EXBLK	1	1
+  0x70020006,  //  0021  JMP		#0029
+  0x58140006,  //  0022  LDCONST	R5	K6
+  0xAC140200,  //  0023  CATCH	R5	1	0
+  0x70020002,  //  0024  JMP		#0028
+  0x50140000,  //  0025  LDBOOL	R5	0	0
+  0x80040A00,  //  0026  RET	1	R5
+  0x70020000,  //  0027  JMP		#0029
+  0xB0080000,  //  0028  RAISE	2	R0	R0
+  0x60140005,  //  0029  GETGBL	R5	G5
+  0x5C180200,  //  002A  MOVE	R6	R1
+  0x581C000B,  //  002B  LDCONST	R7	K11
+  0x7C140400,  //  002C  CALL	R5	2
+  0x74120011,  //  002D  JMPT	R4	#0040
+  0xA8020005,  //  002E  EXBLK	0	#0035
+  0x8C18010C,  //  002F  GETMET	R6	R0	R268
+  0x200308,  //  0030  ADD	R8	R1	R264
+  0x5C240A00,  //  0031  MOVE	R9	R5
+  0x7C180600,  //  0032  CALL	R6	3
+  0xA8040001,  //  0033  EXBLK	1	1
+  0x7002000A,  //  0034  JMP		#0040
+  0xAC180001,  //  0035  CATCH	R6	0	1
+  0x70020007,  //  0036  JMP		#003F
+  0x8C1C010D,  //  0037  GETMET	R7	R0	R269
+  0x8C24050E,  //  0038  GETMET	R9	R2	R270
+  0x582C000F,  //  0039  LDCONST	R11	K15
+  0x300308,  //  003A  ADD	R12	R1	R264
+  0x5C340C00,  //  003B  MOVE	R13	R6
+  0x7C240800,  //  003C  CALL	R9	4
+  0x7C1C0400,  //  003D  CALL	R7	2
+  0x70020000,  //  003E  JMP		#0040
+  0xB0080000,  //  003F  RAISE	2	R0	R0
+  0x5C180A00,  //  0040  MOVE	R6	R5
+  0x7C180000,  //  0041  CALL	R6	0
+  0x50180200,  //  0042  LDBOOL	R6	1	0
+  0x80040C00,  //  0043  RET	1	R6
 };
 
-static const bproto load_proto = {
-  NULL,     // bgcobject *next
-  8,       // type
-  0x08,        // marked
-  14,       // nstack
-  0,       // nupvals
-  2,       // argc
-  0,       // varg
-  NULL,     // bgcobject *gray
-  NULL,     // bupvaldesc *upvals
-  (bvalue*) &load_ktab,     // ktab
-  NULL,     // bproto **ptab
-  (binstruction*) &load_code,     // code
-  be_local_const_str(load_str_name),       // name
-  73,       // codesize
-  18,       // nconst
-  0,       // nproto
-  be_local_const_str(load_str_source),     // source
-#if BE_DEBUG_RUNTIME_INFO /* debug information */
-  NULL,     // lineinfo
-  0,        // nlineinfo
-#endif
-#if BE_DEBUG_VAR_INFO
-  NULL,     // varinfo
-  0,        // nvarinfo
-#endif
-};
-
-const bclosure load_closure = {
-  NULL,     // bgcobject *next
-  36,       // type
-  0x08,        // marked
-  0,       // nupvals
-  NULL,     // bgcobject *gray
-  (bproto*) &load_proto,     // proto
-  { NULL }     // upvals
-};
+be_define_local_proto(load, 14, 2, 1, 0, 0);
+be_define_local_closure(load);
 
 /*******************************************************************/
 

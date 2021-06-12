@@ -1,7 +1,43 @@
 #- Native code used for testing and code solidification -#
 #- Do not use it -#
 
-class Tasmota
+class Tasmota2 : Tasmota
+
+  def load(f)
+    import string
+
+    # check that the file ends with '.be' of '.bec'
+    var fl = string.split(f,'.')
+    if (size(fl) <= 1 || (fl[-1] != 'be' && fl[-1] != 'bec'))
+      raise "io_error", "file extension is not '.be' or '.bec'"
+    end
+    var native = f[size(f)-1] == 'c'
+    # load - works the same for .be and .bec
+
+    # try if file exists
+    try
+      var ff = open(f, 'r')
+      ff.close()
+    except 'io_error'
+      return false    # signals that file does not exist
+    end
+
+    var c = compile(f,'file')
+    # save the compiled bytecode
+    if !native
+      try
+        self.save(f+'c', c)
+      except .. as e
+        self.log(string.format('BRY: could not save compiled file %s (%s)',f+'c',e))
+      end
+    end
+    # call the compiled code
+    c()
+    # call successfuls
+    return true
+
+  end
+
   def event(type, cmd, idx, payload)
     if type=='cmd' return self.exec_cmd(cmd, idx, payload)
     elif type=='rule' return self.exec_rules(payload)
@@ -55,3 +91,4 @@ class Tasmota
   end
 
 end
+tasmota = Tasmota2()
