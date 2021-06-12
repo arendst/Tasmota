@@ -13,7 +13,7 @@ def runcolor()
   var red = tasmota.scale_uint(int(pwr), 0, 2500, 0, 255)
   var green = 255 - red
   var channels = [red, green, 0]
-  tasmota.set_light({"channels":channels, "bri":64, "power":true})
+  light.set({"channels":channels, "bri":64, "power":true})
   tasmota.set_timer(2000, runcolor)
 end
 
