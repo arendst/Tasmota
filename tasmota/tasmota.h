@@ -28,15 +28,10 @@
 #define MQTT_DATA_STRING                    // Use heap instead of fixed memory for TasmotaGlobal.mqtt_data
 
 /*********************************************************************************************\
- * Default sensor states
+ * Default image
 \*********************************************************************************************/
 
 #define CODE_IMAGE_STR "tasmota"
-
-#define USE_LIGHT                           // Enable light control
-#define USE_ENERGY_SENSOR                   // Use energy sensors (+14k code)
-#define USE_HLW8012                         // Use energy sensor for Sonoff Pow and WolfBlitz
-#define USE_CSE7766                         // Use energy sensor for Sonoff S31 and Pow R2
 
 /*********************************************************************************************\
  * Power Type
@@ -175,7 +170,8 @@ const uint16_t TOPSZ = 151;                 // Max number of characters in topic
 
 #ifdef ESP8266
 #ifdef PIO_FRAMEWORK_ARDUINO_MMU_CACHE16_IRAM48_SECHEAP_SHARED
-const uint16_t LOG_BUFFER_SIZE = 6144;      // Max number of characters in logbuffer used by weblog, syslog and mqttlog
+const uint16_t LOG_BUFFER_SIZE = 4096;      // Max number of characters in logbuffer used by weblog, syslog and mqttlog
+//const uint16_t LOG_BUFFER_SIZE = 6144;      // Max number of characters in logbuffer used by weblog, syslog and mqttlog
 #else
 const uint16_t LOG_BUFFER_SIZE = 4096;      // Max number of characters in logbuffer used by weblog, syslog and mqttlog
 #endif  // PIO_FRAMEWORK_ARDUINO_MMU_CACHE16_IRAM48_SECHEAP_SHARED
