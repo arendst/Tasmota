@@ -1,5 +1,5 @@
 /*
-  Settings->ino - user settings for Tasmota
+  settings.ino - user settings for Tasmota
 
   Copyright (C) 2021  Theo Arends
 

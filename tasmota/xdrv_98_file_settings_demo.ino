@@ -61,16 +61,16 @@ void CmndDrvText(void) {
     if (!XdrvMailbox.usridx) {
       // Command DrvText
       for (uint32_t i = 0; i < DRV98_MAX_DRV_TEXT; i++) {
-        AddLog(LOG_LEVEL_DEBUG, PSTR("DRV: DrvText%02d %s"), i, Drv98Settings->drv_text[i]);
+        AddLog(LOG_LEVEL_DEBUG, PSTR("DRV: DrvText%02d %s"), i, Drv98Settings.drv_text[i]);
       }
       ResponseCmndDone();
     } else {
       // Command DrvText<index> <text>
       uint32_t index = XdrvMailbox.index -1;
       if (XdrvMailbox.data_len > 0) {
-        snprintf_P(Drv98Settings->drv_text[index], sizeof(Drv98Settings->drv_text[index]), XdrvMailbox.data);
+        snprintf_P(Drv98Settings.drv_text[index], sizeof(Drv98Settings.drv_text[index]), XdrvMailbox.data);
       }
-      ResponseCmndIdxChar(Drv98Settings->drv_text[index]);
+      ResponseCmndIdxChar(Drv98Settings.drv_text[index]);
     }
   }
 }
@@ -90,15 +90,15 @@ void DrvDemoSettingsDefault(void) {
   AddLog(LOG_LEVEL_INFO, PSTR("DRV: " D_USE_DEFAULTS));
 
   memset(&Drv98Settings, 0x00, sizeof(Drv98Settings));
-  Drv98Settings->version = DRV98_VERSION;
+  Drv98Settings.version = DRV98_VERSION;
   // Init any other parameter in struct Drv98Settings
-  snprintf_P(Drv98Settings->drv_text[0], sizeof(Drv98Settings->drv_text[0]), PSTR("Azalea"));
+  snprintf_P(Drv98Settings.drv_text[0], sizeof(Drv98Settings.drv_text[0]), PSTR("Azalea"));
 }
 
 void DrvDemoSettingsDelta(void) {
   // Fix possible setting deltas
 
-  if (Drv98Settings->version != DRV98_VERSION) {      // Fix version dependent changes
+  if (Drv98Settings.version != DRV98_VERSION) {      // Fix version dependent changes
 
     if (Settings->version < 0x01010100) {
       AddLog(LOG_LEVEL_INFO, PSTR("DRV: Update oldest version restore"));
@@ -110,7 +110,7 @@ void DrvDemoSettingsDelta(void) {
     }
 
     // Set current version and save settings
-    Drv98Settings->version = DRV98_VERSION;
+    Drv98Settings.version = DRV98_VERSION;
     DrvDemoSettingsSave();
   }
 }
@@ -142,15 +142,15 @@ void DrvDemoSettingsLoad(void) {
   AddLog(LOG_LEVEL_INFO, PSTR("DRV: ERROR File system not enabled"));
 #endif  // USE_UFILESYS
 
-  Drv98Settings->crc32 = DrvDemoSettingsCrc32();
+  Drv98Settings.crc32 = DrvDemoSettingsCrc32();
 }
 
 void DrvDemoSettingsSave(void) {
   // Called from FUNC_SAVE_SETTINGS every SaveData second and at restart
 
-  if (DrvDemoSettingsCrc32() != Drv98Settings->crc32) {
+  if (DrvDemoSettingsCrc32() != Drv98Settings.crc32) {
     // Try to save file /.drvset098
-    Drv98Settings->crc32 = DrvDemoSettingsCrc32();
+    Drv98Settings.crc32 = DrvDemoSettingsCrc32();
 
     char filename[20];
     // Use for sensors:

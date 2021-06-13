@@ -892,7 +892,7 @@ public:
     calcLevels();
   }
 
-  // save the current light state to Settings->
+  // save the current light state to Settings
   void saveSettings() {
     if (Light.pwm_multi_channels) {
       // simply save each channel

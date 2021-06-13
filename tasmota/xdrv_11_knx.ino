@@ -34,7 +34,7 @@ Constants in tasmota.h
                                                        #define MAX_CALLBACKS             10
                                              Both to MAX_KNX_CB
 
-Variables in Settings->h
+Variables in settings.h
 -----------------------
 
 bool          Settings->flag.knx_enabled             Enable/Disable KNX Protocol

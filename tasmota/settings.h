@@ -1,5 +1,5 @@
 /*
-  Settings->h - setting variables for Tasmota
+  settings.h - setting variables for Tasmota
 
   Copyright (C) 2021  Theo Arends
 

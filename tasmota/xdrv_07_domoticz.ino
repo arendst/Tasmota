@@ -39,7 +39,7 @@ void (* const DomoticzCommand[])(void) PROGMEM = {
 const char DOMOTICZ_MESSAGE[] PROGMEM = "{\"idx\":%d,\"nvalue\":%d,\"svalue\":\"%s\",\"Battery\":%d,\"RSSI\":%d}";
 
 #if MAX_DOMOTICZ_SNS_IDX < DZ_MAX_SENSORS
-  #error "Domoticz: Too many sensors or change Settings->h layout"
+  #error "Domoticz: Too many sensors or change settings.h layout"
 #endif
 
 const char kDomoticzSensors[] PROGMEM =

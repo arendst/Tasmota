@@ -254,7 +254,7 @@ String EthernetMacAddress(void);
 #define FS_FILE_APPEND              "a"
 
 #define TASM_FILE_SETTINGS          "/.settings"       // Settings binary blob
-#define TASM_FILE_SETTINGS_LKG      "/.Settings->lkg"   // Last Known Good Settings binary blob
+#define TASM_FILE_SETTINGS_LKG      "/.settings.lkg"   // Last Known Good Settings binary blob
 #define TASM_FILE_DRIVER            "/.drvset%03d"
 #define TASM_FILE_SENSOR            "/.snsset%03d"
 #define TASM_FILE_TLSKEY            "/tlskey"          // TLS private key
