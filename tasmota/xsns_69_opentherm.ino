@@ -465,15 +465,20 @@ uint8_t sns_opentherm_read_flags(char *data, uint32_t len)
 // and "ot_ch" is "1", boiler will keep heating
 #define D_CMND_SET_CENTRAL_HEATING_ENABLED "ch"
 
+// Get/Set boiler status m_enableHotWater value. It's equivalent of the EnableHotWater settings
+// flag value, however, this command does not update the settings.
+#define D_CMND_SET_HOT_WATER_ENABLED "dhw"
+
 const char kOpenThermCommands[] PROGMEM = D_PRFX_OTHERM "|" D_CMND_OTHERM_BOILER_SETPOINT "|" D_CMND_OTHERM_DHW_SETPOINT
-    "|" D_CMND_OTHERM_SAVE_SETTINGS "|" D_CMND_OTHERM_FLAGS "|" D_CMND_SET_CENTRAL_HEATING_ENABLED;
+	    "|" D_CMND_OTHERM_SAVE_SETTINGS "|" D_CMND_OTHERM_FLAGS "|" D_CMND_SET_CENTRAL_HEATING_ENABLED "|" D_CMND_SET_HOT_WATER_ENABLED;
 
 void (*const OpenThermCommands[])(void) PROGMEM = {
     &sns_opentherm_boiler_setpoint_cmd,
     &sns_opentherm_hot_water_setpoint_cmd,
     &sns_opentherm_save_settings_cmd,
     &sns_opentherm_flags_cmd,
-    &sns_opentherm_set_central_heating_cmd};
+    &sns_opentherm_set_central_heating_cmd,
+    &sns_opentherm_set_hot_water_cmd};
 
 void sns_opentherm_cmd(void) { }
 void sns_opentherm_boiler_setpoint_cmd(void)
@@ -535,6 +540,16 @@ void sns_opentherm_set_central_heating_cmd(void)
         sns_ot_boiler_status.m_enableCentralHeating = atoi(XdrvMailbox.data);
     }
     ResponseCmndNumber(sns_ot_boiler_status.m_enableCentralHeating ? 1 : 0);
+}
+
+void sns_opentherm_set_hot_water_cmd(void)
+{
+    bool query = strlen(XdrvMailbox.data) == 0;
+    if (!query)
+    {
+        sns_ot_boiler_status.m_enableHotWater = atoi(XdrvMailbox.data);
+    }
+    ResponseCmndNumber(sns_ot_boiler_status.m_enableHotWater ? 1 : 0);
 }
 
 /*********************************************************************************************\
