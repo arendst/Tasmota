@@ -1,0 +1,17 @@
+{
+  "name": "universal display Library",
+  "version": "0.1",
+  "description": "This is a library a couple of displays.",
+  "license": "MIT",
+  "homepage": "https://github.com/arendst/Tasmota",
+  "frameworks": "*",
+  "platforms": "*",
+  "authors":
+  {
+    "name": "Gerhard Mutz",
+    "maintainer": true
+  },
+  "build": {
+    "flags": [ "-I$PROJECT_DIR/include" ]
+  }
+}

@@ -78,6 +78,10 @@ void *special_realloc(void *ptr, size_t size) {
   return realloc(ptr, size);
 }
 
+void *special_calloc(size_t num, size_t size) {
+  return calloc(num, size);
+}
+
 String GetDeviceHardware(void) {
   // esptool.py get_efuses
   uint32_t efuse1 = *(uint32_t*)(0x3FF00050);
@@ -486,6 +490,13 @@ void *special_realloc(void *ptr, size_t size) {
     return heap_caps_realloc(ptr, size, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
   } else {
     return realloc(ptr, size);
+  }
+}
+void *special_calloc(size_t num, size_t size) {
+  if (psramFound()) {
+    return heap_caps_calloc(num, size, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+  } else {
+    return calloc(num, size);
   }
 }
 

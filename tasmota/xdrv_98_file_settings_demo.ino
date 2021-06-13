@@ -100,11 +100,11 @@ void DrvDemoSettingsDelta(void) {
 
   if (Drv98Settings.version != DRV98_VERSION) {      // Fix version dependent changes
 
-    if (Settings.version < 0x01010100) {
+    if (Settings->version < 0x01010100) {
       AddLog(LOG_LEVEL_INFO, PSTR("DRV: Update oldest version restore"));
 
     }
-    if (Settings.version < 0x01010101) {
+    if (Settings->version < 0x01010101) {
       AddLog(LOG_LEVEL_INFO, PSTR("DRV: Update old version restore"));
 
     }

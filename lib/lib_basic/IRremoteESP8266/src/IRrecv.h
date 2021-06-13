@@ -729,6 +729,10 @@ class IRrecv {
   bool decodeXmp(decode_results *results, uint16_t offset = kStartOffset,
                  const uint16_t nbits = kXmpBits, const bool strict = true);
 #endif  // DECODE_XMP
+#if DECODE_TRUMA
+  bool decodeTruma(decode_results *results, uint16_t offset = kStartOffset,
+                   const uint16_t nbits = kTrumaBits, const bool strict = true);
+#endif  // DECODE_TRUMA
 };
 
 #endif  // IRRECV_H_

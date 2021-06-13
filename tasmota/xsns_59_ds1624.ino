@@ -182,7 +182,7 @@ void DS1624Show(bool json)
     if (!ds1624_sns[i].valid) { continue; }
 
     if (json) {
-      ResponseAppend_P(JSON_SNS_F_TEMP, ds1624_sns[i].name, Settings.flag2.temperature_resolution, &ds1624_sns[i].value);
+      ResponseAppend_P(JSON_SNS_F_TEMP, ds1624_sns[i].name, Settings->flag2.temperature_resolution, &ds1624_sns[i].value);
       if ((0 == TasmotaGlobal.tele_period) && once) {
 #ifdef USE_DOMOTICZ
         DomoticzFloatSensor(DZ_TEMP, ds1624_sns[i].value);

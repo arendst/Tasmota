@@ -27,6 +27,7 @@
 \*********************************************************************************************/
 
 #define D_JSON_ABORTED "Aborted"
+#define D_JSON_ACK "Ack"
 #define D_JSON_ACTIVE "Active"
 #define D_JSON_ADDRESS "Address"
 #define D_JSON_AIRQUALITY "AirQuality"
@@ -104,6 +105,7 @@
 #define D_JSON_IMPORT_POWER "ImportPower"
 #define D_JSON_IMPORT_REACTIVE "ImportReactive"
 #define D_JSON_INFRARED "Infrared"
+#define D_JSON_INVALID_FILE_TYPE "Invalid filetype or buffer"
 #define D_JSON_UNKNOWN "Unknown"
 #define D_JSON_LIGHT "Light"
 #define D_JSON_LINK_COUNT "LinkCount"
@@ -111,6 +113,7 @@
 #define D_JSON_LOW "Low"
 #define D_JSON_MAC "Mac"
 #define D_JSON_MASK "Mask"
+#define D_JSON_MD5_MISMATCH "MD5 mismatch"
 #define D_JSON_MEMORY_ERROR "Memory error"
 #define D_JSON_MINIMAL "minimal"
 #define D_JSON_MODEL "Model"
@@ -197,6 +200,7 @@
 #define D_JSON_VOLUME "Volume"
 #define D_JSON_WEIGHT "Weight"
 #define D_JSON_WIFI "Wifi"
+#define D_JSON_WIFI_MODE "Mode"
 #define D_JSON_WRONG "Wrong"
 #define D_JSON_WRONG_PARAMETERS "Wrong parameters"
 #define D_JSON_YESTERDAY "Yesterday"
@@ -345,6 +349,7 @@
   #define D_JSON_GPIO "GPIO"
   #define D_JSON_FLAG "FLAG"
   #define D_JSON_BASE "BASE"
+  #define D_JSON_CMND "CMND"
 #define D_CMND_TEMPOFFSET "TempOffset"
 #define D_CMND_HUMOFFSET "HumOffset"
 #define D_CMND_GLOBAL_TEMP "GlobalTemp"
@@ -390,6 +395,8 @@
 #define D_CMND_INFORETAIN "InfoRetain"
 #define D_CMND_STATERETAIN "StateRetain"
 #define D_CMND_PUBLISH "Publish"
+#define D_CMND_FILEUPLOAD "FileUpload"
+#define D_CMND_FILEDOWNLOAD "FileDownload"
 
 // Commands xdrv_01_webserver.ino
 #define D_CMND_WEBSERVER "Webserver"
@@ -689,7 +696,6 @@
 // Commands xdrv_52_berry.ino - Berry scripting language
 #define D_PRFX_BR "Br"
 #define D_CMND_BR_RUN ""
-#define D_CMND_BR_RESET "Reset"
 #define D_BR_NOT_STARTED  "Berry not started"
 
 // Commands xsns_02_analog.ino

@@ -20,6 +20,8 @@
 
 #ifdef USE_BERRY
 
+#ifdef USE_ENERGY_SENSOR
+
 #include <berry.h>
 
 
@@ -32,7 +34,6 @@
  * 
 \*********************************************************************************************/
 extern "C" {
-#ifdef USE_ENERGY_SENSOR
   // Berry: `begintransmission(address:int) -> nil`
   int32_t b_nrg_read(struct bvm *vm);
   int32_t b_nrg_read(struct bvm *vm) {
@@ -40,7 +41,7 @@ extern "C" {
     map_insert_float(vm, "total", Energy.total);
     // Energy.phase_count
     map_insert_float(vm, "power", Energy.active_power[0]);
-    map_insert_float(vm, "yesterday", (float)Settings.energy_kWhyesterday / 100000);
+    map_insert_float(vm, "yesterday", (float)Settings->energy_kWhyesterday / 100000);
     map_insert_float(vm, "today", Energy.daily);
     map_insert_float(vm, "activepower", Energy.active_power[0]);
     map_insert_float(vm, "apparentpower", Energy.active_power[0]);
@@ -53,18 +54,16 @@ extern "C" {
     be_pop(vm, 1);
     be_return(vm); // Return
   }
-#else // USE_ENERGY_SENSOR
+}
+
+extern "C" {
   // 
   int32_t b_wire_energymissing(struct bvm *vm);
   int32_t b_wire_energymissing(struct bvm *vm) {
     be_raise(vm, "feature_error", "Energy sensor is not enabled, use '#define USE_ENERGY_SENSOR'");
   }
 
-  // define weak aliases
-  int32_t b_nrg_read(struct bvm *vm) __attribute__ ((weak, alias ("b_wire_energymissing")));
-#endif // USE_ENERGY_SENSOR
 }
 
-
-
+#endif // USE_ENERGY_SENSOR
 #endif  // USE_BERRY

@@ -71,7 +71,7 @@ void Dds2382EverySecond(void)
       Energy.power_factor[0] = (float)((buffer[35] << 8) + buffer[36]) / 1000.0;                                          // 1.00
       Energy.frequency[0] = (float)((buffer[37] << 8) + buffer[38]) / 100.0;                                              // 50.0 Hz
       uint8_t offset = 11;
-      if (Settings.flag3.dds2382_model) {  // SetOption71 - Select different Modbus registers for Active Energy (#6531)
+      if (Settings->flag3.dds2382_model) {  // SetOption71 - Select different Modbus registers for Active Energy (#6531)
         offset = 19;
       }
       Energy.export_active[0] = (float)((buffer[offset] << 24) + (buffer[offset +1] << 16) + (buffer[offset +2] << 8) + buffer[offset +3]) / 100.0;    // 429496.729 kW

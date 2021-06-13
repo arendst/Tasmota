@@ -1,5 +1,5 @@
 // Copyright 2017 Jonny Graham
-// Copyright 2018-2019 David Conran
+// Copyright 2018-2021 David Conran
 // Copyright 2021 siriuslzx
 
 /// @file
@@ -31,6 +31,8 @@
 //   Brand: Fujitsu,  Model: ASU30C1 A/C (ARDB1)
 //   Brand: Fujitsu,  Model: AR-RAH1U remote (ARREB1E)
 //   Brand: Fujitsu,  Model: ASU12RLF A/C (ARREB1E)
+//   Brand: Fujitsu,  Model: AR-REW4E remote (ARREW4E)
+//   Brand: Fujitsu,  Model: ASYG09KETA-B A/C (ARREW4E)
 
 #ifndef IR_FUJITSU_H_
 #define IR_FUJITSU_H_
@@ -54,21 +56,27 @@ union FujitsuProtocol {
     uint8_t shortcode[kFujitsuAcStateLengthShort];
   };
   struct {
-    // Byte 0~4
-    uint64_t      :40;
+    // Byte 0~1
+    uint64_t           :16;  // Fixed header
+    // Byte 2
+    uint64_t            :4;
+    uint64_t Id         :2;   // Device Number/Identifier
+    uint64_t            :2;
+    // Byte 3-4
+    uint64_t            :16;
     // Byte 5
-    uint64_t Cmd  :8;  // short codes:cmd; long codes:fixed value
+    uint64_t Cmd        :8;  // short codes:cmd; long codes:fixed value
     // Byte 6
     uint64_t RestLength :8;  // Nr. of bytes in the message after this byte.
     // Byte 7
-    uint64_t        :8;
+    uint64_t Protocol   :8;  // Seems like a protocol version number. Not sure.
     // Byte 8
-    uint64_t Power  :1;
-    uint64_t        :3;
-    uint64_t Temp   :4;
+    uint64_t Power      :1;
+    uint64_t Fahrenheit :1;
+    uint64_t Temp       :6;  // Internal representation varies between models.
     // Byte 9
     uint64_t Mode       :3;
-    uint64_t Clean      :1;
+    uint64_t Clean      :1;  // Also 10C Heat in ARREW4E.
     uint64_t TimerType  :2;
     uint64_t            :2;
     // Byte 10
@@ -89,16 +97,16 @@ union FujitsuProtocol {
     uint64_t              :1;
     uint64_t OutsideQuiet :1;
     // Byte 15
-    uint64_t :0;
+    uint64_t              :0;  // Checksum
   };
 };
 
 // Constants
-const uint8_t kFujitsuAcModeAuto = 0x00;
-const uint8_t kFujitsuAcModeCool = 0x01;
-const uint8_t kFujitsuAcModeDry = 0x02;
-const uint8_t kFujitsuAcModeFan = 0x03;
-const uint8_t kFujitsuAcModeHeat = 0x04;
+const uint8_t kFujitsuAcModeAuto =  0x0;  // 0b000
+const uint8_t kFujitsuAcModeCool =  0x1;  // 0b001
+const uint8_t kFujitsuAcModeDry =   0x2;  // 0b010
+const uint8_t kFujitsuAcModeFan =   0x3;  // 0b011
+const uint8_t kFujitsuAcModeHeat =  0x4;  // 0b100
 
 const uint8_t kFujitsuAcCmdStayOn = 0x00;            // b00000000
 const uint8_t kFujitsuAcCmdTurnOn = 0x01;            // b00000001
@@ -116,8 +124,12 @@ const uint8_t kFujitsuAcFanMed = 0x02;
 const uint8_t kFujitsuAcFanLow = 0x03;
 const uint8_t kFujitsuAcFanQuiet = 0x04;
 
-const uint8_t kFujitsuAcMinTemp = 16;  // 16C
-const uint8_t kFujitsuAcMaxTemp = 30;  // 30C
+const float   kFujitsuAcMinTemp =     16;  // 16C
+const float   kFujitsuAcMaxTemp =     30;  // 30C
+const uint8_t kFujitsuAcTempOffsetC = kFujitsuAcMinTemp;
+const float   kFujitsuAcMinTempF =    60;  // 60F
+const float   kFujitsuAcMaxTempF =    88;  // 88F
+const uint8_t kFujitsuAcTempOffsetF = 44;
 
 const uint8_t kFujitsuAcSwingOff = 0x00;
 const uint8_t kFujitsuAcSwingVert = 0x01;
@@ -146,8 +158,8 @@ const uint16_t kFujitsuAcTimerMax = 12 * 60;  ///< Minutes.
 #define FUJITSU_AC_FAN_MED kFujitsuAcFanMed
 #define FUJITSU_AC_FAN_LOW kFujitsuAcFanLow
 #define FUJITSU_AC_FAN_QUIET kFujitsuAcFanQuiet
-#define FUJITSU_AC_MIN_TEMP kFujitsuAcMinTemp
-#define FUJITSU_AC_MAX_TEMP kFujitsuAcMaxTemp
+#define FUJITSU_AC_MIN_TEMP kFujitsuAcMinTempC
+#define FUJITSU_AC_MAX_TEMP kFujitsuAcMaxTempC
 #define FUJITSU_AC_SWING_OFF kFujitsuAcSwingOff
 #define FUJITSU_AC_SWING_VERT kFujitsuAcSwingVert
 #define FUJITSU_AC_SWING_HORIZ kFujitsuAcSwingHoriz
@@ -178,8 +190,8 @@ class IRFujitsuAC {
   void toggleSwingVert(const bool update = true);
   void setCmd(const uint8_t cmd);
   uint8_t getCmd(void) const;
-  void setTemp(const uint8_t temp);
-  uint8_t getTemp(void) const;
+  void setTemp(const float temp, const bool useCelsius = true);
+  float getTemp(void) const;
   void setFanSpeed(const uint8_t fan);
   uint8_t getFanSpeed(void) const;
   void setMode(const uint8_t mode);
@@ -198,6 +210,8 @@ class IRFujitsuAC {
   bool getClean(void) const;
   void setFilter(const bool on);
   bool getFilter(void) const;
+  void set10CHeat(const bool on);
+  bool get10CHeat(void) const;
   void setOutsideQuiet(const bool on);
   bool getOutsideQuiet(void) const;
   uint8_t getTimerType(void) const;
@@ -207,6 +221,10 @@ class IRFujitsuAC {
   uint16_t getOffSleepTimer(void) const;
   void setOffTimer(const uint16_t nr_mins);
   void setSleepTimer(const uint16_t nr_mins);
+  void setId(const uint8_t num);
+  uint8_t getId(void) const;
+  void setCelsius(const bool on);
+  bool getCelsius(void) const;
   static uint8_t convertMode(const stdAc::opmode_t mode);
   static uint8_t convertFan(stdAc::fanspeed_t speed);
   static stdAc::opmode_t toCommonMode(const uint8_t mode);

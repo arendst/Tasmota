@@ -317,7 +317,7 @@ static void free_suffix(bfuncinfo *finfo, bexpdesc *e)
         be_code_freeregs(finfo, 1);
     }
     /* release object register */
-    if (e->v.ss.tt == ETREG && (int)e->v.ss.obj >= nlocal) {
+    if (e->v.ss.tt == ETREG && (int)e->v.ss.obj >= nlocal && (e->v.ss.obj + 1 >= finfo->freereg)) {
         be_code_freeregs(finfo, 1);
     }
 }

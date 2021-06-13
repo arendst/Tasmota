@@ -665,6 +665,7 @@ uint16_t IRsend::defaultBits(const decode_type_t protocol) {
     case MAGIQUEST:
     case VESTEL_AC:
     case TECHNIBEL_AC:
+    case TRUMA:
       return 56;
     case AMCOR:
     case CARRIER_AC64:
@@ -1022,6 +1023,11 @@ bool IRsend::send(const decode_type_t type, const uint64_t data,
       sendTranscold(data, nbits, min_repeat);
       break;
 #endif  // SEND_TRANSCOLD
+#if SEND_TRUMA
+    case TRUMA:
+      sendTruma(data, nbits, min_repeat);
+      break;
+#endif  // SEND_TRUMA
 #if SEND_VESTEL_AC
     case VESTEL_AC:
       sendVestelAc(data, nbits, min_repeat);

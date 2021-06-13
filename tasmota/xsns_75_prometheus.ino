@@ -50,6 +50,9 @@ const char *UnitfromType(const char *type)  // find unit for measurment type
   if (strcmp(type, "humidity") == 0) {
     return "percentage";
   }
+  if (strcmp(type, "id") == 0) {
+    return "untyped";
+  }
   return "";
 }
 
@@ -74,8 +77,8 @@ void HandleMetrics(void) {
   WSContentSend_P(PSTR("# TYPE tasmota_info gauge\ntasmota_info{version=\"%s\",image=\"%s\",build_timestamp=\"%s\"} 1\n"),
                   TasmotaGlobal.version, TasmotaGlobal.image_name, GetBuildDateAndTime().c_str());
   WSContentSend_P(PSTR("# TYPE tasmota_uptime_seconds gauge\ntasmota_uptime_seconds %d\n"), TasmotaGlobal.uptime);
-  WSContentSend_P(PSTR("# TYPE tasmota_boot_count counter\ntasmota_boot_count %d\n"), Settings.bootcount);
-  WSContentSend_P(PSTR("# TYPE tasmota_flash_writes_total counter\ntasmota_flash_writes_total %d\n"), Settings.save_flag);
+  WSContentSend_P(PSTR("# TYPE tasmota_boot_count counter\ntasmota_boot_count %d\n"), Settings->bootcount);
+  WSContentSend_P(PSTR("# TYPE tasmota_flash_writes_total counter\ntasmota_flash_writes_total %d\n"), Settings->save_flag);
 
 
   // Pseudo-metric providing metadata about the WiFi station.
@@ -85,28 +88,40 @@ void HandleMetrics(void) {
   WSContentSend_P(PSTR("# TYPE tasmota_wifi_station_signal_dbm gauge\ntasmota_wifi_station_signal_dbm{mac_address=\"%s\"} %d\n"), WiFi.BSSIDstr().c_str(), WiFi.RSSI());
 
   if (!isnan(TasmotaGlobal.temperature_celsius)) {
-    dtostrfd(TasmotaGlobal.temperature_celsius, Settings.flag2.temperature_resolution, parameter);
-    WSContentSend_P(PSTR("# TYPE tasmotaglobal_temperature_celsius gauge\ntasmotaglobal_temperature_celsius %s\n"), parameter);
+    dtostrfd(TasmotaGlobal.temperature_celsius, Settings->flag2.temperature_resolution, parameter);
+    WSContentSend_P(PSTR("# TYPE tasmota_global_temperature_celsius gauge\ntasmota_global_temperature_celsius %s\n"), parameter);
   }
   if (TasmotaGlobal.humidity != 0) {
-    dtostrfd(TasmotaGlobal.humidity, Settings.flag2.humidity_resolution, parameter);
-    WSContentSend_P(PSTR("# TYPE tasmotaglobal_humidity gauge\ntasmotaglobal_humidity %s\n"), parameter);
+    dtostrfd(TasmotaGlobal.humidity, Settings->flag2.humidity_resolution, parameter);
+    WSContentSend_P(PSTR("# TYPE tasmota_global_humidity gauge\ntasmota_global_humidity_percentage %s\n"), parameter);
   }
   if (TasmotaGlobal.pressure_hpa != 0) {
-    dtostrfd(TasmotaGlobal.pressure_hpa, Settings.flag2.pressure_resolution, parameter);
-    WSContentSend_P(PSTR("# TYPE tasmotaglobal_pressure_hpa gauge\ntasmotaglobal_pressure_hpa %s\n"), parameter);
+    dtostrfd(TasmotaGlobal.pressure_hpa, Settings->flag2.pressure_resolution, parameter);
+    WSContentSend_P(PSTR("# TYPE tasmota_global_pressure_hpa gauge\ntasmota_global_pressure_hpa %s\n"), parameter);
   }
 
+  // Pseudo-metric providing metadata about the free memory.
+  #ifdef ESP32
+    int32_t freeMaxMem = 100 - (int32_t)(ESP_getMaxAllocHeap() * 100 / ESP_getFreeHeap());
+    WSContentSend_PD(PSTR("# TYPE tasmota_memory_bytes gauge\ntasmota_memory_bytes{memory=\"Ram\"} %d\n"), ESP_getFreeHeap());
+    WSContentSend_PD(PSTR("# TYPE tasmota_memory_ratio gauge\ntasmota_memory_ratio{memory=\"Fragmentation\"} %d)"), freeMaxMem / 100);
+    if (psramFound()) {
+      WSContentSend_P(PSTR("# TYPE tasmota_memory_bytes gauge\ntasmota_memory_bytes{memory=\"Psram\"} %d\n"), ESP.getFreePsram() );
+    }
+  #else // ESP32
+    WSContentSend_PD(PSTR("# TYPE tasmota_memory_bytes gauge\ntasmota_memory_bytes{memory=\"ram\"} %d\n"), ESP_getFreeHeap());
+  #endif // ESP32
+
 #ifdef USE_ENERGY_SENSOR
-  dtostrfd(Energy.voltage[0], Settings.flag2.voltage_resolution, parameter);
+  dtostrfd(Energy.voltage[0], Settings->flag2.voltage_resolution, parameter);
   WSContentSend_P(PSTR("# TYPE energy_voltage_volts gauge\nenergy_voltage_volts %s\n"), parameter);
-  dtostrfd(Energy.current[0], Settings.flag2.current_resolution, parameter);
+  dtostrfd(Energy.current[0], Settings->flag2.current_resolution, parameter);
   WSContentSend_P(PSTR("# TYPE energy_current_amperes gauge\nenergy_current_amperes %s\n"), parameter);
-  dtostrfd(Energy.active_power[0], Settings.flag2.wattage_resolution, parameter);
+  dtostrfd(Energy.active_power[0], Settings->flag2.wattage_resolution, parameter);
   WSContentSend_P(PSTR("# TYPE energy_power_active_watts gauge\nenergy_power_active_watts %s\n"), parameter);
-  dtostrfd(Energy.daily, Settings.flag2.energy_resolution, parameter);
+  dtostrfd(Energy.daily, Settings->flag2.energy_resolution, parameter);
   WSContentSend_P(PSTR("# TYPE energy_power_kilowatts_daily counter\nenergy_power_kilowatts_daily %s\n"), parameter);
-  dtostrfd(Energy.total, Settings.flag2.energy_resolution, parameter);
+  dtostrfd(Energy.total, Settings->flag2.energy_resolution, parameter);
   WSContentSend_P(PSTR("# TYPE energy_power_kilowatts_total counter\nenergy_power_kilowatts_total %s\n"), parameter);
 #endif
 
@@ -117,9 +132,7 @@ void HandleMetrics(void) {
 
   ResponseClear();
   MqttShowSensor(); //Pull sensor data
-  char json[strlen(TasmotaGlobal.mqtt_data)+1];
-  snprintf_P(json, sizeof(json), TasmotaGlobal.mqtt_data);
-  String jsonStr = json;
+  String jsonStr = TasmotaGlobal.mqtt_data;
   JsonParser parser((char *)jsonStr.c_str());
   JsonParserObject root = parser.getRootObject();
   if (root) { // did JSON parsing went ok?
@@ -148,8 +161,13 @@ void HandleMetrics(void) {
               String type = FormatMetricName(key2.getStr());
               const char *unit = UnitfromType(type.c_str());
               if (strcmp(type.c_str(), "totalstarttime") != 0) {  // this metric causes prometheus of fail
-                WSContentSend_P(PSTR("# TYPE tasmota_sensors_%s_%s gauge\ntasmota_sensors_%s_%s{sensor=\"%s\"} %s\n"),
-                  type.c_str(), unit, type.c_str(), unit, sensor.c_str(), value);
+                if (strcmp(type.c_str(), "id") == 0) {            // this metric is NaN, so convert it to a label, see Wi-Fi metrics above
+                  WSContentSend_P(PSTR("# TYPE tasmota_sensors_%s_%s gauge\ntasmota_sensors_%s_%s{sensor=\"%s\",id=\"%s\"} 1\n"),
+                    type.c_str(), unit, type.c_str(), unit, sensor.c_str(), value);
+                } else {
+                  WSContentSend_P(PSTR("# TYPE tasmota_sensors_%s_%s gauge\ntasmota_sensors_%s_%s{sensor=\"%s\"} %s\n"),
+                    type.c_str(), unit, type.c_str(), unit, sensor.c_str(), value);
+                }
               }
             }
           }

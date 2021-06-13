@@ -75,7 +75,7 @@
  * Set the maximum total stack size.
  * Default: 20000
  **/
-#define BE_STACK_TOTAL_MAX              4000
+#define BE_STACK_TOTAL_MAX              8000
 
 /* Macro: BE_STACK_FREE_MIN
  * Set the minimum free count of the stack. The stack idles will
@@ -153,16 +153,11 @@
 #define BE_USE_MATH_MODULE              1
 #define BE_USE_TIME_MODULE              0
 #define BE_USE_OS_MODULE                0
+#define BE_USE_GLOBAL_MODULE            1
 #define BE_USE_SYS_MODULE               0
 #define BE_USE_DEBUG_MODULE             1
 #define BE_USE_GC_MODULE                1
 #define BE_USE_SOLIDIFY_MODULE          1
-
-// #ifdef ESP32
-#define BE_USE_TASMOTA                  1
-// #else
-// #define BE_USE_TASMOTA                     0
-// #endif
 
 /* Macro: BE_EXPLICIT_XXX
  * If these macros are defined, the corresponding function will
@@ -174,22 +169,25 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-  extern void *berry_malloc(uint32_t size);
+  extern void *berry_malloc(size_t size);
+  extern void  berry_free(void *ptr);
   extern void *berry_realloc(void *ptr, size_t size);
 #ifdef __cplusplus
 }
 #endif
   #define BE_EXPLICIT_MALLOC              berry_malloc
+  #define BE_EXPLICIT_FREE                berry_free
   #define BE_EXPLICIT_REALLOC             berry_realloc
 #else
   #define BE_EXPLICIT_MALLOC              malloc
+  #define BE_EXPLICIT_FREE                free
   #define BE_EXPLICIT_REALLOC             realloc
 #endif // USE_BERRY_PSRAM
 
 #define BE_EXPLICIT_ABORT               abort
 #define BE_EXPLICIT_EXIT                exit
 // #define BE_EXPLICIT_MALLOC              malloc
-#define BE_EXPLICIT_FREE                free
+// #define BE_EXPLICIT_FREE                free
 // #define BE_EXPLICIT_REALLOC             realloc
 
 /* Macro: be_assert

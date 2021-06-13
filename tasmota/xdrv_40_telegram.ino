@@ -78,9 +78,6 @@ struct {
   uint8_t retry = 0;
   uint8_t poll = TELEGRAM_LOOP_WAIT;
   uint8_t wait = 0;
-  bool send_enable = false;
-  bool recv_enable = false;
-  bool echo_enable = false;
   bool recv_busy = false;
   bool skip = true;           // Skip first telegram if restarted
 } Telegram;
@@ -107,7 +104,7 @@ bool TelegramInit(void) {
 }
 
 String TelegramConnectToTelegram(String command) {
-//  AddLog_P(LOG_LEVEL_DEBUG, PSTR("TGM: Cmnd %s"), command.c_str());
+//  AddLog(LOG_LEVEL_DEBUG, PSTR("TGM: Cmnd %s"), command.c_str());
 
   if (!TelegramInit()) { return ""; }
 
@@ -204,13 +201,13 @@ void TelegramGetUpdates(uint32_t offset) {
   //  }
   // ]}
 
-  AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("TGM: Response %s"), response.c_str());
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("TGM: Response %s"), response.c_str());
 
   JsonParser parser((char*)response.c_str());
   JsonParserObject root = parser.getRootObject();
   if (root) {
 
-//    AddLog_P(LOG_LEVEL_DEBUG, PSTR("TGM: Sent Update request messages up to %s"), offset.c_str());
+//    AddLog(LOG_LEVEL_DEBUG, PSTR("TGM: Sent Update request messages up to %s"), offset.c_str());
 
     JsonParserArray arr = root[PSTR("result")];
     uint32_t max_updates = arr.size();
@@ -238,7 +235,7 @@ void TelegramGetUpdates(uint32_t offset) {
         }
         Telegram.next_update_id = Telegram.message[i].update_id +1;  // Write id of last read message
 
-        AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("TGM: Parsed update_id %d, chat_id %s, text \"%s\""), Telegram.message[i].update_id, Telegram.message[i].chat_id.c_str(), Telegram.message[i].text.c_str());
+        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("TGM: Parsed update_id %d, chat_id %s, text \"%s\""), Telegram.message[i].update_id, Telegram.message[i].chat_id.c_str(), Telegram.message[i].text.c_str());
       }
     } else {
 //      AddLog(LOG_LEVEL_DEBUG, PSTR("TGM: No new messages"));
@@ -259,7 +256,7 @@ bool TelegramSendMessage(String chat_id, String text) {
     String command = "bot" + _token + "/sendMessage?chat_id=" + chat_id + "&text=" + UrlEncode(text);
     String response = TelegramConnectToTelegram(command);
 
-//    AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("TGM: Response %s"), response.c_str());
+//    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("TGM: Response %s"), response.c_str());
 
     if (response.startsWith("{\"ok\":true")) {
 //      AddLog(LOG_LEVEL_DEBUG, PSTR("TGM: Message sent"));
@@ -282,7 +279,7 @@ void TelegramSendGetMe(void) {
 
   // {"ok":true,"result":{"id":1179906608,"is_bot":true,"first_name":"Tasmota","username":"tasmota_bot","can_join_groups":true,"can_read_all_group_messages":false,"supports_inline_queries":false}}
 
-//  AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("TGM: Response %s"), response.c_str());
+//  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("TGM: Response %s"), response.c_str());
 }
 */
 
@@ -301,12 +298,16 @@ String TelegramExecuteCommand(const char *svalue) {
     // [14:49:36.123 MQTT: stat/wemos5/RESULT = {"POWER":"OFF"}] > [{"POWER":"OFF"}]
     char* JSON = (char*)memchr(line, '{', len);
     if (JSON) {  // Is it a JSON message (and not only [15:26:08 MQT: stat/wemos5/POWER = O])
-      size_t JSONlen = len - (JSON - line);
-      if (JSONlen > sizeof(TasmotaGlobal.mqtt_data)) { JSONlen = sizeof(TasmotaGlobal.mqtt_data); }
-      char stemp[JSONlen];
-      strlcpy(stemp, JSON +1, JSONlen -2);
-      if (cflg) { response += F(","); }
-      response += stemp;
+      if (cflg) { response += F(","); }  // Add a comma
+
+//      size_t JSONlen = len - (JSON - line);
+//      response.concat(JSON +1, JSONlen -3);  // Add terminating '\0' - Not supported on ESP32
+      len -= 2;                          // Skip last '}'
+      char save_log_char = line[len];
+      line[len] = '\0';                  // Add terminating \'0'
+      response.concat(JSON +1);          // Skip first '{'
+      line[len] = save_log_char;
+
       cflg = true;
     }
   }
@@ -317,7 +318,7 @@ String TelegramExecuteCommand(const char *svalue) {
 }
 
 void TelegramLoop(void) {
-  if (!TasmotaGlobal.global_state.network_down && (Telegram.recv_enable || Telegram.echo_enable)) {
+  if (!TasmotaGlobal.global_state.network_down && (Settings->sbflag1.telegram_recv_enable || Settings->sbflag1.telegram_echo_enable)) {
     switch (Telegram.state) {
       case 0:
         TelegramInit();
@@ -330,7 +331,7 @@ void TelegramLoop(void) {
         Telegram.state++;
         break;
       case 2:
-        if (Telegram.echo_enable) {
+        if (Settings->sbflag1.telegram_echo_enable) {
           if (Telegram.retry && (Telegram.index < Telegram.message_count)) {
             if (TelegramSendMessage(Telegram.message[Telegram.index].chat_id, Telegram.message[Telegram.index].text)) {
               Telegram.index++;
@@ -391,21 +392,24 @@ void CmndTmState(void) {
       switch (XdrvMailbox.payload) {
       case 0: // Off
       case 1: // On
-        Telegram.send_enable = XdrvMailbox.payload &1;
+        Settings->sbflag1.telegram_send_enable = XdrvMailbox.payload &1;
         break;
       case 2: // Off
       case 3: // On
-        Telegram.recv_enable = XdrvMailbox.payload &1;
+        Settings->sbflag1.telegram_recv_enable = XdrvMailbox.payload &1;
         break;
       case 4: // Off
       case 5: // On
-        Telegram.echo_enable = XdrvMailbox.payload &1;
+        Settings->sbflag1.telegram_echo_enable = XdrvMailbox.payload &1;
         break;
       }
     }
   }
-  snprintf_P (TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), PSTR("{\"%s\":{\"Send\":\"%s\",\"Receive\":\"%s\",\"Echo\":\"%s\"}}"),
-    XdrvMailbox.command, GetStateText(Telegram.send_enable), GetStateText(Telegram.recv_enable), GetStateText(Telegram.echo_enable));
+  Response_P(PSTR("{\"%s\":{\"Send\":\"%s\",\"Receive\":\"%s\",\"Echo\":\"%s\"}}"),
+    XdrvMailbox.command,
+    GetStateText(Settings->sbflag1.telegram_send_enable),
+    GetStateText(Settings->sbflag1.telegram_recv_enable),
+    GetStateText(Settings->sbflag1.telegram_echo_enable));
 }
 
 void CmndTmPoll(void) {
@@ -433,7 +437,7 @@ void CmndTmChatId(void) {
 }
 
 void CmndTmSend(void) {
-  if (!Telegram.send_enable || !strlen(SettingsText(SET_TELEGRAM_CHATID))) {
+  if (!Settings->sbflag1.telegram_send_enable || !strlen(SettingsText(SET_TELEGRAM_CHATID))) {
     ResponseCmndFailed();
     return;
   }

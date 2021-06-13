@@ -56,7 +56,8 @@ const PROGMEM char* kIonStr = D_STR_ION;  ///< "Ion"
 const PROGMEM char* kFreshStr = D_STR_FRESH;  ///< "Fresh"
 const PROGMEM char* kHoldStr = D_STR_HOLD;  ///< "Hold"
 const PROGMEM char* kButtonStr = D_STR_BUTTON;  ///< "Button"
-const PROGMEM char* k8CHeatStr = D_STR_8C_HEAT;  ///< "8CHeat"
+const PROGMEM char* k8CHeatStr = D_STR_8C_HEAT;  ///< "8C Heat"
+const PROGMEM char* k10CHeatStr = D_STR_10C_HEAT;  ///< "10C Heat"
 const PROGMEM char* kNightStr = D_STR_NIGHT;  ///< "Night"
 const PROGMEM char* kSilentStr = D_STR_SILENT;  ///< "Silent"
 const PROGMEM char* kFilterStr = D_STR_FILTER;  ///< "Filter"
@@ -97,6 +98,7 @@ const PROGMEM char* kRoomStr = D_STR_ROOM;  ///< "Room"
 const PROGMEM char* k6thSenseStr = D_STR_6THSENSE;  ///< "6th Sense"
 const PROGMEM char* kTypeStr = D_STR_TYPE;  ///< "Type"
 const PROGMEM char* kSpecialStr = D_STR_SPECIAL;  ///< "Special"
+const PROGMEM char* kIdStr = D_STR_ID;  ///< "Id" / Device Identifier
 
 const PROGMEM char* kAutoStr = D_STR_AUTO;  ///< "Auto"
 const PROGMEM char* kAutomaticStr = D_STR_AUTOMATIC;  ///< "Automatic"
@@ -282,5 +284,6 @@ const PROGMEM char *kAllProtocolNamesStr =
     D_STR_MILESTAG2 "\x0"
     D_STR_ECOCLIM "\x0"
     D_STR_XMP "\x0"
+    D_STR_TRUMA "\x0"
     ///< New protocol strings should be added just above this line.
     "\x0";  ///< This string requires double null termination.

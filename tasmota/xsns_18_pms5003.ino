@@ -174,14 +174,14 @@ bool PmsCommandSensor(void)
   if (PinUsed(GPIO_PMS5003_TX) && (XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 32001)) {
     if (XdrvMailbox.payload < MIN_INTERVAL_PERIOD) {
       // Set Active Mode if interval is less than 60 seconds
-      Settings.pms_wake_interval = 0;
+      Settings->pms_wake_interval = 0;
       Pms.wake_mode = 1;
       Pms.ready = 1;
       PmsSendCmd(CMD_MODE_ACTIVE);
       PmsSendCmd(CMD_WAKEUP);
     } else {
       // Set Passive Mode and schedule read once per interval time
-      Settings.pms_wake_interval = XdrvMailbox.payload;
+      Settings->pms_wake_interval = XdrvMailbox.payload;
       PmsSendCmd(CMD_MODE_PASSIVE);
       PmsSendCmd(CMD_SLEEP);
       Pms.wake_mode = 0;
@@ -189,7 +189,7 @@ bool PmsCommandSensor(void)
     }
   }
 
-  Response_P(S_JSON_SENSOR_INDEX_NVALUE, XSNS_18, Settings.pms_wake_interval);
+  Response_P(S_JSON_SENSOR_INDEX_NVALUE, XSNS_18, Settings->pms_wake_interval);
 
   return true;
 }
@@ -198,15 +198,15 @@ bool PmsCommandSensor(void)
 
 void PmsSecond(void)                 // Every second
 {
-  if (Settings.pms_wake_interval >= MIN_INTERVAL_PERIOD) {
+  if (Settings->pms_wake_interval >= MIN_INTERVAL_PERIOD) {
     // Passive Mode
     Pms.time++;
-    if ((Settings.pms_wake_interval - Pms.time <= WARMUP_PERIOD) && !Pms.wake_mode) {
+    if ((Settings->pms_wake_interval - Pms.time <= WARMUP_PERIOD) && !Pms.wake_mode) {
       // wakeup sensor WARMUP_PERIOD before read interval
       Pms.wake_mode = 1;
       PmsSendCmd(CMD_WAKEUP);
     }
-    if (Pms.time >= Settings.pms_wake_interval) {
+    if (Pms.time >= Settings->pms_wake_interval) {
       // sensor is awake and warmed up, set up for reading
       PmsSendCmd(CMD_READ_DATA);
       Pms.ready = 1;
@@ -217,7 +217,7 @@ void PmsSecond(void)                 // Every second
   if (Pms.ready) {
     if (PmsReadData()) {
       Pms.valid = 10;
-      if (Settings.pms_wake_interval >= MIN_INTERVAL_PERIOD) {
+      if (Settings->pms_wake_interval >= MIN_INTERVAL_PERIOD) {
         PmsSendCmd(CMD_SLEEP);
         Pms.wake_mode = 0;
         Pms.ready = 0;
@@ -225,7 +225,7 @@ void PmsSecond(void)                 // Every second
     } else {
       if (Pms.valid) {
         Pms.valid--;
-        if (Settings.pms_wake_interval >= MIN_INTERVAL_PERIOD) {
+        if (Settings->pms_wake_interval >= MIN_INTERVAL_PERIOD) {
           PmsSendCmd(CMD_READ_DATA);
           Pms.ready = 1;
         }
@@ -245,15 +245,15 @@ void PmsInit(void)
       if (PmsSerial->hardwareSerial()) { ClaimSerial(); }
 
       if (!PinUsed(GPIO_PMS5003_TX)) {  // setting interval not supported if TX pin not connected
-        Settings.pms_wake_interval = 0;
+        Settings->pms_wake_interval = 0;
         Pms.ready = 1;
       } else {
-        if (Settings.pms_wake_interval >= MIN_INTERVAL_PERIOD) {
+        if (Settings->pms_wake_interval >= MIN_INTERVAL_PERIOD) {
           // Passive Mode
           PmsSendCmd(CMD_MODE_PASSIVE);
           Pms.wake_mode = 0;
           Pms.ready = 0;
-          Pms.time = Settings.pms_wake_interval - WARMUP_PERIOD; // Let it wake up in the next second
+          Pms.time = Settings->pms_wake_interval - WARMUP_PERIOD; // Let it wake up in the next second
         }
       }
 

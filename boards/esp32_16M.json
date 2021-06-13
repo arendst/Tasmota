@@ -1,0 +1,38 @@
+{
+  "build": {
+    "arduino":{
+      "ldscript": "esp32_out.ld"
+    },
+    "core": "esp32",
+    "extra_flags": "-DARDUINO_ESP32_DEV",
+    "f_cpu": "80000000L",
+    "f_flash": "40000000L",
+    "flash_mode": "dio",
+    "mcu": "esp32",
+    "variant": "esp32",
+    "partitions": "esp32_partition_app2944k_spiffs10M.csv"
+  },
+  "connectivity": [
+    "wifi",
+    "bluetooth",
+    "ethernet",
+    "can"
+  ],
+  "debug": {
+    "openocd_board": "esp-wroom-32.cfg"
+  },
+  "frameworks": [
+    "arduino",
+    "espidf"
+  ],
+  "name": "Espressif Generic ESP32 16M Flash, Tasmota 2944k Code/OTA, 10M SPIFFS",
+  "upload": {
+    "flash_size": "16MB",
+    "maximum_ram_size": 327680,
+    "maximum_size": 16777216,
+    "require_upload_port": true,
+    "speed": 460800
+  },
+  "url": "https://en.wikipedia.org/wiki/ESP32",
+  "vendor": "Espressif"
+}

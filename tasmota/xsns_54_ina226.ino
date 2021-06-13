@@ -204,7 +204,7 @@ void Ina226Init()
   Ina226Info_t *p = Ina226Info;
 
   //AddLog( LOG_LEVEL_NONE, "Ina226Init");
-//  AddLog( LOG_LEVEL_NONE, "Size of Settings: %d bytes", sizeof(Settings));
+//  AddLog( LOG_LEVEL_NONE, "Size of Settings: %d bytes", sizeof(TSettings));
 
 //  if (!TasmotaGlobal.i2c_enabled)
 //    AddLog(LOG_LEVEL_DEBUG, "INA226: Initialization failed: No I2C support");
@@ -227,8 +227,8 @@ void Ina226Init()
 
     // Skip device probing if the full scale current is zero
 
-    //AddLog( LOG_LEVEL_NONE, "fs_i[%d]: %d", i, Settings.ina226_i_fs[i]);
-    if (!Settings.ina226_i_fs[i])
+    //AddLog( LOG_LEVEL_NONE, "fs_i[%d]: %d", i, Settings->ina226_i_fs[i]);
+    if (!Settings->ina226_i_fs[i])
       continue;
 
 
@@ -264,12 +264,12 @@ void Ina226Init()
     // Configuration
     p->config = config;
     // Full scale current in tenths of an amp
-    //AddLog( LOG_LEVEL_NONE, "Full Scale I in tenths of an amp: %u", Settings.ina226_i_fs[i]);
-    p->i_lsb = (((float) Settings.ina226_i_fs[i])/10.0f)/32768.0f;
+    //AddLog( LOG_LEVEL_NONE, "Full Scale I in tenths of an amp: %u", Settings->ina226_i_fs[i]);
+    p->i_lsb = (((float) Settings->ina226_i_fs[i])/10.0f)/32768.0f;
     //_debug_fval("i_lsb: %s", p->i_lsb, 7);
 
     // Get shunt resistor value in micro ohms
-    uint32_t r_shunt_uohms = _expand_r_shunt(Settings.ina226_r_shunt[i]);
+    uint32_t r_shunt_uohms = _expand_r_shunt(Settings->ina226_r_shunt[i]);
     //AddLog( LOG_LEVEL_NONE, "Shunt R in micro-ohms: %u", r_shunt_uohms);
 
 
@@ -440,18 +440,18 @@ bool Ina226CommandSensor()
         //AddLog( LOG_LEVEL_NONE, "r_shunt_uohms: %d", r_shunt_uohms);
         if (r_shunt_uohms > 32767){
           uint32_t r_shunt_mohms = r_shunt_uohms/1000UL;
-          Settings.ina226_r_shunt[device] = (uint16_t) (r_shunt_mohms | 0x8000);
+          Settings->ina226_r_shunt[device] = (uint16_t) (r_shunt_mohms | 0x8000);
         }
         else
-          Settings.ina226_r_shunt[device] = (uint16_t) r_shunt_uohms;
+          Settings->ina226_r_shunt[device] = (uint16_t) r_shunt_uohms;
 
-        //AddLog( LOG_LEVEL_NONE, "r_shunt_compacted: %04X", Settings.ina226_r_shunt[device]);
+        //AddLog( LOG_LEVEL_NONE, "r_shunt_compacted: %04X", Settings->ina226_r_shunt[device]);
         show_config = true;
         break;
 
       case 2: // Set full scale current in tenths of amps from user input in Amps
-        Settings.ina226_i_fs[device] = (uint16_t) ((CharToFloat(params[1])) * 10.0f);
-        //AddLog( LOG_LEVEL_NONE, "i_fs: %d", Settings.ina226_i_fs[device]);
+        Settings->ina226_i_fs[device] = (uint16_t) ((CharToFloat(params[1])) * 10.0f);
+        //AddLog( LOG_LEVEL_NONE, "i_fs: %d", Settings->ina226_i_fs[device]);
         show_config = true;
         break;
 
@@ -469,10 +469,10 @@ bool Ina226CommandSensor()
     char fs_i_str[16];
 
     // Shunt resistance is stored in EEPROM in microohms. Convert to ohms
-    r_shunt_uohms = _expand_r_shunt(Settings.ina226_r_shunt[device]);
+    r_shunt_uohms = _expand_r_shunt(Settings->ina226_r_shunt[device]);
     dtostrfd(((float)r_shunt_uohms)/1000000.0f, 6, shunt_r_str);
     // Full scale current is stored in EEPROM in tenths of an amp. Convert to amps.
-    dtostrfd(((float)Settings.ina226_i_fs[device])/10.0f, 1, fs_i_str);
+    dtostrfd(((float)Settings->ina226_i_fs[device])/10.0f, 1, fs_i_str);
     // Send json response
     Response_P(PSTR("{\"Sensor54-device-settings-%d\":{\"SHUNT_R\":%s,\"FS_I\":%s}}"),
       device + 1, shunt_r_str, fs_i_str);
@@ -503,11 +503,11 @@ void Ina226Show(bool json)
     num_found++;
 
     char voltage[16];
-    dtostrfd(voltages[i], Settings.flag2.voltage_resolution, voltage);
+    dtostrfd(voltages[i], Settings->flag2.voltage_resolution, voltage);
     char current[16];
-    dtostrfd(currents[i], Settings.flag2.current_resolution, current);
+    dtostrfd(currents[i], Settings->flag2.current_resolution, current);
     char power[16];
-    dtostrfd(powers[i], Settings.flag2.wattage_resolution, power);
+    dtostrfd(powers[i], Settings->flag2.wattage_resolution, power);
     char name[16];
     snprintf_P(name, sizeof(name), PSTR("INA226%c%d"),IndexSeparator(), i + 1);
 

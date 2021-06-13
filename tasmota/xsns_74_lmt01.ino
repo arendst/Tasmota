@@ -86,7 +86,7 @@ int LMT01_getPulses(void) {
 
 void LMT01_Show(bool Json) {
   if (Json) {
-    ResponseAppend_P(JSON_SNS_F_TEMP, "LMT01", Settings.flag2.temperature_resolution, &lmt01_temperature);
+    ResponseAppend_P(JSON_SNS_F_TEMP, "LMT01", Settings->flag2.temperature_resolution, &lmt01_temperature);
 #ifdef USE_DOMOTICZ
     if (0 == TasmotaGlobal.tele_period) {
       DomoticzFloatSensor(DZ_TEMP, lmt01_temperature);

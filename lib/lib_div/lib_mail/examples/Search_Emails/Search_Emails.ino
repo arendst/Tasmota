@@ -7,7 +7,7 @@
  * 
  * Github: https://github.com/mobizt/ESP-Mail-Client
  * 
- * Copyright (c) 2020 mobizt
+ * Copyright (c) 2021 mobizt
  *
 */
 
@@ -109,6 +109,21 @@ void setup()
      * And for ESP8266, assign the CS pins of SPI port
      * MailClient.sdBegin(15)
      * Which pin 15 is the CS pin of SD card adapter
+    */
+
+    /** ########################################################
+     * Some properties of IMAP_Config and ESP_Mail_Session data
+     * accept the pointer to constant char i.e. const char*. 
+     * 
+     * You may assign a string literal to that properties like 
+     * below example.
+     *   
+     * config.search.criteria = String("UID SEARCH ALL").c_str();
+     * 
+     * String folder = "INBOX";
+     * imap.selectFolder(folder.c_str());
+     * 
+     * ###########################################################
     */
 
     /* Set the session config */
@@ -227,7 +242,7 @@ void setup()
         printSelectedMailboxInfo(imap);
 
         /* Config to search all messages in the opened mailboax (Search mode) */
-        config.search.criteria = "UID SEARCH ALL";
+        config.search.criteria = "UID SEARCH ALL"; // or "UID SEARCH NEW" for recent received messages
 
         /* No message UID provide for fetching */
         config.fetch.uid = "";

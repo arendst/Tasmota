@@ -56,6 +56,7 @@ run : all
 run_tests : run
 
 install-googletest :
+	rm -rf ../lib/googletest
 	git clone -b v1.8.x https://github.com/google/googletest.git ../lib/googletest
 
 # Builds gtest.a and gtest_main.a.

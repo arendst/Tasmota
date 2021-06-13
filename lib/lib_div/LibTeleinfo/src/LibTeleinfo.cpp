@@ -17,6 +17,7 @@
 //           V2.00 2020-06-11 - Integration into Tasmota
 //           V2.01 2020-08-11 - Merged LibTeleinfo official and Tasmota version
 //                              Added support for new standard mode of linky smart meter
+//           V2.02 2021-04-20 - Add label field to overload callback (ADPS)
 //
 // All text above must be included in any redistribution.
 //
@@ -84,7 +85,7 @@ Input   : callback function
 Output  : - 
 Comments: -
 ====================================================================== */
-void TInfo::attachADPS(void (*fn_ADPS)(uint8_t phase))
+void TInfo::attachADPS(void (*fn_ADPS)(uint8_t phase, char * label))
 {
   // indicate the user callback
   _fn_ADPS = fn_ADPS;   
@@ -759,7 +760,7 @@ void TInfo::customLabel( char * plabel, char * pvalue, uint8_t * pflags)
   
     // Traitement de l'ADPS demandé par le sketch
     if (_fn_ADPS) 
-      _fn_ADPS(phase);
+      _fn_ADPS(phase, plabel);
   }
 }
 
@@ -891,10 +892,14 @@ ValueList * TInfo::checkLine(char * pline)
                 // this frame will for sure be updated
                 _frame_updated = true;
 
-                // Do we need to advertise user callback
-                if (_fn_data)
-                  _fn_data(me, flags);
               }
+
+              // Tasmota need to to calulation on Energy Module
+              // So always pass data value even if it's the same than previous value
+              // Do we need to advertise user callback
+              if (_fn_data)
+                _fn_data(me, flags);
+
             }
           }
           else

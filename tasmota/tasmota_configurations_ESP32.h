@@ -33,6 +33,7 @@
 #define CODE_IMAGE_STR "webcam"
 
 #define USE_WEBCAM
+#define ENABLE_RTSPSERVER
 #define USE_UFILESYS
 #define USE_SDCARD
   #define GUI_TRASH_FILE
@@ -69,7 +70,9 @@
 #define USE_ADC
 #define USE_SPI
   #define USE_DISPLAY                            // Add SPI Display Support (+2k code)
+  #ifndef USE_UNIVERSAL_DISPLAY
     #define USE_DISPLAY_ILI9341                  // [DisplayModel 4] Enable ILI9341 Tft 480x320 display (+19k code)
+  #endif
 //#define USE_BLE_ESP32                            // Enable new BLE driver
 //#define USE_MI_ESP32                             // (ESP32 only) Add support for ESP32 as a BLE-bridge (+9k2 mem, +292k flash)
 #endif  // FIRMWARE_ODROID_GO
@@ -103,14 +106,20 @@
 
 #define USE_I2C
   #define USE_BMA423
-  #define USE_MPU6886
+  #define USE_MPU_ACCEL
 #define USE_SPI
   #define USE_DISPLAY
-    #define USE_DISPLAY_ILI9341
+#ifdef USE_UNIVERSAL_DISPLAY
+  #define USE_LVGL
+//  #define USE_DISPLAY_LVGL_ONLY
+#else
+  #define USE_DISPLAY_ILI9341                  // [DisplayModel 4] Enable ILI9341 Tft 480x320 display (+19k code)
+  #define USE_DISPLAY_MODES1TO5
+  #define USE_TOUCH_BUTTONS
+#endif
     #define JPEG_PICTS
     #define USE_FT5206
-    #define USE_TOUCH_BUTTONS
-      #define MAX_TOUCH_BUTTONS 16
+
 #define USE_SENDMAIL
 #define USE_ESP32MAIL
 
@@ -224,7 +233,7 @@
 //#define USE_MPR121                             // [I2cDriver23] Enable MPR121 controller (I2C addresses 0x5A, 0x5B, 0x5C and 0x5D) in input mode for touch buttons (+1k3 code)
 //#define USE_CCS811                             // [I2cDriver24] Enable CCS811 sensor (I2C address 0x5A) (+2k2 code)
 #define USE_CCS811_V2                          // [I2cDriver24] Enable CCS811 sensor (I2C addresses 0x5A and 0x5B) (+2k8 code)
-#define USE_MPU6886                              // [I2cDriver??] Enable MPU6886 6-axis MotionTracking sensor (I2C address 0x68)
+#define USE_MPU_ACCEL                          // [I2cDriver58] Enable MPU6886, MPU9250 6-axis MotionTracking sensor (I2C address 0x68)
 //#define USE_MPU6050                            // [I2cDriver25] Enable MPU6050 sensor (I2C address 0x68 AD0 low or 0x69 AD0 high) (+3K3 of code and 188 Bytes of RAM)
 //#define USE_DS3231                             // [I2cDriver26] Enable DS3231 external RTC in case no Wifi is avaliable. See docs in the source file (+1k2 code)
 //#define USE_MGC3130                            // [I2cDriver27] Enable MGC3130 Electric Field Effect Sensor (I2C address 0x42) (+2k7 code, 0k3 mem)

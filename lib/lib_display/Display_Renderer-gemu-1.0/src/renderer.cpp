@@ -27,11 +27,7 @@
 #include <pgmspace.h>
 #include "renderer.h"
 
-#define USE_EPD_FONTS
-//#define USE_ALL_EPD_FONTS
-//#define USE_GFX_FONTS
-#define USE_TINY_FONT
-#define USE_7SEG_FONT
+
 
 uint8_t wr_redir=0;
 
@@ -43,13 +39,17 @@ uint8_t wr_redir=0;
 #define OLED_FONT_HEIGTH       8
 #define BLACK 0
 
-Renderer::Renderer(int16_t x, int16_t y) :
-Adafruit_GFX(x, y) {
+#ifdef USE_GFX
+Renderer::Renderer(int16_t x, int16_t y) : Adafruit_GFX(x, y) {
+#else
+Renderer::Renderer(int16_t x, int16_t y) {
+#endif
+
   font=0;
 #ifdef USE_EPD_FONTS
   selected_font = &Font12;
 #endif
-
+  disp_bpp = 16;
 }
 
 uint16_t Renderer::GetColorFromIndex(uint8_t index) {
@@ -153,6 +153,13 @@ void Renderer::DrawStringAt(int16_t x, int16_t y, const char* text, uint16_t col
     int refcolumn = x;
     sFONT *xfont = selected_font;
 
+/*
+    if (font == 5 && !drawmode) {
+      // clear bckground
+      int16_t x1,y1;
+      uint16_t w,h;
+      Adafruit_GFX::getTextBounds(text, 0, 0, &x1, &y1, &w, &h);
+    }*/
 #ifndef USE_EPD_FONTS
     font=0;
 #endif
@@ -297,13 +304,15 @@ void Renderer::setTextFont(uint8_t f) {
 
 
 void Renderer::SetRamfont(uint8_t *font) {
+
   ramfont = (GFXfont*)font;
-  uint32_t bitmap_offset = (uint32_t)ramfont->bitmap;
-  uint32_t glyph_offset = (uint32_t)ramfont->glyph;
+  if (font) {
+    uint32_t bitmap_offset = (uint32_t)ramfont->bitmap;
+    uint32_t glyph_offset = (uint32_t)ramfont->glyph;
 
-  ramfont->bitmap = (uint8_t*)((uint32_t)font + bitmap_offset);
-  ramfont->glyph = (GFXglyph*)((uint32_t)font + glyph_offset);
-
+    ramfont->bitmap = (uint8_t*)((uint32_t)font + bitmap_offset);
+    ramfont->glyph = (GFXglyph*)((uint32_t)font + glyph_offset);
+  }
   setFont(ramfont);
 }
 
@@ -588,6 +597,40 @@ void Renderer::scrollTo(uint16_t y) {
 
 }
 
+void Renderer::SetPwrCB(pwr_cb cb) {
+
+}
+void Renderer::SetDimCB(dim_cb cb) {
+
+}
+
+uint16_t Renderer::fgcol(void) {
+  return 0;
+}
+uint16_t Renderer::bgcol(void) {
+  return 0;
+}
+int8_t Renderer::color_type(void) {
+ return 0;
+}
+
+void Renderer::Splash(void) {
+
+}
+
+const char dname[1] = {0};
+
+char *Renderer::devname(void) {
+  return (char*)dname;
+}
+
+LVGL_PARAMS *Renderer::lvgl_pars(void) {
+  return &lvgl_param;
+}
+
+
+// #ifndef USE_DISPLAY_LVGL_ONLY
+
 void VButton::xdrawButton(bool inverted) {
   wr_redir=1;
   drawButton(inverted);
@@ -683,7 +726,7 @@ uint16_t VButton::UpdateSlider(int16_t x, int16_t y) {
   }
 
 }
-
+// #endif // USE_DISPLAY_LVGL_ONLY
 
 
 

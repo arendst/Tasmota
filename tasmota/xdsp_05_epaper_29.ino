@@ -48,13 +48,13 @@ void EpdInitDriver29(void) {
   if (PinUsed(GPIO_EPAPER29_CS) &&
      ((TasmotaGlobal.soft_spi_enabled & SPI_MOSI) || (TasmotaGlobal.spi_enabled & SPI_MOSI))) {
 
-    Settings.display_model = XDSP_05;
+    Settings->display_model = XDSP_05;
 
-    if (Settings.display_width != EPD_WIDTH) {
-      Settings.display_width = EPD_WIDTH;
+    if (Settings->display_width != EPD_WIDTH) {
+      Settings->display_width = EPD_WIDTH;
     }
-    if (Settings.display_height != EPD_HEIGHT) {
-      Settings.display_height = EPD_HEIGHT;
+    if (Settings->display_height != EPD_HEIGHT) {
+      Settings->display_height = EPD_HEIGHT;
     }
 
     // init renderer
@@ -72,7 +72,7 @@ void EpdInitDriver29(void) {
 
     epd->Init(DISPLAY_INIT_FULL);
     epd->Init(DISPLAY_INIT_PARTIAL);
-    renderer->DisplayInit(DISPLAY_INIT_MODE,Settings.display_size,Settings.display_rotate,Settings.display_font);
+    renderer->DisplayInit(DISPLAY_INIT_MODE,Settings->display_size,Settings->display_rotate,Settings->display_font);
 
     renderer->setTextColor(1,0);
 
@@ -104,18 +104,18 @@ void EpdPrintLog29(void)
 
   disp_refresh--;
   if (!disp_refresh) {
-    disp_refresh = Settings.display_refresh;
-    //if (Settings.display_rotate) {
+    disp_refresh = Settings->display_refresh;
+    //if (Settings->display_rotate) {
       if (!disp_screen_buffer_cols) { DisplayAllocScreenBuffer(); }
     //}
 
     char* txt = DisplayLogBuffer('\040');
     if (txt != nullptr) {
-      uint8_t size = Settings.display_size;
+      uint8_t size = Settings->display_size;
       uint16_t theight = size * EPD_FONT_HEIGTH;
 
       renderer->setTextFont(size);
-      uint8_t last_row = Settings.display_rows -1;
+      uint8_t last_row = Settings->display_rows -1;
 
 //      epd_scroll = theight;  // Start below header
       epd_scroll = 0;  // Start at top with no header
@@ -136,13 +136,13 @@ void EpdPrintLog29(void)
 
 void EpdRefresh29(void)  // Every second
 {
-  if (Settings.display_mode) {  // Mode 0 is User text
+  if (Settings->display_mode) {  // Mode 0 is User text
 
     if (!renderer) return;
 /*
-    char tftdt[Settings.display_cols[0] +1];
+    char tftdt[Settings->display_cols[0] +1];
     char date4[11];  // 24-04-2017
-    char space[Settings.display_cols[0] - 17];
+    char space[Settings->display_cols[0] - 17];
     char time[9];    // 13:45:43
 
     EpdSetFont(1);
@@ -155,7 +155,7 @@ void EpdRefresh29(void)  // Every second
 
     EpdDrawStringAt(0, 0, tftdt, COLORED, 0);
 */
-    switch (Settings.display_mode) {
+    switch (Settings->display_mode) {
       case 1:  // Text
       case 2:  // Local
       case 3:  // Local
@@ -183,7 +183,7 @@ bool Xdsp05(uint8_t function)
   if (FUNC_DISPLAY_INIT_DRIVER == function) {
     EpdInitDriver29();
   }
-  else if (epd_init_done && (XDSP_05 == Settings.display_model)) {
+  else if (epd_init_done && (XDSP_05 == Settings->display_model)) {
     switch (function) {
       case FUNC_DISPLAY_MODEL:
         result = true;

@@ -29,11 +29,11 @@ extern "C" {
 }
 
 const char kBrCommands[] PROGMEM = D_PRFX_BR "|"    // prefix
-  D_CMND_BR_RUN "|" D_CMND_BR_RESET
+  D_CMND_BR_RUN
   ;
 
 void (* const BerryCommand[])(void) PROGMEM = {
-  CmndBrRun, CmndBrReset,
+  CmndBrRun,
   };
 
 //
@@ -63,6 +63,9 @@ extern "C" {
   void *berry_realloc(void *ptr, size_t size) {
     return special_realloc(ptr, size);
   }
+  void *berry_calloc(size_t num, size_t size) {
+    return special_calloc(num, size);
+  }
 #else
   void *berry_malloc(uint32_t size) {
     return malloc(size);
@@ -70,8 +73,14 @@ extern "C" {
   void *berry_realloc(void *ptr, size_t size) {
     return realloc(ptr, size);
   }
+  void *berry_calloc(size_t num, size_t size) {
+    return calloc(num, size);
+  }
 #endif // USE_BERRY_PSRAM
 
+  void berry_free(void *ptr) {
+    free(ptr);
+  }
 }
 
 
@@ -84,15 +93,31 @@ extern "C" {
 bool callBerryRule(void) {
   if (berry.rules_busy) { return false; }
   berry.rules_busy = true;
-  char * json_event = TasmotaGlobal.mqtt_data;
+  char * json_event = XdrvMailbox.data;
   bool serviced = false;
-  serviced = callBerryEventDispatcher(PSTR("rule"), nullptr, 0, TasmotaGlobal.mqtt_data);
+  serviced = callBerryEventDispatcher(PSTR("rule"), nullptr, 0, XdrvMailbox.data);
   berry.rules_busy = false;
   return serviced;     // TODO event not handled
 }
 
 size_t callBerryGC(void) {
   return callBerryEventDispatcher(PSTR("gc"), nullptr, 0, nullptr);
+}
+
+void BerryDumpErrorAndClear(bvm *vm, bool berry_console);
+void BerryDumpErrorAndClear(bvm *vm, bool berry_console) {
+  int32_t top = be_top(vm);
+  // check if we have two strings for an Exception
+  if (top >= 2 && be_isstring(vm, -1) && be_isstring(vm, -2)) {
+    if (berry_console) {
+      berry_log_C(PSTR(D_LOG_BERRY "Exception> '%s' - %s"), be_tostring(berry.vm, -2), be_tostring(berry.vm, -1));
+    } else {
+      AddLog(LOG_LEVEL_ERROR, PSTR(D_LOG_BERRY "Exception> '%s' - %s"), be_tostring(berry.vm, -2), be_tostring(berry.vm, -1));
+    }
+  } else {
+    be_dumpstack(vm);
+  }
+  be_pop(vm, top);
 }
 
 // void callBerryMqttData(void) {
@@ -167,28 +192,33 @@ bool callMethodObjectWithArgs(const char * objname, const char * method, size_t 
 // call the event dispatcher from Tasmota object
 int32_t callBerryEventDispatcher(const char *type, const char *cmd, int32_t idx, const char *payload) {
   int32_t ret = 0;
+  bvm *vm = berry.vm;
 
-  if (nullptr == berry.vm) { return ret; }
+  if (nullptr == vm) { return ret; }
   checkBeTop();
-  be_getglobal(berry.vm, PSTR("tasmota"));
-  if (!be_isnil(berry.vm, -1)) {
-    be_getmethod(berry.vm, -1, PSTR("event"));
-    if (!be_isnil(berry.vm, -1)) {
-      be_pushvalue(berry.vm, -2); // add instance as first arg
-      be_pushstring(berry.vm, type != nullptr ? type : "");
-      be_pushstring(berry.vm, cmd != nullptr ? cmd : "");
-      be_pushint(berry.vm, idx);
-      be_pushstring(berry.vm, payload != nullptr ? payload : "{}");  // empty json
-      be_pcall(berry.vm, 5);   // 5 arguments
-      be_pop(berry.vm, 5);
-      if (be_isint(berry.vm, -1) || be_isbool(berry.vm, -1)) {
-        if (be_isint(berry.vm, -1)) { ret = be_toint(berry.vm, -1); }
-        if (be_isbool(berry.vm, -1)) { ret = be_tobool(berry.vm, -1); }
+  be_getglobal(vm, PSTR("tasmota"));
+  if (!be_isnil(vm, -1)) {
+    be_getmethod(vm, -1, PSTR("event"));
+    if (!be_isnil(vm, -1)) {
+      be_pushvalue(vm, -2); // add instance as first arg
+      be_pushstring(vm, type != nullptr ? type : "");
+      be_pushstring(vm, cmd != nullptr ? cmd : "");
+      be_pushint(vm, idx);
+      be_pushstring(vm, payload != nullptr ? payload : "{}");  // empty json
+      ret = be_pcall(vm, 5);   // 5 arguments
+      if (ret != 0) {
+        BerryDumpErrorAndClear(vm, false);  // log in Tasmota console only
+        return ret;
+      }
+      be_pop(vm, 5);
+      if (be_isint(vm, -1) || be_isbool(vm, -1)) {
+        if (be_isint(vm, -1)) { ret = be_toint(vm, -1); }
+        if (be_isbool(vm, -1)) { ret = be_tobool(vm, -1); }
       }
     }
-    be_pop(berry.vm, 1);  // remove method
+    be_pop(vm, 1);  // remove method
   }
-  be_pop(berry.vm, 1);  // remove instance object
+  be_pop(vm, 1);  // remove instance object
   checkBeTop();
   return ret;
 }
@@ -225,7 +255,7 @@ void BerryObservability(bvm *vm, int event...) {
 /*********************************************************************************************\
  * VM Init
 \*********************************************************************************************/
-void BrReset(void) {
+void BerryInit(void) {
   // clean previous VM if any
   if (berry.vm != nullptr) {
     be_vm_delete(berry.vm);
@@ -238,7 +268,6 @@ void BrReset(void) {
     berry.vm = be_vm_new(); /* create a virtual machine instance */
     be_set_obs_hook(berry.vm, &BerryObservability);
     be_load_custom_libs(berry.vm);
-    // AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_BERRY "Berry VM created, RAM used=%u"), be_gc_memcount(berry.vm));
 
     // Register functions
     // be_regfunc(berry.vm, PSTR("log"), l_logInfo);
@@ -248,29 +277,27 @@ void BrReset(void) {
 
     ret_code1 = be_loadstring(berry.vm, berry_prog);
     if (ret_code1 != 0) {
-      AddLog(LOG_LEVEL_ERROR, PSTR(D_LOG_BERRY "ERROR: be_loadstring [%s] %s"), be_tostring(berry.vm, -2), be_tostring(berry.vm, -1));
-      be_pop(berry.vm, 2);
+      BerryDumpErrorAndClear(berry.vm, false);
       break;
     }
     // AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_BERRY "Berry code loaded, RAM used=%u"), be_gc_memcount(berry.vm));
     ret_code2 = be_pcall(berry.vm, 0);
     if (ret_code1 != 0) {
-      AddLog(LOG_LEVEL_ERROR, PSTR(D_LOG_BERRY "ERROR: be_pcall [%s] %s"), be_tostring(berry.vm, -2), be_tostring(berry.vm, -1));
-      be_pop(berry.vm, 1);
+      BerryDumpErrorAndClear(berry.vm, false);
       break;
     }
     // AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_BERRY "Berry code ran, RAM used=%u"), be_gc_memcount(berry.vm));
-    be_pop(berry.vm, 1);
-
-    if (be_top(berry.vm) > 0) {
-      be_dumpstack(berry.vm);
+    if (be_top(berry.vm) > 1) {
+      BerryDumpErrorAndClear(berry.vm, false);
+    } else {
+      be_pop(berry.vm, 1);
     }
-    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_BERRY "Berry initialized, RAM used=%u"), callBerryGC());
-    // AddLog(LOG_LEVEL_INFO, PSTR("Delete Berry VM"));
-    // be_vm_delete(vm);
-    // AddLog(LOG_LEVEL_INFO, PSTR("After Berry"));
 
+    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_BERRY "Berry initialized, RAM used=%u"), callBerryGC());
     berry_init_ok = true;
+
+    // Run pre-init
+    BrLoad("preinit.be");    // run 'preinit.be' if present
   } while (0);
 
   if (!berry_init_ok) {
@@ -282,30 +309,36 @@ void BrReset(void) {
   }
 }
 
-
-void BrAutoexec(void) {
-  if (berry.vm == nullptr) { return; }
+/*********************************************************************************************\
+ * Execute a script in Flash file-system
+ *
+ * Two options supported:
+ *   berry_preinit: load "preinit.be" to configure the device before driver pre-init and init
+ *                  (typically I2C drivers, and AXP192/AXP202 configuration)
+ *   berry_autoexec: load "autoexec.be" once all drivers are initialized
+\*********************************************************************************************/
+void BrLoad(const char * script_name) {
+  if (berry.vm == nullptr || TasmotaGlobal.no_autoexec) { return; }   // abort is berry is not running, or bootloop prevention kicked in
 
   int32_t ret_code1, ret_code2;
   bool berry_init_ok = false;
 
-  // load 'autoexec.be' or 'autoexec.bec'
-  ret_code1 = be_loadstring(berry.vm, berry_autoexec);
-  // be_dumpstack(berry.vm);
-  if (ret_code1 != 0) {
+  be_getglobal(berry.vm, PSTR("load"));
+  if (!be_isnil(berry.vm, -1)) {
+    be_pushstring(berry.vm, script_name);
+
+    if (be_pcall(berry.vm, 1) != 0) {
+      BerryDumpErrorAndClear(berry.vm, false);
+      return;
+    }
+    bool loaded = be_tobool(berry.vm, -2);  // did it succeed?
     be_pop(berry.vm, 2);
-    return;
+    if (loaded) {
+      AddLog(LOG_LEVEL_INFO, D_LOG_BERRY "sucessfully loaded '%s'", script_name);
+    } else {
+      AddLog(LOG_LEVEL_INFO, D_LOG_BERRY "no '%s'", script_name);
+    }
   }
-  ret_code2 = be_pcall(berry.vm, 0);
-  // be_dumpstack(berry.vm);
-  if (ret_code1 != 0) {
-    // AddLog(LOG_LEVEL_ERROR, PSTR(D_LOG_BERRY "ERROR: be_pcall [%s] %s"), be_tostring(berry.vm, -2), be_tostring(berry.vm, -1));
-    be_pop(berry.vm, 1);
-    return;
-  }
-  // AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_BERRY "Berry code ran, RAM used=%u"), be_gc_memcount(berry.vm));
-  be_pop(berry.vm, 1);
-  // be_dumpstack(berry.vm);
 }
 
 /*********************************************************************************************\
@@ -359,15 +392,6 @@ void CmndBrRun(void) {
   checkBeTop();
 }
 
-//
-// Command `BrReset`
-//
-void CmndBrReset(void) {
-  if (berry.vm == nullptr) { ResponseCmndChar_P(PSTR(D_BR_NOT_STARTED)); return; }
-
-  BrReset();
-}
-
 /*********************************************************************************************\
  * Berry console
 \*********************************************************************************************/
@@ -398,18 +422,19 @@ void BrREPLRun(char * cmd) {
         if (!be_isnil(berry.vm, 1)) {
           const char * ret_val = be_tostring(berry.vm, 1);
           berry.log.addString(ret_val, nullptr, "\n");
-          // AddLog_P(LOG_LEVEL_INFO, PSTR(">>> %s"), ret_val);
+          // AddLog(LOG_LEVEL_INFO, PSTR(">>> %s"), ret_val);
         }
         be_pop(berry.vm, 1);
       }
     }
     if (BE_EXCEPTION == ret_code) {
-      be_dumpstack(berry.vm);
-      char exception_s[120];
-      ext_snprintf_P(exception_s, sizeof(exception_s), PSTR("%s: %s"), be_tostring(berry.vm, -2), be_tostring(berry.vm, -1));
-      berry.log.addString(exception_s, nullptr, "\n");
-      // AddLog_P(LOG_LEVEL_INFO, PSTR(">>> %s"), exception_s);
-      be_pop(berry.vm, 2);
+      BerryDumpErrorAndClear(berry.vm, true);
+      // be_dumpstack(berry.vm);
+      // char exception_s[120];
+      // ext_snprintf_P(exception_s, sizeof(exception_s), PSTR("%s: %s"), be_tostring(berry.vm, -2), be_tostring(berry.vm, -1));
+      // berry.log.addString(exception_s, nullptr, "\n");
+      // // AddLog(LOG_LEVEL_INFO, PSTR(">>> %s"), exception_s);
+      // be_pop(berry.vm, 2);
     }
   } while(0);
 
@@ -470,7 +495,7 @@ const char HTTP_SCRIPT_BERRY_CONSOLE[] PROGMEM =
           "lt=setTimeout(l,ltm);" // webrefresh timer....
         "}"
       "};"
-      "x.open('GET','bs?c2='+id+o,true);"  // Related to Webserver->hasArg("c2") and WebGetArg("c2", stmp, sizeof(stmp))
+      "x.open('GET','bc?c2='+id+o,true);"  // Related to Webserver->hasArg("c2") and WebGetArg("c2", stmp, sizeof(stmp))
       "x.send();"
       "ft=setTimeout(l,20000);" // fail timeout, triggered 20s after asking for XHR
     "}else{"
@@ -581,7 +606,7 @@ const char HTTP_BERRY_FORM_CMND[] PROGMEM =
   "</form>";
 
 const char HTTP_BTN_BERRY_CONSOLE[] PROGMEM =
-  "<p><form action='bs' method='get'><button>Berry Scripting console</button></form></p>";
+  "<p><form action='bc' method='get'><button>Berry Scripting console</button></form></p>";
 
 
 void HandleBerryConsoleRefresh(void)
@@ -592,7 +617,7 @@ void HandleBerryConsoleRefresh(void)
   if (svalue.length()) {
     berry.log.reset();          // clear all previous logs
     berry.repl_active = true;   // start recording
-    // AddLog_P(LOG_LEVEL_INFO, PSTR("BRY: received command %s"), svalue.c_str());
+    // AddLog(LOG_LEVEL_INFO, PSTR("BRY: received command %s"), svalue.c_str());
     berry.log.addString(svalue.c_str(), nullptr, BERRY_CONSOLE_CMD_DELIMITER);
 
     // Call berry
@@ -630,7 +655,7 @@ void HandleBerryConsole(void)
   AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP "Berry " D_CONSOLE));
 
   WSContentStart_P(PSTR("Berry " D_CONSOLE));
-  WSContentSend_P(HTTP_SCRIPT_BERRY_CONSOLE, Settings.web_refresh);
+  WSContentSend_P(HTTP_SCRIPT_BERRY_CONSOLE, Settings->web_refresh);
   WSContentSend_P(HTTP_SCRIPT_BERRY_CONSOLE2);
   WSContentSendStyle();
   WSContentFlush();
@@ -645,7 +670,7 @@ void HandleBerryConsole(void)
 //   String svalue = Webserver->arg(F("c1"));
 //   if (svalue.length() && (svalue.length() < MQTT_MAX_PACKET_SIZE)) {
 //     // TODO run command and store result
-//     // AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_COMMAND "%s"), svalue.c_str());
+//     // AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_COMMAND "%s"), svalue.c_str());
 //     // ExecuteWebCommand((char*)svalue.c_str(), SRC_WEBCONSOLE);
 //   }
 
@@ -663,11 +688,10 @@ void HandleBerryConsole(void)
 //   bool cflg = (index);
 //   char* line;
 //   size_t len;
-//   while (GetLog(Settings.weblog_level, &index, &line, &len)) {
-//     if (len > sizeof(TasmotaGlobal.mqtt_data) -2) { len = sizeof(TasmotaGlobal.mqtt_data); }
-//     char stemp[len +1];
-//     strlcpy(stemp, line, len);
-//     WSContentSend_P(PSTR("%s%s"), (cflg) ? PSTR("\n") : "", stemp);
+//   while (GetLog(Settings->weblog_level, &index, &line, &len)) {
+//     if (cflg) { WSContentSend_P(PSTR("\n")); }
+//     WSContentFlush();
+//     Webserver->sendContent(line, len -1);
 //     cflg = true;
 //   }
 //   WSContentSend_P(PSTR("}1"));
@@ -683,13 +707,13 @@ bool Xdrv52(uint8_t function)
   bool result = false;
 
   switch (function) {
-    //case FUNC_PRE_INIT:
-    case FUNC_INIT:
-      BrReset();
-      break;
+    // case FUNC_PRE_INIT: // we start Berry in pre_init so that other modules can call Berry in their init methods
+    // // case FUNC_INIT:
+    //   BerryInit();
+    //   break;
     case FUNC_LOOP:
       if (!berry.autoexec_done) {
-        BrAutoexec();   // run autoexec.be at first tick, so we know all modules are initialized
+        BrLoad("autoexec.be");   // run autoexec.be at first tick, so we know all modules are initialized
         berry.autoexec_done = true;
       }
       break;
@@ -733,8 +757,8 @@ bool Xdrv52(uint8_t function)
       callBerryEventDispatcher(PSTR("web_add_main_button"), nullptr, 0, nullptr);
       break;
     case FUNC_WEB_ADD_HANDLER:
-      // callBerryEventDispatcher(PSTR("web_add_handler"), nullptr, 0, nullptr);
-      WebServer_on(PSTR("/bs"), HandleBerryConsole);
+      callBerryEventDispatcher(PSTR("web_add_handler"), nullptr, 0, nullptr);
+      WebServer_on(PSTR("/bc"), HandleBerryConsole);
       break;
 #endif // USE_WEBSERVER
     case FUNC_SAVE_BEFORE_RESTART:

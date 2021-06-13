@@ -5,6 +5,9 @@
 #include <renderer.h>
 #include <Wire.h>
 #include <SPI.h>
+#ifdef ESP32
+#include "driver/spi_master.h"
+#endif
 
 #define _UDSP_I2C 1
 #define _UDSP_SPI 2
@@ -51,15 +54,20 @@ enum uColorType { uCOLOR_BW, uCOLOR_COLOR };
 #undef GPIO_CLR
 #undef GPIO_SET_SLOW
 #undef GPIO_CLR_SLOW
+#if CONFIG_IDF_TARGET_ESP32C3
+#define GPIO_CLR(A) GPIO.out_w1tc.val = (1 << A)
+#define GPIO_SET(A) GPIO.out_w1ts.val = (1 << A)
+#else // plain ESP32
 #define GPIO_CLR(A) GPIO.out_w1tc = (1 << A)
 #define GPIO_SET(A) GPIO.out_w1ts = (1 << A)
+#endif
 #define GPIO_CLR_SLOW(A) digitalWrite(A, LOW)
 #define GPIO_SET_SLOW(A) digitalWrite(A, HIGH)
 
 #endif
 
-#define SPI_BEGIN_TRANSACTION if (spi_nr <= 2) uspi->beginTransaction(spiSettings);
-#define SPI_END_TRANSACTION if (spi_nr <= 2) uspi->endTransaction();
+#define SPI_BEGIN_TRANSACTION if (spi_nr <= 2) beginTransaction(spiSettings);
+#define SPI_END_TRANSACTION if (spi_nr <= 2) endTransaction();
 #define SPI_CS_LOW if (spi_cs >= 0) GPIO_CLR(spi_cs);
 #define SPI_CS_HIGH if (spi_cs >= 0) GPIO_SET(spi_cs);
 #define SPI_DC_LOW if (spi_dc >= 0) GPIO_CLR(spi_dc);
@@ -79,9 +87,9 @@ class uDisplay : public Renderer {
   void DisplayOnff(int8_t on);
   void Splash(void);
   char *devname(void);
-  uint16_t fgcol(void) const { return fg_col; };
-  uint16_t bgcol(void) const { return bg_col; };
-  int8_t color_type(void) const { return col_type; };
+  uint16_t fgcol(void);
+  uint16_t bgcol(void);
+  int8_t color_type(void);
   void dim(uint8_t dim);
   uint16_t GetColorFromIndex(uint8_t index);
   void setRotation(uint8_t m);
@@ -90,8 +98,12 @@ class uDisplay : public Renderer {
   void pushColors(uint16_t *data, uint16_t len, boolean first);
   void TS_RotConvert(int16_t *x, int16_t *y);
   void invertDisplay(boolean i);
+  void SetPwrCB(pwr_cb cb) { pwr_cbp = cb; };
+  void SetDimCB(dim_cb cb) { dim_cbp = cb; };
 
  private:
+   void beginTransaction(SPISettings s);
+   void endTransaction(void);
    void setAddrWindow(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1);
    void drawPixel(int16_t x, int16_t y, uint16_t color);
    void drawFastHLine(int16_t x, int16_t y, int16_t w, uint16_t color);
@@ -156,8 +168,8 @@ class uDisplay : public Renderer {
    uint8_t dsp_on;
    uint8_t dsp_off;
    uint8_t allcmd_mode;
-   uint16_t splash_font;
-   uint16_t splash_size;
+   int8_t splash_font;
+   uint8_t splash_size;
    uint16_t splash_xp;
    uint16_t splash_yp;
    uint16_t fg_col;
@@ -203,6 +215,30 @@ class uDisplay : public Renderer {
    uint8_t lut_array[LUTMAXSIZE][5];
    uint8_t lut_cnt[5];
    uint8_t lut_cmd[5];
+   uint16_t seta_xp1;
+   uint16_t seta_xp2;
+   uint16_t seta_yp1;
+   uint16_t seta_yp2;
+   int16_t rotmap_xmin;
+   int16_t rotmap_xmax;
+   int16_t rotmap_ymin;
+   int16_t rotmap_ymax;
+   void pushColorsMono(uint16_t *data, uint16_t len, bool rgb16_swap = false);
+#ifdef ESP32
+   // dma section
+   bool DMA_Enabled = false;
+   uint8_t  spiBusyCheck = 0;
+   spi_transaction_t trans;
+   spi_device_handle_t dmaHAL;
+   spi_host_device_t spi_host = VSPI_HOST;
+   // spi_host_device_t spi_host = VSPI_HOST;
+   bool initDMA(bool ctrl_cs);
+   void deInitDMA(void);
+   bool dmaBusy(void);
+   void dmaWait(void);
+   void pushPixelsDMA(uint16_t* image, uint32_t len);
+   void pushPixels3DMA(uint8_t* image, uint32_t len);
+#endif // ESP32
 };
 
 

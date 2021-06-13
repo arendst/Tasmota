@@ -158,8 +158,8 @@ void IRAM_ATTR AS3935Isr(void) {
 // we have to store 5 Bytes in the eeprom. Register 8 is mapped to Byte 4
 uint8_t AS3935ReadRegister(uint8_t reg, uint8_t mask, uint8_t shift) {
   uint8_t data = I2cRead8(AS3935_ADDR, reg);
-  if (reg == 0x08) Settings.as3935_sensor_cfg[4] = data;
-  if (reg <= 0x03) Settings.as3935_sensor_cfg[reg] = data;
+  if (reg == 0x08) Settings->as3935_sensor_cfg[4] = data;
+  if (reg <= 0x03) Settings->as3935_sensor_cfg[reg] = data;
   return ((data & mask) >> shift);
 }
 
@@ -170,8 +170,8 @@ void AS3935WriteRegister(uint8_t reg, uint8_t mask, uint8_t shift, uint8_t data)
   data &= mask;
   data |= currentReg;
   I2cWrite8(AS3935_ADDR, reg, data);
-  if (reg == 0x08) Settings.as3935_sensor_cfg[4] = I2cRead8(AS3935_ADDR, reg);
-  if (reg <= 0x03) Settings.as3935_sensor_cfg[reg] = I2cRead8(AS3935_ADDR, reg);
+  if (reg == 0x08) Settings->as3935_sensor_cfg[4] = I2cRead8(AS3935_ADDR, reg);
+  if (reg <= 0x03) Settings->as3935_sensor_cfg[reg] = I2cRead8(AS3935_ADDR, reg);
 }
 
 /********************************************************************************************/
@@ -415,15 +415,15 @@ bool AS3935LowerNoiseFloor(void) {
   uint16_t vrms;
   uint8_t stage;
   AS3935CalcVrmsLevel(vrms, stage);
-  if (Settings.as3935_functions.nf_autotune_both) {
-    if (stage == 8 && stage > Settings.as3935_parameter.nf_autotune_min) {
+  if (Settings->as3935_functions.nf_autotune_both) {
+    if (stage == 8 && stage > Settings->as3935_parameter.nf_autotune_min) {
       AS3935SetGain(INDOORS);
       AS3935SetNoiseFloor(7);
       return true;
     }
   }
   uint8_t noise = AS3935GetNoiseFloor();
-  if (0 < noise && stage > Settings.as3935_parameter.nf_autotune_min) {
+  if (0 < noise && stage > Settings->as3935_parameter.nf_autotune_min) {
     noise--;
     AS3935SetNoiseFloor(noise);
     return true;
@@ -434,7 +434,7 @@ bool AS3935LowerNoiseFloor(void) {
 bool AS3935RaiseNoiseFloor(void) {
   uint8_t noise = AS3935GetNoiseFloor();
   uint8_t room = AS3935GetGain();
-  if (Settings.as3935_functions.nf_autotune_both) {
+  if (Settings->as3935_functions.nf_autotune_both) {
     if (7 == noise && room == INDOORS) {
       AS3935SetGain(OUTDOORS);
       AS3935SetNoiseFloor(0);
@@ -455,41 +455,41 @@ bool AS3935SetDefault(void) {
   AS3935Reset();
   AS3935SetDisturber(1); // Disturber on by default
   AS3935SetNoiseFloor(7); //  NF High on by default
-  Settings.as3935_sensor_cfg[0] = I2cRead8(AS3935_ADDR, 0x00);
-  Settings.as3935_sensor_cfg[1] = I2cRead8(AS3935_ADDR, 0x01);
-  Settings.as3935_sensor_cfg[2] = I2cRead8(AS3935_ADDR, 0x02);
-  Settings.as3935_sensor_cfg[3] = I2cRead8(AS3935_ADDR, 0x03);
-  Settings.as3935_sensor_cfg[4] = I2cRead8(AS3935_ADDR, 0x08);
+  Settings->as3935_sensor_cfg[0] = I2cRead8(AS3935_ADDR, 0x00);
+  Settings->as3935_sensor_cfg[1] = I2cRead8(AS3935_ADDR, 0x01);
+  Settings->as3935_sensor_cfg[2] = I2cRead8(AS3935_ADDR, 0x02);
+  Settings->as3935_sensor_cfg[3] = I2cRead8(AS3935_ADDR, 0x03);
+  Settings->as3935_sensor_cfg[4] = I2cRead8(AS3935_ADDR, 0x08);
   // set all eeprom functions and values to default
-  Settings.as3935_functions.data = 0x00;
-  Settings.as3935_parameter.nf_autotune_min = 0x00;
-  Settings.as3935_parameter.nf_autotune_time = 4;
-  Settings.as3935_parameter.dist_autotune_time = 1;
+  Settings->as3935_functions.data = 0x00;
+  Settings->as3935_parameter.nf_autotune_min = 0x00;
+  Settings->as3935_parameter.nf_autotune_time = 4;
+  Settings->as3935_parameter.dist_autotune_time = 1;
   return true;
 }
 
 void AS3935InitSettings(void) {
-  if(Settings.as3935_functions.nf_autotune) {
-    if(Settings.as3935_parameter.nf_autotune_min) {
-      if (Settings.as3935_parameter.nf_autotune_min > 7) {
+  if(Settings->as3935_functions.nf_autotune) {
+    if(Settings->as3935_parameter.nf_autotune_min) {
+      if (Settings->as3935_parameter.nf_autotune_min > 7) {
         AS3935SetGain(OUTDOORS);
-        AS3935SetNoiseFloor(Settings.as3935_parameter.nf_autotune_min - 8);
+        AS3935SetNoiseFloor(Settings->as3935_parameter.nf_autotune_min - 8);
       } else {
         AS3935SetGain(INDOORS);
-        AS3935SetNoiseFloor(Settings.as3935_parameter.nf_autotune_min);
+        AS3935SetNoiseFloor(Settings->as3935_parameter.nf_autotune_min);
       }
     }
   }
-  I2cWrite8(AS3935_ADDR, 0x00, Settings.as3935_sensor_cfg[0] & SETREG00MASK);
-  I2cWrite8(AS3935_ADDR, 0x01, Settings.as3935_sensor_cfg[1]);
-  I2cWrite8(AS3935_ADDR, 0x02, Settings.as3935_sensor_cfg[2]);
-  I2cWrite8(AS3935_ADDR, 0x03, Settings.as3935_sensor_cfg[3] & SETREG03MASK);
-  I2cWrite8(AS3935_ADDR, 0x08, Settings.as3935_sensor_cfg[4]);
+  I2cWrite8(AS3935_ADDR, 0x00, Settings->as3935_sensor_cfg[0] & SETREG00MASK);
+  I2cWrite8(AS3935_ADDR, 0x01, Settings->as3935_sensor_cfg[1]);
+  I2cWrite8(AS3935_ADDR, 0x02, Settings->as3935_sensor_cfg[2]);
+  I2cWrite8(AS3935_ADDR, 0x03, Settings->as3935_sensor_cfg[3] & SETREG03MASK);
+  I2cWrite8(AS3935_ADDR, 0x08, Settings->as3935_sensor_cfg[4]);
   delay(2);
 }
 
 bool AS3935Setup(void) {
-  if (Settings.as3935_sensor_cfg[0] == 0x00) {
+  if (Settings->as3935_sensor_cfg[0] == 0x00) {
     AS3935SetDefault();
   } else {
     AS3935InitSettings();
@@ -528,13 +528,13 @@ void AS3935EverySecond(void) {
       if (10 > as3935_sensor.icount) {
         switch (as3935_sensor.irq) {
         case 1:
-          if (Settings.as3935_functions.nf_autotune) {
+          if (Settings->as3935_functions.nf_autotune) {
             if (AS3935RaiseNoiseFloor())
               as3935_sensor.nftimer = 0;
           }
           break;
         case 4:
-          if (Settings.as3935_functions.dist_autotune) {
+          if (Settings->as3935_functions.dist_autotune) {
             AS3935SetDisturber(1);
           }
           break;
@@ -557,13 +557,13 @@ void AS3935EverySecond(void) {
       switch (as3935_sensor.mqtt_event) {
       case 5:
       case 6:
-        if (!Settings.as3935_functions.mqtt_only_Light_Event) {
+        if (!Settings->as3935_functions.mqtt_only_Light_Event) {
           MqttPublishSensor();
           as3935_sensor.http_time = 10;
         }
         break;
       case 7:
-        if (!Settings.as3935_functions.suppress_irq_no_Event) {
+        if (!Settings->as3935_functions.suppress_irq_no_Event) {
           MqttPublishSensor();
           as3935_sensor.http_time = 10;
         }
@@ -595,19 +595,19 @@ void AS3935EverySecond(void) {
       as3935_sensor.http_event = 0;
     }
     // Noise Floor Autotune function
-    if (Settings.as3935_functions.nf_autotune) {
+    if (Settings->as3935_functions.nf_autotune) {
       as3935_sensor.nftimer++;
-      if (as3935_sensor.nftimer > Settings.as3935_parameter.nf_autotune_time * 60) {
+      if (as3935_sensor.nftimer > Settings->as3935_parameter.nf_autotune_time * 60) {
         AS3935LowerNoiseFloor();
         as3935_sensor.nftimer = 0;
       }
     }
     // Disturber auto function
-    if (Settings.as3935_functions.dist_autotune) {
+    if (Settings->as3935_functions.dist_autotune) {
       if (AS3935GetDisturber()) {
         as3935_sensor.disttimer++;
       }
-      if (as3935_sensor.disttimer >= Settings.as3935_parameter.dist_autotune_time * 60) {
+      if (as3935_sensor.disttimer >= Settings->as3935_parameter.dist_autotune_time * 60) {
         AS3935SetDisturber(0);
         as3935_sensor.disttimer = 0;
       }
@@ -642,10 +642,10 @@ bool AS3935Cmd(void) {
       case  CMND_AS3935_SET_MINNF:
         if (XdrvMailbox.data_len) {
           if (15 >= XdrvMailbox.payload) {
-            Settings.as3935_parameter.nf_autotune_min = XdrvMailbox.payload;
+            Settings->as3935_parameter.nf_autotune_min = XdrvMailbox.payload;
           }
         }
-        Response_P(S_JSON_AS3935_COMMAND_NVALUE, command, Settings.as3935_parameter.nf_autotune_min);
+        Response_P(S_JSON_AS3935_COMMAND_NVALUE, command, Settings->as3935_parameter.nf_autotune_min);
         break;
       case CMND_AS3935_SET_MINLIGHT:
         if (XdrvMailbox.data_len) {
@@ -696,24 +696,24 @@ bool AS3935Cmd(void) {
       case CMND_AS3935_DISTTIME:
         if (XdrvMailbox.data_len) {
           if (15 >= XdrvMailbox.payload) {
-           Settings.as3935_parameter.dist_autotune_time = XdrvMailbox.payload;
+           Settings->as3935_parameter.dist_autotune_time = XdrvMailbox.payload;
           }
         }
-        Response_P(S_JSON_AS3935_COMMAND_NVALUE, command, Settings.as3935_parameter.dist_autotune_time);
+        Response_P(S_JSON_AS3935_COMMAND_NVALUE, command, Settings->as3935_parameter.dist_autotune_time);
         break;
       case CMND_AS3935_NFTIME:
         if (XdrvMailbox.data_len) {
           if (15 >= XdrvMailbox.payload) {
-           Settings.as3935_parameter.nf_autotune_time = XdrvMailbox.payload;
+           Settings->as3935_parameter.nf_autotune_time = XdrvMailbox.payload;
           }
         }
-        Response_P(S_JSON_AS3935_COMMAND_NVALUE, command, Settings.as3935_parameter.nf_autotune_time);
+        Response_P(S_JSON_AS3935_COMMAND_NVALUE, command, Settings->as3935_parameter.nf_autotune_time);
         break;
       case CMND_AS3935_SET_DISTURBER:
         if (XdrvMailbox.data_len) {
           if (2 > XdrvMailbox.payload) {
             AS3935SetDisturber(XdrvMailbox.payload);
-            if (!XdrvMailbox.payload) Settings.as3935_functions.dist_autotune = 0;
+            if (!XdrvMailbox.payload) Settings->as3935_functions.dist_autotune = 0;
           }
         }
         Response_P(S_JSON_AS3935_COMMAND_STRING, command, S_JSON_AS3935_COMMAND_ONOFF[AS3935GetDisturber()]);
@@ -721,42 +721,42 @@ bool AS3935Cmd(void) {
       case CMND_AS3935_NF_AUTOTUNE:
         if (XdrvMailbox.data_len) {
           if (2 > XdrvMailbox.payload) {
-            Settings.as3935_functions.nf_autotune = XdrvMailbox.payload;
+            Settings->as3935_functions.nf_autotune = XdrvMailbox.payload;
           }
         }
-        Response_P(S_JSON_AS3935_COMMAND_STRING, command, S_JSON_AS3935_COMMAND_ONOFF[Settings.as3935_functions.nf_autotune]);
+        Response_P(S_JSON_AS3935_COMMAND_STRING, command, S_JSON_AS3935_COMMAND_ONOFF[Settings->as3935_functions.nf_autotune]);
         break;
       case CMND_AS3935_DIST_AUTOTUNE:
         if (XdrvMailbox.data_len) {
           if (2 > XdrvMailbox.payload) {
-            Settings.as3935_functions.dist_autotune = XdrvMailbox.payload;
+            Settings->as3935_functions.dist_autotune = XdrvMailbox.payload;
           }
         }
-        Response_P(S_JSON_AS3935_COMMAND_STRING, command, S_JSON_AS3935_COMMAND_ONOFF[Settings.as3935_functions.dist_autotune]);
+        Response_P(S_JSON_AS3935_COMMAND_STRING, command, S_JSON_AS3935_COMMAND_ONOFF[Settings->as3935_functions.dist_autotune]);
         break;
       case CMND_AS3935_NF_ATUNE_BOTH:
         if (XdrvMailbox.data_len) {
           if (2 > XdrvMailbox.payload) {
-            Settings.as3935_functions.nf_autotune_both = XdrvMailbox.payload;
+            Settings->as3935_functions.nf_autotune_both = XdrvMailbox.payload;
           }
         }
-        Response_P(S_JSON_AS3935_COMMAND_STRING, command, S_JSON_AS3935_COMMAND_ONOFF[Settings.as3935_functions.nf_autotune_both]);
+        Response_P(S_JSON_AS3935_COMMAND_STRING, command, S_JSON_AS3935_COMMAND_ONOFF[Settings->as3935_functions.nf_autotune_both]);
         break;
       case CMND_AS3935_MQTT_LIGHT_EVT:
         if (XdrvMailbox.data_len) {
           if (2 > XdrvMailbox.payload) {
-            Settings.as3935_functions.mqtt_only_Light_Event = XdrvMailbox.payload;
+            Settings->as3935_functions.mqtt_only_Light_Event = XdrvMailbox.payload;
           }
         }
-        Response_P(S_JSON_AS3935_COMMAND_STRING, command, S_JSON_AS3935_COMMAND_ONOFF[Settings.as3935_functions.mqtt_only_Light_Event]);
+        Response_P(S_JSON_AS3935_COMMAND_STRING, command, S_JSON_AS3935_COMMAND_ONOFF[Settings->as3935_functions.mqtt_only_Light_Event]);
         break;
       case CMND_AS3935_MQTT_NO_IRQ_EVT:
         if (XdrvMailbox.data_len) {
           if (2 > XdrvMailbox.payload) {
-            Settings.as3935_functions.suppress_irq_no_Event = XdrvMailbox.payload;
+            Settings->as3935_functions.suppress_irq_no_Event = XdrvMailbox.payload;
           }
         }
-        Response_P(S_JSON_AS3935_COMMAND_STRING, command, S_JSON_AS3935_COMMAND_ONOFF[Settings.as3935_functions.suppress_irq_no_Event]);
+        Response_P(S_JSON_AS3935_COMMAND_STRING, command, S_JSON_AS3935_COMMAND_ONOFF[Settings->as3935_functions.suppress_irq_no_Event]);
         break;
       case CMND_AS3935_SETTINGS: {
         if (!XdrvMailbox.data_len) {
@@ -770,14 +770,14 @@ bool AS3935Cmd(void) {
           uint8_t disturber = AS3935GetDisturber();
           uint8_t reinj = AS3935GetSpikeRejection();
           uint8_t wdth = AS3935GetWdth();
-          uint8_t min_nf = Settings.as3935_parameter.nf_autotune_min;
-          uint8_t nf_time = Settings.as3935_parameter.nf_autotune_time;
-          uint8_t nfauto = Settings.as3935_functions.nf_autotune;
-          uint8_t nfautomax = Settings.as3935_functions.nf_autotune_both;
-          uint8_t distauto = Settings.as3935_functions.dist_autotune;
-          uint8_t jsonlight = Settings.as3935_functions.mqtt_only_Light_Event;
-          uint8_t jsonirq = Settings.as3935_functions.suppress_irq_no_Event;
-          uint8_t dist_time = Settings.as3935_parameter.dist_autotune_time;
+          uint8_t min_nf = Settings->as3935_parameter.nf_autotune_min;
+          uint8_t nf_time = Settings->as3935_parameter.nf_autotune_time;
+          uint8_t nfauto = Settings->as3935_functions.nf_autotune;
+          uint8_t nfautomax = Settings->as3935_functions.nf_autotune_both;
+          uint8_t distauto = Settings->as3935_functions.dist_autotune;
+          uint8_t jsonlight = Settings->as3935_functions.mqtt_only_Light_Event;
+          uint8_t jsonirq = Settings->as3935_functions.suppress_irq_no_Event;
+          uint8_t dist_time = Settings->as3935_parameter.dist_autotune_time;
           Response_P(S_JSON_AS3935_COMMAND_SETTINGS, S_JSON_AS3935_COMMAND_GAIN[gain], nf_floor, vrms, tunecaps, minnumlight, reinj, wdth, min_nf, nf_time, dist_time, S_JSON_AS3935_COMMAND_ONOFF[disturber], S_JSON_AS3935_COMMAND_ONOFF[nfauto], S_JSON_AS3935_COMMAND_ONOFF[distauto], S_JSON_AS3935_COMMAND_ONOFF[nfautomax], S_JSON_AS3935_COMMAND_ONOFF[jsonlight], S_JSON_AS3935_COMMAND_ONOFF[jsonirq]);
         }
       }

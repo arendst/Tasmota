@@ -250,7 +250,7 @@ bool ExsSyncState()
 void ExsDebugState()
 {
 #ifdef EXS_DEBUG
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR("EXS: MCU v%d.%d, c0: On:%d,Dim:%d,Tbl:%d(%d%%), c1: On:%d,Dim:%d,Tbl:%d(%d%%), ChLock: %d"),
+    AddLog(LOG_LEVEL_DEBUG, PSTR("EXS: MCU v%d.%d, c0: On:%d,Dim:%d,Tbl:%d(%d%%), c1: On:%d,Dim:%d,Tbl:%d(%d%%), ChLock: %d"),
               Exs.dimmer.version_major, Exs.dimmer.version_minor,
               Exs.dimmer.channel[0].on, Exs.dimmer.channel[0].dimm,
               Exs.dimmer.channel[0].bright_tbl,
@@ -350,9 +350,9 @@ void ExsPacketProcess(void)
  */
 bool ExsModuleSelected(void)
 {
-  Settings.light_correction = 0;
-  Settings.flag.mqtt_serial = 0;          // CMND_SERIALSEND and CMND_SERIALLOG
-  Settings.flag3.pwm_multi_channels = 1;  // SetOption68 - Enable multi-channels PWM instead of Color PWM
+  Settings->light_correction = 0;
+  Settings->flag.mqtt_serial = 0;          // CMND_SERIALSEND and CMND_SERIALLOG
+  Settings->flag3.pwm_multi_channels = 1;  // SetOption68 - Enable multi-channels PWM instead of Color PWM
   SetSeriallog(LOG_LEVEL_NONE);
 
   TasmotaGlobal.devices_present = +2;

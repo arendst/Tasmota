@@ -420,6 +420,14 @@
                                                    // Enable this if you want to disable the old algo check, which should be more secure
 //  for USE_4K_RSA (support for 4096 bits certificates, instead of 2048), you need to uncommend `-DUSE_4K_RSA` in `build_flags` from `platform.ini` or `platform_override.ini`
 
+// -- MQTT - TLS - Azure IoT & IoT Central ---------
+// Starting with version v9.4.0.3 added support for both Azure IoT Hub and IoT Central
+//#define USE_MQTT_TLS                             // REQUIRED Use TLS for MQTT connection (+34.5k code, +7.0k mem and +4.8k additional during connection handshake)
+//  #define USE_MQTT_AZURE_IOT                     // REQUIRED Enable accesss to IoT Hub without DPS using a preshared key: https://tasmota.github.io/docs/Azure-IoT-Hub/  Enable MQTT for Azure IoT Hub (+1k code)
+//  #define USE_MQTT_AZURE_DPS_SCOPEID             // OPTIONAL Enables Azure Device Provisioning Service (DPS) for provision at scale, REQUIRED for IoT Central.  Uses the REST over HTTPS protocol (+4k memory)
+//  #define USE_MQTT_AZURE_DPS_PRESHAREDKEY        // OPTIONAL The Preshared Key of DPS https://github.com/tasmota/docs/blob/development/docs/Azure-IoT-Central.md
+//  #define USE_MQTT_AZURE_DPS_SCOPE_ENDPOINT      // OPTIONAL Defaults to "https://global.azure-devices-provisioning.net/", can be changed for Azure China, Azure Germany or others.
+
 // -- Telegram Protocol ---------------------------
 //#define USE_TELEGRAM                             // Support for Telegram protocol (+49k code, +7.0k mem and +4.8k additional during connection handshake)
   #define USE_TELEGRAM_FINGERPRINT "\xB2\x72\x47\xA6\x69\x8C\x3C\x69\xF9\x58\x6C\xF3\x60\x02\xFB\x83\xFA\x8B\x1F\x23" // Telegram api.telegram.org TLS public key fingerpring
@@ -462,12 +470,15 @@
 #define USE_RULES                                // Add support for rules (+8k code)
 //  #define USE_EXPRESSION                         // Add support for expression evaluation in rules (+3k2 code, +64 bytes mem)
 //    #define SUPPORT_IF_STATEMENT                 // Add support for IF statement in rules (+4k2 code, -332 bytes mem)
+//  #define USER_RULE1 "<Any rule1 data>"          // Add rule1 data saved at initial firmware load or when command reset is executed
+//  #define USER_RULE2 "<Any rule2 data>"          // Add rule2 data saved at initial firmware load or when command reset is executed
+//  #define USER_RULE3 "<Any rule3 data>"          // Add rule3 data saved at initial firmware load or when command reset is executed
 
 //#define USE_SCRIPT                               // Add support for script (+17k code)
-  //#define USE_SCRIPT_FATFS 4                     // Script: Add FAT FileSystem Support
-
+//  #define USE_SCRIPT_FATFS 4                     // Script: Add FAT FileSystem Support
 //  #define SUPPORT_MQTT_EVENT                     // Support trigger event with MQTT subscriptions (+3k5 code)
 
+//#define USER_BACKLOG "<Any command separated by a semicolon (;)>"  // Add commands executed at firmware load or when command reset is executed
 
 // -- Optional modules ----------------------------
 #define ROTARY_V1                                // Add support for Rotary Encoder as used in MI Desk Lamp (+0k8 code)
@@ -617,7 +628,8 @@
 //  #define USE_EZORGB                             // [I2cDriver55] Enable support for EZO's RGB sensor (+0k5 code) - Shared EZO code required for any EZO device (+1k2 code)
 //  #define USE_EZOPMP                             // [I2cDriver55] Enable support for EZO's PMP sensor (+0k3 code) - Shared EZO code required for any EZO device (+1k2 code)
 //  #define USE_SEESAW_SOIL                        // [I2cDriver56] Enable Capacitice Soil Moisture & Temperature Sensor (I2C addresses 0x36 - 0x39) (+1k3 code)
-//  #define USE_MPU6886                            // [I2cDriver58] Enable MPU6886 - found in M5Stack - support 2 I2C buses on ESP32 (I2C address 0x68) (+2k code)
+//  #define USE_MPU_ACCEL                          // [I2cDriver58] Enable MPU6886/MPU9250 - found in M5Stack - support both I2C buses on ESP32 (I2C address 0x68) (+2k code)
+//  #define USE_BM8563                             // [I2cDriver59] Enable BM8563 RTC - found in M5Stack - support both I2C buses on ESP32 (I2C address 0x51) (+2.5k code)
 
 //  #define USE_DISPLAY                            // Add I2C Display Support (+2k code)
     #define USE_DISPLAY_MODES1TO5                // Enable display mode 1 to 5 in addition to mode 0
@@ -644,6 +656,11 @@
     // #define SEVENSEG_ADDRESS1     0x70      // No longer used.  Use MTX_ADDRESS1 - MTX_ADDRESS8 instead to specify I2C address of sevenseg displays
 //    #define USE_DISPLAY_SH1106                   // [DisplayModel 7] [I2cDriver6] Enable SH1106 Oled 128x64 display (I2C addresses 0x3C and 0x3D)
 #endif  // USE_I2C
+
+
+// -- Universal Display Driver ---------------------------------
+// #define USE_UNIVERSAL_DISPLAY                   // New universal display driver for both I2C and SPI
+    #define MAX_TOUCH_BUTTONS 16                  // Virtual touch buttons
 
 // -- SPI sensors ---------------------------------
 //#define USE_SPI                                  // Hardware SPI using GPIO12(MISO), GPIO13(MOSI) and GPIO14(CLK) in addition to two user selectable GPIOs(CS and DC)
@@ -684,8 +701,9 @@
 //#define USE_DYP                                  // Add support for DYP ME-007 ultrasonic distance sensor, serial port version (+0k5 code)
 #define USE_SERIAL_BRIDGE                        // Add support for software Serial Bridge (+0k8 code)
 //#define USE_TCP_BRIDGE                           //  Add support for Serial to TCP bridge (+1.3k code)
-//#define USE_MP3_PLAYER                           // Use of the DFPlayer Mini MP3 Player RB-DFR-562 commands: play, volume and stop
+//#define USE_MP3_PLAYER                           // Use of the DFPlayer Mini MP3 Player RB-DFR-562 commands: play, pause, stop, track, volume and reset
   #define MP3_VOLUME           10                // Set the startup volume on init, the range can be 0..30(max)
+//  #define USE_DY_SV17F                             // Use of DY-SV17F MP3 Player commands: play, stop, track and volume
 //#define USE_AZ7798                               // Add support for AZ-Instrument 7798 CO2 datalogger (+1k6 code)
 //#define USE_PN532_HSU                            // Add support for PN532 using HSU (Serial) interface (+1k8 code, 140 bytes mem)
 //  #define USE_PN532_DATA_FUNCTION                // Add sensor40 command support for erase, setting data block content (+1k7 code, 388 bytes mem)
@@ -794,6 +812,10 @@
   #define USE_ZIGBEE_MANUFACTURER "Tasmota"      // reported "Manufacturer" (cluster 0000 / attribute 0004)
   #define USE_ZBBRIDGE_TLS                       // TLS support for zbbridge
   #define USE_ZIGBEE_ZBBRIDGE_EEPROM 0x50        // I2C id for the ZBBridge EEPROM
+  // #define USE_ZIGBEE_FORCE_NO_CHILDREN           // This feature forces `CONFIG_MAX_END_DEVICE_CHILDREN` to zero which means that the coordinator does not accept any direct child. End-devices must pair through a router.
+                                                 // This may mitigate some battery drain issues with IKEA devices.
+                                                 // **DO NOT USE UNLESS YOU KNOW EXACTLY WHAT YOU'RE DOING** See #10413
+
 
   // Auto-binding constants, see `Z_autoAttributeReporting`
   // Below are the threshold for attribute reporting
@@ -916,9 +938,52 @@
 #define USE_CSE7761                              // Add support for CSE7761 Energy monitor as used in Sonoff Dual R3
 
 // -- LVGL Graphics Library ---------------------------------
-//#define USE_LVGL                                  // LVGL Engine, requires Berry, takes 440k of Flash
-  #define USE_LVGL_BG_DEFAULT 0x000000              // Default color for the uninitialized background screen (black)
-
+//#define USE_LVGL                                 // LVGL Engine, requires Berry (+382KB)
+  #define USE_LVGL_PSRAM                         // Allocate LVGL memory in PSRAM if PSRAM is connected - this might be slightly slower but leaves main memory intact
+  #define USE_LVGL_MAX_SLEEP  10                 // max sleep in ms when LVGL is enabled, more than 10ms will make display less responsive
+  #define USE_LVGL_PNG_DECODER                   // include a PNG image decoder from file system (+16KB)
+  //#define USE_LVGL_FREETYPE                      // Use the FreeType renderer to display fonts using native TTF files in file system (+77KB flash)
+    #define LV_USE_FT_CACHE_MANAGER 1            // define whether glyphs are cached by FreeType library
+    #define USE_LVGL_FREETYPE_MAX_FACES 64       // max number of FreeType faces in cache
+    #define USE_LVGL_FREETYPE_MAX_SIZES 4        // max number of sizes in cache
+    #define USE_LVGL_FREETYPE_MAX_BYTES 16*1024  // max bytes in cache
+    #define USE_LVGL_FREETYPE_MAX_BYTES_PSRAM 64*1024  // max bytes in cache when using PSRAM
+  #define USE_LVGL_BG_DEFAULT 0x000000           // Default color for the uninitialized background screen (black)
+  // Disabling select widgets that will be rarely used in Tasmota (-13KB)
+    #define BE_LV_WIDGET_ARC 1
+    #define BE_LV_WIDGET_BAR 1
+    #define BE_LV_WIDGET_BTN 1
+    #define BE_LV_WIDGET_BTNMATRIX 1
+    #define BE_LV_WIDGET_CALENDAR 0
+    #define BE_LV_WIDGET_CANVAS 1
+    #define BE_LV_WIDGET_CHART 1
+    #define BE_LV_WIDGET_CHECKBOX 1
+    #define BE_LV_WIDGET_CONT 1
+    #define BE_LV_WIDGET_CPICKER 1
+    #define BE_LV_WIDGET_DROPDOWN 1
+    #define BE_LV_WIDGET_GAUGE 1
+    #define BE_LV_WIDGET_IMG 1
+    #define BE_LV_WIDGET_IMGBTN 1
+    #define BE_LV_WIDGET_KEYBOARD 0
+    #define BE_LV_WIDGET_LABEL 1
+    #define BE_LV_WIDGET_LED 1
+    #define BE_LV_WIDGET_LINE 1
+    #define BE_LV_WIDGET_LINEMETER 1
+    #define BE_LV_WIDGET_LIST 1
+    #define BE_LV_WIDGET_MSGBOX 1
+    #define BE_LV_WIDGET_OBJMASK 1
+    #define BE_LV_WIDGET_TEMPL 1
+    #define BE_LV_WIDGET_PAGE 1
+    #define BE_LV_WIDGET_ROLLER 1
+    #define BE_LV_WIDGET_SLIDER 1
+    #define BE_LV_WIDGET_SPINBOX 1
+    #define BE_LV_WIDGET_SPINNER 1
+    #define BE_LV_WIDGET_SWITCH 1
+    #define BE_LV_WIDGET_TABLE 1
+    #define BE_LV_WIDGET_TABVIEW 1
+    #define BE_LV_WIDGET_TEXTAREA 1
+    #define BE_LV_WIDGET_TILEVIEW 1
+    #define BE_LV_WIDGET_WIN 0
 
 #endif  // ESP32
 

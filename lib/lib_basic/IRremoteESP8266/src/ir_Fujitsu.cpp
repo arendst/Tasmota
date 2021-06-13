@@ -1,5 +1,5 @@
 // Copyright 2017 Jonny Graham
-// Copyright 2017-2019 David Conran
+// Copyright 2017-2021 David Conran
 // Copyright 2021 siriuslzx
 
 /// @file
@@ -28,6 +28,7 @@ const uint16_t kFujitsuAcBitMark = 448;
 const uint16_t kFujitsuAcOneSpace = 1182;
 const uint16_t kFujitsuAcZeroSpace = 390;
 const uint16_t kFujitsuAcMinGap = 8100;
+const uint8_t  kFujitsuAcExtraTolerance = 5;  // Extra tolerance percentage.
 
 using irutils::addBoolToString;
 using irutils::addIntToString;
@@ -35,7 +36,7 @@ using irutils::addLabeledString;
 using irutils::addModeToString;
 using irutils::addModelToString;
 using irutils::addFanToString;
-using irutils::addTempToString;
+using irutils::addTempFloatToString;
 using irutils::minsToString;
 
 #if SEND_FUJITSU_AC
@@ -147,6 +148,7 @@ bool IRFujitsuAC::updateUseLongOrShort(void) {
         case fujitsu_ac_remote_model_t::ARRY4:
         case fujitsu_ac_remote_model_t::ARRAH2E:
         case fujitsu_ac_remote_model_t::ARREB1E:
+        case fujitsu_ac_remote_model_t::ARREW4E:
           _.Cmd = 0xFE;
           break;
         case fujitsu_ac_remote_model_t::ARDB1:
@@ -165,19 +167,20 @@ void IRFujitsuAC::checkSum(void) {
   if (updateUseLongOrShort()) {  // Is it a long code?
     // Nr. of bytes in the message after this byte.
     _.RestLength = _state_length - 7;
-    _.longcode[7] = 0x30;
-    _.Power = (_cmd == kFujitsuAcCmdTurnOn);
+    _.Protocol = (_model == fujitsu_ac_remote_model_t::ARREW4E) ? 0x31 : 0x30;
+    _.Power = (_cmd == kFujitsuAcCmdTurnOn) || get10CHeat();
 
     // These values depend on model
-    if (_model != fujitsu_ac_remote_model_t::ARREB1E) {
+    if (_model != fujitsu_ac_remote_model_t::ARREB1E &&
+        _model != fujitsu_ac_remote_model_t::ARREW4E) {
       _.OutsideQuiet = 0;
       if (_model != fujitsu_ac_remote_model_t::ARRAH2E) {
         _.TimerType = kFujitsuAcStopTimers;
       }
     }
     if (_model != fujitsu_ac_remote_model_t::ARRY4) {
-      _.Clean = 0;
-      _.Filter = 0;
+      if (_model != fujitsu_ac_remote_model_t::ARREW4E) _.Clean = false;
+      _.Filter = false;
     }
     // Set the On/Off/Sleep timer Nr of mins.
     _.OffTimer = getOffSleepTimer();
@@ -215,6 +218,7 @@ void IRFujitsuAC::checkSum(void) {
       case fujitsu_ac_remote_model_t::ARRY4:
       case fujitsu_ac_remote_model_t::ARRAH2E:
       case fujitsu_ac_remote_model_t::ARREB1E:
+      case fujitsu_ac_remote_model_t::ARREW4E:
         // The last byte is the inverse of penultimate byte
         _.shortcode[_state_length_short - 1] =
             ~_.shortcode[_state_length_short - 2];
@@ -278,9 +282,9 @@ void IRFujitsuAC::buildFromState(const uint16_t length) {
   // Currently the only way we know how to tell ARRAH2E & ARRY4 apart is if
   // either the raw Filter or Clean setting is on.
   if (_model == fujitsu_ac_remote_model_t::ARRAH2E && (_.Filter || _.Clean))
-      setModel(fujitsu_ac_remote_model_t::ARRY4);
+    setModel(fujitsu_ac_remote_model_t::ARRY4);
   if (_state_length == kFujitsuAcStateLength && _.OutsideQuiet)
-      setModel(fujitsu_ac_remote_model_t::ARREB1E);
+    setModel(fujitsu_ac_remote_model_t::ARREB1E);
   switch (_.Cmd) {
     case kFujitsuAcCmdTurnOff:
     case kFujitsuAcCmdStepHoriz:
@@ -292,6 +296,7 @@ void IRFujitsuAC::buildFromState(const uint16_t length) {
       setCmd(_.Cmd);
       break;
   }
+  if (_.Protocol == 0x31) setModel(fujitsu_ac_remote_model_t::ARREW4E);
 }
 
 /// Set the internal state from a valid code for this protocol.
@@ -362,6 +367,7 @@ void IRFujitsuAC::setCmd(const uint8_t cmd) {
       switch (_model) {
         // Only these remotes have these commands.
         case ARREB1E:
+        case ARREW4E:
           _cmd = cmd;
         break;
       default:
@@ -406,24 +412,70 @@ void IRFujitsuAC::setOutsideQuiet(const bool on) {
 /// @return true, the setting is on. false, the setting is off.
 bool IRFujitsuAC::getOutsideQuiet(void) const {
   switch (_model) {
-    // Only ARREB1E seems to have this mode.
-    case fujitsu_ac_remote_model_t::ARREB1E: return _.OutsideQuiet;
+    // Only ARREB1E & ARREW4E seems to have this mode.
+    case fujitsu_ac_remote_model_t::ARREB1E:
+    case fujitsu_ac_remote_model_t::ARREW4E:
+      return _.OutsideQuiet;
     default: return false;
   }
 }
 
 /// Set the temperature.
-/// @param[in] temp The temperature in degrees celsius.
-void IRFujitsuAC::setTemp(const uint8_t temp) {
-  uint8_t t = std::max((uint8_t)kFujitsuAcMinTemp, temp);
-  t = std::min((uint8_t)kFujitsuAcMaxTemp, t);
-  _.Temp = t - kFujitsuAcMinTemp;
+/// @param[in] temp The temperature in degrees.
+/// @param[in] useCelsius Use Celsius or Fahrenheit?
+void IRFujitsuAC::setTemp(const float temp, const bool useCelsius) {
+  float mintemp;
+  float maxtemp;
+  uint8_t offset;
+  bool _useCelsius;
+  float _temp;
+
+  switch (_model) {
+    // These models have native Fahrenheit & Celsius upport.
+    case fujitsu_ac_remote_model_t::ARREW4E:
+      _useCelsius = useCelsius;
+      _temp = temp;
+      break;
+    // Make sure everything else uses Celsius.
+    default:
+      _useCelsius = true;
+      _temp = useCelsius ? temp : fahrenheitToCelsius(temp);
+  }
+  setCelsius(_useCelsius);
+  if (_useCelsius) {
+    mintemp = kFujitsuAcMinTemp;
+    maxtemp = kFujitsuAcMaxTemp;
+    offset = kFujitsuAcTempOffsetC;
+  } else {
+    mintemp = kFujitsuAcMinTempF;
+    maxtemp = kFujitsuAcMaxTempF;
+    offset = kFujitsuAcTempOffsetF;
+  }
+  _temp = std::max(mintemp, _temp);
+  _temp = std::min(maxtemp, _temp);
+  if (_useCelsius) {
+    if (_model == fujitsu_ac_remote_model_t::ARREW4E)
+      _.Temp = (_temp - (offset / 2)) * 2;
+    else
+      _.Temp = (_temp - offset) * 4;
+  } else {
+    _.Temp = _temp - offset;
+  }
   setCmd(kFujitsuAcCmdStayOn);  // No special command involved.
 }
 
 /// Get the current temperature setting.
-/// @return The current setting for temp. in degrees celsius.
-uint8_t IRFujitsuAC::getTemp(void) const { return _.Temp + kFujitsuAcMinTemp; }
+/// @return The current setting for temp. in degrees of the currently set units.
+float IRFujitsuAC::getTemp(void) const {
+  if (_model == fujitsu_ac_remote_model_t::ARREW4E) {
+    if (_.Fahrenheit)  // Currently only ARREW4E supports native Fahrenheit.
+      return _.Temp + kFujitsuAcTempOffsetF;
+    else
+      return (_.Temp / 2.0) + (kFujitsuAcMinTemp / 2);
+  } else {
+    return _.Temp / 4 + kFujitsuAcMinTemp;
+  }
+}
 
 /// Set the speed of the fan.
 /// @param[in] fanSpeed The desired setting.
@@ -511,6 +563,35 @@ void IRFujitsuAC::setFilter(const bool on) {
 bool IRFujitsuAC::getFilter(void) const {
   switch (_model) {
     case fujitsu_ac_remote_model_t::ARRY4: return _.Filter;
+    default: return false;
+  }
+}
+
+/// Set the 10C heat status of the A/C.
+/// @param[in] on true, the setting is on. false, the setting is off.
+void IRFujitsuAC::set10CHeat(const bool on) {
+  switch (_model) {
+    // Only selected models support this.
+    case fujitsu_ac_remote_model_t::ARREW4E:
+      setClean(on);  // 10C Heat uses the same bit as Clean
+      if (on) {
+        _.Mode = kFujitsuAcModeFan;
+        _.Power = true;
+        _.Fan = kFujitsuAcFanAuto;
+        _.Swing = kFujitsuAcSwingOff;
+      }
+    default:
+      break;
+  }
+}
+
+/// Get the 10C heat status of the A/C.
+/// @return true, the setting is on. false, the setting is off.
+bool IRFujitsuAC::get10CHeat(void) const {
+  switch (_model) {
+    case fujitsu_ac_remote_model_t::ARREW4E:
+      return (_.Clean && _.Power && _.Mode == kFujitsuAcModeFan &&
+              _.Fan == kFujitsuAcFanAuto && _.Swing == kFujitsuAcSwingOff);
     default: return false;
   }
 }
@@ -623,6 +704,22 @@ bool IRFujitsuAC::validChecksum(uint8_t state[], const uint16_t length) {
   return checksum == (uint8_t)(sum_complement - sum);  // Does it match?
 }
 
+/// Set the device's remote ID number.
+/// @param[in] num The ID for the remote. Valid number range is 0 to 3.
+void IRFujitsuAC::setId(const uint8_t num) { _.Id = num; }
+
+/// Get the current device's remote ID number.
+/// @return The current device's remote ID number.
+uint8_t IRFujitsuAC::getId(void) const { return _.Id; }
+
+/// Set the Temperature units for the A/C.
+/// @param[in] on true, use Celsius. false, use Fahrenheit.
+void IRFujitsuAC::setCelsius(const bool on) { _.Fahrenheit = !on; }
+
+/// Get the Clean mode status of the A/C.
+/// @return true, the setting is on. false, the setting is off.
+bool IRFujitsuAC::getCelsius(void) const { return !_.Fahrenheit; }
+
 /// Convert a stdAc::opmode_t enum into its native mode.
 /// @param[in] mode The enum to be converted.
 /// @return The native equivalent of the enum.
@@ -684,7 +781,7 @@ stdAc::state_t IRFujitsuAC::toCommon(void) const {
   result.model = _model;
   result.power = getPower();
   result.mode = toCommonMode(_.Mode);
-  result.celsius = true;
+  result.celsius = getCelsius();
   result.degrees = getTemp();
   result.fanspeed = toCommonFanSpeed(_.Fan);
   uint8_t swing = _.Swing;
@@ -726,11 +823,12 @@ String IRFujitsuAC::toString(void) const {
   result.reserve(100);  // Reserve some heap for the string to reduce fragging.
   fujitsu_ac_remote_model_t model = _model;
   result += addModelToString(decode_type_t::FUJITSU_AC, model, false);
+  result += addIntToString(_.Id, kIdStr);
   result += addBoolToString(getPower(), kPowerStr);
   result += addModeToString(_.Mode, kFujitsuAcModeAuto, kFujitsuAcModeCool,
                             kFujitsuAcModeHeat, kFujitsuAcModeDry,
                             kFujitsuAcModeFan);
-  result += addTempToString(getTemp());
+  result += addTempFloatToString(getTemp(), getCelsius());
   result += addFanToString(_.Fan, kFujitsuAcFanHigh, kFujitsuAcFanLow,
                            kFujitsuAcFanAuto, kFujitsuAcFanQuiet,
                            kFujitsuAcFanMed);
@@ -739,9 +837,16 @@ String IRFujitsuAC::toString(void) const {
     case fujitsu_ac_remote_model_t::ARDB1:
     case fujitsu_ac_remote_model_t::ARJW2:
       break;
-    default:  // Assume everything else does.
+    // These models have Clean & Filter, plus Swing (via fall thru)
+    case fujitsu_ac_remote_model_t::ARRAH2E:
+    case fujitsu_ac_remote_model_t::ARREB1E:
+    case fujitsu_ac_remote_model_t::ARRY4:
       result += addBoolToString(getClean(), kCleanStr);
       result += addBoolToString(getFilter(), kFilterStr);
+      // FALL THRU
+    default:   // e.g. ARREW4E
+      if (model == fujitsu_ac_remote_model_t::ARREW4E)
+        result += addBoolToString(get10CHeat(), k10CHeatStr);
       result += addIntToString(_.Swing, kSwingStr);
       result += kSpaceLBraceStr;
       switch (_.Swing) {
@@ -801,6 +906,7 @@ String IRFujitsuAC::toString(void) const {
   String type_str = kTimerStr;
   switch (model) {
     case fujitsu_ac_remote_model_t::ARREB1E:
+    case fujitsu_ac_remote_model_t::ARREW4E:
       result += addBoolToString(getOutsideQuiet(), kOutsideQuietStr);
       // FALL THRU
     // These models seem to have timer support.
@@ -858,32 +964,30 @@ bool IRrecv::decodeFujitsuAC(decode_results* results, uint16_t offset,
     }
   }
 
-  // Header
-  if (!matchMark(results->rawbuf[offset++], kFujitsuAcHdrMark)) return false;
-  if (!matchSpace(results->rawbuf[offset++], kFujitsuAcHdrSpace)) return false;
-
-  // Data (Fixed signature)
-  match_result_t data_result =
-      matchData(&(results->rawbuf[offset]), kFujitsuAcMinBits - 8,
-                kFujitsuAcBitMark, kFujitsuAcOneSpace, kFujitsuAcBitMark,
-                kFujitsuAcZeroSpace, _tolerance, kMarkExcess, false);
-  if (data_result.success == false) return false;      // Fail
-  if (data_result.data != 0x1010006314) return false;  // Signature failed.
+  // Header / Some of the Data
+  uint16_t used = matchGeneric(results->rawbuf + offset, results->state,
+                               results->rawlen - offset, kFujitsuAcMinBits - 8,
+                               kFujitsuAcHdrMark, kFujitsuAcHdrSpace,  // Header
+                               kFujitsuAcBitMark, kFujitsuAcOneSpace,  // Data
+                               kFujitsuAcBitMark, kFujitsuAcZeroSpace,
+                               0, 0,  // No Footer (yet)
+                               false, _tolerance + kFujitsuAcExtraTolerance, 0,
+                               false);  // LSBF
+  if (!used) return false;
+  offset += used;
+  // Check we have the typical data header.
+  if (results->state[0] != 0x14 || results->state[1] != 0x63) return false;
   dataBitsSoFar += kFujitsuAcMinBits - 8;
-  offset += data_result.used;
-  results->state[0] = 0x14;
-  results->state[1] = 0x63;
-  results->state[2] = 0x00;
-  results->state[3] = 0x10;
-  results->state[4] = 0x10;
 
   // Keep reading bytes until we either run out of message or state to fill.
+  match_result_t data_result;
   for (uint16_t i = 5;
        offset <= results->rawlen - 16 && i < kFujitsuAcStateLength;
        i++, dataBitsSoFar += 8, offset += data_result.used) {
     data_result = matchData(
         &(results->rawbuf[offset]), 8, kFujitsuAcBitMark, kFujitsuAcOneSpace,
-        kFujitsuAcBitMark, kFujitsuAcZeroSpace, _tolerance, kMarkExcess, false);
+        kFujitsuAcBitMark, kFujitsuAcZeroSpace,
+        _tolerance + kFujitsuAcExtraTolerance, 0, false);
     if (data_result.success == false) break;  // Fail
     results->state[i] = data_result.data;
   }

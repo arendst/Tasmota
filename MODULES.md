@@ -1,6 +1,7 @@
 ## Supported Modules
 
-The following hardware modules are supported.
+### ESP8266 based
+The following ESP8266 based hardware modules are supported.
 
 Module             | LCode | Description
 -------------------|-------|-----------------------
@@ -80,4 +81,17 @@ Module             | LCode | Description
 74 Sonoff D1       |   x   | Sonoff D1 Wifi and RF Dimmer
 75 Sonoff ZbBridge |   x   | Sonoff Zigbee bridge
 
-Over 1940 additional devices are supported using [templates](TEMPLATES.md).
+### ESP32 based
+The following ESP32 based hardware modules are supported.
+
+Module             | LCode | Description
+-------------------|-------|-----------------------
+01 ESP32-DevKit    |   x   | Any ESP32 device
+02 ESP32-Cam       |   x   | ESP32 webcam
+03 Odroid Go       |   x   | Odroid Go
+04 ESP32-Solo      |   x   | ESP32-Solo
+05 WT32-Eth01      |   x   | WT32-Eth01 ethernet
+06 TTGO Watch      |   x   | TTGO Watch
+07 M5Stack Core2   |   x   | M5Stack Core2
+
+Over 2000 additional devices are supported using [templates](TEMPLATES.md).

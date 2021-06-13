@@ -1,20 +1,20 @@
 /*
- * HTTP Client for ESP8266 wrapper v1.0.1
- *
+ * HTTP Client for ESP8266 wrapper v1.0.3
+ * 
  * The MIT License (MIT)
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
- *
- *
+ * 
+ * 
  * Permission is hereby granted, free of charge, to any person returning a copy of
  * this software and associated documentation files (the "Software"), to deal in
  * the Software without restriction, including without limitation the rights to
  * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
  * the Software, and to permit persons to whom the Software is furnished to do so,
  * subject to the following conditions:
- *
+ * 
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- *
+ * 
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
  * FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
@@ -47,6 +47,9 @@
 #include <Arduino.h>
 #include <core_version.h>
 #include <time.h>
+#include <string>
+
+#include "SDK_Version_Common.h"
 
 #ifndef ARDUINO_ESP8266_GIT_VER
 #error Your ESP8266 Arduino Core SDK is outdated, please update. From Arduino IDE go to Boards Manager and search 'esp8266' then select the latest version.
@@ -65,16 +68,11 @@
 #define FS_NO_GLOBALS
 #include <FS.h>
 #include <SD.h>
-#include "extras/ESP_Mail_Client_FS.h"
-
-#ifdef USE_LITTLEFS
-#include <LittleFS.h>
-#define FLASH_FS LittleFS
-#else
+#include "ESP_Mail_FS.h"
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-#define FLASH_FS SPIFFS
-#endif
+#define ESP_MAIL_FLASH_FS ESP_Mail_DEFAULT_FLASH_FS
+#define ESP_MAIL_SD_FS ESP_Mail_DEFAULT_SD_FS
 
 #if __has_include(<WiFiEspAT.h>) || __has_include(<espduino.h>)
 #error WiFi UART bridge was not supported.

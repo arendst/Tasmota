@@ -96,9 +96,9 @@ void EthernetEvent(WiFiEvent_t event) {
     case SYSTEM_EVENT_ETH_GOT_IP:
       AddLog(LOG_LEVEL_DEBUG, PSTR("ETH: Mac %s, IPAddress %_I, Hostname %s"),
         ETH.macAddress().c_str(), (uint32_t)ETH.localIP(), eth_hostname);
-      Settings.ipv4_address[1] = (uint32_t)ETH.gatewayIP();
-      Settings.ipv4_address[2] = (uint32_t)ETH.subnetMask();
-      Settings.ipv4_address[3] = (uint32_t)ETH.dnsIP();
+      Settings->ipv4_address[1] = (uint32_t)ETH.gatewayIP();
+      Settings->ipv4_address[2] = (uint32_t)ETH.subnetMask();
+      Settings->ipv4_address[3] = (uint32_t)ETH.dnsIP();
       TasmotaGlobal.global_state.eth_down = 0;
       break;
     case SYSTEM_EVENT_ETH_DISCONNECTED:
@@ -115,16 +115,16 @@ void EthernetEvent(WiFiEvent_t event) {
 }
 
 void EthernetInit(void) {
-  if (!Settings.flag4.network_ethernet) { return; }
+  if (!Settings->flag4.network_ethernet) { return; }
   if (!PinUsed(GPIO_ETH_PHY_MDC) && !PinUsed(GPIO_ETH_PHY_MDIO)) {
     AddLog(LOG_LEVEL_DEBUG, PSTR("ETH: No ETH MDC and/or ETH MDIO GPIO defined"));
     return;
   }
 
   if (WT32_ETH01 == TasmotaGlobal.module_type) {
-    Settings.eth_address = 1;                    // EthAddress
-    Settings.eth_type = ETH_PHY_LAN8720;         // EthType
-    Settings.eth_clk_mode = ETH_CLOCK_GPIO0_IN;  // EthClockMode
+    Settings->eth_address = 1;                    // EthAddress
+    Settings->eth_type = ETH_PHY_LAN8720;         // EthType
+    Settings->eth_clk_mode = ETH_CLOCK_GPIO0_IN;  // EthClockMode
   }
 
 //  snprintf_P(Eth.hostname, sizeof(Eth.hostname), PSTR("%s_eth"), TasmotaGlobal.hostname);
@@ -136,7 +136,7 @@ void EthernetInit(void) {
   int eth_power = Pin(GPIO_ETH_PHY_POWER);
   int eth_mdc = Pin(GPIO_ETH_PHY_MDC);
   int eth_mdio = Pin(GPIO_ETH_PHY_MDIO);
-  if (!ETH.begin(Settings.eth_address, eth_power, eth_mdc, eth_mdio, (eth_phy_type_t)Settings.eth_type, (eth_clock_mode_t)Settings.eth_clk_mode)) {
+  if (!ETH.begin(Settings->eth_address, eth_power, eth_mdc, eth_mdio, (eth_phy_type_t)Settings->eth_type, (eth_clock_mode_t)Settings->eth_clk_mode)) {
     AddLog(LOG_LEVEL_DEBUG, PSTR("ETH: Bad PHY type or init error"));
   };
 }
@@ -170,37 +170,37 @@ void (* const EthernetCommand[])(void) PROGMEM = {
 void CmndEthernet(void)
 {
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 1)) {
-    Settings.flag4.network_ethernet = XdrvMailbox.payload;
+    Settings->flag4.network_ethernet = XdrvMailbox.payload;
     TasmotaGlobal.restart_flag = 2;
   }
-  ResponseCmndStateText(Settings.flag4.network_ethernet);
+  ResponseCmndStateText(Settings->flag4.network_ethernet);
 }
 
 void CmndEthAddress(void)
 {
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 31)) {
-    Settings.eth_address = XdrvMailbox.payload;
+    Settings->eth_address = XdrvMailbox.payload;
     TasmotaGlobal.restart_flag = 2;
   }
-  ResponseCmndNumber(Settings.eth_address);
+  ResponseCmndNumber(Settings->eth_address);
 }
 
 void CmndEthType(void)
 {
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 2)) {
-    Settings.eth_type = XdrvMailbox.payload;
+    Settings->eth_type = XdrvMailbox.payload;
     TasmotaGlobal.restart_flag = 2;
   }
-  ResponseCmndNumber(Settings.eth_type);
+  ResponseCmndNumber(Settings->eth_type);
 }
 
 void CmndEthClockMode(void)
 {
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 3)) {
-    Settings.eth_clk_mode = XdrvMailbox.payload;
+    Settings->eth_clk_mode = XdrvMailbox.payload;
     TasmotaGlobal.restart_flag = 2;
   }
-  ResponseCmndNumber(Settings.eth_clk_mode);
+  ResponseCmndNumber(Settings->eth_clk_mode);
 }
 
 /*********************************************************************************************\

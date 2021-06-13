@@ -73,10 +73,10 @@ void CmdSet(void)
         if (param[i] < 1) { param[i] = 1; }  // msb, lsb, serial, counter
       }
       DEBUG_DRIVER_LOG(LOG_LEVEL_DEBUG_MORE, PSTR("params: %08x %08x %08x %08x"), param[0], param[1], param[2], param[3]);
-      Settings.keeloq_master_msb = param[0];
-      Settings.keeloq_master_lsb = param[1];
-      Settings.keeloq_serial = param[2];
-      Settings.keeloq_count = param[3];
+      Settings->keeloq_master_msb = param[0];
+      Settings->keeloq_master_lsb = param[1];
+      Settings->keeloq_serial = param[2];
+      Settings->keeloq_count = param[3];
 
       jaroliftDevice.serial = param[2];
       jaroliftDevice.count = param[3];
@@ -93,7 +93,7 @@ void CmdSet(void)
 
 void GenerateDeviceCryptKey()
 {
-  Keeloq k(Settings.keeloq_master_msb, Settings.keeloq_master_lsb);
+  Keeloq k(Settings->keeloq_master_msb, Settings->keeloq_master_lsb);
   jaroliftDevice.device_key_msb = k.decrypt(jaroliftDevice.serial | 0x60000000L);
   jaroliftDevice.device_key_lsb = k.decrypt(jaroliftDevice.serial | 0x20000000L);
 
@@ -118,7 +118,7 @@ void CmdSendButton(void)
 
       CreateKeeloqPacket();
       jaroliftDevice.count++;
-      Settings.keeloq_count = jaroliftDevice.count;
+      Settings->keeloq_count = jaroliftDevice.count;
 
       for(int repeat = 0; repeat <= 1; repeat++)
       {
@@ -256,8 +256,8 @@ void KeeloqInit()
   pinMode(jaroliftDevice.port_tx, OUTPUT);
   pinMode(jaroliftDevice.port_rx, INPUT_PULLUP);
 
-  jaroliftDevice.serial = Settings.keeloq_serial;
-  jaroliftDevice.count = Settings.keeloq_count;
+  jaroliftDevice.serial = Settings->keeloq_serial;
+  jaroliftDevice.count = Settings->keeloq_count;
   GenerateDeviceCryptKey();
 }
 

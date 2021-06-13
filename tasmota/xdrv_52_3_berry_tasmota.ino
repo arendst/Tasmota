@@ -26,6 +26,26 @@
 const uint32_t BERRY_MAX_LOGS = 16;   // max number of print output recorded when outside of REPL, used to avoid infinite grow of logs
 
 /*********************************************************************************************\
+ * Return C callback from index
+ * 
+\*********************************************************************************************/
+extern "C" {
+  int32_t l_get_cb(struct bvm *vm);
+  int32_t l_get_cb(struct bvm *vm) {
+    int32_t argc = be_top(vm); // Get the number of arguments
+    if (argc >= 2 && be_isint(vm, 2)) {
+      int32_t idx = be_toint(vm, 2);
+      if (idx >= 0 && idx < ARRAY_SIZE(berry_callback_array)) {
+        const berry_callback_t c_ptr = berry_callback_array[idx];
+        be_pushcomptr(vm, (void*) c_ptr);
+        be_return(vm);
+      }
+    }
+    be_raise(vm, kTypeError, nullptr);
+  }
+}
+
+/*********************************************************************************************\
  * Native functions mapped to Berry functions
  * 
  * log(msg:string [,log_level:int]) ->nil
@@ -60,7 +80,7 @@ extern "C" {
         if (top == 4) {
           retain = be_tobool(vm, 4);
         }
-        strlcpy(TasmotaGlobal.mqtt_data, payload, sizeof(TasmotaGlobal.mqtt_data));
+        Response_P(payload);
         MqttPublish(topic, retain);
         be_return(vm); // Return
       }
@@ -77,7 +97,11 @@ extern "C" {
       const char * command = be_tostring(vm, 2);
       be_pop(vm, 2);    // clear the stack before calling, because of re-entrant call to Berry in a Rule
       ExecuteCommand(command, SRC_BERRY);
+#ifdef MQTT_DATA_STRING
+      be_pushstring(vm, TasmotaGlobal.mqtt_data.c_str());
+#else
       be_pushstring(vm, TasmotaGlobal.mqtt_data);
+#endif
       be_return(vm); // Return
     }
     be_raise(vm, kTypeError, nullptr);
@@ -123,6 +147,65 @@ extern "C" {
       bool reached = TimeReached(timer);
       be_pushbool(vm, reached);
       be_return(vm); // Return
+    }
+    be_raise(vm, kTypeError, nullptr);
+  }
+
+  // Berry: tasmota.time_reached(timer:int) -> bool
+  //
+  int32_t l_rtc(struct bvm *vm);
+  int32_t l_rtc(struct bvm *vm) {
+    int32_t top = be_top(vm); // Get the number of arguments
+    if (top == 1) {  // no argument (instance only)
+      be_newobject(vm, "map");
+      map_insert_int(vm, "utc", Rtc.utc_time);
+      map_insert_int(vm, "local", Rtc.local_time);
+      map_insert_int(vm, "restart", Rtc.restart_time);
+      map_insert_int(vm, "timezone", Rtc.time_timezone);
+      be_pop(vm, 1);
+      be_return(vm);
+    }
+    be_raise(vm, kTypeError, nullptr);
+  }
+
+  // Berry: tasmota.memory(timer:int) -> bool
+  //
+  int32_t l_memory(struct bvm *vm);
+  int32_t l_memory(struct bvm *vm) {
+    int32_t top = be_top(vm); // Get the number of arguments
+    if (top == 1) {  // no argument (instance only)
+      be_newobject(vm, "map");
+      map_insert_int(vm, "flash", ESP.getFlashChipSize() / 1024);
+      map_insert_int(vm, "program", ESP_getSketchSize() / 1024);
+      map_insert_int(vm, "program_free", ESP.getFreeSketchSpace() / 1024);
+      map_insert_int(vm, "heap_free", ESP_getFreeHeap() / 1024);
+      int32_t freeMaxMem = 100 - (int32_t)(ESP_getMaxAllocHeap() * 100 / ESP_getFreeHeap());
+      map_insert_int(vm, "frag", freeMaxMem);
+      if (psramFound()) {
+        map_insert_int(vm, "psram", ESP.getPsramSize() / 1024);
+        map_insert_int(vm, "psram_free", ESP.getFreePsram() / 1024);
+      }
+      be_pop(vm, 1);
+      be_return(vm);
+    }
+    be_raise(vm, kTypeError, nullptr);
+  }
+
+  int32_t l_time_dump(bvm *vm) {
+    int32_t top = be_top(vm); // Get the number of arguments
+    if (top == 2 && be_isint(vm, 2)) {
+      time_t ts = be_toint(vm, 2);
+      struct tm *t = gmtime(&ts);
+      be_newobject(vm, "map");
+      map_insert_int(vm, "year", t->tm_year + 1900);
+      map_insert_int(vm, "month", t->tm_mon + 1);
+      map_insert_int(vm, "day", t->tm_mday);
+      map_insert_int(vm, "hour", t->tm_hour);
+      map_insert_int(vm, "min", t->tm_min);
+      map_insert_int(vm, "sec", t->tm_sec);
+      map_insert_int(vm, "weekday", t->tm_wday);
+      be_pop(vm, 1);
+      be_return(vm);
     }
     be_raise(vm, kTypeError, nullptr);
   }
@@ -232,6 +315,18 @@ extern "C" {
   }
 
   // web append with decimal conversion
+  int32_t l_webSend(bvm *vm);
+  int32_t l_webSend(bvm *vm) {
+    int32_t top = be_top(vm); // Get the number of arguments
+    if (top == 2 && be_isstring(vm, 2)) {
+      const char *msg = be_tostring(vm, 2);
+      WSContentSend_P(PSTR("%s"), msg);
+      be_return_nil(vm); // Return nil when something goes wrong
+    }
+    be_raise(vm, kTypeError, nullptr);
+  }
+
+  // web append with decimal conversion
   int32_t l_webSendDecimal(bvm *vm);
   int32_t l_webSendDecimal(bvm *vm) {
     int32_t top = be_top(vm); // Get the number of arguments
@@ -314,7 +409,7 @@ extern "C" {
         log_level = be_toint(vm, 3);
         if (log_level > LOG_LEVEL_DEBUG_MORE) { log_level = LOG_LEVEL_DEBUG_MORE; }
       }
-      AddLog_P(log_level, PSTR("%s"), msg);
+      AddLog(log_level, PSTR("%s"), msg);
       be_return(vm); // Return
     }
     be_return_nil(vm); // Return nil when something goes wrong
@@ -357,7 +452,36 @@ void berry_log(const char * berry_buf) {
   }
   // AddLog(LOG_LEVEL_INFO, PSTR("[Add to log] %s"), berry_buf);
   berry.log.addString(berry_buf, pre_delimiter, "\n");
-  AddLog_P(LOG_LEVEL_INFO, PSTR("%s"), berry_buf);
+  AddLog(LOG_LEVEL_INFO, PSTR("%s"), berry_buf);
+}
+
+const uint16_t LOGSZ = 128;                 // Max number of characters in log line
+
+extern "C" {
+  void berry_log_C(const char * berry_buf, ...) {
+    // To save stack space support logging for max text length of 128 characters
+    char log_data[LOGSZ];
+
+    va_list arg;
+    va_start(arg, berry_buf);
+    uint32_t len = ext_vsnprintf_P(log_data, LOGSZ-3, berry_buf, arg);
+    va_end(arg);
+    if (len+3 > LOGSZ) { strcat(log_data, "..."); }  // Actual data is more
+    berry_log(log_data);
+  }
+}
+
+
+void berry_log_P(const char * berry_buf, ...) {
+  // To save stack space support logging for max text length of 128 characters
+  char log_data[LOGSZ];
+
+  va_list arg;
+  va_start(arg, berry_buf);
+  uint32_t len = ext_vsnprintf_P(log_data, LOGSZ-3, berry_buf, arg);
+  va_end(arg);
+  if (len+3 > LOGSZ) { strcat(log_data, "..."); }  // Actual data is more
+  berry_log(log_data);
 }
 
 

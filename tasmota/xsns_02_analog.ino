@@ -461,7 +461,7 @@ void AdcShow(bool json) {
       case ADC_TEMP: {
         if (json) {
           AdcShowContinuation(&jsonflg);
-          ResponseAppend_P(PSTR("\"" D_JSON_TEMPERATURE "%s\":%*_f"), adc_idx, Settings.flag2.temperature_resolution, &Adc[idx].temperature);
+          ResponseAppend_P(PSTR("\"" D_JSON_TEMPERATURE "%s\":%*_f"), adc_idx, Settings->flag2.temperature_resolution, &Adc[idx].temperature);
           if ((0 == TasmotaGlobal.tele_period) && (!domo_flag[ADC_TEMP])) {
 #ifdef USE_DOMOTICZ
             DomoticzFloatSensor(DZ_TEMP, Adc[idx].temperature);
@@ -500,7 +500,7 @@ void AdcShow(bool json) {
       case ADC_RANGE: {
         float adc_range = AdcGetRange(idx);
         char range_chr[FLOATSZ];
-        dtostrfd(adc_range, Settings.flag2.frequency_resolution, range_chr);
+        dtostrfd(adc_range, Settings->flag2.frequency_resolution, range_chr);
 
         if (json) {
           AdcShowContinuation(&jsonflg);
@@ -517,13 +517,13 @@ void AdcShow(bool json) {
 
         float voltage = (float)(Adc[idx].param3) / 10;
         char voltage_chr[FLOATSZ];
-        dtostrfd(voltage, Settings.flag2.voltage_resolution, voltage_chr);
+        dtostrfd(voltage, Settings->flag2.voltage_resolution, voltage_chr);
         char current_chr[FLOATSZ];
-        dtostrfd(Adc[idx].current, Settings.flag2.current_resolution, current_chr);
+        dtostrfd(Adc[idx].current, Settings->flag2.current_resolution, current_chr);
         char power_chr[FLOATSZ];
-        dtostrfd(voltage * Adc[idx].current, Settings.flag2.wattage_resolution, power_chr);
+        dtostrfd(voltage * Adc[idx].current, Settings->flag2.wattage_resolution, power_chr);
         char energy_chr[FLOATSZ];
-        dtostrfd(Adc[idx].energy, Settings.flag2.energy_resolution, energy_chr);
+        dtostrfd(Adc[idx].energy, Settings->flag2.energy_resolution, energy_chr);
 
         if (json) {
           AdcShowContinuation(&jsonflg);

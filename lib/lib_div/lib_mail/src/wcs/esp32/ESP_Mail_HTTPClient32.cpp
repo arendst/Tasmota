@@ -1,17 +1,17 @@
 /*
- * Customized version of ESP32 HTTPClient Library.
- *
- * v 1.1.1
- *
+ * Customized version of ESP32 HTTPClient Library. 
+ * 
+ * v 1.1.5
+ * 
  * The MIT License (MIT)
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
- *
+ * 
  * HTTPClient Arduino library for ESP32
  *
  * Copyright (c) 2015 Markus Sattler. All rights reserved.
  * This file is part of the HTTPClient for Arduino.
- * Port to ESP32 by Evandro Luis Copercini (2017),
- * changed fingerprints to CA verification.
+ * Port to ESP32 by Evandro Luis Copercini (2017), 
+ * changed fingerprints to CA verification. 	
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -38,8 +38,6 @@
 
 ESP_Mail_HTTPClient32::ESP_Mail_HTTPClient32()
 {
-    transportTraits = ESP_Mail_TransportTraitsPtr(new ESP_Mail_TLSTraits(nullptr));
-    _wcs = transportTraits->create();
 }
 
 ESP_Mail_HTTPClient32::~ESP_Mail_HTTPClient32()
@@ -52,9 +50,6 @@ ESP_Mail_HTTPClient32::~ESP_Mail_HTTPClient32()
     }
     std::string().swap(_host);
     std::string().swap(_caCertFile);
-    _cacert.reset(new char);
-    _cacert = nullptr;
-    transportTraits.reset(nullptr);
 }
 
 bool ESP_Mail_HTTPClient32::begin(const char *host, uint16_t port)
@@ -171,10 +166,10 @@ bool ESP_Mail_HTTPClient32::connect(bool secured)
         return true;
     }
 
-    if (!transportTraits)
-        return false;
+    if (_debugCallback)
+        _wcs->setDebugCB(&_debugCallback);
+    _wcs->setSTARTTLS(!secured);
 
-    transportTraits->verify(*_wcs, _host.c_str(), !secured, _debugCallback);
     if (!_wcs->connect(_host.c_str(), _port))
         return false;
     return connected();
@@ -187,14 +182,15 @@ void ESP_Mail_HTTPClient32::setDebugCallback(DebugMsgCallback cb)
 
 void ESP_Mail_HTTPClient32::setCACert(const char *caCert)
 {
+    _wcs->setCACert(caCert);
     if (caCert)
-    {
-        transportTraits.reset(nullptr);
-        transportTraits = ESP_Mail_TransportTraitsPtr(new ESP_Mail_TLSTraits(caCert));
         _certType = 1;
-    }
     else
+    {
+        setInsecure();
         _certType = 0;
+    }
+    //_wcs->setNoDelay(true);
 }
 
 void ESP_Mail_HTTPClient32::setCertFile(const char *caCertFile, esp_mail_file_storage_type storageType)
@@ -202,45 +198,34 @@ void ESP_Mail_HTTPClient32::setCertFile(const char *caCertFile, esp_mail_file_st
 
     if (strlen(caCertFile) > 0)
     {
-        bool t = false;
-        _certType = 2;
-
-        if (storageType == esp_mail_file_storage_type::esp_mail_file_storage_type_flash) {
-        //    t = SPIFFS.begin(true);
-        }
-        else if (storageType == esp_mail_file_storage_type::esp_mail_file_storage_type_sd)
-            t = SD.begin();
-        if (!t)
-            return;
-
         File f;
-        if (storageType == esp_mail_file_storage_type::esp_mail_file_storage_type_flash)
+        if (storageType == esp_mail_file_storage_type_flash)
         {
-            //if (SPIFFS.exists(caCertFile))
-              //  f = SPIFFS.open(caCertFile, FILE_READ);
+            ESP_MAIL_FLASH_FS.begin();
+            if (ESP_MAIL_FLASH_FS.exists(caCertFile))
+                f = ESP_MAIL_FLASH_FS.open(caCertFile, FILE_READ);
         }
-        else if (storageType == esp_mail_file_storage_type::esp_mail_file_storage_type_sd)
+        else if (storageType == esp_mail_file_storage_type_sd)
         {
-            if (SD.exists(caCertFile))
-                f = SD.open(caCertFile, FILE_READ);
+            ESP_MAIL_SD_FS.begin();
+            if (ESP_MAIL_SD_FS.exists(caCertFile))
+                f = ESP_MAIL_SD_FS.open(caCertFile, FILE_READ);
         }
 
         if (f)
         {
             size_t len = f.size();
-            _cacert.reset(new char);
-            _cacert = nullptr;
-            _cacert = std::unique_ptr<char>(new char[len]);
-
-            if (f.available())
-                f.readBytes(_cacert.get(), len);
-
+            _wcs->loadCACert(f, len);
             f.close();
-
-            transportTraits.reset(nullptr);
-            transportTraits = ESP_Mail_TransportTraitsPtr(new ESP_Mail_TLSTraits(_cacert.get()));
         }
+        _certType = 2;
     }
+    //_wcs->setNoDelay(true);
+}
+
+void ESP_Mail_HTTPClient32::setInsecure()
+{
+    _wcs->setInsecure();
 }
 
 #endif //ESP32

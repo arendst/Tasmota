@@ -71,7 +71,7 @@ void ILI9488_InitDriver(void) {
 
     if (!renderer) return;
 
-    Settings.display_model = XDSP_08;
+    Settings->display_model = XDSP_08;
 
     ili9488_init_done = true;
   }
@@ -88,7 +88,7 @@ bool Xdsp08(uint8_t function)
   if (FUNC_DISPLAY_INIT_DRIVER == function) {
     ILI9488_InitDriver();
   }
-  else if (ili9488_init_done && (XDSP_08 == Settings.display_model)) {
+  else if (ili9488_init_done && (XDSP_08 == Settings->display_model)) {
     switch (function) {
       case FUNC_DISPLAY_MODEL:
         result = true;

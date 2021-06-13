@@ -365,8 +365,8 @@ void DebugCfgDump(char* parms)
   uint16_t col;
   char *p;
 
-  uint8_t *buffer = (uint8_t *) &Settings;
-  maxrow = ((sizeof(Settings)+CFG_COLS)/CFG_COLS);
+  uint8_t *buffer = (uint8_t *) Settings;
+  maxrow = ((sizeof(TSettings)+CFG_COLS)/CFG_COLS);
 
   uint16_t srow = strtol(parms, &p, 16) / CFG_COLS;
   uint16_t mrow = strtol(p, &p, 10);
@@ -411,10 +411,10 @@ void DebugCfgPeek(char* parms)
   char *p;
 
   uint16_t address = strtol(parms, &p, 16);
-  if (address > sizeof(Settings)) address = sizeof(Settings) -4;
+  if (address > sizeof(TSettings)) address = sizeof(TSettings) -4;
   address = (address >> 2) << 2;
 
-  uint8_t *buffer = (uint8_t *) &Settings;
+  uint8_t *buffer = (uint8_t *) Settings;
   uint8_t data8 = buffer[address];
   uint16_t data16 = (buffer[address +1] << 8) + buffer[address];
   uint32_t data32 = (buffer[address +3] << 24) + (buffer[address +2] << 16) + data16;
@@ -437,12 +437,12 @@ void DebugCfgPoke(char* parms)
   char *p;
 
   uint16_t address = strtol(parms, &p, 16);
-  if (address > sizeof(Settings)) address = sizeof(Settings) -4;
+  if (address > sizeof(TSettings)) address = sizeof(TSettings) -4;
   address = (address >> 2) << 2;
 
   uint32_t data = strtol(p, &p, 16);
 
-  uint8_t *buffer = (uint8_t *) &Settings;
+  uint8_t *buffer = (uint8_t *) Settings;
   uint32_t data32 = (buffer[address +3] << 24) + (buffer[address +2] << 16) + (buffer[address +1] << 8) + buffer[address];
 
   uint8_t *nbuffer = (uint8_t *) &data;
@@ -480,7 +480,7 @@ void SetFlashMode(uint8_t mode)
 
 void CmndHelp(void)
 {
-  AddLog_P(LOG_LEVEL_INFO, PSTR("HLP: %s"), kDebugCommands);
+  AddLog(LOG_LEVEL_INFO, PSTR("HLP: %s"), kDebugCommands);
   ResponseCmndDone();
 }
 
@@ -512,10 +512,10 @@ void CmndCfgPoke(void)
 void CmndCfgXor(void)
 {
   if (XdrvMailbox.data_len > 0) {
-    Web.config_xor_on_set = XdrvMailbox.payload;
+    config_xor_on_set = XdrvMailbox.payload;
   }
   char temp[10];
-  snprintf_P(temp, sizeof(temp), PSTR("0x%02X"), Web.config_xor_on_set);
+  snprintf_P(temp, sizeof(temp), PSTR("0x%02X"), config_xor_on_set);
   ResponseCmndChar(temp);
 }
 #endif  // USE_WEBSERVER
@@ -562,7 +562,7 @@ void CmndSetSensor(void)
 {
   if (XdrvMailbox.index < MAX_XSNS_DRIVERS) {
     if (XdrvMailbox.payload >= 0) {
-      bitWrite(Settings.sensors[XdrvMailbox.index / 32], XdrvMailbox.index % 32, XdrvMailbox.payload &1);
+      bitWrite(Settings->sensors[XdrvMailbox.index / 32], XdrvMailbox.index % 32, XdrvMailbox.payload &1);
       if (1 == XdrvMailbox.payload) {
         TasmotaGlobal.restart_flag = 2;  // To safely re-enable a sensor currently most sensor need to follow complete restart init cycle
       }

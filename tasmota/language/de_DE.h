@@ -303,7 +303,7 @@
 #define D_CHECK_CREDENTIALS "Bitte SSID/Passwort überprüfen"
 #define D_SUCCESSFUL_WIFI_CONNECTION "mit Wifi verbunden"
 #define D_NOW_YOU_CAN_CLOSE_THIS_WINDOW "das Fenster kann geschlossen werden"
-#define D_REDIRECTING_TO_NEW_IP "Umleitung zur neuen Geräte IP-Addresse"
+#define D_REDIRECTING_TO_NEW_IP "Umleitung zur neuen Geräte IP-Adresse"
 
 #define D_MQTT_PARAMETERS "MQTT-Einstellungen"
 #define D_CLIENT "client"
@@ -495,7 +495,7 @@
 #define D_ZIGBEE_UNSUPPORTED_ATTRIBUTE_TYPE "Nicht unterstützter Attribut Typ"
 #define D_ZIGBEE_JSON_REQUIRED "Konfiguration muss JSON basiert sein"
 #define D_ZIGBEE_RESET_1_OR_2 "1 oder 2 für Reset"
-#define D_ZIGBEE_EEPROM_FOUND_AT_ADDRESS "ZBBridge EEPROM gefunden auf Addresse"
+#define D_ZIGBEE_EEPROM_FOUND_AT_ADDRESS "ZBBridge EEPROM gefunden auf Adresse"
 #define D_ZIGBEE_RANDOMIZING_ZBCONFIG "Zufällige Zigbee Parameter erstellt, Überprüfung mit 'ZbConfig'"
 
 // xdrv_03_energy.ino
@@ -578,6 +578,8 @@
 
 // xsns_53_sml.ino
 #define D_TPWRIN "Verbrauch"
+#define D_TPWRIN0 "Verbrauch T0"
+#define D_TPWRIN1 "Verbrauch T1"
 #define D_TPWROUT "Einspeisung"
 #define D_TPWRCURR "Aktueller Verbrauch"
 #define D_TPWRCURR1 "Verbrauch P1"
@@ -610,6 +612,12 @@
 #define D_SENSOR_DS18X20       "DS18x20"
 #define D_SENSOR_I2C_SCL       "I2C SCL"
 #define D_SENSOR_I2C_SDA       "I2C SDA"
+#define D_SENSOR_I2S_OUT_DATA  "I2S Out Data"
+#define D_SENSOR_I2S_OUT_CLK   "I2S Out Clk"
+#define D_SENSOR_I2S_OUT_SLCT  "I2S Out Slct"
+#define D_SENSOR_I2S_IN_DATA   "I2S In Data"
+#define D_SENSOR_I2S_IN_CLK    "I2S In Clk"
+#define D_SENSOR_I2S_IN_SLCT   "I2S In Slct"
 #define D_SENSOR_WS2812        "WS2812"
 #define D_SENSOR_DFR562        "MP3 Player"
 #define D_SENSOR_IRSEND        "IRsend"
@@ -620,6 +628,7 @@
 #define D_SENSOR_LED_LINK      "LedLink"    // Suffix "i"
 #define D_SENSOR_PWM           "PWM"        // Suffix "1"
 #define D_SENSOR_COUNTER       "Counter"    // Suffix "1"
+#define D_SENSOR_INTERRUPT     "Interrupt"
 #define D_SENSOR_INPUT         "Input"
 #define D_SENSOR_IRRECV        "IRrecv"
 #define D_SENSOR_MHZ_RX        "MHZ Rx"
@@ -659,9 +668,9 @@
 #define D_SENSOR_TM1638_CLK    "TM1638 CLK"
 #define D_SENSOR_TM1638_DIO    "TM1638 DIO"
 #define D_SENSOR_TM1638_STB    "TM1638 STB"
-#define D_SENSOR_MAX7219_DIN    "MAX7219 DIN"
+#define D_SENSOR_MAX7219_DIN   "MAX7219 DIN"
 #define D_SENSOR_MAX7219_CS    "MAX7219 CS"
-#define D_SENSOR_MAX7219_CLK    "MAX7219 CLK"
+#define D_SENSOR_MAX7219_CLK   "MAX7219 CLK"
 #define D_SENSOR_HX711_SCK     "HX711 SCK"
 #define D_SENSOR_HX711_DAT     "HX711 DAT"
 #define D_SENSOR_FTC532        "FTC532"
@@ -715,7 +724,7 @@
 #define D_SENSOR_HRE_DATA      "HRE Data"
 #define D_SENSOR_ADE7953_IRQ   "ADE7953 IRQ"
 #define D_SENSOR_BUZZER        "Buzzer"
-#define D_SENSOR_OLED_RESET    "OLED Reset"
+#define D_SENSOR_DISP_RESET    "Display Rst"
 #define D_SENSOR_ZIGBEE_TXD    "Zigbee Tx"
 #define D_SENSOR_ZIGBEE_RXD    "Zigbee Rx"
 #define D_SENSOR_ZIGBEE_RST    "Zigbee Rst"
@@ -741,9 +750,9 @@
 #define D_SENSOR_SM2135_DAT    "SM2135 Dat"
 #define D_SENSOR_DEEPSLEEP     "DeepSleep"
 #define D_SENSOR_EXS_ENABLE    "EXS Enable"
-#define D_SENSOR_CLIENT_TX    "Client TX"
-#define D_SENSOR_CLIENT_RX    "Client RX"
-#define D_SENSOR_CLIENT_RESET "Client RST"
+#define D_SENSOR_CLIENT_TX     "Client TX"
+#define D_SENSOR_CLIENT_RX     "Client RX"
+#define D_SENSOR_CLIENT_RESET  "Client RST"
 #define D_SENSOR_GPS_RX        "GPS RX"
 #define D_SENSOR_GPS_TX        "GPS TX"
 #define D_SENSOR_HM10_RX       "HM10 RX"
@@ -817,8 +826,8 @@
 #define D_SENSOR_NEOPOOL_TX    "NeoPool Tx"
 #define D_SENSOR_NEOPOOL_RX    "NeoPool Rx"
 #define D_SENSOR_VL53L0X_XSHUT "VL53L0X XSHUT"
-#define D_SENSOR_TFMINIPLUS_TX  "TFmini+ TX"
-#define D_SENSOR_TFMINIPLUS_RX  "TFmini+ RX"
+#define D_SENSOR_TFMINIPLUS_TX "TFmini+ TX"
+#define D_SENSOR_TFMINIPLUS_RX "TFmini+ RX"
 #define D_SENSOR_ZEROCROSS     "ZC Puls"
 #define D_SENSOR_HALLEFFECT    "HallEffect"
 #define D_SENSOR_EPD_DATA      "EPD Data"
@@ -869,7 +878,7 @@
 #define D_UNIT_WATTHOUR "Wh"
 #define D_UNIT_WATT_METER_QUADRAT "W/m²"
 
-#define D_NEW_ADDRESS          "Neue Addresse"
+#define D_NEW_ADDRESS          "Neue Adresse"
 #define D_OUT_OF_RANGE         "Außerhalb Bereich"
 #define D_SENSOR_DETECTED      "erkannt"
 
@@ -985,7 +994,7 @@
 #define D_FP_IMAGEFAIL "Abbildungsfehler"               // 0x03 Failed to enroll the finger
 #define D_FP_IMAGEMESS "schlechtes Abbild"              // 0x06 Failed to generate character file due to overly disorderly fingerprint image
 #define D_FP_FEATUREFAIL "Fingerabdruck zu klein"       // 0x07 Failed to generate character file due to the lack of character point or small fingerprint image
-#define D_FP_NOMATCH "keine Übereinstimmung"           // 0x08 Finger doesn't match
+#define D_FP_NOMATCH "keine Übereinstimmung"            // 0x08 Finger doesn't match
 #define D_FP_NOTFOUND "keinen Eintrag gefunden"         // 0x09 Failed to find matching finger
 #define D_FP_ENROLLMISMATCH "Fingerabdruck fehlerhaft"  // 0x0A Failed to combine the character files
 #define D_FP_BADLOCATION "Eintrag Fehler"               // 0x0B Addressed PageID is beyond the finger library
@@ -1046,8 +1055,12 @@
 #define D_NEOPOOL_PR_OFF                  "PrAus"
 #define D_NEOPOOL_SETPOINT_OK             "Ok"
 #define D_NEOPOOL_COVER                   "Abdeckung"
-#define D_NEOPOOL_SHOCK                   "Shock"
-#define D_NEOPOOL_ALARM                   "! "
+#define D_NEOPOOL_SHOCK                   "Boost"
+#define D_NEOPOOL_STATUS_ON               "ON"
+#define D_NEOPOOL_STATUS_OFF              "OFF"
+#define D_NEOPOOL_STATUS_WAIT             "WAIT"
+#define D_NEOPOOL_STATUS_TANK             "TANK"
+#define D_NEOPOOL_STATUS_FLOW             "Flow"
 #define D_NEOPOOL_LOW                     "Niedrig"
 #define D_NEOPOOL_FLOW1                   "FL1"
 #define D_NEOPOOL_FLOW2                   "FL2"

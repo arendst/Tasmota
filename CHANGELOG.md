@@ -1,7 +1,48 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-## [Released] 
+## [Released]
+
+## [9.5.0] 20210617
+- Release Michael
+
+## [9.4.0.5]
+### Added
+- Preliminary support for Esp32C3 - RiscV based
+
+### Changed
+- NeoPixelBus library from v2.6.1.4 to v2.6.3 stage
+- Allow longer MQTT response messages by removing fixed memory buffer with size 1040 to heap allocated buffer
+- Command ``Timers`` layout of JSON message changed to single line
+- Command ``Gpio`` layout of JSON message changed to single line
+- Command ``Modules`` layout of JSON message changed to single line
+- I2C extended MPU6886 to also support MPU9250 (found in Legacy M5Stack Fire)
+- ESP32 increase log buffer from 4k to 6k to support longer messages
+- Move Settings from DRAM to heap
+
+## [9.4.0.4]
+### Added
+- Version bump to signal new features to Hass
+- Support for BM8563 RTC chip (I2C) found in M5Stack Core2 and M5StickC
+- Command ``Status0`` providing all status information on a single line
+
+### Changed
+- IRremoteESP8266 library from v2.7.16 to v2.7.18
+
+## [9.4.0.3] 20210515
+### Added
+- Make Telegram command ``TmState`` persistent (#11965)
+- Zigbee firmware for Tube's Zigbee coordinator based on EFR32 and ESP32
+- Zigbee firmware 6.7.9 for Sonoff ZBBridge
+- Defines ``USER_RULE1``, ``USER_RULE2`` and ``USER_RULE3`` to store rules at compile time
+- Define ``USER_BACKLOG`` to store commands at compile time to be executed at firmware load or when executing command ``reset``
+- LVGL support for TrueType fonts via FreeType library
+
+## [9.4.0.2] 20210430
+### Added
+- Initial support for optional ``Template`` JSON fieldpair ``"CMND":"<any template related command>|<any template related command>|..."`` (#11788)
+- ESP32 pulldown buttons ``Button_d`` and ``Button_id`` and switches ``Switch_d`` (#10814)
+- Support for MQTT using Azure IoT Hub by Kevin Saye (#11906)
 
 ## [9.4.0] 20210423
 - Release Leslie

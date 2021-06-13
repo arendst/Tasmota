@@ -290,9 +290,9 @@ float atan2f(float a, float b)
 void Tx2xCheckSampleCount(void)
 {
   uint32_t tx2x_prev_avg_samples = tx2x_avg_samples;
-  if (Settings.tele_period) {
+  if (Settings->tele_period) {
     // number for avg samples = teleperiod value if set
-    tx2x_avg_samples = Settings.tele_period;
+    tx2x_avg_samples = Settings->tele_period;
   } else {
     // otherwise use default number of samples for this driver
     tx2x_avg_samples = TX2X_WEIGHT_AVG_SAMPLE;
@@ -437,7 +437,7 @@ void Tx2xRead(void)
 
 #ifndef USE_TX2X_WIND_SENSOR_NOSTATISTICS
   Tx2xCheckSampleCount();
-  if (0==Settings.tele_period && (TasmotaGlobal.uptime-tx2x_last_uptime)>=tx2x_avg_samples) {
+  if (0==Settings->tele_period && (TasmotaGlobal.uptime-tx2x_last_uptime)>=tx2x_avg_samples) {
     Tx2xResetStat();
   }
 #endif  // USE_TX2X_WIND_SENSOR_NOSTATISTICS
@@ -445,8 +445,8 @@ void Tx2xRead(void)
 
 void Tx2xInit(void)
 {
-  if (!Settings.flag2.speed_conversion) {
-    Settings.flag2.speed_conversion = 2;  // 0 = none, 1 = m/s, 2 = km/h, 3 = kn, 4 = mph, 5 = ft/s, 6 = yd/s
+  if (!Settings->flag2.speed_conversion) {
+    Settings->flag2.speed_conversion = 2;  // 0 = none, 1 = m/s, 2 = km/h, 3 = kn, 4 = mph, 5 = ft/s, 6 = yd/s
   }
 #ifndef USE_TX2X_WIND_SENSOR_NOSTATISTICS
   tx2x_valuesread = false;
