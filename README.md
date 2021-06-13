@@ -141,7 +141,7 @@ People helping to keep the show on the road:
 - Frogmore42 for providing many issue answers
 - Jason2866 for platformio support and providing many issue answers
 - Blakadder for managing the new document site and providing template management
-- Stephan Hadinger for refactoring light driver, enhancing HueEmulation, Zigbee and Berry support
+- Stephan Hadinger for refactoring light driver, enhancing HueEmulation, LVGL, Zigbee and Berry support
 - tmo for designing the official Tasmota logo
 - Stefan Bode for his Shutter and Deep sleep drivers
 - Jacek Ziółkowski for his [TDM](https://github.com/jziolkowski/tdm) management tool and [Tasmotizer](https://github.com/tasmota/tasmotizer) flashing tool
