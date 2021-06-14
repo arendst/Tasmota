@@ -184,13 +184,14 @@ static binstance* newobject(bvm *vm, bclass *c)
     return obj;
 }
 
-bbool be_class_newobj(bvm *vm, bclass *c, bvalue *reg, int argc)
+bbool be_class_newobj(bvm *vm, bclass *c, bvalue *reg, int argc, int mode)
 {
     bvalue init;
     size_t pos = reg - vm->reg;
     binstance *obj = newobject(vm, c);
-    reg = vm->reg + pos; /* the stack may have changed  */
+    reg = vm->reg + pos - mode; /* the stack may have changed  */
     var_setinstance(reg, obj);
+    var_setinstance(reg + mode, obj);
     /* find constructor */
     obj = instance_member(vm, obj, str_literal(vm, "init"), &init);
     if (obj && var_type(&init) != MT_VARIABLE) {

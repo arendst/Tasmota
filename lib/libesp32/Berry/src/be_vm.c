@@ -990,8 +990,9 @@ newframe: /* a new call frame */
                 ++var, --argc, mode = 1;
                 goto recall;
             case BE_CLASS:
-                if (be_class_newobj(vm, var_toobj(var), var, ++argc)) {
-                    reg = vm->reg;
+                if (be_class_newobj(vm, var_toobj(var), var, ++argc, mode)) {
+                    reg = vm->reg + mode;
+                    mode = 0;
                     var = RA() + 1; /* to next register */
                     goto recall; /* call constructor */
                 }
@@ -1109,7 +1110,7 @@ static void do_ntvfunc(bvm *vm, bvalue *reg, int argc)
 
 static void do_class(bvm *vm, bvalue *reg, int argc)
 {
-    if (be_class_newobj(vm, var_toobj(reg), reg, ++argc)) {
+    if (be_class_newobj(vm, var_toobj(reg), reg, ++argc, 0)) {
         be_incrtop(vm);
         be_dofunc(vm, reg + 1, argc);
         be_stackpop(vm, 1);
