@@ -220,10 +220,9 @@ void Pcf8574Show(bool json)
     {
       uint8_t gpio = Pcf8574Read(idx);
       ResponseAppend_P(PSTR(",\"PCF8574%c%d\":{\"D0\":%i,\"D1\":%i,\"D2\":%i,\"D3\":%i,\"D4\":%i,\"D5\":%i,\"D6\":%i,\"D7\":%i}"),
-                IndexSeparator(), idx +1,
-                (gpio>>0)&1,(gpio>>1)&1,(gpio>>2)&1,(gpio>>3)&1,(gpio>>4)&1,(gpio>>5)&1,(gpio>>6)&1,(gpio>>7)&1);
+        IndexSeparator(), idx +1,
+        (gpio>>0)&1,(gpio>>1)&1,(gpio>>2)&1,(gpio>>3)&1,(gpio>>4)&1,(gpio>>5)&1,(gpio>>6)&1,(gpio>>7)&1);
     }
-    ResponseJsonEnd();
   }
 #endif // #ifdef USE_PCF8574_SENSOR
 #if defined(USE_WEBSERVER) && defined(USE_PCF8574_DISPLAYINPUT)
