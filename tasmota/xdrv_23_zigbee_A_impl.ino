@@ -2128,8 +2128,9 @@ void ZigbeeShowMap(void) {
  * Interface
 \*********************************************************************************************/
 
-bool Xdrv23(uint8_t function)
-{
+bool Xdrv23(uint8_t function) {
+  if (TasmotaGlobal.gpio_optiona.enable_ccloader) { return false; }
+
   bool result = false;
 
   if (zigbee.active) {
@@ -2177,7 +2178,7 @@ bool Xdrv23(uint8_t function)
         result = DecodeCommand(kZbCommands, ZigbeeCommand, kZbSynonyms);
         break;
       case FUNC_SAVE_BEFORE_RESTART:
-        if (!zigbee.init_phase) { 
+        if (!zigbee.init_phase) {
           hibernateAllData();
           restoreDumpAllDevices();
         }
