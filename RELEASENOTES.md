@@ -32,7 +32,7 @@ Support of Core versions before 2.7.1 has been removed.
 
 ## Support of TLS
 
-In addition to TLS using fingerprints now also user supplied CA certs and AWS IoT is supported. Read [full documentation](https://tasmota.github.io/docs/AWS-IoT)
+In addition to TLS using fingerprints now also user supplied CA certs, AWS IoT and Azure IoT is supported. Read [full documentation](https://tasmota.github.io/docs/AWS-IoT)
 
 ## Initial configuration tools
 
@@ -56,7 +56,14 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 
 Above binaries are also available as gzipped version allowing faster uploads.
 
-The binaries can be downloaded from either https://github.com/arendst/Tasmota/tree/release-firmware or http://ota.tasmota.com/tasmota/release. The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmota.com/tasmota/release/tasmota.bin.gz``
+Latest released binaries can be downloaded from
+- https://github.com/arendst/Tasmota/tree/release-firmware
+- http://ota.tasmota.com/tasmota/release
+
+Historical binaries can be downloaded from
+- http://ota.tasmota.com/tasmota/release-9.5.0
+
+The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmota.com/tasmota/release/tasmota.bin.gz``
 
 ### ESP32 based
 The following binary downloads have been compiled with ESP32/Arduino library core version **1.0.6**.
@@ -73,7 +80,16 @@ The following binary downloads have been compiled with ESP32/Arduino library cor
 - **tasmota32-odroidgo.bin** = The Odroid-Go version is specifically tailored to Odroid_go hardware for 8M+ flash.
 - **tasmota32-core2.bin** = The Core2 version is specifically tailored to M5Stack Core2 hardware for 8M+ flash.
 
-The binaries can be downloaded from either https://github.com/arendst/Tasmota/tree/release-firmware or http://ota.tasmota.com/tasmota32/release. The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmota.com/tasmota32/release/tasmota32.bin``
+Latest released binaries can be downloaded from
+- https://github.com/arendst/Tasmota/tree/release-firmware
+- http://ota.tasmota.com/tasmota32/release
+
+Historical binaries can be downloaded from
+- http://ota.tasmota.com/tasmota32/release-9.5.0
+
+The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmota.com/tasmota32/release/tasmota32.bin``
+
+## Additional information
 
 [List](MODULES.md) of embedded modules.
 
@@ -82,31 +98,65 @@ The binaries can be downloaded from either https://github.com/arendst/Tasmota/tr
 ## Changelog v9.4.0.5
 ### Added
 - Command ``Status0`` providing all status information on a single line
-- Initial support for optional ``Template`` JSON fieldpair ``"CMND":"<any template related command>|<any template related command>|..."`` [#11788](https://github.com/arendst/Tasmota/issues/11788)
+- Command ``TuyaSend5`` for hex string (#12211)
+- Commands ``Color2`` and ``Dimmer4`` to allow retaining brightness ratio between white and color channels when setting dimmer for linked lights (#12072)
+- Support for optional ``Template`` JSON fieldpair ``"CMND":"<any template related command>|<any template related command>|..."`` [#11788](https://github.com/arendst/Tasmota/issues/11788)
 - ESP32 pulldown buttons ``Button_d`` and ``Button_id`` and switches ``Switch_d`` [#10814](https://github.com/arendst/Tasmota/issues/10814)
 - Support for MQTT using Azure IoT Hub by Kevin Saye [#11906](https://github.com/arendst/Tasmota/issues/11906)
 - Make Telegram command ``TmState`` persistent [#11965](https://github.com/arendst/Tasmota/issues/11965)
+- Zigbee binary supporting cc25xx hardware on ESP8266 4M flash hardware (#11872)
 - Zigbee firmware for Tube's Zigbee coordinator based on EFR32 and ESP32
 - Zigbee firmware 6.7.9 for Sonoff ZBBridge
 - Defines ``USER_RULE1``, ``USER_RULE2`` and ``USER_RULE3`` to store rules at compile time
 - Define ``USER_BACKLOG`` to store commands at compile time to be executed at firmware load or when executing command ``reset``
-- LVGL support for TrueType fonts via FreeType library
+- LVGL support for 3 buttons as rotary encoder (#12035)
+- LVGL support for touchscreen (#12039)
+- LVGL support for TrueType fonts via FreeType library (#12087)
+- LVGL support for PSRAM (#12062)
+- LVGL support for PNG images (#12148)
+- Allow home assistant discovery of MCP2300xx output as relay (#12037)
 - Support for BM8563 RTC chip (I2C) found in M5Stack Core2 and M5StickC
 - Preliminary support for Esp32C3 - RiscV based
+- Support for voltage and current monitoring when using Shelly dimmer 2 hardware (#11988)
+- Support for Azure Device Provisioning Service for IoT Hub (#12056)
+- Show new IP after the Wi-Fi Initial Config (#12091)
+- Update Sugar Valley Neopool driver (#12171)
+- Acer projector support (#12190)
+- I2S and Interrupt GPIO types (#12192)
+- Update OpenTherm driver (#12195)
+- Support for BM8563 RTC chip (I2C) found in M5Stack Core2 and M5StickC (#12199)
 
 ### Breaking Changed
 
 ### Changed
 - IRremoteESP8266 library from v2.7.16 to v2.7.18
 - NeoPixelBus library from v2.6.1.4 to v2.6.3 stage
+- Shelly Dimmer 1 and 2 stm32 firmware from v51.5 to v51.6
 - Allow longer MQTT response messages by removing fixed memory buffer with size 1040 to heap allocated buffer
 - Command ``Timers`` layout of JSON message changed to single line
 - Command ``Gpio`` layout of JSON message changed to single line
 - Command ``Modules`` layout of JSON message changed to single line
 - ESP32 increase log buffer from 4k to 6k to support longer messages
 - Move Settings from DRAM to heap
+- WifiManager save wificonfig from settings, do it only once (#12242)
+- Improving SI7021 reading reliability by adjusting timers (#12256)
+- Refactor ESP32 partition selection, now via boards (#12257)
+- Refactor platformio configurations by Jason2866
 
 ### Fixed
+- Wrong flash size detection when saving Zigbee device information on ESP8266 (#11870)
+- Prometheus metrics parse error on DS18x20 (#11931)
+- DS18x20 name search id (#11958)
+- Avoid erasing of Zigbee data if zigbee is not started (#11961)
+- Zigbee XModem retries (#11967)
+- Teleinfo standard mode and blacklist feature crash (#11991)
+- ESP32 Hue light (#12005)
+- Map received CCT channels back in DevGroups (#12044)
+- Increase TLS minimum stack thunk to 3800 bytes (#12063)
+- Delay discovery of PZEM sensors (#12076)
+- PING race condition breaks JSON in rule (#12106)
+- Support Tuya powermeter >6500W (#12115)
+- Zigbee max end-device (#12159)
 
 ### Noted
 - ESP32 single core **tasmota32solo1.bin** binary can only be uploaded using the GUI as OTA upload will trigger the watchdog timer
