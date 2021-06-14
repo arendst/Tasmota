@@ -19,15 +19,34 @@ All notable changes to this project will be documented in this file.
 - I2C extended MPU6886 to also support MPU9250 (found in Legacy M5Stack Fire)
 - ESP32 increase log buffer from 4k to 6k to support longer messages
 - Move Settings from DRAM to heap
+- WifiManager save wificonfig from settings, do it only once (#12242)
+- Improving SI7021 reading reliability by adjusting timers (#12256)
+- Refactor ESP32 partition selection, now via boards (#12257)
+- Refactor platformio configurations by Jason2866
+- Use correct template for Home Assistant light (#12317)
 
 ## [9.4.0.4]
 ### Added
 - Version bump to signal new features to Hass
-- Support for BM8563 RTC chip (I2C) found in M5Stack Core2 and M5StickC
 - Command ``Status0`` providing all status information on a single line
+- LVGL support for PNG images (#12148)
+- Update Sugar Valley Neopool driver (#12171)
+- Acer projector support (#12190)
+- I2S and Interrupt GPIO types (#12192)
+- Update OpenTherm driver (#12195)
+- Support for BM8563 RTC chip (I2C) found in M5Stack Core2 and M5StickC (#12199)
+- Command ``TuyaSend5`` for hex string (#12211)
+- Extend command ``Wifi`` with Wi-Fi Mode Control (#12292)
 
 ### Changed
 - IRremoteESP8266 library from v2.7.16 to v2.7.18
+
+### Fixed
+- PING race condition breaks JSON in rule (#12106)
+- Support Tuya powermeter >6500W (#12115)
+- Zigbee max end-device (#12159)
+- Prevent keep state MCP230xx output fast toggle on reboot (#12264)
+- Tuya data type 2 read as 32 bit integer (instead of 16 bit) (#12282)
 
 ## [9.4.0.3] 20210515
 ### Added
@@ -36,13 +55,39 @@ All notable changes to this project will be documented in this file.
 - Zigbee firmware 6.7.9 for Sonoff ZBBridge
 - Defines ``USER_RULE1``, ``USER_RULE2`` and ``USER_RULE3`` to store rules at compile time
 - Define ``USER_BACKLOG`` to store commands at compile time to be executed at firmware load or when executing command ``reset``
-- LVGL support for TrueType fonts via FreeType library
+- LVGL support for 3 buttons as rotary encoder (#12035)
+- LVGL support for touchscreen (#12039)
+- Allow home assistant discovery of MCP2300xx output as relay (#12037)
+- LVGL support for TrueType fonts via FreeType library (#12087)
+- LVGL support for PSRAM (#12062)
+- Support for voltage and current monitoring when using Shelly dimmer 2 hardware (#11988)
+- Support for Azure Device Provisioning Service for IoT Hub (#12056)
+- Commands ``Color2`` and ``Dimmer4`` to allow retaining brightness ratio between white and color channels when setting dimmer for linked lights (#12072)
+- Show new IP after the Wi-Fi Initial Config (#12091)
+
+### Fixed
+- Avoid erasing of Zigbee data if zigbee is not started (#11961)
+- Zigbee XModem retries (#11967)
+- Teleinfo standard mode and blacklist feature crash (#11991)
+- ESP32 Hue light (#12005)
+- Map received CCT channels back in DevGroups (#12044)
+- Increase TLS minimum stack thunk to 3800 bytes (#12063)
+- Delay discovery of PZEM sensors (#12076)
+
+### Changed
+- Shelly Dimmer 1 and 2 stm32 firmware from v51.5 to v51.6
 
 ## [9.4.0.2] 20210430
 ### Added
 - Initial support for optional ``Template`` JSON fieldpair ``"CMND":"<any template related command>|<any template related command>|..."`` (#11788)
 - ESP32 pulldown buttons ``Button_d`` and ``Button_id`` and switches ``Switch_d`` (#10814)
 - Support for MQTT using Azure IoT Hub by Kevin Saye (#11906)
+- Zigbee binary supporting cc25xx hardware on 4M flash hardware (#11872)
+
+### Fixed
+- Wrong flash size detection when saving Zigbee device information on ESP8266 (#11870)
+- Prometheus metrics parse error on DS18x20 (#11931)
+- DS18x20 name search id (#11958)
 
 ## [9.4.0] 20210423
 - Release Leslie
