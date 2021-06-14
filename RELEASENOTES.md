@@ -116,7 +116,6 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - LVGL support for TrueType fonts via FreeType library [#12087](https://github.com/arendst/Tasmota/issues/12087)
 - LVGL support for PNG images [#12148](https://github.com/arendst/Tasmota/issues/12148)
 - Allow Home Assistant discovery of MCP2300xx output as relay [#12037](https://github.com/arendst/Tasmota/issues/12037)
-- Support for BM8563 RTC chip (I2C) found in M5Stack Core2 and M5StickC
 - Preliminary support for Esp32C3 - RiscV based
 - Support for voltage and current monitoring when using Shelly dimmer 2 hardware [#11988](https://github.com/arendst/Tasmota/issues/11988)
 - Support for Azure Device Provisioning Service for IoT Hub [#12056](https://github.com/arendst/Tasmota/issues/12056)
