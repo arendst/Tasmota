@@ -173,7 +173,8 @@ jobs:
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
- 
+        path: ./build_output
+
   tasmota-AF:
     runs-on: ubuntu-latest
     steps:
