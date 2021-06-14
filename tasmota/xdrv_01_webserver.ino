@@ -147,11 +147,8 @@ const char HTTP_MODULE_TEMPLATE_REPLACE_NO_INDEX[] PROGMEM =
 
 #if defined(ESP32) && CONFIG_IDF_TARGET_ESP32C3
 const char HTTP_SCRIPT_TEMPLATE2[] PROGMEM =
-    "j=0;"
-    "for(i=0;i<" STR(MAX_USER_PINS) ";i++){"  // Skip GPIO 11-17
-      "if(11==i){j=18;}"
-      "sk(g[i],j);"                       // Set GPIO
-      "j++;"
+    "for(i=0;i<" STR(MAX_USER_PINS) ";i++){"
+      "sk(g[i],i);"                       // Set GPIO
     "}";
 #else // Now ESP32 and ESP8266
 const char HTTP_SCRIPT_TEMPLATE2[] PROGMEM =
@@ -1547,9 +1544,14 @@ void HandleTemplateConfiguration(void) {
     WSContentBegin(200, CT_PLAIN);
     WSContentSend_P(PSTR("%s}1"), AnyModuleName(module).c_str());  // NAME: Generic
     for (uint32_t i = 0; i < nitems(template_gp.io); i++) {        // 17,148,29,149,7,255,255,255,138,255,139,255,255
+#if defined(ESP32) && CONFIG_IDF_TARGET_ESP32C3
+      // ESP32C3 we always send all GPIOs, Flash are just hidden
+      WSContentSend_P(PSTR("%s%d"), (i>0)?",":"", template_gp.io[i]);
+#else
       if (!FlashPin(i)) {
         WSContentSend_P(PSTR("%s%d"), (i>0)?",":"", template_gp.io[i]);
       }
+#endif
     }
     WSContentSend_P(PSTR("}1%d}1%d"), flag, Settings->user_template_base);  // FLAG: 1  BASE: 17
     WSContentEnd();
@@ -1590,11 +1592,20 @@ void HandleTemplateConfiguration(void) {
                        "<hr/>"));
   WSContentSend_P(HTTP_TABLE100);
   for (uint32_t i = 0; i < MAX_GPIO_PIN; i++) {
+#if defined(ESP32) && CONFIG_IDF_TARGET_ESP32C3
+    // ESP32C3 all gpios are in the template, flash are hidden
+    bool hidden = FlashPin(i);
+    WSContentSend_P(PSTR("<tr%s><td><b><font color='#%06x'>" D_GPIO "%d</font></b></td><td%s><select id='g%d' onchange='ot(%d,this.value)'></select></td>"),
+      hidden ? PSTR(" hidden") : "",
+      RedPin(i) ? WebColor(COL_TEXT_WARNING) : WebColor(COL_TEXT), i, (0==i) ? PSTR(" style='width:146px'") : "", i, i);
+    WSContentSend_P(PSTR("<td style='width:54px'><select id='h%d'></select></td></tr>"), i);
+#else
     if (!FlashPin(i)) {
       WSContentSend_P(PSTR("<tr><td><b><font color='#%06x'>" D_GPIO "%d</font></b></td><td%s><select id='g%d' onchange='ot(%d,this.value)'></select></td>"),
         RedPin(i) ? WebColor(COL_TEXT_WARNING) : WebColor(COL_TEXT), i, (0==i) ? PSTR(" style='width:146px'") : "", i, i);
       WSContentSend_P(PSTR("<td style='width:54px'><select id='h%d'></select></td></tr>"), i);
     }
+#endif
   }
   WSContentSend_P(PSTR("</table>"));
 
@@ -1632,10 +1643,14 @@ void TemplateSaveSettings(void) {
 
   uint32_t j = 0;
   for (uint32_t i = 0; i < nitems(Settings->user_template.gp.io); i++) {
+#if defined(ESP32) && CONFIG_IDF_TARGET_ESP32C3
+    snprintf_P(command, sizeof(command), PSTR("%s%s%d"), command, (i>0)?",":"", WebGetGpioArg(i));
+#else
     if (6 == i) { j = 9; }
     if (8 == i) { j = 12; }
     snprintf_P(command, sizeof(command), PSTR("%s%s%d"), command, (i>0)?",":"", WebGetGpioArg(j));
     j++;
+#endif
   }
 
   uint32_t flag = 0;
