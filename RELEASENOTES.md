@@ -98,35 +98,34 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 ## Changelog v9.4.0.5
 ### Added
 - Command ``Status0`` providing all status information on a single line
-- Command ``TuyaSend5`` for hex string (#12211)
-- Commands ``Color2`` and ``Dimmer4`` to allow retaining brightness ratio between white and color channels when setting dimmer for linked lights (#12072)
+- Command ``TuyaSend5`` for hex string [#12211](https://github.com/arendst/Tasmota/issues/12211)
+- Commands ``Color2`` and ``Dimmer4`` to allow retaining brightness ratio between white and color channels when setting dimmer for linked lights [#12072](https://github.com/arendst/Tasmota/issues/12072)
+- Extend command ``Wifi`` with Wi-Fi Mode Control [#12292](https://github.com/arendst/Tasmota/issues/12292)
+- Defines ``USER_RULE1``, ``USER_RULE2`` and ``USER_RULE3`` to store rules at compile time
+- Define ``USER_BACKLOG`` to store commands at compile time to be executed at firmware load or when executing command ``reset``
 - Support for optional ``Template`` JSON fieldpair ``"CMND":"<any template related command>|<any template related command>|..."`` [#11788](https://github.com/arendst/Tasmota/issues/11788)
 - ESP32 pulldown buttons ``Button_d`` and ``Button_id`` and switches ``Switch_d`` [#10814](https://github.com/arendst/Tasmota/issues/10814)
 - Support for MQTT using Azure IoT Hub by Kevin Saye [#11906](https://github.com/arendst/Tasmota/issues/11906)
 - Make Telegram command ``TmState`` persistent [#11965](https://github.com/arendst/Tasmota/issues/11965)
-- Zigbee binary supporting cc25xx hardware on ESP8266 4M flash hardware (#11872)
+- Zigbee binary supporting cc25xx hardware on ESP8266 4M flash hardware [#11872](https://github.com/arendst/Tasmota/issues/11872)
 - Zigbee firmware for Tube's Zigbee coordinator based on EFR32 and ESP32
 - Zigbee firmware 6.7.9 for Sonoff ZBBridge
-- Defines ``USER_RULE1``, ``USER_RULE2`` and ``USER_RULE3`` to store rules at compile time
-- Define ``USER_BACKLOG`` to store commands at compile time to be executed at firmware load or when executing command ``reset``
-- LVGL support for 3 buttons as rotary encoder (#12035)
-- LVGL support for touchscreen (#12039)
-- LVGL support for TrueType fonts via FreeType library (#12087)
-- LVGL support for PSRAM (#12062)
-- LVGL support for PNG images (#12148)
-- Allow home assistant discovery of MCP2300xx output as relay (#12037)
+- LVGL support for 3 buttons as rotary encoder [#12035](https://github.com/arendst/Tasmota/issues/12035)
+- LVGL support for touchscreen [#12039](https://github.com/arendst/Tasmota/issues/12039)
+- LVGL support for PSRAM [#12062](https://github.com/arendst/Tasmota/issues/12062)
+- LVGL support for TrueType fonts via FreeType library [#12087](https://github.com/arendst/Tasmota/issues/12087)
+- LVGL support for PNG images [#12148](https://github.com/arendst/Tasmota/issues/12148)
+- Allow Home Assistant discovery of MCP2300xx output as relay [#12037](https://github.com/arendst/Tasmota/issues/12037)
 - Support for BM8563 RTC chip (I2C) found in M5Stack Core2 and M5StickC
 - Preliminary support for Esp32C3 - RiscV based
-- Support for voltage and current monitoring when using Shelly dimmer 2 hardware (#11988)
-- Support for Azure Device Provisioning Service for IoT Hub (#12056)
-- Show new IP after the Wi-Fi Initial Config (#12091)
-- Update Sugar Valley Neopool driver (#12171)
-- Acer projector support (#12190)
-- I2S and Interrupt GPIO types (#12192)
-- Update OpenTherm driver (#12195)
-- Support for BM8563 RTC chip (I2C) found in M5Stack Core2 and M5StickC (#12199)
-
-### Breaking Changed
+- Support for voltage and current monitoring when using Shelly dimmer 2 hardware [#11988](https://github.com/arendst/Tasmota/issues/11988)
+- Support for Azure Device Provisioning Service for IoT Hub [#12056](https://github.com/arendst/Tasmota/issues/12056)
+- Show new IP after the Wi-Fi Initial Config [#12091](https://github.com/arendst/Tasmota/issues/12091)
+- Update Sugar Valley Neopool driver [#12171](https://github.com/arendst/Tasmota/issues/12171)
+- Acer projector support [#12190](https://github.com/arendst/Tasmota/issues/12190)
+- I2S and Interrupt GPIO types [#12192](https://github.com/arendst/Tasmota/issues/12192)
+- Update OpenTherm driver [#12195](https://github.com/arendst/Tasmota/issues/12195)
+- Support for BM8563 RTC chip (I2C) found in M5Stack Core2 and M5StickC [#12199](https://github.com/arendst/Tasmota/issues/12199)
 
 ### Changed
 - IRremoteESP8266 library from v2.7.16 to v2.7.18
@@ -138,25 +137,28 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - Command ``Modules`` layout of JSON message changed to single line
 - ESP32 increase log buffer from 4k to 6k to support longer messages
 - Move Settings from DRAM to heap
-- WifiManager save wificonfig from settings, do it only once (#12242)
-- Improving SI7021 reading reliability by adjusting timers (#12256)
-- Refactor ESP32 partition selection, now via boards (#12257)
 - Refactor platformio configurations by Jason2866
+- WifiManager save wificonfig from settings, do it only once [#12242](https://github.com/arendst/Tasmota/issues/12242)
+- Improving SI7021 reading reliability by adjusting timers [#12256](https://github.com/arendst/Tasmota/issues/12256)
+- Refactor ESP32 partition selection, now via boards [#12257](https://github.com/arendst/Tasmota/issues/12257)
+- Use correct template for Home Assistant light [#12317](https://github.com/arendst/Tasmota/issues/12317)
 
 ### Fixed
-- Wrong flash size detection when saving Zigbee device information on ESP8266 (#11870)
-- Prometheus metrics parse error on DS18x20 (#11931)
-- DS18x20 name search id (#11958)
-- Avoid erasing of Zigbee data if zigbee is not started (#11961)
-- Zigbee XModem retries (#11967)
-- Teleinfo standard mode and blacklist feature crash (#11991)
-- ESP32 Hue light (#12005)
-- Map received CCT channels back in DevGroups (#12044)
-- Increase TLS minimum stack thunk to 3800 bytes (#12063)
-- Delay discovery of PZEM sensors (#12076)
-- PING race condition breaks JSON in rule (#12106)
-- Support Tuya powermeter >6500W (#12115)
-- Zigbee max end-device (#12159)
+- Wrong flash size detection when saving Zigbee device information on ESP8266 [#11870](https://github.com/arendst/Tasmota/issues/11870)
+- Prometheus metrics parse error on DS18x20 [#11931](https://github.com/arendst/Tasmota/issues/11931)
+- DS18x20 name search id [#11958](https://github.com/arendst/Tasmota/issues/11958)
+- Avoid erasing of Zigbee data if zigbee is not started [#11961](https://github.com/arendst/Tasmota/issues/11961)
+- Zigbee XModem retries [#11967](https://github.com/arendst/Tasmota/issues/11967)
+- Teleinfo standard mode and blacklist feature crash [#11991](https://github.com/arendst/Tasmota/issues/11991)
+- ESP32 Hue light [#12005](https://github.com/arendst/Tasmota/issues/12005)
+- Map received CCT channels back in DevGroups [#12044](https://github.com/arendst/Tasmota/issues/12044)
+- Increase TLS minimum stack thunk to 3800 bytes [#12063](https://github.com/arendst/Tasmota/issues/12063)
+- Delay discovery of PZEM sensors [#12076](https://github.com/arendst/Tasmota/issues/12076)
+- PING race condition breaks JSON in rule [#12106](https://github.com/arendst/Tasmota/issues/12106)
+- Support Tuya powermeter >6500W [#12115](https://github.com/arendst/Tasmota/issues/12115)
+- Zigbee max end-device [#12159](https://github.com/arendst/Tasmota/issues/12159)
+- Prevent keep state MCP230xx output fast toggle on reboot [#12264](https://github.com/arendst/Tasmota/issues/12264)
+- Tuya data type 2 read as 32 bit integer (instead of 16 bit) [#12282](https://github.com/arendst/Tasmota/issues/12282)
 
 ### Noted
 - ESP32 single core **tasmota32solo1.bin** binary can only be uploaded using the GUI as OTA upload will trigger the watchdog timer

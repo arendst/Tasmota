@@ -20,6 +20,7 @@ All notable changes to this project will be documented in this file.
 - Improving SI7021 reading reliability by adjusting timers (#12256)
 - Refactor ESP32 partition selection, now via boards (#12257)
 - Refactor platformio configurations by Jason2866
+- Use correct template for Home Assistant light (#12317)
 
 ## [9.4.0.4]
 ### Added
@@ -32,6 +33,7 @@ All notable changes to this project will be documented in this file.
 - Update OpenTherm driver (#12195)
 - Support for BM8563 RTC chip (I2C) found in M5Stack Core2 and M5StickC (#12199)
 - Command ``TuyaSend5`` for hex string (#12211)
+- Extend command ``Wifi`` with Wi-Fi Mode Control (#12292)
 
 ### Changed
 - IRremoteESP8266 library from v2.7.16 to v2.7.18
@@ -40,6 +42,8 @@ All notable changes to this project will be documented in this file.
 - PING race condition breaks JSON in rule (#12106)
 - Support Tuya powermeter >6500W (#12115)
 - Zigbee max end-device (#12159)
+- Prevent keep state MCP230xx output fast toggle on reboot (#12264)
+- Tuya data type 2 read as 32 bit integer (instead of 16 bit) (#12282)
 
 ## [9.4.0.3] 20210515
 ### Added
@@ -81,8 +85,6 @@ All notable changes to this project will be documented in this file.
 - Wrong flash size detection when saving Zigbee device information on ESP8266 (#11870)
 - Prometheus metrics parse error on DS18x20 (#11931)
 - DS18x20 name search id (#11958)
-
-## [Released]
 
 ## [Released]
 
