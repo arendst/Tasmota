@@ -95,7 +95,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 
 [Complete list](BUILDS.md) of available feature and sensors.
 
-## Changelog v9.5.0 Michael
+## Changelog v9.5.0 Michael (Rossi)
 ### Added
 - Command ``Status0`` providing all status information on a single line
 - Command ``TuyaSend5`` for hex string [#12211](https://github.com/arendst/Tasmota/issues/12211)
@@ -125,9 +125,6 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - I2S and Interrupt GPIO types [#12192](https://github.com/arendst/Tasmota/issues/12192)
 - Update OpenTherm driver [#12195](https://github.com/arendst/Tasmota/issues/12195)
 - Support for BM8563 RTC chip (I2C) found in M5Stack Core2 and M5StickC [#12199](https://github.com/arendst/Tasmota/issues/12199)
-
-### Breaking Changed
-- ESP32 partition layout changed to accomodate more file space on most and more code space on core2 and odroid-go [#11746](https://github.com/arendst/Tasmota/issues/11746)
 
 ### Changed
 - IRremoteESP8266 library from v2.7.16 to v2.7.18

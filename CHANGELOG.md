@@ -4,9 +4,9 @@ All notable changes to this project will be documented in this file.
 ## [Released]
 
 ## [9.5.0] 20210617
-- Release Michael
+- Release Michael (Rossi)
 
-## [9.4.0.5]
+## [9.4.0.5] 20210617
 ### Added
 - Preliminary support for Esp32C3 - RiscV based
 
@@ -25,7 +25,7 @@ All notable changes to this project will be documented in this file.
 - Refactor platformio configurations by Jason2866
 - Use correct template for Home Assistant light (#12317)
 
-## [9.4.0.4]
+## [9.4.0.4] 20210610
 ### Added
 - Version bump to signal new features to Hass
 - Command ``Status0`` providing all status information on a single line
