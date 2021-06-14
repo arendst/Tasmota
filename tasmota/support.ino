@@ -984,10 +984,19 @@ String GetSerialConfig(void) {
   return String(config);
 }
 
+#if defined(ESP32) && CONFIG_IDF_TARGET_ESP32C3
+// temporary workaround, see https://github.com/espressif/arduino-esp32/issues/5287
+#include <driver/uart.h>
 uint32_t GetSerialBaudrate(void) {
-  // Serial.printf(">> GetSerialBaudrate baudrate = %d\n", Serial.baudRate());
+  uint32_t br;
+  uart_get_baudrate(0, &br);
+  return (br / 300) * 300;  // Fix ESP32 strange results like 115201
+}
+#else
+uint32_t GetSerialBaudrate(void) {
   return (Serial.baudRate() / 300) * 300;  // Fix ESP32 strange results like 115201
 }
+#endif
 
 void SetSerialBegin(void) {
   TasmotaGlobal.baudrate = Settings->baudrate * 300;
@@ -1019,9 +1028,7 @@ void SetSerialBaudrate(uint32_t baudrate) {
   TasmotaGlobal.baudrate = baudrate;
   Settings->baudrate = TasmotaGlobal.baudrate / 300;
   if (GetSerialBaudrate() != TasmotaGlobal.baudrate) {
-#if defined(CONFIG_IDF_TARGET_ESP32C3) && !CONFIG_IDF_TARGET_ESP32C3    // crashes on ESP32C3 - TODO
     SetSerialBegin();
-#endif
   }
 }
 
