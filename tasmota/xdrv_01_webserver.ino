@@ -1017,7 +1017,9 @@ void WebSliderColdWarm(void)
 
 void HandleRoot(void)
 {
+#ifndef NO_CAPTIVE_PORTAL
   if (CaptivePortal()) { return; }  // If captive portal redirect instead of displaying the page.
+#endif  // NO_CAPTIVE_PORTAL
 
   if (Webserver->hasArg(F("rst"))) {
     WebRestart(0);
@@ -2941,8 +2943,9 @@ void HandleConsoleRefresh(void)
 void HandleNotFound(void)
 {
 //  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP "Not found (%s)"), Webserver->uri().c_str());
-
+#ifndef NO_CAPTIVE_PORTAL
   if (CaptivePortal()) { return; }  // If captive portal redirect instead of displaying the error page.
+#endif  // NO_CAPTIVE_PORTAL
 
 #ifdef USE_EMULATION
 #ifdef USE_EMULATION_HUE
@@ -2962,6 +2965,7 @@ void HandleNotFound(void)
   }
 }
 
+#ifndef NO_CAPTIVE_PORTAL
 /* Redirect to captive portal if we got a request for another domain. Return true in that case so the page handler do not try to handle the request again. */
 bool CaptivePortal(void)
 {
@@ -2976,6 +2980,7 @@ bool CaptivePortal(void)
   }
   return false;
 }
+#endif  // NO_CAPTIVE_PORTAL
 
 /*********************************************************************************************/
 
