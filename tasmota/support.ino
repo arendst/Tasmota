@@ -1540,12 +1540,13 @@ void TemplateGpios(myio *gp)
   uint32_t j = 0;
   for (uint32_t i = 0; i < nitems(Settings->user_template.gp.io); i++) {
 #if defined(ESP32) && CONFIG_IDF_TARGET_ESP32C3
+    dest[i] = src[i];
 #else
     if (6 == i) { j = 9; }
     if (8 == i) { j = 12; }
-#endif
     dest[j] = src[i];
     j++;
+#endif
   }
   // 11 85 00 85 85 00 00 00 00 00 00 00 15 38 85 00 00 81
 
