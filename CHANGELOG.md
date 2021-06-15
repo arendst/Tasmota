@@ -6,7 +6,11 @@ All notable changes to this project will be documented in this file.
 ## [9.5.0] 20210617
 - Release Michael (Rossi)
 
-## [9.4.0.5] 20210617
+## [9.4.0.6] 20210617
+### Added
+- Command ``MqttWifiTimeout 100..20000`` to control MQTT Wi-Fi connection timeout default set to 200 mS (#12222)
+
+## [9.4.0.5] 20210615
 ### Added
 - Preliminary support for Esp32C3 - RiscV based
 
@@ -19,7 +23,7 @@ All notable changes to this project will be documented in this file.
 - I2C extended MPU6886 to also support MPU9250 (found in Legacy M5Stack Fire)
 - ESP32 increase log buffer from 4k to 6k to support longer messages
 - Move Settings from DRAM to heap
-- WifiManager save wificonfig from settings, do it only once (#12242)
+- WifiManager save Wi-Fi configuration from settings, do it only once (#12242)
 - Improving SI7021 reading reliability by adjusting timers (#12256)
 - Refactor ESP32 partition selection, now via boards (#12257)
 - Refactor platformio configurations by Jason2866
@@ -94,7 +98,7 @@ All notable changes to this project will be documented in this file.
 
 ## [9.4.0.1] 20210423
 ### Added
-- Command ``Wifi 0/1`` for ESP8266 to turn wifi Off and On. When wifi is Off it is always returned On after a restart except for a wake-up from deepsleep (#11839)
+- Command ``Wifi 0/1`` for ESP8266 to turn Wi-Fi Off and On. When Wi-Fi is Off it is always returned On after a restart except for a wake-up from deepsleep (#11839)
 
 ### Changed
 - Zigbee refactored storage for device configuration and device last known data (#11838)
@@ -120,7 +124,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - In tasmota-sensors.bin enabled support for VL53L0X and disabled TSL2561 (#11711)
 - Add HLW8012/BL0937 average pulse calculation by Alex Lovett (#11722)
-- Redesigned initial GUI wifi configuration by Adrian Scillato (#11693)
+- Redesigned initial GUI Wi-Fi configuration by Adrian Scillato (#11693)
 - Redesigned GUI by moving non-configuration buttons from ``Configuration`` to new submenu ``Consoles``
 
 ### Fixed
@@ -289,8 +293,8 @@ All notable changes to this project will be documented in this file.
 - ESP8266 until now NOT SUPPORTED linker files 2MB and up. Current settings will be overwritten once LittleFS is enabled
 
 ### Changed
-- Force initial default state ``SetOption57 1`` to scan wifi network every 44 minutes for strongest signal (#10395)
-- Command ``Sleep 0`` removes any sleep from wifi modem except when ESP32 BLE is active
+- Force initial default state ``SetOption57 1`` to scan Wi-Fi network every 44 minutes for strongest signal (#10395)
+- Command ``Sleep 0`` removes any sleep from Wi-Fi modem except when ESP32 BLE is active
 - PubSubClient MQTT_SOCKET_TIMEOUT from 15 to 4 seconds
 - Domoticz fixed 2 decimals resolution by user selectable ``TempRes``, ``HumRes`` and ``PressRes`` resolutions
 
@@ -329,7 +333,7 @@ All notable changes to this project will be documented in this file.
 - Gpio ``Option A1`` enabling PWM2 high impedance if powered off as used by Wyze bulbs (#10196)
 - Support for FTC532 8-button touch controller by Peter Franck (#10222)
 - Support character `#` to be replaced by `space`-character in command ``Publish`` topic (#10258)
-- BSSID and Signal Strength Indicator to GUI wifi scan result (#10253)
+- BSSID and Signal Strength Indicator to GUI Wi-Fi scan result (#10253)
 - Support for Afrikaans language translations by Christiaan Heerze
 - Support for IR inverted leds using ``#define IR_SEND_INVERTED true`` (#10301)
 - Support for disabling 38kHz IR modulation using ``#define IR_SEND_USE_MODULATION false`` (#10301)
@@ -385,7 +389,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - Core library from v2.7.4.7 to v2.7.4.9
 - Shelly Dimmer fw upgrade using WebGUI Firmware Upgrade and file from folder `tools/fw_shd_stm32/`
-- MQTT Wifi connection timeout from 5000 to 200 mSec (#9886)
+- MQTT Wi-Fi connection timeout from 5000 to 200 mSec (#9886)
 - Platformio compiler option `-free -fipa-pta` enabled (#9875)
 - IRremoteESP8266 library from v2.7.12 to v2.7.13
 - Shelly Dimmer 1 and 2 stm32 firmware from v51.4 to v51.5
@@ -689,7 +693,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Initial support for Telegram bot (#8619)
 - Support for HP303B Temperature and Pressure sensor by Robert Jaakke (#8638)
-- Rule trigger ``System#Init`` to allow early rule execution without wifi and mqtt initialized yet
+- Rule trigger ``System#Init`` to allow early rule execution without Wi-Fi and mqtt initialized yet
 - Serial to TCP bridge, ``TCPStart`` and ``TCPBaudRate`` (needs #define USE_TCP_BRIDGE)
 
 ## [8.3.1.2] - 20200522
@@ -804,7 +808,7 @@ All notable changes to this project will be documented in this file.
 - Command ``Ping`` (#7176)
 - Command ``Palette`` to add the ability to specify a palette of colors (#8150)
 - Commands ``GlobalTemp`` and ``GlobalHum`` to init sensor data (#8152)
-- Quick wifi reconnect using saved AP parameters when ``SetOption56 0`` (#3189)
+- Quick Wi-Fi reconnect using saved AP parameters when ``SetOption56 0`` (#3189)
 - More accuracy to GPS NTP server (#8088)
 - Support for an iAQ sensor (#8107)
 - Support for Seven Segment display using HT16K33 (#8116)
@@ -818,7 +822,7 @@ All notable changes to this project will be documented in this file.
 - IRremoteESP8266 library updated to v2.7.5
 
 ### Fixed
-- PWM flickering during wifi connection (#8046)
+- PWM flickering during Wi-Fi connection (#8046)
 - Zigbee crash with Occupancy sensor (#8089)
 - Prevent multiple pings to run concurrently
 - Scheme 2-4 brightness when SetOption68 1 (#8058)

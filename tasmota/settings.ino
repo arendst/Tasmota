@@ -932,6 +932,7 @@ void SettingsDefaultSet2(void) {
   Settings->mqttlog_level = MQTT_LOG_LEVEL;
   Settings->mqtt_keepalive = MQTT_KEEPALIVE;
   Settings->mqtt_socket_timeout = MQTT_SOCKET_TIMEOUT;
+  Settings->mqtt_wifi_timeout = MQTT_WIFI_CLIENT_TIMEOUT / 100;
 
   // Energy
   flag.no_power_on_check |= ENERGY_VOLTAGE_ALWAYS;
@@ -1355,6 +1356,9 @@ void SettingsDelta(void) {
     }
     if (Settings->version < 0x09040002) {
       Settings->sbflag1.data = 0;
+    }
+    if (Settings->version < 0x09040006) {
+      Settings->mqtt_wifi_timeout = MQTT_WIFI_CLIENT_TIMEOUT / 100;
     }
 
     Settings->version = VERSION;

@@ -19,10 +19,6 @@
 
 #define XDRV_02                    2
 
-#ifndef MQTT_WIFI_CLIENT_TIMEOUT
-#define MQTT_WIFI_CLIENT_TIMEOUT   200    // Wifi TCP connection timeout (default is 5000 mSec)
-#endif
-
 #define USE_MQTT_NEW_PUBSUBCLIENT
 
 // #define DEBUG_DUMP_TLS    // allow dumping of TLS Flash keys
@@ -59,7 +55,7 @@ const char kMqttCommands[] PROGMEM = "|"  // No prefix
 #if defined(USE_MQTT_TLS) && !defined(USE_MQTT_TLS_CA_CERT)
   D_CMND_MQTTFINGERPRINT "|"
 #endif
-  D_CMND_MQTTUSER "|" D_CMND_MQTTPASSWORD "|" D_CMND_MQTTKEEPALIVE "|" D_CMND_MQTTTIMEOUT "|"
+  D_CMND_MQTTUSER "|" D_CMND_MQTTPASSWORD "|" D_CMND_MQTTKEEPALIVE "|" D_CMND_MQTTTIMEOUT "|" D_CMND_MQTTWIFITIMEOUT "|"
 #if defined(USE_MQTT_TLS) && defined(USE_MQTT_AWS_IOT)
   D_CMND_TLSKEY "|"
 #endif
@@ -88,7 +84,7 @@ void (* const MqttCommand[])(void) PROGMEM = {
 #if defined(USE_MQTT_TLS) && !defined(USE_MQTT_TLS_CA_CERT)
   &CmndMqttFingerprint,
 #endif
-  &CmndMqttUser, &CmndMqttPassword, &CmndMqttKeepAlive, &CmndMqttTimeout,
+  &CmndMqttUser, &CmndMqttPassword, &CmndMqttKeepAlive, &CmndMqttTimeout, &CmndMqttWifiTimeout,
 #if defined(USE_MQTT_TLS) && defined(USE_MQTT_AWS_IOT)
   &CmndTlsKey,
 #endif
@@ -994,16 +990,16 @@ void MqttReconnect(void) {
   Response_P(S_LWT_OFFLINE);
 
   if (MqttClient.connected()) { MqttClient.disconnect(); }
-  EspClient.setTimeout(MQTT_WIFI_CLIENT_TIMEOUT);
+  EspClient.setTimeout(Settings->mqtt_wifi_timeout * 100);
 #ifdef USE_MQTT_TLS
   if (Mqtt.mqtt_tls) {
     tlsClient->stop();
   } else {
-//    EspClient = WiFiClient();               // Wifi Client reconnect issue 4497 (https://github.com/esp8266/Arduino/issues/4497)
+//    EspClient = WiFiClient();                // Wifi Client reconnect issue 4497 (https://github.com/esp8266/Arduino/issues/4497)
     MqttClient.setClient(EspClient);
   }
 #else
-//  EspClient = WiFiClient();               // Wifi Client reconnect issue 4497 (https://github.com/esp8266/Arduino/issues/4497)
+//  EspClient = WiFiClient();                  // Wifi Client reconnect issue 4497 (https://github.com/esp8266/Arduino/issues/4497)
   MqttClient.setClient(EspClient);
 #endif
 
@@ -1215,6 +1211,7 @@ void CmndMqttKeepAlive(void) {
 }
 
 void CmndMqttTimeout(void) {
+  // Set timeout between 1 and 100 seconds
   if ((XdrvMailbox.payload >= 1) && (XdrvMailbox.payload <= 100)) {
     Settings->mqtt_socket_timeout = XdrvMailbox.payload;
 #ifdef USE_MQTT_NEW_PUBSUBCLIENT
@@ -1222,6 +1219,15 @@ void CmndMqttTimeout(void) {
 #endif
   }
   ResponseCmndNumber(Settings->mqtt_socket_timeout);
+}
+
+void CmndMqttWifiTimeout(void) {
+  // Set timeout between 100 and 20000 mSec
+  if ((XdrvMailbox.payload >= 100) && (XdrvMailbox.payload <= 20000)) {
+    Settings->mqtt_wifi_timeout = XdrvMailbox.payload / 100;
+    EspClient.setTimeout(Settings->mqtt_wifi_timeout * 100);
+  }
+  ResponseCmndNumber(Settings->mqtt_wifi_timeout * 100);
 }
 
 void CmndMqttlog(void) {
