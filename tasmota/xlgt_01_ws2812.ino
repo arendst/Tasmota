@@ -69,7 +69,7 @@ void (* const Ws2812Command[])(void) PROGMEM = {
 #elif (USE_WS2812_CTYPE == NEO_RBG)
   #define NEO_FEATURE_TYPE  Rbg
 #elif (USE_WS2812_CTYPE == NEO_RGBW)
-  #define NEO_FEATURE_TYPE  Rbgw
+  #define NEO_FEATURE_TYPE  Rgbw
 #elif (USE_WS2812_CTYPE == NEO_GRBW)
   #define NEO_FEATURE_TYPE  Grbw
 #else
