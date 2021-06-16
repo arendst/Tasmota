@@ -593,7 +593,7 @@ const char HTTP_BERRY_FORM_CMND[] PROGMEM =
   "<br>"
   "<div contenteditable='false' class='br0 bro' readonly id='t1' cols='340' wrap='off'>"
     "<div class='br1'>Welcome to the Berry Scripting console. "
-      "Check the <a href='https://tasmota.github.io/docs/Berry-Scripting/' target='_blank'>documentation</a>."
+      "Check the <a href='https://tasmota.github.io/docs/Berry/' target='_blank'>documentation</a>."
     "</div>"
   "</div>"
   // "<textarea readonly id='t1' cols='340' wrap='off'></textarea>"
