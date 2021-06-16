@@ -2497,11 +2497,18 @@ void CmndSupportColor(void)
         else {
 #endif  // USE_LIGHT_PALETTE
           uint32_t old_bri = light_state.getBri();
+          uint32_t old_bri_rgb = light_state.getBriRGB();
           // change all channels to specified values
           light_controller.changeChannels(Light.entry_color);
           if (2 == XdrvMailbox.index) {
             // If Color2, set back old brightness
-            LightSetBriScaled(old_bri);
+            if (light_controller.isCTRGBLinked()) {
+              // RGB and white are linked, adjust brightness of all channels
+              LightSetBriScaled(old_bri);
+            } else {
+              // RGB and white are unlinked, adjust brightness only of RGB channels
+              LightSetBri(Light.device, old_bri_rgb);
+            }
           }
 #ifdef USE_LIGHT_PALETTE
         }
