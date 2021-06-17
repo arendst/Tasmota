@@ -37,7 +37,9 @@
 #define W1_CONVERT_TEMP      0x44
 #define W1_READ_SCRATCHPAD   0xBE
 
+#ifndef DS18X20_MAX_SENSORS // DS18X20_MAX_SENSORS fallback to 8 if not defined in user_config_override.h
 #define DS18X20_MAX_SENSORS  8
+#endif
 
 const char kDs18x20Types[] PROGMEM = "DS18x20|DS18S20|DS1822|DS18B20|MAX31850";
 
