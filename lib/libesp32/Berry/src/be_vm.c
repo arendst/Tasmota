@@ -779,6 +779,11 @@ newframe: /* a new call frame */
                 int type = obj_attribute(vm, b, c, a);
                 reg = vm->reg;
                 if (basetype(type) == BE_FUNCTION) {
+                    /* check if the object is a superinstance, if so get the lowest possible subclass */
+                    while (obj->sub) {
+                        obj = obj->sub;
+                    }
+                    var_setobj(&self, var_type(&self), obj);  /* replace superinstance by lowest subinstance */
                     a[1] = self;
                 } else {
                     vm_error(vm, "attribute_error",
