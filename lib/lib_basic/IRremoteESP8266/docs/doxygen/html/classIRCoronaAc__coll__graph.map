@@ -1,6 +1,0 @@
-<map id="IRCoronaAc" name="IRCoronaAc">
-<area shape="rect" id="node1" title="Class for handling detailed Corona A/C messages." alt="" coords="31,184,129,211"/>
-<area shape="rect" id="node2" href="$classIRsend.html" title="Class for sending all basic IR protocols." alt="" coords="5,95,72,121"/>
-<area shape="rect" id="node3" href="$unionCoronaProtocol.html" title="Native representation of a Corona A/C message." alt="" coords="97,95,218,121"/>
-<area shape="rect" id="node4" href="$structCoronaSection.html" title="Native representation of a section of a Corona A/C message." alt="" coords="99,5,215,32"/>
-</map>
