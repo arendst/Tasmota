@@ -34,7 +34,6 @@
 
 #define USE_WEBCAM
 #define ENABLE_RTSPSERVER
-#define USE_UFILESYS
 #define USE_SDCARD
   #define GUI_TRASH_FILE
 #define USE_SPI
@@ -58,10 +57,7 @@
 #define FALLBACK_MODULE        ODROID_GO         // [Module2] Select default module on fast reboot where USER_MODULE is user template
 
 #define USE_ODROID_GO                            // Add support for Odroid Go
-#define USE_UFILESYS
 #define USE_SDCARD
-  #define GUI_TRASH_FILE
-  #define GUI_EDIT_FILE
 
 #ifdef USE_BERRY                                 // Berry scripting language
   #define USE_BERRY_PSRAM                        // Allocate Berry memory in PSRAM if PSRAM is connected - this might be slightly slower but leaves main memory intact
@@ -95,10 +91,7 @@
 #define USE_M5STACK_CORE2                        // Add support for M5Stack Core2
   #define USE_I2S_SAY_TIME
   #define USE_I2S_WEBRADIO
-#define USE_UFILESYS
 #define USE_SDCARD
-  #define GUI_TRASH_FILE
-  #define GUI_EDIT_FILE
 
 #ifdef USE_BERRY                                 // Berry scripting language
   #define USE_BERRY_PSRAM                        // Allocate Berry memory in PSRAM if PSRAM is connected - this might be slightly slower but leaves main memory intact
@@ -159,10 +152,7 @@
 #undef FALLBACK_MODULE
 #define FALLBACK_MODULE        WEMOS             // [Module2] Select default module on fast reboot where USER_MODULE is user template
 
-#define USE_UFILESYS
 #define USE_SDCARD
-  #define GUI_TRASH_FILE
-  #define GUI_EDIT_FILE
 
 #define USE_ADC
 #undef USE_BERRY                                 // Disable Berry scripting language
@@ -179,10 +169,7 @@
 
 #define USE_ENHANCED_GUI_WIFI_SCAN
 
-#define USE_UFILESYS
 #define USE_SDCARD
-  #define GUI_TRASH_FILE
-  #define GUI_EDIT_FILE
 
 #define ROTARY_V1                                // Add support for Rotary Encoder as used in MI Desk Lamp
 

@@ -131,6 +131,8 @@ String EthernetMacAddress(void);
 #endif  // ARDUINO_ESP32_RELEASE
 
 #define USE_UFILESYS
+#define GUI_TRASH_FILE
+#define GUI_EDIT_FILE
 
 #undef FIRMWARE_MINIMAL                            // Minimal is not supported as not needed
 
