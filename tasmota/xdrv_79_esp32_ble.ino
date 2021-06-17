@@ -1408,22 +1408,16 @@ class BLEAdvCallbacks: public NimBLEAdvertisedDeviceCallbacks {
 
     // call anyone who asked about advertisements
     for (int i = 0; i < advertismentCallbacks.size(); i++) {
-      try {
-        ADVERTISMENT_CALLBACK* pFN;
-        pFN = advertismentCallbacks[i];
-        int res = pFN(&BLEAdvertisment);
+      ADVERTISMENT_CALLBACK* pFN;
+      pFN = advertismentCallbacks[i];
+      int res = pFN(&BLEAdvertisment);
 
-        // if this callback wants to stop here, then do so.
-        if (1 == res) break;
+      // if this callback wants to stop here, then do so.
+      if (1 == res) break;
 
-        // if this callback wants to kill this device
-        if (2 == res) {
-          //BLEScan->erase(address);
-        }
-      } catch(const std::exception& e){
-#ifdef BLE_ESP32_DEBUG
-        AddLog(LOG_LEVEL_ERROR,PSTR("BLE: exception in advertismentCallbacks"));
-#endif
+      // if this callback wants to kill this device
+      if (2 == res) {
+        //BLEScan->erase(address);
       }
     }
 
@@ -1444,17 +1438,11 @@ static void BLEscanEndedCB(NimBLEScanResults results){
   if (BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: Scan ended"));
 #endif
   for (int i = 0; i < scancompleteCallbacks.size(); i++){
-    try {
-      SCANCOMPLETE_CALLBACK *pFn = scancompleteCallbacks[i];
-      int callbackres = pFn(results);
+    SCANCOMPLETE_CALLBACK *pFn = scancompleteCallbacks[i];
+    int callbackres = pFn(results);
 #ifdef BLE_ESP32_DEBUG
-      if (BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: scancompleteCallbacks %d %d"), i, callbackres);
+    if (BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: scancompleteCallbacks %d %d"), i, callbackres);
 #endif
-    } catch(const std::exception& e){
-#ifdef BLE_ESP32_DEBUG
-      AddLog(LOG_LEVEL_ERROR,PSTR("BLE: exception in operationsCallbacks"));
-#endif
-    }
   }
 
   BLERunningScan = 2;
@@ -1659,23 +1647,17 @@ static void BLETaskStopStartNimBLE(NimBLEClient **ppClient, bool start = true){
 
     (*ppClient)->setClientCallbacks(nullptr, false);
 
-    try {
-      if ((*ppClient)->isConnected()){
+    if ((*ppClient)->isConnected()){
 #ifdef BLE_ESP32_DEBUG
-        AddLog(LOG_LEVEL_INFO,PSTR("BLE: disconnecting connected client"));
+      AddLog(LOG_LEVEL_INFO,PSTR("BLE: disconnecting connected client"));
 #endif
-        (*ppClient)->disconnect();
-      }
-      NimBLEDevice::deleteClient((*ppClient));
-      (*ppClient) = nullptr;
-#ifdef BLE_ESP32_DEBUG
-      AddLog(LOG_LEVEL_INFO,PSTR("BLE: deleted client"));
-#endif
-    } catch(const std::exception& e){
-#ifdef BLE_ESP32_DEBUG
-      AddLog(LOG_LEVEL_ERROR,PSTR("BLE: Stopping NimBLE:exception in delete client"));
-#endif
+      (*ppClient)->disconnect();
     }
+    NimBLEDevice::deleteClient((*ppClient));
+    (*ppClient) = nullptr;
+#ifdef BLE_ESP32_DEBUG
+    AddLog(LOG_LEVEL_INFO,PSTR("BLE: deleted client"));
+#endif
 
     if (ble32Scan){
       ble32Scan->setAdvertisedDeviceCallbacks(nullptr,true);
@@ -2089,47 +2071,41 @@ static void BLETaskRunCurrentOperation(BLE_ESP32::generic_sensor_t** pCurrentOpe
 
 // for safety's sake, only call from the run task
 static void BLETaskRunTaskDoneOperation(BLE_ESP32::generic_sensor_t** op, NimBLEClient **ppClient){
-  try {
-    if ((*ppClient)->isConnected()){
+  if ((*ppClient)->isConnected()){
 #ifdef BLE_ESP32_DEBUG
-      if (BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: runTaskDoneOperation: disconnecting connected client"));
+    if (BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: runTaskDoneOperation: disconnecting connected client"));
 #endif
-      (*ppClient)->disconnect();
-      // wait for 1/2 second after disconnect
-      int waits = 0;
-      do {
+    (*ppClient)->disconnect();
+    // wait for 1/2 second after disconnect
+    int waits = 0;
+    do {
+      vTaskDelay(500/ portTICK_PERIOD_MS);
+      if (waits) {
+        //(*ppClient)->disconnect();
+        // we will stall here forever!!! - as testing
+#ifdef BLE_ESP32_DEBUG
+        AddLog(LOG_LEVEL_ERROR,PSTR("BLE: wait discon%d"), waits);
+#endif
         vTaskDelay(500/ portTICK_PERIOD_MS);
-        if (waits) {
-          //(*ppClient)->disconnect();
-          // we will stall here forever!!! - as testing
+      }
+      waits++;
+      if (waits == 5){
+        int conn_id = (*ppClient)->getConnId();
+        ble_gap_conn_broken(conn_id, -1);
 #ifdef BLE_ESP32_DEBUG
-          AddLog(LOG_LEVEL_ERROR,PSTR("BLE: wait discon%d"), waits);
+        AddLog(LOG_LEVEL_ERROR,PSTR("BLE: wait discon%d - kill connection"), waits);
 #endif
-          vTaskDelay(500/ portTICK_PERIOD_MS);
-        }
-        waits++;
-        if (waits == 5){
-          int conn_id = (*ppClient)->getConnId();
-          ble_gap_conn_broken(conn_id, -1);
-#ifdef BLE_ESP32_DEBUG
-          AddLog(LOG_LEVEL_ERROR,PSTR("BLE: wait discon%d - kill connection"), waits);
-#endif
-        }
-        if (waits == 60){
-          AddLog(LOG_LEVEL_ERROR,PSTR("BLE: >60s waiting -> BLE Failed, restart Tasmota %d"), waits);
-          BLEStop = 1;
-          BLEStopAt = esp_timer_get_time();
+      }
+      if (waits == 60){
+        AddLog(LOG_LEVEL_ERROR,PSTR("BLE: >60s waiting -> BLE Failed, restart Tasmota %d"), waits);
+        BLEStop = 1;
+        BLEStopAt = esp_timer_get_time();
 
-          BLERestartTasmota = 10;
-          BLERestartTasmotaReason = BLE_RESTART_TEAMOTA_REASON_BLE_DISCONNECT_FAIL;
-          break;
-        }
-      } while ((*ppClient)->isConnected());
-    }
-  } catch(const std::exception& e){
-#ifdef BLE_ESP32_DEBUG
-    AddLog(LOG_LEVEL_ERROR,PSTR("BLE: runTaskDoneOperation: exception in disconnect"));
-#endif
+        BLERestartTasmota = 10;
+        BLERestartTasmotaReason = BLE_RESTART_TEAMOTA_REASON_BLE_DISCONNECT_FAIL;
+        break;
+      }
+    } while ((*ppClient)->isConnected());
   }
 
 
@@ -3322,35 +3298,23 @@ static void mainThreadOpCallbacks() {
 
       if (BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: op->completecallback is %u opid %d"), op->completecallback, op->opid);
       if (op->completecallback){
-        try {
-          OPCOMPLETE_CALLBACK *pFn = (OPCOMPLETE_CALLBACK *)(op->completecallback);
-          callbackres = pFn(op);
+        OPCOMPLETE_CALLBACK *pFn = (OPCOMPLETE_CALLBACK *)(op->completecallback);
+        callbackres = pFn(op);
 #ifdef BLE_ESP32_DEBUG
-          if (BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: op->completecallback %d opid %d"), callbackres, op->opid);
+        if (BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: op->completecallback %d opid %d"), callbackres, op->opid);
 #endif
-        } catch(const std::exception& e){
-#ifdef BLE_ESP32_DEBUG
-          AddLog(LOG_LEVEL_ERROR,PSTR("BLE: exception in op->completecallback"));
-#endif
-        }
       }
 
       if (!callbackres){
         for (int i = 0; i < operationsCallbacks.size(); i++){
-          try {
-            if (BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: operationsCallbacks %d is %u"), i, operationsCallbacks[i]);
-            OPCOMPLETE_CALLBACK *pFn = operationsCallbacks[i];
-            callbackres = pFn(op);
+          if (BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: operationsCallbacks %d is %u"), i, operationsCallbacks[i]);
+          OPCOMPLETE_CALLBACK *pFn = operationsCallbacks[i];
+          callbackres = pFn(op);
 #ifdef BLE_ESP32_DEBUG
-            if (BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: operationsCallbacks %d %d"), i, callbackres);
+          if (BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: operationsCallbacks %d %d"), i, callbackres);
 #endif
-            if (callbackres){
-              break; // this callback ate the op.
-            }
-          } catch(const std::exception& e){
-#ifdef BLE_ESP32_DEBUG
-            AddLog(LOG_LEVEL_ERROR,PSTR("BLE: exception in operationsCallbacks"));
-#endif
+          if (callbackres){
+            break; // this callback ate the op.
           }
         }
       }
