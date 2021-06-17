@@ -3,7 +3,14 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [9.4.0.6]
+## [9.5.0.1]
+
+## [Released]
+
+## [9.5.0] 20210617
+- Release Michael (Rossi)
+
+## [9.4.0.6] 20210617
 ### Added
 - Command ``MqttWifiTimeout 100..20000`` to control MQTT Wi-Fi connection timeout default set to 200 mS (#12222)
 
@@ -89,8 +96,6 @@ All notable changes to this project will be documented in this file.
 - Wrong flash size detection when saving Zigbee device information on ESP8266 (#11870)
 - Prometheus metrics parse error on DS18x20 (#11931)
 - DS18x20 name search id (#11958)
-
-## [Released]
 
 ## [9.4.0] 20210423
 - Release Leslie
