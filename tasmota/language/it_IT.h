@@ -939,6 +939,7 @@
 #define D_NEW_FILE             "nuovofile.txt"
 #define D_CREATE_NEW_FILE      "Crea e modifica nuovo file"
 #define D_EDIT_FILE            "Modifica file"
+#define D_CONFIRM_FILE_DEL     "Conferma eliminazione file"
 
 //xsns_67_as3935.ino
 #define D_AS3935_GAIN       "guadagno:"

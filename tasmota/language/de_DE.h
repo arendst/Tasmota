@@ -939,6 +939,7 @@
 #define D_NEW_FILE             "neue-datei.txt"
 #define D_CREATE_NEW_FILE      "Neue Datei erstellen und bearbeiten"
 #define D_EDIT_FILE            "Datei bearbeiten"
+#define D_CONFIRM_FILE_DEL     "Löschen der Datei bestätigen"
 
 //xsns_67_as3935.ino
 #define D_AS3935_GAIN "Umgebung:"
