@@ -577,7 +577,7 @@ const char UFS_FORM_SDC_HREF[] PROGMEM =
 #ifdef GUI_TRASH_FILE
 const char UFS_FORM_SDC_HREFdel[] PROGMEM =
   //"<a href=ufsd?delete=%s/%s>&#128465;</a>"; // 🗑️
-  "<a href=ufsd?delete=%s/%s>&#128293;</a>"; // 🔥
+  "<a href=ufsd?delete=%s/%s onclick=\"return confirm('" D_CONFIRM_FILE_DEL "')\">&#128293;</a>"; // 🔥
 #endif // GUI_TRASH_FILE
 
 #ifdef GUI_EDIT_FILE

@@ -1,18 +1,18 @@
 /*
   fr-FR.h - localization for French - France for Tasmota
-  
+
   Copyright (C) 2021  Olivier Francais
-  
+
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
-  
+
   This program is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU General Public License for more details.
-  
+
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
@@ -938,6 +938,7 @@
 #define D_NEW_FILE             "nouveau-fichier.txt"
 #define D_CREATE_NEW_FILE      "Créer and modifier un nouveau fichier"
 #define D_EDIT_FILE            "Modification de fichier"
+#define D_CONFIRM_FILE_DEL     "Confirmez la suppression du fichier"
 
 //xsns_67_as3935.ino
 #define D_AS3935_GAIN "gain:"
