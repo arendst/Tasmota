@@ -110,6 +110,15 @@ class Partition_info
     
   end
 
+  # check if the parition is an OTA partition
+  # if yes, return OTA number (starting at 0)
+  # if no, return nil
+  def is_ota()
+    if self.type == 0 && (self.subtype >= 0x10 && self.subtype < 0x20)
+      return self.subtype - 0x10
+    end
+  end
+
   def tostring()
     import string
     var type_s = ""
@@ -418,14 +427,13 @@ end
 partition.Partition = Partition
 
 return partition
-#Example
-#-
+
+#- Example
 
 import partition
-Partition = partition.Partition
 
 # read
-p = Partition()
+p = partition.Partition()
 print(p)
 
 -#
