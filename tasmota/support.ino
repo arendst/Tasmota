@@ -2300,8 +2300,7 @@ bool GetLog(uint32_t req_loglevel, uint32_t* index_p, char** entry_pp, size_t* l
 #endif  // ESP32
 
   if (!index) {                            // Dump all
-    index = TasmotaGlobal.log_buffer_pointer +1;
-    if (index > 255) { index = 1; }
+    index = TasmotaGlobal.log_buffer[0];
   }
 
   do {
