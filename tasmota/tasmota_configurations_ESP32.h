@@ -232,6 +232,8 @@
 #undef USE_EMULATION_WEMO
 //#undef USE_EMULATION_HUE
 
+#define USE_WS2812
+
 #define USE_DS18x20                              // Add support for DS18x20 sensors with id sort, single scan and read retry (+1k3 code)
 
 #undef USE_ENERGY_SENSOR
