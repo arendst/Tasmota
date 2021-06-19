@@ -99,7 +99,9 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 ### Added
 
 ### Changed
+- ESP32 core library from v1.0.6 to v1.0.7
 - Force ESP32 defines USE_UFILESYS, GUI_TRASH_FILE and #define GUI_EDIT_FILE
+- Speed up initial GUI console refresh
 
 ### Fixed
 

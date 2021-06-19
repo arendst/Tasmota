@@ -47,7 +47,7 @@
 #endif                                                   //   If the first is true, but this is false, the device will restart but the user will see
                                                          //   a window telling that the WiFi Configuration was Ok and that the window can be closed.
 
-const uint16_t CHUNKED_BUFFER_SIZE = 500;                // Chunk buffer size
+const uint16_t CHUNKED_BUFFER_SIZE = 500;                // Chunk buffer size (needs to be well below stack space (4k for ESP8266, 8k for ESP32) but large enough to cache some small messages)
 
 const uint16_t HTTP_REFRESH_TIME = 2345;                 // milliseconds
 const uint16_t HTTP_RESTART_RECONNECT_TIME = 10000;      // milliseconds - Allow time for restart and wifi reconnect
@@ -710,9 +710,31 @@ void WSContentFlush(void) {
   }
 }
 
+void _WSContentSendBufferChunk(const char* content) {
+  int len = strlen(content);
+  if (len < CHUNKED_BUFFER_SIZE) {                 // Append chunk buffer with small content
+    Web.chunk_buffer += content;
+    len = Web.chunk_buffer.length();
+  }
+  if (len >= CHUNKED_BUFFER_SIZE) {                // Either content or chunk buffer is oversize
+    WSContentFlush();                              // Send chunk buffer before possible content oversize
+  }
+  if (strlen(content) >= CHUNKED_BUFFER_SIZE) {    // Content is oversize
+    _WSContentSend(content);                       // Send content
+  }
+}
+
 void WSContentSend(const char* content, size_t size) {
-  WSContentFlush();
-  _WSContentSend(content, size);
+  // To speed up transmission use chunked buffer if possible
+  if (size < CHUNKED_BUFFER_SIZE) {
+    // Terminate non-terminated content
+    char buffer[size +1];
+    strlcpy(buffer, content, sizeof(buffer));      // Terminate with '\0'
+    _WSContentSendBufferChunk(buffer);
+  } else {
+    WSContentFlush();                              // Flush chunk buffer
+    _WSContentSend(content, size);
+  }
 }
 
 void _WSContentSendBuffer(bool decimal, const char * formatP, va_list arg) {
@@ -730,18 +752,7 @@ void _WSContentSendBuffer(bool decimal, const char * formatP, va_list arg) {
     }
   }
 
-  if (len < CHUNKED_BUFFER_SIZE) {                 // Append chunk buffer with small content
-    Web.chunk_buffer += content;
-    len = Web.chunk_buffer.length();
-  }
-
-  if (len >= CHUNKED_BUFFER_SIZE) {                // Either content or chunk buffer is oversize
-    WSContentFlush();                              // Send chunk buffer before possible content oversize
-  }
-  if (strlen(content) >= CHUNKED_BUFFER_SIZE) {    // Content is oversize
-    _WSContentSend(content);                       // Send content
-  }
-
+  _WSContentSendBufferChunk(content);
   free(content);
 }
 
@@ -761,8 +772,7 @@ void WSContentSend_PD(const char* formatP, ...) {  // Content send snprintf_P ch
   va_end(arg);
 }
 
-void WSContentStart_P(const char* title, bool auth)
-{
+void WSContentStart_P(const char* title, bool auth) {
   if (auth && !WebAuthenticate()) {
     return Webserver->requestAuthentication();
   }
@@ -774,13 +784,11 @@ void WSContentStart_P(const char* title, bool auth)
   }
 }
 
-void WSContentStart_P(const char* title)
-{
+void WSContentStart_P(const char* title) {
   WSContentStart_P(title, true);
 }
 
-void WSContentSendStyle_P(const char* formatP, ...)
-{
+void WSContentSendStyle_P(const char* formatP, ...) {
   if ( WifiIsInManagerMode() && (!Web.initial_config) ) {
     if (WifiConfigCounter()) {
       WSContentSend_P(HTTP_SCRIPT_COUNTER);
@@ -828,8 +836,7 @@ void WSContentSendStyle_P(const char* formatP, ...)
   WSContentSend_P(PSTR("</div>"));
 }
 
-void WSContentSendStyle(void)
-{
+void WSContentSendStyle(void) {
   WSContentSendStyle_P(nullptr);
 }
 
@@ -837,8 +844,7 @@ void WSContentTextCenterStart(uint32_t color) {
   WSContentSend_P(PSTR("<div style='text-align:center;color:#%06x;'>"), color);
 }
 
-void WSContentButton(uint32_t title_index, bool show=true)
-{
+void WSContentButton(uint32_t title_index, bool show=true) {
   char action[4];
   char title[100];  // Large to accomodate UTF-16 as used by Russian
 
@@ -858,8 +864,7 @@ void WSContentButton(uint32_t title_index, bool show=true)
   }
 }
 
-void WSContentSpaceButton(uint32_t title_index, bool show=true)
-{
+void WSContentSpaceButton(uint32_t title_index, bool show=true) {
   WSContentSend_P(PSTR("<div id=but%dd style=\"display: %s;\"></div>"),title_index, show ? "block":"none");            // 5px padding
   WSContentButton(title_index, show);
 }
@@ -876,8 +881,7 @@ void WSContentSend_CurrentMA(const char *types, float f_current) {
   WSContentSend_PD(HTTP_SNS_F_CURRENT_MA, types, Settings->flag2.current_resolution, &f_current);
 }
 
-void WSContentSend_THD(const char *types, float f_temperature, float f_humidity)
-{
+void WSContentSend_THD(const char *types, float f_temperature, float f_humidity) {
   WSContentSend_Temp(types, f_temperature);
 
   char parameter[FLOATSZ];
@@ -887,14 +891,13 @@ void WSContentSend_THD(const char *types, float f_temperature, float f_humidity)
   WSContentSend_PD(HTTP_SNS_DEW, types, parameter, TempUnit());
 }
 
-void WSContentEnd(void)
-{
-  WSContentSend("", 0);                            // Signal end of chunked content
+void WSContentEnd(void) {
+  WSContentFlush();                                // Flush chunk buffer
+  _WSContentSend("");                              // Signal end of chunked content
   Webserver->client().stop();
 }
 
-void WSContentStop(void)
-{
+void WSContentStop(void) {
   if ( WifiIsInManagerMode() && (!Web.initial_config) ) {
     if (WifiConfigCounter()) {
       WSContentSend_P(HTTP_COUNTER);
