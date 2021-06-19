@@ -24,14 +24,18 @@ class Partition_manager : Driver
   # Show a single OTA Partition
   #
   def page_show_partition(slot, active)
-    webserver.content_send("<fieldset><legend><b>&nbsp;" + slot.label)
-    if active
-      webserver.content_send(" (active)")
-    end
-    webserver.content_send("</b></legend>")
+    webserver.content_send(string.format("<fieldset><legend><b title='Start: 0x%03X 000'>&nbsp;%s%s</b></legend>",
+                                         slot.start / 0x1000, slot.label, active ? " (active)" : ""))
 
-    webserver.content_send(string.format("<p><b>Start: </b>0x<b>%03x</b> 000</p>", slot.start / 0x1000))
-    webserver.content_send(string.format("<p><b>Size: </b>%i KB</p>", slot.size / 1024))
+    webserver.content_send(string.format("<p><b>Partition size: </b>%i KB</p>", slot.size / 1024))
+    var used = slot.get_image_size()
+    if used >= 0
+      webserver.content_send(string.format("<p><b>Used: </b>%i KB</p>", used / 1024))
+      webserver.content_send(string.format("<p><b>Free: </b>%i KB</p>", (slot.size - used) / 1024))
+    else
+      webserver.content_send("<p><b>Used: unknwon")
+      webserver.content_send("<p><b>Free: unknwon")
+    end
     
     webserver.content_send("<p></p></fieldset><p></p>")
   end
@@ -41,11 +45,10 @@ class Partition_manager : Driver
   # Show a single OTA Partition
   #
   def page_show_spiffs(slot, free_mem)
-    webserver.content_send("<fieldset><legend><b>&nbsp;" + slot.label)
-    webserver.content_send("</b></legend>")
+    webserver.content_send(string.format("<fieldset><legend><b title='Start: 0x%03X 000'>&nbsp;%s</b></legend>",
+                                         slot.start / 0x1000, slot.label))
 
-    webserver.content_send(string.format("<p><b>Start: </b>0x<b>%03x</b> 000</p>", slot.start / 0x1000))
-    webserver.content_send(string.format("<p><b>Size: </b>%i KB</p>", slot.size / 1024))
+    webserver.content_send(string.format("<p><b>Partition size: </b>%i KB</p>", slot.size / 1024))
     if free_mem != nil
       webserver.content_send(string.format("<p><b>Unallocated: </b>%i KB</p>", free_mem / 1024))
     end
@@ -78,8 +81,9 @@ class Partition_manager : Driver
     webserver.content_start("Partition Manager")           #- title of the web page -#
     webserver.content_send_style()                  #- send standard Tasmota styles -#
 
-    webserver.content_send("<p><b>Esp32 Partition Manager</b></p><p></p>")   #- send any html -#
+    webserver.content_send("<fieldset><legend><b>&nbsp;Partition Manager</b></legend><p></p>")
     self.page_show_partitions()
+    webserver.content_send("<p></p></fieldset><p></p>")
 
     webserver.content_button(webserver.BUTTON_MANAGEMENT) #- button back to management page -#
     webserver.content_stop()                        #- end of web page -#
