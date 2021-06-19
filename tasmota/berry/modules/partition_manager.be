@@ -63,7 +63,7 @@ class Partition_manager : Driver
       if ota_num != nil
         # we have an OTA partition
         self.page_show_partition(slot, ota_num == p.otadata.active_otadata)
-      elif slot.type == 1 && slot.subtype == 130
+      elif slot.is_spiffs()
         var flash_size = tasmota.memory()['flash'] * 1024
         var used_size = (slot.start + slot.size)
         self.page_show_spiffs(slot, slot == p.slots[-1] ? flash_size - used_size : nil)

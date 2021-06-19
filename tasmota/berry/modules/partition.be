@@ -119,6 +119,42 @@ class Partition_info
     end
   end
 
+  # check if the parition is a SPIFFS partition
+  # returns bool
+  def is_spiffs()
+    return self.type == 1 && self.subtype == 130
+  end
+
+  # get the actual image size give of the partition
+  # returns -1 if the partition is not an app ota partition
+  def get_image_size()
+    if self.is_ota() == nil return -1 end
+    var addr = self.start
+    var magic_byte = flash.read(addr, 1).get(0, 1)
+    if magic_byte != 0xE9 raise "internal_error", string.format("Invalid magic_byte 0x%02X (should be 0xE9)", magic_byte) end
+    
+    var seg_count = flash.read(addr+1, 1).get(0, 1)
+    # print("Segment count", seg_count)
+    
+    var seg_offset = addr + 0x20 # sizeof(esp_image_header_t) + sizeof(esp_image_segment_header_t) = 24 + 8
+    var seg_size = 0
+
+    for seg_num:0..seg_count-1
+      # print(string.format("Reading 0x%08X", seg_offset))
+      var segment_header = flash.read(seg_offset - 8, 8)
+      var seg_start_addr = segment_header.get(0, 4)
+      var seg_size = segment_header.get(4,4)
+      # print(string.format("Segment %i: flash_offset=0x%08X start_addr=0x%08X size=0x%08X", seg_num, seg_offset, seg_start_addr, seg_size))
+
+      seg_offset += seg_size + 8    # add segment_length + sizeof(esp_image_segment_header_t)
+    end
+    var total_size = seg_offset - addr + 1 # add 1KB for safety
+
+    # print(string.format("Total size = %i KB", total_size/1024))
+
+    return total_size
+  end
+
   def tostring()
     import string
     var type_s = ""
