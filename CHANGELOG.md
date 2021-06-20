@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - ESP32 Webcam add boundary marker before sending mjpeg image (#12376)
+- DDS238-2 wrong reactive power value (#12283)
 
 ## [Released]
 

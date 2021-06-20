@@ -104,6 +104,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - Speed up initial GUI console refresh
 
 ### Fixed
+- DDS238-2 wrong reactive power value [#12283](https://github.com/arendst/Tasmota/issues/12283)
 - ESP32 Webcam add boundary marker before sending mjpeg image [#12376](https://github.com/arendst/Tasmota/issues/12376)
 
 ### Noted
