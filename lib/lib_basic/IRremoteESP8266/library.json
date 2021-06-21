@@ -46,5 +46,12 @@
   ],
   "exclude": [".github", "extras", "docs", "assets"],
   "frameworks": "arduino",
-  "platforms": ["espressif8266", "espressif32"]
+  "platforms": ["espressif8266", "espressif32"],
+
+
+
+  "build": {
+    "srcDir": "IRremoteESP8266/src",
+    "flags": [ "-I$PROJECT_DIR/include", "-includetasmota_options.h" ]
+  }
 }

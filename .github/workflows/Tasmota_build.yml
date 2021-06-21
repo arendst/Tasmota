@@ -164,26 +164,6 @@ jobs:
         path: ./build_output
 
 
-  tasmota-ircustom:
-    needs: tasmota_pull
-    runs-on: ubuntu-latest
-    continue-on-error: true
-    steps:
-    - uses: actions/checkout@v1
-    - name: Set up Python
-      uses: actions/setup-python@v1
-    - name: Install dependencies
-      run: |
-        pip install -U platformio
-    - name: Run PlatformIO
-      run: |
-        platformio run -e tasmota-ircustom
-    - uses: actions/upload-artifact@v2
-      with:
-        name: firmware
-        path: ./build_output
-
-
   tasmota-zbbridge:
     needs: tasmota_pull
     runs-on: ubuntu-latest

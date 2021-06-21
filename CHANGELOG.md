@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 - ESP32 core library from v1.0.6 to v1.0.7
 - Force ESP32 defines USE_UFILESYS, GUI_TRASH_FILE and #define GUI_EDIT_FILE
 - Speed up initial GUI console refresh
+- Simplified configuration for ir-full, tasmota-ircustom no more needed
 
 ### Fixed
 - ESP32 Webcam add boundary marker before sending mjpeg image (#12376)
