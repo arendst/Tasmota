@@ -6,18 +6,57 @@
  *******************************************************************/
 #include "be_constobj.h"
 
-extern int d_getTasmotaGlob(bvm *vm);
+/********************************************************************
+  class Driver2 : Driver
+    var every_second
+    var every_100ms
+    var web_add_handler
+    var web_add_button
+    var web_add_main_button
+    var save_before_restart
+    var web_sensor
+    var json_append
+    var button_pressed
+    var display
 
+    def get_tasmota()
+      import global
+      return global.tasmota
+    end
+
+    def add_cmd(c, f)
+      var tasmota = self.get_tasmota()
+      tasmota.add_cmd(c, / cmd, idx, payload, payload_json -> f(self, cmd, idx, payload, payload_json))
+    end
+  end
+********************************************************************/
 
 /********************************************************************
-  "class Driver2 : Driver "
-    "def add_cmd(c, f) "
-      "var tasmota = self.get_tasmota() "
-      "tasmota.add_cmd(c, / cmd, idx, payload, payload_json -> f(self, cmd, idx, payload, payload_json)) "
-    "end "
-  "end "
-  "Driver = Driver2 "
+** Solidified function: get_tasmota
 ********************************************************************/
+
+/********** Solidified proto: get_tasmota */
+be_define_local_const_str(get_tasmota_str_name, "get_tasmota", 334356779, 11);
+be_define_local_const_str(get_tasmota_str_source, "input", -103256197, 5);
+be_define_local_const_str(get_tasmota_str_0, "global", 503252654, 6);
+be_define_local_const_str(get_tasmota_str_1, "tasmota", 424643812, 7);
+
+static const bvalue get_tasmota_ktab[2] = {
+  { { .s=be_local_const_str(get_tasmota_str_0) }, BE_STRING},
+  { { .s=be_local_const_str(get_tasmota_str_1) }, BE_STRING},
+};
+
+static const uint32_t get_tasmota_code[3] = {
+  0xA4060000,  //  0000  IMPORT	R1	R256
+  0x88080301,  //  0001  GETMBR	R2	R1	R257
+  0x80040400,  //  0002  RET	1	R2
+};
+
+be_define_local_proto(get_tasmota, 3, 1, 1, 0, 0);
+be_define_local_closure(get_tasmota);
+
+/*******************************************************************/
+
 /********************************************************************
 ** Solidified function: add_cmd
 ********************************************************************/
@@ -95,9 +134,8 @@ void be_load_driverlib(bvm *vm) {
         { "button_pressed", NULL },
         { "display", NULL },
 
-        { "get_tasmota", d_getTasmotaGlob },
-
         { NULL, (bntvfunc) BE_CLOSURE }, /* mark section for berry closures */
+        { "get_tasmota", (bntvfunc) &get_tasmota_closure },
         { "add_cmd", (bntvfunc) &add_cmd_closure },
         
         { NULL, NULL }
@@ -123,7 +161,7 @@ class be_class_tasmota_driver (scope: global, name: Driver) {
     button_pressed, var
     display, var
 
-    get_tasmota, func(d_getTasmotaGlob)
+    get_tasmota, closure(get_tasmota_closure)
 
     add_cmd, closure(add_cmd_closure)
 }
