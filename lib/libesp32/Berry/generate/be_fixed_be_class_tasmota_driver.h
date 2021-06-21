@@ -12,7 +12,7 @@ static be_define_const_map_slots(be_class_tasmota_driver_map) {
     { be_const_key(button_pressed, 4), be_const_int(7) },
     { be_const_key(every_second, -1), be_const_int(8) },
     { be_const_key(web_sensor, 5), be_const_int(9) },
-    { be_const_key(get_tasmota, -1), be_const_func(d_getTasmotaGlob) },
+    { be_const_key(get_tasmota, -1), be_const_closure(get_tasmota_closure) },
 };
 
 static be_define_const_map(
