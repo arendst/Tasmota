@@ -512,7 +512,13 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule, bool stop_all
 
 //AddLog(LOG_LEVEL_DEBUG, PSTR("RUL-RM2: RulesRuleMatch |%s|"), buf.c_str());
 
-  buf.replace("\\"," ");                               // "Disable" any escaped control character
+// Do not do below replace as it will replace escaped quote too.
+//  buf.replace("\\"," ");                               // "Disable" any escaped control character
+  buf.replace("\n"," n");                              // "Disable" escaped control character
+  buf.replace("\t"," t");                              // "Disable" escaped control character
+  buf.replace("\r"," r");                              // "Disable" escaped control character
+  buf.replace("\f"," f");                              // "Disable" escaped control character
+  buf.replace("\b"," b");                              // "Disable" escaped control character
   JsonParser parser((char*)buf.c_str());
   JsonParserObject obj = parser.getRootObject();
   if (!obj) {
@@ -2139,8 +2145,8 @@ void CmndRule(void)
       }
 
       // we need to split the rule in chunks
-      rule = rule.substring(0, MAX_RULE_SIZE);
-      rule += F("...");
+//      rule = rule.substring(0, MAX_RULE_SIZE);
+//      rule += F("...");
     }
     Response_P(PSTR("{\"%s%d\":{\"State\":\"%s\",\"Once\":\"%s\",\"StopOnError\":\"%s\",\"Length\":%d,\"Free\":%d,\"Rules\":\"%s\"}}"),
       XdrvMailbox.command, index, GetStateText(bitRead(Settings->rule_enabled, index -1)), GetStateText(bitRead(Settings->rule_once, index -1)),
