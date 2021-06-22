@@ -510,15 +510,11 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule, bool stop_all
 
   String buf = event;                                  // Copy the string into a new buffer that will be modified
 
-//AddLog(LOG_LEVEL_DEBUG, PSTR("RUL-RM2: RulesRuleMatch |%s|"), buf.c_str());
-
 // Do not do below replace as it will replace escaped quote too.
 //  buf.replace("\\"," ");                               // "Disable" any escaped control character
-  buf.replace("\n"," n");                              // "Disable" escaped control character
-  buf.replace("\t"," t");                              // "Disable" escaped control character
-  buf.replace("\r"," r");                              // "Disable" escaped control character
-  buf.replace("\f"," f");                              // "Disable" escaped control character
-  buf.replace("\b"," b");                              // "Disable" escaped control character
+
+//AddLog(LOG_LEVEL_DEBUG, PSTR("RUL-RM2: RulesRuleMatch |%s|"), buf.c_str());
+
   JsonParser parser((char*)buf.c_str());
   JsonParserObject obj = parser.getRootObject();
   if (!obj) {
