@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - Force ESP32 defines USE_UFILESYS, GUI_TRASH_FILE and #define GUI_EDIT_FILE
 - Speed up initial GUI console refresh
 - Simplified configuration for ir-full and removal of tasmota-ircustom
+- Add Esp32 Partition Manager as a Berry component
 
 ### Fixed
 - ESP32 Webcam add boundary marker before sending mjpeg image (#12376)
