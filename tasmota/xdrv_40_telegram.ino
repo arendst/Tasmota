@@ -104,7 +104,7 @@ bool TelegramInit(void) {
 }
 
 String TelegramConnectToTelegram(String command) {
-//  AddLog(LOG_LEVEL_DEBUG, PSTR("TGM: Cmnd %s"), command.c_str());
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("TGM: Cmnd %s"), command.c_str());
 
   if (!TelegramInit()) { return ""; }
 
@@ -114,18 +114,33 @@ String TelegramConnectToTelegram(String command) {
 
 //    AddLog(LOG_LEVEL_DEBUG, PSTR("TGM: Connected in %d ms, max ThunkStack used %d"), millis() - tls_connect_time, telegramClient->getMaxThunkStackUse());
 
-    telegramClient->println("GET /"+command);
+//    telegramClient->println("GET /"+command);
+
+    String request = String("GET /") + command +
+                      " HTTP/1.1\r\n" +
+                      "Host: api.telegram.org" +
+                      "\r\n" + "Connection: close\r\n\r\n";
+    telegramClient->print(request);
+
+
 
     char c;
     int ch_count=0;
     uint32_t now = millis();
     bool avail = false;
+    bool start = false;
     while (millis() -now < 1500) {
       while (telegramClient->available()) {
         char c = telegramClient->read();
-        if (ch_count < 700) {  // Allow up to two messages
-          response = response + c;
-          ch_count++;
+        if (ch_count < 1000) {  // Allow up to two messages
+
+          if (c == '{') {
+            start = true;
+          }
+          if (start) {
+            response = response + c;
+            ch_count++;
+          }
         }
         avail = true;
       }
