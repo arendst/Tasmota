@@ -513,9 +513,7 @@ bool MqttPublishLib(const char* topic, const uint8_t* payload, unsigned int plen
 }
 
 void MqttDataHandler(char* mqtt_topic, uint8_t* mqtt_data, unsigned int data_len) {
-#ifdef USE_DEBUG_DRIVER
-  ShowFreeMem(PSTR("MqttDataHandler"));
-#endif
+  SHOW_FREE_MEM(PSTR("MqttDataHandler"));
 
   // Do not allow more data than would be feasable within stack space
   if (data_len >= MQTT_MAX_PACKET_SIZE) { return; }
@@ -620,9 +618,7 @@ void MqttPublishLoggingAsync(bool refresh) {
 void MqttPublishPayload(const char* topic, const char* payload, uint32_t binary_length, bool retained) {
   // Publish <topic> payload string or binary when binary_length set with optional retained
 
-#ifdef USE_DEBUG_DRIVER
-  ShowFreeMem(PSTR("MqttPublish"));
-#endif
+  SHOW_FREE_MEM(PSTR("MqttPublish"));
 
   bool binary_data = (binary_length > 0);
   if (!binary_data) {
@@ -640,7 +636,7 @@ void MqttPublishPayload(const char* topic, const char* payload, uint32_t binary_
     log_data_topic = (MESHroleNode()) ? F("MSH: ") : F(D_LOG_MQTT);  // MSH: or MQT:
 #else
     log_data_topic = F(D_LOG_MQTT);                      // MQT:
-#endif
+#endif  // USE_TASMESH
     log_data_topic += topic;                             // stat/tasmota/STATUS2
   } else {
     log_data_topic = F(D_LOG_RESULT);                    // RSL:

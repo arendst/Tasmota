@@ -502,6 +502,11 @@ bool first_device_group_is_local = true;
 #define DEBUG_TRACE_LOG(...)
 #endif
 
+#ifdef USE_DEBUG_DRIVER
+#define SHOW_FREE_MEM(WHERE) ShowFreeMem(WHERE);
+#else
+#define SHOW_FREE_MEM(WHERE)
+#endif
 
 /*********************************************************************************************\
  * Macro for SetOption synonyms

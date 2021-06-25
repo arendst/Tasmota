@@ -806,9 +806,7 @@ bool RulesProcessEvent(const char *json_event)
   Rules.busy = true;
   bool serviced = false;
 
-#ifdef USE_DEBUG_DRIVER
-  ShowFreeMem(PSTR("RulesProcessEvent"));
-#endif
+  SHOW_FREE_MEM(PSTR("RulesProcessEvent"));
 
 //AddLog(LOG_LEVEL_DEBUG, PSTR("RUL: ProcessEvent |%s|"), json_event);
 

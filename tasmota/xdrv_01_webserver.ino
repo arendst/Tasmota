@@ -693,9 +693,7 @@ void WSContentBegin(int code, int ctype) {
 void _WSContentSend(const char* content, size_t size) {  // Lowest level sendContent for all core versions
   Webserver->sendContent(content, size);
 
-#ifdef USE_DEBUG_DRIVER
-  ShowFreeMem(PSTR("WSContentSend"));
-#endif
+  SHOW_FREE_MEM(PSTR("WSContentSend"));
   DEBUG_CORE_LOG(PSTR("WEB: Chunk size %d"), size);
 }
 

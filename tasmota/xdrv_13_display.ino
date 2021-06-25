@@ -1576,9 +1576,7 @@ void DisplayJsonValue(const char* topic, const char* device, const char* mkey, c
   char source[Settings->display_cols[0] - Settings->display_cols[1]];
   char svalue[Settings->display_cols[1] +1];
 
-#ifdef USE_DEBUG_DRIVER
-  ShowFreeMem(PSTR("DisplayJsonValue"));
-#endif
+  SHOW_FREE_MEM(PSTR("DisplayJsonValue"));
 
   memset(spaces, 0x20, sizeof(spaces));
   spaces[sizeof(spaces) -1] = '\0';
