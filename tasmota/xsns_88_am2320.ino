@@ -29,7 +29,7 @@
  * and https://github.com/nightphobos/tasmota-am2320-i2c-driver as adaptation code to Tamota
 \*********************************************************************************************/
 
-#define XSNS_92           92
+#define XSNS_88           88
 #define XI2C_92           92     // See I2CDEVICES.md
 
 #define AM2320_ADDR				0x5C	 // use 7bit address: 0xB8 >> 1
