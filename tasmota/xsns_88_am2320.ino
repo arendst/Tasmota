@@ -30,7 +30,7 @@
 \*********************************************************************************************/
 
 #define XSNS_88           88
-#define XI2C_92           92     // See I2CDEVICES.md
+#define XI2C_60           60     // See I2CDEVICES.md
 
 #define AM2320_ADDR				0x5C	 // use 7bit address: 0xB8 >> 1
 #define INIT_MAX_RETRIES  5	
@@ -196,7 +196,7 @@ void Am2320Show(bool json)
 
 bool Xsns92(uint8_t function)
 {
-  if (!I2cEnabled(XI2C_92)) { return false; }
+  if (!I2cEnabled(XI2C_60)) { return false; }
 
   boolean result = false;
 
