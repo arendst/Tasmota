@@ -1423,35 +1423,36 @@ static const bclosure exec_cmd_closure = {
       "return gc.allocated() "
     "end "
 ********************************************************************/
+
 /********************************************************************
 ** Solidified function: gc
 ********************************************************************/
-
-/********** Solidified proto: gc */
-be_define_local_const_str(gc_str_name, "gc", 1042313471, 2);
-be_define_local_const_str(gc_str_source, "string", 398550328, 6);
-be_define_local_const_str(gc_str_0, "gc", 1042313471, 2);
-be_define_local_const_str(gc_str_1, "collect", -1895928271, 7);
-be_define_local_const_str(gc_str_2, "allocated", 429986098, 9);
-
-static const bvalue gc_ktab[3] = {
-  { { .s=be_local_const_str(gc_str_0) }, BE_STRING},
-  { { .s=be_local_const_str(gc_str_1) }, BE_STRING},
-  { { .s=be_local_const_str(gc_str_2) }, BE_STRING},
-};
-
-static const uint32_t gc_code[6] = {
-  0xA4060000,  //  0000  IMPORT	R1	R256
-  0x8C080301,  //  0001  GETMET	R2	R1	R257
-  0x7C080200,  //  0002  CALL	R2	1
-  0x8C080302,  //  0003  GETMET	R2	R1	R258
-  0x7C080200,  //  0004  CALL	R2	1
-  0x80040400,  //  0005  RET	1	R2
-};
-
-be_define_local_proto(gc, 4, 1, 1, 0, 0);
-be_define_local_closure(gc);
-
+be_local_closure(gc,   /* name */
+  be_nested_proto(
+    4,                          /* nstack */
+    1,                          /* argc */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 3]) {     /* upvals */
+      { { .s=be_nested_const_str("gc", 1042313471, 2) }, BE_STRING},
+      { { .s=be_nested_const_str("collect", -1895928271, 7) }, BE_STRING},
+      { { .s=be_nested_const_str("allocated", 429986098, 9) }, BE_STRING},
+    }),
+    (be_nested_const_str("gc", 1042313471, 2)),
+    (be_nested_const_str("string", 398550328, 6)),
+    ( &(const binstruction[ 6]) {  /* code */
+      0xA4060000,  //  0000  IMPORT	R1	R256
+      0x8C080301,  //  0001  GETMET	R2	R1	R257
+      0x7C080200,  //  0002  CALL	R2	1
+      0x8C080302,  //  0003  GETMET	R2	R1	R258
+      0x7C080200,  //  0004  CALL	R2	1
+      0x80040400,  //  0005  RET	1	R2
+    })
+  )
+);
 /*******************************************************************/
 
 /********************************************************************
