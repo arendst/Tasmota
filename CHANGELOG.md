@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file.
 - Speed up initial GUI console refresh
 - Simplified configuration for ir-full and removal of tasmota-ircustom
 - Add Esp32 Partition Manager as a Berry component
+- Update timing DHT11, AM2301 (DHT21, DHT22, AM2302, AM2321), SI7021 (#12488)
 
 ### Fixed
 - ESP32 Webcam add boundary marker before sending mjpeg image (#12376)
