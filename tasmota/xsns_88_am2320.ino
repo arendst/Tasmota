@@ -1,7 +1,7 @@
 /*
-  xsns_88_am2320.ino - Tasmota driver for I2C AM2320 Temp/Hum Sensor
+  xsns_88_am2320.ino - I2C AM2320 Temp/Hum Sensor for Tasmota
 
-  Copyright (C) 2019  Lars Wessels
+  Copyright (C) 2021  Lars Wessels
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -19,7 +19,6 @@
 
 #ifdef USE_I2C
 #ifdef USE_AM2320
-
 /*********************************************************************************************\
  * AM2320 - Digital Temperature and Humidity Sensor
  * https://akizukidenshi.com/download/ds/aosong/AM2320.pdf
@@ -33,7 +32,7 @@
 #define XI2C_60           60     // See I2CDEVICES.md
 
 #define AM2320_ADDR				0x5C	 // use 7bit address: 0xB8 >> 1
-#define INIT_MAX_RETRIES  5	
+#define INIT_MAX_RETRIES  5
 
 char AM2320_types[] = "AM2320";
 
@@ -47,7 +46,7 @@ struct AM2320_Readings {
 
 bool Am2320Init(void)
 {
-  // wake AM2320 up, goes to sleep to not warm up and affect the humidity sensor 
+  // wake AM2320 up, goes to sleep to not warm up and affect the humidity sensor
   Wire.beginTransmission(AM2320_ADDR);
   Wire.write(0x02);
   Wire.endTransmission();
@@ -95,9 +94,9 @@ bool Am2320Read(void)
   if (Wire.available() != 8) { return false; }
 
   // read 8 bytes: preamble(2) + data(2) + crc(2)
-  memset(buf, 0, 8);  
-  for (uint8_t i = 0; i < 8; i++) { 
-    buf[i] = Wire.read(); 
+  memset(buf, 0, 8);
+  for (uint8_t i = 0; i < 8; i++) {
+    buf[i] = Wire.read();
   }
 
   if (buf[0] != 0x03) { return false; }  // must be 0x03 function code reply
@@ -109,14 +108,14 @@ bool Am2320Read(void)
     int temperature = ((buf[4] & 0x7F) << 8) | buf[5];
     AM2320.t = temperature / 10.0;
     // check for negative temp reading
-    AM2320.t = ((buf[4] & 0x80) >> 7) == 1 ? AM2320.t * (-1) : AM2320.t; 
+    AM2320.t = ((buf[4] & 0x80) >> 7) == 1 ? AM2320.t * (-1) : AM2320.t;
 
     int humidity = (buf[2] << 8) | buf[3];
     AM2320.h = humidity / 10.0;
-   
+
     AM2320.valid = SENSOR_MAX_MISS; // reset error counter
     return true;
-    
+
   } else {
     AddLog(LOG_LEVEL_ERROR, PSTR(D_LOG_I2C "Am2320Read() checksum failed"));
     return false;
@@ -125,7 +124,7 @@ bool Am2320Read(void)
 
 
 void Am2320Detect(void)
-{  
+{
   if (Am2320Init()) {
     if (!am2320_found) {
       AddLog(LOG_LEVEL_INFO, S_LOG_I2C_FOUND_AT, AM2320_types, AM2320_ADDR);
@@ -140,8 +139,8 @@ void Am2320Detect(void)
 
 
 void Am2320EverySecond(void)
-{ 
-  // if (!(uptime%10)) { 
+{
+  // if (!(uptime%10)) {
   //   Am2320Detect(); // look for sensor every 10 seconds, after three misses it's set to not found
   // } else if (uptime & 1 && am2320_found) { // read from sensor every 2 seconds
   if (TasmotaGlobal.uptime &1) {
@@ -194,7 +193,7 @@ void Am2320Show(bool json)
  * Interface
 \*********************************************************************************************/
 
-bool Xsns92(uint8_t function)
+bool Xsns88(uint8_t function)
 {
   if (!I2cEnabled(XI2C_60)) { return false; }
 

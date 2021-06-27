@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 ## [9.5.0.1]
 ### Added
 - Enable UFILESYS, GUI_TRASH_FILE and GUI_EDIT_FILE for any device compiled with more than 1M flash size
+- Support for AM2320 Temperature and Humidity Sensor by Lars Wessels (#12485)
 
 ### Changed
 - ESP32 core library from v1.0.6 to v1.0.7
