@@ -47,18 +47,21 @@ struct DHTSTRUCT {
   float    h = NAN;
 } Dht[DHT_MAX_SENSORS];
 
-bool DhtWaitState(uint32_t sensor, uint32_t level)
+// changed from bool to unsigned long returning the time to wait until state changes
+unsigned long DhtWaitState(uint32_t sensor, uint32_t level)
 {
   unsigned long timeout = micros() + 100;
+  unsigned long startms = micros();
+
   while (digitalRead(Dht[sensor].pin) != level) {
     if (TimeReachedUsec(timeout)) {
       AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DHT D_TIMEOUT_WAITING_FOR " %s " D_PULSE),
         (level) ? D_START_SIGNAL_HIGH : D_START_SIGNAL_LOW);
-      return false;
+      return 0;                             // return 0 (==false for compatibility) if timeout reached 
     }
     delayMicroseconds(1);
   }
-  return true;
+  return micros()-startms;
 }
 
 bool DhtRead(uint32_t sensor)
@@ -78,7 +81,8 @@ bool DhtRead(uint32_t sensor)
       break;
     case GPIO_DHT22:                                    // DHT21, DHT22, AM2301, AM2302, AM2321
 //      delay(2);   // minimum 1ms
-      delayMicroseconds(2000);                          // See https://github.com/arendst/Tasmota/pull/7468#issuecomment-647067015
+//      delayMicroseconds(2000);                          // See https://github.com/arendst/Tasmota/pull/7468#issuecomment-647067015
+      delayMicroseconds(1100);                          // changed to Arduino DHT library value
       break;
     case GPIO_SI7021:                                   // iTead SI7021
       delayMicroseconds(500);
@@ -133,14 +137,12 @@ bool DhtRead(uint32_t sensor)
 
   uint32_t i = 0;
   noInterrupts();
-  if (DhtWaitState(sensor, 0) && DhtWaitState(sensor, 1) && DhtWaitState(sensor, 0)) {
+  if (DhtWaitState(sensor, 0)) {                        // only wait for one state change to 0
     for (i = 0; i < 40; i++) {
       if (!DhtWaitState(sensor, 1)) { break; }
-      delayMicroseconds(32);                          // Was 30
-      if (digitalRead(Dht[sensor].pin)) {
-        dht_data[i / 8] |= (1 << (7 - i % 8));
-      }
-      if (!DhtWaitState(sensor, 0)) { break; }
+      int wt = DhtWaitState(sensor,0);                  // determine time to change state 
+        if(wt==0) break;
+        if(wt>50) dht_data[i / 8] |= (1 << (7 - i % 8));  // if longer than 50 usec then 1, else 0
     }
   }
   interrupts();
