@@ -913,7 +913,10 @@ void RulesEvery50ms(void)
         } else {
           parameter = event + strlen(event);  // '\0'
         }
-        snprintf_P(json_event, sizeof(json_event), PSTR("{\"Event\":{\"%s\":\"%s\"}}"), event, parameter);
+        if (parameter[0]=='{')
+          snprintf_P(json_event, sizeof(json_event), PSTR("{\"Event\":{\"%s\":%s}}"), event, parameter);
+        else
+          snprintf_P(json_event, sizeof(json_event), PSTR("{\"Event\":{\"%s\":\"%s\"}}"), event, parameter);
         Rules.event_data[0] ='\0';
         RulesProcessEvent(json_event);
       } else {
