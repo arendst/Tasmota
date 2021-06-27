@@ -528,16 +528,16 @@ void BmpShow(bool json)
       }
 
       char pressure[33];
-      dtostrfd(bmp_pressure, Settings.flag2.pressure_resolution, pressure);
+      dtostrfd(bmp_pressure, Settings->flag2.pressure_resolution, pressure);
       char sea_pressure[33];
-      dtostrfd(bmp_sealevel, Settings.flag2.pressure_resolution, sea_pressure);
+      dtostrfd(bmp_sealevel, Settings->flag2.pressure_resolution, sea_pressure);
 
       float bmp_humidity = ConvertHumidity(bmp_sensors[bmp_idx].bmp_humidity);
       char humidity[33];
-      dtostrfd(bmp_humidity, Settings.flag2.humidity_resolution, humidity);
+      dtostrfd(bmp_humidity, Settings->flag2.humidity_resolution, humidity);
       float f_dewpoint = CalcTempHumToDew(bmp_temperature, bmp_humidity);
       char dewpoint[33];
-      dtostrfd(f_dewpoint, Settings.flag2.temperature_resolution, dewpoint);
+      dtostrfd(f_dewpoint, Settings->flag2.temperature_resolution, dewpoint);
 #ifdef USE_BME680
       char gas_resistance[33];
       dtostrfd(bmp_sensors[bmp_idx].bmp_gas_resistance, 2, gas_resistance);
@@ -554,14 +554,14 @@ void BmpShow(bool json)
 
         ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_TEMPERATURE "\":%*_f%s,\"" D_JSON_PRESSURE "\":%s%s%s}"),
           name,
-          Settings.flag2.temperature_resolution, &bmp_temperature,
+          Settings->flag2.temperature_resolution, &bmp_temperature,
           (bmp_sensors[bmp_idx].bmp_model >= 2) ? json_humidity : "",
           pressure,
-          (Settings.altitude != 0) ? json_sealevel : "",
+          (Settings->altitude != 0) ? json_sealevel : "",
           (bmp_sensors[bmp_idx].bmp_model >= 3) ? json_gas : "");
 #else
         ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_TEMPERATURE "\":%*_f%s,\"" D_JSON_PRESSURE "\":%s%s}"),
-          name, Settings.flag2.temperature_resolution, &bmp_temperature, (bmp_sensors[bmp_idx].bmp_model >= 2) ? json_humidity : "", pressure, (Settings.altitude != 0) ? json_sealevel : "");
+          name, Settings->flag2.temperature_resolution, &bmp_temperature, (bmp_sensors[bmp_idx].bmp_model >= 2) ? json_humidity : "", pressure, (Settings->altitude != 0) ? json_sealevel : "");
 #endif  // USE_BME680
 
 #ifdef USE_DOMOTICZ
@@ -588,7 +588,7 @@ void BmpShow(bool json)
           WSContentSend_PD(HTTP_SNS_DEW, name, dewpoint, TempUnit());
         }
         WSContentSend_PD(HTTP_SNS_PRESSURE, name, pressure, PressureUnit().c_str());
-        if (Settings.altitude != 0) {
+        if (Settings->altitude != 0) {
           WSContentSend_PD(HTTP_SNS_SEAPRESSURE, name, sea_pressure, PressureUnit().c_str());
         }
 #ifdef USE_BME680

@@ -46,6 +46,7 @@ Ticker TickerSwitch;
 struct SWITCH {
   uint32_t debounce = 0;                     // Switch debounce timer
   uint32_t no_pullup_mask = 0;               // Switch pull-up bitmask flags
+  uint32_t pulldown_mask = 0;                // Switch pull-down bitmask flags
   uint8_t state[MAX_SWITCHES] = { 0 };
   uint8_t last_state[MAX_SWITCHES];          // Last wall switch states
   uint8_t hold_timer[MAX_SWITCHES] = { 0 };  // Timer for wallswitch push button hold
@@ -58,6 +59,10 @@ struct SWITCH {
 
 void SwitchPullupFlag(uint32 switch_bit) {
   bitSet(Switch.no_pullup_mask, switch_bit);
+}
+
+void SwitchPulldownFlag(uint32 switch_bit) {
+  bitSet(Switch.pulldown_mask, switch_bit);
 }
 
 void SwitchSetVirtual(uint32_t index, uint32_t state) {
@@ -73,7 +78,7 @@ uint8_t SwitchLastState(uint32_t index) {
 }
 
 bool SwitchState(uint32_t index) {
-  uint32_t switchmode = Settings.switchmode[index];
+  uint32_t switchmode = Settings->switchmode[index];
   return ((FOLLOW_INV == switchmode) ||
           (PUSHBUTTON_INV == switchmode) ||
           (PUSHBUTTONHOLD_INV == switchmode) ||
@@ -90,21 +95,21 @@ void SwitchProbe(void) {
 
   uint32_t state_filter;
   uint32_t first_change = Switch.first_change;
-  uint32_t debounce_flags = Settings.switch_debounce % 10;
+  uint32_t debounce_flags = Settings->switch_debounce % 10;
   bool force_high = (debounce_flags &1);                     // 51, 101, 151 etc
   bool force_low = (debounce_flags &2);                      // 52, 102, 152 etc
   bool ac_detect = (debounce_flags == 9);
 
   if (ac_detect) {
-    if (Settings.switch_debounce < 2 * AC_PERIOD * SWITCH_FAST_PROBE_INTERVAL + 9) {
+    if (Settings->switch_debounce < 2 * AC_PERIOD * SWITCH_FAST_PROBE_INTERVAL + 9) {
       state_filter = 2 * AC_PERIOD;
-    } else if (Settings.switch_debounce > (0x7f - 2 * AC_PERIOD) * SWITCH_FAST_PROBE_INTERVAL) {
+    } else if (Settings->switch_debounce > (0x7f - 2 * AC_PERIOD) * SWITCH_FAST_PROBE_INTERVAL) {
       state_filter = 0x7f;
     } else {
-      state_filter = (Settings.switch_debounce - 9) / SWITCH_FAST_PROBE_INTERVAL;
+      state_filter = (Settings->switch_debounce - 9) / SWITCH_FAST_PROBE_INTERVAL;
     }
   } else {
-    state_filter = Settings.switch_debounce / SWITCH_PROBE_INTERVAL;	// 5, 10, 15
+    state_filter = Settings->switch_debounce / SWITCH_PROBE_INTERVAL;	// 5, 10, 15
   }
 
   for (uint32_t i = 0; i < MAX_SWITCHES; i++) {
@@ -188,7 +193,7 @@ void SwitchProbe(void) {
 }
 
 void SwitchInit(void) {
-  bool ac_detect = (Settings.switch_debounce % 10 == 9);
+  bool ac_detect = (Settings->switch_debounce % 10 == 9);
 
   Switch.present = 0;
   for (uint32_t i = 0; i < MAX_SWITCHES; i++) {
@@ -199,7 +204,7 @@ void SwitchInit(void) {
       pinMode(Pin(GPIO_SWT1, i), bitRead(Switch.no_pullup_mask, i) ? INPUT : ((16 == Pin(GPIO_SWT1, i)) ? INPUT_PULLDOWN_16 : INPUT_PULLUP));
 #endif  // ESP8266
 #ifdef ESP32
-      pinMode(Pin(GPIO_SWT1, i), bitRead(Switch.no_pullup_mask, i) ? INPUT : INPUT_PULLUP);
+      pinMode(Pin(GPIO_SWT1, i), bitRead(Switch.pulldown_mask, i) ? INPUT_PULLDOWN : bitRead(Switch.no_pullup_mask, i) ? INPUT : INPUT_PULLUP);
 #endif  // ESP32
       if (ac_detect) {
         Switch.state[i] = 0x80 + 2 * AC_PERIOD;
@@ -223,18 +228,18 @@ void SwitchInit(void) {
 void SwitchHandler(uint32_t mode) {
   if (TasmotaGlobal.uptime < 4) { return; }                  // Block GPIO for 4 seconds after poweron to workaround Wemos D1 / Obi RTS circuit
 
-  uint32_t loops_per_second = 1000 / Settings.switch_debounce;
+  uint32_t loops_per_second = 1000 / Settings->switch_debounce;
 
   for (uint32_t i = 0; i < MAX_SWITCHES; i++) {
     if (PinUsed(GPIO_SWT1, i) || (mode)) {
       uint32_t button = Switch.virtual_state[i];
       uint32_t switchflag = POWER_TOGGLE +1;
       uint32_t mqtt_action = POWER_NONE;
-      uint32_t switchmode = Settings.switchmode[i];
+      uint32_t switchmode = Settings->switchmode[i];
 
       if (Switch.hold_timer[i] & (((switchmode == PUSHHOLDMULTI) | (switchmode == PUSHHOLDMULTI_INV)) ? SM_TIMER_MASK: SM_NO_TIMER_MASK)) {
         Switch.hold_timer[i]--;
-        if ((Switch.hold_timer[i] & SM_TIMER_MASK) == loops_per_second * Settings.param[P_HOLD_TIME] / 25) {
+        if ((Switch.hold_timer[i] & SM_TIMER_MASK) == loops_per_second * Settings->param[P_HOLD_TIME] / 25) {
           if ((switchmode == PUSHHOLDMULTI) & (NOT_PRESSED == Switch.last_state[i])) {
             SendKey(KEY_SWITCH, i +1, POWER_INCREMENT);      // Execute command via MQTT
           }
@@ -255,7 +260,7 @@ void SwitchHandler(uint32_t mode) {
               break;
             case PUSHHOLDMULTI:
               if (NOT_PRESSED == button) {
-                Switch.hold_timer[i] = loops_per_second * Settings.param[P_HOLD_TIME] / 25;
+                Switch.hold_timer[i] = loops_per_second * Settings->param[P_HOLD_TIME] / 25;
                 SendKey(KEY_SWITCH, i +1, POWER_INCREMENT);  // Execute command via MQTT
                 mqtt_action = POWER_INCREMENT;
               } else {
@@ -266,7 +271,7 @@ void SwitchHandler(uint32_t mode) {
               break;
             case PUSHHOLDMULTI_INV:
               if (PRESSED == button) {
-                Switch.hold_timer[i] = loops_per_second * Settings.param[P_HOLD_TIME] / 25;
+                Switch.hold_timer[i] = loops_per_second * Settings->param[P_HOLD_TIME] / 25;
                 SendKey(KEY_SWITCH, i +1, POWER_INCREMENT);  // Execute command via MQTT
                 mqtt_action = POWER_INCREMENT;
 
@@ -308,7 +313,7 @@ void SwitchHandler(uint32_t mode) {
           break;
         case PUSHBUTTONHOLD:
           if (PRESSED == button) {
-            Switch.hold_timer[i] = loops_per_second * Settings.param[P_HOLD_TIME] / 10;  // Start timer on button press
+            Switch.hold_timer[i] = loops_per_second * Settings->param[P_HOLD_TIME] / 10;  // Start timer on button press
           }
           if ((NOT_PRESSED == button) && (Switch.hold_timer[i])) {
             Switch.hold_timer[i] = 0;        // Button released and hold timer not expired : stop timer...
@@ -317,7 +322,7 @@ void SwitchHandler(uint32_t mode) {
           break;
         case PUSHBUTTONHOLD_INV:
           if (NOT_PRESSED == button) {
-            Switch.hold_timer[i] = loops_per_second * Settings.param[P_HOLD_TIME] / 10;  // Start timer on button press...
+            Switch.hold_timer[i] = loops_per_second * Settings->param[P_HOLD_TIME] / 10;  // Start timer on button press...
           }
           if ((PRESSED == button) && (Switch.hold_timer[i])) {
             Switch.hold_timer[i] = 0;        // Button released and hold timer not expired : stop timer.
@@ -343,7 +348,7 @@ void SwitchHandler(uint32_t mode) {
               mqtt_action = POWER_INV;
             }
           } else {
-            if ((Switch.hold_timer[i] & SM_TIMER_MASK) > loops_per_second * Settings.param[P_HOLD_TIME] / 25) {
+            if ((Switch.hold_timer[i] & SM_TIMER_MASK) > loops_per_second * Settings->param[P_HOLD_TIME] / 25) {
               if((Switch.hold_timer[i] & ~SM_TIMER_MASK) != SM_SECOND_PRESS) {
                 Switch.hold_timer[i]= SM_FIRST_PRESS;
                 switchflag = POWER_TOGGLE;                      // Toggle with pushbutton
@@ -359,7 +364,7 @@ void SwitchHandler(uint32_t mode) {
               mqtt_action = POWER_RELEASE;
             }
           }
-          Switch.hold_timer[i] = (Switch.hold_timer[i] & ~SM_TIMER_MASK) | loops_per_second * Settings.param[P_HOLD_TIME] / 10;
+          Switch.hold_timer[i] = (Switch.hold_timer[i] & ~SM_TIMER_MASK) | loops_per_second * Settings->param[P_HOLD_TIME] / 10;
           break;
         case PUSHHOLDMULTI_INV:
           if (PRESSED == button) {
@@ -369,7 +374,7 @@ void SwitchHandler(uint32_t mode) {
               mqtt_action = POWER_INV;
             }
           } else {
-            if ((Switch.hold_timer[i] & SM_TIMER_MASK)> loops_per_second * Settings.param[P_HOLD_TIME] / 25) {
+            if ((Switch.hold_timer[i] & SM_TIMER_MASK)> loops_per_second * Settings->param[P_HOLD_TIME] / 25) {
               if((Switch.hold_timer[i] & ~SM_TIMER_MASK) != SM_SECOND_PRESS) {
                 Switch.hold_timer[i]= SM_FIRST_PRESS;
                 switchflag = POWER_TOGGLE;                      // Toggle with pushbutton
@@ -385,7 +390,7 @@ void SwitchHandler(uint32_t mode) {
               mqtt_action = POWER_RELEASE;
             }
           }
-          Switch.hold_timer[i] = (Switch.hold_timer[i] & ~SM_TIMER_MASK) | loops_per_second * Settings.param[P_HOLD_TIME] / 10;
+          Switch.hold_timer[i] = (Switch.hold_timer[i] & ~SM_TIMER_MASK) | loops_per_second * Settings->param[P_HOLD_TIME] / 10;
           break;
         case PUSHON:
           if (PRESSED == button) {
@@ -405,14 +410,14 @@ void SwitchHandler(uint32_t mode) {
         Switch.last_state[i] = button;
       }
       if (switchflag <= POWER_TOGGLE) {
-        if (!Settings.flag5.mqtt_switches) {                    // SetOption114 (0) - Detach Switches from relays and enable MQTT action state for all the SwitchModes
+        if (!Settings->flag5.mqtt_switches) {                    // SetOption114 (0) - Detach Switches from relays and enable MQTT action state for all the SwitchModes
           if (!SendKey(KEY_SWITCH, i +1, switchflag)) {         // Execute command via MQTT
             ExecuteCommandPower(i +1, switchflag, SRC_SWITCH);  // Execute command internally (if i < TasmotaGlobal.devices_present)
           }
         } else { mqtt_action = switchflag; }
       }
-      if ((mqtt_action != POWER_NONE) && Settings.flag5.mqtt_switches) {  // SetOption114 (0) - Detach Switches from relays and enable MQTT action state for all the SwitchModes
-        if (!Settings.flag.hass_discovery) {                    // SetOption19 - Control Home Assistant automatic discovery (See SetOption59)
+      if ((mqtt_action != POWER_NONE) && Settings->flag5.mqtt_switches) {  // SetOption114 (0) - Detach Switches from relays and enable MQTT action state for all the SwitchModes
+        if (!Settings->flag.hass_discovery) {                    // SetOption19 - Control Home Assistant automatic discovery (See SetOption59)
           char mqtt_state_str[16];
           char *mqtt_state = mqtt_state_str;
           if (mqtt_action <= 3) {
@@ -435,7 +440,7 @@ void SwitchHandler(uint32_t mode) {
 void SwitchLoop(void) {
   if (Switch.present) {
     if (TimeReached(Switch.debounce)) {
-      SetNextTimeInterval(Switch.debounce, Settings.switch_debounce);
+      SetNextTimeInterval(Switch.debounce, Settings->switch_debounce);
       SwitchHandler(0);
     }
   }

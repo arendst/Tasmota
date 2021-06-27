@@ -18,11 +18,13 @@
 #define be_class_members(cl)            ((cl)->members)
 #define be_class_super(cl)              ((cl)->super)
 #define be_class_setsuper(self, sup)    ((self)->super = (sup))
+#define be_class_setsub(self, sub)      ((self)->sub = (sub))
 #define be_instance_name(obj)           ((obj)->_class->name)
 #define be_instance_class(obj)          ((obj)->_class)
 #define be_instance_members(obj)        ((obj)->members)
 #define be_instance_member_count(obj)   ((obj)->_class->nvar)
 #define be_instance_super(obj)          ((obj)->super)
+#define be_instance_sub(obj)            ((obj)->sub)
 
 struct bclass {
     bcommon_header;
@@ -41,6 +43,7 @@ struct bclass {
 struct binstance {
     bcommon_header;
     struct binstance *super;
+    struct binstance *sub;
     bclass *_class;
     bgcobject *gray; /* for gc gray list */
     bvalue members[1]; /* members variable data field */
@@ -55,7 +58,7 @@ void be_prim_method_bind(bvm *vm, bclass *c, bstring *name, bntvfunc f);
 void be_closure_method_bind(bvm *vm, bclass *c, bstring *name, bclosure *cl);
 int be_class_closure_count(bclass *c);
 void be_class_upvalue_init(bvm *vm, bclass *c);
-bbool be_class_newobj(bvm *vm, bclass *c, bvalue *argv, int argc);
+bbool be_class_newobj(bvm *vm, bclass *c, bvalue *argv, int argc, int mode);
 int be_instance_member(bvm *vm, binstance *obj, bstring *name, bvalue *dst);
 bbool be_instance_setmember(bvm *vm, binstance *obj, bstring *name, bvalue *src);
 

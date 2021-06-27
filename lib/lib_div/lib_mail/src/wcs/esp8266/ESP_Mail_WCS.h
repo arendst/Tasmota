@@ -1,5 +1,5 @@
 /*
-  Customized version of WiFiClientSecure.h
+  Customized version of WiFiClientSecure.h v1.0.1
 
   WiFiClientBearSSL- SSL client/server for esp8266 using BearSSL libraries
   - Mostly compatible with Arduino WiFi shield library and standard
@@ -32,7 +32,7 @@
 #include <bearssl/bearssl.h>
 #include "ESP_Mail_BearSSLHelpers.h"
 #include "ESP_Mail_CertStoreBearSSL.h"
-
+#include "SDK_Version_Common.h"
 
 namespace ESP_Mail {
 

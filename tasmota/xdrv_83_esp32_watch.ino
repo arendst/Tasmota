@@ -304,13 +304,13 @@ int32_t ttgo_sleeptime;
       esp_light_sleep_start();
     } else {
       ttgo_globs.ttgo_power->setPowerOutPut(0xFF, false);
-      Settings.deepsleep = -ttgo_sleeptime;
+      Settings->deepsleep = -ttgo_sleeptime;
 #ifdef USE_DEEPSLEEP
       RtcSettings.nextwakeup = 0;
       deepsleep_flag = (0 == XdrvMailbox.payload) ? 0 : DEEPSLEEP_START_COUNTDOWN;
       if (deepsleep_flag) {
-        if (!Settings.tele_period) {
-          Settings.tele_period = TELE_PERIOD;  // Need teleperiod to go back to sleep
+        if (!Settings->tele_period) {
+          Settings->tele_period = TELE_PERIOD;  // Need teleperiod to go back to sleep
         }
       }
 #endif

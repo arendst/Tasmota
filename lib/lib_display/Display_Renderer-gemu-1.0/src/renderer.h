@@ -4,22 +4,57 @@
 
 #include <Adafruit_GFX.h>
 #include "fonts.h"
+#include "tasmota_options.h"
 
 #define BLACK 0
 #define WHITE 1
 #define INVERSE 2
 
+#define USE_EPD_FONTS
+//#define USE_ALL_EPD_FONTS
+//#define USE_GFX_FONTS
+#define USE_TINY_FONT
+#define USE_7SEG_FONT
+
 #define MAX_INDEXCOLORS 32
+
+#ifdef USE_DISPLAY_LVGL_ONLY
+#undef USE_EPD_FONTS
+#endif
 
 // depends on GFX driver
 // GFX patched
 // a. in class GFX setCursor,setTextSize => virtual
 // b. textcolor,textbgcolor => public;
 
+typedef struct LVGL_PARAMS {
+  uint16_t fluslines;
+  union {
+    uint8_t data;
+    struct {
+      uint8_t use_dma : 1;
+      uint8_t swap_color : 1;
+      uint8_t resvd_0 : 1;
+      uint8_t resvd_1 : 1;
+      uint8_t resvd_2 : 1;
+      uint8_t resvd_3 : 1;
+      uint8_t resvd_4 : 1;
+      uint8_t resvd_5 : 1;
+    };
+  };
+}LVGL_PARAMS;
+
 typedef void (*pwr_cb)(uint8_t);
 typedef void (*dim_cb)(uint8_t);
 
+#define USE_GFX
+
+#ifdef USE_GFX
 class Renderer : public Adafruit_GFX {
+#else
+class Renderer {
+#endif
+
   //Paint(unsigned char* image, int width, int height);
   //~Renderer();
 public:
@@ -51,7 +86,7 @@ public:
   virtual int8_t color_type(void);
   virtual void Splash(void);
   virtual char *devname(void);
-  virtual uint16_t lvgl_pars(void);
+  virtual LVGL_PARAMS *lvgl_pars(void);
 
   void setDrawMode(uint8_t mode);
   uint8_t drawmode;
@@ -60,7 +95,8 @@ public:
   virtual uint8_t *allocate_framebuffer(uint32_t size);
   pwr_cb pwr_cbp = 0;
   dim_cb dim_cbp = 0;
-  uint16_t lvgl_param = 0;
+  LVGL_PARAMS lvgl_param;
+  int8_t disp_bpp;
 private:
   void DrawCharAt(int16_t x, int16_t y, char ascii_char,int16_t colored);
   inline void drawFastVLineInternal(int16_t x, int16_t y, int16_t h, uint16_t color) __attribute__((always_inline));
@@ -97,6 +133,7 @@ struct Slider {
   uint16_t barcol;
 };
 
+// #ifndef USE_DISPLAY_LVGL_ONLY
 class VButton : public Adafruit_GFX_Button {
   public:
   TButton_State vpower;
@@ -107,6 +144,7 @@ class VButton : public Adafruit_GFX_Button {
   uint16_t UpdateSlider(int16_t x, int16_t y);
   void SliderInit(Renderer *rend, uint16_t xp, uint16_t yp, uint16_t xs, uint16_t ys, uint16_t nelem, uint16_t bgcol, uint16_t frcol, uint16_t barcol);
 };
+// #endif // USE_DISPLAY_LVGL_ONLY
 
 
 #endif

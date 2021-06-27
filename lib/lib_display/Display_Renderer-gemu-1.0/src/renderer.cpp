@@ -27,11 +27,7 @@
 #include <pgmspace.h>
 #include "renderer.h"
 
-#define USE_EPD_FONTS
-//#define USE_ALL_EPD_FONTS
-//#define USE_GFX_FONTS
-#define USE_TINY_FONT
-#define USE_7SEG_FONT
+
 
 uint8_t wr_redir=0;
 
@@ -43,13 +39,17 @@ uint8_t wr_redir=0;
 #define OLED_FONT_HEIGTH       8
 #define BLACK 0
 
-Renderer::Renderer(int16_t x, int16_t y) :
-Adafruit_GFX(x, y) {
+#ifdef USE_GFX
+Renderer::Renderer(int16_t x, int16_t y) : Adafruit_GFX(x, y) {
+#else
+Renderer::Renderer(int16_t x, int16_t y) {
+#endif
+
   font=0;
 #ifdef USE_EPD_FONTS
   selected_font = &Font12;
 #endif
-
+  disp_bpp = 16;
 }
 
 uint16_t Renderer::GetColorFromIndex(uint8_t index) {
@@ -624,9 +624,12 @@ char *Renderer::devname(void) {
   return (char*)dname;
 }
 
-uint16_t Renderer::lvgl_pars(void) {
-  return lvgl_param;
+LVGL_PARAMS *Renderer::lvgl_pars(void) {
+  return &lvgl_param;
 }
+
+
+// #ifndef USE_DISPLAY_LVGL_ONLY
 
 void VButton::xdrawButton(bool inverted) {
   wr_redir=1;
@@ -723,7 +726,7 @@ uint16_t VButton::UpdateSlider(int16_t x, int16_t y) {
   }
 
 }
-
+// #endif // USE_DISPLAY_LVGL_ONLY
 
 
 

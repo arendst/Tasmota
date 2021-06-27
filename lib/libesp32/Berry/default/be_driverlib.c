@@ -4,22 +4,59 @@
  * To use: `d = Driver()`
  * 
  *******************************************************************/
-#include "be_object.h"
-#include "be_string.h"
-#include "be_gc.h"
-
-extern int d_getTasmotaGlob(bvm *vm);
-
+#include "be_constobj.h"
 
 /********************************************************************
-  "class Driver2 : Driver "
-    "def add_cmd(c, f) "
-      "var tasmota = self.get_tasmota() "
-      "tasmota.add_cmd(c, / cmd, idx, payload, payload_json -> f(self, cmd, idx, payload, payload_json)) "
-    "end "
-  "end "
-  "Driver = Driver2 "
+  class Driver2 : Driver
+    var every_second
+    var every_100ms
+    var web_add_handler
+    var web_add_button
+    var web_add_main_button
+    var save_before_restart
+    var web_sensor
+    var json_append
+    var button_pressed
+    var display
+
+    def get_tasmota()
+      import global
+      return global.tasmota
+    end
+
+    def add_cmd(c, f)
+      var tasmota = self.get_tasmota()
+      tasmota.add_cmd(c, / cmd, idx, payload, payload_json -> f(self, cmd, idx, payload, payload_json))
+    end
+  end
 ********************************************************************/
+
+/********************************************************************
+** Solidified function: get_tasmota
+********************************************************************/
+
+/********** Solidified proto: get_tasmota */
+be_define_local_const_str(get_tasmota_str_name, "get_tasmota", 334356779, 11);
+be_define_local_const_str(get_tasmota_str_source, "input", -103256197, 5);
+be_define_local_const_str(get_tasmota_str_0, "global", 503252654, 6);
+be_define_local_const_str(get_tasmota_str_1, "tasmota", 424643812, 7);
+
+static const bvalue get_tasmota_ktab[2] = {
+  { { .s=be_local_const_str(get_tasmota_str_0) }, BE_STRING},
+  { { .s=be_local_const_str(get_tasmota_str_1) }, BE_STRING},
+};
+
+static const uint32_t get_tasmota_code[3] = {
+  0xA4060000,  //  0000  IMPORT	R1	R256
+  0x88080301,  //  0001  GETMBR	R2	R1	R257
+  0x80040400,  //  0002  RET	1	R2
+};
+
+be_define_local_proto(get_tasmota, 3, 1, 1, 0, 0);
+be_define_local_closure(get_tasmota);
+
+/*******************************************************************/
+
 /********************************************************************
 ** Solidified function: add_cmd
 ********************************************************************/
@@ -30,8 +67,8 @@ static const bupvaldesc add_cmd_0_upvals[2] = {
   be_local_const_upval(1, 0),
 };
 
-be_define_local_const_str(add_cmd_0_str_name, "add_cmd_0", 607256038, 0, 8, 0);
-be_define_local_const_str(add_cmd_0_str_source, "input", -103256197, 0, 5, 0);
+be_define_local_const_str(add_cmd_0_str_name, "add_cmd_0", 607256038, 8);
+be_define_local_const_str(add_cmd_0_str_source, "input", -103256197, 5);
 
 static const uint32_t add_cmd_0_code[8] = {
   0x68100000,  //  0000  GETUPV	R4	U0
@@ -51,10 +88,10 @@ static const bproto *add_cmd_subproto[1] = {
   &add_cmd_0_proto,
 };
 
-be_define_local_const_str(add_cmd_str_name, "add_cmd", -933336417, 0, 7, 0);
-be_define_local_const_str(add_cmd_str_source, "input", -103256197, 0, 5, 0);
-be_define_local_const_str(add_cmd_str_0, "get_tasmota", 334356779, 0, 11, 0);
-be_define_local_const_str(add_cmd_str_1, "add_cmd", -933336417, 0, 7, 0);
+be_define_local_const_str(add_cmd_str_name, "add_cmd", -933336417, 7);
+be_define_local_const_str(add_cmd_str_source, "input", -103256197, 5);
+be_define_local_const_str(add_cmd_str_0, "get_tasmota", 334356779, 11);
+be_define_local_const_str(add_cmd_str_1, "add_cmd", -933336417, 7);
 
 static const bvalue add_cmd_ktab[2] = {
   { { .s=be_local_const_str(add_cmd_str_0) }, BE_STRING},
@@ -77,34 +114,55 @@ be_define_local_closure(add_cmd);
 
 /*******************************************************************/
 
-// #if !BE_USE_PRECOMPILED_OBJECT
-#if 1           // TODO we will do pre-compiled later
-void be_load_driverlib(bvm *vm)
-{
+
+
+#if BE_USE_PRECOMPILED_OBJECT
+#include "../generate/be_fixed_be_class_tasmota_driver.h"
+#endif
+
+void be_load_driverlib(bvm *vm) {
+#if !BE_USE_PRECOMPILED_OBJECT
     static const bnfuncinfo members[] = {
         { "every_second", NULL },
         { "every_100ms", NULL },
+        { "web_add_handler", NULL },
         { "web_add_button", NULL },
         { "web_add_main_button", NULL },
         { "save_before_restart", NULL },
         { "web_sensor", NULL },
         { "json_append", NULL },
         { "button_pressed", NULL },
-
-        { "get_tasmota", d_getTasmotaGlob },
+        { "display", NULL },
 
         { NULL, (bntvfunc) BE_CLOSURE }, /* mark section for berry closures */
+        { "get_tasmota", (bntvfunc) &get_tasmota_closure },
         { "add_cmd", (bntvfunc) &add_cmd_closure },
         
         { NULL, NULL }
     };
     be_regclass(vm, "Driver", members);
-}
 #else
+    be_pushntvclass(vm, &be_class_tasmota_driver);
+    be_setglobal(vm, "Driver");
+    be_pop(vm, 1);
+#endif
+}
 /* @const_object_info_begin
-module tasmota (scope: global, depend: 1) {
-    get_free_heap, func(l_getFreeHeap)
+
+class be_class_tasmota_driver (scope: global, name: Driver) {
+    every_second, var
+    every_100ms, var
+    web_add_handler, var
+    web_add_button, var
+    web_add_main_button, var
+    save_before_restart, var
+    web_sensor, var
+    json_append, var
+    button_pressed, var
+    display, var
+
+    get_tasmota, closure(get_tasmota_closure)
+
+    add_cmd, closure(add_cmd_closure)
 }
 @const_object_info_end */
-#include "../generate/be_fixed_tasmota.h"
-#endif

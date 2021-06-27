@@ -120,7 +120,7 @@ void Scd30Update(void)
             scd30ErrorState = SCD30_STATE_ERROR_DATA_CRC;
             scd30CrcError_count++;
 #ifdef SCD30_DEBUG
-            AddLog_P(LOG_LEVEL_ERROR, PSTR("SCD30: CRC error, CRC error: %ld, CO2 zero: %ld, good: %ld, no data: %ld, sc30_reset: %ld, i2c_reset: %ld"),
+            AddLog(LOG_LEVEL_ERROR, PSTR("SCD30: CRC error, CRC error: %ld, CO2 zero: %ld, good: %ld, no data: %ld, sc30_reset: %ld, i2c_reset: %ld"),
               scd30CrcError_count, scd30Co2Zero_count, scd30GoodMeas_count, scd30DataNotAvailable_count, scd30Reset_count, i2cReset_count);
 #endif
             break;
@@ -128,7 +128,7 @@ void Scd30Update(void)
           case ERROR_SCD30_CO2_ZERO:
             scd30Co2Zero_count++;
 #ifdef SCD30_DEBUG
-            AddLog_P(LOG_LEVEL_ERROR, PSTR("SCD30: CO2 zero, CRC error: %ld, CO2 zero: %ld, good: %ld, no data: %ld, sc30_reset: %ld, i2c_reset: %ld"),
+            AddLog(LOG_LEVEL_ERROR, PSTR("SCD30: CO2 zero, CRC error: %ld, CO2 zero: %ld, good: %ld, no data: %ld, sc30_reset: %ld, i2c_reset: %ld"),
               scd30CrcError_count, scd30Co2Zero_count, scd30GoodMeas_count, scd30DataNotAvailable_count, scd30Reset_count, i2cReset_count);
 #endif
             break;
@@ -136,7 +136,7 @@ void Scd30Update(void)
           default: {
             scd30ErrorState = SCD30_STATE_ERROR_READ_MEAS;
 #ifdef SCD30_DEBUG
-            AddLog_P(LOG_LEVEL_ERROR, PSTR("SCD30: Update: ReadMeasurement error: 0x%lX, counter: %ld"), error, scd30Loop_count);
+            AddLog(LOG_LEVEL_ERROR, PSTR("SCD30: Update: ReadMeasurement error: 0x%lX, counter: %ld"), error, scd30Loop_count);
 #endif
              return;
           }
@@ -148,9 +148,9 @@ void Scd30Update(void)
       case SCD30_STATE_ERROR_DATA_CRC: {
         //scd30IsDataValid = false;
 #ifdef SCD30_DEBUG
-        AddLog_P(LOG_LEVEL_ERROR, PSTR("SCD30: in error state: %d, good: %ld, no data: %ld, sc30 reset: %ld, i2c reset: %ld"),
+        AddLog(LOG_LEVEL_ERROR, PSTR("SCD30: in error state: %d, good: %ld, no data: %ld, sc30 reset: %ld, i2c reset: %ld"),
           scd30ErrorState, scd30GoodMeas_count, scd30DataNotAvailable_count, scd30Reset_count, i2cReset_count);
-        AddLog_P(LOG_LEVEL_ERROR, PSTR("SCD30: got CRC error, try again, counter: %ld"), scd30Loop_count);
+        AddLog(LOG_LEVEL_ERROR, PSTR("SCD30: got CRC error, try again, counter: %ld"), scd30Loop_count);
 #endif
         scd30ErrorState = ERROR_SCD30_NO_ERROR;
       }
@@ -159,15 +159,15 @@ void Scd30Update(void)
       case SCD30_STATE_ERROR_READ_MEAS: {
         //scd30IsDataValid = false;
 #ifdef SCD30_DEBUG
-        AddLog_P(LOG_LEVEL_ERROR, PSTR("SCD30: in error state: %d, good: %ld, no data: %ld, sc30 reset: %ld, i2c reset: %ld"),
+        AddLog(LOG_LEVEL_ERROR, PSTR("SCD30: in error state: %d, good: %ld, no data: %ld, sc30 reset: %ld, i2c reset: %ld"),
           scd30ErrorState, scd30GoodMeas_count, scd30DataNotAvailable_count, scd30Reset_count, i2cReset_count);
-        AddLog_P(LOG_LEVEL_ERROR, PSTR("SCD30: not answering, sending soft reset, counter: %ld"), scd30Loop_count);
+        AddLog(LOG_LEVEL_ERROR, PSTR("SCD30: not answering, sending soft reset, counter: %ld"), scd30Loop_count);
 #endif
         scd30Reset_count++;
         error = scd30.softReset();
         if (error) {
 #ifdef SCD30_DEBUG
-          AddLog_P(LOG_LEVEL_ERROR, PSTR("SCD30: resetting got error: 0x%lX"), error);
+          AddLog(LOG_LEVEL_ERROR, PSTR("SCD30: resetting got error: 0x%lX"), error);
 #endif
           error >>= 8;
           if (error == 4) {
@@ -184,16 +184,16 @@ void Scd30Update(void)
       case SCD30_STATE_ERROR_SOFT_RESET: {
         //scd30IsDataValid = false;
 #ifdef SCD30_DEBUG
-        AddLog_P(LOG_LEVEL_ERROR, PSTR("SCD30: in error state: %d, good: %ld, no data: %ld, sc30 reset: %ld, i2c reset: %ld"),
+        AddLog(LOG_LEVEL_ERROR, PSTR("SCD30: in error state: %d, good: %ld, no data: %ld, sc30 reset: %ld, i2c reset: %ld"),
           scd30ErrorState, scd30GoodMeas_count, scd30DataNotAvailable_count, scd30Reset_count, i2cReset_count);
-        AddLog_P(LOG_LEVEL_ERROR, PSTR("SCD30: clearing i2c bus"));
+        AddLog(LOG_LEVEL_ERROR, PSTR("SCD30: clearing i2c bus"));
 #endif
         i2cReset_count++;
         error = scd30.clearI2CBus();
         if (error) {
           scd30ErrorState = SCD30_STATE_ERROR_I2C_RESET;
 #ifdef SCD30_DEBUG
-          AddLog_P(LOG_LEVEL_ERROR, PSTR("SCD30: error clearing i2c bus: 0x%lX"), error);
+          AddLog(LOG_LEVEL_ERROR, PSTR("SCD30: error clearing i2c bus: 0x%lX"), error);
 #endif
         } else {
           scd30ErrorState = ERROR_SCD30_NO_ERROR;
@@ -204,7 +204,7 @@ void Scd30Update(void)
       default: {
         //scd30IsDataValid = false;
 #ifdef SCD30_DEBUG
-        AddLog_P(LOG_LEVEL_ERROR, PSTR("SCD30: unknown error state: 0x%lX"), scd30ErrorState);
+        AddLog(LOG_LEVEL_ERROR, PSTR("SCD30: unknown error state: 0x%lX"), scd30ErrorState);
 #endif
         scd30ErrorState = SCD30_STATE_ERROR_SOFT_RESET; // try again
       }
@@ -340,7 +340,7 @@ bool Scd30CommandSensor()
         if (error)
         {
 #ifdef SCD30_DEBUG
-          AddLog_P(LOG_LEVEL_ERROR, PSTR("SCD30: error getting FW version: 0x%lX"), error);
+          AddLog(LOG_LEVEL_ERROR, PSTR("SCD30: error getting FW version: 0x%lX"), error);
 #endif
           serviced = false;
         }

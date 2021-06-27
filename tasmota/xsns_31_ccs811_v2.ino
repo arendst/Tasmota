@@ -150,7 +150,7 @@ void CCS811ReadMailboxValue( uint8_t address, uint8_t mailbox, byte * pbuf, uint
   for (uint8_t i = 0; i < buflen; i++) {
     *(pbuf + i) = Wire.read();
 #ifdef CCS811_DEBUG
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR( D_LOG_DEBUG D_PRFX_CCS811 " reading byte %u: 0%02x / %u"), i, *(pbuf + i), *(pbuf + i));
+    AddLog(LOG_LEVEL_DEBUG, PSTR( D_LOG_DEBUG D_PRFX_CCS811 " reading byte %u: 0%02x / %u"), i, *(pbuf + i), *(pbuf + i));
 #endif
   }
 }
@@ -159,7 +159,7 @@ void CCS811WriteMailboxValue(uint8_t address, uint8_t mailbox, byte * pbuf, uint
 {
 #ifdef CCS811_DEBUG
   for (uint8_t i = 0; i < buflen; i++) {
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR( D_LOG_DEBUG D_PRFX_CCS811 " writing byte %u: 0%02x / %u"), i, *(pbuf + i), *(pbuf + i));
+    AddLog(LOG_LEVEL_DEBUG, PSTR( D_LOG_DEBUG D_PRFX_CCS811 " writing byte %u: 0%02x / %u"), i, *(pbuf + i), *(pbuf + i));
   }
 #endif
 	Wire.beginTransmission(address);
@@ -180,7 +180,7 @@ CCS811DATA * CmndCCS811SelectDeviceFromIndex(void) {
       if  (pccsd->device_index == XdrvMailbox.index) {
         pccsd_command = pccsd;
 #ifdef CCS811_DEBUG
-        AddLog_P(LOG_LEVEL_DEBUG, PSTR( D_LOG_DEBUG D_PRFX_CCS811 " I2C Address: 0%02x"), pccsd_command->address);
+        AddLog(LOG_LEVEL_DEBUG, PSTR( D_LOG_DEBUG D_PRFX_CCS811 " I2C Address: 0%02x"), pccsd_command->address);
 #endif
         break;
       }

@@ -1,8 +1,7 @@
 /********************************************************************
  * Tasmota LVGL Font class
  *******************************************************************/
-#include "be_object.h"
-#include "be_string.h"
+#include "be_constobj.h"
 
 #ifdef USE_LVGL
 

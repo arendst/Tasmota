@@ -97,7 +97,7 @@ bool DhtRead(uint32_t sensor)
       delayMicroseconds(50);
       break;
     case GPIO_SI7021:                                   // iTead SI7021
-      delayMicroseconds(20);                            // See: https://github.com/letscontrolit/ESPEasy/issues/1798
+      delayMicroseconds(30);                            // See: https://github.com/letscontrolit/ESPEasy/issues/1798 and https://github.com/arendst/Tasmota/issues/12180
       break;
   }
 
@@ -136,7 +136,7 @@ bool DhtRead(uint32_t sensor)
   if (DhtWaitState(sensor, 0) && DhtWaitState(sensor, 1) && DhtWaitState(sensor, 0)) {
     for (i = 0; i < 40; i++) {
       if (!DhtWaitState(sensor, 1)) { break; }
-      delayMicroseconds(35);                          // Was 30
+      delayMicroseconds(32);                          // Was 30
       if (digitalRead(Dht[sensor].pin)) {
         dht_data[i / 8] |= (1 << (7 - i % 8));
       }

@@ -356,6 +356,10 @@
 //#undef USE_RULES                                 // Disable support for rules
 #undef USE_DISCOVERY                             // Disable mDNS for the following services (+8k code or +23.5k code with core 2_5_x, +0.3k mem)
 
+// -- IR options ----------------------------
+#define USE_IR_REMOTE                            // Enable IR remote commands using library IRremoteESP8266
+#define USE_IR_REMOTE_FULL                       // Support all IR protocols from IRremoteESP8266
+
 // -- Optional modules ----------------------------
 #undef ROTARY_V1                                 // Disable support for MI Desk Lamp
 #undef USE_SONOFF_RF                             // Disable support for Sonoff Rf Bridge (+3k2 code)
@@ -762,7 +766,6 @@
 #undef FIRMWARE_KNX_NO_EMULATION                 // Disable tasmota-knx with KNX but without Emulation
 #undef FIRMWARE_DISPLAYS                         // Disable tasmota-display with display drivers enabled
 #undef FIRMWARE_IR                               // Disable tasmota-ir with IR full protocols activated
-#undef FIRMWARE_IR_CUSTOM                        // Disable tasmota customizable with special marker to add all IR protocols
 
 #undef USE_ARDUINO_OTA                           // Disable support for Arduino OTA
 #undef USE_DOMOTICZ                              // Disable Domoticz
@@ -909,7 +912,6 @@
 #undef FIRMWARE_KNX_NO_EMULATION                // Disable tasmota-knx with KNX but without Emulation
 #undef FIRMWARE_DISPLAYS                        // Disable tasmota-display with display drivers enabled
 #undef FIRMWARE_IR                              // Disable tasmota-ir with IR full protocols activated
-#undef FIRMWARE_IR_CUSTOM                       // Disable tasmota customizable with special marker to add all IR protocols
 
 #endif  // FIRMWARE_MINICUSTOM
 
@@ -918,5 +920,35 @@
 #include "tasmota_configurations_ESP32.h"
 #endif  // ESP32
 
+/*********************************************************************************************\
+ * Post-configuration for IRremoteESP8266 protocol selection
+\*********************************************************************************************/
+
+// IR_SEND has two mode: minimal or full (USE_IR_REMOTE_FULL)
+#ifdef USE_IR_REMOTE_FULL
+  // Enable all protocols except PRONTO
+  #ifndef _IR_ENABLE_DEFAULT_                  // it is possible to define this value previously in config
+    #define _IR_ENABLE_DEFAULT_ true           // Enable all protocols except exluded below
+  #endif
+  // PRONTO protocol cannot be supported because it requires specific APIs which are not supported in Tasmota
+  #define DECODE_PRONTO false                  // Exclude PRONTO protocol
+  #define SEND_PRONTO false                    // Exclude PRONTO protocol
+#else
+  #define _IR_ENABLE_DEFAULT_ false              // disable all protocols by default
+  // below are the default IR protocols
+  #define DECODE_HASH true
+  #ifdef USE_IR_SEND_NEC
+    #define SEND_NEC   true                      // Support IRsend NEC protocol
+    #define DECODE_NEC true                      // Support IRreceive NEC protocol
+  #endif
+  #ifdef USE_IR_SEND_RC5
+    #define SEND_RC5   true                      // Support IRsend Philips RC5 protocol
+    #define DECODE_RC5 true                      // Support IRreceive Philips RC5 protocol
+  #endif
+  #ifdef USE_IR_SEND_RC6
+    #define SEND_RC6   true                      // Support IRsend Philips RC6 protocol
+    #define DECODE_RC6 true                      // Support IRreceive Philips RC6 protocol
+  #endif
+#endif
 
 #endif  // _TASMOTA_CONFIGURATIONS_H_

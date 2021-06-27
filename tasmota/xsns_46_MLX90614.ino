@@ -75,9 +75,9 @@ void MLX90614_Every_Second(void)
 void MLX90614_Show(uint8_t json)
 {
   char obj_tstr[16];
-  dtostrfd(mlx90614.obj_temp, Settings.flag2.temperature_resolution, obj_tstr);
+  dtostrfd(mlx90614.obj_temp, Settings->flag2.temperature_resolution, obj_tstr);
   char amb_tstr[16];
-  dtostrfd(mlx90614.amb_temp, Settings.flag2.temperature_resolution, amb_tstr);
+  dtostrfd(mlx90614.amb_temp, Settings->flag2.temperature_resolution, amb_tstr);
 
   if (json) {
     ResponseAppend_P(PSTR(",\"MLX90614\":{\"OBJTMP\":%s,\"AMBTMP\":%s}"), obj_tstr, amb_tstr);

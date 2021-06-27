@@ -6,6 +6,8 @@
 
 - `ncp-uart-sw-6.7.8_115200.ota` - NEW: The current and recommended stable version for EZSP v8 compatible hosts.
 
+- `ncp-uart-nsw_6.7.9_115200.ota` - has some additional bug fixes and is under testing.
+
 ### Archived versions
 
 - `ncp-uart-sw_6.7.6_115200.ota` - OLD: Original version for EZSP v8 compatible hosts, (contains a bug that can cause battery of IKEA and Philips remotes to drain).

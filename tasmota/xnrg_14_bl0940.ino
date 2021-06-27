@@ -105,10 +105,10 @@ void Bl0940Received(void) {
     Bl0940.voltage, Bl0940.current, Bl0940.power, Bl0940.cf_pulses, Bl0940.tps1);
 
   if (Energy.power_on) {  // Powered on
-    Energy.voltage[0] = (float)Bl0940.voltage / Settings.energy_voltage_calibration;
-    if (power && (Bl0940.power > Settings.energy_power_calibration)) {                                   // We need at least 1W
-      Energy.active_power[0] = (float)Bl0940.power / Settings.energy_power_calibration;
-      Energy.current[0] = (float)Bl0940.current / (Settings.energy_current_calibration * 100);
+    Energy.voltage[0] = (float)Bl0940.voltage / Settings->energy_voltage_calibration;
+    if (power && (Bl0940.power > Settings->energy_power_calibration)) {                                   // We need at least 1W
+      Energy.active_power[0] = (float)Bl0940.power / Settings->energy_power_calibration;
+      Energy.current[0] = (float)Bl0940.current / (Settings->energy_current_calibration * 100);
     } else {
       Energy.active_power[0] = 0;
       Energy.current[0] = 0;
@@ -185,7 +185,7 @@ void Bl0940EverySecond(void) {
         cf_pulses = Bl0940.cf_pulses - Bl0940.cf_pulses_last_time;
       }
       if (cf_pulses && Energy.active_power[0])  {
-        uint32_t watt256 = (1638400 * 256) / Settings.energy_power_calibration;
+        uint32_t watt256 = (1638400 * 256) / Settings->energy_power_calibration;
         uint32_t delta = (cf_pulses * watt256) / 36;
         if (delta <= (4000 * 1000 / 36)) {  // max load for SHP10: 4.00kW (3.68kW)
           Bl0940.cf_pulses_last_time = Bl0940.cf_pulses;
@@ -214,10 +214,10 @@ void Bl0940SnsInit(void) {
     if (Bl0940Serial->hardwareSerial()) {
       ClaimSerial();
     }
-    if (HLW_UREF_PULSE == Settings.energy_voltage_calibration) {
-      Settings.energy_voltage_calibration = BL0940_UREF;
-      Settings.energy_current_calibration = BL0940_IREF;
-      Settings.energy_power_calibration = BL0940_PREF;
+    if (HLW_UREF_PULSE == Settings->energy_voltage_calibration) {
+      Settings->energy_voltage_calibration = BL0940_UREF;
+      Settings->energy_current_calibration = BL0940_IREF;
+      Settings->energy_power_calibration = BL0940_PREF;
     }
     Energy.use_overtemp = true;                 // Use global temperature for overtemp detection
 
@@ -250,17 +250,17 @@ bool Bl0940Command(void) {
 
   if (CMND_POWERSET == Energy.command_code) {
     if (XdrvMailbox.data_len && Bl0940.power) {
-      Settings.energy_power_calibration = (Bl0940.power * 100) / value;
+      Settings->energy_power_calibration = (Bl0940.power * 100) / value;
     }
   }
   else if (CMND_VOLTAGESET == Energy.command_code) {
     if (XdrvMailbox.data_len && Bl0940.voltage) {
-      Settings.energy_voltage_calibration = (Bl0940.voltage * 100) / value;
+      Settings->energy_voltage_calibration = (Bl0940.voltage * 100) / value;
     }
   }
   else if (CMND_CURRENTSET == Energy.command_code) {
     if (XdrvMailbox.data_len && Bl0940.current) {
-      Settings.energy_current_calibration = Bl0940.current / value;
+      Settings->energy_current_calibration = Bl0940.current / value;
     }
   }
   else serviced = false;  // Unknown command
@@ -270,7 +270,7 @@ bool Bl0940Command(void) {
 
 void Bl0940Show(bool json) {
   if (json) {
-    ResponseAppend_P(JSON_SNS_F_TEMP, "BL0940", Settings.flag2.temperature_resolution, &Bl0940.temperature);
+    ResponseAppend_P(JSON_SNS_F_TEMP, "BL0940", Settings->flag2.temperature_resolution, &Bl0940.temperature);
     if (0 == TasmotaGlobal.tele_period) {
 #ifdef USE_DOMOTICZ
       DomoticzFloatSensor(DZ_TEMP, Bl0940.temperature);

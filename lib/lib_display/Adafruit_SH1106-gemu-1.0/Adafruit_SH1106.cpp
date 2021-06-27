@@ -72,6 +72,8 @@ void Adafruit_SH1106::DisplayInit(int8_t p,int8_t size,int8_t rot,int8_t font) {
     //fillScreen(BLACK);
     fillScreen(BLACK);
     Updateframe();
+
+    disp_bpp = -1;
   //}
 }
 

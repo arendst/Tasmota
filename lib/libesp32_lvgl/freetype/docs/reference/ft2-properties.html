@@ -1,0 +1,1906 @@
+
+
+
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      <meta http-equiv="x-ua-compatible" content="ie=edge">
+      
+        <meta name="description" content="API Reference Documentation for FreeType-2.10.4">
+      
+      
+      
+        <meta name="author" content="FreeType Contributors">
+      
+      
+        <meta name="lang:clipboard.copy" content="Copy to clipboard">
+      
+        <meta name="lang:clipboard.copied" content="Copied to clipboard">
+      
+        <meta name="lang:search.language" content="en">
+      
+        <meta name="lang:search.pipeline.stopwords" content="True">
+      
+        <meta name="lang:search.pipeline.trimmer" content="True">
+      
+        <meta name="lang:search.result.none" content="No matching documents">
+      
+        <meta name="lang:search.result.one" content="1 matching document">
+      
+        <meta name="lang:search.result.other" content="# matching documents">
+      
+        <meta name="lang:search.tokenizer" content="[\s\-]+">
+      
+      <link rel="shortcut icon" href="images/favico.ico">
+      <meta name="generator" content="mkdocs-1.1, mkdocs-material-4.6.3">
+    
+    
+      
+        <title>Driver properties - FreeType-2.10.4 API Reference</title>
+      
+    
+    
+      <link rel="stylesheet" href="assets/stylesheets/application.adb8469c.css">
+      
+        <link rel="stylesheet" href="assets/stylesheets/application-palette.a8b3c06d.css">
+      
+      
+        
+        
+        <meta name="theme-color" content="#4caf50">
+      
+    
+    
+      <script src="assets/javascripts/modernizr.86422ebf.js"></script>
+    
+    
+      
+        <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Noto+Serif:300,400,400i,700%7CRoboto+Mono&display=fallback">
+        <style>body,input{font-family:"Noto Serif","Helvetica Neue",Helvetica,Arial,sans-serif}code,kbd,pre{font-family:"Roboto Mono","Courier New",Courier,monospace}</style>
+      
+    
+    <link rel="stylesheet" href="assets/fonts/material-icons.css">
+    
+    
+      <link rel="stylesheet" href="stylesheets/extra.css">
+    
+    
+      
+    
+    
+  </head>
+  
+    
+    
+    <body dir="ltr" data-md-color-primary="green" data-md-color-accent="green">
+  
+    <svg class="md-svg">
+      <defs>
+        
+        
+      </defs>
+    </svg>
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" data-md-component="overlay" for="__drawer"></label>
+    
+      <a href="#driver-properties" tabindex="0" class="md-skip">
+        Skip to content
+      </a>
+    
+    
+      <header class="md-header" data-md-component="header">
+  <nav class="md-header-nav md-grid">
+    <div class="md-flex">
+      <div class="md-flex__cell md-flex__cell--shrink">
+        <a href="." title="FreeType-2.10.4 API Reference" aria-label="FreeType-2.10.4 API Reference" class="md-header-nav__button md-logo">
+          
+            <img alt="logo" src="images/favico.ico" width="24" height="24">
+          
+        </a>
+      </div>
+      <div class="md-flex__cell md-flex__cell--shrink">
+        <label class="md-icon md-icon--menu md-header-nav__button" for="__drawer"></label>
+      </div>
+      <div class="md-flex__cell md-flex__cell--stretch">
+        <div class="md-flex__ellipsis md-header-nav__title" data-md-component="title">
+          
+            <span class="md-header-nav__topic">
+              FreeType-2.10.4 API Reference
+            </span>
+            <span class="md-header-nav__topic">
+              
+                Driver properties
+              
+            </span>
+          
+        </div>
+      </div>
+      <div class="md-flex__cell md-flex__cell--shrink">
+        
+          <label class="md-icon md-icon--search md-header-nav__button" for="__search"></label>
+          
+<div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" aria-label="search" name="query" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="query" data-md-state="active">
+      <label class="md-icon md-search__icon" for="__search"></label>
+      <button type="reset" class="md-icon md-search__icon" data-md-component="reset" tabindex="-1">
+        &#xE5CD;
+      </button>
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="result">
+          <div class="md-search-result__meta">
+            Type to start searching
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+        
+      </div>
+      
+    </div>
+  </nav>
+</header>
+    
+    <div class="md-container">
+      
+        
+      
+      
+      <main class="md-main" role="main">
+        <div class="md-main__inner md-grid" data-md-component="container">
+          
+            
+              <div class="md-sidebar md-sidebar--primary" data-md-component="navigation">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    <nav class="md-nav md-nav--primary" data-md-level="0">
+  <label class="md-nav__title md-nav__title--site" for="__drawer">
+    <a href="." title="FreeType-2.10.4 API Reference" class="md-nav__button md-logo">
+      
+        <img alt="logo" src="images/favico.ico" width="48" height="48">
+      
+    </a>
+    FreeType-2.10.4 API Reference
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="index.html" title="TOC" class="md-nav__link">
+      TOC
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="ft2-index.html" title="Index" class="md-nav__link">
+      Index
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-3" type="checkbox" id="nav-3">
+    
+    <label class="md-nav__link" for="nav-3">
+      General Remarks
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-3">
+        General Remarks
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-header_inclusion.html" title="FreeType's header inclusion scheme" class="md-nav__link">
+      FreeType's header inclusion scheme
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-user_allocation.html" title="User allocation" class="md-nav__link">
+      User allocation
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-4" type="checkbox" id="nav-4">
+    
+    <label class="md-nav__link" for="nav-4">
+      Core API
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-4">
+        Core API
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-version.html" title="FreeType Version" class="md-nav__link">
+      FreeType Version
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-basic_types.html" title="Basic Data Types" class="md-nav__link">
+      Basic Data Types
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-base_interface.html" title="Base Interface" class="md-nav__link">
+      Base Interface
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-glyph_variants.html" title="Unicode Variation Sequences" class="md-nav__link">
+      Unicode Variation Sequences
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-color_management.html" title="Glyph Color Management" class="md-nav__link">
+      Glyph Color Management
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-layer_management.html" title="Glyph Layer Management" class="md-nav__link">
+      Glyph Layer Management
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-glyph_management.html" title="Glyph Management" class="md-nav__link">
+      Glyph Management
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-mac_specific.html" title="Mac Specific Interface" class="md-nav__link">
+      Mac Specific Interface
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-sizes_management.html" title="Size Management" class="md-nav__link">
+      Size Management
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-header_file_macros.html" title="Header File Macros" class="md-nav__link">
+      Header File Macros
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-5" type="checkbox" id="nav-5">
+    
+    <label class="md-nav__link" for="nav-5">
+      Format-Specific API
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-5">
+        Format-Specific API
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-multiple_masters.html" title="Multiple Masters" class="md-nav__link">
+      Multiple Masters
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-truetype_tables.html" title="TrueType Tables" class="md-nav__link">
+      TrueType Tables
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-type1_tables.html" title="Type 1 Tables" class="md-nav__link">
+      Type 1 Tables
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-sfnt_names.html" title="SFNT Names" class="md-nav__link">
+      SFNT Names
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-bdf_fonts.html" title="BDF and PCF Files" class="md-nav__link">
+      BDF and PCF Files
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-cid_fonts.html" title="CID Fonts" class="md-nav__link">
+      CID Fonts
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-pfr_fonts.html" title="PFR Fonts" class="md-nav__link">
+      PFR Fonts
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-winfnt_fonts.html" title="Window FNT Files" class="md-nav__link">
+      Window FNT Files
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-font_formats.html" title="Font Formats" class="md-nav__link">
+      Font Formats
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-gasp_table.html" title="Gasp Table" class="md-nav__link">
+      Gasp Table
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+  
+
+
+  <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-6" type="checkbox" id="nav-6" checked>
+    
+    <label class="md-nav__link" for="nav-6">
+      Controlling FreeType Modules
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-6">
+        Controlling FreeType Modules
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-auto_hinter.html" title="The auto-hinter" class="md-nav__link">
+      The auto-hinter
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-cff_driver.html" title="The CFF driver" class="md-nav__link">
+      The CFF driver
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-t1_cid_driver.html" title="The Type 1 and CID drivers" class="md-nav__link">
+      The Type 1 and CID drivers
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-tt_driver.html" title="The TrueType driver" class="md-nav__link">
+      The TrueType driver
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-pcf_driver.html" title="The PCF driver" class="md-nav__link">
+      The PCF driver
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+  
+
+
+  <li class="md-nav__item md-nav__item--active">
+    
+    <input class="md-toggle md-nav__toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+    
+      
+    
+    
+      <label class="md-nav__link md-nav__link--active" for="__toc">
+        Driver properties
+      </label>
+    
+    <a href="ft2-properties.html" title="Driver properties" class="md-nav__link md-nav__link--active">
+      Driver properties
+    </a>
+    
+      
+<nav class="md-nav md-nav--secondary">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">Table of contents</label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#synopsis" class="md-nav__link">
+    Synopsis
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ft_hinting_xxx" class="md-nav__link">
+    FT_HINTING_XXX
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hinting-engine" class="md-nav__link">
+    hinting-engine
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#no-stem-darkening" class="md-nav__link">
+    no-stem-darkening
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#darkening-parameters" class="md-nav__link">
+    darkening-parameters
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#random-seed" class="md-nav__link">
+    random-seed
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#no-long-family-names" class="md-nav__link">
+    no-long-family-names
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tt_interpreter_version_xxx" class="md-nav__link">
+    TT_INTERPRETER_VERSION_XXX
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#interpreter-version" class="md-nav__link">
+    interpreter-version
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#glyph-to-script-map" class="md-nav__link">
+    glyph-to-script-map
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ft_autohinter_script_xxx" class="md-nav__link">
+    FT_AUTOHINTER_SCRIPT_XXX
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ft_prop_glyphtoscriptmap" class="md-nav__link">
+    FT_Prop_GlyphToScriptMap
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#fallback-script" class="md-nav__link">
+    fallback-script
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#default-script" class="md-nav__link">
+    default-script
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#increase-x-height" class="md-nav__link">
+    increase-x-height
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ft_prop_increasexheight" class="md-nav__link">
+    FT_Prop_IncreaseXHeight
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#warping" class="md-nav__link">
+    warping
+  </a>
+  
+</li>
+      
+      
+      
+      
+      
+    </ul>
+  
+</nav>
+    
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-parameter_tags.html" title="Parameter Tags" class="md-nav__link">
+      Parameter Tags
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-lcd_rendering.html" title="Subpixel Rendering" class="md-nav__link">
+      Subpixel Rendering
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-7" type="checkbox" id="nav-7">
+    
+    <label class="md-nav__link" for="nav-7">
+      Cache Sub-System
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-7">
+        Cache Sub-System
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-cache_subsystem.html" title="Cache Sub-System" class="md-nav__link">
+      Cache Sub-System
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-8" type="checkbox" id="nav-8">
+    
+    <label class="md-nav__link" for="nav-8">
+      Support API
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-8">
+        Support API
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-computations.html" title="Computations" class="md-nav__link">
+      Computations
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-list_processing.html" title="List Processing" class="md-nav__link">
+      List Processing
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-outline_processing.html" title="Outline Processing" class="md-nav__link">
+      Outline Processing
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-quick_advance.html" title="Quick retrieval of advance values" class="md-nav__link">
+      Quick retrieval of advance values
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-bitmap_handling.html" title="Bitmap Handling" class="md-nav__link">
+      Bitmap Handling
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-raster.html" title="Scanline Converter" class="md-nav__link">
+      Scanline Converter
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-glyph_stroker.html" title="Glyph Stroker" class="md-nav__link">
+      Glyph Stroker
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-system_interface.html" title="System Interface" class="md-nav__link">
+      System Interface
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-module_management.html" title="Module Management" class="md-nav__link">
+      Module Management
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-gzip.html" title="GZIP Streams" class="md-nav__link">
+      GZIP Streams
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-lzw.html" title="LZW Streams" class="md-nav__link">
+      LZW Streams
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-bzip2.html" title="BZIP2 Streams" class="md-nav__link">
+      BZIP2 Streams
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-9" type="checkbox" id="nav-9">
+    
+    <label class="md-nav__link" for="nav-9">
+      Error Codes
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-9">
+        Error Codes
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-error_enumerations.html" title="Error Enumerations" class="md-nav__link">
+      Error Enumerations
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-error_code_values.html" title="Error Code Values" class="md-nav__link">
+      Error Code Values
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-10" type="checkbox" id="nav-10">
+    
+    <label class="md-nav__link" for="nav-10">
+      Miscellaneous
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-10">
+        Miscellaneous
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-gx_validation.html" title="TrueTypeGX/AAT Validation" class="md-nav__link">
+      TrueTypeGX/AAT Validation
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-incremental.html" title="Incremental Loading" class="md-nav__link">
+      Incremental Loading
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-truetype_engine.html" title="The TrueType Engine" class="md-nav__link">
+      The TrueType Engine
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-ot_validation.html" title="OpenType Validation" class="md-nav__link">
+      OpenType Validation
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="toc">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+<nav class="md-nav md-nav--secondary">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">Table of contents</label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#synopsis" class="md-nav__link">
+    Synopsis
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ft_hinting_xxx" class="md-nav__link">
+    FT_HINTING_XXX
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hinting-engine" class="md-nav__link">
+    hinting-engine
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#no-stem-darkening" class="md-nav__link">
+    no-stem-darkening
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#darkening-parameters" class="md-nav__link">
+    darkening-parameters
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#random-seed" class="md-nav__link">
+    random-seed
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#no-long-family-names" class="md-nav__link">
+    no-long-family-names
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tt_interpreter_version_xxx" class="md-nav__link">
+    TT_INTERPRETER_VERSION_XXX
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#interpreter-version" class="md-nav__link">
+    interpreter-version
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#glyph-to-script-map" class="md-nav__link">
+    glyph-to-script-map
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ft_autohinter_script_xxx" class="md-nav__link">
+    FT_AUTOHINTER_SCRIPT_XXX
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ft_prop_glyphtoscriptmap" class="md-nav__link">
+    FT_Prop_GlyphToScriptMap
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#fallback-script" class="md-nav__link">
+    fallback-script
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#default-script" class="md-nav__link">
+    default-script
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#increase-x-height" class="md-nav__link">
+    increase-x-height
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ft_prop_increasexheight" class="md-nav__link">
+    FT_Prop_IncreaseXHeight
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#warping" class="md-nav__link">
+    warping
+  </a>
+  
+</li>
+      
+      
+      
+      
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content">
+            <article class="md-content__inner md-typeset">
+              
+                
+                
+                <p><a href="https://www.freetype.org">FreeType</a> &raquo; <a href="../">Docs</a> &raquo; <a href="index.html#controlling-freetype-modules">Controlling FreeType Modules</a> &raquo; Driver properties</p>
+<hr />
+<h1 id="driver-properties">Driver properties<a class="headerlink" href="#driver-properties" title="Permanent link">&para;</a></h1>
+<h2 id="synopsis">Synopsis<a class="headerlink" href="#synopsis" title="Permanent link">&para;</a></h2>
+<p>Driver modules can be controlled by setting and unsetting properties, using the functions <code><a href="ft2-module_management.html#ft_property_set">FT_Property_Set</a></code> and <code><a href="ft2-module_management.html#ft_property_get">FT_Property_Get</a></code>. This section documents the available properties, together with auxiliary macros and structures.</p>
+<h2 id="ft_hinting_xxx">FT_HINTING_XXX<a class="headerlink" href="#ft_hinting_xxx" title="Permanent link">&para;</a></h2>
+<p>Defined in FT_DRIVER_H (freetype/ftdriver.h).</p>
+<div class = "codehilite"><pre><code>#<span class="keyword">define</span> <a href="ft2-properties.html#ft_hinting_freetype">FT_HINTING_FREETYPE</a>  0
+#<span class="keyword">define</span> <a href="ft2-properties.html#ft_hinting_adobe">FT_HINTING_ADOBE</a>     1
+
+  /* these constants (introduced in 2.4.12) are deprecated */
+#<span class="keyword">define</span> FT_CFF_HINTING_FREETYPE  <a href="ft2-properties.html#ft_hinting_freetype">FT_HINTING_FREETYPE</a>
+#<span class="keyword">define</span> FT_CFF_HINTING_ADOBE     <a href="ft2-properties.html#ft_hinting_adobe">FT_HINTING_ADOBE</a>
+</code></pre></div>
+
+<p>A list of constants used for the <code><a href="ft2-properties.html#hinting-engine">hinting-engine</a></code> property to select the hinting engine for CFF, Type&nbsp;1, and CID fonts.</p>
+<h4>values</h4>
+
+<table class="fields">
+<tr><td class="val" id="ft_hinting_freetype">FT_HINTING_FREETYPE</td><td class="desc">
+<p>Use the old FreeType hinting engine.</p>
+</td></tr>
+<tr><td class="val" id="ft_hinting_adobe">FT_HINTING_ADOBE</td><td class="desc">
+<p>Use the hinting engine contributed by Adobe.</p>
+</td></tr>
+</table>
+
+<h4>since</h4>
+
+<p>2.9</p>
+<hr>
+
+<h2 id="hinting-engine">hinting-engine<a class="headerlink" href="#hinting-engine" title="Permanent link">&para;</a></h2>
+<p>Thanks to Adobe, which contributed a new hinting (and parsing) engine, an application can select between &lsquo;freetype&rsquo; and &lsquo;adobe&rsquo; if compiled with <code>CFF_CONFIG_OPTION_OLD_ENGINE</code>. If this configuration macro isn't defined, &lsquo;hinting-engine&rsquo; does nothing.</p>
+<p>The same holds for the Type&nbsp;1 and CID modules if compiled with <code>T1_CONFIG_OPTION_OLD_ENGINE</code>.</p>
+<p>For the &lsquo;cff&rsquo; module, the default engine is &lsquo;freetype&rsquo; if <code>CFF_CONFIG_OPTION_OLD_ENGINE</code> is defined, and &lsquo;adobe&rsquo; otherwise.</p>
+<p>For both the &lsquo;type1&rsquo; and &lsquo;t1cid&rsquo; modules, the default engine is &lsquo;freetype&rsquo; if <code>T1_CONFIG_OPTION_OLD_ENGINE</code> is defined, and &lsquo;adobe&rsquo; otherwise.</p>
+<h4>note</h4>
+
+<p>This property can be used with <code><a href="ft2-module_management.html#ft_property_get">FT_Property_Get</a></code> also.</p>
+<p>This property can be set via the <code>FREETYPE_PROPERTIES</code> environment variable (using values &lsquo;adobe&rsquo; or &lsquo;freetype&rsquo;).</p>
+<h4>example</h4>
+
+<p>The following example code demonstrates how to select Adobe's hinting engine for the &lsquo;cff&rsquo; module (omitting the error handling).
+<div class="highlight"><pre><span></span><code>  FT_Library  library;
+  FT_UInt     hinting_engine = FT_HINTING_ADOBE;
+
+
+  FT_Init_FreeType( &amp;library );
+
+  FT_Property_Set( library, &quot;cff&quot;,
+                            &quot;hinting-engine&quot;, &amp;hinting_engine );
+</code></pre></div></p>
+<h4>since</h4>
+
+<p>2.4.12 (for &lsquo;cff&rsquo; module)</p>
+<p>2.9 (for &lsquo;type1&rsquo; and &lsquo;t1cid&rsquo; modules)</p>
+<hr>
+
+<h2 id="no-stem-darkening">no-stem-darkening<a class="headerlink" href="#no-stem-darkening" title="Permanent link">&para;</a></h2>
+<p>All glyphs that pass through the auto-hinter will be emboldened unless this property is set to TRUE. The same is true for the CFF, Type&nbsp;1, and CID font modules if the &lsquo;Adobe&rsquo; engine is selected (which is the default).</p>
+<p>Stem darkening emboldens glyphs at smaller sizes to make them more readable on common low-DPI screens when using linear alpha blending and gamma correction, see <code><a href="ft2-base_interface.html#ft_render_glyph">FT_Render_Glyph</a></code>. When not using linear alpha blending and gamma correction, glyphs will appear heavy and fuzzy!</p>
+<p>Gamma correction essentially lightens fonts since shades of grey are shifted to higher pixel values (=&nbsp;higher brightness) to match the original intention to the reality of our screens. The side-effect is that glyphs &lsquo;thin out&rsquo;. Mac OS&nbsp;X and Adobe's proprietary font rendering library implement a counter-measure: stem darkening at smaller sizes where shades of gray dominate. By emboldening a glyph slightly in relation to its pixel size, individual pixels get higher coverage of filled-in outlines and are therefore &lsquo;blacker&rsquo;. This counteracts the &lsquo;thinning out&rsquo; of glyphs, making text remain readable at smaller sizes.</p>
+<p>For the auto-hinter, stem-darkening is experimental currently and thus switched off by default (this is, <code>no-stem-darkening</code> is set to TRUE by default). Total consistency with the CFF driver is not achieved right now because the emboldening method differs and glyphs must be scaled down on the Y-axis to keep outline points inside their precomputed blue zones. The smaller the size (especially 9ppem and down), the higher the loss of emboldening versus the CFF driver.</p>
+<p>Note that stem darkening is never applied if <code><a href="ft2-base_interface.html#ft_load_xxx">FT_LOAD_NO_SCALE</a></code> is set.</p>
+<h4>note</h4>
+
+<p>This property can be used with <code><a href="ft2-module_management.html#ft_property_get">FT_Property_Get</a></code> also.</p>
+<p>This property can be set via the <code>FREETYPE_PROPERTIES</code> environment variable (using values 1 and 0 for &lsquo;on&rsquo; and &lsquo;off&rsquo;, respectively). It can also be set per face using <code><a href="ft2-base_interface.html#ft_face_properties">FT_Face_Properties</a></code> with <code><a href="ft2-parameter_tags.html#ft_param_tag_stem_darkening">FT_PARAM_TAG_STEM_DARKENING</a></code>.</p>
+<h4>example</h4>
+
+<div class="highlight"><pre><span></span><code>  FT_Library  library;
+  FT_Bool     no_stem_darkening = TRUE;
+
+
+  FT_Init_FreeType( &amp;library );
+
+  FT_Property_Set( library, &quot;cff&quot;,
+                            &quot;no-stem-darkening&quot;, &amp;no_stem_darkening );
+</code></pre></div>
+
+<h4>since</h4>
+
+<p>2.4.12 (for &lsquo;cff&rsquo; module)</p>
+<p>2.6.2 (for &lsquo;autofitter&rsquo; module)</p>
+<p>2.9 (for &lsquo;type1&rsquo; and &lsquo;t1cid&rsquo; modules)</p>
+<hr>
+
+<h2 id="darkening-parameters">darkening-parameters<a class="headerlink" href="#darkening-parameters" title="Permanent link">&para;</a></h2>
+<p>By default, the Adobe hinting engine, as used by the CFF, Type&nbsp;1, and CID font drivers, darkens stems as follows (if the <code>no-stem-darkening</code> property isn't set):
+<div class="highlight"><pre><span></span><code>  stem width &lt;= 0.5px:   darkening amount = 0.4px
+  stem width  = 1px:     darkening amount = 0.275px
+  stem width  = 1.667px: darkening amount = 0.275px
+  stem width &gt;= 2.333px: darkening amount = 0px
+</code></pre></div></p>
+<p>and piecewise linear in-between. At configuration time, these four control points can be set with the macro <code>CFF_CONFIG_OPTION_DARKENING_PARAMETERS</code>; the CFF, Type&nbsp;1, and CID drivers share these values. At runtime, the control points can be changed using the <code>darkening-parameters</code> property (see the example below that demonstrates this for the Type&nbsp;1 driver).</p>
+<p>The x&nbsp;values give the stem width, and the y&nbsp;values the darkening amount. The unit is 1000<sup>th</sup> of pixels. All coordinate values must be positive; the x&nbsp;values must be monotonically increasing; the y&nbsp;values must be monotonically decreasing and smaller than or equal to 500 (corresponding to half a pixel); the slope of each linear piece must be shallower than -1 (e.g., -.4).</p>
+<p>The auto-hinter provides this property, too, as an experimental feature. See <code><a href="ft2-properties.html#no-stem-darkening">no-stem-darkening</a></code> for more.</p>
+<h4>note</h4>
+
+<p>This property can be used with <code><a href="ft2-module_management.html#ft_property_get">FT_Property_Get</a></code> also.</p>
+<p>This property can be set via the <code>FREETYPE_PROPERTIES</code> environment variable, using eight comma-separated integers without spaces. Here the above example, using <code>\</code> to break the line for readability.
+<div class="highlight"><pre><span></span><code>  FREETYPE_PROPERTIES=\
+  type1:darkening-parameters=500,300,1000,200,1500,100,2000,0
+</code></pre></div></p>
+<h4>example</h4>
+
+<div class="highlight"><pre><span></span><code>  FT_Library  library;
+  FT_Int      darken_params[8] = {  500, 300,   // x1, y1
+                                   1000, 200,   // x2, y2
+                                   1500, 100,   // x3, y3
+                                   2000,   0 }; // x4, y4
+
+
+  FT_Init_FreeType( &amp;library );
+
+  FT_Property_Set( library, &quot;type1&quot;,
+                            &quot;darkening-parameters&quot;, darken_params );
+</code></pre></div>
+
+<h4>since</h4>
+
+<p>2.5.1 (for &lsquo;cff&rsquo; module)</p>
+<p>2.6.2 (for &lsquo;autofitter&rsquo; module)</p>
+<p>2.9 (for &lsquo;type1&rsquo; and &lsquo;t1cid&rsquo; modules)</p>
+<hr>
+
+<h2 id="random-seed">random-seed<a class="headerlink" href="#random-seed" title="Permanent link">&para;</a></h2>
+<p>By default, the seed value for the CFF &lsquo;random&rsquo; operator and the similar &lsquo;0 28 callothersubr pop&rsquo; command for the Type&nbsp;1 and CID drivers is set to a random value. However, mainly for debugging purposes, it is often necessary to use a known value as a seed so that the pseudo-random number sequences generated by &lsquo;random&rsquo; are repeatable.</p>
+<p>The <code>random-seed</code> property does that. Its argument is a signed 32bit integer; if the value is zero or negative, the seed given by the <code>intitialRandomSeed</code> private DICT operator in a CFF file gets used (or a default value if there is no such operator). If the value is positive, use it instead of <code>initialRandomSeed</code>, which is consequently ignored.</p>
+<h4>note</h4>
+
+<p>This property can be set via the <code>FREETYPE_PROPERTIES</code> environment variable. It can also be set per face using <code><a href="ft2-base_interface.html#ft_face_properties">FT_Face_Properties</a></code> with <code><a href="ft2-parameter_tags.html#ft_param_tag_random_seed">FT_PARAM_TAG_RANDOM_SEED</a></code>.</p>
+<h4>since</h4>
+
+<p>2.8 (for &lsquo;cff&rsquo; module)</p>
+<p>2.9 (for &lsquo;type1&rsquo; and &lsquo;t1cid&rsquo; modules)</p>
+<hr>
+
+<h2 id="no-long-family-names">no-long-family-names<a class="headerlink" href="#no-long-family-names" title="Permanent link">&para;</a></h2>
+<p>If <code>PCF_CONFIG_OPTION_LONG_FAMILY_NAMES</code> is active while compiling FreeType, the PCF driver constructs long family names.</p>
+<p>There are many PCF fonts just called &lsquo;Fixed&rsquo; which look completely different, and which have nothing to do with each other. When selecting &lsquo;Fixed&rsquo; in KDE or Gnome one gets results that appear rather random, the style changes often if one changes the size and one cannot select some fonts at all. The improve this situation, the PCF module prepends the foundry name (plus a space) to the family name. It also checks whether there are &lsquo;wide&rsquo; characters; all put together, family names like &lsquo;Sony Fixed&rsquo; or &lsquo;Misc Fixed Wide&rsquo; are constructed.</p>
+<p>If <code>no-long-family-names</code> is set, this feature gets switched off.</p>
+<h4>note</h4>
+
+<p>This property can be used with <code><a href="ft2-module_management.html#ft_property_get">FT_Property_Get</a></code> also.</p>
+<p>This property can be set via the <code>FREETYPE_PROPERTIES</code> environment variable (using values 1 and 0 for &lsquo;on&rsquo; and &lsquo;off&rsquo;, respectively).</p>
+<h4>example</h4>
+
+<div class="highlight"><pre><span></span><code>  FT_Library  library;
+  FT_Bool     no_long_family_names = TRUE;
+
+
+  FT_Init_FreeType( &amp;library );
+
+  FT_Property_Set( library, &quot;pcf&quot;,
+                            &quot;no-long-family-names&quot;,
+                            &amp;no_long_family_names );
+</code></pre></div>
+
+<h4>since</h4>
+
+<p>2.8</p>
+<hr>
+
+<h2 id="tt_interpreter_version_xxx">TT_INTERPRETER_VERSION_XXX<a class="headerlink" href="#tt_interpreter_version_xxx" title="Permanent link">&para;</a></h2>
+<p>Defined in FT_DRIVER_H (freetype/ftdriver.h).</p>
+<div class = "codehilite"><pre><code>#<span class="keyword">define</span> <a href="ft2-properties.html#tt_interpreter_version_35">TT_INTERPRETER_VERSION_35</a>  35
+#<span class="keyword">define</span> <a href="ft2-properties.html#tt_interpreter_version_38">TT_INTERPRETER_VERSION_38</a>  38
+#<span class="keyword">define</span> <a href="ft2-properties.html#tt_interpreter_version_40">TT_INTERPRETER_VERSION_40</a>  40
+</code></pre></div>
+
+<p>A list of constants used for the <code><a href="ft2-properties.html#interpreter-version">interpreter-version</a></code> property to select the hinting engine for Truetype fonts.</p>
+<p>The numeric value in the constant names represents the version number as returned by the &lsquo;GETINFO&rsquo; bytecode instruction.</p>
+<h4>values</h4>
+
+<table class="fields">
+<tr><td class="val" id="tt_interpreter_version_35">TT_INTERPRETER_VERSION_35</td><td class="desc">
+<p>Version&nbsp;35 corresponds to MS rasterizer v.1.7 as used e.g. in Windows&nbsp;98; only grayscale and B/W rasterizing is supported.</p>
+</td></tr>
+<tr><td class="val" id="tt_interpreter_version_38">TT_INTERPRETER_VERSION_38</td><td class="desc">
+<p>Version&nbsp;38 corresponds to MS rasterizer v.1.9; it is roughly equivalent to the hinting provided by DirectWrite ClearType (as can be found, for example, in the Internet Explorer&nbsp;9 running on Windows&nbsp;7). It is used in FreeType to select the &lsquo;Infinality&rsquo; subpixel hinting code. The code may be removed in a future version.</p>
+</td></tr>
+<tr><td class="val" id="tt_interpreter_version_40">TT_INTERPRETER_VERSION_40</td><td class="desc">
+<p>Version&nbsp;40 corresponds to MS rasterizer v.2.1; it is roughly equivalent to the hinting provided by DirectWrite ClearType (as can be found, for example, in Microsoft's Edge Browser on Windows&nbsp;10). It is used in FreeType to select the &lsquo;minimal&rsquo; subpixel hinting code, a stripped-down and higher performance version of the &lsquo;Infinality&rsquo; code.</p>
+</td></tr>
+</table>
+
+<h4>note</h4>
+
+<p>This property controls the behaviour of the bytecode interpreter and thus how outlines get hinted. It does <strong>not</strong> control how glyph get rasterized! In particular, it does not control subpixel color filtering.</p>
+<p>If FreeType has not been compiled with the configuration option <code>TT_CONFIG_OPTION_SUBPIXEL_HINTING</code>, selecting version&nbsp;38 or&nbsp;40 causes an <code>FT_Err_Unimplemented_Feature</code> error.</p>
+<p>Depending on the graphics framework, Microsoft uses different bytecode and rendering engines. As a consequence, the version numbers returned by a call to the &lsquo;GETINFO&rsquo; bytecode instruction are more convoluted than desired.</p>
+<p>Here are two tables that try to shed some light on the possible values for the MS rasterizer engine, together with the additional features introduced by it.
+<div class="highlight"><pre><span></span><code>  GETINFO framework               version feature
+  -------------------------------------------------------------------
+      3   GDI (Win 3.1),            v1.0  16-bit, first version
+          TrueImage
+     33   GDI (Win NT 3.1),         v1.5  32-bit
+          HP Laserjet
+     34   GDI (Win 95)              v1.6  font smoothing,
+                                          new SCANTYPE opcode
+     35   GDI (Win 98/2000)         v1.7  (UN)SCALED_COMPONENT_OFFSET
+                                            bits in composite glyphs
+     36   MGDI (Win CE 2)           v1.6+ classic ClearType
+     37   GDI (XP and later),       v1.8  ClearType
+          GDI+ old (before Vista)
+     38   GDI+ old (Vista, Win 7),  v1.9  subpixel ClearType,
+          WPF                             Y-direction ClearType,
+                                          additional error checking
+     39   DWrite (before Win 8)     v2.0  subpixel ClearType flags
+                                            in GETINFO opcode,
+                                          bug fixes
+     40   GDI+ (after Win 7),       v2.1  Y-direction ClearType flag
+          DWrite (Win 8)                    in GETINFO opcode,
+                                          Gray ClearType
+</code></pre></div></p>
+<p>The &lsquo;version&rsquo; field gives a rough orientation only, since some applications provided certain features much earlier (as an example, Microsoft Reader used subpixel and Y-direction ClearType already in Windows 2000). Similarly, updates to a given framework might include improved hinting support.
+<div class="highlight"><pre><span></span><code>   version   sampling          rendering        comment
+            x        y       x           y
+  --------------------------------------------------------------
+    v1.0   normal  normal  B/W           B/W    bi-level
+    v1.6   high    high    gray          gray   grayscale
+    v1.8   high    normal  color-filter  B/W    (GDI) ClearType
+    v1.9   high    high    color-filter  gray   Color ClearType
+    v2.1   high    normal  gray          B/W    Gray ClearType
+    v2.1   high    high    gray          gray   Gray ClearType
+</code></pre></div></p>
+<p>Color and Gray ClearType are the two available variants of &lsquo;Y-direction ClearType&rsquo;, meaning grayscale rasterization along the Y-direction; the name used in the TrueType specification for this feature is &lsquo;symmetric smoothing&rsquo;. &lsquo;Classic ClearType&rsquo; is the original algorithm used before introducing a modified version in Win&nbsp;XP. Another name for v1.6's grayscale rendering is &lsquo;font smoothing&rsquo;, and &lsquo;Color ClearType&rsquo; is sometimes also called &lsquo;DWrite ClearType&rsquo;. To differentiate between today's Color ClearType and the earlier ClearType variant with B/W rendering along the vertical axis, the latter is sometimes called &lsquo;GDI ClearType&rsquo;.</p>
+<p>&lsquo;Normal&rsquo; and &lsquo;high&rsquo; sampling describe the (virtual) resolution to access the rasterized outline after the hinting process. &lsquo;Normal&rsquo; means 1 sample per grid line (i.e., B/W). In the current Microsoft implementation, &lsquo;high&rsquo; means an extra virtual resolution of 16x16 (or 16x1) grid lines per pixel for bytecode instructions like &lsquo;MIRP&rsquo;. After hinting, these 16 grid lines are mapped to 6x5 (or 6x1) grid lines for color filtering if Color ClearType is activated.</p>
+<p>Note that &lsquo;Gray ClearType&rsquo; is essentially the same as v1.6's grayscale rendering. However, the GETINFO instruction handles it differently: v1.6 returns bit&nbsp;12 (hinting for grayscale), while v2.1 returns bits&nbsp;13 (hinting for ClearType), 18 (symmetrical smoothing), and&nbsp;19 (Gray ClearType). Also, this mode respects bits 2 and&nbsp;3 for the version&nbsp;1 gasp table exclusively (like Color ClearType), while v1.6 only respects the values of version&nbsp;0 (bits 0 and&nbsp;1).</p>
+<p>Keep in mind that the features of the above interpreter versions might not map exactly to FreeType features or behavior because it is a fundamentally different library with different internals.</p>
+<hr>
+
+<h2 id="interpreter-version">interpreter-version<a class="headerlink" href="#interpreter-version" title="Permanent link">&para;</a></h2>
+<p>Currently, three versions are available, two representing the bytecode interpreter with subpixel hinting support (old &lsquo;Infinality&rsquo; code and new stripped-down and higher performance &lsquo;minimal&rsquo; code) and one without, respectively. The default is subpixel support if <code>TT_CONFIG_OPTION_SUBPIXEL_HINTING</code> is defined, and no subpixel support otherwise (since it isn't available then).</p>
+<p>If subpixel hinting is on, many TrueType bytecode instructions behave differently compared to B/W or grayscale rendering (except if &lsquo;native ClearType&rsquo; is selected by the font). Microsoft's main idea is to render at a much increased horizontal resolution, then sampling down the created output to subpixel precision. However, many older fonts are not suited to this and must be specially taken care of by applying (hardcoded) tweaks in Microsoft's interpreter.</p>
+<p>Details on subpixel hinting and some of the necessary tweaks can be found in Greg Hitchcock's whitepaper at &lsquo;<a href="https://www.microsoft.com/typography/cleartype/truetypecleartype.aspx">https://www.microsoft.com/typography/cleartype/truetypecleartype.aspx</a>&rsquo;. Note that FreeType currently doesn't really &lsquo;subpixel hint&rsquo; (6x1, 6x2, or 6x5 supersampling) like discussed in the paper. Depending on the chosen interpreter, it simply ignores instructions on vertical stems to arrive at very similar results.</p>
+<h4>note</h4>
+
+<p>This property can be used with <code><a href="ft2-module_management.html#ft_property_get">FT_Property_Get</a></code> also.</p>
+<p>This property can be set via the <code>FREETYPE_PROPERTIES</code> environment variable (using values &lsquo;35&rsquo;, &lsquo;38&rsquo;, or &lsquo;40&rsquo;).</p>
+<h4>example</h4>
+
+<p>The following example code demonstrates how to deactivate subpixel hinting (omitting the error handling).
+<div class="highlight"><pre><span></span><code>  FT_Library  library;
+  FT_Face     face;
+  FT_UInt     interpreter_version = TT_INTERPRETER_VERSION_35;
+
+
+  FT_Init_FreeType( &amp;library );
+
+  FT_Property_Set( library, &quot;truetype&quot;,
+                            &quot;interpreter-version&quot;,
+                            &amp;interpreter_version );
+</code></pre></div></p>
+<h4>since</h4>
+
+<p>2.5</p>
+<hr>
+
+<h2 id="glyph-to-script-map">glyph-to-script-map<a class="headerlink" href="#glyph-to-script-map" title="Permanent link">&para;</a></h2>
+<p><strong>Experimental only</strong></p>
+<p>The auto-hinter provides various script modules to hint glyphs. Examples of supported scripts are Latin or CJK. Before a glyph is auto-hinted, the Unicode character map of the font gets examined, and the script is then determined based on Unicode character ranges, see below.</p>
+<p>OpenType fonts, however, often provide much more glyphs than character codes (small caps, superscripts, ligatures, swashes, etc.), to be controlled by so-called &lsquo;features&rsquo;. Handling OpenType features can be quite complicated and thus needs a separate library on top of FreeType.</p>
+<p>The mapping between glyph indices and scripts (in the auto-hinter sense, see the <code><a href="ft2-properties.html#ft_autohinter_script_xxx">FT_AUTOHINTER_SCRIPT_XXX</a></code> values) is stored as an array with <code>num_glyphs</code> elements, as found in the font's <code><a href="ft2-base_interface.html#ft_face">FT_Face</a></code> structure. The <code>glyph-to-script-map</code> property returns a pointer to this array, which can be modified as needed. Note that the modification should happen before the first glyph gets processed by the auto-hinter so that the global analysis of the font shapes actually uses the modified mapping.</p>
+<h4>example</h4>
+
+<p>The following example code demonstrates how to access it (omitting the error handling).
+<div class="highlight"><pre><span></span><code>  FT_Library                library;
+  FT_Face                   face;
+  FT_Prop_GlyphToScriptMap  prop;
+
+
+  FT_Init_FreeType( &amp;library );
+  FT_New_Face( library, &quot;foo.ttf&quot;, 0, &amp;face );
+
+  prop.face = face;
+
+  FT_Property_Get( library, &quot;autofitter&quot;,
+                            &quot;glyph-to-script-map&quot;, &amp;prop );
+
+  // adjust `prop.map&#39; as needed right here
+
+  FT_Load_Glyph( face, ..., FT_LOAD_FORCE_AUTOHINT );
+</code></pre></div></p>
+<h4>since</h4>
+
+<p>2.4.11</p>
+<hr>
+
+<h2 id="ft_autohinter_script_xxx">FT_AUTOHINTER_SCRIPT_XXX<a class="headerlink" href="#ft_autohinter_script_xxx" title="Permanent link">&para;</a></h2>
+<p>Defined in FT_DRIVER_H (freetype/ftdriver.h).</p>
+<div class = "codehilite"><pre><code>#<span class="keyword">define</span> <a href="ft2-properties.html#ft_autohinter_script_none">FT_AUTOHINTER_SCRIPT_NONE</a>   0
+#<span class="keyword">define</span> <a href="ft2-properties.html#ft_autohinter_script_latin">FT_AUTOHINTER_SCRIPT_LATIN</a>  1
+#<span class="keyword">define</span> <a href="ft2-properties.html#ft_autohinter_script_cjk">FT_AUTOHINTER_SCRIPT_CJK</a>    2
+#<span class="keyword">define</span> <a href="ft2-properties.html#ft_autohinter_script_indic">FT_AUTOHINTER_SCRIPT_INDIC</a>  3
+</code></pre></div>
+
+<p><strong>Experimental only</strong></p>
+<p>A list of constants used for the <code><a href="ft2-properties.html#glyph-to-script-map">glyph-to-script-map</a></code> property to specify the script submodule the auto-hinter should use for hinting a particular glyph.</p>
+<h4>values</h4>
+
+<table class="fields long">
+<tr><td class="val" id="ft_autohinter_script_none">FT_AUTOHINTER_SCRIPT_NONE</td><td class="desc">
+<p>Don't auto-hint this glyph.</p>
+</td></tr>
+<tr><td class="val" id="ft_autohinter_script_latin">FT_AUTOHINTER_SCRIPT_LATIN</td><td class="desc">
+<p>Apply the latin auto-hinter. For the auto-hinter, &lsquo;latin&rsquo; is a very broad term, including Cyrillic and Greek also since characters from those scripts share the same design constraints.</p>
+<p>By default, characters from the following Unicode ranges are assigned to this submodule.</p>
+<pre><code>  U+0020 - U+007F  // Basic Latin (no control characters)
+  U+00A0 - U+00FF  // Latin-1 Supplement (no control characters)
+  U+0100 - U+017F  // Latin Extended-A
+  U+0180 - U+024F  // Latin Extended-B
+  U+0250 - U+02AF  // IPA Extensions
+  U+02B0 - U+02FF  // Spacing Modifier Letters
+  U+0300 - U+036F  // Combining Diacritical Marks
+  U+0370 - U+03FF  // Greek and Coptic
+  U+0400 - U+04FF  // Cyrillic
+  U+0500 - U+052F  // Cyrillic Supplement
+  U+1D00 - U+1D7F  // Phonetic Extensions
+  U+1D80 - U+1DBF  // Phonetic Extensions Supplement
+  U+1DC0 - U+1DFF  // Combining Diacritical Marks Supplement
+  U+1E00 - U+1EFF  // Latin Extended Additional
+  U+1F00 - U+1FFF  // Greek Extended
+  U+2000 - U+206F  // General Punctuation
+  U+2070 - U+209F  // Superscripts and Subscripts
+  U+20A0 - U+20CF  // Currency Symbols
+  U+2150 - U+218F  // Number Forms
+  U+2460 - U+24FF  // Enclosed Alphanumerics
+  U+2C60 - U+2C7F  // Latin Extended-C
+  U+2DE0 - U+2DFF  // Cyrillic Extended-A
+  U+2E00 - U+2E7F  // Supplemental Punctuation
+  U+A640 - U+A69F  // Cyrillic Extended-B
+  U+A720 - U+A7FF  // Latin Extended-D
+  U+FB00 - U+FB06  // Alphab. Present. Forms (Latin Ligatures)
+ U+1D400 - U+1D7FF // Mathematical Alphanumeric Symbols
+ U+1F100 - U+1F1FF // Enclosed Alphanumeric Supplement
+</code></pre>
+</td></tr>
+<tr><td class="val" id="ft_autohinter_script_cjk">FT_AUTOHINTER_SCRIPT_CJK</td><td class="desc">
+<p>Apply the CJK auto-hinter, covering Chinese, Japanese, Korean, old Vietnamese, and some other scripts.</p>
+<p>By default, characters from the following Unicode ranges are assigned to this submodule.</p>
+<pre><code>  U+1100 - U+11FF  // Hangul Jamo
+  U+2E80 - U+2EFF  // CJK Radicals Supplement
+  U+2F00 - U+2FDF  // Kangxi Radicals
+  U+2FF0 - U+2FFF  // Ideographic Description Characters
+  U+3000 - U+303F  // CJK Symbols and Punctuation
+  U+3040 - U+309F  // Hiragana
+  U+30A0 - U+30FF  // Katakana
+  U+3100 - U+312F  // Bopomofo
+  U+3130 - U+318F  // Hangul Compatibility Jamo
+  U+3190 - U+319F  // Kanbun
+  U+31A0 - U+31BF  // Bopomofo Extended
+  U+31C0 - U+31EF  // CJK Strokes
+  U+31F0 - U+31FF  // Katakana Phonetic Extensions
+  U+3200 - U+32FF  // Enclosed CJK Letters and Months
+  U+3300 - U+33FF  // CJK Compatibility
+  U+3400 - U+4DBF  // CJK Unified Ideographs Extension A
+  U+4DC0 - U+4DFF  // Yijing Hexagram Symbols
+  U+4E00 - U+9FFF  // CJK Unified Ideographs
+  U+A960 - U+A97F  // Hangul Jamo Extended-A
+  U+AC00 - U+D7AF  // Hangul Syllables
+  U+D7B0 - U+D7FF  // Hangul Jamo Extended-B
+  U+F900 - U+FAFF  // CJK Compatibility Ideographs
+  U+FE10 - U+FE1F  // Vertical forms
+  U+FE30 - U+FE4F  // CJK Compatibility Forms
+  U+FF00 - U+FFEF  // Halfwidth and Fullwidth Forms
+ U+1B000 - U+1B0FF // Kana Supplement
+ U+1D300 - U+1D35F // Tai Xuan Hing Symbols
+ U+1F200 - U+1F2FF // Enclosed Ideographic Supplement
+ U+20000 - U+2A6DF // CJK Unified Ideographs Extension B
+ U+2A700 - U+2B73F // CJK Unified Ideographs Extension C
+ U+2B740 - U+2B81F // CJK Unified Ideographs Extension D
+ U+2F800 - U+2FA1F // CJK Compatibility Ideographs Supplement
+</code></pre>
+</td></tr>
+<tr><td class="val" id="ft_autohinter_script_indic">FT_AUTOHINTER_SCRIPT_INDIC</td><td class="desc">
+<p>Apply the indic auto-hinter, covering all major scripts from the Indian sub-continent and some other related scripts like Thai, Lao, or Tibetan.</p>
+<p>By default, characters from the following Unicode ranges are assigned to this submodule.</p>
+<pre><code>  U+0900 - U+0DFF  // Indic Range
+  U+0F00 - U+0FFF  // Tibetan
+  U+1900 - U+194F  // Limbu
+  U+1B80 - U+1BBF  // Sundanese
+  U+A800 - U+A82F  // Syloti Nagri
+  U+ABC0 - U+ABFF  // Meetei Mayek
+ U+11800 - U+118DF // Sharada
+</code></pre>
+<p>Note that currently Indic support is rudimentary only, missing blue zone support.</p>
+</td></tr>
+</table>
+
+<h4>since</h4>
+
+<p>2.4.11</p>
+<hr>
+
+<h2 id="ft_prop_glyphtoscriptmap">FT_Prop_GlyphToScriptMap<a class="headerlink" href="#ft_prop_glyphtoscriptmap" title="Permanent link">&para;</a></h2>
+<p>Defined in FT_DRIVER_H (freetype/ftdriver.h).</p>
+<div class = "codehilite"><pre><code>  <span class="keyword">typedef</span> <span class="keyword">struct</span>  FT_Prop_GlyphToScriptMap_
+  {
+    <a href="ft2-base_interface.html#ft_face">FT_Face</a>     face;
+    <a href="ft2-basic_types.html#ft_ushort">FT_UShort</a>*  map;
+
+  } <b>FT_Prop_GlyphToScriptMap</b>;
+</code></pre></div>
+
+<p><strong>Experimental only</strong></p>
+<p>The data exchange structure for the <code><a href="ft2-properties.html#glyph-to-script-map">glyph-to-script-map</a></code> property.</p>
+<h4>since</h4>
+
+<p>2.4.11</p>
+<hr>
+
+<h2 id="fallback-script">fallback-script<a class="headerlink" href="#fallback-script" title="Permanent link">&para;</a></h2>
+<p><strong>Experimental only</strong></p>
+<p>If no auto-hinter script module can be assigned to a glyph, a fallback script gets assigned to it (see also the <code><a href="ft2-properties.html#glyph-to-script-map">glyph-to-script-map</a></code> property). By default, this is <code><a href="ft2-properties.html#ft_autohinter_script_xxx">FT_AUTOHINTER_SCRIPT_CJK</a></code>. Using the <code>fallback-script</code> property, this fallback value can be changed.</p>
+<h4>note</h4>
+
+<p>This property can be used with <code><a href="ft2-module_management.html#ft_property_get">FT_Property_Get</a></code> also.</p>
+<p>It's important to use the right timing for changing this value: The creation of the glyph-to-script map that eventually uses the fallback script value gets triggered either by setting or reading a face-specific property like <code><a href="ft2-properties.html#glyph-to-script-map">glyph-to-script-map</a></code>, or by auto-hinting any glyph from that face. In particular, if you have already created an <code><a href="ft2-base_interface.html#ft_face">FT_Face</a></code> structure but not loaded any glyph (using the auto-hinter), a change of the fallback script will affect this face.</p>
+<h4>example</h4>
+
+<div class="highlight"><pre><span></span><code>  FT_Library  library;
+  FT_UInt     fallback_script = FT_AUTOHINTER_SCRIPT_NONE;
+
+
+  FT_Init_FreeType( &amp;library );
+
+  FT_Property_Set( library, &quot;autofitter&quot;,
+                            &quot;fallback-script&quot;, &amp;fallback_script );
+</code></pre></div>
+
+<h4>since</h4>
+
+<p>2.4.11</p>
+<hr>
+
+<h2 id="default-script">default-script<a class="headerlink" href="#default-script" title="Permanent link">&para;</a></h2>
+<p><strong>Experimental only</strong></p>
+<p>If FreeType gets compiled with <code>FT_CONFIG_OPTION_USE_HARFBUZZ</code> to make the HarfBuzz library access OpenType features for getting better glyph coverages, this property sets the (auto-fitter) script to be used for the default (OpenType) script data of a font's GSUB table. Features for the default script are intended for all scripts not explicitly handled in GSUB; an example is a &lsquo;dlig&rsquo; feature, containing the combination of the characters &lsquo;T&rsquo;, &lsquo;E&rsquo;, and &lsquo;L&rsquo; to form a &lsquo;TEL&rsquo; ligature.</p>
+<p>By default, this is <code><a href="ft2-properties.html#ft_autohinter_script_xxx">FT_AUTOHINTER_SCRIPT_LATIN</a></code>. Using the <code>default-script</code> property, this default value can be changed.</p>
+<h4>note</h4>
+
+<p>This property can be used with <code><a href="ft2-module_management.html#ft_property_get">FT_Property_Get</a></code> also.</p>
+<p>It's important to use the right timing for changing this value: The creation of the glyph-to-script map that eventually uses the default script value gets triggered either by setting or reading a face-specific property like <code><a href="ft2-properties.html#glyph-to-script-map">glyph-to-script-map</a></code>, or by auto-hinting any glyph from that face. In particular, if you have already created an <code><a href="ft2-base_interface.html#ft_face">FT_Face</a></code> structure but not loaded any glyph (using the auto-hinter), a change of the default script will affect this face.</p>
+<h4>example</h4>
+
+<div class="highlight"><pre><span></span><code>  FT_Library  library;
+  FT_UInt     default_script = FT_AUTOHINTER_SCRIPT_NONE;
+
+
+  FT_Init_FreeType( &amp;library );
+
+  FT_Property_Set( library, &quot;autofitter&quot;,
+                            &quot;default-script&quot;, &amp;default_script );
+</code></pre></div>
+
+<h4>since</h4>
+
+<p>2.5.3</p>
+<hr>
+
+<h2 id="increase-x-height">increase-x-height<a class="headerlink" href="#increase-x-height" title="Permanent link">&para;</a></h2>
+<p>For ppem values in the range 6&nbsp;&lt;= ppem &lt;= <code>increase-x-height</code>, round up the font's x&nbsp;height much more often than normally. If the value is set to&nbsp;0, which is the default, this feature is switched off. Use this property to improve the legibility of small font sizes if necessary.</p>
+<h4>note</h4>
+
+<p>This property can be used with <code><a href="ft2-module_management.html#ft_property_get">FT_Property_Get</a></code> also.</p>
+<p>Set this value right after calling <code><a href="ft2-base_interface.html#ft_set_char_size">FT_Set_Char_Size</a></code>, but before loading any glyph (using the auto-hinter).</p>
+<h4>example</h4>
+
+<div class="highlight"><pre><span></span><code>  FT_Library               library;
+  FT_Face                  face;
+  FT_Prop_IncreaseXHeight  prop;
+
+
+  FT_Init_FreeType( &amp;library );
+  FT_New_Face( library, &quot;foo.ttf&quot;, 0, &amp;face );
+  FT_Set_Char_Size( face, 10 * 64, 0, 72, 0 );
+
+  prop.face  = face;
+  prop.limit = 14;
+
+  FT_Property_Set( library, &quot;autofitter&quot;,
+                            &quot;increase-x-height&quot;, &amp;prop );
+</code></pre></div>
+
+<h4>since</h4>
+
+<p>2.4.11</p>
+<hr>
+
+<h2 id="ft_prop_increasexheight">FT_Prop_IncreaseXHeight<a class="headerlink" href="#ft_prop_increasexheight" title="Permanent link">&para;</a></h2>
+<p>Defined in FT_DRIVER_H (freetype/ftdriver.h).</p>
+<div class = "codehilite"><pre><code>  <span class="keyword">typedef</span> <span class="keyword">struct</span>  FT_Prop_IncreaseXHeight_
+  {
+    <a href="ft2-base_interface.html#ft_face">FT_Face</a>  face;
+    <a href="ft2-basic_types.html#ft_uint">FT_UInt</a>  limit;
+
+  } <b>FT_Prop_IncreaseXHeight</b>;
+</code></pre></div>
+
+<p>The data exchange structure for the <code><a href="ft2-properties.html#increase-x-height">increase-x-height</a></code> property.</p>
+<hr>
+
+<h2 id="warping">warping<a class="headerlink" href="#warping" title="Permanent link">&para;</a></h2>
+<p><strong>Experimental only</strong></p>
+<p>If FreeType gets compiled with option <code>AF_CONFIG_OPTION_USE_WARPER</code> to activate the warp hinting code in the auto-hinter, this property switches warping on and off.</p>
+<p>Warping only works in &lsquo;normal&rsquo; auto-hinting mode replacing it. The idea of the code is to slightly scale and shift a glyph along the non-hinted dimension (which is usually the horizontal axis) so that as much of its segments are aligned (more or less) to the grid. To find out a glyph's optimal scaling and shifting value, various parameter combinations are tried and scored.</p>
+<p>By default, warping is off.</p>
+<h4>note</h4>
+
+<p>This property can be used with <code><a href="ft2-module_management.html#ft_property_get">FT_Property_Get</a></code> also.</p>
+<p>This property can be set via the <code>FREETYPE_PROPERTIES</code> environment variable (using values 1 and 0 for &lsquo;on&rsquo; and &lsquo;off&rsquo;, respectively).</p>
+<p>The warping code can also change advance widths. Have a look at the <code>lsb_delta</code> and <code>rsb_delta</code> fields in the <code><a href="ft2-base_interface.html#ft_glyphslotrec">FT_GlyphSlotRec</a></code> structure for details on improving inter-glyph distances while rendering.</p>
+<p>Since warping is a global property of the auto-hinter it is best to change its value before rendering any face. Otherwise, you should reload all faces that get auto-hinted in &lsquo;normal&rsquo; hinting mode.</p>
+<h4>example</h4>
+
+<p>This example shows how to switch on warping (omitting the error handling).
+<div class="highlight"><pre><span></span><code>  FT_Library  library;
+  FT_Bool     warping = 1;
+
+
+  FT_Init_FreeType( &amp;library );
+
+  FT_Property_Set( library, &quot;autofitter&quot;, &quot;warping&quot;, &amp;warping );
+</code></pre></div></p>
+<h4>since</h4>
+
+<p>2.6</p>
+<hr>
+                
+                  
+                
+                
+              
+              
+                
+
+
+              
+            </article>
+          </div>
+        </div>
+      </main>
+      
+        
+<footer class="md-footer">
+  
+    <div class="md-footer-nav">
+      <nav class="md-footer-nav__inner md-grid">
+        
+          <a href="ft2-pcf_driver.html" title="The PCF driver" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+            <div class="md-flex__cell md-flex__cell--shrink">
+              <i class="md-icon md-icon--arrow-back md-footer-nav__button"></i>
+            </div>
+            <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
+              <span class="md-flex__ellipsis">
+                <span class="md-footer-nav__direction">
+                  Previous
+                </span>
+                The PCF driver
+              </span>
+            </div>
+          </a>
+        
+        
+          <a href="ft2-parameter_tags.html" title="Parameter Tags" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
+            <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
+              <span class="md-flex__ellipsis">
+                <span class="md-footer-nav__direction">
+                  Next
+                </span>
+                Parameter Tags
+              </span>
+            </div>
+            <div class="md-flex__cell md-flex__cell--shrink">
+              <i class="md-icon md-icon--arrow-forward md-footer-nav__button"></i>
+            </div>
+          </a>
+        
+      </nav>
+    </div>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-footer-copyright">
+        
+          <div class="md-footer-copyright__highlight">
+            Copyright 2020 <a href = "https://www.freetype.org/license.html">The FreeType Project</a>.
+          </div>
+        
+        powered by
+        <a href="https://www.mkdocs.org" target="_blank" rel="noopener">MkDocs</a>
+        and
+        <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+          Material for MkDocs</a>
+      </div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    
+      <script src="assets/javascripts/application.c33a9706.js"></script>
+      
+      <script>app.initialize({version:"1.1",url:{base:"."}})</script>
+      
+        <script src="javascripts/extra.js"></script>
+      
+    
+  </body>
+</html>

@@ -30,9 +30,14 @@
 #ifdef USE_CCLOADER
 
 /*********************************************************************************************\
-* CCLOader
+* CCLoader
 *
 * Usage:
+*  - Configure GPIOs like:
+*    - DEBUG_DATA on CC25xx device to GPIO Zigbee Rx
+*    - DEBUG_CLOCK on CC25xx device to GPIO Zigbee Tx
+*    - RESET_N on CC25xx device to GPIO Zigbee Rst
+*    - Any GPIO as Option_A4
 \*********************************************************************************************/
 
 #define XDRV_46             46
@@ -125,10 +130,10 @@ struct {
 
 const char CCLtype[] PROGMEM = "CCL";
 
-// Debug control pins & the indicate LED
-int CCL_RESET = 14; //GPIO14=D5 on NodeMCU/WeMos D1 Mini
-int CCL_DD = 4; //GPIO4=D2 on NodeMCU/WeMos D1 Mini
-int CCL_DC = 5; //GPIO5=D1 on NodeMCU/WeMos D1 Mini
+// Debug control pins
+int CCL_RESET;  // RESET_N on CC25xx device
+int CCL_DD;     // DEBUG_DATA on CC25xx device
+int CCL_DC;     // DEBUG_CLOCK on CC25xx device
 
 /********************************************************************************************/
 /**************************************************************************//**
@@ -520,22 +525,22 @@ void CCLRunDUP(void)
   delay(10);   // Wait
 }
 
-void CCLProgrammerInit(void)
-{
-  pinMode(CCL_DD, OUTPUT);
-  pinMode(CCL_DC, OUTPUT);
-  pinMode(CCL_RESET, OUTPUT);
-  digitalWrite(CCL_DD, LOW);
-  digitalWrite(CCL_DC, LOW);
-  digitalWrite(CCL_RESET, HIGH);
-}
+void CCLoaderinit(void) {
+  if (PinUsed(GPIO_ZIGBEE_RX) && PinUsed(GPIO_ZIGBEE_TX) && PinUsed(GPIO_ZIGBEE_RST)) {
+    CCL_RESET = Pin(GPIO_ZIGBEE_RST);
+    CCL_DD = Pin(GPIO_ZIGBEE_RX);
+    CCL_DC = Pin(GPIO_ZIGBEE_TX);
 
-bool CCLoaderinit()
-{
-  CCLProgrammerInit();
-  AddLog(LOG_LEVEL_INFO,PSTR("CCL: programmer init"));
-  CCL.init = true;
-  return true;
+    pinMode(CCL_DD, OUTPUT);
+    pinMode(CCL_DC, OUTPUT);
+    pinMode(CCL_RESET, OUTPUT);
+    digitalWrite(CCL_DD, LOW);
+    digitalWrite(CCL_DC, LOW);
+    digitalWrite(CCL_RESET, HIGH);
+
+    AddLog(LOG_LEVEL_INFO, PSTR("CCL: programmer init"));
+    CCL.init = true;
+  }
 }
 
 String CCLChipName(uint8_t chipID) {
@@ -664,22 +669,23 @@ void CCLoadershow(bool json) {
  * Interface
 \*********************************************************************************************/
 
-bool Xdrv46(uint8_t function)
-{
+bool Xdrv46(uint8_t function) {
+  if (!TasmotaGlobal.gpio_optiona.enable_ccloader) { return false; }
+
   bool result = false;
 
   if (FUNC_INIT == function) {
-    result = CCLoaderinit();
+    CCLoaderinit();
   }
-  if(CCL.init){
-      switch(function){
-          case FUNC_EVERY_100_MSECOND:
-            CCLoaderLoop();
-            break;
-            case FUNC_WEB_SENSOR:
-            CCLoadershow(0);
-            break;
-      }
+  if (CCL.init) {
+    switch(function){
+      case FUNC_EVERY_100_MSECOND:
+        CCLoaderLoop();
+        break;
+      case FUNC_WEB_SENSOR:
+        CCLoadershow(0);
+        break;
+    }
   }
   return result;
 }

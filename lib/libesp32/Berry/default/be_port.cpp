@@ -12,9 +12,14 @@
 #include <string.h>
 #include <Arduino.h>
 
+// from https://github.com/eyalroz/cpp-static-block
+#include "static_block.hpp"
+
 // Local pointer for file managment
-#include <FS.h>
-extern FS *dfsp;
+#ifdef USE_UFILESYS
+    #include <FS.h>
+    extern FS *ufsp;
+#endif // USE_UFILESYS
 
 /* this file contains configuration for the file system. */
 
@@ -53,13 +58,21 @@ extern "C" {
 
 // We need to create a local buffer, since we might mess up mqtt_data
 #ifndef BERRY_LOGSZ
-#define BERRY_LOGSZ 128
+#define BERRY_LOGSZ 700
 #endif
-static char log_berry_buffer[BERRY_LOGSZ] = { 0, };
+extern "C" {
+    extern void *berry_malloc(size_t size);
+}
+static char * log_berry_buffer = nullptr;
+static_block {
+    log_berry_buffer = (char*) berry_malloc(BERRY_LOGSZ);
+    if (log_berry_buffer) log_berry_buffer[0] = 0;
+}
 extern void berry_log(const char * berry_buf);
 
 BERRY_API void be_writebuffer(const char *buffer, size_t length)
 {
+    if (!log_berry_buffer) return;
     if (buffer == nullptr || length == 0) { return; }
     uint32_t idx = 0;
     while (idx < length) {
@@ -72,7 +85,7 @@ BERRY_API void be_writebuffer(const char *buffer, size_t length)
             }
         }
         uint32_t chars_to_append = (cr_pos >= 0) ? cr_pos - idx : length - idx;     // note cr_pos < length
-        snprintf(log_berry_buffer, sizeof(log_berry_buffer), "%s%.*s", log_berry_buffer, chars_to_append, &buffer[idx]);   // append at most `length` chars
+        snprintf(log_berry_buffer, BERRY_LOGSZ, "%s%.*s", log_berry_buffer, chars_to_append, &buffer[idx]);   // append at most `length` chars
         if (cr_pos >= 0) {
             // flush
             berry_log(log_berry_buffer);
@@ -94,47 +107,61 @@ BERRY_API char* be_readstring(char *buffer, size_t size)
 
 void* be_fopen(const char *filename, const char *modes)
 {
-    if (dfsp != nullptr && filename != nullptr && modes != nullptr) {
+#ifdef USE_UFILESYS
+    if (ufsp != nullptr && filename != nullptr && modes != nullptr) {
+        char fname2[strlen(filename) + 2];
+        if (filename[0] == '/') {
+            strcpy(fname2, filename);   // copy unchanged
+        } else {
+            fname2[0] = '/';
+            strcpy(fname2 + 1, filename);   // prepend with '/'
+        }
         // Serial.printf("be_fopen filename=%s, modes=%s\n", filename, modes);
-        File f = dfsp->open(filename, modes);       // returns an object, not a pointer
+        File f = ufsp->open(fname2, modes);       // returns an object, not a pointer
         if (f) {
             File * f_ptr = new File(f);                 // copy to dynamic object
             *f_ptr = f;                                 // TODO is this necessary?
             return f_ptr;
         }
     }
+#endif // USE_UFILESYS
     return nullptr;
     // return fopen(filename, modes);
 }
 
 int be_fclose(void *hfile)
 {
+#ifdef USE_UFILESYS
     // Serial.printf("be_fclose\n");
-    if (dfsp != nullptr && hfile != nullptr) {
+    if (ufsp != nullptr && hfile != nullptr) {
         File * f_ptr = (File*) hfile;
         f_ptr->close();
         delete f_ptr;
         return 0;
     }
+#endif // USE_UFILESYS
     return -1;
     // return fclose(hfile);
 }
 
 size_t be_fwrite(void *hfile, const void *buffer, size_t length)
 {
+#ifdef USE_UFILESYS
     // Serial.printf("be_fwrite %d\n", length);
-    if (dfsp != nullptr && hfile != nullptr && buffer != nullptr) {
+    if (ufsp != nullptr && hfile != nullptr && buffer != nullptr) {
         File * f_ptr = (File*) hfile;
         return f_ptr->write((const uint8_t*) buffer, length);
     }
+#endif // USE_UFILESYS
     return 0;
     // return fwrite(buffer, 1, length, hfile);
 }
 
 size_t be_fread(void *hfile, void *buffer, size_t length)
 {
+#ifdef USE_UFILESYS
     // Serial.printf("be_fread %d\n", length);
-    if (dfsp != nullptr && hfile != nullptr && buffer != nullptr) {
+    if (ufsp != nullptr && hfile != nullptr && buffer != nullptr) {
         File * f_ptr = (File*) hfile;
         int32_t ret = f_ptr->read((uint8_t*) buffer, length);
         if (ret >= 0) {
@@ -142,15 +169,17 @@ size_t be_fread(void *hfile, void *buffer, size_t length)
             return ret;
         }
     }
+#endif // USE_UFILESYS
     return 0;
     // return fread(buffer, 1, length, hfile);
 }
 
 char* be_fgets(void *hfile, void *buffer, int size)
 {
+#ifdef USE_UFILESYS
     // Serial.printf("be_fgets %d\n", size);
     uint8_t * buf = (uint8_t*) buffer;
-    if (dfsp != nullptr && hfile != nullptr && buffer != nullptr && size > 0) {
+    if (ufsp != nullptr && hfile != nullptr && buffer != nullptr && size > 0) {
         File * f_ptr = (File*) hfile;
         int ret = f_ptr->readBytesUntil('\n', buf, size - 1);
         if (ret >= 0) {
@@ -158,49 +187,57 @@ char* be_fgets(void *hfile, void *buffer, int size)
             return (char*) buffer;
         }
     }
+#endif // USE_UFILESYS
     return nullptr;
     // return fgets(buffer, size, hfile);
 }
 
 int be_fseek(void *hfile, long offset)
 {
+#ifdef USE_UFILESYS
     // Serial.printf("be_fseek %d\n", offset);
-    if (dfsp != nullptr && hfile != nullptr) {
+    if (ufsp != nullptr && hfile != nullptr) {
         File * f_ptr = (File*) hfile;
         if (f_ptr->seek(offset)) {
             return 0;       // success
         }
     }
+#endif // USE_UFILESYS
     return -1;
     // return fseek(hfile, offset, SEEK_SET);
 }
 
 long int be_ftell(void *hfile)
 {
+#ifdef USE_UFILESYS
     // Serial.printf("be_ftell\n");
-    if (dfsp != nullptr && hfile != nullptr) {
+    if (ufsp != nullptr && hfile != nullptr) {
         File * f_ptr = (File*) hfile;
         return f_ptr->position();
     }
+#endif // USE_UFILESYS
     return 0;
     // return ftell(hfile);
 }
 
 long int be_fflush(void *hfile)
 {
+#ifdef USE_UFILESYS
     // Serial.printf("be_fflush\n");
-    if (dfsp != nullptr && hfile != nullptr) {
+    if (ufsp != nullptr && hfile != nullptr) {
         File * f_ptr = (File*) hfile;
         f_ptr->flush();
     }
+#endif // USE_UFILESYS
     return 0;
     // return fflush(hfile);
 }
 
 size_t be_fsize(void *hfile)
 {
+#ifdef USE_UFILESYS
     // Serial.printf("be_fsize\n");
-    if (dfsp != nullptr && hfile != nullptr) {
+    if (ufsp != nullptr && hfile != nullptr) {
         File * f_ptr = (File*) hfile;
         return f_ptr->size();
     }
@@ -209,6 +246,7 @@ size_t be_fsize(void *hfile)
     // size = ftell(hfile);
     // fseek(hfile, offset, SEEK_SET);
     // return size;
+#endif // USE_UFILESYS
     return 0;
 }
 

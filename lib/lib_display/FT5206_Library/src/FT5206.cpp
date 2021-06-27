@@ -29,8 +29,7 @@ github:https://github.com/lewisxhe/FT5206_Library
 /////////////////////////////////////////////////////////////////
 #include "FT5206.h"
 
-int FT5206_Class::begin(TwoWire &port, uint8_t addr)
-{
+int FT5206_Class::begin(TwoWire &port, uint8_t addr) {
     _i2cPort = &port;
     _address = addr;
     uint8_t val;
@@ -39,9 +38,9 @@ int FT5206_Class::begin(TwoWire &port, uint8_t addr)
     if (val != FT5206_VENDID) {
   //      return false;
     }
-    _readByte(FT5206_CHIPID_REG, 1, &val);
+    _readByte(FT5206_CHIPID_REG, 1, &chip_id);
     //Serial.printf("chip id %d\n",val );
-    if ((val != FT6206_CHIPID) && (val != FT6236_CHIPID) && (val != FT6236U_CHIPID) && (val != FT5206U_CHIPID)  && (val != FT5316_CHIPID) ) {
+    if ((chip_id != FT6206_CHIPID) && (chip_id != FT6236_CHIPID) && (chip_id != FT6236U_CHIPID) && (chip_id != FT5206U_CHIPID)  && (chip_id != FT5316_CHIPID) ) {
         return false;
     }
     _init = true;
@@ -49,14 +48,12 @@ int FT5206_Class::begin(TwoWire &port, uint8_t addr)
 }
 
 // valid touching detect threshold.
-void FT5206_Class::adjustTheshold(uint8_t thresh)
-{
+void FT5206_Class::adjustTheshold(uint8_t thresh) {
     if (!_init)return;
     _writeByte(FT5206_THRESHHOLD_REG, 1, &thresh);
 }
 
-TP_Point FT5206_Class::getPoint(uint8_t num)
-{
+TP_Point FT5206_Class::getPoint(uint8_t num) {
     if (!_init) return TP_Point(0, 0);
     _readRegister();
     if ((_touches == 0) || (num > 1)) {
@@ -66,30 +63,36 @@ TP_Point FT5206_Class::getPoint(uint8_t num)
     }
 }
 
-uint8_t FT5206_Class::touched()
-{
-    if (!_init)return 0;
+uint8_t FT5206_Class::touched() {
+    if (!_init) return 0;
     uint8_t val = 0;
-    _readByte(FT5206_TOUCHES_REG,1,&val);
+    if (chip_id == FT5316_CHIPID) {
+      _readByte(FT5206_MODE_REG, 1, &val);
+      if (val) {
+        // wrong mode
+        val = 0;
+        _writeByte(FT5206_MODE_REG, 1, &val);
+      }
+    }
+
+    _readByte(FT5206_TOUCHES_REG, 1, &val);
+    //Serial.printf(">> TP: %d\n", val);
     return val > 2 ? 0: val;
 }
 
-void FT5206_Class::enterSleepMode()
-{
+void FT5206_Class::enterSleepMode() {
     if (!_init)return;
     uint8_t val = FT5206_SLEEP_IN;
     _writeByte(FT5206_POWER_REG, 1, &val);
 }
 
-void FT5206_Class::enterMonitorMode()
-{
+void FT5206_Class::enterMonitorMode() {
     if (!_init)return;
     uint8_t val = FT5206_MONITOR;
     _writeByte(FT5206_POWER_REG, 1, &val);
 }
 
-void FT5206_Class::_readRegister()
-{
+void FT5206_Class::_readRegister() {
     _readByte(DEVIDE_MODE, 16, _data);
     _touches = _data[TD_STATUS];
     if ((_touches > 2) || (_touches == 0)) {

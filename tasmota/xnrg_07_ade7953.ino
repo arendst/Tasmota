@@ -160,18 +160,18 @@ void Ade7953GetData(void)
     Ade7953.active_power[0], Ade7953.active_power[1], active_power_sum);
 
   if (Energy.power_on) {  // Powered on
-    Energy.voltage[0] = (float)Ade7953.voltage_rms / Settings.energy_voltage_calibration;
+    Energy.voltage[0] = (float)Ade7953.voltage_rms / Settings->energy_voltage_calibration;
     Energy.frequency[0] = 223750.0f / ( (float)Ade7953.period + 1);
 
     for (uint32_t channel = 0; channel < 2; channel++) {
       Energy.data_valid[channel] = 0;
-      Energy.active_power[channel] = (float)Ade7953.active_power[channel] / (Settings.energy_power_calibration / 10);
-      Energy.reactive_power[channel] = (float)reactive_power[channel] / (Settings.energy_power_calibration / 10);
-      Energy.apparent_power[channel] = (float)apparent_power[channel] / (Settings.energy_power_calibration / 10);
+      Energy.active_power[channel] = (float)Ade7953.active_power[channel] / (Settings->energy_power_calibration / 10);
+      Energy.reactive_power[channel] = (float)reactive_power[channel] / (Settings->energy_power_calibration / 10);
+      Energy.apparent_power[channel] = (float)apparent_power[channel] / (Settings->energy_power_calibration / 10);
       if (0 == Energy.active_power[channel]) {
         Energy.current[channel] = 0;
       } else {
-        Energy.current[channel] = (float)Ade7953.current_rms[channel] / (Settings.energy_current_calibration * 10);
+        Energy.current[channel] = (float)Ade7953.current_rms[channel] / (Settings->energy_current_calibration * 10);
       }
     }
 /*
@@ -182,7 +182,7 @@ void Ade7953GetData(void)
   }
 
   if (active_power_sum) {
-    Energy.kWhtoday_delta += ((active_power_sum * (100000 / (Settings.energy_power_calibration / 10))) / 3600);
+    Energy.kWhtoday_delta += ((active_power_sum * (100000 / (Settings->energy_power_calibration / 10))) / 3600);
     EnergyUpdateToday();
   }
 }
@@ -205,10 +205,10 @@ void Ade7953DrvInit(void)
     pinMode(Pin(GPIO_ADE7953_IRQ), INPUT);        // Related to resetPins() - Must be set to input
     delay(100);                                   // Need 100mS to init ADE7953
     if (I2cSetDevice(ADE7953_ADDR)) {
-      if (HLW_PREF_PULSE == Settings.energy_power_calibration) {
-        Settings.energy_power_calibration = ADE7953_PREF;
-        Settings.energy_voltage_calibration = ADE7953_UREF;
-        Settings.energy_current_calibration = ADE7953_IREF;
+      if (HLW_PREF_PULSE == Settings->energy_power_calibration) {
+        Settings->energy_power_calibration = ADE7953_PREF;
+        Settings->energy_voltage_calibration = ADE7953_UREF;
+        Settings->energy_current_calibration = ADE7953_IREF;
       }
       I2cSetActiveFound(ADE7953_ADDR, "ADE7953");
       Ade7953.init_step = 2;
@@ -243,21 +243,21 @@ bool Ade7953Command(void)
   else if (CMND_POWERSET == Energy.command_code) {
     if (XdrvMailbox.data_len && Ade7953.active_power[channel]) {
       if ((value > 100) && (value < 200000)) {  // Between 1W and 2000W
-        Settings.energy_power_calibration = (Ade7953.active_power[channel] * 1000) / value;  // 0.00 W
+        Settings->energy_power_calibration = (Ade7953.active_power[channel] * 1000) / value;  // 0.00 W
       }
     }
   }
   else if (CMND_VOLTAGESET == Energy.command_code) {
     if (XdrvMailbox.data_len && Ade7953.voltage_rms) {
       if ((value > 10000) && (value < 26000)) {  // Between 100V and 260V
-        Settings.energy_voltage_calibration = (Ade7953.voltage_rms * 100) / value;  // 0.00 V
+        Settings->energy_voltage_calibration = (Ade7953.voltage_rms * 100) / value;  // 0.00 V
       }
     }
   }
   else if (CMND_CURRENTSET == Energy.command_code) {
     if (XdrvMailbox.data_len && Ade7953.current_rms[channel]) {
       if ((value > 2000) && (value < 1000000)) {  // Between 20mA and 10A
-        Settings.energy_current_calibration = ((Ade7953.current_rms[channel] * 100) / value) * 100;  // 0.00 mA
+        Settings->energy_current_calibration = ((Ade7953.current_rms[channel] * 100) / value) * 100;  // 0.00 mA
       }
     }
   }

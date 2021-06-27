@@ -190,8 +190,8 @@ unsigned long ir_lasttime = 0;
 void IrReceiveUpdateThreshold(void)
 {
   if (irrecv != nullptr) {
-    if (Settings.param[P_IR_UNKNOW_THRESHOLD] < 6) { Settings.param[P_IR_UNKNOW_THRESHOLD] = 6; }
-    irrecv->setUnknownThreshold(Settings.param[P_IR_UNKNOW_THRESHOLD]);
+    if (Settings->param[P_IR_UNKNOW_THRESHOLD] < 6) { Settings->param[P_IR_UNKNOW_THRESHOLD] = 6; }
+    irrecv->setUnknownThreshold(Settings->param[P_IR_UNKNOW_THRESHOLD]);
   }
 }
 
@@ -199,7 +199,7 @@ void IrReceiveInit(void)
 {
   // an IR led is at GPIO_IRRECV
   irrecv = new IRrecv(Pin(GPIO_IRRECV), IR_RCV_BUFFER_SIZE, IR_RCV_TIMEOUT, IR_RCV_SAVE_BUFFER);
-  irrecv->setUnknownThreshold(Settings.param[P_IR_UNKNOW_THRESHOLD]);
+  irrecv->setUnknownThreshold(Settings->param[P_IR_UNKNOW_THRESHOLD]);
   irrecv->enableIRIn();                  // Start the receiver
 
   //  AddLog(LOG_LEVEL_DEBUG, PSTR("IrReceive initialized"));
@@ -240,7 +240,7 @@ void IrReceiveCheck(void)
       ir_lasttime = now;
 
       char svalue[64];
-      if (Settings.flag.ir_receive_decimal) {  // SetOption29 - IR receive data format
+      if (Settings->flag.ir_receive_decimal) {  // SetOption29 - IR receive data format
         ulltoa(results.value, svalue, 10);
       } else {
         snprintf_P(svalue, sizeof(svalue), PSTR("\"0x%s\""), hvalue);
@@ -257,7 +257,7 @@ void IrReceiveCheck(void)
       bool prev_number = false;     // was the previous value a number, meaning we may need a comma prefix
       bool ir_high = true;          // alternate high/low
       // Add raw data in a compact format
-      if (Settings.flag3.receive_raw) {  // SetOption58 - Add IR Raw data to JSON message
+      if (Settings->flag3.receive_raw) {  // SetOption58 - Add IR Raw data to JSON message
         ResponseAppend_P(PSTR(",\"" D_JSON_IR_RAWDATA "\":\""));
         size_t rawlen = results.rawlen;
         uint32_t i;
@@ -278,7 +278,7 @@ void IrReceiveCheck(void)
             prev_number = true;
           }
           ir_high = !ir_high;
-          if (strlen(TasmotaGlobal.mqtt_data) > sizeof(TasmotaGlobal.mqtt_data) - 40) { break; }  // Quit if char string becomes too long
+          if (ResponseLength() + 40 > ResponseSize()) { break; }  // Quit if char string becomes too long
         }
         uint16_t extended_length = getCorrectedRawLength(&results);
         ResponseAppend_P(PSTR("\",\"" D_JSON_IR_RAWDATA "Info\":[%d,%d,%d]"), extended_length, i -1, results.overflow);

@@ -62,7 +62,7 @@ bool hydrateDeviceData(class Z_Device & device, const SBuffer & buf, size_t star
 // #ifdef Z_EEPROM_DEBUG
 //   {
 //     char hex_char[((data_len+1) * 2) + 2];
-//     AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "hydrateDeviceData data_len=%d contains %s"), data_len, ToHex_P(buf.buf(start+offset+1), data_len, hex_char, sizeof(hex_char)));
+//     AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "hydrateDeviceData data_len=%d contains %s"), data_len, ToHex_P(buf.buf(start+offset+1), data_len, hex_char, sizeof(hex_char)));
 //   }
 // #endif
     Z_Data & data_elt = device.data.createFromBuffer(buf, start + offset + 1, data_len);
@@ -89,7 +89,7 @@ int32_t hydrateSingleDeviceData(const SBuffer & buf) {
 #ifdef Z_EEPROM_DEBUG
   {
     if (segment_len > 3) {
-      AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "ZbData 0x%04X,%*_H"), shortaddr, buf.buf(2), buf.len() - 2);
+      AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "ZbData 0x%04X,%*_H"), shortaddr, buf.buf(2), buf.len() - 2);
     }
   }
 #endif
@@ -220,6 +220,7 @@ bool hydrateDevicesData(void) {
 \*********************************************************************************************/
 void hibernateAllData(void) {
   if (Rtc.utc_time < START_VALID_TIME) { return; }
+  if (zigbee_devices.devicesSize() == 0) { return; }    // safe-guard, if data is empty, don't save anything
   Univ_Write_File f;
   const char * storage_class = PSTR("");
 
@@ -242,9 +243,6 @@ void hibernateAllData(void) {
 #endif
 
   if (f.valid()) {
-    // first prefix is number of devices
-    uint8_t device_num = zigbee_devices.devicesSize();
-
     for (const auto & device : zigbee_devices.getDevices()) {
       // allocte a buffer for a single device
       SBuffer buf = hibernateDeviceData(device);

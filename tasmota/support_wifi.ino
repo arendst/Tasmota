@@ -153,7 +153,7 @@ void WiFiSetSleepMode(void)
 
 // Sleep explanation: https://github.com/esp8266/Arduino/blob/3f0c601cfe81439ce17e9bd5d28994a7ed144482/libraries/ESP8266WiFi/src/ESP8266WiFiGeneric.cpp#L255
 /*
-  if (TasmotaGlobal.sleep && Settings.flag3.sleep_normal) {  // SetOption60 - Enable normal sleep instead of dynamic sleep
+  if (TasmotaGlobal.sleep && Settings->flag3.sleep_normal) {  // SetOption60 - Enable normal sleep instead of dynamic sleep
     WiFi.setSleepMode(WIFI_LIGHT_SLEEP);        // Allow light sleep during idle times
   } else {
     WiFi.setSleepMode(WIFI_MODEM_SLEEP);        // Disable sleep (Esp8288/Arduino core and sdk default)
@@ -164,7 +164,7 @@ void WiFiSetSleepMode(void)
       WiFi.setSleepMode(WIFI_NONE_SLEEP);       // Disable sleep
     }
   } else {
-    if (Settings.flag3.sleep_normal) {          // SetOption60 - Enable normal sleep instead of dynamic sleep
+    if (Settings->flag3.sleep_normal) {          // SetOption60 - Enable normal sleep instead of dynamic sleep
       WiFi.setSleepMode(WIFI_LIGHT_SLEEP);      // Allow light sleep during idle times
     } else {
       WiFi.setSleepMode(WIFI_MODEM_SLEEP);      // Sleep (Esp8288/Arduino core and sdk default)
@@ -175,8 +175,6 @@ void WiFiSetSleepMode(void)
 
 void WifiBegin(uint8_t flag, uint8_t channel)
 {
-  const static char kWifiPhyMode[] PROGMEM = " bgnl";
-
 #ifdef USE_EMULATION
   UdpDisconnect();
 #endif  // USE_EMULATION
@@ -194,30 +192,30 @@ void WifiBegin(uint8_t flag, uint8_t channel)
   switch (flag) {
   case 0:  // AP1
   case 1:  // AP2
-    Settings.sta_active = flag;
+    Settings->sta_active = flag;
     break;
   case 2:  // Toggle
-    Settings.sta_active ^= 1;
+    Settings->sta_active ^= 1;
   }        // 3: Current AP
-  if (!strlen(SettingsText(SET_STASSID1 + Settings.sta_active))) {
-    Settings.sta_active ^= 1;  // Skip empty SSID
+  if (!strlen(SettingsText(SET_STASSID1 + Settings->sta_active))) {
+    Settings->sta_active ^= 1;  // Skip empty SSID
   }
-  if (Settings.ipv4_address[0]) {
-    WiFi.config(Settings.ipv4_address[0], Settings.ipv4_address[1], Settings.ipv4_address[2], Settings.ipv4_address[3]);  // Set static IP
+  if (Settings->ipv4_address[0]) {
+    WiFi.config(Settings->ipv4_address[0], Settings->ipv4_address[1], Settings->ipv4_address[2], Settings->ipv4_address[3]);  // Set static IP
   }
   WiFi.hostname(TasmotaGlobal.hostname);
 
   char stemp[40] = { 0 };
   if (channel) {
-    WiFi.begin(SettingsText(SET_STASSID1 + Settings.sta_active), SettingsText(SET_STAPWD1 + Settings.sta_active), channel, Wifi.bssid);
+    WiFi.begin(SettingsText(SET_STASSID1 + Settings->sta_active), SettingsText(SET_STAPWD1 + Settings->sta_active), channel, Wifi.bssid);
     // Add connected BSSID and channel for multi-AP installations
     char hex_char[18];
     snprintf_P(stemp, sizeof(stemp), PSTR(" Channel %d BSSId %s"), channel, ToHex_P((unsigned char*)Wifi.bssid, 6, hex_char, sizeof(hex_char), ':'));
   } else {
-    WiFi.begin(SettingsText(SET_STASSID1 + Settings.sta_active), SettingsText(SET_STAPWD1 + Settings.sta_active));
+    WiFi.begin(SettingsText(SET_STASSID1 + Settings->sta_active), SettingsText(SET_STAPWD1 + Settings->sta_active));
   }
   AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_CONNECTING_TO_AP "%d %s%s " D_IN_MODE " 11%c " D_AS " %s..."),
-    Settings.sta_active +1, SettingsText(SET_STASSID1 + Settings.sta_active), stemp, pgm_read_byte(&kWifiPhyMode[WiFi.getPhyMode() & 0x3]), TasmotaGlobal.hostname);
+    Settings->sta_active +1, SettingsText(SET_STASSID1 + Settings->sta_active), stemp, pgm_read_byte(&kWifiPhyMode[WiFi.getPhyMode() & 0x3]), TasmotaGlobal.hostname);
 
 #if LWIP_IPV6
   for (bool configured = false; !configured;) {
@@ -388,19 +386,19 @@ void WifiCheckIp(void)
     if (Wifi.status != WL_CONNECTED) {
       AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_CONNECTED));
 //      AddLog(LOG_LEVEL_INFO, PSTR("Wifi: Set IP addresses"));
-      Settings.ipv4_address[1] = (uint32_t)WiFi.gatewayIP();
-      Settings.ipv4_address[2] = (uint32_t)WiFi.subnetMask();
-      Settings.ipv4_address[3] = (uint32_t)WiFi.dnsIP();
+      Settings->ipv4_address[1] = (uint32_t)WiFi.gatewayIP();
+      Settings->ipv4_address[2] = (uint32_t)WiFi.subnetMask();
+      Settings->ipv4_address[3] = (uint32_t)WiFi.dnsIP();
 
       // Save current AP parameters for quick reconnect
-      Settings.wifi_channel = WiFi.channel();
+      Settings->wifi_channel = WiFi.channel();
       uint8_t *bssid = WiFi.BSSID();
-      memcpy((void*) &Settings.wifi_bssid, (void*) bssid, sizeof(Settings.wifi_bssid));
+      memcpy((void*) &Settings->wifi_bssid, (void*) bssid, sizeof(Settings->wifi_bssid));
     }
     Wifi.status = WL_CONNECTED;
   } else {
     WifiSetState(0);
-    uint8_t wifi_config_tool = Settings.sta_config;
+    uint8_t wifi_config_tool = Settings->sta_config;
     Wifi.status = WiFi.status();
     switch (Wifi.status) {
       case WL_CONNECTED:
@@ -410,8 +408,8 @@ void WifiCheckIp(void)
         break;
       case WL_NO_SSID_AVAIL:
         AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_CONNECT_FAILED_AP_NOT_REACHED));
-        Settings.wifi_channel = 0;  // Disable stored AP
-        if (WIFI_WAIT == Settings.sta_config) {
+        Settings->wifi_channel = 0;  // Disable stored AP
+        if (WIFI_WAIT == Settings->sta_config) {
           Wifi.retry = Wifi.retry_init;
         } else {
           if (Wifi.retry > (Wifi.retry_init / 2)) {
@@ -424,7 +422,7 @@ void WifiCheckIp(void)
         break;
       case WL_CONNECT_FAILED:
         AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_CONNECT_FAILED_WRONG_PASSWORD));
-        Settings.wifi_channel = 0;  // Disable stored AP
+        Settings->wifi_channel = 0;  // Disable stored AP
         if (Wifi.retry > (Wifi.retry_init / 2)) {
           Wifi.retry = Wifi.retry_init / 2;
         }
@@ -435,10 +433,10 @@ void WifiCheckIp(void)
       default:  // WL_IDLE_STATUS and WL_DISCONNECTED
         if (!Wifi.retry || ((Wifi.retry_init / 2) == Wifi.retry)) {
           AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_CONNECT_FAILED_AP_TIMEOUT));
-          Settings.wifi_channel = 0;  // Disable stored AP
+          Settings->wifi_channel = 0;  // Disable stored AP
         } else {
           if (!strlen(SettingsText(SET_STASSID1)) && !strlen(SettingsText(SET_STASSID2))) {
-            Settings.wifi_channel = 0;  // Disable stored AP
+            Settings->wifi_channel = 0;  // Disable stored AP
             wifi_config_tool = WIFI_MANAGER;  // Skip empty SSIDs and start Wifi config tool
             Wifi.retry = 0;
           } else {
@@ -447,15 +445,15 @@ void WifiCheckIp(void)
         }
     }
     if (Wifi.retry) {
-      if (Settings.flag3.use_wifi_scan) {  // SetOption56 - Scan wifi network at restart for configured AP's
+      if (Settings->flag3.use_wifi_scan) {  // SetOption56 - Scan wifi network at restart for configured AP's
         if (Wifi.retry_init == Wifi.retry) {
           Wifi.scan_state = 1;    // Select scanned SSID
         }
       } else {
         if (Wifi.retry_init == Wifi.retry) {
-          WifiBegin(3, Settings.wifi_channel);  // Select default SSID
+          WifiBegin(3, Settings->wifi_channel);  // Select default SSID
         }
-        if ((Settings.sta_config != WIFI_WAIT) && ((Wifi.retry_init / 2) == Wifi.retry)) {
+        if ((Settings->sta_config != WIFI_WAIT) && ((Wifi.retry_init / 2) == Wifi.retry)) {
           WifiBegin(2, 0);        // Select alternate SSID
         }
       }
@@ -489,7 +487,7 @@ void WifiCheck(uint8_t param)
           if (strlen(WiFi.psk().c_str())) {
             SettingsUpdateText(SET_STAPWD1, WiFi.psk().c_str());
           }
-          Settings.sta_active = 0;
+          Settings->sta_active = 0;
           AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_WCFG_2_WIFIMANAGER D_CMND_SSID "1 %s"), SettingsText(SET_STASSID1));
         }
       }
@@ -507,7 +505,7 @@ void WifiCheck(uint8_t param)
       }
       if ((WL_CONNECTED == WiFi.status()) && WifiCheck_hasIP(WiFi.localIP()) && !Wifi.config_type) {
         WifiSetState(1);
-        if (Settings.flag3.use_wifi_rescan) {  // SetOption57 - Scan wifi network every 44 minutes for configured AP's
+        if (Settings->flag3.use_wifi_rescan) {  // SetOption57 - Scan wifi network every 44 minutes for configured AP's
           if (!(TasmotaGlobal.uptime % (60 * WIFI_RESCAN_MINUTES))) {
             Wifi.scan_state = 2;
           }
@@ -532,13 +530,13 @@ int WifiState(void)
 String WifiGetOutputPower(void)
 {
   char stemp1[TOPSZ];
-  dtostrfd((float)(Settings.wifi_output_power) / 10, 1, stemp1);
+  dtostrfd((float)(Settings->wifi_output_power) / 10, 1, stemp1);
   return String(stemp1);
 }
 
 void WifiSetOutputPower(void)
 {
-  WiFi.setOutputPower((float)(Settings.wifi_output_power) / 10);
+  WiFi.setOutputPower((float)(Settings->wifi_output_power) / 10);
 }
 
 /*
@@ -573,7 +571,7 @@ void WifiEnable(void) {
 
 void WifiConnect(void)
 {
-  if (!Settings.flag4.network_wifi) { return; }
+  if (!Settings->flag4.network_wifi) { return; }
 
   WifiSetState(0);
   WifiSetOutputPower();
@@ -583,7 +581,7 @@ void WifiConnect(void)
   Wifi.retry = Wifi.retry_init;
   Wifi.counter = 1;
 
-  memcpy((void*) &Wifi.bssid, (void*) Settings.wifi_bssid, sizeof(Wifi.bssid));
+  memcpy((void*) &Wifi.bssid, (void*) Settings->wifi_bssid, sizeof(Wifi.bssid));
 
 #ifdef WIFI_RF_PRE_INIT
   if (rf_pre_init_flag) {
@@ -603,7 +601,7 @@ void WifiShutdown(bool option = false)
   delay(100);                 // Flush anything in the network buffers.
 #endif  // USE_EMULATION
 
-  if (Settings.flag.mqtt_enabled) {  // SetOption3 - Enable MQTT
+  if (Settings->flag.mqtt_enabled) {  // SetOption3 - Enable MQTT
     MqttDisconnect();
     delay(100);               // Flush anything in the network buffers.
   }
@@ -689,7 +687,7 @@ void stationKeepAliveNow(void) {
 void wifiKeepAlive(void) {
   static uint32_t wifi_timer = millis();                     // Wifi keepalive timer
 
-  uint32_t wifiTimerSec = Settings.param[P_ARP_GRATUITOUS];  // 8-bits number of seconds, or minutes if > 100
+  uint32_t wifiTimerSec = Settings->param[P_ARP_GRATUITOUS];  // 8-bits number of seconds, or minutes if > 100
 
   if ((WL_CONNECTED != Wifi.status) || (0 == wifiTimerSec)) { return; }   // quick exit if wifi not connected or feature disabled
 

@@ -70,9 +70,9 @@ struct {
 /*********************************************************************************************/
 
 uint8_t Bh1750Resolution(uint32_t sensor_index) {
-  uint8_t settings_resolution = Settings.SensorBits1.bh1750_1_resolution;
+  uint8_t settings_resolution = Settings->SensorBits1.bh1750_1_resolution;
   if (1 == sensor_index) {
-    settings_resolution = Settings.SensorBits1.bh1750_2_resolution;
+    settings_resolution = Settings->SensorBits1.bh1750_2_resolution;
   }
   return settings_resolution;
 }
@@ -142,9 +142,9 @@ void CmndBh1750Resolution(void) {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= Bh1750.count)) {
     if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 2)) {
       if (1 == XdrvMailbox.index) {
-        Settings.SensorBits1.bh1750_1_resolution = XdrvMailbox.payload;
+        Settings->SensorBits1.bh1750_1_resolution = XdrvMailbox.payload;
       } else {
-        Settings.SensorBits1.bh1750_2_resolution = XdrvMailbox.payload;
+        Settings->SensorBits1.bh1750_2_resolution = XdrvMailbox.payload;
       }
       Bh1750SetResolution(XdrvMailbox.index -1);
     }

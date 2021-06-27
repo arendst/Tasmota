@@ -45,7 +45,7 @@ struct EZOHUM : public EZOStruct {
     if (isnan(temperature)) {
       char parameter[FLOATSZ];
 
-      dtostrfd(humidity, Settings.flag2.humidity_resolution, parameter);
+      dtostrfd(humidity, Settings->flag2.humidity_resolution, parameter);
       WSContentSend_PD(HTTP_SNS_HUM, name, parameter);
     } else {
       TempHumDewShow(json, (0 == TasmotaGlobal.tele_period), name, temperature, humidity);

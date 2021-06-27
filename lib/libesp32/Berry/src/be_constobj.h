@@ -47,14 +47,19 @@ extern "C" {
     .type = BE_REAL                                             \
 }
 
-#define be_const_str(_val) {                                    \
-    .v.s = (bstring*)(_val),                                       \
+#define be_const_str(_str) {                                    \
+    .v.s = (bstring*)(_str),                                    \
     .type = BE_STRING                                           \
 }
 
 #define be_const_class(_class) {                                \
     .v.c = &(_class),                                           \
     .type = BE_CLASS                                            \
+}
+
+#define be_const_closure(_closure) {                            \
+    .v.c = &(_closure),                                         \
+    .type = BE_CLOSURE                                          \
 }
 
 #define be_const_module(_module) {                              \
@@ -131,9 +136,19 @@ const bntvmodule be_native_module(_module) = {                  \
     BE_REAL                                                     \
 }
 
+#define be_const_str(_string) {                                 \
+    bvaldata(bstring(_string)),                                 \
+    BE_STRING                                                   \
+}
+
 #define be_const_class(_class) {                                \
     bvaldata(&(_class)),                                        \
     BE_CLASS                                                    \
+}
+
+#define be_const_closure(_closure) {                            \
+    bvaldata(&(_closure)),                                      \
+    BE_CLOSURE                                                  \
 }
 
 #define be_const_module(_module) {                              \

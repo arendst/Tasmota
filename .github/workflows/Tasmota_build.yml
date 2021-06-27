@@ -164,26 +164,6 @@ jobs:
         path: ./build_output
 
 
-  tasmota-ircustom:
-    needs: tasmota_pull
-    runs-on: ubuntu-latest
-    continue-on-error: true
-    steps:
-    - uses: actions/checkout@v1
-    - name: Set up Python
-      uses: actions/setup-python@v1
-    - name: Install dependencies
-      run: |
-        pip install -U platformio
-    - name: Run PlatformIO
-      run: |
-        platformio run -e tasmota-ircustom
-    - uses: actions/upload-artifact@v2
-      with:
-        name: firmware
-        path: ./build_output
-
-
   tasmota-zbbridge:
     needs: tasmota_pull
     runs-on: ubuntu-latest
@@ -198,6 +178,26 @@ jobs:
     - name: Run PlatformIO
       run: |
         platformio run -e tasmota-zbbridge
+    - uses: actions/upload-artifact@v2
+      with:
+        name: firmware
+        path: ./build_output
+
+
+  tasmota-zigbee:
+    needs: tasmota_pull
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v1
+    - name: Set up Python
+      uses: actions/setup-python@v1
+    - name: Install dependencies
+      run: |
+        pip install -U platformio
+    - name: Run PlatformIO
+      run: |
+        platformio run -e tasmota-zigbee
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
@@ -844,6 +844,26 @@ jobs:
         path: ./build_output
 
 
+  tasmota32-lvgl:
+    needs: tasmota_pull
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v1
+    - name: Set up Python
+      uses: actions/setup-python@v1
+    - name: Install dependencies
+      run: |
+        pip install -U platformio
+    - name: Run PlatformIO
+      run: |
+        platformio run -e tasmota32-lvgl
+    - uses: actions/upload-artifact@v2
+      with:
+        name: firmware
+        path: ./build_output
+
+
   tasmota32-ir:
     needs: tasmota_pull
     runs-on: ubuntu-latest
@@ -858,26 +878,6 @@ jobs:
     - name: Run PlatformIO
       run: |
         platformio run -e tasmota32-ir
-    - uses: actions/upload-artifact@v2
-      with:
-        name: firmware
-        path: ./build_output
-
-
-  tasmota32-ircustom:
-    needs: tasmota_pull
-    runs-on: ubuntu-latest
-    continue-on-error: true
-    steps:
-    - uses: actions/checkout@v1
-    - name: Set up Python
-      uses: actions/setup-python@v1
-    - name: Install dependencies
-      run: |
-        pip install -U platformio
-    - name: Run PlatformIO
-      run: |
-        platformio run -e tasmota32-ircustom
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
@@ -1385,7 +1385,7 @@ jobs:
 
 
   Upload:
-    needs: [tasmota-VN, tasmota32-ircustom, tasmota32-VN, tasmota32-TW, tasmota32-TR]
+    needs: [tasmota-VN, tasmota32-VN, tasmota32-TW, tasmota32-TR]
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -1410,13 +1410,15 @@ jobs:
         [ ! -f ./mv_firmware/firmware/tasmota-minimal.* ] || mv ./mv_firmware/firmware/tasmota-minimal.* ./firmware/tasmota/
         [ ! -f ./mv_firmware/firmware/tasmota-lite.* ] || mv ./mv_firmware/firmware/tasmota-lite.* ./firmware/tasmota/
         [ ! -f ./mv_firmware/firmware/tasmota-ir*.* ] || mv ./mv_firmware/firmware/tasmota-ir*.* ./firmware/tasmota/
-        [ ! -f ./mv_firmware/firmware/tasmota-display.* ] || mv ./mv_firmware/firmware/tasmota-display.* ./firmware/tasmota/
+        [ ! -f ./mv_firmware/firmware/tasmota-display.* ] || mv ./mv_firmware/firmware/tasmota-display.* ./firmware/tasmota/ 
         [ ! -f ./mv_firmware/firmware/tasmota-knx.* ] || mv ./mv_firmware/firmware/tasmota-knx.* ./firmware/tasmota/
         [ ! -f ./mv_firmware/firmware/tasmota-zbbridge.* ] || mv ./mv_firmware/firmware/tasmota-zbbridge.* ./firmware/tasmota/
+        [ ! -f ./mv_firmware/firmware/tasmota-zigbee.* ] || mv ./mv_firmware/firmware/tasmota-zigbee.* ./firmware/tasmota/
         [ ! -f ./mv_firmware/firmware/tasmota32.* ] || mv ./mv_firmware/firmware/tasmota32.* ./firmware/tasmota32/
         [ ! -f ./mv_firmware/firmware/tasmota32solo1*.* ] || mv ./mv_firmware/firmware/tasmota32solo1*.* ./firmware/tasmota32/
         [ ! -f ./mv_firmware/firmware/tasmota32-ir*.* ] || mv ./mv_firmware/firmware/tasmota32-ir*.* ./firmware/tasmota32/
         [ ! -f ./mv_firmware/firmware/tasmota32-display.* ] || mv ./mv_firmware/firmware/tasmota32-display.* ./firmware/tasmota32/
+        [ ! -f ./mv_firmware/firmware/tasmota32-lvgl.* ] || mv ./mv_firmware/firmware/tasmota32-lvgl.* ./firmware/tasmota32/
         [ ! -f ./mv_firmware/firmware/tasmota32-web*.* ] || mv ./mv_firmware/firmware/tasmota32-web*.* ./firmware/tasmota32/
         [ ! -f ./mv_firmware/firmware/tasmota32-odroidgo.* ] || mv ./mv_firmware/firmware/tasmota32-odroidgo.* ./firmware/tasmota32/
         [ ! -f ./mv_firmware/firmware/tasmota32-core2.* ] || mv ./mv_firmware/firmware/tasmota32-core2.* ./firmware/tasmota32/

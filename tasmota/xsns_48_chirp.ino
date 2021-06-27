@@ -382,9 +382,9 @@ void ChirpEvery100MSecond(void)
           chirp_next_job++;
           break;
           case 14:
-          if (Settings.tele_period > 16){
-              chirp_timeout_count = (Settings.tele_period - 16) * 10;  // sync it with the TELEPERIOD, we need about up to 16 seconds to measure
-              DEBUG_SENSOR_LOG(PSTR("CHIRP: timeout 1/10 sec: %u, tele: %u"), chirp_timeout_count, Settings.tele_period);
+          if (Settings->tele_period > 16){
+              chirp_timeout_count = (Settings->tele_period - 16) * 10;  // sync it with the TELEPERIOD, we need about up to 16 seconds to measure
+              DEBUG_SENSOR_LOG(PSTR("CHIRP: timeout 1/10 sec: %u, tele: %u"), chirp_timeout_count, Settings->tele_period);
             }
           else{
             AddLog(LOG_LEVEL_INFO, PSTR("CHIRP: TELEPERIOD must be > 16 seconds !"));
@@ -433,7 +433,7 @@ void ChirpShow(bool json)
         if(!chirp_sensor[i].explicitSleep) {
           ResponseAppend_P(PSTR(",\"%s%u\":{\"" D_JSON_MOISTURE "\":%d"), chirp_name, i, chirp_sensor[i].moisture);
           if(chirp_sensor[i].temperature!=-1){ // this is the error code -> no temperature
-            ResponseAppend_P(PSTR(",\"" D_JSON_TEMPERATURE "\":%*_f"), Settings.flag2.temperature_resolution, &t_temperature);
+            ResponseAppend_P(PSTR(",\"" D_JSON_TEMPERATURE "\":%*_f"), Settings->flag2.temperature_resolution, &t_temperature);
           }
           ResponseAppend_P(PSTR(",\"" D_JSON_DARKNESS "\":%s}"),str_light);
         }

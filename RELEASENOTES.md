@@ -32,7 +32,7 @@ Support of Core versions before 2.7.1 has been removed.
 
 ## Support of TLS
 
-In addition to TLS using fingerprints now also user supplied CA certs and AWS IoT is supported. Read [full documentation](https://tasmota.github.io/docs/AWS-IoT)
+In addition to TLS using fingerprints now also user supplied CA certs, AWS IoT and Azure IoT is supported. Read [full documentation](https://tasmota.github.io/docs/AWS-IoT)
 
 ## Initial configuration tools
 
@@ -43,51 +43,72 @@ For initial configuration this release supports Webserver based **WifiManager** 
 ### ESP8266 or ESP8285 based
 The following binary downloads have been compiled with ESP8266/Arduino library core version **2.7.4.9**.
 
-- **tasmota.bin** = The Tasmota version with most drivers. **RECOMMENDED RELEASE BINARY**
-- **tasmota-BG.bin** to **tasmota-TW.bin** = The Tasmota version in different languages.
-- **tasmota-lite.bin** = The Lite version without most drivers and sensors.
-- **tasmota-knx.bin** = The Knx version without some features but adds KNX support.
-- **tasmota-sensors.bin** = The Sensors version adds more useful sensors.
-- **tasmota-ir.bin** = The InfraRed Receiver and transmitter version allowing all available protocols provided by library IRremoteESP8266 but without most other features.
-- **tasmota-display.bin** = The Display version without Energy Monitoring but adds display support.
-- **tasmota-zbbridge.bin** = The dedicated Sonoff Zigbee Bridge version.
-- **tasmota-minimal.bin** = The Minimal version allows intermediate OTA uploads to support larger versions and does NOT change any persistent parameter. This version **should NOT be used for initial installation**.
+- **tasmota.bin** = The Tasmota version with most drivers for 1M+ flash. **RECOMMENDED RELEASE BINARY**
+- **tasmota-AF.bin** to **tasmota-VN.bin** = The Tasmota version in different languages for 1M+ flash.
+- **tasmota-lite.bin** = The Lite version without most drivers and sensors for 1M+ flash.
+- **tasmota-knx.bin** = The Knx version without some features but adds KNX support for 1M+ flash.
+- **tasmota-sensors.bin** = The Sensors version adds more useful sensors for 1M+ flash.
+- **tasmota-ir.bin** = The InfraRed Receiver and transmitter version allowing all available protocols provided by library IRremoteESP8266 but without most other features for 1M+ flash.
+- **tasmota-display.bin** = The Display version without Energy Monitoring but adds display support for 1M+ flash.
+- **tasmota-zbbridge.bin** = The dedicated Sonoff Zigbee Bridge version for 2M+ flash.
+- **tasmota-zigbee.bin** = The dedicated cc25xx Zigbee Bridge version for 4M+ flash.
+- **tasmota-minimal.bin** = The Minimal version allows intermediate OTA uploads to support larger versions and does NOT change any persistent parameter for 1M+ flash. This version **should NOT be used for initial installation**.
 
 Above binaries are also available as gzipped version allowing faster uploads.
 
-The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota/release. The links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmota.com/tasmota/release/tasmota.bin.gz``
+Latest released binaries can be downloaded from
+- https://github.com/arendst/Tasmota/tree/release-firmware
+- http://ota.tasmota.com/tasmota/release
+
+Historical binaries can be downloaded from
+- http://ota.tasmota.com/tasmota/release-9.5.0
+
+The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmota.com/tasmota/release/tasmota.bin.gz``
 
 ### ESP32 based
 The following binary downloads have been compiled with ESP32/Arduino library core version **1.0.6**.
 
-- **tasmota32.bin** = The Tasmota version with most drivers including additional sensors and KNX.  **RECOMMENDED RELEASE BINARY**
-- **tasmota32solo1.bin** = The Tasmota version with most drivers including additional sensors and KNX for single core ESP32.
-- **tasmota32-BG.bin** to **tasmota32-TW.bin** = The Tasmota version in different languages.
-- **tasmota32-ir.bin** = The InfraRed Receiver and transmitter version allowing all available protocols provided by library IRremoteESP8266 but without most other features.
-- **tasmota32-display.bin** = The Display version without Energy Monitoring but adds display support.
-- **tasmota32-webcam.bin** = The Webcam version adds webcam support.
-- **tasmota32-bluetooth.bin** = The Bluetooth version adds BLE support.
-- **tasmota32-odroidgo.bin** = The Odroid-Go version is specifically tailored to Odroid_go hardware.
-- **tasmota32-core2.bin** = The Core2 version is specifically tailored to M5Stack Core2 hardware.
+- **tasmota32.bin** = The Tasmota version with most drivers including additional sensors and KNX for 4M+ flash.  **RECOMMENDED RELEASE BINARY**
+- **tasmota32_8M.bin** = The Tasmota version with most drivers including additional sensors and KNX for 8M+ flash.
+- **tasmota32_16M.bin** = The Tasmota version with most drivers including additional sensors and KNX for 16M+ flash.
+- **tasmota32solo1.bin** = The Tasmota version with most drivers including additional sensors and KNX for single core ESP32 and 4M+ flash.
+- **tasmota32-AF.bin** to **tasmota32-VN.bin** = The Tasmota version in different languages for 4M+ flash.
+- **tasmota32-ir.bin** = The InfraRed Receiver and transmitter version allowing all available protocols provided by library IRremoteESP8266 but without most other features for 4M+ flash.
+- **tasmota32-display.bin** = The Display version without Energy Monitoring but adds display support for 4M+ flash.
+- **tasmota32-webcam.bin** = The Webcam version adds webcam support for 4M+ flash.
+- **tasmota32-bluetooth.bin** = The Bluetooth version adds BLE support for 4M+ flash.
+- **tasmota32-odroidgo.bin** = The Odroid-Go version is specifically tailored to Odroid_go hardware for 8M+ flash.
+- **tasmota32-core2.bin** = The Core2 version is specifically tailored to M5Stack Core2 hardware for 8M+ flash.
 
-The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota32/release. The links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmota.com/tasmota32/release/tasmota32.bin``
+Latest released binaries can be downloaded from
+- https://github.com/arendst/Tasmota/tree/release-firmware
+- http://ota.tasmota.com/tasmota32/release
+
+Historical binaries can be downloaded from
+- http://ota.tasmota.com/tasmota32/release-9.5.0
+
+The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmota.com/tasmota32/release/tasmota32.bin``
+
+## Additional information
 
 [List](MODULES.md) of embedded modules.
 
 [Complete list](BUILDS.md) of available feature and sensors.
 
-## Changelog v9.4.0.1
+## Changelog v9.5.0.1
 ### Added
-- Command ``Wifi 0/1`` for ESP8266 to turn wifi Off and On. When wifi is Off it is always returned On after a restart except for a wake-up from deepsleep [#11839](https://github.com/arendst/Tasmota/issues/11839)
-
-### Breaking Changed
 
 ### Changed
-- Zigbee refactored storage for device configuration and device last known data [#11838](https://github.com/arendst/Tasmota/issues/11838)
+- ESP32 core library from v1.0.6 to v1.0.7
+- Force ESP32 defines USE_UFILESYS, GUI_TRASH_FILE and #define GUI_EDIT_FILE
+- Speed up initial GUI console refresh
+- Simplified configuration for ir-full and removal of tasmota-ircustom [#12428](https://github.com/arendst/Tasmota/issues/12428)
 
 ### Fixed
-- Command ``Power`` should not reset pulsetime [#11805](https://github.com/arendst/Tasmota/issues/11805)
-- Teleperiod rule handling regression from v9.3.1.2 [#11851](https://github.com/arendst/Tasmota/issues/11851)
+- DDS238-2 wrong reactive power value [#12283](https://github.com/arendst/Tasmota/issues/12283)
+- ESP32 Webcam add boundary marker before sending mjpeg image [#12376](https://github.com/arendst/Tasmota/issues/12376)
+- NO VALID JSON regression from may 4th [#12440](https://github.com/arendst/Tasmota/issues/12440)
+- Telegram response decoding stopped working after 20210621 and exception on long result message [#12451](https://github.com/arendst/Tasmota/issues/12451)
 
 ### Noted
 - ESP32 single core **tasmota32solo1.bin** binary can only be uploaded using the GUI as OTA upload will trigger the watchdog timer

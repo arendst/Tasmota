@@ -123,7 +123,7 @@ size_t MhzSendCmd(uint8_t command_id)
   memcpy_P(&mhz_send[6], kMhzCommands[command_id] + sizeof(uint16_t), sizeof(uint16_t));
   mhz_send[8] = MhzCalculateChecksum(mhz_send);
 
-//  AddLog_P(LOG_LEVEL_DEBUG, PSTR("Final MhzCommand: %x %x %x %x %x %x %x %x %x"),mhz_send[0],mhz_send[1],mhz_send[2],mhz_send[3],mhz_send[4],mhz_send[5],mhz_send[6],mhz_send[7],mhz_send[8]);
+//  AddLog(LOG_LEVEL_DEBUG, PSTR("Final MhzCommand: %x %x %x %x %x %x %x %x %x"),mhz_send[0],mhz_send[1],mhz_send[2],mhz_send[3],mhz_send[4],mhz_send[5],mhz_send[6],mhz_send[7],mhz_send[8]);
 
   return MhzSerial->write(mhz_send, sizeof(mhz_send));
 }
@@ -218,7 +218,7 @@ void MhzEverySecond(void)
 
     uint16_t u = (mhz_response[6] << 8) | mhz_response[7];
     if (15000 == u) {      // During (and only ever at) sensor boot, 'u' is reported as 15000
-      if (Settings.SensorBits1.mhz19b_abc_disable) {
+      if (Settings->SensorBits1.mhz19b_abc_disable) {
         // After bootup of the sensor the ABC will be enabled.
         // Thus only actively disable after bootup.
         mhz_abc_must_apply = true;
@@ -237,7 +237,7 @@ void MhzEverySecond(void)
         if (0 == s || 64 == s) {  // Reading is stable.
           if (mhz_abc_must_apply) {
             mhz_abc_must_apply = false;
-            if (!Settings.SensorBits1.mhz19b_abc_disable) {
+            if (!Settings->SensorBits1.mhz19b_abc_disable) {
               MhzSendCmd(MHZ_CMND_ABCENABLE);
             } else {
               MhzSendCmd(MHZ_CMND_ABCDISABLE);
@@ -276,12 +276,12 @@ bool MhzCommandSensor(void)
 
   switch (XdrvMailbox.payload) {
     case 0:
-      Settings.SensorBits1.mhz19b_abc_disable = true;
+      Settings->SensorBits1.mhz19b_abc_disable = true;
       MhzSendCmd(MHZ_CMND_ABCDISABLE);
       Response_P(S_JSON_SENSOR_INDEX_SVALUE, XSNS_15, ABC_DISABLED);
       break;
     case 1:
-      Settings.SensorBits1.mhz19b_abc_disable = false;
+      Settings->SensorBits1.mhz19b_abc_disable = false;
       MhzSendCmd(MHZ_CMND_ABCENABLE);
       Response_P(S_JSON_SENSOR_INDEX_SVALUE, XSNS_15, ABC_ENABLED);
       break;
@@ -310,7 +310,7 @@ bool MhzCommandSensor(void)
       Response_P(S_JSON_SENSOR_INDEX_SVALUE, XSNS_15, D_JSON_RANGE_5000);
       break;
     default:
-      if (!Settings.SensorBits1.mhz19b_abc_disable) {
+      if (!Settings->SensorBits1.mhz19b_abc_disable) {
         Response_P(S_JSON_SENSOR_INDEX_SVALUE, XSNS_15, ABC_ENABLED);
       } else {
         Response_P(S_JSON_SENSOR_INDEX_SVALUE, XSNS_15, ABC_DISABLED);
@@ -343,7 +343,7 @@ void MhzShow(bool json)
 
   if (json) {
     ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_MODEL "\":\"%s\",\"" D_JSON_CO2 "\":%d,\"" D_JSON_TEMPERATURE "\":%*_f}"),
-      types, model, mhz_last_ppm, Settings.flag2.temperature_resolution, &mhz_temperature);
+      types, model, mhz_last_ppm, Settings->flag2.temperature_resolution, &mhz_temperature);
 #ifdef USE_DOMOTICZ
     if (0 == TasmotaGlobal.tele_period) {
       DomoticzSensor(DZ_AIRQUALITY, mhz_last_ppm);

@@ -120,4 +120,5 @@ private:
     uint8_t _touches = 0;
     bool _init = false;
     TwoWire *_i2cPort;
+    uint8_t chip_id;
 };

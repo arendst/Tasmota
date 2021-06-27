@@ -748,10 +748,14 @@ public:
                     _frame_control.b.frame_type, _frame_control.b.direction, _frame_control.b.disable_def_resp,
                     _manuf_code, _transact_seq, _cmd_id,
                     &_payload);
-    if (Settings.flag3.tuya_serial_mqtt_publish) {
+    if (Settings->flag3.tuya_serial_mqtt_publish) {
       MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR(D_RSLT_SENSOR));
     } else {
-      AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE "%s"), TasmotaGlobal.mqtt_data);
+#ifdef MQTT_DATA_STRING
+      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE "%s"), TasmotaGlobal.mqtt_data.c_str());
+#else
+      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE "%s"), TasmotaGlobal.mqtt_data);
+#endif      
     }
   }
 
@@ -1370,7 +1374,7 @@ void ZCLFrame::computeSyntheticAttributes(Z_attribute_list& attr_list) {
       case 0x04030000:    // SeaPressure
         {
           int16_t pressure = attr.getInt();
-          int16_t pressure_sealevel = (pressure / FastPrecisePow(1.0 - ((float)Settings.altitude / 44330.0f), 5.255f)) - 21.6f;
+          int16_t pressure_sealevel = (pressure / FastPrecisePow(1.0 - ((float)Settings->altitude / 44330.0f), 5.255f)) - 21.6f;
           attr_list.addAttribute(0x0403, 0xFFF0).setInt(pressure_sealevel);
           // We create a synthetic attribute 0403/FFF0 to indicate sea level
         }
@@ -1668,7 +1672,7 @@ void ZCLFrame::parseClusterSpecificCommand(Z_attribute_list& attr_list) {
     zigbee_devices.setTimer(_srcaddr, 0 /* groupaddr */, USE_ZIGBEE_DEBOUNCE_COMMANDS, 0 /*clusterid*/, _srcendpoint, Z_CAT_DEBOUNCE_CMD, 0, &Z_ResetDebounce);
 
     convertClusterSpecific(attr_list, _cluster_id, _cmd_id, _frame_control.b.direction, _srcaddr, _srcendpoint, _payload);
-    if (!Settings.flag5.zb_disable_autoquery) {
+    if (!Settings->flag5.zb_disable_autoquery) {
     // read attributes unless disabled
       if (!_frame_control.b.direction) {    // only handle server->client (i.e. device->coordinator)
         if (_wasbroadcast) {                // only update for broadcast messages since we don't see unicast from device to device and we wouldn't know the target
@@ -1991,7 +1995,7 @@ void Z_postProcessAttributes(uint16_t shortaddr, uint16_t src_ep, class Z_attrib
 
   for (auto &attr : attr_list) {
     // add endpoint suffix if needed
-    if ((Settings.flag4.zb_index_ep) && (src_ep != 1) && (count_ep > 1)) {
+    if ((Settings->flag4.zb_index_ep) && (src_ep != 1) && (count_ep > 1)) {
       // we need to add suffix if the suffix is not already different from 1
       if (attr.key_suffix == 1) {
         attr.key_suffix = src_ep;
@@ -2042,7 +2046,7 @@ void Z_postProcessAttributes(uint16_t shortaddr, uint16_t src_ep, class Z_attrib
         uint8_t *attr_address = ((uint8_t*)&data) + sizeof(Z_Data) + map_offset;
         uint32_t uval32 = attr.getUInt();     // call converter to uint only once
         int32_t  ival32 = attr.getInt();     // call converter to int only once
-        // AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_ZIGBEE "Mapping type=%d offset=%d zigbee_type=%02X value=%d\n"), (uint8_t) map_type, map_offset, zigbee_type, ival32);
+        // AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_ZIGBEE "Mapping type=%d offset=%d zigbee_type=%02X value=%d\n"), (uint8_t) map_type, map_offset, zigbee_type, ival32);
         switch (ccccaaaa) {
           case 0xEF000202:
           case 0xEF000203:    // need to convert Tuya temperatures from 1/10 to 1/00 °C
@@ -2108,7 +2112,7 @@ void Z_parseAttributeKey_inner(class Z_attribute & attr, uint16_t preferred_clus
     uint16_t local_cluster_id = CxToCluster(pgm_read_byte(&converter->cluster_short));
     uint8_t  local_type_id = pgm_read_byte(&converter->type);
     int8_t   local_multiplier = CmToMultiplier(pgm_read_byte(&converter->multiplier_idx));
-    // AddLog_P(LOG_LEVEL_DEBUG, PSTR("Try cluster = 0x%04X, attr = 0x%04X, type_id = 0x%02X"), local_cluster_id, local_attr_id, local_type_id);
+    // AddLog(LOG_LEVEL_DEBUG, PSTR("Try cluster = 0x%04X, attr = 0x%04X, type_id = 0x%02X"), local_cluster_id, local_attr_id, local_type_id);
 
     if (!attr.key_is_str) {
       if ((attr.key.id.cluster == local_cluster_id) && (attr.key.id.attr_id == local_attr_id)) {
@@ -2117,7 +2121,7 @@ void Z_parseAttributeKey_inner(class Z_attribute & attr, uint16_t preferred_clus
       }
     } else if (pgm_read_word(&converter->name_offset)) {
       const char * key = attr.key.key;
-      // AddLog_P(LOG_LEVEL_DEBUG, PSTR("Comparing '%s' with '%s'"), attr_name, converter->name);
+      // AddLog(LOG_LEVEL_DEBUG, PSTR("Comparing '%s' with '%s'"), attr_name, converter->name);
       if (0 == strcasecmp_P(key, Z_strings + pgm_read_word(&converter->name_offset))) {
         if ((preferred_cluster == 0xFFFF) ||    // any cluster
             (local_cluster_id == preferred_cluster)) {
@@ -2171,7 +2175,7 @@ bool Z_parseAttributeKey(class Z_attribute & attr, uint16_t preferred_cluster) {
       attr.attr_type = type_id;
     }
   }
-  // AddLog_P(LOG_LEVEL_DEBUG, PSTR("cluster_id = 0x%04X, attr_id = 0x%04X"), cluster_id, attr_id);
+  // AddLog(LOG_LEVEL_DEBUG, PSTR("cluster_id = 0x%04X, attr_id = 0x%04X"), cluster_id, attr_id);
 
   // do we already know the type, i.e. attribute and cluster are also known
   if ((Zunk == attr.attr_type) && (preferred_cluster != 0xFFFF)) {

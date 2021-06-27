@@ -78,6 +78,10 @@ void *special_realloc(void *ptr, size_t size) {
   return realloc(ptr, size);
 }
 
+void *special_calloc(size_t num, size_t size) {
+  return calloc(num, size);
+}
+
 String GetDeviceHardware(void) {
   // esptool.py get_efuses
   uint32_t efuse1 = *(uint32_t*)(0x3FF00050);
@@ -157,14 +161,16 @@ void SettingsErase(uint8_t type) {
   // cal_data - SDK PHY calibration data as documented in esp_phy_init.h
   // qpc      - Tasmota Quick Power Cycle state
   // main     - Tasmota Settings data
-  int32_t r1, r2, r3;
+  int32_t r1, r2, r3 = 0;
   switch (type) {
     case 0:               // Reset 2 = Erase all flash from program end to end of physical flash
     case 2:               // Reset 5, 6 = Erase all flash from program end to end of physical flash excluding filesystem
 //      nvs_flash_erase();  // Erase RTC, PHY, sta.mac, ap.sndchan, ap.mac, Tasmota etc.
       r1 = NvmErase("qpc");
       r2 = NvmErase("main");
+#ifdef USE_UFILESYS
       r3 = TfsDeleteFile(TASM_FILE_SETTINGS);
+#endif
       AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_ERASE " Tasmota data (%d,%d,%d)"), r1, r2, r3);
       break;
     case 1:               // Reset 3 = SDK parameter area
@@ -180,7 +186,9 @@ void SettingsErase(uint8_t type) {
 //      r3 = esp_phy_erase_cal_data_in_nvs();
 //      r3 = NvmErase("cal_data");
 //      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_ERASE " Tasmota (%d,%d) and PHY data (%d)"), r1, r2, r3);
+#ifdef USE_UFILESYS
       r3 = TfsDeleteFile(TASM_FILE_SETTINGS);
+#endif
       AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_ERASE " Tasmota data (%d,%d,%d)"), r1, r2, r3);
       break;
   }
@@ -188,15 +196,21 @@ void SettingsErase(uint8_t type) {
 
 uint32_t SettingsRead(void *data, size_t size) {
   uint32_t source = 1;
+#ifdef USE_UFILESYS
   if (!TfsLoadFile(TASM_FILE_SETTINGS, (uint8_t*)data, size)) {
+#endif
     source = 0;
     NvmLoad("main", "Settings", data, size);
+#ifdef USE_UFILESYS
   }
+#endif
   return source;
 }
 
 void SettingsWrite(const void *pSettings, unsigned nSettingsLen) {
+#ifdef USE_UFILESYS
   TfsSaveFile(TASM_FILE_SETTINGS, (const uint8_t*)pSettings, nSettingsLen);
+#endif
   NvmSave("main", "Settings", pSettings, nSettingsLen);
 }
 
@@ -486,6 +500,13 @@ void *special_realloc(void *ptr, size_t size) {
     return heap_caps_realloc(ptr, size, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
   } else {
     return realloc(ptr, size);
+  }
+}
+void *special_calloc(size_t num, size_t size) {
+  if (psramFound()) {
+    return heap_caps_calloc(num, size, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+  } else {
+    return calloc(num, size);
   }
 }
 

@@ -628,24 +628,6 @@ int MI32_decryptPacket(char *_buf, uint16_t _bufSize, uint32_t _type){
 }
 #endif // USE_MI_DECRYPTION
 
-#ifdef USE_HOME_ASSISTANT
-/**
- * @brief For HASS only, changes last entry of JSON in mqtt_data to 'null'
- */
-
-void MI32nullifyEndOfMQTT_DATA(){
-  char *p = TasmotaGlobal.mqtt_data + strlen(TasmotaGlobal.mqtt_data);
-  while(true){
-    *p--;
-    if(p[0]==':'){
-      p[1] = 0;
-      break;
-    }
-  }
-  ResponseAppend_P(PSTR("null"));
-}
-#endif // USE_HOME_ASSISTANT
-
 /*********************************************************************************************\
  * common functions
 \*********************************************************************************************/
@@ -798,7 +780,7 @@ void MI32Init(void) {
     AddLog(LOG_LEVEL_INFO,PSTR("M32: Init BLE device"));
     MI32.mode.canScan = 1;
     MI32.mode.init = 1;
-    MI32.period = Settings.tele_period;
+    MI32.period = Settings->tele_period;
 
     MI32StartScanTask(); // Let's get started !!
   }
@@ -1598,12 +1580,14 @@ void MI32addBeacon(uint8_t index, char* data){
 void MI32showScanResults(){
   size_t _size = MIBLEscanResult.size();
   ResponseAppend_P(PSTR(",\"BLEScan\":{\"Found\":%u,\"Devices\":["), _size);
+  bool add_comma = false;
   for(auto _scanResult : MIBLEscanResult){
     char _MAC[18];
     ToHex_P(_scanResult.MAC,6,_MAC,18,':');
-    ResponseAppend_P(PSTR("{\"MAC\":\"%s\",\"CID\":\"0x%04x\",\"SVC\":\"0x%04x\",\"UUID\":\"0x%04x\",\"RSSI\":%d},"), _MAC, _scanResult.CID, _scanResult.SVC, _scanResult.UUID, _scanResult.RSSI);
+    ResponseAppend_P(PSTR("%s{\"MAC\":\"%s\",\"CID\":\"0x%04x\",\"SVC\":\"0x%04x\",\"UUID\":\"0x%04x\",\"RSSI\":%d}"),
+      (add_comma)?",":"", _MAC, _scanResult.CID, _scanResult.SVC, _scanResult.UUID, _scanResult.RSSI);
+    add_comma = true;  
   }
-  if(_size != 0)TasmotaGlobal.mqtt_data[strlen(TasmotaGlobal.mqtt_data)-1] = 0; // delete last comma
   ResponseAppend_P(PSTR("]}"));
   MIBLEscanResult.clear();
   MI32.mode.shallShowScanResult = 0;
@@ -1611,12 +1595,13 @@ void MI32showScanResults(){
 
 void MI32showBlockList(){
   ResponseAppend_P(PSTR(",\"Block\":["));
+  bool add_comma = false;
   for(auto _scanResult : MIBLEBlockList){
     char _MAC[18];
     ToHex_P(_scanResult.buf,6,_MAC,18,':');
-    ResponseAppend_P(PSTR("\"%s\","), _MAC);
+    ResponseAppend_P(PSTR("%s\"%s\""), (add_comma)?",":"", _MAC);
+    add_comma = true;  
   }
-  if(MIBLEBlockList.size()!=0) TasmotaGlobal.mqtt_data[strlen(TasmotaGlobal.mqtt_data)-1] = 0; // delete last comma
   ResponseAppend_P(PSTR("]"));
   MI32.mode.shallShowBlockList = 0;
 }
@@ -1990,6 +1975,14 @@ const char HTTP_NMT[] PROGMEM = "{s}%s No motion{m}> %u seconds{e}";
 const char HTTP_MI32_FLORA_DATA[] PROGMEM = "{s}%s" " Fertility" "{m}%u us/cm{e}";
 const char HTTP_MI32_HL[] PROGMEM = "{s}<hr>{m}<hr>{e}";
 
+void MI32ShowContinuation(bool *commaflg) {
+  if (*commaflg) {
+    ResponseAppend_P(PSTR(","));
+  } else {
+    *commaflg = true;
+  }
+}
+
 void MI32Show(bool json)
 {
   if (json) {
@@ -2023,11 +2016,10 @@ void MI32Show(bool json)
       if(MI32.mode.triggeredTele && MIBLEsensors[i].eventType.raw == 0) continue;
       if(MI32.mode.triggeredTele && MIBLEsensors[i].shallSendMQTT==0) continue;
 
-      ResponseAppend_P(PSTR(",\"%s-%02x%02x%02x\":"), // do not add the '{' now ...
+      bool commaflg = false;
+      ResponseAppend_P(PSTR(",\"%s-%02x%02x%02x\":{"),
         kMI32DeviceType[MIBLEsensors[i].type-1],
         MIBLEsensors[i].MAC[3], MIBLEsensors[i].MAC[4], MIBLEsensors[i].MAC[5]);
-
-      uint32_t _positionCurlyBracket = strlen(TasmotaGlobal.mqtt_data); // ... this will be a ',' first, but later be replaced
 
       if((!MI32.mode.triggeredTele && !MI32.option.minimalSummary)||MI32.mode.triggeredTele){
         bool tempHumSended = false;
@@ -2038,7 +2030,7 @@ void MI32Show(bool json)
               ||(hass_mode!=-1)
 #endif //USE_HOME_ASSISTANT
             ) {
-              ResponseAppend_P(PSTR(","));
+              MI32ShowContinuation(&commaflg);
               ResponseAppendTHD(MIBLEsensors[i].temp, MIBLEsensors[i].hum);
               tempHumSended = true;
             }
@@ -2051,8 +2043,9 @@ void MI32Show(bool json)
               ||(hass_mode!=-1)
 #endif //USE_HOME_ASSISTANT
             ) {
-              ResponseAppend_P(PSTR(",\"" D_JSON_TEMPERATURE "\":%*_f"),
-                Settings.flag2.temperature_resolution, &MIBLEsensors[i].temp);
+              MI32ShowContinuation(&commaflg);
+              ResponseAppend_P(PSTR("\"" D_JSON_TEMPERATURE "\":%*_f"),
+                Settings->flag2.temperature_resolution, &MIBLEsensors[i].temp);
             }
           }
         }
@@ -2064,50 +2057,63 @@ void MI32Show(bool json)
 #endif //USE_HOME_ASSISTANT
             ) {
               char hum[FLOATSZ];
-              dtostrfd(MIBLEsensors[i].hum, Settings.flag2.humidity_resolution, hum);
-              ResponseAppend_P(PSTR(",\"" D_JSON_HUMIDITY "\":%s"), hum);
+              dtostrfd(MIBLEsensors[i].hum, Settings->flag2.humidity_resolution, hum);
+              MI32ShowContinuation(&commaflg);
+              ResponseAppend_P(PSTR("\"" D_JSON_HUMIDITY "\":%s"), hum);
             }
           }
         }
         if (MIBLEsensors[i].feature.lux){
           if(MIBLEsensors[i].eventType.lux || !MI32.mode.triggeredTele || MI32.option.allwaysAggregate){
-            if (MIBLEsensors[i].lux!=0x0ffffff
 #ifdef USE_HOME_ASSISTANT
-              ||(hass_mode!=-1)
+            if ((hass_mode != -1) && (MIBLEsensors[i].lux == 0x0ffffff)) {
+              MI32ShowContinuation(&commaflg);
+              ResponseAppend_P(PSTR("\"" D_JSON_ILLUMINANCE "\":null"));
+            } else
+#endif //USE_HOME_ASSISTANT
+            if ((MIBLEsensors[i].lux != 0x0ffffff)
+#ifdef USE_HOME_ASSISTANT
+              || (hass_mode != -1)
 #endif //USE_HOME_ASSISTANT
             ) { // this is the error code -> no lux
-              ResponseAppend_P(PSTR(",\"" D_JSON_ILLUMINANCE "\":%u"), MIBLEsensors[i].lux);
-#ifdef USE_HOME_ASSISTANT
-              if (MIBLEsensors[i].lux==0x0ffffff) MI32nullifyEndOfMQTT_DATA();
-#endif //USE_HOME_ASSISTANT
+              MI32ShowContinuation(&commaflg);
+              ResponseAppend_P(PSTR("\"" D_JSON_ILLUMINANCE "\":%u"), MIBLEsensors[i].lux);
             }
           }
         }
         if (MIBLEsensors[i].feature.moist){
           if(MIBLEsensors[i].eventType.moist || !MI32.mode.triggeredTele || MI32.option.allwaysAggregate){
-            if (MIBLEsensors[i].moisture!=0xff
 #ifdef USE_HOME_ASSISTANT
-              ||(hass_mode!=-1)
+            if ((hass_mode != -1) && (MIBLEsensors[i].moisture == 0xff)) {
+              MI32ShowContinuation(&commaflg);
+              ResponseAppend_P(PSTR("\"" D_JSON_MOISTURE "\":null"));
+            } else
+#endif //USE_HOME_ASSISTANT
+            if ((MIBLEsensors[i].moisture != 0xff)
+#ifdef USE_HOME_ASSISTANT
+              || (hass_mode != -1)
 #endif //USE_HOME_ASSISTANT
             ) {
-              ResponseAppend_P(PSTR(",\"" D_JSON_MOISTURE "\":%u"), MIBLEsensors[i].moisture);
-#ifdef USE_HOME_ASSISTANT
-              if (MIBLEsensors[i].moisture==0xff) MI32nullifyEndOfMQTT_DATA();
-#endif //USE_HOME_ASSISTANT
+              MI32ShowContinuation(&commaflg);
+              ResponseAppend_P(PSTR("\"" D_JSON_MOISTURE "\":%u"), MIBLEsensors[i].moisture);
             }
           }
         }
         if (MIBLEsensors[i].feature.fert){
           if(MIBLEsensors[i].eventType.fert || !MI32.mode.triggeredTele || MI32.option.allwaysAggregate){
-            if (MIBLEsensors[i].fertility!=0xffff
 #ifdef USE_HOME_ASSISTANT
-              ||(hass_mode!=-1)
+            if ((hass_mode != -1) && (MIBLEsensors[i].fertility == 0xffff)) {
+              MI32ShowContinuation(&commaflg);
+              ResponseAppend_P(PSTR("\"Fertility\":null"));
+            } else
+#endif //USE_HOME_ASSISTANT
+            if ((MIBLEsensors[i].fertility != 0xffff)
+#ifdef USE_HOME_ASSISTANT
+              || (hass_mode != -1)
 #endif //USE_HOME_ASSISTANT
             ) {
-              ResponseAppend_P(PSTR(",\"Fertility\":%u"), MIBLEsensors[i].fertility);
-#ifdef USE_HOME_ASSISTANT
-              if (MIBLEsensors[i].fertility==0xffff) MI32nullifyEndOfMQTT_DATA();
-#endif //USE_HOME_ASSISTANT
+              MI32ShowContinuation(&commaflg);
+              ResponseAppend_P(PSTR("\"Fertility\":%u"), MIBLEsensors[i].fertility);
             }
           }
         }
@@ -2117,50 +2123,63 @@ void MI32Show(bool json)
               ||(hass_mode==2)
 #endif //USE_HOME_ASSISTANT
           ){
-            ResponseAppend_P(PSTR(",\"Btn\":%u"),MIBLEsensors[i].Btn);
+            MI32ShowContinuation(&commaflg);
+            ResponseAppend_P(PSTR("\"Btn\":%u"),MIBLEsensors[i].Btn);
           }
         }
       } // minimal summary
       if (MIBLEsensors[i].feature.PIR){
         if(MIBLEsensors[i].eventType.motion || !MI32.mode.triggeredTele){
-          if(MI32.mode.triggeredTele) ResponseAppend_P(PSTR(",\"PIR\":1")); // only real-time
-          ResponseAppend_P(PSTR(",\"Events\":%u"),MIBLEsensors[i].events);
+          if(MI32.mode.triggeredTele) {
+            MI32ShowContinuation(&commaflg);
+            ResponseAppend_P(PSTR("\"PIR\":1")); // only real-time
+          }
+          MI32ShowContinuation(&commaflg);
+          ResponseAppend_P(PSTR("\"Events\":%u"),MIBLEsensors[i].events);
         }
         else if(MIBLEsensors[i].eventType.noMotion && MI32.mode.triggeredTele){
-          ResponseAppend_P(PSTR(",\"PIR\":0"));
+          MI32ShowContinuation(&commaflg);
+          ResponseAppend_P(PSTR("\"PIR\":0"));
         }
       }
 
       if (MIBLEsensors[i].type == FLORA && !MI32.mode.triggeredTele) {
         if (MIBLEsensors[i].firmware[0] != '\0') { // this is the error code -> no firmware
-          ResponseAppend_P(PSTR(",\"Firmware\":\"%s\""), MIBLEsensors[i].firmware);
+          MI32ShowContinuation(&commaflg);
+          ResponseAppend_P(PSTR("\"Firmware\":\"%s\""), MIBLEsensors[i].firmware);
         }
       }
 
       if (MIBLEsensors[i].feature.NMT || !MI32.mode.triggeredTele){
         if(MIBLEsensors[i].eventType.NMT){
-          ResponseAppend_P(PSTR(",\"NMT\":%u"), MIBLEsensors[i].NMT);
+          MI32ShowContinuation(&commaflg);
+          ResponseAppend_P(PSTR("\"NMT\":%u"), MIBLEsensors[i].NMT);
         }
       }
       if (MIBLEsensors[i].feature.bat){
         if(MIBLEsensors[i].eventType.bat || !MI32.mode.triggeredTele || MI32.option.allwaysAggregate){
-          if (MIBLEsensors[i].bat != 0x00
 #ifdef USE_HOME_ASSISTANT
-              ||(hass_mode!=-1)
+          if ((hass_mode != -1) && (MIBLEsensors[i].bat == 0x00)) {
+            MI32ShowContinuation(&commaflg);
+            ResponseAppend_P(PSTR("\"Battery\":null"));
+          } else
 #endif //USE_HOME_ASSISTANT
-          ) { // this is the error code -> no battery
-          ResponseAppend_P(PSTR(",\"Battery\":%u"), MIBLEsensors[i].bat);
+          if ((MIBLEsensors[i].bat != 0x00)
 #ifdef USE_HOME_ASSISTANT
-              if (MIBLEsensors[i].bat == 0x00) MI32nullifyEndOfMQTT_DATA();
+            || (hass_mode != -1)
 #endif //USE_HOME_ASSISTANT
+          ) {
+            MI32ShowContinuation(&commaflg);
+            ResponseAppend_P(PSTR("\"Battery\":%u"), MIBLEsensors[i].bat);
           }
         }
       }
-      if (MI32.option.showRSSI) ResponseAppend_P(PSTR(",\"RSSI\":%d"), MIBLEsensors[i].RSSI);
+      if (MI32.option.showRSSI) {
+        MI32ShowContinuation(&commaflg);
+        ResponseAppend_P(PSTR("\"RSSI\":%d"), MIBLEsensors[i].RSSI);
+      }
+      ResponseJsonEnd();
 
-      if(_positionCurlyBracket==strlen(TasmotaGlobal.mqtt_data)) ResponseAppend_P(PSTR(",")); // write some random char, to be overwritten in the next step
-      ResponseAppend_P(PSTR("}"));
-      TasmotaGlobal.mqtt_data[_positionCurlyBracket] = '{';
       MIBLEsensors[i].eventType.raw = 0;
       if(MIBLEsensors[i].shallSendMQTT==1){
         MIBLEsensors[i].shallSendMQTT = 0;
@@ -2279,7 +2298,7 @@ void MI32Show(bool json)
 
 bool Xsns62(uint8_t function)
 {
-  if (!Settings.flag5.mi32_enable) { return false; }  // SetOption115 - Enable ESP32 MI32 BLE
+  if (!Settings->flag5.mi32_enable) { return false; }  // SetOption115 - Enable ESP32 MI32 BLE
 
   bool result = false;
 

@@ -42,13 +42,14 @@ enum ZbUploadSteps { ZBU_IDLE, ZBU_INIT,
                      ZBU_SOFTWARE_RESET, ZBU_SOFTWARE_SEND, ZBU_HARDWARE_RESET, ZBU_PROMPT,
                      ZBU_SYNC, ZBU_UPLOAD, ZBU_EOT, ZBU_COMPLETE, ZBU_DONE, ZBU_ERROR, ZBU_FINISH };
 
-const uint8_t PIN_ZIGBEE_BOOTLOADER = 5;
+const uint8_t PIN_ZIGBEE_DEFAULT_BOOTLOADER = 5;    // default pin for Sonoff ZBBridge
 
 struct ZBUPLOAD {
   uint32_t ota_size = 0;
-  uint32_t sector_counter = 0;
+  int32_t sector_base = -1;
+  int32_t sector_counter = -1;
   uint32_t byte_counter = 0;
-  char *buffer;
+  char *buffer = nullptr;
   uint8_t ota_step = ZBU_IDLE;
   uint8_t bootloader = 0;
   uint8_t state = ZBU_IDLE;
@@ -65,16 +66,18 @@ uint32_t ZigbeeUploadAvailable(void) {
 }
 
 char ZigbeeUploadFlashRead(void) {
-  if (0 == ZbUpload.byte_counter) {
+  if (nullptr == ZbUpload.buffer) {
     if (!(ZbUpload.buffer = (char *)malloc(SPI_FLASH_SEC_SIZE))) {
-      return (-1);  // Not enough (memory) space
+      return -1;  // Not enough (memory) space
     }
   }
 
   uint32_t index = ZbUpload.byte_counter % SPI_FLASH_SEC_SIZE;
-  if (0 == index) {
+  int32_t sector = ZbUpload.sector_base + ZbUpload.byte_counter / SPI_FLASH_SEC_SIZE;
+  if (sector != ZbUpload.sector_counter) {
+    ZbUpload.sector_counter = sector;
     ESP.flashRead(ZbUpload.sector_counter * SPI_FLASH_SEC_SIZE, (uint32_t*)ZbUpload.buffer, SPI_FLASH_SEC_SIZE);
-    ZbUpload.sector_counter++;
+    // AddLog(LOG_LEVEL_DEBUG, "= sector %d %*_H", ZbUpload.sector_counter, 256, ZbUpload.buffer);
   }
 
   char data = ZbUpload.buffer[index];
@@ -91,7 +94,6 @@ char ZigbeeUploadFlashRead(void) {
     // When the source device reaches the last XModem data block, it should be padded to 128 bytes
     // of data using SUB (ASCII 0x1A) characters.
     data = XM_SUB;
-//    if (ZbUpload.buffer) { free(ZbUpload.buffer); }  // Don't in case of retries
   }
   return data;
 }
@@ -146,7 +148,7 @@ char XModemWaitACK(void)
     while (!ZigbeeSerial->available()) {
       delayMicroseconds(100);
       i++;
-      if (i > 200) { return -1; }
+      if (i > 4000) { return -1; }
     }
     in_char = ZigbeeSerial->read();
 
@@ -176,6 +178,7 @@ bool XModemSendPacket(uint32_t packet_no) {
 
     uint8_t packet_num = packet_no;
 
+    // AddLog(LOG_LEVEL_DEBUG, "++ Packet %d, retries %d, counter %d", packet_no, retries, ZbUpload.byte_counter);
     // Try to send packet, so header first
     ZigbeeSerial->write(XM_SOH);
     ZigbeeSerial->write(packet_num);
@@ -215,8 +218,11 @@ void ZigbeeUploadSetSoftwareBootloader() {
 }
 
 void ZigbeeUploadSetBootloader(uint8_t state) {
-  pinMode(PIN_ZIGBEE_BOOTLOADER, OUTPUT);
-  digitalWrite(PIN_ZIGBEE_BOOTLOADER, state);  // Toggle Gecko bootloader
+  int32_t pin_bootloader = Pin(GPIO_ZIGBEE_RST, 1);
+  if (pin_bootloader < 0) { pin_bootloader = PIN_ZIGBEE_DEFAULT_BOOTLOADER; }
+  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE "Bootloader pin %d"), pin_bootloader);
+  pinMode(pin_bootloader, OUTPUT);
+  digitalWrite(pin_bootloader, state);  // Toggle Gecko bootloader
   digitalWrite(Pin(GPIO_ZIGBEE_RST), 0);
   delay(100);                                  // Need to experiment to find a value as low as possible
   digitalWrite(Pin(GPIO_ZIGBEE_RST), 1);       // Reboot MCU EFR32
@@ -301,6 +307,7 @@ bool ZigbeeUploadXmodem(void) {
         XModem.timeout = millis() + (10 * 1000);  // Allow 10 seconds to receive EBL prompt
         XModem.delay = millis() + (2 * XMODEM_FLUSH_DELAY);
         ZbUpload.byte_counter = 0;
+        ZbUpload.sector_counter = -1;
         ZbUpload.ota_step = ZBU_PROMPT;
       }
       break;
@@ -311,6 +318,7 @@ bool ZigbeeUploadXmodem(void) {
       XModem.timeout = millis() + (30 * 1000);  // Allow 30 seconds to receive EBL prompt
       XModem.delay = millis() + (2 * XMODEM_FLUSH_DELAY);
       ZbUpload.byte_counter = 0;
+      ZbUpload.sector_counter = -1;
       ZbUpload.ota_step = ZBU_PROMPT;
       break;
     }
@@ -332,6 +340,7 @@ bool ZigbeeUploadXmodem(void) {
       XModem.timeout = millis() + (30 * 1000);  // Allow 30 seconds to receive EBL prompt
       XModem.delay = millis() + (2 * XMODEM_FLUSH_DELAY);
       ZbUpload.byte_counter = 0;
+      ZbUpload.sector_counter = -1;
       ZbUpload.ota_step = ZBU_PROMPT;
       break;
     }
@@ -390,8 +399,10 @@ bool ZigbeeUploadXmodem(void) {
           XModem.oldChecksum = (xmodem_sync == XM_NAK);
           XModem.packet_no = 1;
           ZbUpload.byte_counter = 0;
+          ZbUpload.sector_counter = -1;
           ZbUpload.ota_step = ZBU_UPLOAD;
           AddLog(LOG_LEVEL_DEBUG, PSTR("XMD: Init packet send"));
+          delay(100);
         }
       }
       break;
@@ -440,6 +451,7 @@ bool ZigbeeUploadXmodem(void) {
           AddLog(LOG_LEVEL_DEBUG, PSTR("XMD: " D_SUCCESSFUL));
           XModem.timeout = millis() + (30 * 1000);  // Allow 30 seconds to receive EBL prompt
           ZbUpload.byte_counter = 0;
+          ZbUpload.sector_counter = -1;
           ZbUpload.ota_step = ZBU_COMPLETE;
         }
       }
@@ -476,10 +488,10 @@ bool ZigbeeUploadXmodem(void) {
     case ZBU_DONE: {                     // *** Clean up and restart to disable bootloader and use new firmware
       ZigbeeUploadSetBootloader(1);      // Disable bootloader and reset MCU - should happen at restart
       if (1 == TasmotaGlobal.sleep) {
-        TasmotaGlobal.sleep = Settings.sleep;         // Restore loop sleep
+        TasmotaGlobal.sleep = Settings->sleep;         // Restore loop sleep
       }
 //      TasmotaGlobal.restart_flag = 2;    // Restart to disable bootloader and use new firmware
-      if (ZbUpload.buffer) { free(ZbUpload.buffer); }
+      if (ZbUpload.buffer) { free(ZbUpload.buffer); ZbUpload.buffer = nullptr; }
       ZbUpload.ota_step = ZBU_FINISH;    // Never return to zero without a restart to get a sane Zigbee environment
       break;
     }
@@ -506,7 +518,8 @@ uint8_t ZigbeeUploadStep1Init(void) {
 }
 
 void ZigbeeUploadStep1Done(uint32_t data, size_t size) {
-  ZbUpload.sector_counter = data;
+  ZbUpload.sector_base = data;
+  ZbUpload.sector_counter = -1;
   ZbUpload.ota_size = size;
   ZbUpload.ota_step = ZBU_INIT;
   ZbUpload.state = ZBU_UPLOAD;      // Signal upload done and ready for delayed upload to MCU EFR32
