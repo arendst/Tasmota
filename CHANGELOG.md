@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased] - Development
 
 ## [9.5.0.1]
+### Added
+- Enable UFILESYS, GUI_TRASH_FILE and GUI_EDIT_FILE for any device compiled with more than 1M flash size
+
 ### Changed
 - ESP32 core library from v1.0.6 to v1.0.7
 - Force ESP32 defines USE_UFILESYS, GUI_TRASH_FILE and #define GUI_EDIT_FILE

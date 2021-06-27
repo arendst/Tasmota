@@ -35,7 +35,6 @@
 #define USE_WEBCAM
 #define ENABLE_RTSPSERVER
 #define USE_SDCARD
-  #define GUI_TRASH_FILE
 #define USE_SPI
 #undef USE_BERRY                                 // Disable Berry scripting language
 #undef  USE_MI_ESP32                             // (ESP32 only) Disable support for ESP32 as a BLE-bridge (+9k2 mem, +292k flash)
@@ -203,10 +202,7 @@
 #define USE_BERRY                                // Enable Berry scripting language
 //#define USE_BERRY_PSRAM                        // Allocate Berry memory in PSRAM if PSRAM is connected - this might be slightly slower but leaves main memory intact
 
-#define USE_UFILESYS
 #define USE_SDCARD
-  #define GUI_TRASH_FILE
-  #define GUI_EDIT_FILE
 
 #define ROTARY_V1                                // Add support for Rotary Encoder as used in MI Desk Lamp
 
