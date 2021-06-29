@@ -122,7 +122,7 @@ static void m_solidify_proto(bvm *vm, bproto *pr, const char * func_name, int bu
     logfmt("%*s( &(const binstruction[%2d]) {  /* code */\n", indent, "", pr->codesize);
     for (int pc = 0; pc < pr->codesize; pc++) {
         uint32_t ins = pr->code[pc];
-        logfmt("%*s  0x%04X,  //", indent, "", ins);
+        logfmt("%*s  0x%08X,  //", indent, "", ins);
         be_print_inst(ins, pc);
         bopcode op = IGET_OP(ins);
         if (op == OP_GETGBL || op == OP_SETGBL) {
