@@ -1618,11 +1618,13 @@ uint32_t ValidPin(uint32_t pin, uint32_t gpio) {
     return GPIO_NONE;    // Disable flash pins GPIO6, GPIO7, GPIO8 and GPIO11
   }
 
+#ifndef CONFIG_IDF_TARGET_ESP32C3
   if ((WEMOS == Settings->module) && !Settings->flag3.user_esp8285_enable) {  // SetOption51 - Enable ESP8285 user GPIO's
     if ((9 == pin) || (10 == pin)) {
       return GPIO_NONE;  // Disable possible flash GPIO9 and GPIO10
     }
   }
+#endif  // not ESP32C3
 
   return gpio;
 }
