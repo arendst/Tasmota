@@ -367,48 +367,31 @@ void DisableBrownout(void) {
 //
 
 String ESP32GetResetReason(uint32_t cpu_no) {
-
-#if CONFIG_IDF_TARGET_ESP32
 	// tools\sdk\include\esp32\rom\rtc.h
-  switch (rtc_get_reset_reason(cpu_no)) {
-    case POWERON_RESET          : return F("Vbat power on reset");                              // 1
-    case SW_RESET               : return F("Software reset digital core");                      // 3
-    case OWDT_RESET             : return F("Legacy watch dog reset digital core");              // 4
-    case DEEPSLEEP_RESET        : return F("Deep Sleep reset digital core");                    // 5
-    case SDIO_RESET             : return F("Reset by SLC module, reset digital core");          // 6
-    case TG0WDT_SYS_RESET       : return F("Timer Group0 Watch dog reset digital core");        // 7
-    case TG1WDT_SYS_RESET       : return F("Timer Group1 Watch dog reset digital core");        // 8
-    case RTCWDT_SYS_RESET       : return F("RTC Watch dog Reset digital core");                 // 9
-    case INTRUSION_RESET        : return F("Instrusion tested to reset CPU");                   // 10
-    case TGWDT_CPU_RESET        : return F("Time Group reset CPU");                             // 11
-    case SW_CPU_RESET           : return F("Software reset CPU");                               // 12
-    case RTCWDT_CPU_RESET       : return F("RTC Watch dog Reset CPU");                          // 13
-    case EXT_CPU_RESET          : return F("or APP CPU, reseted by PRO CPU");                   // 14
-    case RTCWDT_BROWN_OUT_RESET : return F("Reset when the vdd voltage is not stable");         // 15
-    case RTCWDT_RTC_RESET       : return F("RTC Watch dog reset digital core and rtc module");  // 16
-  }
-#elif CONFIG_IDF_TARGET_ESP32S2
+	// tools\sdk\esp32\include\esp_rom\include\esp32c3\rom\rtc.h
 	// tools\sdk\esp32\include\esp_rom\include\esp32s2\rom\rtc.h
-  switch (rtc_get_reset_reason(cpu_no)) {
-    case POWERON_RESET          : return F("Vbat power on reset");                              // 1
-    case RTC_SW_SYS_RESET       : return F("Software reset digital core");                      // 3
-    case DEEPSLEEP_RESET        : return F("Deep Sleep reset digital core");                    // 5
-    case TG0WDT_SYS_RESET       : return F("Timer Group0 Watch dog reset digital core");        // 7
-    case TG1WDT_SYS_RESET       : return F("Timer Group1 Watch dog reset digital core");        // 8
-    case RTCWDT_SYS_RESET       : return F("RTC Watch dog Reset digital core");                 // 9
-    case INTRUSION_RESET        : return F("Instrusion tested to reset CPU");                   // 10
-    case TG0WDT_CPU_RESET       : return F("Time Group0 reset CPU");                            // 11
-    case RTC_SW_CPU_RESET       : return F("Software reset CPU");                               // 12
-    case RTCWDT_CPU_RESET       : return F("RTC Watch dog Reset CPU");                          // 13
-    case RTCWDT_BROWN_OUT_RESET : return F("Reset when the vdd voltage is not stable");         // 15
-    case RTCWDT_RTC_RESET       : return F("RTC Watch dog reset digital core and rtc module");  // 16
-    case TG1WDT_CPU_RESET       : return F("Time Group1 reset CPU");                            // 17
-    case SUPER_WDT_RESET        : return F("Super watchdog reset digital core and rtc module"); // 18
-    case GLITCH_RTC_RESET       : return F("Glitch reset digital core and rtc module");         // 19
+  switch (rtc_get_reset_reason(cpu_no)) {                                   //     ESP32             ESP32-S / ESP32-C
+    case 1  : return F("Vbat power on reset");                              // 1   POWERON_RESET     POWERON_RESET
+    case 3  : return F("Software reset digital core");                      // 3   SW_RESET          RTC_SW_SYS_RESET
+    case 4  : return F("Legacy watch dog reset digital core");              // 4   OWDT_RESET        -
+    case 5  : return F("Deep Sleep reset digital core");                    // 5   DEEPSLEEP_RESET   DEEPSLEEP_RESET
+    case 6  : return F("Reset by SLC module, reset digital core");          // 6   SDIO_RESET
+    case 7  : return F("Timer Group0 Watch dog reset digital core");        // 7   TG0WDT_SYS_RESET
+    case 8  : return F("Timer Group1 Watch dog reset digital core");        // 8   TG1WDT_SYS_RESET
+    case 9  : return F("RTC Watch dog Reset digital core");                 // 9   RTCWDT_SYS_RESET
+    case 10 : return F("Instrusion tested to reset CPU");                   // 10  INTRUSION_RESET
+    case 11 : return F("Time Group0 reset CPU");                            // 11  TGWDT_CPU_RESET   TG0WDT_CPU_RESET
+    case 12 : return F("Software reset CPU");                               // 12  SW_CPU_RESET      RTC_SW_CPU_RESET
+    case 13 : return F("RTC Watch dog Reset CPU");                          // 13  RTCWDT_CPU_RESET
+    case 14 : return F("or APP CPU, reseted by PRO CPU");                   // 14  EXT_CPU_RESET     -
+    case 15 : return F("Reset when the vdd voltage is not stable");         // 15  RTCWDT_BROWN_OUT_RESET
+    case 16 : return F("RTC Watch dog reset digital core and rtc module");  // 16  RTCWDT_RTC_RESET
+    case 17 : return F("Time Group1 reset CPU");                            // 17  -                 TG1WDT_CPU_RESET
+    case 18 : return F("Super watchdog reset digital core and rtc module"); // 18  -                 SUPER_WDT_RESET
+    case 19 : return F("Glitch reset digital core and rtc module");         // 19  -                 GLITCH_RTC_RESET
   }
-#endif
 
-  return F("No meaning");                                                                       // 0 and undefined
+  return F("No meaning");                                                   // 0 and undefined
 }
 
 String ESP_getResetReason(void) {
@@ -417,17 +400,10 @@ String ESP_getResetReason(void) {
 
 uint32_t ESP_ResetInfoReason(void) {
   RESET_REASON reason = rtc_get_reset_reason(0);
-#if CONFIG_IDF_TARGET_ESP32
-  if (POWERON_RESET == reason) { return REASON_DEFAULT_RST; }
-  if (SW_CPU_RESET == reason) { return REASON_SOFT_RESTART; }
-  if (DEEPSLEEP_RESET == reason)  { return REASON_DEEP_SLEEP_AWAKE; }
-  if (SW_RESET == reason) { return REASON_EXT_SYS_RST; }
-#elif CONFIG_IDF_TARGET_ESP32S2
-  if (POWERON_RESET == reason) { return REASON_DEFAULT_RST; }
-  if (RTC_SW_CPU_RESET == reason) { return REASON_SOFT_RESTART; }
-  if (DEEPSLEEP_RESET == reason)  { return REASON_DEEP_SLEEP_AWAKE; }
-  if (RTC_SW_SYS_RESET == reason) { return REASON_EXT_SYS_RST; }
-#endif
+  if (1  == reason) { return REASON_DEFAULT_RST; }       // POWERON_RESET
+  if (12 == reason) { return REASON_SOFT_RESTART; }      // SW_CPU_RESET / RTC_SW_CPU_RESET
+  if (5  == reason) { return REASON_DEEP_SLEEP_AWAKE; }  // DEEPSLEEP_RESET
+  if (3  == reason) { return REASON_EXT_SYS_RST; }       // SW_RESET / RTC_SW_SYS_RESET
   return -1; //no "official error code", but should work with the current code base
 }
 
