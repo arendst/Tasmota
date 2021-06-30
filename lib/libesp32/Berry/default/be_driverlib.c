@@ -13,6 +13,9 @@
     var web_add_handler
     var web_add_button
     var web_add_main_button
+    var web_add_management_button
+    var web_add_config_button
+    var web_add_console_button
     var save_before_restart
     var web_sensor
     var json_append
@@ -126,6 +129,9 @@ void be_load_driverlib(bvm *vm) {
         { "web_add_handler", NULL },
         { "web_add_button", NULL },
         { "web_add_main_button", NULL },
+        { "web_add_management_button", NULL },
+        { "web_add_config_button", NULL },
+        { "web_add_console_button", NULL },
         { "save_before_restart", NULL },
         { "web_sensor", NULL },
         { "json_append", NULL },
@@ -153,6 +159,9 @@ class be_class_tasmota_driver (scope: global, name: Driver) {
     web_add_handler, var
     web_add_button, var
     web_add_main_button, var
+    web_add_management_button, var
+    web_add_config_button, var
+    web_add_console_button, var
     save_before_restart, var
     web_sensor, var
     json_append, var
