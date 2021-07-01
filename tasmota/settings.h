@@ -521,18 +521,24 @@ typedef struct {
 
   uint8_t       ex_switchmode[8];          // 3A4 - Free since 9.2.0.6
 
-  myio          my_gp;                     // 3AC  2 x 18 bytes (ESP8266) / 2 x 40 bytes (ESP32)
+  myio          my_gp;                     // 3AC  2 x 18 bytes (ESP8266) / 2 x 40 bytes (ESP32) / 2 x 22 bytes (ESP32-C3)
 #ifdef ESP8266
   uint16_t      gpio16_converted;          // 3D0
   uint8_t       free_esp8266_3D2[42];      // 3D2
-#endif
-  mytmplt       user_template;             // 3FC  2 x 15 bytes (ESP8266) / 2 x 37 bytes (ESP32)
-#ifdef ESP8266
-
-  uint8_t       free_esp8266_41A[55];      // 41A
-
 #endif  // ESP8266
 #ifdef ESP32
+#ifdef CONFIG_IDF_TARGET_ESP32C3
+  uint8_t       free_esp32c3_3D8[36];      // 3D8  - Due to smaller myio
+#endif  // CONFIG_IDF_TARGET_ESP32C3
+#endif  // ESP32
+  mytmplt       user_template;             // 3FC  2 x 15 bytes (ESP8266) / 2 x 37 bytes (ESP32) / 2 x 23 bytes (ESP32-C3)
+#ifdef ESP8266
+  uint8_t       free_esp8266_41A[55];      // 41A
+#endif  // ESP8266
+#ifdef ESP32
+#ifdef CONFIG_IDF_TARGET_ESP32C3
+  uint8_t       free_esp32c3_42A[28];      // 42A  - Due to smaller mytmplt
+#endif  // CONFIG_IDF_TARGET_ESP32C3
   uint8_t       eth_type;                  // 446
   uint8_t       eth_clk_mode;              // 447
 
