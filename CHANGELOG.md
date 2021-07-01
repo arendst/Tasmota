@@ -3,6 +3,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
+## [9.5.0.2]
+### Fixed
+- ESP32-C3 settings layout for configuration backup and restore
+
 ## [9.5.0.1]
 ### Added
 - Enable UFILESYS, GUI_TRASH_FILE and GUI_EDIT_FILE for any device compiled with more than 1M flash size
