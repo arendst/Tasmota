@@ -320,9 +320,9 @@ void ButtonHandler(void) {
                   // Success
                 } else {
                   if (Button.press_counter[button_index] < 6) { // Single to Penta press
-                    if (WifiState() > WIFI_RESTART) {           // Wifimanager active
-                      TasmotaGlobal.restart_flag = 1;
-                    }
+//                    if (WifiState() > WIFI_RESTART) {           // Wifimanager active
+//                      TasmotaGlobal.restart_flag = 1;
+//                    }
                     if (!Settings->flag3.mqtt_buttons) {         // SetOption73 - Detach buttons from relays and enable MQTT action state for multipress
                       if (Button.press_counter[button_index] == 1) {  // By default first press always send a TOGGLE (2)
                         ExecuteCommandPower(button_index + Button.press_counter[button_index], POWER_TOGGLE, SRC_BUTTON);
