@@ -2402,9 +2402,9 @@ chknext:
           rstring[0] = 0;
           int8_t index = fvar;
 #ifdef MQTT_DATA_STRING
-          char *wd = TasmotaGlobal.mqtt_data;
+          char *wd = (char*)TasmotaGlobal.mqtt_data.c_str();
 #else
-          char *wd = TasmotaGlobal.mqtt_data.c_str();
+          char *wd = TasmotaGlobal.mqtt_data;
 #endif
           strlcpy(rstring, wd, glob_script_mem.max_ssize);
           if (index) {

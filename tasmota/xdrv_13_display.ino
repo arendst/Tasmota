@@ -1302,7 +1302,7 @@ void DisplayDTVarsTeleperiod(void) {
     char *json = (char*)malloc(jlen + 2);
     if (json) {
 #ifdef MQTT_DATA_STRING
-      strlcpy(json, TasmotaGlobal.mqtt_data.c_str(), jlen + 1);
+      strlcpy(json, (char*)TasmotaGlobal.mqtt_data.c_str(), jlen + 1);
 #else
       strlcpy(json, TasmotaGlobal.mqtt_data, jlen + 1);
 #endif
@@ -1325,7 +1325,7 @@ void get_dt_mqtt(void) {
     ResponseJsonEnd();
   }
 #ifdef MQTT_DATA_STRING
-  get_dt_vars(TasmotaGlobal.mqtt_data.c_str());
+  get_dt_vars((char*)TasmotaGlobal.mqtt_data.c_str());
 #else
   get_dt_vars(TasmotaGlobal.mqtt_data);
 #endif
