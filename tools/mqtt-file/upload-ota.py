@@ -50,7 +50,7 @@ myfiletype = 1                         # Tasmota firmware file type
 
 # **** End of User Configuration Section
 
-use_base64 = False
+use_base64 = True
 
 # Derive fulltopic from broker LWT message
 mypublish = "cmnd/"+mytopic+"/fileupload"
@@ -104,13 +104,16 @@ def on_message(client, userdata, msg):
    Ack_flag = False
 
 def wait_for_ack():
-   timeout = 100
+   global Err_flag
+
+   timeout = 500
    while Ack_flag and Err_flag == False and timeout > 0:
       time.sleep(0.01)
       timeout = timeout -1
 
    if 0 == timeout:
       print("Error: Timeout")
+      Err_flag = True
 
    return Ack_flag
 

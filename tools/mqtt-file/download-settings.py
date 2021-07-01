@@ -145,13 +145,16 @@ def on_message(client, userdata, msg):
    Ack_flag = False
 
 def wait_for_ack():
-   timeout = 100
+   global Err_flag
+
+   timeout = 500
    while Ack_flag and Err_flag == False and timeout > 0:
       time.sleep(0.01)
       timeout = timeout -1
 
    if 0 == timeout:
       print("Error: Timeout")
+      Err_flag = True
 
    return Ack_flag
 

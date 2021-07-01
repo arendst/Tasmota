@@ -44,7 +44,7 @@ broker_port = 1883                     # MQTT broker port
 
 mypassword = ""                        # Tasmota MQTT password
 mytopic = "demo"                       # Tasmota MQTT topic
-myfile = "Config_demo_9.4.0.4.dmp"     # Tasmota Settings file name
+myfile = "Config_demo_9.5.0.1.dmp"     # Tasmota Settings file name
 myfiletype = 2                         # Tasmota Settings file type
 
 # **** End of User Configuration Section
@@ -103,13 +103,16 @@ def on_message(client, userdata, msg):
    Ack_flag = False
 
 def wait_for_ack():
-   timeout = 100
+   global Err_flag
+
+   timeout = 500
    while Ack_flag and Err_flag == False and timeout > 0:
       time.sleep(0.01)
       timeout = timeout -1
 
    if 0 == timeout:
       print("Error: Timeout")
+      Err_flag = True
 
    return Ack_flag
 
