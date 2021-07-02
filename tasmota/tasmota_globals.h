@@ -164,7 +164,13 @@ String EthernetMacAddress(void);
 #define USE_UFILESYS
 #define GUI_TRASH_FILE
 #define GUI_EDIT_FILE
-#endif
+#define USE_PING
+  #ifdef USE_RULES
+  #define USE_EXPRESSION
+  #define SUPPORT_IF_STATEMENT
+  #define SUPPORT_MQTT_EVENT
+  #endif  // USE_RULES
+#endif  // NOT ESP8266_1M
 
 #ifdef USE_EMULATION_HUE
 #define USE_EMULATION
