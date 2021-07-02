@@ -115,10 +115,9 @@
 #define USE_SENDMAIL
 #define USE_ESP32MAIL
 
-#define USE_SCRIPT                               // Add support for script (+17k code)
+#ifndef USE_RULES
+  #define USE_SCRIPT                             // Add support for script (+17k code)
 // Script related defines
-#ifdef USE_SCRIPT
-  #undef USE_RULES
   #define MAXVARS 75
   #define MAXSVARS 15
   #define MAXFILT 10
@@ -133,7 +132,7 @@
   #define SCRIPT_FULL_WEBPAGE
   #define SCRIPT_GET_HTTPS_JP
   #define USE_GOOGLE_CHARTS
-#endif  // USE_SCRIPT
+#endif  // USE_RULES
 #endif  // FIRMWARE_M5STACK_CORE2
 
 /*********************************************************************************************\
