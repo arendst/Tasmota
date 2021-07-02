@@ -382,6 +382,9 @@
 // -- Wifi Config tools ---------------------------
 #define WIFI_SOFT_AP_CHANNEL   1                 // Soft Access Point Channel number between 1 and 13 as used by Wi-Fi Manager web GUI
 
+// -- ESP-NOW -------------------------------------
+//#define USE_TASMESH                              // Enable Tasmota Mesh using ESP-NOW (+11k code)
+
 // -- OTA -----------------------------------------
 //#define USE_ARDUINO_OTA                          // Add optional support for Arduino OTA (+13k code)
 
