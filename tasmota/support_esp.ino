@@ -507,10 +507,10 @@ String GetDeviceHardware(void) {
 Source: esp-idf esp_system.h and esptool
 
 typedef enum {
-    CHIP_ESP32   = 1, //!< ESP32
-    CHIP_ESP32S2 = 2, //!< ESP32-S2
-    CHIP_ESP32S3 = 4, //!< ESP32-S3
-    CHIP_ESP32C3 = 5, //!< ESP32-C3
+    CHIP_ESP32   = 1,  //!< ESP32
+    CHIP_ESP32S2 = 2,  //!< ESP32-S2
+    CHIP_ESP32S3 = 4,  //!< ESP32-S3
+    CHIP_ESP32C3 = 5,  //!< ESP32-C3
 } esp_chip_model_t;
 
 // Chip feature flags, used in esp_chip_info_t
@@ -628,7 +628,7 @@ typedef struct {
   else if (6 == chip_model) {  // ESP32-S3(beta3)
     return F("ESP32-S3");
   }
-  else if (7 == chip_model) {  // ESP32-C6
+  else if (7 == chip_model) {  // ESP32-C6(beta)
 #ifdef CONFIG_IDF_TARGET_ESP32C6
 /* esptool:
     def get_pkg_version(self):
@@ -649,6 +649,28 @@ typedef struct {
     }
 #endif  // CONFIG_IDF_TARGET_ESP32C6
     return F("ESP32-C6");
+  }
+  else if (10 == chip_model) {  // ESP32-H2
+#ifdef CONFIG_IDF_TARGET_ESP32H2
+/* esptool:
+    def get_pkg_version(self):
+        num_word = 3
+        block1_addr = self.EFUSE_BASE + 0x044
+        word3 = self.read_reg(block1_addr + (4 * num_word))
+        pkg_version = (word3 >> 21) & 0x0F
+        return pkg_version
+*/
+    uint32_t chip_ver = REG_GET_FIELD(EFUSE_RD_MAC_SPI_SYS_3_REG, EFUSE_PKG_VERSION);
+    uint32_t pkg_version = chip_ver & 0x7;
+//    uint32_t pkg_version = esp_efuse_get_pkg_ver();
+
+//    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("HDW: ESP32 Model %d, Revision %d, Core %d, Package %d"), chip_info.model, chip_revision, chip_info.cores, chip_ver);
+
+    switch (pkg_version) {
+      case 0:              return F("ESP32-H2");
+    }
+#endif  // CONFIG_IDF_TARGET_ESP32H2
+    return F("ESP32-H2");
   }
   return F("ESP32");
 }
