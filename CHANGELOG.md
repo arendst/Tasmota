@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased] - Development
 
 ## [9.5.0.2]
+### Added
+- Initial support for Tasmota Mesh (TasMesh) providing node/broker communication using ESP-NOW (#11939)
+
+### Changed
+- ESP32 core library from v1.0.7 to v1.0.7.1
+
 ### Fixed
 - ESP32-C3 settings layout for configuration backup and restore
 

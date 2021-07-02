@@ -44,7 +44,7 @@ broker_port = 1883                     # MQTT broker port
 
 mypassword = ""                        # Tasmota MQTT password
 mytopic = "demo"                       # Tasmota MQTT topic
-myfile = "Config_demo_9.5.0.1.dmp"     # Tasmota Settings file name
+myfile = "Config_demo_9.5.0.2.dmp"     # Tasmota Settings file name
 myfiletype = 2                         # Tasmota Settings file type
 
 # **** End of User Configuration Section
@@ -86,7 +86,12 @@ def on_message(client, userdata, msg):
       if "Started" in rcv_code:
          return
       if "Error" in rcv_code:
-         print("Error: "+rcv_code)
+         if "1" in rcv_code: print("Error: Wrong password")
+         else:
+            if "2" in rcv_code: print("Error: Bad chunk size")
+            else:
+               if "3" in rcv_code: print("Error: Invalid file type")
+               else: print("Error: "+rcv_code)
          Err_flag = True
          return
    if "Command" in root:

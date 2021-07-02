@@ -94,7 +94,12 @@ def on_message(client, userdata, msg):
             if "Started" in rcv_code:
                return
             if "Error" in rcv_code:
-               print("Error: "+rcv_code)
+               if "1" in rcv_code: print("Error: Wrong password")
+               else:
+                  if "2" in rcv_code: print("Error: Bad chunk size")
+                  else:
+                     if "3" in rcv_code: print("Error: Invalid file type")
+                     else: print("Error: "+rcv_code)
                Err_flag = True
                return
          if "Command" in root:
