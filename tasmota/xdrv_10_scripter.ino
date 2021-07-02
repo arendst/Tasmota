@@ -81,7 +81,7 @@ uint32_t DecodeLightId(uint32_t hue_id);
 
 #undef USE_SCRIPT_FATFS
 #define USE_SCRIPT_FATFS -1
-#pragma message "universal file system used"
+// #pragma message "universal file system used"
 
 #else // USE_UFILESYS
 
