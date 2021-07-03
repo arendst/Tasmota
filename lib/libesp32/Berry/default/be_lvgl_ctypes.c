@@ -12,7 +12,7 @@
 // the first 4 bytes are a pointer to a string
 // returns 0..total_elements-1 or -1 if not found
 
-int32_t bin_search(const char * needle, const void * table, size_t elt_size, size_t total_elements) {
+int32_t bin_search_ctypes(const char * needle, const void * table, size_t elt_size, size_t total_elements) {
     int32_t low = 0;
     int32_t high = total_elements - 1;
     int32_t mid = (low + high) / 2;
@@ -109,7 +109,7 @@ int be_ctypes_init(bvm *vm) {
     // berry_log_C("be_ctypes_init> init called");
 
     // look for class definition
-    int32_t class_idx = bin_search(class_name, &be_ctypes_classes->classes[0], sizeof(be_ctypes_class_t), be_ctypes_classes->size);
+    int32_t class_idx = bin_search_ctypes(class_name, &be_ctypes_classes->classes[0], sizeof(be_ctypes_class_t), be_ctypes_classes->size);
     if (class_idx >= 0) {
         // found
         const be_ctypes_structure_t * definitions = be_ctypes_classes->classes[class_idx].definitions;
@@ -139,7 +139,7 @@ int be_ctypes_member(bvm *vm) {
     const char *name = be_tostring(vm, 2);
 
     // look for member
-    int32_t member_idx = bin_search(name, &definitions->items[0], sizeof(be_ctypes_structure_item_t), definitions->size_elt);
+    int32_t member_idx = bin_search_ctypes(name, &definitions->items[0], sizeof(be_ctypes_structure_item_t), definitions->size_elt);
     if (member_idx >= 0) {
         const be_ctypes_structure_item_t *member = &definitions->items[member_idx];
         // berry_log_C("member found bytes=%i, bits=%i, len_bits=%i, type=%i", member->offset_bytes, member->offset_bits, member->len_bits, member->type);
@@ -193,7 +193,7 @@ int be_ctypes_setmember(bvm *vm) {
     const char *name = be_tostring(vm, 2);
 
     // look for member
-    int32_t member_idx = bin_search(name, &definitions->items[0], sizeof(be_ctypes_structure_item_t), definitions->size_elt);
+    int32_t member_idx = bin_search_ctypes(name, &definitions->items[0], sizeof(be_ctypes_structure_item_t), definitions->size_elt);
     if (member_idx >= 0) {
         const be_ctypes_structure_item_t *member = &definitions->items[member_idx];
         // berry_log_C("member found bytes=%i, bits=%i, len_bits=%i, type=%i", member->offset_bytes, member->offset_bits, member->len_bits, member->type);
