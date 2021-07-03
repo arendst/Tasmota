@@ -176,6 +176,7 @@ extern "C" {
 // the first 4 bytes are a pointer to a string
 // returns 0..total_elements-1 or -1 if not found
 extern "C" {
+  int32_t bin_search(const char * needle, const void * table, size_t elt_size, size_t total_elements);
   int32_t bin_search(const char * needle, const void * table, size_t elt_size, size_t total_elements) {
     int32_t low = 0;
     int32_t high = total_elements - 1;

@@ -40,6 +40,7 @@ ctypes.be_u32 =  -4
 ctypes.be_u16 =  -2
 ctypes.be_u8  =  -1
 
+ctypes.bf_x   = 0 # generic bitfield
 # bitfields (always unsigned)
 ctypes.bf_0   = 100 # serves as base
 ctypes.bf_1   = 101
@@ -157,14 +158,56 @@ ctypes.print_types = def ()
   print("  ctypes_str = 3,")
   print("};")
   print()
-  print("typedef struct be_ctypes_structure_t {")
+  print("typedef struct be_ctypes_structure_item_t {")
   print("  const char * name;")
   print("  uint16_t  offset_bits;")
   print("  uint16_t  len_bits : 13;")
   print("  uint16_t  type : 3;")
+  print("} be_ctypes_structure_item_t;")
+  print()
+  print("typedef struct be_ctypes_structure_t {")
+  print("  uint16_t  size_bytes;       /* size in bytes */")
+  print("  uint16_t  size_elt;         /* number of elements */")
+  print("  const be_ctypes_structure_item_t * items;")
   print("} be_ctypes_structure_t;")
+  print()
 end
 
+global_classes = []   # track the list of all classes and 
+ctypes.print_classes = def ()
+  ctypes.sort(global_classes)
+
+  print("const be_ctypes_classes_t be_ctypes_classes[] = {")
+  print(string.format("  %i,", size(global_classes)))
+  print(string.format("  (const be_ctypes_class_t[%i]) {", size(global_classes)))
+
+  for elt:global_classes
+    print(string.format("    { \"%s\", &be_%s },", elt, elt))
+  end
+
+  print("}};")
+  print()
+  print("/* @const_object_info_begin")
+  print("class be_class_ctypes_classes (scope: global) {")
+  for elt:global_classes
+    print(string.format("    %s, int(0)", elt))
+  end
+  print("}")
+  print("@const_object_info_end */")
+  print()
+
+  print("void be_load_ctypes_definitions_lib(bvm *vm) {")
+  print("  be_pushcomptr(vm, (void*) be_ctypes_classes);")
+  print("  be_setglobal(vm, \".ctypes_classes\");")
+  print("  be_pop(vm, 1);")
+  print()
+  for elt:global_classes
+    print(string.format("  static be_define_const_empty_class(be_class_%s, &be_class_lv_ctypes, %s);", elt, elt))
+    print(string.format("  ctypes_register_class(vm, &be_class_%s, &be_%s);", elt, elt))
+  end
+  print("}")
+
+end
 
 #-------------------------------------------------------------
 #- 'ctypes.structure' class
@@ -203,23 +246,29 @@ class structure
       self.parse_line(map_line)
     end
 
+    # clear any outstanding bitfield
+    self.align(1)
+    self.size_bytes = self.cur_offset
+
     if name != nil
-      print(string.format("const be_ctypes_structure_t be_%s[%d] = {", name, size(self.mapping)))
+      print(string.format("const be_ctypes_structure_t be_%s = {", name))
+      print(string.format("  %i,  /* size in bytes */", self.size_bytes))
+      print(string.format("  %i,  /* number of elements */", size(self.mapping)))
+      print(string.format("  (const be_ctypes_structure_item_t[%i]) {", size(self.mapping)))
       # list keys for future binary search
       var names = []
       for n:self.mapping.keys() names.push(n) end   # convert to list
       ctypes.sort(names)
       for n:names
         var args = self.mapping[n]
-        print(string.format("  { \"%s\", %i, %i, %s },", n, args[0], args[1], args[2]))
+        print(string.format("    { \"%s\", %i, %i, %i, %i },", n, args[0], args[1], args[2], args[3]))
       end
-      print("};")
+      print("}};")
       print()
-    end
 
-    # clear any outstanding bitfield
-    self.align(1)
-    self.size_bytes = self.cur_offset
+      # retain class definition
+      global_classes.push(name)
+    end
   end
 
   def size()
@@ -277,10 +326,10 @@ class structure
 
     var offset = self.cur_offset    # var for closure
 
-    # inlcude nested
+    # include nested
     for subname:type_obj.mapping.keys()
       var val = type_obj.mapping[subname]
-      self.mapping[name+"_"+subname] = [val[0] + (offset << 3), val[1], val[2]]
+      self.mapping[name+"_"+subname] = [val[0] + offset, val[1], val[2], val[3]]
     end
     # self.mapping[name] = [offset << 3, sub_size << 3]
 
@@ -290,17 +339,17 @@ class structure
     self.cur_offset += sub_size
   end
 
-  def get_int_closure(name, size_in_bytes_le_be)  # can be 1/2/4
+  def get_int_closure(name, type)  # can be 1/2/4
     #- abs size -#
-    var size_in_bytes = size_in_bytes_le_be < 0 ? - size_in_bytes_le_be : size_in_bytes_le_be
+    var size_in_bytes = type < 0 ? - type : type
     var signed = size_in_bytes > 10
-    size_in_bytes_le_be = size_in_bytes_le_be % 10  # remove sign marker
+    var size_in_bytes_le_be = type % 10  # remove sign marker
     size_in_bytes = size_in_bytes % 10  # remove sign marker
 
     self.align(size_in_bytes)       # force alignment
     var offset = self.cur_offset    # prepare variable for capture in closure
     
-    self.mapping[name] = [offset << 3, size_in_bytes_le_be << 3, signed ? "ctypes_int" : "ctypes_uint"]
+    self.mapping[name] = [offset, 0, 0, type]
 
     #- add closures -#
     if signed
@@ -317,7 +366,7 @@ class structure
   def get_bitfield_closure(name, size_in_bits)  # can be 1..32
     var cur_offset = self.cur_offset    # prepare variable for capture in closure
     var bit_offset = self.bit_offset
-    self.mapping[name] = [bit_offset + (cur_offset << 3), size_in_bits, "ctypes_uint"]
+    self.mapping[name] = [cur_offset, bit_offset, size_in_bits, 0]
     self.get_closures[name] = def (b, p) return ctypes.get_bits(b, cur_offset + p, bit_offset, size_in_bits) end
     self.set_closures[name] = def (b, p, v) return ctypes.set_bits(b, cur_offset+ p, bit_offset, size_in_bits, v) end
 
@@ -446,9 +495,9 @@ return ctypes
 # > bb.e
 # key_error: e
 # stack traceback:
-# 	<native>: in native function
-# 	stdin:11: in function `member`
-# 	stdin:1: in function `main`
+#   <native>: in native function
+#   stdin:11: in function `member`
+#   stdin:1: in function `main`
 
 
 # > bb['a']
