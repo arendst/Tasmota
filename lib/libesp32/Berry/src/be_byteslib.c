@@ -763,7 +763,6 @@ class Bytes : bytes
 #- Reads a bit-field in a `bytes()` object
 #-
 #- Input:
-#-   offset_bytes (int): byte offset in the bytes() object
 #-   offset_bits  (int): bit number to start reading from (0 = LSB)
 #-   len_bits     (int): how many bits to read
 #- Output:
@@ -801,11 +800,9 @@ class Bytes : bytes
   #- Writes a bit-field in a `bytes()` object
   #-
   #- Input:
-  #-   offset_bytes (int): byte offset in the bytes() object
   #-   offset_bits  (int): bit number to start writing to (0 = LSB)
   #-   len_bits     (int): how many bits to write
-  #- Output:
-  #-   bytes() object modified (by reference)
+  #-   val          (int): value to set
   #-------------------------------------------------------------#
   def setbits(offset_bits, len_bits, val)
     if len_bits < 0 || len_bits > 32 raise "value_error", "length in bits must be between 0 and 32" end
@@ -966,6 +963,7 @@ void be_load_byteslib(bvm *vm)
         { "get", m_getu },
         { "geti", m_geti },
         { "set", m_set },
+        { "seti", m_set },      // setters for signed and unsigned are identical
         { "item", m_item },
         { "setitem", m_setitem },
         { "size", m_size },
@@ -998,6 +996,7 @@ class be_class_bytes (scope: global, name: bytes) {
     get, func(m_getu)
     geti, func(m_geti)
     set, func(m_set)
+    seti, func(m_set)
     item, func(m_item)
     setitem, func(m_setitem)
     size, func(m_size)

@@ -102,6 +102,8 @@ extern void be_load_md5_lib(bvm *vm);
 extern void be_load_lvgl_color_lib(bvm *vm);
 extern void be_load_lvgl_font_lib(bvm *vm);
 extern void be_load_lv_all_lib(bvm *vm);
+extern void be_load_lvgl_ctypes_lib(bvm *vm);
+extern void be_load_ctypes_definitions_lib(bvm *vm);
 #endif// USE_LVGL
 
 /* this code loads the native class definitions */
@@ -126,6 +128,8 @@ BERRY_API void be_load_custom_libs(bvm *vm)
     be_load_lvgl_font_lib(vm);
 
     be_load_lv_all_lib(vm);
+    be_load_lvgl_ctypes_lib(vm);
+    be_load_ctypes_definitions_lib(vm);
 #endif // USE_LVGL
 }
 #endif

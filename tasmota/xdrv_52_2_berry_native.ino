@@ -176,29 +176,30 @@ extern "C" {
 // the first 4 bytes are a pointer to a string
 // returns 0..total_elements-1 or -1 if not found
 extern "C" {
-  int32_t bin_search(const char * needle, const void * table, size_t elt_size, size_t total_elements) {
-    int32_t low = 0;
-    int32_t high = total_elements - 1;
-    int32_t mid = (low + high) / 2;
-    // start a dissect
-    while (low <= high) {
-      const char * elt = *(const char **) ( ((uint8_t*)table) + mid * elt_size );
-      int32_t comp = strcmp(needle, elt);
-      if (comp < 0) {
-        high = mid - 1;
-      } else if (comp > 0) {
-        low = mid + 1;
-      } else {
-        break;
-      }
-      mid = (low + high) / 2;
-    }
-    if (low <= high) {
-      return mid;
-    } else {
-      return -1;
-    }
-  }
+  extern int32_t bin_search(const char * needle, const void * table, size_t elt_size, size_t total_elements);
+  // int32_t bin_search(const char * needle, const void * table, size_t elt_size, size_t total_elements) {
+  //   int32_t low = 0;
+  //   int32_t high = total_elements - 1;
+  //   int32_t mid = (low + high) / 2;
+  //   // start a dissect
+  //   while (low <= high) {
+  //     const char * elt = *(const char **) ( ((uint8_t*)table) + mid * elt_size );
+  //     int32_t comp = strcmp(needle, elt);
+  //     if (comp < 0) {
+  //       high = mid - 1;
+  //     } else if (comp > 0) {
+  //       low = mid + 1;
+  //     } else {
+  //       break;
+  //     }
+  //     mid = (low + high) / 2;
+  //   }
+  //   if (low <= high) {
+  //     return mid;
+  //   } else {
+  //     return -1;
+  //   }
+  // }
 }
 
 /*********************************************************************************************\

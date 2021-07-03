@@ -43,11 +43,11 @@ lv_area_t = [
 ]
 lv_area_t = ctypes.structure(lv_area_t, "lv_area_t")
 
-test_t = [
-    [lv_area_t, "a"],
-    [lv_area_t, "b"]
-]
-test_t = ctypes.structure(test_t, "test_t")
+# test_t = [
+#     [lv_area_t, "a"],
+#     [lv_area_t, "b"]
+# ]
+# test_t = ctypes.structure(test_t, "test_t")
 
 lv_draw_rect_dsc_t = [
     [lv_style_int_t, "radius"],
@@ -275,6 +275,8 @@ lv_draw_mask_saved_t = [
 ]
 lv_draw_mask_saved_t = ctypes.structure(lv_draw_mask_saved_t, "lv_draw_mask_saved_t")
 
+#
+ctypes.print_classes()
 
 # Ex:
 # bb = ctypes.buffer(test_t, bytes("0101020203030404FFFFFEFEFCFC8080"))
