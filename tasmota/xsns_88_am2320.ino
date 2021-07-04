@@ -154,38 +154,11 @@ void Am2320EverySecond(void)
 
 void Am2320Show(bool json)
 {
-  if (!am2320_found) { return; } // no sensor, no show :(
-
-  float t, h, dewpoint;
-
   if (AM2320.valid) {
-    t = ConvertTemp(AM2320.t);
-    h = ConvertHumidity(AM2320.h);
-    dewpoint = CalcTempHumToDew(AM2320.t, AM2320.h);
-  } else {
-    t = -1;
-    h = -1;
-    dewpoint = -1;
-  }
+    float t = ConvertTemp(AM2320.t);
+    float h = ConvertHumidity(AM2320.h);
 
-  if (json) {
-    ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_TEMPERATURE "\":%f,\"" D_JSON_HUMIDITY "\":%f,\"" D_JSON_DEWPOINT "\":%f}"),AM2320_types,t,h,dewpoint);
-
-#ifdef USE_DOMOTICZ
-    if (0 == Settings->tele_period) {
-      DomoticzTempHumPressureSensor(t, h);
-    }
-#endif  // USE_DOMOTICZ
-#ifdef USE_KNX
-    if (0 == Settings->tele_period) {
-      KnxSensor(KNX_TEMPERATURE, t);
-      KnxSensor(KNX_HUMIDITY, h);
-    }
-#endif  // USE_KNX
-#ifdef USE_WEBSERVER
-  } else {
-    WSContentSend_THD(AM2320_types, t, h);
-#endif  // USE_WEBSERVER
+    TempHumDewShow(json, (0 == TasmotaGlobal.tele_period), AM2320_types, t, h);
   }
 }
 
