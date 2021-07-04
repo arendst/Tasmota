@@ -97,15 +97,20 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 
 ## Changelog v9.5.0.2
 ### Added
-- Enable UFILESYS, GUI_TRASH_FILE and GUI_EDIT_FILE for any device compiled with more than 1M flash size
 - Initial support for Tasmota Mesh (TasMesh) providing node/broker communication using ESP-NOW [#11939](https://github.com/arendst/Tasmota/issues/11939)
+- Berry ESP32 partition manager [#12465](https://github.com/arendst/Tasmota/issues/12465)
 - Support for AM2320 Temperature and Humidity Sensor by Lars Wessels [#12485](https://github.com/arendst/Tasmota/issues/12485)
+- Rule event support as JSON payload [#12496](https://github.com/arendst/Tasmota/issues/12496)
+- MQTT minimum password length restriction in GUI [#12553](https://github.com/arendst/Tasmota/issues/12553)
 
 ### Changed
 - ESP32 core library from v1.0.6 to v1.0.7.1
-- Force ESP32 defines USE_UFILESYS, GUI_TRASH_FILE and #define GUI_EDIT_FILE
 - Speed up initial GUI console refresh
+- Enable UFILESYS, GUI_TRASH_FILE and GUI_EDIT_FILE for any device compiled with more than 1M flash size
 - Simplified configuration for ir-full and removal of tasmota-ircustom [#12428](https://github.com/arendst/Tasmota/issues/12428)
+- Refactor platformio [#12442](https://github.com/arendst/Tasmota/issues/12442)
+- Allow buttons to work in AP normal mode [#12518](https://github.com/arendst/Tasmota/issues/12518)
+- Enable Ping and rule features for any device compiled with more than 1M flash size [#12539](https://github.com/arendst/Tasmota/issues/12539)
 
 ### Fixed
 - ESP32-C3 settings layout for configuration backup and restore
@@ -113,6 +118,11 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - ESP32 Webcam add boundary marker before sending mjpeg image [#12376](https://github.com/arendst/Tasmota/issues/12376)
 - NO VALID JSON regression from may 4th [#12440](https://github.com/arendst/Tasmota/issues/12440)
 - Telegram response decoding stopped working after 20210621 and exception on long result message [#12451](https://github.com/arendst/Tasmota/issues/12451)
+- Neopool compile error on DEBUG_TASMOTA_SENSOR [#12464](https://github.com/arendst/Tasmota/issues/12464)
+- Berry button handlers and error messages [#12521](https://github.com/arendst/Tasmota/issues/12521)
+- Scripter and Display MQTT errors due to MQTT_DATA move to String [#12525](https://github.com/arendst/Tasmota/issues/12525)
+- Scripter moving average and sml input validation [#12541](https://github.com/arendst/Tasmota/issues/12541)
+- Zigbee Hue angle encoding [#12545](https://github.com/arendst/Tasmota/issues/12545)
 
 ### Noted
 - ESP32 single core **tasmota32solo1.bin** binary can only be uploaded using the GUI as OTA upload will trigger the watchdog timer

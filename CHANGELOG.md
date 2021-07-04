@@ -6,30 +6,40 @@ All notable changes to this project will be documented in this file.
 ## [9.5.0.2]
 ### Added
 - Initial support for Tasmota Mesh (TasMesh) providing node/broker communication using ESP-NOW (#11939)
+- MQTT minimum password length restriction in GUI (#12553)
 
 ### Changed
 - ESP32 core library from v1.0.7 to v1.0.7.1
+- Allow buttons to work in AP normal mode (#12518)
+- Enable Ping and rule features for any device compiled with more than 1M flash size (#12539)
 
 ### Fixed
 - ESP32-C3 settings layout for configuration backup and restore
+- Berry button handlers and error messages (#12521)
+- Scripter and Display MQTT errors due to MQTT_DATA move to String (#12525)
+- Scripter moving average and sml input validation (#12541)
+- Zigbee Hue angle encoding (#12545)
+- AM2320 value reporting (#12552)
 
-## [9.5.0.1]
+## [9.5.0.1] 20210701
 ### Added
-- Enable UFILESYS, GUI_TRASH_FILE and GUI_EDIT_FILE for any device compiled with more than 1M flash size
+- Berry ESP32 partition manager (#12465)
+- Rule event support as JSON payload (#12496)
 - Support for AM2320 Temperature and Humidity Sensor by Lars Wessels (#12485)
 
 ### Changed
 - ESP32 core library from v1.0.6 to v1.0.7
-- Force ESP32 defines USE_UFILESYS, GUI_TRASH_FILE and #define GUI_EDIT_FILE
 - Speed up initial GUI console refresh
+- Enable UFILESYS, GUI_TRASH_FILE and GUI_EDIT_FILE for any device compiled with more than 1M flash size
 - Simplified configuration for ir-full and removal of tasmota-ircustom
-- Add Esp32 Partition Manager as a Berry component
+- Refactor platformio (#12442)
 
 ### Fixed
 - ESP32 Webcam add boundary marker before sending mjpeg image (#12376)
 - DDS238-2 wrong reactive power value (#12283)
 - NO VALID JSON regression from may 4th (#12440)
 - Telegram response decoding stopped working after 20210621 and exception on long result message (#12451)
+- Neopool compile error on DEBUG_TASMOTA_SENSOR (#12464)
 
 ## [Released]
 
