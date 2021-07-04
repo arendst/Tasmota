@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 - ESP32 core library from v1.0.7 to v1.0.7.1
+- ESP32 Ethernet Phy Type information to IDF v3+
 - Allow buttons to work in AP normal mode (#12518)
 - Enable Ping and rule features for any device compiled with more than 1M flash size (#12539)
 

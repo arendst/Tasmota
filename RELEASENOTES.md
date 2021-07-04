@@ -105,6 +105,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 
 ### Changed
 - ESP32 core library from v1.0.6 to v1.0.7.1
+- ESP32 Ethernet Phy Type information to IDF v3+
 - Speed up initial GUI console refresh
 - Enable UFILESYS, GUI_TRASH_FILE and GUI_EDIT_FILE for any device compiled with more than 1M flash size
 - Simplified configuration for ir-full and removal of tasmota-ircustom [#12428](https://github.com/arendst/Tasmota/issues/12428)

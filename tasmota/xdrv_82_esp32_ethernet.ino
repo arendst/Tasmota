@@ -67,15 +67,16 @@
 //********************************************************************************************
 
 #ifndef ETH_ADDRESS
-#define ETH_ADDRESS       0                      // esp_eth.h eth_phy_base_t:   0 = PHY0 .. 31 = PHY31
+#define ETH_ADDRESS       0                      // ETH.h uint8_t:          0 = PHY0 .. 31 = PHY31
 #endif
 
 #ifndef ETH_TYPE
-#define ETH_TYPE          ETH_PHY_LAN8720        // ETH.h eth_phy_type_t:       0 = ETH_PHY_LAN8720, 1 = ETH_PHY_TLK110, 2 = ETH_PHY_IP101
+#define ETH_TYPE          ETH_PHY_LAN8720        // ETH.h eth_phy_type_t:   0 = ETH_PHY_LAN8720, 1 = ETH_PHY_TLK110/ETH_PHY_IP101, 2 = ETH_PHY_RTL8201, 3 = ETH_PHY_DP83848, 4 = ETH_PHY_DM9051, 5 = ETH_PHY_KSZ8081
+
 #endif
 
 #ifndef ETH_CLKMODE
-#define ETH_CLKMODE       ETH_CLOCK_GPIO0_IN     // esp_eth.h eth_clock_mode_t: 0 = ETH_CLOCK_GPIO0_IN, 1 = ETH_CLOCK_GPIO0_OUT, 2 = ETH_CLOCK_GPIO16_OUT, 3 = ETH_CLOCK_GPIO17_OUT
+#define ETH_CLKMODE       ETH_CLOCK_GPIO0_IN     // ETH.h eth_clock_mode_t: 0 = ETH_CLOCK_GPIO0_IN, 1 = ETH_CLOCK_GPIO0_OUT, 2 = ETH_CLOCK_GPIO16_OUT, 3 = ETH_CLOCK_GPIO17_OUT
 #endif
 */
 
