@@ -109,13 +109,13 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - ESP32 Ethernet Phy Type information to IDF v3+
 - Speed up initial GUI console refresh
 - Enable UFILESYS, GUI_TRASH_FILE and GUI_EDIT_FILE for any device compiled with more than 1M flash size
-- Setting hostname to fixing ArduinoESP32 core 2.0.0
 - Simplified configuration for ir-full and removal of tasmota-ircustom [#12428](https://github.com/arendst/Tasmota/issues/12428)
 - Refactor platformio [#12442](https://github.com/arendst/Tasmota/issues/12442)
 - Allow buttons to work in AP normal mode [#12518](https://github.com/arendst/Tasmota/issues/12518)
 - Enable Ping and rule features for any device compiled with more than 1M flash size [#12539](https://github.com/arendst/Tasmota/issues/12539)
 
 ### Fixed
+- ESP32 core v2.0.0 setting hostname
 - ESP32-C3 settings layout for configuration backup and restore
 - DDS238-2 wrong reactive power value [#12283](https://github.com/arendst/Tasmota/issues/12283)
 - ESP32 Webcam add boundary marker before sending mjpeg image [#12376](https://github.com/arendst/Tasmota/issues/12376)

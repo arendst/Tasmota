@@ -14,10 +14,10 @@ All notable changes to this project will be documented in this file.
 - ESP32 Ethernet Phy Type information to IDF v3+
 - Allow buttons to work in AP normal mode (#12518)
 - Enable Ping and rule features for any device compiled with more than 1M flash size (#12539)
-- Setting hostname to fixing ArduinoESP32 core 2.0.0
 
 ### Fixed
 - ESP32-C3 settings layout for configuration backup and restore
+- ESP32 core v2.0.0 setting hostname
 - Berry button handlers and error messages (#12521)
 - Scripter and Display MQTT errors due to MQTT_DATA move to String (#12525)
 - Scripter moving average and sml input validation (#12541)

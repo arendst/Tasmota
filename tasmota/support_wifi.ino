@@ -116,7 +116,7 @@ void WifiSetMode(WiFiMode_t wifi_mode) {
   if (WiFi.getMode() == wifi_mode) { return; }
 
   if (wifi_mode != WIFI_OFF) {
-    WiFi.hostname(TasmotaGlobal.hostname);  // Set hostname before WiFi.mode as needed for ESP32 core 2.0.0
+    WiFi.hostname(TasmotaGlobal.hostname);  // ESP32 needs this here (before WiFi.mode) for core 2.0.0
 
     // See: https://github.com/esp8266/Arduino/issues/6172#issuecomment-500457407
     WiFi.forceSleepWake(); // Make sure WiFi is really active.
@@ -187,6 +187,7 @@ void WifiBegin(uint8_t flag, uint8_t channel)
   WiFi.persistent(false);   // Solve possible wifi init errors (re-add at 6.2.1.16 #4044, #4083)
   WiFi.disconnect(true);    // Delete SDK wifi config
   delay(200);
+
   WifiSetMode(WIFI_STA);    // Disable AP mode
   WiFiSetSleepMode();
 //  if (WiFi.getPhyMode() != WIFI_PHY_MODE_11N) { WiFi.setPhyMode(WIFI_PHY_MODE_11N); }  // B/G/N
@@ -207,6 +208,7 @@ void WifiBegin(uint8_t flag, uint8_t channel)
   if (Settings->ipv4_address[0]) {
     WiFi.config(Settings->ipv4_address[0], Settings->ipv4_address[1], Settings->ipv4_address[2], Settings->ipv4_address[3]);  // Set static IP
   }
+  WiFi.hostname(TasmotaGlobal.hostname);  // ESP8266 needs this here (after WiFi.mode)
 
   char stemp[40] = { 0 };
   if (channel) {
