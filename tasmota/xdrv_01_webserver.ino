@@ -1,7 +1,7 @@
 /*
   xdrv_01_webserver.ino - webserver for Tasmota
 
-  Copyright (C) 2021  Theo Arends
+  Copyright (C) 2021  Theo Arends and Adrian Scillato
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -394,7 +394,7 @@ const char kUploadErrors[] PROGMEM =
 
 const uint16_t DNS_PORT = 53;
 enum HttpOptions {HTTP_OFF, HTTP_USER, HTTP_ADMIN, HTTP_MANAGER, HTTP_MANAGER_RESET_ONLY};
-enum WifiTestOptions {WIFI_NOT_TESTING, WIFI_TESTING, WIFI_TEST_FINISHED_SUCCESSFUL, WIFI_TEST_FINISHED_BAD};
+enum WifiTestOptions {WIFI_NOT_TESTING, WIFI_TESTING, WIFI_TEST_FINISHED, WIFI_TEST_FINISHED_BAD};
 
 DNSServer *DnsServer;
 ESP8266WebServer *Webserver;
@@ -412,6 +412,7 @@ struct WEB {
   uint8_t wifi_test_counter = 0;
   uint16_t save_data_counter = 0;
   uint8_t old_wificonfig = MAX_WIFI_OPTION; // means "nothing yet saved here"
+  bool wifi_test_AP_TIMEOUT = false;
 } Web;
 
 // Helper function to avoid code duplication (saves 4k Flash)
@@ -1826,13 +1827,17 @@ void HandleWifiConfiguration(void) {
     return;
   }
 
-  if ( WIFI_TEST_FINISHED_SUCCESSFUL == Web.wifiTest ) {
+  if ( WIFI_TEST_FINISHED == Web.wifiTest ) {
     Web.wifiTest = WIFI_NOT_TESTING;
+    if (Web.wifi_test_AP_TIMEOUT) {   
+      WebRestart(1); // Save credentials and Force Restart in STA only mode (11n-only routers) 
+    } else {
 #if (RESTART_AFTER_INITIAL_WIFI_CONFIG)
-    WebRestart(3);
+      WebRestart(3);
 #else
-    HandleRoot();
+      HandleRoot();
 #endif
+    }
   }
 
   WSContentStart_P(PSTR(D_CONFIGURE_WIFI), !WifiIsInManagerMode());
@@ -3282,8 +3287,9 @@ bool Xdrv01(uint8_t function)
         Web.wifi_test_counter--;
         AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_WIFI D_TRYING_TO_CONNECT " %s"), SettingsText(SET_STASSID1));
         if ( WifiCheck_hasIP(WiFi.localIP()) ) {  // Got IP - Connection Established
+          Web.wifi_test_AP_TIMEOUT = false;
           Web.wifi_test_counter = 0;
-          Web.wifiTest = WIFI_TEST_FINISHED_SUCCESSFUL;
+          Web.wifiTest = WIFI_TEST_FINISHED;
           AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_CMND_SSID "1 %s: " D_CONNECTED " - " D_IP_ADDRESS " %_I"), SettingsText(SET_STASSID1), (uint32_t)WiFi.localIP());
 //          TasmotaGlobal.blinks = 255;                    // Signal wifi connection with blinks
           if (MAX_WIFI_OPTION != Web.old_wificonfig) {
@@ -3302,15 +3308,37 @@ bool Xdrv01(uint8_t function)
           switch (WiFi.status()) {
             case WL_CONNECTED:
               AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_CONNECT_FAILED_NO_IP_ADDRESS));
+              Web.wifi_test_AP_TIMEOUT = false;
               break;
             case WL_NO_SSID_AVAIL:
               AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_CONNECT_FAILED_AP_NOT_REACHED));
+              Web.wifi_test_AP_TIMEOUT = false;
               break;
             case WL_CONNECT_FAILED:
               AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_CONNECT_FAILED_WRONG_PASSWORD));
+              Web.wifi_test_AP_TIMEOUT = false;
               break;
-            default:  // WL_IDLE_STATUS and WL_DISCONNECTED
+            default:  // WL_IDLE_STATUS and WL_DISCONNECTED - SSId in range but no answer from the router
               AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_CONNECT_FAILED_AP_TIMEOUT));
+              // If this error occurs twice, Tasmota will connect directly to the router without testing crendentials.
+              //   ESP8266 in AP+STA mode can manage only 11b and 11g, so routers that are 11n-ONLY won't respond.
+              //   For this case, the user will see in the UI a message to check credentials. After that, if the user hits
+              //   save and connect again, and the CONNECT_FAILED_AP_TIMEOUT is shown again, Credentials will be saved and
+              //   Tasmota will restart and try to connect in STA mode only (11b/g/n).
+              //
+              //   If it fails again, depending on the WIFICONFIG settings, the user will need to wait or will need to
+              //   push 6 times the button to enable Tasmota AP mode again.
+              if (Web.wifi_test_AP_TIMEOUT) {   
+                Web.wifiTest = WIFI_TEST_FINISHED;
+                AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_CMND_SSID "1 %s: " D_ATTEMPTING_CONNECTION), SettingsText(SET_STASSID1) );
+                if (MAX_WIFI_OPTION != Web.old_wificonfig) {
+                  TasmotaGlobal.wifi_state_flag = Settings->sta_config = Web.old_wificonfig;
+                }
+                TasmotaGlobal.save_data_counter = Web.save_data_counter;
+                Settings->save_data = Web.save_data_counter;
+                SettingsSaveAll();
+              }
+              Web.wifi_test_AP_TIMEOUT = true;
           }
           int n = WiFi.scanNetworks(); // restart scan
         }
