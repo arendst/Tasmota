@@ -17,7 +17,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#if defined(USE_TX20_WIND_SENSOR) || defined(USE_TX23_WIND_SENSOR)
+#if defined(USE_TX20_WIND_SENSOR) || defined(USE_TX23_WIND_SENSOR) || defined(USE_WS2300_WIND_SENSOR)
 
 /*********************************************************************************************\
  * La Crosse TX20/TX23 Anemometer
@@ -55,6 +55,16 @@
 #warning **** use USE_TX20_WIND_SENSOR or USE_TX23_WIND_SENSOR but not both together, TX20 disabled ****
 #endif // USE_TX20_WIND_SENSOR && USE_TX23_WIND_SENSOR
 
+#if defined(USE_WS2300_WIND_SENSOR) && defined(USE_TX23_WIND_SENSOR)
+#undef USE_WS2300_WIND_SENSOR
+#warning **** use USE_WS2300_WIND_SENSOR or USE_TX23_WIND_SENSOR but not both together, WS2300 disabled ****
+#endif // USE_TX20_WIND_SENSOR && USE_TX23_WIND_SENSOR
+
+#if defined(USE_WS2300_WIND_SENSOR) && defined(USE_TX20_WIND_SENSOR)
+#undef USE_WS2300_WIND_SENSOR
+#warning **** use USE_WS2300_WIND_SENSOR or USE_TX20_WIND_SENSOR but not both together, WS2300 disabled ****
+#endif // USE_TX20_WIND_SENSOR && USE_TX23_WIND_SENSOR
+
 // #define USE_TX2X_WIND_SENSOR_NOSTATISTICS        // suppress statistics (speed/dir avg/min/max/range)
 #define TX2X_BIT_TIME          1220  // microseconds
 #define TX2X_WEIGHT_AVG_SAMPLE  150  // seconds
@@ -70,9 +80,14 @@ extern "C" {
 #ifdef USE_TX20_WIND_SENSOR
 #undef D_TX2x_NAME
 #define D_TX2x_NAME "TX20"
-#else  //  USE_TX20_WIND_SENSOR
+#endif
+#ifdef USE_TX23_WIND_SENSOR  //  USE_TX23_WIND_SENSOR
 #undef D_TX2x_NAME
 #define D_TX2x_NAME "TX23"
+#endif
+#ifdef USE_WS2300_WIND_SENSOR  //  USE_WS2300_WIND_SENSOR
+#undef D_TX2x_NAME
+#define D_TX2x_NAME "WS2300-15"
 #endif  //  USE_TX20_WIND_SENSOR
 
 #ifdef USE_WEBSERVER
@@ -236,7 +251,14 @@ void IRAM_ATTR TX2xStartRead(void)
 #ifdef USE_TX23_WIND_SENSOR
       if ((chk == tx2x_sd) && (0x1b==tx2x_sa) && (tx2x_sb==tx2x_se) && (tx2x_sc==tx2x_sf) && (tx2x_sc < 511)) {
 #else
-      if ((chk == tx2x_sd) && (tx2x_sb==tx2x_se) && (tx2x_sc==tx2x_sf) && (tx2x_sc < 511)) {
+      if 
+      #ifdef USE_TX20_WIND_SENSOR
+      ((chk == tx2x_sd) && (tx2x_sb==tx2x_se) && (tx2x_sc==tx2x_sf) && (tx2x_sc < 511)) 
+      #endif
+      #ifdef USE_WS2300_WIND_SENSOR
+      ((chk == tx2x_sd) && (tx2x_sc < 511)) 
+      #endif
+      {
 #endif
         tx2x_last_available = TasmotaGlobal.uptime;
         // Wind speed spec: 0 to 180 km/h (0 to 50 m/s)
