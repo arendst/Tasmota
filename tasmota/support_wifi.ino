@@ -159,16 +159,15 @@ void WiFiSetSleepMode(void)
     WiFi.setSleepMode(WIFI_MODEM_SLEEP);        // Disable sleep (Esp8288/Arduino core and sdk default)
   }
 */
-  if (0 == TasmotaGlobal.sleep) {
+  bool wifi_no_sleep = Settings->flag5.wifi_no_sleep;
+#ifdef CONFIG_IDF_TARGET_ESP32C3
+  wifi_no_sleep = true;             // temporary patch for IDF4.4, wifi sleeping may cause wifi drops
+#endif
+  if (0 == TasmotaGlobal.sleep || wifi_no_sleep) {
     if (!TasmotaGlobal.wifi_stay_asleep) {
       WiFi.setSleepMode(WIFI_NONE_SLEEP);       // Disable sleep
     }
   } else {
-#ifdef CONFIG_IDF_TARGET_ESP32C3
-    if (!TasmotaGlobal.wifi_stay_asleep) {
-      WiFi.setSleepMode(WIFI_NONE_SLEEP);       // Disable sleep
-    } else
-#endif
     if (Settings->flag3.sleep_normal) {         // SetOption60 - Enable normal sleep instead of dynamic sleep
       WiFi.setSleepMode(WIFI_LIGHT_SLEEP);      // Allow light sleep during idle times
     } else {

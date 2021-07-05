@@ -355,6 +355,8 @@
 #define D_CMND_GLOBAL_TEMP "GlobalTemp"
 #define D_CMND_GLOBAL_HUM "GlobalHum"
 
+#define D_SO_WIFINOSLEEP "WifiNoSleep"
+
 #ifdef ESP32
 #define D_CMND_TOUCH_CAL "TouchCal"
 #define D_CMND_TOUCH_THRES "TouchThres"
