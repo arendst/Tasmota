@@ -23,6 +23,8 @@ All notable changes to this project will be documented in this file.
 - Scripter moving average and sml input validation (#12541)
 - Zigbee Hue angle encoding (#12545)
 - AM2320 value reporting (#12552)
+- Exception 28 when unable to send MQTT message and a topic name without a slash '/' (#12555)
+- Wi-Fi initial setup workaround for 11n only routers (#12566)
 
 ## [9.5.0.1] 20210701
 ### Added
