@@ -42,6 +42,7 @@ Adafruit_LvGL_Glue * glue;
 // Logging
 // **************************************************
 #if LV_USE_LOG
+#ifdef USE_BERRY
 static void lvbe_debug(lv_log_level_t level, const char *file, uint32_t line, const char *fname, const char *msg);
 static void lvbe_debug(lv_log_level_t level, const char *file, uint32_t line, const char *fname, const char *msg) {
   be_writebuffer("LVG: ", sizeof("LVG: "));
@@ -50,6 +51,7 @@ static void lvbe_debug(lv_log_level_t level, const char *file, uint32_t line, co
   be_writebuffer(msg, strlen(msg));
   be_writebuffer("\n", sizeof("\n"));
 }
+#endif
 #endif
 
 /************************************************************
