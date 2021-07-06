@@ -28,7 +28,11 @@ extern "C" {
 
 #ifndef USE_IRAM_ATTR
 #if defined(ESP8266)
+#if defined(IRAM_ATTR)
+#define USE_IRAM_ATTR IRAM_ATTR
+#else  // IRAM_ATTR
 #define USE_IRAM_ATTR ICACHE_RAM_ATTR
+#endif  // IRAM_ATTR
 #endif  // ESP8266
 #if defined(ESP32)
 #define USE_IRAM_ATTR IRAM_ATTR
@@ -514,7 +518,9 @@ bool IRrecv::decode(decode_results *results, irparams_t *save,
   // interrupt. decode() is not stored in ICACHE_RAM.
   // Another better option would be to zero the entire irparams.rawbuf[] on
   // resume() but that is a much more expensive operation compare to this.
-  params.rawbuf[params.rawlen] = 0;
+  // However, don't do this if rawbuf is already full as we stomp over the heap.
+  // See: https://github.com/crankyoldgit/IRremoteESP8266/issues/1516
+  if (!params.overflow) params.rawbuf[params.rawlen] = 0;
 
   bool resumed = false;  // Flag indicating if we have resumed.
 
@@ -770,6 +776,10 @@ bool IRrecv::decode(decode_results *results, irparams_t *save,
     DPRINTLN("Attempting Haier AC YR-W02 decode");
     if (decodeHaierACYRW02(results, offset)) return true;
 #endif
+#if DECODE_HAIER_AC176
+    DPRINTLN("Attempting Haier AC 176 bit decode");
+    if (decodeHaierAC176(results, offset)) return true;
+#endif  // DECODE_HAIER_AC176
 #if DECODE_HITACHI_AC424
     // HitachiAc424 should be checked before HitachiAC, HitachiAC2,
     // & HitachiAC184
@@ -1006,6 +1016,14 @@ bool IRrecv::decode(decode_results *results, irparams_t *save,
     DPRINTLN("Attempting XMP decode");
     if (decodeXmp(results, offset, kXmpBits)) return true;
 #endif  // DECODE_XMP
+#if DECODE_TEKNOPOINT
+    DPRINTLN("Attempting Teknopoint decode");
+    if (decodeTeknopoint(results, offset)) return true;
+#endif  // DECODE_TEKNOPOINT
+#if DECODE_KELON
+    DPRINTLN("Attempting Kelon decode");
+    if (decodeKelon(results, offset)) return true;
+#endif  // DECODE_KELON
   // Typically new protocols are added above this line.
   }
 #if DECODE_HASH
@@ -1866,4 +1884,11 @@ uint16_t IRrecv::matchManchesterData(volatile const uint16_t *data_ptr,
   *result_ptr = GETBITS64(data, 0, nbits);
   return offset;
 }
+
+#if UNIT_TEST
+/// Unit test helper to get access to the params structure.
+volatile irparams_t *IRrecv::_getParamsPtr(void) {
+  return &params;
+}
+#endif  // UNIT_TEST
 // End of IRrecv class -------------------

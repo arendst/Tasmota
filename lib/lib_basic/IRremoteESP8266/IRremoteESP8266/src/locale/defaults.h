@@ -586,6 +586,9 @@
 #ifndef D_STR_HAIER_AC_YRW02
 #define D_STR_HAIER_AC_YRW02 "HAIER_AC_YRW02"
 #endif  // D_STR_HAIER_AC_YRW02
+#ifndef D_STR_HAIER_AC176
+#define D_STR_HAIER_AC176 "HAIER_AC176"
+#endif  // D_STR_HAIER_AC176
 #ifndef D_STR_HITACHI_AC
 #define D_STR_HITACHI_AC "HITACHI_AC"
 #endif  // D_STR_HITACHI_AC
@@ -610,6 +613,9 @@
 #ifndef D_STR_JVC
 #define D_STR_JVC "JVC"
 #endif  // D_STR_JVC
+#ifndef D_STR_KELON
+#define D_STR_KELON "KELON"
+#endif  // D_STR_KELON
 #ifndef D_STR_KELVINATOR
 #define D_STR_KELVINATOR "KELVINATOR"
 #endif  // D_STR_KELVINATOR
@@ -763,6 +769,9 @@
 #ifndef D_STR_TECO
 #define D_STR_TECO "TECO"
 #endif  // D_STR_TECO
+#ifndef D_STR_TEKNOPOINT
+#define D_STR_TEKNOPOINT "TEKNOPOINT"
+#endif  // D_STR_TEKNOPOINT
 #ifndef D_STR_TOSHIBA_AC
 #define D_STR_TOSHIBA_AC "TOSHIBA_AC"
 #endif  // D_STR_TOSHIBA_AC

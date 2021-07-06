@@ -162,6 +162,9 @@ class IRrecv {
 #if DECODE_HASH
   uint16_t _unknown_threshold;
 #endif
+#ifdef UNIT_TEST
+  volatile irparams_t *_getParamsPtr(void);
+#endif  // UNIT_TEST
   // These are called by decode
   uint8_t _validTolerance(const uint8_t percentage);
   void copyIrParams(volatile irparams_t *src, irparams_t *dst);
@@ -561,6 +564,12 @@ class IRrecv {
                           const uint16_t nbits = kHaierACYRW02Bits,
                           const bool strict = true);
 #endif
+#if DECODE_HAIER_AC176
+  bool decodeHaierAC176(decode_results *results,
+                        uint16_t offset = kStartOffset,
+                        const uint16_t nbits = kHaierAC176Bits,
+                        const bool strict = true);
+#endif  // DECODE_HAIER_AC176
 #if (DECODE_HITACHI_AC || DECODE_HITACHI_AC2 || DECODE_HITACHI_AC344)
   bool decodeHitachiAC(decode_results *results, uint16_t offset = kStartOffset,
                        const uint16_t nbits = kHitachiAcBits,
@@ -733,6 +742,15 @@ class IRrecv {
   bool decodeTruma(decode_results *results, uint16_t offset = kStartOffset,
                    const uint16_t nbits = kTrumaBits, const bool strict = true);
 #endif  // DECODE_TRUMA
+#if DECODE_TEKNOPOINT
+  bool decodeTeknopoint(decode_results *results, uint16_t offset = kStartOffset,
+                        const uint16_t nbits = kTeknopointBits,
+                        const bool strict = true);
+#endif  // DECODE_TEKNOPOINT
+#if DECODE_KELON
+  bool decodeKelon(decode_results *results, uint16_t offset = kStartOffset,
+                   const uint16_t nbits = kKelonBits, const bool strict = true);
+#endif  // DECODE_KELON
 };
 
 #endif  // IRRECV_H_

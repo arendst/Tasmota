@@ -285,5 +285,8 @@ const PROGMEM char *kAllProtocolNamesStr =
     D_STR_ECOCLIM "\x0"
     D_STR_XMP "\x0"
     D_STR_TRUMA "\x0"
+    D_STR_HAIER_AC176 "\x0"
+    D_STR_TEKNOPOINT "\x0"
+    D_STR_KELON "\x0"
     ///< New protocol strings should be added just above this line.
     "\x0";  ///< This string requires double null termination.

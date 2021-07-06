@@ -43,6 +43,7 @@
 //   Brand: Daikin,  Model: M Series A/C (DAIKIN)
 //   Brand: Daikin,  Model: FTXM-M A/C (DAIKIN)
 //   Brand: Daikin,  Model: ARC466A33 remote (DAIKIN)
+//   Brand: Daikin,  Model: FTWX35AXV1 A/C (DAIKIN64)
 
 #ifndef IR_DAIKIN_H_
 #define IR_DAIKIN_H_
@@ -627,9 +628,10 @@ const uint8_t kDaikin64Overhead = 9;
 const int8_t  kDaikin64ToleranceDelta = 5;  // +5%
 
 const uint64_t kDaikin64KnownGoodState = 0x7C16161607204216;
-const uint8_t kDaikin64Dry =  0b001;
-const uint8_t kDaikin64Cool = 0b010;
-const uint8_t kDaikin64Fan =  0b100;
+const uint8_t kDaikin64Dry =  0b0001;
+const uint8_t kDaikin64Cool = 0b0010;
+const uint8_t kDaikin64Fan =  0b0100;
+const uint8_t kDaikin64Heat =  0b1000;
 const uint8_t kDaikin64FanAuto =  0b0001;
 const uint8_t kDaikin64FanLow =   0b1000;
 const uint8_t kDaikin64FanMed =   0b0100;
