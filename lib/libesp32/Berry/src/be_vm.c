@@ -779,6 +779,11 @@ newframe: /* a new call frame */
                 int type = obj_attribute(vm, b, c, a);
                 reg = vm->reg;
                 if (basetype(type) == BE_FUNCTION) {
+                    /* check if the object is a superinstance, if so get the lowest possible subclass */
+                    while (obj->sub) {
+                        obj = obj->sub;
+                    }
+                    var_setobj(&self, var_type(&self), obj);  /* replace superinstance by lowest subinstance */
                     a[1] = self;
                 } else {
                     vm_error(vm, "attribute_error",
@@ -835,6 +840,18 @@ newframe: /* a new call frame */
                 bvalue *v = be_module_bind(vm, obj, attr);
                 if (v != NULL) {
                     *v = tmp;
+                    dispatch();
+                }
+                /* if it failed, try 'setmeemner' */
+                bvalue *member = be_module_attr(vm, obj, str_literal(vm, "setmember"));
+                if (member && var_basetype(member) == BE_FUNCTION) {
+                    bvalue *top = vm->top;
+                    top[0] = *member;
+                    top[1] = *b; /* move name to argv[0] */
+                    top[2] = tmp; /* move value to argv[1] */
+                    vm->top += 3;   /* prevent collection results */
+                    be_dofunc(vm, top, 2); /* call method 'setmember' */
+                    vm->top -= 3;
                     dispatch();
                 }
             }
@@ -978,8 +995,9 @@ newframe: /* a new call frame */
                 ++var, --argc, mode = 1;
                 goto recall;
             case BE_CLASS:
-                if (be_class_newobj(vm, var_toobj(var), var, ++argc)) {
-                    reg = vm->reg;
+                if (be_class_newobj(vm, var_toobj(var), var, ++argc, mode)) {
+                    reg = vm->reg + mode;
+                    mode = 0;
                     var = RA() + 1; /* to next register */
                     goto recall; /* call constructor */
                 }
@@ -1016,6 +1034,17 @@ newframe: /* a new call frame */
                 push_native(vm, var, argc, mode);
                 f(vm); /* call C primitive function */
                 ret_native(vm);
+                break;
+            }
+            case BE_MODULE: {
+                bmodule *f = var_toobj(var);
+                bvalue *member = be_module_attr(vm, f, str_literal(vm, "()"));
+                if (member && var_basetype(member) == BE_FUNCTION) {
+                    *var = *member;
+                    goto recall; /* call '()' method */
+                } else {
+                    call_error(vm, var);
+                }
                 break;
             }
             default:
@@ -1086,7 +1115,7 @@ static void do_ntvfunc(bvm *vm, bvalue *reg, int argc)
 
 static void do_class(bvm *vm, bvalue *reg, int argc)
 {
-    if (be_class_newobj(vm, var_toobj(reg), reg, ++argc)) {
+    if (be_class_newobj(vm, var_toobj(reg), reg, ++argc, 0)) {
         be_incrtop(vm);
         be_dofunc(vm, reg + 1, argc);
         be_stackpop(vm, 1);

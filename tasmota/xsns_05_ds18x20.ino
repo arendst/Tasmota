@@ -293,7 +293,7 @@ bool OneWireCrc8(uint8_t *addr) {
 
 void Ds18x20Init(void) {
   DS18X20Data.pin = Pin(GPIO_DSB);
-  DS18X20Data.input_mode = Settings.flag3.ds18x20_internal_pullup ? INPUT_PULLUP : INPUT;  // SetOption74 - Enable internal pullup for single DS18x20 sensor
+  DS18X20Data.input_mode = Settings->flag3.ds18x20_internal_pullup ? INPUT_PULLUP : INPUT;  // SetOption74 - Enable internal pullup for single DS18x20 sensor
 
   if (PinUsed(GPIO_DSB_OUT)) {
     DS18X20Data.pin_out = Pin(GPIO_DSB_OUT);
@@ -404,7 +404,7 @@ bool Ds18x20Read(uint8_t sensor) {
         }
       }
       ds18x20_sensor[index].temperature = temperature;
-      if (Settings.flag5.ds18x20_mean) {
+      if (Settings->flag5.ds18x20_mean) {
         if (ds18x20_sensor[index].numread++ == 0) {
           ds18x20_sensor[index].temp_sum = 0;
         }
@@ -482,7 +482,7 @@ void Ds18x20Show(bool json) {
       Ds18x20Name(i);
 
       if (json) {
-        if (Settings.flag5.ds18x20_mean) {
+        if (Settings->flag5.ds18x20_mean) {
           if ((0 == TasmotaGlobal.tele_period) && ds18x20_sensor[index].numread) {
             ds18x20_sensor[index].temperature = ds18x20_sensor[index].temp_sum / ds18x20_sensor[index].numread;
             ds18x20_sensor[index].numread = 0;
@@ -493,7 +493,7 @@ void Ds18x20Show(bool json) {
           sprintf(address+2*j, "%02X", ds18x20_sensor[index].address[6-j]);  // Skip sensor type and crc
         }
         ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_ID "\":\"%s\",\"" D_JSON_TEMPERATURE "\":%*_f}"),
-          DS18X20Data.name, address, Settings.flag2.temperature_resolution, &ds18x20_sensor[index].temperature);
+          DS18X20Data.name, address, Settings->flag2.temperature_resolution, &ds18x20_sensor[index].temperature);
 #ifdef USE_DOMOTICZ
         if ((0 == TasmotaGlobal.tele_period) && (0 == i)) {
           DomoticzFloatSensor(DZ_TEMP, ds18x20_sensor[index].temperature);

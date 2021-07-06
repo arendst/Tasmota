@@ -41,7 +41,7 @@ extern "C" {
     map_insert_float(vm, "total", Energy.total);
     // Energy.phase_count
     map_insert_float(vm, "power", Energy.active_power[0]);
-    map_insert_float(vm, "yesterday", (float)Settings.energy_kWhyesterday / 100000);
+    map_insert_float(vm, "yesterday", (float)Settings->energy_kWhyesterday / 100000);
     map_insert_float(vm, "today", Energy.daily);
     map_insert_float(vm, "activepower", Energy.active_power[0]);
     map_insert_float(vm, "apparentpower", Energy.active_power[0]);
@@ -56,8 +56,6 @@ extern "C" {
   }
 }
 
-#endif // USE_ENERGY_SENSOR
-
 extern "C" {
   // 
   int32_t b_wire_energymissing(struct bvm *vm);
@@ -67,4 +65,5 @@ extern "C" {
 
 }
 
+#endif // USE_ENERGY_SENSOR
 #endif  // USE_BERRY

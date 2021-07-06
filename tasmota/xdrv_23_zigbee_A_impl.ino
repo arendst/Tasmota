@@ -74,7 +74,7 @@ void ZigbeeInit(void)
 // #pragma GCC diagnostic pop
   // Check if settings in Flash are set
   if (PinUsed(GPIO_ZIGBEE_RX) && PinUsed(GPIO_ZIGBEE_TX)) {
-    if (0 == Settings.zb_channel) {
+    if (0 == Settings->zb_channel) {
       AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE D_ZIGBEE_RANDOMIZING_ZBCONFIG));
       uint64_t mac64 = 0;     // stuff mac address into 64 bits
       WiFi.macAddress((uint8_t*) &mac64);
@@ -89,17 +89,17 @@ void ZigbeeInit(void)
       uint16_t  pan_id = (mac64 & 0x3FFF);
       if (0x0000 == pan_id) { pan_id = 0x0001; }    // avoid extreme values
       if (0x3FFF == pan_id) { pan_id = 0x3FFE; }    // avoid extreme values
-      Settings.zb_pan_id = pan_id;
+      Settings->zb_pan_id = pan_id;
 
-      Settings.zb_ext_panid = 0xCCCCCCCC00000000L | (mac64 & 0x00000000FFFFFFFFL);
-      Settings.zb_precfgkey_l = (mac64 << 32) | (esp_id << 16) | flash_id;
-      Settings.zb_precfgkey_h = (mac64 << 32) | (esp_id << 16) | flash_id;
-      Settings.zb_channel = USE_ZIGBEE_CHANNEL;
-      Settings.zb_txradio_dbm = USE_ZIGBEE_TXRADIO_DBM;
+      Settings->zb_ext_panid = 0xCCCCCCCC00000000L | (mac64 & 0x00000000FFFFFFFFL);
+      Settings->zb_precfgkey_l = (mac64 << 32) | (esp_id << 16) | flash_id;
+      Settings->zb_precfgkey_h = (mac64 << 32) | (esp_id << 16) | flash_id;
+      Settings->zb_channel = USE_ZIGBEE_CHANNEL;
+      Settings->zb_txradio_dbm = USE_ZIGBEE_TXRADIO_DBM;
     }
 
-    if (Settings.zb_txradio_dbm < 0) {
-      Settings.zb_txradio_dbm = -Settings.zb_txradio_dbm;
+    if (Settings->zb_txradio_dbm < 0) {
+      Settings->zb_txradio_dbm = -Settings->zb_txradio_dbm;
 #ifdef USE_ZIGBEE_EZSP
       EZ_reset_config = true;         // force reconfigure of EZSP
 #endif
@@ -119,10 +119,10 @@ void ZigbeeInit(void)
 
   // update commands with the current settings
 #ifdef USE_ZIGBEE_ZNP
-  ZNP_UpdateConfig(Settings.zb_channel, Settings.zb_pan_id, Settings.zb_ext_panid, Settings.zb_precfgkey_l, Settings.zb_precfgkey_h);
+  ZNP_UpdateConfig(Settings->zb_channel, Settings->zb_pan_id, Settings->zb_ext_panid, Settings->zb_precfgkey_l, Settings->zb_precfgkey_h);
 #endif
 #ifdef USE_ZIGBEE_EZSP
-  EZ_UpdateConfig(Settings.zb_channel, Settings.zb_pan_id, Settings.zb_ext_panid, Settings.zb_precfgkey_l, Settings.zb_precfgkey_h, Settings.zb_txradio_dbm);
+  EZ_UpdateConfig(Settings->zb_channel, Settings->zb_pan_id, Settings->zb_ext_panid, Settings->zb_precfgkey_l, Settings->zb_precfgkey_h, Settings->zb_txradio_dbm);
 #endif
 
   ZigbeeInitSerial();
@@ -149,7 +149,7 @@ void CmndZbReset(void) {
       eraseZigbeeDevices();
       // no break - this is intended
     case 2:   // fall through
-      Settings.zb_txradio_dbm = - abs(Settings.zb_txradio_dbm);
+      Settings->zb_txradio_dbm = - abs(Settings->zb_txradio_dbm);
       TasmotaGlobal.restart_flag = 2;
 #ifdef USE_ZIGBEE_ZNP
       ResponseCmndChar_P(PSTR(D_JSON_ZIGBEE_CC2530 " " D_JSON_RESET_AND_RESTARTING));
@@ -184,14 +184,14 @@ void zigbeeZCLSendCmd(class ZCLMessage &zcl) {
     // endpoint is not specified, let's try to find it from shortAddr, unless it's a group address
     zcl.endpoint = zigbee_devices.findFirstEndpoint(zcl.shortaddr);
     if (0x00 == zcl.endpoint) { zcl.endpoint = 0x01; }    // if we don't know the endpoint, try 0x01
-    //AddLog_P(LOG_LEVEL_DEBUG, PSTR("ZbSend: guessing endpoint 0x%02X"), endpoint);
+    //AddLog(LOG_LEVEL_DEBUG, PSTR("ZbSend: guessing endpoint 0x%02X"), endpoint);
   }
 
-  // AddLog_P(LOG_LEVEL_DEBUG, PSTR("ZbSend: shortaddr 0x%04X, groupaddr 0x%04X, cluster 0x%04X, endpoint 0x%02X, cmd 0x%02X, data %_B"),
+  // AddLog(LOG_LEVEL_DEBUG, PSTR("ZbSend: shortaddr 0x%04X, groupaddr 0x%04X, cluster 0x%04X, endpoint 0x%02X, cmd 0x%02X, data %_B"),
   //   zcl.shortaddr, zcl.groupaddr, zcl.cluster, zcl.endpoint, zcl.cmd, &zcl.buf);
 
   if ((0 == zcl.endpoint) && (zcl.validShortaddr())) {     // endpoint null is ok for group address
-    AddLog_P(LOG_LEVEL_INFO, PSTR("ZbSend: unspecified endpoint"));
+    AddLog(LOG_LEVEL_INFO, PSTR("ZbSend: unspecified endpoint"));
     return;
   }
 
@@ -202,14 +202,14 @@ void zigbeeZCLSendCmd(class ZCLMessage &zcl) {
     zcl.transacSet = true;
   }
 
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR("ZigbeeZCLSend device: 0x%04X, group: 0x%04X, endpoint:%d, cluster:0x%04X, cmd:0x%02X, send:\"%_B\""),
+  AddLog(LOG_LEVEL_DEBUG, PSTR("ZigbeeZCLSend device: 0x%04X, group: 0x%04X, endpoint:%d, cluster:0x%04X, cmd:0x%02X, send:\"%_B\""),
             zcl.shortaddr, zcl.groupaddr, zcl.endpoint, zcl.cluster, zcl.cmd, &zcl.buf);
 
   ZigbeeZCLSend_Raw(zcl);
 
   // now set the timer, if any, to read back the state later
   if (zcl.clusterSpecific) {
-    if (!Settings.flag5.zb_disable_autoquery) {
+    if (!Settings->flag5.zb_disable_autoquery) {
       // read back attribute value unless it is disabled
       sendHueUpdate(zcl.shortaddr, zcl.groupaddr, zcl.cluster, zcl.endpoint);
     }
@@ -312,7 +312,7 @@ bool ZbAppendWriteBuf(SBuffer & buf, const Z_attribute & attr, bool prepend_stat
   if (res < 0) {
     // remove the attribute type we just added
     // buf.setLen(buf.len() - (operation == ZCL_READ_ATTRIBUTES_RESPONSE ? 4 : 3));
-    AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE D_ZIGBEE_UNSUPPORTED_ATTRIBUTE_TYPE " %04X/%04X '0x%02X'"), attr.key.id.cluster, attr.key.id.attr_id, attr.attr_type);
+    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE D_ZIGBEE_UNSUPPORTED_ATTRIBUTE_TYPE " %04X/%04X '0x%02X'"), attr.key.id.cluster, attr.key.id.attr_id, attr.attr_type);
     return false;
   }
   return true;
@@ -518,7 +518,7 @@ void ZbSendSend(class JsonParserToken val_cmd, ZCLMessage & zcl) {
         }
       }
 
-      //AddLog_P(LOG_LEVEL_DEBUG, PSTR("ZbSend: command_template = %s"), cmd_str.c_str());
+      //AddLog(LOG_LEVEL_DEBUG, PSTR("ZbSend: command_template = %s"), cmd_str.c_str());
       if (0xFF == cmd_var) {      // if command number is a variable, replace it with x
         zcl.cmd = x;
         x = y;                  // and shift other variables
@@ -653,7 +653,7 @@ void ZbSendRead(JsonParserToken val_attr, ZCLMessage & zcl) {
         }
       }
       if (!found) {
-        AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE D_ZIGBEE_UNKNWON_ATTRIBUTE), key.getStr());
+        AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE D_ZIGBEE_UNKNWON_ATTRIBUTE), key.getStr());
       }
     }
 
@@ -742,7 +742,7 @@ void CmndZbSend(void) {
     zcl.endpoint = 0xFF;                  // endpoint not used for group addresses, so use a dummy broadcast endpoint
   } else if (!zcl.validEndpoint()) {         // if it was not already specified, try to guess it
     zcl.endpoint = zigbee_devices.findFirstEndpoint(zcl.shortaddr);
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR("ZIG: guessing endpoint %d"), zcl.endpoint);
+    AddLog(LOG_LEVEL_DEBUG, PSTR("ZIG: guessing endpoint %d"), zcl.endpoint);
   }
   if (!zcl.validEndpoint()) {                // after this, if it is still zero, then it's an error
       ResponseCmndChar_P(PSTR("Missing endpoint"));
@@ -1595,12 +1595,12 @@ void CmndZbData(void) {
 void CmndZbConfig(void) {
   // ZbConfig
   // ZbConfig {"Channel":11,"PanID":"0x1A63","ExtPanID":"0xCCCCCCCCCCCCCCCC","KeyL":"0x0F0D0B0907050301L","KeyH":"0x0D0C0A0806040200L"}
-  uint8_t     zb_channel     = Settings.zb_channel;
-  uint16_t    zb_pan_id      = Settings.zb_pan_id;
-  uint64_t    zb_ext_panid   = Settings.zb_ext_panid;
-  uint64_t    zb_precfgkey_l = Settings.zb_precfgkey_l;
-  uint64_t    zb_precfgkey_h = Settings.zb_precfgkey_h;
-  int8_t      zb_txradio_dbm = Settings.zb_txradio_dbm;
+  uint8_t     zb_channel     = Settings->zb_channel;
+  uint16_t    zb_pan_id      = Settings->zb_pan_id;
+  uint64_t    zb_ext_panid   = Settings->zb_ext_panid;
+  uint64_t    zb_precfgkey_l = Settings->zb_precfgkey_l;
+  uint64_t    zb_precfgkey_h = Settings->zb_precfgkey_h;
+  int8_t      zb_txradio_dbm = Settings->zb_txradio_dbm;
 
   // if (zigbee.init_phase) { ResponseCmndChar_P(PSTR(D_ZIGBEE_NOT_STARTED)); return; }
   RemoveSpace(XdrvMailbox.data);
@@ -1621,24 +1621,24 @@ void CmndZbConfig(void) {
     if (zb_channel > 26) { zb_channel = 26; }
     // if network key is zero, we generate a truly random key with a hardware generator from ESP
     if ((0 == zb_precfgkey_l) && (0 == zb_precfgkey_h)) {
-      AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE D_ZIGBEE_GENERATE_KEY));
+      AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE D_ZIGBEE_GENERATE_KEY));
       zb_precfgkey_l = (uint64_t)HwRandom() << 32 | HwRandom();
       zb_precfgkey_h = (uint64_t)HwRandom() << 32 | HwRandom();
     }
 
     // Check if a parameter was changed after all
-    if ( (zb_channel      != Settings.zb_channel) ||
-         (zb_pan_id       != Settings.zb_pan_id) ||
-         (zb_ext_panid    != Settings.zb_ext_panid) ||
-         (zb_precfgkey_l  != Settings.zb_precfgkey_l) ||
-         (zb_precfgkey_h  != Settings.zb_precfgkey_h) ||
-         (zb_txradio_dbm  != Settings.zb_txradio_dbm) ) {
-      Settings.zb_channel      = zb_channel;
-      Settings.zb_pan_id       = zb_pan_id;
-      Settings.zb_ext_panid    = zb_ext_panid;
-      Settings.zb_precfgkey_l  = zb_precfgkey_l;
-      Settings.zb_precfgkey_h  = zb_precfgkey_h;
-      Settings.zb_txradio_dbm  = zb_txradio_dbm;
+    if ( (zb_channel      != Settings->zb_channel) ||
+         (zb_pan_id       != Settings->zb_pan_id) ||
+         (zb_ext_panid    != Settings->zb_ext_panid) ||
+         (zb_precfgkey_l  != Settings->zb_precfgkey_l) ||
+         (zb_precfgkey_h  != Settings->zb_precfgkey_h) ||
+         (zb_txradio_dbm  != Settings->zb_txradio_dbm) ) {
+      Settings->zb_channel      = zb_channel;
+      Settings->zb_pan_id       = zb_pan_id;
+      Settings->zb_ext_panid    = zb_ext_panid;
+      Settings->zb_precfgkey_l  = zb_precfgkey_l;
+      Settings->zb_precfgkey_h  = zb_precfgkey_h;
+      Settings->zb_txradio_dbm  = zb_txradio_dbm;
       TasmotaGlobal.restart_flag = 2;    // save and reboot
     }
   }
@@ -2092,7 +2092,7 @@ void ZigbeeMapRefresh(void) {
 
 // Display a graphical representation of the Zigbee map using vis.js network
 void ZigbeeShowMap(void) {
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP "Zigbee Mapper"));
+  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP "Zigbee Mapper"));
 
   // if no map, then launch a new mapping
   if ((!zigbee.init_phase) && (!zigbee.mapping_ready) && (!zigbee.mapping_in_progress)) {
@@ -2128,8 +2128,9 @@ void ZigbeeShowMap(void) {
  * Interface
 \*********************************************************************************************/
 
-bool Xdrv23(uint8_t function)
-{
+bool Xdrv23(uint8_t function) {
+  if (TasmotaGlobal.gpio_optiona.enable_ccloader) { return false; }
+
   bool result = false;
 
   if (zigbee.active) {
@@ -2177,7 +2178,7 @@ bool Xdrv23(uint8_t function)
         result = DecodeCommand(kZbCommands, ZigbeeCommand, kZbSynonyms);
         break;
       case FUNC_SAVE_BEFORE_RESTART:
-        if (!zigbee.init_phase) { 
+        if (!zigbee.init_phase) {
           hibernateAllData();
           restoreDumpAllDevices();
         }

@@ -207,17 +207,17 @@ void HueRespondToMSearch(void)
     snprintf_P(response + len, sizeof(response) - len, msg[HUE_RESP_ST1], uuid.c_str());
     PortUdp.write(response);
     PortUdp.endPacket();
-    // AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_UPNP "UDP resp=%s"), response);
+    // AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_UPNP "UDP resp=%s"), response);
 
     snprintf_P(response + len, sizeof(response) - len, msg[HUE_RESP_ST2], uuid.c_str(), uuid.c_str());
     PortUdp.write(response);
     PortUdp.endPacket();
-    // AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_UPNP "UDP resp=%s"), response);
+    // AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_UPNP "UDP resp=%s"), response);
 
     snprintf_P(response + len, sizeof(response) - len, msg[HUE_RESP_ST3], uuid.c_str());
     PortUdp.write(response);
     PortUdp.endPacket();
-    // AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_UPNP "UDP resp=%s"), response);
+    // AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_UPNP "UDP resp=%s"), response);
 
     snprintf_P(message, sizeof(message), PSTR(D_3_RESPONSE_PACKETS_SENT));
   } else {
@@ -479,7 +479,7 @@ char     prev_y_str[24] = "\0";
 uint8_t getLocalLightSubtype(uint8_t device) {
   if (TasmotaGlobal.light_type) {
     if (device >= Light.device) {
-      if (Settings.flag3.pwm_multi_channels) {  // SetOption68 - Enable multi-channels PWM instead of Color PWM
+      if (Settings->flag3.pwm_multi_channels) {  // SetOption68 - Enable multi-channels PWM instead of Color PWM
         return LST_SINGLE;     // If SetOption68, each channel acts like a dimmer
       } else {
         return Light.subtype;  // the actual light
@@ -511,7 +511,7 @@ void HueLightStatus1(uint8_t device, String *response)
 
 #ifdef USE_SHUTTER
   if (ShutterState(device)) {
-    bri = (float)((Settings.shutter_options[device-1] & 1) ? 100 - Settings.shutter_position[device-1] : Settings.shutter_position[device-1]) / 100;
+    bri = (float)((Settings->shutter_options[device-1] & 1) ? 100 - Settings->shutter_position[device-1] : Settings->shutter_position[device-1]) / 100;
   }
 #endif
 
@@ -591,7 +591,7 @@ void HueLightStatus2(uint8_t device, String *response)
   UnishoxStrings msg(HUE_LIGHTS);
   snprintf_P(buf, buf_size, msg[HUE_LIGHTS_STATUS_JSON2],
             EscapeJSONString(fname).c_str(),
-            EscapeJSONString(Settings.user_template_name).c_str(),
+            EscapeJSONString(Settings->user_template_name).c_str(),
             PSTR("Tasmota"),
             GetHueDeviceId(device).c_str());
   *response += buf;
@@ -663,7 +663,7 @@ uint32_t DecodeLightId(uint32_t hue_id, uint16_t * shortaddr = nullptr)
 // Check if the Echo device is of 1st generation, which triggers different results
 inline uint32_t findEchoGeneration(void) {
   // don't try to guess from User-Agent anymore but use SetOption109
-  return Settings.flag4.alexa_gen_1 ? 1 : 2;
+  return Settings->flag4.alexa_gen_1 ? 1 : 2;
 }
 
 void HueGlobalConfig(String *path) {
@@ -761,7 +761,7 @@ void HueLightsCommand(uint8_t device, uint32_t device_id, String &response) {
     }
 
     if (TasmotaGlobal.light_type && (local_light_subtype >= LST_SINGLE)) {
-      if (!Settings.flag3.pwm_multi_channels) {  // SetOption68 - Enable multi-channels PWM instead of Color PWM
+      if (!Settings->flag3.pwm_multi_channels) {  // SetOption68 - Enable multi-channels PWM instead of Color PWM
         light_state.getHSB(&hue, &sat, nullptr);
         bri = light_state.getBri();   // get the combined bri for CT and RGB, not only the RGB one
         ct = light_state.getCT();
@@ -879,12 +879,12 @@ void HueLightsCommand(uint8_t device, uint32_t device_id, String &response) {
     if (change) {
 #ifdef USE_SHUTTER
       if (ShutterState(device)) {
-        AddLog(LOG_LEVEL_DEBUG, PSTR("Settings.shutter_invert: %d"), Settings.shutter_options[device-1] & 1);
+        AddLog(LOG_LEVEL_DEBUG, PSTR("Settings->shutter_invert: %d"), Settings->shutter_options[device-1] & 1);
         ShutterSetPosition(device, bri * 100.0f );
       } else
 #endif
       if (TasmotaGlobal.light_type && (local_light_subtype > LST_NONE)) {   // not relay
-        if (!Settings.flag3.pwm_multi_channels) {  // SetOption68 - Enable multi-channels PWM instead of Color PWM
+        if (!Settings->flag3.pwm_multi_channels) {  // SetOption68 - Enable multi-channels PWM instead of Color PWM
           if (g_gotct) {
             light_controller.changeCTB(ct, bri);
           } else {
@@ -1000,7 +1000,7 @@ void HueLights(String *path)
     code = 406;
   }
   exit:
-  AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_HTTP D_HUE " Result (%s)"), response.c_str());
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_HTTP D_HUE " Result (%s)"), response.c_str());
   WSSend(code, CT_APP_JSON, response);
 }
 
@@ -1085,9 +1085,9 @@ bool Xdrv20(uint8_t function)
   bool result = false;
 
 #if defined(USE_SCRIPT_HUE) || defined(USE_ZIGBEE)
-  if ((EMUL_HUE == Settings.flag2.emulation)) {
+  if ((EMUL_HUE == Settings->flag2.emulation)) {
 #else
-  if (TasmotaGlobal.devices_present && (EMUL_HUE == Settings.flag2.emulation)) {
+  if (TasmotaGlobal.devices_present && (EMUL_HUE == Settings->flag2.emulation)) {
 #endif
     switch (function) {
       case FUNC_WEB_ADD_HANDLER:

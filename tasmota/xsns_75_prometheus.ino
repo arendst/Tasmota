@@ -77,8 +77,8 @@ void HandleMetrics(void) {
   WSContentSend_P(PSTR("# TYPE tasmota_info gauge\ntasmota_info{version=\"%s\",image=\"%s\",build_timestamp=\"%s\"} 1\n"),
                   TasmotaGlobal.version, TasmotaGlobal.image_name, GetBuildDateAndTime().c_str());
   WSContentSend_P(PSTR("# TYPE tasmota_uptime_seconds gauge\ntasmota_uptime_seconds %d\n"), TasmotaGlobal.uptime);
-  WSContentSend_P(PSTR("# TYPE tasmota_boot_count counter\ntasmota_boot_count %d\n"), Settings.bootcount);
-  WSContentSend_P(PSTR("# TYPE tasmota_flash_writes_total counter\ntasmota_flash_writes_total %d\n"), Settings.save_flag);
+  WSContentSend_P(PSTR("# TYPE tasmota_boot_count counter\ntasmota_boot_count %d\n"), Settings->bootcount);
+  WSContentSend_P(PSTR("# TYPE tasmota_flash_writes_total counter\ntasmota_flash_writes_total %d\n"), Settings->save_flag);
 
 
   // Pseudo-metric providing metadata about the WiFi station.
@@ -88,15 +88,15 @@ void HandleMetrics(void) {
   WSContentSend_P(PSTR("# TYPE tasmota_wifi_station_signal_dbm gauge\ntasmota_wifi_station_signal_dbm{mac_address=\"%s\"} %d\n"), WiFi.BSSIDstr().c_str(), WiFi.RSSI());
 
   if (!isnan(TasmotaGlobal.temperature_celsius)) {
-    dtostrfd(TasmotaGlobal.temperature_celsius, Settings.flag2.temperature_resolution, parameter);
+    dtostrfd(TasmotaGlobal.temperature_celsius, Settings->flag2.temperature_resolution, parameter);
     WSContentSend_P(PSTR("# TYPE tasmota_global_temperature_celsius gauge\ntasmota_global_temperature_celsius %s\n"), parameter);
   }
   if (TasmotaGlobal.humidity != 0) {
-    dtostrfd(TasmotaGlobal.humidity, Settings.flag2.humidity_resolution, parameter);
+    dtostrfd(TasmotaGlobal.humidity, Settings->flag2.humidity_resolution, parameter);
     WSContentSend_P(PSTR("# TYPE tasmota_global_humidity gauge\ntasmota_global_humidity_percentage %s\n"), parameter);
   }
   if (TasmotaGlobal.pressure_hpa != 0) {
-    dtostrfd(TasmotaGlobal.pressure_hpa, Settings.flag2.pressure_resolution, parameter);
+    dtostrfd(TasmotaGlobal.pressure_hpa, Settings->flag2.pressure_resolution, parameter);
     WSContentSend_P(PSTR("# TYPE tasmota_global_pressure_hpa gauge\ntasmota_global_pressure_hpa %s\n"), parameter);
   }
 
@@ -113,15 +113,15 @@ void HandleMetrics(void) {
   #endif // ESP32
 
 #ifdef USE_ENERGY_SENSOR
-  dtostrfd(Energy.voltage[0], Settings.flag2.voltage_resolution, parameter);
+  dtostrfd(Energy.voltage[0], Settings->flag2.voltage_resolution, parameter);
   WSContentSend_P(PSTR("# TYPE energy_voltage_volts gauge\nenergy_voltage_volts %s\n"), parameter);
-  dtostrfd(Energy.current[0], Settings.flag2.current_resolution, parameter);
+  dtostrfd(Energy.current[0], Settings->flag2.current_resolution, parameter);
   WSContentSend_P(PSTR("# TYPE energy_current_amperes gauge\nenergy_current_amperes %s\n"), parameter);
-  dtostrfd(Energy.active_power[0], Settings.flag2.wattage_resolution, parameter);
+  dtostrfd(Energy.active_power[0], Settings->flag2.wattage_resolution, parameter);
   WSContentSend_P(PSTR("# TYPE energy_power_active_watts gauge\nenergy_power_active_watts %s\n"), parameter);
-  dtostrfd(Energy.daily, Settings.flag2.energy_resolution, parameter);
+  dtostrfd(Energy.daily, Settings->flag2.energy_resolution, parameter);
   WSContentSend_P(PSTR("# TYPE energy_power_kilowatts_daily counter\nenergy_power_kilowatts_daily %s\n"), parameter);
-  dtostrfd(Energy.total, Settings.flag2.energy_resolution, parameter);
+  dtostrfd(Energy.total, Settings->flag2.energy_resolution, parameter);
   WSContentSend_P(PSTR("# TYPE energy_power_kilowatts_total counter\nenergy_power_kilowatts_total %s\n"), parameter);
 #endif
 
@@ -132,9 +132,7 @@ void HandleMetrics(void) {
 
   ResponseClear();
   MqttShowSensor(); //Pull sensor data
-  char json[strlen(TasmotaGlobal.mqtt_data)+1];
-  snprintf_P(json, sizeof(json), TasmotaGlobal.mqtt_data);
-  String jsonStr = json;
+  String jsonStr = TasmotaGlobal.mqtt_data;
   JsonParser parser((char *)jsonStr.c_str());
   JsonParserObject root = parser.getRootObject();
   if (root) { // did JSON parsing went ok?

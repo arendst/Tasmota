@@ -84,26 +84,26 @@ struct remote_pwm_dimmer * active_remote_pwm_dimmer;
 
 void PWMModulePreInit(void)
 {
-  Settings.seriallog_level = 0;
-  Settings.flag.mqtt_serial = 0;  // Disable serial logging
-  Settings.ledstate = 0;          // Disable LED usage
+  Settings->seriallog_level = 0;
+  Settings->flag.mqtt_serial = 0;  // Disable serial logging
+  Settings->ledstate = 0;          // Disable LED usage
 
   // If the module was just changed to PWM Dimmer, set the defaults.
   if (TasmotaGlobal.module_changed) {
-    Settings.flag.pwm_control = true;     // SetOption15 - Switch between commands PWM or COLOR/DIMMER/CT/CHANNEL
-    Settings.bri_power_on = Settings.bri_preset_low = Settings.bri_preset_high = 0;
+    Settings->flag.pwm_control = true;     // SetOption15 - Switch between commands PWM or COLOR/DIMMER/CT/CHANNEL
+    Settings->bri_power_on = Settings->bri_preset_low = Settings->bri_preset_high = 0;
  }
 
   // Previous versions of PWM Dimmer used SetOption32 - Button held for factor times longer as the
   // hold time. The hold time is now fixed and SetOption32 is used as normal including to
   // determine how long a button is held before a reset command is executed. If SetOption32 is
   // still 5, change it to 40 (the default).
-  if (Settings.param[P_HOLD_TIME] == 5) Settings.param[P_HOLD_TIME] = 40;
+  if (Settings->param[P_HOLD_TIME] == 5) Settings->param[P_HOLD_TIME] = 40;
 
   // Make sure the brightness level settings are sensible.
-  if (!Settings.bri_power_on) Settings.bri_power_on = 128;
-  if (!Settings.bri_preset_low) Settings.bri_preset_low = 10;
-  if (Settings.bri_preset_high < Settings.bri_preset_low) Settings.bri_preset_high = 255;
+  if (!Settings->bri_power_on) Settings->bri_power_on = 128;
+  if (!Settings->bri_preset_low) Settings->bri_preset_low = 10;
+  if (Settings->bri_preset_high < Settings->bri_preset_low) Settings->bri_preset_high = 255;
 
   PWMDimmerSetPoweredOffLed();
 
@@ -113,8 +113,8 @@ void PWMModulePreInit(void)
 #ifdef USE_PWM_DIMMER_REMOTE
   // If remote device mode is enabled, set the device group count to the number of buttons
   // present.
-  if (Settings.flag4.multiple_device_groups) {
-    Settings.flag4.device_groups_enabled = true;
+  if (Settings->flag4.multiple_device_groups) {
+    Settings->flag4.device_groups_enabled = true;
 
     device_group_count = 0;
     for (uint32_t button_index = 0; button_index < MAX_PWM_DIMMER_KEYS; button_index++) {
@@ -149,7 +149,7 @@ void PWMDimmerSetBrightnessLeds(int32_t bri)
   uint32_t mask = 1;
   int32_t led;
   for (led = 0; led < TasmotaGlobal.leds_present; led++) {
-    if (Settings.ledmask & mask) leds++;
+    if (Settings->ledmask & mask) leds++;
     mask <<= 1;
   }
 
@@ -158,8 +158,8 @@ void PWMDimmerSetBrightnessLeds(int32_t bri)
   if (leds) {
     led_timeout_seconds = 5;
     if (bri < 0) {
-      bri = ((bri == -2 && Settings.flag4.led_timeout) || !Light.power ? 0 : light_state.getBri());
-      if (!bri || !Settings.flag4.led_timeout) led_timeout_seconds = 0;
+      bri = ((bri == -2 && Settings->flag4.led_timeout) || !Light.power ? 0 : light_state.getBri());
+      if (!bri || !Settings->flag4.led_timeout) led_timeout_seconds = 0;
     }
     uint32_t step = 256 / (leds + 1);
 
@@ -174,10 +174,10 @@ void PWMDimmerSetBrightnessLeds(int32_t bri)
         led++;
         mask <<= 1;
         if (!mask) mask = 1;
-        if (Settings.ledmask & mask) break;
+        if (Settings->ledmask & mask) break;
       }
-      pwm_led_bri = changeUIntScale((bri > level ? bri - level : 0), 0, step, 0, Settings.pwm_range);
-      analogWrite(Pin(GPIO_LED1, led), bitRead(TasmotaGlobal.led_inverted, led) ? Settings.pwm_range - pwm_led_bri : pwm_led_bri);
+      pwm_led_bri = changeUIntScale((bri > level ? bri - level : 0), 0, step, 0, Settings->pwm_range);
+      analogWrite(Pin(GPIO_LED1, led), bitRead(TasmotaGlobal.led_inverted, led) ? Settings->pwm_range - pwm_led_bri : pwm_led_bri);
     }
   }
 }
@@ -186,7 +186,7 @@ void PWMDimmerSetPoweredOffLed(void)
 {
   // Set the powered-off LED state.
   if (PinUsed(GPIO_LEDLNK)) {
-    bool power_off_led_on = !TasmotaGlobal.power && Settings.flag4.powered_off_led;
+    bool power_off_led_on = !TasmotaGlobal.power && Settings->flag4.powered_off_led;
     if (TasmotaGlobal.ledlnk_inverted) power_off_led_on ^= 1;
     digitalWrite(Pin(GPIO_LEDLNK), power_off_led_on);
   }
@@ -233,28 +233,28 @@ void PWMDimmerHandleDevGroupItem(void)
       remote_pwm_dimmer->bri_power_on = value;
       if (is_local)
 #endif  // USE_PWM_DIMMER_REMOTE
-        Settings.bri_power_on = value;
+        Settings->bri_power_on = value;
       break;
     case DGR_ITEM_BRI_PRESET_LOW:
 #ifdef USE_PWM_DIMMER_REMOTE
       remote_pwm_dimmer->bri_preset_low = value;
       if (is_local)
 #endif  // USE_PWM_DIMMER_REMOTE
-        Settings.bri_preset_low = value;
+        Settings->bri_preset_low = value;
       break;
     case DGR_ITEM_BRI_PRESET_HIGH:
 #ifdef USE_PWM_DIMMER_REMOTE
       remote_pwm_dimmer->bri_preset_high = value;
       if (is_local)
 #endif  // USE_PWM_DIMMER_REMOTE
-        Settings.bri_preset_high = value;
+        Settings->bri_preset_high = value;
       break;
     case DGR_ITEM_STATUS:
 #ifdef USE_PWM_DIMMER_REMOTE
       if (is_local)
 #endif  // USE_PWM_DIMMER_REMOTE
-        SendDeviceGroupMessage(0, DGR_MSGTYP_UPDATE, DGR_ITEM_BRI_POWER_ON, Settings.bri_power_on,
-          DGR_ITEM_BRI_PRESET_LOW, Settings.bri_preset_low, DGR_ITEM_BRI_PRESET_HIGH, Settings.bri_preset_high);
+        SendDeviceGroupMessage(0, DGR_MSGTYP_UPDATE, DGR_ITEM_BRI_POWER_ON, Settings->bri_power_on,
+          DGR_ITEM_BRI_PRESET_LOW, Settings->bri_preset_low, DGR_ITEM_BRI_PRESET_HIGH, Settings->bri_preset_high);
 #ifdef USE_PWM_DIMMER_REMOTE
       else
         SendDeviceGroupMessage(-device_group_index, DGR_MSGTYP_UPDATE, DGR_ITEM_POWER, remote_pwm_dimmer->power_on,
@@ -328,7 +328,7 @@ void PWMDimmerHandleButton(uint32_t button_index, bool pressed)
             power_on_bri = active_remote_pwm_dimmer->bri = active_remote_pwm_dimmer->bri_preset_low;
           else
 #endif  // USE_PWM_DIMMER_REMOTE
-            power_on_bri = Settings.bri_preset_low;
+            power_on_bri = Settings->bri_preset_low;
           button_hold_time[button_index] = now + 500;
         }
       }
@@ -349,7 +349,7 @@ void PWMDimmerHandleButton(uint32_t button_index, bool pressed)
 
         // Otherwise, if the power is on and remote mode is enabled, adjust the brightness. Set the
         // direction based on which button is pressed. The new brightness will be calculated below.
-        else if (power_is_on && Settings.flag4.multiple_device_groups) {
+        else if (power_is_on && Settings->flag4.multiple_device_groups) {
           bri_offset = (is_down_button ? -1 : 1);
         }
 
@@ -387,13 +387,13 @@ void PWMDimmerHandleButton(uint32_t button_index, bool pressed)
 
             // Toggle the powered-off LED option.
             if (down_button_tapped) {
-                Settings.flag4.led_timeout ^= 1;
-                if (Light.power) PWMDimmerSetBrightnessLeds(Settings.flag4.led_timeout ? 0 : -1);
+                Settings->flag4.led_timeout ^= 1;
+                if (Light.power) PWMDimmerSetBrightnessLeds(Settings->flag4.led_timeout ? 0 : -1);
             }
 
             // Toggle the LED timeout.
             else {
-                Settings.flag4.powered_off_led ^= 1;
+                Settings->flag4.powered_off_led ^= 1;
                 PWMDimmerSetPoweredOffLed();
             }
 #ifdef USE_PWM_DIMMER_REMOTE
@@ -431,7 +431,7 @@ void PWMDimmerHandleButton(uint32_t button_index, bool pressed)
           power_on_bri = active_remote_pwm_dimmer->bri_power_on;
         else
 #endif  // USE_PWM_DIMMER_REMOTE
-          power_on_bri = Settings.bri_power_on;
+          power_on_bri = Settings->bri_power_on;
       }
     }
 
@@ -485,7 +485,7 @@ void PWMDimmerHandleButton(uint32_t button_index, bool pressed)
             power_on_bri = active_remote_pwm_dimmer->bri = (is_down_button ? active_remote_pwm_dimmer->bri_preset_low : active_remote_pwm_dimmer->bri_preset_high);
           else
 #endif  // USE_PWM_DIMMER_REMOTE
-            power_on_bri = (is_down_button ? Settings.bri_preset_low : Settings.bri_preset_high);
+            power_on_bri = (is_down_button ? Settings->bri_preset_low : Settings->bri_preset_high);
         }
       }
     }
@@ -501,7 +501,7 @@ void PWMDimmerHandleButton(uint32_t button_index, bool pressed)
     else
 #endif  // USE_PWM_DIMMER_REMOTE
       bri = light_state.getBri();
-    int32_t new_bri = bri + bri_offset * (Settings.light_correction ? 4 : bri / 16 + 1);
+    int32_t new_bri = bri + bri_offset * (Settings->light_correction ? 4 : bri / 16 + 1);
 
     if (bri_offset > 0) {
       if (new_bri > 255) new_bri = 255;
@@ -525,13 +525,13 @@ void PWMDimmerHandleButton(uint32_t button_index, bool pressed)
         ignore_dgr_sends = true;
 #endif  // USE_DEVICE_GROUPS
         light_state.setBri(new_bri);
-        Settings.light_dimmer = light_state.BriToDimmer(new_bri);
+        Settings->light_dimmer = light_state.BriToDimmer(new_bri);
         LightAnimate();
         TasmotaGlobal.skip_light_fade = false;
 #ifdef USE_DEVICE_GROUPS
         ignore_dgr_sends = false;
 #endif  // USE_DEVICE_GROUPS
-        Settings.bri_power_on = new_bri;
+        Settings->bri_power_on = new_bri;
 #ifdef USE_PWM_DIMMER_REMOTE
       }
 #endif  // USE_PWM_DIMMER_REMOTE
@@ -571,7 +571,7 @@ void PWMDimmerHandleButton(uint32_t button_index, bool pressed)
     else {
 #endif  // USE_PWM_DIMMER_REMOTE
       light_state.setBri(power_on_bri);
-      Settings.light_dimmer = light_state.BriToDimmer(power_on_bri);
+      Settings->light_dimmer = light_state.BriToDimmer(power_on_bri);
 #ifdef USE_DEVICE_GROUPS
       Light.devgrp_no_channels_out = true;
 #endif // USE_DEVICE_GROUPS
@@ -622,7 +622,7 @@ void PWMDimmerHandleButton(uint32_t button_index, bool pressed)
     char topic[TOPSZ];
     Response_P(PSTR("Trigger%u"), mqtt_trigger);
 #ifdef USE_DEVICE_GROUPS
-    if (Settings.flag4.device_groups_enabled) {
+    if (Settings->flag4.device_groups_enabled) {
       snprintf_P(topic, sizeof(topic), PSTR("cmnd/%s/EVENT"), device_groups[power_button_index].group_name);
       MqttPublish(topic);
     }
@@ -649,7 +649,7 @@ void PWMDimmerHandleButton(uint32_t button_index, bool pressed)
       light_controller.saveSettings();
   }
 
-  if (state_updated && Settings.flag3.hass_tele_on_power) { // SetOption59 - Send tele/%topic%/STATE in addition to stat/%topic%/RESULT
+  if (state_updated && Settings->flag3.hass_tele_on_power) { // SetOption59 - Send tele/%topic%/STATE in addition to stat/%topic%/RESULT
 #ifdef USE_PWM_DIMMER_REMOTE
     if (!active_remote_pwm_dimmer)
 #endif  // USE_PWM_DIMMER_REMOTE
@@ -667,8 +667,8 @@ void CmndBriPreset(void)
     bool valid = true;
     uint32_t value;
     uint8_t parm[2];
-    parm[0] = Settings.bri_preset_low;
-    parm[1] = Settings.bri_preset_high;
+    parm[0] = Settings->bri_preset_low;
+    parm[1] = Settings->bri_preset_high;
     char * ptr = XdrvMailbox.data;
     for (uint32_t i = 0; i < 2; i++) {
       while (*ptr == ' ') ptr++;
@@ -691,29 +691,29 @@ void CmndBriPreset(void)
     }
     if (valid && !*ptr) {
       if (parm[0] < parm[1]) {
-        Settings.bri_preset_low = parm[0];
-        Settings.bri_preset_high = parm[1];
+        Settings->bri_preset_low = parm[0];
+        Settings->bri_preset_high = parm[1];
       } else
       {
-        Settings.bri_preset_low = parm[1];
-        Settings.bri_preset_high = parm[0];
+        Settings->bri_preset_low = parm[1];
+        Settings->bri_preset_high = parm[0];
       }
 #ifdef USE_DEVICE_GROUPS
-      SendDeviceGroupMessage(0, DGR_MSGTYP_UPDATE, DGR_ITEM_BRI_PRESET_LOW, Settings.bri_preset_low, DGR_ITEM_BRI_PRESET_HIGH, Settings.bri_preset_high);
+      SendDeviceGroupMessage(0, DGR_MSGTYP_UPDATE, DGR_ITEM_BRI_PRESET_LOW, Settings->bri_preset_low, DGR_ITEM_BRI_PRESET_HIGH, Settings->bri_preset_high);
 #endif  // USE_DEVICE_GROUPS
     }
   }
-  Response_P(PSTR("{\"" D_CMND_BRI_PRESET "\":{\"Low\":%d,\"High\":%d}}"), Settings.bri_preset_low, Settings.bri_preset_high);
+  Response_P(PSTR("{\"" D_CMND_BRI_PRESET "\":{\"Low\":%d,\"High\":%d}}"), Settings->bri_preset_low, Settings->bri_preset_high);
 }
 
 #ifdef USE_DEVICE_GROUPS
 void CmndPWMDimmerPWMs(void)
 {
   if (XdrvMailbox.data_len > 0 && XdrvMailbox.payload <= 5) {
-    Settings.pwm_dimmer_cfg.pwm_count = XdrvMailbox.payload - 1;
+    Settings->pwm_dimmer_cfg.pwm_count = XdrvMailbox.payload - 1;
     TasmotaGlobal.restart_flag = 2;
   }
-  Response_P(PSTR("{\"" D_CMND_PWM_DIMMER_PWMS "\":%u}"), Settings.pwm_dimmer_cfg.pwm_count + 1);
+  Response_P(PSTR("{\"" D_CMND_PWM_DIMMER_PWMS "\":%u}"), Settings->pwm_dimmer_cfg.pwm_count + 1);
 }
 #endif  // USE_DEVICE_GROUPS
 
@@ -772,7 +772,7 @@ bool Xdrv35(uint8_t function)
             // Top          0          1     1     0
             // Middle       1          2    15     0
             // Bottom      15          3    15     1
-            if (!buttons_pressed && Settings.flag4.multiple_device_groups) {
+            if (!buttons_pressed && Settings->flag4.multiple_device_groups) {
               power_button_index = button_index;
               down_button_index = (Pin(GPIO_KEY1, power_button_index) == 15 ? TasmotaGlobal.gpio_pin[1] : TasmotaGlobal.gpio_pin[15]) - 32;
               active_remote_pwm_dimmer = nullptr;
@@ -786,14 +786,14 @@ bool Xdrv35(uint8_t function)
             buttons_pressed++;
             if (buttons_pressed > 1) multibutton_in_progress = true;
             uint32_t hold_delay = 250;
-            if (button_index == power_button_index) hold_delay = Settings.param[P_HOLD_TIME] * 10;
+            if (button_index == power_button_index) hold_delay = Settings->param[P_HOLD_TIME] * 10;
             button_hold_time[button_index] = now + hold_delay;
           }
 
           // If hold time has arrived and no rule is enabled that handles the button hold, handle it.
           else if (button_hold_time[button_index] <= now) {
 #ifdef USE_RULES
-            sprintf(TasmotaGlobal.mqtt_data, PSTR("{\"Button%u\":{\"State\":3}}"), button_index + 1);
+            Response_P(PSTR("{\"Button%u\":{\"State\":3}}"), button_index + 1);
             Rules.no_execute = true;
             if (!XdrvRulesProcess(0)) {
 #endif  // USE_RULES

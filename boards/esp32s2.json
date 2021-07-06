@@ -8,7 +8,8 @@
     "f_flash": "80000000L",
     "flash_mode": "dio",
     "mcu": "esp32s2",
-    "variant": "esp32s2"
+    "variant": "esp32s2",
+    "partitions": "esp32_partition_app1856k_spiffs320k.csv"
   },
   "connectivity": [
     "wifi"
@@ -20,7 +21,7 @@
     "espidf",
     "arduino"
   ],
-  "name": "Espressif ESP32-S2-Saola-1",
+  "name": "Espressif Generic ESP32-S2 4M Flash, Tasmota 1856k Code/OTA, 320k SPIFFS",
   "upload": {
     "flash_size": "4MB",
     "maximum_ram_size": 327680,

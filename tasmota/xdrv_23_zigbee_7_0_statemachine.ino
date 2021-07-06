@@ -963,10 +963,10 @@ void ZigbeeGotoLabel(uint8_t label) {
     const Zigbee_Instruction *cur_instr_line = &zb_prog[i];
     cur_instr = pgm_read_byte(&cur_instr_line->i.i);
     cur_d8    = pgm_read_byte(&cur_instr_line->i.d8);
-    //AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("ZGB GOTO: pc %d instr %d"), i, cur_instr);
+    //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("ZGB GOTO: pc %d instr %d"), i, cur_instr);
 
     if (ZGB_INSTR_LABEL == cur_instr) {
-      //AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_ZIGBEE "found label %d at pc %d"), cur_d8, i);
+      //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_ZIGBEE "found label %d at pc %d"), cur_d8, i);
       if (label == cur_d8) {
         // label found, goto to this pc
         zigbee.pc = i;
@@ -1090,7 +1090,7 @@ void ZigbeeStateMachine_Run(void) {
         }
         break;
       case ZGB_INSTR_LOG:
-        AddLog_P(cur_d8, (char*) cur_ptr1);
+        AddLog(cur_d8, (char*) cur_ptr1);
         break;
       case ZGB_INSTR_MQTT_STATE:
         {

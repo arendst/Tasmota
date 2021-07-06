@@ -165,6 +165,7 @@ static binstance* newobjself(bvm *vm, bclass *c)
         while (v < end) { var_setnil(v); ++v; }
         obj->_class = c;
         obj->super = NULL;
+        obj->sub = NULL;
     }
     return obj;
 }
@@ -178,19 +179,21 @@ static binstance* newobject(bvm *vm, bclass *c)
     be_incrtop(vm); /* protect new objects from GC */
     for (c = c->super; c; c = c->super) {
         prev->super = newobjself(vm, c);
+        prev->super->sub = prev;
         prev = prev->super;
     }
     be_stackpop(vm, 1);
     return obj;
 }
 
-bbool be_class_newobj(bvm *vm, bclass *c, bvalue *reg, int argc)
+bbool be_class_newobj(bvm *vm, bclass *c, bvalue *reg, int argc, int mode)
 {
     bvalue init;
     size_t pos = reg - vm->reg;
     binstance *obj = newobject(vm, c);
-    reg = vm->reg + pos; /* the stack may have changed  */
+    reg = vm->reg + pos - mode; /* the stack may have changed  */
     var_setinstance(reg, obj);
+    var_setinstance(reg + mode, obj);
     /* find constructor */
     obj = instance_member(vm, obj, str_literal(vm, "init"), &init);
     if (obj && var_type(&init) != MT_VARIABLE) {

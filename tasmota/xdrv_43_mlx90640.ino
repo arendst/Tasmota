@@ -573,12 +573,12 @@ void MLX90640every100msec(){
 void MLX90640Show(uint8_t json)
 {
   char amb_tstr[FLOATSZ];
-  dtostrfd(MLX90640.Ta, Settings.flag2.temperature_resolution, amb_tstr);
+  dtostrfd(MLX90640.Ta, Settings->flag2.temperature_resolution, amb_tstr);
   if (json) {
     ResponseAppend_P(PSTR(",\"MLX90640\":{\"" D_JSON_TEMPERATURE "\":[%s"), amb_tstr);
   for(int i = 0;i<MLX90640_POI_NUM;i++){
     char obj_tstr[FLOATSZ];
-    dtostrfd(MLX90640.To[MLX90640.pois[i*2]+(MLX90640.pois[(i*2)+1]*32)], Settings.flag2.temperature_resolution, obj_tstr);
+    dtostrfd(MLX90640.To[MLX90640.pois[i*2]+(MLX90640.pois[(i*2)+1]*32)], Settings->flag2.temperature_resolution, obj_tstr);
     ResponseAppend_P(PSTR(",%s"),obj_tstr);
     // AddLog(LOG_LEVEL_DEBUG, PSTR("Array pos: %u"),MLX90640.pois[i*2]+(MLX90640.pois[(i*2)+1]*32));
     AddLog(LOG_LEVEL_DEBUG, PSTR("POI-%u: x: %u, y: %u"),i+1,MLX90640.pois[i*2],MLX90640.pois[(i*2)+1]);

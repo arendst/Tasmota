@@ -516,19 +516,19 @@ void Z_Devices::jsonAppend(uint16_t shortaddr, const Z_attribute_list &attr_list
 // internal function to publish device information with respect to all `SetOption`s
 //
 void Z_Device::jsonPublishAttrList(const char * json_prefix, const Z_attribute_list &attr_list) const {
-  bool use_fname = (Settings.flag4.zigbee_use_names) && (friendlyName);    // should we replace shortaddr with friendlyname?
+  bool use_fname = (Settings->flag4.zigbee_use_names) && (friendlyName);    // should we replace shortaddr with friendlyname?
 
-  TasmotaGlobal.mqtt_data[0] = 0; // clear string
+  ResponseClear(); // clear string
   // Do we prefix with `ZbReceived`?
-  if (!Settings.flag4.remove_zbreceived && !Settings.flag5.zb_received_as_subtopic) {
+  if (!Settings->flag4.remove_zbreceived && !Settings->flag5.zb_received_as_subtopic) {
     Response_P(PSTR("{\"%s\":"), json_prefix);
   }
   // What key do we use, shortaddr or name?
-  if (!Settings.flag5.zb_omit_json_addr) {
+  if (!Settings->flag5.zb_omit_json_addr) {
     if (use_fname) {
-      Response_P(PSTR("%s{\"%s\":"), TasmotaGlobal.mqtt_data, friendlyName);
+      ResponseAppend_P(PSTR("{\"%s\":"), friendlyName);
     } else {
-      Response_P(PSTR("%s{\"0x%04X\":"), TasmotaGlobal.mqtt_data, shortaddr);
+      ResponseAppend_P(PSTR("{\"0x%04X\":"), shortaddr);
     }
   }
   ResponseAppend_P(PSTR("{"));
@@ -542,46 +542,46 @@ void Z_Device::jsonPublishAttrList(const char * json_prefix, const Z_attribute_l
   // Add all other attributes
   ResponseAppend_P(PSTR("%s}"), attr_list.toString(false).c_str());
 
-  if (!Settings.flag5.zb_omit_json_addr) {
+  if (!Settings->flag5.zb_omit_json_addr) {
     ResponseAppend_P(PSTR("}"));
   }
 
-  if (!Settings.flag4.remove_zbreceived && !Settings.flag5.zb_received_as_subtopic) {
+  if (!Settings->flag4.remove_zbreceived && !Settings->flag5.zb_received_as_subtopic) {
     ResponseAppend_P(PSTR("}"));
   }
 
-  if (Settings.flag4.zigbee_distinct_topics) {
+  if (Settings->flag4.zigbee_distinct_topics) {
     char subtopic[TOPSZ];
-    if (Settings.flag4.zb_topic_fname && friendlyName && strlen(friendlyName)) {
+    if (Settings->flag4.zb_topic_fname && friendlyName && strlen(friendlyName)) {
       // Clean special characters
       char stemp[TOPSZ];
       strlcpy(stemp, friendlyName, sizeof(stemp));
       MakeValidMqtt(0, stemp);
-      if (Settings.flag5.zigbee_hide_bridge_topic) {
+      if (Settings->flag5.zigbee_hide_bridge_topic) {
         snprintf_P(subtopic, sizeof(subtopic), PSTR("%s"), stemp);
       } else {
         snprintf_P(subtopic, sizeof(subtopic), PSTR("%s/%s"), TasmotaGlobal.mqtt_topic, stemp);
-      } 
+      }
     } else {
-      if (Settings.flag5.zigbee_hide_bridge_topic) {
+      if (Settings->flag5.zigbee_hide_bridge_topic) {
         snprintf_P(subtopic, sizeof(subtopic), PSTR("%04X"), shortaddr);
       } else {
         snprintf_P(subtopic, sizeof(subtopic), PSTR("%s/%04X"), TasmotaGlobal.mqtt_topic, shortaddr);
-      } 
+      }
     }
-    if (Settings.flag5.zb_topic_endpoint) {
+    if (Settings->flag5.zb_topic_endpoint) {
       if (attr_list.isValidSrcEp()) {
         snprintf_P(subtopic, sizeof(subtopic), PSTR("%s_%d"), subtopic, attr_list.src_ep);
       }
     }
     char stopic[TOPSZ];
-    if (Settings.flag5.zb_received_as_subtopic)
+    if (Settings->flag5.zb_received_as_subtopic)
       GetTopic_P(stopic, TELE, subtopic, json_prefix);
     else
       GetTopic_P(stopic, TELE, subtopic, PSTR(D_RSLT_SENSOR));
-    MqttPublish(stopic, Settings.flag.mqtt_sensor_retain);
+    MqttPublish(stopic, Settings->flag.mqtt_sensor_retain);
   } else {
-    MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
+    MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings->flag.mqtt_sensor_retain);
   }
   XdrvRulesProcess(0);     // apply rules
 }
@@ -665,7 +665,7 @@ Z_Device & Z_Devices::parseDeviceFromName(const char * param, uint16_t * parsed_
 // Add "Device":"0x1234","Name":"FrienflyName"
 void Z_Device::jsonAddDeviceNamme(Z_attribute_list & attr_list) const {
   const char * fname = friendlyName;
-  bool use_fname = (Settings.flag4.zigbee_use_names) && (fname);    // should we replace shortaddr with friendlyname?
+  bool use_fname = (Settings->flag4.zigbee_use_names) && (fname);    // should we replace shortaddr with friendlyname?
 
   attr_list.addAttributePMEM(PSTR(D_JSON_ZIGBEE_DEVICE)).setHex32(shortaddr);
   if (fname) {
@@ -880,7 +880,7 @@ int32_t Z_Devices::deviceRestore(JsonParserObject json) {
           data.setConfig(config);
         }
       } else {
-        AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Ignoring config '%s'"), conf_str);
+        AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Ignoring config '%s'"), conf_str);
       }
     }
   }

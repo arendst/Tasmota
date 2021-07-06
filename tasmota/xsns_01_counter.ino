@@ -76,10 +76,10 @@ void IRAM_ATTR CounterIsrArg(void *arg) {
     debounce_time = time - Counter.timer_low_high[index];
     if bitRead(Counter.pin_state, index) {
       // last valid pin state was high, current pin state is low
-      if (debounce_time <= Settings.pulse_counter_debounce_high * 1000) return;
+      if (debounce_time <= Settings->pulse_counter_debounce_high * 1000) return;
     } else {
       // last valid pin state was low, current pin state is high
-      if (debounce_time <= Settings.pulse_counter_debounce_low * 1000) return;
+      if (debounce_time <= Settings->pulse_counter_debounce_low * 1000) return;
     }
     // passed debounce check, save pin state and timing
     Counter.timer_low_high[index] = time;
@@ -90,7 +90,7 @@ void IRAM_ATTR CounterIsrArg(void *arg) {
       // restart PWM each second (german 50Hz has to up to 0.01% deviation)
       // restart initiated by setting Counter.startReSync = true;
 #ifdef USE_AC_ZERO_CROSS_DIMMER
-      if (RtcSettings.pulse_counter[index]%(Settings.pwm_frequency / (Light.fade_running ? 10:1))== 0 && PinUsed(GPIO_PWM1, index) && Settings.flag4.zerocross_dimmer) {
+      if (RtcSettings.pulse_counter[index]%(Settings->pwm_frequency / (Light.fade_running ? 10:1))== 0 && PinUsed(GPIO_PWM1, index) && Settings->flag4.zerocross_dimmer) {
         ac_zero_cross_dimmer.currentCycleCount = ESP.getCycleCount();
 
         // 1000µs to ensure not to fire on the next sinus wave
@@ -107,9 +107,9 @@ void IRAM_ATTR CounterIsrArg(void *arg) {
   }
 
   debounce_time = time - Counter.timer[index];
-  if (debounce_time > Settings.pulse_counter_debounce * 1000) {
+  if (debounce_time > Settings->pulse_counter_debounce * 1000) {
     Counter.timer[index] = time;
-    if (bitRead(Settings.pulse_counter_type, index)) {
+    if (bitRead(Settings->pulse_counter_type, index)) {
       RtcSettings.pulse_counter[index] = debounce_time;
     } else {
       RtcSettings.pulse_counter[index]++;
@@ -151,11 +151,11 @@ void CounterInit(void)
   for (uint32_t i = 0; i < MAX_COUNTERS; i++) {
     if (PinUsed(GPIO_CNTR1, i)) {
 #ifdef USE_AC_ZERO_CROSS_DIMMER
-      ac_zero_cross_dimmer.tobe_cycle_timeClockCycles = microsecondsToClockCycles(1000000 / Settings.pwm_frequency);
+      ac_zero_cross_dimmer.tobe_cycle_timeClockCycles = microsecondsToClockCycles(1000000 / Settings->pwm_frequency);
 #endif
       Counter.any_counter = true;
       pinMode(Pin(GPIO_CNTR1, i), bitRead(Counter.no_pullup, i) ? INPUT : INPUT_PULLUP);
-      if ((0 == Settings.pulse_counter_debounce_low) && (0 == Settings.pulse_counter_debounce_high) && !Settings.flag4.zerocross_dimmer) {
+      if ((0 == Settings->pulse_counter_debounce_low) && (0 == Settings->pulse_counter_debounce_high) && !Settings->flag4.zerocross_dimmer) {
         Counter.pin_state = 0;
         attachInterruptArg(Pin(GPIO_CNTR1, i), CounterIsrArg, &ctr_index[i], FALLING);
       } else {
@@ -170,7 +170,7 @@ void CounterEverySecond(void)
 {
   for (uint32_t i = 0; i < MAX_COUNTERS; i++) {
     if (PinUsed(GPIO_CNTR1, i)) {
-      if (bitRead(Settings.pulse_counter_type, i)) {
+      if (bitRead(Settings->pulse_counter_type, i)) {
         uint32_t time = micros() - Counter.timer[i];
         if (time > 4200000000) {  // 70 minutes
           RtcSettings.pulse_counter[i] = 4200000000;  // Set Timer to max in case of no more interrupts due to stall of measured device
@@ -184,7 +184,7 @@ void CounterSaveState(void)
 {
   for (uint32_t i = 0; i < MAX_COUNTERS; i++) {
     if (PinUsed(GPIO_CNTR1, i)) {
-      Settings.pulse_counter[i] = RtcSettings.pulse_counter[i];
+      Settings->pulse_counter[i] = RtcSettings.pulse_counter[i];
     }
   }
 }
@@ -196,7 +196,7 @@ void CounterShow(bool json)
   for (uint32_t i = 0; i < MAX_COUNTERS; i++) {
     if (PinUsed(GPIO_CNTR1, i)) {
       char counter[33];
-      if (bitRead(Settings.pulse_counter_type, i)) {
+      if (bitRead(Settings->pulse_counter_type, i)) {
         dtostrfd((double)RtcSettings.pulse_counter[i] / 1000000, 6, counter);
       } else {
         dsxflg++;
@@ -215,13 +215,13 @@ void CounterShow(bool json)
           dsxflg++;
         }
 #endif  // USE_DOMOTICZ
-        if ((0 == TasmotaGlobal.tele_period ) && (Settings.flag3.counter_reset_on_tele)) {
+        if ((0 == TasmotaGlobal.tele_period ) && (Settings->flag3.counter_reset_on_tele)) {
           RtcSettings.pulse_counter[i] = 0;
         }
 #ifdef USE_WEBSERVER
       } else {
         WSContentSend_PD(PSTR("{s}" D_COUNTER "%d{m}%s%s{e}"),
-          i +1, counter, (bitRead(Settings.pulse_counter_type, i)) ? " " D_UNIT_SECOND : "");
+          i +1, counter, (bitRead(Settings->pulse_counter_type, i)) ? " " D_UNIT_SECOND : "");
 #endif  // USE_WEBSERVER
       }
     }
@@ -281,10 +281,10 @@ void CmndCounter(void)
     if ((XdrvMailbox.data_len > 0) && PinUsed(GPIO_CNTR1, XdrvMailbox.index -1)) {
       if ((XdrvMailbox.data[0] == '-') || (XdrvMailbox.data[0] == '+')) {
         RtcSettings.pulse_counter[XdrvMailbox.index -1] += XdrvMailbox.payload;
-        Settings.pulse_counter[XdrvMailbox.index -1] += XdrvMailbox.payload;
+        Settings->pulse_counter[XdrvMailbox.index -1] += XdrvMailbox.payload;
       } else {
         RtcSettings.pulse_counter[XdrvMailbox.index -1] = XdrvMailbox.payload;
-        Settings.pulse_counter[XdrvMailbox.index -1] = XdrvMailbox.payload;
+        Settings->pulse_counter[XdrvMailbox.index -1] = XdrvMailbox.payload;
       }
     }
     ResponseCmndIdxNumber(RtcSettings.pulse_counter[XdrvMailbox.index -1]);
@@ -295,38 +295,38 @@ void CmndCounterType(void)
 {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_COUNTERS)) {
     if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 1) && PinUsed(GPIO_CNTR1, XdrvMailbox.index -1)) {
-      bitWrite(Settings.pulse_counter_type, XdrvMailbox.index -1, XdrvMailbox.payload &1);
+      bitWrite(Settings->pulse_counter_type, XdrvMailbox.index -1, XdrvMailbox.payload &1);
       RtcSettings.pulse_counter[XdrvMailbox.index -1] = 0;
-      Settings.pulse_counter[XdrvMailbox.index -1] = 0;
+      Settings->pulse_counter[XdrvMailbox.index -1] = 0;
     }
-    ResponseCmndIdxNumber(bitRead(Settings.pulse_counter_type, XdrvMailbox.index -1));
+    ResponseCmndIdxNumber(bitRead(Settings->pulse_counter_type, XdrvMailbox.index -1));
   }
 }
 
 void CmndCounterDebounce(void)
 {
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 32001)) {
-    Settings.pulse_counter_debounce = XdrvMailbox.payload;
+    Settings->pulse_counter_debounce = XdrvMailbox.payload;
   }
-  ResponseCmndNumber(Settings.pulse_counter_debounce);
+  ResponseCmndNumber(Settings->pulse_counter_debounce);
 }
 
 void CmndCounterDebounceLow(void)
 {
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 32001)) {
-    Settings.pulse_counter_debounce_low = XdrvMailbox.payload;
+    Settings->pulse_counter_debounce_low = XdrvMailbox.payload;
     CounterInit();
   }
-  ResponseCmndNumber(Settings.pulse_counter_debounce_low);
+  ResponseCmndNumber(Settings->pulse_counter_debounce_low);
 }
 
 void CmndCounterDebounceHigh(void)
 {
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 32001)) {
-    Settings.pulse_counter_debounce_high = XdrvMailbox.payload;
+    Settings->pulse_counter_debounce_high = XdrvMailbox.payload;
     CounterInit();
   }
-  ResponseCmndNumber(Settings.pulse_counter_debounce_high);
+  ResponseCmndNumber(Settings->pulse_counter_debounce_high);
 }
 
 /*********************************************************************************************\

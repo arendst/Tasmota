@@ -956,7 +956,7 @@ bool XsnsEnabled(uint32_t sns_index) {
     uint32_t index = kXsnsList[sns_index];
 #endif
     if (index < MAX_XSNS_DRIVERS) {
-      return bitRead(Settings.sensors[index / 32], index % 32);
+      return bitRead(Settings->sensors[index / 32], index % 32);
     }
   }
   return true;
@@ -972,7 +972,7 @@ void XsnsSensorState(void) {
 #endif
     bool disabled = false;
     if (sensorid < MAX_XSNS_DRIVERS) {
-      disabled = !bitRead(Settings.sensors[sensorid / 32], sensorid % 32);
+      disabled = !bitRead(Settings->sensors[sensorid / 32], sensorid % 32);
     }
     ResponseAppend_P(PSTR("%s%s%d"), (i) ? "," : "", (disabled) ? "!" : "", sensorid);
   }

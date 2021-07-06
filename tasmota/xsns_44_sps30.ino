@@ -150,7 +150,7 @@ void SPS30_Detect(void)
 }
 
 #define D_UNIT_PM "ug/m3"
-#define D_UNIT_NCPM "#/m3"
+#define D_UNIT_NCPM "#/cm3"
 
 #ifdef USE_WEBSERVER
 const char HTTP_SNS_SPS30_a[] PROGMEM ="{s}SPS30 " "%s" "{m}%s " D_UNIT_PM "{e}";
@@ -160,7 +160,7 @@ const char HTTP_SNS_SPS30_c[] PROGMEM ="{s}SPS30 " "TYPSIZ" "{m}%s " "um" "{e}";
 
 #define PMDP 2
 
-#define SPS30_HOURS Settings.sps30_inuse_hours
+#define SPS30_HOURS Settings->sps30_inuse_hours
 //#define SPS30_HOURS sps30_inuse_hours
 //uint8_t sps30_inuse_hours;
 

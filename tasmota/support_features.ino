@@ -725,7 +725,7 @@ void ResponseAppendFeatures(void)
 
   static uint32_t feature8 = 0x00000000;
   if (!feature8) {           // Only fill this once
-#if defined(USE_I2C) && defined(USE_MPU6886)
+#if defined(USE_I2C) && defined(USE_MPU_ACCEL)
     feature8 |= 0x00000001;  // xsns_85_mpu6886.ino
 #endif
 #ifdef USE_TFMINIPLUS
@@ -737,11 +737,15 @@ void ResponseAppendFeatures(void)
 #ifdef USE_BERRY
     feature8 |= 0x00000008;  // xdrv_52_9_berry.ino
 #endif
-//    feature8 |= 0x00000010;
+#if defined(USE_I2C) && defined(USE_BM8563)
+    feature8 |= 0x00000010;
+#endif
 #if defined(USE_ENERGY_SENSOR) && defined(USE_ENERGY_DUMMY)
     feature8 |= 0x00000020;
 #endif
-//    feature8 |= 0x00000040;
+#if defined(USE_I2C) && defined(USE_AM2320)
+    feature8 |= 0x00000040;
+#endif
 //    feature8 |= 0x00000080;
 
 //    feature8 |= 0x00000100;

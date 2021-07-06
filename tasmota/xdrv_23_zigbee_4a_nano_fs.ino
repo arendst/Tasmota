@@ -308,7 +308,7 @@ bool ZFS::findFileEntry(uint32_t name, ZFS_File_Entry & entry, uint8_t * _entry_
 #ifdef Z_EEPROM_DEBUG
     // {
     //   char hex_char[(sizeof(ZFS_File_Entry) * 2) + 2];
-    //   AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Read entry %d at address 0x%04X contains %*_H"), entry_idx, entry_addr, sizeof(entry), &entry);
+    //   AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Read entry %d at address 0x%04X contains %*_H"), entry_idx, entry_addr, sizeof(entry), &entry);
     // }
 #endif
     if (entry.name == name) {
@@ -341,7 +341,7 @@ void ZFS::erase(void) {
 int32_t ZFS::readBytes(uint32_t name, void* buffer, size_t buffer_len, uint16_t read_start, uint16_t read_len) {
   if (!zigbee.eeprom_ready) { return -1; }
 #ifdef Z_EEPROM_DEBUG
-    // AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "readBytes name=%08X, buffer_len=%d, read_start=0x%04X, read_len=%d"), name, buffer_len, read_start, read_len);
+    // AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "readBytes name=%08X, buffer_len=%d, read_start=0x%04X, read_len=%d"), name, buffer_len, read_start, read_len);
 #endif
   if (name == 0x00000000) { return -1; }
   if (buffer_len == 0) { return 0; }
@@ -375,20 +375,20 @@ void ZFS::initOrFormat(void) {
   if (!zigbee.eeprom_present) { return; }
 
 #ifdef Z_EEPROM_DEBUG
-  // AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "sizeof(ZFS_Bitmap)=%d sizeof(ZFS_File_Entry)=%d sizeof(ZFS_Root_Entry)=%d sizeof(ZFS_Dir_Block)=%d"), sizeof(ZFS_Bitmap), sizeof(ZFS_File_Entry), sizeof(ZFS_Root_Entry), sizeof(ZFS_Dir_Block));
+  // AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "sizeof(ZFS_Bitmap)=%d sizeof(ZFS_File_Entry)=%d sizeof(ZFS_Root_Entry)=%d sizeof(ZFS_Dir_Block)=%d"), sizeof(ZFS_Bitmap), sizeof(ZFS_File_Entry), sizeof(ZFS_Root_Entry), sizeof(ZFS_Dir_Block));
   {
     byte map[256];
     char hex_char[(256 * 2) + 2];
     zigbee.eeprom.readBytes(0x0000, 256, map);
-    AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "BLK 00 %s"), ToHex_P(map, sizeof(map), hex_char, sizeof(hex_char)));
+    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "BLK 00 %s"), ToHex_P(map, sizeof(map), hex_char, sizeof(hex_char)));
     // zigbee.eeprom.readBytes(0x0100, 256, map);
-    // AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "BLK 01 %s"), ToHex_P(map, sizeof(map), hex_char, sizeof(hex_char)));
+    // AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "BLK 01 %s"), ToHex_P(map, sizeof(map), hex_char, sizeof(hex_char)));
     zigbee.eeprom.readBytes(0x0200, 256, map);
-    AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "BLK 02 %s"), ToHex_P(map, sizeof(map), hex_char, sizeof(hex_char)));
+    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "BLK 02 %s"), ToHex_P(map, sizeof(map), hex_char, sizeof(hex_char)));
     zigbee.eeprom.readBytes(0x2100, 256, map);
-    AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "BLK 21 %s"), ToHex_P(map, sizeof(map), hex_char, sizeof(hex_char)));
+    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "BLK 21 %s"), ToHex_P(map, sizeof(map), hex_char, sizeof(hex_char)));
     // zigbee.eeprom.readBytes(0xFF00, 256, map);
-    // AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "BLK FF %s"), ToHex_P(map, sizeof(map), hex_char, sizeof(hex_char)));
+    // AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "BLK FF %s"), ToHex_P(map, sizeof(map), hex_char, sizeof(hex_char)));
   }
 #endif
 
@@ -397,9 +397,9 @@ void ZFS::initOrFormat(void) {
 
   if (dir->b0.signature == ZFS_SIGNATURE) {
     // Good
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE "EEPROM signature 0x%08X is correct"), dir->b0.signature);
+    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE "EEPROM signature 0x%08X is correct"), dir->b0.signature);
   } else {
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE "EEPROM signature 0x%08X is incorrect, formatting"), dir->b0.signature);
+    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE "EEPROM signature 0x%08X is incorrect, formatting"), dir->b0.signature);
     format();
   }
   delete dir;
@@ -411,7 +411,7 @@ void ZFS::initOrFormat(void) {
 // Format EEPROM
 //
 void ZFS::format(void) {
-  AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Formatting EEPROM"));
+  AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Formatting EEPROM"));
 
   // First write the bitmap
   ZFS_Bitmap * bitmap = new ZFS_Bitmap();
@@ -455,7 +455,7 @@ int32_t ZFS_Write_File::addBytes(void* buffer, size_t buffer_len) {
   if (length + buffer_len > ZFS_FILE_BLOCKS * 256) { return -1; }   // exceeded max size
 
 // #ifdef Z_EEPROM_DEBUG
-//   AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "eeprom.writeBytes address=0x%04X, len=%d"), (blk_start << 8) + length, buffer_len);
+//   AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "eeprom.writeBytes address=0x%04X, len=%d"), (blk_start << 8) + length, buffer_len);
 // #endif
   zigbee.eeprom.writeBytes((blk_start << 8) + length, buffer_len, (byte*)buffer);
   length += buffer_len;

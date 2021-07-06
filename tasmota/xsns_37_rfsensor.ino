@@ -251,7 +251,7 @@ void RfSnsAnalyzeTheov2(void)
     break;
   }
 
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR("RFS: TheoV2, ChkCalc %d, Chksum %d, id %d, Type %d, Ch %d, Volt %d, BattLo %d, Pld1 %d, Pld2 %d"),
+  AddLog(LOG_LEVEL_DEBUG, PSTR("RFS: TheoV2, ChkCalc %d, Chksum %d, id %d, Type %d, Ch %d, Volt %d, BattLo %d, Pld1 %d, Pld2 %d"),
     chksum, Checksum, id, Type, Channel +1, Payload3, (Voltage & 0x80) >> 7, Payload1, Payload2);
 }
 
@@ -276,7 +276,7 @@ void RfSnsTheoV2Show(bool json)
 
         if (json) {
           ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_TEMPERATURE "\":%*_f,\"" D_JSON_ILLUMINANCE "\":%d,\"" D_JSON_VOLTAGE "\":%s}"),
-            sensor, Settings.flag2.temperature_resolution, &temp, rfsns_theo_v2_t1[i].lux, voltage);
+            sensor, Settings->flag2.temperature_resolution, &temp, rfsns_theo_v2_t1[i].lux, voltage);
 #ifdef USE_DOMOTICZ
           if ((0 == TasmotaGlobal.tele_period) && !sensor_once) {
             DomoticzFloatSensor(DZ_TEMP, temp);
@@ -502,7 +502,7 @@ void RfSnsAnalyzeAlectov2()
     rfsns_alecto_v2->wdir = data[8] & 0xf;
   }
 
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR("RFS: " D_ALECTOV2 ", ChkCalc %d, Chksum %d, rc %d, Temp %d, Hum %d, Rain %d, Wind %d, Gust %d, Dir %d, Factor %s"),
+  AddLog(LOG_LEVEL_DEBUG, PSTR("RFS: " D_ALECTOV2 ", ChkCalc %d, Chksum %d, rc %d, Temp %d, Hum %d, Rain %d, Wind %d, Gust %d, Dir %d, Factor %s"),
     checksumcalc, checksum, rc, ((data[1] & 0x3) * 256 + data[2]) - 400, data[3], (data[6] * 256) + data[7], data[4], data[5], data[8] & 0xf, dtostrfd(factor, 3, buf1));
 }
 

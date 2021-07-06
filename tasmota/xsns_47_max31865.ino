@@ -360,8 +360,8 @@ void MAX31865_Show(bool Json) {
       if (Json) {
         ResponseAppend_P(PSTR(",\"MAX31865%c%d\":{\"" D_JSON_TEMPERATURE "\":%*_f,\"" D_JSON_RESISTANCE "\":%*_f,\"" D_JSON_ERROR "\":%d}"), \
           IndexSeparator(), i,
-          Settings.flag2.temperature_resolution, &MAX31865_Result[i].PtdTemp,
-          Settings.flag2.temperature_resolution, &MAX31865_Result[i].PtdResistance,
+          Settings->flag2.temperature_resolution, &MAX31865_Result[i].PtdTemp,
+          Settings->flag2.temperature_resolution, &MAX31865_Result[i].PtdResistance,
           MAX31865_Result[i].ErrorCode);
         if ((0 == TasmotaGlobal.tele_period) && (!report_once)) {
 #ifdef USE_DOMOTICZ

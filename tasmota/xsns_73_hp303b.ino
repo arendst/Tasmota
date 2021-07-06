@@ -108,14 +108,14 @@ void HP303B_Show(bool json) {
       float sealevel = ConvertPressureForSeaLevel(hp303b_sensor[i].pressure);
 
       char str_pressure[33];
-      dtostrfd(hp303b_sensor[i].pressure, Settings.flag2.pressure_resolution, str_pressure);
+      dtostrfd(hp303b_sensor[i].pressure, Settings->flag2.pressure_resolution, str_pressure);
       char sea_pressure[33];
-      dtostrfd(sealevel, Settings.flag2.pressure_resolution, sea_pressure);
+      dtostrfd(sealevel, Settings->flag2.pressure_resolution, sea_pressure);
 
       if (json) {
         ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_TEMPERATURE "\":%*_f,\"" D_JSON_PRESSURE "\":%s"),
-          sensor_name, Settings.flag2.temperature_resolution, &hp303b_sensor[i].temperature,  str_pressure);
-        if (Settings.altitude != 0) {
+          sensor_name, Settings->flag2.temperature_resolution, &hp303b_sensor[i].temperature,  str_pressure);
+        if (Settings->altitude != 0) {
           ResponseAppend_P(PSTR(",\"" D_JSON_PRESSUREATSEALEVEL "\":%s"), sea_pressure);
         }
         ResponseJsonEnd();
@@ -129,7 +129,7 @@ void HP303B_Show(bool json) {
       } else {
         WSContentSend_Temp(sensor_name, hp303b_sensor[i].temperature);
         WSContentSend_PD(HTTP_SNS_PRESSURE, sensor_name, str_pressure, PressureUnit().c_str());
-        if (Settings.altitude != 0) {
+        if (Settings->altitude != 0) {
           WSContentSend_PD(HTTP_SNS_SEAPRESSURE, sensor_name, sea_pressure, PressureUnit().c_str());
         }
 #endif // USE_WEBSERVER

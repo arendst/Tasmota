@@ -232,10 +232,10 @@ bool Ina219Read(void)
 bool Ina219CommandSensor(void)
 {
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 255)) {
-    Settings.ina219_mode = XdrvMailbox.payload;
+    Settings->ina219_mode = XdrvMailbox.payload;
     TasmotaGlobal.restart_flag = 2;
   }
-  Response_P(S_JSON_SENSOR_INDEX_NVALUE, XSNS_13, Settings.ina219_mode);
+  Response_P(S_JSON_SENSOR_INDEX_NVALUE, XSNS_13, Settings->ina219_mode);
 
   return true;
 }
@@ -247,7 +247,7 @@ void Ina219Detect(void)
   for (uint32_t i = 0; i < sizeof(ina219_type); i++) {
     uint16_t addr = ina219_addresses[i];
     if (I2cActive(addr)) { continue; }
-    if (Ina219SetCalibration(Settings.ina219_mode, addr)) {
+    if (Ina219SetCalibration(Settings->ina219_mode, addr)) {
       I2cSetActiveFound(addr, ina219_types);
       ina219_type[i] = 1;
       ina219_count++;
@@ -282,11 +282,11 @@ void Ina219Show(bool json)
     sensor_num++;
 
     char voltage[16];
-    dtostrfd(ina219_voltage[i], Settings.flag2.voltage_resolution, voltage);
+    dtostrfd(ina219_voltage[i], Settings->flag2.voltage_resolution, voltage);
     char current[16];
-    dtostrfd(ina219_current[i], Settings.flag2.current_resolution, current);
+    dtostrfd(ina219_current[i], Settings->flag2.current_resolution, current);
     char power[16];
-    dtostrfd(ina219_voltage[i] * ina219_current[i], Settings.flag2.wattage_resolution, power);
+    dtostrfd(ina219_voltage[i] * ina219_current[i], Settings->flag2.wattage_resolution, power);
     char name[16];
     if (num_found>1)
       snprintf_P(name, sizeof(name), PSTR("%s%c%d"), ina219_types, IndexSeparator(), sensor_num);

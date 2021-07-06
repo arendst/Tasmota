@@ -130,8 +130,6 @@ String EthernetMacAddress(void);
 #define ARDUINO_CORE_RELEASE        ARDUINO_ESP32_RELEASE
 #endif  // ARDUINO_ESP32_RELEASE
 
-#define USE_UFILESYS
-
 #undef FIRMWARE_MINIMAL                            // Minimal is not supported as not needed
 
 // Hardware has no ESP32
@@ -161,6 +159,18 @@ String EthernetMacAddress(void);
 /*********************************************************************************************\
  * Mandatory defines satisfying disabled defines
 \*********************************************************************************************/
+
+#ifndef ESP8266_1M
+#define USE_UFILESYS
+#define GUI_TRASH_FILE
+#define GUI_EDIT_FILE
+#define USE_PING
+  #ifdef USE_RULES
+  #define USE_EXPRESSION
+  #define SUPPORT_IF_STATEMENT
+  #define SUPPORT_MQTT_EVENT
+  #endif  // USE_RULES
+#endif  // NOT ESP8266_1M
 
 #ifdef USE_EMULATION_HUE
 #define USE_EMULATION
@@ -193,7 +203,6 @@ String EthernetMacAddress(void);
 #ifdef USE_PID
 #define USE_TIMEPROP
 #endif
-
                                                // See https://github.com/esp8266/Arduino/pull/4889
 #undef NO_EXTRA_4K_HEAP                        // Allocate 4k heap for WPS in ESP8166/Arduino core v2.4.2 (was always allocated in previous versions)
 
@@ -244,8 +253,6 @@ String EthernetMacAddress(void);
 #define WS2812_LEDS                 30         // [Pixels] Number of LEDs
 #endif
 
-const uint16_t LOG_BUFFER_SIZE = 4000;         // Max number of characters in logbuffer used by weblog, syslog and mqttlog
-
 #if defined(ARDUINO_ESP8266_RELEASE_2_3_0) || defined(ARDUINO_ESP8266_RELEASE_2_4_0) || defined(ARDUINO_ESP8266_RELEASE_2_4_1) || defined(ARDUINO_ESP8266_RELEASE_2_4_2) || defined(ARDUINO_ESP8266_RELEASE_2_5_0) || defined(ARDUINO_ESP8266_RELEASE_2_5_1) || defined(ARDUINO_ESP8266_RELEASE_2_5_2)
   #error "Arduino ESP8266 Core versions before 2.7.1 are not supported"
 #endif
@@ -268,12 +275,16 @@ const uint16_t LOG_BUFFER_SIZE = 4000;         // Max number of characters in lo
 
 #ifndef MQTT_MAX_PACKET_SIZE
 #define MQTT_MAX_PACKET_SIZE        1200       // Bytes
+//#define MQTT_MAX_PACKET_SIZE        2048       // Bytes
 #endif
 #ifndef MQTT_KEEPALIVE
 #define MQTT_KEEPALIVE              30         // Seconds
 #endif
 #ifndef MQTT_SOCKET_TIMEOUT
 #define MQTT_SOCKET_TIMEOUT         4          // Seconds
+#endif
+#ifndef MQTT_WIFI_CLIENT_TIMEOUT
+#define MQTT_WIFI_CLIENT_TIMEOUT    200        // Wifi TCP connection timeout (default is 5000 mSec)
 #endif
 #ifndef MQTT_CLEAN_SESSION
 #define MQTT_CLEAN_SESSION          1          // 0 = No clean session, 1 = Clean session (default)
@@ -286,8 +297,7 @@ const uint16_t LOG_BUFFER_SIZE = 4000;         // Max number of characters in lo
 #endif
 
 #ifndef MESSZ
-//#define MESSZ                       1040     // Max number of characters in JSON message string (Hass discovery and nice MQTT_MAX_PACKET_SIZE = 1200)
-#define MESSZ                       (MQTT_MAX_PACKET_SIZE -TOPSZ -7)  // Max number of characters in JSON message string
+#define MESSZ                       1040       // Max number of characters in JSON message string (Hass discovery and nice MQTT_MAX_PACKET_SIZE = 1200)
 #endif
 
 #ifndef USE_DEVICE_GROUPS
@@ -480,26 +490,31 @@ bool first_device_group_is_local = true;
 #endif  // USE_DEVICE_GROUPS
 
 #ifdef DEBUG_TASMOTA_CORE
-#define DEBUG_CORE_LOG(...) AddLog_Debug(__VA_ARGS__)
+#define DEBUG_CORE_LOG(...) AddLog(LOG_LEVEL_DEBUG, __VA_ARGS__)
 #else
 #define DEBUG_CORE_LOG(...)
 #endif
 #ifdef DEBUG_TASMOTA_DRIVER
-#define DEBUG_DRIVER_LOG(...) AddLog_Debug(__VA_ARGS__)
+#define DEBUG_DRIVER_LOG(...) AddLog(LOG_LEVEL_DEBUG, __VA_ARGS__)
 #else
 #define DEBUG_DRIVER_LOG(...)
 #endif
 #ifdef DEBUG_TASMOTA_SENSOR
-#define DEBUG_SENSOR_LOG(...) AddLog_Debug(__VA_ARGS__)
+#define DEBUG_SENSOR_LOG(...) AddLog(LOG_LEVEL_DEBUG, __VA_ARGS__)
 #else
 #define DEBUG_SENSOR_LOG(...)
 #endif
 #ifdef DEBUG_TASMOTA_TRACE
-#define DEBUG_TRACE_LOG(...) AddLog_Debug(__VA_ARGS__)
+#define DEBUG_TRACE_LOG(...) AddLog(LOG_LEVEL_DEBUG, __VA_ARGS__)
 #else
 #define DEBUG_TRACE_LOG(...)
 #endif
 
+#ifdef USE_DEBUG_DRIVER
+#define SHOW_FREE_MEM(WHERE) ShowFreeMem(WHERE);
+#else
+#define SHOW_FREE_MEM(WHERE)
+#endif
 
 /*********************************************************************************************\
  * Macro for SetOption synonyms

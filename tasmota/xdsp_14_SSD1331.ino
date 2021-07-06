@@ -46,13 +46,13 @@ void SSD1331_InitDriver() {
   if (PinUsed(GPIO_SSD1331_CS) && PinUsed(GPIO_SSD1331_DC) &&
      ((TasmotaGlobal.soft_spi_enabled & SPI_MOSI) || (TasmotaGlobal.spi_enabled & SPI_MOSI))) {
 
-    Settings.display_model = XDSP_14;
+    Settings->display_model = XDSP_14;
 
-    if (Settings.display_width != Adafruit_SSD1331::TFTWIDTH) {
-      Settings.display_width = Adafruit_SSD1331::TFTWIDTH;
+    if (Settings->display_width != Adafruit_SSD1331::TFTWIDTH) {
+      Settings->display_width = Adafruit_SSD1331::TFTWIDTH;
     }
-    if (Settings.display_height != Adafruit_SSD1331::TFTHEIGHT) {
-      Settings.display_height = Adafruit_SSD1331::TFTHEIGHT;
+    if (Settings->display_height != Adafruit_SSD1331::TFTHEIGHT) {
+      Settings->display_height = Adafruit_SSD1331::TFTHEIGHT;
     }
 
 
@@ -72,8 +72,8 @@ void SSD1331_InitDriver() {
     ssd1331->begin();
     renderer = ssd1331;
     // Rotation is currently broken, https://github.com/adafruit/Adafruit-SSD1331-OLED-Driver-Library-for-Arduino/issues/26
-    renderer->DisplayInit(DISPLAY_INIT_MODE, Settings.display_size, Settings.display_rotate, Settings.display_font);
-    renderer->dim(Settings.display_dimmer);
+    renderer->DisplayInit(DISPLAY_INIT_MODE, Settings->display_size, Settings->display_rotate, Settings->display_font);
+    renderer->dim(Settings->display_dimmer);
 
 #ifdef SHOW_SPLASH
     // Welcome text
@@ -96,12 +96,12 @@ void SSD1331_InitDriver() {
 void SSD1331PrintLog(bool withDateTime) {
   disp_refresh--;
   if (!disp_refresh) {
-    disp_refresh = Settings.display_refresh;
+    disp_refresh = Settings->display_refresh;
     if (!disp_screen_buffer_cols) { DisplayAllocScreenBuffer(); }
 
     char* txt = DisplayLogBuffer('\370');
     if (txt != NULL) {
-      uint8_t last_row = Settings.display_rows -1;
+      uint8_t last_row = Settings->display_rows -1;
 
       renderer->clearDisplay();
       renderer->setCursor(0,0);
@@ -144,8 +144,8 @@ void SSD1331Time(void) {
 }
 
 void SSD1331Refresh(void) {     // Every second
-  if (Settings.display_mode) {  // Mode 0 is User text
-    switch (Settings.display_mode) {
+  if (Settings->display_mode) {  // Mode 0 is User text
+    switch (Settings->display_mode) {
       case 1:  // Time
         SSD1331Time();
         break;
@@ -173,7 +173,7 @@ bool Xdsp14(uint8_t function) {
   if (FUNC_DISPLAY_INIT_DRIVER == function) {
       SSD1331_InitDriver();
   }
-  else if (ssd1331_init_done && (XDSP_14 == Settings.display_model)) {
+  else if (ssd1331_init_done && (XDSP_14 == Settings->display_model)) {
     switch (function) {
       case FUNC_DISPLAY_MODEL:
         result = true;

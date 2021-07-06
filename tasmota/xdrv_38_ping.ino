@@ -99,7 +99,7 @@ extern "C" {
   // ================================================================================
   // Prepare a echo ICMP request
   //
-  void ICACHE_FLASH_ATTR t_ping_prepare_echo(struct icmp_echo_hdr *iecho, uint16_t len, Ping_t *ping) {
+  void t_ping_prepare_echo(struct icmp_echo_hdr *iecho, uint16_t len, Ping_t *ping) {
     size_t data_len = len - sizeof(struct icmp_echo_hdr);
 
     ICMPH_TYPE_SET(iecho, ICMP_ECHO);
@@ -125,7 +125,7 @@ extern "C" {
     struct pbuf *p;
     uint16_t ping_size = sizeof(struct icmp_echo_hdr) + Ping_data_size;
 
-    ping->ping_time_sent = system_get_time();
+    ping->ping_time_sent = millis();
     p = pbuf_alloc(PBUF_IP, ping_size, PBUF_RAM);
     if (!p) { return; }
     if ((p->len == p->tot_len) && (p->next == nullptr)) {
@@ -135,7 +135,7 @@ extern "C" {
       ping_target.addr = ping->ip;
 #endif  // ESP8266
 #ifdef ESP32
-      ping_target.u_addr.ip4.addr = ping->ip;
+      ip_addr_set_ip4_u32(&ping_target, ping->ip);
 #endif  // ESP32
       iecho = (struct icmp_echo_hdr *) p->payload;
 
@@ -191,8 +191,7 @@ extern "C" {
         if (iecho->seqno != ping->seqno){   // debounce already received packet
           /* do some ping result processing */
           sys_untimeout(t_ping_timeout, ping);      // remove time-out handler
-          uint32_t delay = system_relative_time(ping->ping_time_sent);
-          delay /= 1000;
+          uint32_t delay = millis() - ping->ping_time_sent;
 
           ping->sum_time += delay;
           if (delay < ping->min_time) { ping->min_time = delay; }

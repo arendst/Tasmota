@@ -212,7 +212,7 @@ void ZigbeeHueHS(uint16_t shortaddr, uint16_t hue, uint8_t sat) {
   uint8_t hue8 = changeUIntScale(hue, 0, 360, 0, 254);
   if (sat > 0xFE) { sat = 0xFE; }
   SBuffer s(4);
-  s.add8(hue);
+  s.add8(hue8);
   s.add8(sat);
   s.add16(0);
   ZigbeeSendHue(shortaddr, 0x0300, 0x06, s);
@@ -367,7 +367,7 @@ void ZigbeeHandleHue(uint16_t shortaddr, uint32_t device_id, String &response) {
   else {
     response = msg[HUE_ERROR_JSON];
   }
-  AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_HTTP D_HUE " Result (%s)"), response.c_str());
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_HTTP D_HUE " Result (%s)"), response.c_str());
   WSSend(code, CT_APP_JSON, response);
 
   free(buf);

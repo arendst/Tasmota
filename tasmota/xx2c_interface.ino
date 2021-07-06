@@ -414,7 +414,7 @@ const uint8_t kI2cList[] = {
 
 bool I2cEnabled(uint32_t i2c_index)
 {
-  return (TasmotaGlobal.i2c_enabled && bitRead(Settings.i2c_drivers[i2c_index / 32], i2c_index % 32));
+  return (TasmotaGlobal.i2c_enabled && bitRead(Settings->i2c_drivers[i2c_index / 32], i2c_index % 32));
 }
 
 void I2cDriverState(void)
@@ -428,7 +428,7 @@ void I2cDriverState(void)
 #endif
     bool disabled = false;
     if (i2c_driver_id < MAX_I2C_DRIVERS) {
-      disabled = !bitRead(Settings.i2c_drivers[i2c_driver_id / 32], i2c_driver_id % 32);
+      disabled = !bitRead(Settings->i2c_drivers[i2c_driver_id / 32], i2c_driver_id % 32);
     }
     ResponseAppend_P(PSTR("%s%s%d"), (i) ? "," : "", (disabled) ? "!" : "", i2c_driver_id);
   }

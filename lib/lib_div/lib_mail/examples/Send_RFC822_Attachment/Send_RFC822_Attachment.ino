@@ -11,7 +11,7 @@
  * 
  * Github: https://github.com/mobizt/ESP-Mail-Client
  * 
- * Copyright (c) 2020 mobizt
+ * Copyright (c) 2021 mobizt
  *
 */
 
@@ -205,7 +205,7 @@ void setup()
   message.addAttachment(att);
 
   /* Add rfc822 message in the message */
-  message.addRMessage(rfc822);
+  message.addMessage(rfc822);
 
   /* Connect to server with the session config */
   if (!smtp.connect(&session))

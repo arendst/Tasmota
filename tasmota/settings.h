@@ -156,7 +156,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t wiegand_keypad_to_tag : 1;    // bit 10 (v9.3.1.1)  - SetOption124 - (Wiegand) send key pad stroke as single char (0) or one tag (ending char #) (1)
     uint32_t zigbee_hide_bridge_topic : 1; // bit 11 (v9.3.1.1)  - SetOption125 - (Zigbee) Hide bridge topic from zigbee topic (use with SetOption89) (1)
     uint32_t ds18x20_mean : 1;             // bit 12 (v9.3.1.2)  - SetOption126 - (DS18x20) Enable arithmetic mean over teleperiod for JSON temperature (1)
-    uint32_t spare13 : 1;                  // bit 13
+    uint32_t wifi_no_sleep : 1;            // bit 13 (v9.5.0.2)  - SetOption127 - (Wifi) Keep wifi in no-sleep mode, prevents some occasional unresponsiveness
     uint32_t spare14 : 1;                  // bit 14
     uint32_t spare15 : 1;                  // bit 15
     uint32_t spare16 : 1;                  // bit 16
@@ -435,10 +435,10 @@ typedef union {
   };
 } DisplayOptions;
 
-const uint32_t settings_text_size = 699;   // Settings.text_pool[size] = Settings.display_model (2D2) - Settings.text_pool (017)
+const uint32_t settings_text_size = 699;   // Settings->text_pool[size] = Settings->display_model (2D2) - Settings->text_pool (017)
 const uint8_t MAX_TUYA_FUNCTIONS = 16;
 
-struct {
+typedef struct {
   uint16_t      cfg_holder;                // 000  v6 header
   uint16_t      cfg_size;                  // 002
   unsigned long save_flag;                 // 004
@@ -521,18 +521,24 @@ struct {
 
   uint8_t       ex_switchmode[8];          // 3A4 - Free since 9.2.0.6
 
-  myio          my_gp;                     // 3AC  2 x 18 bytes (ESP8266) / 2 x 40 bytes (ESP32)
+  myio          my_gp;                     // 3AC  2 x 18 bytes (ESP8266) / 2 x 40 bytes (ESP32) / 2 x 22 bytes (ESP32-C3)
 #ifdef ESP8266
   uint16_t      gpio16_converted;          // 3D0
   uint8_t       free_esp8266_3D2[42];      // 3D2
-#endif
-  mytmplt       user_template;             // 3FC  2 x 15 bytes (ESP8266) / 2 x 37 bytes (ESP32)
-#ifdef ESP8266
-
-  uint8_t       free_esp8266_41A[55];      // 41A
-
 #endif  // ESP8266
 #ifdef ESP32
+#ifdef CONFIG_IDF_TARGET_ESP32C3
+  uint8_t       free_esp32c3_3D8[36];      // 3D8  - Due to smaller myio
+#endif  // CONFIG_IDF_TARGET_ESP32C3
+#endif  // ESP32
+  mytmplt       user_template;             // 3FC  2 x 15 bytes (ESP8266) / 2 x 37 bytes (ESP32) / 2 x 23 bytes (ESP32-C3)
+#ifdef ESP8266
+  uint8_t       free_esp8266_41A[55];      // 41A
+#endif  // ESP8266
+#ifdef ESP32
+#ifdef CONFIG_IDF_TARGET_ESP32C3
+  uint8_t       free_esp32c3_42A[28];      // 42A  - Due to smaller mytmplt
+#endif  // CONFIG_IDF_TARGET_ESP32C3
   uint8_t       eth_type;                  // 446
   uint8_t       eth_clk_mode;              // 447
 
@@ -588,9 +594,7 @@ struct {
 
   uint16_t      mqtt_keepalive;            // 52C
   uint16_t      mqtt_socket_timeout;       // 52E
-
-  uint8_t       free_530[1];               // 530
-
+  uint8_t       mqtt_wifi_timeout;         // 530
   uint8_t       ina219_mode;               // 531
   uint16_t      pulse_timer[MAX_PULSETIMERS];  // 532
   uint16_t      button_debounce;           // 542
@@ -762,7 +766,7 @@ struct {
   uint32_t      i2c_drivers[3];            // FEC  I2cDriver
   uint32_t      cfg_timestamp;             // FF8
   uint32_t      cfg_crc32;                 // FFC
-} Settings;
+} TSettings;
 
 typedef struct {
   uint16_t      valid;                     // 280  (RTC memory offset 100 - sizeof(RTCRBT))

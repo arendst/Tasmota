@@ -738,31 +738,31 @@ public:
 
   void loadSettings() {
 #ifdef DEBUG_LIGHT
-    AddLog(LOG_LEVEL_DEBUG_MORE, "LightControllerClass::loadSettings Settings.light_color (%d %d %d %d %d - %d)",
-      Settings.light_color[0], Settings.light_color[1], Settings.light_color[2],
-      Settings.light_color[3], Settings.light_color[4], Settings.light_dimmer);
+    AddLog(LOG_LEVEL_DEBUG_MORE, "LightControllerClass::loadSettings Settings->light_color (%d %d %d %d %d - %d)",
+      Settings->light_color[0], Settings->light_color[1], Settings->light_color[2],
+      Settings->light_color[3], Settings->light_color[4], Settings->light_dimmer);
     AddLog(LOG_LEVEL_DEBUG_MORE, "LightControllerClass::loadSettings light_type/sub (%d %d)",
       TasmotaGlobal.light_type, Light.subtype);
 #endif
     if (_pwm_multi_channels) {
-      _state->setChannelsRaw(Settings.light_color);
+      _state->setChannelsRaw(Settings->light_color);
     } else {
       // first try setting CW, if zero, it select RGB mode
-      _state->setCW(Settings.light_color[3], Settings.light_color[4], true);
-      _state->setRGB(Settings.light_color[0], Settings.light_color[1], Settings.light_color[2]);
+      _state->setCW(Settings->light_color[3], Settings->light_color[4], true);
+      _state->setRGB(Settings->light_color[0], Settings->light_color[1], Settings->light_color[2]);
 
       // only if non-multi channel
       // We apply dimmer in priority to RGB
-      uint8_t bri = _state->DimmerToBri(Settings.light_dimmer);
+      uint8_t bri = _state->DimmerToBri(Settings->light_dimmer);
 
       // The default values are #FFFFFFFFFF, in this case we avoid setting all channels
       // at the same time, see #6534 and #8120
-      if ((DEFAULT_LIGHT_COMPONENT == Settings.light_color[0]) &&
-          (DEFAULT_LIGHT_COMPONENT == Settings.light_color[1]) &&
-          (DEFAULT_LIGHT_COMPONENT == Settings.light_color[2]) &&
-          (DEFAULT_LIGHT_COMPONENT == Settings.light_color[3]) &&
-          (DEFAULT_LIGHT_COMPONENT == Settings.light_color[4]) &&
-          (DEFAULT_LIGHT_DIMMER    == Settings.light_dimmer) ) {
+      if ((DEFAULT_LIGHT_COMPONENT == Settings->light_color[0]) &&
+          (DEFAULT_LIGHT_COMPONENT == Settings->light_color[1]) &&
+          (DEFAULT_LIGHT_COMPONENT == Settings->light_color[2]) &&
+          (DEFAULT_LIGHT_COMPONENT == Settings->light_color[3]) &&
+          (DEFAULT_LIGHT_COMPONENT == Settings->light_color[4]) &&
+          (DEFAULT_LIGHT_DIMMER    == Settings->light_dimmer) ) {
         if ((LST_COLDWARM == Light.subtype) || (LST_RGBCW == Light.subtype)) {
           _state->setCW(255, 0);       // avoid having both white channels at 100%, zero second channel (#see 8120)
         }
@@ -771,7 +771,7 @@ public:
         _state->setColorMode(LCM_RGB);
       }
 
-      if (Settings.light_color[0] + Settings.light_color[1] + Settings.light_color[2] > 0) {
+      if (Settings->light_color[0] + Settings->light_color[1] + Settings->light_color[2] > 0) {
         _state->setBriRGB(bri);
       } else {
         _state->setBriCT(bri);
@@ -892,33 +892,33 @@ public:
     calcLevels();
   }
 
-  // save the current light state to Settings.
+  // save the current light state to Settings
   void saveSettings() {
     if (Light.pwm_multi_channels) {
       // simply save each channel
-      _state->getChannelsRaw(Settings.light_color);
-      Settings.light_dimmer = 100;    // arbitrary value, unused in this mode
+      _state->getChannelsRaw(Settings->light_color);
+      Settings->light_dimmer = 100;    // arbitrary value, unused in this mode
     } else {
       uint8_t cm = _state->getColorMode();
 
-      memset(&Settings.light_color[0], 0, sizeof(Settings.light_color));    // clear all channels
+      memset(&Settings->light_color[0], 0, sizeof(Settings->light_color));    // clear all channels
       if (LCM_RGB & cm) {   // can be either LCM_RGB or LCM_BOTH
-        _state->getRGB(&Settings.light_color[0], &Settings.light_color[1], &Settings.light_color[2]);
-        Settings.light_dimmer = _state->BriToDimmer(_state->getBriRGB());
+        _state->getRGB(&Settings->light_color[0], &Settings->light_color[1], &Settings->light_color[2]);
+        Settings->light_dimmer = _state->BriToDimmer(_state->getBriRGB());
         // anyways we always store RGB with BrightnessRGB
         if (LCM_BOTH == cm) {
           // then store at actual brightness CW/WW if dual mode
-          _state->getActualRGBCW(nullptr, nullptr, nullptr, &Settings.light_color[3], &Settings.light_color[4]);
+          _state->getActualRGBCW(nullptr, nullptr, nullptr, &Settings->light_color[3], &Settings->light_color[4]);
         }
       } else if (LCM_CT == cm) {    // cm can only be LCM_CT
-        _state->getCW(&Settings.light_color[3], &Settings.light_color[4]);
-        Settings.light_dimmer = _state->BriToDimmer(_state->getBriCT());
+        _state->getCW(&Settings->light_color[3], &Settings->light_color[4]);
+        Settings->light_dimmer = _state->BriToDimmer(_state->getBriCT());
       }
     }
 #ifdef DEBUG_LIGHT
-    AddLog(LOG_LEVEL_DEBUG_MORE, "LightControllerClass::saveSettings Settings.light_color (%d %d %d %d %d - %d)",
-      Settings.light_color[0], Settings.light_color[1], Settings.light_color[2],
-      Settings.light_color[3], Settings.light_color[4], Settings.light_dimmer);
+    AddLog(LOG_LEVEL_DEBUG_MORE, "LightControllerClass::saveSettings Settings->light_color (%d %d %d %d %d - %d)",
+      Settings->light_color[0], Settings->light_color[1], Settings->light_color[2],
+      Settings->light_color[3], Settings->light_color[4], Settings->light_dimmer);
 #endif
   }
 
@@ -968,7 +968,7 @@ void checkVirtualCT(void) {
 // Init default values for virtual CT, depending on the number of channels
 void initCTRange(uint32_t channels) {
   if (channels == 4) {
-    if (Settings.flag4.virtual_ct_cw) {       // Hardware White is Cold White
+    if (Settings->flag4.virtual_ct_cw) {       // Hardware White is Cold White
       memcpy_P(Light.vct_color[0], CT_PIVOTS_CWW, sizeof(Light.vct_color[0]));      // Cold white
       memcpy_P(Light.vct_color[1], CT_PIVOTS_RGB, sizeof(Light.vct_color[1]));      // Warm white
     } else {       // Hardware White is Warm White
@@ -1002,7 +1002,7 @@ void setCTRange(uint16_t ct_min, uint16_t ct_max) {
 }
 
 void setAlexaCTRange(void) {    // depending on SetOption82, full or limited CT range
-  if (Settings.flag4.alexa_ct_range) {
+  if (Settings->flag4.alexa_ct_range) {
     setCTRange(CT_MIN_ALEXA, CT_MAX_ALEXA);
   } else {
     setCTRange(CT_MIN, CT_MAX);
@@ -1020,7 +1020,7 @@ bool LightModuleInit(void)
 {
   TasmotaGlobal.light_type = LT_BASIC;                 // Use basic PWM control if SetOption15 = 0
 
-  if (Settings.flag.pwm_control) {                     // SetOption15 - Switch between commands PWM or COLOR/DIMMER/CT/CHANNEL
+  if (Settings->flag.pwm_control) {                     // SetOption15 - Switch between commands PWM or COLOR/DIMMER/CT/CHANNEL
     for (uint32_t i = 0; i < MAX_PWMS; i++) {
       if (PinUsed(GPIO_PWM1, i)) { TasmotaGlobal.light_type++; }  // Use Dimmer/Color control for all PWM as SetOption15 = 1
     }
@@ -1053,7 +1053,7 @@ bool LightModuleInit(void)
 #ifdef USE_PWM_DIMMER
 #ifdef USE_DEVICE_GROUPS
   else if (PWM_DIMMER == TasmotaGlobal.module_type) {
-    TasmotaGlobal.light_type = Settings.pwm_dimmer_cfg.pwm_count + 1;
+    TasmotaGlobal.light_type = Settings->pwm_dimmer_cfg.pwm_count + 1;
   }
 #endif  // USE_DEVICE_GROUPS
 #endif  // USE_PWM_DIMMER
@@ -1064,16 +1064,16 @@ bool LightModuleInit(void)
 
   // post-process for lights
   uint32_t pwm_channels = (TasmotaGlobal.light_type & 7) > LST_MAX ? LST_MAX : (TasmotaGlobal.light_type & 7);
-  if (Settings.flag3.pwm_multi_channels) {  // SetOption68 - Enable multi-channels PWM instead of Color PWM
+  if (Settings->flag3.pwm_multi_channels) {  // SetOption68 - Enable multi-channels PWM instead of Color PWM
     if (0 == pwm_channels) { pwm_channels = 1; }
     TasmotaGlobal.devices_present += pwm_channels - 1;    // add the pwm channels controls at the end
-  } else if ((Settings.param[P_RGB_REMAP] & 128) && (LST_RGBW <= pwm_channels)) {  // SetOption37
+  } else if ((Settings->param[P_RGB_REMAP] & 128) && (LST_RGBW <= pwm_channels)) {  // SetOption37
     // if RGBW or RGBCW, and SetOption37 >= 128, we manage RGB and W separately, hence adding a device
     TasmotaGlobal.devices_present++;
   } else {
 #ifdef USE_LIGHT_VIRTUAL_CT
     initCTRange(pwm_channels);
-    if ((Settings.flag4.virtual_ct) && (LST_RGB <= pwm_channels)) {
+    if ((Settings->flag4.virtual_ct) && (LST_RGB <= pwm_channels)) {
       Light.virtual_ct = true;    // enabled
       TasmotaGlobal.light_type += 5 - pwm_channels;               // pretend it is a 5 channels bulb
     }
@@ -1088,43 +1088,43 @@ bool LightModuleInit(void)
 void LightCalcPWMRange(void) {
   uint16_t pwm_min, pwm_max;
 
-  pwm_min = change8to10(LightStateClass::DimmerToBri(Settings.dimmer_hw_min));   // default 0
-  pwm_max = change8to10(LightStateClass::DimmerToBri(Settings.dimmer_hw_max));   // default 100
-  if (Settings.light_correction) {
+  pwm_min = change8to10(LightStateClass::DimmerToBri(Settings->dimmer_hw_min));   // default 0
+  pwm_max = change8to10(LightStateClass::DimmerToBri(Settings->dimmer_hw_max));   // default 100
+  if (Settings->light_correction) {
     pwm_min = ledGamma10_10(pwm_min);       // apply gamma correction
     pwm_max = ledGamma10_10(pwm_max);       // 0..1023
   }
-  pwm_min = pwm_min > 0 ? changeUIntScale(pwm_min, 1, 1023, 1, Settings.pwm_range) : 0;  // adapt range but keep zero and non-zero values
-  pwm_max = changeUIntScale(pwm_max, 1, 1023, 1, Settings.pwm_range);  // pwm_max cannot be zero
+  pwm_min = pwm_min > 0 ? changeUIntScale(pwm_min, 1, 1023, 1, Settings->pwm_range) : 0;  // adapt range but keep zero and non-zero values
+  pwm_max = changeUIntScale(pwm_max, 1, 1023, 1, Settings->pwm_range);  // pwm_max cannot be zero
 
   Light.pwm_min = pwm_min;
   Light.pwm_max = pwm_max;
-  //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("LightCalcPWMRange %d %d - %d %d"), Settings.dimmer_hw_min, Settings.dimmer_hw_max, Light.pwm_min, Light.pwm_max);
+  //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("LightCalcPWMRange %d %d - %d %d"), Settings->dimmer_hw_min, Settings->dimmer_hw_max, Light.pwm_min, Light.pwm_max);
 }
 
 void LightSetScheme(uint32_t scheme) {
-  if (!scheme && Settings.light_scheme) {
+  if (!scheme && Settings->light_scheme) {
     Light.update = true;
   }
-  Settings.light_scheme = scheme;
+  Settings->light_scheme = scheme;
 }
 
 void LightInit(void)
 {
   // move white blend mode from deprecated `RGBWWTable` to `SetOption105`
-  if (0 == Settings.rgbwwTable[4]) {
-    Settings.flag4.white_blend_mode = true;
-    Settings.rgbwwTable[4] = 255;       // set RGBWWTable value to its default
+  if (0 == Settings->rgbwwTable[4]) {
+    Settings->flag4.white_blend_mode = true;
+    Settings->rgbwwTable[4] = 255;       // set RGBWWTable value to its default
   }
 
   Light.device = TasmotaGlobal.devices_present;
   Light.subtype = (TasmotaGlobal.light_type & 7) > LST_MAX ? LST_MAX : (TasmotaGlobal.light_type & 7); // Always 0 - LST_MAX (5)
-  Light.pwm_multi_channels = Settings.flag3.pwm_multi_channels;  // SetOption68 - Enable multi-channels PWM instead of Color PWM
+  Light.pwm_multi_channels = Settings->flag3.pwm_multi_channels;  // SetOption68 - Enable multi-channels PWM instead of Color PWM
 
   if (LST_RGBW <= Light.subtype) {
     // only change if RGBW or RGBCW
     // do not allow independant RGB and WC colors
-    bool ct_rgb_linked = !(Settings.param[P_RGB_REMAP] & 128);  // SetOption37
+    bool ct_rgb_linked = !(Settings->param[P_RGB_REMAP] & 128);  // SetOption37
     light_controller.setCTRGBLinked(ct_rgb_linked);
   }
 
@@ -1138,7 +1138,7 @@ void LightInit(void)
   }
   LightCalcPWMRange();
 #ifdef DEBUG_LIGHT
-  AddLog_P(LOG_LEVEL_DEBUG_MORE, "LightInit Light.pwm_multi_channels=%d Light.subtype=%d Light.device=%d TasmotaGlobal.devices_present=%d",
+  AddLog(LOG_LEVEL_DEBUG_MORE, "LightInit Light.pwm_multi_channels=%d Light.subtype=%d Light.device=%d TasmotaGlobal.devices_present=%d",
     Light.pwm_multi_channels, Light.subtype, Light.device, TasmotaGlobal.devices_present);
 #endif
 
@@ -1148,11 +1148,11 @@ void LightInit(void)
   light_controller.calcLevels();    // calculate the initial values (#8058)
 
   if (LST_SINGLE == Light.subtype) {
-    Settings.light_color[0] = 255;      // One channel only supports Dimmer but needs max color
+    Settings->light_color[0] = 255;      // One channel only supports Dimmer but needs max color
   }
   if (TasmotaGlobal.light_type < LT_PWM6) {           // PWM
     for (uint32_t i = 0; i < TasmotaGlobal.light_type; i++) {
-      Settings.pwm_value[i] = 0;        // Disable direct PWM control
+      Settings->pwm_value[i] = 0;        // Disable direct PWM control
       if (PinUsed(GPIO_PWM1, i)) {
 #ifdef ESP8266
         pinMode(Pin(GPIO_PWM1, i), OUTPUT);
@@ -1174,16 +1174,16 @@ void LightInit(void)
   if (Light.subtype < LST_RGB) {
     max_scheme = LS_POWER;
   }
-  if ((LS_WAKEUP == Settings.light_scheme) || (Settings.light_scheme > max_scheme)) {
+  if ((LS_WAKEUP == Settings->light_scheme) || (Settings->light_scheme > max_scheme)) {
     LightSetScheme(LS_POWER);
   }
   Light.power = 0;
   Light.update = true;
   Light.wakeup_active = 0;
-  if (0 == Settings.light_wakeup) {
-    Settings.light_wakeup = 60;         // Fix divide by zero exception 0 in Animate
+  if (0 == Settings->light_wakeup) {
+    Settings->light_wakeup = 60;         // Fix divide by zero exception 0 in Animate
   }
-  if (Settings.flag4.fade_at_startup) {
+  if (Settings->flag4.fade_at_startup) {
     Light.fade_initialized = true;      // consider fade intialized starting from black
   }
 
@@ -1192,7 +1192,7 @@ void LightInit(void)
 
 void LightUpdateColorMapping(void)
 {
-  uint8_t param = Settings.param[P_RGB_REMAP] & 127;  // SetOption37
+  uint8_t param = Settings->param[P_RGB_REMAP] & 127;  // SetOption37
   if (param > 119){ param = 0; }
 
   uint8_t tmp[] = {0,1,2,3,4};
@@ -1215,7 +1215,7 @@ void LightUpdateColorMapping(void)
   Light.color_remap[4] = tmp[1-param];
 
   Light.update = true;
-  //AddLog(LOG_LEVEL_DEBUG, PSTR("%d colors: %d %d %d %d %d") ,Settings.param[P_RGB_REMAP], Light.color_remap[0],Light.color_remap[1],Light.color_remap[2],Light.color_remap[3],Light.color_remap[4]);
+  //AddLog(LOG_LEVEL_DEBUG, PSTR("%d colors: %d %d %d %d %d") ,Settings->param[P_RGB_REMAP], Light.color_remap[0],Light.color_remap[1],Light.color_remap[2],Light.color_remap[3],Light.color_remap[4]);
 }
 
 uint8_t LightGetDimmer(uint8_t dimmer) {
@@ -1352,7 +1352,7 @@ void LightSetSignal(uint16_t lo, uint16_t hi, uint16_t value)
 /* lo - below lo is green
    hi - above hi is red
 */
-  if (Settings.flag.light_signal) {  // SetOption18 - Pair light signal with CO2 sensor
+  if (Settings->flag.light_signal) {  // SetOption18 - Pair light signal with CO2 sensor
     uint16_t signal = changeUIntScale(value, lo, hi, 0, 255);  // 0..255
 //    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "Light signal %d"), signal);
     light_controller.changeRGB(signal, 255 - signal, 0, true);  // keep bri
@@ -1366,12 +1366,12 @@ void LightSetSignal(uint16_t lo, uint16_t hi, uint16_t value)
 // convert channels to string, use Option 17 to foce decimal, unless force_hex
 char* LightGetColor(char* scolor, boolean force_hex = false)
 {
-  if ((0 == Settings.light_scheme) || (!Light.pwm_multi_channels)) {
+  if ((0 == Settings->light_scheme) || (!Light.pwm_multi_channels)) {
     light_controller.calcLevels();      // recalculate levels only if Scheme 0, otherwise we mess up levels
   }
   scolor[0] = '\0';
   for (uint32_t i = 0; i < Light.subtype; i++) {
-    if (!force_hex && Settings.flag.decimal_text) {  // SetOption17 - Switch between decimal or hexadecimal output
+    if (!force_hex && Settings->flag.decimal_text) {  // SetOption17 - Switch between decimal or hexadecimal output
       snprintf_P(scolor, LIGHT_COLOR_SIZE, PSTR("%s%s%d"), scolor, (i > 0) ? "," : "", Light.current_color[i]);
     } else {
       snprintf_P(scolor, LIGHT_COLOR_SIZE, PSTR("%s%02X"), scolor, Light.current_color[i]);
@@ -1406,7 +1406,7 @@ void ResponseLightState(uint8_t append)
                             Light.device, GetStateText(Light.power & 1), light_state.getDimmer(1),
                             Light.device + 1, GetStateText(Light.power & 2 ? 1 : 0), light_state.getDimmer(2));
     } else {
-      GetPowerDevice(scommand, Light.device, sizeof(scommand), Settings.flag.device_index_enable);  // SetOption26 - Switch between POWER or POWER1
+      GetPowerDevice(scommand, Light.device, sizeof(scommand), Settings->flag.device_index_enable);  // SetOption26 - Switch between POWER or POWER1
       ResponseAppend_P(PSTR("\"%s\":\"%s\",\"" D_CMND_DIMMER "\":%d"), scommand, GetStateText(Light.power & 1),
                       light_state.getDimmer());
     }
@@ -1445,13 +1445,13 @@ void ResponseLightState(uint8_t append)
 
     if (append) {
       if (Light.subtype >= LST_RGB) {
-        ResponseAppend_P(PSTR(",\"" D_CMND_SCHEME "\":%d"), Settings.light_scheme);
+        ResponseAppend_P(PSTR(",\"" D_CMND_SCHEME "\":%d"), Settings->light_scheme);
       }
       if (Light.max_scheme > LS_MAX) {
-        ResponseAppend_P(PSTR(",\"" D_CMND_WIDTH "\":%d"), Settings.light_width);
+        ResponseAppend_P(PSTR(",\"" D_CMND_WIDTH "\":%d"), Settings->light_width);
       }
       ResponseAppend_P(PSTR(",\"" D_CMND_FADE "\":\"%s\",\"" D_CMND_SPEED "\":%d,\"" D_CMND_LEDTABLE "\":\"%s\""),
-        GetStateText(Settings.light_fade), Settings.light_speed, GetStateText(Settings.light_correction));
+        GetStateText(Settings->light_fade), Settings->light_speed, GetStateText(Settings->light_correction));
     }
   } else {  // Light.pwm_multi_channels
     for (uint32_t i = 0; i < Light.subtype; i++) {
@@ -1479,7 +1479,7 @@ void LightPreparePower(power_t channels = 0xFFFFFFFF) {    // 1 = only RGB, 2 = 
       if (bitRead(channels, i)) {
         // if channel is non-null, channel is supposed to be on, but it is off, do Power On
         if ((Light.current_color[i]) && (!bitRead(Light.power, i))) {
-          if (!Settings.flag.not_power_linked) {  // SetOption20 - Control power in relation to Dimmer/Color/Ct changes
+          if (!Settings->flag.not_power_linked) {  // SetOption20 - Control power in relation to Dimmer/Color/Ct changes
             ExecuteCommandPower(Light.device + i, POWER_ON_NO_STATE, SRC_LIGHT);
           }
         } else {
@@ -1496,7 +1496,7 @@ void LightPreparePower(power_t channels = 0xFFFFFFFF) {    // 1 = only RGB, 2 = 
   } else {
     if (light_controller.isCTRGBLinked()) {   // linked, standard
       if (light_state.getBri() && !(Light.power)) {
-        if (!Settings.flag.not_power_linked) {  // SetOption20 - Control power in relation to Dimmer/Color/Ct changes
+        if (!Settings->flag.not_power_linked) {  // SetOption20 - Control power in relation to Dimmer/Color/Ct changes
           ExecuteCommandPower(Light.device, POWER_ON_NO_STATE, SRC_LIGHT);
         }
       } else if (!light_state.getBri() && Light.power) {
@@ -1506,7 +1506,7 @@ void LightPreparePower(power_t channels = 0xFFFFFFFF) {    // 1 = only RGB, 2 = 
       // RGB
       if (channels & 1) {
         if (light_state.getBriRGB() && !(Light.power & 1)) {
-          if (!Settings.flag.not_power_linked) {  // SetOption20 - Control power in relation to Dimmer/Color/Ct changes
+          if (!Settings->flag.not_power_linked) {  // SetOption20 - Control power in relation to Dimmer/Color/Ct changes
             ExecuteCommandPower(Light.device, POWER_ON_NO_STATE, SRC_LIGHT);
           }
         } else if (!light_state.getBriRGB() && (Light.power & 1)) {
@@ -1516,7 +1516,7 @@ void LightPreparePower(power_t channels = 0xFFFFFFFF) {    // 1 = only RGB, 2 = 
       // White CT
       if (channels & 2) {
         if (light_state.getBriCT() && !(Light.power & 2)) {
-          if (!Settings.flag.not_power_linked) {  // SetOption20 - Control power in relation to Dimmer/Color/Ct changes
+          if (!Settings->flag.not_power_linked) {  // SetOption20 - Control power in relation to Dimmer/Color/Ct changes
             ExecuteCommandPower(Light.device + 1, POWER_ON_NO_STATE, SRC_LIGHT);
           }
         } else if (!light_state.getBriCT() && (Light.power & 2)) {
@@ -1529,7 +1529,7 @@ void LightPreparePower(power_t channels = 0xFFFFFFFF) {    // 1 = only RGB, 2 = 
 #endif  // USE_DOMOTICZ
   }
 
-  if (Settings.flag3.hass_tele_on_power) {  // SetOption59 - Send tele/%topic%/STATE in addition to stat/%topic%/RESULT
+  if (Settings->flag3.hass_tele_on_power) {  // SetOption59 - Send tele/%topic%/STATE in addition to stat/%topic%/RESULT
     MqttPublishTeleState();
   }
 
@@ -1558,9 +1558,9 @@ void LightSetPaletteEntry(void)
 
 void LightCycleColor(int8_t direction)
 {
-//  if (Light.strip_timer_counter % (Settings.light_speed * 2)) { return; }  // Speed 1: 24sec, 2: 48sec, 3: 72sec, etc
-  if (Settings.light_speed > 3) {
-    if (Light.strip_timer_counter % (Settings.light_speed - 2)) { return; }  // Speed 4: 24sec, 5: 36sec, 6: 48sec, etc
+//  if (Light.strip_timer_counter % (Settings->light_speed * 2)) { return; }  // Speed 1: 24sec, 2: 48sec, 3: 72sec, etc
+  if (Settings->light_speed > 3) {
+    if (Light.strip_timer_counter % (Settings->light_speed - 2)) { return; }  // Speed 4: 24sec, 5: 36sec, 6: 48sec, etc
   }
 
 #ifdef USE_LIGHT_PALETTE
@@ -1597,8 +1597,8 @@ void LightCycleColor(int8_t direction)
     direction = (Light.random &0x01) ? 1 : -1;
   }
 
-//  if (Settings.light_speed < 3) { direction <<= (3 - Settings.light_speed); }  // Speed 1: 12/4=3sec, 2: 12/2=6sec, 3: 12sec
-  if (Settings.light_speed < 3) { direction *= (4 - Settings.light_speed); }  // Speed 1: 12/3=4sec, 2: 12/2=6sec, 3: 12sec
+//  if (Settings->light_speed < 3) { direction <<= (3 - Settings->light_speed); }  // Speed 1: 12/4=3sec, 2: 12/2=6sec, 3: 12sec
+  if (Settings->light_speed < 3) { direction *= (4 - Settings->light_speed); }  // Speed 1: 12/3=4sec, 2: 12/2=6sec, 3: 12sec
   Light.wheel += direction;
   uint16_t hue = changeUIntScale(Light.wheel, 0, 255, 0, 359);  // Scale to hue to keep amount of steps low (max 255 instead of 359)
 
@@ -1637,7 +1637,7 @@ void LightSetPower(void)
     Light.wakeup_active--;
   }
 #ifdef DEBUG_LIGHT
-  AddLog_P(LOG_LEVEL_DEBUG_MORE, "LightSetPower XdrvMailbox.index=%d Light.old_power=%d Light.power=%d mask=%d shift=%d",
+  AddLog(LOG_LEVEL_DEBUG_MORE, "LightSetPower XdrvMailbox.index=%d Light.old_power=%d Light.power=%d mask=%d shift=%d",
     XdrvMailbox.index, Light.old_power, Light.power, mask, shift);
 #endif
   if (Light.power != Light.old_power) {
@@ -1648,12 +1648,12 @@ void LightSetPower(void)
 
 bool LightGetFadeSetting(void) {
   if (Light.fade_once_enabled) return Light.fade_once_value;
-  return Settings.light_fade;
+  return Settings->light_fade;
 }
 
 uint8_t LightGetSpeedSetting(void) {
   if (Light.speed_once_enabled) return Light.speed_once_value;
-  return Settings.light_speed;
+  return Settings->light_speed;
 }
 
 // On entry Light.new_color[5] contains the color to be displayed
@@ -1669,22 +1669,22 @@ void LightAnimate(void)
   // set sleep parameter: either settings,
   // or set a maximum of PWM_MAX_SLEEP if light is on or Fade is running
   if (Light.power || Light.fade_running) {
-    if (Settings.sleep > PWM_MAX_SLEEP) {
+    if (Settings->sleep > PWM_MAX_SLEEP) {
       TasmotaGlobal.sleep = PWM_MAX_SLEEP;      // set a maximum value (in milliseconds) to sleep to ensure that animations are smooth
     } else {
-      TasmotaGlobal.sleep = Settings.sleep;     // or keep the current sleep if it's low enough
+      TasmotaGlobal.sleep = Settings->sleep;     // or keep the current sleep if it's low enough
     }
   } else {
-    TasmotaGlobal.sleep = Settings.sleep;
+    TasmotaGlobal.sleep = Settings->sleep;
   }
 
   if (!Light.power) {                   // All channels powered off
     Light.strip_timer_counter = 0;
-    if (Settings.light_scheme >= LS_MAX) {
+    if (Settings->light_scheme >= LS_MAX) {
       power_off = true;
     }
   } else {
-    switch (Settings.light_scheme) {
+    switch (Settings->light_scheme) {
       case LS_POWER:
         light_controller.calcLevels(Light.new_color);
         break;
@@ -1698,9 +1698,9 @@ void LightAnimate(void)
             Light.wakeup_start_time = millis();
           }
           // which step are we in a range 0..1023
-          uint32_t step_10 = ((millis() - Light.wakeup_start_time) * 1023) / (Settings.light_wakeup * 1000);
+          uint32_t step_10 = ((millis() - Light.wakeup_start_time) * 1023) / (Settings->light_wakeup * 1000);
           if (step_10 > 1023) { step_10 = 1023; }   // sanity check
-          uint8_t wakeup_bri = changeUIntScale(step_10, 0, 1023, 0, LightStateClass::DimmerToBri(Settings.light_dimmer));
+          uint8_t wakeup_bri = changeUIntScale(step_10, 0, 1023, 0, LightStateClass::DimmerToBri(Settings->light_dimmer));
 
           if (wakeup_bri != light_state.getBri()) {
             light_state.setBri(wakeup_bri);
@@ -1723,17 +1723,17 @@ void LightAnimate(void)
       case LS_CYCLEUP:
       case LS_CYCLEDN:
       case LS_RANDOM:
-        if (LS_CYCLEUP == Settings.light_scheme) {
+        if (LS_CYCLEUP == Settings->light_scheme) {
           LightCycleColor(1);
-        } else if (LS_CYCLEDN == Settings.light_scheme) {
+        } else if (LS_CYCLEDN == Settings->light_scheme) {
           LightCycleColor(-1);
         } else {
           LightCycleColor(0);
         }
         if (Light.pwm_multi_channels) {     // See #8058
-          Light.new_color[0] = changeUIntScale(Light.new_color[0], 0, 255, 0, Settings.light_color[0]);
-          Light.new_color[1] = changeUIntScale(Light.new_color[1], 0, 255, 0, Settings.light_color[1]);
-          Light.new_color[2] = changeUIntScale(Light.new_color[2], 0, 255, 0, Settings.light_color[2]);
+          Light.new_color[0] = changeUIntScale(Light.new_color[0], 0, 255, 0, Settings->light_color[0]);
+          Light.new_color[1] = changeUIntScale(Light.new_color[1], 0, 255, 0, Settings->light_color[1]);
+          Light.new_color[2] = changeUIntScale(Light.new_color[2], 0, 255, 0, Settings->light_color[2]);
         }
         break;
       default:
@@ -1741,15 +1741,15 @@ void LightAnimate(void)
     }
 
 #ifdef USE_DEVICE_GROUPS
-    if (Settings.light_scheme != Light.last_scheme) {
-      Light.last_scheme = Settings.light_scheme;
-      SendDeviceGroupMessage(Light.device, DGR_MSGTYP_UPDATE, DGR_ITEM_LIGHT_SCHEME, Settings.light_scheme);
+    if (Settings->light_scheme != Light.last_scheme) {
+      Light.last_scheme = Settings->light_scheme;
+      SendDeviceGroupMessage(Light.device, DGR_MSGTYP_UPDATE, DGR_ITEM_LIGHT_SCHEME, Settings->light_scheme);
       Light.devgrp_no_channels_out = false;
     }
 #endif  // USE_DEVICE_GROUPS
   }
 
-  if ((Settings.light_scheme < LS_MAX) || power_off) {  // exclude WS281X Neopixel schemes
+  if ((Settings->light_scheme < LS_MAX) || power_off) {  // exclude WS281X Neopixel schemes
 
     // Apply power modifiers to Light.new_color
     LightApplyPower(Light.new_color, Light.power);
@@ -1787,16 +1787,16 @@ void LightAnimate(void)
         // AddLog(LOG_LEVEL_INFO, PSTR(">>> calcGammaBulbs Out %03X,%03X,%03X,%03X,%03X"), cur_col_10[0], cur_col_10[1], cur_col_10[2], cur_col_10[3], cur_col_10[4]);
       }
 
-      // Apply RGBWWTable only if not Settings.flag4.white_blend_mode
+      // Apply RGBWWTable only if not Settings->flag4.white_blend_mode
       for (uint32_t i = 0; i < (rgbwwtable_applied_white ? 3 : Light.subtype); i++) {
-        uint32_t adjust = change8to10(Settings.rgbwwTable[i]);
+        uint32_t adjust = change8to10(Settings->rgbwwTable[i]);
         cur_col_10[i] = changeUIntScale(cur_col_10[i], 0, 1023, 0, adjust);
       }
 
       // final adjusments for PMW ranges, post-gamma correction
       for (uint32_t i = 0; i < LST_MAX; i++) {
         // scale from 0..1023 to 0..pwm_range, but keep any non-zero value to at least 1
-        cur_col_10[i] = (cur_col_10[i] > 0) ? changeUIntScale(cur_col_10[i], 1, 1023, 1, Settings.pwm_range) : 0;
+        cur_col_10[i] = (cur_col_10[i] > 0) ? changeUIntScale(cur_col_10[i], 1, 1023, 1, Settings->pwm_range) : 0;
       }
 
       // apply port remapping on both 8 bits and 10 bits versions
@@ -1847,10 +1847,10 @@ void LightAnimate(void)
 }
 
 bool isChannelGammaCorrected(uint32_t channel) {
-  if (!Settings.light_correction) { return false; }   // Gamma correction not activated
+  if (!Settings->light_correction) { return false; }   // Gamma correction not activated
   if (channel >= Light.subtype) { return false; }     // Out of range
 #ifdef ESP8266
-  if ((PHILIPS == TasmotaGlobal.module_type) || (Settings.flag4.pwm_ct_mode)) {
+  if ((PHILIPS == TasmotaGlobal.module_type) || (Settings->flag4.pwm_ct_mode)) {
     if ((LST_COLDWARM == Light.subtype) && (1 == channel)) { return false; }   // PMW reserved for CT
     if ((LST_RGBCW == Light.subtype) && (4 == channel)) { return false; }   // PMW reserved for CT
   }
@@ -1861,7 +1861,7 @@ bool isChannelGammaCorrected(uint32_t channel) {
 // is the channel a regular PWM or ColorTemp control
 bool isChannelCT(uint32_t channel) {
 #ifdef ESP8266
-  if ((PHILIPS == TasmotaGlobal.module_type) || (Settings.flag4.pwm_ct_mode)) {
+  if ((PHILIPS == TasmotaGlobal.module_type) || (Settings->flag4.pwm_ct_mode)) {
     if ((LST_COLDWARM == Light.subtype) && (1 == channel)) { return true; }   // PMW reserved for CT
     if ((LST_RGBCW == Light.subtype) && (4 == channel)) { return true; }   // PMW reserved for CT
   }
@@ -1916,14 +1916,14 @@ bool LightApplyFade(void) {   // did the value chanegd and needs to be applied
     }
     if (distance > 0) {
       // compute the duration of the animation
-      // Note: Settings.light_speed is the number of half-seconds for a 100% fade,
+      // Note: Settings->light_speed is the number of half-seconds for a 100% fade,
       // i.e. light_speed=1 means 1024 steps in 500ms
       Light.fade_duration = LightGetSpeedSetting() * 500;
       Light.speed_once_enabled = false; // The once off speed value has been read, reset it
-      if (!Settings.flag5.fade_fixed_duration) {
+      if (!Settings->flag5.fade_fixed_duration) {
         Light.fade_duration = (distance * Light.fade_duration) / 1023;    // time is proportional to distance, except with SO117
       }
-      if (Settings.save_data) {
+      if (Settings->save_data) {
         // Also postpone the save_data for the duration of the Fade (in seconds)
         uint32_t delay_seconds = 1 + (Light.fade_duration + 999) / 1000;   // add one more second
         // AddLog(LOG_LEVEL_INFO, PSTR("delay_seconds %d, save_data_counter %d"), delay_seconds, TasmotaGlobal.save_data_counter);
@@ -2005,10 +2005,10 @@ void LightSetOutputs(const uint16_t *cur_col_10) {
         //AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION "Cur_Col%d 10 bits %d"), i, cur_col_10[i]);
         uint16_t cur_col = cur_col_10[i + Light.pwm_offset];
         if (!isChannelCT(i)) {   // if CT don't use pwm_min and pwm_max
-          cur_col = cur_col > 0 ? changeUIntScale(cur_col, 0, Settings.pwm_range, Light.pwm_min, Light.pwm_max) : 0;   // shrink to the range of pwm_min..pwm_max
+          cur_col = cur_col > 0 ? changeUIntScale(cur_col, 0, Settings->pwm_range, Light.pwm_min, Light.pwm_max) : 0;   // shrink to the range of pwm_min..pwm_max
         }
-        if (!Settings.flag4.zerocross_dimmer) {
-          analogWrite(Pin(GPIO_PWM1, i), bitRead(TasmotaGlobal.pwm_inverted, i) ? Settings.pwm_range - cur_col : cur_col);
+        if (!Settings->flag4.zerocross_dimmer) {
+          analogWrite(Pin(GPIO_PWM1, i), bitRead(TasmotaGlobal.pwm_inverted, i) ? Settings->pwm_range - cur_col : cur_col);
         }
 #ifdef USE_PWM_DIMMER
         // Animate brightness LEDs to follow PWM dimmer brightness
@@ -2047,7 +2047,7 @@ void LightSetOutputs(const uint16_t *cur_col_10) {
 // Just apply basic Gamma to each channel
 void calcGammaMultiChannels(uint16_t cur_col_10[5]) {
   // Apply gamma correction for 8 and 10 bits resolutions, if needed
-  if (Settings.light_correction) {
+  if (Settings->light_correction) {
     for (uint32_t i = 0; i < LST_MAX; i++) {
       cur_col_10[i] = ledGamma10_10(cur_col_10[i]);
     }
@@ -2072,7 +2072,7 @@ void calcGammaBulbCW(uint16_t cw10[2], uint16_t *white_bri10_out, bool *white_fr
   bool white_free_cw = (white_bri10 > 1031);      // take a margin of 8 above 1023 to account for rounding errors
   white_bri10 = (white_bri10 > 1023) ? 1023 : white_bri10;    // max 1023
 
-  if (Settings.light_correction) {
+  if (Settings->light_correction) {
     if (white_free_cw) {
       cw10[0] = ledGamma10_10(cw10[0]);
       cw10[1] = ledGamma10_10(cw10[1]);
@@ -2103,7 +2103,7 @@ void calcGammaBulbCW(uint16_t cw10[2], uint16_t *white_bri10_out, bool *white_fr
 //
 void calcGammaBulb5Channels(uint16_t col10[LST_MAX], uint16_t *white_bri10_out, bool *white_free_cw) {
   for (uint32_t i = 0; i < 3; i++) {
-    if (Settings.light_correction) {
+    if (Settings->light_correction) {
       col10[i] = ledGamma10_10(col10[i]);
     }
   }
@@ -2142,7 +2142,7 @@ bool calcGammaBulbs(uint16_t cur_col_10[5]) {
 
 #ifdef ESP8266
   if ((LST_COLDWARM == Light.subtype) || (LST_RGBCW == Light.subtype)) {
-    if ((PHILIPS == TasmotaGlobal.module_type) || (Settings.flag4.pwm_ct_mode)) {   // channel 1 is the color tone, mapped to cold channel (0..255)
+    if ((PHILIPS == TasmotaGlobal.module_type) || (Settings->flag4.pwm_ct_mode)) {   // channel 1 is the color tone, mapped to cold channel (0..255)
       pwm_ct = true;
       // Xiaomi Philips bulbs follow a different scheme:
       // channel 0=intensity, channel1=temperature
@@ -2155,14 +2155,14 @@ bool calcGammaBulbs(uint16_t cur_col_10[5]) {
 
   // Now see if we need to mix RGB and  White
   // Valid only for LST_RGBW, LST_RGBCW, SetOption105 1, and white is zero (see doc)
-  if ((LST_RGBW <= Light.subtype) && (Settings.flag4.white_blend_mode) && (0 == cur_col_10[3]+cur_col_10[4])) {
+  if ((LST_RGBW <= Light.subtype) && (Settings->flag4.white_blend_mode) && (0 == cur_col_10[3]+cur_col_10[4])) {
     uint32_t min_rgb_10 = min3(cur_col_10[0], cur_col_10[1], cur_col_10[2]);
     cur_col_10[0] -= min_rgb_10;
     cur_col_10[1] -= min_rgb_10;
     cur_col_10[2] -= min_rgb_10;
 
     // Add to white level
-    uint32_t adjust_w_10 = change8to10(Settings.rgbwwTable[3]);   // take the correction factor, bought back to 10 bits
+    uint32_t adjust_w_10 = change8to10(Settings->rgbwwTable[3]);   // take the correction factor, bought back to 10 bits
     white_bri10 += changeUIntScale(min_rgb_10, 0, 1023, 0, adjust_w_10);  // set white power down corrected with rgbwwTable[3]
     white_bri10 = (white_bri10 > 1023) ? 1023 : white_bri10;    // max 1023
     rgbwwtable_applied_white = true;
@@ -2251,7 +2251,7 @@ void LightHandleDevGroupItem(void)
   static bool send_state = false;
   static bool restore_power = false;
 
-  if (Settings.flag4.multiple_device_groups ? Settings.device_group_tie[*XdrvMailbox.topic] != Light.device : !(XdrvMailbox.index & DGR_FLAG_LOCAL)) return;
+  if (Settings->flag4.multiple_device_groups ? Settings->device_group_tie[*XdrvMailbox.topic] != Light.device : !(XdrvMailbox.index & DGR_FLAG_LOCAL)) return;
   bool more_to_come;
   uint32_t value = XdrvMailbox.payload;
   switch (XdrvMailbox.command_code) {
@@ -2270,7 +2270,7 @@ void LightHandleDevGroupItem(void)
       TasmotaGlobal.skip_light_fade = false;
       if (send_state && !more_to_come) {
         light_controller.saveSettings();
-        if (Settings.flag3.hass_tele_on_power) {  // SetOption59 - Send tele/%topic%/STATE in addition to stat/%topic%/RESULT
+        if (Settings->flag3.hass_tele_on_power) {  // SetOption59 - Send tele/%topic%/STATE in addition to stat/%topic%/RESULT
           MqttPublishTeleState();
         }
         send_state = false;
@@ -2279,13 +2279,13 @@ void LightHandleDevGroupItem(void)
     case DGR_ITEM_LIGHT_BRI:
       if (light_state.getBri() != value) {
         light_state.setBri(value);
-        Settings.light_dimmer = light_state.BriToDimmer(value);
+        Settings->light_dimmer = light_state.BriToDimmer(value);
         send_state = true;
       }
       break;
     case DGR_ITEM_LIGHT_SCHEME:
-      if (Settings.light_scheme != value) {
-        Light.last_scheme = Settings.light_scheme = value;
+      if (Settings->light_scheme != value) {
+        Light.last_scheme = Settings->light_scheme = value;
         Light.devgrp_no_channels_out = (value != 0);
         send_state = true;
       }
@@ -2339,10 +2339,10 @@ void LightHandleDevGroupItem(void)
           if (value > MAX_FIXED_COLOR) value += 200 - MAX_FIXED_COLOR;
         }
         Light.fixed_color_index = value;
-        bool save_decimal_text = Settings.flag.decimal_text;
+        bool save_decimal_text = Settings->flag.decimal_text;
         char str[16];
         LightColorEntry(str, sprintf_P(str, PSTR("%u"), value));
-        Settings.flag.decimal_text = save_decimal_text;
+        Settings->flag.decimal_text = save_decimal_text;
         uint32_t old_bri = light_state.getBri();
         light_controller.changeChannels(Light.entry_color);
         light_controller.changeBri(old_bri);
@@ -2355,20 +2355,20 @@ void LightHandleDevGroupItem(void)
       }
       break;
     case DGR_ITEM_LIGHT_FADE:
-      if (Settings.light_fade != value) {
-        Settings.light_fade = value;
+      if (Settings->light_fade != value) {
+        Settings->light_fade = value;
         send_state = true;
       }
       break;
     case DGR_ITEM_LIGHT_SPEED:
-      if (Settings.light_speed != value && value > 0 && value <= 40) {
-        Settings.light_speed = value;
+      if (Settings->light_speed != value && value > 0 && value <= 40) {
+        Settings->light_speed = value;
         send_state = true;
       }
       break;
     case DGR_ITEM_STATUS:
-      SendDeviceGroupMessage(Light.device, DGR_MSGTYP_PARTIAL_UPDATE, DGR_ITEM_LIGHT_FADE, Settings.light_fade,
-        DGR_ITEM_LIGHT_SPEED, Settings.light_speed, DGR_ITEM_LIGHT_SCHEME, Settings.light_scheme);
+      SendDeviceGroupMessage(Light.device, DGR_MSGTYP_PARTIAL_UPDATE, DGR_ITEM_LIGHT_FADE, Settings->light_fade,
+        DGR_ITEM_LIGHT_SPEED, Settings->light_speed, DGR_ITEM_LIGHT_SCHEME, Settings->light_scheme);
       LightSendDeviceGroupStatus();
       break;
   }
@@ -2473,7 +2473,7 @@ bool LightColorEntry(char *buffer, uint32_t buffer_length)
 
 //  Too much magic so removed since 9.0.0.3
 //  if (entry_type) {
-//    Settings.flag.decimal_text = entry_type -1;     // SetOption17 - Switch between decimal or hexadecimal output
+//    Settings->flag.decimal_text = entry_type -1;     // SetOption17 - Switch between decimal or hexadecimal output
 //  }
 
   return (entry_type);
@@ -2497,11 +2497,18 @@ void CmndSupportColor(void)
         else {
 #endif  // USE_LIGHT_PALETTE
           uint32_t old_bri = light_state.getBri();
+          uint32_t old_bri_rgb = light_state.getBriRGB();
           // change all channels to specified values
           light_controller.changeChannels(Light.entry_color);
           if (2 == XdrvMailbox.index) {
             // If Color2, set back old brightness
-            LightSetBriScaled(old_bri);
+            if (light_controller.isCTRGBLinked()) {
+              // RGB and white are linked, adjust brightness of all channels
+              LightSetBriScaled(old_bri);
+            } else {
+              // RGB and white are unlinked, adjust brightness only of RGB channels
+              LightSetBri(Light.device, old_bri_rgb);
+            }
           }
 #ifdef USE_LIGHT_PALETTE
         }
@@ -2510,7 +2517,7 @@ void CmndSupportColor(void)
         coldim = true;
       } else {             // Color3, 4, 5 and 6
         for (uint32_t i = 0; i < LST_RGB; i++) {
-          Settings.ws_color[XdrvMailbox.index -3][i] = Light.entry_color[i];
+          Settings->ws_color[XdrvMailbox.index -3][i] = Light.entry_color[i];
         }
       }
     }
@@ -2522,10 +2529,10 @@ void CmndSupportColor(void)
   if (XdrvMailbox.index >= 3) {
     scolor[0] = '\0';
     for (uint32_t i = 0; i < LST_RGB; i++) {
-      if (Settings.flag.decimal_text) {  // SetOption17 - Switch between decimal or hexadecimal output
-        snprintf_P(scolor, sizeof(scolor), PSTR("%s%s%d"), scolor, (i > 0) ? "," : "", Settings.ws_color[XdrvMailbox.index -3][i]);
+      if (Settings->flag.decimal_text) {  // SetOption17 - Switch between decimal or hexadecimal output
+        snprintf_P(scolor, sizeof(scolor), PSTR("%s%s%d"), scolor, (i > 0) ? "," : "", Settings->ws_color[XdrvMailbox.index -3][i]);
       } else {
-        snprintf_P(scolor, sizeof(scolor), PSTR("%s%02X"), scolor, Settings.ws_color[XdrvMailbox.index -3][i]);
+        snprintf_P(scolor, sizeof(scolor), PSTR("%s%02X"), scolor, Settings->ws_color[XdrvMailbox.index -3][i]);
       }
     }
     ResponseCmndIdxChar(scolor);
@@ -2660,11 +2667,11 @@ void CmndScheme(void)
     uint32_t max_scheme = Light.max_scheme;
 
     if (1 == XdrvMailbox.data_len) {
-      if (('+' == XdrvMailbox.data[0]) && (Settings.light_scheme < max_scheme)) {
-        XdrvMailbox.payload = Settings.light_scheme + ((0 == Settings.light_scheme) ? 2 : 1);  // Skip wakeup
+      if (('+' == XdrvMailbox.data[0]) && (Settings->light_scheme < max_scheme)) {
+        XdrvMailbox.payload = Settings->light_scheme + ((0 == Settings->light_scheme) ? 2 : 1);  // Skip wakeup
       }
-      else if (('-' == XdrvMailbox.data[0]) && (Settings.light_scheme > 0)) {
-        XdrvMailbox.payload = Settings.light_scheme - ((2 == Settings.light_scheme) ? 2 : 1);  // Skip wakeup
+      else if (('-' == XdrvMailbox.data[0]) && (Settings->light_scheme > 0)) {
+        XdrvMailbox.payload = Settings->light_scheme - ((2 == Settings->light_scheme) ? 2 : 1);  // Skip wakeup
       }
     }
     if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= max_scheme)) {
@@ -2676,17 +2683,17 @@ void CmndScheme(void)
 #endif  // USE_LIGHT_PALETTE
       }
       LightSetScheme(XdrvMailbox.payload);
-      if (LS_WAKEUP == Settings.light_scheme) {
+      if (LS_WAKEUP == Settings->light_scheme) {
         Light.wakeup_active = 3;
       }
       LightPowerOn();
       Light.strip_timer_counter = 0;
       // Publish state message for Hass
-      if (Settings.flag3.hass_tele_on_power) {  // SetOption59 - Send tele/%topic%/STATE in addition to stat/%topic%/RESULT
+      if (Settings->flag3.hass_tele_on_power) {  // SetOption59 - Send tele/%topic%/STATE in addition to stat/%topic%/RESULT
         MqttPublishTeleState();
       }
     }
-    ResponseCmndNumber(Settings.light_scheme);
+    ResponseCmndNumber(Settings->light_scheme);
   }
 }
 
@@ -2731,7 +2738,7 @@ void CmndColorTemperature(void)
 
 void LightDimmerOffset(uint32_t index, int32_t offset) {
   int32_t dimmer = light_state.getDimmer(index) + offset;
-  if (dimmer < 1) { dimmer = Settings.flag3.slider_dimmer_stay_on; }  // SetOption77 - Do not power off if slider moved to far left
+  if (dimmer < 1) { dimmer = Settings->flag3.slider_dimmer_stay_on; }  // SetOption77 - Do not power off if slider moved to far left
   if (dimmer > 100) { dimmer = 100; }
 
   XdrvMailbox.index = index;
@@ -2765,9 +2772,9 @@ void CmndDimmer(void)
   // Handle +/-/!/</> special commands
   if (1 == XdrvMailbox.data_len) {
     if ('+' == XdrvMailbox.data[0]) {
-      XdrvMailbox.payload = (dimmer > (100 - Settings.dimmer_step - 1)) ? 100 : dimmer + Settings.dimmer_step;
+      XdrvMailbox.payload = (dimmer > (100 - Settings->dimmer_step - 1)) ? 100 : dimmer + Settings->dimmer_step;
     } else if ('-' == XdrvMailbox.data[0]) {
-      XdrvMailbox.payload = (dimmer < (Settings.dimmer_step + 1)) ? 1 : dimmer - Settings.dimmer_step;
+      XdrvMailbox.payload = (dimmer < (Settings->dimmer_step + 1)) ? 1 : dimmer - Settings->dimmer_step;
     } else if ('!' == XdrvMailbox.data[0] && Light.fade_running) {
       XdrvMailbox.payload = LightGetCurFadeBri();
     } else if ('<' == XdrvMailbox.data[0] ) {
@@ -2802,9 +2809,9 @@ void CmndDimmer(void)
     }
 #if defined(USE_PWM_DIMMER) && defined(USE_DEVICE_GROUPS)
     uint8_t bri = light_state.getBri();
-    if (bri != Settings.bri_power_on) {
-      Settings.bri_power_on = bri;
-      SendDeviceGroupMessage(Light.device, DGR_MSGTYP_PARTIAL_UPDATE, DGR_ITEM_BRI_POWER_ON, Settings.bri_power_on);
+    if (bri != Settings->bri_power_on) {
+      Settings->bri_power_on = bri;
+      SendDeviceGroupMessage(Light.device, DGR_MSGTYP_PARTIAL_UPDATE, DGR_ITEM_BRI_POWER_ON, Settings->bri_power_on);
     }
 #endif  // USE_PWM_DIMMER && USE_DEVICE_GROUPS
     Light.update = true;
@@ -2821,20 +2828,20 @@ void CmndDimmerRange(void)
   // DimmerRange 0,100 - Set dimmer hardware range from 0 to 100 and restart
   if (XdrvMailbox.data_len > 0) {
     uint32_t parm[2];
-    parm[0] = Settings.dimmer_hw_min;
-    parm[1] = Settings.dimmer_hw_max;
+    parm[0] = Settings->dimmer_hw_min;
+    parm[1] = Settings->dimmer_hw_max;
     ParseParameters(2, parm);
     if (parm[0] < parm[1]) {
-      Settings.dimmer_hw_min = parm[0];
-      Settings.dimmer_hw_max = parm[1];
+      Settings->dimmer_hw_min = parm[0];
+      Settings->dimmer_hw_max = parm[1];
     } else {
-      Settings.dimmer_hw_min = parm[1];
-      Settings.dimmer_hw_max = parm[0];
+      Settings->dimmer_hw_min = parm[1];
+      Settings->dimmer_hw_max = parm[0];
     }
     LightCalcPWMRange();
     Light.update = true;
   }
-  Response_P(PSTR("{\"" D_CMND_DIMMER_RANGE "\":{\"Min\":%d,\"Max\":%d}}"), Settings.dimmer_hw_min, Settings.dimmer_hw_max);
+  Response_P(PSTR("{\"" D_CMND_DIMMER_RANGE "\":{\"Min\":%d,\"Max\":%d}}"), Settings->dimmer_hw_min, Settings->dimmer_hw_max);
 }
 
 void CmndDimmerStep(void)
@@ -2843,14 +2850,14 @@ void CmndDimmerStep(void)
   // DimmerStep 1..50 - Set dimmer step
   if (XdrvMailbox.data_len > 0) {
     if (XdrvMailbox.payload < 1) {
-       Settings.dimmer_step = 1;
+       Settings->dimmer_step = 1;
     } else if (XdrvMailbox.payload > 50) {
-      Settings.dimmer_step = 50;
+      Settings->dimmer_step = 50;
     } else {
-      Settings.dimmer_step = XdrvMailbox.payload;
+      Settings->dimmer_step = XdrvMailbox.payload;
     }
   }
-  ResponseCmndNumber(Settings.dimmer_step);
+  ResponseCmndNumber(Settings->dimmer_step);
 }
 
 void CmndLedTable(void)
@@ -2863,16 +2870,16 @@ void CmndLedTable(void)
     switch (XdrvMailbox.payload) {
     case 0: // Off
     case 1: // On
-      Settings.light_correction = XdrvMailbox.payload;
+      Settings->light_correction = XdrvMailbox.payload;
       break;
     case 2: // Toggle
-      Settings.light_correction ^= 1;
+      Settings->light_correction ^= 1;
       break;
     }
     LightCalcPWMRange();
     Light.update = true;
   }
-  ResponseCmndStateText(Settings.light_correction);
+  ResponseCmndStateText(Settings->light_correction);
 }
 
 void CmndRgbwwTable(void)
@@ -2883,14 +2890,14 @@ void CmndRgbwwTable(void)
     uint32_t parm[LST_RGBCW -1];
     uint32_t parmcount = ParseParameters(LST_RGBCW, parm);
     for (uint32_t i = 0; i < parmcount; i++) {
-      Settings.rgbwwTable[i] = parm[i];
+      Settings->rgbwwTable[i] = parm[i];
     }
     Light.update = true;
   }
   char scolor[LIGHT_COLOR_SIZE];
   scolor[0] = '\0';
   for (uint32_t i = 0; i < LST_RGBCW; i++) {
-    snprintf_P(scolor, sizeof(scolor), PSTR("%s%s%d"), scolor, (i > 0) ? "," : "", Settings.rgbwwTable[i]);
+    snprintf_P(scolor, sizeof(scolor), PSTR("%s%s%d"), scolor, (i > 0) ? "," : "", Settings->rgbwwTable[i]);
   }
   ResponseCmndChar(scolor);
 }
@@ -2907,18 +2914,18 @@ void CmndFade(void)
     switch (XdrvMailbox.payload) {
     case 0: // Off
     case 1: // On
-      Settings.light_fade = XdrvMailbox.payload;
+      Settings->light_fade = XdrvMailbox.payload;
       break;
     case 2: // Toggle
-      Settings.light_fade ^= 1;
+      Settings->light_fade ^= 1;
       break;
     }
   #ifdef USE_DEVICE_GROUPS
-    if (XdrvMailbox.payload >= 0 && XdrvMailbox.payload <= 2) SendDeviceGroupMessage(Light.device, DGR_MSGTYP_UPDATE, DGR_ITEM_LIGHT_FADE, Settings.light_fade);
+    if (XdrvMailbox.payload >= 0 && XdrvMailbox.payload <= 2) SendDeviceGroupMessage(Light.device, DGR_MSGTYP_UPDATE, DGR_ITEM_LIGHT_FADE, Settings->light_fade);
   #endif  // USE_DEVICE_GROUPS
-    if (!Settings.light_fade) { Light.fade_running = false; }
+    if (!Settings->light_fade) { Light.fade_running = false; }
   }
-  ResponseCmndStateText(Settings.light_fade);
+  ResponseCmndStateText(Settings->light_fade);
 }
 
 void CmndSpeed(void)
@@ -2939,20 +2946,20 @@ void CmndSpeed(void)
     // Speed +  - Increment Speed
     // Speed -  - Decrement Speed
     if (1 == XdrvMailbox.data_len) {
-      if (('+' == XdrvMailbox.data[0]) && (Settings.light_speed > 1)) {
-        XdrvMailbox.payload = Settings.light_speed - 1;
+      if (('+' == XdrvMailbox.data[0]) && (Settings->light_speed > 1)) {
+        XdrvMailbox.payload = Settings->light_speed - 1;
       }
-      else if (('-' == XdrvMailbox.data[0]) && (Settings.light_speed < 40)) {
-        XdrvMailbox.payload = Settings.light_speed + 1;
+      else if (('-' == XdrvMailbox.data[0]) && (Settings->light_speed < 40)) {
+        XdrvMailbox.payload = Settings->light_speed + 1;
       }
     }
     if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload <= 40)) {
-      Settings.light_speed = XdrvMailbox.payload;
+      Settings->light_speed = XdrvMailbox.payload;
 #ifdef USE_DEVICE_GROUPS
-      SendDeviceGroupMessage(Light.device, DGR_MSGTYP_UPDATE, DGR_ITEM_LIGHT_SPEED, Settings.light_speed);
+      SendDeviceGroupMessage(Light.device, DGR_MSGTYP_UPDATE, DGR_ITEM_LIGHT_SPEED, Settings->light_speed);
 #endif  // USE_DEVICE_GROUPS
     }
-    ResponseCmndNumber(Settings.light_speed);
+    ResponseCmndNumber(Settings->light_speed);
   }
 }
 
@@ -2961,10 +2968,10 @@ void CmndWakeupDuration(void)
   // WakeUpDuration    - Show current Wake Up duration in seconds
   // WakeUpDuration 60 - Set Wake Up duration to 60 seconds
   if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload < 3001)) {
-    Settings.light_wakeup = XdrvMailbox.payload;
+    Settings->light_wakeup = XdrvMailbox.payload;
     Light.wakeup_active = 0;
   }
-  ResponseCmndNumber(Settings.light_wakeup);
+  ResponseCmndNumber(Settings->light_wakeup);
 }
 
 void CmndCTRange(void)
@@ -2994,7 +3001,7 @@ void CmndCTRange(void)
 #ifdef USE_LIGHT_VIRTUAL_CT
 void CmndVirtualCT(void)
 {
-  if (!Settings.flag4.virtual_ct) {
+  if (!Settings->flag4.virtual_ct) {
     ResponseCmndChar_P(PSTR("You need to enable `SetOption106 1`"));
     return;
   }
@@ -3086,7 +3093,7 @@ void CmndPalette(void)
   if (Light.palette_count) {
     palette_entry = Light.palette;
     for (int entry = 0; entry < Light.palette_count; entry++) {
-      if (Settings.flag.decimal_text) {  // SetOption17 - Switch between decimal or hexadecimal output
+      if (Settings->flag.decimal_text) {  // SetOption17 - Switch between decimal or hexadecimal output
         *p++ = '"';
         for (uint32_t i = 0; i < Light.subtype; i++) {
           p += sprintf_P(p, PSTR("%d,"), *palette_entry++);
@@ -3140,7 +3147,7 @@ void CmndUndocA(void)
   char scolor[LIGHT_COLOR_SIZE];
   LightGetColor(scolor, true);  // force hex whatever Option 17
   scolor[6] = '\0';  // RGB only
-  Response_P(PSTR("%s,%d,%d,%d,%d,%d"), scolor, Settings.light_fade, Settings.light_correction, Settings.light_scheme, Settings.light_speed, Settings.light_width);
+  Response_P(PSTR("%s,%d,%d,%d,%d,%d"), scolor, Settings->light_fade, Settings->light_correction, Settings->light_scheme, Settings->light_speed, Settings->light_width);
   MqttPublishPrefixTopicRulesProcess_P(STAT, XdrvMailbox.topic);
   ResponseClear();
 }

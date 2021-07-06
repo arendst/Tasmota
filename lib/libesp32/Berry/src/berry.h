@@ -263,6 +263,18 @@ typedef struct bntvmodule {
         .s = _s                                           \
     }
 
+/* new version for more compact literals */
+#define be_nested_const_str(_s, _hash, _len)  \
+    (bstring*) &(const bcstring) {            \
+        .next = (bgcobject *)NULL,            \
+        .type = BE_STRING,                    \
+        .marked = GC_CONST,                   \
+        .extra = 0,                           \
+        .slen = _len,                         \
+        .hash = 0,                            \
+        .s = _s                               \
+    }
+
 #define be_local_const_str(_name) (bstring*) &be_local_const_str_##_name
 
 /* conditional macro see  https://stackoverflow.com/questions/11632219/c-preprocessor-macro-specialisation-based-on-an-argument */
@@ -316,6 +328,30 @@ typedef struct bntvmodule {
     PROTO_VAR_INFO_BLOCK                                                          \
   }
 
+/* new version for more compact literals */
+#define be_nested_proto(_nstack, _argc, _has_upval, _upvals, _has_subproto, _protos, _has_const, _ktab, _fname, _source, _code)     \
+  & (const bproto) {                                                              \
+    NULL,                       /* bgcobject *next */                             \
+    BE_PROTO,                   /* type BE_PROTO */                               \
+    0x08,                       /* marked outside of GC */                        \
+    (_nstack),                  /* nstack */                                      \
+    BE_IIF(_has_upval)(sizeof(*_upvals)/sizeof(bupvaldesc),0),  /* nupvals */     \
+    (_argc),                    /* argc */                                        \
+    0,                          /* varg */                                        \
+    NULL,                       /* bgcobject *gray */                             \
+    (bupvaldesc*) _upvals,      /* bupvaldesc *upvals */                          \
+    (bvalue*) _ktab,            /* ktab */                                        \
+    (struct bproto**) _protos,  /* bproto **ptab */                               \
+    (binstruction*) _code,      /* code */                                        \
+    _fname,                     /* name */                                        \
+    sizeof(*_code)/sizeof(binstruction),                        /* codesize */    \
+    BE_IIF(_has_const)(sizeof(*_ktab)/sizeof(bvalue),0),        /* nconst */      \
+    BE_IIF(_has_subproto)(sizeof(*_protos)/sizeof(bproto*),0),  /* proto */       \
+    _source,                    /* source */                                      \
+    PROTO_RUNTIME_BLOCK                                                           \
+    PROTO_VAR_INFO_BLOCK                                                          \
+  }
+
 #define be_define_local_closure(_name)        \
   const bclosure _name##_closure = {          \
     NULL,           /* bgcobject *next */     \
@@ -327,6 +363,17 @@ typedef struct bntvmodule {
     { NULL }        /* upvals */              \
   }
 
+/* new version for more compact literals */
+#define be_local_closure(_name, _proto)       \
+  const bclosure _name##_closure = {          \
+    NULL,           /* bgcobject *next */     \
+    BE_CLOSURE,     /* type BE_CLOSURE */     \
+    GC_CONST,       /* marked GC_CONST */     \
+    0,              /* nupvals */             \
+    NULL,           /* bgcobject *gray */     \
+    (bproto*) _proto, /* proto */             \
+    { NULL }        /* upvals */              \
+  }
 
 /* debug hook typedefs */
 #define BE_HOOK_LINE    1

@@ -54,7 +54,7 @@
         AABBCCDDEEFF/n (n = 0..3) where n indicates the TYPE of address
         most notably, if you wish to connect to a random address (n = 1), then you must specify,
         else it will not connect.
-        e.g. to alias a random address to fred: 
+        e.g. to alias a random address to fred:
         BLEAlias fred=1234567890/1
         to connect and read fred's name:
         BLEName fred
@@ -68,14 +68,14 @@
       BLEAdv - unused
       BLEOp
         advanced - perform a BLE active operation
-        mainly for debug or unsupported devices. 
+        mainly for debug or unsupported devices.
       BLEMode
-        control scanning mode 
+        control scanning mode
         0 - stop BLE
         1 - run BLE but manual scan
         *2 - run BLE with auto scan
       BLEDetails
-        display details of adverts 
+        display details of adverts
         BLEdetails0 - no display
         BLEdetails2 <mac|alias> - display for one device
         BLEdetails3 - display for ALL devices
@@ -98,7 +98,7 @@
       BLEDevices
         display or clear the devices list
         BLEDevices0 - clear list
-        BLEDevices1 - publish on tele 
+        BLEDevices1 - publish on tele
       BLEMaxAge
         display or set the max age of a BLE address before being forgotten
         BLEMaxAge - display the setting
@@ -952,9 +952,9 @@ int SafeAddLog_P(uint32_t loglevel, PGM_P formatP, ...) {
   int added = 0;
 
   // if the log would not be output do nothing here.
-  if ((loglevel > Settings.weblog_level) &&
+  if ((loglevel > Settings->weblog_level) &&
       (loglevel > TasmotaGlobal.seriallog_level) &&
-      (loglevel > Settings.mqttlog_level) &&
+      (loglevel > Settings->mqttlog_level) &&
       (loglevel > TasmotaGlobal.syslog_level)){
     return added;
   }
@@ -974,14 +974,14 @@ int SafeAddLog_P(uint32_t loglevel, PGM_P formatP, ...) {
   vsnprintf_P(BLE_temp_log_data, maxlen, formatP, arg);
   va_end(arg);
 #ifdef USE_NATIVE_LOGGING
-  AddLog_P(loglevel, PSTR("%s"), BLE_temp_log_data);
+  AddLog(loglevel, PSTR("%s"), BLE_temp_log_data);
   return 1;
 #else
   if (thistask == TasmotaMainTask){
     loglevel = LOG_LEVEL_ERROR;
     snprintf(BLE_temp_log_data + strlen(BLE_temp_log_data), 13, "-!MAINTHREAD!");
     xSemaphoreGive(SafeLogMutex); // release mutex
-    AddLog_P(loglevel, PSTR("%s"), BLE_temp_log_data);
+    AddLog(loglevel, PSTR("%s"), BLE_temp_log_data);
     return 0;
   }
 
@@ -1164,8 +1164,8 @@ void setDetails(ble_advertisment_t *ad){
   p += len;
   maxlen -= len;
   if (ad->addrtype){
-    *(p++) = '/';  
-    *(p++) = 0x30+ad->addrtype;  
+    *(p++) = '/';
+    *(p++) = 0x30+ad->addrtype;
   }
   *(p++) = '\"'; maxlen--;
 
@@ -1259,8 +1259,11 @@ void postAdvertismentDetails(){
 
   TasAutoMutex localmutex(&BLEOperationsRecursiveMutex, "BLEPostAdd");
   if (BLEAdvertismentDetailsJsonSet){
-    strncpy(TasmotaGlobal.mqtt_data, BLEAdvertismentDetailsJson, sizeof(TasmotaGlobal.mqtt_data));
-    TasmotaGlobal.mqtt_data[sizeof(TasmotaGlobal.mqtt_data)-1] = 0;
+
+//    strncpy(TasmotaGlobal.mqtt_data, BLEAdvertismentDetailsJson, sizeof(TasmotaGlobal.mqtt_data));
+//    TasmotaGlobal.mqtt_data[sizeof(TasmotaGlobal.mqtt_data)-1] = 0;
+    Response_P(BLEAdvertismentDetailsJson);
+
     BLEAdvertismentDetailsJsonSet = 0;
     // we got the data, give before MQTT call.
     localmutex.give();
@@ -1405,22 +1408,16 @@ class BLEAdvCallbacks: public NimBLEAdvertisedDeviceCallbacks {
 
     // call anyone who asked about advertisements
     for (int i = 0; i < advertismentCallbacks.size(); i++) {
-      try {
-        ADVERTISMENT_CALLBACK* pFN;
-        pFN = advertismentCallbacks[i];
-        int res = pFN(&BLEAdvertisment);
+      ADVERTISMENT_CALLBACK* pFN;
+      pFN = advertismentCallbacks[i];
+      int res = pFN(&BLEAdvertisment);
 
-        // if this callback wants to stop here, then do so.
-        if (1 == res) break;
+      // if this callback wants to stop here, then do so.
+      if (1 == res) break;
 
-        // if this callback wants to kill this device
-        if (2 == res) {
-          //BLEScan->erase(address);
-        }
-      } catch(const std::exception& e){
-#ifdef BLE_ESP32_DEBUG
-        AddLog(LOG_LEVEL_ERROR,PSTR("BLE: exception in advertismentCallbacks"));
-#endif
+      // if this callback wants to kill this device
+      if (2 == res) {
+        //BLEScan->erase(address);
       }
     }
 
@@ -1441,17 +1438,11 @@ static void BLEscanEndedCB(NimBLEScanResults results){
   if (BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: Scan ended"));
 #endif
   for (int i = 0; i < scancompleteCallbacks.size(); i++){
-    try {
-      SCANCOMPLETE_CALLBACK *pFn = scancompleteCallbacks[i];
-      int callbackres = pFn(results);
+    SCANCOMPLETE_CALLBACK *pFn = scancompleteCallbacks[i];
+    int callbackres = pFn(results);
 #ifdef BLE_ESP32_DEBUG
-      if (BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: scancompleteCallbacks %d %d"), i, callbackres);
+    if (BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: scancompleteCallbacks %d %d"), i, callbackres);
 #endif
-    } catch(const std::exception& e){
-#ifdef BLE_ESP32_DEBUG
-      AddLog(LOG_LEVEL_ERROR,PSTR("BLE: exception in operationsCallbacks"));
-#endif
-    }
   }
 
   BLERunningScan = 2;
@@ -1656,23 +1647,17 @@ static void BLETaskStopStartNimBLE(NimBLEClient **ppClient, bool start = true){
 
     (*ppClient)->setClientCallbacks(nullptr, false);
 
-    try {
-      if ((*ppClient)->isConnected()){
+    if ((*ppClient)->isConnected()){
 #ifdef BLE_ESP32_DEBUG
-        AddLog(LOG_LEVEL_INFO,PSTR("BLE: disconnecting connected client"));
+      AddLog(LOG_LEVEL_INFO,PSTR("BLE: disconnecting connected client"));
 #endif
-        (*ppClient)->disconnect();
-      }
-      NimBLEDevice::deleteClient((*ppClient));
-      (*ppClient) = nullptr;
-#ifdef BLE_ESP32_DEBUG
-      AddLog(LOG_LEVEL_INFO,PSTR("BLE: deleted client"));
-#endif
-    } catch(const std::exception& e){
-#ifdef BLE_ESP32_DEBUG
-      AddLog(LOG_LEVEL_ERROR,PSTR("BLE: Stopping NimBLE:exception in delete client"));
-#endif
+      (*ppClient)->disconnect();
     }
+    NimBLEDevice::deleteClient((*ppClient));
+    (*ppClient) = nullptr;
+#ifdef BLE_ESP32_DEBUG
+    AddLog(LOG_LEVEL_INFO,PSTR("BLE: deleted client"));
+#endif
 
     if (ble32Scan){
       ble32Scan->setAdvertisedDeviceCallbacks(nullptr,true);
@@ -2086,47 +2071,41 @@ static void BLETaskRunCurrentOperation(BLE_ESP32::generic_sensor_t** pCurrentOpe
 
 // for safety's sake, only call from the run task
 static void BLETaskRunTaskDoneOperation(BLE_ESP32::generic_sensor_t** op, NimBLEClient **ppClient){
-  try {
-    if ((*ppClient)->isConnected()){
+  if ((*ppClient)->isConnected()){
 #ifdef BLE_ESP32_DEBUG
-      if (BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: runTaskDoneOperation: disconnecting connected client"));
+    if (BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: runTaskDoneOperation: disconnecting connected client"));
 #endif
-      (*ppClient)->disconnect();
-      // wait for 1/2 second after disconnect
-      int waits = 0;
-      do {
+    (*ppClient)->disconnect();
+    // wait for 1/2 second after disconnect
+    int waits = 0;
+    do {
+      vTaskDelay(500/ portTICK_PERIOD_MS);
+      if (waits) {
+        //(*ppClient)->disconnect();
+        // we will stall here forever!!! - as testing
+#ifdef BLE_ESP32_DEBUG
+        AddLog(LOG_LEVEL_ERROR,PSTR("BLE: wait discon%d"), waits);
+#endif
         vTaskDelay(500/ portTICK_PERIOD_MS);
-        if (waits) {
-          //(*ppClient)->disconnect();
-          // we will stall here forever!!! - as testing
+      }
+      waits++;
+      if (waits == 5){
+        int conn_id = (*ppClient)->getConnId();
+        ble_gap_conn_broken(conn_id, -1);
 #ifdef BLE_ESP32_DEBUG
-          AddLog(LOG_LEVEL_ERROR,PSTR("BLE: wait discon%d"), waits);
+        AddLog(LOG_LEVEL_ERROR,PSTR("BLE: wait discon%d - kill connection"), waits);
 #endif
-          vTaskDelay(500/ portTICK_PERIOD_MS);
-        }
-        waits++;
-        if (waits == 5){
-          int conn_id = (*ppClient)->getConnId();
-          ble_gap_conn_broken(conn_id, -1);
-#ifdef BLE_ESP32_DEBUG
-          AddLog(LOG_LEVEL_ERROR,PSTR("BLE: wait discon%d - kill connection"), waits);
-#endif
-        }
-        if (waits == 60){
-          AddLog(LOG_LEVEL_ERROR,PSTR("BLE: >60s waiting -> BLE Failed, restart Tasmota %d"), waits);
-          BLEStop = 1;
-          BLEStopAt = esp_timer_get_time();
+      }
+      if (waits == 60){
+        AddLog(LOG_LEVEL_ERROR,PSTR("BLE: >60s waiting -> BLE Failed, restart Tasmota %d"), waits);
+        BLEStop = 1;
+        BLEStopAt = esp_timer_get_time();
 
-          BLERestartTasmota = 10;
-          BLERestartTasmotaReason = BLE_RESTART_TEAMOTA_REASON_BLE_DISCONNECT_FAIL;
-          break;
-        }
-      } while ((*ppClient)->isConnected());
-    }
-  } catch(const std::exception& e){
-#ifdef BLE_ESP32_DEBUG
-    AddLog(LOG_LEVEL_ERROR,PSTR("BLE: runTaskDoneOperation: exception in disconnect"));
-#endif
+        BLERestartTasmota = 10;
+        BLERestartTasmotaReason = BLE_RESTART_TEAMOTA_REASON_BLE_DISCONNECT_FAIL;
+        break;
+      }
+    } while ((*ppClient)->isConnected());
   }
 
 
@@ -2248,7 +2227,7 @@ void BLEEvery50mSecond(){
 
 static void stopStartBLE(){
   // dont start of disabled
-  uint8_t enable = (Settings.flag5.mi32_enable || BLEEnableUnsaved) && BLEEnableMask;
+  uint8_t enable = (Settings->flag5.mi32_enable || BLEEnableUnsaved) && BLEEnableMask;
 
   if (enable != BLEMasterEnable){
     if (enable){
@@ -2306,7 +2285,7 @@ static void BLEEverySecond(bool restart){
     if (BLERestartTasmota == 2){
       if (!BLERestartTasmotaReason) BLERestartTasmotaReason = BLE_RESTART_TEAMOTA_REASON_UNKNOWN;
       Response_P(PSTR("{\"reboot\":\"%s\"}"), BLERestartTasmotaReason);
-      MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR("BLE"), Settings.flag.mqtt_sensor_retain);
+      MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR("BLE"), Settings->flag.mqtt_sensor_retain);
       AddLog(LOG_LEVEL_ERROR,PSTR("BLE: Failure! Restarting Tasmota in %d seconds because %s"), BLERestartTasmota, BLERestartTasmotaReason);
     }
 
@@ -2319,7 +2298,7 @@ static void BLEEverySecond(bool restart){
 
   if (BLERestartBLEReason){ // just use the ptr as the trigger to send MQTT
     Response_P(PSTR("{\"blerestart\":\"%s\"}"), BLERestartBLEReason);
-    MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR("BLE"), Settings.flag.mqtt_sensor_retain);
+    MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR("BLE"), Settings->flag.mqtt_sensor_retain);
     AddLog(LOG_LEVEL_ERROR,PSTR("BLE: Failure! Restarting BLE Stack because %s"), BLERestartBLEReason);
     BLERestartBLEReason = nullptr;
   }
@@ -3142,13 +3121,26 @@ void CmndBLEOperation(void){
 \*********************************************************************************************/
 static void BLEPostMQTTSeenDevices(int type) {
   int remains = 0;
+#ifdef MQTT_DATA_STRING
+  ResponseTime_P(PSTR(""));
+  String response_time = TasmotaGlobal.mqtt_data;
+
+  int maxlen = 1024;
+  char dest[maxlen];
+  do {
+    Response_P(response_time.c_str());  // Keep using same time stamp
+    remains = getSeenDevicesToJson(dest, maxlen);
+    ResponseAppend_P(dest);
+    // no retain - this is present devices, not historic
+    MqttPublishPrefixTopicRulesProcess_P((1== type) ? TELE : STAT, PSTR("BLE"));
+  } while (remains);
+#else
   nextSeenDev = 0;
 
   memset(TasmotaGlobal.mqtt_data, 0, sizeof(TasmotaGlobal.mqtt_data));
-  ResponseTime_P(PSTR(""));
-  int timelen = strlen(TasmotaGlobal.mqtt_data);
+  int timelen = ResponseTime_P(PSTR(""));
   char *dest = TasmotaGlobal.mqtt_data + timelen;
-  int maxlen = (sizeof(TasmotaGlobal.mqtt_data)-20) - timelen;
+  int maxlen = ResponseSize() -20 -timelen;
 
 //  if (!TasmotaGlobal.ota_state_flag){
   do {
@@ -3157,6 +3149,7 @@ static void BLEPostMQTTSeenDevices(int type) {
     MqttPublishPrefixTopicRulesProcess_P((1== type) ? TELE : STAT, PSTR("BLE"));
   } while (remains);
 //  }
+#endif
 }
 
 static void BLEPostMQTT(bool onlycompleted) {
@@ -3170,7 +3163,7 @@ static void BLEPostMQTT(bool onlycompleted) {
     if (prepOperation && !onlycompleted){
       std::string out = BLETriggerResponse(prepOperation);
       Response_P(PSTR("%s"), out.c_str());
-      MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR("BLE"), Settings.flag.mqtt_sensor_retain);
+      MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR("BLE"), Settings->flag.mqtt_sensor_retain);
 #ifdef BLE_ESP32_DEBUG
       if (BLEDebugMode > 0) AddLog(LOG_LEVEL_INFO,PSTR("BLE: prep sent %s"), out.c_str());
 #endif
@@ -3190,7 +3183,7 @@ static void BLEPostMQTT(bool onlycompleted) {
           std::string out = BLETriggerResponse(toSend);
           localmutex.give();
           Response_P(PSTR("%s"), out.c_str());
-          MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR("BLE"), Settings.flag.mqtt_sensor_retain);
+          MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR("BLE"), Settings->flag.mqtt_sensor_retain);
 #ifdef BLE_ESP32_DEBUG
           if (BLEDebugMode > 0) AddLog(LOG_LEVEL_INFO,PSTR("BLE: queued %d sent %s"), i, out.c_str());
 #endif
@@ -3212,7 +3205,7 @@ static void BLEPostMQTT(bool onlycompleted) {
           std::string out = BLETriggerResponse(toSend);
           localmutex.give();
           Response_P(PSTR("%s"), out.c_str());
-          MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR("BLE"), Settings.flag.mqtt_sensor_retain);
+          MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR("BLE"), Settings->flag.mqtt_sensor_retain);
 #ifdef BLE_ESP32_DEBUG
           if (BLEDebugMode > 0) AddLog(LOG_LEVEL_INFO,PSTR("BLE: curr %d sent %s"), i, out.c_str());
 #endif
@@ -3235,7 +3228,7 @@ static void BLEPostMQTT(bool onlycompleted) {
 #endif
           std::string out = BLETriggerResponse(toSend);
           Response_P(PSTR("%s"), out.c_str());
-          MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR("BLE"), Settings.flag.mqtt_sensor_retain);
+          MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR("BLE"), Settings->flag.mqtt_sensor_retain);
           // we alreayd removed this from the queues, so now delete
           delete toSend;
           //break;
@@ -3245,7 +3238,7 @@ static void BLEPostMQTT(bool onlycompleted) {
     }
   } else {
     Response_P(PSTR("{\"BLEOperation\":{}}"));
-    MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR("BLE"), Settings.flag.mqtt_sensor_retain);
+    MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR("BLE"), Settings->flag.mqtt_sensor_retain);
   }
 }
 
@@ -3305,42 +3298,30 @@ static void mainThreadOpCallbacks() {
 
       if (BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: op->completecallback is %u opid %d"), op->completecallback, op->opid);
       if (op->completecallback){
-        try {
-          OPCOMPLETE_CALLBACK *pFn = (OPCOMPLETE_CALLBACK *)(op->completecallback);
-          callbackres = pFn(op);
+        OPCOMPLETE_CALLBACK *pFn = (OPCOMPLETE_CALLBACK *)(op->completecallback);
+        callbackres = pFn(op);
 #ifdef BLE_ESP32_DEBUG
-          if (BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: op->completecallback %d opid %d"), callbackres, op->opid);
+        if (BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: op->completecallback %d opid %d"), callbackres, op->opid);
 #endif
-        } catch(const std::exception& e){
-#ifdef BLE_ESP32_DEBUG
-          AddLog(LOG_LEVEL_ERROR,PSTR("BLE: exception in op->completecallback"));
-#endif
-        }
       }
 
       if (!callbackres){
         for (int i = 0; i < operationsCallbacks.size(); i++){
-          try {
-            if (BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: operationsCallbacks %d is %u"), i, operationsCallbacks[i]);
-            OPCOMPLETE_CALLBACK *pFn = operationsCallbacks[i];
-            callbackres = pFn(op);
+          if (BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: operationsCallbacks %d is %u"), i, operationsCallbacks[i]);
+          OPCOMPLETE_CALLBACK *pFn = operationsCallbacks[i];
+          callbackres = pFn(op);
 #ifdef BLE_ESP32_DEBUG
-            if (BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: operationsCallbacks %d %d"), i, callbackres);
+          if (BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: operationsCallbacks %d %d"), i, callbackres);
 #endif
-            if (callbackres){
-              break; // this callback ate the op.
-            }
-          } catch(const std::exception& e){
-#ifdef BLE_ESP32_DEBUG
-            AddLog(LOG_LEVEL_ERROR,PSTR("BLE: exception in operationsCallbacks"));
-#endif
+          if (callbackres){
+            break; // this callback ate the op.
           }
         }
       }
 
       // always remove from here
       completedOperations.erase(completedOperations.begin() + i);
-      // unless some callback told us not to send on MQTT, then remove from completed and 
+      // unless some callback told us not to send on MQTT, then remove from completed and
       // add to mqtt list
       if (!callbackres){
         addOperation(&mqttOperations, &op);
@@ -3374,7 +3355,7 @@ static void BLEShowStats(){
     ResponseAppend_P(PSTR("{\"%s\":\"%s\"}"), tmp, aliases[i]->name);
   }
   ResponseAppend_P(PSTR("]}"));
-  MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR("BLE"), Settings.flag.mqtt_sensor_retain);
+  MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR("BLE"), Settings->flag.mqtt_sensor_retain);
 }*/
 
 void BLEAliasListResp(){
@@ -3396,7 +3377,7 @@ static void BLEDiag()
   uint32_t totalCount = BLEAdvertisment.totalCount;
   uint32_t deviceCount = seenDevices.size();
 #ifdef BLE_ESP32_DEBUG
-  if (BLEDebugMode > 0) AddLog_P(LOG_LEVEL_INFO,PSTR("BLE: scans:%u,advertisements:%u,devices:%u,resets:%u,BLEStop:%d,BLERunning:%d,BLERunningScan:%d,BLELoopCount:%u,BLEOpCount:%u"), BLEScanCount, totalCount, deviceCount, BLEResets, BLEStop, BLERunning, BLERunningScan, BLELoopCount, BLEOpCount);
+  if (BLEDebugMode > 0) AddLog(LOG_LEVEL_INFO,PSTR("BLE: scans:%u,advertisements:%u,devices:%u,resets:%u,BLEStop:%d,BLERunning:%d,BLERunningScan:%d,BLELoopCount:%u,BLEOpCount:%u"), BLEScanCount, totalCount, deviceCount, BLEResets, BLEStop, BLERunning, BLERunningScan, BLELoopCount, BLEOpCount);
 #endif
 }
 
@@ -3531,7 +3512,7 @@ void HandleBleConfiguration(void)
 #ifdef BLE_ESP32_DEBUG
     AddLog(LOG_LEVEL_DEBUG, PSTR("BLE: SETTINGS SAVE"));
 #endif
-    Settings.flag5.mi32_enable = Webserver->hasArg("e0");  //
+    Settings->flag5.mi32_enable = Webserver->hasArg("e0");  //
     BLEScanActiveMode = (Webserver->hasArg("e1")?1:0);  //
 
     SettingsSaveAll();
@@ -3547,7 +3528,7 @@ void HandleBleConfiguration(void)
   WSContentSendStyle_P(HTTP_BLE_DEV_STYLE);
   //WSContentSendStyle();
   WSContentSend_P(HTTP_FORM_BLE,
-    (Settings.flag5.mi32_enable) ? " checked" : "",
+    (Settings->flag5.mi32_enable) ? " checked" : "",
     (BLEScanActiveMode) ? " checked" : ""
     );
   WSContentSend_P(HTTP_FORM_END);
@@ -3595,21 +3576,21 @@ void HandleBleConfiguration(void)
 
 int ExtStopBLE(){
   AddLog(LOG_LEVEL_INFO, PSTR("BLE: Stopping if active"));
-  BLE_ESP32::BLEEnableMask = 0; 
+  BLE_ESP32::BLEEnableMask = 0;
   BLE_ESP32::stopStartBLE();
   return 0;
 }
 
 int ExtRestartBLEIfEnabled(){
   AddLog(LOG_LEVEL_INFO, PSTR("BLE: Starting if active"));
-  BLE_ESP32::BLEEnableMask = 1; 
+  BLE_ESP32::BLEEnableMask = 1;
   BLE_ESP32::stopStartBLE();
   return 0;
 }
 
 bool Xdrv79(uint8_t function)
 {
-  //if (!Settings.flag5.mi32_enable) { return false; }  // SetOption115 - Enable ESP32 BLE BLE
+  //if (!Settings->flag5.mi32_enable) { return false; }  // SetOption115 - Enable ESP32 BLE BLE
 
   bool result = false;
 
@@ -3738,7 +3719,7 @@ void sendExample(){
 #endif
 }
 // end #ifdef BLE_ESP32_EXAMPLES
-#endif 
+#endif
 
 
 #endif

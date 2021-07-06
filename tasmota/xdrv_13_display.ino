@@ -36,6 +36,10 @@ extern FS *ufsp;
 extern FS *ffsp;
 #endif
 
+#ifdef USE_TOUCH_BUTTONS
+extern VButton *buttons[MAX_TOUCH_BUTTONS];
+#endif
+
 // drawing color is WHITE
 // on epaper the whole display buffer is transfered inverted this results in white paper
 uint16_t fg_color = 1;
@@ -249,7 +253,7 @@ bool disp_subscribed = false;
 void DisplayInit(uint8_t mode)
 {
   if (renderer)  {
-    renderer->DisplayInit(mode, Settings.display_size, Settings.display_rotate, Settings.display_font);
+    renderer->DisplayInit(mode, Settings->display_size, Settings->display_rotate, Settings->display_font);
   }
   else {
     dsp_init = mode;
@@ -1292,12 +1296,16 @@ void draw_dt_vars(void) {
 void DisplayDTVarsTeleperiod(void) {
   ResponseClear();
   MqttShowState();
-  uint32_t jlen = strlen(TasmotaGlobal.mqtt_data);
+  uint32_t jlen = ResponseLength();
 
   if (jlen < DTV_JSON_SIZE) {
     char *json = (char*)malloc(jlen + 2);
     if (json) {
+#ifdef MQTT_DATA_STRING
+      strlcpy(json, (char*)TasmotaGlobal.mqtt_data.c_str(), jlen + 1);
+#else
       strlcpy(json, TasmotaGlobal.mqtt_data, jlen + 1);
+#endif
       get_dt_vars(json);
       free(json);
     }
@@ -1312,11 +1320,15 @@ void get_dt_mqtt(void) {
   TasmotaGlobal.tele_period = 2;
   XsnsNextCall(FUNC_JSON_APPEND, xsns_index);
   TasmotaGlobal.tele_period = script_tele_period_save;
-  if (strlen(TasmotaGlobal.mqtt_data)) {
-    TasmotaGlobal.mqtt_data[0] = '{';
-    snprintf_P(TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), PSTR("%s}"), TasmotaGlobal.mqtt_data);
+  if (ResponseLength()) {
+    ResponseJsonStart();
+    ResponseJsonEnd();
   }
+#ifdef MQTT_DATA_STRING
+  get_dt_vars((char*)TasmotaGlobal.mqtt_data.c_str());
+#else
   get_dt_vars(TasmotaGlobal.mqtt_data);
+#endif
 }
 
 void get_dt_vars(char *json) {
@@ -1384,11 +1396,11 @@ void DisplayFreeScreenBuffer(void)
 void DisplayAllocScreenBuffer(void)
 {
   if (!disp_screen_buffer_cols) {
-    disp_screen_buffer_rows = Settings.display_rows;
+    disp_screen_buffer_rows = Settings->display_rows;
     disp_screen_buffer = (char**)malloc(sizeof(*disp_screen_buffer) * disp_screen_buffer_rows);
     if (disp_screen_buffer != nullptr) {
       for (uint32_t i = 0; i < disp_screen_buffer_rows; i++) {
-        disp_screen_buffer[i] = (char*)malloc(sizeof(*disp_screen_buffer[i]) * (Settings.display_cols[0] +1));
+        disp_screen_buffer[i] = (char*)malloc(sizeof(*disp_screen_buffer[i]) * (Settings->display_cols[0] +1));
         if (disp_screen_buffer[i] == nullptr) {
           DisplayFreeScreenBuffer();
           break;
@@ -1396,7 +1408,7 @@ void DisplayAllocScreenBuffer(void)
       }
     }
     if (disp_screen_buffer != nullptr) {
-      disp_screen_buffer_cols = Settings.display_cols[0] +1;
+      disp_screen_buffer_cols = Settings->display_cols[0] +1;
       DisplayClearScreenBuffer();
     }
   }
@@ -1445,7 +1457,7 @@ void DisplayAllocLogBuffer(void)
     disp_log_buffer = (char**)malloc(sizeof(*disp_log_buffer) * DISPLAY_LOG_ROWS);
     if (disp_log_buffer != nullptr) {
       for (uint32_t i = 0; i < DISPLAY_LOG_ROWS; i++) {
-        disp_log_buffer[i] = (char*)malloc(sizeof(*disp_log_buffer[i]) * (Settings.display_cols[0] +1));
+        disp_log_buffer[i] = (char*)malloc(sizeof(*disp_log_buffer[i]) * (Settings->display_cols[0] +1));
         if (disp_log_buffer[i] == nullptr) {
           DisplayFreeLogBuffer();
           break;
@@ -1453,7 +1465,7 @@ void DisplayAllocLogBuffer(void)
       }
     }
     if (disp_log_buffer != nullptr) {
-      disp_log_buffer_cols = Settings.display_cols[0] +1;
+      disp_log_buffer_cols = Settings->display_cols[0] +1;
       DisplayClearLogBuffer();
     }
   }
@@ -1492,10 +1504,10 @@ char* DisplayLogBuffer(char temp_code)
 
 void DisplayLogBufferInit(void)
 {
-  if (Settings.display_mode) {
+  if (Settings->display_mode) {
     disp_log_buffer_idx = 0;
     disp_log_buffer_ptr = 0;
-    disp_refresh = Settings.display_refresh;
+    disp_refresh = Settings->display_refresh;
 
     snprintf_P(disp_temp, sizeof(disp_temp), PSTR("%c"), TempUnit());
     snprintf_P(disp_pres, sizeof(disp_pres), PressureUnit().c_str());
@@ -1505,7 +1517,7 @@ void DisplayLogBufferInit(void)
     char buffer[40];
     snprintf_P(buffer, sizeof(buffer), PSTR(D_VERSION " %s%s"), TasmotaGlobal.version, TasmotaGlobal.image_name);
     DisplayLogBufferAdd(buffer);
-    snprintf_P(buffer, sizeof(buffer), PSTR("Display mode %d"), Settings.display_mode);
+    snprintf_P(buffer, sizeof(buffer), PSTR("Display mode %d"), Settings->display_mode);
     DisplayLogBufferAdd(buffer);
 
     snprintf_P(buffer, sizeof(buffer), PSTR(D_CMND_HOSTNAME " %s"), NetworkHostname());
@@ -1515,7 +1527,7 @@ void DisplayLogBufferInit(void)
     ext_snprintf_P(buffer, sizeof(buffer), PSTR("IP %_I"), (uint32_t)NetworkAddress());
     DisplayLogBufferAdd(buffer);
     if (!TasmotaGlobal.global_state.wifi_down) {
-      snprintf_P(buffer, sizeof(buffer), PSTR(D_JSON_SSID " %s"), SettingsText(SET_STASSID1 + Settings.sta_active));
+      snprintf_P(buffer, sizeof(buffer), PSTR(D_JSON_SSID " %s"), SettingsText(SET_STASSID1 + Settings->sta_active));
       DisplayLogBufferAdd(buffer);
       snprintf_P(buffer, sizeof(buffer), PSTR(D_JSON_RSSI " %d%%"), WifiGetRssiAsQuality(WiFi.RSSI()));
       DisplayLogBufferAdd(buffer);
@@ -1559,14 +1571,12 @@ const char kSensorQuantity[] PROGMEM =
 void DisplayJsonValue(const char* topic, const char* device, const char* mkey, const char* value)
 {
   char quantity[TOPSZ];
-  char buffer[Settings.display_cols[0] +1];
-  char spaces[Settings.display_cols[0]];
-  char source[Settings.display_cols[0] - Settings.display_cols[1]];
-  char svalue[Settings.display_cols[1] +1];
+  char buffer[Settings->display_cols[0] +1];
+  char spaces[Settings->display_cols[0]];
+  char source[Settings->display_cols[0] - Settings->display_cols[1]];
+  char svalue[Settings->display_cols[1] +1];
 
-#ifdef USE_DEBUG_DRIVER
-  ShowFreeMem(PSTR("DisplayJsonValue"));
-#endif
+  SHOW_FREE_MEM(PSTR("DisplayJsonValue"));
 
   memset(spaces, 0x20, sizeof(spaces));
   spaces[sizeof(spaces) -1] = '\0';
@@ -1617,12 +1627,12 @@ void DisplayJsonValue(const char* topic, const char* device, const char* mkey, c
   }
   snprintf_P(buffer, sizeof(buffer), PSTR("%s %s"), source, svalue);
 
-//  AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "mkey [%s], source [%s], value [%s], quantity_code %d, log_buffer [%s]"), mkey, source, value, quantity_code, buffer);
+//  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "mkey [%s], source [%s], value [%s], quantity_code %d, log_buffer [%s]"), mkey, source, value, quantity_code, buffer);
 
   DisplayLogBufferAdd(buffer);
 }
 
-void DisplayAnalyzeJson(char *topic, char *json)
+void DisplayAnalyzeJson(char *topic, const char *json)
 {
 // //tele/pow2/STATE    {"Time":"2017-09-20T11:53:03", "Uptime":10, "Vcc":3.123, "POWER":"ON", "Wifi":{"AP":2, "SSId":"indebuurt2", "RSSI":68, "APMac":"00:22:6B:FE:8E:20"}}
 // //tele/pow2/ENERGY   {"Time":"2017-09-20T11:53:03", "Total":6.522, "Yesterday":0.150, "Today":0.073, "Period":0.5, "Power":12.1, "Factor":0.56, "Voltage":210.1, "Current":0.102}
@@ -1686,7 +1696,7 @@ void DisplayMqttSubscribe(void)
  * - home/%prefix%/%topic%
  * - home/level2/%prefix%/%topic% etc.
  */
-  if (Settings.display_model && (Settings.display_mode &0x04)) {
+  if (Settings->display_model && (Settings->display_mode &0x04)) {
 
     char stopic[TOPSZ];
     char ntopic[TOPSZ];
@@ -1718,7 +1728,7 @@ bool DisplayMqttData(void)
     snprintf_P(stopic, sizeof(stopic) , PSTR("%s/"), SettingsText(SET_MQTTPREFIX3));  // tele/
     char *tp = strstr(XdrvMailbox.topic, stopic);
     if (tp) {                                                // tele/tasmota/SENSOR
-      if (Settings.display_mode &0x04) {
+      if (Settings->display_mode &0x04) {
         tp = tp + strlen(stopic);                              // tasmota/SENSOR
         char *topic = strtok(tp, "/");                         // tasmota
         DisplayAnalyzeJson(topic, XdrvMailbox.data);
@@ -1731,10 +1741,15 @@ bool DisplayMqttData(void)
 
 void DisplayLocalSensor(void)
 {
-  if ((Settings.display_mode &0x02) && (0 == TasmotaGlobal.tele_period)) {
+  if ((Settings->display_mode &0x02) && (0 == TasmotaGlobal.tele_period)) {
     char no_topic[1] = { 0 };
+#ifdef MQTT_DATA_STRING
+//    DisplayAnalyzeJson(TasmotaGlobal.mqtt_topic, TasmotaGlobal.mqtt_data.c_str());  // Add local topic
+    DisplayAnalyzeJson(no_topic, TasmotaGlobal.mqtt_data.c_str());    // Discard any topic
+#else
 //    DisplayAnalyzeJson(TasmotaGlobal.mqtt_topic, TasmotaGlobal.mqtt_data);  // Add local topic
     DisplayAnalyzeJson(no_topic, TasmotaGlobal.mqtt_data);    // Discard any topic
+#endif
   }
 }
 
@@ -1754,8 +1769,8 @@ void DisplayInitDriver(void)
 #endif // USE_MULTI_DISPLAY
 
   if (renderer) {
-    renderer->setTextFont(Settings.display_font);
-    renderer->setTextSize(Settings.display_size);
+    renderer->setTextFont(Settings->display_font);
+    renderer->setTextSize(Settings->display_size);
     // force opaque mode
     renderer->setDrawMode(0);
 
@@ -1776,19 +1791,19 @@ void DisplayInitDriver(void)
   for (uint8_t count = 0; count < NUM_GRAPHS; count++) { graph[count] = 0; }
 #endif
 
-//  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "Display model %d"), Settings.display_model);
+//  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "Display model %d"), Settings->display_model);
 
-  if (Settings.display_model) {
+  if (Settings->display_model) {
     TasmotaGlobal.devices_present++;
     if (!PinUsed(GPIO_BACKLIGHT)) {
-      if (TasmotaGlobal.light_type && (4 == Settings.display_model)) {
+      if (TasmotaGlobal.light_type && (4 == Settings->display_model)) {
         TasmotaGlobal.devices_present--;  // Assume PWM channel is used for backlight
       }
     }
     disp_device = TasmotaGlobal.devices_present;
 
 #ifndef USE_DISPLAY_MODES1TO5
-    Settings.display_mode = 0;
+    Settings->display_mode = 0;
 #else
     DisplayLogBufferInit();
 #endif  // USE_DISPLAY_MODES1TO5
@@ -1801,7 +1816,7 @@ void DisplaySetPower(void)
 
 //AddLog(LOG_LEVEL_DEBUG, PSTR("DSP: Power %d"), disp_power);
 
-  if (Settings.display_model) {
+  if (Settings->display_model) {
     if (!renderer) {
       XdspCall(FUNC_DISPLAY_POWER);
     } else {
@@ -1818,50 +1833,50 @@ void CmndDisplay(void) {
   Response_P(PSTR("{\"" D_PRFX_DISPLAY "\":{\"" D_CMND_DISP_MODEL "\":%d,\"" D_CMND_DISP_TYPE "\":%d,\"" D_CMND_DISP_WIDTH "\":%d,\"" D_CMND_DISP_HEIGHT "\":%d,\""
     D_CMND_DISP_MODE "\":%d,\"" D_CMND_DISP_DIMMER "\":%d,\"" D_CMND_DISP_SIZE "\":%d,\"" D_CMND_DISP_FONT "\":%d,\""
     D_CMND_DISP_ROTATE "\":%d,\"" D_CMND_DISP_INVERT "\":%d,\"" D_CMND_DISP_REFRESH "\":%d,\"" D_CMND_DISP_COLS "\":[%d,%d],\"" D_CMND_DISP_ROWS "\":%d}}"),
-    Settings.display_model, Settings.display_options.type, Settings.display_width, Settings.display_height,
-    Settings.display_mode, changeUIntScale(Settings.display_dimmer, 0, 15, 0, 100), Settings.display_size, Settings.display_font,
-    Settings.display_rotate, Settings.display_options.invert, Settings.display_refresh, Settings.display_cols[0], Settings.display_cols[1], Settings.display_rows);
+    Settings->display_model, Settings->display_options.type, Settings->display_width, Settings->display_height,
+    Settings->display_mode, changeUIntScale(Settings->display_dimmer, 0, 15, 0, 100), Settings->display_size, Settings->display_font,
+    Settings->display_rotate, Settings->display_options.invert, Settings->display_refresh, Settings->display_cols[0], Settings->display_cols[1], Settings->display_rows);
 }
 
 void CmndDisplayModel(void) {
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < DISPLAY_MAX_DRIVERS)) {
-    uint32_t last_display_model = Settings.display_model;
-    Settings.display_model = XdrvMailbox.payload;
+    uint32_t last_display_model = Settings->display_model;
+    Settings->display_model = XdrvMailbox.payload;
     if (XdspCall(FUNC_DISPLAY_MODEL)) {
       TasmotaGlobal.restart_flag = 2;  // Restart to re-init interface and add/Remove MQTT subscribe
     } else {
-      Settings.display_model = last_display_model;
+      Settings->display_model = last_display_model;
     }
   }
-  ResponseCmndNumber(Settings.display_model);
+  ResponseCmndNumber(Settings->display_model);
 }
 
 void CmndDisplayType(void) {
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 7)) {
-    Settings.display_options.type = XdrvMailbox.payload;
+    Settings->display_options.type = XdrvMailbox.payload;
     TasmotaGlobal.restart_flag = 2;
   }
-  ResponseCmndNumber(Settings.display_options.type);
+  ResponseCmndNumber(Settings->display_options.type);
 }
 
 void CmndDisplayWidth(void) {
   if (XdrvMailbox.payload > 0) {
-    if (XdrvMailbox.payload != Settings.display_width) {
-      Settings.display_width = XdrvMailbox.payload;
+    if (XdrvMailbox.payload != Settings->display_width) {
+      Settings->display_width = XdrvMailbox.payload;
       TasmotaGlobal.restart_flag = 2;  // Restart to re-init width
     }
   }
-  ResponseCmndNumber(Settings.display_width);
+  ResponseCmndNumber(Settings->display_width);
 }
 
 void CmndDisplayHeight(void) {
   if (XdrvMailbox.payload > 0) {
-    if (XdrvMailbox.payload != Settings.display_height) {
-      Settings.display_height = XdrvMailbox.payload;
+    if (XdrvMailbox.payload != Settings->display_height) {
+      Settings->display_height = XdrvMailbox.payload;
       TasmotaGlobal.restart_flag = 2;  // Restart to re-init height
     }
   }
-  ResponseCmndNumber(Settings.display_height);
+  ResponseCmndNumber(Settings->display_height);
 }
 
 void CmndDisplayMode(void) {
@@ -1874,13 +1889,13 @@ void CmndDisplayMode(void) {
  * 5 = Mqtt up and time     Mqtt (incl local) sensors and time   Mqtt (incl local) sensors and time
 */
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 5)) {
-    uint32_t last_display_mode = Settings.display_mode;
-    Settings.display_mode = XdrvMailbox.payload;
+    uint32_t last_display_mode = Settings->display_mode;
+    Settings->display_mode = XdrvMailbox.payload;
 
-    if (disp_subscribed != (Settings.display_mode &0x04)) {
+    if (disp_subscribed != (Settings->display_mode &0x04)) {
       TasmotaGlobal.restart_flag = 2;  // Restart to Add/Remove MQTT subscribe
     } else {
-      if (last_display_mode && !Settings.display_mode) {  // Switch to mode 0
+      if (last_display_mode && !Settings->display_mode) {  // Switch to mode 0
         DisplayInit(DISPLAY_INIT_MODE);
         if (renderer) renderer->fillScreen(bg_color);
         else DisplayClear();
@@ -1891,88 +1906,88 @@ void CmndDisplayMode(void) {
     }
   }
 #endif  // USE_DISPLAY_MODES1TO5
-  ResponseCmndNumber(Settings.display_mode);
+  ResponseCmndNumber(Settings->display_mode);
 }
 
 void CmndDisplayDimmer(void) {
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 100)) {
-    Settings.display_dimmer = changeUIntScale(XdrvMailbox.payload, 0, 100, 0, 15);  // Correction for Domoticz (0 - 15)
-    if (Settings.display_dimmer && !(disp_power)) {
+    Settings->display_dimmer = changeUIntScale(XdrvMailbox.payload, 0, 100, 0, 15);  // Correction for Domoticz (0 - 15)
+    if (Settings->display_dimmer && !(disp_power)) {
       ExecuteCommandPower(disp_device, POWER_ON, SRC_DISPLAY);
     }
-    else if (!Settings.display_dimmer && disp_power) {
+    else if (!Settings->display_dimmer && disp_power) {
       ExecuteCommandPower(disp_device, POWER_OFF, SRC_DISPLAY);
     }
     if (renderer) {
-      renderer->dim(Settings.display_dimmer);
+      renderer->dim(Settings->display_dimmer);
     } else {
       XdspCall(FUNC_DISPLAY_DIM);
     }
   }
-  ResponseCmndNumber(changeUIntScale(Settings.display_dimmer, 0, 15, 0, 100));
+  ResponseCmndNumber(changeUIntScale(Settings->display_dimmer, 0, 15, 0, 100));
 }
 
 void CmndDisplaySize(void) {
   if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload <= 4)) {
-    Settings.display_size = XdrvMailbox.payload;
-    if (renderer) renderer->setTextSize(Settings.display_size);
-    //else DisplaySetSize(Settings.display_size);
+    Settings->display_size = XdrvMailbox.payload;
+    if (renderer) renderer->setTextSize(Settings->display_size);
+    //else DisplaySetSize(Settings->display_size);
   }
-  ResponseCmndNumber(Settings.display_size);
+  ResponseCmndNumber(Settings->display_size);
 }
 
 void CmndDisplayFont(void) {
   if ((XdrvMailbox.payload >=0) && (XdrvMailbox.payload <= 4)) {
-    Settings.display_font = XdrvMailbox.payload;
-    if (renderer) renderer->setTextFont(Settings.display_font);
-    //else DisplaySetFont(Settings.display_font);
+    Settings->display_font = XdrvMailbox.payload;
+    if (renderer) renderer->setTextFont(Settings->display_font);
+    //else DisplaySetFont(Settings->display_font);
   }
-  ResponseCmndNumber(Settings.display_font);
+  ResponseCmndNumber(Settings->display_font);
 }
 
 void CmndDisplayRotate(void) {
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 4)) {
-    if ((Settings.display_rotate) != XdrvMailbox.payload) {
+    if ((Settings->display_rotate) != XdrvMailbox.payload) {
 /*
       // Needs font info regarding height and width
-      if ((Settings.display_rotate &1) != (XdrvMailbox.payload &1)) {
-        uint8_t temp_rows = Settings.display_rows;
-        Settings.display_rows = Settings.display_cols[0];
-        Settings.display_cols[0] = temp_rows;
+      if ((Settings->display_rotate &1) != (XdrvMailbox.payload &1)) {
+        uint8_t temp_rows = Settings->display_rows;
+        Settings->display_rows = Settings->display_cols[0];
+        Settings->display_cols[0] = temp_rows;
 #ifdef USE_DISPLAY_MODES1TO5
         DisplayReAllocScreenBuffer();
 #endif  // USE_DISPLAY_MODES1TO5
       }
 */
-      Settings.display_rotate = XdrvMailbox.payload;
+      Settings->display_rotate = XdrvMailbox.payload;
       DisplayInit(DISPLAY_INIT_MODE);
 #ifdef USE_DISPLAY_MODES1TO5
       DisplayLogBufferInit();
 #endif  // USE_DISPLAY_MODES1TO5
     }
   }
-  ResponseCmndNumber(Settings.display_rotate);
+  ResponseCmndNumber(Settings->display_rotate);
 }
 
 void CmndDisplayInvert(void) {
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 1)) {
-    Settings.display_options.invert = XdrvMailbox.payload;
-    if (renderer) renderer->invertDisplay(Settings.display_options.invert);
+    Settings->display_options.invert = XdrvMailbox.payload;
+    if (renderer) renderer->invertDisplay(Settings->display_options.invert);
   }
-  ResponseCmndNumber(Settings.display_options.invert);
+  ResponseCmndNumber(Settings->display_options.invert);
 }
 
 void CmndDisplayRefresh(void) {
   if ((XdrvMailbox.payload >= 1) && (XdrvMailbox.payload <= 7)) {
-    Settings.display_refresh = XdrvMailbox.payload;
+    Settings->display_refresh = XdrvMailbox.payload;
   }
-  ResponseCmndNumber(Settings.display_refresh);
+  ResponseCmndNumber(Settings->display_refresh);
 }
 
 void CmndDisplayColumns(void) {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= 2)) {
     if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload <= DISPLAY_MAX_COLS)) {
-      Settings.display_cols[XdrvMailbox.index -1] = XdrvMailbox.payload;
+      Settings->display_cols[XdrvMailbox.index -1] = XdrvMailbox.payload;
 #ifdef USE_DISPLAY_MODES1TO5
       if (1 == XdrvMailbox.index) {
         DisplayLogBufferInit();
@@ -1980,27 +1995,27 @@ void CmndDisplayColumns(void) {
       }
 #endif  // USE_DISPLAY_MODES1TO5
     }
-    ResponseCmndIdxNumber(Settings.display_cols[XdrvMailbox.index -1]);
+    ResponseCmndIdxNumber(Settings->display_cols[XdrvMailbox.index -1]);
   }
 }
 
 void CmndDisplayRows(void) {
   if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload <= DISPLAY_MAX_ROWS)) {
-    Settings.display_rows = XdrvMailbox.payload;
+    Settings->display_rows = XdrvMailbox.payload;
 #ifdef USE_DISPLAY_MODES1TO5
     DisplayLogBufferInit();
     DisplayReAllocScreenBuffer();
 #endif  // USE_DISPLAY_MODES1TO5
   }
-  ResponseCmndNumber(Settings.display_rows);
+  ResponseCmndNumber(Settings->display_rows);
 }
 
 void CmndDisplayAddress(void) {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= 8)) {
     if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 255)) {
-      Settings.display_address[XdrvMailbox.index -1] = XdrvMailbox.payload;
+      Settings->display_address[XdrvMailbox.index -1] = XdrvMailbox.payload;
     }
-    ResponseCmndIdxNumber(Settings.display_address[XdrvMailbox.index -1]);
+    ResponseCmndIdxNumber(Settings->display_address[XdrvMailbox.index -1]);
   }
 }
 
@@ -2016,7 +2031,7 @@ void CmndDisplayBlinkrate(void) {
 #ifdef USE_UFILESYS
 void CmndDisplayBatch(void) {
   if (XdrvMailbox.data_len > 0) {
-    if (!Settings.display_mode) {
+    if (!Settings->display_mode) {
       Display_Text_From_File(XdrvMailbox.data);
     }
     ResponseCmndChar(XdrvMailbox.data);
@@ -2029,9 +2044,9 @@ void CmndDisplayText(void) {
 #ifndef USE_DISPLAY_MODES1TO5
     DisplayText();
 #else
-    if(Settings.display_model == 15) {
+    if(Settings->display_model == 15) {
       XdspCall(FUNC_DISPLAY_SEVENSEG_TEXT);
-    } else if (!Settings.display_mode) {
+    } else if (!Settings->display_mode) {
       DisplayText();
     } else {
       DisplayLogBufferAdd(XdrvMailbox.data);
@@ -2686,7 +2701,7 @@ bool Xdrv13(uint8_t function)
         DisplayInitDriver();
         break;
       case FUNC_EVERY_50_MSECOND:
-        if (Settings.display_model) { XdspCall(FUNC_DISPLAY_EVERY_50_MSECOND); }
+        if (Settings->display_model) { XdspCall(FUNC_DISPLAY_EVERY_50_MSECOND); }
         break;
       case FUNC_SET_POWER:
         DisplaySetPower();
@@ -2701,7 +2716,7 @@ bool Xdrv13(uint8_t function)
 #endif // USE_DT_VARS
 
 #ifdef USE_DISPLAY_MODES1TO5
-        if (Settings.display_model && Settings.display_mode) { XdspCall(FUNC_DISPLAY_EVERY_SECOND); }
+        if (Settings->display_model && Settings->display_mode) { XdspCall(FUNC_DISPLAY_EVERY_SECOND); }
 #endif
         break;
       case FUNC_AFTER_TELEPERIOD:

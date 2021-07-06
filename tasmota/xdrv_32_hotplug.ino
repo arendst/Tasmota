@@ -44,8 +44,8 @@ struct {
 void HotPlugInit(void)
 {
   // If empty eeprom is 0xFF by default
-  if (Settings.hotplug_scan == 0xFF) { Settings.hotplug_scan = 0; }
-  if (Settings.hotplug_scan != 0) {
+  if (Settings->hotplug_scan == 0xFF) { Settings->hotplug_scan = 0; }
+  if (Settings->hotplug_scan != 0) {
     Hotplug.enabled = true;
     Hotplug.timeout = 1;  // First scan in a second
   } else
@@ -57,7 +57,7 @@ void HotPlugEverySecond(void)
   if (Hotplug.enabled) {
     if (Hotplug.timeout == 0) {
       XsnsCall(FUNC_HOTPLUG_SCAN);
-      Hotplug.timeout = Settings.hotplug_scan;
+      Hotplug.timeout = Settings->hotplug_scan;
     }
     Hotplug.timeout--;
   }
@@ -70,10 +70,10 @@ void HotPlugEverySecond(void)
 void CmndHotPlugTime(void)
 {
   if (XdrvMailbox.payload <= HOTPLUG_MAX) {
-    Settings.hotplug_scan = XdrvMailbox.payload;
+    Settings->hotplug_scan = XdrvMailbox.payload;
     HotPlugInit();
   }
-  ResponseCmndNumber(Settings.hotplug_scan);
+  ResponseCmndNumber(Settings->hotplug_scan);
 }
 
 /*********************************************************************************************\

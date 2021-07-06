@@ -157,6 +157,7 @@ m = minimal, l = lite, t = tasmota, k = knx, s = sensors, i = ir, d = display
 | USE_EZORTD            | - | - | - / - | - | - | - | - |
 | USE_SEESAW_SOIL       | - | - | - / - | - | - | - | - |
 | USE_TOF10120          | - | - | - / - | - | - | - | - |
+| USE_AM2320            | - | - | - / - | - | - | - | - |
 |                       |   |   |       |   |   |   |   |
 | Feature or Sensor     | m | l | t     | k | s | i | d | Remarks
 | USE_SPI               | - | - | - / - | - | - | - | x |

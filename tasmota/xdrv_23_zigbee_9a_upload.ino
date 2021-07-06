@@ -77,7 +77,7 @@ char ZigbeeUploadFlashRead(void) {
   if (sector != ZbUpload.sector_counter) {
     ZbUpload.sector_counter = sector;
     ESP.flashRead(ZbUpload.sector_counter * SPI_FLASH_SEC_SIZE, (uint32_t*)ZbUpload.buffer, SPI_FLASH_SEC_SIZE);
-    // AddLog_P(LOG_LEVEL_DEBUG, "= sector %d %*_H", ZbUpload.sector_counter, 256, ZbUpload.buffer);
+    // AddLog(LOG_LEVEL_DEBUG, "= sector %d %*_H", ZbUpload.sector_counter, 256, ZbUpload.buffer);
   }
 
   char data = ZbUpload.buffer[index];
@@ -488,7 +488,7 @@ bool ZigbeeUploadXmodem(void) {
     case ZBU_DONE: {                     // *** Clean up and restart to disable bootloader and use new firmware
       ZigbeeUploadSetBootloader(1);      // Disable bootloader and reset MCU - should happen at restart
       if (1 == TasmotaGlobal.sleep) {
-        TasmotaGlobal.sleep = Settings.sleep;         // Restore loop sleep
+        TasmotaGlobal.sleep = Settings->sleep;         // Restore loop sleep
       }
 //      TasmotaGlobal.restart_flag = 2;    // Restart to disable bootloader and use new firmware
       if (ZbUpload.buffer) { free(ZbUpload.buffer); ZbUpload.buffer = nullptr; }

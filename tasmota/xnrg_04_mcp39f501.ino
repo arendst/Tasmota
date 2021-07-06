@@ -214,15 +214,15 @@ void McpParseCalibration(void)
   cal_registers.accumulation_interval      = McpExtractInt(mcp_buffer, 52, 2);
 
   if (mcp_calibrate & MCP_CALIBRATE_POWER) {
-    cal_registers.calibration_active_power = Settings.energy_power_calibration;
+    cal_registers.calibration_active_power = Settings->energy_power_calibration;
     if (McpCalibrationCalc(&cal_registers, 16)) { action = true; }
   }
   if (mcp_calibrate & MCP_CALIBRATE_VOLTAGE) {
-    cal_registers.calibration_voltage = Settings.energy_voltage_calibration;
+    cal_registers.calibration_voltage = Settings->energy_voltage_calibration;
     if (McpCalibrationCalc(&cal_registers, 0)) { action = true; }
   }
   if (mcp_calibrate & MCP_CALIBRATE_CURRENT) {
-    cal_registers.calibration_current = Settings.energy_current_calibration;
+    cal_registers.calibration_current = Settings->energy_current_calibration;
     if (McpCalibrationCalc(&cal_registers, 8)) { action = true; }
   }
   mcp_timeout = 0;
@@ -230,9 +230,9 @@ void McpParseCalibration(void)
 
   mcp_calibrate = 0;
 
-  Settings.energy_power_calibration = cal_registers.calibration_active_power;
-  Settings.energy_voltage_calibration = cal_registers.calibration_voltage;
-  Settings.energy_current_calibration = cal_registers.calibration_current;
+  Settings->energy_power_calibration = cal_registers.calibration_active_power;
+  Settings->energy_voltage_calibration = cal_registers.calibration_voltage;
+  Settings->energy_current_calibration = cal_registers.calibration_current;
 
   mcp_system_configuration = cal_registers.system_configuration;
 
@@ -386,7 +386,7 @@ void McpParseFrequency(void)
   uint16_t gain_line_frequency = mcp_buffer[4] * 256 + mcp_buffer[5];
 
   if (mcp_calibrate & MCP_CALIBRATE_FREQUENCY) {
-    line_frequency_ref = Settings.energy_frequency_calibration;
+    line_frequency_ref = Settings->energy_frequency_calibration;
 
     if ((0xFFFF == mcp_line_frequency) || (0 == gain_line_frequency)) {  // Reset values to 50Hz
       mcp_line_frequency  = 50000;
@@ -398,7 +398,7 @@ void McpParseFrequency(void)
     McpSetFrequency(line_frequency_ref, gain_line_frequency);
   }
 
-  Settings.energy_frequency_calibration = line_frequency_ref;
+  Settings->energy_frequency_calibration = line_frequency_ref;
 
   mcp_calibrate = 0;
 }
@@ -602,7 +602,7 @@ bool McpCommand(void)
     if (XdrvMailbox.data_len && mcp_active_power) {
       value = (unsigned long)(CharToFloat(XdrvMailbox.data) * 100);
       if ((value > 100) && (value < 200000)) {  // Between 1W and 2000W
-        Settings.energy_power_calibration = value;
+        Settings->energy_power_calibration = value;
         mcp_calibrate |= MCP_CALIBRATE_POWER;
         McpGetCalibration();
       }
@@ -612,7 +612,7 @@ bool McpCommand(void)
     if (XdrvMailbox.data_len && mcp_voltage_rms) {
       value = (unsigned long)(CharToFloat(XdrvMailbox.data) * 10);
       if ((value > 1000) && (value < 2600)) {  // Between 100V and 260V
-        Settings.energy_voltage_calibration = value;
+        Settings->energy_voltage_calibration = value;
         mcp_calibrate |= MCP_CALIBRATE_VOLTAGE;
         McpGetCalibration();
       }
@@ -622,7 +622,7 @@ bool McpCommand(void)
     if (XdrvMailbox.data_len && mcp_current_rms) {
       value = (unsigned long)(CharToFloat(XdrvMailbox.data) * 10);
       if ((value > 100) && (value < 80000)) {  // Between 10mA and 8A
-        Settings.energy_current_calibration = value;
+        Settings->energy_current_calibration = value;
         mcp_calibrate |= MCP_CALIBRATE_CURRENT;
         McpGetCalibration();
       }
@@ -632,7 +632,7 @@ bool McpCommand(void)
     if (XdrvMailbox.data_len && mcp_line_frequency) {
       value = (unsigned long)(CharToFloat(XdrvMailbox.data) * 1000);
       if ((value > 45000) && (value < 65000)) {  // Between 45Hz and 65Hz
-        Settings.energy_frequency_calibration = value;
+        Settings->energy_frequency_calibration = value;
         mcp_calibrate |= MCP_CALIBRATE_FREQUENCY;
         McpGetFrequency();
       }

@@ -151,7 +151,7 @@ void NovaSdsSecond(void)                 // Every second
     NovaSdsSetWorkPeriod();
     novasds_valid=1;
   }
-  if((Settings.tele_period - Settings.novasds_startingoffset <= 0))
+  if((Settings->tele_period - Settings->novasds_startingoffset <= 0))
   {
     if(!cont_mode)
     { //switched to continuous mode
@@ -162,17 +162,17 @@ void NovaSdsSecond(void)                 // Every second
   else
     cont_mode = 0;
 
-  if(TasmotaGlobal.tele_period == Settings.tele_period -  Settings.novasds_startingoffset && !cont_mode)
+  if(TasmotaGlobal.tele_period == Settings->tele_period -  Settings->novasds_startingoffset && !cont_mode)
   { //lets start fan and laser
     NovaSdsCommand(NOVA_SDS_SLEEP_AND_WORK, NOVA_SDS_SET_MODE, NOVA_SDS_WORK, NOVA_SDS_DEVICE_ID, nullptr);
   }
-  if(TasmotaGlobal.tele_period >= Settings.tele_period-5 && TasmotaGlobal.tele_period <= Settings.tele_period-2)
+  if(TasmotaGlobal.tele_period >= Settings->tele_period-5 && TasmotaGlobal.tele_period <= Settings->tele_period-2)
   { //we are doing 4 measurements here
     if(!(NovaSdsReadData())) novasds_valid=0;
     pm100_sum += novasds_data.pm100;
     pm25_sum  += novasds_data.pm25;
   }
-  if(TasmotaGlobal.tele_period == Settings.tele_period-1)
+  if(TasmotaGlobal.tele_period == Settings->tele_period-1)
   { //calculate the average of 4 measuremens
     novasds_data.pm100 = pm100_sum >> 2;
     novasds_data.pm25  = pm25_sum >> 2;
@@ -191,10 +191,10 @@ void NovaSdsSecond(void)                 // Every second
 bool NovaSdsCommandSensor(void)
 {
   if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload < 256)) {
-    if( XdrvMailbox.payload < 10 ) Settings.novasds_startingoffset = 10;
-    else Settings.novasds_startingoffset = XdrvMailbox.payload;
+    if( XdrvMailbox.payload < 10 ) Settings->novasds_startingoffset = 10;
+    else Settings->novasds_startingoffset = XdrvMailbox.payload;
   }
-  Response_P(S_JSON_SENSOR_INDEX_NVALUE, XSNS_20, Settings.novasds_startingoffset);
+  Response_P(S_JSON_SENSOR_INDEX_NVALUE, XSNS_20, Settings->novasds_startingoffset);
 
   return true;
 }

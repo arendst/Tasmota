@@ -1,0 +1,35 @@
+{
+  "build": {
+    "arduino":{
+      "ldscript": "esp32_out.ld"
+    },
+    "core": "esp32",
+    "extra_flags": "-DARDUINO_ODROID_ESP32 -DBOARD_HAS_PSRAM -mfix-esp32-psram-cache-issue",
+    "f_cpu": "240000000L",
+    "f_flash": "80000000L",
+    "flash_mode": "dio",
+    "mcu": "esp32",
+    "variant": "odroid_esp32",
+    "partitions": "esp32_partition_app2944k_spiffs10M.csv"
+  },
+  "connectivity": [
+    "wifi",
+    "bluetooth",
+    "ethernet",
+    "can"
+  ],
+  "frameworks": [
+    "arduino",
+    "espidf"
+  ],
+  "name": "ESP32 ODROID-GO 16M Flash, 4MB PSRAM, Tasmota 2944k Code/OTA, 10M SPIFFS",
+  "upload": {
+    "flash_size": "16MB",
+    "maximum_ram_size": 327680,
+    "maximum_size": 16777216,
+    "require_upload_port": true,
+    "speed": 2000000
+  },
+  "url": "https://www.hardkernel.com/main/products/prdt_info.php?g_code=G152875062626",
+  "vendor": "Hardkernel"
+}
