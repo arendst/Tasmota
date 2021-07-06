@@ -3525,6 +3525,9 @@ TEST(TestDaikin64Class, OperatingMode) {
   ac.setMode(kDaikin64Fan);
   EXPECT_EQ(kDaikin64Fan, ac.getMode());
 
+  ac.setMode(kDaikin64Heat);
+  EXPECT_EQ(kDaikin64Heat, ac.getMode());
+
   ac.setMode(kDaikin64Dry);
   EXPECT_EQ(kDaikin64Dry, ac.getMode());
 
@@ -3678,6 +3681,7 @@ TEST(TestDaikin64Class, HumanReadable) {
       "Turbo: On, Quiet: Off, Swing(V): On, Sleep: Off, "
       "Clock: 07:20, On Timer: Off, Off Timer: 23:30",
       ac.toString());
+  ac.setMode(kDaikin64Heat);
   ac.setQuiet(true);
   ac.setSleep(true);
   ac.setClock(12 * 60 + 31);
@@ -3685,7 +3689,7 @@ TEST(TestDaikin64Class, HumanReadable) {
   ac.setOnTime(8 * 60 + 59);
   ac.setOffTimeEnabled(false);
   EXPECT_EQ(
-      "Power Toggle: Off, Mode: 4 (Fan), Temp: 30C, Fan: 9 (Quiet), "
+      "Power Toggle: Off, Mode: 8 (Heat), Temp: 30C, Fan: 9 (Quiet), "
       "Turbo: Off, Quiet: On, Swing(V): On, Sleep: On, "
       "Clock: 12:31, On Timer: 08:30, Off Timer: Off",
       ac.toString());

@@ -1243,7 +1243,7 @@ TEST(TestIRac, Panasonic) {
   ASSERT_TRUE(IRAcUtils::decodeToState(&ac._irsend.capture, &r, &p));
 
   char expected_dke[] =
-      "Model: 3 (DKE), Power: On, Mode: 3 (Cool), Temp: 18C, Fan: 4 (High), "
+      "Model: 3 (DKE), Power: On, Mode: 3 (Cool), Temp: 18C, Fan: 4 (Maximum), "
       "Swing(V): 2 (High), Swing(H): 6 (Middle), "
       "Quiet: Off, Powerful: On, Ion: On, "
       "Clock: 19:17, On Timer: Off, Off Timer: Off";
@@ -2148,14 +2148,21 @@ TEST(TestIRac, Issue821) {
               result.mode,      // Mode
               result.degrees,   // Celsius
               result.fanspeed,  // Fan speed
-              result.swingv,       // Vertical swing
-              result.swingh,       // Horizontal swing
-              result.turbo,                       // Turbo
-              result.light,                       // Light
-              result.clean,                       // Clean
-              -1);                         // Sleep
+              result.swingv,    // Vertical swing
+              result.swingh,    // Horizontal swing
+              result.turbo,     // Turbo
+              result.light,     // Light
+              result.clean,     // Clean
+              -1);              // Sleep
   ac._irsend.makeDecodeResult();
+  // We expect a normal state message, followed by the special "light" message.
   EXPECT_TRUE(capture.decode(&ac._irsend.capture));
+  ASSERT_EQ(COOLIX, ac._irsend.capture.decode_type);
+  ASSERT_EQ(kCoolixBits, ac._irsend.capture.bits);
+  ASSERT_EQ("Power: On, Mode: 2 (Auto), Fan: 0 (Auto0), Temp: 24C, "
+            "Zone Follow: Off, Sensor Temp: Off",
+            IRAcUtils::resultAcToString(&ac._irsend.capture));
+  EXPECT_TRUE(capture.decodeCOOLIX(&ac._irsend.capture, 201));
   ASSERT_EQ(COOLIX, ac._irsend.capture.decode_type);
   ASSERT_EQ(kCoolixBits, ac._irsend.capture.bits);
   ASSERT_EQ("Power: On, Light: Toggle",
@@ -2163,36 +2170,36 @@ TEST(TestIRac, Issue821) {
   EXPECT_EQ(
       "f38000d50"
       "m4692s4416"
-      "m552s1656m552s552m552s1656m552s1656m552s552m552s1656m552s552m552s1656"
-      "m552s552m552s1656m552s552m552s552m552s1656m552s552m552s1656m552s552"
-      "m552s1656m552s1656m552s1656m552s1656m552s552m552s1656m552s552m552s1656"
-      "m552s552m552s552m552s552m552s552m552s1656m552s552m552s1656m552s552"
-      "m552s1656m552s552m552s1656m552s552m552s552m552s1656m552s552m552s1656"
-      "m552s552m552s1656m552s552m552s1656m552s1656m552s552m552s1656m552s552"
+      "m552s1656m552s552m552s1656m552s1656m552s552m552s552m552s1656m552s552"
+      "m552s552m552s1656m552s552m552s552m552s1656m552s1656m552s552m552s1656"
+      "m552s552m552s552m552s552m552s1656m552s1656m552s1656m552s1656m552s1656"
+      "m552s1656m552s1656m552s1656m552s552m552s552m552s552m552s552m552s552"
+      "m552s552m552s1656m552s552m552s552m552s1656m552s552m552s552m552s552"
+      "m552s1656m552s552m552s1656m552s1656m552s552m552s1656m552s1656m552s1656"
       "m552s5244"
       "m4692s4416"
-      "m552s1656m552s552m552s1656m552s1656m552s552m552s1656m552s552m552s1656"
-      "m552s552m552s1656m552s552m552s552m552s1656m552s552m552s1656m552s552"
-      "m552s1656m552s1656m552s1656m552s1656m552s552m552s1656m552s552m552s1656"
-      "m552s552m552s552m552s552m552s552m552s1656m552s552m552s1656m552s552"
-      "m552s1656m552s552m552s1656m552s552m552s552m552s1656m552s552m552s1656"
-      "m552s552m552s1656m552s552m552s1656m552s1656m552s552m552s1656m552s552"
+      "m552s1656m552s552m552s1656m552s1656m552s552m552s552m552s1656m552s552"
+      "m552s552m552s1656m552s552m552s552m552s1656m552s1656m552s552m552s1656"
+      "m552s552m552s552m552s552m552s1656m552s1656m552s1656m552s1656m552s1656"
+      "m552s1656m552s1656m552s1656m552s552m552s552m552s552m552s552m552s552"
+      "m552s552m552s1656m552s552m552s552m552s1656m552s552m552s552m552s552"
+      "m552s1656m552s552m552s1656m552s1656m552s552m552s1656m552s1656m552s1656"
       "m552s105244"
       "m4692s4416"
-      "m552s1656m552s552m552s1656m552s1656m552s552m552s552m552s1656m552s552"
-      "m552s552m552s1656m552s552m552s552m552s1656m552s1656m552s552m552s1656"
-      "m552s552m552s552m552s552m552s1656m552s1656m552s1656m552s1656m552s1656"
-      "m552s1656m552s1656m552s1656m552s552m552s552m552s552m552s552m552s552"
-      "m552s552m552s1656m552s552m552s552m552s1656m552s552m552s552m552s552"
-      "m552s1656m552s552m552s1656m552s1656m552s552m552s1656m552s1656m552s1656"
+      "m552s1656m552s552m552s1656m552s1656m552s552m552s1656m552s552m552s1656"
+      "m552s552m552s1656m552s552m552s552m552s1656m552s552m552s1656m552s552"
+      "m552s1656m552s1656m552s1656m552s1656m552s552m552s1656m552s552m552s1656"
+      "m552s552m552s552m552s552m552s552m552s1656m552s552m552s1656m552s552"
+      "m552s1656m552s552m552s1656m552s552m552s552m552s1656m552s552m552s1656"
+      "m552s552m552s1656m552s552m552s1656m552s1656m552s552m552s1656m552s552"
       "m552s5244"
       "m4692s4416"
-      "m552s1656m552s552m552s1656m552s1656m552s552m552s552m552s1656m552s552"
-      "m552s552m552s1656m552s552m552s552m552s1656m552s1656m552s552m552s1656"
-      "m552s552m552s552m552s552m552s1656m552s1656m552s1656m552s1656m552s1656"
-      "m552s1656m552s1656m552s1656m552s552m552s552m552s552m552s552m552s552"
-      "m552s552m552s1656m552s552m552s552m552s1656m552s552m552s552m552s552"
-      "m552s1656m552s552m552s1656m552s1656m552s552m552s1656m552s1656m552s1656"
+      "m552s1656m552s552m552s1656m552s1656m552s552m552s1656m552s552m552s1656"
+      "m552s552m552s1656m552s552m552s552m552s1656m552s552m552s1656m552s552"
+      "m552s1656m552s1656m552s1656m552s1656m552s552m552s1656m552s552m552s1656"
+      "m552s552m552s552m552s552m552s552m552s1656m552s552m552s1656m552s552"
+      "m552s1656m552s552m552s1656m552s552m552s552m552s1656m552s552m552s1656"
+      "m552s552m552s1656m552s552m552s1656m552s1656m552s552m552s1656m552s552"
       "m552s105244",
       ac._irsend.outputStr());
 }

@@ -8,6 +8,7 @@
 //   Brand: AUX,  Model: YKR-T/011 remote
 //   Brand: Electra,  Model: Classic INV 17 / AXW12DCS A/C
 //   Brand: Electra,  Model: YKR-M/003E remote
+//   Brand: Frigidaire,  Model: FGPC102AB1 A/C
 
 #ifndef IR_ELECTRA_H_
 #define IR_ELECTRA_H_
