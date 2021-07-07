@@ -572,7 +572,6 @@ void be_lexer_deinit(blexer *lexer)
 {
     be_free(lexer->vm, lexer->buf.s, lexer->buf.size);
     keyword_unregiste(lexer->vm);
-    be_stackpop(lexer->vm, 1); /* pop strtab */
 }
 
 int be_lexer_scan_next(blexer *lexer)
