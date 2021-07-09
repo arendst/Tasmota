@@ -1,5 +1,0 @@
-json = value;
-value = object | array |
-        string | number | 'true' | 'false' | 'null';
-object = '{' [ string ':' value ] { ',' string ':' value } '}';
-array = '[' [json] { ',' json } ']';
