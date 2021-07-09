@@ -1,0 +1,8 @@
+# Stop on errors
+set -e
+
+cd "$(dirname "$0")/.."
+
+rm -rf dist
+NODE_ENV=production npm exec -- tsc
+NODE_ENV=production npm exec -- rollup -c

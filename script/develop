@@ -1,0 +1,17 @@
+# Stop on errors
+set -e
+
+cd "$(dirname "$0")/.."
+
+rm -rf dist
+
+# Quit all background tasks when script exits
+trap "kill 0" EXIT
+
+# Run tsc once as rollup expects those files
+tsc || true
+
+npm exec -- serve &
+npm exec -- tsc --watch &
+npm exec -- rollup -c --watch &
+wait
