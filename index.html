@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <style>
+      body {
+        font-family: sans-serif;
+      }
+      .pick-variant {
+        margin-bottom: 16px;
+      }
+    </style>
+    <script
+      type="module"
+      src="https://unpkg.com/esp-web-tools@3.4.2/dist/web/install-button.js?module"
+    ></script>
+  </head>
+  <body>
+    <h1>Install Tasmota</h1>
+
+    <div class="pick-variant">
+      <p>
+        To install Tasmota, connect your ESP device to your computer, pick your
+        selected variant and click the install button.
+      </p>
+      <select>
+        <optgroup label="ESP32">
+          <option
+            value="firmware/tasmota32/tasmota32.manifest.json"
+          >
+            Tasmota32
+          </option>
+
+
+        </optgroup>
+        <optgroup label="ESP8266">
+          <option
+            value="firmware/tasmota/tasmota.manifest.json"
+          >
+            Tasmota
+          </option>
+
+
+        </optgroup>
+      </select>
+    </div>
+    <esp-web-install-button></esp-web-install-button>
+    <script>
+      const selectEl = document.querySelector(".pick-variant select");
+      const installEl = document.querySelector("esp-web-install-button");
+      installEl.manifest = selectEl.value;
+      selectEl.addEventListener("change", () => {
+        installEl.manifest = selectEl.value;
+      });
+    </script>
+  </body>
+</html>
