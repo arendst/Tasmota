@@ -1,0 +1,9 @@
+{
+  "name": "Tasmota",
+  "builds": [
+    {
+      "chipFamily": "ESP8266",
+      "parts": [{ "path": "tasmota.bin", "offset": 0 }]
+    }
+  ]
+}
