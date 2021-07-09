@@ -1792,16 +1792,17 @@ void HandleWifiConfiguration(void) {
     if ( WifiIsInManagerMode() ) {
       // Test WIFI Connection to Router
       // As Tasmota is in this case in AP mode, a STA connection can be established too at the same time
+
+      if (WIFI_NOT_TESTING == Web.wifiTest) {
+        if (MAX_WIFI_OPTION == Web.old_wificonfig) { Web.old_wificonfig = Settings->sta_config; }
+        TasmotaGlobal.wifi_state_flag = Settings->sta_config = WIFI_MANAGER;
+        Web.save_data_counter = TasmotaGlobal.save_data_counter;
+      }
+
       Web.wifi_test_counter = 9;   // seconds to test user's proposed AP
       Web.wifiTest = WIFI_TESTING;
-
-      Web.save_data_counter = TasmotaGlobal.save_data_counter;
       TasmotaGlobal.save_data_counter = 0;               // Stop auto saving data - Updating Settings
       Settings->save_data = 0;
-
-      if (MAX_WIFI_OPTION == Web.old_wificonfig) { Web.old_wificonfig = Settings->sta_config; }
-      TasmotaGlobal.wifi_state_flag = Settings->sta_config = WIFI_MANAGER;
-
       TasmotaGlobal.sleep = 0;                           // Disable sleep
       TasmotaGlobal.restart_flag = 0;                    // No restart
       TasmotaGlobal.ota_state_flag = 0;                  // No OTA
