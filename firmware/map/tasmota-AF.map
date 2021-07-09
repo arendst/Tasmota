@@ -16600,7 +16600,7 @@ Discarded input sections
  .irom.text.x509_minimal.c.789.3
                 0x0000000000000000      0x11c .pio/build/tasmota-AF/lib340/libbearssl-esp8266.a(x509_minimal.c.o)
  .irom.text.x509_minimal.c.524.2
-                0x0000000000000000      0xb14 .pio/build/tasmota-AF/lib340/libbearssl-esp8266.a(x509_minimal.c.o)
+                0x0000000000000000      0xb0e .pio/build/tasmota-AF/lib340/libbearssl-esp8266.a(x509_minimal.c.o)
  .irom.text.x509_minimal.c.495.1
                 0x0000000000000000      0x12b .pio/build/tasmota-AF/lib340/libbearssl-esp8266.a(x509_minimal.c.o)
  .irom.text.x509_minimal.c.336.0
