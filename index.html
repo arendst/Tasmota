@@ -1,13 +1,31 @@
 <!DOCTYPE html>
-<html>
+<html lang="en" class="">
   <head>
+    <meta charset='utf-8'>
+    <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no"/>
+    <title>Install Tasmota</title>
     <style>
-      body {
-        font-family: sans-serif;
-      }
-      .pick-variant {
-        margin-bottom: 16px;
-      }
+      div,fieldset,input,select{padding:5px;font-size:1em;}
+      fieldset{background:#4f4f4f;}
+      p{margin:0.5em 0;}
+      input{width:100%;box-sizing:border-box;-webkit-box-sizing:border-box;-moz-box-sizing:border-box;background:#dddddd;color:#000000;}
+      input[type=checkbox],input[type=radio]{width:1em;margin-right:6px;vertical-align:-1px;}
+      input[type=range]{width:99%;}
+      select{width:100%;background:#dddddd;color:#000000;}
+      textarea{resize:vertical;width:98%;height:318px;padding:5px;overflow:auto;background:#1f1f1f;color:#65c115;}
+      body{text-align:center;font-family:verdana,sans-serif;background:#252525;}
+      td{padding:0px;}
+      button{border:0;border-radius:0.3rem;background:#1fa3ec;color:#faffff;line-height:2.4rem;font-size:1.2rem;width:100%;-webkit-transition-duration:0.4s;transition-duration:0.4s;cursor:pointer;}
+      button:hover{background:#0e70a4;}
+      .bred{background:#d43535;}
+      .bred:hover{background:#931f1f;}
+      .bgrn{background:#47c266;}
+      .bgrn:hover{background:#5aaf6f;}
+      a{color:#1fa3ec;text-decoration:none;}
+      .p{float:left;text-align:left;}
+      .q{float:right;text-align:right;}
+      .r{border-radius:0.3em;padding:2px;margin:6px 2px;}
+      .pick-variant{margin-bottom:16px;}
     </style>
     <script
       type="module"
@@ -15,35 +33,40 @@
     ></script>
   </head>
   <body>
+    <div style='display:inline-block;color:#eaeaea;min-width:340px;'>
+
     <h1>Install Tasmota</h1>
 
     <div class="pick-variant">
       <p>
-        To install Tasmota, connect your ESP device to your computer, pick your
-        selected variant and click the install button.
+        To install Tasmota, connect your ESP device</br>
+        to your computer, pick your selected variant</br>
+        and click the install button.
       </p>
+      </br>
       <select>
-        <optgroup label="ESP32">
-          <option
-            value="firmware/tasmota32/tasmota32.manifest.json"
-          >
-            Tasmota32
-          </option>
-
-
+        <optgroup label="Release">
+          <option value="manifest/release.tasmota.manifest.json">Tasmota</option>
+          <option value="manifest/release.tasmota-display.manifest.json">Tasmota Display</option>
+          <option value="manifest/release.tasmota-lite.manifest.json">Tasmota Lite</option>
+          <option value="manifest/release.tasmota-sensors.manifest.json">Tasmota Sensors</option>
+          <option value="manifest/release.tasmota-de.manifest.json">Tasmota Deutsch</option>
         </optgroup>
-        <optgroup label="ESP8266">
-          <option
-            value="firmware/tasmota/tasmota.manifest.json"
-          >
-            Tasmota
-          </option>
-
-
+        <optgroup label="Development">
+          <option value="manifest/development.tasmota.manifest.json">Tasmota</option>
+          <option value="manifest/development.tasmota-display.manifest.json">Tasmota Display</option>
+          <option value="manifest/development.tasmota-lite.manifest.json">Tasmota Lite</option>
+          <option value="manifest/development.tasmota-sensors.manifest.json">Tasmota Sensors</option>
+          <option value="manifest/development.tasmota-de.manifest.json">Tasmota Deutsch</option>
         </optgroup>
       </select>
+      <p>
+        <input type="checkbox" id="erase" name="erase" onchange="toggleErase()">
+        <label for="erase">Reset settings to default</label>
+      </p>
+
     </div>
-    <esp-web-install-button></esp-web-install-button>
+    <esp-web-install-button id="inst"></esp-web-install-button>
     <script>
       const selectEl = document.querySelector(".pick-variant select");
       const installEl = document.querySelector("esp-web-install-button");
@@ -51,6 +74,22 @@
       selectEl.addEventListener("change", () => {
         installEl.manifest = selectEl.value;
       });
+
+      function toggleErase() {
+	    if (document.getElementById('erase').checked) {
+	      document.getElementById('inst').setAttribute('erase-first','');
+	    } else {
+	      document.getElementById('inst').removeAttribute('erase-first');
+	    }
+      }
     </script>
+    </br>
+    </br>
+    <div style='text-align:right;font-size:11px;'>
+      <hr/>
+      <a href="https://esphome.github.io/esp-web-tools/" target='_blank' style='color:#aaa;'>Tasmota Installer powered by ESP Web Tools</a>
+    </div>
+
+    </div>
   </body>
 </html>
