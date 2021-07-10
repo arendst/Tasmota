@@ -22,6 +22,7 @@
 #include "ir_Gree.h"
 #include "ir_Haier.h"
 #include "ir_Hitachi.h"
+#include "ir_Kelon.h"
 #include "ir_Kelvinator.h"
 #include "ir_LG.h"
 #include "ir_Midea.h"
@@ -289,6 +290,12 @@ void electra(IRElectraAc *ac,
                   const float degrees, const stdAc::fanspeed_t fan,
                   const stdAc::swingv_t swingv);
 #endif  // SEND_HITACHI_AC424
+#if SEND_KELON
+  void kelon(IRKelonAc *ac, const bool togglePower, const stdAc::opmode_t mode,
+             const int8_t dryGrade, const float degrees,
+             const stdAc::fanspeed_t fan, const bool toggleSwing,
+             const bool superCool, const int16_t sleep);
+#endif  // SEND_KELON
 #if SEND_KELVINATOR
   void kelvinator(IRKelvinatorAC *ac,
                   const bool on, const stdAc::opmode_t mode,

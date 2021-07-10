@@ -12,7 +12,7 @@
 
 // Test sending typical data only.
 TEST(TestSendHaierAC, SendDataOnly) {
-  IRsendTest irsend(0);
+  IRsendTest irsend(kGpioUnused);
   irsend.begin();
   uint8_t haier_zero[kHaierACStateLength] = {0x00, 0x00, 0x00, 0x00, 0x00,
                                              0x00, 0x00, 0x00, 0x00};
@@ -56,7 +56,7 @@ TEST(TestSendHaierAC, SendDataOnly) {
 
 // Test sending typical data with repeats.
 TEST(TestSendHaierAC, SendWithRepeats) {
-  IRsendTest irsend(0);
+  IRsendTest irsend(kGpioUnused);
   irsend.begin();
 
   irsend.reset();
@@ -105,7 +105,7 @@ TEST(TestSendHaierAC, SendWithRepeats) {
 // Tests for IRHaierAC class.
 
 TEST(TestHaierACClass, Command) {
-  IRHaierAC haier(0);
+  IRHaierAC haier(kGpioUnused);
   haier.begin();
 
   haier.setCommand(kHaierAcCmdOff);
@@ -145,7 +145,7 @@ TEST(TestHaierACClass, Command) {
 }
 
 TEST(TestHaierACClass, OperatingMode) {
-  IRHaierAC haier(0);
+  IRHaierAC haier(kGpioUnused);
   haier.begin();
 
   haier.setMode(kHaierAcAuto);
@@ -177,7 +177,7 @@ TEST(TestHaierACClass, OperatingMode) {
 }
 
 TEST(TestHaierACClass, Temperature) {
-  IRHaierAC haier(0);
+  IRHaierAC haier(kGpioUnused);
   haier.begin();
 
   haier.setTemp(kHaierAcMinTemp);
@@ -218,7 +218,7 @@ TEST(TestHaierACClass, Temperature) {
 }
 
 TEST(TestHaierACClass, FanSpeed) {
-  IRHaierAC haier(0);
+  IRHaierAC haier(kGpioUnused);
   haier.begin();
   haier.setFan(kHaierAcFanLow);
   haier.setCommand(kHaierAcCmdOn);
@@ -241,7 +241,7 @@ TEST(TestHaierACClass, FanSpeed) {
 }
 
 TEST(TestHaierACClass, Swing) {
-  IRHaierAC haier(0);
+  IRHaierAC haier(kGpioUnused);
   haier.begin();
   haier.setFan(kHaierAcFanLow);
   haier.setCommand(kHaierAcCmdOn);
@@ -263,7 +263,7 @@ TEST(TestHaierACClass, Swing) {
 }
 
 TEST(TestHaierACClass, CurrentTime) {
-  IRHaierAC haier(0);
+  IRHaierAC haier(kGpioUnused);
   haier.begin();
   EXPECT_EQ(0, haier.getCurrTime());
 
@@ -290,7 +290,7 @@ TEST(TestHaierACClass, CurrentTime) {
 }
 
 TEST(TestHaierACClass, Timers) {
-  IRHaierAC haier(0);
+  IRHaierAC haier(kGpioUnused);
   haier.begin();
 
   haier.setCommand(kHaierAcCmdOn);
@@ -347,7 +347,7 @@ TEST(TestHaierACClass, Timers) {
 }
 
 TEST(TestHaierACClass, MessageConstuction) {
-  IRHaierAC haier(0);
+  IRHaierAC haier(kGpioUnused);
 
   EXPECT_EQ(
       "Command: 1 (On), Mode: 0 (Auto), Temp: 25C, Fan: 1 (Low), "
@@ -420,7 +420,7 @@ TEST(TestHaierACClass, MessageConstuction) {
 // Tests for the IRHaierACYRW02 class.
 
 TEST(TestHaierACYRW02Class, Button) {
-  IRHaierACYRW02 haier(0);
+  IRHaierACYRW02 haier(kGpioUnused);
   haier.begin();
 
   haier.setButton(kHaierAcYrw02ButtonPower);
@@ -439,7 +439,7 @@ TEST(TestHaierACYRW02Class, Button) {
 }
 
 TEST(TestHaierACYRW02Class, OperatingMode) {
-  IRHaierACYRW02 haier(0);
+  IRHaierACYRW02 haier(kGpioUnused);
   haier.begin();
 
   haier.setButton(kHaierAcYrw02ButtonPower);
@@ -473,7 +473,7 @@ TEST(TestHaierACYRW02Class, OperatingMode) {
 }
 
 TEST(TestHaierACYRW02Class, Temperature) {
-  IRHaierACYRW02 haier(0);
+  IRHaierACYRW02 haier(kGpioUnused);
   haier.begin();
 
   haier.setTemp(kHaierAcMinTemp);
@@ -514,7 +514,7 @@ TEST(TestHaierACYRW02Class, Temperature) {
 }
 
 TEST(TestHaierACYRW02Class, HealthMode) {
-  IRHaierACYRW02 haier(0);
+  IRHaierACYRW02 haier(kGpioUnused);
   haier.begin();
 
   haier.setHealth(true);
@@ -532,7 +532,7 @@ TEST(TestHaierACYRW02Class, HealthMode) {
 }
 
 TEST(TestHaierACYRW02Class, Power) {
-  IRHaierACYRW02 haier(0);
+  IRHaierACYRW02 haier(kGpioUnused);
   haier.begin();
 
   haier.setPower(true);
@@ -555,7 +555,7 @@ TEST(TestHaierACYRW02Class, Power) {
 }
 
 TEST(TestHaierACYRW02Class, SleepMode) {
-  IRHaierACYRW02 haier(0);
+  IRHaierACYRW02 haier(kGpioUnused);
   haier.begin();
 
   haier.setSleep(true);
@@ -573,7 +573,7 @@ TEST(TestHaierACYRW02Class, SleepMode) {
 }
 
 TEST(TestHaierACYRW02Class, TurboMode) {
-  IRHaierACYRW02 haier(0);
+  IRHaierACYRW02 haier(kGpioUnused);
   haier.begin();
 
   haier.setTurbo(kHaierAcYrw02TurboOff);
@@ -596,7 +596,7 @@ TEST(TestHaierACYRW02Class, TurboMode) {
 }
 
 TEST(TestHaierACYRW02Class, Fan) {
-  IRHaierACYRW02 haier(0);
+  IRHaierACYRW02 haier(kGpioUnused);
   haier.begin();
 
   haier.setFan(kHaierAcYrw02FanAuto);
@@ -625,7 +625,7 @@ TEST(TestHaierACYRW02Class, Fan) {
 }
 
 TEST(TestHaierACYRW02Class, Swing) {
-  IRHaierACYRW02 haier(0);
+  IRHaierACYRW02 haier(kGpioUnused);
   haier.begin();
 
   haier.setSwing(kHaierAcYrw02SwingOff);
@@ -670,7 +670,7 @@ TEST(TestHaierACYRW02Class, Swing) {
 }
 
 TEST(TestHaierACYRW02Class, MessageConstuction) {
-  IRHaierACYRW02 haier(0);
+  IRHaierACYRW02 haier(kGpioUnused);
 
   EXPECT_EQ(
       "Power: On, Button: 5 (Power), Mode: 0 (Auto), Temp: 25C,"
@@ -703,7 +703,7 @@ TEST(TestHaierACYRW02Class, RealStates) {
       0xA6, 0xE1, 0x00, 0x00, 0x40, 0x20, 0x00,
       0x80, 0x00, 0x00, 0x00, 0x00, 0x07, 0x6E};
 
-  IRHaierACYRW02 haier(0);
+  IRHaierACYRW02 haier(kGpioUnused);
   haier.setRaw(expectedState1);
   EXPECT_EQ(
       "Power: On, Button: 7 (Health), Mode: 4 (Heat), Temp: 30C,"
@@ -758,8 +758,8 @@ TEST(TestHaierACYRW02Class, RealStates) {
 
 // Decode normal "synthetic" messages.
 TEST(TestDecodeHaierAC, NormalDecodeWithStrict) {
-  IRsendTest irsend(0);
-  IRrecv irrecv(0);
+  IRsendTest irsend(kGpioUnused);
+  IRrecv irrecv(kGpioUnused);
   irsend.begin();
 
   uint8_t expectedState[kHaierACStateLength] = {0xA5, 0x01, 0x20, 0x01, 0x00,
@@ -789,8 +789,8 @@ TEST(TestDecodeHaierAC, NormalDecodeWithStrict) {
 
 // Decode a "real" example message.
 TEST(TestDecodeHaierAC, RealExample1) {
-  IRsendTest irsend(0);
-  IRrecv irrecv(0);
+  IRsendTest irsend(kGpioUnused);
+  IRrecv irrecv(kGpioUnused);
   irsend.begin();
 
   irsend.reset();
@@ -831,8 +831,8 @@ TEST(TestDecodeHaierAC, RealExample1) {
 
 // Decode a "real" example message.
 TEST(TestDecodeHaierAC, RealExample2) {
-  IRsendTest irsend(0);
-  IRrecv irrecv(0);
+  IRsendTest irsend(kGpioUnused);
+  IRrecv irrecv(kGpioUnused);
   irsend.begin();
 
   irsend.reset();
@@ -863,7 +863,7 @@ TEST(TestDecodeHaierAC, RealExample2) {
   EXPECT_FALSE(irsend.capture.repeat);
   EXPECT_STATE_EQ(expectedState, irsend.capture.state, irsend.capture.bits);
 
-  IRHaierAC haier(0);
+  IRHaierAC haier(kGpioUnused);
   haier.setRaw(irsend.capture.state);
   EXPECT_EQ(
       "Command: 6 (Temp Up), Mode: 1 (Cool), Temp: 22C, Fan: 1 (Low), "
@@ -874,8 +874,8 @@ TEST(TestDecodeHaierAC, RealExample2) {
 
 // Decode a "real" example message.
 TEST(TestDecodeHaierAC, RealExample3) {
-  IRsendTest irsend(0);
-  IRrecv irrecv(0);
+  IRsendTest irsend(kGpioUnused);
+  IRrecv irrecv(kGpioUnused);
   irsend.begin();
 
   irsend.reset();
@@ -906,7 +906,7 @@ TEST(TestDecodeHaierAC, RealExample3) {
   EXPECT_FALSE(irsend.capture.repeat);
   EXPECT_STATE_EQ(expectedState, irsend.capture.state, irsend.capture.bits);
 
-  IRHaierAC haier(0);
+  IRHaierAC haier(kGpioUnused);
   haier.setRaw(irsend.capture.state);
   EXPECT_EQ(
       "Command: 12 (Health), Mode: 1 (Cool), Temp: 30C, Fan: 1 (Low), "
@@ -917,8 +917,8 @@ TEST(TestDecodeHaierAC, RealExample3) {
 
 // Decode normal "synthetic" messages.
 TEST(TestDecodeHaierAC_YRW02, NormalDecode) {
-  IRsendTest irsend(0);
-  IRrecv irrecv(0);
+  IRsendTest irsend(kGpioUnused);
+  IRrecv irrecv(kGpioUnused);
   irsend.begin();
 
   uint8_t expectedState[kHaierACYRW02StateLength] = {
@@ -937,8 +937,8 @@ TEST(TestDecodeHaierAC_YRW02, NormalDecode) {
 
 // Decode a "real" example message.
 TEST(TestDecodeHaierAC_YRW02, RealExample) {
-  IRsendTest irsend(0);
-  IRrecv irrecv(0);
+  IRsendTest irsend(kGpioUnused);
+  IRrecv irrecv(kGpioUnused);
   irsend.begin();
 
   irsend.reset();
@@ -976,7 +976,7 @@ TEST(TestDecodeHaierAC_YRW02, RealExample) {
   EXPECT_FALSE(irsend.capture.repeat);
   EXPECT_STATE_EQ(expectedState, irsend.capture.state, irsend.capture.bits);
 
-  IRHaierACYRW02 haier(0);
+  IRHaierACYRW02 haier(kGpioUnused);
   haier.setRaw(irsend.capture.state);
   EXPECT_EQ(
       "Power: On, Button: 5 (Power), Mode: 1 (Cool), Temp: 17C,"
@@ -990,7 +990,7 @@ TEST(TestDecodeHaierAC_YRW02, RealExample) {
 TEST(TestHaierAcIssues, Issue668) {
   IRHaierAC ac(0);
   IRHaierAC acText(1);
-  IRrecv irrecv(0);
+  IRrecv irrecv(kGpioUnused);
   ac.begin();
 
   // Turn on the AC.
@@ -1134,4 +1134,96 @@ TEST(TestHaierACYRW02Class, toCommon) {
   ASSERT_FALSE(ac.toCommon().clean);
   ASSERT_FALSE(ac.toCommon().beep);
   ASSERT_EQ(-1, ac.toCommon().clock);
+}
+
+TEST(TestDecodeHaierAC176, RealExample) {
+  IRsendTest irsend(kGpioUnused);
+  IRrecv irrecv(kGpioUnused);
+  irsend.begin();
+
+  irsend.reset();
+  // Ref: https://github.com/crankyoldgit/IRremoteESP8266/issues/1480
+  const uint16_t rawData[357] = {
+      3096, 2948, 3048, 4388, 588, 1610, 614, 498, 586, 1612, 612, 500, 612,
+      500, 586, 1610, 588, 1612, 612, 502, 586, 1612, 612, 500, 612, 500, 614,
+      500, 612, 498, 586, 1610, 586, 1612, 612, 502, 612, 500, 612, 500, 612,
+      500, 612, 500, 612, 500, 612, 500, 612, 500, 612, 504, 612, 500, 612, 500,
+      612, 500, 612, 500, 612, 500, 612, 500, 612, 500, 612, 502, 614, 498, 586,
+      1612, 612, 500, 612, 500, 612, 500, 612, 500, 612, 500, 612, 502, 586,
+      1612, 612, 500, 586, 1610, 612, 500, 612, 498, 612, 500, 614, 478, 634,
+      502, 612, 500, 612, 500, 612, 500, 612, 500, 612, 500, 612, 500, 612, 498,
+      614, 504, 612, 500, 614, 500, 586, 1612, 612, 500, 612, 500, 612, 500,
+      612, 500, 612, 502, 612, 500, 612, 500, 612, 500, 612, 500, 612, 500, 612,
+      500, 612, 500, 612, 504, 614, 500, 612, 500, 612, 498, 614, 500, 612, 500,
+      612, 500, 612, 500, 612, 482, 632, 500, 612, 502, 610, 500, 614, 500, 612,
+      500, 612, 500, 612, 480, 632, 504, 612, 480, 632, 500, 612, 500, 612, 480,
+      632, 500, 612, 500, 612, 500, 612, 502, 612, 500, 612, 500, 612, 500, 612,
+      500, 612, 500, 586, 1612, 612, 500, 586, 1616, 612, 500, 612, 500, 586,
+      1610, 588, 1612, 612, 502, 612, 500, 614, 498, 586, 1614, 586, 1612, 612,
+      500, 586, 1610, 586, 1592, 632, 498, 586, 1610, 588, 1610, 586, 1614, 614,
+      500, 612, 480, 632, 500, 612, 500, 612, 500, 612, 500, 614, 498, 612, 500,
+      614, 500, 614, 500, 612, 500, 612, 500, 614, 498, 614, 498, 614, 500, 612,
+      504, 612, 500, 612, 500, 612, 500, 612, 498, 612, 502, 612, 500, 614, 498,
+      612, 502, 612, 500, 612, 498, 614, 500, 612, 500, 612, 500, 612, 500, 612,
+      500, 614, 502, 612, 500, 614, 478, 634, 498, 614, 500, 612, 500, 612, 500,
+      612, 500, 612, 482, 634, 500, 612, 500, 612, 500, 612, 500, 614, 498, 614,
+      500, 612, 480, 632, 502, 586, 1610, 614, 478, 608, 1610, 588, 1610, 612,
+      498, 586, 1610, 588, 1610, 586, 1606, 612};  // UNKNOWN ABFAD961
+
+  irsend.sendRaw(rawData, 357, 38000);
+  irsend.makeDecodeResult();
+  ASSERT_TRUE(irrecv.decode(&irsend.capture));
+  ASSERT_EQ(HAIER_AC176, irsend.capture.decode_type);
+  EXPECT_EQ(kHaierAC176Bits, irsend.capture.bits);
+  EXPECT_FALSE(irsend.capture.repeat);
+  const uint8_t expectedState[kHaierAC176StateLength] = {
+      0xA6, 0x86, 0x00, 0x00, 0x40, 0xA0, 0x00,
+      0x20, 0x00, 0x00, 0x00, 0x00, 0x05, 0x31,
+      0xB7, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xB7};
+  EXPECT_STATE_EQ(expectedState, irsend.capture.state, irsend.capture.bits);
+}
+
+// Decode normal "synthetic" messages.
+TEST(TestDecodeHaierAC176, SyntheticDecode) {
+  IRsendTest irsend(kGpioUnused);
+  IRrecv irrecv(kGpioUnused);
+  irsend.begin();
+
+  const uint8_t expectedState[kHaierAC176StateLength] = {
+      0xA6, 0x86, 0x00, 0x00, 0x40, 0xA0, 0x00,
+      0x20, 0x00, 0x00, 0x00, 0x00, 0x05, 0x31,
+      0xB7, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xB7};
+
+  irsend.reset();
+  irsend.sendHaierAC176(expectedState);
+  irsend.makeDecodeResult();
+  ASSERT_TRUE(irrecv.decode(&irsend.capture));
+  EXPECT_EQ(HAIER_AC176, irsend.capture.decode_type);
+  EXPECT_EQ(kHaierAC176Bits, irsend.capture.bits);
+  EXPECT_FALSE(irsend.capture.repeat);
+  EXPECT_STATE_EQ(expectedState, irsend.capture.state, irsend.capture.bits);
+}
+
+TEST(TestUtils, Housekeeping) {
+  ASSERT_EQ("HAIER_AC", typeToString(decode_type_t::HAIER_AC));
+  ASSERT_EQ(decode_type_t::HAIER_AC, strToDecodeType("HAIER_AC"));
+  ASSERT_TRUE(hasACState(decode_type_t::HAIER_AC));
+  ASSERT_TRUE(IRac::isProtocolSupported(decode_type_t::HAIER_AC));
+  ASSERT_EQ(kHaierACBits, IRsend::defaultBits(decode_type_t::HAIER_AC));
+  ASSERT_EQ(kNoRepeat, IRsend::minRepeats(decode_type_t::HAIER_AC));
+
+  ASSERT_EQ("HAIER_AC_YRW02", typeToString(decode_type_t::HAIER_AC_YRW02));
+  ASSERT_EQ(decode_type_t::HAIER_AC_YRW02, strToDecodeType("HAIER_AC_YRW02"));
+  ASSERT_TRUE(hasACState(decode_type_t::HAIER_AC_YRW02));
+  ASSERT_TRUE(IRac::isProtocolSupported(decode_type_t::HAIER_AC_YRW02));
+  ASSERT_EQ(kHaierACYRW02Bits,
+            IRsend::defaultBits(decode_type_t::HAIER_AC_YRW02));
+  ASSERT_EQ(kNoRepeat, IRsend::minRepeats(decode_type_t::HAIER_AC_YRW02));
+
+  ASSERT_EQ("HAIER_AC176", typeToString(decode_type_t::HAIER_AC176));
+  ASSERT_EQ(decode_type_t::HAIER_AC176, strToDecodeType("HAIER_AC176"));
+  ASSERT_TRUE(hasACState(decode_type_t::HAIER_AC176));
+  ASSERT_FALSE(IRac::isProtocolSupported(decode_type_t::HAIER_AC176));
+  ASSERT_EQ(kHaierAC176Bits, IRsend::defaultBits(decode_type_t::HAIER_AC176));
+  ASSERT_EQ(kNoRepeat, IRsend::minRepeats(decode_type_t::HAIER_AC176));
 }

@@ -17,6 +17,10 @@
 //   Brand: Airwell, Model: RC08B remote
 //   Brand: Kastron, Model: RG57A7/BGEF Inverter remote
 //   Brand: Kaysun, Model: Casual CF A/C
+//   Brand: Toshiba, Model: RAS-M10YKV-E A/C
+//   Brand: Toshiba, Model: RAS-M13YKV-E A/C
+//   Brand: Toshiba, Model: RAS-4M27YAV-E A/C
+//   Brand: Toshiba, Model: WH-E1YE remote
 
 #ifndef IR_COOLIX_H_
 #define IR_COOLIX_H_

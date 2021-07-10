@@ -82,6 +82,9 @@ Functions</h2></td></tr>
 <tr class="memitem:a772e623c4b60208200e02afbaec66651"><td class="memItemLeft" align="right" valign="top"><a class="el" href="IRremoteESP8266_8h.html#afbeda3fd1bdc8c37d01bdf9f5c8274ff">String</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceirutils.html#a772e623c4b60208200e02afbaec66651">addIntToString</a> (const uint16_t value, const <a class="el" href="IRremoteESP8266_8h.html#afbeda3fd1bdc8c37d01bdf9f5c8274ff">String</a> label, const bool precomma)</td></tr>
 <tr class="memdesc:a772e623c4b60208200e02afbaec66651"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create a String with a colon separated labeled Integer suitable for Humans. e.g. "Foo: 23".  <a href="namespaceirutils.html#a772e623c4b60208200e02afbaec66651">More...</a><br /></td></tr>
 <tr class="separator:a772e623c4b60208200e02afbaec66651"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad8032ad49c2af274b7c9bc2ecd7d6bce"><td class="memItemLeft" align="right" valign="top"><a class="el" href="IRremoteESP8266_8h.html#afbeda3fd1bdc8c37d01bdf9f5c8274ff">String</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceirutils.html#ad8032ad49c2af274b7c9bc2ecd7d6bce">addSignedIntToString</a> (const int16_t value, const <a class="el" href="IRremoteESP8266_8h.html#afbeda3fd1bdc8c37d01bdf9f5c8274ff">String</a> label, const bool precomma)</td></tr>
+<tr class="memdesc:ad8032ad49c2af274b7c9bc2ecd7d6bce"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create a String with a colon separated labeled Integer suitable for Humans. e.g. "Foo: 23".  <a href="namespaceirutils.html#ad8032ad49c2af274b7c9bc2ecd7d6bce">More...</a><br /></td></tr>
+<tr class="separator:ad8032ad49c2af274b7c9bc2ecd7d6bce"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae89b70ce66617a8707c1951eadbc6fbd"><td class="memItemLeft" align="right" valign="top"><a class="el" href="IRremoteESP8266_8h.html#afbeda3fd1bdc8c37d01bdf9f5c8274ff">String</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceirutils.html#ae89b70ce66617a8707c1951eadbc6fbd">modelToStr</a> (const <a class="el" href="IRremoteESP8266_8h.html#ad5b287a488a8c1b7b8661f029ab56fad">decode_type_t</a> protocol, const int16_t model)</td></tr>
 <tr class="memdesc:ae89b70ce66617a8707c1951eadbc6fbd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Generate the model string for a given Protocol/Model pair.  <a href="namespaceirutils.html#ae89b70ce66617a8707c1951eadbc6fbd">More...</a><br /></td></tr>
 <tr class="separator:ae89b70ce66617a8707c1951eadbc6fbd"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -530,6 +533,51 @@ Functions</h2></td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">heat</td><td>The numeric value for Heat mode. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">dry</td><td>The numeric value for Dry mode. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">fan</td><td>The numeric value for Fan mode. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>The resulting String. </dd></dl>
+
+</div>
+</div>
+<a id="ad8032ad49c2af274b7c9bc2ecd7d6bce"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad8032ad49c2af274b7c9bc2ecd7d6bce">&#9670;&nbsp;</a></span>addSignedIntToString()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="IRremoteESP8266_8h.html#afbeda3fd1bdc8c37d01bdf9f5c8274ff">String</a> irutils::addSignedIntToString </td>
+          <td>(</td>
+          <td class="paramtype">const int16_t&#160;</td>
+          <td class="paramname"><em>value</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="IRremoteESP8266_8h.html#afbeda3fd1bdc8c37d01bdf9f5c8274ff">String</a>&#160;</td>
+          <td class="paramname"><em>label</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const bool&#160;</td>
+          <td class="paramname"><em>precomma</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Create a String with a colon separated labeled Integer suitable for Humans. e.g. "Foo: 23". </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">value</td><td>The value to come after the label. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">label</td><td>The label to precede the value. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">precomma</td><td>Should the output string start with ", " or not? </td></tr>
   </table>
   </dd>
 </dl>

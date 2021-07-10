@@ -1,5 +1,28 @@
 # Release Notes
 
+## _v2.7.19 (20210706)_
+
+**[Bug Fixes]**
+- Illegal Heap write in rawbuf when the capture has overflowed. (#1516 #1517)
+- PANASONIC_AC: Fix Low and High fan speeds (#1515)
+- Fix MDNS in IRServer and IRMQTTServer example code (#1498 #1499)
+- IRac: Fix off-by-one error in Coolix's sleep setting. (#1500)
+- Fix undefined constant (#1490)
+
+**[Features]**
+- Add detailed support for Kelon ACs (#1494)
+- Experimental basic support for Teknopoint A/C protocol (#1486 #1504)
+- Daikin64: Add support for Heat mode (#1492)
+- Basic support for `HAIER_AC176` 176 bit protocol. (#1480 #1481)
+
+**[Misc]**
+- GREE: Update inter-message gap timing (#1508 #1509)
+- IRac: Change Coolix to send special messages after a normal message. (#1501 #1502)
+- Fix compiler warnings causing Travis failures. (#1491)
+- Update supported model info (#1477 #1485 #1488 #1489)
+- Add HTML viewport meta tag to IRServer and IRMQTTServer examples (#1467 #1469)
+
+
 ## _v2.7.18 (20210420)_
 
 **[Misc]**

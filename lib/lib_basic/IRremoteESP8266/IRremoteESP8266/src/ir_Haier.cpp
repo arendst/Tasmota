@@ -1,4 +1,4 @@
-// Copyright 2018 crankyoldgit
+// Copyright 2018-2021 crankyoldgit
 /// @file
 /// @brief Support for Haier A/C protocols.
 /// The specifics of reverse engineering the protocols details:
@@ -8,6 +8,7 @@
 /// @see https://www.dropbox.com/s/mecyib3lhdxc8c6/IR%20data%20reverse%20engineering.xlsx?dl=0
 /// @see https://github.com/crankyoldgit/IRremoteESP8266/issues/485
 /// @see https://www.dropbox.com/sh/w0bt7egp0fjger5/AADRFV6Wg4wZskJVdFvzb8Z0a?dl=0&preview=haer2.ods
+/// @see https://github.com/crankyoldgit/IRremoteESP8266/issues/1480
 
 #include "ir_Haier.h"
 #include <cstring>
@@ -42,7 +43,7 @@ using irutils::minsToString;
   _.x##Mins = mins % 60;\
 } while (0)
 
-#if (SEND_HAIER_AC || SEND_HAIER_AC_YRW02)
+#if (SEND_HAIER_AC || SEND_HAIER_AC_YRW02 || SEND_HAIER_AC176)
 /// Send a Haier A/C formatted message. (HSU07-HEA03 remote)
 /// Status: STABLE / Known to be working.
 /// @param[in] data The message to be sent.
@@ -63,11 +64,11 @@ void IRsend::sendHaierAC(const unsigned char data[], const uint16_t nbytes,
                 50);
   }
 }
-#endif  // (SEND_HAIER_AC || SEND_HAIER_AC_YRW02)
+#endif  // (SEND_HAIER_AC || SEND_HAIER_AC_YRW02 || SEND_HAIER_AC176)
 
 #if SEND_HAIER_AC_YRW02
 /// Send a Haier YR-W02 remote A/C formatted message.
-/// Status: Alpha / Untested on a real device.
+/// Status: STABLE / Known to be working.
 /// @param[in] data The message to be sent.
 /// @param[in] nbytes The number of bytes of message to be sent.
 /// @param[in] repeat The number of times the command is to be repeated.
@@ -76,6 +77,18 @@ void IRsend::sendHaierACYRW02(const unsigned char data[], const uint16_t nbytes,
   if (nbytes >= kHaierACYRW02StateLength) sendHaierAC(data, nbytes, repeat);
 }
 #endif  // SEND_HAIER_AC_YRW02
+
+#if SEND_HAIER_AC176
+/// Send a Haier 176 bit remote A/C formatted message.
+/// Status: STABLE / Known to be working.
+/// @param[in] data The message to be sent.
+/// @param[in] nbytes The number of bytes of message to be sent.
+/// @param[in] repeat The number of times the command is to be repeated.
+void IRsend::sendHaierAC176(const unsigned char data[], const uint16_t nbytes,
+                            const uint16_t repeat) {
+  if (nbytes >= kHaierAC176StateLength) sendHaierAC(data, nbytes, repeat);
+}
+#endif  // SEND_HAIER_AC176
 
 /// Class constructor
 /// @param[in] pin GPIO to be used when sending.
@@ -1039,3 +1052,35 @@ bool IRrecv::decodeHaierACYRW02(decode_results* results, uint16_t offset,
   return true;
 }
 #endif  // DECODE_HAIER_AC_YRW02
+
+#if DECODE_HAIER_AC176
+/// Decode the supplied Haier 176 bit remote A/C message.
+/// Status: STABLE / Known to be working.
+/// @param[in,out] results Ptr to the data to decode & where to store the decode
+///   result.
+/// @param[in] offset The starting index to use when attempting to decode the
+///   raw data. Typically/Defaults to kStartOffset.
+/// @param[in] nbits The number of data bits to expect.
+/// @param[in] strict Flag indicating if we should perform strict matching.
+/// @return A boolean. True if it can decode it, false if it can't.
+bool IRrecv::decodeHaierAC176(decode_results* results, uint16_t offset,
+                              const uint16_t nbits, const bool strict) {
+  if (strict) {
+    if (nbits != kHaierAC176Bits)
+      return false;  // Not strictly a HAIER_AC176 message.
+  }
+
+  // The protocol is almost exactly the same as HAIER_AC
+  if (!decodeHaierAC(results, offset, nbits, false)) return false;
+
+  // Compliance
+  if (strict) {
+    if (results->state[0] != kHaierAcYrw02Prefix) return false;
+  }
+
+  // Success
+  // It looks correct, but we haven't check the checksum etc.
+  results->decode_type = HAIER_AC176;
+  return true;
+}
+#endif  // DECODE_HAIER_AC176
