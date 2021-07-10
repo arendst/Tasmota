@@ -1,5 +1,5 @@
 {
-  "name": "Release Tasmota Display",
+  "name": "Release Tasmota Sensors",
   "builds": [
     {
       "chipFamily": "ESP32",
