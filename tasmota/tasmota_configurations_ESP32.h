@@ -303,6 +303,7 @@
 //#define USE_EZOPMP                             // [I2cDriver55] Enable support for EZO's PMP sensor (+0k3 code) - Shared EZO code required for any EZO device (+1k2 code)
 //#define USE_SEESAW_SOIL                        // [I2cDriver56] Enable Capacitice Soil Moisture & Temperature Sensor (I2C addresses 0x36 - 0x39) (+1k3 code)
 
+//#define USE_T67XX                                // Add support for T67XX CO2 sensor (+1.3k code)
 //#define USE_MHZ19                                // Add support for MH-Z19 CO2 sensor (+2k code)
 //#define USE_SENSEAIR                             // Add support for SenseAir K30, K70 and S8 CO2 sensor (+2k3 code)
 #ifndef CO2_LOW
