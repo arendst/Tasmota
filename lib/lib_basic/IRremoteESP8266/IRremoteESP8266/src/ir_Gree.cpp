@@ -4,6 +4,7 @@
 /// @file
 /// @brief Support for Gree A/C protocols.
 /// @see https://github.com/ToniA/arduino-heatpumpir/blob/master/GreeHeatpumpIR.h
+/// @see https://github.com/crankyoldgit/IRremoteESP8266/issues/1508
 
 #include "ir_Gree.h"
 #include <algorithm>
@@ -24,7 +25,7 @@ const uint16_t kGreeHdrSpace = 4500;  ///< See #684 & real example in unit tests
 const uint16_t kGreeBitMark = 620;
 const uint16_t kGreeOneSpace = 1600;
 const uint16_t kGreeZeroSpace = 540;
-const uint16_t kGreeMsgSpace = 19000;
+const uint16_t kGreeMsgSpace = 19980;  ///< See #1508, #386, & Kelvinator
 const uint8_t kGreeBlockFooter = 0b010;
 const uint8_t kGreeBlockFooterBits = 3;
 

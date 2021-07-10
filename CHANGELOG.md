@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 - Initial support for Tasmota Mesh (TasMesh) providing node/broker communication using ESP-NOW (#11939)
 - MQTT minimum password length restriction in GUI (#12553)
 - Command ``SetOption127 1`` to force Wifi in no-sleep mode even if ``Sleep 0`` is not enabled
+- IRremoteESP8266 library from v2.7.18 to v2.7.19
 
 ### Changed
 - ESP32 core library from v1.0.7 to v1.0.7.1
@@ -23,6 +24,8 @@ All notable changes to this project will be documented in this file.
 - Scripter moving average and sml input validation (#12541)
 - Zigbee Hue angle encoding (#12545)
 - AM2320 value reporting (#12552)
+- Exception 28 when unable to send MQTT message and a topic name without a slash '/' (#12555)
+- Wi-Fi initial setup workaround for 11n only routers (#12566)
 
 ## [9.5.0.1] 20210701
 ### Added

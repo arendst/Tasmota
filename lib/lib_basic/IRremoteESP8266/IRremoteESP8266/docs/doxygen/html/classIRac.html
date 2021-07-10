@@ -249,6 +249,9 @@ Private Member Functions</h2></td></tr>
 <tr class="memitem:aec6de0752ddd3a3e7c6824cb1b692508"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classIRac.html#aec6de0752ddd3a3e7c6824cb1b692508">hitachi424</a> (<a class="el" href="classIRHitachiAc424.html">IRHitachiAc424</a> *ac, const bool on, const <a class="el" href="namespacestdAc.html#a99ad268c783486f9b3207cb78f48444f">stdAc::opmode_t</a> mode, const float degrees, const <a class="el" href="namespacestdAc.html#a8bb0dbf18fe69f639f4ac0b3ff133383">stdAc::fanspeed_t</a> fan, const <a class="el" href="namespacestdAc.html#ac07f224c7bb47cac55dd01f24770ef43">stdAc::swingv_t</a> swingv)</td></tr>
 <tr class="memdesc:aec6de0752ddd3a3e7c6824cb1b692508"><td class="mdescLeft">&#160;</td><td class="mdescRight">Send a Hitachi 424-bit A/C message with the supplied settings.  <a href="classIRac.html#aec6de0752ddd3a3e7c6824cb1b692508">More...</a><br /></td></tr>
 <tr class="separator:aec6de0752ddd3a3e7c6824cb1b692508"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a38bd8145eecbb840bda38bb280466a17"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classIRac.html#a38bd8145eecbb840bda38bb280466a17">kelon</a> (<a class="el" href="classIRKelonAc.html">IRKelonAc</a> *ac, const bool togglePower, const <a class="el" href="namespacestdAc.html#a99ad268c783486f9b3207cb78f48444f">stdAc::opmode_t</a> mode, const int8_t dryGrade, const float degrees, const <a class="el" href="namespacestdAc.html#a8bb0dbf18fe69f639f4ac0b3ff133383">stdAc::fanspeed_t</a> fan, const bool toggleSwing, const bool superCool, const int16_t sleep)</td></tr>
+<tr class="memdesc:a38bd8145eecbb840bda38bb280466a17"><td class="mdescLeft">&#160;</td><td class="mdescRight">Send a Kelon A/C message with the supplied settings.  <a href="classIRac.html#a38bd8145eecbb840bda38bb280466a17">More...</a><br /></td></tr>
+<tr class="separator:a38bd8145eecbb840bda38bb280466a17"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6e4d8061841a7271205f81bd8e7d6171"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classIRac.html#a6e4d8061841a7271205f81bd8e7d6171">kelvinator</a> (<a class="el" href="classIRKelvinatorAC.html">IRKelvinatorAC</a> *ac, const bool on, const <a class="el" href="namespacestdAc.html#a99ad268c783486f9b3207cb78f48444f">stdAc::opmode_t</a> mode, const float degrees, const <a class="el" href="namespacestdAc.html#a8bb0dbf18fe69f639f4ac0b3ff133383">stdAc::fanspeed_t</a> fan, const <a class="el" href="namespacestdAc.html#ac07f224c7bb47cac55dd01f24770ef43">stdAc::swingv_t</a> swingv, const <a class="el" href="namespacestdAc.html#aae50ee315fa9c9ec1a4078da40d6b147">stdAc::swingh_t</a> swingh, const bool quiet, const bool turbo, const bool light, const bool filter, const bool clean)</td></tr>
 <tr class="memdesc:a6e4d8061841a7271205f81bd8e7d6171"><td class="mdescLeft">&#160;</td><td class="mdescRight">Send a Kelvinator A/C message with the supplied settings.  <a href="classIRac.html#a6e4d8061841a7271205f81bd8e7d6171">More...</a><br /></td></tr>
 <tr class="separator:a6e4d8061841a7271205f81bd8e7d6171"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -3332,6 +3335,100 @@ Private Attributes</h2></td></tr>
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>true if the protocol is supported by this class, otherwise false. </dd></dl>
+
+</div>
+</div>
+<a id="a38bd8145eecbb840bda38bb280466a17"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a38bd8145eecbb840bda38bb280466a17">&#9670;&nbsp;</a></span>kelon()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void IRac::kelon </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classIRKelonAc.html">IRKelonAc</a> *&#160;</td>
+          <td class="paramname"><em>ac</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const bool&#160;</td>
+          <td class="paramname"><em>togglePower</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="namespacestdAc.html#a99ad268c783486f9b3207cb78f48444f">stdAc::opmode_t</a>&#160;</td>
+          <td class="paramname"><em>mode</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const int8_t&#160;</td>
+          <td class="paramname"><em>dryGrade</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const float&#160;</td>
+          <td class="paramname"><em>degrees</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="namespacestdAc.html#a8bb0dbf18fe69f639f4ac0b3ff133383">stdAc::fanspeed_t</a>&#160;</td>
+          <td class="paramname"><em>fan</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const bool&#160;</td>
+          <td class="paramname"><em>toggleSwing</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const bool&#160;</td>
+          <td class="paramname"><em>superCool</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const int16_t&#160;</td>
+          <td class="paramname"><em>sleep</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Send a Kelon A/C message with the supplied settings. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in,out]</td><td class="paramname">ac</td><td>A Ptr to an <a class="el" href="classIRKelonAc.html">IRKelonAc</a> object to use. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">togglePower</td><td>Whether to toggle the unit's power </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">mode</td><td>The operation mode setting. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">dryGrade</td><td>The dehumidification intensity grade </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">degrees</td><td>The temperature setting in degrees. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">fan</td><td>The speed setting for the fan. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">toggleSwing</td><td>Whether to toggle the swing setting </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">superCool</td><td>Run the device in Super cooling mode. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">sleep</td><td>Nr. of minutes for sleep mode. -1 is Off, &gt;= 0 is on </td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>

@@ -20,6 +20,8 @@
 //   Brand: Samsung,  Model: AR12KSFPEWQNET A/C (SAMSUNG_AC)
 //   Brand: Samsung,  Model: AR12HSSDBWKNEU A/C (SAMSUNG_AC)
 //   Brand: Samsung,  Model: AR12NXCXAWKXEU A/C (SAMSUNG_AC)
+//   Brand: Samsung,  Model: AR09HSFSBWKN A/C (SAMSUNG_AC)
+//   Brand: Samsung,  Model: DB93-14195A remote (SAMSUNG_AC)
 
 #ifndef IR_SAMSUNG_H_
 #define IR_SAMSUNG_H_

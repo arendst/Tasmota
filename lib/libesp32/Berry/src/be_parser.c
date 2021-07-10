@@ -1520,7 +1520,7 @@ bclosure* be_parser_source(bvm *vm,
     mainfunc(&parser, cl);
     be_lexer_deinit(&parser.lexer);
     be_global_release_space(vm); /* clear global space */
-    be_stackpop(vm, 1);
+    be_stackpop(vm, 2); /* pop strtab */
     scan_next_token(&parser); /* clear lexer */
     return cl;
 }

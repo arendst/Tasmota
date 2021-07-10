@@ -1390,6 +1390,15 @@ jobs:
     continue-on-error: true
     steps:
     - uses: actions/checkout@v1
+    - name: Delete all files and folders
+      run: |
+        rm -rf *
+        git config --local user.name "Platformio BUILD"
+        git checkout firmware
+    - name: Display files from branch firmware
+      run: ls -R
+    - name: Remove old firmware files
+      run: rm -rf ./firmware/*
     - uses: actions/download-artifact@v2
       with:
         name: firmware
@@ -1410,7 +1419,7 @@ jobs:
         [ ! -f ./mv_firmware/firmware/tasmota-minimal.* ] || mv ./mv_firmware/firmware/tasmota-minimal.* ./firmware/tasmota/
         [ ! -f ./mv_firmware/firmware/tasmota-lite.* ] || mv ./mv_firmware/firmware/tasmota-lite.* ./firmware/tasmota/
         [ ! -f ./mv_firmware/firmware/tasmota-ir*.* ] || mv ./mv_firmware/firmware/tasmota-ir*.* ./firmware/tasmota/
-        [ ! -f ./mv_firmware/firmware/tasmota-display.* ] || mv ./mv_firmware/firmware/tasmota-display.* ./firmware/tasmota/ 
+        [ ! -f ./mv_firmware/firmware/tasmota-display.* ] || mv ./mv_firmware/firmware/tasmota-display.* ./firmware/tasmota/
         [ ! -f ./mv_firmware/firmware/tasmota-knx.* ] || mv ./mv_firmware/firmware/tasmota-knx.* ./firmware/tasmota/
         [ ! -f ./mv_firmware/firmware/tasmota-zbbridge.* ] || mv ./mv_firmware/firmware/tasmota-zbbridge.* ./firmware/tasmota/
         [ ! -f ./mv_firmware/firmware/tasmota-zigbee.* ] || mv ./mv_firmware/firmware/tasmota-zigbee.* ./firmware/tasmota/
@@ -1428,12 +1437,22 @@ jobs:
         [ ! -f ./tools/Esptool/ESP32/*.* ] || mv ./tools/Esptool/ESP32/*.* ./firmware/tasmota32/ESP32_needed_files/
         [ ! -f ./tools/Esptool/Odroid_go_and_core2/*.* ] || mv ./tools/Esptool/Odroid_go_and_core2/*.* ./firmware/tasmota32/Odroid_go_and_core2_needed_files/
         [ ! -f ./FIRMWARE.md ] || mv -f ./FIRMWARE.md ./README.md
+    - uses: actions/checkout@v2
+      with:
+        ref: release-firmware
+        path: tmp-folder
+    - name: Display files from branch release-firmware
+      run: |
+        ls -R ./tmp-folder
+        mkdir -p ./release-firmware/
+        cp -rf ./tmp-folder/firmware/* ./release-firmware/
+        rm -rf ./tmp-folder
+    - name: Display files to commit
+      run: ls -R ./*
     - name: Commit files  # transfer the new binaries back into the repository
       run: |
-        git config --local user.name "Platformio BUILD"
         git rm -r --cached .
-        git add ./README.md
-        git add -f ./firmware/*.*
+        git add -f ./*
         git commit -m "Tasmota ESP Binaries http://tasmota.com"
     - name: Push changes  # push the firmware files to branch firmware
       uses: ad-m/github-push-action@master

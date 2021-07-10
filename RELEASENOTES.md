@@ -126,6 +126,8 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - Scripter and Display MQTT errors due to MQTT_DATA move to String [#12525](https://github.com/arendst/Tasmota/issues/12525)
 - Scripter moving average and sml input validation [#12541](https://github.com/arendst/Tasmota/issues/12541)
 - Zigbee Hue angle encoding [#12545](https://github.com/arendst/Tasmota/issues/12545)
+- Exception 28 when unable to send MQTT message and a topic name without a slash '/' [#12555](https://github.com/arendst/Tasmota/issues/12555)
+- Wi-Fi initial setup workaround for 11n only routers [#12566](https://github.com/arendst/Tasmota/issues/12566)
 
 ### Noted
 - ESP32 single core **tasmota32solo1.bin** binary can only be uploaded using the GUI as OTA upload will trigger the watchdog timer

@@ -42,6 +42,49 @@ TEST(TestIRrecv, IRrecvDestructor) {
   delete irrecv_ptr;
 }
 
+TEST(TestIRrecv, DecodeHeapOverflow) {
+  // Check that we handle the rawbuf correctly when we fill it. e.g. overflow.
+  // Ref: https://github.com/crankyoldgit/IRremoteESP8266/issues/1516
+  IRrecv irrecv(1);
+  irrecv.enableIRIn();
+  ASSERT_EQ(kRawBuf, irrecv.getBufSize());
+  volatile irparams_t *params_ptr = irrecv._getParamsPtr();
+  // replace the buffer with a slightly bigger one to see if we go past the end
+  // accidentally.
+  params_ptr->rawbuf = new uint16_t[kRawBuf + 10];
+  ASSERT_EQ(kRawBuf, irrecv.getBufSize());  // Should not change.
+  // Fill the raw buffer with canaries
+  //  Values of 100 for the proper buffer size, & values of 99 for the extras
+  for (uint16_t i = 0; i < irrecv.getBufSize() + 10; i++) {
+    params_ptr->rawbuf[i] = 100;
+    if (i >= irrecv.getBufSize()) params_ptr->rawbuf[i]--;
+  }
+  ASSERT_EQ(100, params_ptr->rawbuf[kRawBuf - 1]);
+  EXPECT_EQ(99, params_ptr->rawbuf[kRawBuf]);
+  EXPECT_EQ(99, params_ptr->rawbuf[kRawBuf + 1]);
+  ASSERT_EQ(kRawBuf, params_ptr->bufsize);
+  decode_results results;
+  // Mock up the rest of params like we've received a message that has used
+  // all the rawbuf.
+  params_ptr->rawlen = kRawBuf;
+  params_ptr->overflow = true;
+  params_ptr->rcvstate = kStopState;
+  // Need to tweak results structure too.
+  results.rawbuf = params_ptr->rawbuf;
+  results.rawlen = params_ptr->rawlen;
+  results.overflow = params_ptr->overflow;
+
+  // Do the decode.
+  ASSERT_TRUE(irrecv.decode(&results));
+  // Yay, nothing exploded! Now check everything is as we expect
+  // w.r.t. the buffer.
+  ASSERT_EQ(kRawBuf, params_ptr->rawlen);
+  ASSERT_TRUE(params_ptr->overflow);
+  ASSERT_EQ(100, params_ptr->rawbuf[params_ptr->rawlen - 1]);
+  EXPECT_EQ(99, params_ptr->rawbuf[params_ptr->rawlen]);
+  EXPECT_EQ(99, params_ptr->rawbuf[params_ptr->rawlen + 1]);
+}
+
 // Tests for copyIrParams()
 
 TEST(TestCopyIrParams, CopyEmpty) {
