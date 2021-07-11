@@ -10,7 +10,7 @@ If you like **Tasmota**, give it a star, or fork it and contribute!
 [![GitHub forks](https://img.shields.io/github/forks/arendst/Tasmota.svg?style=social&label=Fork)](https://github.com/arendst/Tasmota/network)
 [![donate](https://img.shields.io/badge/donate-PayPal-blue.svg)](https://paypal.me/tasmota)
 
-See [CHANGELOG.md](https://github.com/arendst/Tasmota/blob/development/tasmota/CHANGELOG.md) for changes since last release.
+See [CHANGELOG](https://raw.githubusercontent.com/arendst/Tasmota/development/CHANGELOG.md) for changes since last release.
 
 Unless your Tasmota powered device exhibits a problem or you need to make use of a feature that is not available in the Tasmota version currently installed on your device, leave your device alone - it works so don't make unnecessary changes! If the release version (i.e., the master branch) exhibits unexpected behaviour for your device and configuration, you should upgrade to the latest development version instead to see if your problem is resolved as some bugs in previous releases or development builds may already have been resolved.
 
