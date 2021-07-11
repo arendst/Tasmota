@@ -74,6 +74,16 @@ String FormatMetricName(const char *metric) {
   return formatted;
 }
 
+// Labels can be any sequence of UTF-8 characters, but backslash, double-quote
+// and line feed must be escaped.
+String FormatLabelValue(const char *value) {
+  String formatted = value;
+  formatted.replace("\\", "\\\\");
+  formatted.replace("\"", "\\\"");
+  formatted.replace("\n", "\\n");
+  return formatted;
+}
+
 void HandleMetrics(void) {
   if (!HttpCheckPriviledgedAccess()) { return; }
 
@@ -84,8 +94,8 @@ void HandleMetrics(void) {
   char parameter[FLOATSZ];
 
   // Pseudo-metric providing metadata about the running firmware version.
-  WSContentSend_P(PSTR("# TYPE tasmota_info gauge\ntasmota_info{version=\"%s\",image=\"%s\",build_timestamp=\"%s\"} 1\n"),
-                  TasmotaGlobal.version, TasmotaGlobal.image_name, GetBuildDateAndTime().c_str());
+  WSContentSend_P(PSTR("# TYPE tasmota_info gauge\ntasmota_info{version=\"%s\",image=\"%s\",build_timestamp=\"%s\",devicename=\"%s\"} 1\n"),
+                  TasmotaGlobal.version, TasmotaGlobal.image_name, GetBuildDateAndTime().c_str(), FormatLabelValue(SettingsText(SET_DEVICENAME)).c_str());
   WSContentSend_P(PSTR("# TYPE tasmota_uptime_seconds gauge\ntasmota_uptime_seconds %d\n"), TasmotaGlobal.uptime);
   WSContentSend_P(PSTR("# TYPE tasmota_boot_count counter\ntasmota_boot_count %d\n"), Settings->bootcount);
   WSContentSend_P(PSTR("# TYPE tasmota_flash_writes_total counter\ntasmota_flash_writes_total %d\n"), Settings->save_flag);
