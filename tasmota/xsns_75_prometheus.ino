@@ -20,6 +20,13 @@
 #ifdef USE_PROMETHEUS
 /*********************************************************************************************\
  * Prometheus support
+ *
+ * The text format for metrics, labels and values is documented at [1]. Only
+ * the UTF-8 text encoding is supported.
+ *
+ * [1]
+ * https://github.com/prometheus/docs/blob/master/content/docs/instrumenting/exposition_formats.md
+ *
 \*********************************************************************************************/
 
 #define XSNS_75                    75
