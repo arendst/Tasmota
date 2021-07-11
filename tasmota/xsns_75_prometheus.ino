@@ -24,7 +24,8 @@
 
 #define XSNS_75                    75
 
-const char *UnitfromType(const char *type)  // find unit for measurment type
+// Find appropriate unit for measurement type.
+const char *UnitfromType(const char *type)
 {
   if (strcmp(type, "time") == 0) {
     return "seconds";
@@ -56,7 +57,9 @@ const char *UnitfromType(const char *type)  // find unit for measurment type
   return "";
 }
 
-String FormatMetricName(const char *metric) {  // cleanup spaces and uppercases for Prmetheus metrics conventions
+// Replace spaces and periods in metric name to match Prometheus metrics
+// convention.
+String FormatMetricName(const char *metric) {
   String formatted = metric;
   formatted.toLowerCase();
   formatted.replace(" ", "_");
@@ -135,7 +138,7 @@ void HandleMetrics(void) {
   String jsonStr = TasmotaGlobal.mqtt_data;
   JsonParser parser((char *)jsonStr.c_str());
   JsonParserObject root = parser.getRootObject();
-  if (root) { // did JSON parsing went ok?
+  if (root) { // did JSON parsing succeed?
     for (auto key1 : root) {
       JsonParserToken value1 = key1.getValue();
       if (value1.isObject()) {
@@ -160,7 +163,7 @@ void HandleMetrics(void) {
               String sensor = FormatMetricName(key1.getStr());
               String type = FormatMetricName(key2.getStr());
               const char *unit = UnitfromType(type.c_str());
-              if (strcmp(type.c_str(), "totalstarttime") != 0) {  // this metric causes prometheus of fail
+              if (strcmp(type.c_str(), "totalstarttime") != 0) {  // this metric causes Prometheus of fail
                 if (strcmp(type.c_str(), "id") == 0) {            // this metric is NaN, so convert it to a label, see Wi-Fi metrics above
                   WSContentSend_P(PSTR("# TYPE tasmota_sensors_%s_%s gauge\ntasmota_sensors_%s_%s{sensor=\"%s\",id=\"%s\"} 1\n"),
                     type.c_str(), unit, type.c_str(), unit, sensor.c_str(), value);
