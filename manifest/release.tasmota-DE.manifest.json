@@ -1,0 +1,19 @@
+{
+  "name": "Release Tasmota DE",
+  "builds": [
+    {
+      "chipFamily": "ESP32",
+      "improv": false,
+      "parts": [
+        { "path": "../static/esp32/bootloader_dout_40m.bin", "offset": 4096 },
+        { "path": "../static/esp32/partitions.bin", "offset": 32768 },
+        { "path": "../static/esp32/boot_app0.bin", "offset": 57344 },
+        { "path": "../release-release-firmware/tasmota32/languages/tasmota32-DE.bin", "offset": 65536 }
+      ]
+    },
+    {
+      "chipFamily": "ESP8266",
+      "parts": [{ "path": "../release-release-firmware/tasmota/languages/tasmota-DE.bin", "offset": 0 }]
+    }
+  ]
+}

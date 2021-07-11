@@ -1,0 +1,15 @@
+{
+  "name": "Release Tasmota32 WebCam (english)",
+  "builds": [
+    {
+      "chipFamily": "ESP32",
+      "improv": false,
+      "parts": [
+        { "path": "../static/webcam/bootloader_dout_40m.bin", "offset": 4096 },
+        { "path": "../static/webcam/partitions.bin", "offset": 32768 },
+        { "path": "../static/webcam/boot_app0.bin", "offset": 57344 },
+        { "path": "../release-firmware/tasmota32/tasmota32-webcam.bin", "offset": 65536 }
+      ]
+    }
+  ]
+}
