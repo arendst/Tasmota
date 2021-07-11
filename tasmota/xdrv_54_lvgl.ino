@@ -401,11 +401,11 @@ void start_lvgl(const char * uconfig) {
 #ifdef USE_BERRY
   lv_obj_set_style_local_bg_color(lv_scr_act(), LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, lv_color_from_uint32(USE_LVGL_BG_DEFAULT));
   lv_obj_set_style_local_bg_opa(lv_scr_act(), LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, LV_OPA_COVER);
-#endif
 
 #if LV_USE_LOG
   lv_log_register_print_cb(lvbe_debug);
 #endif // LV_USE_LOG
+#endif
 
 #ifdef USE_UFILESYS
   // Add file system mapping
