@@ -1,5 +1,5 @@
 {
-  "name": "Release Tasmota Display",
+  "name": "Development Tasmota ES",
   "builds": [
     {
       "chipFamily": "ESP32",
@@ -8,12 +8,12 @@
         { "path": "../static/esp32/bootloader_dout_40m.bin", "offset": 4096 },
         { "path": "../static/esp32/partitions.bin", "offset": 32768 },
         { "path": "../static/esp32/boot_app0.bin", "offset": 57344 },
-        { "path": "../release-firmware/tasmota32/tasmota32-display.bin", "offset": 65536 }
+        { "path": "../firmware/tasmota32/languages/tasmota32-ES.bin", "offset": 65536 }
       ]
     },
     {
       "chipFamily": "ESP8266",
-      "parts": [{ "path": "../release-firmware/tasmota/tasmota-display.bin", "offset": 0 }]
+      "parts": [{ "path": "../firmware/tasmota/languages/tasmota-ES.bin", "offset": 0 }]
     }
   ]
 }

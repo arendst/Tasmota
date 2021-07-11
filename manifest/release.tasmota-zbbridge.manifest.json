@@ -1,0 +1,9 @@
+{
+  "name": "Release Tasmota KNX",
+  "builds": [
+    {
+      "chipFamily": "ESP8266",
+      "parts": [{ "path": "../release-firmware/tasmota/tasmota-knx.bin", "offset": 0 }]
+    }
+  ]
+}

@@ -1,5 +1,5 @@
 {
-  "name": "Release Tasmota",
+  "name": "Release Tasmota (english)",
   "builds": [
     {
       "chipFamily": "ESP32",
