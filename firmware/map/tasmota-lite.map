@@ -29223,20 +29223,20 @@ END GROUP
  *fill*         0x000000004026b43d        0x3 
  .irom.text.tasmota.ino.85.186
                 0x000000004026b440        0xc .pio/build/tasmota-lite/src/tasmota.ino.cpp.o
- .irom.text.tasmota_template.h.2345.183
+ .irom.text.tasmota_template.h.2347.183
                 0x000000004026b44c       0x54 .pio/build/tasmota-lite/src/tasmota.ino.cpp.o
- .irom.text.tasmota_template.h.1277.182
+ .irom.text.tasmota_template.h.1279.182
                 0x000000004026b4a0      0x2a0 .pio/build/tasmota-lite/src/tasmota.ino.cpp.o
- .irom.text.tasmota_template.h.1195.181
+ .irom.text.tasmota_template.h.1197.181
                 0x000000004026b740       0x4b .pio/build/tasmota-lite/src/tasmota.ino.cpp.o
- .irom.text.tasmota_template.h.1078.180
+ .irom.text.tasmota_template.h.1080.180
                 0x000000004026b78b       0x40 .pio/build/tasmota-lite/src/tasmota.ino.cpp.o
- .irom.text.tasmota_template.h.1067.179
+ .irom.text.tasmota_template.h.1069.179
                 0x000000004026b7cb      0x35e .pio/build/tasmota-lite/src/tasmota.ino.cpp.o
  *fill*         0x000000004026bb29        0x1 
  .irom.text.tasmota_template_legacy.h.257.178
                 0x000000004026bb2a      0x1b2 .pio/build/tasmota-lite/src/tasmota.ino.cpp.o
- .irom.text.tasmota_template.h.954.177
+ .irom.text.tasmota_template.h.956.177
                 0x000000004026bcdc       0x25 .pio/build/tasmota-lite/src/tasmota.ino.cpp.o
  *fill*         0x000000004026bd01        0x1 
  .irom.text.tasmota_template.h.372.175
