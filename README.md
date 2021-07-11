@@ -14,8 +14,6 @@ See [CHANGELOG](https://github.com/arendst/Tasmota/blob/development/CHANGELOG.md
 
 Easy initial installation of Tasmota via **[Tasmota WebFlasher](https://arendst.github.io/Tasmota/)**. The actual development binaries are available together with the latest release version. It is important to note that development binaries are based on the current codebase. These commits are tested as much as is possible and are typically quite stable. However, it is infeasible to test on the hundreds of different types of devices with all the available configuration options permitted.
 
-Note that there is a chance, as with any upgrade, that the device may not function as expected. You must always account for the possibility that you may need to flash the device via the serial programming interface if the OTA upgrade fails. Even with the master release, you should always attempt to test the device or a similar prototype before upgrading a device which is in production or is hard to reach. And, as always, make a backup of the device configuration before beginning any firmware update.
-
 ## Disclaimer
 
 :warning: **DANGER OF ELECTROCUTION** :warning:
