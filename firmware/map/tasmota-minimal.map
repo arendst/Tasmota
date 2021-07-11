@@ -25923,15 +25923,15 @@ END GROUP
  *fill*         0x00000000402540c9        0x3 
  .irom.text.tasmota.ino.85.186
                 0x00000000402540cc        0xc .pio/build/tasmota-minimal/src/tasmota.ino.cpp.o
- .irom.text.tasmota_template.h.2345.183
+ .irom.text.tasmota_template.h.2347.183
                 0x00000000402540d8       0x54 .pio/build/tasmota-minimal/src/tasmota.ino.cpp.o
- .irom.text.tasmota_template.h.1277.182
+ .irom.text.tasmota_template.h.1279.182
                 0x000000004025412c      0x2a0 .pio/build/tasmota-minimal/src/tasmota.ino.cpp.o
- .irom.text.tasmota_template.h.1195.181
+ .irom.text.tasmota_template.h.1197.181
                 0x00000000402543cc       0x4b .pio/build/tasmota-minimal/src/tasmota.ino.cpp.o
- .irom.text.tasmota_template.h.1078.180
+ .irom.text.tasmota_template.h.1080.180
                 0x0000000040254417       0x3e .pio/build/tasmota-minimal/src/tasmota.ino.cpp.o
- .irom.text.tasmota_template.h.1067.179
+ .irom.text.tasmota_template.h.1069.179
                 0x0000000040254455      0x35e .pio/build/tasmota-minimal/src/tasmota.ino.cpp.o
  *fill*         0x00000000402547b3        0x1 
  .irom.text.tasmota_template_legacy.h.257.178
