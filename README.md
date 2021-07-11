@@ -12,7 +12,7 @@ If you like **Tasmota**, give it a star, or fork it and contribute!
 
 See [CHANGELOG](https://github.com/arendst/Tasmota/blob/development/CHANGELOG.md) for changes since last release.
 
-Easy initial installation of Tasmota via **[Tasmota WebFlasher](https://arendst.github.io/Tasmota/)**. The actual development binaries are available together with the latest release version. It is important to note that development binaries are based on the current codebase. These commits are tested as much as is possible and are typically quite stable. However, it is infeasible to test on the hundreds of different types of devices with all the available configuration options permitted.
+Easy initial installation of Tasmota via **[Tasmota WebInstaller](https://arendst.github.io/Tasmota/)**. The actual development binaries are available together with the latest release version. It is important to note that development binaries are based on the current codebase. These commits are tested as much as is possible and are typically quite stable. However, it is infeasible to test on the hundreds of different types of devices with all the available configuration options permitted.
 
 ## Disclaimer
 
