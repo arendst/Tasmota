@@ -3610,6 +3610,7 @@ void IRDaikin64::setMode(const uint8_t mode) {
     case kDaikin64Fan:
     case kDaikin64Dry:
     case kDaikin64Cool:
+    case kDaikin64Heat:
       _.Mode = mode;
       break;
     default:
@@ -3624,7 +3625,8 @@ uint8_t IRDaikin64::convertMode(const stdAc::opmode_t mode) {
   switch (mode) {
     case stdAc::opmode_t::kDry: return kDaikin64Dry;
     case stdAc::opmode_t::kFan: return kDaikin64Fan;
-    default: return kDaikinCool;
+    case stdAc::opmode_t::kHeat: return kDaikin64Heat;
+    default: return kDaikin64Cool;
   }
 }
 
@@ -3634,6 +3636,7 @@ uint8_t IRDaikin64::convertMode(const stdAc::opmode_t mode) {
 stdAc::opmode_t IRDaikin64::toCommonMode(const uint8_t mode) {
   switch (mode) {
     case kDaikin64Cool: return stdAc::opmode_t::kCool;
+    case kDaikin64Heat: return stdAc::opmode_t::kHeat;
     case kDaikin64Dry:  return stdAc::opmode_t::kDry;
     case kDaikin64Fan:  return stdAc::opmode_t::kFan;
     default: return stdAc::opmode_t::kAuto;
@@ -3817,7 +3820,7 @@ String IRDaikin64::toString(void) const {
   result.reserve(120);  // Reserve some heap for the string to reduce fragging.
   result += addBoolToString(_.Power, kPowerToggleStr, false);
   result += addModeToString(_.Mode, 0xFF, kDaikin64Cool,
-                            0xFF, kDaikin64Dry, kDaikin64Fan);
+                            kDaikin64Heat, kDaikin64Dry, kDaikin64Fan);
   result += addTempToString(getTemp());
   if (!getTurbo()) {
     result += addFanToString(_.Fan, kDaikin64FanHigh, kDaikin64FanLow,

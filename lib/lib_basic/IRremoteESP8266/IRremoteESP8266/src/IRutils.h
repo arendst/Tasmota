@@ -20,6 +20,7 @@ const uint8_t kHighNibble = 4;
 const uint8_t kModeBitsSize = 3;
 uint64_t reverseBits(uint64_t input, uint16_t nbits);
 String uint64ToString(uint64_t input, uint8_t base = 10);
+String int64ToString(int64_t input, uint8_t base = 10);
 String typeToString(const decode_type_t protocol,
                     const bool isRepeat = false);
 void serialPrintUint64(uint64_t input, uint8_t base = 10);
@@ -49,6 +50,8 @@ namespace irutils {
                          const bool precomma = true);
   String addIntToString(const uint16_t value, const String label,
                         const bool precomma = true);
+  String addSignedIntToString(const int16_t value, const String label,
+                              const bool precomma = true);
   String modelToStr(const decode_type_t protocol, const int16_t model);
   String addModelToString(const decode_type_t protocol, const int16_t model,
                           const bool precomma = true);

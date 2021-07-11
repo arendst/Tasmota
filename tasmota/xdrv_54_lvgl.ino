@@ -42,6 +42,7 @@ Adafruit_LvGL_Glue * glue;
 // Logging
 // **************************************************
 #if LV_USE_LOG
+#ifdef USE_BERRY
 static void lvbe_debug(lv_log_level_t level, const char *file, uint32_t line, const char *fname, const char *msg);
 static void lvbe_debug(lv_log_level_t level, const char *file, uint32_t line, const char *fname, const char *msg) {
   be_writebuffer("LVG: ", sizeof("LVG: "));
@@ -50,6 +51,7 @@ static void lvbe_debug(lv_log_level_t level, const char *file, uint32_t line, co
   be_writebuffer(msg, strlen(msg));
   be_writebuffer("\n", sizeof("\n"));
 }
+#endif
 #endif
 
 /************************************************************
@@ -399,11 +401,11 @@ void start_lvgl(const char * uconfig) {
 #ifdef USE_BERRY
   lv_obj_set_style_local_bg_color(lv_scr_act(), LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, lv_color_from_uint32(USE_LVGL_BG_DEFAULT));
   lv_obj_set_style_local_bg_opa(lv_scr_act(), LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, LV_OPA_COVER);
-#endif
 
 #if LV_USE_LOG
   lv_log_register_print_cb(lvbe_debug);
 #endif // LV_USE_LOG
+#endif
 
 #ifdef USE_UFILESYS
   // Add file system mapping

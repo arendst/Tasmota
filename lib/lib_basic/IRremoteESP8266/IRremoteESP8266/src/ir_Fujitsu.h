@@ -158,8 +158,8 @@ const uint16_t kFujitsuAcTimerMax = 12 * 60;  ///< Minutes.
 #define FUJITSU_AC_FAN_MED kFujitsuAcFanMed
 #define FUJITSU_AC_FAN_LOW kFujitsuAcFanLow
 #define FUJITSU_AC_FAN_QUIET kFujitsuAcFanQuiet
-#define FUJITSU_AC_MIN_TEMP kFujitsuAcMinTempC
-#define FUJITSU_AC_MAX_TEMP kFujitsuAcMaxTempC
+#define FUJITSU_AC_MIN_TEMP kFujitsuAcMinTemp
+#define FUJITSU_AC_MAX_TEMP kFujitsuAcMaxTemp
 #define FUJITSU_AC_SWING_OFF kFujitsuAcSwingOff
 #define FUJITSU_AC_SWING_VERT kFujitsuAcSwingVert
 #define FUJITSU_AC_SWING_HORIZ kFujitsuAcSwingHoriz
