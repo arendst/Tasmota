@@ -230,7 +230,7 @@ void be_check_arg_type(bvm *vm, int32_t argc, const char * arg_type, int32_t p[5
 void be_check_arg_type(bvm *vm, int32_t argc, const char * arg_type, int32_t p[5]) {
   bool arg_type_check = (arg_type != nullptr);      // is type checking activated
   int32_t arg_idx = 0;    // position in arg_type string
-  char type_short_name[16];
+  char type_short_name[32];
 
   for (uint32_t i = 0; i < argc; i++) {
     type_short_name[0] = 0;   // clear string
@@ -300,8 +300,8 @@ extern "C" {
     fn_any_callable f = (fn_any_callable) func;
     // AddLog(LOG_LEVEL_INFO, ">> be_call_c_func(%p) - %p,%p,%p,%p,%p", f, p[0], p[1], p[2], p[3], p[4]);
     lv_obj_t * obj;
-    if ((int32_t)obj1 == -1) {  // special semantics of first ptr is -1, then just encapsulate
-      obj = obj2;
+    if ((int32_t)obj2 == -1) {  // special semantics if second ptr is -1, then just encapsulate
+      obj = obj1;
     } else {                    // otherwise call the LVGL creator
       obj = (lv_obj_t*) (*f)((int32_t)obj1, (int32_t)obj2, 0, 0, 0);
     }
@@ -393,7 +393,7 @@ extern "C" {
 
     fn_any_callable f = (fn_any_callable) func;
     be_check_arg_type(vm, argc, arg_type, p);
-    // AddLog(LOG_LEVEL_INFO, ">> be_call_c_func(%p) - %p,%p,%p,%p,%p - %s", f, p[0], p[1], p[2], p[3], p[4], return_type);
+    // berry_log_C(">> be_call_c_func(%p) - %p,%p,%p,%p,%p - %s", f, p[0], p[1], p[2], p[3], p[4], return_type ? return_type : "NULL");
     int32_t ret = (*f)(p[0], p[1], p[2], p[3], p[4]);
     // AddLog(LOG_LEVEL_INFO, ">> be_call_c_func, ret = %p", ret);
     if ((return_type == nullptr) || (strlen(return_type) == 0))       { be_return_nil(vm); }  // does not return
@@ -403,14 +403,15 @@ extern "C" {
         case 'i':   be_pushint(vm, ret); break;
         case 'b':   be_pushbool(vm, ret);  break;
         case 's':   be_pushstring(vm, (const char*) ret);  break;
+        case 'c':   be_pushint(vm, ret); break; // TODO missing 'c' general callback type
         default:    be_raise(vm, "internal_error", "Unsupported return type"); break;
       }
       be_return(vm);
     } else { // class name
       // AddLog(LOG_LEVEL_INFO, ">> be_call_c_func, create_obj", ret);
       be_getglobal(vm, return_type);  // stack = class
-      be_pushcomptr(vm, (void*) -1);         // stack = class, -1
-      be_pushcomptr(vm, (void*) ret);         // stack = class, -1, ptr
+      be_pushcomptr(vm, (void*) ret);         // stack = class, ptr
+      be_pushcomptr(vm, (void*) -1);         // stack = class, ptr, -1
       be_call(vm, 2);                 // instanciate with 2 arguments, stack = instance, -1, ptr
       be_pop(vm, 2);                  // stack = instance
       be_return(vm);
@@ -949,7 +950,7 @@ extern "C" {
   int lvx_tostring(bvm *vm) {
     lv_obj_t * obj = (lv_obj_t*) lv_get_arg(vm, 1);
     const char * classname = be_classname(vm, 1);
-    char s[32];
+    char s[48];
     snprintf(s, sizeof(s), "<instance: %s(0x%08X)>", classname, obj);
     be_pushnstring(vm, s, strlen(s)); /* make escape string from buffer */
     be_return(vm);
@@ -1006,6 +1007,19 @@ extern "C" {
     be_return(vm);
   }
 }
+
+// ======================================================================
+// Patch for ill-named functions
+// ======================================================================
+
+extern "C" {
+  // lv_signal_send should be renamed lv_obj_signal_send
+  // lv_res_t lv_signal_send(lv_obj_t * obj, lv_signal_t signal, void * param);
+  lv_res_t lv_obj_signal_send(lv_obj_t * obj, lv_signal_t signal, void * param) {
+    return lv_signal_send(obj, signal, param);
+  }
+}
+
 
 #include "lvgl_berry/be_lv_c_mapping.h"
 
