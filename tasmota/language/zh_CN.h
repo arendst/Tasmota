@@ -198,6 +198,8 @@
 #define D_WEIGHT "重量"
 #define D_WARMLIGHT "暖"
 #define D_WEB_SERVER "Web Server"
+#define D_SOC "State of Charge"
+#define D_SOH "State of Health"
 
 // tasmota.ino
 #define D_WARNING_MINIMAL_VERSION "警告：精简固件不支持持久保存设置"
@@ -831,6 +833,7 @@
 #define D_SENSOR_ZEROCROSS     "ZC Pulse"
 #define D_SENSOR_HALLEFFECT    "HallEffect"
 #define D_SENSOR_EPD_DATA      "EPD Data"
+#define D_SENSOR_MCP2515_CS    "MCP2515 CS"
 
 // Units
 #define D_UNIT_AMPERE "A"

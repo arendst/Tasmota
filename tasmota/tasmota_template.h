@@ -158,6 +158,7 @@ enum UserSelectablePins {
   GPIO_MAX7219CLK, GPIO_MAX7219DIN, GPIO_MAX7219CS, // MAX7219 interface
   GPIO_TFMINIPLUS_TX, GPIO_TFMINIPLUS_RX,  // TFmini Plus ToF sensor
   GPIO_ZEROCROSS,
+  GPIO_MCP2515_CS,                 // MCP2515 Chip Select
 #ifdef ESP32
   GPIO_HALLEFFECT,
   GPIO_EPD_DATA,                       // Base connection EPD driver
@@ -347,6 +348,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_MAX7219_CLK "|" D_SENSOR_MAX7219_DIN "|" D_SENSOR_MAX7219_CS "|"
   D_SENSOR_TFMINIPLUS_TX "|" D_SENSOR_TFMINIPLUS_RX "|"
   D_SENSOR_ZEROCROSS "|"
+  D_SENSOR_MCP2515_CS "|"
 #ifdef ESP32
   D_SENSOR_HALLEFFECT "|"
   D_SENSOR_EPD_DATA "|"
@@ -459,6 +461,9 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_SDCARD
   AGPIO(GPIO_SDCARD_CS),
 #endif  // USE_SDCARD
+#ifdef USE_MCP2515
+  AGPIO(GPIO_MCP2515_CS)
+#endif  // USE_MCP2515
 #endif  // USE_SPI
 
   AGPIO(GPIO_SSPI_MISO),      // Software SPI Master Input Client Output
