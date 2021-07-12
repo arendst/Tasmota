@@ -27,24 +27,47 @@ extern int lv0_screenshot(bvm *vm);
 static int lv_get_hor_res(void) {
   return lv_disp_get_hor_res(lv_disp_get_default());
 }
-static int lv_get_ver_res(bvm *vm) {
+static int lv_get_ver_res(void) {
   return lv_disp_get_ver_res(lv_disp_get_default());
 }
 
 /* `lv` methods */
 const lvbe_call_c_t lv_func[] = {
-  // resolution
+
+  { "draw_arc", (void*) &lv_draw_arc, "", "iiiii(lv_area)(lv_draw_line_dsc)" },
+  { "draw_img", (void*) &lv_draw_img, "", "(lv_area)(lv_area).(lv_draw_img_dsc)" },
+  { "draw_img_dsc_init", (void*) &lv_draw_img_dsc_init, "", "(lv_draw_img_dsc)" },
+  { "draw_label", (void*) &lv_draw_label, "", "(lv_area)(lv_area)(lv_draw_label_dsc)s(lv_draw_label_hint)" },
+  { "draw_label_dsc_init", (void*) &lv_draw_label_dsc_init, "", "(lv_draw_label_dsc)" },
+  { "draw_line", (void*) &lv_draw_line, "", "(lv_point)(lv_point)(lv_area)(lv_draw_line_dsc)" },
+  { "draw_line_dsc_init", (void*) &lv_draw_line_dsc_init, "", "(lv_draw_line_dsc)" },
+  { "draw_mask_add", (void*) &lv_draw_mask_add, "i", ".." },
+  { "draw_mask_angle_init", (void*) &lv_draw_mask_angle_init, "", "(lv_draw_mask_angle_param)iiii" },
+  { "draw_mask_fade_init", (void*) &lv_draw_mask_fade_init, "", "(lv_draw_mask_fade_param)(lv_area)iiii" },
+  { "draw_mask_get_cnt", (void*) &lv_draw_mask_get_cnt, "i", "" },
+  { "draw_mask_line_angle_init", (void*) &lv_draw_mask_line_angle_init, "", "(lv_draw_mask_line_param)iii(lv_draw_mask_line_side)" },
+  { "draw_mask_line_points_init", (void*) &lv_draw_mask_line_points_init, "", "(lv_draw_mask_line_param)iiii(lv_draw_mask_line_side)" },
+  { "draw_mask_map_init", (void*) &lv_draw_mask_map_init, "", "(lv_draw_mask_map_param)(lv_area)(lv_opa)" },
+  { "draw_mask_radius_init", (void*) &lv_draw_mask_radius_init, "", "(lv_draw_mask_radius_param)(lv_area)ib" },
+  { "draw_mask_remove_custom", (void*) &lv_draw_mask_remove_custom, ".", "." },
+  { "draw_mask_remove_id", (void*) &lv_draw_mask_remove_id, ".", "i" },
+  { "draw_polygon", (void*) &lv_draw_polygon, "", "ii(lv_area)(lv_draw_rect_dsc)" },
+  { "draw_px", (void*) &lv_draw_px, "", "(lv_point)(lv_area)(lv_style)" },
+  { "draw_rect", (void*) &lv_draw_rect, "", "(lv_area)(lv_area)(lv_draw_rect_dsc)" },
+  { "draw_triangle", (void*) &lv_draw_triangle, "", "i(lv_area)(lv_draw_rect_dsc)" },
+  { "event_get_data", (void*) &lv_event_get_data, ".", "" },
+  { "event_send", (void*) &lv_event_send, "i", "(lv_obj)i." },
+  { "event_send_refresh", (void*) &lv_event_send_refresh, "i", "(lv_obj)" },
+  { "event_send_refresh_recursive", (void*) &lv_event_send_refresh_recursive, "", "(lv_obj)" },
   { "get_hor_res", (void*) &lv_get_hor_res, "i", "" },
   { "get_ver_res", (void*) &lv_get_ver_res, "i", "" },
-
-  // layers
   { "layer_sys", (void*) &lv_layer_sys, "lv_obj", "" },
   { "layer_top", (void*) &lv_layer_top, "lv_obj", "" },
-
-  // screens
   { "scr_act", (void*) &lv_scr_act, "lv_obj", "" },
   { "scr_load", (void*) &lv_scr_load, "", "(lv_obj)" },
-  { "scr_load_anim", (void*) &lv_scr_load_anim, "", "(lv_obj)iiib" },
+  { "scr_load_anim", (void*) &lv_scr_load_anim, "", "(lv_obj)(lv_scr_load_anim)iib" },
+  { "signal_send", (void*) &lv_signal_send, "i", "(lv_obj)i." },
+
 };
 const size_t lv_func_size = sizeof(lv_func) / sizeof(lv_func[0]);
 
@@ -160,6 +183,19 @@ const be_constint_t lv0_constants[] = {
     { "DRAG_DIR_HOR", LV_DRAG_DIR_HOR },
     { "DRAG_DIR_ONE", LV_DRAG_DIR_ONE },
     { "DRAG_DIR_VER", LV_DRAG_DIR_VER },
+    { "DRAW_MASK_LINE_SIDE_BOTTOM", LV_DRAW_MASK_LINE_SIDE_BOTTOM },
+    { "DRAW_MASK_LINE_SIDE_LEFT", LV_DRAW_MASK_LINE_SIDE_LEFT },
+    { "DRAW_MASK_LINE_SIDE_RIGHT", LV_DRAW_MASK_LINE_SIDE_RIGHT },
+    { "DRAW_MASK_LINE_SIDE_TOP", LV_DRAW_MASK_LINE_SIDE_TOP },
+    { "DRAW_MASK_RES_CHANGED", LV_DRAW_MASK_RES_CHANGED },
+    { "DRAW_MASK_RES_FULL_COVER", LV_DRAW_MASK_RES_FULL_COVER },
+    { "DRAW_MASK_RES_TRANSP", LV_DRAW_MASK_RES_TRANSP },
+    { "DRAW_MASK_RES_UNKNOWN", LV_DRAW_MASK_RES_UNKNOWN },
+    { "DRAW_MASK_TYPE_ANGLE", LV_DRAW_MASK_TYPE_ANGLE },
+    { "DRAW_MASK_TYPE_FADE", LV_DRAW_MASK_TYPE_FADE },
+    { "DRAW_MASK_TYPE_LINE", LV_DRAW_MASK_TYPE_LINE },
+    { "DRAW_MASK_TYPE_MAP", LV_DRAW_MASK_TYPE_MAP },
+    { "DRAW_MASK_TYPE_RADIUS", LV_DRAW_MASK_TYPE_RADIUS },
     { "DROPDOWN_DIR_DOWN", LV_DROPDOWN_DIR_DOWN },
     { "DROPDOWN_DIR_LEFT", LV_DROPDOWN_DIR_LEFT },
     { "DROPDOWN_DIR_RIGHT", LV_DROPDOWN_DIR_RIGHT },
@@ -496,11 +532,7 @@ const be_constint_t lv0_constants[] = {
 };
 
 const size_t lv0_constants_size = sizeof(lv0_constants)/sizeof(lv0_constants[0]);
-
-
 #if !BE_USE_PRECOMPILED_OBJECT
-//#if 1           // TODO we will do pre-compiled later
-
 
 be_native_module_attr_table(lvgl) {
     // Symbols    
@@ -582,8 +614,6 @@ be_native_module_attr_table(lvgl) {
     be_native_module_function("load_freetype_font", lv0_load_freetype_font),
 
     be_native_module_function("screenshot", lv0_screenshot),
-
-
 };
 
 be_define_native_module(lvgl, NULL);
@@ -729,9 +759,6 @@ module lvgl (scope: global) {
     load_freetype_font, func(lv0_load_freetype_font)
 
     screenshot, func(lv0_screenshot)
-
-
-
 }
 @const_object_info_end */
 #include "../generate/be_fixed_lvgl.h"
