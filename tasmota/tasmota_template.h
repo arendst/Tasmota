@@ -158,7 +158,7 @@ enum UserSelectablePins {
   GPIO_MAX7219CLK, GPIO_MAX7219DIN, GPIO_MAX7219CS, // MAX7219 interface
   GPIO_TFMINIPLUS_TX, GPIO_TFMINIPLUS_RX,  // TFmini Plus ToF sensor
   GPIO_ZEROCROSS,
-  GPIO_MCP2515_CS,                 // MCP2515 Chip Select
+  GPIO_MCP2515_CS,                     // MCP2515 Chip Select
 #ifdef ESP32
   GPIO_HALLEFFECT,
   GPIO_EPD_DATA,                       // Base connection EPD driver
@@ -462,7 +462,7 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_SDCARD_CS),
 #endif  // USE_SDCARD
 #ifdef USE_MCP2515
-  AGPIO(GPIO_MCP2515_CS)
+  AGPIO(GPIO_MCP2515_CS),
 #endif  // USE_MCP2515
 #endif  // USE_SPI
 

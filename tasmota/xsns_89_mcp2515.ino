@@ -47,8 +47,8 @@
   #define MCP2515_CLOCK  MCP_8MHZ
 #endif
 
-#ifndef MCP2515_MAX_MSG
-  #define MCP2515_MAX_MSG 14
+#ifndef MCP2515_MAX_FRAMES
+  #define MCP2515_MAX_FRAMES 14
 #endif
 
 #ifndef MCP2515_BMS_CLIENT
@@ -60,11 +60,11 @@
 #endif // MCP2515_BMS_CLIENT
 
 #ifdef MCP2515_BMS_CLIENT
-  struct BMS_Struct {
+struct BMS_Struct {
   uint16_t  stateOfCharge;
   uint16_t  stateOfHealth;
   float     battVoltage;
-  float     battMilliAmp;
+  float     battAmp = 0;
   float     battTemp;
   char      name[17];
 } bms;
@@ -72,66 +72,110 @@
 
 int8_t mcp2515_init_status = 1;
 
-struct can_frame canMsg;
-MCP2515 mcp2515;
+struct can_frame canFrame;
+MCP2515 *mcp2515 = nullptr;
+
+char c2h(char c)
+{
+  return "0123456789ABCDEF"[0x0F & (unsigned char)c];
+}
 
 void MCP2515_Init(void) {
   mcp2515 = new MCP2515(5);
-  if (MCP2515::ERROR_OK != mcp2515.reset()) {
+  if (MCP2515::ERROR_OK != mcp2515->reset()) {
     AddLog(LOG_LEVEL_ERROR, PSTR("MCP2515: Failed to reset module"));
     mcp2515_init_status = 0;
   }
 
-  if (MCP2515::ERROR_OK != mcp2515.setBitrate(CAN_500KBPS, MCP_8MHZ)) {
-    AddLog(LOG_LEVEL_ERROR, PSTR("MCP2515: Failed to set module bitrate");
+  if (MCP2515::ERROR_OK != mcp2515->setBitrate(MCP2515_BITRATE, MCP2515_CLOCK)) {
+    AddLog(LOG_LEVEL_ERROR, PSTR("MCP2515: Failed to set module bitrate"));
     mcp2515_init_status = 0;
   }
   
-  if (mcp2515_init_status && MCP2515::ERROR_OK != mcp2515.setNormalMode()) {
-    AddLog(LOG_LEVEL_ERROR, PSTR("MCP2515: Failed to set normal mode");
+  if (mcp2515_init_status && MCP2515::ERROR_OK != mcp2515->setNormalMode()) {
+    AddLog(LOG_LEVEL_ERROR, PSTR("MCP2515: Failed to set normal mode"));
     mcp2515_init_status = 0;
   }
 }
 
 void MCP2515_Read() {
   uint8_t nCounter = 0;
-  while (mcp2515.checkReceive() && nCounter <= MCP2515_MAX_MSG) {
-    nCounter++;
-    if (mcp2515.readMessage(&canMsg) == MCP2515::ERROR_OK) {
+  bool checkRcv;
+  if(mcp2515_init_status) {
+
+    checkRcv = mcp2515->checkReceive();
+
+    while (checkRcv && nCounter <= MCP2515_MAX_FRAMES) {
+      mcp2515->checkReceive();
+      nCounter++;
+      if (mcp2515->readMessage(&canFrame) == MCP2515::ERROR_OK) {
 #ifdef MCP2515_BMS_CLIENT
   #ifdef MCP2515_BMS_FREEDWON
-    switch(canMsg.can_id) {
-      case 0x355:
-        bms.stateOfCharge = canMsg.data[1] << 8 + canMsg.data[0];
-        bms.stateOfHealth = canMsg.data[3] << 8 + canMsg.data[2];
-        break;
-      case 0x356:
-        bms.battVoltage = (canMsg.data[1] << 8 + canMsg.data[0])/100;
-        bms.battMilliAmp = (canMsg.data[3] << 8 + canMsg.data[2])*100;
-        bms.battTemp = ConvertTemp((canMsg.data[5] << 8 + canMsg.data[4])/10); // Convert to fahrenheit if SetOpion8 is set
-        break;
-      case 0x370:
-      case 0x371:
-        for(int i = 0; i < canMsg.can_dlc; i++) {
-          bms.name[i + (8 * canMsg.can_id & 0x1)] = canMsg.data[i]; // If can_id is 0x371 then fill from byte 8 onwards
-        }
-        bms.name[16] = 0; // Ensure that name is null terminated
-        break;
-      default:
-        String canMsg;
-        for(int i = 0; i < canMsg.can_dlc; i++) {
-          canMsg += String(canMsg.data[i], HEX);
-        }
-        AddLog(LOG_LEVEL_DEBUG, PSTR("MCP2515: Received message 0x%s from ID 0x%X", canMsg, canMsg.can_id);
-        break;
-    }
+      switch(canFrame.can_id) {
+        // Charge/Discharge parameters
+        case 0x351:
+          break;
+        // State of Charge/Health
+        case 0x355:
+          if(6 >= canFrame.can_dlc) {
+            bms.stateOfCharge = (canFrame.data[1] << 8) + canFrame.data[0];
+            bms.stateOfHealth = (canFrame.data[3] << 8) + canFrame.data[2];
+          } else {
+            AddLog(LOG_LEVEL_DEBUG, PSTR("MCP2515: Unexpected length (%d) for ID 0x355"), canFrame.can_dlc);
+          }
+          break;
+        // Voltage/Current/Temperature
+        case 0x356:
+          if(6 >= canFrame.can_dlc) {
+            bms.battVoltage = (float)((canFrame.data[1] << 8) + canFrame.data[0])/100;
+            bms.battAmp = (float)((canFrame.data[3] << 8) + canFrame.data[2])/10;
+            bms.battTemp = ConvertTemp((float)((canFrame.data[5] << 8) + canFrame.data[4])/10); // Convert to fahrenheit if SetOpion8 is set
+          } else {
+            AddLog(LOG_LEVEL_DEBUG, PSTR("MCP2515: Unexpected length (%d) for ID 0x356"), canFrame.can_dlc);
+          }
+          break;
+        // Battery / BMS name
+        case 0x370:
+        case 0x371:
+          for(int i = 0; i < canFrame.can_dlc; i++) {
+            uint8_t nameStrPos = i + ((canFrame.can_id & 0x1) * 8); // If can_id is 0x371 then fill from byte 8 onwards
+            bms.name[nameStrPos] = canFrame.data[i];
+          }
+          bms.name[16] = 0; // Ensure that name is null terminated
+          break;
+        // Modules status
+        case 0x372:
+        // Min. cell voltage id string
+        case 0x374:
+        // Min. cell temperature id string
+        case 0x376:
+        // Installed capacity
+        case 0x379:
+        // Serial number
+        case 0x380:
+        case 0x381:
+          break;
+        default:
+          char canMsg[17];
+          canMsg[0] = 0;
+          for(int i = 0; i < canFrame.can_dlc; i++) {
+            canMsg[i*2] = c2h(canFrame.data[i]>>4);
+            canMsg[i*2+1] = c2h(canFrame.data[i]);
+          }
+          if(canFrame.can_dlc > 0) {
+            canMsg[(canFrame.can_dlc - 1) * 2 + 2] = 0;
+          }
+          AddLog(LOG_LEVEL_DEBUG, PSTR("MCP2515: Received message 0x%s from ID 0x%X"), canMsg, (uint32_t)canFrame.can_id);
+          break;
+      }
   #endif // MCP2515_BMS_FREEDWON
 #endif // MCP2515_BMS_CLIENT
-    } else if(mcp2515.checkError()) {
-      uint8_t errFlags = mcp2515.getErrorFlags();
-        mcp2515.clearRXnOVRFlags();
-        AddLog(LOG_LEVEL_DEBUG, PSTR("MCP2515: Received error %d", errFlags);
-        break;
+      } else if(mcp2515->checkError()) {
+        uint8_t errFlags = mcp2515->getErrorFlags();
+          mcp2515->clearRXnOVRFlags();
+          AddLog(LOG_LEVEL_DEBUG, PSTR("MCP2515: Received error %d"), errFlags);
+          break;
+      }
     }
   }
 }
@@ -145,10 +189,12 @@ void MCP2515_Show(bool Json) {
 #ifdef USE_WEBSERVER
   } else {
   #ifdef MCP2515_BMS_CLIENT
+    char ampStr[6];
+    dtostrf(bms.battAmp, 5, 1, ampStr);
     WSContentSend_PD(HTTP_SNS_SOC, bms.name, bms.stateOfCharge);
     WSContentSend_PD(HTTP_SNS_SOH, bms.name, bms.stateOfHealth);
     WSContentSend_Voltage(bms.name, bms.battVoltage);
-    WSContentSend_CurrentMA(bms.name, bms.battMilliAmp);
+    WSContentSend_PD(HTTP_SNS_CURRENT, ampStr);
     WSContentSend_Temp(bms.name, bms.battTemp);
   #endif // MCP2515_BMS_CLIENT
 #endif  // USE_WEBSERVER
@@ -168,7 +214,7 @@ bool Xsns89(uint8_t function)
       case FUNC_INIT:
         MCP2515_Init();
         break;
-      case FUNC_EVERY_SECOND:
+      case FUNC_EVERY_50_MSECOND:
         MCP2515_Read();
         break;
       case FUNC_JSON_APPEND:
