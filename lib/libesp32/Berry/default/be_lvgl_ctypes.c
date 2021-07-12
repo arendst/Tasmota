@@ -93,7 +93,7 @@ int be_ctypes_init(bvm *vm) {
     int argc = be_top(vm);
     void * src_data = NULL;
     if (argc > 1 && (be_isint(vm, 2) || be_iscomptr(vm,2))) {
-        src_data = be_toint(vm, 2);
+        src_data = (void*) be_toint(vm, 2);
     }
 
     // get global array of classes from global variable '.ctypes_classes'

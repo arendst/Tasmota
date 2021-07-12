@@ -1,7 +1,7 @@
 #include "be_constobj.h"
 
 static be_define_const_map_slots(be_lv_event_cb_map) {
-    { be_const_key(opt_call, -1), be_const_func(lv_event_cb_call) },
+    { be_const_key(call, -1), be_const_func(lv_event_cb_call) },
 };
 
 static be_define_const_map(

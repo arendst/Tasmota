@@ -90,7 +90,7 @@ class be_lvgl_cb (scope: global, name: lv_cb) {
     .p, var
     init, func(lv0_init)
     tostring, func(lvx_tostring)
-    (), func(lv_cb_call)
+    call, func(lv_cb_call)
 }
 @const_object_info_end */
 
@@ -194,23 +194,23 @@ void be_load_lvgl_cb_all_lib(bvm *vm) {
 /* @const_object_info_begin
 
 class be_lv_group_focus_cb (scope: global, name: lv_group_focus_cb, super: be_lvgl_cb) {
-    (), func(lv_group_focus_cb_call)
+    call, func(lv_group_focus_cb_call)
 }
 
 class be_lv_event_cb (scope: global, name: lv_event_cb, super: be_lvgl_cb) {
-    (), func(lv_event_cb_call)
+    call, func(lv_event_cb_call)
 }
 
 class be_lv_signal_cb (scope: global, name: lv_signal_cb, super: be_lvgl_cb) {
-    (), func(lv_signal_cb_call)
+    call, func(lv_signal_cb_call)
 }
 
 class be_lv_design_cb (scope: global, name: lv_design_cb, super: be_lvgl_cb) {
-    (), func(lv_design_cb_call)
+    call, func(lv_design_cb_call)
 }
 
 class be_lv_gauge_format_cb (scope: global, name: lv_gauge_format_cb, super: be_lvgl_cb) {
-    (), func(lv_gauge_format_cb_call)
+    call, func(lv_gauge_format_cb_call)
 }
 
 @const_object_info_end */

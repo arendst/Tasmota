@@ -338,36 +338,33 @@ extern "C" {
 
         // look for class descriptor
         int32_t class_idx = bin_search(class_name, &lv_classes[0].name, sizeof(lv_classes[0]), lv_classes_size);
-        if (class_idx < 0) {
-          // class not found, abort
-          // berry_log_C("lvx_member class not found");
-          be_return_nil(vm);
-        }
-        const lvbe_call_c_t * methods_calls = lv_classes[class_idx].func_table;
-        size_t methods_size = lv_classes[class_idx].size;
+        if (class_idx >= 0) {
+          const lvbe_call_c_t * methods_calls = lv_classes[class_idx].func_table;
+          size_t methods_size = lv_classes[class_idx].size;
 
-        int32_t method_idx = bin_search(method_name, methods_calls, sizeof(lvbe_call_c_t), methods_size);
-        if (method_idx >= 0) {
-          // method found
-          const lvbe_call_c_t * method = &methods_calls[method_idx];
-          // berry_log_C("lvx_member method found func=%p return_type=%s arg_type=%s", method->func, method->return_type, method->arg_type);
-          // push native closure
-          be_pushntvclosure(vm, &lvx_call_c, 3);   // 3 upvals
+          int32_t method_idx = bin_search(method_name, methods_calls, sizeof(lvbe_call_c_t), methods_size);
+          if (method_idx >= 0) {
+            // method found
+            const lvbe_call_c_t * method = &methods_calls[method_idx];
+            // berry_log_C("lvx_member method found func=%p return_type=%s arg_type=%s", method->func, method->return_type, method->arg_type);
+            // push native closure
+            be_pushntvclosure(vm, &lvx_call_c, 3);   // 3 upvals
 
-          be_pushcomptr(vm, method->func);
-          be_setupval(vm, -2, 0);
-          be_pop(vm, 1);
+            be_pushcomptr(vm, method->func);
+            be_setupval(vm, -2, 0);
+            be_pop(vm, 1);
 
-          be_pushstring(vm, method->return_type);
-          be_setupval(vm, -2, 1);
-          be_pop(vm, 1);
+            be_pushstring(vm, method->return_type);
+            be_setupval(vm, -2, 1);
+            be_pop(vm, 1);
 
-          be_pushstring(vm, method->arg_type);
-          be_setupval(vm, -2, 2);
-          be_pop(vm, 1);
+            be_pushstring(vm, method->arg_type);
+            be_setupval(vm, -2, 2);
+            be_pop(vm, 1);
 
-          // all good
-          be_return(vm);
+            // all good
+            be_return(vm);
+          }
         }
 
         // get super if any, or nil if none
