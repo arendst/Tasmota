@@ -293,7 +293,7 @@ extern "C" {
     if (argc > 1) {
       obj1 = (lv_obj_t*) be_convert_single_elt(vm, 2);
     }
-    if (argc > 2) {
+    if (argc > 2 && !be_isnil(vm, 3)) {
       obj2 = (lv_obj_t*) be_convert_single_elt(vm, 3);
     }
     // AddLog(LOG_LEVEL_INFO, "argc %d obj1 %p obj2 %p", argc, obj1, obj2);
