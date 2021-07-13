@@ -37967,7 +37967,7 @@ END GROUP
                 0x0000000040295a5b        0x9 .pio/build/tasmota-zbbridge/src/tasmota.ino.cpp.o
  .irom0.pstr.support_rtc.ino.115.423
                 0x0000000040295a64       0x10 .pio/build/tasmota-zbbridge/src/tasmota.ino.cpp.o
- .irom0.pstr.support_features.ino.784.419
+ .irom0.pstr.support_features.ino.786.419
                 0x0000000040295a74       0x4d .pio/build/tasmota-zbbridge/src/tasmota.ino.cpp.o
  .irom0.pstr.support_esptool.ino.98.418
                 0x0000000040295ac1       0x21 .pio/build/tasmota-zbbridge/src/tasmota.ino.cpp.o

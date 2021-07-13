@@ -31679,7 +31679,7 @@ END GROUP
                 0x00000000402720eb        0x9 .pio/build/tasmota-lite/src/tasmota.ino.cpp.o
  .irom0.pstr.support_rtc.ino.115.416
                 0x00000000402720f4       0x10 .pio/build/tasmota-lite/src/tasmota.ino.cpp.o
- .irom0.pstr.support_features.ino.784.412
+ .irom0.pstr.support_features.ino.786.412
                 0x0000000040272104       0x4d .pio/build/tasmota-lite/src/tasmota.ino.cpp.o
  .irom0.pstr.support_esptool.ino.98.411
                 0x0000000040272151       0x21 .pio/build/tasmota-lite/src/tasmota.ino.cpp.o
