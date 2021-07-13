@@ -132,9 +132,15 @@
         <input type="checkbox" id="erase" name="erase" onchange="toggleErase()">
         <label for="erase">Reset settings to default</label>
       </p>
-
+      </br>
+      <p>
+        <esp-web-install-button id="inst"></esp-web-install-button>
+      </p>
     </div>
-    <esp-web-install-button id="inst"></esp-web-install-button>
+    <div style='text-align:right;font-size:11px;'>
+      <hr/>
+      <a href="https://esphome.github.io/esp-web-tools/" target='_blank' style='color:#aaa;'>Tasmota Installer powered by ESP Web Tools</a>
+    </div>
     <script>
       const selectEl = document.querySelector(".pick-variant select");
       const installEl = document.querySelector("esp-web-install-button");
@@ -151,13 +157,5 @@
 	    }
       }
     </script>
-    </br>
-    </br>
-    <div style='text-align:right;font-size:11px;'>
-      <hr/>
-      <a href="https://esphome.github.io/esp-web-tools/" target='_blank' style='color:#aaa;'>Tasmota Installer powered by ESP Web Tools</a>
-    </div>
-
-    </div>
   </body>
 </html>
