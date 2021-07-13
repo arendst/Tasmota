@@ -198,6 +198,8 @@
 #define D_WEIGHT "Тегло"
 #define D_WARMLIGHT "Топла"
 #define D_WEB_SERVER "Уеб сървър"
+#define D_SOC "State of Charge"
+#define D_SOH "State of Health"
 
 // tasmota.ino
 #define D_WARNING_MINIMAL_VERSION "ПРЕДУПРЕЖДЕНИЕ Тази версия не поддържа постоянни настройки"
