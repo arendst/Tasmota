@@ -28,6 +28,7 @@ All notable changes to this project will be documented in this file.
 - AM2320 value reporting (#12552)
 - Exception 28 when unable to send MQTT message and a topic name without a slash '/' (#12555)
 - Wi-Fi initial setup workaround for 11n only routers (#12566)
+- ESP32 do not use chip temperature sensor as global temperature if external temperature sensor is used (#12630)
 
 ## [9.5.0.1] 20210701
 ### Added

@@ -487,7 +487,7 @@ void *special_calloc(size_t num, size_t size) {
 }
 
 float CpuTemperature(void) {
-  return ConvertTemp(temperatureRead());
+  return (float)temperatureRead();  // In Celsius
 }
 
 /*

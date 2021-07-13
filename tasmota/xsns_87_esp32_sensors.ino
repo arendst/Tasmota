@@ -52,7 +52,16 @@ void Esp32SensorInit(void) {
 #endif  // CONFIG_IDF_TARGET_ESP32
 
 void Esp32SensorShow(bool json) {
-  float t = CpuTemperature();
+  static bool add_global_temp = false;
+
+  if (json) {
+    add_global_temp = !ResponseContains_P(PSTR(D_JSON_TEMPERATURE));
+  }
+  float c = CpuTemperature();  // in Celsius
+  if (add_global_temp) {
+    UpdateGlobalTemperature(c);
+  }
+  float t = ConvertTempToFahrenheit(c);
 
 #if CONFIG_IDF_TARGET_ESP32
   int value = 0;

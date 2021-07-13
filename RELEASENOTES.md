@@ -135,6 +135,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - Zigbee Hue angle encoding [#12545](https://github.com/arendst/Tasmota/issues/12545)
 - Exception 28 when unable to send MQTT message and a topic name without a slash '/' [#12555](https://github.com/arendst/Tasmota/issues/12555)
 - Wi-Fi initial setup workaround for 11n only routers [#12566](https://github.com/arendst/Tasmota/issues/12566)
+- ESP32 do not use chip temperature sensor as global temperature if external temperature sensor is used [#12630](https://github.com/arendst/Tasmota/issues/12630)
 
 ### Noted
 - ESP32 single core **tasmota32solo1.bin** binary can only be uploaded using the GUI as OTA upload will trigger the watchdog timer
