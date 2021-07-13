@@ -1,7 +1,7 @@
 /*
   xsns_89_t67xx.ino - Telaire T6700 Series CO2 sensor support for Tasmota
 
-  Copyright (c) 2021 Alexander Savchenko (alexander@savchenko.by)
+  Copyright (c) 2021  Alexander Savchenko (alexander@savchenko.by)
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by

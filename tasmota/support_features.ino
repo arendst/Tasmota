@@ -746,7 +746,9 @@ void ResponseAppendFeatures(void)
 #if defined(USE_I2C) && defined(USE_AM2320)
     feature8 |= 0x00000040;
 #endif
-//    feature8 |= 0x00000080;
+#if defined(USE_I2C) && defined(USE_T67XX)
+    feature8 |= 0x00000080;
+#endif
 
 //    feature8 |= 0x00000100;
 //    feature8 |= 0x00000200;
