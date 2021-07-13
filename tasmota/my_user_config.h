@@ -575,6 +575,7 @@
     #define USE_APDS9960_PROXIMITY                 // Enable APDS9960 Proximity feature (>50 code)
     #define USE_APDS9960_COLOR                     // Enable APDS9960 Color feature (+0.8k code)
     #define USE_APDS9960_STARTMODE  0              // Default to enable Gesture mode
+//  #define USE_T67XX                              // Enable Telaire T67XX CO2 sensor (+1.3k code)
 //  #define USE_MCP230xx                           // [I2cDriver22] Enable MCP23008/MCP23017 - Must define I2C Address in #define USE_MCP230xx_ADDR below - range 0x20 - 0x27 (+5k1 code)
 //    #define USE_MCP230xx_ADDR 0x20               // Enable MCP23008/MCP23017 I2C Address to use (Must be within range 0x20 through 0x26 - set according to your wired setup)
 //    #define USE_MCP230xx_OUTPUT                  // Enable MCP23008/MCP23017 OUTPUT support through sensor29 commands (+2k2 code)

@@ -148,6 +148,7 @@
 //#define USE_RC522                              // Add support for MFRC522 13.56Mhz Rfid reader (+6k code)
 
 #define USE_MHZ19                                // Add support for MH-Z19 CO2 sensor (+2k code)
+#define USE_T67XX                                // Add support for T67XX CO2 sensor (+1.3k code)
 #define USE_SENSEAIR                             // Add support for SenseAir K30, K70 and S8 CO2 sensor (+2k3 code)
 #ifndef CO2_LOW
   #define CO2_LOW              800               // Below this CO2 value show green light (needs PWM or WS2812 RG(B) led and enable with SetOption18 1)
