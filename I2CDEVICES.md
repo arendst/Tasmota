@@ -94,3 +94,4 @@ Index | Define              | Driver  | Device   | Address(es) | Description
   58  | USE_MPU_ACCEL       | xsns_85 | MPU_ACCEL| 0x68        | MPU6886/MPU9250 6-axis MotionTracking sensor from M5Stack
   59  | USE_BM8563          | xdrv_56 | BM8563   | 0x51        | BM8563 RTC from M5Stack
   60  | USE_AM2320          | xsns_88 | AM2320   | 0x5C        | Temperature and Humidity sensor
+  61  | USE_T67XX           | xsns_89 | T67XX    | 0x15        | CO2 sensor

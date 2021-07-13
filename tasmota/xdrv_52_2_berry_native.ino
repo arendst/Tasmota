@@ -314,11 +314,10 @@ extern "C" {
  * Optional argument:
  * - return_type: the C function return value is int32_t and is converted to the
  *   relevant Berry object depending on this char:
- *   '0' (default): nil, no value
+ *   '' (default): nil, no value
  *   'i' be_int
  *   'b' be_boot
  *   's' be_str
- *   'o' instance of `lv_obj` (needs to be improved)
  * 
  * - arg_type: optionally check the types of input arguments, or throw an error
  *   string of argument types, '+' marks optional arguments
@@ -326,6 +325,7 @@ extern "C" {
  *   'i' be_int
  *   'b' be_bool
  *   's' be_string
+ *   'c' C callback
  *   'lv_obj' be_instance of type or subtype
  *   '0'..'5' callback
  * 
@@ -394,6 +394,8 @@ int32_t be_convert_single_elt(bvm *vm, int32_t idx, const char * arg_type = null
   int32_t ret = 0;
   char provided_type = 0;
   idx = be_absindex(vm, idx);   // make sure we have an absolute index
+  
+  // berry_log_C(">> 0 idx=%i arg_type=%s", idx, arg_type ? arg_type : "NULL");
   if (arg_type == nullptr) { arg_type = "."; }    // if no type provided, replace with wildchar
   size_t arg_type_len = strlen(arg_type);
 
@@ -453,7 +455,7 @@ int32_t be_convert_single_elt(bvm *vm, int32_t idx, const char * arg_type = null
   if      (be_isint(vm, idx))     { ret = be_toint(vm, idx); provided_type = 'i'; }
   else if (be_isbool(vm, idx))    { ret = be_tobool(vm, idx); provided_type = 'b'; }
   else if (be_isstring(vm, idx))  { ret = (int32_t) be_tostring(vm, idx); provided_type = 's'; }
-  else if (be_iscomptr(vm, idx))  { ret = (int32_t) be_tocomptr(vm, idx); provided_type = 'i'; }
+  else if (be_iscomptr(vm, idx))  { ret = (int32_t) be_tocomptr(vm, idx); provided_type = 'c'; }
 
   // check if simple type was a match
   if (provided_type) {
@@ -470,33 +472,44 @@ int32_t be_convert_single_elt(bvm *vm, int32_t idx, const char * arg_type = null
 
   // non-simple type
   if (be_isinstance(vm, idx))  {
-    be_getmember(vm, idx, ".p");
-    int32_t ret = be_convert_single_elt(vm, -1, nullptr);   // recurse
-    be_pop(vm, 1);
-
-    if (arg_type_len > 1) {
-      // Check type
-      be_classof(vm, idx);
-      bool class_found = be_getglobal(vm, arg_type);
-      // Stack: class_of_idx, class_of_target (or nil)
-      if (class_found) {
-        if (!be_isderived(vm, -2)) {
-          berry_log_P("Unexpected class type '%s', expected '%s'", be_classname(vm, idx), arg_type);
-        }
-      } else {
-        berry_log_P("Unable to find class '%s' (%d)", arg_type, arg_type_len);
-      }
+    // check if the instance is a subclass of `bytes()``
+    be_getbuiltin(vm, "bytes");    // add "list" class
+    if (be_isderived(vm, idx)) {
+      be_pop(vm, 1);
+      be_getmember(vm, idx, "_buffer");
+      be_pushvalue(vm, idx);
+      be_call(vm, 1);
+      int32_t ret = (int32_t) be_tocomptr(vm, -2);
       be_pop(vm, 2);
-    } else if (arg_type[0] != '.') {
-      berry_log_P("Unexpected instance type '%s', expected '%s'", be_classname(vm, idx), arg_type);
-    }
+      return ret;
+    } else {
+      be_pop(vm, 1);
+      be_getmember(vm, idx, ".p");
+      int32_t ret = be_convert_single_elt(vm, -1, nullptr);   // recurse
+      be_pop(vm, 1);
 
-    return ret;
+      if (arg_type_len > 1) {
+        // Check type
+        be_classof(vm, idx);
+        bool class_found = be_getglobal(vm, arg_type);
+        // Stack: class_of_idx, class_of_target (or nil)
+        if (class_found) {
+          if (!be_isderived(vm, -2)) {
+            berry_log_P("Unexpected class type '%s', expected '%s'", be_classname(vm, idx), arg_type);
+          }
+        } else {
+          berry_log_P("Unable to find class '%s' (%d)", arg_type, arg_type_len);
+        }
+        be_pop(vm, 2);
+      } else if (arg_type[0] != '.') {
+        berry_log_P("Unexpected instance type '%s', expected '%s'", be_classname(vm, idx), arg_type);
+      }
+
+      return ret;
+    }
   } else {
     be_raise(vm, kTypeError, nullptr);
   }
-
-  // 
 
   return ret;
 }

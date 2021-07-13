@@ -75,9 +75,14 @@ return_types = {
   "lv_border_side_t": "i",
   "lv_align_t": "i",
   "lv_keyboard_mode_t": "i",
-  # "lv_group_focus_cb_t": "i",
   "lv_indev_type_t": "i",
+  "lv_event_t": "i",
+  "lv_signal_t": "i",
 
+  # "lv_signal_cb_t": "c",
+  # "lv_design_cb_t": "c",
+  # "lv_event_cb_t": "c",
+  # "lv_group_focus_cb_t": "c",
 
   "lv_obj_t *": "lv_obj",
   "lv_color_t": "lv_color",
@@ -85,19 +90,27 @@ return_types = {
   "lv_group_t *": "lv_group",
   #"lv_disp_t*": "lv_disp",
   #"lv_style_list_t*": "",
+
+  # callbacks
+  "lv_group_focus_cb_t": "lv_group_focus_cb",
+  "lv_event_cb_t": "lv_event_cb",
+  "lv_signal_cb_t": "lv_signal_cb",
+  "lv_design_cb_t": "lv_design_cb",
+  "lv_gauge_format_cb_t": "lv_gauge_format_cb",
 }
 
 lv = {}
 lvs = []   # special case for case for lv_style
 lv0 = []        # function in lvlg module
 lv_module = []
-lv_cb_types = []  # list of callback types that will need each a separate C callback, later sorted by first argument
+lv_cb_types = ['lv_group_focus_cb', 'lv_event_cb', 'lv_signal_cb', 'lv_design_cb', 'lv_gauge_format_cb']
+# list of callback types that will need each a separate C callback
 
 lv_widgets = ['arc', 'bar', 'btn', 'btnmatrix', 'calendar', 'canvas', 'chart', 'checkbox',
              'cont', 'cpicker', 'dropdown', 'gauge', 'img', 'imgbtn', 'keyboard', 'label', 'led', 'line',
              'linemeter', 'list', 'msgbox', 'objmask', 'templ', 'page', 'roller', 'slider', 'spinbox',
              'spinner', 'switch', 'table', 'tabview', 'textarea', 'tileview', 'win']
-lv_prefix = ['obj', 'group', 'style', 'indev'] + lv_widgets
+lv_prefix = ['obj', 'group', 'style', 'indev', ] + lv_widgets
 
 def try_int(s):
   try:
@@ -115,6 +128,7 @@ def c_convert_ret_type(c_ret):
 with open(lv_widgets_file) as f:
   for l_raw in f:
     l_raw = re.sub('//.*$', '', l_raw) # remove trailing comments
+    l_raw = re.sub('LV_ATTRIBUTE_FAST_MEM ', '', l_raw) # remove LV_ATTRIBUTE_FAST_MEM marker
     l_raw = re.sub('\s+', ' ', l_raw) # replace any multi-space with a single space
     l_raw = l_raw.strip(" \t\n\r")    # remove leading or trailing spaces
     l_raw = re.sub('static ', '', l_raw)
@@ -128,12 +142,16 @@ with open(lv_widgets_file) as f:
       ret_type = g.group(1)   # return type of the function
       # Ex: ret_type -> 'void'
 
-      if ret_type not in return_types:
+      ret_type_without_t = re.sub(r"_t$", "", ret_type)
+      if ret_type in return_types:
+        # convert return type
+        c_ret = c_convert_ret_type(ret_type)
+      elif ret_type_without_t in lv_cb_types:
+        c_ret = "c"   # general callback, if not already captured by explicit type
+      else:
         print(f"  // Skipping unsupported return type: {ret_type}")
         continue
 
-      # convert return type
-      c_ret = c_convert_ret_type(ret_type)
 
       # convert arguments
       c_args = ""
@@ -155,7 +173,7 @@ with open(lv_widgets_file) as f:
             ga_type = re.sub(r"_t$", "", ga_type)
           
           # if the type is a single letter, we just add it
-          if len(ga_type) == 1:
+          if len(ga_type) == 1 and ga_type != 'c':  # callbacks are different
             c_args += ga_type
           else:
             if ga_type.endswith("_cb"):
@@ -175,22 +193,25 @@ with open(lv_widgets_file) as f:
 
       c_func_name = ""
 
+      if func_name == "lv_style_init":
+        continue   # no need for init as it would collied with native init (and called behind the scene anyways)
+
       found = False
       for subtype in lv_prefix:
-        if func_name == "lv_style_init": continue   # no need for init as it would collied with native init (and called behind the scene anyways)
         if func_name.startswith("lv_" + subtype + "_"):
           be_name = re.sub("^lv_" + subtype + "_", '', func_name)
           c_func_name = "lvbe_" + subtype + "_" + be_name
           if subtype not in lv: lv[subtype] = []    # add entry
           # special case if the function is create, we change the return type to macth the class
-          # if be_name == 'create':
-          #   c_ret = "lv_" + subtype
-          #   lv0.append( [ c_func_name, c_ret, c_args, func_name, subtype ] )  # also add to lvgl
           lv[subtype].append( [ c_func_name, c_ret, c_args, func_name, be_name ] )
           found = True
           break
 
       if found: continue
+      # not found, we treat it as lv top level function
+      be_name = re.sub("^lv_", '', func_name)
+      lv0.append( [ func_name, c_ret, c_args, func_name, be_name ] )
+      # print(lv0[-1])
 
 print("| callback types"+str(lv_cb_types))
 
@@ -444,7 +465,7 @@ for subtype, flv in lv.items():
   print(f"    {{ NULL, NULL }}")
   print(f"  }};")
   print(f"  be_regclass(vm, \"lv_{subtype}\", members);")
-  if subtype != "obj" and subtype != "group":   # lv_obj and lv_group do not inherit from lv_obj
+  if subtype in lv_widgets: # only for subclasses of lv_obj
     print()
     print(f"  be_getglobal(vm, \"lv_{subtype}\");")
     print(f"  be_getglobal(vm, \"lv_obj\");")
@@ -460,7 +481,7 @@ for subtype, flv in lv.items():
   print(f"}};")
   print()
   print(f"/* @const_object_info_begin")
-  if subtype != "obj" and subtype != "group":   # lv_obj and lv_group do not inherit from lv_obj
+  if subtype in lv_widgets: # only for subclasses of lv_obj
     print(f"class be_class_lv_{subtype} (scope: global, name: lv_{subtype}, super: be_class_lv_obj) {{")
   else:
     print(f"class be_class_lv_{subtype} (scope: global, name: lv_{subtype}) {{")
@@ -524,24 +545,43 @@ extern int lv0_screenshot(bvm *vm);
 static int lv_get_hor_res(void) {
   return lv_disp_get_hor_res(lv_disp_get_default());
 }
-static int lv_get_ver_res(bvm *vm) {
+static int lv_get_ver_res(void) {
   return lv_disp_get_ver_res(lv_disp_get_default());
 }
 
 /* `lv` methods */
 const lvbe_call_c_t lv_func[] = {
-  // resolution
-  { "get_hor_res", (void*) &lv_get_hor_res, "i", "" },
-  { "get_ver_res", (void*) &lv_get_ver_res, "i", "" },
+""")
 
-  // layers
-  { "layer_sys", (void*) &lv_layer_sys, "lv_obj", "" },
-  { "layer_top", (void*) &lv_layer_top, "lv_obj", "" },
+func_out = {} # used to sort output
+for f in lv0:
+  c_func_name = f[0]
+  c_ret_type = f[1]
+  c_argc = f[2]
+  if c_argc is not None: c_argc = "\"" + c_argc + "\""
+  orig_func_name = f[3]
+  be_name = f[4]
+  func_out[be_name] = f"  {{ \"{be_name}\", (void*) &{orig_func_name}, \"{c_ret_type}\", { c_argc if c_argc else 'nullptr'} }},"
 
-  // screens
-  { "scr_act", (void*) &lv_scr_act, "lv_obj", "" },
-  { "scr_load", (void*) &lv_scr_load, "", "(lv_obj)" },
-  { "scr_load_anim", (void*) &lv_scr_load_anim, "", "(lv_obj)iiib" },
+for be_name in sorted(func_out):
+  print(func_out[be_name])
+
+
+
+
+  # // resolution
+  # { "get_hor_res", (void*) &lv_get_hor_res, "i", "" },
+  # { "get_ver_res", (void*) &lv_get_ver_res, "i", "" },
+
+  # // layers
+  # { "layer_sys", (void*) &lv_layer_sys, "lv_obj", "" },
+  # { "layer_top", (void*) &lv_layer_top, "lv_obj", "" },
+
+  # // screens
+  # { "scr_act", (void*) &lv_scr_act, "lv_obj", "" },
+  # { "scr_load", (void*) &lv_scr_load, "", "(lv_obj)" },
+  # { "scr_load_anim", (void*) &lv_scr_load_anim, "", "(lv_obj)iiib" },
+print("""
 };
 const size_t lv_func_size = sizeof(lv_func) / sizeof(lv_func[0]);
 
@@ -574,17 +614,7 @@ print("""
 };
 
 const size_t lv0_constants_size = sizeof(lv0_constants)/sizeof(lv0_constants[0]);
-""")
-
-for f in lv0:
-  c_func_name = f[0]
-  print(f"extern int {c_func_name}(bvm *vm);")
-  
-
-print("""
 #if !BE_USE_PRECOMPILED_OBJECT
-//#if 1           // TODO we will do pre-compiled later
-
 
 be_native_module_attr_table(lvgl) {
     // Symbols    
@@ -686,15 +716,6 @@ print("""
     be_native_module_function("load_freetype_font", lv0_load_freetype_font),
 
     be_native_module_function("screenshot", lv0_screenshot),
-""")
-
-for f in lv0:
-
-  c_func_name = f[0]
-  be_name = f[4]
-  print(f"    be_native_module_function(\"{be_name}\", {c_func_name}),")
-
-print("""
 };
 
 be_define_native_module(lvgl, NULL);
@@ -849,16 +870,6 @@ print("""
     load_freetype_font, func(lv0_load_freetype_font)
 
     screenshot, func(lv0_screenshot)
-
-""")
-
-for f in lv0:
-
-  c_func_name = f[0]
-  be_name = f[4]
-  print(f"    {be_name}, func({c_func_name})")
-
-print("""
 }
 @const_object_info_end */
 #include "../generate/be_fixed_lvgl.h"

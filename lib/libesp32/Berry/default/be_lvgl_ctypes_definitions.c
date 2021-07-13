@@ -98,7 +98,7 @@ void ctypes_register_class(bvm *vm, const bclass * ctypes_class, const be_ctypes
 /********************************************************************
  * Generated code, don't edit
  *******************************************************************/
-const be_ctypes_structure_t be_lv_point_t = {
+const be_ctypes_structure_t be_lv_point = {
   4,  /* size in bytes */
   2,  /* number of elements */
   (const be_ctypes_structure_item_t[2]) {
@@ -106,7 +106,7 @@ const be_ctypes_structure_t be_lv_point_t = {
     { "y", 2, 0, 0, 12 },
 }};
 
-const be_ctypes_structure_t be_lv_area_t = {
+const be_ctypes_structure_t be_lv_area = {
   8,  /* size in bytes */
   4,  /* number of elements */
   (const be_ctypes_structure_item_t[4]) {
@@ -116,7 +116,7 @@ const be_ctypes_structure_t be_lv_area_t = {
     { "y2", 6, 0, 0, 12 },
 }};
 
-const be_ctypes_structure_t be_lv_draw_rect_dsc_t = {
+const be_ctypes_structure_t be_lv_draw_rect_dsc = {
   77,  /* size in bytes */
   43,  /* number of elements */
   (const be_ctypes_structure_item_t[43]) {
@@ -165,7 +165,7 @@ const be_ctypes_structure_t be_lv_draw_rect_dsc_t = {
     { "value_str", 56, 0, 0, 4 },
 }};
 
-const be_ctypes_structure_t be_lv_draw_line_dsc_t = {
+const be_ctypes_structure_t be_lv_draw_line_dsc = {
   10,  /* size in bytes */
   9,  /* number of elements */
   (const be_ctypes_structure_item_t[9]) {
@@ -180,7 +180,7 @@ const be_ctypes_structure_t be_lv_draw_line_dsc_t = {
     { "width", 2, 0, 0, 12 },
 }};
 
-const be_ctypes_structure_t be_lv_draw_img_dsc_t = {
+const be_ctypes_structure_t be_lv_draw_img_dsc = {
   14,  /* size in bytes */
   9,  /* number of elements */
   (const be_ctypes_structure_item_t[9]) {
@@ -195,7 +195,7 @@ const be_ctypes_structure_t be_lv_draw_img_dsc_t = {
     { "zoom", 7, 0, 0, 2 },
 }};
 
-const be_ctypes_structure_t be_lv_draw_label_dsc_t = {
+const be_ctypes_structure_t be_lv_draw_label_dsc = {
   31,  /* size in bytes */
   15,  /* number of elements */
   (const be_ctypes_structure_item_t[15]) {
@@ -216,7 +216,7 @@ const be_ctypes_structure_t be_lv_draw_label_dsc_t = {
     { "sel_start", 15, 0, 0, 4 },
 }};
 
-const be_ctypes_structure_t be_lv_draw_mask_common_dsc_t = {
+const be_ctypes_structure_t be_lv_draw_mask_common_dsc = {
   5,  /* size in bytes */
   2,  /* number of elements */
   (const be_ctypes_structure_item_t[2]) {
@@ -224,7 +224,7 @@ const be_ctypes_structure_t be_lv_draw_mask_common_dsc_t = {
     { "type", 4, 0, 0, 1 },
 }};
 
-const be_ctypes_structure_t be_lv_draw_mask_line_param_cfg_t = {
+const be_ctypes_structure_t be_lv_draw_mask_line_param_cfg = {
   9,  /* size in bytes */
   5,  /* number of elements */
   (const be_ctypes_structure_item_t[5]) {
@@ -235,7 +235,7 @@ const be_ctypes_structure_t be_lv_draw_mask_line_param_cfg_t = {
     { "side", 8, 0, 2, 0 },
 }};
 
-const be_ctypes_structure_t be_lv_draw_mask_line_param_t = {
+const be_ctypes_structure_t be_lv_draw_mask_line_param = {
   35,  /* size in bytes */
   15,  /* number of elements */
   (const be_ctypes_structure_item_t[15]) {
@@ -256,7 +256,7 @@ const be_ctypes_structure_t be_lv_draw_mask_line_param_t = {
     { "yx_steep", 22, 0, 0, 14 },
 }};
 
-const be_ctypes_structure_t be_lv_draw_mask_angle_param_cfg_t = {
+const be_ctypes_structure_t be_lv_draw_mask_angle_param_cfg = {
   8,  /* size in bytes */
   4,  /* number of elements */
   (const be_ctypes_structure_item_t[4]) {
@@ -266,7 +266,7 @@ const be_ctypes_structure_t be_lv_draw_mask_angle_param_cfg_t = {
     { "vertex_p_y", 2, 0, 0, 12 },
 }};
 
-const be_ctypes_structure_t be_lv_draw_mask_angle_param_t = {
+const be_ctypes_structure_t be_lv_draw_mask_angle_param = {
   85,  /* size in bytes */
   37,  /* number of elements */
   (const be_ctypes_structure_item_t[37]) {
@@ -309,7 +309,7 @@ const be_ctypes_structure_t be_lv_draw_mask_angle_param_t = {
     { "start_line_yx_steep", 35, 0, 0, 14 },
 }};
 
-const be_ctypes_structure_t be_lv_draw_mask_radius_param_cfg_t = {
+const be_ctypes_structure_t be_lv_draw_mask_radius_param_cfg = {
   11,  /* size in bytes */
   6,  /* number of elements */
   (const be_ctypes_structure_item_t[6]) {
@@ -321,7 +321,7 @@ const be_ctypes_structure_t be_lv_draw_mask_radius_param_cfg_t = {
     { "rect_y2", 6, 0, 0, 12 },
 }};
 
-const be_ctypes_structure_t be_lv_sqrt_res_t = {
+const be_ctypes_structure_t be_lv_sqrt_res = {
   4,  /* size in bytes */
   2,  /* number of elements */
   (const be_ctypes_structure_item_t[2]) {
@@ -329,7 +329,7 @@ const be_ctypes_structure_t be_lv_sqrt_res_t = {
     { "i", 0, 0, 0, 2 },
 }};
 
-const be_ctypes_structure_t be_lv_draw_mask_radius_param_t = {
+const be_ctypes_structure_t be_lv_draw_mask_radius_param = {
   24,  /* size in bytes */
   11,  /* number of elements */
   (const be_ctypes_structure_item_t[11]) {
@@ -346,7 +346,7 @@ const be_ctypes_structure_t be_lv_draw_mask_radius_param_t = {
     { "y_prev_x_i", 20, 0, 0, 2 },
 }};
 
-const be_ctypes_structure_t be_lv_draw_mask_fade_param_cfg_t = {
+const be_ctypes_structure_t be_lv_draw_mask_fade_param_cfg = {
   14,  /* size in bytes */
   8,  /* number of elements */
   (const be_ctypes_structure_item_t[8]) {
@@ -360,7 +360,7 @@ const be_ctypes_structure_t be_lv_draw_mask_fade_param_cfg_t = {
     { "y_top", 8, 0, 0, 12 },
 }};
 
-const be_ctypes_structure_t be_lv_draw_mask_fade_param_t = {
+const be_ctypes_structure_t be_lv_draw_mask_fade_param = {
   19,  /* size in bytes */
   10,  /* number of elements */
   (const be_ctypes_structure_item_t[10]) {
@@ -376,7 +376,7 @@ const be_ctypes_structure_t be_lv_draw_mask_fade_param_t = {
     { "dsc_type", 4, 0, 0, 1 },
 }};
 
-const be_ctypes_structure_t be_lv_draw_mask_map_param_cfg_t = {
+const be_ctypes_structure_t be_lv_draw_mask_map_param_cfg = {
   12,  /* size in bytes */
   5,  /* number of elements */
   (const be_ctypes_structure_item_t[5]) {
@@ -387,7 +387,7 @@ const be_ctypes_structure_t be_lv_draw_mask_map_param_cfg_t = {
     { "map", 8, 0, 0, 4 },
 }};
 
-const be_ctypes_structure_t be_lv_draw_mask_map_param_t = {
+const be_ctypes_structure_t be_lv_draw_mask_map_param = {
   17,  /* size in bytes */
   7,  /* number of elements */
   (const be_ctypes_structure_item_t[7]) {
@@ -400,7 +400,7 @@ const be_ctypes_structure_t be_lv_draw_mask_map_param_t = {
     { "dsc_type", 4, 0, 0, 1 },
 }};
 
-const be_ctypes_structure_t be_lv_draw_mask_saved_t = {
+const be_ctypes_structure_t be_lv_draw_mask_saved = {
   8,  /* size in bytes */
   2,  /* number of elements */
   (const be_ctypes_structure_item_t[2]) {
@@ -411,48 +411,48 @@ const be_ctypes_structure_t be_lv_draw_mask_saved_t = {
 const be_ctypes_classes_t be_ctypes_classes[] = {
   19,
   (const be_ctypes_class_t[19]) {
-    { "lv_area_t", &be_lv_area_t },
-    { "lv_draw_img_dsc_t", &be_lv_draw_img_dsc_t },
-    { "lv_draw_label_dsc_t", &be_lv_draw_label_dsc_t },
-    { "lv_draw_line_dsc_t", &be_lv_draw_line_dsc_t },
-    { "lv_draw_mask_angle_param_cfg_t", &be_lv_draw_mask_angle_param_cfg_t },
-    { "lv_draw_mask_angle_param_t", &be_lv_draw_mask_angle_param_t },
-    { "lv_draw_mask_common_dsc_t", &be_lv_draw_mask_common_dsc_t },
-    { "lv_draw_mask_fade_param_cfg_t", &be_lv_draw_mask_fade_param_cfg_t },
-    { "lv_draw_mask_fade_param_t", &be_lv_draw_mask_fade_param_t },
-    { "lv_draw_mask_line_param_cfg_t", &be_lv_draw_mask_line_param_cfg_t },
-    { "lv_draw_mask_line_param_t", &be_lv_draw_mask_line_param_t },
-    { "lv_draw_mask_map_param_cfg_t", &be_lv_draw_mask_map_param_cfg_t },
-    { "lv_draw_mask_map_param_t", &be_lv_draw_mask_map_param_t },
-    { "lv_draw_mask_radius_param_cfg_t", &be_lv_draw_mask_radius_param_cfg_t },
-    { "lv_draw_mask_radius_param_t", &be_lv_draw_mask_radius_param_t },
-    { "lv_draw_mask_saved_t", &be_lv_draw_mask_saved_t },
-    { "lv_draw_rect_dsc_t", &be_lv_draw_rect_dsc_t },
-    { "lv_point_t", &be_lv_point_t },
-    { "lv_sqrt_res_t", &be_lv_sqrt_res_t },
+    { "lv_area", &be_lv_area },
+    { "lv_draw_img_dsc", &be_lv_draw_img_dsc },
+    { "lv_draw_label_dsc", &be_lv_draw_label_dsc },
+    { "lv_draw_line_dsc", &be_lv_draw_line_dsc },
+    { "lv_draw_mask_angle_param", &be_lv_draw_mask_angle_param },
+    { "lv_draw_mask_angle_param_cfg", &be_lv_draw_mask_angle_param_cfg },
+    { "lv_draw_mask_common_dsc", &be_lv_draw_mask_common_dsc },
+    { "lv_draw_mask_fade_param", &be_lv_draw_mask_fade_param },
+    { "lv_draw_mask_fade_param_cfg", &be_lv_draw_mask_fade_param_cfg },
+    { "lv_draw_mask_line_param", &be_lv_draw_mask_line_param },
+    { "lv_draw_mask_line_param_cfg", &be_lv_draw_mask_line_param_cfg },
+    { "lv_draw_mask_map_param", &be_lv_draw_mask_map_param },
+    { "lv_draw_mask_map_param_cfg", &be_lv_draw_mask_map_param_cfg },
+    { "lv_draw_mask_radius_param", &be_lv_draw_mask_radius_param },
+    { "lv_draw_mask_radius_param_cfg", &be_lv_draw_mask_radius_param_cfg },
+    { "lv_draw_mask_saved", &be_lv_draw_mask_saved },
+    { "lv_draw_rect_dsc", &be_lv_draw_rect_dsc },
+    { "lv_point", &be_lv_point },
+    { "lv_sqrt_res", &be_lv_sqrt_res },
 }};
 
 /* @const_object_info_begin
 class be_class_ctypes_classes (scope: global) {
-    lv_area_t, int(0)
-    lv_draw_img_dsc_t, int(0)
-    lv_draw_label_dsc_t, int(0)
-    lv_draw_line_dsc_t, int(0)
-    lv_draw_mask_angle_param_cfg_t, int(0)
-    lv_draw_mask_angle_param_t, int(0)
-    lv_draw_mask_common_dsc_t, int(0)
-    lv_draw_mask_fade_param_cfg_t, int(0)
-    lv_draw_mask_fade_param_t, int(0)
-    lv_draw_mask_line_param_cfg_t, int(0)
-    lv_draw_mask_line_param_t, int(0)
-    lv_draw_mask_map_param_cfg_t, int(0)
-    lv_draw_mask_map_param_t, int(0)
-    lv_draw_mask_radius_param_cfg_t, int(0)
-    lv_draw_mask_radius_param_t, int(0)
-    lv_draw_mask_saved_t, int(0)
-    lv_draw_rect_dsc_t, int(0)
-    lv_point_t, int(0)
-    lv_sqrt_res_t, int(0)
+    lv_area, int(0)
+    lv_draw_img_dsc, int(0)
+    lv_draw_label_dsc, int(0)
+    lv_draw_line_dsc, int(0)
+    lv_draw_mask_angle_param, int(0)
+    lv_draw_mask_angle_param_cfg, int(0)
+    lv_draw_mask_common_dsc, int(0)
+    lv_draw_mask_fade_param, int(0)
+    lv_draw_mask_fade_param_cfg, int(0)
+    lv_draw_mask_line_param, int(0)
+    lv_draw_mask_line_param_cfg, int(0)
+    lv_draw_mask_map_param, int(0)
+    lv_draw_mask_map_param_cfg, int(0)
+    lv_draw_mask_radius_param, int(0)
+    lv_draw_mask_radius_param_cfg, int(0)
+    lv_draw_mask_saved, int(0)
+    lv_draw_rect_dsc, int(0)
+    lv_point, int(0)
+    lv_sqrt_res, int(0)
 }
 @const_object_info_end */
 
@@ -461,44 +461,44 @@ void be_load_ctypes_definitions_lib(bvm *vm) {
   be_setglobal(vm, ".ctypes_classes");
   be_pop(vm, 1);
 
-  static be_define_const_empty_class(be_class_lv_area_t, &be_class_lv_ctypes, lv_area_t);
-  ctypes_register_class(vm, &be_class_lv_area_t, &be_lv_area_t);
-  static be_define_const_empty_class(be_class_lv_draw_img_dsc_t, &be_class_lv_ctypes, lv_draw_img_dsc_t);
-  ctypes_register_class(vm, &be_class_lv_draw_img_dsc_t, &be_lv_draw_img_dsc_t);
-  static be_define_const_empty_class(be_class_lv_draw_label_dsc_t, &be_class_lv_ctypes, lv_draw_label_dsc_t);
-  ctypes_register_class(vm, &be_class_lv_draw_label_dsc_t, &be_lv_draw_label_dsc_t);
-  static be_define_const_empty_class(be_class_lv_draw_line_dsc_t, &be_class_lv_ctypes, lv_draw_line_dsc_t);
-  ctypes_register_class(vm, &be_class_lv_draw_line_dsc_t, &be_lv_draw_line_dsc_t);
-  static be_define_const_empty_class(be_class_lv_draw_mask_angle_param_cfg_t, &be_class_lv_ctypes, lv_draw_mask_angle_param_cfg_t);
-  ctypes_register_class(vm, &be_class_lv_draw_mask_angle_param_cfg_t, &be_lv_draw_mask_angle_param_cfg_t);
-  static be_define_const_empty_class(be_class_lv_draw_mask_angle_param_t, &be_class_lv_ctypes, lv_draw_mask_angle_param_t);
-  ctypes_register_class(vm, &be_class_lv_draw_mask_angle_param_t, &be_lv_draw_mask_angle_param_t);
-  static be_define_const_empty_class(be_class_lv_draw_mask_common_dsc_t, &be_class_lv_ctypes, lv_draw_mask_common_dsc_t);
-  ctypes_register_class(vm, &be_class_lv_draw_mask_common_dsc_t, &be_lv_draw_mask_common_dsc_t);
-  static be_define_const_empty_class(be_class_lv_draw_mask_fade_param_cfg_t, &be_class_lv_ctypes, lv_draw_mask_fade_param_cfg_t);
-  ctypes_register_class(vm, &be_class_lv_draw_mask_fade_param_cfg_t, &be_lv_draw_mask_fade_param_cfg_t);
-  static be_define_const_empty_class(be_class_lv_draw_mask_fade_param_t, &be_class_lv_ctypes, lv_draw_mask_fade_param_t);
-  ctypes_register_class(vm, &be_class_lv_draw_mask_fade_param_t, &be_lv_draw_mask_fade_param_t);
-  static be_define_const_empty_class(be_class_lv_draw_mask_line_param_cfg_t, &be_class_lv_ctypes, lv_draw_mask_line_param_cfg_t);
-  ctypes_register_class(vm, &be_class_lv_draw_mask_line_param_cfg_t, &be_lv_draw_mask_line_param_cfg_t);
-  static be_define_const_empty_class(be_class_lv_draw_mask_line_param_t, &be_class_lv_ctypes, lv_draw_mask_line_param_t);
-  ctypes_register_class(vm, &be_class_lv_draw_mask_line_param_t, &be_lv_draw_mask_line_param_t);
-  static be_define_const_empty_class(be_class_lv_draw_mask_map_param_cfg_t, &be_class_lv_ctypes, lv_draw_mask_map_param_cfg_t);
-  ctypes_register_class(vm, &be_class_lv_draw_mask_map_param_cfg_t, &be_lv_draw_mask_map_param_cfg_t);
-  static be_define_const_empty_class(be_class_lv_draw_mask_map_param_t, &be_class_lv_ctypes, lv_draw_mask_map_param_t);
-  ctypes_register_class(vm, &be_class_lv_draw_mask_map_param_t, &be_lv_draw_mask_map_param_t);
-  static be_define_const_empty_class(be_class_lv_draw_mask_radius_param_cfg_t, &be_class_lv_ctypes, lv_draw_mask_radius_param_cfg_t);
-  ctypes_register_class(vm, &be_class_lv_draw_mask_radius_param_cfg_t, &be_lv_draw_mask_radius_param_cfg_t);
-  static be_define_const_empty_class(be_class_lv_draw_mask_radius_param_t, &be_class_lv_ctypes, lv_draw_mask_radius_param_t);
-  ctypes_register_class(vm, &be_class_lv_draw_mask_radius_param_t, &be_lv_draw_mask_radius_param_t);
-  static be_define_const_empty_class(be_class_lv_draw_mask_saved_t, &be_class_lv_ctypes, lv_draw_mask_saved_t);
-  ctypes_register_class(vm, &be_class_lv_draw_mask_saved_t, &be_lv_draw_mask_saved_t);
-  static be_define_const_empty_class(be_class_lv_draw_rect_dsc_t, &be_class_lv_ctypes, lv_draw_rect_dsc_t);
-  ctypes_register_class(vm, &be_class_lv_draw_rect_dsc_t, &be_lv_draw_rect_dsc_t);
-  static be_define_const_empty_class(be_class_lv_point_t, &be_class_lv_ctypes, lv_point_t);
-  ctypes_register_class(vm, &be_class_lv_point_t, &be_lv_point_t);
-  static be_define_const_empty_class(be_class_lv_sqrt_res_t, &be_class_lv_ctypes, lv_sqrt_res_t);
-  ctypes_register_class(vm, &be_class_lv_sqrt_res_t, &be_lv_sqrt_res_t);
+  static be_define_const_empty_class(be_class_lv_area, &be_class_lv_ctypes, lv_area);
+  ctypes_register_class(vm, &be_class_lv_area, &be_lv_area);
+  static be_define_const_empty_class(be_class_lv_draw_img_dsc, &be_class_lv_ctypes, lv_draw_img_dsc);
+  ctypes_register_class(vm, &be_class_lv_draw_img_dsc, &be_lv_draw_img_dsc);
+  static be_define_const_empty_class(be_class_lv_draw_label_dsc, &be_class_lv_ctypes, lv_draw_label_dsc);
+  ctypes_register_class(vm, &be_class_lv_draw_label_dsc, &be_lv_draw_label_dsc);
+  static be_define_const_empty_class(be_class_lv_draw_line_dsc, &be_class_lv_ctypes, lv_draw_line_dsc);
+  ctypes_register_class(vm, &be_class_lv_draw_line_dsc, &be_lv_draw_line_dsc);
+  static be_define_const_empty_class(be_class_lv_draw_mask_angle_param, &be_class_lv_ctypes, lv_draw_mask_angle_param);
+  ctypes_register_class(vm, &be_class_lv_draw_mask_angle_param, &be_lv_draw_mask_angle_param);
+  static be_define_const_empty_class(be_class_lv_draw_mask_angle_param_cfg, &be_class_lv_ctypes, lv_draw_mask_angle_param_cfg);
+  ctypes_register_class(vm, &be_class_lv_draw_mask_angle_param_cfg, &be_lv_draw_mask_angle_param_cfg);
+  static be_define_const_empty_class(be_class_lv_draw_mask_common_dsc, &be_class_lv_ctypes, lv_draw_mask_common_dsc);
+  ctypes_register_class(vm, &be_class_lv_draw_mask_common_dsc, &be_lv_draw_mask_common_dsc);
+  static be_define_const_empty_class(be_class_lv_draw_mask_fade_param, &be_class_lv_ctypes, lv_draw_mask_fade_param);
+  ctypes_register_class(vm, &be_class_lv_draw_mask_fade_param, &be_lv_draw_mask_fade_param);
+  static be_define_const_empty_class(be_class_lv_draw_mask_fade_param_cfg, &be_class_lv_ctypes, lv_draw_mask_fade_param_cfg);
+  ctypes_register_class(vm, &be_class_lv_draw_mask_fade_param_cfg, &be_lv_draw_mask_fade_param_cfg);
+  static be_define_const_empty_class(be_class_lv_draw_mask_line_param, &be_class_lv_ctypes, lv_draw_mask_line_param);
+  ctypes_register_class(vm, &be_class_lv_draw_mask_line_param, &be_lv_draw_mask_line_param);
+  static be_define_const_empty_class(be_class_lv_draw_mask_line_param_cfg, &be_class_lv_ctypes, lv_draw_mask_line_param_cfg);
+  ctypes_register_class(vm, &be_class_lv_draw_mask_line_param_cfg, &be_lv_draw_mask_line_param_cfg);
+  static be_define_const_empty_class(be_class_lv_draw_mask_map_param, &be_class_lv_ctypes, lv_draw_mask_map_param);
+  ctypes_register_class(vm, &be_class_lv_draw_mask_map_param, &be_lv_draw_mask_map_param);
+  static be_define_const_empty_class(be_class_lv_draw_mask_map_param_cfg, &be_class_lv_ctypes, lv_draw_mask_map_param_cfg);
+  ctypes_register_class(vm, &be_class_lv_draw_mask_map_param_cfg, &be_lv_draw_mask_map_param_cfg);
+  static be_define_const_empty_class(be_class_lv_draw_mask_radius_param, &be_class_lv_ctypes, lv_draw_mask_radius_param);
+  ctypes_register_class(vm, &be_class_lv_draw_mask_radius_param, &be_lv_draw_mask_radius_param);
+  static be_define_const_empty_class(be_class_lv_draw_mask_radius_param_cfg, &be_class_lv_ctypes, lv_draw_mask_radius_param_cfg);
+  ctypes_register_class(vm, &be_class_lv_draw_mask_radius_param_cfg, &be_lv_draw_mask_radius_param_cfg);
+  static be_define_const_empty_class(be_class_lv_draw_mask_saved, &be_class_lv_ctypes, lv_draw_mask_saved);
+  ctypes_register_class(vm, &be_class_lv_draw_mask_saved, &be_lv_draw_mask_saved);
+  static be_define_const_empty_class(be_class_lv_draw_rect_dsc, &be_class_lv_ctypes, lv_draw_rect_dsc);
+  ctypes_register_class(vm, &be_class_lv_draw_rect_dsc, &be_lv_draw_rect_dsc);
+  static be_define_const_empty_class(be_class_lv_point, &be_class_lv_ctypes, lv_point);
+  ctypes_register_class(vm, &be_class_lv_point, &be_lv_point);
+  static be_define_const_empty_class(be_class_lv_sqrt_res, &be_class_lv_ctypes, lv_sqrt_res);
+  ctypes_register_class(vm, &be_class_lv_sqrt_res, &be_lv_sqrt_res);
 }
 
 /*******************************************************************/

@@ -10,17 +10,17 @@ import ctypes
 
 ctypes.print_types()
 
-lv_style_int_t = ctypes.i16
-lv_color_t = ctypes.u16        # depends on colors
-lv_grad_dir_t = ctypes.u8
-lv_opa_t = ctypes.u8
-lv_blend_mode_t = ctypes.u8
-lv_align_t = ctypes.u8
-lv_coord_t = ctypes.i16
-lv_bidi_dir_t = ctypes.u8
-lv_txt_flag_t = ctypes.u8
-lv_text_decor_t = ctypes.u8
-lv_font_t = ctypes.u32
+lv_style_int = ctypes.i16
+lv_color = ctypes.u16        # depends on colors
+lv_grad_dir = ctypes.u8
+lv_opa = ctypes.u8
+lv_blend_mode = ctypes.u8
+lv_align = ctypes.u8
+lv_coord = ctypes.i16
+lv_bidi_dir = ctypes.u8
+lv_txt_flag = ctypes.u8
+lv_text_decor = ctypes.u8
+lv_font = ctypes.u32
 uint8_t_1 = ctypes.bf_1
 uint8_t_2 = ctypes.bf_2
 uint8_t = ctypes.u8
@@ -29,158 +29,158 @@ uint32_t = ctypes.u32
 int32_t = ctypes.i32
 ptr = ctypes.u32
 
-lv_point_t = [
-    [lv_coord_t, "x"],
-    [lv_coord_t, "y"],
+lv_point = [
+    [lv_coord, "x"],
+    [lv_coord, "y"],
 ]
-lv_point_t = ctypes.structure(lv_point_t, "lv_point_t")
+lv_point = ctypes.structure(lv_point, "lv_point")
 
-lv_area_t = [
-    [lv_coord_t, "x1"],
-    [lv_coord_t, "y1"],
-    [lv_coord_t, "x2"],
-    [lv_coord_t, "y2"],
+lv_area = [
+    [lv_coord, "x1"],
+    [lv_coord, "y1"],
+    [lv_coord, "x2"],
+    [lv_coord, "y2"],
 ]
-lv_area_t = ctypes.structure(lv_area_t, "lv_area_t")
+lv_area = ctypes.structure(lv_area, "lv_area")
 
 # test_t = [
-#     [lv_area_t, "a"],
-#     [lv_area_t, "b"]
+#     [lv_area, "a"],
+#     [lv_area, "b"]
 # ]
 # test_t = ctypes.structure(test_t, "test_t")
 
-lv_draw_rect_dsc_t = [
-    [lv_style_int_t, "radius"],
+lv_draw_rect_dsc = [
+    [lv_style_int, "radius"],
 
     #/*Background*/
-    [lv_color_t, "bg_color"],
-    [lv_color_t, "bg_grad_color"],
-    [lv_grad_dir_t, "bg_grad_dir"],
-    [lv_style_int_t, "bg_main_color_stop"],
-    [lv_style_int_t, "bg_grad_color_stop"],
-    [lv_opa_t, "bg_opa"],
-    [lv_blend_mode_t, "bg_blend_mode"],
+    [lv_color, "bg_color"],
+    [lv_color, "bg_grad_color"],
+    [lv_grad_dir, "bg_grad_dir"],
+    [lv_style_int, "bg_main_color_stop"],
+    [lv_style_int, "bg_grad_color_stop"],
+    [lv_opa, "bg_opa"],
+    [lv_blend_mode, "bg_blend_mode"],
 
     #/*Border*/
-    [lv_color_t, "border_color"],
-    [lv_style_int_t, "border_width"],
-    [lv_style_int_t, "border_side"],
-    [lv_opa_t, "border_opa"],
-    [lv_blend_mode_t, "border_blend_mode"],
+    [lv_color, "border_color"],
+    [lv_style_int, "border_width"],
+    [lv_style_int, "border_side"],
+    [lv_opa, "border_opa"],
+    [lv_blend_mode, "border_blend_mode"],
     [uint8_t_1, "border_post"],
 
     #/*Outline*/
-    [lv_color_t, "outline_color"],
-    [lv_style_int_t, "outline_width"],
-    [lv_style_int_t, "outline_pad"],
-    [lv_opa_t, "outline_opa"],
-    [lv_blend_mode_t, "outline_blend_mode"],
+    [lv_color, "outline_color"],
+    [lv_style_int, "outline_width"],
+    [lv_style_int, "outline_pad"],
+    [lv_opa, "outline_opa"],
+    [lv_blend_mode, "outline_blend_mode"],
 
     #/*Shadow*/
-    [lv_color_t, "shadow_color"],
-    [lv_style_int_t, "shadow_width"],
-    [lv_style_int_t, "shadow_ofs_x"],
-    [lv_style_int_t, "shadow_ofs_y"],
-    [lv_style_int_t, "shadow_spread"],
-    [lv_opa_t, "shadow_opa"],
-    [lv_blend_mode_t, "shadow_blend_mode"],
+    [lv_color, "shadow_color"],
+    [lv_style_int, "shadow_width"],
+    [lv_style_int, "shadow_ofs_x"],
+    [lv_style_int, "shadow_ofs_y"],
+    [lv_style_int, "shadow_spread"],
+    [lv_opa, "shadow_opa"],
+    [lv_blend_mode, "shadow_blend_mode"],
 
     #/*Pattern*/
     [ptr, "pattern_image"],
     [ptr, "pattern_font"],
-    [lv_color_t, "pattern_recolor"],
-    [lv_opa_t, "pattern_opa"],
-    [lv_opa_t, "pattern_recolor_opa"],
+    [lv_color, "pattern_recolor"],
+    [lv_opa, "pattern_opa"],
+    [lv_opa, "pattern_recolor_opa"],
     [uint8_t_1, "pattern_repeat"],
-    [lv_blend_mode_t, "pattern_blend_mode"],
+    [lv_blend_mode, "pattern_blend_mode"],
 
     #/*Value*/
     [ptr, "value_str"],
     [ptr, "value_font"],
-    [lv_opa_t, "value_opa"],
-    [lv_color_t, "value_color"],
-    [lv_style_int_t, "value_ofs_x"],
-    [lv_style_int_t, "value_ofs_y"],
-    [lv_style_int_t, "value_letter_space"],
-    [lv_style_int_t, "value_line_space"],
-    [lv_align_t, "value_align"],
-    [lv_blend_mode_t, "value_blend_mode"],
+    [lv_opa, "value_opa"],
+    [lv_color, "value_color"],
+    [lv_style_int, "value_ofs_x"],
+    [lv_style_int, "value_ofs_y"],
+    [lv_style_int, "value_letter_space"],
+    [lv_style_int, "value_line_space"],
+    [lv_align, "value_align"],
+    [lv_blend_mode, "value_blend_mode"],
 ]
-lv_draw_rect_dsc_t = ctypes.structure(lv_draw_rect_dsc_t, "lv_draw_rect_dsc_t")
+lv_draw_rect_dsc = ctypes.structure(lv_draw_rect_dsc, "lv_draw_rect_dsc")
 
-lv_draw_line_dsc_t = [
-    [lv_color_t, "color"],
-    [lv_style_int_t, "width"],
-    [lv_style_int_t, "dash_width"],
-    [lv_style_int_t, "dash_gap"],
-    [lv_opa_t, "opa"],
+lv_draw_line_dsc = [
+    [lv_color, "color"],
+    [lv_style_int, "width"],
+    [lv_style_int, "dash_width"],
+    [lv_style_int, "dash_gap"],
+    [lv_opa, "opa"],
     [uint8_t_2, "blend_mode"],
     [uint8_t_1, "round_start"],
     [uint8_t_1, "round_end"],
     [uint8_t_1, "raw_end"],
 ]
-lv_draw_line_dsc_t = ctypes.structure(lv_draw_line_dsc_t, "lv_draw_line_dsc_t")
+lv_draw_line_dsc = ctypes.structure(lv_draw_line_dsc, "lv_draw_line_dsc")
 
-lv_draw_img_dsc_t = [
-    [lv_opa_t, "opa"],
+lv_draw_img_dsc = [
+    [lv_opa, "opa"],
     [uint16_t, "angle"],
-    [lv_point_t, "pivot"],
+    [lv_point, "pivot"],
     [uint16_t, "zoom"],
-    [lv_opa_t, "recolor_opa"],
-    [lv_color_t, "recolor"],
-    [lv_blend_mode_t, "blend_mode"],
+    [lv_opa, "recolor_opa"],
+    [lv_color, "recolor"],
+    [lv_blend_mode, "blend_mode"],
     [uint8_t_1, "antialias"],
 ]
-lv_draw_img_dsc_t = ctypes.structure(lv_draw_img_dsc_t, "lv_draw_img_dsc_t")
+lv_draw_img_dsc = ctypes.structure(lv_draw_img_dsc, "lv_draw_img_dsc")
 
-lv_draw_label_dsc_t = [
-    [lv_color_t, "color"],
-    [lv_color_t, "sel_color"],
-    [lv_color_t, "sel_bg_color"],
-    [lv_font_t, "font"],
-    [lv_opa_t, "opa"],
-    [lv_style_int_t, "line_space"],
-    [lv_style_int_t, "letter_space"],
+lv_draw_label_dsc = [
+    [lv_color, "color"],
+    [lv_color, "sel_color"],
+    [lv_color, "sel_bg_color"],
+    [lv_font, "font"],
+    [lv_opa, "opa"],
+    [lv_style_int, "line_space"],
+    [lv_style_int, "letter_space"],
     [uint32_t, "sel_start"],
     [uint32_t, "sel_end"],
-    [lv_coord_t, "ofs_x"],
-    [lv_coord_t, "ofs_y"],
-    [lv_bidi_dir_t, "bidi_dir"],
-    [lv_txt_flag_t, "flag"],
-    [lv_text_decor_t, "decor"],
-    [lv_blend_mode_t, "blend_mode"],
+    [lv_coord, "ofs_x"],
+    [lv_coord, "ofs_y"],
+    [lv_bidi_dir, "bidi_dir"],
+    [lv_txt_flag, "flag"],
+    [lv_text_decor, "decor"],
+    [lv_blend_mode, "blend_mode"],
 ]
-lv_draw_label_dsc_t = ctypes.structure(lv_draw_label_dsc_t, "lv_draw_label_dsc_t")
+lv_draw_label_dsc = ctypes.structure(lv_draw_label_dsc, "lv_draw_label_dsc")
 
 #- --------- lv_mask --------- -#
-lv_draw_mask_xcb_t = ptr    # callback
-lv_draw_mask_type_t = ctypes.u8
-lv_draw_mask_line_side_t = ctypes.u8
+lv_draw_mask_xcb = ptr    # callback
+lv_draw_mask_type = ctypes.u8
+lv_draw_mask_line_side = ctypes.u8
 
-lv_draw_mask_common_dsc_t = [
-    [lv_draw_mask_xcb_t, "cb"],
-    [lv_draw_mask_type_t, "type"],
+lv_draw_mask_common_dsc = [
+    [lv_draw_mask_xcb, "cb"],
+    [lv_draw_mask_type, "type"],
 ]
-lv_draw_mask_common_dsc_t = ctypes.structure(lv_draw_mask_common_dsc_t, "lv_draw_mask_common_dsc_t")
+lv_draw_mask_common_dsc = ctypes.structure(lv_draw_mask_common_dsc, "lv_draw_mask_common_dsc")
 
-lv_draw_mask_line_param_cfg_t = [
+lv_draw_mask_line_param_cfg = [
     #/*First point */
-    [lv_point_t, "p1"],
+    [lv_point, "p1"],
 
     #/*Second point*/
-    [lv_point_t, "p2"],
+    [lv_point, "p2"],
 
     #/*Which side to keep?*/
     [uint8_t_2, "side"],
 ]
-lv_draw_mask_line_param_cfg_t = ctypes.structure(lv_draw_mask_line_param_cfg_t, "lv_draw_mask_line_param_cfg_t")
+lv_draw_mask_line_param_cfg = ctypes.structure(lv_draw_mask_line_param_cfg, "lv_draw_mask_line_param_cfg")
 
-lv_draw_mask_line_param_t = [
+lv_draw_mask_line_param = [
     #/*The first element must be the common descriptor*/
-    [lv_draw_mask_common_dsc_t, "dsc"],
-    [lv_draw_mask_line_param_cfg_t, "cfg"],
+    [lv_draw_mask_common_dsc, "dsc"],
+    [lv_draw_mask_line_param_cfg, "cfg"],
     #/*A point of the line*/
-    [lv_point_t, "origo"],
+    [lv_point, "origo"],
     #/* X / (1024*Y) steepness (X is 0..1023 range). What is the change of X in 1024 Y?*/
     [int32_t, "xy_steep"],
     #/* Y / (1024*X) steepness (Y is 0..1023 range). What is the change of Y in 1024 X?*/
@@ -195,85 +195,85 @@ lv_draw_mask_line_param_t = [
     # * It is used to select left/right/top/bottom*/
     [uint8_t_1, "inv"],
 ]
-lv_draw_mask_line_param_t = ctypes.structure(lv_draw_mask_line_param_t, "lv_draw_mask_line_param_t")
+lv_draw_mask_line_param = ctypes.structure(lv_draw_mask_line_param, "lv_draw_mask_line_param")
 
-lv_draw_mask_angle_param_cfg_t = [
-    [lv_point_t, "vertex_p"],
-    [lv_coord_t, "start_angle"],
-    [lv_coord_t, "end_angle"],
+lv_draw_mask_angle_param_cfg = [
+    [lv_point, "vertex_p"],
+    [lv_coord, "start_angle"],
+    [lv_coord, "end_angle"],
 ]
-lv_draw_mask_angle_param_cfg_t = ctypes.structure(lv_draw_mask_angle_param_cfg_t, "lv_draw_mask_angle_param_cfg_t")
+lv_draw_mask_angle_param_cfg = ctypes.structure(lv_draw_mask_angle_param_cfg, "lv_draw_mask_angle_param_cfg")
 
-lv_draw_mask_angle_param_t = [
+lv_draw_mask_angle_param = [
     #/*The first element must be the common descriptor*/
-    [lv_draw_mask_common_dsc_t, "dsc"],
-    [lv_draw_mask_angle_param_cfg_t, "cfg"],
+    [lv_draw_mask_common_dsc, "dsc"],
+    [lv_draw_mask_angle_param_cfg, "cfg"],
 
-    [lv_draw_mask_line_param_t, "start_line"],
-    [lv_draw_mask_line_param_t, "end_line"],
+    [lv_draw_mask_line_param, "start_line"],
+    [lv_draw_mask_line_param, "end_line"],
     [uint16_t, "delta_deg"],
 ]
-lv_draw_mask_angle_param_t = ctypes.structure(lv_draw_mask_angle_param_t, "lv_draw_mask_angle_param_t")
+lv_draw_mask_angle_param = ctypes.structure(lv_draw_mask_angle_param, "lv_draw_mask_angle_param")
 
 
-lv_draw_mask_radius_param_cfg_t = [
-    [lv_area_t, "rect"],
-    [lv_coord_t, "radius"],
+lv_draw_mask_radius_param_cfg = [
+    [lv_area, "rect"],
+    [lv_coord, "radius"],
     [uint8_t_1, "outer"],
 ]
-lv_draw_mask_radius_param_cfg_t = ctypes.structure(lv_draw_mask_radius_param_cfg_t, "lv_draw_mask_radius_param_cfg_t")
+lv_draw_mask_radius_param_cfg = ctypes.structure(lv_draw_mask_radius_param_cfg, "lv_draw_mask_radius_param_cfg")
 
-lv_sqrt_res_t = [
+lv_sqrt_res = [
     [uint16_t, "i"],
     [uint16_t, "f"],
 ]
-lv_sqrt_res_t = ctypes.structure(lv_sqrt_res_t, "lv_sqrt_res_t")
+lv_sqrt_res = ctypes.structure(lv_sqrt_res, "lv_sqrt_res")
 
-lv_draw_mask_radius_param_t = [
+lv_draw_mask_radius_param = [
     #/*The first element must be the common descriptor*/
-    [lv_draw_mask_common_dsc_t, "dsc"],
-    [lv_draw_mask_radius_param_cfg_t, "cfg"],
+    [lv_draw_mask_common_dsc, "dsc"],
+    [lv_draw_mask_radius_param_cfg, "cfg"],
     [int32_t, "y_prev"],
-    [lv_sqrt_res_t, "y_prev_x"],
+    [lv_sqrt_res, "y_prev_x"],
 ]
-lv_draw_mask_radius_param_t = ctypes.structure(lv_draw_mask_radius_param_t, "lv_draw_mask_radius_param_t")
+lv_draw_mask_radius_param = ctypes.structure(lv_draw_mask_radius_param, "lv_draw_mask_radius_param")
 
 
-lv_draw_mask_fade_param_cfg_t = [
-    [lv_area_t, "coords"],
-    [lv_coord_t, "y_top"],
-    [lv_coord_t, "y_bottom"],
-    [lv_opa_t, "opa_top"],
-    [lv_opa_t, "opa_bottom"],
+lv_draw_mask_fade_param_cfg = [
+    [lv_area, "coords"],
+    [lv_coord, "y_top"],
+    [lv_coord, "y_bottom"],
+    [lv_opa, "opa_top"],
+    [lv_opa, "opa_bottom"],
 ]
-lv_draw_mask_fade_param_cfg_t = ctypes.structure(lv_draw_mask_fade_param_cfg_t, "lv_draw_mask_fade_param_cfg_t")
+lv_draw_mask_fade_param_cfg = ctypes.structure(lv_draw_mask_fade_param_cfg, "lv_draw_mask_fade_param_cfg")
 
-lv_draw_mask_fade_param_t = [
+lv_draw_mask_fade_param = [
     # /*The first element must be the common descriptor*/
-    [lv_draw_mask_common_dsc_t, "dsc"],
-    [lv_draw_mask_fade_param_cfg_t, "cfg"],
+    [lv_draw_mask_common_dsc, "dsc"],
+    [lv_draw_mask_fade_param_cfg, "cfg"],
 ]
-lv_draw_mask_fade_param_t = ctypes.structure(lv_draw_mask_fade_param_t, "lv_draw_mask_fade_param_t")
+lv_draw_mask_fade_param = ctypes.structure(lv_draw_mask_fade_param, "lv_draw_mask_fade_param")
 
 
-lv_draw_mask_map_param_cfg_t = [
-    [lv_area_t, "coords"],
+lv_draw_mask_map_param_cfg = [
+    [lv_area, "coords"],
     [ptr, "map"],
 ]
-lv_draw_mask_map_param_cfg_t = ctypes.structure(lv_draw_mask_map_param_cfg_t, "lv_draw_mask_map_param_cfg_t")
+lv_draw_mask_map_param_cfg = ctypes.structure(lv_draw_mask_map_param_cfg, "lv_draw_mask_map_param_cfg")
 
-lv_draw_mask_map_param_t = [
+lv_draw_mask_map_param = [
     #/*The first element must be the common descriptor*/
-    [lv_draw_mask_common_dsc_t, "dsc"],
-    [lv_draw_mask_map_param_cfg_t, "cfg"],
+    [lv_draw_mask_common_dsc, "dsc"],
+    [lv_draw_mask_map_param_cfg, "cfg"],
 ]
-lv_draw_mask_map_param_t = ctypes.structure(lv_draw_mask_map_param_t, "lv_draw_mask_map_param_t")
+lv_draw_mask_map_param = ctypes.structure(lv_draw_mask_map_param, "lv_draw_mask_map_param")
 
-lv_draw_mask_saved_t = [
+lv_draw_mask_saved = [
     [ptr, "param"],
     [ptr, "custom_id"],
 ]
-lv_draw_mask_saved_t = ctypes.structure(lv_draw_mask_saved_t, "lv_draw_mask_saved_t")
+lv_draw_mask_saved = ctypes.structure(lv_draw_mask_saved, "lv_draw_mask_saved")
 
 #
 ctypes.print_classes()
@@ -286,7 +286,7 @@ ctypes.print_classes()
 
 #- Ex
 
-bb=ctypes.buffer(lv_draw_line_dsc_t)
+bb=ctypes.buffer(lv_draw_line_dsc)
 bb.color
 bb.blend_mode
 
@@ -302,12 +302,12 @@ bb.raw_end = 1
 bb.blend_mode=0
 - bytes('FFFF0000000000000010')
 
-lv_draw_line_dsc_t = [
-    [lv_color_t, "color"],
-    [lv_style_int_t, "width"],
-    [lv_style_int_t, "dash_width"],
-    [lv_style_int_t, "dash_gap"],
-    [lv_opa_t, "opa"],
+lv_draw_line_dsc = [
+    [lv_color, "color"],
+    [lv_style_int, "width"],
+    [lv_style_int, "dash_width"],
+    [lv_style_int, "dash_gap"],
+    [lv_opa, "opa"],
     [uint8_t_2, "blend_mode"],
     [uint8_t_1, "round_start"],
     [uint8_t_1, "round_end"],

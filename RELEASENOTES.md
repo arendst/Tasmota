@@ -38,6 +38,10 @@ In addition to TLS using fingerprints now also user supplied CA certs, AWS IoT a
 
 For initial configuration this release supports Webserver based **WifiManager** or **Serial** based command interface only. Support for **WPS** and **SmartConfig** has been removed.
 
+## Initial installation
+
+Easy initial installation of Tasmota can be performed using the [Tasmota WebInstaller](https://arendst.github.io/Tasmota/).
+
 ## Provided Binary Downloads
 
 ### ESP8266 or ESP8285 based
@@ -52,7 +56,6 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - **tasmota-display.bin** = The Display version without Energy Monitoring but adds display support for 1M+ flash.
 - **tasmota-zbbridge.bin** = The dedicated Sonoff Zigbee Bridge version for 2M+ flash.
 - **tasmota-zigbee.bin** = The dedicated cc25xx Zigbee Bridge version for 4M+ flash.
-- **tasmota-minimal.bin** = The Minimal version allows intermediate OTA uploads to support larger versions and does NOT change any persistent parameter for 1M+ flash. This version **should NOT be used for initial installation**.
 
 Above binaries are also available as gzipped version allowing faster uploads.
 
@@ -97,15 +100,19 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 
 ## Changelog v9.5.0.2
 ### Added
+- Release of [Tasmota WebInstaller](https://arendst.github.io/Tasmota/)
 - Command ``SetOption127 1`` to force Wifi in no-sleep mode even if ``Sleep 0`` is not enabled
 - Initial support for Tasmota Mesh (TasMesh) providing node/broker communication using ESP-NOW [#11939](https://github.com/arendst/Tasmota/issues/11939)
 - Berry ESP32 partition manager [#12465](https://github.com/arendst/Tasmota/issues/12465)
 - Support for AM2320 Temperature and Humidity Sensor by Lars Wessels [#12485](https://github.com/arendst/Tasmota/issues/12485)
 - Rule event support as JSON payload [#12496](https://github.com/arendst/Tasmota/issues/12496)
 - MQTT minimum password length restriction in GUI [#12553](https://github.com/arendst/Tasmota/issues/12553)
+- Support for Technoline WS2300-15 Anemometer [#12573](https://github.com/arendst/Tasmota/issues/12573)
+- Support for Telaire T6700 Series CO2 sensor by Alexander Savchenko [#12618](https://github.com/arendst/Tasmota/issues/12618)
 
 ### Changed
 - ESP32 core library from v1.0.6 to v1.0.7.1
+- IRremoteESP8266 library from v2.7.18 to v2.7.19
 - ESP32 Ethernet Phy Type information to IDF v3+
 - Speed up initial GUI console refresh
 - Enable UFILESYS, GUI_TRASH_FILE and GUI_EDIT_FILE for any device compiled with more than 1M flash size
@@ -128,6 +135,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - Zigbee Hue angle encoding [#12545](https://github.com/arendst/Tasmota/issues/12545)
 - Exception 28 when unable to send MQTT message and a topic name without a slash '/' [#12555](https://github.com/arendst/Tasmota/issues/12555)
 - Wi-Fi initial setup workaround for 11n only routers [#12566](https://github.com/arendst/Tasmota/issues/12566)
+- ESP32 do not use chip temperature sensor as global temperature if external temperature sensor is used [#12630](https://github.com/arendst/Tasmota/issues/12630)
 
 ### Noted
 - ESP32 single core **tasmota32solo1.bin** binary can only be uploaded using the GUI as OTA upload will trigger the watchdog timer
