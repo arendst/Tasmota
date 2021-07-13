@@ -364,7 +364,7 @@ void ResponseAppendFeatures(void)
 #if defined(USE_ENERGY_SENSOR) && defined(USE_PZEM_DC)
     feature4 |= 0x00001000;  // xnrg_06_pzem_dc.ino
 #endif
-#if defined(USE_TX20_WIND_SENSOR) || defined(USE_TX23_WIND_SENSOR)
+#if defined(USE_TX20_WIND_SENSOR) || defined(USE_TX23_WIND_SENSOR) || defined(USE_WS2300_WIND_SENSOR)
     feature4 |= 0x00002000;  // xsns_35_tx20.ino
 #endif
 #if defined(USE_I2C) && defined(USE_MGC3130)
