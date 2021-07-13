@@ -12,6 +12,16 @@ extern "C" {
 /* `lv_img` methods */
 #if BE_LV_WIDGET_IMG
 const lvbe_call_c_t lv_img_func[] = {
+  { "buf_free", (void*) &lv_img_buf_free, "", "(lv_img_dsc)" },
+  { "buf_get_img_size", (void*) &lv_img_buf_get_img_size, "i", "ii(lv_img_cf)" },
+  { "buf_get_px_alpha", (void*) &lv_img_buf_get_px_alpha, "i", "(lv_img_dsc)ii" },
+  { "buf_get_px_color", (void*) &lv_img_buf_get_px_color, "lv_color", "(lv_img_dsc)ii(lv_color)" },
+  { "buf_set_palette", (void*) &lv_img_buf_set_palette, "", "(lv_img_dsc)i(lv_color)" },
+  { "buf_set_px_alpha", (void*) &lv_img_buf_set_px_alpha, "", "(lv_img_dsc)iii" },
+  { "buf_set_px_color", (void*) &lv_img_buf_set_px_color, "", "(lv_img_dsc)ii(lv_color)" },
+  { "cf_get_px_size", (void*) &lv_img_cf_get_px_size, "i", "(lv_img_cf)" },
+  { "cf_has_alpha", (void*) &lv_img_cf_has_alpha, "b", "(lv_img_cf)" },
+  { "cf_is_chroma_keyed", (void*) &lv_img_cf_is_chroma_keyed, "b", "(lv_img_cf)" },
   { "create", (void*) &lv_img_create, "+lv_img", "(lv_obj)(lv_obj)" },
   { "get_angle", (void*) &lv_img_get_angle, "i", "(lv_obj)" },
   { "get_antialias", (void*) &lv_img_get_antialias, "b", "(lv_obj)" },
@@ -149,6 +159,7 @@ const lvbe_call_c_t lv_group_func[] = {
   { "focus_prev", (void*) &lv_group_focus_prev, "", "(lv_group)" },
   { "get_click_focus", (void*) &lv_group_get_click_focus, "b", "(lv_group)" },
   { "get_editing", (void*) &lv_group_get_editing, "b", "(lv_group)" },
+  { "get_focus_cb", (void*) &lv_group_get_focus_cb, "lv_group_focus_cb", "(lv_group)" },
   { "get_focused", (void*) &lv_group_get_focused, "lv_obj", "(lv_group)" },
   { "get_wrap", (void*) &lv_group_get_wrap, "b", "(lv_group)" },
   { "remove_all_objs", (void*) &lv_group_remove_all_objs, "", "(lv_group)" },
@@ -203,11 +214,13 @@ const lvbe_call_c_t lv_obj_func[] = {
   { "get_child_back", (void*) &lv_obj_get_child_back, "lv_obj", "(lv_obj)(lv_obj)" },
   { "get_click", (void*) &lv_obj_get_click, "b", "(lv_obj)" },
   { "get_coords", (void*) &lv_obj_get_coords, "", "(lv_obj)(lv_area)" },
+  { "get_design_cb", (void*) &lv_obj_get_design_cb, "lv_design_cb", "(lv_obj)" },
   { "get_drag", (void*) &lv_obj_get_drag, "b", "(lv_obj)" },
   { "get_drag_dir", (void*) &lv_obj_get_drag_dir, "i", "(lv_obj)" },
   { "get_drag_parent", (void*) &lv_obj_get_drag_parent, "b", "(lv_obj)" },
   { "get_drag_throw", (void*) &lv_obj_get_drag_throw, "b", "(lv_obj)" },
   { "get_draw_rect_ext_pad_size", (void*) &lv_obj_get_draw_rect_ext_pad_size, "i", "(lv_obj)i" },
+  { "get_event_cb", (void*) &lv_obj_get_event_cb, "lv_event_cb", "(lv_obj)" },
   { "get_ext_attr", (void*) &lv_obj_get_ext_attr, ".", "(lv_obj)" },
   { "get_ext_click_pad_bottom", (void*) &lv_obj_get_ext_click_pad_bottom, "i", "(lv_obj)" },
   { "get_ext_click_pad_left", (void*) &lv_obj_get_ext_click_pad_left, "i", "(lv_obj)" },
@@ -229,6 +242,7 @@ const lvbe_call_c_t lv_obj_func[] = {
   { "get_parent_event", (void*) &lv_obj_get_parent_event, "b", "(lv_obj)" },
   { "get_protect", (void*) &lv_obj_get_protect, "i", "(lv_obj)" },
   { "get_screen", (void*) &lv_obj_get_screen, "lv_obj", "(lv_obj)" },
+  { "get_signal_cb", (void*) &lv_obj_get_signal_cb, "lv_signal_cb", "(lv_obj)" },
   { "get_state", (void*) &lv_obj_get_state, "i", "(lv_obj)i" },
   { "get_style_bg_blend_mode", (void*) &lv_obj_get_style_bg_blend_mode, "i", "(lv_obj)i" },
   { "get_style_bg_color", (void*) &lv_obj_get_style_bg_color, "lv_color", "(lv_obj)i" },
@@ -472,6 +486,7 @@ const lvbe_call_c_t lv_obj_func[] = {
   { "set_width_margin", (void*) &lv_obj_set_width_margin, "", "(lv_obj)i" },
   { "set_x", (void*) &lv_obj_set_x, "", "(lv_obj)i" },
   { "set_y", (void*) &lv_obj_set_y, "", "(lv_obj)i" },
+  { "signal_send", (void*) &lv_obj_signal_send, "i", "(lv_obj)i." },
 };
 
 /* `lv_arc` methods */
@@ -772,7 +787,7 @@ const lvbe_call_c_t lv_imgbtn_func[] = {
 #if BE_LV_WIDGET_KEYBOARD
 const lvbe_call_c_t lv_keyboard_func[] = {
   { "create", (void*) &lv_keyboard_create, "+lv_keyboard", "(lv_obj)(lv_obj)" },
-  { "def_event_cb", (void*) &lv_keyboard_def_event_cb, "", "(lv_obj)(lv_event)" },
+  { "def_event_cb", (void*) &lv_keyboard_def_event_cb, "", "(lv_obj)i" },
   { "get_cursor_manage", (void*) &lv_keyboard_get_cursor_manage, "b", "(lv_obj)" },
   { "get_mode", (void*) &lv_keyboard_get_mode, "i", "(lv_obj)" },
   { "get_textarea", (void*) &lv_keyboard_get_textarea, "lv_obj", "(lv_obj)" },
@@ -1159,7 +1174,7 @@ const lvbe_call_c_t lv_win_func[] = {
   { "add_btn_left", (void*) &lv_win_add_btn_left, "lv_obj", "(lv_obj)." },
   { "add_btn_right", (void*) &lv_win_add_btn_right, "lv_obj", "(lv_obj)." },
   { "clean", (void*) &lv_win_clean, "", "(lv_obj)" },
-  { "close_event_cb", (void*) &lv_win_close_event_cb, "", "(lv_obj)(lv_event)" },
+  { "close_event_cb", (void*) &lv_win_close_event_cb, "", "(lv_obj)i" },
   { "create", (void*) &lv_win_create, "+lv_win", "(lv_obj)(lv_obj)" },
   { "focus", (void*) &lv_win_focus, "", "(lv_obj)(lv_obj)(lv_anim_enable)" },
   { "get_anim_time", (void*) &lv_win_get_anim_time, "i", "(lv_obj)" },

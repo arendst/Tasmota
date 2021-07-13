@@ -20,11 +20,19 @@
 #ifdef USE_PROMETHEUS
 /*********************************************************************************************\
  * Prometheus support
+ *
+ * The text format for metrics, labels and values is documented at [1]. Only
+ * the UTF-8 text encoding is supported.
+ *
+ * [1]
+ * https://github.com/prometheus/docs/blob/master/content/docs/instrumenting/exposition_formats.md
+ *
 \*********************************************************************************************/
 
 #define XSNS_75                    75
 
-const char *UnitfromType(const char *type)  // find unit for measurment type
+// Find appropriate unit for measurement type.
+const char *UnitfromType(const char *type)
 {
   if (strcmp(type, "time") == 0) {
     return "seconds";
@@ -56,11 +64,23 @@ const char *UnitfromType(const char *type)  // find unit for measurment type
   return "";
 }
 
-String FormatMetricName(const char *metric) {  // cleanup spaces and uppercases for Prmetheus metrics conventions
+// Replace spaces and periods in metric name to match Prometheus metrics
+// convention.
+String FormatMetricName(const char *metric) {
   String formatted = metric;
   formatted.toLowerCase();
   formatted.replace(" ", "_");
   formatted.replace(".", "_");
+  return formatted;
+}
+
+// Labels can be any sequence of UTF-8 characters, but backslash, double-quote
+// and line feed must be escaped.
+String FormatLabelValue(const char *value) {
+  String formatted = value;
+  formatted.replace("\\", "\\\\");
+  formatted.replace("\"", "\\\"");
+  formatted.replace("\n", "\\n");
   return formatted;
 }
 
@@ -74,8 +94,8 @@ void HandleMetrics(void) {
   char parameter[FLOATSZ];
 
   // Pseudo-metric providing metadata about the running firmware version.
-  WSContentSend_P(PSTR("# TYPE tasmota_info gauge\ntasmota_info{version=\"%s\",image=\"%s\",build_timestamp=\"%s\"} 1\n"),
-                  TasmotaGlobal.version, TasmotaGlobal.image_name, GetBuildDateAndTime().c_str());
+  WSContentSend_P(PSTR("# TYPE tasmota_info gauge\ntasmota_info{version=\"%s\",image=\"%s\",build_timestamp=\"%s\",devicename=\"%s\"} 1\n"),
+                  TasmotaGlobal.version, TasmotaGlobal.image_name, GetBuildDateAndTime().c_str(), FormatLabelValue(SettingsText(SET_DEVICENAME)).c_str());
   WSContentSend_P(PSTR("# TYPE tasmota_uptime_seconds gauge\ntasmota_uptime_seconds %d\n"), TasmotaGlobal.uptime);
   WSContentSend_P(PSTR("# TYPE tasmota_boot_count counter\ntasmota_boot_count %d\n"), Settings->bootcount);
   WSContentSend_P(PSTR("# TYPE tasmota_flash_writes_total counter\ntasmota_flash_writes_total %d\n"), Settings->save_flag);
@@ -135,7 +155,7 @@ void HandleMetrics(void) {
   String jsonStr = TasmotaGlobal.mqtt_data;
   JsonParser parser((char *)jsonStr.c_str());
   JsonParserObject root = parser.getRootObject();
-  if (root) { // did JSON parsing went ok?
+  if (root) { // did JSON parsing succeed?
     for (auto key1 : root) {
       JsonParserToken value1 = key1.getValue();
       if (value1.isObject()) {
@@ -160,7 +180,7 @@ void HandleMetrics(void) {
               String sensor = FormatMetricName(key1.getStr());
               String type = FormatMetricName(key2.getStr());
               const char *unit = UnitfromType(type.c_str());
-              if (strcmp(type.c_str(), "totalstarttime") != 0) {  // this metric causes prometheus of fail
+              if (strcmp(type.c_str(), "totalstarttime") != 0) {  // this metric causes Prometheus of fail
                 if (strcmp(type.c_str(), "id") == 0) {            // this metric is NaN, so convert it to a label, see Wi-Fi metrics above
                   WSContentSend_P(PSTR("# TYPE tasmota_sensors_%s_%s gauge\ntasmota_sensors_%s_%s{sensor=\"%s\",id=\"%s\"} 1\n"),
                     type.c_str(), unit, type.c_str(), unit, sensor.c_str(), value);

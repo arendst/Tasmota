@@ -83,8 +83,19 @@ typedef struct be_ctypes_classes_t {
 
 // const be_ctypes_class_t * g_ctypes_classes = NULL;
 
-// extern void berry_log_C(const char * berry_buf, ...);
+//
+// Constructor for ctypes structure
+//
+// If no arg: allocate a bytes() structure of the right size, filled with zeroes
+// Arg1 is instance self
+// If arg 2 is int (and not null): copy the data to the bytes structure
 int be_ctypes_init(bvm *vm) {
+    int argc = be_top(vm);
+    void * src_data = NULL;
+    if (argc > 1 && (be_isint(vm, 2) || be_iscomptr(vm,2))) {
+        src_data = (void*) be_toint(vm, 2);
+    }
+
     // get global array of classes from global variable '.ctypes_classes'
     be_getglobal(vm, ".ctypes_classes");
     const be_ctypes_classes_t * be_ctypes_classes = (const be_ctypes_classes_t *) be_tocomptr(vm, -1);
@@ -125,6 +136,18 @@ int be_ctypes_init(bvm *vm) {
         be_pushint(vm, definitions->size_bytes);
         be_call(vm, 2);
         be_pop(vm, 3);
+
+        // if src_data then copy source data to the new structure
+        if (src_data) {
+            // call self._buffer()
+            be_getmember(vm, 1, "_buffer");
+            be_pushvalue(vm, 1);
+            be_call(vm, 1);     // call with 1 parameter
+            void * dst_data = be_tocomptr(vm, -2);
+            be_pop(vm, 2);
+            // copy data
+            memmove(dst_data, src_data, definitions->size_bytes);
+        }
     }
 
     be_return(vm);
