@@ -51,6 +51,14 @@
   #define MCP2515_MAX_FRAMES 14
 #endif
 
+#ifndef CAN_KEEP_ALIVE_SECS
+  #define CAN_KEEP_ALIVE_SECS 300
+#endif
+
+#ifndef MCP2515_TIMEOUT
+  #define MCP2515_TIMEOUT 10
+#endif
+
 #ifndef MCP2515_BMS_CLIENT
   #define MCP2515_BMS_CLIENT
   // Look for Freedom Won BMS data in CAN message
@@ -63,15 +71,16 @@
 struct BMS_Struct {
   uint16_t  stateOfCharge;
   uint16_t  stateOfHealth;
-  float     battVoltage;
-  float     battAmp = 0;
-  float     battTemp;
+  uint16_t  battVoltage; // Div 100
+  int16_t   battAmp; // Div 10
+  int16_t   battTemp; // Div 10
   char      name[17];
 } bms;
 #endif
 
 int8_t mcp2515_init_status = 1;
 
+uint32_t lastFrameRecv = 0;
 struct can_frame canFrame;
 MCP2515 *mcp2515 = nullptr;
 
@@ -96,12 +105,17 @@ void MCP2515_Init(void) {
     AddLog(LOG_LEVEL_ERROR, PSTR("MCP2515: Failed to set normal mode"));
     mcp2515_init_status = 0;
   }
+#ifdef MCP2515_BMS_FREEDWON
+  // TODO: Filter CAN bus messages
+  //mcp2515->setFilterMask();
+  //mcp2515->setFilter();
+#endif
 }
 
 void MCP2515_Read() {
   uint8_t nCounter = 0;
   bool checkRcv;
-  if(mcp2515_init_status) {
+  if (mcp2515_init_status) {
 
     checkRcv = mcp2515->checkReceive();
 
@@ -109,30 +123,36 @@ void MCP2515_Read() {
       mcp2515->checkReceive();
       nCounter++;
       if (mcp2515->readMessage(&canFrame) == MCP2515::ERROR_OK) {
+        lastFrameRecv = TasmotaGlobal.uptime;
 #ifdef MCP2515_BMS_CLIENT
   #ifdef MCP2515_BMS_FREEDWON
-      switch(canFrame.can_id) {
+      switch (canFrame.can_id) {
         // Charge/Discharge parameters
         case 0x351:
           break;
         // State of Charge/Health
         case 0x355:
-          if(6 >= canFrame.can_dlc) {
-            bms.stateOfCharge = (canFrame.data[1] << 8) + canFrame.data[0];
-            bms.stateOfHealth = (canFrame.data[3] << 8) + canFrame.data[2];
+          if (6 >= canFrame.can_dlc) {
+            bms.stateOfCharge = (canFrame.data[1] << 8) | canFrame.data[0];
+            bms.stateOfHealth = (canFrame.data[3] << 8) | canFrame.data[2];
           } else {
             AddLog(LOG_LEVEL_DEBUG, PSTR("MCP2515: Unexpected length (%d) for ID 0x355"), canFrame.can_dlc);
           }
           break;
         // Voltage/Current/Temperature
         case 0x356:
-          if(6 >= canFrame.can_dlc) {
-            bms.battVoltage = (float)((canFrame.data[1] << 8) + canFrame.data[0])/100;
-            bms.battAmp = (float)((canFrame.data[3] << 8) + canFrame.data[2])/10;
-            bms.battTemp = ConvertTemp((float)((canFrame.data[5] << 8) + canFrame.data[4])/10); // Convert to fahrenheit if SetOpion8 is set
+          if (6 >= canFrame.can_dlc) {
+            bms.battVoltage = (canFrame.data[1] << 8) | canFrame.data[0];
+            bms.battAmp = (canFrame.data[3] << 8) | canFrame.data[2];
+            bms.battTemp = (canFrame.data[5] << 8) | canFrame.data[4]; // Convert to fahrenheit if SetOpion8 is set
           } else {
             AddLog(LOG_LEVEL_DEBUG, PSTR("MCP2515: Unexpected length (%d) for ID 0x356"), canFrame.can_dlc);
           }
+          break;
+        // Manufacturer name
+        case 0x35E:
+        // Battery Model / Firmware version
+        case 0x35F:
           break;
         // Battery / BMS name
         case 0x370:
@@ -145,10 +165,16 @@ void MCP2515_Read() {
           break;
         // Modules status
         case 0x372:
+        // Min/Max cell voltage/temperature
+        case 0x373:
         // Min. cell voltage id string
         case 0x374:
+        // Max. cell voltage id string
+        case 0x375:
         // Min. cell temperature id string
         case 0x376:
+        // Max. cell temperature id string
+        case 0x377:
         // Installed capacity
         case 0x379:
         // Serial number
@@ -162,7 +188,7 @@ void MCP2515_Read() {
             canMsg[i*2] = c2h(canFrame.data[i]>>4);
             canMsg[i*2+1] = c2h(canFrame.data[i]);
           }
-          if(canFrame.can_dlc > 0) {
+          if (canFrame.can_dlc > 0) {
             canMsg[(canFrame.can_dlc - 1) * 2 + 2] = 0;
           }
           AddLog(LOG_LEVEL_DEBUG, PSTR("MCP2515: Received message 0x%s from ID 0x%X"), canMsg, (uint32_t)canFrame.can_id);
@@ -170,32 +196,46 @@ void MCP2515_Read() {
       }
   #endif // MCP2515_BMS_FREEDWON
 #endif // MCP2515_BMS_CLIENT
-      } else if(mcp2515->checkError()) {
+      } else if (mcp2515->checkError()) {
         uint8_t errFlags = mcp2515->getErrorFlags();
           mcp2515->clearRXnOVRFlags();
           AddLog(LOG_LEVEL_DEBUG, PSTR("MCP2515: Received error %d"), errFlags);
           break;
       }
     }
+
+#ifdef MCP2515_BMS_FREEDWON
+    if (!(TasmotaGlobal.uptime%CAN_KEEP_ALIVE_SECS) && TasmotaGlobal.uptime>60) {
+      canFrame.can_id  = 0x305;
+      canFrame.can_dlc = 0;
+      if (MCP2515::ERROR_OK != mcp2515->sendMessage(&canFrame)) {
+        AddLog(LOG_LEVEL_ERROR, PSTR("MCP2515: Failed to send keep alive frame"));
+      }
+    }
+#endif
   }
 }
 
 void MCP2515_Show(bool Json) {
   if (Json) {
+    if (lastFrameRecv > 0 && TasmotaGlobal.uptime - lastFrameRecv <= MCP2515_TIMEOUT ) {
 #ifdef MCP2515_BMS_CLIENT
-    ResponseAppend_P(PSTR(",\"MCP2515\":{\"SOC\":%d,\"SOH\":%d}"), bms.stateOfCharge, bms.stateOfHealth);
+    ResponseAppend_P(PSTR(",\"MCP2515\":{\"SOC\":%d,\"SOH\":%d}"), \
+      bms.stateOfCharge, 
+      bms.stateOfHealth 
+      );
 #endif // MCP2515_BMS_CLIENT
-
+    }
 #ifdef USE_WEBSERVER
   } else {
   #ifdef MCP2515_BMS_CLIENT
     char ampStr[6];
-    dtostrf(bms.battAmp, 5, 1, ampStr);
+    dtostrf((float(bms.battAmp) / 10), 5, 1, ampStr);
     WSContentSend_PD(HTTP_SNS_SOC, bms.name, bms.stateOfCharge);
     WSContentSend_PD(HTTP_SNS_SOH, bms.name, bms.stateOfHealth);
-    WSContentSend_Voltage(bms.name, bms.battVoltage);
+    WSContentSend_Voltage(bms.name, (float(bms.battVoltage) / 100));
     WSContentSend_PD(HTTP_SNS_CURRENT, ampStr);
-    WSContentSend_Temp(bms.name, bms.battTemp);
+    WSContentSend_Temp(bms.name, ConvertTemp(float(bms.battTemp) / 10));
   #endif // MCP2515_BMS_CLIENT
 #endif  // USE_WEBSERVER
   }
