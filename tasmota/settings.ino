@@ -1122,7 +1122,7 @@ void SettingsDefaultSet2(void) {
 
   SettingsDefaultWebColor();
 
-  memset(&Settings->monitors, 0xFF, 20);  // Enable all possible monitors, displays and sensors
+  memset(&Settings->sensors, 0xFF, 32);  // Enable all possible sensors
   SettingsEnableAllI2cDrivers();
 
   // Tuya
@@ -1361,7 +1361,6 @@ void SettingsDelta(void) {
     if (Settings->version < 0x09040006) {
       Settings->mqtt_wifi_timeout = MQTT_WIFI_CLIENT_TIMEOUT / 100;
     }
-
 #ifdef CONFIG_IDF_TARGET_ESP32C3
     if (Settings->version < 0x09050002) {
       if (Settings->cfg_size != sizeof(TSettings)) {
@@ -1374,6 +1373,9 @@ void SettingsDelta(void) {
       }
     }
 #endif
+    if (Settings->version < 0x09050003) {
+      memset(&Settings->sensors, 0xFF, 16);  // Enable all possible sensors
+    }
 
     Settings->version = VERSION;
     SettingsSave(1);

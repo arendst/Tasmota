@@ -643,12 +643,7 @@ typedef struct {
   uint16_t      sbaudrate;                 // 77A
   EnergyUsage   energy_usage;              // 77C
 
-  uint32_t      ex_adc_param1;             // 794  Free since 9.0.0.1
-  uint32_t      ex_adc_param2;             // 798  Free since 9.0.0.1
-  int           ex_adc_param3;             // 79C  Free since 9.0.0.1
-
-  uint32_t      monitors;                  // 7A0
-  uint32_t      sensors[4];                // 7A4  Normal WebSensor, Debug SetSensor
+  uint32_t      sensors[2][4];             // 794  Disable individual (0) sensor drivers / (1) GUI sensor output
   uint32_t      energy_kWhtotal_time;      // 7B4
   unsigned long weight_item;               // 7B8  Weight of one item in gram * 10
   uint16_t      ledmask;                   // 7BC

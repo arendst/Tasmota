@@ -257,6 +257,7 @@
 #define D_CMND_PULSETIME "PulseTime"
 #define D_CMND_BLINKTIME "BlinkTime"
 #define D_CMND_BLINKCOUNT "BlinkCount"
+#define D_CMND_SETSENSOR "SetSensor"
 #define D_CMND_SENSOR "Sensor"
 #define D_CMND_DRIVER "Driver"
 #define D_CMND_SAVEDATA "SaveData"

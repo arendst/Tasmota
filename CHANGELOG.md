@@ -3,7 +3,11 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [9.5.0.2]
+## [9.5.0.3]
+### Added
+- Command ``SetSensor1..127 0|1`` to globally disable individual sensor driver
+
+## [9.5.0.2] 20210714
 ### Added
 - Initial support for Tasmota Mesh (TasMesh) providing node/broker communication using ESP-NOW (#11939)
 - MQTT minimum password length restriction in GUI (#12553)

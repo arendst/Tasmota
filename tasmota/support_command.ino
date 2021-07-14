@@ -42,7 +42,7 @@ const char kTasmotaCommands[] PROGMEM = "|"  // No prefix
 #endif  // USE_DEVICE_GROUPS_SEND
   D_CMND_DEVGROUP_SHARE "|" D_CMND_DEVGROUPSTATUS "|" D_CMND_DEVGROUP_TIE "|"
 #endif  // USE_DEVICE_GROUPS
-  D_CMND_SENSOR "|" D_CMND_DRIVER
+  D_CMND_SETSENSOR "|" D_CMND_SENSOR "|" D_CMND_DRIVER
 #ifdef ESP32
    "|Info|" D_CMND_TOUCH_CAL "|" D_CMND_TOUCH_THRES "|" D_CMND_TOUCH_NUM "|" D_CMND_CPU_FREQUENCY
 #endif  // ESP32
@@ -74,7 +74,7 @@ void (* const TasmotaCommand[])(void) PROGMEM = {
 #endif  // USE_DEVICE_GROUPS_SEND
   &CmndDevGroupShare, &CmndDevGroupStatus, &CmndDevGroupTie,
 #endif  // USE_DEVICE_GROUPS
-  &CmndSensor, &CmndDriver
+  &CmndSetSensor, &CmndSensor, &CmndDriver
 #ifdef ESP32
   , &CmndInfo, &CmndTouchCal, &CmndTouchThres, &CmndTouchNum, &CmndCpuFrequency
 #endif  // ESP32
@@ -560,7 +560,7 @@ void CmndStatus(void)
     ResponseAppendFeatures();
     XsnsDriverState();
     ResponseAppend_P(PSTR(",\"Sensors\":"));
-    XsnsSensorState();
+    XsnsSensorState(0);
     ResponseJsonEndEnd();
     CmndStatusResponse(4);
   }
@@ -2265,6 +2265,21 @@ void CmndDevGroupTie(void)
   }
 }
 #endif  // USE_DEVICE_GROUPS
+
+void CmndSetSensor(void)
+{
+  if (XdrvMailbox.index < MAX_XSNS_DRIVERS) {
+    if (XdrvMailbox.payload >= 0) {
+      bitWrite(Settings->sensors[0][XdrvMailbox.index / 32], XdrvMailbox.index % 32, XdrvMailbox.payload &1);
+      if (1 == XdrvMailbox.payload) {
+        TasmotaGlobal.restart_flag = 2;  // To safely re-enable a sensor currently most sensor need to follow complete restart init cycle
+      }
+    }
+    Response_P(PSTR("{\"" D_CMND_SETSENSOR "\":"));
+    XsnsSensorState(0);
+    ResponseJsonEnd();
+  }
+}
 
 void CmndSensor(void)
 {

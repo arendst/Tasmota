@@ -3235,11 +3235,11 @@ void CmndWebSensor(void)
 {
   if (XdrvMailbox.index < MAX_XSNS_DRIVERS) {
     if (XdrvMailbox.payload >= 0) {
-      bitWrite(Settings->sensors[XdrvMailbox.index / 32], XdrvMailbox.index % 32, XdrvMailbox.payload &1);
+      bitWrite(Settings->sensors[1][XdrvMailbox.index / 32], XdrvMailbox.index % 32, XdrvMailbox.payload &1);
     }
   }
   Response_P(PSTR("{\"" D_CMND_WEBSENSOR "\":"));
-  XsnsSensorState();
+  XsnsSensorState(1);
   ResponseJsonEnd();
 }
 
