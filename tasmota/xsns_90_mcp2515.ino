@@ -34,7 +34,7 @@
  *  VCC     Vin/5V
 \*********************************************************************************************/
 
-#define XSNS_89              89
+#define XSNS_90              90
 
 #include "mcp2515.h"
 
@@ -245,7 +245,7 @@ void MCP2515_Show(bool Json) {
  * Interface
 \*********************************************************************************************/
 
-bool Xsns89(uint8_t function)
+bool Xsns90(uint8_t function)
 {
   bool result = false;
 
