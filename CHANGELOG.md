@@ -17,6 +17,8 @@ All notable changes to this project will be documented in this file.
 - ESP32 Ethernet Phy Type information to IDF v3+
 - Allow buttons to work in AP normal mode (#12518)
 - Enable Ping and rule features for any device compiled with more than 1M flash size (#12539)
+- ESP32 internal sensor driver id moved from 87 to 127
+- Extended supported sensor driver range to 128
 
 ### Fixed
 - ESP32-C3 settings layout for configuration backup and restore

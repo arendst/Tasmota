@@ -648,8 +648,7 @@ typedef struct {
   int           ex_adc_param3;             // 79C  Free since 9.0.0.1
 
   uint32_t      monitors;                  // 7A0
-  uint32_t      sensors[3];                // 7A4  Normal WebSensor, Debug SetSensor
-  uint32_t      displays;                  // 7B0
+  uint32_t      sensors[4];                // 7A4  Normal WebSensor, Debug SetSensor
   uint32_t      energy_kWhtotal_time;      // 7B4
   unsigned long weight_item;               // 7B8  Weight of one item in gram * 10
   uint16_t      ledmask;                   // 7BC
