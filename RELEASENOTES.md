@@ -116,6 +116,8 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - ESP32 Ethernet Phy Type information to IDF v3+
 - Speed up initial GUI console refresh
 - Enable UFILESYS, GUI_TRASH_FILE and GUI_EDIT_FILE for any device compiled with more than 1M flash size
+- ESP32 internal sensor driver id moved from 87 to 127
+- Extended supported sensor driver range to 128
 - Simplified configuration for ir-full and removal of tasmota-ircustom [#12428](https://github.com/arendst/Tasmota/issues/12428)
 - Refactor platformio [#12442](https://github.com/arendst/Tasmota/issues/12442)
 - Allow buttons to work in AP normal mode [#12518](https://github.com/arendst/Tasmota/issues/12518)
