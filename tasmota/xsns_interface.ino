@@ -416,7 +416,119 @@ bool (* const xsns_func_ptr[])(uint8_t) = {  // Sensor Function Pointers for sim
 #endif
 
 #ifdef XSNS_99
-  &Xsns99
+  &Xsns99,
+#endif
+
+#ifdef XSNS_100
+  &Xsns100,
+#endif
+
+#ifdef XSNS_101
+  &Xsns101,
+#endif
+
+#ifdef XSNS_102
+  &Xsns102,
+#endif
+
+#ifdef XSNS_103
+  &Xsns103,
+#endif
+
+#ifdef XSNS_104
+  &Xsns104,
+#endif
+
+#ifdef XSNS_105
+  &Xsns105,
+#endif
+
+#ifdef XSNS_106
+  &Xsns106,
+#endif
+
+#ifdef XSNS_107
+  &Xsns107,
+#endif
+
+#ifdef XSNS_108
+  &Xsns108,
+#endif
+
+#ifdef XSNS_109
+  &Xsns109
+#endif
+
+#ifdef XSNS_110
+  &Xsns110,
+#endif
+
+#ifdef XSNS_111
+  &Xsns111,
+#endif
+
+#ifdef XSNS_112
+  &Xsns112,
+#endif
+
+#ifdef XSNS_113
+  &Xsns113,
+#endif
+
+#ifdef XSNS_114
+  &Xsns114,
+#endif
+
+#ifdef XSNS_115
+  &Xsns115,
+#endif
+
+#ifdef XSNS_116
+  &Xsns116,
+#endif
+
+#ifdef XSNS_117
+  &Xsns117,
+#endif
+
+#ifdef XSNS_118
+  &Xsns118,
+#endif
+
+#ifdef XSNS_119
+  &Xsns119,
+#endif
+
+#ifdef XSNS_120
+  &Xsns120,
+#endif
+
+#ifdef XSNS_121
+  &Xsns121,
+#endif
+
+#ifdef XSNS_122
+  &Xsns122,
+#endif
+
+#ifdef XSNS_123
+  &Xsns123,
+#endif
+
+#ifdef XSNS_124
+  &Xsns124,
+#endif
+
+#ifdef XSNS_125
+  &Xsns125,
+#endif
+
+#ifdef XSNS_126
+  &Xsns126,
+#endif
+
+#ifdef XSNS_127
+  &Xsns127
 #endif
 };
 
@@ -937,13 +1049,8 @@ const uint8_t kXsnsList[] = {
 #endif
 
 #ifdef XSNS_127
-  XSNS_127,
+  XSNS_127
 #endif
-
-#ifdef XSNS_128
-  XSNS_128
-#endif
-
 };
 
 /*********************************************************************************************/

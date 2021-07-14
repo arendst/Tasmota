@@ -1,5 +1,5 @@
 /*
-  xsns_87_esp32_sensors.ino - ESP32 Temperature and Hall Effect sensor for Tasmota
+  xsns_127_esp32_sensors.ino - ESP32 Temperature and Hall Effect sensor for Tasmota
 
   Copyright (C) 2021  Theo Arends
 
@@ -23,13 +23,16 @@
 /*********************************************************************************************\
  * ESP32 CPU Temperature and optional Hall Effect sensor
  *
+ * To allow for not updating the global temperature by the ESP32 temperature sensor this
+ *   driver needs to be the highest numbered driver (currently 127)
+ *
  * ESP32 internal Hall Effect sensor connected to both GPIO36 and GPIO39
  * To enable set
  * GPIO36 as HallEffect 1
  * GPIO39 as HallEffect 2
 \*********************************************************************************************/
 
-#define XSNS_87                  87
+#define XSNS_127                 127
 
 #if CONFIG_IDF_TARGET_ESP32
 
@@ -116,7 +119,7 @@ void Esp32SensorShow(bool json) {
  * Interface
 \*********************************************************************************************/
 
-bool Xsns87(uint8_t function) {
+bool Xsns127(uint8_t function) {
   bool result = false;
 
   switch (function) {
