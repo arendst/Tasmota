@@ -102,7 +102,9 @@ const char HASS_DISCOVER_LIGHT_WHITE[] PROGMEM =
 const char HASS_DISCOVER_LIGHT_CT[] PROGMEM =
   ",\"clr_temp_cmd_t\":\"%s\","                   // cmnd/led2/CT
   "\"clr_temp_stat_t\":\"%s\","                   // stat/led2/RESULT
-  "\"clr_temp_val_tpl\":\"{{value_json." D_CMND_COLORTEMPERATURE "}}\"";
+  "\"clr_temp_val_tpl\":\"{{value_json." D_CMND_COLORTEMPERATURE "}}\","
+  "\"clrm_stat_t\":\"%s\","                       // stat/led2/RESULT
+  "\"clrm_val_tpl\":\"{%%if value_json.White%%}color_temp{%%else%%}hs{%%endif %%}\"";
 
 const char HASS_DISCOVER_LIGHT_SCHEME[] PROGMEM =
   ",\"fx_cmd_t\":\"%s\","                         // cmnd/led2/Scheme
@@ -530,7 +532,7 @@ void HAssAnnounceRelayLight(void)
               char *color_temp_command_topic = stemp1;
 
               GetTopic_P(color_temp_command_topic, CMND, TasmotaGlobal.mqtt_topic, D_CMND_COLORTEMPERATURE);
-              TryResponseAppend_P(HASS_DISCOVER_LIGHT_CT, color_temp_command_topic, state_topic);
+              TryResponseAppend_P(HASS_DISCOVER_LIGHT_CT, color_temp_command_topic, state_topic, state_topic);
               ct_light = false;
           }
           if (LST_RGBW == Light.subtype && !PwmMulti && LightControl) {
