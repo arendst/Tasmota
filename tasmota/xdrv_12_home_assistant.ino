@@ -535,7 +535,7 @@ void HAssAnnounceRelayLight(void)
               TryResponseAppend_P(HASS_DISCOVER_LIGHT_CT, color_temp_command_topic, state_topic);
               ct_light = false;
           }
-          if ((!ind_light && wt_light) || (LST_RGBW <= Light.subtype &&
+          if ((!ind_light && wt_light) || (LST_RGBW == Light.subtype &&
               !PwmMulti && LightControl)) {
               char *white_temp_command_topic = stemp1;
 
