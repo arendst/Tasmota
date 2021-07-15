@@ -94,10 +94,10 @@ const char HASS_DISCOVER_LIGHT_COLOR[] PROGMEM =
   "\"rgb_val_tpl\":\"{{value_json." D_CMND_COLOR ".split(',')[0:3]|join(',')}}\"";
 
 const char HASS_DISCOVER_LIGHT_WHITE[] PROGMEM =
-  ",\"whit_val_cmd_t\":\"%s\","                   // cmnd/led2/White
-  "\"whit_val_stat_t\":\"%s\","                   // stat/led2/RESULT
-  "\"whit_val_scl\":100,"
-  "\"whit_val_tpl\":\"{{value_json." D_CMND_WHITE "}}\"";
+  ",\"whit_cmd_t\":\"%s\","                       // cmnd/led2/White
+  "\"clrm_stat_t\":\"%s\","                       // stat/led2/RESULT
+  "\"whit_scl\":100,"
+  "\"clrm_val_tpl\":\"{%%if value_json.White%%}white{%%else%%}rgb{%%endif %%}\"";
 
 const char HASS_DISCOVER_LIGHT_CT[] PROGMEM =
   ",\"clr_temp_cmd_t\":\"%s\","                   // cmnd/led2/CT
