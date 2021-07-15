@@ -1,4 +1,3 @@
-
 #-------------------------------------------------------------
  - Generic driver for AXP192
  -------------------------------------------------------------#
@@ -265,7 +264,7 @@ class AXP192_M5Stack_Core2 : AXP192
   def set_lcd_voltage(voltage)
     if voltage < 2500  voltage = 2500 end
     if voltage > 3300  voltage = 3300 end
-    self.set_ldo_voltage(2, voltage)
+    self.set_dc_voltage(3, voltage)
   end
 
   # set state of the green led, GPIO 1
