@@ -1327,7 +1327,7 @@ void SettingsDelta(void) {
     if (Settings->version < 0x09000002) {
       char parameters[32];
       snprintf_P(parameters, sizeof(parameters), PSTR("%d,%d,%d,%d,%d"),
-        Settings->ex_adc_param_type, Settings->sensors[0][0], Settings->sensors[0][1], Settings->sensors[0][2], Settings->mbflag2.data);
+        Settings->ex_adc_param_type, Settings->sensors[0][0], Settings->sensors[0][1], (int)Settings->sensors[0][2], Settings->mbflag2.data);
       SettingsUpdateText(SET_ADC_PARAM1, parameters);
     }
 #endif  // ESP8266
