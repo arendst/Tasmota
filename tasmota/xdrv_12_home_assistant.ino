@@ -93,21 +93,23 @@ const char HASS_DISCOVER_BASE_LIGHT[] PROGMEM =
   "\"on_cmd_type\":\"%s\","                       // power on (first), power on (last), no power on (brightness)
   "\"bri_val_tpl\":\"{{value_json.%s}}\"";
 
-const char HASS_DISCOVER_LIGHT_COLOR[] PROGMEM =
-  ",\"rgb_cmd_t\":\"%s2\","                       // cmnd/led2/Color2
-  "\"rgb_stat_t\":\"%s\","                        // stat/led2/RESULT
-  "\"rgb_val_tpl\":\"{{value_json." D_CMND_COLOR ".split(',')[0:3]|join(',')}}\"";
+const char HASS_DISCOVER_LIGHT_HS_COLOR[] PROGMEM =
+  ",\"hs_cmd_t\":\"%s\","                        // cmnd/led2/HSBColor
+  "\"hs_stat_t\":\"%s\","                        // stat/led2/RESULT
+  "\"hs_val_tpl\":\"{{value_json." D_CMND_HSBCOLOR ".split(',')[0:2]|join(',')}}\"";
 
 const char HASS_DISCOVER_LIGHT_WHITE[] PROGMEM =
-  ",\"whit_val_cmd_t\":\"%s\","                   // cmnd/led2/White
-  "\"whit_val_stat_t\":\"%s\","                   // stat/led2/RESULT
-  "\"whit_val_scl\":100,"
-  "\"whit_val_tpl\":\"{{value_json." D_CMND_WHITE "}}\"";
+  ",\"whit_cmd_t\":\"%s\","                       // cmnd/led2/White
+  "\"clrm_stat_t\":\"%s\","                       // stat/led2/RESULT
+  "\"whit_scl\":100,"
+  "\"clrm_val_tpl\":\"{%%if value_json.White%%}white{%%else%%}hs{%%endif %%}\"";
 
 const char HASS_DISCOVER_LIGHT_CT[] PROGMEM =
   ",\"clr_temp_cmd_t\":\"%s\","                   // cmnd/led2/CT
   "\"clr_temp_stat_t\":\"%s\","                   // stat/led2/RESULT
-  "\"clr_temp_val_tpl\":\"{{value_json." D_CMND_COLORTEMPERATURE "}}\"";
+  "\"clr_temp_val_tpl\":\"{{value_json." D_CMND_COLORTEMPERATURE "}}\","
+  "\"clrm_stat_t\":\"%s\","                       // stat/led2/RESULT
+  "\"clrm_val_tpl\":\"{%%if value_json.White%%}color_temp{%%else%%}hs{%%endif %%}\"";
 
 const char HASS_DISCOVER_LIGHT_SCHEME[] PROGMEM =
   ",\"fx_cmd_t\":\"%s\","                         // cmnd/led2/Scheme
@@ -408,7 +410,6 @@ void HAssAnnounceRelayLight(void)
   bool is_topic_light = false;                          // Switch HAss domain between Lights and Relays
   bool ind_light = false;                               // Controls Separated Lights when SetOption37 is >= 128
   bool ct_light = false;                                // Controls a CT Light when SetOption37 is >= 128
-  bool wt_light = false;                                // Controls a White Light when SetOption37 is >= 128
   bool err_flag = false;                                // When true it blocks the creation of entities if the order of the Relays is not correct to avoid issue with Lights
   bool TuyaMod = false;                                 // Controls Tuya MCU modules
   bool PwmMod = false;                                  // Controls PWM_DIMMER module
@@ -539,16 +540,15 @@ void HAssAnnounceRelayLight(void)
           if ((ind_light && !PwmMulti) || LightControl) {
 
             if (Light.subtype >= LST_RGB) {
-              char *rgb_command_topic = stemp1;
+              char *clr_command_topic = stemp1;
 
-              GetTopic_P(rgb_command_topic, CMND, TasmotaGlobal.mqtt_topic, D_CMND_COLOR);
-              TryResponseAppend_P(HASS_DISCOVER_LIGHT_COLOR, rgb_command_topic, state_topic);
+              GetTopic_P(clr_command_topic, CMND, TasmotaGlobal.mqtt_topic, D_CMND_HSBCOLOR);
+              TryResponseAppend_P(HASS_DISCOVER_LIGHT_HS_COLOR, clr_command_topic, state_topic);
 
               char *effect_command_topic = stemp1;
               GetTopic_P(effect_command_topic, CMND, TasmotaGlobal.mqtt_topic, D_CMND_SCHEME);
               TryResponseAppend_P(HASS_DISCOVER_LIGHT_SCHEME, effect_command_topic, state_topic);
             }
-            if (LST_RGBW <= Light.subtype) { wt_light = true; }
             if (LST_RGBCW == Light.subtype) { ct_light = true; }
           }
 
@@ -557,16 +557,14 @@ void HAssAnnounceRelayLight(void)
               char *color_temp_command_topic = stemp1;
 
               GetTopic_P(color_temp_command_topic, CMND, TasmotaGlobal.mqtt_topic, D_CMND_COLORTEMPERATURE);
-              TryResponseAppend_P(HASS_DISCOVER_LIGHT_CT, color_temp_command_topic, state_topic);
+              TryResponseAppend_P(HASS_DISCOVER_LIGHT_CT, color_temp_command_topic, state_topic, state_topic);
               ct_light = false;
           }
-          if ((!ind_light && wt_light) || (LST_RGBW <= Light.subtype &&
-              !PwmMulti && LightControl)) {
+          if (LST_RGBW == Light.subtype && !PwmMulti && LightControl) {
               char *white_temp_command_topic = stemp1;
 
               GetTopic_P(white_temp_command_topic, CMND, TasmotaGlobal.mqtt_topic, D_CMND_WHITE);
               TryResponseAppend_P(HASS_DISCOVER_LIGHT_WHITE, white_temp_command_topic, state_topic);
-              wt_light = false;
           }
           ind_light = false;
           max_lights--;
