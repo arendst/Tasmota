@@ -198,6 +198,8 @@
 #define D_WEIGHT               "Peso"
 #define D_WARMLIGHT            "Calda"
 #define D_WEB_SERVER           "Server web"
+#define D_SOC                  "Stato di Carica"
+#define D_SOH                  "State of Health"
 
 // tasmota.ino
 #define D_WARNING_MINIMAL_VERSION  "ATTENZIONE Questa versione non supporta il salvataggio delle impostazioni"
@@ -831,6 +833,7 @@
 #define D_SENSOR_ZEROCROSS              "Impulsi ZC"
 #define D_SENSOR_HALLEFFECT             "Effetto hall"
 #define D_SENSOR_EPD_DATA               "EPD - Dati"
+#define D_SENSOR_MCP2515_CS             "MCP2515 - CS"
 
 // Units
 #define D_UNIT_AMPERE                     "A"
