@@ -393,13 +393,13 @@ void Ds18x20Init(void) {
     if (ds18x20_sensor[i].address[0] == DS2413_CHIPID) {
       ds18x20_sensor[i].pwr_index = TasmotaGlobal.devices_present;
       if (Ds18x20Read(i)) {                             // restore Powerstate
-// AddLog(LOG_LEVEL_DEBUG, PSTR("PiO: Initial pioState %02x, GlobalPower %_X, SettingsPower %_X"), ds18x20_sensor[i].pioState, &TasmotaGlobal.power, &Settings.power);
-        if (Settings.flag.save_state) {       // SetOption0 - Save power state
+// AddLog(LOG_LEVEL_DEBUG, PSTR("PiO: Initial pioState %02x, GlobalPower %_X, SettingsPower %_X"), ds18x20_sensor[i].pioState, &TasmotaGlobal.power, &Settings->power);
+        if (Settings->flag.save_state) {      // SetOption0 - Save power state
           bitWrite(TasmotaGlobal.power, TasmotaGlobal.devices_present,
-                    bitRead(Settings.power, TasmotaGlobal.devices_present));
+                   bitRead(Settings->power, TasmotaGlobal.devices_present));
           bitWrite(TasmotaGlobal.power, TasmotaGlobal.devices_present +1,
-                    bitRead(Settings.power, TasmotaGlobal.devices_present+1));
-        } else if (!Settings.flag3.no_power_feedback) {         // SetOption63
+                   bitRead(Settings->power, TasmotaGlobal.devices_present+1));
+        } else if (!Settings->flag3.no_power_feedback) {        // SetOption63
           bitWrite(TasmotaGlobal.power, TasmotaGlobal.devices_present,
                       (ds18x20_sensor[i].pioState & DS2413_PORTA_OUT)>>1);
           bitWrite(TasmotaGlobal.power, TasmotaGlobal.devices_present+1,
@@ -491,7 +491,7 @@ bool Ds18x20Read(uint8_t sensor) {
           }
         }
         ds18x20_sensor[index].temperature = temperature;
-        if (Settings.flag5.ds18x20_mean) {
+        if (Settings->flag5.ds18x20_mean) {
           if (ds18x20_sensor[index].numread++ == 0) {
             ds18x20_sensor[index].temp_sum = 0;
           }
@@ -500,7 +500,6 @@ bool Ds18x20Read(uint8_t sensor) {
         ds18x20_sensor[index].valid = SENSOR_MAX_MISS;
         return true;
       }
-<<<<<<< HEAD
 #ifdef DS18x20_ADD_DS2413
     } else {                                                    // read DS2413
       OneWireWrite(DS2413_ACCESS_READ);
@@ -532,7 +531,7 @@ bool Ds18x20Read(uint8_t sensor) {
                                   bitRead(ds18x20_sensor[index].pioState,i));
                 MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT,
                                                           PSTR("DS2413_INP"));
-                if (Settings.flag3.hass_tele_on_power) {        // SetOption59
+                if (Settings->flag3.hass_tele_on_power) {       // SetOption59
                   MqttPublishSensor();              // add tele/%topic%/SENSOR
                 }
               }
@@ -543,12 +542,6 @@ bool Ds18x20Read(uint8_t sensor) {
           ds18x20_sensor[index].pre_pioState &= ~DS2413_INPUT_MASK;
           ds18x20_sensor[index].pre_pioState |=
                         (ds18x20_sensor[index].pioState & DS2413_INPUT_MASK);
-=======
-      ds18x20_sensor[index].temperature = temperature;
-      if (Settings->flag5.ds18x20_mean) {
-        if (ds18x20_sensor[index].numread++ == 0) {
-          ds18x20_sensor[index].temp_sum = 0;
->>>>>>> development
         }
         ds18x20_sensor[index].valid = SENSOR_MAX_MISS;
         return true;
@@ -689,22 +682,17 @@ void Ds18x20Show(bool json) {
         for (uint32_t j = 0; j < 6; j++) {
           sprintf(address+2*j, "%02X", ds18x20_sensor[index].address[6-j]);  // Skip sensor type and crc
         }
-<<<<<<< HEAD
 #ifdef DS18x20_ADD_DS2413
         if(ds18x20_sensor[index].address[0] != DS2413_CHIPID) {
 #endif //DS18x20_ADD_DS2413
           ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_ID "\":\"%s\",\"" D_JSON_TEMPERATURE "\":%*_f}"),
-            DS18X20Data.name, address, Settings.flag2.temperature_resolution, &ds18x20_sensor[index].temperature);
+            DS18X20Data.name, address, Settings->flag2.temperature_resolution, &ds18x20_sensor[index].temperature);
 #ifdef DS18x20_ADD_DS2413
         } else {
           ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_ID "\":\"%s\",\"" "Port Status" "\":\"%d\"}"),
               DS18X20Data.name, address, ds18x20_sensor[index].pioState);
         }
 #endif //DS18x20_ADD_DS2413
-=======
-        ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_ID "\":\"%s\",\"" D_JSON_TEMPERATURE "\":%*_f}"),
-          DS18X20Data.name, address, Settings->flag2.temperature_resolution, &ds18x20_sensor[index].temperature);
->>>>>>> development
 #ifdef USE_DOMOTICZ
         if ((0 == TasmotaGlobal.tele_period) && (0 == i)) {
           DomoticzFloatSensor(DZ_TEMP, ds18x20_sensor[index].temperature);
