@@ -27,6 +27,7 @@
 
 //#define USE_DS18x20_RECONFIGURE    // When sensor is lost keep retrying or re-configure
 //#define DS18x20_USE_ID_AS_NAME      // Use last 3 bytes for naming of sensors
+//#define DS18x20_ADD_DS2413          // add code for 1wire DS2312 2 bit IOport
 
 #define DS18S20_CHIPID       0x10  // +/-0.5C 9-bit
 #define DS1822_CHIPID        0x22  // +/-2C 12-bit
