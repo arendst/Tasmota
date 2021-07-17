@@ -738,19 +738,21 @@ void ResponseAppendFeatures(void)
     feature8 |= 0x00000008;  // xdrv_52_9_berry.ino
 #endif
 #if defined(USE_I2C) && defined(USE_BM8563)
-    feature8 |= 0x00000010;
+    feature8 |= 0x00000010;  // xdrv_56_BM8563_RTC.ino
 #endif
 #if defined(USE_ENERGY_SENSOR) && defined(USE_ENERGY_DUMMY)
-    feature8 |= 0x00000020;
+    feature8 |= 0x00000020;  // xnrg_20_dummy.ino
 #endif
 #if defined(USE_I2C) && defined(USE_AM2320)
-    feature8 |= 0x00000040;
+    feature8 |= 0x00000040;  // xsns_88_am2320.ino
 #endif
 #if defined(USE_I2C) && defined(USE_T67XX)
-    feature8 |= 0x00000080;
+    feature8 |= 0x00000080;  // xsns_89_t67xx.ino
 #endif
 
-//    feature8 |= 0x00000100;
+#if defined(USE_SPI) && defined(USE_MCP2515)
+    feature8 |= 0x00000100;  // xsns_87_mcp2515.ino
+#endif
 //    feature8 |= 0x00000200;
 //    feature8 |= 0x00000400;
 //    feature8 |= 0x00000800;

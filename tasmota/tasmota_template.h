@@ -169,6 +169,7 @@ enum UserSelectablePins {
   GPIO_I2S_OUT_DATA, GPIO_I2S_OUT_CLK, GPIO_I2S_OUT_SLCT,
   GPIO_I2S_IN_DATA,  GPIO_I2S_IN_CLK,  GPIO_I2S_IN_SLCT,
   GPIO_INTERRUPT,
+  GPIO_MCP2515_CS,                     // MCP2515 Chip Select
   GPIO_SENSOR_END };
 
 enum ProgramSelectablePins {
@@ -358,6 +359,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_I2S_OUT_DATA "|" D_SENSOR_I2S_OUT_CLK "|" D_SENSOR_I2S_OUT_SLCT "|"
   D_SENSOR_I2S_IN_DATA  "|" D_SENSOR_I2S_IN_CLK  "|" D_SENSOR_I2S_IN_SLCT  "|"
   D_SENSOR_INTERRUPT "|"
+  D_SENSOR_MCP2515_CS "|"
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -459,6 +461,9 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_SDCARD
   AGPIO(GPIO_SDCARD_CS),
 #endif  // USE_SDCARD
+#ifdef USE_MCP2515
+  AGPIO(GPIO_MCP2515_CS),
+#endif  // USE_MCP2515
 #endif  // USE_SPI
 
   AGPIO(GPIO_SSPI_MISO),      // Software SPI Master Input Client Output

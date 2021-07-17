@@ -303,7 +303,7 @@ bool MESHrouteMQTTtoMESH(const char* _topic, char* _data, bool _retained) {
   size_t _bytesLeft = strlen(_topic) + strlen(_data) +2;
   MESH.sendPacket.counter++;
   MESH.sendPacket.chunk = 0;
-  MESH.sendPacket.chunks = ((_bytesLeft+2) / MESH_PAYLOAD_SIZE) +1;
+  MESH.sendPacket.chunks = (_bytesLeft / MESH_PAYLOAD_SIZE) +1;
   memcpy(MESH.sendPacket.receiver, MESH.broker, 6);
   MESH.sendPacket.type = PACKET_TYPE_MQTT;
   MESH.sendPacket.chunkSize = MESH_PAYLOAD_SIZE;
