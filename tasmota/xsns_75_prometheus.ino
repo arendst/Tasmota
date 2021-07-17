@@ -113,7 +113,7 @@ void HandleMetrics(void) {
   }
   if (TasmotaGlobal.humidity != 0) {
     dtostrfd(TasmotaGlobal.humidity, Settings->flag2.humidity_resolution, parameter);
-    WSContentSend_P(PSTR("# TYPE tasmota_global_humidity gauge\ntasmota_global_humidity_percentage %s\n"), parameter);
+    WSContentSend_P(PSTR("# TYPE tasmota_global_humidity_percentage gauge\ntasmota_global_humidity_percentage %s\n"), parameter);
   }
   if (TasmotaGlobal.pressure_hpa != 0) {
     dtostrfd(TasmotaGlobal.pressure_hpa, Settings->flag2.pressure_resolution, parameter);
@@ -124,7 +124,7 @@ void HandleMetrics(void) {
   #ifdef ESP32
     int32_t freeMaxMem = 100 - (int32_t)(ESP_getMaxAllocHeap() * 100 / ESP_getFreeHeap());
     WSContentSend_PD(PSTR("# TYPE tasmota_memory_bytes gauge\ntasmota_memory_bytes{memory=\"Ram\"} %d\n"), ESP_getFreeHeap());
-    WSContentSend_PD(PSTR("# TYPE tasmota_memory_ratio gauge\ntasmota_memory_ratio{memory=\"Fragmentation\"} %d)"), freeMaxMem / 100);
+    WSContentSend_PD(PSTR("# TYPE tasmota_memory_ratio gauge\ntasmota_memory_ratio{memory=\"Fragmentation\"} %d\n"), freeMaxMem / 100);
     if (UsePSRAM()) {
       WSContentSend_P(PSTR("# TYPE tasmota_memory_bytes gauge\ntasmota_memory_bytes{memory=\"Psram\"} %d\n"), ESP.getFreePsram() );
     }
@@ -196,7 +196,7 @@ void HandleMetrics(void) {
         const char *value = value1.getStr(nullptr);
         String sensor = FormatMetricName(key1.getStr());
         if (value != nullptr && isdigit(value[0] && strcmp(sensor.c_str(), "time") != 0)) {  //remove false 'time' metric
-          WSContentSend_P(PSTR("# TYPE tasmota_sensors_%s gauge\ntasmota_sensors{sensor=\"%s\"} %s\n"), sensor.c_str(), sensor.c_str(), value);
+          WSContentSend_P(PSTR("# TYPE tasmota_sensors gauge\ntasmota_sensors{sensor=\"%s\"} %s\n"), sensor.c_str(), value);
         }
       }
     }
