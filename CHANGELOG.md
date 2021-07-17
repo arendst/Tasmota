@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 ## [9.5.0.3]
 ### Added
 - Command ``SetSensor1..127 0|1`` to globally disable individual sensor driver
+- Support for CAN bus and Freedom Won Battery Management System by Marius Bezuidenhout (#12651)
 
 ## [9.5.0.2] 20210714
 ### Added

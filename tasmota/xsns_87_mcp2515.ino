@@ -1,7 +1,7 @@
 /*
-  xsns_89_mcp2515.ino - MCP2515 CAN bus support for Tasmota
+  xsns_87_mcp2515.ino - MCP2515 CAN bus support for Tasmota
 
-  Copyright (C) 2021 Marius Bezuidenhout
+  Copyright (C) 2021  Marius Bezuidenhout
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -34,9 +34,7 @@
  *  VCC     Vin/5V
 \*********************************************************************************************/
 
-#define XSNS_90              90
-
-#include "mcp2515.h"
+#define XSNS_87              87
 
 // set defaults if not defined
 #ifndef MCP2515_BITRATE
@@ -66,6 +64,8 @@
     #define MCP2515_BMS_FREEDWON
   #endif  // MCP2515_BMS_FREEDWON
 #endif // MCP2515_BMS_CLIENT
+
+#include "mcp2515.h"
 
 #ifdef MCP2515_BMS_CLIENT
 struct BMS_Struct {
@@ -100,7 +100,7 @@ void MCP2515_Init(void) {
     AddLog(LOG_LEVEL_ERROR, PSTR("MCP2515: Failed to set module bitrate"));
     mcp2515_init_status = 0;
   }
-  
+
   if (mcp2515_init_status && MCP2515::ERROR_OK != mcp2515->setNormalMode()) {
     AddLog(LOG_LEVEL_ERROR, PSTR("MCP2515: Failed to set normal mode"));
     mcp2515_init_status = 0;
@@ -221,8 +221,8 @@ void MCP2515_Show(bool Json) {
     if (lastFrameRecv > 0 && TasmotaGlobal.uptime - lastFrameRecv <= MCP2515_TIMEOUT ) {
 #ifdef MCP2515_BMS_CLIENT
     ResponseAppend_P(PSTR(",\"MCP2515\":{\"SOC\":%d,\"SOH\":%d}"), \
-      bms.stateOfCharge, 
-      bms.stateOfHealth 
+      bms.stateOfCharge,
+      bms.stateOfHealth
       );
 #endif // MCP2515_BMS_CLIENT
     }
@@ -245,7 +245,7 @@ void MCP2515_Show(bool Json) {
  * Interface
 \*********************************************************************************************/
 
-bool Xsns90(uint8_t function)
+bool Xsns87(uint8_t function)
 {
   bool result = false;
 
