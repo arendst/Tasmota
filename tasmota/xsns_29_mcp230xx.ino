@@ -51,6 +51,7 @@ uint8_t mcp230xx_pincount = 0;
 uint8_t mcp230xx_outpincount = 0;
 #ifdef USE_MCP230xx_OUTPUT
 uint8_t mcp230xx_outpinmapping[16];
+uint8_t mcp230xx_keepout_no_toggle = 0;
 #endif
 uint8_t mcp230xx_int_en = 0;
 uint8_t mcp230xx_int_prio_counter = 0;
@@ -78,11 +79,11 @@ const char MCP230XX_OUTPUT_RESPONSE[] PROGMEM = "{\"Sensor29_D%i\":{\"MODE\":%i,
 void MCP230xx_CheckForIntCounter(void) {
   uint8_t en = 0;
   for (uint32_t ca=0;ca<16;ca++) {
-    if (Settings.mcp230xx_config[ca].int_count_en) {
+    if (Settings->mcp230xx_config[ca].int_count_en) {
       en=1;
     }
   }
-  if (!Settings.mcp230xx_int_timer) en=0;
+  if (!Settings->mcp230xx_int_timer) en=0;
   mcp230xx_int_counter_en=en;
   if (!mcp230xx_int_counter_en) { // Interrupt counters are disabled, so we clear all the counters
     for (uint32_t ca=0;ca<16;ca++) {
@@ -94,7 +95,7 @@ void MCP230xx_CheckForIntCounter(void) {
 void MCP230xx_CheckForIntRetainer(void) {
   uint8_t en = 0;
   for (uint32_t ca=0;ca<16;ca++) {
-    if (Settings.mcp230xx_config[ca].int_retain_flag) {
+    if (Settings->mcp230xx_config[ca].int_retain_flag) {
       en=1;
     }
   }
@@ -113,7 +114,7 @@ const char* ConvertNumTxt(uint8_t statu, uint8_t pinmod=0) {
 #endif // USE_MCP230xx_OUTPUT
 #ifdef USE_MCP230xx_OUTPUT
   if ((6 == pinmod) && (statu < 2)) { statu = 1-statu; }
-  if ((config) && (Settings.flag.save_state)) {
+  if ((config) && (Settings->flag.save_state)) {
     return "SAVED";
   }
 #endif // USE_MCP230xx_OUTPUT
@@ -169,7 +170,7 @@ void MCP230xx_ApplySettings(void)
   TasmotaGlobal.devices_present -= mcp230xx_outpincount;
   mcp230xx_outpincount = 0;
   for (uint32_t idx = 0; idx < mcp230xx_pincount; idx++) {
-    if (Settings.mcp230xx_config[idx].pinmode >= 5) {
+    if (Settings->mcp230xx_config[idx].pinmode >= 5) {
       mcp230xx_outpinmapping[mcp230xx_outpincount] = idx;
       mcp230xx_outpincount++;
     }
@@ -188,7 +189,7 @@ void MCP230xx_ApplySettings(void)
     uint8_t reg_readpins = I2cRead8(USE_MCP230xx_ADDR, MCP230xx_OLAT + mcp230xx_port);
 #endif // USE_MCP230xx_OUTPUT
     for (uint32_t idx = 0; idx < 8; idx++) {
-      switch (Settings.mcp230xx_config[idx+(mcp230xx_port*8)].pinmode) {
+      switch (Settings->mcp230xx_config[idx+(mcp230xx_port*8)].pinmode) {
         case 0 ... 1:
           reg_iodir |= (1 << idx);
           break;
@@ -200,13 +201,14 @@ void MCP230xx_ApplySettings(void)
 #ifdef USE_MCP230xx_OUTPUT
         case 5 ... 6:
           reg_iodir &= ~(1 << idx);
-          if (Settings.flag.save_state) {  // SetOption0 - Save power state and use after restart - Firmware configuration wants us to use the last pin state
-            reg_portpins[mcp230xx_port] |= (Settings.mcp230xx_config[idx+(mcp230xx_port*8)].saved_state << idx);
+          if (Settings->flag.save_state) {  // SetOption0 - Save power state and use after restart - Firmware configuration wants us to use the last pin state
+            reg_portpins[mcp230xx_port] |= (Settings->mcp230xx_config[idx+(mcp230xx_port*8)].saved_state << idx);
           } else {
-            if (Settings.mcp230xx_config[idx+(mcp230xx_port*8)].keep_output) { // Read the value to use from the MCP230xx
+            if (Settings->mcp230xx_config[idx+(mcp230xx_port*8)].keep_output) { // Read the value to use from the MCP230xx
               reg_portpins[mcp230xx_port] |= reg_readpins & (1 << idx);
+              mcp230xx_keepout_no_toggle++;
             }
-            else if (Settings.mcp230xx_config[idx+(mcp230xx_port*8)].pullup) {
+            else if (Settings->mcp230xx_config[idx+(mcp230xx_port*8)].pullup) {
               reg_portpins[mcp230xx_port] |= (1 << idx);
             }
           }
@@ -216,11 +218,11 @@ void MCP230xx_ApplySettings(void)
           break;
       }
 #ifdef USE_MCP230xx_OUTPUT
-      if ((Settings.mcp230xx_config[idx+(mcp230xx_port*8)].pullup) && (Settings.mcp230xx_config[idx+(mcp230xx_port*8)].pinmode < 5)) {
+      if ((Settings->mcp230xx_config[idx+(mcp230xx_port*8)].pullup) && (Settings->mcp230xx_config[idx+(mcp230xx_port*8)].pinmode < 5)) {
         reg_gppu |= (1 << idx);
       }
 #else // not USE_MCP230xx_OUTPUT
-      if (Settings.mcp230xx_config[idx+(mcp230xx_port*8)].pullup) {
+      if (Settings->mcp230xx_config[idx+(mcp230xx_port*8)].pullup) {
         reg_gppu |= (1 << idx);
       }
 #endif // USE_MCP230xx_OUTPUT
@@ -236,6 +238,7 @@ void MCP230xx_ApplySettings(void)
     for (uint32_t idx = 0; idx < mcp230xx_outpincount; idx++) {
       if (mcp230xx_port ? mcp230xx_outpinmapping[idx] > 7 : mcp230xx_outpinmapping[idx] < 8) {
         uint8_t relay_no = TasmotaGlobal.devices_present - mcp230xx_outpincount + idx + 1;
+        if (mcp230xx_keepout_no_toggle >0) mcp230xx_keepout_no_toggle--;
         ExecuteCommandPower(relay_no, (reg_portpins[mcp230xx_port] >> (mcp230xx_outpinmapping[idx] & 7)) & 1, SRC_IGNORE);
       }
     }
@@ -292,8 +295,8 @@ void MCP230xx_CheckForInterrupt(void) {
           for (uint32_t intp = 0; intp < 8; intp++) {
             if ((intf >> intp) & 0x01) { // we know which pin caused interrupt
               report_int = 0;
-              if (Settings.mcp230xx_config[intp+(mcp230xx_port*8)].pinmode > 1) {
-                switch (Settings.mcp230xx_config[intp+(mcp230xx_port*8)].pinmode) {
+              if (Settings->mcp230xx_config[intp+(mcp230xx_port*8)].pinmode > 1) {
+                switch (Settings->mcp230xx_config[intp+(mcp230xx_port*8)].pinmode) {
                   case 2:
                     report_int = 1;
                     break;
@@ -308,15 +311,15 @@ void MCP230xx_CheckForInterrupt(void) {
                 }
                 // Check for interrupt counter
                 if ((mcp230xx_int_counter_en) && (report_int)) { // We may have some counting to do
-                  if (Settings.mcp230xx_config[intp+(mcp230xx_port*8)].int_count_en) { // Indeed, for this pin
+                  if (Settings->mcp230xx_config[intp+(mcp230xx_port*8)].int_count_en) { // Indeed, for this pin
                     mcp230xx_int_counter[intp+(mcp230xx_port*8)]++;
                   }
                 }
                 // check for interrupt defer on this pin
                 if (report_int) {
-                  if (Settings.mcp230xx_config[intp+(mcp230xx_port*8)].int_report_defer) {
+                  if (Settings->mcp230xx_config[intp+(mcp230xx_port*8)].int_report_defer) {
                     mcp230xx_int_report_defer_counter[intp+(mcp230xx_port*8)]++;
-                    if (mcp230xx_int_report_defer_counter[intp+(mcp230xx_port*8)] >= Settings.mcp230xx_config[intp+(mcp230xx_port*8)].int_report_defer) {
+                    if (mcp230xx_int_report_defer_counter[intp+(mcp230xx_port*8)] >= Settings->mcp230xx_config[intp+(mcp230xx_port*8)].int_report_defer) {
                       mcp230xx_int_report_defer_counter[intp+(mcp230xx_port*8)]=0;
                     } else {
                       report_int = 0; // defer int report for now
@@ -325,12 +328,12 @@ void MCP230xx_CheckForInterrupt(void) {
                 }
                 // check if interrupt retain is used, if it is for this pin then we do not report immediately as it will be reported in teleperiod
                 if (report_int) {
-                  if (Settings.mcp230xx_config[intp+(mcp230xx_port*8)].int_retain_flag) {
+                  if (Settings->mcp230xx_config[intp+(mcp230xx_port*8)].int_retain_flag) {
                     mcp230xx_int_retainer[intp+(mcp230xx_port*8)] = 1;
                     report_int = 0; // do not report for now
                   }
                 }
-                if (Settings.mcp230xx_config[intp+(mcp230xx_port*8)].int_count_en) { // We do not want to report via tele or event if counting is enabled
+                if (Settings->mcp230xx_config[intp+(mcp230xx_port*8)].int_count_en) { // We do not want to report via tele or event if counting is enabled
                   report_int = 0;
                 }
                 if (report_int) {
@@ -339,7 +342,7 @@ void MCP230xx_CheckForInterrupt(void) {
                   unsigned long millis_now = millis();
                   unsigned long millis_since_last_int = millis_now - int_millis[intp+(mcp230xx_port*8)];
                   int_millis[intp+(mcp230xx_port*8)]=millis_now;
-                  switch (Settings.mcp230xx_config[intp+(mcp230xx_port*8)].int_report_mode) {
+                  switch (Settings->mcp230xx_config[intp+(mcp230xx_port*8)].int_report_mode) {
                     case 0:
                       int_tele=true;
                       int_event=true;
@@ -355,7 +358,7 @@ void MCP230xx_CheckForInterrupt(void) {
                     ResponseTime_P(PSTR(",\"MCP230XX_INT\":{\"D%i\":%i,\"MS\":%lu}}"),
                       intp+(mcp230xx_port*8), ((mcp230xx_intcap >> intp) & 0x01),millis_since_last_int);
                     MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, PSTR("MCP230XX_INT"));
-                    if (Settings.flag3.hass_tele_on_power) {  // SetOption59 - Send tele/%topic%/SENSOR in addition to stat/%topic%/RESULT
+                    if (Settings->flag3.hass_tele_on_power) {  // SetOption59 - Send tele/%topic%/SENSOR in addition to stat/%topic%/RESULT
                         MqttPublishSensor();
                     }
                   }
@@ -390,16 +393,16 @@ void MCP230xx_Show(bool json)
 #ifdef USE_MCP230xx_OUTPUT
     uint8_t outputcount = 0;
     for (uint32_t pinx = 0; pinx < mcp230xx_pincount; pinx++) {
-      if (Settings.mcp230xx_config[pinx].pinmode >= 5) { outputcount++; }
+      if (Settings->mcp230xx_config[pinx].pinmode >= 5) { outputcount++; }
     }
     if (outputcount) {
       uint16_t gpiototal = ((uint16_t)gpiob << 8) | gpio;
-      ResponseAppend_P(PSTR(",\"MCP230_OUT\":{"));
+      ResponseAppend_P(PSTR(",\"OUT\":{"));
       char stt[7];
       bool first = true;
       for (uint32_t pinx = 0; pinx < mcp230xx_pincount; pinx++) {
-        if (Settings.mcp230xx_config[pinx].pinmode >= 5) {
-          sprintf(stt, ConvertNumTxt(((gpiototal>>pinx)&1), Settings.mcp230xx_config[pinx].pinmode));
+        if (Settings->mcp230xx_config[pinx].pinmode >= 5) {
+          sprintf(stt, ConvertNumTxt(((gpiototal>>pinx)&1), Settings->mcp230xx_config[pinx].pinmode));
           ResponseAppend_P(PSTR("%s\"OUT_D%i\":\"%s\""), (first) ? "" : ",", pinx, stt);
           first = false;
         }
@@ -416,8 +419,8 @@ void MCP230xx_Show(bool json)
 void MCP230xx_SetOutPin(uint8_t pin,uint8_t pinstate) {
   uint8_t portpins;
   uint8_t port = 0;
-  uint8_t pinmo = Settings.mcp230xx_config[pin].pinmode;
-  uint8_t interlock = Settings.flag.interlock;  // CMND_INTERLOCK - Enable/disable interlock
+  uint8_t pinmo = Settings->mcp230xx_config[pin].pinmode;
+  uint8_t interlock = Settings->flag.interlock;  // CMND_INTERLOCK - Enable/disable interlock
   int pinadd = (pin % 2)+1-(3*(pin % 2)); //check if pin is odd or even and convert to 1 (if even) or -1 (if odd)
   char cmnd[7], stt[4];
   if (pin > 7) { port = 1; }
@@ -430,13 +433,13 @@ void MCP230xx_SetOutPin(uint8_t pin,uint8_t pinstate) {
   }
 
   I2cWrite8(USE_MCP230xx_ADDR, MCP230xx_GPIO + port, portpins);
-  if (Settings.flag.save_state) {  // SetOption0 - Save power state and use after restart - Firmware configured to save last known state in settings
-    Settings.mcp230xx_config[pin].saved_state=(portpins>>(pin-(port*8))&1)^(pinmo-5);
-    Settings.mcp230xx_config[pin+pinadd].saved_state=(portpins>>(pin+pinadd-(port*8))&1)^(pinmo-5);
+  if (Settings->flag.save_state) {  // SetOption0 - Save power state and use after restart - Firmware configured to save last known state in settings
+    Settings->mcp230xx_config[pin].saved_state=(portpins>>(pin-(port*8))&1)^(pinmo-5);
+    Settings->mcp230xx_config[pin+pinadd].saved_state=(portpins>>(pin+pinadd-(port*8))&1)^(pinmo-5);
   }
   sprintf(cmnd,ConvertNumTxt(pinstate, pinmo));
   sprintf(stt,ConvertNumTxt((portpins >> (pin-(port*8))&1), pinmo));
-  if (interlock && (pinmo == Settings.mcp230xx_config[pin+pinadd].pinmode)) {
+  if (interlock && (pinmo == Settings->mcp230xx_config[pin+pinadd].pinmode)) {
     char stt1[4];
     sprintf(stt1,ConvertNumTxt((portpins >> (pin+pinadd-(port*8))&1), pinmo));
     Response_P(PSTR("{\"S29cmnd_D%i\":{\"COMMAND\":\"%s\",\"STATE\":\"%s\"},\"S29cmnd_D%i\":{\"STATE\":\"%s\"}}"),pin, cmnd, stt, pin+pinadd, stt1);
@@ -451,23 +454,23 @@ void MCP230xx_Reset(uint8_t pinmode) {
   uint8_t pullup = 0;
   if ((pinmode > 1) && (pinmode < 5)) { pullup=1; }
   for (uint32_t pinx=0;pinx<16;pinx++) {
-    Settings.mcp230xx_config[pinx].pinmode=pinmode;
-    Settings.mcp230xx_config[pinx].pullup=pullup;
-    Settings.mcp230xx_config[pinx].saved_state=0;
+    Settings->mcp230xx_config[pinx].pinmode=pinmode;
+    Settings->mcp230xx_config[pinx].pullup=pullup;
+    Settings->mcp230xx_config[pinx].saved_state=0;
     if ((pinmode > 1) && (pinmode < 5)) {
-      Settings.mcp230xx_config[pinx].int_report_mode=0; // Enabled for ALL by default
+      Settings->mcp230xx_config[pinx].int_report_mode=0; // Enabled for ALL by default
     } else {
-      Settings.mcp230xx_config[pinx].int_report_mode=3; // Disabled for pinmode 1, 5 and 6 (No interrupts there)
+      Settings->mcp230xx_config[pinx].int_report_mode=3; // Disabled for pinmode 1, 5 and 6 (No interrupts there)
     }
-    Settings.mcp230xx_config[pinx].int_report_defer=0; // Disabled
-    Settings.mcp230xx_config[pinx].int_count_en=0;     // Disabled by default
-    Settings.mcp230xx_config[pinx].int_retain_flag=0;  // Disabled by default
-    Settings.mcp230xx_config[pinx].keep_output=0;      // Disabled by default
-    Settings.mcp230xx_config[pinx].spare14=0;
-    Settings.mcp230xx_config[pinx].spare15=0;
+    Settings->mcp230xx_config[pinx].int_report_defer=0; // Disabled
+    Settings->mcp230xx_config[pinx].int_count_en=0;     // Disabled by default
+    Settings->mcp230xx_config[pinx].int_retain_flag=0;  // Disabled by default
+    Settings->mcp230xx_config[pinx].keep_output=0;      // Disabled by default
+    Settings->mcp230xx_config[pinx].spare14=0;
+    Settings->mcp230xx_config[pinx].spare15=0;
   }
-  Settings.mcp230xx_int_prio = 0; // Once per FUNC_EVERY_50_MSECOND callback
-  Settings.mcp230xx_int_timer = 0;
+  Settings->mcp230xx_int_prio = 0; // Once per FUNC_EVERY_50_MSECOND callback
+  Settings->mcp230xx_int_timer = 0;
   MCP230xx_ApplySettings();
 #ifdef USE_MCP230xx_OUTPUT
   if (pinmode > 4) {
@@ -519,12 +522,12 @@ bool MCP230xx_Command(void)
     if (paramcount > 1) {
       uint8_t intpri = atoi(ArgV(argument, 2));
       if ((intpri >= 0) && (intpri <= 20)) {
-        Settings.mcp230xx_int_prio = intpri;
-        Response_P(MCP230XX_INTCFG_RESPONSE,"PRI",99,Settings.mcp230xx_int_prio);  // "{\"MCP230xx_INT%s\":{\"D_%i\":%i}}";
+        Settings->mcp230xx_int_prio = intpri;
+        Response_P(MCP230XX_INTCFG_RESPONSE,"PRI",99,Settings->mcp230xx_int_prio);  // "{\"MCP230xx_INT%s\":{\"D_%i\":%i}}";
         return serviced;
       }
     } else { // No parameter was given for INTPRI so we return the current configured value
-      Response_P(MCP230XX_INTCFG_RESPONSE,"PRI",99,Settings.mcp230xx_int_prio);  // "{\"MCP230xx_INT%s\":{\"D_%i\":%i}}";
+      Response_P(MCP230XX_INTCFG_RESPONSE,"PRI",99,Settings->mcp230xx_int_prio);  // "{\"MCP230xx_INT%s\":{\"D_%i\":%i}}";
       return serviced;
     }
   }
@@ -533,13 +536,13 @@ bool MCP230xx_Command(void)
     if (paramcount > 1) {
       uint8_t inttim = atoi(ArgV(argument, 2));
       if ((inttim >= 0) && (inttim <= 3600)) {
-        Settings.mcp230xx_int_timer = inttim;
+        Settings->mcp230xx_int_timer = inttim;
         MCP230xx_CheckForIntCounter(); // update register on whether or not we should be counting interrupts
-        Response_P(MCP230XX_INTCFG_RESPONSE,"TIMER",99,Settings.mcp230xx_int_timer);  // "{\"MCP230xx_INT%s\":{\"D_%i\":%i}}";
+        Response_P(MCP230XX_INTCFG_RESPONSE,"TIMER",99,Settings->mcp230xx_int_timer);  // "{\"MCP230xx_INT%s\":{\"D_%i\":%i}}";
         return serviced;
       }
     } else { // No parameter was given for INTTIM so we return the current configured value
-      Response_P(MCP230XX_INTCFG_RESPONSE,"TIMER",99,Settings.mcp230xx_int_timer);  // "{\"MCP230xx_INT%s\":{\"D_%i\":%i}}";
+      Response_P(MCP230XX_INTCFG_RESPONSE,"TIMER",99,Settings->mcp230xx_int_timer);  // "{\"MCP230xx_INT%s\":{\"D_%i\":%i}}";
       return serviced;
     }
   }
@@ -558,20 +561,20 @@ bool MCP230xx_Command(void)
         if (paramcount > 2) {
           uint8_t intdef = atoi(ArgV(argument, 3));
           if ((intdef >= 0) && (intdef <= 15)) {
-            Settings.mcp230xx_config[pin].int_report_defer=intdef;
-            if (Settings.mcp230xx_config[pin].int_count_en) {
-              Settings.mcp230xx_config[pin].int_count_en=0;
+            Settings->mcp230xx_config[pin].int_report_defer=intdef;
+            if (Settings->mcp230xx_config[pin].int_count_en) {
+              Settings->mcp230xx_config[pin].int_count_en=0;
               MCP230xx_CheckForIntCounter();
               AddLog(LOG_LEVEL_INFO, PSTR("*** WARNING *** - Disabled INTCNT for pin D%i"),pin);
             }
-            Response_P(MCP230XX_INTCFG_RESPONSE,"DEF",pin,Settings.mcp230xx_config[pin].int_report_defer);  // "{\"MCP230xx_INT%s\":{\"D_%i\":%i}}";
+            Response_P(MCP230XX_INTCFG_RESPONSE,"DEF",pin,Settings->mcp230xx_config[pin].int_report_defer);  // "{\"MCP230xx_INT%s\":{\"D_%i\":%i}}";
             return serviced;
           } else {
             serviced=false;
             return serviced;
           }
         } else {
-          Response_P(MCP230XX_INTCFG_RESPONSE,"DEF",pin,Settings.mcp230xx_config[pin].int_report_defer);  // "{\"MCP230xx_INT%s\":{\"D_%i\":%i}}";
+          Response_P(MCP230XX_INTCFG_RESPONSE,"DEF",pin,Settings->mcp230xx_config[pin].int_report_defer);  // "{\"MCP230xx_INT%s\":{\"D_%i\":%i}}";
           return serviced;
         }
       }
@@ -597,27 +600,27 @@ bool MCP230xx_Command(void)
         if (paramcount > 2) {
           uint8_t intcnt = atoi(ArgV(argument, 3));
           if ((intcnt >= 0) && (intcnt <= 1)) {
-            Settings.mcp230xx_config[pin].int_count_en=intcnt;
-            if (Settings.mcp230xx_config[pin].int_report_defer) {
-              Settings.mcp230xx_config[pin].int_report_defer=0;
+            Settings->mcp230xx_config[pin].int_count_en=intcnt;
+            if (Settings->mcp230xx_config[pin].int_report_defer) {
+              Settings->mcp230xx_config[pin].int_report_defer=0;
               AddLog(LOG_LEVEL_INFO, PSTR("*** WARNING *** - Disabled INTDEF for pin D%i"),pin);
             }
-            if (Settings.mcp230xx_config[pin].int_report_mode < 3) {
-              Settings.mcp230xx_config[pin].int_report_mode=3;
+            if (Settings->mcp230xx_config[pin].int_report_mode < 3) {
+              Settings->mcp230xx_config[pin].int_report_mode=3;
               AddLog(LOG_LEVEL_INFO, PSTR("*** WARNING *** - Disabled immediate interrupt/telemetry reporting for pin D%i"),pin);
             }
-            if ((Settings.mcp230xx_config[pin].int_count_en) && (!Settings.mcp230xx_int_timer)) {
+            if ((Settings->mcp230xx_config[pin].int_count_en) && (!Settings->mcp230xx_int_timer)) {
               AddLog(LOG_LEVEL_INFO, PSTR("*** WARNING *** - INTCNT enabled for pin D%i but global INTTIMER is disabled!"),pin);
             }
             MCP230xx_CheckForIntCounter(); // update register on whether or not we should be counting interrupts
-            Response_P(MCP230XX_INTCFG_RESPONSE,"CNT",pin,Settings.mcp230xx_config[pin].int_count_en);  // "{\"MCP230xx_INT%s\":{\"D_%i\":%i}}";
+            Response_P(MCP230XX_INTCFG_RESPONSE,"CNT",pin,Settings->mcp230xx_config[pin].int_count_en);  // "{\"MCP230xx_INT%s\":{\"D_%i\":%i}}";
             return serviced;
           } else {
             serviced=false;
             return serviced;
           }
         } else {
-          Response_P(MCP230XX_INTCFG_RESPONSE,"CNT",pin,Settings.mcp230xx_config[pin].int_count_en);  // "{\"MCP230xx_INT%s\":{\"D_%i\":%i}}";
+          Response_P(MCP230XX_INTCFG_RESPONSE,"CNT",pin,Settings->mcp230xx_config[pin].int_count_en);  // "{\"MCP230xx_INT%s\":{\"D_%i\":%i}}";
           return serviced;
         }
       }
@@ -643,8 +646,8 @@ bool MCP230xx_Command(void)
         if (paramcount > 2) {
           uint8_t int_retain = atoi(ArgV(argument, 3));
           if ((int_retain >= 0) && (int_retain <= 1)) {
-            Settings.mcp230xx_config[pin].int_retain_flag=int_retain;
-            Response_P(MCP230XX_INTCFG_RESPONSE,"INT_RETAIN",pin,Settings.mcp230xx_config[pin].int_retain_flag);
+            Settings->mcp230xx_config[pin].int_retain_flag=int_retain;
+            Response_P(MCP230XX_INTCFG_RESPONSE,"INT_RETAIN",pin,Settings->mcp230xx_config[pin].int_retain_flag);
             MCP230xx_CheckForIntRetainer();
             return serviced;
           } else {
@@ -652,7 +655,7 @@ bool MCP230xx_Command(void)
             return serviced;
           }
         } else {
-          Response_P(MCP230XX_INTCFG_RESPONSE,"INT_RETAIN",pin,Settings.mcp230xx_config[pin].int_retain_flag);
+          Response_P(MCP230XX_INTCFG_RESPONSE,"INT_RETAIN",pin,Settings->mcp230xx_config[pin].int_retain_flag);
           return serviced;
         }
       }
@@ -679,17 +682,17 @@ bool MCP230xx_Command(void)
       if (pin > 7) { port = 1; }
       uint8_t portdata = MCP230xx_readGPIO(port);
       char pulluptxtr[7],pinstatustxtr[7];
-      uint8_t pinmod = Settings.mcp230xx_config[pin].pinmode;
+      uint8_t pinmod = Settings->mcp230xx_config[pin].pinmode;
 #ifdef USE_MCP230xx_OUTPUT
       if (pinmod > 4) {
-        sprintf(pulluptxtr,ConvertNumTxt(Settings.mcp230xx_config[pin].pullup | (Settings.mcp230xx_config[pin].keep_output << 1), 0, 1));
+        sprintf(pulluptxtr,ConvertNumTxt(Settings->mcp230xx_config[pin].pullup | (Settings->mcp230xx_config[pin].keep_output << 1), 0, 1));
         sprintf(pinstatustxtr,ConvertNumTxt(portdata>>(pin-(port*8))&1,pinmod));
         Response_P(MCP230XX_OUTPUT_RESPONSE,pin,pinmod,pulluptxtr,pinstatustxtr);
       } else {
 #endif //USE_MCP230xx_OUTPUT
         char intmodetxt[9];
-        sprintf(intmodetxt,IntModeTxt(Settings.mcp230xx_config[pin].int_report_mode));
-        sprintf(pulluptxtr,ConvertNumTxt(Settings.mcp230xx_config[pin].pullup | (Settings.mcp230xx_config[pin].keep_output << 1)));
+        sprintf(intmodetxt,IntModeTxt(Settings->mcp230xx_config[pin].int_report_mode));
+        sprintf(pulluptxtr,ConvertNumTxt(Settings->mcp230xx_config[pin].pullup | (Settings->mcp230xx_config[pin].keep_output << 1)));
         sprintf(pinstatustxtr,ConvertNumTxt(portdata>>(pin-(port*8))&1));
         Response_P(MCP230XX_SENSOR_RESPONSE,pin,pinmod,pulluptxtr,intmodetxt,pinstatustxtr);
 #ifdef USE_MCP230xx_OUTPUT
@@ -698,8 +701,8 @@ bool MCP230xx_Command(void)
       return serviced;
     }
 #ifdef USE_MCP230xx_OUTPUT
-    if (Settings.mcp230xx_config[pin].pinmode >= 5 && paramcount == 2) { // Changing output value
-      uint8_t pincmd = Settings.mcp230xx_config[pin].pinmode - 5;
+    if (Settings->mcp230xx_config[pin].pinmode >= 5 && paramcount == 2) { // Changing output value
+      uint8_t pincmd = Settings->mcp230xx_config[pin].pinmode - 5;
       uint8_t relay_no = 0;
       for (relay_no = 0; relay_no < mcp230xx_pincount ; relay_no ++) {
         if ( mcp230xx_outpinmapping[relay_no] == pin) break;
@@ -736,32 +739,32 @@ bool MCP230xx_Command(void)
 #else // not use OUTPUT
     if ((pin < mcp230xx_pincount) && (pinmode > 0) && (pinmode < 5) && (pullup < 2) && (paramcount > 2)) {
 #endif // USE_MCP230xx_OUTPUT
-      Settings.mcp230xx_config[pin].pinmode=pinmode;
-      Settings.mcp230xx_config[pin].pullup=pullup & 1;
-      Settings.mcp230xx_config[pin].keep_output=pullup >> 1;
+      Settings->mcp230xx_config[pin].pinmode=pinmode;
+      Settings->mcp230xx_config[pin].pullup=pullup & 1;
+      Settings->mcp230xx_config[pin].keep_output=pullup >> 1;
       if ((pinmode > 1) && (pinmode < 5)) {
         if ((intmode >= 0) && (intmode <= 3)) {
-          Settings.mcp230xx_config[pin].int_report_mode=intmode;
+          Settings->mcp230xx_config[pin].int_report_mode=intmode;
         }
       } else {
-        Settings.mcp230xx_config[pin].int_report_mode=3; // Int mode not valid for pinmodes other than 2 through 4
+        Settings->mcp230xx_config[pin].int_report_mode=3; // Int mode not valid for pinmodes other than 2 through 4
       }
       MCP230xx_ApplySettings();
       uint8_t port = 0;
       if (pin > 7) { port = 1; }
       uint8_t portdata = MCP230xx_readGPIO(port);
       char pulluptxtr[7],pinstatustxtr[7];
-      uint8_t pinmod = Settings.mcp230xx_config[pin].pinmode;
+      uint8_t pinmod = Settings->mcp230xx_config[pin].pinmode;
 #ifdef USE_MCP230xx_OUTPUT
       if (pinmod > 4) {
-        sprintf(pulluptxtr,ConvertNumTxt(Settings.mcp230xx_config[pin].pullup | (Settings.mcp230xx_config[pin].keep_output << 1), 0, 1));
+        sprintf(pulluptxtr,ConvertNumTxt(Settings->mcp230xx_config[pin].pullup | (Settings->mcp230xx_config[pin].keep_output << 1), 0, 1));
         sprintf(pinstatustxtr,ConvertNumTxt(portdata>>(pin-(port*8))&1,pinmod));
         Response_P(MCP230XX_OUTPUT_RESPONSE,pin,pinmod,pulluptxtr,pinstatustxtr);
       } else {
 #endif //USE_MCP230xx_OUTPUT
         char intmodetxt[9];
-        sprintf(intmodetxt,IntModeTxt(Settings.mcp230xx_config[pin].int_report_mode));
-        sprintf(pulluptxtr,ConvertNumTxt(Settings.mcp230xx_config[pin].pullup | (Settings.mcp230xx_config[pin].keep_output << 1)));
+        sprintf(intmodetxt,IntModeTxt(Settings->mcp230xx_config[pin].int_report_mode));
+        sprintf(pulluptxtr,ConvertNumTxt(Settings->mcp230xx_config[pin].pullup | (Settings->mcp230xx_config[pin].keep_output << 1)));
         sprintf(pinstatustxtr,ConvertNumTxt(portdata>>(pin-(port*8))&1));
         Response_P(MCP230XX_SENSOR_RESPONSE,pin,pinmod,pulluptxtr,intmodetxt,pinstatustxtr);
 #ifdef USE_MCP230xx_OUTPUT
@@ -774,9 +777,9 @@ bool MCP230xx_Command(void)
 /*      char pulluptxtc[7], pinstatustxtc[7];
       char intmodetxt[9];
       sprintf(pulluptxtc,ConvertNumTxt(pullup));
-      sprintf(intmodetxt,IntModeTxt(Settings.mcp230xx_config[pin].int_report_mode));
+      sprintf(intmodetxt,IntModeTxt(Settings->mcp230xx_config[pin].int_report_mode));
 #ifdef USE_MCP230xx_OUTPUT
-      sprintf(pinstatustxtc,ConvertNumTxt(portdata>>(pin-(port*8))&1,Settings.mcp230xx_config[pin].pinmode));
+      sprintf(pinstatustxtc,ConvertNumTxt(portdata>>(pin-(port*8))&1,Settings->mcp230xx_config[pin].pinmode));
 #else  // not USE_MCP230xx_OUTPUT
       sprintf(pinstatustxtc,ConvertNumTxt(portdata>>(pin-(port*8))&1));
 #endif // USE_MCP230xx_OUTPUT
@@ -804,9 +807,9 @@ void MCP230xx_UpdateWebData(void)
   }
   uint16_t gpio = (gpio2 << 8) + gpio1;
   for (uint32_t pin = 0; pin < mcp230xx_pincount; pin++) {
-    if (Settings.mcp230xx_config[pin].pinmode >= 5) {
+    if (Settings->mcp230xx_config[pin].pinmode >= 5) {
       char stt[7];
-      sprintf(stt,ConvertNumTxt((gpio>>pin)&1,Settings.mcp230xx_config[pin].pinmode));
+      sprintf(stt,ConvertNumTxt((gpio>>pin)&1,Settings->mcp230xx_config[pin].pinmode));
       WSContentSend_PD(HTTP_SNS_MCP230xx_OUTPUT, pin, stt);
     }
   }
@@ -828,14 +831,14 @@ void MCP230xx_OutputTelemetry(void)
   if (2 == mcp230xx_type) { gpiob=MCP230xx_readGPIO(1); }
   gpiototal=((uint16_t)gpiob << 8) | gpioa;
   for (uint32_t pinx = 0;pinx < mcp230xx_pincount;pinx++) {
-    if (Settings.mcp230xx_config[pinx].pinmode >= 5) outputcount++;
+    if (Settings->mcp230xx_config[pinx].pinmode >= 5) outputcount++;
   }
   if (outputcount) {
     char stt[7];
     ResponseTime_P(PSTR(",\"MCP230_OUT\":{"));
     for (uint32_t pinx = 0;pinx < mcp230xx_pincount;pinx++) {
-      if (Settings.mcp230xx_config[pinx].pinmode >= 5) {
-        sprintf(stt,ConvertNumTxt(((gpiototal>>pinx)&1),Settings.mcp230xx_config[pinx].pinmode));
+      if (Settings->mcp230xx_config[pinx].pinmode >= 5) {
+        sprintf(stt,ConvertNumTxt(((gpiototal>>pinx)&1),Settings->mcp230xx_config[pinx].pinmode));
         ResponseAppend_P(PSTR("\"OUT_D%i\":\"%s\","),pinx,stt);
       }
     }
@@ -851,7 +854,7 @@ void MCP230xx_Interrupt_Counter_Report(void) {
   ResponseTime_P(PSTR(",\"MCP230_INTTIMER\":{"));
   bool first = true;
   for (uint32_t pinx = 0;pinx < mcp230xx_pincount;pinx++) {
-    if (Settings.mcp230xx_config[pinx].int_count_en) { // Counting is enabled for this pin so we add to report
+    if (Settings->mcp230xx_config[pinx].int_count_en) { // Counting is enabled for this pin so we add to report
       ResponseAppend_P(PSTR("%s\"INTCNT_D%i\":%i,"), (first) ? "" : "?", pinx, mcp230xx_int_counter[pinx]);
       first = false;
       mcp230xx_int_counter[pinx]=0;
@@ -866,7 +869,7 @@ void MCP230xx_Interrupt_Retain_Report(void) {
   uint16_t retainresult = 0;
   ResponseTime_P(PSTR(",\"MCP_INTRETAIN\":{"));
   for (uint32_t pinx = 0;pinx < mcp230xx_pincount;pinx++) {
-    if (Settings.mcp230xx_config[pinx].int_retain_flag) {
+    if (Settings->mcp230xx_config[pinx].int_retain_flag) {
       ResponseAppend_P(PSTR("\"D%i\":%i,"),pinx,mcp230xx_int_retainer[pinx]);
       retainresult |= (((mcp230xx_int_retainer[pinx])&1) << pinx);
       mcp230xx_int_retainer[pinx]=0;
@@ -880,15 +883,17 @@ void MCP230xx_Interrupt_Retain_Report(void) {
 void MCP230xx_SwitchRelay() {
   for (uint32_t i = TasmotaGlobal.devices_present - mcp230xx_outpincount; i < TasmotaGlobal.devices_present; i++) {
     uint8_t pin = mcp230xx_outpinmapping[i - (TasmotaGlobal.devices_present - mcp230xx_outpincount)];
-    uint8_t pincmd = Settings.mcp230xx_config[pin].pinmode - 5;
+    uint8_t pincmd = Settings->mcp230xx_config[pin].pinmode - 5;
     uint8_t relay_state = bitRead(XdrvMailbox.index, i);
-    switch (relay_state) {
-    case 1:
-      MCP230xx_SetOutPin(pin,1-pincmd);
-      break;
-    case 0:
-      MCP230xx_SetOutPin(pin,pincmd);
-      break;
+    if (mcp230xx_keepout_no_toggle == 0 || !Settings->mcp230xx_config[pin].keep_output) {
+      switch (relay_state) {
+      case 1:
+        MCP230xx_SetOutPin(pin,1-pincmd);
+        break;
+      case 0:
+        MCP230xx_SetOutPin(pin,pincmd);
+        break;
+      }
     }
   }
 }
@@ -912,7 +917,7 @@ bool Xsns29(uint8_t function)
       case FUNC_EVERY_50_MSECOND:
         if (mcp230xx_int_en) { // Only check for interrupts if its enabled on one of the pins
           mcp230xx_int_prio_counter++;
-          if ((mcp230xx_int_prio_counter) >= (Settings.mcp230xx_int_prio)) {
+          if ((mcp230xx_int_prio_counter) >= (Settings->mcp230xx_int_prio)) {
             MCP230xx_CheckForInterrupt();
             mcp230xx_int_prio_counter=0;
           }
@@ -921,7 +926,7 @@ bool Xsns29(uint8_t function)
       case FUNC_EVERY_SECOND:
         if (mcp230xx_int_counter_en) {
           mcp230xx_int_sec_counter++;
-          if (mcp230xx_int_sec_counter >= Settings.mcp230xx_int_timer) { // Interrupt counter interval reached, lets report
+          if (mcp230xx_int_sec_counter >= Settings->mcp230xx_int_timer) { // Interrupt counter interval reached, lets report
             MCP230xx_Interrupt_Counter_Report();
           }
         }

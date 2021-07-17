@@ -346,7 +346,7 @@ bool Xdrv21(uint8_t function)
 {
   bool result = false;
 
-  if (TasmotaGlobal.devices_present && (EMUL_WEMO == Settings.flag2.emulation)) {
+  if (TasmotaGlobal.devices_present && (EMUL_WEMO == Settings->flag2.emulation)) {
     switch (function) {
       case FUNC_WEB_ADD_HANDLER:
         WebServer_on(PSTR("/upnp/control/basicevent1"), HandleUpnpEvent, HTTP_POST);

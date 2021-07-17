@@ -64,8 +64,8 @@ void PS16DZSerialSendUpdateCommand(void)
 {
   uint8_t light_state_dimmer = light_state.getDimmer();
   // Dimming acts odd below 10% - this mirrors the threshold set on the faceplate itself
-  light_state_dimmer = (light_state_dimmer < Settings.dimmer_hw_min) ? Settings.dimmer_hw_min : light_state_dimmer;
-  light_state_dimmer = (light_state_dimmer > Settings.dimmer_hw_max) ? Settings.dimmer_hw_max : light_state_dimmer;
+  light_state_dimmer = (light_state_dimmer < Settings->dimmer_hw_min) ? Settings->dimmer_hw_min : light_state_dimmer;
+  light_state_dimmer = (light_state_dimmer > Settings->dimmer_hw_max) ? Settings->dimmer_hw_max : light_state_dimmer;
 
   char tx_buffer[80];
   snprintf_P(tx_buffer, sizeof(tx_buffer), PSTR("AT+UPDATE=\"sequence\":\"%d%03d\",\"switch\":\"%s\",\"bright\":%d"),
@@ -130,7 +130,7 @@ void PS16DZSerialInput(void)
 
 //            AddLog(LOG_LEVEL_DEBUG, PSTR("PSZ: Brightness %d"), Ps16dz.dimmer);
 
-            is_brightness_change = Ps16dz.dimmer != Settings.light_dimmer;
+            is_brightness_change = Ps16dz.dimmer != Settings->light_dimmer;
             if (TasmotaGlobal.power && (Ps16dz.dimmer > 0) && is_brightness_change) {
               snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_DIMMER " %d"), Ps16dz.dimmer);
               ExecuteCommand(scmnd, SRC_SWITCH);
@@ -154,10 +154,10 @@ void PS16DZSerialInput(void)
       else if (!strncmp(Ps16dz.rx_buffer+3, "SETTING", 7)) {
         // AT+SETTING=enterESPTOUCH - When ON button is held for over 5 seconds
         // AT+SETTING=exitESPTOUCH  - When ON button is pressed
-        if (!Settings.flag.button_restrict) {  // SetOption1 - Control button multipress
+        if (!Settings->flag.button_restrict) {  // SetOption1 - Control button multipress
           int state = WIFI_MANAGER;
           if (!strncmp(Ps16dz.rx_buffer+10, "=exit", 5)) { state = WIFI_RETRY; }
-          if (state != Settings.sta_config) {
+          if (state != Settings->sta_config) {
             snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_WIFICONFIG " %d"), state);
             ExecuteCommand(scmnd, SRC_BUTTON);
           }

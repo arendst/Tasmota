@@ -54,17 +54,22 @@ void be_initupvals(bvm *vm, bclosure *cl)
 void be_upvals_close(bvm *vm, bvalue *level)
 {
     bupval *node = vm->upvalist, *next;
-    while (node && node->value >= level) {
+    bupval **prev = &vm->upvalist;
+    while (node) {
         next = node->u.next;
-        if (!node->refcnt) {
-            be_free(vm, node, sizeof(bupval));
+        if (node->value >= level) {
+            if (!node->refcnt) {
+                be_free(vm, node, sizeof(bupval));
+            } else {
+                node->u.value = *node->value; /* move value to upvalue slot */
+                node->value = &node->u.value;
+            }
+            *prev = next;   /* remove from linked list */
         } else {
-            node->u.value = *node->value; /* move value to upvalue slot */
-            node->value = &node->u.value;
+            prev = &node->u.next;
         }
         node = next;
     }
-    vm->upvalist = node;
 }
 
 void be_release_upvalues(bvm *vm, bclosure *cl)

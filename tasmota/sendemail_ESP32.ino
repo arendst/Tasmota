@@ -3,19 +3,11 @@
 #include <ESP_Mail_Client.h>
 
 
-#ifdef ESP8266
 #ifndef SEND_MAIL32_MINRAM
 #undef SEND_MAIL32_MINRAM
-#define SEND_MAIL32_MINRAM 13*1024
+#define SEND_MAIL32_MINRAM 70*1024
 #endif
-#endif // ESP8266
 
-#ifdef ESP32
-#ifndef SEND_MAIL32_MINRAM
-#undef SEND_MAIL32_MINRAM
-#define SEND_MAIL32_MINRAM 30*1024
-#endif
-#endif // ESP32
 
 #define xPSTR(a) a
 #define MAX_ATTCHMENTS 8
@@ -41,7 +33,7 @@ uint16_t SendMail(char *buffer) {
   const char *to;
   const char *subject;
   const char *cmd;
-  uint16_t status = 0;
+  uint16_t status = 1;
   uint16_t blen;
   char *endcmd;
   ESP_Mail_Session session;
@@ -159,7 +151,7 @@ uint16_t SendMail(char *buffer) {
 #endif
 
 #ifdef DEBUG_EMAIL_PORT
-  AddLog_P(LOG_LEVEL_INFO, PSTR("%s - %d - %s - %s"), mserv, port, user, passwd);
+  AddLog(LOG_LEVEL_INFO, PSTR("%s - %d - %s - %s"), mserv, port, user, passwd);
 #endif
 
 #ifdef EMAIL_FROM
@@ -169,12 +161,16 @@ uint16_t SendMail(char *buffer) {
 #endif
 
 #ifdef DEBUG_EMAIL_PORT
-  AddLog_P(LOG_LEVEL_INFO, PSTR("%s - %s - %s - %s"), from, to, subject, cmd);
+  AddLog(LOG_LEVEL_INFO, PSTR("%s - %s - %s - %s"), from, to, subject, cmd);
 #endif
 
 
-  //smtp->debug(true);
+#ifdef DEBUG_EMAIL_PORT
+  smtp->debug(true);
+#else
   smtp->debug(false);
+#endif
+
 //  smtp->callback(smtpCallback);
 
   message.clearRecipients();
@@ -219,14 +215,17 @@ uint16_t SendMail(char *buffer) {
 
   /* Connect to server with the session config */
   delay(0);
-  if (!smtp->connect(&session))
+  if (!smtp->connect(&session)) {
     goto exit;
+  }
 
   /* Start sending the Email and close the session */
   delay(0);
 
   if (!MailClient.sendMail(smtp, &message, true)) {
     Serial.println("Error sending Email, " + smtp->errorReason());
+  } else {
+    status = 0;
   }
 
 exit:
@@ -372,4 +371,16 @@ if (status.success())
 }
 
 }
+
+
+void Tasmota_print(const char *txt) {
+#ifdef DEBUG_EMAIL_PORT
+  AddLog(LOG_LEVEL_INFO, PSTR("ESP32mail: %s"),txt);
+#endif
+}
+
+
+
+
+
 #endif // USE_ESP32MAIL

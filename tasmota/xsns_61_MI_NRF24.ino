@@ -1682,6 +1682,14 @@ const char HTTP_MINRF_FLORA_DATA[] PROGMEM =  "{s}%s" " Fertility" "{m}%dus/cm{e
 const char HTTP_MINRF_HL[] PROGMEM = "{s}<hr>{m}<hr>{e}";
 const char HTTP_NRF24NEW[] PROGMEM = "{s}%sL01%c{m}%u%s / %u{e}";
 
+void MINRFShowContinuation(bool *commaflg) {
+  if (*commaflg) {
+    ResponseAppend_P(PSTR(","));
+  } else {
+    *commaflg = true;
+  }
+}
+
 void MINRFShow(bool json)
 {
   if (json) {
@@ -1706,9 +1714,9 @@ void MINRFShow(bool json)
         if(MIBLEsensors[i].type != YEERC) break; // send every RC code, even if there is a potentially false MAC
         }
 
-      ResponseAppend_P(PSTR(",\"%s-%02x%02x%02x\":"),kMINRFDeviceType[MIBLEsensors[i].type-1],MIBLEsensors[i].MAC[3],MIBLEsensors[i].MAC[4],MIBLEsensors[i].MAC[5]);
-
-      uint32_t _positionCurlyBracket = strlen(TasmotaGlobal.mqtt_data); // ... this will be a ',' first, but later be replaced
+      bool commaflg = false;
+      ResponseAppend_P(PSTR(",\"%s-%02x%02x%02x\":{"),
+        kMINRFDeviceType[MIBLEsensors[i].type-1],MIBLEsensors[i].MAC[3],MIBLEsensors[i].MAC[4],MIBLEsensors[i].MAC[5]);
 
       if((!MINRF.mode.triggeredTele && !MINRF.option.minimalSummary)||MINRF.mode.triggeredTele){
         bool tempHumSended = false;
@@ -1719,7 +1727,7 @@ void MINRFShow(bool json)
               ||(!hass_mode==2)
 #endif //USE_HOME_ASSISTANT
             ) {
-              ResponseAppend_P(PSTR(","));
+              MINRFShowContinuation(&commaflg);
               ResponseAppendTHD(MIBLEsensors[i].temp, MIBLEsensors[i].hum);
               tempHumSended = true;
             }
@@ -1732,8 +1740,9 @@ void MINRFShow(bool json)
               ||(hass_mode==2)
 #endif //USE_HOME_ASSISTANT
             ) {
-              ResponseAppend_P(PSTR(",\"" D_JSON_TEMPERATURE "\":%*_f"),
-                Settings.flag2.temperature_resolution, &MIBLEsensors[i].temp);
+              MINRFShowContinuation(&commaflg);
+              ResponseAppend_P(PSTR("\"" D_JSON_TEMPERATURE "\":%*_f"),
+                Settings->flag2.temperature_resolution, &MIBLEsensors[i].temp);
             }
           }
         }
@@ -1741,8 +1750,9 @@ void MINRFShow(bool json)
           if(MIBLEsensors[i].eventType.hum || !MINRF.mode.triggeredTele || MINRF.option.allwaysAggregate) {
             if (!isnan(MIBLEsensors[i].hum)) {
               char hum[FLOATSZ];
-              dtostrfd(MIBLEsensors[i].hum, Settings.flag2.humidity_resolution, hum);
-              ResponseAppend_P(PSTR(",\"" D_JSON_HUMIDITY "\":%s"), hum);
+              dtostrfd(MIBLEsensors[i].hum, Settings->flag2.humidity_resolution, hum);
+              MINRFShowContinuation(&commaflg);
+              ResponseAppend_P(PSTR("\"" D_JSON_HUMIDITY "\":%s"), hum);
             }
           }
         }
@@ -1753,7 +1763,8 @@ void MINRFShow(bool json)
               ||(hass_mode==2)
 #endif //USE_HOME_ASSISTANT
             ) { // this is the error code -> no lux
-              ResponseAppend_P(PSTR(",\"" D_JSON_ILLUMINANCE "\":%u"), MIBLEsensors[i].lux);
+              MINRFShowContinuation(&commaflg);
+              ResponseAppend_P(PSTR("\"" D_JSON_ILLUMINANCE "\":%u"), MIBLEsensors[i].lux);
             }
           }
         }
@@ -1764,7 +1775,8 @@ void MINRFShow(bool json)
               ||(hass_mode==2)
 #endif //USE_HOME_ASSISTANT
             ) {
-              ResponseAppend_P(PSTR(",\"" D_JSON_MOISTURE "\":%u"), MIBLEsensors[i].moisture);
+              MINRFShowContinuation(&commaflg);
+              ResponseAppend_P(PSTR("\"" D_JSON_MOISTURE "\":%u"), MIBLEsensors[i].moisture);
             }
           }
         }
@@ -1775,29 +1787,37 @@ void MINRFShow(bool json)
               ||(hass_mode==2)
 #endif //USE_HOME_ASSISTANT
             ) {
-              ResponseAppend_P(PSTR(",\"Fertility\":%u"), MIBLEsensors[i].fertility);
+              MINRFShowContinuation(&commaflg);
+              ResponseAppend_P(PSTR("\"Fertility\":%u"), MIBLEsensors[i].fertility);
             }
           }
         }
         if (MIBLEsensors[i].feature.Btn){
           if(MIBLEsensors[i].eventType.Btn){
-            ResponseAppend_P(PSTR(",\"Btn\":%u"),MIBLEsensors[i].Btn);
+            MINRFShowContinuation(&commaflg);
+            ResponseAppend_P(PSTR("\"Btn\":%u"),MIBLEsensors[i].Btn);
           }
         }
       } // minimal summary
       if (MIBLEsensors[i].feature.PIR){
         if(MIBLEsensors[i].eventType.motion || !MINRF.mode.triggeredTele){
-          if(MINRF.mode.triggeredTele) ResponseAppend_P(PSTR(",\"PIR\":1")); // only real-time
-          ResponseAppend_P(PSTR(",\"Events\":%u"),MIBLEsensors[i].events);
+          if(MINRF.mode.triggeredTele) {
+            MINRFShowContinuation(&commaflg);
+            ResponseAppend_P(PSTR("\"PIR\":1")); // only real-time
+          }
+          MINRFShowContinuation(&commaflg);
+          ResponseAppend_P(PSTR("\"Events\":%u"),MIBLEsensors[i].events);
         }
         else if(MIBLEsensors[i].eventType.noMotion && MINRF.mode.triggeredTele){
-          ResponseAppend_P(PSTR(",\"PIR\":0"));
+          MINRFShowContinuation(&commaflg);
+          ResponseAppend_P(PSTR("\"PIR\":0"));
         }
       }
 
       if (MIBLEsensors[i].feature.NMT || !MINRF.mode.triggeredTele){
         if(MIBLEsensors[i].eventType.NMT){
-          ResponseAppend_P(PSTR(",\"NMT\":%u"), MIBLEsensors[i].NMT);
+          MINRFShowContinuation(&commaflg);
+          ResponseAppend_P(PSTR("\"NMT\":%u"), MIBLEsensors[i].NMT);
         }
       }
       if (MIBLEsensors[i].feature.bat){
@@ -1807,13 +1827,13 @@ void MINRFShow(bool json)
               ||(hass_mode==2)
 #endif //USE_HOME_ASSISTANT
           ) {
-          ResponseAppend_P(PSTR(",\"Battery\":%u"), MIBLEsensors[i].bat);
+          MINRFShowContinuation(&commaflg);
+          ResponseAppend_P(PSTR("\"Battery\":%u"), MIBLEsensors[i].bat);
           }
         }
       }
-      if(_positionCurlyBracket==strlen(TasmotaGlobal.mqtt_data)) ResponseAppend_P(PSTR(",")); // write some random char, to be overwritten in the next step
-      ResponseAppend_P(PSTR("}"));
-      TasmotaGlobal.mqtt_data[_positionCurlyBracket] = '{';
+      ResponseJsonEnd();
+
       MIBLEsensors[i].eventType.raw = 0;
       if(MIBLEsensors[i].shallSendMQTT==1){
         MIBLEsensors[i].shallSendMQTT = 0;

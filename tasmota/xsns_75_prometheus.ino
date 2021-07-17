@@ -20,11 +20,19 @@
 #ifdef USE_PROMETHEUS
 /*********************************************************************************************\
  * Prometheus support
+ *
+ * The text format for metrics, labels and values is documented at [1]. Only
+ * the UTF-8 text encoding is supported.
+ *
+ * [1]
+ * https://github.com/prometheus/docs/blob/master/content/docs/instrumenting/exposition_formats.md
+ *
 \*********************************************************************************************/
 
 #define XSNS_75                    75
 
-const char *UnitfromType(const char *type)  // find unit for measurment type
+// Find appropriate unit for measurement type.
+const char *UnitfromType(const char *type)
 {
   if (strcmp(type, "time") == 0) {
     return "seconds";
@@ -56,11 +64,23 @@ const char *UnitfromType(const char *type)  // find unit for measurment type
   return "";
 }
 
-String FormatMetricName(const char *metric) {  // cleanup spaces and uppercases for Prmetheus metrics conventions
+// Replace spaces and periods in metric name to match Prometheus metrics
+// convention.
+String FormatMetricName(const char *metric) {
   String formatted = metric;
   formatted.toLowerCase();
   formatted.replace(" ", "_");
   formatted.replace(".", "_");
+  return formatted;
+}
+
+// Labels can be any sequence of UTF-8 characters, but backslash, double-quote
+// and line feed must be escaped.
+String FormatLabelValue(const char *value) {
+  String formatted = value;
+  formatted.replace("\\", "\\\\");
+  formatted.replace("\"", "\\\"");
+  formatted.replace("\n", "\\n");
   return formatted;
 }
 
@@ -74,11 +94,11 @@ void HandleMetrics(void) {
   char parameter[FLOATSZ];
 
   // Pseudo-metric providing metadata about the running firmware version.
-  WSContentSend_P(PSTR("# TYPE tasmota_info gauge\ntasmota_info{version=\"%s\",image=\"%s\",build_timestamp=\"%s\"} 1\n"),
-                  TasmotaGlobal.version, TasmotaGlobal.image_name, GetBuildDateAndTime().c_str());
+  WSContentSend_P(PSTR("# TYPE tasmota_info gauge\ntasmota_info{version=\"%s\",image=\"%s\",build_timestamp=\"%s\",devicename=\"%s\"} 1\n"),
+                  TasmotaGlobal.version, TasmotaGlobal.image_name, GetBuildDateAndTime().c_str(), FormatLabelValue(SettingsText(SET_DEVICENAME)).c_str());
   WSContentSend_P(PSTR("# TYPE tasmota_uptime_seconds gauge\ntasmota_uptime_seconds %d\n"), TasmotaGlobal.uptime);
-  WSContentSend_P(PSTR("# TYPE tasmota_boot_count counter\ntasmota_boot_count %d\n"), Settings.bootcount);
-  WSContentSend_P(PSTR("# TYPE tasmota_flash_writes_total counter\ntasmota_flash_writes_total %d\n"), Settings.save_flag);
+  WSContentSend_P(PSTR("# TYPE tasmota_boot_count counter\ntasmota_boot_count %d\n"), Settings->bootcount);
+  WSContentSend_P(PSTR("# TYPE tasmota_flash_writes_total counter\ntasmota_flash_writes_total %d\n"), Settings->save_flag);
 
 
   // Pseudo-metric providing metadata about the WiFi station.
@@ -88,15 +108,15 @@ void HandleMetrics(void) {
   WSContentSend_P(PSTR("# TYPE tasmota_wifi_station_signal_dbm gauge\ntasmota_wifi_station_signal_dbm{mac_address=\"%s\"} %d\n"), WiFi.BSSIDstr().c_str(), WiFi.RSSI());
 
   if (!isnan(TasmotaGlobal.temperature_celsius)) {
-    dtostrfd(TasmotaGlobal.temperature_celsius, Settings.flag2.temperature_resolution, parameter);
+    dtostrfd(TasmotaGlobal.temperature_celsius, Settings->flag2.temperature_resolution, parameter);
     WSContentSend_P(PSTR("# TYPE tasmota_global_temperature_celsius gauge\ntasmota_global_temperature_celsius %s\n"), parameter);
   }
   if (TasmotaGlobal.humidity != 0) {
-    dtostrfd(TasmotaGlobal.humidity, Settings.flag2.humidity_resolution, parameter);
+    dtostrfd(TasmotaGlobal.humidity, Settings->flag2.humidity_resolution, parameter);
     WSContentSend_P(PSTR("# TYPE tasmota_global_humidity gauge\ntasmota_global_humidity_percentage %s\n"), parameter);
   }
   if (TasmotaGlobal.pressure_hpa != 0) {
-    dtostrfd(TasmotaGlobal.pressure_hpa, Settings.flag2.pressure_resolution, parameter);
+    dtostrfd(TasmotaGlobal.pressure_hpa, Settings->flag2.pressure_resolution, parameter);
     WSContentSend_P(PSTR("# TYPE tasmota_global_pressure_hpa gauge\ntasmota_global_pressure_hpa %s\n"), parameter);
   }
 
@@ -113,15 +133,15 @@ void HandleMetrics(void) {
   #endif // ESP32
 
 #ifdef USE_ENERGY_SENSOR
-  dtostrfd(Energy.voltage[0], Settings.flag2.voltage_resolution, parameter);
+  dtostrfd(Energy.voltage[0], Settings->flag2.voltage_resolution, parameter);
   WSContentSend_P(PSTR("# TYPE energy_voltage_volts gauge\nenergy_voltage_volts %s\n"), parameter);
-  dtostrfd(Energy.current[0], Settings.flag2.current_resolution, parameter);
+  dtostrfd(Energy.current[0], Settings->flag2.current_resolution, parameter);
   WSContentSend_P(PSTR("# TYPE energy_current_amperes gauge\nenergy_current_amperes %s\n"), parameter);
-  dtostrfd(Energy.active_power[0], Settings.flag2.wattage_resolution, parameter);
+  dtostrfd(Energy.active_power[0], Settings->flag2.wattage_resolution, parameter);
   WSContentSend_P(PSTR("# TYPE energy_power_active_watts gauge\nenergy_power_active_watts %s\n"), parameter);
-  dtostrfd(Energy.daily, Settings.flag2.energy_resolution, parameter);
+  dtostrfd(Energy.daily, Settings->flag2.energy_resolution, parameter);
   WSContentSend_P(PSTR("# TYPE energy_power_kilowatts_daily counter\nenergy_power_kilowatts_daily %s\n"), parameter);
-  dtostrfd(Energy.total, Settings.flag2.energy_resolution, parameter);
+  dtostrfd(Energy.total, Settings->flag2.energy_resolution, parameter);
   WSContentSend_P(PSTR("# TYPE energy_power_kilowatts_total counter\nenergy_power_kilowatts_total %s\n"), parameter);
 #endif
 
@@ -132,12 +152,10 @@ void HandleMetrics(void) {
 
   ResponseClear();
   MqttShowSensor(); //Pull sensor data
-  char json[strlen(TasmotaGlobal.mqtt_data)+1];
-  snprintf_P(json, sizeof(json), TasmotaGlobal.mqtt_data);
-  String jsonStr = json;
+  String jsonStr = TasmotaGlobal.mqtt_data;
   JsonParser parser((char *)jsonStr.c_str());
   JsonParserObject root = parser.getRootObject();
-  if (root) { // did JSON parsing went ok?
+  if (root) { // did JSON parsing succeed?
     for (auto key1 : root) {
       JsonParserToken value1 = key1.getValue();
       if (value1.isObject()) {
@@ -162,7 +180,7 @@ void HandleMetrics(void) {
               String sensor = FormatMetricName(key1.getStr());
               String type = FormatMetricName(key2.getStr());
               const char *unit = UnitfromType(type.c_str());
-              if (strcmp(type.c_str(), "totalstarttime") != 0) {  // this metric causes prometheus of fail
+              if (strcmp(type.c_str(), "totalstarttime") != 0) {  // this metric causes Prometheus of fail
                 if (strcmp(type.c_str(), "id") == 0) {            // this metric is NaN, so convert it to a label, see Wi-Fi metrics above
                   WSContentSend_P(PSTR("# TYPE tasmota_sensors_%s_%s gauge\ntasmota_sensors_%s_%s{sensor=\"%s\",id=\"%s\"} 1\n"),
                     type.c_str(), unit, type.c_str(), unit, sensor.c_str(), value);

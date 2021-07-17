@@ -9,7 +9,7 @@
  * 
  * Github: https://github.com/mobizt/ESP-Mail-Client
  * 
- * Copyright (c) 2020 mobizt
+ * Copyright (c) 2021 mobizt
  *
 */
 
@@ -84,6 +84,39 @@ void setup()
   /* Declare the session config data */
   ESP_Mail_Session session;
 
+  /** ########################################################
+   * Some properties of SMTPSession data and parameters pass to 
+   * SMTP_Message class accept the pointer to constant char
+   * i.e. const char*. 
+   * 
+   * You may assign a string literal to that properties or function 
+   * like below example.
+   *   
+   * session.login.user_domain = "mydomain.net";
+   * session.login.user_domain = String("mydomain.net").c_str();
+   * 
+   * or
+   * 
+   * String doman = "mydomain.net";
+   * session.login.user_domain = domain.c_str();
+   * 
+   * And
+   * 
+   * String name = "Jack " + String("dawson");
+   * String email = "jack_dawson" + String(123) + "@mail.com";
+   * 
+   * message.addRecipient(name.c_str(), email.c_str());
+   * 
+   * message.addHeader(String("Message-ID: <abcde.fghij@gmail.com>").c_str());
+   * 
+   * or
+   * 
+   * String header = "Message-ID: <abcde.fghij@gmail.com>";
+   * message.addHeader(header.c_str());
+   * 
+   * ###########################################################
+  */
+
   /* Set the session config */
   session.server.host_name = SMTP_HOST;
   session.server.port = SMTP_PORT;
@@ -100,7 +133,8 @@ void setup()
   message.subject = "Test sending plain text Email";
   message.addRecipient("Someone", "####@#####_dot_com");
 
-  message.text.content = "This is simple plain text message";
+  String textMsg = "This is simple plain text message";
+  message.text.content = textMsg.c_str();
 
   /** The Plain text message character set e.g.
    * us-ascii

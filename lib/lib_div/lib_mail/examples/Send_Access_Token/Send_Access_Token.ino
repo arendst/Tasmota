@@ -9,7 +9,7 @@
  * 
  * Github: https://github.com/mobizt/ESP-Mail-Client
  * 
- * Copyright (c) 2020 mobizt
+ * Copyright (c) 2021 mobizt
  *
 */
 
@@ -45,6 +45,9 @@
  * 
  * To test this using GMail, get the OAuth2.0 access token from this web site
  * https://developers.google.com/oauthplayground/
+ * 
+ * You can use the ESP Signer library to generate OAuth2.0 access token
+ * The library is available here https://github.com/mobizt/ESP-Signer
  * 
  * 1. Select the following scope (in Step 1) from Gmail API V1
  * https://mail.google.com/

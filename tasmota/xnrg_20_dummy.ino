@@ -46,14 +46,14 @@ void NrgDummyEverySecond(void) {
   if (Energy.power_on) {  // Powered on
     float energy = 0;
     for (uint32_t channel = 0; channel < Energy.phase_count; channel++) {
-      Energy.voltage[channel] = ((float)Settings.energy_voltage_calibration / 100);       // V
-      Energy.frequency[channel] = ((float)Settings.energy_frequency_calibration / 100);   // Hz
+      Energy.voltage[channel] = ((float)Settings->energy_voltage_calibration / 100);       // V
+      Energy.frequency[channel] = ((float)Settings->energy_frequency_calibration / 100);   // Hz
       if (bitRead(TasmotaGlobal.power, channel)) {  // Emulate power read only if device is powered on
-        Energy.active_power[channel] = ((float)Settings.energy_power_calibration / 100);    // W
+        Energy.active_power[channel] = ((float)Settings->energy_power_calibration / 100);    // W
         if (0 == Energy.active_power[channel]) {
           Energy.current[channel] = 0;
         } else {
-          Energy.current[channel] = ((float)Settings.energy_current_calibration / 100000);  // A
+          Energy.current[channel] = ((float)Settings->energy_current_calibration / 100000);  // A
           energy += Energy.active_power[channel];
         }
         Energy.data_valid[channel] = 0;
@@ -75,33 +75,33 @@ bool NrgDummyCommand(void) {
   if (CMND_POWERSET == Energy.command_code) {
     if (XdrvMailbox.data_len) {
       if ((value > 100) && (value < 200000)) {    // Between 1.00 and 2000.00 W
-        Settings.energy_power_calibration = value;
+        Settings->energy_power_calibration = value;
       }
     }
   }
   else if (CMND_VOLTAGESET == Energy.command_code) {
     if (XdrvMailbox.data_len) {
       if ((value > 10000) && (value < 26000)) {   // Between 100.00 and 260.00 V
-        Settings.energy_voltage_calibration = value;
+        Settings->energy_voltage_calibration = value;
       }
     }
   }
   else if (CMND_CURRENTSET == Energy.command_code) {
     if (XdrvMailbox.data_len) {
       if ((value > 1000) && (value < 1000000)) {  // Between 10.00 mA and 10.00000 A
-        Settings.energy_current_calibration = value;
+        Settings->energy_current_calibration = value;
       }
     }
   }
   else if (CMND_FREQUENCYSET == Energy.command_code) {
     if (XdrvMailbox.data_len) {
       if ((value > 4500) && (value < 6500)) {     // Between 45.00 and 65.00 Hz
-        Settings.energy_frequency_calibration = value;
+        Settings->energy_frequency_calibration = value;
       }
     }
   }
   else if (CMND_ENERGYCONFIG == Energy.command_code) {
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR("NRG: Config index %d, payload %d, data '%s'"),
+    AddLog(LOG_LEVEL_DEBUG, PSTR("NRG: Config index %d, payload %d, data '%s'"),
       XdrvMailbox.index, XdrvMailbox.payload, XdrvMailbox.data ? XdrvMailbox.data : "null" );
   }
   else serviced = false;  // Unknown command
@@ -111,11 +111,11 @@ bool NrgDummyCommand(void) {
 
 void NrgDummyDrvInit(void) {
   if (TasmotaGlobal.gpio_optiona.dummy_energy && TasmotaGlobal.devices_present) {
-    if (HLW_PREF_PULSE == Settings.energy_power_calibration) {
-      Settings.energy_frequency_calibration = NRG_DUMMY_FREF;
-      Settings.energy_voltage_calibration = NRG_DUMMY_UREF;
-      Settings.energy_current_calibration = NRG_DUMMY_IREF;
-      Settings.energy_power_calibration = NRG_DUMMY_PREF;
+    if (HLW_PREF_PULSE == Settings->energy_power_calibration) {
+      Settings->energy_frequency_calibration = NRG_DUMMY_FREF;
+      Settings->energy_voltage_calibration = NRG_DUMMY_UREF;
+      Settings->energy_current_calibration = NRG_DUMMY_IREF;
+      Settings->energy_power_calibration = NRG_DUMMY_PREF;
     }
 
     Energy.phase_count = (TasmotaGlobal.devices_present < ENERGY_MAX_PHASES) ? TasmotaGlobal.devices_present : ENERGY_MAX_PHASES;

@@ -306,7 +306,7 @@ void seeSoilJson(int no) {                      // common json
 
   ResponseAppend_P(PSTR ("\"%s\":{\"" D_JSON_ID "\":\"%02X\",\"" D_JSON_TEMPERATURE "\":%*_f,\"" D_JSON_MOISTURE "\":%u}"),
     sensor_name, SeeSoilSNS[no].address,
-    Settings.flag2.temperature_resolution, &SeeSoilSNS[no].temperature,
+    Settings->flag2.temperature_resolution, &SeeSoilSNS[no].temperature,
     (uint32_t) SeeSoilSNS[no].moisture);
 }
 

@@ -37,14 +37,14 @@ Constants in tasmota.h
 Variables in settings.h
 -----------------------
 
-bool          Settings.flag.knx_enabled             Enable/Disable KNX Protocol
-uint16_t      Settings.knx_physsical_addr           Physical KNX address of this device
-uint8_t       Settings.knx_GA_registered            Number of group address to read
-uint8_t       Settings.knx_CB_registered            Number of group address to write
-uint16_t      Settings.knx_GA_addr[MAX_KNX_GA]      Group address to read
-uint16_t      Settings.knx_CB_addr[MAX_KNX_CB]      Group address to write
-uint8_t       Settings.knx_GA_param[MAX_KNX_GA]     Type of Input (relay changed, button pressed, sensor read)
-uint8_t       Settings.knx_CB_param[MAX_KNX_CB]     Type of Output (set relay, toggle relay, reply sensor value)
+bool          Settings->flag.knx_enabled             Enable/Disable KNX Protocol
+uint16_t      Settings->knx_physsical_addr           Physical KNX address of this device
+uint8_t       Settings->knx_GA_registered            Number of group address to read
+uint8_t       Settings->knx_CB_registered            Number of group address to write
+uint16_t      Settings->knx_GA_addr[MAX_KNX_GA]      Group address to read
+uint16_t      Settings->knx_CB_addr[MAX_KNX_CB]      Group address to write
+uint8_t       Settings->knx_GA_param[MAX_KNX_GA]     Type of Input (relay changed, button pressed, sensor read)
+uint8_t       Settings->knx_CB_param[MAX_KNX_CB]     Type of Output (set relay, toggle relay, reply sensor value)
 
 \*********************************************************************************************/
 
@@ -210,11 +210,11 @@ void (* const KnxCommand[])(void) PROGMEM = {
 
 uint8_t KNX_GA_Search( uint8_t param, uint8_t start = 0 )
 {
-  for (uint32_t i = start; i < Settings.knx_GA_registered; ++i)
+  for (uint32_t i = start; i < Settings->knx_GA_registered; ++i)
   {
-    if ( Settings.knx_GA_param[i] == param )
+    if ( Settings->knx_GA_param[i] == param )
     {
-      if ( Settings.knx_GA_addr[i] != 0 ) // Relay has group address set? GA=0/0/0 can not be used as KNX address, so it is used here as a: not set value
+      if ( Settings->knx_GA_addr[i] != 0 ) // Relay has group address set? GA=0/0/0 can not be used as KNX address, so it is used here as a: not set value
       {
          if ( i >= start ) { return i; }
       }
@@ -226,11 +226,11 @@ uint8_t KNX_GA_Search( uint8_t param, uint8_t start = 0 )
 
 uint8_t KNX_CB_Search( uint8_t param, uint8_t start = 0 )
 {
-  for (uint32_t i = start; i < Settings.knx_CB_registered; ++i)
+  for (uint32_t i = start; i < Settings->knx_CB_registered; ++i)
   {
-    if ( Settings.knx_CB_param[i] == param )
+    if ( Settings->knx_CB_param[i] == param )
     {
-      if ( Settings.knx_CB_addr[i] != 0 )
+      if ( Settings->knx_CB_addr[i] != 0 )
       {
          if ( i >= start ) { return i; }
       }
@@ -243,20 +243,20 @@ uint8_t KNX_CB_Search( uint8_t param, uint8_t start = 0 )
 void KNX_ADD_GA( uint8_t GAop, uint8_t GA_FNUM, uint8_t GA_AREA, uint8_t GA_FDEF )
 {
   // Check if all GA were assigned. If yes-> return
-  if ( Settings.knx_GA_registered >= MAX_KNX_GA ) { return; }
+  if ( Settings->knx_GA_registered >= MAX_KNX_GA ) { return; }
   if ( GA_FNUM == 0 && GA_AREA == 0 && GA_FDEF == 0 ) { return; }
 
   // Assign a GA to that address
-  Settings.knx_GA_param[Settings.knx_GA_registered] = GAop;
+  Settings->knx_GA_param[Settings->knx_GA_registered] = GAop;
   KNX_addr.ga.area = GA_FNUM;
   KNX_addr.ga.line = GA_AREA;
   KNX_addr.ga.member = GA_FDEF;
-  Settings.knx_GA_addr[Settings.knx_GA_registered] = KNX_addr.value;
+  Settings->knx_GA_addr[Settings->knx_GA_registered] = KNX_addr.value;
 
-  Settings.knx_GA_registered++;
+  Settings->knx_GA_registered++;
 
   AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_KNX D_ADD " GA #%d: %s " D_TO " %d/%d/%d"),
-   Settings.knx_GA_registered,
+   Settings->knx_GA_registered,
    device_param_ga[GAop-1],
    GA_FNUM, GA_AREA, GA_FDEF );
 }
@@ -270,18 +270,18 @@ void KNX_DEL_GA( uint8_t GAnum )
   uint8_t len = 0;
 
   // Delete GA
-  Settings.knx_GA_param[GAnum-1] = 0;
+  Settings->knx_GA_param[GAnum-1] = 0;
 
   if (GAnum == 1)
   {
     // start of array, so delete first entry
     src_offset = 1;
-    // Settings.knx_GA_registered will be 1 in case of only one entry
-    // Settings.knx_GA_registered will be 2 in case of two entries, etc..
+    // Settings->knx_GA_registered will be 1 in case of only one entry
+    // Settings->knx_GA_registered will be 2 in case of two entries, etc..
     // so only copy anything, if there is it at least more then one element
-    len = (Settings.knx_GA_registered - 1);
+    len = (Settings->knx_GA_registered - 1);
   }
-  else if (GAnum == Settings.knx_GA_registered)
+  else if (GAnum == Settings->knx_GA_registered)
   {
     // last element, don't do anything, simply decrement counter
   }
@@ -293,16 +293,16 @@ void KNX_DEL_GA( uint8_t GAnum )
     // skip all prev elements
     dest_offset = GAnum -1 ; // GAnum -1 is equal to how many element are in front of it
     src_offset = dest_offset + 1; // start after the current element
-    len = (Settings.knx_GA_registered - GAnum);
+    len = (Settings->knx_GA_registered - GAnum);
   }
 
   if (len > 0)
   {
-    memmove(Settings.knx_GA_param + dest_offset, Settings.knx_GA_param + src_offset, len * sizeof(uint8_t));
-    memmove(Settings.knx_GA_addr + dest_offset, Settings.knx_GA_addr + src_offset, len * sizeof(uint16_t));
+    memmove(Settings->knx_GA_param + dest_offset, Settings->knx_GA_param + src_offset, len * sizeof(uint8_t));
+    memmove(Settings->knx_GA_addr + dest_offset, Settings->knx_GA_addr + src_offset, len * sizeof(uint16_t));
   }
 
-  Settings.knx_GA_registered--;
+  Settings->knx_GA_registered--;
 
   AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_KNX D_DELETE " GA #%d"),
     GAnum );
@@ -312,7 +312,7 @@ void KNX_DEL_GA( uint8_t GAnum )
 void KNX_ADD_CB( uint8_t CBop, uint8_t CB_FNUM, uint8_t CB_AREA, uint8_t CB_FDEF )
 {
   // Check if all callbacks were assigned. If yes-> return
-  if ( Settings.knx_CB_registered >= MAX_KNX_CB ) { return; }
+  if ( Settings->knx_CB_registered >= MAX_KNX_CB ) { return; }
   if ( CB_FNUM == 0 && CB_AREA == 0 && CB_FDEF == 0 ) { return; }
 
   // Check if a CB for CBop was registered on the ESP-KNX-IP Library
@@ -326,18 +326,18 @@ void KNX_ADD_CB( uint8_t CBop, uint8_t CB_FNUM, uint8_t CB_AREA, uint8_t CB_FDEF
       // Is going to be used device_param[j].type that stores the type number (1: relay 1, etc)
   }
   // Assign a callback to CB address
-  Settings.knx_CB_param[Settings.knx_CB_registered] = CBop;
+  Settings->knx_CB_param[Settings->knx_CB_registered] = CBop;
   KNX_addr.ga.area = CB_FNUM;
   KNX_addr.ga.line = CB_AREA;
   KNX_addr.ga.member = CB_FDEF;
-  Settings.knx_CB_addr[Settings.knx_CB_registered] = KNX_addr.value;
+  Settings->knx_CB_addr[Settings->knx_CB_registered] = KNX_addr.value;
 
   knx.callback_assign( device_param[CBop-1].CB_id, KNX_addr );
 
-  Settings.knx_CB_registered++;
+  Settings->knx_CB_registered++;
 
   AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_KNX D_ADD " CB #%d: %d/%d/%d " D_TO " %s"),
-   Settings.knx_CB_registered,
+   Settings->knx_CB_registered,
    CB_FNUM, CB_AREA, CB_FDEF,
    device_param_cb[CBop-1] );
 }
@@ -345,25 +345,25 @@ void KNX_ADD_CB( uint8_t CBop, uint8_t CB_FNUM, uint8_t CB_AREA, uint8_t CB_FDEF
 
 void KNX_DEL_CB( uint8_t CBnum )
 {
-  uint8_t oldparam = Settings.knx_CB_param[CBnum-1];
+  uint8_t oldparam = Settings->knx_CB_param[CBnum-1];
   uint8_t dest_offset = 0;
   uint8_t src_offset = 0;
   uint8_t len = 0;
 
   // Delete assigment
   knx.callback_unassign(CBnum-1);
-  Settings.knx_CB_param[CBnum-1] = 0;
+  Settings->knx_CB_param[CBnum-1] = 0;
 
   if (CBnum == 1)
   {
     // start of array, so delete first entry
     src_offset = 1;
-    // Settings.knx_CB_registered will be 1 in case of only one entry
-    // Settings.knx_CB_registered will be 2 in case of two entries, etc..
+    // Settings->knx_CB_registered will be 1 in case of only one entry
+    // Settings->knx_CB_registered will be 2 in case of two entries, etc..
     // so only copy anything, if there is it at least more then one element
-    len = (Settings.knx_CB_registered - 1);
+    len = (Settings->knx_CB_registered - 1);
   }
-  else if (CBnum == Settings.knx_CB_registered)
+  else if (CBnum == Settings->knx_CB_registered)
   {
     // last element, don't do anything, simply decrement counter
   }
@@ -375,16 +375,16 @@ void KNX_DEL_CB( uint8_t CBnum )
     // skip all prev elements
     dest_offset = CBnum -1 ; // GAnum -1 is equal to how many element are in front of it
     src_offset = dest_offset + 1; // start after the current element
-    len = (Settings.knx_CB_registered - CBnum);
+    len = (Settings->knx_CB_registered - CBnum);
   }
 
   if (len > 0)
   {
-    memmove(Settings.knx_CB_param + dest_offset, Settings.knx_CB_param + src_offset, len * sizeof(uint8_t));
-    memmove(Settings.knx_CB_addr + dest_offset, Settings.knx_CB_addr + src_offset, len * sizeof(uint16_t));
+    memmove(Settings->knx_CB_param + dest_offset, Settings->knx_CB_param + src_offset, len * sizeof(uint8_t));
+    memmove(Settings->knx_CB_addr + dest_offset, Settings->knx_CB_addr + src_offset, len * sizeof(uint16_t));
   }
 
-  Settings.knx_CB_registered--;
+  Settings->knx_CB_registered--;
 
   // Check if there is no other assigment to that callback. If there is not. delete that callback register
   if ( KNX_CB_Search( oldparam ) == KNX_Empty ) {
@@ -421,21 +421,21 @@ bool KNX_CONFIG_NOT_MATCH(void)
   }
 
   // Check for invalid or erroneous configuration (tasmota flashed without clearing the memory)
-  for (uint32_t i = 0; i < Settings.knx_GA_registered; ++i)
+  for (uint32_t i = 0; i < Settings->knx_GA_registered; ++i)
   {
-    if ( Settings.knx_GA_param[i] != 0 ) // the GA[i] have a parameter defined?
+    if ( Settings->knx_GA_param[i] != 0 ) // the GA[i] have a parameter defined?
     {
-      if ( Settings.knx_GA_addr[i] == 0 ) // the GA[i] with parameter have the 0/0/0 as address?
+      if ( Settings->knx_GA_addr[i] == 0 ) // the GA[i] with parameter have the 0/0/0 as address?
       {
          return true; // So, it is invalid. Reset KNX configuration
       }
     }
   }
-  for (uint32_t i = 0; i < Settings.knx_CB_registered; ++i)
+  for (uint32_t i = 0; i < Settings->knx_CB_registered; ++i)
   {
-    if ( Settings.knx_CB_param[i] != 0 ) // the CB[i] have a parameter defined?
+    if ( Settings->knx_CB_param[i] != 0 ) // the CB[i] have a parameter defined?
     {
-      if ( Settings.knx_CB_addr[i] == 0 ) // the CB[i] with parameter have the 0/0/0 as address?
+      if ( Settings->knx_CB_addr[i] == 0 ) // the CB[i] with parameter have the 0/0/0 as address?
       {
          return true; // So, it is invalid. Reset KNX configuration
       }
@@ -456,11 +456,11 @@ void KNXStart(void)
 void KNX_INIT(void)
 {
   // Check for incompatible config
-  if (Settings.knx_GA_registered > MAX_KNX_GA) { Settings.knx_GA_registered = MAX_KNX_GA; }
-  if (Settings.knx_CB_registered > MAX_KNX_CB) { Settings.knx_CB_registered = MAX_KNX_CB; }
+  if (Settings->knx_GA_registered > MAX_KNX_GA) { Settings->knx_GA_registered = MAX_KNX_GA; }
+  if (Settings->knx_CB_registered > MAX_KNX_CB) { Settings->knx_CB_registered = MAX_KNX_CB; }
 
   // Set Physical KNX Address of the device
-  KNX_physs_addr.value = Settings.knx_physsical_addr;
+  KNX_physs_addr.value = Settings->knx_physsical_addr;
   knx.physical_address_set( KNX_physs_addr );
 
   // Read Configuration
@@ -520,8 +520,8 @@ void KNX_INIT(void)
 
   // Delete from KNX settings all configuration is not anymore related to this device
   if (KNX_CONFIG_NOT_MATCH()) {
-    Settings.knx_GA_registered = 0;
-    Settings.knx_CB_registered = 0;
+    Settings->knx_GA_registered = 0;
+    Settings->knx_CB_registered = 0;
     AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_KNX D_DELETE " " D_KNX_PARAMETERS));
   }
 
@@ -529,16 +529,16 @@ void KNX_INIT(void)
   //     Search on the settings if there is a group address set for receive KNX messages for the type: device_param[j].type
   //     If there is, register the group address on the KNX_IP Library to Receive data for Executing Callbacks
   uint8_t j;
-  for (uint32_t i = 0; i < Settings.knx_CB_registered; ++i)
+  for (uint32_t i = 0; i < Settings->knx_CB_registered; ++i)
   {
-    j = Settings.knx_CB_param[i];
+    j = Settings->knx_CB_param[i];
     if ( j > 0 )
     {
       device_param[j-1].CB_id = knx.callback_register("", KNX_CB_Action, &device_param[j-1]); // KNX IP Library requires a parameter
                                                                                               // to identify which action was requested on the KNX network
                                                                                               // to be performed on this device (set relay, etc.)
                                                                                               // Is going to be used device_param[j].type that stores the type number (1: relay 1, etc)
-      KNX_addr.value = Settings.knx_CB_addr[i];
+      KNX_addr.value = Settings->knx_CB_addr[i];
       knx.callback_assign( device_param[j-1].CB_id, KNX_addr );
     }
   }
@@ -548,7 +548,7 @@ void KNX_INIT(void)
 void KNX_CB_Action(message_t const &msg, void *arg)
 {
   device_parameters_t *chan = (device_parameters_t *)arg;
-  if (!(Settings.flag.knx_enabled)) { return; }
+  if (!(Settings->flag.knx_enabled)) { return; }
 
   char tempchar[33];
 
@@ -581,7 +581,7 @@ void KNX_CB_Action(message_t const &msg, void *arg)
       {
         if (!toggle_inhibit) {
           ExecuteCommandPower((chan->type) -8, POWER_TOGGLE, SRC_KNX);
-          if (Settings.flag.knx_enable_enhancement) {
+          if (Settings->flag.knx_enable_enhancement) {
             toggle_inhibit = TOGGLE_INHIBIT_TIME;
           }
         }
@@ -599,7 +599,7 @@ void KNX_CB_Action(message_t const &msg, void *arg)
             snprintf_P(command, sizeof(command), PSTR("event KNXRX_VAL%d=%s"), ((chan->type) - KNX_SLOT1 + 1 ), tempchar);
           }
           ExecuteCommand(command, SRC_KNX);
-          if (Settings.flag.knx_enable_enhancement) {
+          if (Settings->flag.knx_enable_enhancement) {
             toggle_inhibit = TOGGLE_INHIBIT_TIME;
           }
         }
@@ -611,7 +611,7 @@ void KNX_CB_Action(message_t const &msg, void *arg)
           // Value received
           snprintf_P(command, sizeof(command), PSTR("event KNX_SCENE=%s"), tempchar);
           ExecuteCommand(command, SRC_KNX);
-          if (Settings.flag.knx_enable_enhancement) {
+          if (Settings->flag.knx_enable_enhancement) {
             toggle_inhibit = TOGGLE_INHIBIT_TIME;
           }
         }
@@ -623,7 +623,7 @@ void KNX_CB_Action(message_t const &msg, void *arg)
       if (chan->type < 9) // reply Relays status
       {
         knx.answer_1bit(msg.received_on, chan->last_state);
-        if (Settings.flag.knx_enable_enhancement) {
+        if (Settings->flag.knx_enable_enhancement) {
           knx.answer_1bit(msg.received_on, chan->last_state);
           knx.answer_1bit(msg.received_on, chan->last_state);
         }
@@ -631,7 +631,7 @@ void KNX_CB_Action(message_t const &msg, void *arg)
       else if (chan->type == KNX_TEMPERATURE) // Reply Temperature
       {
         knx.answer_4byte_float(msg.received_on, last_temp);
-        if (Settings.flag.knx_enable_enhancement) {
+        if (Settings->flag.knx_enable_enhancement) {
           knx.answer_4byte_float(msg.received_on, last_temp);
           knx.answer_4byte_float(msg.received_on, last_temp);
         }
@@ -639,7 +639,7 @@ void KNX_CB_Action(message_t const &msg, void *arg)
       else if (chan->type == KNX_HUMIDITY) // Reply Humidity
       {
         knx.answer_4byte_float(msg.received_on, last_hum);
-        if (Settings.flag.knx_enable_enhancement) {
+        if (Settings->flag.knx_enable_enhancement) {
           knx.answer_4byte_float(msg.received_on, last_hum);
           knx.answer_4byte_float(msg.received_on, last_hum);
         }
@@ -647,7 +647,7 @@ void KNX_CB_Action(message_t const &msg, void *arg)
       else if (chan->type == KNX_ENERGY_VOLTAGE) // Reply KNX_ENERGY_VOLTAGE
       {        
         knx.answer_4byte_float(msg.received_on, Energy.voltage[0]);
-        if (Settings.flag.knx_enable_enhancement) {
+        if (Settings->flag.knx_enable_enhancement) {
           knx.answer_4byte_float(msg.received_on, Energy.voltage[0]);
           knx.answer_4byte_float(msg.received_on, Energy.voltage[0]);
         }
@@ -655,7 +655,7 @@ void KNX_CB_Action(message_t const &msg, void *arg)
       else if (chan->type == KNX_ENERGY_CURRENT) // Reply KNX_ENERGY_CURRENT
       {
         knx.answer_4byte_float(msg.received_on, Energy.current[0]);
-        if (Settings.flag.knx_enable_enhancement) {
+        if (Settings->flag.knx_enable_enhancement) {
           knx.answer_4byte_float(msg.received_on, Energy.current[0]);
           knx.answer_4byte_float(msg.received_on, Energy.current[0]);
         }
@@ -663,7 +663,7 @@ void KNX_CB_Action(message_t const &msg, void *arg)
       else if (chan->type == KNX_ENERGY_POWER) // Reply KNX_ENERGY_POWER
       {
         knx.answer_4byte_float(msg.received_on, Energy.active_power[0]);
-        if (Settings.flag.knx_enable_enhancement) {
+        if (Settings->flag.knx_enable_enhancement) {
           knx.answer_4byte_float(msg.received_on, Energy.active_power[0]);
           knx.answer_4byte_float(msg.received_on, Energy.active_power[0]);
         }
@@ -671,16 +671,16 @@ void KNX_CB_Action(message_t const &msg, void *arg)
       else if (chan->type == KNX_ENERGY_POWERFACTOR) // Reply KNX_ENERGY_POWERFACTOR
       {
         knx.answer_4byte_float(msg.received_on, Energy.power_factor[0]);
-        if (Settings.flag.knx_enable_enhancement) {
+        if (Settings->flag.knx_enable_enhancement) {
           knx.answer_4byte_float(msg.received_on, Energy.power_factor[0]);
           knx.answer_4byte_float(msg.received_on, Energy.power_factor[0]);
         }
       }
       else if (chan->type == KNX_ENERGY_YESTERDAY) // Reply KNX_ENERGY_YESTERDAY
       {
-        float energy_kWhyesterday = (float)Settings.energy_kWhyesterday / 100000;
+        float energy_kWhyesterday = (float)Settings->energy_kWhyesterday / 100000;
         knx.answer_4byte_float(msg.received_on, energy_kWhyesterday);
-        if (Settings.flag.knx_enable_enhancement) {
+        if (Settings->flag.knx_enable_enhancement) {
           knx.answer_4byte_float(msg.received_on, energy_kWhyesterday);
           knx.answer_4byte_float(msg.received_on, energy_kWhyesterday);
         }
@@ -688,7 +688,7 @@ void KNX_CB_Action(message_t const &msg, void *arg)
       else if (chan->type == KNX_ENERGY_DAILY) // Reply KNX_ENERGY_DAILY
       {
         knx.answer_4byte_float(msg.received_on, Energy.daily);
-        if (Settings.flag.knx_enable_enhancement) {
+        if (Settings->flag.knx_enable_enhancement) {
           knx.answer_4byte_float(msg.received_on, Energy.daily);
           knx.answer_4byte_float(msg.received_on, Energy.daily);
         }
@@ -696,7 +696,7 @@ void KNX_CB_Action(message_t const &msg, void *arg)
       else if (chan->type == KNX_ENERGY_TOTAL) // Reply KNX_ENERGY_TOTAL
       {
         knx.answer_4byte_float(msg.received_on, Energy.total);
-        if (Settings.flag.knx_enable_enhancement) {
+        if (Settings->flag.knx_enable_enhancement) {
           knx.answer_4byte_float(msg.received_on, Energy.total);
           knx.answer_4byte_float(msg.received_on, Energy.total);
         }
@@ -708,7 +708,7 @@ void KNX_CB_Action(message_t const &msg, void *arg)
           char command[25];
           snprintf_P(command, sizeof(command), PSTR("event KNXRX_REQ%d"), ((chan->type) - KNX_SLOT1 + 1 ) );
           ExecuteCommand(command, SRC_KNX);
-          if (Settings.flag.knx_enable_enhancement) {
+          if (Settings->flag.knx_enable_enhancement) {
             toggle_inhibit = TOGGLE_INHIBIT_TIME;
           }
         }
@@ -721,16 +721,16 @@ void KNX_CB_Action(message_t const &msg, void *arg)
 
 void KnxUpdatePowerState(uint8_t device, power_t state)
 {
-  if (!(Settings.flag.knx_enabled)) { return; }
+  if (!(Settings->flag.knx_enabled)) { return; }
 
   device_param[device -1].last_state = bitRead(state, device -1); // power state (on/off)
 
   // Search all the registered GA that has that output (variable: device) as parameter
   uint8_t i = KNX_GA_Search(device);
   while ( i != KNX_Empty ) {
-    KNX_addr.value = Settings.knx_GA_addr[i];
+    KNX_addr.value = Settings->knx_GA_addr[i];
     knx.write_1bit(KNX_addr, device_param[device -1].last_state);
-    if (Settings.flag.knx_enable_enhancement) {
+    if (Settings->flag.knx_enable_enhancement) {
       knx.write_1bit(KNX_addr, device_param[device -1].last_state);
       knx.write_1bit(KNX_addr, device_param[device -1].last_state);
     }
@@ -746,7 +746,7 @@ void KnxUpdatePowerState(uint8_t device, power_t state)
 
 void KnxSendButtonPower(void)
 {
-  if (!(Settings.flag.knx_enabled)) { return; }
+  if (!(Settings->flag.knx_enabled)) { return; }
 
   uint32_t key = (XdrvMailbox.payload >> 16) & 0xFF;
   uint32_t device = XdrvMailbox.payload & 0xFF;
@@ -762,9 +762,9 @@ void KnxSendButtonPower(void)
 // Search all the registered GA that has that output (variable: device) as parameter
   uint8_t i = KNX_GA_Search(device + 8);
   while ( i != KNX_Empty ) {
-    KNX_addr.value = Settings.knx_GA_addr[i];
+    KNX_addr.value = Settings->knx_GA_addr[i];
     knx.write_1bit(KNX_addr, !(state == 0));
-    if (Settings.flag.knx_enable_enhancement) {
+    if (Settings->flag.knx_enable_enhancement) {
       knx.write_1bit(KNX_addr, !(state == 0));
       knx.write_1bit(KNX_addr, !(state == 0));
     }
@@ -789,13 +789,13 @@ void KnxSensor(uint8_t sensor_type, float value)
     last_hum = value;
   }
 
-  if (!(Settings.flag.knx_enabled)) { return; }
+  if (!(Settings->flag.knx_enabled)) { return; }
 
   uint8_t i = KNX_GA_Search(sensor_type);
   while ( i != KNX_Empty ) {
-    KNX_addr.value = Settings.knx_GA_addr[i];
+    KNX_addr.value = Settings->knx_GA_addr[i];
     knx.write_4byte_float(KNX_addr, value);
-    if (Settings.flag.knx_enable_enhancement) {
+    if (Settings->flag.knx_enable_enhancement) {
       knx.write_4byte_float(KNX_addr, value);
       knx.write_4byte_float(KNX_addr, value);
     }
@@ -957,11 +957,11 @@ void HandleKNXConfiguration(void)
             "}"
           "}"));
     WSContentSendStyle();
-    KNX_physs_addr.value = Settings.knx_physsical_addr;
+    KNX_physs_addr.value = Settings->knx_physsical_addr;
     WSContentSend_P(HTTP_FORM_KNX, KNX_physs_addr.pa.area, KNX_physs_addr.pa.line, KNX_physs_addr.pa.member);
-    if ( Settings.flag.knx_enabled ) { WSContentSend_P(PSTR(" checked")); }
+    if ( Settings->flag.knx_enabled ) { WSContentSend_P(PSTR(" checked")); }
     WSContentSend_P(HTTP_FORM_KNX1);
-    if ( Settings.flag.knx_enable_enhancement ) { WSContentSend_P(PSTR(" checked")); }
+    if ( Settings->flag.knx_enable_enhancement ) { WSContentSend_P(PSTR(" checked")); }
 
     WSContentSend_P(HTTP_FORM_KNX2);
     for (uint32_t i = 0; i < KNX_MAX_device_param ; i++)
@@ -973,13 +973,13 @@ void HandleKNXConfiguration(void)
     }
     WSContentSend_P(PSTR("</select> -> "));
     WSContentSend_P(HTTP_FORM_KNX_GA, "GA_FNUM", "GA_AREA", "GA_FDEF");
-    WSContentSend_P(HTTP_FORM_KNX_ADD_BTN, "GAwarning", (Settings.knx_GA_registered < MAX_KNX_GA) ? "" : "disabled", 1);
-    for (uint32_t i = 0; i < Settings.knx_GA_registered ; ++i)
+    WSContentSend_P(HTTP_FORM_KNX_ADD_BTN, "GAwarning", (Settings->knx_GA_registered < MAX_KNX_GA) ? "" : "disabled", 1);
+    for (uint32_t i = 0; i < Settings->knx_GA_registered ; ++i)
     {
-      if ( Settings.knx_GA_param[i] )
+      if ( Settings->knx_GA_param[i] )
       {
-        KNX_addr.value = Settings.knx_GA_addr[i];
-        WSContentSend_P(HTTP_FORM_KNX_ADD_TABLE_ROW, device_param_ga[Settings.knx_GA_param[i]-1], KNX_addr.ga.area, KNX_addr.ga.line, KNX_addr.ga.member, i +1);
+        KNX_addr.value = Settings->knx_GA_addr[i];
+        WSContentSend_P(HTTP_FORM_KNX_ADD_TABLE_ROW, device_param_ga[Settings->knx_GA_param[i]-1], KNX_addr.ga.area, KNX_addr.ga.line, KNX_addr.ga.member, i +1);
       }
     }
 
@@ -999,14 +999,14 @@ void HandleKNXConfiguration(void)
       }
     }
     WSContentSend_P(PSTR("</select> "));
-    WSContentSend_P(HTTP_FORM_KNX_ADD_BTN, "CBwarning", (Settings.knx_CB_registered < MAX_KNX_CB) ? "" : "disabled", 2);
+    WSContentSend_P(HTTP_FORM_KNX_ADD_BTN, "CBwarning", (Settings->knx_CB_registered < MAX_KNX_CB) ? "" : "disabled", 2);
 
-    for (uint32_t i = 0; i < Settings.knx_CB_registered ; ++i)
+    for (uint32_t i = 0; i < Settings->knx_CB_registered ; ++i)
     {
-      if ( Settings.knx_CB_param[i] )
+      if ( Settings->knx_CB_param[i] )
       {
-        KNX_addr.value = Settings.knx_CB_addr[i];
-        WSContentSend_P(HTTP_FORM_KNX_ADD_TABLE_ROW2, KNX_addr.ga.area, KNX_addr.ga.line, KNX_addr.ga.member, device_param_cb[Settings.knx_CB_param[i]-1], i +1);
+        KNX_addr.value = Settings->knx_CB_addr[i];
+        WSContentSend_P(HTTP_FORM_KNX_ADD_TABLE_ROW2, KNX_addr.ga.area, KNX_addr.ga.line, KNX_addr.ga.member, device_param_cb[Settings->knx_CB_param[i]-1], i +1);
       }
     }
     WSContentSend_P(PSTR("</table></center></fieldset>"));
@@ -1023,10 +1023,10 @@ void KNX_Save_Settings(void)
   String stmp;
   address_t KNX_addr;
 
-  Settings.flag.knx_enabled = Webserver->hasArg("b1");
-  Settings.flag.knx_enable_enhancement = Webserver->hasArg("b2");
+  Settings->flag.knx_enabled = Webserver->hasArg("b1");
+  Settings->flag.knx_enable_enhancement = Webserver->hasArg("b2");
   AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_KNX D_ENABLED ": %d, " D_KNX_ENHANCEMENT ": %d"),
-   Settings.flag.knx_enabled, Settings.flag.knx_enable_enhancement );
+   Settings->flag.knx_enabled, Settings->flag.knx_enable_enhancement );
 
   stmp = Webserver->arg("area");
   KNX_addr.pa.area = stmp.toInt();
@@ -1034,31 +1034,31 @@ void KNX_Save_Settings(void)
   KNX_addr.pa.line = stmp.toInt();
   stmp = Webserver->arg("member");
   KNX_addr.pa.member = stmp.toInt();
-  Settings.knx_physsical_addr = KNX_addr.value;
+  Settings->knx_physsical_addr = KNX_addr.value;
   knx.physical_address_set( KNX_addr ); // Set Physical KNX Address of the device
   AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_KNX D_KNX_PHYSICAL_ADDRESS ": %d.%d.%d "),
    KNX_addr.pa.area, KNX_addr.pa.line, KNX_addr.pa.member );
 
   AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_KNX "GA: %d"),
-   Settings.knx_GA_registered );
-  for (uint32_t i = 0; i < Settings.knx_GA_registered ; ++i)
+   Settings->knx_GA_registered );
+  for (uint32_t i = 0; i < Settings->knx_GA_registered ; ++i)
   {
-    KNX_addr.value = Settings.knx_GA_addr[i];
+    KNX_addr.value = Settings->knx_GA_addr[i];
     AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_KNX "GA #%d: %s " D_TO " %d/%d/%d"),
-     i+1, device_param_ga[Settings.knx_GA_param[i]-1],
+     i+1, device_param_ga[Settings->knx_GA_param[i]-1],
      KNX_addr.ga.area, KNX_addr.ga.line, KNX_addr.ga.member );
 
   }
 
   AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_KNX "CB: %d"),
-   Settings.knx_CB_registered );
-  for (uint32_t i = 0; i < Settings.knx_CB_registered ; ++i)
+   Settings->knx_CB_registered );
+  for (uint32_t i = 0; i < Settings->knx_CB_registered ; ++i)
   {
-    KNX_addr.value = Settings.knx_CB_addr[i];
+    KNX_addr.value = Settings->knx_CB_addr[i];
     AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_KNX "CB #%d: %d/%d/%d " D_TO " %s"),
      i+1,
      KNX_addr.ga.area, KNX_addr.ga.line, KNX_addr.ga.member,
-     device_param_cb[Settings.knx_CB_param[i]-1] );
+     device_param_cb[Settings->knx_CB_param[i]-1] );
   }
 }
 
@@ -1071,15 +1071,15 @@ void KNX_Save_Settings(void)
 
 void CmndKnxTxCmnd(void)
 {
-  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_KNXTX_CMNDS) && (XdrvMailbox.data_len > 0) && Settings.flag.knx_enabled) {
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_KNXTX_CMNDS) && (XdrvMailbox.data_len > 0) && Settings->flag.knx_enabled) {
     // XdrvMailbox.index <- KNX SLOT to use
     // XdrvMailbox.payload <- data to send
     // Search all the registered GA that has that output (variable: KNX SLOTx) as parameter
     uint8_t i = KNX_GA_Search(XdrvMailbox.index + KNX_SLOT1 -1);
     while ( i != KNX_Empty ) {
-      KNX_addr.value = Settings.knx_GA_addr[i];
+      KNX_addr.value = Settings->knx_GA_addr[i];
       knx.write_1bit(KNX_addr, !(XdrvMailbox.payload == 0));
-      if (Settings.flag.knx_enable_enhancement) {
+      if (Settings->flag.knx_enable_enhancement) {
         knx.write_1bit(KNX_addr, !(XdrvMailbox.payload == 0));
         knx.write_1bit(KNX_addr, !(XdrvMailbox.payload == 0));
       }
@@ -1096,19 +1096,19 @@ void CmndKnxTxCmnd(void)
 
 void CmndKnxTxVal(void)
 {
-  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_KNXTX_CMNDS) && (XdrvMailbox.data_len > 0) && Settings.flag.knx_enabled) {
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_KNXTX_CMNDS) && (XdrvMailbox.data_len > 0) && Settings->flag.knx_enabled) {
     // XdrvMailbox.index <- KNX SLOT to use
     // XdrvMailbox.payload <- data to send
     // Search all the registered GA that has that output (variable: KNX SLOTx) as parameter
     uint8_t i = KNX_GA_Search(XdrvMailbox.index + KNX_SLOT1 -1);
     while ( i != KNX_Empty ) {
-      KNX_addr.value = Settings.knx_GA_addr[i];
+      KNX_addr.value = Settings->knx_GA_addr[i];
 
       float tempvar = CharToFloat(XdrvMailbox.data);
       dtostrfd(tempvar,2,XdrvMailbox.data);
 
       knx.write_4byte_float(KNX_addr, tempvar);
-      if (Settings.flag.knx_enable_enhancement) {
+      if (Settings->flag.knx_enable_enhancement) {
         knx.write_4byte_float(KNX_addr, tempvar);
         knx.write_4byte_float(KNX_addr, tempvar);
       }
@@ -1125,17 +1125,17 @@ void CmndKnxTxVal(void)
 
 void CmndKnxTxScene(void)
 {
-  if ( (XdrvMailbox.data_len > 0) && Settings.flag.knx_enabled ) {
+  if ( (XdrvMailbox.data_len > 0) && Settings->flag.knx_enabled ) {
     // XdrvMailbox.payload <- scene number to send
     uint8_t i = KNX_GA_Search(KNX_SCENE);
     if ( i != KNX_Empty ) {
-      KNX_addr.value = Settings.knx_GA_addr[i];
+      KNX_addr.value = Settings->knx_GA_addr[i];
 
       uint8_t tempvar = TextToInt(XdrvMailbox.data);
       dtostrfd(tempvar,0,XdrvMailbox.data);
 
       knx.write_1byte_uint(KNX_addr, tempvar);
-      if (Settings.flag.knx_enable_enhancement) {
+      if (Settings->flag.knx_enable_enhancement) {
         knx.write_1byte_uint(KNX_addr, tempvar);
         knx.write_1byte_uint(KNX_addr, tempvar);
       }
@@ -1151,17 +1151,17 @@ void CmndKnxTxScene(void)
 void CmndKnxEnabled(void)
 {
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 1)) {
-    Settings.flag.knx_enabled = XdrvMailbox.payload;
+    Settings->flag.knx_enabled = XdrvMailbox.payload;
   }
-  ResponseCmndChar (GetStateText(Settings.flag.knx_enabled) );
+  ResponseCmndChar (GetStateText(Settings->flag.knx_enabled) );
 }
 
 void CmndKnxEnhanced(void)
 {
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 1)) {
-    Settings.flag.knx_enable_enhancement = XdrvMailbox.payload;
+    Settings->flag.knx_enable_enhancement = XdrvMailbox.payload;
   }
-  ResponseCmndChar (GetStateText(Settings.flag.knx_enable_enhancement) );
+  ResponseCmndChar (GetStateText(Settings->flag.knx_enable_enhancement) );
 }
 
 void CmndKnxPa(void)
@@ -1183,10 +1183,10 @@ void CmndKnxPa(void)
       KNX_addr.pa.area = pa_area;
       KNX_addr.pa.line = pa_line;
       KNX_addr.pa.member = pa_member;
-      Settings.knx_physsical_addr = KNX_addr.value;
+      Settings->knx_physsical_addr = KNX_addr.value;
     }
   }
-  KNX_addr.value = Settings.knx_physsical_addr;
+  KNX_addr.value = Settings->knx_physsical_addr;
   Response_P (PSTR("{\"%s\":\"%d.%d.%d\"}"),
     XdrvMailbox.command, KNX_addr.pa.area, KNX_addr.pa.line, KNX_addr.pa.member );
 }
@@ -1215,29 +1215,29 @@ void CmndKnxGa(void)
         KNX_addr.ga.line = ga_line;
         KNX_addr.ga.member = ga_member;
 
-        if ( XdrvMailbox.index > Settings.knx_GA_registered ) {
-          Settings.knx_GA_registered ++;
-          XdrvMailbox.index = Settings.knx_GA_registered;
+        if ( XdrvMailbox.index > Settings->knx_GA_registered ) {
+          Settings->knx_GA_registered ++;
+          XdrvMailbox.index = Settings->knx_GA_registered;
         }
 
-        Settings.knx_GA_addr[XdrvMailbox.index -1] = KNX_addr.value;
-        Settings.knx_GA_param[XdrvMailbox.index -1] = ga_option;
+        Settings->knx_GA_addr[XdrvMailbox.index -1] = KNX_addr.value;
+        Settings->knx_GA_param[XdrvMailbox.index -1] = ga_option;
       } else {
-        if ( (XdrvMailbox.payload <= Settings.knx_GA_registered) && (XdrvMailbox.payload > 0) ) {
+        if ( (XdrvMailbox.payload <= Settings->knx_GA_registered) && (XdrvMailbox.payload > 0) ) {
           XdrvMailbox.index = XdrvMailbox.payload;
         } else {
           ResponseCmndIdxError();
           return;
         }
       }
-      if ( XdrvMailbox.index <= Settings.knx_GA_registered ) {
-        KNX_addr.value = Settings.knx_GA_addr[XdrvMailbox.index -1];
+      if ( XdrvMailbox.index <= Settings->knx_GA_registered ) {
+        KNX_addr.value = Settings->knx_GA_addr[XdrvMailbox.index -1];
         Response_P (PSTR("{\"%s%d\":\"%s, %d/%d/%d\"}"),
-          XdrvMailbox.command, XdrvMailbox.index, device_param_ga[Settings.knx_GA_param[XdrvMailbox.index-1]-1],
+          XdrvMailbox.command, XdrvMailbox.index, device_param_ga[Settings->knx_GA_param[XdrvMailbox.index-1]-1],
           KNX_addr.ga.area, KNX_addr.ga.line, KNX_addr.ga.member );
       }
     } else {
-      ResponseCmndIdxNumber (Settings.knx_GA_registered );
+      ResponseCmndIdxNumber (Settings->knx_GA_registered );
     }
   }
 }
@@ -1266,29 +1266,29 @@ void CmndKnxCb(void)
         KNX_addr.ga.line = cb_line;
         KNX_addr.ga.member = cb_member;
 
-        if ( XdrvMailbox.index > Settings.knx_CB_registered ) {
-          Settings.knx_CB_registered ++;
-          XdrvMailbox.index = Settings.knx_CB_registered;
+        if ( XdrvMailbox.index > Settings->knx_CB_registered ) {
+          Settings->knx_CB_registered ++;
+          XdrvMailbox.index = Settings->knx_CB_registered;
         }
 
-        Settings.knx_CB_addr[XdrvMailbox.index -1] = KNX_addr.value;
-        Settings.knx_CB_param[XdrvMailbox.index -1] = cb_option;
+        Settings->knx_CB_addr[XdrvMailbox.index -1] = KNX_addr.value;
+        Settings->knx_CB_param[XdrvMailbox.index -1] = cb_option;
       } else {
-        if ( (XdrvMailbox.payload <= Settings.knx_CB_registered) && (XdrvMailbox.payload > 0) ) {
+        if ( (XdrvMailbox.payload <= Settings->knx_CB_registered) && (XdrvMailbox.payload > 0) ) {
           XdrvMailbox.index = XdrvMailbox.payload;
         } else {
           ResponseCmndIdxError();
           return;
         }
       }
-      if ( XdrvMailbox.index <= Settings.knx_CB_registered ) {
-        KNX_addr.value = Settings.knx_CB_addr[XdrvMailbox.index -1];
+      if ( XdrvMailbox.index <= Settings->knx_CB_registered ) {
+        KNX_addr.value = Settings->knx_CB_addr[XdrvMailbox.index -1];
         Response_P (PSTR("{\"%s%d\":\"%s, %d/%d/%d\"}"),
-          XdrvMailbox.command, XdrvMailbox.index, device_param_cb[Settings.knx_CB_param[XdrvMailbox.index-1]-1],
+          XdrvMailbox.command, XdrvMailbox.index, device_param_cb[Settings->knx_CB_param[XdrvMailbox.index-1]-1],
           KNX_addr.ga.area, KNX_addr.ga.line, KNX_addr.ga.member );
       }
     } else {
-      ResponseCmndIdxNumber (Settings.knx_CB_registered );
+      ResponseCmndIdxNumber (Settings->knx_CB_registered );
     }
   }
 }

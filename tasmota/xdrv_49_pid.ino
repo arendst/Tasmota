@@ -393,7 +393,7 @@ void PIDRun(void) {
   // `%topic%/PID {"power":"0.000"}`
   char str_buf[FLOATSZ];
   dtostrfd(power, 3, str_buf);
-  snprintf_P(TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), PSTR("{\"%s\":\"%s\"}"), "power", str_buf);
+  Response_P(PSTR("{\"%s\":\"%s\"}"), "power", str_buf);
   MqttPublishPrefixTopicRulesProcess_P(TELE, "PID");
 #endif // PID_DONT_USE_PID_TOPIC
 

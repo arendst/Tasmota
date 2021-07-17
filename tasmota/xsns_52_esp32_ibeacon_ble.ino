@@ -72,8 +72,8 @@ uint8_t ib_upd_interval,ib_tout_interval;
 //#else
 //#undef IB_UPDATE_TIME
 //#undef IB_TIMEOUT_TIME
-//#define IB_UPDATE_TIME Settings.ib_upd_interval
-//#define IB_TIMEOUT_TIME Settings.ib_tout_interval
+//#define IB_UPDATE_TIME Settings->ib_upd_interval
+//#define IB_TIMEOUT_TIME Settings->ib_tout_interval
 //#endif
 
 #define ENDIAN_CHANGE_U16(x) ((((x)&0xFF00) >> 8) + (((x)&0xFF) << 8))

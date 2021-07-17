@@ -1,5 +1,5 @@
 /*
-  xdrv_12_discovery.ino - Discovery support for Tasmota
+  xdrv_12_discovery.ino - MQTT Discovery support for Tasmota
 
   Copyright (C) 2021  Erik Montnemery, Federico Leoni and Theo Arends
 
@@ -22,7 +22,7 @@
 /*********************************************************************************************\
  * Tasmota discovery
  *
- * A version of xdrv_12_home_assistant supporting the new Tasmota Discovery be used by
+ * A version of xdrv_12_home_assistant supporting the new Tasmota Discovery used by
  * latest versions of Home Assistant or TasmoManager.
  *
  * SetOption19 0   - [DiscoverOff 0] [Discover 1] Enables discovery (default)
@@ -32,8 +32,6 @@
 \*********************************************************************************************/
 
 #define XDRV_12     12
-
-uint8_t TasDiscoverData_init_step;
 
 void TasDiscoverMessage(void) {
   Response_P(PSTR("{\"ip\":\"%_I\","                           // IP Address
@@ -90,7 +88,7 @@ void TasDiscoverMessage(void) {
     }
   }
 
-  if ((Light.device > 0) && Settings.flag3.pwm_multi_channels) {  // How many relays are light devices?
+  if ((Light.device > 0) && Settings->flag3.pwm_multi_channels) {  // How many relays are light devices?
     lightidx = TasmotaGlobal.devices_present - Light.subtype;
   }
 
@@ -100,13 +98,13 @@ void TasDiscoverMessage(void) {
     if (i < TasmotaGlobal.devices_present) {
 
 #ifdef USE_SHUTTER
-      if (Settings.flag3.shutter_mode) {
+      if (Settings->flag3.shutter_mode) {
         for (uint32_t k = 0; k < MAX_SHUTTERS; k++) {
-          if (0 == Settings.shutter_startrelay[k]) {
+          if (0 == Settings->shutter_startrelay[k]) {
             break;
           } else {
-            if (Settings.shutter_startrelay[k] > 0 && Settings.shutter_startrelay[k] <= MAX_SHUTTER_RELAYS) {
-              Shutter[Settings.shutter_startrelay[k]-1] = Shutter[Settings.shutter_startrelay[k]] = 1;
+            if (Settings->shutter_startrelay[k] > 0 && Settings->shutter_startrelay[k] <= MAX_SHUTTER_RELAYS) {
+              Shutter[Settings->shutter_startrelay[k]-1] = Shutter[Settings->shutter_startrelay[k]] = 1;
             }
           }
         }
@@ -133,7 +131,7 @@ void TasDiscoverMessage(void) {
 
   // Enable Discovery for Switches only if SetOption114 is enabled
   for (uint32_t i = 0; i < MAX_SWITCHES; i++) {
-    ResponseAppend_P(PSTR("%s%d"), (i > 0 ? "," : ""), (PinUsed(GPIO_SWT1, i) && Settings.flag5.mqtt_switches) ? Settings.switchmode[i] : -1);
+    ResponseAppend_P(PSTR("%s%d"), (i > 0 ? "," : ""), (PinUsed(GPIO_SWT1, i) && Settings->flag5.mqtt_switches) ? Settings->switchmode[i] : -1);
   }
 
   ResponseAppend_P(PSTR("],"                                   // Switch modes (end)
@@ -143,7 +141,7 @@ void TasDiscoverMessage(void) {
   for (uint32_t i = 0; i < MAX_SWITCHES; i++) {
     char sname[TOPSZ];
     snprintf_P(sname, sizeof(sname), PSTR("\"%s\""), GetSwitchText(i).c_str());
-    ResponseAppend_P(PSTR("%s%s"), (i > 0 ? "," : ""), (PinUsed(GPIO_SWT1, i) && Settings.flag5.mqtt_switches) ? sname : PSTR("null"));
+    ResponseAppend_P(PSTR("%s%s"), (i > 0 ? "," : ""), (PinUsed(GPIO_SWT1, i) && Settings->flag5.mqtt_switches) ? sname : PSTR("null"));
   }
 
   ResponseAppend_P(PSTR("],"                                   // Switch names (end)
@@ -155,7 +153,7 @@ void TasDiscoverMessage(void) {
 #ifdef ESP8266
     SerialButton = ((0 == i) && (SONOFF_DUAL == TasmotaGlobal.module_type ));
 #endif  // ESP8266
-    ResponseAppend_P(PSTR("%s%d"), (i > 0 ? "," : ""), (SerialButton ? 1 : (PinUsed(GPIO_KEY1, i)) && Settings.flag3.mqtt_buttons));
+    ResponseAppend_P(PSTR("%s%d"), (i > 0 ? "," : ""), (SerialButton ? 1 : (PinUsed(GPIO_KEY1, i)) && Settings->flag3.mqtt_buttons));
   }
 
   ResponseAppend_P(PSTR("],"                                   // Button flag (end)
@@ -173,23 +171,23 @@ void TasDiscoverMessage(void) {
                         "\"lk\":%d,"                           // Light CTRGB linked
                         "\"lt_st\":%d,"                        // Light SubType
                         "\"sho\":["),                          // Shutter Options (start)
-                        Settings.flag.mqtt_response,
-                        Settings.flag.button_swap,
-                        Settings.flag.button_single,
-                        Settings.flag.decimal_text,
-                        Settings.flag.not_power_linked,
-                        Settings.flag.hass_light,
-                        Settings.flag3.pwm_multi_channels,
-                        Settings.flag3.mqtt_buttons,
-                        Settings.flag4.alexa_ct_range,
-                        Settings.flag5.mqtt_switches,
-                        Settings.flag5.fade_fixed_duration,
+                        Settings->flag.mqtt_response,
+                        Settings->flag.button_swap,
+                        Settings->flag.button_single,
+                        Settings->flag.decimal_text,
+                        Settings->flag.not_power_linked,
+                        Settings->flag.hass_light,
+                        Settings->flag3.pwm_multi_channels,
+                        Settings->flag3.mqtt_buttons,
+                        Settings->flag4.alexa_ct_range,
+                        Settings->flag5.mqtt_switches,
+                        Settings->flag5.fade_fixed_duration,
                         light_controller.isCTRGBLinked(),
                         Light.subtype);
 
   for (uint32_t i = 0; i < MAX_SHUTTERS; i++) {
 #ifdef USE_SHUTTER
-    ResponseAppend_P(PSTR("%s%d"), (i > 0 ? "," : ""), Settings.shutter_options[i]);
+    ResponseAppend_P(PSTR("%s%d"), (i > 0 ? "," : ""), Settings->shutter_options[i]);
 #else
     ResponseAppend_P(PSTR("%s0"), (i > 0 ? "," : ""));
 #endif  // USE_SHUTTER
@@ -203,14 +201,14 @@ void TasDiscovery(void) {
   TasmotaGlobal.masterlog_level = LOG_LEVEL_DEBUG_MORE;        // Hide topic on clean and remove use weblog 4 to show it
 
   ResponseClear();                                             // Clear retained message
-  if (!Settings.flag.hass_discovery) {                         // SetOption19 - Clear retained message
+  if (!Settings->flag.hass_discovery) {                         // SetOption19 - Clear retained message
     TasDiscoverMessage();                                      // Build discovery message
   }
   char stopic[TOPSZ];
   snprintf_P(stopic, sizeof(stopic), PSTR("tasmota/discovery/%s/config"), NetworkUniqueId().c_str());
   MqttPublish(stopic, true);
 
-  if (!Settings.flag.hass_discovery) {                         // SetOption19 - Clear retained message
+  if (!Settings->flag.hass_discovery) {                         // SetOption19 - Clear retained message
     Response_P(PSTR("{\"sn\":"));
     MqttShowSensor();
     ResponseAppend_P(PSTR(",\"ver\":1}"));
@@ -222,13 +220,13 @@ void TasDiscovery(void) {
 }
 
 void TasRediscover(void) {
-  TasDiscoverData_init_step = 1;                               // Delayed discovery or clear retained messages
+  TasmotaGlobal.discovery_counter = 1;                         // Delayed discovery or clear retained messages
 }
 
 void TasDiscoverInit(void) {
   if (ResetReason() != REASON_DEEP_SLEEP_AWAKE) {
-    Settings.flag.hass_discovery = 0;                          // SetOption19 - Enable Tasmota discovery and Disable legacy Hass discovery
-    TasDiscoverData_init_step = 10;                            // Delayed discovery
+    Settings->flag.hass_discovery = 0;                          // SetOption19 - Enable Tasmota discovery and Disable legacy Hass discovery
+    TasmotaGlobal.discovery_counter = 10;                      // Delayed discovery
   }
 }
 
@@ -257,10 +255,10 @@ void (* const TasDiscoverCommand[])(void) PROGMEM = {
 
 void CmndTasDiscover(void) {
   if (XdrvMailbox.payload >= 0) {
-    Settings.flag.hass_discovery = !(XdrvMailbox.payload & 1);
+    Settings->flag.hass_discovery = !(XdrvMailbox.payload & 1);
     TasRediscover();
   }
-  ResponseCmndChar(GetStateText(!Settings.flag.hass_discovery));
+  ResponseCmndChar(GetStateText(!Settings->flag.hass_discovery));
 }
 
 /*********************************************************************************************\
@@ -270,18 +268,23 @@ void CmndTasDiscover(void) {
 bool Xdrv12(uint8_t function) {
   bool result = false;
 
-  if (Settings.flag.mqtt_enabled) {                            // SetOption3 - Enable MQTT
+  if (Settings->flag.mqtt_enabled) {                            // SetOption3 - Enable MQTT
     switch (function) {
     case FUNC_EVERY_SECOND:
-      if (TasDiscoverData_init_step) {
-        TasDiscoverData_init_step--;
-        if (!TasDiscoverData_init_step) {
+      if (TasmotaGlobal.discovery_counter) {
+        TasmotaGlobal.discovery_counter--;
+        if (!TasmotaGlobal.discovery_counter) {
           TasDiscovery();                                      // Send the topics for discovery
         }
       }
       break;
     case FUNC_COMMAND:
       result = DecodeCommand(kTasDiscoverCommands, TasDiscoverCommand, kTasDiscoverSynonyms);
+      break;
+    case FUNC_MQTT_SUBSCRIBE:
+      if (0 == Mqtt.initial_connection_state) {
+        TasRediscover();
+      }
       break;
     case FUNC_MQTT_INIT:
       TasDiscoverInit();

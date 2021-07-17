@@ -245,9 +245,9 @@ const char HTTP_ENERGY_LE01MR[] PROGMEM =
 void FifLEShow(bool json)
 {
   char total_reactive_chr[FLOATSZ];
-  dtostrfd(Le01mr.total_reactive, Settings.flag2.energy_resolution, total_reactive_chr);
+  dtostrfd(Le01mr.total_reactive, Settings->flag2.energy_resolution, total_reactive_chr);
   char total_active_chr[FLOATSZ];
-  dtostrfd(Le01mr.total_active, Settings.flag2.energy_resolution, total_active_chr);
+  dtostrfd(Le01mr.total_active, Settings->flag2.energy_resolution, total_active_chr);
 
   if (json) {
     ResponseAppend_P(PSTR(",\"" D_JSON_TOTAL_ACTIVE "\":%s,\"" D_JSON_TOTAL_REACTIVE "\":%s"),

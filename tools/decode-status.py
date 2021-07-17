@@ -181,7 +181,8 @@ a_setoption = [[
     "(Wiegand) send key pad stroke as single char (0) or one tag (ending char #) (1)",
     "(Zigbee) Hide bridge topic from zigbee topic (use with SetOption89) (1)",
     "(DS18x20) Enable arithmetic mean over teleperiod for JSON temperature (1)",
-    "","","",
+    "(Wifi) Keep wifi in no-sleep mode, prevents some occasional unresponsiveness",
+    "","",
     "","","","",
     "","","","",
     "","","","",
@@ -252,8 +253,8 @@ a_features = [[
     "USE_BS814A2","USE_SEESAW_SOIL","USE_WIEGAND","USE_NEOPOOL",
     "USE_TOF10120","USE_SDM72","USE_DISPLAY_TM1637","USE_PROJECTOR_CTRL"
     ],[
-    "USE_MPU6886","USE_TFMINIPLUS","USE_CSE7761","USE_BERRY",
-    "USE_HALLEFFECT","USE_ENERGY_DUMMY","","",
+    "USE_MPU_ACCEL","USE_TFMINIPLUS","USE_CSE7761","USE_BERRY",
+    "USE_BM8563","USE_ENERGY_DUMMY","USE_AM2320","USE_T67XX",
     "","","","",
     "","","","",
     "","","","",
@@ -287,7 +288,7 @@ else:
         obj = json.load(fp)
 
 def StartDecode():
-    print ("\n*** decode-status.py v20210406 by Theo Arends and Jacek Ziolkowski ***")
+    print ("\n*** decode-status.py v20210713 by Theo Arends and Jacek Ziolkowski ***")
 
 #    print("Decoding\n{}".format(obj))
 
@@ -337,7 +338,11 @@ def StartDecode():
     if "StatusMEM" in obj:
         if "Features" in obj["StatusMEM"]:
             features = []
-            for f in range(7):
+            maxfeatures = len(obj["StatusMEM"]["Features"]) - 1
+            if maxfeatures > len(a_features):
+                print("decode-status.py too old, does not support all feature bits")
+            maxfeatures = min(maxfeatures, len(a_features))
+            for f in range(maxfeatures + 1):
                 feature = obj["StatusMEM"]["Features"][f]
                 i_feature = int(feature,16)
                 if f == 0:

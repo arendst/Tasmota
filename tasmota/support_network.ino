@@ -27,15 +27,15 @@ struct {
 
 #ifdef USE_DISCOVERY
 void StartMdns(void) {
-//  static uint8_t mdns_delayed_start = Settings.param[P_MDNS_DELAYED_START];
+//  static uint8_t mdns_delayed_start = Settings->param[P_MDNS_DELAYED_START];
 
-  if (Settings.flag3.mdns_enabled) {  // SetOption55 - Control mDNS service
+  if (Settings->flag3.mdns_enabled) {  // SetOption55 - Control mDNS service
     if (!Mdns.begun) {
 //      if (mdns_delayed_start) {
 //        AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_MDNS D_ATTEMPTING_CONNECTION));
 //        mdns_delayed_start--;
 //      } else {
-//        mdns_delayed_start = Settings.param[P_MDNS_DELAYED_START];
+//        mdns_delayed_start = Settings->param[P_MDNS_DELAYED_START];
         MDNS.end(); // close existing or MDNS.begin will fail
         Mdns.begun = (uint8_t)MDNS.begin(TasmotaGlobal.hostname);
         AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_MDNS "%s"), (Mdns.begun) ? PSTR(D_INITIALIZED) : PSTR(D_FAILED));
@@ -63,9 +63,9 @@ void MqttDiscoverServer(void)
     }
 #endif  // MDNS_HOSTNAME
     SettingsUpdateText(SET_MQTT_HOST, MDNS.hostname(i).c_str());
-    Settings.mqtt_port = MDNS.port(i);
+    Settings->mqtt_port = MDNS.port(i);
 
-    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_MDNS D_MQTT_SERVICE_FOUND " %s," D_PORT " %d"), SettingsText(SET_MQTT_HOST), Settings.mqtt_port);
+    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_MDNS D_MQTT_SERVICE_FOUND " %s," D_PORT " %d"), SettingsText(SET_MQTT_HOST), Settings->mqtt_port);
   }
 }
 #endif  // MQTT_HOST_DISCOVERY

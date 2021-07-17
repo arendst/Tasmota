@@ -27,7 +27,6 @@
  * To test this file:
  * - Have hardware with at least 2M flash
  * - Enable a board with at least 256k filesystem in platform_override.ini
- * - Enable define USE_UFILESYS in user_config_override.h
 \*********************************************************************************************/
 #warning **** USE_DRV_FILE_DEMO is enabled ****
 
@@ -100,11 +99,11 @@ void DrvDemoSettingsDelta(void) {
 
   if (Drv98Settings.version != DRV98_VERSION) {      // Fix version dependent changes
 
-    if (Settings.version < 0x01010100) {
+    if (Settings->version < 0x01010100) {
       AddLog(LOG_LEVEL_INFO, PSTR("DRV: Update oldest version restore"));
 
     }
-    if (Settings.version < 0x01010101) {
+    if (Settings->version < 0x01010101) {
       AddLog(LOG_LEVEL_INFO, PSTR("DRV: Update old version restore"));
 
     }

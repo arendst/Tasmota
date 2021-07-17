@@ -125,21 +125,21 @@ void Pcf8574Init(void)
       uint8_t gpio = Pcf8574Read(idx);
       Pcf8574.pin_mask[idx] = gpio;
 #ifdef USE_PCF8574_MQTTINPUT
-      Pcf8574.last_input[idx] = gpio & ~Settings.pcf8574_config[idx];
+      Pcf8574.last_input[idx] = gpio & ~Settings->pcf8574_config[idx];
 #endif // #ifdef USE_PCF8574_MQTTINPUT
-      //AddLog(LOG_LEVEL_DEBUG, PSTR("PCF: PCF-%d config=0x%02x, gpio=0x%02X"), idx +1, Settings.pcf8574_config[idx], gpio);
+      //AddLog(LOG_LEVEL_DEBUG, PSTR("PCF: PCF-%d config=0x%02x, gpio=0x%02X"), idx +1, Settings->pcf8574_config[idx], gpio);
 
       for (uint32_t i = 0; i < 8; i++, gpio>>=1) {
-        uint8_t _result = Settings.pcf8574_config[idx] >> i &1;
-        //AddLog(LOG_LEVEL_DEBUG, PSTR("PCF: I2C shift i %d: %d. Powerstate: %d, TasmotaGlobal.devices_present: %d"), i,_result, Settings.power>>i&1, TasmotaGlobal.devices_present);
+        uint8_t _result = Settings->pcf8574_config[idx] >> i &1;
+        //AddLog(LOG_LEVEL_DEBUG, PSTR("PCF: I2C shift i %d: %d. Powerstate: %d, TasmotaGlobal.devices_present: %d"), i,_result, Settings->power>>i&1, TasmotaGlobal.devices_present);
         if (_result > 0) {
           Pcf8574.pin[TasmotaGlobal.devices_present] = i + 8 * idx;
-          bitWrite(TasmotaGlobal.rel_inverted, TasmotaGlobal.devices_present, Settings.flag3.pcf8574_ports_inverted);  // SetOption81 - Invert all ports on PCF8574 devices
-          if (!Settings.flag.save_state && !Settings.flag3.no_power_feedback) {  // SetOption63 - Don't scan relay power state at restart - #5594 and #5663
+          bitWrite(TasmotaGlobal.rel_inverted, TasmotaGlobal.devices_present, Settings->flag3.pcf8574_ports_inverted);  // SetOption81 - Invert all ports on PCF8574 devices
+          if (!Settings->flag.save_state && !Settings->flag3.no_power_feedback) {  // SetOption63 - Don't scan relay power state at restart - #5594 and #5663
             //AddLog(LOG_LEVEL_DEBUG, PSTR("PCF: Set power from from chip state"));
-            uint8_t power_state = Settings.flag3.pcf8574_ports_inverted ? 1 & ~gpio : 1 & gpio;
+            uint8_t power_state = Settings->flag3.pcf8574_ports_inverted ? 1 & ~gpio : 1 & gpio;
             bitWrite(TasmotaGlobal.power, TasmotaGlobal.devices_present, power_state);
-            bitWrite(Settings.power, TasmotaGlobal.devices_present, power_state);
+            bitWrite(Settings->power, TasmotaGlobal.devices_present, power_state);
           }
           //else AddLog(LOG_LEVEL_DEBUG, PSTR("PCF: DON'T set power from chip state"));
           TasmotaGlobal.devices_present++;
@@ -147,7 +147,7 @@ void Pcf8574Init(void)
         }
       }
     }
-    //AddLog(LOG_LEVEL_DEBUG, PSTR("PCF: Settings.power=0x%08X, TasmotaGlobal.power=0x%08X"), Settings.power, TasmotaGlobal.power);
+    //AddLog(LOG_LEVEL_DEBUG, PSTR("PCF: Settings->power=0x%08X, TasmotaGlobal.power=0x%08X"), Settings->power, TasmotaGlobal.power);
     AddLog(LOG_LEVEL_INFO, PSTR("PCF: Total devices %d, PCF8574 output ports %d"), Pcf8574.max_devices, Pcf8574.max_connected_ports);
   }
 }
@@ -191,7 +191,7 @@ void HandlePcf8574(void)
 
   WSContentStart_P(D_CONFIGURE_PCF8574);
   WSContentSendStyle();
-  WSContentSend_P(HTTP_FORM_I2C_PCF8574_1, (Settings.flag3.pcf8574_ports_inverted) ? PSTR(" checked") : "");  // SetOption81 - Invert all ports on PCF8574 devices
+  WSContentSend_P(HTTP_FORM_I2C_PCF8574_1, (Settings->flag3.pcf8574_ports_inverted) ? PSTR(" checked") : "");  // SetOption81 - Invert all ports on PCF8574 devices
   WSContentSend_P(HTTP_TABLE100);
   for (uint32_t idx = 0; idx < Pcf8574.max_devices; idx++) {
     for (uint32_t idx2 = 0; idx2 < 8; idx2++) {  // 8 ports on PCF8574
@@ -200,8 +200,8 @@ void HandlePcf8574(void)
         idx +1, idx2,
         idx2 + 8*idx,
         idx2 + 8*idx,
-        ((helper & Settings.pcf8574_config[idx]) >> idx2 == 0) ? PSTR(" selected ") : " ",
-        ((helper & Settings.pcf8574_config[idx]) >> idx2 == 1) ? PSTR(" selected ") : " "
+        ((helper & Settings->pcf8574_config[idx]) >> idx2 == 0) ? PSTR(" selected ") : " ",
+        ((helper & Settings->pcf8574_config[idx]) >> idx2 == 1) ? PSTR(" selected ") : " "
       );
     }
   }
@@ -219,18 +219,17 @@ void Pcf8574Show(bool json)
     for (int idx = 0 ; idx < Pcf8574.max_devices ; idx++)
     {
       uint8_t gpio = Pcf8574Read(idx);
-      ResponseAppend_P(PSTR(",\"PCF8574%c%d\":{\"D0\":%i,\"D1\":%i,\"D2\":%i,\"D3\":%i,\"D4\":%i,\"D5\":%i,\"D6\":%i,\"D7\":%i"),
-                IndexSeparator(), idx +1,
-                (gpio>>0)&1,(gpio>>1)&1,(gpio>>2)&1,(gpio>>3)&1,(gpio>>4)&1,(gpio>>5)&1,(gpio>>6)&1,(gpio>>7)&1);
+      ResponseAppend_P(PSTR(",\"PCF8574%c%d\":{\"D0\":%i,\"D1\":%i,\"D2\":%i,\"D3\":%i,\"D4\":%i,\"D5\":%i,\"D6\":%i,\"D7\":%i}"),
+        IndexSeparator(), idx +1,
+        (gpio>>0)&1,(gpio>>1)&1,(gpio>>2)&1,(gpio>>3)&1,(gpio>>4)&1,(gpio>>5)&1,(gpio>>6)&1,(gpio>>7)&1);
     }
-    ResponseJsonEnd();
   }
 #endif // #ifdef USE_PCF8574_SENSOR
 #if defined(USE_WEBSERVER) && defined(USE_PCF8574_DISPLAYINPUT)
   if(!json) {
     for (int idx = 0 ; idx < Pcf8574.max_devices ; idx++)
     {
-      uint8_t input_mask = ~Settings.pcf8574_config[idx]; //invert to 1 = input
+      uint8_t input_mask = ~Settings->pcf8574_config[idx]; //invert to 1 = input
       uint8_t gpio = Pcf8574Read(idx);
       for (int pin = 0 ; pin < 8 ; ++pin, input_mask>>=1, gpio>>=1)
       {
@@ -249,7 +248,7 @@ void Pcf8574CheckForInputChange(void)
 {
     for (int idx = 0 ; idx < Pcf8574.max_devices ; idx++)
     {
-      uint8_t input_mask = ~Settings.pcf8574_config[idx]; //invert to 1 = input
+      uint8_t input_mask = ~Settings->pcf8574_config[idx]; //invert to 1 = input
       uint8_t input = Pcf8574Read(idx) & input_mask;
       uint8_t last_input = Pcf8574.last_input[idx];
       if (input != last_input) { // don't scan bits if no change (EVERY_50_MS !)
@@ -257,7 +256,7 @@ void Pcf8574CheckForInputChange(void)
           if (bitRead(input_mask,pin) && bitRead(input,pin) != bitRead(last_input,pin)) {
             ResponseTime_P(PSTR(",\"PCF8574%c%d_INP\":{\"D%i\":%i}}"), IndexSeparator(), idx +1, pin, bitRead(input,pin));
             MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, PSTR("PCF8574_INP"));
-            if (Settings.flag3.hass_tele_on_power) {  // SetOption59 - Send tele/%topic%/SENSOR in addition to stat/%topic%/RESULT
+            if (Settings->flag3.hass_tele_on_power) {  // SetOption59 - Send tele/%topic%/SENSOR in addition to stat/%topic%/RESULT
                 MqttPublishSensor();
             }
           }
@@ -275,10 +274,10 @@ void Pcf8574SaveSettings(void)
 
   //AddLog(LOG_LEVEL_DEBUG, PSTR("PCF: Start working on Save arguements: inverted:%d")), Webserver->hasArg("b1");
 
-  Settings.flag3.pcf8574_ports_inverted = Webserver->hasArg("b1");  // SetOption81 - Invert all ports on PCF8574 devices
+  Settings->flag3.pcf8574_ports_inverted = Webserver->hasArg("b1");  // SetOption81 - Invert all ports on PCF8574 devices
   for (byte idx = 0; idx < Pcf8574.max_devices; idx++) {
     byte count=0;
-    byte n = Settings.pcf8574_config[idx];
+    byte n = Settings->pcf8574_config[idx];
     while(n!=0) {
       n = n&(n-1);
       count++;
@@ -291,15 +290,15 @@ void Pcf8574SaveSettings(void)
       WebGetArg(stemp, tmp, sizeof(tmp));
       byte _value = (!strlen(tmp)) ?  0 : atoi(tmp);
       if (_value) {
-        Settings.pcf8574_config[idx] = Settings.pcf8574_config[idx] | 1 << i;
+        Settings->pcf8574_config[idx] = Settings->pcf8574_config[idx] | 1 << i;
         TasmotaGlobal.devices_present++;
         Pcf8574.max_connected_ports++;
       } else {
-        Settings.pcf8574_config[idx] = Settings.pcf8574_config[idx] & ~(1 << i );
+        Settings->pcf8574_config[idx] = Settings->pcf8574_config[idx] & ~(1 << i );
       }
     }
-    //Settings.pcf8574_config[0] = (!strlen(webServer->arg("i2cs0").c_str())) ?  0 : atoi(webServer->arg("i2cs0").c_str());
-    //AddLog(LOG_LEVEL_INFO, PSTR("PCF: I2C Board: %d, Config: %2x")),  idx, Settings.pcf8574_config[idx];
+    //Settings->pcf8574_config[0] = (!strlen(webServer->arg("i2cs0").c_str())) ?  0 : atoi(webServer->arg("i2cs0").c_str());
+    //AddLog(LOG_LEVEL_INFO, PSTR("PCF: I2C Board: %d, Config: %2x")),  idx, Settings->pcf8574_config[idx];
 
   }
 }

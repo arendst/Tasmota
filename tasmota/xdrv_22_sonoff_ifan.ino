@@ -135,7 +135,7 @@ void SonoffIfanReceived(void)
   }
   if (6 == mode) {
     // AA 55 01 06 00 01 01 09 - Buzzer
-    Settings.flag3.buzzer_enable = !Settings.flag3.buzzer_enable;  // SetOption67 - Enable buzzer when available
+    Settings->flag3.buzzer_enable = !Settings->flag3.buzzer_enable;  // SetOption67 - Enable buzzer when available
   }
   if (7 == mode) {
     // AA 55 01 07 00 01 01 0A - Rf long press - forget RF codes

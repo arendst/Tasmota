@@ -114,7 +114,7 @@ float MAX31855_GetReferenceTemperature(int32_t RawData) {
 *   Acquires the raw data via SPI, checks for MAX31855 errors and fills result structure
 */
 void MAX31855_GetResult(void) {
-  if (Settings.flag4.max6675) {                  // SetOption94 - Implement simpler MAX6675 protocol instead of MAX31855
+  if (Settings->flag4.max6675) {                  // SetOption94 - Implement simpler MAX6675 protocol instead of MAX31855
     int32_t RawData = MAX31855_ShiftIn(16);
     int32_t temp = (RawData >> 3) & ((1 << 12) - 1);
 
@@ -140,13 +140,13 @@ void MAX31855_GetResult(void) {
 
 void MAX31855_Show(bool Json) {
   char sensor_name[10];
-  GetTextIndexed(sensor_name, sizeof(sensor_name), Settings.flag4.max6675, kMax31855Types);
+  GetTextIndexed(sensor_name, sizeof(sensor_name), Settings->flag4.max6675, kMax31855Types);
 
   if (Json) {
     ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_TEMPERATURE "\":%*_f,\"" D_JSON_REFERENCETEMPERATURE "\":%*_f,\"" D_JSON_ERROR "\":%d}"), \
       sensor_name,
-      Settings.flag2.temperature_resolution, &MAX31855_Result.ProbeTemperature,
-      Settings.flag2.temperature_resolution, &MAX31855_Result.ReferenceTemperature,
+      Settings->flag2.temperature_resolution, &MAX31855_Result.ProbeTemperature,
+      Settings->flag2.temperature_resolution, &MAX31855_Result.ReferenceTemperature,
       MAX31855_Result.ErrorCode);
 #ifdef USE_DOMOTICZ
     if (0 == TasmotaGlobal.tele_period) {

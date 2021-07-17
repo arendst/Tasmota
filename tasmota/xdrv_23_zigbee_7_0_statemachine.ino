@@ -631,7 +631,9 @@ ZBM(ZBS_SET_ADDR_TABLE,   EZSP_setConfigurationValue, 0x00 /*high*/, EZSP_CONFIG
 ZBM(ZBS_SET_MCAST_TABLE,  EZSP_setConfigurationValue, 0x00 /*high*/, EZSP_CONFIG_MULTICAST_TABLE_SIZE, 0x10, 0x00)            // 5300061000
 ZBM(ZBS_SET_STK_PROF,     EZSP_setConfigurationValue, 0x00 /*high*/, EZSP_CONFIG_STACK_PROFILE, 0x02, 0x00)                   // 53000C0200
 ZBM(ZBS_SET_SEC_LEVEL,    EZSP_setConfigurationValue, 0x00 /*high*/, EZSP_CONFIG_SECURITY_LEVEL, 0x05, 0x00)                  // 53000D0500
-ZBM(ZBS_SET_MAX_DEVICES,  EZSP_setConfigurationValue, 0x00 /*high*/, EZSP_CONFIG_MAX_END_DEVICE_CHILDREN, 0x20, 0x00)         // 5300111800
+#ifdef USE_ZIGBEE_FORCE_NO_CHILDREN
+ZBM(ZBS_SET_MAX_DEVICES,  EZSP_setConfigurationValue, 0x00 /*high*/, EZSP_CONFIG_MAX_END_DEVICE_CHILDREN, 0x00, 0x00)         // 5300112000
+#endif
 ZBM(ZBS_SET_INDIRECT_TMO, EZSP_setConfigurationValue, 0x00 /*high*/, EZSP_CONFIG_INDIRECT_TRANSMISSION_TIMEOUT, 0x00, 0x1E)   // 530012001E
 ZBM(ZBS_SET_TC_CACHE,     EZSP_setConfigurationValue, 0x00 /*high*/, EZSP_CONFIG_TRUST_CENTER_ADDRESS_CACHE_SIZE, 0x02, 0x00) // 5300190200
 ZBM(ZBS_SET_ROUTE_TBL,    EZSP_setConfigurationValue, 0x00 /*high*/, EZSP_CONFIG_SOURCE_ROUTE_TABLE_SIZE, 0x10, 0x00)         // 53001A1000
@@ -837,7 +839,9 @@ static const Zigbee_Instruction zb_prog[] PROGMEM = {
     ZI_SEND(ZBS_SET_MCAST_TABLE)        ZI_WAIT_RECV(2500, ZBR_SET_OK)
     ZI_SEND(ZBS_SET_STK_PROF)           ZI_WAIT_RECV(2500, ZBR_SET_OK)
     ZI_SEND(ZBS_SET_SEC_LEVEL)          ZI_WAIT_RECV(2500, ZBR_SET_OK)
+  #ifdef USE_ZIGBEE_FORCE_NO_CHILDREN
     ZI_SEND(ZBS_SET_MAX_DEVICES)        ZI_WAIT_RECV(2500, ZBR_SET_OK)
+  #endif
     ZI_SEND(ZBS_SET_INDIRECT_TMO)       ZI_WAIT_RECV(2500, ZBR_SET_OK)
     ZI_SEND(ZBS_SET_TC_CACHE)           ZI_WAIT_RECV(2500, ZBR_SET_OK)
     ZI_SEND(ZBS_SET_ROUTE_TBL)          ZI_WAIT_RECV(2500, ZBR_SET_OK)
@@ -959,10 +963,10 @@ void ZigbeeGotoLabel(uint8_t label) {
     const Zigbee_Instruction *cur_instr_line = &zb_prog[i];
     cur_instr = pgm_read_byte(&cur_instr_line->i.i);
     cur_d8    = pgm_read_byte(&cur_instr_line->i.d8);
-    //AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("ZGB GOTO: pc %d instr %d"), i, cur_instr);
+    //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("ZGB GOTO: pc %d instr %d"), i, cur_instr);
 
     if (ZGB_INSTR_LABEL == cur_instr) {
-      //AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_ZIGBEE "found label %d at pc %d"), cur_d8, i);
+      //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_ZIGBEE "found label %d at pc %d"), cur_d8, i);
       if (label == cur_d8) {
         // label found, goto to this pc
         zigbee.pc = i;
@@ -1086,7 +1090,7 @@ void ZigbeeStateMachine_Run(void) {
         }
         break;
       case ZGB_INSTR_LOG:
-        AddLog_P(cur_d8, (char*) cur_ptr1);
+        AddLog(cur_d8, (char*) cur_ptr1);
         break;
       case ZGB_INSTR_MQTT_STATE:
         {

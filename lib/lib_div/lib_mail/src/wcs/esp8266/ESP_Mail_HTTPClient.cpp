@@ -1,5 +1,5 @@
 /*
- * HTTP Client for ESP8266 wrapper v1.0.1
+ * HTTP Client for ESP8266 wrapper v1.0.3
  * 
  * The MIT License (MIT)
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -187,6 +187,7 @@ bool ESP_Mail_HTTPClient::connect(bool secured)
   return connected();
 }
 
+
 void ESP_Mail_HTTPClient::setCACert(const char *caCert)
 {
 
@@ -224,46 +225,29 @@ void ESP_Mail_HTTPClient::setCertFile(const char *caCertFile, esp_mail_file_stor
   if (_clockReady && strlen(caCertFile) > 0)
   {
 
-    if (storageType == 0)
+    fs::File f;
+    if (storageType == esp_mail_file_storage_type_flash)
     {
-      bool t = FLASH_FS.begin();
-      if (t)
-      {
-        fs::File f;
-        if (FLASH_FS.exists(caCertFile))
-        {
-          f = FLASH_FS.open(caCertFile, "r");
-          size_t len = f.size();
-          uint8_t *der = new uint8_t[len];
-
-          if (f.available())
-            f.read(der, len);
-
-          f.close();
-          _wcs->setTrustAnchors(new ESP_Mail::ESP_Mail_X509List(der, len));
-          delete[] der;
-        }
-      }
+      ESP_MAIL_FLASH_FS.begin();
+      if (ESP_MAIL_FLASH_FS.exists(caCertFile))
+        f = ESP_MAIL_FLASH_FS.open(caCertFile, "r");
     }
-    else
+    else if (storageType == esp_mail_file_storage_type_sd)
     {
-      bool t = SD.begin(_sdPin);
-      if (t)
-      {
-        File f;
-        if (SD.exists(caCertFile))
-        {
-          f = SD.open(caCertFile, FILE_READ);
-          size_t len = f.size();
-          uint8_t *der = new uint8_t[len];
-          if (f.available())
-            f.read(der, len);
+      ESP_MAIL_SD_FS.begin(_sdPin);
+      if (ESP_MAIL_SD_FS.exists(caCertFile))
+        f = ESP_MAIL_SD_FS.open(caCertFile, FILE_READ);
+    }
 
-          f.close();
-          _wcs->setTrustAnchors(new ESP_Mail::ESP_Mail_X509List(der, len));
-          delete[] der;
-        }
-      }
+    if (f)
+    {
+      size_t len = f.size();
+      uint8_t *der = new uint8_t[len];
+      if (f.available())
+        f.read(der, len);
+      f.close();
+      _wcs->setTrustAnchors(new ESP_Mail::ESP_Mail_X509List(der, len));
+      delete[] der;
     }
     _certType = 2;
   }

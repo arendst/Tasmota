@@ -189,7 +189,7 @@ bool HdcTriggerRead(void) {
 /**
  * Performs a temperature and humidity measurement, and calls
  * the conversion function providing the results in the correct
- * unit according to the device settings.
+ * unit according to the device Settings->
  *
  * returns: false if something failed during the read process.
  *

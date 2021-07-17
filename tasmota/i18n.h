@@ -27,6 +27,7 @@
 \*********************************************************************************************/
 
 #define D_JSON_ABORTED "Aborted"
+#define D_JSON_ACK "Ack"
 #define D_JSON_ACTIVE "Active"
 #define D_JSON_ADDRESS "Address"
 #define D_JSON_AIRQUALITY "AirQuality"
@@ -104,6 +105,7 @@
 #define D_JSON_IMPORT_POWER "ImportPower"
 #define D_JSON_IMPORT_REACTIVE "ImportReactive"
 #define D_JSON_INFRARED "Infrared"
+#define D_JSON_INVALID_FILE_TYPE "Invalid filetype or buffer"
 #define D_JSON_UNKNOWN "Unknown"
 #define D_JSON_LIGHT "Light"
 #define D_JSON_LINK_COUNT "LinkCount"
@@ -111,6 +113,7 @@
 #define D_JSON_LOW "Low"
 #define D_JSON_MAC "Mac"
 #define D_JSON_MASK "Mask"
+#define D_JSON_MD5_MISMATCH "MD5 mismatch"
 #define D_JSON_MEMORY_ERROR "Memory error"
 #define D_JSON_MINIMAL "minimal"
 #define D_JSON_MODEL "Model"
@@ -197,6 +200,7 @@
 #define D_JSON_VOLUME "Volume"
 #define D_JSON_WEIGHT "Weight"
 #define D_JSON_WIFI "Wifi"
+#define D_JSON_WIFI_MODE "Mode"
 #define D_JSON_WRONG "Wrong"
 #define D_JSON_WRONG_PARAMETERS "Wrong parameters"
 #define D_JSON_YESTERDAY "Yesterday"
@@ -253,6 +257,7 @@
 #define D_CMND_PULSETIME "PulseTime"
 #define D_CMND_BLINKTIME "BlinkTime"
 #define D_CMND_BLINKCOUNT "BlinkCount"
+#define D_CMND_SETSENSOR "SetSensor"
 #define D_CMND_SENSOR "Sensor"
 #define D_CMND_DRIVER "Driver"
 #define D_CMND_SAVEDATA "SaveData"
@@ -351,6 +356,8 @@
 #define D_CMND_GLOBAL_TEMP "GlobalTemp"
 #define D_CMND_GLOBAL_HUM "GlobalHum"
 
+#define D_SO_WIFINOSLEEP "WifiNoSleep"
+
 #ifdef ESP32
 #define D_CMND_TOUCH_CAL "TouchCal"
 #define D_CMND_TOUCH_THRES "TouchThres"
@@ -374,6 +381,7 @@
 #define D_CMND_MQTTPASSWORD "MqttPassword"
 #define D_CMND_MQTTKEEPALIVE "MqttKeepAlive"
 #define D_CMND_MQTTTIMEOUT "MqttTimeout"
+#define D_CMND_MQTTWIFITIMEOUT "MqttWifiTimeout"
 #define D_CMND_TLSKEY "TLSKey"
 #define D_CMND_FULLTOPIC "FullTopic"
 #define D_CMND_PREFIX "Prefix"
@@ -391,6 +399,8 @@
 #define D_CMND_INFORETAIN "InfoRetain"
 #define D_CMND_STATERETAIN "StateRetain"
 #define D_CMND_PUBLISH "Publish"
+#define D_CMND_FILEUPLOAD "FileUpload"
+#define D_CMND_FILEDOWNLOAD "FileDownload"
 
 // Commands xdrv_01_webserver.ino
 #define D_CMND_WEBSERVER "Webserver"
@@ -690,7 +700,6 @@
 // Commands xdrv_52_berry.ino - Berry scripting language
 #define D_PRFX_BR "Br"
 #define D_CMND_BR_RUN ""
-#define D_CMND_BR_RESET "Reset"
 #define D_BR_NOT_STARTED  "Berry not started"
 
 // Commands xsns_02_analog.ino

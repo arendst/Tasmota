@@ -37,6 +37,7 @@ struct BUZZER {
   uint8_t state = 0;
   uint8_t tune_size = 0;
   uint8_t size = 0;
+  uint8_t sleep;                   // Current copy of TasmotaGlobal.sleep
 } Buzzer;
 
 /*********************************************************************************************/
@@ -46,12 +47,12 @@ void BuzzerSet(uint32_t state) {
     state = !state;
   }
 
-  if (Settings.flag4.buzzer_freq_mode) {     // SetOption111 - Enable frequency output mode for buzzer
+  if (Settings->flag4.buzzer_freq_mode) {     // SetOption111 - Enable frequency output mode for buzzer
     static uint8_t last_state = 0;
     if (last_state != state) {
       // Set 50% duty cycle for frequency output
       // Set 0% (or 100% for inverted PWM) duty cycle which turns off frequency output either way
-      analogWrite(Pin(GPIO_BUZZER), (state) ? Settings.pwm_range / 2 : 0);  // set duty cycle for frequency output
+      analogWrite(Pin(GPIO_BUZZER), (state) ? Settings->pwm_range / 2 : 0);  // set duty cycle for frequency output
       last_state = state;
     }
   } else {
@@ -89,17 +90,18 @@ void BuzzerBeep(uint32_t count, uint32_t on, uint32_t off, uint32_t tune, uint32
   Buzzer.count = count * 2;                  // Start buzzer
 
   AddLog(LOG_LEVEL_DEBUG, PSTR("BUZ: Count %d(%d), Time %d/%d, Tune 0x%08X(0x%08X), Size %d, Mode %d"),
-    count, Buzzer.count, on, off, tune, Buzzer.tune, Buzzer.tune_size, Settings.flag4.buzzer_freq_mode);
+    count, Buzzer.count, on, off, tune, Buzzer.tune, Buzzer.tune_size, Settings->flag4.buzzer_freq_mode);
 
   Buzzer.enable = (Buzzer.count > 0);
   if (Buzzer.enable) {
-    if (Settings.sleep > PWM_MAX_SLEEP) {
+    Buzzer.sleep = TasmotaGlobal.sleep;
+    if (Settings->sleep > PWM_MAX_SLEEP) {
       TasmotaGlobal.sleep = PWM_MAX_SLEEP;   // Set a maxumum value of 10 milliseconds to ensure that buzzer periods are a bit more accurate
     } else {
-      TasmotaGlobal.sleep = Settings.sleep;  // Or keep the current sleep if it's lower than 10
+      TasmotaGlobal.sleep = Settings->sleep;  // Or keep the current sleep if it's lower than 10
     }
   } else {
-    TasmotaGlobal.sleep = Settings.sleep;    // Restore original sleep
+    TasmotaGlobal.sleep = Buzzer.sleep;      // Restore original sleep
     BuzzerSet(0);
   }
 }
@@ -116,7 +118,7 @@ void BuzzerBeep(uint32_t count) {
 }
 
 void BuzzerEnabledBeep(uint32_t count, uint32_t duration) {
-  if (Settings.flag3.buzzer_enable) {        // SetOption67 - Enable buzzer when available
+  if (Settings->flag3.buzzer_enable) {        // SetOption67 - Enable buzzer when available
     BuzzerBeep(count, duration, 1, 0, 0);
   }
 }
@@ -165,6 +167,7 @@ void BuzzerEvery100mSec(void) {
       }
       BuzzerSet(Buzzer.state);
     } else {
+      TasmotaGlobal.sleep = Buzzer.sleep;      // Restore original sleep
       Buzzer.enable = false;
     }
   }

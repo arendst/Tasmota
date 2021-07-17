@@ -76,7 +76,7 @@ void IRAM_ATTR WindMeterUpdateSpeed(void)
 {
   uint32_t time = micros();
   uint32_t time_diff = time - WindMeter.counter_time;
-  if (time_diff > Settings.windmeter_pulse_debounce * 1000) {
+  if (time_diff > Settings->windmeter_pulse_debounce * 1000) {
     WindMeter.counter_time = time;
     WindMeter.counter++;
 //    AddLog(LOG_LEVEL_DEBUG, PSTR("WMET: Counter %d"), WindMeter.counter);
@@ -87,23 +87,23 @@ void IRAM_ATTR WindMeterUpdateSpeed(void)
 
 void WindMeterInit(void)
 {
-  if (!Settings.flag2.speed_conversion) {
-    Settings.flag2.speed_conversion = 2;  // 0 = none, 1 = m/s, 2 = km/h, 3 = kn, 4 = mph, 5 = ft/s, 6 = yd/s
+  if (!Settings->flag2.speed_conversion) {
+    Settings->flag2.speed_conversion = 2;  // 0 = none, 1 = m/s, 2 = km/h, 3 = kn, 4 = mph, 5 = ft/s, 6 = yd/s
   }
-  if (!Settings.windmeter_radius) {
-    Settings.windmeter_radius = WINDMETER_DEF_RADIUS;
+  if (!Settings->windmeter_radius) {
+    Settings->windmeter_radius = WINDMETER_DEF_RADIUS;
   }
-  if (!Settings.windmeter_pulses_x_rot) {
-    Settings.windmeter_pulses_x_rot = WINDMETER_DEF_PULSES_X_ROT;
+  if (!Settings->windmeter_pulses_x_rot) {
+    Settings->windmeter_pulses_x_rot = WINDMETER_DEF_PULSES_X_ROT;
   }
-  if (!Settings.windmeter_pulse_debounce) {
-    Settings.windmeter_pulse_debounce = WINDMETER_DEF_PULSE_DEBOUNCE;
+  if (!Settings->windmeter_pulse_debounce) {
+    Settings->windmeter_pulse_debounce = WINDMETER_DEF_PULSE_DEBOUNCE;
   }
-  if (!Settings.windmeter_speed_factor) {
-    Settings.windmeter_speed_factor = (int16_t)(WINDMETER_DEF_COMP_FACTOR * 1000);
+  if (!Settings->windmeter_speed_factor) {
+    Settings->windmeter_speed_factor = (int16_t)(WINDMETER_DEF_COMP_FACTOR * 1000);
   }
-  if (!Settings.windmeter_tele_pchange) {
-    Settings.windmeter_tele_pchange = WINDMETER_DEF_TELE_PCHANGE;
+  if (!Settings->windmeter_tele_pchange) {
+    Settings->windmeter_tele_pchange = WINDMETER_DEF_TELE_PCHANGE;
   }
 
 #ifndef USE_WINDMETER_NOSTATISTICS
@@ -122,8 +122,8 @@ void WindMeterEverySecond(void)
   //AddLog(LOG_LEVEL_INFO, PSTR("delta_time: %d"), delta_time);
 
   // speed = ( (pulses / pulses_per_rotation) * (2 * pi * radius) ) / delta_time
-  WindMeter.speed = ((WindMeter.counter / Settings.windmeter_pulses_x_rot) * (windmeter_2pi * ((float)Settings.windmeter_radius / 1000))) * ((float)Settings.windmeter_speed_factor / 1000);
-  //WindMeter.speed = (((WindMeter.counter / Settings.windmeter_pulses_x_rot) * (windmeter_2pi * ((float)Settings.windmeter_radius / 1000))) / ((float)delta_time / 1000000)) * ((float)Settings.windmeter_speed_factor / 1000);
+  WindMeter.speed = ((WindMeter.counter / Settings->windmeter_pulses_x_rot) * (windmeter_2pi * ((float)Settings->windmeter_radius / 1000))) * ((float)Settings->windmeter_speed_factor / 1000);
+  //WindMeter.speed = (((WindMeter.counter / Settings->windmeter_pulses_x_rot) * (windmeter_2pi * ((float)Settings->windmeter_radius / 1000))) / ((float)delta_time / 1000000)) * ((float)Settings->windmeter_speed_factor / 1000);
   WindMeter.counter = 0;
   //WindMeter.speed_time = time;
 
@@ -151,7 +151,7 @@ void WindMeterEverySecond(void)
   WindMeter.speed_avg += float(WindMeter.speed) / WindMeter.samples_count;
 
   WindMeterCheckSampleCount();
-  if (0==Settings.tele_period) {
+  if (0==Settings->tele_period) {
     WindMeterResetStatData();
   }
 #endif  // USE_WINDMETER_NOSTATISTICS
@@ -163,13 +163,13 @@ void WindMeterEverySecond(void)
 
 bool WindMeterShouldTriggerTele()
 {
-  if (Settings.windmeter_tele_pchange > 100) {
+  if (Settings->windmeter_tele_pchange > 100) {
     return false;
   } else if (WindMeter.last_tele_speed == 0) {
     return WindMeter.speed > 0;
   } else {
     float perc_change = (WindMeter.speed / WindMeter.last_tele_speed) -1;
-    return (perc_change * ((perc_change < 0) ? -100 : 100)) >= Settings.windmeter_tele_pchange;
+    return (perc_change * ((perc_change < 0) ? -100 : 100)) >= Settings->windmeter_tele_pchange;
   }
 }
 
@@ -184,9 +184,9 @@ void WindMeterResetStatData(void)
 void WindMeterCheckSampleCount(void)
 {
   uint32_t prev_avg_samples_no = WindMeter.avg_samples_no;
-  if (Settings.tele_period) {
+  if (Settings->tele_period) {
     // number for avg samples = teleperiod value if set
-    WindMeter.avg_samples_no = Settings.tele_period;
+    WindMeter.avg_samples_no = Settings->tele_period;
   } else {
     // otherwise use default number of samples for this driver
     WindMeter.avg_samples_no = WINDMETER_WEIGHT_AVG_SAMPLE;
@@ -282,30 +282,30 @@ bool Xsns68Cmnd(void)
     char argument[XdrvMailbox.data_len];
     switch (XdrvMailbox.payload) {
       case 1:
-        Settings.windmeter_radius = (uint16_t)strtol(ArgV(argument, 2), nullptr, 10);
+        Settings->windmeter_radius = (uint16_t)strtol(ArgV(argument, 2), nullptr, 10);
         break;
       case 2:
-        Settings.windmeter_pulses_x_rot = (uint8_t)strtol(ArgV(argument, 2), nullptr, 10);
+        Settings->windmeter_pulses_x_rot = (uint8_t)strtol(ArgV(argument, 2), nullptr, 10);
         break;
       case 3:
-        Settings.windmeter_pulse_debounce = (uint16_t)strtol(ArgV(argument, 2), nullptr, 10);
+        Settings->windmeter_pulse_debounce = (uint16_t)strtol(ArgV(argument, 2), nullptr, 10);
         break;
       case 4:
-        Settings.windmeter_speed_factor = (int16_t)(CharToFloat(ArgV(argument, 2)) * 1000);
+        Settings->windmeter_speed_factor = (int16_t)(CharToFloat(ArgV(argument, 2)) * 1000);
         break;
       case 5:
-        Settings.windmeter_tele_pchange = (uint8_t)strtol(ArgV(argument, 2), nullptr, 10);
+        Settings->windmeter_tele_pchange = (uint8_t)strtol(ArgV(argument, 2), nullptr, 10);
         break;
     }
   }
 
-  float speed_factor = (float)Settings.windmeter_speed_factor / 1000;
+  float speed_factor = (float)Settings->windmeter_speed_factor / 1000;
   char tele_pchange_string[4] = "off";
-  if (Settings.windmeter_tele_pchange <= 100) {
-    itoa(Settings.windmeter_tele_pchange, tele_pchange_string, 10);
+  if (Settings->windmeter_tele_pchange <= 100) {
+    itoa(Settings->windmeter_tele_pchange, tele_pchange_string, 10);
   }
   Response_P(PSTR("{\"" D_WINDMETER_NAME "\":{\"Radius\":%d,\"PulsesPerRot\":%d,\"PulseDebounce\":%d,\"SpeedFactor\":%3_f,\"TeleTriggerMin%Change\":%s}}"),
-        Settings.windmeter_radius, Settings.windmeter_pulses_x_rot, Settings.windmeter_pulse_debounce, &speed_factor, tele_pchange_string);
+        Settings->windmeter_radius, Settings->windmeter_pulses_x_rot, Settings->windmeter_pulse_debounce, &speed_factor, tele_pchange_string);
 
   return true;
 }

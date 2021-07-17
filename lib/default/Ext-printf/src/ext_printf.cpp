@@ -202,6 +202,8 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 /*********************************************************************************************\
  * snprintf extended
  *
+ * New: if the provided buffer is nullptr, a buffer is allocated on the heap (malloc)
+ * and returned as a pointer instead of the length of the output (needs casting)
 \*********************************************************************************************/
 
 // get a fresh malloc allocated string based on the current pointer (can be in PROGMEM)
@@ -216,7 +218,7 @@ char * copyStr(const char * str) {
 const char ext_invalid_mem[] PROGMEM = "<--INVALID-->";
 const uint32_t min_valid_ptr = 0x3F000000;    // addresses below this line are invalid
 
-int32_t ext_vsnprintf_P(char * buf, size_t buf_len, const char * fmt_P, va_list va) {
+int32_t ext_vsnprintf_P(char * out_buf, size_t buf_len, const char * fmt_P, va_list va) {
   va_list va_cpy;
   va_copy(va_cpy, va);
 
@@ -242,7 +244,6 @@ int32_t ext_vsnprintf_P(char * buf, size_t buf_len, const char * fmt_P, va_list 
 			if (*fmt == '*') {
 				decimals = va_arg(va, int32_t);   // skip width argument as int
         decimals_ptr = va_cur_ptr4(va, int32_t);    // pointer to value on stack
-        const char ** cur_val_ptr = va_cur_ptr4(va, const char*);    // pointer to value on stack
         fmt++;
         // Serial.printf("> decimals=%d, decimals_ptr=0x%08X\n", decimals, decimals_ptr);
 			}
@@ -390,7 +391,24 @@ int32_t ext_vsnprintf_P(char * buf, size_t buf_len, const char * fmt_P, va_list 
     }
   }
   // Serial.printf("> format_final=%s\n", fmt_cpy); Serial.flush();
-  int32_t ret = vsnprintf_P(buf, buf_len, fmt_cpy, va_cpy);
+  int32_t ret = 0;    // return 0 if unsuccessful
+  if (out_buf != nullptr) {
+    ret = vsnprintf_P(out_buf, buf_len, fmt_cpy, va_cpy);
+  } else {
+    // if there is no output buffer, we allocate one on the heap
+    // first we do a dry-run to know the target size
+    char dummy[2];
+    int32_t target_len = vsnprintf_P(dummy, 1, fmt_cpy, va_cpy);
+    if (target_len >= 0) {
+      // successful
+      char * allocated_buf = (char*) malloc(target_len + 1);
+      if (allocated_buf != nullptr) {
+        allocated_buf[0] = 0;   // default to empty string
+        vsnprintf_P(allocated_buf, target_len + 1, fmt_cpy, va_cpy);
+        ret = (int32_t) allocated_buf;
+      }
+    }
+  }
 
   va_end(va_cpy);
 
@@ -403,11 +421,25 @@ int32_t ext_vsnprintf_P(char * buf, size_t buf_len, const char * fmt_P, va_list 
   return ret;
 }
 
-int32_t ext_snprintf_P(char * buf, size_t buf_len, const char * fmt, ...) {
+char * ext_vsnprintf_malloc_P(const char * fmt_P, va_list va) {
+  int32_t ret = ext_vsnprintf_P(nullptr, 0, fmt_P, va);
+  return (char*) ret;
+}
+
+int32_t ext_snprintf_P(char * out_buf, size_t buf_len, const char * fmt, ...) {
   va_list va;
   va_start(va, fmt);
 
-  int32_t ret = ext_vsnprintf_P(buf, buf_len, fmt, va);
+  int32_t ret = ext_vsnprintf_P(out_buf, buf_len, fmt, va);
   va_end(va);
   return ret;
+}
+
+char * ext_snprintf_malloc_P(const char * fmt, ...) {
+  va_list va;
+  va_start(va, fmt);
+
+  int32_t ret = ext_vsnprintf_P(nullptr, 0, fmt, va);
+  va_end(va);
+  return (char*) ret;
 }

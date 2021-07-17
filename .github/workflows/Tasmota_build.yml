@@ -164,26 +164,6 @@ jobs:
         path: ./build_output
 
 
-  tasmota-ircustom:
-    needs: tasmota_pull
-    runs-on: ubuntu-latest
-    continue-on-error: true
-    steps:
-    - uses: actions/checkout@v1
-    - name: Set up Python
-      uses: actions/setup-python@v1
-    - name: Install dependencies
-      run: |
-        pip install -U platformio
-    - name: Run PlatformIO
-      run: |
-        platformio run -e tasmota-ircustom
-    - uses: actions/upload-artifact@v2
-      with:
-        name: firmware
-        path: ./build_output
-
-
   tasmota-zbbridge:
     needs: tasmota_pull
     runs-on: ubuntu-latest
@@ -198,6 +178,26 @@ jobs:
     - name: Run PlatformIO
       run: |
         platformio run -e tasmota-zbbridge
+    - uses: actions/upload-artifact@v2
+      with:
+        name: firmware
+        path: ./build_output
+
+
+  tasmota-zigbee:
+    needs: tasmota_pull
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v1
+    - name: Set up Python
+      uses: actions/setup-python@v1
+    - name: Install dependencies
+      run: |
+        pip install -U platformio
+    - name: Run PlatformIO
+      run: |
+        platformio run -e tasmota-zigbee
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
@@ -844,6 +844,26 @@ jobs:
         path: ./build_output
 
 
+  tasmota32-lvgl:
+    needs: tasmota_pull
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v1
+    - name: Set up Python
+      uses: actions/setup-python@v1
+    - name: Install dependencies
+      run: |
+        pip install -U platformio
+    - name: Run PlatformIO
+      run: |
+        platformio run -e tasmota32-lvgl
+    - uses: actions/upload-artifact@v2
+      with:
+        name: firmware
+        path: ./build_output
+
+
   tasmota32-ir:
     needs: tasmota_pull
     runs-on: ubuntu-latest
@@ -858,26 +878,6 @@ jobs:
     - name: Run PlatformIO
       run: |
         platformio run -e tasmota32-ir
-    - uses: actions/upload-artifact@v2
-      with:
-        name: firmware
-        path: ./build_output
-
-
-  tasmota32-ircustom:
-    needs: tasmota_pull
-    runs-on: ubuntu-latest
-    continue-on-error: true
-    steps:
-    - uses: actions/checkout@v1
-    - name: Set up Python
-      uses: actions/setup-python@v1
-    - name: Install dependencies
-      run: |
-        pip install -U platformio
-    - name: Run PlatformIO
-      run: |
-        platformio run -e tasmota32-ircustom
     - uses: actions/upload-artifact@v2
       with:
         name: firmware
@@ -1385,11 +1385,20 @@ jobs:
 
 
   Upload:
-    needs: [tasmota-VN, tasmota32-ircustom, tasmota32-VN, tasmota32-TW, tasmota32-TR]
+    needs: [tasmota-VN, tasmota32-VN, tasmota32-TW, tasmota32-TR]
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
     - uses: actions/checkout@v1
+    - name: Delete all files and folders
+      run: |
+        rm -rf *
+        git config --local user.name "Platformio BUILD"
+        git checkout firmware
+    - name: Display files from branch firmware
+      run: ls -R
+    - name: Remove old firmware files
+      run: rm -rf ./firmware/*
     - uses: actions/download-artifact@v2
       with:
         name: firmware
@@ -1413,10 +1422,12 @@ jobs:
         [ ! -f ./mv_firmware/firmware/tasmota-display.* ] || mv ./mv_firmware/firmware/tasmota-display.* ./firmware/tasmota/
         [ ! -f ./mv_firmware/firmware/tasmota-knx.* ] || mv ./mv_firmware/firmware/tasmota-knx.* ./firmware/tasmota/
         [ ! -f ./mv_firmware/firmware/tasmota-zbbridge.* ] || mv ./mv_firmware/firmware/tasmota-zbbridge.* ./firmware/tasmota/
+        [ ! -f ./mv_firmware/firmware/tasmota-zigbee.* ] || mv ./mv_firmware/firmware/tasmota-zigbee.* ./firmware/tasmota/
         [ ! -f ./mv_firmware/firmware/tasmota32.* ] || mv ./mv_firmware/firmware/tasmota32.* ./firmware/tasmota32/
         [ ! -f ./mv_firmware/firmware/tasmota32solo1*.* ] || mv ./mv_firmware/firmware/tasmota32solo1*.* ./firmware/tasmota32/
         [ ! -f ./mv_firmware/firmware/tasmota32-ir*.* ] || mv ./mv_firmware/firmware/tasmota32-ir*.* ./firmware/tasmota32/
         [ ! -f ./mv_firmware/firmware/tasmota32-display.* ] || mv ./mv_firmware/firmware/tasmota32-display.* ./firmware/tasmota32/
+        [ ! -f ./mv_firmware/firmware/tasmota32-lvgl.* ] || mv ./mv_firmware/firmware/tasmota32-lvgl.* ./firmware/tasmota32/
         [ ! -f ./mv_firmware/firmware/tasmota32-web*.* ] || mv ./mv_firmware/firmware/tasmota32-web*.* ./firmware/tasmota32/
         [ ! -f ./mv_firmware/firmware/tasmota32-odroidgo.* ] || mv ./mv_firmware/firmware/tasmota32-odroidgo.* ./firmware/tasmota32/
         [ ! -f ./mv_firmware/firmware/tasmota32-core2.* ] || mv ./mv_firmware/firmware/tasmota32-core2.* ./firmware/tasmota32/
@@ -1426,12 +1437,22 @@ jobs:
         [ ! -f ./tools/Esptool/ESP32/*.* ] || mv ./tools/Esptool/ESP32/*.* ./firmware/tasmota32/ESP32_needed_files/
         [ ! -f ./tools/Esptool/Odroid_go_and_core2/*.* ] || mv ./tools/Esptool/Odroid_go_and_core2/*.* ./firmware/tasmota32/Odroid_go_and_core2_needed_files/
         [ ! -f ./FIRMWARE.md ] || mv -f ./FIRMWARE.md ./README.md
+    - uses: actions/checkout@v2
+      with:
+        ref: release-firmware
+        path: tmp-folder
+    - name: Display files from branch release-firmware
+      run: |
+        ls -R ./tmp-folder
+        mkdir -p ./release-firmware/
+        cp -rf ./tmp-folder/firmware/* ./release-firmware/
+        rm -rf ./tmp-folder
+    - name: Display files to commit
+      run: ls -R ./*
     - name: Commit files  # transfer the new binaries back into the repository
       run: |
-        git config --local user.name "Platformio BUILD"
         git rm -r --cached .
-        git add ./README.md
-        git add -f ./firmware/*.*
+        git add -f ./*
         git commit -m "Tasmota ESP Binaries http://tasmota.com"
     - name: Push changes  # push the firmware files to branch firmware
       uses: ad-m/github-push-action@master

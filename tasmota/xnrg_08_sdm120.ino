@@ -214,11 +214,11 @@ void Sdm220Show(bool json)
   if (isnan(Sdm120.import_active)) { return; }
 
   char import_active_chr[FLOATSZ];
-  dtostrfd(Sdm120.import_active, Settings.flag2.energy_resolution, import_active_chr);
+  dtostrfd(Sdm120.import_active, Settings->flag2.energy_resolution, import_active_chr);
   char import_reactive_chr[FLOATSZ];
-  dtostrfd(Sdm120.import_reactive, Settings.flag2.energy_resolution, import_reactive_chr);
+  dtostrfd(Sdm120.import_reactive, Settings->flag2.energy_resolution, import_reactive_chr);
   char export_reactive_chr[FLOATSZ];
-  dtostrfd(Sdm120.export_reactive, Settings.flag2.energy_resolution, export_reactive_chr);
+  dtostrfd(Sdm120.export_reactive, Settings->flag2.energy_resolution, export_reactive_chr);
   char phase_angle_chr[FLOATSZ];
   dtostrfd(Sdm120.phase_angle, 2, phase_angle_chr);
 

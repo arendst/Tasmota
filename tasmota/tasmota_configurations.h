@@ -143,6 +143,10 @@
 //#define USE_EZORGB                             // [I2cDriver55] Enable support for EZO's RGB sensor (+0k5 code) - Shared EZO code required for any EZO device (+1k2 code)
 //#define USE_EZOPMP                             // [I2cDriver55] Enable support for EZO's PMP sensor (+0k3 code) - Shared EZO code required for any EZO device (+1k2 code)
 //#define USE_SEESAW_SOIL                        // [I2cDriver56] Enable Capacitice Soil Moisture & Temperature Sensor (I2C addresses 0x36 - 0x39) (+1k3 code)
+//#define USE_MPU_ACCEL                          // [I2cDriver58] Enable MPU6886/MPU9250 - found in M5Stack - support both I2C buses on ESP32 (I2C address 0x68) (+2k code)
+//#define USE_BM8563                             // [I2cDriver59] Enable BM8563 RTC - found in M5Stack - support both I2C buses on ESP32 (I2C address 0x51) (+2k5 code)
+//#define USE_AM2320                             // [I2cDriver60] Enable AM2320 temperature and humidity Sensor (I2C address 0x5C) (+1k code)
+//#define USE_T67XX                              // [I2cDriver61] Enable Telaire T67XX CO2 sensor (I2C address 0x15) (+1k3 code)
 
 //#define USE_SPI                                // Hardware SPI using GPIO12(MISO), GPIO13(MOSI) and GPIO14(CLK) in addition to two user selectable GPIOs(CS and DC)
 //#define USE_RC522                              // Add support for MFRC522 13.56Mhz Rfid reader (+6k code)
@@ -355,6 +359,10 @@
 //#undef USE_SUNRISE                               // Disable support for Sunrise and sunset tools
 //#undef USE_RULES                                 // Disable support for rules
 #undef USE_DISCOVERY                             // Disable mDNS for the following services (+8k code or +23.5k code with core 2_5_x, +0.3k mem)
+
+// -- IR options ----------------------------
+#define USE_IR_REMOTE                            // Enable IR remote commands using library IRremoteESP8266
+#define USE_IR_REMOTE_FULL                       // Support all IR protocols from IRremoteESP8266
 
 // -- Optional modules ----------------------------
 #undef ROTARY_V1                                 // Disable support for MI Desk Lamp
@@ -762,7 +770,6 @@
 #undef FIRMWARE_KNX_NO_EMULATION                 // Disable tasmota-knx with KNX but without Emulation
 #undef FIRMWARE_DISPLAYS                         // Disable tasmota-display with display drivers enabled
 #undef FIRMWARE_IR                               // Disable tasmota-ir with IR full protocols activated
-#undef FIRMWARE_IR_CUSTOM                        // Disable tasmota customizable with special marker to add all IR protocols
 
 #undef USE_ARDUINO_OTA                           // Disable support for Arduino OTA
 #undef USE_DOMOTICZ                              // Disable Domoticz
@@ -909,7 +916,6 @@
 #undef FIRMWARE_KNX_NO_EMULATION                // Disable tasmota-knx with KNX but without Emulation
 #undef FIRMWARE_DISPLAYS                        // Disable tasmota-display with display drivers enabled
 #undef FIRMWARE_IR                              // Disable tasmota-ir with IR full protocols activated
-#undef FIRMWARE_IR_CUSTOM                       // Disable tasmota customizable with special marker to add all IR protocols
 
 #endif  // FIRMWARE_MINICUSTOM
 
@@ -918,5 +924,79 @@
 #include "tasmota_configurations_ESP32.h"
 #endif  // ESP32
 
+/*********************************************************************************************\
+ * Post-configuration for IRremoteESP8266 protocol selection
+\*********************************************************************************************/
+
+// IR_SEND has two mode: minimal or full (USE_IR_REMOTE_FULL)
+#ifdef USE_IR_REMOTE_FULL
+  // Enable all protocols except PRONTO
+  #ifndef _IR_ENABLE_DEFAULT_                  // it is possible to define this value previously in config
+    #define _IR_ENABLE_DEFAULT_ true           // Enable all protocols except exluded below
+  #endif
+  // PRONTO protocol cannot be supported because it requires specific APIs which are not supported in Tasmota
+  #define DECODE_PRONTO false                  // Exclude PRONTO protocol
+  #define SEND_PRONTO false                    // Exclude PRONTO protocol
+#else
+  #define _IR_ENABLE_DEFAULT_ false              // disable all protocols by default
+  // below are the default IR protocols
+  #define DECODE_HASH true
+  #ifdef USE_IR_SEND_NEC
+    #define SEND_NEC   true                      // Support IRsend NEC protocol
+    #define DECODE_NEC true                      // Support IRreceive NEC protocol
+  #endif
+  #ifdef USE_IR_SEND_RC5
+    #define SEND_RC5   true                      // Support IRsend Philips RC5 protocol
+    #define DECODE_RC5 true                      // Support IRreceive Philips RC5 protocol
+  #endif
+  #ifdef USE_IR_SEND_RC6
+    #define SEND_RC6   true                      // Support IRsend Philips RC6 protocol
+    #define DECODE_RC6 true                      // Support IRreceive Philips RC6 protocol
+  #endif
+#endif
+
+/*********************************************************************************************\
+ * Mandatory defines satisfying disabled defines
+\*********************************************************************************************/
+
+#ifndef ESP8266_1M
+#define USE_UFILESYS
+#define GUI_TRASH_FILE
+#define GUI_EDIT_FILE
+#define USE_PING
+  #ifdef USE_RULES
+  #define USE_EXPRESSION
+  #define SUPPORT_IF_STATEMENT
+  #define SUPPORT_MQTT_EVENT
+  #endif  // USE_RULES
+#endif  // NOT ESP8266_1M
+
+#ifdef USE_EMULATION_HUE
+#define USE_EMULATION
+#endif
+#ifdef USE_EMULATION_WEMO
+#define USE_EMULATION
+#endif
+
+// Convert legacy slave to client
+#ifdef USE_TASMOTA_SLAVE
+#define USE_TASMOTA_CLIENT
+#endif
+#ifdef USE_TASMOTA_SLAVE_FLASH_SPEED
+#define USE_TASMOTA_CLIENT_FLASH_SPEED USE_TASMOTA_SLAVE_FLASH_SPEED
+#endif
+#ifdef USE_TASMOTA_SLAVE_SERIAL_SPEED
+#define USE_TASMOTA_CLIENT_SERIAL_SPEED USE_TASMOTA_SLAVE_SERIAL_SPEED
+#endif
+
+#ifdef USE_SCRIPT
+#define USE_UNISHOX_COMPRESSION                // Add support for string compression
+#endif
+#ifdef USE_ZIGBEE
+#define USE_UNISHOX_COMPRESSION                // Add support for string compression
+#endif
+#ifdef USE_EMULATION_HUE
+#define USE_UNISHOX_COMPRESSION                // Add support for string compression
+#endif
 
 #endif  // _TASMOTA_CONFIGURATIONS_H_

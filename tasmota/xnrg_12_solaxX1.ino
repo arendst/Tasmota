@@ -420,20 +420,20 @@ const char HTTP_SNS_solaxX1_DATA3[] PROGMEM =
 void solaxX1Show(bool json)
 {
   char solar_power[33];
-  dtostrfd(solaxX1.dc1_power + solaxX1.dc2_power, Settings.flag2.wattage_resolution, solar_power);
+  dtostrfd(solaxX1.dc1_power + solaxX1.dc2_power, Settings->flag2.wattage_resolution, solar_power);
   char pv1_voltage[33];
-  dtostrfd(solaxX1.dc1_voltage, Settings.flag2.voltage_resolution, pv1_voltage);
+  dtostrfd(solaxX1.dc1_voltage, Settings->flag2.voltage_resolution, pv1_voltage);
   char pv1_current[33];
-  dtostrfd(solaxX1.dc1_current, Settings.flag2.current_resolution, pv1_current);
+  dtostrfd(solaxX1.dc1_current, Settings->flag2.current_resolution, pv1_current);
   char pv1_power[33];
-  dtostrfd(solaxX1.dc1_power, Settings.flag2.wattage_resolution, pv1_power);
+  dtostrfd(solaxX1.dc1_power, Settings->flag2.wattage_resolution, pv1_power);
 #ifdef SOLAXX1_PV2
   char pv2_voltage[33];
-  dtostrfd(solaxX1.dc2_voltage, Settings.flag2.voltage_resolution, pv2_voltage);
+  dtostrfd(solaxX1.dc2_voltage, Settings->flag2.voltage_resolution, pv2_voltage);
   char pv2_current[33];
-  dtostrfd(solaxX1.dc2_current, Settings.flag2.current_resolution, pv2_current);
+  dtostrfd(solaxX1.dc2_current, Settings->flag2.current_resolution, pv2_current);
   char pv2_power[33];
-  dtostrfd(solaxX1.dc2_power, Settings.flag2.wattage_resolution, pv2_power);
+  dtostrfd(solaxX1.dc2_power, Settings->flag2.wattage_resolution, pv2_power);
 #endif
   char runtime[33];
   dtostrfd(solaxX1.runtime_total, 0, runtime);
@@ -449,7 +449,7 @@ void solaxX1Show(bool json)
                                 pv2_voltage, pv2_current, pv2_power);
 #endif
     ResponseAppend_P(PSTR(",\"" D_JSON_TEMPERATURE "\":%*_f,\"" D_JSON_RUNTIME "\":%s,\"" D_JSON_STATUS "\":\"%s\",\"" D_JSON_ERROR "\":%d"),
-                                Settings.flag2.temperature_resolution, &solaxX1.temperature, runtime, status, solaxX1.errorCode);
+                                Settings->flag2.temperature_resolution, &solaxX1.temperature, runtime, status, solaxX1.errorCode);
 
 #ifdef USE_DOMOTICZ
     // Avoid bad temperature report at beginning of the day (spikes of 1200 celsius degrees)

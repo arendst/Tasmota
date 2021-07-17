@@ -495,7 +495,7 @@ miel_hvac_send(struct miel_hvac_softc *sc, uint8_t type,
 
 	char hex_h[(sizeof(h) + 1) * 2];
 	char hex_d[(len + 1) * 2];
-	AddLog_P(LOG_LEVEL_DEBUG,
+	AddLog(LOG_LEVEL_DEBUG,
 	    PSTR(MIEL_HVAC_LOGNAME ": sending %s %s %02x"),
 	    ToHex_P((uint8_t *)&h, sizeof(h), hex_h, sizeof(hex_h)),
 	    ToHex_P((uint8_t *)data, len, hex_d, sizeof(hex_d)),
@@ -837,7 +837,7 @@ miel_hvac_log_bytes(struct miel_hvac_softc *sc, const char *name,
 	char hex[(MIEL_HVAC_DATABUFLEN + 1) * 2];
 	const unsigned char *b = (const unsigned char *)buf;
 
-	AddLog_P(LOG_LEVEL_DEBUG, PSTR(MIEL_HVAC_LOGNAME
+	AddLog(LOG_LEVEL_DEBUG, PSTR(MIEL_HVAC_LOGNAME
 	    ": response %s %s"), name, ToHex_P(b, len, hex, sizeof(hex)));
 }
 
@@ -873,7 +873,7 @@ miel_hvac_publish_settings(struct miel_hvac_softc *sc)
 	}
 
 	dtostrfd(ConvertTemp(miel_hvac_temp2deg(set->temp)),
-	    Settings.flag2.temperature_resolution, temp);
+	    Settings->flag2.temperature_resolution, temp);
 	ResponseAppend_P(PSTR(",\"" D_JSON_IRHVAC_TEMP "\":%s"), temp);
 
 	name = miel_hvac_map_byval(set->fan,
@@ -1078,7 +1078,7 @@ miel_hvac_sensor(struct miel_hvac_softc *sc)
 		char room_temp[33];
 
 		dtostrfd(ConvertTemp(temp),
-		    Settings.flag2.temperature_resolution, room_temp);
+		    Settings->flag2.temperature_resolution, room_temp);
 		ResponseAppend_P(PSTR("\"" D_JSON_TEMPERATURE "\":%s"),
 		    room_temp);
 

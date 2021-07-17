@@ -83,8 +83,17 @@ const bmap _name = {                                            \
 const bclass _name = {                                          \
     be_const_header(BE_CLASS),                                  \
     .nvar = _nvar,                                              \
-    .super = _super,                                            \
+    .super = (bclass*)_super,                                   \
     .members = (bmap*)&_name##_map,                             \
+    .name = (bstring*)&be_const_str_##_name_                    \
+}
+
+#define be_define_const_empty_class(_name, _super, _name_)      \
+const bclass _name = {                                          \
+    be_const_header(BE_CLASS),                                  \
+    .nvar = 0,                                                  \
+    .super = (bclass*)_super,                                   \
+    .members = NULL,                                            \
     .name = (bstring*)&be_const_str_##_name_                    \
 }
 
@@ -166,7 +175,13 @@ const bmap _name(                                               \
 
 #define be_define_const_class(_name, _nvar, _super, _name_)     \
 const bclass _name(                                             \
-    _nvar, _super, (bmap*)&_name##_map,                         \
+    _nvar, (bclass*)_super, (bmap*)&_name##_map,                         \
+    (bstring*)&be_const_str_##_name_                            \
+)
+
+#define be_define_const_empty_class(_name, _super, _name_)      \
+const bclass _name(                                             \
+    0, (bclass*)_super, NULL,                                            \
     (bstring*)&be_const_str_##_name_                            \
 )
 

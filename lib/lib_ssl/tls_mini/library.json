@@ -1,0 +1,17 @@
+{
+  "name": "TLS mini client derived from Arduino",
+  "version": "1.0",
+  "description": "TLS mini client derived from Arduino",
+  "license": "MIT",
+  "homepage": "https://github.com/arendst/Tasmota",
+  "frameworks": "*",
+  "platforms": "*",
+  "authors":
+  {
+    "name": "Stephan Hadinger",
+    "maintainer": true
+  },
+  "build": {
+    "flags": [ "-I$PROJECT_DIR/include" ]
+  }
+}

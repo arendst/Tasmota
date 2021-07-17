@@ -39,21 +39,21 @@ extern uint16_t bg_color;
 void EpdInitDriver47(void) {
   if (PinUsed(GPIO_EPD_DATA)) {
 
-    Settings.display_model = XDSP_16;
+    Settings->display_model = XDSP_16;
 
-    if (Settings.display_width != EPD47_WIDTH) {
-      Settings.display_width = EPD47_WIDTH;
+    if (Settings->display_width != EPD47_WIDTH) {
+      Settings->display_width = EPD47_WIDTH;
     }
-    if (Settings.display_height != EPD47_HEIGHT) {
-      Settings.display_height = EPD47_HEIGHT;
+    if (Settings->display_height != EPD47_HEIGHT) {
+      Settings->display_height = EPD47_HEIGHT;
     }
 
     // init renderer
-    epd47  = new Epd47(Settings.display_width, Settings.display_height);
+    epd47  = new Epd47(Settings->display_width, Settings->display_height);
     epd47->Init();
 
     renderer = epd47;
-    renderer->DisplayInit(DISPLAY_INIT_MODE, Settings.display_size, Settings.display_rotate, Settings.display_font);
+    renderer->DisplayInit(DISPLAY_INIT_MODE, Settings->display_size, Settings->display_rotate, Settings->display_font);
     renderer->setTextColor(EPD47_BLACK, EPD47_WHITE);
 
 #ifdef SHOW_SPLASH
@@ -283,7 +283,7 @@ bool Xdsp16(uint8_t function)
   if (FUNC_DISPLAY_INIT_DRIVER == function) {
     EpdInitDriver47();
   }
-  else if (epd47_init_done && (XDSP_16 == Settings.display_model)) {
+  else if (epd47_init_done && (XDSP_16 == Settings->display_model)) {
     switch (function) {
       case FUNC_DISPLAY_MODEL:
         result = true;

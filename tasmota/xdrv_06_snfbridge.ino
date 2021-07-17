@@ -205,7 +205,7 @@ void SonoffBridgeReceived(void)
     high_time = TasmotaGlobal.serial_in_buffer[5] << 8 | TasmotaGlobal.serial_in_buffer[6];  // High time in uSec
     if (low_time && high_time) {
       for (uint32_t i = 0; i < 9; i++) {
-        Settings.rf_code[SnfBridge.learn_key][i] = TasmotaGlobal.serial_in_buffer[i +1];
+        Settings->rf_code[SnfBridge.learn_key][i] = TasmotaGlobal.serial_in_buffer[i +1];
       }
       Response_P(S_JSON_COMMAND_INDEX_SVALUE, D_CMND_RFKEY, SnfBridge.learn_key, D_JSON_LEARNED);
       MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, PSTR(D_CMND_RFKEY));
@@ -228,15 +228,15 @@ void SonoffBridgeReceived(void)
         SnfBridge.last_time = now;
         strncpy_P(rfkey, PSTR("\"" D_JSON_NONE "\""), sizeof(rfkey));
         for (uint32_t i = 1; i <= 16; i++) {
-          if (Settings.rf_code[i][0]) {
-            uint32_t send_id = Settings.rf_code[i][6] << 16 | Settings.rf_code[i][7] << 8 | Settings.rf_code[i][8];
+          if (Settings->rf_code[i][0]) {
+            uint32_t send_id = Settings->rf_code[i][6] << 16 | Settings->rf_code[i][7] << 8 | Settings->rf_code[i][8];
             if (send_id == received_id) {
               snprintf_P(rfkey, sizeof(rfkey), PSTR("%d"), i);
               break;
             }
           }
         }
-        if (Settings.flag.rf_receive_decimal) {  // SetOption28 - RF receive data format
+        if (Settings->flag.rf_receive_decimal) {  // SetOption28 - RF receive data format
           snprintf_P(stemp, sizeof(stemp), PSTR("%u"), received_id);
         } else {
           snprintf_P(stemp, sizeof(stemp), PSTR("\"%06X\""), received_id);
@@ -323,7 +323,7 @@ void SonoffBridgeSendCode(uint32_t code)
   Serial.write(0xAA);  // Start of Text
   Serial.write(0xA5);  // Send following code
   for (uint32_t i = 0; i < 6; i++) {
-    Serial.write(Settings.rf_code[0][i]);
+    Serial.write(Settings->rf_code[0][i]);
   }
   Serial.write((code >> 16) & 0xff);
   Serial.write((code >> 8) & 0xff);
@@ -340,18 +340,18 @@ void SonoffBridgeSend(uint8_t idx, uint8_t key)
   Serial.write(0xAA);  // Start of Text
   Serial.write(0xA5);  // Send following code
   for (uint32_t i = 0; i < 8; i++) {
-    Serial.write(Settings.rf_code[idx][i]);
+    Serial.write(Settings->rf_code[idx][i]);
   }
   if (0 == idx) {
     code = (0x10 << (key >> 2)) | (1 << (key & 3));  // 11,12,14,18,21,22,24,28,41,42,44,48,81,82,84,88
   } else {
-    code = Settings.rf_code[idx][8];
+    code = Settings->rf_code[idx][8];
   }
   Serial.write(code);
   Serial.write(0x55);  // End of Text
   Serial.flush();
 #ifdef USE_DOMOTICZ
-//  uint32_t rid = Settings.rf_code[idx][6] << 16 | Settings.rf_code[idx][7] << 8 | code;
+//  uint32_t rid = Settings->rf_code[idx][6] << 16 | Settings->rf_code[idx][7] << 8 | code;
 //  DomoticzSensor(DZ_COUNT, rid);  // Send rid as Domoticz Counter value
 #endif  // USE_DOMOTICZ
 }
@@ -398,8 +398,8 @@ void CmndRfBridge(void)  // RfSync, RfLow, RfHigh, RfHost and RfCode
         uint8_t msb = code >> 8;
         uint8_t lsb = code & 0xFF;
         if ((code > 0) && (code < 0x7FFF) && (msb != 0x55) && (lsb != 0x55)) {  // Check for End of Text codes
-          Settings.rf_code[0][set_index] = msb;
-          Settings.rf_code[0][set_index +1] = lsb;
+          Settings->rf_code[0][set_index] = msb;
+          Settings->rf_code[0][set_index +1] = lsb;
         }
       }
     }
@@ -407,7 +407,7 @@ void CmndRfBridge(void)  // RfSync, RfLow, RfHigh, RfHost and RfCode
   if (CMND_RFCODE == XdrvMailbox.command_code) {
     code = SnfBridge.last_send_code;
   } else {
-    code = Settings.rf_code[0][set_index] << 8 | Settings.rf_code[0][set_index +1];
+    code = Settings->rf_code[0][set_index] << 8 | Settings->rf_code[0][set_index +1];
   }
   if (10 == radix) {
     snprintf_P(stemp, sizeof(stemp), PSTR("%d"), code);
@@ -428,34 +428,34 @@ void CmndRfKey(void)
         ResponseCmndIdxChar(PSTR(D_JSON_START_LEARNING));
       }
       else if (3 == XdrvMailbox.payload) {         // Unlearn RF data
-        Settings.rf_code[XdrvMailbox.index][0] = 0;  // Reset sync_time MSB
+        Settings->rf_code[XdrvMailbox.index][0] = 0;  // Reset sync_time MSB
         ResponseCmndIdxChar(PSTR(D_JSON_SET_TO_DEFAULT));
       }
       else if (4 == XdrvMailbox.payload) {         // Save RF data provided by RFSync, RfLow, RfHigh and last RfCode
         for (uint32_t i = 0; i < 6; i++) {
-          Settings.rf_code[XdrvMailbox.index][i] = Settings.rf_code[0][i];
+          Settings->rf_code[XdrvMailbox.index][i] = Settings->rf_code[0][i];
         }
-        Settings.rf_code[XdrvMailbox.index][6] = (SnfBridge.last_send_code >> 16) & 0xff;
-        Settings.rf_code[XdrvMailbox.index][7] = (SnfBridge.last_send_code >> 8) & 0xff;
-        Settings.rf_code[XdrvMailbox.index][8] = SnfBridge.last_send_code & 0xff;
+        Settings->rf_code[XdrvMailbox.index][6] = (SnfBridge.last_send_code >> 16) & 0xff;
+        Settings->rf_code[XdrvMailbox.index][7] = (SnfBridge.last_send_code >> 8) & 0xff;
+        Settings->rf_code[XdrvMailbox.index][8] = SnfBridge.last_send_code & 0xff;
         ResponseCmndIdxChar(PSTR(D_JSON_SAVED));
       } else if (5 == XdrvMailbox.payload) {      // Show default or learned RF data
         uint8_t key = XdrvMailbox.index;
-        uint8_t index = (0 == Settings.rf_code[key][0]) ? 0 : key;  // Use default if sync_time MSB = 0
-        uint16_t sync_time = (Settings.rf_code[index][0] << 8) | Settings.rf_code[index][1];
-        uint16_t low_time = (Settings.rf_code[index][2] << 8) | Settings.rf_code[index][3];
-        uint16_t high_time = (Settings.rf_code[index][4] << 8) | Settings.rf_code[index][5];
-        uint32_t code = (Settings.rf_code[index][6] << 16) | (Settings.rf_code[index][7] << 8);
+        uint8_t index = (0 == Settings->rf_code[key][0]) ? 0 : key;  // Use default if sync_time MSB = 0
+        uint16_t sync_time = (Settings->rf_code[index][0] << 8) | Settings->rf_code[index][1];
+        uint16_t low_time = (Settings->rf_code[index][2] << 8) | Settings->rf_code[index][3];
+        uint16_t high_time = (Settings->rf_code[index][4] << 8) | Settings->rf_code[index][5];
+        uint32_t code = (Settings->rf_code[index][6] << 16) | (Settings->rf_code[index][7] << 8);
         if (0 == index) {
           key--;
           code |= (uint8_t)((0x10 << (key >> 2)) | (1 << (key & 3)));
         } else {
-          code |= Settings.rf_code[index][8];
+          code |= Settings->rf_code[index][8];
         }
         Response_P(PSTR("{\"%s%d\":{\"" D_JSON_SYNC "\":%d,\"" D_JSON_LOW "\":%d,\"" D_JSON_HIGH "\":%d,\"" D_JSON_DATA "\":\"%06X\"}}"),
                    XdrvMailbox.command, XdrvMailbox.index, sync_time, low_time, high_time, code);
       } else {
-        if ((1 == XdrvMailbox.payload) || (0 == Settings.rf_code[XdrvMailbox.index][0])) {  // Test sync_time MSB
+        if ((1 == XdrvMailbox.payload) || (0 == Settings->rf_code[XdrvMailbox.index][0])) {  // Test sync_time MSB
           SonoffBridgeSend(0, XdrvMailbox.index);  // Send default RF data
           ResponseCmndIdxChar(PSTR(D_JSON_DEFAULT_SENT));
         } else {

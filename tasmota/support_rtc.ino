@@ -77,7 +77,7 @@ bool MidnightNow(void)
 
 bool IsDst(void)
 {
-  if (Rtc.time_timezone == Settings.toffset[1]) {
+  if (Rtc.time_timezone == Settings->toffset[1]) {
     return true;
   }
   return false;
@@ -199,10 +199,10 @@ String GetDateAndTime(uint8_t time_type)
       time = Rtc.restart_time;
       break;
     case DT_ENERGY:
-      time = Settings.energy_kWhtotal_time;
+      time = Settings->energy_kWhtotal_time;
       break;
     case DT_BOOTCOUNT:
-      time = Settings.bootcount_reset_time;
+      time = Settings->bootcount_reset_time;
       break;
   }
   String dt = GetDT(time);  // 2017-03-07T11:08:02
@@ -214,7 +214,7 @@ String GetDateAndTime(uint8_t time_type)
     time_type = DT_LOCAL;
   }
 
-  if (Settings.flag3.time_append_timezone && (DT_LOCAL == time_type)) {  // SetOption52 - Append timezone to JSON time
+  if (Settings->flag3.time_append_timezone && (DT_LOCAL == time_type)) {  // SetOption52 - Append timezone to JSON time
     dt += GetTimeZone();    // 2017-03-07T11:08:02-07:00
   }
   return dt;  // 2017-03-07T11:08:02-07:00
@@ -392,8 +392,8 @@ void RtcSecond(void)
     TIME_T tmpTime;
     BreakTime(Rtc.utc_time, tmpTime);
     RtcTime.year = tmpTime.year + 1970;
-    Rtc.daylight_saving_time = RuleToTime(Settings.tflag[1], RtcTime.year);
-    Rtc.standard_time = RuleToTime(Settings.tflag[0], RtcTime.year);
+    Rtc.daylight_saving_time = RuleToTime(Settings->tflag[1], RtcTime.year);
+    Rtc.standard_time = RuleToTime(Settings->tflag[0], RtcTime.year);
 
     AddLog(LOG_LEVEL_DEBUG, PSTR("RTC: " D_UTC_TIME " %s, " D_DST_TIME " %s, " D_STD_TIME " %s"),
       GetDateAndTime(DT_UTC).c_str(), GetDateAndTime(DT_DST).c_str(), GetDateAndTime(DT_STD).c_str());
@@ -415,13 +415,13 @@ void RtcSecond(void)
 
   Rtc.local_time = Rtc.utc_time;
   if (Rtc.local_time > START_VALID_TIME) {  // 2016-01-01
-    int16_t timezone_minutes = Settings.timezone_minutes;
-    if (Settings.timezone < 0) { timezone_minutes *= -1; }
-    Rtc.time_timezone = (Settings.timezone * SECS_PER_HOUR) + (timezone_minutes * SECS_PER_MIN);
-    if (99 == Settings.timezone) {
-      int32_t dstoffset = Settings.toffset[1] * SECS_PER_MIN;
-      int32_t stdoffset = Settings.toffset[0] * SECS_PER_MIN;
-      if (Settings.tflag[1].hemis) {
+    int16_t timezone_minutes = Settings->timezone_minutes;
+    if (Settings->timezone < 0) { timezone_minutes *= -1; }
+    Rtc.time_timezone = (Settings->timezone * SECS_PER_HOUR) + (timezone_minutes * SECS_PER_MIN);
+    if (99 == Settings->timezone) {
+      int32_t dstoffset = Settings->toffset[1] * SECS_PER_MIN;
+      int32_t stdoffset = Settings->toffset[0] * SECS_PER_MIN;
+      if (Settings->tflag[1].hemis) {
         // Southern hemisphere
         if ((Rtc.utc_time >= (Rtc.standard_time - dstoffset)) && (Rtc.utc_time < (Rtc.daylight_saving_time - stdoffset))) {
           Rtc.time_timezone = stdoffset;  // Standard Time
@@ -439,11 +439,11 @@ void RtcSecond(void)
     }
     Rtc.local_time += Rtc.time_timezone;
     Rtc.time_timezone /= 60;
-    if (!Settings.energy_kWhtotal_time) {
-      Settings.energy_kWhtotal_time = Rtc.local_time;
+    if (!Settings->energy_kWhtotal_time) {
+      Settings->energy_kWhtotal_time = Rtc.local_time;
     }
-    if (Settings.bootcount_reset_time < START_VALID_TIME) {
-      Settings.bootcount_reset_time = Rtc.local_time;
+    if (Settings->bootcount_reset_time < START_VALID_TIME) {
+      Settings->bootcount_reset_time = Rtc.local_time;
     }
   }
 

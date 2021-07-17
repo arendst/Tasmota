@@ -300,9 +300,8 @@ public:
     } else {
       snprintf_P(message, sizeof(message), PSTR(D_FAILED_TO_SEND_RESPONSE));
     }
-    // Do not use AddLog_P here (interrupt routine) if syslog or mqttlog is enabled. UDP/TCP will force exception 9
     AddLog(LOG_LEVEL_DEBUG, PSTR("WMO: WeMo Type %d, %s to %s:%d"),
-             echo_type, message, udp_remote_ip.toString().c_str(), udp_remote_port);
+      echo_type, message, udp_remote_ip.toString().c_str(), udp_remote_port);
   }
 
   void HandleServerLoop() {
@@ -432,7 +431,7 @@ bool Xdrv21(uint8_t function)
 {
   bool result = false;
 
-  if (TasmotaGlobal.devices_present && (EMUL_WEMO == Settings.flag2.emulation)) {
+  if (TasmotaGlobal.devices_present && (EMUL_WEMO == Settings->flag2.emulation)) {
     switch (function) {
       case FUNC_LOOP:
         for (uint32_t i = 1; i < numOfWemoSwitch; i++) { // Handle devices web server

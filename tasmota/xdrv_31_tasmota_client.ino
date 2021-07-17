@@ -95,7 +95,7 @@ uint32_t SimpleHexParseLine(char *hexline) {
   uint8_t addr_l = SimpleHexParseGetByte(hexline, 3);
   uint8_t rectype = SimpleHexParseGetByte(hexline, 4);
 
-//  AddLog_P(LOG_LEVEL_DEBUG, PSTR("DBG: Hexline |%s|, Len %d, Address 0x%02X%02X, RecType %d"), hexline, len, addr_h, addr_l, rectype);
+//  AddLog(LOG_LEVEL_DEBUG, PSTR("DBG: Hexline |%s|, Len %d, Address 0x%02X%02X, RecType %d"), hexline, len, addr_h, addr_l, rectype);
 
   if (len > 16) { return 5; }                // Error: Line too long
   if (rectype > 1) { return 6; }             // Error: Invalid record type

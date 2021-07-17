@@ -42,7 +42,7 @@ Driver is tested on a NEO-6m and a Beitian-220. Series 7 should work too. This a
 
 ## Features:
 - get position and time data
-- sets system time automatically and Settings.latitude and Settings.longitude via command
+- sets system time automatically and Settings->latitude and Settings->longitude via command
 - can log postion data with timestamp to flash with a small memory footprint of only 12 Bytes per record
 - constructs a GPX-file for download of this data
 - Web-UI
@@ -598,8 +598,8 @@ void UBXSelectMode(uint16_t mode)
       UBX.mode.forceUTCupdate = false;
       break;
     case 13:
-      Settings.latitude = UBX.rec_buffer.values.lat/10;
-      Settings.longitude = UBX.rec_buffer.values.lon/10;
+      Settings->latitude = UBX.rec_buffer.values.lat/10;
+      Settings->longitude = UBX.rec_buffer.values.lon/10;
       break;
     case 14:
       vPortServer.begin();

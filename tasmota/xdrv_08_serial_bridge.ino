@@ -56,8 +56,8 @@ void SerialBridgeInput(void)
     }
     if (serial_in_byte || serial_bridge_raw) {                                 // Any char between 1 and 127 or any char (0 - 255)
       bool in_byte_is_delimiter =                                              // Char is delimiter when...
-        (((Settings.serial_delimiter < 128) && (serial_in_byte == Settings.serial_delimiter)) || // Any char between 1 and 127 and being delimiter
-        ((Settings.serial_delimiter == 128) && !isprint(serial_in_byte))) &&   // Any char not between 32 and 127
+        (((Settings->serial_delimiter < 128) && (serial_in_byte == Settings->serial_delimiter)) || // Any char between 1 and 127 and being delimiter
+        ((Settings->serial_delimiter == 128) && !isprint(serial_in_byte))) &&   // Any char not between 32 and 127
         !serial_bridge_raw;                                                    // In raw mode (CMND_SERIALSEND3) there is never a delimiter
 
       if ((serial_bridge_in_byte_counter < SERIAL_BRIDGE_BUFFER_SIZE -1) &&    // Add char to string if it still fits and ...
@@ -106,7 +106,7 @@ void SerialBridgeInit(void)
   serial_bridge_active = false;
   if (PinUsed(GPIO_SBR_RX) && PinUsed(GPIO_SBR_TX)) {
     SerialBridgeSerial = new TasmotaSerial(Pin(GPIO_SBR_RX), Pin(GPIO_SBR_TX), HARDWARE_FALLBACK);
-    if (SerialBridgeSerial->begin(Settings.sbaudrate * 300)) {  // Baud rate is stored div 300 so it fits into 16 bits
+    if (SerialBridgeSerial->begin(Settings->sbaudrate * 300)) {  // Baud rate is stored div 300 so it fits into 16 bits
       if (SerialBridgeSerial->hardwareSerial()) {
         ClaimSerial();
         serial_bridge_buffer = TasmotaGlobal.serial_in_buffer;  // Use idle serial buffer to save RAM
@@ -172,10 +172,10 @@ void CmndSBaudrate(void)
 {
   if (XdrvMailbox.payload >= 300) {
     XdrvMailbox.payload /= 300;  // Make it a valid baudrate
-    Settings.sbaudrate = XdrvMailbox.payload;
-    SerialBridgeSerial->begin(Settings.sbaudrate * 300);  // Reinitialize serial port with new baud rate
+    Settings->sbaudrate = XdrvMailbox.payload;
+    SerialBridgeSerial->begin(Settings->sbaudrate * 300);  // Reinitialize serial port with new baud rate
   }
-  ResponseCmndNumber(Settings.sbaudrate * 300);
+  ResponseCmndNumber(Settings->sbaudrate * 300);
 }
 
 /*********************************************************************************************\

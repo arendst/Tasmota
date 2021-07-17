@@ -6,9 +6,11 @@
 ** https://github.com/Skiars/berry/blob/master/LICENSE
 ********************************************************************/
 #include "be_object.h"
+#include "be_vm.h"
 #include "be_exec.h"
 #include "be_mem.h"
 #include "be_gc.h"
+#include "be_class.h"
 #include <string.h>
 
 #define READLINE_STEP       100
@@ -73,9 +75,33 @@ static int l_input(bvm *vm)
 
 static int l_super(bvm *vm)
 {
-    if (be_top(vm)) {
-        be_getsuper(vm, 1);
-        be_return(vm);
+    int argc = be_top(vm);
+    if (argc) {
+        if (argc >= 2) {
+            if (be_isinstance(vm, 1) && be_isclass(vm, 2)) {
+                /* leveled super, i.e. fix the parenthood class level */
+                binstance *o = var_toobj(be_indexof(vm, 1));
+                bclass *bc = var_toobj(be_indexof(vm, 2));
+                while (o) {
+                    bclass *c = be_instance_class(o);
+                    if (c == bc) break;         /* found */
+                    o = be_instance_super(o);
+                }
+                bvalue *top = be_incrtop(vm);
+                if (o) {
+                    var_setinstance(top, o);    /* return the instance with the specified parent class */
+                } else {
+                    var_setnil(top);            /* not found, return nil */
+                }
+                be_return(vm);
+            } else {
+                be_raise(vm, "type_error", "leveled super() requires 'instance' and 'class' arguments");
+            }
+        } else {
+            /* simple use of super */
+            be_getsuper(vm, 1);
+            be_return(vm);
+        }
     }
     be_return_nil(vm);
 }
