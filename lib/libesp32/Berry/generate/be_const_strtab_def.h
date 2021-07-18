@@ -445,7 +445,8 @@ be_define_const_str(add_driver, "add_driver", 1654458371u, 0, 10, &be_const_str_
 be_define_const_str(content_button, "content_button", 1956476087u, 0, 14, NULL);
 be_define_const_str(HX711_DAT, "HX711_DAT", 2935118250u, 0, 9, NULL);
 be_define_const_str(dot_p, ".p", 1171526419u, 0, 2, &be_const_str_content_stop);
-be_define_const_str(content_stop, "content_stop", 658554751u, 0, 12, NULL);
+be_define_const_str(content_stop, "content_stop", 658554751u, 0, 12, &be_const_str_exists);
+be_define_const_str(exists, "exists", 1002329533u, 0, 6, NULL);
 be_define_const_str(GPS_RX, "GPS_RX", 1075637342u, 0, 6, &be_const_str_HX711_SCK);
 be_define_const_str(HX711_SCK, "HX711_SCK", 3785979404u, 0, 9, &be_const_str_RDM6300_RX);
 be_define_const_str(RDM6300_RX, "RDM6300_RX", 1522345628u, 0, 10, NULL);
@@ -943,6 +944,6 @@ static const bstring* const m_string_table[] = {
 
 static const struct bconststrtab m_const_string_table = {
     .size = 306,
-    .count = 612,
+    .count = 613,
     .table = m_string_table
 };

@@ -446,6 +446,7 @@ extern const bcstring be_const_str_content_button;
 extern const bcstring be_const_str_HX711_DAT;
 extern const bcstring be_const_str_dot_p;
 extern const bcstring be_const_str_content_stop;
+extern const bcstring be_const_str_exists;
 extern const bcstring be_const_str_GPS_RX;
 extern const bcstring be_const_str_HX711_SCK;
 extern const bcstring be_const_str_RDM6300_RX;
