@@ -1632,7 +1632,13 @@ bool RedPin(uint32_t pin) // pin may be dangerous to change, display in RED in t
 #if defined(ESP32) && CONFIG_IDF_TARGET_ESP32C3
   return false;     // no red pin on ESP32C3
 #else // ESP32 and ESP8266
+
+#ifdef CONFIG_IDF_TARGET_ESP32
+  return (16==pin)||(17==pin)||(9==pin)||(10==pin);
+#else
   return (9==pin)||(10==pin);
+#endif
+
 #endif
 }
 
