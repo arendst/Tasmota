@@ -181,7 +181,7 @@ extern "C" {
       map_insert_int(vm, "heap_free", ESP_getFreeHeap() / 1024);
       int32_t freeMaxMem = 100 - (int32_t)(ESP_getMaxAllocHeap() * 100 / ESP_getFreeHeap());
       map_insert_int(vm, "frag", freeMaxMem);
-      if (psramFound()) {
+      if (UsePSRAM()) {
         map_insert_int(vm, "psram", ESP.getPsramSize() / 1024);
         map_insert_int(vm, "psram_free", ESP.getFreePsram() / 1024);
       }

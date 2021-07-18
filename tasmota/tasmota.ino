@@ -276,6 +276,14 @@ void setup(void) {
 
 //  AddLog(LOG_LEVEL_INFO, PSTR("ADR: Settings %p, Log %p"), Settings, TasmotaGlobal.log_buffer);
   AddLog(LOG_LEVEL_INFO, PSTR("HDW: %s"), GetDeviceHardware().c_str());
+#ifdef ESP32
+  AddLog(LOG_LEVEL_DEBUG, PSTR("HDW: psramFound=%i CanUsePSRAM=%i"), psramFound(), CanUsePSRAM());
+#endif // ESP32
+#if defined(ESP32) && !defined(HAS_PSRAM_FIX)
+  if (psramFound() && !CanUsePSRAM()) {
+    AddLog(LOG_LEVEL_INFO, PSTR("HDW: PSRAM is disabled, requires specific compilation on this hardware (see doc)"));
+  }
+#endif // ESP32
 
 #ifdef USE_UFILESYS
   UfsInit();  // xdrv_50_filesystem.ino
