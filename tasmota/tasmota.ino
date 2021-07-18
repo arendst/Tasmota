@@ -66,7 +66,7 @@
 #endif  // USE_SDCARD
 #endif  // ESP8266
 #ifdef ESP32
-#include <LITTLEFS.h>
+#include <LittleFS.h>
 #ifdef USE_SDCARD
 #include <SD.h>
 #endif  // USE_SDCARD
