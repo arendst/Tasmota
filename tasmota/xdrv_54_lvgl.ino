@@ -442,13 +442,13 @@ void start_lvgl(const char * uconfig) {
   // initialize the FreeType renderer
   lv_freetype_init(USE_LVGL_FREETYPE_MAX_FACES,
                    USE_LVGL_FREETYPE_MAX_SIZES,
-                   psramFound() ? USE_LVGL_FREETYPE_MAX_BYTES_PSRAM : USE_LVGL_FREETYPE_MAX_BYTES);
+                   UsePSRAM() ? USE_LVGL_FREETYPE_MAX_BYTES_PSRAM : USE_LVGL_FREETYPE_MAX_BYTES);
 #endif
 #ifdef USE_LVGL_PNG_DECODER
   lv_png_init();
 #endif // USE_LVGL_PNG_DECODER
 
-  if (psramFound()) {
+  if (UsePSRAM()) {
     lv_img_cache_set_size(LV_IMG_CACHE_DEF_SIZE_PSRAM);
   }
 

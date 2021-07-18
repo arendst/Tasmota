@@ -125,7 +125,7 @@ void HandleMetrics(void) {
     int32_t freeMaxMem = 100 - (int32_t)(ESP_getMaxAllocHeap() * 100 / ESP_getFreeHeap());
     WSContentSend_PD(PSTR("# TYPE tasmota_memory_bytes gauge\ntasmota_memory_bytes{memory=\"Ram\"} %d\n"), ESP_getFreeHeap());
     WSContentSend_PD(PSTR("# TYPE tasmota_memory_ratio gauge\ntasmota_memory_ratio{memory=\"Fragmentation\"} %d)"), freeMaxMem / 100);
-    if (psramFound()) {
+    if (UsePSRAM()) {
       WSContentSend_P(PSTR("# TYPE tasmota_memory_bytes gauge\ntasmota_memory_bytes{memory=\"Psram\"} %d\n"), ESP.getFreePsram() );
     }
   #else // ESP32
