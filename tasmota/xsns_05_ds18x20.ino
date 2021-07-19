@@ -46,9 +46,9 @@
 #define DS2413_ACK_ERROR     0xFF
 #define DS2413_WRITE_MASK    0xFC
 #define DS2413_READ_MASK     0x0F   // PIOstate
-#define DS2413_PORTA_OUT     0b0010 // PIOstate
-#define DS2413_PORTB_OUT     0b1000
-#define DS2413_OUTPUT_MASK   (DS2413_PORTB_OUT | DS2413_PORTA_OUT)
+#define DS2413_BIT_PORTA_OUT 1      // PIOstate
+#define DS2413_BIT_PORTB_OUT 3
+#define DS2413_OUTPUT_MASK   ((1<<DS2413_BIT_PORTB_OUT)|(1<<DS2413_BIT_PORTA_OUT))
 #define DS2413_PORTA_IN      0b0001 // PIOstate
 #define DS2413_PORTB_IN      0b0100
 #define DS2413_INPUT_MASK    (DS2413_PORTB_IN | DS2413_PORTA_IN)
@@ -84,7 +84,7 @@ struct {
       uint8_t pwr_index;          // Tasmota RelayNumber and RelayNumber+1
     };
   };
-  uint8_t address[8];             // Note: address must be word aligned !!!
+  uint8_t address[8];             // NOTE! address word aligned for addlog %_X
   float temp_sum;
   uint16_t numread;
   uint8_t index;
@@ -374,7 +374,7 @@ void Ds18x20Init(void) {
     for (uint32_t j = i + 1; j < DS18X20Data.sensors; j++) {
 #ifndef DS18x20_ADD_DS2413
       if (ids[ds18x20_sensor[i].index] > ids[ds18x20_sensor[j].index]) {  // Sort ascending
-#else
+#else                          // Sort ascending and DS2413 after TempSensors
       if ( ((ids[ds18x20_sensor[i].index] > ids[ds18x20_sensor[j].index]) &&
             ((ds18x20_sensor[ds18x20_sensor[i].index].address[0] != DS18B20_CHIPID) ||
              (ds18x20_sensor[ds18x20_sensor[j].index].address[0] == DS18B20_CHIPID))) ||
@@ -393,7 +393,7 @@ void Ds18x20Init(void) {
   for (uint32_t i = 0; i < DS18X20Data.sensors; i++) {
     if (ds18x20_sensor[i].address[0] == DS2413_CHIPID) {
       ds18x20_sensor[i].pwr_index = TasmotaGlobal.devices_present;
-      if (Ds18x20Read(i)) {                             // restore Powerstate
+      if (Ds18x20Read(i)) {                              // restore Powerstate
 // AddLog(LOG_LEVEL_DEBUG, PSTR("PiO: Initial pioState %02x, GlobalPower %_X, SettingsPower %_X"), ds18x20_sensor[i].pioState, &TasmotaGlobal.power, &Settings->power);
         if (Settings->flag.save_state) {      // SetOption0 - Save power state
           bitWrite(TasmotaGlobal.power, TasmotaGlobal.devices_present,
@@ -402,13 +402,13 @@ void Ds18x20Init(void) {
                    bitRead(Settings->power, TasmotaGlobal.devices_present+1));
         } else if (!Settings->flag3.no_power_feedback) {        // SetOption63
           bitWrite(TasmotaGlobal.power, TasmotaGlobal.devices_present,
-                      (ds18x20_sensor[i].pioState & DS2413_PORTA_OUT)>>1);
-          bitWrite(TasmotaGlobal.power, TasmotaGlobal.devices_present+1,
-                      (ds18x20_sensor[i].pioState & DS2413_PORTB_OUT)>>3);
+                   bitRead(ds18x20_sensor[i].pioState, DS2413_BIT_PORTA_OUT));
+          bitWrite(TasmotaGlobal.power, TasmotaGlobal.devices_present +1,
+                   bitRead(ds18x20_sensor[i].pioState, DS2413_BIT_PORTB_OUT));
         }
         DS2413write(i, TasmotaGlobal.power);
       }
-      TasmotaGlobal.devices_present += 2;	          // 2 Outputs (+ 2 Inputs)
+      TasmotaGlobal.devices_present += 2;            // 2 Outputs (+ 2 Inputs)
       DS18X20Data.ds2413_sensors++;
     }
   }
@@ -690,8 +690,9 @@ void Ds18x20Show(bool json) {
             DS18X20Data.name, address, Settings->flag2.temperature_resolution, &ds18x20_sensor[index].temperature);
 #ifdef DS18x20_ADD_DS2413
         } else {
-          ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_ID "\":\"%s\",\"" "Port Status" "\":\"%d\"}"),
-              DS18X20Data.name, address, ds18x20_sensor[index].pioState);
+          ResponseAppend_P(PSTR(",\"%s\":{\""
+              D_JSON_ID "\":\"%s\",\"" "Port Status" "\":\"0x%04x\"}"),
+              DS18X20Data.name, address, ds18x20_sensor[index].pub_pioState);
         }
 #endif //DS18x20_ADD_DS2413
 #ifdef USE_DOMOTICZ
