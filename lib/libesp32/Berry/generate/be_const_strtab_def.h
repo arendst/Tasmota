@@ -413,7 +413,8 @@ be_define_const_str(asstring, "asstring", 1298225088u, 0, 8, &be_const_str_lv_dr
 be_define_const_str(lv_draw_mask_angle_param_cfg, "lv_draw_mask_angle_param_cfg", 3599767368u, 0, 28, &be_const_str_save);
 be_define_const_str(save, "save", 3439296072u, 0, 4, &be_const_str_size);
 be_define_const_str(size, "size", 597743964u, 0, 4, NULL);
-be_define_const_str(NONE, "NONE", 1932136219u, 0, 4, NULL);
+be_define_const_str(NONE, "NONE", 1932136219u, 0, 4, &be_const_str_static);
+be_define_const_str(static, "static", 3532702267u, 71, 6, NULL);
 be_define_const_str(exp, "exp", 1923516200u, 0, 3, &be_const_str_on);
 be_define_const_str(on, "on", 1630810064u, 0, 2, NULL);
 be_define_const_str(BL0940_RX, "BL0940_RX", 2908993179u, 0, 9, &be_const_str_WIEGAND_D0);

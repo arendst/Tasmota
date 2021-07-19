@@ -42,6 +42,11 @@ extern "C" {
     .type = BE_INT                                              \
 }
 
+#define be_const_var(_val) {                                    \
+    .v.i = (bint)(_val),                                        \
+    .type = BE_INDEX                                            \
+}
+
 #define be_const_real(_val) {                                   \
     .v.r = (breal)(_val),                                       \
     .type = BE_REAL                                             \
@@ -138,6 +143,11 @@ const bntvmodule be_native_module(_module) = {                  \
 #define be_const_int(_val) {                                    \
     bvaldata(bint(_val)),                                       \
     BE_INT                                                      \
+}
+
+#define be_const_var(_val) {                                    \
+    bvaldata(bint(_val)),                                       \
+    BE_INDEX                                                    \
 }
 
 #define be_const_real(_val) {                                   \

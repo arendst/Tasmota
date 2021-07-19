@@ -38,6 +38,7 @@ static const char * m_type_ktab(int type)
     switch (type){
         case BE_NIL:    return "BE_NIL";
         case BE_INT:    return "BE_INT";
+        case BE_INDEX:  return "BE_INDEX";
         case BE_REAL:   return "BE_REAL";
         case BE_BOOL:   return "BE_BOOL";
         case BE_STRING: return "BE_STRING";
@@ -82,7 +83,7 @@ static void m_solidify_proto(bvm *vm, bproto *pr, const char * func_name, int bu
 
     logfmt("%*s%d,                          /* has constants */\n", indent, "", (pr->nconst > 0) ? 1 : 0);
     if (pr->nconst > 0) {
-        logfmt("%*s( &(const bvalue[%2d]) {     /* upvals */\n", indent, "", pr->nconst);
+        logfmt("%*s( &(const bvalue[%2d]) {     /* constants */\n", indent, "", pr->nconst);
         for (int k = 0; k < pr->nconst; k++) {
             int type = pr->ktab[k].type;
             const char *type_name = m_type_ktab(type);
@@ -99,7 +100,7 @@ static void m_solidify_proto(bvm *vm, bproto *pr, const char * func_name, int bu
                     be_raise(vm, "internal_error", "Strings greater than 255 chars not supported yet");
                 }
                 logfmt("\", %i, %zu) }, %s},\n", be_strhash(pr->ktab[k].v.s), len >= 255 ? 255 : len, type_name);
-            } else if (type == BE_INT) {
+            } else if (type == BE_INT || type == BE_INDEX) {
                 logfmt("%*s  { { .i=%" BE_INT_FMTLEN "i }, %s},\n", indent, "", pr->ktab[k].v.i, type_name);
             } else if (type == BE_REAL) {
     #if BE_USE_SINGLE_FLOAT

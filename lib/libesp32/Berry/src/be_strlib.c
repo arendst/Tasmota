@@ -80,6 +80,7 @@ static bstring* sim2str(bvm *vm, bvalue *v)
     case BE_BOOL:
         strcpy(sbuf, var_tobool(v) ? "true" : "false");
         break;
+    case BE_INDEX:
     case BE_INT:
         sprintf(sbuf, BE_INT_FORMAT, var_toint(v));
         break;

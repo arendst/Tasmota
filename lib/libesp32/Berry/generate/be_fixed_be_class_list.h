@@ -14,7 +14,7 @@ static be_define_const_map_slots(be_class_list_map) {
     { be_const_key(tostring, 3), be_const_func(m_tostring) },
     { be_const_key(opt_eq, -1), be_const_func(m_equal) },
     { be_const_key(init, -1), be_const_func(m_init) },
-    { be_const_key(dot_p, 17), be_const_int(0) },
+    { be_const_key(dot_p, 17), be_const_var(0) },
     { be_const_key(setitem, -1), be_const_func(m_setitem) },
     { be_const_key(opt_connect, 4), be_const_func(m_connect) },
     { be_const_key(opt_neq, -1), be_const_func(m_nequal) },
