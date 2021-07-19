@@ -1,5 +1,5 @@
 /*
-  tasmota.ino - Tasmota firmware for iTead Sonoff, Wemos and NodeMCU hardware
+  tasmota.ino - Tasmota firmware for iTead Sonoff, Wemos, NodeMCU, ESP8266 and ESP32 hardwares
 
   Copyright (C) 2021  Theo Arends
 
@@ -398,7 +398,7 @@ void setup(void) {
   SetPowerOnState();
   WifiConnect();
 
-  AddLog(LOG_LEVEL_INFO, PSTR(D_PROJECT " %s %s " D_VERSION " %s%s-" ARDUINO_CORE_RELEASE "(%s)"),
+  AddLog(LOG_LEVEL_INFO, PSTR(D_PROJECT " %s - %s " D_VERSION " %s%s-" ARDUINO_CORE_RELEASE "(%s)"),
     PSTR(PROJECT), SettingsText(SET_DEVICENAME), TasmotaGlobal.version, TasmotaGlobal.image_name, GetBuildDateAndTime().c_str());
 #ifdef FIRMWARE_MINIMAL
   AddLog(LOG_LEVEL_INFO, PSTR(D_WARNING_MINIMAL_VERSION));
