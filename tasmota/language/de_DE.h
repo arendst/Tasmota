@@ -198,8 +198,8 @@
 #define D_WEIGHT "Gewicht"
 #define D_WARMLIGHT "warm"
 #define D_WEB_SERVER "Web-Server"
-#define D_SOC "State of Charge"
-#define D_SOH "State of Health"
+#define D_SOC "Ladestatus"
+#define D_SOH "Gesundheitsstatus"
 
 // tasmota.ino
 #define D_WARNING_MINIMAL_VERSION "ACHTUNG: Diese Version unterstützt keine persistenten Einstellungen"
