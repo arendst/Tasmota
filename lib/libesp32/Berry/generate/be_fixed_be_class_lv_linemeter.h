@@ -3,7 +3,7 @@
 static be_define_const_map_slots(be_class_lv_linemeter_map) {
     { be_const_key(init, 2), be_const_func(lvbe_linemeter_create) },
     { be_const_key(tostring, -1), be_const_func(lvx_tostring) },
-    { be_const_key(dot_p, -1), be_const_int(0) },
+    { be_const_key(dot_p, -1), be_const_var(0) },
     { be_const_key(member, 0), be_const_func(lvx_member) },
 };
 

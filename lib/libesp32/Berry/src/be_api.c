@@ -36,7 +36,7 @@ static void class_init(bvm *vm, bclass *c, const bnfuncinfo *lib)
             if (lib->function) { /* method */
                 be_prim_method_bind(vm, c, s, lib->function);
             } else {
-                be_member_bind(vm, c, s); /* member */
+                be_member_bind(vm, c, s, btrue); /* member */
             }
             ++lib;
         }
@@ -643,6 +643,9 @@ static int ins_member(bvm *vm, int index, const char *k)
     if (var_isinstance(o)) {
         binstance *obj = var_toobj(o);
         type = be_instance_member(vm, obj, be_newstr(vm, k), top);
+        if (type == BE_NONE) {
+            type = BE_NIL;
+        }
     }
     return type;
 }

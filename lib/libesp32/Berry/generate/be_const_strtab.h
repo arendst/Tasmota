@@ -414,6 +414,7 @@ extern const bcstring be_const_str_lv_draw_mask_angle_param_cfg;
 extern const bcstring be_const_str_save;
 extern const bcstring be_const_str_size;
 extern const bcstring be_const_str_NONE;
+extern const bcstring be_const_str_static;
 extern const bcstring be_const_str_exp;
 extern const bcstring be_const_str_on;
 extern const bcstring be_const_str_BL0940_RX;
