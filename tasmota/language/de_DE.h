@@ -1,7 +1,7 @@
 /*
   de-DE.h - localization for German - Germany for Tasmota
 
-  Copyright (C) 2021  VinceMasuka
+  Copyright (C) 2021  VinceMasuka and Jason2866
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v9.3.1.3
+ * Updated until v9.5.0.3
 \*********************************************************************/
 
 //#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
