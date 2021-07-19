@@ -22,10 +22,13 @@
  * Prometheus support
  *
  * The text format for metrics, labels and values is documented at [1]. Only
- * the UTF-8 text encoding is supported.
+ * the UTF-8 text encoding is supported. [2] describes how metrics and labels
+ * should be named.
  *
  * [1]
  * https://github.com/prometheus/docs/blob/master/content/docs/instrumenting/exposition_formats.md
+ * [2]
+ * https://github.com/prometheus/docs/blob/master/content/docs/practices/naming.md
  *
 \*********************************************************************************************/
 
@@ -161,6 +164,28 @@ void WritePromMetricStr(const char *name, uint8_t flags, const char *value, ...)
   va_end(labels);
 }
 
+// Sentinel value for known memory metrics, chosen to unlikely match actual
+// values.
+const uint32_t kPromMemoryUnknown = 0xFFFFFFFF - 1;
+
+// Write metrics providing information about used and available memory.
+void WritePromMemoryMetrics(const char *type, uint32_t size, uint32_t avail, uint32_t max_alloc) {
+  if (size != kPromMemoryUnknown) {
+    WritePromMetricInt32(PSTR("memory_size_bytes"), kPromMetricGauge, size,
+      PSTR("memory"), type, nullptr);
+  }
+
+  WritePromMetricInt32(PSTR("memory_free_bytes"), kPromMetricGauge, avail,
+    PSTR("memory"), type, nullptr);
+
+  if (max_alloc != kPromMemoryUnknown) {
+    // The largest contiguous free memory block, useful for checking
+    // fragmentation.
+    WritePromMetricInt32(PSTR("memory_max_alloc_bytes"), kPromMetricGauge, max_alloc,
+      PSTR("memory"), type, nullptr);
+  }
+}
+
 void HandleMetrics(void) {
   if (!HttpCheckPriviledgedAccess()) { return; }
 
@@ -211,25 +236,26 @@ void HandleMetrics(void) {
       nullptr);
   }
 
-  // Pseudo-metric providing metadata about the free memory.
+  WritePromMemoryMetrics(PSTR("heap"),
 #ifdef ESP32
-  int32_t freeMaxMem = 100 - (int32_t)(ESP_getMaxAllocHeap() * 100 / ESP_getFreeHeap());
+    ESP.getHeapSize(),
+#else
+    kPromMemoryUnknown,
+#endif
+    ESP_getFreeHeap(),
+#ifdef ESP32
+    ESP_getMaxAllocHeap()
+#else
+    kPromMemoryUnknown
+#endif
+  );
 
-  WritePromMetricInt32(PSTR("memory_bytes"), kPromMetricGauge,
-    ESP_getFreeHeap(), PSTR("memory"), PSTR("Ram"), nullptr);
-
-  // FIXME: Always truncated to integer
-  WritePromMetricInt32(PSTR("memory_ratio"), kPromMetricGauge,
-    freeMaxMem / 100, PSTR("memory"), PSTR("Fragmentation"), nullptr);
-
+#ifdef ESP32
   if (UsePSRAM()) {
-    WritePromMetricInt32(PSTR("memory_bytes"), kPromMetricGauge,
-      ESP.getFreePsram(), PSTR("memory"), PSTR("Psram"), nullptr);
+    WritePromMemoryMetrics(PSTR("psram"), ESP.getPsramSize(),
+      ESP.getFreePsram(), ESP.getMaxAllocPsram());
   }
-#else // ESP32
-  WritePromMetricInt32(PSTR("memory_bytes"), kPromMetricGauge,
-    ESP_getFreeHeap(), PSTR("memory"), PSTR("ram"), nullptr);
-#endif // ESP32
+#endif
 
 #ifdef USE_ENERGY_SENSOR
   // TODO: Don't disable prefix on energy metrics
