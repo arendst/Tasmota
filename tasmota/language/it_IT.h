@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v9.4.0.1 - Last update 28.05.2021
+ * Updated until v9.5.0.3 - Last update 19.07.2021
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -198,8 +198,8 @@
 #define D_WEIGHT               "Peso"
 #define D_WARMLIGHT            "Calda"
 #define D_WEB_SERVER           "Server web"
-#define D_SOC                  "Stato di Carica"
-#define D_SOH                  "State of Health"
+#define D_SOC                  "Stato di carica"
+#define D_SOH                  "State di salute"
 
 // tasmota.ino
 #define D_WARNING_MINIMAL_VERSION  "ATTENZIONE Questa versione non supporta il salvataggio delle impostazioni"
