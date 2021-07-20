@@ -109,8 +109,8 @@ void UfsInitOnce(void) {
 
 #ifdef ESP32
   // try lfs first
-  ffsp = &LITTLEFS;
-  if (!LITTLEFS.begin(true)) {
+  ffsp = &LittleFS;
+  if (!LittleFS.begin(true)) {
     // ffat is second
     ffsp = &FFat;
     if (!FFat.begin(true)) {
@@ -223,9 +223,9 @@ uint32_t UfsInfo(uint32_t sel, uint32_t type) {
 #endif  // ESP8266
 #ifdef ESP32
       if (sel == 0) {
-        result = LITTLEFS.totalBytes();
+        result = LittleFS.totalBytes();
       } else {
-        result = LITTLEFS.totalBytes() - LITTLEFS.usedBytes();
+        result = LittleFS.totalBytes() - LittleFS.usedBytes();
       }
 #endif  // ESP32
       break;
