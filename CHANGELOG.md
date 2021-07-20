@@ -7,8 +7,10 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Command ``SetSensor1..127 0|1`` to globally disable individual sensor driver
 - Support for CAN bus and Freedom Won Battery Management System by Marius Bezuidenhout (#12651)
+- Berry ESP32 support for I2S audio mp3 playback
+
+### Changed
 - Disable PSRAM on unsupported hardware
-- Berry add support for I2S audio mp3 playback
 
 ## [9.5.0.2] 20210714
 ### Added

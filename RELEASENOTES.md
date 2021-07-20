@@ -105,6 +105,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - Command ``SetSensor1..127 0|1`` to globally disable individual sensor driver
 - Initial support for Tasmota Mesh (TasMesh) providing node/broker communication using ESP-NOW [#11939](https://github.com/arendst/Tasmota/issues/11939)
 - Berry ESP32 partition manager [#12465](https://github.com/arendst/Tasmota/issues/12465)
+- Berry ESP32 support for I2S audio mp3 playback
 - Support for AM2320 Temperature and Humidity Sensor by Lars Wessels [#12485](https://github.com/arendst/Tasmota/issues/12485)
 - Rule event support as JSON payload [#12496](https://github.com/arendst/Tasmota/issues/12496)
 - MQTT minimum password length restriction in GUI [#12553](https://github.com/arendst/Tasmota/issues/12553)
@@ -120,6 +121,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - Enable UFILESYS, GUI_TRASH_FILE and GUI_EDIT_FILE for any device compiled with more than 1M flash size
 - ESP32 internal sensor driver id moved from 87 to 127
 - Extended supported sensor driver range to 128
+- Disable PSRAM on unsupported hardware
 - Simplified configuration for ir-full and removal of tasmota-ircustom [#12428](https://github.com/arendst/Tasmota/issues/12428)
 - Refactor platformio [#12442](https://github.com/arendst/Tasmota/issues/12442)
 - Allow buttons to work in AP normal mode [#12518](https://github.com/arendst/Tasmota/issues/12518)
@@ -142,4 +144,4 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - ESP32 do not use chip temperature sensor as global temperature if external temperature sensor is used [#12630](https://github.com/arendst/Tasmota/issues/12630)
 
 ### Noted
-- ESP32 single core **tasmota32solo1.bin** binary can only be uploaded using the GUI as OTA upload will trigger the watchdog timer
+- ESP32 single core **tasmota32solo1.bin** binary can only be uploaded using the GUI as OTA upload will trigger the watchdog timer. Fixed once https://github.com/espressif/arduino-esp32/pull/5426 is merged.
