@@ -275,7 +275,18 @@ be_native_module_attr_table(gpio) {
     be_native_module_int("HALLEFFECT", 237),
     be_native_module_int("EPD_DATA", 238),
     be_native_module_int("INPUT", 239),
-    be_native_module_int("SENSOR_END", 240),
+    be_native_module_int("KEY1_PD", 240),
+    be_native_module_int("KEY1_INV_PD", 241),
+    be_native_module_int("SWT1_PD", 242),
+    be_native_module_int("I2S_OUT_DATA", 243),
+    be_native_module_int("I2S_OUT_CLK", 244),
+    be_native_module_int("I2S_OUT_SLCT", 245),
+    be_native_module_int("I2S_IN_DATA", 246),
+    be_native_module_int("I2S_IN_CLK", 247),
+    be_native_module_int("I2S_IN_SLCT", 248),
+    be_native_module_int("INTERRUPT", 249),
+
+    be_native_module_int("SENSOR_END", 250),
 
     be_native_module_function("pin_mode", gp_pin_mode),
     be_native_module_function("digital_write", gp_digital_write),
@@ -546,7 +557,18 @@ module gpio (scope: global) {
     HALLEFFECT, int(237)
     EPD_DATA, int(238)
     INPUT, int(239)
-    SENSOR_END, int(240)
+    KEY1_PD, int(240)
+    KEY1_INV_PD, int(241)
+    SWT1_PD, int(242)
+    I2S_OUT_DATA, int(243)
+    I2S_OUT_CLK, int(244)
+    I2S_OUT_SLCT, int(245)
+    I2S_IN_DATA, int(246)
+    I2S_IN_CLK, int(247)
+    I2S_IN_SLCT, int(248)
+    INTERRUPT, int(249)
+
+    SENSOR_END, int(250)
 
     pin_mode, func(gp_pin_mode)
     digital_write, func(gp_digital_write)

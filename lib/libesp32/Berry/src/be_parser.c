@@ -1235,7 +1235,24 @@ static void classvar_stmt(bparser *parser, bclass *c)
     }
 }
 
-static void classstatic_stmt(bparser *parser, bclass *c)
+static void class_static_assignment_expr(bparser *parser, bexpdesc *e, bstring *name)
+{
+    if (match_skip(parser, OptAssign)) { /* '=' */
+        bexpdesc e1, e2;
+        /* parse the right expression */
+        expr(parser, &e2);
+
+        e1 = *e;        /* copy the class description */
+        bexpdesc key;   /* build the member key */
+        init_exp(&key, ETSTRING, 0);
+        key.v.s = name;
+
+        be_code_member(parser->finfo, &e1, &key);   /* compute member accessor */
+        be_code_setvar(parser->finfo, &e1, &e2);    /* set member */
+    }
+}
+
+static void classstatic_stmt(bparser *parser, bclass *c, bexpdesc *e)
 {
     bstring *name;
     /* 'static' ID {',' ID} */
@@ -1243,10 +1260,13 @@ static void classstatic_stmt(bparser *parser, bclass *c)
     if (match_id(parser, name) != NULL) {
         check_class_attr(parser, c, name);
         be_member_bind(parser->vm, c, name, bfalse);
+        class_static_assignment_expr(parser, e, name);
+
         while (match_skip(parser, OptComma)) { /* ',' */
             if (match_id(parser, name) != NULL) {
                 check_class_attr(parser, c, name);
                 be_member_bind(parser->vm, c, name, bfalse);
+                class_static_assignment_expr(parser, e, name);
             } else {
                 parser_error(parser, "class static error");
             }
@@ -1281,13 +1301,13 @@ static void class_inherit(bparser *parser, bexpdesc *e)
     }
 }
 
-static void class_block(bparser *parser, bclass *c)
+static void class_block(bparser *parser, bclass *c, bexpdesc *e)
 {
     /* { [;] } */
     while (block_follow(parser)) {
         switch (next_type(parser)) {
         case KeyVar: classvar_stmt(parser, c); break;
-        case KeyStatic: classstatic_stmt(parser, c); break;
+        case KeyStatic: classstatic_stmt(parser, c, e); break;
         case KeyDef: classdef_stmt(parser, c); break;
         case OptSemic: scan_next_token(parser); break;
         default: push_error(parser,
@@ -1307,7 +1327,7 @@ static void class_stmt(bparser *parser)
         new_var(parser, name, &e);
         be_code_class(parser->finfo, &e, c);
         class_inherit(parser, &e);
-        class_block(parser, c);
+        class_block(parser, c, &e);
         be_class_compress(parser->vm, c); /* compress class size */
         match_token(parser, KeyEnd); /* skip 'end' */
     } else {

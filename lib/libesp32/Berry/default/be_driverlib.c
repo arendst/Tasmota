@@ -125,6 +125,7 @@ void be_load_driverlib(bvm *vm) {
 #if !BE_USE_PRECOMPILED_OBJECT
     static const bnfuncinfo members[] = {
         { "every_second", NULL },
+        { "every_50ms", NULL },
         { "every_100ms", NULL },
         { "web_add_handler", NULL },
         { "web_add_button", NULL },
@@ -155,6 +156,7 @@ void be_load_driverlib(bvm *vm) {
 
 class be_class_tasmota_driver (scope: global, name: Driver) {
     every_second, var
+    every_50ms, var
     every_100ms, var
     web_add_handler, var
     web_add_button, var

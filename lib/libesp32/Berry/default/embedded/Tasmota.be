@@ -242,15 +242,17 @@ class Tasmota2 : Tasmota
   end
 
   def event(type, cmd, idx, payload)
+    if type=='every_50ms' self.run_deferred() end  #- first run deferred events -#
+
     if type=='cmd' return self.exec_cmd(cmd, idx, payload)
     elif type=='rule' return self.exec_rules(payload)
     elif type=='mqtt_data' return nil
     elif type=='gc' return self.gc()
-    elif type=='every_50ms' return self.run_deferred()
     elif self._drivers
       for d:self._drivers
         try
           if   type=='every_second' && d.every_second                           d.every_second()
+          elif type=='every_50ms' && d.every_50ms                               d.every_50ms()
           elif type=='every_100ms' && d.every_100ms                             d.every_100ms()
           elif type=='web_add_button' && d.web_add_button                       d.web_add_button()
           elif type=='web_add_main_button' && d.web_add_main_button             d.web_add_main_button()
