@@ -456,7 +456,7 @@ const uint8_t meter[]=
 //0x77,0x07,0x01,0x00,0x01,0x08,0x01,0xff
 "1,77070101010801ff@1000," D_TPWRIN1 ",kWh," DJ_TPWRIN1 ",2|" // Verbrauch T1
 //0x77,0x07,0x01,0x00,0x01,0x07,0x00,0xff
-"1,77070100010700ff@1," D_TPWRCURR ",W," DJ_TPWRCURR ",0|" // Strom Gesamt 
+"1,77070100010700ff@1," D_TPWRCURR ",W," DJ_TPWRCURR ",0|" // Strom Gesamt
 //0x77,0x07,0x01,0x00,0x01,0x07,0x00,0xff
 "1,77070100150700ff@1," D_TPWRCURR1 ",W," DJ_TPWRCURR1 ",0|" // Strom L1
 //0x77,0x07,0x01,0x00,0x01,0x07,0x00,0xff
@@ -1436,6 +1436,13 @@ void SML_Decode(uint8_t index) {
       mp = strchr(mp, '|');
       if (mp) mp++;
       continue;
+    }
+
+    // =d must handle dindex
+    if (*mp == '=' && *(mp + 1) == 'd') {
+      if (index != mindex) {
+        dindex++;
+      }
     }
 
     if (index!=mindex) goto nextsect;
