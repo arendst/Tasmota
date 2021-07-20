@@ -1,7 +1,7 @@
 #include "be_constobj.h"
 
 static be_define_const_map_slots(be_class_lv_ctypes_map) {
-    { be_const_key(dot_def, -1), be_const_var(0) },
+    { be_const_key(dot_def, -1), be_const_index(0) },
     { be_const_key(setmember, -1), be_const_func(be_ctypes_setmember) },
     { be_const_key(init, -1), be_const_func(be_ctypes_init) },
     { be_const_key(member, 2), be_const_func(be_ctypes_member) },

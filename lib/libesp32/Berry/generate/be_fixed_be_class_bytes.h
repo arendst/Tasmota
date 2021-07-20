@@ -7,7 +7,7 @@ static be_define_const_map_slots(be_class_bytes_map) {
     { be_const_key(seti, -1), be_const_func(m_set) },
     { be_const_key(setitem, -1), be_const_func(m_setitem) },
     { be_const_key(item, 18), be_const_func(m_item) },
-    { be_const_key(dot_p, 3), be_const_var(0) },
+    { be_const_key(dot_p, 3), be_const_index(0) },
     { be_const_key(geti, -1), be_const_func(m_geti) },
     { be_const_key(opt_connect, -1), be_const_func(m_connect) },
     { be_const_key(tostring, -1), be_const_func(m_tostring) },
