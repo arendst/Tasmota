@@ -7,6 +7,7 @@
 
 extern int l_getFreeHeap(bvm *vm);
 extern int l_publish(bvm *vm);
+extern int l_publish_result(bvm *vm);
 extern int l_cmd(bvm *vm);
 extern int l_get_cb(bvm *vm);
 extern int l_getoption(bvm *vm);
@@ -2304,6 +2305,7 @@ void be_load_tasmota_ntvlib(bvm *vm)
         { "wire2", NULL },
         { "get_free_heap", l_getFreeHeap },
         { "publish", l_publish },
+        { "publish_result", l_publish_result },
         { "_cmd", l_cmd },
         { "_get_cb", l_get_cb },
         { "get_option", l_getoption },
@@ -2385,6 +2387,7 @@ class be_class_tasmota (scope: global, name: Tasmota) {
 
     get_free_heap, func(l_getFreeHeap)
     publish, func(l_publish)
+    publish_result, func(l_publish_result)
     _cmd, func(l_cmd)
     _get_cb, func(l_get_cb)
     get_option, func(l_getoption)
