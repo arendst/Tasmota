@@ -380,6 +380,12 @@ void setup(void) {
   } else {
     snprintf_P(TasmotaGlobal.hostname, sizeof(TasmotaGlobal.hostname)-1, SettingsText(SET_HOSTNAME));
   }
+  char *s = TasmotaGlobal.hostname;
+  while (*s) {
+    if (' ' == *s) { *s = '_'; }
+    s++;
+  }
+  snprintf_P(TasmotaGlobal.mqtt_topic, sizeof(TasmotaGlobal.mqtt_topic), ResolveToken(TasmotaGlobal.mqtt_topic).c_str());
 
   RtcInit();
   GpioInit();

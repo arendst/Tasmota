@@ -77,6 +77,13 @@ char* GetOtaUrl(char *otaurl, size_t otaurl_size)
   return otaurl;
 }
 
+String ResolveToken(const char* input) {
+  String resolved = input;
+  resolved.replace(F("%hostname%"), TasmotaGlobal.hostname);
+  resolved.replace(F("%id%"), NetworkUniqueId());
+  return resolved;
+}
+
 char* GetTopic_P(char *stopic, uint32_t prefix, char *topic, const char* subtopic)
 {
   /* prefix 0 = Cmnd
@@ -120,8 +127,7 @@ char* GetTopic_P(char *stopic, uint32_t prefix, char *topic, const char* subtopi
     fulltopic.replace(FPSTR(MQTT_TOKEN_PREFIX), SettingsText(SET_MQTTPREFIX1 + prefix));
 
     fulltopic.replace(FPSTR(MQTT_TOKEN_TOPIC), (const __FlashStringHelper *)topic);
-    fulltopic.replace(F("%hostname%"), TasmotaGlobal.hostname);
-    fulltopic.replace(F("%id%"), NetworkUniqueId());
+    fulltopic = ResolveToken(fulltopic.c_str());
   }
   fulltopic.replace(F("#"), "");
   fulltopic.replace(F("//"), "/");

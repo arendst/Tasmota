@@ -11,6 +11,10 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 - Disable PSRAM on unsupported hardware
+- Replace spaces by hyphens in final hostname (#12710)
+
+### Fixed
+- Discovery fails when using ``%hostname%`` in a topic (#12710)
 
 ## [9.5.0.2] 20210714
 ### Added
