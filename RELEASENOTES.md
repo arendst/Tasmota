@@ -69,7 +69,7 @@ Historical binaries can be downloaded from
 The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmota.com/tasmota/release/tasmota.bin.gz``
 
 ### ESP32 based
-The following binary downloads have been compiled with ESP32/Arduino library core version **1.0.6**.
+The following binary downloads have been compiled with ESP32/Arduino library core version **1.0.7.3**.
 
 - **tasmota32.bin** = The Tasmota version with most drivers including additional sensors and KNX for 4M+ flash.  **RECOMMENDED RELEASE BINARY**
 - **tasmota32_8M.bin** = The Tasmota version with most drivers including additional sensors and KNX for 8M+ flash.
@@ -114,7 +114,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - Support for CAN bus and Freedom Won Battery Management System by Marius Bezuidenhout [#12651](https://github.com/arendst/Tasmota/issues/12651)
 
 ### Changed
-- ESP32 core library from v1.0.6 to v1.0.7.1
+- ESP32 core library from v1.0.6 to v1.0.7.3
 - IRremoteESP8266 library from v2.7.18 to v2.7.19
 - ESP32 Ethernet Phy Type information to IDF v3+
 - Speed up initial GUI console refresh
@@ -131,6 +131,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 ### Fixed
 - ESP32 core v2.0.0 setting hostname
 - ESP32-C3 settings layout for configuration backup and restore
+- ESP32-Solo OTA upgrade
 - DDS238-2 wrong reactive power value [#12283](https://github.com/arendst/Tasmota/issues/12283)
 - ESP32 Webcam add boundary marker before sending mjpeg image [#12376](https://github.com/arendst/Tasmota/issues/12376)
 - NO VALID JSON regression from may 4th [#12440](https://github.com/arendst/Tasmota/issues/12440)
@@ -144,6 +145,3 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - Wi-Fi initial setup workaround for 11n only routers [#12566](https://github.com/arendst/Tasmota/issues/12566)
 - ESP32 do not use chip temperature sensor as global temperature if external temperature sensor is used [#12630](https://github.com/arendst/Tasmota/issues/12630)
 - Discovery fails when using ``%hostname%`` in a topic [#12710](https://github.com/arendst/Tasmota/issues/12710)
-
-### Noted
-- ESP32 single core **tasmota32solo1.bin** binary can only be uploaded using the GUI as OTA upload will trigger the watchdog timer. Fixed once https://github.com/espressif/arduino-esp32/pull/5426 is merged.
