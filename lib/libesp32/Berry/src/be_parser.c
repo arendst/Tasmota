@@ -1255,7 +1255,7 @@ static void class_static_assignment_expr(bparser *parser, bexpdesc *e, bstring *
 static void classstatic_stmt(bparser *parser, bclass *c, bexpdesc *e)
 {
     bstring *name;
-    /* 'static' ID {',' ID} */
+    /* 'static' ID ['=' expr] {',' ID ['=' expr] } */
     scan_next_token(parser); /* skip 'static' */
     if (match_id(parser, name) != NULL) {
         check_class_attr(parser, c, name);

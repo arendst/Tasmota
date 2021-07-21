@@ -226,8 +226,8 @@ extern void lv_ex_get_started_1(void);
 // - a callback, only 6 callbacks supported 0..5
 //   - '&1' callback 1
 //
-void be_check_arg_type(bvm *vm, int32_t argc, const char * arg_type, int32_t p[5]);
-void be_check_arg_type(bvm *vm, int32_t argc, const char * arg_type, int32_t p[5]) {
+void be_check_arg_type(bvm *vm, int32_t argc, const char * arg_type, int32_t p[8]);
+void be_check_arg_type(bvm *vm, int32_t argc, const char * arg_type, int32_t p[8]) {
   bool arg_type_check = (arg_type != nullptr);      // is type checking activated
   int32_t arg_idx = 0;    // position in arg_type string
   char type_short_name[32];
@@ -278,7 +278,8 @@ void be_check_arg_type(bvm *vm, int32_t argc, const char * arg_type, int32_t p[5
   }
 }
 
-typedef int32_t (*fn_any_callable)(int32_t p0, int32_t p1, int32_t p2, int32_t p3, int32_t p4);
+typedef int32_t (*fn_any_callable)(int32_t p0, int32_t p1, int32_t p2, int32_t p3,
+                                   int32_t p4, int32_t p5, int32_t p6, int32_t p7);
 extern "C" {
 
   void lv_init_set_member(bvm *vm, int index, void * ptr);
@@ -303,7 +304,7 @@ extern "C" {
     if ((int32_t)obj2 == -1) {  // special semantics if second ptr is -1, then just encapsulate
       obj = obj1;
     } else {                    // otherwise call the LVGL creator
-      obj = (lv_obj_t*) (*f)((int32_t)obj1, (int32_t)obj2, 0, 0, 0);
+      obj = (lv_obj_t*) (*f)((int32_t)obj1, (int32_t)obj2, 0, 0, 0, 0, 0, 0);
     }
     lv_init_set_member(vm, 1, obj);
     be_return_nil(vm);
@@ -379,7 +380,7 @@ extern "C" {
   }
 
   int be_call_c_func(bvm *vm, void * func, const char * return_type, const char * arg_type) {
-    int32_t p[5] = {0,0,0,0,0};
+    int32_t p[8] = {0,0,0,0,0,0,0,0};
     int32_t argc = be_top(vm); // Get the number of arguments
 
     // check if we call a constructor
@@ -391,7 +392,7 @@ extern "C" {
     fn_any_callable f = (fn_any_callable) func;
     be_check_arg_type(vm, argc, arg_type, p);
     // berry_log_C(">> be_call_c_func(%p) - %p,%p,%p,%p,%p - %s", f, p[0], p[1], p[2], p[3], p[4], return_type ? return_type : "NULL");
-    int32_t ret = (*f)(p[0], p[1], p[2], p[3], p[4]);
+    int32_t ret = (*f)(p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7]);
     // AddLog(LOG_LEVEL_INFO, ">> be_call_c_func, ret = %p", ret);
     if ((return_type == nullptr) || (strlen(return_type) == 0))       { be_return_nil(vm); }  // does not return
     else if (strlen(return_type) == 1) {

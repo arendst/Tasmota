@@ -1241,3 +1241,9 @@ uint32_t lv_img_buf_get_img_size(lv_coord_t w, lv_coord_t h, lv_img_cf_t cf);
 // void lv_img_cache_set_size(uint16_t new_slot_num);
 // void lv_img_cache_invalidate_src(const void * src);
 
+
+// ======================================================================
+// Artificial
+// ======================================================================
+
+void lv_refr_now(void);

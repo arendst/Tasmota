@@ -83,7 +83,7 @@
  * expanded if the number of free is less than BE_STACK_FREE_MIN.
  * Default: 10
  **/
-#define BE_STACK_FREE_MIN               10
+#define BE_STACK_FREE_MIN               25
 
 /* Macro: BE_STACK_FREE_MIN
  * The short string will hold the hash value when the value is
