@@ -209,6 +209,7 @@ extern "C" {
 extern "C" {
   
   typedef int32_t (*berry_callback_t)(int32_t v0, int32_t v1, int32_t v2, int32_t v3);
+  extern void BerryDumpErrorAndClear(bvm *vm, bool berry_console);
 
   int32_t call_berry_cb(int32_t num, int32_t v0, int32_t v1, int32_t v2, int32_t v3) {
     // call berry cb dispatcher
@@ -227,7 +228,11 @@ extern "C" {
         be_pushint(berry.vm, v2);
         be_pushint(berry.vm, v3);
 
-        be_pcall(berry.vm, 6);   // 5 arguments
+        ret = be_pcall(berry.vm, 6);   // 5 arguments
+        if (ret != 0) {
+          BerryDumpErrorAndClear(berry.vm, false);  // log in Tasmota console only
+          return 0;
+        }
         be_pop(berry.vm, 6);
 
         if (be_isint(berry.vm, -1) || be_isnil(berry.vm, -1)) {  // sanity check
@@ -381,8 +386,12 @@ int32_t lvbe_callback_x(uint32_t n, struct _lv_obj_t * obj, int32_t v1, int32_t 
   be_pushint(berry.vm, v2);
   be_pushint(berry.vm, v3);
   be_pushint(berry.vm, v4);
-  be_pcall(berry.vm, 6);
-  int32_t ret = be_toint(berry.vm, -7);
+  int32_t ret = be_pcall(berry.vm, 6);
+  if (ret != 0) {
+    BerryDumpErrorAndClear(berry.vm, false);  // log in Tasmota console only
+    return 0;
+  }
+  ret = be_toint(berry.vm, -7);
   be_pop(berry.vm, 7);
   // berry_log_P(">>>: Callback called out %d ret=%i", n, ret);
   return ret;

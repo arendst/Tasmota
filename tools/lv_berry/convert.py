@@ -39,6 +39,8 @@ return_types = {
   "const char *": "s",
   "lv_obj_user_data_t": "i",
 
+  "lv_objmask_mask_t *": ".",
+
   "lv_coord_t": "i",
   "lv_res_t": "i",
   "lv_style_int_t": "i",
@@ -78,6 +80,8 @@ return_types = {
   "lv_indev_type_t": "i",
   "lv_event_t": "i",
   "lv_signal_t": "i",
+  "lv_img_cf_t": "i",
+  "lv_draw_mask_line_side_t": "i",
 
   # "lv_signal_cb_t": "c",
   # "lv_design_cb_t": "c",

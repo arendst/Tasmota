@@ -43,10 +43,10 @@ static void m_solidify_bvalue(bvm *vm, bvalue * value)
         logfmt("be_const_bool(%i)", var_tobool(value));
         break;
     case BE_INT:
-        logfmt("be_const_int(%lli)", var_toint(value));
+        logfmt("be_const_int(%i)", var_toint(value));
         break;
     case BE_INDEX:
-        logfmt("be_const_index(%lli)", var_toint(value));
+        logfmt("be_const_index(%i)", var_toint(value));
         break;
     case BE_REAL:
 #if BE_USE_SINGLE_FLOAT
