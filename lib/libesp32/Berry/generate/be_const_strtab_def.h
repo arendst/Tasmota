@@ -266,6 +266,7 @@ be_define_const_str(load_freetype_font, "load_freetype_font", 2368447592u, 0, 18
 be_define_const_str(lv_draw_mask_map_param, "lv_draw_mask_map_param", 1666886804u, 0, 22, &be_const_str_lv_draw_mask_radius_param);
 be_define_const_str(lv_draw_mask_radius_param, "lv_draw_mask_radius_param", 3777679220u, 0, 25, &be_const_str_write);
 be_define_const_str(write, "write", 3190202204u, 0, 5, NULL);
+be_define_const_str(toint, "toint", 3613182909u, 0, 5, NULL);
 be_define_const_str(BACKLIGHT, "BACKLIGHT", 3147761926u, 0, 9, &be_const_str_FALLING);
 be_define_const_str(FALLING, "FALLING", 2851701064u, 0, 7, &be_const_str_ROT1B_NP);
 be_define_const_str(ROT1B_NP, "ROT1B_NP", 3710079736u, 0, 8, &be_const_str_ZIGBEE_RX);
@@ -787,7 +788,7 @@ static const bstring* const m_string_table[] = {
     (const bstring *)&be_const_str_gamma8,
     (const bstring *)&be_const_str_BUZZER,
     (const bstring *)&be_const_str_RDM6300_RX,
-    NULL,
+    (const bstring *)&be_const_str_toint,
     (const bstring *)&be_const_str_BACKLIGHT,
     (const bstring *)&be_const_str_ILI9341_CS,
     (const bstring *)&be_const_str_SYMBOL_WARNING,
@@ -980,6 +981,6 @@ static const bstring* const m_string_table[] = {
 
 static const struct bconststrtab m_const_string_table = {
     .size = 318,
-    .count = 636,
+    .count = 637,
     .table = m_string_table
 };

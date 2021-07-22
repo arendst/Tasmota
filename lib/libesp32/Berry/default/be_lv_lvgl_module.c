@@ -34,6 +34,7 @@ static int lv_get_ver_res(void) {
 /* `lv` methods */
 const lvbe_call_c_t lv_func[] = {
 
+  { "color_mix", (void*) &lv_color_mix, "lv_color", "(lv_color)(lv_color)i" },
   { "draw_arc", (void*) &lv_draw_arc, "", "iiiii(lv_area)(lv_draw_line_dsc)" },
   { "draw_img", (void*) &lv_draw_img, "", "(lv_area)(lv_area).(lv_draw_img_dsc)" },
   { "draw_img_dsc_init", (void*) &lv_draw_img_dsc_init, "", "(lv_draw_img_dsc)" },
@@ -54,6 +55,7 @@ const lvbe_call_c_t lv_func[] = {
   { "draw_polygon", (void*) &lv_draw_polygon, "", "ii(lv_area)(lv_draw_rect_dsc)" },
   { "draw_px", (void*) &lv_draw_px, "", "(lv_point)(lv_area)(lv_style)" },
   { "draw_rect", (void*) &lv_draw_rect, "", "(lv_area)(lv_area)(lv_draw_rect_dsc)" },
+  { "draw_rect_dsc_init", (void*) &lv_draw_rect_dsc_init, "", "(lv_draw_rect_dsc)" },
   { "draw_triangle", (void*) &lv_draw_triangle, "", "i(lv_area)(lv_draw_rect_dsc)" },
   { "event_get_data", (void*) &lv_event_get_data, ".", "" },
   { "event_send", (void*) &lv_event_send, "i", "(lv_obj)i." },

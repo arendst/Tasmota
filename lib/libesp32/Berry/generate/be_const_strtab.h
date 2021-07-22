@@ -266,6 +266,7 @@ extern const bcstring be_const_str_load_freetype_font;
 extern const bcstring be_const_str_lv_draw_mask_map_param;
 extern const bcstring be_const_str_lv_draw_mask_radius_param;
 extern const bcstring be_const_str_write;
+extern const bcstring be_const_str_toint;
 extern const bcstring be_const_str_BACKLIGHT;
 extern const bcstring be_const_str_FALLING;
 extern const bcstring be_const_str_ROT1B_NP;

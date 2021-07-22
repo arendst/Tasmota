@@ -439,18 +439,24 @@ extern "C" {
     return *col;
   }
   inline uint32_t lv_color_to_uint32(lv_color_t col) {
-    uint32_t *p = (uint32_t*) &col;
+    uint16_t *p = (uint16_t*) &col;
     return *p;
   }
 
   // lv_color
+  // First arg is a 24 bits RGB color
+  // If first arg is `nil` second arg is the native value of color
   int lco_init(bvm *vm) {
     int argc = be_top(vm);
-    uint32_t color = 0x0000;    // default to black
-    if (argc > 1 && be_isint(vm, 2)) {
-      color = be_toint(vm, 2);
+    uint32_t color32 = 0x000000;    // default to black
+
+    if (argc > 1) {
+      color32 = be_toint(vm, 2);
     }
-    lv_color_t lv_color = lv_color_hex(color);
+    lv_color_t lv_color = lv_color_hex(color32);
+    if (argc > 2 && be_toint(vm, 3) == -1) {
+      lv_color.full = be_toint(vm, 2);
+    }
     be_pushint(vm, lv_color_to_uint32(lv_color));
     be_setmember(vm, 1, ".p");
     be_return_nil(vm);
@@ -461,11 +467,19 @@ extern "C" {
     be_getmember(vm, 1, ".p");
     uint32_t ntv_color = be_toint(vm, -1);
     lv_color = lv_color_from_uint32(ntv_color);
-    uint32_t color = lv_color_to32(lv_color);
+    uint32_t color = lv_color_to32(lv_color) & 0xFFFFFF;
     be_pop(vm, 1);  // remove attribute
     char s[48];
     snprintf(s, sizeof(s), "lv_color(0x%06x - native:0x%04x)", color, ntv_color);
     be_pushnstring(vm, s, strlen(s)); /* make escape string from buffer */
+    be_return(vm);
+  }
+
+  int lco_toint(bvm *vm) {
+    lv_color_t lv_color = {};
+    be_getmember(vm, 1, ".p");
+    uint32_t ntv_color = be_toint(vm, -1);
+    be_pushint(vm, ntv_color);
     be_return(vm);
   }
 

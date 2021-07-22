@@ -38,7 +38,6 @@ int32_t bin_search_ctypes(const char * needle, const void * table, size_t elt_si
 
 
 enum {
-
     ctypes_i32    = 14,
     ctypes_i16    = 12,
     ctypes_i8     = 11,
@@ -62,7 +61,8 @@ typedef struct be_ctypes_structure_item_t {
     uint16_t  offset_bytes;
     uint8_t   offset_bits : 3;
     uint8_t   len_bits : 5;
-    int8_t    type;
+    int8_t    type : 5;
+    uint8_t   mapping : 3;
 } be_ctypes_structure_item_t;
 
 typedef struct be_ctypes_structure_t {
@@ -78,6 +78,7 @@ typedef struct be_ctypes_class_t {
 
 typedef struct be_ctypes_classes_t {
     uint16_t  size;
+    const char **instance_mapping;  /* array of instance class names for automatic instanciation of class */
     const be_ctypes_class_t * classes;
 } be_ctypes_classes_t;
 
@@ -176,7 +177,7 @@ int be_ctypes_member(bvm *vm) {
             be_pushint(vm, member->len_bits);
             be_call(vm, 3);
             be_pop(vm, 3);
-            be_return(vm);
+            // int result at top of stack
         } else {
             // general int support
             int size = member->type;       // eventually 1/2/4, positive if little endian, negative if big endian
@@ -196,8 +197,28 @@ int be_ctypes_member(bvm *vm) {
             be_pushint(vm, size);
             be_call(vm, 3);
             be_pop(vm, 3);
-            be_return(vm);
+            // int result at top of stack
         }
+        // the int result is at top of the stack
+        // check if we need an instance mapping
+        if (member->mapping > 0) {
+            // find the name of the class
+
+            // get global array of classes from global variable '.ctypes_classes'
+            be_getglobal(vm, ".ctypes_classes");
+            const be_ctypes_classes_t * be_ctypes_classes = (const be_ctypes_classes_t *) be_tocomptr(vm, -1);
+            be_pop(vm, 1);
+
+            const char * mapping_name = be_ctypes_classes->instance_mapping[member->mapping - 1];
+            if (mapping_name) {
+                be_getglobal(vm, mapping_name);     // stack: class
+                be_pushvalue(vm, -2);               // stack: class, value
+                be_pushint(vm, -1);                 // stack; class, value, -1
+                be_call(vm, 2);                     // call constructor with 2 parameters
+                be_pop(vm, 2);                      // leave new instance on top of stack
+            }
+        }
+        be_return(vm);
     }
 
     be_return_nil(vm);
@@ -209,6 +230,22 @@ int be_ctypes_member(bvm *vm) {
 // 3: value
 int be_ctypes_setmember(bvm *vm) {
     int argc = be_top(vm);
+
+    // If the value is an instance, we call 'toint()' and replace the value
+    if (be_isinstance(vm, 3)) {
+
+        be_getmember(vm, 3, "toint");
+        if (!be_isnil(vm, -1)) {
+            be_pushvalue(vm, 3);
+            be_call(vm, 1);
+            be_pop(vm, 1);
+            be_moveto(vm, -1, 3);
+        } else {
+            be_raise(vm, "value_error", "Value is an instance without 'toint()' method");
+        }
+        be_pop(vm, 1);
+    }
+
     be_getmember(vm, 1, ".def");
     const be_ctypes_structure_t *definitions;
     definitions = (const be_ctypes_structure_t *) be_tocomptr(vm, -1);
