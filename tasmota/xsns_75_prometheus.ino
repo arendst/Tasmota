@@ -164,7 +164,7 @@ void WritePromMetricStr(const char *name, uint8_t flags, const char *value, ...)
   va_end(labels);
 }
 
-// Sentinel value for known memory metrics, chosen to unlikely match actual
+// Sentinel value for unknown memory metrics, chosen to unlikely match actual
 // values.
 const uint32_t kPromMemoryUnknown = 0xFFFFFFFF - 1;
 
