@@ -78,7 +78,7 @@ static int m_setmember(bvm *vm)
 
 #if !BE_USE_PRECOMPILED_OBJECT
 be_native_module_attr_table(introspect) {
-    be_native_module_function("attrlist", m_attrlist),
+    be_native_module_function("members", m_attrlist),
 
     be_native_module_function("get", m_findmember),
     be_native_module_function("set", m_setmember),
@@ -88,7 +88,7 @@ be_define_native_module(introspect, NULL);
 #else
 /* @const_object_info_begin
 module introspect (scope: global, depend: BE_USE_INTROSPECT_MODULE) {
-    attrlist, func(m_attrlist)
+    members, func(m_attrlist)
 
     get, func(m_findmember)
     set, func(m_setmember)
