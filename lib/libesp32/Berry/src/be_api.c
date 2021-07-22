@@ -208,6 +208,12 @@ BERRY_API bbool be_isinstance(bvm *vm, int index)
     return var_isinstance(v);
 }
 
+BERRY_API bbool be_ismodule(bvm *vm, int index)
+{
+    bvalue *v = be_indexof(vm, index);
+    return var_ismodule(v);
+}
+
 BERRY_API bbool be_islist(bvm *vm, int index)
 {
     bvalue *v = be_indexof(vm, index);
