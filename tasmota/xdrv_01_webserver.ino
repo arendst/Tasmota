@@ -390,7 +390,8 @@ const char kLoggingLevels[] PROGMEM = D_NONE "|" D_ERROR "|" D_INFO "|" D_DEBUG 
 const char kEmulationOptions[] PROGMEM = D_NONE "|" D_BELKIN_WEMO "|" D_HUE_BRIDGE;
 
 const char kUploadErrors[] PROGMEM =
-  D_UPLOAD_ERR_1 "|" D_UPLOAD_ERR_2 "|" D_UPLOAD_ERR_3 "|" D_UPLOAD_ERR_4 "|" D_UPLOAD_ERR_5 "|" D_UPLOAD_ERR_6 "|" D_UPLOAD_ERR_7 "|" D_UPLOAD_ERR_8 "|" D_UPLOAD_ERR_9;
+//  D_UPLOAD_ERR_1 "|" D_UPLOAD_ERR_2 "|" D_UPLOAD_ERR_3 "|" D_UPLOAD_ERR_4 "|" D_UPLOAD_ERR_5 "|" D_UPLOAD_ERR_6 "|" D_UPLOAD_ERR_7 "|" D_UPLOAD_ERR_8 "|" D_UPLOAD_ERR_9;
+  D_UPLOAD_ERR_1 "|" D_UPLOAD_ERR_2 "|" D_UPLOAD_ERR_3 "|" D_UPLOAD_ERR_4 "| |" D_UPLOAD_ERR_6 "|" D_UPLOAD_ERR_7 "|" D_UPLOAD_ERR_8 "|" D_UPLOAD_ERR_9;
 
 const uint16_t DNS_PORT = 53;
 enum HttpOptions {HTTP_OFF, HTTP_USER, HTTP_ADMIN, HTTP_MANAGER, HTTP_MANAGER_RESET_ONLY};
@@ -1830,8 +1831,8 @@ void HandleWifiConfiguration(void) {
 
   if ( WIFI_TEST_FINISHED == Web.wifiTest ) {
     Web.wifiTest = WIFI_NOT_TESTING;
-    if (Web.wifi_test_AP_TIMEOUT) {   
-      WebRestart(1); // Save credentials and Force Restart in STA only mode (11n-only routers) 
+    if (Web.wifi_test_AP_TIMEOUT) {
+      WebRestart(1); // Save credentials and Force Restart in STA only mode (11n-only routers)
     } else {
 #if (RESTART_AFTER_INITIAL_WIFI_CONFIG)
       WebRestart(3);
@@ -2722,7 +2723,8 @@ void HandleUploadLoop(void) {
     }
 #endif  // USE_WEB_FW_UPGRADE
     else if (Update.write(upload.buf, upload.currentSize) != upload.currentSize) {
-      Web.upload_error = 5;  // Upload buffer miscompare
+//      Web.upload_error = 5;  // Upload buffer miscompare
+      Web.upload_error = 2;  // Not enough space
       return;
     }
     if (upload.totalSize && !(upload.totalSize % 102400)) {
@@ -3329,7 +3331,7 @@ bool Xdrv01(uint8_t function)
               //
               //   If it fails again, depending on the WIFICONFIG settings, the user will need to wait or will need to
               //   push 6 times the button to enable Tasmota AP mode again.
-              if (Web.wifi_test_AP_TIMEOUT) {   
+              if (Web.wifi_test_AP_TIMEOUT) {
                 Web.wifiTest = WIFI_TEST_FINISHED;
                 AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_CMND_SSID "1 %s: " D_ATTEMPTING_CONNECTION), SettingsText(SET_STASSID1) );
                 if (MAX_WIFI_OPTION != Web.old_wificonfig) {

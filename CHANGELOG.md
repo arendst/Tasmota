@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file.
 - ESP32 core library from v1.0.7.1 to v1.0.7.3
 - Disable PSRAM on unsupported hardware
 - Replace spaces by hyphens in final hostname (#12710)
+- Message ``Upload buffer miscompare`` into ``Not enough space``
 
 ### Fixed
 - Discovery fails when using ``%hostname%`` in a topic (#12710)
