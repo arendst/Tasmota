@@ -112,6 +112,8 @@ extern void be_load_lvgl_cb_lib(bvm *vm);
 extern void be_load_lvgl_cb_all_lib(bvm *vm);
 extern void be_load_lvgl_ctypes_lib(bvm *vm);
 extern void be_load_ctypes_definitions_lib(bvm *vm);
+// custom widgets
+extern void be_load_lv_signal_bars_class(bvm *vm);
 #endif// USE_LVGL
 
 /* this code loads the native class definitions */
@@ -143,6 +145,8 @@ BERRY_API void be_load_custom_libs(bvm *vm)
     be_load_lvgl_cb_all_lib(vm);
     be_load_lvgl_ctypes_lib(vm);
     be_load_ctypes_definitions_lib(vm);
+    // custom widgets
+    be_load_lv_signal_bars_class(vm);
 #endif // USE_LVGL
 }
 #endif

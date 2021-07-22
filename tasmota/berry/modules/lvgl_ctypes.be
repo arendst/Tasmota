@@ -11,7 +11,7 @@ import ctypes
 ctypes.print_types()
 
 lv_style_int = ctypes.i16
-lv_color = ctypes.u16        # depends on colors
+lv_color = [ctypes.u16, "lv_color"]        # cast to the class instance, constructor is called with 2 args: (nil, value)
 lv_grad_dir = ctypes.u8
 lv_opa = ctypes.u8
 lv_blend_mode = ctypes.u8

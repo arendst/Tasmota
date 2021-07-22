@@ -1851,54 +1851,47 @@ static const bclosure wire_scan_closure = {
 /********************************************************************
 ** Solidified function: time_str
 ********************************************************************/
-
-/********** Solidified proto: time_str */
-be_define_local_const_str(time_str_str_name, "time_str", -1681139684, 8);
-be_define_local_const_str(time_str_str_source, "input", -103256197, 5);
-be_define_local_const_str(time_str_str_0, "string", 398550328, 6);
-be_define_local_const_str(time_str_str_1, "time_dump", -964556549, 9);
-be_define_local_const_str(time_str_str_2, "format", -1180859054, 6);
-be_define_local_const_str(time_str_str_3, "%04d-%02d-%02dT%02d:%02d:%02d", -869438695, 29);
-be_define_local_const_str(time_str_str_4, "year", -1367388900, 4);
-be_define_local_const_str(time_str_str_5, "month", -696646139, 5);
-be_define_local_const_str(time_str_str_6, "day", -464576003, 3);
-be_define_local_const_str(time_str_str_7, "hour", -1241306097, 4);
-be_define_local_const_str(time_str_str_8, "min", -913357481, 3);
-be_define_local_const_str(time_str_str_9, "sec", -1155074638, 3);
-
-static const bvalue time_str_ktab[10] = {
-  { { .s=be_local_const_str(time_str_str_0) }, BE_STRING},
-  { { .s=be_local_const_str(time_str_str_1) }, BE_STRING},
-  { { .s=be_local_const_str(time_str_str_2) }, BE_STRING},
-  { { .s=be_local_const_str(time_str_str_3) }, BE_STRING},
-  { { .s=be_local_const_str(time_str_str_4) }, BE_STRING},
-  { { .s=be_local_const_str(time_str_str_5) }, BE_STRING},
-  { { .s=be_local_const_str(time_str_str_6) }, BE_STRING},
-  { { .s=be_local_const_str(time_str_str_7) }, BE_STRING},
-  { { .s=be_local_const_str(time_str_str_8) }, BE_STRING},
-  { { .s=be_local_const_str(time_str_str_9) }, BE_STRING},
-};
-
-static const uint32_t time_str_code[14] = {
-  0xA40A0000,  //  0000  IMPORT	R2	R256
-  0x8C0C0101,  //  0001  GETMET	R3	R0	R257
-  0x5C140200,  //  0002  MOVE	R5	R1
-  0x7C0C0400,  //  0003  CALL	R3	2
-  0x8C100502,  //  0004  GETMET	R4	R2	R258
-  0x58180003,  //  0005  LDCONST	R6	K3
-  0x941C0704,  //  0006  GETIDX	R7	R3	R260
-  0x94200705,  //  0007  GETIDX	R8	R3	R261
-  0x94240706,  //  0008  GETIDX	R9	R3	R262
-  0x94280707,  //  0009  GETIDX	R10	R3	R263
-  0x942C0708,  //  000A  GETIDX	R11	R3	R264
-  0x94300709,  //  000B  GETIDX	R12	R3	R265
-  0x7C101000,  //  000C  CALL	R4	8
-  0x80040800,  //  000D  RET	1	R4
-};
-
-be_define_local_proto(time_str, 13, 2, 1, 0, 0);
-be_define_local_closure(time_str);
-
+be_local_closure(time_str,   /* name */
+  be_nested_proto(
+    13,                          /* nstack */
+    2,                          /* argc */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[10]) {     /* constants */
+      be_nested_string("string", 398550328, 6),
+      be_nested_string("time_dump", -964556549, 9),
+      be_nested_string("format", -1180859054, 6),
+      be_nested_string("%04d-%02d-%02dT%02d:%02d:%02d", -869438695, 29),
+      be_nested_string("year", -1367388900, 4),
+      be_nested_string("month", -696646139, 5),
+      be_nested_string("day", -464576003, 3),
+      be_nested_string("hour", -1241306097, 4),
+      be_nested_string("min", -913357481, 3),
+      be_nested_string("sec", -1155074638, 3),
+    }),
+    (be_nested_const_str("time_str", -1681139684, 8)),
+    (be_nested_const_str("input", -103256197, 5)),
+    ( &(const binstruction[14]) {  /* code */
+      0xA40A0000,  //  0000  IMPORT	R2	R256
+      0x8C0C0101,  //  0001  GETMET	R3	R0	R257
+      0x5C140200,  //  0002  MOVE	R5	R1
+      0x7C0C0400,  //  0003  CALL	R3	2
+      0x8C100502,  //  0004  GETMET	R4	R2	R258
+      0x58180003,  //  0005  LDCONST	R6	K3
+      0x941C0704,  //  0006  GETIDX	R7	R3	R260
+      0x94200705,  //  0007  GETIDX	R8	R3	R261
+      0x94240706,  //  0008  GETIDX	R9	R3	R262
+      0x94280707,  //  0009  GETIDX	R10	R3	R263
+      0x942C0708,  //  000A  GETIDX	R11	R3	R264
+      0x94300709,  //  000B  GETIDX	R12	R3	R265
+      0x7C101000,  //  000C  CALL	R4	8
+      0x80040800,  //  000D  RET	1	R4
+    })
+  )
+);
 /*******************************************************************/
 
 /********************************************************************
@@ -2174,115 +2167,112 @@ static const bclosure set_light_closure = {
 
 /*******************************************************************/
 
-
 /********************************************************************
 ** Solidified function: cb_dispatch
 ********************************************************************/
-
-/********** Solidified proto: cb_dispatch */
-be_define_local_const_str(cb_dispatch_str_name, "cb_dispatch", 1741510499, 11);
-be_define_local_const_str(cb_dispatch_str_source, "input", -103256197, 5);
-be_define_local_const_str(cb_dispatch_str_0, "_cb", -251666929, 3);
-be_define_local_const_str(cb_dispatch_str_2, "find", -1108310694, 4);
-
-static const bvalue cb_dispatch_ktab[3] = {
-  { { .s=be_local_const_str(cb_dispatch_str_0) }, BE_STRING},
-  { { .i=0 }, BE_INT},
-  { { .s=be_local_const_str(cb_dispatch_str_2) }, BE_STRING},
-};
-
-static const uint32_t cb_dispatch_code[20] = {
-  0x88180100,  //  0000  GETMBR	R6	R0	R256
-  0x4C1C0000,  //  0001  LDNIL	7
-  0x1C180C07,  //  0002  EQ	R6	R6	R7
-  0x781A0000,  //  0003  JMPF	R6	#0005
-  0x80060200,  //  0004  RET	1	R257
-  0x88180100,  //  0005  GETMBR	R6	R0	R256
-  0x8C180D02,  //  0006  GETMET	R6	R6	R258
-  0x5C200200,  //  0007  MOVE	R8	R1
-  0x7C180400,  //  0008  CALL	R6	2
-  0x4C1C0000,  //  0009  LDNIL	7
-  0x201C0C07,  //  000A  NE	R7	R6	R7
-  0x781E0006,  //  000B  JMPF	R7	#0013
-  0x5C1C0C00,  //  000C  MOVE	R7	R6
-  0x5C200400,  //  000D  MOVE	R8	R2
-  0x5C240600,  //  000E  MOVE	R9	R3
-  0x5C280800,  //  000F  MOVE	R10	R4
-  0x5C2C0A00,  //  0010  MOVE	R11	R5
-  0x7C1C0800,  //  0011  CALL	R7	4
-  0x80040E00,  //  0012  RET	1	R7
-  0x80060200,  //  0013  RET	1	R257
-};
-
-be_define_local_proto(cb_dispatch, 12, 6, 1, 0, 0);
-be_define_local_closure(cb_dispatch);
-
+be_local_closure(cb_dispatch,   /* name */
+  be_nested_proto(
+    12,                          /* nstack */
+    6,                          /* argc */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 3]) {     /* constants */
+      be_nested_string("_cb", -251666929, 3),
+      be_const_int(0),
+      be_nested_string("find", -1108310694, 4),
+    }),
+    (be_nested_const_str("cb_dispatch", 1741510499, 11)),
+    (be_nested_const_str("input", -103256197, 5)),
+    ( &(const binstruction[20]) {  /* code */
+      0x88180100,  //  0000  GETMBR	R6	R0	R256
+      0x4C1C0000,  //  0001  LDNIL	7
+      0x1C180C07,  //  0002  EQ	R6	R6	R7
+      0x781A0000,  //  0003  JMPF	R6	#0005
+      0x80060200,  //  0004  RET	1	R257
+      0x88180100,  //  0005  GETMBR	R6	R0	R256
+      0x8C180D02,  //  0006  GETMET	R6	R6	R258
+      0x5C200200,  //  0007  MOVE	R8	R1
+      0x7C180400,  //  0008  CALL	R6	2
+      0x4C1C0000,  //  0009  LDNIL	7
+      0x201C0C07,  //  000A  NE	R7	R6	R7
+      0x781E0006,  //  000B  JMPF	R7	#0013
+      0x5C1C0C00,  //  000C  MOVE	R7	R6
+      0x5C200400,  //  000D  MOVE	R8	R2
+      0x5C240600,  //  000E  MOVE	R9	R3
+      0x5C280800,  //  000F  MOVE	R10	R4
+      0x5C2C0A00,  //  0010  MOVE	R11	R5
+      0x7C1C0800,  //  0011  CALL	R7	4
+      0x80040E00,  //  0012  RET	1	R7
+      0x80060200,  //  0013  RET	1	R257
+    })
+  )
+);
 /*******************************************************************/
 
 /********************************************************************
 ** Solidified function: gen_cb
 ********************************************************************/
-
-/********** Solidified proto: gen_cb */
-be_define_local_const_str(gen_cb_str_name, "gen_cb", -1049739745, 6);
-be_define_local_const_str(gen_cb_str_source, "input", -103256197, 5);
-be_define_local_const_str(gen_cb_str_0, "_cb", -251666929, 3);
-be_define_local_const_str(gen_cb_str_2, "find", -1108310694, 4);
-be_define_local_const_str(gen_cb_str_3, "_get_cb", 1448849122, 7);
-be_define_local_const_str(gen_cb_str_4, "stop_iteration", -121173395, 14);
-be_define_local_const_str(gen_cb_str_5, "internal_error", -1775809127, 14);
-be_define_local_const_str(gen_cb_str_6, "No callback available", 633786138, 21);
-
-static const bvalue gen_cb_ktab[7] = {
-  { { .s=be_local_const_str(gen_cb_str_0) }, BE_STRING},
-  { { .i=0 }, BE_INT},
-  { { .s=be_local_const_str(gen_cb_str_2) }, BE_STRING},
-  { { .s=be_local_const_str(gen_cb_str_3) }, BE_STRING},
-  { { .s=be_local_const_str(gen_cb_str_4) }, BE_STRING},
-  { { .s=be_local_const_str(gen_cb_str_5) }, BE_STRING},
-  { { .s=be_local_const_str(gen_cb_str_6) }, BE_STRING},
-};
-
-static const uint32_t gen_cb_code[34] = {
-  0x88080100,  //  0000  GETMBR	R2	R0	R256
-  0x4C0C0000,  //  0001  LDNIL	3
-  0x1C080403,  //  0002  EQ	R2	R2	R3
-  0x780A0002,  //  0003  JMPF	R2	#0007
-  0x6008000B,  //  0004  GETGBL	R2	G11
-  0x7C080000,  //  0005  CALL	R2	0
-  0x90020002,  //  0006  SETMBR	R0	R256	R2
-  0x60080000,  //  0007  GETGBL	R2	G0
-  0x540E0012,  //  0008  LDINT	R3	19
-  0x400E0203,  //  0009  CONNECT	R3	R257	R3
-  0x7C080200,  //  000A  CALL	R2	1
-  0xA8020010,  //  000B  EXBLK	0	#001D
-  0x5C0C0400,  //  000C  MOVE	R3	R2
-  0x7C0C0000,  //  000D  CALL	R3	0
-  0x88100100,  //  000E  GETMBR	R4	R0	R256
-  0x8C100902,  //  000F  GETMET	R4	R4	R258
-  0x5C180600,  //  0010  MOVE	R6	R3
-  0x7C100400,  //  0011  CALL	R4	2
-  0x4C140000,  //  0012  LDNIL	5
-  0x1C100805,  //  0013  EQ	R4	R4	R5
-  0x78120006,  //  0014  JMPF	R4	#001C
-  0x88100100,  //  0015  GETMBR	R4	R0	R256
-  0x98100601,  //  0016  SETIDX	R4	R3	R1
-  0x8C100103,  //  0017  GETMET	R4	R0	R259
-  0x5C180600,  //  0018  MOVE	R6	R3
-  0x7C100400,  //  0019  CALL	R4	2
-  0xA8040001,  //  001A  EXBLK	1	1
-  0x80040800,  //  001B  RET	1	R4
-  0x7001FFEE,  //  001C  JMP		#000C
-  0x58080004,  //  001D  LDCONST	R2	K4
-  0xAC080200,  //  001E  CATCH	R2	1	0
-  0xB0080000,  //  001F  RAISE	2	R0	R0
-  0xB0060B06,  //  0020  RAISE	1	R261	R262
-  0x80000000,  //  0021  RET	0	R0
-};
-
-be_define_local_proto(gen_cb, 7, 2, 1, 0, 0);
-be_define_local_closure(gen_cb);
-
+be_local_closure(gen_cb,   /* name */
+  be_nested_proto(
+    7,                          /* nstack */
+    2,                          /* argc */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 7]) {     /* constants */
+      be_nested_string("_cb", -251666929, 3),
+      be_const_int(0),
+      be_nested_string("find", -1108310694, 4),
+      be_nested_string("_get_cb", 1448849122, 7),
+      be_nested_string("stop_iteration", -121173395, 14),
+      be_nested_string("internal_error", -1775809127, 14),
+      be_nested_string("No callback available", 633786138, 21),
+    }),
+    (be_nested_const_str("gen_cb", -1049739745, 6)),
+    (be_nested_const_str("input", -103256197, 5)),
+    ( &(const binstruction[34]) {  /* code */
+      0x88080100,  //  0000  GETMBR	R2	R0	R256
+      0x4C0C0000,  //  0001  LDNIL	3
+      0x1C080403,  //  0002  EQ	R2	R2	R3
+      0x780A0002,  //  0003  JMPF	R2	#0007
+      0x6008000B,  //  0004  GETGBL	R2	G11
+      0x7C080000,  //  0005  CALL	R2	0
+      0x90020002,  //  0006  SETMBR	R0	R256	R2
+      0x60080000,  //  0007  GETGBL	R2	G0
+      0x540E0012,  //  0008  LDINT	R3	19
+      0x400E0203,  //  0009  CONNECT	R3	R257	R3
+      0x7C080200,  //  000A  CALL	R2	1
+      0xA8020010,  //  000B  EXBLK	0	#001D
+      0x5C0C0400,  //  000C  MOVE	R3	R2
+      0x7C0C0000,  //  000D  CALL	R3	0
+      0x88100100,  //  000E  GETMBR	R4	R0	R256
+      0x8C100902,  //  000F  GETMET	R4	R4	R258
+      0x5C180600,  //  0010  MOVE	R6	R3
+      0x7C100400,  //  0011  CALL	R4	2
+      0x4C140000,  //  0012  LDNIL	5
+      0x1C100805,  //  0013  EQ	R4	R4	R5
+      0x78120006,  //  0014  JMPF	R4	#001C
+      0x88100100,  //  0015  GETMBR	R4	R0	R256
+      0x98100601,  //  0016  SETIDX	R4	R3	R1
+      0x8C100103,  //  0017  GETMET	R4	R0	R259
+      0x5C180600,  //  0018  MOVE	R6	R3
+      0x7C100400,  //  0019  CALL	R4	2
+      0xA8040001,  //  001A  EXBLK	1	1
+      0x80040800,  //  001B  RET	1	R4
+      0x7001FFEE,  //  001C  JMP		#000C
+      0x58080004,  //  001D  LDCONST	R2	K4
+      0xAC080200,  //  001E  CATCH	R2	1	0
+      0xB0080000,  //  001F  RAISE	2	R0	R0
+      0xB0060B06,  //  0020  RAISE	1	R261	R262
+      0x80000000,  //  0021  RET	0	R0
+    })
+  )
+);
 /*******************************************************************/
 
 

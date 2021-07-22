@@ -43,10 +43,18 @@ static void m_solidify_bvalue(bvm *vm, bvalue * value)
         logfmt("be_const_bool(%i)", var_tobool(value));
         break;
     case BE_INT:
+#if BE_INTGER_TYPE == 2
+        logfmt("be_const_int(%lli)", var_toint(value));
+#else
         logfmt("be_const_int(%i)", var_toint(value));
+#endif
         break;
     case BE_INDEX:
+#if BE_INTGER_TYPE == 2
+        logfmt("be_const_index(%lli)", var_toint(value));
+#else
         logfmt("be_const_index(%i)", var_toint(value));
+#endif
         break;
     case BE_REAL:
 #if BE_USE_SINGLE_FLOAT
@@ -199,11 +207,14 @@ static void m_solidify_class(bvm *vm, bclass *cl, int builtins)
     logfmt("** Solidified class: %s\n", class_name);
     logfmt("********************************************************************/\n");
 
+    if (cl->super) {
+        logfmt("extern const bclass be_class_%s;\n", str(cl->super->name));
+    }
 
     logfmt("be_local_class(%s,\n", class_name);
     logfmt("    %i,\n", cl->nvar);
     if (cl->super) {
-        logfmt("    &be_%s_class,\n", str(cl->super->name));
+        logfmt("    &be_class_%s,\n", str(cl->super->name));
     } else {
         logfmt("    NULL,\n");
     }
