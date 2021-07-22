@@ -195,7 +195,8 @@ struct
   bool init_done = false;
   bool scroll = false;
   bool show_clock = false;
-  bool clock_24 = false;
+  bool clock_24 = true;
+  uint8_t brightness = 1;
 } TM1637Data;
 
 /*********************************************************************************************\
@@ -946,18 +947,29 @@ bool CmndTM1637Clock(void)
 }
 
 /*********************************************************************************************\
+* Set display dimmer
+\*********************************************************************************************/
+bool CmndTM1637Dim(void)
+{
+    TM1637Data.brightness = XdrvMailbox.payload;
+    TM1637Dim();
+    return true;
+}
+
+/*********************************************************************************************\
 * refreshes the time if clock is displayed
 \*********************************************************************************************/
 void TM1637ShowTime()
 {
   uint8_t hr = RtcTime.hour;
   uint8_t mn = RtcTime.minute;
+  uint8_t sc = RtcTime.second;
   // uint8_t hr = 1;
   // uint8_t mn = 0;
   char z = ' ';
   if (TM1637Data.clock_24)
   {
-    z = '0';
+    z = ' ';
   }
   else
   {
@@ -966,22 +978,25 @@ void TM1637ShowTime()
     if (hr == 0)
       hr = 12;
   }
-
+  
   char tm[5];
-  if (hr < 10)
-  {
-    if (mn < 10)
-      snprintf(tm, sizeof(tm), PSTR("%c%d0%d"), z, hr, mn);
-    else
-      snprintf(tm, sizeof(tm), PSTR("%c%d%d"), z, hr, mn);
-  }
-  else
-  {
-    if (mn < 10)
-      snprintf(tm, sizeof(tm), PSTR("%d0%d"), hr, mn);
-    else
-      snprintf(tm, sizeof(tm), PSTR("%d%d"), hr, mn);
-  }
+  snprintf(tm, sizeof(tm), "%2d%02d", hr, mn);
+//  if (hr < 10)
+//  {
+//    if (mn < 10)
+//      snprintf(tm, sizeof(tm), PSTR("%c%d0%d"), z, hr, mn);
+//    else
+//      snprintf(tm, sizeof(tm), PSTR("%c%d%d"), z, hr, mn);
+//  }
+//  else
+//  {
+//    if (mn < 10)
+//      snprintf(tm, sizeof(tm), PSTR("%d0%d"), hr, mn);
+//    else
+//      snprintf(tm, sizeof(tm), PSTR("%d%d"), hr, mn);
+//  }
+
+    //AddLog(LOG_LEVEL_DEBUG, PSTR("TM7: TM1637Data.show_clock %d, TM1637Data.clock_24 %d, Hour: %s"), TM1637Data.show_clock, TM1637Data.clock_24, tm);
 
   if (TM1637 == TM1637Data.display_type)
   {
@@ -989,8 +1004,8 @@ void TM1637ShowTime()
     for (uint32_t i = 0; i < 4; i++)
     {
       rawBytes[0] = tm1637display->encode(tm[i]);
-      if ((millis() % 1000) > 500 && (i == 1))
-        rawBytes[0] = rawBytes[0] | 128;
+      if ((sc % 2) == 0 && (i == 1))
+        rawBytes[0] = (rawBytes[0] | 0x80);
       tm1637display->printRaw(rawBytes, 1, TM1637Data.digit_order[i]);
     }
   }
@@ -998,7 +1013,7 @@ void TM1637ShowTime()
   {
     for (uint32_t i = 0; i < 4; i++)
     {
-      if ((millis() % 1000) > 500 && (i == 1))
+      if ((sc % 2) == 0 && (i == 1))
         tm1638display->displayASCIIwDot(i, tm[i]);
       else
         tm1638display->displayASCII(i, tm[i]);
@@ -1008,7 +1023,7 @@ void TM1637ShowTime()
   {
     for (uint32_t i = 0; i < 4; i++)
     {
-      if ((millis() % 1000) > 500 && (i == 1))
+      if ((sc % 2) == 0 && (i == 1))
         displayMAX7219ASCIIwDot(i, tm[i]);
       else
         displayMAX7219ASCII(i, tm[i]);
@@ -1067,6 +1082,9 @@ bool TM1637MainFunc(uint8_t fn)
   case FUNC_DISPLAY_CLOCK:
     result = CmndTM1637Clock();
     break;
+  case FUNC_DISPLAY_DIM:
+    result = CmndTM1637Dim();
+    break;
   }
 
   return result;
@@ -1103,7 +1121,7 @@ void TM1637Print(char *txt)
     {
       uint8_t rawBytes[1];
       rawBytes[0] = tm1637display->encode(txt[i]);
-      //      if ((millis() % 1000) > 500 && (i == 1)) { rawBytes[0] = rawBytes[0] | 128; }
+      //     if ((millis() % 1000) > 500 && (i == 1)) { rawBytes[0] = rawBytes[0] | 128; }
       tm1637display->printRaw(rawBytes, 1, TM1637Data.digit_order[i]);
     }
     else if (TM1638 == TM1637Data.display_type)
@@ -1176,15 +1194,15 @@ void TM1637Time(void)
 
   if (Settings->display_cols[0] >= 8)
   {
-    snprintf_P(line, sizeof(line), PSTR("%02d %02d %02d"), RtcTime.hour, RtcTime.minute, RtcTime.second);
+    snprintf_P(line, sizeof(line), PSTR("%2d %02d %02d"), RtcTime.hour, RtcTime.minute, RtcTime.second);
   }
   else if (Settings->display_cols[0] >= 6)
   {
-    snprintf_P(line, sizeof(line), PSTR("%02d%02d%02d"), RtcTime.hour, RtcTime.minute, RtcTime.second);
+    snprintf_P(line, sizeof(line), PSTR("%2d%02d%02d"), RtcTime.hour, RtcTime.minute, RtcTime.second);
   }
   else
   {
-    snprintf_P(line, sizeof(line), PSTR("%02d%02d"), RtcTime.hour, RtcTime.minute);
+    snprintf_P(line, sizeof(line), PSTR("%2d%02d"), RtcTime.hour, RtcTime.minute);
   }
   TM1637Center(line);
 }
@@ -1218,7 +1236,8 @@ void TM1637Refresh(void)
   switch (Settings->display_mode)
   {
   case 1: // Time
-    TM1637Time();
+    //TM1637Time();
+    TM1637ShowTime();
     break;
   case 2: // Date
     TM1637Date();
@@ -1270,10 +1289,10 @@ bool Xdsp15(uint8_t function)
         {
           TM1637ScrollText();
         }
-        if (TM1637Data.show_clock)
-        {
-          TM1637ShowTime();
-        }
+//        if (TM1637Data.show_clock)
+//        {
+//          TM1637ShowTime();
+//        }
       }
       break;
 #ifdef USE_DISPLAY_MODES1TO5
