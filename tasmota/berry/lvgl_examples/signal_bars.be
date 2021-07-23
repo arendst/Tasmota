@@ -27,16 +27,18 @@ class lv_signal_bars : lv_obj
     self.area = global.lv_area()
   end
 
+  def atleast1(x) if x >= 1 return x else return 1 end end
+
   def my_design_cb(area, mode)
     import global
     var lv = global.lv
-    def atleast1(x) if x >= 1 return x else return 1 end end
+    #def atleast1(x) if x >= 1 return x else return 1 end end
     # the model is that we have 4 bars and inter-bar (1/4 of width)
     var height = self.get_height()
     var width = self.get_width()
 
-    var inter_bar = atleast1(width / 15)
-    var bar = atleast1((width - inter_bar * 3) / 4)
+    var inter_bar = self.atleast1(width / 15)
+    var bar = self.atleast1((width - inter_bar * 3) / 4)
     var bar_offset = bar / 2
 
     if mode == lv.DESIGN_COVER_CHK
