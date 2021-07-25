@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - Support for CAN bus and Freedom Won Battery Management System by Marius Bezuidenhout (#12651)
 - Berry ESP32 support for I2S audio mp3 playback
 - Berry add module ``introspect``
+- Berry add ``tasmota.wifi()`` and ``tasmota.eth()``
 
 ### Changed
 - ESP32 core library from v1.0.7.1 to v1.0.7.3

@@ -184,7 +184,7 @@ extern "C" {
     be_raise(vm, kTypeError, nullptr);
   }
 
-  // Berry: tasmota.memory(timer:int) -> bool
+  // Berry: tasmota.memory() -> map
   //
   int32_t l_memory(struct bvm *vm);
   int32_t l_memory(struct bvm *vm) {
@@ -201,6 +201,53 @@ extern "C" {
         map_insert_int(vm, "psram", ESP.getPsramSize() / 1024);
         map_insert_int(vm, "psram_free", ESP.getFreePsram() / 1024);
       }
+      be_pop(vm, 1);
+      be_return(vm);
+    }
+    be_raise(vm, kTypeError, nullptr);
+  }
+
+  // Berry: tasmota.wifi() -> map
+  //
+  int32_t l_wifi(struct bvm *vm);
+  int32_t l_wifi(struct bvm *vm) {
+    int32_t top = be_top(vm); // Get the number of arguments
+    if (top == 1) {  // no argument (instance only)
+      be_newobject(vm, "map");
+      if (Settings->flag4.network_wifi) {
+        int32_t rssi = WiFi.RSSI();
+        map_insert_int(vm, "rssi", rssi);
+        map_insert_int(vm, "quality", WifiGetRssiAsQuality(rssi));
+#if LWIP_IPV6
+        String ipv6_addr = WifiGetIPv6();
+        if (ipv6_addr != "") {
+          map_insert_str(vm, "ip6", ipv6_addr.c_str());
+        }
+#endif
+        if (static_cast<uint32_t>(WiFi.localIP()) != 0) {
+          map_insert_str(vm, "mac", WiFi.macAddress().c_str());
+          map_insert_str(vm, "ip", WiFi.localIP().toString().c_str());
+        }
+      }
+      be_pop(vm, 1);
+      be_return(vm);
+    }
+    be_raise(vm, kTypeError, nullptr);
+  }
+
+  // Berry: tasmota.eth() -> map
+  //
+  int32_t l_eth(struct bvm *vm);
+  int32_t l_eth(struct bvm *vm) {
+    int32_t top = be_top(vm); // Get the number of arguments
+    if (top == 1) {  // no argument (instance only)
+      be_newobject(vm, "map");
+#ifdef USE_ETHERNET
+      if (static_cast<uint32_t>(EthernetLocalIP()) != 0) {
+        map_insert_str(vm, "mac", EthernetMacAddress().c_str());
+        map_insert_str(vm, "ip", EthernetLocalIP().toString().c_str());
+      }
+#endif
       be_pop(vm, 1);
       be_return(vm);
     }
