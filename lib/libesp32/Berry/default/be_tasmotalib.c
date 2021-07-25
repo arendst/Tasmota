@@ -16,6 +16,8 @@ extern int l_timereached(bvm *vm);
 extern int l_rtc(bvm *vm);
 extern int l_time_dump(bvm *vm);
 extern int l_memory(bvm *vm);
+extern int l_wifi(bvm *vm);
+extern int l_eth(bvm *vm);
 extern int l_yield(bvm *vm);
 extern int l_delay(bvm *vm);
 extern int l_scaleuint(bvm *vm);
@@ -2304,6 +2306,8 @@ void be_load_tasmota_ntvlib(bvm *vm)
         { "rtc", l_rtc },
         { "time_dump", l_time_dump },
         { "memory", l_memory },
+        { "wifi", l_wifi },
+        { "eth", l_eth },
         { "yield", l_yield },
         { "delay", l_delay },
         { "scale_uint", l_scaleuint },
@@ -2386,6 +2390,8 @@ class be_class_tasmota (scope: global, name: Tasmota) {
     rtc, func(l_rtc)
     time_dump, func(l_time_dump)
     memory, func(l_memory)
+    wifi, func(l_wifi)
+    eth, func(l_eth)
     yield, func(l_yield)
     delay, func(l_delay)
     scale_uint, func(l_scaleuint)
