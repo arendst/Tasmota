@@ -46,12 +46,12 @@ be_local_closure(get_tasmota,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 2]) {     /* upvals */
-      { { .s=be_nested_const_str("global", 503252654, 6) }, BE_STRING},
-      { { .s=be_nested_const_str("tasmota", 424643812, 7) }, BE_STRING},
+    ( &(const bvalue[ 2]) {     /* constants */
+      be_nested_string("global", 503252654, 6),
+      be_nested_string("tasmota", 424643812, 7),
     }),
     (be_nested_const_str("get_tasmota", 334356779, 11)),
-    (be_nested_const_str("stdin", -1529146723, 5)),
+    (be_nested_const_str("input", -103256197, 5)),
     ( &(const binstruction[ 3]) {  /* code */
       0xA4060000,  //  0000  IMPORT	R1	R256
       0x88080301,  //  0001  GETMBR	R2	R1	R257
@@ -71,38 +71,40 @@ be_local_closure(add_cmd,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     1,                          /* has sup protos */
-    be_nested_proto(
-      10,                          /* nstack */
-      4,                          /* argc */
-      1,                          /* has upvals */
-      ( &(const bupvaldesc[ 2]) {  /* upvals */
-        be_local_const_upval(1, 2),
-        be_local_const_upval(1, 0),
-      }),
-      0,                          /* has sup protos */
-      NULL,                       /* no sub protos */
-      0,                          /* has constants */
-      NULL,                       /* no const */
-      (be_nested_const_str("<lambda>", 607256038, 8)),
-      (be_nested_const_str("stdin", -1529146723, 5)),
-      ( &(const binstruction[ 8]) {  /* code */
-        0x68100000,  //  0000  GETUPV	R4	U0
-        0x68140001,  //  0001  GETUPV	R5	U1
-        0x5C180000,  //  0002  MOVE	R6	R0
-        0x5C1C0200,  //  0003  MOVE	R7	R1
-        0x5C200400,  //  0004  MOVE	R8	R2
-        0x5C240600,  //  0005  MOVE	R9	R3
-        0x7C100A00,  //  0006  CALL	R4	5
-        0x80040800,  //  0007  RET	1	R4
-      })
-    ),
+    ( &(const struct bproto*[ 1]) {
+      be_nested_proto(
+        10,                          /* nstack */
+        4,                          /* argc */
+        1,                          /* has upvals */
+        ( &(const bupvaldesc[ 2]) {  /* upvals */
+          be_local_const_upval(1, 2),
+          be_local_const_upval(1, 0),
+        }),
+        0,                          /* has sup protos */
+        NULL,                       /* no sub protos */
+        0,                          /* has constants */
+        NULL,                       /* no const */
+        (be_nested_const_str("<lambda>", 607256038, 8)),
+        (be_nested_const_str("input", -103256197, 5)),
+        ( &(const binstruction[ 8]) {  /* code */
+          0x68100000,  //  0000  GETUPV	R4	U0
+          0x68140001,  //  0001  GETUPV	R5	U1
+          0x5C180000,  //  0002  MOVE	R6	R0
+          0x5C1C0200,  //  0003  MOVE	R7	R1
+          0x5C200400,  //  0004  MOVE	R8	R2
+          0x5C240600,  //  0005  MOVE	R9	R3
+          0x7C100A00,  //  0006  CALL	R4	5
+          0x80040800,  //  0007  RET	1	R4
+        })
+      ),
+    }),
     1,                          /* has constants */
-    ( &(const bvalue[ 2]) {     /* upvals */
-      { { .s=be_nested_const_str("get_tasmota", 334356779, 11) }, BE_STRING},
-      { { .s=be_nested_const_str("add_cmd", -933336417, 7) }, BE_STRING},
+    ( &(const bvalue[ 2]) {     /* constants */
+      be_nested_string("get_tasmota", 334356779, 11),
+      be_nested_string("add_cmd", -933336417, 7),
     }),
     (be_nested_const_str("add_cmd", -933336417, 7)),
-    (be_nested_const_str("stdin", -1529146723, 5)),
+    (be_nested_const_str("input", -103256197, 5)),
     ( &(const binstruction[ 8]) {  /* code */
       0x8C0C0100,  //  0000  GETMET	R3	R0	R256
       0x7C0C0200,  //  0001  CALL	R3	1

@@ -110,13 +110,15 @@ static void m_solidify_proto(bvm *vm, bproto *pr, const char * func_name, int bu
 
     logfmt("%*s%d,                          /* has sup protos */\n", indent, "", (pr->nproto > 0) ? 1 : 0);
     if (pr->nproto > 0) {
+        logfmt("%*s( &(const struct bproto*[%2d]) {\n", indent, "", pr->nproto);
         for (int32_t i = 0; i < pr->nproto; i++) {
             size_t sub_len = strlen(func_name) + 10;
             char sub_name[sub_len];
             snprintf(sub_name, sizeof(sub_name), "%s_%d", func_name, i);
-            m_solidify_proto(vm, pr->ptab[i], sub_name, builtins, indent);
+            m_solidify_proto(vm, pr->ptab[i], sub_name, builtins, indent+2);
             logfmt(",\n");
         }
+        logfmt("%*s}),\n", indent, "");
     } else {
         logfmt("%*sNULL,                       /* no sub protos */\n", indent, "");
     }
