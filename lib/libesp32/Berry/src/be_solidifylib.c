@@ -129,7 +129,7 @@ static void m_solidify_proto(bvm *vm, bproto *pr, const char * func_name, int bu
         for (int k = 0; k < pr->nconst; k++) {
             logfmt("%*s  ", indent, "");
             m_solidify_bvalue(vm, &pr->ktab[k]);
-            logfmt(",\n");
+            logfmt(",    /* R%d - K%d */\n", 256+k, k);
         }
         logfmt("%*s}),\n", indent, "");
     } else {

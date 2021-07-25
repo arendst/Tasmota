@@ -20,11 +20,11 @@ be_local_closure(init,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
-      be_nested_string("global", 503252654, 6),
-      be_nested_string("lv_signal_bars", -780994737, 14),
-      be_nested_string("init", 380752755, 4),
-      be_nested_string("tasmota", 424643812, 7),
-      be_nested_string("add_driver", 1654458371, 10),
+      be_nested_string("global", 503252654, 6),    /* R256 - K0 */
+      be_nested_string("lv_signal_bars", -780994737, 14),    /* R257 - K1 */
+      be_nested_string("init", 380752755, 4),    /* R258 - K2 */
+      be_nested_string("tasmota", 424643812, 7),    /* R259 - K3 */
+      be_nested_string("add_driver", 1654458371, 10),    /* R260 - K4 */
     }),
     (be_nested_const_str("init", 380752755, 4)),
     (be_nested_const_str("input", -103256197, 5)),
@@ -62,12 +62,12 @@ be_local_closure(every_second,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 6]) {     /* constants */
-      be_nested_string("global", 503252654, 6),
-      be_nested_string("tasmota", 424643812, 7),
-      be_nested_string("wifi", 120087624, 4),
-      be_nested_string("find", -1108310694, 4),
-      be_nested_string("quality", -1697296346, 7),
-      be_nested_string("set_percentage", -1342944572, 14),
+      be_nested_string("global", 503252654, 6),    /* R256 - K0 */
+      be_nested_string("tasmota", 424643812, 7),    /* R257 - K1 */
+      be_nested_string("wifi", 120087624, 4),    /* R258 - K2 */
+      be_nested_string("find", -1108310694, 4),    /* R259 - K3 */
+      be_nested_string("quality", -1697296346, 7),    /* R260 - K4 */
+      be_nested_string("set_percentage", -1342944572, 14),    /* R261 - K5 */
     }),
     (be_nested_const_str("every_second", 2075451465, 12)),
     (be_nested_const_str("input", -103256197, 5)),
