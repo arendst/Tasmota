@@ -241,7 +241,7 @@ class Tasmota2 : Tasmota
 
   end
 
-  def event(type, cmd, idx, payload)
+  def event_old(type, cmd, idx, payload)
     if type=='every_50ms' self.run_deferred() end  #- first run deferred events -#
 
     if type=='cmd' return self.exec_cmd(cmd, idx, payload)
@@ -270,6 +270,29 @@ class Tasmota2 : Tasmota
         except .. as e,m
           import string
           print(string.format("BRY: Exception> '%s' - %s", e, m))
+        end
+      end
+    end
+  end
+
+  def event(event_type, cmd, idx, payload)
+    import introspect
+    if event_type=='every_50ms' self.run_deferred() end  #- first run deferred events -#
+
+    if event_type=='cmd' return self.exec_cmd(cmd, idx, payload)
+    elif event_type=='rule' return self.exec_rules(payload)
+    elif event_type=='mqtt_data' return nil
+    elif event_type=='gc' return self.gc()
+    elif self._drivers
+      for d:self._drivers
+        var f = introspect.get(d, event_type)   # try to match a function or method with the same name
+        if type(f) == 'function'
+          try
+            f(d)
+          except .. as e,m
+            import string
+            print(string.format("BRY: Exception> '%s' - %s", e, m))
+          end
         end
       end
     end

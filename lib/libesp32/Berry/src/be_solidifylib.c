@@ -250,7 +250,7 @@ static void m_solidify_class(bvm *vm, bclass *cl, int builtins)
     logfmt("/*******************************************************************/\n\n");
 
     logfmt("void be_load_%s_class(bvm *vm) {\n", class_name);
-    logfmt("    be_pushntvclass(vm, &be_%s_class);\n", class_name);
+    logfmt("    be_pushntvclass(vm, &be_class_%s);\n", class_name);
     logfmt("    be_setglobal(vm, \"%s\");\n", class_name);
     logfmt("    be_pop(vm, 1);\n");
     logfmt("}\n");
