@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 - Berry ESP32 support for I2S audio mp3 playback
 - Berry add module ``introspect``
 - Berry add ``tasmota.wifi()`` and ``tasmota.eth()``
+- LVGL new widget ``lv_wifi_bars``
 
 ### Changed
 - ESP32 core library from v1.0.7.1 to v1.0.7.3

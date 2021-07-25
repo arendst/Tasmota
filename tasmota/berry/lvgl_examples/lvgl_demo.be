@@ -57,13 +57,10 @@ log_height = log.get_height()
 # log.get_style_pad_right(lv.OBJ_PART_MAIN, lv.STATE_DEFAULT)
 log.set_style_local_pad_right(lv.OBJ_PART_MAIN, lv.STATE_DEFAULT, log_height+1)
 
-bars = lv_signal_bars(log)
+bars = lv_wifi_bars(log)
 
 bars.set_style_local_bg_color(lv.OBJ_PART_MAIN, lv.STATE_DEFAULT, lv_color(lv.BLACK))
 
 bars.set_height(log_height)
 bars.set_width(log_height)
 bars.set_x(log.get_width() - log_height)
-
-#bars.get_style_transform_width(lv.OBJ_PART_MAIN)
-#bars.get_style_transform_height(lv.OBJ_PART_MAIN)

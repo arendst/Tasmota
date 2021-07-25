@@ -144,7 +144,7 @@ const bntvmodule be_native_module(_module) = {                  \
 
 /* defines needed for solidified classes */
 #define be_local_class(_name, _nvar, _super, _map, _cname)      \
-  const bclass be_##_name##_class = {                                \
+  const bclass be_class_##_name = {                             \
     be_const_header(BE_CLASS),                                  \
     .nvar = _nvar,                                              \
     .super = (bclass*)_super,                                   \

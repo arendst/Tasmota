@@ -371,7 +371,7 @@ be_local_class(lv_signal_bars,
 /*******************************************************************/
 
 void be_load_lv_signal_bars_class(bvm *vm) {
-    be_pushntvclass(vm, &be_lv_signal_bars_class);
+    be_pushntvclass(vm, &be_class_lv_signal_bars);
     be_setglobal(vm, "lv_signal_bars");
     be_pop(vm, 1);
 }
