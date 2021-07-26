@@ -1850,6 +1850,10 @@ void GpioInit(void)
       pinMode(i, OUTPUT);
       digitalWrite(i, 0);
     }
+
+/*
+  // Until 20210726
+
     // Set any non-used GPIO to INPUT - Related to resetPins() in support_legacy_cores.ino
     // Doing it here solves relay toggles at restart.
 #if CONFIG_IDF_TARGET_ESP32C3
@@ -1865,6 +1869,16 @@ void GpioInit(void)
       }
     }
 #endif // CONFIG_IDF_TARGET_ESP32C3
+*/
+#ifdef ESP8266
+    // Set any non-used GPIO to INPUT - Related to resetPins() in support_legacy_cores.ino
+    // Doing it here solves relay toggles at restart.
+    else if (((i < 6) || (i > 11)) && (GPIO_NONE == mpin)) {  // Skip SPI flash interface
+      if (!((1 == i) || (3 == i))) {             // Skip serial
+        pinMode(i, INPUT);
+      }
+    }
+#endif  // ESP8266
   }
 
   // Digital input
