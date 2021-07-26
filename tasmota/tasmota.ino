@@ -382,7 +382,8 @@ void setup(void) {
   }
   char *s = TasmotaGlobal.hostname;
   while (*s) {
-    if (' ' == *s) { *s = '_'; }
+    if (!(isalnum(*s) || ('.' == *s))) { *s = '-'; }                 // Valid hostname chars are A..Z, a..z, 0..9, . and -
+    if ((s == TasmotaGlobal.hostname) && ('-' == *s)) { *s = 'x'; }  // First char cannot be a dash so replace by an x
     s++;
   }
   snprintf_P(TasmotaGlobal.mqtt_topic, sizeof(TasmotaGlobal.mqtt_topic), ResolveToken(TasmotaGlobal.mqtt_topic).c_str());
