@@ -23,6 +23,7 @@
 #define XDRV_52             52
 
 #include <berry.h>
+#include "be_vm.h"
 
 extern "C" {
   extern void be_load_custom_libs(bvm *vm);
@@ -267,6 +268,7 @@ void BerryInit(void) {
   do {
     berry.vm = be_vm_new(); /* create a virtual machine instance */
     be_set_obs_hook(berry.vm, &BerryObservability);
+    comp_set_named_gbl(berry.vm);
     be_load_custom_libs(berry.vm);
 
     // Register functions
