@@ -8,26 +8,22 @@ class lv_signal_bars : lv_obj
   var p1, p2, line_dsc, area
 
   def init(parent, copy)
-    import global
-    var lv = global.lv
     # init parent object
-    super(self, global.lv_obj).init(parent, copy)
+    super(self, lv_obj).init(parent, copy)
     # keep a copy of 
     self.ancestor_design = self.get_design_cb()
     self.set_design_cb(self.my_design_cb)
     # own values
     self.percentage = 100
     # pre-allocate buffers
-    self.p1 = global.lv_point()
-    self.p2 = global.lv_point()
-    self.line_dsc = global.lv_draw_line_dsc()
-    self.area = global.lv_area()
+    self.p1 = lv_point()
+    self.p2 = lv_point()
+    self.line_dsc = lv_draw_line_dsc()
+    self.area = lv_area()
   end
 
   def my_design_cb(area, mode)
     def atleast1(x) if x >= 1 return x else return 1 end end
-    import global
-    var lv = global.lv
     # the model is that we have 4 bars and inter-bar (1/4 of width)
     var height = self.get_height()
     var width = self.get_width()
@@ -88,14 +84,12 @@ end
 
 class lv_wifi_bars: lv_signal_bars
   def init(parent, copy)
-    import global
-    super(self, global.lv_signal_bars).init(parent, copy)
-    global.tasmota.add_driver(self)
+    super(self, lv_signal_bars).init(parent, copy)
+    tasmota.add_driver(self)
   end
 
   def every_second()
-    import global
-    var wifi = global.tasmota.wifi()
+    var wifi = tasmota.wifi()
     var quality = wifi.find("quality")
     if quality != nil
       self.set_percentage(quality)

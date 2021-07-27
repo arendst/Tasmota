@@ -446,10 +446,17 @@ static int singlevaraux(bvm *vm, bfuncinfo *finfo, bstring *s, bexpdesc *var)
                 int res = singlevaraux(vm, finfo->prev, s, var);
                 if (res == ETUPVAL || res == ETLOCAL) {
                     idx = new_upval(vm, finfo, s, var); /* new upvalue */
-                } else if (be_global_find(vm, s) >= 0) {
-                    return ETGLOBAL; /* global variable */
                 } else {
-                    return ETVOID; /* unknow (new variable or error) */
+                    idx = be_global_find(vm, s);
+                    if (idx >= 0) {
+                        if (idx < be_builtin_count(vm)) {
+                            return ETGLOBAL; /* global variable */
+                        } else {
+                            return comp_is_named_gbl(vm) ? ETNGLOBAL : ETGLOBAL; /* global variable */
+                        }
+                    } else {
+                        return ETVOID; /* unknow (new variable or error) */
+                    }
                 }
             }
             init_exp(var, ETUPVAL, idx);
@@ -460,6 +467,7 @@ static int singlevaraux(bvm *vm, bfuncinfo *finfo, bstring *s, bexpdesc *var)
 
 static void singlevar(bparser *parser, bexpdesc *var)
 {
+    bexpdesc key;
     bstring *varname = next_token(parser).u.s;
     int type = singlevaraux(parser->vm, parser->finfo, varname, var);
     switch (type) {
@@ -470,6 +478,12 @@ static void singlevar(bparser *parser, bexpdesc *var)
     case ETGLOBAL:
         init_exp(var, ETGLOBAL, 0);
         var->v.idx = be_global_find(parser->vm, varname);
+        break;
+    case ETNGLOBAL:
+        init_exp(&key, ETSTRING, 0);
+        key.v.s = varname;
+        init_exp(var, ETNGLOBAL, 0);
+        var->v.idx = be_code_nglobal(parser->finfo, &key);
         break;
     default:
         break;

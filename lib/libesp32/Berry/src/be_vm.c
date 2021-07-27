@@ -435,6 +435,7 @@ BERRY_API bvm* be_vm_new(void)
     be_globalvar_init(vm);
     be_gc_setpause(vm, 1);
     be_loadlibs(vm);
+    vm->compopt = 0;
 #if BE_USE_OBSERVABILITY_HOOK
     vm->obshook = NULL;
 #endif
@@ -498,6 +499,38 @@ newframe: /* a new call frame */
             bvalue *v = RA();
             int idx = IGET_Bx(ins);
             *v = *be_global_var(vm, idx);
+            dispatch();
+        }
+        opcase(GETNGBL): {  /* get Global by name */
+            bvalue *v = RA();
+            bvalue *b = RKB();
+            if (var_isstr(b)) {
+                bstring *name = var_tostr(b);
+                int idx = be_global_find(vm, name);
+                if (idx > -1) {
+                    *v = *be_global_var(vm, idx);
+                } else {
+                    vm_error(vm, "attribute_error", "'%s' undeclared", str(name));
+                }
+            } else {
+                vm_error(vm, "internal_error", "global name must be a string");
+            }
+            dispatch();
+        }
+        opcase(SETNGBL): {  /* set Global by name */
+            bvalue *v = RA();
+            bvalue *b = RKB();
+            if (var_isstr(b)) {
+                bstring *name = var_tostr(b);
+                int idx = be_global_find(vm, name);
+                if (idx > -1) {
+                    *be_global_var(vm, idx) = *v;
+                } else {
+                    vm_error(vm, "attribute_error", "'%s' undeclared", str(name));
+                }
+            } else {
+                vm_error(vm, "internal_error", "global name must be a string");
+            }
             dispatch();
         }
         opcase(SETGBL): {
