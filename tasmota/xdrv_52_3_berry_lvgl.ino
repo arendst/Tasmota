@@ -226,11 +226,11 @@ extern void lv_ex_get_started_1(void);
 // - a callback, only 6 callbacks supported 0..5
 //   - '&1' callback 1
 //
-void be_check_arg_type(bvm *vm, int32_t argc, const char * arg_type, int32_t p[5]);
-void be_check_arg_type(bvm *vm, int32_t argc, const char * arg_type, int32_t p[5]) {
+void be_check_arg_type(bvm *vm, int32_t argc, const char * arg_type, int32_t p[8]);
+void be_check_arg_type(bvm *vm, int32_t argc, const char * arg_type, int32_t p[8]) {
   bool arg_type_check = (arg_type != nullptr);      // is type checking activated
   int32_t arg_idx = 0;    // position in arg_type string
-  char type_short_name[16];
+  char type_short_name[32];
 
   for (uint32_t i = 0; i < argc; i++) {
     type_short_name[0] = 0;   // clear string
@@ -278,7 +278,8 @@ void be_check_arg_type(bvm *vm, int32_t argc, const char * arg_type, int32_t p[5
   }
 }
 
-typedef int32_t (*fn_any_callable)(int32_t p0, int32_t p1, int32_t p2, int32_t p3, int32_t p4);
+typedef int32_t (*fn_any_callable)(int32_t p0, int32_t p1, int32_t p2, int32_t p3,
+                                   int32_t p4, int32_t p5, int32_t p6, int32_t p7);
 extern "C" {
 
   void lv_init_set_member(bvm *vm, int index, void * ptr);
@@ -293,17 +294,17 @@ extern "C" {
     if (argc > 1) {
       obj1 = (lv_obj_t*) be_convert_single_elt(vm, 2);
     }
-    if (argc > 2) {
+    if (argc > 2 && !be_isnil(vm, 3)) {
       obj2 = (lv_obj_t*) be_convert_single_elt(vm, 3);
     }
     // AddLog(LOG_LEVEL_INFO, "argc %d obj1 %p obj2 %p", argc, obj1, obj2);
     fn_any_callable f = (fn_any_callable) func;
     // AddLog(LOG_LEVEL_INFO, ">> be_call_c_func(%p) - %p,%p,%p,%p,%p", f, p[0], p[1], p[2], p[3], p[4]);
     lv_obj_t * obj;
-    if ((int32_t)obj1 == -1) {  // special semantics of first ptr is -1, then just encapsulate
-      obj = obj2;
+    if ((int32_t)obj2 == -1) {  // special semantics if second ptr is -1, then just encapsulate
+      obj = obj1;
     } else {                    // otherwise call the LVGL creator
-      obj = (lv_obj_t*) (*f)((int32_t)obj1, (int32_t)obj2, 0, 0, 0);
+      obj = (lv_obj_t*) (*f)((int32_t)obj1, (int32_t)obj2, 0, 0, 0, 0, 0, 0);
     }
     lv_init_set_member(vm, 1, obj);
     be_return_nil(vm);
@@ -338,36 +339,33 @@ extern "C" {
 
         // look for class descriptor
         int32_t class_idx = bin_search(class_name, &lv_classes[0].name, sizeof(lv_classes[0]), lv_classes_size);
-        if (class_idx < 0) {
-          // class not found, abort
-          // berry_log_C("lvx_member class not found");
-          be_return_nil(vm);
-        }
-        const lvbe_call_c_t * methods_calls = lv_classes[class_idx].func_table;
-        size_t methods_size = lv_classes[class_idx].size;
+        if (class_idx >= 0) {
+          const lvbe_call_c_t * methods_calls = lv_classes[class_idx].func_table;
+          size_t methods_size = lv_classes[class_idx].size;
 
-        int32_t method_idx = bin_search(method_name, methods_calls, sizeof(lvbe_call_c_t), methods_size);
-        if (method_idx >= 0) {
-          // method found
-          const lvbe_call_c_t * method = &methods_calls[method_idx];
-          // berry_log_C("lvx_member method found func=%p return_type=%s arg_type=%s", method->func, method->return_type, method->arg_type);
-          // push native closure
-          be_pushntvclosure(vm, &lvx_call_c, 3);   // 3 upvals
+          int32_t method_idx = bin_search(method_name, methods_calls, sizeof(lvbe_call_c_t), methods_size);
+          if (method_idx >= 0) {
+            // method found
+            const lvbe_call_c_t * method = &methods_calls[method_idx];
+            // berry_log_C("lvx_member method found func=%p return_type=%s arg_type=%s", method->func, method->return_type, method->arg_type);
+            // push native closure
+            be_pushntvclosure(vm, &lvx_call_c, 3);   // 3 upvals
 
-          be_pushcomptr(vm, method->func);
-          be_setupval(vm, -2, 0);
-          be_pop(vm, 1);
+            be_pushcomptr(vm, method->func);
+            be_setupval(vm, -2, 0);
+            be_pop(vm, 1);
 
-          be_pushstring(vm, method->return_type);
-          be_setupval(vm, -2, 1);
-          be_pop(vm, 1);
+            be_pushstring(vm, method->return_type);
+            be_setupval(vm, -2, 1);
+            be_pop(vm, 1);
 
-          be_pushstring(vm, method->arg_type);
-          be_setupval(vm, -2, 2);
-          be_pop(vm, 1);
+            be_pushstring(vm, method->arg_type);
+            be_setupval(vm, -2, 2);
+            be_pop(vm, 1);
 
-          // all good
-          be_return(vm);
+            // all good
+            be_return(vm);
+          }
         }
 
         // get super if any, or nil if none
@@ -382,7 +380,7 @@ extern "C" {
   }
 
   int be_call_c_func(bvm *vm, void * func, const char * return_type, const char * arg_type) {
-    int32_t p[5] = {0,0,0,0,0};
+    int32_t p[8] = {0,0,0,0,0,0,0,0};
     int32_t argc = be_top(vm); // Get the number of arguments
 
     // check if we call a constructor
@@ -393,8 +391,8 @@ extern "C" {
 
     fn_any_callable f = (fn_any_callable) func;
     be_check_arg_type(vm, argc, arg_type, p);
-    // AddLog(LOG_LEVEL_INFO, ">> be_call_c_func(%p) - %p,%p,%p,%p,%p - %s", f, p[0], p[1], p[2], p[3], p[4], return_type);
-    int32_t ret = (*f)(p[0], p[1], p[2], p[3], p[4]);
+    // berry_log_C(">> be_call_c_func(%p) - %p,%p,%p,%p,%p - %s", f, p[0], p[1], p[2], p[3], p[4], return_type ? return_type : "NULL");
+    int32_t ret = (*f)(p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7]);
     // AddLog(LOG_LEVEL_INFO, ">> be_call_c_func, ret = %p", ret);
     if ((return_type == nullptr) || (strlen(return_type) == 0))       { be_return_nil(vm); }  // does not return
     else if (strlen(return_type) == 1) {
@@ -403,14 +401,15 @@ extern "C" {
         case 'i':   be_pushint(vm, ret); break;
         case 'b':   be_pushbool(vm, ret);  break;
         case 's':   be_pushstring(vm, (const char*) ret);  break;
+        case 'c':   be_pushint(vm, ret); break; // TODO missing 'c' general callback type
         default:    be_raise(vm, "internal_error", "Unsupported return type"); break;
       }
       be_return(vm);
     } else { // class name
       // AddLog(LOG_LEVEL_INFO, ">> be_call_c_func, create_obj", ret);
       be_getglobal(vm, return_type);  // stack = class
-      be_pushcomptr(vm, (void*) -1);         // stack = class, -1
-      be_pushcomptr(vm, (void*) ret);         // stack = class, -1, ptr
+      be_pushcomptr(vm, (void*) ret);         // stack = class, ptr
+      be_pushcomptr(vm, (void*) -1);         // stack = class, ptr, -1
       be_call(vm, 2);                 // instanciate with 2 arguments, stack = instance, -1, ptr
       be_pop(vm, 2);                  // stack = instance
       be_return(vm);
@@ -440,18 +439,24 @@ extern "C" {
     return *col;
   }
   inline uint32_t lv_color_to_uint32(lv_color_t col) {
-    uint32_t *p = (uint32_t*) &col;
+    uint16_t *p = (uint16_t*) &col;
     return *p;
   }
 
   // lv_color
+  // First arg is a 24 bits RGB color
+  // If first arg is `nil` second arg is the native value of color
   int lco_init(bvm *vm) {
     int argc = be_top(vm);
-    uint32_t color = 0x0000;    // default to black
-    if (argc > 1 && be_isint(vm, 2)) {
-      color = be_toint(vm, 2);
+    uint32_t color32 = 0x000000;    // default to black
+
+    if (argc > 1) {
+      color32 = be_toint(vm, 2);
     }
-    lv_color_t lv_color = lv_color_hex(color);
+    lv_color_t lv_color = lv_color_hex(color32);
+    if (argc > 2 && be_toint(vm, 3) == -1) {
+      lv_color.full = be_toint(vm, 2);
+    }
     be_pushint(vm, lv_color_to_uint32(lv_color));
     be_setmember(vm, 1, ".p");
     be_return_nil(vm);
@@ -462,11 +467,19 @@ extern "C" {
     be_getmember(vm, 1, ".p");
     uint32_t ntv_color = be_toint(vm, -1);
     lv_color = lv_color_from_uint32(ntv_color);
-    uint32_t color = lv_color_to32(lv_color);
+    uint32_t color = lv_color_to32(lv_color) & 0xFFFFFF;
     be_pop(vm, 1);  // remove attribute
     char s[48];
     snprintf(s, sizeof(s), "lv_color(0x%06x - native:0x%04x)", color, ntv_color);
     be_pushnstring(vm, s, strlen(s)); /* make escape string from buffer */
+    be_return(vm);
+  }
+
+  int lco_toint(bvm *vm) {
+    lv_color_t lv_color = {};
+    be_getmember(vm, 1, ".p");
+    uint32_t ntv_color = be_toint(vm, -1);
+    be_pushint(vm, ntv_color);
     be_return(vm);
   }
 
@@ -949,7 +962,7 @@ extern "C" {
   int lvx_tostring(bvm *vm) {
     lv_obj_t * obj = (lv_obj_t*) lv_get_arg(vm, 1);
     const char * classname = be_classname(vm, 1);
-    char s[32];
+    char s[48];
     snprintf(s, sizeof(s), "<instance: %s(0x%08X)>", classname, obj);
     be_pushnstring(vm, s, strlen(s)); /* make escape string from buffer */
     be_return(vm);
@@ -1006,6 +1019,19 @@ extern "C" {
     be_return(vm);
   }
 }
+
+// ======================================================================
+// Patch for ill-named functions
+// ======================================================================
+
+extern "C" {
+  // lv_signal_send should be renamed lv_obj_signal_send
+  // lv_res_t lv_signal_send(lv_obj_t * obj, lv_signal_t signal, void * param);
+  lv_res_t lv_obj_signal_send(lv_obj_t * obj, lv_signal_t signal, void * param) {
+    return lv_signal_send(obj, signal, param);
+  }
+}
+
 
 #include "lvgl_berry/be_lv_c_mapping.h"
 

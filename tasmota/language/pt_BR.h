@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v9.4.0.1
+ * Updated until v9.5.0.3
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -198,6 +198,8 @@
 #define D_WEIGHT "Peso"
 #define D_WARMLIGHT "Luz quente"
 #define D_WEB_SERVER "Servidor WEB"
+#define D_SOC "Estado de Carga"
+#define D_SOH "Estado de Saúde"
 
 // tasmota.ino
 #define D_WARNING_MINIMAL_VERSION "AVISO: esta versão não supporta configurações persistentes"
@@ -831,6 +833,7 @@
 #define D_SENSOR_ZEROCROSS     "ZC Pulse"
 #define D_SENSOR_HALLEFFECT    "Efeito Hall"
 #define D_SENSOR_EPD_DATA      "EPD Data"
+#define D_SENSOR_MCP2515_CS    "MCP2515 CS"
 
 // Units
 #define D_UNIT_AMPERE "A"

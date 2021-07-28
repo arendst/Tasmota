@@ -25,7 +25,8 @@ typedef enum {
     ETUPVAL,
     ETMEMBER,
     ETINDEX,
-    ETREG
+    ETREG,
+    ETNGLOBAL
 } exptype_t;
 
 typedef struct {

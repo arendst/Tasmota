@@ -169,6 +169,7 @@ enum UserSelectablePins {
   GPIO_I2S_OUT_DATA, GPIO_I2S_OUT_CLK, GPIO_I2S_OUT_SLCT,
   GPIO_I2S_IN_DATA,  GPIO_I2S_IN_CLK,  GPIO_I2S_IN_SLCT,
   GPIO_INTERRUPT,
+  GPIO_MCP2515_CS,                     // MCP2515 Chip Select
   GPIO_SENSOR_END };
 
 enum ProgramSelectablePins {
@@ -358,6 +359,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_I2S_OUT_DATA "|" D_SENSOR_I2S_OUT_CLK "|" D_SENSOR_I2S_OUT_SLCT "|"
   D_SENSOR_I2S_IN_DATA  "|" D_SENSOR_I2S_IN_CLK  "|" D_SENSOR_I2S_IN_SLCT  "|"
   D_SENSOR_INTERRUPT "|"
+  D_SENSOR_MCP2515_CS "|"
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -459,6 +461,9 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_SDCARD
   AGPIO(GPIO_SDCARD_CS),
 #endif  // USE_SDCARD
+#ifdef USE_MCP2515
+  AGPIO(GPIO_MCP2515_CS),
+#endif  // USE_MCP2515
 #endif  // USE_SPI
 
   AGPIO(GPIO_SSPI_MISO),      // Software SPI Master Input Client Output
@@ -471,10 +476,12 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_DISPLAY_ILI9341
   AGPIO(GPIO_ILI9341_CS),
   AGPIO(GPIO_ILI9341_DC),
+#endif  // USE_DISPLAY_ILI9341
+
 #ifdef USE_XPT2046
   AGPIO(GPIO_XPT2046_CS),     // XPT2046 SPI Chip Select
 #endif
-#endif  // USE_DISPLAY_ILI9341
+
 #ifdef USE_DISPLAY_ILI9488
   AGPIO(GPIO_ILI9488_CS),
 #endif  // USE_DISPLAY_ILI9488
@@ -738,7 +745,7 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_PMS5003_TX),     // Plantower PMS5003 Serial interface
   AGPIO(GPIO_PMS5003_RX),     // Plantower PMS5003 Serial interface
 #endif
-#if defined(USE_TX20_WIND_SENSOR) || defined(USE_TX23_WIND_SENSOR)
+#if defined(USE_TX20_WIND_SENSOR) || defined(USE_TX23_WIND_SENSOR) || defined(USE_WS2300_WIND_SENSOR)
   AGPIO(GPIO_TX2X_TXD_BLACK), // TX20/TX23 Transmission Pin
 #endif
 #ifdef USE_WINDMETER

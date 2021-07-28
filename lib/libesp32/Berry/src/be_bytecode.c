@@ -129,7 +129,7 @@ static bstring** save_members(bvm *vm, void *fp, bclass *c, int nvar)
     }
     while ((node = be_map_next(members, &iter)) != NULL) {
         be_assert(var_isstr(&node->key));
-        if (var_isint(&node->value)) { /* cache member name */
+        if (var_isindex(&node->value)) { /* cache member name */
             if (vars == NULL) {
                 return NULL; /* should never be executed */
             }
@@ -405,7 +405,7 @@ static void load_class(bvm *vm, void *fp, bvalue *v)
     }
     for (count = 0; count < nvar; ++count) { /* load member-variable table */
         bstring *name = cache_string(vm, fp);
-        be_member_bind(vm, c, name);
+        be_member_bind(vm, c, name, btrue);
         be_stackpop(vm, 1); /* pop the cached string */
     }
 }

@@ -112,11 +112,12 @@ void WifiConfig(uint8_t type)
   }
 }
 
-void WifiSetMode(WiFiMode_t wifi_mode)
-{
+void WifiSetMode(WiFiMode_t wifi_mode) {
   if (WiFi.getMode() == wifi_mode) { return; }
 
   if (wifi_mode != WIFI_OFF) {
+    WiFi.hostname(TasmotaGlobal.hostname);  // ESP32 needs this here (before WiFi.mode) for core 2.0.0
+
     // See: https://github.com/esp8266/Arduino/issues/6172#issuecomment-500457407
     WiFi.forceSleepWake(); // Make sure WiFi is really active.
     delay(100);
@@ -159,12 +160,16 @@ void WiFiSetSleepMode(void)
     WiFi.setSleepMode(WIFI_MODEM_SLEEP);        // Disable sleep (Esp8288/Arduino core and sdk default)
   }
 */
-  if (0 == TasmotaGlobal.sleep) {
+  bool wifi_no_sleep = Settings->flag5.wifi_no_sleep;
+#ifdef CONFIG_IDF_TARGET_ESP32C3
+  wifi_no_sleep = true;                         // Temporary patch for IDF4.4, wifi sleeping may cause wifi drops
+#endif
+  if (0 == TasmotaGlobal.sleep || wifi_no_sleep) {
     if (!TasmotaGlobal.wifi_stay_asleep) {
       WiFi.setSleepMode(WIFI_NONE_SLEEP);       // Disable sleep
     }
   } else {
-    if (Settings->flag3.sleep_normal) {          // SetOption60 - Enable normal sleep instead of dynamic sleep
+    if (Settings->flag3.sleep_normal) {         // SetOption60 - Enable normal sleep instead of dynamic sleep
       WiFi.setSleepMode(WIFI_LIGHT_SLEEP);      // Allow light sleep during idle times
     } else {
       WiFi.setSleepMode(WIFI_MODEM_SLEEP);      // Sleep (Esp8288/Arduino core and sdk default)
@@ -182,8 +187,8 @@ void WifiBegin(uint8_t flag, uint8_t channel)
   WiFi.persistent(false);   // Solve possible wifi init errors (re-add at 6.2.1.16 #4044, #4083)
   WiFi.disconnect(true);    // Delete SDK wifi config
   delay(200);
-//  WiFi.mode(WIFI_STA);      // Disable AP mode
-  WifiSetMode(WIFI_STA);
+
+  WifiSetMode(WIFI_STA);    // Disable AP mode
   WiFiSetSleepMode();
 //  if (WiFi.getPhyMode() != WIFI_PHY_MODE_11N) { WiFi.setPhyMode(WIFI_PHY_MODE_11N); }  // B/G/N
 //  if (WiFi.getPhyMode() != WIFI_PHY_MODE_11G) { WiFi.setPhyMode(WIFI_PHY_MODE_11G); }  // B/G
@@ -203,7 +208,7 @@ void WifiBegin(uint8_t flag, uint8_t channel)
   if (Settings->ipv4_address[0]) {
     WiFi.config(Settings->ipv4_address[0], Settings->ipv4_address[1], Settings->ipv4_address[2], Settings->ipv4_address[3]);  // Set static IP
   }
-  WiFi.hostname(TasmotaGlobal.hostname);
+  WiFi.hostname(TasmotaGlobal.hostname);  // ESP8266 needs this here (after WiFi.mode)
 
   char stemp[40] = { 0 };
   if (channel) {

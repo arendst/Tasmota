@@ -522,16 +522,21 @@ class IRsend {
   void sendCarrierAC64(uint64_t data, uint16_t nbits = kCarrierAc64Bits,
                        uint16_t repeat = kCarrierAc64MinRepeat);
 #endif
-#if (SEND_HAIER_AC || SEND_HAIER_AC_YRW02)
+#if (SEND_HAIER_AC || SEND_HAIER_AC_YRW02 || SEND_HAIER_AC176)
   void sendHaierAC(const unsigned char data[],
                    const uint16_t nbytes = kHaierACStateLength,
                    const uint16_t repeat = kHaierAcDefaultRepeat);
-#endif
+#endif  // (SEND_HAIER_AC || SEND_HAIER_AC_YRW02 || SEND_HAIER_AC176)
 #if SEND_HAIER_AC_YRW02
   void sendHaierACYRW02(const unsigned char data[],
                         const uint16_t nbytes = kHaierACYRW02StateLength,
                         const uint16_t repeat = kHaierAcYrw02DefaultRepeat);
-#endif
+#endif  // SEND_HAIER_AC_YRW02
+#if SEND_HAIER_AC176
+  void sendHaierAC176(const unsigned char data[],
+                      const uint16_t nbytes = kHaierAC176StateLength,
+                      const uint16_t repeat = kHaierAc176DefaultRepeat);
+#endif  // SEND_HAIER_AC176
 #if SEND_HITACHI_AC
   void sendHitachiAC(const unsigned char data[],
                      const uint16_t nbytes = kHitachiAcStateLength,
@@ -669,8 +674,8 @@ class IRsend {
 #endif  // SEND_ZEPEAL
 #if SEND_VOLTAS
   void sendVoltas(const unsigned char data[],
-                       const uint16_t nbytes = kVoltasStateLength,
-                       const uint16_t repeat = kNoRepeat);
+                  const uint16_t nbytes = kVoltasStateLength,
+                  const uint16_t repeat = kNoRepeat);
 #endif  // SEND_VOLTAS
 #if SEND_METZ
   void sendMetz(const uint64_t data,
@@ -707,6 +712,15 @@ class IRsend {
   void sendTruma(const uint64_t data, const uint16_t nbits = kTrumaBits,
                  const uint16_t repeat = kNoRepeat);
 #endif  // SEND_TRUMA
+#if SEND_TEKNOPOINT
+  void sendTeknopoint(const unsigned char data[],
+                      const uint16_t nbytes = kTeknopointStateLength,
+                      const uint16_t repeat = kNoRepeat);
+#endif  // SEND_TEKNOPOINT
+#if SEND_KELON
+  void sendKelon(const uint64_t data, const uint16_t nbits = kKelonBits,
+                 const uint16_t repeat = kNoRepeat);
+#endif  // SEND_KELON
 
  protected:
 #ifdef UNIT_TEST

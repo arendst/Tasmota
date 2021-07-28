@@ -14,7 +14,6 @@
 #include "be_var.h"
 #include "be_exec.h"
 #include "be_vm.h"
-#include <stdio.h>
 
 #define NOT_MASK                (1 << 0)
 #define NOT_EXPR                (1 << 1)
@@ -376,6 +375,9 @@ static int var2reg(bfuncinfo *finfo, bexpdesc *e, int dst)
     case ETGLOBAL:
         codeABx(finfo, OP_GETGBL, dst, e->v.idx);
         break;
+    case ETNGLOBAL:
+        codeABC(finfo, OP_GETNGBL, dst, e->v.ss.idx, 0);
+        break;
     case ETUPVAL:
         codeABx(finfo, OP_GETUPV, dst, e->v.idx);
         break;
@@ -552,6 +554,15 @@ int be_code_unop(bfuncinfo *finfo, int op, bexpdesc *e)
     return 0;
 }
 
+static void setbgblvar(bfuncinfo *finfo, bopcode op, bexpdesc *e1, int src)
+{
+    if (isK(src)) { /* move const to register */
+        code_move(finfo, finfo->freereg, src);
+        src = finfo->freereg;
+    }
+    codeABC(finfo, op, src, e1->v.idx, 0);
+}
+
 static void setsupvar(bfuncinfo *finfo, bopcode op, bexpdesc *e1, int src)
 {
     if (isK(src)) { /* move const to register */
@@ -588,6 +599,9 @@ int be_code_setvar(bfuncinfo *finfo, bexpdesc *e1, bexpdesc *e2)
         break;
     case ETGLOBAL: /* store to grobal R(A) -> G(Bx) */
         setsupvar(finfo, OP_SETGBL, e1, src);
+        break;
+    case ETNGLOBAL: /* store to grobal R(A) -> G(Bx) */
+        setbgblvar(finfo, OP_SETNGBL, e1, src);
         break;
     case ETUPVAL:
         setsupvar(finfo, OP_SETUPV, e1, src);
@@ -709,6 +723,11 @@ static void package_suffix(bfuncinfo *finfo, bexpdesc *c, bexpdesc *k)
     c->v.ss.obj = exp2anyreg(finfo, c);
     c->v.ss.tt = c->type;
     c->v.ss.idx = key;
+}
+
+int be_code_nglobal(bfuncinfo *finfo, bexpdesc *k)
+{
+    return exp2anyreg(finfo, k);
 }
 
 void be_code_member(bfuncinfo *finfo, bexpdesc *c, bexpdesc *k)

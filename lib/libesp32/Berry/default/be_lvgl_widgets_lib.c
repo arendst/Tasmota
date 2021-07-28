@@ -47,6 +47,16 @@ extern int lvbe_img_get_angle(bvm *vm);
 extern int lvbe_img_get_pivot(bvm *vm);
 extern int lvbe_img_get_zoom(bvm *vm);
 extern int lvbe_img_get_antialias(bvm *vm);
+extern int lvbe_img_cf_get_px_size(bvm *vm);
+extern int lvbe_img_cf_is_chroma_keyed(bvm *vm);
+extern int lvbe_img_cf_has_alpha(bvm *vm);
+extern int lvbe_img_buf_get_px_color(bvm *vm);
+extern int lvbe_img_buf_get_px_alpha(bvm *vm);
+extern int lvbe_img_buf_set_px_color(bvm *vm);
+extern int lvbe_img_buf_set_px_alpha(bvm *vm);
+extern int lvbe_img_buf_set_palette(bvm *vm);
+extern int lvbe_img_buf_free(bvm *vm);
+extern int lvbe_img_buf_get_img_size(bvm *vm);
 
 /* `lv_style` external functions definitions */
 extern int lvbe_style_copy(bvm *vm);
@@ -167,6 +177,7 @@ extern int lvbe_group_set_editing(bvm *vm);
 extern int lvbe_group_set_click_focus(bvm *vm);
 extern int lvbe_group_set_wrap(bvm *vm);
 extern int lvbe_group_get_focused(bvm *vm);
+extern int lvbe_group_get_focus_cb(bvm *vm);
 extern int lvbe_group_get_editing(bvm *vm);
 extern int lvbe_group_get_click_focus(bvm *vm);
 extern int lvbe_group_get_wrap(bvm *vm);
@@ -280,6 +291,9 @@ extern int lvbe_obj_get_base_dir(bvm *vm);
 extern int lvbe_obj_get_protect(bvm *vm);
 extern int lvbe_obj_is_protected(bvm *vm);
 extern int lvbe_obj_get_state(bvm *vm);
+extern int lvbe_obj_get_signal_cb(bvm *vm);
+extern int lvbe_obj_get_design_cb(bvm *vm);
+extern int lvbe_obj_get_event_cb(bvm *vm);
 extern int lvbe_obj_is_point_on_coords(bvm *vm);
 extern int lvbe_obj_hittest(bvm *vm);
 extern int lvbe_obj_get_ext_attr(bvm *vm);
@@ -479,6 +493,7 @@ extern int lvbe_obj_get_style_scale_grad_color(bvm *vm);
 extern int lvbe_obj_set_style_local_scale_grad_color(bvm *vm);
 extern int lvbe_obj_get_style_scale_end_color(bvm *vm);
 extern int lvbe_obj_set_style_local_scale_end_color(bvm *vm);
+extern int lvbe_obj_signal_send(bvm *vm);
 
 /* `lv_arc` external functions definitions */
 extern int lvbe_arc_create(bvm *vm);
@@ -837,6 +852,7 @@ extern int lvbe_msgbox_get_btnmatrix(bvm *vm);
 
 /* `lv_objmask` external functions definitions */
 extern int lvbe_objmask_create(bvm *vm);
+extern int lvbe_objmask_add_mask(bvm *vm);
 extern int lvbe_objmask_update_mask(bvm *vm);
 extern int lvbe_objmask_remove_mask(bvm *vm);
 
@@ -1159,11 +1175,6 @@ void be_load_lv_style_lib(bvm *vm) {
     { NULL, NULL }
   };
   be_regclass(vm, "lv_style", members);
-
-  be_getglobal(vm, "lv_style");
-  be_getglobal(vm, "lv_obj");
-  be_setsuper(vm, -2);
-  be_pop(vm, 2);
 #else
     be_pushntvclass(vm, &be_class_lv_style);
     be_setglobal(vm, "lv_style");
@@ -1172,7 +1183,7 @@ void be_load_lv_style_lib(bvm *vm) {
 };
 
 /* @const_object_info_begin
-class be_class_lv_style (scope: global, name: lv_style, super: be_class_lv_obj) {
+class be_class_lv_style (scope: global, name: lv_style) {
     .p, var
     init, func(lvs_init)
     tostring, func(lvs_tostring)
@@ -1226,11 +1237,6 @@ void be_load_lv_indev_lib(bvm *vm) {
     { NULL, NULL }
   };
   be_regclass(vm, "lv_indev", members);
-
-  be_getglobal(vm, "lv_indev");
-  be_getglobal(vm, "lv_obj");
-  be_setsuper(vm, -2);
-  be_pop(vm, 2);
 #else
     be_pushntvclass(vm, &be_class_lv_indev);
     be_setglobal(vm, "lv_indev");
@@ -1239,7 +1245,7 @@ void be_load_lv_indev_lib(bvm *vm) {
 };
 
 /* @const_object_info_begin
-class be_class_lv_indev (scope: global, name: lv_indev, super: be_class_lv_obj) {
+class be_class_lv_indev (scope: global, name: lv_indev) {
     .p, var
     init, func(lv0_init)
     tostring, func(lvx_tostring)

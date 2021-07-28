@@ -665,15 +665,15 @@ TEST(TestIRPanasonicAcClass, SetAndGetFan) {
   EXPECT_EQ(kPanasonicAcFanMin, ac.getFan());
   ac.setFan(kPanasonicAcFanMin - 1);
   EXPECT_EQ(kPanasonicAcFanAuto, ac.getFan());
+  ac.setFan(kPanasonicAcFanLow);
+  EXPECT_EQ(kPanasonicAcFanLow, ac.getFan());
   ac.setFan(kPanasonicAcFanMed);
   EXPECT_EQ(kPanasonicAcFanMed, ac.getFan());
-  ac.setFan(kPanasonicAcFanMin + 1);
-  EXPECT_EQ(kPanasonicAcFanAuto, ac.getFan());
+  ac.setFan(kPanasonicAcFanHigh);
+  EXPECT_EQ(kPanasonicAcFanHigh, ac.getFan());
   ac.setFan(kPanasonicAcFanMax);
   EXPECT_EQ(kPanasonicAcFanMax, ac.getFan());
   ac.setFan(kPanasonicAcFanMax + 1);
-  EXPECT_EQ(kPanasonicAcFanAuto, ac.getFan());
-  ac.setFan(kPanasonicAcFanMax - 1);
   EXPECT_EQ(kPanasonicAcFanAuto, ac.getFan());
 }
 
@@ -788,14 +788,14 @@ TEST(TestIRPanasonicAcClass, HumanReadable) {
   ac.setPowerful(true);
   EXPECT_EQ(
       "Model: 4 (JKE), Power: On, Mode: 4 (Heat), Temp: 30C, "
-      "Fan: 4 (High), Swing(V): 15 (Auto), Quiet: Off, "
+      "Fan: 4 (Maximum), Swing(V): 15 (Auto), Quiet: Off, "
       "Powerful: On, Clock: 00:00, On Timer: Off, Off Timer: Off",
       ac.toString());
   ac.setQuiet(true);
   ac.setModel(kPanasonicLke);
   EXPECT_EQ(
       "Model: 1 (LKE), Power: Off, Mode: 4 (Heat), Temp: 30C, "
-      "Fan: 4 (High), Swing(V): 15 (Auto), "
+      "Fan: 4 (Maximum), Swing(V): 15 (Auto), "
       "Swing(H): 6 (Middle), Quiet: On, Powerful: Off, "
       "Clock: 00:00, On Timer: 00:00, Off Timer: Off",
       ac.toString());
@@ -803,7 +803,7 @@ TEST(TestIRPanasonicAcClass, HumanReadable) {
   ac.setSwingHorizontal(kPanasonicAcSwingHRight);
   EXPECT_EQ(
       "Model: 3 (DKE), Power: Off, Mode: 4 (Heat), Temp: 30C, "
-      "Fan: 4 (High), Swing(V): 15 (Auto), "
+      "Fan: 4 (Maximum), Swing(V): 15 (Auto), "
       "Swing(H): 11 (Right), Quiet: On, Powerful: Off, Ion: Off, "
       "Clock: 00:00, On Timer: Off, Off Timer: Off",
       ac.toString());

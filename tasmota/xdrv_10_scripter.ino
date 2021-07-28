@@ -2224,12 +2224,7 @@ chknext:
         if (!strncmp(vname, "fmt(", 4)) {
           lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
           if (!fvar) {
-#ifdef ESP8266
             LittleFS.format();
-#endif
-#ifdef ESP32
-            LITTLEFS.format();
-#endif
           } else {
             //SD.format();
           }

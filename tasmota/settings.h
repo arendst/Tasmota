@@ -156,7 +156,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t wiegand_keypad_to_tag : 1;    // bit 10 (v9.3.1.1)  - SetOption124 - (Wiegand) send key pad stroke as single char (0) or one tag (ending char #) (1)
     uint32_t zigbee_hide_bridge_topic : 1; // bit 11 (v9.3.1.1)  - SetOption125 - (Zigbee) Hide bridge topic from zigbee topic (use with SetOption89) (1)
     uint32_t ds18x20_mean : 1;             // bit 12 (v9.3.1.2)  - SetOption126 - (DS18x20) Enable arithmetic mean over teleperiod for JSON temperature (1)
-    uint32_t spare13 : 1;                  // bit 13
+    uint32_t wifi_no_sleep : 1;            // bit 13 (v9.5.0.2)  - SetOption127 - (Wifi) Keep wifi in no-sleep mode, prevents some occasional unresponsiveness
     uint32_t spare14 : 1;                  // bit 14
     uint32_t spare15 : 1;                  // bit 15
     uint32_t spare16 : 1;                  // bit 16
@@ -643,13 +643,7 @@ typedef struct {
   uint16_t      sbaudrate;                 // 77A
   EnergyUsage   energy_usage;              // 77C
 
-  uint32_t      ex_adc_param1;             // 794  Free since 9.0.0.1
-  uint32_t      ex_adc_param2;             // 798  Free since 9.0.0.1
-  int           ex_adc_param3;             // 79C  Free since 9.0.0.1
-
-  uint32_t      monitors;                  // 7A0
-  uint32_t      sensors[3];                // 7A4  Normal WebSensor, Debug SetSensor
-  uint32_t      displays;                  // 7B0
+  uint32_t      sensors[2][4];             // 794  Disable individual (0) sensor drivers / (1) GUI sensor output
   uint32_t      energy_kWhtotal_time;      // 7B4
   unsigned long weight_item;               // 7B8  Weight of one item in gram * 10
   uint16_t      ledmask;                   // 7BC

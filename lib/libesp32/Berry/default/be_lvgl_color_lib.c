@@ -9,6 +9,7 @@
 
 extern int lco_init(bvm *vm);           // generic function
 extern int lco_tostring(bvm *vm);       // generic function
+extern int lco_toint(bvm *vm);       // generic function
 
 
 #if BE_USE_PRECOMPILED_OBJECT
@@ -21,6 +22,7 @@ void be_load_lvgl_color_lib(bvm *vm) {
         { ".p", NULL },               // keeping track of styles to avoid GC
         { "init", lco_init },
         { "tostring", lco_tostring },
+        { "toint", lco_toint },
 
         // { NULL, (bntvfunc) BE_CLOSURE }, /* mark section for berry closures */
         
@@ -39,6 +41,7 @@ class be_class_lv_color (scope: global, name: lv_color) {
     .p, var
     init, func(lco_init)
     tostring, func(lco_tostring)
+    toint, func(lco_toint)
 }
 @const_object_info_end */
 

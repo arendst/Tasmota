@@ -720,29 +720,35 @@ char* GetPowerDevice(char* dest, uint32_t idx, size_t size)
   return GetPowerDevice(dest, idx, size, 0);
 }
 
-float ConvertTemp(float c)
-{
+float ConvertTempToFahrenheit(float c) {
   float result = c;
 
-  TasmotaGlobal.global_update = TasmotaGlobal.uptime;
-  TasmotaGlobal.temperature_celsius = c;
-
   if (!isnan(c) && Settings->flag.temperature_conversion) {    // SetOption8 - Switch between Celsius or Fahrenheit
-    result = c * 1.8 + 32;                                    // Fahrenheit
+    result = c * 1.8 + 32;                                     // Fahrenheit
   }
   result = result + (0.1 * Settings->temp_comp);
   return result;
 }
 
-float ConvertTempToCelsius(float c)
-{
+float ConvertTempToCelsius(float c) {
   float result = c;
 
-  if (!isnan(c) && Settings->flag.temperature_conversion) {    // SetOption8 - Switch between Celsius or Fahrenheit
-    result = (c - 32) / 1.8;                                  // Celsius
+  if (!isnan(c) && !Settings->flag.temperature_conversion) {   // SetOption8 - Switch between Celsius or Fahrenheit
+    result = (c - 32) / 1.8;                                   // Celsius
   }
   result = result + (0.1 * Settings->temp_comp);
   return result;
+}
+
+void UpdateGlobalTemperature(float c) {
+  TasmotaGlobal.global_update = TasmotaGlobal.uptime;
+  TasmotaGlobal.temperature_celsius = c;
+}
+
+float ConvertTemp(float c) {
+  UpdateGlobalTemperature(c);
+
+  return ConvertTempToFahrenheit(c);
 }
 
 char TempUnit(void)
@@ -1328,6 +1334,23 @@ bool ResponseContains_P(const char* needle) {
 #endif
 }
 
+/*
+uint32_t ResponseContains_P(const char* needle) {
+  const char *tmp;
+#ifdef MQTT_DATA_STRING
+  tmp = TasmotaGlobal.mqtt_data.c_str();
+#else
+  tmp = TasmotaGlobal.mqtt_data;
+#endif
+  uint32_t count = 0;
+  while (tmp = strstr_P(tmp, needle)) {
+    count++;
+    tmp++;
+  }
+  return count;
+}
+*/
+
 /*********************************************************************************************\
  * GPIO Module and Template management
 \*********************************************************************************************/
@@ -1609,7 +1632,13 @@ bool RedPin(uint32_t pin) // pin may be dangerous to change, display in RED in t
 #if defined(ESP32) && CONFIG_IDF_TARGET_ESP32C3
   return false;     // no red pin on ESP32C3
 #else // ESP32 and ESP8266
+
+#ifdef CONFIG_IDF_TARGET_ESP32
+  return (16==pin)||(17==pin)||(9==pin)||(10==pin);
+#else
   return (9==pin)||(10==pin);
+#endif
+
 #endif
 }
 

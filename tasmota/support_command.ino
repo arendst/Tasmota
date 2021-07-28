@@ -18,6 +18,9 @@
 */
 
 const char kTasmotaCommands[] PROGMEM = "|"  // No prefix
+  // SetOptions synonyms
+  D_SO_WIFINOSLEEP "|"
+  // Other commands
   D_CMND_BACKLOG "|" D_CMND_DELAY "|" D_CMND_POWER "|" D_CMND_STATUS "|" D_CMND_STATE "|" D_CMND_SLEEP "|" D_CMND_UPGRADE "|" D_CMND_UPLOAD "|" D_CMND_OTAURL "|"
   D_CMND_SERIALLOG "|" D_CMND_RESTART "|" D_CMND_POWERONSTATE "|" D_CMND_PULSETIME "|" D_CMND_BLINKTIME "|" D_CMND_BLINKCOUNT "|" D_CMND_SAVEDATA "|"
   D_CMND_SO "|" D_CMND_SETOPTION "|" D_CMND_TEMPERATURE_RESOLUTION "|" D_CMND_HUMIDITY_RESOLUTION "|" D_CMND_PRESSURE_RESOLUTION "|" D_CMND_POWER_RESOLUTION "|"
@@ -39,11 +42,15 @@ const char kTasmotaCommands[] PROGMEM = "|"  // No prefix
 #endif  // USE_DEVICE_GROUPS_SEND
   D_CMND_DEVGROUP_SHARE "|" D_CMND_DEVGROUPSTATUS "|" D_CMND_DEVGROUP_TIE "|"
 #endif  // USE_DEVICE_GROUPS
-  D_CMND_SENSOR "|" D_CMND_DRIVER
+  D_CMND_SETSENSOR "|" D_CMND_SENSOR "|" D_CMND_DRIVER
 #ifdef ESP32
    "|Info|" D_CMND_TOUCH_CAL "|" D_CMND_TOUCH_THRES "|" D_CMND_TOUCH_NUM "|" D_CMND_CPU_FREQUENCY
 #endif  // ESP32
   ;
+
+SO_SYNONYMS(kTasmotaSynonyms,
+  127,
+);
 
 void (* const TasmotaCommand[])(void) PROGMEM = {
   &CmndBacklog, &CmndDelay, &CmndPower, &CmndStatus, &CmndState, &CmndSleep, &CmndUpgrade, &CmndUpgrade, &CmndOtaUrl,
@@ -67,7 +74,7 @@ void (* const TasmotaCommand[])(void) PROGMEM = {
 #endif  // USE_DEVICE_GROUPS_SEND
   &CmndDevGroupShare, &CmndDevGroupStatus, &CmndDevGroupTie,
 #endif  // USE_DEVICE_GROUPS
-  &CmndSensor, &CmndDriver
+  &CmndSetSensor, &CmndSensor, &CmndDriver
 #ifdef ESP32
   , &CmndInfo, &CmndTouchCal, &CmndTouchThres, &CmndTouchNum, &CmndCpuFrequency
 #endif  // ESP32
@@ -281,7 +288,7 @@ void CommandHandler(char* topicBuf, char* dataBuf, uint32_t data_len)
 #ifdef USE_SCRIPT_SUB_COMMAND
   // allow overwrite tasmota cmds
     if (!Script_SubCmd()) {
-      if (!DecodeCommand(kTasmotaCommands, TasmotaCommand)) {
+      if (!DecodeCommand(kTasmotaCommands, TasmotaCommand, kTasmotaSynonyms)) {
         if (!XdrvCall(FUNC_COMMAND)) {
           if (!XsnsCall(FUNC_COMMAND)) {
             type = nullptr;  // Unknown command
@@ -290,7 +297,7 @@ void CommandHandler(char* topicBuf, char* dataBuf, uint32_t data_len)
       }
     }
 #else  // USE_SCRIPT_SUB_COMMAND
-    if (!DecodeCommand(kTasmotaCommands, TasmotaCommand)) {
+    if (!DecodeCommand(kTasmotaCommands, TasmotaCommand, kTasmotaSynonyms)) {
       if (!XdrvCall(FUNC_COMMAND)) {
         if (!XsnsCall(FUNC_COMMAND)) {
           type = nullptr;  // Unknown command
@@ -553,7 +560,7 @@ void CmndStatus(void)
     ResponseAppendFeatures();
     XsnsDriverState();
     ResponseAppend_P(PSTR(",\"Sensors\":"));
-    XsnsSensorState();
+    XsnsSensorState(0);
     ResponseJsonEndEnd();
     CmndStatusResponse(4);
   }
@@ -2258,6 +2265,21 @@ void CmndDevGroupTie(void)
   }
 }
 #endif  // USE_DEVICE_GROUPS
+
+void CmndSetSensor(void)
+{
+  if (XdrvMailbox.index < MAX_XSNS_DRIVERS) {
+    if (XdrvMailbox.payload >= 0) {
+      bitWrite(Settings->sensors[0][XdrvMailbox.index / 32], XdrvMailbox.index % 32, XdrvMailbox.payload &1);
+      if (1 == XdrvMailbox.payload) {
+        TasmotaGlobal.restart_flag = 2;  // To safely re-enable a sensor currently most sensor need to follow complete restart init cycle
+      }
+    }
+    Response_P(PSTR("{\"" D_CMND_SETSENSOR "\":"));
+    XsnsSensorState(0);
+    ResponseJsonEnd();
+  }
+}
 
 void CmndSensor(void)
 {

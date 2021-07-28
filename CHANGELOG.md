@@ -3,33 +3,73 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [9.5.0.2]
+## [9.5.0.3]
+### Added
+- Command ``SetSensor1..127 0|1`` to globally disable individual sensor driver
+- Support for CAN bus and Freedom Won Battery Management System by Marius Bezuidenhout (#12651)
+- Berry ESP32 support for I2S audio mp3 playback
+- Berry add module ``introspect``
+- Berry add ``tasmota.wifi()`` and ``tasmota.eth()``
+- LVGL new widget ``lv_wifi_bars``
+
+### Changed
+- ESP32 core library from v1.0.7.1 to v1.0.7.3
+- Disable PSRAM on unsupported hardware
+- Replace spaces by hyphens in final hostname (#12710)
+- Message ``Upload buffer miscompare`` into ``Not enough space``
+
+### Fixed
+- Discovery fails when using ``%hostname%`` in a topic (#12710)
+- ESP32-Solo OTA upgrade
+
+## [9.5.0.2] 20210714
 ### Added
 - Initial support for Tasmota Mesh (TasMesh) providing node/broker communication using ESP-NOW (#11939)
+- MQTT minimum password length restriction in GUI (#12553)
+- Command ``SetOption127 1`` to force Wifi in no-sleep mode even if ``Sleep 0`` is not enabled
+- Support for Technoline WS2300-15 Anemometer (#12573)
+- Support for Telaire T6700 Series CO2 sensor by Alexander Savchenko (#12618)
 
 ### Changed
 - ESP32 core library from v1.0.7 to v1.0.7.1
+- IRremoteESP8266 library from v2.7.18 to v2.7.19
+- ESP32 Ethernet Phy Type information to IDF v3+
+- Allow buttons to work in AP normal mode (#12518)
+- Enable Ping and rule features for any device compiled with more than 1M flash size (#12539)
+- ESP32 internal sensor driver id moved from 87 to 127
+- Extended supported sensor driver range to 128
 
 ### Fixed
 - ESP32-C3 settings layout for configuration backup and restore
+- ESP32 core v2.0.0 setting hostname
+- Berry button handlers and error messages (#12521)
+- Scripter and Display MQTT errors due to MQTT_DATA move to String (#12525)
+- Scripter moving average and sml input validation (#12541)
+- Zigbee Hue angle encoding (#12545)
+- AM2320 value reporting (#12552)
+- Exception 28 when unable to send MQTT message and a topic name without a slash '/' (#12555)
+- Wi-Fi initial setup workaround for 11n only routers (#12566)
+- ESP32 do not use chip temperature sensor as global temperature if external temperature sensor is used (#12630)
 
-## [9.5.0.1]
+## [9.5.0.1] 20210701
 ### Added
-- Enable UFILESYS, GUI_TRASH_FILE and GUI_EDIT_FILE for any device compiled with more than 1M flash size
+- Berry ESP32 partition manager (#12465)
+- Rule event support as JSON payload (#12496)
 - Support for AM2320 Temperature and Humidity Sensor by Lars Wessels (#12485)
 
 ### Changed
 - ESP32 core library from v1.0.6 to v1.0.7
-- Force ESP32 defines USE_UFILESYS, GUI_TRASH_FILE and #define GUI_EDIT_FILE
 - Speed up initial GUI console refresh
+- Enable UFILESYS, GUI_TRASH_FILE and GUI_EDIT_FILE for any device compiled with more than 1M flash size
 - Simplified configuration for ir-full and removal of tasmota-ircustom
-- Add Esp32 Partition Manager as a Berry component
+- Refactor platformio (#12442)
 
 ### Fixed
 - ESP32 Webcam add boundary marker before sending mjpeg image (#12376)
 - DDS238-2 wrong reactive power value (#12283)
 - NO VALID JSON regression from may 4th (#12440)
 - Telegram response decoding stopped working after 20210621 and exception on long result message (#12451)
+- Neopool compile error on DEBUG_TASMOTA_SENSOR (#12464)
 
 ## [Released]
 

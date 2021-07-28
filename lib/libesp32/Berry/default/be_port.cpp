@@ -250,7 +250,22 @@ size_t be_fsize(void *hfile)
     return 0;
 }
 
-
+int be_isexist(const char *filename)
+{
+#ifdef USE_UFILESYS
+    if (ufsp != nullptr) {
+        char fname2[strlen(filename) + 2];
+        if (filename[0] == '/') {
+            strcpy(fname2, filename);   // copy unchanged
+        } else {
+            fname2[0] = '/';
+            strcpy(fname2 + 1, filename);   // prepend with '/'
+        }
+        return ufsp->exists(fname2);
+    }
+#endif // USE_UFILESYS
+    return 0;
+}
 
 #if BE_USE_FILE_SYSTEM
 #if defined(USE_FATFS) /* FatFs */

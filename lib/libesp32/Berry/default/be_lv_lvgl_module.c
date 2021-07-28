@@ -27,24 +27,50 @@ extern int lv0_screenshot(bvm *vm);
 static int lv_get_hor_res(void) {
   return lv_disp_get_hor_res(lv_disp_get_default());
 }
-static int lv_get_ver_res(bvm *vm) {
+static int lv_get_ver_res(void) {
   return lv_disp_get_ver_res(lv_disp_get_default());
 }
 
 /* `lv` methods */
 const lvbe_call_c_t lv_func[] = {
-  // resolution
+
+  { "color_mix", (void*) &lv_color_mix, "lv_color", "(lv_color)(lv_color)i" },
+  { "draw_arc", (void*) &lv_draw_arc, "", "iiiii(lv_area)(lv_draw_line_dsc)" },
+  { "draw_img", (void*) &lv_draw_img, "", "(lv_area)(lv_area).(lv_draw_img_dsc)" },
+  { "draw_img_dsc_init", (void*) &lv_draw_img_dsc_init, "", "(lv_draw_img_dsc)" },
+  { "draw_label", (void*) &lv_draw_label, "", "(lv_area)(lv_area)(lv_draw_label_dsc)s(lv_draw_label_hint)" },
+  { "draw_label_dsc_init", (void*) &lv_draw_label_dsc_init, "", "(lv_draw_label_dsc)" },
+  { "draw_line", (void*) &lv_draw_line, "", "(lv_point)(lv_point)(lv_area)(lv_draw_line_dsc)" },
+  { "draw_line_dsc_init", (void*) &lv_draw_line_dsc_init, "", "(lv_draw_line_dsc)" },
+  { "draw_mask_add", (void*) &lv_draw_mask_add, "i", ".." },
+  { "draw_mask_angle_init", (void*) &lv_draw_mask_angle_init, "", "(lv_draw_mask_angle_param)iiii" },
+  { "draw_mask_fade_init", (void*) &lv_draw_mask_fade_init, "", "(lv_draw_mask_fade_param)(lv_area)iiii" },
+  { "draw_mask_get_cnt", (void*) &lv_draw_mask_get_cnt, "i", "" },
+  { "draw_mask_line_angle_init", (void*) &lv_draw_mask_line_angle_init, "", "(lv_draw_mask_line_param)iiii" },
+  { "draw_mask_line_points_init", (void*) &lv_draw_mask_line_points_init, "", "(lv_draw_mask_line_param)iiiii" },
+  { "draw_mask_map_init", (void*) &lv_draw_mask_map_init, "", "(lv_draw_mask_map_param)(lv_area)(lv_opa)" },
+  { "draw_mask_radius_init", (void*) &lv_draw_mask_radius_init, "", "(lv_draw_mask_radius_param)(lv_area)ib" },
+  { "draw_mask_remove_custom", (void*) &lv_draw_mask_remove_custom, ".", "." },
+  { "draw_mask_remove_id", (void*) &lv_draw_mask_remove_id, ".", "i" },
+  { "draw_polygon", (void*) &lv_draw_polygon, "", "ii(lv_area)(lv_draw_rect_dsc)" },
+  { "draw_px", (void*) &lv_draw_px, "", "(lv_point)(lv_area)(lv_style)" },
+  { "draw_rect", (void*) &lv_draw_rect, "", "(lv_area)(lv_area)(lv_draw_rect_dsc)" },
+  { "draw_rect_dsc_init", (void*) &lv_draw_rect_dsc_init, "", "(lv_draw_rect_dsc)" },
+  { "draw_triangle", (void*) &lv_draw_triangle, "", "i(lv_area)(lv_draw_rect_dsc)" },
+  { "event_get_data", (void*) &lv_event_get_data, ".", "" },
+  { "event_send", (void*) &lv_event_send, "i", "(lv_obj)i." },
+  { "event_send_refresh", (void*) &lv_event_send_refresh, "i", "(lv_obj)" },
+  { "event_send_refresh_recursive", (void*) &lv_event_send_refresh_recursive, "", "(lv_obj)" },
   { "get_hor_res", (void*) &lv_get_hor_res, "i", "" },
   { "get_ver_res", (void*) &lv_get_ver_res, "i", "" },
-
-  // layers
   { "layer_sys", (void*) &lv_layer_sys, "lv_obj", "" },
   { "layer_top", (void*) &lv_layer_top, "lv_obj", "" },
-
-  // screens
+  { "refr_now", (void*) &lv_refr_now, "", "" },
   { "scr_act", (void*) &lv_scr_act, "lv_obj", "" },
   { "scr_load", (void*) &lv_scr_load, "", "(lv_obj)" },
-  { "scr_load_anim", (void*) &lv_scr_load_anim, "", "(lv_obj)iiib" },
+  { "scr_load_anim", (void*) &lv_scr_load_anim, "", "(lv_obj)(lv_scr_load_anim)iib" },
+  { "signal_send", (void*) &lv_signal_send, "i", "(lv_obj)i." },
+
 };
 const size_t lv_func_size = sizeof(lv_func) / sizeof(lv_func[0]);
 
@@ -148,6 +174,13 @@ const be_constint_t lv0_constants[] = {
     { "CPICKER_TYPE_DISC", LV_CPICKER_TYPE_DISC },
     { "CPICKER_TYPE_RECT", LV_CPICKER_TYPE_RECT },
     { "CYAN", 65535 },
+    { "DESIGN_COVER_CHK", LV_DESIGN_COVER_CHK },
+    { "DESIGN_DRAW_MAIN", LV_DESIGN_DRAW_MAIN },
+    { "DESIGN_DRAW_POST", LV_DESIGN_DRAW_POST },
+    { "DESIGN_RES_COVER", LV_DESIGN_RES_COVER },
+    { "DESIGN_RES_MASKED", LV_DESIGN_RES_MASKED },
+    { "DESIGN_RES_NOT_COVER", LV_DESIGN_RES_NOT_COVER },
+    { "DESIGN_RES_OK", LV_DESIGN_RES_OK },
     { "DISP_ROT_180", LV_DISP_ROT_180 },
     { "DISP_ROT_270", LV_DISP_ROT_270 },
     { "DISP_ROT_90", LV_DISP_ROT_90 },
@@ -160,6 +193,19 @@ const be_constint_t lv0_constants[] = {
     { "DRAG_DIR_HOR", LV_DRAG_DIR_HOR },
     { "DRAG_DIR_ONE", LV_DRAG_DIR_ONE },
     { "DRAG_DIR_VER", LV_DRAG_DIR_VER },
+    { "DRAW_MASK_LINE_SIDE_BOTTOM", LV_DRAW_MASK_LINE_SIDE_BOTTOM },
+    { "DRAW_MASK_LINE_SIDE_LEFT", LV_DRAW_MASK_LINE_SIDE_LEFT },
+    { "DRAW_MASK_LINE_SIDE_RIGHT", LV_DRAW_MASK_LINE_SIDE_RIGHT },
+    { "DRAW_MASK_LINE_SIDE_TOP", LV_DRAW_MASK_LINE_SIDE_TOP },
+    { "DRAW_MASK_RES_CHANGED", LV_DRAW_MASK_RES_CHANGED },
+    { "DRAW_MASK_RES_FULL_COVER", LV_DRAW_MASK_RES_FULL_COVER },
+    { "DRAW_MASK_RES_TRANSP", LV_DRAW_MASK_RES_TRANSP },
+    { "DRAW_MASK_RES_UNKNOWN", LV_DRAW_MASK_RES_UNKNOWN },
+    { "DRAW_MASK_TYPE_ANGLE", LV_DRAW_MASK_TYPE_ANGLE },
+    { "DRAW_MASK_TYPE_FADE", LV_DRAW_MASK_TYPE_FADE },
+    { "DRAW_MASK_TYPE_LINE", LV_DRAW_MASK_TYPE_LINE },
+    { "DRAW_MASK_TYPE_MAP", LV_DRAW_MASK_TYPE_MAP },
+    { "DRAW_MASK_TYPE_RADIUS", LV_DRAW_MASK_TYPE_RADIUS },
     { "DROPDOWN_DIR_DOWN", LV_DROPDOWN_DIR_DOWN },
     { "DROPDOWN_DIR_LEFT", LV_DROPDOWN_DIR_LEFT },
     { "DROPDOWN_DIR_RIGHT", LV_DROPDOWN_DIR_RIGHT },
@@ -221,6 +267,21 @@ const be_constint_t lv0_constants[] = {
     { "GRAD_DIR_VER", LV_GRAD_DIR_VER },
     { "GRAY", 8421504 },
     { "GREEN", 32768 },
+    { "IMG_CF_ALPHA_1BIT", LV_IMG_CF_ALPHA_1BIT },
+    { "IMG_CF_ALPHA_2BIT", LV_IMG_CF_ALPHA_2BIT },
+    { "IMG_CF_ALPHA_4BIT", LV_IMG_CF_ALPHA_4BIT },
+    { "IMG_CF_ALPHA_8BIT", LV_IMG_CF_ALPHA_8BIT },
+    { "IMG_CF_INDEXED_1BIT", LV_IMG_CF_INDEXED_1BIT },
+    { "IMG_CF_INDEXED_2BIT", LV_IMG_CF_INDEXED_2BIT },
+    { "IMG_CF_INDEXED_4BIT", LV_IMG_CF_INDEXED_4BIT },
+    { "IMG_CF_INDEXED_8BIT", LV_IMG_CF_INDEXED_8BIT },
+    { "IMG_CF_RAW", LV_IMG_CF_RAW },
+    { "IMG_CF_RAW_ALPHA", LV_IMG_CF_RAW_ALPHA },
+    { "IMG_CF_RAW_CHROMA_KEYED", LV_IMG_CF_RAW_CHROMA_KEYED },
+    { "IMG_CF_TRUE_COLOR", LV_IMG_CF_TRUE_COLOR },
+    { "IMG_CF_TRUE_COLOR_ALPHA", LV_IMG_CF_TRUE_COLOR_ALPHA },
+    { "IMG_CF_TRUE_COLOR_CHROMA_KEYED", LV_IMG_CF_TRUE_COLOR_CHROMA_KEYED },
+    { "IMG_CF_UNKNOWN", LV_IMG_CF_UNKNOWN },
     { "INDEV_STATE_PR", LV_INDEV_STATE_PR },
     { "INDEV_STATE_REL", LV_INDEV_STATE_REL },
     { "KEYBOARD_MODE_NUM", LV_KEYBOARD_MODE_NUM },
@@ -309,6 +370,7 @@ const be_constint_t lv0_constants[] = {
     { "PROTECT_POS", LV_PROTECT_POS },
     { "PROTECT_PRESS_LOST", LV_PROTECT_PRESS_LOST },
     { "PURPLE", 8388736 },
+    { "RADIUS_CIRCLE", 32767 },
     { "RED", 16711680 },
     { "ROLLER_MODE_INFINITE", LV_ROLLER_MODE_INFINITE },
     { "ROLLER_MODE_NORMAL", LV_ROLLER_MODE_NORMAL },
@@ -496,11 +558,7 @@ const be_constint_t lv0_constants[] = {
 };
 
 const size_t lv0_constants_size = sizeof(lv0_constants)/sizeof(lv0_constants[0]);
-
-
 #if !BE_USE_PRECOMPILED_OBJECT
-//#if 1           // TODO we will do pre-compiled later
-
 
 be_native_module_attr_table(lvgl) {
     // Symbols    
@@ -582,8 +640,6 @@ be_native_module_attr_table(lvgl) {
     be_native_module_function("load_freetype_font", lv0_load_freetype_font),
 
     be_native_module_function("screenshot", lv0_screenshot),
-
-
 };
 
 be_define_native_module(lvgl, NULL);
@@ -729,9 +785,6 @@ module lvgl (scope: global) {
     load_freetype_font, func(lv0_load_freetype_font)
 
     screenshot, func(lv0_screenshot)
-
-
-
 }
 @const_object_info_end */
 #include "../generate/be_fixed_lvgl.h"

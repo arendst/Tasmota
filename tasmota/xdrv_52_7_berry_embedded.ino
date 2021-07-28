@@ -96,12 +96,26 @@ const char berry_prog[] =
   // "end "
   // "lv = lvgl() "
   "import lvgl as lv "
+  // 'lv_group_focus_cb', 'lv_event_cb', 'lv_signal_cb', 'lv_design_cb', 'lv_gauge_format_cb'
   "_lvgl_cb = [ {}, {}, {}, {}, {}, {} ] "
   "_lvgl_cb_obj = [ {}, {}, {}, {}, {}, {} ] "
   "def _lvgl_cb_dispatch(idx, obj, v1, v2, v3, v4) "
     // "import string print(string.format('>>> idx=%i obj=0x%08X v1=%i', idx, obj, v1)) "
     "var func = _lvgl_cb[idx].find(obj) "
     "var inst = _lvgl_cb_obj[idx].find(obj) "
+    // convert arguments to ctypes if needed
+
+    // typedef void (*lv_group_focus_cb_t)(struct _lv_group_t *);
+    // typedef void (*lv_event_cb_t)(struct _lv_obj_t * obj, lv_event_t event);
+    // typedef lv_res_t (*lv_signal_cb_t)(struct _lv_obj_t * obj, lv_signal_t sign, void * param);
+    // typedef lv_design_res_t (*lv_design_cb_t)(struct _lv_obj_t * obj, const lv_area_t * clip_area, lv_design_mode_t mode);
+    // typedef void (*lv_gauge_format_cb_t)(lv_obj_t * gauge, char * buf, int bufsize, int32_t value);
+
+    "if idx == 3 "
+      // lv_signal_cb - arg2 is lv_area
+      "v1 = lv_area(v1) "
+    "end "
+    
     "if func != nil "
       "return func(inst, v1, v2, v3, v4) "
     "end "

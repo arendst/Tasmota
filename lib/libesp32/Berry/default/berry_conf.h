@@ -83,7 +83,7 @@
  * expanded if the number of free is less than BE_STACK_FREE_MIN.
  * Default: 10
  **/
-#define BE_STACK_FREE_MIN               10
+#define BE_STACK_FREE_MIN               20
 
 /* Macro: BE_STACK_FREE_MIN
  * The short string will hold the hash value when the value is
@@ -158,6 +158,7 @@
 #define BE_USE_DEBUG_MODULE             1
 #define BE_USE_GC_MODULE                1
 #define BE_USE_SOLIDIFY_MODULE          1
+#define BE_USE_INTROSPECT_MODULE        1
 
 /* Macro: BE_EXPLICIT_XXX
  * If these macros are defined, the corresponding function will

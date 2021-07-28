@@ -158,7 +158,6 @@ void lv_event_send_refresh_recursive(lv_obj_t * obj);
 // lv_res_t lv_event_send_func(lv_event_cb_t event_xcb, lv_obj_t * obj, lv_event_t event, const void * data);
 const void * lv_event_get_data(void);
 void lv_obj_set_signal_cb(lv_obj_t * obj, lv_signal_cb_t signal_cb);
-lv_res_t lv_signal_send(lv_obj_t * obj, lv_signal_t signal, void * param);
 void lv_obj_set_design_cb(lv_obj_t * obj, lv_design_cb_t design_cb);
 void * lv_obj_allocate_ext_attr(lv_obj_t * obj, uint16_t ext_size);
 void lv_obj_refresh_ext_draw_pad(lv_obj_t * obj);
@@ -1163,3 +1162,90 @@ void lv_win_focus(lv_obj_t * win, lv_obj_t * obj, lv_anim_enable_t anim_en);
 static inline void lv_win_scroll_hor(lv_obj_t * win, lv_coord_t dist)
 static inline void lv_win_scroll_ver(lv_obj_t * win, lv_coord_t dist)
 
+// ======================================================================
+// Patch
+// ======================================================================
+
+// lv_signal_send should be renamed lv_obj_signal_send
+// lv_res_t lv_signal_send(lv_obj_t * obj, lv_signal_t signal, void * param);
+lv_res_t lv_obj_signal_send(lv_obj_t * obj, lv_signal_t signal, void * param);
+
+// ======================================================================
+// LV top level functions
+// ======================================================================
+
+// resolution
+lv_coord_t lv_get_hor_res(void);
+lv_coord_t lv_get_ver_res(void);
+
+// layers
+static inline lv_obj_t * lv_layer_sys(void);
+static inline lv_obj_t * lv_layer_top(void);
+
+// screens
+static inline lv_obj_t * lv_scr_act(void);
+static inline void lv_scr_load(lv_obj_t * scr);
+void lv_scr_load_anim(lv_obj_t * scr, lv_scr_load_anim_t anim_type, uint32_t time, uint32_t delay, bool auto_del);
+
+lv_res_t lv_signal_send(lv_obj_t * obj, lv_signal_t signal, void * param);
+
+// ======================================================================
+// LV DRAW
+// ======================================================================
+
+void lv_draw_arc(lv_coord_t center_x, lv_coord_t center_y, uint16_t radius,  uint16_t start_angle, uint16_t end_angle, const lv_area_t * clip_area, const lv_draw_line_dsc_t * dsc);
+
+LV_ATTRIBUTE_FAST_MEM void _lv_blend_fill(const lv_area_t * clip_area, const lv_area_t * fill_area, lv_color_t color, lv_opa_t * mask, lv_draw_mask_res_t mask_res, lv_opa_t opa, lv_blend_mode_t mode);
+LV_ATTRIBUTE_FAST_MEM void _lv_blend_map(const lv_area_t * clip_area, const lv_area_t * map_area, const lv_color_t * map_buf, lv_opa_t * mask, lv_draw_mask_res_t mask_res, lv_opa_t opa, lv_blend_mode_t mode);
+
+void lv_draw_img_dsc_init(lv_draw_img_dsc_t * dsc);
+void lv_draw_img(const lv_area_t * coords, const lv_area_t * mask, const void * src, const lv_draw_img_dsc_t * dsc);
+lv_img_src_t lv_img_src_get_type(const void * src);
+uint8_t lv_img_cf_get_px_size(lv_img_cf_t cf);
+bool lv_img_cf_is_chroma_keyed(lv_img_cf_t cf);
+bool lv_img_cf_has_alpha(lv_img_cf_t cf);
+
+LV_ATTRIBUTE_FAST_MEM void lv_draw_label_dsc_init(lv_draw_label_dsc_t * dsc);
+LV_ATTRIBUTE_FAST_MEM void lv_draw_label(const lv_area_t * coords, const lv_area_t * mask, const lv_draw_label_dsc_t * dsc, const char * txt, lv_draw_label_hint_t * hint);
+
+LV_ATTRIBUTE_FAST_MEM void lv_draw_line(const lv_point_t * point1, const lv_point_t * point2, const lv_area_t * clip, const lv_draw_line_dsc_t * dsc);
+LV_ATTRIBUTE_FAST_MEM void lv_draw_line_dsc_init(lv_draw_line_dsc_t * dsc);
+
+int16_t lv_draw_mask_add(void * param, void * custom_id);
+LV_ATTRIBUTE_FAST_MEM lv_draw_mask_res_t lv_draw_mask_apply(lv_opa_t * mask_buf, lv_coord_t abs_x, lv_coord_t abs_y, lv_coord_t len);
+void * lv_draw_mask_remove_id(int16_t id);
+void * lv_draw_mask_remove_custom(void * custom_id);
+LV_ATTRIBUTE_FAST_MEM uint8_t lv_draw_mask_get_cnt(void);
+void lv_draw_mask_line_points_init(lv_draw_mask_line_param_t * param, lv_coord_t p1x, lv_coord_t p1y, lv_coord_t p2x, lv_coord_t p2y, lv_draw_mask_line_side_t side);
+void lv_draw_mask_line_angle_init(lv_draw_mask_line_param_t * param, lv_coord_t p1x, lv_coord_t py, int16_t angle, lv_draw_mask_line_side_t side);
+void lv_draw_mask_angle_init(lv_draw_mask_angle_param_t * param, lv_coord_t vertex_x, lv_coord_t vertex_y, lv_coord_t start_angle, lv_coord_t end_angle);
+void lv_draw_mask_radius_init(lv_draw_mask_radius_param_t * param, const lv_area_t * rect, lv_coord_t radius, bool inv);
+void lv_draw_mask_fade_init(lv_draw_mask_fade_param_t * param, const lv_area_t * coords, lv_opa_t opa_top, lv_coord_t y_top, lv_opa_t opa_bottom, lv_coord_t y_bottom);
+void lv_draw_mask_map_init(lv_draw_mask_map_param_t * param, const lv_area_t * coords, const lv_opa_t * map);
+
+LV_ATTRIBUTE_FAST_MEM void lv_draw_rect_dsc_init(lv_draw_rect_dsc_t * dsc);
+void lv_draw_rect(const lv_area_t * coords, const lv_area_t * mask, const lv_draw_rect_dsc_t * dsc);
+void lv_draw_px(const lv_point_t * point, const lv_area_t * clip_area, const lv_style_t * style);
+
+void lv_draw_triangle(const lv_point_t points[], const lv_area_t * clip, const lv_draw_rect_dsc_t * draw_dsc);
+void lv_draw_polygon(const lv_point_t points[], uint16_t point_cnt, const lv_area_t * mask, const lv_draw_rect_dsc_t * draw_dsc);
+
+lv_img_dsc_t * lv_img_buf_alloc(lv_coord_t w, lv_coord_t h, lv_img_cf_t cf);
+lv_color_t lv_img_buf_get_px_color(lv_img_dsc_t * dsc, lv_coord_t x, lv_coord_t y, lv_color_t color);
+lv_opa_t lv_img_buf_get_px_alpha(lv_img_dsc_t * dsc, lv_coord_t x, lv_coord_t y);
+void lv_img_buf_set_px_color(lv_img_dsc_t * dsc, lv_coord_t x, lv_coord_t y, lv_color_t c);
+void lv_img_buf_set_px_alpha(lv_img_dsc_t * dsc, lv_coord_t x, lv_coord_t y, lv_opa_t opa);
+void lv_img_buf_set_palette(lv_img_dsc_t * dsc, uint8_t id, lv_color_t c);
+void lv_img_buf_free(lv_img_dsc_t * dsc);
+uint32_t lv_img_buf_get_img_size(lv_coord_t w, lv_coord_t h, lv_img_cf_t cf);
+
+// void lv_img_cache_set_size(uint16_t new_slot_num);
+// void lv_img_cache_invalidate_src(const void * src);
+
+
+// ======================================================================
+// Artificial
+// ======================================================================
+
+void lv_refr_now(void);
+lv_color_t lv_color_mix(lv_color_t c1, lv_color_t c2, uint8_t mix);

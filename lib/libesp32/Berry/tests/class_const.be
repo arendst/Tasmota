@@ -1,0 +1,69 @@
+def assert_attribute_error(f)
+    try
+        f()
+        assert(false, 'unexpected execution flow')
+    except .. as e, m
+        assert(e == 'attribute_error')
+    end
+end
+
+class A
+    static a
+    def init() self.b = 2 end
+    def f() end 
+    var b 
+    static c, s, r
+end
+
+assert(A.a == nil)
+assert(A.c == nil)
+assert(A.s == nil)
+assert_attribute_error(/-> A.b)
+assert_attribute_error(/-> A.d)
+
+a = A()
+assert(a.b == 2)
+assert(a.a == nil)
+assert(a.c == nil)
+
+A.a = 1
+A.c = 3
+A.s = "foo"
+A.r = 3.5
+assert(a.a == 1)
+assert(a.c == 3)
+assert(A.a == 1)
+assert(A.c == 3)
+import gc gc.collect()
+assert(A.s == "foo")
+assert(a.s == "foo")
+assert(A.r == 3.5)
+assert(a.r == 3.5)
+
+#- test valid or invalid methods and members -#
+
+def assert_attribute_error(c)
+    try
+        compile(c)()
+        assert(false, 'unexpected execution flow')
+    except .. as e, m
+        assert(e == 'attribute_error')
+    end
+end
+
+class A
+    var a, g
+    static h
+    def init() self.a = 1 end
+    def f(x, y) return type(self) end
+end
+a=A()
+a.g = def (x, y) return type(x) end
+A.h = def (x, y) return type(x) end
+
+assert(type(a.g) == 'function')
+assert(type(a.h) == 'function')
+
+assert_attribute_error("a.g(1,2)")
+assert(a.h(1) == 'instance')
+# A.h(1) - error
