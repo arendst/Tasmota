@@ -751,10 +751,17 @@ bool Xdrv52(uint8_t function)
       } else {
         WSContentSend_P(HTTP_BTN_BERRY_CONSOLE);
         callBerryEventDispatcher(PSTR("web_add_button"), nullptr, 0, nullptr);
+        callBerryEventDispatcher(PSTR("web_add_console_button"), nullptr, 0, nullptr);
       }
       break;
     case FUNC_WEB_ADD_MAIN_BUTTON:
       callBerryEventDispatcher(PSTR("web_add_main_button"), nullptr, 0, nullptr);
+      break;
+    case FUNC_WEB_ADD_MANAGEMENT_BUTTON:
+      callBerryEventDispatcher(PSTR("web_add_management_button"), nullptr, 0, nullptr);
+      break;
+    case FUNC_WEB_ADD_BUTTON:
+      callBerryEventDispatcher(PSTR("web_add_config_button"), nullptr, 0, nullptr);
       break;
     case FUNC_WEB_ADD_HANDLER:
       callBerryEventDispatcher(PSTR("web_add_handler"), nullptr, 0, nullptr);

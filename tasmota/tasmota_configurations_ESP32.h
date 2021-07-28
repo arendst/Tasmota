@@ -35,7 +35,6 @@
 #define USE_WEBCAM
 #define ENABLE_RTSPSERVER
 #define USE_SDCARD
-  #define GUI_TRASH_FILE
 #define USE_SPI
 #undef USE_BERRY                                 // Disable Berry scripting language
 #undef  USE_MI_ESP32                             // (ESP32 only) Disable support for ESP32 as a BLE-bridge (+9k2 mem, +292k flash)
@@ -116,10 +115,9 @@
 #define USE_SENDMAIL
 #define USE_ESP32MAIL
 
-#define USE_SCRIPT                               // Add support for script (+17k code)
+#ifndef USE_RULES
+  #define USE_SCRIPT                             // Add support for script (+17k code)
 // Script related defines
-#ifdef USE_SCRIPT
-  #undef USE_RULES
   #define MAXVARS 75
   #define MAXSVARS 15
   #define MAXFILT 10
@@ -134,7 +132,7 @@
   #define SCRIPT_FULL_WEBPAGE
   #define SCRIPT_GET_HTTPS_JP
   #define USE_GOOGLE_CHARTS
-#endif  // USE_SCRIPT
+#endif  // USE_RULES
 #endif  // FIRMWARE_M5STACK_CORE2
 
 /*********************************************************************************************\
@@ -203,10 +201,7 @@
 #define USE_BERRY                                // Enable Berry scripting language
 //#define USE_BERRY_PSRAM                        // Allocate Berry memory in PSRAM if PSRAM is connected - this might be slightly slower but leaves main memory intact
 
-#define USE_UFILESYS
 #define USE_SDCARD
-  #define GUI_TRASH_FILE
-  #define GUI_EDIT_FILE
 
 #define ROTARY_V1                                // Add support for Rotary Encoder as used in MI Desk Lamp
 
@@ -231,6 +226,8 @@
 #define USE_LIGHT_PALETTE                        // Add support for color palette (+0k9 code)
 #undef USE_EMULATION_WEMO
 //#undef USE_EMULATION_HUE
+
+#define USE_WS2812
 
 #define USE_DS18x20                              // Add support for DS18x20 sensors with id sort, single scan and read retry (+1k3 code)
 

@@ -3,9 +3,33 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [9.5.0.1]
+## [9.5.0.2]
+### Added
+- Initial support for Tasmota Mesh (TasMesh) providing node/broker communication using ESP-NOW (#11939)
+
 ### Changed
+- ESP32 core library from v1.0.7 to v1.0.7.1
+
+### Fixed
+- ESP32-C3 settings layout for configuration backup and restore
+
+## [9.5.0.1]
+### Added
+- Enable UFILESYS, GUI_TRASH_FILE and GUI_EDIT_FILE for any device compiled with more than 1M flash size
+- Support for AM2320 Temperature and Humidity Sensor by Lars Wessels (#12485)
+
+### Changed
+- ESP32 core library from v1.0.6 to v1.0.7
 - Force ESP32 defines USE_UFILESYS, GUI_TRASH_FILE and #define GUI_EDIT_FILE
+- Speed up initial GUI console refresh
+- Simplified configuration for ir-full and removal of tasmota-ircustom
+- Add Esp32 Partition Manager as a Berry component
+
+### Fixed
+- ESP32 Webcam add boundary marker before sending mjpeg image (#12376)
+- DDS238-2 wrong reactive power value (#12283)
+- NO VALID JSON regression from may 4th (#12440)
+- Telegram response decoding stopped working after 20210621 and exception on long result message (#12451)
 
 ## [Released]
 

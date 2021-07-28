@@ -154,9 +154,7 @@ void ExecuteCommand(const char *cmnd, uint32_t source)
   // cmnd: "status 0"  = stopic "status" and svalue " 0"
   // cmnd: "var1 =1"   = stopic "var1" and svalue " =1"
   // cmnd: "var1=1"    = stopic "var1" and svalue "=1"
-#ifdef USE_DEBUG_DRIVER
-  ShowFreeMem(PSTR("ExecuteCommand"));
-#endif
+  SHOW_FREE_MEM(PSTR("ExecuteCommand"));
   ShowSource(source);
 
   const char *pos = cmnd;
@@ -196,9 +194,7 @@ void ExecuteCommand(const char *cmnd, uint32_t source)
 
 void CommandHandler(char* topicBuf, char* dataBuf, uint32_t data_len)
 {
-#ifdef USE_DEBUG_DRIVER
-  ShowFreeMem(PSTR("CommandHandler"));
-#endif
+  SHOW_FREE_MEM(PSTR("CommandHandler"));
 
   bool grpflg = false;
   uint32_t real_index = SET_MQTT_GRP_TOPIC;

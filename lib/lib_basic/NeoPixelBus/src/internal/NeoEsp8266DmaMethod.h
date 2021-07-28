@@ -39,7 +39,11 @@ extern "C"
 #include "ets_sys.h"
 
 #include "i2s_reg.h"
+#ifndef ARDUINO_ESP8266_RELEASE_3_0_1
 #include "i2s.h"
+#else 
+#include "core_esp8266_i2s.h"
+#endif
 #include "eagle_soc.h"
 #include "esp8266_peri.h"
 #include "slc_register.h"

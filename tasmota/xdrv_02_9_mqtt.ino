@@ -476,6 +476,13 @@ bool MqttPublishLib(const char* topic, const uint8_t* payload, unsigned int plen
     }
   }
 
+#ifdef USE_TASMESH
+ if (MESHrouteMQTTtoMESH(topic, (char*)payload, retained)) {  // If we are a node, send this via ESP-Now
+   yield();
+   return true;
+ }
+#endif  // USE_TASMESH
+
 #ifdef USE_MQTT_AZURE_IOT
   String sourceTopicString = urlEncodeBase64(String(topic));
   String topicString = "devices/" + String(SettingsText(SET_MQTT_CLIENT));
@@ -506,9 +513,7 @@ bool MqttPublishLib(const char* topic, const uint8_t* payload, unsigned int plen
 }
 
 void MqttDataHandler(char* mqtt_topic, uint8_t* mqtt_data, unsigned int data_len) {
-#ifdef USE_DEBUG_DRIVER
-  ShowFreeMem(PSTR("MqttDataHandler"));
-#endif
+  SHOW_FREE_MEM(PSTR("MqttDataHandler"));
 
   // Do not allow more data than would be feasable within stack space
   if (data_len >= MQTT_MAX_PACKET_SIZE) { return; }
@@ -554,6 +559,14 @@ void MqttDataHandler(char* mqtt_topic, uint8_t* mqtt_data, unsigned int data_len
   if (Mqtt.disable_logging) {
     TasmotaGlobal.masterlog_level = LOG_LEVEL_DEBUG_MORE;  // Hide logging
   }
+
+#ifdef USE_TASMESH
+#ifdef ESP32
+  if (MESHinterceptMQTTonBroker(topic, (uint8_t*)mqtt_data, data_len +1)) {
+    return;  // Check if this is a message for a node
+  }
+#endif  // ESP32
+#endif  // USE_TASMESH
 
   // MQTT pre-processing
   XdrvMailbox.index = strlen(topic);
@@ -605,9 +618,7 @@ void MqttPublishLoggingAsync(bool refresh) {
 void MqttPublishPayload(const char* topic, const char* payload, uint32_t binary_length, bool retained) {
   // Publish <topic> payload string or binary when binary_length set with optional retained
 
-#ifdef USE_DEBUG_DRIVER
-  ShowFreeMem(PSTR("MqttPublish"));
-#endif
+  SHOW_FREE_MEM(PSTR("MqttPublish"));
 
   bool binary_data = (binary_length > 0);
   if (!binary_data) {
@@ -621,7 +632,11 @@ void MqttPublishPayload(const char* topic, const char* payload, uint32_t binary_
   // To lower heap usage the payload is not copied to the heap but used directly
   String log_data_topic;                                 // 20210420 Moved to heap to solve tight stack resulting in exception 2
   if (Settings->flag.mqtt_enabled && MqttPublishLib(topic, (const uint8_t*)payload, binary_length, retained)) {  // SetOption3 - Enable MQTT
+#ifdef USE_TASMESH
+    log_data_topic = (MESHroleNode()) ? F("MSH: ") : F(D_LOG_MQTT);  // MSH: or MQT:
+#else
     log_data_topic = F(D_LOG_MQTT);                      // MQT:
+#endif  // USE_TASMESH
     log_data_topic += topic;                             // stat/tasmota/STATUS2
   } else {
     log_data_topic = F(D_LOG_RESULT);                    // RSL:

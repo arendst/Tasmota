@@ -103,34 +103,54 @@ bool TelegramInit(void) {
   return init_done;
 }
 
-String TelegramConnectToTelegram(String command) {
-//  AddLog(LOG_LEVEL_DEBUG, PSTR("TGM: Cmnd %s"), command.c_str());
+String TelegramConnectToTelegram(const String &command) {
+//  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("TGM: Cmnd '%s'"), command.c_str());
 
   if (!TelegramInit()) { return ""; }
 
+  String host = F("api.telegram.org");
   String response = "";
   uint32_t tls_connect_time = millis();
-  if (telegramClient->connect("api.telegram.org", 443)) {
+  if (telegramClient->connect(host.c_str(), 443)) {
 
 //    AddLog(LOG_LEVEL_DEBUG, PSTR("TGM: Connected in %d ms, max ThunkStack used %d"), millis() - tls_connect_time, telegramClient->getMaxThunkStackUse());
 
-    telegramClient->println("GET /"+command);
+//    telegramClient->println("GET /"+command);  // Fails after 20210621
+    String request = "GET /" + command + " HTTP/1.1\r\nHost: " + host + "\r\nConnection: close\r\n\r\n";
+    telegramClient->print(request);
+/*
+    Response before 20210621:
+    {"ok":true,"result":[]}
 
+    Response after 20210621:
+    HTTP/1.1 200 OK
+    Server: nginx/1.18.0
+    Date: Thu, 24 Jun 2021 15:26:20 GMT
+    Content-Type: application/json
+    Content-Length: 23
+    Connection: close
+    Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+    Access-Control-Allow-Origin: *
+    Access-Control-Allow-Methods: GET, POST, OPTIONS
+    Access-Control-Expose-Headers: Content-Length,Content-Type,Date,Server,Connection
+
+    {"ok":true,"result":[]}
+*/
     char c;
-    int ch_count=0;
+    bool available = false;
     uint32_t now = millis();
-    bool avail = false;
-    while (millis() -now < 1500) {
+    while (!available && (millis() -now < 1500)) {
       while (telegramClient->available()) {
-        char c = telegramClient->read();
-        if (ch_count < 700) {  // Allow up to two messages
-          response = response + c;
-          ch_count++;
+        c = telegramClient->read();
+        if (c == '{') {
+          available = true;               // Skip headers (+-400 bytes) and start response at first JSON
         }
-        avail = true;
-      }
-      if (avail) {
-        break;
+        if (available) {
+          response += c;
+          if (response.length() > 800) {  // Allow up to two messages
+            break;
+          }
+        }
       }
     }
 
@@ -201,7 +221,7 @@ void TelegramGetUpdates(uint32_t offset) {
   //  }
   // ]}
 
-  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("TGM: Response %s"), response.c_str());
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("TGM: Response '%s'"), response.c_str());
 
   JsonParser parser((char*)response.c_str());
   JsonParserObject root = parser.getRootObject();
@@ -245,7 +265,7 @@ void TelegramGetUpdates(uint32_t offset) {
   }
 }
 
-bool TelegramSendMessage(String chat_id, String text) {
+bool TelegramSendMessage(const String &chat_id, const String &text) {
   AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("TGM: sendMessage"));
 
   if (!TelegramInit()) { return false; }

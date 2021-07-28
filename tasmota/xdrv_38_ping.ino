@@ -125,7 +125,7 @@ extern "C" {
     struct pbuf *p;
     uint16_t ping_size = sizeof(struct icmp_echo_hdr) + Ping_data_size;
 
-    ping->ping_time_sent = system_get_time();
+    ping->ping_time_sent = micros();
     p = pbuf_alloc(PBUF_IP, ping_size, PBUF_RAM);
     if (!p) { return; }
     if ((p->len == p->tot_len) && (p->next == nullptr)) {
@@ -191,7 +191,7 @@ extern "C" {
         if (iecho->seqno != ping->seqno){   // debounce already received packet
           /* do some ping result processing */
           sys_untimeout(t_ping_timeout, ping);      // remove time-out handler
-          uint32_t delay = system_relative_time(ping->ping_time_sent);
+          uint32_t delay = micros() - ping->ping_time_sent;
           delay /= 1000;
 
           ping->sum_time += delay;

@@ -13,6 +13,7 @@
 #include "be_exec.h"
 #include "be_vm.h"
 #include "be_mem.h"
+#include "be_constobj.h"
 #include <string.h>
 #include <ctype.h>
 
@@ -44,13 +45,6 @@ static void buf_set_len(buf_impl* buf, const size_t len)
     buf->len = (len <= buf->size) ? len : buf->size;
     if (old_len < buf->len) {
         memset((void*) &buf->buf[old_len], 0, buf->len - old_len);
-    }
-}
-
-static void buf_set1(buf_impl* buf, const size_t offset, const uint8_t data)
-{
-    if (offset < buf->len) {
-        buf->buf[offset] = data;
     }
 }
 
@@ -120,7 +114,31 @@ static uint8_t buf_get1(buf_impl* buf, int offset)
     return 0;
 }
 
-static uint16_t buf_get2_le(buf_impl* buf, int offset) {
+static void buf_set1(buf_impl* buf, const size_t offset, const uint8_t data)
+{
+    if (offset < buf->len) {
+        buf->buf[offset] = data;
+    }
+}
+
+static void buf_set2_le(buf_impl* buf, const size_t offset, const uint16_t data)
+{
+    if ((offset >= 0) && (offset < buf->len - 1)) {
+        buf->buf[offset] = data & 0xFF;
+        buf->buf[offset+1] = data >> 8;
+    }
+}
+
+static void buf_set2_be(buf_impl* buf, const size_t offset, const uint16_t data)
+{
+    if ((offset >= 0) && (offset < buf->len - 1)) {
+        buf->buf[offset+1] = data & 0xFF;
+        buf->buf[offset] = data >> 8;
+    }
+}
+
+static uint16_t buf_get2_le(buf_impl* buf, int offset)
+{
     if ((offset >= 0) && (offset < buf->len - 1)) {
         return buf->buf[offset] | (buf->buf[offset+1] << 8);
     }
@@ -133,6 +151,26 @@ static uint16_t buf_get2_be(buf_impl* buf, int offset)
         return buf->buf[offset+1] | (buf->buf[offset] << 8);
     }
     return 0;
+}
+
+static void buf_set4_le(buf_impl* buf, const size_t offset, const uint32_t data)
+{
+    if ((offset >= 0) && (offset < buf->len - 3)) {
+        buf->buf[offset] = data & 0xFF;
+        buf->buf[offset+1] = (data >> 8) & 0xFF;
+        buf->buf[offset+2] = (data >> 16) & 0xFF;
+        buf->buf[offset+3] = data >> 24;
+    }
+}
+
+static void buf_set4_be(buf_impl* buf, const size_t offset, const uint32_t data)
+{
+    if ((offset >= 0) && (offset < buf->len - 3)) {
+        buf->buf[offset+3] = data & 0xFF;
+        buf->buf[offset+2] = (data >> 8) & 0xFF;
+        buf->buf[offset+1] = (data >> 16) & 0xFF;
+        buf->buf[offset] = data >> 24;
+    }
 }
 
 static uint32_t buf_get4_le(buf_impl* buf, int offset)
@@ -383,13 +421,13 @@ static int m_add(bvm *vm)
 
 /*
  * Get an int made of 1, 2 or 4 bytes, in little or big endian
- * `get(index:int[, size:int = 1]) -> instance`
+ * `get(index:int[, size:int = 1]) -> int`
  * 
  * size: may be 1, 2, 4 (little endian), or -1, -2, -4 (big endian)
- *       obvisouly -1 is idntical to 1
+ *       obvisouly -1 is identical to 1
  *       0 returns nil
  */
-static int m_get(bvm *vm)
+static int m_get(bvm *vm, bbool sign)
 {
     int argc = be_top(vm);
     buf_impl * buf = bytes_check_data(vm, 0); /* we reserve 4 bytes anyways */
@@ -403,10 +441,16 @@ static int m_get(bvm *vm)
         switch (vsize) {
             case 0:                                     break;
             case -1:    /* fallback below */
-            case 1:     ret = buf_get1(buf, idx);       break;
-            case 2:     ret = buf_get2_le(buf, idx);    break;
+            case 1:     ret = buf_get1(buf, idx);
+                        if (sign) { ret = (int8_t)(uint8_t) ret; }
+                        break;
+            case 2:     ret = buf_get2_le(buf, idx);
+                        if (sign) { ret = (int16_t)(uint16_t) ret; }
+                        break;
             case 4:     ret = buf_get4_le(buf, idx);    break;
-            case -2:    ret = buf_get2_be(buf, idx);    break;
+            case -2:    ret = buf_get2_be(buf, idx);
+                        if (sign) { ret = (int16_t)(uint16_t) ret; }
+                        break;
             case -4:    ret = buf_get4_be(buf, idx);    break;
             default:    be_raise(vm, "type_error", "size must be -4, -2, -1, 0, 1, 2 or 4.");
         }
@@ -417,6 +461,53 @@ static int m_get(bvm *vm)
             be_pushnil(vm);
         }
         be_return(vm);
+    }
+    be_return_nil(vm);
+}
+
+/* signed int */
+static int m_geti(bvm *vm)
+{
+    return m_get(vm, 1);
+}
+
+/* unsigned int */
+static int m_getu(bvm *vm)
+{
+    return m_get(vm, 0);
+}
+
+/*
+ * Set an int made of 1, 2 or 4 bytes, in little or big endian
+ * `set(index:int, value:int[, size:int = 1]) -> nil`
+ * 
+ * size: may be 1, 2, 4 (little endian), or -1, -2, -4 (big endian)
+ *       obvisouly -1 is identical to 1
+ *       0 returns nil
+ */
+static int m_set(bvm *vm)
+{
+    int argc = be_top(vm);
+    buf_impl * buf = bytes_check_data(vm, 0); /* we reserve 4 bytes anyways */
+    if (argc >=3 && be_isint(vm, 2) && be_isint(vm, 3)) {
+        int32_t idx = be_toint(vm, 2);
+        int32_t value = be_toint(vm, 3);
+        int vsize = 1;
+        if (argc >= 4 && be_isint(vm, 4)) {
+            vsize = be_toint(vm, 4);
+        }
+        switch (vsize) {
+            case 0:                                     break;
+            case -1:    /* fallback below */
+            case 1:     buf_set1(buf, idx, value);      break;
+            case 2:     buf_set2_le(buf, idx, value);   break;
+            case 4:     buf_set4_le(buf, idx, value);   break;
+            case -2:    buf_set2_be(buf, idx, value);   break;
+            case -4:    buf_set4_be(buf, idx, value);   break;
+            default:    be_raise(vm, "type_error", "size must be -4, -2, -1, 0, 1, 2 or 4.");
+        }
+        be_pop(vm, argc - 1);
+        be_return_nil(vm);
     }
     be_return_nil(vm);
 }
@@ -609,6 +700,26 @@ static int m_nequal(bvm *vm)
 }
 
 /*
+ * Advanced API
+ */
+
+/*
+ * Retrieve the memory address of the raw buffer
+ * to be used in C functions.
+ * 
+ * Note: the address is guaranteed not to move unless you
+ * resize the buffer
+ * 
+ * `_buffer() -> comptr`
+ */
+static int m_buffer(bvm *vm)
+{
+    buf_impl * buf = bytes_check_data(vm, 0);
+    be_pushcomptr(vm, &buf->buf);
+    be_return(vm);
+}
+
+/*
  * External API
  */
 BERRY_API void be_pushbytes(bvm *vm, const void * bytes, size_t len)
@@ -642,17 +753,217 @@ BERRY_API const void *be_tobytes(bvm *vm, int rel_index, size_t *len)
     return NULL;
 }
 
+/* Helper code to compile bytecode
+
+
+class Bytes : bytes
+#-------------------------------------------------------------
+#- 'getbits' function
+#-
+#- Reads a bit-field in a `bytes()` object
+#-
+#- Input:
+#-   offset_bits  (int): bit number to start reading from (0 = LSB)
+#-   len_bits     (int): how many bits to read
+#- Output:
+#-   valuer (int)
+#-------------------------------------------------------------#
+  def getbits(offset_bits, len_bits)
+    if len_bits <= 0 || len_bits > 32 raise "value_error", "length in bits must be between 0 and 32" end
+    var ret = 0
+  
+    var offset_bytes = offset_bits >> 3
+    offset_bits = offset_bits % 8
+
+    var bit_shift = 0                   #- bit number to write to -#
+  
+    while (len_bits > 0)
+      var block_bits = 8 - offset_bits    # how many bits to read in the current block (block = byte) -#
+      if block_bits > len_bits  block_bits = len_bits end
+  
+      var mask = ( (1<<block_bits) - 1) << offset_bits
+      ret = ret | ( ((self[offset_bytes] & mask) >> offset_bits) << bit_shift)
+  
+      #- move the input window -#
+      bit_shift += block_bits
+      len_bits -= block_bits
+      offset_bits = 0                   #- start at full next byte -#
+      offset_bytes += 1
+    end
+  
+    return ret
+  end
+  
+  #-------------------------------------------------------------
+  #- 'setbits' function
+  #-
+  #- Writes a bit-field in a `bytes()` object
+  #-
+  #- Input:
+  #-   offset_bits  (int): bit number to start writing to (0 = LSB)
+  #-   len_bits     (int): how many bits to write
+  #-   val          (int): value to set
+  #-------------------------------------------------------------#
+  def setbits(offset_bits, len_bits, val)
+    if len_bits < 0 || len_bits > 32 raise "value_error", "length in bits must be between 0 and 32" end
+
+    var offset_bytes = offset_bits >> 3
+    offset_bits = offset_bits % 8
+  
+    while (len_bits > 0)
+      var block_bits = 8 - offset_bits    #- how many bits to write in the current block (block = byte) -#
+      if block_bits > len_bits  block_bits = len_bits end
+  
+      var mask_val = (1<<block_bits) - 1  #- mask to the n bits to get for this block -#
+      var mask_b_inv = 0xFF - (mask_val << offset_bits)
+      self[offset_bytes] = (self[offset_bytes] & mask_b_inv) | ((val & mask_val) << offset_bits)
+  
+      #- move the input window -#
+      val >>= block_bits
+      len_bits -= block_bits
+      offset_bits = 0                   #- start at full next byte -#
+      offset_bytes += 1
+    end
+    return self
+  end
+end
+
+*/
+
+/********************************************************************
+** Solidified function: getbits
+********************************************************************/
+be_local_closure(getbits,   /* name */
+  be_nested_proto(
+    9,                          /* nstack */
+    3,                          /* argc */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 5]) {     /* constants */
+      { { .i=0 }, BE_INT},
+      { { .s=be_nested_const_str("value_error", 773297791, 11) }, BE_STRING},
+      { { .s=be_nested_const_str("length in bits must be between 0 and 32", -1710458168, 39) }, BE_STRING},
+      { { .i=3 }, BE_INT},
+      { { .i=1 }, BE_INT},
+    }),
+    (be_nested_const_str("getbits", -1200798317, 7)),
+    (be_nested_const_str("stdin", -1529146723, 5)),
+    ( &(const binstruction[32]) {  /* code */
+      0x180C0500,  //  0000  LE R3  R2  R256
+      0x740E0002,  //  0001  JMPT R3  #0005
+      0x540E001F,  //  0002  LDINT  R3  32
+      0x240C0403,  //  0003  GT R3  R2  R3
+      0x780E0000,  //  0004  JMPF R3  #0006
+      0xB0060302,  //  0005  RAISE  1 R257  R258
+      0x580C0000,  //  0006  LDCONST  R3  K0
+      0x3C100303,  //  0007  SHR  R4  R1  R259
+      0x54160007,  //  0008  LDINT  R5  8
+      0x10040205,  //  0009  MOD  R1  R1  R5
+      0x58140000,  //  000A  LDCONST  R5  K0
+      0x24180500,  //  000B  GT R6  R2  R256
+      0x781A0011,  //  000C  JMPF R6  #001F
+      0x541A0007,  //  000D  LDINT  R6  8
+      0x04180C01,  //  000E  SUB  R6  R6  R1
+      0x241C0C02,  //  000F  GT R7  R6  R2
+      0x781E0000,  //  0010  JMPF R7  #0012
+      0x5C180400,  //  0011  MOVE R6  R2
+      0x381E0806,  //  0012  SHL  R7  R260  R6
+      0x041C0F04,  //  0013  SUB  R7  R7  R260
+      0x381C0E01,  //  0014  SHL  R7  R7  R1
+      0x94200004,  //  0015  GETIDX R8  R0  R4
+      0x2C201007,  //  0016  AND  R8  R8  R7
+      0x3C201001,  //  0017  SHR  R8  R8  R1
+      0x38201005,  //  0018  SHL  R8  R8  R5
+      0x300C0608,  //  0019  OR R3  R3  R8
+      0x00140A06,  //  001A  ADD  R5  R5  R6
+      0x04080406,  //  001B  SUB  R2  R2  R6
+      0x58040000,  //  001C  LDCONST  R1  K0
+      0x00100904,  //  001D  ADD  R4  R4  R260
+      0x7001FFEB,  //  001E  JMP    #000B
+      0x80040600,  //  001F  RET  1 R3
+    })
+  )
+);
+/*******************************************************************/
+
+/********************************************************************
+** Solidified function: setbits
+********************************************************************/
+be_local_closure(setbits,   /* name */
+  be_nested_proto(
+    10,                          /* nstack */
+    4,                          /* argc */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 5]) {     /* constants */
+      { { .i=0 }, BE_INT},
+      { { .s=be_nested_const_str("value_error", 773297791, 11) }, BE_STRING},
+      { { .s=be_nested_const_str("length in bits must be between 0 and 32", -1710458168, 39) }, BE_STRING},
+      { { .i=3 }, BE_INT},
+      { { .i=1 }, BE_INT},
+    }),
+    (be_nested_const_str("setbits", -1532559129, 7)),
+    (be_nested_const_str("stdin", -1529146723, 5)),
+    ( &(const binstruction[33]) {  /* code */
+      0x14100500,  //  0000  LT R4  R2  R256
+      0x74120002,  //  0001  JMPT R4  #0005
+      0x5412001F,  //  0002  LDINT  R4  32
+      0x24100404,  //  0003  GT R4  R2  R4
+      0x78120000,  //  0004  JMPF R4  #0006
+      0xB0060302,  //  0005  RAISE  1 R257  R258
+      0x3C100303,  //  0006  SHR  R4  R1  R259
+      0x54160007,  //  0007  LDINT  R5  8
+      0x10040205,  //  0008  MOD  R1  R1  R5
+      0x24140500,  //  0009  GT R5  R2  R256
+      0x78160014,  //  000A  JMPF R5  #0020
+      0x54160007,  //  000B  LDINT  R5  8
+      0x04140A01,  //  000C  SUB  R5  R5  R1
+      0x24180A02,  //  000D  GT R6  R5  R2
+      0x781A0000,  //  000E  JMPF R6  #0010
+      0x5C140400,  //  000F  MOVE R5  R2
+      0x381A0805,  //  0010  SHL  R6  R260  R5
+      0x04180D04,  //  0011  SUB  R6  R6  R260
+      0x541E00FE,  //  0012  LDINT  R7  255
+      0x38200C01,  //  0013  SHL  R8  R6  R1
+      0x041C0E08,  //  0014  SUB  R7  R7  R8
+      0x94200004,  //  0015  GETIDX R8  R0  R4
+      0x2C201007,  //  0016  AND  R8  R8  R7
+      0x2C240606,  //  0017  AND  R9  R3  R6
+      0x38241201,  //  0018  SHL  R9  R9  R1
+      0x30201009,  //  0019  OR R8  R8  R9
+      0x98000808,  //  001A  SETIDX R0  R4  R8
+      0x3C0C0605,  //  001B  SHR  R3  R3  R5
+      0x04080405,  //  001C  SUB  R2  R2  R5
+      0x58040000,  //  001D  LDCONST  R1  K0
+      0x00100904,  //  001E  ADD  R4  R4  R260
+      0x7001FFE8,  //  001F  JMP    #0009
+      0x80040000,  //  0020  RET  1 R0
+    })
+  )
+);
+/*******************************************************************/
+
 #if !BE_USE_PRECOMPILED_OBJECT
 void be_load_byteslib(bvm *vm)
 {
     static const bnfuncinfo members[] = {
         { ".p", NULL },
+        { "_buffer", m_buffer },
         { "init", m_init },
         { "tostring", m_tostring },
         { "asstring", m_asstring },
         { "fromstring", m_fromstring },
         { "add", m_add },
-        { "get", m_get },
+        { "get", m_getu },
+        { "geti", m_geti },
+        { "set", m_set },
+        { "seti", m_set },      // setters for signed and unsigned are identical
         { "item", m_item },
         { "setitem", m_setitem },
         { "size", m_size },
@@ -663,6 +974,11 @@ void be_load_byteslib(bvm *vm)
         { "..", m_connect },
         { "==", m_equal },
         { "!=", m_nequal },
+
+        { NULL, (bntvfunc) BE_CLOSURE }, /* mark section for berry closures */
+        { "getbits", (bntvfunc) &getbits_closure },
+        { "setbits", (bntvfunc) &setbits_closure },
+
         { NULL, NULL }
     };
     be_regclass(vm, "bytes", members);
@@ -671,12 +987,16 @@ void be_load_byteslib(bvm *vm)
 /* @const_object_info_begin
 class be_class_bytes (scope: global, name: bytes) {
     .p, var
+    _buffer, func(m_buffer)
     init, func(m_init)
     tostring, func(m_tostring)
     asstring, func(m_asstring)
     fromstring, func(m_fromstring)
     add, func(m_add)
-    get, func(m_get)
+    get, func(m_getu)
+    geti, func(m_geti)
+    set, func(m_set)
+    seti, func(m_set)
     item, func(m_item)
     setitem, func(m_setitem)
     size, func(m_size)
@@ -687,6 +1007,9 @@ class be_class_bytes (scope: global, name: bytes) {
     .., func(m_connect)
     ==, func(m_equal)
     !=, func(m_nequal)
+
+    getbits, closure(getbits_closure)
+    setbits, closure(setbits_closure)
 }
 @const_object_info_end */
 #include "../generate/be_fixed_be_class_bytes.h"

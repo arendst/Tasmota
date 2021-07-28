@@ -3084,7 +3084,7 @@ void MI32ShowTriggeredSensors(){
         }
         sprintf(SensorTopic, "tele/tasmota_ble/%s",
           id);
-        MqttPublish(SensorTopic);
+        MqttPublish(SensorTopic, Settings->flag.mqtt_sensor_retain);
       } else {
         MqttPublishPrefixTopic_P(STAT, PSTR(D_RSLT_SENSOR), Settings->flag.mqtt_sensor_retain);
       }

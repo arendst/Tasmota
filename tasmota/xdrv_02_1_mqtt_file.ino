@@ -37,6 +37,7 @@ struct FMQTT {
   uint32_t file_pos = 0;                 // MQTT file position during upload/download
   uint32_t file_size = 0;                // MQTT total file size
   uint32_t file_type = 0;                // MQTT File type (See UploadTypes)
+  uint32_t chunk_size;
   uint8_t* file_buffer = nullptr;        // MQTT file buffer
   const char* file_password = nullptr;   // MQTT password
   MD5Builder md5;                        // MQTT md5
@@ -47,6 +48,41 @@ struct FMQTT {
 } FMqtt;
 
 const uint32_t FileTransferHeaderSize = 21;       // {"Id":116,"Data":""}<null>
+
+void MqttFileValidate(uint32_t error) {
+  if (error) {
+    FMqtt.file_buffer = nullptr;
+
+    MqttDisableLogging(false);
+
+    if (4 == error) {
+      ResponseCmndChar(PSTR(D_JSON_ABORTED));
+    } else {
+      char error_txt[20];
+      snprintf_P(error_txt, sizeof(error_txt), PSTR(D_JSON_ERROR " %d"), error);
+      ResponseCmndChar(error_txt);
+    }
+  }
+}
+
+void MqttFilePublish(void) {
+  if (!FMqtt.file_buffer) {
+    MqttDisableLogging(false);
+
+    FMqtt.file_id = 0;
+    FMqtt.file_size = 0;
+    FMqtt.file_type = 0;
+    FMqtt.file_binary = false;
+    FMqtt.file_md5 = (const char*) nullptr;                  // Force deallocation of the String internal memory
+    FMqtt.file_password = nullptr;
+  }
+  MqttPublishPrefixTopic_P(STAT, XdrvMailbox.command);
+  ResponseClear();
+}
+
+/*********************************************************************************************\
+ * MQTT Upload to device
+\*********************************************************************************************/
 
 uint32_t MqttFileUploadValidate(uint32_t rcv_id) {
   if (XdrvMailbox.grpflg) { return 5; }                      // No grouptopic supported
@@ -105,6 +141,25 @@ uint32_t MqttFileUploadValidate(uint32_t rcv_id) {
 
     ResponseCmndChar(PSTR(D_JSON_STARTED));
     MqttPublishPrefixTopic_P(STAT, XdrvMailbox.command);     // Enforce stat/wemos10/FILEUPLOAD
+
+    /*
+      The upload chunk size is the data size of the payload.
+      The PubSubClient upload buffer with length MQTT_MAX_PACKET_SIZE contains
+        - Header of 5 bytes (MQTT_MAX_HEADER_SIZE)
+        - Topic string terminated with a zero (stat/demo/FILEUPLOAD<null>)
+        - Payload ({"Id":116,"Data":"<base64 encoded chunk_size>"}<null>) or (<binary data>)
+    */
+    const uint32_t PubSubClientHeaderSize = 5;             // MQTT_MAX_HEADER_SIZE
+    FMqtt.chunk_size = MqttClient.getBufferSize() - PubSubClientHeaderSize - FMqtt.topic_size -1;
+#ifdef USE_TASMESH
+    if (MESHroleNode()) {
+      // TasMesh default payload size (topic+payload) is 160
+      if (MESHmaxPayloadSize() < FMqtt.chunk_size) {
+        FMqtt.chunk_size = MESHmaxPayloadSize();
+      }
+    }
+#endif  // USE_TASMESH
+
   }
   else if (((FMqtt.file_id > 0) && (FMqtt.file_id != rcv_id)) || (0 == XdrvMailbox.payload)) {
     // Error receiving data
@@ -128,37 +183,6 @@ uint32_t MqttFileUploadValidate(uint32_t rcv_id) {
     return 4;                                                // Upload aborted
   }
   return 0;                                                  // No error
-}
-
-void MqttFileValidate(uint32_t error) {
-  if (error) {
-    FMqtt.file_buffer = nullptr;
-
-    MqttDisableLogging(false);
-
-    if (4 == error) {
-      ResponseCmndChar(PSTR(D_JSON_ABORTED));
-    } else {
-      char error_txt[20];
-      snprintf_P(error_txt, sizeof(error_txt), PSTR(D_JSON_ERROR " %d"), error);
-      ResponseCmndChar(error_txt);
-    }
-  }
-}
-
-void MqttFilePublish(void) {
-  if (!FMqtt.file_buffer) {
-    MqttDisableLogging(false);
-
-    FMqtt.file_id = 0;
-    FMqtt.file_size = 0;
-    FMqtt.file_type = 0;
-    FMqtt.file_binary = false;
-    FMqtt.file_md5 = (const char*) nullptr;                  // Force deallocation of the String internal memory
-    FMqtt.file_password = nullptr;
-  }
-  MqttPublishPrefixTopic_P(STAT, XdrvMailbox.command);
-  ResponseClear();
 }
 
 void CmndFileUpload(void) {
@@ -257,20 +281,11 @@ void CmndFileUpload(void) {
     if ((FMqtt.file_pos < FMqtt.file_size) || (FMqtt.file_md5.length() != 32))   {
       MqttDisableLogging(true);
 
-      /*
-        The upload chunk size is the data size of the payload.
-        The PubSubClient upload buffer with length MQTT_MAX_PACKET_SIZE contains
-          - Header of 5 bytes (MQTT_MAX_HEADER_SIZE)
-          - Topic string terminated with a zero (stat/demo/FILEUPLOAD<null>)
-          - Payload ({"Id":116,"Data":"<base64 encoded chunk_size>"}<null>) or (<binary data>)
-      */
-      const uint32_t PubSubClientHeaderSize = 5;             // MQTT_MAX_HEADER_SIZE
-      uint32_t chunk_size = MqttClient.getBufferSize() - PubSubClientHeaderSize - FMqtt.topic_size -1;
-      if (!binary_data) {
-        chunk_size = (((chunk_size - FileTransferHeaderSize) / 4) * 3) -2;  // Calculate base64 chunk size
+      if (!binary_data && !FMqtt.file_pos) {
+        FMqtt.chunk_size = (((FMqtt.chunk_size - FileTransferHeaderSize) / 4) * 3) -2;  // Calculate base64 chunk size
       }
       // {"Id":116,"MaxSize":"765"}
-      Response_P(PSTR("{\"Id\":%d,\"MaxSize\":%d}"), FMqtt.file_id, chunk_size);
+      Response_P(PSTR("{\"Id\":%d,\"MaxSize\":%d}"), FMqtt.file_id, FMqtt.chunk_size);
     } else {
       FMqtt.md5.calculate();
       if (strcasecmp(FMqtt.file_md5.c_str(), FMqtt.md5.toString().c_str())) {
@@ -309,6 +324,10 @@ void CmndFileUpload(void) {
 
   MqttFilePublish();
 }
+
+/*********************************************************************************************\
+ * MQTT Download from device
+\*********************************************************************************************/
 
 uint32_t MqttFileDownloadValidate(void) {
   if (XdrvMailbox.grpflg) { return 5; }                      // No grouptopic supported
@@ -386,6 +405,12 @@ void CmndFileDownload(void) {
         */
         chunk_size = (((ResponseSize() - FileTransferHeaderSize) / 4) * 3) -2;
       }
+#ifdef USE_TASMESH
+      if (MESHroleNode() && (chunk_size > 2048)) {
+        chunk_size = 2048;
+      }
+#endif  // USE_TASMESH
+
       uint32_t bytes_left = FMqtt.file_size - FMqtt.file_pos;
       uint32_t write_bytes = (bytes_left < chunk_size) ? bytes_left : chunk_size;
       uint8_t* buffer = FMqtt.file_buffer + FMqtt.file_pos;
@@ -400,6 +425,9 @@ void CmndFileDownload(void) {
         char* base64_data = (char*)malloc(encode_base64_length(write_bytes) +2);
         if (base64_data) {
           Response_P(PSTR("{\"Id\":%d,\"Data\":\""), FMqtt.file_id);  // FileTransferHeaderSize
+
+          SHOW_FREE_MEM(PSTR("CmndFileDownload"));
+
           encode_base64((unsigned char*)buffer, write_bytes, (unsigned char*)base64_data);
           ResponseAppend_P(base64_data);
           ResponseAppend_P("\"}");

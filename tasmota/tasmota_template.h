@@ -977,17 +977,17 @@ typedef struct MYTMPLT8266 {
 
 #endif  // ESP8266
 #ifdef ESP32
-#if CONFIG_IDF_TARGET_ESP32C3
+#ifdef CONFIG_IDF_TARGET_ESP32C3
 
 #define MAX_GPIO_PIN       22   // Number of supported GPIO
-#define MIN_FLASH_PINS     0    // Number of flash chip pins unusable for configuration (GPIO6, 7, 8 and 11)
+#define MIN_FLASH_PINS     0    // Number of flash chip pins unusable for configuration (GPIO11 to 17)
 #define MAX_USER_PINS      22   // MAX_GPIO_PIN - MIN_FLASH_PINS
 #define WEMOS_MODULE       0    // Wemos module
 
 //                                  0 1 2 3 4 5 6 7 8 9101112131415161718192021
 const char PINS_WEMOS[] PROGMEM = "AOAOAOAOAOAOIOIOIOIOIOFLFLFLFLFLFLFLIOIORXTX";
 
-#else // v CONFIG_IDF_TARGET_ESP32C3 v
+#else  // not CONFIG_IDF_TARGET_ESP32C3
 
 #define MAX_GPIO_PIN       40   // Number of supported GPIO
 #define MIN_FLASH_PINS     4    // Number of flash chip pins unusable for configuration (GPIO6, 7, 8 and 11)
@@ -997,18 +997,20 @@ const char PINS_WEMOS[] PROGMEM = "AOAOAOAOAOAOIOIOIOIOIOFLFLFLFLFLFLFLIOIORXTX"
 //                                  0 1 2 3 4 5 6 7 8 9101112131415161718192021222324252627282930313233343536373839
 const char PINS_WEMOS[] PROGMEM = "IOTXIORXIOIOflashcFLFLolIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOAOAOIAIAIAIAIAIA";
 
-#endif // CONFIG_IDF_TARGET_ESP32C3
+#endif  // not CONFIG_IDF_TARGET_ESP32C3
 #endif  // ESP32
 
-//********************************************************************************************
+/********************************************************************************************\
+ * !!! Changes in below type sizes impact Settings layout - Add fill bytes in Settings !!!
+\********************************************************************************************/
 
 typedef struct MYIO {
   uint16_t      io[MAX_GPIO_PIN];
-} myio;                         // 18 * 2 = 36 bytes / 40 * 2 = 80 bytes
+} myio;                         // ESP8266: 18 * 2 = 36 bytes / ESP32: 40 * 2 = 80 bytes / ESP32-C3: 22 * 2 = 44 bytes
 
 typedef struct MYCFGIO {
   uint16_t      io[MAX_USER_PINS];
-} mycfgio;                      // 14 * 2 = 28 bytes / 36 * 2 = 72 bytes
+} mycfgio;                      // ESP8266: 14 * 2 = 28 bytes / ESP32: 36 * 2 = 72 bytes / ESP32-C3: 22 * 2 = 44 bytes
 
 #define GPIO_FLAG_USED       0  // Currently no flags used
 
@@ -1035,9 +1037,9 @@ typedef union {
 } gpio_flag;                    // 2 bytes
 
 typedef struct MYTMPLT {
-  mycfgio      gp;              // 28 / 72 bytes
+  mycfgio      gp;              // 28 / 72 / 44 bytes
   gpio_flag    flag;            // 2 bytes
-} mytmplt;                      // 30 / 74 bytes
+} mytmplt;                      // 30 / 74 / 46 bytes
 
 //********************************************************************************************
 
@@ -2455,9 +2457,9 @@ const mytmplt8285 kModules8285[TMP_MAXMODULE_8266 - TMP_WEMOS] PROGMEM = {
 #endif  // ESP8266
 
 #ifdef ESP32
-#if CONFIG_IDF_TARGET_ESP32C3
+#ifdef CONFIG_IDF_TARGET_ESP32C3
 /********************************************************************************************\
- * ESP32 Module templates
+ * ESP32-C3 Module templates
 \********************************************************************************************/
 
 #define USER_MODULE        255
@@ -2511,7 +2513,7 @@ const mytmplt kModules[] PROGMEM = {
 
 \*********************************************************************************************/
 
-#else // CONFIG_IDF_TARGET_ESP32C3 - now ESP32
+#else  // not CONFIG_IDF_TARGET_ESP32C3 - now ESP32
 /********************************************************************************************\
  * ESP32 Module templates
 \********************************************************************************************/
@@ -2826,7 +2828,7 @@ const mytmplt kModules[] PROGMEM = {
 
 \*********************************************************************************************/
 
-#endif // CONFIG_IDF_TARGET_ESP32C3
+#endif  // Not CONFIG_IDF_TARGET_ESP32C3
 #endif  // ESP32
 
 #endif  // _TASMOTA_TEMPLATE_H_
