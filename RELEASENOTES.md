@@ -123,6 +123,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - ESP32 internal sensor driver id moved from 87 to 127
 - Extended supported sensor driver range to 128
 - Disable PSRAM on unsupported hardware
+- ESP32 remove GPIO initialization to INPUT from not used GPIOs to allow JTAG support
 - Simplified configuration for ir-full and removal of tasmota-ircustom [#12428](https://github.com/arendst/Tasmota/issues/12428)
 - Refactor platformio [#12442](https://github.com/arendst/Tasmota/issues/12442)
 - Allow buttons to work in AP normal mode [#12518](https://github.com/arendst/Tasmota/issues/12518)

@@ -17,6 +17,7 @@ All notable changes to this project will be documented in this file.
 - Disable PSRAM on unsupported hardware
 - Replace spaces by hyphens in final hostname (#12710)
 - Message ``Upload buffer miscompare`` into ``Not enough space``
+- ESP32 remove GPIO initialization to INPUT from not used GPIOs to allow JTAG support
 
 ### Fixed
 - Discovery fails when using ``%hostname%`` in a topic (#12710)
