@@ -16,8 +16,9 @@ jobs:
     - name: Use latest Tasmota development
       run: |
         git config --local user.name "Platformio BUILD"
+        git config user.email github-actions@github.com
         git switch -c work
-        git remote add -f Tasmota "https://github.com/arendst/Tasmota.git"
+        git remote add -f Tasmota "https://github.com/arendst/Tasmota.git" --track development
         git merge Tasmota/development --allow-unrelated-histories
     - name: Push Tasmota   # Push updates of latest Tasmota development to repo
       uses: ad-m/github-push-action@master
@@ -1392,12 +1393,9 @@ jobs:
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-    - uses: actions/checkout@v1
-    - name: Delete all files and folders
-      run: |
-        rm -rf *
-        git config --local user.name "Platformio BUILD"
-        git checkout firmware
+    - uses: actions/checkout@v2
+      with:
+        ref: firmware
     - name: Display files from branch firmware
       run: ls -R
     - name: Remove old firmware files
@@ -1454,6 +1452,8 @@ jobs:
       run: ls -R ./*
     - name: Commit files  # transfer the new binaries back into the repository
       run: |
+        git config user.name github-actions
+        git config user.email github-actions@github.com
         git rm -r --cached .
         git add -f ./*
         git commit -m "Tasmota ESP Binaries http://tasmota.com"
