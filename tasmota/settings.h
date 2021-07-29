@@ -598,8 +598,7 @@ typedef struct {
   uint8_t       ina219_mode;               // 531
   uint16_t      pulse_timer[MAX_PULSETIMERS];  // 532
   uint16_t      button_debounce;           // 542
-  uint32_t      ipv4_address[4];           // 544
-  unsigned long energy_kWhtotal;           // 554
+  uint32_t      ipv4_address[5];           // 544
 
   uint8_t       free_558[100];             // 558
 
@@ -737,10 +736,11 @@ typedef struct {
   uint16_t      shd_warmup_brightness;     // F5C
   uint8_t       shd_warmup_time;           // F5E
 
-  uint8_t       free_f5f[65];              // F5F - Decrement if adding new Setting variables just above and below
+  uint8_t       free_f5f[61];              // F5F - Decrement if adding new Setting variables just above and below
 
   // Only 32 bit boundary variables below
 
+  unsigned long energy_kWhtotal;           // F9C
   SBitfield1    sbflag1;                   // FA0
   TeleinfoCfg   teleinfo;                  // FA4
   uint64_t      rf_protocol_mask;          // FA8

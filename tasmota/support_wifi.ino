@@ -207,7 +207,7 @@ void WifiBegin(uint8_t flag, uint8_t channel)
     Settings->sta_active ^= 1;  // Skip empty SSID
   }
   if (Settings->ipv4_address[0]) {
-    WiFi.config(Settings->ipv4_address[0], Settings->ipv4_address[1], Settings->ipv4_address[2], Settings->ipv4_address[3]);  // Set static IP
+    WiFi.config(Settings->ipv4_address[0], Settings->ipv4_address[1], Settings->ipv4_address[2], Settings->ipv4_address[3], Settings->ipv4_address[4]);  // Set static IP
   }
   WiFi.hostname(TasmotaGlobal.hostname);  // ESP8266 needs this here (after WiFi.mode)
 
@@ -396,6 +396,7 @@ void WifiCheckIp(void)
       Settings->ipv4_address[1] = (uint32_t)WiFi.gatewayIP();
       Settings->ipv4_address[2] = (uint32_t)WiFi.subnetMask();
       Settings->ipv4_address[3] = (uint32_t)WiFi.dnsIP();
+      Settings->ipv4_address[4] = (uint32_t)WiFi.dnsIP(1);
 
       // Save current AP parameters for quick reconnect
       Settings->wifi_channel = WiFi.channel();
