@@ -49,6 +49,7 @@ struct WIFI {
   uint8_t counter;
   uint8_t retry_init;
   uint8_t retry;
+  uint8_t max_retry;
   uint8_t status;
   uint8_t config_type = 0;
   uint8_t config_counter = 0;
@@ -388,6 +389,7 @@ void WifiCheckIp(void)
     WifiSetState(1);
     Wifi.counter = WIFI_CHECK_SEC;
     Wifi.retry = Wifi.retry_init;
+    Wifi.max_retry = 0;
     if (Wifi.status != WL_CONNECTED) {
       AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_CONNECTED));
 //      AddLog(LOG_LEVEL_INFO, PSTR("Wifi: Set IP addresses"));
@@ -439,6 +441,10 @@ void WifiCheckIp(void)
         if (!Wifi.retry || ((Wifi.retry_init / 2) == Wifi.retry)) {
           AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_CONNECT_FAILED_AP_TIMEOUT));
           Settings->wifi_channel = 0;  // Disable stored AP
+          Wifi.max_retry++;
+          if (100 == Wifi.max_retry) {  // Restart after 100 * (WIFI_RETRY_OFFSET_SEC + MAC) / 2 seconds
+            TasmotaGlobal.restart_flag = 2;
+          }
         } else {
           if (!strlen(SettingsText(SET_STASSID1)) && !strlen(SettingsText(SET_STASSID2))) {
             Settings->wifi_channel = 0;  // Disable stored AP
@@ -584,6 +590,7 @@ void WifiConnect(void)
   Wifi.status = 0;
   Wifi.retry_init = WIFI_RETRY_OFFSET_SEC + (ESP_getChipId() & 0xF);  // Add extra delay to stop overrun by simultanous re-connects
   Wifi.retry = Wifi.retry_init;
+  Wifi.max_retry = 0;
   Wifi.counter = 1;
 
   memcpy((void*) &Wifi.bssid, (void*) Settings->wifi_bssid, sizeof(Wifi.bssid));
