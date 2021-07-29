@@ -22,6 +22,6 @@ static be_define_const_map(
 BE_EXPORT_VARIABLE be_define_const_class(
     be_class_tasmota_i2c_driver,
     3,
-    (bclass *)&be_class_tasmota_driver,
+    (bclass *)&be_class_Driver,
     I2C_Driver
 );
