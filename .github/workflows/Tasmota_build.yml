@@ -1,8 +1,11 @@
 name: Build_firmware
 
 on:
+  workflow_dispatch:  # Manually start a workflow
   push:
     branches: development
+    paths-ignore:
+    - '.github/**' # Ignore changes towards the .github directory
 
 jobs:
   tasmota_pull:
