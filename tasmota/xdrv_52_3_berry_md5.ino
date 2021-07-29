@@ -33,7 +33,8 @@ extern "C" {
   int free_ctx(bvm* vm) {
     int argc = be_top(vm);
     if (argc > 0) {
-      struct MD5Context * ctx = (struct MD5Context *) be_tocomptr(vm, 1);
+      be_getmember(vm, 1, ".p");
+      struct MD5Context * ctx = (struct MD5Context *) be_tocomptr(vm, -1);
       if (ctx != NULL) {
         be_os_free(ctx);
       }

@@ -241,7 +241,7 @@ class Tasmota
 
   end
 
-  def event(event_type, cmd, idx, payload)
+  def event(event_type, cmd, idx, payload, raw)
     import introspect
     if event_type=='every_50ms' self.run_deferred() end  #- first run deferred events -#
 
@@ -253,7 +253,7 @@ class Tasmota
         var f = introspect.get(d, event_type)   # try to match a function or method with the same name
         if type(f) == 'function'
           try
-            var done = f(d, cmd, idx, payload)
+            var done = f(d, cmd, idx, payload, raw)
             if done == true return true end
           except .. as e,m
             import string
