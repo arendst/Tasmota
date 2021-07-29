@@ -8,9 +8,6 @@
 #ifdef USE_I2S
 #ifdef USE_I2S_AUDIO_BERRY
 
-// extern bclass* be_class_tasmota_driver;     // Parent class
-
-
 extern int i2s_output_i2s_init(bvm *vm);
 extern int i2s_output_i2s_deinit(bvm *vm);
 

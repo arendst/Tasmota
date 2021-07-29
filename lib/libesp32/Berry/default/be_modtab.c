@@ -100,7 +100,7 @@ BERRY_LOCAL const bntvmodule* const be_module_table[] = {
 #ifdef ESP32
 extern void be_load_tasmota_ntvlib(bvm *vm);
 extern void be_load_wirelib(bvm *vm);
-extern void be_load_driverlib(bvm *vm);
+extern void be_load_Driver_class(bvm *vm);
 extern void be_load_driver_i2c_lib(bvm *vm);
 extern void be_load_md5_lib(bvm *vm);
 
@@ -131,7 +131,7 @@ BERRY_API void be_load_custom_libs(bvm *vm)
     /* be_load_xxxlib(vm); */
 #endif
     be_load_tasmota_ntvlib(vm);
-    be_load_driverlib(vm);
+    be_load_Driver_class(vm);
     be_load_md5_lib(vm);
 #ifdef USE_I2C
     be_load_wirelib(vm);
