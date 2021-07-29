@@ -1,13 +1,51 @@
 /*
   xdrv_90_rangeextender.ino - WiFi Range Extender for Tasmota
+
+To use this, add the following to your user_config_override.h
+#define USE_DRV_RANGE_EXTENDER
+
+If you want to support NAPT (removing the need for routes on a core router):
+#define USE_RANGE_EXTENDER_NAPT
+
+To have NAPT enabled by default:
+#define EXTENDER_NAPT_ENABLE 1
+
+An example full static configuration:
+#define USE_DRV_RANGE_EXTENDER
+#define USE_RANGE_EXTENDER_NAPT
+#define EXTENDER_SSID "rangeextender"
+#define EXTENDER_PASSWORD "securepassword"
+#define EXTENDER_LOCAL_IP IPAddress(10, 99, 1, 1)
+#define EXTENDER_SUBNET IPAddress(255, 255, 255, 0)
+#define EXTENDER_NAPT_ENABLE 1
+
+
+A dynamic configuration is also supported. Please note, this is **NOT SAVED TO FLASH**:
+Backlog RgxSSID rangeextender ; RgxPassword securepassword ;  RgxAddress 192.168.99.1 ; RgxSubnet 255.255.255.0 ; RgxNAPT ON
+
+To have this run automatically at start up, you can do the following (this will save to flash):
+Rule1 ON Power1#Boot DO Backlog RgxSSID rangeextender ; RgxPassword securepassword ;  RgxAddress 192.168.99.1 ; RgxSubnet 255.255.255.0 ; RgxNAPT ON ENDON
+Rule1 ON
+
 */
 
-#define USE_DRV_RANGE_EXTENDER  // XXX
-#define USE_RANGE_EXTENDER_NAPT // XXX
 #ifdef USE_DRV_RANGE_EXTENDER
 #warning **** USE_DRV_RANGE_EXTENDER is enabled ****
 
 #define XDRV_90 90
+
+#ifndef EXTENDER_SSID
+#define EXTENDER_SSID ""
+#endif
+#ifndef EXTENDER_PASSWORD
+#define EXTENDER_PASSWORD ""
+#endif
+#ifndef EXTENDER_LOCAL_IP
+#define EXTENDER_LOCAL_IP IPAddress(192, 168, 99, 1)
+#endif
+#ifndef EXTENDER_SUBNET
+#define EXTENDER_SUBNET IPAddress(255, 255, 255, 0)
+#endif
 
 const char kDrvRgxCommands[] PROGMEM = "Rgx|" // Prefix
                                        "Address"
@@ -32,24 +70,44 @@ void (*const DrvRgxCommand[])(void) PROGMEM = {
 #define RGX_NOT_CONFIGURED 0
 #define RGX_FORCE_CONFIGURE 1
 #define RGX_CONFIGURED 2
+#define RGX_CONFIG_INCOMPLETE 3
 
-#define RGX_BIT_NAPT_ENABLED 1 << 0
-#define RGX_BIT_USE_NAPT 1 << 1
 typedef struct
 {
-  char ssid[33] = EXTENDER_SSID;
-  char password[65] = EXTENDER_PASSWORD;
+  char ssid[31] = EXTENDER_SSID;
+  char password[31] = EXTENDER_PASSWORD;
   uint32_t ipv4_address = EXTENDER_LOCAL_IP;
   uint32_t ipv4_subnet = EXTENDER_SUBNET;
   uint8_t status = RGX_NOT_CONFIGURED;
-#if defined(USE_RANGE_EXTENDER_NAPT) && defined(EXTENDER_NAPT_ENABLE)
-  uint8_t statebits = RGX_BIT_USE_NAPT;
+#ifdef USE_RANGE_EXTENDER_NAPT
+  bool napt_enabled = false;
+  bool napt_inited = false;
+#ifdef EXTENDER_NAPT_ENABLE
+  bool use_napt = true;
 #else
-  uint8_t statebits = 0;
+  bool use_napt = false;
+#endif // EXTENDER_NAPT_ENABLE
 #endif // USE_RANGE_EXTENDER_NAPT
 } TRgxSettings;
 
 TRgxSettings RgxSettings;
+
+// Check the current configuration is complete, updating RgxSettings.status
+void RgxCheckConfig(void)
+{
+  if (
+      strlen(RgxSettings.ssid) > 0 &&
+      strlen(RgxSettings.password) >= 8 &&
+      RgxSettings.ipv4_address &&
+      RgxSettings.ipv4_subnet)
+  {
+    RgxSettings.status = RGX_NOT_CONFIGURED;
+  }
+  else
+  {
+    RgxSettings.status = RGX_CONFIG_INCOMPLETE;
+  }
+}
 
 void CmndRgxAddresses(void)
 {
@@ -74,102 +132,113 @@ void CmndRgxAddresses(void)
 
 void CmndRgxSSID(void)
 {
-  if (XdrvMailbox.data_len >= sizeof(RgxSettings.ssid))
+  if (XdrvMailbox.data_len)
   {
-    ResponseCmndChar_P(PSTR("SSID too long"));
-    return;
+    if (XdrvMailbox.data_len < 2 || XdrvMailbox.data_len >= sizeof(RgxSettings.ssid))
+    {
+      ResponseCmndChar_P(PSTR("SSID too short/long"));
+      return;
+    }
   }
   strcpy(RgxSettings.ssid, XdrvMailbox.data);
   RgxSettings.status = RGX_FORCE_CONFIGURE;
-  // Response_P(PSTR("{SSID:\"%s\"}"), RgxSettings.ssid);
+  ResponseRgxConfig();
+}
+
+void CmndRgxPassword(void)
+{
+  if (XdrvMailbox.data_len)
+  {
+    if (XdrvMailbox.data_len < 8 || XdrvMailbox.data_len >= sizeof(RgxSettings.password))
+    {
+      ResponseCmndChar_P(PSTR("Password too short/long"));
+      return;
+    }
+  }
+  strcpy(RgxSettings.password, XdrvMailbox.data);
+  RgxSettings.status = RGX_FORCE_CONFIGURE;
   ResponseRgxConfig();
 }
 
 #ifdef USE_RANGE_EXTENDER_NAPT
 void CmndRgxNAPT(void)
 {
-  Serial.printf("XXX before Data len: %u Bits: %u\n", XdrvMailbox.data_len, RgxSettings.statebits);
   if (XdrvMailbox.data_len)
   {
-    if (XdrvMailbox.payload)
-    {
-      RgxSettings.statebits |= RGX_BIT_USE_NAPT;
-    }
-    else
-    {
-      RgxSettings.statebits &= ~RGX_BIT_USE_NAPT;
-    }
+    RgxSettings.use_napt = XdrvMailbox.payload;
     RgxSettings.status = RGX_FORCE_CONFIGURE;
   }
-  Serial.printf("XXX after Data len: %u Bits: %u\n", XdrvMailbox.data_len, RgxSettings.statebits);
-  ResponseCmndStateText((bool)(RgxSettings.statebits & RGX_BIT_USE_NAPT));
+  ResponseCmndStateText(RgxSettings.use_napt);
 };
 #endif // USE_RANGE_EXTENDER_NAPT
 
 void ResponseRgxConfig(void)
 {
-  Response_P(PSTR("{RgxSSID:\"%s\", RgxPassword:\"%s\", RgxAddress:\"%_I\", RgxSubnet:\"%_I\"}"), RgxSettings.ssid, RgxSettings.password, RgxSettings.ipv4_address, RgxSettings.ipv4_subnet);
+  RgxCheckConfig();
+  Response_P(PSTR("{CompleteConfiguration: %s, RgxSSID:\"%s\", RgxPassword:\"%s\", RgxAddress:\"%_I\", RgxSubnet:\"%_I\"}"),
+             (RgxSettings.status == RGX_CONFIG_INCOMPLETE) ? "false" : "true",
+             RgxSettings.ssid,
+             RgxSettings.password,
+             RgxSettings.ipv4_address,
+             RgxSettings.ipv4_subnet);
 }
-
-// void CmndRgxAddress(void)
-// {
-//   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 31))
-//   {
-//     // Settings->eth_address = XdrvMailbox.payload;
-//     AddLog(LOG_LEVEL_INFO, "XXXX Payload: %s", XdrvMailbox.data);
-//     // TasmotaGlobal.restart_flag = 2;
-//   }
-//   // ResponseCmndNumber(Settings->eth_address);
-//   ResponseCmndDone();
-// }
-
-// void CmndRgxSSID(void){};
-void CmndRgxPassword(void){};
 
 void rngxSetup()
 {
+  // Check we have a complete config first
+  RgxCheckConfig();
+  if (RgxSettings.status == RGX_CONFIG_INCOMPLETE)
+  {
+    AddLog(LOG_LEVEL_DEBUG, PSTR("RGX: Range Extender config incomplete"));
+    return;
+  }
   dhcps_set_dns(0, WiFi.dnsIP(0));
   dhcps_set_dns(1, WiFi.dnsIP(1));
   // WiFi.softAPConfig(EXTENDER_LOCAL_IP, EXTENDER_GATEWAY_IP, EXTENDER_SUBNET);
   WiFi.softAPConfig(RgxSettings.ipv4_address, RgxSettings.ipv4_address, RgxSettings.ipv4_subnet);
   WiFi.softAP(RgxSettings.ssid, RgxSettings.password);
-  AddLog(LOG_LEVEL_INFO, "XXX, WiFi Extender Enabled");
+  AddLog(LOG_LEVEL_INFO, PSTR("RGX: WiFi Extender AP Enabled"));
 
 #ifdef USE_RANGE_EXTENDER_NAPT
 // Memory usage at 512: Heap from 30136 to 17632: 12504
 // Memory usage at 128: Heap from 30136 to 26848: 3288
 #define NAPT 128     // IP_NAPT_MAX: 512
 #define NAPT_PORT 10 //  IP_PORTMAP_MAX: 32
-  Serial.printf("XXX Bits: %u: and use: %u  and enabled: %u, value: %u, %u\n", RgxSettings.statebits, (RgxSettings.statebits & RGX_BIT_USE_NAPT), (RgxSettings.statebits & RGX_BIT_NAPT_ENABLED), RGX_BIT_NAPT_ENABLED, RGX_BIT_USE_NAPT);
-  if ((RgxSettings.statebits & RGX_BIT_USE_NAPT) && !(RgxSettings.statebits & RGX_BIT_NAPT_ENABLED))
+  if (RgxSettings.use_napt && !RgxSettings.napt_enabled)
   {
-    err_t ret = ip_napt_init(NAPT, NAPT_PORT);
-    AddLog(LOG_LEVEL_DEBUG, "XXX ip_napt_init(%d,%d): ret=%d (OK=%d)", NAPT, NAPT_PORT, (int)ret, (int)ERR_OK);
-    if (ret == ERR_OK)
+    if (!RgxSettings.napt_inited)
     {
-      ret = ip_napt_enable_no(SOFTAP_IF, 1);
+      err_t ret = ip_napt_init(NAPT, NAPT_PORT);
       if (ret == ERR_OK)
       {
-        AddLog(LOG_LEVEL_INFO, "XXX Extended WiFi Network '%s'", EXTENDER_SSID);
-        RgxSettings.statebits |= RGX_BIT_NAPT_ENABLED;
+        AddLog(LOG_LEVEL_INFO, PSTR("RGX: NAPT initialization complete"));
+        RgxSettings.napt_inited = true;
+      }
+      else
+      {
+        AddLog(LOG_LEVEL_ERROR, PSTR("RGX: NAPT initialization failed! (%d)"), ret);
       }
     }
-    if (ret != ERR_OK)
+    if (RgxSettings.napt_inited)
     {
-      AddLog(LOG_LEVEL_ERROR, PSTR("XXX NAPT initialization failed, already configured?"));
+      err_t ret = ip_napt_enable_no(SOFTAP_IF, 1);
+      if (ret == ERR_OK)
+      {
+        AddLog(LOG_LEVEL_INFO, PSTR("RGX: NAPT Enabled"));
+        RgxSettings.napt_enabled = true;
+      }
     }
   }
-  else if (!(RgxSettings.statebits & RGX_BIT_USE_NAPT) && (RgxSettings.statebits & RGX_BIT_NAPT_ENABLED))
+  else if (!RgxSettings.use_napt && RgxSettings.napt_enabled)
   {
-    err_t ret = ip_napt_enable_no(SOFTAP_IF, 1);
+    err_t ret = ip_napt_enable_no(SOFTAP_IF, 0);
     if (ret == ERR_OK)
     {
-      AddLog(LOG_LEVEL_INFO, "XXX NAPT Disabled");
-      RgxSettings.statebits &= ~RGX_BIT_NAPT_ENABLED;
+      AddLog(LOG_LEVEL_INFO, "RGX: NAPT Disabled");
+      RgxSettings.napt_enabled = false;
     }
   }
 #endif // USE_RANGE_EXTENDER_NAPT
-  Serial.printf("XXX after Bits: %u: and use: %u  and enabled: %u, value: %ui\n", RgxSettings.statebits, (RgxSettings.statebits & RGX_BIT_USE_NAPT), (RgxSettings.statebits & RGX_BIT_NAPT_ENABLED), RGX_BIT_NAPT_ENABLED);
   RgxSettings.status = RGX_CONFIGURED;
 }
 
@@ -184,39 +253,26 @@ bool Xdrv90(uint8_t function)
   switch (function)
   {
   case FUNC_COMMAND:
-    AddLog(LOG_LEVEL_INFO, PSTR("TEST Command"));
     result = DecodeCommand(kDrvRgxCommands, DrvRgxCommand);
     break;
   case FUNC_PRE_INIT:
-    AddLog(LOG_LEVEL_INFO, PSTR("TEST PreInit"));
     break;
   case FUNC_EVERY_SECOND:
-    uint8_t xx = 7;
-    Serial.printf("================== XX: %u\n", xx);
-    xx |= RGX_BIT_USE_NAPT;
-    Serial.printf("================== XX: |= %u\n", xx);
-
-    Serial.printf("================== XX: ~%u\n", ~(uint8_t)RGX_BIT_USE_NAPT);
-
-    xx &= ~(uint8_t)RGX_BIT_USE_NAPT;
-    Serial.printf("================== XX: &= ~%u\n", xx);
-
+    // AddLog(LOG_LEVEL_INFO, PSTR("RGX: XXX DEBUG INFO: Wifi.status: %d, WiFi.getMode(): %d, RgxSettings.status: %d"), Wifi.status, WiFi.getMode(), RgxSettings.status);
     if (RgxSettings.status == RGX_NOT_CONFIGURED && Wifi.status == WL_CONNECTED)
     {
       // Setup only if WiFi in STA only mode
       if (WiFi.getMode() == WIFI_STA)
       {
         // Connecting for the first time, setup WiFi
-        AddLog(LOG_LEVEL_INFO, PSTR("RGX: Setup WIFI AP..."));
         rngxSetup();
       }
       else
       {
-        AddLog(LOG_LEVEL_INFO, PSTR("RGX: NOT doing Setup WIFI AP..."));
         RgxSettings.status = RGX_CONFIGURED;
       }
     }
-    else if (RgxSettings.status == RGX_FORCE_CONFIGURE)
+    else if (RgxSettings.status == RGX_FORCE_CONFIGURE && Wifi.status == WL_CONNECTED)
     {
       rngxSetup();
     }
@@ -225,12 +281,10 @@ bool Xdrv90(uint8_t function)
       if (Wifi.status != WL_CONNECTED)
       {
         // No longer connected, need to setup again
-        AddLog(LOG_LEVEL_INFO, PSTR("RGX: No longer connected, prepare to reconnect WIFI AP..."));
+        AddLog(LOG_LEVEL_INFO, PSTR("RGX: No longer connected, prepare to reconnect WiFi AP..."));
         RgxSettings.status = RGX_NOT_CONFIGURED;
       }
     }
-    // XXX
-    AddLog(LOG_LEVEL_INFO, PSTR("RGX: DEBUG INFO: Wifi.status: %d, WiFi.getMode(): %d"), Wifi.status, WiFi.getMode());
     break;
   }
   return result;
