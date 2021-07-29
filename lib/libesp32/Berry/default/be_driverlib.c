@@ -7,6 +7,55 @@
 #include "be_constobj.h"
 
 /********************************************************************
+** Solidified function: init
+********************************************************************/
+be_local_closure(init,   /* name */
+  be_nested_proto(
+    1,                          /* nstack */
+    1,                          /* argc */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    0,                          /* has constants */
+    NULL,                       /* no const */
+    (be_nested_const_str("init", 380752755, 4)),
+    (be_nested_const_str("input", -103256197, 5)),
+    ( &(const binstruction[ 1]) {  /* code */
+      0x80000000,  //  0000  RET	0	R0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: get_tasmota
+********************************************************************/
+be_local_closure(get_tasmota,   /* name */
+  be_nested_proto(
+    2,                          /* nstack */
+    1,                          /* argc */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 1]) {     /* constants */
+      be_nested_string("tasmota", 424643812, 7),    /* R256 - K0 */
+    }),
+    (be_nested_const_str("get_tasmota", 334356779, 11)),
+    (be_nested_const_str("input", -103256197, 5)),
+    ( &(const binstruction[ 2]) {  /* code */
+      0xB8060000,  //  0000  GETNGBL	R1	R256
+      0x80040200,  //  0001  RET	1	R1
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
 ** Solidified function: add_cmd
 ********************************************************************/
 be_local_closure(add_cmd,   /* name */
@@ -70,22 +119,24 @@ be_local_closure(add_cmd,   /* name */
 be_local_class(Driver,
     13,
     NULL,
-    be_nested_map(14,
+    be_nested_map(16,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_nested_key("web_add_handler", -304792334, 15, 2), be_const_index(2) },
-        { be_nested_key("every_second", 2075451465, 12, -1), be_const_index(0) },
-        { be_nested_key("web_add_button", -757092238, 14, -1), be_const_index(3) },
-        { be_nested_key("web_add_config_button", 639674325, 21, 1), be_const_index(6) },
-        { be_nested_key("every_100ms", 1546407804, 11, 0), be_const_index(1) },
-        { be_nested_key("add_cmd", -933336417, 7, -1), be_const_closure(add_cmd_closure) },
-        { be_nested_key("web_add_management_button", -1556090110, 25, 13), be_const_index(5) },
-        { be_nested_key("display", 1164572437, 7, -1), be_const_index(12) },
-        { be_nested_key("web_add_main_button", -334599632, 19, 9), be_const_index(4) },
-        { be_nested_key("save_before_restart", 1253239338, 19, 11), be_const_index(8) },
-        { be_nested_key("web_sensor", -1394870324, 10, 6), be_const_index(9) },
-        { be_nested_key("button_pressed", 1694209616, 14, -1), be_const_index(11) },
-        { be_nested_key("json_append", -1292948012, 11, -1), be_const_index(10) },
+        { be_nested_key("web_add_main_button", -334599632, 19, 14), be_const_index(4) },
         { be_nested_key("web_add_console_button", -813531104, 22, -1), be_const_index(7) },
+        { be_nested_key("web_add_management_button", -1556090110, 25, 8), be_const_index(5) },
+        { be_nested_key("init", 380752755, 4, -1), be_const_closure(init_closure) },
+        { be_nested_key("json_append", -1292948012, 11, -1), be_const_index(10) },
+        { be_nested_key("web_add_config_button", 639674325, 21, 7), be_const_index(6) },
+        { be_nested_key("every_100ms", 1546407804, 11, -1), be_const_index(1) },
+        { be_nested_key("display", 1164572437, 7, -1), be_const_index(12) },
+        { be_nested_key("web_add_button", -757092238, 14, 13), be_const_index(3) },
+        { be_nested_key("every_second", 2075451465, 12, -1), be_const_index(0) },
+        { be_nested_key("save_before_restart", 1253239338, 19, -1), be_const_index(8) },
+        { be_nested_key("get_tasmota", 334356779, 11, -1), be_const_closure(get_tasmota_closure) },
+        { be_nested_key("web_sensor", -1394870324, 10, 6), be_const_index(9) },
+        { be_nested_key("web_add_handler", -304792334, 15, -1), be_const_index(2) },
+        { be_nested_key("button_pressed", 1694209616, 14, 1), be_const_index(11) },
+        { be_nested_key("add_cmd", -933336417, 7, -1), be_const_closure(add_cmd_closure) },
     })),
     (be_nested_const_str("Driver", -718580993, 6))
 );

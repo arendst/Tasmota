@@ -19,6 +19,10 @@ class Driver
   def init()
   end
 
+  def get_tasmota()
+    return tasmota
+  end
+
   def add_cmd(c, f)
     tasmota.add_cmd(c, / cmd, idx, payload, payload_json -> f(self, cmd, idx, payload, payload_json))
   end
