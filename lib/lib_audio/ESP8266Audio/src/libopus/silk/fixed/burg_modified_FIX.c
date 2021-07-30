@@ -57,12 +57,12 @@ void silk_burg_modified_c(
     opus_int         k, n, s, lz, rshifts, reached_max_gain;
     opus_int32       C0, num, nrg, rc_Q31, invGain_Q30, Atmp_QA, Atmp1, tmp1, tmp2, x1, x2;
     const opus_int16 *x_ptr;
-    opus_int32       C_first_row[ SILK_MAX_ORDER_LPC ];
-    opus_int32       C_last_row[  SILK_MAX_ORDER_LPC ];
-    opus_int32       Af_QA[       SILK_MAX_ORDER_LPC ];
-    opus_int32       CAf[ SILK_MAX_ORDER_LPC + 1 ];
-    opus_int32       CAb[ SILK_MAX_ORDER_LPC + 1 ];
-    opus_int32       xcorr[ SILK_MAX_ORDER_LPC ];
+    opus_int32       *C_first_row = (opus_int32*)malloc(sizeof(opus_int32) * SILK_MAX_ORDER_LPC);
+    opus_int32       *C_last_row = (opus_int32*)malloc(sizeof(opus_int32) * SILK_MAX_ORDER_LPC);
+    opus_int32       *Af_QA = (opus_int32*)malloc(sizeof(opus_int32) * SILK_MAX_ORDER_LPC);
+    opus_int32       *CAf = (opus_int32*)malloc(sizeof(opus_int32) * (SILK_MAX_ORDER_LPC+1));
+    opus_int32       *CAb = (opus_int32*)malloc(sizeof(opus_int32) * (SILK_MAX_ORDER_LPC+1));
+    opus_int32       *xcorr = (opus_int32*)malloc(sizeof(opus_int32) * SILK_MAX_ORDER_LPC);
     opus_int64       C0_64;
 
     celt_assert( subfr_length * nb_subfr <= MAX_FRAME_SIZE );
@@ -277,4 +277,10 @@ void silk_burg_modified_c(
         *res_nrg = silk_SMLAWW( nrg, silk_SMMUL( SILK_FIX_CONST( FIND_LPC_COND_FAC, 32 ), C0 ), -tmp1 );/* Q( -rshifts ) */
         *res_nrg_Q = -rshifts;
     }
+    free(C_first_row);
+    free(C_last_row);
+    free(Af_QA);
+    free(CAf);
+    free(CAb);
+    free(xcorr);
 }

@@ -76,7 +76,7 @@ static const int newBWTab[4][4] PROGMEM = {
  * Notes:       this is carefully written to be efficient on ARM
  *              use the assembly code version in sbrcov.s when building for ARM!
  **************************************************************************************/
-#if (defined (__arm) && defined (__ARMCC_VERSION)) || (defined (_WIN32) && defined (_WIN32_WCE) && defined (ARM)) || (defined(__GNUC__) && defined(__arm__))
+#if (defined (XXXX__arm) && defined (__ARMCC_VERSION)) || (defined (_WIN32) && defined (_WIN32_WCE) && defined (ARM)) || (defined(__GNUC__) && defined(XXXX__arm__))
 #ifdef __cplusplus
 extern "C"
 #endif
@@ -237,7 +237,7 @@ static int CalcCovariance1(int *XBuf, int *p01reN, int *p01imN, int *p12reN, int
  * Notes:       this is carefully written to be efficient on ARM
  *              use the assembly code version in sbrcov.s when building for ARM!
  **************************************************************************************/
-#if (defined (__arm) && defined (__ARMCC_VERSION)) || (defined (_WIN32) && defined (_WIN32_WCE) && defined (ARM)) || (defined(__GNUC__) && defined(__arm__))
+#if (defined (XXXX__arm) && defined (__ARMCC_VERSION)) || (defined (_WIN32) && defined (_WIN32_WCE) && defined (ARM)) || (defined(__GNUC__) && defined(XXXX__arm__))
 #ifdef __cplusplus
 extern "C"
 #endif

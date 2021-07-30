@@ -48,7 +48,8 @@ void silk_resampler_down2_3(
     opus_int32 *buf_ptr;
     SAVE_STACK;
 
-    ALLOC( buf, RESAMPLER_MAX_BATCH_SIZE_IN + ORDER_FIR, opus_int32 );
+//    ALLOC( buf, RESAMPLER_MAX_BATCH_SIZE_IN + ORDER_FIR, opus_int32 );
+    opus_int32 *buf = (opus_int32*)malloc((RESAMPLER_MAX_BATCH_SIZE_IN + ORDER_FIR) * sizeof(opus_int32));
 
     /* Copy buffered samples to start of buffer */
     silk_memcpy( buf, S, ORDER_FIR * sizeof( opus_int32 ) );
@@ -99,5 +100,6 @@ void silk_resampler_down2_3(
 
     /* Copy last part of filtered signal to the state for the next call */
     silk_memcpy( S, &buf[ nSamplesIn ], ORDER_FIR * sizeof( opus_int32 ) );
+    free(buf);
     RESTORE_STACK;
 }

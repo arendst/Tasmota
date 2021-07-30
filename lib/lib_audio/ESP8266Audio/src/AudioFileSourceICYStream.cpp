@@ -17,6 +17,9 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+
+#if defined(ESP32) || defined(ESP8266)
+
 #define _GNU_SOURCE
 
 #include "AudioFileSourceICYStream.h"
@@ -83,12 +86,16 @@ AudioFileSourceICYStream::~AudioFileSourceICYStream()
 
 uint32_t AudioFileSourceICYStream::readInternal(void *data, uint32_t len, bool nonBlock)
 {
+  // Ensure we can't possibly read 2 ICY headers in a single go #355
+  if (icyMetaInt > 1) {
+    len = std::min((int)(icyMetaInt >> 1), (int)len);
+  }
 retry:
   if (!http.connected()) {
     cb.st(STATUS_DISCONNECTED, PSTR("Stream disconnected"));
     http.end();
     for (int i = 0; i < reconnectTries; i++) {
-      char buff[32];
+      char buff[64];
       sprintf_P(buff, PSTR("Attempting to reconnect, try %d"), i);
       cb.st(STATUS_RECONNECTING, buff);
       delay(reconnectDelayMs);
@@ -211,3 +218,5 @@ retry:
   icyByteCount += ret;
   return read;
 }
+
+#endif

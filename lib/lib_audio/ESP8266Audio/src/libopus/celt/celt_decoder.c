@@ -482,7 +482,7 @@ static int celt_plc_pitch_search(celt_sig *decode_mem[2], int C, int arch)
    int pitch_index;
    VARDECL( opus_val16, lp_pitch_buf );
    SAVE_STACK;
-   ALLOC( lp_pitch_buf, DECODE_BUFFER_SIZE>>1, opus_val16 );
+   opus_val16 *lp_pitch_buf = (opus_val16*)malloc((DECODE_BUFFER_SIZE>>1) * sizeof(opus_val16)); //ALLOC( lp_pitch_buf, DECODE_BUFFER_SIZE>>1, opus_val16 );
    pitch_downsample(decode_mem, lp_pitch_buf,
          DECODE_BUFFER_SIZE, C, arch);
    pitch_search(lp_pitch_buf+(PLC_PITCH_LAG_MAX>>1), lp_pitch_buf,
@@ -490,6 +490,7 @@ static int celt_plc_pitch_search(celt_sig *decode_mem[2], int C, int arch)
          PLC_PITCH_LAG_MAX-PLC_PITCH_LAG_MIN, &pitch_index, arch);
    pitch_index = PLC_PITCH_LAG_MAX-pitch_index;
    RESTORE_STACK;
+   free(lp_pitch_buf);
    return pitch_index;
 }
 

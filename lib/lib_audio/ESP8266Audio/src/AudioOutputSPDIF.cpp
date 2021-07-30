@@ -37,6 +37,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+#if defined(ESP32) || defined(ESP8266)
 
 #include <Arduino.h>
 #if defined(ESP32)
@@ -286,3 +287,5 @@ bool AudioOutputSPDIF::stop()
   frame_num = 0;
   return true;
 }
+
+#endif
