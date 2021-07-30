@@ -444,6 +444,7 @@ BERRY_API bbool be_ismap(bvm *vm, int index);
 BERRY_API bbool be_iscomptr(bvm *vm, int index);
 BERRY_API bbool be_iscomobj(bvm *vm, int index);
 BERRY_API bbool be_isderived(bvm *vm, int index);
+BERRY_API bbool be_isbytes(bvm *vm, int index);
 
 BERRY_API bint be_toint(bvm *vm, int index);
 BERRY_API breal be_toreal(bvm *vm, int index);

@@ -230,6 +230,7 @@ be_define_const_str(type, "type", 1361572173u, 0, 4, NULL);
 be_define_const_str(_request_from, "_request_from", 3965148604u, 0, 13, NULL);
 be_define_const_str(__lower__, "__lower__", 123855590u, 0, 9, &be_const_str_detect);
 be_define_const_str(detect, "detect", 8884370u, 0, 6, NULL);
+be_define_const_str(AudioGeneratorWAV, "AudioGeneratorWAV", 2746509368u, 0, 17, NULL);
 be_define_const_str(HPMA_TX, "HPMA_TX", 173233104u, 0, 7, &be_const_str_input);
 be_define_const_str(input, "input", 4191711099u, 0, 5, &be_const_str_issubclass);
 be_define_const_str(issubclass, "issubclass", 4078395519u, 0, 10, NULL);
@@ -765,7 +766,7 @@ static const bstring* const m_string_table[] = {
     (const bstring *)&be_const_str___lower__,
     NULL,
     NULL,
-    NULL,
+    (const bstring *)&be_const_str_AudioGeneratorWAV,
     (const bstring *)&be_const_str_HPMA_TX,
     (const bstring *)&be_const_str_SYMBOL_PLAY,
     NULL,
@@ -971,6 +972,6 @@ static const bstring* const m_string_table[] = {
 
 static const struct bconststrtab m_const_string_table = {
     .size = 315,
-    .count = 630,
+    .count = 631,
     .table = m_string_table
 };

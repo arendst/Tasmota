@@ -11,6 +11,13 @@
 extern int i2s_output_i2s_init(bvm *vm);
 extern int i2s_output_i2s_deinit(bvm *vm);
 
+extern int i2s_generator_wav_init(bvm *vm);
+extern int i2s_generator_wav_deinit(bvm *vm);
+extern int i2s_generator_wav_begin(bvm *vm);
+extern int i2s_generator_wav_loop(bvm *vm);
+extern int i2s_generator_wav_stop(bvm *vm);
+extern int i2s_generator_wav_isrunning(bvm *vm);
+
 extern int i2s_generator_mp3_init(bvm *vm);
 extern int i2s_generator_mp3_deinit(bvm *vm);
 extern int i2s_generator_mp3_begin(bvm *vm);
@@ -28,6 +35,7 @@ extern int i2s_file_source_fs_deinit(bvm *vm);
 #include "../generate/be_fixed_be_class_audio_output.h"
 #include "../generate/be_fixed_be_class_audio_output_i2s.h"
 #include "../generate/be_fixed_be_class_audio_generator.h"
+#include "../generate/be_fixed_be_class_audio_generator_wav.h"
 #include "../generate/be_fixed_be_class_audio_generator_mp3.h"
 #include "../generate/be_fixed_be_class_audio_file_source.h"
 #include "../generate/be_fixed_be_class_audio_file_source_fs.h"
@@ -40,6 +48,10 @@ void be_load_driver_audio_lib(bvm *vm) {
 
     be_pushntvclass(vm, &be_class_audio_output_i2s);
     be_setglobal(vm, "AudioOutputI2S");
+    be_pop(vm, 1);
+
+    be_pushntvclass(vm, &be_class_audio_generator_wav);
+    be_setglobal(vm, "AudioGeneratorWAV");
     be_pop(vm, 1);
 
     be_pushntvclass(vm, &be_class_audio_generator_mp3);
@@ -71,6 +83,16 @@ class be_class_audio_output_i2s (scope: global, name: AudioOutputI2S, super: be_
     init, func(i2s_output_i2s_init)
     deinit, func(i2s_output_i2s_deinit)
     close, func(i2s_output_i2s_deinit)
+}
+
+class be_class_audio_generator_wav (scope: global, name: AudioGeneratorWAV, super: be_class_audio_generator) {
+    init, func(i2s_generator_wav_init)
+    deinit, func(i2s_generator_wav_deinit)
+    close, func(i2s_generator_wav_deinit)
+    begin, func(i2s_generator_wav_begin)
+    loop, func(i2s_generator_wav_loop)
+    stop, func(i2s_generator_wav_stop)
+    isrunning, func(i2s_generator_wav_isrunning)
 }
 
 class be_class_audio_generator_mp3 (scope: global, name: AudioGeneratorMP3, super: be_class_audio_generator) {

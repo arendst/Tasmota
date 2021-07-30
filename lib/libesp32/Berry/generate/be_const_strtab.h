@@ -230,6 +230,7 @@ extern const bcstring be_const_str_type;
 extern const bcstring be_const_str__request_from;
 extern const bcstring be_const_str___lower__;
 extern const bcstring be_const_str_detect;
+extern const bcstring be_const_str_AudioGeneratorWAV;
 extern const bcstring be_const_str_HPMA_TX;
 extern const bcstring be_const_str_input;
 extern const bcstring be_const_str_issubclass;

@@ -16,10 +16,17 @@
 static int i_write(bvm *vm)
 {
     be_getmember(vm, 1, ".p");
-    if(be_iscomptr(vm, -1) && be_isstring(vm, 2)) {
+    if(be_iscomptr(vm, -1) && (be_isstring(vm, 2) || be_isbytes(vm, 2))) {
         void *fh = be_tocomptr(vm, -1);
-        const char *data = be_tostring(vm, 2);
-        be_fwrite(fh, data, be_strlen(vm, 2));
+        size_t size = 0;
+        const char *data = NULL;
+        if (be_isstring(vm, 2)) {
+            data = be_tostring(vm, 2);
+            size = be_strlen(vm, 2);
+        } else {
+            data = be_tobytes(vm, 2, &size);
+        }
+        be_fwrite(fh, data, size);
     }
     be_return_nil(vm);
 }
@@ -46,6 +53,43 @@ static int i_read(bvm *vm)
             be_free(vm, buffer, size);
         } else {
             be_pushstring(vm, "");
+        }
+        be_return(vm);
+    }
+    be_return_nil(vm);
+}
+
+static int i_readbytes(bvm *vm)
+{
+    int argc = be_top(vm);
+    be_getmember(vm, 1, ".p");
+    if (be_iscomptr(vm, -1)) {
+        void *fh = be_tocomptr(vm, -1);
+        size_t size = readsize(vm, argc, fh);
+        if (size) {
+            /* avoid double allocation, using directly the internal buffer of bytes() */
+            be_getbuiltin(vm, "bytes");
+            be_pushint(vm, size);
+            be_call(vm, 1);  /* call bytes() constructor with pre-sized buffer */
+            be_pop(vm, 1);  /* bytes() instance is at top */
+
+            be_getmember(vm, -1, "resize");
+            be_pushvalue(vm, -2);
+            be_pushint(vm, size);
+            be_call(vm, 2); /* call b.resize(size) */
+            be_pop(vm, 3);  /* bytes() instance is at top */
+
+            char *buffer = (char*) be_tobytes(vm, -1, NULL); /* we get the address of the internam buffer of size 'size' */
+            size = be_fread(fh, buffer, size);
+
+            /* resize if something went wrong */
+            be_getmember(vm, -1, "resize");
+            be_pushvalue(vm, -2);
+            be_pushint(vm, size);
+            be_call(vm, 2); /* call b.resize(size) */
+            be_pop(vm, 3);  /* bytes() instance is at top */
+        } else {
+            be_pushbytes(vm, NULL, 0);
         }
         be_return(vm);
     }
@@ -144,6 +188,7 @@ int be_nfunc_open(bvm *vm)
         { ".p", NULL },
         { "write", i_write },
         { "read", i_read },
+        { "readbytes", i_readbytes },
         { "readline", i_readline },
         { "seek", i_seek },
         { "tell", i_tell },
