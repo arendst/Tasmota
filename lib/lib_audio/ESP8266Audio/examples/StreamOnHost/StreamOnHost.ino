@@ -8,7 +8,13 @@
 #include "AudioFileSourceICYStream.h"
 #include "AudioFileSourceBuffer.h"
 #include "AudioGeneratorMP3.h"
-#include "AudioOutputI2SNoDAC.h"
+#if AUDIO
+#pragma message("Outputting audio")
+#include "AudioOutputLinuxDSP.h"
+#else
+#pragma message("No audio")
+#include "AudioOutputNullSlow.h"
+#endif
 
 // To run, set your ESP8266 build to 160MHz, update the SSID info, and upload.
 
@@ -22,12 +28,15 @@ const char* ssid = STASSID;
 const char* password = STAPSK;
 
 // Randomly picked URL
-const char *URL="http://kvbstreams.dyndns.org:8000/wkvi-am";
+//const char *URL="http://kvbstreams.dyndns.org:8000/wkvi-am";
+//const char *URL="http://stream2.pvpjamz.com:8706/stream";
+// that one is not well decoded:
+const char *URL="http://icecast.radiofrance.fr/franceinter-lofi.mp3";
 
 AudioGeneratorMP3 *mp3;
 AudioFileSourceICYStream *file;
 AudioFileSourceBuffer *buff;
-AudioOutputI2SNoDAC *out;
+AudioOutputNullSlow *out;
 
 // Called when a metadata event occurs (i.e. an ID3 tag, an ICY block, etc.
 void MDCallback(void *cbData, const char *type, bool isUnicode, const char *string)
@@ -77,11 +86,13 @@ void setup()
   Serial.println("Connected");
 
   audioLogger = &Serial;
-  file = new AudioFileSourceICYStream(URL);
+  file = new AudioFileSourceICYStream();
   file->RegisterMetadataCB(MDCallback, (void*)"ICY");
+  file->useHTTP10();
+  file->open(URL);
   buff = new AudioFileSourceBuffer(file, 2048);
   buff->RegisterStatusCB(StatusCallback, (void*)"buffer");
-  out = new AudioOutputI2SNoDAC();
+  out = new AudioOutputNullSlow();
   mp3 = new AudioGeneratorMP3();
   mp3->RegisterStatusCB(StatusCallback, (void*)"mp3");
   mp3->begin(buff, out);

@@ -7,6 +7,9 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Support for second DNS server
 
+### Changed
+- ESP8266Audio library from v1.5.0 to v1.9.2
+
 ## [9.5.0.3] 20210729
 ### Added
 - Command ``SetSensor1..127 0|1`` to globally disable individual sensor driver

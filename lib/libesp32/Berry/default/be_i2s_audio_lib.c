@@ -10,6 +10,7 @@
 
 extern int i2s_output_i2s_init(bvm *vm);
 extern int i2s_output_i2s_deinit(bvm *vm);
+extern int i2s_output_i2s_stop(bvm *vm);
 
 extern int i2s_generator_wav_init(bvm *vm);
 extern int i2s_generator_wav_deinit(bvm *vm);
@@ -82,13 +83,12 @@ class be_class_audio_file_source (scope: global, name: AudioFileSource) {
 class be_class_audio_output_i2s (scope: global, name: AudioOutputI2S, super: be_class_audio_output) {
     init, func(i2s_output_i2s_init)
     deinit, func(i2s_output_i2s_deinit)
-    close, func(i2s_output_i2s_deinit)
+    stop, func(i2s_output_i2s_stop)
 }
 
 class be_class_audio_generator_wav (scope: global, name: AudioGeneratorWAV, super: be_class_audio_generator) {
     init, func(i2s_generator_wav_init)
     deinit, func(i2s_generator_wav_deinit)
-    close, func(i2s_generator_wav_deinit)
     begin, func(i2s_generator_wav_begin)
     loop, func(i2s_generator_wav_loop)
     stop, func(i2s_generator_wav_stop)
@@ -98,7 +98,6 @@ class be_class_audio_generator_wav (scope: global, name: AudioGeneratorWAV, supe
 class be_class_audio_generator_mp3 (scope: global, name: AudioGeneratorMP3, super: be_class_audio_generator) {
     init, func(i2s_generator_mp3_init)
     deinit, func(i2s_generator_mp3_deinit)
-    close, func(i2s_generator_mp3_deinit)
     begin, func(i2s_generator_mp3_begin)
     loop, func(i2s_generator_mp3_loop)
     stop, func(i2s_generator_mp3_stop)
@@ -108,7 +107,6 @@ class be_class_audio_generator_mp3 (scope: global, name: AudioGeneratorMP3, supe
 class be_class_audio_file_source_fs (scope: global, name: AudioFileSourceFS, super: be_class_audio_file_source) {
     init, func(i2s_file_source_fs_init)
     deinit, func(i2s_file_source_fs_deinit)
-    close, func(i2s_file_source_fs_deinit)
 }
 
 @const_object_info_end */

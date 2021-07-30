@@ -314,7 +314,6 @@ extern const bcstring be_const_str_number;
 extern const bcstring be_const_str_read_bytes;
 extern const bcstring be_const_str_dot_p;
 extern const bcstring be_const_str_bus;
-extern const bcstring be_const_str_close;
 extern const bcstring be_const_str_lv_group_focus_cb;
 extern const bcstring be_const_str_SDS0X1_TX;
 extern const bcstring be_const_str_SDM72_TX;

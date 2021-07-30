@@ -73,12 +73,17 @@ libopus=../../src/libopus/opus_decoder.c ../../src/libopus/opus_projection_decod
 
 opusfile=../../src/opusfile/opusfile.c ../../src/opusfile/stream.c ../../src/opusfile/internal.c ../../src/opusfile/info.c
 
-CCOPTS=-g -Wunused-parameter -Wall -m32 -include Arduino.h
-CPPOPTS=-g -Wunused-parameter -Wall -std=c++11 -m32 -include Arduino.h
+libflac=../../src/libflac/md5.c ../../src/libflac/window.c ../../src/libflac/memory.c ../../src/libflac/cpu.c \
+../../src/libflac/fixed.c ../../src/libflac/format.c ../../src/libflac/lpc.c ../../src/libflac/crc.c \
+../../src/libflac/bitreader.c ../../src/libflac/bitmath.c ../../src/libflac/stream_decoder.c ../../src/libflac/float.c
+
+
+CCOPTS=-g -Wunused-parameter -Wall -m32 -include Arduino.h -Wstack-usage=300
+CPPOPTS=-g -Wunused-parameter -Wall -std=c++11 -m32 -Wstack-usage=300 -include Arduino.h
 
 .phony: all
 
-all: mp3 aac wav midi opus
+all: mp3 aac wav midi opus flac
 
 mp3: FORCE
 	rm -f *.o
@@ -93,6 +98,13 @@ aac: FORCE
 	g++ $(CPPOPTS) -o aac aac.cpp Serial.cpp *.o ../../src/AudioFileSourceSTDIO.cpp ../../src/AudioOutputSTDIO.cpp ../../src/AudioFileSourceID3.cpp ../../src/AudioGeneratorAAC.cpp  ../../src/AudioLogger.cpp -I ../../src/ -I.
 	rm -f *.o
 	echo valgrind --leak-check=full --track-origins=yes -v --error-limit=no --show-leak-kinds=all ./aac
+
+flac: FORCE
+	rm -f *.o
+	gcc $(CCOPTS) -DUSE_DEFAULT_STDLIB -c $(libflac) -I ../../src/ -I ../../src/libflac -I.
+	g++ $(CPPOPTS) -o flac flac.cpp Serial.cpp *.o ../../src/AudioFileSourceSTDIO.cpp ../../src/AudioOutputSTDIO.cpp ../../src/AudioFileSourceID3.cpp ../../src/AudioGeneratorFLAC.cpp  ../../src/AudioLogger.cpp -I ../../src/ -I.
+	rm -f *.o
+	echo valgrind --leak-check=full --track-origins=yes -v --error-limit=no --show-leak-kinds=all ./flac
 
 wav: FORCE
 	rm -f *.o
@@ -116,6 +128,6 @@ opus: FORCE
 	echo valgrind --leak-check=full --track-origins=yes -v --error-limit=no --show-leak-kinds=all ./opus
 
 clean:
-	rm -f mp3 aac wav midi opus *.o
+	rm -f mp3 aac wav midi opus flac *.o
 
 FORCE:

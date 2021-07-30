@@ -1,7 +1,7 @@
 /*
   AudioFileSourceHTTPStream
   Connect to a HTTP based streaming service
-
+  
   Copyright (C) 2017  Earle F. Philhower, III
 
   This program is free software: you can redistribute it and/or modify
@@ -18,8 +18,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _AUDIOFILESOURCEICYSTREAM_H
-#define _AUDIOFILESOURCEICYSTREAM_H
+#if defined(ESP32) || defined(ESP8266)
+#pragma once
 
 #include <Arduino.h>
 #ifdef ESP32
@@ -36,7 +36,7 @@ class AudioFileSourceICYStream : public AudioFileSourceHTTPStream
     AudioFileSourceICYStream();
     AudioFileSourceICYStream(const char *url);
     virtual ~AudioFileSourceICYStream() override;
-
+    
     virtual bool open(const char *url) override;
 
   private:
@@ -44,6 +44,5 @@ class AudioFileSourceICYStream : public AudioFileSourceHTTPStream
     int icyMetaInt;
     int icyByteCount;
 };
-
 
 #endif

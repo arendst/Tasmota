@@ -61,7 +61,9 @@ extern "C" {
       }
       // AudioOutputI2S(int port=0, int output_mode=EXTERNAL_I2S, int dma_buf_count = 8, int use_apll=APLL_DISABLE);
       AudioOutputI2S * audio = new AudioOutputI2S(port, mode, dma_buf_count);
-      audio->SetPinout(bclkPin, wclkPin, doutPin);    // return value has no useful information for us
+      if (0 == mode) {
+        audio->SetPinout(bclkPin, wclkPin, doutPin);    // return value has no useful information for us
+      }
       be_pushcomptr(vm, (void*) audio);
       be_setmember(vm, 1, ".p");
       be_return_nil(vm);
@@ -81,6 +83,16 @@ extern "C" {
       be_setmember(vm, 1, ".p");
     }
 
+    be_return_nil(vm);
+  }
+
+  int i2s_output_i2s_stop(bvm *vm) {
+    int argc = be_top(vm);
+    be_getmember(vm, 1, ".p");
+    AudioOutputI2S * audio = (AudioOutputI2S *) be_tocomptr(vm, -1);
+    if (audio) {
+      audio->stop();
+    }
     be_return_nil(vm);
   }
 
