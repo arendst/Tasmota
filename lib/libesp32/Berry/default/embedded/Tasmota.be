@@ -1,7 +1,7 @@
 #- Native code used for testing and code solidification -#
 #- Do not use it -#
 
-class Tasmota2 : Tasmota
+class Tasmota
 
   # add `chars_in_string(s:string,c:string) -> int``
   # looks for any char in c, and return the position of the first char
@@ -241,26 +241,27 @@ class Tasmota2 : Tasmota
 
   end
 
-  def event(event_type, cmd, idx, payload)
+  def event(event_type, cmd, idx, payload, raw)
     import introspect
     if event_type=='every_50ms' self.run_deferred() end  #- first run deferred events -#
 
     if event_type=='cmd' return self.exec_cmd(cmd, idx, payload)
     elif event_type=='rule' return self.exec_rules(payload)
-    elif event_type=='mqtt_data' return nil
     elif event_type=='gc' return self.gc()
     elif self._drivers
       for d:self._drivers
         var f = introspect.get(d, event_type)   # try to match a function or method with the same name
         if type(f) == 'function'
           try
-            f(d)
+            var done = f(d, cmd, idx, payload, raw)
+            if done == true return true end
           except .. as e,m
             import string
             print(string.format("BRY: Exception> '%s' - %s", e, m))
           end
         end
       end
+      return false
     end
   end
 
@@ -288,4 +289,3 @@ class Tasmota2 : Tasmota
   end
 
 end
-tasmota = Tasmota2()

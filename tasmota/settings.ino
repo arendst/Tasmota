@@ -859,6 +859,7 @@ void SettingsDefaultSet2(void) {
   ParseIPv4(&Settings->ipv4_address[1], PSTR(WIFI_GATEWAY));
   ParseIPv4(&Settings->ipv4_address[2], PSTR(WIFI_SUBNETMASK));
   ParseIPv4(&Settings->ipv4_address[3], PSTR(WIFI_DNS));
+  ParseIPv4(&Settings->ipv4_address[4], PSTR(WIFI_DNS2));
   Settings->sta_config = WIFI_CONFIG_TOOL;
 //  Settings->sta_active = 0;
   SettingsUpdateText(SET_STASSID1, PSTR(STA_SSID1));
@@ -1375,6 +1376,10 @@ void SettingsDelta(void) {
 #endif
     if (Settings->version < 0x09050003) {
       memset(&Settings->sensors, 0xFF, 16);  // Enable all possible sensors
+    }
+    if (Settings->version < 0x09050004) {
+      Settings->energy_kWhtotal = Settings->ipv4_address[4];
+      ParseIPv4(&Settings->ipv4_address[4], PSTR(WIFI_DNS2));
     }
 
     Settings->version = VERSION;

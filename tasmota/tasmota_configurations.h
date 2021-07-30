@@ -269,6 +269,7 @@
 #undef USE_EMULATION_WEMO                        // Disable Belkin WeMo emulation for Alexa (+6k code, +2k mem common)
 #undef USE_DOMOTICZ                              // Disable Domoticz
 #undef USE_HOME_ASSISTANT                        // Disable Home Assistant
+#define USE_TASMOTA_DISCOVERY                    // Enable Tasmota Discovery support (+2k code)
 
 // -- Optional modules ----------------------------
 #undef ROTARY_V1                                 // Disable support for MI Desk Lamp
@@ -486,6 +487,7 @@
 #undef USE_ARDUINO_OTA                           // Disable support for Arduino OTA
 #define USE_DOMOTICZ                             // Enable Domoticz
 #undef USE_HOME_ASSISTANT                        // Disable Home Assistant
+#define USE_TASMOTA_DISCOVERY                    // Enable Tasmota Discovery support (+2k code)
 
 #define UPGRADE_V8_MIN                           // do not support upgrading from version below 8.0.0
 
@@ -639,6 +641,7 @@
 #undef USE_ARDUINO_OTA                           // Disable support for Arduino OTA
 #undef USE_DOMOTICZ                              // Disable Domoticz
 #undef USE_HOME_ASSISTANT                        // Disable Home Assistant
+#define USE_TASMOTA_DISCOVERY                    // Enable Tasmota Discovery support (+2k code)
 #undef USE_MQTT_TLS                              // Disable TLS support won't work as the MQTTHost is not set
 #undef USE_KNX                                   // Disable KNX IP Protocol Support
 //#undef USE_WEBSERVER                             // Disable Webserver

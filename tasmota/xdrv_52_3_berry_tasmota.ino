@@ -72,17 +72,27 @@ extern "C" {
   int32_t l_publish(struct bvm *vm);
   int32_t l_publish(struct bvm *vm) {
     int32_t top = be_top(vm); // Get the number of arguments
-    if (top >= 3 && be_isstring(vm, 2) && be_isstring(vm, 3)) {  // 2 mandatory string arguments
+    if (top >= 3 && be_isstring(vm, 2) && (be_isstring(vm, 3) || be_isinstance(vm, 3))) {  // 2 mandatory string arguments
       if (top == 3 || (top == 4 && be_isbool(vm, 4))) {           // 3rd optional argument must be bool
         const char * topic = be_tostring(vm, 2);
-        const char * payload = be_tostring(vm, 3);
+        const char * payload = nullptr;
+        size_t payload_len = 0;
+        if (be_isstring(vm, 3)) {
+          payload = be_tostring(vm, 3);
+          payload_len = strlen(payload);
+        } else {
+          be_getglobal(vm, "bytes"); /* get the bytes class */ /* TODO eventually replace with be_getbuiltin */
+          if (be_isderived(vm, 3)) {
+            payload = (const char *) be_tobytes(vm, 3, &payload_len);
+          }
+        }
         bool retain = false;
         if (top == 4) {
           retain = be_tobool(vm, 4);
         }
-        Response_P(payload);
-        MqttPublish(topic, retain);
-        be_return(vm); // Return
+        if (!payload) { be_raise(vm, "value_error", "Empty payload"); }
+        MqttPublishPayload(topic, payload, payload_len, retain);
+        be_return_nil(vm); // Return
       }
     }
     be_raise(vm, kTypeError, nullptr);

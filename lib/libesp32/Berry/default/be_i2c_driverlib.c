@@ -9,7 +9,7 @@
  *******************************************************************/
 #include "be_constobj.h"
 
-extern bclass* be_class_tasmota_driver;     // Parent class
+extern bclass* be_class_Driver;     // Parent class
 
 /********************************************************************
 ** Solidified function: init
@@ -418,7 +418,7 @@ void be_load_driver_i2c_lib(bvm *vm) {
 }
 /* @const_object_info_begin
 
-class be_class_tasmota_i2c_driver (scope: global, name: I2C_Driver, super: be_class_tasmota_driver) {
+class be_class_tasmota_i2c_driver (scope: global, name: I2C_Driver, super: be_class_Driver) {
     wire, var
     addr, var
     name, var

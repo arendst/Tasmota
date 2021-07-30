@@ -3,7 +3,11 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [9.5.0.3]
+## [9.5.0.4]
+### Added
+- Support for second DNS server
+
+## [9.5.0.3] 20210729
 ### Added
 - Command ``SetSensor1..127 0|1`` to globally disable individual sensor driver
 - Support for CAN bus and Freedom Won Battery Management System by Marius Bezuidenhout (#12651)
@@ -17,10 +21,12 @@ All notable changes to this project will be documented in this file.
 - Disable PSRAM on unsupported hardware
 - Replace spaces by hyphens in final hostname (#12710)
 - Message ``Upload buffer miscompare`` into ``Not enough space``
+- ESP32 remove GPIO initialization to INPUT from not used GPIOs to allow JTAG support
 
 ### Fixed
 - Discovery fails when using ``%hostname%`` in a topic (#12710)
 - ESP32-Solo OTA upgrade
+- ESP32 buzzer in PWM mode exception (#12717)
 
 ## [9.5.0.2] 20210714
 ### Added

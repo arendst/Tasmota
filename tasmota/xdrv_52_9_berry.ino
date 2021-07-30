@@ -37,6 +37,8 @@ void (* const BerryCommand[])(void) PROGMEM = {
   CmndBrRun,
   };
 
+int32_t callBerryEventDispatcher(const char *type, const char *cmd, int32_t idx, const char *payload, uint32_t data_len = 0);
+
 //
 // Sanity Check for be_top()
 //
@@ -191,7 +193,8 @@ bool callMethodObjectWithArgs(const char * objname, const char * method, size_t 
 
 
 // call the event dispatcher from Tasmota object
-int32_t callBerryEventDispatcher(const char *type, const char *cmd, int32_t idx, const char *payload) {
+// if data_len is non-zero, the event is also sent as raw `bytes()` object because the string may lose data
+int32_t callBerryEventDispatcher(const char *type, const char *cmd, int32_t idx, const char *payload, uint32_t data_len) {
   int32_t ret = 0;
   bvm *vm = berry.vm;
 
@@ -206,7 +209,13 @@ int32_t callBerryEventDispatcher(const char *type, const char *cmd, int32_t idx,
       be_pushstring(vm, cmd != nullptr ? cmd : "");
       be_pushint(vm, idx);
       be_pushstring(vm, payload != nullptr ? payload : "{}");  // empty json
-      ret = be_pcall(vm, 5);   // 5 arguments
+      if (data_len > 0) {
+        be_pushbytes(vm, payload, data_len);    // if data_len is set, we also push raw bytes
+        ret = be_pcall(vm, 6);   // 6 arguments
+        be_pop(vm, 1);
+      } else {
+        ret = be_pcall(vm, 5);   // 5 arguments
+      }
       if (ret != 0) {
         BerryDumpErrorAndClear(vm, false);  // log in Tasmota console only
         return ret;
@@ -725,7 +734,7 @@ bool Xdrv52(uint8_t function)
       result = callBerryRule();
       break;
     case FUNC_MQTT_DATA:
-      result = callBerryEventDispatcher(PSTR("mqtt_data"), XdrvMailbox.topic, 0, XdrvMailbox.data);
+      result = callBerryEventDispatcher(PSTR("mqtt_data"), XdrvMailbox.topic, 0, XdrvMailbox.data, XdrvMailbox.data_len);
       break;
     case FUNC_EVERY_50_MSECOND:
       callBerryEventDispatcher(PSTR("every_50ms"), nullptr, 0, nullptr);
