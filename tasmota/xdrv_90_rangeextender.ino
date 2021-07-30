@@ -4,6 +4,14 @@
 To use this, add the following to your user_config_override.h
 #define USE_DRV_RANGE_EXTENDER
 
+
+Additionally PIO_FRAMEWORK_ARDUINO_LWIP2_HIGHER_BANDWIDTH must be set in your build options.
+For example, in your platfromio_tasmota_cenv.ini, you will need an entry such as:
+[env:tasmota-rangeextender]
+build_flags = ${common.build_flags} 
+              -D FIRMWARE_RANGE_EXTENDER
+              -D PIO_FRAMEWORK_ARDUINO_LWIP2_HIGHER_BANDWIDTH
+
 If you want to support NAPT (removing the need for routes on a core router):
 #define USE_RANGE_EXTENDER_NAPT
 
@@ -30,7 +38,17 @@ Rule1 ON
 */
 
 #ifdef USE_DRV_RANGE_EXTENDER
+#ifdef ESP32
+#error arduino-esp32 v2 required for NAPT support - not yet a stable release
+#endif // ESP32
+
 #warning **** USE_DRV_RANGE_EXTENDER is enabled ****
+
+#if LWIP_FEATURES
+// All good
+#else
+#error LWIP_FEATURES required, add "-D PIO_FRAMEWORK_ARDUINO_LWIP2_HIGHER_BANDWIDTH" to build_flags
+#endif
 
 #define XDRV_90 90
 
@@ -48,21 +66,34 @@ Rule1 ON
 #endif
 
 const char kDrvRgxCommands[] PROGMEM = "Rgx|" // Prefix
-                                       "Address"
-                                       "|"
-                                       "Subnet"
-                                       "|"
                                        "SSID"
                                        "|"
                                        "Password"
+#ifdef USE_RANGE_EXTENDER_NAPT
                                        "|"
-                                       "NAPT";
+                                       "NAPT"
+#endif // USE_RANGE_EXTENDER_NAPT
+                                       "|"
+                                       "Address"
+                                       "|"
+                                       "Subnet";
+
 void (*const DrvRgxCommand[])(void) PROGMEM = {
-    &CmndRgxAddresses, &CmndRgxAddresses, &CmndRgxSSID, &CmndRgxPassword, &CmndRgxNAPT};
+    &CmndRgxSSID,
+    &CmndRgxPassword,
+#ifdef USE_RANGE_EXTENDER_NAPT
+    &CmndRgxNAPT,
+#endif // USE_RANGE_EXTENDER_NAPT
+    &CmndRgxAddresses,
+    &CmndRgxAddresses,
+};
 
 #ifdef USE_RANGE_EXTENDER_NAPT
+#ifdef ESP8266
 #include <lwip/napt.h>
+#endif // ESP8266
 #endif // USE_RANGE_EXTENDER_NAPT
+
 #include <ESP8266WiFi.h>
 #include <lwip/dns.h>
 #include <dhcpserver.h>
@@ -101,7 +132,10 @@ void RgxCheckConfig(void)
       RgxSettings.ipv4_address &&
       RgxSettings.ipv4_subnet)
   {
-    RgxSettings.status = RGX_NOT_CONFIGURED;
+    if (RgxSettings.status != RGX_FORCE_CONFIGURE)
+    {
+      RgxSettings.status = RGX_NOT_CONFIGURED;
+    }
   }
   else
   {
