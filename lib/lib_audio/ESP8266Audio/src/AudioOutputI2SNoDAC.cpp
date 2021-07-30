@@ -22,7 +22,7 @@
 #ifdef ESP32
   #include "driver/i2s.h"
 #elif defined(ARDUINO_ARCH_RP2040) || defined(ESP8266)
-  #include <I2S.h>
+  #include <i2s.h>
 #endif
 #include "AudioOutputI2SNoDAC.h"
 
