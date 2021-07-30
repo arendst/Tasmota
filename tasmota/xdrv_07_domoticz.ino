@@ -526,6 +526,7 @@ void CmndDomoticzSend(void) {
             else if (3 == XdrvMailbox.index) { type = DZ_AIRQUALITY; }
             DomoticzSendData(type, index, data);
           }
+          ResponseCmndDone();
         }
       }
     }
