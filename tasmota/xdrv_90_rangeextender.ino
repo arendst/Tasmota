@@ -38,17 +38,31 @@ Rule1 ON
 */
 
 #ifdef USE_DRV_RANGE_EXTENDER
-#ifdef ESP32
-#error arduino-esp32 v2 required for NAPT support - not yet a stable release
-#endif // ESP32
 
 #warning **** USE_DRV_RANGE_EXTENDER is enabled ****
 
-#if LWIP_FEATURES
+#ifdef ESP8266
+#ifdef LWIP_FEATURES
 // All good
 #else
 #error LWIP_FEATURES required, add "-D PIO_FRAMEWORK_ARDUINO_LWIP2_HIGHER_BANDWIDTH" to build_flags
-#endif
+#endif // LWIP_FEATURES
+#endif // ESP8266
+
+#ifdef ESP32
+#ifdef CONFIG_LWIP_IP_FORWARD
+// All good
+#else
+#error CONFIG_LWIP_IP_FORWARD not set, arduino-esp32 v2 or later required with CONFIG_LWIP_IP_FORWARD support
+#endif // CONFIG_LWIP_IP_FORWARD
+#ifdef USE_RANGE_EXTENDER_NAPT
+#ifdef CONFIG_LWIP_IPV4_NAPT
+// All good
+#else
+#error CONFIG_LWIP_IPV4_NAPT not set, arduino-esp32 v2 or later required with CONFIG_LWIP_IPV4_NAPT support
+#endif // IP_NAPT
+#endif // CONFIG_LWIP_IPV4_NAPT
+#endif // ESP32
 
 #define XDRV_90 90
 
@@ -96,12 +110,19 @@ void (*const DrvRgxCommand[])(void) PROGMEM = {
 
 #include <ESP8266WiFi.h>
 #include <lwip/dns.h>
+#ifdef ESP8266
 #include <dhcpserver.h>
+#endif // ESP8266
+#ifdef ESP32
+#include "lwip/lwip_napt.h"
+#include <dhcpserver/dhcpserver.h>
+#endif // ESP32
 
 #define RGX_NOT_CONFIGURED 0
 #define RGX_FORCE_CONFIGURE 1
 #define RGX_CONFIGURED 2
 #define RGX_CONFIG_INCOMPLETE 3
+#define RGX_SETUP_NAPT 4
 
 typedef struct
 {
@@ -112,7 +133,9 @@ typedef struct
   uint8_t status = RGX_NOT_CONFIGURED;
 #ifdef USE_RANGE_EXTENDER_NAPT
   bool napt_enabled = false;
+#ifdef ESP8266
   bool napt_inited = false;
+#endif // ESP8266
 #ifdef EXTENDER_NAPT_ENABLE
   bool use_napt = true;
 #else
@@ -173,8 +196,8 @@ void CmndRgxSSID(void)
       ResponseCmndChar_P(PSTR("SSID too short/long"));
       return;
     }
+    strcpy(RgxSettings.ssid, XdrvMailbox.data);
   }
-  strcpy(RgxSettings.ssid, XdrvMailbox.data);
   RgxSettings.status = RGX_FORCE_CONFIGURE;
   ResponseRgxConfig();
 }
@@ -188,8 +211,8 @@ void CmndRgxPassword(void)
       ResponseCmndChar_P(PSTR("Password too short/long"));
       return;
     }
+    strcpy(RgxSettings.password, XdrvMailbox.data);
   }
-  strcpy(RgxSettings.password, XdrvMailbox.data);
   RgxSettings.status = RGX_FORCE_CONFIGURE;
   ResponseRgxConfig();
 }
@@ -226,22 +249,42 @@ void rngxSetup()
     AddLog(LOG_LEVEL_DEBUG, PSTR("RGX: Range Extender config incomplete"));
     return;
   }
+#ifdef ESP8266
   dhcps_set_dns(0, WiFi.dnsIP(0));
   dhcps_set_dns(1, WiFi.dnsIP(1));
+#endif // ESP8266
+#ifdef ESP32
+  esp_err_t err;
+  tcpip_adapter_dns_info_t ip_dns;
+
+  err = tcpip_adapter_dhcps_stop(TCPIP_ADAPTER_IF_AP);
+  err = tcpip_adapter_get_dns_info(TCPIP_ADAPTER_IF_STA, ESP_NETIF_DNS_MAIN, &ip_dns);
+  err = tcpip_adapter_set_dns_info(TCPIP_ADAPTER_IF_AP, ESP_NETIF_DNS_MAIN, &ip_dns);
+  dhcps_offer_t opt_val = OFFER_DNS; // supply a dns server via dhcps
+  tcpip_adapter_dhcps_option(ESP_NETIF_OP_SET, ESP_NETIF_DOMAIN_NAME_SERVER, &opt_val, 1);
+  err = tcpip_adapter_dhcps_start(TCPIP_ADAPTER_IF_AP);
+
+#endif // ESP32
   // WiFi.softAPConfig(EXTENDER_LOCAL_IP, EXTENDER_GATEWAY_IP, EXTENDER_SUBNET);
   WiFi.softAPConfig(RgxSettings.ipv4_address, RgxSettings.ipv4_address, RgxSettings.ipv4_subnet);
   WiFi.softAP(RgxSettings.ssid, RgxSettings.password);
   AddLog(LOG_LEVEL_INFO, PSTR("RGX: WiFi Extender AP Enabled"));
+  RgxSettings.status = RGX_SETUP_NAPT;
+}
 
+void rngxSetupNAPT()
+{
+  // A short delay is required for enabling NAPT to work on the ESP32
 #ifdef USE_RANGE_EXTENDER_NAPT
+  if (RgxSettings.use_napt && !RgxSettings.napt_enabled)
+  {
+#ifdef ESP8266
+    if (!RgxSettings.napt_inited)
+    {
 // Memory usage at 512: Heap from 30136 to 17632: 12504
 // Memory usage at 128: Heap from 30136 to 26848: 3288
 #define NAPT 128     // IP_NAPT_MAX: 512
 #define NAPT_PORT 10 //  IP_PORTMAP_MAX: 32
-  if (RgxSettings.use_napt && !RgxSettings.napt_enabled)
-  {
-    if (!RgxSettings.napt_inited)
-    {
       err_t ret = ip_napt_init(NAPT, NAPT_PORT);
       if (ret == ERR_OK)
       {
@@ -262,15 +305,27 @@ void rngxSetup()
         RgxSettings.napt_enabled = true;
       }
     }
+#endif // ESP8266
+#ifdef ESP32
+    ip_napt_enable(WiFi.softAPIP(), 1);
+    AddLog(LOG_LEVEL_INFO, PSTR("RGX: NAPT Enabled"));
+    RgxSettings.napt_enabled = true;
+#endif // ESP32
   }
   else if (!RgxSettings.use_napt && RgxSettings.napt_enabled)
   {
+#ifdef ESP8266
     err_t ret = ip_napt_enable_no(SOFTAP_IF, 0);
     if (ret == ERR_OK)
     {
       AddLog(LOG_LEVEL_INFO, "RGX: NAPT Disabled");
       RgxSettings.napt_enabled = false;
     }
+#endif // ESP8266
+#ifdef ESP32
+    ip_napt_enable(WiFi.softAPIP(), 0);
+    AddLog(LOG_LEVEL_INFO, "RGX: NAPT Disabled, reboot maybe required");
+#endif // ESP32
   }
 #endif // USE_RANGE_EXTENDER_NAPT
   RgxSettings.status = RGX_CONFIGURED;
@@ -309,6 +364,10 @@ bool Xdrv90(uint8_t function)
     else if (RgxSettings.status == RGX_FORCE_CONFIGURE && Wifi.status == WL_CONNECTED)
     {
       rngxSetup();
+    }
+    else if (RgxSettings.status == RGX_SETUP_NAPT)
+    {
+      rngxSetupNAPT();
     }
     else if (RgxSettings.status == RGX_CONFIGURED)
     {
