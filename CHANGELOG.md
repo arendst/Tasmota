@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 ## [9.5.0.4]
 ### Added
 - Support for second DNS server
+- Optional IP filter to command ``TCPStart`` (#12806)
 
 ### Changed
 - ESP8266Audio library from v1.5.0 to v1.9.2
