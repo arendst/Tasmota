@@ -245,8 +245,8 @@ typedef union {
     uint32_t telegram_send_enable : 1;     // bit 0  (v9.4.0.3) - CMND_TMSTATE 0/1 - Enable Telegram send
     uint32_t telegram_recv_enable : 1;     // bit 1  (v9.4.0.3) - CMND_TMSTATE 2/3 - Enable Telegram receive
     uint32_t telegram_echo_enable : 1;     // bit 2  (v9.4.0.3) - CMND_TMSTATE 4/5 - Enable Telegram echo
-    uint32_t spare03 : 1;                  // bit 3
-    uint32_t spare04 : 1;                  // bit 4
+    uint32_t range_extender : 1;           // bit 3  (v9.5.0.5) - CMND_RGXSTATE - Enable range extender
+    uint32_t range_extender_napt : 1;      // bit 4  (v9.5.0.5) - CMND_RGXNAPT - Enable range extender NAPT
     uint32_t spare05 : 1;                  // bit 5
     uint32_t spare06 : 1;                  // bit 6
     uint32_t spare07 : 1;                  // bit 7
@@ -599,8 +599,10 @@ typedef struct {
   uint16_t      pulse_timer[MAX_PULSETIMERS];  // 532
   uint16_t      button_debounce;           // 542
   uint32_t      ipv4_address[5];           // 544
+  uint32_t      ipv4_rgx_address;          // 558
+  uint32_t      ipv4_rgx_subnetmask;       // 55C
 
-  uint8_t       free_558[100];             // 558
+  uint8_t       free_560[92];              // 560
 
   SysMBitfield1 flag2;                     // 5BC
   unsigned long pulse_counter[MAX_COUNTERS];  // 5C0

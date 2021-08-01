@@ -368,6 +368,7 @@ enum SettingsTextIndex { SET_OTAURL,
                          SET_SWITCH_TXT25, SET_SWITCH_TXT26, SET_SWITCH_TXT27, SET_SWITCH_TXT28,  // MAX_SWITCHES_TXT
 #endif  // ESP32
                          SET_SHD_PARAM,
+                         SET_RGX_SSID, SET_RGX_PASSWORD,
                          SET_MAX };
 
 enum SpiInterfaces { SPI_NONE, SPI_MOSI, SPI_MISO, SPI_MOSI_MISO };
