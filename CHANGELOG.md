@@ -3,7 +3,11 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [9.5.0.4]
+## [9.5.0.5]
+### Added
+- Inital support for Wi-Fi extender (#12784)
+
+## [9.5.0.4] 20210801
 ### Added
 - Support for second DNS server
 - Optional IP filter to command ``TCPStart`` (#12806)
@@ -36,7 +40,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Initial support for Tasmota Mesh (TasMesh) providing node/broker communication using ESP-NOW (#11939)
 - MQTT minimum password length restriction in GUI (#12553)
-- Command ``SetOption127 1`` to force Wifi in no-sleep mode even if ``Sleep 0`` is not enabled
+- Command ``SetOption127 1`` to force Wi-Fi in no-sleep mode even if ``Sleep 0`` is not enabled
 - Support for Technoline WS2300-15 Anemometer (#12573)
 - Support for Telaire T6700 Series CO2 sensor by Alexander Savchenko (#12618)
 

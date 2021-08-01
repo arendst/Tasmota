@@ -98,10 +98,10 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 
 [Complete list](BUILDS.md) of available feature and sensors.
 
-## Changelog v9.5.0.4
+## Changelog v9.5.0.5
 ### Added
 - Release of [Tasmota WebInstaller](https://arendst.github.io/Tasmota/)
-- Command ``SetOption127 1`` to force Wifi in no-sleep mode even if ``Sleep 0`` is not enabled
+- Command ``SetOption127 1`` to force Wi-Fi in no-sleep mode even if ``Sleep 0`` is not enabled
 - Command ``SetSensor1..127 0|1`` to globally disable individual sensor driver
 - Support for second DNS server
 - Initial support for Tasmota Mesh (TasMesh) providing node/broker communication using ESP-NOW [#11939](https://github.com/arendst/Tasmota/issues/11939)
@@ -114,6 +114,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - Support for Telaire T6700 Series CO2 sensor by Alexander Savchenko [#12618](https://github.com/arendst/Tasmota/issues/12618)
 - Support for CAN bus and Freedom Won Battery Management System by Marius Bezuidenhout [#12651](https://github.com/arendst/Tasmota/issues/12651)
 - Optional IP filter to command ``TCPStart`` [#12806](https://github.com/arendst/Tasmota/issues/12806)
+- Inital support for Wi-Fi extender [#12784](https://github.com/arendst/Tasmota/issues/12784)
 
 ### Changed
 - ESP32 core library from v1.0.6 to v1.0.7.3
