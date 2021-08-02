@@ -62,7 +62,7 @@ Backlog RgxSSID rangeextender ; RgxPassword securepassword ; RgxAddress 192.168.
 #warning **** USE_WIFI_RANGE_EXTENDER is enabled ****
 
 #ifdef ESP8266
-#ifdef LWIP_FEATURES
+#if LWIP_FEATURES
 // All good
 #else
 #error LWIP_FEATURES required, add "-D PIO_FRAMEWORK_ARDUINO_LWIP2_HIGHER_BANDWIDTH" to build_flags
