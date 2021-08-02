@@ -344,6 +344,12 @@ String EthernetMacAddress(void);
 #define STARTING_OFFSET             30         // NOVA SDS parameter used in settings
 #endif
 
+#ifndef WIFI_RGX_STATE
+#define WIFI_RGX_STATE              0
+#endif
+#ifndef WIFI_RGX_NAPT
+#define WIFI_RGX_NAPT               0
+#endif
 #ifndef WIFI_RGX_SSID
 #define WIFI_RGX_SSID               ""
 #endif
