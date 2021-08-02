@@ -103,6 +103,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - Release of [Tasmota WebInstaller](https://arendst.github.io/Tasmota/)
 - Command ``SetOption127 1`` to force Wi-Fi in no-sleep mode even if ``Sleep 0`` is not enabled
 - Command ``SetSensor1..127 0|1`` to globally disable individual sensor driver
+- Neopool commands ``NPPHRes``, ``NPCLRes`` and ``NPIonRes`` [#12813](https://github.com/arendst/Tasmota/issues/12813)
 - Support for second DNS server
 - Initial support for Tasmota Mesh (TasMesh) providing node/broker communication using ESP-NOW [#11939](https://github.com/arendst/Tasmota/issues/11939)
 - Berry ESP32 partition manager [#12465](https://github.com/arendst/Tasmota/issues/12465)
@@ -151,3 +152,4 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - ESP32 do not use chip temperature sensor as global temperature if external temperature sensor is used [#12630](https://github.com/arendst/Tasmota/issues/12630)
 - Discovery fails when using ``%hostname%`` in a topic [#12710](https://github.com/arendst/Tasmota/issues/12710)
 - ESP32 buzzer in PWM mode exception (#12717)[#12717](https://github.com/arendst/Tasmota/issues/12717)
+- Neopool communication error [#12813](https://github.com/arendst/Tasmota/issues/12813)

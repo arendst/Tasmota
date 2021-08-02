@@ -6,6 +6,10 @@ All notable changes to this project will be documented in this file.
 ## [9.5.0.5]
 ### Added
 - Inital support for Wi-Fi extender (#12784)
+- Neopool commands ``NPPHRes``, ``NPCLRes`` and ``NPIonRes`` (#12813)
+
+### Fixed
+- Neopool communication error (#12813)
 
 ## [9.5.0.4] 20210801
 ### Added
