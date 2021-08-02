@@ -1,7 +1,7 @@
 /*
   AudioOutputI2S
   Base class for I2S interface port
-  
+
   Copyright (C) 2017  Earle F. Philhower, III
 
   This program is free software: you can redistribute it and/or modify
@@ -269,7 +269,11 @@ bool AudioOutputI2S::ConsumeSample(int16_t sample[2])
     {
       s32 = ((Amplify(ms[RIGHTCHANNEL])) << 16) | (Amplify(ms[LEFTCHANNEL]) & 0xffff);
     }
-    return i2s_write_bytes((i2s_port_t)portNo, (const char *)&s32, sizeof(uint32_t), 0);
+// Deprecated. Use i2s_write
+//    return i2s_write_bytes((i2s_port_t)portNo, (const char *)&s32, sizeof(uint32_t), 0);
+    size_t bytes_written;
+    i2s_write((i2s_port_t)portNo, (const char*)&s32, sizeof(uint32_t), &bytes_written, 0);
+    return bytes_written;
   #elif defined(ESP8266)
     uint32_t s32 = ((Amplify(ms[RIGHTCHANNEL])) << 16) | (Amplify(ms[LEFTCHANNEL]) & 0xffff);
     return i2s_write_sample_nb(s32); // If we can't store it, return false.  OTW true
