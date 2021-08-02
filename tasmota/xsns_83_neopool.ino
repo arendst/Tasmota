@@ -734,6 +734,12 @@ const char HTTP_SNS_NEOPOOL_STATUS_ACTIVE[]    PROGMEM = "filter:invert(1)";
  *              1 - output as hexadecimal strings (default)
  *            get output format if <format> is omitted, otherwise
  *
+ * NPPHRes {<digits>}
+ * NPCLRes {<digits>}
+ * NPIonRes {<digits>}
+ *            get/set number of digits in results for PH, CL and ION values
+ *
+ *
  * NPRead <addr> {<cnt>}
  * NPReadL <addr> {<cnt>}
  *            read 16/32-bit register (cnt = 1..30|1..15), cnt = 1 if omitted
