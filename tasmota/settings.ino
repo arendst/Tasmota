@@ -871,6 +871,8 @@ void SettingsDefaultSet2(void) {
   SettingsUpdateText(SET_HOSTNAME, WIFI_HOSTNAME);
   SettingsUpdateText(SET_RGX_SSID, PSTR(WIFI_RGX_SSID));
   SettingsUpdateText(SET_RGX_PASSWORD, PSTR(WIFI_RGX_PASSWORD));
+  Settings->sbflag1.range_extender = WIFI_RGX_STATE;
+  Settings->sbflag1.range_extender_napt = WIFI_RGX_NAPT;
 
   // Syslog
   SettingsUpdateText(SET_SYSLOG_HOST, PSTR(SYS_LOG_HOST));
@@ -1386,6 +1388,8 @@ void SettingsDelta(void) {
       ParseIPv4(&Settings->ipv4_address[4], PSTR(WIFI_DNS2));
     }
     if (Settings->version < 0x09050005) {
+      Settings->sbflag1.range_extender = WIFI_RGX_STATE;
+      Settings->sbflag1.range_extender_napt = WIFI_RGX_NAPT;
       ParseIPv4(&Settings->ipv4_rgx_address, PSTR(WIFI_RGX_IP_ADDRESS));
       ParseIPv4(&Settings->ipv4_rgx_subnetmask, PSTR(WIFI_RGX_SUBNETMASK));
       SettingsUpdateText(SET_RGX_SSID, PSTR(WIFI_RGX_SSID));
