@@ -7705,6 +7705,7 @@ uint32_t scripter_create_task(uint32_t num, uint32_t time, uint32_t core, uint32
 
 
 int32_t http_req(char *host, char *request) {
+  WiFiClient http_client;
   HTTPClient http;
   int32_t httpCode = 0;
   uint8_t mode = 0;
@@ -7721,12 +7722,12 @@ int32_t http_req(char *host, char *request) {
     // GET
     strcat(hbuff, request);
     //AddLog(LOG_LEVEL_INFO, PSTR("HTTP GET %s"),hbuff);
-    http.begin(hbuff);
+    http.begin(http_client, hbuff);
     httpCode = http.GET();
   } else {
     // POST
     //AddLog(LOG_LEVEL_INFO, PSTR("HTTP POST %s - %s"),hbuff, request);
-    http.begin(hbuff);
+    http.begin(http_client, hbuff);
     http.addHeader("Content-Type", "text/plain");
     httpCode = http.POST(request);
   }
@@ -7745,6 +7746,7 @@ int32_t http_req(char *host, char *request) {
 #endif
 
   http.end();
+  http_client.stop();
 
   return httpCode;
 }
