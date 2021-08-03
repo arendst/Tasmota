@@ -22,7 +22,11 @@
 #ifdef ESP32
   #include "driver/i2s.h"
 #elif defined(ARDUINO_ARCH_RP2040) || defined(ESP8266)
-  #include <i2s.h>
+  #ifdef ARDUINO_ESP8266_MAJOR    //this define was added in ESP8266 Arduino Core version v3.0.1
+    #include "core_esp8266_i2s.h" //for Arduino core >= 3.0.1
+  #else
+    #include "i2s.h"              //for Arduino core <= 3.0.0
+  #endif
 #endif
 #include "AudioOutputI2SNoDAC.h"
 
