@@ -8,6 +8,9 @@ All notable changes to this project will be documented in this file.
 - Inital support for Wi-Fi extender (#12784)
 - Neopool commands ``NPPHRes``, ``NPCLRes`` and ``NPIonRes`` (#12813)
 
+### Changed
+- Make Sonoff L1 MusicSync persistent (#12008)
+
 ### Fixed
 - Neopool communication error (#12813)
 
