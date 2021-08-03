@@ -37,13 +37,13 @@ extern "C"
 #include "Arduino.h"
 #include "osapi.h"
 #include "ets_sys.h"
-
 #include "i2s_reg.h"
-#ifndef ARDUINO_ESP8266_RELEASE_3_0_1
-#include "i2s.h"
-#else 
-#include "core_esp8266_i2s.h"
+#ifdef ARDUINO_ESP8266_MAJOR    //this define was added in ESP8266 Arduino Core version v3.0.1
+  #include "core_esp8266_i2s.h" //for Arduino core >= 3.0.1
+#else
+  #include "i2s.h"              //for Arduino core <= 3.0.0
 #endif
+
 #include "eagle_soc.h"
 #include "esp8266_peri.h"
 #include "slc_register.h"
