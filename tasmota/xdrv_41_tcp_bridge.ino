@@ -35,7 +35,7 @@ WiFiServer   *server_tcp = nullptr;
 WiFiClient   client_tcp[TCP_BRIDGE_CONNECTIONS];
 uint8_t      client_next = 0;
 uint8_t     *tcp_buf = nullptr;     // data transfer buffer
-IPAddress    ip_filter = 0;
+IPAddress    ip_filter;
 
 #include <TasmotaSerial.h>
 TasmotaSerial *TCPSerial = nullptr;
@@ -62,7 +62,7 @@ void TCPLoop(void)
   // check for a new client connection
   if ((server_tcp) && (server_tcp->hasClient())) {
     WiFiClient new_client = server_tcp->available();
-    
+
     AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_TCP "Got connection from %s"), new_client.remoteIP().toString().c_str());
     // Check for IP filtering if it's enabled.
     if (ip_filter) {
