@@ -104,15 +104,28 @@ bool RotaryButtonPressed(uint32_t button_index) {
 }
 
 void IRAM_ATTR RotaryIsrArgMiDesk(void *arg) {
-  const int8_t rotary_state_pos[16] = { 0, 1, -1, 2, -1, 0, -2, 1, 1, -2, 0, -1, 2, -1, 1, 0 };
-
   tEncoder* encoder = static_cast<tEncoder*>(arg);
 
   // https://github.com/PaulStoffregen/Encoder/blob/master/Encoder.h
   uint32_t state = encoder->state & 3;
   if (digitalRead(encoder->pina)) { state |= 4; }
   if (digitalRead(encoder->pinb)) { state |= 8; }
-  encoder->position += rotary_state_pos[state];
+
+//  This fails intermittendly with panic (Cache disabled but cached memory region accessed)
+//  int8_t rotary_state_pos[16] = { 0, 1, -1, 2, -1, 0, -2, 1, 1, -2, 0, -1, 2, -1, 1, 0 };
+//  encoder->position += rotary_state_pos[state];
+//  The below code does the same but is forced in IRAM as being code
+  switch (state) {
+    case 1: case 7: case 8: case 14:
+      encoder->position++; break;
+    case 2: case 4: case 11: case 13:
+      encoder->position--; break;
+    case 3: case 12:
+      encoder->position += 2; break;
+    case 6: case 9:
+      encoder->position -= 2; break;
+  }
+
   encoder->state = (state >> 2);
 }
 
