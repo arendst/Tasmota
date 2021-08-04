@@ -29,7 +29,7 @@ License along with NeoPixel.  If not, see
 <http://www.gnu.org/licenses/>.
 -------------------------------------------------------------------------*/
 
-template <typename T_LAYOUT> class NeoRingTopology : protected T_LAYOUT
+template <typename T_LAYOUT> class NeoRingTopology : public T_LAYOUT
 {
 public:
     NeoRingTopology()
@@ -85,7 +85,7 @@ public:
 
     uint8_t getCountOfRings() const 
     {
-        return _ringCount() - 1; // minus one as the Rings includes the extra value
+        return T_LAYOUT::_ringCount() - 1; // minus one as the Rings includes the extra value
     }
 
     uint16_t getPixelCountAtRing(uint8_t ring) const 
@@ -100,7 +100,7 @@ public:
 
     uint16_t getPixelCount() const
     {
-        return T_LAYOUT::Rings[_ringCount() - 1]; // the last entry is the total count
+        return T_LAYOUT::Rings[T_LAYOUT::_ringCount() - 1]; // the last entry is the total count
     }
 
 private:
@@ -109,8 +109,4 @@ private:
         return T_LAYOUT::Rings[ring] + pixel;
     }
 
-    uint8_t _ringCount() const
-    {
-        return sizeof(T_LAYOUT::Rings) / sizeof(T_LAYOUT::Rings[0]);
-    }
 };

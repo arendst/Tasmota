@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
-NeoTm1814ColorFeatures provides feature classes to describe color order and
-color depth for NeoPixelBus template class specific to the TM1814 chip
+NeoTm1914ColorFeatures provides feature classes to describe color order and
+color depth for NeoPixelBus template class specific to the TM1914 chip
 
 Written by Michael C. Miller.
 
@@ -26,51 +26,59 @@ License along with NeoPixel.  If not, see
 -------------------------------------------------------------------------*/
 #pragma once
 
-class NeoTm1814Settings : public NeoRgbwCurrentSettings
+enum NeoTm1914_Mode
 {
-public:
-    NeoTm1814Settings(uint16_t red, uint16_t green, uint16_t blue, uint16_t white)  :
-        NeoRgbwCurrentSettings(red, green, blue, white)
-    {
-    }
-
-    const static uint16_t MinCurrent = 65;
-    const static uint16_t MaxCurrent = 380;
-
-    static uint16_t LimitCurrent(uint16_t value)
-    {
-        if (value < MinCurrent)
-        {
-            value = MinCurrent;
-        }
-        else if (value > MaxCurrent)
-        {
-            value = MaxCurrent;
-        }
-        return value;
-    }
+    NeoTm1914_Mode_DinFdinAutoSwitch,  // Switches between DIN and FDIN on any signal pause > 300ms
+    NeoTm1914_Mode_DinOnly, // DIN input pin used exclusively 
+    NeoTm1914_Mode_FdinOnly  // FDIN input pin used exclusively 
 };
 
-class Neo4ElementsTm1814Settings : public Neo4Elements
+class NeoTm1914Settings 
 {
 public:
-    typedef NeoTm1814Settings SettingsObject;
-    static const size_t SettingsSize = 8;
+    NeoTm1914Settings(NeoTm1914_Mode mode = NeoTm1914_Mode_DinOnly)  :
+        Mode(mode)
+    {
+    }
+
+    NeoTm1914_Mode Mode;
+};
+
+class Neo3ElementsTm1914Settings : public Neo3Elements
+{
+public:
+    typedef NeoTm1914Settings SettingsObject;
+    static const size_t SettingsSize = 6;
 
     static void applySettings(uint8_t* pData, const SettingsObject& settings)
     {
         uint8_t* pSet = pData;
+        uint8_t mode = 0xff;
 
-        // C1
-        *pSet++ = (SettingsObject::LimitCurrent(settings.WhiteCurrent) - SettingsObject::MinCurrent) / 5;
-        *pSet++ = (SettingsObject::LimitCurrent(settings.RedTenthMilliAmpere) - SettingsObject::MinCurrent) / 5;
-        *pSet++ = (SettingsObject::LimitCurrent(settings.GreenTenthMilliAmpere) - SettingsObject::MinCurrent) / 5;
-        *pSet++ = (SettingsObject::LimitCurrent(settings.BlueTenthMilliAmpere) - SettingsObject::MinCurrent) / 5;
-        
+        // C1 - the mode
+        *pSet++ = 0xff;
+        *pSet++ = 0xff;
+
+        switch (settings.Mode)
+        {
+        case NeoTm1914_Mode_DinFdinAutoSwitch:
+            mode = 0xff;
+            break;
+
+        case NeoTm1914_Mode_FdinOnly:
+            mode = 0xfa;
+            break;
+
+        case NeoTm1914_Mode_DinOnly:
+        default:
+            mode = 0xf5;
+            break;
+        }
+        *pSet++ = mode;
+
+        // C2 - ones compliment of the above
         uint8_t* pC1 = pData;
-
-        // C2
-        for (uint8_t elem = 0; elem < 4; elem++)
+        for (uint8_t elem = 0; elem < 3; elem++)
         {
             *pSet++ = ~(*pC1++);
         }
@@ -88,14 +96,13 @@ public:
 };
 
 
-class NeoWrgbTm1814Feature : public Neo4ElementsTm1814Settings
+class NeoRgbTm1914Feature : public Neo3ElementsTm1914Settings
 {
 public:
     static void applyPixelColor(uint8_t* pPixels, uint16_t indexPixel, ColorObject color)
     {
         uint8_t* p = getPixelAddress(pPixels, indexPixel);
 
-        *p++ = color.W;
         *p++ = color.R;
         *p++ = color.G;
         *p = color.B;
@@ -106,7 +113,6 @@ public:
         ColorObject color;
         const uint8_t* p = getPixelAddress(pPixels, indexPixel);
 
-        color.W = *p++;
         color.R = *p++;
         color.G = *p++;
         color.B = *p;
@@ -119,7 +125,6 @@ public:
         ColorObject color;
         const uint8_t* p = getPixelAddress((const uint8_t*)pPixels, indexPixel);
 
-        color.W = pgm_read_byte(p++);
         color.R = pgm_read_byte(p++);
         color.G = pgm_read_byte(p++);
         color.B = pgm_read_byte(p);
@@ -129,3 +134,41 @@ public:
     
 };
 
+
+class NeoGrbTm1914Feature : public Neo3ElementsTm1914Settings
+{
+public:
+    static void applyPixelColor(uint8_t* pPixels, uint16_t indexPixel, ColorObject color)
+    {
+        uint8_t* p = getPixelAddress(pPixels, indexPixel);
+
+        *p++ = color.G;
+        *p++ = color.R;
+        *p = color.B;
+    }
+
+    static ColorObject retrievePixelColor(const uint8_t* pPixels, uint16_t indexPixel)
+    {
+        ColorObject color;
+        const uint8_t* p = getPixelAddress(pPixels, indexPixel);
+
+        color.G = *p++;
+        color.R = *p++;
+        color.B = *p;
+
+        return color;
+    }
+
+    static ColorObject retrievePixelColor_P(PGM_VOID_P pPixels, uint16_t indexPixel)
+    {
+        ColorObject color;
+        const uint8_t* p = getPixelAddress((const uint8_t*)pPixels, indexPixel);
+
+        color.G = pgm_read_byte(p++);
+        color.R = pgm_read_byte(p++);
+        color.B = pgm_read_byte(p);
+
+        return color;
+    }
+
+};
