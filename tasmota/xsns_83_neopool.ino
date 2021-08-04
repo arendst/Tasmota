@@ -549,6 +549,9 @@ bool neopool_first_read = true;
 #endif  // NEOPOOL_OPTIMIZE_READINGS
 bool neopool_error = true;
 
+#define NEOPOOL_MAX_REPEAT_ON_ERROR 10
+uint8_t neopool_repeat_on_error = 2;
+
 uint16_t neopool_light_relay;
 uint8_t neopool_light_prg_delay;
 uint8_t neopoll_cmd_delay = 0;
@@ -730,9 +733,15 @@ const char HTTP_SNS_NEOPOOL_STATUS_ACTIVE[]    PROGMEM = "filter:invert(1)";
  *
  * NPResult {<format>}
  *            get/set addr/data result format read/write commands (format = 0|1):
+ *            get output format if <format> is omitted, otherwise
  *              0 - output as decimal numbers
  *              1 - output as hexadecimal strings (default)
- *            get output format if <format> is omitted, otherwise
+ *
+ * NPOnError {<repeat>}
+ *            get/set auto-repeat Modbus read/write commands on error (repeat = 0..10):
+ *            get auto-repeat setting if <repeat> is omitted, otherwise
+ *              0     - disable auto-repeat on read/write error
+ *              1..10 - repeat commands n times until ok
  *
  * NPPHRes {<digits>}
  * NPCLRes {<digits>}
@@ -830,6 +839,7 @@ const char HTTP_SNS_NEOPOOL_STATUS_ACTIVE[]    PROGMEM = "filter:invert(1)";
 #define D_CMND_NP_SAVE "Save"
 #define D_CMND_NP_EXEC "Exec"
 #define D_CMND_NP_ESCAPE "Escape"
+#define D_CMND_NP_ONERROR "OnError"
 #define D_CMND_NP_PHRES "PHRes"
 #define D_CMND_NP_CLRES "CLRes"
 #define D_CMND_NP_IONRES "IONRes"
@@ -849,6 +859,7 @@ const char kNPCommands[] PROGMEM =  D_PRFX_NEOPOOL "|"  // Prefix
   D_CMND_NP_SAVE "|"
   D_CMND_NP_EXEC "|"
   D_CMND_NP_ESCAPE "|"
+  D_CMND_NP_ONERROR "|"
   D_CMND_NP_PHRES "|"
   D_CMND_NP_CLRES "|"
   D_CMND_NP_IONRES
@@ -869,6 +880,7 @@ void (* const NPCommand[])(void) PROGMEM = {
   &CmndNeopoolSave,
   &CmndNeopoolExec,
   &CmndNeopoolEscape,
+  &CmndNeopoolOnError,
   &CmndNeopoolPHRes,
   &CmndNeopoolCLRes,
   &CmndNeopoolIONRes
@@ -1051,7 +1063,7 @@ void NeoPool250msSetStatus(bool status)
 }
 
 
-uint8_t NeoPoolReadRegister(uint16_t addr, uint16_t *data, uint16_t cnt)
+uint8_t NeoPoolReadRegisterData(uint16_t addr, uint16_t *data, uint16_t cnt)
 {
   bool data_ready;
   uint32_t timeoutMS;
@@ -1099,7 +1111,7 @@ uint8_t NeoPoolReadRegister(uint16_t addr, uint16_t *data, uint16_t cnt)
 }
 
 
-uint8_t NeoPoolWriteRegister(uint16_t addr, uint16_t *data, uint16_t cnt)
+uint8_t NeoPoolWriteRegisterData(uint16_t addr, uint16_t *data, uint16_t cnt)
 {
   uint8_t *frame;
   uint32_t numbytes;
@@ -1173,6 +1185,30 @@ uint8_t NeoPoolWriteRegister(uint16_t addr, uint16_t *data, uint16_t cnt)
 #endif  // DEBUG_TASMOTA_SENSOR
   NeoPool250msSetStatus(true);
   return NEOPOOL_MODBUS_ERROR_TIMEOUT;
+}
+
+
+uint8_t NeoPoolReadRegister(uint16_t addr, uint16_t *data, uint16_t cnt)
+{
+  uint8_t repeat = neopool_repeat_on_error;
+  uint8_t result;
+  do {
+    result = NeoPoolReadRegisterData(addr, data, cnt);
+    SleepDelay(0);
+  } while(repeat-- > 0 || NEOPOOL_MODBUS_OK != result);
+  return result;
+}
+
+
+uint8_t NeoPoolWriteRegister(uint16_t addr, uint16_t *data, uint16_t cnt)
+{
+  uint8_t repeat = neopool_repeat_on_error;
+  uint8_t result;
+  do {
+    result = NeoPoolWriteRegisterData(addr, data, cnt);
+    SleepDelay(0);
+  } while(repeat-- > 0 || NEOPOOL_MODBUS_OK != result);
+  return result;
 }
 
 
@@ -2008,6 +2044,15 @@ void CmndNeopoolEscape(void)
   } else {
     NeopoolResponseError();
   }
+}
+
+
+void CmndNeopoolOnError(void)
+{
+  if (XdrvMailbox.data_len && XdrvMailbox.payload >= 0 && XdrvMailbox.payload <= NEOPOOL_MAX_REPEAT_ON_ERROR) {
+     neopool_repeat_on_error = XdrvMailbox.payload;
+  }
+  ResponseCmndNumber(neopool_repeat_on_error);
 }
 
 
