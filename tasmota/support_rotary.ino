@@ -47,6 +47,9 @@
 #endif
 
 const uint8_t rotary_offset = 128;
+#ifdef ESP8266
+const int8_t rotary_state_pos[16] = { 0, 1, -1, 2, -1, 0, -2, 1, 1, -2, 0, -1, 2, -1, 1, 0 };
+#endif  // ESP8266
 
 struct ROTARY {
   uint8_t no_pullup_mask_a = 0;                // Rotary A pull-up bitmask flags
@@ -111,21 +114,13 @@ void IRAM_ATTR RotaryIsrArgMiDesk(void *arg) {
   if (digitalRead(encoder->pina)) { state |= 4; }
   if (digitalRead(encoder->pinb)) { state |= 8; }
 
-//  This fails intermittendly with panic (Cache disabled but cached memory region accessed)
-//  int8_t rotary_state_pos[16] = { 0, 1, -1, 2, -1, 0, -2, 1, 1, -2, 0, -1, 2, -1, 1, 0 };
-//  encoder->position += rotary_state_pos[state];
-//  The below code does the same but is forced in IRAM as being code
-  switch (state) {
-    case 1: case 7: case 8: case 14:
-      encoder->position++; break;
-    case 2: case 4: case 11: case 13:
-      encoder->position--; break;
-    case 3: case 12:
-      encoder->position += 2; break;
-    case 6: case 9:
-      encoder->position -= 2; break;
-  }
+#ifdef ESP32
+//  This fails intermittendly with panic (Cache disabled but cached memory region accessed) if not in DRAM
+//  https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/memory-types.html
+  const static DRAM_ATTR int8_t rotary_state_pos[16] = { 0, 1, -1, 2, -1, 0, -2, 1, 1, -2, 0, -1, 2, -1, 1, 0 };
+#endif  // ESP32
 
+  encoder->position += rotary_state_pos[state];
   encoder->state = (state >> 2);
 }
 
