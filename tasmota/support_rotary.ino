@@ -150,6 +150,11 @@ void RotaryInit(void) {
     Rotary.model = 0;
   }
 #endif  // ESP8266
+#ifdef ESP32
+  if (ValidTemplate("Mi Desk Pro")) {
+    Rotary.model = 0;
+  }
+#endif  // ESP32
 
   RotaryInitMaxSteps();
 

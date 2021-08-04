@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Inital support for Wi-Fi extender (#12784)
 - Neopool commands ``NPPHRes``, ``NPCLRes`` and ``NPIonRes`` (#12813)
+- Support for (Yeelight) Mi Desk Pro using binary tasmota32solo1.bin and template named "Mi Desk Pro"
 
 ### Changed
 - Make Sonoff L1 MusicSync persistent (#12008)
