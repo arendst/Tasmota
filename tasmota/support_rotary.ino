@@ -47,7 +47,6 @@
 #endif
 
 const uint8_t rotary_offset = 128;
-const int8_t rotary_state_pos[16] = { 0, 1, -1, 2, -1, 0, -2, 1, 1, -2, 0, -1, 2, -1, 1, 0 };
 
 struct ROTARY {
   uint8_t no_pullup_mask_a = 0;                // Rotary A pull-up bitmask flags
@@ -105,6 +104,8 @@ bool RotaryButtonPressed(uint32_t button_index) {
 }
 
 void IRAM_ATTR RotaryIsrArgMiDesk(void *arg) {
+  const int8_t rotary_state_pos[16] = { 0, 1, -1, 2, -1, 0, -2, 1, 1, -2, 0, -1, 2, -1, 1, 0 };
+
   tEncoder* encoder = static_cast<tEncoder*>(arg);
 
   // https://github.com/PaulStoffregen/Encoder/blob/master/Encoder.h
