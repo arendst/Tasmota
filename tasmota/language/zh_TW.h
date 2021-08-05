@@ -240,6 +240,7 @@
 #define D_ERASED_SECTOR "抹除磁區"
 
 // xdrv_02_webserver.ino
+#define D_NO_PASSWORD_SET "Device Insecure<br>Please set a Web Admin Password"
 #define D_NOSCRIPT "為了要使用 Tasmota，請啟用 JavaScript"
 #define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "MINIMAL韌體<br>請升級"
 #define D_WEBSERVER_ACTIVE_ON "網頁伺服器已經啟動，位於:"
