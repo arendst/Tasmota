@@ -240,6 +240,7 @@
 #define D_ERASED_SECTOR "擦除扇区"
 
 // webserver.ino
+#define D_NO_PASSWORD_SET "Device Insecure<br>Please set a Web Admin Password"
 #define D_NOSCRIPT "Tasmota 要求浏览器支持 JavaScript"
 #define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "当前是精简版固件<br>请升级"
 #define D_WEBSERVER_ACTIVE_ON "Web 服务器地址:"
