@@ -240,6 +240,7 @@
 #define D_ERASED_SECTOR "Rensade sektor"
 
 // xdrv_02_webserver.ino
+#define D_NO_PASSWORD_SET "Device Insecure<br>Please set a Web Admin Password"
 #define D_NOSCRIPT "För att använda Tasmota, aktivera JavaScript"
 #define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "MINIMAL firmware<br>var god uppgradera"
 #define D_WEBSERVER_ACTIVE_ON "Webbserver aktiv på"
