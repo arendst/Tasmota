@@ -240,6 +240,7 @@
 #define D_ERASED_SECTOR "Szektor törlése"
 
 // xdrv_02_webserver.ino
+#define D_NO_PASSWORD_SET "Device Insecure<br>Please set a Web Admin Password"
 #define D_NOSCRIPT "A Tasmota használatához engedélyezd a Javascriptet!"
 #define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "MINIMÁLIS firmware<br>frissítsd!"
 #define D_WEBSERVER_ACTIVE_ON "Webszerver aktív:"
