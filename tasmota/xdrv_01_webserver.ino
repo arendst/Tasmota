@@ -234,6 +234,8 @@ const char HTTP_HEAD_STYLE3[] PROGMEM =
   "<div style='text-align:left;display:inline-block;color:#%06x;min-width:340px;'>"  // COLOR_TEXT
 #ifdef FIRMWARE_MINIMAL
   "<div style='text-align:center;color:#%06x;'><h3>" D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "</h3></div>"  // COLOR_TEXT_WARNING
+#else
+  "<div style='text-align:center;color:#%06x;display:%s;'><h3>" D_NO_PASSWORD_SET "</h3></div>"  // COLOR_TEXT_WARNING
 #endif
   "<div style='text-align:center;color:#%06x;'><noscript>" D_NOSCRIPT "<br></noscript>" // COLOR_TITLE
 /*
@@ -816,12 +818,16 @@ void WSContentSendStyle_P(const char* formatP, ...) {
     _WSContentSendBuffer(false, formatP, arg);
     va_end(arg);
   }
-  WSContentSend_P(HTTP_HEAD_STYLE3, WebColor(COL_TEXT),
-#ifdef FIRMWARE_MINIMAL
-  WebColor(COL_TEXT_WARNING),
+  WSContentSend_P(HTTP_HEAD_STYLE3,
+                    WebColor(COL_TEXT),
+                    WebColor(COL_TEXT_WARNING),
+#ifndef FIRMWARE_MINIMAL
+                    ( (WifiIsInManagerMode()) || (strlen(SettingsText(SET_WEBPWD))) ) ? "none" : "initial",
 #endif
-  WebColor(COL_TITLE),
-  (Web.initial_config) ? "" : ModuleName().c_str(), SettingsText(SET_DEVICENAME));
+                    WebColor(COL_TITLE),
+                    (Web.initial_config) ? "" : ModuleName().c_str(),
+                    SettingsText(SET_DEVICENAME)
+                  );
 
   // SetOption53 - Show hostname and IP address in GUI main menu
 #if (RESTART_AFTER_INITIAL_WIFI_CONFIG)
