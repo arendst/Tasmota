@@ -240,6 +240,7 @@
 #define D_ERASED_SECTOR "Secteur effacé"
 
 // xdrv_02_webserver.ino
+#define D_NO_PASSWORD_SET "Device Insecure<br>Please set a Web Admin Password"
 #define D_NOSCRIPT "Pour utiliser Tasmota, veuillez activer JavaScript"
 #define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "Firmware MINIMAL<br>merci de mettre à jour"
 #define D_WEBSERVER_ACTIVE_ON "Serveur web actif sur"
