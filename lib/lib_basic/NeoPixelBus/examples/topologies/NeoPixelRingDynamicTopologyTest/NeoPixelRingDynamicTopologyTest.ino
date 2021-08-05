@@ -32,12 +32,28 @@ const uint8_t PixelPin = 2;  // make sure to set this to the correct pin, ignore
 //
 class MyRingsLayout
 {
+public:
+    void Begin() {
+      // this is where you load your dynamic rings layout and init Rings and RingCount
+      // this example will just set these to static numbers to simulate a dynamic layout
+      RingCount = 6;
+      Rings = new uint16_t[RingCount];
+
+      Rings[0] = 1;
+      Rings[1] = 6;
+      Rings[2] = 12;
+      Rings[3] = 16;
+      Rings[4] = 24;
+      Rings[5] = 60; // don't forget the final count of pixels as the last item
+    }
+
 protected:
-    const uint16_t Rings[7] = {0, 1, 7, 19, 35, 59, PixelCount}; 
+    uint16_t* Rings; 
+    uint8_t RingCount;
     
     uint8_t _ringCount() const
     {
-        return sizeof(Rings) / sizeof(Rings[0]);
+        return RingCount;
     }
 };
 
@@ -63,6 +79,8 @@ void setup()
 
     Serial.println();
     Serial.println("Initializing...");
+
+    topo.Begin();
 
     strip.Begin();
     strip.Show();
