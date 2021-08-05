@@ -292,7 +292,10 @@ const char HTTP_FORM_WIFI_PART2[] PROGMEM =
   "<p><b>" D_AP2_SSID "</b> (" STA_SSID2 ")<br><input id='s2' placeholder=\"" D_AP2_SSID_HELP "\" value=\"%s\"></p>"
   "<p><label><b>" D_AP_PASSWORD "</b><input type='checkbox' onclick='sp(\"p2\")'></label><br><input id='p2' type='password' placeholder=\"" D_AP_PASSWORD_HELP "\" value=\"" D_ASTERISK_PWD "\"></p>"
   "<p><b>" D_HOSTNAME "</b> (%s)<br><input id='h' placeholder=\"%s\" value=\"%s\"></p>"
-  "<p><b>" D_CORS_DOMAIN "</b><input id='c' placeholder=\"" CORS_DOMAIN "\" value=\"%s\"></p>";
+#ifdef USE_CORS
+  "<p><b>" D_CORS_DOMAIN "</b><input id='c' placeholder=\"" CORS_DOMAIN "\" value=\"%s\"></p>"
+#endif
+  ;
 
 const char HTTP_FORM_LOG1[] PROGMEM =
   "<fieldset><legend><b>&nbsp;" D_LOGGING_PARAMETERS "&nbsp;</b>"
@@ -650,12 +653,14 @@ bool HttpCheckPriviledgedAccess(bool autorequestauth = true)
   return true;
 }
 
+#ifdef USE_CORS
 void HttpHeaderCors(void)
 {
   if (strlen(SettingsText(SET_CORS))) {
     Webserver->sendHeader(F("Access-Control-Allow-Origin"), SettingsText(SET_CORS));
   }
 }
+#endif
 
 void WSHeaderSend(void)
 {
@@ -665,7 +670,9 @@ void WSHeaderSend(void)
   Webserver->sendHeader(F("Cache-Control"), F("no-cache, no-store, must-revalidate"));
   Webserver->sendHeader(F("Pragma"), F("no-cache"));
   Webserver->sendHeader(F("Expires"), F("-1"));
+#ifdef USE_CORS
   HttpHeaderCors();
+#endif
 }
 
 /**********************************************************************************************
@@ -1993,7 +2000,11 @@ void HandleWifiConfiguration(void) {
       // As WIFI_HOSTNAME may contain %s-%04d it cannot be part of HTTP_FORM_WIFI where it will exception
       WSContentSend_P(PSTR("></p>"));
     } else {
+#ifdef USE_CORS
       WSContentSend_P(HTTP_FORM_WIFI_PART2, SettingsText(SET_STASSID2), WIFI_HOSTNAME, WIFI_HOSTNAME, SettingsText(SET_HOSTNAME), SettingsText(SET_CORS));
+#else
+      WSContentSend_P(HTTP_FORM_WIFI_PART2, SettingsText(SET_STASSID2), WIFI_HOSTNAME, WIFI_HOSTNAME, SettingsText(SET_HOSTNAME));
+#endif
     }
 
     WSContentSend_P(HTTP_FORM_END);
@@ -2026,7 +2037,9 @@ void HandleWifiConfiguration(void) {
 void WifiSaveSettings(void) {
   String cmnd = F(D_CMND_BACKLOG "0 ");
   cmnd += AddWebCommand(PSTR(D_CMND_HOSTNAME), PSTR("h"), PSTR("1"));
+#ifdef USE_CORS
   cmnd += AddWebCommand(PSTR(D_CMND_CORS), PSTR("c"), PSTR("1"));
+#endif
   cmnd += AddWebCommand(PSTR(D_CMND_SSID "1"), PSTR("s1"), PSTR("1"));
   cmnd += AddWebCommand(PSTR(D_CMND_SSID "2"), PSTR("s2"), PSTR("1"));
   cmnd += AddWebCommand(PSTR(D_CMND_PASSWORD "3"), PSTR("p1"), PSTR("\""));
@@ -2816,7 +2829,9 @@ void HandleUploadLoop(void) {
 
 void HandlePreflightRequest(void)
 {
+#ifdef USE_CORS
   HttpHeaderCors();
+#endif
   Webserver->sendHeader(F("Access-Control-Allow-Methods"), F("GET, POST"));
   Webserver->sendHeader(F("Access-Control-Allow-Headers"), F("authorization"));
   WSSend(200, CT_HTML, "");
@@ -3105,7 +3120,11 @@ const char kWebCommands[] PROGMEM = "|"  // No prefix
   D_CMND_SENDMAIL "|"
 #endif
   D_CMND_WEBSERVER "|" D_CMND_WEBPASSWORD "|" D_CMND_WEBLOG "|" D_CMND_WEBREFRESH "|" D_CMND_WEBSEND "|" D_CMND_WEBCOLOR "|"
-  D_CMND_WEBSENSOR "|" D_CMND_WEBBUTTON "|" D_CMND_CORS;
+  D_CMND_WEBSENSOR "|" D_CMND_WEBBUTTON
+#ifdef USE_CORS
+  "|" D_CMND_CORS
+#endif
+  ;
 
 void (* const WebCommand[])(void) PROGMEM = {
 #ifdef USE_EMULATION
@@ -3115,7 +3134,11 @@ void (* const WebCommand[])(void) PROGMEM = {
   &CmndSendmail,
 #endif
   &CmndWebServer, &CmndWebPassword, &CmndWeblog, &CmndWebRefresh, &CmndWebSend, &CmndWebColor,
-  &CmndWebSensor, &CmndWebButton, &CmndCors };
+  &CmndWebSensor, &CmndWebButton
+#ifdef USE_CORS
+  , &CmndCors
+#endif
+  };
 
 /*********************************************************************************************\
  * Commands
@@ -3260,6 +3283,7 @@ void CmndWebButton(void)
   }
 }
 
+#ifdef USE_CORS
 void CmndCors(void)
 {
   if (XdrvMailbox.data_len > 0) {
@@ -3267,6 +3291,7 @@ void CmndCors(void)
   }
   ResponseCmndChar(SettingsText(SET_CORS));
 }
+#endif
 
 /*********************************************************************************************\
  * Interface
