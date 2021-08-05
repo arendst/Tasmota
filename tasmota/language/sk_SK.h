@@ -240,6 +240,7 @@
 #define D_ERASED_SECTOR "Zmazaný sektor"
 
 // xdrv_02_webserver.ino
+#define D_NO_PASSWORD_SET "Device Insecure<br>Please set a Web Admin Password"
 #define D_NOSCRIPT "Pre používanie prostredia Tasmota povoľte JavaScript"
 #define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "Firmware MINIMÁLNY<br>prosím aktualizujte"
 #define D_WEBSERVER_ACTIVE_ON "Aktívny Web server"
