@@ -240,6 +240,7 @@
 #define D_ERASED_SECTOR "삭제된 섹터"
 
 // xdrv_02_webserver.ino
+#define D_NO_PASSWORD_SET "Device Insecure<br>Please set a Web Admin Password"
 #define D_NOSCRIPT "Tasmota를 사용하려면 JavaScript를 활성화 하십시오."
 #define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "MINIMAL firmware<br>업그레이드가 필요합니다"
 #define D_WEBSERVER_ACTIVE_ON "Web 서버 작동 중"
