@@ -240,6 +240,7 @@
 #define D_ERASED_SECTOR "Khu vực bị xóa"
 
 // xdrv_02_webserver.ino
+#define D_NO_PASSWORD_SET "Device Insecure<br>Please set a Web Admin Password"
 #define D_NOSCRIPT "Để sử dụng Tasmota, vui lòng bật JavaScript"
 #define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "Đang sử dụng bản MINIMAL <br>vui lòng nâng cấp"
 #define D_WEBSERVER_ACTIVE_ON "Máy chủ Web đã bật"
