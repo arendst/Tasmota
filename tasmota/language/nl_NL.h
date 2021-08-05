@@ -240,6 +240,7 @@
 #define D_ERASED_SECTOR "Wis sector"
 
 // xdrv_02_webserver.ino
+#define D_NO_PASSWORD_SET "Device Insecure<br>Please set a Web Admin Password"
 #define D_NOSCRIPT "Zet JavaScript aan voor Tasmota"
 #define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "MINIMAL firmware<br>opwaarderen"
 #define D_WEBSERVER_ACTIVE_ON "Webserver actief op"
