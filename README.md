@@ -93,7 +93,7 @@ If you're looking for support on **Tasmota** there are some options available:
 
 ### Documentation
 
-* [Documentation Site](https://tasmota.github.io/docs): For information on how to flash Tasmota, configure, use and expand it
+* [Documentation Site](https://tasmota.github.io/docs): For information on how to flash Tasmota, configure, use and expand it 
 * [FAQ and Troubleshooting](https://tasmota.github.io/docs/FAQ/): For information on common problems and solutions.
 * [Commands Information](https://tasmota.github.io/docs/Commands): For information on all the commands supported by Tasmota.
 
