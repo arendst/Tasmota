@@ -24,7 +24,6 @@ jobs:
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         branch: 'master'
-        force: true
 
 
   tasmota:
@@ -1412,8 +1411,6 @@ jobs:
       run: |
         mkdir -p ./firmware/tasmota/languages
         mkdir -p ./firmware/tasmota32/languages
-        mkdir -p ./firmware/tasmota32/ESP32_needed_files/
-        mkdir -p ./firmware/tasmota32/Odroid_go_and_core2_needed_files/
         mkdir -p ./firmware/map
         [ ! -f ./mv_firmware/map/* ] || mv ./mv_firmware/map/* ./firmware/map/
         [ ! -f ./mv_firmware/firmware/tasmota.* ] || mv ./mv_firmware/firmware/tasmota.* ./firmware/tasmota/
@@ -1436,20 +1433,15 @@ jobs:
         [ ! -f ./mv_firmware/firmware/tasmota32-bluetooth.* ] || mv ./mv_firmware/firmware/tasmota32-bluetooth.* ./firmware/tasmota32/
         [ ! -f ./mv_firmware/firmware/tasmota32* ] || mv ./mv_firmware/firmware/tasmota32* ./firmware/tasmota32/languages/
         [ ! -f ./mv_firmware/firmware/* ] || mv ./mv_firmware/firmware/* ./firmware/tasmota/languages/
-        [ ! -f ./tools/Esptool/ESP32/*.* ] || mv ./tools/Esptool/ESP32/*.* ./firmware/tasmota32/ESP32_needed_files/
-        [ ! -f ./tools/Esptool/Odroid_go_and_core2/*.* ] || mv ./tools/Esptool/Odroid_go_and_core2/*.* ./firmware/tasmota32/Odroid_go_and_core2_needed_files/
-        [ ! -f ./FIRMWARE.md ] || mv -f ./RELEASENOTES.md ./README.md
-    - name: Commit files  # transfer the new binaries back into the repository
-      run: |
-        git config user.name github-actions
-        git config user.email github-actions@github.com
-        git rm -r --cached .
-        git add ./README.md
-        git add -f ./firmware/*.*
-        git commit -m "Tasmota ESP Binaries http://tasmota.com"
-    - name: Push changes  # push the firmware files to branch firmware
-      uses: ad-m/github-push-action@master
+    - name: Display files
+      run: ls -R ./*
+    - name: Push Firmware files to https://github.com/arendst/Tasmota-firmware
+      uses: dmnemec/copy_file_to_another_repo_action@main
+      env:
+        API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
       with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        branch: 'release-firmware'
-        force: true
+        source_file: 'firmware'
+        destination_repo: 'arendst/Tasmota-firmware'
+        destination_folder: 'release-firmware'
+        user_email: 'github-actions@github.com'
+        user_name: 'github-actions'
