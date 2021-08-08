@@ -133,6 +133,7 @@ void (*const DrvRgxCommand[])(void) PROGMEM = {
 typedef struct
 {
   uint8_t status = RGX_NOT_CONFIGURED;
+  uint16_t lastlinkcount = 0;
 #ifdef USE_WIFI_RANGE_EXTENDER_NAPT
   bool napt_enabled = false;
 #endif // USE_WIFI_RANGE_EXTENDER_NAPT
@@ -280,6 +281,7 @@ void rngxSetup()
   WiFi.softAP(SettingsText(SET_RGX_SSID), SettingsText(SET_RGX_PASSWORD));
   AddLog(LOG_LEVEL_INFO, PSTR("RGX: WiFi Extender AP Enabled with SSID: %s"), WiFi.softAPSSID().c_str());
   RgxSettings.status = RGX_SETUP_NAPT;
+  RgxSettings.lastlinkcount = Wifi.link_count;
 }
 
 void rngxSetupNAPT(void)
@@ -357,7 +359,7 @@ bool Xdrv58(uint8_t function)
     case FUNC_PRE_INIT:
       break;
     case FUNC_EVERY_SECOND:
-      // AddLog(LOG_LEVEL_INFO, PSTR("RGX: XXX DEBUG INFO: Wifi.status: %d, WiFi.getMode(): %d, RgxSettings.status: %d"), Wifi.status, WiFi.getMode(), RgxSettings.status);
+      // AddLog(LOG_LEVEL_INFO, PSTR("RGX: XXX DEBUG: Wifi.status: %d, WiFi.getMode(): %d, RgxSettings.status: %d, link_count: %d"), Wifi.status, WiFi.getMode(), RgxSettings.status, Wifi.link_count);
       if (RgxSettings.status == RGX_NOT_CONFIGURED && Wifi.status == WL_CONNECTED)
       {
         // Setup only if WiFi in STA only mode
@@ -386,6 +388,12 @@ bool Xdrv58(uint8_t function)
         {
           // No longer connected, need to setup again
           AddLog(LOG_LEVEL_INFO, PSTR("RGX: No longer connected, prepare to reconnect WiFi AP..."));
+          RgxSettings.status = RGX_NOT_CONFIGURED;
+        }
+        else if (RgxSettings.lastlinkcount != Wifi.link_count && WiFi.getMode() != WIFI_AP_STA)
+        {
+          // Assume WiFi has reconnected and been reconfigured, prepare to reconnect
+          AddLog(LOG_LEVEL_INFO, PSTR("RGX: Link count now: %d, WiFi.getMode(): %d, unconfigure..."), Wifi.link_count, WiFi.getMode());
           RgxSettings.status = RGX_NOT_CONFIGURED;
         }
       }
