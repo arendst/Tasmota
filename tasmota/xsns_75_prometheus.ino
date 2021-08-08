@@ -78,16 +78,15 @@ String FormatMetricName(const char *metric) {
 }
 
 const uint8_t
-  kPromMetricNoPrefix = _BV(1),
-  kPromMetricGauge = _BV(2),
-  kPromMetricCounter = _BV(3),
+  kPromMetricGauge = _BV(0),
+  kPromMetricCounter = _BV(1),
   kPromMetricTypeMask = kPromMetricGauge | kPromMetricCounter;
 
 // Format and send a Prometheus metric to the client. Use flags to configure
 // the type. Labels must be supplied in tuples of two character array pointers
 // and terminated by nullptr.
 void WritePromMetric(const char *name, uint8_t flags, const char *value, va_list labels) {
-  PGM_P const prefix = (flags & kPromMetricNoPrefix) ? PSTR("") : PSTR("tasmota_");
+  PGM_P const prefix = PSTR("tasmota_");
   PGM_P tmp;
   String lval;
 
@@ -258,29 +257,27 @@ void HandleMetrics(void) {
 #endif
 
 #ifdef USE_ENERGY_SENSOR
-  // TODO: Don't disable prefix on energy metrics
   WritePromMetricDec(PSTR("energy_voltage_volts"),
-    kPromMetricGauge | kPromMetricNoPrefix,
+    kPromMetricGauge,
     Energy.voltage[0], Settings->flag2.voltage_resolution, nullptr);
   WritePromMetricDec(PSTR("energy_current_amperes"),
-    kPromMetricGauge | kPromMetricNoPrefix,
+    kPromMetricGauge,
     Energy.current[0], Settings->flag2.current_resolution, nullptr);
   WritePromMetricDec(PSTR("energy_power_active_watts"),
-    kPromMetricGauge | kPromMetricNoPrefix,
+    kPromMetricGauge,
     Energy.active_power[0], Settings->flag2.wattage_resolution, nullptr);
   WritePromMetricDec(PSTR("energy_power_kilowatts_daily"),
-    kPromMetricCounter | kPromMetricNoPrefix,
+    kPromMetricCounter,
     Energy.daily, Settings->flag2.energy_resolution, nullptr);
   WritePromMetricDec(PSTR("energy_power_kilowatts_total"),
-    kPromMetricCounter | kPromMetricNoPrefix,
+    kPromMetricCounter,
     Energy.total, Settings->flag2.energy_resolution, nullptr);
 #endif
 
   for (uint32_t device = 0; device < TasmotaGlobal.devices_present; device++) {
     power_t mask = 1 << device;
-    // TODO: Don't disable prefix
     snprintf_P(namebuf, sizeof(namebuf), PSTR("relay%d_state"), device + 1);
-    WritePromMetricInt32(namebuf, kPromMetricGauge | kPromMetricNoPrefix,
+    WritePromMetricInt32(namebuf, kPromMetricGauge,
       (TasmotaGlobal.power & mask), nullptr);
   }
 
