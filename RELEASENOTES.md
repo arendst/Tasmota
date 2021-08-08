@@ -60,7 +60,7 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 Above binaries are also available as gzipped version allowing faster uploads.
 
 Latest released binaries can be downloaded from
-- https://github.com/arendst/Tasmota-firmware/tree/release-firmware
+- https://github.com/arendst/Tasmota-firmware/tree/main/release-firmware
 - http://ota.tasmota.com/tasmota/release
 
 Historical binaries can be downloaded from
@@ -84,7 +84,7 @@ The following binary downloads have been compiled with ESP32/Arduino library cor
 - **tasmota32-core2.bin** = The Core2 version is specifically tailored to M5Stack Core2 hardware for 8M+ flash.
 
 Latest released binaries can be downloaded from
-- https://github.com/arendst/Tasmota-firmware/tree/release-firmware
+- https://github.com/arendst/Tasmota-firmware/tree/main/release-firmware
 - http://ota.tasmota.com/tasmota32/release
 
 Historical binaries can be downloaded from
