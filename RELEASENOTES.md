@@ -130,6 +130,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - Disable PSRAM on unsupported hardware
 - ESP32 remove GPIO initialization to INPUT from not used GPIOs to allow JTAG support
 - Relax NTP poll if no ntpserver can be resolved by DNS
+- Move firmware binaries to https://github.com/arendst/Tasmota-firmware/tree/main/release-firmware
 - Make Sonoff L1 MusicSync persistent [#12008](https://github.com/arendst/Tasmota/issues/12008)
 - Simplified configuration for ir-full and removal of tasmota-ircustom [#12428](https://github.com/arendst/Tasmota/issues/12428)
 - Refactor platformio [#12442](https://github.com/arendst/Tasmota/issues/12442)
