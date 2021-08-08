@@ -6,7 +6,7 @@ OUTPUT_DIR = "build_output{}".format(os.path.sep)
 
 def bin_map_copy(source, target, env):
     variant = str(target[0]).split(os.path.sep)[2]
-    
+
     # check if output directories exist and create if necessary
     if not os.path.isdir(OUTPUT_DIR):
         os.mkdir(OUTPUT_DIR)
@@ -27,8 +27,13 @@ def bin_map_copy(source, target, env):
     # copy firmware.bin to firmware/<variant>.bin
     shutil.copy(str(target[0]), bin_file)
 
-    # copy firmware.map to map/<variant>.map
+    # move firmware.map to map/<variant>.map
     if os.path.isfile("firmware.map"):
         shutil.move("firmware.map", map_file)
+
+    map_new_loc = str(target[0]).split(os.path.sep)[0] + os.path.sep + str(target[0]).split(os.path.sep)[1] + os.path.sep + str(target[0]).split(os.path.sep)[2] + os.path.sep + "Tasmota.map"
+    # move Tasmota.map to map/<variant>.map
+    if os.path.isfile(map_new_loc):
+        shutil.move(map_new_loc, map_file)
 
 env.AddPostAction("$BUILD_DIR/${PROGNAME}.bin", [bin_map_copy])
