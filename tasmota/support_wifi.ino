@@ -732,6 +732,7 @@ void WifiPollNtp() {
 
     TasmotaGlobal.ntp_force_sync = false;
 
+    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("NTP: Synch time..."));
     ntp_run_time = millis();
     uint32_t ntp_time = WifiGetNtp();
     ntp_run_time = (millis() - ntp_run_time) / 1000;
@@ -742,6 +743,7 @@ void WifiPollNtp() {
       Rtc.utc_time = ntp_time;
       ntp_sync_minute = 60;             // Sync so block further requests
       RtcSync();
+      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("NTP: Synched"));
     } else {
       ntp_sync_minute++;                // Try again in next minute
     }
@@ -778,7 +780,7 @@ uint32_t WifiGetNtp(void) {
     ntp_server_id++;
   }
   if (!resolved_ip) {
-//    AddLog(LOG_LEVEL_DEBUG, PSTR("NTP: No server found"));
+    AddLog(LOG_LEVEL_DEBUG, PSTR("NTP: Unable to resolve IP address"));
     return 0;
   }
 
