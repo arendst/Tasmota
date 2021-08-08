@@ -858,6 +858,8 @@ void MqttDisconnected(int state) {
   }
 
   MqttClient.disconnect();
+  // Check if this solves intermittent MQTT re-connection failures when broker is restarted
+  EspClient.stop();
 
   AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT D_CONNECT_FAILED_TO " %s:%d, rc %d. " D_RETRY_IN " %d " D_UNIT_SECOND), SettingsText(SET_MQTT_HOST), Settings->mqtt_port, state, Mqtt.retry_counter);
   TasmotaGlobal.rules_flag.mqtt_disconnected = 1;

@@ -715,6 +715,7 @@ void wifiKeepAlive(void) {
 
 void WifiPollNtp() {
   static uint8_t ntp_sync_minute = 0;
+  static uint32_t ntp_run_time = 0;
 
   if (TasmotaGlobal.global_state.network_down || Rtc.user_time_entry) { return; }
 
@@ -723,13 +724,20 @@ void WifiPollNtp() {
     ntp_sync_minute = 1;                 // If sync prepare for a new cycle
   }
   // First try ASAP to sync. If fails try once every 60 seconds based on chip id
-  uint8_t offset = (TasmotaGlobal.uptime < 30) ? RtcTime.second : (((ESP_getChipId() & 0xF) * 3) + 3) ;
+  uint8_t offset = (TasmotaGlobal.uptime < 30) ? RtcTime.second + ntp_run_time : (((ESP_getChipId() & 0xF) * 3) + 3) ;
+
   if ( (((offset == RtcTime.second) && ( (RtcTime.year < 2016) ||                  // Never synced
                                          (ntp_sync_minute == uptime_minute))) ||   // Re-sync every hour
        TasmotaGlobal.ntp_force_sync ) ) {                                          // Forced sync
 
     TasmotaGlobal.ntp_force_sync = false;
+
+    ntp_run_time = millis();
     uint32_t ntp_time = WifiGetNtp();
+    ntp_run_time = (millis() - ntp_run_time) / 1000;
+//    AddLog(LOG_LEVEL_DEBUG, PSTR("NTP: Runtime %d"), ntp_run_time);
+    if (ntp_run_time < 5) { ntp_run_time = 0; }  // DNS timeout is around 10s
+
     if (ntp_time > START_VALID_TIME) {
       Rtc.utc_time = ntp_time;
       ntp_sync_minute = 60;             // Sync so block further requests
@@ -758,10 +766,14 @@ uint32_t WifiGetNtp(void) {
       ntp_server = fallback_ntp_server;
     }
     if (strlen(ntp_server)) {
-      resolved_ip = (WiFi.hostByName(ntp_server, time_server_ip) == 1);
-      if (255 == time_server_ip[0]) { resolved_ip = false; }
+      resolved_ip = (WiFi.hostByName(ntp_server, time_server_ip) == 1);  // DNS timeout set to (ESP8266) 10s / (ESP32) 14s
+      if ((255 == time_server_ip[0]) ||                                                                // No valid name resolved (255.255.255.255)
+          ((255 == time_server_ip[1]) && (255 == time_server_ip[2]) && (255 == time_server_ip[3]))) {  // No valid name resolved (x.255.255.255)
+        resolved_ip = false;
+      }
       yield();
       if (resolved_ip) { break; }
+//      AddLog(LOG_LEVEL_DEBUG, PSTR("NTP: Unable to resolve '%s'"), ntp_server);
     }
     ntp_server_id++;
   }
@@ -770,7 +782,7 @@ uint32_t WifiGetNtp(void) {
     return 0;
   }
 
-//  AddLog(LOG_LEVEL_DEBUG, PSTR("NTP: Name %s, IP %_I"), ntp_server, (uint32_t)time_server_ip);
+//  AddLog(LOG_LEVEL_DEBUG, PSTR("NTP: Host %s IP %_I"), ntp_server, (uint32_t)time_server_ip);
 
   WiFiUDP udp;
 
