@@ -40,7 +40,7 @@ For initial configuration this release supports Webserver based **WifiManager** 
 
 ## Initial installation
 
-Easy initial installation of Tasmota can be performed using the [Tasmota WebInstaller](https://arendst.github.io/Tasmota/).
+Easy initial installation of Tasmota can be performed using the [Tasmota WebInstaller](https://arendst.github.io/Tasmota-firmware/).
 
 ## Provided Binary Downloads
 
@@ -100,7 +100,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 
 ## Changelog v9.5.0.5
 ### Added
-- Release of [Tasmota WebInstaller](https://arendst.github.io/Tasmota/)
+- Release of [Tasmota WebInstaller](https://arendst.github.io/Tasmota-firmware/)
 - Command ``SetOption127 1`` to force Wi-Fi in no-sleep mode even if ``Sleep 0`` is not enabled
 - Command ``SetSensor1..127 0|1`` to globally disable individual sensor driver
 - Neopool commands ``NPPHRes``, ``NPCLRes`` and ``NPIonRes`` [#12813](https://github.com/arendst/Tasmota/issues/12813)
