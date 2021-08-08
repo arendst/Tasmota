@@ -1441,6 +1441,6 @@ jobs:
         API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
       with:
         source_file: 'release-firmware'
-        destination_repo: 'arendst/Tasmota-firmware'
+        destination_repo: 'Jason2866/Tasmota-firmware'
         user_email: 'github-actions@github.com'
         user_name: 'github-actions'
