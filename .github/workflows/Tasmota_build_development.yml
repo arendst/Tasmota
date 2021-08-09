@@ -6,6 +6,7 @@ on:
     branches: development
     paths-ignore:
     - '.github/**' # Ignore changes towards the .github directory
+    - '**.md' # Do no build if *.md files changes
 
 jobs:
 
