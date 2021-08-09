@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file.
 - Make Sonoff L1 MusicSync persistent (#12008)
 - Relax NTP poll if no ntpserver can be resolved by DNS
 - Move firmware binaries to https://github.com/arendst/Tasmota-firmware/tree/main/release-firmware
+- Default disable CORS for enhanced security and provide user compile option ``#define USE_CORS`` (#12827)
 
 ### Fixed
 - Neopool communication error (#12813)
