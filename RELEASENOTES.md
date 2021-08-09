@@ -119,8 +119,10 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - Inital support for Wi-Fi extender [#12784](https://github.com/arendst/Tasmota/issues/12784)
 
 ### Changed
+- Move firmware binaries to https://github.com/arendst/Tasmota-firmware/tree/main/release-firmware
 - ESP32 core library from v1.0.6 to v1.0.7.3
 - IRremoteESP8266 library from v2.7.18 to v2.7.19
+- NeoPixelBus library from v2.6.3 to v2.6.7
 - Message ``Upload buffer miscompare`` into ``Not enough space``
 - ESP32 Ethernet Phy Type information to IDF v3+
 - Speed up initial GUI console refresh
@@ -130,7 +132,6 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - Disable PSRAM on unsupported hardware
 - ESP32 remove GPIO initialization to INPUT from not used GPIOs to allow JTAG support
 - Relax NTP poll if no ntpserver can be resolved by DNS
-- Move firmware binaries to https://github.com/arendst/Tasmota-firmware/tree/main/release-firmware
 - Make Sonoff L1 MusicSync persistent [#12008](https://github.com/arendst/Tasmota/issues/12008)
 - Simplified configuration for ir-full and removal of tasmota-ircustom [#12428](https://github.com/arendst/Tasmota/issues/12428)
 - Refactor platformio [#12442](https://github.com/arendst/Tasmota/issues/12442)
@@ -138,6 +139,9 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - Enable Ping and rule features for any device compiled with more than 1M flash size [#12539](https://github.com/arendst/Tasmota/issues/12539)
 - Replace spaces by hyphens in final hostname [#12710](https://github.com/arendst/Tasmota/issues/12710)
 - Default disable CORS for enhanced security and provide user compile option ``#define USE_CORS`` [#12827](https://github.com/arendst/Tasmota/issues/12827)
+- Prometheus: All metrics are prefixed with ``tasmota_`` [#12842](https://github.com/arendst/Tasmota/issues/12842)
+    Memory metrics have been cleaned up to work consistently between ESP8266 and ESP32
+    The device name is reported as an info metric
 
 ### Fixed
 - ESP32 core v2.0.0 setting hostname
