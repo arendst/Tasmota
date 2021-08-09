@@ -14,18 +14,20 @@ def map_gzip(source, target, env):
 
     # create string with location and file names based on variant
     bin_file = "{}map{}{}.map".format(OUTPUT_DIR, os.path.sep, variant)
-    gzip_file = "{}map{}{}.map.gz".format(OUTPUT_DIR, os.path.sep, variant)
 
-    # check if new target map files exist and remove if necessary
-    if os.path.isfile(gzip_file): os.remove(gzip_file)
+    if os.path.isfile(bin_file):
+        gzip_file = "{}map{}{}.map.gz".format(OUTPUT_DIR, os.path.sep, variant)
 
-    # write gzip map file
-    with open(bin_file,"rb") as fp:
-        with gzip.open(gzip_file, "wb", compresslevel = 9) as f:
-            shutil.copyfileobj(fp, f)
+        # check if new target map files exist and remove if necessary
+        if os.path.isfile(gzip_file): os.remove(gzip_file)
 
-    # remove map file
-    if os.path.isfile(bin_file): os.remove(bin_file)
+        # write gzip map file
+        with open(bin_file,"rb") as fp:
+            with gzip.open(gzip_file, "wb", compresslevel = 9) as f:
+                shutil.copyfileobj(fp, f)
+
+        # remove map file
+        if os.path.isfile(bin_file): os.remove(bin_file)
 
 env.AddPostAction("$BUILD_DIR/${PROGNAME}.bin", [map_gzip])
 
