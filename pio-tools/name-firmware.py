@@ -1,4 +1,5 @@
 Import('env')
+Import('projenv')
 import os
 import shutil
 
@@ -31,7 +32,21 @@ def bin_map_copy(source, target, env):
     if os.path.isfile("firmware.map"):
         shutil.move("firmware.map", map_file)
 
-    map_new_loc = str(target[0]).split(os.path.sep)[0] + os.path.sep + str(target[0]).split(os.path.sep)[1] + os.path.sep + str(target[0]).split(os.path.sep)[2] + os.path.sep + "Tasmota.map"
+    #map_new_loc = str(target[0]).split(os.path.sep)[0] + os.path.sep + str(target[0]).split(os.path.sep)[1] + os.path.sep + str(target[0]).split(os.path.sep)[2] + os.path.sep + "Tasmota.map"
+    # PIO env variables see: https://github.com/platformio/platformio-core/blob/develop/platformio/builder/main.py#L108:L128
+    proj_build_dir = env["PROJECT_BUILD_DIR"]
+    #build_dir = env["BUILD_DIR"]
+    pio_env = env["PIOENV"]
+    src_dir = env["PROJECT_SRC_DIR"]
+    map_name = str(src_dir).split(os.path.sep)[2]
+    map_new_loc = proj_build_dir + os.path.sep + pio_env + os.path.sep + map_name + ".map"
+    #print("proj_build_dir: {}".format(proj_build_dir))
+    #print("pioenv: {}".format(pio_env))
+    #print("src_dir: {}".format(src_dir))
+    #print("build_dir: {}".format(build_dir))
+    #print("map_name: {}".format(map_name))
+    #print("map_new_loc: {}".format(map_new_loc))
+
     # move Tasmota.map to map/<variant>.map
     if os.path.isfile(map_new_loc):
         shutil.move(map_new_loc, map_file)
