@@ -137,6 +137,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - Allow buttons to work in AP normal mode [#12518](https://github.com/arendst/Tasmota/issues/12518)
 - Enable Ping and rule features for any device compiled with more than 1M flash size [#12539](https://github.com/arendst/Tasmota/issues/12539)
 - Replace spaces by hyphens in final hostname [#12710](https://github.com/arendst/Tasmota/issues/12710)
+- Default disable CORS for enhanced security and provide user compile option ``#define USE_CORS`` [#12827](https://github.com/arendst/Tasmota/issues/12827)
 
 ### Fixed
 - ESP32 core v2.0.0 setting hostname

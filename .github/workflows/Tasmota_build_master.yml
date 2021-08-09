@@ -7,27 +7,8 @@ on:
     - '.github/**' # Ignore changes towards the .github directory
 
 jobs:
-  tasmota_pull:
-    runs-on: ubuntu-latest
-    continue-on-error: true
-    steps:
-    - uses: actions/checkout@v2
-    - name: Use Tasmota master
-      run: |
-        git config --local user.name "Platformio BUILD"
-        git config user.email github-actions@github.com
-        git switch -c work
-        git remote add -f Tasmota "https://github.com/arendst/Tasmota.git" --track master
-        git merge Tasmota/master --allow-unrelated-histories
-    - name: Push Tasmota   # Push updates of latest Tasmota master to repo
-      uses: ad-m/github-push-action@master
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        branch: 'master'
-
 
   tasmota:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -47,7 +28,6 @@ jobs:
 
 
   tasmota-minimal:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -67,7 +47,6 @@ jobs:
 
 
   tasmota-lite:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -87,7 +66,6 @@ jobs:
 
 
   tasmota-knx:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -107,7 +85,6 @@ jobs:
 
 
   tasmota-sensors:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -127,7 +104,6 @@ jobs:
 
 
   tasmota-display:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -147,7 +123,6 @@ jobs:
 
 
   tasmota-ir:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -167,7 +142,6 @@ jobs:
 
 
   tasmota-zbbridge:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -187,7 +161,6 @@ jobs:
 
 
   tasmota-zigbee:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -207,7 +180,6 @@ jobs:
 
 
   tasmota-AF:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -227,7 +199,6 @@ jobs:
 
 
   tasmota-BG:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -247,7 +218,6 @@ jobs:
 
 
   tasmota-BR:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -267,7 +237,6 @@ jobs:
 
 
   tasmota-CN:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -287,7 +256,6 @@ jobs:
 
 
   tasmota-CZ:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -307,7 +275,6 @@ jobs:
 
 
   tasmota-DE:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -327,7 +294,6 @@ jobs:
 
 
   tasmota-ES:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -347,7 +313,6 @@ jobs:
 
 
   tasmota-FR:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -367,7 +332,6 @@ jobs:
 
 
   tasmota-FY:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -387,7 +351,6 @@ jobs:
 
 
   tasmota-GR:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -407,7 +370,6 @@ jobs:
 
 
   tasmota-HE:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -427,7 +389,6 @@ jobs:
 
 
   tasmota-HU:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -447,7 +408,6 @@ jobs:
 
 
   tasmota-IT:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -467,7 +427,6 @@ jobs:
 
 
   tasmota-KO:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -487,7 +446,6 @@ jobs:
 
 
   tasmota-NL:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -507,7 +465,6 @@ jobs:
 
 
   tasmota-PL:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -527,7 +484,6 @@ jobs:
 
 
   tasmota-PT:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -547,7 +503,6 @@ jobs:
 
 
   tasmota-RO:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -567,7 +522,6 @@ jobs:
 
 
   tasmota-RU:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -587,7 +541,6 @@ jobs:
 
 
   tasmota-SE:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -607,7 +560,6 @@ jobs:
 
 
   tasmota-SK:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -627,7 +579,6 @@ jobs:
 
 
   tasmota-TR:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -647,7 +598,6 @@ jobs:
 
 
   tasmota-TW:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -667,7 +617,6 @@ jobs:
 
 
   tasmota-UK:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -687,7 +636,6 @@ jobs:
 
 
   tasmota-VN:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -707,7 +655,6 @@ jobs:
 
 
   tasmota32:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -727,7 +674,6 @@ jobs:
 
 
   tasmota32solo1:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -747,7 +693,6 @@ jobs:
 
 
   tasmota32-webcam:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -767,7 +712,6 @@ jobs:
 
 
   tasmota32-odroidgo:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -787,7 +731,6 @@ jobs:
 
 
   tasmota32-core2:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -807,7 +750,6 @@ jobs:
 
 
   tasmota32-bluetooth:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -827,7 +769,6 @@ jobs:
 
 
   tasmota32-display:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -847,7 +788,6 @@ jobs:
 
 
   tasmota32-lvgl:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -867,7 +807,6 @@ jobs:
 
 
   tasmota32-ir:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -887,7 +826,6 @@ jobs:
 
 
   tasmota32-AF:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -907,7 +845,6 @@ jobs:
 
 
   tasmota32-BG:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -927,7 +864,6 @@ jobs:
 
 
   tasmota32-BR:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -947,7 +883,6 @@ jobs:
 
 
   tasmota32-CN:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -967,7 +902,6 @@ jobs:
 
 
   tasmota32-CZ:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -987,7 +921,6 @@ jobs:
 
 
   tasmota32-DE:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -1007,7 +940,6 @@ jobs:
 
 
   tasmota32-ES:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -1027,7 +959,6 @@ jobs:
 
 
   tasmota32-FR:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -1047,7 +978,6 @@ jobs:
 
 
   tasmota32-FY:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -1067,7 +997,6 @@ jobs:
 
 
   tasmota32-GR:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -1087,7 +1016,6 @@ jobs:
 
 
   tasmota32-HE:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -1107,7 +1035,6 @@ jobs:
 
 
   tasmota32-HU:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -1127,7 +1054,6 @@ jobs:
 
 
   tasmota32-IT:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -1147,7 +1073,6 @@ jobs:
 
 
   tasmota32-KO:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -1167,7 +1092,6 @@ jobs:
 
 
   tasmota32-NL:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -1187,7 +1111,6 @@ jobs:
 
 
   tasmota32-PL:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -1207,7 +1130,6 @@ jobs:
 
 
   tasmota32-PT:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -1227,7 +1149,6 @@ jobs:
 
 
   tasmota32-RO:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -1247,7 +1168,6 @@ jobs:
 
 
   tasmota32-RU:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -1267,7 +1187,6 @@ jobs:
 
 
   tasmota32-SE:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -1287,7 +1206,6 @@ jobs:
 
 
   tasmota32-SK:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -1307,7 +1225,6 @@ jobs:
 
 
   tasmota32-TR:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -1327,7 +1244,6 @@ jobs:
 
 
   tasmota32-TW:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -1347,7 +1263,6 @@ jobs:
 
 
   tasmota32-UK:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -1367,7 +1282,6 @@ jobs:
 
 
   tasmota32-VN:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
