@@ -106,6 +106,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - Neopool commands ``NPPHRes``, ``NPCLRes`` and ``NPIonRes`` [#12813](https://github.com/arendst/Tasmota/issues/12813)
 - Support for second DNS server
 - Support for (Yeelight) Mi Desk Pro using binary tasmota32solo1.bin
+- Initial support for influxdb using ``#define USE_INFLUXDB`` and several ``Ifx`` commands
 - Initial support for Tasmota Mesh (TasMesh) providing node/broker communication using ESP-NOW [#11939](https://github.com/arendst/Tasmota/issues/11939)
 - Berry ESP32 partition manager [#12465](https://github.com/arendst/Tasmota/issues/12465)
 - Berry ESP32 support for I2S audio mp3 playback
