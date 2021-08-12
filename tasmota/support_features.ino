@@ -759,7 +759,9 @@ void ResponseAppendFeatures(void)
 #ifdef USE_WIFI_RANGE_EXTENDER
     feature8 |= 0x00000400;  // xdrv_58_range_extender.ino
 #endif
-//    feature8 |= 0x00000800;
+#ifdef USE_INFLUXDB
+    feature8 |= 0x00000800;  // xsns_90_influxdb.ino
+#endif
 
 //    feature8 |= 0x00001000;
 //    feature8 |= 0x00002000;
