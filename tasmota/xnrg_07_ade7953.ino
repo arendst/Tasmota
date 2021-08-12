@@ -37,27 +37,28 @@
 
 #define ADE7953_ADDR            0x38
 
+// 24-bit data registers
 const uint16_t Ade7953Registers[] {
-  0x31B,  // RMS current channel B (Relay 1)
-  0x313,  // Active power channel B
-  0x311,  // Apparent power channel B
-  0x315,  // Reactive power channel B
-  0x31A,  // RMS current channel A (Relay 2)
-  0x312,  // Active power channel A
-  0x310,  // Apparent power channel A
-  0x314,  // Reactive power channel A
-  0x31C,  // RMS voltage (Both relays)
-  0x10E   // 16-bit unsigned period register
+  0x31B,  // IRMSB - RMS current channel B (Relay 1)
+  0x313,  // BWATT - Active power channel B
+  0x311,  // BVA - Apparent power channel B
+  0x315,  // BVAR - Reactive power channel B
+  0x31A,  // IRMSA - RMS current channel A (Relay 2)
+  0x312,  // AWATT - Active power channel A
+  0x310,  // AVA - Apparent power channel A
+  0x314,  // AVAR - Reactive power channel A
+  0x31C,  // VRMS - RMS voltage (Both relays)
+  0x10E,  // Period - 16-bit unsigned period register
+  0x301   // ACCMODE - Accumulation mode
 };
 
-const uint16_t ACCMODERegister = 0x301; //ACCMODE Register (Address 0x201 for 21 bits and Address 0x301 for 32 bits)
-//active power
-const uint32_t APSIGN[] {
+// Active power
+const uint16_t APSIGN[] {
   0x800, //Bit 10 (21 bits) in ACCMODE Register for channel A (0 - positive, 1 - negative)
   0x400  //Bit 11 (21 bits) in ACCMODE Register for channel B (0 - positive, 1 - negative)
 };
-//reactive power
-const uint32_t VARSIGN[] {
+// Reactive power
+const uint16_t VARSIGN[] {
   0x200, //Bit 12 (21 bits) in ACCMODE Register for channel A (0 - positive, 1 - negative)
   0x100  //Bit 13 (21 bits) in ACCMODE Register for channel B (0 - positive, 1 - negative)
 };
@@ -132,13 +133,16 @@ void Ade7953Init(void)
 
 void Ade7953GetData(void)
 {
+  uint32_t acc_mode;
   int32_t reg[2][4];
   for (uint32_t i = 0; i < sizeof(Ade7953Registers)/sizeof(uint16_t); i++) {
     int32_t value = Ade7953Read(Ade7953Registers[i]);
     if (8 == i) {
       Ade7953.voltage_rms = value;  // RMS voltage (Both relays)
     } else if (9 == i) {
-      Ade7953.period = value;  // period
+      Ade7953.period = value;       // Period
+    } else if (10 == i) {
+      acc_mode = value;             // Accumulation mode
     } else {
       reg[i >> 2][i &3] = value;
     }
@@ -148,7 +152,6 @@ void Ade7953GetData(void)
     reg[0][0], reg[0][1], reg[0][2], reg[0][3],
     reg[1][0], reg[1][1], reg[1][2], reg[1][3]);
 
-  uint32_t valueACCMODE = Ade7953Read(ACCMODERegister);
   uint32_t apparent_power[2] = { 0, 0 };
   uint32_t reactive_power[2] = { 0, 0 };
 
@@ -179,11 +182,11 @@ void Ade7953GetData(void)
     for (uint32_t channel = 0; channel < 2; channel++) {
       Energy.data_valid[channel] = 0;
       Energy.active_power[channel] = (float)Ade7953.active_power[channel] / (Settings->energy_power_calibration / 10);
-      if ((valueACCMODE & APSIGN[channel]) == APSIGN[channel]) {
+      if ((acc_mode & APSIGN[channel]) != 0) {
         Energy.active_power[channel] = Energy.active_power[channel] * -1;
       }
       Energy.reactive_power[channel] = (float)reactive_power[channel] / (Settings->energy_power_calibration / 10);
-      if ((valueACCMODE & VARSIGN[channel]) == VARSIGN[channel]) {
+      if ((acc_mode & VARSIGN[channel]) != 0) {
         Energy.reactive_power[channel] = Energy.reactive_power[channel] * -1;
       }
       Energy.apparent_power[channel] = (float)apparent_power[channel] / (Settings->energy_power_calibration / 10);

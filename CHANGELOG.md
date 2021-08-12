@@ -21,6 +21,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - Neopool communication error (#12813)
+- Negative power values for ADE7953 based devices like Shelly EM (#12874)
 
 ## [9.5.0.4] 20210801
 ### Added
