@@ -50,6 +50,18 @@ const uint16_t Ade7953Registers[] {
   0x10E   // 16-bit unsigned period register
 };
 
+const uint16_t ACCMODERegister = 0x301; //ACCMODE Register (Address 0x201 for 21 bits and Address 0x301 for 32 bits)
+//active power
+const uint32_t APSIGN[] {
+  0x800, //Bit 10 (21 bits) in ACCMODE Register for channel A (0 - positive, 1 - negative)
+  0x400  //Bit 11 (21 bits) in ACCMODE Register for channel B (0 - positive, 1 - negative)
+};
+//reactive power
+const uint32_t VARSIGN[] {
+  0x200, //Bit 12 (21 bits) in ACCMODE Register for channel A (0 - positive, 1 - negative)
+  0x100  //Bit 13 (21 bits) in ACCMODE Register for channel B (0 - positive, 1 - negative)
+};
+
 struct Ade7953 {
   uint32_t voltage_rms = 0;
   uint32_t period = 0;
@@ -136,6 +148,7 @@ void Ade7953GetData(void)
     reg[0][0], reg[0][1], reg[0][2], reg[0][3],
     reg[1][0], reg[1][1], reg[1][2], reg[1][3]);
 
+  uint32_t valueACCMODE = Ade7953Read(ACCMODERegister);
   uint32_t apparent_power[2] = { 0, 0 };
   uint32_t reactive_power[2] = { 0, 0 };
 
@@ -166,7 +179,13 @@ void Ade7953GetData(void)
     for (uint32_t channel = 0; channel < 2; channel++) {
       Energy.data_valid[channel] = 0;
       Energy.active_power[channel] = (float)Ade7953.active_power[channel] / (Settings->energy_power_calibration / 10);
+      if ((valueACCMODE & APSIGN[channel]) == APSIGN[channel]) {
+        Energy.active_power[channel] = Energy.active_power[channel] * -1;
+      }
       Energy.reactive_power[channel] = (float)reactive_power[channel] / (Settings->energy_power_calibration / 10);
+      if ((valueACCMODE & VARSIGN[channel]) == VARSIGN[channel]) {
+        Energy.reactive_power[channel] = Energy.reactive_power[channel] * -1;
+      }
       Energy.apparent_power[channel] = (float)apparent_power[channel] / (Settings->energy_power_calibration / 10);
       if (0 == Energy.active_power[channel]) {
         Energy.current[channel] = 0;
