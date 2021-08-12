@@ -945,119 +945,119 @@ const uint8_t kXdrvList[] = {
 #endif
 
 #ifdef XDRV_100
-  Xdrv100,
+  XDRV_100,
 #endif
 
 #ifdef XDRV_101
-  Xdrv101,
+  XDRV_101,
 #endif
 
 #ifdef XDRV_102
-  Xdrv102,
+  XDRV_102,
 #endif
 
 #ifdef XDRV_103
-  Xdrv103,
+  XDRV_103,
 #endif
 
 #ifdef XDRV_104
-  Xdrv104,
+  XDRV_104,
 #endif
 
 #ifdef XDRV_105
-  Xdrv105,
+  XDRV_105,
 #endif
 
 #ifdef XDRV_106
-  Xdrv106,
+  XDRV_106,
 #endif
 
 #ifdef XDRV_107
-  Xdrv107,
+  XDRV_107,
 #endif
 
 #ifdef XDRV_108
-  Xdrv108,
+  XDRV_108,
 #endif
 
 #ifdef XDRV_109
-  Xdrv109,
+  XDRV_109,
 #endif
 
 #ifdef XDRV_110
-  Xdrv110,
+  XDRV_110,
 #endif
 
 #ifdef XDRV_111
-  Xdrv111,
+  XDRV_111,
 #endif
 
 #ifdef XDRV_112
-  Xdrv112,
+  XDRV_112,
 #endif
 
 #ifdef XDRV_113
-  Xdrv113,
+  XDRV_113,
 #endif
 
 #ifdef XDRV_114
-  Xdrv114,
+  XDRV_114,
 #endif
 
 #ifdef XDRV_115
-  Xdrv115,
+  XDRV_115,
 #endif
 
 #ifdef XDRV_116
-  Xdrv116,
+  XDRV_116,
 #endif
 
 #ifdef XDRV_117
-  Xdrv117,
+  XDRV_117,
 #endif
 
 #ifdef XDRV_118
-  Xdrv118,
+  XDRV_118,
 #endif
 
 #ifdef XDRV_119
-  Xdrv119,
+  XDRV_119,
 #endif
 
 #ifdef XDRV_120
-  Xdrv120,
+  XDRV_120,
 #endif
 
 #ifdef XDRV_121
-  Xdrv121,
+  XDRV_121,
 #endif
 
 #ifdef XDRV_122
-  Xdrv122,
+  XDRV_122,
 #endif
 
 #ifdef XDRV_123
-  Xdrv123,
+  XDRV_123,
 #endif
 
 #ifdef XDRV_124
-  Xdrv124,
+  XDRV_124,
 #endif
 
 #ifdef XDRV_125
-  Xdrv125,
+  XDRV_125,
 #endif
 
 #ifdef XDRV_126
-  Xdrv126,
+  XDRV_126,
 #endif
 
 #ifdef XDRV_127
-  Xdrv127,
+  XDRV_127,
 #endif
 
 #ifdef XDRV_128
-  Xdrv128
+  XDRV_128
 #endif
 };
 
