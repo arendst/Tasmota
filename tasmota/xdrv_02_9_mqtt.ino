@@ -817,6 +817,11 @@ void MqttPublishPowerState(uint32_t device) {
       Response_P(GetStateText(bitRead(TasmotaGlobal.power, device -1)));
       MqttPublish(stopic, Settings->flag.mqtt_power_retain);  // CMND_POWERRETAIN
     }
+
+#ifdef USE_INFLUXDB
+    InfluxDbPublishPowerState(device);
+#endif
+
 #ifdef USE_SONOFF_IFAN
   }
 #endif  // USE_SONOFF_IFAN

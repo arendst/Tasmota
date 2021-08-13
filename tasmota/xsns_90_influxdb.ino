@@ -43,7 +43,7 @@
 
 #define XSNS_90            90
 
-#define INFLUXDB_INITIAL   12            // Initial number of seconds after restart keeping in mind sensor initialization
+#define INFLUXDB_INITIAL   7             // Initial number of seconds after wifi connect keeping in mind sensor initialization
 
 #ifndef INFLUXDB_VERSION
 #define INFLUXDB_VERSION   1             // Version of Influxdb 1 or 2
@@ -76,8 +76,8 @@ struct {
   String _serverUrl;                     // Connection info
   String _writeUrl;                      // Cached full write url
   String _lastErrorResponse;             // Server reponse or library error message for last failed request
-  uint32_t interval = INFLUXDB_INITIAL;
   uint32_t _lastRequestTime = 0;         // Last time in ms we made are a request to server
+  int interval = 0;
   int _lastStatusCode = 0;               // HTTP status code of last request to server
   int _lastRetryAfter = 0;               // Store retry timeout suggested by server after last request
   bool _connectionReuse;                 // true if HTTP connection should be kept open. Usable for frequent writes. Default false
@@ -233,6 +233,7 @@ char* InfluxDbMakeNumber(char* dest, const char* source) {
 }
 
 void InfluxDbProcessJson(void) {
+  if (!IFDB.init) { return; }
 
 //  AddLog(LOG_LEVEL_DEBUG, PSTR("IFX: JSON %s"), TasmotaGlobal.mqtt_data.c_str());
 
@@ -328,7 +329,7 @@ void InfluxDbProcessJson(void) {
                   (strcasecmp_P(type, PSTR(D_JSON_SPEED_UNIT)) == 0)
                   )) {
               // switch1,device=demo value=1
-              snprintf_P(linebuf, sizeof(linebuf), PSTR("%s,device=%s value=%s\n"),
+              snprintf_P(linebuf, sizeof(linebuf), PSTR("%s,device=%s,sensor=device value=%s\n"),
                 type, TasmotaGlobal.mqtt_topic, value);
               data += linebuf;
             }
@@ -343,21 +344,29 @@ void InfluxDbProcessJson(void) {
   }
 }
 
+void InfluxDbPublishPowerState(uint32_t device) {
+  Response_P(PSTR("{\"power%d\":\"%d\"}"), device, bitRead(TasmotaGlobal.power, device -1));
+  InfluxDbProcessJson();
+}
+
 void InfluxDbLoop(void) {
-  if (IFDB.interval) {
+  if (!TasmotaGlobal.global_state.network_down) {
     IFDB.interval--;
-    if (0 == IFDB.interval || IFDB.interval > Settings->tele_period) {
+    if (IFDB.interval <= 0 || IFDB.interval > Settings->tele_period) {
       IFDB.interval = Settings->tele_period;
       if (!IFDB.init) {
         if (InfluxDbParameterInit()) {
           IFDB.init = InfluxDbValidateConnection();
+          if (IFDB.init) {
+            IFDB.interval = INFLUXDB_INITIAL;
+          }
         }
+      } else {
+        ResponseClear();
+        if (MqttShowSensor()) {   // Pull sensor data
+          InfluxDbProcessJson();
+        };
       }
-
-      ResponseClear();
-      if (MqttShowSensor()) {   // Pull sensor data
-        InfluxDbProcessJson();
-      };
     }
   }
 }
