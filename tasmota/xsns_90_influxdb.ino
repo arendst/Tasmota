@@ -156,10 +156,10 @@ void InfluxDbAfterRequest(int expectedStatusCode, bool modifyLastConnStatus) {
   if (IFDB._lastStatusCode != expectedStatusCode) {
     if (IFDB._lastStatusCode > 0) {
       IFDB._lastErrorResponse = IFDBhttpClient->getString();
-      AddLog(LOG_LEVEL_DEBUG, PSTR("IFX: Response\n%s"), IFDB._lastErrorResponse.c_str());
+      AddLog(LOG_LEVEL_INFO, PSTR("IFX: Response %s"), IFDB._lastErrorResponse.c_str());  // {"error":"database not found: \"db\""}
     } else {
       IFDB._lastErrorResponse = IFDBhttpClient->errorToString(IFDB._lastStatusCode);
-      AddLog(LOG_LEVEL_DEBUG, PSTR("IFX: Error %s"), IFDB._lastErrorResponse.c_str());
+      AddLog(LOG_LEVEL_INFO, PSTR("IFX: Error %s"), IFDB._lastErrorResponse.c_str());
     }
   }
 }
@@ -177,7 +177,7 @@ bool InfluxDbValidateConnection(void) {
   }
   // on version 1.8.9 /health works fine
 //  String url = IFDB._serverUrl + "/health";
-  AddLog(LOG_LEVEL_DEBUG, PSTR("IFX: Validating connection to %s"), url.c_str());
+  AddLog(LOG_LEVEL_INFO, PSTR("IFX: Validating connection to %s"), url.c_str());
 
   if (!IFDBhttpClient->begin(*IFDBwifiClient, url)) {
     AddLog(LOG_LEVEL_DEBUG, PSTR("IFX: Begin failed"));
@@ -231,6 +231,8 @@ void InfluxDbMetrics(void) {
     char sensor[64];     // 'ds18b20'
     char type[64];       // 'temperature'
     char sensor_id[32];  // ',id=01144A0CB2AA'
+    sensor_id[0] = '\0';
+
     String data = "";    // Multiple linebufs
 
     for (auto key1 : root) {
@@ -260,6 +262,8 @@ void InfluxDbMetrics(void) {
             if (value != nullptr && isdigit(value[0])) {
               LowerCase(sensor, key1.getStr());
               LowerCase(type, key2.getStr());
+
+//              AddLog(LOG_LEVEL_DEBUG, PSTR("IFX2: sensor %s (%s), type %s (%s)"), key1.getStr(), sensor, key2.getStr(), type);
 
               if (strcmp(type, "totalstarttime") != 0) {  // Not needed/wanted
                 if (strcmp(type, "id") == 0) {            // Index for DS18B20
