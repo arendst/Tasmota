@@ -964,7 +964,7 @@ const uint8_t sNumbers[] PROGMEM = { 0,0,0,0,0,0,0,
                                      4,4,
                                      255 };
 
-int GetStateNumber(char *state_text)
+int GetStateNumber(const char *state_text)
 {
   char command[CMDSZ];
   int state_number = GetCommandCode(command, sizeof(command), state_text, kOptions);

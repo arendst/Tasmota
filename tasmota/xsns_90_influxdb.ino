@@ -95,18 +95,18 @@ String InfluxDbAuth(void) {
   return auth;
 }
 
-bool InfluxDbInit(void) {
-  IFDB._serverUrl = "http://";
-  IFDB._serverUrl += SettingsText(SET_INFLUXDB_HOST);
-  IFDB._serverUrl += ":";
-  IFDB._serverUrl += Settings->influxdb_port;
-  if (IFDB._serverUrl.length() == 0 ||
+bool InfluxDbParameterInit(void) {
+  if (strlen(SettingsText(SET_INFLUXDB_BUCKET)) == 0 ||
       (2 == Settings->influxdb_version && (strlen(SettingsText(SET_INFLUXDB_ORG)) == 0 ||
-                                           strlen(SettingsText(SET_INFLUXDB_BUCKET)) == 0 ||
                                            strlen(SettingsText(SET_INFLUXDB_TOKEN)) == 0))) {
     AddLog(LOG_LEVEL_DEBUG, PSTR("IFX: Invalid parameters"));
     return false;
   }
+  IFDB._serverUrl = "http://";
+  IFDB._serverUrl += SettingsText(SET_INFLUXDB_HOST);
+  IFDB._serverUrl += ":";
+  IFDB._serverUrl += Settings->influxdb_port;
+
   IFDB._writeUrl = IFDB._serverUrl;
   if (2 == Settings->influxdb_version) {
     IFDB._writeUrl += "/api/v2/write?org=";
@@ -118,8 +118,12 @@ bool InfluxDbInit(void) {
     IFDB._writeUrl += UrlEncode(SettingsText(SET_INFLUXDB_BUCKET));
     IFDB._writeUrl += InfluxDbAuth();
   }
-//  AddLog(LOG_LEVEL_DEBUG, PSTR("IFX: Url %s"), IFDB._writeUrl.c_str());
+  AddLog(LOG_LEVEL_DEBUG, PSTR("IFX: Url %s"), IFDB._writeUrl.c_str());
 
+  return true;
+}
+
+bool InfluxDbInit(void) {
   IFDBwifiClient = new WiFiClient;
   if (!IFDBhttpClient) {
     IFDBhttpClient = new HTTPClient;
@@ -156,7 +160,7 @@ void InfluxDbAfterRequest(int expectedStatusCode, bool modifyLastConnStatus) {
   if (IFDB._lastStatusCode != expectedStatusCode) {
     if (IFDB._lastStatusCode > 0) {
       IFDB._lastErrorResponse = IFDBhttpClient->getString();
-      AddLog(LOG_LEVEL_INFO, PSTR("IFX: Response %s"), IFDB._lastErrorResponse.c_str());  // {"error":"database not found: \"db\""}
+      AddLog(LOG_LEVEL_INFO, PSTR("IFX: %s"), IFDB._lastErrorResponse.c_str());  // {"error":"database not found: \"db\""}
     } else {
       IFDB._lastErrorResponse = IFDBhttpClient->errorToString(IFDB._lastStatusCode);
       AddLog(LOG_LEVEL_INFO, PSTR("IFX: Error %s"), IFDB._lastErrorResponse.c_str());
@@ -217,16 +221,26 @@ int InfluxDbPostData(const char *data) {
 
 /*********************************************************************************************/
 
-void InfluxDbMetrics(void) {
-  ResponseClear();
-  if (!MqttShowSensor()) { return; };  // Pull sensor data
+char* InfluxDbMakeNumber(char* dest, const char* source) {
+  // Convert special text as found in kOptions to a number
+  // Like "OFF" -> 0, "ON" -> 1, "TOGGLE" -> 2
+  int number = GetStateNumber(source);
+  if (number >= 0) {
+    itoa(number, dest, 10);
+    return dest;
+  }
+  return (char*)source;
+}
 
-//  AddLog(LOG_LEVEL_DEBUG, PSTR("IFX: Metrics %s"), TasmotaGlobal.mqtt_data.c_str());
+void InfluxDbProcessJson(void) {
+
+//  AddLog(LOG_LEVEL_DEBUG, PSTR("IFX: JSON %s"), TasmotaGlobal.mqtt_data.c_str());
 
   String jsonStr = TasmotaGlobal.mqtt_data;
   JsonParser parser((char *)jsonStr.c_str());
   JsonParserObject root = parser.getRootObject();
   if (root) {
+    char number[32];
     char linebuf[128];   // 'temperature,device=demo,sensor=ds18b20,id=01144A0CB2AA value=26.44\n'
     char sensor[64];     // 'ds18b20'
     char type[64];       // 'temperature'
@@ -245,65 +259,81 @@ void InfluxDbMetrics(void) {
             JsonParserObject Object3 = value2.getObject();
             for (auto key3 : Object3) {
               const char *value = key3.getValue().getStr();
-              if (value != nullptr && isdigit(value[0])) {
-                // Level 3
-                LowerCase(sensor, key2.getStr());
-                LowerCase(type, key3.getStr());
-                // temperature,device=tasmota1,sensor=DS18B20 value=24.44
-                snprintf_P(linebuf, sizeof(linebuf), PSTR("%s,device=%s,sensor=%s value=%s\n"),
-                  type, TasmotaGlobal.mqtt_topic, sensor, value);
-                data += linebuf;
+              if (value != nullptr) {
+                value = InfluxDbMakeNumber(number, value);
+                if (isdigit(value[0])) {
+                  // Level 3
+                  LowerCase(sensor, key2.getStr());
+                  LowerCase(type, key3.getStr());
+                  // temperature,device=tasmota1,sensor=DS18B20 value=24.44
+                  snprintf_P(linebuf, sizeof(linebuf), PSTR("%s,device=%s,sensor=%s value=%s\n"),
+                    type, TasmotaGlobal.mqtt_topic, sensor, value);
+                  data += linebuf;
+                }
               }
             }
           } else {
             // Level 2
+            // { ... "ANALOG":{"Temperature":184.72},"DS18B20":{"Id":"01144A0CB2AA","Temperature":24.88},"HTU21":{"Temperature":25.32,"Humidity":49.2,"DewPoint":13.88},"Global":{"Temperature":24.88,"Humidity":49.2,"DewPoint":13.47}, ... }
             bool isarray = value2.isArray();
             const char *value = (isarray) ? (value2.getArray())[0].getStr() : value2.getStr();
-            if (value != nullptr && isdigit(value[0])) {
-              LowerCase(sensor, key1.getStr());
-              LowerCase(type, key2.getStr());
+            if (value != nullptr) {
+              value = InfluxDbMakeNumber(number, value);
+              if (isdigit(value[0])) {
+                LowerCase(sensor, key1.getStr());
+                LowerCase(type, key2.getStr());
 
-//              AddLog(LOG_LEVEL_DEBUG, PSTR("IFX2: sensor %s (%s), type %s (%s)"), key1.getStr(), sensor, key2.getStr(), type);
+  //              AddLog(LOG_LEVEL_DEBUG, PSTR("IFX2: sensor %s (%s), type %s (%s)"), key1.getStr(), sensor, key2.getStr(), type);
 
-              if (strcmp(type, "totalstarttime") != 0) {  // Not needed/wanted
-                if (strcmp(type, "id") == 0) {            // Index for DS18B20
-                  snprintf_P(sensor_id, sizeof(sensor_id), PSTR(",id=%s"), value);
-                } else {
-                  if (isarray) {
-                    JsonParserArray arr = value2.getArray();
-                    uint32_t i = 0;
-                    for (auto val : arr) {
-                      i++;
-                      // power1,device=shelly25,sensor=energy value=0.00
-                      // power2,device=shelly25,sensor=energy value=4.12
-                      snprintf_P(linebuf, sizeof(linebuf), PSTR("%s%d,device=%s,sensor=%s%s value=%s\n"),
-                        type, i, TasmotaGlobal.mqtt_topic, sensor, sensor_id, val.getStr());
+                if (strcmp(type, "totalstarttime") != 0) {  // Not needed/wanted
+                  if (strcmp(type, "id") == 0) {            // Index for DS18B20
+                    snprintf_P(sensor_id, sizeof(sensor_id), PSTR(",id=%s"), value);
+                  } else {
+                    if (isarray) {
+                      JsonParserArray arr = value2.getArray();
+                      uint32_t i = 0;
+                      for (auto val : arr) {
+                        i++;
+                        // power1,device=shelly25,sensor=energy value=0.00
+                        // power2,device=shelly25,sensor=energy value=4.12
+                        snprintf_P(linebuf, sizeof(linebuf), PSTR("%s%d,device=%s,sensor=%s%s value=%s\n"),
+                          type, i, TasmotaGlobal.mqtt_topic, sensor, sensor_id, val.getStr());
+                        data += linebuf;
+                      }
+                    } else {
+                      // temperature,device=demo,sensor=ds18b20,id=01144A0CB2AA value=22.63
+                      snprintf_P(linebuf, sizeof(linebuf), PSTR("%s,device=%s,sensor=%s%s value=%s\n"),
+                        type, TasmotaGlobal.mqtt_topic, sensor, sensor_id, value);
                       data += linebuf;
                     }
-                  } else {
-                    // temperature,device=Wemos10,sensor=ds18b20,id=01144A0CB2AA value=22.63
-                    snprintf_P(linebuf, sizeof(linebuf), PSTR("%s,device=%s,sensor=%s%s value=%s\n"),
-                      type, TasmotaGlobal.mqtt_topic, sensor, sensor_id, value);
-                    data += linebuf;
+                    sensor_id[0] = '\0';
                   }
-                  sensor_id[0] = '\0';
                 }
               }
             }
           }
         }
-/*
       } else {
         // Level 1
+        // {"Time":"2021-08-13T14:15:56","Switch1":"ON","Switch2":"OFF", ... "TempUnit":"C"}
         const char *value = value1.getStr();
-        LowerCase(sensor, key1.getStr());
+        if (value != nullptr) {
+          value = InfluxDbMakeNumber(number, value);
+          if (isdigit(value[0])) {
+            LowerCase(type, key1.getStr());
 
-        // time,device=Wemos10 value=2021-08-11T09:46:29
-        // tempunit,device=Wemos10 value=C
-        snprintf_P(linebuf, sizeof(linebuf), PSTR("%s,device=%s value=%s\n"),
-          sensor, TasmotaGlobal.mqtt_topic, value);
-        data += linebuf;
-*/
+            if (!((strcasecmp_P(type, PSTR(D_JSON_TIME)) == 0) ||              // No time,device=demo value=2021-08-11T09:46:29
+                  (strcasecmp_P(type, PSTR(D_JSON_TEMPERATURE_UNIT)) == 0) ||  // No tempunit,device=demo value=C
+                  (strcasecmp_P(type, PSTR(D_JSON_PRESSURE_UNIT)) == 0) ||
+                  (strcasecmp_P(type, PSTR(D_JSON_SPEED_UNIT)) == 0)
+                  )) {
+              // switch1,device=demo value=1
+              snprintf_P(linebuf, sizeof(linebuf), PSTR("%s,device=%s value=%s\n"),
+                type, TasmotaGlobal.mqtt_topic, value);
+              data += linebuf;
+            }
+          }
+        }
       }
     }
     if (data.length() > 0 ) {
@@ -314,10 +344,22 @@ void InfluxDbMetrics(void) {
 }
 
 void InfluxDbLoop(void) {
-  if (!IFDB.init) {
-    IFDB.init = InfluxDbValidateConnection();
+  if (IFDB.interval) {
+    IFDB.interval--;
+    if (0 == IFDB.interval || IFDB.interval > Settings->tele_period) {
+      IFDB.interval = Settings->tele_period;
+      if (!IFDB.init) {
+        if (InfluxDbParameterInit()) {
+          IFDB.init = InfluxDbValidateConnection();
+        }
+      }
+
+      ResponseClear();
+      if (MqttShowSensor()) {   // Pull sensor data
+        InfluxDbProcessJson();
+      };
+    }
   }
-  InfluxDbMetrics();
 }
 
 /*********************************************************************************************\
@@ -435,13 +477,7 @@ bool Xsns90(uint8_t function) {
 
   switch (function) {
     case FUNC_EVERY_SECOND:
-      if (IFDB.interval) {
-        IFDB.interval--;
-        if (0 == IFDB.interval || IFDB.interval > Settings->tele_period) {
-          IFDB.interval = Settings->tele_period;
-          InfluxDbLoop();
-        }
-      }
+      InfluxDbLoop();
       break;
     case FUNC_COMMAND:
       result = DecodeCommand(kInfluxDbCommands, InfluxCommand);
