@@ -19,7 +19,6 @@ All notable changes to this project will be documented in this file.
 - Prometheus: All metrics are prefixed with ``tasmota_`` (#12842)
     Memory metrics have been cleaned up to work consistently between ESP8266 and ESP32
     The device name is reported as an info metric
-- Show power status in state message always with power index number like ``POWER1``
 
 ### Fixed
 - Neopool communication error (#12813)
