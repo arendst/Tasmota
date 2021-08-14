@@ -753,7 +753,7 @@ void MqttShowState(void)
       if (i == LightDevice())  { ResponseLightState(1); }    // call it only once
     } else {
 #endif
-      ResponseAppend_P(PSTR(",\"%s\":\"%s\""), GetPowerDevice(stemp1, i, sizeof(stemp1), Settings->flag.device_index_enable),  // SetOption26 - Switch between POWER or POWER1
+      ResponseAppend_P(PSTR(",\"%s\":\"%s\""), GetPowerDevice(stemp1, i, sizeof(stemp1), 1),  // SetOption26 - Switch between POWER or POWER1
                                                GetStateText(bitRead(TasmotaGlobal.power, i-1)));
 #ifdef USE_SONOFF_IFAN
       if (IsModuleIfan()) {

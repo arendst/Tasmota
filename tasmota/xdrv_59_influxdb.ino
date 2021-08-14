@@ -39,6 +39,11 @@
  * IfxToken    - Set Influxdb v2 and token
  *
  * Set influxdb update interval with command teleperiod
+ *
+ * The following triggers result in automatic influxdb numeric feeds without appended time:
+ * - this driver initiated state message
+ * - this driver initiated teleperiod data
+ * - power commands
 \*********************************************************************************************/
 
 #define XDRV_59            59
@@ -361,10 +366,18 @@ void InfluxDbLoop(void) {
           }
         }
       } else {
+
+        // {"Time":"2021-08-14T17:19:33","Uptime":"0T00:24:09","UptimeSec":1449,"Heap":29,"SleepMode":"Dynamic","Sleep":50,"LoadAvg":19,"MqttCount":1,"POWER1":"ON","Wifi":{"AP":1,"SSId":"indebuurt_IoT","BSSId":"98:38:C9:CA:17:C1","Channel":11,"Mode":"11n","RSSI":100,"Signal":-44,"LinkCount":1,"Downtime":"0T00:00:03"}}
+        ResponseClear();
+        MqttShowState();          // Pull state data
+        InfluxDbProcessJson();
+
+        // {"Time":"2021-08-14T17:19:33","Switch1":"ON","Switch2":"OFF","ANALOG":{"Temperature":184.72},"DS18B20":{"Id":"01144A0CB2AA","Temperature":27.50},"HTU21":{"Temperature":28.23,"Humidity":39.7,"DewPoint":13.20},"Global":{"Temperature":27.50,"Humidity":39.7,"DewPoint":12.55},"TempUnit":"C"}
         ResponseClear();
         if (MqttShowSensor()) {   // Pull sensor data
           InfluxDbProcessJson();
         };
+
       }
     }
   }
