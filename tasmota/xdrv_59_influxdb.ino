@@ -87,6 +87,10 @@ struct {
   bool init = false;
 } IFDB;
 
+/*********************************************************************************************\
+ * Influxdb library function
+\*********************************************************************************************/
+
 String InfluxDbAuth(void) {
   String auth = "";
   if (strlen(SettingsText(SET_INFLUXDB_ORG)) > 0 && strlen(SettingsText(SET_INFLUXDB_TOKEN)) > 0) {
@@ -222,7 +226,9 @@ int InfluxDbPostData(const char *data) {
   return IFDB._lastStatusCode;
 }
 
-/*********************************************************************************************/
+/*********************************************************************************************\
+ * Data preparation
+\*********************************************************************************************/
 
 char* InfluxDbMakeNumber(char* dest, const char* source) {
   // Convert special text as found in kOptions to a number
@@ -265,7 +271,7 @@ void InfluxDbProcessJson(void) {
               const char *value = key3.getValue().getStr();
               if (value != nullptr) {
                 value = InfluxDbMakeNumber(number, value);
-                if (isdigit(value[0])) {
+                if (IsNumeric(value)) {
                   // Level 3
                   LowerCase(sensor, key2.getStr());
                   LowerCase(type, key3.getStr());
@@ -283,7 +289,7 @@ void InfluxDbProcessJson(void) {
             const char *value = (isarray) ? (value2.getArray())[0].getStr() : value2.getStr();
             if (value != nullptr) {
               value = InfluxDbMakeNumber(number, value);
-              if (isdigit(value[0])) {
+              if (IsNumeric(value)) {
                 LowerCase(sensor, key1.getStr());
                 LowerCase(type, key2.getStr());
 
@@ -323,7 +329,7 @@ void InfluxDbProcessJson(void) {
         const char *value = value1.getStr();
         if (value != nullptr) {
           value = InfluxDbMakeNumber(number, value);
-          if (isdigit(value[0])) {
+          if (IsNumeric(value)) {
             LowerCase(type, key1.getStr());
 
             if (!((strcasecmp_P(type, PSTR(D_JSON_TIME)) == 0) ||              // No time,device=demo value=2021-08-11T09:46:29

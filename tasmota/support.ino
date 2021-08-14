@@ -523,6 +523,12 @@ bool StrCaseStr_P(const char* source, const char* search) {
   return (strstr(case_source, case_search) != nullptr);
 }
 
+bool IsNumeric(const char* value) {
+  char *digit = (char*)value;
+  while (isdigit(*digit) || *digit == '.' || *digit == '-') { digit++; }
+  return (*digit == '\0');
+}
+
 char* Trim(char* p)
 {
   if (*p != '\0') {
