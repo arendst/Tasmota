@@ -392,6 +392,7 @@
 
 // -- Influxdb ------------------------------------
 //#define USE_INFLUXDB                             // Enable influxdb support (+5k code)
+//  #define INFLUXDB_STATE     0                   // [Ifx] Influxdb initially Off (0) or On (1)
 //  #define INFLUXDB_VERSION   1                   // Version of Influxdb 1 or 2
 //  #define INFLUXDB_HOST      "influxdb"          // [IfxHost] Influxdb hostname or IP address
 //  #define INFLUXDB_PORT      8086                // [IfxPort] Influxdb port number

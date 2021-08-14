@@ -1,5 +1,5 @@
 /*
-  xsns_90_influxdb.ino - Influxdb support for Tasmota
+  xdrv_59_influxdb.ino - Influxdb support for Tasmota
 
   Copyright (C) 2021  Theo Arends
 
@@ -28,7 +28,7 @@
  * https://docs.influxdata.com/influxdb/v1.8/write_protocols/line_protocol_reference/
  *
  * Supported commands:
- * Ifx         - Show current state
+ * Ifx         - Set Influxdb state off (0) or on (1) and show current state
  * IfxHost     - Set Influxdb host name or IP address
  * IfxPort     - Set Influxdb port
  * IfxDatabase - Set Influxdb v1 and database name
@@ -41,10 +41,13 @@
  * Set influxdb update interval with command teleperiod
 \*********************************************************************************************/
 
-#define XSNS_90            90
+#define XDRV_59            59
 
 #define INFLUXDB_INITIAL   7             // Initial number of seconds after wifi connect keeping in mind sensor initialization
 
+#ifndef INFLUXDB_STATE
+#define INFLUXDB_STATE     0             // [Ifx] Influxdb initially Off (0) or On (1)
+#endif
 #ifndef INFLUXDB_VERSION
 #define INFLUXDB_VERSION   1             // Version of Influxdb 1 or 2
 #endif
@@ -405,8 +408,14 @@ void InfluxDbReinit(void) {
 }
 
 void CmndInfluxDbState(void) {
-  Response_P(PSTR("{\"" D_PRFX_INFLUXDB "\":{\"" D_CMND_INFLUXDBHOST "\":\"%s\",\"" D_CMND_INFLUXDBPORT "\":%d,\"Version\":%d"),
-    SettingsText(SET_INFLUXDB_HOST), Settings->influxdb_port, Settings->influxdb_version);
+  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 1)) {
+    if (Settings->sbflag1.influxdb_state != XdrvMailbox.payload) {
+      Settings->sbflag1.influxdb_state = XdrvMailbox.payload;
+      InfluxDbReinit();
+    }
+  }
+  Response_P(PSTR("{\"" D_PRFX_INFLUXDB "\":{\"State\":\"%s\",\"" D_CMND_INFLUXDBHOST "\":\"%s\",\"" D_CMND_INFLUXDBPORT "\":%d,\"Version\":%d"),
+    GetStateText(Settings->sbflag1.influxdb_state), SettingsText(SET_INFLUXDB_HOST), Settings->influxdb_port, Settings->influxdb_version);
   if (1 == Settings->influxdb_version) {
     ResponseAppend_P(PSTR(",\"" D_CMND_INFLUXDBDATABASE "\":\"%s\",\"" D_CMND_INFLUXDBUSER "\":\"%s\"}}"),
       SettingsText(SET_INFLUXDB_BUCKET), SettingsText(SET_INFLUXDB_ORG));
@@ -471,26 +480,29 @@ void CmndInfluxDbDatabase(void) {
  * Interface
 \*********************************************************************************************/
 
-bool Xsns90(uint8_t function) {
+bool Xdrv59(uint8_t function) {
   bool result = false;
 
-  if (!Settings->sbflag1.influxdb_default) {
-    Settings->influxdb_version = INFLUXDB_VERSION;
-    Settings->influxdb_port = INFLUXDB_PORT;
-    SettingsUpdateText(SET_INFLUXDB_HOST, PSTR(INFLUXDB_HOST));
-    SettingsUpdateText(SET_INFLUXDB_ORG, PSTR(INFLUXDB_ORG));
-    SettingsUpdateText(SET_INFLUXDB_TOKEN, PSTR(INFLUXDB_TOKEN));
-    SettingsUpdateText(SET_INFLUXDB_BUCKET, PSTR(INFLUXDB_BUCKET));
-    Settings->sbflag1.influxdb_default = 1;
-  }
-
-  switch (function) {
-    case FUNC_EVERY_SECOND:
-      InfluxDbLoop();
-      break;
-    case FUNC_COMMAND:
-      result = DecodeCommand(kInfluxDbCommands, InfluxCommand);
-      break;
+  if (FUNC_PRE_INIT == function) {
+    // Initial persistent settings executed only once
+    if (!Settings->sbflag1.influxdb_default) {
+      Settings->sbflag1.influxdb_state = INFLUXDB_STATE;
+      Settings->influxdb_version = INFLUXDB_VERSION;
+      Settings->influxdb_port = INFLUXDB_PORT;
+      SettingsUpdateText(SET_INFLUXDB_HOST, PSTR(INFLUXDB_HOST));
+      SettingsUpdateText(SET_INFLUXDB_ORG, PSTR(INFLUXDB_ORG));
+      SettingsUpdateText(SET_INFLUXDB_TOKEN, PSTR(INFLUXDB_TOKEN));
+      SettingsUpdateText(SET_INFLUXDB_BUCKET, PSTR(INFLUXDB_BUCKET));
+      Settings->sbflag1.influxdb_default = 1;
+    }
+  } else if (FUNC_COMMAND == function) {
+    result = DecodeCommand(kInfluxDbCommands, InfluxCommand);
+  } else if (Settings->sbflag1.influxdb_state) {
+    switch (function) {
+      case FUNC_EVERY_SECOND:
+        InfluxDbLoop();
+        break;
+    }
   }
   return result;
 }
