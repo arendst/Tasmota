@@ -1634,8 +1634,12 @@ void ResetPwm(void)
 {
   for (uint32_t i = 0; i < MAX_PWMS; i++) {     // Basic PWM control only
     if (PinUsed(GPIO_PWM1, i)) {
+#ifdef USE_SLOW_PWM
+      SlowPWMAnalogWrite(Pin(GPIO_PWM1, i), bitRead(TasmotaGlobal.pwm_inverted, i) ? Settings->pwm_range : 0);
+#else
       analogWrite(Pin(GPIO_PWM1, i), bitRead(TasmotaGlobal.pwm_inverted, i) ? Settings->pwm_range : 0);
 //      analogWrite(Pin(GPIO_PWM1, i), bitRead(TasmotaGlobal.pwm_inverted, i) ? Settings->pwm_range - Settings->pwm_value[i] : Settings->pwm_value[i]);
+#endif  // USE_SLOW_PWM
     }
   }
 }
@@ -1935,14 +1939,26 @@ void GpioInit(void)
       pinMode(Pin(GPIO_PWM1, i), OUTPUT);
 #endif  // ESP8266
 #ifdef ESP32
+#ifdef USE_SLOW_PWM
+      pinMode(Pin(GPIO_PWM1, i), OUTPUT);
+#else
       analogAttach(Pin(GPIO_PWM1, i), i);
+#endif  // USE_SLOW_PWM
 #endif  // ESP32
       if (TasmotaGlobal.light_type) {
         // force PWM GPIOs to low or high mode, see #7165
+#ifdef USE_SLOW_PWM
+        SlowPWMAnalogWrite(Pin(GPIO_PWM1, i), bitRead(TasmotaGlobal.pwm_inverted, i) ? Settings->pwm_range : 0);
+#else
         analogWrite(Pin(GPIO_PWM1, i), bitRead(TasmotaGlobal.pwm_inverted, i) ? Settings->pwm_range : 0);
+#endif  // USE_SLOW_PWM
       } else {
         TasmotaGlobal.pwm_present = true;
+#ifdef USE_SLOW_PWM
+        SlowPWMAnalogWrite(Pin(GPIO_PWM1, i), bitRead(TasmotaGlobal.pwm_inverted, i) ? Settings->pwm_range - Settings->pwm_value[i] : Settings->pwm_value[i]);
+#else
         analogWrite(Pin(GPIO_PWM1, i), bitRead(TasmotaGlobal.pwm_inverted, i) ? Settings->pwm_range - Settings->pwm_value[i] : Settings->pwm_value[i]);
+#endif  // USE_SLOW_PWM
       }
     }
   }

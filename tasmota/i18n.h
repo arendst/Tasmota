@@ -281,6 +281,7 @@
 #define D_CMND_GPIOS "GPIOs"
 #define D_CMND_PWM "PWM"
 #define D_CMND_PWMFREQUENCY "PWMFrequency"
+#define D_CMND_SLOWPWMPERIOD "SlowPWMPeriod"
 #define D_CMND_PWMRANGE "PWMRange"
 #define D_CMND_BUTTONDEBOUNCE "ButtonDebounce"
 #define D_CMND_SWITCHDEBOUNCE "SwitchDebounce"

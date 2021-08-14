@@ -1044,6 +1044,7 @@ void SettingsDefaultSet2(void) {
   flag4.virtual_ct_cw |= LIGHT_VIRTUAL_CT_CW;
 
   Settings->pwm_frequency = PWM_FREQ;
+  Settings->slow_pwm_period = SLOW_PWM_PERIOD;
   Settings->pwm_range = PWM_RANGE;
   for (uint32_t i = 0; i < MAX_PWMS; i++) {
     Settings->light_color[i] = DEFAULT_LIGHT_COMPONENT;
@@ -1394,6 +1395,7 @@ void SettingsDelta(void) {
       ParseIPv4(&Settings->ipv4_rgx_subnetmask, PSTR(WIFI_RGX_SUBNETMASK));
       SettingsUpdateText(SET_RGX_SSID, PSTR(WIFI_RGX_SSID));
       SettingsUpdateText(SET_RGX_PASSWORD, PSTR(WIFI_RGX_PASSWORD));
+      Settings->slow_pwm_period = SLOW_PWM_PERIOD;
     }
 
     Settings->version = VERSION;

@@ -144,6 +144,10 @@ const uint16_t PWM_MIN = 40;                // [PWM_MIN] Minimum frequency - Def
                                             //    For Dimmers use double of your mains AC frequecy (100 for 50Hz and 120 for 60Hz)
                                             //    For Controlling Servos use 50 and also set PWM_FREQ as 50 (DO NOT USE THESE VALUES FOR DIMMERS)
 
+const uint16_t SLOW_PWM_PERIOD = 10;        // 1..600 slow PWM period in second - Default: 10 seconds
+const uint16_t SLOW_PWM_MAX = 600;          // Maximum slow PWM period in second - Default: 10 minutes
+const uint16_t SLOW_PWM_MIN = 1;            // Minimum slow PWM period in second - Default: 1 second
+
 const uint16_t MAX_POWER_HOLD = 10;         // Time in SECONDS to allow max agreed power
 const uint16_t MAX_POWER_WINDOW = 30;       // Time in SECONDS to disable allow max agreed power
 const uint16_t SAFE_POWER_HOLD = 10;        // Time in SECONDS to allow max unit safe power

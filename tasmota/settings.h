@@ -587,8 +587,9 @@ typedef struct {
 
   uint16_t      influxdb_port;             // 4CE
   power_t       interlock[MAX_INTERLOCKS_SET];  // 4D0 MAX_INTERLOCKS = MAX_RELAYS / 2
+  uint16_t      slow_pwm_period;           // 508
 
-  uint8_t       free_508[36];              // 508
+  uint8_t       free_50A[34];              // 50A
 
   uint16_t      mqtt_keepalive;            // 52C
   uint16_t      mqtt_socket_timeout;       // 52E

@@ -1158,7 +1158,11 @@ void LightInit(void)
         pinMode(Pin(GPIO_PWM1, i), OUTPUT);
 #endif  // ESP8266
 #ifdef ESP32
+#ifdef USE_SLOW_PWM
+        pinMode(Pin(GPIO_PWM1, i), OUTPUT);
+#else
         analogAttach(Pin(GPIO_PWM1, i), i);
+#endif  // USE_SLOW_PWM
 #endif  // ESP32
       }
     }
@@ -2015,7 +2019,11 @@ void LightSetOutputs(const uint16_t *cur_col_10) {
           cur_col = cur_col > 0 ? changeUIntScale(cur_col, 0, Settings->pwm_range, Light.pwm_min, Light.pwm_max) : 0;   // shrink to the range of pwm_min..pwm_max
         }
         if (!Settings->flag4.zerocross_dimmer) {
+#ifdef USE_SLOW_PWM
+          SlowPWMAnalogWrite(Pin(GPIO_PWM1, i), bitRead(TasmotaGlobal.pwm_inverted, i) ? Settings->pwm_range - cur_col : cur_col);
+#else
           analogWrite(Pin(GPIO_PWM1, i), bitRead(TasmotaGlobal.pwm_inverted, i) ? Settings->pwm_range - cur_col : cur_col);
+#endif  // USE_SLOW_PWM
         }
       }
     }

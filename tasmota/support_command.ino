@@ -1437,7 +1437,11 @@ void CmndPwm(void)
   if (TasmotaGlobal.pwm_present && (XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_PWMS)) {
     if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= Settings->pwm_range) && PinUsed(GPIO_PWM1, XdrvMailbox.index -1)) {
       Settings->pwm_value[XdrvMailbox.index -1] = XdrvMailbox.payload;
+#ifdef USE_SLOW_PWM
+      SlowPWMAnalogWrite(Pin(GPIO_PWM1, XdrvMailbox.index -1), bitRead(TasmotaGlobal.pwm_inverted, XdrvMailbox.index -1) ? Settings->pwm_range - XdrvMailbox.payload : XdrvMailbox.payload);
+#else
       analogWrite(Pin(GPIO_PWM1, XdrvMailbox.index -1), bitRead(TasmotaGlobal.pwm_inverted, XdrvMailbox.index -1) ? Settings->pwm_range - XdrvMailbox.payload : XdrvMailbox.payload);
+#endif  // USE_SLOW_PWM
     }
     Response_P(PSTR("{"));
     MqttShowPWMState();  // Render the PWM status to MQTT
@@ -1472,6 +1476,9 @@ void CmndPwmrange(void) {
       }
     }
     if (Settings->pwm_range != old_pwm_range) {  // On ESP32 this prevents loss of duty state
+#ifdef USE_SLOW_PWM
+      SlowPWMAnalogWriteRangeChanged();
+#endif  // USE_SLOW_PWM
       analogWriteRange(Settings->pwm_range);     // Default is 1023 (Arduino.h)
     }
   }
