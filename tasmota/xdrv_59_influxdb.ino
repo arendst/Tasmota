@@ -258,7 +258,7 @@ void InfluxDbProcessJson(void) {
 
 //  AddLog(LOG_LEVEL_DEBUG, PSTR("IFX: JSON %s"), ResponseData());
 
-  String jsonStr = TasmotaGlobal.mqtt_data;
+  String jsonStr = ResponseData();
   JsonParser parser((char *)jsonStr.c_str());
   JsonParserObject root = parser.getRootObject();
   if (root) {

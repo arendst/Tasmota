@@ -3123,7 +3123,7 @@ static void BLEPostMQTTSeenDevices(int type) {
   int remains = 0;
 #ifdef MQTT_DATA_STRING
   ResponseTime_P(PSTR(""));
-  String response_time = TasmotaGlobal.mqtt_data;
+  String response_time = ResponseData();
 
   int maxlen = 1024;
   char dest[maxlen];

@@ -1093,13 +1093,9 @@ bool XdrvRulesProcess(bool teleperiod, const char* event) {
 }
 
 bool XdrvRulesProcess(bool teleperiod) {
-#ifdef MQTT_DATA_STRING
-  bool result = XdrvRulesProcess(teleperiod, TasmotaGlobal.mqtt_data.c_str());
-  ResponseClear();
+  bool result = XdrvRulesProcess(teleperiod, ResponseData());
+  ResponseClear();  // Free heap space
   return result;
-#else
-  return XdrvRulesProcess(teleperiod, TasmotaGlobal.mqtt_data);
-#endif  
 }
 
 #ifdef USE_DEBUG_DRIVER
