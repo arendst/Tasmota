@@ -350,15 +350,8 @@ void MCP2515_Show(bool Json) {
       if (bms.setFields & BMS_TEMP) {
         WSContentSend_Temp(bms.manuf, ConvertTemp(float(bms.battTemp) / 10));
       }
-      if (bms.setFields & BMS_SERIAL) {
-        WSContentSend_PD(PSTR("{s}%s Serial nr.{m}%s{e}"), bms.manuf, bms.serialNr);
-      }
-      if (bms.setFields & BMS_MODEL) {
-        WSContentSend_PD(PSTR("{s}%s Model{m}%d{e}"), bms.manuf, bms.model);
-      }
-      if (bms.setFields & BMS_FIRMWARE_VER) {
-        WSContentSend_PD(PSTR("{s}%s Firmware ver.{m}%d{e}"), bms.manuf, bms.firmwareVer);
-      }
+    } else {
+      WSContentSend_PD(PSTR("{s}MCP2515 {m} Waiting for data{e}"));
     }
   #endif // MCP2515_BMS_CLIENT
 #endif  // USE_WEBSERVER
