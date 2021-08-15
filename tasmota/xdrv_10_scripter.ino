@@ -2403,11 +2403,7 @@ chknext:
           char rstring[SCRIPT_MAXSSIZE];
           rstring[0] = 0;
           int8_t index = fvar;
-#ifdef MQTT_DATA_STRING
-          char *wd = (char*)TasmotaGlobal.mqtt_data.c_str();
-#else
-          char *wd = TasmotaGlobal.mqtt_data;
-#endif
+          char *wd = ResponseData();
           strlcpy(rstring, wd, glob_script_mem.max_ssize);
           if (index) {
             if (strlen(wd) && index) {
@@ -2432,11 +2428,7 @@ chknext:
                 // preserve mqtt_data
                 char *mqd = (char*)malloc(ResponseSize()+2);
                 if (mqd) {
-#ifdef MQTT_DATA_STRING
-                  strlcpy(mqd, TasmotaGlobal.mqtt_data.c_str(), ResponseSize());
-#else
-                  strlcpy(mqd, TasmotaGlobal.mqtt_data, ResponseSize());
-#endif
+                  strlcpy(mqd, ResponseData(), ResponseSize());
                   wd = mqd;
                   char *lwd = wd;
                   while (index) {
@@ -5007,11 +4999,7 @@ void ScripterEvery100ms(void) {
     if (ResponseLength()) {
       ResponseJsonStart();
       ResponseJsonEnd();
-#ifdef MQTT_DATA_STRING
-      Run_Scripter(">T", 2, TasmotaGlobal.mqtt_data.c_str());
-#else
-      Run_Scripter(">T", 2, TasmotaGlobal.mqtt_data);
-#endif
+      Run_Scripter(">T", 2, ResponseData());
     }
   }
   if (bitRead(Settings->rule_enabled, 0)) {
@@ -7735,13 +7723,12 @@ int32_t http_req(char *host, char *request) {
 #ifdef USE_WEBSEND_RESPONSE
 #ifdef MQTT_DATA_STRING
   TasmotaGlobal.mqtt_data = http.getString();
-  //AddLog(LOG_LEVEL_INFO, PSTR("HTTP RESULT %s"), TasmotaGlobal.mqtt_data.c_str());
-  Run_Scripter(">E", 2, TasmotaGlobal.mqtt_data.c_str());
 #else
   strlcpy(TasmotaGlobal.mqtt_data, http.getString().c_str(), ResponseSize());
-  //AddLog(LOG_LEVEL_INFO, PSTR("HTTP RESULT %s"), TasmotaGlobal.mqtt_data);
-  Run_Scripter(">E", 2, TasmotaGlobal.mqtt_data);
 #endif
+  //AddLog(LOG_LEVEL_INFO, PSTR("HTTP RESULT %s"), ResponseData());
+  Run_Scripter(">E", 2, ResponseData());
+
   glob_script_mem.glob_error = 0;
 #endif
 
@@ -8442,41 +8429,24 @@ bool Xdrv10(uint8_t function)
       break;
     case FUNC_RULES_PROCESS:
       if (bitRead(Settings->rule_enabled, 0)) {
-#ifdef MQTT_DATA_STRING
 #ifdef USE_SCRIPT_STATUS
-        if (!strncmp_P(TasmotaGlobal.mqtt_data.c_str(), PSTR("{\"Status"), 8)) {
-          Run_Scripter(">U", 2, TasmotaGlobal.mqtt_data.c_str());
+        if (!strncmp_P(ResponseData(), PSTR("{\"Status"), 8)) {
+          Run_Scripter(">U", 2, ResponseData());
         } else {
-          Run_Scripter(">E", 2, TasmotaGlobal.mqtt_data.c_str());
+          Run_Scripter(">E", 2, ResponseData());
         }
 #else
-        Run_Scripter(">E", 2, TasmotaGlobal.mqtt_data.c_str());
+        Run_Scripter(">E", 2, ResponseData());
 #endif
-#else  // MQTT_DATA_STRING
-#ifdef USE_SCRIPT_STATUS
-        if (!strncmp_P(TasmotaGlobal.mqtt_data, PSTR("{\"Status"), 8)) {
-          Run_Scripter(">U", 2, TasmotaGlobal.mqtt_data);
-        } else {
-          Run_Scripter(">E", 2, TasmotaGlobal.mqtt_data);
-        }
-#else
-        Run_Scripter(">E", 2, TasmotaGlobal.mqtt_data);
-#endif
-#endif  // MQTT_DATA_STRING
+
         result = glob_script_mem.event_handeled;
       }
       break;
     case FUNC_TELEPERIOD_RULES_PROCESS:
       if (bitRead(Settings->rule_enabled, 0)) {
-#ifdef MQTT_DATA_STRING
-        if (TasmotaGlobal.mqtt_data.length()) {
-          Run_Scripter(">T", 2, TasmotaGlobal.mqtt_data.c_str());
+        if (ResponseLength()) {
+          Run_Scripter(">T", 2, ResponseData());
         }
-#else
-        if (TasmotaGlobal.mqtt_data[0]) {
-          Run_Scripter(">T", 2, TasmotaGlobal.mqtt_data);
-        }
-#endif
       }
       break;
 #ifdef USE_WEBSERVER

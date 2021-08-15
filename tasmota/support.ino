@@ -1191,6 +1191,14 @@ char* ResponseGetTime(uint32_t format, char* time_str)
   return time_str;
 }
 
+char* ResponseData(void) {
+#ifdef MQTT_DATA_STRING
+  return (char*)TasmotaGlobal.mqtt_data.c_str();
+#else
+  return TasmotaGlobal.mqtt_data;
+#endif
+}
+
 uint32_t ResponseSize(void) {
 #ifdef MQTT_DATA_STRING
   return MAX_LOGSZ;                            // Arbitratry max length satisfying full log entry
@@ -1333,29 +1341,15 @@ int ResponseJsonEndEnd(void)
 }
 
 bool ResponseContains_P(const char* needle) {
+/*
 #ifdef MQTT_DATA_STRING
   return (strstr_P(TasmotaGlobal.mqtt_data.c_str(), needle) != nullptr);
 #else
   return (strstr_P(TasmotaGlobal.mqtt_data, needle) != nullptr);
 #endif
-}
-
-/*
-uint32_t ResponseContains_P(const char* needle) {
-  const char *tmp;
-#ifdef MQTT_DATA_STRING
-  tmp = TasmotaGlobal.mqtt_data.c_str();
-#else
-  tmp = TasmotaGlobal.mqtt_data;
-#endif
-  uint32_t count = 0;
-  while (tmp = strstr_P(tmp, needle)) {
-    count++;
-    tmp++;
-  }
-  return count;
-}
 */
+  return (strstr_P(ResponseData(), needle) != nullptr);
+}
 
 /*********************************************************************************************\
  * GPIO Module and Template management

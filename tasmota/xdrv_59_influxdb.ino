@@ -256,7 +256,7 @@ char* InfluxDbNumber(char* alternative, const char* source) {
 void InfluxDbProcessJson(void) {
   if (!IFDB.init) { return; }
 
-//  AddLog(LOG_LEVEL_DEBUG, PSTR("IFX: JSON %s"), TasmotaGlobal.mqtt_data.c_str());
+//  AddLog(LOG_LEVEL_DEBUG, PSTR("IFX: JSON %s"), ResponseData());
 
   String jsonStr = TasmotaGlobal.mqtt_data;
   JsonParser parser((char *)jsonStr.c_str());

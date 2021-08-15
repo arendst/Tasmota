@@ -432,7 +432,7 @@ void CmndStatusResponse(uint32_t index) {
       all_status = (const char*) nullptr;
     } else {
       if (0 == index) { all_status = ""; }
-      all_status += TasmotaGlobal.mqtt_data;
+      all_status += ResponseData();
     }
   }
   else if (index < 99) {
