@@ -10,7 +10,7 @@ All notable changes to this project will be documented in this file.
 - Support for (Yeelight) Mi Desk Pro using binary tasmota32solo1.bin
 - Initial support for influxdb using ``#define USE_INFLUXDB`` and several ``Ifx`` commands
 - Command ``SetOption128 1`` disabling web referer check default blocking HTTP web commands (#12828)
-- Initial support for PWM with slower than 1Hz periods using ``#define USE_SLOW_PWM`` and ``SlowPwmPeriod`` command
+- Initial support for PWM with slower than 1Hz periods using ``#define USE_SLOW_PWM`` and ``SlowPwmPeriod`` command (#12890)
 
 ### Changed
 - NeoPixelBus library from v2.6.3 to v2.6.7
