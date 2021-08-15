@@ -400,6 +400,9 @@ const uint16_t DNS_PORT = 53;
 enum HttpOptions {HTTP_OFF, HTTP_USER, HTTP_ADMIN, HTTP_MANAGER, HTTP_MANAGER_RESET_ONLY};
 enum WifiTestOptions {WIFI_NOT_TESTING, WIFI_TESTING, WIFI_TEST_FINISHED, WIFI_TEST_FINISHED_BAD};
 
+const char * headerKeys[] = {"Referer"};
+const size_t numberOfHeaders = 1;
+
 DNSServer *DnsServer;
 ESP8266WebServer *Webserver;
 
@@ -542,6 +545,9 @@ void StartWebserver(int type, IPAddress ipweb)
   if (!Web.state) {
     if (!Webserver) {
       Webserver = new ESP8266WebServer((HTTP_MANAGER == type || HTTP_MANAGER_RESET_ONLY == type) ? 80 : WEB_PORT);
+
+      Webserver->collectHeaders(headerKeys, numberOfHeaders);
+
       // call `Webserver->on()` on each entry
       for (uint32_t i=0; i<nitems(WebServerDispatch); i++) {
         const WebServerDispatch_t & line = WebServerDispatch[i];
@@ -650,7 +656,19 @@ bool HttpCheckPriviledgedAccess(bool autorequestauth = true)
     Webserver->requestAuthentication();
     return false;
   }
-  return true;
+
+  if(!Settings->flag5.disable_referer_chk) {
+    String referer = Webserver->header("Referer");  // http://demo/? or http://192.168.2.153/?
+    referer.toUpperCase();
+    String hostname = NetworkHostname();
+    hostname.toUpperCase();
+    if ((referer.indexOf(hostname) > 0) || (referer.indexOf(NetworkAddress().toString()) > 0)) {
+      return true;
+    }
+    return false;
+  } else {
+    return true;
+  }
 }
 
 #ifdef USE_CORS
