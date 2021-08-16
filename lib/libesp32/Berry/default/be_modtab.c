@@ -101,6 +101,7 @@ BERRY_LOCAL const bntvmodule* const be_module_table[] = {
 extern void be_load_tasmota_ntvlib(bvm *vm);
 extern void be_load_wirelib(bvm *vm);
 extern void be_load_Driver_class(bvm *vm);
+extern void be_load_Timer_class(bvm *vm);
 extern void be_load_driver_i2c_lib(bvm *vm);
 extern void be_load_md5_lib(bvm *vm);
 extern void be_load_aes_gcm_lib(bvm *vm);
@@ -131,6 +132,7 @@ BERRY_API void be_load_custom_libs(bvm *vm)
 #if !BE_USE_PRECOMPILED_OBJECT
     /* be_load_xxxlib(vm); */
 #endif
+    be_load_Timer_class(vm);
     be_load_tasmota_ntvlib(vm);
     be_load_Driver_class(vm);
     be_load_md5_lib(vm);
