@@ -1,6 +1,20 @@
 #- Native code used for testing and code solidification -#
 #- Do not use it -#
 
+class Timer
+  var due, f, id
+  def init(due, f, id)
+    self.due = due
+    self.f = f
+    self.id = id
+  end
+  def tostring()
+    import string
+    return string.format("<instance: %s(%s, %s, %s)", str(classof(self)),
+              str(self.due), str(self.f), str(self.id))
+  end
+end
+
 class Tasmota
 
   # add `chars_in_string(s:string,c:string) -> int``
@@ -127,9 +141,9 @@ class Tasmota
     return false
   end
 
-  def set_timer(delay,f)
+  def set_timer(delay,f,id)
     if !self._timers self._timers=[] end
-    self._timers.push([self.millis(delay),f])
+    self._timers.push(Timer(self.millis(delay),f,id))
   end
 
   # run every 50ms tick
@@ -137,10 +151,24 @@ class Tasmota
     if self._timers
       var i=0
       while i<self._timers.size()
-        if self.time_reached(self._timers[i][0])
-          f=self._timers[i][1]
+        if self.time_reached(self._timers[i].due)
+          f=self._timers[i].f
           self._timers.remove(i)
           f()
+        else
+          i=i+1
+        end
+      end
+    end
+  end
+
+  # remove timers by id
+  def remove_timer(id)
+    if tasmota._timers
+      var i=0
+      while i<tasmota._timers.size()
+        if self._timers[i].id == id
+          self._timers.remove(i)
         else
           i=i+1
         end
