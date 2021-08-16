@@ -28,7 +28,8 @@ def map_gzip(source, target, env):
             map_file.unlink()
 
 
-env.AddPostAction("$BUILD_DIR/${PROGNAME}.bin", [map_gzip])
+if not tasmotapiolib.is_env_set(tasmotapiolib.DISABLE_MAP_GZ):
+    env.AddPostAction("$BUILD_DIR/${PROGNAME}.bin", [map_gzip])
 
 # gzip only for ESP8266
 if env["PIOPLATFORM"] != "espressif32":
@@ -65,4 +66,5 @@ if env["PIOPLATFORM"] != "espressif32":
                 )
             )
 
-    env.AddPostAction("$BUILD_DIR/${PROGNAME}.bin", [bin_gzip])
+    if not tasmotapiolib.is_env_set(tasmotapiolib.DISABLE_BIN_GZ):
+        env.AddPostAction("$BUILD_DIR/${PROGNAME}.bin", [bin_gzip])
