@@ -45,7 +45,7 @@
  * Use precompiled objects to avoid creating these objects at
  * runtime. Enable this macro can greatly optimize RAM usage.
  * Default: 1
-//  **/
+ **/
 #define BE_USE_PRECOMPILED_OBJECT       1
 
 /* Macro: BE_DEBUG_RUNTIME_INFO
@@ -142,6 +142,14 @@
  **/
 #define BE_USE_DEBUG_HOOK               0
 
+/* Macro: BE_USE_DEBUG_GC
+ * Enable GC debug mode. This causes an actual gc after each
+ * allocation. It's much slower and should not be used
+ * in production code.
+ * Default: 0
+ **/
+#define BE_USE_DEBUG_GC                  0
+
 /* Macro: BE_USE_XXX_MODULE
  * These macros control whether the related module is compiled.
  * When they are true, they will enable related modules. At this
@@ -159,6 +167,7 @@
 #define BE_USE_GC_MODULE                1
 #define BE_USE_SOLIDIFY_MODULE          1
 #define BE_USE_INTROSPECT_MODULE        1
+#define BE_USE_STRICT_MODULE            1
 
 /* Macro: BE_EXPLICIT_XXX
  * If these macros are defined, the corresponding function will

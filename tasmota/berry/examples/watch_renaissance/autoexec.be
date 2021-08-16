@@ -38,9 +38,9 @@ ren_sec.set_pos(110,10)
 
 prev_day = -1
 def set_watch()
-    now = tasmota.rtc()
-    time_raw = now['local'] + now['timezone'] * 60
-    time = tasmota.time_dump(time_raw)
+    var now = tasmota.rtc()
+    var time_raw = now['local'] + now['timezone'] * 60
+    var time = tasmota.time_dump(time_raw)
     # set second
     ren_sec.set_angle(60 * time['sec'])
     # set minutes
