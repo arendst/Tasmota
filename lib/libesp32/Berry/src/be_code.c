@@ -23,8 +23,8 @@
 #define min(a, b)               ((a) < (b) ? (a) : (b))
 #define notexpr(e)              isset((e)->not, NOT_EXPR)
 #define notmask(e)              isset((e)->not, NOT_MASK)
-#define exp2anyreg(f, e)        exp2reg(f, e, (f)->freereg)
-#define var2anyreg(f, e)        var2reg(f, e, (f)->freereg)
+#define exp2anyreg(f, e)        exp2reg(f, e, -1)   /* -1 means allocate a new register if needed */
+#define var2anyreg(f, e)        var2reg(f, e, -1)   /* -1 means allocate a new register if needed */
 #define hasjump(e)              ((e)->t != (e)->f || notexpr(e))
 #define code_bool(f, r, b, j)   codeABC(f, OP_LDBOOL, r, b, j)
 #define code_call(f, a, b)      codeABC(f, OP_CALL, a, b, 0)
@@ -321,9 +321,38 @@ static void free_suffix(bfuncinfo *finfo, bexpdesc *e)
     }
 }
 
+static int suffix_destreg(bfuncinfo *finfo, bexpdesc *e1, int dst)
+{
+    int cand_dst = dst;  /* candidate for new dst */
+    int nlocal = be_list_count(finfo->local);
+    int reg1 = (e1->v.ss.tt == ETREG) ? e1->v.ss.obj : -1;  /* check if obj is ETREG or -1 */
+    int reg2 = (!isK(e1->v.ss.idx) && e1->v.ss.idx >= nlocal) ? e1->v.ss.idx : -1;  /* check if idx is ETREG or -1 */
+
+    if (reg1 >= 0 && reg2 >= 0) {
+        /* both are ETREG, we keep the lowest and discard the other */
+        if (reg1 != reg2) {
+            cand_dst = min(reg1, reg2);
+            be_code_freeregs(finfo, 1);  /* and free the other one */
+        } else {
+            cand_dst = reg1;  /* both ETREG are equal, we return its value */
+        }
+    } else if (reg1 >= 0) {
+        cand_dst = reg1;
+    } else if (reg2 >= 0) {
+        cand_dst = reg2;
+    } else {
+        // dst unchanged
+    }
+
+    if (dst >= finfo->freereg) {
+        dst = cand_dst;  /* if dst was allocating a new register, use the more precise candidate */
+    }
+    return dst;
+}
+
 static int code_suffix(bfuncinfo *finfo, bopcode op, bexpdesc *e, int dst)
 {
-    free_suffix(finfo, e); /* free temporary registers */
+    dst = suffix_destreg(finfo, e, dst);
     if (dst > finfo->freereg) {
         dst = finfo->freereg;
     }
@@ -351,6 +380,9 @@ static bbool constint(bfuncinfo *finfo, bint i)
 
 static int var2reg(bfuncinfo *finfo, bexpdesc *e, int dst)
 {
+    if (dst < 0) {  /* if unspecified, allocate a new register if needed */
+        dst = finfo->freereg;
+    }
     be_assert(e != NULL);
     switch (e->type) {
     case ETINT:
@@ -420,28 +452,37 @@ static int exp2reg(bfuncinfo *finfo, bexpdesc *e, int dst)
     return reg;
 }
 
-static int codedestreg(bfuncinfo *finfo, bexpdesc *e1, bexpdesc *e2)
+static int codedestreg(bfuncinfo *finfo, bexpdesc *e1, bexpdesc *e2, int dst)
 {
-    int dst, con1 = e1->type == ETREG, con2 = e2->type == ETREG;
+    int cand_dst = dst;
+    int con1 = e1->type == ETREG, con2 = e2->type == ETREG;
 
     if (con1 && con2) {
-        dst = min(e1->v.idx, e2->v.idx);
+        cand_dst = min(e1->v.idx, e2->v.idx);
         be_code_freeregs(finfo, 1);
     } else if (con1) {
-        dst = e1->v.idx;
+        cand_dst = e1->v.idx;
     } else if (con2) {
-        dst = e2->v.idx;
+        cand_dst = e2->v.idx;
     } else {
-        dst = be_code_allocregs(finfo, 1);
+        if (dst >= finfo->freereg) {
+            cand_dst = be_code_allocregs(finfo, 1);
+            return cand_dst;
+        }
     }
-    return dst;
+    if (dst >= finfo->freereg) {
+        return cand_dst;
+    } else {
+        return dst;
+    }
 }
 
-static void binaryexp(bfuncinfo *finfo, bopcode op, bexpdesc *e1, bexpdesc *e2)
+static void binaryexp(bfuncinfo *finfo, bopcode op, bexpdesc *e1, bexpdesc *e2, int dst)
 {
-    int src1 = exp2anyreg(finfo, e1);
+    if (dst < 0) { dst = finfo->freereg; }
+    int src1 = exp2reg(finfo, e1, dst);  /* potentially force the target for src1 reg */
     int src2 = exp2anyreg(finfo, e2);
-    int dst = codedestreg(finfo, e1, e2);
+    dst = codedestreg(finfo, e1, e2, dst);
     codeABC(finfo, op, dst, src1, src2);
     e1->type = ETREG;
     e1->v.idx = dst;
@@ -462,7 +503,7 @@ void be_code_prebinop(bfuncinfo *finfo, int op, bexpdesc *e)
     }
 }
 
-void be_code_binop(bfuncinfo *finfo, int op, bexpdesc *e1, bexpdesc *e2)
+void be_code_binop(bfuncinfo *finfo, int op, bexpdesc *e1, bexpdesc *e2, int dst)
 {
     switch (op) {
     case OptAnd:
@@ -480,7 +521,7 @@ void be_code_binop(bfuncinfo *finfo, int op, bexpdesc *e1, bexpdesc *e2)
     case OptNE: case OptGT: case OptGE: case OptConnect:
     case OptBitAnd: case OptBitOr: case OptBitXor:
     case OptShiftL: case OptShiftR:
-        binaryexp(finfo, (bopcode)(op - OptAdd), e1, e2);
+        binaryexp(finfo, (bopcode)(op - OptAdd), e1, e2, dst);
         break;
     default: break;
     }
@@ -586,7 +627,7 @@ static void setsfxvar(bfuncinfo *finfo, bopcode op, bexpdesc *e1, int src)
 int be_code_setvar(bfuncinfo *finfo, bexpdesc *e1, bexpdesc *e2)
 {
     int src = exp2reg(finfo, e2,
-        e1->type == ETLOCAL ? e1->v.idx : finfo->freereg);
+        e1->type == ETLOCAL ? e1->v.idx : -1);
 
     if (e1->type != ETLOCAL || e1->v.idx != src) {
         free_expreg(finfo, e2); /* free source (only ETREG) */
