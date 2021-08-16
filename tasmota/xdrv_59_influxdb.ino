@@ -84,7 +84,7 @@ struct {
   String _serverUrl;                     // Connection info
   String _writeUrl;                      // Cached full write url
   String _lastErrorResponse;             // Server reponse or library error message for last failed request
-  uint32_t _lastRequestTime = 0;         // Last time in ms we made are a request to server
+  uint32_t _lastRequestTime = 0;         // Last time in ms we made a request to server
   int interval = 0;
   int _lastStatusCode = 0;               // HTTP status code of last request to server
   int _lastRetryAfter = 0;               // Store retry timeout suggested by server after last request
@@ -161,7 +161,7 @@ void InfluxDbAfterRequest(int expectedStatusCode, bool modifyLastConnStatus) {
     IFDB._lastRequestTime = millis();
 //    AddLog(LOG_LEVEL_DEBUG, PSTR("IFX: HTTP status code %d"), IFDB._lastStatusCode);
     IFDB._lastRetryAfter = 0;
-    if (IFDB._lastStatusCode >= 429) { //retryable server errors
+    if (IFDB._lastStatusCode >= 429) { // Retryable server errors
       if (IFDBhttpClient->hasHeader(RetryAfter)) {
         IFDB._lastRetryAfter = IFDBhttpClient->header(RetryAfter).toInt();
         AddLog(LOG_LEVEL_DEBUG, PSTR("IFX: Reply after %d"), IFDB._lastRetryAfter);
@@ -171,12 +171,12 @@ void InfluxDbAfterRequest(int expectedStatusCode, bool modifyLastConnStatus) {
   IFDB._lastErrorResponse = "";
   if (IFDB._lastStatusCode != expectedStatusCode) {
     if (IFDB._lastStatusCode > 0) {
-      IFDB._lastErrorResponse = IFDBhttpClient->getString();
-      AddLog(LOG_LEVEL_INFO, PSTR("IFX: %s"), IFDB._lastErrorResponse.c_str());  // {"error":"database not found: \"db\""}
+      IFDB._lastErrorResponse = IFDBhttpClient->getString();  // {"error":"database not found: \"db\""}\n
     } else {
       IFDB._lastErrorResponse = IFDBhttpClient->errorToString(IFDB._lastStatusCode);
-      AddLog(LOG_LEVEL_INFO, PSTR("IFX: Error %s"), IFDB._lastErrorResponse.c_str());
     }
+    IFDB._lastErrorResponse.trim();  // Remove trailing \n
+    AddLog(LOG_LEVEL_INFO, PSTR("IFX: Error %s"), IFDB._lastErrorResponse.c_str());
   }
 }
 
@@ -191,8 +191,6 @@ bool InfluxDbValidateConnection(void) {
   if (1 == Settings->influxdb_version) {
     url += InfluxDbAuth();
   }
-  // on version 1.8.9 /health works fine
-//  String url = IFDB._serverUrl + "/health";
   AddLog(LOG_LEVEL_INFO, PSTR("IFX: Validating connection to %s"), url.c_str());
 
   if (!IFDBhttpClient->begin(*IFDBwifiClient, url)) {
@@ -221,6 +219,7 @@ int InfluxDbPostData(const char *data) {
       return false;
     }
 
+    Trim((char*)data);  // Remove trailing \n
     AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("IFX: Sending\n%s"), data);
     IFDBhttpClient->addHeader(F("Content-Type"), F("text/plain"));
     InfluxDbBeforeRequest();
