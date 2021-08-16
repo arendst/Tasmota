@@ -328,6 +328,8 @@
 #define D_WEB_ADMIN_PASSWORD "Clave Administrador Web"
 #define D_MQTT_ENABLE "Habilitar MQTT"
 #define D_MQTT_TLS_ENABLE "MQTT TLS"
+#define D_HTTP_API "HTTP API"
+#define D_HTTP_API_ENABLE "Habilitar HTTP API"
 #define D_FRIENDLY_NAME "Nombre Amigable"
 #define D_BELKIN_WEMO "Belkin WeMo"
 #define D_HUE_BRIDGE "Hue Bridge"
