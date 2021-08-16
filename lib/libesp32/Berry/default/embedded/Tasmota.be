@@ -265,6 +265,47 @@ class Tasmota
     end
   end
 
+  def add_driver(d)
+    if self._drivers
+      self._drivers.push(d)
+        else
+      self._drivers = [d]
+    end
+  end
+
+  # cmd high-level function
+  def cmd(command)
+    import json
+    var ret = self._cmd(command)
+    var j = json.load(ret)
+    if type(j) == 'instance'
+      return j
+    else
+      return {'response':j}
+    end
+  end
+
+  # set_light and get_light deprecetaion
+  def get_light(l)
+    print('tasmota.get_light() is deprecated, use light.get()')
+    import light
+    if l != nil
+      return light.get(l)
+    else
+      return light.get()
+    end
+  end
+  def set_light(v,l)
+    print('tasmota.set_light() is deprecated, use light.set()')
+    import light
+    if l != nil
+      return light.set(v,l)
+    else
+      return light.set(v)
+    end
+  end
+
+
   #- dispatch callback number n, with parameters v0,v1,v2,v3 -#
   def cb_dispatch(n,v0,v1,v2,v3)
     if self._cb == nil return 0 end

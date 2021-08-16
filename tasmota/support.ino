@@ -316,7 +316,7 @@ float CharToFloat(const char *str)
   char *pt = strbuf;
   if (*pt == '\0') { return 0.0; }
 
-  while ((*pt != '\0') && isblank(*pt)) { pt++; }  // Trim leading spaces
+  while ((*pt != '\0') && isspace(*pt)) { pt++; }  // Trim leading spaces
 
   signed char sign = 1;
   if (*pt == '-') { sign = -1; }
@@ -524,17 +524,18 @@ bool StrCaseStr_P(const char* source, const char* search) {
 }
 
 bool IsNumeric(const char* value) {
+  // Test for characters '-.0123456789'
   char *digit = (char*)value;
   while (isdigit(*digit) || *digit == '.' || *digit == '-') { digit++; }
   return (*digit == '\0');
 }
 
-char* Trim(char* p)
-{
+char* Trim(char* p) {
+  // Remove leading and trailing tab, \n, \v, \f, \r and space
   if (*p != '\0') {
-    while ((*p != '\0') && isblank(*p)) { p++; }  // Trim leading spaces
+    while ((*p != '\0') && isspace(*p)) { p++; }  // Trim leading spaces
     char* q = p + strlen(p) -1;
-    while ((q >= p) && isblank(*q)) { q--; }   // Trim trailing spaces
+    while ((q >= p) && isspace(*q)) { q--; }   // Trim trailing spaces
     q++;
     *q = '\0';
   }

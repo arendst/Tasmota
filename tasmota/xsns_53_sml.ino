@@ -1198,7 +1198,7 @@ double CharToDouble(const char *str)
 
   strlcpy(strbuf, str, sizeof(strbuf));
   char *pt = strbuf;
-  while ((*pt != '\0') && isblank(*pt)) { pt++; }  // Trim leading spaces
+  while ((*pt != '\0') && isspace(*pt)) { pt++; }  // Trim leading spaces
 
   signed char sign = 1;
   if (*pt == '-') { sign = -1; }
