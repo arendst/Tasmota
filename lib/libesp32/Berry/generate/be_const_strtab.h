@@ -553,6 +553,7 @@ extern const bcstring be_const_str_gamma10;
 extern const bcstring be_const_str_RISING;
 extern const bcstring be_const_str_lv_draw_mask_line_param;
 extern const bcstring be_const_str_rand;
+extern const bcstring be_const_str_remove_timer;
 extern const bcstring be_const_str_Wire;
 extern const bcstring be_const_str_lv_dropdown;
 extern const bcstring be_const_str_setitem;
