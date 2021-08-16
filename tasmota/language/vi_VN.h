@@ -328,6 +328,8 @@
 #define D_WEB_ADMIN_PASSWORD "Mật khẩu quản trị Web"
 #define D_MQTT_ENABLE "Kích hoạt MQTT"
 #define D_MQTT_TLS_ENABLE "MQTT TLS"
+#define D_HTTP_API "HTTP API"
+#define D_HTTP_API_ENABLE "Kích hoạt HTTP API"
 #define D_FRIENDLY_NAME "Tên hiển thị thiết bị "
 #define D_BELKIN_WEMO "Belkin WeMo"
 #define D_HUE_BRIDGE "Hue Bridge"
