@@ -13,15 +13,15 @@ extern "C" {
 #if BE_LV_WIDGET_IMG
 const lvbe_call_c_t lv_img_func[] = {
   { "buf_free", (void*) &lv_img_buf_free, "", "(lv_img_dsc)" },
-  { "buf_get_img_size", (void*) &lv_img_buf_get_img_size, "i", "ii(lv_img_cf)" },
+  { "buf_get_img_size", (void*) &lv_img_buf_get_img_size, "i", "iii" },
   { "buf_get_px_alpha", (void*) &lv_img_buf_get_px_alpha, "i", "(lv_img_dsc)ii" },
   { "buf_get_px_color", (void*) &lv_img_buf_get_px_color, "lv_color", "(lv_img_dsc)ii(lv_color)" },
   { "buf_set_palette", (void*) &lv_img_buf_set_palette, "", "(lv_img_dsc)i(lv_color)" },
   { "buf_set_px_alpha", (void*) &lv_img_buf_set_px_alpha, "", "(lv_img_dsc)iii" },
   { "buf_set_px_color", (void*) &lv_img_buf_set_px_color, "", "(lv_img_dsc)ii(lv_color)" },
-  { "cf_get_px_size", (void*) &lv_img_cf_get_px_size, "i", "(lv_img_cf)" },
-  { "cf_has_alpha", (void*) &lv_img_cf_has_alpha, "b", "(lv_img_cf)" },
-  { "cf_is_chroma_keyed", (void*) &lv_img_cf_is_chroma_keyed, "b", "(lv_img_cf)" },
+  { "cf_get_px_size", (void*) &lv_img_cf_get_px_size, "i", "i" },
+  { "cf_has_alpha", (void*) &lv_img_cf_has_alpha, "b", "i" },
+  { "cf_is_chroma_keyed", (void*) &lv_img_cf_is_chroma_keyed, "b", "i" },
   { "create", (void*) &lv_img_create, "+lv_img", "(lv_obj)(lv_obj)" },
   { "get_angle", (void*) &lv_img_get_angle, "i", "(lv_obj)" },
   { "get_antialias", (void*) &lv_img_get_antialias, "b", "(lv_obj)" },
@@ -612,7 +612,7 @@ const lvbe_call_c_t lv_canvas_func[] = {
   { "draw_text", (void*) &lv_canvas_draw_text, "", "(lv_obj)iii(lv_draw_label_dsc)si" },
   { "fill_bg", (void*) &lv_canvas_fill_bg, "", "(lv_obj)(lv_color)i" },
   { "get_px", (void*) &lv_canvas_get_px, "lv_color", "(lv_obj)ii" },
-  { "set_buffer", (void*) &lv_canvas_set_buffer, "", "(lv_obj).ii(lv_img_cf)" },
+  { "set_buffer", (void*) &lv_canvas_set_buffer, "", "(lv_obj).iii" },
   { "set_palette", (void*) &lv_canvas_set_palette, "", "(lv_obj)i(lv_color)" },
   { "set_px", (void*) &lv_canvas_set_px, "", "(lv_obj)ii(lv_color)" },
   { "transform", (void*) &lv_canvas_transform, "", "(lv_obj)(lv_img_dsc)iiiiiib" },
@@ -927,9 +927,10 @@ const lvbe_call_c_t lv_msgbox_func[] = {
 /* `lv_objmask` methods */
 #if BE_LV_WIDGET_OBJMASK
 const lvbe_call_c_t lv_objmask_func[] = {
+  { "add_mask", (void*) &lv_objmask_add_mask, ".", "(lv_obj)." },
   { "create", (void*) &lv_objmask_create, "+lv_objmask", "(lv_obj)(lv_obj)" },
-  { "remove_mask", (void*) &lv_objmask_remove_mask, "", "(lv_obj)(lv_objmask_mask)" },
-  { "update_mask", (void*) &lv_objmask_update_mask, "", "(lv_obj)(lv_objmask_mask)." },
+  { "remove_mask", (void*) &lv_objmask_remove_mask, "", "(lv_obj)." },
+  { "update_mask", (void*) &lv_objmask_update_mask, "", "(lv_obj).." },
 };
 #endif // BE_LV_WIDGET_OBJMASK
 

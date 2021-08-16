@@ -292,7 +292,10 @@ const char HTTP_FORM_WIFI_PART2[] PROGMEM =
   "<p><b>" D_AP2_SSID "</b> (" STA_SSID2 ")<br><input id='s2' placeholder=\"" D_AP2_SSID_HELP "\" value=\"%s\"></p>"
   "<p><label><b>" D_AP_PASSWORD "</b><input type='checkbox' onclick='sp(\"p2\")'></label><br><input id='p2' type='password' placeholder=\"" D_AP_PASSWORD_HELP "\" value=\"" D_ASTERISK_PWD "\"></p>"
   "<p><b>" D_HOSTNAME "</b> (%s)<br><input id='h' placeholder=\"%s\" value=\"%s\"></p>"
-  "<p><b>" D_CORS_DOMAIN "</b><input id='c' placeholder=\"" CORS_DOMAIN "\" value=\"%s\"></p>";
+#ifdef USE_CORS
+  "<p><b>" D_CORS_DOMAIN "</b><input id='c' placeholder=\"" CORS_DOMAIN "\" value=\"%s\"></p>"
+#endif
+  ;
 
 const char HTTP_FORM_LOG1[] PROGMEM =
   "<fieldset><legend><b>&nbsp;" D_LOGGING_PARAMETERS "&nbsp;</b>"
@@ -390,7 +393,8 @@ const char kLoggingLevels[] PROGMEM = D_NONE "|" D_ERROR "|" D_INFO "|" D_DEBUG 
 const char kEmulationOptions[] PROGMEM = D_NONE "|" D_BELKIN_WEMO "|" D_HUE_BRIDGE;
 
 const char kUploadErrors[] PROGMEM =
-  D_UPLOAD_ERR_1 "|" D_UPLOAD_ERR_2 "|" D_UPLOAD_ERR_3 "|" D_UPLOAD_ERR_4 "|" D_UPLOAD_ERR_5 "|" D_UPLOAD_ERR_6 "|" D_UPLOAD_ERR_7 "|" D_UPLOAD_ERR_8 "|" D_UPLOAD_ERR_9;
+//  D_UPLOAD_ERR_1 "|" D_UPLOAD_ERR_2 "|" D_UPLOAD_ERR_3 "|" D_UPLOAD_ERR_4 "|" D_UPLOAD_ERR_5 "|" D_UPLOAD_ERR_6 "|" D_UPLOAD_ERR_7 "|" D_UPLOAD_ERR_8 "|" D_UPLOAD_ERR_9;
+  D_UPLOAD_ERR_1 "|" D_UPLOAD_ERR_2 "|" D_UPLOAD_ERR_3 "|" D_UPLOAD_ERR_4 "| |" D_UPLOAD_ERR_6 "|" D_UPLOAD_ERR_7 "|" D_UPLOAD_ERR_8 "|" D_UPLOAD_ERR_9;
 
 const uint16_t DNS_PORT = 53;
 enum HttpOptions {HTTP_OFF, HTTP_USER, HTTP_ADMIN, HTTP_MANAGER, HTTP_MANAGER_RESET_ONLY};
@@ -538,6 +542,11 @@ void StartWebserver(int type, IPAddress ipweb)
   if (!Web.state) {
     if (!Webserver) {
       Webserver = new ESP8266WebServer((HTTP_MANAGER == type || HTTP_MANAGER_RESET_ONLY == type) ? 80 : WEB_PORT);
+
+      const char* headerkeys[] = { "Referer" };
+      size_t headerkeyssize = sizeof(headerkeys) / sizeof(char*);
+      Webserver->collectHeaders(headerkeys, headerkeyssize);
+
       // call `Webserver->on()` on each entry
       for (uint32_t i=0; i<nitems(WebServerDispatch); i++) {
         const WebServerDispatch_t & line = WebServerDispatch[i];
@@ -646,15 +655,32 @@ bool HttpCheckPriviledgedAccess(bool autorequestauth = true)
     Webserver->requestAuthentication();
     return false;
   }
-  return true;
+
+  if (!Settings->flag5.disable_referer_chk && !WifiIsInManagerMode()) {
+    String referer = Webserver->header(F("Referer"));  // http://demo/? or http://192.168.2.153/?
+    if (referer.length()) {
+      referer.toUpperCase();
+      String hostname = NetworkHostname();
+      hostname.toUpperCase();
+      if ((referer.indexOf(hostname) == 7) || (referer.indexOf(NetworkAddress().toString()) == 7)) {
+        return true;
+      }
+    }
+    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP "Referer denied"));
+    return false;
+  } else {
+    return true;
+  }
 }
 
+#ifdef USE_CORS
 void HttpHeaderCors(void)
 {
   if (strlen(SettingsText(SET_CORS))) {
     Webserver->sendHeader(F("Access-Control-Allow-Origin"), SettingsText(SET_CORS));
   }
 }
+#endif
 
 void WSHeaderSend(void)
 {
@@ -664,7 +690,9 @@ void WSHeaderSend(void)
   Webserver->sendHeader(F("Cache-Control"), F("no-cache, no-store, must-revalidate"));
   Webserver->sendHeader(F("Pragma"), F("no-cache"));
   Webserver->sendHeader(F("Expires"), F("-1"));
+#ifdef USE_CORS
   HttpHeaderCors();
+#endif
 }
 
 /**********************************************************************************************
@@ -1830,8 +1858,8 @@ void HandleWifiConfiguration(void) {
 
   if ( WIFI_TEST_FINISHED == Web.wifiTest ) {
     Web.wifiTest = WIFI_NOT_TESTING;
-    if (Web.wifi_test_AP_TIMEOUT) {   
-      WebRestart(1); // Save credentials and Force Restart in STA only mode (11n-only routers) 
+    if (Web.wifi_test_AP_TIMEOUT) {
+      WebRestart(1); // Save credentials and Force Restart in STA only mode (11n-only routers)
     } else {
 #if (RESTART_AFTER_INITIAL_WIFI_CONFIG)
       WebRestart(3);
@@ -1992,7 +2020,11 @@ void HandleWifiConfiguration(void) {
       // As WIFI_HOSTNAME may contain %s-%04d it cannot be part of HTTP_FORM_WIFI where it will exception
       WSContentSend_P(PSTR("></p>"));
     } else {
+#ifdef USE_CORS
       WSContentSend_P(HTTP_FORM_WIFI_PART2, SettingsText(SET_STASSID2), WIFI_HOSTNAME, WIFI_HOSTNAME, SettingsText(SET_HOSTNAME), SettingsText(SET_CORS));
+#else
+      WSContentSend_P(HTTP_FORM_WIFI_PART2, SettingsText(SET_STASSID2), WIFI_HOSTNAME, WIFI_HOSTNAME, SettingsText(SET_HOSTNAME));
+#endif
     }
 
     WSContentSend_P(HTTP_FORM_END);
@@ -2025,7 +2057,9 @@ void HandleWifiConfiguration(void) {
 void WifiSaveSettings(void) {
   String cmnd = F(D_CMND_BACKLOG "0 ");
   cmnd += AddWebCommand(PSTR(D_CMND_HOSTNAME), PSTR("h"), PSTR("1"));
+#ifdef USE_CORS
   cmnd += AddWebCommand(PSTR(D_CMND_CORS), PSTR("c"), PSTR("1"));
+#endif
   cmnd += AddWebCommand(PSTR(D_CMND_SSID "1"), PSTR("s1"), PSTR("1"));
   cmnd += AddWebCommand(PSTR(D_CMND_SSID "2"), PSTR("s2"), PSTR("1"));
   cmnd += AddWebCommand(PSTR(D_CMND_PASSWORD "3"), PSTR("p1"), PSTR("\""));
@@ -2101,11 +2135,7 @@ void HandleOtherConfiguration(void) {
   WSContentSendStyle();
 
   TemplateJson();
-#ifdef MQTT_DATA_STRING
-  WSContentSend_P(HTTP_FORM_OTHER, TasmotaGlobal.mqtt_data.c_str(), (USER_MODULE == Settings->module) ? PSTR(" checked disabled") : "",
-#else
-  WSContentSend_P(HTTP_FORM_OTHER, TasmotaGlobal.mqtt_data, (USER_MODULE == Settings->module) ? PSTR(" checked disabled") : "",
-#endif
+  WSContentSend_P(HTTP_FORM_OTHER, ResponseData(), (USER_MODULE == Settings->module) ? PSTR(" checked disabled") : "",
     (Settings->flag.mqtt_enabled) ? PSTR(" checked") : "",   // SetOption3 - Enable MQTT
     SettingsText(SET_FRIENDLYNAME1), SettingsText(SET_DEVICENAME));
 
@@ -2309,7 +2339,8 @@ void HandleInformation(void)
   if (!TasmotaGlobal.global_state.network_down) {
     WSContentSend_P(PSTR("}1" D_GATEWAY "}2%_I"), Settings->ipv4_address[1]);
     WSContentSend_P(PSTR("}1" D_SUBNET_MASK "}2%_I"), Settings->ipv4_address[2]);
-    WSContentSend_P(PSTR("}1" D_DNS_SERVER "}2%_I"), Settings->ipv4_address[3]);
+    WSContentSend_P(PSTR("}1" D_DNS_SERVER "1}2%_I"), Settings->ipv4_address[3]);
+    WSContentSend_P(PSTR("}1" D_DNS_SERVER "2}2%_I"), Settings->ipv4_address[4]);
   }
   if ((WiFi.getMode() >= WIFI_AP) && (static_cast<uint32_t>(WiFi.softAPIP()) != 0)) {
     WSContentSend_P(PSTR("}1<hr/>}2<hr/>"));
@@ -2722,7 +2753,8 @@ void HandleUploadLoop(void) {
     }
 #endif  // USE_WEB_FW_UPGRADE
     else if (Update.write(upload.buf, upload.currentSize) != upload.currentSize) {
-      Web.upload_error = 5;  // Upload buffer miscompare
+//      Web.upload_error = 5;  // Upload buffer miscompare
+      Web.upload_error = 2;  // Not enough space
       return;
     }
     if (upload.totalSize && !(upload.totalSize % 102400)) {
@@ -2813,7 +2845,9 @@ void HandleUploadLoop(void) {
 
 void HandlePreflightRequest(void)
 {
+#ifdef USE_CORS
   HttpHeaderCors();
+#endif
   Webserver->sendHeader(F("Access-Control-Allow-Methods"), F("GET, POST"));
   Webserver->sendHeader(F("Access-Control-Allow-Headers"), F("authorization"));
   WSSend(200, CT_HTML, "");
@@ -3102,7 +3136,11 @@ const char kWebCommands[] PROGMEM = "|"  // No prefix
   D_CMND_SENDMAIL "|"
 #endif
   D_CMND_WEBSERVER "|" D_CMND_WEBPASSWORD "|" D_CMND_WEBLOG "|" D_CMND_WEBREFRESH "|" D_CMND_WEBSEND "|" D_CMND_WEBCOLOR "|"
-  D_CMND_WEBSENSOR "|" D_CMND_WEBBUTTON "|" D_CMND_CORS;
+  D_CMND_WEBSENSOR "|" D_CMND_WEBBUTTON
+#ifdef USE_CORS
+  "|" D_CMND_CORS
+#endif
+  ;
 
 void (* const WebCommand[])(void) PROGMEM = {
 #ifdef USE_EMULATION
@@ -3112,7 +3150,11 @@ void (* const WebCommand[])(void) PROGMEM = {
   &CmndSendmail,
 #endif
   &CmndWebServer, &CmndWebPassword, &CmndWeblog, &CmndWebRefresh, &CmndWebSend, &CmndWebColor,
-  &CmndWebSensor, &CmndWebButton, &CmndCors };
+  &CmndWebSensor, &CmndWebButton
+#ifdef USE_CORS
+  , &CmndCors
+#endif
+  };
 
 /*********************************************************************************************\
  * Commands
@@ -3257,6 +3299,7 @@ void CmndWebButton(void)
   }
 }
 
+#ifdef USE_CORS
 void CmndCors(void)
 {
   if (XdrvMailbox.data_len > 0) {
@@ -3264,6 +3307,7 @@ void CmndCors(void)
   }
   ResponseCmndChar(SettingsText(SET_CORS));
 }
+#endif
 
 /*********************************************************************************************\
  * Interface
@@ -3329,7 +3373,7 @@ bool Xdrv01(uint8_t function)
               //
               //   If it fails again, depending on the WIFICONFIG settings, the user will need to wait or will need to
               //   push 6 times the button to enable Tasmota AP mode again.
-              if (Web.wifi_test_AP_TIMEOUT) {   
+              if (Web.wifi_test_AP_TIMEOUT) {
                 Web.wifiTest = WIFI_TEST_FINISHED;
                 AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_CMND_SSID "1 %s: " D_ATTEMPTING_CONNECTION), SettingsText(SET_STASSID1) );
                 if (MAX_WIFI_OPTION != Web.old_wificonfig) {

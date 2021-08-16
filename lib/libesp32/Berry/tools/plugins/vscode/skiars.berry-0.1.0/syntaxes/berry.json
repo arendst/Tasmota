@@ -67,7 +67,7 @@
         "keywords": {
             "patterns": [{
                 "name": "keyword.berry",
-                "match": "\\b(var|def|class|true|false|nil|self|super|import|as)\\b"
+                "match": "\\b(var|static|def|class|true|false|nil|self|super|import|as)\\b"
             }]
         },
         "identifier": {

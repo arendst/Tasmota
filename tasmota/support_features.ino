@@ -753,9 +753,15 @@ void ResponseAppendFeatures(void)
 #if defined(USE_SPI) && defined(USE_MCP2515)
     feature8 |= 0x00000100;  // xsns_87_mcp2515.ino
 #endif
-//    feature8 |= 0x00000200;
-//    feature8 |= 0x00000400;
-//    feature8 |= 0x00000800;
+#ifdef USE_TASMESH
+    feature8 |= 0x00000200;  // xdrv_57_9_tasmesh.ino
+#endif
+#ifdef USE_WIFI_RANGE_EXTENDER
+    feature8 |= 0x00000400;  // xdrv_58_range_extender.ino
+#endif
+#ifdef USE_INFLUXDB
+    feature8 |= 0x00000800;  // xdrv_59_influxdb.ino
+#endif
 
 //    feature8 |= 0x00001000;
 //    feature8 |= 0x00002000;

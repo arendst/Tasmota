@@ -160,6 +160,7 @@ class Partition_info
   end
 
   def tostring()
+    import string
     var type_s = ""
     var subtype_s = ""
     if   self.type == 0  type_s = "app"

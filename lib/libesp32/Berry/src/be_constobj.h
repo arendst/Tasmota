@@ -37,14 +37,34 @@ extern "C" {
     .type = BE_FUNCTION                                         \
 }
 
+#define be_const_nil() {                                        \
+    .v.i = 0,                                                   \
+    .type = BE_NIL                                              \
+}
+
 #define be_const_int(_val) {                                    \
     .v.i = (bint)(_val),                                        \
     .type = BE_INT                                              \
 }
 
+#define be_const_index(_val) {                                  \
+    .v.i = (bint)(_val),                                        \
+    .type = BE_INDEX                                            \
+}
+
 #define be_const_real(_val) {                                   \
     .v.r = (breal)(_val),                                       \
     .type = BE_REAL                                             \
+}
+
+#define be_const_real_hex(_val) {                               \
+    .v.p = (void*)(_val),                                       \
+    .type = BE_REAL                                             \
+}
+
+#define be_const_bool(_val) {                                   \
+    .v.b = (bbool)(_val),                                       \
+    .type = BE_BOOL                                             \
 }
 
 #define be_const_str(_str) {                                    \
@@ -83,7 +103,7 @@ const bmap _name = {                                            \
 const bclass _name = {                                          \
     be_const_header(BE_CLASS),                                  \
     .nvar = _nvar,                                              \
-    .super = (bclass*)_super,                                   \
+    .super = _super,                                            \
     .members = (bmap*)&_name##_map,                             \
     .name = (bstring*)&be_const_str_##_name_                    \
 }
@@ -122,6 +142,39 @@ const bntvmodule be_native_module(_module) = {                  \
     .init = _init                                               \
 }
 
+/* defines needed for solidified classes */
+#define be_local_class(_name, _nvar, _super, _map, _cname)      \
+  const bclass be_class_##_name = {                             \
+    be_const_header(BE_CLASS),                                  \
+    .nvar = _nvar,                                              \
+    .super = (bclass*)_super,                                   \
+    .members = (bmap*)_map,                                     \
+    .name = _cname                                              \
+}
+
+#define be_nested_map(_size, _slots)                            \
+  & (const bmap) {                                              \
+    be_const_header(BE_MAP),                                    \
+    .slots = _slots,                                            \
+    .lastfree = NULL,                                           \
+    .size = _size,                                              \
+    .count = _size                                              \
+  }
+
+#define be_nested_string(_str, _hash, _len)                     \
+  {                                                             \
+    { .s=(be_nested_const_str(_str, _hash, _len ))              \
+    },                                                          \
+    BE_STRING                                                   \
+  }
+
+#define be_nested_key(_str, _hash, _len, _next)                 \
+  {                                                             \
+    { .s=(be_nested_const_str(_str, _hash, _len )) },           \
+    BE_STRING,                                                  \
+    (uint32_t)(_next) & 0xFFFFFF                                \
+  }
+
 #else
 
 #define be_const_key(_str, _next) {                             \
@@ -135,13 +188,33 @@ const bntvmodule be_native_module(_module) = {                  \
     BE_FUNCTION                                                 \
 }
 
+#define be_const_nil() {                                        \
+    bvaldata(0),                                                \
+    BE_NIL                                                      \
+}
+
 #define be_const_int(_val) {                                    \
     bvaldata(bint(_val)),                                       \
     BE_INT                                                      \
 }
 
+#define be_const_bool(_val) {                                   \
+    bvaldata(bbool(_val)),                                      \
+    BE_BOOL                                                     \
+}
+
+#define be_const_index(_val) {                                  \
+    bvaldata(bint(_val)),                                       \
+    BE_INDEX                                                    \
+}
+
 #define be_const_real(_val) {                                   \
     bvaldata(breal(_val)),                                      \
+    BE_REAL                                                     \
+}
+
+#define be_const_real_hex(_val) {                               \
+    bvaldata((void*)(_val)),                                    \
     BE_REAL                                                     \
 }
 

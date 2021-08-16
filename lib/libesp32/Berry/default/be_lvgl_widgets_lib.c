@@ -852,6 +852,7 @@ extern int lvbe_msgbox_get_btnmatrix(bvm *vm);
 
 /* `lv_objmask` external functions definitions */
 extern int lvbe_objmask_create(bvm *vm);
+extern int lvbe_objmask_add_mask(bvm *vm);
 extern int lvbe_objmask_update_mask(bvm *vm);
 extern int lvbe_objmask_remove_mask(bvm *vm);
 

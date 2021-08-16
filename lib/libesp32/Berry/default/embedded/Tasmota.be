@@ -1,7 +1,7 @@
 #- Native code used for testing and code solidification -#
 #- Do not use it -#
 
-class Tasmota2 : Tasmota
+class Tasmota
 
   # add `chars_in_string(s:string,c:string) -> int``
   # looks for any char in c, and return the position of the first char
@@ -241,35 +241,27 @@ class Tasmota2 : Tasmota
 
   end
 
-  def event(type, cmd, idx, payload)
-    if type=='cmd' return self.exec_cmd(cmd, idx, payload)
-    elif type=='rule' return self.exec_rules(payload)
-    elif type=='mqtt_data' return nil
-    elif type=='gc' return self.gc()
-    elif type=='every_50ms' return self.run_deferred()
+  def event(event_type, cmd, idx, payload, raw)
+    import introspect
+    if event_type=='every_50ms' self.run_deferred() end  #- first run deferred events -#
+
+    if event_type=='cmd' return self.exec_cmd(cmd, idx, payload)
+    elif event_type=='rule' return self.exec_rules(payload)
+    elif event_type=='gc' return self.gc()
     elif self._drivers
       for d:self._drivers
-        try
-          if   type=='every_second' && d.every_second                           d.every_second()
-          elif type=='every_100ms' && d.every_100ms                             d.every_100ms()
-          elif type=='web_add_button' && d.web_add_button                       d.web_add_button()
-          elif type=='web_add_main_button' && d.web_add_main_button             d.web_add_main_button()
-          elif type=='web_add_management_button' && d.web_add_management_button d.web_add_management_button()
-          elif type=='web_add_config_button' && d.web_add_config_button         d.web_add_config_button()
-          elif type=='web_add_console_button' && d.web_add_console_button       d.web_add_console_button()
-          elif type=='save_before_restart' && d.save_before_restart             d.save_before_restart()
-          elif type=='web_add_handler' && d.web_add_handler                     d.web_add_handler()
-          elif type=='web_sensor' && d.web_sensor                               d.web_sensor()
-          elif type=='json_append' && d.json_append                             d.json_append()
-          elif type=='button_pressed' && d.button_pressed                       d.button_pressed()
-          elif type=='web_add_handler' && d.display                             d.display()
-          elif type=='display' && d.display                                     d.display()
+        var f = introspect.get(d, event_type)   # try to match a function or method with the same name
+        if type(f) == 'function'
+          try
+            var done = f(d, cmd, idx, payload, raw)
+            if done == true return true end
+          except .. as e,m
+            import string
+            print(string.format("BRY: Exception> '%s' - %s", e, m))
           end
-        except .. as e,m
-          import string
-          print(string.format("BRY: Exception> '%s' - %s", e, m))
         end
       end
+      return false
     end
   end
 
@@ -297,4 +289,3 @@ class Tasmota2 : Tasmota
   end
 
 end
-tasmota = Tasmota2()

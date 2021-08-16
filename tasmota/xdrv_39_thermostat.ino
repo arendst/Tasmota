@@ -1328,7 +1328,7 @@ void ThermostatDebug(uint8_t ctr_output)
 #endif // DEBUG_THERMOSTAT
 
 void ThermostatGetLocalSensor(uint8_t ctr_output) {
-  String buf = TasmotaGlobal.mqtt_data;   // copy the string into a new buffer that will be modified
+  String buf = ResponseData();   // copy the string into a new buffer that will be modified
   JsonParser parser((char*)buf.c_str());
   JsonParserObject root = parser.getRootObject();
   if (root) {

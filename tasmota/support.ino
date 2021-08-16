@@ -523,6 +523,12 @@ bool StrCaseStr_P(const char* source, const char* search) {
   return (strstr(case_source, case_search) != nullptr);
 }
 
+bool IsNumeric(const char* value) {
+  char *digit = (char*)value;
+  while (isdigit(*digit) || *digit == '.' || *digit == '-') { digit++; }
+  return (*digit == '\0');
+}
+
 char* Trim(char* p)
 {
   if (*p != '\0') {
@@ -964,7 +970,7 @@ const uint8_t sNumbers[] PROGMEM = { 0,0,0,0,0,0,0,
                                      4,4,
                                      255 };
 
-int GetStateNumber(char *state_text)
+int GetStateNumber(const char *state_text)
 {
   char command[CMDSZ];
   int state_number = GetCommandCode(command, sizeof(command), state_text, kOptions);
@@ -1185,6 +1191,14 @@ char* ResponseGetTime(uint32_t format, char* time_str)
   return time_str;
 }
 
+char* ResponseData(void) {
+#ifdef MQTT_DATA_STRING
+  return (char*)TasmotaGlobal.mqtt_data.c_str();
+#else
+  return TasmotaGlobal.mqtt_data;
+#endif
+}
+
 uint32_t ResponseSize(void) {
 #ifdef MQTT_DATA_STRING
   return MAX_LOGSZ;                            // Arbitratry max length satisfying full log entry
@@ -1327,29 +1341,15 @@ int ResponseJsonEndEnd(void)
 }
 
 bool ResponseContains_P(const char* needle) {
+/*
 #ifdef MQTT_DATA_STRING
   return (strstr_P(TasmotaGlobal.mqtt_data.c_str(), needle) != nullptr);
 #else
   return (strstr_P(TasmotaGlobal.mqtt_data, needle) != nullptr);
 #endif
-}
-
-/*
-uint32_t ResponseContains_P(const char* needle) {
-  const char *tmp;
-#ifdef MQTT_DATA_STRING
-  tmp = TasmotaGlobal.mqtt_data.c_str();
-#else
-  tmp = TasmotaGlobal.mqtt_data;
-#endif
-  uint32_t count = 0;
-  while (tmp = strstr_P(tmp, needle)) {
-    count++;
-    tmp++;
-  }
-  return count;
-}
 */
+  return (strstr_P(ResponseData(), needle) != nullptr);
+}
 
 /*********************************************************************************************\
  * GPIO Module and Template management

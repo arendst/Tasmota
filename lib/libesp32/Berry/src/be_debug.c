@@ -62,6 +62,9 @@ void be_print_inst(binstruction ins, int pc)
     case OP_OR: case OP_XOR: case OP_SHL: case OP_SHR:
         logbuf("%s\tR%d\tR%d\tR%d", opc2str(op), IGET_RA(ins), IGET_RKB(ins), IGET_RKC(ins));
         break;
+    case OP_GETNGBL: case OP_SETNGBL:
+        logbuf("%s\tR%d\tR%d", opc2str(op), IGET_RA(ins), IGET_RKB(ins));
+        break;
     case OP_GETGBL: case OP_SETGBL:
         logbuf("%s\tR%d\tG%d", opc2str(op), IGET_RA(ins), IGET_Bx(ins));
         break;

@@ -2689,11 +2689,7 @@ void MI32ShowSomeSensors(){
   }
   ResponseAppend_P(PSTR("}"));
   MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR(D_RSLT_SENSOR), Settings->flag.mqtt_sensor_retain);
-#ifdef MQTT_DATA_STRING
-  //AddLog(LOG_LEVEL_DEBUG,PSTR("M32: %s: show some %d %s"),D_CMND_MI32, MI32.mqttCurrentSlot, TasmotaGlobal.mqtt_data.c_str());
-#else
-  //AddLog(LOG_LEVEL_DEBUG,PSTR("M32: %s: show some %d %s"),D_CMND_MI32, MI32.mqttCurrentSlot, TasmotaGlobal.mqtt_data);
-#endif
+  //AddLog(LOG_LEVEL_DEBUG,PSTR("M32: %s: show some %d %s"),D_CMND_MI32, MI32.mqttCurrentSlot, ResponseData());
 
 #ifdef USE_HOME_ASSISTANT
   if(hass_mode==2){
@@ -2746,11 +2742,7 @@ void MI32ShowOneMISensor(){
       id);
 
     MqttPublish(SensorTopic);
-#ifdef MQTT_DATA_STRING
-    //AddLog(LOG_LEVEL_DEBUG,PSTR("M32: %s: show some %d %s"),D_CMND_MI32, MI32.mqttCurrentSlot, TasmotaGlobal.mqtt_data.c_str());
-#else
-    //AddLog(LOG_LEVEL_DEBUG,PSTR("M32: %s: show some %d %s"),D_CMND_MI32, MI32.mqttCurrentSlot, TasmotaGlobal.mqtt_data);
-#endif
+    //AddLog(LOG_LEVEL_DEBUG,PSTR("M32: %s: show some %d %s"),D_CMND_MI32, MI32.mqttCurrentSlot, ResponseData());
   }
   MI32.mqttCurrentSingleSlot++;
 }
@@ -3006,11 +2998,7 @@ void MI32DiscoveryOneMISensor(){
       //vTaskDelay(100/ portTICK_PERIOD_MS);
     }
   } // end if hass discovery
-#ifdef MQTT_DATA_STRING
-  //AddLog(LOG_LEVEL_DEBUG,PSTR("M32: %s: show some %d %s"),D_CMND_MI32, MI32.mqttCurrentSlot, TasmotaGlobal.mqtt_data.c_str());
-#else
-  //AddLog(LOG_LEVEL_DEBUG,PSTR("M32: %s: show some %d %s"),D_CMND_MI32, MI32.mqttCurrentSlot, TasmotaGlobal.mqtt_data);
-#endif
+  //AddLog(LOG_LEVEL_DEBUG,PSTR("M32: %s: show some %d %s"),D_CMND_MI32, MI32.mqttCurrentSlot, ResponseData());
 #endif //USE_HOME_ASSISTANT
 
 }
@@ -3088,11 +3076,7 @@ void MI32ShowTriggeredSensors(){
       } else {
         MqttPublishPrefixTopic_P(STAT, PSTR(D_RSLT_SENSOR), Settings->flag.mqtt_sensor_retain);
       }
-#ifdef MQTT_DATA_STRING
-      AddLog(LOG_LEVEL_DEBUG,PSTR("M32: %s: triggered %d %s"),D_CMND_MI32, sensor, TasmotaGlobal.mqtt_data.c_str());
-#else
-      AddLog(LOG_LEVEL_DEBUG,PSTR("M32: %s: triggered %d %s"),D_CMND_MI32, sensor, TasmotaGlobal.mqtt_data);
-#endif
+      AddLog(LOG_LEVEL_DEBUG,PSTR("M32: %s: triggered %d %s"),D_CMND_MI32, sensor, ResponseData());
       XdrvRulesProcess(0);
 
     } else { // else don't and clear

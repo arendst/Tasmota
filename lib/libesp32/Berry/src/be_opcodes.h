@@ -52,4 +52,6 @@ OPCODE(IMPORT),     /*  A, B, C  |   IF (A == C) import module name as RK(B) to 
 OPCODE(EXBLK),      /*  A, Bx    |   ... */
 OPCODE(CATCH),      /*  A, B, C  |   ... */
 OPCODE(RAISE),      /*  A, B, C  |   ... */
-OPCODE(CLASS)       /*  Bx       |   init class in K[Bx] */
+OPCODE(CLASS),      /*  Bx       |   init class in K[Bx] */
+OPCODE(GETNGBL),    /*  A, B     |   R(A) <- GLOBAL[B] by name */
+OPCODE(SETNGBL)     /*  A, B     |   R(A) -> GLOBAL[B] by name */

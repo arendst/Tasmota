@@ -18,6 +18,9 @@
     "ethernet",
     "can"
   ],
+  "debug": {
+    "openocd_target": "esp32.cfg"
+  },
   "frameworks": [
     "arduino",
     "espidf"

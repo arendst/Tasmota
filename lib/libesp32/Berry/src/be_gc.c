@@ -339,12 +339,19 @@ static void free_lstring(bvm *vm, bgcobject *obj)
     }
 }
 
+static void free_instance(bvm *vm, bgcobject *obj)
+{
+    binstance *o = cast_instance(obj);
+    int nvar = be_instance_member_count(o);
+    be_free(vm, obj, sizeof(binstance) + sizeof(bvalue) * (nvar - 1));
+}
+
 static void free_object(bvm *vm, bgcobject *obj)
 {
     switch (obj->type) {
     case BE_STRING: free_lstring(vm, obj); break; /* long string */
     case BE_CLASS: be_free(vm, obj, sizeof(bclass)); break;
-    case BE_INSTANCE: be_free(vm, obj, sizeof(binstance)); break;
+    case BE_INSTANCE: free_instance(vm, obj); break;
     case BE_MAP: be_map_delete(vm, cast_map(obj)); break;
     case BE_LIST: be_list_delete(vm, cast_list(obj)); break;
     case BE_CLOSURE: free_closure(vm, obj); break;

@@ -31,6 +31,7 @@ void be_code_closure(bfuncinfo *finfo, bexpdesc *e, int idx);
 void be_code_close(bfuncinfo *finfo, int isret);
 void be_code_class(bfuncinfo *finfo, bexpdesc *dst, bclass *c);
 void be_code_ret(bfuncinfo *finfo, bexpdesc *e);
+int be_code_nglobal(bfuncinfo *finfo, bexpdesc *k);
 void be_code_member(bfuncinfo *finfo, bexpdesc *e1, bexpdesc *e2);
 void be_code_index(bfuncinfo *finfo, bexpdesc *c, bexpdesc *k);
 void be_code_setsuper(bfuncinfo *finfo, bexpdesc *c, bexpdesc *s);

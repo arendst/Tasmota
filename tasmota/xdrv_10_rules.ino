@@ -987,11 +987,7 @@ void RulesEvery100ms(void) {
     if (ResponseLength()) {
       ResponseJsonStart();                                           // {"INA219":{"Voltage":4.494,"Current":0.020,"Power":0.089}
       ResponseJsonEnd();
-#ifdef MQTT_DATA_STRING
-      RulesProcessEvent(TasmotaGlobal.mqtt_data.c_str());
-#else
-      RulesProcessEvent(TasmotaGlobal.mqtt_data);
-#endif
+      RulesProcessEvent(ResponseData());
     }
   }
 }

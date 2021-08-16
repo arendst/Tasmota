@@ -136,7 +136,7 @@ const uint32_t PWM_RANGE = 1023;            // 255..1023 needs to be devisible b
 //const uint16_t PWM_FREQ = 910;              // 100..1000 Hz led refresh (iTead value)
 const uint16_t PWM_FREQ = 977;              // 100..4000 Hz led refresh
 #ifdef ESP32
-const uint16_t PWM_MAX = 50000;              // [PWM_MAX] Maximum frequency for ESP32 - Default: 4000
+const uint16_t PWM_MAX = 50000;             // [PWM_MAX] Maximum frequency for ESP32 - Default: 50000
 #else
 const uint16_t PWM_MAX = 4000;              // [PWM_MAX] Maximum frequency - Default: 4000
 #endif
@@ -368,6 +368,8 @@ enum SettingsTextIndex { SET_OTAURL,
                          SET_SWITCH_TXT25, SET_SWITCH_TXT26, SET_SWITCH_TXT27, SET_SWITCH_TXT28,  // MAX_SWITCHES_TXT
 #endif  // ESP32
                          SET_SHD_PARAM,
+                         SET_RGX_SSID, SET_RGX_PASSWORD,
+                         SET_INFLUXDB_HOST, SET_INFLUXDB_PORT, SET_INFLUXDB_ORG, SET_INFLUXDB_TOKEN, SET_INFLUXDB_BUCKET,
                          SET_MAX };
 
 enum SpiInterfaces { SPI_NONE, SPI_MOSI, SPI_MISO, SPI_MOSI_MISO };

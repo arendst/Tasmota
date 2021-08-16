@@ -20,6 +20,7 @@ be_extern_native_module(sys);
 be_extern_native_module(debug);
 be_extern_native_module(gc);
 be_extern_native_module(solidify);
+be_extern_native_module(introspect);
 
 /* Tasmota specific */
 be_extern_native_module(light);
@@ -69,6 +70,9 @@ BERRY_LOCAL const bntvmodule* const be_module_table[] = {
 #if BE_USE_SOLIDIFY_MODULE
     &be_native_module(solidify),
 #endif
+#if BE_USE_INTROSPECT_MODULE
+    &be_native_module(introspect),
+#endif
     /* user-defined modules register start */
     
     &be_native_module(path),
@@ -96,9 +100,14 @@ BERRY_LOCAL const bntvmodule* const be_module_table[] = {
 #ifdef ESP32
 extern void be_load_tasmota_ntvlib(bvm *vm);
 extern void be_load_wirelib(bvm *vm);
-extern void be_load_driverlib(bvm *vm);
+extern void be_load_Driver_class(bvm *vm);
 extern void be_load_driver_i2c_lib(bvm *vm);
 extern void be_load_md5_lib(bvm *vm);
+extern void be_load_aes_gcm_lib(bvm *vm);
+
+#ifdef USE_I2S_AUDIO_BERRY
+extern void be_load_driver_audio_lib(bvm *vm);
+#endif
 
 #ifdef USE_LVGL
 extern void be_load_lvgl_color_lib(bvm *vm);
@@ -108,6 +117,9 @@ extern void be_load_lvgl_cb_lib(bvm *vm);
 extern void be_load_lvgl_cb_all_lib(bvm *vm);
 extern void be_load_lvgl_ctypes_lib(bvm *vm);
 extern void be_load_ctypes_definitions_lib(bvm *vm);
+// custom widgets
+extern void be_load_lv_signal_bars_class(bvm *vm);
+extern void be_load_lv_wifi_bars_class(bvm *vm);
 #endif// USE_LVGL
 
 /* this code loads the native class definitions */
@@ -120,12 +132,18 @@ BERRY_API void be_load_custom_libs(bvm *vm)
     /* be_load_xxxlib(vm); */
 #endif
     be_load_tasmota_ntvlib(vm);
-    be_load_driverlib(vm);
+    be_load_Driver_class(vm);
     be_load_md5_lib(vm);
+#ifdef USE_ALEXA_AVS
+    be_load_aes_gcm_lib(vm);
+#endif
 #ifdef USE_I2C
     be_load_wirelib(vm);
     be_load_driver_i2c_lib(vm);
 #endif // USE_I2C
+#ifdef USE_I2S_AUDIO_BERRY
+    be_load_driver_audio_lib(vm);
+#endif
 #ifdef USE_LVGL
     // LVGL
     be_load_lvgl_color_lib(vm);
@@ -136,6 +154,9 @@ BERRY_API void be_load_custom_libs(bvm *vm)
     be_load_lvgl_cb_all_lib(vm);
     be_load_lvgl_ctypes_lib(vm);
     be_load_ctypes_definitions_lib(vm);
+    // custom widgets
+    be_load_lv_signal_bars_class(vm);
+    be_load_lv_wifi_bars_class(vm);
 #endif // USE_LVGL
 }
 #endif

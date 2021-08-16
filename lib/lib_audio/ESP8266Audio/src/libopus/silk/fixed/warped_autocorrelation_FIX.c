@@ -49,8 +49,8 @@ void silk_warped_autocorrelation_FIX_c(
 {
     opus_int   n, i, lsh;
     opus_int32 tmp1_QS, tmp2_QS;
-    opus_int32 state_QS[ MAX_SHAPE_LPC_ORDER + 1 ] = { 0 };
-    opus_int64 corr_QC[  MAX_SHAPE_LPC_ORDER + 1 ] = { 0 };
+    opus_int32 *state_QS = (opus_int32*)calloc(MAX_SHAPE_LPC_ORDER + 1, sizeof(opus_int32));
+    opus_int64 *corr_QC = (opus_int64*)calloc(MAX_SHAPE_LPC_ORDER + 1, sizeof(opus_int64));
 
     /* Order must be even */
     celt_assert( ( order & 1 ) == 0 );
@@ -88,5 +88,7 @@ void silk_warped_autocorrelation_FIX_c(
         }
     }
     silk_assert( corr_QC[ 0 ] >= 0 ); /* If breaking, decrease QC*/
+    free(state_QS);
+    free(corr_QC);
 }
 #endif /* OVERRIDE_silk_warped_autocorrelation_FIX_c */

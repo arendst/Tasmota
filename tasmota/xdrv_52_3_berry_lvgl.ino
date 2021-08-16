@@ -226,8 +226,8 @@ extern void lv_ex_get_started_1(void);
 // - a callback, only 6 callbacks supported 0..5
 //   - '&1' callback 1
 //
-void be_check_arg_type(bvm *vm, int32_t argc, const char * arg_type, int32_t p[5]);
-void be_check_arg_type(bvm *vm, int32_t argc, const char * arg_type, int32_t p[5]) {
+void be_check_arg_type(bvm *vm, int32_t argc, const char * arg_type, int32_t p[8]);
+void be_check_arg_type(bvm *vm, int32_t argc, const char * arg_type, int32_t p[8]) {
   bool arg_type_check = (arg_type != nullptr);      // is type checking activated
   int32_t arg_idx = 0;    // position in arg_type string
   char type_short_name[32];
@@ -278,7 +278,8 @@ void be_check_arg_type(bvm *vm, int32_t argc, const char * arg_type, int32_t p[5
   }
 }
 
-typedef int32_t (*fn_any_callable)(int32_t p0, int32_t p1, int32_t p2, int32_t p3, int32_t p4);
+typedef int32_t (*fn_any_callable)(int32_t p0, int32_t p1, int32_t p2, int32_t p3,
+                                   int32_t p4, int32_t p5, int32_t p6, int32_t p7);
 extern "C" {
 
   void lv_init_set_member(bvm *vm, int index, void * ptr);
@@ -303,7 +304,7 @@ extern "C" {
     if ((int32_t)obj2 == -1) {  // special semantics if second ptr is -1, then just encapsulate
       obj = obj1;
     } else {                    // otherwise call the LVGL creator
-      obj = (lv_obj_t*) (*f)((int32_t)obj1, (int32_t)obj2, 0, 0, 0);
+      obj = (lv_obj_t*) (*f)((int32_t)obj1, (int32_t)obj2, 0, 0, 0, 0, 0, 0);
     }
     lv_init_set_member(vm, 1, obj);
     be_return_nil(vm);
@@ -379,7 +380,7 @@ extern "C" {
   }
 
   int be_call_c_func(bvm *vm, void * func, const char * return_type, const char * arg_type) {
-    int32_t p[5] = {0,0,0,0,0};
+    int32_t p[8] = {0,0,0,0,0,0,0,0};
     int32_t argc = be_top(vm); // Get the number of arguments
 
     // check if we call a constructor
@@ -391,7 +392,7 @@ extern "C" {
     fn_any_callable f = (fn_any_callable) func;
     be_check_arg_type(vm, argc, arg_type, p);
     // berry_log_C(">> be_call_c_func(%p) - %p,%p,%p,%p,%p - %s", f, p[0], p[1], p[2], p[3], p[4], return_type ? return_type : "NULL");
-    int32_t ret = (*f)(p[0], p[1], p[2], p[3], p[4]);
+    int32_t ret = (*f)(p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7]);
     // AddLog(LOG_LEVEL_INFO, ">> be_call_c_func, ret = %p", ret);
     if ((return_type == nullptr) || (strlen(return_type) == 0))       { be_return_nil(vm); }  // does not return
     else if (strlen(return_type) == 1) {
@@ -438,18 +439,24 @@ extern "C" {
     return *col;
   }
   inline uint32_t lv_color_to_uint32(lv_color_t col) {
-    uint32_t *p = (uint32_t*) &col;
+    uint16_t *p = (uint16_t*) &col;
     return *p;
   }
 
   // lv_color
+  // First arg is a 24 bits RGB color
+  // If first arg is `nil` second arg is the native value of color
   int lco_init(bvm *vm) {
     int argc = be_top(vm);
-    uint32_t color = 0x0000;    // default to black
-    if (argc > 1 && be_isint(vm, 2)) {
-      color = be_toint(vm, 2);
+    uint32_t color32 = 0x000000;    // default to black
+
+    if (argc > 1) {
+      color32 = be_toint(vm, 2);
     }
-    lv_color_t lv_color = lv_color_hex(color);
+    lv_color_t lv_color = lv_color_hex(color32);
+    if (argc > 2 && be_toint(vm, 3) == -1) {
+      lv_color.full = be_toint(vm, 2);
+    }
     be_pushint(vm, lv_color_to_uint32(lv_color));
     be_setmember(vm, 1, ".p");
     be_return_nil(vm);
@@ -460,11 +467,19 @@ extern "C" {
     be_getmember(vm, 1, ".p");
     uint32_t ntv_color = be_toint(vm, -1);
     lv_color = lv_color_from_uint32(ntv_color);
-    uint32_t color = lv_color_to32(lv_color);
+    uint32_t color = lv_color_to32(lv_color) & 0xFFFFFF;
     be_pop(vm, 1);  // remove attribute
     char s[48];
     snprintf(s, sizeof(s), "lv_color(0x%06x - native:0x%04x)", color, ntv_color);
     be_pushnstring(vm, s, strlen(s)); /* make escape string from buffer */
+    be_return(vm);
+  }
+
+  int lco_toint(bvm *vm) {
+    lv_color_t lv_color = {};
+    be_getmember(vm, 1, ".p");
+    uint32_t ntv_color = be_toint(vm, -1);
+    be_pushint(vm, ntv_color);
     be_return(vm);
   }
 

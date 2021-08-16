@@ -72,18 +72,44 @@ extern "C" {
   int32_t l_publish(struct bvm *vm);
   int32_t l_publish(struct bvm *vm) {
     int32_t top = be_top(vm); // Get the number of arguments
-    if (top >= 3 && be_isstring(vm, 2) && be_isstring(vm, 3)) {  // 2 mandatory string arguments
+    if (top >= 3 && be_isstring(vm, 2) && (be_isstring(vm, 3) || be_isinstance(vm, 3))) {  // 2 mandatory string arguments
       if (top == 3 || (top == 4 && be_isbool(vm, 4))) {           // 3rd optional argument must be bool
         const char * topic = be_tostring(vm, 2);
-        const char * payload = be_tostring(vm, 3);
+        const char * payload = nullptr;
+        size_t payload_len = 0;
+        if (be_isstring(vm, 3)) {
+          payload = be_tostring(vm, 3);
+          payload_len = strlen(payload);
+        } else {
+          be_getglobal(vm, "bytes"); /* get the bytes class */ /* TODO eventually replace with be_getbuiltin */
+          if (be_isderived(vm, 3)) {
+            payload = (const char *) be_tobytes(vm, 3, &payload_len);
+          }
+        }
         bool retain = false;
         if (top == 4) {
           retain = be_tobool(vm, 4);
         }
-        Response_P(payload);
-        MqttPublish(topic, retain);
-        be_return(vm); // Return
+        if (!payload) { be_raise(vm, "value_error", "Empty payload"); }
+        MqttPublishPayload(topic, payload, payload_len, retain);
+        be_return_nil(vm); // Return
       }
+    }
+    be_raise(vm, kTypeError, nullptr);
+  }
+  
+  // Berry: `tasmota.publish_result(payload:string, subtopic:string) -> nil``
+  //
+  int32_t l_publish_result(struct bvm *vm);
+  int32_t l_publish_result(struct bvm *vm) {
+    int32_t top = be_top(vm); // Get the number of arguments
+    if (top >= 3 && be_isstring(vm, 2) && be_isstring(vm, 3)) {  // 2 mandatory string arguments
+      const char * payload = be_tostring(vm, 2);
+      const char * subtopic = be_tostring(vm, 3);
+      Response_P(PSTR("%s"), payload);
+      be_pop(vm, top);
+      MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, subtopic);
+      be_return_nil(vm); // Return
     }
     be_raise(vm, kTypeError, nullptr);
   }
@@ -97,11 +123,7 @@ extern "C" {
       const char * command = be_tostring(vm, 2);
       be_pop(vm, 2);    // clear the stack before calling, because of re-entrant call to Berry in a Rule
       ExecuteCommand(command, SRC_BERRY);
-#ifdef MQTT_DATA_STRING
-      be_pushstring(vm, TasmotaGlobal.mqtt_data.c_str());
-#else
-      be_pushstring(vm, TasmotaGlobal.mqtt_data);
-#endif
+      be_pushstring(vm, ResponseData());
       be_return(vm); // Return
     }
     be_raise(vm, kTypeError, nullptr);
@@ -168,7 +190,7 @@ extern "C" {
     be_raise(vm, kTypeError, nullptr);
   }
 
-  // Berry: tasmota.memory(timer:int) -> bool
+  // Berry: tasmota.memory() -> map
   //
   int32_t l_memory(struct bvm *vm);
   int32_t l_memory(struct bvm *vm) {
@@ -185,6 +207,53 @@ extern "C" {
         map_insert_int(vm, "psram", ESP.getPsramSize() / 1024);
         map_insert_int(vm, "psram_free", ESP.getFreePsram() / 1024);
       }
+      be_pop(vm, 1);
+      be_return(vm);
+    }
+    be_raise(vm, kTypeError, nullptr);
+  }
+
+  // Berry: tasmota.wifi() -> map
+  //
+  int32_t l_wifi(struct bvm *vm);
+  int32_t l_wifi(struct bvm *vm) {
+    int32_t top = be_top(vm); // Get the number of arguments
+    if (top == 1) {  // no argument (instance only)
+      be_newobject(vm, "map");
+      if (Settings->flag4.network_wifi) {
+        int32_t rssi = WiFi.RSSI();
+        map_insert_int(vm, "rssi", rssi);
+        map_insert_int(vm, "quality", WifiGetRssiAsQuality(rssi));
+#if LWIP_IPV6
+        String ipv6_addr = WifiGetIPv6();
+        if (ipv6_addr != "") {
+          map_insert_str(vm, "ip6", ipv6_addr.c_str());
+        }
+#endif
+        if (static_cast<uint32_t>(WiFi.localIP()) != 0) {
+          map_insert_str(vm, "mac", WiFi.macAddress().c_str());
+          map_insert_str(vm, "ip", WiFi.localIP().toString().c_str());
+        }
+      }
+      be_pop(vm, 1);
+      be_return(vm);
+    }
+    be_raise(vm, kTypeError, nullptr);
+  }
+
+  // Berry: tasmota.eth() -> map
+  //
+  int32_t l_eth(struct bvm *vm);
+  int32_t l_eth(struct bvm *vm) {
+    int32_t top = be_top(vm); // Get the number of arguments
+    if (top == 1) {  // no argument (instance only)
+      be_newobject(vm, "map");
+#ifdef USE_ETHERNET
+      if (static_cast<uint32_t>(EthernetLocalIP()) != 0) {
+        map_insert_str(vm, "mac", EthernetMacAddress().c_str());
+        map_insert_str(vm, "ip", EthernetLocalIP().toString().c_str());
+      }
+#endif
       be_pop(vm, 1);
       be_return(vm);
     }

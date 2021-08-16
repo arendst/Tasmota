@@ -54,7 +54,6 @@ struct SNFL1 {
   uint8_t dimmer;
   uint8_t power;
   uint8_t old_music_sync = 0;
-  uint8_t music_sync = 0;
   uint8_t sensitive;
   uint8_t speed;
 } Snfl1;
@@ -249,10 +248,10 @@ bool SnfL1SetChannels(void) {
         Snfl1.color[i] = scale_col[i];
       }
     }
-    if (!power_changed && !dimmer_changed && !color_changed && (Snfl1.old_music_sync == Snfl1.music_sync)) { return true; }
+    if (!power_changed && !dimmer_changed && !color_changed && (Snfl1.old_music_sync == Settings->sbflag1.sonoff_l1_music_sync)) { return true; }
 
     uint32_t mode = SONOFF_L1_MODE_COLORFUL;
-    if (Snfl1.music_sync) {
+    if (Settings->sbflag1.sonoff_l1_music_sync) {
       mode = SONOFF_L1_MODE_SYNC_TO_MUSIC;
     }
 
@@ -291,7 +290,6 @@ bool SnfL1ModuleSelected(void) {
 
         Snfl1.power = !Light.power;
         Snfl1.dimmer = !light_state.getDimmer();
-        Snfl1.music_sync = 0;
         Snfl1.sensitive = 5;   // 1..10
         Snfl1.speed = 50;      // 1..100
 
@@ -309,13 +307,13 @@ void CmndMusicSync(void) {
   // Format is L1MusicSync on/off/toggle, sensitivity, speed
   // sensitivity 1..10, speed 1..100
   if (XdrvMailbox.data_len > 0) {
-    Snfl1.old_music_sync = Snfl1.music_sync;
+    Snfl1.old_music_sync = Settings->sbflag1.sonoff_l1_music_sync;
     uint32_t parm[3] = { 0 };
     ParseParameters(3, parm);
     if (2 == parm[0]) {
-      Snfl1.music_sync ^= 1;                 // Toggle
+      Settings->sbflag1.sonoff_l1_music_sync ^= 1;                 // Toggle
     } else {
-      Snfl1.music_sync = parm[0] & 1;        // On or Off
+      Settings->sbflag1.sonoff_l1_music_sync = parm[0] & 1;        // On or Off
     }
     if ((parm[1] > 0) && (parm[1] < 11)) {
       Snfl1.sensitive = parm[1];             // 1..10
@@ -326,7 +324,7 @@ void CmndMusicSync(void) {
     SnfL1SetChannels();
   }
   Response_P(PSTR("{\"%s\":{\"Mode\":\"%s\",\"Sensitive\":%d,\"Speed\":%d}}"),
-    XdrvMailbox.command, GetStateText(Snfl1.music_sync), Snfl1.sensitive, Snfl1.speed);
+    XdrvMailbox.command, GetStateText(Settings->sbflag1.sonoff_l1_music_sync), Snfl1.sensitive, Snfl1.speed);
 }
 
 /*********************************************************************************************\

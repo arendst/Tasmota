@@ -1,5 +1,5 @@
 /*
-  tasmota.ino - Tasmota firmware for iTead Sonoff, Wemos and NodeMCU hardware
+  tasmota.ino - Tasmota firmware for iTead Sonoff, Wemos, NodeMCU, ESP8266 and ESP32 hardwares
 
   Copyright (C) 2021  Theo Arends
 
@@ -66,7 +66,7 @@
 #endif  // USE_SDCARD
 #endif  // ESP8266
 #ifdef ESP32
-#include <LITTLEFS.h>
+#include <LittleFS.h>
 #ifdef USE_SDCARD
 #include <SD.h>
 #endif  // USE_SDCARD
@@ -380,6 +380,13 @@ void setup(void) {
   } else {
     snprintf_P(TasmotaGlobal.hostname, sizeof(TasmotaGlobal.hostname)-1, SettingsText(SET_HOSTNAME));
   }
+  char *s = TasmotaGlobal.hostname;
+  while (*s) {
+    if (!(isalnum(*s) || ('.' == *s))) { *s = '-'; }                 // Valid hostname chars are A..Z, a..z, 0..9, . and -
+    if ((s == TasmotaGlobal.hostname) && ('-' == *s)) { *s = 'x'; }  // First char cannot be a dash so replace by an x
+    s++;
+  }
+  snprintf_P(TasmotaGlobal.mqtt_topic, sizeof(TasmotaGlobal.mqtt_topic), ResolveToken(TasmotaGlobal.mqtt_topic).c_str());
 
   RtcInit();
   GpioInit();
@@ -398,7 +405,7 @@ void setup(void) {
   SetPowerOnState();
   WifiConnect();
 
-  AddLog(LOG_LEVEL_INFO, PSTR(D_PROJECT " %s %s " D_VERSION " %s%s-" ARDUINO_CORE_RELEASE "(%s)"),
+  AddLog(LOG_LEVEL_INFO, PSTR(D_PROJECT " %s - %s " D_VERSION " %s%s-" ARDUINO_CORE_RELEASE "(%s)"),
     PSTR(PROJECT), SettingsText(SET_DEVICENAME), TasmotaGlobal.version, TasmotaGlobal.image_name, GetBuildDateAndTime().c_str());
 #ifdef FIRMWARE_MINIMAL
   AddLog(LOG_LEVEL_INFO, PSTR(D_WARNING_MINIMAL_VERSION));

@@ -372,7 +372,7 @@ static int m_fromstring(bvm *vm)
     int argc = be_top(vm);
     if (argc >= 2 && be_isstring(vm, 2)) {
         const char *s = be_tostring(vm, 2);
-        size_t len = strlen(s);
+        size_t len = be_strlen(vm, 2);
         buf_impl * buf = bytes_check_data(vm, 0);
         buf = bytes_resize(vm, buf, len); /* resize if needed */
         if (len > buf->size) { len = buf->size; } /* avoid overflow */
@@ -751,6 +751,20 @@ BERRY_API const void *be_tobytes(bvm *vm, int rel_index, size_t *len)
     }
     if (len) { *len = 0; }
     return NULL;
+}
+
+BERRY_API bbool be_isbytes(bvm *vm, int rel_index)
+{
+    bbool ret = bfalse;
+    int index = be_absindex(vm, rel_index);
+    if (be_isinstance(vm, index)) {
+        be_getbuiltin(vm, "bytes");
+        if (be_isderived(vm, index)) {
+            ret = btrue;
+        }
+        be_pop(vm, 1);
+    }
+    return ret;
 }
 
 /* Helper code to compile bytecode
