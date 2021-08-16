@@ -524,6 +524,7 @@ bool StrCaseStr_P(const char* source, const char* search) {
 }
 
 bool IsNumeric(const char* value) {
+  // Test for characters '-.0123456789'
   char *digit = (char*)value;
   while (isdigit(*digit) || *digit == '.' || *digit == '-') { digit++; }
   return (*digit == '\0');

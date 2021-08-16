@@ -293,36 +293,38 @@ void InfluxDbProcessJson(void) {
           } else {
             // Level 2
             // { ... "ANALOG":{"Temperature":184.72},"DS18B20":{"Id":"01144A0CB2AA","Temperature":24.88},"HTU21":{"Temperature":25.32,"Humidity":49.2,"DewPoint":13.88},"Global":{"Temperature":24.88,"Humidity":49.2,"DewPoint":13.47}, ... }
-            bool isarray = value2.isArray();
-            const char* value = InfluxDbNumber(number, (isarray) ? (value2.getArray())[0].getStr() : value2.getStr());
+            LowerCase(type, key2.getStr());
+            bool is_id = (!strcmp_P(type, PSTR("id")));  // Index for DS18B20
+            bool is_array = value2.isArray();
+            const char* value = nullptr;
+            if (is_id && !is_array) {
+              snprintf_P(sensor_id, sizeof(sensor_id), PSTR(",id=%s"), value2.getStr());
+            } else {
+              value = InfluxDbNumber(number, (is_array) ? (value2.getArray())[0].getStr() : value2.getStr());
+            }
             if (value != nullptr) {
               LowerCase(sensor, key1.getStr());
-              LowerCase(type, key2.getStr());
 
 //              AddLog(LOG_LEVEL_DEBUG, PSTR("IFX2: sensor %s (%s), type %s (%s)"), key1.getStr(), sensor, key2.getStr(), type);
 
-              if (strcmp(type, "id") == 0) {            // Index for DS18B20
-                snprintf_P(sensor_id, sizeof(sensor_id), PSTR(",id=%s"), value);
-              } else {
-                if (isarray) {
-                  JsonParserArray arr = value2.getArray();
-                  uint32_t i = 0;
-                  for (auto val : arr) {
-                    i++;
-                    // power1,device=shelly25,sensor=energy value=0.00
-                    // power2,device=shelly25,sensor=energy value=4.12
-                    snprintf_P(linebuf, sizeof(linebuf), PSTR("%s%d,device=%s,sensor=%s%s value=%s\n"),
-                      type, i, TasmotaGlobal.mqtt_topic, sensor, sensor_id, val.getStr());
-                    data += linebuf;
-                  }
-                } else {
-                  // temperature,device=demo,sensor=ds18b20,id=01144A0CB2AA value=22.63
-                  snprintf_P(linebuf, sizeof(linebuf), PSTR("%s,device=%s,sensor=%s%s value=%s\n"),
-                    type, TasmotaGlobal.mqtt_topic, sensor, sensor_id, value);
+              if (is_array) {
+                JsonParserArray arr = value2.getArray();
+                uint32_t i = 0;
+                for (auto val : arr) {
+                  i++;
+                  // power1,device=shelly25,sensor=energy value=0.00
+                  // power2,device=shelly25,sensor=energy value=4.12
+                  snprintf_P(linebuf, sizeof(linebuf), PSTR("%s%d,device=%s,sensor=%s%s value=%s\n"),
+                    type, i, TasmotaGlobal.mqtt_topic, sensor, sensor_id, val.getStr());
                   data += linebuf;
                 }
-                sensor_id[0] = '\0';
+              } else {
+                // temperature,device=demo,sensor=ds18b20,id=01144A0CB2AA value=22.63
+                snprintf_P(linebuf, sizeof(linebuf), PSTR("%s,device=%s,sensor=%s%s value=%s\n"),
+                  type, TasmotaGlobal.mqtt_topic, sensor, sensor_id, value);
+                data += linebuf;
               }
+              sensor_id[0] = '\0';
             }
           }
         }
