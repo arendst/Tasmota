@@ -3,7 +3,11 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [9.5.0.5]
+## [9.5.0.6]
+### Added
+- Version bump to monitor possible HTTP issues releated to ``SetOption128``
+
+## [9.5.0.5] 20210815
 ### Added
 - Inital support for Wi-Fi extender (#12784)
 - Neopool commands ``NPPHRes``, ``NPCLRes`` and ``NPIonRes`` (#12813)
