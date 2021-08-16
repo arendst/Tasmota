@@ -333,8 +333,6 @@ void MCP2515_Show(bool Json) {
   } else {
   #ifdef MCP2515_BMS_CLIENT
     if (bms.setFields & BMS_MANUFACTURER) {
-      char ampStr[6];
-      dtostrf((float(bms.battAmp) / 10), 5, 1, ampStr);
       if (bms.setFields & BMS_SOC) {
         WSContentSend_PD(HTTP_SNS_SOC, bms.manuf, bms.stateOfCharge);
       }
@@ -345,11 +343,34 @@ void MCP2515_Show(bool Json) {
         WSContentSend_Voltage(bms.manuf, (float(bms.battVoltage) / 100));
       }
       if (bms.setFields & BMS_AMP) {
+        char ampStr[6];
+        dtostrf((float(bms.battAmp) / 10), 5, 1, ampStr);
         WSContentSend_PD(PSTR("{s}%s " D_CURRENT "{m}%s " D_UNIT_AMPERE "{e}"), bms.manuf, ampStr);
       }
       if (bms.setFields & BMS_TEMP) {
         WSContentSend_Temp(bms.manuf, ConvertTemp(float(bms.battTemp) / 10));
       }
+      if (bms.setFields & BMS_CHARGE_VOLT_MAX) {
+        char voltStr[6];
+        dtostrf((float(bms.chargeVoltLimit) / 10), 5, 1, voltStr);
+        WSContentSend_PD(PSTR("{s}%s Max Voltage{m}%s " D_UNIT_AMPERE "{e}"), bms.manuf, voltStr);
+      }
+      if (bms.setFields & BMS_CHARGE_VOLT_MIN) {
+        char voltStr[6];
+        dtostrf((float(bms.dischargeVolt) / 10), 5, 1, voltStr);
+        WSContentSend_PD(PSTR("{s}%s Min Voltage{m}%s " D_UNIT_AMPERE "{e}"), bms.manuf, voltStr);
+      }
+      if (bms.setFields & BMS_CHARGE_AMP_MAX) {
+        char ampStr[6];
+        dtostrf((float(bms.maxChargeCurrent) / 10), 5, 1, ampStr);
+        WSContentSend_PD(PSTR("{s}%s Max Charge Current{m}%s " D_UNIT_AMPERE "{e}"), bms.manuf, ampStr);
+      }
+      if (bms.setFields & BMS_CHARGE_AMP_MIN) {
+        char ampStr[6];
+        dtostrf((float(bms.maxDischargeCurrent) / 10), 5, 1, ampStr);
+        WSContentSend_PD(PSTR("{s}%s Max Discharge Current{m}%s " D_UNIT_AMPERE "{e}"), bms.manuf, ampStr);
+      }
+
     } else {
       WSContentSend_PD(PSTR("{s}MCP2515 {m} Waiting for data{e}"));
     }
