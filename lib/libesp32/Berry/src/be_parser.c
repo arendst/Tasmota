@@ -467,7 +467,6 @@ static int singlevaraux(bvm *vm, bfuncinfo *finfo, bstring *s, bexpdesc *var)
 
 static void singlevar(bparser *parser, bexpdesc *var)
 {
-    bexpdesc key;
     bstring *varname = next_token(parser).u.s;
     int type = singlevaraux(parser->vm, parser->finfo, varname, var);
     switch (type) {
@@ -480,10 +479,13 @@ static void singlevar(bparser *parser, bexpdesc *var)
         var->v.idx = be_global_find(parser->vm, varname);
         break;
     case ETNGLOBAL:
-        init_exp(&key, ETSTRING, 0);
-        key.v.s = varname;
-        init_exp(var, ETNGLOBAL, 0);
-        var->v.idx = be_code_nglobal(parser->finfo, &key);
+        {
+            bexpdesc key;
+            init_exp(&key, ETSTRING, 0);
+            key.v.s = varname;
+            init_exp(var, ETNGLOBAL, 0);
+            var->v.idx = be_code_nglobal(parser->finfo, &key);
+        }
         break;
     default:
         break;
@@ -610,7 +612,7 @@ static void list_nextmember(bparser *parser, bexpdesc *l)
     bfuncinfo *finfo = parser->finfo;
     expr(parser, &e); /* value */
     check_var(parser, &e);
-    be_code_binop(finfo, OptConnect, &v, &e);
+    be_code_binop(finfo, OptConnect, &v, &e, -1);
     be_code_freeregs(finfo, 1);
 }
 
@@ -823,9 +825,11 @@ static void suffix_alloc_reg(bparser *parser, bexpdesc *l)
 /* compound assignment */
 static void compound_assign(bparser *parser, int op, bexpdesc *l, bexpdesc *r)
 {
+    int dst = -1;  /* destination register in case of compound assignment */
     if (op != OptAssign) { /* check left variable */
         check_var(parser, l);
         /* cache the register of the object when continuously assigning */
+        dst = parser->finfo->freereg;
         suffix_alloc_reg(parser, l);
     }
     expr(parser, r); /* right expression */
@@ -834,7 +838,7 @@ static void compound_assign(bparser *parser, int op, bexpdesc *l, bexpdesc *r)
         bexpdesc e = *l;
         op = op < OptAndAssign ? op - OptAddAssign + OptAdd
                 : op - OptAndAssign + OptBitAnd;
-        be_code_binop(parser->finfo, op, &e, r); /* coding operation */
+        be_code_binop(parser->finfo, op, &e, r, dst); /* coding operation */
         *r = e;
     }
 }
@@ -938,7 +942,7 @@ static void sub_expr(bparser *parser, bexpdesc *e, int prio)
         init_exp(&e2, ETVOID, 0);
         sub_expr(parser, &e2, binary_op_prio(op));
         check_var(parser, &e2);
-        be_code_binop(finfo, op, e, &e2); /* encode binary op */
+        be_code_binop(finfo, op, e, &e2, -1); /* encode binary op */
         op = get_binop(parser);
     }
     if (prio == ASSIGN_OP_PRIO) {
