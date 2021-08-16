@@ -93,7 +93,7 @@ class Tasmota
     var sub_event = event
     var rl = string.split(rl_list[0],'#')
     for it:rl
-      found=self.find_key_i(sub_event,it)
+      var found=self.find_key_i(sub_event,it)
       if found == nil return false end
       sub_event = sub_event[found]
     end
@@ -152,7 +152,7 @@ class Tasmota
       var i=0
       while i<self._timers.size()
         if self.time_reached(self._timers[i].due)
-          f=self._timers[i].f
+          var f=self._timers[i].f
           self._timers.remove(i)
           f()
         else

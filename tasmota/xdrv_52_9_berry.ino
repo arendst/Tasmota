@@ -277,7 +277,8 @@ void BerryInit(void) {
   do {
     berry.vm = be_vm_new(); /* create a virtual machine instance */
     be_set_obs_hook(berry.vm, &BerryObservability);
-    comp_set_named_gbl(berry.vm);
+    comp_set_named_gbl(berry.vm);  /* Enable named globals in Berry compiler */
+    comp_set_strict(berry.vm);  /* Enable strict mode in Berry compiler */
     be_load_custom_libs(berry.vm);
 
     // Register functions

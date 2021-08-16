@@ -14,9 +14,14 @@
 #define comp_set_named_gbl(vm)      ((vm)->compopt |= (1<<COMP_NAMED_GBL))
 #define comp_clear_named_gbl(vm)    ((vm)->compopt &= ~(1<<COMP_NAMED_GBL))
 
+#define comp_is_strict(vm)       ((vm)->compopt & (1<<COMP_STRICT))
+#define comp_set_strict(vm)      ((vm)->compopt |= (1<<COMP_STRICT))
+#define comp_clear_strict(vm)    ((vm)->compopt &= ~(1<<COMP_STRICT))
+
 /* Compilation options */
 typedef enum {
     COMP_NAMED_GBL = 0x00, /* compile with named globals */
+    COMP_STRICT = 0x01, /* compile with named globals */
 } compoptmask;
 
 typedef struct {

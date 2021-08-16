@@ -83,4 +83,4 @@ module global (scope: global, depend: BE_USE_GLOBAL_MODULE) {
 #include "../generate/be_fixed_global.h"
 #endif
 
-#endif /* BE_USE_INTROSPECT_MODULE */
+#endif /* BE_USE_GLOBAL_MODULE */
