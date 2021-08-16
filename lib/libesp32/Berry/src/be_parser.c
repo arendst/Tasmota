@@ -467,6 +467,7 @@ static int singlevaraux(bvm *vm, bfuncinfo *finfo, bstring *s, bexpdesc *var)
 
 static void singlevar(bparser *parser, bexpdesc *var)
 {
+    bexpdesc key;
     bstring *varname = next_token(parser).u.s;
     int type = singlevaraux(parser->vm, parser->finfo, varname, var);
     switch (type) {
@@ -479,13 +480,10 @@ static void singlevar(bparser *parser, bexpdesc *var)
         var->v.idx = be_global_find(parser->vm, varname);
         break;
     case ETNGLOBAL:
-        {
-            bexpdesc key;
-            init_exp(&key, ETSTRING, 0);
-            key.v.s = varname;
-            init_exp(var, ETNGLOBAL, 0);
-            var->v.idx = be_code_nglobal(parser->finfo, &key);
-        }
+        init_exp(&key, ETSTRING, 0);
+        key.v.s = varname;
+        init_exp(var, ETNGLOBAL, 0);
+        var->v.idx = be_code_nglobal(parser->finfo, &key);
         break;
     default:
         break;

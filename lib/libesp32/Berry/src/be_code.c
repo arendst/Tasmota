@@ -408,7 +408,7 @@ static int var2reg(bfuncinfo *finfo, bexpdesc *e, int dst)
         codeABx(finfo, OP_GETGBL, dst, e->v.idx);
         break;
     case ETNGLOBAL:
-        codeABC(finfo, OP_GETNGBL, dst, e->v.ss.obj, e->v.ss.idx);
+        codeABC(finfo, OP_GETNGBL, dst, e->v.ss.idx, 0);
         break;
     case ETUPVAL:
         codeABx(finfo, OP_GETUPV, dst, e->v.idx);
@@ -601,7 +601,7 @@ static void setbgblvar(bfuncinfo *finfo, bopcode op, bexpdesc *e1, int src)
         code_move(finfo, finfo->freereg, src);
         src = finfo->freereg;
     }
-    codeABC(finfo, op, src, 0, e1->v.idx);
+    codeABC(finfo, op, src, e1->v.idx, 0);
 }
 
 static void setsupvar(bfuncinfo *finfo, bopcode op, bexpdesc *e1, int src)

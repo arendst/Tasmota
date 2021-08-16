@@ -352,6 +352,17 @@ typedef struct bntvmodule {
     PROTO_VAR_INFO_BLOCK                                                          \
   }
 
+#define be_define_local_closure(_name)        \
+  const bclosure _name##_closure = {          \
+    NULL,           /* bgcobject *next */     \
+    BE_CLOSURE,     /* type BE_CLOSURE */     \
+    GC_CONST,       /* marked GC_CONST */     \
+    0,              /* nupvals */             \
+    NULL,           /* bgcobject *gray */     \
+    (bproto*) &_name##_proto, /* proto */     \
+    { NULL }        /* upvals */              \
+  }
+
 /* new version for more compact literals */
 #define be_local_closure(_name, _proto)       \
   static const bclosure _name##_closure = {   \
