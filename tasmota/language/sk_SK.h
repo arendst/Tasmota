@@ -250,6 +250,7 @@
 #define D_WIFIMANAGER_SET_ACCESSPOINT_AND_STATION "Wi-Fi manažér nastaví AP a zachová STA"
 #define D_WIFIMANAGER_SET_ACCESSPOINT "Wi-Fi manažér nastaví Access Point"
 #define D_TRYING_TO_CONNECT "Skúšam pripojiť zariadenie k sieti"
+#define D_REFERER_DENIED "Referer denied. Use 'SO128 1' for HTTP API commands. 'Webpassword' is recommended."
 
 #define D_RESTART_IN "Reštart"
 #define D_SECONDS "sekúnd"
