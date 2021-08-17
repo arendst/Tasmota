@@ -250,6 +250,7 @@
 #define D_WIFIMANAGER_SET_ACCESSPOINT_AND_STATION "Wifimanager set AccessPoint and keep Station"
 #define D_WIFIMANAGER_SET_ACCESSPOINT "Wifimanager set AccessPoint"
 #define D_TRYING_TO_CONNECT "Đang thử kết nối mạng cho thiết bị"
+#define D_REFERER_DENIED "Referer denied. Use 'SO128 1' for HTTP API commands. 'Webpassword' is recommended."
 
 #define D_RESTART_IN "Khởi động trong"
 #define D_SECONDS "giây"
