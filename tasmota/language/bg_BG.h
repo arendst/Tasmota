@@ -250,6 +250,7 @@
 #define D_WIFIMANAGER_SET_ACCESSPOINT_AND_STATION "Wifi мениджърът настройва точка за достъп и запомня станцията"
 #define D_WIFIMANAGER_SET_ACCESSPOINT "Wifi мениджърът настрои точката за достъп"
 #define D_TRYING_TO_CONNECT "Опит за свързване на устройството към мрежата"
+#define D_REFERER_DENIED "Referer denied. Use 'SO128 1' for HTTP API commands. 'Webpassword' is recommended."
 
 #define D_RESTART_IN "Рестарт след"
 #define D_SECONDS "секунди"
