@@ -666,7 +666,7 @@ bool HttpCheckPriviledgedAccess(bool autorequestauth = true)
         return true;
       }
     }
-    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_HTTP "HTP: Referer denied. Use 'SO128 1' for HTTP API commands. 'Webpassword' is recommended."));
+    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_HTTP "Referer denied. Use 'SO128 1' for HTTP API commands. 'Webpassword' is recommended."));
     return false;
   } else {
     return true;
