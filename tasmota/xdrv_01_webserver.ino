@@ -666,7 +666,7 @@ bool HttpCheckPriviledgedAccess(bool autorequestauth = true)
         return true;
       }
     }
-    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP "Referer denied"));
+    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_HTTP "Referer denied"));
     return false;
   } else {
     return true;
