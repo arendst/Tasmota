@@ -250,6 +250,7 @@
 #define D_WIFIMANAGER_SET_ACCESSPOINT_AND_STATION "Wifimanager: configura o Ponto de Acesso e a Estação"
 #define D_WIFIMANAGER_SET_ACCESSPOINT "Wifimanager: configura o Ponto de Acesso"
 #define D_TRYING_TO_CONNECT "Conectar o dispositivo à rede"
+#define D_REFERER_DENIED "Referer denied. Use 'SO128 1' for HTTP API commands. 'Webpassword' is recommended."
 
 #define D_RESTART_IN "Reinicia em"
 #define D_SECONDS "segundos"
