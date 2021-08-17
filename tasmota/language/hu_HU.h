@@ -250,6 +250,7 @@
 #define D_WIFIMANAGER_SET_ACCESSPOINT_AND_STATION "WifiManager AccessPoint(AP) és Station(ST) beállítása"
 #define D_WIFIMANAGER_SET_ACCESSPOINT "Wifimanager AccessPoint(AP) beállítása"
 #define D_TRYING_TO_CONNECT "Csatlakozás a hálózatra..."
+#define D_REFERER_DENIED "Referer denied. Use 'SO128 1' for HTTP API commands. 'Webpassword' is recommended."
 
 #define D_RESTART_IN "Újraindítás..."
 #define D_SECONDS "másodperc"
