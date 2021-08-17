@@ -250,6 +250,7 @@
 #define D_WIFIMANAGER_SET_ACCESSPOINT_AND_STATION "Wifimanager set AccessPoint and keep Station"
 #define D_WIFIMANAGER_SET_ACCESSPOINT "Wifimanager set AccessPoint"
 #define D_TRYING_TO_CONNECT "Προσπάθεια σύνδεσης της συσκευής σε ασύρματο δίκτυο"
+#define D_REFERER_DENIED "Referer denied. Use 'SO128 1' for HTTP API commands. 'Webpassword' is recommended."
 
 #define D_RESTART_IN "Επανεκκίνηση σε"
 #define D_SECONDS "δευτερόλεπτα"
