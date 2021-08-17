@@ -10,6 +10,9 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - Berry now compiling in ``strict`` mode to catch more bugs
 
+### Fixed
+- Fixed PWM5 on ESP32C3
+
 ## [9.5.0.5] 20210815
 ### Added
 - Inital support for Wi-Fi extender (#12784)
