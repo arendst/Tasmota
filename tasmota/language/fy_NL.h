@@ -250,6 +250,7 @@
 #define D_WIFIMANAGER_SET_ACCESSPOINT_AND_STATION "WiFi Manager start AccessPoint en hâldt Station"
 #define D_WIFIMANAGER_SET_ACCESSPOINT "WiFi manager start AccessPoint"
 #define D_TRYING_TO_CONNECT "Apparaat besiket te ferbinen mei netwurk"
+#define D_REFERER_DENIED "Referer denied. Use 'SO128 1' for HTTP API commands. 'Webpassword' is recommended."
 
 #define D_RESTART_IN "Start opnij yn"
 #define D_SECONDS "sekonden"
