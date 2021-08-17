@@ -250,6 +250,7 @@
 #define D_WIFIMANAGER_SET_ACCESSPOINT_AND_STATION "Wifi менеджер устанавливает Точку Доступа и сохраняет станцию"
 #define D_WIFIMANAGER_SET_ACCESSPOINT "Wifi менеджер установил Точку Доступа"
 #define D_TRYING_TO_CONNECT "Попытка подключения устройства к сети"
+#define D_REFERER_DENIED "Referer denied. Use 'SO128 1' for HTTP API commands. 'Webpassword' is recommended."
 
 #define D_RESTART_IN "Перезапуск"
 #define D_SECONDS "секунд"
