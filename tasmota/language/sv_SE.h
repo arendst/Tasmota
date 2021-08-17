@@ -250,6 +250,7 @@
 #define D_WIFIMANAGER_SET_ACCESSPOINT_AND_STATION "Wifihanterare ange accesspunkt och behåll station"
 #define D_WIFIMANAGER_SET_ACCESSPOINT "Wifihanterare ange accesspunkt"
 #define D_TRYING_TO_CONNECT "Försöker att ansluta enheten till nätverk"
+#define D_REFERER_DENIED "Referer denied. Use 'SO128 1' for HTTP API commands. 'Webpassword' is recommended."
 
 #define D_RESTART_IN "Omstart om"
 #define D_SECONDS "sekunder"
