@@ -250,6 +250,7 @@
 #define D_WIFIMANAGER_SET_ACCESSPOINT_AND_STATION "Wifimanager como AccessPoint y Estación"
 #define D_WIFIMANAGER_SET_ACCESSPOINT "Wifimanager como AccessPoint"
 #define D_TRYING_TO_CONNECT "Intentado conectar dispositivo a la red"
+#define D_REFERER_DENIED "HTTP API desactivada. Usar 'SO128 1' para habilitarla. Se recomienda usar también 'Webpassword'"
 
 #define D_RESTART_IN "Reinicio en"
 #define D_SECONDS "segundos"
