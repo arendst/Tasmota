@@ -29,6 +29,198 @@ typedef struct buf_impl {
 } buf_impl;
 
 /********************************************************************
+** Base64 lib from https://github.com/Densaugeo/base64_arduino
+**
+********************************************************************/
+
+/* binary_to_base64:
+ *   Description:
+ *     Converts a single byte from a binary value to the corresponding base64 character
+ *   Parameters:
+ *     v - Byte to convert
+ *   Returns:
+ *     ascii code of base64 character. If byte is >= 64, then there is not corresponding base64 character
+ *     and 255 is returned
+ */
+static unsigned char binary_to_base64(unsigned char v);
+
+/* base64_to_binary:
+ *   Description:
+ *     Converts a single byte from a base64 character to the corresponding binary value
+ *   Parameters:
+ *     c - Base64 character (as ascii code)
+ *   Returns:
+ *     6-bit binary value
+ */
+static unsigned char base64_to_binary(unsigned char c);
+
+/* encode_base64_length:
+ *   Description:
+ *     Calculates length of base64 string needed for a given number of binary bytes
+ *   Parameters:
+ *     input_length - Amount of binary data in bytes
+ *   Returns:
+ *     Number of base64 characters needed to encode input_length bytes of binary data
+ */
+static unsigned int encode_base64_length(unsigned int input_length);
+
+/* decode_base64_length:
+ *   Description:
+ *     Calculates number of bytes of binary data in a base64 string
+ *   Parameters:
+ *     input - Base64-encoded null-terminated string
+ *   Returns:
+ *     Number of bytes of binary data in input
+ */
+static unsigned int decode_base64_length(unsigned char input[]);
+
+/* encode_base64:
+ *   Description:
+ *     Converts an array of bytes to a base64 null-terminated string
+ *   Parameters:
+ *     input - Pointer to input data
+ *     input_length - Number of bytes to read from input pointer
+ *     output - Pointer to output string. Null terminator will be added automatically
+ *   Returns:
+ *     Length of encoded string in bytes (not including null terminator)
+ */
+static unsigned int encode_base64(unsigned char input[], unsigned int input_length, unsigned char output[]);
+
+/* decode_base64:
+ *   Description:
+ *     Converts a base64 null-terminated string to an array of bytes
+ *   Parameters:
+ *     input - Pointer to input string
+ *     output - Pointer to output array
+ *   Returns:
+ *     Number of bytes in the decoded binary
+ */
+static unsigned int decode_base64(unsigned char input[], unsigned char output[]);
+
+static unsigned char binary_to_base64(unsigned char v) {
+  // Capital letters - 'A' is ascii 65 and base64 0
+  if(v < 26) return v + 'A';
+  
+  // Lowercase letters - 'a' is ascii 97 and base64 26
+  if(v < 52) return v + 71;
+  
+  // Digits - '0' is ascii 48 and base64 52
+  if(v < 62) return v - 4;
+  
+  // '+' is ascii 43 and base64 62
+  if(v == 62) return '+';
+  
+  // '/' is ascii 47 and base64 63
+  if(v == 63) return '/';
+  
+  return 64;
+}
+
+static unsigned char base64_to_binary(unsigned char c) {
+  // Capital letters - 'A' is ascii 65 and base64 0
+  if('A' <= c && c <= 'Z') return c - 'A';
+  
+  // Lowercase letters - 'a' is ascii 97 and base64 26
+  if('a' <= c && c <= 'z') return c - 71;
+  
+  // Digits - '0' is ascii 48 and base64 52
+  if('0' <= c && c <= '9') return c + 4;
+  
+  // '+' is ascii 43 and base64 62
+  if(c == '+') return 62;
+  
+  // '/' is ascii 47 and base64 63
+  if(c == '/') return 63;
+  
+  return 255;
+}
+
+static unsigned int encode_base64_length(unsigned int input_length) {
+  return (input_length + 2)/3*4;
+}
+
+static unsigned int decode_base64_length(unsigned char input[]) {
+  unsigned char *start = input;
+  
+  while(base64_to_binary(input[0]) < 64) {
+    ++input;
+  }
+  
+  unsigned int input_length = input - start;
+  
+  unsigned int output_length = input_length/4*3;
+  
+  switch(input_length % 4) {
+    default: return output_length;
+    case 2: return output_length + 1;
+    case 3: return output_length + 2;
+  }
+}
+
+static unsigned int encode_base64(unsigned char input[], unsigned int input_length, unsigned char output[]) {
+  unsigned int full_sets = input_length/3;
+  
+  // While there are still full sets of 24 bits...
+  for(unsigned int i = 0; i < full_sets; ++i) {
+    output[0] = binary_to_base64(                         input[0] >> 2);
+    output[1] = binary_to_base64((input[0] & 0x03) << 4 | input[1] >> 4);
+    output[2] = binary_to_base64((input[1] & 0x0F) << 2 | input[2] >> 6);
+    output[3] = binary_to_base64( input[2] & 0x3F);
+    
+    input += 3;
+    output += 4;
+  }
+  
+  switch(input_length % 3) {
+    case 0:
+      output[0] = '\0';
+      break;
+    case 1:
+      output[0] = binary_to_base64(                         input[0] >> 2);
+      output[1] = binary_to_base64((input[0] & 0x03) << 4);
+      output[2] = '=';
+      output[3] = '=';
+      output[4] = '\0';
+      break;
+    case 2:
+      output[0] = binary_to_base64(                         input[0] >> 2);
+      output[1] = binary_to_base64((input[0] & 0x03) << 4 | input[1] >> 4);
+      output[2] = binary_to_base64((input[1] & 0x0F) << 2);
+      output[3] = '=';
+      output[4] = '\0';
+      break;
+  }
+  
+  return encode_base64_length(input_length);
+}
+
+static unsigned int decode_base64(unsigned char input[], unsigned char output[]) {
+  unsigned int output_length = decode_base64_length(input);
+  
+  // While there are still full sets of 24 bits...
+  for(unsigned int i = 2; i < output_length; i += 3) {
+    output[0] = base64_to_binary(input[0]) << 2 | base64_to_binary(input[1]) >> 4;
+    output[1] = base64_to_binary(input[1]) << 4 | base64_to_binary(input[2]) >> 2;
+    output[2] = base64_to_binary(input[2]) << 6 | base64_to_binary(input[3]);
+    
+    input += 4;
+    output += 3;
+  }
+  
+  switch(output_length % 3) {
+    case 1:
+      output[0] = base64_to_binary(input[0]) << 2 | base64_to_binary(input[1]) >> 4;
+      break;
+    case 2:
+      output[0] = base64_to_binary(input[0]) << 2 | base64_to_binary(input[1]) >> 4;
+      output[1] = base64_to_binary(input[1]) << 4 | base64_to_binary(input[2]) >> 2;
+      break;
+  }
+  
+  return output_length;
+}
+
+/********************************************************************
 ** Buffer low-level implementation
 **
 ** Extracted from Tasmota SBuffer lib
@@ -343,13 +535,26 @@ static size_t tohex(char * out, size_t outsz, const uint8_t * in, size_t insz) {
 
 static int m_tostring(bvm *vm)
 {
+    int argc = be_top(vm);
+    int max_len = 32;  /* limit to 32 bytes by default */
+    int truncated = 0;
+    if (argc > 1 && be_isint(vm, 2)) {
+        max_len = be_toint(vm, 2);  /* you can specify the len as second argument, or 0 for unlimited */
+    }
     buf_impl * buf = bytes_check_data(vm, 0);
     size_t len = buf->len;
-    size_t hex_len = len * 2 + 5 + 2 + 2 + 1;  /* reserve size for `bytes("")\0` - 9 chars */
+    if (max_len > 0 && len > max_len) {
+        len = max_len;  /* limit output size */
+        truncated = 1;
+    }
+    size_t hex_len = len * 2 + 5 + 2 + 2 + 1 + truncated * 3;  /* reserve size for `bytes("")\0` - 9 chars */
 
     char * hex_out = be_pushbuffer(vm, hex_len);
     size_t l = be_strlcpy(hex_out, "bytes('", hex_len);
-    l += tohex(&hex_out[l], hex_len - l, buf_get_buf(buf), buf->len);
+    l += tohex(&hex_out[l], hex_len - l, buf_get_buf(buf), len);
+    if (truncated) {
+        l += be_strlcpy(&hex_out[l], "...", hex_len - l);
+    }
     l += be_strlcpy(&hex_out[l], "')", hex_len - l);
 
     be_pushnstring(vm, hex_out, l); /* make escape string from buffer */
@@ -700,6 +905,56 @@ static int m_nequal(bvm *vm)
 }
 
 /*
+ * Converts bytes() to a base64 string
+ * 
+ * Note: there are no line breaks inserted
+ * 
+ * `b.tob64() -> string`
+ */
+static int m_tob64(bvm *vm)
+{
+    buf_impl * buf = bytes_check_data(vm, 0);
+    size_t len = buf->len;
+    size_t b64_len = encode_base64_length(len) + 1;  /* size of base64 encoded string for this binary length, add NULL terminator */
+
+    char * b64_out = be_pushbuffer(vm, b64_len);
+    size_t converted = encode_base64(buf_get_buf(buf), len, b64_out);
+
+    be_pushnstring(vm, b64_out, converted); /* make string from buffer */
+    be_remove(vm, -2); /* remove buffer */
+    be_return(vm);
+}
+
+/*
+ * Converts base63 to bytes()
+ * 
+ * `bytes().fromb64() -> bytes()`
+ */
+static int m_fromb64(bvm *vm)
+{
+    int argc = be_top(vm);
+    if (argc >= 2 && be_isstring(vm, 2)) {
+        const char *s = be_tostring(vm, 2);
+        size_t len = be_strlen(vm, 2);
+        size_t bin_len = decode_base64_length(s);   /* do a first pass to calculate the buffer size */
+
+        buf_impl * buf = bytes_check_data(vm, 0);
+        buf = bytes_resize(vm, buf, bin_len); /* resize if needed */
+        if (bin_len > buf->size) { /* avoid overflow */
+            be_raise(vm, "memory_error", "cannot allocate buffer");
+        }
+
+        size_t bin_len_final = decode_base64(s, buf_get_buf(buf));  /* decode */
+        buf->len = bin_len_final;
+        be_pop(vm, 1); /* remove arg to leave instance */
+        be_return(vm);
+    }
+    be_raise(vm, "type_error", "operand must be a string");
+    be_return_nil(vm);
+}
+
+
+/*
  * Advanced API
  */
 
@@ -973,6 +1228,8 @@ void be_load_byteslib(bvm *vm)
         { "tostring", m_tostring },
         { "asstring", m_asstring },
         { "fromstring", m_fromstring },
+        { "tob64", m_tob64 },
+        { "fromb64", m_fromb64 },
         { "add", m_add },
         { "get", m_getu },
         { "geti", m_geti },
@@ -1006,6 +1263,8 @@ class be_class_bytes (scope: global, name: bytes) {
     tostring, func(m_tostring)
     asstring, func(m_asstring)
     fromstring, func(m_fromstring)
+    tob64, func(m_tob64)
+    fromb64, func(m_fromb64)
     add, func(m_add)
     get, func(m_getu)
     geti, func(m_geti)
