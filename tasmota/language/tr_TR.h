@@ -250,6 +250,7 @@
 #define D_WIFIMANAGER_SET_ACCESSPOINT_AND_STATION "Wifi yöneticisi AP olarak ayarlandı ve istasyon olarak bekletiliyor"
 #define D_WIFIMANAGER_SET_ACCESSPOINT "Wifi yöneticisi AP olarak ayarlandı"
 #define D_TRYING_TO_CONNECT "Cihaz ağa bağlanmaya çalışıyor"
+#define D_REFERER_DENIED "Referer denied. Use 'SO128 1' for HTTP API commands. 'Webpassword' is recommended."
 
 #define D_RESTART_IN "Burada tekrar başlat"
 #define D_SECONDS "saniye"
