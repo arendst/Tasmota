@@ -250,6 +250,7 @@
 #define D_WIFIMANAGER_SET_ACCESSPOINT_AND_STATION "와이파이 매니저가 AccessPoint와 keep Station을 설정"
 #define D_WIFIMANAGER_SET_ACCESSPOINT "와이파이 매니저가 AccessPoint를 설정"
 #define D_TRYING_TO_CONNECT "장치를 네트워크에 연결하려고 시도 중"
+#define D_REFERER_DENIED "Referer denied. Use 'SO128 1' for HTTP API commands. 'Webpassword' is recommended."
 
 #define D_RESTART_IN "재시작"
 #define D_SECONDS "초"
