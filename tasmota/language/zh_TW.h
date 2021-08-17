@@ -250,6 +250,7 @@
 #define D_WIFIMANAGER_SET_ACCESSPOINT_AND_STATION "Wifimanager set AccessPoint and keep Station"
 #define D_WIFIMANAGER_SET_ACCESSPOINT "Wifimanager 已設定存取點"
 #define D_TRYING_TO_CONNECT "正在將裝置連線至網路"
+#define D_REFERER_DENIED "Referer denied. Use 'SO128 1' for HTTP API commands. 'Webpassword' is recommended."
 
 #define D_RESTART_IN "重新啟動倒數 "
 #define D_SECONDS " 秒"
