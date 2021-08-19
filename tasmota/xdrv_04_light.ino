@@ -1670,6 +1670,9 @@ void LightAnimate(void)
   // make sure we update CT range in case SetOption82 was changed
   Light.strip_timer_counter++;
 
+#ifdef USE_SLOW_PWM
+  TasmotaGlobal.sleep = Settings->sleep;
+#else
   // set sleep parameter: either settings,
   // or set a maximum of PWM_MAX_SLEEP if light is on or Fade is running
   if (Light.power || Light.fade_running) {
@@ -1681,6 +1684,7 @@ void LightAnimate(void)
   } else {
     TasmotaGlobal.sleep = Settings->sleep;
   }
+#endif  // USE_SLOW_PWM
 
   if (!Light.power) {                   // All channels powered off
     Light.strip_timer_counter = 0;

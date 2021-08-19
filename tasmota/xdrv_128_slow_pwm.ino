@@ -53,6 +53,8 @@
  * - use Generic(18) or ESP32-DevKit(1) module type
  * - set GPIO pins as PWM<x> or PWM_i<x>
  * - use SlowPwmPeriod <x> command to set slow PWM cycle time
+ *   Note: Slow PWM's time resolution is 50ms, setting period times lower than 5s will decrase
+ *   even Dimmer 1..100 resolution. Use low values only for test purposes.
  * - from now on, there are 3 scenarios:
  *   - as plain PWM output:
  *     - execute: SetOption15 0
@@ -239,7 +241,7 @@ bool Xdrv128(uint8_t function) {
     case FUNC_MODULE_INIT:
       slow_pwm.PwmInit();
       break;
-    case FUNC_LOOP:
+    case FUNC_EVERY_50_MSECOND:
       slow_pwm.PwmLoop();
       break;
     case FUNC_COMMAND:
