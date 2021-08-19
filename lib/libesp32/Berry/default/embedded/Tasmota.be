@@ -15,6 +15,7 @@ class Timer
   end
 end
 
+tasmota = nil
 class Tasmota
 
   # add `chars_in_string(s:string,c:string) -> int``

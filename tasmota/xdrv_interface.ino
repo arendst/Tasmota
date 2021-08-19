@@ -1083,8 +1083,8 @@ bool XdrvRulesProcess(bool teleperiod, const char* event) {
   char* data_save = XdrvMailbox.data;
   XdrvMailbox.data = (char*)event;
   bool rule_handled = XdrvCallDriver(10, (teleperiod) ? FUNC_TELEPERIOD_RULES_PROCESS : FUNC_RULES_PROCESS);
-#ifdef USE_BERRY
-  // events are passed to both Rules engine AND Berry engine
+#if defined(USE_BERRY) && !defined(USE_RULES)
+  // events are sent to Berry in Rules driver, or here if USE_RULES is not defined (only on a subset)
   bool berry_handled = XdrvCallDriver(52, FUNC_RULES_PROCESS);
   rule_handled |= berry_handled;
 #endif
