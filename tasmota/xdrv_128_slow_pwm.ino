@@ -61,7 +61,7 @@
  *   - as Light, only with 1 PWM pin (this has built in HA support also, as normal Light entity)
  *     see: https://tasmota.github.io/docs/Lights/#1-channel-dimmable-light
  *     - execute: LedTable 0  - or recompile with Settings->light_correction = 0;
- *     - use Power<x>, Dimmer<x>, Channel<x> commands to set duty cycle
+ *     - use Power<x>, Dimmer<x> commands to set duty cycle
  *     - use PwmRange <x>, SlowPwmPeriod <x> commands to change parameters
  *       Note: restart device when PwmRange changed, Light updates range only when reinitialized
  *   - as Light, but 1..5 PWM pins (this has built in HA support also, as normal Light entity)
