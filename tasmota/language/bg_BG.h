@@ -328,6 +328,8 @@
 #define D_WEB_ADMIN_PASSWORD "Парола на уеб администратора"
 #define D_MQTT_ENABLE "Активиране на MQTT"
 #define D_MQTT_TLS_ENABLE "MQTT TLS"
+#define D_HTTP_API "HTTP API"
+#define D_HTTP_API_ENABLE "Активиране на HTTP API"
 #define D_FRIENDLY_NAME "Приятелско име"
 #define D_BELKIN_WEMO "Belkin WeMo"
 #define D_HUE_BRIDGE "Hue Bridge"

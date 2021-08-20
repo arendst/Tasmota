@@ -328,6 +328,8 @@
 #define D_WEB_ADMIN_PASSWORD "WEB 管理密码"
 #define D_MQTT_ENABLE "启用 MQTT"
 #define D_MQTT_TLS_ENABLE "MQTT TLS"
+#define D_HTTP_API "HTTP API"
+#define D_HTTP_API_ENABLE "启用 HTTP API"
 #define D_FRIENDLY_NAME "昵称"
 #define D_BELKIN_WEMO "Belkin WeMo"
 #define D_HUE_BRIDGE "飞利浦 Hue 网桥"

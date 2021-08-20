@@ -316,6 +316,7 @@ const char HTTP_FORM_OTHER[] PROGMEM =
   "<br>"
   "<label><b>" D_WEB_ADMIN_PASSWORD "</b><input type='checkbox' onclick='sp(\"wp\")'></label><br><input id='wp' type='password' placeholder=\"" D_WEB_ADMIN_PASSWORD "\" value=\"" D_ASTERISK_PWD "\"><br>"
   "<br>"
+  "<label><input id='b3' type='checkbox'%s><b>" D_HTTP_API_ENABLE "</b></label><br>"  
   "<label><input id='b1' type='checkbox'%s><b>" D_MQTT_ENABLE "</b></label><br>"
   "<br>"
   "<label><b>" D_DEVICE_NAME "</b> (%s)</label><br><input id='dn' placeholder=\"\" value=\"%s\"><br>"
@@ -2136,6 +2137,7 @@ void HandleOtherConfiguration(void) {
 
   TemplateJson();
   WSContentSend_P(HTTP_FORM_OTHER, ResponseData(), (USER_MODULE == Settings->module) ? PSTR(" checked disabled") : "",
+    (Settings->flag5.disable_referer_chk) ? PSTR(" checked") : "",   // SetOption128 - Enable HTTP API
     (Settings->flag.mqtt_enabled) ? PSTR(" checked") : "",   // SetOption3 - Enable MQTT
     SettingsText(SET_FRIENDLYNAME1), SettingsText(SET_DEVICENAME));
 
@@ -2186,6 +2188,8 @@ void OtherSaveSettings(void) {
   cmnd += AddWebCommand(PSTR(D_CMND_WEBPASSWORD "2"), PSTR("wp"), PSTR("\""));
   cmnd += F(";" D_CMND_SO "3 ");
   cmnd += Webserver->hasArg(F("b1"));
+  cmnd += F(";" D_CMND_SO "128 ");
+  cmnd += Webserver->hasArg(F("b3"));  
   cmnd += AddWebCommand(PSTR(D_CMND_DEVICENAME), PSTR("dn"), PSTR("\""));
   char webindex[5];
   char cmnd2[24];                             // ";Module 0;Template "
@@ -2348,6 +2352,8 @@ void HandleInformation(void)
     WSContentSend_P(PSTR("}1" D_IP_ADDRESS " (AP)}2%_I"), (uint32_t)WiFi.softAPIP());
     WSContentSend_P(PSTR("}1" D_GATEWAY "}2%_I"), (uint32_t)WiFi.softAPIP());
   }
+  WSContentSend_P(PSTR("}1}2&nbsp;"));  // Empty line
+  WSContentSend_P(PSTR("}1" D_HTTP_API "}2%s"), Settings->flag5.disable_referer_chk ? PSTR(D_ENABLED) : PSTR(D_DISABLED)); // SetOption 128
   WSContentSend_P(PSTR("}1}2&nbsp;"));  // Empty line
   if (Settings->flag.mqtt_enabled) {  // SetOption3 - Enable MQTT
     WSContentSend_P(PSTR("}1" D_MQTT_HOST "}2%s"), SettingsText(SET_MQTT_HOST));
