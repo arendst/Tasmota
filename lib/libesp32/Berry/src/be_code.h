@@ -14,7 +14,7 @@
 
 int be_code_allocregs(bfuncinfo *finfo, int count);
 void be_code_prebinop(bfuncinfo *finfo, int op, bexpdesc *e);
-void be_code_binop(bfuncinfo *finfo, int op, bexpdesc *e1, bexpdesc *e2);
+void be_code_binop(bfuncinfo *finfo, int op, bexpdesc *e1, bexpdesc *e2, int dst);
 int be_code_unop(bfuncinfo *finfo, int op, bexpdesc *e);
 int be_code_setvar(bfuncinfo *finfo, bexpdesc *e1, bexpdesc *e2);
 int be_code_nextreg(bfuncinfo *finfo, bexpdesc *e);

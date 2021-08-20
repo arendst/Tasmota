@@ -84,10 +84,11 @@ struct {
   String _serverUrl;                     // Connection info
   String _writeUrl;                      // Cached full write url
   String _lastErrorResponse;             // Server reponse or library error message for last failed request
-  uint32_t _lastRequestTime = 0;         // Last time in ms we made are a request to server
+  uint32_t _lastRequestTime = 0;         // Last time in ms we made a request to server
   int interval = 0;
   int _lastStatusCode = 0;               // HTTP status code of last request to server
   int _lastRetryAfter = 0;               // Store retry timeout suggested by server after last request
+  uint8_t log_level = LOG_LEVEL_DEBUG_MORE;
   bool _connectionReuse;                 // true if HTTP connection should be kept open. Usable for frequent writes. Default false
   bool init = false;
 } IFDB;
@@ -161,7 +162,7 @@ void InfluxDbAfterRequest(int expectedStatusCode, bool modifyLastConnStatus) {
     IFDB._lastRequestTime = millis();
 //    AddLog(LOG_LEVEL_DEBUG, PSTR("IFX: HTTP status code %d"), IFDB._lastStatusCode);
     IFDB._lastRetryAfter = 0;
-    if (IFDB._lastStatusCode >= 429) { //retryable server errors
+    if (IFDB._lastStatusCode >= 429) { // Retryable server errors
       if (IFDBhttpClient->hasHeader(RetryAfter)) {
         IFDB._lastRetryAfter = IFDBhttpClient->header(RetryAfter).toInt();
         AddLog(LOG_LEVEL_DEBUG, PSTR("IFX: Reply after %d"), IFDB._lastRetryAfter);
@@ -171,12 +172,12 @@ void InfluxDbAfterRequest(int expectedStatusCode, bool modifyLastConnStatus) {
   IFDB._lastErrorResponse = "";
   if (IFDB._lastStatusCode != expectedStatusCode) {
     if (IFDB._lastStatusCode > 0) {
-      IFDB._lastErrorResponse = IFDBhttpClient->getString();
-      AddLog(LOG_LEVEL_INFO, PSTR("IFX: %s"), IFDB._lastErrorResponse.c_str());  // {"error":"database not found: \"db\""}
+      IFDB._lastErrorResponse = IFDBhttpClient->getString();  // {"error":"database not found: \"db\""}\n
     } else {
       IFDB._lastErrorResponse = IFDBhttpClient->errorToString(IFDB._lastStatusCode);
-      AddLog(LOG_LEVEL_INFO, PSTR("IFX: Error %s"), IFDB._lastErrorResponse.c_str());
     }
+    IFDB._lastErrorResponse.trim();  // Remove trailing \n
+    AddLog(LOG_LEVEL_INFO, PSTR("IFX: Error %s"), IFDB._lastErrorResponse.c_str());
   }
 }
 
@@ -191,8 +192,6 @@ bool InfluxDbValidateConnection(void) {
   if (1 == Settings->influxdb_version) {
     url += InfluxDbAuth();
   }
-  // on version 1.8.9 /health works fine
-//  String url = IFDB._serverUrl + "/health";
   AddLog(LOG_LEVEL_INFO, PSTR("IFX: Validating connection to %s"), url.c_str());
 
   if (!IFDBhttpClient->begin(*IFDBwifiClient, url)) {
@@ -221,7 +220,8 @@ int InfluxDbPostData(const char *data) {
       return false;
     }
 
-    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("IFX: Sending\n%s"), data);
+    Trim((char*)data);  // Remove trailing \n
+    AddLog(IFDB.log_level, PSTR("IFX: Sending\n%s"), data);
     IFDBhttpClient->addHeader(F("Content-Type"), F("text/plain"));
     InfluxDbBeforeRequest();
     IFDB._lastStatusCode = IFDBhttpClient->POST((uint8_t*)data, strlen(data));
@@ -235,19 +235,22 @@ int InfluxDbPostData(const char *data) {
  * Data preparation
 \*********************************************************************************************/
 
-char* InfluxDbNumber(char* alternative, const char* source) {
-  // Test for valid numeric data ('-.0123456789') or ON, OFF etc. as defined in kOptions
-  if (source != nullptr) {
-    char* out = (char*)source;
-    // Convert special text as found in kOptions to a number
-    // Like "OFF" -> 0, "ON" -> 1, "TOGGLE" -> 2
-    int number = GetStateNumber(source);
-    if (number >= 0) {
-      itoa(number, alternative, 10);
-      out = alternative;
-    }
-    if (IsNumeric(out)) {
-      return out;
+char* InfluxDbNumber(char* alternative, JsonParserToken value) {
+  if (value.isValid()) {
+    char* source = (char*)value.getStr();
+    // Test for valid numeric data ('-.0123456789') or ON, OFF etc. as defined in kOptions
+    if (source != nullptr) {
+      char* out = source;
+      // Convert special text as found in kOptions to a number
+      // Like "OFF" -> 0, "ON" -> 1, "TOGGLE" -> 2
+      int number = GetStateNumber(source);
+      if (number >= 0) {
+        itoa(number, alternative, 10);
+        out = alternative;
+      }
+      if (IsNumeric(out)) {
+        return out;
+      }
     }
   }
   return nullptr;
@@ -256,10 +259,12 @@ char* InfluxDbNumber(char* alternative, const char* source) {
 void InfluxDbProcessJson(void) {
   if (!IFDB.init) { return; }
 
-//  AddLog(LOG_LEVEL_DEBUG, PSTR("IFX: JSON %s"), ResponseData());
+  AddLog(IFDB.log_level, PSTR("IFX: Process %s"), ResponseData());
 
-  String jsonStr = ResponseData();
-  JsonParser parser((char *)jsonStr.c_str());
+//  String jsonStr = ResponseData();  // Make a copy before use
+//  JsonParser parser((char *)jsonStr.c_str());
+  JsonParser parser((char *)ResponseData());  // Destroys ResponseData but saves heap space
+
   JsonParserObject root = parser.getRootObject();
   if (root) {
     char number[12];     // '1' to '255'
@@ -280,8 +285,8 @@ void InfluxDbProcessJson(void) {
           if (value2.isObject()) {
             JsonParserObject Object3 = value2.getObject();
             for (auto key3 : Object3) {
-              const char* value = InfluxDbNumber(number, key3.getValue().getStr());
-              if (value != nullptr) {
+              char* value = InfluxDbNumber(number, key3.getValue());
+              if ((value != nullptr) && key2.isValid() && key3.isValid()) {
                 // Level 3
                 LowerCase(sensor, key2.getStr());
                 LowerCase(type, key3.getStr());
@@ -294,44 +299,47 @@ void InfluxDbProcessJson(void) {
           } else {
             // Level 2
             // { ... "ANALOG":{"Temperature":184.72},"DS18B20":{"Id":"01144A0CB2AA","Temperature":24.88},"HTU21":{"Temperature":25.32,"Humidity":49.2,"DewPoint":13.88},"Global":{"Temperature":24.88,"Humidity":49.2,"DewPoint":13.47}, ... }
-            bool isarray = value2.isArray();
-            const char* value = InfluxDbNumber(number, (isarray) ? (value2.getArray())[0].getStr() : value2.getStr());
-            if (value != nullptr) {
+            if (!key1.isValid() || !value2.isValid()) { continue; }
+            LowerCase(type, key2.getStr());
+            bool is_id = (!strcmp_P(type, PSTR("id")));  // Index for DS18B20
+            bool is_array = value2.isArray();
+            char* value = nullptr;
+            if (is_id && !is_array) {
+              snprintf_P(sensor_id, sizeof(sensor_id), PSTR(",id=%s"), value2.getStr());
+            } else {
+              value = InfluxDbNumber(number, (is_array) ? (value2.getArray())[0] : value2);
+            }
+            if ((value != nullptr) && key2.isValid()) {
               LowerCase(sensor, key1.getStr());
-              LowerCase(type, key2.getStr());
 
 //              AddLog(LOG_LEVEL_DEBUG, PSTR("IFX2: sensor %s (%s), type %s (%s)"), key1.getStr(), sensor, key2.getStr(), type);
 
-              if (strcmp(type, "id") == 0) {            // Index for DS18B20
-                snprintf_P(sensor_id, sizeof(sensor_id), PSTR(",id=%s"), value);
-              } else {
-                if (isarray) {
-                  JsonParserArray arr = value2.getArray();
-                  uint32_t i = 0;
-                  for (auto val : arr) {
-                    i++;
-                    // power1,device=shelly25,sensor=energy value=0.00
-                    // power2,device=shelly25,sensor=energy value=4.12
-                    snprintf_P(linebuf, sizeof(linebuf), PSTR("%s%d,device=%s,sensor=%s%s value=%s\n"),
-                      type, i, TasmotaGlobal.mqtt_topic, sensor, sensor_id, val.getStr());
-                    data += linebuf;
-                  }
-                } else {
-                  // temperature,device=demo,sensor=ds18b20,id=01144A0CB2AA value=22.63
-                  snprintf_P(linebuf, sizeof(linebuf), PSTR("%s,device=%s,sensor=%s%s value=%s\n"),
-                    type, TasmotaGlobal.mqtt_topic, sensor, sensor_id, value);
+              if (is_array) {
+                JsonParserArray arr = value2.getArray();
+                uint32_t i = 0;
+                for (auto val : arr) {
+                  i++;
+                  // power1,device=shelly25,sensor=energy value=0.00
+                  // power2,device=shelly25,sensor=energy value=4.12
+                  snprintf_P(linebuf, sizeof(linebuf), PSTR("%s%d,device=%s,sensor=%s%s value=%s\n"),
+                    type, i, TasmotaGlobal.mqtt_topic, sensor, sensor_id, val.getStr());
                   data += linebuf;
                 }
-                sensor_id[0] = '\0';
+              } else {
+                // temperature,device=demo,sensor=ds18b20,id=01144A0CB2AA value=22.63
+                snprintf_P(linebuf, sizeof(linebuf), PSTR("%s,device=%s,sensor=%s%s value=%s\n"),
+                  type, TasmotaGlobal.mqtt_topic, sensor, sensor_id, value);
+                data += linebuf;
               }
+              sensor_id[0] = '\0';
             }
           }
         }
       } else {
         // Level 1
         // {"Time":"2021-08-13T14:15:56","Switch1":"ON","Switch2":"OFF", ... "TempUnit":"C"}
-        const char* value = InfluxDbNumber(number, value1.getStr());
-        if (value != nullptr) {
+        char* value = InfluxDbNumber(number, value1);
+        if ((value != nullptr) && key1.isValid()) {
           LowerCase(type, key1.getStr());
           // switch1,device=demo,sensor=device value=0
           // power1,device=demo,sensor=device value=1
@@ -391,6 +399,7 @@ void InfluxDbLoop(void) {
 \*********************************************************************************************/
 
 #define D_PRFX_INFLUXDB         "Ifx"
+#define D_CMND_INFLUXDBLOG      "Log"
 #define D_CMND_INFLUXDBHOST     "Host"
 #define D_CMND_INFLUXDBPORT     "Port"
 #define D_CMND_INFLUXDBUSER     "User"
@@ -401,14 +410,14 @@ void InfluxDbLoop(void) {
 #define D_CMND_INFLUXDBBUCKET   "Bucket"
 
 const char kInfluxDbCommands[] PROGMEM = D_PRFX_INFLUXDB "|"  // Prefix
-  "|"
+  "|" D_CMND_INFLUXDBLOG "|"
   D_CMND_INFLUXDBHOST "|" D_CMND_INFLUXDBPORT "|"
   D_CMND_INFLUXDBUSER "|" D_CMND_INFLUXDBORG "|"
   D_CMND_INFLUXDBPASSWORD "|" D_CMND_INFLUXDBTOKEN "|"
   D_CMND_INFLUXDBDATABASE "|" D_CMND_INFLUXDBBUCKET;
 
 void (* const InfluxCommand[])(void) PROGMEM = {
-  &CmndInfluxDbState,
+  &CmndInfluxDbState, &CmndInfluxDbLog,
   &CmndInfluxDbHost, &CmndInfluxDbPort,
   &CmndInfluxDbUser, &CmndInfluxDbUser,
   &CmndInfluxDbPassword, &CmndInfluxDbPassword,
@@ -435,6 +444,13 @@ void CmndInfluxDbState(void) {
     ResponseAppend_P(PSTR(",\"" D_CMND_INFLUXDBBUCKET "\":\"%s\",\"" D_CMND_INFLUXDBORG "\":\"%s\"}}"),
       SettingsText(SET_INFLUXDB_BUCKET), SettingsText(SET_INFLUXDB_ORG));
   }
+}
+
+void CmndInfluxDbLog(void) {
+  if ((XdrvMailbox.payload >= LOG_LEVEL_NONE) && (XdrvMailbox.payload <= LOG_LEVEL_DEBUG_MORE)) {
+    IFDB.log_level = XdrvMailbox.payload;
+  }
+  ResponseCmndNumber(IFDB.log_level);
 }
 
 void CmndInfluxDbHost(void) {

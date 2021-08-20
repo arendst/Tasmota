@@ -925,162 +925,156 @@ const bclosure exec_rules_closure = {
 
 /*******************************************************************/
 
-
-/********************************************************************
-    "def set_timer(delay,f) "
-      "if !self._timers self._timers=[] end "
-      "self._timers.push([self.millis(delay),f]) "
-    "end "
-********************************************************************/
 /********************************************************************
 ** Solidified function: set_timer
 ********************************************************************/
 be_local_closure(set_timer,   /* name */
   be_nested_proto(
-    9,                          /* nstack */
-    3,                          /* argc */
+    10,                          /* nstack */
+    4,                          /* argc */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 3]) {     /* upvals */
-      { { .s=be_nested_const_str("_timers", -1694866380, 7) }, BE_STRING},
-      { { .s=be_nested_const_str("push", -2022703139, 4) }, BE_STRING},
-      { { .s=be_nested_const_str("millis", 1214679063, 6) }, BE_STRING},
+    ( &(const bvalue[ 4]) {     /* constants */
+      be_nested_string("_timers", -1694866380, 7),    /* R256 - K0 */
+      be_nested_string("push", -2022703139, 4),    /* R257 - K1 */
+      be_nested_string("Timer", -346839614, 5),    /* R258 - K2 */
+      be_nested_string("millis", 1214679063, 6),    /* R259 - K3 */
     }),
     (be_nested_const_str("set_timer", 2135414533, 9)),
-    (be_nested_const_str("string", 398550328, 6)),
+    (be_nested_const_str("input", -103256197, 5)),
     ( &(const binstruction[16]) {  /* code */
-      0x880C0100,  //  0000  GETMBR	R3	R0	R256
-      0x740E0002,  //  0001  JMPT	R3	#0005
-      0x600C000A,  //  0002  GETGBL	R3	G10
-      0x7C0C0000,  //  0003  CALL	R3	0
-      0x90020003,  //  0004  SETMBR	R0	R256	R3
-      0x880C0100,  //  0005  GETMBR	R3	R0	R256
-      0x8C0C0701,  //  0006  GETMET	R3	R3	R257
-      0x6014000A,  //  0007  GETGBL	R5	G10
-      0x7C140000,  //  0008  CALL	R5	0
-      0x8C180102,  //  0009  GETMET	R6	R0	R258
-      0x5C200200,  //  000A  MOVE	R8	R1
-      0x7C180400,  //  000B  CALL	R6	2
-      0x40180A06,  //  000C  CONNECT	R6	R5	R6
-      0x40180A02,  //  000D  CONNECT	R6	R5	R2
-      0x7C0C0400,  //  000E  CALL	R3	2
+      0x88100100,  //  0000  GETMBR	R4	R0	R256
+      0x74120002,  //  0001  JMPT	R4	#0005
+      0x6010000A,  //  0002  GETGBL	R4	G10
+      0x7C100000,  //  0003  CALL	R4	0
+      0x90020004,  //  0004  SETMBR	R0	R256	R4
+      0x88100100,  //  0005  GETMBR	R4	R0	R256
+      0x8C100901,  //  0006  GETMET	R4	R4	R257
+      0xB81A0400,  //  0007  GETNGBL	R6	R258
+      0x8C1C0103,  //  0008  GETMET	R7	R0	R259
+      0x5C240200,  //  0009  MOVE	R9	R1
+      0x7C1C0400,  //  000A  CALL	R7	2
+      0x5C200400,  //  000B  MOVE	R8	R2
+      0x5C240600,  //  000C  MOVE	R9	R3
+      0x7C180600,  //  000D  CALL	R6	3
+      0x7C100400,  //  000E  CALL	R4	2
       0x80000000,  //  000F  RET	0	R0
     })
   )
 );
 /*******************************************************************/
 
-
-/********************************************************************
-    // run every 50ms tick
-    "def run_deferred() "
-      "if self._timers "
-        "var i=0 "
-        "while i<self._timers.size() "
-          "if self.time_reached(self._timers[i][0]) "
-            "f=self._timers[i][1] "
-            "self._timers.remove(i) "
-            "f() "
-          "else "
-            "i=i+1 "
-          "end "
-        "end "
-      "end "
-    "end "
-********************************************************************/
 /********************************************************************
 ** Solidified function: run_deferred
 ********************************************************************/
-
-be_define_local_const_str(run_deferred_str_name, "run_deferred", 371594696, 12);
-be_define_local_const_str(run_deferred_str_source, "string", 398550328, 6);
-be_define_local_const_str(run_deferred_str_0, "_timers", -1694866380, 7);
-be_define_local_const_str(run_deferred_str_2, "size", 597743964, 4);
-be_define_local_const_str(run_deferred_str_3, "time_reached", 2075136773, 12);
-be_define_local_const_str(run_deferred_str_5, "remove", -611183107, 6);
-
-static const bvalue run_deferred_ktab[6] = {
-  { { .s=be_local_const_str(run_deferred_str_0) }, BE_STRING},
-  { { .i=0 }, BE_INT},
-  { { .s=be_local_const_str(run_deferred_str_2) }, BE_STRING},
-  { { .s=be_local_const_str(run_deferred_str_3) }, BE_STRING},
-  { { .i=1 }, BE_INT},
-  { { .s=be_local_const_str(run_deferred_str_5) }, BE_STRING},
-};
-
-static const uint32_t run_deferred_code[27] = {
-  0x88040100,  //  0000  GETMBR R1  R0  R256
-  0x78060017,  //  0001  JMPF R1  #001A
-  0x58040001,  //  0002  LDCONST  R1  K1
-  0x88080100,  //  0003  GETMBR R2  R0  R256
-  0x8C080502,  //  0004  GETMET R2  R2  R258
-  0x7C080200,  //  0005  CALL R2  1
-  0x14080202,  //  0006  LT R2  R1  R2
-  0x780A0011,  //  0007  JMPF R2  #001A
-  0x8C080103,  //  0008  GETMET R2  R0  R259
-  0x88100100,  //  0009  GETMBR R4  R0  R256
-  0x94100801,  //  000A  GETIDX R4  R4  R1
-  0x94100901,  //  000B  GETIDX R4  R4  R257
-  0x7C080400,  //  000C  CALL R2  2
-  0x780A0009,  //  000D  JMPF R2  #0018
-  0x88080100,  //  000E  GETMBR R2  R0  R256
-  0x94080401,  //  000F  GETIDX R2  R2  R1
-  0x94080504,  //  0010  GETIDX R2  R2  R260
-  0x880C0100,  //  0011  GETMBR R3  R0  R256
-  0x8C0C0705,  //  0012  GETMET R3  R3  R261
-  0x5C140200,  //  0013  MOVE R5  R1
-  0x7C0C0400,  //  0014  CALL R3  2
-  0x5C0C0400,  //  0015  MOVE R3  R2
-  0x7C0C0000,  //  0016  CALL R3  0
-  0x70020000,  //  0017  JMP    #0019
-  0x40304,  //  0018  ADD R1  R1  R260
-  0x7001FFE8,  //  0019  JMP    #0003
-  0x80000000,  //  001A  RET  0 R0
-};
-
-static const bproto run_deferred_proto = {
-  NULL,     // bgcobject *next
-  8,       // type
-  0x08,        // marked
-  6,       // nstack
-  0,       // nupvals
-  1,       // argc
-  0,       // varg
-  NULL,     // bgcobject *gray
-  NULL,     // bupvaldesc *upvals
-  (bvalue*) &run_deferred_ktab,     // ktab
-  NULL,     // bproto **ptab
-  (binstruction*) &run_deferred_code,     // code
-  be_local_const_str(run_deferred_str_name),       // name
-  27,       // codesize
-  6,       // nconst
-  0,       // nproto
-  be_local_const_str(run_deferred_str_source),     // source
-#if BE_DEBUG_RUNTIME_INFO /* debug information */
-  NULL,     // lineinfo
-  0,        // nlineinfo
-#endif
-#if BE_DEBUG_VAR_INFO
-  NULL,     // varinfo
-  0,        // nvarinfo
-#endif
-};
-
-const bclosure run_deferred_closure = {
-  NULL,     // bgcobject *next
-  36,       // type
-  0x08,        // marked
-  0,       // nupvals
-  NULL,     // bgcobject *gray
-  (bproto*) &run_deferred_proto,     // proto
-  { NULL }     // upvals
-};
-
+be_local_closure(run_deferred,   /* name */
+  be_nested_proto(
+    6,                          /* nstack */
+    1,                          /* argc */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 8]) {     /* constants */
+      be_nested_string("_timers", -1694866380, 7),    /* R256 - K0 */
+      be_const_int(0),    /* R257 - K1 */
+      be_nested_string("size", 597743964, 4),    /* R258 - K2 */
+      be_nested_string("time_reached", 2075136773, 12),    /* R259 - K3 */
+      be_nested_string("due", -399437003, 3),    /* R260 - K4 */
+      be_nested_string("f", -485742695, 1),    /* R261 - K5 */
+      be_nested_string("remove", -611183107, 6),    /* R262 - K6 */
+      be_const_int(1),    /* R263 - K7 */
+    }),
+    (be_nested_const_str("run_deferred", 371594696, 12)),
+    (be_nested_const_str("input", -103256197, 5)),
+    ( &(const binstruction[27]) {  /* code */
+      0x88040100,  //  0000  GETMBR	R1	R0	R256
+      0x78060017,  //  0001  JMPF	R1	#001A
+      0x58040001,  //  0002  LDCONST	R1	K1
+      0x88080100,  //  0003  GETMBR	R2	R0	R256
+      0x8C080502,  //  0004  GETMET	R2	R2	R258
+      0x7C080200,  //  0005  CALL	R2	1
+      0x14080202,  //  0006  LT	R2	R1	R2
+      0x780A0011,  //  0007  JMPF	R2	#001A
+      0x8C080103,  //  0008  GETMET	R2	R0	R259
+      0x88100100,  //  0009  GETMBR	R4	R0	R256
+      0x94100801,  //  000A  GETIDX	R4	R4	R1
+      0x88100904,  //  000B  GETMBR	R4	R4	R260
+      0x7C080400,  //  000C  CALL	R2	2
+      0x780A0009,  //  000D  JMPF	R2	#0018
+      0x88080100,  //  000E  GETMBR	R2	R0	R256
+      0x94080401,  //  000F  GETIDX	R2	R2	R1
+      0x88080505,  //  0010  GETMBR	R2	R2	R261
+      0x880C0100,  //  0011  GETMBR	R3	R0	R256
+      0x8C0C0706,  //  0012  GETMET	R3	R3	R262
+      0x5C140200,  //  0013  MOVE	R5	R1
+      0x7C0C0400,  //  0014  CALL	R3	2
+      0x5C0C0400,  //  0015  MOVE	R3	R2
+      0x7C0C0000,  //  0016  CALL	R3	0
+      0x70020000,  //  0017  JMP		#0019
+      0x00040307,  //  0018  ADD	R1	R1	R263
+      0x7001FFE8,  //  0019  JMP		#0003
+      0x80000000,  //  001A  RET	0	R0
+    })
+  )
+);
 /*******************************************************************/
 
+/********************************************************************
+** Solidified function: remove_timer
+********************************************************************/
+be_local_closure(remove_timer,   /* name */
+  be_nested_proto(
+    6,                          /* nstack */
+    2,                          /* argc */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 7]) {     /* constants */
+      be_nested_string("tasmota", 424643812, 7),    /* R256 - K0 */
+      be_nested_string("_timers", -1694866380, 7),    /* R257 - K1 */
+      be_const_int(0),    /* R258 - K2 */
+      be_nested_string("size", 597743964, 4),    /* R259 - K3 */
+      be_nested_string("id", 926444256, 2),    /* R260 - K4 */
+      be_nested_string("remove", -611183107, 6),    /* R261 - K5 */
+      be_const_int(1),    /* R262 - K6 */
+    }),
+    (be_nested_const_str("remove_timer", -153495081, 12)),
+    (be_nested_const_str("input", -103256197, 5)),
+    ( &(const binstruction[23]) {  /* code */
+      0xB80A0000,  //  0000  GETNGBL	R2	R256
+      0x88080501,  //  0001  GETMBR	R2	R2	R257
+      0x780A0012,  //  0002  JMPF	R2	#0016
+      0x58080002,  //  0003  LDCONST	R2	K2
+      0xB80E0000,  //  0004  GETNGBL	R3	R256
+      0x880C0701,  //  0005  GETMBR	R3	R3	R257
+      0x8C0C0703,  //  0006  GETMET	R3	R3	R259
+      0x7C0C0200,  //  0007  CALL	R3	1
+      0x140C0403,  //  0008  LT	R3	R2	R3
+      0x780E000B,  //  0009  JMPF	R3	#0016
+      0x880C0101,  //  000A  GETMBR	R3	R0	R257
+      0x940C0602,  //  000B  GETIDX	R3	R3	R2
+      0x880C0704,  //  000C  GETMBR	R3	R3	R260
+      0x1C0C0601,  //  000D  EQ	R3	R3	R1
+      0x780E0004,  //  000E  JMPF	R3	#0014
+      0x880C0101,  //  000F  GETMBR	R3	R0	R257
+      0x8C0C0705,  //  0010  GETMET	R3	R3	R261
+      0x5C140400,  //  0011  MOVE	R5	R2
+      0x7C0C0400,  //  0012  CALL	R3	2
+      0x70020000,  //  0013  JMP		#0015
+      0x00080506,  //  0014  ADD	R2	R2	R262
+      0x7001FFED,  //  0015  JMP		#0004
+      0x80000000,  //  0016  RET	0	R0
+    })
+  )
+);
+/*******************************************************************/
 
 /********************************************************************
     // Add command to list
@@ -1213,111 +1207,58 @@ be_local_closure(remove_cmd,   /* name */
 /*******************************************************************/
 
 /********************************************************************
-    // Execute custom command
-    "def exec_cmd(cmd, idx, payload) "
-      "if self._ccmd "
-        "import json "
-        "var payload_json = json.load(payload) "
-        "var cmd_found = self.find_key_i(self._ccmd, cmd) "
-        "if cmd_found != nil "
-          "self.resolvecmnd(cmd_found) "  // set the command name in XdrvMailbox.command
-          "self._ccmd[cmd_found](cmd_found, idx, payload, payload_json) "
-          "return true "
-        "end "
-      "end "
-      "return false "
-    "end "
-********************************************************************/
-/********************************************************************
 ** Solidified function: exec_cmd
 ********************************************************************/
-
-be_define_local_const_str(exec_cmd_str_name, "exec_cmd", 493567399, 8);
-be_define_local_const_str(exec_cmd_str_source, "string", 398550328, 6);
-be_define_local_const_str(exec_cmd_str_0, "_ccmd", -2131545883, 5);
-be_define_local_const_str(exec_cmd_str_1, "json", 916562499, 4);
-be_define_local_const_str(exec_cmd_str_2, "load", -435725847, 4);
-be_define_local_const_str(exec_cmd_str_3, "find_key_i", 850136726, 10);
-be_define_local_const_str(exec_cmd_str_4, "resolvecmnd", 993361485, 11);
-
-static const bvalue exec_cmd_ktab[5] = {
-  { { .s=be_local_const_str(exec_cmd_str_0) }, BE_STRING},
-  { { .s=be_local_const_str(exec_cmd_str_1) }, BE_STRING},
-  { { .s=be_local_const_str(exec_cmd_str_2) }, BE_STRING},
-  { { .s=be_local_const_str(exec_cmd_str_3) }, BE_STRING},
-  { { .s=be_local_const_str(exec_cmd_str_4) }, BE_STRING},
-};
-
-static const uint32_t exec_cmd_code[27] = {
-  0x88100100,  //  0000  GETMBR	R4	R0	R256
-  0x78120016,  //  0001  JMPF	R4	#0019
-  0xA4120200,  //  0002  IMPORT	R4	R257
-  0x8C140902,  //  0003  GETMET	R5	R4	R258
-  0x5C1C0600,  //  0004  MOVE	R7	R3
-  0x7C140400,  //  0005  CALL	R5	2
-  0x8C180103,  //  0006  GETMET	R6	R0	R259
-  0x88200100,  //  0007  GETMBR	R8	R0	R256
-  0x5C240200,  //  0008  MOVE	R9	R1
-  0x7C180600,  //  0009  CALL	R6	3
-  0x4C1C0000,  //  000A  LDNIL	7
-  0x201C0C07,  //  000B  NE	R7	R6	R7
-  0x781E000B,  //  000C  JMPF	R7	#0019
-  0x8C1C0104,  //  000D  GETMET	R7	R0	R260
-  0x5C240C00,  //  000E  MOVE	R9	R6
-  0x7C1C0400,  //  000F  CALL	R7	2
-  0x881C0100,  //  0010  GETMBR	R7	R0	R256
-  0x941C0E06,  //  0011  GETIDX	R7	R7	R6
-  0x5C200C00,  //  0012  MOVE	R8	R6
-  0x5C240400,  //  0013  MOVE	R9	R2
-  0x5C280600,  //  0014  MOVE	R10	R3
-  0x5C2C0A00,  //  0015  MOVE	R11	R5
-  0x7C1C0800,  //  0016  CALL	R7	4
-  0x501C0200,  //  0017  LDBOOL	R7	1	0
-  0x80040E00,  //  0018  RET	1	R7
-  0x50100000,  //  0019  LDBOOL	R4	0	0
-  0x80040800,  //  001A  RET	1	R4
-};
-
-static const bproto exec_cmd_proto = {
-  NULL,     // bgcobject *next
-  8,       // type
-  0x08,        // marked
-  12,       // nstack
-  0,       // nupvals
-  4,       // argc
-  0,       // varg
-  NULL,     // bgcobject *gray
-  NULL,     // bupvaldesc *upvals
-  (bvalue*) &exec_cmd_ktab,     // ktab
-  NULL,     // bproto **ptab
-  (binstruction*) &exec_cmd_code,     // code
-  be_local_const_str(exec_cmd_str_name),       // name
-  27,       // codesize
-  5,       // nconst
-  0,       // nproto
-  be_local_const_str(exec_cmd_str_source),     // source
-#if BE_DEBUG_RUNTIME_INFO /* debug information */
-  NULL,     // lineinfo
-  0,        // nlineinfo
-#endif
-#if BE_DEBUG_VAR_INFO
-  NULL,     // varinfo
-  0,        // nvarinfo
-#endif
-};
-
-static const bclosure exec_cmd_closure = {
-  NULL,     // bgcobject *next
-  36,       // type
-  0x08,        // marked
-  0,       // nupvals
-  NULL,     // bgcobject *gray
-  (bproto*) &exec_cmd_proto,     // proto
-  { NULL }     // upvals
-};
-
+be_local_closure(exec_cmd,   /* name */
+  be_nested_proto(
+    12,                          /* nstack */
+    4,                          /* argc */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 5]) {     /* constants */
+      be_nested_string("_ccmd", -2131545883, 5),    /* R256 - K0 */
+      be_nested_string("json", 916562499, 4),    /* R257 - K1 */
+      be_nested_string("load", -435725847, 4),    /* R258 - K2 */
+      be_nested_string("find_key_i", 850136726, 10),    /* R259 - K3 */
+      be_nested_string("resolvecmnd", 993361485, 11),    /* R260 - K4 */
+    }),
+    (be_nested_const_str("exec_cmd", 493567399, 8)),
+    (be_nested_const_str("string", 398550328, 6)),
+    ( &(const binstruction[27]) {  /* code */
+      0x88100100,  //  0000  GETMBR	R4	R0	R256
+      0x78120016,  //  0001  JMPF	R4	#0019
+      0xA4120200,  //  0002  IMPORT	R4	R257
+      0x8C140902,  //  0003  GETMET	R5	R4	R258
+      0x5C1C0600,  //  0004  MOVE	R7	R3
+      0x7C140400,  //  0005  CALL	R5	2
+      0x8C180103,  //  0006  GETMET	R6	R0	R259
+      0x88200100,  //  0007  GETMBR	R8	R0	R256
+      0x5C240200,  //  0008  MOVE	R9	R1
+      0x7C180600,  //  0009  CALL	R6	3
+      0x4C1C0000,  //  000A  LDNIL	7
+      0x201C0C07,  //  000B  NE	R7	R6	R7
+      0x781E000B,  //  000C  JMPF	R7	#0019
+      0x8C1C0104,  //  000D  GETMET	R7	R0	R260
+      0x5C240C00,  //  000E  MOVE	R9	R6
+      0x7C1C0400,  //  000F  CALL	R7	2
+      0x881C0100,  //  0010  GETMBR	R7	R0	R256
+      0x941C0E06,  //  0011  GETIDX	R7	R7	R6
+      0x5C200C00,  //  0012  MOVE	R8	R6
+      0x5C240400,  //  0013  MOVE	R9	R2
+      0x5C280600,  //  0014  MOVE	R10	R3
+      0x5C2C0A00,  //  0015  MOVE	R11	R5
+      0x7C1C0800,  //  0016  CALL	R7	4
+      0x501C0200,  //  0017  LDBOOL	R7	1	0
+      0x80040E00,  //  0018  RET	1	R7
+      0x50100000,  //  0019  LDBOOL	R4	0	0
+      0x80040800,  //  001A  RET	1	R4
+    })
+  )
+);
 /*******************************************************************/
-
 
 /********************************************************************
     // Force gc and return allocated memory
@@ -1478,70 +1419,37 @@ be_local_closure(event,   /* name */
 /********************************************************************
 ** Solidified function: add_driver
 ********************************************************************/
-
-be_define_local_const_str(add_driver_str_name, "add_driver", 1654458371, 10);
-be_define_local_const_str(add_driver_str_source, "string", 398550328, 6);
-be_define_local_const_str(add_driver_str_0, "_drivers", -1034638311, 8);
-be_define_local_const_str(add_driver_str_1, "push", -2022703139, 4);
-
-static const bvalue add_driver_ktab[2] = {
-  { { .s=be_local_const_str(add_driver_str_0) }, BE_STRING},
-  { { .s=be_local_const_str(add_driver_str_1) }, BE_STRING},
-};
-
-static const uint32_t add_driver_code[12] = {
-  0x88080100,  //  0000  GETMBR R2  R0  R256
-  0x780A0004,  //  0001  JMPF R2  #0007
-  0x88080100,  //  0002  GETMBR R2  R0  R256
-  0x8C080501,  //  0003  GETMET R2  R2  R257
-  0x5C100200,  //  0004  MOVE R4  R1
-  0x7C080400,  //  0005  CALL R2  2
-  0x70020003,  //  0006  JMP    #000B
-  0x6008000A,  //  0007  GETGBL R2  G10
-  0x7C080000,  //  0008  CALL R2  0
-  0x400C0401,  //  0009  CONNECT  R3  R2  R1
-  0x90020002,  //  000A  SETMBR R0  R256  R2
-  0x80000000,  //  000B  RET  0 R0
-};
-
-static const bproto add_driver_proto = {
-  NULL,     // bgcobject *next
-  8,       // type
-  0x08,        // marked
-  5,       // nstack
-  0,       // nupvals
-  2,       // argc
-  0,       // varg
-  NULL,     // bgcobject *gray
-  NULL,     // bupvaldesc *upvals
-  (bvalue*) &add_driver_ktab,     // ktab
-  NULL,     // bproto **ptab
-  (binstruction*) &add_driver_code,     // code
-  be_local_const_str(add_driver_str_name),       // name
-  12,       // codesize
-  2,       // nconst
-  0,       // nproto
-  be_local_const_str(add_driver_str_source),     // source
-#if BE_DEBUG_RUNTIME_INFO /* debug information */
-  NULL,     // lineinfo
-  0,        // nlineinfo
-#endif
-#if BE_DEBUG_VAR_INFO
-  NULL,     // varinfo
-  0,        // nvarinfo
-#endif
-};
-
-const bclosure add_driver_closure = {
-  NULL,     // bgcobject *next
-  36,       // type
-  0x08,        // marked
-  0,       // nupvals
-  NULL,     // bgcobject *gray
-  (bproto*) &add_driver_proto,     // proto
-  { NULL }     // upvals
-};
-
+be_local_closure(add_driver,   /* name */
+  be_nested_proto(
+    5,                          /* nstack */
+    2,                          /* argc */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 2]) {     /* constants */
+      be_nested_string("_drivers", -1034638311, 8),    /* R256 - K0 */
+      be_nested_string("push", -2022703139, 4),    /* R257 - K1 */
+    }),
+    (be_nested_const_str("add_driver", 1654458371, 10)),
+    (be_nested_const_str("string", 398550328, 6)),
+    ( &(const binstruction[12]) {  /* code */
+      0x88080100,  //  0000  GETMBR	R2	R0	R256
+      0x780A0004,  //  0001  JMPF	R2	#0007
+      0x88080100,  //  0002  GETMBR	R2	R0	R256
+      0x8C080501,  //  0003  GETMET	R2	R2	R257
+      0x5C100200,  //  0004  MOVE	R4	R1
+      0x7C080400,  //  0005  CALL	R2	2
+      0x70020003,  //  0006  JMP		#000B
+      0x6008000A,  //  0007  GETGBL	R2	G10
+      0x7C080000,  //  0008  CALL	R2	0
+      0x400C0401,  //  0009  CONNECT	R3	R2	R1
+      0x90020002,  //  000A  SETMBR	R0	R256	R2
+      0x80000000,  //  000B  RET	0	R0
+    })
+  )
+);
 /*******************************************************************/
 
 /********************************************************************
@@ -2246,6 +2154,7 @@ void be_load_tasmota_ntvlib(bvm *vm)
         { "exec_rules", (bntvfunc) &exec_rules_closure },
         { "set_timer", (bntvfunc) &set_timer_closure },
         { "run_deferred", (bntvfunc) &run_deferred_closure },
+        { "remove_timer", (bntvfunc) &remove_timer_closure },
         { "add_cmd", (bntvfunc) &add_cmd_closure },
         { "remove_cmd", (bntvfunc) &remove_cmd_closure },
         { "exec_cmd", (bntvfunc) &exec_cmd_closure },
@@ -2329,6 +2238,7 @@ class be_class_tasmota (scope: global, name: Tasmota) {
     exec_rules, closure(exec_rules_closure)
     set_timer, closure(set_timer_closure)
     run_deferred, closure(run_deferred_closure)
+    remove_timer, closure(remove_timer_closure)
     add_cmd, closure(add_cmd_closure)
     remove_cmd, closure(remove_cmd_closure)
     exec_cmd, closure(exec_cmd_closure)

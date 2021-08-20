@@ -178,6 +178,7 @@ void be_class_upvalue_init(bvm *vm, bclass *c)
     }
 }
 
+/* (internal) Instanciate an instance for a single class and initialize variables to nil */
 static binstance* newobjself(bvm *vm, bclass *c)
 {
     size_t size = sizeof(binstance) + sizeof(bvalue) * (c->nvar - 1);
@@ -185,15 +186,17 @@ static binstance* newobjself(bvm *vm, bclass *c)
     binstance *obj = cast_instance(gco);
     be_assert(obj != NULL);
     if (obj) { /* initialize members */
-        bvalue *v = obj->members, *end = v + c->nvar;
-        while (v < end) { var_setnil(v); ++v; }
-        obj->_class = c;
-        obj->super = NULL;
-        obj->sub = NULL;
+        bvalue *v = obj->members, *end = v + c->nvar;  /* instance variables is a simple array of pointers at obj->members of size c->nvar */
+        while (v < end) { var_setnil(v); ++v; }  /* Initialize all instance variables to `nil` */
+        obj->_class = c;  /* set its class object */
+        obj->super = NULL;  /* no super class instance for now */
+        obj->sub = NULL;  /* no subclass instance for now */
     }
     return obj;
 }
 
+/* (internal) Instanciate the whole chain of instances when there is a class hierarchy */
+/* All variables set to nil, constructors are not called here */
 static binstance* newobject(bvm *vm, bclass *c)
 {
     binstance *obj, *prev;
@@ -201,23 +204,26 @@ static binstance* newobject(bvm *vm, bclass *c)
     obj = prev = newobjself(vm, c);
     var_setinstance(vm->top, obj);
     be_incrtop(vm); /* protect new objects from GC */
-    for (c = c->super; c; c = c->super) {
+    for (c = c->super; c; c = c->super) {  /* initialize one instance object per class and per superclass */
         prev->super = newobjself(vm, c);
-        prev->super->sub = prev;
+        prev->super->sub = prev;  /* link the super/sub classes instances */
         prev = prev->super;
     }
     be_stackpop(vm, 1);
     return obj;
 }
 
+/* Instanciate new instance from stack with argc parameters */
+/* Pushes the constructor on the stack to be executed if a construtor is found */
+/* Returns true if a constructor is found */
 bbool be_class_newobj(bvm *vm, bclass *c, bvalue *reg, int argc, int mode)
 {
     bvalue init;
     size_t pos = reg - vm->reg;
-    binstance *obj = newobject(vm, c);
-    reg = vm->reg + pos - mode; /* the stack may have changed  */
+    binstance *obj = newobject(vm, c);  /* create empty object hierarchy from class hierarchy */
+    reg = vm->reg + pos - mode; /* the stack may have changed, mode=1 when class is instanciated from module #104 */
     var_setinstance(reg, obj);
-    var_setinstance(reg + mode, obj);
+    var_setinstance(reg + mode, obj);  /* copy to reg and reg+1 if mode==1 */
     /* find constructor */
     obj = instance_member(vm, obj, str_literal(vm, "init"), &init);
     if (obj && var_type(&init) != MT_VARIABLE) {
@@ -231,6 +237,10 @@ bbool be_class_newobj(bvm *vm, bclass *c, bvalue *reg, int argc, int mode)
     return bfalse;
 }
 
+/* Find instance member by name and copy value to `dst` */
+/* Input: none of `obj`, `name` and `dst` may not be NULL */
+/* Returns the type of the member or BE_NONE if member not found */
+/* TODO need to support synthetic members */
 int be_instance_member(bvm *vm, binstance *obj, bstring *name, bvalue *dst)
 {
     int type;

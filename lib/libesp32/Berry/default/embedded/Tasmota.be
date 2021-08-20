@@ -1,6 +1,21 @@
 #- Native code used for testing and code solidification -#
 #- Do not use it -#
 
+class Timer
+  var due, f, id
+  def init(due, f, id)
+    self.due = due
+    self.f = f
+    self.id = id
+  end
+  def tostring()
+    import string
+    return string.format("<instance: %s(%s, %s, %s)", str(classof(self)),
+              str(self.due), str(self.f), str(self.id))
+  end
+end
+
+tasmota = nil
 class Tasmota
 
   # add `chars_in_string(s:string,c:string) -> int``
@@ -79,7 +94,7 @@ class Tasmota
     var sub_event = event
     var rl = string.split(rl_list[0],'#')
     for it:rl
-      found=self.find_key_i(sub_event,it)
+      var found=self.find_key_i(sub_event,it)
       if found == nil return false end
       sub_event = sub_event[found]
     end
@@ -127,9 +142,9 @@ class Tasmota
     return false
   end
 
-  def set_timer(delay,f)
+  def set_timer(delay,f,id)
     if !self._timers self._timers=[] end
-    self._timers.push([self.millis(delay),f])
+    self._timers.push(Timer(self.millis(delay),f,id))
   end
 
   # run every 50ms tick
@@ -137,10 +152,24 @@ class Tasmota
     if self._timers
       var i=0
       while i<self._timers.size()
-        if self.time_reached(self._timers[i][0])
-          f=self._timers[i][1]
+        if self.time_reached(self._timers[i].due)
+          var f=self._timers[i].f
           self._timers.remove(i)
           f()
+        else
+          i=i+1
+        end
+      end
+    end
+  end
+
+  # remove timers by id
+  def remove_timer(id)
+    if tasmota._timers
+      var i=0
+      while i<tasmota._timers.size()
+        if self._timers[i].id == id
+          self._timers.remove(i)
         else
           i=i+1
         end
@@ -264,6 +293,47 @@ class Tasmota
       return false
     end
   end
+
+  def add_driver(d)
+    if self._drivers
+      self._drivers.push(d)
+        else
+      self._drivers = [d]
+    end
+  end
+
+  # cmd high-level function
+  def cmd(command)
+    import json
+    var ret = self._cmd(command)
+    var j = json.load(ret)
+    if type(j) == 'instance'
+      return j
+    else
+      return {'response':j}
+    end
+  end
+
+  # set_light and get_light deprecetaion
+  def get_light(l)
+    print('tasmota.get_light() is deprecated, use light.get()')
+    import light
+    if l != nil
+      return light.get(l)
+    else
+      return light.get()
+    end
+  end
+  def set_light(v,l)
+    print('tasmota.set_light() is deprecated, use light.set()')
+    import light
+    if l != nil
+      return light.set(v,l)
+    else
+      return light.set(v)
+    end
+  end
+
 
   #- dispatch callback number n, with parameters v0,v1,v2,v3 -#
   def cb_dispatch(n,v0,v1,v2,v3)
