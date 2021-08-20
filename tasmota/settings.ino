@@ -888,6 +888,7 @@ void SettingsDefaultSet2(void) {
   Settings->weblog_level = WEB_LOG_LEVEL;
   SettingsUpdateText(SET_WEBPWD, PSTR(WEB_PASSWORD));
   SettingsUpdateText(SET_CORS, PSTR(CORS_DOMAIN));
+  Settings->flag5.disable_referer_chk |= true;
 
   // Button
   flag.button_restrict |= KEY_DISABLE_MULTIPRESS;
@@ -1394,6 +1395,9 @@ void SettingsDelta(void) {
       ParseIPv4(&Settings->ipv4_rgx_subnetmask, PSTR(WIFI_RGX_SUBNETMASK));
       SettingsUpdateText(SET_RGX_SSID, PSTR(WIFI_RGX_SSID));
       SettingsUpdateText(SET_RGX_PASSWORD, PSTR(WIFI_RGX_PASSWORD));
+    }
+    if (Settings->version < 0x09050007) {
+      Settings->flag5.disable_referer_chk = true;
     }
 
     Settings->version = VERSION;

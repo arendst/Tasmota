@@ -98,10 +98,11 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 
 [Complete list](BUILDS.md) of available feature and sensors.
 
-## Changelog v9.5.0.6
+## Changelog v9.5.0.7
 ### Added
 - Release of [Tasmota WebInstaller](https://arendst.github.io/Tasmota-firmware/)
 - Command ``SetOption127 1`` to force Wi-Fi in no-sleep mode even if ``Sleep 0`` is not enabled
+- Command ``SetOption128 0|1`` web referer check disabling HTTP API commands if set to 0. Default set to 1 for backward compatibility [#12828](https://github.com/arendst/Tasmota/issues/12828)
 - Command ``SetSensor1..127 0|1`` to globally disable individual sensor driver
 - Neopool commands ``NPPHRes``, ``NPCLRes`` and ``NPIonRes`` [#12813](https://github.com/arendst/Tasmota/issues/12813)
 - Support for second DNS server
@@ -118,7 +119,6 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - Support for CAN bus and Freedom Won Battery Management System by Marius Bezuidenhout [#12651](https://github.com/arendst/Tasmota/issues/12651)
 - Optional IP filter to command ``TCPStart`` [#12806](https://github.com/arendst/Tasmota/issues/12806)
 - Inital support for Wi-Fi extender [#12784](https://github.com/arendst/Tasmota/issues/12784)
-- Command ``SetOption128 1`` disabling web referer check default blocking HTTP web commands [#12828](https://github.com/arendst/Tasmota/issues/12828)
 
 ### Changed
 - Move firmware binaries to https://github.com/arendst/Tasmota-firmware/tree/main/release-firmware

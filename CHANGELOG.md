@@ -3,7 +3,11 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [9.5.0.6]
+## [9.5.0.7]
+### Added
+- Turn HTTP API (command ``SetOption128 1``) default on for backward compatibility
+
+## [9.5.0.6] 20210820
 ### Added
 - Version bump to monitor possible HTTP issues releated to ``SetOption128``
 

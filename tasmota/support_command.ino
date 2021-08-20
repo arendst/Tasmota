@@ -568,11 +568,10 @@ void CmndStatus(void)
   if ((0 == payload) || (5 == payload)) {
     Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS5_NETWORK "\":{\"" D_CMND_HOSTNAME "\":\"%s\",\"" D_CMND_IPADDRESS "\":\"%_I\",\""
                           D_JSON_GATEWAY "\":\"%_I\",\"" D_JSON_SUBNETMASK "\":\"%_I\",\"" D_JSON_DNSSERVER "1\":\"%_I\",\"" D_JSON_DNSSERVER "2\":\"%_I\",\""
-                          D_JSON_MAC "\":\"%s\",\"" D_CMND_WEBSERVER "\":%d,\"" D_CMND_WIFICONFIG "\":%d,\"" D_CMND_WIFIPOWER "\":%s,\"" D_HTTP_API "\":\"%s\"}}"),
+                          D_JSON_MAC "\":\"%s\",\"" D_CMND_WEBSERVER "\":%d,\"HTTP_API\":%d,\"" D_CMND_WIFICONFIG "\":%d,\"" D_CMND_WIFIPOWER "\":%s}}"),
                           NetworkHostname(), (uint32_t)NetworkAddress(),
                           Settings->ipv4_address[1], Settings->ipv4_address[2], Settings->ipv4_address[3], Settings->ipv4_address[4],
-                          NetworkMacAddress().c_str(), Settings->webserver, Settings->sta_config, WifiGetOutputPower().c_str(),
-                          (Settings->flag5.disable_referer_chk) ? PSTR(D_ENABLED) : PSTR(D_DISABLED) );
+                          NetworkMacAddress().c_str(), Settings->webserver, Settings->flag5.disable_referer_chk, Settings->sta_config, WifiGetOutputPower().c_str());
     CmndStatusResponse(5);
   }
 
