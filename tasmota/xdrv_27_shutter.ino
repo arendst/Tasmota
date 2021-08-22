@@ -1084,6 +1084,7 @@ void CmndShutterPosition(void)
         }
         int8_t new_shutterdirection = Shutter[index].real_position < Shutter[index].target_position ? 1 : -1;
         if (Shutter[index].direction == -new_shutterdirection) {
+	  Shutter[index].start_position = Shutter[index].target_position;	
           ShutterPowerOff(index);
         }
         if (Shutter[index].direction != new_shutterdirection) {
