@@ -161,7 +161,7 @@ ble_svc_gap_appearance_write_access(struct ble_gatt_access_ctxt *ctxt)
         return BLE_ATT_ERR_INVALID_ATTR_VALUE_LEN;
     }
 
-    rc = ble_hs_mbuf_to_flat(ctxt->om, ble_svc_gap_appearance, om_len, NULL);
+    rc = ble_hs_mbuf_to_flat(ctxt->om, &ble_svc_gap_appearance, om_len, NULL);
     if (rc != 0) {
         return BLE_ATT_ERR_UNLIKELY;
     }

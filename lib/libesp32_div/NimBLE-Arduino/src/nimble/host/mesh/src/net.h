@@ -41,6 +41,13 @@ struct bt_mesh_app_key {
 	} keys[2];
 };
 
+struct bt_mesh_node {
+	u16_t addr;
+	u16_t net_idx;
+	u8_t  dev_key[16];
+	u8_t  num_elem;
+};
+
 struct bt_mesh_subnet {
 	u32_t beacon_sent;        /* Timestamp of last sent beacon */
 	u8_t  beacons_last;       /* Number of beacons during last
@@ -78,7 +85,7 @@ struct bt_mesh_subnet {
 struct bt_mesh_rpl {
 	u16_t src;
 	bool  old_iv;
-#if defined(CONFIG_BT_SETTINGS)
+#if (MYNEWT_VAL(BLE_MESH_SETTINGS))
 	bool  store;
 #endif
 	u32_t seq;
@@ -115,6 +122,12 @@ struct bt_mesh_friend {
 
 	struct bt_mesh_friend_seg {
 		struct net_buf_slist_t queue;
+
+		/* The target number of segments, i.e. not necessarily
+		 * the current number of segments, in the queue. This is
+		 * used for Friend Queue free space calculations.
+		 */
+		u8_t        seg_count;
 	} seg[FRIEND_SEG_RX];
 
 	struct os_mbuf *last;
@@ -208,7 +221,7 @@ enum {
 	BT_MESH_IVU_TEST,        /* IV Update test mode */
 	BT_MESH_IVU_PENDING,     /* Update blocked by SDU in progress */
 
-	/* pending storage actions */
+	/* pending storage actions, must reside within first 32 flags */
 	BT_MESH_RPL_PENDING,
 	BT_MESH_KEYS_PENDING,
 	BT_MESH_NET_PENDING,
@@ -217,6 +230,8 @@ enum {
 	BT_MESH_HB_PUB_PENDING,
 	BT_MESH_CFG_PENDING,
 	BT_MESH_MOD_PENDING,
+	BT_MESH_VA_PENDING,
+	BT_MESH_NODES_PENDING,
 
 	/* Don't touch - intentionally last */
 	BT_MESH_FLAG_COUNT,
@@ -249,6 +264,10 @@ struct bt_mesh_net {
 
 	u8_t dev_key[16];
 
+#if MYNEWT_VAL(BLE_MESH_PROVISIONER)
+	struct bt_mesh_node nodes[MYNEWT_VAL(BLE_MESH_NODE_COUNT)];
+#endif
+
 	struct bt_mesh_app_key app_keys[MYNEWT_VAL(BLE_MESH_APP_KEY_COUNT)];
 
 	struct bt_mesh_subnet sub[MYNEWT_VAL(BLE_MESH_SUBNET_COUNT)];
@@ -276,7 +295,7 @@ struct bt_mesh_net_rx {
 	       net_if:2,       /* Network interface */
 	       local_match:1,  /* Matched a local element */
 	       friend_match:1; /* Matched an LPN we're friends for */
-	s8_t   rssi;
+	u16_t  msg_cache_idx;  /* Index of entry in message cache */
 };
 
 /* Encoding context for Network/Transport data */
@@ -346,6 +365,8 @@ u32_t bt_mesh_next_seq(void);
 void bt_mesh_net_start(void);
 
 void bt_mesh_net_init(void);
+void bt_mesh_net_header_parse(struct os_mbuf *buf,
+			      struct bt_mesh_net_rx *rx);
 
 /* Friendship Credential Management */
 struct friend_cred {
@@ -371,5 +392,21 @@ struct friend_cred *friend_cred_create(struct bt_mesh_subnet *sub, u16_t addr,
 				       u16_t lpn_counter, u16_t frnd_counter);
 void friend_cred_clear(struct friend_cred *cred);
 int friend_cred_del(u16_t net_idx, u16_t addr);
+
+static inline void send_cb_finalize(const struct bt_mesh_send_cb *cb,
+				    void *cb_data)
+{
+	if (!cb) {
+		return;
+	}
+
+	if (cb->start) {
+		cb->start(0, 0, cb_data);
+	}
+
+	if (cb->end) {
+		cb->end(0, cb_data);
+	}
+}
 
 #endif

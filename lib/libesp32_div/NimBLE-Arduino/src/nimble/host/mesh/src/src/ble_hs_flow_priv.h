@@ -26,7 +26,7 @@ extern "C" {
 #endif
 
 void ble_hs_flow_connection_broken(uint16_t conn_handle);
-void ble_hs_flow_fill_acl_usrhdr(struct os_mbuf *om);
+void ble_hs_flow_track_data_mbuf(struct os_mbuf *om);
 int ble_hs_flow_startup(void);
 
 #ifdef __cplusplus

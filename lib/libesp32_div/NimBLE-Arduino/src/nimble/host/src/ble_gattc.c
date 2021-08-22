@@ -912,7 +912,7 @@ ble_gattc_proc_matches_conn_rx_entry(struct ble_gattc_proc *proc, void *arg)
     criteria->matching_rx_entry = ble_gattc_rx_entry_find(
         proc->op, criteria->rx_entries, criteria->num_rx_entries);
 
-    return 1;
+    return (criteria->matching_rx_entry != NULL);
 }
 
 static void

@@ -207,15 +207,19 @@ extern "C" {
 #endif
 
 void put_le16(void *buf, uint16_t x);
+void put_le24(void *buf, uint32_t x);
 void put_le32(void *buf, uint32_t x);
 void put_le64(void *buf, uint64_t x);
 uint16_t get_le16(const void *buf);
+uint32_t get_le24(const void *buf);
 uint32_t get_le32(const void *buf);
 uint64_t get_le64(const void *buf);
 void put_be16(void *buf, uint16_t x);
+void put_be24(void *buf, uint32_t x);
 void put_be32(void *buf, uint32_t x);
 void put_be64(void *buf, uint64_t x);
 uint16_t get_be16(const void *buf);
+uint32_t get_be24(const void *buf);
 uint32_t get_be32(const void *buf);
 uint64_t get_be64(const void *buf);
 void swap_in_place(void *buf, int len);

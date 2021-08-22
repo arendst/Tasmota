@@ -84,12 +84,27 @@ ble_hs_conn_chan_find_by_dcid(struct ble_hs_conn *conn, uint16_t cid)
         if (chan->dcid == cid) {
             return chan;
         }
-        if (chan->dcid > cid) {
-            return NULL;
-        }
     }
 
     return NULL;
+}
+
+bool
+ble_hs_conn_chan_exist(struct ble_hs_conn *conn, struct ble_l2cap_chan *chan)
+{
+#if !NIMBLE_BLE_CONNECT
+    return NULL;
+#endif
+
+    struct ble_l2cap_chan *tmp;
+
+    SLIST_FOREACH(tmp, &conn->bhc_channels, next) {
+        if (chan == tmp) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 int
@@ -197,7 +212,21 @@ ble_hs_conn_delete_chan(struct ble_hs_conn *conn, struct ble_l2cap_chan *chan)
     }
 
     SLIST_REMOVE(&conn->bhc_channels, chan, ble_l2cap_chan, next);
-    ble_l2cap_chan_free(chan);
+    ble_l2cap_chan_free(conn, chan);
+}
+
+void
+ble_hs_conn_foreach(ble_hs_conn_foreach_fn *cb, void *arg)
+{
+    struct ble_hs_conn *conn;
+
+    BLE_HS_DBG_ASSERT(ble_hs_locked_by_cur_task());
+
+    SLIST_FOREACH(conn, &ble_hs_conns, bhc_next) {
+        if (cb(conn, arg) != 0) {
+            return;
+        }
+    }
 }
 
 void
@@ -377,7 +406,7 @@ ble_hs_conn_addrs(const struct ble_hs_conn *conn,
 
     /* Determine our address information. */
     addrs->our_id_addr.type =
-        ble_hs_misc_addr_type_to_id(conn->bhc_our_addr_type);
+        ble_hs_misc_own_addr_type_to_id(conn->bhc_our_addr_type);
 
 #if MYNEWT_VAL(BLE_EXT_ADV)
     /* With EA enabled random address for slave connection is per advertising

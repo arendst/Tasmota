@@ -6,13 +6,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include "syscfg/syscfg.h"
+#define MESH_LOG_MODULE BLE_MESH_MODEL_LOG
+
 #include <string.h>
 #include <errno.h>
 #include <stdbool.h>
-
-#include "syscfg/syscfg.h"
-#define BT_DBG_ENABLED (MYNEWT_VAL(BLE_MESH_DEBUG_MODEL))
-#include "host/ble_hs_log.h"
 
 #include "mesh/mesh.h"
 #include "mesh_priv.h"
@@ -206,7 +205,7 @@ static int cli_wait(void)
 int bt_mesh_health_attention_get(u16_t net_idx, u16_t addr, u16_t app_idx,
 				 u8_t *attention)
 {
-	struct os_mbuf *msg = NET_BUF_SIMPLE(2 + 0 + 4);
+	struct os_mbuf *msg = BT_MESH_MODEL_BUF(OP_ATTENTION_GET, 0);
 	struct bt_mesh_msg_ctx ctx = {
 		.net_idx = net_idx,
 		.app_idx = app_idx,
@@ -241,7 +240,7 @@ done:
 int bt_mesh_health_attention_set(u16_t net_idx, u16_t addr, u16_t app_idx,
 				 u8_t attention, u8_t *updated_attention)
 {
-	struct os_mbuf *msg = NET_BUF_SIMPLE(2 + 1 + 4);
+	struct os_mbuf *msg = BT_MESH_MODEL_BUF(OP_ATTENTION_SET, 1);
 	struct bt_mesh_msg_ctx ctx = {
 		.net_idx = net_idx,
 		.app_idx = app_idx,
@@ -287,7 +286,7 @@ done:
 int bt_mesh_health_period_get(u16_t net_idx, u16_t addr, u16_t app_idx,
 			      u8_t *divisor)
 {
-	struct os_mbuf *msg = NET_BUF_SIMPLE(2 + 0 + 4);
+	struct os_mbuf *msg = BT_MESH_MODEL_BUF(OP_HEALTH_PERIOD_GET, 0);
 	struct bt_mesh_msg_ctx ctx = {
 		.net_idx = net_idx,
 		.app_idx = app_idx,
@@ -322,7 +321,7 @@ done:
 int bt_mesh_health_period_set(u16_t net_idx, u16_t addr, u16_t app_idx,
 			      u8_t divisor, u8_t *updated_divisor)
 {
-	struct os_mbuf *msg = NET_BUF_SIMPLE(2 + 1 + 4);
+	struct os_mbuf *msg = BT_MESH_MODEL_BUF(OP_HEALTH_PERIOD_SET, 1);
 	struct bt_mesh_msg_ctx ctx = {
 		.net_idx = net_idx,
 		.app_idx = app_idx,
@@ -369,7 +368,7 @@ int bt_mesh_health_fault_test(u16_t net_idx, u16_t addr, u16_t app_idx,
 			      u16_t cid, u8_t test_id, u8_t *faults,
 			      size_t *fault_count)
 {
-	struct os_mbuf *msg = NET_BUF_SIMPLE(2 + 3 + 4);
+	struct os_mbuf *msg = BT_MESH_MODEL_BUF(OP_HEALTH_FAULT_TEST, 3);
 	struct bt_mesh_msg_ctx ctx = {
 		.net_idx = net_idx,
 		.app_idx = app_idx,
@@ -420,7 +419,7 @@ int bt_mesh_health_fault_clear(u16_t net_idx, u16_t addr, u16_t app_idx,
 			       u16_t cid, u8_t *test_id, u8_t *faults,
 			       size_t *fault_count)
 {
-	struct os_mbuf *msg = NET_BUF_SIMPLE(2 + 2 + 4);
+	struct os_mbuf *msg = BT_MESH_MODEL_BUF(OP_HEALTH_FAULT_CLEAR, 2);
 	struct bt_mesh_msg_ctx ctx = {
 		.net_idx = net_idx,
 		.app_idx = app_idx,
@@ -470,7 +469,7 @@ int bt_mesh_health_fault_get(u16_t net_idx, u16_t addr, u16_t app_idx,
 			     u16_t cid, u8_t *test_id, u8_t *faults,
 			     size_t *fault_count)
 {
-	struct os_mbuf *msg = NET_BUF_SIMPLE(2 + 2 + 4);
+	struct os_mbuf *msg = BT_MESH_MODEL_BUF(OP_HEALTH_FAULT_GET, 2);
 	struct bt_mesh_msg_ctx ctx = {
 		.net_idx = net_idx,
 		.app_idx = app_idx,
@@ -528,11 +527,11 @@ int bt_mesh_health_cli_set(struct bt_mesh_model *model)
 	return 0;
 }
 
-int bt_mesh_health_cli_init(struct bt_mesh_model *model, bool primary)
+static int health_cli_init(struct bt_mesh_model *model)
 {
 	struct bt_mesh_health_cli *cli = model->user_data;
 
-	BT_DBG("primary %u", primary);
+	BT_DBG("primary %u", bt_mesh_model_in_primary(model));
 
 	if (!cli) {
 		BT_ERR("No Health Client context provided");
@@ -551,3 +550,7 @@ int bt_mesh_health_cli_init(struct bt_mesh_model *model, bool primary)
 
 	return 0;
 }
+
+const struct bt_mesh_model_cb bt_mesh_health_cli_cb = {
+	.init = health_cli_init,
+};

@@ -30,7 +30,7 @@
 #include "services/gap/ble_svc_gap.h"
 #include "services/gatt/ble_svc_gatt.h"
 
-#ifdef ARDUINO_ARCH_ESP32
+#ifdef CONFIG_ENABLE_ARDUINO_DEPENDS
 #include "esp32-hal-bt.h"
 #endif
 
@@ -60,6 +60,7 @@ ble_gap_event_listener      NimBLEDevice::m_listener;
 std::list <NimBLEClient*>   NimBLEDevice::m_cList;
 #endif
 std::list <NimBLEAddress>   NimBLEDevice::m_ignoreList;
+std::vector<NimBLEAddress>  NimBLEDevice::m_whiteList;
 NimBLESecurityCallbacks*    NimBLEDevice::m_securityCallbacks = nullptr;
 uint8_t                     NimBLEDevice::m_own_addr_type = BLE_OWN_ADDR_PUBLIC;
 uint16_t                    NimBLEDevice::m_scanDuplicateSize = CONFIG_BTDM_SCAN_DUPL_CACHE_SIZE;
@@ -448,6 +449,211 @@ void NimBLEDevice::setScanFilterMode(uint8_t mode) {
     m_scanFilterMode = mode;
 }
 
+#if defined(CONFIG_BT_NIMBLE_ROLE_CENTRAL) || defined(CONFIG_BT_NIMBLE_ROLE_PERIPHERAL)
+/**
+ * @brief Gets the number of bonded peers stored
+ */
+/*STATIC*/
+int NimBLEDevice::getNumBonds() {
+    ble_addr_t peer_id_addrs[MYNEWT_VAL(BLE_STORE_MAX_BONDS)];
+    int num_peers, rc;
+
+    rc = ble_store_util_bonded_peers(&peer_id_addrs[0], &num_peers, MYNEWT_VAL(BLE_STORE_MAX_BONDS));
+    if (rc !=0) {
+        return 0;
+    }
+
+    return num_peers;
+}
+
+
+/**
+ * @brief Deletes all bonding information.
+ */
+ /*STATIC*/
+void NimBLEDevice::deleteAllBonds() {
+    ble_store_clear();
+}
+
+
+/**
+ * @brief Deletes a peer bond.
+ * @param [in] address The address of the peer with which to delete bond info.
+ * @returns true on success.
+ */
+/*STATIC*/
+bool NimBLEDevice::deleteBond(const NimBLEAddress &address) {
+    ble_addr_t delAddr;
+    memcpy(&delAddr.val, address.getNative(),6);
+    delAddr.type = address.getType();
+
+    int rc = ble_gap_unpair(&delAddr);
+    if (rc != 0) {
+        return false;
+    }
+
+    return true;
+}
+
+
+/**
+ * @brief Checks if a peer device is bonded.
+ * @param [in] address The address to check for bonding.
+ * @returns true if bonded.
+ */
+/*STATIC*/
+bool NimBLEDevice::isBonded(const NimBLEAddress &address) {
+    ble_addr_t peer_id_addrs[MYNEWT_VAL(BLE_STORE_MAX_BONDS)];
+    int num_peers, rc;
+
+    rc = ble_store_util_bonded_peers(&peer_id_addrs[0], &num_peers, MYNEWT_VAL(BLE_STORE_MAX_BONDS));
+    if (rc != 0) {
+        return false;
+    }
+
+    for (int i = 0; i < num_peers; i++) {
+        NimBLEAddress storedAddr(peer_id_addrs[i]);
+        if(storedAddr == address) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+
+/**
+ * @brief Get the address of a bonded peer device by index.
+ * @param [in] index The index to retrieve the peer address of.
+ * @returns NimBLEAddress of the found bonded peer or nullptr if not found.
+ */
+/*STATIC*/
+NimBLEAddress NimBLEDevice::getBondedAddress(int index) {
+    ble_addr_t peer_id_addrs[MYNEWT_VAL(BLE_STORE_MAX_BONDS)];
+    int num_peers, rc;
+
+    rc = ble_store_util_bonded_peers(&peer_id_addrs[0], &num_peers, MYNEWT_VAL(BLE_STORE_MAX_BONDS));
+    if (rc != 0) {
+        return nullptr;
+    }
+
+    if (index > num_peers || index < 0) {
+        return nullptr;
+    }
+
+    return NimBLEAddress(peer_id_addrs[index]);
+}
+#endif
+
+/**
+ * @brief Checks if a peer device is whitelisted.
+ * @param [in] address The address to check for in the whitelist.
+ * @returns true if the address is in the whitelist.
+ */
+bool NimBLEDevice::onWhiteList(const NimBLEAddress & address) {
+    for (auto &it : m_whiteList) {
+        if (it == address) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+
+/**
+ * @brief Add a peer address to the whitelist.
+ * @param [in] address The address to add to the whitelist.
+ * @returns true if successful.
+ */
+bool NimBLEDevice::whiteListAdd(const NimBLEAddress & address) {
+    if (NimBLEDevice::onWhiteList(address)) {
+        return true;
+    }
+
+    m_whiteList.push_back(address);
+    std::vector<ble_addr_t> wlVec;
+    wlVec.reserve(m_whiteList.size());
+
+    for (auto &it : m_whiteList) {
+        ble_addr_t wlAddr;
+        memcpy(&wlAddr.val, it.getNative(), 6);
+        wlAddr.type = it.getType();
+        wlVec.push_back(wlAddr);
+    }
+
+    int rc = ble_gap_wl_set(&wlVec[0], wlVec.size());
+    if (rc != 0) {
+        NIMBLE_LOGE(LOG_TAG, "Failed adding to whitelist rc=%d", rc);
+        return false;
+    }
+
+    return true;
+}
+
+
+/**
+ * @brief Remove a peer address from the whitelist.
+ * @param [in] address The address to remove from the whitelist.
+ * @returns true if successful.
+ */
+bool NimBLEDevice::whiteListRemove(const NimBLEAddress & address) {
+    if (!NimBLEDevice::onWhiteList(address)) {
+        return true;
+    }
+
+    std::vector<ble_addr_t> wlVec;
+    wlVec.reserve(m_whiteList.size());
+
+    for (auto &it : m_whiteList) {
+        if (it != address) {
+            ble_addr_t wlAddr;
+            memcpy(&wlAddr.val, it.getNative(), 6);
+            wlAddr.type = it.getType();
+            wlVec.push_back(wlAddr);
+        }
+    }
+
+    int rc = ble_gap_wl_set(&wlVec[0], wlVec.size());
+    if (rc != 0) {
+        NIMBLE_LOGE(LOG_TAG, "Failed removing from whitelist rc=%d", rc);
+        return false;
+    }
+
+    // Don't remove from the list unless NimBLE returned success
+    for (auto it = m_whiteList.begin(); it < m_whiteList.end(); ++it) {
+        if ((*it) == address) {
+            m_whiteList.erase(it);
+            break;
+        }
+    }
+
+    return true;
+}
+
+
+/**
+ * @brief Gets the count of addresses in the whitelist.
+ * @returns The number of addresses in the whitelist.
+ */
+size_t NimBLEDevice::getWhiteListCount() {
+    return m_whiteList.size();
+}
+
+
+/**
+ * @brief Gets the address at the vector index.
+ * @param [in] index The vector index to retrieve the address from.
+ * @returns the NimBLEAddress at the whitelist index or nullptr if not found.
+ */
+NimBLEAddress NimBLEDevice::getWhiteListAddress(size_t index) {
+    if (index > m_whiteList.size()) {
+        NIMBLE_LOGE(LOG_TAG, "Invalid index; %u", index);
+        return nullptr;
+    }
+    return m_whiteList[index];
+}
+
 
 /**
  * @brief Host reset, we pass the message so we don't make calls until resynced.
@@ -534,7 +740,7 @@ void NimBLEDevice::setScanFilterMode(uint8_t mode) {
         int rc=0;
         esp_err_t errRc = ESP_OK;
 
-#ifdef ARDUINO_ARCH_ESP32
+#ifdef CONFIG_ENABLE_ARDUINO_DEPENDS
         // make sure the linker includes esp32-hal-bt.c so ardruino init doesn't release BLE memory.
         btStarted();
 #endif
@@ -551,8 +757,12 @@ void NimBLEDevice::setScanFilterMode(uint8_t mode) {
         esp_bt_controller_mem_release(ESP_BT_MODE_CLASSIC_BT);
 
         esp_bt_controller_config_t bt_cfg = BT_CONTROLLER_INIT_CONFIG_DEFAULT();
+#ifdef CONFIG_IDF_TARGET_ESP32C3
+        bt_cfg.bluetooth_mode = ESP_BT_MODE_BLE;
+#else
         bt_cfg.mode = ESP_BT_MODE_BLE;
         bt_cfg.ble_max_conn = CONFIG_BT_NIMBLE_MAX_CONNECTIONS;
+#endif
         bt_cfg.normal_adv_size = m_scanDuplicateSize;
         bt_cfg.scan_duplicate_type = m_scanFilterMode;
 
@@ -771,17 +981,23 @@ void NimBLEDevice::setSecurityCallbacks(NimBLESecurityCallbacks* callbacks) {
 void NimBLEDevice::setOwnAddrType(uint8_t own_addr_type, bool useNRPA) {
     m_own_addr_type = own_addr_type;
     switch (own_addr_type) {
+#ifdef CONFIG_IDF_TARGET_ESP32
         case BLE_OWN_ADDR_PUBLIC:
             ble_hs_pvcy_rpa_config(NIMBLE_HOST_DISABLE_PRIVACY);
             break;
+#endif
         case BLE_OWN_ADDR_RANDOM:
             setSecurityInitKey(BLE_SM_PAIR_KEY_DIST_ENC | BLE_SM_PAIR_KEY_DIST_ID);
+#ifdef CONFIG_IDF_TARGET_ESP32
             ble_hs_pvcy_rpa_config(useNRPA ? NIMBLE_HOST_ENABLE_NRPA : NIMBLE_HOST_ENABLE_RPA);
+#endif
             break;
         case BLE_OWN_ADDR_RPA_PUBLIC_DEFAULT:
         case BLE_OWN_ADDR_RPA_RANDOM_DEFAULT:
             setSecurityInitKey(BLE_SM_PAIR_KEY_DIST_ENC | BLE_SM_PAIR_KEY_DIST_ID);
+#ifdef CONFIG_IDF_TARGET_ESP32
             ble_hs_pvcy_rpa_config(NIMBLE_HOST_ENABLE_RPA);
+#endif
             break;
     }
 } // setOwnAddrType

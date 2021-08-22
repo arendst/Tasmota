@@ -70,7 +70,7 @@ ble_l2cap_chan_alloc(uint16_t conn_handle)
 }
 
 void
-ble_l2cap_chan_free(struct ble_l2cap_chan *chan)
+ble_l2cap_chan_free(struct ble_hs_conn *conn, struct ble_l2cap_chan *chan)
 {
     int rc;
 
@@ -79,7 +79,7 @@ ble_l2cap_chan_free(struct ble_l2cap_chan *chan)
     }
 
     os_mbuf_free_chain(chan->rx_buf);
-    ble_l2cap_coc_cleanup_chan(chan);
+    ble_l2cap_coc_cleanup_chan(conn, chan);
 
 #if MYNEWT_VAL(BLE_HS_DEBUG)
     memset(chan, 0xff, sizeof *chan);
@@ -155,7 +155,62 @@ ble_l2cap_connect(uint16_t conn_handle, uint16_t psm, uint16_t mtu,
     return ble_l2cap_sig_coc_connect(conn_handle, psm, mtu, sdu_rx, cb, cb_arg);
 }
 
-int ble_l2cap_disconnect(struct ble_l2cap_chan *chan)
+int
+ble_l2cap_get_chan_info(struct ble_l2cap_chan *chan, struct ble_l2cap_chan_info *chan_info)
+{
+    if (!chan || !chan_info) {
+        return BLE_HS_EINVAL;
+    }
+
+    memset(chan_info, 0, sizeof(*chan_info));
+    chan_info->dcid = chan->dcid;
+    chan_info->scid = chan->scid;
+    chan_info->our_l2cap_mtu = chan->my_mtu;
+    chan_info->peer_l2cap_mtu = chan->peer_mtu;
+
+#if MYNEWT_VAL(BLE_L2CAP_COC_MAX_NUM)
+    chan_info->psm = chan->psm;
+    chan_info->our_coc_mtu = chan->coc_rx.mtu;
+    chan_info->peer_coc_mtu = chan->coc_tx.mtu;
+#endif
+
+    return 0;
+}
+
+int
+ble_l2cap_enhanced_connect(uint16_t conn_handle,
+                               uint16_t psm, uint16_t mtu,
+                               uint8_t num, struct os_mbuf *sdu_rx[],
+                               ble_l2cap_event_fn *cb, void *cb_arg)
+{
+    return ble_l2cap_sig_ecoc_connect(conn_handle, psm, mtu,
+                                      num, sdu_rx, cb, cb_arg);
+}
+
+int
+ble_l2cap_reconfig(struct ble_l2cap_chan *chans[], uint8_t num, uint16_t new_mtu)
+{
+    int i;
+    uint16_t conn_handle;
+
+    if (num == 0 || !chans) {
+        return BLE_HS_EINVAL;
+    }
+
+    conn_handle = chans[0]->conn_handle;
+
+    for (i = 1; i < num; i++) {
+        if (conn_handle != chans[i]->conn_handle) {
+            BLE_HS_LOG(ERROR, "All channels should have same conn handle\n");
+            return BLE_HS_EINVAL;
+        }
+    }
+
+    return ble_l2cap_sig_coc_reconfig(conn_handle, chans, num, new_mtu);
+}
+
+int
+ble_l2cap_disconnect(struct ble_l2cap_chan *chan)
 {
     return ble_l2cap_sig_disconnect(chan);
 }
@@ -188,23 +243,18 @@ ble_l2cap_remove_rx(struct ble_hs_conn *conn, struct ble_l2cap_chan *chan)
 static void
 ble_l2cap_append_rx(struct ble_l2cap_chan *chan, struct os_mbuf *frag)
 {
-    int rc;
-
-    (void)rc;
-
 #if MYNEWT_VAL(BLE_L2CAP_JOIN_RX_FRAGS)
-    /* Copy the data from the incoming fragment into the packet in progress. */
-    rc = os_mbuf_appendfrom(chan->rx_buf, frag, 0, OS_MBUF_PKTLEN(frag));
-    if (rc == 0) {
-        os_mbuf_free_chain(frag);
-        return;
-    }
-#endif
+    struct os_mbuf *m;
 
+    /* Copy the data from the incoming fragment into the packet in progress. */
+    m = os_mbuf_pack_chains(chan->rx_buf, frag);
+    assert(m);
+#else
     /* Join disabled or append failed due to mbuf shortage.  Just attach the
      * mbuf to the end of the packet.
      */
     os_mbuf_concat(chan->rx_buf, frag);
+#endif
 }
 
 static int

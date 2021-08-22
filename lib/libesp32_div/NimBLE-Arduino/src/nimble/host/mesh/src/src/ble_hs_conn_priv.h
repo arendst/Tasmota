@@ -38,6 +38,15 @@ typedef uint8_t ble_hs_conn_flags_t;
 #define BLE_HS_CONN_F_TERMINATING   0x02
 #define BLE_HS_CONN_F_TX_FRAG       0x04 /* Cur ACL packet partially txed. */
 
+#if MYNEWT_VAL(BLE_L2CAP_COC_MAX_NUM)
+#define BLE_HS_CONN_L2CAP_COC_CID_MASK_LEN_REM \
+                      ((MYNEWT_VAL(BLE_L2CAP_COC_MAX_NUM) % (8 * sizeof(uint32_t))) ? 1 : 0)
+
+#define BLE_HS_CONN_L2CAP_COC_CID_MASK_LEN  \
+                      (MYNEWT_VAL(BLE_L2CAP_COC_MAX_NUM) / (8 * sizeof(uint32_t)) + \
+                       BLE_HS_CONN_L2CAP_COC_CID_MASK_LEN_REM)
+#endif
+
 struct ble_hs_conn {
     SLIST_ENTRY(ble_hs_conn) bhc_next;
     uint16_t bhc_handle;
@@ -61,6 +70,9 @@ struct ble_hs_conn {
     struct ble_l2cap_chan_list bhc_channels;
     struct ble_l2cap_chan *bhc_rx_chan; /* Channel rxing current packet. */
     ble_npl_time_t bhc_rx_timeout;
+#if MYNEWT_VAL(BLE_L2CAP_COC_MAX_NUM)
+    uint32_t l2cap_coc_cid_mask[BLE_HS_CONN_L2CAP_COC_CID_MASK_LEN];
+#endif
 
     /**
      * Count of packets sent over this connection that the controller has not
@@ -86,6 +98,10 @@ struct ble_hs_conn {
 
     ble_gap_event_fn *bhc_cb;
     void *bhc_cb_arg;
+
+#if MYNEWT_VAL(BLE_PERIODIC_ADV)
+    struct ble_hs_periodic_sync *psync;
+#endif
 };
 
 struct ble_hs_conn_addrs {
@@ -110,14 +126,18 @@ struct ble_l2cap_chan *ble_hs_conn_chan_find_by_scid(struct ble_hs_conn *conn,
                                              uint16_t cid);
 struct ble_l2cap_chan *ble_hs_conn_chan_find_by_dcid(struct ble_hs_conn *conn,
                                              uint16_t cid);
+bool ble_hs_conn_chan_exist(struct ble_hs_conn *conn, struct ble_l2cap_chan *chan);
 int ble_hs_conn_chan_insert(struct ble_hs_conn *conn,
                             struct ble_l2cap_chan *chan);
-void
-ble_hs_conn_delete_chan(struct ble_hs_conn *conn, struct ble_l2cap_chan *chan);
+void ble_hs_conn_delete_chan(struct ble_hs_conn *conn,
+                             struct ble_l2cap_chan *chan);
 
 void ble_hs_conn_addrs(const struct ble_hs_conn *conn,
                        struct ble_hs_conn_addrs *addrs);
 int32_t ble_hs_conn_timer(void);
+
+typedef int ble_hs_conn_foreach_fn(struct ble_hs_conn *conn, void *arg);
+void ble_hs_conn_foreach(ble_hs_conn_foreach_fn *cb, void *arg);
 
 int ble_hs_conn_init(void);
 

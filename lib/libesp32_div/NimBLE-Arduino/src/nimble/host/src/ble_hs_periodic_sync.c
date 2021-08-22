@@ -24,6 +24,7 @@
 #include "host/ble_hs_id.h"
 #include "ble_hs_priv.h"
 
+#if MYNEWT_VAL(BLE_PERIODIC_ADV)
 static SLIST_HEAD(, ble_hs_periodic_sync) g_ble_hs_periodic_sync_handles;
 static struct os_mempool ble_hs_periodic_sync_pool;
 
@@ -150,3 +151,4 @@ ble_hs_periodic_sync_init(void)
 
     return 0;
 }
+#endif

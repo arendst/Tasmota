@@ -7,12 +7,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "mesh/mesh.h"
-
 #include "syscfg/syscfg.h"
-#define BT_DBG_ENABLED (MYNEWT_VAL(BLE_MESH_DEBUG_ADV))
-#include "host/ble_hs_log.h"
+#define MESH_LOG_MODULE BLE_MESH_ADV_LOG
 
+#include "mesh/mesh.h"
 #include "host/ble_hs_adv.h"
 #include "host/ble_gap.h"
 #include "nimble/hci_common.h"
@@ -108,9 +106,14 @@ static inline void adv_send(struct os_mbuf *buf)
 
 	adv_int = max(adv_int_min,
 		      BT_MESH_TRANSMIT_INT(BT_MESH_ADV(buf)->xmit));
+#if MYNEWT_VAL(BLE_CONTROLLER)
+	duration = ((BT_MESH_TRANSMIT_COUNT(BT_MESH_ADV(buf)->xmit) + 1) *
+				(adv_int + 10));
+#else
 	duration = (MESH_SCAN_WINDOW_MS +
 		    ((BT_MESH_TRANSMIT_COUNT(BT_MESH_ADV(buf)->xmit) + 1) *
 		     (adv_int + 10)));
+#endif
 
 	BT_DBG("type %u om_len %u: %s", BT_MESH_ADV(buf)->type,
 	       buf->om_len, bt_hex(buf->om_data, buf->om_len));
@@ -188,6 +191,8 @@ mesh_adv_thread(void *args)
 		if (BT_MESH_ADV(buf)->busy) {
 			BT_MESH_ADV(buf)->busy = 0;
 			adv_send(buf);
+		} else {
+			net_buf_unref(buf);
 		}
 
 		/* os_sched(NULL); */
@@ -395,6 +400,8 @@ done:
 
 int bt_mesh_scan_enable(void)
 {
+	int err;
+
 #if MYNEWT_VAL(BLE_EXT_ADV)
 	struct ble_gap_ext_disc_params uncoded_params =
 		{ .itvl = MESH_SCAN_INTERVAL, .window = MESH_SCAN_WINDOW,
@@ -402,7 +409,7 @@ int bt_mesh_scan_enable(void)
 
 	BT_DBG("");
 
-	return ble_gap_ext_disc(g_mesh_addr_type, 0, 0, 0, 0, 0,
+	err =  ble_gap_ext_disc(g_mesh_addr_type, 0, 0, 0, 0, 0,
 				&uncoded_params, NULL, NULL, NULL);
 #else
 	struct ble_gap_disc_params scan_param =
@@ -411,13 +418,28 @@ int bt_mesh_scan_enable(void)
 
 	BT_DBG("");
 
-	return ble_gap_disc(g_mesh_addr_type, BLE_HS_FOREVER, &scan_param, NULL, NULL);
+	err =  ble_gap_disc(g_mesh_addr_type, BLE_HS_FOREVER, &scan_param,
+			    NULL, NULL);
 #endif
+	if (err && err != BLE_HS_EALREADY) {
+		BT_ERR("starting scan failed (err %d)", err);
+		return err;
+	}
+
+	return 0;
 }
 
 int bt_mesh_scan_disable(void)
 {
+	int err;
+
 	BT_DBG("");
 
-	return ble_gap_disc_cancel();
+	err = ble_gap_disc_cancel();
+	if (err && err != BLE_HS_EALREADY) {
+		BT_ERR("stopping scan failed (err %d)", err);
+		return err;
+	}
+
+	return 0;
 }

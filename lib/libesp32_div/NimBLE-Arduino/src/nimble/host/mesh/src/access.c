@@ -6,14 +6,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <errno.h>
-
-#include <os/os_mbuf.h>
-#include "mesh/mesh.h"
-
 #include "syscfg/syscfg.h"
-#define BT_DBG_ENABLED (MYNEWT_VAL(BLE_MESH_DEBUG_ACCESS))
-#include "host/ble_hs_log.h"
+#define MESH_LOG_MODULE BLE_MESH_ACCESS_LOG
+
+#include <errno.h>
+#include <os/os_mbuf.h>
+
+#include "mesh/mesh.h"
 
 #include "mesh_priv.h"
 #include "adv.h"
@@ -28,24 +27,6 @@
 
 static const struct bt_mesh_comp *dev_comp;
 static u16_t dev_primary_addr;
-
-static const struct {
-	const u16_t id;
-	int (*const init)(struct bt_mesh_model *model, bool primary);
-} model_init[] = {
-	{ BT_MESH_MODEL_ID_CFG_SRV, bt_mesh_cfg_srv_init },
-	{ BT_MESH_MODEL_ID_HEALTH_SRV, bt_mesh_health_srv_init },
-#if MYNEWT_VAL(BLE_MESH_CFG_CLI)
-	{ BT_MESH_MODEL_ID_CFG_CLI, bt_mesh_cfg_cli_init },
-#endif
-#if MYNEWT_VAL(BLE_MESH_HEALTH_CLI)
-	{ BT_MESH_MODEL_ID_HEALTH_CLI, bt_mesh_health_cli_init },
-#endif
-#if MYNEWT_VAL(BLE_MESH_SHELL_MODELS)
-	{ BT_MESH_MODEL_ID_GEN_ONOFF_CLI, bt_mesh_gen_model_cli_init },
-	{ BT_MESH_MODEL_ID_GEN_LEVEL_CLI, bt_mesh_gen_model_cli_init },
-#endif
-};
 
 void bt_mesh_model_foreach(void (*func)(struct bt_mesh_model *mod,
 					struct bt_mesh_elem *elem,
@@ -101,7 +82,11 @@ s32_t bt_mesh_model_pub_period_get(struct bt_mesh_model *mod)
 		CODE_UNREACHABLE;
 	}
 
-	return period >> mod->pub->period_div;
+	if (mod->pub->fast_period) {
+		return period >> mod->pub->period_div;
+	} else {
+		return period;
+	}
 }
 
 static s32_t next_period(struct bt_mesh_model *mod)
@@ -146,7 +131,24 @@ static void publish_sent(int err, void *user_data)
 	}
 }
 
+static void publish_start(u16_t duration, int err, void *user_data)
+{
+	struct bt_mesh_model *mod = user_data;
+	struct bt_mesh_model_pub *pub = mod->pub;
+
+	if (err) {
+		BT_ERR("Failed to publish: err %d", err);
+		return;
+	}
+
+	/* Initialize the timestamp for the beginning of a new period */
+	if (pub->count == BT_MESH_PUB_TRANSMIT_COUNT(pub->retransmit)) {
+		pub->period_start = k_uptime_get_32();
+	}
+}
+
 static const struct bt_mesh_send_cb pub_sent_cb = {
+	.start = publish_start,
 	.end = publish_sent,
 };
 
@@ -223,8 +225,6 @@ static void mod_publish(struct ble_npl_event *work)
 
 	__ASSERT_NO_MSG(pub->update != NULL);
 
-	pub->period_start = k_uptime_get_32();
-
 	err = pub->update(pub->mod);
 	if (err) {
 		BT_ERR("Failed to update publication message");
@@ -234,11 +234,6 @@ static void mod_publish(struct ble_npl_event *work)
 	err = bt_mesh_model_publish(pub->mod);
 	if (err) {
 		BT_ERR("Publishing failed (err %d)", err);
-	}
-
-	if (pub->count) {
-		/* Retransmissions also control the timer */
-		k_delayed_work_cancel(&pub->timer);
 	}
 }
 
@@ -297,14 +292,8 @@ static void mod_init(struct bt_mesh_model *mod, struct bt_mesh_elem *elem,
 		mod->mod_idx = mod - elem->models;
 	}
 
-	if (vnd) {
-		return;
-	}
-
-	for (i = 0; i < ARRAY_SIZE(model_init); i++) {
-		if (model_init[i].id == mod->id) {
-			model_init[i].init(mod, primary);
-		}
+	if (mod->cb && mod->cb->init) {
+		mod->cb->init(mod);
 	}
 }
 
@@ -354,7 +343,7 @@ u16_t bt_mesh_primary_addr(void)
 	return dev_primary_addr;
 }
 
-u16_t *bt_mesh_model_find_group(struct bt_mesh_model *mod, u16_t addr)
+static u16_t *model_group_get(struct bt_mesh_model *mod, u16_t addr)
 {
 	int i;
 
@@ -367,6 +356,45 @@ u16_t *bt_mesh_model_find_group(struct bt_mesh_model *mod, u16_t addr)
 	return NULL;
 }
 
+struct find_group_visitor_ctx {
+	u16_t *entry;
+	struct bt_mesh_model *mod;
+	u16_t addr;
+};
+
+static enum bt_mesh_walk find_group_mod_visitor(struct bt_mesh_model *mod,
+						u32_t depth, void *user_data)
+{
+	struct find_group_visitor_ctx *ctx = user_data;
+
+	if (mod->elem_idx != ctx->mod->elem_idx) {
+		return BT_MESH_WALK_CONTINUE;
+	}
+
+	ctx->entry = model_group_get(mod, ctx->addr);
+	if (ctx->entry) {
+		ctx->mod = mod;
+		return BT_MESH_WALK_STOP;
+	}
+
+	return BT_MESH_WALK_CONTINUE;
+}
+
+u16_t *bt_mesh_model_find_group(struct bt_mesh_model **mod, u16_t addr)
+{
+	struct find_group_visitor_ctx ctx = {
+		.mod = *mod,
+		.entry = NULL,
+		.addr = addr,
+	};
+
+	bt_mesh_model_tree_walk(bt_mesh_model_root(*mod),
+				find_group_mod_visitor, &ctx);
+
+	*mod = ctx.mod;
+	return ctx.entry;
+}
+
 static struct bt_mesh_model *bt_mesh_elem_find_group(struct bt_mesh_elem *elem,
 						     u16_t group_addr)
 {
@@ -377,7 +405,7 @@ static struct bt_mesh_model *bt_mesh_elem_find_group(struct bt_mesh_elem *elem,
 	for (i = 0; i < elem->model_count; i++) {
 		model = &elem->models[i];
 
-		match = bt_mesh_model_find_group(model, group_addr);
+		match = model_group_get(model, group_addr);
 		if (match) {
 			return model;
 		}
@@ -386,7 +414,7 @@ static struct bt_mesh_model *bt_mesh_elem_find_group(struct bt_mesh_elem *elem,
 	for (i = 0; i < elem->vnd_model_count; i++) {
 		model = &elem->vnd_models[i];
 
-		match = bt_mesh_model_find_group(model, group_addr);
+		match = model_group_get(model, group_addr);
 		if (match) {
 			return model;
 		}
@@ -397,17 +425,21 @@ static struct bt_mesh_model *bt_mesh_elem_find_group(struct bt_mesh_elem *elem,
 
 struct bt_mesh_elem *bt_mesh_elem_find(u16_t addr)
 {
-	int i;
+	u16_t index;
 
-	for (i = 0; i < dev_comp->elem_count; i++) {
-		struct bt_mesh_elem *elem = &dev_comp->elem[i];
+	if (BT_MESH_ADDR_IS_UNICAST(addr)) {
+		index = (addr - dev_comp->elem[0].addr);
+		if (index < dev_comp->elem_count) {
+			return &dev_comp->elem[index];
+		} else {
+			return NULL;
+		}
+	}
 
-		if (BT_MESH_ADDR_IS_GROUP(addr) ||
-		    BT_MESH_ADDR_IS_VIRTUAL(addr)) {
-			if (bt_mesh_elem_find_group(elem, addr)) {
-				return elem;
-			}
-		} else if (elem->addr == addr) {
+	for (index = 0; index < dev_comp->elem_count; index++) {
+		struct bt_mesh_elem *elem = &dev_comp->elem[index];
+
+		if (bt_mesh_elem_find_group(elem, addr)) {
 			return elem;
 		}
 	}
@@ -425,7 +457,9 @@ static bool model_has_key(struct bt_mesh_model *mod, u16_t key)
 	int i;
 
 	for (i = 0; i < ARRAY_SIZE(mod->keys); i++) {
-		if (mod->keys[i] == key) {
+		if (mod->keys[i] == key ||
+		    (mod->keys[i] == BT_MESH_KEY_DEV_ANY &&
+		     BT_MESH_IS_DEV_KEY(key))) {
 			return true;
 		}
 	}
@@ -433,9 +467,19 @@ static bool model_has_key(struct bt_mesh_model *mod, u16_t key)
 	return false;
 }
 
+static bool model_has_dst(struct bt_mesh_model *mod, u16_t dst)
+{
+	if (BT_MESH_ADDR_IS_UNICAST(dst)) {
+		return (dev_comp->elem[mod->elem_idx].addr == dst);
+	} else if (BT_MESH_ADDR_IS_GROUP(dst) || BT_MESH_ADDR_IS_VIRTUAL(dst)) {
+		return bt_mesh_model_find_group(&mod, dst);
+	}
+
+	return (mod->elem_idx == 0 && bt_mesh_fixed_group_match(dst));
+}
+
 static const struct bt_mesh_model_op *find_op(struct bt_mesh_model *models,
-					      u8_t model_count, u16_t dst,
-					      u16_t app_idx, u32_t opcode,
+					      u8_t model_count, u32_t opcode,
 					      struct bt_mesh_model **model)
 {
 	u8_t i;
@@ -444,17 +488,6 @@ static const struct bt_mesh_model_op *find_op(struct bt_mesh_model *models,
 		const struct bt_mesh_model_op *op;
 
 		*model = &models[i];
-
-		if (BT_MESH_ADDR_IS_GROUP(dst) ||
-		    BT_MESH_ADDR_IS_VIRTUAL(dst)) {
-			if (!bt_mesh_model_find_group(*model, dst)) {
-				continue;
-			}
-		}
-
-		if (!model_has_key(*model, app_idx)) {
-			continue;
-		}
 
 		for (op = (*model)->op; op->func; op++) {
 			if (op->opcode == opcode) {
@@ -508,8 +541,7 @@ bool bt_mesh_fixed_group_match(u16_t addr)
 	case BT_MESH_ADDR_ALL_NODES:
 		return true;
 	case BT_MESH_ADDR_PROXIES:
-		/* TODO: Proxy not yet supported */
-		return false;
+		return (bt_mesh_gatt_proxy_get() == BT_MESH_GATT_PROXY_ENABLED);
 	case BT_MESH_ADDR_FRIENDS:
 		return (bt_mesh_friend_get() == BT_MESH_FRIEND_ENABLED);
 	case BT_MESH_ADDR_RELAYS:
@@ -540,24 +572,13 @@ void bt_mesh_model_recv(struct bt_mesh_net_rx *rx, struct os_mbuf *buf)
 
 	for (i = 0; i < dev_comp->elem_count; i++) {
 		struct bt_mesh_elem *elem = &dev_comp->elem[i];
-
-		if (BT_MESH_ADDR_IS_UNICAST(rx->ctx.recv_dst)) {
-			if (elem->addr != rx->ctx.recv_dst) {
-				continue;
-			}
-		} else if (BT_MESH_ADDR_IS_GROUP(rx->ctx.recv_dst) ||
-			   BT_MESH_ADDR_IS_VIRTUAL(rx->ctx.recv_dst)) {
-			/* find_op() will do proper model/group matching */
-		} else if (i != 0 ||
-			   !bt_mesh_fixed_group_match(rx->ctx.recv_dst)) {
-			continue;
-		}
+		struct net_buf_simple_state state;
 
 		/* SIG models cannot contain 3-byte (vendor) OpCodes, and
 		 * vendor models cannot contain SIG (1- or 2-byte) OpCodes, so
 		 * we only need to do the lookup in one of the model lists.
 		 */
-		if (opcode < 0x10000) {
+		if (BT_MESH_MODEL_OP_LEN(opcode) < 3) {
 			models = elem->models;
 			count = elem->model_count;
 		} else {
@@ -565,29 +586,32 @@ void bt_mesh_model_recv(struct bt_mesh_net_rx *rx, struct os_mbuf *buf)
 			count = elem->vnd_model_count;
 		}
 
-		op = find_op(models, count, rx->ctx.recv_dst, rx->ctx.app_idx,
-			     opcode, &model);
-		if (op) {
-			struct net_buf_simple_state state;
+		op = find_op(models, count, opcode, &model);
+		if (!op) {
+			BT_DBG("No OpCode 0x%08x for elem %d", opcode, i);
+			continue;
+		}
 
-			if (buf->om_len < op->min_len) {
-				BT_ERR("Too short message for OpCode 0x%08x",
-				       (unsigned) opcode);
+		if (!model_has_key(model, rx->ctx.app_idx)) {
 				continue;
 			}
 
-			/* The callback will likely parse the buffer, so
-			 * store the parsing state in case multiple models
-			 * receive the message.
-			 */
-			net_buf_simple_save(buf, &state);
-			op->func(model, &rx->ctx, buf);
-			net_buf_simple_restore(buf, &state);
-
-		} else {
-			BT_DBG("No OpCode 0x%08x for elem %d",
-			       (unsigned) opcode, i);
+		if (!model_has_dst(model, rx->ctx.recv_dst)) {
+			continue;
 		}
+
+		if (buf->om_len < op->min_len) {
+			BT_ERR("Too short message for OpCode 0x%08x", opcode);
+			continue;
+		}
+
+		/* The callback will likely parse the buffer, so
+		 * store the parsing state in case multiple models
+		 * receive the message.
+		 */
+		net_buf_simple_save(buf, &state);
+		op->func(model, &rx->ctx, buf);
+		net_buf_simple_restore(buf, &state);
 	}
 }
 
@@ -595,21 +619,21 @@ void bt_mesh_model_msg_init(struct os_mbuf *msg, u32_t opcode)
 {
 	net_buf_simple_init(msg, 0);
 
-	if (opcode < 0x100) {
-		/* 1-byte OpCode */
+	switch (BT_MESH_MODEL_OP_LEN(opcode)) {
+	case 1:
 		net_buf_simple_add_u8(msg, opcode);
-		return;
-	}
-
-	if (opcode < 0x10000) {
-		/* 2-byte OpCode */
+		break;
+	case 2:
 		net_buf_simple_add_be16(msg, opcode);
-		return;
+		break;
+	case 3:
+		net_buf_simple_add_u8(msg, ((opcode >> 16) & 0xff));
+		net_buf_simple_add_le16(msg, opcode & 0xffff);
+		break;
+	default:
+		BT_WARN("Unknown opcode format");
+		break;
 	}
-
-	/* 3-byte OpCode */
-	net_buf_simple_add_u8(msg, ((opcode >> 16) & 0xff));
-	net_buf_simple_add_le16(msg, opcode & 0xffff);
 }
 
 static int model_send(struct bt_mesh_model *model,
@@ -732,7 +756,7 @@ done:
 	return err;
 }
 
-struct bt_mesh_model *bt_mesh_model_find_vnd(struct bt_mesh_elem *elem,
+struct bt_mesh_model *bt_mesh_model_find_vnd(const struct bt_mesh_elem *elem,
 					     u16_t company, u16_t id)
 {
 	u8_t i;
@@ -747,7 +771,7 @@ struct bt_mesh_model *bt_mesh_model_find_vnd(struct bt_mesh_elem *elem,
 	return NULL;
 }
 
-struct bt_mesh_model *bt_mesh_model_find(struct bt_mesh_elem *elem,
+struct bt_mesh_model *bt_mesh_model_find(const struct bt_mesh_elem *elem,
 					 u16_t id)
 {
 	u8_t i;
@@ -765,3 +789,68 @@ const struct bt_mesh_comp *bt_mesh_comp_get(void)
 {
 	return dev_comp;
 }
+
+struct bt_mesh_model *bt_mesh_model_root(struct bt_mesh_model *mod)
+{
+#ifdef CONFIG_BT_MESH_MODEL_EXTENSIONS
+	while (mod->next) {
+		mod = mod->next;
+	}
+#endif
+	return mod;
+}
+
+void bt_mesh_model_tree_walk(struct bt_mesh_model *root,
+			     enum bt_mesh_walk (*cb)(struct bt_mesh_model *mod,
+						     u32_t depth,
+						     void *user_data),
+			     void *user_data)
+{
+	struct bt_mesh_model *m = root;
+	u32_t depth = 0;
+
+	do {
+		if (cb(m, depth, user_data) == BT_MESH_WALK_STOP) {
+			return;
+		}
+#if MYNEWT_VAL(BLE_MESH_MODEL_EXTENSIONS)
+		if (m->extends) {
+			m = m->extends;
+			depth++;
+		} else if (m->flags & BT_MESH_MOD_NEXT_IS_PARENT) {
+			m = m->next->next;
+			depth--;
+		} else {
+			m = m->next;
+		}
+#endif
+	} while (m && m != root);
+}
+
+#if MYNEWT_VAL(BLE_MESH_MODEL_EXTENSIONS)
+int bt_mesh_model_extend(struct bt_mesh_model *mod,
+			 struct bt_mesh_model *base_mod)
+{
+	/* Form a cyclical LCRS tree:
+	 * The extends-pointer points to the first child, and the next-pointer
+	 * points to the next sibling. The last sibling is marked by the
+	 * BT_MESH_MOD_NEXT_IS_PARENT flag, and its next-pointer points back to
+	 * the parent. This way, the whole tree is accessible from any node.
+	 *
+	 * We add children (extend them) by inserting them as the first child.
+	 */
+	if (base_mod->next) {
+		return -EALREADY;
+	}
+
+	if (mod->extends) {
+		base_mod->next = mod->extends;
+	} else {
+		base_mod->next = mod;
+		base_mod->flags |= BT_MESH_MOD_NEXT_IS_PARENT;
+	}
+
+	mod->extends = base_mod;
+	return 0;
+}
+#endif

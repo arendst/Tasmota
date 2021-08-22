@@ -70,7 +70,6 @@ private:
 
     uint16_t            getStartHandle();
     uint16_t            getEndHandle();
-    uint16_t            getEndHandle(NimBLERemoteCharacteristic *pCharacteristic);
     void                releaseSemaphores();
 
     // Properties

@@ -357,7 +357,6 @@ void ble_att_error_rsp_parse(const void *payload, int len,
                              struct ble_att_error_rsp *rsp);
 void ble_att_error_rsp_write(void *payload, int len,
                              const struct ble_att_error_rsp *rsp);
-void ble_att_error_rsp_log(const struct ble_att_error_rsp *cmd);
 void ble_att_mtu_req_parse(const void *payload, int len,
                            struct ble_att_mtu_cmd *cmd);
 void ble_att_mtu_req_write(void *payload, int len,
@@ -366,43 +365,34 @@ void ble_att_mtu_rsp_parse(const void *payload, int len,
                            struct ble_att_mtu_cmd *cmd);
 void ble_att_mtu_rsp_write(void *payload, int len,
                            const struct ble_att_mtu_cmd *cmd);
-void ble_att_mtu_cmd_log(const struct ble_att_mtu_cmd *cmd);
 void ble_att_find_info_req_parse(const void *payload, int len,
                                  struct ble_att_find_info_req *req);
 void ble_att_find_info_req_write(void *payload, int len,
                                  const struct ble_att_find_info_req *req);
-void ble_att_find_info_req_log(const struct ble_att_find_info_req *cmd);
 void ble_att_find_info_rsp_parse(const void *payload, int len,
                                  struct ble_att_find_info_rsp *rsp);
 void ble_att_find_info_rsp_write(void *payload, int len,
                                  const struct ble_att_find_info_rsp *rsp);
-void ble_att_find_info_rsp_log(const struct ble_att_find_info_rsp *cmd);
 void ble_att_find_type_value_req_parse(
     const void *payload, int len, struct ble_att_find_type_value_req *req);
 void ble_att_find_type_value_req_write(
     void *payload, int len, const struct ble_att_find_type_value_req *req);
-void ble_att_find_type_value_req_log(
-    const struct ble_att_find_type_value_req *cmd);
 void ble_att_read_type_req_parse(const void *payload, int len,
                                  struct ble_att_read_type_req *req);
 void ble_att_read_type_req_write(void *payload, int len,
                                  const struct ble_att_read_type_req *req);
-void ble_att_read_type_req_log(const struct ble_att_read_type_req *cmd);
 void ble_att_read_type_rsp_parse(const void *payload, int len,
                                  struct ble_att_read_type_rsp *rsp);
 void ble_att_read_type_rsp_write(void *payload, int len,
                                  const struct ble_att_read_type_rsp *rsp);
-void ble_att_read_type_rsp_log(const struct ble_att_read_type_rsp *cmd);
 void ble_att_read_req_parse(const void *payload, int len,
                             struct ble_att_read_req *req);
 void ble_att_read_req_write(void *payload, int len,
                             const struct ble_att_read_req *req);
-void ble_att_read_req_log(const struct ble_att_read_req *cmd);
 void ble_att_read_blob_req_parse(const void *payload, int len,
                                  struct ble_att_read_blob_req *req);
 void ble_att_read_blob_req_write(void *payload, int len,
                                  const struct ble_att_read_blob_req *req);
-void ble_att_read_blob_req_log(const struct ble_att_read_blob_req *cmd);
 void ble_att_read_mult_req_parse(const void *payload, int len);
 void ble_att_read_mult_req_write(void *payload, int len);
 void ble_att_read_mult_rsp_parse(const void *payload, int len);
@@ -411,14 +401,10 @@ void ble_att_read_group_type_req_parse(
     const void *payload, int len, struct ble_att_read_group_type_req *req);
 void ble_att_read_group_type_req_write(
     void *payload, int len, const struct ble_att_read_group_type_req *req);
-void ble_att_read_group_type_req_log(
-    const struct ble_att_read_group_type_req *cmd);
 void ble_att_read_group_type_rsp_parse(
     const void *payload, int len, struct ble_att_read_group_type_rsp *rsp);
 void ble_att_read_group_type_rsp_write(
     void *payload, int len, const struct ble_att_read_group_type_rsp *rsp);
-void ble_att_read_group_type_rsp_log(
-    const struct ble_att_read_group_type_rsp *cmd);
 void ble_att_write_req_parse(const void *payload, int len,
                              struct ble_att_write_req *req);
 void ble_att_write_req_write(void *payload, int len,
@@ -427,20 +413,16 @@ void ble_att_write_cmd_parse(const void *payload, int len,
                              struct ble_att_write_req *req);
 void ble_att_write_cmd_write(void *payload, int len,
                              const struct ble_att_write_req *req);
-void ble_att_write_cmd_log(const struct ble_att_write_cmd *cmd);
-void ble_att_write_req_log(const struct ble_att_write_req *req);
 void ble_att_prep_write_req_parse(const void *payload, int len,
                                   struct ble_att_prep_write_cmd *cmd);
 void ble_att_prep_write_req_write(void *payload, int len,
                                   const struct ble_att_prep_write_cmd *cmd);
-void ble_att_prep_write_cmd_log(const struct ble_att_prep_write_cmd *cmd);
 void ble_att_prep_write_rsp_parse(const void *payload, int len,
                                   struct ble_att_prep_write_cmd *cmd);
 void ble_att_prep_write_rsp_write(void *payload, int len,
                                   const struct ble_att_prep_write_cmd *cmd);
 void ble_att_exec_write_req_parse(const void *payload, int len,
                                   struct ble_att_exec_write_req *req);
-void ble_att_exec_write_req_log(const struct ble_att_exec_write_req *cmd);
 void ble_att_exec_write_req_write(void *payload, int len,
                                   const struct ble_att_exec_write_req *req);
 void ble_att_exec_write_rsp_parse(const void *payload, int len);
@@ -449,14 +431,12 @@ void ble_att_notify_req_parse(const void *payload, int len,
                               struct ble_att_notify_req *req);
 void ble_att_notify_req_write(void *payload, int len,
                               const struct ble_att_notify_req *req);
-void ble_att_notify_req_log(const struct ble_att_notify_req *cmd);
 void ble_att_indicate_req_parse(const void *payload, int len,
                                 struct ble_att_indicate_req *req);
 void ble_att_indicate_req_write(void *payload, int len,
                                 const struct ble_att_indicate_req *req);
 void ble_att_indicate_rsp_parse(const void *payload, int len);
 void ble_att_indicate_rsp_write(void *payload, int len);
-void ble_att_indicate_req_log(const struct ble_att_indicate_req *cmd);
 
 void *ble_att_cmd_prepare(uint8_t opcode, size_t len, struct os_mbuf *txom);
 void *ble_att_cmd_get(uint8_t opcode, size_t len, struct os_mbuf **txom);

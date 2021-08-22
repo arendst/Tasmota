@@ -30,6 +30,17 @@ put_le16(void *buf, uint16_t x)
 }
 
 void
+put_le24(void *buf, uint32_t x)
+{
+    uint8_t *u8ptr;
+
+    u8ptr = buf;
+    u8ptr[0] = (uint8_t)x;
+    u8ptr[1] = (uint8_t)(x >> 8);
+    u8ptr[2] = (uint8_t)(x >> 16);
+}
+
+void
 put_le32(void *buf, uint32_t x)
 {
     uint8_t *u8ptr;
@@ -66,6 +77,20 @@ get_le16(const void *buf)
     u8ptr = buf;
     x = u8ptr[0];
     x |= (uint16_t)u8ptr[1] << 8;
+
+    return x;
+}
+
+uint32_t
+get_le24(const void *buf)
+{
+    const uint8_t *u8ptr;
+    uint32_t x;
+
+    u8ptr = buf;
+    x = u8ptr[0];
+    x |= (uint32_t)u8ptr[1] << 8;
+    x |= (uint32_t)u8ptr[2] << 16;
 
     return x;
 }
@@ -115,6 +140,17 @@ put_be16(void *buf, uint16_t x)
 }
 
 void
+put_be24(void *buf, uint32_t x)
+{
+    uint8_t *u8ptr;
+
+    u8ptr = buf;
+    u8ptr[0] = (uint8_t)(x >> 24);
+    u8ptr[1] = (uint8_t)(x >> 16);
+    u8ptr[2] = (uint8_t)(x >> 8);
+}
+
+void
 put_be32(void *buf, uint32_t x)
 {
     uint8_t *u8ptr;
@@ -151,6 +187,20 @@ get_be16(const void *buf)
     u8ptr = buf;
     x = (uint16_t)u8ptr[0] << 8;
     x |= u8ptr[1];
+
+    return x;
+}
+
+uint32_t
+get_be24(const void *buf)
+{
+    const uint8_t *u8ptr;
+    uint32_t x;
+
+    u8ptr = buf;
+    x = (uint32_t)u8ptr[0] << 24;
+    x |= (uint32_t)u8ptr[1] << 16;
+    x |= (uint32_t)u8ptr[2] << 8;
 
     return x;
 }

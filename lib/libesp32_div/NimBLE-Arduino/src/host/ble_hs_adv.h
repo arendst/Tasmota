@@ -35,7 +35,7 @@ extern "C" {
 struct ble_hs_adv_field {
     uint8_t length;
     uint8_t type;
-    uint8_t value[];
+    uint8_t value[0];
 };
 
 typedef int (* ble_hs_adv_parse_func_t) (const struct ble_hs_adv_field *,
@@ -46,22 +46,22 @@ struct ble_hs_adv_fields {
     uint8_t flags;
 
     /*** 0x02,0x03 - 16-bit service class UUIDs. */
-    ble_uuid16_t *uuids16;
+    const ble_uuid16_t *uuids16;
     uint8_t num_uuids16;
     unsigned uuids16_is_complete:1;
 
     /*** 0x04,0x05 - 32-bit service class UUIDs. */
-    ble_uuid32_t *uuids32;
+    const ble_uuid32_t *uuids32;
     uint8_t num_uuids32;
     unsigned uuids32_is_complete:1;
 
     /*** 0x06,0x07 - 128-bit service class UUIDs. */
-    ble_uuid128_t *uuids128;
+    const ble_uuid128_t *uuids128;
     uint8_t num_uuids128;
     unsigned uuids128_is_complete:1;
 
     /*** 0x08,0x09 - Local name. */
-    uint8_t *name;
+    const uint8_t *name;
     uint8_t name_len;
     unsigned name_is_complete:1;
 
@@ -70,14 +70,14 @@ struct ble_hs_adv_fields {
     unsigned tx_pwr_lvl_is_present:1;
 
     /*** 0x0d - Slave connection interval range. */
-    uint8_t *slave_itvl_range;
+    const uint8_t *slave_itvl_range;
 
     /*** 0x16 - Service data - 16-bit UUID. */
-    uint8_t *svc_data_uuid16;
+    const uint8_t *svc_data_uuid16;
     uint8_t svc_data_uuid16_len;
 
     /*** 0x17 - Public target address. */
-    uint8_t *public_tgt_addr;
+    const uint8_t *public_tgt_addr;
     uint8_t num_public_tgt_addrs;
 
     /*** 0x19 - Appearance. */
@@ -89,19 +89,19 @@ struct ble_hs_adv_fields {
     unsigned adv_itvl_is_present:1;
 
     /*** 0x20 - Service data - 32-bit UUID. */
-    uint8_t *svc_data_uuid32;
+    const uint8_t *svc_data_uuid32;
     uint8_t svc_data_uuid32_len;
 
     /*** 0x21 - Service data - 128-bit UUID. */
-    uint8_t *svc_data_uuid128;
+    const uint8_t *svc_data_uuid128;
     uint8_t svc_data_uuid128_len;
 
     /*** 0x24 - URI. */
-    uint8_t *uri;
+    const uint8_t *uri;
     uint8_t uri_len;
 
     /*** 0xff - Manufacturer specific data. */
-    uint8_t *mfg_data;
+    const uint8_t *mfg_data;
     uint8_t mfg_data_len;
 };
 
@@ -164,8 +164,8 @@ int ble_hs_adv_set_fields_mbuf(const struct ble_hs_adv_fields *adv_fields,
 int ble_hs_adv_set_fields(const struct ble_hs_adv_fields *adv_fields,
                           uint8_t *dst, uint8_t *dst_len, uint8_t max_len);
 
-int ble_hs_adv_parse_fields(struct ble_hs_adv_fields *adv_fields, uint8_t *src,
-                            uint8_t src_len);
+int ble_hs_adv_parse_fields(struct ble_hs_adv_fields *adv_fields,
+                            const uint8_t *src, uint8_t src_len);
 
 int ble_hs_adv_parse(const uint8_t *data, uint8_t length,
                      ble_hs_adv_parse_func_t func, void *user_data);
