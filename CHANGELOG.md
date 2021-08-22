@@ -8,6 +8,9 @@ All notable changes to this project will be documented in this file.
 - Turn HTTP API (command ``SetOption128 1``) default on for backward compatibility
 - Support for IEM3155 Wattmeter (#12940)
 
+### Fixed
+- WDT reset on shutters with stepper motors during deceleration (#12849)
+
 ## [9.5.0.6] 20210820
 ### Added
 - Version bump to monitor possible HTTP issues releated to ``SetOption128``
