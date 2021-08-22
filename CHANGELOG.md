@@ -6,7 +6,7 @@ All notable changes to this project will be documented in this file.
 ## [9.5.0.7]
 ### Added
 - Turn HTTP API (command ``SetOption128 1``) default on for backward compatibility
-- Support for IEM3155 Wattmeter (#12950)
+- Support for IEM3155 Wattmeter (#12940)
 
 ## [9.5.0.6] 20210820
 ### Added
