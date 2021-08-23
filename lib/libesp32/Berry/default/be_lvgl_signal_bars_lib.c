@@ -14,6 +14,7 @@ be_local_closure(my_design_cb,   /* name */
   be_nested_proto(
     21,                          /* nstack */
     3,                          /* argc */
+    0,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     1,                          /* has sup protos */
@@ -21,6 +22,7 @@ be_local_closure(my_design_cb,   /* name */
       be_nested_proto(
         2,                          /* nstack */
         1,                          /* argc */
+        0,                          /* varg */
         0,                          /* has upvals */
         NULL,                       /* no upvals */
         0,                          /* has sup protos */
@@ -212,6 +214,7 @@ be_local_closure(get_percentage,   /* name */
   be_nested_proto(
     2,                          /* nstack */
     1,                          /* argc */
+    0,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
@@ -238,6 +241,7 @@ be_local_closure(init,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     3,                          /* argc */
+    0,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
@@ -304,6 +308,7 @@ be_local_closure(set_percentage,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     2,                          /* argc */
+    0,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
@@ -350,16 +355,16 @@ be_local_class(lv_signal_bars,
     &be_class_lv_obj,
     be_nested_map(10,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_nested_key("p1", -1605446022, 2, -1), be_const_index(2) },
+        { be_nested_key("p1", -1605446022, 2, -1), be_const_var(2) },
         { be_nested_key("my_design_cb", -1173588798, 12, -1), be_const_closure(my_design_cb_closure) },
         { be_nested_key("get_percentage", -1414483304, 14, -1), be_const_closure(get_percentage_closure) },
         { be_nested_key("init", 380752755, 4, 7), be_const_closure(init_closure) },
         { be_nested_key("set_percentage", -1342944572, 14, 0), be_const_closure(set_percentage_closure) },
-        { be_nested_key("percentage", -1756136011, 10, 3), be_const_index(1) },
-        { be_nested_key("area", -1693507260, 4, -1), be_const_index(5) },
-        { be_nested_key("p2", -1622223641, 2, -1), be_const_index(3) },
-        { be_nested_key("line_dsc", -200476318, 8, 1), be_const_index(4) },
-        { be_nested_key("ancestor_design", 421545719, 15, -1), be_const_index(0) },
+        { be_nested_key("percentage", -1756136011, 10, 3), be_const_var(1) },
+        { be_nested_key("area", -1693507260, 4, -1), be_const_var(5) },
+        { be_nested_key("p2", -1622223641, 2, -1), be_const_var(3) },
+        { be_nested_key("line_dsc", -200476318, 8, 1), be_const_var(4) },
+        { be_nested_key("ancestor_design", 421545719, 15, -1), be_const_var(0) },
     })),
     (be_nested_const_str("lv_signal_bars", -780994737, 14))
 );

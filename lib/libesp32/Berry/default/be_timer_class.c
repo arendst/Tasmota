@@ -12,6 +12,7 @@ be_local_closure(tostring,   /* name */
   be_nested_proto(
     10,                          /* nstack */
     1,                          /* argc */
+    0,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
@@ -60,6 +61,7 @@ be_local_closure(init,   /* name */
   be_nested_proto(
     4,                          /* nstack */
     4,                          /* argc */
+    0,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
@@ -92,9 +94,9 @@ be_local_class(Timer,
     be_nested_map(5,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_nested_key("tostring", -1995258651, 8, 4), be_const_closure(tostring_closure) },
-        { be_nested_key("id", 926444256, 2, 2), be_const_index(2) },
-        { be_nested_key("f", -485742695, 1, -1), be_const_index(1) },
-        { be_nested_key("due", -399437003, 3, -1), be_const_index(0) },
+        { be_nested_key("id", 926444256, 2, 2), be_const_var(2) },
+        { be_nested_key("f", -485742695, 1, -1), be_const_var(1) },
+        { be_nested_key("due", -399437003, 3, -1), be_const_var(0) },
         { be_nested_key("init", 380752755, 4, -1), be_const_closure(init_closure) },
     })),
     (be_nested_const_str("Timer", -346839614, 5))

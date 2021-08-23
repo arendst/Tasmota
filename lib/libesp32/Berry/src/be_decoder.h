@@ -46,6 +46,9 @@
 #define IsBx_MAX                cast_int(IBx_MASK >> 1)
 #define IsBx_MIN                cast_int(-IsBx_MAX - 1)
 
+/* mask for K/R values */
+#define KR_MASK                 ((1 << (IRKB_BITS-1)) - 1)
+
 /* get field */
 #define IGET_OP(i)              cast(bopcode, INS_GETx(i, IOP_MASK, IOP_POS))
 #define IGET_RA(i)              INS_GETx(i, IRA_MASK, IRA_POS)

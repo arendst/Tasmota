@@ -45,6 +45,7 @@ be_local_closure(read_bytes,   /* name */
   be_nested_proto(
     8,                          /* nstack */
     4,                          /* argc */
+    0,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
@@ -107,6 +108,7 @@ be_local_closure(write_bytes,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     4,                          /* argc */
+    0,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */

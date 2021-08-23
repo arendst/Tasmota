@@ -51,9 +51,9 @@ static void m_solidify_bvalue(bvm *vm, bvalue * value)
         break;
     case BE_INDEX:
 #if BE_INTGER_TYPE == 2
-        logfmt("be_const_index(%lli)", var_toint(value));
+        logfmt("be_const_var(%lli)", var_toint(value));
 #else
-        logfmt("be_const_index(%i)", var_toint(value));
+        logfmt("be_const_var(%i)", var_toint(value));
 #endif
         break;
     case BE_REAL:
@@ -96,6 +96,7 @@ static void m_solidify_proto(bvm *vm, bproto *pr, const char * func_name, int bu
 
     logfmt("%*s%d,                          /* nstack */\n", indent, "", pr->nstack);
     logfmt("%*s%d,                          /* argc */\n", indent, "", pr->argc);
+    logfmt("%*s%d,                          /* varg */\n", indent, "", pr->varg);
     logfmt("%*s%d,                          /* has upvals */\n", indent, "", (pr->nupvals > 0) ? 1 : 0);
 
     if (pr->nupvals > 0) {
@@ -127,9 +128,9 @@ static void m_solidify_proto(bvm *vm, bproto *pr, const char * func_name, int bu
     if (pr->nconst > 0) {
         logfmt("%*s( &(const bvalue[%2d]) {     /* constants */\n", indent, "", pr->nconst);
         for (int k = 0; k < pr->nconst; k++) {
-            logfmt("%*s  ", indent, "");
+            logfmt("%*s/* K%-3d */  ", indent, "", k);
             m_solidify_bvalue(vm, &pr->ktab[k]);
-            logfmt(",    /* R%d - K%d */\n", 256+k, k);
+            logfmt(",\n");
         }
         logfmt("%*s}),\n", indent, "");
     } else {
