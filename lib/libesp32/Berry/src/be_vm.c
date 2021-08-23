@@ -12,6 +12,7 @@
 #include "be_class.h"
 #include "be_func.h"
 #include "be_vector.h"
+#include "be_list.h"
 #include "be_map.h"
 #include "be_module.h"
 #include "be_mem.h"
@@ -1085,6 +1086,20 @@ newframe: /* a new call frame */
                 end = reg + proto->argc;  /* end of expected arguments */
                 for (; v < end; ++v) {  /* set all not provided arguments to nil */
                     var_setnil(v);
+                }
+                if (proto->varg) {  /* there are vararg at the last argument, build the list */
+                    /* code below uses mostly low-level calls for performance */
+                    be_stack_require(vm, argc + 2);   /* make sure we don't overflow the stack */
+                    bvalue *top_save = vm->top;  /* save original stack, we need fresh slots to create the 'list' instance */
+                    vm->top = v;  /* move top of stack right after last argument */
+                    be_newobject(vm, "list");  /* this creates 2 objects on stack: list instance, BE_LIST object */
+                    blist *list = var_toobj(vm->top-1);  /* get low-level BE_LIST structure */
+                    v = reg + proto->argc - 1;  /* last argument */
+                    for (; v < reg + argc; v++) {
+                        be_list_push(vm, list, v); /* push all varargs into list */       
+                    }
+                    *(reg + proto->argc - 1) = *(vm->top-2);  /* change the vararg argument to now contain the list instance */
+                    vm->top = top_save;  /* restore top of stack pointer */
                 }
                 goto newframe;  /* continue execution of the closure */
             }

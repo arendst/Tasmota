@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Turn HTTP API (command ``SetOption128 1``) default on for backward compatibility
 - Support for IEM3155 Wattmeter (#12940)
+- Berry support for vararg
 
 ### Fixed
 - WDT reset on shutters with stepper motors during deceleration (#12849)
