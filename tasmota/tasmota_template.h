@@ -639,7 +639,7 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_HJL_CF),         // HJL-01/BL0937 CF power
 #endif
 #if defined(USE_I2C) && defined(USE_ADE7953)
-  AGPIO(GPIO_ADE7953_IRQ),    // ADE7953 IRQ
+  AGPIO(GPIO_ADE7953_IRQ) + 2,  // ADE7953 IRQ
 #endif
 #ifdef USE_CSE7761
   AGPIO(GPIO_CSE7761_TX),     // CSE7761 Serial interface (Dual R3)

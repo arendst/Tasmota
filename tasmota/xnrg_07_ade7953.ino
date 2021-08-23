@@ -21,7 +21,10 @@
 #ifdef USE_ENERGY_SENSOR
 #ifdef USE_ADE7953
 /*********************************************************************************************\
- * ADE7953 - Energy (Shelly 2.5)
+ * ADE7953 - Energy used in Shelly 2.5 (model 0) and Shelly EM (model 1)
+ *
+ * {"NAME":"Shelly 2.5","GPIO":[320,0,32,0,224,193,0,0,640,192,608,225,3456,4736],"FLAG":0,"BASE":18}
+ * {"NAME":"Shelly EM","GPIO":[0,0,0,0,0,0,0,0,640,3457,608,224,0,1],"FLAG":0,"BASE":18}
  *
  * Based on datasheet from https://www.analog.com/en/products/ade7953.html
  *
@@ -69,6 +72,7 @@ struct Ade7953 {
   uint32_t current_rms[2] = { 0, 0 };
   uint32_t active_power[2] = { 0, 0 };
   uint8_t init_step = 0;
+  uint8_t model = 0;          // 0 = Shelly 2.5, 1 = Shelly EM
 } Ade7953;
 
 int Ade7953RegSize(uint16_t reg)
@@ -182,12 +186,14 @@ void Ade7953GetData(void)
     for (uint32_t channel = 0; channel < 2; channel++) {
       Energy.data_valid[channel] = 0;
       Energy.active_power[channel] = (float)Ade7953.active_power[channel] / (Settings->energy_power_calibration / 10);
-      if ((acc_mode & APSIGN[channel]) != 0) {
-        Energy.active_power[channel] = Energy.active_power[channel] * -1;
-      }
       Energy.reactive_power[channel] = (float)reactive_power[channel] / (Settings->energy_power_calibration / 10);
-      if ((acc_mode & VARSIGN[channel]) != 0) {
-        Energy.reactive_power[channel] = Energy.reactive_power[channel] * -1;
+      if (1 == Ade7953.model) {  // Shelly EM
+        if ((acc_mode & APSIGN[channel]) != 0) {
+          Energy.active_power[channel] = Energy.active_power[channel] * -1;
+        }
+        if ((acc_mode & VARSIGN[channel]) != 0) {
+          Energy.reactive_power[channel] = Energy.reactive_power[channel] * -1;
+        }
       }
       Energy.apparent_power[channel] = (float)apparent_power[channel] / (Settings->energy_power_calibration / 10);
       if (0 == Energy.active_power[channel]) {
@@ -223,8 +229,10 @@ void Ade7953EnergyEverySecond(void)
 
 void Ade7953DrvInit(void)
 {
-  if (PinUsed(GPIO_ADE7953_IRQ)) {                // Irq on GPIO16 is not supported...
-    pinMode(Pin(GPIO_ADE7953_IRQ), INPUT);        // Related to resetPins() - Must be set to input
+  if (PinUsed(GPIO_ADE7953_IRQ, GPIO_ANY)) {      // Irq on GPIO16 is not supported...
+    uint32_t pin_irq = Pin(GPIO_ADE7953_IRQ, GPIO_ANY);
+    pinMode(pin_irq, INPUT);                      // Related to resetPins() - Must be set to input
+    Ade7953.model = GetPin(pin_irq) - AGPIO(GPIO_ADE7953_IRQ);  // 0 .. 1 ;
     delay(100);                                   // Need 100mS to init ADE7953
     if (I2cSetDevice(ADE7953_ADDR)) {
       if (HLW_PREF_PULSE == Settings->energy_power_calibration) {
