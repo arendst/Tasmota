@@ -148,8 +148,10 @@ void Ade7953GetData(void)
     } else if (10 == i) {
       acc_mode = value;             // Accumulation mode
       if (0 == Ade7953.model) {     // Shelly 2.5 - Swap channel B values due to hardware connection
-        if (acc_mode & APSIGN[0]) { acc_mode &= ~APSIGN[0]; } else { acc_mode |= APSIGN[0]; }
-        if (acc_mode & VARSIGN[0]) { acc_mode &= ~VARSIGN[0]; } else { acc_mode |= VARSIGN[0]; }
+//        if (acc_mode & APSIGN[0]) { acc_mode &= ~APSIGN[0]; } else { acc_mode |= APSIGN[0]; }
+//        if (acc_mode & VARSIGN[0]) { acc_mode &= ~VARSIGN[0]; } else { acc_mode |= VARSIGN[0]; }
+        acc_mode ^= (APSIGN[0] | VARSIGN[0]);
+//        acc_mode ^= 0xA00;
       }
     } else {
       reg[i >> 2][i &3] = value;
