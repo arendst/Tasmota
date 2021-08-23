@@ -147,6 +147,10 @@ void Ade7953GetData(void)
       Ade7953.period = value;       // Period
     } else if (10 == i) {
       acc_mode = value;             // Accumulation mode
+      if (0 == Ade7953.model) {     // Shelly 2.5 - Swap channel B values due to hardware connection
+        if (acc_mode & APSIGN[0]) { acc_mode &= ~APSIGN[0]; } else { acc_mode |= APSIGN[0]; }
+        if (acc_mode & VARSIGN[0]) { acc_mode &= ~VARSIGN[0]; } else { acc_mode |= VARSIGN[0]; }
+      }
     } else {
       reg[i >> 2][i &3] = value;
     }
@@ -187,14 +191,14 @@ void Ade7953GetData(void)
       Energy.data_valid[channel] = 0;
       Energy.active_power[channel] = (float)Ade7953.active_power[channel] / (Settings->energy_power_calibration / 10);
       Energy.reactive_power[channel] = (float)reactive_power[channel] / (Settings->energy_power_calibration / 10);
-      if (1 == Ade7953.model) {  // Shelly EM
+//      if (1 == Ade7953.model) {  // Shelly EM
         if ((acc_mode & APSIGN[channel]) != 0) {
           Energy.active_power[channel] = Energy.active_power[channel] * -1;
         }
         if ((acc_mode & VARSIGN[channel]) != 0) {
           Energy.reactive_power[channel] = Energy.reactive_power[channel] * -1;
         }
-      }
+//      }
       Energy.apparent_power[channel] = (float)apparent_power[channel] / (Settings->energy_power_calibration / 10);
       if (0 == Energy.active_power[channel]) {
         Energy.current[channel] = 0;
