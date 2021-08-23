@@ -528,23 +528,45 @@ static void singlevar(bparser *parser, bexpdesc *var)
     }
 }
 
+/* parse a vararg argument in the form `def f(a, *b) end` */
+/* Munch the '*', read the token, create variable and declare the function as vararg */
+static void func_vararg(bparser *parser) {
+    bexpdesc v;
+    bstring *str;
+    match_token(parser, OptMul); /* skip '*' */
+    str = next_token(parser).u.s;
+    match_token(parser, TokenId); /* match and skip ID */
+    new_var(parser, str, &v); /* new variable */
+    parser->finfo->proto->varg = 1;   /* set varg flag */
+}
+
 /* Parse function or method definition variable list */
 /* Create an implicit local variable for each argument starting at R0 */
 /* Update function proto argc to the expected number or arguments */
 /* Raise an exception if multiple arguments have the same name */
+/* New: vararg support */
 static void func_varlist(bparser *parser)
 {
     bexpdesc v;
     bstring *str;
-    /* '(' [ID {',' ID}] ')' */
+    /* '(' [ ID {',' ID}] ')' or */
+    /* '(' '*' ID ')' or */
+    /* '(' [ ID {',' ID}] ',' '*' ID ')' */
     match_token(parser, OptLBK); /* skip '(' */
-    if (match_id(parser, str) != NULL) {
+    if (next_type(parser) == OptMul) {
+        func_vararg(parser);
+    } else if (match_id(parser, str) != NULL) {
         new_var(parser, str, &v); /* new variable */
         while (match_skip(parser, OptComma)) { /* ',' */
-            str = next_token(parser).u.s;
-            match_token(parser, TokenId); /* match and skip ID */
-            /* new local variable */
-            new_var(parser, str, &v);
+            if (next_type(parser) == OptMul) {
+                func_vararg(parser);
+                break;
+            } else {
+                str = next_token(parser).u.s;
+                match_token(parser, TokenId); /* match and skip ID */
+                /* new local variable */
+                new_var(parser, str, &v);
+            }
         }
     }
     match_token(parser, OptRBK); /* skip ')' */
