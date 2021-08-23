@@ -512,11 +512,15 @@ static int str_format(bvm *vm)
             concat2(vm);
             p = get_mode(p + 1, mode);
             buf[0] = '\0';
-            if (index > top) {
+            if (index > top && *p != '%') {
                 be_raise(vm, "runtime_error", be_pushfstring(vm,
                     "bad argument #%d to 'format': no value", index));
             }
             switch (*p) {
+            case '%':
+                be_pushstring(vm, "%");
+                --index;  /* compensate the future ++index */
+                break;
             case 'd': case 'i': case 'o':
             case 'u': case 'x': case 'X':
                 if (be_isint(vm, index)) {

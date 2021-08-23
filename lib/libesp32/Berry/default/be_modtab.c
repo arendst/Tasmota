@@ -20,8 +20,8 @@ be_extern_native_module(sys);
 be_extern_native_module(debug);
 be_extern_native_module(gc);
 be_extern_native_module(solidify);
-be_extern_native_module(strict);
 be_extern_native_module(introspect);
+be_extern_native_module(strict);
 
 /* Tasmota specific */
 be_extern_native_module(light);

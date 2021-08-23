@@ -1,7 +1,7 @@
 #include "be_constobj.h"
 
 static be_define_const_map_slots(be_class_bytes_map) {
-    { be_const_key(dot_p, -1), be_const_index(0) },
+    { be_const_key(dot_p, -1), be_const_var(0) },
     { be_const_key(seti, 6), be_const_func(m_set) },
     { be_const_key(get, 7), be_const_func(m_getu) },
     { be_const_key(size, 10), be_const_func(m_size) },

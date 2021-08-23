@@ -505,6 +505,7 @@ be_local_closure(remove_rule,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     2,                          /* argc */
+    0,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
@@ -932,6 +933,7 @@ be_local_closure(set_timer,   /* name */
   be_nested_proto(
     10,                          /* nstack */
     4,                          /* argc */
+    0,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
@@ -974,6 +976,7 @@ be_local_closure(run_deferred,   /* name */
   be_nested_proto(
     6,                          /* nstack */
     1,                          /* argc */
+    0,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
@@ -1031,6 +1034,7 @@ be_local_closure(remove_timer,   /* name */
   be_nested_proto(
     6,                          /* nstack */
     2,                          /* argc */
+    0,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
@@ -1182,6 +1186,7 @@ be_local_closure(remove_cmd,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     2,                          /* argc */
+    0,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
@@ -1213,6 +1218,7 @@ be_local_closure(exec_cmd,   /* name */
   be_nested_proto(
     12,                          /* nstack */
     4,                          /* argc */
+    0,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
@@ -1276,6 +1282,7 @@ be_local_closure(gc,   /* name */
   be_nested_proto(
     4,                          /* nstack */
     1,                          /* argc */
+    0,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
@@ -1307,6 +1314,7 @@ be_local_closure(event,   /* name */
   be_nested_proto(
     19,                          /* nstack */
     6,                          /* argc */
+    0,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
@@ -1423,6 +1431,7 @@ be_local_closure(add_driver,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     2,                          /* argc */
+    0,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
@@ -1459,6 +1468,7 @@ be_local_closure(load,   /* name */
   be_nested_proto(
     14,                          /* nstack */
     2,                          /* argc */
+    0,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
@@ -1670,6 +1680,7 @@ be_local_closure(time_str,   /* name */
   be_nested_proto(
     13,                          /* nstack */
     2,                          /* argc */
+    0,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
@@ -1989,6 +2000,7 @@ be_local_closure(cb_dispatch,   /* name */
   be_nested_proto(
     12,                          /* nstack */
     6,                          /* argc */
+    0,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
@@ -2034,6 +2046,7 @@ be_local_closure(gen_cb,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     2,                          /* argc */
+    0,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */

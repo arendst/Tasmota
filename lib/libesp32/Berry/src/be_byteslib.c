@@ -536,7 +536,7 @@ static size_t tohex(char * out, size_t outsz, const uint8_t * in, size_t insz) {
 static int m_tostring(bvm *vm)
 {
     int argc = be_top(vm);
-    int max_len = 32;  /* limit to 32 bytes by default */
+    size_t max_len = 32;  /* limit to 32 bytes by default */
     int truncated = 0;
     if (argc > 1 && be_isint(vm, 2)) {
         max_len = be_toint(vm, 2);  /* you can specify the len as second argument, or 0 for unlimited */
@@ -918,7 +918,7 @@ static int m_tob64(bvm *vm)
     size_t b64_len = encode_base64_length(len) + 1;  /* size of base64 encoded string for this binary length, add NULL terminator */
 
     char * b64_out = be_pushbuffer(vm, b64_len);
-    size_t converted = encode_base64(buf_get_buf(buf), len, b64_out);
+    size_t converted = encode_base64(buf_get_buf(buf), len, (unsigned char*)b64_out);
 
     be_pushnstring(vm, b64_out, converted); /* make string from buffer */
     be_remove(vm, -2); /* remove buffer */
@@ -935,8 +935,7 @@ static int m_fromb64(bvm *vm)
     int argc = be_top(vm);
     if (argc >= 2 && be_isstring(vm, 2)) {
         const char *s = be_tostring(vm, 2);
-        size_t len = be_strlen(vm, 2);
-        size_t bin_len = decode_base64_length(s);   /* do a first pass to calculate the buffer size */
+        size_t bin_len = decode_base64_length((unsigned char*)s);   /* do a first pass to calculate the buffer size */
 
         buf_impl * buf = bytes_check_data(vm, 0);
         buf = bytes_resize(vm, buf, bin_len); /* resize if needed */
@@ -944,7 +943,7 @@ static int m_fromb64(bvm *vm)
             be_raise(vm, "memory_error", "cannot allocate buffer");
         }
 
-        size_t bin_len_final = decode_base64(s, buf_get_buf(buf));  /* decode */
+        size_t bin_len_final = decode_base64((unsigned char*)s, buf_get_buf(buf));  /* decode */
         buf->len = bin_len_final;
         be_pop(vm, 1); /* remove arg to leave instance */
         be_return(vm);
@@ -1106,6 +1105,7 @@ be_local_closure(getbits,   /* name */
   be_nested_proto(
     9,                          /* nstack */
     3,                          /* argc */
+    0,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
@@ -1165,6 +1165,7 @@ be_local_closure(setbits,   /* name */
   be_nested_proto(
     10,                          /* nstack */
     4,                          /* argc */
+    0,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */

@@ -47,7 +47,7 @@ extern "C" {
     .type = BE_INT                                              \
 }
 
-#define be_const_index(_val) {                                  \
+#define be_const_var(_val) {                                  \
     .v.i = (bint)(_val),                                        \
     .type = BE_INDEX                                            \
 }
@@ -203,7 +203,7 @@ const bntvmodule be_native_module(_module) = {                  \
     BE_BOOL                                                     \
 }
 
-#define be_const_index(_val) {                                  \
+#define be_const_var(_val) {                                  \
     bvaldata(bint(_val)),                                       \
     BE_INDEX                                                    \
 }

@@ -14,6 +14,7 @@ be_local_closure(init,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     3,                          /* argc */
+    0,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
@@ -54,6 +55,7 @@ be_local_closure(every_second,   /* name */
   be_nested_proto(
     6,                          /* nstack */
     1,                          /* argc */
+    0,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
