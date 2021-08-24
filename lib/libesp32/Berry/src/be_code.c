@@ -251,7 +251,7 @@ static int newconst(bfuncinfo *finfo, bvalue *k)
 }
 
 /* Find constant by value and return constant number, or -1 if constant does not exist */
-/* The search is linear and lilited to 50 elements for performance reasons */
+/* The search is linear and limited to 100 elements for performance reasons */
 static int findconst(bfuncinfo *finfo, bexpdesc *e)
 {
     int i, count = be_vector_count(&finfo->kvec);
@@ -260,7 +260,7 @@ static int findconst(bfuncinfo *finfo, bexpdesc *e)
      * so only search the constant table for the
      * previous value.
      **/
-    count = count < 50 ? count : 50;
+    count = count < 100 ? count : 100;
     for (i = 0; i < count; ++i) {
         bvalue *k = be_vector_at(&finfo->kvec, i);
         switch (e->type) {
@@ -746,10 +746,12 @@ int be_code_proto(bfuncinfo *finfo, bproto *proto)
 
 void be_code_closure(bfuncinfo *finfo, bexpdesc *e, int idx)
 {
-    int reg = e->type == ETGLOBAL ? finfo->freereg: e->v.idx;
+    int reg = (e->type == ETGLOBAL || e->type == ETNGLOBAL) ? finfo->freereg: e->v.idx;
     code_closure(finfo, idx, reg);
-    if (e->type == ETGLOBAL) { /* store to grobal R(A) -> G(Bx) */
+    if (e->type == ETGLOBAL) { /* store to global R(A) -> G(Bx) */
         codeABx(finfo, OP_SETGBL, reg, e->v.idx);
+    } else if (e->type == ETNGLOBAL) { /* store R(A) -> GLOBAL[RK(B)] */
+        codeABC(finfo, OP_SETNGBL, reg, e->v.idx, 0);
     }
 }
 
@@ -841,9 +843,12 @@ void be_code_class(bfuncinfo *finfo, bexpdesc *dst, bclass *c)
     src = newconst(finfo, &var);  /* allocate a new constant and return kreg */
     if (dst->type == ETLOCAL) {  /* if target is a local variable, just assign */
         codeABx(finfo, OP_LDCONST, dst->v.idx, src);
-    } else {  /* otherwise set as global with same name as class name */
+    } else if (dst->type == ETGLOBAL) {  /* otherwise set as global with same name as class name */
         codeABx(finfo, OP_LDCONST, finfo->freereg, src);
         codeABx(finfo, OP_SETGBL, finfo->freereg, dst->v.idx);
+    } else if (dst->type == ETNGLOBAL) {
+        codeABx(finfo, OP_LDCONST, finfo->freereg, src);
+        codeABC(finfo, OP_SETNGBL, finfo->freereg, dst->v.idx, 0);
     }
     codeABx(finfo, OP_CLASS, 0, src);  /* emit CLASS opcode to register class */
 }
