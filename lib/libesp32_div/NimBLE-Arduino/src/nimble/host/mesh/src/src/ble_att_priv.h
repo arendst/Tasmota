@@ -170,12 +170,6 @@ void ble_att_set_peer_mtu(struct ble_l2cap_chan *chan, uint16_t peer_mtu);
 uint16_t ble_att_chan_mtu(const struct ble_l2cap_chan *chan);
 int ble_att_init(void);
 
-#define BLE_ATT_LOG_CMD(is_tx, cmd_name, conn_handle, log_cb, cmd) \
-    BLE_HS_LOG_CMD((is_tx), "att", (cmd_name), (conn_handle), (log_cb), (cmd))
-
-#define BLE_ATT_LOG_EMPTY_CMD(is_tx, cmd_name, conn_handle) \
-    BLE_HS_LOG_EMPTY_CMD((is_tx), "att", (cmd_name), (conn_handle))
-
 /*** @svr */
 
 int ble_att_svr_start(void);

@@ -40,14 +40,31 @@ static ble_npl_event_fn ble_hs_flow_event_cb;
 
 static struct ble_npl_event ble_hs_flow_ev;
 
+/* Connection handle associated with each mbuf in ACL pool */
+static uint16_t ble_hs_flow_mbuf_conn_handle[ MYNEWT_VAL(BLE_ACL_BUF_COUNT) ];
+
+static inline int
+ble_hs_flow_mbuf_index(const struct os_mbuf *om)
+{
+    const struct os_mempool *mp = om->om_omp->omp_pool;
+    uintptr_t addr = (uintptr_t)om;
+    int idx;
+
+    idx = (addr - mp->mp_membuf_addr) / mp->mp_block_size;
+
+    BLE_HS_DBG_ASSERT(mp->mp_membuf_addr + idx * mp->mp_block_size == addr);
+
+    return idx;
+}
+
 static int
 ble_hs_flow_tx_num_comp_pkts(void)
 {
     uint8_t buf[
-        BLE_HCI_HOST_NUM_COMP_PKTS_HDR_LEN +
-        BLE_HCI_HOST_NUM_COMP_PKTS_ENT_LEN
+        sizeof(struct ble_hci_cb_host_num_comp_pkts_cp) +
+        sizeof(struct ble_hci_cb_host_num_comp_pkts_entry)
     ];
-    struct hci_host_num_comp_pkts_entry entry;
+    struct ble_hci_cb_host_num_comp_pkts_cp *cmd = (void *) buf;
     struct ble_hs_conn *conn;
     int rc;
 
@@ -62,16 +79,12 @@ ble_hs_flow_tx_num_comp_pkts(void)
 
         if (conn->bhc_completed_pkts > 0) {
             /* Only specify one connection per command. */
-            buf[0] = 1;
+            /* TODO could combine this in single HCI command */
+            cmd->handles = 1;
 
             /* Append entry for this connection. */
-            entry.conn_handle = conn->bhc_handle;
-            entry.num_pkts = conn->bhc_completed_pkts;
-            rc = ble_hs_hci_cmd_build_host_num_comp_pkts_entry(
-                &entry,
-                buf + BLE_HCI_HOST_NUM_COMP_PKTS_HDR_LEN,
-                sizeof buf - BLE_HCI_HOST_NUM_COMP_PKTS_HDR_LEN);
-            BLE_HS_DBG_ASSERT(rc == 0);
+            cmd->h[0].handle = htole16(conn->bhc_handle);
+            cmd->h[0].count = htole16(conn->bhc_completed_pkts);
 
             conn->bhc_completed_pkts = 0;
 
@@ -147,18 +160,13 @@ ble_hs_flow_acl_free(struct os_mempool_ext *mpe, void *data, void *arg)
     struct ble_hs_conn *conn;
     const struct os_mbuf *om;
     uint16_t conn_handle;
+    int idx;
     int rc;
 
     om = data;
 
-    /* An ACL data packet must be a single mbuf, and it must contain the
-     * corresponding connection handle in its user header.
-     */
-    assert(OS_MBUF_IS_PKTHDR(om));
-    assert(OS_MBUF_USRHDR_LEN(om) >= sizeof conn_handle);
-
-    /* Copy the connection handle out of the mbuf. */
-    memcpy(&conn_handle, OS_MBUF_USRHDR(om), sizeof conn_handle);
+    idx = ble_hs_flow_mbuf_index(om);
+    conn_handle = ble_hs_flow_mbuf_conn_handle[idx];
 
     /* Free the mbuf back to its pool. */
     rc = os_memblock_put_from_cb(&mpe->mpe_mp, data);
@@ -194,23 +202,19 @@ ble_hs_flow_connection_broken(uint16_t conn_handle)
 }
 
 /**
- * Fills the user header of an incoming data packet.  On function return, the
- * header contains the connection handle associated with the sender.
+ * Associates incoming data packet with a connection handle of the sender.
  *
  * If flow control is disabled, this function is a no-op.
  */
 void
-ble_hs_flow_fill_acl_usrhdr(struct os_mbuf *om)
+ble_hs_flow_track_data_mbuf(struct os_mbuf *om)
 {
 #if MYNEWT_VAL(BLE_HS_FLOW_CTRL)
     const struct hci_data_hdr *hdr;
-    uint16_t *conn_handle;
-
-    BLE_HS_DBG_ASSERT(OS_MBUF_USRHDR_LEN(om) >= sizeof *conn_handle);
-    conn_handle = OS_MBUF_USRHDR(om);
+    int idx = ble_hs_flow_mbuf_index(om);
 
     hdr = (void *)om->om_data;
-    *conn_handle = BLE_HCI_DATA_HANDLE(hdr->hdh_handle_pb_bc);
+    ble_hs_flow_mbuf_conn_handle[idx] = BLE_HCI_DATA_HANDLE(hdr->hdh_handle_pb_bc);
 #endif
 }
 
@@ -224,29 +228,39 @@ int
 ble_hs_flow_startup(void)
 {
 #if MYNEWT_VAL(BLE_HS_FLOW_CTRL)
-    struct hci_host_buf_size buf_size_cmd;
+    struct ble_hci_cb_ctlr_to_host_fc_cp enable_cmd;
+    struct ble_hci_cb_host_buf_size_cp buf_size_cmd = {
+            .acl_data_len = htole16(MYNEWT_VAL(BLE_ACL_BUF_SIZE)),
+            .acl_num = htole16(MYNEWT_VAL(BLE_ACL_BUF_COUNT)),
+    };
     int rc;
 
     ble_npl_event_init(&ble_hs_flow_ev, ble_hs_flow_event_cb, NULL);
 
     /* Assume failure. */
     ble_hci_trans_set_acl_free_cb(NULL, NULL);
+
 #if MYNEWT_VAL(SELFTEST)
     ble_npl_callout_stop(&ble_hs_flow_timer);
 #endif
 
-    rc = ble_hs_hci_cmd_tx_set_ctlr_to_host_fc(BLE_HCI_CTLR_TO_HOST_FC_ACL);
+    enable_cmd.enable = BLE_HCI_CTLR_TO_HOST_FC_ACL;
+
+    rc = ble_hs_hci_cmd_tx(BLE_HCI_OP(BLE_HCI_OGF_CTLR_BASEBAND,
+                                      BLE_HCI_OCF_CB_SET_CTLR_TO_HOST_FC),
+                           &enable_cmd, sizeof(enable_cmd), NULL, 0);
     if (rc != 0) {
         return rc;
     }
 
-    buf_size_cmd = (struct hci_host_buf_size) {
-        .acl_pkt_len = MYNEWT_VAL(BLE_ACL_BUF_SIZE),
-        .num_acl_pkts = MYNEWT_VAL(BLE_ACL_BUF_COUNT),
-    };
-    rc = ble_hs_hci_cmd_tx_host_buf_size(&buf_size_cmd);
+    rc = ble_hs_hci_cmd_tx(BLE_HCI_OP(BLE_HCI_OGF_CTLR_BASEBAND,
+                                      BLE_HCI_OCF_CB_HOST_BUF_SIZE),
+                           &buf_size_cmd, sizeof(buf_size_cmd), NULL, 0);
     if (rc != 0) {
-        ble_hs_hci_cmd_tx_set_ctlr_to_host_fc(BLE_HCI_CTLR_TO_HOST_FC_OFF);
+        enable_cmd.enable = BLE_HCI_CTLR_TO_HOST_FC_OFF;
+        ble_hs_hci_cmd_tx(BLE_HCI_OP(BLE_HCI_OGF_CTLR_BASEBAND,
+                                     BLE_HCI_OCF_CB_SET_CTLR_TO_HOST_FC),
+                          &enable_cmd, sizeof(enable_cmd), NULL, 0);
         return rc;
     }
 

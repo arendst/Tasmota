@@ -660,10 +660,10 @@ os_mbuf_cmpf(const struct os_mbuf *om, int off, const void *data, int len)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wpointer-arith"
             rc = memcmp(om->om_data + om_off, data + data_off, chunk_sz);
-#pragma GCC diagnostic pop
             if (rc != 0) {
                 return rc;
             }
+#pragma GCC diagnostic pop
         }
 
         data_off += chunk_sz;
@@ -1046,3 +1046,89 @@ os_mbuf_trim_front(struct os_mbuf *om)
     return om;
 }
 
+struct os_mbuf *
+os_mbuf_pack_chains(struct os_mbuf *m1, struct os_mbuf *m2)
+{
+    uint16_t rem_len;
+    uint16_t copylen;
+    uint8_t *dptr;
+    struct os_mbuf *cur;
+    struct os_mbuf *next;
+
+    /* If m1 is NULL, return NULL */
+    if (m1 == NULL) {
+        return NULL;
+    }
+
+    /*
+     * Concatenate the two chains to start. This will discard packet header in
+     * m2 and adjust packet length in m1 if m1 has a packet header.
+     */
+    if (m2 != NULL) {
+        os_mbuf_concat(m1, m2);
+    }
+
+    cur = m1;
+    while (1) {
+        /* If there is leading space in the mbuf, move data up */
+        if (OS_MBUF_LEADINGSPACE(cur)) {
+            dptr = &cur->om_databuf[0];
+            if (OS_MBUF_IS_PKTHDR(cur)) {
+                dptr += cur->om_pkthdr_len;
+            }
+            memmove(dptr, cur->om_data, cur->om_len);
+            cur->om_data = dptr;
+        }
+
+        /* Set pointer to where we will begin copying data in current mbuf */
+        dptr = cur->om_data + cur->om_len;
+
+        /* Get a pointer to the next buf we want to absorb */
+        next = SLIST_NEXT(cur, om_next);
+
+        /*
+         * Is there trailing space in the mbuf? If so, copy data from
+         * following mbufs into the current mbuf
+         */
+        rem_len = OS_MBUF_TRAILINGSPACE(cur);
+        while (rem_len && next) {
+            copylen = min(rem_len, next->om_len);
+            memcpy(dptr, next->om_data, copylen);
+            cur->om_len += copylen;
+            dptr += copylen;
+            rem_len -= copylen;
+
+            /*
+             * We copied bytes from the next mbuf. Move the data pointer
+             * and subtract from its length
+             */
+            next->om_data += copylen;
+            next->om_len -= copylen;
+
+            /*
+             * Keep removing and freeing consecutive zero length mbufs,
+             * stopping when we find one with data in it or we have
+             * reached the end. This will prevent any zero length mbufs
+             * from remaining in the chain.
+             */
+            while (next->om_len == 0) {
+                SLIST_NEXT(cur, om_next) = SLIST_NEXT(next, om_next);
+                os_mbuf_free(next);
+                next = SLIST_NEXT(cur, om_next);
+                if (next == NULL) {
+                    break;
+                }
+            }
+        }
+
+        /* If no mbufs are left, we are done */
+        if (next == NULL) {
+            break;
+        }
+
+        /* Move cur to next as we filled up current */
+        cur = next;
+    }
+
+    return m1;
+}

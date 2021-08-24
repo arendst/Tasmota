@@ -222,37 +222,46 @@ static struct bt_mesh_health_cli health_cli = {
 #endif /* MYNEWT_VAL(BLE_MESH_HEALTH_CLI) */
 
 #if MYNEWT_VAL(BLE_MESH_SHELL_MODELS)
-static struct bt_mesh_model_pub gen_onoff_pub;
-static struct bt_mesh_model_pub gen_level_pub;
+static struct bt_mesh_gen_model_cli gen_onoff_cli;
+static struct bt_mesh_model_pub gen_onoff_cli_pub;
+static struct bt_mesh_model_pub gen_onoff_srv_pub;
+static struct bt_mesh_gen_model_cli gen_level_cli;
+static struct bt_mesh_model_pub gen_level_cli_pub;
+static struct bt_mesh_model_pub gen_level_srv_pub;
 static struct bt_mesh_model_pub light_lightness_pub;
-static struct bt_mesh_gen_onoff_srv_cb gen_onoff_srv_cb = {
+static struct bt_mesh_gen_onoff_srv gen_onoff_srv = {
 	.get = light_model_gen_onoff_get,
 	.set = light_model_gen_onoff_set,
 };
-static struct bt_mesh_gen_level_srv_cb gen_level_srv_cb = {
+static struct bt_mesh_gen_level_srv gen_level_srv = {
 	.get = light_model_gen_level_get,
 	.set = light_model_gen_level_set,
 };
-static struct bt_mesh_light_lightness_srv_cb light_lightness_srv_cb = {
+static struct bt_mesh_light_lightness_srv light_lightness_srv = {
 	.get = light_model_light_lightness_get,
 	.set = light_model_light_lightness_set,
 };
 
-void bt_mesh_set_gen_onoff_srv_cb(struct bt_mesh_gen_onoff_srv_cb *gen_onoff_cb)
+void bt_mesh_set_gen_onoff_srv_cb(int (*get)(struct bt_mesh_model *model, u8_t *state),
+				  int (*set)(struct bt_mesh_model *model, u8_t state))
 {
-	gen_onoff_srv_cb = *gen_onoff_cb;
+	gen_onoff_srv.get = get;
+	gen_onoff_srv.set = set;
 }
 
-void bt_mesh_set_gen_level_srv_cb(struct bt_mesh_gen_level_srv_cb *gen_level_cb)
+void bt_mesh_set_gen_level_srv_cb(int (*get)(struct bt_mesh_model *model, s16_t *level),
+				  int (*set)(struct bt_mesh_model *model, s16_t level))
 {
-	gen_level_srv_cb = *gen_level_cb;
+	gen_level_srv.get = get;
+	gen_level_srv.set = set;
 }
 
-void bt_mesh_set_light_lightness_srv_cb(struct bt_mesh_light_lightness_srv_cb *light_lightness_cb)
+void bt_mesh_set_light_lightness_srv_cb(int (*get)(struct bt_mesh_model *model, s16_t *level),
+					int (*set)(struct bt_mesh_model *model, s16_t level))
 {
-	light_lightness_srv_cb = *light_lightness_cb;
+	light_lightness_srv.get = get;
+	light_lightness_srv.set = set;
 }
-
 #endif
 
 static struct bt_mesh_model root_models[] = {
@@ -265,11 +274,11 @@ static struct bt_mesh_model root_models[] = {
 	BT_MESH_MODEL_HEALTH_CLI(&health_cli),
 #endif
 #if MYNEWT_VAL(BLE_MESH_SHELL_MODELS)
-	BT_MESH_MODEL_GEN_ONOFF_SRV(&gen_onoff_srv_cb, &gen_onoff_pub),
-	BT_MESH_MODEL_GEN_ONOFF_CLI(),
-	BT_MESH_MODEL_GEN_LEVEL_SRV(&gen_level_srv_cb, &gen_level_pub),
-	BT_MESH_MODEL_GEN_LEVEL_CLI(),
-	BT_MESH_MODEL_LIGHT_LIGHTNESS_SRV(&light_lightness_srv_cb, &light_lightness_pub),
+	BT_MESH_MODEL_GEN_ONOFF_SRV(&gen_onoff_srv, &gen_onoff_srv_pub),
+	BT_MESH_MODEL_GEN_ONOFF_CLI(&gen_onoff_cli, &gen_onoff_cli_pub),
+	BT_MESH_MODEL_GEN_LEVEL_SRV(&gen_level_srv, &gen_level_srv_pub),
+	BT_MESH_MODEL_GEN_LEVEL_CLI(&gen_level_cli, &gen_level_cli_pub),
+	BT_MESH_MODEL_LIGHT_LIGHTNESS_SRV(&light_lightness_srv, &light_lightness_pub),
 #endif
 };
 
@@ -323,9 +332,23 @@ static void prov_complete(u16_t net_idx, u16_t addr)
 {
 	printk("Local node provisioned, net_idx 0x%04x address 0x%04x\n",
 	       net_idx, addr);
-	net.net_idx = net_idx,
 	net.local = addr;
+	net.net_idx = net_idx,
 	net.dst = addr;
+}
+
+static void prov_node_added(u16_t net_idx, u16_t addr, u8_t num_elem)
+{
+	printk("Node provisioned, net_idx 0x%04x address "
+	       "0x%04x elements %d", net_idx, addr, num_elem);
+
+	net.net_idx = net_idx,
+	net.dst = addr;
+}
+
+static void prov_input_complete(void)
+{
+	printk("Input complete");
 }
 
 static void prov_reset(void)
@@ -467,6 +490,7 @@ static struct bt_mesh_prov prov = {
 	.link_open = link_open,
 	.link_close = link_close,
 	.complete = prov_complete,
+	.node_added = prov_node_added,
 	.reset = prov_reset,
 	.static_val = NULL,
 	.static_val_len = 0,
@@ -477,6 +501,7 @@ static struct bt_mesh_prov prov = {
 	.input_size = MYNEWT_VAL(BLE_MESH_OOB_INPUT_SIZE),
 	.input_actions = MYNEWT_VAL(BLE_MESH_OOB_INPUT_ACTIONS),
 	.input = input,
+	.input_complete = prov_input_complete,
 };
 
 static int cmd_static_oob(int argc, char *argv[])
@@ -794,19 +819,6 @@ struct shell_cmd_help cmd_net_send_help = {
 	NULL, "<hex string>", NULL
 };
 
-static int cmd_iv_update(int argc, char *argv[])
-{
-	if (bt_mesh_iv_update()) {
-		printk("Transitioned to IV Update In Progress state\n");
-	} else {
-		printk("Transitioned to IV Update Normal state\n");
-	}
-
-	printk("IV Index is 0x%08lx\n", bt_mesh.iv_index);
-
-	return 0;
-}
-
 static int cmd_rpl_clear(int argc, char *argv[])
 {
 	bt_mesh_rpl_clear();
@@ -857,6 +869,20 @@ struct shell_cmd_help cmd_lpn_unsubscribe_help = {
 };
 #endif
 
+#if MYNEWT_VAL(BLE_MESH_IV_UPDATE_TEST)
+static int cmd_iv_update(int argc, char *argv[])
+{
+	if (bt_mesh_iv_update()) {
+		printk("Transitioned to IV Update In Progress state\n");
+	} else {
+		printk("Transitioned to IV Update Normal state\n");
+	}
+
+	printk("IV Index is 0x%08lx\n", bt_mesh.iv_index);
+
+	return 0;
+}
+
 static int cmd_iv_update_test(int argc, char *argv[])
 {
 	bool enable;
@@ -880,6 +906,7 @@ static int cmd_iv_update_test(int argc, char *argv[])
 struct shell_cmd_help cmd_iv_update_test_help = {
 	NULL, "<value: off, on>", NULL
 };
+#endif
 
 #if MYNEWT_VAL(BLE_MESH_CFG_CLI)
 
@@ -1802,6 +1829,37 @@ static int cmd_pb_adv(int argc, char *argv[])
 {
 	return cmd_pb(BT_MESH_PROV_ADV, argc, argv);
 }
+
+#if MYNEWT_VAL(BLE_MESH_PROVISIONER)
+static int cmd_provision_adv(int argc, char *argv[])
+{
+	u8_t uuid[16];
+	u8_t attention_duration;
+	u16_t net_idx;
+	u16_t addr;
+	size_t len;
+	int err;
+
+	len = hex2bin(argv[1], uuid, sizeof(uuid));
+	(void)memset(uuid + len, 0, sizeof(uuid) - len);
+
+	net_idx = strtoul(argv[2], NULL, 0);
+	addr = strtoul(argv[3], NULL, 0);
+	attention_duration = strtoul(argv[4], NULL, 0);
+
+	err = bt_mesh_provision_adv(uuid, net_idx, addr, attention_duration);
+	if (err) {
+		printk("Provisioning failed (err %d)", err);
+	}
+
+	return 0;
+}
+
+struct shell_cmd_help cmd_provision_adv_help = {
+	NULL, "<UUID> <NetKeyIndex> <addr> <AttentionDuration>" , NULL
+};
+#endif /* CONFIG_BT_MESH_PROVISIONER */
+
 #endif /* CONFIG_BT_MESH_PB_ADV */
 
 #if MYNEWT_VAL(BLE_MESH_PB_GATT)
@@ -2403,6 +2461,13 @@ static const struct shell_cmd mesh_commands[] = {
         .sc_cmd_func = cmd_pb_adv,
         .help = &cmd_pb_help,
     },
+#if MYNEWT_VAL(BLE_MESH_PROVISIONER)
+    {
+        .sc_cmd = "provision-adv",
+        .sc_cmd_func = cmd_provision_adv,
+        .help = &cmd_provision_adv_help,
+    },
+#endif
 #endif
 #if MYNEWT_VAL(BLE_MESH_PB_GATT)
     {
@@ -2482,6 +2547,7 @@ static const struct shell_cmd mesh_commands[] = {
         .sc_cmd_func = cmd_net_send,
         .help = &cmd_net_send_help,
     },
+#if MYNEWT_VAL(BLE_MESH_IV_UPDATE_TEST)
     {
         .sc_cmd = "iv-update",
         .sc_cmd_func = cmd_iv_update,
@@ -2492,6 +2558,7 @@ static const struct shell_cmd mesh_commands[] = {
         .sc_cmd_func = cmd_iv_update_test,
         .help = &cmd_iv_update_test_help,
     },
+#endif
     {
         .sc_cmd = "rpl-clear",
         .sc_cmd_func = cmd_rpl_clear,

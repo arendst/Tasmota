@@ -17,18 +17,26 @@
  * under the License.
  */
 
-#ifndef H_BLE_HS_DBG_PRIV_
-#define H_BLE_HS_DBG_PRIV_
+#ifndef H_LOG_COMMON_
+#define H_LOG_COMMON_
+
+#include "log_common/ignore.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-void ble_hs_dbg_event_disp(uint8_t *evbuf);
-void ble_hs_dbg_set_sync_state(uint8_t sync_state);
+#define LOG_LEVEL_DEBUG    (0)
+#define LOG_LEVEL_INFO     (1)
+#define LOG_LEVEL_WARN     (2)
+#define LOG_LEVEL_ERROR    (3)
+#define LOG_LEVEL_CRITICAL (4)
+#define LOG_LEVEL_NONE     (5)
+/* Up to 7 custom log levels. */
+#define LOG_LEVEL_MAX      (15)
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* H_HOST_DBG_ */
+#endif

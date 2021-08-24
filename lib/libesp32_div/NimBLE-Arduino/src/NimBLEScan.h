@@ -70,6 +70,7 @@ public:
     void                setDuplicateFilter(bool enabled);
     void                setLimitedOnly(bool enabled);
     void                setFilterPolicy(uint8_t filter);
+    void                clearDuplicateCache();
     bool                stop();
     void                clearResults();
     NimBLEScanResults   getResults();

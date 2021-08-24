@@ -84,7 +84,16 @@ extern "C" {
 #define BLE_SM_IOACT_INPUT                      2
 #define BLE_SM_IOACT_DISP                       3
 #define BLE_SM_IOACT_NUMCMP                     4
-#define BLE_SM_IOACT_MAX_PLUS_ONE               5
+#define BLE_SM_IOACT_OOB_SC                     5
+#define BLE_SM_IOACT_MAX_PLUS_ONE               6
+
+struct ble_sm_sc_oob_data {
+    /** Random Number. */
+    uint8_t r[16];
+
+    /** Confirm Value. */
+    uint8_t c[16];
+};
 
 struct ble_sm_io {
     uint8_t action;
@@ -92,8 +101,14 @@ struct ble_sm_io {
         uint32_t passkey;
         uint8_t  oob[16];
         uint8_t  numcmp_accept;
+        struct {
+            struct ble_sm_sc_oob_data *local;
+            struct ble_sm_sc_oob_data *remote;
+        } oob_sc_data;
     };
 };
+
+int ble_sm_sc_oob_generate_data(struct ble_sm_sc_oob_data *oob_data);
 
 #if NIMBLE_BLE_SM
 int ble_sm_inject_io(uint16_t conn_handle, struct ble_sm_io *pkey);

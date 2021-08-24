@@ -137,7 +137,7 @@ private:
 
     void    setAddress(NimBLEAddress address);
     void    setAdvType(uint8_t advType);
-    void    setPayload(uint8_t *payload, uint8_t length, bool append);
+    void    setPayload(const uint8_t *payload, uint8_t length, bool append);
     void    setRSSI(int rssi);
     uint8_t findAdvField(uint8_t type, uint8_t index = 0, uint8_t *data_loc = nullptr);
     uint8_t findServiceData(uint8_t index, uint8_t* bytes);

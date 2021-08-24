@@ -6,6 +6,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include "syscfg/syscfg.h"
+#define MESH_LOG_MODULE BLE_MESH_CRYPTO_LOG
+
 #include <string.h>
 #include <stdbool.h>
 #include <errno.h>
@@ -26,11 +29,7 @@
 #include <tinycrypt/aes.h>
 #include <tinycrypt/cmac_mode.h>
 #include <tinycrypt/ccm_mode.h>
-
 #endif
-
-#define BT_DBG_ENABLED (MYNEWT_VAL(BLE_MESH_DEBUG_CRYPTO))
-#include "host/ble_hs_log.h"
 
 #include "crypto.h"
 
@@ -315,7 +314,7 @@ static int bt_mesh_ccm_decrypt(const u8_t key[16], u8_t nonce[13],
 			}
 		}
 
-		for (i = 0; i < aad_len; i++, j++) {
+		for (; i < aad_len; i++, j++) {
 			pmsg[i] = Xn[i] ^ aad[j];
 		}
 
@@ -479,7 +478,7 @@ static int bt_mesh_ccm_encrypt(const u8_t key[16], u8_t nonce[13],
 			}
 		}
 
-		for (i = 0; i < aad_len; i++, j++) {
+		for (; i < aad_len; i++, j++) {
 			pmsg[i] = Xn[i] ^ aad[j];
 		}
 
@@ -569,7 +568,6 @@ static int bt_mesh_ccm_encrypt(const u8_t key[16], u8_t nonce[13],
 	return 0;
 }
 
-#if (MYNEWT_VAL(BLE_MESH_PROXY))
 static void create_proxy_nonce(u8_t nonce[13], const u8_t *pdu,
 			       u32_t iv_index)
 {
@@ -595,7 +593,6 @@ static void create_proxy_nonce(u8_t nonce[13], const u8_t *pdu,
 	/* IV Index */
 	sys_put_be32(iv_index, &nonce[9]);
 }
-#endif /* PROXY */
 
 static void create_net_nonce(u8_t nonce[13], const u8_t *pdu,
 			     u32_t iv_index)
@@ -661,15 +658,11 @@ int bt_mesh_net_encrypt(const u8_t key[16], struct os_mbuf *buf,
 	       bt_hex(key, 16), mic_len);
 	BT_DBG("PDU (len %u) %s", buf->om_len, bt_hex(buf->om_data, buf->om_len));
 
-#if (MYNEWT_VAL(BLE_MESH_PROXY))
-	if (proxy) {
+	if (IS_ENABLED(CONFIG_BT_MESH_PROXY) && proxy) {
 		create_proxy_nonce(nonce, buf->om_data, iv_index);
 	} else {
 		create_net_nonce(nonce, buf->om_data, iv_index);
 	}
-#else
-	create_net_nonce(nonce, buf->om_data, iv_index);
-#endif
 
 	BT_DBG("Nonce %s", bt_hex(nonce, 13));
 
@@ -692,15 +685,11 @@ int bt_mesh_net_decrypt(const u8_t key[16], struct os_mbuf *buf,
 	BT_DBG("iv_index %u, key %s mic_len %u", (unsigned) iv_index,
 	       bt_hex(key, 16), mic_len);
 
-#if (MYNEWT_VAL(BLE_MESH_PROXY))
-	if (proxy) {
+	if (IS_ENABLED(CONFIG_BT_MESH_PROXY) && proxy) {
 		create_proxy_nonce(nonce, buf->om_data, iv_index);
 	} else {
 		create_net_nonce(nonce, buf->om_data, iv_index);
 	}
-#else
-	create_net_nonce(nonce, buf->om_data, iv_index);
-#endif
 
 	BT_DBG("Nonce %s", bt_hex(nonce, 13));
 
@@ -728,12 +717,11 @@ static void create_app_nonce(u8_t nonce[13], bool dev_key, u8_t aszmic,
 	sys_put_be32(iv_index, &nonce[9]);
 }
 
-int bt_mesh_app_encrypt(const u8_t key[16], bool dev_key, u8_t aszmic,
-			struct os_mbuf *buf, const u8_t *ad,
-			u16_t src, u16_t dst, u32_t seq_num, u32_t iv_index)
+static int mesh_app_encrypt(const u8_t key[16], bool dev_key, u8_t aszmic,
+			    struct os_mbuf *buf, const u8_t *ad,
+			    u16_t src, u16_t dst, u32_t seq_num, u32_t iv_index)
 {
 	u8_t nonce[13];
-	int err;
 
 	BT_DBG("AppKey %s", bt_hex(key, 16));
 	BT_DBG("dev_key %u src 0x%04x dst 0x%04x", dev_key, src, dst);
@@ -745,8 +733,35 @@ int bt_mesh_app_encrypt(const u8_t key[16], bool dev_key, u8_t aszmic,
 
 	BT_DBG("Nonce  %s", bt_hex(nonce, 13));
 
-	err = bt_mesh_ccm_encrypt(key, nonce, buf->om_data, buf->om_len, ad,
-				  ad ? 16 : 0, buf->om_data, APP_MIC_LEN(aszmic));
+	return bt_mesh_ccm_encrypt(key, nonce, buf->om_data, buf->om_len, ad,
+				   ad ? 16 : 0, buf->om_data,
+				   APP_MIC_LEN(aszmic));
+}
+
+int bt_mesh_app_encrypt_in_place(const u8_t key[16], bool dev_key, u8_t aszmic,
+				 struct os_mbuf *buf, const u8_t *ad, u16_t src,
+				 u16_t dst, u32_t seq_num, u32_t iv_index)
+{
+	int err;
+
+	err = mesh_app_encrypt(key, dev_key, aszmic, buf, ad, src, dst,
+			       seq_num, iv_index);
+	if (!err) {
+		BT_DBG("Encr: %s", bt_hex(buf->om_data, buf->om_len));
+	}
+
+	return err;
+}
+
+int bt_mesh_app_encrypt(const u8_t key[16], bool dev_key, u8_t aszmic,
+			struct os_mbuf *buf, const u8_t *ad,
+			u16_t src, u16_t dst, u32_t seq_num, u32_t iv_index)
+{
+	int err;
+
+	err = mesh_app_encrypt(key, dev_key, aszmic, buf, ad, src, dst,
+			       seq_num, iv_index);
+
 	if (!err) {
 		net_buf_simple_add(buf, APP_MIC_LEN(aszmic));
 		BT_DBG("Encr: %s", bt_hex(buf->om_data, buf->om_len));
@@ -755,23 +770,43 @@ int bt_mesh_app_encrypt(const u8_t key[16], bool dev_key, u8_t aszmic,
 	return err;
 }
 
-int bt_mesh_app_decrypt(const u8_t key[16], bool dev_key, u8_t aszmic,
-			struct os_mbuf *buf, struct os_mbuf *out,
-			const u8_t *ad, u16_t src, u16_t dst, u32_t seq_num,
-			u32_t iv_index)
+static int mesh_app_decrypt(const u8_t key[16], bool dev_key, u8_t aszmic,
+			    struct os_mbuf *buf, struct os_mbuf *out,
+			    const u8_t *ad, u16_t src, u16_t dst,
+			    u32_t seq_num, u32_t iv_index)
 {
 	u8_t nonce[13];
-	int err;
 
-	BT_DBG("EncData (len %u) %s", buf->om_len, bt_hex(buf->om_data, buf->om_len));
+	BT_DBG("EncData (len %u) %s", buf->om_len,
+	       bt_hex(buf->om_data, buf->om_len));
 
 	create_app_nonce(nonce, dev_key, aszmic, src, dst, seq_num, iv_index);
 
 	BT_DBG("AppKey %s", bt_hex(key, 16));
 	BT_DBG("Nonce  %s", bt_hex(nonce, 13));
 
-	err = bt_mesh_ccm_decrypt(key, nonce, buf->om_data, buf->om_len, ad,
-				  ad ? 16 : 0, out->om_data, APP_MIC_LEN(aszmic));
+	return bt_mesh_ccm_decrypt(key, nonce, buf->om_data, buf->om_len, ad,
+				   ad ? 16 : 0, out->om_data,
+				   APP_MIC_LEN(aszmic));
+}
+
+int bt_mesh_app_decrypt_in_place(const u8_t key[16], bool dev_key, u8_t aszmic,
+				 struct os_mbuf *buf, const u8_t *ad, u16_t src,
+				 u16_t dst, u32_t seq_num, u32_t iv_index)
+{
+	return mesh_app_decrypt(key, dev_key, aszmic, buf, buf,
+				ad, src, dst, seq_num, iv_index);
+}
+
+int bt_mesh_app_decrypt(const u8_t key[16], bool dev_key, u8_t aszmic,
+			struct os_mbuf *buf, struct os_mbuf *out,
+			const u8_t *ad, u16_t src, u16_t dst, u32_t seq_num,
+			u32_t iv_index)
+{
+	int err;
+
+	err = mesh_app_decrypt(key, dev_key, aszmic, buf, out,
+			       ad, src, dst, seq_num, iv_index);
 	if (!err) {
 		net_buf_simple_add(out, buf->om_len);
 	}
@@ -898,6 +933,12 @@ int bt_mesh_prov_decrypt(const u8_t key[16], u8_t nonce[13],
 			 const u8_t data[25 + 8], u8_t out[25])
 {
 	return bt_mesh_ccm_decrypt(key, nonce, data, 25, NULL, 0, out, 8);
+}
+
+int bt_mesh_prov_encrypt(const u8_t key[16], u8_t nonce[13],
+			 const u8_t data[25], u8_t out[25 + 8])
+{
+	return bt_mesh_ccm_encrypt(key, nonce, data, 25, NULL, 0, out, 8);
 }
 
 int bt_mesh_beacon_auth(const u8_t beacon_key[16], u8_t flags,

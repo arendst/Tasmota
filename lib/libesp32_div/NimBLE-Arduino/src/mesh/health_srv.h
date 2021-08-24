@@ -71,6 +71,7 @@ struct bt_mesh_health_srv {
 int bt_mesh_fault_update(struct bt_mesh_elem *elem);
 
 extern const struct bt_mesh_model_op bt_mesh_health_srv_op[];
+extern const struct bt_mesh_model_cb bt_mesh_health_srv_cb;
 
 /** @def BT_MESH_MODEL_HEALTH_SRV
  *
@@ -84,9 +85,9 @@ extern const struct bt_mesh_model_op bt_mesh_health_srv_op[];
  *
  *  @return New mesh model instance.
  */
-#define BT_MESH_MODEL_HEALTH_SRV(srv, pub)                                   \
-		BT_MESH_MODEL(BT_MESH_MODEL_ID_HEALTH_SRV,                   \
-			      bt_mesh_health_srv_op, pub, srv)
+#define BT_MESH_MODEL_HEALTH_SRV(srv, pub)                                     \
+	BT_MESH_MODEL_CB(BT_MESH_MODEL_ID_HEALTH_SRV, bt_mesh_health_srv_op,   \
+			 pub, srv, &bt_mesh_health_srv_cb)
 
 #ifdef __cplusplus
 }

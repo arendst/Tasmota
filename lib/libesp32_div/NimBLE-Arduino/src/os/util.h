@@ -17,18 +17,22 @@
  * under the License.
  */
 
-#ifndef H_BLE_HS_DBG_PRIV_
-#define H_BLE_HS_DBG_PRIV_
+#ifndef H_OS_UTIL_
+#define H_OS_UTIL_
 
-#ifdef __cplusplus
-extern "C" {
+/* Helpers to pass integers as pointers and vice-versa */
+#define POINTER_TO_UINT(p) ((unsigned int) ((uintptr_t) (p)))
+#define UINT_TO_POINTER(u) ((void *) ((uintptr_t) (u)))
+#define POINTER_TO_INT(p) ((int) ((intptr_t) (p)))
+#define INT_TO_POINTER(u) ((void *) ((intptr_t) (u)))
+
+/* Helper to retrieve pointer to "parent" object in structure */
+#define CONTAINER_OF(ptr, type, field) \
+        ((type *)(((char *)(ptr)) - offsetof(type, field)))
+
+/* Helper to calculate number of elements in array */
+#ifndef ARRAY_SIZE
+#define ARRAY_SIZE(array) \
+        (sizeof(array) / sizeof((array)[0]))
 #endif
-
-void ble_hs_dbg_event_disp(uint8_t *evbuf);
-void ble_hs_dbg_set_sync_state(uint8_t sync_state);
-
-#ifdef __cplusplus
-}
 #endif
-
-#endif /* H_HOST_DBG_ */

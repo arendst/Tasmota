@@ -81,23 +81,40 @@ void ble_gap_rx_le_scan_timeout(void);
 
 #if MYNEWT_VAL(BLE_EXT_ADV)
 void ble_gap_rx_ext_adv_report(struct ble_gap_ext_disc_desc *desc);
-void ble_gap_rx_adv_set_terminated(struct hci_le_adv_set_terminated *evt);
+void ble_gap_rx_adv_set_terminated(const struct ble_hci_ev_le_subev_adv_set_terminated *ev);
 #if MYNEWT_VAL(BLE_PERIODIC_ADV)
-void ble_gap_rx_peroidic_adv_sync_estab(struct hci_le_subev_periodic_adv_sync_estab *evt);
-void ble_gap_rx_periodic_adv_rpt(struct hci_le_subev_periodic_adv_rpt *evt);
-void ble_gap_rx_periodic_adv_sync_lost(struct hci_le_subev_periodic_adv_sync_lost *evt);
+void ble_gap_rx_peroidic_adv_sync_estab(const struct ble_hci_ev_le_subev_periodic_adv_sync_estab *ev);
+void ble_gap_rx_periodic_adv_rpt(const struct ble_hci_ev_le_subev_periodic_adv_rpt *ev);
+void ble_gap_rx_periodic_adv_sync_lost(const struct ble_hci_ev_le_subev_periodic_adv_sync_lost *ev);
+void ble_gap_rx_periodic_adv_sync_transfer(const struct ble_hci_ev_le_subev_periodic_adv_sync_transfer *ev);
 #endif
-void ble_gap_rx_scan_req_rcvd(struct hci_le_scan_req_rcvd *evt);
+void ble_gap_rx_scan_req_rcvd(const struct ble_hci_ev_le_subev_scan_req_rcvd *ev);
 #endif
 void ble_gap_rx_adv_report(struct ble_gap_disc_desc *desc);
-void ble_gap_rx_rd_rem_sup_feat_complete(struct hci_le_rd_rem_supp_feat_complete *evt);
-int ble_gap_rx_conn_complete(struct hci_le_conn_complete *evt, uint8_t instance);
-void ble_gap_rx_disconn_complete(struct hci_disconn_complete *evt);
-void ble_gap_rx_update_complete(struct hci_le_conn_upd_complete *evt);
-void ble_gap_rx_param_req(struct hci_le_conn_param_req *evt);
+void ble_gap_rx_rd_rem_sup_feat_complete(const struct ble_hci_ev_le_subev_rd_rem_used_feat *ev);
+
+struct ble_gap_conn_complete
+{
+    uint8_t status;
+    uint16_t connection_handle;
+    uint8_t role;
+    uint8_t peer_addr_type;
+    uint8_t peer_addr[BLE_DEV_ADDR_LEN];
+    uint16_t conn_itvl;
+    uint16_t conn_latency;
+    uint16_t supervision_timeout;
+    uint8_t master_clk_acc;
+    uint8_t local_rpa[BLE_DEV_ADDR_LEN];
+    uint8_t peer_rpa[BLE_DEV_ADDR_LEN];
+};
+
+int ble_gap_rx_conn_complete(struct ble_gap_conn_complete *evt, uint8_t instance);
+void ble_gap_rx_disconn_complete(const struct ble_hci_ev_disconn_cmp *ev);
+void ble_gap_rx_update_complete(const struct ble_hci_ev_le_subev_conn_upd_complete *ev);
+void ble_gap_rx_param_req(const struct ble_hci_ev_le_subev_rem_conn_param_req *ev);
 int ble_gap_rx_l2cap_update_req(uint16_t conn_handle,
                                 struct ble_gap_upd_params *params);
-void ble_gap_rx_phy_update_complete(struct hci_le_phy_upd_complete *evt);
+void ble_gap_rx_phy_update_complete(const struct ble_hci_ev_le_subev_phy_update_complete *ev);
 void ble_gap_enc_event(uint16_t conn_handle, int status,
                        int security_restored, int bonded);
 void ble_gap_passkey_event(uint16_t conn_handle,
@@ -118,6 +135,7 @@ int ble_gap_master_in_progress(void);
 void ble_gap_preempt(void);
 void ble_gap_preempt_done(void);
 
+int ble_gap_terminate_with_conn(struct ble_hs_conn *conn, uint8_t hci_reason);
 void ble_gap_conn_broken(uint16_t conn_handle, int reason);
 void ble_gap_reset_state(int reason);
 int32_t ble_gap_timer(void);

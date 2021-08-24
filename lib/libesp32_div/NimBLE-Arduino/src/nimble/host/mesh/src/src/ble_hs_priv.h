@@ -26,7 +26,6 @@
 #include "ble_att_priv.h"
 #include "ble_gap_priv.h"
 #include "ble_gatt_priv.h"
-#include "ble_hs_dbg_priv.h"
 #include "ble_hs_hci_priv.h"
 #include "ble_hs_atomic_priv.h"
 #include "ble_hs_conn_priv.h"
@@ -118,7 +117,8 @@ int ble_hs_misc_conn_chan_find(uint16_t conn_handle, uint16_t cid,
 int ble_hs_misc_conn_chan_find_reqd(uint16_t conn_handle, uint16_t cid,
                                     struct ble_hs_conn **out_conn,
                                     struct ble_l2cap_chan **out_chan);
-uint8_t ble_hs_misc_addr_type_to_id(uint8_t addr_type);
+uint8_t ble_hs_misc_own_addr_type_to_id(uint8_t addr_type);
+uint8_t ble_hs_misc_peer_addr_type_to_id(uint8_t addr_type);
 int ble_hs_misc_restore_irks(void);
 
 int ble_hs_locked_by_cur_task(void);
@@ -141,31 +141,6 @@ struct ble_mqueue {
 int ble_mqueue_init(struct ble_mqueue *mq, ble_npl_event_fn *ev_fn, void *ev_arg);
 struct os_mbuf *ble_mqueue_get(struct ble_mqueue *mq);
 int ble_mqueue_put(struct ble_mqueue *mq, struct ble_npl_eventq *evq, struct os_mbuf *om);
-
-#if MYNEWT_VAL(LOG_LEVEL) <= LOG_LEVEL_DEBUG && !BLE_MONITOR
-
-#define BLE_HS_LOG_CMD(is_tx, cmd_type, cmd_name, conn_handle,                \
-                       log_cb, cmd) do                                        \
-{                                                                             \
-    BLE_HS_LOG(DEBUG, "%sed %s command: %s; conn=%d ",                        \
-               (is_tx) ? "tx" : "rx", (cmd_type), (cmd_name), (conn_handle)); \
-    (log_cb)(cmd);                                                            \
-    BLE_HS_LOG(DEBUG, "\n");                                                  \
-} while (0)
-
-#define BLE_HS_LOG_EMPTY_CMD(is_tx, cmd_type, cmd_name, conn_handle) do       \
-{                                                                             \
-    BLE_HS_LOG(DEBUG, "%sed %s command: %s; conn=%d ",                        \
-               (is_tx) ? "tx" : "rx", (cmd_type), (cmd_name), (conn_handle)); \
-    BLE_HS_LOG(DEBUG, "\n");                                                  \
-} while (0)
-
-#else
-
-#define BLE_HS_LOG_CMD(is_tx, cmd_type, cmd_name, conn_handle, log_cb, cmd)
-#define BLE_HS_LOG_EMPTY_CMD(is_tx, cmd_type, cmd_name, conn_handle)
-
-#endif
 
 #if MYNEWT_VAL(BLE_HS_DEBUG)
     #define BLE_HS_DBG_ASSERT(x) assert(x)

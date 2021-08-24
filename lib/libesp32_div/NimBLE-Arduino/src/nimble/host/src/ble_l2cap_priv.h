@@ -65,8 +65,20 @@ struct ble_l2cap_chan {
     uint16_t conn_handle;
     uint16_t dcid;
     uint16_t scid;
-    uint16_t my_mtu;
-    uint16_t peer_mtu;      /* 0 if not exchanged. */
+
+    /* Unions just to avoid confusion on MPS/MTU.
+     * In CoC context, L2CAP MTU is MPS
+     */
+    union {
+        uint16_t my_mtu;
+        uint16_t my_coc_mps;
+    };
+
+    union {
+        uint16_t peer_mtu;
+        uint16_t peer_coc_mps;
+    };
+
     ble_l2cap_chan_flags flags;
 
     struct os_mbuf *rx_buf;
@@ -102,7 +114,7 @@ struct os_mbuf *ble_l2cap_prepend_hdr(struct os_mbuf *om, uint16_t cid,
                                       uint16_t len);
 
 struct ble_l2cap_chan *ble_l2cap_chan_alloc(uint16_t conn_handle);
-void ble_l2cap_chan_free(struct ble_l2cap_chan *chan);
+void ble_l2cap_chan_free(struct ble_hs_conn *conn, struct ble_l2cap_chan *chan);
 
 bool ble_l2cap_is_mtu_req_sent(const struct ble_l2cap_chan *chan);
 
@@ -117,6 +129,13 @@ int ble_l2cap_tx(struct ble_hs_conn *conn, struct ble_l2cap_chan *chan,
 void ble_l2cap_remove_rx(struct ble_hs_conn *conn, struct ble_l2cap_chan *chan);
 
 int ble_l2cap_init(void);
+
+/* Below experimental API is available when BLE_VERSION >= 52 */
+int ble_l2cap_enhanced_connect(uint16_t conn_handle,
+                               uint16_t psm, uint16_t mtu,
+                               uint8_t num, struct os_mbuf *sdu_rx[],
+                               ble_l2cap_event_fn *cb, void *cb_arg);
+int ble_l2cap_reconfig(struct ble_l2cap_chan *chans[], uint8_t num, uint16_t new_mtu);
 
 #ifdef __cplusplus
 }

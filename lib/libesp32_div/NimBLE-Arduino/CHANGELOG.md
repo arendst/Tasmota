@@ -2,6 +2,52 @@
 
 All notable changes to this project will be documented in this file.  
 
+## [1.3.1] - 2021-08-04
+
+### Fixed
+- Corrected a compiler/linker error when an application or a library uses bluetooth classic due to the redefinition of `btInUse`.
+
+## [1.3.0] - 2021-08-02
+
+### Added
+- `NimBLECharacteristic::removeDescriptor`: Dynamically remove a descriptor from a characterisic. Takes effect after all connections are closed and sends a service changed indication.
+- `NimBLEService::removeCharacteristic`: Dynamically remove a characteristic from a service. Takes effect after all connections are closed and sends a service changed indication
+- `NimBLEServerCallbacks::onMTUChange`: This is callback is called when the MTU is updated after connection with a client.
+- ESP32C3 support
+
+- Whitelist API:
+  - `NimBLEDevice::whiteListAdd`: Add a device to the whitelist.
+  - `NimBLEDevice::whiteListRemove`: Remove a device from the whitelist.
+  - `NimBLEDevice::onWhiteList`: Check if the device is on the whitelist.
+  - `NimBLEDevice::getWhiteListCount`: Gets the size of the whitelist
+  - `NimBLEDevice::getWhiteListAddress`: Get the address of a device on the whitelist by index value.
+
+- Bond management API:
+  - `NimBLEDevice::getNumBonds`: Gets the number of bonds stored.
+  - `NimBLEDevice::isBonded`: Checks if the device is bonded.
+  - `NimBLEDevice::deleteAllBonds`: Deletes all bonds.
+  - `NimBLEDevice::getBondedAddress`: Gets the address of a bonded device by the index value.
+
+- `NimBLECharacteristic::getCallbacks` to retrieve the current callback handler.
+- Connection Information class: `NimBLEConnInfo`.
+- `NimBLEScan::clearDuplicateCache`: This can be used to reset the cache of advertised devices so they will be immediately discovered again.
+
+### Changed
+- FreeRTOS files have been removed as they are not used by the library.
+- Services, characteristics and descriptors can now be created statically and added after.
+- Excess logging and some asserts removed.
+- Use ESP_LOGx macros to enable using local log level filtering.
+
+### Fixed
+- `NimBLECharacteristicCallbacks::onSubscribe` Is now called after the connection is added to the vector.
+- Corrected bonding failure when reinitializing the BLE stack.
+- Writing to a characterisic with a std::string value now correctly writes values with null characters.
+- Retrieving remote descriptors now uses the characterisic end handle correctly.
+- Missing data in long writes to remote descriptors.
+- Hanging on task notification when sending an indication from the characteristic callback.
+- BLE controller memory could be released when using Arduino as a component.
+- Complile errors with NimBLE release 1.3.0.
+
 ## [1.2.0] - 2021-02-08
 
 ### Added

@@ -153,20 +153,24 @@ ble_hs_id_set_rnd(const uint8_t *rnd_addr)
 {
     uint8_t addr_type_byte;
     int rc;
-    int i, rnd_part_sum = 0;
+    int ones;
 
     ble_hs_lock();
 
-    /* Make sure random part of rnd_addr is not all ones or zeros */
+    /* Make sure random part of rnd_addr is not all ones or zeros. Reference:
+     * Core v5.0, Vol 6, Part B, section 1.3.2.1 */
     addr_type_byte = rnd_addr[5] & 0xc0;
-    for (i = 0; i < BLE_DEV_ADDR_LEN; i++) {
-        rnd_part_sum += *(rnd_addr + i);
-    }
-    rnd_part_sum -= addr_type_byte;
 
-    /* All ones in random part: 5*(0xFF) + 0x3F = 0x53A  */
+    /* count bits set to 1 in random part of address */
+    ones = __builtin_popcount(rnd_addr[0]);
+    ones += __builtin_popcount(rnd_addr[1]);
+    ones += __builtin_popcount(rnd_addr[2]);
+    ones += __builtin_popcount(rnd_addr[3]);
+    ones += __builtin_popcount(rnd_addr[4]);
+    ones += __builtin_popcount(rnd_addr[5] & 0x3f);
+
     if ((addr_type_byte != 0x00 && addr_type_byte != 0xc0) ||
-        (rnd_part_sum == 0) || (rnd_part_sum == 0x53A)) {
+            (ones == 0 || ones == 46)) {
         rc = BLE_HS_EINVAL;
         goto done;
     }
@@ -177,8 +181,6 @@ ble_hs_id_set_rnd(const uint8_t *rnd_addr)
     }
 
     memcpy(ble_hs_id_rnd, rnd_addr, 6);
-
-    rc = 0;
 
 done:
     ble_hs_unlock();
@@ -286,7 +288,7 @@ ble_hs_id_addr_type_usable(uint8_t own_addr_type)
 
     case BLE_OWN_ADDR_RPA_PUBLIC_DEFAULT:
     case BLE_OWN_ADDR_RPA_RANDOM_DEFAULT:
-        id_addr_type = ble_hs_misc_addr_type_to_id(own_addr_type);
+        id_addr_type = ble_hs_misc_own_addr_type_to_id(own_addr_type);
         rc = ble_hs_id_addr(id_addr_type, NULL, &nrpa);
         if (rc != 0) {
             return rc;

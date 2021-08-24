@@ -437,6 +437,24 @@ void NimBLEClient::updateConnParams(uint16_t minInterval, uint16_t maxInterval,
 
 
 /**
+ * @brief Get detailed information about the current peer connection.
+ */
+NimBLEConnInfo NimBLEClient::getConnInfo() {
+    NimBLEConnInfo connInfo;
+    if (!isConnected()) {
+        NIMBLE_LOGE(LOG_TAG, "Not connected");
+    } else {
+        int rc = ble_gap_conn_find(m_conn_id, &connInfo.m_desc);
+        if (rc != 0) {
+            NIMBLE_LOGE(LOG_TAG, "Connection info not found");
+        }
+    }
+
+    return connInfo;
+} // getConnInfo
+
+
+/**
  * @brief Set the timeout to wait for connection attempt to complete.
  * @param [in] time The number of seconds before timeout.
  */
