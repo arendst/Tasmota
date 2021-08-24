@@ -150,12 +150,22 @@ void DS3231EverySecond(void)
       TasmotaGlobal.rules_flag.time_set = 1;
     }
   }
-  else if (!ds3231WriteStatus && Rtc.utc_time > START_VALID_TIME && abs(Rtc.utc_time - ReadFromDS3231()) > 60) {//if time is valid and is drift from RTC in more that 60 second
+  else
+  #ifdef CONFIG_IDF_TARGET_ESP32C3
+  if (!ds3231WriteStatus && Rtc.utc_time > START_VALID_TIME && abs((int)(Rtc.utc_time - ReadFromDS3231())) > 60) {//if time is valid and is drift from RTC in more that 60 second
     AddLog(LOG_LEVEL_INFO, PSTR("Write Time TO DS3231 from NTP (" D_UTC_TIME ") %s, (" D_DST_TIME ") %s, (" D_STD_TIME ") %s"),
                 GetDateAndTime(DT_UTC).c_str(), GetDateAndTime(DT_DST).c_str(), GetDateAndTime(DT_STD).c_str());
     SetDS3231Time (Rtc.utc_time); //update the DS3231 time
     ds3231WriteStatus = true;
   }
+  #else
+  if (!ds3231WriteStatus && Rtc.utc_time > START_VALID_TIME && abs(Rtc.utc_time - ReadFromDS3231()) > 60) {//if time is valid and is drift from RTC in more that 60 second
+    AddLog(LOG_LEVEL_INFO, PSTR("Write Time TO DS3231 from NTP (" D_UTC_TIME ") %s, (" D_DST_TIME ") %s, (" D_STD_TIME ") %s"),
+                GetDateAndTime(DT_UTC).c_str(), GetDateAndTime(DT_DST).c_str(), GetDateAndTime(DT_STD).c_str());
+    SetDS3231Time (Rtc.utc_time); //update the DS3231 time
+    ds3231WriteStatus = true;
+  }
+ #endif
 }
 
 /*********************************************************************************************\
