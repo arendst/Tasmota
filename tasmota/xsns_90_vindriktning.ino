@@ -50,6 +50,8 @@ struct VINDRIKTNING {
 bool VindriktningReadData(void)
 {
   AddLog(LOG_LEVEL_INFO, PSTR("VindriktningReadData"));
+  AddLog(LOG_LEVEL_INFO, PSTR("VindriktningReadData: Available data: %d"), VindriktningSerial->available());
+
   if (! VindriktningSerial->available()) {
     return false;
   }
