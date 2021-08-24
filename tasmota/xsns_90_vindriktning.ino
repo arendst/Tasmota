@@ -49,12 +49,12 @@ struct VINDRIKTNING {
 
 bool VindriktningReadData(void)
 {
+  AddLog(LOG_LEVEL_INFO, PSTR("VindriktningReadData"));
   if (! VindriktningSerial->available()) {
     return false;
   }
   while (VindriktningSerial->available()) {
     VindriktningSerial->read();
-    // Serial->write('.', 1);
     delay(15);
   }
 
@@ -62,14 +62,12 @@ bool VindriktningReadData(void)
     return false;
   }
 
-  // Serial->write('Done.', 5);
   uint8_t buffer[6];
   VindriktningSerial->readBytes(buffer, 6);
   vindriktning_data = (buffer[5] << 8) | buffer[6];
   VindriktningSerial->flush();  // Make room for another burst
 
-  // AddLogBuffer(LOG_LEVEL_DEBUG_MORE, buffer, 24);
-  // AddLog(LOG_LEVEL_DEBUG, PSTR("PMS: " D_CHECKSUM_FAILURE));
+  AddLog(LOG_LEVEL_INFO, PSTR("PMS: %d"), vindriktning_data);
 
   Vindriktning.valid = 10;
 
@@ -78,12 +76,13 @@ bool VindriktningReadData(void)
 
 bool VindriktningCommandSensor(void)
 {
+  AddLog(LOG_LEVEL_INFO, PSTR("VindriktningCommandSensor"));
   // Set Passive Mode and schedule read once per interval time
   Settings->pms_wake_interval = XdrvMailbox.payload;
-  PmsSendCmd(CMD_MODE_PASSIVE);
-  PmsSendCmd(CMD_SLEEP);
-  Pms.wake_mode = 0;
-  Pms.ready = 0;
+  //PmsSendCmd(CMD_MODE_PASSIVE);
+  //PmsSendCmd(CMD_SLEEP);
+  Vindriktning.wake_mode = 0;
+  Vindriktning.ready = 0;
 
   Response_P(S_JSON_SENSOR_INDEX_NVALUE, XSNS_18, Settings->pms_wake_interval);
 
@@ -94,6 +93,7 @@ bool VindriktningCommandSensor(void)
 
 void VindriktningSecond(void)                 // Every second
 {
+  AddLog(LOG_LEVEL_INFO, PSTR("VindriktningSecond"));
   if (Settings->pms_wake_interval >= MIN_INTERVAL_PERIOD) {
     // Passive Mode
     Vindriktning.time++;
@@ -134,14 +134,21 @@ void VindriktningSecond(void)                 // Every second
 void VindriktningInit(void)
 {
   Vindriktning.type = 0;
+  AddLog(LOG_LEVEL_INFO, PSTR("VindriktningInit"));
   if (PinUsed(GPIO_VINDRIKTNING_RX)) {
+    AddLog(LOG_LEVEL_INFO, PSTR("VindriktningInit: PinUsed(GPIO_VINDRIKTNING_RX) TRUE"));
     VindriktningSerial = new TasmotaSerial(Pin(GPIO_VINDRIKTNING_RX), -1, 1);
     if (VindriktningSerial->begin(9600)) {
+      AddLog(LOG_LEVEL_INFO, PSTR("Serial initialization OK"));
       if (VindriktningSerial->hardwareSerial()) { ClaimSerial(); }
       Settings->pms_wake_interval = 0;
       Vindriktning.ready = 1;
-      Vindriktning.type = 1;
+      // Vindriktning.type = 1;
+    } else {
+      AddLog(LOG_LEVEL_INFO, PSTR("Serial initialization Failed"));
     }
+  } else {
+    AddLog(LOG_LEVEL_INFO, PSTR("VindriktningInit: PinUsed(GPIO_VINDRIKTNING_RX) FALSE"));
   }
 }
 
@@ -152,6 +159,7 @@ const char HTTP_VINDRIKTNING_SNS[] PROGMEM =
 
 void VindriktningShow(bool json)
 {
+  AddLog(LOG_LEVEL_INFO, PSTR("VindriktningShow"));
   if (Vindriktning.valid) {
     if (json) {
       ResponseAppend_P(PSTR(",\"VINDRIKTNING\":{\"CF1\":%d}"), vindriktning_data);
@@ -176,6 +184,29 @@ bool Xsns90(uint8_t function)
 {
   bool result = false;
 
+  // AddLog(LOG_LEVEL_INFO, PSTR("Xsns90(%d)"), function);
+
+  //  Xsns90(5)
+  //  Xsns90(6)
+  //  Xsns90(7)
+  //  Xsns90(9)
+  //  Xsns90(10)
+  //  Xsns90(11)
+
+  // 0 FUNC_SETTINGS_OVERRIDE
+  // 1 FUNC_PIN_STATE
+  // 2 FUNC_MODULE_INIT
+  // 3 FUNC_PRE_INIT
+  // 4 FUNC_INIT
+  // 5 FUNC_LOOP
+  // 6 FUNC_EVERY_50_MSECOND
+  // 7 FUNC_EVERY_100_MSECOND
+  // 8 FUNC_EVERY_200_MSECOND
+  // 9 FUNC_EVERY_250_MSECOND
+  // 10 FUNC_EVERY_SECOND,
+  // 11 FUNC_SAVE_SETTINGS
+  // 12 FUNC_SAVE_AT_MIDNIGHT
+  // 13 FUNC_SAVE_BEFORE_RESTART,
   if (Vindriktning.type) {
     switch (function) {
       case FUNC_INIT:
