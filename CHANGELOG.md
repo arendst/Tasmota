@@ -9,9 +9,13 @@ All notable changes to this project will be documented in this file.
 - Support for IEM3155 Wattmeter (#12940)
 - Berry support for vararg
 
+### Changed
+- Shelly EM template needs to use GPIO ADE7953_IRQ_2
+
 ### Fixed
 - WDT reset on shutters with stepper motors during deceleration (#12849)
 - Shelly 2.5 negative power values on relay 1 regression from 9.5.0.5
+- Wiegand support for keypad zero key in single key mode using ``SetOption124 1`` (#12960)
 
 ## [9.5.0.6] 20210820
 ### Added
