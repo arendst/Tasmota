@@ -226,6 +226,7 @@
 //#define USE_THERMOSTAT                           // Add support for Thermostat
 #undef DEBUG_THEO                                // Disable debug code
 #undef USE_DEBUG_DRIVER                          // Disable debug code
+#define USE_VINDRIKTNING                         // Enable IKEA Vindriktning serial sensor
 #endif  // FIRMWARE_SENSORS
 
 /*********************************************************************************************\

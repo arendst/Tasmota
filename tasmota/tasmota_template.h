@@ -170,6 +170,7 @@ enum UserSelectablePins {
   GPIO_I2S_IN_DATA,  GPIO_I2S_IN_CLK,  GPIO_I2S_IN_SLCT,
   GPIO_INTERRUPT,
   GPIO_MCP2515_CS,                     // MCP2515 Chip Select
+  GPIO_VINDRIKTNING_RX,                // IKEA VINDRIKTNING Serial interface
   GPIO_SENSOR_END };
 
 enum ProgramSelectablePins {
@@ -246,6 +247,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_SR04_TRIG "|" D_SENSOR_SR04_ECHO "|"
   D_SENSOR_SDM120_TX "|" D_SENSOR_SDM120_RX "|"
   D_SENSOR_SDM630_TX "|" D_SENSOR_SDM630_RX "|"
+  D_SENSOR_VINDRIKTNING_RX "|"
   D_SENSOR_TM1638_CLK "|" D_SENSOR_TM1638_DIO "|" D_SENSOR_TM1638_STB "|"
   D_SENSOR_DFR562 "|"
   D_SENSOR_HX711_SCK "|" D_SENSOR_HX711_DAT "|"
@@ -790,6 +792,9 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_AS608
   AGPIO(GPIO_AS608_TX),
   AGPIO(GPIO_AS608_RX),
+#endif
+#ifdef USE_VINDRIKTNING
+  AGPIO(GPIO_VINDRIKTNING_RX),
 #endif
 
 /*-------------------------------------------------------------------------------------------*\

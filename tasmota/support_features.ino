@@ -762,8 +762,10 @@ void ResponseAppendFeatures(void)
 #ifdef USE_INFLUXDB
     feature8 |= 0x00000800;  // xdrv_59_influxdb.ino
 #endif
+#ifdef USE_VINDRIKTNING
+    feature8 |= 0x00001000;  // xdrv_90_vindriktning.ino
+#endif
 
-//    feature8 |= 0x00001000;
 //    feature8 |= 0x00002000;
 //    feature8 |= 0x00004000;
 //    feature8 |= 0x00008000;
