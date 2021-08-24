@@ -396,7 +396,7 @@ void Wiegand::ScanForTag() {
 
     for (int i= 0; i < WIEGAND_RFID_ARRAY_SIZE; i++)
     {
-      if (rfid_found[i].RFID != 0) {
+	  if (rfid_found[i].RFID != 0 || (rfid_found[i].RFID == 0 && i == 0)) {
         uint64_t oldTag = rfid;
         bool validKey =  WiegandConversion(rfid_found[i].RFID, rfid_found[i].bitCount);
         #if (DEV_WIEGAND_TEST_MODE)>0
