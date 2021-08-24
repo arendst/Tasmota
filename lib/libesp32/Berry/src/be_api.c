@@ -608,23 +608,18 @@ BERRY_API bbool be_getbuiltin(bvm *vm, const char *name)
 
 BERRY_API bbool be_setmember(bvm *vm, int index, const char *k)
 {
-    int res = BE_NIL;
     bvalue *o = be_indexof(vm, index);
+    bvalue *v = be_indexof(vm, -1);
     if (var_isinstance(o)) {
         bstring *key = be_newstr(vm, k);
-        bvalue *v = be_indexof(vm, -1);
         binstance *obj = var_toobj(o);
-        res = be_instance_setmember(vm, obj, key, v);
+        return be_instance_setmember(vm, obj, key, v);
     } else if (var_ismodule(o)) {
         bstring *key = be_newstr(vm, k);
         bmodule *mod = var_toobj(o);
-        bvalue *v = be_module_bind(vm, mod, key);
-        if (v) {
-            *v = *be_indexof(vm, -1);
-            return btrue;
-        }
+        return be_module_setmember(vm, mod, key, v);
     }
-    return res != BE_NIL;
+    return bfalse;
 }
 
 BERRY_API bbool be_copy(bvm *vm, int index)
@@ -650,16 +645,15 @@ static int ins_member(bvm *vm, int index, const char *k, bbool onlyins)
     if (var_isinstance(o)) {
         binstance *obj = var_toobj(o);
         type = be_instance_member(vm, obj, be_newstr(vm, k), top);
-        if (type == BE_NONE) {
-            type = BE_NIL;
-        }
+    } else if (var_isclass(o) && !onlyins) {
+        bclass *cl = var_toobj(o);
+        type = be_class_member(vm, cl, be_newstr(vm, k), top);
     } else if (var_ismodule(o) && !onlyins) {
         bmodule *module = var_toobj(o);
-        bvalue *v = be_module_attr(vm, module, be_newstr(vm, k));
-        if (v != NULL) {
-            *top = *v;
-            type = v->type;
-        }
+        type = be_module_attr(vm, module, be_newstr(vm, k), top);
+    }
+    if (type == BE_NONE) {
+        type = BE_NIL;
     }
     return type;
 }

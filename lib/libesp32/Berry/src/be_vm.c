@@ -275,26 +275,10 @@ static void obj_method(bvm *vm, bvalue *o, bstring *attr, bvalue *dst)
     }
 }
 
-static int obj_attribute(bvm *vm, bvalue *o, bvalue *c, bvalue *dst)
+static int obj_attribute(bvm *vm, bvalue *o, bstring *attr, bvalue *dst)
 {
-    bvalue instance = *o; /* save instance to send it later to member */
-    bstring *attr = var_tostr(c);
     binstance *obj = var_toobj(o);
     int type = be_instance_member(vm, obj, attr, dst);
-    if (type == BE_NONE) { /* if no method found, try virtual */
-        /* get method 'member' */
-        int type2 = be_instance_member(vm, obj, str_literal(vm, "member"), vm->top);
-        if (basetype(type2) == BE_FUNCTION) {
-            bvalue *top = vm->top;
-            top[1] = instance; /* move instance to argv[0] */
-            top[2] = *c; /* move method name to argv[1] */
-            vm->top += 3;   /* prevent collection results */
-            be_dofunc(vm, top, 2); /* call method 'member' */
-            vm->top -= 3;
-            *dst = *vm->top;   /* copy result to R(A) */
-            type = var_type(dst);
-        }
-    }
     if (type == BE_NONE) {
         vm_error(vm, "attribute_error",
             "the '%s' object has no attribute '%s'",
@@ -312,6 +296,19 @@ static int class_attribute(bvm *vm, bvalue *o, bvalue *c, bvalue *dst)
         vm_error(vm, "attribute_error",
             "the '%s' class has no static attribute '%s'",
             str(obj->name), str(attr));
+    }
+    return type;
+}
+
+static int module_attribute(bvm *vm, bvalue *o, bvalue *c, bvalue *dst)
+{
+    bstring *attr = var_tostr(c);
+    bmodule *module = var_toobj(o);
+    int type = be_module_attr(vm, module, attr, dst);
+    if (type == BE_NONE) {
+        vm_error(vm, "attribute_error",
+            "module '%s' has no member '%s'",
+            be_module_name(module), str(attr));
     }
     return type;
 }
@@ -529,12 +526,8 @@ newframe: /* a new call frame */
             bvalue *b = RKB();
             if (var_isstr(b)) {
                 bstring *name = var_tostr(b);
-                int idx = be_global_find(vm, name);
-                if (idx > -1) {
-                    *be_global_var(vm, idx) = *v;
-                } else {
-                    vm_error(vm, "attribute_error", "'%s' undeclared", str(name));
-                }
+                int idx = be_global_new(vm, name);
+                *be_global_var(vm, idx) = *v;
             } else {
                 vm_error(vm, "internal_error", "global name must be a string");
             }
@@ -793,35 +786,14 @@ newframe: /* a new call frame */
         opcase(GETMBR): {
             bvalue *a = RA(), *b = RKB(), *c = RKC();
             if (var_isinstance(b) && var_isstr(c)) {
-                obj_attribute(vm, b, c, a);
+                obj_attribute(vm, b, var_tostr(c), a);
                 reg = vm->reg;
             } else if (var_isclass(b) && var_isstr(c)) {
                 class_attribute(vm, b, c, a);
                 reg = vm->reg;
             } else if (var_ismodule(b) && var_isstr(c)) {
-                bstring *attr = var_tostr(c);
-                bmodule *module = var_toobj(b);
-                bvalue *v = be_module_attr(vm, module, attr);
-                if (v) {
-                    *a = *v;
-                } else {
-                    bvalue *member = be_module_attr(vm, module, str_literal(vm, "member"));
-                    var_setnil(a);
-                    if (member && var_basetype(member) == BE_FUNCTION) {
-                        bvalue *top = vm->top;
-                        top[0] = *member;
-                        top[1] = *c; /* move name to argv[0] */
-                        vm->top += 2;   /* prevent collection results */
-                        be_dofunc(vm, top, 1); /* call method 'method' */
-                        vm->top -= 2;
-                        *a = *vm->top;   /* copy result to R(A) */
-                    }
-                    if (var_basetype(a) == BE_NIL) {
-                        vm_error(vm, "attribute_error",
-                            "module '%s' has no attribute '%s'",
-                            be_module_name(module), str(attr));
-                    }
-                }
+                module_attribute(vm, b, c, a);
+                reg = vm->reg;
             } else {
                 attribute_error(vm, "attribute", b, c);
             }
@@ -830,49 +802,23 @@ newframe: /* a new call frame */
         opcase(GETMET): {
             bvalue *a = RA(), *b = RKB(), *c = RKC();
             if (var_isinstance(b) && var_isstr(c)) {
-                bvalue self = *b;
-                bstring *attr = var_tostr(c);
                 binstance *obj = var_toobj(b);
-                int type = obj_attribute(vm, b, c, a);
+                int type = obj_attribute(vm, b, var_tostr(c), a);
                 reg = vm->reg;
                 if (basetype(type) == BE_FUNCTION) {
                     /* check if the object is a superinstance, if so get the lowest possible subclass */
                     while (obj->sub) {
                         obj = obj->sub;
                     }
-                    var_setobj(&self, var_type(&self), obj);  /* replace superinstance by lowest subinstance */
-                    a[1] = self;
+                    var_setinstance(&a[1], obj);  /* replace superinstance by lowest subinstance */
                 } else {
                     vm_error(vm, "attribute_error",
                         "class '%s' has no method '%s'",
-                        str(be_instance_name(obj)), str(attr));
+                        str(be_instance_name(obj)), str(var_tostr(c)));
                 }
             } else if (var_ismodule(b) && var_isstr(c)) {
-                bstring *attr = var_tostr(c);
-                bmodule *module = var_toobj(b);
-                bvalue *src = be_module_attr(vm, module, attr);
-                if (src) {
-                    var_settype(a, NOT_METHOD);
-                    a[1] = *src;
-                } else {
-                    bvalue *member = be_module_attr(vm, module, str_literal(vm, "member"));
-                    var_setnil(a);
-                    if (member && var_basetype(member) == BE_FUNCTION) {
-                        bvalue *top = vm->top;
-                        top[0] = *member;
-                        top[1] = *c; /* move name to argv[0] */
-                        vm->top += 2;   /* prevent collection results */
-                        be_dofunc(vm, top, 1); /* call method 'method' */
-                        vm->top -= 2;
-                        var_settype(a, NOT_METHOD);
-                        a[1] = *vm->top;   /* copy result to R(A) */
-                    }
-                    if (var_basetype(a) == BE_NIL) {
-                        vm_error(vm, "attribute_error",
-                            "module '%s' has no method '%s'",
-                            be_module_name(module), str(attr));
-                    }
-                }
+                module_attribute(vm, b, c, &a[1]);
+                var_settype(a, NOT_METHOD);
             } else {
                 attribute_error(vm, "method", b, c);
             }
@@ -903,23 +849,10 @@ newframe: /* a new call frame */
             if (var_ismodule(a) && var_isstr(b)) {
                 bmodule *obj = var_toobj(a);
                 bstring *attr = var_tostr(b);
-                bvalue tmp = *c; /* stack may change */
-                bvalue *v = be_module_bind(vm, obj, attr);
-                if (v != NULL) {
-                    *v = tmp;
+                if (be_module_setmember(vm, obj, attr, c)) {
                     dispatch();
-                }
-                /* if it failed, try 'setmeemner' */
-                bvalue *member = be_module_attr(vm, obj, str_literal(vm, "setmember"));
-                if (member && var_basetype(member) == BE_FUNCTION) {
-                    bvalue *top = vm->top;
-                    top[0] = *member;
-                    top[1] = *b; /* move name to argv[0] */
-                    top[2] = tmp; /* move value to argv[1] */
-                    vm->top += 3;   /* prevent collection results */
-                    be_dofunc(vm, top, 2); /* call method 'setmember' */
-                    vm->top -= 3;
-                    dispatch();
+                } else {
+                    // fall through exception below
                 }
             }
             attribute_error(vm, "writable attribute", a, b);
@@ -1118,14 +1051,10 @@ newframe: /* a new call frame */
                 break;
             }
             case BE_MODULE: {
-                bmodule *f = var_toobj(var);
-                bvalue *member = be_module_attr(vm, f, str_literal(vm, "()"));
-                if (member && var_basetype(member) == BE_FUNCTION) {
-                    *var = *member;
-                    goto recall; /* call '()' method */
-                } else {
-                    call_error(vm, var);
-                }
+                bvalue attr;
+                var_setstr(&attr, str_literal(vm, "()"));
+                module_attribute(vm, var, &attr, var);  /* exception if not found */
+                goto recall; /* call '()' method */
                 break;
             }
             default:

@@ -299,22 +299,58 @@ void be_module_delete(bvm *vm, bmodule *module)
     be_free(vm, module, sizeof(bmodule));
 }
 
-bvalue* be_module_attr(bvm *vm, bmodule *module, bstring *attr)
+int be_module_attr(bvm *vm, bmodule *module, bstring *attr, bvalue *dst)
 {
-    return be_map_findstr(vm, module->table, attr);
+    bvalue *member = be_map_findstr(vm, module->table, attr);
+    if (!member) {  /* try the 'member' function */
+        member = be_map_findstr(vm, module->table, str_literal(vm, "member"));
+        if (member && var_basetype(member) == BE_FUNCTION) {
+            bvalue *top = vm->top;
+            top[0] = *member;
+            var_setstr(&top[1], attr);
+            vm->top += 2;   /* prevent collection results */
+            be_dofunc(vm, top, 1); /* call method 'method' */
+            vm->top -= 2;
+            *dst = *vm->top;   /* copy result to R(A) */
+            if (var_basetype(dst) != BE_NIL) {
+                return var_type(dst);
+            }
+        }
+        return BE_NONE;
+    } else {
+        *dst = *member;
+        return var_type(dst);
+    }
 }
 
-bvalue* be_module_bind(bvm *vm, bmodule *module, bstring *attr)
+bbool be_module_setmember(bvm *vm, bmodule *module, bstring *attr, bvalue *src)
 {
+    assert(src);
     bmap *attrs = module->table;
     if (!gc_isconst(attrs)) {
         bvalue *v = be_map_findstr(vm, attrs, attr);
         if (v == NULL) {
             v = be_map_insertstr(vm, attrs, attr, NULL);
         }
-        return v;
+        if (v) {
+            *v = *src;
+            return btrue;
+        }
+    } else {
+        /* if not writable, try 'setmember' */
+        int type = be_module_attr(vm, module, str_literal(vm, "setmember"), vm->top);
+        if (type == BE_FUNCTION) {
+            bvalue *top = vm->top;
+            // top[0] already has 'member'
+            var_setstr(&top[1], attr);  /* attribute name */
+            top[2] = *src;  /* new value */
+            vm->top += 3;   /* prevent collection results */
+            be_dofunc(vm, top, 2); /* call method 'setmember' */
+            vm->top -= 3;
+            return btrue;
+        }
     }
-    return NULL;
+    return bfalse;
 }
 
 const char* be_module_name(bmodule *module)
