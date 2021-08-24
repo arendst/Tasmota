@@ -143,7 +143,7 @@ void VindriktningInit(void)
       if (VindriktningSerial->hardwareSerial()) { ClaimSerial(); }
       Settings->pms_wake_interval = 0;
       Vindriktning.ready = 1;
-      // Vindriktning.type = 1;
+      Vindriktning.type = 1;
     } else {
       AddLog(LOG_LEVEL_INFO, PSTR("Serial initialization Failed"));
     }
