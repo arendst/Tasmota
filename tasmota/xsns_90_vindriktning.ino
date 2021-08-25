@@ -34,9 +34,9 @@
 
 TasmotaSerial *VindriktningSerial;
 
-uint16_t vindriktning_pm2_5;
-uint16_t vindriktning_pm1_0;
-uint16_t vindriktning_pm10;
+uint16_t vindriktning_pm2_5 = 0;
+uint16_t vindriktning_pm1_0 = 0;
+uint16_t vindriktning_pm10 = 0;
 
 struct VINDRIKTNING {
   uint8_t type = 1;
@@ -85,8 +85,6 @@ bool VindriktningReadData(void)
   VindriktningSerial->flush();  // Make room for another burst
 
   AddLog(LOG_LEVEL_DEBUG, PSTR("VindriktningReadData: PMS=1.0: %d 2.5: %d, 10: %d (Data %02d (CRC: %02x): %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x)"), vindriktning_pm1_0, vindriktning_pm2_5, vindriktning_pm10, serial_vindriktning_in_byte_counter, crc, buffer[0], buffer[1], buffer[2], buffer[3], buffer[4], buffer[5], buffer[6], buffer[7], buffer[8], buffer[9], buffer[10], buffer[11], buffer[12], buffer[13], buffer[14], buffer[15], buffer[16], buffer[17], buffer[18], buffer[19]);
-
-  Vindriktning.valid = MIN_INTERVAL_PERIOD;
 
   return true;
 }
@@ -173,7 +171,7 @@ bool Xsns90(uint8_t function)
         break;
 #ifdef USE_WEBSERVER
       case FUNC_WEB_SENSOR:
-        VindriktningShow(0);
+	VindriktningShow(0);
         break;
 #endif  // USE_WEBSERVER
     }
