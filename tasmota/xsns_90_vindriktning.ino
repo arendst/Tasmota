@@ -43,11 +43,8 @@ uint16_t vindriktning_pm1_0;
 uint16_t vindriktning_pm10;
 
 struct VINDRIKTNING {
-  uint16_t time = 0;
   uint8_t type = 1;
   uint8_t valid = 0;
-  uint8_t wake_mode = 1;
-  uint8_t ready = 1;
 } Vindriktning;
 
 
@@ -102,38 +99,11 @@ bool VindriktningReadData(void)
 
 void VindriktningSecond(void)                 // Every second
 {
-  //AddLog(LOG_LEVEL_INFO, PSTR("VindriktningSecond"));
-  if (Settings->pms_wake_interval >= MIN_INTERVAL_PERIOD) {
-    // Passive Mode
-    Vindriktning.time++;
-    if ((Settings->pms_wake_interval - Vindriktning.time <= WARMUP_PERIOD) && !Vindriktning.wake_mode) {
-      // wakeup sensor WARMUP_PERIOD before read interval
-      Vindriktning.wake_mode = 1;
-    }
-    if (Vindriktning.time >= Settings->pms_wake_interval) {
-      // sensor is awake and warmed up, set up for reading
-      // FIXME VindriktningSendCmd(CMD_READ_DATA);
-      Vindriktning.ready = 1;
-      Vindriktning.time = 0;
-    }
-  }
-
-  if (Vindriktning.ready) {
-    if (VindriktningReadData()) {
-      Vindriktning.valid = 10;
-      if (Settings->pms_wake_interval >= MIN_INTERVAL_PERIOD) {
-        // FIXME VindriktningSendCmd(CMD_SLEEP);
-        Vindriktning.wake_mode = 0;
-        Vindriktning.ready = 0;
-      }
-    } else {
-      if (Vindriktning.valid) {
-        Vindriktning.valid--;
-        if (Settings->pms_wake_interval >= MIN_INTERVAL_PERIOD) {
-          // FIXME VindriktningSendCmd(CMD_READ_DATA);
-          Vindriktning.ready = 1;
-        }
-      }
+  if (VindriktningReadData()) {
+    Vindriktning.valid = 10;
+  } else {
+    if (Vindriktning.valid) {
+      Vindriktning.valid--;
     }
   }
 }
@@ -150,8 +120,6 @@ void VindriktningInit(void)
     if (VindriktningSerial->begin(9600)) {
       //AddLog(LOG_LEVEL_INFO, PSTR("Serial initialization OK"));
       if (VindriktningSerial->hardwareSerial()) { ClaimSerial(); }
-      Settings->pms_wake_interval = 0;
-      Vindriktning.ready = 1;
       Vindriktning.type = 1;
     } else {
       AddLog(LOG_LEVEL_INFO, PSTR("Serial initialization Failed"));
@@ -161,23 +129,27 @@ void VindriktningInit(void)
 
 #ifdef USE_WEBSERVER
 const char HTTP_VINDRIKTNING_SNS[] PROGMEM =
-  "{s}VINDRIKTNING " D_PARTICALS_BEYOND " 2.5 " D_UNIT_MICROMETER "{m}%d " D_UNIT_PARTS_PER_DECILITER "{e}"; // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
+  "{s}VINDRIKTNING " D_ENVIRONMENTAL_CONCENTRATION " 1.0 " D_UNIT_MICROMETER "{m}%d " D_UNIT_MICROGRAM_PER_CUBIC_METER "{e}"
+  "{s}VINDRIKTNING " D_ENVIRONMENTAL_CONCENTRATION " 2.5 " D_UNIT_MICROMETER "{m}%d " D_UNIT_MICROGRAM_PER_CUBIC_METER "{e}"
+  "{s}VINDRIKTNING " D_ENVIRONMENTAL_CONCENTRATION " 10 " D_UNIT_MICROMETER "{m}%d " D_UNIT_MICROGRAM_PER_CUBIC_METER "{e}";      // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 #endif  // USE_WEBSERVER
 
 void VindriktningShow(bool json)
 {
-  AddLog(LOG_LEVEL_INFO, PSTR("VindriktningShow"));
+  //AddLog(LOG_LEVEL_INFO, PSTR("VindriktningShow"));
   if (Vindriktning.valid) {
     if (json) {
-      ResponseAppend_P(PSTR(",\"VINDRIKTNING\":{\"CF1\":%d}"), vindriktning_pm2_5);
+      ResponseAppend_P(PSTR(",\"VINDRIKTNING\":{\"PM1.0\":%d,\"PM2.5\":%d,\"PM10\",%d}"), vindriktning_pm1_0, vindriktning_pm2_5, vindriktning_pm10);
 #ifdef USE_DOMOTICZ
       if (0 == TasmotaGlobal.tele_period) {
+        DomoticzSensor(DZ_VOLTAGE, vindriktning_pm1_0);	// PM1.0
         DomoticzSensor(DZ_VOLTAGE, vindriktning_pm2_5);	// PM2.5
+        DomoticzSensor(DZ_VOLTAGE, vindriktning_pm10);	// PM10
       }
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
     } else {
-        WSContentSend_PD(HTTP_VINDRIKTNING_SNS, vindriktning_pm2_5);
+        WSContentSend_PD(HTTP_VINDRIKTNING_SNS, vindriktning_pm1_0, vindriktning_pm2_5, vindriktning_pm10);
 #endif  // USE_WEBSERVER
     }
   }
