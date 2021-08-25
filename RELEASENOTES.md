@@ -122,6 +122,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - Inital support for Wi-Fi extender [#12784](https://github.com/arendst/Tasmota/issues/12784)
 - Command ``Subscribe2 ...`` to subscribe to a MQTT topic without appended "/#" [#12858](https://github.com/arendst/Tasmota/issues/12858)
 - Support for IEM3155 Wattmeter [#12940](https://github.com/arendst/Tasmota/issues/12940)
+- Support for Hydreon RG-15 Solid State Rain sensor [#12974](https://github.com/arendst/Tasmota/issues/12974)
 
 ### Changed
 - Move firmware binaries to https://github.com/arendst/Tasmota-firmware/tree/main/release-firmware

@@ -1,7 +1,7 @@
 /*
   xsns_90-hrg15.ino - Hydreon RG-15 support for Tasmota
 
-  Copyright (c) 2021 Wouter Breukink
+  Copyright (c) 2021  Wouter Breukink
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -93,7 +93,7 @@ bool Rg15Poll(void) {
   while (HydreonSerial->available()) {
     Rg15ReadLine(rg15_buffer);
     AddLog(LOG_LEVEL_DEBUG_MORE,PSTR("%s:" D_JSON_SERIALRECEIVED " = %s"),"HRG", rg15_buffer);
-    
+
     Rg15Process(rg15_buffer);
   }
 
@@ -127,7 +127,7 @@ bool Rg15ReadLine(char* buffer)
 }
 
 void Rg15Process(char* buffer) {
-  
+
   // Process payload, example: Acc  0.01 mm, EventAcc  2.07 mm, TotalAcc 54.85 mm, RInt  2.89 mmph
   Rg15.received = 1;
   Rg15.acc = Rg15Parse(buffer, "Acc");
