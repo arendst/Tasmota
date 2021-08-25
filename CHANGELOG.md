@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 - Turn HTTP API (command ``SetOption128 1``) default on for backward compatibility
 - Support for IEM3155 Wattmeter (#12940)
 - Berry support for vararg
+- Switchmode11 and 12: ``SetOption129 1`` delays single press events from pressing to release switch (#12712 / #12713)
 
 ### Changed
 - Shelly EM template needs to use GPIO ADE7953_IRQ_2
