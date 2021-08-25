@@ -38,7 +38,9 @@
 
 TasmotaSerial *VindriktningSerial;
 
-uint16_t vindriktning_data;
+uint16_t vindriktning_pm2_5;
+uint16_t vindriktning_pm1_0;
+uint16_t vindriktning_pm10;
 
 struct VINDRIKTNING {
   uint16_t time = 0;
@@ -53,6 +55,7 @@ bool VindriktningReadData(void)
 {
   int serial_vindriktning_in_byte_counter = 0;
   uint8_t buffer[VINDRIKTNING_DATASET_SIZE];
+  uint8_t crc = 0;
 
   //AddLog(LOG_LEVEL_INFO, PSTR("VindriktningReadData"));
   //AddLog(LOG_LEVEL_INFO, PSTR("VindriktningReadData: Available data: %d"), VindriktningSerial->available());
@@ -65,6 +68,7 @@ bool VindriktningReadData(void)
     uint8_t serial_in_byte = VindriktningSerial->read();
     if (serial_vindriktning_in_byte_counter <= VINDRIKTNING_DATASET_SIZE -1) {
 	buffer[serial_vindriktning_in_byte_counter++] = serial_in_byte;
+	crc += serial_in_byte;
     }
     serial_bridge_polling_window = millis();
   }
@@ -74,10 +78,20 @@ bool VindriktningReadData(void)
     return false;
   }
 
-  vindriktning_data = (buffer[5] << 8) | buffer[6];
+  if (crc != 0) {
+    AddLog(LOG_LEVEL_INFO, PSTR("VindriktningReadData: Incorrect checksum"));
+    return false;
+  }
+
+  // sample data:
+  // 16 11 0b 00 00 00 0c 00 00 03 cb 00 00 00 0c 01 00 00 00 e7
+  //               |pm2_5|     |pm1_0|        |pm10 |     | CRC |
+  vindriktning_pm2_5 = (buffer[5] << 8) | buffer[6];
+  vindriktning_pm1_0 = (buffer[9] << 8) | buffer[10];
+  vindriktning_pm10 = (buffer[13] << 8) | buffer[14];
   VindriktningSerial->flush();  // Make room for another burst
 
-  AddLog(LOG_LEVEL_INFO, PSTR("VindriktningReadData: PMS=%d (Data %02d: %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x)"), vindriktning_data, serial_vindriktning_in_byte_counter, buffer[0], buffer[1], buffer[2], buffer[3], buffer[4], buffer[5], buffer[6], buffer[7], buffer[8], buffer[9], buffer[10], buffer[11], buffer[12], buffer[13], buffer[14], buffer[15], buffer[16], buffer[17], buffer[18], buffer[19]);
+  AddLog(LOG_LEVEL_INFO, PSTR("VindriktningReadData: PMS=1.0: %d 2.5: %d, 10: %d (Data %02d (CRC: %02x): %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x)"), vindriktning_pm1_0, vindriktning_pm2_5, vindriktning_pm10, serial_vindriktning_in_byte_counter, crc, buffer[0], buffer[1], buffer[2], buffer[3], buffer[4], buffer[5], buffer[6], buffer[7], buffer[8], buffer[9], buffer[10], buffer[11], buffer[12], buffer[13], buffer[14], buffer[15], buffer[16], buffer[17], buffer[18], buffer[19]);
 
   Vindriktning.valid = 10;
 
@@ -155,15 +169,15 @@ void VindriktningShow(bool json)
   AddLog(LOG_LEVEL_INFO, PSTR("VindriktningShow"));
   if (Vindriktning.valid) {
     if (json) {
-      ResponseAppend_P(PSTR(",\"VINDRIKTNING\":{\"CF1\":%d}"), vindriktning_data);
+      ResponseAppend_P(PSTR(",\"VINDRIKTNING\":{\"CF1\":%d}"), vindriktning_pm2_5);
 #ifdef USE_DOMOTICZ
       if (0 == TasmotaGlobal.tele_period) {
-        DomoticzSensor(DZ_VOLTAGE, vindriktning_data);	// PM2.5
+        DomoticzSensor(DZ_VOLTAGE, vindriktning_pm2_5);	// PM2.5
       }
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
     } else {
-        WSContentSend_PD(HTTP_VINDRIKTNING_SNS, vindriktning_data);
+        WSContentSend_PD(HTTP_VINDRIKTNING_SNS, vindriktning_pm2_5);
 #endif  // USE_WEBSERVER
     }
   }
