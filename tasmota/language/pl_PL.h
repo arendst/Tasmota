@@ -836,6 +836,8 @@
 #define D_SENSOR_HALLEFFECT    "Efekt Halla"
 #define D_SENSOR_EPD_DATA      "EPD Dane"
 #define D_SENSOR_MCP2515_CS    "MCP2515 CS"
+#define D_SENSOR_HRG15_RX      "HRG15 RX"
+#define D_SENSOR_HRG15_TX      "HRG15 TX"
 
 // Units
 #define D_UNIT_AMPERE "A"
