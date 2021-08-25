@@ -158,7 +158,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t ds18x20_mean : 1;             // bit 12 (v9.3.1.2)  - SetOption126 - (DS18x20) Enable arithmetic mean over teleperiod for JSON temperature (1)
     uint32_t wifi_no_sleep : 1;            // bit 13 (v9.5.0.2)  - SetOption127 - (Wifi) Keep wifi in no-sleep mode, prevents some occasional unresponsiveness
     uint32_t disable_referer_chk : 1;      // bit 14 (v9.5.0.5)  - SetOption128 - (Web) Allow access without referer check
-    uint32_t spare15 : 1;                  // bit 15
+    uint32_t switch_dimmer_act_at_rls : 1; // bit 15 (v9.5.0.7) - SetOption129 - (Switch) With Switchmode11 & 12, State#2 is tiggered at push (0, default) or release (1) 
     uint32_t spare16 : 1;                  // bit 16
     uint32_t spare17 : 1;                  // bit 17
     uint32_t spare18 : 1;                  // bit 18

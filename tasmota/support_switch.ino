@@ -240,11 +240,14 @@ void SwitchHandler(uint32_t mode) {
       if (Switch.hold_timer[i] & (((switchmode == PUSHHOLDMULTI) | (switchmode == PUSHHOLDMULTI_INV)) ? SM_TIMER_MASK: SM_NO_TIMER_MASK)) {
         Switch.hold_timer[i]--;
         if ((Switch.hold_timer[i] & SM_TIMER_MASK) == loops_per_second * Settings->param[P_HOLD_TIME] / 25) {
-          if ((switchmode == PUSHHOLDMULTI) & (NOT_PRESSED == Switch.last_state[i])) {
-            SendKey(KEY_SWITCH, i +1, POWER_INCREMENT);      // Execute command via MQTT
-          }
-          if ((switchmode == PUSHHOLDMULTI_INV) & (PRESSED == Switch.last_state[i])) {
-            SendKey(KEY_SWITCH, i +1, POWER_INCREMENT);      // Execute command via MQTT
+          if ((switchmode == PUSHHOLDMULTI) | (switchmode == PUSHHOLDMULTI_INV)){
+            if (((switchmode == PUSHHOLDMULTI) & (NOT_PRESSED == Switch.last_state[i])) | ((switchmode == PUSHHOLDMULTI_INV) & (PRESSED == Switch.last_state[i]))) {
+              SendKey(KEY_SWITCH, i +1, POWER_INCREMENT);      // Execute command via MQTT
+            }
+            else if ((Settings->flag5.switch_dimmer_act_at_rls) & ((Switch.hold_timer[i] & ~SM_TIMER_MASK) == SM_FIRST_PRESS)) {
+                switchflag = POWER_TOGGLE;                      // Toggle with pushbutton
+                Switch.hold_timer[i] = 0;
+            }
           }
         }
         if (0 == (Switch.hold_timer[i] & (((switchmode == PUSHHOLDMULTI) | (switchmode == PUSHHOLDMULTI_INV)) ? SM_TIMER_MASK: SM_NO_TIMER_MASK))) {
@@ -351,7 +354,9 @@ void SwitchHandler(uint32_t mode) {
             if ((Switch.hold_timer[i] & SM_TIMER_MASK) > loops_per_second * Settings->param[P_HOLD_TIME] / 25) {
               if((Switch.hold_timer[i] & ~SM_TIMER_MASK) != SM_SECOND_PRESS) {
                 Switch.hold_timer[i]= SM_FIRST_PRESS;
-                switchflag = POWER_TOGGLE;                      // Toggle with pushbutton
+                if (!Settings->flag5.switch_dimmer_act_at_rls){
+                  switchflag = POWER_TOGGLE;                      // Toggle with pushbutton
+                }
               }
               else{
                 SendKey(KEY_SWITCH, i +1, POWER_100);           // Execute command via MQTT
@@ -377,7 +382,9 @@ void SwitchHandler(uint32_t mode) {
             if ((Switch.hold_timer[i] & SM_TIMER_MASK)> loops_per_second * Settings->param[P_HOLD_TIME] / 25) {
               if((Switch.hold_timer[i] & ~SM_TIMER_MASK) != SM_SECOND_PRESS) {
                 Switch.hold_timer[i]= SM_FIRST_PRESS;
-                switchflag = POWER_TOGGLE;                      // Toggle with pushbutton
+                if (!Settings->flag5.switch_dimmer_act_at_rls){
+                  switchflag = POWER_TOGGLE;                      // Toggle with pushbutton
+                }
               }
               else{
                 SendKey(KEY_SWITCH, i +1, POWER_100);           // Execute command via MQTT
