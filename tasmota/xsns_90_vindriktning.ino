@@ -86,6 +86,7 @@ bool VindriktningReadData(void)
 
   AddLog(LOG_LEVEL_DEBUG, PSTR("VindriktningReadData: PMS=1.0: %d 2.5: %d, 10: %d (Data %02d (CRC: %02x): %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x)"), vindriktning_pm1_0, vindriktning_pm2_5, vindriktning_pm10, serial_vindriktning_in_byte_counter, crc, buffer[0], buffer[1], buffer[2], buffer[3], buffer[4], buffer[5], buffer[6], buffer[7], buffer[8], buffer[9], buffer[10], buffer[11], buffer[12], buffer[13], buffer[14], buffer[15], buffer[16], buffer[17], buffer[18], buffer[19]);
 
+  TasmotaGlobal.discovery_counter = 1;    // force TasDiscovery()
   return true;
 }
 
@@ -131,20 +132,24 @@ const char HTTP_VINDRIKTNING_SNS[] PROGMEM =
 void VindriktningShow(bool json)
 {
   //AddLog(LOG_LEVEL_DEBUG, PSTR("VindriktningShow"));
-  if (Vindriktning.valid) {
-    if (json) {
-      ResponseAppend_P(PSTR(",\"VINDRIKTNING\":{\"PM1.0\":%d,\"PM2.5\":%d,\"PM10\":%d}"), vindriktning_pm1_0, vindriktning_pm2_5, vindriktning_pm10);
+  if (PinUsed(GPIO_VINDRIKTNING_RX)) {
+    if (Vindriktning.valid) {
+      if (json) {
+        ResponseAppend_P(PSTR(",\"VINDRIKTNING\":{\"PM1.0\":%d,\"PM2.5\":%d,\"PM10\":%d}"), vindriktning_pm1_0, vindriktning_pm2_5, vindriktning_pm10);
 #ifdef USE_DOMOTICZ
-      if (0 == TasmotaGlobal.tele_period) {
-        DomoticzSensor(DZ_VOLTAGE, vindriktning_pm1_0);	// PM1.0
-        DomoticzSensor(DZ_VOLTAGE, vindriktning_pm2_5);	// PM2.5
-        DomoticzSensor(DZ_VOLTAGE, vindriktning_pm10);	// PM10
-      }
+        if (0 == TasmotaGlobal.tele_period) {
+          DomoticzSensor(DZ_VOLTAGE, vindriktning_pm1_0);	// PM1.0
+          DomoticzSensor(DZ_VOLTAGE, vindriktning_pm2_5);	// PM2.5
+          DomoticzSensor(DZ_VOLTAGE, vindriktning_pm10);	// PM10
+        }
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
-    } else {
-        WSContentSend_PD(HTTP_VINDRIKTNING_SNS, vindriktning_pm1_0, vindriktning_pm2_5, vindriktning_pm10);
+      } else {
+          WSContentSend_PD(HTTP_VINDRIKTNING_SNS, vindriktning_pm1_0, vindriktning_pm2_5, vindriktning_pm10);
 #endif  // USE_WEBSERVER
+      }
+    } else {
+        ResponseAppend_P(PSTR(",\"VINDRIKTNING\":{\"PM1.0\":null,\"PM2.5\":null,\"PM10\":null}"));
     }
   }
 }
