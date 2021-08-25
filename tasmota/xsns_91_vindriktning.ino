@@ -1,5 +1,5 @@
 /*
-  xsns_90_vindriktning.ino - IKEA vindriktning particle concentration sensor support for Tasmota
+  xsns_91_vindriktning.ino - IKEA vindriktning particle concentration sensor support for Tasmota
 
   Copyright (C) 2021  Theo Arends
 
@@ -22,7 +22,7 @@
  * IKEA VINDRIKTNING particle concentration sensor
 \*********************************************************************************************/
 
-#define XSNS_90             90
+#define XSNS_91             91
 
 #include <TasmotaSerial.h>
 
@@ -162,11 +162,11 @@ void VindriktningShow(bool json)
  * Interface
 \*********************************************************************************************/
 
-bool Xsns90(uint8_t function)
+bool Xsns91(uint8_t function)
 {
   bool result = false;
 
-  // AddLog(LOG_LEVEL_DEBUG, PSTR("Xsns90(%d)"), function);
+  // AddLog(LOG_LEVEL_DEBUG, PSTR("Xsns91(%d)"), function);
   if (Vindriktning.type) {
     switch (function) {
       case FUNC_INIT:

@@ -977,7 +977,7 @@
 #define D_SENSOR_BOILER_OT_RX   "OpenTherm RX"
 #define D_SENSOR_BOILER_OT_TX   "OpenTherm TX"
 
-//xsns_90_vindriktning.ino
+//xsns_91_vindriktning.ino
 #define D_SENSOR_VINDRIKTNING_RX   "VINDRIKTNING"
 
 // xnrg_15_teleinfo Denky (Teleinfo)

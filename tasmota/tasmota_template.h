@@ -795,14 +795,12 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_AS608_TX),
   AGPIO(GPIO_AS608_RX),
 #endif
-<<<<<<< HEAD
-#ifdef USE_VINDRIKTNING
-  AGPIO(GPIO_VINDRIKTNING_RX),
-=======
 #ifdef USE_HRG15
   AGPIO(GPIO_HRG15_TX),
   AGPIO(GPIO_HRG15_RX),
->>>>>>> d4f444a85af216ffc0cc1cb8c22fc92685a0b265
+#endif
+#ifdef USE_VINDRIKTNING
+  AGPIO(GPIO_VINDRIKTNING_RX),
 #endif
 
 /*-------------------------------------------------------------------------------------------*\

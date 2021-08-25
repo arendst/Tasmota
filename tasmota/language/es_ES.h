@@ -977,6 +977,9 @@
 #define D_SENSOR_BOILER_OT_RX   "OpenTherm RX"
 #define D_SENSOR_BOILER_OT_TX   "OpenTherm TX"
 
+//xsns_91_vindriktning.ino
+#define D_SENSOR_VINDRIKTNING_RX   "VINDRIKTNING"
+
 // xnrg_15_teleinfo Denky (Teleinfo)
 #define D_CONTRACT        "Contratado"
 #define D_POWER_LOAD      "Potencia"
