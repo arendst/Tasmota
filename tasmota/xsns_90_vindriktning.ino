@@ -26,10 +26,6 @@
 
 #include <TasmotaSerial.h>
 
-#ifndef WARMUP_PERIOD
-#define WARMUP_PERIOD 30          // Turn on PMSX003 XX-seconds before read in passive mode
-#endif
-
 #ifndef MIN_INTERVAL_PERIOD
 #define MIN_INTERVAL_PERIOD 60    // minimum interval period in seconds required for passive mode
 #endif
@@ -90,7 +86,7 @@ bool VindriktningReadData(void)
 
   AddLog(LOG_LEVEL_DEBUG, PSTR("VindriktningReadData: PMS=1.0: %d 2.5: %d, 10: %d (Data %02d (CRC: %02x): %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x)"), vindriktning_pm1_0, vindriktning_pm2_5, vindriktning_pm10, serial_vindriktning_in_byte_counter, crc, buffer[0], buffer[1], buffer[2], buffer[3], buffer[4], buffer[5], buffer[6], buffer[7], buffer[8], buffer[9], buffer[10], buffer[11], buffer[12], buffer[13], buffer[14], buffer[15], buffer[16], buffer[17], buffer[18], buffer[19]);
 
-  Vindriktning.valid = 10;
+  Vindriktning.valid = MIN_INTERVAL_PERIOD;
 
   return true;
 }
@@ -100,7 +96,7 @@ bool VindriktningReadData(void)
 void VindriktningSecond(void)                 // Every second
 {
   if (VindriktningReadData()) {
-    Vindriktning.valid = 10;
+    Vindriktning.valid = MIN_INTERVAL_PERIOD;
   } else {
     if (Vindriktning.valid) {
       Vindriktning.valid--;
