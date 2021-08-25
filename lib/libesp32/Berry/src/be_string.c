@@ -55,7 +55,6 @@ int be_eqstr(bstring *s1, bstring *s2)
         blstring *ls2 = cast(blstring*, s2);
         return ls1->llen == ls2->llen && !strcmp(lstr(ls1), lstr(ls2));
     }
-    // TODO one is long const and the other is long string
     /* const short strings */
     if (gc_isconst(s1) || gc_isconst(s2)) { /* one of the two string is short const */
         if (cast(bcstring*, s1)->hash && cast(bcstring*, s2)->hash) {

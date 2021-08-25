@@ -250,19 +250,19 @@ bool SnfL1SetChannels(void) {
     }
     if (!power_changed && !dimmer_changed && !color_changed && (Snfl1.old_music_sync == Settings->sbflag1.sonoff_l1_music_sync)) { return true; }
 
-    uint32_t mode = SONOFF_L1_MODE_COLORFUL;
-    if (Settings->sbflag1.sonoff_l1_music_sync) {
-      mode = SONOFF_L1_MODE_SYNC_TO_MUSIC;
-    }
-
-    snprintf_P(Snfl1.buffer, SONOFF_L1_BUFFER_SIZE, PSTR("AT+UPDATE=\"sequence\":\"%d%03d\",\"switch\":\"%s\",\"light_type\":1,\"colorR\":%d,\"colorG\":%d,\"colorB\":%d,\"bright\":%d,\"mode\":%d,\"sensitive\":%d,\"speed\":%d"),
+    uint32_t mode = (Settings->sbflag1.sonoff_l1_music_sync) ? SONOFF_L1_MODE_SYNC_TO_MUSIC : SONOFF_L1_MODE_COLORFUL;
+    snprintf_P(Snfl1.buffer, SONOFF_L1_BUFFER_SIZE, PSTR("AT+UPDATE=\"sequence\":\"%d%03d\",\"switch\":\"%s\",\"light_type\":1,\"colorR\":%d,\"colorG\":%d,\"colorB\":%d,\"bright\":%d,\"mode\":%d"),
       LocalTime(), millis()%1000,
       Snfl1.power ? "on" : "off",
       Snfl1.color[0], Snfl1.color[1], Snfl1.color[2],
       Snfl1.dimmer,
-      mode,
-      Snfl1.sensitive,
-      Snfl1.speed);
+      mode);
+    if (SONOFF_L1_MODE_SYNC_TO_MUSIC == mode) {
+      snprintf_P(Snfl1.buffer, SONOFF_L1_BUFFER_SIZE, PSTR("%s,\"sensitive\":%d,\"speed\":%d"),
+        Snfl1.buffer,
+        Snfl1.sensitive,
+        Snfl1.speed);
+    }
 
 #ifdef SONOFF_L1_START_DELAY
     static bool first_call = true;

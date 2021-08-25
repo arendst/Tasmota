@@ -809,12 +809,10 @@ extern "C" {
 
           // all good
           be_return(vm);
-        } else {
-          be_return_nil(vm);
         }
       }
     }
-    be_raise(vm, "attribute_error", "module 'lvgl' has no such attribute");
+    be_return_nil(vm);
   }
 
   /*********************************************************************************************\

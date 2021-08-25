@@ -62,7 +62,7 @@ void be_print_inst(binstruction ins, int pc)
     case OP_OR: case OP_XOR: case OP_SHL: case OP_SHR:
         logbuf("%s\tR%d\t%c%d\t%c%d", opc2str(op), IGET_RA(ins),
                 isKB(ins) ? 'K' : 'R', IGET_RKB(ins) & KR_MASK,
-                isKB(ins) ? 'K' : 'R', IGET_RKC(ins) & KR_MASK);
+                isKC(ins) ? 'K' : 'R', IGET_RKC(ins) & KR_MASK);
         break;
     case OP_GETNGBL: case OP_SETNGBL:
         logbuf("%s\tR%d\t%c%d", opc2str(op), IGET_RA(ins),
@@ -116,7 +116,7 @@ void be_print_inst(binstruction ins, int pc)
     case OP_RAISE:
         logbuf("%s\t%d\t%c%d\t%c%d", opc2str(op), IGET_RA(ins),
                 isKB(ins) ? 'K' : 'R', IGET_RKB(ins) & KR_MASK,
-                isKB(ins) ? 'K' : 'R', IGET_RKC(ins) & KR_MASK);
+                isKC(ins) ? 'K' : 'R', IGET_RKC(ins) & KR_MASK);
         break;
     case OP_EXBLK:
         if (IGET_RA(ins)) {

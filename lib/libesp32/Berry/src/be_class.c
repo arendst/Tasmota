@@ -241,20 +241,38 @@ bbool be_class_newobj(bvm *vm, bclass *c, bvalue *reg, int argc, int mode)
 /* Input: none of `obj`, `name` and `dst` may not be NULL */
 /* Returns the type of the member or BE_NONE if member not found */
 /* TODO need to support synthetic members */
-int be_instance_member(bvm *vm, binstance *obj, bstring *name, bvalue *dst)
+int be_instance_member(bvm *vm, binstance *instance, bstring *name, bvalue *dst)
 {
     int type;
     be_assert(name != NULL);
-    obj = instance_member(vm, obj, name, dst);
+    binstance * obj = instance_member(vm, instance, name, dst);
     type = var_type(dst);
     if (obj && type == MT_VARIABLE) {
         *dst = obj->members[dst->v.i];
     }
     if (obj) {
         return type;
-    } else {
-        return BE_NONE;
+    } else {  /* if no method found, try virtual */
+        /* get method 'member' */
+        obj = instance_member(vm, instance, str_literal(vm, "member"), vm->top);
+        if (obj && basetype(var_type(vm->top)) == BE_FUNCTION) {
+            bvalue *top = vm->top;
+            var_setinstance(&top[1], instance);
+            var_setstr(&top[2], name);
+            vm->top += 3;   /* prevent gc collection results */
+            be_dofunc(vm, top, 2); /* call method 'member' */
+            vm->top -= 3;
+            *dst = *vm->top;   /* copy result to R(A) */
+            if (obj && var_type(dst) == MT_VARIABLE) {
+                *dst = obj->members[dst->v.i];
+            }
+            type = var_type(dst);
+            if (type != BE_NIL) {
+                return type;
+            }
+        }
     }
+    return BE_NONE;
 }
 
 int be_class_member(bvm *vm, bclass *obj, bstring *name, bvalue *dst)

@@ -111,6 +111,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - Initial support for Tasmota Mesh (TasMesh) providing node/broker communication using ESP-NOW [#11939](https://github.com/arendst/Tasmota/issues/11939)
 - Berry ESP32 partition manager [#12465](https://github.com/arendst/Tasmota/issues/12465)
 - Berry ESP32 support for I2S audio mp3 playback
+- Berry ESP32 support for vararg
 - Support for AM2320 Temperature and Humidity Sensor by Lars Wessels [#12485](https://github.com/arendst/Tasmota/issues/12485)
 - Rule event support as JSON payload [#12496](https://github.com/arendst/Tasmota/issues/12496)
 - MQTT minimum password length restriction in GUI [#12553](https://github.com/arendst/Tasmota/issues/12553)
@@ -119,7 +120,9 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - Support for CAN bus and Freedom Won Battery Management System by Marius Bezuidenhout [#12651](https://github.com/arendst/Tasmota/issues/12651)
 - Optional IP filter to command ``TCPStart`` [#12806](https://github.com/arendst/Tasmota/issues/12806)
 - Inital support for Wi-Fi extender [#12784](https://github.com/arendst/Tasmota/issues/12784)
+- Command ``Subscribe2 ...`` to subscribe to a MQTT topic without appended "/#" [#12858](https://github.com/arendst/Tasmota/issues/12858)
 - Support for IEM3155 Wattmeter [#12940](https://github.com/arendst/Tasmota/issues/12940)
+- Support for Hydreon RG-15 Solid State Rain sensor [#12974](https://github.com/arendst/Tasmota/issues/12974)
 
 ### Changed
 - Move firmware binaries to https://github.com/arendst/Tasmota-firmware/tree/main/release-firmware
@@ -145,6 +148,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - Prometheus: All metrics are prefixed with ``tasmota_`` [#12842](https://github.com/arendst/Tasmota/issues/12842)
     Memory metrics have been cleaned up to work consistently between ESP8266 and ESP32
     The device name is reported as an info metric
+- Shelly EM template needs to use GPIO ADE7953_IRQ_2
 
 ### Fixed
 - ESP32 core v2.0.0 setting hostname
@@ -167,3 +171,6 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - Neopool communication error [#12813](https://github.com/arendst/Tasmota/issues/12813)
 - WDT reset on shutters with stepper motors during deceleration [#12849](https://github.com/arendst/Tasmota/issues/12849)
 - Negative power values for ADE7953 based devices like Shelly EM [#12874](https://github.com/arendst/Tasmota/issues/12874)
+- Unable to disable MusicSync mode on Sonoff L1 Lite regression from 9.3.0 [#12930](https://github.com/arendst/Tasmota/issues/12930)
+- Wiegand support for keypad zero key in single key mode using ``SetOption124 1`` [#12960](https://github.com/arendst/Tasmota/issues/12960)
+- Hass and Tasmota discovery prefix topic notifications [#12972](https://github.com/arendst/Tasmota/issues/12972)

@@ -461,6 +461,14 @@ static void new_var(bparser *parser, bstring *name, bexpdesc *var)
             push_error(parser,
                 "too many global variables (in '%s')", str(name));
         }
+        if (comp_is_named_gbl(parser->vm)) {
+            /* change to ETNGLBAL */
+            bexpdesc key;
+            init_exp(&key, ETSTRING, 0);
+            key.v.s = name;
+            init_exp(var, ETNGLOBAL, 0);
+            var->v.idx = be_code_nglobal(parser->finfo, &key);
+        }
     }
 }
 
