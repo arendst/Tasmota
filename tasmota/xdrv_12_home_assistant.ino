@@ -414,6 +414,7 @@ void TryResponseAppend_P(const char *format, ...) {
 #endif
 }
 
+#ifdef USE_LIGHT
 void HAssAnnounceRelayLight(void)
 {
   char stopic[TOPSZ];
@@ -535,7 +536,6 @@ void HAssAnnounceRelayLight(void)
           }
           TryResponseAppend_P(HASS_DISCOVER_DEVICE_INFO_SHORT, unique_id, ESP_getChipId());
 
-  #ifdef USE_LIGHT
         if (i >= Light.device) {
           if (!RelayX || PwmMod || (TuyaDim > 0 && TuyaMod)) {
             char *brightness_command_topic = stemp1;
@@ -586,7 +586,6 @@ void HAssAnnounceRelayLight(void)
           ind_light = false;
           max_lights--;
         }
-  #endif  // USE_LIGHT
         TryResponseAppend_P(PSTR("}"));
       }
     }
@@ -594,6 +593,7 @@ void HAssAnnounceRelayLight(void)
     MqttPublish(stopic, true);
   }
 }
+#endif  // USE_LIGHT
 
 void HAssAnnouncerTriggers(uint8_t device, uint8_t present, uint8_t key, uint8_t toggle, uint8_t hold, uint8_t single, uint8_t trg_start, uint8_t trg_end)
 {
@@ -1107,8 +1107,10 @@ void HAssDiscovery(void)
     // Send info about shutters
     HAssAnnounceShutters();
 
+#ifdef USE_LIGHT
     // Send info about relays and lights
     HAssAnnounceRelayLight();
+#endif // USE_LIGHT
 
     // Send info about status sensor
     HAssAnnounceDeviceInfoAndStatusSensor();
