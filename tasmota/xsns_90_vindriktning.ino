@@ -54,8 +54,8 @@ bool VindriktningReadData(void)
   uint8_t buffer[VINDRIKTNING_DATASET_SIZE];
   uint8_t crc = 0;
 
-  //AddLog(LOG_LEVEL_INFO, PSTR("VindriktningReadData"));
-  //AddLog(LOG_LEVEL_INFO, PSTR("VindriktningReadData: Available data: %d"), VindriktningSerial->available());
+  //AddLog(LOG_LEVEL_DEBUG, PSTR("VindriktningReadData"));
+  //AddLog(LOG_LEVEL_DEBUG, PSTR("VindriktningReadData: Available data: %d"), VindriktningSerial->available());
 
   if (! VindriktningSerial->available()) {
     return false;
@@ -71,12 +71,12 @@ bool VindriktningReadData(void)
   }
 
   if (serial_vindriktning_in_byte_counter < VINDRIKTNING_DATASET_SIZE) {
-    AddLog(LOG_LEVEL_INFO, PSTR("VindriktningReadData: Insufficient data set: length: %d < 20"), serial_vindriktning_in_byte_counter);
+    AddLog(LOG_LEVEL_DEBUG, PSTR("VindriktningReadData: Insufficient data set: length: %d < 20"), serial_vindriktning_in_byte_counter);
     return false;
   }
 
   if (crc != 0) {
-    AddLog(LOG_LEVEL_INFO, PSTR("VindriktningReadData: Incorrect checksum"));
+    AddLog(LOG_LEVEL_DEBUG, PSTR("VindriktningReadData: Incorrect checksum"));
     return false;
   }
 
@@ -88,7 +88,7 @@ bool VindriktningReadData(void)
   vindriktning_pm10 = (buffer[13] << 8) | buffer[14];
   VindriktningSerial->flush();  // Make room for another burst
 
-  AddLog(LOG_LEVEL_INFO, PSTR("VindriktningReadData: PMS=1.0: %d 2.5: %d, 10: %d (Data %02d (CRC: %02x): %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x)"), vindriktning_pm1_0, vindriktning_pm2_5, vindriktning_pm10, serial_vindriktning_in_byte_counter, crc, buffer[0], buffer[1], buffer[2], buffer[3], buffer[4], buffer[5], buffer[6], buffer[7], buffer[8], buffer[9], buffer[10], buffer[11], buffer[12], buffer[13], buffer[14], buffer[15], buffer[16], buffer[17], buffer[18], buffer[19]);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("VindriktningReadData: PMS=1.0: %d 2.5: %d, 10: %d (Data %02d (CRC: %02x): %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x)"), vindriktning_pm1_0, vindriktning_pm2_5, vindriktning_pm10, serial_vindriktning_in_byte_counter, crc, buffer[0], buffer[1], buffer[2], buffer[3], buffer[4], buffer[5], buffer[6], buffer[7], buffer[8], buffer[9], buffer[10], buffer[11], buffer[12], buffer[13], buffer[14], buffer[15], buffer[16], buffer[17], buffer[18], buffer[19]);
 
   Vindriktning.valid = 10;
 
@@ -113,16 +113,16 @@ void VindriktningSecond(void)                 // Every second
 void VindriktningInit(void)
 {
   Vindriktning.type = 0;
-  //AddLog(LOG_LEVEL_INFO, PSTR("VindriktningInit"));
+  //AddLog(LOG_LEVEL_DEBUG, PSTR("VindriktningInit"));
   if (PinUsed(GPIO_VINDRIKTNING_RX)) {
-    //AddLog(LOG_LEVEL_INFO, PSTR("VindriktningInit: PinUsed(GPIO_VINDRIKTNING_RX) TRUE"));
+    //AddLog(LOG_LEVEL_DEBUG, PSTR("VindriktningInit: PinUsed(GPIO_VINDRIKTNING_RX) TRUE"));
     VindriktningSerial = new TasmotaSerial(Pin(GPIO_VINDRIKTNING_RX), -1, 1);
     if (VindriktningSerial->begin(9600)) {
-      //AddLog(LOG_LEVEL_INFO, PSTR("Serial initialization OK"));
+      //AddLog(LOG_LEVEL_DEBUG, PSTR("Serial initialization OK"));
       if (VindriktningSerial->hardwareSerial()) { ClaimSerial(); }
       Vindriktning.type = 1;
     } else {
-      AddLog(LOG_LEVEL_INFO, PSTR("Serial initialization Failed"));
+      AddLog(LOG_LEVEL_DEBUG, PSTR("Serial initialization Failed"));
     }
   }
 }
@@ -136,10 +136,10 @@ const char HTTP_VINDRIKTNING_SNS[] PROGMEM =
 
 void VindriktningShow(bool json)
 {
-  //AddLog(LOG_LEVEL_INFO, PSTR("VindriktningShow"));
+  //AddLog(LOG_LEVEL_DEBUG, PSTR("VindriktningShow"));
   if (Vindriktning.valid) {
     if (json) {
-      ResponseAppend_P(PSTR(",\"VINDRIKTNING\":{\"PM1.0\":%d,\"PM2.5\":%d,\"PM10\",%d}"), vindriktning_pm1_0, vindriktning_pm2_5, vindriktning_pm10);
+      ResponseAppend_P(PSTR(",\"VINDRIKTNING\":{\"PM1.0\":%d,\"PM2.5\":%d,\"PM10\":%d}"), vindriktning_pm1_0, vindriktning_pm2_5, vindriktning_pm10);
 #ifdef USE_DOMOTICZ
       if (0 == TasmotaGlobal.tele_period) {
         DomoticzSensor(DZ_VOLTAGE, vindriktning_pm1_0);	// PM1.0
@@ -163,7 +163,7 @@ bool Xsns90(uint8_t function)
 {
   bool result = false;
 
-  // AddLog(LOG_LEVEL_INFO, PSTR("Xsns90(%d)"), function);
+  // AddLog(LOG_LEVEL_DEBUG, PSTR("Xsns90(%d)"), function);
   if (Vindriktning.type) {
     switch (function) {
       case FUNC_INIT:
