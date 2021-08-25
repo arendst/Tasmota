@@ -16,6 +16,7 @@ All notable changes to this project will be documented in this file.
 - WDT reset on shutters with stepper motors during deceleration (#12849)
 - Shelly 2.5 negative power values on relay 1 regression from 9.5.0.5
 - Wiegand support for keypad zero key in single key mode using ``SetOption124 1`` (#12960)
+- Hass and Tasmota discovery prefix topic notifications (#12972)
 
 ## [9.5.0.6] 20210820
 ### Added

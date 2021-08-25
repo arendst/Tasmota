@@ -170,3 +170,4 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - WDT reset on shutters with stepper motors during deceleration [#12849](https://github.com/arendst/Tasmota/issues/12849)
 - Negative power values for ADE7953 based devices like Shelly EM [#12874](https://github.com/arendst/Tasmota/issues/12874)
 - Wiegand support for keypad zero key in single key mode using ``SetOption124 1`` [#12960](https://github.com/arendst/Tasmota/issues/12960)
+- Hass and Tasmota discovery prefix topic notifications [#12972](https://github.com/arendst/Tasmota/issues/12972)
