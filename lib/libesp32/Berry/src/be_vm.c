@@ -267,7 +267,7 @@ bbool be_value2bool(bvm *vm, bvalue *v)
 static void obj_method(bvm *vm, bvalue *o, bstring *attr, bvalue *dst)
 {
     binstance *obj = var_toobj(o);
-    int type = be_instance_member(vm, obj, attr, dst);
+    int type = be_instance_member_simple(vm, obj, attr, dst);
     if (basetype(type) != BE_FUNCTION) {
         vm_error(vm, "attribute_error",
             "the '%s' object has no method '%s'",
