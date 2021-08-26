@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 - Command ``Subscribe2 ...`` to subscribe to a MQTT topic without appended "/#" (#12858)
 - Support for Hydreon RG-15 Solid State Rain sensor (#12974)
 - Support for IKEA VINDRIKTNING particle concentration sensor (#12976)
+- Commands ``SwitchMode 17`` PushHoldMultiDelay and ``SwitchMode 18`` PushHoldMultiDelayInverted adding delayed single press event (#12973)
 
 ### Changed
 - Shelly EM template needs to use GPIO ADE7953_IRQ_2
@@ -1037,7 +1038,7 @@ All notable changes to this project will be documented in this file.
 ## [8.1.0.6] - 20200205
 ### Added
 - Support for sensors DS18x20 and DHT family on Shelly 1 and Shelly 1PM using Shelly Add-On adapter (#7469)
-- Commands ``SwitchMode 11`` PushHoldMulti and ``SwitchMode 12`` PushHoldInverted (#7603)
+- Commands ``SwitchMode 11`` PushHoldMulti and ``SwitchMode 12`` PushHoldMultiInverted (#7603)
 - Command ``Buzzer -1`` for infinite mode and command ``Buzzer -2`` for following led mode (#7623)
 - Support for MI-BLE sensors using HM-10 Bluetooth 4.0 module by Christian Staars (#7683)
 - BootCount Reset Time as BCResetTime to ``Status 1``
