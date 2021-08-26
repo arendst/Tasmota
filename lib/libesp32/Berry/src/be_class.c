@@ -244,6 +244,20 @@ static int default_init_native_method(bvm *vm) {
 }
 
 /* Find instance member by name and copy value to `dst` */
+/* Do not look into virtual members */
+int be_instance_member_simple(bvm *vm, binstance *instance, bstring *name, bvalue *dst)
+{
+    int type;
+    be_assert(name != NULL);
+    binstance * obj = instance_member(vm, instance, name, dst);
+    type = var_type(dst);
+    if (obj && type == MT_VARIABLE) {
+        *dst = obj->members[dst->v.i];
+    }
+    return type;
+}
+
+/* Find instance member by name and copy value to `dst` */
 /* Input: none of `obj`, `name` and `dst` may not be NULL */
 /* Returns the type of the member or BE_NONE if member not found */
 /* TODO need to support synthetic members */
