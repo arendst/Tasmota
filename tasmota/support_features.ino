@@ -765,7 +765,9 @@ void ResponseAppendFeatures(void)
 #ifdef USE_HRG15
     feature8 |= 0x00001000;  // xsns_90_hrg15.ino
 #endif
-//    feature8 |= 0x00002000;
+#ifdef USE_VINDRIKTNING
+    feature8 |= 0x00002000;  // xsns_91_vindriktning.ino
+#endif
 //    feature8 |= 0x00004000;
 //    feature8 |= 0x00008000;
 

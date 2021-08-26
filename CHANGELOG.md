@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 - Berry support for vararg
 - Command ``Subscribe2 ...`` to subscribe to a MQTT topic without appended "/#" (#12858)
 - Support for Hydreon RG-15 Solid State Rain sensor (#12974)
+- Support for IKEA VINDRIKTNING particle concentration sensor (#12976)
 
 ### Changed
 - Shelly EM template needs to use GPIO ADE7953_IRQ_2

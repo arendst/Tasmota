@@ -744,6 +744,7 @@
 //  #define USE_AS608_MESSAGES                     // Add verbose error messages (+0k4 code)
 //#define USE_TFMINIPLUS                           // Add support for TFmini Plus (TFmini, TFmini-S) LiDAR modules via UART interface (+0k8)
 //#define USE_HRG15                                // Add support for Hydreon RG-15 Solid State Rain sensor (+1k5 code)
+//#define USE_VINDRIKTNING                         // Add support for IKEA VINDRIKTNING particle concentration sensor (+1k code)
 
 // -- Power monitoring sensors --------------------
 #define USE_ENERGY_SENSOR                        // Add support for Energy Monitors (+14k code)

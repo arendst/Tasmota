@@ -171,6 +171,7 @@ enum UserSelectablePins {
   GPIO_INTERRUPT,
   GPIO_MCP2515_CS,                     // MCP2515 Chip Select
   GPIO_HRG15_TX, GPIO_HRG15_RX,        // Hydreon RG-15 rain sensor serial interface
+  GPIO_VINDRIKTNING_RX,                // IKEA VINDRIKTNING Serial interface
   GPIO_SENSOR_END };
 
 enum ProgramSelectablePins {
@@ -361,7 +362,8 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_I2S_IN_DATA  "|" D_SENSOR_I2S_IN_CLK  "|" D_SENSOR_I2S_IN_SLCT  "|"
   D_SENSOR_INTERRUPT "|"
   D_SENSOR_MCP2515_CS "|"
-  D_SENSOR_HRG15_TX "|" D_SENSOR_HRG15_RX
+  D_SENSOR_HRG15_TX "|" D_SENSOR_HRG15_RX "|"
+  D_SENSOR_VINDRIKTNING_RX
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -796,6 +798,9 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_HRG15
   AGPIO(GPIO_HRG15_TX),
   AGPIO(GPIO_HRG15_RX),
+#endif
+#ifdef USE_VINDRIKTNING
+  AGPIO(GPIO_VINDRIKTNING_RX),
 #endif
 
 /*-------------------------------------------------------------------------------------------*\
