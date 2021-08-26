@@ -461,7 +461,10 @@ static void destruct_object(bvm *vm, bgcobject *obj)
         type = be_instance_member(vm, ins, str_literal(vm, "deinit"), vm->top);
         be_incrtop(vm);
         if (basetype(type) == BE_FUNCTION) {
-            be_dofunc(vm, vm->top - 1, 1);
+            var_setinstance(vm->top, ins);  /* push instance on stack as arg 1 */
+            be_incrtop(vm);
+            be_dofunc(vm, vm->top - 2, 1);  /* warning, there shoudln't be any exception raised here, or the gc stops */
+            be_stackpop(vm, 1);
         }
         be_stackpop(vm, 1);
     }
