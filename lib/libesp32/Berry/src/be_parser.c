@@ -97,7 +97,7 @@ static void match_notoken(bparser *parser, btokentype type)
     }
 }
 
-/* check that if the expdesc is a symbol, it is avalid one or raise an exception */
+/* check that if the expdesc is a symbol, it is a valid one or raise an exception */
 static void check_symbol(bparser *parser, bexpdesc *e)
 {
     if (e->type == ETVOID && e->v.s == NULL) { /* error when token is not a symbol */
@@ -106,7 +106,7 @@ static void check_symbol(bparser *parser, bexpdesc *e)
     }
 }
 
-/* check that the value in `e` is valid for a variable, i.e. conatins a value or a valid symbol */
+/* check that the value in `e` is valid for a variable, i.e. contains a value or a valid symbol */
 static void check_var(bparser *parser, bexpdesc *e)
 {
     check_symbol(parser, e); /* check the token is a symbol */
@@ -989,6 +989,7 @@ static void cond_expr(bparser *parser, bexpdesc *e)
     if (next_type(parser) == OptQuestion) {
         int jf, jl = NO_JUMP; /* jump list */
         bfuncinfo *finfo = parser->finfo;
+        check_var(parser, e);  /* check if valid */
         scan_next_token(parser); /* skip '?' */
         be_code_jumpbool(finfo, e, bfalse); /* go if true */
         jf = e->f;
