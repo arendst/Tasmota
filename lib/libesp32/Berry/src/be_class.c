@@ -14,6 +14,7 @@
 #include "be_vm.h"
 #include "be_func.h"
 #include "be_var.h"
+#include <string.h>
 
 #define check_members(vm, c)            \
     if (!(c)->members) {                \
@@ -237,6 +238,11 @@ bbool be_class_newobj(bvm *vm, bclass *c, bvalue *reg, int argc, int mode)
     return bfalse;
 }
 
+/* Default empty constructor */
+static int default_init_native_method(bvm *vm) {
+    be_return_nil(vm);
+}
+
 /* Find instance member by name and copy value to `dst` */
 /* Input: none of `obj`, `name` and `dst` may not be NULL */
 /* Returns the type of the member or BE_NONE if member not found */
@@ -253,22 +259,28 @@ int be_instance_member(bvm *vm, binstance *instance, bstring *name, bvalue *dst)
     if (obj) {
         return type;
     } else {  /* if no method found, try virtual */
-        /* get method 'member' */
-        obj = instance_member(vm, instance, str_literal(vm, "member"), vm->top);
-        if (obj && basetype(var_type(vm->top)) == BE_FUNCTION) {
-            bvalue *top = vm->top;
-            var_setinstance(&top[1], instance);
-            var_setstr(&top[2], name);
-            vm->top += 3;   /* prevent gc collection results */
-            be_dofunc(vm, top, 2); /* call method 'member' */
-            vm->top -= 3;
-            *dst = *vm->top;   /* copy result to R(A) */
-            if (obj && var_type(dst) == MT_VARIABLE) {
-                *dst = obj->members[dst->v.i];
-            }
-            type = var_type(dst);
-            if (type != BE_NIL) {
-                return type;
+        /* if 'init' does not exist, create a virtual empty constructor */
+        if (strcmp(str(name), "init") == 0) {
+            var_setntvfunc(dst, default_init_native_method);
+            return var_type(dst);
+        } else {
+            /* get method 'member' */
+            obj = instance_member(vm, instance, str_literal(vm, "member"), vm->top);
+            if (obj && basetype(var_type(vm->top)) == BE_FUNCTION) {
+                bvalue *top = vm->top;
+                var_setinstance(&top[1], instance);
+                var_setstr(&top[2], name);
+                vm->top += 3;   /* prevent gc collection results */
+                be_dofunc(vm, top, 2); /* call method 'member' */
+                vm->top -= 3;
+                *dst = *vm->top;   /* copy result to R(A) */
+                if (obj && var_type(dst) == MT_VARIABLE) {
+                    *dst = obj->members[dst->v.i];
+                }
+                type = var_type(dst);
+                if (type != BE_NIL) {
+                    return type;
+                }
             }
         }
     }
