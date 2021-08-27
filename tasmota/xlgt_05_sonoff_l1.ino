@@ -286,6 +286,16 @@ bool SnfL1SetChannels(void) {
   return true;
 }
 
+bool SnfL1SetChannelsFromFunc(void) {
+  static bool first_call = true;
+  if (first_call) {
+    first_call = false;                          // Allow MusicSync at init time
+  } else {
+    Settings->sbflag1.sonoff_l1_music_sync = 0;  // Disable MusicSync on user color change
+  }
+  return SnfL1SetChannels();
+}
+
 bool SnfL1ModuleSelected(void) {
   if (SONOFF_L1 == TasmotaGlobal.module_type) {
     if (PinUsed(GPIO_RXD) && PinUsed(GPIO_TXD)) {
@@ -345,7 +355,7 @@ bool Xlgt05(uint8_t function)
       result = SnfL1SerialInput();
       break;
     case FUNC_SET_CHANNELS:
-      result = SnfL1SetChannels();
+      result = SnfL1SetChannelsFromFunc();
       break;
     case FUNC_MODULE_INIT:
       result = SnfL1ModuleSelected();
