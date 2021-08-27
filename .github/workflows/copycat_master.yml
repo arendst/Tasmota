@@ -2,8 +2,8 @@ name: Copy_firmware_master
 
 on:
   push:
-
-copycat:
+jobs:
+  copycat:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -19,6 +19,7 @@ copycat:
           dst_repo_name: install
           username: workflow
           commit_message: "Update from official release"
+
   copycat32:
     runs-on: ubuntu-latest
     steps:
