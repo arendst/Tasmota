@@ -182,6 +182,11 @@ bool SnfL1SerialInput(void) {
           snprintf_P(cmnd_dimmer, sizeof(cmnd_dimmer), PSTR(D_CMND_DIMMER " %d"), dimmer);
         }
 
+        else if (!strncmp(token2, "\"mode\"", 6)) {
+          uint8_t received_mode = atoi(token3);
+          Settings->sbflag1.sonoff_l1_music_sync = (SONOFF_L1_MODE_SYNC_TO_MUSIC == received_mode);
+        }
+
         token = strtok_r(nullptr, ",", &end_str);
       }
 
