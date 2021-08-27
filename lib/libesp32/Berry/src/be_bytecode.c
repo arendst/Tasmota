@@ -137,14 +137,21 @@ static bstring** save_members(bvm *vm, void *fp, bclass *c, int nvar)
         } else { /* save method's name and function */
             bproto *proto;
             bvalue *value = &node->value;
-            be_assert(var_isclosure(value) || var_isproto(value));
+            be_assert(var_isclosure(value) || var_isproto(value) || var_isnil(value));
             save_string(fp, var_tostr(&node->key)); /* save method name */
             if (var_isproto(value)) { /* the method is a prototype */
                 proto = var_toobj(value);
-            } else { /* the method is a closure */
-                proto = cast(bclosure *, var_toobj(value))->proto;
+                save_proto(vm, fp, proto); /* only save prototype */
+            } else if (var_isclosure(value)) { /* the method is a closure */
+                proto = cast(bclosure *, var_toobj(value))->proto;            
+                save_proto(vm, fp, proto); /* only save prototype */
+            } else if (var_isnil(value)) {
+                /* this is a static member (nil default) */
+                save_word(fp, 0);  /* store a zero byte that will be seen as a zero length method name which is invalid */
+            } else {
+                be_raise(vm, "internal_error", "unsupported member in class");
+                return NULL; /* should never be executed */
             }
-            save_proto(vm, fp, proto); /* only save prototype */
         }
     }
     return vars;
@@ -286,7 +293,7 @@ void be_bytecode_save(bvm *vm, const char *filename, bproto *proto)
 #endif /* BE_USE_BYTECODE_SAVER */
 
 #if BE_USE_BYTECODE_LOADER
-static void load_proto(bvm *vm, void *fp, bproto **proto, int info, int version);
+static bbool load_proto(bvm *vm, void *fp, bproto **proto, int info, int version);
 
 static uint8_t load_byte(void *fp)
 {
@@ -416,8 +423,13 @@ static void load_class(bvm *vm, void *fp, bvalue *v, int version)
         value = vm->top;
         var_setproto(value, NULL);
         be_incrtop(vm);
-        load_proto(vm, fp, (bproto**)&var_toobj(value), -3, version);
-        be_method_bind(vm, c, name, var_toobj(value));
+        if (load_proto(vm, fp, (bproto**)&var_toobj(value), -3, version)) {
+            /* actual method */
+            be_method_bind(vm, c, name, var_toobj(value));
+        } else {
+            /* no proto, static member set to nil */
+            be_member_bind(vm, c, name, bfalse);
+        }
         be_stackpop(vm, 2); /* pop the cached string and proto */
     }
     for (count = 0; count < nvar; ++count) { /* load member-variable table */
@@ -509,21 +521,28 @@ static void load_upvals(bvm *vm, void *fp, bproto *proto)
     }
 }
 
-static void load_proto(bvm *vm, void *fp, bproto **proto, int info, int version)
+static bbool load_proto(bvm *vm, void *fp, bproto **proto, int info, int version)
 {
-    *proto = be_newproto(vm);
-    (*proto)->name = load_string(vm, fp);
-    (*proto)->source = load_string(vm, fp);
-    (*proto)->argc = load_byte(fp);
-    (*proto)->nstack = load_byte(fp);
-    if (version > 1) {
-        (*proto)->varg = load_byte(fp);
-        load_byte(fp); /* discard reserved byte */
+    /* first load the name */
+    /* if empty, it's a static member so don't allocate an actual proto */
+    bstring *name = load_string(vm, fp);
+    if (str_len(name)) {
+        *proto = be_newproto(vm);
+        (*proto)->name = name;
+        (*proto)->source = load_string(vm, fp);
+        (*proto)->argc = load_byte(fp);
+        (*proto)->nstack = load_byte(fp);
+        if (version > 1) {
+            (*proto)->varg = load_byte(fp);
+            load_byte(fp); /* discard reserved byte */
+        }
+        load_bytecode(vm, fp, *proto, info);
+        load_constant(vm, fp, *proto, version);
+        load_proto_table(vm, fp, *proto, version);
+        load_upvals(vm, fp, *proto);
+        return btrue;
     }
-    load_bytecode(vm, fp, *proto, info);
-    load_constant(vm, fp, *proto, version);
-    load_proto_table(vm, fp, *proto, version);
-    load_upvals(vm, fp, *proto);
+    return bfalse;  /* no proto read */
 }
 
 void load_global_info(bvm *vm, void *fp)
