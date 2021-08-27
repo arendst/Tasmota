@@ -29,7 +29,7 @@ jobs:
         with:
           personal_token: ${{ secrets.API_TOKEN_GITHUB }}
           src_path: release-firmware/tasmota32/.
-          src_branch: main
+          src_branch: master
           dst_path: firmware/release
           dst_owner: tasmota
           dst_branch: main
