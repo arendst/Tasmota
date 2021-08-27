@@ -792,6 +792,13 @@ static void member_expr(bparser *parser, bexpdesc *e)
         init_exp(&key, ETSTRING, 0);
         key.v.s = str;
         be_code_member(parser->finfo, e, &key);
+    } else if (next_type(parser) == OptLBK) {
+        scan_next_token(parser); /* skip '(' */
+        bexpdesc key;
+        expr(parser, &key);
+        check_var(parser, &key);
+        match_token(parser, OptRBK); /* skip ')' */
+        be_code_member(parser->finfo, e, &key);
     } else {
         push_error(parser, "invalid syntax near '%s'",
             be_token2str(parser->vm, &next_token(parser)));
