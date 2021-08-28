@@ -507,9 +507,12 @@ void HAssAnnounceRelayLight(void)
     } else if ((i < Light.device) && !RelayX) {
       err_flag = true;
       AddLog(LOG_LEVEL_ERROR, PSTR("%s"), kHAssError2);
-#endif //USE_LIGHT
     } else {
       if (Settings->flag.hass_discovery && (RelayX || (Light.device > 0) && (max_lights > 0)) && !err_flag )
+#else
+    } else {
+      if (Settings->flag.hass_discovery && RelayX )
+#endif //USE_LIGHT
       {                    // SetOption19 - Control Home Assistant automatic discovery (See SetOption59)
           char name[TOPSZ]; // friendlyname(33) + " " + index
           char value_template[33];
