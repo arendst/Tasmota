@@ -982,6 +982,14 @@
 #define USE_EMULATION
 #endif
 
+#ifdef USE_COUNTER
+#define USE_LIGHT
+#endif
+
+#ifdef USE_PWM_DIMMER
+#define USE_LIGHT
+#endif
+
 // Convert legacy slave to client
 #ifdef USE_TASMOTA_SLAVE
 #define USE_TASMOTA_CLIENT
