@@ -1362,6 +1362,6 @@ jobs:
       with:
         source_file: 'trigger.txt'
         destination_repo: 'Jason2866/Tasmota-specials'
-        destination_branch: 'special_builder'
+        destination_branch: 'start_build'
         user_email: 'github-actions@github.com'
         user_name: 'github-actions'
