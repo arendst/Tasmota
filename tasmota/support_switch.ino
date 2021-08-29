@@ -37,7 +37,7 @@ const uint8_t AC_PERIOD = (20 + SWITCH_FAST_PROBE_INTERVAL - 1) / SWITCH_FAST_PR
 #define POWER_NONE            99
 
 const char kSwitchPressStates[] PROGMEM =
-  "||||POWER_INCREMENT|POWER_INV|POWER_CLEAR|POWER_RELEASE|POWER_100|POWER_DELAYED";
+  "||||POWER_INCREMENT|POWER_INV|POWER_CLEAR|POWER_RELEASE|POWER_100||POWER_DELAYED";
 
 #include <Ticker.h>
 
@@ -245,7 +245,8 @@ void SwitchHandler(uint32_t mode) {
               SendKey(KEY_SWITCH, i +1, POWER_INCREMENT);      // Execute command via MQTT
             }
             else if ((Switch.hold_timer[i] & ~SM_TIMER_MASK) == SM_FIRST_PRESS) {
-                switchflag = POWER_DELAYED;                      // Toggle with pushbutton
+                SendKey(KEY_SWITCH, i +1, POWER_DELAYED);      // Execute command via MQTT
+                mqtt_action = POWER_DELAYED;
                 Switch.hold_timer[i] = 0;
             }
           }
