@@ -1171,7 +1171,11 @@ void CmndSubscribe(void)
       subscription_item.Key = key;
       subscriptions.add(subscription_item);
 
+      if (2 == XdrvMailbox.index) {
+        topic = subscription_item.Topic;  // Do not append "/#""
+      }
       MqttSubscribe(topic.c_str());
+
       events.concat(event_name + "," + topic
         + (key.length()>0 ? "," : "")
         + key);

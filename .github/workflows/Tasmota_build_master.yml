@@ -1358,3 +1358,17 @@ jobs:
         destination_repo: 'arendst/Tasmota-firmware'
         user_email: 'github-actions@github.com'
         user_name: 'github-actions'
+    - name: Creat trigger.txt
+      run: |
+         echo ${GITHUB_SHA}  &> trigger.txt
+         echo "$(<trigger.txt)"
+    - name: Push trigger.txt to start workflow in repo https://github.com/arendst/Tasmota-firmware
+      uses: dmnemec/copy_file_to_another_repo_action@main
+      env:
+        API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
+      with:
+        source_file: 'trigger.txt'
+        destination_repo: 'arendst/Tasmota-firmware'
+        destination_branch: 'action-master'
+        user_email: 'github-actions@github.com'
+        user_name: 'github-actions'

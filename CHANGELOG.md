@@ -8,7 +8,10 @@ All notable changes to this project will be documented in this file.
 - Turn HTTP API (command ``SetOption128 1``) default on for backward compatibility
 - Support for IEM3155 Wattmeter (#12940)
 - Berry support for vararg
-- Switchmode11 and 12: ``SetOption129 1`` delays single press events from pressing to release switch (#12712 / #12713)
+- Command ``Subscribe2 ...`` to subscribe to a MQTT topic without appended "/#" (#12858)
+- Support for Hydreon RG-15 Solid State Rain sensor (#12974)
+- Support for IKEA VINDRIKTNING particle concentration sensor (#12976)
+- Commands ``SwitchMode 17`` PushHoldMultiDelay and ``SwitchMode 18`` PushHoldMultiDelayInverted adding delayed single press event (#12973)
 
 ### Changed
 - Shelly EM template needs to use GPIO ADE7953_IRQ_2
@@ -18,6 +21,7 @@ All notable changes to this project will be documented in this file.
 - Shelly 2.5 negative power values on relay 1 regression from 9.5.0.5
 - Wiegand support for keypad zero key in single key mode using ``SetOption124 1`` (#12960)
 - Hass and Tasmota discovery prefix topic notifications (#12972)
+- Unable to disable MusicSync mode on Sonoff L1 Lite regression from 9.3.0 (#12930)
 
 ## [9.5.0.6] 20210820
 ### Added
@@ -1034,7 +1038,7 @@ All notable changes to this project will be documented in this file.
 ## [8.1.0.6] - 20200205
 ### Added
 - Support for sensors DS18x20 and DHT family on Shelly 1 and Shelly 1PM using Shelly Add-On adapter (#7469)
-- Commands ``SwitchMode 11`` PushHoldMulti and ``SwitchMode 12`` PushHoldInverted (#7603)
+- Commands ``SwitchMode 11`` PushHoldMulti and ``SwitchMode 12`` PushHoldMultiInverted (#7603)
 - Command ``Buzzer -1`` for infinite mode and command ``Buzzer -2`` for following led mode (#7623)
 - Support for MI-BLE sensors using HM-10 Bluetooth 4.0 module by Christian Staars (#7683)
 - BootCount Reset Time as BCResetTime to ``Status 1``

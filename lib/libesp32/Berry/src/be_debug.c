@@ -111,7 +111,7 @@ void be_print_inst(binstruction ins, int pc)
         logbuf("%s\tK%d", opc2str(op), IGET_Bx(ins));
         break;
     case OP_CLOSE: case OP_LDNIL:
-        logbuf("%s\t%d", opc2str(op), IGET_RA(ins));
+        logbuf("%s\tR%d", opc2str(op), IGET_RA(ins));
         break;
     case OP_RAISE:
         logbuf("%s\t%d\t%c%d\t%c%d", opc2str(op), IGET_RA(ins),
