@@ -55,6 +55,7 @@ m = minimal, l = lite, t = tasmota, k = knx, s = sensors, i = ir, d = display
 | USE_KEELOQ            | - | - | - / - | - | - | - | - |
 | USE_SONOFF_D1         | - | - | x / - | x | - | - | - |
 | USE_SHELLY_DIMMER     | - | - | x / - | - | - | - | - |
+| USE_AC_ZERO_CROSS_DIMMER | - | - | x / x | x | x | x | x |
 |                       |   |   |       |   |   |   |   |
 | Feature or Sensor     | m | l | t     | k | s | i | d | Remarks
 | USE_LIGHT             | - | x | x / x | x | x | x | x |
