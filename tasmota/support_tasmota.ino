@@ -515,6 +515,7 @@ bool SendKey(uint32_t key, uint32_t device, uint32_t state)
 // state 6 = POWER_CLEAR = button released
 // state 7 = POWER_RELEASE = button released
 // state 9 = CLEAR_RETAIN = clear retain flag
+// state 10 = POWER_DELAYED = button released delayed
 
   char stopic[TOPSZ];
   char scommand[CMDSZ];
