@@ -15,6 +15,7 @@ extern int l_millis(bvm *vm);
 extern int l_timereached(bvm *vm);
 extern int l_rtc(bvm *vm);
 extern int l_time_dump(bvm *vm);
+extern int l_strftime(bvm *vm);
 extern int l_memory(bvm *vm);
 extern int l_wifi(bvm *vm);
 extern int l_eth(bvm *vm);
@@ -2216,6 +2217,7 @@ class be_class_tasmota (scope: global, name: Tasmota) {
     time_reached, func(l_timereached)
     rtc, func(l_rtc)
     time_dump, func(l_time_dump)
+    strftime, func(l_strftime)
     memory, func(l_memory)
     wifi, func(l_wifi)
     eth, func(l_eth)

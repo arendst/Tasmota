@@ -598,7 +598,8 @@ be_define_const_str(tolower, "tolower", 1042520049u, 0, 7, NULL);
 be_define_const_str(SYMBOL_UP, "SYMBOL_UP", 3886401511u, 0, 9, &be_const_str_lv_draw_mask_radius_param_cfg);
 be_define_const_str(lv_draw_mask_radius_param_cfg, "lv_draw_mask_radius_param_cfg", 3889386773u, 0, 29, &be_const_str_member);
 be_define_const_str(member, "member", 719708611u, 0, 6, &be_const_str_set);
-be_define_const_str(set, "set", 3324446467u, 0, 3, NULL);
+be_define_const_str(set, "set", 3324446467u, 0, 3, &be_const_str_strftime);
+be_define_const_str(strftime, "strftime", 187738851u, 0, 8, NULL);
 be_define_const_str(EPAPER29_CS, "EPAPER29_CS", 3916373594u, 0, 11, &be_const_str_SPI_MISO);
 be_define_const_str(SPI_MISO, "SPI_MISO", 150818010u, 0, 8, NULL);
 be_define_const_str(HIGH, "HIGH", 2066738941u, 0, 4, &be_const_str_MAX7219DIN);
@@ -992,6 +993,6 @@ static const bstring* const m_string_table[] = {
 
 static const struct bconststrtab m_const_string_table = {
     .size = 322,
-    .count = 644,
+    .count = 645,
     .table = m_string_table
 };
