@@ -534,18 +534,22 @@ bool ShdPacketProcess(void)
                 Energy.active_power[0] = wattage;
                 Energy.voltage[0] = voltage;
                 Energy.current[0] = current;
+/*
+                // This is duplicated code as it is already services by the Energy driver (xdrv_03_energy.ino)
                 Energy.apparent_power[0] = voltage * current;
+
                 if ((voltage * current) > wattage)
                     Energy.reactive_power[0] = sqrtf((voltage * current) * (voltage * current) - wattage * wattage);
                 else
                     Energy.reactive_power[0] = 0;
+
                 if (wattage > (voltage * current))
                     Energy.power_factor[0] = 1;
                 else if ((voltage * current) == 0)
                     Energy.power_factor[0] = 0;
                 else
                     Energy.power_factor[0] = wattage / (voltage * current);
-
+*/
                 if (Shd.last_power_check > 10 && Energy.active_power[0] > 0)
                 {
                     float kWhused = (float)Energy.active_power[0] * (Rtc.utc_time - Shd.last_power_check) / 36;
