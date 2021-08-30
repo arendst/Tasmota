@@ -599,6 +599,7 @@ extern const bcstring be_const_str_SYMBOL_UP;
 extern const bcstring be_const_str_lv_draw_mask_radius_param_cfg;
 extern const bcstring be_const_str_member;
 extern const bcstring be_const_str_set;
+extern const bcstring be_const_str_strftime;
 extern const bcstring be_const_str_EPAPER29_CS;
 extern const bcstring be_const_str_SPI_MISO;
 extern const bcstring be_const_str_HIGH;

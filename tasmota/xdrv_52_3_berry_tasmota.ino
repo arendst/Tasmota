@@ -279,6 +279,20 @@ extern "C" {
     be_raise(vm, kTypeError, nullptr);
   }
 
+  int32_t l_strftime(bvm *vm) {
+    int32_t argc = be_top(vm); // Get the number of arguments
+    if (argc == 3 && be_isstring(vm, 2) && be_isint(vm, 3)) {
+      const char * format = be_tostring(vm, 2);
+      time_t ts = be_toint(vm, 3);
+      struct tm *t = gmtime(&ts);
+      char s[64] = {0};
+      strftime(s, sizeof(s), format, t);
+      be_pushstring(vm, s);
+      be_return(vm);
+    }
+    be_raise(vm, kTypeError, nullptr);
+  }
+
   // Berry: tasmota.delay(timer:int) -> nil
   //
   int32_t l_delay(struct bvm *vm);
