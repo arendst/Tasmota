@@ -536,7 +536,7 @@ bool ShdPacketProcess(void)
                 Energy.current[0] = current;
                 Energy.apparent_power[0] = voltage * current;
                 if ((voltage * current) > wattage)
-                    Energy.reactive_power[0] = sqrt((voltage * current) * (voltage * current) - wattage * wattage);
+                    Energy.reactive_power[0] = sqrtf((voltage * current) * (voltage * current) - wattage * wattage);
                 else
                     Energy.reactive_power[0] = 0;
                 if (wattage > (voltage * current))
@@ -552,7 +552,7 @@ bool ShdPacketProcess(void)
 #ifdef SHELLY_DIMMER_DEBUG
                     AddLog(LOG_LEVEL_DEBUG, PSTR(SHD_LOGNAME "Adding %i mWh to todays usage from %lu to %lu"), (int)(kWhused * 10), Shd.last_power_check, Rtc.utc_time);
 #endif  // SHELLY_DIMMER_DEBUG
-                    Energy.kWhtoday += kWhused;
+                    Energy.kWhtoday_delta += kWhused;
                     EnergyUpdateToday();
                 }
                 Shd.last_power_check = Rtc.utc_time;
