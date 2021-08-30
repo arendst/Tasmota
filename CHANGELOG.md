@@ -22,6 +22,7 @@ All notable changes to this project will be documented in this file.
 - Wiegand support for keypad zero key in single key mode using ``SetOption124 1`` (#12960)
 - Hass and Tasmota discovery prefix topic notifications (#12972)
 - Unable to disable MusicSync mode on Sonoff L1 Lite regression from 9.3.0 (#12930)
+- Shelly Dimmer 2 Energy usage (#12815)
 
 ## [9.5.0.6] 20210820
 ### Added
