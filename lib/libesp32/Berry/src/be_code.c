@@ -251,7 +251,7 @@ static int newconst(bfuncinfo *finfo, bvalue *k)
 }
 
 /* Find constant by value and return constant number, or -1 if constant does not exist */
-/* The search is linear and limited to 100 elements for performance reasons */
+/* The search is linear and limited to BE_CONST_SEARCH_SIZE elements for performance reasons */
 static int findconst(bfuncinfo *finfo, bexpdesc *e)
 {
     int i, count = be_vector_count(&finfo->kvec);
@@ -260,7 +260,7 @@ static int findconst(bfuncinfo *finfo, bexpdesc *e)
      * so only search the constant table for the
      * previous value.
      **/
-    count = count < 100 ? count : 100;
+    count = count < BE_CONST_SEARCH_SIZE ? count : BE_CONST_SEARCH_SIZE;
     for (i = 0; i < count; ++i) {
         bvalue *k = be_vector_at(&finfo->kvec, i);
         switch (e->type) {
