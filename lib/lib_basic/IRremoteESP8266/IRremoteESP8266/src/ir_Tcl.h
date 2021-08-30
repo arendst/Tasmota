@@ -1,10 +1,11 @@
-// Copyright 2019 David Conran
+// Copyright 2019, 2021 David Conran
 
 /// @file
 /// @brief Support for TCL protocols.
 
 // Supports:
 //   Brand: Leberg,  Model: LBS-TOR07 A/C
+//   Brand: TCL,  Model: TAC-09CHSD/XA31I A/C
 
 #ifndef IR_TCL_H_
 #define IR_TCL_H_
@@ -23,12 +24,18 @@
 union Tcl112Protocol{
   uint8_t raw[kTcl112AcStateLength];  ///< The State in IR code form.
   struct {
-    // Byte 0~4
-    uint8_t pad0[5];
+    // Byte 0~2
+    uint8_t pad0[3];
+    // Byte 3
+    uint8_t MsgType :2;
+    uint8_t         :6;
+    // Byte 4
+    uint8_t       :8;
     // Byte 5
     uint8_t       :2;
     uint8_t Power :1;
-    uint8_t       :3;
+    uint8_t       :2;
+    uint8_t Quiet :1;
     uint8_t Light :1;
     uint8_t Econo :1;
     // Byte 6
@@ -83,6 +90,9 @@ const float   kTcl112AcTempMin    = 16.0;
 
 const uint8_t kTcl112AcSwingVOn =    0b111;
 const uint8_t kTcl112AcSwingVOff =   0b000;
+// MsgType
+const uint8_t kTcl112AcNormal  = 0b01;
+const uint8_t kTcl112AcSpecial = 0b10;
 
 // Classes
 /// Class for handling detailed TCL A/C messages.
@@ -129,11 +139,13 @@ class IRTcl112Ac {
   bool getSwingVertical(void) const;
   void setTurbo(const bool on);
   bool getTurbo(void) const;
+  void setQuiet(const bool on);
+  bool getQuiet(const bool def = false) const;
   static uint8_t convertMode(const stdAc::opmode_t mode);
   static uint8_t convertFan(const stdAc::fanspeed_t speed);
   static stdAc::opmode_t toCommonMode(const uint8_t mode);
   static stdAc::fanspeed_t toCommonFanSpeed(const uint8_t speed);
-  stdAc::state_t toCommon(void) const;
+  stdAc::state_t toCommon(const stdAc::state_t *prev = NULL) const;
   String toString(void) const;
 #ifndef UNIT_TEST
 
@@ -145,6 +157,9 @@ class IRTcl112Ac {
   /// @endcond
 #endif  // UNIT_TEST
   Tcl112Protocol _;
+  bool _quiet_prev;
+  bool _quiet;
+  bool _quiet_explictly_set;
   void checksum(const uint16_t length = kTcl112AcStateLength);
 };
 

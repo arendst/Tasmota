@@ -22,6 +22,8 @@
 //   Brand: Danby,  Model: DAC100BGUWDB (MIDEA)
 //   Brand: Danby,  Model: DAC120BGUWDB (MIDEA)
 //   Brand: Danby,  Model: R09C/BCGE remote (MIDEA)
+//   Brand: Trotec,  Model: TROTEC PAC 3900 X (MIDEA)
+//   Brand: Trotec,  Model: RG57H(B)/BGE remote (MIDEA)
 
 #ifndef IR_MIDEA_H_
 #define IR_MIDEA_H_

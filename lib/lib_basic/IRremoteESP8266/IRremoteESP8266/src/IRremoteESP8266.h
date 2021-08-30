@@ -53,7 +53,7 @@
 #endif  // UNIT_TEST
 
 // Library Version
-#define _IRREMOTEESP8266_VERSION_ "2.7.19"
+#define _IRREMOTEESP8266_VERSION_ "2.7.20"
 
 // Set the language & locale for the library. See the `locale` dir for options.
 #ifndef _IR_LOCALE_
@@ -209,6 +209,13 @@
 #define SEND_SANYO_AC          _IR_ENABLE_DEFAULT_
 #endif  // SEND_SANYO_AC
 
+#ifndef DECODE_SANYO_AC88
+#define DECODE_SANYO_AC88      _IR_ENABLE_DEFAULT_
+#endif  // DECODE_SANYO_AC88
+#ifndef SEND_SANYO_AC88
+#define SEND_SANYO_AC88        _IR_ENABLE_DEFAULT_
+#endif  // SEND_SANYO_AC88
+
 #ifndef DECODE_MITSUBISHI
 #define DECODE_MITSUBISHI      _IR_ENABLE_DEFAULT_
 #endif  // DECODE_MITSUBISHI
@@ -348,6 +355,13 @@
 #ifndef SEND_TROTEC
 #define SEND_TROTEC            _IR_ENABLE_DEFAULT_
 #endif  // SEND_TROTEC
+
+#ifndef DECODE_TROTEC_3550
+#define DECODE_TROTEC_3550     _IR_ENABLE_DEFAULT_
+#endif  // DECODE_TROTEC_3550
+#ifndef SEND_TROTEC_3550
+#define SEND_TROTEC_3550       _IR_ENABLE_DEFAULT_
+#endif  // SEND_TROTEC_3550
 
 #ifndef DECODE_NIKAI
 #define DECODE_NIKAI           _IR_ENABLE_DEFAULT_
@@ -769,6 +783,13 @@
 #define SEND_KELON          _IR_ENABLE_DEFAULT_
 #endif  // SEND_KELON
 
+#ifndef DECODE_BOSE
+#define DECODE_BOSE         _IR_ENABLE_DEFAULT_
+#endif  // DECODE_BOSE
+#ifndef SEND_BOSE
+#define SEND_BOSE           _IR_ENABLE_DEFAULT_
+#endif  // SEND_BOSE
+
 #if (DECODE_ARGO || DECODE_DAIKIN || DECODE_FUJITSU_AC || DECODE_GREE || \
      DECODE_KELVINATOR || DECODE_MITSUBISHI_AC || DECODE_TOSHIBA_AC || \
      DECODE_TROTEC || DECODE_HAIER_AC || DECODE_HITACHI_AC || \
@@ -782,7 +803,8 @@
      DECODE_MITSUBISHI112 || DECODE_HITACHI_AC424 || DECODE_HITACHI_AC3 || \
      DECODE_HITACHI_AC344 || DECODE_CORONA_AC || DECODE_SANYO_AC || \
      DECODE_VOLTAS || DECODE_MIRAGE || DECODE_HAIER_AC176 || \
-     DECODE_TEKNOPOINT || DECODE_KELON || \
+     DECODE_TEKNOPOINT || DECODE_KELON || DECODE_TROTEC_3550 || \
+     DECODE_SANYO_AC88 || \
      false)
   // Add any DECODE to the above if it uses result->state (see kStateSizeMax)
   // you might also want to add the protocol to hasACState function
@@ -926,8 +948,11 @@ enum decode_type_t {
   HAIER_AC176,
   TEKNOPOINT,
   KELON,
+  TROTEC_3550,
+  SANYO_AC88,  // 105
+  BOSE,
   // Add new entries before this one, and update it to point to the last entry.
-  kLastDecodeType = KELON,
+  kLastDecodeType = BOSE,
 };
 
 // Message lengths & required repeat values
@@ -1113,6 +1138,9 @@ const uint16_t kSamsungAcExtendedBits = kSamsungAcExtendedStateLength * 8;
 const uint16_t kSamsungAcDefaultRepeat = kNoRepeat;
 const uint16_t kSanyoAcStateLength = 9;
 const uint16_t kSanyoAcBits = kSanyoAcStateLength * 8;
+const uint16_t kSanyoAc88StateLength = 11;
+const uint16_t kSanyoAc88Bits = kSanyoAc88StateLength * 8;
+const uint16_t kSanyoAc88MinRepeat = 2;
 const uint16_t kSanyoSA8650BBits = 12;
 const uint16_t kSanyoLC7461AddressBits = 13;
 const uint16_t kSanyoLC7461CommandBits = 8;
@@ -1166,6 +1194,7 @@ const uint16_t kVoltasStateLength = 10;
 const uint16_t kMilesTag2ShotBits = 14;
 const uint16_t kMilesTag2MsgBits = 24;
 const uint16_t kMilesMinRepeat = 0;
+const uint16_t kBoseBits = 16;
 
 
 // Legacy defines. (Deprecated)

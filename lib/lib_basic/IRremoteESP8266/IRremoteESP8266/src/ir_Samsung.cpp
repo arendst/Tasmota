@@ -7,6 +7,7 @@
 /// @see https://github.com/crankyoldgit/IRremoteESP8266/issues/621
 /// @see https://github.com/crankyoldgit/IRremoteESP8266/issues/1062
 /// @see http://elektrolab.wz.cz/katalog/samsung_protocol.pdf
+/// @see https://github.com/crankyoldgit/IRremoteESP8266/issues/1538 (Checksum)
 
 #include "ir_Samsung.h"
 #include <algorithm>
@@ -279,8 +280,8 @@ IRSamsungAc::IRSamsungAc(const uint16_t pin, const bool inverted,
 /// @param[in] initialPower Set the initial power state. True, on. False, off.
 void IRSamsungAc::stateReset(const bool forcepower, const bool initialPower) {
   static const uint8_t kReset[kSamsungAcExtendedStateLength] = {
-      0x02, 0x92, 0x0F, 0x00, 0x00, 0x00, 0xF0, 0x01, 0x02, 0xAE, 0x71, 0x00,
-      0x15, 0xF0};
+      0x02, 0x92, 0x0F, 0x00, 0x00, 0x00, 0xF0,
+      0x01, 0x02, 0xAE, 0x71, 0x00, 0x15, 0xF0};
   std::memcpy(_.raw, kReset, kSamsungAcExtendedStateLength);
   _forcepower = forcepower;
   _lastsentpowerstate = initialPower;
@@ -290,23 +291,31 @@ void IRSamsungAc::stateReset(const bool forcepower, const bool initialPower) {
 /// Set up hardware to be able to send a message.
 void IRSamsungAc::begin(void) { _irsend.begin(); }
 
-/// Calculate the checksum for a given state.
-/// @param[in] state The array to calc the checksum of.
-/// @param[in] length The length/size of the array.
+/// Get the existing checksum for a given state section.
+/// @param[in] section The array to extract the checksum from.
+/// @return The existing checksum value.
+/// @see https://github.com/crankyoldgit/IRremoteESP8266/issues/1538#issuecomment-894645947
+uint8_t IRSamsungAc::getSectionChecksum(const uint8_t *section) {
+  return ((GETBITS8(*(section + 2), kLowNibble, kNibbleSize) << kNibbleSize) +
+          GETBITS8(*(section + 1), kHighNibble, kNibbleSize));
+}
+
+/// Calculate the checksum for a given state section.
+/// @param[in] section The array to calc the checksum of.
 /// @return The calculated checksum value.
-uint8_t IRSamsungAc::calcChecksum(const uint8_t state[],
-                                  const uint16_t length) {
+/// @see https://github.com/crankyoldgit/IRremoteESP8266/issues/1538#issuecomment-894645947
+uint8_t IRSamsungAc::calcSectionChecksum(const uint8_t *section) {
   uint8_t sum = 0;
-  // Safety check so we don't go outside the array.
-  if (length < 7) return 255;
-  // Shamelessly inspired by:
-  //   https://github.com/adafruit/Raw-IR-decoder-for-Arduino/pull/3/files
-  // Count most of the '1' bits after the checksum location.
-  sum += countBits(state[length - 7], 8);
-  sum -= countBits(GETBITS8(state[length - 6], kLowNibble, kNibbleSize), 8);
-  sum += countBits(GETBITS8(state[length - 5], 1, 7), 8);
-  sum += countBits(state + length - 4, 3);
-  return GETBITS8(28 - sum, kLowNibble, kNibbleSize);
+
+  sum += countBits(*section, 8);  // Include the entire first byte
+  // The lower half of the second byte.
+  sum += countBits(GETBITS8(*(section + 1), kLowNibble, kNibbleSize), 8);
+  // The upper half of the third byte.
+  sum += countBits(GETBITS8(*(section + 2), kHighNibble, kNibbleSize), 8);
+  // The next 4 bytes.
+  sum += countBits(section + 3, 4);
+  // Bitwise invert the result.
+  return sum ^ UINT8_MAX;
 }
 
 /// Verify the checksum is valid for a given state.
@@ -314,22 +323,29 @@ uint8_t IRSamsungAc::calcChecksum(const uint8_t state[],
 /// @param[in] length The length/size of the array.
 /// @return true, if the state has a valid checksum. Otherwise, false.
 bool IRSamsungAc::validChecksum(const uint8_t state[], const uint16_t length) {
-  if (length < kSamsungAcStateLength)
-    return true;  // No checksum to compare with. Assume okay.
-  uint8_t offset = 0;
-  if (length >= kSamsungAcExtendedStateLength) offset = 7;
-  return (GETBITS8(state[length - 6], kHighNibble, kNibbleSize) ==
-          IRSamsungAc::calcChecksum(state, length)) &&
-         (GETBITS8(state[length - (13 + offset)], kHighNibble, kNibbleSize) ==
-          IRSamsungAc::calcChecksum(state, length - (7 + offset)));
+  bool result = true;
+  const uint16_t maxlength =
+      (length > kSamsungAcExtendedStateLength) ? kSamsungAcExtendedStateLength
+                                               : length;
+  for (uint16_t offset = 0;
+       offset + kSamsungAcSectionLength <= maxlength;
+       offset += kSamsungAcSectionLength)
+    result &= (getSectionChecksum(state + offset) ==
+               calcSectionChecksum(state + offset));
+  return result;
 }
 
 /// Update the checksum for the internal state.
-/// @param[in] length The length/size of the internal array to checksum.
-void IRSamsungAc::checksum(uint16_t length) {
-  if (length < 13) return;
-  _.Sum2 = calcChecksum(_.raw, length);
-  _.Sum1 = calcChecksum(_.raw, length - 7);
+void IRSamsungAc::checksum(void) {
+  uint8_t sectionsum = calcSectionChecksum(_.raw);
+  _.Sum1Upper = GETBITS8(sectionsum, kHighNibble, kNibbleSize);
+  _.Sum1Lower = GETBITS8(sectionsum, kLowNibble, kNibbleSize);
+  sectionsum = calcSectionChecksum(_.raw + kSamsungAcSectionLength);
+  _.Sum2Upper = GETBITS8(sectionsum, kHighNibble, kNibbleSize);
+  _.Sum2Lower = GETBITS8(sectionsum, kLowNibble, kNibbleSize);
+  sectionsum = calcSectionChecksum(_.raw + kSamsungAcSectionLength * 2);
+  _.Sum3Upper = GETBITS8(sectionsum, kHighNibble, kNibbleSize);
+  _.Sum3Lower = GETBITS8(sectionsum, kLowNibble, kNibbleSize);
 }
 
 #if SEND_SAMSUNG_AC
@@ -339,18 +355,14 @@ void IRSamsungAc::checksum(uint16_t length) {
 /// @note Use for most function/mode/settings changes to the unit.
 ///   i.e. When the device is already running.
 void IRSamsungAc::send(const uint16_t repeat, const bool calcchecksum) {
-  if (calcchecksum) checksum();
-  // Do we need to send a the special power on/off message?
-  if (getPower() != _lastsentpowerstate || _forcepower) {
-    _forcepower = false;  // It will now been sent, so clear the flag if set.
-    if (getPower()) {
-      sendOn(repeat);
-    } else {
-      sendOff(repeat);
-      return;  // No point sending anything else if we are turning the unit off.
-    }
+  // Do we need to send a the special power on/off message? i.e. An Extended Msg
+  if (getPower() != _lastsentpowerstate || _forcepower) {  // We do.
+    sendExtended(repeat, calcchecksum);
+    _forcepower = false;  // It has now been sent, so clear the flag if set.
+  } else {  // No, it's just a normal message.
+    if (calcchecksum) checksum();
+    _irsend.sendSamsungAC(_.raw, kSamsungAcStateLength, repeat);
   }
-  _irsend.sendSamsungAC(_.raw, kSamsungAcStateLength, repeat);
 }
 
 /// Send the extended current internal state as an IR message.
@@ -360,20 +372,24 @@ void IRSamsungAc::send(const uint16_t repeat, const bool calcchecksum) {
 /// Samsung A/C requires an extended length message when you want to
 /// change the power operating mode of the A/C unit.
 void IRSamsungAc::sendExtended(const uint16_t repeat, const bool calcchecksum) {
+  static const uint8_t extended_middle_section[kSamsungAcSectionLength] = {
+      0x01, 0xD2, 0x0F, 0x00, 0x00, 0x00, 0x00};
   if (calcchecksum) checksum();
-  uint8_t extended_state[kSamsungAcExtendedStateLength] = {
-      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-      0x01, 0xD2, 0x0F, 0x00, 0x00, 0x00, 0x00,
-      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-  // Copy/convert the internal state to an extended state.
-  for (uint16_t i = 0; i < kSamsungAcSectionLength; i++)
-    extended_state[i] = _.raw[i];
-  for (uint16_t i = kSamsungAcSectionLength; i < kSamsungAcStateLength; i++)
-    extended_state[i + kSamsungAcSectionLength] = _.raw[i];
-  // extended_state[8] seems special. This is a guess on how to calculate it.
-  extended_state[8] = (extended_state[1] & 0x9F) | 0x40;
+  // Copy/convert the internal state to an extended state by
+  // copying the second section to the third section, and inserting the extended
+  // middle (second) section.
+  std::memcpy(_.raw + 2 * kSamsungAcSectionLength,
+              _.raw + kSamsungAcSectionLength,
+              kSamsungAcSectionLength);
+  std::memcpy(_.raw + kSamsungAcSectionLength, extended_middle_section,
+              kSamsungAcSectionLength);
   // Send it.
-  _irsend.sendSamsungAC(extended_state, kSamsungAcExtendedStateLength, repeat);
+  _irsend.sendSamsungAC(_.raw, kSamsungAcExtendedStateLength, repeat);
+  // Now revert it by copying the third section over the second section.
+  std::memcpy(_.raw + kSamsungAcSectionLength,
+              _.raw + 2* kSamsungAcSectionLength,
+              kSamsungAcSectionLength);
+  _lastsentpowerstate = getPower();  // Remember the last power state sent.
 }
 
 /// Send the special extended "On" message as the library can't seem to
@@ -381,7 +397,7 @@ void IRSamsungAc::sendExtended(const uint16_t repeat, const bool calcchecksum) {
 /// @param[in] repeat Nr. of times the message will be repeated.
 /// @see https://github.com/crankyoldgit/IRremoteESP8266/issues/604#issuecomment-475020036
 void IRSamsungAc::sendOn(const uint16_t repeat) {
-  const uint8_t extended_state[21] = {
+  const uint8_t extended_state[kSamsungAcExtendedStateLength] = {
       0x02, 0x92, 0x0F, 0x00, 0x00, 0x00, 0xF0,
       0x01, 0xD2, 0x0F, 0x00, 0x00, 0x00, 0x00,
       0x01, 0xE2, 0xFE, 0x71, 0x80, 0x11, 0xF0};
@@ -394,7 +410,7 @@ void IRSamsungAc::sendOn(const uint16_t repeat) {
 /// @param[in] repeat Nr. of times the message will be repeated.
 /// @see https://github.com/crankyoldgit/IRremoteESP8266/issues/604#issuecomment-475020036
 void IRSamsungAc::sendOff(const uint16_t repeat) {
-  const uint8_t extended_state[21] = {
+  const uint8_t extended_state[kSamsungAcExtendedStateLength] = {
       0x02, 0xB2, 0x0F, 0x00, 0x00, 0x00, 0xC0,
       0x01, 0xD2, 0x0F, 0x00, 0x00, 0x00, 0x00,
       0x01, 0x02, 0xFF, 0x71, 0x80, 0x11, 0xC0};

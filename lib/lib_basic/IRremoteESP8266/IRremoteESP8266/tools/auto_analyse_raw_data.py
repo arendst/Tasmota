@@ -1,9 +1,9 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 """Attempt an automatic analysis of IRremoteESP8266's Raw data output.
    Makes suggestions on key values and tried to break down the message
    into likely chunks."""
 #
-# Copyright 2018 David Conran
+# Copyright 2018-2021 David Conran
 import argparse
 import sys
 
@@ -303,9 +303,10 @@ def convert_rawdata(data_str):
   for timing in [x.strip() for x in data_str.split(',')]:
     try:
       results.append(int(timing))
-    except ValueError:
+    except ValueError as non_numeric:
       raise ValueError(
-          "Raw Data contains a non-numeric value of '%s'." % timing)
+          "Raw Data contains a non-numeric value of '%s'." %
+          timing) from non_numeric
   return results
 
 
@@ -723,7 +724,7 @@ def get_rawdata(arg_options):
   if arg_options.stdin:
     return sys.stdin.read()
   if arg_options.file:
-    with open(arg_options.file) as input_file:
+    with open(arg_options.file, encoding="utf8") as input_file:
       return input_file.read()
   else:
     return arg_options.rawdata

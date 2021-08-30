@@ -548,9 +548,9 @@ stdAc::fanspeed_t IRGreeAC::toCommonFanSpeed(const uint8_t speed) {
   }
 }
 
-/// Convert a stdAc::swingv_t enum into it's native setting.
-/// @param[in] pos The enum to be converted.
-/// @return The native equivalent of the enum.
+/// Convert a native Vertical Swing into its stdAc equivalent.
+/// @param[in] pos The native setting to be converted.
+/// @return The stdAc equivalent of the native setting.
 stdAc::swingv_t IRGreeAC::toCommonSwingV(const uint8_t pos) {
   switch (pos) {
     case kGreeSwingUp: return stdAc::swingv_t::kHighest;

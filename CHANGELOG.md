@@ -16,6 +16,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 - Shelly EM template needs to use GPIO ADE7953_IRQ_2
+- IRremoteESP8266 library from v2.7.19 to v2.7.20
 
 ### Fixed
 - WDT reset on shutters with stepper motors during deceleration (#12849)

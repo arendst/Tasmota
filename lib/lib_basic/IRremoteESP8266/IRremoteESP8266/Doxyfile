@@ -13,3 +13,4 @@ GENERATE_LATEX         = NO
 ENABLE_PREPROCESSING   = NO
 QUIET                  = YES
 WARN_NO_PARAMDOC       = YES
+WARN_AS_ERROR          = YES
