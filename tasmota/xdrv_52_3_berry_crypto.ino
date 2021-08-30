@@ -146,50 +146,73 @@ extern "C" {
     } while (0);
     be_raise(vm, kTypeError, nullptr);
   }
+}
 
-//   // `Md5.update(content:bytes()) -> nil`
-//   //
-//   // Add raw bytes to the MD5 calculation
-//   int32_t m_md5_update(struct bvm *vm);
-//   int32_t m_md5_update(struct bvm *vm) {
-//     int32_t argc = be_top(vm); // Get the number of arguments
-//     if (argc >= 2 && be_isinstance(vm, 2)) {
-//       do {
-//         be_getglobal(vm, "bytes"); /* get the bytes class */ /* TODO eventually replace with be_getbuiltin */
-//         if (!be_isderived(vm, 2)) break;
-//         size_t length = 0;
-//         const void * bytes = be_tobytes(vm, 2, &length);
-//         if (!bytes) break;
+/*********************************************************************************************\
+ * EC C25519 class
+ * 
+\*********************************************************************************************/
+#define BR_EC25519_IMPL  br_ec_c25519_m15  // BearSSL implementation for Curve 25519
 
-//         be_getmember(vm, 1, ".p");
-//         struct MD5Context * ctx;
-//         ctx = (struct MD5Context *) be_tocomptr(vm, -1);
-//         if (!ctx) break;
+extern "C" {
+  // crypto.EC_C25519().public_key(private_key:bytes(32)) -> bytes(32)
+  // Computes the public key from a completely random private key of 32 bytes
+  int32_t m_ec_c25519_pubkey(bvm *vm);
+  int32_t m_ec_c25519_pubkey(bvm *vm) {
+    int32_t argc = be_top(vm); // Get the number of arguments
+    if (argc >= 2 && be_isbytes(vm, 2)) {
+      size_t buf_len = 0;
+      const uint8_t * buf = (const uint8_t*) be_tobytes(vm, 2, &buf_len);
+      if (buf_len == 32) {
+        /* create the private key structure */
+        uint8_t sk[32];
+        for (int32_t i=0; i<32; i++) {
+          sk[i] = buf[31-i];
+        }
+        br_ec_private_key br_sk = { BR_EC_curve25519, sk, 32 };
 
-//         if (length > 0) {
-//           MD5Update(ctx, (const uint8_t*) bytes, length);
-//         }
-//         be_return_nil(vm);
-//         // success
-//       } while (0);
-//     }
-//     be_raise(vm, kTypeError, nullptr);
-//   }
+        uint8_t pk_buf[32]; /* EC 25519 is 32 bytes */
+        size_t ret = br_ec_compute_pub(&BR_EC25519_IMPL, nullptr, pk_buf, &br_sk);
+        if (ret == 32) {
+          be_pushbytes(vm, pk_buf, ret);
+          be_return(vm);
+        }
+      }
+      be_raise(vm, "value_error", "invalid input");
+    }
+    be_raise(vm, kTypeError, nullptr);
+  }
 
-//   // `Md5.update(content:bytes()) -> nil`
-//   //
-//   // Add raw bytes to the MD5 calculation
-//   int32_t m_md5_finish(struct bvm *vm);
-//   int32_t m_md5_finish(struct bvm *vm) {
-//     be_getmember(vm, 1, ".p");
-//     struct MD5Context * ctx;
-//     ctx = (struct MD5Context *) be_tocomptr(vm, -1);
+  // crypto.EC_C25519().shared_key(my_private_key:bytes(32), their_public_key:bytes(32)) -> bytes(32)
+  // Computes the shared pre-key. Normally this shared pre-key is hashed with another algorithm.
+  int32_t m_ec_c25519_sharedkey(bvm *vm);
+  int32_t m_ec_c25519_sharedkey(bvm *vm) {
+    int32_t argc = be_top(vm); // Get the number of arguments
+    if (argc >= 3 && be_isbytes(vm, 2) && be_isbytes(vm, 3)) {
+      size_t sk_len = 0;
+      const uint8_t * sk_buf = (const uint8_t*) be_tobytes(vm, 2, &sk_len);
+      uint8_t sk[32];
+      for (int32_t i=0; i<32; i++) {
+        sk[i] = sk_buf[31-i];
+      }
+      size_t pk_len = 0;
+      const uint8_t * pk_const = (const uint8_t*) be_tobytes(vm, 3, &pk_len);
+      uint8_t pk[32];
+      memmove(pk, pk_const, sizeof(pk));  /* copy to a non-const variable to receive the result */
 
-//     uint8_t output[16];
-//     MD5Final(output, ctx);
-//     be_pushbytes(vm, output, sizeof(output));
-//     be_return(vm);
-//   }
+      if (sk_len == 32 && pk_len == 32) {
+        if (BR_EC25519_IMPL.mul(pk, pk_len, sk, sk_len, BR_EC_curve25519)) {
+          /* return value (xoff is zero so no offset) */
+          be_pushbytes(vm, pk, pk_len);
+          be_return(vm);
+        } else {
+          be_raise(vm, "internal_error", "internal bearssl error in 519_m15.mul()");
+        }
+      }
+      be_raise(vm, "value_error", "invalid input");
+    }
+    be_raise(vm, kTypeError, nullptr);
+  }
 }
 
 #endif // USE_ALEXA_AVS
