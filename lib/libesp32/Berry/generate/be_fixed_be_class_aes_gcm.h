@@ -18,5 +18,5 @@ BE_EXPORT_VARIABLE be_define_const_class(
     be_class_aes_gcm,
     2,
     NULL,
-    GCM
+    AES_GCM
 );
