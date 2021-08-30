@@ -93,9 +93,9 @@ def getallacs():
     match = IRSEND_FN_RE.match(path.name)
     if match:
       rawmodels = getenums(path)
-      for acprotocol in rawmodels:
+      for acprotocol, acmodels in rawmodels.items():
         models = set()
-        for model in rawmodels[acprotocol]:
+        for model in acmodels:
           model = model.upper()
           model = model.replace("K{}".format(acprotocol.upper()), "")
           if model and model not in EXCLUDED_PROTOCOLS:
@@ -173,7 +173,7 @@ def getalldevices():
     protocol = match.group(1)
     for brand, model in supports:
       protocolbrand = (protocol, brand)
-      pbset = sets.allcodes.get(protocolbrand, list())
+      pbset = sets.allcodes.get(protocolbrand, [])
       if model in pbset:
         print("Model %s is duplicated for %s, %s" % (model, protocol, brand))
       sets.allcodes[protocolbrand] = pbset + [model]

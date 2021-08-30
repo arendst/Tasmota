@@ -39,8 +39,9 @@ const PROGMEM char* kMouldStr = D_STR_MOULD;  ///< "Mould"
 const PROGMEM char* kCleanStr = D_STR_CLEAN;  ///< "Clean"
 const PROGMEM char* kPurifyStr = D_STR_PURIFY;  ///< "Purify"
 const PROGMEM char* kTimerStr = D_STR_TIMER;  ///< "Timer"
-const PROGMEM char* kOnTimerStr = D_STR_ONTIMER;  ///< "OnTimer"
-const PROGMEM char* kOffTimerStr = D_STR_OFFTIMER;  ///< "OffTimer"
+const PROGMEM char* kOnTimerStr = D_STR_ONTIMER;  ///< "On Timer"
+const PROGMEM char* kOffTimerStr = D_STR_OFFTIMER;  ///< "Off Timer"
+const PROGMEM char* kTimerModeStr = D_STR_TIMERMODE;  ///< "Timer Mode"
 const PROGMEM char* kClockStr = D_STR_CLOCK;  ///< "Clock"
 const PROGMEM char* kCommandStr = D_STR_COMMAND;  ///< "Command"
 const PROGMEM char* kXFanStr = D_STR_XFAN;  ///< "XFan"
@@ -99,6 +100,7 @@ const PROGMEM char* k6thSenseStr = D_STR_6THSENSE;  ///< "6th Sense"
 const PROGMEM char* kTypeStr = D_STR_TYPE;  ///< "Type"
 const PROGMEM char* kSpecialStr = D_STR_SPECIAL;  ///< "Special"
 const PROGMEM char* kIdStr = D_STR_ID;  ///< "Id" / Device Identifier
+const PROGMEM char* kVaneStr = D_STR_VANE;  ///< "Vane"
 
 const PROGMEM char* kAutoStr = D_STR_AUTO;  ///< "Auto"
 const PROGMEM char* kAutomaticStr = D_STR_AUTOMATIC;  ///< "Automatic"
@@ -288,5 +290,8 @@ const PROGMEM char *kAllProtocolNamesStr =
     D_STR_HAIER_AC176 "\x0"
     D_STR_TEKNOPOINT "\x0"
     D_STR_KELON "\x0"
+    D_STR_TROTEC_3550 "\x0"
+    D_STR_SANYO_AC88 "\x0"
+    D_STR_BOSE "\x0"
     ///< New protocol strings should be added just above this line.
     "\x0";  ///< This string requires double null termination.

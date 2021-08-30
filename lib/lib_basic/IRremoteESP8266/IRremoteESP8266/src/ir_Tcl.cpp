@@ -1,4 +1,4 @@
-// Copyright 2019 David Conran
+// Copyright 2019, 2021 David Conran
 
 /// @file
 /// @brief Support for TCL protocols.
@@ -53,6 +53,26 @@ void IRTcl112Ac::begin(void) { _irsend.begin(); }
 /// Send the current internal state as an IR message.
 /// @param[in] repeat Nr. of times the message will be repeated.
 void IRTcl112Ac::send(const uint16_t repeat) {
+  uint8_t save[kTcl112AcStateLength];
+  // Do we need to send the special "quiet" message?
+  if (_quiet != _quiet_prev) {
+    // Backup the current state.
+    std::memcpy(save, _.raw, kTcl112AcStateLength);
+    const uint8_t quiet_off[kTcl112AcStateLength] = {
+        0x23, 0xCB, 0x26, 0x02, 0x00, 0x40, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x65};
+    // Use a known good quiet/mute off/type 2 state for the time being.
+    // Ref: https://github.com/crankyoldgit/IRremoteESP8266/issues/1528#issuecomment-876989044
+    setRaw(quiet_off);
+    setQuiet(_quiet);
+    // Send it.
+    _irsend.sendTcl112Ac(getRaw(), kTcl112AcStateLength, repeat);
+    // Now it's been sent, update the quiet previous state.
+    _quiet_prev = _quiet;
+    // Restore the old state.
+    setRaw(save);
+  }
+  // Send the normal (type 1) state.
   _irsend.sendTcl112Ac(getRaw(), kTcl112AcStateLength, repeat);
 }
 #endif  // SEND_TCL112AC
@@ -62,10 +82,15 @@ void IRTcl112Ac::send(const uint16_t repeat) {
 /// @param[in] length The length/size of the array.
 /// @return The calculated checksum value.
 uint8_t IRTcl112Ac::calcChecksum(uint8_t state[], const uint16_t length) {
-  if (length)
-    return sumBytes(state, length - 1);
-  else
+  if (length) {
+    if (length > 4 && state[3] == 0x02) {  // Special nessage?
+      return sumBytes(state, length - 1, 0xF);  // Checksum needs an offset.
+    } else {
+      return sumBytes(state, length - 1);
+    }
+  } else {
     return 0;
+  }
 }
 
 /// Calculate & set the checksum for the current internal state of the remote.
@@ -91,6 +116,9 @@ void IRTcl112Ac::stateReset(void) {
       0x23, 0xCB, 0x26, 0x01, 0x00, 0x24, 0x03, 0x07, 0x40, 0x00, 0x00, 0x00,
       0x00, 0x03};
   std::memcpy(_.raw, reset, kTcl112AcStateLength);
+  _quiet = false;
+  _quiet_prev = false;
+  _quiet_explictly_set = false;
 }
 
 /// Get a PTR to the internal state/code for this protocol.
@@ -115,21 +143,15 @@ void IRTcl112Ac::off(void) { setPower(false); }
 
 /// Change the power setting.
 /// @param[in] on true, the setting is on. false, the setting is off.
-void IRTcl112Ac::setPower(const bool on) {
-  _.Power = on;
-}
+void IRTcl112Ac::setPower(const bool on) { _.Power = on; }
 
 /// Get the value of the current power setting.
 /// @return true, the setting is on. false, the setting is off.
-bool IRTcl112Ac::getPower(void) const {
-  return _.Power;
-}
+bool IRTcl112Ac::getPower(void) const { return _.Power; }
 
 /// Get the operating mode setting of the A/C.
 /// @return The current operating mode setting.
-uint8_t IRTcl112Ac::getMode(void) const {
-  return _.Mode;
-}
+uint8_t IRTcl112Ac::getMode(void) const { return _.Mode; }
 
 /// Set the operating mode of the A/C.
 /// @param[in] mode The desired operating mode.
@@ -193,57 +215,39 @@ void IRTcl112Ac::setFan(const uint8_t speed) {
 
 /// Get the current fan speed setting.
 /// @return The current fan speed/mode.
-uint8_t IRTcl112Ac::getFan(void) const {
-  return _.Fan;
-}
+uint8_t IRTcl112Ac::getFan(void) const { return _.Fan; }
 
 /// Set the economy setting of the A/C.
 /// @param[in] on true, the setting is on. false, the setting is off.
-void IRTcl112Ac::setEcono(const bool on) {
-  _.Econo = on;
-}
+void IRTcl112Ac::setEcono(const bool on) { _.Econo = on; }
 
 /// Get the economy setting of the A/C.
 /// @return true, the setting is on. false, the setting is off.
-bool IRTcl112Ac::getEcono(void) const {
-  return  _.Econo;
-}
+bool IRTcl112Ac::getEcono(void) const { return  _.Econo; }
 
 /// Set the Health (Filter) setting of the A/C.
 /// @param[in] on true, the setting is on. false, the setting is off.
-void IRTcl112Ac::setHealth(const bool on) {
-  _.Health = on;
-}
+void IRTcl112Ac::setHealth(const bool on) { _.Health = on; }
 
 /// Get the Health (Filter) setting of the A/C.
 /// @return true, the setting is on. false, the setting is off.
-bool IRTcl112Ac::getHealth(void) const {
-  return _.Health;
-}
+bool IRTcl112Ac::getHealth(void) const { return _.Health; }
 
 /// Set the Light (LED/Display) setting of the A/C.
 /// @param[in] on true, the setting is on. false, the setting is off.
-void IRTcl112Ac::setLight(const bool on) {
-  _.Light = !on;  // Cleared when on.
-}
+void IRTcl112Ac::setLight(const bool on) { _.Light = !on; }  // Cleared when on.
 
 /// Get the Light (LED/Display) setting of the A/C.
 /// @return true, the setting is on. false, the setting is off.
-bool IRTcl112Ac::getLight(void) const {
-  return !_.Light;
-}
+bool IRTcl112Ac::getLight(void) const { return !_.Light; }
 
 /// Set the horizontal swing setting of the A/C.
 /// @param[in] on true, the setting is on. false, the setting is off.
-void IRTcl112Ac::setSwingHorizontal(const bool on) {
-  _.SwingH = on;
-}
+void IRTcl112Ac::setSwingHorizontal(const bool on) { _.SwingH = on; }
 
 /// Get the horizontal swing setting of the A/C.
 /// @return true, the setting is on. false, the setting is off.
-bool IRTcl112Ac::getSwingHorizontal(void) const {
-  return _.SwingH;
-}
+bool IRTcl112Ac::getSwingHorizontal(void) const { return _.SwingH; }
 
 /// Set the vertical swing setting of the A/C.
 /// @param[in] on true, the setting is on. false, the setting is off.
@@ -253,9 +257,7 @@ void IRTcl112Ac::setSwingVertical(const bool on) {
 
 /// Get the vertical swing setting of the A/C.
 /// @return true, the setting is on. false, the setting is off.
-bool IRTcl112Ac::getSwingVertical(void) const {
-  return _.SwingV;
-}
+bool IRTcl112Ac::getSwingVertical(void) const { return _.SwingV; }
 
 /// Set the Turbo setting of the A/C.
 /// @param[in] on true, the setting is on. false, the setting is off.
@@ -269,8 +271,24 @@ void IRTcl112Ac::setTurbo(const bool on) {
 
 /// Get the Turbo setting of the A/C.
 /// @return true, the setting is on. false, the setting is off.
-bool IRTcl112Ac::getTurbo(void) const {
-  return _.Turbo;
+bool IRTcl112Ac::getTurbo(void) const { return _.Turbo; }
+
+/// Set the Quiet setting of the A/C.
+/// @param[in] on true, the setting is on. false, the setting is off.
+void IRTcl112Ac::setQuiet(const bool on) {
+  _quiet_explictly_set = true;
+  _quiet = on;
+  if (_.MsgType == kTcl112AcSpecial) _.Quiet = on;
+}
+
+/// Get the Quiet setting of the A/C.
+/// @param[in] def The default value to use if we are not sure.
+/// @return true, the setting is on. false, the setting is off.
+bool IRTcl112Ac::getQuiet(const bool def) const {
+  if (_.MsgType == kTcl112AcSpecial)
+    return _.Quiet;
+  else
+    return _quiet_explictly_set ? _quiet : def;
 }
 
 /// Convert a stdAc::opmode_t enum into its native mode.
@@ -326,26 +344,30 @@ stdAc::fanspeed_t IRTcl112Ac::toCommonFanSpeed(const uint8_t spd) {
 }
 
 /// Convert the current internal state into its stdAc::state_t equivalent.
+/// @param[in] prev Ptr to the previous state if required.
 /// @return The stdAc equivalent of the native settings.
-stdAc::state_t IRTcl112Ac::toCommon(void) const {
+stdAc::state_t IRTcl112Ac::toCommon(const stdAc::state_t *prev) const {
   stdAc::state_t result;
+  // Start with the previous state if given it.
+  if (prev != NULL) result = *prev;
   result.protocol = decode_type_t::TCL112AC;
   result.model = -1;  // Not supported.
-  result.power = _.Power;
-  result.mode = toCommonMode(_.Mode);
-  result.celsius = true;
-  result.degrees = getTemp();
-  result.fanspeed = toCommonFanSpeed(_.Fan);
-  result.swingv = _.SwingV ? stdAc::swingv_t::kAuto :
-                                             stdAc::swingv_t::kOff;
-  result.swingh = _.SwingH ? stdAc::swingh_t::kAuto :
-                                               stdAc::swingh_t::kOff;
-  result.turbo = _.Turbo;
-  result.light = getLight();
-  result.filter = _.Health;
-  result.econo = _.Econo;
+  result.quiet = getQuiet(result.quiet);
+  // The rest only get updated if it is a "normal" message.
+  if (_.MsgType == kTcl112AcNormal) {
+    result.power = _.Power;
+    result.mode = toCommonMode(_.Mode);
+    result.celsius = true;
+    result.degrees = getTemp();
+    result.fanspeed = toCommonFanSpeed(_.Fan);
+    result.swingv = _.SwingV ? stdAc::swingv_t::kAuto : stdAc::swingv_t::kOff;
+    result.swingh = _.SwingH ? stdAc::swingh_t::kAuto : stdAc::swingh_t::kOff;
+    result.turbo = _.Turbo;
+    result.filter = _.Health;
+    result.econo = _.Econo;
+    result.light = getLight();
+  }
   // Not supported.
-  result.quiet = false;
   result.clean = false;
   result.beep = false;
   result.sleep = -1;
@@ -357,19 +379,28 @@ stdAc::state_t IRTcl112Ac::toCommon(void) const {
 /// @return A human readable string.
 String IRTcl112Ac::toString(void) const {
   String result = "";
-  result.reserve(140);  // Reserve some heap for the string to reduce fragging.
-  result += addBoolToString(_.Power, kPowerStr, false);
-  result += addModeToString(_.Mode, kTcl112AcAuto, kTcl112AcCool,
-                            kTcl112AcHeat, kTcl112AcDry, kTcl112AcFan);
-  result += addTempFloatToString(getTemp());
-  result += addFanToString(_.Fan, kTcl112AcFanHigh, kTcl112AcFanLow,
-                           kTcl112AcFanAuto, kTcl112AcFanAuto, kTcl112AcFanMed);
-  result += addBoolToString(_.Econo, kEconoStr);
-  result += addBoolToString(_.Health, kHealthStr);
-  result += addBoolToString(getLight(), kLightStr);
-  result += addBoolToString(_.Turbo, kTurboStr);
-  result += addBoolToString(_.SwingH, kSwingHStr);
-  result += addBoolToString(_.SwingV, kSwingVStr);
+  result.reserve(150);  // Reserve some heap for the string to reduce fragging.
+  result += addIntToString(_.MsgType, D_STR_TYPE, false);
+  switch (_.MsgType) {
+    case kTcl112AcNormal:
+      result += addBoolToString(_.Power, kPowerStr);
+      result += addModeToString(_.Mode, kTcl112AcAuto, kTcl112AcCool,
+                                kTcl112AcHeat, kTcl112AcDry, kTcl112AcFan);
+      result += addTempFloatToString(getTemp());
+      result += addFanToString(_.Fan, kTcl112AcFanHigh, kTcl112AcFanLow,
+                               kTcl112AcFanAuto, kTcl112AcFanAuto,
+                               kTcl112AcFanMed);
+      result += addBoolToString(_.Econo, kEconoStr);
+      result += addBoolToString(_.Health, kHealthStr);
+      result += addBoolToString(_.Turbo, kTurboStr);
+      result += addBoolToString(_.SwingH, kSwingHStr);
+      result += addBoolToString(_.SwingV, kSwingVStr);
+      result += addBoolToString(getLight(), kLightStr);
+      break;
+    case kTcl112AcSpecial:
+      result += addBoolToString(_.Quiet, kQuietStr);
+      break;
+  }
   return result;
 }
 

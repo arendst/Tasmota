@@ -176,6 +176,8 @@ enum whirlpool_ac_remote_model_t {
 enum lg_ac_remote_model_t {
   GE6711AR2853M = 1,  // (1) LG 28-bit Protocol (default)
   AKB75215403,        // (2) LG2 28-bit Protocol
+  AKB74955603,        // (3) LG2 28-bit Protocol variant
+  AKB73757604,        // (4) LG2 Variant of AKB74955603
 };
 
 
@@ -317,6 +319,11 @@ class IRsend {
                    const uint16_t nbytes = kSanyoAcStateLength,
                    const uint16_t repeat = kNoRepeat);
 #endif  // SEND_SANYO_AC
+#if SEND_SANYO_AC88
+  void sendSanyoAc88(const uint8_t *data,
+                     const uint16_t nbytes = kSanyoAc88StateLength,
+                     const uint16_t repeat = kSanyoAc88MinRepeat);
+#endif  // SEND_SANYO_AC88
 #if SEND_DISH
   // sendDISH() should typically be called with repeat=3 as DISH devices
   // expect the code to be sent at least 4 times. (code + 3 repeats = 4 codes)
@@ -483,7 +490,12 @@ class IRsend {
   void sendTrotec(const unsigned char data[],
                   const uint16_t nbytes = kTrotecStateLength,
                   const uint16_t repeat = kTrotecDefaultRepeat);
-#endif
+#endif  // SEND_TROTEC
+#if SEND_TROTEC_3550
+  void sendTrotec3550(const unsigned char data[],
+                      const uint16_t nbytes = kTrotecStateLength,
+                      const uint16_t repeat = kTrotecDefaultRepeat);
+#endif  // SEND_TROTEC_3550
 #if SEND_NIKAI
   void sendNikai(uint64_t data, uint16_t nbits = kNikaiBits,
                  uint16_t repeat = kNoRepeat);
@@ -721,6 +733,10 @@ class IRsend {
   void sendKelon(const uint64_t data, const uint16_t nbits = kKelonBits,
                  const uint16_t repeat = kNoRepeat);
 #endif  // SEND_KELON
+#if SEND_BOSE
+  void sendBose(const uint64_t data, const uint16_t nbits = kBoseBits,
+                const uint16_t repeat = kNoRepeat);
+#endif  // SEND_BOSE
 
  protected:
 #ifdef UNIT_TEST

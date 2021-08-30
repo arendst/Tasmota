@@ -90,6 +90,9 @@
 #ifndef D_STR_OFFTIMER
 #define D_STR_OFFTIMER D_STR_OFF " " D_STR_TIMER  // Set `D_STR_OFF` first!
 #endif  // D_STR_OFFTIMER
+#ifndef D_STR_TIMERMODE
+#define D_STR_TIMERMODE D_STR_TIMER " " D_STR_MODE  // Set `D_STR_MODE` first!
+#endif  // D_STR_TIMERMODE
 #ifndef D_STR_CLOCK
 #define D_STR_CLOCK "Clock"
 #endif  // D_STR_CLOCK
@@ -279,6 +282,9 @@
 #ifndef D_STR_ID
 #define D_STR_ID "Id"
 #endif  // D_STR_ID
+#ifndef D_STR_VANE
+#define D_STR_VANE "Vane"
+#endif  // D_STR_VANE
 
 #ifndef D_STR_AUTO
 #define D_STR_AUTO "Auto"
@@ -502,6 +508,9 @@
 #ifndef D_STR_ARGO
 #define D_STR_ARGO "ARGO"
 #endif  // D_STR_ARGO
+#ifndef D_STR_BOSE
+#define D_STR_BOSE "BOSE"
+#endif  // D_STR_BOSE
 #ifndef D_STR_CARRIER_AC
 #define D_STR_CARRIER_AC "CARRIER_AC"
 #endif  // D_STR_CARRIER_AC
@@ -739,6 +748,9 @@
 #ifndef D_STR_SANYO_AC
 #define D_STR_SANYO_AC "SANYO_AC"
 #endif  // D_STR_SANYO_AC
+#ifndef D_STR_SANYO_AC88
+#define D_STR_SANYO_AC88 "SANYO_AC88"
+#endif  // D_STR_SANYO_AC88
 #ifndef D_STR_SANYO_LC7461
 #define D_STR_SANYO_LC7461 "SANYO_LC7461"
 #endif  // D_STR_SANYO_LC7461
@@ -781,6 +793,9 @@
 #ifndef D_STR_TROTEC
 #define D_STR_TROTEC "TROTEC"
 #endif  // D_STR_TROTEC
+#ifndef D_STR_TROTEC_3550
+#define D_STR_TROTEC_3550 D_STR_TROTEC "_3550"
+#endif  // D_STR_TROTEC_3550
 #ifndef D_STR_TRUMA
 #define D_STR_TRUMA "TRUMA"
 #endif  // D_STR_TRUMA
