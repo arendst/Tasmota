@@ -50,6 +50,12 @@ bool VindriktningReadData(void) {
   if (!VindriktningSerial->available()) {
     return false;
   }
+  while ((VindriktningSerial->peek() != 0x16) && VindriktningSerial->available()) {
+    VindriktningSerial->read();
+  }
+  if (VindriktningSerial->available() < VINDRIKTNING_DATASET_SIZE) {
+    return false;
+  }
 
   uint8_t buffer[VINDRIKTNING_DATASET_SIZE];
   VindriktningSerial->readBytes(buffer, VINDRIKTNING_DATASET_SIZE);
@@ -67,6 +73,7 @@ bool VindriktningReadData(void) {
   }
 
   // sample data:
+  //  0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19
   // 16 11 0b 00 00 00 0c 00 00 03 cb 00 00 00 0c 01 00 00 00 e7
   //               |pm2_5|     |pm1_0|     |pm10 |        | CRC |
   Vindriktning.pm2_5 = (buffer[5] << 8) | buffer[6];
