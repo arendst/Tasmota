@@ -113,6 +113,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - Berry ESP32 partition manager [#12465](https://github.com/arendst/Tasmota/issues/12465)
 - Berry ESP32 support for I2S audio mp3 playback
 - Berry ESP32 support for vararg
+- Berry ESP32 support for Curve 25519 EC crypto
 - Support for AM2320 Temperature and Humidity Sensor by Lars Wessels [#12485](https://github.com/arendst/Tasmota/issues/12485)
 - Rule event support as JSON payload [#12496](https://github.com/arendst/Tasmota/issues/12496)
 - MQTT minimum password length restriction in GUI [#12553](https://github.com/arendst/Tasmota/issues/12553)
@@ -129,7 +130,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 ### Changed
 - Move firmware binaries to https://github.com/arendst/Tasmota-firmware/tree/main/release-firmware
 - ESP32 core library from v1.0.6 to v1.0.7.3
-- IRremoteESP8266 library from v2.7.18 to v2.7.19
+- IRremoteESP8266 library from v2.7.18 to v2.7.20
 - NeoPixelBus library from v2.6.3 to v2.6.7
 - Message ``Upload buffer miscompare`` into ``Not enough space``
 - ESP32 Ethernet Phy Type information to IDF v3+
