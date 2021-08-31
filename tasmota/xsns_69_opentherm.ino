@@ -237,7 +237,7 @@ void sns_opentherm_stat(bool json)
     {
         ResponseAppend_P(PSTR(",\"OPENTHERM\":{"));
         ResponseAppend_P(PSTR("\"conn\":\"%s\","), statusStr);
-        ResponseAppend_P(PSTR("\"settings\":%d,"), Settings->ot_flags);
+        ResponseAppend_P(PSTR("\"settings\":%d"), Settings->ot_flags);
         sns_opentherm_dump_telemetry();
         ResponseJsonEnd();
 #ifdef USE_WEBSERVER

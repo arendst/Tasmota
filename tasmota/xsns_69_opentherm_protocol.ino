@@ -549,7 +549,6 @@ void sns_opentherm_process_success_response(struct OT_BOILER_STATUS_T *boilerSta
 
 void sns_opentherm_dump_telemetry()
 {
-    bool add_coma = false;
     for (int i = 0; i < SNS_OT_COMMANDS_COUNT; ++i)
     {
         struct OpenThermCommandT *cmd = &sns_opentherm_commands[i];
@@ -558,11 +557,8 @@ void sns_opentherm_dump_telemetry()
             continue;
         }
 
-        ResponseAppend_P(PSTR("%s\"%s\":"), add_coma ? "," : "", cmd->m_command_name);
-
+        ResponseAppend_P(PSTR(",\"%s\":"), cmd->m_command_name);
         cmd->m_ot_appent_telemetry(cmd);
-
-        add_coma = true;
     }
 }
 
