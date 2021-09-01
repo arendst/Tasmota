@@ -5,6 +5,8 @@ All notable changes to this project will be documented in this file.
 
 ## [9.5.0.8]
 
+### Fixed
+- Fixed crash when PSRAM is absent and ``BOARD_HAS_PSRAM`` set
 
 ## [9.5.0.7] 20210901
 ### Added
