@@ -98,7 +98,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 
 [Complete list](BUILDS.md) of available feature and sensors.
 
-## Changelog v9.5.0.7
+## Changelog v9.5.0.8
 ### Added
 - Release of [Tasmota WebInstaller](https://arendst.github.io/Tasmota-firmware/)
 - Command ``SetOption2 1`` to enable display of global temperature/humidity/pressure info to JSON sensor message
