@@ -25,6 +25,7 @@ All notable changes to this project will be documented in this file.
 - Hass and Tasmota discovery prefix topic notifications (#12972)
 - Unable to disable MusicSync mode on Sonoff L1 Lite regression from 9.3.0 (#12930)
 - Shelly Dimmer 2 Energy usage (#12815)
+- Sonoff L1 (lite) smoother color transitions
 
 ## [9.5.0.6] 20210820
 ### Added

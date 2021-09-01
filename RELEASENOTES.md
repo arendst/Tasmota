@@ -157,6 +157,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - ESP32 core v2.0.0 setting hostname
 - ESP32-C3 settings layout for configuration backup and restore
 - ESP32-Solo OTA upgrade
+- Sonoff L1 (lite) smoother color transitions
 - DDS238-2 wrong reactive power value [#12283](https://github.com/arendst/Tasmota/issues/12283)
 - ESP32 Webcam add boundary marker before sending mjpeg image [#12376](https://github.com/arendst/Tasmota/issues/12376)
 - NO VALID JSON regression from may 4th [#12440](https://github.com/arendst/Tasmota/issues/12440)
