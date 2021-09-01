@@ -3124,7 +3124,7 @@ int WebGetConfig(char *buffer)
   RemoveSpace(buffer);                        // host = |[192.168.178.86:80,admin:joker|
   String url = ResolveToken(buffer);
 
-  AddLog(LOG_LEVEL_DEBUG, PSTR("WEB: Config Uri |%s|"), url.c_str());
+  DEBUG_CORE_LOG(PSTR("WEB: Config Uri |%s|"), url.c_str());
 
   WiFiClient http_client;
   HTTPClient http;
@@ -3147,17 +3147,17 @@ int WebGetConfig(char *buffer)
             delayMicroseconds(1);
           }
           if (len) {
-            AddLog(LOG_LEVEL_DEBUG, PSTR("WEB: Connection lost"));
+            DEBUG_CORE_LOG(PSTR("WEB: Connection lost"));
             status = WEBCMND_CONNECTION_LOST;
           } else if (SettingsConfigRestore()) {
             AddLog(LOG_LEVEL_INFO, PSTR("WEB: Settings applied, restarting"));
             TasmotaGlobal.restart_flag = 2;  // Always restart to re-enable disabled features during update
           } else {
-            AddLog(LOG_LEVEL_DEBUG, PSTR("WEB: Settings file invalid"));
+            DEBUG_CORE_LOG(PSTR("WEB: Settings file invalid"));
             status = WEBCMND_INVALID_FILE;
           }
         } else {
-          AddLog(LOG_LEVEL_DEBUG, PSTR("WEB: Memory error (%d) or invalid file length (%d)"), settings_buffer, len);
+          DEBUG_CORE_LOG(PSTR("WEB: Memory error (%d) or invalid file length (%d)"), settings_buffer, len);
           status = WEBCMND_MEMORY_ERROR;
         }
       } else {
@@ -3165,7 +3165,7 @@ int WebGetConfig(char *buffer)
         status = (http_code == HTTP_CODE_NOT_FOUND) ? WEBCMND_FILE_NOT_FOUND : WEBCMND_OTHER_HTTP_ERROR;
       }
     } else {
-      AddLog(LOG_LEVEL_DEBUG, PSTR("WEB: Connection failed"));
+      DEBUG_CORE_LOG(PSTR("WEB: Connection failed"));
       status = 2;                           // Connection failed
     }
     http.end();                             // Clean up connection data
