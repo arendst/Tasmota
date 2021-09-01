@@ -67,3 +67,27 @@ assert(type(a.h) == 'function')
 assert_attribute_error("a.g(1,2)")
 assert(a.h(1) == 'instance')
 # A.h(1) - error
+
+#- test static initializers -#
+class A
+    static a = 1, b, c = 3.5, d = 42, e = "foo", f = [1], g = {}
+    var aa,ab
+end
+
+assert(A.a == 1)
+assert(A.b == nil)
+assert(A.c == 3.5)
+assert(A.d == 42)
+assert(A.e == "foo")
+assert(A.f == [1])
+
+a = A()
+assert(a.a == 1)
+assert(a.b == nil)
+assert(a.c == 3.5)
+assert(a.d == 42)
+assert(a.e == "foo")
+assert(a.f == [1])
+assert(a.g == A.g)
+assert(a.aa == nil)
+assert(a.ab == nil)
