@@ -120,16 +120,8 @@ void VindriktningInit(void) {
 }
 
 #ifdef USE_WEBSERVER
-#ifdef VINDRIKTNING_SHOW_PM1
-const char HTTP_VINDRIKTNING_SNS_PM1[] PROGMEM =
-  "{s}VINDRIKTNING " D_ENVIRONMENTAL_CONCENTRATION " 1 " D_UNIT_MICROMETER "{m}%d " D_UNIT_MICROGRAM_PER_CUBIC_METER "{e}";      // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
-#endif  // VINDRIKTNING_SHOW_PM1
-const char HTTP_VINDRIKTNING_SNS_PM2_5[] PROGMEM =
-  "{s}VINDRIKTNING " D_ENVIRONMENTAL_CONCENTRATION " 2.5 " D_UNIT_MICROMETER "{m}%d " D_UNIT_MICROGRAM_PER_CUBIC_METER "{e}";      // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
-#ifdef VINDRIKTNING_SHOW_PM10
-const char HTTP_VINDRIKTNING_SNS_PM10[] PROGMEM =
-  "{s}VINDRIKTNING " D_ENVIRONMENTAL_CONCENTRATION " 10 " D_UNIT_MICROMETER "{m}%d " D_UNIT_MICROGRAM_PER_CUBIC_METER "{e}";      // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
-#endif  // VINDRIKTNING_SHOW_PM10
+const char HTTP_VINDRIKTNING_SNS[] PROGMEM =
+  "{s}VINDRIKTNING " D_ENVIRONMENTAL_CONCENTRATION " %s " D_UNIT_MICROMETER "{m}%d " D_UNIT_MICROGRAM_PER_CUBIC_METER "{e}";      // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 #endif  // USE_WEBSERVER
 
 void VindriktningShow(bool json) {
@@ -158,11 +150,11 @@ void VindriktningShow(bool json) {
 #ifdef USE_WEBSERVER
     } else {
 #ifdef VINDRIKTNING_SHOW_PM1
-        WSContentSend_PD(HTTP_VINDRIKTNING_SNS_PM1, Vindriktning.pm1_0);
+        WSContentSend_PD(HTTP_VINDRIKTNING_SNS, "1", Vindriktning.pm1_0);
 #endif  // VINDRIKTNING_SHOW_PM1
-        WSContentSend_PD(HTTP_VINDRIKTNING_SNS_PM2_5, Vindriktning.pm2_5);
+        WSContentSend_PD(HTTP_VINDRIKTNING_SNS, "2.5", Vindriktning.pm2_5);
 #ifdef VINDRIKTNING_SHOW_PM10
-        WSContentSend_PD(HTTP_VINDRIKTNING_SNS_PM10, Vindriktning.pm10);
+        WSContentSend_PD(HTTP_VINDRIKTNING_SNS, "10", Vindriktning.pm10);
 #endif  // VINDRIKTNING_SHOW_PM10
 #endif  // USE_WEBSERVER
     }
