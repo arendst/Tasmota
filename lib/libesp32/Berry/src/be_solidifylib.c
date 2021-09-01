@@ -18,6 +18,7 @@
 #include <stdio.h>
 
 #if BE_USE_SOLIDIFY_MODULE
+#include <inttypes.h>
 
 #ifndef INST_BUF_SIZE
 #define INST_BUF_SIZE   96
@@ -60,7 +61,7 @@ static void m_solidify_bvalue(bvm *vm, bvalue * value)
 #if BE_USE_SINGLE_FLOAT
         logfmt("be_const_real_hex(0x%08X)", (uint32_t) var_toobj(value));
 #else
-        logfmt("be_const_real_hex(0x%016llX)", (uint64_t) var_toobj(value));
+        logfmt("be_const_real_hex(0x%016" PRIx64 ")", (uint64_t)var_toobj(value));
 #endif
         break;
     case BE_STRING:

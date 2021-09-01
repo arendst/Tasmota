@@ -123,6 +123,8 @@
     _vm->cf->status = PRIM_FUNC; \
 }
 
+static void prep_closure(bvm *vm, bvalue *reg, int argc, int mode);
+
 static void attribute_error(bvm *vm, const char *t, bvalue *b, bvalue *c)
 {
     const char *attr = var_isstr(c) ? str(var_tostr(c)) : be_vtype2str(c);
@@ -1011,29 +1013,31 @@ newframe: /* a new call frame */
                 goto recall; /* call '()' method */
             }
             case BE_CLOSURE: {
-                bvalue *v, *end;
-                bproto *proto = var2cl(var)->proto;  /* get proto for closure */
-                push_closure(vm, var, proto->nstack, mode);  /* prepare stack for closure */
+                // bvalue *v, *end;
+                // bproto *proto = var2cl(var)->proto;  /* get proto for closure */
+                // push_closure(vm, var, proto->nstack, mode);  /* prepare stack for closure */
+                // reg = vm->reg;  /* `reg` has changed, now new base register */
+                // v = reg + argc;  /* end of provided arguments */
+                // end = reg + proto->argc;  /* end of expected arguments */
+                // for (; v < end; ++v) {  /* set all not provided arguments to nil */
+                //     var_setnil(v);
+                // }
+                // if (proto->varg) {  /* there are vararg at the last argument, build the list */
+                //     /* code below uses mostly low-level calls for performance */
+                //     be_stack_require(vm, argc + 2);   /* make sure we don't overflow the stack */
+                //     bvalue *top_save = vm->top;  /* save original stack, we need fresh slots to create the 'list' instance */
+                //     vm->top = v;  /* move top of stack right after last argument */
+                //     be_newobject(vm, "list");  /* this creates 2 objects on stack: list instance, BE_LIST object */
+                //     blist *list = var_toobj(vm->top-1);  /* get low-level BE_LIST structure */
+                //     v = reg + proto->argc - 1;  /* last argument */
+                //     for (; v < reg + argc; v++) {
+                //         be_list_push(vm, list, v); /* push all varargs into list */       
+                //     }
+                //     *(reg + proto->argc - 1) = *(vm->top-2);  /* change the vararg argument to now contain the list instance */
+                //     vm->top = top_save;  /* restore top of stack pointer */
+                // }
+                prep_closure(vm, var, argc, mode);
                 reg = vm->reg;  /* `reg` has changed, now new base register */
-                v = reg + argc;  /* end of provided arguments */
-                end = reg + proto->argc;  /* end of expected arguments */
-                for (; v < end; ++v) {  /* set all not provided arguments to nil */
-                    var_setnil(v);
-                }
-                if (proto->varg) {  /* there are vararg at the last argument, build the list */
-                    /* code below uses mostly low-level calls for performance */
-                    be_stack_require(vm, argc + 2);   /* make sure we don't overflow the stack */
-                    bvalue *top_save = vm->top;  /* save original stack, we need fresh slots to create the 'list' instance */
-                    vm->top = v;  /* move top of stack right after last argument */
-                    be_newobject(vm, "list");  /* this creates 2 objects on stack: list instance, BE_LIST object */
-                    blist *list = var_toobj(vm->top-1);  /* get low-level BE_LIST structure */
-                    v = reg + proto->argc - 1;  /* last argument */
-                    for (; v < reg + argc; v++) {
-                        be_list_push(vm, list, v); /* push all varargs into list */       
-                    }
-                    *(reg + proto->argc - 1) = *(vm->top-2);  /* change the vararg argument to now contain the list instance */
-                    vm->top = top_save;  /* restore top of stack pointer */
-                }
                 goto newframe;  /* continue execution of the closure */
             }
             case BE_NTVCLOS: {
@@ -1094,16 +1098,43 @@ newframe: /* a new call frame */
     }
 }
 
-static void do_closure(bvm *vm, bvalue *reg, int argc)
+static void prep_closure(bvm *vm, bvalue *reg, int argc, int mode)
 {
     bvalue *v, *end;
     bproto *proto = var2cl(reg)->proto;
-    push_closure(vm, reg, proto->nstack, 0);
+    push_closure(vm, reg, proto->nstack, mode);
     v = vm->reg + argc;
     end = vm->reg + proto->argc;
     for (; v <= end; ++v) {
         var_setnil(v);
     }
+    if (proto->varg) {  /* there are vararg at the last argument, build the list */
+        /* code below uses mostly low-level calls for performance */
+        be_stack_require(vm, argc + 2);   /* make sure we don't overflow the stack */
+        bvalue *top_save = vm->top;  /* save original stack, we need fresh slots to create the 'list' instance */
+        vm->top = v;  /* move top of stack right after last argument */
+        be_newobject(vm, "list");  /* this creates 2 objects on stack: list instance, BE_LIST object */
+        blist *list = var_toobj(vm->top-1);  /* get low-level BE_LIST structure */
+        v = vm->reg + proto->argc - 1;  /* last argument */
+        for (; v < vm->reg + argc; v++) {
+            be_list_push(vm, list, v); /* push all varargs into list */       
+        }
+        *(vm->reg + proto->argc - 1) = *(vm->top-2);  /* change the vararg argument to now contain the list instance */
+        vm->top = top_save;  /* restore top of stack pointer */
+    }
+}
+
+static void do_closure(bvm *vm, bvalue *reg, int argc)
+{
+    // bvalue *v, *end;
+    // bproto *proto = var2cl(reg)->proto;
+    // push_closure(vm, reg, proto->nstack, 0);
+    // v = vm->reg + argc;
+    // end = vm->reg + proto->argc;
+    // for (; v <= end; ++v) {
+    //     var_setnil(v);
+    // }
+    prep_closure(vm, reg, argc, 0);
     vm_exec(vm);
 }
 

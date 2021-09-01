@@ -306,48 +306,48 @@ static uint8_t buf_get1(buf_impl* buf, int offset)
     return 0;
 }
 
-static void buf_set1(buf_impl* buf, const size_t offset, const uint8_t data)
+static void buf_set1(buf_impl* buf, size_t offset, uint8_t data)
 {
     if (offset < buf->len) {
         buf->buf[offset] = data;
     }
 }
 
-static void buf_set2_le(buf_impl* buf, const size_t offset, const uint16_t data)
+static void buf_set2_le(buf_impl* buf, size_t offset, uint16_t data)
 {
-    if ((offset >= 0) && (offset < buf->len - 1)) {
+    if (offset + 1 < buf->len) {
         buf->buf[offset] = data & 0xFF;
         buf->buf[offset+1] = data >> 8;
     }
 }
 
-static void buf_set2_be(buf_impl* buf, const size_t offset, const uint16_t data)
+static void buf_set2_be(buf_impl* buf, size_t offset, uint16_t data)
 {
-    if ((offset >= 0) && (offset < buf->len - 1)) {
+    if (offset + 1 < buf->len) {
         buf->buf[offset+1] = data & 0xFF;
         buf->buf[offset] = data >> 8;
     }
 }
 
-static uint16_t buf_get2_le(buf_impl* buf, int offset)
+static uint16_t buf_get2_le(buf_impl* buf, size_t offset)
 {
-    if ((offset >= 0) && (offset < buf->len - 1)) {
+    if (offset + 1 < buf->len) {
         return buf->buf[offset] | (buf->buf[offset+1] << 8);
     }
     return 0;
 }
 
-static uint16_t buf_get2_be(buf_impl* buf, int offset)
+static uint16_t buf_get2_be(buf_impl* buf, size_t offset)
 {
-    if (offset < buf->len - 1) {
+    if (offset + 1 < buf->len) {
         return buf->buf[offset+1] | (buf->buf[offset] << 8);
     }
     return 0;
 }
 
-static void buf_set4_le(buf_impl* buf, const size_t offset, const uint32_t data)
+static void buf_set4_le(buf_impl* buf, size_t offset, uint32_t data)
 {
-    if ((offset >= 0) && (offset < buf->len - 3)) {
+    if (offset + 3 < buf->len) {
         buf->buf[offset] = data & 0xFF;
         buf->buf[offset+1] = (data >> 8) & 0xFF;
         buf->buf[offset+2] = (data >> 16) & 0xFF;
@@ -355,9 +355,9 @@ static void buf_set4_le(buf_impl* buf, const size_t offset, const uint32_t data)
     }
 }
 
-static void buf_set4_be(buf_impl* buf, const size_t offset, const uint32_t data)
+static void buf_set4_be(buf_impl* buf, size_t offset, uint32_t data)
 {
-    if ((offset >= 0) && (offset < buf->len - 3)) {
+    if (offset + 3 < buf->len) {
         buf->buf[offset+3] = data & 0xFF;
         buf->buf[offset+2] = (data >> 8) & 0xFF;
         buf->buf[offset+1] = (data >> 16) & 0xFF;
@@ -365,18 +365,18 @@ static void buf_set4_be(buf_impl* buf, const size_t offset, const uint32_t data)
     }
 }
 
-static uint32_t buf_get4_le(buf_impl* buf, int offset)
+static uint32_t buf_get4_le(buf_impl* buf, size_t offset)
 {
-    if ((offset >= 0) && (offset < buf->len - 3)) {
+    if (offset + 3 < buf->len) {
         return buf->buf[offset] | (buf->buf[offset+1] << 8) |
             (buf->buf[offset+2] << 16) | (buf->buf[offset+3] << 24);
     }
     return 0;
 }
 
-static uint32_t buf_get4_be(buf_impl* buf, int offset)
+static uint32_t buf_get4_be(buf_impl* buf, size_t offset)
 {
-    if (offset < buf->len - 3) {
+    if (offset + 3 < buf->len) {
         return buf->buf[offset+3] | (buf->buf[offset+2] << 8) |
             (buf->buf[offset+1] << 16) | (buf->buf[offset] << 24);
     }
