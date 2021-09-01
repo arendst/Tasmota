@@ -284,7 +284,7 @@ void WiFiClientSecure_light::stop(void) {
 
 void WiFiClientSecure_light::flush(void) {
   (void) _run_until(BR_SSL_SENDAPP);
-  WiFiClient::flush();
+  // don't call flush on ESP32 - its behavior is different and empties the receive buffer - which we don't want
 }
 #endif
 
