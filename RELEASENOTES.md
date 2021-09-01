@@ -101,6 +101,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 ## Changelog v9.5.0.7
 ### Added
 - Release of [Tasmota WebInstaller](https://arendst.github.io/Tasmota-firmware/)
+- Command ``SetOption2 1`` to enable display of global temperature/humidity/pressure info to JSON sensor message
 - Command ``SetOption127 1`` to force Wi-Fi in no-sleep mode even if ``Sleep 0`` is not enabled
 - Command ``SetOption128 0|1`` web referer check disabling HTTP API commands if set to 0. Default set to 1 for backward compatibility [#12828](https://github.com/arendst/Tasmota/issues/12828)
 - Command ``SetSensor1..127 0|1`` to globally disable individual sensor driver

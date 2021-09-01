@@ -844,7 +844,7 @@ bool MqttShowSensor(void)
   XsnsCall(FUNC_JSON_APPEND);
   XdrvCall(FUNC_JSON_APPEND);
 
-  if (TasmotaGlobal.global_update) {
+  if (TasmotaGlobal.global_update && Settings->flag.mqtt_add_global_info) {
     if ((TasmotaGlobal.humidity > 0) || !isnan(TasmotaGlobal.temperature_celsius) || (TasmotaGlobal.pressure_hpa != 0)) {
       uint32_t add_comma = 0;
       ResponseAppend_P(PSTR(",\"Global\":{"));

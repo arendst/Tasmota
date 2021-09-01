@@ -52,7 +52,7 @@ a_on_off = ["OFF","ON "]
 a_setoption = [[
     "(Settings) Save power state (1) and use after restart",
     "(Button) Control button single press (1) or multipress (0)",
-    "(Not used) Add units to JSON status messages",
+    "(MQTT) Add global temperature/humidity/pressure info to JSON sensor message",
     "(MQTT) Enable (1)",
     "(MQTT) Switch between RESULT (0) or COMMAND (1)",
     "(MQTT) Retain on Power",
@@ -288,7 +288,7 @@ else:
         obj = json.load(fp)
 
 def StartDecode():
-    print ("\n*** decode-status.py v20210826 by Theo Arends and Jacek Ziolkowski ***")
+    print ("\n*** decode-status.py v20210901 by Theo Arends and Jacek Ziolkowski ***")
 
 #    print("Decoding\n{}".format(obj))
 
