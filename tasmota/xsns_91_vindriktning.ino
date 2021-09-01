@@ -27,7 +27,8 @@
 
 #define XSNS_91                   91
 
-//#define XSNS_91_XTRA_INFO              // Display unverified data for PM1.0 and PM10
+//#define VINDRIKTNING_SHOW_PM1         // Display undocumented/supposed PM1.0 values
+//#define VINDRIKTNING_SHOW_PM10        // Display undocumented/supposed PM10 values
 
 #include <TasmotaSerial.h>
 
@@ -36,11 +37,13 @@
 TasmotaSerial *VindriktningSerial;
 
 struct VINDRIKTNING {
-  uint16_t pm2_5 = 0;
-#ifdef XSNS_91_XTRA_INFO
+#ifdef VINDRIKTNING_SHOW_PM1
   uint16_t pm1_0 = 0;
+#endif  // VINDRIKTNING_SHOW_PM1
+  uint16_t pm2_5 = 0;
+#ifdef VINDRIKTNING_SHOW_PM10
   uint16_t pm10 = 0;
-#endif  // XSNS_91_XTRA_INFO
+#endif  // VINDRIKTNING_SHOW_PM10
   uint8_t type = 1;
   uint8_t valid = 0;
   bool discovery_triggered = false;
@@ -77,10 +80,12 @@ bool VindriktningReadData(void) {
   // 16 11 0b 00 00 00 0c 00 00 03 cb 00 00 00 0c 01 00 00 00 e7
   //               |pm2_5|     |pm1_0|     |pm10 |        | CRC |
   Vindriktning.pm2_5 = (buffer[5] << 8) | buffer[6];
-#ifdef XSNS_91_XTRA_INFO
+#ifdef VINDRIKTNING_SHOW_PM1
   Vindriktning.pm1_0 = (buffer[9] << 8) | buffer[10];
+#endif  // VINDRIKTNING_SHOW_PM1
+#ifdef VINDRIKTNING_SHOW_PM10
   Vindriktning.pm10 = (buffer[13] << 8) | buffer[14];
-#endif  // XSNS_91_XTRA_INFO
+#endif  // VINDRIKTNING_SHOW_PM10
 
   if (!Vindriktning.discovery_triggered) {
     TasmotaGlobal.discovery_counter = 1;      // force TasDiscovery()
@@ -114,59 +119,55 @@ void VindriktningInit(void) {
   }
 }
 
-#ifdef XSNS_91_XTRA_INFO
-
 #ifdef USE_WEBSERVER
-const char HTTP_VINDRIKTNING_SNS[] PROGMEM =
-  "{s}VINDRIKTNING " D_ENVIRONMENTAL_CONCENTRATION " 1.0 " D_UNIT_MICROMETER "{m}%d " D_UNIT_MICROGRAM_PER_CUBIC_METER "{e}"
-  "{s}VINDRIKTNING " D_ENVIRONMENTAL_CONCENTRATION " 2.5 " D_UNIT_MICROMETER "{m}%d " D_UNIT_MICROGRAM_PER_CUBIC_METER "{e}"
+#ifdef VINDRIKTNING_SHOW_PM1
+const char HTTP_VINDRIKTNING_SNS_PM1[] PROGMEM =
+  "{s}VINDRIKTNING " D_ENVIRONMENTAL_CONCENTRATION " 1 " D_UNIT_MICROMETER "{m}%d " D_UNIT_MICROGRAM_PER_CUBIC_METER "{e}";      // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
+#endif  // VINDRIKTNING_SHOW_PM1
+const char HTTP_VINDRIKTNING_SNS_PM2_5[] PROGMEM =
+  "{s}VINDRIKTNING " D_ENVIRONMENTAL_CONCENTRATION " 2.5 " D_UNIT_MICROMETER "{m}%d " D_UNIT_MICROGRAM_PER_CUBIC_METER "{e}";      // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
+#ifdef VINDRIKTNING_SHOW_PM10
+const char HTTP_VINDRIKTNING_SNS_PM10[] PROGMEM =
   "{s}VINDRIKTNING " D_ENVIRONMENTAL_CONCENTRATION " 10 " D_UNIT_MICROMETER "{m}%d " D_UNIT_MICROGRAM_PER_CUBIC_METER "{e}";      // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
+#endif  // VINDRIKTNING_SHOW_PM10
 #endif  // USE_WEBSERVER
 
 void VindriktningShow(bool json) {
   if (Vindriktning.valid) {
     if (json) {
-      ResponseAppend_P(PSTR(",\"VINDRIKTNING\":{\"PM1\":%d,\"PM2.5\":%d,\"PM10\":%d}"), Vindriktning.pm1_0, Vindriktning.pm2_5, Vindriktning.pm10);
+      ResponseAppend_P(PSTR(",\"VINDRIKTNING\":{"));
+#ifdef VINDRIKTNING_SHOW_PM1
+      ResponseAppend_P(PSTR("\"PM1\":%d,"), Vindriktning.pm1_0);
+#endif  // VINDRIKTNING_SHOW_PM1
+      ResponseAppend_P(PSTR("\"PM2.5\":%d"), Vindriktning.pm2_5);
+#ifdef VINDRIKTNING_SHOW_PM10
+      ResponseAppend_P(PSTR(",\"PM10\":%d"), Vindriktning.pm10);
+#endif  // VINDRIKTNING_SHOW_PM10
+      ResponseJsonEnd();
 #ifdef USE_DOMOTICZ
       if (0 == TasmotaGlobal.tele_period) {
+#ifdef VINDRIKTNING_SHOW_PM1
         DomoticzSensor(DZ_COUNT, Vindriktning.pm1_0);	   // PM1.0
+#endif  // VINDRIKTNING_SHOW_PM1
         DomoticzSensor(DZ_VOLTAGE, Vindriktning.pm2_5);	 // PM2.5
+#ifdef VINDRIKTNING_SHOW_PM10
         DomoticzSensor(DZ_CURRENT, Vindriktning.pm10);	 // PM10
+#endif  // VINDRIKTNING_SHOW_PM10
       }
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
     } else {
-        WSContentSend_PD(HTTP_VINDRIKTNING_SNS, Vindriktning.pm1_0, Vindriktning.pm2_5, Vindriktning.pm10);
+#ifdef VINDRIKTNING_SHOW_PM1
+        WSContentSend_PD(HTTP_VINDRIKTNING_SNS_PM1, Vindriktning.pm1_0);
+#endif  // VINDRIKTNING_SHOW_PM1
+        WSContentSend_PD(HTTP_VINDRIKTNING_SNS_PM2_5, Vindriktning.pm2_5);
+#ifdef VINDRIKTNING_SHOW_PM10
+        WSContentSend_PD(HTTP_VINDRIKTNING_SNS_PM10, Vindriktning.pm10);
+#endif  // VINDRIKTNING_SHOW_PM10
 #endif  // USE_WEBSERVER
     }
   }
 }
-
-#else  // No XSNS_91_XTRA_INFO
-
-#ifdef USE_WEBSERVER
-const char HTTP_VINDRIKTNING_SNS[] PROGMEM =
-  "{s}VINDRIKTNING " D_ENVIRONMENTAL_CONCENTRATION " 2.5 " D_UNIT_MICROMETER "{m}%d " D_UNIT_MICROGRAM_PER_CUBIC_METER "{e}";
-#endif  // USE_WEBSERVER
-
-void VindriktningShow(bool json) {
-  if (Vindriktning.valid) {
-    if (json) {
-      ResponseAppend_P(PSTR(",\"VINDRIKTNING\":{\"PM2.5\":%d}"), Vindriktning.pm2_5);
-#ifdef USE_DOMOTICZ
-      if (0 == TasmotaGlobal.tele_period) {
-        DomoticzSensor(DZ_VOLTAGE, Vindriktning.pm2_5);	 // PM2.5
-      }
-#endif  // USE_DOMOTICZ
-#ifdef USE_WEBSERVER
-    } else {
-        WSContentSend_PD(HTTP_VINDRIKTNING_SNS, Vindriktning.pm2_5);
-#endif  // USE_WEBSERVER
-    }
-  }
-}
-
-#endif  // XSNS_91_XTRA_INFO
 
 /*********************************************************************************************\
  * Interface
