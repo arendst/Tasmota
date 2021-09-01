@@ -888,8 +888,11 @@ void SettingsDefaultSet2(void) {
   Settings->weblog_level = WEB_LOG_LEVEL;
   SettingsUpdateText(SET_WEBPWD, PSTR(WEB_PASSWORD));
   SettingsUpdateText(SET_CORS, PSTR(CORS_DOMAIN));
-  Settings->flag5.disable_referer_chk |= true;
-
+#ifdef DISABLE_REFERER_CHK
+  flag5.disable_referer_chk |= false;
+#else
+  flag5.disable_referer_chk |= true;
+#endif
   // Button
   flag.button_restrict |= KEY_DISABLE_MULTIPRESS;
   flag.button_swap |= KEY_SWAP_DOUBLE_PRESS;
@@ -1397,7 +1400,11 @@ void SettingsDelta(void) {
       SettingsUpdateText(SET_RGX_PASSWORD, PSTR(WIFI_RGX_PASSWORD));
     }
     if (Settings->version < 0x09050007) {
-      Settings->flag5.disable_referer_chk = true;
+#ifdef DISABLE_REFERER_CHK
+      Settings->flag5.disable_referer_chk |= false;
+#else
+      Settings->flag5.disable_referer_chk |= true;
+#endif
     }
 
     Settings->version = VERSION;
