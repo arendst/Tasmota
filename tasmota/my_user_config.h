@@ -457,6 +457,7 @@
 #define USE_WEBSERVER                            // Enable web server and Wi-Fi Manager (+66k code, +8k mem)
   #define WEB_PORT             80                // Web server Port for User and Admin mode
   #define WEB_USERNAME         "admin"           // Web server Admin mode user name
+//  #define DISABLE_REFERER_CHK                     // [SetOption128] Disable HTTP API
 //  #define USE_JAVASCRIPT_ES6                     // Enable ECMAScript6 syntax using less JavaScript code bytes (fails on IE11)
   #define USE_ENHANCED_GUI_WIFI_SCAN             // Enable Wi-Fi scan output with BSSID (+0k5 code)
 //  #define USE_WEBSEND_RESPONSE                   // Enable command WebSend response message (+1k code)
