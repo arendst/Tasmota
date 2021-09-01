@@ -464,10 +464,21 @@ uint8_t* FlashDirectAccess(void) {
   return data;
 }
 
+extern "C" {
+  bool esp_spiram_is_initialized(void);
+}
+
+// this function is a replacement for `psramFound()`.
+// `psramFound()` can return true even if no PSRAM is actually installed
+// This new version also checks `esp_spiram_is_initialized` to know if the PSRAM is initialized
+bool FoundPSRAM(void) {
+  return psramFound() && esp_spiram_is_initialized();
+}
+
 // new function to check whether PSRAM is present and supported (i.e. required pacthes are present)
 bool UsePSRAM(void) {
   static bool can_use_psram = CanUsePSRAM();
-  return psramFound() && can_use_psram;
+  return FoundPSRAM() && can_use_psram;
 }
 
 void *special_malloc(uint32_t size) {
@@ -690,6 +701,7 @@ typedef struct {
  * patches are present.
  */
 bool CanUsePSRAM(void) {
+  if (!FoundPSRAM()) return false;
 #ifdef HAS_PSRAM_FIX
   return true;
 #endif
