@@ -37,7 +37,7 @@ const uint8_t AC_PERIOD = (20 + SWITCH_FAST_PROBE_INTERVAL - 1) / SWITCH_FAST_PR
 #define POWER_NONE            99
 
 const char kSwitchPressStates[] PROGMEM =
-  "||||POWER_INCREMENT|POWER_INV|POWER_CLEAR|POWER_RELEASE|POWER_100|";
+  "||||POWER_INCREMENT|POWER_INV|POWER_CLEAR|POWER_RELEASE|POWER_100||POWER_DELAYED";
 
 #include <Ticker.h>
 
@@ -237,32 +237,21 @@ void SwitchHandler(uint32_t mode) {
       uint32_t mqtt_action = POWER_NONE;
       uint32_t switchmode = Settings->switchmode[i];
 
-      bool push_hold_multi_delay = ((PUSHHOLDMULTIDELAY == switchmode) || (PUSHHOLDMULTIDELAY_INV == switchmode));
-      if (push_hold_multi_delay) {
-        switchmode -= (PUSHHOLDMULTIDELAY - PUSHHOLDMULTI);
-      }
-      bool push_hold_multi = ((PUSHHOLDMULTI == switchmode) || (PUSHHOLDMULTI_INV == switchmode));
-
-      if (Switch.hold_timer[i] & ((push_hold_multi) ? SM_TIMER_MASK : SM_NO_TIMER_MASK)) {
+      if (Switch.hold_timer[i] & (((switchmode == PUSHHOLDMULTI) | (switchmode == PUSHHOLDMULTI_INV)) ? SM_TIMER_MASK: SM_NO_TIMER_MASK)) {
         Switch.hold_timer[i]--;
         if ((Switch.hold_timer[i] & SM_TIMER_MASK) == loops_per_second * Settings->param[P_HOLD_TIME] / 25) {
-          bool do_sendkey = false;
-          switch (switchmode) {
-            case PUSHHOLDMULTI:
-              do_sendkey = (NOT_PRESSED == Switch.last_state[i]);
-              break;
-            case PUSHHOLDMULTI_INV:
-              do_sendkey = (PRESSED == Switch.last_state[i]);
-              break;
-          }
-          if (do_sendkey) {
-            SendKey(KEY_SWITCH, i +1, POWER_INCREMENT);      // Execute command via MQTT
-          } else if (push_hold_multi_delay && ((Switch.hold_timer[i] & ~SM_TIMER_MASK) == SM_FIRST_PRESS)) {
-            switchflag = POWER_TOGGLE;                       // Toggle with pushbutton
-            Switch.hold_timer[i] = 0;
+          if ((switchmode == PUSHHOLDMULTI) | (switchmode == PUSHHOLDMULTI_INV)){
+            if (((switchmode == PUSHHOLDMULTI) & (NOT_PRESSED == Switch.last_state[i])) | ((switchmode == PUSHHOLDMULTI_INV) & (PRESSED == Switch.last_state[i]))) {
+              SendKey(KEY_SWITCH, i +1, POWER_INCREMENT);      // Execute command via MQTT
+            }
+            else if ((Switch.hold_timer[i] & ~SM_TIMER_MASK) == SM_FIRST_PRESS) {
+                SendKey(KEY_SWITCH, i +1, POWER_DELAYED);      // Execute command via MQTT
+                mqtt_action = POWER_DELAYED;
+                Switch.hold_timer[i] = 0;
+            }
           }
         }
-        if (0 == (Switch.hold_timer[i] & ((push_hold_multi) ? SM_TIMER_MASK: SM_NO_TIMER_MASK))) {
+        if (0 == (Switch.hold_timer[i] & (((switchmode == PUSHHOLDMULTI) | (switchmode == PUSHHOLDMULTI_INV)) ? SM_TIMER_MASK: SM_NO_TIMER_MASK))) {
           switch (switchmode) {
             case TOGGLEMULTI:
               switchflag = POWER_TOGGLE;                     // Toggle after hold
@@ -365,9 +354,7 @@ void SwitchHandler(uint32_t mode) {
             if ((Switch.hold_timer[i] & SM_TIMER_MASK) > loops_per_second * Settings->param[P_HOLD_TIME] / 25) {
               if ((Switch.hold_timer[i] & ~SM_TIMER_MASK) != SM_SECOND_PRESS) {
                 Switch.hold_timer[i]= SM_FIRST_PRESS;
-                if (!push_hold_multi_delay) {
-                  switchflag = POWER_TOGGLE;                    // Toggle with pushbutton
-                }
+                switchflag = POWER_TOGGLE;                      // Toggle with pushbutton
               }
               else{
                 SendKey(KEY_SWITCH, i +1, POWER_100);           // Execute command via MQTT
@@ -393,9 +380,7 @@ void SwitchHandler(uint32_t mode) {
             if ((Switch.hold_timer[i] & SM_TIMER_MASK)> loops_per_second * Settings->param[P_HOLD_TIME] / 25) {
               if ((Switch.hold_timer[i] & ~SM_TIMER_MASK) != SM_SECOND_PRESS) {
                 Switch.hold_timer[i]= SM_FIRST_PRESS;
-                if (!push_hold_multi_delay) {
-                  switchflag = POWER_TOGGLE;                    // Toggle with pushbutton
-                }
+                switchflag = POWER_TOGGLE;                      // Toggle with pushbutton
               }
               else{
                 SendKey(KEY_SWITCH, i +1, POWER_100);           // Execute command via MQTT
