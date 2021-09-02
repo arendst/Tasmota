@@ -105,28 +105,28 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - Command ``SetOption127 1`` to force Wi-Fi in no-sleep mode even if ``Sleep 0`` is not enabled
 - Command ``SetOption128 0|1`` web referer check disabling HTTP API commands if set to 0. Default set to 1 for backward compatibility [#12828](https://github.com/arendst/Tasmota/issues/12828)
 - Command ``SetSensor1..127 0|1`` to globally disable individual sensor driver
+- Command ``Subscribe2 ...`` to subscribe to a MQTT topic without appended "/#" [#12858](https://github.com/arendst/Tasmota/issues/12858)
 - Command ``WebGetConfig <url>`` if ``#define USE_WEBGETCONFIG`` is enabled to restore/init configuration from external webserver [#13034](https://github.com/arendst/Tasmota/issues/13034)
 - Neopool commands ``NPPHRes``, ``NPCLRes`` and ``NPIonRes`` [#12813](https://github.com/arendst/Tasmota/issues/12813)
 - Support for second DNS server
 - Support for (Yeelight) Mi Desk Pro using binary tasmota32solo1.bin
-- Initial support for influxdb using ``#define USE_INFLUXDB`` and several ``Ifx`` commands
+- Support for influxdb using ``#define USE_INFLUXDB`` and several ``Ifx`` commands
+- Support for AM2320 Temperature and Humidity Sensor by Lars Wessels [#12485](https://github.com/arendst/Tasmota/issues/12485)
+- Support for Technoline WS2300-15 Anemometer [#12573](https://github.com/arendst/Tasmota/issues/12573)
+- Support for Telaire T6700 Series CO2 sensor by Alexander Savchenko [#12618](https://github.com/arendst/Tasmota/issues/12618)
+- Support for CAN bus and Freedom Won Battery Management System by Marius Bezuidenhout [#12651](https://github.com/arendst/Tasmota/issues/12651)
+- Support for IEM3155 Wattmeter [#12940](https://github.com/arendst/Tasmota/issues/12940)
+- Support for Hydreon RG-15 Solid State Rain sensor [#12974](https://github.com/arendst/Tasmota/issues/12974)
+- Support for IKEA VINDRIKTNING particle concentration sensor [#12976](https://github.com/arendst/Tasmota/issues/12976)
 - Initial support for Tasmota Mesh (TasMesh) providing node/broker communication using ESP-NOW [#11939](https://github.com/arendst/Tasmota/issues/11939)
+- Inital support for Wi-Fi extender [#12784](https://github.com/arendst/Tasmota/issues/12784)
 - Berry ESP32 partition manager [#12465](https://github.com/arendst/Tasmota/issues/12465)
 - Berry ESP32 support for I2S audio mp3 playback
 - Berry ESP32 support for vararg
 - Berry ESP32 support for Curve 25519 EC crypto
-- Support for AM2320 Temperature and Humidity Sensor by Lars Wessels [#12485](https://github.com/arendst/Tasmota/issues/12485)
 - Rule event support as JSON payload [#12496](https://github.com/arendst/Tasmota/issues/12496)
 - MQTT minimum password length restriction in GUI [#12553](https://github.com/arendst/Tasmota/issues/12553)
-- Support for Technoline WS2300-15 Anemometer [#12573](https://github.com/arendst/Tasmota/issues/12573)
-- Support for Telaire T6700 Series CO2 sensor by Alexander Savchenko [#12618](https://github.com/arendst/Tasmota/issues/12618)
-- Support for CAN bus and Freedom Won Battery Management System by Marius Bezuidenhout [#12651](https://github.com/arendst/Tasmota/issues/12651)
 - Optional IP filter to command ``TCPStart`` [#12806](https://github.com/arendst/Tasmota/issues/12806)
-- Inital support for Wi-Fi extender [#12784](https://github.com/arendst/Tasmota/issues/12784)
-- Command ``Subscribe2 ...`` to subscribe to a MQTT topic without appended "/#" [#12858](https://github.com/arendst/Tasmota/issues/12858)
-- Support for IEM3155 Wattmeter [#12940](https://github.com/arendst/Tasmota/issues/12940)
-- Support for Hydreon RG-15 Solid State Rain sensor [#12974](https://github.com/arendst/Tasmota/issues/12974)
-- Support for IKEA VINDRIKTNING particle concentration sensor [#12976](https://github.com/arendst/Tasmota/issues/12976)
 
 ### Changed
 - Move firmware binaries to https://github.com/arendst/Tasmota-firmware/tree/main/release-firmware
@@ -138,10 +138,11 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - Speed up initial GUI console refresh
 - Enable UFILESYS, GUI_TRASH_FILE and GUI_EDIT_FILE for any device compiled with more than 1M flash size
 - ESP32 internal sensor driver id moved from 87 to 127
-- Extended supported sensor driver range to 128
+- Supported sensor driver range extended from 96 to 128
 - Disable PSRAM on unsupported hardware
 - ESP32 remove GPIO initialization to INPUT from not used GPIOs to allow JTAG support
 - Relax NTP poll if no ntpserver can be resolved by DNS
+- Shelly EM template needs to use GPIO ``ADE7953_IRQ 2``
 - Make Sonoff L1 MusicSync persistent [#12008](https://github.com/arendst/Tasmota/issues/12008)
 - Simplified configuration for ir-full and removal of tasmota-ircustom [#12428](https://github.com/arendst/Tasmota/issues/12428)
 - Refactor platformio [#12442](https://github.com/arendst/Tasmota/issues/12442)
@@ -152,7 +153,6 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - Prometheus: All metrics are prefixed with ``tasmota_`` [#12842](https://github.com/arendst/Tasmota/issues/12842)
     Memory metrics have been cleaned up to work consistently between ESP8266 and ESP32
     The device name is reported as an info metric
-- Shelly EM template needs to use GPIO ADE7953_IRQ_2
 
 ### Fixed
 - ESP32 core v2.0.0 setting hostname
@@ -172,7 +172,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - Wi-Fi initial setup workaround for 11n only routers [#12566](https://github.com/arendst/Tasmota/issues/12566)
 - ESP32 do not use chip temperature sensor as global temperature if external temperature sensor is used [#12630](https://github.com/arendst/Tasmota/issues/12630)
 - Discovery fails when using ``%hostname%`` in a topic [#12710](https://github.com/arendst/Tasmota/issues/12710)
-- ESP32 buzzer in PWM mode exception (#12717)[#12717](https://github.com/arendst/Tasmota/issues/12717)
+- ESP32 buzzer in PWM mode exception [#12717](https://github.com/arendst/Tasmota/issues/12717)
 - Neopool communication error [#12813](https://github.com/arendst/Tasmota/issues/12813)
 - Shelly Dimmer 2 Energy usage [#12815](https://github.com/arendst/Tasmota/issues/12815)
 - WDT reset on shutters with stepper motors during deceleration [#12849](https://github.com/arendst/Tasmota/issues/12849)
@@ -180,5 +180,6 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - Unable to disable MusicSync mode on Sonoff L1 Lite regression from 9.3.0 [#12930](https://github.com/arendst/Tasmota/issues/12930)
 - Wiegand support for keypad zero key in single key mode using ``SetOption124 1`` [#12960](https://github.com/arendst/Tasmota/issues/12960)
 - Hass and Tasmota discovery prefix topic notifications [#12972](https://github.com/arendst/Tasmota/issues/12972)
+- OpenTherm invalid JSON [#13028](https://github.com/arendst/Tasmota/issues/13028)
 - MQTT TLS related connection timing errors [#13033](https://github.com/arendst/Tasmota/issues/13033)
 - ESP32 crash when PSRAM is absent and ``BOARD_HAS_PSRAM`` set [#13037](https://github.com/arendst/Tasmota/issues/13037)
