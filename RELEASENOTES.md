@@ -179,3 +179,5 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - Unable to disable MusicSync mode on Sonoff L1 Lite regression from 9.3.0 [#12930](https://github.com/arendst/Tasmota/issues/12930)
 - Wiegand support for keypad zero key in single key mode using ``SetOption124 1`` [#12960](https://github.com/arendst/Tasmota/issues/12960)
 - Hass and Tasmota discovery prefix topic notifications [#12972](https://github.com/arendst/Tasmota/issues/12972)
+- MQTT TLS related connection timing errors [#13033](https://github.com/arendst/Tasmota/issues/13033)
+- ESP32 crash when PSRAM is absent and ``BOARD_HAS_PSRAM`` set [#13037](https://github.com/arendst/Tasmota/issues/13037)

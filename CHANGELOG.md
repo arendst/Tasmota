@@ -4,9 +4,9 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased] - Development
 
 ## [9.5.0.8]
-
 ### Fixed
-- Fixed crash when PSRAM is absent and ``BOARD_HAS_PSRAM`` set
+- ESP32 crash when PSRAM is absent and ``BOARD_HAS_PSRAM`` set (#13037)
+- MQTT TLS related connection timing errors (#13033)
 
 ## [9.5.0.7] 20210901
 ### Added
