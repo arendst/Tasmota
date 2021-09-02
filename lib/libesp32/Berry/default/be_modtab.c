@@ -109,6 +109,7 @@ extern void be_load_Driver_class(bvm *vm);
 extern void be_load_Timer_class(bvm *vm);
 extern void be_load_driver_i2c_lib(bvm *vm);
 extern void be_load_md5_lib(bvm *vm);
+extern void be_load_webclient_lib(bvm *vm);
 extern void be_load_crypto_lib(bvm *vm);
 
 #ifdef USE_I2S_AUDIO_BERRY
@@ -148,6 +149,9 @@ BERRY_API void be_load_custom_libs(bvm *vm)
     be_load_wirelib(vm);
     be_load_driver_i2c_lib(vm);
 #endif // USE_I2C
+#ifdef USE_WEBCLIENT
+    be_load_webclient_lib(vm);
+#endif // USE_WEBCLIENT
 #if defined(USE_ONEWIRE) || defined(USE_DS18x20)
     be_load_onewirelib(vm);
 #endif
