@@ -3124,7 +3124,7 @@ int WebGetConfig(char *buffer)
   RemoveSpace(buffer);                        // host = |[192.168.178.86:80,admin:joker|
   String url = ResolveToken(buffer);
 
-  DEBUG_CORE_LOG(PSTR("WEB: Config Uri |%s|"), url.c_str());
+  DEBUG_CORE_LOG(PSTR("WEB: Config Uri '%s'"), url.c_str());
 
   WiFiClient http_client;
   HTTPClient http;
@@ -3137,7 +3137,7 @@ int WebGetConfig(char *buffer)
         int len = http.getSize();
         if ((len <= sizeof(TSettings)) && SettingsBufferAlloc()) {
           uint8_t *buff = settings_buffer;
-          if (len==-1) len = sizeof(TSettings);
+          if (len == -1) { len = sizeof(TSettings); }
           while (http.connected() && (len > 0)) {
             size_t size = stream->available();
             if (size) {
@@ -3176,7 +3176,6 @@ int WebGetConfig(char *buffer)
   return status;
 }
 #endif // USE_WEBGETCONFIG
-
 
 bool JsonWebColor(const char* dataBuf)
 {
@@ -3337,6 +3336,8 @@ void CmndWebSend(void)
 #ifdef USE_WEBGETCONFIG
 void CmndWebGetConfig(void)
 {
+  // WebGetConfig http://myserver:8000/tasmota/conf/%id%.dmp where %id% is expanded to device mac address
+  // WebGetConfig http://myserver:8000/tasmota/conf/Config_demo_9.5.0.8.dmp
   if (XdrvMailbox.data_len > 0) {
     uint32_t result = WebGetConfig(XdrvMailbox.data);
     char stemp1[20];
