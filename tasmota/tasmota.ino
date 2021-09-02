@@ -133,7 +133,7 @@ struct {
   bool pwm_present;                         // Any PWM channel configured with SetOption15 0
   bool i2c_enabled;                         // I2C configured
 #ifdef ESP32
-  bool i2c_enabled_2;                        // I2C configured, second controller on ESP32, Wire1
+  bool i2c_enabled_2;                       // I2C configured, second controller on ESP32, Wire1
 #endif
   bool ntp_force_sync;                      // Force NTP sync
   bool skip_light_fade;                     // Temporarily skip light fading
@@ -141,6 +141,7 @@ struct {
   bool module_changed;                      // Indicate module changed since last restart
   bool wifi_stay_asleep;                    // Allow sleep only incase of ESP32 BLE
   bool no_autoexec;                         // Disable autoexec
+  bool enable_logging;                      // Enable logging
 
   StateBitfield global_state;               // Global states (currently Wifi and Mqtt) (8 bits)
   uint8_t spi_enabled;                      // SPI configured
@@ -224,6 +225,10 @@ void setup(void) {
   RtcPreInit();
   SettingsInit();
 
+#ifdef USE_EMERGENCY_RESET
+  EmergencyReset();
+#endif  // USE_EMERGENCY_RESET
+
   memset(&TasmotaGlobal, 0, sizeof(TasmotaGlobal));
   TasmotaGlobal.baudrate = APP_BAUDRATE;
   TasmotaGlobal.seriallog_timer = SERIALLOG_TIMER;
@@ -233,6 +238,7 @@ void setup(void) {
   TasmotaGlobal.tele_period = 9999;
   TasmotaGlobal.active_device = 1;
   TasmotaGlobal.global_state.data = 0xF;  // Init global state (wifi_down, mqtt_down) to solve possible network issues
+  TasmotaGlobal.enable_logging = 1;
 
   RtcRebootLoad();
   if (!RtcRebootValid()) {

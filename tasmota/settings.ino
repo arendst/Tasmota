@@ -276,6 +276,32 @@ void UpdateQuickPowerCycle(bool update) {
 #endif  // FIRMWARE_MINIMAL
 }
 
+#ifdef USE_EMERGENCY_RESET
+/*********************************************************************************************\
+ * Emergency reset if Rx and Tx are tied together
+\*********************************************************************************************/
+
+void EmergencyReset(void) {
+  Serial.begin(115200);
+  Serial.write(0xAA);
+  Serial.write(0x55);
+  delay(1);
+  if (Serial.available() == 2) {
+    if ((Serial.read() == 0xAA) && (Serial.read() == 0x55)) {
+      SettingsErase(3);       // Reset all settings including QuickPowerCycle flag
+
+      do {                    // Wait for user to remove Rx Tx jumper and power cycle
+        Serial.write(0xA5);
+        delay(1000);          // Satisfy SDK
+      } while (Serial.read() == 0xA5);  // Poll for removal of jumper
+
+      ESP_Restart();          // Restart to init default settings
+    }
+  }
+  while (Serial.available()) { Serial.read(); }  // Flush input buffer
+}
+#endif  // USE_EMERGENCY_RESET
+
 /*********************************************************************************************\
  * Settings services
 \*********************************************************************************************/
