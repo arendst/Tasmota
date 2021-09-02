@@ -39,7 +39,7 @@
 #include <StreamString.h>
 #include <base64.h>
 
-#include "HTTPClientLight.h"
+#include "HttpClientLight.h"
 #include "WiFiClientSecureLightBearSSL.h"
 
 // #ifdef HTTPCLIENT_1_1_COMPATIBLE
