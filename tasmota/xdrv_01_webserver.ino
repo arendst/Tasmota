@@ -401,6 +401,12 @@ const uint16_t DNS_PORT = 53;
 enum HttpOptions {HTTP_OFF, HTTP_USER, HTTP_ADMIN, HTTP_MANAGER, HTTP_MANAGER_RESET_ONLY};
 enum WifiTestOptions {WIFI_NOT_TESTING, WIFI_TESTING, WIFI_TEST_FINISHED, WIFI_TEST_FINISHED_BAD};
 
+enum WebCmndStatus { WEBCMND_DONE=0, WEBCMND_WRONG_PARAMETERS, WEBCMND_CONNECT_FAILED, WEBCMND_HOST_NOT_FOUND, WEBCMND_MEMORY_ERROR
+#ifdef USE_WEBGETCONFIG
+  , WEBCMND_FILE_NOT_FOUND, WEBCMND_OTHER_HTTP_ERROR, WEBCMND_CONNECTION_LOST, WEBCMND_INVALID_FILE
+#endif // USE_WEBGETCONFIG
+};
+
 DNSServer *DnsServer;
 ESP8266WebServer *Webserver;
 
@@ -3042,7 +3048,7 @@ int WebSend(char *buffer)
   char *user;
   char *password;
   char *command;
-  int status = 1;                             // Wrong parameters
+  int status = WEBCMND_WRONG_PARAMETERS;
 
                                               // buffer = |  [  192.168.178.86  :  80  ,  admin  :  joker  ]    POWER1 ON   |
   host = strtok_r(buffer, "]", &command);     // host = |  [  192.168.178.86  :  80  ,  admin  :  joker  |, command = |    POWER1 ON   |
@@ -3096,17 +3102,81 @@ int WebSend(char *buffer)
           MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, PSTR(D_CMND_WEBSEND));
 #endif  // USE_WEBSEND_RESPONSE
         }
-        status = 0;                           // No error - Done
+        status = WEBCMND_DONE;
       } else {
-        status = 2;                           // Connection failed
+        status = WEBCMND_CONNECT_FAILED;
       }
       http.end();                             // Clean up connection data
     } else {
-      status = 3;                             // Host not found or connection error
+      status = WEBCMND_HOST_NOT_FOUND;
     }
   }
   return status;
 }
+
+#ifdef USE_WEBGETCONFIG
+int WebGetConfig(char *buffer)
+{
+  // http://user:password@server:port/path/%id%.dmp  : %id% will be expanded to MAC address
+
+  int status = WEBCMND_WRONG_PARAMETERS;
+
+  RemoveSpace(buffer);                        // host = |[192.168.178.86:80,admin:joker|
+  String url = ResolveToken(buffer);
+
+  DEBUG_CORE_LOG(PSTR("WEB: Config Uri |%s|"), url.c_str());
+
+  WiFiClient http_client;
+  HTTPClient http;
+  if (http.begin(http_client, UrlEncode(url))) {  // UrlEncode(url) = |http://192.168.178.86/cm?cmnd=POWER1%20ON|
+    int http_code = http.GET();             // Start connection and send HTTP header
+    if (http_code > 0) {                    // http_code will be negative on error
+      status = WEBCMND_DONE;
+      if (http_code == HTTP_CODE_OK || http_code == HTTP_CODE_MOVED_PERMANENTLY) {
+        WiFiClient *stream = http.getStreamPtr();
+        int len = http.getSize();
+        if ((len <= sizeof(TSettings)) && SettingsBufferAlloc()) {
+          uint8_t *buff = settings_buffer;
+          if (len==-1) len = sizeof(TSettings);
+          while (http.connected() && (len > 0)) {
+            size_t size = stream->available();
+            if (size) {
+              int read = stream->readBytes(buff, len);
+              len -= read;
+            }
+            delayMicroseconds(1);
+          }
+          if (len) {
+            DEBUG_CORE_LOG(PSTR("WEB: Connection lost"));
+            status = WEBCMND_CONNECTION_LOST;
+          } else if (SettingsConfigRestore()) {
+            AddLog(LOG_LEVEL_INFO, PSTR("WEB: Settings applied, restarting"));
+            TasmotaGlobal.restart_flag = 2;  // Always restart to re-enable disabled features during update
+          } else {
+            DEBUG_CORE_LOG(PSTR("WEB: Settings file invalid"));
+            status = WEBCMND_INVALID_FILE;
+          }
+        } else {
+          DEBUG_CORE_LOG(PSTR("WEB: Memory error (%d) or invalid file length (%d)"), settings_buffer, len);
+          status = WEBCMND_MEMORY_ERROR;
+        }
+      } else {
+        AddLog(LOG_LEVEL_DEBUG, PSTR("WEB: HTTP error %d"), http_code);
+        status = (http_code == HTTP_CODE_NOT_FOUND) ? WEBCMND_FILE_NOT_FOUND : WEBCMND_OTHER_HTTP_ERROR;
+      }
+    } else {
+      DEBUG_CORE_LOG(PSTR("WEB: Connection failed"));
+      status = 2;                           // Connection failed
+    }
+    http.end();                             // Clean up connection data
+  } else {
+    status = 3;                             // Host not found or connection error
+  }
+
+  return status;
+}
+#endif // USE_WEBGETCONFIG
+
 
 bool JsonWebColor(const char* dataBuf)
 {
@@ -3132,7 +3202,11 @@ bool JsonWebColor(const char* dataBuf)
   return true;
 }
 
-const char kWebSendStatus[] PROGMEM = D_JSON_DONE "|" D_JSON_WRONG_PARAMETERS "|" D_JSON_CONNECT_FAILED "|" D_JSON_HOST_NOT_FOUND "|" D_JSON_MEMORY_ERROR;
+const char kWebCmndStatus[] PROGMEM = D_JSON_DONE "|" D_JSON_WRONG_PARAMETERS "|" D_JSON_CONNECT_FAILED "|" D_JSON_HOST_NOT_FOUND "|" D_JSON_MEMORY_ERROR
+#ifdef USE_WEBGETCONFIG
+  "|" D_JSON_FILE_NOT_FOUND "|" D_JSON_OTHER_HTTP_ERROR "|" D_JSON_CONNECTION_LOST "|" D_JSON_INVALID_FILE_TYPE
+#endif // USE_WEBGETCONFIG
+;
 
 const char kWebCommands[] PROGMEM = "|"  // No prefix
 #ifdef USE_EMULATION
@@ -3143,10 +3217,13 @@ const char kWebCommands[] PROGMEM = "|"  // No prefix
 #endif
   D_CMND_WEBSERVER "|" D_CMND_WEBPASSWORD "|" D_CMND_WEBLOG "|" D_CMND_WEBREFRESH "|" D_CMND_WEBSEND "|" D_CMND_WEBCOLOR "|"
   D_CMND_WEBSENSOR "|" D_CMND_WEBBUTTON
+#ifdef USE_WEBGETCONFIG
+  "|" D_CMND_WEBGETCONFIG
+#endif
 #ifdef USE_CORS
   "|" D_CMND_CORS
 #endif
-  ;
+;
 
 void (* const WebCommand[])(void) PROGMEM = {
 #ifdef USE_EMULATION
@@ -3157,6 +3234,9 @@ void (* const WebCommand[])(void) PROGMEM = {
 #endif
   &CmndWebServer, &CmndWebPassword, &CmndWeblog, &CmndWebRefresh, &CmndWebSend, &CmndWebColor,
   &CmndWebSensor, &CmndWebButton
+#ifdef USE_WEBGETCONFIG
+  , &CmndWebGetConfig
+#endif
 #ifdef USE_CORS
   , &CmndCors
 #endif
@@ -3194,7 +3274,7 @@ void CmndSendmail(void)
   if (XdrvMailbox.data_len > 0) {
     uint8_t result = SendMail(XdrvMailbox.data);
     char stemp1[20];
-    ResponseCmndChar(GetTextIndexed(stemp1, sizeof(stemp1), result, kWebSendStatus));
+    ResponseCmndChar(GetTextIndexed(stemp1, sizeof(stemp1), result, kWebCmndStatus));
   }
 }
 #endif  // USE_SENDMAIL
@@ -3250,9 +3330,20 @@ void CmndWebSend(void)
   if (XdrvMailbox.data_len > 0) {
     uint32_t result = WebSend(XdrvMailbox.data);
     char stemp1[20];
-    ResponseCmndChar(GetTextIndexed(stemp1, sizeof(stemp1), result, kWebSendStatus));
+    ResponseCmndChar(GetTextIndexed(stemp1, sizeof(stemp1), result, kWebCmndStatus));
   }
 }
+
+#ifdef USE_WEBGETCONFIG
+void CmndWebGetConfig(void)
+{
+  if (XdrvMailbox.data_len > 0) {
+    uint32_t result = WebGetConfig(XdrvMailbox.data);
+    char stemp1[20];
+    ResponseCmndChar(GetTextIndexed(stemp1, sizeof(stemp1), result, kWebCmndStatus));
+  }
+}
+#endif // USE_WEBGETCONFIG
 
 void CmndWebColor(void)
 {
