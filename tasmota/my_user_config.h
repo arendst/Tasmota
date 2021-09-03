@@ -980,7 +980,11 @@
 
 #define USE_BERRY                                // Enable Berry scripting language
 //#define USE_BERRY_PSRAM                        // Allocate Berry memory in PSRAM if PSRAM is connected - this might be slightly slower but leaves main memory intact
-
+  #define USE_WEBCLIENT                          // Enable `webclient` to make HTTP/HTTPS requests. Can be disabled for security reasons.
+    // #define USE_WEBCLIENT_HTTPS                  // Enable HTTPS outgoing requests based on BearSSL (much ligher then mbedTLS, 42KB vs 150KB) in insecure mode (no verification of server's certificate)
+                                                 // Note that only one cipher is enabled: ECDHE_RSA_WITH_AES_128_GCM_SHA256 which is very commonly used and highly secure
+    #define USE_BERRY_WEBCLIENT_USERAGENT  "TasmotaClient" // default user-agent used, can be changed with `wc.set_useragent()`
+    #define USE_BERRY_WEBCLIENT_TIMEOUT  5000    // Default timeout in milliseconds
 #define USE_CSE7761                              // Add support for CSE7761 Energy monitor as used in Sonoff Dual R3
 
 // -- LVGL Graphics Library ---------------------------------
@@ -1075,10 +1079,10 @@
  * Post-process compile options for TLS
 \*********************************************************************************************/
 
-#if defined(USE_MQTT_TLS) || defined(USE_SENDMAIL) || defined(USE_TELEGRAM)
+#if defined(USE_MQTT_TLS) || defined(USE_SENDMAIL) || defined(USE_TELEGRAM) || defined(USE_WEBCLIENT_HTTPS) || defined(USE_ALEXA_AVS)
   #define USE_TLS                                  // flag indicates we need to include TLS code
 
-  #if defined(USE_MQTT_AWS_IOT) || defined(USE_TELEGRAM)
+  #if defined(USE_MQTT_AWS_IOT) || defined(USE_TELEGRAM) || defined(USE_WEBCLIENT_HTTPS)
     #define USE_MQTT_TLS_FORCE_EC_CIPHER           // AWS IoT and TELEGRAM require EC Cipher
   #endif
 #endif

@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 ## [9.5.0.8]
 ### Added
 - Command ``WebGetConfig <url>`` if ``#define USE_WEBGETCONFIG`` is enabled to restore/init configuration from external webserver (#13034)
+- Berry class ``webclient`` for HTTP/HTTPS requests
 
 ### Fixed
 - OpenTherm invalid JSON (#13028)
