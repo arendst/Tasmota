@@ -23,7 +23,7 @@
 #ifdef USE_WEBCLIENT
 
 #include <berry.h>
-#include <HttpClientLight.h>
+#include "HttpClientLight.h"
 
 String wc_UrlEncode(const String& text) {
   const char hex[] = "0123456789ABCDEF";

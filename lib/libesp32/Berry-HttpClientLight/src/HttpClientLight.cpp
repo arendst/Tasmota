@@ -40,7 +40,10 @@
 #include <base64.h>
 
 #include "HttpClientLight.h"
+
+#ifdef USE_WEBCLIENT_HTTPS
 #include "WiFiClientSecureLightBearSSL.h"
+#endif // USE_WEBCLIENT_HTTPS
 
 // #ifdef HTTPCLIENT_1_1_COMPATIBLE
 class TransportTraits
