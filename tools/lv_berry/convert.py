@@ -82,6 +82,7 @@ return_types = {
   "lv_signal_t": "i",
   "lv_img_cf_t": "i",
   "lv_draw_mask_line_side_t": "i",
+  "lv_style_property_t": "i",
 
   # "lv_signal_cb_t": "c",
   # "lv_design_cb_t": "c",
