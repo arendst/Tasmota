@@ -88,7 +88,7 @@ struct SHUTTER {
   int8_t   direction;          // 1 == UP , 0 == stop; -1 == down
   int8_t   lastdirection;      // last direction (1 == UP , -1 == down)
   uint8_t  switch_mode;        // how to switch relays: SHT_SWITCH, SHT_PULSE
-  int16_t  motordelay;         // initial motorstarttime in 0.05sec. Also uses for ramp at steppers and servos
+  int8_t   motordelay;         // initial motorstarttime in 0.05sec. Also uses for ramp at steppers and servos, negative if motor stops late
   int16_t  pwm_velocity;       // frequency of PWN for stepper motors or PWM duty cycle change for PWM servo
   uint16_t pwm_value;          // dutyload of PWM 0..1023 on ESP8266
   uint16_t close_velocity_max; // maximum of PWM change during closeing. Defines velocity on opening. Steppers and Servos only
@@ -1186,11 +1186,11 @@ void CmndShutterMotorDelay(void)
 {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= TasmotaGlobal.shutters_present)) {
     if (XdrvMailbox.data_len > 0) {
-      Settings->shutter_motordelay[XdrvMailbox.index -1] = (uint16_t)(STEPS_PER_SECOND * CharToFloat(XdrvMailbox.data));
+      Settings->shutter_motordelay[XdrvMailbox.index -1] = (uint8_t)(STEPS_PER_SECOND * CharToFloat(XdrvMailbox.data));
       ShutterInit();
     }
     char time_chr[10];
-    dtostrfd((float)(Settings->shutter_motordelay[XdrvMailbox.index -1]) / STEPS_PER_SECOND, 2, time_chr);
+    dtostrfd((float)(Shutter[XdrvMailbox.index -1].motordelay) / STEPS_PER_SECOND, 2, time_chr);
     ResponseCmndIdxChar(time_chr);
   }
 }
