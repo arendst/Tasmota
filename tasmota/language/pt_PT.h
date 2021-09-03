@@ -449,8 +449,8 @@
 #define D_TIMER_TIME "Tempo"
 #define D_TIMER_DAYS "Dias"
 #define D_TIMER_REPEAT "Repetir"
-#define D_TIMER_OUTPUT "Aaída"
-#define D_TIMER_ACTION "Açao"
+#define D_TIMER_OUTPUT "Saída"
+#define D_TIMER_ACTION "Ação"
 
 // xdrv_10_knx.ino
 #define D_CONFIGURE_KNX "Configurar KNX"
