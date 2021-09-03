@@ -508,7 +508,16 @@ void *special_calloc(size_t num, size_t size) {
 }
 
 float CpuTemperature(void) {
+#ifdef CONFIG_IDF_TARGET_ESP32
   return (float)temperatureRead();  // In Celsius
+#else
+  // Currently (20210801) repeated calls to temperatureRead() on ESP32C3 and ESP32S2 result in IDF error messages
+  static float t = NAN;
+  if (isnan(t)) {
+    t = (float)temperatureRead();  // In Celsius
+  }
+  return t;
+#endif
 }
 
 /*
@@ -700,8 +709,8 @@ typedef struct {
  * ESP32 v1 and v2 needs some special patches to use PSRAM.
  * Standard Tasmota 32 do not include those patches.
  * If using ESP32 v1, please add: `-mfix-esp32-psram-cache-issue -lc-psram-workaround -lm-psram-workaround`
- * 
- * This function returns true if the chip supports PSRAM natively (v3) or if the 
+ *
+ * This function returns true if the chip supports PSRAM natively (v3) or if the
  * patches are present.
  */
 bool CanUsePSRAM(void) {
