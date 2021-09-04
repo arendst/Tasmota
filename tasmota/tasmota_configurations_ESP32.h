@@ -58,10 +58,6 @@
 #define USE_ODROID_GO                            // Add support for Odroid Go
 #define USE_SDCARD
 
-#ifdef USE_BERRY                                 // Berry scripting language
-  #define USE_BERRY_PSRAM                        // Allocate Berry memory in PSRAM if PSRAM is connected - this might be slightly slower but leaves main memory intact
-#endif
-
 #define USE_ADC
 #define USE_SPI
   #define USE_DISPLAY                            // Add SPI Display Support (+2k code)
@@ -91,10 +87,6 @@
   #define USE_I2S_SAY_TIME
   #define USE_I2S_WEBRADIO
 #define USE_SDCARD
-
-#ifdef USE_BERRY                                 // Berry scripting language
-  #define USE_BERRY_PSRAM                        // Allocate Berry memory in PSRAM if PSRAM is connected - this might be slightly slower but leaves main memory intact
-#endif
 
 #define USE_I2C
   #define USE_BMA423
