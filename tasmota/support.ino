@@ -1565,6 +1565,10 @@ void TemplateGpios(myio *gp)
   for (uint32_t i = 0; i < nitems(Settings->user_template.gp.io); i++) {
 #if defined(ESP32) && CONFIG_IDF_TARGET_ESP32C3
     dest[i] = src[i];
+#elif defined(CONFIG_IDF_TARGET_ESP32S2)
+    if (22 == i) { j = 33; }    // skip 22-32
+    dest[j] = src[i];
+    j++;
 #else
     if (6 == i) { j = 9; }
     if (8 == i) { j = 12; }
@@ -1623,6 +1627,8 @@ bool FlashPin(uint32_t pin)
 {
 #if defined(ESP32) && CONFIG_IDF_TARGET_ESP32C3
   return (pin > 10) && (pin < 18);        // ESP32C3 has GPIOs 11-17 reserved for Flash
+#elif defined(CONFIG_IDF_TARGET_ESP32S2)
+  return (pin > 21) && (pin < 33);        // ESP32S2 skip 22-32
 #else // ESP32 and ESP8266
   return (((pin > 5) && (pin < 9)) || (11 == pin));
 #endif
@@ -1632,6 +1638,8 @@ bool RedPin(uint32_t pin) // pin may be dangerous to change, display in RED in t
 {
 #if defined(ESP32) && CONFIG_IDF_TARGET_ESP32C3
   return false;     // no red pin on ESP32C3
+#elif defined(CONFIG_IDF_TARGET_ESP32S2)
+  return false;     // no red pin on ESP32S3
 #else // ESP32 and ESP8266
 
 #ifdef CONFIG_IDF_TARGET_ESP32
@@ -1648,13 +1656,17 @@ uint32_t ValidPin(uint32_t pin, uint32_t gpio) {
     return GPIO_NONE;    // Disable flash pins GPIO6, GPIO7, GPIO8 and GPIO11
   }
 
-#ifndef CONFIG_IDF_TARGET_ESP32C3
+#if defined(CONFIG_IDF_TARGET_ESP32C3)
+// ignore
+#elif defined(CONFIG_IDF_TARGET_ESP32S2)
+// ignore
+#else // not ESP32C3 and not ESP32S2
   if ((WEMOS == Settings->module) && !Settings->flag3.user_esp8285_enable) {  // SetOption51 - Enable ESP8285 user GPIO's
     if ((9 == pin) || (10 == pin)) {
       return GPIO_NONE;  // Disable possible flash GPIO9 and GPIO10
     }
   }
-#endif  // not ESP32C3
+#endif
 
   return gpio;
 }
