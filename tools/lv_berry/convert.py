@@ -6,12 +6,11 @@ lv_module_file = "lv_module.h"
 
 out_prefix = "../../tasmota/lvgl_berry/"
 lvgl_prefix = "../../lib/libesp32/Berry/default/"
-lvgl_prefix = "../../lib/libesp32/Berry/default/"
 
 be_lv_defines = "be_lv_defines.h"
 be_lv_c_mapping = "be_lv_c_mapping.h"
 be_lv_widgets_libs = "be_lvgl_widgets_lib.c"
-be_lv_lvgl_module = "be_lv_lvgl_module.c"
+be_lv_lvgl_module = "be_lvgl_module.c"
 
 # detect a function definition all
 # Ex: 'void lv_obj_set_parent(lv_obj_t * obj, lv_obj_t * parent);'
