@@ -59,7 +59,7 @@ log.set_style_local_pad_right(lv.OBJ_PART_MAIN, lv.STATE_DEFAULT, log_height+1)
 
 bars = lv_wifi_bars(log)
 
-bars.set_style_local_bg_color(lv.OBJ_PART_MAIN, lv.STATE_DEFAULT, lv_color(lv.BLACK))
+bars.set_style_local_bg_color(lv.OBJ_PART_MAIN, lv.STATE_DEFAULT, lv_color(lv.COLOR_BLACK))
 
 bars.set_height(log_height)
 bars.set_width(log_height)

@@ -16,13 +16,13 @@ mask_map.resize(MASK_WIDTH * MASK_HEIGHT * 4)
 # Create a "8 bit alpha" canvas and clear it
 canvas = lv_canvas(lv.scr_act())
 canvas.set_buffer(mask_map, MASK_WIDTH, MASK_HEIGHT, lv.IMG_CF_ALPHA_8BIT)
-canvas.fill_bg(lv_color(lv.BLACK), lv.OPA_TRANSP)
-canvas.fill_bg(lv_color(lv.BLACK), lv.OPA_50)
+canvas.fill_bg(lv_color(lv.COLOR_BLACK), lv.OPA_TRANSP)
+canvas.fill_bg(lv_color(lv.COLOR_BLACK), lv.OPA_50)
 
 # Draw a label to the canvas. The result "image" will be used as mask
 label_dsc = lv_draw_label_dsc()
 lv.draw_label_dsc_init(label_dsc)
-label_dsc.color = lv_color(lv.WHITE)
+label_dsc.color = lv_color(lv.COLOR_WHITE)
 canvas.draw_text(5, 5, MASK_WIDTH, label_dsc, "Text with gradient", lv.LABEL_ALIGN_CENTER)
 
 # The mask is read, the canvas is not required anymore
@@ -46,8 +46,8 @@ om.add_mask(m)
 # Create a style with gradient
 style_bg = lv_style()
 style_bg.set_bg_opa(lv.STATE_DEFAULT, lv.OPA_COVER)
-style_bg.set_bg_color(lv.STATE_DEFAULT, lv_color(lv.RED))
-style_bg.set_bg_grad_color(lv.STATE_DEFAULT, lv_color(lv.BLUE))
+style_bg.set_bg_color(lv.STATE_DEFAULT, lv_color(lv.COLOR_RED))
+style_bg.set_bg_grad_color(lv.STATE_DEFAULT, lv_color(lv.COLOR_BLUE))
 style_bg.set_bg_grad_dir(lv.STATE_DEFAULT, lv.GRAD_DIR_HOR)
 
 # Create and object with the gradient style on the object mask.
