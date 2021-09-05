@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 - Command ``WebGetConfig <url>`` if ``#define USE_WEBGETCONFIG`` is enabled to restore/init configuration from external webserver (#13034)
 - Berry class ``webclient`` for HTTP/HTTPS requests
 - Support for ESP32S2 GPIOs
+- ESP32 add GPIO 6/7/8/11 to template and remove GPIO 28-31 (remapping so backwards compatible)
 
 ### Fixed
 - OpenTherm invalid JSON (#13028)

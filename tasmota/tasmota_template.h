@@ -997,6 +997,9 @@ typedef struct MYTMPLT8266 {
 #ifdef ESP32
 #ifdef CONFIG_IDF_TARGET_ESP32C3
 
+/* ****************************************
+ * ESP32C3
+ * ****************************************/
 #define MAX_GPIO_PIN       22   // Number of supported GPIO
 #define MIN_FLASH_PINS     0    // Number of flash chip pins unusable for configuration (GPIO11 to 17)
 #define MAX_USER_PINS      22   // MAX_GPIO_PIN - MIN_FLASH_PINS
@@ -1007,6 +1010,9 @@ const char PINS_WEMOS[] PROGMEM = "AOAOAOAOAOAOIOIOIOIOIOFLFLFLFLFLFLFLIOIORXTX"
 
 #elif defined(CONFIG_IDF_TARGET_ESP32S2)
 
+/* ****************************************
+ * ESP32S2
+ * ****************************************/
 #define MAX_GPIO_PIN       47   // Number of supported GPIO
 #define MIN_FLASH_PINS     11   // Number of flash chip pins unusable for configuration (22-25 don't exist, 26-32 for SPI)
 #define MAX_USER_PINS      36   // MAX_GPIO_PIN - MIN_FLASH_PINS
@@ -1017,13 +1023,34 @@ const char PINS_WEMOS[] PROGMEM = "IOAOAOAOAOAOAOAOAOAOAOAOAOAOAOAOAOAOAOAOAOIO-
 
 #else  // not CONFIG_IDF_TARGET_ESP32C3 nor CONFIG_IDF_TARGET_ESP32S2 - ESP32
 
+/* ****************************************
+ * ESP32 - including Pico
+ *
+ * The initial template was 0-5 9-10 12-39
+ * New template covers 0-27 32-39
+ * However to maintain backwards compatibility, the following mapping occures
+ * Template GPIO | Phyiscal GPIO
+ *   28          |  6
+ *   29          |  7
+ *   30          |  8
+ *   31          |  11
+ * ****************************************/
+// Conversion table
+#define ESP32_TEMPLATE_TO_PHY         \
+   0,  1,  2,  3,  4,  5,             \
+   9, 10,                             \
+  12, 13, 14, 15, 16, 17, 18, 19,     \
+  20, 21, 22, 23, 24, 25, 26, 27,     \
+   6,  7,  8, 11,      /* 28-31 */    \
+  32, 33, 34, 35, 36, 37, 38, 39
+
 #define MAX_GPIO_PIN       40   // Number of supported GPIO
 #define MIN_FLASH_PINS     4    // Number of flash chip pins unusable for configuration (GPIO6, 7, 8 and 11)
 #define MAX_USER_PINS      36   // MAX_GPIO_PIN - MIN_FLASH_PINS
 #define WEMOS_MODULE       0    // Wemos module
 
 //                                  0 1 2 3 4 5 6 7 8 9101112131415161718192021222324252627282930313233343536373839
-const char PINS_WEMOS[] PROGMEM = "IOTXIORXIOIOflashcFLFLolIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOAOAOIAIAIAIAIAIA";
+const char PINS_WEMOS[] PROGMEM = "IOTXIORXIOIOFLFLFLFLFLFLIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIO--------AOAOIAIAIAIAIAIA";
 
 #endif  // ESP32/S2/C3 selection
 #endif  // ESP32
@@ -2692,12 +2719,12 @@ const mytmplt kModules[] PROGMEM = {
     AGPIO(GPIO_USER),            // 3       IO     RXD0         GPIO3, U0RXD, CLK_OUT2
     AGPIO(GPIO_USER),            // 4       IO                  GPIO4, ADC2_CH0, TOUCH0, RTC_GPIO10, HSPIHD, HS2_DATA1, SD_DATA1, EMAC_TX_ER
     AGPIO(GPIO_USER),            // 5       IO                  GPIO5, VSPICS0, HS1_DATA6, EMAC_RX_CLK
-                                 // 6       IO                  GPIO6, Flash CLK
-                                 // 7       IO                  GPIO7, Flash D0
-                                 // 8       IO                  GPIO8, Flash D1
+                                 // 6       IO                  Remapped to 28
+                                 // 7       IO                  Remapped to 29
+                                 // 8       IO                  Remapped to 30
     AGPIO(GPIO_USER),            // 9       IO                  GPIO9, Flash D2, U1RXD
     AGPIO(GPIO_USER),            // 10      IO                  GPIO10, Flash D3, U1TXD
-                                 // 11      IO                  GPIO11, Flash CMD
+                                 // 11      IO                  Remapped to 31
     AGPIO(GPIO_USER),            // 12      (I)O                GPIO12, ADC2_CH5, TOUCH5, RTC_GPIO15, MTDI, HSPIQ, HS2_DATA2, SD_DATA2, EMAC_TXD3       (If driven High, flash voltage (VDD_SDIO) is 1.8V not default 3.3V. Has internal pull-down, so unconnected = Low = 3.3V. May prevent flashing and/or booting if 3.3V flash is connected and pulled high. See ESP32 datasheet for more details.)
     AGPIO(GPIO_USER),            // 13      IO                  GPIO13, ADC2_CH4, TOUCH4, RTC_GPIO14, MTCK, HSPID, HS2_DATA3, SD_DATA3, EMAC_RX_ER
     AGPIO(GPIO_USER),            // 14      IO                  GPIO14, ADC2_CH6, TOUCH6, RTC_GPIO16, MTMS, HSPICLK, HS2_CLK, SD_CLK, EMAC_TXD2
@@ -2714,10 +2741,10 @@ const mytmplt kModules[] PROGMEM = {
     AGPIO(GPIO_USER),            // 25      IO                  GPIO25, DAC_1, ADC2_CH8, RTC_GPIO6, EMAC_RXD0
     AGPIO(GPIO_USER),            // 26      IO                  GPIO26, DAC_2, ADC2_CH9, RTC_GPIO7, EMAC_RXD1
     AGPIO(GPIO_USER),            // 27      IO                  GPIO27, ADC2_CH7, TOUCH7, RTC_GPIO17, EMAC_RX_DV
-    0,                           // 28
-    0,                           // 29
-    0,                           // 30
-    0,                           // 31
+    0,                           // 6       IO                  GPIO6, Flash CLK
+    0,                           // 7       IO                  GPIO7, Flash D0
+    0,                           // 8       IO                  GPIO8, Flash D1
+    0,                           // 11      IO                  GPIO11, Flash CMD
     AGPIO(GPIO_USER),            // 32      IO                  GPIO32, XTAL_32K_P (32.768 kHz crystal oscillator input), ADC1_CH4, TOUCH9, RTC_GPIO9
     AGPIO(GPIO_USER),            // 33      IO                  GPIO33, XTAL_32K_N (32.768 kHz crystal oscillator output), ADC1_CH5, TOUCH8, RTC_GPIO8
     AGPIO(GPIO_USER),            // 34      I   NO PULLUP       GPIO34, ADC1_CH6, RTC_GPIO4
@@ -2737,12 +2764,12 @@ const mytmplt kModules[] PROGMEM = {
     AGPIO(GPIO_USER),            // 3       IO     RXD0         GPIO3, U0RXD, CLK_OUT2
     AGPIO(GPIO_PWM1),            // 4       IO                  GPIO4, Flashlight
     AGPIO(GPIO_WEBCAM_DATA),     // 5       IO                  GPIO5, CAM_DATA1
-                                 // 6       IO                  GPIO6, Flash CLK
-                                 // 7       IO                  GPIO7, Flash D0
-                                 // 8       IO                  GPIO8, Flash D1
+                                 // 6       IO                  Remapped to 28
+                                 // 7       IO                  Remapped to 29
+                                 // 8       IO                  Remapped to 30
     AGPIO(GPIO_USER),            // 9       IO                  GPIO9, Flash D2, U1RXD
     AGPIO(GPIO_USER),            // 10      IO                  GPIO10, Flash D3, U1TXD
-                                 // 11      IO                  GPIO11, Flash CMD
+                                 // 11      IO                  Remapped to 31
     AGPIO(GPIO_USER),            // 12      (I)O                GPIO12, ADC2_CH5, TOUCH5, RTC_GPIO15, MTDI, HSPIQ, HS2_DATA2, SD_DATA2, EMAC_TXD3       (If driven High, flash voltage (VDD_SDIO) is 1.8V not default 3.3V. Has internal pull-down, so unconnected = Low = 3.3V. May prevent flashing and/or booting if 3.3V flash is connected and pulled high. See ESP32 datasheet for more details.)
     AGPIO(GPIO_SDCARD_CS),       // 13      IO                  GPIO13, VSPI_CS_TFLASH
     AGPIO(GPIO_SPI_CLK),         // 14      IO                  GPIO14, VSPI_CLK
@@ -2759,10 +2786,10 @@ const mytmplt kModules[] PROGMEM = {
     AGPIO(GPIO_WEBCAM_VSYNC),    // 25      IO                  GPIO25, CAM_VSYNC
     AGPIO(GPIO_WEBCAM_SIOD),     // 26      IO                  GPIO26, CAM_SIOD
     AGPIO(GPIO_WEBCAM_SIOC),     // 27      IO                  GPIO27, CAM_SIOC
-    0,                           // 28
-    0,                           // 29
-    0,                           // 30
-    0,                           // 31
+    0,                           // 6       IO                  GPIO6, Flash CLK
+    0,                           // 7       IO                  GPIO7, Flash D0
+    0,                           // 8       IO                  GPIO8, Flash D1
+    0,                           // 11      IO                  GPIO11, Flash CMD
     AGPIO(GPIO_WEBCAM_PWDN),     // 32      IO                  GPIO32, CAM_PWDN
     AGPIO(GPIO_USER),            // 33      IO                  GPIO33, XTAL_32K_N (32.768 kHz crystal oscillator output), ADC1_CH5, TOUCH8, RTC_GPIO8
     AGPIO(GPIO_WEBCAM_DATA) +6,  // 34      I   NO PULLUP       GPIO34, CAM_DATA7
@@ -2783,12 +2810,12 @@ const mytmplt kModules[] PROGMEM = {
     AGPIO(GPIO_RXD),             // 3       IO     RXD0         GPIO3, RXD0
     AGPIO(GPIO_USER),            // 4       IO                  GPIO4, ADC2_CH0, TOUCH0, RTC_GPIO10, HSPIHD, HS2_DATA1, SD_DATA1, EMAC_TX_ER
     AGPIO(GPIO_ILI9341_CS),      // 5       IO                  GPIO5, VSPI_CS0_LCD
-                                 // 6       IO                  GPIO6, Flash CLK
-                                 // 7       IO                  GPIO7, Flash D0
-                                 // 8       IO                  GPIO8, Flash D1
+                                 // 6       IO                  Remapped to 28
+                                 // 7       IO                  Remapped to 29
+                                 // 8       IO                  Remapped to 30
     0,                           // 9       IO                  GPIO9, Flash D2, U1RXD
     0,                           // 10      IO                  GPIO10, Flash D3, U1TXD
-                                 // 11      IO                  GPIO11, Flash CMD
+                                 // 11      IO                  Remapped to 31
     AGPIO(GPIO_USER),            // 12      (I)O                GPIO12, ADC2_CH5, TOUCH5, RTC_GPIO15, MTDI, HSPIQ, HS2_DATA2, SD_DATA2, EMAC_TXD3       (If driven High, flash voltage (VDD_SDIO) is 1.8V not default 3.3V. Has internal pull-down, so unconnected = Low = 3.3V. May prevent flashing and/or booting if 3.3V flash is connected and pulled high. See ESP32 datasheet for more details.)
     AGPIO(GPIO_KEY1) +1,         // 13      IO                  GPIO13, BTN-MENU
     AGPIO(GPIO_PWM1),            // 14      IO                  GPIO14, LCD Backlight
@@ -2805,10 +2832,10 @@ const mytmplt kModules[] PROGMEM = {
     0,                           // 25      IO                  GPIO25, DAC_1 (PAM8304A)
     0,                           // 26      IO                  GPIO26, DAC_2 (PAM8304A)
     AGPIO(GPIO_KEY1) +2,         // 27      IO                  GPIO27, BTN-SELECT
-    0,                           // 28
-    0,                           // 29
-    0,                           // 30
-    0,                           // 31
+    0,                           // 6       IO                  GPIO6, Flash CLK
+    0,                           // 7       IO                  GPIO7, Flash D0
+    0,                           // 8       IO                  GPIO8, Flash D1
+    0,                           // 11      IO                  GPIO11, Flash CMD
     AGPIO(GPIO_SWT1) +4,         // 32      IO                  GPIO32, BTN-A
     AGPIO(GPIO_SWT1) +5,         // 33      IO                  GPIO33, BTN-B
     AGPIO(GPIO_ADC_JOY),         // 34      I   NO PULLUP       GPIO34, JOY-X (LEFT-RIGHT)
@@ -2834,12 +2861,12 @@ const mytmplt kModules[] PROGMEM = {
     AGPIO(GPIO_USER),            // 3       IO     RXD0         GPIO3, U0RXD, CLK_OUT2
     AGPIO(GPIO_USER),            // 4       IO                  GPIO4, ADC2_CH0, TOUCH0, RTC_GPIO10, HSPIHD, HS2_DATA1, SD_DATA1, EMAC_TX_ER
     AGPIO(GPIO_USER),            // 5       IO                  GPIO5, RXD Led green
-                                 // 6       IO                  GPIO6, Flash CLK
-                                 // 7       IO                  GPIO7, Flash D0
-                                 // 8       IO                  GPIO8, Flash D1
+                                 // 6       IO                  Remapped to 28
+                                 // 7       IO                  Remapped to 29
+                                 // 8       IO                  Remapped to 30
     0,                           // 9       IO                  GPIO9, Flash D2, U1RXD
     0,                           // 10      IO                  GPIO10, Flash D3, U1TXD
-                                 // 11      IO                  GPIO11, Flash CMD
+                                 // 11      IO                  Remapped to 31
     AGPIO(GPIO_USER),            // 12      (I)O                GPIO12, ADC2_CH5, TOUCH5, RTC_GPIO15, MTDI, HSPIQ, HS2_DATA2, SD_DATA2, EMAC_TXD3       (If driven High, flash voltage (VDD_SDIO) is 1.8V not default 3.3V. Has internal pull-down, so unconnected = Low = 3.3V. May prevent flashing and/or booting if 3.3V flash is connected and pulled high. See ESP32 datasheet for more details.)
     0,                           // 13      IO                  GPIO13, Ethernet EMAC_RX_ER
     AGPIO(GPIO_USER),            // 14      IO                  GPIO14, ADC2_CH6, TOUCH6, RTC_GPIO16, MTMS, HSPICLK, HS2_CLK, SD_CLK, EMAC_TXD2
@@ -2856,10 +2883,10 @@ const mytmplt kModules[] PROGMEM = {
     0,                           // 25      IO                  GPIO25, Ethernet EMAC_RXD0
     0,                           // 26      IO                  GPIO26, Ethernet EMAC_RXD1
     0,                           // 27      IO                  GPIO27, Ethernet EMAC_RX_DV
-    0,                           // 28
-    0,                           // 29
-    0,                           // 30
-    0,                           // 31
+    0,                           // 6       IO                  GPIO6, Flash CLK
+    0,                           // 7       IO                  GPIO7, Flash D0
+    0,                           // 8       IO                  GPIO8, Flash D1
+    0,                           // 11      IO                  GPIO11, Flash CMD
     AGPIO(GPIO_USER),            // 32      IO                  GPIO32, CFG
     AGPIO(GPIO_USER),            // 33      IO                  GPIO33, 485_EN
     0,                           // 34      I   NO PULLUP       GPIO34, ADC1_CH6, RTC_GPIO4
@@ -2885,12 +2912,12 @@ const mytmplt kModules[] PROGMEM = {
     AGPIO(GPIO_USER),            // 3       IO     RXD0         GPIO3, U0RXD
     AGPIO(GPIO_SDCARD_CS),       // 4       IO                  GPIO4, SPI_CS_CARD
     AGPIO(GPIO_ILI9341_CS),      // 5       IO                  GPIO5, SPI_CS_LCD
-                                 // 6       IO                  GPIO6, Flash CLK
-                                 // 7       IO                  GPIO7, Flash D0
-                                 // 8       IO                  GPIO8, Flash D1
+                                 // 6       IO                  Remapped to 28
+                                 // 7       IO                  Remapped to 29
+                                 // 8       IO                  Remapped to 30
     0,                           // 9       IO                  GPIO9, Flash D2, PSRAM_D3
     0,                           // 10      IO                  GPIO10, Flash D3, PSRAM_D2
-                                 // 11      IO                  GPIO11, Flash CMD
+                                 // 11      IO                  Remapped to 31
     0,                           // 12      (I)O                GPIO12, SPKR_CLK
     AGPIO(GPIO_USER),            // 13      IO                  GPIO13, ADC2_CH4, TOUCH4, RTC_GPIO14, MTCK, HSPID, HS2_DATA3, SD_DATA3, EMAC_RX_ER
     AGPIO(GPIO_USER),            // 14      IO                  GPIO14, ADC2_CH6, TOUCH6, RTC_GPIO16, MTMS, HSPICLK, HS2_CLK, SD_CLK, EMAC_TXD2
@@ -2907,10 +2934,10 @@ const mytmplt kModules[] PROGMEM = {
     AGPIO(GPIO_USER),            // 25      IO                  GPIO25, DAC_1, ADC2_CH8, RTC_GPIO6, EMAC_RXD0
     AGPIO(GPIO_USER),            // 26      IO                  GPIO26, DAC_2, ADC2_CH9, RTC_GPIO7, EMAC_RXD1
     AGPIO(GPIO_USER),            // 27      IO                  GPIO27, ADC2_CH7, TOUCH7, RTC_GPIO17, EMAC_RX_DV
-    0,                           // 28
-    0,                           // 29
-    0,                           // 30
-    0,                           // 31
+    0,                           // 6       IO                  GPIO6, Flash CLK
+    0,                           // 7       IO                  GPIO7, Flash D0
+    0,                           // 8       IO                  GPIO8, Flash D1
+    0,                           // 11      IO                  GPIO11, Flash CMD
     AGPIO(GPIO_I2C_SDA),         // 32      IO                  GPIO32, I2C_SDA
     AGPIO(GPIO_I2C_SCL),         // 33      IO                  GPIO33, I2C_SCL
     AGPIO(GPIO_USER),            // 34      I   NO PULLUP       GPIO34, ADC1_CH6, RTC_GPIO4

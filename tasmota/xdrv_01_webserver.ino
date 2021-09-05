@@ -158,7 +158,15 @@ const char HTTP_SCRIPT_TEMPLATE2[] PROGMEM =
       "sk(g[i],j);"                       // Set GPIO
       "j++;"
     "}";
-#else // Now ESP32 and ESP8266
+#elif defined(CONFIG_IDF_TARGET_ESP32)
+const char HTTP_SCRIPT_TEMPLATE2[] PROGMEM =
+    "j=0;"
+    "for(i=0;i<" STR(MAX_USER_PINS) ";i++){"  // Skip 28-31
+      "if(28==i){j=32;}"
+      "sk(g[i],j);"                       // Set GPIO
+      "j++;"
+    "}";
+#else // ESP8266
 const char HTTP_SCRIPT_TEMPLATE2[] PROGMEM =
     "j=0;"
     "for(i=0;i<" STR(MAX_USER_PINS) ";i++){"  // Supports 13 GPIOs
@@ -1698,7 +1706,9 @@ void TemplateSaveSettings(void) {
     if (22 == i) { j = 33; }    // skip 22-32
     snprintf_P(command, sizeof(command), PSTR("%s%s%d"), command, (i>0)?",":"", WebGetGpioArg(j));
     j++;
-#else
+#elif defined(CONFIG_IDF_TARGET_ESP32)
+    snprintf_P(command, sizeof(command), PSTR("%s%s%d"), command, (i>0)?",":"", WebGetGpioArg(Esp32TemplateToPhy[i]));
+#else  // ESP8266
     if (6 == i) { j = 9; }
     if (8 == i) { j = 12; }
     snprintf_P(command, sizeof(command), PSTR("%s%s%d"), command, (i>0)?",":"", WebGetGpioArg(j));
