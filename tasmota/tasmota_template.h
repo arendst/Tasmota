@@ -2559,6 +2559,7 @@ const mytmplt kModules[] PROGMEM = {
     AGPIO(GPIO_USER),            // 19      IO                  GPIO19, USB_D+
     AGPIO(GPIO_USER),            // 20      IO     RXD0         GPIO20, U0RXD
     AGPIO(GPIO_USER),            // 21      IO     TXD0         GPIO21, U0TXD
+    0                            // Flag
   },
 };
 
@@ -2639,6 +2640,7 @@ const mytmplt kModules[] PROGMEM = {
     AGPIO(GPIO_USER),            // 44      IO                  GPIO44, U0RXD
     AGPIO(GPIO_USER),            // 45      IO                  GPIO45, Strapping
     AGPIO(GPIO_USER),            // 46      I                   GPIO46, Input only, Strapping
+    0                            // Flag
   },
 };
 
