@@ -1541,6 +1541,11 @@ void GetInternalTemplate(void* ptr, uint32_t module, uint32_t option) {
 }
 #endif  // ESP8266
 
+#ifdef CONFIG_IDF_TARGET_ESP32
+// Conversion table from gpio template to physical gpio
+const uint8_t Esp32TemplateToPhy[MAX_USER_PINS] = { ESP32_TEMPLATE_TO_PHY };
+#endif // CONFIG_IDF_TARGET_ESP32
+
 void TemplateGpios(myio *gp)
 {
   uint16_t *dest = (uint16_t *)gp;
@@ -1561,6 +1566,7 @@ void TemplateGpios(myio *gp)
 
 //  AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t *)&src, sizeof(mycfgio));
 
+  // Expand template to physical GPIO array, j=phy_GPIO, i=template_GPIO
   uint32_t j = 0;
   for (uint32_t i = 0; i < nitems(Settings->user_template.gp.io); i++) {
 #if defined(ESP32) && CONFIG_IDF_TARGET_ESP32C3
@@ -1569,7 +1575,9 @@ void TemplateGpios(myio *gp)
     if (22 == i) { j = 33; }    // skip 22-32
     dest[j] = src[i];
     j++;
-#else
+#elif defined(CONFIG_IDF_TARGET_ESP32)
+    dest[Esp32TemplateToPhy[i]] = src[i];
+#else // ESP8266
     if (6 == i) { j = 9; }
     if (8 == i) { j = 12; }
     dest[j] = src[i];
@@ -1629,7 +1637,9 @@ bool FlashPin(uint32_t pin)
   return (pin > 10) && (pin < 18);        // ESP32C3 has GPIOs 11-17 reserved for Flash
 #elif defined(CONFIG_IDF_TARGET_ESP32S2)
   return (pin > 21) && (pin < 33);        // ESP32S2 skip 22-32
-#else // ESP32 and ESP8266
+#elif defined(CONFIG_IDF_TARGET_ESP32)
+  return (pin >= 28) && (pin <= 31);      // ESP21 skip 28-31
+#else // ESP8266
   return (((pin > 5) && (pin < 9)) || (11 == pin));
 #endif
 }
@@ -1640,14 +1650,11 @@ bool RedPin(uint32_t pin) // pin may be dangerous to change, display in RED in t
   return false;     // no red pin on ESP32C3
 #elif defined(CONFIG_IDF_TARGET_ESP32S2)
   return false;     // no red pin on ESP32S3
-#else // ESP32 and ESP8266
-
-#ifdef CONFIG_IDF_TARGET_ESP32
-  return (16==pin)||(17==pin)||(9==pin)||(10==pin);
-#else
+#elif defined(CONFIG_IDF_TARGET_ESP32)  // red pins are 6-11 for original ESP32, other models like PICO are not impacted if flash pins are condfigured
+  // PICO can also have 16/17/18/23 not available
+  return ((6<=pin) && (11>=pin)) || (16==pin) || (17==pin);  // TODO adapt depending on the exact type of ESP32
+#else // ESP8266
   return (9==pin)||(10==pin);
-#endif
-
 #endif
 }
 
@@ -1659,6 +1666,8 @@ uint32_t ValidPin(uint32_t pin, uint32_t gpio) {
 #if defined(CONFIG_IDF_TARGET_ESP32C3)
 // ignore
 #elif defined(CONFIG_IDF_TARGET_ESP32S2)
+// ignore
+#elif defined(CONFIG_IDF_TARGET_ESP32)
 // ignore
 #else // not ESP32C3 and not ESP32S2
   if ((WEMOS == Settings->module) && !Settings->flag3.user_esp8285_enable) {  // SetOption51 - Enable ESP8285 user GPIO's
