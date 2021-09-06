@@ -51,7 +51,7 @@ uint32_t rf_lasttime = 0;
 void RfReceiveCheck(void) {
   if (mySwitch.available()) {
 
-    unsigned long long data = mySwitch.getReceivedValue();
+    uint64_t data = mySwitch.getReceivedValue();
     unsigned int bits = mySwitch.getReceivedBitlength();
     int protocol = mySwitch.getReceivedProtocol();
     int delay = mySwitch.getReceivedDelay();
@@ -152,7 +152,7 @@ void CmndRfSend(void)
   bool error = false;
 
   if (XdrvMailbox.data_len) {
-    unsigned long long data = 0;	// unsigned long long  => support payload >32bit
+    uint64_t data = 0;	// uint64_t  => support payload >32bit
     unsigned int bits = 24;
     int protocol = 1;
     int repeat = 10;
