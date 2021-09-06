@@ -431,7 +431,7 @@ void ShutterDecellerateForStop(uint8_t i)
         //prepare for stop PWM
         Shutter[i].accelerator = 0;
         Shutter[i].pwm_velocity = 0;
-        while (RtcSettings.pulse_counter[i] < (uint32_t)(Shutter[i].target_position-Shutter[i].start_position)*Shutter[i].direction*ShutterGlobal.open_velocity_max/RESOLUTION/STEPS_PER_SECOND) {
+        while (RtcSettings.pulse_counter[i] < (uint32_t)(Shutter[i].target_position-Shutter[i].start_position)*Shutter[i].direction*ShutterGlobal.open_velocity_max/RESOLUTION/STEPS_PER_SECOND && missing_steps > 0) {
         }
         analogWrite(Pin(GPIO_PWM1, i), 0); // removed with 8.3 because of reset caused by watchog
         Shutter[i].real_position = ShutterCalculatePosition(i);
@@ -1084,7 +1084,6 @@ void CmndShutterPosition(void)
         }
         int8_t new_shutterdirection = Shutter[index].real_position < Shutter[index].target_position ? 1 : -1;
         if (Shutter[index].direction == -new_shutterdirection) {
-	  Shutter[index].target_position = Shutter[index].start_position;
           ShutterPowerOff(index);
         }
         if (Shutter[index].direction != new_shutterdirection) {
