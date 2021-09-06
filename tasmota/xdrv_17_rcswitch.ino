@@ -51,22 +51,21 @@ uint32_t rf_lasttime = 0;
 void RfReceiveCheck(void) {
   if (mySwitch.available()) {
 
-    unsigned long data = mySwitch.getReceivedValue();
+    unsigned long long data = mySwitch.getReceivedValue();
     unsigned int bits = mySwitch.getReceivedBitlength();
     int protocol = mySwitch.getReceivedProtocol();
     int delay = mySwitch.getReceivedDelay();
 
-    AddLog(LOG_LEVEL_DEBUG, PSTR("RFR: Data 0x%lX (%u), Bits %d, Protocol %d, Delay %d"), data, data, bits, protocol, delay);
+    char stemp[32];
+    ext_snprintf_P(stemp, sizeof(stemp), PSTR("\"0x%_X\""), &data);
+    AddLog(LOG_LEVEL_DEBUG, PSTR("RFR: Data 0x%s, Bits %d, Protocol %d, Delay %d"), stemp, bits, protocol, delay);
 
     uint32_t now = millis();
     if ((now - rf_lasttime > RF_TIME_AVOID_DUPLICATE) && (data > 0)) {
       rf_lasttime = now;
 
-      char stemp[16];
-      if (Settings->flag.rf_receive_decimal) {      // SetOption28 - RF receive data format (0 = hexadecimal, 1 = decimal)
+      if (Settings->flag.rf_receive_decimal && (bits <=32)) {      // SetOption28 - RF receive data format (0 = hexadecimal, 1 = decimal), except for >32 as we can't
         snprintf_P(stemp, sizeof(stemp), PSTR("%u"), (uint32_t)data);
-      } else {
-        snprintf_P(stemp, sizeof(stemp), PSTR("\"0x%lX\""), (uint32_t)data);
       }
       ResponseTime_P(PSTR(",\"" D_JSON_RFRECEIVED "\":{\"" D_JSON_RF_DATA "\":%s,\"" D_JSON_RF_BITS "\":%d,\"" D_JSON_RF_PROTOCOL "\":%d,\"" D_JSON_RF_PULSE "\":%d}}"),
         stemp, bits, protocol, delay);
