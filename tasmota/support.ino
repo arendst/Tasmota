@@ -136,20 +136,20 @@ class TasAutoMutex {
   int maxWait;
   const char *name;
   public:
-    TasAutoMutex(void ** mutex, const char *name = "", int maxWait = 40, bool take=true);
+    TasAutoMutex(SemaphoreHandle_t* mutex, const char *name = "", int maxWait = 40, bool take=true);
     ~TasAutoMutex();
     void give();
     void take();
-    static void init(void ** ptr);
+    static void init(SemaphoreHandle_t* ptr);
 };
 //////////////////////////////////////////
 
-TasAutoMutex::TasAutoMutex(void **mutex, const char *name, int maxWait, bool take) {
+TasAutoMutex::TasAutoMutex(SemaphoreHandle_t*mutex, const char *name, int maxWait, bool take) {
   if (mutex) {
     if (!(*mutex)){
       TasAutoMutex::init(mutex);
     }
-    this->mutex = (SemaphoreHandle_t)*mutex;
+    this->mutex = *mutex;
     this->maxWait = maxWait;
     this->name = name;
     if (take) {
@@ -172,9 +172,9 @@ TasAutoMutex::~TasAutoMutex() {
   }
 }
 
-void TasAutoMutex::init(void ** ptr) {
+void TasAutoMutex::init(SemaphoreHandle_t* ptr) {
   SemaphoreHandle_t mutex = xSemaphoreCreateRecursiveMutex();
-  (*ptr) = (void *) mutex;
+  (*ptr) = mutex;
   // needed, else for ESP8266 as we will initialis more than once in logging
 //  (*ptr) = (void *) 1;
 }
@@ -2327,7 +2327,7 @@ bool NeedLogRefresh(uint32_t req_loglevel, uint32_t index) {
 #ifdef ESP32
   // this takes the mutex, and will be release when the class is destroyed -
   // i.e. when the functon leaves  You CAN call mutex.give() to leave early.
-  TasAutoMutex mutex(&TasmotaGlobal.log_buffer_mutex);
+  TasAutoMutex mutex((SemaphoreHandle_t *)&TasmotaGlobal.log_buffer_mutex);
 #endif  // ESP32
 
   // Skip initial buffer fill
@@ -2349,7 +2349,7 @@ bool GetLog(uint32_t req_loglevel, uint32_t* index_p, char** entry_pp, size_t* l
 #ifdef ESP32
   // this takes the mutex, and will be release when the class is destroyed -
   // i.e. when the functon leaves  You CAN call mutex.give() to leave early.
-  TasAutoMutex mutex(&TasmotaGlobal.log_buffer_mutex);
+  TasAutoMutex mutex((SemaphoreHandle_t *)&TasmotaGlobal.log_buffer_mutex);
 #endif  // ESP32
 
   if (!index) {                            // Dump all
@@ -2396,7 +2396,7 @@ void AddLogData(uint32_t loglevel, const char* log_data, const char* log_data_pa
 #ifdef ESP32
   // this takes the mutex, and will be release when the class is destroyed -
   // i.e. when the functon leaves  You CAN call mutex.give() to leave early.
-  TasAutoMutex mutex(&TasmotaGlobal.log_buffer_mutex);
+  TasAutoMutex mutex((SemaphoreHandle_t *)&TasmotaGlobal.log_buffer_mutex);
 #endif  // ESP32
 
   char mxtime[14];  // "13:45:21.999 "
