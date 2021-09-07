@@ -343,7 +343,7 @@ std::vector<mi_sensor_t> MIBLEsensors;
 std::vector<mi_bindKey_t> MIBLEbindKeys;
 std::vector<MAC_t> MIBLEBlockList;
 
-void *slotmutex = nullptr;
+SemaphoreHandle_t slotmutex = (SemaphoreHandle_t) nullptr;
 
 /*********************************************************************************************\
  * constants
