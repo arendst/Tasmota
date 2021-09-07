@@ -550,6 +550,7 @@ be_define_const_str(SYMBOL_NEXT, "SYMBOL_NEXT", 1102844455u, 0, 11, &be_const_st
 be_define_const_str(strftime, "strftime", 187738851u, 0, 8, NULL);
 be_define_const_str(import, "import", 288002260u, 66, 6, NULL);
 be_define_const_str(REL1_INV, "REL1_INV", 3733155371u, 0, 8, NULL);
+be_define_const_str(atan2, "atan2", 3173440503u, 0, 5, &be_const_str_tan);
 be_define_const_str(tan, "tan", 2633446552u, 0, 3, NULL);
 be_define_const_str(CHANGE, "CHANGE", 4280911421u, 0, 6, &be_const_str_range);
 be_define_const_str(range, "range", 4208725202u, 0, 5, NULL);
@@ -948,7 +949,7 @@ static const bstring* const m_string_table[] = {
     (const bstring *)&be_const_str_SYMBOL_NEXT,
     (const bstring *)&be_const_str_import,
     (const bstring *)&be_const_str_REL1_INV,
-    (const bstring *)&be_const_str_tan,
+    (const bstring *)&be_const_str_atan2,
     (const bstring *)&be_const_str_CHANGE,
     (const bstring *)&be_const_str_SYMBOL_WIFI,
     NULL,
@@ -1013,6 +1014,6 @@ static const bstring* const m_string_table[] = {
 
 static const struct bconststrtab m_const_string_table = {
     .size = 329,
-    .count = 658,
+    .count = 659,
     .table = m_string_table
 };

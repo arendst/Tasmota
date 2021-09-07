@@ -550,6 +550,7 @@ extern const bcstring be_const_str_SYMBOL_NEXT;
 extern const bcstring be_const_str_strftime;
 extern const bcstring be_const_str_import;
 extern const bcstring be_const_str_REL1_INV;
+extern const bcstring be_const_str_atan2;
 extern const bcstring be_const_str_tan;
 extern const bcstring be_const_str_CHANGE;
 extern const bcstring be_const_str_range;
