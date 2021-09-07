@@ -343,7 +343,7 @@ std::vector<mi_sensor_t> MIBLEsensors;
 std::vector<mi_bindKey_t> MIBLEbindKeys;
 std::vector<MAC_t> MIBLEBlockList;
 
-void *slotmutex = nullptr;
+SemaphoreHandle_t slotmutex = (SemaphoreHandle_t) nullptr;
 
 /*********************************************************************************************\
  * constants
@@ -2389,7 +2389,7 @@ const char HTTP_MI32_LIGHT[] PROGMEM = "{s}%s" " Light" "{m}%d{e}";
 //  "http://127.0.0.1:8887/keys/TelinkFlasher.html?mac=%s&cb=http%%3A%%2F%%2F%s%%2Fmikey"
 //  "\">%s</a>{m} {e}";
 const char HTTP_NEEDKEY[] PROGMEM = "{s}%s <a target=\"_blank\" href=\""
-  "https://btsimonh.github.io/atc1441.github.io/TelinkFlasherTasmota.html?mac=%s&cb=http%%3A%%2F%%2F%s%%2Fmikey"
+  "https://tasmota.github.io/ble_key_extractor?mac=%s&cb=http%%3A%%2F%%2F%s%%2Fmikey"
   "\">%s</a>{m} {e}";
 
 
