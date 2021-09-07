@@ -133,6 +133,18 @@ static int m_atan(bvm *vm)
     be_return(vm);
 }
 
+static int m_atan2(bvm *vm)
+{
+    if (be_top(vm) >= 2 && be_isnumber(vm, 1) && be_isnumber(vm, 2)) {
+        breal y = be_toreal(vm, 1);
+        breal x = be_toreal(vm, 2);
+        be_pushreal(vm, mathfunc(atan2)(y, x));
+    } else {
+        be_pushreal(vm, (breal)0.0);
+    }
+    be_return(vm);
+}
+
 static int m_sinh(bvm *vm)
 {
     if (be_top(vm) >= 1 && be_isnumber(vm, 1)) {
@@ -269,6 +281,7 @@ be_native_module_attr_table(math) {
     be_native_module_function("asin", m_asin),
     be_native_module_function("acos", m_acos),
     be_native_module_function("atan", m_atan),
+    be_native_module_function("atan2", m_atan2),
     be_native_module_function("sinh", m_sinh),
     be_native_module_function("cosh", m_cosh),
     be_native_module_function("tanh", m_tanh),
@@ -299,6 +312,7 @@ module math (scope: global, depend: BE_USE_MATH_MODULE) {
     asin, func(m_asin)
     acos, func(m_acos)
     atan, func(m_atan)
+    atan2, func(m_atan2)
     sinh, func(m_sinh)
     cosh, func(m_cosh)
     tanh, func(m_tanh)
