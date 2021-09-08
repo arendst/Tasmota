@@ -3,9 +3,9 @@
 --#
 
 class lv_signal_bars : lv_obj
-  var ancestor_design     # previous design_cb
-  var percentage          # value to display, range 0..100
-  var p1, p2, line_dsc    # instances of objects kept to avoid re-instanciating at each call
+  var ancestor_design         # previous design_cb
+  var percentage              # value to display, range 0..100
+  var p1, p2, area, line_dsc  # instances of objects kept to avoid re-instanciating at each call
 
   def init(parent, copy)
     # init parent object
@@ -18,10 +18,11 @@ class lv_signal_bars : lv_obj
     # pre-allocate buffers
     self.p1 = lv_point()
     self.p2 = lv_point()
+    self.area = lv_area()
     self.line_dsc = lv_draw_line_dsc()
   end
 
-  def my_design_cb(area, mode)
+  def my_design_cb(clip_area, mode)
     def atleast1(x) if x >= 1 return x else return 1 end end
     # the model is that we have 4 bars and inter-bar (1/4 of width)
     var height = self.get_height()
@@ -32,16 +33,16 @@ class lv_signal_bars : lv_obj
     var bar_offset = bar / 2
 
     if mode == lv.DESIGN_COVER_CHK
-      #- Return false if the object is not covers the clip_area area -#
-      return self.ancestor_design.call(self, area, mode)
+      #- Return false if the object is not covers the clip_area clip_area -#
+      return self.ancestor_design.call(self, clip_area, mode)
 
     elif mode == lv.DESIGN_DRAW_MAIN
-      #self.ancestor_design.call(self, area, mode)  # commented since we don't draw a background
+      #self.ancestor_design.call(self, clip_area, mode)  # commented since we don't draw a background
     
-      # get coordinates of area
-      self.get_coords(area)
-      var x_ofs = area.x1
-      var y_ofs = area.y1
+      # get coordinates of object
+      self.get_coords(self.area)
+      var x_ofs = self.area.x1
+      var y_ofs = self.area.y1
 
       lv.draw_line_dsc_init(self.line_dsc)          # initialize lv_draw_line_dsc structure
       self.init_draw_line_dsc(lv.OBJ_PART_MAIN, self.line_dsc)
@@ -58,10 +59,10 @@ class lv_signal_bars : lv_obj
         self.p1.x = x_ofs + i * (bar + inter_bar) + bar_offset
         self.p2.y = y_ofs + ((3 - i) * (height - bar)) / 4 + bar_offset
         self.p2.x = self.p1.x
-        lv.draw_line(self.p1, self.p2, area, self.line_dsc)
+        lv.draw_line(self.p1, self.p2, clip_area, self.line_dsc)
       end
     #elif mode == lv.DESIGN_DRAW_POST    # commented since we don't want a frame around this object
-      #self.ancestor_design.call(self, area, mode)
+      #self.ancestor_design.call(self, clip_area, mode)
     end
     return lv.DESIGN_RES_OK
   end
