@@ -21,16 +21,11 @@ stat_line.set_align(lv.LABEL_ALIGN_LEFT)                                        
 stat_line.set_style_local_bg_color(lv.OBJ_PART_MAIN, lv.STATE_DEFAULT, lv_color(0xD00000))    # background #000088
 stat_line.set_style_local_bg_opa(lv.OBJ_PART_MAIN, lv.STATE_DEFAULT, lv.OPA_COVER)            # 100% background opacity
 stat_line.set_style_local_text_color(lv.OBJ_PART_MAIN, lv.STATE_DEFAULT, lv_color(0xFFFFFF))  # text color #FFFFFF
-stat_line.set_text("Welcome to Tasmota")
+stat_line.set_text("Tasmota")
 stat_line_height = stat_line.get_height()
 
 #- display wifi strength indicator icon (for professionals ;) -#
-stat_line.set_style_local_pad_right(lv.OBJ_PART_MAIN, lv.STATE_DEFAULT, stat_line_height + 1)
-wifi_bars = lv_wifi_bars(stat_line)
-wifi_bars.set_style_local_bg_color(lv.OBJ_PART_MAIN, lv.STATE_DEFAULT, lv_color(lv.COLOR_BLACK))
-wifi_bars.set_height(stat_line_height)
-wifi_bars.set_width(stat_line_height)
-wifi_bars.set_x(stat_line.get_width() - stat_line_height)
+wifi_icon = lv_wifi_arcs_icon(stat_line)    # the widget takes care of positioning and driver stuff
 
 #- create a style for the buttons -#
 btn_style = lv_style()
