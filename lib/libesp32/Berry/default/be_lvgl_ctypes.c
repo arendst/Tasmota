@@ -154,6 +154,19 @@ int be_ctypes_init(bvm *vm) {
     be_return(vm);
 }
 
+//
+// copy ctypes_bytes, with same class and same content
+//
+int be_ctypes_copy(bvm *vm) {
+    size_t len;
+    const void * src = be_tobytes(vm, 1, &len);
+    be_classof(vm, 1);
+    be_pushint(vm, (int32_t) src);  // skip first 4 bytes
+    be_call(vm, 1);
+    be_pop(vm, 1);
+    be_return(vm);
+}
+
 int be_ctypes_member(bvm *vm) {
     int argc = be_top(vm);
     be_getmember(vm, 1, ".def");
@@ -307,6 +320,7 @@ void be_load_lvgl_ctypes_lib(bvm *vm) {
     static const bnfuncinfo members[] = {
         { ".def", NULL },               // pointer to definition
         { "init", be_ctypes_init },
+        { "copy", be_ctypes_copy },
         { "member", be_ctypes_member },
         { "setmember", be_ctypes_setmember },
         { NULL, NULL }
@@ -327,6 +341,7 @@ void be_load_lvgl_ctypes_lib(bvm *vm) {
 /* @const_object_info_begin
 class be_class_lv_ctypes (scope: global, name: ctypes_bytes, super: be_class_bytes) {
     .def, var
+    copy, func(be_ctypes_copy)
     init, func(be_ctypes_init)
     member, func(be_ctypes_member)
     setmember, func(be_ctypes_setmember)
