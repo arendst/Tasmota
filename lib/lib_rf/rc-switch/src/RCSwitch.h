@@ -59,7 +59,7 @@
 // Number of maximum high/Low changes per packet.
 // We can handle up to (unsigned long) => 32 bit * 2 H/L changes per bit + 2 for sync
 // Для keeloq нужно увеличить RCSWITCH_MAX_CHANGES до 23+1+66*2+1=157
-#define RCSWITCH_MAX_CHANGES 67        // default 67
+#define RCSWITCH_MAX_CHANGES 106        // default 67 See https://github.com/sui77/rc-switch/wiki/Add_New_Remote_Part_2
 
 class RCSwitch {
 
@@ -78,7 +78,7 @@ class RCSwitch {
     void switchOff(char sGroup, int nDevice);
 
     void sendTriState(const char* sCodeWord);
-    void send(unsigned long long code, unsigned int length);
+    void send(uint64_t code, unsigned int length);
     void send(const char* sCodeWord);
 
     #if not defined( RCSwitchDisableReceiving )
@@ -88,7 +88,7 @@ class RCSwitch {
     bool available();
     void resetAvailable();
 
-    unsigned long long getReceivedValue();
+    uint64_t getReceivedValue();
     unsigned int getReceivedBitlength();
     unsigned int getReceivedDelay();
     unsigned int getReceivedProtocol();
@@ -102,7 +102,7 @@ class RCSwitch {
     void setRepeatTransmit(int nRepeatTransmit);
     #if not defined( RCSwitchDisableReceiving )
     void setReceiveTolerance(int nPercent);
-    void setReceiveProtocolMask(unsigned long long mask);
+    void setReceiveProtocolMask(uint64_t mask);
     #endif
 
     /**
@@ -173,8 +173,8 @@ class RCSwitch {
 
     #if not defined( RCSwitchDisableReceiving )
     static int nReceiveTolerance;
-    volatile static unsigned long long nReceivedValue;
-    volatile static unsigned long long nReceiveProtocolMask;
+    volatile static uint64_t nReceivedValue;
+    volatile static uint64_t nReceiveProtocolMask;
     volatile static unsigned int nReceivedBitlength;
     volatile static unsigned int nReceivedDelay;
     volatile static unsigned int nReceivedProtocol;
