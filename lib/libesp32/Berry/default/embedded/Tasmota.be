@@ -302,6 +302,15 @@ class Tasmota
     end
   end
 
+  def remove_driver(d)
+    if self._drivers
+      var idx = self._drivers.find(d)
+      if idx != nil
+        self._drivers.pop(idx)
+      end
+    end
+  end
+
   # cmd high-level function
   def cmd(command)
     import json

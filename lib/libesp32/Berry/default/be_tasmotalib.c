@@ -1463,6 +1463,46 @@ be_local_closure(add_driver,   /* name */
 /*******************************************************************/
 
 /********************************************************************
+** Solidified function: remove_driver
+********************************************************************/
+be_local_closure(remove_driver,   /* name */
+  be_nested_proto(
+    6,                          /* nstack */
+    2,                          /* argc */
+    0,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 3]) {     /* constants */
+    /* K0   */  be_nested_string("_drivers", -1034638311, 8),
+    /* K1   */  be_nested_string("find", -1108310694, 4),
+    /* K2   */  be_nested_string("pop", 1362321360, 3),
+    }),
+    (be_nested_const_str("remove_driver", 1030243768, 13)),
+    (be_nested_const_str("input", -103256197, 5)),
+    ( &(const binstruction[14]) {  /* code */
+      0x88080100,  //  0000  GETMBR	R2	R0	K0
+      0x780A000A,  //  0001  JMPF	R2	#000D
+      0x88080100,  //  0002  GETMBR	R2	R0	K0
+      0x8C080501,  //  0003  GETMET	R2	R2	K1
+      0x5C100200,  //  0004  MOVE	R4	R1
+      0x7C080400,  //  0005  CALL	R2	2
+      0x4C0C0000,  //  0006  LDNIL	R3
+      0x200C0403,  //  0007  NE	R3	R2	R3
+      0x780E0003,  //  0008  JMPF	R3	#000D
+      0x880C0100,  //  0009  GETMBR	R3	R0	K0
+      0x8C0C0702,  //  000A  GETMET	R3	R3	K2
+      0x5C140400,  //  000B  MOVE	R5	R2
+      0x7C0C0400,  //  000C  CALL	R3	2
+      0x80000000,  //  000D  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+/********************************************************************
 ** Solidified function: load
 ********************************************************************/
 be_local_closure(load,   /* name */
@@ -2105,96 +2145,15 @@ be_local_closure(gen_cb,   /* name */
 /*******************************************************************/
 
 
-#if BE_USE_PRECOMPILED_OBJECT
 #include "../generate/be_fixed_be_class_tasmota.h"
-#endif
 
 
 // Class definition
 void be_load_tasmota_ntvlib(bvm *vm)
 {
-#if !BE_USE_PRECOMPILED_OBJECT
-    static const bnfuncinfo members[] = {
-        { "_rules", NULL },
-        { "_timers", NULL },
-        { "_ccmd", NULL },
-        { "_drivers", NULL },
-        { "_cb", NULL},
-        { "wire1", NULL },
-        { "wire2", NULL },
-        { "get_free_heap", l_getFreeHeap },
-        { "publish", l_publish },
-        { "publish_result", l_publish_result },
-        { "_cmd", l_cmd },
-        { "_get_cb", l_get_cb },
-        { "get_option", l_getoption },
-        { "millis", l_millis },
-        { "time_reached", l_timereached },
-        { "rtc", l_rtc },
-        { "time_dump", l_time_dump },
-        { "memory", l_memory },
-        { "wifi", l_wifi },
-        { "eth", l_eth },
-        { "yield", l_yield },
-        { "delay", l_delay },
-        { "scale_uint", l_scaleuint },
-        { "log", l_logInfo },
-        { "save", l_save },
-
-        { "resp_cmnd", l_respCmnd },
-        { "resp_cmnd_str", l_respCmndStr },
-        { "resp_cmnd_done", l_respCmndDone },
-        { "resp_cmnd_error", l_respCmndError },
-        { "resp_cmnd_failed", l_respCmndFailed },
-        { "resolvecmnd", l_resolveCmnd },
-
-        { "response_append", l_respAppend },
-        { "web_send", l_webSend },
-        { "web_send_decimal", l_webSendDecimal },
-
-        { "get_power", l_getpower },
-        { "set_power", l_setpower },
-
-        { "i2c_enabled", l_i2cenabled },
-
-        { NULL, (bntvfunc) BE_CLOSURE }, /* mark section for berry closures */
-        { "cmd", (bntvfunc) &cmd_closure },
-        { "chars_in_string", (bntvfunc) &chars_in_string_closure },
-        { "find_key_i", (bntvfunc) &find_key_i_closure },
-        { "find_op", (bntvfunc) &find_op_closure },
-        { "add_rule", (bntvfunc) &add_rule_closure },
-        { "remove_rule", (bntvfunc) &remove_rule_closure },
-        { "try_rule", (bntvfunc) &try_rule_closure },
-        { "exec_rules", (bntvfunc) &exec_rules_closure },
-        { "set_timer", (bntvfunc) &set_timer_closure },
-        { "run_deferred", (bntvfunc) &run_deferred_closure },
-        { "remove_timer", (bntvfunc) &remove_timer_closure },
-        { "add_cmd", (bntvfunc) &add_cmd_closure },
-        { "remove_cmd", (bntvfunc) &remove_cmd_closure },
-        { "exec_cmd", (bntvfunc) &exec_cmd_closure },
-        { "gc", (bntvfunc) &gc_closure },
-        { "event", (bntvfunc) &event_closure },
-        { "add_driver", (bntvfunc) &add_driver_closure },
-        { "load", (bntvfunc) &load_closure },
-        { "wire_scan", (bntvfunc) &wire_scan_closure },
-        { "time_str", (bntvfunc) &time_str_closure },
-
-        // callbacks
-        { "cb_dispatch", (bntvfunc) &cb_dispatch_closure },
-        { "gen_cb", (bntvfunc) &gen_cb_closure },
-
-        // deprecated
-        { "get_light", (bntvfunc) &get_light_closure },
-        { "set_light", (bntvfunc) &set_light_closure },
-
-        { NULL, NULL }
-    };
-    be_regclass(vm, "Tasmota", members);
-#else
     be_pushntvclass(vm, &be_class_tasmota);
     be_setglobal(vm, "Tasmota");
     be_pop(vm, 1);
-#endif
 }
 
 /* @const_object_info_begin
@@ -2260,6 +2219,7 @@ class be_class_tasmota (scope: global, name: Tasmota) {
     gc, closure(gc_closure)
     event, closure(event_closure)
     add_driver, closure(add_driver_closure)
+    remove_driver, closure(remove_driver_closure)
     load, closure(load_closure)
     wire_scan, closure(wire_scan_closure)
     time_str, closure(time_str_closure)
