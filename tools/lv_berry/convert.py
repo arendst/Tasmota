@@ -2,7 +2,7 @@ import re
 import sys
 
 lv_widgets_file = "lv_widgets.h"
-lv_module_file = "lv_module.h"
+lv_module_file = "lv_enum.h"
 
 out_prefix = "../../tasmota/lvgl_berry/"
 lvgl_prefix = "../../lib/libesp32/Berry/default/"
