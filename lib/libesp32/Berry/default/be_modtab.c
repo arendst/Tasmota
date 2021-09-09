@@ -131,6 +131,7 @@ extern void be_load_lv_wifi_bars_icon_class(bvm *vm);
 extern void be_load_lv_signal_arcs_class(bvm *vm);
 extern void be_load_lv_wifi_arcs_class(bvm *vm);
 extern void be_load_lv_wifi_arcs_icon_class(bvm *vm);
+extern void be_load_lv_clock_icon_class(bvm *vm);
 #endif// USE_LVGL
 
 /* this code loads the native class definitions */
@@ -179,6 +180,7 @@ BERRY_API void be_load_custom_libs(bvm *vm)
     be_load_lv_signal_arcs_class(vm);
     be_load_lv_wifi_arcs_class(vm);
     be_load_lv_wifi_arcs_icon_class(vm);
+    be_load_lv_clock_icon_class(vm);
 #endif // USE_LVGL
 }
 #endif

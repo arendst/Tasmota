@@ -26,6 +26,7 @@ stat_line_height = stat_line.get_height()
 
 #- display wifi strength indicator icon (for professionals ;) -#
 wifi_icon = lv_wifi_arcs_icon(stat_line)    # the widget takes care of positioning and driver stuff
+clock_icon = lv_clock_icon(stat_line)
 
 #- create a style for the buttons -#
 btn_style = lv_style()
