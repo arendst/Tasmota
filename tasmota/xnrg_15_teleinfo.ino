@@ -562,21 +562,9 @@ void TInfoDrvInit(void) {
     // If one TInfo RX pin declared use it
     if (PinUsed(GPIO_TELEINFO_RX)) {
         tic_rx_pin = Pin(GPIO_TELEINFO_RX);
-    } else {
-        // Case we are on denky V4 board without any TInfo RX pin selected 
-        #ifdef ARDUINO_DENKY_PICOV3
-            tic_rx_pin = 8;
-            AddLog(LOG_LEVEL_INFO, PSTR("TIC: Denky D4 board, RX on GPIO%d"), tic_rx_pin);
-        #endif
-    }
-
-    // Enable teleinfo
-    if (tic_rx_pin != NOT_A_PIN) {
         TasmotaGlobal.energy_driver = XNRG_15;
         Energy.voltage_available = false;
         Energy.phase_count = 1;
-    } else {
-        AddLog(LOG_LEVEL_ERROR, PSTR("TIC: Device has no RX pin"));
     }
 }
 
@@ -589,6 +577,7 @@ Comments: -
 ====================================================================== */
 void TInfoInit(void)
 {
+    if (!PinUsed(GPIO_TELEINFO_RX)) { return; }       // ignore if pin not set
     int baudrate;
 
     // Deprecated SetOption102 - Set Baud rate for Teleinfo serial communication (0 = 1200 or 1 = 9600)
@@ -611,8 +600,6 @@ void TInfoInit(void)
         pinMode(en_pin, OUTPUT);
         digitalWrite(en_pin, HIGH);
         AddLog(LOG_LEVEL_INFO, PSTR("TIC: Enable with GPIO%d"), en_pin);
-    } else  {
-        AddLog(LOG_LEVEL_INFO, PSTR("TIC: always enabled"));
     }
 
 #ifdef ESP8266
@@ -626,11 +613,7 @@ void TInfoInit(void)
     TInfoSerial = new TasmotaSerial(tic_rx_pin, -1, 1, 0, serial_buffer_size);
 #endif  // ESP32
 
-    // Trick here even using SERIAL_7E1 or TS_SERIAL_7E1
-    // this is not working, need to call SetSerialConfig after
-    if (TInfoSerial->begin(baudrate)) {
-
-
+    if (TInfoSerial->begin(baudrate, SERIAL_7E1)) {
 #ifdef ESP8266
         if (TInfoSerial->hardwareSerial() ) {
             ClaimSerial();
@@ -647,10 +630,6 @@ void TInfoInit(void)
             AddLog(LOG_LEVEL_INFO, PSTR("TIC: using software serial"));
         }
 #endif  // ESP8266
-#ifdef ESP32
-        SetSerialConfig(TS_SERIAL_7E1);
-        AddLog(LOG_LEVEL_INFO, PSTR("TIC: using ESP32 hardware serial"));
-#endif  // ESP32
         // Init teleinfo
         tinfo.init(tinfo_mode);
         // Attach needed callbacks
@@ -666,7 +645,6 @@ void TInfoInit(void)
                 AddLog(LOG_LEVEL_INFO, PSTR("TIC: Sending only one frame over %d "), raw_skip+1);
             } 
         }
-        AddLog(LOG_LEVEL_INFO, PSTR("TIC: Ready"));
     }
 }
 
@@ -1029,27 +1007,27 @@ bool Xnrg15(uint8_t function)
     bool result = false;
     switch (function)
     {
-        case FUNC_EVERY_250_MSECOND:
-            TInfoProcess();
-            break;
-        case FUNC_COMMAND:
-            result = TInfoCmd();
-            break;
-
-        case FUNC_JSON_APPEND:
-            TInfoShow(1);
-            break;
-    #ifdef USE_WEBSERVER
-        case FUNC_WEB_SENSOR:
-            TInfoShow(0);
-            break;
-    #endif  // USE_WEBSERVER
         case FUNC_INIT:
             TInfoInit();
             break;
         case FUNC_PRE_INIT:
             TInfoDrvInit();
             break;
+        case FUNC_EVERY_250_MSECOND:
+            if (tinfo_found) { TInfoProcess(); }
+            break;
+        case FUNC_COMMAND:
+            if (tinfo_found) { result = TInfoCmd(); }
+            break;
+
+        case FUNC_JSON_APPEND:
+            if (tinfo_found) { TInfoShow(1); }
+            break;
+    #ifdef USE_WEBSERVER
+        case FUNC_WEB_SENSOR:
+            if (tinfo_found) { TInfoShow(0); }
+            break;
+    #endif  // USE_WEBSERVER
     }
     return result;
 }
