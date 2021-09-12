@@ -311,44 +311,6 @@ int32_t EspPartitionMmap(uint32_t action) {
 }
 
 */
-//
-// Crash stuff
-//
-
-void CrashDump(void) {
-}
-
-bool CrashFlag(void) {
-  return false;
-}
-
-void CrashDumpClear(void) {
-}
-
-void CmndCrash(void) {
-  /*
-  volatile uint32_t dummy;
-  dummy = *((uint32_t*) 0x00000000);
-*/
-}
-
-// Do an infinite loop to trigger WDT watchdog
-void CmndWDT(void) {
-  /*
-  volatile uint32_t dummy = 0;
-  while (1) {
-    dummy++;
-  }
-*/
-}
-// This will trigger the os watch after OSWATCH_RESET_TIME (=120) seconds
-void CmndBlockedLoop(void) {
-  /*
-  while (1) {
-    delay(1000);
-  }
-*/
-}
 
 //
 // ESP32 specific
