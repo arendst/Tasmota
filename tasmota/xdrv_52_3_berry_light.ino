@@ -216,6 +216,7 @@ extern "C" {
 
             uint8_t channels[LST_MAX] = {};     // initialized with all zeroes
             if (list_size > LST_MAX) { list_size = LST_MAX; }   // no more than 5 channels, no need to test for positive, any negative will be discarded by loop
+            bool on = false;    // if all are zero, then only set power off
             for (uint32_t i = 0; i < list_size; i++) {
               // be_dumpstack(vm);
               get_list_item(vm, i);
@@ -223,16 +224,12 @@ extern "C" {
               int32_t val = be_toint(vm, -1);
               be_pop(vm, 1);      // remove result from stack
               channels[i] = to_u8(val);
-
-              bool on = false;    // if all are zero, then only set power off
-              for (uint32_t i = 0; i < LST_MAX; i++) {
-                if (channels[i] != 0) { on = true; }
-              }
-              if (on) {
-                light_controller.changeChannels(channels);
-              } else {
-                ExecuteCommandPower(idx + 1, POWER_OFF, SRC_BERRY);
-              }
+              if (channels[i]) { on = true; }
+            }
+            if (on) {
+              light_controller.changeChannels(channels);
+            } else {
+              ExecuteCommandPower(idx + 1, POWER_OFF, SRC_BERRY);
             }
           } else {
             be_pop(vm, 1);      // remove "list" class from top
