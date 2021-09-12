@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - Berry class ``webclient`` for HTTP/HTTPS requests
 - Support for ESP32S2 GPIOs
 - ESP32 add GPIO 6/7/8/11 to template and remove GPIO 28-31 (remapping so backwards compatible)
+- Crash recorder ``Status 12`` for ESP32/ESP32S2/ESP32C3, supporting Esp-idf 3.3/4.4
 
 ### Fixed
 - OpenTherm invalid JSON (#13028)
