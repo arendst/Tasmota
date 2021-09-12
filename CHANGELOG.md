@@ -11,6 +11,9 @@ All notable changes to this project will be documented in this file.
 - ESP32 add GPIO 6/7/8/11 to template and remove GPIO 28-31 (remapping so backwards compatible)
 - Crash recorder ``Status 12`` for ESP32/ESP32S2/ESP32C3, supporting Esp-idf 3.3/4.4
 
+### Changed
+- M5 Stack Core2 uses UNIVERSAL_DISPLAY with enabled LVGL as default now
+
 ### Fixed
 - OpenTherm invalid JSON (#13028)
 - ESP32 crash when PSRAM is absent and ``BOARD_HAS_PSRAM`` set (#13037)
