@@ -104,6 +104,8 @@
     #define JPEG_PICTS
     #define USE_FT5206
 
+#define USE_LIGHT
+
 #define USE_SENDMAIL
 #define USE_ESP32MAIL
 
