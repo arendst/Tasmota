@@ -22,7 +22,9 @@
 
 #include <berry.h>
 
+#if defined(CONFIG_IDF_TARGET_ESP32) || defined(CONFIG_IDF_TARGET_ESP32S2)
 #include <driver/dac.h>
+#endif
 /*********************************************************************************************\
  * Native functions mapped to Berry functions
  * 
