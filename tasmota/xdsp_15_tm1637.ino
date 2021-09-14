@@ -233,7 +233,8 @@ void TM1637Init(void)
   Settings->display_cols[0] = Settings->display_width;
   Settings->display_height = 1;
   Settings->display_rows = Settings->display_height;
-  if(!Settings->display_dimmer || Settings->display_dimmer < 2 || Settings->display_dimmer > 15) Settings->display_dimmer = 8;
+  uint8_t dimmer16 = GetDisplayDimmer16();
+  if(!dimmer16 || dimmer16 < 2 || dimmer16 > 15) SetDisplayDimmer(50);
 
   if (TM1637 == TM1637Data.display_type)
   {
@@ -1074,8 +1075,8 @@ bool TM1637MainFunc(uint8_t fn)
 
 void TM1637Dim(void)
 {
-  // Settings->display_dimmer = 0 - 15
-  uint8_t brightness = Settings->display_dimmer >> 1; // 0 - 7
+  // GetDisplayDimmer16() = 0 - 15
+  uint8_t brightness = GetDisplayDimmer16() >> 1; // 0 - 7
 
   if (TM1637 == TM1637Data.display_type)
   {

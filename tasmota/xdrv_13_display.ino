@@ -396,6 +396,30 @@ uint32_t decode_te(char *line) {
 }
 
 /*-------------------------------------------------------------------------------------------*/
+// Getter and Setter for DisplayDimer
+// Original encoding is range 0..15
+// New encoding is range 0..100 using negative numbers, i.e. 0..-100
+uint8_t GetDisplayDimmer(void) {
+  if (Settings->display_dimmer_protected > 0) {
+    return changeUIntScale(Settings->display_dimmer_protected, 0, 15, 0, 100);
+  } else {
+    if (Settings->display_dimmer_protected < -100) { Settings->display_dimmer_protected = -100; }
+    return - Settings->display_dimmer_protected;
+  }
+}
+
+// retro-compatible call to get range 0..15
+uint8_t GetDisplayDimmer16(void) {
+  return changeUIntScale(GetDisplayDimmer(), 0, 100, 0, 15);
+}
+
+// In: 0..100
+void SetDisplayDimmer(uint8_t dimmer) {
+  if (dimmer > 100) { dimmer = 100; }
+  Settings->display_dimmer_protected = - dimmer;
+}
+
+/*-------------------------------------------------------------------------------------------*/
 
 #define DISPLAY_BUFFER_COLS    128          // Max number of characters in linebuf
 
@@ -1750,6 +1774,7 @@ void DisplayLocalSensor(void)
 void DisplayInitDriver(void)
 {
   XdspCall(FUNC_DISPLAY_INIT_DRIVER);
+  ApplyDisplayDimmer();
 
 #ifdef USE_MULTI_DISPLAY
   Set_display(0);
@@ -1821,7 +1846,7 @@ void CmndDisplay(void) {
     D_CMND_DISP_MODE "\":%d,\"" D_CMND_DISP_DIMMER "\":%d,\"" D_CMND_DISP_SIZE "\":%d,\"" D_CMND_DISP_FONT "\":%d,\""
     D_CMND_DISP_ROTATE "\":%d,\"" D_CMND_DISP_INVERT "\":%d,\"" D_CMND_DISP_REFRESH "\":%d,\"" D_CMND_DISP_COLS "\":[%d,%d],\"" D_CMND_DISP_ROWS "\":%d}}"),
     Settings->display_model, Settings->display_options.type, Settings->display_width, Settings->display_height,
-    Settings->display_mode, changeUIntScale(Settings->display_dimmer, 0, 15, 0, 100), Settings->display_size, Settings->display_font,
+    Settings->display_mode, GetDisplayDimmer(), Settings->display_size, Settings->display_font,
     Settings->display_rotate, Settings->display_options.invert, Settings->display_refresh, Settings->display_cols[0], Settings->display_cols[1], Settings->display_rows);
 }
 
@@ -1896,22 +1921,30 @@ void CmndDisplayMode(void) {
   ResponseCmndNumber(Settings->display_mode);
 }
 
+// Apply the current display dimmer
+void ApplyDisplayDimmer(void) {
+  uint8_t dimmer8 = changeUIntScale(GetDisplayDimmer(), 0, 100, 0, 255);
+  uint8_t dimmer8_gamma = ledGamma(dimmer8);
+  if (dimmer8 && !(disp_power)) {
+    ExecuteCommandPower(disp_device, POWER_ON, SRC_DISPLAY);
+  }
+  else if (!dimmer8 && disp_power) {
+    ExecuteCommandPower(disp_device, POWER_OFF, SRC_DISPLAY);
+  }
+  if (renderer) {
+    renderer->dim8(dimmer8, dimmer8_gamma);   // provide 8 bits and gamma corrected dimmer in 8 bits
+  } else {
+    XdspCall(FUNC_DISPLAY_DIM);
+  }
+}
+
 void CmndDisplayDimmer(void) {
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 100)) {
-    Settings->display_dimmer = changeUIntScale(XdrvMailbox.payload, 0, 100, 0, 15);  // Correction for Domoticz (0 - 15)
-    if (Settings->display_dimmer && !(disp_power)) {
-      ExecuteCommandPower(disp_device, POWER_ON, SRC_DISPLAY);
-    }
-    else if (!Settings->display_dimmer && disp_power) {
-      ExecuteCommandPower(disp_device, POWER_OFF, SRC_DISPLAY);
-    }
-    if (renderer) {
-      renderer->dim(Settings->display_dimmer);
-    } else {
-      XdspCall(FUNC_DISPLAY_DIM);
-    }
+    uint8_t dimmer = XdrvMailbox.payload;
+    SetDisplayDimmer(dimmer);
+    ApplyDisplayDimmer();
   }
-  ResponseCmndNumber(changeUIntScale(Settings->display_dimmer, 0, 15, 0, 100));
+  ResponseCmndNumber(GetDisplayDimmer());
 }
 
 void CmndDisplaySize(void) {

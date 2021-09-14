@@ -1116,7 +1116,7 @@ void SettingsDefaultSet2(void) {
   Settings->display_rows = 2;
   Settings->display_cols[0] = 16;
   Settings->display_cols[1] = 8;
-  Settings->display_dimmer = 1;
+  Settings->display_dimmer_protected = -10;  // 10%
   Settings->display_size = 1;
   Settings->display_font = 1;
 //  Settings->display_rotate = 0;

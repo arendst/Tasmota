@@ -469,7 +469,7 @@ typedef struct {
   uint8_t       display_rows;              // 2D5
   uint8_t       display_cols[2];           // 2D6
   uint8_t       display_address[8];        // 2D8
-  uint8_t       display_dimmer;            // 2E0
+  int8_t        display_dimmer_protected;  // 2E0 - if positive range 0..15, if negative range 0..100 (neg) - don't use directly
   uint8_t       display_size;              // 2E1
   TimeRule      tflag[2];                  // 2E2
   uint16_t      pwm_frequency;             // 2E6

@@ -58,6 +58,11 @@ uint16_t Renderer::GetColorFromIndex(uint8_t index) {
 }
 
 void Renderer::dim(uint8_t contrast) {
+  uint8_t contrast8 = ((uint32_t)contrast * 255) / 15;
+  dim8(contrast8, contrast8);
+}
+
+void Renderer::dim8(uint8_t contrast, uint8_t contrast_gamma) {
 
 }
 
