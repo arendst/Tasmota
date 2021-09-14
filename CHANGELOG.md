@@ -14,6 +14,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 - M5 Stack Core2 uses UNIVERSAL_DISPLAY with enabled LVGL as default now
+- ``DisplayDimmer`` has now resolution of 8 bits instead of 4, and uses Gamma for LED
 
 ### Fixed
 - OpenTherm invalid JSON (#13028)

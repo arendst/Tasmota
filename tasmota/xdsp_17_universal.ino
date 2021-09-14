@@ -312,7 +312,7 @@ uDisplay *udisp;
 #endif
 
     renderer->DisplayInit(DISPLAY_INIT_MODE, Settings->display_size, Settings->display_rotate, Settings->display_font);
-    renderer->dim(Settings->display_dimmer);
+    ApplyDisplayDimmer();
 
 #ifdef SHOW_SPLASH
     renderer->Splash();

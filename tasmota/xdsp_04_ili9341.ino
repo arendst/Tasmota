@@ -97,7 +97,7 @@ void ILI9341_InitDriver()
 #endif
 
     renderer->DisplayInit(DISPLAY_INIT_MODE, Settings->display_size, Settings->display_rotate, Settings->display_font);
-    renderer->dim(Settings->display_dimmer);
+    renderer->dim(GetDisplayDimmer16());
 
 #ifdef SHOW_SPLASH
     // Welcome text

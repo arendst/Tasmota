@@ -423,9 +423,9 @@ Renderer *uDisplay::Init(void) {
 
     if (bpanel >= 0) {
 #ifdef ESP32
-        ledcSetup(ESP32_PWM_CHANNEL, 4000, 8);
+        ledcSetup(ESP32_PWM_CHANNEL, 977, 8);   // use 10 bits resolution like in Light
         ledcAttachPin(bpanel, ESP32_PWM_CHANNEL);
-        ledcWrite(ESP32_PWM_CHANNEL, 128);
+        ledcWrite(ESP32_PWM_CHANNEL, 8);        // 38/255 correspond roughly to 50% visual brighness (with Gamma)
 #else
         pinMode(bpanel, OUTPUT);
         digitalWrite(bpanel, HIGH);
@@ -1343,7 +1343,7 @@ void uDisplay::DisplayOnff(int8_t on) {
       if (dsp_on != 0xff) spi_command_one(dsp_on);
       if (bpanel >= 0) {
 #ifdef ESP32
-        ledcWrite(ESP32_PWM_CHANNEL, dimmer);
+        ledcWrite(ESP32_PWM_CHANNEL, dimmer8_gamma);
 #else
         digitalWrite(bpanel, HIGH);
 #endif
@@ -1386,38 +1386,37 @@ void uDisplay::invertDisplay(boolean i) {
 
 void udisp_dimm(uint8_t dim);
 
-void uDisplay::dim(uint8_t dim) {
-  dimmer = dim;
+// input value is 0..15
+// void uDisplay::dim(uint8_t dim) {
+//   dim8(((uint32_t)dim * 255) / 15);
+// }
 
+// dim is 0..255
+void uDisplay::dim8(uint8_t dim, uint8_t dim_gamma) {           // dimmer with 8 bits resolution, 0..255. Gamma correction must be done by caller
+  dimmer8 = dim;
+  dimmer8_gamma = dim_gamma;
   if (ep_mode) {
     return;
   }
 
-  if (interface == _UDSP_SPI) {
-    if (dimmer > 15) dimmer = 15;
-    dimmer = ((float)dimmer / 15.0) * 255.0;
-#ifdef ESP32
-    if (bpanel >= 0) {
-      ledcWrite(ESP32_PWM_CHANNEL, dimmer);
-    } else {
-      //udisp_dimm(dim);
-      if (dim_cbp) {
-        dim_cbp(dim);
-      }
-    }
+#ifdef ESP32              // TODO should we also add a ESP8266 version for bpanel?
+  if (bpanel >= 0) {      // is the BaclPanel GPIO configured
+    ledcWrite(ESP32_PWM_CHANNEL, dimmer8_gamma);
+  } else if (dim_cbp) {
+    dim_cbp(dim);
+  }
 #endif
-
-    if (dim_op != 0xff) {
+  if (interface == _UDSP_SPI) {
+    if (dim_op != 0xff) {   // send SPI command if dim configured
       SPI_BEGIN_TRANSACTION
       SPI_CS_LOW
       spi_command(dim_op);
-      spi_data8(dim);
+      spi_data8(dimmer8);
       SPI_CS_HIGH
       SPI_END_TRANSACTION
     }
   }
 }
-
 
 // the cases are PSEUDO_OPCODES from MODULE_DESCRIPTOR
 // and may be exapnded with more opcodes
