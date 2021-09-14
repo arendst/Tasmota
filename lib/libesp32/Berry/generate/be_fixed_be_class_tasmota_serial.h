@@ -43,5 +43,5 @@ BE_EXPORT_VARIABLE be_define_const_class(
     be_class_tasmota_serial,
     1,
     NULL,
-    Serial
+    serial
 );

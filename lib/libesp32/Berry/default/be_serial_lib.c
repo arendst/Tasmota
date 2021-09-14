@@ -21,13 +21,13 @@ extern int b_serial_flush(bvm *vm);
 
 void be_load_serial_lib(bvm *vm) {
     be_pushntvclass(vm, &be_class_tasmota_serial);
-    be_setglobal(vm, "Serial");
+    be_setglobal(vm, "serial");
     be_pop(vm, 1);
 }
 
 /* @const_object_info_begin
 
-class be_class_tasmota_serial (scope: global, name: Serial) {
+class be_class_tasmota_serial (scope: global, name: serial) {
     .p, var
 
     SERIAL_5N1, int(SERIAL_5N1)

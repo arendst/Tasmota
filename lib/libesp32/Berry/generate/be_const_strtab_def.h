@@ -449,7 +449,6 @@ be_define_const_str(remove_cmd, "remove_cmd", 3832315702u, 0, 10, NULL);
 be_define_const_str(TUYA_RX, "TUYA_RX", 1609397679u, 0, 7, &be_const_str_VL53L0X_XSHUT1);
 be_define_const_str(VL53L0X_XSHUT1, "VL53L0X_XSHUT1", 2341134183u, 0, 14, &be_const_str_WE517_RX);
 be_define_const_str(WE517_RX, "WE517_RX", 4096577879u, 0, 8, NULL);
-be_define_const_str(Serial, "Serial", 143954585u, 0, 6, &be_const_str_open);
 be_define_const_str(open, "open", 3546203337u, 0, 4, &be_const_str_target_search);
 be_define_const_str(target_search, "target_search", 1947846553u, 0, 13, NULL);
 be_define_const_str(clear, "clear", 1550717474u, 0, 5, &be_const_str_find);
@@ -497,7 +496,8 @@ be_define_const_str(SERIAL_5E2, "SERIAL_5E2", 1180552854u, 0, 10, &be_const_str_
 be_define_const_str(find_key_i, "find_key_i", 850136726u, 0, 10, NULL);
 be_define_const_str(PZEM016_RX, "PZEM016_RX", 1004012055u, 0, 10, NULL);
 be_define_const_str(save, "save", 3439296072u, 0, 4, NULL);
-be_define_const_str(SSD1351_DC, "SSD1351_DC", 84950353u, 0, 10, NULL);
+be_define_const_str(SSD1351_DC, "SSD1351_DC", 84950353u, 0, 10, &be_const_str_serial);
+be_define_const_str(serial, "serial", 3687697785u, 0, 6, NULL);
 be_define_const_str(_get_cb, "_get_cb", 1448849122u, 0, 7, NULL);
 be_define_const_str(ROT1A, "ROT1A", 759599716u, 0, 5, NULL);
 be_define_const_str(I2S_OUT_DATA, "I2S_OUT_DATA", 1176288293u, 0, 12, NULL);
@@ -928,7 +928,7 @@ static const bstring* const m_string_table[] = {
     (const bstring *)&be_const_str_remove_cmd,
     (const bstring *)&be_const_str_TUYA_RX,
     NULL,
-    (const bstring *)&be_const_str_Serial,
+    (const bstring *)&be_const_str_open,
     (const bstring *)&be_const_str_clear,
     (const bstring *)&be_const_str_content_flush,
     (const bstring *)&be_const_str_RF_SENSOR,
