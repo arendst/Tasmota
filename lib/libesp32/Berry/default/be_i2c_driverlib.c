@@ -389,44 +389,16 @@ be_local_closure(read32,   /* name */
 /*******************************************************************/
 
 
-#if BE_USE_PRECOMPILED_OBJECT
-#include "../generate/be_fixed_be_class_tasmota_i2c_driver.h"
-#endif
+#include "../generate/be_fixed_be_class_I2C_Driver.h"
 
 void be_load_driver_i2c_lib(bvm *vm) {
-#if !BE_USE_PRECOMPILED_OBJECT
-    static const bnfuncinfo members[] = {
-        { "wire", NULL },
-        { "addr", NULL },
-        { "name", NULL },
-
-        { NULL, (bntvfunc) BE_CLOSURE }, /* mark section for berry closures */
-        { "init", (bntvfunc) &init_closure },
-        { "write8", (bntvfunc) &write8_closure },
-        { "write_bit", (bntvfunc) &write_bit_closure },
-        { "read8", (bntvfunc) &read8_closure },
-        { "read12", (bntvfunc) &read12_closure },
-        { "read13", (bntvfunc) &read13_closure },
-        { "read24", (bntvfunc) &read24_closure },
-        { "read32", (bntvfunc) &read32_closure },
-        
-        { NULL, NULL }
-    };
-
-    be_regclass(vm, "I2C_Driver", members);
-    be_getglobal(vm, "I2C_Driver");
-    be_getglobal(vm, "Driver");
-    be_setsuper(vm, -2);
-    be_pop(vm, 2);
-#else
-    be_pushntvclass(vm, &be_class_tasmota_i2c_driver);
+    be_pushntvclass(vm, &be_class_I2C_Driver);
     be_setglobal(vm, "I2C_Driver");
     be_pop(vm, 1);
-#endif
 }
 /* @const_object_info_begin
 
-class be_class_tasmota_i2c_driver (scope: global, name: I2C_Driver, super: be_class_Driver) {
+class be_class_I2C_Driver (scope: global, name: I2C_Driver, super: be_class_Driver) {
     wire, var
     addr, var
     name, var
