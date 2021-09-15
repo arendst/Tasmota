@@ -16,6 +16,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - M5 Stack Core2 uses UNIVERSAL_DISPLAY with enabled LVGL as default now
 - ``DisplayDimmer`` has now range 0..100 instead of 0..15
+- Minimum PWM Frequency lowered to 2Hz on ESP32 (#13123)
 
 ### Fixed
 - OpenTherm invalid JSON (#13028)
