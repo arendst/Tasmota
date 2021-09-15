@@ -76,62 +76,12 @@ static int m_setmember(bvm *vm)
     be_return_nil(vm);
 }
 
-/* call a function with variable number of arguments */
-/* first argument is a callable object (function, closure, native function, native closure) */
-/* then all subsequent arguments are pushed except the last one */
-/* If the last argument is a 'list', then all elements are pushed as arguments */
-/* otherwise the last argument is pushed as well */
-static int m_vcall(bvm *vm)
-{
-    int top = be_top(vm);
-    if (top >= 1 && be_isfunction(vm, 1)) {
-        size_t arg_count = top - 1;  /* we have at least 'top - 1' arguments */
-        /* test if last argument is a list */
-
-        if (top > 1 && be_isinstance(vm, top) && be_getmember(vm, top, ".p") && be_islist(vm, top + 1)) {
-            int32_t list_size = be_data_size(vm, top + 1);
-
-            if (list_size > 0) {
-                be_stack_require(vm, list_size + 3);   /* make sure we don't overflow the stack */
-                for (int i = 0; i < list_size; i++) {
-                    be_pushnil(vm);
-                }
-                be_moveto(vm, top + 1, top + 1 + list_size);
-                be_moveto(vm, top, top + list_size);
-
-                be_refpush(vm, -2);
-                be_pushiter(vm, -1);
-                while (be_iter_hasnext(vm, -2)) {
-                    be_iter_next(vm, -2);
-                    be_moveto(vm, -1, top);
-                    top++;
-                    be_pop(vm, 1);
-                }
-                be_pop(vm, 1);  /* remove iterator */
-                be_refpop(vm);
-            }
-            be_pop(vm, 2);
-            arg_count = arg_count - 1 + list_size;
-        }
-        /* actual call */
-        be_call(vm, arg_count);
-        /* remove args */
-        be_pop(vm, arg_count);
-        /* return value */
-
-        be_return(vm);
-    }
-    be_raise(vm, "value_error", "first argument must be a function");
-    be_return_nil(vm);
-}
-
 #if !BE_USE_PRECOMPILED_OBJECT
 be_native_module_attr_table(introspect) {
     be_native_module_function("members", m_attrlist),
 
     be_native_module_function("get", m_findmember),
     be_native_module_function("set", m_setmember),
-    be_native_module_function("vcall", m_vcall),
 };
 
 be_define_native_module(introspect, NULL);
@@ -142,7 +92,6 @@ module introspect (scope: global, depend: BE_USE_INTROSPECT_MODULE) {
 
     get, func(m_findmember)
     set, func(m_setmember)
-    vcall, func(m_vcall)
 }
 @const_object_info_end */
 #include "../generate/be_fixed_introspect.h"

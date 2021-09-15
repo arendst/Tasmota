@@ -325,7 +325,6 @@ extern const bcstring be_const_str_SYMBOL_SHUFFLE;
 extern const bcstring be_const_str_strftime;
 extern const bcstring be_const_str_lv_draw_line_dsc;
 extern const bcstring be_const_str_lv_dropdown;
-extern const bcstring be_const_str_vcall;
 extern const bcstring be_const_str_SERIAL_6E1;
 extern const bcstring be_const_str_SYMBOL_LIST;
 extern const bcstring be_const_str_SI7021;

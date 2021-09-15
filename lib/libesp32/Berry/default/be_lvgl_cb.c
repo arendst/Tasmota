@@ -102,94 +102,32 @@ class be_lvgl_cb (scope: global, name: lv_cb) {
 // 'lv_gauge_format_cb'
 //
 
-#if BE_USE_PRECOMPILED_OBJECT
 #include "../generate/be_fixed_be_lv_group_focus_cb.h"
 #include "../generate/be_fixed_be_lv_event_cb.h"
 #include "../generate/be_fixed_be_lv_signal_cb.h"
 #include "../generate/be_fixed_be_lv_design_cb.h"
 #include "../generate/be_fixed_be_lv_gauge_format_cb.h"
-#endif
 
 void be_load_lvgl_cb_all_lib(bvm *vm) {
-#if !BE_USE_PRECOMPILED_OBJECT
-    static const bnfuncinfo members_lv_group_focus_cb[] = {
-        { "()", lv_group_focus_cb_call },
-        { NULL, NULL }
-    };
-    be_regclass(vm, "lv_group_focus_cb", members);
-    be_getglobal(vm, "lv_group_focus_cb");
-    be_getglobal(vm, "lv_cb");
-    be_setsuper(vm, -2);
-    be_pop(vm, 2);
-#else
     be_pushntvclass(vm, &be_lv_group_focus_cb);
     be_setglobal(vm, "lv_group_focus_cb");
     be_pop(vm, 1);
-#endif
 
-#if !BE_USE_PRECOMPILED_OBJECT
-    static const bnfuncinfo members_lv_event_cb[] = {
-        { "()", lv_event_cb_call },
-        { NULL, NULL }
-    };
-    be_regclass(vm, "lv_event_cb", members);
-    be_getglobal(vm, "lv_event_cb");
-    be_getglobal(vm, "lv_cb");
-    be_setsuper(vm, -2);
-    be_pop(vm, 2);
-#else
     be_pushntvclass(vm, &be_lv_event_cb);
     be_setglobal(vm, "lv_event_cb");
     be_pop(vm, 1);
-#endif
-
-#if !BE_USE_PRECOMPILED_OBJECT
-    static const bnfuncinfo members_lv_signal_cb[] = {
-        { "()", lv_signal_cb_call },
-        { NULL, NULL }
-    };
-    be_regclass(vm, "lv_signal_cb", members);
-    be_getglobal(vm, "lv_signal_cb");
-    be_getglobal(vm, "lv_cb");
-    be_setsuper(vm, -2);
-    be_pop(vm, 2);
-#else
+    
     be_pushntvclass(vm, &be_lv_signal_cb);
     be_setglobal(vm, "lv_signal_cb");
     be_pop(vm, 1);
-#endif
 
-#if !BE_USE_PRECOMPILED_OBJECT
-    static const bnfuncinfo members_lv_design_cb[] = {
-        { "()", lv_design_cb_call },
-        { NULL, NULL }
-    };
-    be_regclass(vm, "lv_design_cb", members);
-    be_getglobal(vm, "lv_design_cb");
-    be_getglobal(vm, "lv_cb");
-    be_setsuper(vm, -2);
-    be_pop(vm, 2);
-#else
     be_pushntvclass(vm, &be_lv_design_cb);
     be_setglobal(vm, "lv_design_cb");
     be_pop(vm, 1);
-#endif
 
-#if !BE_USE_PRECOMPILED_OBJECT
-    static const bnfuncinfo members_lv_gauge_format_cb[] = {
-        { "()", lv_gauge_format_cb_call },
-        { NULL, NULL }
-    };
-    be_regclass(vm, "lv_gauge_format_cb", members);
-    be_getglobal(vm, "lv_gauge_format_cb");
-    be_getglobal(vm, "lv_cb");
-    be_setsuper(vm, -2);
-    be_pop(vm, 2);
-#else
     be_pushntvclass(vm, &be_lv_gauge_format_cb);
     be_setglobal(vm, "lv_gauge_format_cb");
     be_pop(vm, 1);
-#endif
 }
 /* @const_object_info_begin
 

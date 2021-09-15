@@ -28,6 +28,7 @@ private:
         std::string name;
         std::map<std::string, std::string> attr;
         std::map<std::string, std::string> data;
+        std::vector<std::string> data_ordered;  /* used to retrieve in insertion order */
     };
 
     std::string block_tostring(const block &block);

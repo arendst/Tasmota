@@ -324,8 +324,7 @@ be_define_const_str(SM2135_CLK, "SM2135_CLK", 2383410011u, 0, 10, &be_const_str_
 be_define_const_str(SYMBOL_SHUFFLE, "SYMBOL_SHUFFLE", 1123310147u, 0, 14, &be_const_str_strftime);
 be_define_const_str(strftime, "strftime", 187738851u, 0, 8, NULL);
 be_define_const_str(lv_draw_line_dsc, "lv_draw_line_dsc", 2422805236u, 0, 16, NULL);
-be_define_const_str(lv_dropdown, "lv_dropdown", 2797165301u, 0, 11, &be_const_str_vcall);
-be_define_const_str(vcall, "vcall", 2639337069u, 0, 5, NULL);
+be_define_const_str(lv_dropdown, "lv_dropdown", 2797165301u, 0, 11, NULL);
 be_define_const_str(SERIAL_6E1, "SERIAL_6E1", 334249486u, 0, 10, &be_const_str_SYMBOL_LIST);
 be_define_const_str(SYMBOL_LIST, "SYMBOL_LIST", 70793990u, 0, 11, NULL);
 be_define_const_str(SI7021, "SI7021", 864377911u, 0, 6, &be_const_str_content_button);
@@ -1059,6 +1058,6 @@ static const bstring* const m_string_table[] = {
 
 static const struct bconststrtab m_const_string_table = {
     .size = 344,
-    .count = 689,
+    .count = 688,
     .table = m_string_table
 };

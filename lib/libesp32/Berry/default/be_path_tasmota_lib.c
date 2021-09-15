@@ -27,19 +27,9 @@ static int m_path_exists(bvm *vm)
     be_return(vm);
 }
 
-#if !BE_USE_PRECOMPILED_OBJECT
-be_native_module_attr_table(path) {
-    be_native_module_function("exists", m_path_exists),
-};
-
-static be_define_native_module(path, NULL);
-
-#else
 /* @const_object_info_begin
 module path (scope: global, file: tasmota_path) {
     exists, func(m_path_exists)
 }
 @const_object_info_end */
 #include "../generate/be_fixed_tasmota_path.h"
-
-#endif
