@@ -248,6 +248,17 @@ size_t be_fsize(void *hfile)
     return 0;
 }
 
+extern "C" time_t be_last_modified(void *hfile)
+{
+#ifdef USE_UFILESYS
+    if (ufsp != nullptr && hfile != nullptr) {
+        File * f_ptr = (File*) hfile;
+        return f_ptr->getLastWrite();
+    }
+#endif // USE_UFILESYS
+    return 0;
+}
+
 int be_isexist(const char *filename)
 {
 #ifdef USE_UFILESYS

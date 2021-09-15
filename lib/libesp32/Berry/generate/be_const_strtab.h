@@ -1,6 +1,7 @@
 extern const bcstring be_const_str_PZEM0XX_TX;
 extern const bcstring be_const_str__begin_transmission;
 extern const bcstring be_const_str_MHZ_TXD;
+extern const bcstring be_const_str_last_modified;
 extern const bcstring be_const_str_list;
 extern const bcstring be_const_str_lv_draw_mask_line_param_cfg;
 extern const bcstring be_const_str_screenshot;
