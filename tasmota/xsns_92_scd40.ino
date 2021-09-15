@@ -19,10 +19,9 @@
 
 */
 
-// define USE_SCD40 to use SCD40 (or SCD41 device without additional SCD41 functions)
-// define USE_SCD41 to use SCD41 device (including low-power options)
-// define USE_SCD40_LOWPOWER to use low-power periodic measurement mode
-// define SCD40_DEBUG (or SCD41_DEBUG) to debug
+// define USE_SCD40 to use SCD40 or SCD41 device; use SCD41-functions only if you use SCD41 sensor
+// define USE_SCD40_LOWPOWER to use low-power periodic measurement mode (both SCD40 and SCD41)
+// define SCD40_DEBUG to debug
 
 // Console instructions supported: (errorvalue=-1 in case of error, errorvalue=0 otherwise)
 //                                 (data=-1 in case of error, value otherwise)
@@ -53,13 +52,6 @@
 //#define SCD40_DEBUG
 
 #ifdef USE_I2C
-
-#ifdef USE_SCD41
-#define USE_SCD40
-#ifdef SCD41_DEBUG
-#define SCD40_DEBUG
-#endif
-#endif
 
 #ifdef USE_SCD40
 
@@ -115,7 +107,7 @@ int scd40DataNotAvailable_count = 0;
 int scd40GoodMeas_count = 0;
 int scd40Reset_count = 0;
 int scd40CrcError_count = 0;
-int i2cReset_count = 0;
+int scd40i2cReset_count = 0;
 uint16_t scd40_CO2 = 0;
 uint16_t scd40_CO2EAvg = 0;
 float scd40_Humid = 0.0;
@@ -188,7 +180,7 @@ void Scd40Update(void)
           scd40CrcError_count++;
 #ifdef SCD40_DEBUG
           AddLog(LOG_LEVEL_ERROR, PSTR("SCD40: CRC error, CRC error: %ld, good: %ld, no data: %ld, sc30_reset: %ld, i2c_reset: %ld"),
-            scd40CrcError_count, scd40GoodMeas_count, scd40DataNotAvailable_count, scd40Reset_count, i2cReset_count);
+            scd40CrcError_count, scd40GoodMeas_count, scd40DataNotAvailable_count, scd40Reset_count, scd40i2cReset_count);
 #endif
           break;
 
@@ -207,7 +199,7 @@ void Scd40Update(void)
     case SCD40_STATE_ERROR_READ_MEAS: {
 #ifdef SCD40_DEBUG
       AddLog(LOG_LEVEL_ERROR, PSTR("SCD40: (rd) in error state: %d, good: %ld, no data: %ld, sc30 reset: %ld, i2c reset: %ld"),
-        scd40ErrorState, scd40GoodMeas_count, scd40DataNotAvailable_count, scd40Reset_count, i2cReset_count);
+        scd40ErrorState, scd40GoodMeas_count, scd40DataNotAvailable_count, scd40Reset_count, scd40i2cReset_count);
       AddLog(LOG_LEVEL_ERROR, PSTR("SCD40: not answering, sending soft reset, counter: %ld"), scd40Loop_count);
 #endif
       scd40Reset_count++;
@@ -234,10 +226,10 @@ void Scd40Update(void)
     case SCD40_STATE_ERROR_SOFT_RESET: {
 #ifdef SCD40_DEBUG
       AddLog(LOG_LEVEL_ERROR, PSTR("SCD40: (rst) in error state: %d, good: %ld, no data: %ld, sc30 reset: %ld, i2c reset: %ld"),
-        scd40ErrorState, scd40GoodMeas_count, scd40DataNotAvailable_count, scd40Reset_count, i2cReset_count);
+        scd40ErrorState, scd40GoodMeas_count, scd40DataNotAvailable_count, scd40Reset_count, scd40i2cReset_count);
       AddLog(LOG_LEVEL_ERROR, PSTR("SCD40: clearing i2c bus"));
 #endif
-      i2cReset_count++;
+      scd40i2cReset_count++;
       error = scd40.clearI2CBus();
       if (error) {
         scd40ErrorState = SCD40_STATE_ERROR_I2C_RESET;
@@ -411,7 +403,6 @@ bool Scd40CommandSensor()
       }
       break;
 
-#ifdef USE_SCD41
       case CMND_SCD40_SINGLESHOT:                
       {
         error = scd40.measureSingleShot();
@@ -425,7 +416,6 @@ bool Scd40CommandSensor()
         Response_P(S_JSON_SCD40_COMMAND_NVALUE, command, error?-1:0);
       }
       break;
-#endif
 
       default:
         // else for Unknown command
