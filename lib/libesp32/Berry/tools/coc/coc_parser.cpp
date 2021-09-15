@@ -186,4 +186,5 @@ void coc_parser::parse_body_item(object_block *object)
     if (parse_char_continue(','))
         value.depend = parse_tonewline();
     object->data[key] = value;
+    object->data_ordered.push_back(key);
 }

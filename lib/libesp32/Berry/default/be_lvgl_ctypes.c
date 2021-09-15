@@ -311,31 +311,12 @@ int be_ctypes_setmember(bvm *vm) {
 
 BE_EXPORT_VARIABLE extern const bclass be_class_bytes;
 
-#if BE_USE_PRECOMPILED_OBJECT
 #include "../generate/be_fixed_be_class_lv_ctypes.h"
-#endif
 
 void be_load_lvgl_ctypes_lib(bvm *vm) {
-#if !BE_USE_PRECOMPILED_OBJECT
-    static const bnfuncinfo members[] = {
-        { ".def", NULL },               // pointer to definition
-        { "init", be_ctypes_init },
-        { "copy", be_ctypes_copy },
-        { "member", be_ctypes_member },
-        { "setmember", be_ctypes_setmember },
-        { NULL, NULL }
-    };
-    be_regclass(vm, "ctypes_bytes", members);
-
-    be_getglobal(vm, "ctypes_bytes");
-    be_getglobal(vm, "bytes");
-    be_setsuper(vm, -2);
-    be_pop(vm, 2);
-#else
     be_pushntvclass(vm, &be_class_lv_ctypes);
     be_setglobal(vm, "ctypes_bytes");
     be_pop(vm, 1);
-#endif
 }
 
 /* @const_object_info_begin

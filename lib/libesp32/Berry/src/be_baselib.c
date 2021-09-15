@@ -277,6 +277,55 @@ static int l_iterator(bvm *vm)
     be_return_nil(vm);
 }
 
+/* call a function with variable number of arguments */
+/* first argument is a callable object (function, closure, native function, native closure) */
+/* then all subsequent arguments are pushed except the last one */
+/* If the last argument is a 'list', then all elements are pushed as arguments */
+/* otherwise the last argument is pushed as well */
+static int l_call(bvm *vm)
+{
+    int top = be_top(vm);
+    if (top >= 1 && be_isfunction(vm, 1)) {
+        size_t arg_count = top - 1;  /* we have at least 'top - 1' arguments */
+        /* test if last argument is a list */
+
+        if (top > 1 && be_isinstance(vm, top) && be_getmember(vm, top, ".p") && be_islist(vm, top + 1)) {
+            int32_t list_size = be_data_size(vm, top + 1);
+
+            if (list_size > 0) {
+                be_stack_require(vm, list_size + 3);   /* make sure we don't overflow the stack */
+                for (int i = 0; i < list_size; i++) {
+                    be_pushnil(vm);
+                }
+                be_moveto(vm, top + 1, top + 1 + list_size);
+                be_moveto(vm, top, top + list_size);
+
+                be_refpush(vm, -2);
+                be_pushiter(vm, -1);
+                while (be_iter_hasnext(vm, -2)) {
+                    be_iter_next(vm, -2);
+                    be_moveto(vm, -1, top);
+                    top++;
+                    be_pop(vm, 1);
+                }
+                be_pop(vm, 1);  /* remove iterator */
+                be_refpop(vm);
+            }
+            be_pop(vm, 2);
+            arg_count = arg_count - 1 + list_size;
+        }
+        /* actual call */
+        be_call(vm, arg_count);
+        /* remove args */
+        be_pop(vm, arg_count);
+        /* return value */
+
+        be_return(vm);
+    }
+    be_raise(vm, "value_error", "first argument must be a function");
+    be_return_nil(vm);
+}
+
 static int l_str(bvm *vm)
 {
     if (be_top(vm)) {
@@ -407,6 +456,12 @@ void be_load_baselib(bvm *vm)
     be_regfunc(vm, "isinstance", l_isinstance);
     be_regfunc(vm, "__iterator__", l_iterator);
 }
+
+/* call must be added later to respect order of builtins */
+void be_load_baselib_call(bvm *vm)
+{
+    be_regfunc(vm, "call", l_call);
+}
 #else
 extern const bclass be_class_list;
 extern const bclass be_class_map;
@@ -437,6 +492,7 @@ vartab m_builtin (scope: local) {
     map, class(be_class_map)
     range, class(be_class_range)
     bytes, class(be_class_bytes)
+    call, func(l_call)
 }
 @const_object_info_end */
 #include "../generate/be_fixed_m_builtin.h"

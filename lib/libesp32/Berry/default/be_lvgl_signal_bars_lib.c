@@ -149,7 +149,7 @@ be_local_closure(my_design_cb,   /* name */
       0xB83E0800,  //  003F  GETNGBL	R15	K4
       0x883C1F16,  //  0040  GETMBR	R15	R15	K22
       0x7C300600,  //  0041  CALL	R12	3
-      0x60340000,  //  0042  GETGBL	R13	G0
+      0x60340010,  //  0042  GETGBL	R13	G16
       0x403A3102,  //  0043  CONNECT	R14	K24	K2
       0x7C340200,  //  0044  CALL	R13	1
       0xA802002C,  //  0045  EXBLK	0	#0073
@@ -268,7 +268,7 @@ be_local_closure(init,   /* name */
     (be_nested_const_str("init", 380752755, 4)),
     (be_nested_const_str("input", -103256197, 5)),
     ( &(const binstruction[28]) {  /* code */
-      0x600C0014,  //  0000  GETGBL	R3	G20
+      0x600C0003,  //  0000  GETGBL	R3	G3
       0x5C100000,  //  0001  MOVE	R4	R0
       0x7C0C0200,  //  0002  CALL	R3	1
       0x8C0C0700,  //  0003  GETMET	R3	R3	K0
