@@ -1,6 +1,7 @@
 be_define_const_str(PZEM0XX_TX, "PZEM0XX_TX", 944775704u, 0, 10, &be_const_str__begin_transmission);
 be_define_const_str(_begin_transmission, "_begin_transmission", 2779461176u, 0, 19, NULL);
-be_define_const_str(MHZ_TXD, "MHZ_TXD", 3310158233u, 0, 7, &be_const_str_list);
+be_define_const_str(MHZ_TXD, "MHZ_TXD", 3310158233u, 0, 7, &be_const_str_last_modified);
+be_define_const_str(last_modified, "last_modified", 772177145u, 0, 13, &be_const_str_list);
 be_define_const_str(list, "list", 217798785u, 0, 4, &be_const_str_lv_draw_mask_line_param_cfg);
 be_define_const_str(lv_draw_mask_line_param_cfg, "lv_draw_mask_line_param_cfg", 2154874825u, 0, 27, &be_const_str_screenshot);
 be_define_const_str(screenshot, "screenshot", 3894592561u, 0, 10, NULL);
@@ -1058,6 +1059,6 @@ static const bstring* const m_string_table[] = {
 
 static const struct bconststrtab m_const_string_table = {
     .size = 344,
-    .count = 688,
+    .count = 689,
     .table = m_string_table
 };
