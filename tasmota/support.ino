@@ -1017,6 +1017,11 @@ void SetSerialBegin(void) {
   Serial.flush();
 #ifdef ESP8266
   Serial.begin(TasmotaGlobal.baudrate, (SerialConfig)pgm_read_byte(kTasmotaSerialConfig + Settings->serial_config));
+  if (15==Pin(GPIO_TXD,0) && 13==Pin(GPIO_RXD,0)) {
+    Serial.flush();
+    Serial.swap();
+    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_SERIAL "Serial pins swapped to alternate"));
+  }
 #endif  // ESP8266
 #ifdef ESP32
   delay(10);  // Allow time to cleanup queues - if not used hangs ESP32
