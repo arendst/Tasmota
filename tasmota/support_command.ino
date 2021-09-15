@@ -1450,6 +1450,10 @@ void CmndPwmfrequency(void)
   if ((1 == XdrvMailbox.payload) || ((XdrvMailbox.payload >= PWM_MIN) && (XdrvMailbox.payload <= PWM_MAX))) {
     Settings->pwm_frequency = (1 == XdrvMailbox.payload) ? PWM_FREQ : XdrvMailbox.payload;
     analogWriteFreq(Settings->pwm_frequency);   // Default is 1000 (core_esp8266_wiring_pwm.c)
+#ifdef USE_LIGHT
+    LightReapplyColor();
+    LightAnimate();
+#endif // USE_LIGHT
   }
   ResponseCmndNumber(Settings->pwm_frequency);
 }

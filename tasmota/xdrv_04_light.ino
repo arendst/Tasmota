@@ -1656,6 +1656,13 @@ uint8_t LightGetSpeedSetting(void) {
   return Settings->light_speed;
 }
 
+// Force to reapply color, for example when PWM Frequency changed
+void LightReapplyColor(void) {
+  for (uint32_t i = 0; i < LST_MAX; i++) {
+    Light.last_color[i] = 0;
+  }
+}
+
 // On entry Light.new_color[5] contains the color to be displayed
 // and Light.last_color[5] the color currently displayed
 // Light.power tells which lights or channels (SetOption68) are on/off
