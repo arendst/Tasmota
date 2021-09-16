@@ -8383,8 +8383,16 @@ bool Xdrv10(uint8_t function)
       if (glob_script_mem.script_ram[0]!='>' && glob_script_mem.script_ram[1]!='D') {
         // clr all
         memset(glob_script_mem.script_ram, 0 ,glob_script_mem.script_size);
+#ifdef PRECONFIGURED_SCRIPT
+        strcpy_P(glob_script_mem.script_ram, PSTR(PRECONFIGURED_SCRIPT));
+#else  
         strcpy_P(glob_script_mem.script_ram, PSTR(">D\nscript error must start with >D"));
+#endif
+#ifdef START_SCRIPT_FROM_BOOT
+        bitWrite(Settings->rule_enabled, 0, 1);
+#else
         bitWrite(Settings->rule_enabled, 0, 0);
+#endif
       }
 
       // assure permanent memory is 4 byte aligned
