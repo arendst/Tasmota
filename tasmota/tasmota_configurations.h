@@ -506,7 +506,6 @@
 //#undef USE_WEBSERVER                             // Disable Webserver
 #undef USE_ENHANCED_GUI_WIFI_SCAN                // Disable wifi scan output with BSSID (+0k5 code)
 //#undef USE_WEBSEND_RESPONSE                      // Disable command WebSend response message (+1k code)
-#define USE_EMULATION                            // Enable Hue emulation
 #define USE_EMULATION_HUE                        // Enable Hue Bridge emulation for Alexa (+14k code, +2k mem common)
 #undef USE_EMULATION_WEMO                        // Disable Belkin WeMo emulation for Alexa (+6k code, +2k mem common)
 #undef USE_CUSTOM                                // Disable Custom features
@@ -755,6 +754,7 @@
 #undef USE_THERMOSTAT                            // Disable support for Thermostat
 #undef DEBUG_THEO                                // Disable debug code
 #undef USE_DEBUG_DRIVER                          // Disable debug code
+#undef USE_AC_ZERO_CROSS_DIMMER                  // Disable support for AC_ZERO_CROSS_DIMMER
 #endif  // FIRMWARE_LITE
 
 
@@ -899,6 +899,7 @@
 #undef USE_PROMETHEUS                            // Disable support for https://prometheus.io/ metrics exporting over HTTP /metrics endpoint
 #undef DEBUG_THEO                                // Disable debug code
 #undef USE_DEBUG_DRIVER                          // Disable debug code
+#undef USE_AC_ZERO_CROSS_DIMMER                  // Disable support for AC_ZERO_CROSS_DIMMER
 
 #endif  // FIRMWARE_MINIMAL
 #endif  // ifndef FIRMWARE_MINICUSTOM
@@ -980,6 +981,26 @@
 #endif
 #ifdef USE_EMULATION_WEMO
 #define USE_EMULATION
+#endif
+#ifdef USE_EMULATION
+#define USE_LIGHT
+#endif
+
+#ifdef USE_AC_ZERO_CROSS_DIMMER
+#define USE_COUNTER
+#define USE_LIGHT
+#endif
+
+#ifdef USE_PWM_DIMMER
+#define USE_LIGHT
+#endif
+
+#ifdef USE_TUYA_MCU
+#define USE_LIGHT
+#endif
+
+#ifdef USE_ARILUX_RF
+#define USE_LIGHT
 #endif
 
 // Convert legacy slave to client

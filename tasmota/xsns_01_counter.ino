@@ -24,8 +24,6 @@
 
 #define XSNS_01             1
 
-#define USE_AC_ZERO_CROSS_DIMMER 1
-
 #define D_PRFX_COUNTER "Counter"
 #define D_CMND_COUNTERTYPE "Type"
 #define D_CMND_COUNTERDEBOUNCE "Debounce"
@@ -59,7 +57,7 @@ struct AC_ZERO_CROSS_DIMMER {
   uint32_t lastCycleCount = 0;
   uint32_t currentSteps = 100;
 } ac_zero_cross_dimmer;
-#endif
+#endif //USE_AC_ZERO_CROSS_DIMMER
 
 void IRAM_ATTR CounterIsrArg(void *arg) {
   uint32_t index = *static_cast<uint8_t*>(arg);
@@ -101,7 +99,7 @@ void IRAM_ATTR CounterIsrArg(void *arg) {
         }
         ac_zero_cross_dimmer.lastCycleCount = ac_zero_cross_dimmer.currentCycleCount;
       }
-#endif
+#endif //USE_AC_ZERO_CROSS_DIMMER
       return;
     }
   }
@@ -152,7 +150,7 @@ void CounterInit(void)
     if (PinUsed(GPIO_CNTR1, i)) {
 #ifdef USE_AC_ZERO_CROSS_DIMMER
       ac_zero_cross_dimmer.tobe_cycle_timeClockCycles = microsecondsToClockCycles(1000000 / Settings->pwm_frequency);
-#endif
+#endif //USE_AC_ZERO_CROSS_DIMMER
       Counter.any_counter = true;
       pinMode(Pin(GPIO_CNTR1, i), bitRead(Counter.no_pullup, i) ? INPUT : INPUT_PULLUP);
       if ((0 == Settings->pulse_counter_debounce_low) && (0 == Settings->pulse_counter_debounce_high) && !Settings->flag4.zerocross_dimmer) {
@@ -269,7 +267,7 @@ void SyncACDimmer(void)
     }
   }
 }
-#endif
+#endif //USE_AC_ZERO_CROSS_DIMMER
 
 /*********************************************************************************************\
  * Commands
@@ -349,7 +347,7 @@ bool Xsns01(uint8_t function)
       case FUNC_LOOP:
         SyncACDimmer();
       break;
-#endif
+#endif //USE_AC_ZERO_CROSS_DIMMER
 #ifdef USE_WEBSERVER
       case FUNC_WEB_SENSOR:
         CounterShow(0);

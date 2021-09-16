@@ -422,7 +422,9 @@ void HAssAnnounceRelayLight(void)
   char stemp3[TOPSZ];
   char unique_id[30];
 
+#ifdef USE_LIGHT
   bool LightControl = light_controller.isCTRGBLinked(); // SetOption37 - Color remapping for led channels, also provides an option for allowing independent handling of RGB and white channels
+#endif //USE_LIGHT
   bool PwmMulti = Settings->flag3.pwm_multi_channels;    // SetOption68 - Multi-channel PWM instead of a single light
   bool is_topic_light = false;                          // Switch HAss domain between Lights and Relays
   bool ind_light = false;                               // Controls Separated Lights when SetOption37 is >= 128
@@ -448,14 +450,15 @@ void HAssAnnounceRelayLight(void)
         if (TUYA_DIMMER == TasmotaGlobal.module_type || SK03_TUYA == TasmotaGlobal.module_type) { TuyaMod = true; }
   #endif //ESP8266
 
+#ifdef USE_LIGHT
   // If there is a special Light to be enabled and managed with SetOption68 or SetOption37 >= 128, Discovery calculates the maximum number of entities to be generated in advance
-
   if (PwmMulti) { max_lights = Light.subtype; }
 
   if (!LightControl) {
     ind_light = true;
     if (!PwmMulti) { max_lights = 2;}
   }
+#endif //USE_LIGHT
 
 #ifdef USE_SHUTTER
   if (Settings->flag3.shutter_mode) {
@@ -500,11 +503,16 @@ void HAssAnnounceRelayLight(void)
 
     if (bitRead(shutter_mask, i-1)) {
       // suppress shutter relays
+#ifdef USE_LIGHT      
     } else if ((i < Light.device) && !RelayX) {
       err_flag = true;
       AddLog(LOG_LEVEL_ERROR, PSTR("%s"), kHAssError2);
     } else {
       if (Settings->flag.hass_discovery && (RelayX || (Light.device > 0) && (max_lights > 0)) && !err_flag )
+#else
+    } else {
+      if (Settings->flag.hass_discovery && RelayX )
+#endif //USE_LIGHT
       {                    // SetOption19 - Control Home Assistant automatic discovery (See SetOption59)
           char name[TOPSZ]; // friendlyname(33) + " " + index
           char value_template[33];
