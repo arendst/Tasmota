@@ -122,7 +122,7 @@ m = minimal, l = lite, t = tasmota, k = knx, s = sensors, i = ir, d = display
 | USE_MGC3130           | - | - | - / - | - | - | - | - |
 | USE_MAX44009          | - | - | - / - | - | - | - | - |
 | USE_SCD30             | - | - | - / x | - | x | - | - |
-| USE_SCD40             | - | - | - / - | - | x | - | - |
+| USE_SCD40             | - | - | - / x | - | x | - | - |
 | USE_SPS30             | - | - | - / - | - | - | - | - |
 | USE_ADE7953           | - | - | x / x | x | x | - | x |
 | USE_VL53L0X           | - | - | - / x | - | x | - | - |
