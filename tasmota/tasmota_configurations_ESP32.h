@@ -33,6 +33,7 @@
 #define CODE_IMAGE_STR "webcam"
 
 #define USE_WEBCAM
+#define USE_TASMOTA_DISCOVERY
 #define ENABLE_RTSPSERVER
 #define USE_SPI
 #define USE_SDCARD
