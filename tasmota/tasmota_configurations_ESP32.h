@@ -33,11 +33,26 @@
 #define CODE_IMAGE_STR "webcam"
 
 #define USE_WEBCAM
+#define USE_TASMOTA_DISCOVERY
 #define ENABLE_RTSPSERVER
-#define USE_SDCARD
 #define USE_SPI
+#define USE_SDCARD
+
+#undef USE_I2C
+#undef USE_HOME_ASSISTANT
+#undef USE_COUNTER
+#undef USE_IR_REMOTE
+#undef USE_AC_ZERO_CROSS_DIMMER
+#undef USE_PWM_DIMMER
+#undef USE_TUYA_MCU
+#undef USE_EMULATION_HUE
+#undef USE_EMULATION_WEMO
+#undef USE_ARILUX_RF
+#undef USE_DS18x20
+#undef USE_WS2812
+#undef USE_ENERGY_SENSOR
 #undef USE_BERRY                                 // Disable Berry scripting language
-#undef  USE_MI_ESP32                             // (ESP32 only) Disable support for ESP32 as a BLE-bridge (+9k2 mem, +292k flash)
+#undef USE_MI_ESP32                             // (ESP32 only) Disable support for ESP32 as a BLE-bridge (+9k2 mem, +292k flash)
 #endif  // FIRMWARE_WEBCAM
 
 /*********************************************************************************************\
