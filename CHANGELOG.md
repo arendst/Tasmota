@@ -18,6 +18,7 @@ All notable changes to this project will be documented in this file.
 - ``DisplayDimmer`` has now range 0..100 instead of 0..15
 - Minimum PWM Frequency lowered to 2Hz on ESP32 (#13123)
 - Use Tasmota Arduino Core32 1.0.7.4 for ESP32 builds (#13154)
+- Shrinked Webcam build, uses now `USE_TASMOTA_DISCOVERY` (#13148)
 
 ### Fixed
 - OpenTherm invalid JSON (#13028)
