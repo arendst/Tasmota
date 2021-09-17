@@ -73,6 +73,8 @@
 #define USE_ODROID_GO                            // Add support for Odroid Go
 #define USE_SDCARD
 
+#undef USE_HOME_ASSISTANT
+
 #define USE_ADC
 #define USE_SPI
   #define USE_DISPLAY                            // Add SPI Display Support (+2k code)
@@ -98,6 +100,8 @@
 #define MODULE                 M5STACK_CORE2     // [Module] Select default module from tasmota_template.h
 #undef FALLBACK_MODULE
 #define FALLBACK_MODULE        M5STACK_CORE2     // [Module2] Select default module on fast reboot where USER_MODULE is user template
+
+#undef USE_HOME_ASSISTANT
 
 #define USE_M5STACK_CORE2                        // Add support for M5Stack Core2
   #define USE_I2S_SAY_TIME
@@ -159,6 +163,9 @@
 #define MODULE                 WEMOS             // [Module] Select default module from tasmota_template.h
 #undef FALLBACK_MODULE
 #define FALLBACK_MODULE        WEMOS             // [Module2] Select default module on fast reboot where USER_MODULE is user template
+
+#define USE_TASMOTA_DISCOVERY
+#undef USE_HOME_ASSISTANT
 
 #define USE_SDCARD
 
