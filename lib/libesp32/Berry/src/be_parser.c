@@ -900,10 +900,12 @@ static void suffix_expr(bparser *parser, bexpdesc *e)
 static void suffix_alloc_reg(bparser *parser, bexpdesc *l)
 {
     bfuncinfo *finfo = parser->finfo;
-    bbool suffix = l->type == ETINDEX || l->type == ETMEMBER;
+    bbool is_suffix = l->type == ETINDEX || l->type == ETMEMBER;   /* is suffix */
+    bbool is_suffix_reg = l->v.ss.tt == ETREG || l->v.ss.tt == ETLOCAL || l->v.ss.tt == ETGLOBAL || l->v.ss.tt == ETNGLOBAL;   /* if suffix, does it need a register */
+    bbool is_global = l->type == ETGLOBAL || l->type == ETNGLOBAL;
     /* in the suffix expression, if the object is a temporary
      * variable (l->v.ss.tt == ETREG), it needs to be cached. */
-    if (suffix && l->v.ss.tt == ETREG) {
+    if (is_global || (is_suffix && is_suffix_reg)) {
         be_code_allocregs(finfo, 1);
     }
 }
