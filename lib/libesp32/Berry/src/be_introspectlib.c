@@ -87,7 +87,7 @@ static int m_toptr(bvm *vm)
             be_pushint(vm, (int) var_toobj(v));
             be_return(vm);
         } else {
-            be_raisef(vm, "value_error", "unsupported for this type");
+            be_raise(vm, "value_error", "unsupported for this type");
         }
     }
     be_return_nil(vm);
@@ -104,7 +104,7 @@ static int m_fromptr(bvm *vm)
                 bvalue *top = be_incrtop(vm);
                 var_setobj(top, ptr->type, ptr);
             } else {
-                be_raisef(vm, "value_error", "unsupported for this type");
+                be_raise(vm, "value_error", "unsupported for this type");
             }
         }
         be_return(vm);
