@@ -13,6 +13,8 @@
 #include "be_debug.h"
 #include "be_map.h"
 #include "be_vm.h"
+#include "be_exec.h"
+#include "be_gc.h"
 #include <string.h>
 
 #if BE_USE_INTROSPECT_MODULE
@@ -76,6 +78,40 @@ static int m_setmember(bvm *vm)
     be_return_nil(vm);
 }
 
+static int m_toptr(bvm *vm)
+{
+    int top = be_top(vm);
+    if (top >= 1) {
+        bvalue *v = be_indexof(vm, 1);
+        if (var_basetype(v) >= BE_GCOBJECT) {
+            be_pushint(vm, (int) var_toobj(v));
+            be_return(vm);
+        } else {
+            be_raise(vm, "value_error", "unsupported for this type");
+        }
+    }
+    be_return_nil(vm);
+}
+
+static int m_fromptr(bvm *vm)
+{
+    int top = be_top(vm);
+    if (top >= 1) {
+        int v = be_toint(vm, 1);
+        if (v) {
+            bgcobject * ptr = (bgcobject*) v;
+            if (var_basetype(ptr) >= BE_GCOBJECT) {
+                bvalue *top = be_incrtop(vm);
+                var_setobj(top, ptr->type, ptr);
+            } else {
+                be_raise(vm, "value_error", "unsupported for this type");
+            }
+        }
+        be_return(vm);
+    }
+    be_return_nil(vm);
+}
+
 #if !BE_USE_PRECOMPILED_OBJECT
 be_native_module_attr_table(introspect) {
     be_native_module_function("members", m_attrlist),
@@ -92,6 +128,9 @@ module introspect (scope: global, depend: BE_USE_INTROSPECT_MODULE) {
 
     get, func(m_findmember)
     set, func(m_setmember)
+
+    toptr, func(m_toptr)
+    fromptr, func(m_fromptr)
 }
 @const_object_info_end */
 #include "../generate/be_fixed_introspect.h"
