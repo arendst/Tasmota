@@ -84,7 +84,7 @@ static int m_toptr(bvm *vm)
     if (top >= 1) {
         bvalue *v = be_indexof(vm, 1);
         if (var_basetype(v) >= BE_GCOBJECT) {
-            be_pushint(vm, (int) var_toobj(v));
+            be_pushcomptr(vm, var_toobj(v));
             be_return(vm);
         } else {
             be_raise(vm, "value_error", "unsupported for this type");
@@ -97,7 +97,12 @@ static int m_fromptr(bvm *vm)
 {
     int top = be_top(vm);
     if (top >= 1) {
-        int v = be_toint(vm, 1);
+        void* v;
+        if (be_iscomptr(vm, 1)) {
+            v = be_tocomptr(vm, 1);
+        } else {
+            v = (void*) be_toint(vm, 1);
+        }
         if (v) {
             bgcobject * ptr = (bgcobject*) v;
             if (var_basetype(ptr) >= BE_GCOBJECT) {
@@ -106,8 +111,8 @@ static int m_fromptr(bvm *vm)
             } else {
                 be_raise(vm, "value_error", "unsupported for this type");
             }
+            be_return(vm);
         }
-        be_return(vm);
     }
     be_return_nil(vm);
 }
