@@ -37,9 +37,10 @@ extern int l_webSend(bvm *vm);
 extern int l_webSendDecimal(bvm *vm);
 
 extern int l_getlight(bvm *vm);
-extern int l_getpower(bvm *vm);
 extern int l_setlight(bvm *vm);
+extern int l_getpower(bvm *vm);
 extern int l_setpower(bvm *vm);
+extern int l_getswitch(bvm *vm);
 
 extern int l_i2cenabled(bvm *vm);
 
@@ -1609,6 +1610,7 @@ class be_class_tasmota (scope: global, name: Tasmota) {
 
     get_power, func(l_getpower)
     set_power, func(l_setpower)
+    get_switch, func(l_getswitch)
 
     i2c_enabled, func(l_i2cenabled)
 
