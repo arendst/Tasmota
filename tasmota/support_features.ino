@@ -509,7 +509,7 @@ void ResponseAppendFeatures(void)
 #if defined(USE_ENERGY_SENSOR) && defined(USE_LE01MR)
     feature5 |= 0x08000000;  // xnrg_13_fif_le01mr.ino
 #endif
-#if defined(USE_I2C) && defined(USE_AHT1x)
+#if defined(USE_I2C) && (defined(USE_AHT1x) || defined(USE_AHT2x))
     feature5 |= 0x10000000;  // xsns_63_aht1x.ino
 #endif
 #if defined(USE_I2C) && defined(USE_WEMOS_MOTOR_V1)
