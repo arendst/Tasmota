@@ -408,14 +408,6 @@ void setup(void) {
   BerryInit();
 #endif // USE_BERRY
 
-#ifdef ESP8266
-  if (15==Pin(GPIO_TXD,0) && 13==Pin(GPIO_RXD,0)) {
-    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_SERIAL "Swapping Serial pins to alternate"));
-    Serial.flush();
-    Serial.swap();
-  }
-#endif
-
   XdrvCall(FUNC_PRE_INIT);
   XsnsCall(FUNC_PRE_INIT);
 

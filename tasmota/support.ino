@@ -981,120 +981,6 @@ int GetStateNumber(const char *state_text)
   return state_number;
 }
 
-String GetSerialConfig(void) {
-  // Settings->serial_config layout
-  // b000000xx - 5, 6, 7 or 8 data bits
-  // b00000x00 - 1 or 2 stop bits
-  // b000xx000 - None, Even or Odd parity
-
-  const static char kParity[] PROGMEM = "NEOI";
-
-  char config[4];
-  config[0] = '5' + (Settings->serial_config & 0x3);
-  config[1] = pgm_read_byte(&kParity[(Settings->serial_config >> 3) & 0x3]);
-  config[2] = '1' + ((Settings->serial_config >> 2) & 0x1);
-  config[3] = '\0';
-  return String(config);
-}
-
-#if defined(ESP32) && CONFIG_IDF_TARGET_ESP32C3
-// temporary workaround, see https://github.com/espressif/arduino-esp32/issues/5287
-#include <driver/uart.h>
-uint32_t GetSerialBaudrate(void) {
-  uint32_t br;
-  uart_get_baudrate(0, &br);
-  return (br / 300) * 300;  // Fix ESP32 strange results like 115201
-}
-#else
-uint32_t GetSerialBaudrate(void) {
-  return (Serial.baudRate() / 300) * 300;  // Fix ESP32 strange results like 115201
-}
-#endif
-
-void SetSerialBegin(void) {
-  TasmotaGlobal.baudrate = Settings->baudrate * 300;
-  AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_SERIAL "Set to %s %d bit/s"), GetSerialConfig().c_str(), TasmotaGlobal.baudrate);
-  Serial.flush();
-#ifdef ESP8266
-  Serial.begin(TasmotaGlobal.baudrate, (SerialConfig)pgm_read_byte(kTasmotaSerialConfig + Settings->serial_config));
-  if (15==Pin(GPIO_TXD,0) && 13==Pin(GPIO_RXD,0)) {
-    Serial.flush();
-    Serial.swap();
-    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_SERIAL "Serial pins swapped to alternate"));
-  }
-#endif  // ESP8266
-#ifdef ESP32
-  delay(10);  // Allow time to cleanup queues - if not used hangs ESP32
-  Serial.end();
-  delay(10);  // Allow time to cleanup queues - if not used hangs ESP32
-  uint32_t config = pgm_read_dword(kTasmotaSerialConfig + Settings->serial_config);
-  Serial.begin(TasmotaGlobal.baudrate, config);
-#endif  // ESP32
-}
-
-void SetSerialConfig(uint32_t serial_config) {
-  if (serial_config > TS_SERIAL_8O2) {
-    serial_config = TS_SERIAL_8N1;
-  }
-  if (serial_config != Settings->serial_config) {
-    Settings->serial_config = serial_config;
-    SetSerialBegin();
-  }
-}
-
-void SetSerialBaudrate(uint32_t baudrate) {
-  TasmotaGlobal.baudrate = baudrate;
-  Settings->baudrate = TasmotaGlobal.baudrate / 300;
-  if (GetSerialBaudrate() != TasmotaGlobal.baudrate) {
-    SetSerialBegin();
-  }
-}
-
-void SetSerial(uint32_t baudrate, uint32_t serial_config) {
-  Settings->flag.mqtt_serial = 0;  // CMND_SERIALSEND and CMND_SERIALLOG
-  Settings->serial_config = serial_config;
-  TasmotaGlobal.baudrate = baudrate;
-  Settings->baudrate = TasmotaGlobal.baudrate / 300;
-  SetSeriallog(LOG_LEVEL_NONE);
-  SetSerialBegin();
-}
-
-void ClaimSerial(void) {
-  TasmotaGlobal.serial_local = true;
-  AddLog(LOG_LEVEL_INFO, PSTR("SNS: Hardware Serial"));
-  SetSeriallog(LOG_LEVEL_NONE);
-  TasmotaGlobal.baudrate = GetSerialBaudrate();
-  Settings->baudrate = TasmotaGlobal.baudrate / 300;
-}
-
-void SerialSendRaw(char *codes)
-{
-  char *p;
-  char stemp[3];
-  uint8_t code;
-
-  int size = strlen(codes);
-
-  while (size > 1) {
-    strlcpy(stemp, codes, sizeof(stemp));
-    code = strtol(stemp, &p, 16);
-    Serial.write(code);
-    size -= 2;
-    codes += 2;
-  }
-}
-
-// values is a comma-delimited string: e.g. "72,101,108,108,111,32,87,111,114,108,100,33,10"
-void SerialSendDecimal(char *values)
-{
-  char *p;
-  uint8_t code;
-  for (char* str = strtok_r(values, ",", &p); str; str = strtok_r(nullptr, ",", &p)) {
-    code = (uint8_t)atoi(str);
-    Serial.write(code);
-  }
-}
-
 uint32_t GetHash(const char *buffer, size_t size)
 {
   uint32_t hash = 0;
@@ -1898,6 +1784,130 @@ uint32_t JsonParsePath(JsonParserObject *jobj, const char *spath, char delim, fl
 }
 
 #endif // USE_SCRIPT
+
+/*********************************************************************************************\
+ * Serial
+\*********************************************************************************************/
+
+String GetSerialConfig(void) {
+  // Settings->serial_config layout
+  // b000000xx - 5, 6, 7 or 8 data bits
+  // b00000x00 - 1 or 2 stop bits
+  // b000xx000 - None, Even or Odd parity
+
+  const static char kParity[] PROGMEM = "NEOI";
+
+  char config[4];
+  config[0] = '5' + (Settings->serial_config & 0x3);
+  config[1] = pgm_read_byte(&kParity[(Settings->serial_config >> 3) & 0x3]);
+  config[2] = '1' + ((Settings->serial_config >> 2) & 0x1);
+  config[3] = '\0';
+  return String(config);
+}
+
+#if defined(ESP32) && CONFIG_IDF_TARGET_ESP32C3
+// temporary workaround, see https://github.com/espressif/arduino-esp32/issues/5287
+#include <driver/uart.h>
+uint32_t GetSerialBaudrate(void) {
+  uint32_t br;
+  uart_get_baudrate(0, &br);
+  return (br / 300) * 300;  // Fix ESP32 strange results like 115201
+}
+#else
+uint32_t GetSerialBaudrate(void) {
+  return (Serial.baudRate() / 300) * 300;  // Fix ESP32 strange results like 115201
+}
+#endif
+
+#ifdef ESP8266
+void SetSerialSwap(void) {
+  if ((15 == Pin(GPIO_TXD)) && (13 == Pin(GPIO_RXD))) {
+    Serial.flush();
+    Serial.swap();
+    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_SERIAL "Serial pins swapped to alternate"));
+  }
+}
+#endif
+
+void SetSerialBegin(void) {
+  TasmotaGlobal.baudrate = Settings->baudrate * 300;
+  AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_SERIAL "Set to %s %d bit/s"), GetSerialConfig().c_str(), TasmotaGlobal.baudrate);
+  Serial.flush();
+#ifdef ESP8266
+  Serial.begin(TasmotaGlobal.baudrate, (SerialConfig)pgm_read_byte(kTasmotaSerialConfig + Settings->serial_config));
+  SetSerialSwap();
+#endif  // ESP8266
+#ifdef ESP32
+  delay(10);  // Allow time to cleanup queues - if not used hangs ESP32
+  Serial.end();
+  delay(10);  // Allow time to cleanup queues - if not used hangs ESP32
+  uint32_t config = pgm_read_dword(kTasmotaSerialConfig + Settings->serial_config);
+  Serial.begin(TasmotaGlobal.baudrate, config);
+#endif  // ESP32
+}
+
+void SetSerialConfig(uint32_t serial_config) {
+  if (serial_config > TS_SERIAL_8O2) {
+    serial_config = TS_SERIAL_8N1;
+  }
+  if (serial_config != Settings->serial_config) {
+    Settings->serial_config = serial_config;
+    SetSerialBegin();
+  }
+}
+
+void SetSerialBaudrate(uint32_t baudrate) {
+  TasmotaGlobal.baudrate = baudrate;
+  Settings->baudrate = TasmotaGlobal.baudrate / 300;
+  if (GetSerialBaudrate() != TasmotaGlobal.baudrate) {
+    SetSerialBegin();
+  }
+}
+
+void SetSerial(uint32_t baudrate, uint32_t serial_config) {
+  Settings->flag.mqtt_serial = 0;  // CMND_SERIALSEND and CMND_SERIALLOG
+  Settings->serial_config = serial_config;
+  TasmotaGlobal.baudrate = baudrate;
+  Settings->baudrate = TasmotaGlobal.baudrate / 300;
+  SetSeriallog(LOG_LEVEL_NONE);
+  SetSerialBegin();
+}
+
+void ClaimSerial(void) {
+  TasmotaGlobal.serial_local = true;
+  AddLog(LOG_LEVEL_INFO, PSTR("SNS: Hardware Serial"));
+  SetSeriallog(LOG_LEVEL_NONE);
+  TasmotaGlobal.baudrate = GetSerialBaudrate();
+  Settings->baudrate = TasmotaGlobal.baudrate / 300;
+}
+
+void SerialSendRaw(char *codes)
+{
+  char *p;
+  char stemp[3];
+  uint8_t code;
+
+  int size = strlen(codes);
+
+  while (size > 1) {
+    strlcpy(stemp, codes, sizeof(stemp));
+    code = strtol(stemp, &p, 16);
+    Serial.write(code);
+    size -= 2;
+    codes += 2;
+  }
+}
+
+// values is a comma-delimited string: e.g. "72,101,108,108,111,32,87,111,114,108,100,33,10"
+void SerialSendDecimal(char *values)
+{
+  char *p;
+  uint8_t code;
+  for (char* str = strtok_r(values, ",", &p); str; str = strtok_r(nullptr, ",", &p)) {
+    code = (uint8_t)atoi(str);
+    Serial.write(code);
+  }
+}
 
 /*********************************************************************************************\
  * Sleep aware time scheduler functions borrowed from ESPEasy
