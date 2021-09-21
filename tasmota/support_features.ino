@@ -568,7 +568,7 @@ void ResponseAppendFeatures(void)
     feature6 |= 0x00002000;  // xsns_72_mcp9808.ino
 #endif
 #if defined(USE_ENERGY_SENSOR) && (defined(USE_BL0940) || defined(USE_BL09XX))
-    feature6 |= 0x00004000;  // xnrg_14_bl0940.ino
+    feature6 |= 0x00004000;  // xnrg_14_bl09xx.ino
 #endif
 #ifdef USE_TELEGRAM
     feature6 |= 0x00008000;  // xdrv_40_telegram.ino

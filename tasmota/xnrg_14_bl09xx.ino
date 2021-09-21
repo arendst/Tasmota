@@ -20,7 +20,7 @@
 #ifdef USE_ENERGY_SENSOR
 #if defined(USE_BL0940) || defined(USE_BL09XX)
 #ifdef USE_BL0940
-#warning **** USE_BL0940 is obsolete. Please replace with USE_BLE0939 ****
+#warning **** USE_BL0940 is obsolete. Please replace with USE_BLE09XX ****
 #endif
 /*********************************************************************************************\
  * Support the following Shangai Belling energy sensors:
