@@ -145,7 +145,7 @@ void Bl09XXReceived(void) {
   if (Energy.power_on) {  // Powered on
     Energy.voltage[0] = (float)Bl09XX.voltage / Settings->energy_voltage_calibration;
     //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("BL9: Voltage %f, Temp %f"), Energy.voltage[0], Bl09XX.temperature);
-    for ( int chan = 0 ; chan < Energy.phase_count ; chan++ ) {
+    for (uint32_t chan = 0; chan < Energy.phase_count; chan++) {
       if (Bl09XX.power[chan] > Settings->energy_power_calibration) {                                   // We need at least 1W
         Energy.active_power[chan] = (float)Bl09XX.power[chan] / Settings->energy_power_calibration;
         Energy.current[chan] = (float)Bl09XX.current[chan] / Settings->energy_current_calibration;
@@ -208,16 +208,19 @@ void Bl09XXSerialInput(void) {
 void Bl09XXEverySecond(void) {
   if (Energy.data_valid[0] > ENERGY_WATCHDOG) {
     Bl09XX.voltage = 0;
-    memset(Bl09XX.current,0,sizeof(Bl09XX.current));
-    memset(Bl09XX.power,0,sizeof(Bl09XX.power));
+    memset(Bl09XX.current, 0, sizeof(Bl09XX.current));
+    memset(Bl09XX.power, 0, sizeof(Bl09XX.power));
   } else {
-/*
     // Calculate energy by using active power
-    if (Energy.active_power[0]) {
-      Energy.kWhtoday_delta += (Energy.active_power[0] * 1000) / 36;
+    uint32_t energy_sum = 0;
+    for (uint32_t channel = 0; channel < Energy.phase_count; channel++) {
+      energy_sum += (Energy.active_power[channel] * 1000);
+    }
+    if (energy_sum) {
+      Energy.kWhtoday_delta += energy_sum / 36;
       EnergyUpdateToday();
     }
-*/
+/*
     // Calculate energy by using active energy pulse count
     bool update_today = false;
     for (int chan = 0 ; chan < Energy.phase_count ; chan++ ) {
@@ -245,6 +248,7 @@ void Bl09XXEverySecond(void) {
     }
     if (update_today)
       EnergyUpdateToday();
+*/
   }
 
 //  AddLog(LOG_LEVEL_DEBUG, PSTR("BL9: Poll"));
@@ -298,17 +302,11 @@ void Bl09XXDrvInit(void) {
   if (Bl09XX.model) {
     Bl09XX.rx_buffer = (uint8_t*)(malloc(BL09XX_BUFFER_SIZE));
     if (Bl09XX.rx_buffer != nullptr) {
-      TasmotaGlobal.energy_driver = XNRG_14;
       Energy.voltage_common = true;               // Use common voltage
       Energy.frequency_common = true;             // Use common frequency
       Energy.use_overtemp = true;                 // Use global temperature for overtemp detection
-      if (BL0939_MODEL == Bl09XX.model) {
-        Energy.phase_count = 2;                     // Handle two channels as two phases
-        AddLog(LOG_LEVEL_DEBUG, PSTR("BL9: BL0939 driver enabled, TX:%d, RX:%d"), Pin(GPIO_TXD), Pin(GPIO_BL0939_RX));
-      } else {
-        Energy.phase_count = 1;                     // Handle 1 channel
-        AddLog(LOG_LEVEL_DEBUG, PSTR("BL9: BL0940 driver enabled, TX:%d, RX:%d"), Pin(GPIO_TXD), Pin(GPIO_BL0940_RX));
-      }
+      Energy.phase_count = (BL0939_MODEL == Bl09XX.model) ? 2 : 1;  // Handle two channels as two phases
+      TasmotaGlobal.energy_driver = XNRG_14;
     }
   }
 }
