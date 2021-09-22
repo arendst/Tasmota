@@ -1,11 +1,9 @@
 /********************************************************************
- * Tasmota LVGL ctypes mapping
+ * Tasmota ctypes mapping
  *******************************************************************/
 #include "be_constobj.h"
+#include <string.h>
 
-#ifdef USE_LVGL
-
-#include "lvgl.h"
 extern __attribute__((noreturn)) void be_raisef(bvm *vm, const char *except, const char *msg, ...);
 
 // binary search within an array of sorted strings
@@ -68,6 +66,7 @@ typedef struct be_ctypes_structure_item_t {
 typedef struct be_ctypes_structure_t {
     uint16_t  size_bytes;       /* size in bytes */
     uint16_t  size_elt;         /* number of elements */
+    const char **instance_mapping;  /* array of instance class names for automatic instanciation of class */
     const be_ctypes_structure_item_t * items;
 } be_ctypes_structure_t;
 
@@ -97,14 +96,6 @@ int be_ctypes_init(bvm *vm) {
         src_data = (void*) be_toint(vm, 2);
     }
 
-    // get global array of classes from global variable '.ctypes_classes'
-    be_getglobal(vm, ".ctypes_classes");
-    const be_ctypes_classes_t * be_ctypes_classes = (const be_ctypes_classes_t *) be_tocomptr(vm, -1);
-    be_pop(vm, 1);
-    // berry_log_C("be_ctypes_init> be_ctypes_class = %p", be_ctypes_classes);
-    const char * class_name = be_classname(vm, 1);
-    // berry_log_C("be_ctypes_init> class_name = %s", class_name);
-
     // call super(self, bytes)
     be_getglobal(vm, "super");      // push super function
     be_pushvalue(vm, 1);            // push self instance
@@ -121,16 +112,10 @@ int be_ctypes_init(bvm *vm) {
     // berry_log_C("be_ctypes_init> init called");
 
     // look for class definition
-    int32_t class_idx = bin_search_ctypes(class_name, &be_ctypes_classes->classes[0], sizeof(be_ctypes_class_t), be_ctypes_classes->size);
-    if (class_idx >= 0) {
-        // found
-        const be_ctypes_structure_t * definitions = be_ctypes_classes->classes[class_idx].definitions;
-        // store definition in '.def'
-        // berry_log_C("Found definitions = %p", definitions);
-        be_pushcomptr(vm, (void*) definitions);
-        be_setmember(vm, 1, ".def");
-        be_pop(vm, 1);
-
+    be_getmember(vm, 1, "_def");        // static class comptr
+    const be_ctypes_structure_t *definitions;
+    definitions = (const be_ctypes_structure_t *) be_tocomptr(vm, -1);
+    if (definitions) {
         // call self.resize(definitions->size_bytes)
         be_getmember(vm, 1, "resize");
         be_pushvalue(vm, 1);
@@ -167,9 +152,13 @@ int be_ctypes_copy(bvm *vm) {
     be_return(vm);
 }
 
+// get an attribute from a ctypes structure
+// arg1: ctypes instance
+// arg2: name of the argument
+// The class has a `_def` static class attribute with the C low-level mapping definition
 int be_ctypes_member(bvm *vm) {
     int argc = be_top(vm);
-    be_getmember(vm, 1, ".def");
+    be_getmember(vm, 1, "_def");
     const be_ctypes_structure_t *definitions;
     definitions = (const be_ctypes_structure_t *) be_tocomptr(vm, -1);
     be_pop(vm, 1);
@@ -194,14 +183,14 @@ int be_ctypes_member(bvm *vm) {
         } else {
             // general int support
             int size = member->type;       // eventually 1/2/4, positive if little endian, negative if big endian
-            int sign = false;            // signed int
+            int sign = bfalse;            // signed int
             if (size >= ctypes_i8) {
                 size -= ctypes_i8 - 1;
-                sign = true;
+                sign = btrue;
             }
             if (size <= ctypes_be_i8) {
                 size += ctypes_be_i8 - 1;
-                sign = true;
+                sign = btrue;
             }
             // get
             be_getmember(vm, 1, sign ? "geti" : "get");   // self.get or self.geti
@@ -215,14 +204,7 @@ int be_ctypes_member(bvm *vm) {
         // the int result is at top of the stack
         // check if we need an instance mapping
         if (member->mapping > 0) {
-            // find the name of the class
-
-            // get global array of classes from global variable '.ctypes_classes'
-            be_getglobal(vm, ".ctypes_classes");
-            const be_ctypes_classes_t * be_ctypes_classes = (const be_ctypes_classes_t *) be_tocomptr(vm, -1);
-            be_pop(vm, 1);
-
-            const char * mapping_name = be_ctypes_classes->instance_mapping[member->mapping - 1];
+            const char * mapping_name = definitions->instance_mapping[member->mapping - 1];
             if (mapping_name) {
                 be_getglobal(vm, mapping_name);     // stack: class
                 be_pushvalue(vm, -2);               // stack: class, value
@@ -267,7 +249,7 @@ int be_ctypes_setmember(bvm *vm) {
         be_pop(vm, 1);
     }
 
-    be_getmember(vm, 1, ".def");
+    be_getmember(vm, 1, "_def");
     const be_ctypes_structure_t *definitions;
     definitions = (const be_ctypes_structure_t *) be_tocomptr(vm, -1);
     be_pop(vm, 1);
@@ -293,14 +275,14 @@ int be_ctypes_setmember(bvm *vm) {
         } else {
             // general int support
             int size = member->type;       // eventually 1/2/4, positive if little endian, negative if big endian
-            int sign = false;            // signed int
+            int sign = bfalse;            // signed int
             if (size >= ctypes_i8) {
                 size -= ctypes_i8 - 1;
-                sign = true;
+                sign = btrue;
             }
             if (size <= ctypes_be_i8) {
                 size += ctypes_be_i8 - 1;
-                sign = true;
+                sign = btrue;
             }
             // set
             be_getmember(vm, 1, sign ? "seti" : "set");   // self.get or self.geti
@@ -320,22 +302,20 @@ int be_ctypes_setmember(bvm *vm) {
 
 BE_EXPORT_VARIABLE extern const bclass be_class_bytes;
 
-#include "../generate/be_fixed_be_class_lv_ctypes.h"
+#include "../generate/be_fixed_be_class_ctypes.h"
 
-void be_load_lvgl_ctypes_lib(bvm *vm) {
-    be_pushntvclass(vm, &be_class_lv_ctypes);
+void be_load_ctypes_lib(bvm *vm) {
+    be_pushntvclass(vm, &be_class_ctypes);
     be_setglobal(vm, "ctypes_bytes");
     be_pop(vm, 1);
 }
 
 /* @const_object_info_begin
-class be_class_lv_ctypes (scope: global, name: ctypes_bytes, super: be_class_bytes) {
-    .def, var
+class be_class_ctypes (scope: global, name: ctypes_bytes, super: be_class_bytes) {
+    _def, nil()
     copy, func(be_ctypes_copy)
     init, func(be_ctypes_init)
     member, func(be_ctypes_member)
     setmember, func(be_ctypes_setmember)
 }
 @const_object_info_end */
-
-#endif // USE_LVGL

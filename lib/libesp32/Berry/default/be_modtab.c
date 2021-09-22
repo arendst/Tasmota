@@ -114,6 +114,8 @@ extern void be_load_md5_lib(bvm *vm);
 extern void be_load_webclient_lib(bvm *vm);
 extern void be_load_crypto_lib(bvm *vm);
 
+extern void be_load_ctypes_lib(bvm *vm);
+
 #ifdef USE_I2S_AUDIO_BERRY
 extern void be_load_driver_audio_lib(bvm *vm);
 #endif
@@ -124,7 +126,6 @@ extern void be_load_lvgl_font_lib(bvm *vm);
 extern void be_load_lv_all_lib(bvm *vm);
 extern void be_load_lvgl_cb_lib(bvm *vm);
 extern void be_load_lvgl_cb_all_lib(bvm *vm);
-extern void be_load_lvgl_ctypes_lib(bvm *vm);
 extern void be_load_ctypes_definitions_lib(bvm *vm);
 // custom widgets
 extern void be_load_lv_signal_bars_class(bvm *vm);
@@ -150,6 +151,7 @@ BERRY_API void be_load_custom_libs(bvm *vm)
     be_load_Driver_class(vm);
     be_load_md5_lib(vm);
     be_load_serial_lib(vm);
+    be_load_ctypes_lib(vm);
 #ifdef USE_ALEXA_AVS
     be_load_crypto_lib(vm);
 #endif
@@ -175,7 +177,6 @@ BERRY_API void be_load_custom_libs(bvm *vm)
     be_load_lv_all_lib(vm);
     be_load_lvgl_cb_lib(vm);
     be_load_lvgl_cb_all_lib(vm);
-    be_load_lvgl_ctypes_lib(vm);
     be_load_ctypes_definitions_lib(vm);
     // custom widgets
     be_load_lv_signal_bars_class(vm);

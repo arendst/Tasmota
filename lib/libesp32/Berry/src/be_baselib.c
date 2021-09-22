@@ -231,6 +231,8 @@ static int l_int(bvm *vm)
             be_pushint(vm, (bint)be_toreal(vm, 1));
         } else if (be_isint(vm, 1)) {
             be_pushvalue(vm, 1);
+        } else if (be_iscomptr(vm, 1)) {
+            be_pushint(vm, (int) be_tocomptr(vm, 1));
         } else {
             be_return_nil(vm);
         }

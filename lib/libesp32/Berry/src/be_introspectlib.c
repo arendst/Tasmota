@@ -86,6 +86,9 @@ static int m_toptr(bvm *vm)
         if (var_basetype(v) >= BE_GCOBJECT) {
             be_pushcomptr(vm, var_toobj(v));
             be_return(vm);
+        } else if (var_type(v) == BE_INT) {
+            be_pushcomptr(vm, (void*) var_toint(v));
+            be_return(vm);
         } else {
             be_raise(vm, "value_error", "unsupported for this type");
         }
