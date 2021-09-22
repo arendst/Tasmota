@@ -876,7 +876,7 @@
 #undef USE_DDSU666                               // Disable support for Chint DDSU666 Modbus energy monitor (+0k6 code)
 #undef USE_SOLAX_X1                              // Disable support for Solax X1 series Modbus log info (+3k1 code)
 #undef USE_LE01MR                                // Disable support for F&F LE-01MR Modbus energy meter (+2k code)
-#undef USE_BL0940                                // Disable support for BL0940 Energy monitor as used in Blitzwolf SHP-10 (+1k6 code)
+#undef USE_BL09XX                                // Add support for various BL09XX Energy monitor as used in Blitzwolf SHP-10 or Sonoff Dual R3 v2 (+1k6 code)
 #undef USE_TELEINFO                              // Disable support for French Energy Provider metering telemetry
 #undef USE_IEM3000                               // Disable support for Schneider Electric iEM3000-Modbus series energy monitor (+0k8 code)
 #undef USE_WE517                                 // Disable support for Orno WE517-Modbus energy monitor (+1k code)

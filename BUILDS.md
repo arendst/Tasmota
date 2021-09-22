@@ -80,7 +80,7 @@ m = minimal, l = lite, t = tasmota, k = knx, s = sensors, i = ir, d = display
 | USE_DDSU666           | - | - | - / x | - | x | - | - |
 | USE_SOLAX_X1          | - | - | - / - | - | - | - | - |
 | USE_LE01MR            | - | - | - / - | - | - | - | - |
-| USE_BL0940            | - | x | x / - | x | x | - | - |
+| USE_BL09XX            | - | x | x / x | x | x | - | - |
 | USE_TELEINFO          | - | - | - / - | - | - | - | - |
 | USE_IEM3000           | - | - | - / - | - | - | - | - |
 | USE_WE517             | - | - | - / - | - | - | - | - |
