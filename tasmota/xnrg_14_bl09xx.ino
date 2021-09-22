@@ -25,7 +25,7 @@
 /*********************************************************************************************\
  * Support the following Shangai Belling energy sensors:
  *
- * BL09XX - Energy (as in Blitzwolf SHP10
+ * BL0940 - Energy (as in Blitzwolf SHP10)
  * Template {"NAME":"BW-SHP10","GPIO":[0,148,0,207,158,21,0,0,0,17,0,0,0],"FLAG":0,"BASE":18}
  * Based on datasheet from http://www.belling.com.cn/media/file_object/bel_product/BL09XX/datasheet/BL09XX_V1.1_en.pdf
  *
@@ -37,9 +37,13 @@
 
 #define XNRG_14                     14
 
-#define BL09XX_PREF                 713       // =(4046*1*0,51*1000)/(1,218*1,218*(390*5+0,51)) = 713,105
-#define BL09XX_UREF                 17159     // =(79931*0,51*1000)/(1,218*(390*5+0,51)) = 17158,92
-#define BL09XX_IREF                 266013    // =(324004*1)/1,218 = 266013,14
+#define BL0939_PREF                 713       // =(4046*1*0,51*1000)/(1,218*1,218*(390*5+0,51)) = 713,105
+#define BL0939_UREF                 17159     // =(79931*0,51*1000)/(1,218*(390*5+0,51)) = 17158,92
+#define BL0939_IREF                 266013    // =(324004*1)/1,218 = 266013,14
+
+#define BL0940_PREF                 1430
+#define BL0940_UREF                 33000
+#define BL0940_IREF                 275000
 
 #define BL09XX_PULSES_NOT_INITIALIZED  -1
 
@@ -75,11 +79,11 @@ struct BL09XX {
   long cf_pulses[2] = { 0, };
   long cf_pulses_last_time[2] = { BL09XX_PULSES_NOT_INITIALIZED, BL09XX_PULSES_NOT_INITIALIZED};
   float temperature;
-  uint8_t address;
-  uint8_t model;
   int byte_counter = 0;
   uint16_t tps1 = 0;
   uint8_t *rx_buffer = nullptr;
+  uint8_t address;
+  uint8_t model;
   bool received = false;
 } Bl09XX;
 
@@ -96,7 +100,9 @@ void Bl09XXReceived(void) {
   // 55 F2 03 00 00 00 00 7E 02 00 D4 B0 72 AC 01 00 00 00 00 02 01 00 00 00 00 00 00 00 BA 01 00 FE 03 00 83
   // 55 88 02 00 49 00 00 FE 02 00 AF EF 71 D2 01 00 EB FF FF 49 01 00 00 00 00 02 00 00 CF 01 00 FE 03 00 9F
   // 55 B9 33 00 DE 45 00 94 02 00 CF E4 70 63 02 00 6C 4C 00 13 01 00 09 00 00 00 00 00 E4 01 00 FE 03 00 72
+  // 55 B8 55 00 2F 73 00 D2 02 00 00 C6 74 F9 01 00 97 89 00 37 01 00 AB 00 00 2D 00 00 02 02 00 FE 03 00 6E = U 7652864, I 29487/0, P 35223/0, C 171/0, T 514
   // Hd IFRms--- Current- Reserved Voltage- Reserved Power--- Reserved CF------ Reserved TPS1---- TPS2---- Ck
+  //
   // Sample from BL0939 (dual channel)
   // 55 82 03 00 00 00 00 1E 15 01 65 80 3E E5 C6 00 00 00 00 50 B1 00 00 00 00 00 00 00 F9 01 00 FE 03 00 D2 = U 4096101, I 0/70942, P 0/45392, C 0/0, T 505
   // 55 E6 02 00 00 00 00 37 15 01 0F 83 3E F4 C7 00 00 00 00 69 B1 00 00 00 00 01 00 00 FA 01 00 FE 03 00 7E = U 4096783, I 0/70967, P 0/45417, C 0/1, T 506
@@ -104,7 +110,7 @@ void Bl09XXReceived(void) {
   // 55 04 03 00 00 00 00 D6 14 01 7D 8E 3E 25 C7 00 00 00 00 53 B1 00 00 00 00 01 00 00 F9 01 00 FE 03 00 2E = U 4099709, I 0/70870, P 0/45395, C 0/1, T 505
   // Hd IFRms-A- CurrentA CurrentB Voltage- IFRms-B- PowerA-- PowerB-- CF-A---- CF-B---- TPS1---- TPS2---- Ck
 
-    uint16_t tps1 = Bl09XX.rx_buffer[29] << 8 | Bl09XX.rx_buffer[28];                                      // TPS1 unsigned
+  uint16_t tps1 = Bl09XX.rx_buffer[29] << 8 | Bl09XX.rx_buffer[28];                                      // TPS1 unsigned
   if ((Bl09XX.rx_buffer[0] != BL09XX_PACKET_HEADER) ||                                                   // Bad header
       (Bl09XX.tps1 && ((tps1 < (Bl09XX.tps1 -10)) || (tps1 > (Bl09XX.tps1 +10))))                        // Invalid temperature change
      ) {
@@ -133,8 +139,8 @@ void Bl09XXReceived(void) {
     Bl09XX.cf_pulses[1] = abs(tmp >> 8);                                                                    // CFB_CNT unsigned
   }
 
-  //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("BL9: U %d, I %d/%d, P %d/%d, C %d/%d, T %d"),
-  //  Bl09XX.voltage, Bl09XX.current[0], Bl09XX.current[1], Bl09XX.power[0], Bl09XX.power[1], Bl09XX.cf_pulses[0], Bl09XX.cf_pulses[1], Bl09XX.tps1);
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("BL9: U %d, I %d/%d, P %d/%d, C %d/%d, T %d"),
+    Bl09XX.voltage, Bl09XX.current[0], Bl09XX.current[1], Bl09XX.power[0], Bl09XX.power[1], Bl09XX.cf_pulses[0], Bl09XX.cf_pulses[1], Bl09XX.tps1);
 
   if (Energy.power_on) {  // Powered on
     Energy.voltage[0] = (float)Bl09XX.voltage / Settings->energy_voltage_calibration;
@@ -250,7 +256,6 @@ void Bl09XXEverySecond(void) {
 
 void Bl09XXSnsInit(void) {
   // Software serial init needs to be done here as earlier (serial) interrupts may lead to Exceptions
-  if (XNRG_14 != TasmotaGlobal.energy_driver) return;
   int rx_pin = Pin((BL0939_MODEL == Bl09XX.model) ? GPIO_BL0939_RX : GPIO_BL0940_RX);
   Bl09XXSerial = new TasmotaSerial(rx_pin, Pin(GPIO_TXD), 1);
   if (Bl09XXSerial->begin(4800, 1)) {
@@ -258,10 +263,14 @@ void Bl09XXSnsInit(void) {
       ClaimSerial();
     }
     if (HLW_UREF_PULSE == Settings->energy_voltage_calibration) {
-      Settings->energy_voltage_calibration = BL09XX_UREF;
-      Settings->energy_current_calibration = BL09XX_IREF;
-      Settings->energy_power_calibration = BL09XX_PREF;
+      Settings->energy_voltage_calibration = (BL0939_MODEL == Bl09XX.model) ? BL0939_UREF : BL0940_UREF;
+      Settings->energy_current_calibration = (BL0939_MODEL == Bl09XX.model) ? BL0939_IREF : BL0940_IREF;
+      Settings->energy_power_calibration = (BL0939_MODEL == Bl09XX.model) ? BL0939_PREF : BL0940_PREF;
     }
+    if ((BL0940_MODEL == Bl09XX.model) && (Settings->energy_current_calibration < (BL0940_IREF / 20))) {
+      Settings->energy_current_calibration *= 100;
+    }
+
     Energy.use_overtemp = true;                 // Use global temperature for overtemp detection
 
     for (uint32_t i = 0; i < 5; i++) {
@@ -322,7 +331,7 @@ bool Bl09XXCommand(void) {
   }
   else if (CMND_CURRENTSET == Energy.command_code) {
     if (XdrvMailbox.data_len && Bl09XX.current[channel]) {
-      Settings->energy_current_calibration = Bl09XX.current[channel] / value;
+      Settings->energy_current_calibration = (Bl09XX.current[channel] * 100) / value;
     }
   }
   else serviced = false;  // Unknown command
