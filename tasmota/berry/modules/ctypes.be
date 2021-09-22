@@ -58,6 +58,7 @@ ctypes.bf_12  = 112
 ctypes.bf_13  = 113
 ctypes.bf_14  = 114
 ctypes.bf_15  = 115
+ctypes.bf_16  = 116
 
 def findinlist(l, x)
   for i:0..size(l)-1
@@ -193,6 +194,7 @@ ctypes.print_types = def ()
   print("typedef struct be_ctypes_structure_t {")
   print("    uint16_t  size_bytes;       /* size in bytes */")
   print("    uint16_t  size_elt;         /* number of elements */")
+  print("    const char **instance_mapping;  /* array of instance class names for automatic instanciation of class */")
   print("    const be_ctypes_structure_item_t * items;")
   print("} be_ctypes_structure_t;")
   print()
@@ -207,7 +209,7 @@ ctypes.print_types = def ()
   print("    const be_ctypes_class_t * classes;")
   print("} be_ctypes_classes_t;")
   print()
-  print("BE_EXPORT_VARIABLE extern const bclass be_class_lv_ctypes;")
+  print("BE_EXPORT_VARIABLE extern const bclass be_class_ctypes;")
   print()
   print("void ctypes_register_class(bvm *vm, const bclass * ctypes_class, const be_ctypes_structure_t * definitions) {")
   print("    be_pushntvclass(vm, ctypes_class);")
@@ -215,7 +217,23 @@ ctypes.print_types = def ()
   print("    be_pop(vm, 1);")
   print("}")
   print()
+  print("const char * be_ctypes_instance_mappings[];    /* forward definition */")
+  print()
+
+  print("// Define a sub-class of ctypes with only one member which points to the ctypes defintion")
+  print("#define be_define_ctypes_class(_c_name, _def, _super, _name)                \\")
+  print("  be_local_class(_c_name,                                                   \\")
+  print("      0,                                                                    \\")
+  print("      _super,                                                               \\")
+  print("      be_nested_map(1,                                                      \\")
+  print("      ( (struct bmapnode*) &(const bmapnode[]) {                            \\")
+  print("          { be_nested_key(\"_def\", 1985022181, 4, -1), be_const_comptr(_def) },\\")
+  print("      })),                                                                  \\")
+  print("      (be_nested_const_str(_name, 0, sizeof(_name)-1))                      \\")
+  print("  )")
+  print()
   print("/********************************************************************/")
+  print()
 end
 
 global_classes = []   # track the list of all classes and
@@ -236,33 +254,13 @@ ctypes.print_classes = def ()
 
   ctypes.sort(global_classes)
 
-  print("const be_ctypes_classes_t be_ctypes_classes[] = {")
-  print(string.format("  %i,", size(global_classes)))
-  print(string.format("  be_ctypes_instance_mappings,"))
-  print(string.format("  (const be_ctypes_class_t[%i]) {", size(global_classes)))
-
   for elt:global_classes
-    print(string.format("    { \"%s\", &be_%s },", elt, elt))
+    print(string.format("static be_define_ctypes_class(%s, &be_%s, &be_class_ctypes, \"%s\");", elt, elt, elt))
   end
 
-  print("}};")
   print()
-  print("/* @const_object_info_begin")
-  print("class be_class_ctypes_classes (scope: global) {")
-  for elt:global_classes
-    print(string.format("    %s, int(0)", elt))
-  end
-  print("}")
-  print("@const_object_info_end */")
-  print()
-
   print("void be_load_ctypes_definitions_lib(bvm *vm) {")
-  print("  be_pushcomptr(vm, (void*) be_ctypes_classes);")
-  print("  be_setglobal(vm, \".ctypes_classes\");")
-  print("  be_pop(vm, 1);")
-  print()
   for elt:global_classes
-    print(string.format("  static be_define_const_empty_class(be_class_%s, &be_class_lv_ctypes, %s);", elt, elt))
     print(string.format("  ctypes_register_class(vm, &be_class_%s, &be_%s);", elt, elt))
   end
   print("}")
@@ -316,6 +314,7 @@ class structure
       print(string.format("const be_ctypes_structure_t be_%s = {", name))
       print(string.format("  %i,  /* size in bytes */", self.size_bytes))
       print(string.format("  %i,  /* number of elements */", size(self.mapping)))
+      print(string.format("  be_ctypes_instance_mappings,"))
       print(string.format("  (const be_ctypes_structure_item_t[%i]) {", size(self.mapping)))
       # list keys for future binary search
       var names = []
@@ -447,7 +446,6 @@ class structure
     self.get_closures[name] = def (b, p) return ctypes.get_bits(b, cur_offset + p, bit_offset, size_in_bits) end
     self.set_closures[name] = def (b, p, v) return ctypes.set_bits(b, cur_offset+ p, bit_offset, size_in_bits, v) end
 
-    self.cur_offset += size_in_bits / 8
     self.cur_offset += (self.bit_offset + size_in_bits) / 8
     self.bit_offset = (self.bit_offset + size_in_bits) % 8
   end
