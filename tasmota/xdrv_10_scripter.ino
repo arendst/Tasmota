@@ -69,9 +69,6 @@ keywords if then else endif, or, and are better readable for beginners (others m
 #define MAX_SARRAY_NUM 32
 #endif
 
-#include <renderer.h>
-extern Renderer *renderer;
-
 uint32_t EncodeLightId(uint8_t relay_id);
 uint32_t DecodeLightId(uint32_t hue_id);
 
@@ -209,6 +206,10 @@ void alt_eeprom_readBytes(uint32_t adr, uint32_t len, uint8_t *buf) {
 
 #endif // LITTLEFS_SCRIPT_SIZE
 
+
+#ifdef TESLA_POWERWALL
+#include "powerwall.h"
+#endif
 
 // offsets epoch readings by 1.1.2019 00:00:00 to fit into float with second resolution
 #ifndef EPOCH_OFFSET
@@ -871,7 +872,7 @@ char *script;
     }
 
     // variables usage info
-    AddLog(LOG_LEVEL_INFO, PSTR("Script: nv=%d, tv=%d, vns=%d, ram=%d"), nvars, svars, index, glob_script_mem.script_mem_size);
+    AddLog(LOG_LEVEL_INFO, PSTR("Script: nv=%d, tv=%d, vns=%d, vmem=%d, smem=%d"), nvars, svars, index, glob_script_mem.script_mem_size, glob_script_mem.script_size);
 
     // copy string variables
     char *cp1 = glob_script_mem.glob_snp;
@@ -1082,11 +1083,23 @@ void script_udp_sendvar(char *vname,float *fp,char *sp) {
 void ws2812_set_array(float *array ,uint32_t len, uint32_t offset) {
 
   Ws2812ForceSuspend();
-  for (uint32_t cnt = 0; cnt<len; cnt++) {
-    uint32_t index = cnt + offset;
-    if (index>Settings->light_pixels) break;
-    uint32_t col = array[cnt];
-    Ws2812SetColor(index + 1, col>>16, col>>8, col, 0);
+  for (uint32_t cnt = 0; cnt < len; cnt++) {
+    uint32_t index;
+    if (! (offset & 0x1000)) {
+      index = cnt + (offset & 0x7ff);
+    } else {
+      index = cnt/2 + (offset & 0x7ff);
+    }
+    if (index > Settings->light_pixels) break;
+    if (! (offset & 0x1000)) {
+      uint32_t col = array[cnt];
+      Ws2812SetColor(index + 1, col>>16, col>>8, col, 0);
+    } else {
+      uint32_t hcol = array[cnt];
+      cnt++;
+      uint32_t lcol = array[cnt];
+      Ws2812SetColor(index + 1, hcol>>8, hcol, lcol>>8, lcol);
+    }
   }
   Ws2812ForceUpdate();
 }
@@ -1641,6 +1654,16 @@ char *isvar(char *lp, uint8_t *vtype, struct T_INDEX *tind, float *fp, char *sp,
 
     if (gv && gv->jo) {
       // look for json input
+
+#if 0
+      char sbuf[SCRIPT_MAXSSIZE];
+      sbuf[0]=0;
+      char tmp[128];
+      Replace_Cmd_Vars(lp, 1, tmp, sizeof(tmp));
+      uint32_t res = JsonParsePath(gv->jo, tmp, '#', NULL, sbuf, sizeof(sbuf)); // software_version
+      AddLog(LOG_LEVEL_INFO, PSTR("json string: %s %s"),tmp,  sbuf);
+#endif
+
       JsonParserObject *jpo = gv->jo;
       char jvname[64];
       strcpy(jvname, vname);
@@ -2404,6 +2427,7 @@ chknext:
           rstring[0] = 0;
           int8_t index = fvar;
           char *wd = ResponseData();
+
           strlcpy(rstring, wd, glob_script_mem.max_ssize);
           if (index) {
             if (strlen(wd) && index) {
@@ -2550,12 +2574,11 @@ chknext:
           if (!TasmotaGlobal.global_state.wifi_down) {
             // erase nvs
             lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
-
-            homekit_main(0, fvar);
-            if (fvar >= 98) {
+            int32_t sel = fvar;
+            fvar = homekit_main(0, sel);
+            if (sel >= 98) {
               glob_script_mem.homekit_running == false;
             }
-
           }
           lp++;
           len = 0;
@@ -6515,6 +6538,10 @@ char buff[512];
 
   if (sflg) {
 #ifdef USE_DISPLAY_DUMP
+
+#include <renderer.h>
+extern Renderer *renderer;
+
     // screen copy
     #define fileHeaderSize 14
     #define infoHeaderSize 40
@@ -7691,7 +7718,6 @@ uint32_t scripter_create_task(uint32_t num, uint32_t time, uint32_t core, uint32
 #endif // USE_SCRIPT_TASK
 #endif // ESP32
 
-
 int32_t http_req(char *host, char *request) {
   WiFiClient http_client;
   HTTPClient http;
@@ -7705,6 +7731,10 @@ int32_t http_req(char *host, char *request) {
     mode = 1;
     request++;
   }
+
+#ifdef HTTP_DEBUG
+  AddLog(LOG_LEVEL_INFO, PSTR("HTTP heap %d"), ESP_getFreeHeap());
+#endif
 
   if (!mode) {
     // GET
@@ -7720,13 +7750,23 @@ int32_t http_req(char *host, char *request) {
     httpCode = http.POST(request);
   }
 
+#ifdef HTTP_DEBUG
+  AddLog(LOG_LEVEL_INFO, PSTR("HTTP RESULT %s"), http.getString().c_str());
+#endif
+
 #ifdef USE_WEBSEND_RESPONSE
 #ifdef MQTT_DATA_STRING
   TasmotaGlobal.mqtt_data = http.getString();
 #else
   strlcpy(TasmotaGlobal.mqtt_data, http.getString().c_str(), ResponseSize());
 #endif
-  //AddLog(LOG_LEVEL_INFO, PSTR("HTTP RESULT %s"), ResponseData());
+
+#ifdef HTTP_DEBUG
+  AddLog(LOG_LEVEL_INFO, PSTR("HTTP MQTT BUFFER %s"), ResponseData());
+#endif
+
+//  AddLog(LOG_LEVEL_INFO, PSTR("JSON %s"), wd_jstr);
+//  TasmotaGlobal.mqtt_data = wd_jstr;
   Run_Scripter(">E", 2, ResponseData());
 
   glob_script_mem.glob_error = 0;
@@ -7746,10 +7786,21 @@ int32_t http_req(char *host, char *request) {
 #include <WiFiClientSecure.h>
 #endif //ESP8266
 
+#ifdef TESLA_POWERWALL
+Powerwall powerwall = Powerwall();
+String authCookie   = "";
+#endif
+
 // get tesla powerwall info page json string
 uint32_t call2https(const char *host, const char *path) {
   if (TasmotaGlobal.global_state.wifi_down) return 1;
   uint32_t status = 0;
+
+#ifdef TESLA_POWERWALL
+  authCookie = powerwall.getAuthCookie();
+  return 0;
+#endif
+
 #ifdef ESP32
   WiFiClientSecure *httpsClient;
   httpsClient = new WiFiClientSecure;
@@ -8383,8 +8434,16 @@ bool Xdrv10(uint8_t function)
       if (glob_script_mem.script_ram[0]!='>' && glob_script_mem.script_ram[1]!='D') {
         // clr all
         memset(glob_script_mem.script_ram, 0 ,glob_script_mem.script_size);
+#ifdef PRECONFIGURED_SCRIPT
+        strcpy_P(glob_script_mem.script_ram, PSTR(PRECONFIGURED_SCRIPT));
+#else
         strcpy_P(glob_script_mem.script_ram, PSTR(">D\nscript error must start with >D"));
+#endif
+#ifdef START_SCRIPT_FROM_BOOT
+        bitWrite(Settings->rule_enabled, 0, 1);
+#else
         bitWrite(Settings->rule_enabled, 0, 0);
+#endif
       }
 
       // assure permanent memory is 4 byte aligned

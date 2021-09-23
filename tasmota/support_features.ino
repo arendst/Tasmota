@@ -509,7 +509,7 @@ void ResponseAppendFeatures(void)
 #if defined(USE_ENERGY_SENSOR) && defined(USE_LE01MR)
     feature5 |= 0x08000000;  // xnrg_13_fif_le01mr.ino
 #endif
-#if defined(USE_I2C) && defined(USE_AHT1x)
+#if defined(USE_I2C) && (defined(USE_AHT1x) || defined(USE_AHT2x))
     feature5 |= 0x10000000;  // xsns_63_aht1x.ino
 #endif
 #if defined(USE_I2C) && defined(USE_WEMOS_MOTOR_V1)
@@ -567,8 +567,8 @@ void ResponseAppendFeatures(void)
 #if defined(USE_I2C) && defined(USE_MCP9808)
     feature6 |= 0x00002000;  // xsns_72_mcp9808.ino
 #endif
-#if defined(USE_ENERGY_SENSOR) && defined(USE_BL0940)
-    feature6 |= 0x00004000;  // xnrg_14_bl0940.ino
+#if defined(USE_ENERGY_SENSOR) && (defined(USE_BL0940) || defined(USE_BL09XX))
+    feature6 |= 0x00004000;  // xnrg_14_bl09xx.ino
 #endif
 #ifdef USE_TELEGRAM
     feature6 |= 0x00008000;  // xdrv_40_telegram.ino

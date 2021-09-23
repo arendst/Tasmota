@@ -20,6 +20,7 @@ struct object_block {
     std::string name;
     std::map<std::string, std::string> attr;
     std::map<std::string, data_value> data;
+    std::vector<std::string> data_ordered;  /* preserve order of keys */
 };
 
 #endif

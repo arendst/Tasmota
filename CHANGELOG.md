@@ -13,11 +13,14 @@ All notable changes to this project will be documented in this file.
 - Support for ESP32/ESP32S2 DAC gpio via Berry
 - Berry support for Serial
 - Support for Sensirion SCD40/SCD41 CO2 sensor
+- Support for BL0939 energy monitor as used in ESP32 based Sonoff Dual R3 V2 Pow (#13195)
 
 ### Changed
 - M5 Stack Core2 uses UNIVERSAL_DISPLAY with enabled LVGL as default now
 - ``DisplayDimmer`` has now range 0..100 instead of 0..15
 - Minimum PWM Frequency lowered to 2Hz on ESP32 (#13123)
+- Use Tasmota Arduino Core32 1.0.7.4 for ESP32 builds (#13154)
+- Shrinked Webcam build, uses now `USE_TASMOTA_DISCOVERY` (#13148)
 
 ### Fixed
 - OpenTherm invalid JSON (#13028)

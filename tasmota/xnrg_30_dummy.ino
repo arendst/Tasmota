@@ -1,5 +1,5 @@
 /*
-  xnrg_20_dummy.ino - Dummy energy sensor support for Tasmota
+  xnrg_30_dummy.ino - Dummy energy sensor support for Tasmota
 
   Copyright (C) 2021  Theo Arends
 
@@ -28,7 +28,7 @@
  * Enable by selecting any GPIO as Option A2
 \*********************************************************************************************/
 
-#define XNRG_20             20
+#define XNRG_30             30
 
 #define NRG_DUMMY_U_COMMON  true    // Phase voltage = false, Common voltage = true
 #define NRG_DUMMY_F_COMMON  true    // Phase frequency = false, Common frequency = true
@@ -124,7 +124,7 @@ void NrgDummyDrvInit(void) {
     Energy.type_dc = NRG_DUMMY_DC;                 // AC = false, DC = true;
     Energy.use_overtemp = NRG_DUMMY_OVERTEMP;      // Use global temperature for overtemp detection
 
-    TasmotaGlobal.energy_driver = XNRG_20;
+    TasmotaGlobal.energy_driver = XNRG_30;
   }
 }
 
@@ -132,7 +132,7 @@ void NrgDummyDrvInit(void) {
  * Interface
 \*********************************************************************************************/
 
-bool Xnrg20(uint8_t function) {
+bool Xnrg30(uint8_t function) {
   bool result = false;
 
   switch (function) {

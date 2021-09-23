@@ -23,7 +23,7 @@ be_local_closure(init,   /* name */
     (be_nested_const_str("init", 380752755, 4)),
     (be_nested_const_str("input", -103256197, 5)),
     ( &(const binstruction[ 1]) {  /* code */
-      0x80000000,  //  0000  RET	0	R0
+      0x80000000,  //  0000  RET	0
     })
   )
 );
@@ -44,12 +44,12 @@ be_local_closure(get_tasmota,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
-      be_nested_string("tasmota", 424643812, 7),    /* R256 - K0 */
+    /* K0   */  be_nested_string("tasmota", 424643812, 7),
     }),
     (be_nested_const_str("get_tasmota", 334356779, 11)),
     (be_nested_const_str("input", -103256197, 5)),
     ( &(const binstruction[ 2]) {  /* code */
-      0xB8060000,  //  0000  GETNGBL	R1	R256
+      0xB8060000,  //  0000  GETNGBL	R1	K0
       0x80040200,  //  0001  RET	1	R1
     })
   )
@@ -98,19 +98,19 @@ be_local_closure(add_cmd,   /* name */
     }),
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
-      be_nested_string("tasmota", 424643812, 7),    /* R256 - K0 */
-      be_nested_string("add_cmd", -933336417, 7),    /* R257 - K1 */
+    /* K0   */  be_nested_string("tasmota", 424643812, 7),
+    /* K1   */  be_nested_string("add_cmd", -933336417, 7),
     }),
     (be_nested_const_str("add_cmd", -933336417, 7)),
     (be_nested_const_str("input", -103256197, 5)),
     ( &(const binstruction[ 7]) {  /* code */
-      0xB80E0000,  //  0000  GETNGBL	R3	R256
-      0x8C0C0701,  //  0001  GETMET	R3	R3	R257
+      0xB80E0000,  //  0000  GETNGBL	R3	K0
+      0x8C0C0701,  //  0001  GETMET	R3	R3	K1
       0x5C140200,  //  0002  MOVE	R5	R1
       0x84180000,  //  0003  CLOSURE	R6	P0
       0x7C0C0600,  //  0004  CALL	R3	3
-      0xA0000000,  //  0005  CLOSE	0
-      0x80000000,  //  0006  RET	0	R0
+      0xA0000000,  //  0005  CLOSE	R0
+      0x80000000,  //  0006  RET	0
     })
   )
 );

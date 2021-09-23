@@ -33,11 +33,26 @@
 #define CODE_IMAGE_STR "webcam"
 
 #define USE_WEBCAM
+#define USE_TASMOTA_DISCOVERY
 #define ENABLE_RTSPSERVER
-#define USE_SDCARD
 #define USE_SPI
+#define USE_SDCARD
+
+#undef USE_I2C
+#undef USE_HOME_ASSISTANT
+#undef USE_COUNTER
+#undef USE_IR_REMOTE
+#undef USE_AC_ZERO_CROSS_DIMMER
+#undef USE_PWM_DIMMER
+#undef USE_TUYA_MCU
+#undef USE_EMULATION_HUE
+#undef USE_EMULATION_WEMO
+#undef USE_ARILUX_RF
+#undef USE_DS18x20
+#undef USE_WS2812
+#undef USE_ENERGY_SENSOR
 #undef USE_BERRY                                 // Disable Berry scripting language
-#undef  USE_MI_ESP32                             // (ESP32 only) Disable support for ESP32 as a BLE-bridge (+9k2 mem, +292k flash)
+#undef USE_MI_ESP32                             // (ESP32 only) Disable support for ESP32 as a BLE-bridge (+9k2 mem, +292k flash)
 #endif  // FIRMWARE_WEBCAM
 
 /*********************************************************************************************\
@@ -57,6 +72,8 @@
 
 #define USE_ODROID_GO                            // Add support for Odroid Go
 #define USE_SDCARD
+
+#undef USE_HOME_ASSISTANT
 
 #define USE_ADC
 #define USE_SPI
@@ -83,6 +100,8 @@
 #define MODULE                 M5STACK_CORE2     // [Module] Select default module from tasmota_template.h
 #undef FALLBACK_MODULE
 #define FALLBACK_MODULE        M5STACK_CORE2     // [Module2] Select default module on fast reboot where USER_MODULE is user template
+
+#undef USE_HOME_ASSISTANT
 
 #define USE_M5STACK_CORE2                        // Add support for M5Stack Core2
   #define USE_I2S_SAY_TIME
@@ -144,6 +163,9 @@
 #define MODULE                 WEMOS             // [Module] Select default module from tasmota_template.h
 #undef FALLBACK_MODULE
 #define FALLBACK_MODULE        WEMOS             // [Module2] Select default module on fast reboot where USER_MODULE is user template
+
+#define USE_TASMOTA_DISCOVERY
+#undef USE_HOME_ASSISTANT
 
 #define USE_SDCARD
 
@@ -273,7 +295,7 @@
 //#define USE_DHT12                              // [I2cDriver41] Enable DHT12 humidity and temperature sensor (I2C address 0x5C) (+0k7 code)
 //#define USE_DS1624                             // [I2cDriver42] Enable DS1624, DS1621 temperature sensor (I2C addresses 0x48 - 0x4F) (+1k2 code)
 //#define USE_AHT1x                              // [I2cDriver43] Enable AHT10/15 humidity and temperature sensor (I2C address 0x38, 0x39) (+0k8 code)
-//  #define USE_AHT2x                              // [I2cDriver43] Enable AHT20 instead of AHT1x humidity and temperature sensor (I2C address 0x38) (+0k8 code)
+//#define USE_AHT2x                              // [I2cDriver43] Enable AHT20 instead of AHT1x humidity and temperature sensor (I2C address 0x38) (+0k8 code)
 //#define USE_WEMOS_MOTOR_V1                     // [I2cDriver44] Enable Wemos motor driver V1 (I2C addresses 0x2D - 0x30) (+0k7 code)
   #define WEMOS_MOTOR_V1_ADDR  0x30              // Default I2C address 0x30
   #define WEMOS_MOTOR_V1_FREQ  1000              // Default frequency
@@ -408,7 +430,7 @@
 #define USE_DHT12                              // [I2cDriver41] Enable DHT12 humidity and temperature sensor (I2C address 0x5C) (+0k7 code)
 #define USE_DS1624                             // [I2cDriver42] Enable DS1624, DS1621 temperature sensor (I2C addresses 0x48 - 0x4F) (+1k2 code)
 //#define USE_AHT1x                              // [I2cDriver43] Enable AHT10/15 humidity and temperature sensor (I2C address 0x38, 0x39) (+0k8 code)
-//  #define USE_AHT2x                              // [I2cDriver43] Enable AHT20 instead of AHT1x humidity and temperature sensor (I2C address 0x38) (+0k8 code)
+//#define USE_AHT2x                              // [I2cDriver43] Enable AHT20 instead of AHT1x humidity and temperature sensor (I2C address 0x38) (+0k8 code)
 #define USE_WEMOS_MOTOR_V1                     // [I2cDriver44] Enable Wemos motor driver V1 (I2C addresses 0x2D - 0x30) (+0k7 code)
   #define WEMOS_MOTOR_V1_ADDR  0x30              // Default I2C address 0x30
   #define WEMOS_MOTOR_V1_FREQ  1000              // Default frequency

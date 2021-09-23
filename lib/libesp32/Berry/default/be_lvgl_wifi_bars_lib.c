@@ -84,7 +84,7 @@ be_local_closure(init,   /* name */
     (be_nested_const_str("init", 380752755, 4)),
     (be_nested_const_str("input", -103256197, 5)),
     ( &(const binstruction[15]) {  /* code */
-      0x600C0014,  //  0000  GETGBL	R3	G20
+      0x600C0003,  //  0000  GETGBL	R3	G3
       0x5C100000,  //  0001  MOVE	R4	R0
       0x7C0C0200,  //  0002  CALL	R3	1
       0x8C0C0700,  //  0003  GETMET	R3	R3	K0
@@ -126,7 +126,7 @@ be_local_closure(del,   /* name */
     (be_nested_const_str("del", -816214454, 3)),
     (be_nested_const_str("input", -103256197, 5)),
     ( &(const binstruction[10]) {  /* code */
-      0x60040014,  //  0000  GETGBL	R1	G20
+      0x60040003,  //  0000  GETGBL	R1	G3
       0x5C080000,  //  0001  MOVE	R2	R0
       0x7C040200,  //  0002  CALL	R1	1
       0x8C040300,  //  0003  GETMET	R1	R1	K0

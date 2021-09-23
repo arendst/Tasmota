@@ -476,7 +476,7 @@ be_local_closure(init,   /* name */
     (be_nested_const_str("init", 380752755, 4)),
     (be_nested_const_str("input", -103256197, 5)),
     ( &(const binstruction[ 9]) {  /* code */
-      0x60040014,  //  0000  GETGBL	R1	G20
+      0x60040003,  //  0000  GETGBL	R1	G3
       0x5C080000,  //  0001  MOVE	R2	R0
       0xB80E0000,  //  0002  GETNGBL	R3	K0
       0x7C040400,  //  0003  CALL	R1	2

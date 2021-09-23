@@ -80,7 +80,7 @@ class:
     method_count: 4   -- number of method
     method_table: [
             string    -- method name
-            function  -- method function body
+            function | nil  -- method function body or nil (static member) if the first byte is null (which would be an empty func name)
         ](method_count)
     member_index_table -> [
             string    -- member name

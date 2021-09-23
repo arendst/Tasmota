@@ -16,6 +16,7 @@
 #include "be_strlib.h"
 #include "be_mem.h"
 #include "be_sys.h"
+#include <time.h>
 
 static int m_path_exists(bvm *vm)
 {
@@ -26,20 +27,25 @@ static int m_path_exists(bvm *vm)
     be_pushbool(vm, be_isexist(path));
     be_return(vm);
 }
+extern time_t be_last_modified(void *hfile);
 
-#if !BE_USE_PRECOMPILED_OBJECT
-be_native_module_attr_table(path) {
-    be_native_module_function("exists", m_path_exists),
-};
+static int m_path_last_modified(bvm *vm)
+{
+    if (be_top(vm) >= 1 && be_isstring(vm, 1)) {
+        const char *path = be_tostring(vm, 1);
+        void * f = be_fopen(path, "r");
+        if (f) {
+            be_pushint(vm, be_last_modified(f));
+            be_return(vm);
+        }
+    }
+    be_return_nil(vm);
+}
 
-static be_define_native_module(path, NULL);
-
-#else
 /* @const_object_info_begin
 module path (scope: global, file: tasmota_path) {
     exists, func(m_path_exists)
+    last_modified, func(m_path_last_modified)
 }
 @const_object_info_end */
 #include "../generate/be_fixed_tasmota_path.h"
-
-#endif

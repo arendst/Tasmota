@@ -13,6 +13,8 @@
 #include "be_debug.h"
 #include "be_map.h"
 #include "be_vm.h"
+#include "be_exec.h"
+#include "be_gc.h"
 #include <string.h>
 
 #if BE_USE_INTROSPECT_MODULE
@@ -76,52 +78,45 @@ static int m_setmember(bvm *vm)
     be_return_nil(vm);
 }
 
-/* call a function with variable number of arguments */
-/* first argument is a callable object (function, closure, native function, native closure) */
-/* then all subsequent arguments are pushed except the last one */
-/* If the last argument is a 'list', then all elements are pushed as arguments */
-/* otherwise the last argument is pushed as well */
-static int m_vcall(bvm *vm)
+static int m_toptr(bvm *vm)
 {
     int top = be_top(vm);
-    if (top >= 1 && be_isfunction(vm, 1)) {
-        size_t arg_count = top - 1;  /* we have at least 'top - 1' arguments */
-        /* test if last argument is a list */
-
-        if (top > 1 && be_isinstance(vm, top) && be_getmember(vm, top, ".p") && be_islist(vm, top + 1)) {
-            int32_t list_size = be_data_size(vm, top + 1);
-
-            if (list_size > 0) {
-                be_stack_require(vm, list_size + 3);   /* make sure we don't overflow the stack */
-                for (int i = 0; i < list_size; i++) {
-                    be_pushnil(vm);
-                }
-                be_moveto(vm, top + 1, top + 1 + list_size);
-                be_moveto(vm, top, top + list_size);
-
-                be_refpush(vm, -2);
-                be_pushiter(vm, -1);
-                while (be_iter_hasnext(vm, -2)) {
-                    be_iter_next(vm, -2);
-                    be_moveto(vm, -1, top);
-                    top++;
-                    be_pop(vm, 1);
-                }
-                be_pop(vm, 1);  /* remove iterator */
-                be_refpop(vm);
-            }
-            be_pop(vm, 2);
-            arg_count = arg_count - 1 + list_size;
+    if (top >= 1) {
+        bvalue *v = be_indexof(vm, 1);
+        if (var_basetype(v) >= BE_GCOBJECT) {
+            be_pushcomptr(vm, var_toobj(v));
+            be_return(vm);
+        } else if (var_type(v) == BE_INT) {
+            be_pushcomptr(vm, (void*) var_toint(v));
+            be_return(vm);
+        } else {
+            be_raise(vm, "value_error", "unsupported for this type");
         }
-        /* actual call */
-        be_call(vm, arg_count);
-        /* remove args */
-        be_pop(vm, arg_count);
-        /* return value */
-
-        be_return(vm);
     }
-    be_raise(vm, "value_error", "first argument must be a function");
+    be_return_nil(vm);
+}
+
+static int m_fromptr(bvm *vm)
+{
+    int top = be_top(vm);
+    if (top >= 1) {
+        void* v;
+        if (be_iscomptr(vm, 1)) {
+            v = be_tocomptr(vm, 1);
+        } else {
+            v = (void*) be_toint(vm, 1);
+        }
+        if (v) {
+            bgcobject * ptr = (bgcobject*) v;
+            if (var_basetype(ptr) >= BE_GCOBJECT) {
+                bvalue *top = be_incrtop(vm);
+                var_setobj(top, ptr->type, ptr);
+            } else {
+                be_raise(vm, "value_error", "unsupported for this type");
+            }
+            be_return(vm);
+        }
+    }
     be_return_nil(vm);
 }
 
@@ -131,7 +126,6 @@ be_native_module_attr_table(introspect) {
 
     be_native_module_function("get", m_findmember),
     be_native_module_function("set", m_setmember),
-    be_native_module_function("vcall", m_vcall),
 };
 
 be_define_native_module(introspect, NULL);
@@ -142,7 +136,9 @@ module introspect (scope: global, depend: BE_USE_INTROSPECT_MODULE) {
 
     get, func(m_findmember)
     set, func(m_setmember)
-    vcall, func(m_vcall)
+
+    toptr, func(m_toptr)
+    fromptr, func(m_fromptr)
 }
 @const_object_info_end */
 #include "../generate/be_fixed_introspect.h"
