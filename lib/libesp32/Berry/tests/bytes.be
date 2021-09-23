@@ -7,8 +7,6 @@ b=bytes(0)
 assert(str(b) == "bytes('')")
 b=bytes(1)
 assert(str(b) == "bytes('')")
-b=bytes(-1)
-assert(str(b) == "bytes('')")
 assert(b.size() == 0)
 
 b=bytes("a")
