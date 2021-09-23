@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 - Crash recorder ``Status 12`` for ESP32/ESP32S2/ESP32C3, supporting Esp-idf 3.3/4.4
 - Support for ESP32/ESP32S2 DAC gpio via Berry
 - Berry support for Serial
+- Support for Sensirion SCD40/SCD41 CO2 sensor
 - Support for BL0939 energy monitor as used in ESP32 based Sonoff Dual R3 V2 Pow (#13195)
 
 ### Changed

@@ -768,7 +768,9 @@ void ResponseAppendFeatures(void)
 #ifdef USE_VINDRIKTNING
     feature8 |= 0x00002000;  // xsns_91_vindriktning.ino
 #endif
-//    feature8 |= 0x00004000;
+#if defined(USE_I2C) && defined(USE_SCD40)
+    feature8 |= 0x00004000;  // xsns_92_scd40.ino
+#endif
 //    feature8 |= 0x00008000;
 
 //    feature8 |= 0x00010000;
