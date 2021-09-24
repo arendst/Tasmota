@@ -22,6 +22,7 @@ All notable changes to this project will be documented in this file.
 - Minimum PWM Frequency lowered to 2Hz on ESP32 (#13123)
 - Use Tasmota Arduino Core32 1.0.7.4 for ESP32 builds (#13154)
 - Shrinked Webcam build, uses now `USE_TASMOTA_DISCOVERY` (#13148)
+- Berry revamped ``energy`` module to expose all C variables to Berry (read/write)
 
 ### Fixed
 - OpenTherm invalid JSON (#13028)

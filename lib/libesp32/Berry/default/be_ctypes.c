@@ -51,6 +51,10 @@ enum {
     ctypes_be_u16 =  -2,
     ctypes_be_u8  =  -1,
 
+    // floating point
+    ctypes_float  = 5,
+    ctypes_double = 10,
+
     ctypes_bf     = 0,    //bif-field
 };
 
@@ -88,13 +92,23 @@ typedef struct be_ctypes_classes_t {
 //
 // If no arg: allocate a bytes() structure of the right size, filled with zeroes
 // Arg1 is instance self
-// If arg 2 is int (and not null): copy the data to the bytes structure
+// If arg 2 is int or comptr (and not null): create a mapped bytes buffer to read/write at a specific location (can be copied if need a snapshot)
 int be_ctypes_init(bvm *vm) {
     int argc = be_top(vm);
     void * src_data = NULL;
-    if (argc > 1 && (be_isint(vm, 2) || be_iscomptr(vm,2))) {
-        src_data = (void*) be_toint(vm, 2);
+    if (argc > 1 && (be_isint(vm, 2) || be_iscomptr(vm, 2))) {
+        if (be_iscomptr(vm, 2)) {
+            src_data = be_tocomptr(vm, 2);
+        } else {
+            src_data = (void*) be_toint(vm, 2);
+        }
     }
+
+    // look for class definition
+    be_getmember(vm, 1, "_def");        // static class comptr
+    const be_ctypes_structure_t *definitions;
+    definitions = (const be_ctypes_structure_t *) be_tocomptr(vm, -1);
+    be_pop(vm, 1);
 
     // call super(self, bytes)
     be_getglobal(vm, "super");      // push super function
@@ -107,34 +121,13 @@ int be_ctypes_init(bvm *vm) {
     // call bytes.init(self)
     be_getmember(vm, -1, "init");
     be_pushvalue(vm, -2);
-    be_call(vm, 1);
-    be_pop(vm, 3);
-    // berry_log_C("be_ctypes_init> init called");
+    if (src_data) { be_pushcomptr(vm, src_data); }              // if mapped, push address
+    be_pushint(vm, definitions ? -definitions->size_bytes : 0); // negative size signals a fixed size
+    be_call(vm, src_data ? 3 : 2);      // call with 2 or 3 arguments depending on provided address
+    be_pop(vm, src_data ? 4 : 3);
+    // super(self, bytes) still on top of stack
 
-    // look for class definition
-    be_getmember(vm, 1, "_def");        // static class comptr
-    const be_ctypes_structure_t *definitions;
-    definitions = (const be_ctypes_structure_t *) be_tocomptr(vm, -1);
-    if (definitions) {
-        // call self.resize(definitions->size_bytes)
-        be_getmember(vm, 1, "resize");
-        be_pushvalue(vm, 1);
-        be_pushint(vm, definitions->size_bytes);
-        be_call(vm, 2);
-        be_pop(vm, 3);
-
-        // if src_data then copy source data to the new structure
-        if (src_data) {
-            // call self._buffer()
-            be_getmember(vm, 1, "_buffer");
-            be_pushvalue(vm, 1);
-            be_call(vm, 1);     // call with 1 parameter
-            void * dst_data = be_tocomptr(vm, -2);
-            be_pop(vm, 2);
-            // copy data
-            memmove(dst_data, src_data, definitions->size_bytes);
-        }
-    }
+    be_pop(vm, 1);
 
     be_return(vm);
 }
@@ -146,9 +139,35 @@ int be_ctypes_copy(bvm *vm) {
     size_t len;
     const void * src = be_tobytes(vm, 1, &len);
     be_classof(vm, 1);
-    be_pushint(vm, (int32_t) src);  // skip first 4 bytes
-    be_call(vm, 1);
+    // stack: 1/self + class_object
+    be_call(vm, 0);     // call empty constructor to build empty resizable copy
+    // stack: 1/ self + new_empty_instance
+
+    // source object (self)
+    be_getmember(vm, 1, ".p");
+    const void* src_buf = be_tocomptr(vm, -1);
     be_pop(vm, 1);
+
+    be_getmember(vm, 1, ".len");
+    int32_t src_len = be_toint(vm, -1);
+    be_pop(vm, 1);
+
+    // dest object
+    be_getmember(vm, -1, ".p");
+    const void* dst_buf = be_tocomptr(vm, -1);
+    be_pop(vm, 1);
+
+    be_getmember(vm, -1, ".len");
+    int32_t dst_len = be_toint(vm, -1);
+    be_pop(vm, 1);
+
+    if (src_len != dst_len)  {
+        be_raisef(vm, "internal_error", "new object has wrong size %i (should be %i)", dst_len, src_len);
+    }
+
+    // copy bytes
+    memmove((void*)dst_buf, src_buf, src_len);
+
     be_return(vm);
 }
 
@@ -180,6 +199,20 @@ int be_ctypes_member(bvm *vm) {
             be_call(vm, 3);
             be_pop(vm, 3);
             // int result at top of stack
+        } else if (ctypes_float == member->type) {
+            // Note: double not supported (no need identified)
+            // get raw int32_t
+            be_getmember(vm, 1, "geti");   // self.get or self.geti
+            be_pushvalue(vm, 1);        // push self
+            be_pushint(vm, member->offset_bytes);
+            be_pushint(vm, 4);          // size is 4 bytes
+            be_call(vm, 3);
+            be_pop(vm, 3);
+            // get int and convert to float
+            int32_t val = be_toint(vm, -1);
+            be_pop(vm, 1);
+            float *fval = (float*) &val;    // type wizardry
+            be_pushreal(vm, *fval);
         } else {
             // general int support
             int size = member->type;       // eventually 1/2/4, positive if little endian, negative if big endian
@@ -272,6 +305,19 @@ int be_ctypes_setmember(bvm *vm) {
             be_call(vm, 4);
             be_pop(vm, 5);
             be_return_nil(vm);
+        } else if (ctypes_float == member->type) {
+            // Note: double not supported (no need identified)
+            float val = be_toreal(vm, 3);
+            int32_t *ival = (int32_t*) &val;
+            // set
+            be_getmember(vm, 1, "seti");
+            be_pushvalue(vm, 1);        // push self
+            be_pushint(vm, member->offset_bytes);
+            be_pushint(vm, *ival);
+            be_pushint(vm, 4);      // size is 4 bytes
+            be_call(vm, 4);
+            be_pop(vm, 5);
+            be_return_nil(vm);
         } else {
             // general int support
             int size = member->type;       // eventually 1/2/4, positive if little endian, negative if big endian
@@ -300,6 +346,38 @@ int be_ctypes_setmember(bvm *vm) {
     }
 }
 
+//
+// tomap, create a map instance containing all values decoded
+//
+int be_ctypes_tomap(bvm *vm) {
+    // don't need argc
+    be_getmember(vm, 1, "_def");
+    const be_ctypes_structure_t *definitions;
+    definitions = (const be_ctypes_structure_t *) be_tocomptr(vm, -1);
+    be_pop(vm, 1);
+
+    // create empty map
+    be_newobject(vm, "map");
+
+    for (uint32_t i = 0; i < definitions->size_elt; i++) {
+        const be_ctypes_structure_item_t * item = &definitions->items[i];
+
+        be_pushstring(vm, item->name);     // stack: map - key
+
+        be_getmember(vm, 1, "member");
+        be_pushvalue(vm, 1);
+        be_pushstring(vm, item->name);
+        be_call(vm, 2);
+        be_pop(vm, 2);      // stack: map - key - value
+
+        be_data_insert(vm, -3);
+        be_pop(vm, 2);     // stack: map
+    }
+
+    be_pop(vm, 1);  // remove map struct, to leave map instance
+    be_return(vm);
+}
+
 BE_EXPORT_VARIABLE extern const bclass be_class_bytes;
 
 #include "../generate/be_fixed_be_class_ctypes.h"
@@ -317,5 +395,7 @@ class be_class_ctypes (scope: global, name: ctypes_bytes, super: be_class_bytes)
     init, func(be_ctypes_init)
     member, func(be_ctypes_member)
     setmember, func(be_ctypes_setmember)
+
+    tomap, func(be_ctypes_tomap)
 }
 @const_object_info_end */
