@@ -22,10 +22,22 @@
 #define BYTES_OVERHEAD              4               // bytes overhead to be added when allocating (used to store len and size)
 #define BYTES_HEADROOM              8               // keep a natural headroom of 8 bytes when resizing
 
+#define BYTES_SIZE_FIXED            -1              // if size is -1, then the bytes object cannot be reized
+#define BYTES_SIZE_MAPPED           -2              // if size is -2, then the bytes object is mapped to a fixed memory region, i.e. cannot be resized
+
+#define BYTES_RESIZE_ERROR          "attribute_error"
+#define BYTES_RESIZE_MESSAGE        "bytes object size if fixed and cannot be resized"
+/* be_raise(vm, BYTES_RESIZE_ERROR, BYTES_RESIZE_MESSAGE); */
+
 typedef struct buf_impl {
-  uint16_t size;                // size in bytes of the buffer
-  uint16_t len;                 // current size of the data in buffer. Invariant: len <= size
-  uint8_t buf[];                // the actual data
+  int32_t size;               // size in bytes of the buffer
+  int32_t len;                // current size of the data in buffer. Invariant: len <= size
+  uint8_t *bufptr;            // the actual data
+  int32_t prev_size;          // previous value read from the instance
+  int32_t prev_len;           // previous value read from the instance
+  uint8_t *prev_bufptr;
+  bbool   fixed;              // is size fixed? (actually encoded as negative size)
+  bbool   mapped;
 } buf_impl;
 
 /********************************************************************
@@ -225,160 +237,160 @@ static unsigned int decode_base64(unsigned char input[], unsigned char output[])
 **
 ** Extracted from Tasmota SBuffer lib
 ********************************************************************/
-static inline uint8_t* buf_get_buf(buf_impl* buf)
-{
-    return &buf->buf[0];
-}
+// static inline uint8_t* buf_get_buf(buf_impl* attr)
+// {
+//     return &attr->bufptr[0];
+// }
 
 // shrink or increase. If increase, fill with zeores. Cannot go beyond `size`
-static void buf_set_len(buf_impl* buf, const size_t len)
+static void buf_set_len(buf_impl* attr, const size_t len)
 {
-    uint16_t old_len = buf->len;
-    buf->len = (len <= buf->size) ? len : buf->size;
-    if (old_len < buf->len) {
-        memset((void*) &buf->buf[old_len], 0, buf->len - old_len);
+    uint16_t old_len = attr->len;
+    attr->len = ((int32_t)len <= attr->size) ? len : attr->size;
+    if (old_len < attr->len) {
+        memset((void*) &attr->bufptr[old_len], 0, attr->len - old_len);
     }
 }
 
-static size_t buf_add1(buf_impl* buf, const uint8_t data) // append 8 bits value
+static size_t buf_add1(buf_impl* attr, const uint8_t data) // append 8 bits value
 {
-    if (buf->len < buf->size) {       // do we have room for 1 byte
-        buf->buf[buf->len++] = data;
+    if (attr->len < attr->size) {       // do we have room for 1 byte
+        attr->bufptr[attr->len++] = data;
     }
-    return buf->len;
+    return attr->len;
 }
 
-static size_t buf_add2_le(buf_impl* buf, const uint16_t data) // append 16 bits value
+static size_t buf_add2_le(buf_impl* attr, const uint16_t data) // append 16 bits value
 {
-    if (buf->len < buf->size - 1) {    // do we have room for 2 bytes
-        buf->buf[buf->len++] = data;
-        buf->buf[buf->len++] = data >> 8;
+    if (attr->len < attr->size - 1) {    // do we have room for 2 bytes
+        attr->bufptr[attr->len++] = data;
+        attr->bufptr[attr->len++] = data >> 8;
     }
-    return buf->len;
+    return attr->len;
 }
 
-static size_t buf_add2_be(buf_impl* buf, const uint16_t data) // append 16 bits value
+static size_t buf_add2_be(buf_impl* attr, const uint16_t data) // append 16 bits value
 {
-    if (buf->len < buf->size - 1) {    // do we have room for 2 bytes
-        buf->buf[buf->len++] = data >> 8;
-        buf->buf[buf->len++] = data;
+    if (attr->len < attr->size - 1) {    // do we have room for 2 bytes
+        attr->bufptr[attr->len++] = data >> 8;
+        attr->bufptr[attr->len++] = data;
     }
-    return buf->len;
+    return attr->len;
 }
 
-static size_t buf_add4_le(buf_impl* buf, const uint32_t data) // append 32 bits value
+static size_t buf_add4_le(buf_impl* attr, const uint32_t data) // append 32 bits value
 {
-    if (buf->len < buf->size - 3) {     // do we have room for 4 bytes
-        buf->buf[buf->len++] = data;
-        buf->buf[buf->len++] = data >> 8;
-        buf->buf[buf->len++] = data >> 16;
-        buf->buf[buf->len++] = data >> 24;
+    if (attr->len < attr->size - 3) {     // do we have room for 4 bytes
+        attr->bufptr[attr->len++] = data;
+        attr->bufptr[attr->len++] = data >> 8;
+        attr->bufptr[attr->len++] = data >> 16;
+        attr->bufptr[attr->len++] = data >> 24;
     }
-    return buf->len;
+    return attr->len;
 }
 
-size_t buf_add4_be(buf_impl* buf, const uint32_t data) // append 32 bits value
+size_t buf_add4_be(buf_impl* attr, const uint32_t data) // append 32 bits value
 {
-    if (buf->len < buf->size - 3) {     // do we have room for 4 bytes
-        buf->buf[buf->len++] = data >> 24;
-        buf->buf[buf->len++] = data >> 16;
-        buf->buf[buf->len++] = data >> 8;
-        buf->buf[buf->len++] = data;
+    if (attr->len < attr->size - 3) {     // do we have room for 4 bytes
+        attr->bufptr[attr->len++] = data >> 24;
+        attr->bufptr[attr->len++] = data >> 16;
+        attr->bufptr[attr->len++] = data >> 8;
+        attr->bufptr[attr->len++] = data;
     }
-    return buf->len;
+    return attr->len;
 }
 
-static size_t buf_add_buf(buf_impl* buf, buf_impl* buf2)
+static size_t buf_add_buf(buf_impl* attr, buf_impl* attr2)
 {
-    if (buf->len + buf2->len <= buf->size) {
-        for (uint32_t i = 0; i < buf2->len; i++) {
-            buf->buf[buf->len++] = buf2->buf[i];
+    if (attr->len + attr2->len <= attr->size) {
+        for (int32_t i = 0; i < attr2->len; i++) {
+            attr->bufptr[attr->len++] = attr2->bufptr[i];
         }
     }
-    return buf->len;
+    return attr->len;
 }
 
-static uint8_t buf_get1(buf_impl* buf, int offset)
+static uint8_t buf_get1(buf_impl* attr, int offset)
 {
-    if ((offset >= 0) && (offset < buf->len)) {
-        return buf->buf[offset];
+    if ((offset >= 0) && (offset < attr->len)) {
+        return attr->bufptr[offset];
     }
     return 0;
 }
 
-static void buf_set1(buf_impl* buf, size_t offset, uint8_t data)
+static void buf_set1(buf_impl* attr, size_t offset, uint8_t data)
 {
-    if (offset < buf->len) {
-        buf->buf[offset] = data;
+    if ((int32_t)offset < attr->len) {
+        attr->bufptr[offset] = data;
     }
 }
 
-static void buf_set2_le(buf_impl* buf, size_t offset, uint16_t data)
+static void buf_set2_le(buf_impl* attr, size_t offset, uint16_t data)
 {
-    if (offset + 1 < buf->len) {
-        buf->buf[offset] = data & 0xFF;
-        buf->buf[offset+1] = data >> 8;
+    if ((int32_t)offset + 1 < attr->len) {
+        attr->bufptr[offset] = data & 0xFF;
+        attr->bufptr[offset+1] = data >> 8;
     }
 }
 
-static void buf_set2_be(buf_impl* buf, size_t offset, uint16_t data)
+static void buf_set2_be(buf_impl* attr, size_t offset, uint16_t data)
 {
-    if (offset + 1 < buf->len) {
-        buf->buf[offset+1] = data & 0xFF;
-        buf->buf[offset] = data >> 8;
+    if ((int32_t)offset + 1 < attr->len) {
+        attr->bufptr[offset+1] = data & 0xFF;
+        attr->bufptr[offset] = data >> 8;
     }
 }
 
-static uint16_t buf_get2_le(buf_impl* buf, size_t offset)
+static uint16_t buf_get2_le(buf_impl* attr, size_t offset)
 {
-    if (offset + 1 < buf->len) {
-        return buf->buf[offset] | (buf->buf[offset+1] << 8);
-    }
-    return 0;
-}
-
-static uint16_t buf_get2_be(buf_impl* buf, size_t offset)
-{
-    if (offset + 1 < buf->len) {
-        return buf->buf[offset+1] | (buf->buf[offset] << 8);
+    if ((int32_t)offset + 1 < attr->len) {
+        return attr->bufptr[offset] | (attr->bufptr[offset+1] << 8);
     }
     return 0;
 }
 
-static void buf_set4_le(buf_impl* buf, size_t offset, uint32_t data)
+static uint16_t buf_get2_be(buf_impl* attr, size_t offset)
 {
-    if (offset + 3 < buf->len) {
-        buf->buf[offset] = data & 0xFF;
-        buf->buf[offset+1] = (data >> 8) & 0xFF;
-        buf->buf[offset+2] = (data >> 16) & 0xFF;
-        buf->buf[offset+3] = data >> 24;
-    }
-}
-
-static void buf_set4_be(buf_impl* buf, size_t offset, uint32_t data)
-{
-    if (offset + 3 < buf->len) {
-        buf->buf[offset+3] = data & 0xFF;
-        buf->buf[offset+2] = (data >> 8) & 0xFF;
-        buf->buf[offset+1] = (data >> 16) & 0xFF;
-        buf->buf[offset] = data >> 24;
-    }
-}
-
-static uint32_t buf_get4_le(buf_impl* buf, size_t offset)
-{
-    if (offset + 3 < buf->len) {
-        return buf->buf[offset] | (buf->buf[offset+1] << 8) |
-            (buf->buf[offset+2] << 16) | (buf->buf[offset+3] << 24);
+    if ((int32_t)offset + 1 < attr->len) {
+        return attr->bufptr[offset+1] | (attr->bufptr[offset] << 8);
     }
     return 0;
 }
 
-static uint32_t buf_get4_be(buf_impl* buf, size_t offset)
+static void buf_set4_le(buf_impl* attr, size_t offset, uint32_t data)
 {
-    if (offset + 3 < buf->len) {
-        return buf->buf[offset+3] | (buf->buf[offset+2] << 8) |
-            (buf->buf[offset+1] << 16) | (buf->buf[offset] << 24);
+    if ((int32_t)offset + 3 < attr->len) {
+        attr->bufptr[offset] = data & 0xFF;
+        attr->bufptr[offset+1] = (data >> 8) & 0xFF;
+        attr->bufptr[offset+2] = (data >> 16) & 0xFF;
+        attr->bufptr[offset+3] = data >> 24;
+    }
+}
+
+static void buf_set4_be(buf_impl* attr, size_t offset, uint32_t data)
+{
+    if ((int32_t)offset + 3 < attr->len) {
+        attr->bufptr[offset+3] = data & 0xFF;
+        attr->bufptr[offset+2] = (data >> 8) & 0xFF;
+        attr->bufptr[offset+1] = (data >> 16) & 0xFF;
+        attr->bufptr[offset] = data >> 24;
+    }
+}
+
+static uint32_t buf_get4_le(buf_impl* attr, size_t offset)
+{
+    if ((int32_t)offset + 3 < attr->len) {
+        return attr->bufptr[offset] | (attr->bufptr[offset+1] << 8) |
+            (attr->bufptr[offset+2] << 16) | (attr->bufptr[offset+3] << 24);
+    }
+    return 0;
+}
+
+static uint32_t buf_get4_be(buf_impl* attr, size_t offset)
+{
+    if ((int32_t)offset + 3 < attr->len) {
+        return attr->bufptr[offset+3] | (attr->bufptr[offset+2] << 8) |
+            (attr->bufptr[offset+1] << 16) | (attr->bufptr[offset] << 24);
     }
     return 0;
 }
@@ -387,7 +399,7 @@ static uint32_t buf_get4_be(buf_impl* buf, size_t offset)
 static bbool buf_equals(buf_impl* buf1, buf_impl* buf2)
 {
     if (buf1 == buf2) { return btrue; }
-    if (!buf1 || !buf2) { return bfalse; }   // at least one buf is not empty
+    if (!buf1 || !buf2) { return bfalse; }   // at least one attr is not empty
     // we know that both buf1 and buf2 are non-null
     if (buf1->len != buf2->len) { return bfalse; }
     size_t len = buf1->len;
@@ -405,14 +417,15 @@ static uint8_t asc2byte(char chr)
     else if (chr >= 'a' && chr <= 'f') { rVal = chr + 10 - 'a'; }
     return rVal;
 }
+
 // does not check if there is enough room before hand, truncated if buffer too small
-static void buf_add_hex(buf_impl* buf, const char *hex, size_t len)
+static void buf_add_hex(buf_impl* attr, const char *hex, size_t len)
 {
     uint8_t val;
     for (; len > 1; len -= 2) {
         val = asc2byte(*hex++) << 4;
         val |= asc2byte(*hex++);
-        buf_add1(buf, val);
+        buf_add1(attr, val);
     }
 }
 
@@ -420,114 +433,224 @@ static void buf_add_hex(buf_impl* buf, const char *hex, size_t len)
 ** Wrapping into lib
 ********************************************************************/
 
-buf_impl * bytes_realloc(bvm *vm, buf_impl *oldbuf, int32_t size)
+/* load instance attribute into a single structure, and store 'previous' values in order to later update only the changed ones */
+/* stack item 1 must contain the instance */
+buf_impl m_read_attributes(bvm *vm, int idx)
 {
-    if (size < 4) { size = 4; }
-    if (size > BYTES_MAX_SIZE) { size = BYTES_MAX_SIZE; }
-    size_t oldsize = oldbuf ? oldbuf->size + BYTES_OVERHEAD : 0;
-    buf_impl * next = (buf_impl*) be_realloc(vm, oldbuf, oldsize, size + BYTES_OVERHEAD);  /* malloc */
-    next->size = size;
-    if (!oldbuf) {
-        next->len = 0; /* allocate a new buffer */
+    buf_impl attr;
+    be_getmember(vm, idx, ".p");
+    attr.bufptr = attr.prev_bufptr = be_tocomptr(vm, -1);
+    be_pop(vm, 1);
+
+    be_getmember(vm, idx, ".len");
+    attr.len = attr.prev_len = be_toint(vm, -1);
+    be_pop(vm, 1);
+
+    be_getmember(vm, idx, ".size");
+    int32_t signed_size = be_toint(vm, -1);
+    attr.fixed = bfalse;
+    attr.mapped = bfalse;
+    if (signed_size < 0) {
+        if (signed_size == BYTES_SIZE_MAPPED) {
+            attr.mapped = btrue;
+        }
+        signed_size = attr.len;
+        attr.fixed = btrue;
     }
-    return next;
+    attr.size = attr.prev_size = signed_size;
+    be_pop(vm, 1);
+    return attr;
+}
+
+/* Write back attributes to the bytes instance, only if values changed after loading */
+/* stack item 1 must contain the instance */
+void m_write_attributes(bvm *vm, int rel_idx, const buf_impl * attr)
+{
+    int idx = be_absindex(vm, rel_idx);
+    if (attr->bufptr != attr->prev_bufptr) {
+        be_pushcomptr(vm, attr->bufptr);
+        be_setmember(vm, idx, ".p");
+        be_pop(vm, 1);
+    }
+
+    if (attr->len != attr->prev_len) {
+        be_pushint(vm, attr->len);
+        be_setmember(vm, idx, ".len");
+        be_pop(vm, 1);
+    }
+
+    int32_t new_size = attr->size;
+    if (attr->mapped) {
+        new_size = BYTES_SIZE_MAPPED;
+    } else if (attr->fixed) {
+        new_size = BYTES_SIZE_FIXED;
+    }
+    if (new_size != attr->prev_size) {
+        be_pushint(vm, new_size);
+        be_setmember(vm, idx, ".size");
+        be_pop(vm, 1);
+    }
+}
+
+// buf_impl * bytes_realloc(bvm *vm, buf_impl *oldbuf, int32_t size)
+void bytes_realloc(bvm *vm, buf_impl * attr, int32_t size)
+{
+    if (!attr->fixed && size < 4) { size = 4; }
+    if (size > BYTES_MAX_SIZE) { size = BYTES_MAX_SIZE; }
+    size_t oldsize = attr->bufptr ? attr->size : 0;
+    attr->bufptr = (uint8_t*) be_realloc(vm, attr->bufptr, oldsize, size);  /* malloc */
+    attr->size = size;
+    if (!attr->bufptr) {
+        attr->len = 0; /* allocate a new buffer */
+    }
 }
 
 /* allocate a new `bytes` object with pre-allocated size */
 static void bytes_new_object(bvm *vm, size_t size)
 {
-    be_getglobal(vm, "bytes"); /* eventually change with be_getbuiltin */
-    be_call(vm, 0); /* stack has only instance */
-    be_getmember(vm, -1, "init");
-    be_pushvalue(vm, -2);
-    be_pushint(vm, size); /* stack: instance, init func, instance, size */
-    be_call(vm, 2); /* stack: instance, ret, instance, size */
-    be_pop(vm, 3); /* remove ret, instance, size */
+    be_getbuiltin(vm, "bytes");
+    be_pushint(vm, size);
+    be_call(vm, 1);
+    be_pop(vm, 1);
 }
 
+/*
+ * constructor for bytes()
+ * Arg0 is always self 
+ *
+ * Option 1: main use
+ *    Arg1: string - a string representing the bytes in HEX
+ *
+ * Option 2:
+ *    Arg1: string - a string representing the bytes in HEX
+ *    Arg2: int - pre-reserved buffer size. If negative, size is fixed and cannot be later changed
+ *
+ * Option 3: used by subclasses like ctypes
+ *    Arg1: int - pre-reserved buffer size. If negative, size is fixed and cannot be later changed
+ *
+ * Option 4: mapped buffer
+ *    Arg1: comptr - buffer address of the mapped buffer
+ *    Arg2: int - buffer size. Always fixed (negative or positive)
+ *
+ * */
 static int m_init(bvm *vm)
 {
     int argc = be_top(vm);
-    int size = BYTES_DEFAULT_SIZE;
+    buf_impl attr = { 0, 0, NULL, 0, -1, NULL, bfalse, bfalse }; /* initialize prev_values to invalid to force a write at the end */
+    /* size cannot be 0, len cannot be negative */
     const char * hex_in = NULL;
+
+    int32_t size_arg = 0;
     if (argc > 1 && be_isint(vm, 2)) {
-        int new_size = be_toint(vm, 2) + BYTES_HEADROOM;
-        if (new_size > size) {
-            size = new_size;
-        }
-    } else if (argc > 1 && be_isstring(vm, 2)) {
-        hex_in = be_tostring(vm, 2);
-        if (hex_in) {
-            size = strlen(hex_in) / 2 + BYTES_HEADROOM;        /* allocate headroom */
+        size_arg = be_toint(vm, 2);  /* raw size arg, can be positive or negative */
+    } else if (argc > 2 && be_isint(vm, 3)) {
+        size_arg = be_toint(vm, 3);  /* raw size arg, can be positive or negative */
+    }
+    
+    if (argc > 1 && be_iscomptr(vm, 2)) {
+        if (size_arg) {
+            attr.len = (size_arg < 0) ? -size_arg : size_arg;
+            attr.bufptr = be_tocomptr(vm, 2);
+            attr.fixed = btrue;
+            attr.mapped = btrue;
+            m_write_attributes(vm, 1, &attr);   /* write attributes back to instance */
+            be_return_nil(vm);
+        } else {
+            be_raise(vm, "value_error", "size is required");
         }
     }
-    buf_impl * buf = bytes_realloc(vm, NULL, size); /* allocate new buffer */
-    if (!buf) {
+    if (size_arg == 0) { size_arg = BYTES_DEFAULT_SIZE; }   /* if not specified, use default size */
+
+    /* compute actual size to be reserved */
+    if (size_arg >= 0) {
+        size_arg += BYTES_HEADROOM;     /* add automatic headroom to slightly overallocate */
+        if (size_arg > attr.size) {
+            attr.size = size_arg;
+        }
+    } else {
+        attr.size = -size_arg;   /* set the size to a fixed negative value */
+        attr.fixed = btrue;
+    }
+    size_arg = attr.size;
+
+    /* if arg1 is string, we convert hex */
+    if (argc > 1 && be_isstring(vm, 2)) {
+        hex_in = be_tostring(vm, 2);
+        if (hex_in) {
+            size_arg = strlen(hex_in) / 2;        /* allocate headroom */
+        }
+    }
+    
+    /* check if fixed size that we have the right size */
+    if (attr.fixed && size_arg > attr.size) {
+        be_raise(vm, BYTES_RESIZE_ERROR, BYTES_RESIZE_MESSAGE);
+    }
+    
+    /* allocate */
+    bytes_realloc(vm, &attr, attr.size); /* allocate new buffer */
+    if (!attr.bufptr) {
         be_throw(vm, BE_MALLOC_FAIL);
     }
     
     if (hex_in) {
-        buf_add_hex(buf, hex_in, strlen(hex_in));
-    } 
-    be_pushcomptr(vm, buf);
-    be_setmember(vm, 1, ".p");
+        buf_add_hex(&attr, hex_in, strlen(hex_in));
+    }
+
+    /* if fixed size, set len to size */
+    if (attr.fixed) {
+        buf_set_len(&attr, attr.size);
+    }
+
+    m_write_attributes(vm, 1, &attr);   /* write attributes back to instance */
     be_return_nil(vm);
 }
 
 /* deallocate buffer */
-static int m_deinit(bvm *vm) {
+static int m_deinit(bvm *vm)
 {
-    be_getmember(vm, 1, ".p");
-    buf_impl * buf = be_tocomptr(vm, -1);
-    be_pop(vm, 1);
-    if (buf != NULL) {
-        be_realloc(vm, buf, buf->size + BYTES_OVERHEAD, 0);
+    buf_impl attr = m_read_attributes(vm, 1);
+    if (attr.bufptr != NULL && !attr.mapped) {
+        be_realloc(vm, attr.bufptr, attr.size, 0);
     }
-    be_pushcomptr(vm, NULL);  /* push NULL pointer instead, just in case */
-    be_setmember(vm, 1, ".p");
+    attr.size = 0;
+    attr.len = 0;
+    attr.bufptr = NULL;
+    m_write_attributes(vm, 1, &attr);
     be_return_nil(vm);
-}
 }
 
 /* grow or shrink to the exact value */
 /* stack item 1 must contain the instance */
-static buf_impl * _bytes_resize(bvm *vm, buf_impl * buf, size_t new_size) {
-    buf_impl *new_buf = bytes_realloc(vm, buf, new_size);
-    if (!new_buf) {
+void _bytes_resize(bvm *vm, buf_impl * attr, size_t new_size) {
+    bytes_realloc(vm, attr, new_size);
+    if (!attr->bufptr) {
         be_throw(vm, BE_MALLOC_FAIL);
     }
-    /* replace the .p attribute since address may have changed */
-    be_pushcomptr(vm, new_buf);
-    be_setmember(vm, 1, ".p");
-    be_pop(vm, 1); /* remove comobj from stack */
-    /* the old buffer will be garbage collected later */
-    return new_buf;
 }
 
 /* grow if needed but don't shrink */
 /* if grow, then add some headroom */
 /* stack item 1 must contain the instance */
-static buf_impl * bytes_resize(bvm *vm, buf_impl * buf, size_t new_size) {
+void bytes_resize(bvm *vm, buf_impl * attr, size_t new_size) {
+    if (attr->mapped) { return; }   /* if mapped, don't bother with allocation */
     /* when resized to smaller, we introduce a new heurstic */
     /* If the buffer is 64 bytes or smaller, don't shrink */
     /* Shrink buffer only if target size is smaller than half the original size */
-    if (buf->size >= new_size) {  /* enough room, consider if need to shrink */
-        if (buf->size <= 64) { return buf; }  /* don't shrink if below 64 bytes */
-        if (buf->size < new_size * 2) { return buf; }
+    if (attr->size >= (int32_t)new_size) {  /* enough room, consider if need to shrink */
+        if (attr->size <= 64) { return; }  /* don't shrink if below 64 bytes */
+        if (attr->size < (int32_t)new_size * 2) { return; }
     }
-    return _bytes_resize(vm, buf, new_size + BYTES_HEADROOM);
+    _bytes_resize(vm, attr, new_size);
 }
 
-static buf_impl * bytes_check_data(bvm *vm, size_t add_size) {
-    be_getmember(vm, 1, ".p");
-    buf_impl * buf = be_tocomptr(vm, -1);
-    be_pop(vm, 1); /* remove member from stack */
+buf_impl bytes_check_data(bvm *vm, size_t add_size) {
+    buf_impl attr = m_read_attributes(vm, 1);
     /* check if the `size` is big enough */
-    if (buf->len + add_size > buf->size) {
+    if (attr.len + (int32_t)add_size > attr.size) {
         /* it does not fit so we need to realocate the buffer */
-        buf = bytes_resize(vm, buf, buf->len + add_size);
+        bytes_resize(vm, &attr, attr.len + add_size);
     }
-    return buf;
+    return attr;
 }
 
 static size_t tohex(char * out, size_t outsz, const uint8_t * in, size_t insz) {
@@ -546,13 +669,13 @@ static size_t tohex(char * out, size_t outsz, const uint8_t * in, size_t insz) {
 static int m_tostring(bvm *vm)
 {
     int argc = be_top(vm);
-    size_t max_len = 32;  /* limit to 32 bytes by default */
+    int32_t max_len = 32;  /* limit to 32 bytes by default */
     int truncated = 0;
     if (argc > 1 && be_isint(vm, 2)) {
         max_len = be_toint(vm, 2);  /* you can specify the len as second argument, or 0 for unlimited */
     }
-    buf_impl * buf = bytes_check_data(vm, 0);
-    size_t len = buf->len;
+    buf_impl attr = m_read_attributes(vm, 1);
+    int32_t len = attr.len;
     if (max_len > 0 && len > max_len) {
         len = max_len;  /* limit output size */
         truncated = 1;
@@ -561,7 +684,7 @@ static int m_tostring(bvm *vm)
 
     char * hex_out = be_pushbuffer(vm, hex_len);
     size_t l = be_strlcpy(hex_out, "bytes('", hex_len);
-    l += tohex(&hex_out[l], hex_len - l, buf_get_buf(buf), len);
+    l += tohex(&hex_out[l], hex_len - l, attr.bufptr, len);
     if (truncated) {
         l += be_strlcpy(&hex_out[l], "...", hex_len - l);
     }
@@ -577,8 +700,8 @@ static int m_tostring(bvm *vm)
  */
 static int m_asstring(bvm *vm)
 {
-    buf_impl * buf = bytes_check_data(vm, 0);
-    be_pushnstring(vm, (const char*) buf_get_buf(buf), buf->len);
+    buf_impl attr = bytes_check_data(vm, 0);
+    be_pushnstring(vm, (const char*) attr.bufptr, attr.len);
     be_return(vm);
 }
 
@@ -587,13 +710,17 @@ static int m_fromstring(bvm *vm)
     int argc = be_top(vm);
     if (argc >= 2 && be_isstring(vm, 2)) {
         const char *s = be_tostring(vm, 2);
-        size_t len = be_strlen(vm, 2);
-        buf_impl * buf = bytes_check_data(vm, 0);
-        buf = bytes_resize(vm, buf, len); /* resize if needed */
-        if (len > buf->size) { len = buf->size; } /* avoid overflow */
-        memmove(buf_get_buf(buf), s, len);
-        buf->len = len;
+        int32_t len = be_strlen(vm, 2);      /* calling be_strlen to support null chars in string */
+        buf_impl attr = bytes_check_data(vm, 0);
+        if (attr.fixed && attr.len != len) {
+            be_raise(vm, BYTES_RESIZE_ERROR, BYTES_RESIZE_MESSAGE);
+        }
+        bytes_resize(vm, &attr, len); /* resize if needed */
+        if (len > attr.size) { len = attr.size; } /* avoid overflow */
+        memmove(attr.bufptr, s, len);
+        attr.len = len;
         be_pop(vm, 1); /* remove arg to leave instance */
+        m_write_attributes(vm, 1, &attr);  /* update attributes */
         be_return(vm);
     }
     be_raise(vm, "type_error", "operand must be a string");
@@ -611,7 +738,8 @@ static int m_fromstring(bvm *vm)
 static int m_add(bvm *vm)
 {
     int argc = be_top(vm);
-    buf_impl * buf = bytes_check_data(vm, 4); /* we reserve 4 bytes anyways */
+    buf_impl attr = bytes_check_data(vm, 4); /* we reserve 4 bytes anyways */
+    if (attr.fixed) { be_raise(vm, BYTES_RESIZE_ERROR, BYTES_RESIZE_MESSAGE); }
     if (argc >= 2 && be_isint(vm, 2)) {
         int32_t v = be_toint(vm, 2);
         int vsize = 1;
@@ -619,16 +747,17 @@ static int m_add(bvm *vm)
             vsize = be_toint(vm, 3);
         }
         switch (vsize) {
-            case 0:                             break;
+            case 0:                               break;
             case -1:    /* fallback below */
-            case 1:     buf_add1(buf, v);       break;
-            case 2:     buf_add2_le(buf, v);    break;
-            case 4:     buf_add4_le(buf, v);    break;
-            case -2:    buf_add2_be(buf, v);    break;
-            case -4:    buf_add4_be(buf, v);    break;
+            case 1:     buf_add1(&attr, v);       break;
+            case 2:     buf_add2_le(&attr, v);    break;
+            case 4:     buf_add4_le(&attr, v);    break;
+            case -2:    buf_add2_be(&attr, v);    break;
+            case -4:    buf_add4_be(&attr, v);    break;
             default:    be_raise(vm, "type_error", "size must be -4, -2, -1, 0, 1, 2 or 4.");
         }
         be_pop(vm, argc - 1);
+        m_write_attributes(vm, 1, &attr);  /* update attributes */
         be_return(vm);
     }
     be_return_nil(vm);
@@ -645,7 +774,7 @@ static int m_add(bvm *vm)
 static int m_get(bvm *vm, bbool sign)
 {
     int argc = be_top(vm);
-    buf_impl * buf = bytes_check_data(vm, 0); /* we reserve 4 bytes anyways */
+    buf_impl attr = bytes_check_data(vm, 0); /* we reserve 4 bytes anyways */
     if (argc >=2 && be_isint(vm, 2)) {
         int32_t idx = be_toint(vm, 2);
         int vsize = 1;
@@ -656,17 +785,17 @@ static int m_get(bvm *vm, bbool sign)
         switch (vsize) {
             case 0:                                     break;
             case -1:    /* fallback below */
-            case 1:     ret = buf_get1(buf, idx);
+            case 1:     ret = buf_get1(&attr, idx);
                         if (sign) { ret = (int8_t)(uint8_t) ret; }
                         break;
-            case 2:     ret = buf_get2_le(buf, idx);
+            case 2:     ret = buf_get2_le(&attr, idx);
                         if (sign) { ret = (int16_t)(uint16_t) ret; }
                         break;
-            case 4:     ret = buf_get4_le(buf, idx);    break;
-            case -2:    ret = buf_get2_be(buf, idx);
+            case 4:     ret = buf_get4_le(&attr, idx);    break;
+            case -2:    ret = buf_get2_be(&attr, idx);
                         if (sign) { ret = (int16_t)(uint16_t) ret; }
                         break;
-            case -4:    ret = buf_get4_be(buf, idx);    break;
+            case -4:    ret = buf_get4_be(&attr, idx);    break;
             default:    be_raise(vm, "type_error", "size must be -4, -2, -1, 0, 1, 2 or 4.");
         }
         be_pop(vm, argc - 1);
@@ -703,7 +832,7 @@ static int m_getu(bvm *vm)
 static int m_set(bvm *vm)
 {
     int argc = be_top(vm);
-    buf_impl * buf = bytes_check_data(vm, 0); /* we reserve 4 bytes anyways */
+    buf_impl attr = bytes_check_data(vm, 0); /* we reserve 4 bytes anyways */
     if (argc >=3 && be_isint(vm, 2) && be_isint(vm, 3)) {
         int32_t idx = be_toint(vm, 2);
         int32_t value = be_toint(vm, 3);
@@ -712,16 +841,17 @@ static int m_set(bvm *vm)
             vsize = be_toint(vm, 4);
         }
         switch (vsize) {
-            case 0:                                     break;
+            case 0:                                       break;
             case -1:    /* fallback below */
-            case 1:     buf_set1(buf, idx, value);      break;
-            case 2:     buf_set2_le(buf, idx, value);   break;
-            case 4:     buf_set4_le(buf, idx, value);   break;
-            case -2:    buf_set2_be(buf, idx, value);   break;
-            case -4:    buf_set4_be(buf, idx, value);   break;
+            case 1:     buf_set1(&attr, idx, value);      break;
+            case 2:     buf_set2_le(&attr, idx, value);   break;
+            case 4:     buf_set4_le(&attr, idx, value);   break;
+            case -2:    buf_set2_be(&attr, idx, value);   break;
+            case -4:    buf_set4_be(&attr, idx, value);   break;
             default:    be_raise(vm, "type_error", "size must be -4, -2, -1, 0, 1, 2 or 4.");
         }
         be_pop(vm, argc - 1);
+        m_write_attributes(vm, 1, &attr);  /* update attributes */
         be_return_nil(vm);
     }
     be_return_nil(vm);
@@ -730,12 +860,13 @@ static int m_set(bvm *vm)
 static int m_setitem(bvm *vm)
 {
     int argc = be_top(vm);
-    buf_impl * buf = bytes_check_data(vm, 0); /* we reserve 4 bytes anyways */
+    buf_impl attr = bytes_check_data(vm, 0); /* we reserve 4 bytes anyways */
     if (argc >=3 && be_isint(vm, 2) && be_isint(vm, 3)) {
         int index = be_toint(vm, 2);
         int val = be_toint(vm, 3);
-        if (index >= 0 && index < buf->len) {
-            buf_set1(buf, index, val);
+        if (index >= 0 && index < attr.len) {
+            buf_set1(&attr, index, val);
+            m_write_attributes(vm, 1, &attr);  /* update attributes */
             be_return_nil(vm);
         }
     }
@@ -746,11 +877,11 @@ static int m_setitem(bvm *vm)
 static int m_item(bvm *vm)
 {
     int argc = be_top(vm);
-    buf_impl * buf = bytes_check_data(vm, 0); /* we reserve 4 bytes anyways */
-    if (argc >=2 && be_isint(vm, 2)) {
+    buf_impl attr = bytes_check_data(vm, 0); /* we reserve 4 bytes anyways */
+    if (argc >=2 && be_isint(vm, 2)) {  /* single byte */
         int index = be_toint(vm,2);
-        if (index >= 0 && index < buf->len) {
-            be_pushint(vm, buf_get1(buf, index));
+        if (index >= 0 && index < attr.len) {
+            be_pushint(vm, buf_get1(&attr, index));
             be_return(vm);
         }
     }
@@ -758,7 +889,7 @@ static int m_item(bvm *vm)
         const char *cname = be_classname(vm, 2);
         if (!strcmp(cname, "range")) {
             bint lower, upper;
-            bint size = buf->len;
+            bint size = attr.len;
             /* get index range */
             be_getmember(vm, 2, "__lower__");
             lower = be_toint(vm, -1);
@@ -771,12 +902,12 @@ static int m_item(bvm *vm)
             lower = lower < 0 ? 0 : lower;
             /* construction result list instance */
             bytes_new_object(vm, upper > lower ? upper-lower : 0);
-            be_getmember(vm, -1, ".p");
-            buf_impl * buf2 = be_tocomptr(vm, -1);
-            be_pop(vm, 1);  /* remove .p and leave bytes instance */
+            buf_impl attr2 = m_read_attributes(vm, -1);
+
             for (; lower <= upper; ++lower) {
-                buf_add1(buf2, buf->buf[lower]);
+                buf_add1(&attr2, attr.bufptr[lower]);
             }
+            m_write_attributes(vm, -1, &attr2);  /* update instance */
             be_return(vm);    
         }
     }
@@ -786,17 +917,15 @@ static int m_item(bvm *vm)
 
 static int m_size(bvm *vm)
 {
-    buf_impl * buf = bytes_check_data(vm, 0);
-    be_pushint(vm, buf->len);
+    buf_impl attr = m_read_attributes(vm, 1);
+    be_pushint(vm, attr.len);
     be_return(vm);
 }
 
 static int m_resize(bvm *vm)
 {
     int argc = be_top(vm);
-    be_getmember(vm, 1, ".p");
-    buf_impl * buf = be_tocomptr(vm, -1);
-    be_pop(vm, 1);
+    buf_impl attr = m_read_attributes(vm, 1);
 
     if (argc <= 1 || !be_isint(vm, 2)) {
         be_raise(vm, "type_error", "size must be of type 'int'");
@@ -805,42 +934,42 @@ static int m_resize(bvm *vm)
     if (new_len < 0) {
         new_len = 0;
     }
+    if (attr.fixed && attr.len != new_len) {
+        be_raise(vm, BYTES_RESIZE_ERROR, BYTES_RESIZE_MESSAGE);
+    }
 
-    buf = bytes_resize(vm, buf, new_len);
-    buf_set_len(buf, new_len);
+    bytes_resize(vm, &attr, new_len);
+    buf_set_len(&attr, new_len);
     be_pop(vm, 1);
+    m_write_attributes(vm, 1, &attr);  /* update instance */
     be_return(vm);
 }
 
 static int m_clear(bvm *vm)
 {
-    buf_impl * buf = bytes_check_data(vm, 0);
-    buf->len = 0;
+    buf_impl attr = m_read_attributes(vm, 1);
+    if (attr.fixed) { be_raise(vm, BYTES_RESIZE_ERROR, BYTES_RESIZE_MESSAGE); }
+    attr.len = 0;
+    m_write_attributes(vm, 1, &attr);  /* update instance */
     be_return_nil(vm);
 }
 
 static int m_merge(bvm *vm)
 {
     int argc = be_top(vm);
-    buf_impl * buf1 = bytes_check_data(vm, 0); /* no resize yet */
-    if (argc >= 2 && be_isinstance(vm, 2)) {
-        be_getglobal(vm, "bytes"); /* get the bytes class */ /* TODO eventually replace with be_getbuiltin */
-        if (be_isderived(vm, 2)) {
-            be_getmember(vm, 2, ".p");
-            buf_impl * buf2 = be_tocomptr(vm, -1);
-            be_pop(vm, 4); /* remove class, member, and 2 operands */
+    buf_impl attr = m_read_attributes(vm, 1); /* no resize yet */
+    if (argc >= 2 && be_isbytes(vm, 2)) {
+        buf_impl attr2 = m_read_attributes(vm, 2);
 
-            /* allocate new object */
-            bytes_new_object(vm, buf1->len + buf2->len);
-            be_getmember(vm, -1, ".p");
-            /* .p is on top of stack, then instance */
-            buf_impl * buf3 = be_tocomptr(vm, -1);
-            be_pop(vm, 1);
-            buf_add_buf(buf3, buf1);
-            buf_add_buf(buf3, buf2);
+        /* allocate new object */
+        bytes_new_object(vm, attr.len + attr2.len);
+        buf_impl attr3 = m_read_attributes(vm, -1);
 
-            be_return(vm); /* return self */
-        }
+        buf_add_buf(&attr3, &attr);
+        buf_add_buf(&attr3, &attr2);
+
+        m_write_attributes(vm, -1, &attr3);  /* update instance */
+        be_return(vm); /* return self */
     }
     be_raise(vm, "type_error", "operand must be bytes");
     be_return_nil(vm); /* return self */
@@ -848,12 +977,11 @@ static int m_merge(bvm *vm)
 
 static int m_copy(bvm *vm)
 {
-    buf_impl * buf1 = bytes_check_data(vm, 0); /* no resize */
-    bytes_new_object(vm, buf1->len);
-    be_getmember(vm, -1, ".p");
-    buf_impl * buf2 = be_tocomptr(vm, -1);
-    be_pop(vm, 1);
-    buf_add_buf(buf2, buf1);
+    buf_impl attr = m_read_attributes(vm, 1);
+    bytes_new_object(vm, attr.len);
+    buf_impl attr2 = m_read_attributes(vm, -1);
+    buf_add_buf(&attr2, &attr);
+    m_write_attributes(vm, -1, &attr2);  /* update instance */
     be_return(vm); /* return self */
 }
 
@@ -861,23 +989,22 @@ static int m_copy(bvm *vm)
 static int m_connect(bvm *vm)
 {
     int argc = be_top(vm);
-    buf_impl * buf1 = bytes_check_data(vm, 0); /* don't resize yet */
-    if (argc >= 2 && (be_isinstance(vm, 2) || be_isint(vm, 2))) {
+    buf_impl attr = m_read_attributes(vm, 1);
+    if (attr.fixed) { be_raise(vm, BYTES_RESIZE_ERROR, BYTES_RESIZE_MESSAGE); }
+    if (argc >= 2 && (be_isbytes(vm, 2) || be_isint(vm, 2))) {
         if (be_isint(vm, 2)) {
-            buf1 = bytes_resize(vm, buf1, buf1->len + 1); /* resize */
-            buf_add1(buf1, be_toint(vm, 2));
-            be_pop(vm, 1);  /* remove operand */
+            bytes_resize(vm, &attr, attr.len + 1); /* resize */
+            buf_add1(&attr, be_toint(vm, 2));
+            m_write_attributes(vm, 1, &attr);  /* update instance */
+            be_pushvalue(vm, 1);
             be_return(vm); /* return self */
         } else {
-            be_getglobal(vm, "bytes"); /* get the bytes class */ /* TODO eventually replace with be_getbuiltin */
-            if (be_isderived(vm, 2)) {
-                be_getmember(vm, 2, ".p");
-                buf_impl * buf2 = be_tocomptr(vm, -1);
-                buf1 = bytes_resize(vm, buf1, buf1->len + buf2->len); /* resize buf1 for total size */
-                buf_add_buf(buf1, buf2);
-                be_pop(vm, 3); /* remove class, member, and last operand */
-                be_return(vm); /* return self */
-            }
+            buf_impl attr2 = m_read_attributes(vm, 2);
+            bytes_resize(vm, &attr, attr.len + attr2.len); /* resize buf1 for total size */
+            buf_add_buf(&attr, &attr2);
+            m_write_attributes(vm, 1, &attr);  /* update instance */
+            be_pushvalue(vm, 1);
+            be_return(vm); /* return self */
         }
     }
     be_raise(vm, "type_error", "operand must be bytes or int");
@@ -886,19 +1013,18 @@ static int m_connect(bvm *vm)
 
 static int bytes_equal(bvm *vm, bbool iseq)
 {
-    be_getmember(vm, 1, ".p");
-    buf_impl * buf1 = be_tocomptr(vm, -1);
-    be_pop(vm, 1);
-
-    be_getmember(vm, 2, ".p");
-    buf_impl * buf2 = be_tocomptr(vm, -1);
-    be_pop(vm, 1);
-
     bbool ret;
-    if (buf_equals(buf1, buf2)) {
-        ret = iseq;
-    } else {
+    buf_impl attr1 = m_read_attributes(vm, 1);
+    if (!be_isbytes(vm, 2)) {
         ret = !iseq;
+    } else {
+        buf_impl attr2 = m_read_attributes(vm, 2);
+
+        if (buf_equals(&attr1, &attr2)) {
+            ret = iseq;
+        } else {
+            ret = !iseq;
+        }
     }
     be_pushbool(vm, ret);
     be_return(vm);
@@ -923,12 +1049,12 @@ static int m_nequal(bvm *vm)
  */
 static int m_tob64(bvm *vm)
 {
-    buf_impl * buf = bytes_check_data(vm, 0);
-    size_t len = buf->len;
-    size_t b64_len = encode_base64_length(len) + 1;  /* size of base64 encoded string for this binary length, add NULL terminator */
+    buf_impl attr = m_read_attributes(vm, 1);
+    int32_t len = attr.len;
+    int32_t b64_len = encode_base64_length(len) + 1;  /* size of base64 encoded string for this binary length, add NULL terminator */
 
     char * b64_out = be_pushbuffer(vm, b64_len);
-    size_t converted = encode_base64(buf_get_buf(buf), len, (unsigned char*)b64_out);
+    size_t converted = encode_base64(attr.bufptr, len, (unsigned char*)b64_out);
 
     be_pushnstring(vm, b64_out, converted); /* make string from buffer */
     be_remove(vm, -2); /* remove buffer */
@@ -945,17 +1071,21 @@ static int m_fromb64(bvm *vm)
     int argc = be_top(vm);
     if (argc >= 2 && be_isstring(vm, 2)) {
         const char *s = be_tostring(vm, 2);
-        size_t bin_len = decode_base64_length((unsigned char*)s);   /* do a first pass to calculate the buffer size */
+        int32_t bin_len = decode_base64_length((unsigned char*)s);   /* do a first pass to calculate the buffer size */
 
-        buf_impl * buf = bytes_check_data(vm, 0);
-        buf = bytes_resize(vm, buf, bin_len); /* resize if needed */
-        if (bin_len > buf->size) { /* avoid overflow */
+        buf_impl attr = m_read_attributes(vm, 1);
+        if (attr.fixed && attr.len != bin_len) {
+            be_raise(vm, BYTES_RESIZE_ERROR, BYTES_RESIZE_MESSAGE);
+        }
+        bytes_resize(vm, &attr, bin_len); /* resize if needed */
+        if (bin_len > attr.size) { /* avoid overflow */
             be_raise(vm, "memory_error", "cannot allocate buffer");
         }
 
-        size_t bin_len_final = decode_base64((unsigned char*)s, buf_get_buf(buf));  /* decode */
-        buf->len = bin_len_final;
+        int32_t bin_len_final = decode_base64((unsigned char*)s, attr.bufptr);  /* decode */
+        attr.len = bin_len_final;
         be_pop(vm, 1); /* remove arg to leave instance */
+        m_write_attributes(vm, 1, &attr);  /* update instance */
         be_return(vm);
     }
     be_raise(vm, "type_error", "operand must be a string");
@@ -978,8 +1108,8 @@ static int m_fromb64(bvm *vm)
  */
 static int m_buffer(bvm *vm)
 {
-    buf_impl * buf = bytes_check_data(vm, 0);
-    be_pushcomptr(vm, &buf->buf);
+    buf_impl attr = m_read_attributes(vm, 1);
+    be_pushcomptr(vm, attr.bufptr);
     be_return(vm);
 }
 
@@ -989,29 +1119,21 @@ static int m_buffer(bvm *vm)
 BERRY_API void be_pushbytes(bvm *vm, const void * bytes, size_t len)
 {
     bytes_new_object(vm, len);
-    be_getmember(vm, -1, ".p");
-    buf_impl * buf = be_tocomptr(vm, -1);
-    be_pop(vm, 1); /* remove .p1 and leave instance */
-    if (len > buf->size) { len = buf->size; } /* double check if the buffer allocated was smaller */
-    memmove((void*)buf_get_buf(buf), bytes, len);
-    buf->len = len;
+    buf_impl attr = m_read_attributes(vm, -1);
+    if ((int32_t)len > attr.size) { len = attr.size; } /* double check if the buffer allocated was smaller */
+    memmove((void*)attr.bufptr, bytes, len);
+    attr.len = len;
+    m_write_attributes(vm, -1, &attr);  /* update instance */
     /* bytes instance is on top of stack */
 }
 
 BERRY_API const void *be_tobytes(bvm *vm, int rel_index, size_t *len)
 {
     int index = be_absindex(vm, rel_index);
-    if (be_isinstance(vm, index)) {
-        be_getglobal(vm, "bytes"); /* get the bytes class */ /* TODO eventually replace with be_getbuiltin */
-        if (be_isderived(vm, index)) {
-            be_getmember(vm, index, ".p");
-            buf_impl * buf = be_tocomptr(vm, -1);
-            be_pop(vm, 2); /* class and .p */
-            if (len) { *len = buf->len; }
-            return (void*) buf_get_buf(buf);
-        } else {
-            be_pop(vm, 1);  /* remove class */
-        }
+    if (be_isbytes(vm, index)) {
+        buf_impl attr = m_read_attributes(vm, index);
+        if (len) { *len = attr.len; }
+        return (void*) attr.bufptr;
     }
     if (len) { *len = 0; }
     return NULL;
@@ -1234,6 +1356,8 @@ void be_load_byteslib(bvm *vm)
 {
     static const bnfuncinfo members[] = {
         { ".p", NULL },
+        { ".size", NULL },
+        { ".len", NULL },
         { "_buffer", m_buffer },
         { "init", m_init },
         { "deinit", m_deinit },
@@ -1270,6 +1394,8 @@ void be_load_byteslib(bvm *vm)
 /* @const_object_info_begin
 class be_class_bytes (scope: global, name: bytes) {
     .p, var
+    .size, var
+    .len, var
     _buffer, func(m_buffer)
     init, func(m_init)
     deinit, func(m_deinit)
