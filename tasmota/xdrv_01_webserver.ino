@@ -3098,14 +3098,67 @@ int WebSend(char *buffer)
       }
       url += F("cmnd=");                      // url = |http://192.168.178.86/cm?cmnd=| or |http://192.168.178.86/cm?user=admin&password=joker&cmnd=|
     }
-    url += command;                           // url = |http://192.168.178.86/cm?cmnd=POWER1 ON|
+    url += UrlEncode(command);                // url = |http://192.168.178.86/cm?cmnd=POWER1%20ON|
+    url += F(" GET");                         // url = |http://192.168.178.86/cm?cmnd=POWER1%20ON GET|
 
-    DEBUG_CORE_LOG(PSTR("WEB: Uri |%s|"), url.c_str());
+    DEBUG_CORE_LOG(PSTR("WEB: Uri '%s'"), url.c_str());
+    status = WebQuery(const_cast<char*>(url.c_str()));
+  }
+  return status;
+}
 
-    WiFiClient http_client;
-    HTTPClient http;
-    if (http.begin(http_client, UrlEncode(url))) {  // UrlEncode(url) = |http://192.168.178.86/cm?cmnd=POWER1%20ON|
-      int http_code = http.GET();             // Start connection and send HTTP header
+int WebQuery(char *buffer)
+{
+  // http://192.168.1.1/path GET                                         -> Sends HTTP GET http://192.168.1.1/path
+  // http://192.168.1.1/path POST {"some":"message"}                     -> Sends HTTP POST to http://192.168.1.1/path with body {"some":"message"}
+  // http://192.168.1.1/path PUT [Autorization: Bearer abcdxyz] potato   -> Sends HTTP PUT to http://192.168.1.1/path with authorization header and body "potato"
+  // http://192.168.1.1/path PATCH patchInfo                             -> Sends HTTP PATCH to http://192.168.1.1/path with body "potato"
+
+  // Valid HTTP Commands: GET, POST, PUT, and PATCH
+  // An unlimited number of headers can be sent per request, and a body can be sent for all command types
+  // The body will be ignored if sending a GET command
+
+  WiFiClient http_client;
+  HTTPClient http;
+
+  int status = WEBCMND_WRONG_PARAMETERS;
+
+  char *temp;
+  char *url = strtok_r(buffer, " ", &temp);
+  char *method = strtok_r(temp, " ", &temp);
+
+  if (url && method) {
+    if (http.begin(http_client, UrlEncode(url))) {
+      char empty_body[1] = { 0 };
+      char *body = empty_body;
+      if (temp) {                             // There is a body and/or header
+        if (temp[0] == '[') {                 // Header information was sent; decode it
+          temp += 1;
+          temp = strtok_r(temp, "]", &body);
+          bool headerFound = true;
+          while (headerFound) {
+            char *header = strtok_r(temp, ":", &temp);
+            if (header) {
+              char *headerBody = strtok_r(temp, "|", &temp);
+              if (headerBody) {
+                http.addHeader(header, headerBody);
+              }
+              else headerFound = false;
+            }
+            else headerFound = false;
+          }
+        } else {                              // No header information was sent, but there was a body
+          body = temp;
+        }
+      }
+
+      int http_code;
+      if (0 == strcasecmp_P(method, PSTR("GET"))) { http_code = http.GET(); }
+      else if (0 == strcasecmp_P(method, PSTR("POST"))) { http_code = http.POST(body); }
+      else if (0 == strcasecmp_P(method, PSTR("PUT"))) { http_code = http.PUT(body); }
+      else if (0 == strcasecmp_P(method, PSTR("PATCH"))) { http_code = http.PATCH(body); }
+      else return status;
+
       if (http_code > 0) {                    // http_code will be negative on error
         if (http_code == HTTP_CODE_OK || http_code == HTTP_CODE_MOVED_PERMANENTLY) {
 #ifdef USE_WEBSEND_RESPONSE
@@ -3125,7 +3178,7 @@ int WebSend(char *buffer)
           // recursive call must be possible in this case
           tasm_cmd_activ = 0;
 #endif  // USE_SCRIPT
-          MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, PSTR(D_CMND_WEBSEND));
+          MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, PSTR(D_CMND_WEBQUERY));
 #endif  // USE_WEBSEND_RESPONSE
         }
         status = WEBCMND_DONE;
@@ -3240,8 +3293,8 @@ const char kWebCommands[] PROGMEM = "|"  // No prefix
 #if defined(USE_SENDMAIL) || defined(USE_ESP32MAIL)
   D_CMND_SENDMAIL "|"
 #endif
-  D_CMND_WEBSERVER "|" D_CMND_WEBPASSWORD "|" D_CMND_WEBLOG "|" D_CMND_WEBREFRESH "|" D_CMND_WEBSEND "|" D_CMND_WEBCOLOR "|"
-  D_CMND_WEBSENSOR "|" D_CMND_WEBBUTTON
+  D_CMND_WEBSERVER "|" D_CMND_WEBPASSWORD "|" D_CMND_WEBLOG "|" D_CMND_WEBREFRESH "|" D_CMND_WEBSEND "|" D_CMND_WEBQUERY "|"
+  D_CMND_WEBCOLOR "|" D_CMND_WEBSENSOR "|" D_CMND_WEBBUTTON
 #ifdef USE_WEBGETCONFIG
   "|" D_CMND_WEBGETCONFIG
 #endif
@@ -3257,8 +3310,8 @@ void (* const WebCommand[])(void) PROGMEM = {
 #if defined(USE_SENDMAIL) || defined(USE_ESP32MAIL)
   &CmndSendmail,
 #endif
-  &CmndWebServer, &CmndWebPassword, &CmndWeblog, &CmndWebRefresh, &CmndWebSend, &CmndWebColor,
-  &CmndWebSensor, &CmndWebButton
+  &CmndWebServer, &CmndWebPassword, &CmndWeblog, &CmndWebRefresh, &CmndWebSend, &CmndWebQuery,
+  &CmndWebColor, &CmndWebSensor, &CmndWebButton
 #ifdef USE_WEBGETCONFIG
   , &CmndWebGetConfig
 #endif
@@ -3354,6 +3407,15 @@ void CmndWebSend(void)
 {
   if (XdrvMailbox.data_len > 0) {
     uint32_t result = WebSend(XdrvMailbox.data);
+    char stemp1[20];
+    ResponseCmndChar(GetTextIndexed(stemp1, sizeof(stemp1), result, kWebCmndStatus));
+  }
+}
+
+void CmndWebQuery(void)
+{
+  if (XdrvMailbox.data_len > 0) {
+    uint32_t result = WebQuery(XdrvMailbox.data);
     char stemp1[20];
     ResponseCmndChar(GetTextIndexed(stemp1, sizeof(stemp1), result, kWebCmndStatus));
   }

@@ -107,6 +107,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - Command ``SetSensor1..127 0|1`` to globally disable individual sensor driver
 - Command ``Subscribe2 ...`` to subscribe to a MQTT topic without appended "/#" [#12858](https://github.com/arendst/Tasmota/issues/12858)
 - Command ``WebGetConfig <url>`` if ``#define USE_WEBGETCONFIG`` is enabled to restore/init configuration from external webserver [#13034](https://github.com/arendst/Tasmota/issues/13034)
+- Command ``WebQuery <url> GET|POST|PUT|PATCH [<headers>] <body>`` to extent HTTP requests [#13209](https://github.com/arendst/Tasmota/issues/13209)
 - Optional IP filter to command ``TCPStart`` [#12806](https://github.com/arendst/Tasmota/issues/12806)
 - Neopool commands ``NPPHRes``, ``NPCLRes`` and ``NPIonRes`` [#12813](https://github.com/arendst/Tasmota/issues/12813)
 - Support for second DNS server

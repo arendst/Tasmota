@@ -14,6 +14,7 @@ All notable changes to this project will be documented in this file.
 - Berry support for Serial
 - Support for Sensirion SCD40/SCD41 CO2 sensor (#13139)
 - Support for BL0939 energy monitor as used in ESP32 based Sonoff Dual R3 V2 Pow (#13195)
+- Command ``WebQuery <url> GET|POST|PUT|PATCH [<headers>] <body>`` to extent HTTP requests (#13209)
 
 ### Changed
 - M5 Stack Core2 uses UNIVERSAL_DISPLAY with enabled LVGL as default now
