@@ -59,13 +59,13 @@ typedef struct be_ctypes_classes_t {
 
 BE_EXPORT_VARIABLE extern const bclass be_class_ctypes;
 
-void ctypes_register_class(bvm *vm, const bclass * ctypes_class, const be_ctypes_structure_t * definitions) {
+static void ctypes_register_class(bvm *vm, const bclass * ctypes_class, const be_ctypes_structure_t * definitions) {
     be_pushntvclass(vm, ctypes_class);
     be_setglobal(vm, str(ctypes_class->name));
     be_pop(vm, 1);
 }
 
-const char * be_ctypes_instance_mappings[];    /* forward definition */
+static const char * be_ctypes_instance_mappings[];    /* forward definition */
 
 // Define a sub-class of ctypes with only one member which points to the ctypes defintion
 #define be_define_ctypes_class(_c_name, _def, _super, _name)                \
@@ -410,7 +410,7 @@ const be_ctypes_structure_t be_lv_draw_mask_saved = {
     { "param", 0, 0, 0, 4, 0 },
 }};
 
-const char * be_ctypes_instance_mappings[] = {
+static const char * be_ctypes_instance_mappings[] = {
   "lv_color",
   NULL
 };
@@ -435,7 +435,7 @@ static be_define_ctypes_class(lv_draw_rect_dsc, &be_lv_draw_rect_dsc, &be_class_
 static be_define_ctypes_class(lv_point, &be_lv_point, &be_class_ctypes, "lv_point");
 static be_define_ctypes_class(lv_sqrt_res, &be_lv_sqrt_res, &be_class_ctypes, "lv_sqrt_res");
 
-void be_load_ctypes_definitions_lib(bvm *vm) {
+void be_load_ctypes_lvgl_definitions_lib(bvm *vm) {
   ctypes_register_class(vm, &be_class_lv_area, &be_lv_area);
   ctypes_register_class(vm, &be_class_lv_draw_img_dsc, &be_lv_draw_img_dsc);
   ctypes_register_class(vm, &be_class_lv_draw_label_dsc, &be_lv_draw_label_dsc);

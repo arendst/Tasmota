@@ -40,6 +40,10 @@ ctypes.be_u32 =  -4
 ctypes.be_u16 =  -2
 ctypes.be_u8  =  -1
 
+# floating point
+ctypes.float  = 5
+ctypes.double = 10
+
 ctypes.bf_x   = 0 # generic bitfield
 # bitfields (always unsigned)
 ctypes.bf_0   = 100 # serves as base
@@ -211,13 +215,13 @@ ctypes.print_types = def ()
   print()
   print("BE_EXPORT_VARIABLE extern const bclass be_class_ctypes;")
   print()
-  print("void ctypes_register_class(bvm *vm, const bclass * ctypes_class, const be_ctypes_structure_t * definitions) {")
+  print("static void ctypes_register_class(bvm *vm, const bclass * ctypes_class, const be_ctypes_structure_t * definitions) {")
   print("    be_pushntvclass(vm, ctypes_class);")
   print("    be_setglobal(vm, str(ctypes_class->name));")
   print("    be_pop(vm, 1);")
   print("}")
   print()
-  print("const char * be_ctypes_instance_mappings[];    /* forward definition */")
+  print("static const char * be_ctypes_instance_mappings[];    /* forward definition */")
   print()
 
   print("// Define a sub-class of ctypes with only one member which points to the ctypes defintion")
@@ -239,12 +243,12 @@ end
 global_classes = []   # track the list of all classes and
 global_mappings = []  # mapping to Berry classes, ex: lv_color
 
-ctypes.print_classes = def ()
+ctypes.print_classes = def (module_name)
   # print mappings
   if size(global_mappings) > 7
     raise "internal_error", "too many mappings, 7 max"
   end
-  print("const char * be_ctypes_instance_mappings[] = {")
+  print("static const char * be_ctypes_instance_mappings[] = {")
   for n:global_mappings.iter()
     print(string.format("  \"%s\",", n))
   end
@@ -259,7 +263,7 @@ ctypes.print_classes = def ()
   end
 
   print()
-  print("void be_load_ctypes_definitions_lib(bvm *vm) {")
+  print(string.format("void be_load_ctypes_%s_definitions_lib(bvm *vm) {", module_name))
   for elt:global_classes
     print(string.format("  ctypes_register_class(vm, &be_class_%s, &be_%s);", elt, elt))
   end
@@ -341,7 +345,7 @@ class structure
     var type_obj = map_line[0]
     var name = map_line[1]
     var bits = 0
-    if size(map_line) >= 3 bits = map_line[2] end
+    if size(map_line) >= 3   bits = map_line[2] end
 
     if isinstance(type_obj, ctypes.structure)
       # nested structure
@@ -366,6 +370,9 @@ class structure
       if type_obj > ctypes.bf_0
         # bit field
         self.get_bitfield_closure(name, type_obj - ctypes.bf_0, mapping_idx)
+      elif (type_obj == ctypes.float) || (type_obj == ctypes.double)
+        # multi-bytes
+        self.get_float_closure(name, type_obj, mapping_idx)
       else
         # multi-bytes
         self.get_int_closure(name, type_obj, mapping_idx)
@@ -438,6 +445,26 @@ class structure
     self.cur_offset += size_in_bytes    # next offset
   end
 
+  def get_float_closure(name, type, instance_mapping)  # can be 1/2/4
+    #- abs size -#
+    var size_in_bytes = (type == ctypes.float) ? 4 : 8
+
+    self.align(size_in_bytes)       # force alignment
+    var offset = self.cur_offset    # prepare variable for capture in closure
+    
+    self.mapping[name] = [offset, 0, 0, type, instance_mapping]
+
+    #- add closures -#
+    # TODO no closure yet, anyways need to rethink closures, they are too heavy
+    # if signed
+    #   self.get_closures[name] = def (b, p) return b.geti(offset + p, size_in_bytes_le_be) end
+    # else
+    #   self.get_closures[name] = def (b, p) return b.get(offset + p, size_in_bytes_le_be) end
+    # end
+    # self.set_closures[name] = def (b, p, v) return b.set(offset+ p, v, size_in_bytes_le_be) end
+    
+    self.cur_offset += size_in_bytes    # next offset
+  end
 
   def get_bitfield_closure(name, size_in_bits, instance_mapping)  # can be 1..32
     var cur_offset = self.cur_offset    # prepare variable for capture in closure

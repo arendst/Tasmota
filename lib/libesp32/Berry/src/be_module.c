@@ -255,9 +255,11 @@ static void cache_module(bvm *vm, bstring *name)
 /* Try to run '()' function of module. Module is already loaded. */
 static void module_init(bvm *vm) {
     if (be_getmember(vm, -1, "init")) {
-        /* found, call it with no parameter */
-        be_call(vm, 0);
+        /* found, call it with current module as parameter */
+        be_pushvalue(vm, -2);
+        be_call(vm, 1);
         /* we don't care about the result */
+        be_pop(vm, 1);
     }
     be_pop(vm, 1);
 }
@@ -339,7 +341,7 @@ bbool be_module_setmember(bvm *vm, bmodule *module, bstring *attr, bvalue *src)
     } else {
         /* if not writable, try 'setmember' */
         int type = be_module_attr(vm, module, str_literal(vm, "setmember"), vm->top);
-        if (type == BE_FUNCTION) {
+        if (basetype(type) == BE_FUNCTION) {
             bvalue *top = vm->top;
             // top[0] already has 'member'
             var_setstr(&top[1], attr);  /* attribute name */

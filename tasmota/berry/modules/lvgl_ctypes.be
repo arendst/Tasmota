@@ -276,7 +276,7 @@ lv_draw_mask_saved = [
 lv_draw_mask_saved = ctypes.structure(lv_draw_mask_saved, "lv_draw_mask_saved")
 
 #
-ctypes.print_classes()
+ctypes.print_classes("lvgl")
 
 # Ex:
 # bb = ctypes.buffer(test_t, bytes("0101020203030404FFFFFEFEFCFC8080"))
