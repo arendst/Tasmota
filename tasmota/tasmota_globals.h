@@ -160,7 +160,7 @@ String EthernetMacAddress(void);
  * Fallback parameters
 \*********************************************************************************************/
 
-#ifdef USE_PID
+#if defined(USE_PID) && (!defined(PID_USE_TIMPROP) || (PID_USE_TIMPROP > 0))
 #define USE_TIMEPROP
 #endif
                                                // See https://github.com/esp8266/Arduino/pull/4889

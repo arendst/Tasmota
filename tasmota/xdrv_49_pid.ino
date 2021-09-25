@@ -103,20 +103,21 @@
    #define PID_USE_TIMPROP               1       // To use an internal relay for a time proportioned output to drive the
                                                  // process, set this to indicate which timeprop output to use. For a device
                                                  // with just one relay then this will be 1.
-                                                 // It is then also necessary to define USE_TIMEPROP and set the output up as
-                                                 // explained in xdrv_49_timeprop.ino
-                                                 // To disable this feature leave this undefined (undefined, not defined to nothing).
+                                                 // USE_TIMEPROP will be automativally included. You must set the output as
+                                                 // explained in xdrv_48_timeprop.ino
+                                                 // To disable, override to false in user_config_override.h. If USE_TIMEPROP is 
+                                                 // not explicitly defined, then it will not be added by default.
 
    #define PID_USE_LOCAL_SENSOR                  // If defined then the local sensor will be used for pv. Leave undefined if
                                                  // this is not required.  The rate that the sensor is read is defined by TELE_PERIOD
                                                  // If not using the sensor then you can supply process values via MQTT using
                                                  // cmnd PidPv
 
-   #define PID_SHUTTER                   1     // if using the PID to control a 3-way valve, create Tasmota Shutter and define the
+   #define PID_SHUTTER                   1       // if using the PID to control a 3-way valve, create Tasmota Shutter and define the
                                                  // number of the shutter here. Otherwise leave this commented out
 
-   #define PID_REPORT_MORE_SETTINGS                   // If defined, the SENSOR output will provide more extensive json
-                                                 // output in the PID section
+   #define PID_REPORT_MORE_SETTINGS    true      // If defined to true, the SENSOR output will provide more extensive json
+                                                 // output in the PID section. Override to false to reduce json output
 
  * Help with using the PID algorithm and with loop tuning can be found at
  * http://blog.clanlaw.org.uk/2018/01/09/PID-tuning-with-node-red-contrib-pid.html
@@ -155,10 +156,14 @@
 #define PID_UPDATE_SECS               0       // [PidUpdateSecs] How often to run the pid algorithm
 #endif
 
-#define PID_USE_TIMPROP               1       // To disable this feature leave this undefined
+#ifndef PID_USE_TIMPROP
+#define PID_USE_TIMPROP               1       // To disable this feature define as false in user_config_override
+#endif
 //#define PID_USE_LOCAL_SENSOR                  // [PidPv] If defined then the local sensor will be used for pv.
 //#define PID_SHUTTER                   1       // Number of the shutter here. Otherwise leave this commented out
-#define PID_REPORT_MORE_SETTINGS              // If defined, the SENSOR output will provide more extensive json
+#ifndef PID_REPORT_MORE_SETTINGS
+#define PID_REPORT_MORE_SETTINGS     true     // Override to false if less details are required in SENSOR JSON
+#endif
 
 #include "PID.h"
 
@@ -342,7 +347,7 @@ void PIDShowValues(void) {
   dtostrfd(d_buf, 2, str_buf);
   ResponseAppend_P(PSTR("\"PidSp\":%s,"), str_buf);
 
-#ifdef PID_REPORT_MORE_SETTINGS
+#if PID_REPORT_MORE_SETTINGS
 // #define D_CMND_PID_SETPROPBAND "Pb"
   d_buf = Pid.pid.getPb();
   dtostrfd(d_buf, 2, str_buf);
@@ -403,7 +408,7 @@ void PIDRun(void) {
   ShutterSetPosition(PID_SHUTTER, pos);
 #endif //PID_SHUTTER
 
-#if defined PID_USE_TIMPROP
+#if defined(PID_USE_TIMPROP) && (PID_USE_TIMPROP > 0)
   // send power to appropriate timeprop output
   TimepropSetPower( PID_USE_TIMPROP-1, power );
 #endif // PID_USE_TIMPROP
