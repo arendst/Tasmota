@@ -216,4 +216,10 @@ extern "C" {
  **/
 #define be_assert(expr)                 assert(expr)
 
+/* Tasmota debug specific */
+#ifdef USE_BERRY_DEBUG
+  #undef BE_DEBUG_RUNTIME_INFO
+  #define BE_DEBUG_RUNTIME_INFO 2 /* record line information in 16 bits */
+#endif // USE_BERRY_DEBUG
+
 #endif
