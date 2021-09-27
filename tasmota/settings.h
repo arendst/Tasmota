@@ -441,8 +441,8 @@ const uint8_t MAX_TUYA_FUNCTIONS = 16;
 typedef struct {
   uint16_t      cfg_holder;                // 000  v6 header
   uint16_t      cfg_size;                  // 002
-  unsigned long save_flag;                 // 004
-  unsigned long version;                   // 008
+  uint32_t      save_flag;                 // 004
+  uint32_t      version;                   // 008
   uint16_t      bootcount;                 // 00C
   uint16_t      cfg_crc;                   // 00E
   SOBitfield    flag;                      // 010
@@ -483,19 +483,22 @@ typedef struct {
   int16_t       toffset[2];                // 30E
   uint8_t       display_font;              // 312
   DisplayOptions  display_options;         // 313
+  uint32_t      energy_kWhtoday_ph[3];     // 314
+  uint32_t      energy_kWhyesterday_ph[3]; // 320
+  uint32_t      energy_kWhtotal_ph[3];     // 32C
 
-  uint8_t       free_314[43];              // 314
+  uint8_t       free_338[7];               // 338
 
   uint8_t       tuyamcu_topic;             // 33F  Manage tuyaSend topic. ex_energy_power_delta on 6.6.0.20, replaced on 8.5.0.1
   uint16_t      domoticz_update_timer;     // 340
   uint16_t      pwm_range;                 // 342
-  unsigned long domoticz_relay_idx[MAX_DOMOTICZ_IDX];  // 344
-  unsigned long domoticz_key_idx[MAX_DOMOTICZ_IDX];    // 354
-  unsigned long energy_power_calibration;    // 364
-  unsigned long energy_voltage_calibration;  // 368
-  unsigned long energy_current_calibration;  // 36C
-  unsigned long energy_kWhtoday;           // 370
-  unsigned long energy_kWhyesterday;       // 374
+  uint32_t      domoticz_relay_idx[MAX_DOMOTICZ_IDX];  // 344
+  uint32_t      domoticz_key_idx[MAX_DOMOTICZ_IDX];    // 354
+  uint32_t      energy_power_calibration;    // 364
+  uint32_t      energy_voltage_calibration;  // 368
+  uint32_t      energy_current_calibration;  // 36C
+  uint32_t      energy_kWhtoday;           // 370
+  uint32_t      energy_kWhyesterday;       // 374
   uint16_t      energy_kWhdoy;             // 378
   uint16_t      energy_min_power;          // 37A
   uint16_t      energy_max_power;          // 37C
@@ -603,7 +606,7 @@ typedef struct {
   uint8_t       free_560[92];              // 560
 
   SysMBitfield1 flag2;                     // 5BC
-  unsigned long pulse_counter[MAX_COUNTERS];  // 5C0
+  uint32_t      pulse_counter[MAX_COUNTERS];  // 5C0
   uint16_t      pulse_counter_type;        // 5D0
   uint16_t      pulse_counter_debounce;    // 5D2
   uint8_t       rf_code[17][9];            // 5D4
@@ -643,12 +646,12 @@ typedef struct {
   EnergyUsage   energy_usage;              // 77C
   uint32_t      sensors[2][4];             // 794  Disable individual (0) sensor drivers / (1) GUI sensor output
   uint32_t      energy_kWhtotal_time;      // 7B4
-  unsigned long weight_item;               // 7B8  Weight of one item in gram * 10
+  uint32_t      weight_item;               // 7B8  Weight of one item in gram * 10
   uint16_t      ledmask;                   // 7BC
   uint16_t      weight_max;                // 7BE  Total max weight in kilogram
-  unsigned long weight_reference;          // 7C0  Reference weight in gram
-  unsigned long weight_calibration;        // 7C4
-  unsigned long energy_frequency_calibration;  // 7C8  Also used by HX711 to save last weight
+  uint32_t      weight_reference;          // 7C0  Reference weight in gram
+  uint32_t      weight_calibration;        // 7C4
+  uint32_t      energy_frequency_calibration;  // 7C8  Also used by HX711 to save last weight
   uint16_t      web_refresh;               // 7CC
   char          script_pram[5][10];        // 7CE
   char          rules[MAX_RULE_SETS][MAX_RULE_SIZE];  // 800  Uses 512 bytes in v5.12.0m, 3 x 512 bytes in v5.14.0b
@@ -735,7 +738,7 @@ typedef struct {
 
   // Only 32 bit boundary variables below
 
-  unsigned long energy_kWhtotal;           // F9C
+  uint32_t      energy_kWhtotal;           // F9C
   SBitfield1    sbflag1;                   // FA0
   TeleinfoCfg   teleinfo;                  // FA4
   uint64_t      rf_protocol_mask;          // FA8
@@ -771,19 +774,22 @@ typedef struct {
   uint16_t      valid;                     // 290  (RTC memory offset 100)
   uint8_t       oswatch_blocked_loop;      // 292
   uint8_t       ota_loader;                // 293
-  unsigned long energy_kWhtoday;           // 294
-  unsigned long energy_kWhtotal;           // 298
-  volatile unsigned long pulse_counter[MAX_COUNTERS];  // 29C - See #9521 why volatile
+  uint32_t      energy_kWhtoday;           // 294
+  uint32_t      energy_kWhtotal;           // 298
+  volatile uint32_t pulse_counter[MAX_COUNTERS];  // 29C - See #9521 why volatile
   power_t       power;                     // 2AC
   EnergyUsage   energy_usage;              // 2B0
-  unsigned long nextwakeup;                // 2C8
+  uint32_t      nextwakeup;                // 2C8
   uint32_t      baudrate;                  // 2CC
   uint32_t      ultradeepsleep;            // 2D0
   uint16_t      deepsleep_slip;            // 2D4
 
-  uint8_t       free_2d6[22];              // 2D6
+  uint8_t       free_2d6[2];               // 2D6
 
-                                           // 2EC - 2FF free locations
+  uint32_t      energy_kWhtoday_ph[3];     // 2D8
+  uint32_t      energy_kWhtotal_ph[3];     // 2E4
+
+                                           // 2F0 - 2FF free locations
 } TRtcSettings;
 TRtcSettings RtcSettings;
 #ifdef ESP32
@@ -800,8 +806,8 @@ struct TIME_T {
   char          name_of_month[4];
   uint16_t      day_of_year;
   uint16_t      year;
-  unsigned long days;
-  unsigned long valid;
+  uint32_t      days;
+  uint32_t      valid;
 } RtcTime;
 
 struct XDRVMAILBOX {

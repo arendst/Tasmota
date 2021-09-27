@@ -64,6 +64,10 @@ bool RtcSettingsLoad(uint32_t update) {
       RtcSettings.valid = RTC_MEM_VALID;
       RtcSettings.energy_kWhtoday = Settings->energy_kWhtoday;
       RtcSettings.energy_kWhtotal = Settings->energy_kWhtotal;
+      for (uint32_t i = 0; i < 3; i++) {
+        RtcSettings.energy_kWhtoday_ph[i] = Settings->energy_kWhtoday_ph[i];
+        RtcSettings.energy_kWhtotal_ph[i] = Settings->energy_kWhtotal_ph[i];
+      }
       RtcSettings.energy_usage = Settings->energy_usage;
       for (uint32_t i = 0; i < MAX_COUNTERS; i++) {
         RtcSettings.pulse_counter[i] = Settings->pulse_counter[i];
@@ -1431,6 +1435,10 @@ void SettingsDelta(void) {
 #else
       Settings->flag5.disable_referer_chk |= true;
 #endif
+    }
+    if (Settings->version < 0x09050009) {
+      memset(&Settings->energy_kWhtoday_ph, 0, 36);
+      memset(&RtcSettings.energy_kWhtoday_ph, 0, 24);
     }
 
     Settings->version = VERSION;
