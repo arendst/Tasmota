@@ -98,7 +98,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 
 [Complete list](BUILDS.md) of available feature and sensors.
 
-## Changelog v9.5.0.8
+## Changelog v9.5.0.9
 ### Added
 - Release of [Tasmota WebInstaller](https://arendst.github.io/Tasmota-firmware/)
 - Command ``SetOption2 1`` to enable display of global temperature/humidity/pressure info to JSON sensor message
@@ -132,6 +132,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - ESP32 Berry support for Curve 25519 EC crypto
 - ESP32 Berry support for ESP32/ESP32S2 DAC gpio
 - ESP32 Berry support for Serial
+- ESP32 Berry print stack trace when exception, more detailed with line numbers if `#define USE_BERRY_DEBUG`
 - ESP32 support for (Yeelight) Mi Desk Pro using binary tasmota32solo1.bin
 - ESP32-S2 support for GPIOs
 - ESP32 add GPIO 6/7/8/11 to template and remove GPIO 28-31 (remapping so backwards compatible)
