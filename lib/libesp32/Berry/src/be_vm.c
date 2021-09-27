@@ -743,7 +743,7 @@ newframe: /* a new call frame */
         opcase(FLIP): {
             bvalue *dst = RA(), *a = RKB();
             if (var_isint(a)) {
-                var_setint(dst, -a->v.i);
+                var_setint(dst, ~a->v.i);
             } else if (var_isinstance(a)) {
                 ins_unop(vm, "~", *RKB());
                 reg = vm->reg;
