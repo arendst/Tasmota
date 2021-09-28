@@ -73,62 +73,74 @@ void (* const EnergyCommand[])(void) PROGMEM = {
 
 const char kEnergyPhases[] PROGMEM = "|%s / %s|%s / %s / %s||[%s,%s]|[%s,%s,%s]";
 
-struct ENERGY {
-  float voltage[ENERGY_MAX_PHASES];             // 123.1 V
-  float current[ENERGY_MAX_PHASES];             // 123.123 A
-  float active_power[ENERGY_MAX_PHASES];        // 123.1 W
-  float apparent_power[ENERGY_MAX_PHASES];      // 123.1 VA
-  float reactive_power[ENERGY_MAX_PHASES];      // 123.1 VAr
-  float power_factor[ENERGY_MAX_PHASES];        // 0.12
-  float frequency[ENERGY_MAX_PHASES];           // 123.1 Hz
+//
+//  WARNING: This structure is mapped to Berry through energy_ctypes.be
+//           Any change must be properly reported in Berry to keep in sync
+//           Beware of any stuffing that the compiler must introduce to re-align
+//           fields
+//
+
+struct ENERGY {                                 // Offset   Size    Example/description
+  float voltage[ENERGY_MAX_PHASES];             // 0        4 x 3   123.1 V
+  float current[ENERGY_MAX_PHASES];             // 12       4 x 3   123.123 A
+  float active_power[ENERGY_MAX_PHASES];        // 24       4 x 3   123.1 W
+  float apparent_power[ENERGY_MAX_PHASES];      // 36       4 x 3   123.1 VA
+  float reactive_power[ENERGY_MAX_PHASES];      // 48       4 x 3   123.1 VAr
+  float power_factor[ENERGY_MAX_PHASES];        // 60       4 x 3   0.12
+  float frequency[ENERGY_MAX_PHASES];           // 72       4 x 3   123.1 Hz
 #if defined(SDM630_IMPORT) || defined(SDM72_IMPEXP)
-  float import_active[ENERGY_MAX_PHASES];       // 123.123 kWh
+  float import_active[ENERGY_MAX_PHASES];       // --       --      123.123 kWh
 #endif  // SDM630_IMPORT || SDM72_IMPEXP
-  float export_active[ENERGY_MAX_PHASES];       // 123.123 kWh
+  float export_active[ENERGY_MAX_PHASES];       // 84       4 x 3   123.123 kWh
 
-  float start_energy;                           // 12345.12345 kWh total previous
-  float daily;                                  // 123.123 kWh
-  float total;                                  // 12345.12345 kWh total energy
+  float start_energy;                           // 96       4       12345.12345 kWh total previous
+  float daily;                                  // 100      4       123.123 kWh
+  float total;                                  // 104      4       12345.12345 kWh total energy
 
-  unsigned long kWhtoday_delta;                 // 1212312345 Wh 10^-5 (deca micro Watt hours) - Overflows to Energy.kWhtoday (HLW and CSE only)
-  unsigned long kWhtoday_offset;                // 12312312 Wh * 10^-2 (deca milli Watt hours) - 5764 = 0.05764 kWh = 0.058 kWh = Energy.daily
-  unsigned long kWhtoday;                       // 12312312 Wh * 10^-2 (deca milli Watt hours) - 5764 = 0.05764 kWh = 0.058 kWh = Energy.daily
-  unsigned long period;                         // 12312312 Wh * 10^-2 (deca milli Watt hours) - 5764 = 0.05764 kWh = 0.058 kWh = Energy.daily
+  unsigned long kWhtoday_delta;                 // 108      4       1212312345 Wh 10^-5 (deca micro Watt hours) - Overflows to Energy.kWhtoday (HLW and CSE only)
+  unsigned long kWhtoday_offset;                // 112      4       12312312 Wh * 10^-2 (deca milli Watt hours) - 5764 = 0.05764 kWh = 0.058 kWh = Energy.daily
+  unsigned long kWhtoday;                       // 116      4       12312312 Wh * 10^-2 (deca milli Watt hours) - 5764 = 0.05764 kWh = 0.058 kWh = Energy.daily
+  unsigned long period;                         // 120      4       12312312 Wh * 10^-2 (deca milli Watt hours) - 5764 = 0.05764 kWh = 0.058 kWh = Energy.daily
 
-  uint8_t fifth_second;
-  uint8_t command_code;
-  uint8_t data_valid[ENERGY_MAX_PHASES];
+  uint8_t fifth_second;                         // 124      1
+  uint8_t command_code;                         // 125      1
+  uint8_t data_valid[ENERGY_MAX_PHASES];        // 126      1 x 3
 
-  uint8_t phase_count;                          // Number of phases active
-  bool voltage_common;                          // Use single voltage
-  bool frequency_common;                        // Use single frequency
-  bool use_overtemp;                            // Use global temperature as overtemp trigger on internal energy monitor hardware
-  bool kWhtoday_offset_init;
+  uint8_t phase_count;                          // 129      1       Number of phases active
+  bool voltage_common;                          // 130      1       Use single voltage
+  bool frequency_common;                        // 131      1       Use single frequency
+  bool use_overtemp;                            // 132      1       Use global temperature as overtemp trigger on internal energy monitor hardware
+  bool kWhtoday_offset_init;                    // 133      1
 
-  bool voltage_available;                       // Enable if voltage is measured
-  bool current_available;                       // Enable if current is measured
+  bool voltage_available;                       // 134      1       Enable if voltage is measured
+  bool current_available;                       // 135      1       Enable if current is measured
 
-  bool type_dc;
-  bool power_on;
+  bool type_dc;                                 // 136      1
+  bool power_on;                                // 137      1
 
 #ifdef USE_ENERGY_MARGIN_DETECTION
-  uint16_t power_history[ENERGY_MAX_PHASES][3];
-  uint8_t power_steady_counter;                 // Allow for power on stabilization
-  bool min_power_flag;
-  bool max_power_flag;
-  bool min_voltage_flag;
-  bool max_voltage_flag;
-  bool min_current_flag;
-  bool max_current_flag;
+  uint16_t power_history[ENERGY_MAX_PHASES][3]; // 138      2 x 3x3
+  uint8_t power_steady_counter;                 // 156      1       Allow for power on stabilization
+  bool min_power_flag;                          // 157      1
+  bool max_power_flag;                          // 158      1
+  bool min_voltage_flag;                        // 159      1
+  bool max_voltage_flag;                        // 160      1
+  bool min_current_flag;                        // 161      1
+  bool max_current_flag;                        // 162      1
+
+// uint8_t _compiler_stuffing_1;                // 163      1   1 stuffing byte introduced by the compiler
 
 #ifdef USE_ENERGY_POWER_LIMIT
-  uint16_t mplh_counter;
-  uint16_t mplw_counter;
-  uint8_t mplr_counter;
-  uint8_t max_energy_state;
+  uint16_t mplh_counter;                        // 164      2
+  uint16_t mplw_counter;                        // 166      2
+  uint8_t mplr_counter;                         // 168      1
+  uint8_t max_energy_state;                     // 169      1
 #endif  // USE_ENERGY_POWER_LIMIT
 #endif  // USE_ENERGY_MARGIN_DETECTION
-} Energy;
+
+// uint16_t _compiler_stuffing_2;               // 170      2
+
+} Energy;                                       // Total    172
 
 Ticker ticker_energy;
 
