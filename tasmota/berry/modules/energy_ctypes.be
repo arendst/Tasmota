@@ -15,7 +15,7 @@ uint8 = ctypes.u8
 uint16 = ctypes.u16
 uint32 = ctypes.u32
 int32 = ctypes.i32
-bool = ctypes.bf_1
+bool = ctypes.u8
 
 energy_struct = [
     [float, "voltage"],
@@ -27,6 +27,9 @@ energy_struct = [
     [float, "active_power"],
     [float, "active_power_2"],
     [float, "active_power_3"],
+    [float, "apparent_power"],
+    [float, "apparent_power_2"],
+    [float, "apparent_power_3"],
     [float, "reactive_power"],
     [float, "reactive_power_2"],
     [float, "reactive_power_3"],
@@ -88,6 +91,7 @@ energy_struct = [
     [bool, "min_current_flag"],
     [bool, "max_current_flag"],
     
+    [uint8, "stuff"],
 # #ifdef USE_ENERGY_POWER_LIMIT
     [uint16, "mplh_counter"],
     [uint16, "mplw_counter"],
