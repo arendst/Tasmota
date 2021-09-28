@@ -36,6 +36,7 @@ static int m_path_last_modified(bvm *vm)
         void * f = be_fopen(path, "r");
         if (f) {
             be_pushint(vm, be_last_modified(f));
+            be_fclose(f);
             be_return(vm);
         }
     }

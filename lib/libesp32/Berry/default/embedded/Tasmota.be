@@ -237,37 +237,48 @@ class Tasmota
 
   def load(f)
     import string
+    import path
+
+    # if the filename has no '.' append '.be'
+    if string.find(f, '.') < 0
+      f += ".be"
+    end
 
     # check that the file ends with '.be' of '.bec'
     var fl = string.split(f,'.')
     if (size(fl) <= 1 || (fl[-1] != 'be' && fl[-1] != 'bec'))
       raise "io_error", "file extension is not '.be' or '.bec'"
     end
-    var native = f[size(f)-1] == 'c'
-    # load - works the same for .be and .bec
 
-    # try if file exists
-    try
-      var ff = open(f, 'r')
-      ff.close()
-    except 'io_error'
-      return false    # signals that file does not exist
+    var is_bytecode = f[-1] == 'c'            # file is Berry source and not bytecode
+    var f_time = path.last_modified(f)
+
+    if is_bytecode
+      if f_time == nil  return false end      # file does not exist
+      # f is the right file, continue
+    else
+      var f_time_bc = path.last_modified(f + "c") # timestamp for bytecode
+      if f_time == nil && f_time_bc == nil  return false end
+      if f_time_bc != nil && (f_time == nil || f_time_bc >= f_time)
+        # bytecode exists and is more recent than berry source, use bytecode
+        f = f + "c"   # use bytecode name
+        is_bytecode = true
+      end
     end
-
-    var c = compile(f,'file')
+    
+    var c = compile(f, 'file')
     # save the compiled bytecode
-    if !native
+    if !is_bytecode
       try
-        self.save(f+'c', c)
+        self.save(f + 'c', c)
       except .. as e
-        self.log(string.format('BRY: could not save compiled file %s (%s)',f+'c',e))
+        print(string.format('BRY: could not save compiled file %s (%s)',f+'c',e))
       end
     end
     # call the compiled code
     c()
     # call successfuls
     return true
-
   end
 
   def event(event_type, cmd, idx, payload, raw)
