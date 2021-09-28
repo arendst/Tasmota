@@ -644,6 +644,7 @@ void KNX_CB_Action(message_t const &msg, void *arg)
           knx.answer_4byte_float(msg.received_on, last_hum);
         }
       }
+#if defined(USE_ENERGY_SENSOR)      
       else if (chan->type == KNX_ENERGY_VOLTAGE) // Reply KNX_ENERGY_VOLTAGE
       {        
         knx.answer_4byte_float(msg.received_on, Energy.voltage[0]);
@@ -701,6 +702,7 @@ void KNX_CB_Action(message_t const &msg, void *arg)
           knx.answer_4byte_float(msg.received_on, Energy.total);
         }
       }
+#endif
 #ifdef USE_RULES
       else if ((chan->type >= KNX_SLOT1) && (chan->type <= KNX_SLOT5)) // KNX RX SLOTs (read command)
       {
