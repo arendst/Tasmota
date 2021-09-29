@@ -753,7 +753,7 @@ void TuyaProcessStatePacket(void) {
 
           if (RtcTime.valid) {
             if (Tuya.lastPowerCheckTime != 0 && Energy.active_power[0] > 0) {
-              Energy.kWhtoday[0] += Energy.active_power[0] * (float)(Rtc.utc_time - Tuya.lastPowerCheckTime) / 36.0;
+              Energy.kWhtoday += Energy.active_power[0] * (float)(Rtc.utc_time - Tuya.lastPowerCheckTime) / 36.0;
               EnergyUpdateToday();
             }
             Tuya.lastPowerCheckTime = Rtc.utc_time;
@@ -885,7 +885,7 @@ void TuyaProcessStatePacket(void) {
 
           if (RtcTime.valid) {
             if (Tuya.lastPowerCheckTime != 0 && Energy.active_power[0] > 0) {
-              Energy.kWhtoday[0] += Energy.active_power[0] * (float)(Rtc.utc_time - Tuya.lastPowerCheckTime) / 36.0;
+              Energy.kWhtoday += Energy.active_power[0] * (float)(Rtc.utc_time - Tuya.lastPowerCheckTime) / 36.0;
               EnergyUpdateToday();
             }
             Tuya.lastPowerCheckTime = Rtc.utc_time;

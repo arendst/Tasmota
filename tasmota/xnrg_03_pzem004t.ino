@@ -192,7 +192,6 @@ void PzemEvery250ms(void)
           Energy.active_power[Pzem.phase] = value;
           break;
         case 4:  // Total energy as 99999Wh
-/*
           Pzem.energy += value;
           if (Pzem.phase == Energy.phase_count -1) {
             if (Pzem.energy > Pzem.last_energy) {  // Handle missed phase
@@ -202,10 +201,6 @@ void PzemEvery250ms(void)
               Pzem.last_energy = Pzem.energy;
             }
             Pzem.energy = 0;
-          }
-*/
-          if (TasmotaGlobal.uptime > PZEM_STABILIZE) {
-            EnergyUpdateTotal(value, false, Pzem.phase);
           }
           break;
       }

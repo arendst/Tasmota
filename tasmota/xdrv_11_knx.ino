@@ -645,7 +645,7 @@ void KNX_CB_Action(message_t const &msg, void *arg)
         }
       }
       else if (chan->type == KNX_ENERGY_VOLTAGE) // Reply KNX_ENERGY_VOLTAGE
-      {
+      {        
         knx.answer_4byte_float(msg.received_on, Energy.voltage[0]);
         if (Settings->flag.knx_enable_enhancement) {
           knx.answer_4byte_float(msg.received_on, Energy.voltage[0]);
@@ -678,26 +678,27 @@ void KNX_CB_Action(message_t const &msg, void *arg)
       }
       else if (chan->type == KNX_ENERGY_YESTERDAY) // Reply KNX_ENERGY_YESTERDAY
       {
-        knx.answer_4byte_float(msg.received_on, Energy.yesterday_sum);
+        float energy_kWhyesterday = (float)Settings->energy_kWhyesterday / 100000;
+        knx.answer_4byte_float(msg.received_on, energy_kWhyesterday);
         if (Settings->flag.knx_enable_enhancement) {
-          knx.answer_4byte_float(msg.received_on, Energy.yesterday_sum);
-          knx.answer_4byte_float(msg.received_on, Energy.yesterday_sum);
+          knx.answer_4byte_float(msg.received_on, energy_kWhyesterday);
+          knx.answer_4byte_float(msg.received_on, energy_kWhyesterday);
         }
       }
       else if (chan->type == KNX_ENERGY_DAILY) // Reply KNX_ENERGY_DAILY
       {
-        knx.answer_4byte_float(msg.received_on, Energy.daily_sum);
+        knx.answer_4byte_float(msg.received_on, Energy.daily);
         if (Settings->flag.knx_enable_enhancement) {
-          knx.answer_4byte_float(msg.received_on, Energy.daily_sum);
-          knx.answer_4byte_float(msg.received_on, Energy.daily_sum);
+          knx.answer_4byte_float(msg.received_on, Energy.daily);
+          knx.answer_4byte_float(msg.received_on, Energy.daily);
         }
       }
       else if (chan->type == KNX_ENERGY_TOTAL) // Reply KNX_ENERGY_TOTAL
       {
-        knx.answer_4byte_float(msg.received_on, Energy.total_sum);
+        knx.answer_4byte_float(msg.received_on, Energy.total);
         if (Settings->flag.knx_enable_enhancement) {
-          knx.answer_4byte_float(msg.received_on, Energy.total_sum);
-          knx.answer_4byte_float(msg.received_on, Energy.total_sum);
+          knx.answer_4byte_float(msg.received_on, Energy.total);
+          knx.answer_4byte_float(msg.received_on, Energy.total);
         }
       }
 #ifdef USE_RULES

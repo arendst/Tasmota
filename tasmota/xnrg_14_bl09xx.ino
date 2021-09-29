@@ -212,10 +212,43 @@ void Bl09XXEverySecond(void) {
     memset(Bl09XX.power, 0, sizeof(Bl09XX.power));
   } else {
     // Calculate energy by using active power
+    uint32_t energy_sum = 0;
     for (uint32_t channel = 0; channel < Energy.phase_count; channel++) {
-      Energy.kWhtoday_delta[channel] += Energy.active_power[channel] * 1000 / 36;
+      energy_sum += (Energy.active_power[channel] * 1000);
     }
-    EnergyUpdateToday();
+    if (energy_sum) {
+      Energy.kWhtoday_delta += energy_sum / 36;
+      EnergyUpdateToday();
+    }
+/*
+    // Calculate energy by using active energy pulse count
+    bool update_today = false;
+    for (int chan = 0 ; chan < Energy.phase_count ; chan++ ) {
+      if (BL09XX_PULSES_NOT_INITIALIZED == Bl09XX.cf_pulses_last_time[chan]) {
+        Bl09XX.cf_pulses_last_time[chan] = Bl09XX.cf_pulses[chan];  // Init after restart
+      } else {
+        uint32_t cf_pulses = 0;
+        if (Bl09XX.cf_pulses[chan] < Bl09XX.cf_pulses_last_time[chan]) {  // Rolled over after 0xFFFFFF (16777215) pulses
+          cf_pulses = (0x1000000 - Bl09XX.cf_pulses_last_time[chan]) + Bl09XX.cf_pulses[chan];
+        } else {
+          cf_pulses = Bl09XX.cf_pulses[chan] - Bl09XX.cf_pulses_last_time[chan];
+        }
+        if (cf_pulses && Energy.active_power[chan])  {
+          uint32_t watt256 = (1638400 * 256) / Settings->energy_power_calibration;
+          uint32_t delta = (cf_pulses * watt256) / 36;
+          if (delta <= (4000 * 1000 / 36)) {  // max load for SHP10: 4.00kW (3.68kW)
+            Bl09XX.cf_pulses_last_time[chan] = Bl09XX.cf_pulses[chan];
+          } else {
+            AddLog(LOG_LEVEL_DEBUG, PSTR("BL9: Overload [%d] %d"), chan, delta);
+            Bl09XX.cf_pulses_last_time[chan] = BL09XX_PULSES_NOT_INITIALIZED;
+          }
+          update_today = true;
+        }
+      }
+    }
+    if (update_today)
+      EnergyUpdateToday();
+*/
   }
 
 //  AddLog(LOG_LEVEL_DEBUG, PSTR("BL9: Poll"));

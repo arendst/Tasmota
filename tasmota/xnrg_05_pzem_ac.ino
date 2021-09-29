@@ -78,7 +78,6 @@ void PzemAcEverySecond(void)
         Energy.frequency[PzemAc.phase] = (float)((buffer[17] << 8) + buffer[18]) / 10.0;                                              // 50.0 Hz
         Energy.power_factor[PzemAc.phase] = (float)((buffer[19] << 8) + buffer[20]) / 100.0;                                          // 1.00
 
-/*
         PzemAc.energy += (float)((buffer[15] << 24) + (buffer[16] << 16) + (buffer[13] << 8) + buffer[14]);                           // 4294967295 Wh
         if (PzemAc.phase == Energy.phase_count -1) {
           if (PzemAc.energy > PzemAc.last_energy) {  // Handle missed phase
@@ -89,11 +88,7 @@ void PzemAcEverySecond(void)
           }
           PzemAc.energy = 0;
         }
-*/
-        float energy = (float)((buffer[15] << 24) + (buffer[16] << 16) + (buffer[13] << 8) + buffer[14]);                           // 4294967295 Wh
-        if (TasmotaGlobal.uptime > PZEM_AC_STABILIZE) {
-          EnergyUpdateTotal(energy, false, PzemAc.phase);
-        }
+
       }
     }
   }

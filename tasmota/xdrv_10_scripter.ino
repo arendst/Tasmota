@@ -1946,7 +1946,7 @@ chknext:
           while (*lp==' ') lp++;
           switch ((uint32_t)fvar) {
             case 0:
-              fvar = Energy.total_sum;
+              fvar = Energy.total;
               break;
             case 1:
               fvar = Energy.voltage[0];
@@ -1976,13 +1976,13 @@ chknext:
               fvar = Energy.active_power[2];
               break;
             case 10:
-              fvar = Energy.start_energy[0];
+              fvar = Energy.start_energy;
               break;
             case 11:
-              fvar = Energy.daily_sum;
+              fvar = Energy.daily;
               break;
             case 12:
-              fvar = Energy.yesterday_sum;
+              fvar = (float)Settings->energy_kWhyesterday/100000.0;
               break;
 
             default:
