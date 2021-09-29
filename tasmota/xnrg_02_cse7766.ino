@@ -205,7 +205,7 @@ void CseEverySecond(void) {
         // prevent invalid load delta steps even checksum is valid but allow up to 4kW (issue #7155):
         if (delta <= (4000 * 1000 / 36)) {  // max load for S31/Pow R2: 4.00kW
           Cse.cf_pulses_last_time = Cse.cf_pulses;
-          Energy.kWhtoday_delta += delta;
+          Energy.kWhtoday_delta[0] += delta;
         }
         else {
           AddLog(LOG_LEVEL_DEBUG, PSTR("CSE: Overload"));

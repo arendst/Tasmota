@@ -540,7 +540,7 @@ bool ShdPacketProcess(void)
 #ifdef SHELLY_DIMMER_DEBUG
                     AddLog(LOG_LEVEL_DEBUG, PSTR(SHD_LOGNAME "%4_f W is %u dmWh during %u ms"), &Energy.active_power[0], deca_microWh, time_passed);
 #endif  // SHELLY_DIMMER_DEBUG
-                    Energy.kWhtoday_delta += deca_microWh;
+                    Energy.kWhtoday_delta[0] += deca_microWh;
                     EnergyUpdateToday();
                 }
                 Shd.last_power_check = millis();
