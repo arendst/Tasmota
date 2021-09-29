@@ -44,7 +44,6 @@
 
 void NrgDummyEverySecond(void) {
   if (Energy.power_on) {  // Powered on
-    float energy = 0;
     for (uint32_t channel = 0; channel < Energy.phase_count; channel++) {
       Energy.voltage[channel] = ((float)Settings->energy_voltage_calibration / 100);       // V
       Energy.frequency[channel] = ((float)Settings->energy_frequency_calibration / 100);   // Hz
@@ -54,16 +53,12 @@ void NrgDummyEverySecond(void) {
           Energy.current[channel] = 0;
         } else {
           Energy.current[channel] = ((float)Settings->energy_current_calibration / 100000);  // A
-          energy += Energy.active_power[channel];
+          Energy.kWhtoday_delta[channel] += Energy.active_power[channel] * 1000 / 36;
         }
         Energy.data_valid[channel] = 0;
       }
     }
-
-    if (energy > 0) {
-      Energy.kWhtoday_delta += energy * 1000 / 36;
-      EnergyUpdateToday();
-    }
+    EnergyUpdateToday();
   }
 }
 
