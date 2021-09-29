@@ -1782,38 +1782,39 @@ void DisplayLocalSensor(void)
 void DisplayInitDriver(void)
 {
   XdspCall(FUNC_DISPLAY_INIT_DRIVER);
-  ApplyDisplayDimmer();
-
-#ifdef USE_MULTI_DISPLAY
-  Set_display(0);
-#endif // USE_MULTI_DISPLAY
-
-  if (renderer) {
-    renderer->setTextFont(Settings->display_font);
-    renderer->setTextSize(Settings->display_size);
-    // force opaque mode
-    renderer->setDrawMode(0);
-
-    for (uint32_t cnt = 0; cnt < (MAX_INDEXCOLORS - PREDEF_INDEXCOLORS); cnt++) {
-      index_colors[cnt] = 0;
-    }
-  }
-
-#ifdef USE_DT_VARS
-  free_dt_vars();
-#endif
-
-#ifdef USE_UFILESYS
-  Display_Text_From_File(DISP_BATCH_FILE);
-#endif
-
-#ifdef USE_GRAPH
-  for (uint8_t count = 0; count < NUM_GRAPHS; count++) { graph[count] = 0; }
-#endif
 
 //  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "Display model %d"), Settings->display_model);
 
   if (Settings->display_model) {
+    ApplyDisplayDimmer();
+
+#ifdef USE_MULTI_DISPLAY
+    Set_display(0);
+#endif // USE_MULTI_DISPLAY
+
+    if (renderer) {
+      renderer->setTextFont(Settings->display_font);
+      renderer->setTextSize(Settings->display_size);
+      // force opaque mode
+      renderer->setDrawMode(0);
+
+      for (uint32_t cnt = 0; cnt < (MAX_INDEXCOLORS - PREDEF_INDEXCOLORS); cnt++) {
+        index_colors[cnt] = 0;
+      }
+    }
+
+#ifdef USE_DT_VARS
+    free_dt_vars();
+#endif
+
+#ifdef USE_UFILESYS
+    Display_Text_From_File(DISP_BATCH_FILE);
+#endif
+
+#ifdef USE_GRAPH
+    for (uint8_t count = 0; count < NUM_GRAPHS; count++) { graph[count] = 0; }
+#endif
+
     TasmotaGlobal.devices_present++;
     if (!PinUsed(GPIO_BACKLIGHT)) {
       if (TasmotaGlobal.light_type && (4 == Settings->display_model)) {
