@@ -5,6 +5,10 @@
  *******************************************************************/
 #include "be_constobj.h"
 
+struct dummy_struct {};  // we need a struct name but don't need any meaningful content, we just take the address
+extern struct TasmotaGlobal_t TasmotaGlobal;
+extern struct dummy_struct be_tasmota_global_struct;
+
 extern int l_getFreeHeap(bvm *vm);
 extern int l_publish(bvm *vm);
 extern int l_publish_result(bvm *vm);
@@ -44,6 +48,38 @@ extern int l_getswitch(bvm *vm);
 
 extern int l_i2cenabled(bvm *vm);
 
+/********************************************************************
+** Solidified function: init
+********************************************************************/
+be_local_closure(init,   /* name */
+  be_nested_proto(
+    4,                          /* nstack */
+    1,                          /* argc */
+    0,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 4]) {     /* constants */
+    /* K0   */  be_nested_string("global", 503252654, 6),
+    /* K1   */  be_nested_string("ctypes_bytes_dyn", 915205307, 16),
+    /* K2   */  be_nested_string("_global_addr", 533766721, 12),
+    /* K3   */  be_nested_string("_global_def", 646007001, 11),
+    }),
+    (be_nested_const_str("init", 380752755, 4)),
+    (be_nested_const_str("input", -103256197, 5)),
+    ( &(const binstruction[ 6]) {  /* code */
+      0xB8060200,  //  0000  GETNGBL	R1	K1
+      0x88080102,  //  0001  GETMBR	R2	R0	K2
+      0x880C0103,  //  0002  GETMBR	R3	R0	K3
+      0x7C040400,  //  0003  CALL	R1	2
+      0x90020001,  //  0004  SETMBR	R0	K0	R1
+      0x80000000,  //  0005  RET	0
+    })
+  )
+);
+/*******************************************************************/
 
 /********************************************************************
 ** Solidified function: add_driver
@@ -1598,6 +1634,12 @@ class be_class_tasmota (scope: global, name: Tasmota) {
     _cb, var
     wire1, var
     wire2, var
+    global, var
+
+    _global_def, comptr(&be_tasmota_global_struct)
+    _global_addr, comptr(&TasmotaGlobal)
+
+    init, closure(init_closure)
 
     get_free_heap, func(l_getFreeHeap)
     publish, func(l_publish)

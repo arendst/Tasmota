@@ -73,7 +73,7 @@ extern "C" {
 }
 
 #define be_const_comptr(_val) {                                 \
-    .v.p = (void*)(_val),                                       \
+    .v.c = (const void*)(_val),                                       \
     .type = BE_COMPTR                                           \
 }
 
