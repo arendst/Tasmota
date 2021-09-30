@@ -715,6 +715,10 @@
   #define CO2_HIGH             1200              // Above this CO2 value show red light (needs PWM or WS2812 RG(B) led and enable with SetOption18 1)
 //#define USE_PMS5003                              // Add support for PMS5003 and PMS7003 particle concentration sensor (+1k3 code)
   //#define PMS_MODEL_PMS3003                      // Enable support of PMS3003 instead of PMS5003/PMS7003 (needs the USE_PMS5003 above)
+//#define USE_HM330X                               // Add support for SeedStudio Grove Particule sensor
+  //#define HM330X_DEFAULT_ADDRESS    0x40         // Option: change default I2C address for HM330X used in SeedSTudio Particucle Sensor
+  //#define HM330X_WARMUP_DELAY       30           // Option: change warmup delay during which data are not read from sensor after a power up
+  //#define HM330X_HIDE_OUT_OF_DATE   false        // Option: change to true to hide data from web GUI and SENSOR while sensor is asleep
 //#define USE_NOVA_SDS                             // Add support for SDS011 and SDS021 particle concentration sensor (+1k5 code)
   #define STARTING_OFFSET      30                // Turn on NovaSDS XX-seconds before tele_period is reached
 //#define USE_HPMA                                 // Add support for Honeywell HPMA115S0 particle concentration sensor (+1k4)
