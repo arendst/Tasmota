@@ -63,6 +63,8 @@ struct MULTI_DISP {
   int16_t disp_ypos;
   uint8_t color_type;
   uint8_t auto_draw;
+  uint8_t model;
+  uint8_t used;
 } displays[MAX_MULTI_DISPLAYS];
 uint8_t cur_display;
 Renderer *Init_uDisplay(const char *desc, int8_t cs);
@@ -75,6 +77,8 @@ void Set_display(uint8_t index) {
   displays[index].auto_draw = auto_draw;
   displays[index].disp_xpos = disp_xpos;
   displays[index].disp_ypos = disp_ypos;
+  displays[index].model = Settings->display_model;
+  displays[index].used = 1;
   cur_display = index;
 }
 
@@ -87,6 +91,7 @@ void Get_display(uint8_t index) {
   disp_xpos = displays[index].disp_xpos;
   disp_ypos = displays[index].disp_ypos;
   if (renderer) renderer->setDrawMode(auto_draw >> 1);
+  //Settings->display_model = displays[index].model;
   cur_display = index;
 }
 #endif // USE_MULTI_DISPLAY
@@ -587,16 +592,21 @@ void DisplayText(void)
             break;
 #ifdef USE_MULTI_DISPLAY
           case 'S':
-            {
+            { int16_t rot = -1, srot, model;
               var = atoiv(cp, &temp);
               cp += var;
               if (temp < 1 || temp > MAX_MULTI_DISPLAYS) {
                 temp = 1;
               }
               temp--;
+              if (*cp == 'r') {
+                cp++;
+                var = atoiv(cp, &rot);
+                cp += var;
+              }
               if (*cp == ':') {
                 cp++;
-                if (displays[temp].display) {
+                if (displays[temp].used) {
                   Set_display(cur_display);
                   Get_display(temp);
                 }
@@ -613,13 +623,22 @@ void DisplayText(void)
                       uint32_t size = fp.size();
                       char *fdesc = (char *)calloc(size + 4, 1);
                       if (fdesc) {
+                        model = Settings->display_model;
                         fp.read((uint8_t*)fdesc, size);
                         fp.close();
                         Get_display(temp);
+                        if (rot >= 0) {
+                          srot = Settings->display_rotate;
+                          Settings->display_rotate = rot;
+                        }
                         renderer = Init_uDisplay(fdesc, -1);
+                        if (rot >= 0) {
+                          Settings->display_rotate = srot;
+                        }
                         Set_display(temp);
                         AddLog(LOG_LEVEL_INFO, PSTR("DSP: File descriptor loaded %x"),renderer);
                         free(fdesc);
+                        Settings->display_model = model;
                       }
                     }
                   }

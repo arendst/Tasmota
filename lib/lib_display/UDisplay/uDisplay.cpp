@@ -70,6 +70,7 @@ uDisplay::uDisplay(char *lp) : Renderer(800, 600) {
   bg_col = 0;
   splash_font = -1;
   rotmap_xmin = -1;
+  bpanel = -1;
   allcmd_mode = 0;
   startline = 0xA1;
   uint8_t section = 0;
