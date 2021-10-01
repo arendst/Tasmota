@@ -1805,7 +1805,7 @@ void DisplayInitDriver(void)
 //  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "Display model %d"), Settings->display_model);
 
   if (Settings->display_model) {
-    ApplyDisplayDimmer();
+//    ApplyDisplayDimmer();  // Not allowed here. Way too early in initi sequence. IE power state has not even been set at this point in time
 
 #ifdef USE_MULTI_DISPLAY
     Set_display(0);
