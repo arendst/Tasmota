@@ -17,26 +17,26 @@ P MGS-TYPE SPARE DATA-ID  DATA-VALUE
 #include <Arduino.h>
 
 enum OpenThermResponseStatus {
-	NONE,
-	SUCCESS,
-	INVALID,
-	TIMEOUT
+	OPTH_NONE,
+	OPTH_SUCCESS,
+	OPTH_INVALID,
+	OPTH_TIMEOUT
 };
 
 
 enum OpenThermMessageType {
 	/*  Master to Slave */
-	READ_DATA       = B000,
-	READ            = READ_DATA, // for backwared compatibility
-	WRITE_DATA      = B001,
-	WRITE           = WRITE_DATA, // for backwared compatibility
-	INVALID_DATA    = B010,
-	RESERVED        = B011,
+	OPTH_READ_DATA       = B000,
+	OPTH_READ            = OPTH_READ_DATA, // for backwared compatibility
+	OPTH_WRITE_DATA      = B001,
+	OPTH_WRITE           = OPTH_WRITE_DATA, // for backwared compatibility
+	OPTH_INVALID_DATA    = B010,
+	OPTH_RESERVED        = B011,
 	/* Slave to Master */
-	READ_ACK        = B100,
-	WRITE_ACK       = B101,
-	DATA_INVALID    = B110,
-	UNKNOWN_DATA_ID = B111
+	OPTH_READ_ACK        = B100,
+	OPTH_WRITE_ACK       = B101,
+	OPTH_DATA_INVALID    = B110,
+	OPTH_UNKNOWN_DATA_ID = B111
 };
 
 typedef OpenThermMessageType OpenThermRequestType; // for backwared compatibility
@@ -99,15 +99,15 @@ enum OpenThermMessageID {
 };
 
 enum OpenThermStatus {
-	NOT_INITIALIZED,
-	READY,
-	DELAY,
-	REQUEST_SENDING,
-	RESPONSE_WAITING,
-	RESPONSE_START_BIT,
-	RESPONSE_RECEIVING,
-	RESPONSE_READY,
-	RESPONSE_INVALID
+	OPTH_NOT_INITIALIZED,
+	OPTH_READY,
+	OPTH_DELAY,
+	OPTH_REQUEST_SENDING,
+	OPTH_RESPONSE_WAITING,
+	OPTH_RESPONSE_START_BIT,
+	OPTH_RESPONSE_RECEIVING,
+	OPTH_RESPONSE_READY,
+	OPTH_RESPONSE_INVALID
 };
 
 class OpenTherm
