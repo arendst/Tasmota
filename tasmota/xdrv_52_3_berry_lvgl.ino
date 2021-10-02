@@ -716,7 +716,7 @@ extern "C" {
     if (argc == 0 || (argc == 1 && be_isstring(vm, 1))) {
       const char * uconfig = nullptr;
       if (argc == 1) {
-        be_tostring(vm, 1);
+        uconfig = be_tostring(vm, 1);
       }
       start_lvgl(uconfig);
       be_return_nil(vm);
