@@ -891,8 +891,9 @@ void TuyaProcessStatePacket(void) {
             Tuya.lastPowerCheckTime = Rtc.utc_time;
           }
         } else if (tuya_energy_enabled && fnId == TUYA_MCU_FUNC_POWER_TOTAL) {
-          EnergyUpdateTotal((float)packetValue / 100,true);
+          Energy.import_active[0] = (float)packetValue / 100;
           AddLog(LOG_LEVEL_DEBUG, PSTR("TYA: Rx ID=%d Total_Power=%d"), Tuya.buffer[dpidStart], packetValue);
+          EnergyUpdateTotal();
         }
   #endif // USE_ENERGY_SENSOR
       }

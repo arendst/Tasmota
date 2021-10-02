@@ -110,6 +110,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - Command ``WebGetConfig <url>`` if ``#define USE_WEBGETCONFIG`` is enabled to restore/init configuration from external webserver [#13034](https://github.com/arendst/Tasmota/issues/13034)
 - Command ``WebQuery <url> GET|POST|PUT|PATCH [<headers>] <body>`` to extent HTTP requests [#13209](https://github.com/arendst/Tasmota/issues/13209)
 - Commands ``EnergyTotal<phase>``, ``EnergyToday<phase>`` and ``EnergyYesterday<phase>`` to (re)set energy values
+- Commands ``EnergyUsage`` and ``EnergyExport`` to (re)set energy usage and export values
 - Optional IP filter to command ``TCPStart`` [#12806](https://github.com/arendst/Tasmota/issues/12806)
 - Neopool commands ``NPPHRes``, ``NPCLRes`` and ``NPIonRes`` [#12813](https://github.com/arendst/Tasmota/issues/12813)
 - Support for second DNS server
@@ -145,6 +146,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 
 ### Changed
 - Move firmware binaries to https://github.com/arendst/Tasmota-firmware/tree/main/release-firmware
+- Removed command ``EnergyReset`` as it is replaced by new commands
 - IRremoteESP8266 library from v2.7.18 to v2.7.20
 - NeoPixelBus library from v2.6.3 to v2.6.7
 - Message ``Upload buffer miscompare`` into ``Not enough space``
