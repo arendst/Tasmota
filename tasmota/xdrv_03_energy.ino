@@ -984,13 +984,13 @@ void EnergySnsInit(void)
   if (TasmotaGlobal.energy_driver) {
 
     // Update for split phase totals (v9.5.0.9)
-    if ((Settings->energy_kWhtoday > 0) && (0 == Settings->energy_kWhtoday_ph[0])) {
+    if ((Settings->energy_kWhtotal > 0) && (0 == Settings->energy_kWhtotal_ph[0])) {
+      Settings->energy_kWhtotal_ph[0] = Settings->energy_kWhtotal;
       Settings->energy_kWhtoday_ph[0] = Settings->energy_kWhtoday;
       Settings->energy_kWhyesterday_ph[0] = Settings->energy_kWhyesterday;
-      Settings->energy_kWhtotal_ph[0] = Settings->energy_kWhtotal;
       RtcSettings.energy_kWhtoday_ph[0] = RtcSettings.energy_kWhtoday;
       RtcSettings.energy_kWhtotal_ph[0] = RtcSettings.energy_kWhtotal;
-      Settings->energy_kWhtoday = 0;
+      Settings->energy_kWhtotal = 0;
     }
 
 //    Energy.kWhtoday_offset = 0;
