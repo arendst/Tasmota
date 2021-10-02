@@ -7,8 +7,13 @@
 
 #include "lvgl.h"
 
-extern int lvx_init(bvm *vm);           // generic function
 extern int lvx_tostring(bvm *vm);       // generic function
+extern int lvx_init_ctor(bvm *vm, void * func);
+extern int be_call_c_func(bvm *vm, void * func, const char * return_type, const char * arg_type);
+
+
+// create font either empty or from parameter on stack
+int lvbe_font_create(bvm *vm)       { return be_call_c_func(vm, NULL, "+lv_group", ""); }
 
 #include "../generate/be_fixed_be_class_lv_font.h"
 
@@ -20,8 +25,8 @@ void be_load_lvgl_font_lib(bvm *vm) {
 
 /* @const_object_info_begin
 class be_class_lv_font (scope: global, name: lv_font) {
-    .p, var
-    init, func(lvx_init)
+    _p, var
+    init, func(lvbe_font_create)
     tostring, func(lvx_tostring)
 }
 @const_object_info_end */

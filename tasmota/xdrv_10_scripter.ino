@@ -7972,14 +7972,14 @@ uint8_t lvgl_numobjs;
 lv_obj_t *lvgl_buttons[MAX_LVGL_OBJS];
 
 void start_lvgl(const char * uconfig);
-lv_event_t lvgl_last_event;
+lv_event_code_t lvgl_last_event;
 uint8_t lvgl_last_object;
 uint8_t lvgl_last_slider;
 static lv_obj_t * kb;
 static lv_obj_t * ta;
 
-void lvgl_set_last(lv_obj_t * obj, lv_event_t event);
-void lvgl_set_last(lv_obj_t * obj, lv_event_t event) {
+void lvgl_set_last(lv_obj_t * obj, lv_event_code_t event);
+void lvgl_set_last(lv_obj_t * obj, lv_event_code_t event) {
   lvgl_last_event = event;
   lvgl_last_object = 0;
   for (uint8_t cnt = 0; cnt < MAX_LVGL_OBJS; cnt++) {
@@ -7991,30 +7991,30 @@ void lvgl_set_last(lv_obj_t * obj, lv_event_t event) {
 }
 
 
-void btn_event_cb(lv_obj_t * btn, lv_event_t event);
-void btn_event_cb(lv_obj_t * btn, lv_event_t event) {
-  lvgl_set_last(btn, event);
-  if (event == LV_EVENT_CLICKED) {
+void btn_event_cb(lv_event_t * e);
+void btn_event_cb(lv_event_t * e) {
+  lvgl_set_last(e->target, e->code);
+  if (e->code == LV_EVENT_CLICKED) {
     Run_Scripter(">lvb", 4, 0);
   }
 }
 
-void slider_event_cb(lv_obj_t * sld, lv_event_t event);
-void slider_event_cb(lv_obj_t * sld, lv_event_t event) {
-  lvgl_set_last(sld, event);
-  lvgl_last_slider = lv_slider_get_value(sld);
-  if (event == LV_EVENT_VALUE_CHANGED) {
+void slider_event_cb(lv_event_t * e);
+void slider_event_cb(lv_event_t * e) {
+  lvgl_set_last(e->target, e->code);
+  lvgl_last_slider = lv_slider_get_value(e->target);
+  if (e->code == LV_EVENT_VALUE_CHANGED) {
     Run_Scripter(">lvs", 4, 0);
   }
 }
 
 static void kb_create(void);
-static void ta_event_cb(lv_obj_t * ta_local, lv_event_t e);
-static void kb_event_cb(lv_obj_t * keyboard, lv_event_t e);
+static void ta_event_cb(lv_event_t * e);
+static void kb_event_cb(lv_event_t * e);
 
-static void kb_event_cb(lv_obj_t * keyboard, lv_event_t e) {
-    lv_keyboard_def_event_cb(kb, e);
-    if(e == LV_EVENT_CANCEL) {
+static void kb_event_cb(lv_event_t * e) {
+    lv_keyboard_def_event_cb(e);
+    if(e->code == LV_EVENT_CANCEL) {
         lv_keyboard_set_textarea(kb, NULL);
         lv_obj_del(kb);
         kb = NULL;
@@ -8022,14 +8022,13 @@ static void kb_event_cb(lv_obj_t * keyboard, lv_event_t e) {
 }
 
 static void kb_create(void) {
-    kb = lv_keyboard_create(lv_scr_act(), NULL);
-    lv_keyboard_set_cursor_manage(kb, true);
-    lv_obj_set_event_cb(kb, kb_event_cb);
+    kb = lv_keyboard_create(lv_scr_act());
+    lv_obj_add_event_cb(kb, kb_event_cb, LV_EVENT_ALL, nullptr);
     lv_keyboard_set_textarea(kb, ta);
 }
 
-static void ta_event_cb(lv_obj_t * ta_local, lv_event_t e) {
-    if(e == LV_EVENT_CLICKED && kb == NULL) {
+static void ta_event_cb(lv_event_t * e) {
+    if(e->code == LV_EVENT_CLICKED && kb == NULL) {
       kb_create();
     }
 }
@@ -8077,11 +8076,11 @@ int32_t lvgl_test(char **lpp, int32_t p) {
       lp = GetStringArgument(lp, OPER_EQU, str, 0);
       SCRIPT_SKIP_SPACES
 
-      obj = lv_btn_create(lv_scr_act(), NULL);
+      obj = lv_btn_create(lv_scr_act());
       lv_obj_set_pos(obj, xp, yp);
       lv_obj_set_size(obj, xs, ys);
-      lv_obj_set_event_cb(obj, btn_event_cb);
-      label = lv_label_create(obj, NULL);
+      lv_obj_add_event_cb(obj, btn_event_cb, LV_EVENT_ALL, nullptr);
+      label = lv_label_create(obj);
       lv_label_set_text(label, str);
       lvgl_StoreObj(obj);
       break;
@@ -8096,10 +8095,10 @@ int32_t lvgl_test(char **lpp, int32_t p) {
       lp = GetNumericArgument(lp, OPER_EQU, &ys, 0);
       SCRIPT_SKIP_SPACES
 
-      obj = lv_slider_create(lv_scr_act(), NULL);
+      obj = lv_slider_create(lv_scr_act());
       lv_obj_set_pos(obj, xp, yp);
       lv_obj_set_size(obj, xs, ys);
-      lv_obj_set_event_cb(obj, slider_event_cb);
+      lv_obj_add_event_cb(obj, slider_event_cb, LV_EVENT_ALL, nullptr);
       lvgl_StoreObj(obj);
       break;
 
@@ -8117,10 +8116,10 @@ int32_t lvgl_test(char **lpp, int32_t p) {
       lp = GetNumericArgument(lp, OPER_EQU, &max, 0);
       SCRIPT_SKIP_SPACES
 
-      obj = lv_gauge_create(lv_scr_act(), NULL);
+      obj = lv_meter_create(lv_scr_act());
       lv_obj_set_pos(obj, xp, yp);
       lv_obj_set_size(obj, xs, ys);
-      lv_gauge_set_range(obj, min, max);
+      // lv_gauge_set_range(obj, min, max);   // TODO LVGL8
       lvgl_StoreObj(obj);
       break;
 
@@ -8130,7 +8129,7 @@ int32_t lvgl_test(char **lpp, int32_t p) {
       lp = GetNumericArgument(lp, OPER_EQU, &max, 0);
       SCRIPT_SKIP_SPACES
       if (lvgl_buttons[(uint8_t)min - 1]) {
-        lv_gauge_set_value(lvgl_buttons[(uint8_t)min - 1], 0, max);
+        // lv_gauge_set_value(lvgl_buttons[(uint8_t)min - 1], 0, max);   // TODO LVGL8
       }
       break;
 
@@ -8147,7 +8146,7 @@ int32_t lvgl_test(char **lpp, int32_t p) {
       lp = GetStringArgument(lp, OPER_EQU, str, 0);
       SCRIPT_SKIP_SPACES
 
-      obj = lv_label_create(lv_scr_act(), NULL);
+      obj = lv_label_create(lv_scr_act());
       lv_obj_set_pos(obj, xp, yp);
       lv_obj_set_size(obj, xs, ys);
       lv_label_set_text(obj, str);
@@ -8166,11 +8165,11 @@ int32_t lvgl_test(char **lpp, int32_t p) {
 
     case 8:
       {
-      ta  = lv_textarea_create(lv_scr_act(), NULL);
-      lv_obj_align(ta, NULL, LV_ALIGN_IN_TOP_MID, 0, LV_DPI / 16);
-      lv_obj_set_event_cb(ta, ta_event_cb);
+      ta  = lv_textarea_create(lv_scr_act());
+      lv_obj_align(ta, LV_ALIGN_TOP_MID, 0, LV_DPI_DEF / 16);
+      lv_obj_add_event_cb(ta, ta_event_cb, LV_EVENT_ALL, nullptr);
       lv_textarea_set_text(ta, "");
-      lv_coord_t max_h = LV_VER_RES / 2 - LV_DPI / 8;
+      lv_coord_t max_h = LV_VER_RES / 2 - LV_DPI_DEF / 8;
       if (lv_obj_get_height(ta) > max_h) lv_obj_set_height(ta, max_h);
       kb_create();
       }
@@ -8212,10 +8211,10 @@ lv_draw_line_dsc_t draw_dsc; // Drawing style (for canvas) is similarly global
 
 void lvgl_setup(void) {
   // Create a tabview object, by default this covers the full display.
-  tabview = lv_tabview_create(lv_disp_get_scr_act(NULL), NULL);
+  tabview = lv_tabview_create(lv_disp_get_scr_act(NULL), LV_DIR_TOP, 50);
   // The CLUE display has a lot of pixels and can't refresh very fast.
   // To show off the tabview animation, let's slow it down to 1 second.
-  lv_tabview_set_anim_time(tabview, 1000);
+  // lv_tabview_set_anim_time(tabview, 1000);  // LVGL8 TODO
 
   // Because they're referenced any time an object is drawn, styles need
   // to be permanent in scope; either declared globally (outside all
@@ -8227,33 +8226,33 @@ void lvgl_setup(void) {
   // through for "off" (inactive) tabs -- a vertical green gradient,
   // minimal padding around edges (zero at bottom).
   lv_style_init(&tab_background_style);
-  lv_style_set_bg_color(&tab_background_style, LV_STATE_DEFAULT, lv_color_hex(0x408040));
-  lv_style_set_bg_grad_color(&tab_background_style, LV_STATE_DEFAULT, lv_color_hex(0x304030));
-  lv_style_set_bg_grad_dir(&tab_background_style, LV_STATE_DEFAULT, LV_GRAD_DIR_VER);
-  lv_style_set_pad_top(&tab_background_style, LV_STATE_DEFAULT, 2);
-  lv_style_set_pad_left(&tab_background_style, LV_STATE_DEFAULT, 2);
-  lv_style_set_pad_right(&tab_background_style, LV_STATE_DEFAULT, 2);
-  lv_style_set_pad_bottom(&tab_background_style, LV_STATE_DEFAULT, 0);
-  lv_obj_add_style(tabview, LV_TABVIEW_PART_TAB_BG, &tab_background_style);
+  lv_style_set_bg_color(&tab_background_style, lv_color_hex(0x408040));
+  lv_style_set_bg_grad_color(&tab_background_style, lv_color_hex(0x304030));
+  lv_style_set_bg_grad_dir(&tab_background_style, LV_GRAD_DIR_VER);
+  lv_style_set_pad_top(&tab_background_style, 2);
+  lv_style_set_pad_left(&tab_background_style, 2);
+  lv_style_set_pad_right(&tab_background_style, 2);
+  lv_style_set_pad_bottom(&tab_background_style, 0);
+  // lv_obj_add_style(tabview, LV_TABVIEW_PART_TAB_BG, &tab_background_style); // LVGL8 TODO
 
   // Style for tabs. Active tab is white with opaque background, inactive
   // tabs are transparent so the background shows through (only the white
   // text is seen). A little top & bottom padding reduces scrunchyness.
   lv_style_init(&tab_style);
-  lv_style_set_pad_top(&tab_style, LV_STATE_DEFAULT, 3);
-  lv_style_set_pad_bottom(&tab_style, LV_STATE_DEFAULT, 10);
-  lv_style_set_bg_color(&tab_style, LV_STATE_CHECKED, LV_COLOR_WHITE);
-  lv_style_set_bg_opa(&tab_style, LV_STATE_CHECKED, LV_OPA_100);
-  lv_style_set_text_color(&tab_style, LV_STATE_CHECKED, LV_COLOR_GRAY);
-  lv_style_set_bg_opa(&tab_style, LV_STATE_DEFAULT, LV_OPA_TRANSP);
-  lv_style_set_text_color(&tab_style, LV_STATE_DEFAULT, LV_COLOR_WHITE);
-  lv_obj_add_style(tabview, LV_TABVIEW_PART_TAB_BTN, &tab_style);
+  lv_style_set_pad_top(&tab_style, 3);
+  lv_style_set_pad_bottom(&tab_style, 10);
+  lv_style_set_bg_color(&tab_style, lv_color_white());
+  lv_style_set_bg_opa(&tab_style, LV_OPA_100);
+  lv_style_set_text_color(&tab_style, lv_color_make(0xff, 0xff, 0xff));
+  lv_style_set_bg_opa(&tab_style, LV_OPA_TRANSP);
+  lv_style_set_text_color(&tab_style, lv_color_white());
+  // lv_obj_add_style(tabview, LV_TABVIEW_PART_TAB_BTN, &tab_style);  // LVGL8 TODO
 
   // Style for the small indicator bar that appears below the active tab.
   lv_style_init(&indicator_style);
-  lv_style_set_bg_color(&indicator_style, LV_STATE_DEFAULT, LV_COLOR_RED);
-  lv_style_set_size(&indicator_style, LV_STATE_DEFAULT, 5);
-  lv_obj_add_style(tabview, LV_TABVIEW_PART_INDIC, &indicator_style);
+  lv_style_set_bg_color(&indicator_style, lv_color_make(0xff, 0x00, 0x00));
+  lv_style_set_size(&indicator_style, 5);
+  // lv_obj_add_style(tabview, LV_TABVIEW_PART_INDIC, &indicator_style);  // LVGL8 TODO
 
   // Back to creating widgets...
 
@@ -8266,28 +8265,28 @@ void lvgl_setup(void) {
 
   // The first tab holds a gauge. To keep the demo simple, let's just use
   // the default style and range (0-100). See LittlevGL docs for options.
-  gauge = lv_gauge_create(tab1, NULL);
+  gauge = lv_meter_create(tab1);
   lv_obj_set_size(gauge, 186, 186);
-  lv_obj_align(gauge, NULL, LV_ALIGN_CENTER, 0, 0);
+  lv_obj_align(gauge,LV_ALIGN_CENTER, 0, 0);
 
   // Second tab, make a chart...
-  chart = lv_chart_create(tab2, NULL);
+  chart = lv_chart_create(tab2);
   lv_obj_set_size(chart, 200, 180);
-  lv_obj_align(chart, NULL, LV_ALIGN_CENTER, 0, 0);
-  lv_chart_set_type(chart, LV_CHART_TYPE_COLUMN);
+  lv_obj_align(chart, LV_ALIGN_CENTER, 0, 0);
+  lv_chart_set_type(chart, LV_CHART_TYPE_BAR);
   // For simplicity, we'll stick with the chart's default 10 data points:
-  series = lv_chart_add_series(chart, LV_COLOR_RED);
-  lv_chart_init_points(chart, series, 0);
+  // series = lv_chart_add_series(chart, lv_color_make(0xff, 0x00, 0x00));  // LVGL8 TODO
+  // lv_chart_init_points(chart, series, 0);  // LVGL8 TODO
   // Make each column shift left as new values enter on right:
   lv_chart_set_update_mode(chart, LV_CHART_UPDATE_MODE_SHIFT);
 
   // Third tab is a canvas, which we'll fill with random colored lines.
   // LittlevGL draw functions only work on TRUE_COLOR canvas.
-/*  canvas = lv_canvas_create(tab3, NULL);
+/*  canvas = lv_canvas_create(tab3);
   lv_canvas_set_buffer(canvas, canvas_buffer,
     CANVAS_WIDTH, CANVAS_HEIGHT, LV_IMG_CF_TRUE_COLOR);
-  lv_obj_align(canvas, NULL, LV_ALIGN_CENTER, 0, 0);
-  lv_canvas_fill_bg(canvas, LV_COLOR_WHITE, LV_OPA_100);
+  lv_obj_align(canvas, LV_ALIGN_CENTER, 0, 0);
+  lv_canvas_fill_bg(canvas, lv_color_white(), LV_OPA_100);
 
   // Set up canvas line-drawing style based on defaults.
   // Later we'll change color settings when drawing each line.

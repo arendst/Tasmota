@@ -68,6 +68,37 @@ ctypes.bf_14  = 114
 ctypes.bf_15  = 115
 ctypes.bf_16  = 116
 
+ctypes.type_mapping = {
+  14: "ctypes_i32",
+  12: "ctypes_i16",
+  11: "ctypes_i8",
+   4: "ctypes_u32",
+   2: "ctypes_u16",
+   1: "ctypes_u8",
+
+  -14:"ctypes_be_i32",  # big endian
+  -12:"ctypes_be_i16",
+  -11:"ctypes_be_i8",
+  -4: "ctypes_be_u32",
+  -2: "ctypes_be_u16",
+  -1: "ctypes_be_u8",
+
+   5: "ctypes_float",
+  10: "ctypes_double",
+   9: "ctypes_ptr32",
+  -9: "ctypes_ptr64",
+
+   0: "ctypes_bf"       # bitfield
+}
+
+ctypes.type_to_str = def (type_num)
+  var type_name = ctypes.type_mapping.find(type_num)
+  if type_name == nil
+    return str(type_num)
+  end
+  return type_name
+end
+
 def findinlist(l, x)
   for i:0..size(l)-1
     if l[i] == x
@@ -261,7 +292,7 @@ class structure
       ctypes.sort(names)
       for n:names
         var args = self.mapping[n]
-        print(string.format("    { \"%s\", %i, %i, %i, %i, %i },", n, args[0], args[1], args[2], args[3], args[4]))
+        print(string.format("    { \"%s\", %i, %i, %i, %s, %i },", n, args[0], args[1], args[2], ctypes.type_to_str(args[3]), args[4]))
       end
       print("}};")
       print()
