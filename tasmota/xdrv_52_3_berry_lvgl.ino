@@ -95,114 +95,6 @@ public:
 };
 LVBE_globals lvbe;
 
-/********************************************************************
- * Generated code, don't edit
- *******************************************************************/
- // Configuration
-#ifndef BE_LV_WIDGET_ARC
-#define BE_LV_WIDGET_ARC 1
-#endif
-#ifndef BE_LV_WIDGET_BAR
-#define BE_LV_WIDGET_BAR 1
-#endif
-#ifndef BE_LV_WIDGET_BTN
-#define BE_LV_WIDGET_BTN 1
-#endif
-#ifndef BE_LV_WIDGET_BTNMATRIX
-#define BE_LV_WIDGET_BTNMATRIX 1
-#endif
-#ifndef BE_LV_WIDGET_CALENDAR
-#define BE_LV_WIDGET_CALENDAR 1
-#endif
-#ifndef BE_LV_WIDGET_CANVAS
-#define BE_LV_WIDGET_CANVAS 1
-#endif
-#ifndef BE_LV_WIDGET_CHART
-#define BE_LV_WIDGET_CHART 1
-#endif
-#ifndef BE_LV_WIDGET_CHECKBOX
-#define BE_LV_WIDGET_CHECKBOX 1
-#endif
-#ifndef BE_LV_WIDGET_CONT
-#define BE_LV_WIDGET_CONT 1
-#endif
-#ifndef BE_LV_WIDGET_CPICKER
-#define BE_LV_WIDGET_CPICKER 1
-#endif
-#ifndef BE_LV_WIDGET_DROPDOWN
-#define BE_LV_WIDGET_DROPDOWN 1
-#endif
-#ifndef BE_LV_WIDGET_GAUGE
-#define BE_LV_WIDGET_GAUGE 1
-#endif
-#ifndef BE_LV_WIDGET_IMG
-#define BE_LV_WIDGET_IMG 1
-#endif
-#ifndef BE_LV_WIDGET_IMGBTN
-#define BE_LV_WIDGET_IMGBTN 1
-#endif
-#ifndef BE_LV_WIDGET_KEYBOARD
-#define BE_LV_WIDGET_KEYBOARD 1
-#endif
-#ifndef BE_LV_WIDGET_LABEL
-#define BE_LV_WIDGET_LABEL 1
-#endif
-#ifndef BE_LV_WIDGET_LED
-#define BE_LV_WIDGET_LED 1
-#endif
-#ifndef BE_LV_WIDGET_LINE
-#define BE_LV_WIDGET_LINE 1
-#endif
-#ifndef BE_LV_WIDGET_LINEMETER
-#define BE_LV_WIDGET_LINEMETER 1
-#endif
-#ifndef BE_LV_WIDGET_LIST
-#define BE_LV_WIDGET_LIST 1
-#endif
-#ifndef BE_LV_WIDGET_MSGBOX
-#define BE_LV_WIDGET_MSGBOX 1
-#endif
-#ifndef BE_LV_WIDGET_OBJMASK
-#define BE_LV_WIDGET_OBJMASK 1
-#endif
-#ifndef BE_LV_WIDGET_TEMPL
-#define BE_LV_WIDGET_TEMPL 1
-#endif
-#ifndef BE_LV_WIDGET_PAGE
-#define BE_LV_WIDGET_PAGE 1
-#endif
-#ifndef BE_LV_WIDGET_ROLLER
-#define BE_LV_WIDGET_ROLLER 1
-#endif
-#ifndef BE_LV_WIDGET_SLIDER
-#define BE_LV_WIDGET_SLIDER 1
-#endif
-#ifndef BE_LV_WIDGET_SPINBOX
-#define BE_LV_WIDGET_SPINBOX 1
-#endif
-#ifndef BE_LV_WIDGET_SPINNER
-#define BE_LV_WIDGET_SPINNER 1
-#endif
-#ifndef BE_LV_WIDGET_SWITCH
-#define BE_LV_WIDGET_SWITCH 1
-#endif
-#ifndef BE_LV_WIDGET_TABLE
-#define BE_LV_WIDGET_TABLE 1
-#endif
-#ifndef BE_LV_WIDGET_TABVIEW
-#define BE_LV_WIDGET_TABVIEW 1
-#endif
-#ifndef BE_LV_WIDGET_TEXTAREA
-#define BE_LV_WIDGET_TEXTAREA 1
-#endif
-#ifndef BE_LV_WIDGET_TILEVIEW
-#define BE_LV_WIDGET_TILEVIEW 1
-#endif
-#ifndef BE_LV_WIDGET_WIN
-#define BE_LV_WIDGET_WIN 1
-#endif
-/********************************************************************/
-
 extern void start_lvgl(const char * uconfig);
 extern void lv_ex_get_started_1(void);
 
@@ -222,9 +114,7 @@ extern void lv_ex_get_started_1(void);
 //
 // - a class name surroungded by parenthesis
 //   - '(lv_button)' -> lv_button class or derived
-//
-// - a callback, only 6 callbacks supported 0..5
-//   - '&1' callback 1
+//   - '[lv_event_cb]' -> callback type, still prefixed with '^' to mark that it is cb
 //
 void be_check_arg_type(bvm *vm, int32_t argc, const char * arg_type, int32_t p[8]);
 void be_check_arg_type(bvm *vm, int32_t argc, const char * arg_type, int32_t p[8]) {
@@ -243,22 +133,24 @@ void be_check_arg_type(bvm *vm, int32_t argc, const char * arg_type, int32_t p[8
           type_short_name[1] = 0;
           arg_idx++;
           break;
-        case '&':
-          type_short_name[0] = arg_type[arg_idx+1];
-          type_short_name[1] = 0;
-          arg_idx += 2;
-          break;
         case '(':
+        case '^':
           {
-            arg_idx++;
+            uint32_t prefix = 0;
+            if (arg_type[arg_idx] == '^') {
+              type_short_name[0] = '^';
+              type_short_name[1] = 0;
+              prefix = 1;
+            }
             uint32_t offset = 0;
-            while (arg_type[arg_idx + offset] != ')' && arg_type[arg_idx + offset] != 0) {
-              type_short_name[offset] = arg_type[arg_idx + offset];
-              type_short_name[offset+1] = 0;
+            arg_idx++;
+            while (arg_type[arg_idx + offset] != ')' && arg_type[arg_idx + offset] != '^' && arg_type[arg_idx + offset] != 0 && offset+prefix+1 < sizeof(type_short_name)) {
+              type_short_name[offset+prefix] = arg_type[arg_idx + offset];
+              type_short_name[offset+prefix+1] = 0;
               offset++;
             }
             if (arg_type[arg_idx + offset] == 0) {
-              arg_type = nullptr;   // stop iterations
+              arg_type = nullptr;   // no more parameters, stop iterations
             }
             arg_idx += offset + 1;
           }
@@ -284,27 +176,27 @@ extern "C" {
 
   void lv_init_set_member(bvm *vm, int index, void * ptr);
   
-  // called programmatically
-  int lvx_init_2(bvm *vm, void * func, const char * return_type, const char * arg_type = nullptr);
-  int lvx_init_2(bvm *vm, void * func, const char * return_type, const char * arg_type) {
+  // called programmatically, when an object is construced
+  // LVGL8: constructor now has only 1 parameter (parent)
+  // If arg1 is comptr, then just encapsulate
+  int lvx_init_ctor(bvm *vm, void * func);
+  int lvx_init_ctor(bvm *vm, void * func) {
     int argc = be_top(vm);
-    lv_obj_t * obj1 = nullptr;
-    lv_obj_t * obj2 = nullptr;
+    lv_obj_t * obj = nullptr;
 
-    if (argc > 1) {
-      obj1 = (lv_obj_t*) be_convert_single_elt(vm, 2);
-    }
-    if (argc > 2 && !be_isnil(vm, 3)) {
-      obj2 = (lv_obj_t*) be_convert_single_elt(vm, 3);
-    }
-    // AddLog(LOG_LEVEL_INFO, "argc %d obj1 %p obj2 %p", argc, obj1, obj2);
-    fn_any_callable f = (fn_any_callable) func;
-    // AddLog(LOG_LEVEL_INFO, ">> be_call_c_func(%p) - %p,%p,%p,%p,%p", f, p[0], p[1], p[2], p[3], p[4]);
-    lv_obj_t * obj;
-    if ((int32_t)obj2 == -1) {  // special semantics if second ptr is -1, then just encapsulate
-      obj = obj1;
-    } else {                    // otherwise call the LVGL creator
-      obj = (lv_obj_t*) (*f)((int32_t)obj1, (int32_t)obj2, 0, 0, 0, 0, 0, 0);
+    if ((argc > 1) && be_iscomptr(vm, 2)) {
+      obj = (lv_obj_t*) be_tocomptr(vm, 2);
+    } else {
+      lv_obj_t * obj1 = nullptr;
+      if (argc > 1) {
+        obj1 = (lv_obj_t*) be_convert_single_elt(vm, 2);
+      }
+      // AddLog(LOG_LEVEL_INFO, "argc %d obj1 %p obj2 %p", argc, obj1, obj2);
+      fn_any_callable f = (fn_any_callable) func;
+      // AddLog(LOG_LEVEL_INFO, ">> be_call_c_func(%p) - %p,%p,%p,%p,%p", f, p[0], p[1], p[2], p[3], p[4]);
+      if (f) {  // if f is null, just store 0x00000000
+        obj = (lv_obj_t*) (*f)((int32_t)obj1, 0, 0, 0, 0, 0, 0, 0);
+      }
     }
     lv_init_set_member(vm, 1, obj);
     be_return_nil(vm);
@@ -383,10 +275,10 @@ extern "C" {
     int32_t p[8] = {0,0,0,0,0,0,0,0};
     int32_t argc = be_top(vm); // Get the number of arguments
 
-    // check if we call a constructor
+    // check if we call a constructor, in this case we store the return type into the new object
     if (return_type && return_type[0] == '+') {
       return_type++;    // skip the leading '+'
-      return lvx_init_2(vm, func, return_type);
+      return lvx_init_ctor(vm, func);
     }
 
     fn_any_callable f = (fn_any_callable) func;
@@ -458,13 +350,13 @@ extern "C" {
       lv_color.full = be_toint(vm, 2);
     }
     be_pushint(vm, lv_color_to_uint32(lv_color));
-    be_setmember(vm, 1, ".p");
+    be_setmember(vm, 1, "_p");
     be_return_nil(vm);
   }
 
   int lco_tostring(bvm *vm) {
     lv_color_t lv_color = {};
-    be_getmember(vm, 1, ".p");
+    be_getmember(vm, 1, "_p");
     uint32_t ntv_color = be_toint(vm, -1);
     lv_color = lv_color_from_uint32(ntv_color);
     uint32_t color = lv_color_to32(lv_color) & 0xFFFFFF;
@@ -477,7 +369,7 @@ extern "C" {
 
   int lco_toint(bvm *vm) {
     lv_color_t lv_color = {};
-    be_getmember(vm, 1, ".p");
+    be_getmember(vm, 1, "_p");
     uint32_t ntv_color = be_toint(vm, -1);
     be_pushint(vm, ntv_color);
     be_return(vm);
@@ -487,24 +379,21 @@ extern "C" {
   /*********************************************************************************************\
    * Support for lv
   \*********************************************************************************************/
-  // Get the `.p` member of instance at `index`
+  // Get the `_p` member of instance at `index`
   void * lv_get_arg(bvm *vm, int index) {
     void * ret = nullptr;
     if (be_isinstance(vm, index)) {
-      be_getmember(vm, index, ".p");
+      be_getmember(vm, index, "_p");
       ret = be_tocomptr(vm, -1);
-      be_pop(vm, 1);  // remove .p attribute
+      be_pop(vm, 1);  // remove _p attribute
     }
     return ret;
   }
 
-  // called during init, set the `.p` member with the pointer
+  // called during init, set the `_p` member with the pointer
   void lv_init_set_member(bvm *vm, int index, void * ptr) {
-    if (ptr == nullptr) {
-        be_throw(vm, BE_MALLOC_FAIL);
-    }
     be_pushcomptr(vm, ptr);
-    be_setmember(vm, index, ".p");
+    be_setmember(vm, index, "_p");
     be_pop(vm, 1);
   }
 
@@ -567,7 +456,7 @@ extern "C" {
   int lv0_load_montserrat_font(bvm *vm) {
     int argc = be_top(vm);
     if (argc == 1 && be_isint(vm, 1)) {
-      lv_font_t * font = nullptr;
+      const lv_font_t * font = nullptr;
       int32_t   font_size = be_toindex(vm, 1);
 
       switch (font_size) {
@@ -710,7 +599,7 @@ extern "C" {
 
       if (font != nullptr) {
         be_getglobal(vm, "lv_font");
-        be_pushcomptr(vm, font);
+        be_pushcomptr(vm, (void*)font);
         be_call(vm, 1);
         be_pop(vm, 1);
         be_return(vm);
@@ -724,7 +613,7 @@ extern "C" {
   int lv0_load_seg7_font(bvm *vm) {
     int argc = be_top(vm);
     if (argc == 1 && be_isint(vm, 1)) {
-      lv_font_t * font = nullptr;
+      const lv_font_t * font = nullptr;
       int32_t   font_size = be_toindex(vm, 1);
 
       switch (font_size) {
@@ -744,7 +633,7 @@ extern "C" {
 
       if (font != nullptr) {
         be_getglobal(vm, "lv_font");
-        be_pushcomptr(vm, font);
+        be_pushcomptr(vm, (void*)font);
         be_call(vm, 1);
         be_pop(vm, 1);
         be_return(vm);
@@ -827,7 +716,7 @@ extern "C" {
     if (argc == 0 || (argc == 1 && be_isstring(vm, 1))) {
       const char * uconfig = nullptr;
       if (argc == 1) {
-        be_tostring(vm, 1);
+        uconfig = be_tostring(vm, 1);
       }
       start_lvgl(uconfig);
       be_return_nil(vm);
@@ -842,7 +731,7 @@ extern "C" {
    * 
    * lv.register_button_encoder([inv: bool]) -> nil
   \*********************************************************************************************/
-  bool lvbe_encoder_with_keys_read(lv_indev_drv_t * drv, lv_indev_data_t*data);
+  void lvbe_encoder_with_keys_read(lv_indev_drv_t * drv, lv_indev_data_t*data);
 
   int lv0_register_button_encoder(bvm *vm);   // add buttons with encoder logic
   int lv0_register_button_encoder(bvm *vm) {
@@ -895,7 +784,7 @@ extern "C" {
   //   lv_indev_state_t state; /**< LV_INDEV_STATE_REL or LV_INDEV_STATE_PR*/
   // } lv_indev_data_t;
 
-  bool lvbe_encoder_with_keys_read(lv_indev_drv_t * drv, lv_indev_data_t*data){
+  void lvbe_encoder_with_keys_read(lv_indev_drv_t * drv, lv_indev_data_t *data){
     // scan through buttons if we need to report something
     uint32_t i;
     for (i = 0; i < 3; i++) {
@@ -914,13 +803,12 @@ extern "C" {
     }
 
     // do we have more to report?
-    bool more_to_report = false;
+    data->continue_reading = false;
     for (/* continue where we left */; i < 3; i++) {
       if (lvbe.btn[i].state_changed()) {
-        more_to_report = true;
+        data->continue_reading = true;
       }
     }
-    return more_to_report;
   }
 
   /*********************************************************************************************\
@@ -938,25 +826,8 @@ extern "C" {
   }
 
   /*********************************************************************************************\
-   * Support for lv_obj
+   * Generalized tostring method, shows class and _p value
   \*********************************************************************************************/
-  int lvx_init(bvm *vm);
-  int lvx_init(bvm *vm) {
-    int argc = be_top(vm);
-    lv_obj_t * obj = nullptr;
-
-    if (argc > 1) {
-      obj = (lv_obj_t*) be_convert_single_elt(vm, 2);
-    }
-    // AddLog(LOG_LEVEL_INFO, "argc %d lv_obj %p", argc, obj);
-    if (obj == nullptr) {
-      obj = lv_obj_create(nullptr, nullptr);
-    }
-    // AddLog(LOG_LEVEL_INFO, "lv_obj final %p", obj);
-    lv_init_set_member(vm, 1, obj);
-    be_return_nil(vm);
-  }
-
   int lvx_tostring(bvm *vm) {
     lv_obj_t * obj = (lv_obj_t*) lv_get_arg(vm, 1);
     const char * classname = be_classname(vm, 1);
@@ -978,6 +849,9 @@ extern "C" {
     }
     if (style == nullptr) {
       style = (lv_style_t*) be_malloc(vm, sizeof(lv_style_t));
+      if (style == nullptr) {
+          be_throw(vm, BE_MALLOC_FAIL);
+      }
       if (style != nullptr) {
         lv_style_init(style);
       }
@@ -1017,19 +891,6 @@ extern "C" {
     be_return(vm);
   }
 }
-
-// ======================================================================
-// Patch for ill-named functions
-// ======================================================================
-
-extern "C" {
-  // lv_signal_send should be renamed lv_obj_signal_send
-  // lv_res_t lv_signal_send(lv_obj_t * obj, lv_signal_t signal, void * param);
-  lv_res_t lv_obj_signal_send(lv_obj_t * obj, lv_signal_t signal, void * param) {
-    return lv_signal_send(obj, signal, param);
-  }
-}
-
 
 #include "lvgl_berry/be_lv_c_mapping.h"
 

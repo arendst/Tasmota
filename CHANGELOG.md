@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased] - Development
 
 ## [9.5.0.9]
+### Changed
+- LVGL updated to v8.0.2 **breaking changes**
 
 ## [9.5.0.8] 20210927
 ### Added
