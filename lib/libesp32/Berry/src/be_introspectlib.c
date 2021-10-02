@@ -83,7 +83,7 @@ static int m_toptr(bvm *vm)
     int top = be_top(vm);
     if (top >= 1) {
         bvalue *v = be_indexof(vm, 1);
-        if (var_basetype(v) >= BE_GCOBJECT) {
+        if (var_basetype(v) >= BE_FUNCTION || var_type(v) == BE_COMPTR) {
             be_pushcomptr(vm, var_toobj(v));
             be_return(vm);
         } else if (var_type(v) == BE_INT) {
@@ -126,6 +126,9 @@ be_native_module_attr_table(introspect) {
 
     be_native_module_function("get", m_findmember),
     be_native_module_function("set", m_setmember),
+
+    be_native_module_function("toptr", m_toptr),
+    be_native_module_function("fromptr", m_fromptr),
 };
 
 be_define_native_module(introspect, NULL);

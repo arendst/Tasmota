@@ -34,14 +34,13 @@ int32_t bin_search_ctypes(const char * needle, const void * table, size_t elt_si
     }
 }
 
-
 enum {
-    ctypes_i32    = 14,
-    ctypes_i16    = 12,
-    ctypes_i8     = 11,
-    ctypes_u32    =  4,
-    ctypes_u16    =  2,
-    ctypes_u8     =  1,
+    ctypes_i32    =  14,
+    ctypes_i16    =  12,
+    ctypes_i8     =  11,
+    ctypes_u32    =   4,
+    ctypes_u16    =   2,
+    ctypes_u8     =   1,
 
     // big endian
     ctypes_be_i32 = -14,
@@ -52,10 +51,14 @@ enum {
     ctypes_be_u8  =  -1,
 
     // floating point
-    ctypes_float  = 5,
-    ctypes_double = 10,
+    ctypes_float  =   5,
+    ctypes_double =  10,
 
-    ctypes_bf     = 0,    //bif-field
+    // pointer
+    ctypes_ptr32  =   9,
+    ctypes_ptr64  =  -9,
+
+    ctypes_bf     =   0,    //bif-field
 };
 
 typedef struct be_ctypes_structure_item_t {
@@ -93,12 +96,17 @@ typedef struct be_ctypes_classes_t {
 // If no arg: allocate a bytes() structure of the right size, filled with zeroes
 // Arg1 is instance self
 // If arg 2 is int or comptr (and not null): create a mapped bytes buffer to read/write at a specific location (can be copied if need a snapshot)
+// If arg 2 is a bytes object, consider it's comptr and map the buffer (it's basically casting). WARNING no size check is done so you can easily corrupt memory
 int be_ctypes_init(bvm *vm) {
     int argc = be_top(vm);
     void * src_data = NULL;
-    if (argc > 1 && (be_isint(vm, 2) || be_iscomptr(vm, 2))) {
+    if (argc > 1 && (be_isint(vm, 2) || be_iscomptr(vm, 2) || be_isbytes(vm, 2))) {
         if (be_iscomptr(vm, 2)) {
             src_data = be_tocomptr(vm, 2);
+        } else if (be_isbytes(vm, 2)) {
+            be_getmember(vm, 2, ".p");
+            src_data = be_tocomptr(vm, -1);
+            be_pop(vm, 1);
         } else {
             src_data = (void*) be_toint(vm, 2);
         }
@@ -213,6 +221,17 @@ int be_ctypes_member(bvm *vm) {
             be_pop(vm, 1);
             float *fval = (float*) &val;    // type wizardry
             be_pushreal(vm, *fval);
+        } else if (ctypes_ptr32 == member->type) {
+            be_getmember(vm, 1, "geti");   // self.get or self.geti
+            be_pushvalue(vm, 1);        // push self
+            be_pushint(vm, member->offset_bytes);
+            be_pushint(vm, 4);          // size is 4 bytes TODO 32 bits only supported here
+            be_call(vm, 3);
+            be_pop(vm, 3);
+            // convert to ptr
+            int32_t val = be_toint(vm, -1);
+            be_pop(vm, 1);
+            be_pushcomptr(vm, (void*) val);
         } else {
             // general int support
             int size = member->type;       // eventually 1/2/4, positive if little endian, negative if big endian
@@ -315,6 +334,23 @@ int be_ctypes_setmember(bvm *vm) {
             be_pushint(vm, member->offset_bytes);
             be_pushint(vm, *ival);
             be_pushint(vm, 4);      // size is 4 bytes
+            be_call(vm, 4);
+            be_pop(vm, 5);
+            be_return_nil(vm);
+        } else if (ctypes_ptr32 == member->type) {
+            // Note: 64 bits pointer not supported
+            int32_t ptr;
+            if (be_iscomptr(vm, 3)) {
+                ptr = (int32_t) be_tocomptr(vm, 3);
+            } else {
+                ptr = be_toint(vm, 3);
+            }
+            // set
+            be_getmember(vm, 1, "seti");
+            be_pushvalue(vm, 1);        // push self
+            be_pushint(vm, member->offset_bytes);
+            be_pushint(vm, ptr);
+            be_pushint(vm, 4);      // size is 4 bytes - 64 bits not suppported
             be_call(vm, 4);
             be_pop(vm, 5);
             be_return_nil(vm);

@@ -42,7 +42,7 @@ public:
 
 private:
   lv_disp_drv_t lv_disp_drv;
-  lv_disp_buf_t lv_disp_buf;
+  lv_disp_draw_buf_t lv_disp_buf;
   lv_color_t *lv_pixel_buf;
   lv_color_t *lv_pixel_buf2;
   lv_indev_drv_t lv_indev_drv;

@@ -22,7 +22,7 @@ void be_load_lvgl_color_lib(bvm *vm) {
 
 /* @const_object_info_begin
 class be_class_lv_color (scope: global, name: lv_color) {
-    .p, var
+    _p, var
     init, func(lco_init)
     tostring, func(lco_tostring)
     toint, func(lco_toint)
