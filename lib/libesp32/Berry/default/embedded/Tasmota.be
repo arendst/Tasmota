@@ -17,6 +17,12 @@ end
 
 tasmota = nil
 class Tasmota
+  var global      # mapping to TasmotaGlobal
+
+  def init()
+    # instanciate the mapping object to TasmotaGlobal
+    self.global = ctypes_bytes_dyn(self._global_addr, self._global_def)
+  end
 
   # add `chars_in_string(s:string,c:string) -> int``
   # looks for any char in c, and return the position of the first char

@@ -503,7 +503,7 @@
   #define USE_TLS                                  // flag indicates we need to include TLS code
 #endif                                             // USE_ZBBRIDGE_TLS
 
-#undef USE_KNX                                   // Disable KNX IP Protocol Support
+//#undef USE_KNX                                   // Disable KNX IP Protocol Support
 //#undef USE_WEBSERVER                             // Disable Webserver
 #undef USE_ENHANCED_GUI_WIFI_SCAN                // Disable wifi scan output with BSSID (+0k5 code)
 //#undef USE_WEBSEND_RESPONSE                      // Disable command WebSend response message (+1k code)

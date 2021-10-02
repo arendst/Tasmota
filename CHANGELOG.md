@@ -8,6 +8,9 @@ All notable changes to this project will be documented in this file.
 - Command ``SetOption129 1`` to enable split total energy results (#13030)
 - Commands ``EnergyTotal<phase>``, ``EnergyToday<phase>`` and ``EnergyYesterday<phase>`` to (re)set energy values
 
+### Changed
+- LVGL updated to v8.0.2 **breaking changes**
+
 ## [9.5.0.8] 20210927
 ### Added
 - Command ``WebGetConfig <url>`` if ``#define USE_WEBGETCONFIG`` is enabled to restore/init configuration from external webserver (#13034)

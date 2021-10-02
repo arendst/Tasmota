@@ -37,7 +37,6 @@ module webserver (scope: global) {
 
     check_privileged_access, func(w_webserver_check_privileged_access)
     redirect, func(w_webserver_redirect)
-    content_start, func(w_webserver_content_start)
     content_send, func(w_webserver_content_send)
     content_send_style, func(w_webserver_content_send_style)
     content_flush, func(w_webserver_content_flush)

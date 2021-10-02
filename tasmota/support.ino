@@ -154,9 +154,9 @@ TasAutoMutex::TasAutoMutex(SemaphoreHandle_t*mutex, const char *name, int maxWai
     this->name = name;
     if (take) {
       this->taken = xSemaphoreTakeRecursive(this->mutex, this->maxWait);
-      if (!this->taken){
-        Serial.printf("\r\nMutexfail %s\r\n", this->name);
-      }
+//      if (!this->taken){
+//        Serial.printf("\r\nMutexfail %s\r\n", this->name);
+//      }
     }
   } else {
     this->mutex = (SemaphoreHandle_t)nullptr;
@@ -192,9 +192,9 @@ void TasAutoMutex::take() {
   if (this->mutex) {
     if (!this->taken) {
       this->taken = xSemaphoreTakeRecursive(this->mutex, this->maxWait);
-      if (!this->taken){
-        Serial.printf("\r\nMutexfail %s\r\n", this->name);
-      }
+//      if (!this->taken){
+//        Serial.printf("\r\nMutexfail %s\r\n", this->name);
+//      }
     }
   }
 }

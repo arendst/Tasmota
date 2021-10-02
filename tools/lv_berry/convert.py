@@ -1,7 +1,7 @@
 import re
 import sys
 
-lv_widgets_file = "lv_widgets.h"
+lv_widgets_file = "lv_funcs.h"
 lv_module_file = "lv_enum.h"
 
 out_prefix = "../../tasmota/lvgl_berry/"
@@ -82,38 +82,70 @@ return_types = {
   "lv_img_cf_t": "i",
   "lv_draw_mask_line_side_t": "i",
   "lv_style_property_t": "i",
+  "lv_dir_t": "i",
+  "lv_part_t": "i",
+  "lv_base_dir_t": "i",
+  "lv_text_decor_t": "i",
+  "lv_text_align_t": "i",
+  "lv_arc_mode_t": "i",
+  "lv_bar_mode_t": "i",
+  "lv_event_code_t": "i",
+  "lv_obj_flag_t": "i",
+  "lv_slider_mode_t": "i",
+  "lv_scroll_snap_t": "i",
+  "lv_style_value_t": "i",
+  "lv_img_src_t": "i",
+  "lv_colorwheel_mode_t": "i",
+
+  "_lv_event_dsc_t *": "i",
 
   # "lv_signal_cb_t": "c",
   # "lv_design_cb_t": "c",
   # "lv_event_cb_t": "c",
   # "lv_group_focus_cb_t": "c",
 
+  # ctypes objects
+  "lv_area_t *": "lv_area",
+  "lv_meter_scale_t *": "lv_meter_scale",
+  "lv_meter_indicator_t *": "lv_meter_indicator",
+  "lv_obj_class_t *": "lv_obj_class",
+
+  "_lv_obj_t *": "lv_obj",
   "lv_obj_t *": "lv_obj",
   "lv_color_t": "lv_color",
   "lv_style_t *": "lv_style",
   "lv_group_t *": "lv_group",
+  "lv_font_t *": "lv_font",
   #"lv_disp_t*": "lv_disp",
   #"lv_style_list_t*": "",
 
   # callbacks
   "lv_group_focus_cb_t": "lv_group_focus_cb",
   "lv_event_cb_t": "lv_event_cb",
-  "lv_signal_cb_t": "lv_signal_cb",
-  "lv_design_cb_t": "lv_design_cb",
-  "lv_gauge_format_cb_t": "lv_gauge_format_cb",
+  # "lv_signal_cb_t": "lv_signal_cb",   # removed in LVGL8
+  # "lv_design_cb_t": "lv_design_cb",   # removed in LVGL8
+  # "lv_gauge_format_cb_t": "lv_gauge_format_cb", # removed in LVGL8
 }
 
 lv = {}
 lvs = []   # special case for case for lv_style
 lv0 = []        # function in lvlg module
 lv_module = []
-lv_cb_types = ['lv_group_focus_cb', 'lv_event_cb', 'lv_signal_cb', 'lv_design_cb', 'lv_gauge_format_cb']
+lv_cb_types = ['lv_group_focus_cb', 'lv_event_cb',
+               'lv_constructor_cb',                 # 'constructor_cb', addition to LVGL8, also works for 'destructor_cb'
+               ]
 # list of callback types that will need each a separate C callback
 
-lv_widgets = ['arc', 'bar', 'btn', 'btnmatrix', 'calendar', 'canvas', 'chart', 'checkbox',
-             'cont', 'cpicker', 'dropdown', 'gauge', 'img', 'imgbtn', 'keyboard', 'label', 'led', 'line',
-             'linemeter', 'list', 'msgbox', 'objmask', 'templ', 'page', 'roller', 'slider', 'spinbox',
-             'spinner', 'switch', 'table', 'tabview', 'textarea', 'tileview', 'win']
+# For LVGL8, need to add synthetic lv_style
+lv['style'] = []
+
+# standard widgets
+lv_widgets = ['arc', 'bar', 'btn', 'btnmatrix', 'canvas', 'checkbox',
+              'dropdown', 'img', 'label', 'line', 'roller', 'slider',
+              'switch', 'table', 'textarea' ]
+# extra widgets
+
+lv_widgets = lv_widgets + [ 'chart', 'colorwheel', 'imgbtn', 'led', 'meter', 'msgbox', 'spinbox' ]
 lv_prefix = ['obj', 'group', 'style', 'indev', ] + lv_widgets
 
 def try_int(s):
@@ -137,6 +169,8 @@ with open(lv_widgets_file) as f:
     l_raw = l_raw.strip(" \t\n\r")    # remove leading or trailing spaces
     l_raw = re.sub('static ', '', l_raw)
     l_raw = re.sub('inline ', '', l_raw)
+    l_raw = re.sub('const ', '', l_raw)
+    l_raw = re.sub('struct ', '', l_raw)
     if (len(l_raw) == 0): continue
 
     g = parse_func_def.search(l_raw)
@@ -184,7 +218,7 @@ with open(lv_widgets_file) as f:
               # it's a callback type, we encode it differently
               if ga_type not in lv_cb_types:
                 lv_cb_types.append(ga_type)
-              c_args += "&" + str(lv_cb_types.index(ga_type))
+              c_args += "^" + ga_type + "^"
             else:
               # we have a high-level type that we treat as a class name, enclose in parenthesis
               c_args += "(" + ga_type + ")"
@@ -206,10 +240,13 @@ with open(lv_widgets_file) as f:
           be_name = re.sub("^lv_" + subtype + "_", '', func_name)
           c_func_name = "lvbe_" + subtype + "_" + be_name
           if subtype not in lv: lv[subtype] = []    # add entry
-          # special case if the function is create, we change the return type to macth the class
-          lv[subtype].append( [ c_func_name, c_ret, c_args, func_name, be_name ] )
-          found = True
-          break
+          is_right_type = c_args.startswith(f"(lv_{subtype})")  # check if first arg matches class
+          is_obj_arg1 = c_args.startswith(f"(lv_obj)")          # or first arg is lv_obj
+          is_group_create = (subtype == 'group') and (func_name == 'lv_group_create')
+          if is_right_type or is_obj_arg1 or is_group_create:
+            lv[subtype].append( [ c_func_name, c_ret, c_args, func_name, be_name ] )
+            found = True
+            break
 
       if found: continue
       # not found, we treat it as lv top level function
@@ -269,24 +306,6 @@ with open(lv_module_file) as f:
       #print(g.group(3))
 
 
-sys.stdout = open(out_prefix + be_lv_defines, 'w')
-
-
-print("/********************************************************************")
-print(" * Generated code, don't edit")
-print(" *******************************************************************/")
-print(" // Configuration")
-
-for subtype in lv_widgets:
-  define = f"BE_LV_WIDGET_" + subtype.upper()
-  print(f"#ifndef {define}")
-  print(f"#define {define} 1")
-  print(f"#endif")
-
-print("/********************************************************************/")
-sys.stdout.close()
-
-
 sys.stdout = open(out_prefix + be_lv_c_mapping, 'w')
 print("""
 /********************************************************************
@@ -303,7 +322,7 @@ extern "C" {
 for subtype, flv in lv.items():
   print(f"/* `lv_{subtype}` methods */")
   if subtype in lv_widgets:
-    print(f"#if BE_LV_WIDGET_{subtype.upper()}")
+    print(f"#ifdef BE_LV_WIDGET_{subtype.upper()}")
   print(f"const lvbe_call_c_t lv_{subtype}_func[] = {{")
 
   func_out = {} # used to sort output
@@ -315,8 +334,10 @@ for subtype, flv in lv.items():
     orig_func_name = f[3]
     be_name = f[4]
     if c_func_name.endswith("_create"):
-      c_ret_type = f"+lv_{subtype}"
-    func_out[be_name] = f"  {{ \"{be_name}\", (void*) &{orig_func_name}, \"{c_ret_type}\", { c_argc if c_argc else 'nullptr'} }},"
+      pass
+      # c_ret_type = f"+lv_{subtype}"
+    else:
+      func_out[be_name] = f"  {{ \"{be_name}\", (void*) &{orig_func_name}, \"{c_ret_type}\", { c_argc if c_argc else 'nullptr'} }},"
 
   for be_name in sorted(func_out):
     print(func_out[be_name])
@@ -334,7 +355,7 @@ const lvbe_call_c_classes_t lv_classes[] = {{""")
 for subtype in sorted(lv):
 # for subtype, flv in lv.items():
   if subtype in lv_widgets:
-    print(f"#if BE_LV_WIDGET_{subtype.upper()}")
+    print(f"#ifdef BE_LV_WIDGET_{subtype.upper()}")
   print(f"  {{ \"lv_{subtype}\", lv_{subtype}_func, sizeof(lv_{subtype}_func) / sizeof(lv_{subtype}_func[0]) }},")
   if subtype in lv_widgets:
     print(f"#endif // BE_LV_WIDGET_{subtype.upper()}")
@@ -357,7 +378,7 @@ for subtype, flv in lv.items():
     if c_func_name.endswith("_create"):
       c_ret_type = f"+lv_{subtype}"
       if subtype in lv_widgets:
-        print(f"#if BE_LV_WIDGET_{subtype.upper()}")
+        print(f"#ifdef BE_LV_WIDGET_{subtype.upper()}")
       print(f"  int {c_func_name}(bvm *vm)       {{ return be_call_c_func(vm, (void*) &{orig_func_name}, \"{c_ret_type}\", { c_argc if c_argc else 'nullptr'}); }}")
       if subtype in lv_widgets:
         print(f"#endif // BE_LV_WIDGET_{subtype.upper()}")
@@ -372,7 +393,7 @@ print(f"  void be_load_lv_all_lib(bvm *vm) {{")
 for subtype in lv:
   define = f"BE_LV_WIDGET_" + subtype.upper()
   if subtype in lv_widgets:
-    print(f"#if {define}")
+    print(f"#ifdef {define}")
   print(f"    be_load_lv_{subtype}_lib(vm);")
   if subtype in lv_widgets:
     print(f"#endif")
@@ -407,7 +428,6 @@ extern int lv0_init(bvm *vm);
 extern int lco_init(bvm *vm);
 extern int lco_tostring(bvm *vm);
 
-extern int lvx_init_2(bvm *vm);           // generic function
 extern int lvx_member(bvm *vm);
 extern int lvx_tostring(bvm *vm);       // generic function
 
@@ -425,62 +445,18 @@ for subtype, flv in lv.items():
   
   print()
 
-print("""
-#if BE_USE_PRECOMPILED_OBJECT
-""")
-
 for subtype, flv in lv.items():
   print(f"#include \"../generate/be_fixed_be_class_lv_{subtype}.h\"")
-
-print("""
-#endif
-""")
 
 print()
 
 for subtype, flv in lv.items():
   # class definitions
   print(f"void be_load_lv_{subtype}_lib(bvm *vm) {{")
-  print("#if !BE_USE_PRECOMPILED_OBJECT")
-  print(f"  static const bnfuncinfo members[] = {{")
-  print(f"    {{ \".p\", NULL }},")
-
-  if subtype == "style":
-    print(f"    {{ \"init\", lvs_init }},")
-    print(f"    {{ \"tostring\", lvs_tostring }},")
-  else:
-    if subtype != 'indev':    # indev has no create
-      print(f"    {{ \"init\", lvbe_{subtype}_create }},")
-    else:
-      print(f"    {{ \"init\", lv0_init }},")
-    print(f"    {{ \"tostring\", lvx_tostring }},")
-  print(f"    {{ \"member\", lvx_member }},")
-
-  print()
-  # for f in flv:
-
-  #   c_func_name = f[0]
-  #   be_name = f[4]
-  #   print(f"    {{ \"{be_name}\", {c_func_name} }},")
-
-  print()
-  print(f"    // {{ NULL, (bntvfunc) BE_CLOSURE }}, /* mark section for berry closures */")
-  print()
-  print(f"    {{ NULL, NULL }}")
-  print(f"  }};")
-  print(f"  be_regclass(vm, \"lv_{subtype}\", members);")
-  if subtype in lv_widgets: # only for subclasses of lv_obj
-    print()
-    print(f"  be_getglobal(vm, \"lv_{subtype}\");")
-    print(f"  be_getglobal(vm, \"lv_obj\");")
-    print(f"  be_setsuper(vm, -2);")
-    print(f"  be_pop(vm, 2);")
   
-  print("#else")
   print(f"    be_pushntvclass(vm, &be_class_lv_{subtype});")
   print(f"    be_setglobal(vm, \"lv_{subtype}\");")
   print(f"    be_pop(vm, 1);")
-  print("#endif")
 
   print(f"}};")
   print()
@@ -490,12 +466,14 @@ for subtype, flv in lv.items():
   else:
     print(f"class be_class_lv_{subtype} (scope: global, name: lv_{subtype}) {{")
 
-  print(f"    .p, var")
+  print(f"    _p, var")
   if subtype == "style":
     print(f"    init, func(lvs_init)")
     print(f"    tostring, func(lvs_tostring)")
   else:
     if subtype != 'indev':    # indev has no create
+      if (subtype in lv_widgets) or (subtype == "obj"):
+        print(f"    _class, int(&lv_{subtype}_class)")
       print(f"    init, func(lvbe_{subtype}_create)")
     else:
       print(f"    init, func(lv0_init)")
@@ -618,113 +596,6 @@ print("""
 };
 
 const size_t lv0_constants_size = sizeof(lv0_constants)/sizeof(lv0_constants[0]);
-#if !BE_USE_PRECOMPILED_OBJECT
-
-be_native_module_attr_table(lvgl) {
-    // Symbols    
-    be_native_module_str("SYMBOL_AUDIO", "\\xef\\x80\\x81"),
-    be_native_module_str("SYMBOL_VIDEO", "\\xef\\x80\\x88"),
-    be_native_module_str("SYMBOL_LIST", "\\xef\\x80\\x8b"),
-    be_native_module_str("SYMBOL_OK", "\\xef\\x80\\x8c"),
-    be_native_module_str("SYMBOL_CLOSE", "\\xef\\x80\\x8d"),
-    be_native_module_str("SYMBOL_POWER", "\\xef\\x80\\x91"),
-    be_native_module_str("SYMBOL_SETTINGS", "\\xef\\x80\\x93"),
-    be_native_module_str("SYMBOL_HOME", "\\xef\\x80\\x95"),
-    be_native_module_str("SYMBOL_DOWNLOAD", "\\xef\\x80\\x99"),
-    be_native_module_str("SYMBOL_DRIVE", "\\xef\\x80\\x9c"),
-    be_native_module_str("SYMBOL_REFRESH", "\\xef\\x80\\xa1"),
-    be_native_module_str("SYMBOL_MUTE", "\\xef\\x80\\xa6"),
-    be_native_module_str("SYMBOL_VOLUME_MID", "\\xef\\x80\\xa7"),
-    be_native_module_str("SYMBOL_VOLUME_MAX", "\\xef\\x80\\xa8"),
-    be_native_module_str("SYMBOL_IMAGE", "\\xef\\x80\\xbe"),
-    be_native_module_str("SYMBOL_EDIT", "\\xef\\x8C\\x84"),
-    be_native_module_str("SYMBOL_PREV", "\\xef\\x81\\x88"),
-    be_native_module_str("SYMBOL_PLAY", "\\xef\\x81\\x8b"),
-    be_native_module_str("SYMBOL_PAUSE", "\\xef\\x81\\x8c"),
-    be_native_module_str("SYMBOL_STOP", "\\xef\\x81\\x8d"),
-    be_native_module_str("SYMBOL_NEXT", "\\xef\\x81\\x91"),
-    be_native_module_str("SYMBOL_EJECT", "\\xef\\x81\\x92"),
-    be_native_module_str("SYMBOL_LEFT", "\\xef\\x81\\x93"),
-    be_native_module_str("SYMBOL_RIGHT", "\\xef\\x81\\x94"),
-    be_native_module_str("SYMBOL_PLUS", "\\xef\\x81\\xa7"),
-    be_native_module_str("SYMBOL_MINUS", "\\xef\\x81\\xa8"),
-    be_native_module_str("SYMBOL_EYE_OPEN", "\\xef\\x81\\xae"),
-    be_native_module_str("SYMBOL_EYE_CLOSE", "\\xef\\x81\\xb0"),
-    be_native_module_str("SYMBOL_WARNING", "\\xef\\x81\\xb1"),
-    be_native_module_str("SYMBOL_SHUFFLE", "\\xef\\x81\\xb4"),
-    be_native_module_str("SYMBOL_UP", "\\xef\\x81\\xb7"),
-    be_native_module_str("SYMBOL_DOWN", "\\xef\\x81\\xb8"),
-    be_native_module_str("SYMBOL_LOOP", "\\xef\\x81\\xb9"),
-    be_native_module_str("SYMBOL_DIRECTORY", "\\xef\\x81\\xbb"),
-    be_native_module_str("SYMBOL_UPLOAD", "\\xef\\x82\\x93"),
-    be_native_module_str("SYMBOL_CALL", "\\xef\\x82\\x95"),
-    be_native_module_str("SYMBOL_CUT", "\\xef\\x83\\x84"),
-    be_native_module_str("SYMBOL_COPY", "\\xef\\x83\\x85"),
-    be_native_module_str("SYMBOL_SAVE", "\\xef\\x83\\x87"),
-    be_native_module_str("SYMBOL_CHARGE", "\\xef\\x83\\xa7"),
-    be_native_module_str("SYMBOL_PASTE", "\\xef\\x83\\xAA"),
-    be_native_module_str("SYMBOL_BELL", "\\xef\\x83\\xb3"),
-    be_native_module_str("SYMBOL_KEYBOARD", "\\xef\\x84\\x9c"),
-    be_native_module_str("SYMBOL_GPS", "\\xef\\x84\\xa4"),
-    be_native_module_str("SYMBOL_FILE", "\\xef\\x85\\x9b"),
-    be_native_module_str("SYMBOL_WIFI", "\\xef\\x87\\xab"),
-    be_native_module_str("SYMBOL_BATTERY_FULL", "\\xef\\x89\\x80"),
-    be_native_module_str("SYMBOL_BATTERY_3", "\\xef\\x89\\x81"),
-    be_native_module_str("SYMBOL_BATTERY_2", "\\xef\\x89\\x82"),
-    be_native_module_str("SYMBOL_BATTERY_1", "\\xef\\x89\\x83"),
-    be_native_module_str("SYMBOL_BATTERY_EMPTY", "\\xef\\x89\\x84"),
-    be_native_module_str("SYMBOL_USB", "\\xef\\x8a\\x87"),
-    be_native_module_str("SYMBOL_BLUETOOTH", "\\xef\\x8a\\x93"),
-    be_native_module_str("SYMBOL_TRASH", "\\xef\\x8B\\xAD"),
-    be_native_module_str("SYMBOL_BACKSPACE", "\\xef\\x95\\x9A"),
-    be_native_module_str("SYMBOL_SD_CARD", "\\xef\\x9F\\x82"),
-    be_native_module_str("SYMBOL_NEW_LINE", "\\xef\\xA2\\xA2"),
-
-    be_native_module_str("SYMBOL_DUMMY", "\\xEF\\xA3\\xBF"),
-
-    be_native_module_str("SYMBOL_BULLET", "\\xE2\\x80\\xA2"),
-
-""")
-
-print("/* `lvgl` module functions */")
-print()
-
-
-# for subtype, flv in lv.items():
-#   if subtype != 'xxx': continue
-#   print(f"/* `lv_{subtype}` external functions definitions */")
-#   for f in flv:
-#     c_func_name = f[0]
-#     print(f"extern int {c_func_name}(bvm *vm);")
-  
-#   print()
-
-# for k_v in lv_module:
-#   (k,v) = k_v
-#   if k is None:
-#     print(v)      # comment line
-#     continue
-
-#   print(f"    be_native_module_int(\"{k}\", {v}),")
-
-print("""
-
-    be_native_module_function("member", lv0_member),
-    be_native_module_function("start", lv0_start),
-
-    be_native_module_function("register_button_encoder", lv0_register_button_encoder),
-
-    be_native_module_function("montserrat_font", lv0_load_montserrat_font),
-    be_native_module_function("seg7_font", lv0_load_seg7_font),
-    be_native_module_function("load_font", lv0_load_font),
-    be_native_module_function("load_freetype_font", lv0_load_freetype_font),
-
-    be_native_module_function("screenshot", lv0_screenshot),
-};
-
-be_define_native_module(lvgl, NULL);
-
-#else
 
 be_define_local_const_str(SYMBOL_AUDIO, "\\xef\\x80\\x81", 0, 3);
 be_define_local_const_str(SYMBOL_VIDEO, "\\xef\\x80\\x88", 0, 3);
@@ -877,7 +748,6 @@ print("""
 }
 @const_object_info_end */
 #include "../generate/be_fixed_lvgl.h"
-#endif
 
 #endif // USE_LVGL
 """)
