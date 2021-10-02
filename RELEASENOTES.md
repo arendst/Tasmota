@@ -138,6 +138,9 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - ESP32 add GPIO 6/7/8/11 to template and remove GPIO 28-31 (remapping so backwards compatible)
 - ESP32 crash recorder ``Status 12`` for ESP32/ESP32-S2/ESP32-C3, supporting Esp-idf 3.3/4.4
 
+### Breaking Changed
+- ESP32 LVGL updated to v8.0.2
+
 ### Changed
 - Move firmware binaries to https://github.com/arendst/Tasmota-firmware/tree/main/release-firmware
 - IRremoteESP8266 library from v2.7.18 to v2.7.20
