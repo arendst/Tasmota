@@ -26,7 +26,7 @@
 \*********************************************************************************************/
 
 const char berry_prog[] =
-  ""
+  "import persist "
   // create a 'ntv' module to allow functions to be registered in a safe namespace
   // "ntv = module('ntv') "
 

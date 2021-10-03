@@ -254,14 +254,18 @@ static void cache_module(bvm *vm, bstring *name)
 
 /* Try to run '()' function of module. Module is already loaded. */
 static void module_init(bvm *vm) {
-    if (be_getmember(vm, -1, "init")) {
-        /* found, call it with current module as parameter */
-        be_pushvalue(vm, -2);
-        be_call(vm, 1);
-        /* we don't care about the result */
-        be_pop(vm, 1);
+    if (be_ismodule(vm, -1)) {
+        if (be_getmember(vm, -1, "init")) {
+            /* found, call it with current module as parameter */
+            be_pushvalue(vm, -2);
+            be_call(vm, 1);
+            /* the result of init() is cached and returned */
+            be_pop(vm, 1);
+            be_remove(vm, -2);  /* remove initial module */
+        } else {
+            be_pop(vm, 1);
+        }
     }
-    be_pop(vm, 1);
 }
 
 /* load module to vm->top */
@@ -273,9 +277,9 @@ int be_module_load(bvm *vm, bstring *path)
         if (res == BE_IO_ERROR)
             res = load_package(vm, path);
         if (res == BE_OK) {
-            cache_module(vm, path);
             /* on first load of the module, try running the '()' function */
             module_init(vm);
+            cache_module(vm, path);
         }
     }
     return res;

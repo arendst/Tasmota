@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 - Command ``SetOption129 1`` to enable split total energy results (#13030)
 - Commands ``EnergyTotal<phase>``, ``EnergyToday<phase>`` and ``EnergyYesterday<phase>`` to (re)set energy values
 - Commands ``EnergyUsage`` and ``EnergyExport`` to (re)set energy usage and export values
+- Berry add module ``import persist``
 
 ### Breaking Changed
 - ESP32 LVGL updated to v8.0.2
