@@ -237,7 +237,8 @@ be_define_const_str(bytes, "bytes", 1706151940u, 0, 5, &be_const_str_lv_arc);
 be_define_const_str(lv_arc, "lv_arc", 4170125384u, 0, 6, &be_const_str_nil);
 be_define_const_str(nil, "nil", 228849900u, 63, 3, NULL);
 be_define_const_str(NRG_SEL_INV, "NRG_SEL_INV", 3567431069u, 0, 11, &be_const_str_SYMBOL_LEFT);
-be_define_const_str(SYMBOL_LEFT, "SYMBOL_LEFT", 1563517575u, 0, 11, NULL);
+be_define_const_str(SYMBOL_LEFT, "SYMBOL_LEFT", 1563517575u, 0, 11, &be_const_str_has);
+be_define_const_str(has, "has", 3988721635u, 0, 3, NULL);
 be_define_const_str(DDSU666_TX, "DDSU666_TX", 1880604150u, 0, 10, NULL);
 be_define_const_str(sin, "sin", 3761252941u, 0, 3, &be_const_str_sqrt);
 be_define_const_str(sqrt, "sqrt", 2112764879u, 0, 4, &be_const_str_time_reached);
@@ -1028,6 +1029,6 @@ static const bstring* const m_string_table[] = {
 
 static const struct bconststrtab m_const_string_table = {
     .size = 334,
-    .count = 668,
+    .count = 669,
     .table = m_string_table
 };

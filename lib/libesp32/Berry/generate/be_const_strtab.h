@@ -238,6 +238,7 @@ extern const bcstring be_const_str_lv_arc;
 extern const bcstring be_const_str_nil;
 extern const bcstring be_const_str_NRG_SEL_INV;
 extern const bcstring be_const_str_SYMBOL_LEFT;
+extern const bcstring be_const_str_has;
 extern const bcstring be_const_str_DDSU666_TX;
 extern const bcstring be_const_str_sin;
 extern const bcstring be_const_str_sqrt;
