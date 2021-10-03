@@ -112,7 +112,8 @@ void Sdm72Every250ms(void)
 
       ++Sdm72.read_state %= nitems(sdm72_register);
       if (0 == Sdm72.read_state && !isnan(Sdm72.total_active)) {
-        EnergyUpdateTotal(Sdm72.total_active, true);
+        Energy.import_active[0] = Sdm72.total_active;
+        EnergyUpdateTotal();
       }
     }
   } // end data ready

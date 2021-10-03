@@ -908,7 +908,7 @@ bool SetoptionDecode(uint32_t index, uint32_t *ptype, uint32_t *pindex) {
       *ptype = 4;
       *pindex = index -82;      // 0 .. 31
     }
-    else {                                 // SetOption114 .. 145 = Settings->flag5
+    else {                      // SetOption114 .. 145 = Settings->flag5
       *ptype = 5;
       *pindex = index -114;     // 0 .. 31
     }
