@@ -291,6 +291,7 @@ class Tasmota
     import introspect
     if event_type=='every_50ms' self.run_deferred() end  #- first run deferred events -#
 
+    var done = false
     if event_type=='cmd' return self.exec_cmd(cmd, idx, payload)
     elif event_type=='rule' return self.exec_rules(payload)
     elif event_type=='gc' return self.gc()
@@ -299,16 +300,23 @@ class Tasmota
         var f = introspect.get(d, event_type)   # try to match a function or method with the same name
         if type(f) == 'function'
           try
-            var done = f(d, cmd, idx, payload, raw)
-            if done == true return true end
+            done = f(d, cmd, idx, payload, raw)
+            if done break end
           except .. as e,m
             import string
             print(string.format("BRY: Exception> '%s' - %s", e, m))
           end
         end
       end
-      return false
     end
+
+    # save persist
+    if event_type=='save_before_restart'
+      import persist
+      persist.save()
+    end
+
+    return done
   end
 
   def add_driver(d)
