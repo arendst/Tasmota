@@ -37,8 +37,6 @@
 
 #define XNRG_14                     14
 
-//#define DEBUG_BL09XX
-
 #define BL0939_PREF                 713       // =(4046*1*0,51*1000)/(1,218*1,218*(390*5+0,51)) = 713,105
 #define BL0939_UREF                 17159     // =(79931*0,51*1000)/(1,218*(390*5+0,51)) = 17158,92
 #define BL0939_IREF                 266013    // =(324004*1)/1,218 = 266013,14
@@ -47,23 +45,15 @@
 #define BL0940_UREF                 33000
 #define BL0940_IREF                 275000
 
-#define BL0942_PREF                 596
-#define BL0942_UREF                 15187
-#define BL0942_IREF                 251213
-
 #define BL09XX_PULSES_NOT_INITIALIZED  -1
 
-#define BL0939_BUFFER_SIZE          36
-#define BL0940_BUFFER_SIZE          36
-#define BL0942_BUFFER_SIZE          23
+#define BL09XX_BUFFER_SIZE          36
 
 #define BL0939_MODEL                39
 #define BL0940_MODEL                40
-#define BL0942_MODEL                42
 
 #define BL0939_ADDRESS              0x05
 #define BL0940_ADDRESS              0x00
-#define BL0942_ADDRESS              0x08
 
 #define BL09XX_WRITE_COMMAND        0xA0  // 0xA8 according to documentation
 #define BL09XX_REG_I_FAST_RMS_CTRL  0x10
@@ -89,26 +79,22 @@ struct BL09XX {
   long cf_pulses[2] = { 0, };
   long cf_pulses_last_time[2] = { BL09XX_PULSES_NOT_INITIALIZED, BL09XX_PULSES_NOT_INITIALIZED};
   float temperature;
+  int byte_counter = 0;
   uint16_t tps1 = 0;
   uint8_t *rx_buffer = nullptr;
-  uint8_t buffer_size = 0;
-  uint8_t byte_counter = 0;
-  uint8_t address = 0;
-  uint8_t model = 0;
-  uint8_t rx_pin;
+  uint8_t address;
+  uint8_t model;
   bool received = false;
 } Bl09XX;
 
-const uint8_t bl09xx_init[5][4] = {
-  { BL09XX_REG_SOFT_RESET,      0x5A, 0x5A, 0x5A },   // Reset to default
-  { BL09XX_REG_USR_WRPROT,      0x55, 0x00, 0x00 },   // Enable User Operation Write
-  { BL09XX_REG_MODE,            0x00, 0x10, 0x00 },   // 0x0100 = CF_UNABLE energy pulse, AC_FREQ_SEL 50Hz, RMS_UPDATE_SEL 800mS
-  { BL09XX_REG_TPS_CTRL,        0xFF, 0x47, 0x00 },   // 0x47FF = Over-current and leakage alarm on, Automatic temperature measurement, Interval 100mS
-  { BL09XX_REG_I_FAST_RMS_CTRL, 0x1C, 0x18, 0x00 }  // 0x181C = Half cycle, Fast RMS threshold 6172
-};
+const uint8_t bl09xx_init[5][6] = {
+  { BL09XX_WRITE_COMMAND, BL09XX_REG_SOFT_RESET,      0x5A, 0x5A, 0x5A, 0x38 },   // Reset to default
+  { BL09XX_WRITE_COMMAND, BL09XX_REG_USR_WRPROT,      0x55, 0x00, 0x00, 0xF0 },   // Enable User Operation Write
+  { BL09XX_WRITE_COMMAND, BL09XX_REG_MODE,            0x00, 0x10, 0x00, 0x37 },   // 0x0100 = CF_UNABLE energy pulse, AC_FREQ_SEL 50Hz, RMS_UPDATE_SEL 800mS
+  { BL09XX_WRITE_COMMAND, BL09XX_REG_TPS_CTRL,        0xFF, 0x47, 0x00, 0xFE },   // 0x47FF = Over-current and leakage alarm on, Automatic temperature measurement, Interval 100mS
+  { BL09XX_WRITE_COMMAND, BL09XX_REG_I_FAST_RMS_CTRL, 0x1C, 0x18, 0x00, 0x1B }};  // 0x181C = Half cycle, Fast RMS threshold 6172
 
-
-bool Bl09XXDecode3940(void) {
+void Bl09XXReceived(void) {
   //  0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34
   // Sample from BL0940 (single channel)
   // 55 F2 03 00 00 00 00 7E 02 00 D4 B0 72 AC 01 00 00 00 00 02 01 00 00 00 00 00 00 00 BA 01 00 FE 03 00 83
@@ -128,8 +114,8 @@ bool Bl09XXDecode3940(void) {
   if ((Bl09XX.rx_buffer[0] != BL09XX_PACKET_HEADER) ||                                                   // Bad header
       (Bl09XX.tps1 && ((tps1 < (Bl09XX.tps1 -10)) || (tps1 > (Bl09XX.tps1 +10))))                        // Invalid temperature change
      ) {
-    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("BL9: Invalid data hd=%02X, tps1:%d"), Bl09XX.rx_buffer[0], tps1);
-    return false;
+    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("BL9: Invalid data"));
+    return;
   }
 
   Bl09XX.tps1 = tps1;
@@ -153,72 +139,21 @@ bool Bl09XXDecode3940(void) {
     Bl09XX.cf_pulses[1] = abs(tmp >> 8);                                                                    // CFB_CNT unsigned
   }
 
-#ifdef DEBUG_BL09XX
   AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("BL9: U %d, I %d/%d, P %d/%d, C %d/%d, T %d"),
     Bl09XX.voltage, Bl09XX.current[0], Bl09XX.current[1], Bl09XX.power[0], Bl09XX.power[1], Bl09XX.cf_pulses[0], Bl09XX.cf_pulses[1], Bl09XX.tps1);
-#endif
 
-  return true;
-}
-
-bool Bl09XXDecode42(void) {
-  //  0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22
-  // Hd Current- Voltage- IFRms--- Power--- CF------ Freq- 00 St 00 00 Ck
-  // 55 A3 B9 00 9E 4C 36 93 43 00 F4 98 FF 99 00 00 16 4E 00 01 01 00
-  // U 3558558, I 47523, P 26380, C 153
-  // 55 AC B9 00 79 4D 36 C4 43 00 EF 98 FF 99 00 00 16 4E 00 01 01 00
-  // U 3558777, I 47532, P 26385, C 153
-  // 55 40 BA 00 2D 50 36 FE 43 00 96 98 FF 99 00 00 16 4E 00 01 01 00
-  // U 3559469, I 47680, P 26474, C 153
-  // 55 91 B9 00 33 4C 36 FB 43 00 FC 98 FF 99 00 00 1E 4E 00 21 01 00
-  // U 3558451, I 47505, P 26372, C 153
-  // 55 AF B9 00 05 51 36 D1 43 00 E4 98 FF 99 00 00 1E 4E 00 21 01 00
-  // U 3559685, I 47535, P 26396, C 153
-  // 55 21 BA 00 3A 5E 36 10 44 00 8B 98 FF 99 00 00 16 4E 00 01 01 00
-  // U 3563066, I 47649, P 26485, C 153
-  // 55 BE B9 00 B2 55 36 9D 42 00 D7 98 FF 99 00 00 1E 4E 00 21 01 00
-  // U 3560882, I 47550, P 26409, C 153
-  // All above from a single test with a 40W buld on 230V
-
-  if (Bl09XX.rx_buffer[0] != BL09XX_PACKET_HEADER) {
-    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("BL9: Invalid data hd=%02X"), Bl09XX.rx_buffer[0]);
-    return false;
-  }
-
-  Bl09XX.voltage    = Bl09XX.rx_buffer[6] << 16 | Bl09XX.rx_buffer[5] << 8 | Bl09XX.rx_buffer[4];           // V_RMS unsigned
-
-  int32_t tmp;
-  Bl09XX.current[0] = Bl09XX.rx_buffer[3]  << 16 | Bl09XX.rx_buffer[2]  << 8 | Bl09XX.rx_buffer[1];         // IA_RMS unsigned
-  tmp = Bl09XX.rx_buffer[12] << 24 | Bl09XX.rx_buffer[11] << 16 | Bl09XX.rx_buffer[10] << 8;                // WATT_A signed
-  Bl09XX.power[0] = abs(tmp >> 8);                                                                          // WATT_A unsigned
-  tmp = Bl09XX.rx_buffer[15] << 24 | Bl09XX.rx_buffer[14] << 16 | Bl09XX.rx_buffer[13] << 8;                // CFA_CNT signed
-  Bl09XX.cf_pulses[0] = abs(tmp >> 8);                                                                      // CFA_CNT unsigned
-
-#ifdef DEBUG_BL09XX
-  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("BL9: U %d, I %d, P %d, C %d"),
-    Bl09XX.voltage, Bl09XX.current[0], Bl09XX.power[0], Bl09XX.cf_pulses[0]);
-#endif
-
-  return true;
-}
-
-void Bl09XXUpdateEnergy() {
   if (Energy.power_on) {  // Powered on
     Energy.voltage[0] = (float)Bl09XX.voltage / Settings->energy_voltage_calibration;
-    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("BL9: Voltage %f, Temp %f"), Energy.voltage[0], Bl09XX.temperature);
+    //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("BL9: Voltage %f, Temp %f"), Energy.voltage[0], Bl09XX.temperature);
     for (uint32_t chan = 0; chan < Energy.phase_count; chan++) {
       if (Bl09XX.power[chan] > Settings->energy_power_calibration) {                                   // We need at least 1W
         Energy.active_power[chan] = (float)Bl09XX.power[chan] / Settings->energy_power_calibration;
         Energy.current[chan] = (float)Bl09XX.current[chan] / Settings->energy_current_calibration;
-#ifdef DEBUG_BL09XX
-        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("BL9: Chan[%d] I %f, P %f"), chan, Energy.current[chan], Energy.active_power[chan]);
-#endif
+        //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("BL9: Chan[%d] I %f, P %f"), chan, Energy.current[chan], Energy.active_power[chan]);
       } else {
         Energy.active_power[chan] = 0;
         Energy.current[chan] = 0;
-#ifdef DEBUG_BL09XX
-        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("BL9: Chan[%d] I zero, P zero"), chan);
-#endif
+        //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("BL9: Chan[%d] I zero, P zero"), chan);
       }
     }
   } else {  // Powered off
@@ -228,6 +163,7 @@ void Bl09XXUpdateEnergy() {
     Energy.current[0] = Energy.current[1] = 0;
   }
 }
+
 void Bl09XXSerialInput(void) {
   while (Bl09XXSerial->available()) {
     yield();
@@ -238,29 +174,22 @@ void Bl09XXSerialInput(void) {
     }
     if (Bl09XX.received) {
       Bl09XX.rx_buffer[Bl09XX.byte_counter++] = serial_in_byte;
-      if (Bl09XX.buffer_size == Bl09XX.byte_counter) {
+      if (BL09XX_BUFFER_SIZE == Bl09XX.byte_counter) {
 
-#ifdef DEBUG_BL09XX
-        AddLogBuffer(LOG_LEVEL_DEBUG_MORE, Bl09XX.rx_buffer, Bl09XX.buffer_size -1);
-#endif
+        AddLogBuffer(LOG_LEVEL_DEBUG_MORE, Bl09XX.rx_buffer, BL09XX_BUFFER_SIZE -1);
+
         uint8_t checksum = BL09XX_READ_COMMAND | Bl09XX.address;
-        for (uint32_t i = 0; i < Bl09XX.buffer_size -2; i++) { checksum += Bl09XX.rx_buffer[i]; }
+        for (uint32_t i = 0; i < BL09XX_BUFFER_SIZE -2; i++) { checksum += Bl09XX.rx_buffer[i]; }
         checksum ^= 0xFF;
-        if (checksum == Bl09XX.rx_buffer[Bl09XX.buffer_size-1]) {
+        if (checksum == Bl09XX.rx_buffer[34]) {
           Energy.data_valid[0] = 0;
-          bool ok;
-          if (BL0942_MODEL == Bl09XX.model)
-            ok = Bl09XXDecode42();
-          else
-            ok = Bl09XXDecode3940();
-          if (ok)
-            Bl09XXUpdateEnergy();
+          Bl09XXReceived();
           Bl09XX.received = false;
           return;
         } else {
-          AddLog(LOG_LEVEL_DEBUG, PSTR("BL9: " D_CHECKSUM_FAILURE "received 0x%02X instead of 0x%02X"), Bl09XX.rx_buffer[34], checksum);
+          //AddLog(LOG_LEVEL_DEBUG, PSTR("BL9: " D_CHECKSUM_FAILURE "received 0x%02X instead of 0x%02X"), Bl09XX.rx_buffer[34], checksum);
           do {  // Sync buffer with data (issue #1907 and #3425)
-            memmove(Bl09XX.rx_buffer, Bl09XX.rx_buffer +1, Bl09XX.buffer_size -1);
+            memmove(Bl09XX.rx_buffer, Bl09XX.rx_buffer +1, BL09XX_BUFFER_SIZE -1);
             Bl09XX.byte_counter--;
           } while ((Bl09XX.byte_counter > 1) && (BL09XX_PACKET_HEADER != Bl09XX.rx_buffer[0]));
           if (BL09XX_PACKET_HEADER != Bl09XX.rx_buffer[0]) {
@@ -296,88 +225,55 @@ void Bl09XXEverySecond(void) {
   Bl09XXSerial->write(BL09XX_FULL_PACKET);
 }
 
-void Bl09XXInit(void) {
+void Bl09XXSnsInit(void) {
   // Software serial init needs to be done here as earlier (serial) interrupts may lead to Exceptions
-  Bl09XXSerial = new TasmotaSerial(Bl09XX.rx_pin, Pin(GPIO_TXD), 1);
+  int rx_pin = Pin((BL0939_MODEL == Bl09XX.model) ? GPIO_BL0939_RX : GPIO_BL0940_RX);
+  Bl09XXSerial = new TasmotaSerial(rx_pin, Pin(GPIO_TXD), 1);
   if (Bl09XXSerial->begin(4800, 1)) {
     if (Bl09XXSerial->hardwareSerial()) {
       ClaimSerial();
     }
     if (HLW_UREF_PULSE == Settings->energy_voltage_calibration) {
-      switch (Bl09XX.model) {
-        case BL0939_MODEL:
-          Settings->energy_voltage_calibration = BL0939_UREF;
-          Settings->energy_current_calibration = BL0939_IREF;
-          Settings->energy_power_calibration   = BL0939_PREF;
-          break;
-        case BL0940_MODEL:
-          Settings->energy_voltage_calibration = BL0940_UREF;
-          Settings->energy_current_calibration = BL0940_IREF;
-          Settings->energy_power_calibration   = BL0940_PREF;
-          break;
-        case BL0942_MODEL:
-        default:
-          Settings->energy_voltage_calibration = BL0942_UREF;
-          Settings->energy_current_calibration = BL0942_IREF;
-          Settings->energy_power_calibration   = BL0942_PREF;
-          break;
-      }
+      Settings->energy_voltage_calibration = (BL0939_MODEL == Bl09XX.model) ? BL0939_UREF : BL0940_UREF;
+      Settings->energy_current_calibration = (BL0939_MODEL == Bl09XX.model) ? BL0939_IREF : BL0940_IREF;
+      Settings->energy_power_calibration = (BL0939_MODEL == Bl09XX.model) ? BL0939_PREF : BL0940_PREF;
     }
     if ((BL0940_MODEL == Bl09XX.model) && (Settings->energy_current_calibration < (BL0940_IREF / 20))) {
       Settings->energy_current_calibration *= 100;
     }
 
-    if (BL0942_MODEL != Bl09XX.model) {
-#ifdef DEBUG_BL09XX
-      AddLog(LOG_LEVEL_DEBUG, PSTR("BL9: Send Init string for model BL09%02d"), Bl09XX.model);
-#endif
-      Energy.use_overtemp = true;                 // Use global temperature for overtemp detection
-      for (uint32_t i = 0; i < 5; i++) {
-        uint8_t crc, byte;
-        crc = byte = BL09XX_WRITE_COMMAND | Bl09XX.address;
-        Bl09XXSerial->write(byte);
-        for (uint32_t j = 0; j < 4; j++) {
-          crc += byte = bl09xx_init[i][j];
-          Bl09XXSerial->write(byte);
-        }
-        Bl09XXSerial->write(0xFF ^ crc);
-        delay(1);
+    Energy.use_overtemp = true;                 // Use global temperature for overtemp detection
+
+    for (uint32_t i = 0; i < 5; i++) {
+      Bl09XXSerial->write(bl09xx_init[i][0] | Bl09XX.address);
+      for (uint32_t j = 1; j < 6; j++) {
+        Bl09XXSerial->write(bl09xx_init[i][j]);
+//        Bl09XXSerial->write(pgm_read_byte(bl09xx_init + (6 * i) + j));  // Wrong byte order!
       }
-    } else {
-      Energy.use_overtemp = false;                 // Use global temperature for overtemp detection
+      delay(1);
     }
+
   } else {
     TasmotaGlobal.energy_driver = ENERGY_NONE;
   }
 }
 
-void Bl09XXPreInit(void) {
+void Bl09XXDrvInit(void) {
   if (PinUsed(GPIO_BL0939_RX) && PinUsed(GPIO_TXD)) {
     Bl09XX.model = BL0939_MODEL;
     Bl09XX.address = BL0939_ADDRESS;
-    Bl09XX.buffer_size = BL0939_BUFFER_SIZE;
-    Bl09XX.rx_pin = Pin(GPIO_BL0939_RX);
   } else if (PinUsed(GPIO_BL0940_RX) && PinUsed(GPIO_TXD)) {
     Bl09XX.model = BL0940_MODEL;
     Bl09XX.address = BL0940_ADDRESS;
-    Bl09XX.buffer_size = BL0940_BUFFER_SIZE;
-    Bl09XX.rx_pin = Pin(GPIO_BL0940_RX);
-  }
-   else if (PinUsed(GPIO_BL0942_RX) && PinUsed(GPIO_TXD)) {
-    Bl09XX.model = BL0942_MODEL;
-    Bl09XX.address = BL0942_ADDRESS;
-    Bl09XX.buffer_size = BL0942_BUFFER_SIZE;
-    Bl09XX.rx_pin = Pin(GPIO_BL0942_RX);
   }
   if (Bl09XX.model) {
-    Bl09XX.rx_buffer = (uint8_t*)(malloc(Bl09XX.buffer_size));
+    Bl09XX.rx_buffer = (uint8_t*)(malloc(BL09XX_BUFFER_SIZE));
     if (Bl09XX.rx_buffer != nullptr) {
       Energy.voltage_common = true;               // Use common voltage
       Energy.frequency_common = true;             // Use common frequency
       Energy.use_overtemp = true;                 // Use global temperature for overtemp detection
       Energy.phase_count = (BL0939_MODEL == Bl09XX.model) ? 2 : 1;  // Handle two channels as two phases
       TasmotaGlobal.energy_driver = XNRG_14;
-      AddLog(LOG_LEVEL_DEBUG,PSTR("BL9: Enabling BL09%02d"), Bl09XX.model);
     }
   }
 }
@@ -409,22 +305,21 @@ bool Bl09XXCommand(void) {
 }
 
 void Bl09XXShow(bool json) {
-  if (BL0942_MODEL != Bl09XX.model) {
-    if (json) {
-      ResponseAppend_P(JSON_SNS_F_TEMP, "BL09XX", Settings->flag2.temperature_resolution, &Bl09XX.temperature);
-      if (0 == TasmotaGlobal.tele_period) {
+  if (json) {
+    ResponseAppend_P(JSON_SNS_F_TEMP, "BL09XX", Settings->flag2.temperature_resolution, &Bl09XX.temperature);
+    if (0 == TasmotaGlobal.tele_period) {
 #ifdef USE_DOMOTICZ
-        DomoticzFloatSensor(DZ_TEMP, Bl09XX.temperature);
+      DomoticzFloatSensor(DZ_TEMP, Bl09XX.temperature);
 #endif  // USE_DOMOTICZ
 #ifdef USE_KNX
-        KnxSensor(KNX_TEMPERATURE, Bl09XX.temperature);
+      KnxSensor(KNX_TEMPERATURE, Bl09XX.temperature);
 #endif // USE_KNX
-      }
-#ifdef USE_WEBSERVER
-    } else {
-      WSContentSend_Temp("", Bl09XX.temperature);
-#endif  // USE_WEBSERVER
     }
+#ifdef USE_WEBSERVER
+  } else {
+    WSContentSend_Temp("", Bl09XX.temperature);
+#endif  // USE_WEBSERVER
+
   }
 }
 
@@ -454,10 +349,10 @@ bool Xnrg14(uint8_t function) {
       result = Bl09XXCommand();
       break;
     case FUNC_INIT:
-      Bl09XXInit();
+      Bl09XXSnsInit();
       break;
     case FUNC_PRE_INIT:
-      Bl09XXPreInit();
+      Bl09XXDrvInit();
       break;
   }
   return result;
