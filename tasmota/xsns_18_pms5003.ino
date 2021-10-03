@@ -39,6 +39,8 @@
 #ifndef MIN_INTERVAL_PERIOD
 #define MIN_INTERVAL_PERIOD 60    // minimum interval period in seconds required for passive mode
 #endif
+#define PMS3003FRAMELEN 20		//framelen
+#define PMS5003FRAMELEN 28
 
 TasmotaSerial *PmsSerial;
 
@@ -72,13 +74,14 @@ struct pmsX003data {
   uint16_t framelen;
   uint16_t pm10_standard, pm25_standard, pm100_standard;
   uint16_t pm10_env, pm25_env, pm100_env;
-#ifdef PMS_MODEL_PMS3003
-  uint16_t reserved1, reserved2, reserved3;
-#else
-  uint16_t particles_03um, particles_05um, particles_10um, particles_25um, particles_50um, particles_100um;
+  //When PMS3003, the following line are reserved
+  uint16_t particles_03um, particles_05um, particles_10um;
+  //When PMS3003, the following two line are non-existing
+  uint16_t particles_25um, particles_50um, particles_100um;
   uint16_t unused;
-#endif  // PMS_MODEL_PMS3003
+  //Except for the checksum
   uint16_t checksum;
+  uint8_t ok;
 } pms_data;
 
 /*********************************************************************************************/
@@ -90,6 +93,28 @@ size_t PmsSendCmd(uint8_t command_id)
 
 /*********************************************************************************************/
 
+void MarshallFirstRead(void)
+{
+	pms_data.framelen=ntohs(pms_data.framelen);
+	pms_data.pm10_standard=ntohs(pms_data.pm10_standard);
+	pms_data.pm25_standard=ntohs(pms_data.pm25_standard);
+	pms_data.pm100_standard=ntohs(pms_data.pm100_standard);
+	pms_data.pm10_env=ntohs(pms_data.pm10_env);
+	pms_data.pm25_env=ntohs(pms_data.pm25_env);
+	pms_data.pm100_env=ntohs(pms_data.pm100_env);
+	pms_data.particles_03um=ntohs(pms_data.particles_03um);
+	pms_data.particles_05um=ntohs(pms_data.particles_05um);
+	pms_data.particles_10um=ntohs(pms_data.particles_10um);
+	//The checksum for the pms3003 is stored in this section before being copied to checksum
+	pms_data.particles_25um=ntohs(pms_data.particles_25um);
+}
+void MarshallSecondRead(void)
+{
+	pms_data.particles_50um=ntohs(pms_data.particles_50um);
+	pms_data.particles_100um=ntohs(pms_data.particles_100um);
+	pms_data.unused=ntohs(pms_data.unused);
+	pms_data.checksum=ntohs(pms_data.checksum);
+}
 bool PmsReadData(void)
 {
   if (! PmsSerial->available()) {
@@ -98,65 +123,61 @@ bool PmsReadData(void)
   while ((PmsSerial->peek() != 0x42) && PmsSerial->available()) {
     PmsSerial->read();
   }
-#ifdef PMS_MODEL_PMS3003
-  if (PmsSerial->available() < 24) {
-#else
-  if (PmsSerial->available() < 32) {
-#endif  // PMS_MODEL_PMS3003
-    return false;
+
+  //4 : 2 byte header + 2 byte checksum
+  if (PmsSerial->available() < PMS3003FRAMELEN+4) {
+	  return false;
+  }
+  uint8_t header[2];
+  PmsSerial->readBytes(header,2);
+  if (header[0]!=0x42 or header[1]!=0x4d)
+  {
+	  return false;
+  }
+  pms_data.ok=0;
+  PmsSerial->readBytes((uint8_t*)&pms_data,PMS3003FRAMELEN+2);
+  MarshallFirstRead();
+  if (pms_data.framelen ==PMS3003FRAMELEN) //PMS3003
+  {
+	  pms_data.checksum=pms_data.particles_25um;
+	  AddLogBuffer(LOG_LEVEL_DEBUG_MORE, (uint8_t*)&pms_data, PMS3003FRAMELEN+2);
+  }else if(pms_data.framelen == PMS5003FRAMELEN) //PMS5003-PMS7003
+  {
+	  if (PmsSerial->available()<8)
+	  {
+		  //Not enought data
+    AddLog(LOG_LEVEL_DEBUG, PSTR("PMS: Not enough data for %d bytes "),pms_data.framelen);
+		  return false;
+	  }else{
+		  PmsSerial->readBytes(((uint8_t*)&pms_data)+PMS3003FRAMELEN+2,8);
+		  MarshallSecondRead();
+		  AddLogBuffer(LOG_LEVEL_DEBUG_MORE, (uint8_t*)&pms_data, PMS5003FRAMELEN+2);
+	  }
+  }else{
+    AddLog(LOG_LEVEL_DEBUG, PSTR("PMS: OUT bad framelen2  %d"),pms_data.framelen);
+	  AddLogBuffer(LOG_LEVEL_DEBUG_MORE, (uint8_t*)&pms_data, PMS5003FRAMELEN+2);
+	  return false;
   }
 
-#ifdef PMS_MODEL_PMS3003
-  uint8_t buffer[24];
-  PmsSerial->readBytes(buffer, 24);
-#else
-  uint8_t buffer[32];
-  PmsSerial->readBytes(buffer, 32);
-#endif  // PMS_MODEL_PMS3003
-  uint16_t sum = 0;
+  uint16_t sum = 0x42;
+  sum+=0x4d;
   PmsSerial->flush();  // Make room for another burst
-
-#ifdef PMS_MODEL_PMS3003
-  AddLogBuffer(LOG_LEVEL_DEBUG_MORE, buffer, 24);
-#else
-  AddLogBuffer(LOG_LEVEL_DEBUG_MORE, buffer, 32);
-#endif  // PMS_MODEL_PMS3003
-
-  // get checksum ready
-#ifdef PMS_MODEL_PMS3003
-  for (uint32_t i = 0; i < 22; i++) {
-#else
-  for (uint32_t i = 0; i < 30; i++) {
-#endif  // PMS_MODEL_PMS3003
-    sum += buffer[i];
+  uint8_t* pms_data_in_byte=(uint8_t*)&pms_data;
+  //We check against PMS5003FRAMELEN to prevent any incorrect framelen
+  for (uint16_t i=0; i<pms_data.framelen && pms_data.framelen<=PMS5003FRAMELEN;++i)
+  {
+	  sum+=pms_data_in_byte[i];
   }
-  // The data comes in endian'd, this solves it so it works on all platforms
-#ifdef PMS_MODEL_PMS3003
-  uint16_t buffer_u16[12];
-  for (uint32_t i = 0; i < 12; i++) {
-#else
-  uint16_t buffer_u16[15];
-  for (uint32_t i = 0; i < 15; i++) {
-#endif  // PMS_MODEL_PMS3003
-    buffer_u16[i] = buffer[2 + i*2 + 1];
-    buffer_u16[i] += (buffer[2 + i*2] << 8);
-  }
-#ifdef PMS_MODEL_PMS3003
-  if (sum != buffer_u16[10]) {
-#else
-  if (sum != buffer_u16[14]) {
-#endif  // PMS_MODEL_PMS3003
+//All tasmota platform are network endian (arm/cortex/extensa), so uint16_t comparison are OK
+if (pms_data.checksum!=sum)
+{
+    AddLog(LOG_LEVEL_DEBUG, PSTR("PMS: checksum %d %d" ),pms_data.checksum,sum);
     AddLog(LOG_LEVEL_DEBUG, PSTR("PMS: " D_CHECKSUM_FAILURE));
     return false;
-  }
-
-#ifdef PMS_MODEL_PMS3003
-  memcpy((void *)&pms_data, (void *)buffer_u16, 22);
-#else
-  memcpy((void *)&pms_data, (void *)buffer_u16, 30);
-#endif  // PMS_MODEL_PMS3003
+}
+ 
   Pms.valid = 10;
-
+ pms_data.ok=1;
   if (!Pms.discovery_triggered) {
     TasmotaGlobal.discovery_counter = 1;      // Force discovery
     Pms.discovery_triggered = true;
@@ -269,45 +290,43 @@ void PmsInit(void)
 }
 
 #ifdef USE_WEBSERVER
-#ifdef PMS_MODEL_PMS3003
-const char HTTP_PMS3003_SNS[] PROGMEM =
+const char HTTP_PMSX003_SNS[] PROGMEM =
 //  "{s}PMS3003 " D_STANDARD_CONCENTRATION " 1 " D_UNIT_MICROMETER "{m}%d " D_UNIT_MICROGRAM_PER_CUBIC_METER "{e}"
 //  "{s}PMS3003 " D_STANDARD_CONCENTRATION " 2.5 " D_UNIT_MICROMETER "{m}%d " D_UNIT_MICROGRAM_PER_CUBIC_METER "{e}"
 //  "{s}PMS3003 " D_STANDARD_CONCENTRATION " 10 " D_UNIT_MICROMETER "{m}%d " D_UNIT_MICROGRAM_PER_CUBIC_METER "{e}"
-  "{s}PMS3003 " D_ENVIRONMENTAL_CONCENTRATION " 1 " D_UNIT_MICROMETER "{m}%d " D_UNIT_MICROGRAM_PER_CUBIC_METER "{e}"
-  "{s}PMS3003 " D_ENVIRONMENTAL_CONCENTRATION " 2.5 " D_UNIT_MICROMETER "{m}%d " D_UNIT_MICROGRAM_PER_CUBIC_METER "{e}"
-  "{s}PMS3003 " D_ENVIRONMENTAL_CONCENTRATION " 10 " D_UNIT_MICROMETER "{m}%d " D_UNIT_MICROGRAM_PER_CUBIC_METER "{e}";
-#else
+  "{s}PMSX003 " D_ENVIRONMENTAL_CONCENTRATION " 1 " D_UNIT_MICROMETER "{m}%d " D_UNIT_MICROGRAM_PER_CUBIC_METER "{e}"
+  "{s}PMSX003 " D_ENVIRONMENTAL_CONCENTRATION " 2.5 " D_UNIT_MICROMETER "{m}%d " D_UNIT_MICROGRAM_PER_CUBIC_METER "{e}"
+  "{s}PMSX003 " D_ENVIRONMENTAL_CONCENTRATION " 10 " D_UNIT_MICROMETER "{m}%d " D_UNIT_MICROGRAM_PER_CUBIC_METER "{e}";
 const char HTTP_PMS5003_SNS[] PROGMEM =
 //  "{s}PMS5003 " D_STANDARD_CONCENTRATION " 1 " D_UNIT_MICROMETER "{m}%d " D_UNIT_MICROGRAM_PER_CUBIC_METER "{e}"
 //  "{s}PMS5003 " D_STANDARD_CONCENTRATION " 2.5 " D_UNIT_MICROMETER "{m}%d " D_UNIT_MICROGRAM_PER_CUBIC_METER "{e}"
 //  "{s}PMS5003 " D_STANDARD_CONCENTRATION " 10 " D_UNIT_MICROMETER "{m}%d " D_UNIT_MICROGRAM_PER_CUBIC_METER "{e}"
-  "{s}PMS5003 " D_ENVIRONMENTAL_CONCENTRATION " 1 " D_UNIT_MICROMETER "{m}%d " D_UNIT_MICROGRAM_PER_CUBIC_METER "{e}"
-  "{s}PMS5003 " D_ENVIRONMENTAL_CONCENTRATION " 2.5 " D_UNIT_MICROMETER "{m}%d " D_UNIT_MICROGRAM_PER_CUBIC_METER "{e}"
-  "{s}PMS5003 " D_ENVIRONMENTAL_CONCENTRATION " 10 " D_UNIT_MICROMETER "{m}%d " D_UNIT_MICROGRAM_PER_CUBIC_METER "{e}"
   "{s}PMS5003 " D_PARTICALS_BEYOND " 0.3 " D_UNIT_MICROMETER "{m}%d " D_UNIT_PARTS_PER_DECILITER "{e}"
   "{s}PMS5003 " D_PARTICALS_BEYOND " 0.5 " D_UNIT_MICROMETER "{m}%d " D_UNIT_PARTS_PER_DECILITER "{e}"
   "{s}PMS5003 " D_PARTICALS_BEYOND " 1 " D_UNIT_MICROMETER "{m}%d " D_UNIT_PARTS_PER_DECILITER "{e}"
   "{s}PMS5003 " D_PARTICALS_BEYOND " 2.5 " D_UNIT_MICROMETER "{m}%d " D_UNIT_PARTS_PER_DECILITER "{e}"
   "{s}PMS5003 " D_PARTICALS_BEYOND " 5 " D_UNIT_MICROMETER "{m}%d " D_UNIT_PARTS_PER_DECILITER "{e}"
   "{s}PMS5003 " D_PARTICALS_BEYOND " 10 " D_UNIT_MICROMETER "{m}%d " D_UNIT_PARTS_PER_DECILITER "{e}";      // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
-#endif  // PMS_MODEL_PMS3003
 #endif  // USE_WEBSERVER
 
 void PmsShow(bool json)
 {
-  if (Pms.valid) {
+  if (Pms.valid and pms_data.ok == 1) {
     if (json) {
-#ifdef PMS_MODEL_PMS3003
-      ResponseAppend_P(PSTR(",\"PMS3003\":{\"CF1\":%d,\"CF2.5\":%d,\"CF10\":%d,\"PM1\":%d,\"PM2.5\":%d,\"PM10\":%d}"),
-        pms_data.pm10_standard, pms_data.pm25_standard, pms_data.pm100_standard,
-        pms_data.pm10_env, pms_data.pm25_env, pms_data.pm100_env);
-#else
-      ResponseAppend_P(PSTR(",\"PMS5003\":{\"CF1\":%d,\"CF2.5\":%d,\"CF10\":%d,\"PM1\":%d,\"PM2.5\":%d,\"PM10\":%d,\"PB0.3\":%d,\"PB0.5\":%d,\"PB1\":%d,\"PB2.5\":%d,\"PB5\":%d,\"PB10\":%d}"),
-        pms_data.pm10_standard, pms_data.pm25_standard, pms_data.pm100_standard,
-        pms_data.pm10_env, pms_data.pm25_env, pms_data.pm100_env,
-        pms_data.particles_03um, pms_data.particles_05um, pms_data.particles_10um, pms_data.particles_25um, pms_data.particles_50um, pms_data.particles_100um);
-#endif  // PMS_MODEL_PMS3003
+		if (pms_data.framelen == PMS3003FRAMELEN )
+		{
+
+		  ResponseAppend_P(PSTR(",\"PMS3003\":{\"CF1\":%d,\"CF2.5\":%d,\"CF10\":%d,\"PM1\":%d,\"PM2.5\":%d,\"PM10\":%d}"),
+			pms_data.pm10_standard, pms_data.pm25_standard, pms_data.pm100_standard,
+			pms_data.pm10_env, pms_data.pm25_env, pms_data.pm100_env);
+		}
+		else{
+
+		  ResponseAppend_P(PSTR(",\"PMS5003\":{\"CF1\":%d,\"CF2.5\":%d,\"CF10\":%d,\"PM1\":%d,\"PM2.5\":%d,\"PM10\":%d,\"PB0.3\":%d,\"PB0.5\":%d,\"PB1\":%d,\"PB2.5\":%d,\"PB5\":%d,\"PB10\":%d}"),
+			pms_data.pm10_standard, pms_data.pm25_standard, pms_data.pm100_standard,
+			pms_data.pm10_env, pms_data.pm25_env, pms_data.pm100_env,
+			pms_data.particles_03um, pms_data.particles_05um, pms_data.particles_10um, pms_data.particles_25um, pms_data.particles_50um, pms_data.particles_100um);
+		}
 #ifdef USE_DOMOTICZ
       if (0 == TasmotaGlobal.tele_period) {
         DomoticzSensor(DZ_COUNT, pms_data.pm10_env);     // PM1
@@ -317,20 +336,15 @@ void PmsShow(bool json)
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
     } else {
-
-#ifdef PMS_MODEL_PMS3003
-        WSContentSend_PD(HTTP_PMS3003_SNS,
-//        pms_data.pm10_standard, pms_data.pm25_standard, pms_data.pm100_standard,
+        WSContentSend_PD(HTTP_PMSX003_SNS,
         pms_data.pm10_env, pms_data.pm25_env, pms_data.pm100_env);
-#else
+		if (pms_data.framelen == PMS5003FRAMELEN )
         WSContentSend_PD(HTTP_PMS5003_SNS,
-//        pms_data.pm10_standard, pms_data.pm25_standard, pms_data.pm100_standard,
-        pms_data.pm10_env, pms_data.pm25_env, pms_data.pm100_env,
         pms_data.particles_03um, pms_data.particles_05um, pms_data.particles_10um, pms_data.particles_25um, pms_data.particles_50um, pms_data.particles_100um);
-#endif  // PMS_MODEL_PMS3003
+		}
+
 #endif  // USE_WEBSERVER
     }
-  }
 }
 
 /*********************************************************************************************\
