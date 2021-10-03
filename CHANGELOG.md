@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased] - Development
 
 ## [9.5.0.9]
+### Added
+- Berry add module ``import persist``
+
 ### Breaking Changed
 - ESP32 LVGL updated to v8.0.2
 
