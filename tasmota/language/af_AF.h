@@ -950,6 +950,7 @@
 #define D_CREATE_NEW_FILE      "Create and edit new file"
 #define D_EDIT_FILE            "Edit File"
 #define D_CONFIRM_FILE_DEL     "Confirm file deletion"
+#define D_SHOW_HIDDEN_FILES    "Show hidden files"
 
 //xsns_67_as3935.ino
 #define D_AS3935_GAIN "versterking:"

@@ -950,6 +950,7 @@
 #define D_CREATE_NEW_FILE      "Datei erstellen und bearbeiten"
 #define D_EDIT_FILE            "Datei bearbeiten"
 #define D_CONFIRM_FILE_DEL     "Datei löschen bestätigen"
+#define D_SHOW_HIDDEN_FILES    "Show hidden files"
 
 //xsns_67_as3935.ino
 #define D_AS3935_GAIN "Umgebung:"
