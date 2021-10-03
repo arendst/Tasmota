@@ -259,7 +259,6 @@ uint8_t UfsReject(char *name) {
   }
 
   while (*name=='/') { name++; }
-  if (*name=='_') { return 1; }
   if (*name=='.') { return 1; }
 
   if (!strncasecmp(name, "SPOTLI~1", REJCMPL)) { return 1; }
