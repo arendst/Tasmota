@@ -124,6 +124,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - Support for IKEA VINDRIKTNING particle concentration sensor [#12976](https://github.com/arendst/Tasmota/issues/12976)
 - Support for Sensirion SCD40/SCD41 CO2 sensor [#13139](https://github.com/arendst/Tasmota/issues/13139)
 - Support for BL0939 energy monitor as used in ESP32 based Sonoff Dual R3 V2 Pow [#13195](https://github.com/arendst/Tasmota/issues/13195)
+- Support for BL0942 energy monitor [#13259](https://github.com/arendst/Tasmota/issues/13259)
 - Initial support for Tasmota Mesh (TasMesh) providing node/broker communication using ESP-NOW [#11939](https://github.com/arendst/Tasmota/issues/11939)
 - Initial support for Wi-Fi extender [#12784](https://github.com/arendst/Tasmota/issues/12784)
 - Rule event support as JSON payload [#12496](https://github.com/arendst/Tasmota/issues/12496)
