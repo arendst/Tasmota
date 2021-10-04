@@ -3066,18 +3066,17 @@ void MI32ShowTriggeredSensors(){
         if (alias && *alias){
           id = alias;
         } else {
-          sprintf(idstr, PSTR("%s%02x%02x%02x"),
+          snprintf_P(idstr, sizeof(idstr), PSTR("%s%02x%02x%02x"),
                 kMI32DeviceType[p->type-1],
                 p->MAC[3], p->MAC[4], p->MAC[5]);
         }
-        sprintf(SensorTopic, "tele/tasmota_ble/%s",
-          id);
+        snprintf_P(SensorTopic, sizeof(SensorTopic), PSTR("tele/tasmota_ble/%s"), id);
         MqttPublish(SensorTopic, Settings->flag.mqtt_sensor_retain);
+        AddLog(LOG_LEVEL_DEBUG, PSTR("M32: triggered %d %s"), sensor, ResponseData());
+        XdrvRulesProcess(0);
       } else {
-        MqttPublishPrefixTopic_P(STAT, PSTR(D_RSLT_SENSOR), Settings->flag.mqtt_sensor_retain);
+        MqttPublishPrefixTopicRulesProcess_P(STAT, PSTR(D_RSLT_SENSOR), Settings->flag.mqtt_sensor_retain);
       }
-      AddLog(LOG_LEVEL_DEBUG,PSTR("M32: %s: triggered %d %s"),D_CMND_MI32, sensor, ResponseData());
-      XdrvRulesProcess(0);
 
     } else { // else don't and clear
       ResponseClear();
