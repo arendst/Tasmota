@@ -13,7 +13,7 @@ ctypes.print_types()
 lv_style_int = ctypes.i16
 lv_color = [ctypes.u16, "lv_color"]        # cast to the class instance, constructor is called with 2 args: (nil, value)
 lv_grad_dir = ctypes.u8
-lv_meter_indicator_type_t = ctypes.i32     # probablu an anomaly that needs to be fixed
+lv_meter_indicator_type_t = ctypes.u8
 lv_opa = ctypes.u8
 lv_blend_mode = ctypes.u8
 lv_align = ctypes.u8

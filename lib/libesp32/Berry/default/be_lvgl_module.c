@@ -86,7 +86,7 @@ const lvbe_call_c_t lv_func[] = {
   { "refr_now", (void*) &lv_refr_now, "", "(lv_disp)" },
   { "scr_act", (void*) &lv_scr_act, "lv_obj", "" },
   { "scr_load", (void*) &lv_scr_load, "", "(lv_obj)" },
-  { "scr_load_anim", (void*) &lv_scr_load_anim, "", "(lv_obj)(lv_scr_load_anim)iib" },
+  { "scr_load_anim", (void*) &lv_scr_load_anim, "", "(lv_obj)iiib" },
   { "theme_apply", (void*) &lv_theme_apply, "", "(lv_obj)" },
   { "theme_get_color_primary", (void*) &lv_theme_get_color_primary, "lv_color", "(lv_obj)" },
   { "theme_get_color_secondary", (void*) &lv_theme_get_color_secondary, "lv_color", "(lv_obj)" },
