@@ -903,8 +903,13 @@ void uDisplay::drawFastHLine(int16_t x, int16_t y, int16_t w, uint16_t color) {
   SPI_END_TRANSACTION
 }
 
+//#define CD_XS gxs
+//#define CD_YS gys
+#define CD_XS width()
+#define CD_YS height()
+
 void uDisplay::fillScreen(uint16_t color) {
-  fillRect(0, 0,  gxs, gys, color);
+  fillRect(0, 0,  CD_XS, CD_YS, color);
 }
 
 // fill a rectangle
@@ -921,9 +926,9 @@ void uDisplay::fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t col
     return;
   }
 
-  if((x >= gxs) || (y >= gys)) return;
-  if((x + w - 1) >= gxs)  w = gxs  - x;
-  if((y + h - 1) >= gys) h = gys - y;
+  if((x >= CD_XS) || (y >= CD_YS)) return;
+  if((x + w - 1) >= CD_XS)  w = CD_XS  - x;
+  if((y + h - 1) >= CD_YS) h = CD_YS - y;
 
 
   SPI_BEGIN_TRANSACTION
@@ -1424,14 +1429,24 @@ void uDisplay::dim8(uint8_t dim, uint8_t dim_gamma) {           // dimmer with 8
 void uDisplay::TS_RotConvert(int16_t *x, int16_t *y) {
   int16_t temp;
 
+  if (rot_t[cur_rot] & 0x80) {
+    temp = *y;
+    *y = *x;
+    *x = temp;
+  }
+
   if (rotmap_xmin >= 0) {
     *y = map(*y, rotmap_ymin, rotmap_ymax, 0, gys);
     *x = map(*x, rotmap_xmin, rotmap_xmax, 0, gxs);
+    *x = constrain(*x, 0, gxs);
+    *y = constrain(*y, 0, gys);
   }
-  *x = constrain(*x, 0, gxs);
-  *y = constrain(*y, 0, gys);
+//  *x = constrain(*x, 0, gxs);
+//  *y = constrain(*y, 0, gys);
 
-  switch (rot_t[cur_rot]) {
+  //Serial.printf("rot 1 %d - %d\n",*x,*y );
+
+  switch (rot_t[cur_rot] & 0xf) {
     case 0:
       break;
     case 1:
@@ -1448,7 +1463,15 @@ void uDisplay::TS_RotConvert(int16_t *x, int16_t *y) {
       *y = *x;
       *x = width() - temp;
       break;
+    case 4:
+      *x = width() - *x;
+      break;
+    case 5:
+      *y = height() - *y;
+      break;
   }
+
+  //Serial.printf("rot 2 %d - %d\n",*x,*y );
 }
 
 uint8_t uDisplay::strlen_ln(char *str) {
