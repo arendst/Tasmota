@@ -39,19 +39,38 @@ energy_struct = [
     [float, "frequency"],
     [float, "frequency_2"],
     [float, "frequency_3"],
-# relocate SDM630_IMPORT and SDM72_IMPEXP
+    [float, "import_active"],
+    [float, "import_active_2"],
+    [float, "import_active_3"],
     [float, "export_active"],
     [float, "export_active_2"],
     [float, "export_active_3"],
-
     [float, "start_energy"],
+    [float, "start_energy_2"],
+    [float, "start_energy_3"],
     [float, "daily"],
+    [float, "daily_2"],
+    [float, "daily_3"],
     [float, "total"],
+    [float, "total_2"],
+    [float, "total_3"],
+
+    [float, "daily_sum"],
+    [float, "total_sum"],
+    [float, "yesterday_sum"],
 
     [uint32, "today_delta_kwh"],
+    [uint32, "today_delta_kwh_2"],
+    [uint32, "today_delta_kwh_3"],
     [uint32, "today_offset_kwh"],
+    [uint32, "today_offset_kwh_2"],
+    [uint32, "today_offset_kwh_3"],
     [uint32, "today_kwh"],
+    [uint32, "today_kwh_2"],
+    [uint32, "today_kwh_3"],
     [uint32, "period"],
+    [uint32, "period_2"],
+    [uint32, "period_3"],
 
     [uint8, "fifth_second"],
     [uint8, "command_code"],
@@ -91,7 +110,6 @@ energy_struct = [
     [bool, "min_current_flag"],
     [bool, "max_current_flag"],
     
-    [uint8, "stuff"],
 # #ifdef USE_ENERGY_POWER_LIMIT
     [uint16, "mplh_counter"],
     [uint16, "mplw_counter"],
