@@ -44,14 +44,6 @@
 
 TasmotaSerial *PmsSerial;
 
-struct PMS5003 {
-  uint16_t time = 0;
-  uint8_t type = 1;
-  uint8_t valid = 0;
-  uint8_t wake_mode = 1;
-  uint8_t ready = 1;
-  bool discovery_triggered = false;
-} Pms;
 
 enum PmsCommands
 {
@@ -70,6 +62,7 @@ const uint8_t kPmsCommands[][7] PROGMEM = {
     {0x42, 0x4D, 0xE1, 0x00, 0x00, 0x01, 0x70},  // pms_set_passive_mode
     {0x42, 0x4D, 0xE2, 0x00, 0x00, 0x01, 0x71}}; // pms_passive_mode_read
 
+typedef struct pmsX003data pmsX003data;
 struct pmsX003data {
   uint16_t framelen;
   uint16_t pm10_standard, pm25_standard, pm100_standard;
@@ -82,7 +75,16 @@ struct pmsX003data {
   //Except for the checksum
   uint16_t checksum;
   uint8_t ok;
-} pms_data;
+};
+struct PMS5003 {
+  pmsX003data * pms_data=NULL;
+  uint16_t time = 0;
+  uint8_t type = 1;
+  uint8_t valid = 0;
+  uint8_t wake_mode = 1;
+  uint8_t ready = 1;
+  bool discovery_triggered = false;
+} Pms;
 
 /*********************************************************************************************/
 
@@ -95,28 +97,32 @@ size_t PmsSendCmd(uint8_t command_id)
 
 void MarshallFirstRead(void)
 {
-	pms_data.framelen=ntohs(pms_data.framelen);
-	pms_data.pm10_standard=ntohs(pms_data.pm10_standard);
-	pms_data.pm25_standard=ntohs(pms_data.pm25_standard);
-	pms_data.pm100_standard=ntohs(pms_data.pm100_standard);
-	pms_data.pm10_env=ntohs(pms_data.pm10_env);
-	pms_data.pm25_env=ntohs(pms_data.pm25_env);
-	pms_data.pm100_env=ntohs(pms_data.pm100_env);
-	pms_data.particles_03um=ntohs(pms_data.particles_03um);
-	pms_data.particles_05um=ntohs(pms_data.particles_05um);
-	pms_data.particles_10um=ntohs(pms_data.particles_10um);
+	Pms.pms_data->framelen=ntohs(Pms.pms_data->framelen);
+	Pms.pms_data->pm10_standard=ntohs(Pms.pms_data->pm10_standard);
+	Pms.pms_data->pm25_standard=ntohs(Pms.pms_data->pm25_standard);
+	Pms.pms_data->pm100_standard=ntohs(Pms.pms_data->pm100_standard);
+	Pms.pms_data->pm10_env=ntohs(Pms.pms_data->pm10_env);
+	Pms.pms_data->pm25_env=ntohs(Pms.pms_data->pm25_env);
+	Pms.pms_data->pm100_env=ntohs(Pms.pms_data->pm100_env);
+	Pms.pms_data->particles_03um=ntohs(Pms.pms_data->particles_03um);
+	Pms.pms_data->particles_05um=ntohs(Pms.pms_data->particles_05um);
+	Pms.pms_data->particles_10um=ntohs(Pms.pms_data->particles_10um);
 	//The checksum for the pms3003 is stored in this section before being copied to checksum
-	pms_data.particles_25um=ntohs(pms_data.particles_25um);
+	Pms.pms_data->particles_25um=ntohs(Pms.pms_data->particles_25um);
 }
 void MarshallSecondRead(void)
 {
-	pms_data.particles_50um=ntohs(pms_data.particles_50um);
-	pms_data.particles_100um=ntohs(pms_data.particles_100um);
-	pms_data.unused=ntohs(pms_data.unused);
-	pms_data.checksum=ntohs(pms_data.checksum);
+	Pms.pms_data->particles_50um=ntohs(Pms.pms_data->particles_50um);
+	Pms.pms_data->particles_100um=ntohs(Pms.pms_data->particles_100um);
+	Pms.pms_data->unused=ntohs(Pms.pms_data->unused);
+	Pms.pms_data->checksum=ntohs(Pms.pms_data->checksum);
 }
 bool PmsReadData(void)
 {
+  if (NULL == Pms.pms_data)
+  {
+	  return false;
+  }
   if (! PmsSerial->available()) {
     return false;
   }
@@ -134,50 +140,50 @@ bool PmsReadData(void)
   {
 	  return false;
   }
-  pms_data.ok=0;
-  PmsSerial->readBytes((uint8_t*)&pms_data,PMS3003FRAMELEN+2);
+  Pms.pms_data->ok=0;
+  PmsSerial->readBytes((uint8_t*)Pms.pms_data,PMS3003FRAMELEN+2);
   MarshallFirstRead();
-  if (pms_data.framelen ==PMS3003FRAMELEN) //PMS3003
+  if (Pms.pms_data->framelen ==PMS3003FRAMELEN) //PMS3003
   {
-	  pms_data.checksum=pms_data.particles_25um;
-	  AddLogBuffer(LOG_LEVEL_DEBUG_MORE, (uint8_t*)&pms_data, PMS3003FRAMELEN+2);
-  }else if(pms_data.framelen == PMS5003FRAMELEN) //PMS5003-PMS7003
+	  Pms.pms_data->checksum=Pms.pms_data->particles_25um;
+	  AddLogBuffer(LOG_LEVEL_DEBUG_MORE, (uint8_t*)Pms.pms_data, PMS3003FRAMELEN+2);
+  }else if(Pms.pms_data->framelen == PMS5003FRAMELEN) //PMS5003-PMS7003
   {
 	  if (PmsSerial->available()<8)
 	  {
 		  //Not enought data
-    AddLog(LOG_LEVEL_DEBUG, PSTR("PMS: Not enough data for %d bytes "),pms_data.framelen);
+    AddLog(LOG_LEVEL_DEBUG, PSTR("PMS: Not enough data for %d bytes "),Pms.pms_data->framelen);
 		  return false;
 	  }else{
-		  PmsSerial->readBytes(((uint8_t*)&pms_data)+PMS3003FRAMELEN+2,8);
+		  PmsSerial->readBytes(((uint8_t*)Pms.pms_data)+PMS3003FRAMELEN+2,8);
 		  MarshallSecondRead();
-		  AddLogBuffer(LOG_LEVEL_DEBUG_MORE, (uint8_t*)&pms_data, PMS5003FRAMELEN+2);
+		  AddLogBuffer(LOG_LEVEL_DEBUG_MORE, (uint8_t*)Pms.pms_data, PMS5003FRAMELEN+2);
 	  }
   }else{
-    AddLog(LOG_LEVEL_DEBUG, PSTR("PMS: OUT bad framelen2  %d"),pms_data.framelen);
-	  AddLogBuffer(LOG_LEVEL_DEBUG_MORE, (uint8_t*)&pms_data, PMS5003FRAMELEN+2);
+    AddLog(LOG_LEVEL_DEBUG, PSTR("PMS: OUT bad framelen2  %d"),Pms.pms_data->framelen);
+	  AddLogBuffer(LOG_LEVEL_DEBUG_MORE, (uint8_t*)Pms.pms_data, PMS5003FRAMELEN+2);
 	  return false;
   }
 
   uint16_t sum = 0x42;
   sum+=0x4d;
   PmsSerial->flush();  // Make room for another burst
-  uint8_t* pms_data_in_byte=(uint8_t*)&pms_data;
+  uint8_t* pms_data_in_byte=(uint8_t*)Pms.pms_data;
   //We check against PMS5003FRAMELEN to prevent any incorrect framelen
-  for (uint16_t i=0; i<pms_data.framelen && pms_data.framelen<=PMS5003FRAMELEN;++i)
+  for (uint16_t i=0; i<Pms.pms_data->framelen && Pms.pms_data->framelen<=PMS5003FRAMELEN;++i)
   {
 	  sum+=pms_data_in_byte[i];
   }
 //All tasmota platform are network endian (arm/cortex/extensa), so uint16_t comparison are OK
-if (pms_data.checksum!=sum)
+if (Pms.pms_data->checksum!=sum)
 {
-    AddLog(LOG_LEVEL_DEBUG, PSTR("PMS: checksum %d %d" ),pms_data.checksum,sum);
+    AddLog(LOG_LEVEL_DEBUG, PSTR("PMS: checksum %d %d" ),Pms.pms_data->checksum,sum);
     AddLog(LOG_LEVEL_DEBUG, PSTR("PMS: " D_CHECKSUM_FAILURE));
     return false;
 }
  
-  Pms.valid = 10;
- pms_data.ok=1;
+ Pms.valid = 10;
+ Pms.pms_data->ok=1;
   if (!Pms.discovery_triggered) {
     TasmotaGlobal.discovery_counter = 1;      // Force discovery
     Pms.discovery_triggered = true;
@@ -267,6 +273,12 @@ void PmsInit(void)
 {
   Pms.type = 0;
   if (PinUsed(GPIO_PMS5003_RX)) {
+	//We try to initilized the data struct
+	if (NULL == Pms.pms_data)
+	  Pms.pms_data=(pmsX003data*)malloc(sizeof(pmsX003data));
+    //then we quit if we have not enough memory
+    if (NULL == Pms.pms_data)
+	  return;
     PmsSerial = new TasmotaSerial(Pin(GPIO_PMS5003_RX), (PinUsed(GPIO_PMS5003_TX)) ? Pin(GPIO_PMS5003_TX) : -1, 1);
     if (PmsSerial->begin(9600)) {
       if (PmsSerial->hardwareSerial()) { ClaimSerial(); }
@@ -311,36 +323,37 @@ const char HTTP_PMS5003_SNS[] PROGMEM =
 
 void PmsShow(bool json)
 {
-  if (Pms.valid and pms_data.ok == 1) {
+	//The condition order are important for pms_data
+  if (Pms.valid && NULL!=Pms.pms_data && Pms.pms_data->ok == 1) {
     if (json) {
-		if (pms_data.framelen == PMS3003FRAMELEN )
+		if (Pms.pms_data->framelen == PMS3003FRAMELEN )
 		{
 
 		  ResponseAppend_P(PSTR(",\"PMS3003\":{\"CF1\":%d,\"CF2.5\":%d,\"CF10\":%d,\"PM1\":%d,\"PM2.5\":%d,\"PM10\":%d}"),
-			pms_data.pm10_standard, pms_data.pm25_standard, pms_data.pm100_standard,
-			pms_data.pm10_env, pms_data.pm25_env, pms_data.pm100_env);
+			Pms.pms_data->pm10_standard, Pms.pms_data->pm25_standard, Pms.pms_data->pm100_standard,
+			Pms.pms_data->pm10_env, Pms.pms_data->pm25_env, Pms.pms_data->pm100_env);
 		}
 		else{
 
 		  ResponseAppend_P(PSTR(",\"PMS5003\":{\"CF1\":%d,\"CF2.5\":%d,\"CF10\":%d,\"PM1\":%d,\"PM2.5\":%d,\"PM10\":%d,\"PB0.3\":%d,\"PB0.5\":%d,\"PB1\":%d,\"PB2.5\":%d,\"PB5\":%d,\"PB10\":%d}"),
-			pms_data.pm10_standard, pms_data.pm25_standard, pms_data.pm100_standard,
-			pms_data.pm10_env, pms_data.pm25_env, pms_data.pm100_env,
-			pms_data.particles_03um, pms_data.particles_05um, pms_data.particles_10um, pms_data.particles_25um, pms_data.particles_50um, pms_data.particles_100um);
+			Pms.pms_data->pm10_standard, Pms.pms_data->pm25_standard, Pms.pms_data->pm100_standard,
+			Pms.pms_data->pm10_env, Pms.pms_data->pm25_env, Pms.pms_data->pm100_env,
+			Pms.pms_data->particles_03um, Pms.pms_data->particles_05um, Pms.pms_data->particles_10um, Pms.pms_data->particles_25um, Pms.pms_data->particles_50um, Pms.pms_data->particles_100um);
 		}
 #ifdef USE_DOMOTICZ
       if (0 == TasmotaGlobal.tele_period) {
-        DomoticzSensor(DZ_COUNT, pms_data.pm10_env);     // PM1
-        DomoticzSensor(DZ_VOLTAGE, pms_data.pm25_env);   // PM2.5
-        DomoticzSensor(DZ_CURRENT, pms_data.pm100_env);  // PM10
+        DomoticzSensor(DZ_COUNT, Pms.pms_data->pm10_env);     // PM1
+        DomoticzSensor(DZ_VOLTAGE, Pms.pms_data->pm25_env);   // PM2.5
+        DomoticzSensor(DZ_CURRENT, Pms.pms_data->pm100_env);  // PM10
       }
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
     } else {
         WSContentSend_PD(HTTP_PMSX003_SNS,
-        pms_data.pm10_env, pms_data.pm25_env, pms_data.pm100_env);
-		if (pms_data.framelen == PMS5003FRAMELEN )
+        Pms.pms_data->pm10_env, Pms.pms_data->pm25_env, Pms.pms_data->pm100_env);
+		if (Pms.pms_data->framelen == PMS5003FRAMELEN )
         WSContentSend_PD(HTTP_PMS5003_SNS,
-        pms_data.particles_03um, pms_data.particles_05um, pms_data.particles_10um, pms_data.particles_25um, pms_data.particles_50um, pms_data.particles_100um);
+        Pms.pms_data->particles_03um, Pms.pms_data->particles_05um, Pms.pms_data->particles_10um, Pms.pms_data->particles_25um, Pms.pms_data->particles_50um, Pms.pms_data->particles_100um);
 		}
 
 #endif  // USE_WEBSERVER
