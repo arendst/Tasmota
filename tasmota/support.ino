@@ -2414,8 +2414,14 @@ void AddLogData(uint32_t loglevel, const char* log_data, const char* log_data_pa
   TasAutoMutex mutex((SemaphoreHandle_t *)&TasmotaGlobal.log_buffer_mutex);
 #endif  // ESP32
 
-  char mxtime[14];  // "13:45:21.999 "
-  snprintf_P(mxtime, sizeof(mxtime), PSTR("%02d" D_HOUR_MINUTE_SEPARATOR "%02d" D_MINUTE_SECOND_SEPARATOR "%02d.%03d "), RtcTime.hour, RtcTime.minute, RtcTime.second, RtcMillis());
+  char mxtime[18];  // "13:45:21.999-123 "
+  snprintf_P(mxtime, sizeof(mxtime), PSTR("%02d" D_HOUR_MINUTE_SEPARATOR "%02d" D_MINUTE_SECOND_SEPARATOR "%02d.%03d"),
+    RtcTime.hour, RtcTime.minute, RtcTime.second, RtcMillis());
+  if (Settings->flag5.show_heap_with_timestamp) {
+    snprintf_P(mxtime, sizeof(mxtime), PSTR("%s-%03d"),
+      mxtime, ESP_getFreeHeap1024());
+  }
+  strcat(mxtime, " ");
 
   char empty[2] = { 0 };
   if (!log_data_payload) { log_data_payload = empty; }
