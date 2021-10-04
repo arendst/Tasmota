@@ -358,12 +358,12 @@ class structure
       #- we are not byte aligned, let's re-aling -#
       self.cur_offset += 1
       self.bit_offset = 0
+    end
 
-      #- check 2/4 bytes alignment -#
-      if self.cur_offset % n != 0
-        # we are not aligned with current size
-        self.cur_offset += n - self.cur_offset % n
-      end
+    #- check 2/4 bytes alignment -#
+    if self.cur_offset % n != 0
+      # we are not aligned with current size
+      self.cur_offset += n - self.cur_offset % n
     end
   end
 
