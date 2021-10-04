@@ -77,7 +77,7 @@
             res = var_tobool(a) op var_tobool(b); \
         } else if (var_isstr(a)) { /* string op string */ \
             res = 1 op be_eqstr(a->v.s, b->v.s); \
-        } else if (var_isclass(a) || var_isfunction(a)) { \
+        } else if (var_isclass(a) || var_isfunction(a) || var_iscomptr(a)) { \
             res = var_toobj(a) op var_toobj(b); \
         } else { \
             binop_error(vm, #op, a, b); \

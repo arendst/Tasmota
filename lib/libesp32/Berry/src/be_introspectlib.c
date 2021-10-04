@@ -58,12 +58,20 @@ static int m_attrlist(bvm *vm)
     be_return(vm);
 }
 
+static void m_findmember_protected(bvm *vm, void* data)
+{
+    be_getmember(vm, 1, (const char*) data);
+}
+
 static int m_findmember(bvm *vm)
 {
     int top = be_top(vm);
     if (top >= 2 && (be_isinstance(vm, 1) || be_ismodule(vm, 1) || be_isclass(vm, 1)) && be_isstring(vm, 2)) {
-        be_getmember(vm, 1, be_tostring(vm, 2));
-        be_return(vm);
+        int ret = be_execprotected(vm, &m_findmember_protected, (void*) be_tostring(vm, 2));
+        if (ret == BE_OK) {
+            // be_getmember(vm, 1, be_tostring(vm, 2));
+            be_return(vm);
+        }
     }
     be_return_nil(vm);
 }

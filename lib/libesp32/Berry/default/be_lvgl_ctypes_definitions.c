@@ -330,77 +330,77 @@ const be_ctypes_structure_t be_lv_meter_scale = {
 }};
 
 const be_ctypes_structure_t be_lv_meter_indicator = {
-  20,  /* size in bytes */
+  16,  /* size in bytes */
   5,  /* number of elements */
   be_ctypes_instance_mappings,
   (const be_ctypes_structure_item_t[5]) {
-    { "end_value", 16, 0, 0, ctypes_i32, 0 },
-    { "opa", 8, 0, 0, ctypes_u8, 0 },
+    { "end_value", 12, 0, 0, ctypes_i32, 0 },
+    { "opa", 5, 0, 0, ctypes_u8, 0 },
     { "scale", 0, 0, 0, ctypes_ptr32, 0 },
-    { "start_value", 12, 0, 0, ctypes_i32, 0 },
-    { "type", 4, 0, 0, ctypes_i32, 0 },
+    { "start_value", 8, 0, 0, ctypes_i32, 0 },
+    { "type", 4, 0, 0, ctypes_u8, 0 },
 }};
 
 const be_ctypes_structure_t be_lv_meter_indicator_needle_img = {
-  28,  /* size in bytes */
+  24,  /* size in bytes */
   8,  /* number of elements */
   be_ctypes_instance_mappings,
   (const be_ctypes_structure_item_t[8]) {
-    { "end_value", 16, 0, 0, ctypes_i32, 0 },
-    { "opa", 8, 0, 0, ctypes_u8, 0 },
-    { "pivot_x", 24, 0, 0, ctypes_i16, 0 },
-    { "pivot_y", 26, 0, 0, ctypes_i16, 0 },
+    { "end_value", 12, 0, 0, ctypes_i32, 0 },
+    { "opa", 5, 0, 0, ctypes_u8, 0 },
+    { "pivot_x", 20, 0, 0, ctypes_i16, 0 },
+    { "pivot_y", 22, 0, 0, ctypes_i16, 0 },
     { "scale", 0, 0, 0, ctypes_ptr32, 0 },
-    { "src", 20, 0, 0, ctypes_ptr32, 0 },
-    { "start_value", 12, 0, 0, ctypes_i32, 0 },
-    { "type", 4, 0, 0, ctypes_i32, 0 },
+    { "src", 16, 0, 0, ctypes_ptr32, 0 },
+    { "start_value", 8, 0, 0, ctypes_i32, 0 },
+    { "type", 4, 0, 0, ctypes_u8, 0 },
 }};
 
 const be_ctypes_structure_t be_lv_meter_indicator_needle_line = {
-  26,  /* size in bytes */
+  22,  /* size in bytes */
   8,  /* number of elements */
   be_ctypes_instance_mappings,
   (const be_ctypes_structure_item_t[8]) {
-    { "color", 24, 0, 0, ctypes_u16, 1 },
-    { "end_value", 16, 0, 0, ctypes_i32, 0 },
-    { "opa", 8, 0, 0, ctypes_u8, 0 },
-    { "r_mod", 22, 0, 0, ctypes_i16, 0 },
+    { "color", 20, 0, 0, ctypes_u16, 1 },
+    { "end_value", 12, 0, 0, ctypes_i32, 0 },
+    { "opa", 5, 0, 0, ctypes_u8, 0 },
+    { "r_mod", 18, 0, 0, ctypes_i16, 0 },
     { "scale", 0, 0, 0, ctypes_ptr32, 0 },
-    { "start_value", 12, 0, 0, ctypes_i32, 0 },
-    { "type", 4, 0, 0, ctypes_i32, 0 },
-    { "width", 20, 0, 0, ctypes_u16, 0 },
+    { "start_value", 8, 0, 0, ctypes_i32, 0 },
+    { "type", 4, 0, 0, ctypes_u8, 0 },
+    { "width", 16, 0, 0, ctypes_u16, 0 },
 }};
 
 const be_ctypes_structure_t be_lv_meter_indicator_arc = {
-  32,  /* size in bytes */
+  28,  /* size in bytes */
   9,  /* number of elements */
   be_ctypes_instance_mappings,
   (const be_ctypes_structure_item_t[9]) {
-    { "color", 28, 0, 0, ctypes_u16, 1 },
-    { "end_value", 16, 0, 0, ctypes_i32, 0 },
-    { "opa", 8, 0, 0, ctypes_u8, 0 },
-    { "r_mod", 30, 0, 0, ctypes_i16, 0 },
+    { "color", 24, 0, 0, ctypes_u16, 1 },
+    { "end_value", 12, 0, 0, ctypes_i32, 0 },
+    { "opa", 5, 0, 0, ctypes_u8, 0 },
+    { "r_mod", 26, 0, 0, ctypes_i16, 0 },
     { "scale", 0, 0, 0, ctypes_ptr32, 0 },
-    { "src", 24, 0, 0, ctypes_ptr32, 0 },
-    { "start_value", 12, 0, 0, ctypes_i32, 0 },
-    { "type", 4, 0, 0, ctypes_i32, 0 },
-    { "width", 20, 0, 0, ctypes_u16, 0 },
+    { "src", 20, 0, 0, ctypes_ptr32, 0 },
+    { "start_value", 8, 0, 0, ctypes_i32, 0 },
+    { "type", 4, 0, 0, ctypes_u8, 0 },
+    { "width", 16, 0, 0, ctypes_u16, 0 },
 }};
 
 const be_ctypes_structure_t be_lv_meter_indicator_scale_lines = {
-  27,  /* size in bytes */
+  23,  /* size in bytes */
   9,  /* number of elements */
   be_ctypes_instance_mappings,
   (const be_ctypes_structure_item_t[9]) {
-    { "color_end", 24, 0, 0, ctypes_u16, 1 },
-    { "color_start", 22, 0, 0, ctypes_u16, 1 },
-    { "end_value", 16, 0, 0, ctypes_i32, 0 },
-    { "local_grad", 26, 0, 1, ctypes_bf, 0 },
-    { "opa", 8, 0, 0, ctypes_u8, 0 },
+    { "color_end", 20, 0, 0, ctypes_u16, 1 },
+    { "color_start", 18, 0, 0, ctypes_u16, 1 },
+    { "end_value", 12, 0, 0, ctypes_i32, 0 },
+    { "local_grad", 22, 0, 1, ctypes_bf, 0 },
+    { "opa", 5, 0, 0, ctypes_u8, 0 },
     { "scale", 0, 0, 0, ctypes_ptr32, 0 },
-    { "start_value", 12, 0, 0, ctypes_i32, 0 },
-    { "type", 4, 0, 0, ctypes_i32, 0 },
-    { "width_mod", 20, 0, 0, ctypes_i16, 0 },
+    { "start_value", 8, 0, 0, ctypes_i32, 0 },
+    { "type", 4, 0, 0, ctypes_u8, 0 },
+    { "width_mod", 16, 0, 0, ctypes_i16, 0 },
 }};
 
 const be_ctypes_structure_t be_lv_obj_class = {
