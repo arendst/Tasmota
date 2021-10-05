@@ -18,6 +18,7 @@ class NRG : Driver
     energy.frequency = 50.0
     energy.use_overtemp = 1
     energy.phase_count = 3
+    tasmota.global.energy_driver = 29
     log("NRG: initialized", 2)
   end
 

@@ -30,15 +30,12 @@
 *********************************************************************************************/
 
 void BerryEnergyEverySecond(void) {
-  // Calculate energy by using active power
-  uint32_t energy_sum = 0;
-  for (uint32_t channel = 0; channel < Energy.phase_count; channel++) {
-    if (Energy.data_valid[channel] <= ENERGY_WATCHDOG) {
-      energy_sum += (Energy.active_power[channel] * 1000);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("BNRG: Every Second, data_valid=%d"), Energy.data_valid[0]);
+  if (Energy.data_valid[0] <= ENERGY_WATCHDOG) {
+    // Calculate energy by using active power
+    for (uint32_t channel = 0; channel < Energy.phase_count; channel++) {
+      Energy.kWhtoday_delta[channel] += Energy.active_power[channel] * 1000 / 36;
     }
-  }
-  if (energy_sum) {
-    Energy.kWhtoday_delta += energy_sum / 36;
     EnergyUpdateToday();
   }
 }
@@ -76,10 +73,10 @@ void BerryEnergyInit(void) {
 }
 
 void BerryEnergyPreinit(void) {
-  if (TasmotaGlobal.gpio_optiona.berry_energy) {
+  /*if (TasmotaGlobal.gpio_optiona.berry_energy) {
     TasmotaGlobal.energy_driver = XNRG_29;
-    AddLog(LOG_LEVEL_INFO, PSTR("NRG: Enable Berry Energy driver"));
-  }
+    AddLog(LOG_LEVEL_INFO, PSTR("BNRG: Enable Berry Energy driver"));
+  }*/
 }
 
 
