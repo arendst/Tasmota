@@ -949,6 +949,7 @@
 #define D_CREATE_NEW_FILE      "Créer and modifier un nouveau fichier"
 #define D_EDIT_FILE            "Modification de fichier"
 #define D_CONFIRM_FILE_DEL     "Confirmez la suppression du fichier"
+#define D_SHOW_HIDDEN_FILES    "Affichez les fichiers cachés"
 
 //xsns_67_as3935.ino
 #define D_AS3935_GAIN "gain:"

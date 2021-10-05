@@ -1420,11 +1420,12 @@ static void classdef_stmt(bparser *parser, bclass *c)
 static void class_inherit(bparser *parser, bexpdesc *e)
 {
     if (next_type(parser) == OptColon) { /* ':' */
+        bexpdesc ec = *e;    /* work on a copy because we preserve original class */
         bexpdesc e1;
         scan_next_token(parser); /* skip ':' */
         expr(parser, &e1);
         check_var(parser, &e1);
-        be_code_setsuper(parser->finfo, e, &e1);
+        be_code_setsuper(parser->finfo, &ec, &e1);
     }
 }
 

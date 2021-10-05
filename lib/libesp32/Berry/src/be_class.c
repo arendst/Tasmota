@@ -336,7 +336,7 @@ bbool be_instance_setmember(bvm *vm, binstance *o, bstring *name, bvalue *src)
             vm->top += 4;   /* prevent collection results */
             be_dofunc(vm, top, 3); /* call method 'member' */
             vm->top -= 4;
-            return var_tobool(top);
+            return btrue;
         }
     }
     return bfalse;

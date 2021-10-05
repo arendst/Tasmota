@@ -182,7 +182,7 @@ void FifLEEvery250ms(void)
 
         case 7:
           Energy.import_active[0] = value_buff * 0.01f; // [kWh]
-          Le01mr.total_active = Energy.import_active[0]  // Useless
+          Le01mr.total_active = Energy.import_active[0];  // Useless
           break;
 
         case 8:

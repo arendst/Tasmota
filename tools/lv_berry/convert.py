@@ -96,6 +96,7 @@ return_types = {
   "lv_style_value_t": "i",
   "lv_img_src_t": "i",
   "lv_colorwheel_mode_t": "i",
+  "lv_scr_load_anim_t": "i",
 
   "_lv_event_dsc_t *": "i",
 

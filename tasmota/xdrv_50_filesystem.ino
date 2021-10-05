@@ -563,20 +563,25 @@ const char UFS_FORM_FILE_UPGb[] PROGMEM =
   "<form method='get' action='ufse'><input type='hidden' file='" D_NEW_FILE "'>"
   "<button type='submit'>" D_CREATE_NEW_FILE "</button></form>"
 #endif
+  "<input type='checkbox' id='shf' onclick='sf(eb(\"shf\").checked);' name='shf'>" D_SHOW_HIDDEN_FILES "</input>"
   "</fieldset>"
   "</div>"
   "<div id='f2' name='f2' style='display:none;text-align:center;'><b>" D_UPLOAD_STARTED " ...</b></div>";
+const char UFS_FORM_SDC_DIR_NORMAL[] PROGMEM =
+  "";
+const char UFS_FORM_SDC_DIR_HIDDABLE[] PROGMEM =
+  " class='hf'";
 const char UFS_FORM_SDC_DIRd[] PROGMEM =
   "<pre><a href='%s' file='%s'>%s</a></pre>";
 const char UFS_FORM_SDC_DIRb[] PROGMEM =
-  "<pre><a href='%s' file='%s'>%s</a> %s %8d %s %s</pre>";
+  "<pre%s><a href='%s' file='%s'>%s</a> %s %8d %s %s</pre>";
 const char UFS_FORM_SDC_HREF[] PROGMEM =
   "ufsd?download=%s/%s";
 
 #ifdef GUI_TRASH_FILE
 const char UFS_FORM_SDC_HREFdel[] PROGMEM =
   //"<a href=ufsd?delete=%s/%s>&#128465;</a>"; // 🗑️
-  "<a href=ufsd?delete=%s/%s onclick=\"return confirm('" D_CONFIRM_FILE_DEL "')\">&#128293;</a>"; // 🔥
+  "<a href='ufsd?delete=%s/%s' onclick=\"return confirm('" D_CONFIRM_FILE_DEL "')\">&#128293;</a>"; // 🔥
 #endif // GUI_TRASH_FILE
 
 #ifdef GUI_EDIT_FILE
@@ -584,7 +589,7 @@ const char UFS_FORM_SDC_HREFdel[] PROGMEM =
 #define FILE_BUFFER_SIZE  1024
 
 const char UFS_FORM_SDC_HREFedit[] PROGMEM =
-  "<a href=ufse?file=%s/%s>&#x1F4DD;</a>"; // 📝
+  "<a href='ufse?file=%s/%s'>&#x1F4DD;</a>"; // 📝
 
 const char HTTP_EDITOR_FORM_START[] PROGMEM =
   "<fieldset><legend><b>&nbsp;" D_EDIT_FILE "&nbsp;</b></legend>"
@@ -710,41 +715,40 @@ void UfsListDir(char *path, uint8_t depth) {
       if (!*(pp + 1)) { pp++; }
       char *cp = name;
       // osx formatted disks contain a lot of stuff we dont want
-      if (!UfsReject((char*)ep)) {
+      bool hiddable = UfsReject((char*)ep);
 
-        for (uint8_t cnt = 0; cnt<depth; cnt++) {
-          *cp++ = '-';
+      for (uint8_t cnt = 0; cnt<depth; cnt++) {
+        *cp++ = '-';
+      }
+
+      sprintf(cp, format, ep);
+      if (entry.isDirectory()) {
+        ext_snprintf_P(npath, sizeof(npath), UFS_FORM_SDC_HREF, pp, ep);
+        WSContentSend_P(UFS_FORM_SDC_DIRd, npath, ep, name);
+        uint8_t plen = strlen(path);
+        if (plen > 1) {
+          strcat(path, "/");
         }
-
-        sprintf(cp, format, ep);
-        if (entry.isDirectory()) {
-          ext_snprintf_P(npath, sizeof(npath), UFS_FORM_SDC_HREF, pp, ep);
-          WSContentSend_P(UFS_FORM_SDC_DIRd, npath, ep, name);
-          uint8_t plen = strlen(path);
-          if (plen > 1) {
-            strcat(path, "/");
-          }
-          strcat(path, ep);
-          UfsListDir(path, depth + 4);
-          path[plen] = 0;
-        } else {
+        strcat(path, ep);
+        UfsListDir(path, depth + 4);
+        path[plen] = 0;
+      } else {
 #ifdef GUI_TRASH_FILE
-          char delpath[128];
-          ext_snprintf_P(delpath, sizeof(delpath), UFS_FORM_SDC_HREFdel, pp, ep);
+        char delpath[128];
+        ext_snprintf_P(delpath, sizeof(delpath), UFS_FORM_SDC_HREFdel, pp, ep);
 #else
-          char delpath[2];
-          delpath[0]=0;
+        char delpath[2];
+        delpath[0]=0;
 #endif // GUI_TRASH_FILE
 #ifdef GUI_EDIT_FILE
-          char editpath[128];
-          ext_snprintf_P(editpath, sizeof(editpath), UFS_FORM_SDC_HREFedit, pp, ep);
+        char editpath[128];
+        ext_snprintf_P(editpath, sizeof(editpath), UFS_FORM_SDC_HREFedit, pp, ep);
 #else
-          char editpath[2];
-          editpath[0]=0;
+        char editpath[2];
+        editpath[0]=0;
 #endif // GUI_TRASH_FILE
-          ext_snprintf_P(npath, sizeof(npath), UFS_FORM_SDC_HREF, pp, ep);
-          WSContentSend_P(UFS_FORM_SDC_DIRb, npath, ep, name, tstr.c_str(), entry.size(), delpath, editpath);
-        }
+        ext_snprintf_P(npath, sizeof(npath), UFS_FORM_SDC_HREF, pp, ep);
+        WSContentSend_P(UFS_FORM_SDC_DIRb, hiddable ? UFS_FORM_SDC_DIR_HIDDABLE : UFS_FORM_SDC_DIR_NORMAL, npath, ep, name, tstr.c_str(), entry.size(), delpath, editpath);
       }
       entry.close();
     }
