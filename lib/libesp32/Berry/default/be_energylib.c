@@ -15,6 +15,7 @@ extern struct ENERGY Energy;
 def init(m)
     import global
     global._energy = energy_struct(m._ptr)
+    return m
 end
 
 def read()
@@ -52,7 +53,7 @@ be_local_closure(init,   /* name */
     /* K2   */  be_nested_string("energy_struct", 1655792843, 13),
     /* K3   */  be_nested_string("_ptr", 306235816, 4),
     }),
-    (be_nested_const_str("<anonymous>", 1160973142, 11)),
+    (be_nested_const_str("init", 380752755, 4)),
     (be_nested_const_str("input", -103256197, 5)),
     ( &(const binstruction[ 6]) {  /* code */
       0xA4060000,  //  0000  IMPORT	R1	K0
@@ -60,7 +61,7 @@ be_local_closure(init,   /* name */
       0x880C0103,  //  0002  GETMBR	R3	R0	K3
       0x7C080200,  //  0003  CALL	R2	1
       0x90060202,  //  0004  SETMBR	R1	K1	R2
-      0x80000000,  //  0005  RET	0
+      0x80040000,  //  0005  RET	1	R0
     })
   )
 );
