@@ -6,12 +6,12 @@ Copyright 2018, Ihor Melnyk
 #include "OpenTherm.h"
 
 OpenTherm::OpenTherm(int inPin, int outPin, bool isSlave):
-	status(OpenThermStatus::NOT_INITIALIZED),
+	status(OpenThermStatus::OPTH_NOT_INITIALIZED),
 	inPin(inPin),
 	outPin(outPin),
 	isSlave(isSlave),
 	response(0),
-	responseStatus(OpenThermResponseStatus::NONE),
+	responseStatus(OpenThermResponseStatus::OPTH_NONE),
 	responseTimestamp(0),
 	handleInterruptCallback(NULL),
 	processResponseCallback(NULL)
@@ -27,7 +27,7 @@ void OpenTherm::begin(void(*handleInterruptCallback)(void), void(*processRespons
 		attachInterrupt(digitalPinToInterrupt(inPin), handleInterruptCallback, CHANGE);
 	}
 	activateBoiler();
-	status = OpenThermStatus::READY;
+	status = OpenThermStatus::OPTH_READY;
 	this->processResponseCallback = processResponseCallback;
 }
 
@@ -38,7 +38,7 @@ void OpenTherm::begin(void(*handleInterruptCallback)(void))
 
 bool ICACHE_RAM_ATTR OpenTherm::isReady()
 {
-	return status == OpenThermStatus::READY;
+	return status == OpenThermStatus::OPTH_READY;
 }
 
 int ICACHE_RAM_ATTR OpenTherm::readState() {
@@ -75,9 +75,9 @@ bool OpenTherm::sendRequestAync(unsigned long request)
 	if (!ready)
 	  return false;
 
-	status = OpenThermStatus::REQUEST_SENDING;
+	status = OpenThermStatus::OPTH_REQUEST_SENDING;
 	response = 0;
-	responseStatus = OpenThermResponseStatus::NONE;
+	responseStatus = OpenThermResponseStatus::OPTH_NONE;
 
 	sendBit(HIGH); //start bit
 	for (int i = 31; i >= 0; i--) {
@@ -86,7 +86,7 @@ bool OpenTherm::sendRequestAync(unsigned long request)
 	sendBit(HIGH); //stop bit
 	setIdleState();
 
-	status = OpenThermStatus::RESPONSE_WAITING;
+	status = OpenThermStatus::OPTH_RESPONSE_WAITING;
 	responseTimestamp = micros();
 	return true;
 }
@@ -103,9 +103,9 @@ unsigned long OpenTherm::sendRequest(unsigned long request)
 
 bool OpenTherm::sendResponse(unsigned long request)
 {
-	status = OpenThermStatus::REQUEST_SENDING;
+	status = OpenThermStatus::OPTH_REQUEST_SENDING;
 	response = 0;
-	responseStatus = OpenThermResponseStatus::NONE;
+	responseStatus = OpenThermResponseStatus::OPTH_NONE;
 
 	sendBit(HIGH); //start bit
 	for (int i = 31; i >= 0; i--) {
@@ -113,7 +113,7 @@ bool OpenTherm::sendResponse(unsigned long request)
 	}
 	sendBit(HIGH); //stop bit
 	setIdleState();
-	status = OpenThermStatus::READY;
+	status = OpenThermStatus::OPTH_READY;
 	return true;
 }
 
@@ -127,7 +127,7 @@ void ICACHE_RAM_ATTR OpenTherm::handleInterrupt()
 	if (isReady())
 	{
 		if (isSlave && readState() == HIGH) {
-		   status = OpenThermStatus::RESPONSE_WAITING;
+		   status = OpenThermStatus::OPTH_RESPONSE_WAITING;
 		}
 		else {
 			return;
@@ -135,28 +135,28 @@ void ICACHE_RAM_ATTR OpenTherm::handleInterrupt()
 	}
 
 	unsigned long newTs = micros();
-	if (status == OpenThermStatus::RESPONSE_WAITING) {
+	if (status == OpenThermStatus::OPTH_RESPONSE_WAITING) {
 		if (readState() == HIGH) {
-			status = OpenThermStatus::RESPONSE_START_BIT;
+			status = OpenThermStatus::OPTH_RESPONSE_START_BIT;
 			responseTimestamp = newTs;
 		}
 		else {
-			status = OpenThermStatus::RESPONSE_INVALID;
+			status = OpenThermStatus::OPTH_RESPONSE_INVALID;
 			responseTimestamp = newTs;
 		}
 	}
-	else if (status == OpenThermStatus::RESPONSE_START_BIT) {
+	else if (status == OpenThermStatus::OPTH_RESPONSE_START_BIT) {
 		if ((newTs - responseTimestamp < 750) && readState() == LOW) {
-			status = OpenThermStatus::RESPONSE_RECEIVING;
+			status = OpenThermStatus::OPTH_RESPONSE_RECEIVING;
 			responseTimestamp = newTs;
 			responseBitIndex = 0;
 		}
 		else {
-			status = OpenThermStatus::RESPONSE_INVALID;
+			status = OpenThermStatus::OPTH_RESPONSE_INVALID;
 			responseTimestamp = newTs;
 		}
 	}
-	else if (status == OpenThermStatus::RESPONSE_RECEIVING) {
+	else if (status == OpenThermStatus::OPTH_RESPONSE_RECEIVING) {
 		if ((newTs - responseTimestamp) > 750) {
 			if (responseBitIndex < 32) {
 				response = (response << 1) | !readState();
@@ -164,7 +164,7 @@ void ICACHE_RAM_ATTR OpenTherm::handleInterrupt()
 				responseBitIndex++;
 			}
 			else { //stop bit
-				status = OpenThermStatus::RESPONSE_READY;
+				status = OpenThermStatus::OPTH_RESPONSE_READY;
 				responseTimestamp = newTs;
 			}
 		}
@@ -178,32 +178,32 @@ void OpenTherm::process()
 	unsigned long ts = responseTimestamp;
 	interrupts();
 
-	if (st == OpenThermStatus::READY) return;
+	if (st == OpenThermStatus::OPTH_READY) return;
 	unsigned long newTs = micros();
-	if (st != OpenThermStatus::NOT_INITIALIZED && (newTs - ts) > 1000000) {
-		status = OpenThermStatus::READY;
-		responseStatus = OpenThermResponseStatus::TIMEOUT;
+	if (st != OpenThermStatus::OPTH_NOT_INITIALIZED && (newTs - ts) > 1000000) {
+		status = OpenThermStatus::OPTH_READY;
+		responseStatus = OpenThermResponseStatus::OPTH_TIMEOUT;
 		if (processResponseCallback != NULL) {
 			processResponseCallback(response, responseStatus);
 		}
 	}
-	else if (st == OpenThermStatus::RESPONSE_INVALID) {
-		status = OpenThermStatus::DELAY;
-		responseStatus = OpenThermResponseStatus::INVALID;
+	else if (st == OpenThermStatus::OPTH_RESPONSE_INVALID) {
+		status = OpenThermStatus::OPTH_DELAY;
+		responseStatus = OpenThermResponseStatus::OPTH_INVALID;
 		if (processResponseCallback != NULL) {
 			processResponseCallback(response, responseStatus);
 		}
 	}
-	else if (st == OpenThermStatus::RESPONSE_READY) {
-		status = OpenThermStatus::DELAY;
-		responseStatus = (isSlave ? isValidRequest(response) : isValidResponse(response)) ? OpenThermResponseStatus::SUCCESS : OpenThermResponseStatus::INVALID;
+	else if (st == OpenThermStatus::OPTH_RESPONSE_READY) {
+		status = OpenThermStatus::OPTH_DELAY;
+		responseStatus = (isSlave ? isValidRequest(response) : isValidResponse(response)) ? OpenThermResponseStatus::OPTH_SUCCESS : OpenThermResponseStatus::OPTH_INVALID;
 		if (processResponseCallback != NULL) {
 			processResponseCallback(response, responseStatus);
 		}
 	}
-	else if (st == OpenThermStatus::DELAY) {
+	else if (st == OpenThermStatus::OPTH_DELAY) {
 		if ((newTs - ts) > 100000) {
-			status = OpenThermStatus::READY;
+			status = OpenThermStatus::OPTH_READY;
 		}
 	}
 }
@@ -233,7 +233,7 @@ OpenThermMessageID OpenTherm::getDataID(unsigned long frame)
 unsigned long OpenTherm::buildRequest(OpenThermMessageType type, OpenThermMessageID id, unsigned int data)
 {
 	unsigned long request = data;
-	if (type == OpenThermMessageType::WRITE_DATA) {
+	if (type == OpenThermMessageType::OPTH_WRITE_DATA) {
 		request |= 1ul << 28;
 	}
 	request |= ((unsigned long)id) << 16;
@@ -254,14 +254,14 @@ bool OpenTherm::isValidResponse(unsigned long response)
 {
 	if (OpenTherm::parity(response)) return false;
 	byte msgType = (response << 1) >> 29;
-	return msgType == READ_ACK || msgType == WRITE_ACK;
+	return msgType == OPTH_READ_ACK || msgType == OPTH_WRITE_ACK;
 }
 
 bool OpenTherm::isValidRequest(unsigned long request)
 {
 	if (OpenTherm::parity(request)) return false;
 	byte msgType = (request << 1) >> 29;
-	return msgType == READ_DATA || msgType == WRITE_DATA;
+	return msgType == OPTH_READ_DATA || msgType == OPTH_WRITE_DATA;
 }
 
 void OpenTherm::end() {
@@ -273,10 +273,10 @@ void OpenTherm::end() {
 const char *OpenTherm::statusToString(OpenThermResponseStatus status)
 {
 	switch (status) {
-		case NONE:	return "NONE";
-		case SUCCESS: return "SUCCESS";
-		case INVALID: return "INVALID";
-		case TIMEOUT: return "TIMEOUT";
+		case OPTH_NONE:	return "NONE";
+		case OPTH_SUCCESS: return "SUCCESS";
+		case OPTH_INVALID: return "INVALID";
+		case OPTH_TIMEOUT: return "TIMEOUT";
 		default:	  return "UNKNOWN";
 	}
 }
@@ -284,14 +284,14 @@ const char *OpenTherm::statusToString(OpenThermResponseStatus status)
 const char *OpenTherm::messageTypeToString(OpenThermMessageType message_type)
 {
 	switch (message_type) {
-		case READ_DATA:	   return "READ_DATA";
-		case WRITE_DATA:	  return "WRITE_DATA";
-		case INVALID_DATA:	return "INVALID_DATA";
-		case RESERVED:		return "RESERVED";
-		case READ_ACK:		return "READ_ACK";
-		case WRITE_ACK:	   return "WRITE_ACK";
-		case DATA_INVALID:	return "DATA_INVALID";
-		case UNKNOWN_DATA_ID: return "UNKNOWN_DATA_ID";
+		case OPTH_READ_DATA:	   return "READ_DATA";
+		case OPTH_WRITE_DATA:	  return "WRITE_DATA";
+		case OPTH_INVALID_DATA:	return "INVALID_DATA";
+		case OPTH_RESERVED:		return "RESERVED";
+		case OPTH_READ_ACK:		return "READ_ACK";
+		case OPTH_WRITE_ACK:	   return "WRITE_ACK";
+		case OPTH_DATA_INVALID:	return "DATA_INVALID";
+		case OPTH_UNKNOWN_DATA_ID: return "UNKNOWN_DATA_ID";
 		default:			  return "UNKNOWN";
 	}
 }
@@ -301,25 +301,25 @@ const char *OpenTherm::messageTypeToString(OpenThermMessageType message_type)
 unsigned long OpenTherm::buildSetBoilerStatusRequest(bool enableCentralHeating, bool enableHotWater, bool enableCooling, bool enableOutsideTemperatureCompensation, bool enableCentralHeating2) {
 	unsigned int data = enableCentralHeating | (enableHotWater << 1) | (enableCooling << 2) | (enableOutsideTemperatureCompensation << 3) | (enableCentralHeating2 << 4);
 	data <<= 8;
-	return buildRequest(OpenThermMessageType::READ_DATA, OpenThermMessageID::Status, data);
+	return buildRequest(OpenThermMessageType::OPTH_READ_DATA, OpenThermMessageID::Status, data);
 }
 
 unsigned long OpenTherm::buildSetBoilerTemperatureRequest(float temperature) {
 	unsigned int data = temperatureToData(temperature);
-	return buildRequest(OpenThermMessageType::WRITE_DATA, OpenThermMessageID::TSet, data);
+	return buildRequest(OpenThermMessageType::OPTH_WRITE_DATA, OpenThermMessageID::TSet, data);
 }
 
 unsigned long OpenTherm::buildSetHotWaterTemperatureRequest(float temperature) {
 	unsigned int data = temperatureToData(temperature);
-	return buildRequest(OpenThermMessageType::WRITE_DATA, OpenThermMessageID::TdhwSet, data);
+	return buildRequest(OpenThermMessageType::OPTH_WRITE_DATA, OpenThermMessageID::TdhwSet, data);
 }
 
 unsigned long OpenTherm::buildGetBoilerTemperatureRequest() {
-	return buildRequest(OpenThermMessageType::READ_DATA, OpenThermMessageID::Tboiler, 0);
+	return buildRequest(OpenThermMessageType::OPTH_READ_DATA, OpenThermMessageID::Tboiler, 0);
 }
 
 unsigned long OpenTherm::buildSlaveConfigurationRequest() {
-	return buildRequest(OpenThermMessageType::READ_DATA, OpenThermMessageID::SConfigSMemberIDcode, 0);
+	return buildRequest(OpenThermMessageType::OPTH_READ_DATA, OpenThermMessageID::SConfigSMemberIDcode, 0);
 }
 
 //parsing responses
@@ -387,22 +387,22 @@ float OpenTherm::getBoilerTemperature() {
 }
 
 float OpenTherm::getReturnTemperature() {
-    unsigned long response = sendRequest(buildRequest(OpenThermRequestType::READ, OpenThermMessageID::Tret, 0));
+    unsigned long response = sendRequest(buildRequest(OpenThermRequestType::OPTH_READ, OpenThermMessageID::Tret, 0));
     return isValidResponse(response) ? getFloat(response) : 0;
 }
 
 float OpenTherm::getModulation() {
-    unsigned long response = sendRequest(buildRequest(OpenThermRequestType::READ, OpenThermMessageID::RelModLevel, 0));
+    unsigned long response = sendRequest(buildRequest(OpenThermRequestType::OPTH_READ, OpenThermMessageID::RelModLevel, 0));
     return isValidResponse(response) ? getFloat(response) : 0;
 }
 
 float OpenTherm::getPressure() {
-    unsigned long response = sendRequest(buildRequest(OpenThermRequestType::READ, OpenThermMessageID::CHPressure, 0));
+    unsigned long response = sendRequest(buildRequest(OpenThermRequestType::OPTH_READ, OpenThermMessageID::CHPressure, 0));
     return isValidResponse(response) ? getFloat(response) : 0;
 }
 
 unsigned char OpenTherm::getFault() {
-    return ((sendRequest(buildRequest(OpenThermRequestType::READ, OpenThermMessageID::ASFflags, 0)) >> 8) & 0xff);
+    return ((sendRequest(buildRequest(OpenThermRequestType::OPTH_READ, OpenThermMessageID::ASFflags, 0)) >> 8) & 0xff);
 }
 
 unsigned long OpenTherm::getSlaveConfiguration() {

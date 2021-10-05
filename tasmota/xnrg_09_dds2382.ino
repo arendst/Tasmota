@@ -75,9 +75,8 @@ void Dds2382EverySecond(void)
         offset = 19;
       }
       Energy.export_active[0] = (float)((buffer[offset] << 24) + (buffer[offset +1] << 16) + (buffer[offset +2] << 8) + buffer[offset +3]) / 100.0;    // 429496.729 kW
-      float import_active = (float)((buffer[offset +4] << 24) + (buffer[offset +5] << 16) + (buffer[offset +6] << 8) + buffer[offset +7]) / 100.0;  // 429496.729 kW
-
-      EnergyUpdateTotal(import_active, true);  // 484.708 kWh
+      Energy.import_active[0] = (float)((buffer[offset +4] << 24) + (buffer[offset +5] << 16) + (buffer[offset +6] << 8) + buffer[offset +7]) / 100.0;  // 429496.729 kW
+      EnergyUpdateTotal();  // 484.708 kWh
     }
   } // end data ready
 

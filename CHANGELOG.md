@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased] - Development
 
 ## [9.5.0.9]
+### Added
+- Command ``SetOption129 1`` to enable split total energy results (#13030)
+- Commands ``EnergyTotal<phase>``, ``EnergyToday<phase>`` and ``EnergyYesterday<phase>`` to (re)set energy values
+- Commands ``EnergyUsage`` and ``EnergyExport`` to (re)set energy usage and export values
+- Berry add module ``import persist``
+- Support for BL0942 energy monitor (#13259)
+
+### Breaking Changed
+- ESP32 LVGL updated to v8.0.2
+
+### Changed
+- Removed command ``EnergyReset`` as it is replaced by new commands
+- Files starting with underscore in file system are no more hidden
 
 ## [9.5.0.8] 20210927
 ### Added

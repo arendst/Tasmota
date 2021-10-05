@@ -3,16 +3,12 @@
 --#
 
 class lv_signal_arcs : lv_obj
-  var ancestor_design     # previous design_cb
   var percentage          # value to display, range 0..100
   var p1, p2, area, line_dsc    # instances of objects kept to avoid re-instanciating at each call
 
-  def init(parent, copy)
-    # init parent object
-    super(self).init(parent, copy)
-    # keep a copy of 
-    self.ancestor_design = self.get_design_cb()
-    self.set_design_cb(self.my_design_cb)
+  def init(parent)
+    # init custom widget (don't call super constructor)
+    _lvgl.create_custom_widget(self, parent)
     # own values
     self.percentage = 100
     # pre-allocate buffers
@@ -22,7 +18,11 @@ class lv_signal_arcs : lv_obj
     self.line_dsc = lv_draw_line_dsc()
   end
 
-  def my_design_cb(clip_area, mode)
+  def widget_event(cl, event)
+    # Call the ancestor's event handler
+    if lv.obj_event_base(cl, event) != lv.RES_OK  return  end
+    var code = event.code
+
     import math
     def atleast1(x) if x >= 1 return x else return 1 end end
     # the model is that we have 4 bars and inter-bar (1/4 of width)
@@ -33,25 +33,23 @@ class lv_signal_arcs : lv_obj
     var bar = atleast1((height - inter_bar * 2) / 3)
     var bar_offset = bar / 2
     #print("inter_bar", inter_bar, "bar", bar, "bar_offset", bar_offset)
-    if mode == lv.DESIGN_COVER_CHK
-      #- Return false if the object is not covers the clip_area clip_area -#
-      return self.ancestor_design.call(self, clip_area, mode)
 
-    elif mode == lv.DESIGN_DRAW_MAIN
-      #self.ancestor_design.call(self, clip_area, mode)  # commented since we don't draw a background
+    if code == lv.EVENT_DRAW_MAIN
+      var clip_area = lv_area(event.param)
     
       # get coordinates of object
       self.get_coords(self.area)
       var x_ofs = self.area.x1
       var y_ofs = self.area.y1
-      lv.draw_line_dsc_init(self.line_dsc)                        # initialize lv_draw_line_dsc structure
-      self.init_draw_line_dsc(lv.OBJ_PART_MAIN, self.line_dsc)    # copy the current values
+
+      lv.draw_line_dsc_init(self.line_dsc)                  # initialize lv_draw_line_dsc structure
+      self.init_draw_line_dsc(lv.PART_MAIN, self.line_dsc)  # copy the current values
 
       self.line_dsc.round_start = 1
       self.line_dsc.round_end = 1
       self.line_dsc.width = (bar * 3 + 1) / 4
-      var on_color = self.get_style_line_color(lv.OBJ_PART_MAIN, lv.STATE_DEFAULT)
-      var off_color = self.get_style_bg_color(lv.OBJ_PART_MAIN, lv.STATE_DEFAULT)
+      var on_color = self.get_style_line_color(lv.PART_MAIN | lv.STATE_DEFAULT)
+      var off_color = self.get_style_bg_color(lv.PART_MAIN | lv.STATE_DEFAULT)
 
       # initial calculation, but does not take into account bounding box
       # var angle = int(math.deg(math.atan2(width / 2, height)))
@@ -76,15 +74,14 @@ class lv_signal_arcs : lv_obj
     #elif mode == lv.DESIGN_DRAW_POST    # commented since we don't want a frame around this object
       # self.ancestor_design.call(self, clip_area, mode)
     end
-    return lv.DESIGN_RES_OK
   end
 
   def set_percentage(v)
-    var old_bars = self.percentage / 4
+    var old_bars = self.percentage / 25
     if v > 100 v = 100 end
     if v < 0   v = 0 end
     self.percentage = v
-    if old_bars != v / 4
+    if old_bars != v / 25
       self.invalidate()    # be frugal and avoid updating the widget if it's not needed
     end
   end
@@ -95,8 +92,8 @@ class lv_signal_arcs : lv_obj
 end
 
 class lv_wifi_arcs: lv_signal_arcs
-  def init(parent, copy)
-    super(self).init(parent, copy)
+  def init(parent)
+    super(self).init(parent)
     tasmota.add_driver(self)
     self.set_percentage(0)    # we generally start with 0, meaning not connected
   end
@@ -119,17 +116,18 @@ class lv_wifi_arcs: lv_signal_arcs
 end
 
 class lv_wifi_arcs_icon: lv_wifi_arcs
-  def init(parent, copy)
-    super(self).init(parent, copy)
-    self.set_style_local_bg_color(lv.OBJ_PART_MAIN, lv.STATE_DEFAULT, lv_color(lv.COLOR_BLACK))
+  def init(parent)
+    super(self).init(parent)
+    self.set_style_line_color(lv_color(lv.COLOR_WHITE), lv.PART_MAIN | lv.STATE_DEFAULT)
+    self.set_style_bg_color(lv_color(lv.COLOR_BLACK), lv.PART_MAIN | lv.STATE_DEFAULT)
     if parent != nil
       var parent_height = parent.get_height()
-      var pad_right = parent.get_style_pad_right(lv.OBJ_PART_MAIN, lv.STATE_DEFAULT)
+      var pad_right = parent.get_style_pad_right(lv.PART_MAIN | lv.STATE_DEFAULT)
       self.set_height(parent_height)
       var w = (parent_height*4)/3
       self.set_width(w)	# 130%
       self.set_x(parent.get_width() - w - pad_right)
-      parent.set_style_local_pad_right(lv.OBJ_PART_MAIN, lv.STATE_DEFAULT, pad_right + w + 1)
+      parent.set_style_pad_right(pad_right + w + 1, lv.PART_MAIN | lv.STATE_DEFAULT)
     end
   end
 end

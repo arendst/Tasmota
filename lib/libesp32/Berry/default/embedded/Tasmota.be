@@ -17,6 +17,12 @@ end
 
 tasmota = nil
 class Tasmota
+  var global      # mapping to TasmotaGlobal
+
+  def init()
+    # instanciate the mapping object to TasmotaGlobal
+    self.global = ctypes_bytes_dyn(self._global_addr, self._global_def)
+  end
 
   # add `chars_in_string(s:string,c:string) -> int``
   # looks for any char in c, and return the position of the first char
@@ -237,43 +243,55 @@ class Tasmota
 
   def load(f)
     import string
+    import path
+
+    # if the filename has no '.' append '.be'
+    if string.find(f, '.') < 0
+      f += ".be"
+    end
 
     # check that the file ends with '.be' of '.bec'
     var fl = string.split(f,'.')
     if (size(fl) <= 1 || (fl[-1] != 'be' && fl[-1] != 'bec'))
       raise "io_error", "file extension is not '.be' or '.bec'"
     end
-    var native = f[size(f)-1] == 'c'
-    # load - works the same for .be and .bec
 
-    # try if file exists
-    try
-      var ff = open(f, 'r')
-      ff.close()
-    except 'io_error'
-      return false    # signals that file does not exist
+    var is_bytecode = f[-1] == 'c'            # file is Berry source and not bytecode
+    var f_time = path.last_modified(f)
+
+    if is_bytecode
+      if f_time == nil  return false end      # file does not exist
+      # f is the right file, continue
+    else
+      var f_time_bc = path.last_modified(f + "c") # timestamp for bytecode
+      if f_time == nil && f_time_bc == nil  return false end
+      if f_time_bc != nil && (f_time == nil || f_time_bc >= f_time)
+        # bytecode exists and is more recent than berry source, use bytecode
+        f = f + "c"   # use bytecode name
+        is_bytecode = true
+      end
     end
-
-    var c = compile(f,'file')
+    
+    var c = compile(f, 'file')
     # save the compiled bytecode
-    if !native
+    if !is_bytecode
       try
-        self.save(f+'c', c)
+        self.save(f + 'c', c)
       except .. as e
-        self.log(string.format('BRY: could not save compiled file %s (%s)',f+'c',e))
+        print(string.format('BRY: could not save compiled file %s (%s)',f+'c',e))
       end
     end
     # call the compiled code
     c()
     # call successfuls
     return true
-
   end
 
   def event(event_type, cmd, idx, payload, raw)
     import introspect
     if event_type=='every_50ms' self.run_deferred() end  #- first run deferred events -#
 
+    var done = false
     if event_type=='cmd' return self.exec_cmd(cmd, idx, payload)
     elif event_type=='rule' return self.exec_rules(payload)
     elif event_type=='gc' return self.gc()
@@ -282,16 +300,23 @@ class Tasmota
         var f = introspect.get(d, event_type)   # try to match a function or method with the same name
         if type(f) == 'function'
           try
-            var done = f(d, cmd, idx, payload, raw)
-            if done == true return true end
+            done = f(d, cmd, idx, payload, raw)
+            if done break end
           except .. as e,m
             import string
             print(string.format("BRY: Exception> '%s' - %s", e, m))
           end
         end
       end
-      return false
     end
+
+    # save persist
+    if event_type=='save_before_restart'
+      import persist
+      persist.save()
+    end
+
+    return done
   end
 
   def add_driver(d)

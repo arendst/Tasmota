@@ -47,14 +47,14 @@ static void m_solidify_bvalue(bvm *vm, bvalue * value)
 #if BE_INTGER_TYPE == 2
         logfmt("be_const_int(%lli)", var_toint(value));
 #else
-        logfmt("be_const_int(%i)", var_toint(value));
+        logfmt("be_const_int(%li)", var_toint(value));
 #endif
         break;
     case BE_INDEX:
 #if BE_INTGER_TYPE == 2
         logfmt("be_const_var(%lli)", var_toint(value));
 #else
-        logfmt("be_const_var(%i)", var_toint(value));
+        logfmt("be_const_var(%li)", var_toint(value));
 #endif
         break;
     case BE_REAL:
@@ -78,6 +78,9 @@ static void m_solidify_bvalue(bvm *vm, bvalue * value)
     case BE_CLOSURE:
         logfmt("be_const_closure(%s_closure)", str(((bclosure*) var_toobj(value))->proto->name));
         break;
+    case BE_CLASS:
+        logfmt("be_const_class(be_class_%s)", str(((bclass*) var_toobj(value))->name));
+        break;
     default:
         {
             char error[64];
@@ -86,6 +89,23 @@ static void m_solidify_bvalue(bvm *vm, bvalue * value)
         }
     }
 }
+
+static void m_solidify_subclass(bvm *vm, bclass *cl, int builtins);
+
+/* solidify any inner class */
+static void m_solidify_proto_inner_class(bvm *vm, bproto *pr, int builtins)
+{
+    // parse any class in constants to output it first
+    if (pr->nconst > 0) {
+        for (int k = 0; k < pr->nconst; k++) {
+            if (var_type(&pr->ktab[k]) == BE_CLASS) {
+                // output the class
+                m_solidify_subclass(vm, (bclass*) var_toobj(&pr->ktab[k]), builtins);
+            }
+        }
+    }
+}
+
 
 static void m_solidify_proto(bvm *vm, bproto *pr, const char * func_name, int builtins, int indent)
 {
@@ -172,12 +192,15 @@ static void m_solidify_closure(bvm *vm, bclosure *cl, int builtins)
         be_raise(vm, "internal_error", "Unsupported upvals in closure");
     }
 
+    int indent = 2;
+
+    m_solidify_proto_inner_class(vm, pr, builtins);
+
     logfmt("\n");
     logfmt("/********************************************************************\n");
     logfmt("** Solidified function: %s\n", func_name);
     logfmt("********************************************************************/\n");
 
-    int indent = 2;
     logfmt("be_local_closure(%s,   /* name */\n", func_name);
 
     m_solidify_proto(vm, pr, func_name, builtins, indent);
@@ -188,8 +211,7 @@ static void m_solidify_closure(bvm *vm, bclosure *cl, int builtins)
     logfmt("/*******************************************************************/\n\n");
 }
 
-
-static void m_solidify_class(bvm *vm, bclass *cl, int builtins)
+static void m_solidify_subclass(bvm *vm, bclass *cl, int builtins)
 {
     const char * class_name = str(cl->name);
 
@@ -251,6 +273,14 @@ static void m_solidify_class(bvm *vm, bclass *cl, int builtins)
 
     logfmt("    (be_nested_const_str(\"%s\", %i, %i))\n", class_name, be_strhash(cl->name), str_len(cl->name));
     logfmt(");\n");
+
+}
+
+
+static void m_solidify_class(bvm *vm, bclass *cl, int builtins)
+{
+    const char * class_name = str(cl->name);
+    m_solidify_subclass(vm, cl, builtins);
     logfmt("/*******************************************************************/\n\n");
 
     logfmt("void be_load_%s_class(bvm *vm) {\n", class_name);

@@ -172,7 +172,8 @@ enum UserSelectablePins {
   GPIO_MCP2515_CS,                     // MCP2515 Chip Select
   GPIO_HRG15_TX, GPIO_HRG15_RX,        // Hydreon RG-15 rain sensor serial interface
   GPIO_VINDRIKTNING_RX,                // IKEA VINDRIKTNING Serial interface
-  GPIO_BL0939_RX,      // BL0939 Serial interface (Dual R3 v2)
+  GPIO_BL0939_RX,                      // BL0939 Serial interface (Dual R3 v2)
+  GPIO_BL0942_RX,                      // BL0942 Serial interface
   GPIO_SENSOR_END };
 
 enum ProgramSelectablePins {
@@ -365,7 +366,8 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_MCP2515_CS "|"
   D_SENSOR_HRG15_TX "|" D_SENSOR_HRG15_RX "|"
   D_SENSOR_VINDRIKTNING_RX "|"
-  D_SENSOR_BL0939_RX
+  D_SENSOR_BL0939_RX "|"
+  D_SENSOR_BL0942_RX
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -697,8 +699,9 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_LE01MR_RX),     // F7F LE-01MR energy meter rx pin
 #endif // IFDEF:USE_LE01MR
 #if defined(USE_BL0940) || defined(USE_BL09XX)
-  AGPIO(GPIO_BL0939_RX),      // BL0939 Serial interface (Dual R3 v2)
+  AGPIO(GPIO_BL0939_RX),     // BL0939 Serial interface (Dual R3 v2)
   AGPIO(GPIO_BL0940_RX),     // BL0940 Serial interface
+  AGPIO(GPIO_BL0942_RX),     // BL0940 Serial interface
 #endif
 #ifdef USE_IEM3000
   AGPIO(GPIO_IEM3000_TX),    // IEM3000 Serial interface

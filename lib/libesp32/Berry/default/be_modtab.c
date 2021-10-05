@@ -24,6 +24,7 @@ be_extern_native_module(introspect);
 be_extern_native_module(strict);
 
 /* Tasmota specific */
+be_extern_native_module(persist);
 be_extern_native_module(light);
 be_extern_native_module(gpio);
 be_extern_native_module(energy);
@@ -80,6 +81,7 @@ BERRY_LOCAL const bntvmodule* const be_module_table[] = {
     /* user-defined modules register start */
     
     &be_native_module(path),
+    &be_native_module(persist),
     &be_native_module(gpio),
 #ifdef USE_LIGHT
     &be_native_module(light),
@@ -125,9 +127,8 @@ extern void be_load_driver_audio_lib(bvm *vm);
 extern void be_load_lvgl_color_lib(bvm *vm);
 extern void be_load_lvgl_font_lib(bvm *vm);
 extern void be_load_lv_all_lib(bvm *vm);
-extern void be_load_lvgl_cb_lib(bvm *vm);
-extern void be_load_lvgl_cb_all_lib(bvm *vm);
 extern void be_load_ctypes_lvgl_definitions_lib(bvm *vm);
+extern void be_load_LVGL_glob_class(bvm *vm);
 // custom widgets
 extern void be_load_lv_signal_bars_class(bvm *vm);
 extern void be_load_lv_wifi_bars_class(bvm *vm);
@@ -179,9 +180,8 @@ BERRY_API void be_load_custom_libs(bvm *vm)
     be_load_lvgl_font_lib(vm);
 
     be_load_lv_all_lib(vm);
-    be_load_lvgl_cb_lib(vm);
-    be_load_lvgl_cb_all_lib(vm);
     be_load_ctypes_lvgl_definitions_lib(vm);
+    be_load_LVGL_glob_class(vm);
     // custom widgets
     be_load_lv_signal_bars_class(vm);
     be_load_lv_wifi_bars_class(vm);

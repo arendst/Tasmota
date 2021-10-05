@@ -166,10 +166,11 @@ void IEM3000Every250ms(void)
 
         case 10:
 #ifdef IEM3000_IEM3155
-          EnergyUpdateTotal(value, true);
+          Energy.import_active[0] = value;
 #else
-          EnergyUpdateTotal(value64  * 0.001f, true); // 1125 => 1.125
+          Energy.import_active[0] = value64 * 0.001f;  // 1125 => 1.125
 #endif 
+          EnergyUpdateTotal();
           break;
       }
 

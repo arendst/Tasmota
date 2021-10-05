@@ -180,12 +180,11 @@ void Ade7953GetData(void)
   }
 
   uint32_t current_rms_sum = Ade7953.current_rms[0] + Ade7953.current_rms[1];
-  uint32_t active_power_sum = Ade7953.active_power[0] + Ade7953.active_power[1];
 
-  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("ADE: U %d, C %d, I %d + %d = %d, P %d + %d = %d"),
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("ADE: U %d, C %d, I %d + %d = %d, P %d + %d"),
     Ade7953.voltage_rms, Ade7953.period,
     Ade7953.current_rms[0], Ade7953.current_rms[1], current_rms_sum,
-    Ade7953.active_power[0], Ade7953.active_power[1], active_power_sum);
+    Ade7953.active_power[0], Ade7953.active_power[1]);
 
   if (Energy.power_on) {  // Powered on
     Energy.voltage[0] = (float)Ade7953.voltage_rms / Settings->energy_voltage_calibration;
@@ -208,18 +207,15 @@ void Ade7953GetData(void)
         Energy.current[channel] = 0;
       } else {
         Energy.current[channel] = (float)Ade7953.current_rms[channel] / (Settings->energy_current_calibration * 10);
+        Energy.kWhtoday_delta[channel] += Energy.active_power[channel] * 1000 / 36;
       }
     }
+    EnergyUpdateToday();
 /*
   } else {  // Powered off
     Energy.data_valid[0] = ENERGY_WATCHDOG;
     Energy.data_valid[1] = ENERGY_WATCHDOG;
 */
-  }
-
-  if (active_power_sum) {
-    Energy.kWhtoday_delta += ((active_power_sum * (100000 / (Settings->energy_power_calibration / 10))) / 3600);
-    EnergyUpdateToday();
   }
 }
 

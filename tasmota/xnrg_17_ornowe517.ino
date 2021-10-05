@@ -163,7 +163,8 @@ void WE517Every250ms(void)
           break;
 
         case 16:
-          EnergyUpdateTotal(value, true);
+          Energy.import_active[0] = value;
+          EnergyUpdateTotal();
           break;
       }
 

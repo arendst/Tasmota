@@ -644,8 +644,9 @@ void KNX_CB_Action(message_t const &msg, void *arg)
           knx.answer_4byte_float(msg.received_on, last_hum);
         }
       }
+#if defined(USE_ENERGY_SENSOR)      
       else if (chan->type == KNX_ENERGY_VOLTAGE) // Reply KNX_ENERGY_VOLTAGE
-      {        
+      {
         knx.answer_4byte_float(msg.received_on, Energy.voltage[0]);
         if (Settings->flag.knx_enable_enhancement) {
           knx.answer_4byte_float(msg.received_on, Energy.voltage[0]);
@@ -678,29 +679,29 @@ void KNX_CB_Action(message_t const &msg, void *arg)
       }
       else if (chan->type == KNX_ENERGY_YESTERDAY) // Reply KNX_ENERGY_YESTERDAY
       {
-        float energy_kWhyesterday = (float)Settings->energy_kWhyesterday / 100000;
-        knx.answer_4byte_float(msg.received_on, energy_kWhyesterday);
+        knx.answer_4byte_float(msg.received_on, Energy.yesterday_sum);
         if (Settings->flag.knx_enable_enhancement) {
-          knx.answer_4byte_float(msg.received_on, energy_kWhyesterday);
-          knx.answer_4byte_float(msg.received_on, energy_kWhyesterday);
+          knx.answer_4byte_float(msg.received_on, Energy.yesterday_sum);
+          knx.answer_4byte_float(msg.received_on, Energy.yesterday_sum);
         }
       }
       else if (chan->type == KNX_ENERGY_DAILY) // Reply KNX_ENERGY_DAILY
       {
-        knx.answer_4byte_float(msg.received_on, Energy.daily);
+        knx.answer_4byte_float(msg.received_on, Energy.daily_sum);
         if (Settings->flag.knx_enable_enhancement) {
-          knx.answer_4byte_float(msg.received_on, Energy.daily);
-          knx.answer_4byte_float(msg.received_on, Energy.daily);
+          knx.answer_4byte_float(msg.received_on, Energy.daily_sum);
+          knx.answer_4byte_float(msg.received_on, Energy.daily_sum);
         }
       }
       else if (chan->type == KNX_ENERGY_TOTAL) // Reply KNX_ENERGY_TOTAL
       {
-        knx.answer_4byte_float(msg.received_on, Energy.total);
+        knx.answer_4byte_float(msg.received_on, Energy.total_sum);
         if (Settings->flag.knx_enable_enhancement) {
-          knx.answer_4byte_float(msg.received_on, Energy.total);
-          knx.answer_4byte_float(msg.received_on, Energy.total);
+          knx.answer_4byte_float(msg.received_on, Energy.total_sum);
+          knx.answer_4byte_float(msg.received_on, Energy.total_sum);
         }
       }
+#endif
 #ifdef USE_RULES
       else if ((chan->type >= KNX_SLOT1) && (chan->type <= KNX_SLOT5)) // KNX RX SLOTs (read command)
       {

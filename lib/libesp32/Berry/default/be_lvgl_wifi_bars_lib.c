@@ -66,8 +66,8 @@ be_local_closure(every_second,   /* name */
 ********************************************************************/
 be_local_closure(init,   /* name */
   be_nested_proto(
-    7,                          /* nstack */
-    3,                          /* argc */
+    5,                          /* nstack */
+    2,                          /* argc */
     0,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
@@ -83,22 +83,21 @@ be_local_closure(init,   /* name */
     }),
     (be_nested_const_str("init", 380752755, 4)),
     (be_nested_const_str("input", -103256197, 5)),
-    ( &(const binstruction[15]) {  /* code */
-      0x600C0003,  //  0000  GETGBL	R3	G3
-      0x5C100000,  //  0001  MOVE	R4	R0
-      0x7C0C0200,  //  0002  CALL	R3	1
-      0x8C0C0700,  //  0003  GETMET	R3	R3	K0
-      0x5C140200,  //  0004  MOVE	R5	R1
-      0x5C180400,  //  0005  MOVE	R6	R2
-      0x7C0C0600,  //  0006  CALL	R3	3
-      0xB80E0200,  //  0007  GETNGBL	R3	K1
-      0x8C0C0702,  //  0008  GETMET	R3	R3	K2
-      0x5C140000,  //  0009  MOVE	R5	R0
-      0x7C0C0400,  //  000A  CALL	R3	2
-      0x8C0C0103,  //  000B  GETMET	R3	R0	K3
-      0x58140004,  //  000C  LDCONST	R5	K4
-      0x7C0C0400,  //  000D  CALL	R3	2
-      0x80000000,  //  000E  RET	0
+    ( &(const binstruction[14]) {  /* code */
+      0x60080003,  //  0000  GETGBL	R2	G3
+      0x5C0C0000,  //  0001  MOVE	R3	R0
+      0x7C080200,  //  0002  CALL	R2	1
+      0x8C080500,  //  0003  GETMET	R2	R2	K0
+      0x5C100200,  //  0004  MOVE	R4	R1
+      0x7C080400,  //  0005  CALL	R2	2
+      0xB80A0200,  //  0006  GETNGBL	R2	K1
+      0x8C080502,  //  0007  GETMET	R2	R2	K2
+      0x5C100000,  //  0008  MOVE	R4	R0
+      0x7C080400,  //  0009  CALL	R2	2
+      0x8C080103,  //  000A  GETMET	R2	R0	K3
+      0x58100004,  //  000B  LDCONST	R4	K4
+      0x7C080400,  //  000C  CALL	R2	2
+      0x80000000,  //  000D  RET	0
     })
   )
 );

@@ -303,6 +303,11 @@ void EmergencyReset(void) {
     }
   }
   while (Serial.available()) { Serial.read(); }  // Flush input buffer
+#ifdef ESP32
+  delay(10);                  // Allow time to cleanup queues - if not used hangs ESP32
+  Serial.end();
+  delay(10);                  // Allow time to cleanup queues - if not used hangs ESP32
+#endif  // ESP32
 }
 #endif  // USE_EMERGENCY_RESET
 
