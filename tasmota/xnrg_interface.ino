@@ -156,22 +156,22 @@ bool (* const xnrg_func_ptr[])(uint8_t) = {   // Energy driver Function Pointers
 
 const uint8_t xnrg_present = sizeof(xnrg_func_ptr) / sizeof(xnrg_func_ptr[0]);  // Number of drivers found
 
-uint8_t xnrg_active = 0;
+uint8_t xnrg_active = xnrg_present;
 
 bool XnrgCall(uint8_t function)
 {
   DEBUG_TRACE_LOG(PSTR("NRG: %d"), function);
 
   if (FUNC_PRE_INIT == function) {
-    for (uint32_t x = 0; x < xnrg_present; x++) {
-      xnrg_func_ptr[x](function);
+    TasmotaGlobal.energy_driver = ENERGY_NONE;
+    for (xnrg_active = 0; xnrg_active < xnrg_present; xnrg_active++) {
+      xnrg_func_ptr[xnrg_active](function);
       if (TasmotaGlobal.energy_driver) {
-        xnrg_active = x;
         return true;  // Stop further driver investigation
       }
     }
   }
-  else if (TasmotaGlobal.energy_driver) {
+  else if (TasmotaGlobal.energy_driver && xnrg_active < xnrg_present ) {
     return xnrg_func_ptr[xnrg_active](function);
   }
   return false;

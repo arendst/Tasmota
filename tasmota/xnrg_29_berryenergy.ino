@@ -17,6 +17,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#if 0
 #ifdef USE_ENERGY_SENSOR
 #ifdef USE_BERRY_ENERGY_DRIVER
 
@@ -106,3 +107,4 @@ bool Xnrg29(uint8_t function) {
 
 #endif  // USE_BERRY_ENERGY_DRIVER
 #endif  // USE_ENERGY_SENSOR
+#endif // #if 0
