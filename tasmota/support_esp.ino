@@ -387,12 +387,13 @@ uint32_t ESP_getSketchSize(void) {
 }
 
 uint32_t ESP_getFreeHeap(void) {
-  return ESP.getFreeHeap();
+  // ESP_getFreeHeap() returns also IRAM which we don't use
+  return heap_caps_get_free_size(MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
 }
 
 uint32_t ESP_getMaxAllocHeap(void) {
-  // largest block of heap that can be allocated at once
-  uint32_t free_block_size = ESP.getMaxAllocHeap();
+  // arduino returns IRAM but we want only DRAM
+  uint32_t free_block_size = heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
   if (free_block_size > 100) { free_block_size -= 100; }
   return free_block_size;
 }
