@@ -30,12 +30,18 @@ class Tasmota
   # inv is optional and inverses the behavior, i.e. look for chars not in the list
   def chars_in_string(s,c,inv)
     var inverted = inv ? true : false
-    for i:0..size(s)-1
+    var i = 0
+    while i < size(s)
+    # for i:0..size(s)-1
       var found = false
-      for j:0..size(c)-1
+      var j = 0
+      while j < size(c)
+      # for j:0..size(c)-1
         if s[i] == c[j] found = true end
+        j += 1
       end
       if inverted != found return i end
+      i += 1
     end
     return -1
   end
@@ -99,10 +105,14 @@ class Tasmota
     var rl_list = self.find_op(rule)
     var sub_event = event
     var rl = string.split(rl_list[0],'#')
-    for it:rl
+    var i = 0
+    while i < size(rl)
+    # for it:rl
+      var it = rl[i]
       var found=self.find_key_i(sub_event,it)
       if found == nil return false end
       sub_event = sub_event[found]
+      i += 1
     end
     var op=rl_list[1]
     var op2=rl_list[2]
@@ -297,7 +307,10 @@ class Tasmota
     elif event_type=='rule' return self.exec_rules(payload)
     elif event_type=='gc' return self.gc()
     elif self._drivers
-      for d:self._drivers
+      var i = 0
+      while i < size(self._drivers)
+      #for d:self._drivers
+        var d = self._drivers[i]
         var f = introspect.get(d, event_type)   # try to match a function or method with the same name
         if type(f) == 'function'
           try
@@ -308,6 +321,7 @@ class Tasmota
             print(string.format("BRY: Exception> '%s' - %s", e, m))
           end
         end
+        i += 1
       end
     end
 
