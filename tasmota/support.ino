@@ -2414,12 +2414,19 @@ void AddLogData(uint32_t loglevel, const char* log_data, const char* log_data_pa
   TasAutoMutex mutex((SemaphoreHandle_t *)&TasmotaGlobal.log_buffer_mutex);
 #endif  // ESP32
 
-  char mxtime[18];  // "13:45:21.999-123 "
+  char mxtime[21];  // "13:45:21.999-123/12 "
   snprintf_P(mxtime, sizeof(mxtime), PSTR("%02d" D_HOUR_MINUTE_SEPARATOR "%02d" D_MINUTE_SECOND_SEPARATOR "%02d.%03d"),
     RtcTime.hour, RtcTime.minute, RtcTime.second, RtcMillis());
   if (Settings->flag5.show_heap_with_timestamp) {
+#ifdef ESP8266
     snprintf_P(mxtime, sizeof(mxtime), PSTR("%s-%03d"),
       mxtime, ESP_getFreeHeap1024());
+#else
+    uint32_t freemem = ESP_getFreeHeap();
+    int32_t free_maxmem = 100 - (int32_t)(ESP_getMaxAllocHeap() * 100 / freemem);
+    snprintf_P(mxtime, sizeof(mxtime), PSTR("%s-%03d/%02d"),
+      mxtime, freemem / 1024, free_maxmem);
+#endif
   }
   strcat(mxtime, " ");
 
@@ -2479,14 +2486,24 @@ void AddLogData(uint32_t loglevel, const char* log_data, const char* log_data_pa
 }
 
 void AddLog(uint32_t loglevel, PGM_P formatP, ...) {
-  va_list arg;
-  va_start(arg, formatP);
-  char* log_data = ext_vsnprintf_malloc_P(formatP, arg);
-  va_end(arg);
-  if (log_data == nullptr) { return; }
+  uint32_t highest_loglevel = TasmotaGlobal.seriallog_level;
+  if (Settings->weblog_level > highest_loglevel) { highest_loglevel = Settings->weblog_level; }
+  if (Settings->mqttlog_level > highest_loglevel) { highest_loglevel = Settings->mqttlog_level; }
+  if (TasmotaGlobal.syslog_level > highest_loglevel) { highest_loglevel = TasmotaGlobal.syslog_level; }
+  if (TasmotaGlobal.templog_level > highest_loglevel) { highest_loglevel = TasmotaGlobal.templog_level; }
+  if (TasmotaGlobal.uptime < 3) { highest_loglevel = LOG_LEVEL_DEBUG_MORE; }  // Log all before setup correct log level
 
-  AddLogData(loglevel, log_data);
-  free(log_data);
+  // If no logging is requested then do not access heap to fight fragmentation
+  if ((loglevel <= highest_loglevel) && (TasmotaGlobal.masterlog_level <= highest_loglevel)) {
+    va_list arg;
+    va_start(arg, formatP);
+    char* log_data = ext_vsnprintf_malloc_P(formatP, arg);
+    va_end(arg);
+    if (log_data == nullptr) { return; }
+
+    AddLogData(loglevel, log_data);
+    free(log_data);
+  }
 }
 
 void AddLogBuffer(uint32_t loglevel, uint8_t *buffer, uint32_t count)
