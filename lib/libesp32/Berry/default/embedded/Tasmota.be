@@ -267,7 +267,8 @@ class Tasmota
       if f_time == nil && f_time_bc == nil  return false end
       if f_time_bc != nil && (f_time == nil || f_time_bc >= f_time)
         # bytecode exists and is more recent than berry source, use bytecode
-        f = f + "c"   # use bytecode name
+        ##### temporarily disable loading from bec file
+        # f = f + "c"   # use bytecode name
         is_bytecode = true
       end
     end
