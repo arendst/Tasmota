@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file.
 
 ### Breaking Changed
 - ESP32 LVGL updated to v8.0.2
+- Changed Memory display on ESP32 to not include IRAM (i.e. less by 40-50KB)
 
 ### Changed
 - Removed command ``EnergyReset`` as it is replaced by new commands
