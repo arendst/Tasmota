@@ -27,7 +27,6 @@
  * To test this file:
  * - Have hardware with at least 2M flash
  * - Enable a board with at least 256k filesystem in platform_override.ini
- * - Enable define USE_UFILESYS in user_config_override.h
 \*********************************************************************************************/
 #warning **** USE_DRV_FILE_DEMO is enabled ****
 

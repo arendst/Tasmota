@@ -6,7 +6,7 @@
     "core": "esp32",
     "f_cpu": "160000000L",
     "f_flash": "80000000L",
-    "flash_mode": "dio",
+    "flash_mode": "dout",
     "mcu": "esp32c3",
     "variant": "esp32c3",
     "partitions": "esp32_partition_app1856k_spiffs320k.csv"
@@ -14,8 +14,12 @@
   "connectivity": [
     "wifi"
   ],
+  "debug": {
+    "openocd_target": "esp32c3.cfg"
+  },
   "frameworks": [
-    "arduino"
+    "arduino",
+    "espidf"
   ],
   "name": "Espressif Generic ESP32-C3 4M Flash, Tasmota 1856k Code/OTA, 320k SPIFFS",
   "upload": {
@@ -25,6 +29,6 @@
     "require_upload_port": true,
     "speed": 460800
   },
-  "url": "https://docs.espressif.com/projects/esp-idf/en/latest",
+  "url": "https://docs.espressif.com/projects/esp-idf/en/latest/esp32c3/hw-reference/esp32c3/user-guide-devkitm-1.html",
   "vendor": "Espressif"
 }

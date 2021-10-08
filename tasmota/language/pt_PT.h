@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v9.4.0.1
+ * Updated until v9.5.0.3
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -198,6 +198,8 @@
 #define D_WEIGHT "Peso"
 #define D_WARMLIGHT "Luz Quente"
 #define D_WEB_SERVER "Servidor WEB"
+#define D_SOC "Estado de Carga"
+#define D_SOH "Estado de Saúde"
 
 // tasmota.ino
 #define D_WARNING_MINIMAL_VERSION "AVISO esta versão não supporta configurações persistentes"
@@ -326,6 +328,8 @@
 #define D_WEB_ADMIN_PASSWORD "Palavra Chave do Admin WEB"
 #define D_MQTT_ENABLE "MQTT habilitado"
 #define D_MQTT_TLS_ENABLE "MQTT TLS"
+#define D_HTTP_API "HTTP API"
+#define D_HTTP_API_ENABLE "HTTP API habilitado"
 #define D_FRIENDLY_NAME "Nome amigável"
 #define D_BELKIN_WEMO "Belkin WeMo"
 #define D_HUE_BRIDGE "Hue Bridge"
@@ -445,8 +449,8 @@
 #define D_TIMER_TIME "Tempo"
 #define D_TIMER_DAYS "Dias"
 #define D_TIMER_REPEAT "Repetir"
-#define D_TIMER_OUTPUT "Aaída"
-#define D_TIMER_ACTION "Açao"
+#define D_TIMER_OUTPUT "Saída"
+#define D_TIMER_ACTION "Ação"
 
 // xdrv_10_knx.ino
 #define D_CONFIGURE_KNX "Configurar KNX"
@@ -706,6 +710,9 @@
 #define D_SENSOR_CSE7761_RX    "CSE7761 Rx"
 #define D_SENSOR_CSE7766_TX    "CSE7766 Tx"
 #define D_SENSOR_CSE7766_RX    "CSE7766 Rx"
+#define D_SENSOR_BL0939_RX     "BL0939 Rx"
+#define D_SENSOR_BL0942_RX     "BL0942 Rx"
+#define D_SENSOR_HM330X_SET    "HM330X SET"
 #define D_SENSOR_PN532_TX      "PN532 Tx"
 #define D_SENSOR_PN532_RX      "PN532 Rx"
 #define D_SENSOR_SM16716_CLK   "SM16716 CLK"
@@ -831,6 +838,10 @@
 #define D_SENSOR_ZEROCROSS     "ZC Pulse"
 #define D_SENSOR_HALLEFFECT    "Efeito Hall"
 #define D_SENSOR_EPD_DATA      "EPD Data"
+#define D_SENSOR_MCP2515_CS    "MCP2515 CS"
+#define D_SENSOR_HRG15_RX      "HRG15 Rx"
+#define D_SENSOR_HRG15_TX      "HRG15 Tx"
+#define D_SENSOR_VINDRIKTNING_RX "VINDRIKTNING"
 
 // Units
 #define D_UNIT_AMPERE "A"
@@ -939,6 +950,8 @@
 #define D_NEW_FILE             "newfile.txt"
 #define D_CREATE_NEW_FILE      "Create and edit new file"
 #define D_EDIT_FILE            "Edit File"
+#define D_CONFIRM_FILE_DEL     "Confirm file deletion"
+#define D_SHOW_HIDDEN_FILES    "Show hidden files"
 
 //xsns_67_as3935.ino
 #define D_AS3935_GAIN "gain:"

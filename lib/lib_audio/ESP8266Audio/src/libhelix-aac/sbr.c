@@ -44,6 +44,7 @@
  **************************************************************************************/
 
 #if defined(USE_DEFAULT_STDLIB) || defined(ARDUINO)
+#include <stdio.h>
 #include <stdlib.h>
 #else
 #include "hlxclib/stdlib.h"

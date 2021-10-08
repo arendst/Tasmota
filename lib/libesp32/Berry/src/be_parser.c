@@ -87,6 +87,8 @@ static void match_token(bparser *parser, btokentype type)
     scan_next_token(parser); /* skip this token */
 }
 
+/* Check that the next token is not of type `type` */
+/* or raise an exception */
 static void match_notoken(bparser *parser, btokentype type)
 {
     if (next_type(parser) == type) { /* error when token is match */
@@ -95,6 +97,7 @@ static void match_notoken(bparser *parser, btokentype type)
     }
 }
 
+/* check that if the expdesc is a symbol, it is a valid one or raise an exception */
 static void check_symbol(bparser *parser, bexpdesc *e)
 {
     if (e->type == ETVOID && e->v.s == NULL) { /* error when token is not a symbol */
@@ -103,6 +106,7 @@ static void check_symbol(bparser *parser, bexpdesc *e)
     }
 }
 
+/* check that the value in `e` is valid for a variable, i.e. contains a value or a valid symbol */
 static void check_var(bparser *parser, bexpdesc *e)
 {
     check_symbol(parser, e); /* check the token is a symbol */
@@ -172,14 +176,15 @@ void end_varinfo(bparser *parser, int beginpc)
 
 #endif
 
+/* Initialize bblockinfo structure */
 static void begin_block(bfuncinfo *finfo, bblockinfo *binfo, int type)
 {
-    binfo->prev = finfo->binfo;
-    finfo->binfo = binfo;
+    binfo->prev = finfo->binfo; /* save previous block */
+    finfo->binfo = binfo; /* tell parser this is the current block */
     binfo->type = (bbyte)type;
     binfo->hasupval = 0;
-    binfo->beginpc = finfo->pc;
-    binfo->nactlocals = (bbyte)be_list_count(finfo->local);
+    binfo->beginpc = finfo->pc; /* set starting pc for this block */
+    binfo->nactlocals = (bbyte)be_list_count(finfo->local); /* count number of local variables in previous block */
     if (type & BLOCK_LOOP) {
         binfo->breaklist = NO_JUMP;
         binfo->continuelist = NO_JUMP;
@@ -197,9 +202,9 @@ static void end_block_ex(bparser *parser, int beginpc)
         be_code_patchlist(finfo, binfo->continuelist, binfo->beginpc);
     }
     end_varinfo(parser, beginpc);
-    be_list_resize(parser->vm, finfo->local, binfo->nactlocals);
-    finfo->freereg = binfo->nactlocals;
-    finfo->binfo = binfo->prev;
+    be_list_resize(parser->vm, finfo->local, binfo->nactlocals); /* remove local variables from this block, they are now out of scope */
+    finfo->freereg = binfo->nactlocals; /* adjust first free register accordingly */
+    finfo->binfo = binfo->prev; /* restore previous block */
 }
 
 static void end_block(bparser *parser)
@@ -207,6 +212,8 @@ static void end_block(bparser *parser)
     end_block_ex(parser, -1);
 }
 
+/* Return the name of the source for this parser, could be `string`,
+   `stdin` or the name of the current function */
 static bstring* parser_source(bparser *parser)
 {
     if (parser->finfo) {
@@ -215,29 +222,30 @@ static bstring* parser_source(bparser *parser)
     return be_newstr(parser->vm, parser->lexer.fname);
 }
 
+/* Initialize a function block and create a new `bprotoˋ */
 static void begin_func(bparser *parser, bfuncinfo *finfo, bblockinfo *binfo)
 {
     bvm *vm = parser->vm;
     bproto *proto = be_newproto(vm);
     var_setproto(vm->top, proto);
     be_stackpush(vm);
-    be_vector_init(vm, &finfo->code, sizeof(binstruction));
+    be_vector_init(vm, &finfo->code, sizeof(binstruction)); /* vector for code, vectors are not gced */
     proto->code = be_vector_data(&finfo->code);
     proto->codesize = be_vector_capacity(&finfo->code);
-    be_vector_init(vm, &finfo->kvec, sizeof(bvalue));
+    be_vector_init(vm, &finfo->kvec, sizeof(bvalue)); /* vector for constants */
     proto->ktab = be_vector_data(&finfo->kvec);
     proto->nconst = be_vector_capacity(&finfo->kvec);
-    be_vector_init(vm, &finfo->pvec, sizeof(bproto*));
+    be_vector_init(vm, &finfo->pvec, sizeof(bproto*)); /* vector for subprotos */
     proto->ptab = be_vector_data(&finfo->pvec);
     proto->nproto = be_vector_capacity(&finfo->pvec);
-    proto->source = parser_source(parser);
-    finfo->local = be_list_new(vm);
-    var_setlist(vm->top, finfo->local);
+    proto->source = parser_source(parser); /* keep a copy of source for function */
+    finfo->local = be_list_new(vm); /* list for local variables */
+    var_setlist(vm->top, finfo->local); /* push list of local variables on the stack (avoid gc) */
     be_stackpush(vm);
-    finfo->upval = be_map_new(vm);
+    finfo->upval = be_map_new(vm); /* push a map for upvals on stack */
     var_setmap(vm->top, finfo->upval);
     be_stackpush(vm);
-    finfo->prev = parser->finfo;
+    finfo->prev = parser->finfo; /* init finfo */
     finfo->lexer = &parser->lexer;
     finfo->proto = proto;
     finfo->freereg = 0;
@@ -258,6 +266,7 @@ static void begin_func(bparser *parser, bfuncinfo *finfo, bblockinfo *binfo)
     begin_block(finfo, binfo, 0);
 }
 
+/* compute the upval structure */
 static void setupvals(bfuncinfo *finfo)
 {
     bproto *proto = finfo->proto;
@@ -282,6 +291,7 @@ static void setupvals(bfuncinfo *finfo)
     }
 }
 
+/* Function is complete, finalize bproto */
 static void end_func(bparser *parser)
 {
     bvm *vm = parser->vm;
@@ -289,9 +299,9 @@ static void end_func(bparser *parser)
     bproto *proto = finfo->proto;
 
     be_code_ret(finfo, NULL); /* append a return to last code */
-    end_block(parser);
-    setupvals(finfo);
-    proto->code = be_vector_release(vm, &finfo->code);
+    end_block(parser); /* close block */
+    setupvals(finfo); /* close upvals */
+    proto->code = be_vector_release(vm, &finfo->code); /* compact all vectors and return NULL if empty */
     proto->codesize = finfo->pc;
     proto->ktab = be_vector_release(vm, &finfo->kvec);
     proto->nconst = be_vector_count(&finfo->kvec);
@@ -305,10 +315,11 @@ static void end_func(bparser *parser)
     proto->varinfo = be_vector_release(vm, &finfo->varvec);
     proto->nvarinfo = be_vector_count(&finfo->varvec);
 #endif
-    parser->finfo = parser->finfo->prev;
+    parser->finfo = parser->finfo->prev; /* restore previous `finfo` */
     be_stackpop(vm, 2); /* pop upval and local */
 }
 
+/* is the next token a binary operator? If yes return the operator or `OP_NOT_BINARY` */
 static btokentype get_binop(bparser *parser)
 {
     btokentype op = next_type(parser);
@@ -318,6 +329,8 @@ static btokentype get_binop(bparser *parser)
     return OP_NOT_BINARY;
 }
 
+/* is the next token a unary operator? If yes return the operator or `OP_NOT_BINARY` */
+/* operator 'negative' 'not' and 'flip' */
 static btokentype get_unary_op(bparser *parser)
 {
     btokentype op = next_type(parser);
@@ -327,6 +340,8 @@ static btokentype get_unary_op(bparser *parser)
     return OP_NOT_UNARY;
 }
 
+/* is the next token an assignment operator? If yes return the operator or `OP_NOT_BINARY` */
+/* `=`, `+=`, ... `>>=` */
 static btokentype get_assign_op(bparser *parser)
 {
     btokentype op = next_type(parser);
@@ -336,6 +351,7 @@ static btokentype get_assign_op(bparser *parser)
     return OP_NOT_ASSIGN;
 }
 
+/* Initialize bexpdesc structure with specific type and value as int */
 static void init_exp(bexpdesc *e, exptype_t type, bint i)
 {
     e->type = (bbyte)type;
@@ -346,6 +362,8 @@ static void init_exp(bexpdesc *e, exptype_t type, bint i)
     e->v.i = i;
 }
 
+/* find local variable by name, starting at index `begin` */
+/* linear search, returns -1 if not found */
 static int find_localvar(bfuncinfo *finfo, bstring *s, int begin)
 {
     int i, count = be_list_count(finfo->local);
@@ -358,12 +376,22 @@ static int find_localvar(bfuncinfo *finfo, bstring *s, int begin)
     return -1; /* not found */
 }
 
+/* create a new local variable by name, or return the current register if already exists */
+/* returns the Reg number for the variable */
+/* If STRICT, we don't allow a var to hide a var from outer scope */
+/* We don't allow the same var to be defined twice in same scope */
 static int new_localvar(bparser *parser, bstring *name)
 {
     bfuncinfo *finfo = parser->finfo;
-    int reg = find_localvar(finfo, name, finfo->binfo->nactlocals);
+    int reg = find_localvar(finfo, name, finfo->binfo->nactlocals); /* look if already exists skipping the local variables from upper blocks */
+    /* 'strict': raise an exception if the local variable shadows another local variable */
     if (reg == -1) {
         bvalue *var;
+        if (comp_is_strict(parser->vm)) {
+            if (find_localvar(finfo, name, 0) >= 0 && str(name)[0] != '.') {  /* we do accept nested redifinition of internal variables starting with ':' */
+                push_error(parser, "strict: redefinition of '%s' from outer scope", str(name));
+            }
+        }
         reg = be_list_count(finfo->local); /* new local index */
         var = be_list_push(parser->vm, finfo->local, NULL);
         var_setstr(var, name);
@@ -371,10 +399,13 @@ static int new_localvar(bparser *parser, bstring *name)
             be_code_allocregs(finfo, 1); /* use a register */
         }
         begin_varinfo(parser, name);
+    } else {
+        push_error(parser, "redefinition of '%s'", str(name));
     }
     return reg;
 }
 
+/* Find upval by name, if found return its index number, or -1 */
 static int find_upval(bfuncinfo *finfo, bstring *s)
 {
     bvm *vm = finfo->lexer->vm;
@@ -385,6 +416,8 @@ static int find_upval(bfuncinfo *finfo, bstring *s)
     return -1;
 }
 
+/* Recursively search for upper blocks that are referenced in upvals */
+/* and mark them with `hasupval` */
 static void mark_upval(bfuncinfo *finfo, int level)
 {
     bblockinfo *binfo = finfo->prev->binfo;
@@ -413,18 +446,28 @@ static int new_upval(bvm *vm, bfuncinfo *finfo, bstring *name, bexpdesc *var)
     return index;
 }
 
+/* create a new variable in currenr context as name, and create expdesc for it */
+/* If within a block, create as local, otherwise as global */
 static void new_var(bparser *parser, bstring *name, bexpdesc *var)
 {
     bfuncinfo *finfo = parser->finfo;
     if (finfo->prev || finfo->binfo->prev || parser->islocal) {
         init_exp(var, ETLOCAL, 0);
-        var->v.idx = new_localvar(parser, name);
+        var->v.idx = new_localvar(parser, name); /* if local, contains the index in current local var list */
     } else {
         init_exp(var, ETGLOBAL, 0);
         var->v.idx = be_global_new(parser->vm, name);
         if (var->v.idx > (int)IBx_MASK) {
             push_error(parser,
                 "too many global variables (in '%s')", str(name));
+        }
+        if (comp_is_named_gbl(parser->vm)) {
+            /* change to ETNGLBAL */
+            bexpdesc key;
+            init_exp(&key, ETSTRING, 0);
+            key.v.s = name;
+            init_exp(var, ETNGLOBAL, 0);
+            var->v.idx = be_code_nglobal(parser->finfo, &key);
         }
     }
 }
@@ -446,10 +489,17 @@ static int singlevaraux(bvm *vm, bfuncinfo *finfo, bstring *s, bexpdesc *var)
                 int res = singlevaraux(vm, finfo->prev, s, var);
                 if (res == ETUPVAL || res == ETLOCAL) {
                     idx = new_upval(vm, finfo, s, var); /* new upvalue */
-                } else if (be_global_find(vm, s) >= 0) {
-                    return ETGLOBAL; /* global variable */
                 } else {
-                    return ETVOID; /* unknow (new variable or error) */
+                    idx = be_global_find(vm, s);
+                    if (idx >= 0) {
+                        if (idx < be_builtin_count(vm)) {
+                            return ETGLOBAL; /* global variable */
+                        } else {
+                            return comp_is_named_gbl(vm) ? ETNGLOBAL : ETGLOBAL; /* global variable */
+                        }
+                    } else {
+                        return ETVOID; /* unknow (new variable or error) */
+                    }
                 }
             }
             init_exp(var, ETUPVAL, idx);
@@ -458,8 +508,12 @@ static int singlevaraux(bvm *vm, bfuncinfo *finfo, bstring *s, bexpdesc *var)
     }
 }
 
+/* get variable from next toden as name */
+/* and create an expdesc from it */
+/* can be new, global, named global, upval */
 static void singlevar(bparser *parser, bexpdesc *var)
 {
+    bexpdesc key;
     bstring *varname = next_token(parser).u.s;
     int type = singlevaraux(parser->vm, parser->finfo, varname, var);
     switch (type) {
@@ -471,27 +525,55 @@ static void singlevar(bparser *parser, bexpdesc *var)
         init_exp(var, ETGLOBAL, 0);
         var->v.idx = be_global_find(parser->vm, varname);
         break;
+    case ETNGLOBAL:
+        init_exp(&key, ETSTRING, 0);
+        key.v.s = varname;
+        init_exp(var, ETNGLOBAL, 0);
+        var->v.idx = be_code_nglobal(parser->finfo, &key);
+        break;
     default:
         break;
     }
 }
 
+/* parse a vararg argument in the form `def f(a, *b) end` */
+/* Munch the '*', read the token, create variable and declare the function as vararg */
+static void func_vararg(bparser *parser) {
+    bexpdesc v;
+    bstring *str;
+    match_token(parser, OptMul); /* skip '*' */
+    str = next_token(parser).u.s;
+    match_token(parser, TokenId); /* match and skip ID */
+    new_var(parser, str, &v); /* new variable */
+    parser->finfo->proto->varg = 1;   /* set varg flag */
+}
+
+/* Parse function or method definition variable list */
+/* Create an implicit local variable for each argument starting at R0 */
+/* Update function proto argc to the expected number or arguments */
+/* Raise an exception if multiple arguments have the same name */
+/* New: vararg support */
 static void func_varlist(bparser *parser)
 {
     bexpdesc v;
     bstring *str;
-    /* '(' [ID {',' ID}] ')' */
+    /* '(' [ ID {',' ID}] ')' or */
+    /* '(' '*' ID ')' or */
+    /* '(' [ ID {',' ID}] ',' '*' ID ')' */
     match_token(parser, OptLBK); /* skip '(' */
-    if (match_id(parser, str) != NULL) {
+    if (next_type(parser) == OptMul) {
+        func_vararg(parser);
+    } else if (match_id(parser, str) != NULL) {
         new_var(parser, str, &v); /* new variable */
         while (match_skip(parser, OptComma)) { /* ',' */
-            str = next_token(parser).u.s;
-            match_token(parser, TokenId); /* match and skip ID */
-            /* new local variable */
-            if (find_localvar(parser->finfo, str, 0) == -1) {
-                new_var(parser, str, &v);
+            if (next_type(parser) == OptMul) {
+                func_vararg(parser);
+                break;
             } else {
-                push_error(parser, "redefinition of '%s'", str(str));
+                str = next_token(parser).u.s;
+                match_token(parser, TokenId); /* match and skip ID */
+                /* new local variable */
+                new_var(parser, str, &v);
             }
         }
     }
@@ -499,29 +581,33 @@ static void func_varlist(bparser *parser)
     parser->finfo->proto->argc = parser->finfo->freereg;
 }
 
+/* Parse a function includind arg list and body */
+/* Given name and type (function or method) */
+/* Returns `bproto` object */
 static bproto* funcbody(bparser *parser, bstring *name, int type)
 {
     bfuncinfo finfo;
     bblockinfo binfo;
 
     /* '(' varlist ')' block 'end' */
-    begin_func(parser, &finfo, &binfo);
+    begin_func(parser, &finfo, &binfo); /* init new function context */
     finfo.proto->name = name;
-    if (type & FUNC_METHOD) {
+    if (type & FUNC_METHOD) { /* If method, add an implicit first argument `self` */
         new_localvar(parser, parser_newstr(parser, "self"));
     }
-    func_varlist(parser);
-    stmtlist(parser);
-    end_func(parser);
+    func_varlist(parser); /* parse arg list */
+    stmtlist(parser); /* parse statement without final `end` */
+    end_func(parser); /* close function context */
     match_token(parser, KeyEnd); /* skip 'end' */
-    return finfo.proto;
+    return finfo.proto; /* return fully constructed `bproto` */
 }
 
-/* anonymous function */
+/* anonymous function, build `bproto` object with name `_anonymous_` */
+/* and build a expdesc for the bproto */
 static void anon_func(bparser *parser, bexpdesc *e)
 {
     bproto *proto;
-    bstring *name = parser_newstr(parser, "<anonymous>");
+    bstring *name = parser_newstr(parser, "_anonymous_");
     /* 'def' ID '(' varlist ')' block 'end' */
     scan_next_token(parser); /* skip 'def' */
     proto = funcbody(parser, name, FUNC_ANONYMOUS);
@@ -545,11 +631,7 @@ static void lambda_varlist(bparser *parser)
             str = next_token(parser).u.s;
             match_token(parser, TokenId); /* match and skip ID */
             /* new local variable */
-            if (find_localvar(parser->finfo, str, 0) == -1) {
-                new_var(parser, str, &v);
-            } else {
-                push_error(parser, "redefinition of '%s'", str(str));
-            }
+            new_var(parser, str, &v);
         }
     }
     match_token(parser, OptArrow); /* skip '->' */
@@ -576,6 +658,9 @@ static void lambda_expr(bparser *parser, bexpdesc *e)
     be_stackpop(parser->vm, 1);
 }
 
+/* Instanciate a builtin type by name */
+/* Allocates a new register for the value, and call empty constructor */
+/* Is allocated as LOCAL and must be changed to REG when completed */
 static void new_primtype(bparser *parser, const char *type, bexpdesc *e)
 {
     int idx;
@@ -587,17 +672,19 @@ static void new_primtype(bparser *parser, const char *type, bexpdesc *e)
     init_exp(e, ETGLOBAL, idx);
     idx = be_code_nextreg(finfo, e);
     be_code_call(finfo, idx, 0);
-    e->type = ETLOCAL;
+    e->type = ETLOCAL;  /* declare as local, will be changed to ETREG when completely initialized */
 }
 
+/* Parse next member within a list */
+/* `l` contains the current list. The expr is evaluated and added to the list */
 static void list_nextmember(bparser *parser, bexpdesc *l)
 {
     bexpdesc e, v = *l;
     bfuncinfo *finfo = parser->finfo;
     expr(parser, &e); /* value */
-    check_var(parser, &e);
-    be_code_binop(finfo, OptConnect, &v, &e);
-    be_code_freeregs(finfo, 1);
+    check_var(parser, &e); /* check that we don´t have an unknown symbol */
+    be_code_binop(finfo, OptConnect, &v, &e, -1); /* add it to list with CONNECT */
+    be_code_freeregs(finfo, 1);  /* since left arg is LOCAL, an ETREG was allocated. Free it */
 }
 
 static void map_nextmember(bparser *parser, bexpdesc *l)
@@ -605,25 +692,25 @@ static void map_nextmember(bparser *parser, bexpdesc *l)
     bexpdesc e, v = *l;
     bfuncinfo *finfo = parser->finfo;
     expr(parser, &e); /* key */
-    check_var(parser, &e);
-    be_code_index(finfo, &v, &e);
+    check_var(parser, &e);  /* check if value is valid */
+    be_code_index(finfo, &v, &e);  /* package as `v` as INDEX suffix for value `e` */
     match_token(parser, OptColon); /* ':' */
-    expr(parser, &e); /* value */
-    check_var(parser, &e);
-    be_code_setvar(finfo, &v, &e);
+    expr(parser, &e); /* value in `e` */
+    check_var(parser, &e);  /* check if value is correct */
+    be_code_setvar(finfo, &v, &e);  /* set suffi  INDEX value to e */
 }
 
 static void list_expr(bparser *parser, bexpdesc *e)
 {
     /* '[' {expr ','} [expr] ']' */
-    new_primtype(parser, "list", e); /* new list */
+    new_primtype(parser, "list", e); /* new list, created as LOCAL first */
     while (next_type(parser) != OptRSB) {
         list_nextmember(parser, e);
         if (!match_skip(parser, OptComma)) { /* ',' */
             break;
         }
     }
-    e->type = ETREG;
+    e->type = ETREG; /* then turned to REG */
     match_token(parser, OptRSB); /* skip ']' */
 }
 
@@ -641,14 +728,16 @@ static void map_expr(bparser *parser, bexpdesc *e)
     match_token(parser, OptRBR); /* skip '}' */
 }
 
+/* push each argument as new reg and return number of args */
+/* TODO `e` is ignored by caller */
 static int exprlist(bparser *parser, bexpdesc *e)
 {
     bfuncinfo *finfo = parser->finfo;
     int n = 1;
     /* expr { ',' expr } */
-    expr(parser, e);
-    check_var(parser, e);
-    be_code_nextreg(finfo, e);
+    expr(parser, e);  /* parse expr */
+    check_var(parser, e);  /* check if valid */
+    be_code_nextreg(finfo, e);  /* move result to next reg */
     while (match_skip(parser, OptComma)) { /* ',' */
         expr(parser, e);
         check_var(parser, e);
@@ -658,6 +747,9 @@ static int exprlist(bparser *parser, bexpdesc *e)
     return n;
 }
 
+/* parse call to method or function */
+/* `e` can be a member (method) or a register */
+/* On return, `e` is ETREG to the result of the call */
 static void call_expr(bparser *parser, bexpdesc *e)
 {
     bexpdesc args;
@@ -671,14 +763,15 @@ static void call_expr(bparser *parser, bexpdesc *e)
     if (ismember) {
         base = be_code_getmethod(finfo, e);
     } else {
-        base = be_code_nextreg(finfo, e);
+        base = be_code_nextreg(finfo, e); /* allocate a new base reg if not at top already */
     }
+    /* base is always taken at top of freereg and allocates 1 reg for function and 2 regs for method */
     scan_next_token(parser); /* skip '(' */
-    if (next_type(parser) != OptRBK) {
-        argc = exprlist(parser, &args);
+    if (next_type(parser) != OptRBK) {  /* if arg list is not empty */
+        argc = exprlist(parser, &args);  /* push each argument as new reg and return number of args */
     }
     match_token(parser, OptRBK); /* skip ')' */
-    argc += ismember;
+    argc += ismember;   /* if method there is an additional implicit arg */
     be_code_call(finfo, base, argc);
     if (e->type != ETREG) {
         e->type = ETREG;
@@ -686,6 +779,8 @@ static void call_expr(bparser *parser, bexpdesc *e)
     }
 }
 
+/* Parse member expression */
+/* Generates an ETMEMBER object that is materialized later into GETMBR, GETMET or SETMBR */
 static void member_expr(bparser *parser, bexpdesc *e)
 {
     bstring *str;
@@ -696,6 +791,13 @@ static void member_expr(bparser *parser, bexpdesc *e)
         bexpdesc key;
         init_exp(&key, ETSTRING, 0);
         key.v.s = str;
+        be_code_member(parser->finfo, e, &key);
+    } else if (next_type(parser) == OptLBK) {
+        scan_next_token(parser); /* skip '(' */
+        bexpdesc key;
+        expr(parser, &key);
+        check_var(parser, &key);
+        match_token(parser, OptRBK); /* skip ')' */
         be_code_member(parser->finfo, e, &key);
     } else {
         push_error(parser, "invalid syntax near '%s'",
@@ -798,10 +900,12 @@ static void suffix_expr(bparser *parser, bexpdesc *e)
 static void suffix_alloc_reg(bparser *parser, bexpdesc *l)
 {
     bfuncinfo *finfo = parser->finfo;
-    bbool suffix = l->type == ETINDEX || l->type == ETMEMBER;
+    bbool is_suffix = l->type == ETINDEX || l->type == ETMEMBER;   /* is suffix */
+    bbool is_suffix_reg = l->v.ss.tt == ETREG || l->v.ss.tt == ETLOCAL || l->v.ss.tt == ETGLOBAL || l->v.ss.tt == ETNGLOBAL;   /* if suffix, does it need a register */
+    bbool is_global = l->type == ETGLOBAL || l->type == ETNGLOBAL;
     /* in the suffix expression, if the object is a temporary
      * variable (l->v.ss.tt == ETREG), it needs to be cached. */
-    if (suffix && l->v.ss.tt == ETREG) {
+    if (is_global || (is_suffix && is_suffix_reg)) {
         be_code_allocregs(finfo, 1);
     }
 }
@@ -809,9 +913,11 @@ static void suffix_alloc_reg(bparser *parser, bexpdesc *l)
 /* compound assignment */
 static void compound_assign(bparser *parser, int op, bexpdesc *l, bexpdesc *r)
 {
+    int dst = -1;  /* destination register in case of compound assignment */
     if (op != OptAssign) { /* check left variable */
         check_var(parser, l);
         /* cache the register of the object when continuously assigning */
+        dst = parser->finfo->freereg;
         suffix_alloc_reg(parser, l);
     }
     expr(parser, r); /* right expression */
@@ -820,19 +926,36 @@ static void compound_assign(bparser *parser, int op, bexpdesc *l, bexpdesc *r)
         bexpdesc e = *l;
         op = op < OptAndAssign ? op - OptAddAssign + OptAdd
                 : op - OptAndAssign + OptBitAnd;
-        be_code_binop(parser->finfo, op, &e, r); /* coding operation */
+        be_code_binop(parser->finfo, op, &e, r, dst); /* coding operation */
         *r = e;
     }
 }
 
+/* check if we need to create a new local variable with this name to be assigned to */
+/* Returns true if it´s a new local variable */
+/* A new implicit local variable is created if no global has the same name (excluding builtins) */
+/* This means that you can override a builtin silently */
+/* This also means that a function cannot create a global, they must preexist or create with `global` module */
+/* TODO add warning in strict mode */
 static int check_newvar(bparser *parser, bexpdesc *e)
 {
     if (e->type == ETGLOBAL) {
         if (e->v.idx < be_builtin_count(parser->vm)) {
             e->v.s = be_builtin_name(parser->vm, e->v.idx);
+            if (comp_is_strict(parser->vm)) {
+                push_error(parser, "strict: redefinition of builtin '%s'",
+                    str(e->v.s));
+            }
             return btrue;
         }
         return bfalse;
+    }
+    if (comp_is_strict(parser->vm)) {
+        bfuncinfo *finfo = parser->finfo;
+        if ((e->type == ETVOID) && (finfo->prev || finfo->binfo->prev || parser->islocal)) {
+            push_error(parser, "strict: no global '%s', did you mean 'var %s'?",
+                str(e->v.s), str(e->v.s));
+        }
     }
     return e->type == ETVOID;
 }
@@ -875,6 +998,7 @@ static void cond_expr(bparser *parser, bexpdesc *e)
     if (next_type(parser) == OptQuestion) {
         int jf, jl = NO_JUMP; /* jump list */
         bfuncinfo *finfo = parser->finfo;
+        check_var(parser, e);  /* check if valid */
         scan_next_token(parser); /* skip '?' */
         be_code_jumpbool(finfo, e, bfalse); /* go if true */
         jf = e->f;
@@ -899,39 +1023,42 @@ static void cond_expr(bparser *parser, bexpdesc *e)
 static void sub_expr(bparser *parser, bexpdesc *e, int prio)
 {
     bfuncinfo *finfo = parser->finfo;
-    btokentype op = get_unary_op(parser);
-    if (op != OP_NOT_UNARY) {
+    btokentype op = get_unary_op(parser);  /* check if first token in unary op */
+    if (op != OP_NOT_UNARY) {  /* unary op found */
         int line, res;
-        scan_next_token(parser);
-        line = parser->lexer.linenumber;
-        sub_expr(parser, e, UNARY_OP_PRIO);
-        check_var(parser, e);
-        res = be_code_unop(finfo, op, e);
+        scan_next_token(parser);  /* move to next token */
+        line = parser->lexer.linenumber;  /* remember line number for error reporting */
+        sub_expr(parser, e, UNARY_OP_PRIO);  /* parse subexpr with new prio */
+        check_var(parser, e);  /* check that the value is ok */
+        res = be_code_unop(finfo, op, e);  /* apply unary op with optimizations if the token is a value */
         if (res) { /* encode unary op */
             parser->lexer.linenumber = line;
             push_error(parser, "wrong type argument to unary '%s'",
                 res == 1 ? "negative" : "bit-flip");
         }
     } else {
-        suffix_expr(parser, e);
+        suffix_expr(parser, e);  /* parse left part of binop */
     }
-    op = get_binop(parser);
-    while (op != OP_NOT_BINARY && prio > binary_op_prio(op)) {
+    op = get_binop(parser);  /* check if binop */
+    while (op != OP_NOT_BINARY && prio > binary_op_prio(op)) {  /* is binop applicable */
         bexpdesc e2;
-        check_var(parser, e);
-        scan_next_token(parser);
+        check_var(parser, e);  /* check that left part is valid */
+        scan_next_token(parser);  /* move to next token */
         be_code_prebinop(finfo, op, e); /* and or */
         init_exp(&e2, ETVOID, 0);
-        sub_expr(parser, &e2, binary_op_prio(op));
-        check_var(parser, &e2);
-        be_code_binop(finfo, op, e, &e2); /* encode binary op */
-        op = get_binop(parser);
+        sub_expr(parser, &e2, binary_op_prio(op));  /* parse right side */
+        check_var(parser, &e2);  /* check if valid */
+        be_code_binop(finfo, op, e, &e2, -1); /* encode binary op */
+        op = get_binop(parser);  /* is there a following binop? */
     }
     if (prio == ASSIGN_OP_PRIO) {
         cond_expr(parser, e);
     }
 }
 
+/* Parse new expression and return value in `e` (overwritten) */
+/* Initializes an empty expdes  and parse subexpr */
+/* Always allocates a new temp register at top of freereg */
 static void expr(bparser *parser, bexpdesc *e)
 {
     init_exp(e, ETVOID, 0);
@@ -1208,7 +1335,7 @@ static void return_stmt(bparser *parser)
 
 static void check_class_attr(bparser *parser, bclass *c, bstring *attr)
 {
-    if (be_class_attribute(parser->vm, c, attr) != BE_NIL) {
+    if (be_class_attribute(parser->vm, c, attr) != BE_NONE) {
         push_error(parser,
             "redefinition of the attribute '%s'", str(attr));
     }
@@ -1221,17 +1348,58 @@ static void classvar_stmt(bparser *parser, bclass *c)
     scan_next_token(parser); /* skip 'var' */
     if (match_id(parser, name) != NULL) {
         check_class_attr(parser, c, name);
-        be_member_bind(parser->vm, c, name);
+        be_member_bind(parser->vm, c, name, btrue);
         while (match_skip(parser, OptComma)) { /* ',' */
             if (match_id(parser, name) != NULL) {
                 check_class_attr(parser, c, name);
-                be_member_bind(parser->vm, c, name);
+                be_member_bind(parser->vm, c, name, btrue);
             } else {
                 parser_error(parser, "class var error");
             }
         }
     } else {
         parser_error(parser, "class var error");
+    }
+}
+
+static void class_static_assignment_expr(bparser *parser, bexpdesc *e, bstring *name)
+{
+    if (match_skip(parser, OptAssign)) { /* '=' */
+        bexpdesc e1, e2;
+        /* parse the right expression */
+        expr(parser, &e2);
+
+        e1 = *e;        /* copy the class description */
+        bexpdesc key;   /* build the member key */
+        init_exp(&key, ETSTRING, 0);
+        key.v.s = name;
+
+        be_code_member(parser->finfo, &e1, &key);   /* compute member accessor */
+        be_code_setvar(parser->finfo, &e1, &e2);    /* set member */
+    }
+}
+
+static void classstatic_stmt(bparser *parser, bclass *c, bexpdesc *e)
+{
+    bstring *name;
+    /* 'static' ID ['=' expr] {',' ID ['=' expr] } */
+    scan_next_token(parser); /* skip 'static' */
+    if (match_id(parser, name) != NULL) {
+        check_class_attr(parser, c, name);
+        be_member_bind(parser->vm, c, name, bfalse);
+        class_static_assignment_expr(parser, e, name);
+
+        while (match_skip(parser, OptComma)) { /* ',' */
+            if (match_id(parser, name) != NULL) {
+                check_class_attr(parser, c, name);
+                be_member_bind(parser->vm, c, name, bfalse);
+                class_static_assignment_expr(parser, e, name);
+            } else {
+                parser_error(parser, "class static error");
+            }
+        }
+    } else {
+        parser_error(parser, "class static error");
     }
 }
 
@@ -1252,20 +1420,22 @@ static void classdef_stmt(bparser *parser, bclass *c)
 static void class_inherit(bparser *parser, bexpdesc *e)
 {
     if (next_type(parser) == OptColon) { /* ':' */
+        bexpdesc ec = *e;    /* work on a copy because we preserve original class */
         bexpdesc e1;
         scan_next_token(parser); /* skip ':' */
         expr(parser, &e1);
         check_var(parser, &e1);
-        be_code_setsuper(parser->finfo, e, &e1);
+        be_code_setsuper(parser->finfo, &ec, &e1);
     }
 }
 
-static void class_block(bparser *parser, bclass *c)
+static void class_block(bparser *parser, bclass *c, bexpdesc *e)
 {
     /* { [;] } */
     while (block_follow(parser)) {
         switch (next_type(parser)) {
         case KeyVar: classvar_stmt(parser, c); break;
+        case KeyStatic: classstatic_stmt(parser, c, e); break;
         case KeyDef: classdef_stmt(parser, c); break;
         case OptSemic: scan_next_token(parser); break;
         default: push_error(parser,
@@ -1285,7 +1455,7 @@ static void class_stmt(bparser *parser)
         new_var(parser, name, &e);
         be_code_class(parser->finfo, &e, c);
         class_inherit(parser, &e);
-        class_block(parser, c);
+        class_block(parser, c, &e);
         be_class_compress(parser->vm, c); /* compress class size */
         match_token(parser, KeyEnd); /* skip 'end' */
     } else {
@@ -1520,7 +1690,7 @@ bclosure* be_parser_source(bvm *vm,
     mainfunc(&parser, cl);
     be_lexer_deinit(&parser.lexer);
     be_global_release_space(vm); /* clear global space */
-    be_stackpop(vm, 1);
+    be_stackpop(vm, 2); /* pop strtab */
     scan_next_token(&parser); /* clear lexer */
     return cl;
 }

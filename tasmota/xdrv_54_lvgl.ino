@@ -36,20 +36,24 @@
   #include "lv_png.h"
 #endif // USE_LVGL_PNG_DECODER
 
+#ifdef USE_LVGL_FREETYPE
+  #include "lv_freetype.h"
+#endif // USE_LVGL_FREETYPE
+
 Adafruit_LvGL_Glue * glue;
 
 // **************************************************
 // Logging
 // **************************************************
 #if LV_USE_LOG
-static void lvbe_debug(lv_log_level_t level, const char *file, uint32_t line, const char *fname, const char *msg);
-static void lvbe_debug(lv_log_level_t level, const char *file, uint32_t line, const char *fname, const char *msg) {
+#ifdef USE_BERRY
+static void lvbe_debug(const char *msg);
+static void lvbe_debug(const char *msg) {
   be_writebuffer("LVG: ", sizeof("LVG: "));
-  be_writebuffer(fname, strlen(fname));
-  be_writebuffer(" -> ", sizeof(" -> "));
   be_writebuffer(msg, strlen(msg));
   be_writebuffer("\n", sizeof("\n"));
 }
+#endif
 #endif
 
 /************************************************************
@@ -193,8 +197,8 @@ extern "C" {
  ************************************************************/
 
 #ifdef USE_UFILESYS
-static lv_fs_res_t lvbe_fs_open(lv_fs_drv_t * drv, void * file_p, const char * path, lv_fs_mode_t mode);
-static lv_fs_res_t lvbe_fs_open(lv_fs_drv_t * drv, void * file_p, const char * path, lv_fs_mode_t mode) {
+static void * lvbe_fs_open(lv_fs_drv_t * drv, const char * path, lv_fs_mode_t mode);
+static void * lvbe_fs_open(lv_fs_drv_t * drv, const char * path, lv_fs_mode_t mode) {
   // AddLog(LOG_LEVEL_INFO, "LVG: lvbe_fs_open(%p, %p, %s, %i) %i", drv, file_p, path, mode, sizeof(File));
   const char * modes = nullptr;
   switch (mode) {
@@ -211,7 +215,7 @@ static lv_fs_res_t lvbe_fs_open(lv_fs_drv_t * drv, void * file_p, const char * p
 
   if (modes == nullptr) {
     AddLog(LOG_LEVEL_INFO, "LVG: fs_open, unsupported mode %d", mode);
-    return LV_FS_RES_INV_PARAM;
+    return nullptr;
   }
 
   // Add "/" prefix
@@ -223,10 +227,9 @@ static lv_fs_res_t lvbe_fs_open(lv_fs_drv_t * drv, void * file_p, const char * p
   // AddLog(LOG_LEVEL_INFO, "LVG: F=%*_H", sizeof(f), &f);
   if (f) {
     File * f_ptr = new File(f);                 // copy to dynamic object
-    *((File**)file_p) = f_ptr;
-    return LV_FS_RES_OK;
+    return f_ptr;
   } else {
-    return LV_FS_RES_NOT_EX;
+    return nullptr;
   }
 }
 
@@ -275,11 +278,19 @@ static lv_fs_res_t lvbe_fs_tell(lv_fs_drv_t * drv, void * file_p, uint32_t * pos
   return LV_FS_RES_OK;
 }
 
-static lv_fs_res_t lvbe_fs_seek(lv_fs_drv_t * drv, void * file_p, uint32_t pos);
-static lv_fs_res_t lvbe_fs_seek(lv_fs_drv_t * drv, void * file_p, uint32_t pos) {
+static lv_fs_res_t lvbe_fs_seek(lv_fs_drv_t * drv, void * file_p, uint32_t pos, lv_fs_whence_t whence);
+static lv_fs_res_t lvbe_fs_seek(lv_fs_drv_t * drv, void * file_p, uint32_t pos, lv_fs_whence_t whence) {
   // AddLog(LOG_LEVEL_INFO, "LVG: lvbe_fs_seek(%p, %p, %i)", drv, file_p, pos);
   File * f_ptr = (File*) file_p;
-  if (f_ptr->seek(pos)) {
+  SeekMode seek;
+  switch (whence) {
+    case LV_FS_SEEK_SET: seek = SeekSet; break;
+    case LV_FS_SEEK_CUR: seek = SeekCur; break;
+    case LV_FS_SEEK_END: seek = SeekEnd; break;
+    default: return LV_FS_RES_UNKNOWN;
+  }
+
+  if (f_ptr->seek(pos, seek)) {
     return LV_FS_RES_OK;
   } else {
     return LV_FS_RES_UNKNOWN;
@@ -291,13 +302,6 @@ static lv_fs_res_t lvbe_fs_size(lv_fs_drv_t * drv, void * file_p, uint32_t * siz
   // AddLog(LOG_LEVEL_INFO, "LVG: lvbe_fs_size(%p, %p, %p)", drv, file_p, size_p);
   File * f_ptr = (File*) file_p;
   *size_p = f_ptr->size();
-  return LV_FS_RES_OK;
-}
-
-static lv_fs_res_t lvbe_fs_remove(lv_fs_drv_t * drv, const char *path);
-static lv_fs_res_t lvbe_fs_remove(lv_fs_drv_t * drv, const char *path) {
-  // AddLog(LOG_LEVEL_INFO, "LVG: lvbe_fs_remove(%p, %s)", drv, path);
-  dfsp->remove(path);
   return LV_FS_RES_OK;
 }
 #endif // USE_UFILESYS
@@ -397,13 +401,13 @@ void start_lvgl(const char * uconfig) {
   // Set the default background color of the display
   // This is normally overriden by an opaque screen on top
 #ifdef USE_BERRY
-  lv_obj_set_style_local_bg_color(lv_scr_act(), LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, lv_color_from_uint32(USE_LVGL_BG_DEFAULT));
-  lv_obj_set_style_local_bg_opa(lv_scr_act(), LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, LV_OPA_COVER);
-#endif
+  lv_obj_set_style_bg_color(lv_scr_act(), lv_color_from_uint32(USE_LVGL_BG_DEFAULT), LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_bg_opa(lv_scr_act(), LV_OPA_COVER, LV_PART_MAIN | LV_STATE_DEFAULT);
 
 #if LV_USE_LOG
   lv_log_register_print_cb(lvbe_debug);
 #endif // LV_USE_LOG
+#endif
 
 #ifdef USE_UFILESYS
   // Add file system mapping
@@ -411,8 +415,6 @@ void start_lvgl(const char * uconfig) {
   lv_fs_drv_init(&drv);                     /*Basic initialization*/
 
   drv.letter = 'A';                         /*An uppercase letter to identify the drive */
-  drv.file_size = 0;           /*Size required to store a file object*/
-  drv.rddir_size = 0;           /*Size required to store a directory object (used by dir_open/close/read)*/
   drv.ready_cb = nullptr;               /*Callback to tell if the drive is ready to use */
   drv.open_cb = &lvbe_fs_open;                 /*Callback to open a file */
   drv.close_cb = &lvbe_fs_close;               /*Callback to close a file */
@@ -420,16 +422,10 @@ void start_lvgl(const char * uconfig) {
   drv.write_cb = &lvbe_fs_write;               /*Callback to write a file */
   drv.seek_cb = &lvbe_fs_seek;                 /*Callback to seek in a file (Move cursor) */
   drv.tell_cb = &lvbe_fs_tell;                 /*Callback to tell the cursor position  */
-  drv.trunc_cb = nullptr;               /*Callback to delete a file */
-  drv.size_cb = &lvbe_fs_size;                 /*Callback to tell a file's size */
-  drv.rename_cb = nullptr;             /*Callback to rename a file */
-  drv.remove_cb = &lvbe_fs_remove;             /*Callback to remove a file */
 
   drv.dir_open_cb = nullptr;         /*Callback to open directory to read its content */
   drv.dir_read_cb = nullptr;         /*Callback to read a directory's content */
   drv.dir_close_cb = nullptr;       /*Callback to close a directory */
-
-  drv.free_space_cb = nullptr;     /*Callback to tell free space on the drive */
   // drv.user_data = nullptr;             /*Any custom data if required*/
 
   lv_fs_drv_register(&drv);                 /*Finally register the drive*/
@@ -440,13 +436,13 @@ void start_lvgl(const char * uconfig) {
   // initialize the FreeType renderer
   lv_freetype_init(USE_LVGL_FREETYPE_MAX_FACES,
                    USE_LVGL_FREETYPE_MAX_SIZES,
-                   psramFound() ? USE_LVGL_FREETYPE_MAX_BYTES_PSRAM : USE_LVGL_FREETYPE_MAX_BYTES);
+                   UsePSRAM() ? USE_LVGL_FREETYPE_MAX_BYTES_PSRAM : USE_LVGL_FREETYPE_MAX_BYTES);
 #endif
 #ifdef USE_LVGL_PNG_DECODER
   lv_png_init();
 #endif // USE_LVGL_PNG_DECODER
 
-  if (psramFound()) {
+  if (UsePSRAM()) {
     lv_img_cache_set_size(LV_IMG_CACHE_DEF_SIZE_PSRAM);
   }
 

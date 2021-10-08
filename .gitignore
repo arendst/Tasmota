@@ -26,6 +26,7 @@ tasmota/tasmota.ino.cpp
 tasmota*.bin
 tasmota*.bin.gz
 tasmota*.map
+tasmota*.map.gz
 platformio_override.ini
 platformio_tasmota_cenv.ini
 

@@ -69,9 +69,6 @@ keywords if then else endif, or, and are better readable for beginners (others m
 #define MAX_SARRAY_NUM 32
 #endif
 
-#include <renderer.h>
-extern Renderer *renderer;
-
 uint32_t EncodeLightId(uint8_t relay_id);
 uint32_t DecodeLightId(uint32_t hue_id);
 
@@ -81,7 +78,7 @@ uint32_t DecodeLightId(uint32_t hue_id);
 
 #undef USE_SCRIPT_FATFS
 #define USE_SCRIPT_FATFS -1
-#pragma message "universal file system used"
+// #pragma message "universal file system used"
 
 #else // USE_UFILESYS
 
@@ -164,7 +161,10 @@ void Script_ticker4_end(void) {
 #endif
 #endif
 
+#if defined(USE_SML_M) && defined (USE_SML_SCRIPT_CMD)
 extern uint8_t sml_json_enable;
+extern uint8_t dvalid[SML_MAX_VARS];
+#endif
 
 #if defined(EEP_SCRIPT_SIZE) && !defined(ESP32)
 
@@ -206,6 +206,10 @@ void alt_eeprom_readBytes(uint32_t adr, uint32_t len, uint8_t *buf) {
 
 #endif // LITTLEFS_SCRIPT_SIZE
 
+
+#ifdef TESLA_POWERWALL
+#include "powerwall.h"
+#endif
 
 // offsets epoch readings by 1.1.2019 00:00:00 to fit into float with second resolution
 #ifndef EPOCH_OFFSET
@@ -784,6 +788,9 @@ char *script;
       if (imemptr) free(imemptr);
       return -4;
     }
+
+    memset(script_mem, 0, script_mem_size);
+
     glob_script_mem.script_mem = script_mem;
     glob_script_mem.script_mem_size = script_mem_size;
 
@@ -865,7 +872,7 @@ char *script;
     }
 
     // variables usage info
-    AddLog(LOG_LEVEL_INFO, PSTR("Script: nv=%d, tv=%d, vns=%d, ram=%d"), nvars, svars, index, glob_script_mem.script_mem_size);
+    AddLog(LOG_LEVEL_INFO, PSTR("Script: nv=%d, tv=%d, vns=%d, vmem=%d, smem=%d"), nvars, svars, index, glob_script_mem.script_mem_size, glob_script_mem.script_size);
 
     // copy string variables
     char *cp1 = glob_script_mem.glob_snp;
@@ -1076,11 +1083,23 @@ void script_udp_sendvar(char *vname,float *fp,char *sp) {
 void ws2812_set_array(float *array ,uint32_t len, uint32_t offset) {
 
   Ws2812ForceSuspend();
-  for (uint32_t cnt = 0; cnt<len; cnt++) {
-    uint32_t index = cnt + offset;
-    if (index>Settings->light_pixels) break;
-    uint32_t col = array[cnt];
-    Ws2812SetColor(index + 1, col>>16, col>>8, col, 0);
+  for (uint32_t cnt = 0; cnt < len; cnt++) {
+    uint32_t index;
+    if (! (offset & 0x1000)) {
+      index = cnt + (offset & 0x7ff);
+    } else {
+      index = cnt/2 + (offset & 0x7ff);
+    }
+    if (index > Settings->light_pixels) break;
+    if (! (offset & 0x1000)) {
+      uint32_t col = array[cnt];
+      Ws2812SetColor(index + 1, col>>16, col>>8, col, 0);
+    } else {
+      uint32_t hcol = array[cnt];
+      cnt++;
+      uint32_t lcol = array[cnt];
+      Ws2812SetColor(index + 1, hcol>>8, hcol, lcol>>8, lcol);
+    }
   }
   Ws2812ForceUpdate();
 }
@@ -1635,6 +1654,16 @@ char *isvar(char *lp, uint8_t *vtype, struct T_INDEX *tind, float *fp, char *sp,
 
     if (gv && gv->jo) {
       // look for json input
+
+#if 0
+      char sbuf[SCRIPT_MAXSSIZE];
+      sbuf[0]=0;
+      char tmp[128];
+      Replace_Cmd_Vars(lp, 1, tmp, sizeof(tmp));
+      uint32_t res = JsonParsePath(gv->jo, tmp, '#', NULL, sbuf, sizeof(sbuf)); // software_version
+      AddLog(LOG_LEVEL_INFO, PSTR("json string: %s %s"),tmp,  sbuf);
+#endif
+
       JsonParserObject *jpo = gv->jo;
       char jvname[64];
       strcpy(jvname, vname);
@@ -1749,6 +1778,7 @@ chknext:
           len = 0;
           goto exit;
         }
+#endif
         if (!strncmp(vname, "abs(", 4)) {
           lp=GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
           fvar = fabs(fvar);
@@ -1756,7 +1786,7 @@ chknext:
           len = 0;
           goto exit;
         }
-#endif
+
         if (!strncmp(vname, "asc(", 4)) {
           char str[SCRIPT_MAXSSIZE];
           lp = GetStringArgument(lp + 4, OPER_EQU, str, gv);
@@ -1916,7 +1946,7 @@ chknext:
           while (*lp==' ') lp++;
           switch ((uint32_t)fvar) {
             case 0:
-              fvar = Energy.total;
+              fvar = Energy.total_sum;
               break;
             case 1:
               fvar = Energy.voltage[0];
@@ -1946,13 +1976,13 @@ chknext:
               fvar = Energy.active_power[2];
               break;
             case 10:
-              fvar = Energy.start_energy;
+              fvar = Energy.start_energy[0];
               break;
             case 11:
-              fvar = Energy.daily;
+              fvar = Energy.daily_sum;
               break;
             case 12:
-              fvar = (float)Settings->energy_kWhyesterday/100000.0;
+              fvar = Energy.yesterday_sum;
               break;
 
             default:
@@ -2217,12 +2247,7 @@ chknext:
         if (!strncmp(vname, "fmt(", 4)) {
           lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
           if (!fvar) {
-#ifdef ESP8266
             LittleFS.format();
-#endif
-#ifdef ESP32
-            LITTLEFS.format();
-#endif
           } else {
             //SD.format();
           }
@@ -2401,11 +2426,8 @@ chknext:
           char rstring[SCRIPT_MAXSSIZE];
           rstring[0] = 0;
           int8_t index = fvar;
-#ifdef MQTT_DATA_STRING
-          char *wd = TasmotaGlobal.mqtt_data;
-#else
-          char *wd = TasmotaGlobal.mqtt_data.c_str();
-#endif
+          char *wd = ResponseData();
+
           strlcpy(rstring, wd, glob_script_mem.max_ssize);
           if (index) {
             if (strlen(wd) && index) {
@@ -2430,11 +2452,7 @@ chknext:
                 // preserve mqtt_data
                 char *mqd = (char*)malloc(ResponseSize()+2);
                 if (mqd) {
-#ifdef MQTT_DATA_STRING
-                  strlcpy(mqd, TasmotaGlobal.mqtt_data.c_str(), ResponseSize());
-#else
-                  strlcpy(mqd, TasmotaGlobal.mqtt_data, ResponseSize());
-#endif
+                  strlcpy(mqd, ResponseData(), ResponseSize());
                   wd = mqd;
                   char *lwd = wd;
                   while (index) {
@@ -2556,12 +2574,11 @@ chknext:
           if (!TasmotaGlobal.global_state.wifi_down) {
             // erase nvs
             lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
-
-            homekit_main(0, fvar);
-            if (fvar >= 98) {
+            int32_t sel = fvar;
+            fvar = homekit_main(0, sel);
+            if (sel >= 98) {
               glob_script_mem.homekit_running == false;
             }
-
           }
           lp++;
           len = 0;
@@ -3148,6 +3165,21 @@ chknext:
           lp = GetNumericArgument(lp + 5, OPER_EQU, &fvar, gv);
           if (fvar < 1) fvar = 1;
           SML_Decode(fvar - 1);
+          lp++;
+          len = 0;
+          goto exit;
+        }
+        if (!strncmp(vname, "smlv[", 5)) {
+          lp = GetNumericArgument(lp + 5, OPER_EQU, &fvar, gv);
+          if (!fvar) {
+            for (uint8_t cnt = 0; cnt < SML_MAX_VARS; cnt++) {
+              dvalid[cnt] = 0;
+            }
+            fvar = 0;
+          } else {
+            if (fvar < 1) fvar = 1;
+            fvar = dvalid[(uint32_t)fvar - 1];
+          }
           lp++;
           len = 0;
           goto exit;
@@ -4990,11 +5022,7 @@ void ScripterEvery100ms(void) {
     if (ResponseLength()) {
       ResponseJsonStart();
       ResponseJsonEnd();
-#ifdef MQTT_DATA_STRING
-      Run_Scripter(">T", 2, TasmotaGlobal.mqtt_data.c_str());
-#else
-      Run_Scripter(">T", 2, TasmotaGlobal.mqtt_data);
-#endif
+      Run_Scripter(">T", 2, ResponseData());
     }
   }
   if (bitRead(Settings->rule_enabled, 0)) {
@@ -6510,6 +6538,10 @@ char buff[512];
 
   if (sflg) {
 #ifdef USE_DISPLAY_DUMP
+
+#include <renderer.h>
+extern Renderer *renderer;
+
     // screen copy
     #define fileHeaderSize 14
     #define infoHeaderSize 40
@@ -7686,8 +7718,8 @@ uint32_t scripter_create_task(uint32_t num, uint32_t time, uint32_t core, uint32
 #endif // USE_SCRIPT_TASK
 #endif // ESP32
 
-
 int32_t http_req(char *host, char *request) {
+  WiFiClient http_client;
   HTTPClient http;
   int32_t httpCode = 0;
   uint8_t mode = 0;
@@ -7700,34 +7732,48 @@ int32_t http_req(char *host, char *request) {
     request++;
   }
 
+#ifdef HTTP_DEBUG
+  AddLog(LOG_LEVEL_INFO, PSTR("HTTP heap %d"), ESP_getFreeHeap());
+#endif
+
   if (!mode) {
     // GET
     strcat(hbuff, request);
     //AddLog(LOG_LEVEL_INFO, PSTR("HTTP GET %s"),hbuff);
-    http.begin(hbuff);
+    http.begin(http_client, hbuff);
     httpCode = http.GET();
   } else {
     // POST
     //AddLog(LOG_LEVEL_INFO, PSTR("HTTP POST %s - %s"),hbuff, request);
-    http.begin(hbuff);
+    http.begin(http_client, hbuff);
     http.addHeader("Content-Type", "text/plain");
     httpCode = http.POST(request);
   }
 
+#ifdef HTTP_DEBUG
+  AddLog(LOG_LEVEL_INFO, PSTR("HTTP RESULT %s"), http.getString().c_str());
+#endif
+
 #ifdef USE_WEBSEND_RESPONSE
 #ifdef MQTT_DATA_STRING
   TasmotaGlobal.mqtt_data = http.getString();
-  //AddLog(LOG_LEVEL_INFO, PSTR("HTTP RESULT %s"), TasmotaGlobal.mqtt_data.c_str());
-  Run_Scripter(">E", 2, TasmotaGlobal.mqtt_data.c_str());
 #else
   strlcpy(TasmotaGlobal.mqtt_data, http.getString().c_str(), ResponseSize());
-  //AddLog(LOG_LEVEL_INFO, PSTR("HTTP RESULT %s"), TasmotaGlobal.mqtt_data);
-  Run_Scripter(">E", 2, TasmotaGlobal.mqtt_data);
 #endif
+
+#ifdef HTTP_DEBUG
+  AddLog(LOG_LEVEL_INFO, PSTR("HTTP MQTT BUFFER %s"), ResponseData());
+#endif
+
+//  AddLog(LOG_LEVEL_INFO, PSTR("JSON %s"), wd_jstr);
+//  TasmotaGlobal.mqtt_data = wd_jstr;
+  Run_Scripter(">E", 2, ResponseData());
+
   glob_script_mem.glob_error = 0;
 #endif
 
   http.end();
+  http_client.stop();
 
   return httpCode;
 }
@@ -7740,10 +7786,21 @@ int32_t http_req(char *host, char *request) {
 #include <WiFiClientSecure.h>
 #endif //ESP8266
 
+#ifdef TESLA_POWERWALL
+Powerwall powerwall = Powerwall();
+String authCookie   = "";
+#endif
+
 // get tesla powerwall info page json string
 uint32_t call2https(const char *host, const char *path) {
   if (TasmotaGlobal.global_state.wifi_down) return 1;
   uint32_t status = 0;
+
+#ifdef TESLA_POWERWALL
+  authCookie = powerwall.getAuthCookie();
+  return 0;
+#endif
+
 #ifdef ESP32
   WiFiClientSecure *httpsClient;
   httpsClient = new WiFiClientSecure;
@@ -7915,14 +7972,14 @@ uint8_t lvgl_numobjs;
 lv_obj_t *lvgl_buttons[MAX_LVGL_OBJS];
 
 void start_lvgl(const char * uconfig);
-lv_event_t lvgl_last_event;
+lv_event_code_t lvgl_last_event;
 uint8_t lvgl_last_object;
 uint8_t lvgl_last_slider;
 static lv_obj_t * kb;
 static lv_obj_t * ta;
 
-void lvgl_set_last(lv_obj_t * obj, lv_event_t event);
-void lvgl_set_last(lv_obj_t * obj, lv_event_t event) {
+void lvgl_set_last(lv_obj_t * obj, lv_event_code_t event);
+void lvgl_set_last(lv_obj_t * obj, lv_event_code_t event) {
   lvgl_last_event = event;
   lvgl_last_object = 0;
   for (uint8_t cnt = 0; cnt < MAX_LVGL_OBJS; cnt++) {
@@ -7934,30 +7991,30 @@ void lvgl_set_last(lv_obj_t * obj, lv_event_t event) {
 }
 
 
-void btn_event_cb(lv_obj_t * btn, lv_event_t event);
-void btn_event_cb(lv_obj_t * btn, lv_event_t event) {
-  lvgl_set_last(btn, event);
-  if (event == LV_EVENT_CLICKED) {
+void btn_event_cb(lv_event_t * e);
+void btn_event_cb(lv_event_t * e) {
+  lvgl_set_last(e->target, e->code);
+  if (e->code == LV_EVENT_CLICKED) {
     Run_Scripter(">lvb", 4, 0);
   }
 }
 
-void slider_event_cb(lv_obj_t * sld, lv_event_t event);
-void slider_event_cb(lv_obj_t * sld, lv_event_t event) {
-  lvgl_set_last(sld, event);
-  lvgl_last_slider = lv_slider_get_value(sld);
-  if (event == LV_EVENT_VALUE_CHANGED) {
+void slider_event_cb(lv_event_t * e);
+void slider_event_cb(lv_event_t * e) {
+  lvgl_set_last(e->target, e->code);
+  lvgl_last_slider = lv_slider_get_value(e->target);
+  if (e->code == LV_EVENT_VALUE_CHANGED) {
     Run_Scripter(">lvs", 4, 0);
   }
 }
 
 static void kb_create(void);
-static void ta_event_cb(lv_obj_t * ta_local, lv_event_t e);
-static void kb_event_cb(lv_obj_t * keyboard, lv_event_t e);
+static void ta_event_cb(lv_event_t * e);
+static void kb_event_cb(lv_event_t * e);
 
-static void kb_event_cb(lv_obj_t * keyboard, lv_event_t e) {
-    lv_keyboard_def_event_cb(kb, e);
-    if(e == LV_EVENT_CANCEL) {
+static void kb_event_cb(lv_event_t * e) {
+    lv_keyboard_def_event_cb(e);
+    if(e->code == LV_EVENT_CANCEL) {
         lv_keyboard_set_textarea(kb, NULL);
         lv_obj_del(kb);
         kb = NULL;
@@ -7965,14 +8022,13 @@ static void kb_event_cb(lv_obj_t * keyboard, lv_event_t e) {
 }
 
 static void kb_create(void) {
-    kb = lv_keyboard_create(lv_scr_act(), NULL);
-    lv_keyboard_set_cursor_manage(kb, true);
-    lv_obj_set_event_cb(kb, kb_event_cb);
+    kb = lv_keyboard_create(lv_scr_act());
+    lv_obj_add_event_cb(kb, kb_event_cb, LV_EVENT_ALL, nullptr);
     lv_keyboard_set_textarea(kb, ta);
 }
 
-static void ta_event_cb(lv_obj_t * ta_local, lv_event_t e) {
-    if(e == LV_EVENT_CLICKED && kb == NULL) {
+static void ta_event_cb(lv_event_t * e) {
+    if(e->code == LV_EVENT_CLICKED && kb == NULL) {
       kb_create();
     }
 }
@@ -8020,11 +8076,11 @@ int32_t lvgl_test(char **lpp, int32_t p) {
       lp = GetStringArgument(lp, OPER_EQU, str, 0);
       SCRIPT_SKIP_SPACES
 
-      obj = lv_btn_create(lv_scr_act(), NULL);
+      obj = lv_btn_create(lv_scr_act());
       lv_obj_set_pos(obj, xp, yp);
       lv_obj_set_size(obj, xs, ys);
-      lv_obj_set_event_cb(obj, btn_event_cb);
-      label = lv_label_create(obj, NULL);
+      lv_obj_add_event_cb(obj, btn_event_cb, LV_EVENT_ALL, nullptr);
+      label = lv_label_create(obj);
       lv_label_set_text(label, str);
       lvgl_StoreObj(obj);
       break;
@@ -8039,10 +8095,10 @@ int32_t lvgl_test(char **lpp, int32_t p) {
       lp = GetNumericArgument(lp, OPER_EQU, &ys, 0);
       SCRIPT_SKIP_SPACES
 
-      obj = lv_slider_create(lv_scr_act(), NULL);
+      obj = lv_slider_create(lv_scr_act());
       lv_obj_set_pos(obj, xp, yp);
       lv_obj_set_size(obj, xs, ys);
-      lv_obj_set_event_cb(obj, slider_event_cb);
+      lv_obj_add_event_cb(obj, slider_event_cb, LV_EVENT_ALL, nullptr);
       lvgl_StoreObj(obj);
       break;
 
@@ -8060,10 +8116,10 @@ int32_t lvgl_test(char **lpp, int32_t p) {
       lp = GetNumericArgument(lp, OPER_EQU, &max, 0);
       SCRIPT_SKIP_SPACES
 
-      obj = lv_gauge_create(lv_scr_act(), NULL);
+      obj = lv_meter_create(lv_scr_act());
       lv_obj_set_pos(obj, xp, yp);
       lv_obj_set_size(obj, xs, ys);
-      lv_gauge_set_range(obj, min, max);
+      // lv_gauge_set_range(obj, min, max);   // TODO LVGL8
       lvgl_StoreObj(obj);
       break;
 
@@ -8073,7 +8129,7 @@ int32_t lvgl_test(char **lpp, int32_t p) {
       lp = GetNumericArgument(lp, OPER_EQU, &max, 0);
       SCRIPT_SKIP_SPACES
       if (lvgl_buttons[(uint8_t)min - 1]) {
-        lv_gauge_set_value(lvgl_buttons[(uint8_t)min - 1], 0, max);
+        // lv_gauge_set_value(lvgl_buttons[(uint8_t)min - 1], 0, max);   // TODO LVGL8
       }
       break;
 
@@ -8090,7 +8146,7 @@ int32_t lvgl_test(char **lpp, int32_t p) {
       lp = GetStringArgument(lp, OPER_EQU, str, 0);
       SCRIPT_SKIP_SPACES
 
-      obj = lv_label_create(lv_scr_act(), NULL);
+      obj = lv_label_create(lv_scr_act());
       lv_obj_set_pos(obj, xp, yp);
       lv_obj_set_size(obj, xs, ys);
       lv_label_set_text(obj, str);
@@ -8109,11 +8165,11 @@ int32_t lvgl_test(char **lpp, int32_t p) {
 
     case 8:
       {
-      ta  = lv_textarea_create(lv_scr_act(), NULL);
-      lv_obj_align(ta, NULL, LV_ALIGN_IN_TOP_MID, 0, LV_DPI / 16);
-      lv_obj_set_event_cb(ta, ta_event_cb);
+      ta  = lv_textarea_create(lv_scr_act());
+      lv_obj_align(ta, LV_ALIGN_TOP_MID, 0, LV_DPI_DEF / 16);
+      lv_obj_add_event_cb(ta, ta_event_cb, LV_EVENT_ALL, nullptr);
       lv_textarea_set_text(ta, "");
-      lv_coord_t max_h = LV_VER_RES / 2 - LV_DPI / 8;
+      lv_coord_t max_h = LV_VER_RES / 2 - LV_DPI_DEF / 8;
       if (lv_obj_get_height(ta) > max_h) lv_obj_set_height(ta, max_h);
       kb_create();
       }
@@ -8155,10 +8211,10 @@ lv_draw_line_dsc_t draw_dsc; // Drawing style (for canvas) is similarly global
 
 void lvgl_setup(void) {
   // Create a tabview object, by default this covers the full display.
-  tabview = lv_tabview_create(lv_disp_get_scr_act(NULL), NULL);
+  tabview = lv_tabview_create(lv_disp_get_scr_act(NULL), LV_DIR_TOP, 50);
   // The CLUE display has a lot of pixels and can't refresh very fast.
   // To show off the tabview animation, let's slow it down to 1 second.
-  lv_tabview_set_anim_time(tabview, 1000);
+  // lv_tabview_set_anim_time(tabview, 1000);  // LVGL8 TODO
 
   // Because they're referenced any time an object is drawn, styles need
   // to be permanent in scope; either declared globally (outside all
@@ -8170,33 +8226,33 @@ void lvgl_setup(void) {
   // through for "off" (inactive) tabs -- a vertical green gradient,
   // minimal padding around edges (zero at bottom).
   lv_style_init(&tab_background_style);
-  lv_style_set_bg_color(&tab_background_style, LV_STATE_DEFAULT, lv_color_hex(0x408040));
-  lv_style_set_bg_grad_color(&tab_background_style, LV_STATE_DEFAULT, lv_color_hex(0x304030));
-  lv_style_set_bg_grad_dir(&tab_background_style, LV_STATE_DEFAULT, LV_GRAD_DIR_VER);
-  lv_style_set_pad_top(&tab_background_style, LV_STATE_DEFAULT, 2);
-  lv_style_set_pad_left(&tab_background_style, LV_STATE_DEFAULT, 2);
-  lv_style_set_pad_right(&tab_background_style, LV_STATE_DEFAULT, 2);
-  lv_style_set_pad_bottom(&tab_background_style, LV_STATE_DEFAULT, 0);
-  lv_obj_add_style(tabview, LV_TABVIEW_PART_TAB_BG, &tab_background_style);
+  lv_style_set_bg_color(&tab_background_style, lv_color_hex(0x408040));
+  lv_style_set_bg_grad_color(&tab_background_style, lv_color_hex(0x304030));
+  lv_style_set_bg_grad_dir(&tab_background_style, LV_GRAD_DIR_VER);
+  lv_style_set_pad_top(&tab_background_style, 2);
+  lv_style_set_pad_left(&tab_background_style, 2);
+  lv_style_set_pad_right(&tab_background_style, 2);
+  lv_style_set_pad_bottom(&tab_background_style, 0);
+  // lv_obj_add_style(tabview, LV_TABVIEW_PART_TAB_BG, &tab_background_style); // LVGL8 TODO
 
   // Style for tabs. Active tab is white with opaque background, inactive
   // tabs are transparent so the background shows through (only the white
   // text is seen). A little top & bottom padding reduces scrunchyness.
   lv_style_init(&tab_style);
-  lv_style_set_pad_top(&tab_style, LV_STATE_DEFAULT, 3);
-  lv_style_set_pad_bottom(&tab_style, LV_STATE_DEFAULT, 10);
-  lv_style_set_bg_color(&tab_style, LV_STATE_CHECKED, LV_COLOR_WHITE);
-  lv_style_set_bg_opa(&tab_style, LV_STATE_CHECKED, LV_OPA_100);
-  lv_style_set_text_color(&tab_style, LV_STATE_CHECKED, LV_COLOR_GRAY);
-  lv_style_set_bg_opa(&tab_style, LV_STATE_DEFAULT, LV_OPA_TRANSP);
-  lv_style_set_text_color(&tab_style, LV_STATE_DEFAULT, LV_COLOR_WHITE);
-  lv_obj_add_style(tabview, LV_TABVIEW_PART_TAB_BTN, &tab_style);
+  lv_style_set_pad_top(&tab_style, 3);
+  lv_style_set_pad_bottom(&tab_style, 10);
+  lv_style_set_bg_color(&tab_style, lv_color_white());
+  lv_style_set_bg_opa(&tab_style, LV_OPA_100);
+  lv_style_set_text_color(&tab_style, lv_color_make(0xff, 0xff, 0xff));
+  lv_style_set_bg_opa(&tab_style, LV_OPA_TRANSP);
+  lv_style_set_text_color(&tab_style, lv_color_white());
+  // lv_obj_add_style(tabview, LV_TABVIEW_PART_TAB_BTN, &tab_style);  // LVGL8 TODO
 
   // Style for the small indicator bar that appears below the active tab.
   lv_style_init(&indicator_style);
-  lv_style_set_bg_color(&indicator_style, LV_STATE_DEFAULT, LV_COLOR_RED);
-  lv_style_set_size(&indicator_style, LV_STATE_DEFAULT, 5);
-  lv_obj_add_style(tabview, LV_TABVIEW_PART_INDIC, &indicator_style);
+  lv_style_set_bg_color(&indicator_style, lv_color_make(0xff, 0x00, 0x00));
+  lv_style_set_size(&indicator_style, 5);
+  // lv_obj_add_style(tabview, LV_TABVIEW_PART_INDIC, &indicator_style);  // LVGL8 TODO
 
   // Back to creating widgets...
 
@@ -8209,28 +8265,28 @@ void lvgl_setup(void) {
 
   // The first tab holds a gauge. To keep the demo simple, let's just use
   // the default style and range (0-100). See LittlevGL docs for options.
-  gauge = lv_gauge_create(tab1, NULL);
+  gauge = lv_meter_create(tab1);
   lv_obj_set_size(gauge, 186, 186);
-  lv_obj_align(gauge, NULL, LV_ALIGN_CENTER, 0, 0);
+  lv_obj_align(gauge,LV_ALIGN_CENTER, 0, 0);
 
   // Second tab, make a chart...
-  chart = lv_chart_create(tab2, NULL);
+  chart = lv_chart_create(tab2);
   lv_obj_set_size(chart, 200, 180);
-  lv_obj_align(chart, NULL, LV_ALIGN_CENTER, 0, 0);
-  lv_chart_set_type(chart, LV_CHART_TYPE_COLUMN);
+  lv_obj_align(chart, LV_ALIGN_CENTER, 0, 0);
+  lv_chart_set_type(chart, LV_CHART_TYPE_BAR);
   // For simplicity, we'll stick with the chart's default 10 data points:
-  series = lv_chart_add_series(chart, LV_COLOR_RED);
-  lv_chart_init_points(chart, series, 0);
+  // series = lv_chart_add_series(chart, lv_color_make(0xff, 0x00, 0x00));  // LVGL8 TODO
+  // lv_chart_init_points(chart, series, 0);  // LVGL8 TODO
   // Make each column shift left as new values enter on right:
   lv_chart_set_update_mode(chart, LV_CHART_UPDATE_MODE_SHIFT);
 
   // Third tab is a canvas, which we'll fill with random colored lines.
   // LittlevGL draw functions only work on TRUE_COLOR canvas.
-/*  canvas = lv_canvas_create(tab3, NULL);
+/*  canvas = lv_canvas_create(tab3);
   lv_canvas_set_buffer(canvas, canvas_buffer,
     CANVAS_WIDTH, CANVAS_HEIGHT, LV_IMG_CF_TRUE_COLOR);
-  lv_obj_align(canvas, NULL, LV_ALIGN_CENTER, 0, 0);
-  lv_canvas_fill_bg(canvas, LV_COLOR_WHITE, LV_OPA_100);
+  lv_obj_align(canvas, LV_ALIGN_CENTER, 0, 0);
+  lv_canvas_fill_bg(canvas, lv_color_white(), LV_OPA_100);
 
   // Set up canvas line-drawing style based on defaults.
   // Later we'll change color settings when drawing each line.
@@ -8377,8 +8433,16 @@ bool Xdrv10(uint8_t function)
       if (glob_script_mem.script_ram[0]!='>' && glob_script_mem.script_ram[1]!='D') {
         // clr all
         memset(glob_script_mem.script_ram, 0 ,glob_script_mem.script_size);
+#ifdef PRECONFIGURED_SCRIPT
+        strcpy_P(glob_script_mem.script_ram, PSTR(PRECONFIGURED_SCRIPT));
+#else
         strcpy_P(glob_script_mem.script_ram, PSTR(">D\nscript error must start with >D"));
+#endif
+#ifdef START_SCRIPT_FROM_BOOT
+        bitWrite(Settings->rule_enabled, 0, 1);
+#else
         bitWrite(Settings->rule_enabled, 0, 0);
+#endif
       }
 
       // assure permanent memory is 4 byte aligned
@@ -8423,41 +8487,24 @@ bool Xdrv10(uint8_t function)
       break;
     case FUNC_RULES_PROCESS:
       if (bitRead(Settings->rule_enabled, 0)) {
-#ifdef MQTT_DATA_STRING
 #ifdef USE_SCRIPT_STATUS
-        if (!strncmp_P(TasmotaGlobal.mqtt_data.c_str(), PSTR("{\"Status"), 8)) {
-          Run_Scripter(">U", 2, TasmotaGlobal.mqtt_data.c_str());
+        if (!strncmp_P(ResponseData(), PSTR("{\"Status"), 8)) {
+          Run_Scripter(">U", 2, ResponseData());
         } else {
-          Run_Scripter(">E", 2, TasmotaGlobal.mqtt_data.c_str());
+          Run_Scripter(">E", 2, ResponseData());
         }
 #else
-        Run_Scripter(">E", 2, TasmotaGlobal.mqtt_data.c_str());
+        Run_Scripter(">E", 2, ResponseData());
 #endif
-#else  // MQTT_DATA_STRING
-#ifdef USE_SCRIPT_STATUS
-        if (!strncmp_P(TasmotaGlobal.mqtt_data, PSTR("{\"Status"), 8)) {
-          Run_Scripter(">U", 2, TasmotaGlobal.mqtt_data);
-        } else {
-          Run_Scripter(">E", 2, TasmotaGlobal.mqtt_data);
-        }
-#else
-        Run_Scripter(">E", 2, TasmotaGlobal.mqtt_data);
-#endif
-#endif  // MQTT_DATA_STRING
+
         result = glob_script_mem.event_handeled;
       }
       break;
     case FUNC_TELEPERIOD_RULES_PROCESS:
       if (bitRead(Settings->rule_enabled, 0)) {
-#ifdef MQTT_DATA_STRING
-        if (TasmotaGlobal.mqtt_data.length()) {
-          Run_Scripter(">T", 2, TasmotaGlobal.mqtt_data.c_str());
+        if (ResponseLength()) {
+          Run_Scripter(">T", 2, ResponseData());
         }
-#else
-        if (TasmotaGlobal.mqtt_data[0]) {
-          Run_Scripter(">T", 2, TasmotaGlobal.mqtt_data);
-        }
-#endif
       }
       break;
 #ifdef USE_WEBSERVER

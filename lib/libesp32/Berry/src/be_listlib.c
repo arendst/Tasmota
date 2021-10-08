@@ -209,15 +209,31 @@ static int m_item(bvm *vm)
 
 static int m_find(bvm *vm)
 {
+    bbool found = bfalse;
+    int idx;
     be_getmember(vm, 1, ".p");
     list_check_data(vm, 2);
-    if (be_isint(vm, 2)) {
-        be_pushvalue(vm, 2);
-        if (be_getindex(vm, -2)) {
-            be_return(vm);
+    list_check_ref(vm);
+    be_refpush(vm, 1);
+    be_pushiter(vm, -1);
+    for (idx=0; be_iter_hasnext(vm, -2); idx++) {
+        be_iter_next(vm, -2);
+        be_pushvalue(vm, 2);    /* push needle to compare */
+        if (be_iseq(vm)) {
+            found = btrue;
+            be_pop(vm, 2);
+            break;
         }
+        be_pop(vm, 2);
     }
-    be_return_nil(vm);
+    be_pop(vm, 1); /* pop iterator */
+    be_refpop(vm);
+    if (found) {
+        be_pushint(vm, idx);
+        be_return(vm);
+    } else {
+        be_return_nil(vm);
+    }
 }
 
 static int m_setitem(bvm *vm)

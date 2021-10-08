@@ -4,10 +4,10 @@
       "ldscript": "esp32_out.ld"
     },
     "core": "esp32",
-    "extra_flags": "-DARDUINO_ESP32_DEV",
+    "extra_flags": "-DARDUINO_ESP32_DEV -DBOARD_HAS_PSRAM -DESP32_16M",
     "f_cpu": "80000000L",
     "f_flash": "40000000L",
-    "flash_mode": "dio",
+    "flash_mode": "dout",
     "mcu": "esp32",
     "variant": "esp32",
     "partitions": "esp32_partition_app2944k_spiffs10M.csv"
@@ -19,7 +19,7 @@
     "can"
   ],
   "debug": {
-    "openocd_board": "esp-wroom-32.cfg"
+    "openocd_target": "esp32.cfg"
   },
   "frameworks": [
     "arduino",

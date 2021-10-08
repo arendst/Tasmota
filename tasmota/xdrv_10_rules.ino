@@ -510,9 +510,11 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule, bool stop_all
 
   String buf = event;                                  // Copy the string into a new buffer that will be modified
 
+// Do not do below replace as it will replace escaped quote too.
+//  buf.replace("\\"," ");                               // "Disable" any escaped control character
+
 //AddLog(LOG_LEVEL_DEBUG, PSTR("RUL-RM2: RulesRuleMatch |%s|"), buf.c_str());
 
-  buf.replace("\\"," ");                               // "Disable" any escaped control character
   JsonParser parser((char*)buf.c_str());
   JsonParserObject obj = parser.getRootObject();
   if (!obj) {
@@ -694,7 +696,9 @@ bool RuleSetProcess(uint8_t rule_set, String &event_saved)
 
   delay(0);                                               // Prohibit possible loop software watchdog
 
-//AddLog(LOG_LEVEL_DEBUG, PSTR("RUL-RP1: Event = %s, Rule = %s"), event_saved.c_str(), Settings->rules[rule_set]);
+#ifdef DEBUG_RULES
+  AddLog(LOG_LEVEL_DEBUG, PSTR("RUL-RP1: Event = %s, Rule = %s"), event_saved.c_str(), Settings->rules[rule_set]);
+#endif
 
   String rules = GetRule(rule_set);
 
@@ -714,6 +718,7 @@ bool RuleSetProcess(uint8_t rule_set, String &event_saved)
     int pevt = rule.indexOf(F(" DO "));
     if (pevt == -1) { return serviced; }                  // Bad syntax - Nothing to do
     String event_trigger = rule.substring(3, pevt);       // "INA219#CURRENT>0.100"
+    event_trigger.trim();
 
     plen = rule.indexOf(F(" ENDON"));
     plen2 = rule.indexOf(F(" BREAK"));
@@ -728,7 +733,7 @@ bool RuleSetProcess(uint8_t rule_set, String &event_saved)
     String event = event_saved;
 
 #ifdef DEBUG_RULES
-//    AddLog(LOG_LEVEL_DEBUG, PSTR("RUL-RP2: Event |%s|, Rule |%s|, Command(s) |%s|"), event.c_str(), event_trigger.c_str(), commands.c_str());
+    AddLog(LOG_LEVEL_DEBUG, PSTR("RUL-RP2: Event |%s|, Rule |%s|, Command(s) |%s|"), event.c_str(), event_trigger.c_str(), commands.c_str());
 #endif
 
     if (RulesRuleMatch(rule_set, event, event_trigger, stop_all_rules)) {
@@ -799,16 +804,21 @@ bool RuleSetProcess(uint8_t rule_set, String &event_saved)
 
 bool RulesProcessEvent(const char *json_event)
 {
+#ifdef USE_BERRY
+  // events are passed to Berry before Rules engine
+  callBerryRule(json_event);
+#endif
+
   if (Rules.busy) { return false; }
 
   Rules.busy = true;
   bool serviced = false;
 
-#ifdef USE_DEBUG_DRIVER
-  ShowFreeMem(PSTR("RulesProcessEvent"));
-#endif
+  SHOW_FREE_MEM(PSTR("RulesProcessEvent"));
 
-//AddLog(LOG_LEVEL_DEBUG, PSTR("RUL: ProcessEvent |%s|"), json_event);
+#ifdef DEBUG_RULES
+  AddLog(LOG_LEVEL_DEBUG, PSTR("RUL: ProcessEvent |%s|"), json_event);
+#endif
 
   String event_saved = json_event;
   // json_event = {"INA219":{"Voltage":4.494,"Current":0.020,"Power":0.089}}
@@ -822,7 +832,9 @@ bool RulesProcessEvent(const char *json_event)
   }
   event_saved.toUpperCase();
 
-//AddLog(LOG_LEVEL_DEBUG, PSTR("RUL: Event |%s|"), event_saved.c_str());
+#ifdef DEBUG_RULES
+  AddLog(LOG_LEVEL_DEBUG, PSTR("RUL: Event |%s|"), event_saved.c_str());
+#endif
 
   for (uint32_t i = 0; i < MAX_RULE_SETS; i++) {
     if (GetRuleLen(i) && bitRead(Settings->rule_enabled, i)) {
@@ -858,7 +870,11 @@ void RulesInit(void)
 
 void RulesEvery50ms(void)
 {
+#ifdef USE_BERRY
+  if (!Rules.busy) {  // Emitting Rules events is always enabled with Berry
+#else
   if (Settings->rule_enabled && !Rules.busy) {  // Any rule enabled
+#endif
     char json_event[120];
 
     if (-1 == Rules.new_power) { Rules.new_power = TasmotaGlobal.power; }
@@ -913,7 +929,8 @@ void RulesEvery50ms(void)
         } else {
           parameter = event + strlen(event);  // '\0'
         }
-        snprintf_P(json_event, sizeof(json_event), PSTR("{\"Event\":{\"%s\":\"%s\"}}"), event, parameter);
+        bool quotes = (parameter[0] != '{');
+        snprintf_P(json_event, sizeof(json_event), PSTR("{\"Event\":{\"%s\":%s%s%s}}"), event, (quotes)?"\"":"", parameter, (quotes)?"\"":"");
         Rules.event_data[0] ='\0';
         RulesProcessEvent(json_event);
       } else {
@@ -986,11 +1003,7 @@ void RulesEvery100ms(void) {
     if (ResponseLength()) {
       ResponseJsonStart();                                           // {"INA219":{"Voltage":4.494,"Current":0.020,"Power":0.089}
       ResponseJsonEnd();
-#ifdef MQTT_DATA_STRING
-      RulesProcessEvent(TasmotaGlobal.mqtt_data.c_str());
-#else
-      RulesProcessEvent(TasmotaGlobal.mqtt_data);
-#endif
+      RulesProcessEvent(ResponseData());
     }
   }
 }
@@ -1165,7 +1178,11 @@ void CmndSubscribe(void)
       subscription_item.Key = key;
       subscriptions.add(subscription_item);
 
+      if (2 == XdrvMailbox.index) {
+        topic = subscription_item.Topic;  // Do not append "/#""
+      }
       MqttSubscribe(topic.c_str());
+
       events.concat(event_name + "," + topic
         + (key.length()>0 ? "," : "")
         + key);
@@ -2139,8 +2156,8 @@ void CmndRule(void)
       }
 
       // we need to split the rule in chunks
-      rule = rule.substring(0, MAX_RULE_SIZE);
-      rule += F("...");
+//      rule = rule.substring(0, MAX_RULE_SIZE);
+//      rule += F("...");
     }
     Response_P(PSTR("{\"%s%d\":{\"State\":\"%s\",\"Once\":\"%s\",\"StopOnError\":\"%s\",\"Length\":%d,\"Free\":%d,\"Rules\":\"%s\"}}"),
       XdrvMailbox.command, index, GetStateText(bitRead(Settings->rule_enabled, index -1)), GetStateText(bitRead(Settings->rule_once, index -1)),

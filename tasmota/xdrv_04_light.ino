@@ -1656,6 +1656,13 @@ uint8_t LightGetSpeedSetting(void) {
   return Settings->light_speed;
 }
 
+// Force to reapply color, for example when PWM Frequency changed
+void LightReapplyColor(void) {
+  for (uint32_t i = 0; i < LST_MAX; i++) {
+    Light.last_color[i] = 0;
+  }
+}
+
 // On entry Light.new_color[5] contains the color to be displayed
 // and Light.last_color[5] the color currently displayed
 // Light.power tells which lights or channels (SetOption68) are on/off
@@ -2000,7 +2007,14 @@ void LightApplyPower(uint8_t new_color[LST_MAX], power_t power) {
 void LightSetOutputs(const uint16_t *cur_col_10) {
   // now apply the actual PWM values, adjusted and remapped 10-bits range
   if (TasmotaGlobal.light_type < LT_PWM6) {   // only for direct PWM lights, not for Tuya, Armtronix...
+#ifdef USE_PWM_DIMMER
+    uint16_t max_col = 0;
+#endif  // USE_PWM_DIMMER
     for (uint32_t i = 0; i < (Light.subtype - Light.pwm_offset); i++) {
+      uint16_t cur_col = cur_col_10[i + Light.pwm_offset];
+#ifdef USE_PWM_DIMMER
+      if (cur_col > max_col) max_col = cur_col;
+#endif  // USE_PWM_DIMMER
       if (PinUsed(GPIO_PWM1, i)) {
         //AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION "Cur_Col%d 10 bits %d"), i, cur_col_10[i]);
         uint16_t cur_col = cur_col_10[i + Light.pwm_offset];
@@ -2010,12 +2024,12 @@ void LightSetOutputs(const uint16_t *cur_col_10) {
         if (!Settings->flag4.zerocross_dimmer) {
           analogWrite(Pin(GPIO_PWM1, i), bitRead(TasmotaGlobal.pwm_inverted, i) ? Settings->pwm_range - cur_col : cur_col);
         }
-#ifdef USE_PWM_DIMMER
-        // Animate brightness LEDs to follow PWM dimmer brightness
-        if (PWM_DIMMER == TasmotaGlobal.module_type) PWMDimmerSetBrightnessLeds(change10to8(cur_col));
-#endif  // USE_PWM_DIMMER
       }
     }
+#ifdef USE_PWM_DIMMER
+    // Animate brightness LEDs to follow PWM dimmer brightness
+    if (PWM_DIMMER == TasmotaGlobal.module_type) PWMDimmerSetBrightnessLeds(change10to8(max_col));
+#endif  // USE_PWM_DIMMER
   }
 //  char msg[24];
 //  AddLog(LOG_LEVEL_DEBUG, PSTR("LGT: Channels %s"), ToHex_P((const unsigned char *)cur_col_10, 10, msg, sizeof(msg)));

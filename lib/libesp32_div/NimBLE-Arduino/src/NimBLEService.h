@@ -36,6 +36,10 @@ class NimBLECharacteristic;
 class NimBLEService {
 public:
 
+    NimBLEService(const char* uuid, uint16_t numHandles, NimBLEServer* pServer);
+    NimBLEService(const NimBLEUUID &uuid, uint16_t numHandles, NimBLEServer* pServer);
+    ~NimBLEService();
+
     NimBLEServer*         getServer();
 
     NimBLEUUID            getUUID();
@@ -55,6 +59,8 @@ public:
                                                NIMBLE_PROPERTY::READ |
                                                NIMBLE_PROPERTY::WRITE);
 
+    void                  addCharacteristic(NimBLECharacteristic* pCharacteristic);
+    void                  removeCharacteristic(NimBLECharacteristic* pCharacteristic, bool deleteChr = false);
     NimBLECharacteristic* getCharacteristic(const char* uuid, uint16_t instanceId = 0);
     NimBLECharacteristic* getCharacteristic(const NimBLEUUID &uuid, uint16_t instanceId = 0);
     NimBLECharacteristic* getCharacteristicByHandle(uint16_t handle);
@@ -65,9 +71,6 @@ public:
 
 
 private:
-    NimBLEService(const char* uuid, uint16_t numHandles, NimBLEServer* pServer);
-    NimBLEService(const NimBLEUUID &uuid, uint16_t numHandles, NimBLEServer* pServer);
-    ~NimBLEService();
 
     friend class          NimBLEServer;
     friend class          NimBLEDevice;

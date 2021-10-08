@@ -67,7 +67,7 @@ void Dds2382EverySecond(void)
       Energy.voltage[0] = (float)((buffer[27] << 8) + buffer[28]) / 10.0;
       Energy.current[0] = (float)((buffer[29] << 8) + buffer[30]) / 100.0;
       Energy.active_power[0] = (float)((buffer[31] << 8) + buffer[32]);
-      Energy.reactive_power[0] = (float)((buffer[33] << 8) + buffer[34]);
+      Energy.reactive_power[0] = (float)(int16_t)((buffer[33] << 8) + buffer[34]);
       Energy.power_factor[0] = (float)((buffer[35] << 8) + buffer[36]) / 1000.0;                                          // 1.00
       Energy.frequency[0] = (float)((buffer[37] << 8) + buffer[38]) / 100.0;                                              // 50.0 Hz
       uint8_t offset = 11;
@@ -75,9 +75,8 @@ void Dds2382EverySecond(void)
         offset = 19;
       }
       Energy.export_active[0] = (float)((buffer[offset] << 24) + (buffer[offset +1] << 16) + (buffer[offset +2] << 8) + buffer[offset +3]) / 100.0;    // 429496.729 kW
-      float import_active = (float)((buffer[offset +4] << 24) + (buffer[offset +5] << 16) + (buffer[offset +6] << 8) + buffer[offset +7]) / 100.0;  // 429496.729 kW
-
-      EnergyUpdateTotal(import_active, true);  // 484.708 kWh
+      Energy.import_active[0] = (float)((buffer[offset +4] << 24) + (buffer[offset +5] << 16) + (buffer[offset +6] << 8) + buffer[offset +7]) / 100.0;  // 429496.729 kW
+      EnergyUpdateTotal();  // 484.708 kWh
     }
   } // end data ready
 

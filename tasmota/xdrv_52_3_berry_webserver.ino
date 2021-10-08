@@ -57,9 +57,12 @@ extern "C" {
         // we did have a match, low == high
         be_pushint(vm, webserver_constants[constant_idx].value);
         be_return(vm);
+      } else if (strcmp(needle, "init")) {
+        /* don't throw an exception if the 'init' function is requested */
+        be_raise(vm, "attribute_error", be_pushfstring(vm, "module 'webserver' has no such attribute '%s'", needle));
       }
     }
-    be_raise(vm, "attribute_error", "module 'webserver' has no such attribute");
+    be_return_nil(vm);
   }
 }
 
@@ -128,6 +131,21 @@ extern "C" {
     be_return(vm);
   }
 
+  // Berry: `webserver.redirect(string) -> nil`
+  //
+  int32_t w_webserver_redirect(struct bvm *vm);
+  int32_t w_webserver_redirect(struct bvm *vm) {
+    int32_t argc = be_top(vm); // Get the number of arguments
+    if (argc >= 1 && be_isstring(vm, 1)) {
+      const char * uri = be_tostring(vm, 1);
+      Webserver->sendHeader("Location", uri, true);
+      Webserver->send(302, "text/plain", "");
+      // Webserver->sendHeader(F("Location"), String(F("http://")) + Webserver->client().localIP().toString(), true);
+      be_return_nil(vm);
+    }
+    be_raise(vm, kTypeError, nullptr);
+  }
+
   // Berry: `webserver.content_start() -> nil`
   //
   int32_t w_webserver_content_start(struct bvm *vm);
@@ -141,7 +159,7 @@ extern "C" {
     be_raise(vm, kTypeError, nullptr);
   }
 
-  // Berry: `webserver.content_send() -> nil`
+  // Berry: `webserver.content_send(string) -> nil`
   //
   int32_t w_webserver_content_send(struct bvm *vm);
   int32_t w_webserver_content_send(struct bvm *vm) {
@@ -218,6 +236,20 @@ extern "C" {
         const char * arg_name = be_tostring(vm, 1);
         be_pushstring(vm, Webserver->arg(arg_name).c_str());
       }
+      be_return(vm);
+    }
+    be_raise(vm, kTypeError, nullptr);
+  }
+
+  // Berry: `webserver.arg_name(int) -> string`
+  //
+  // takes an int (index 0..args-1)
+  int32_t w_webserver_arg_name(struct bvm *vm);
+  int32_t w_webserver_arg_name(struct bvm *vm) {
+    int32_t argc = be_top(vm); // Get the number of arguments
+    if (argc >= 1 && be_isint(vm, 1)) {
+      int32_t idx = be_toint(vm, 1);
+      be_pushstring(vm, Webserver->argName(idx).c_str());
       be_return(vm);
     }
     be_raise(vm, kTypeError, nullptr);

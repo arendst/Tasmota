@@ -181,7 +181,8 @@ void FifLEEvery250ms(void)
           break;
 
         case 7:
-          Le01mr.total_active = value_buff * 0.01f; // [kWh]
+          Energy.import_active[0] = value_buff * 0.01f; // [kWh]
+          Le01mr.total_active = Energy.import_active[0];  // Useless
           break;
 
         case 8:
@@ -193,7 +194,7 @@ void FifLEEvery250ms(void)
       if (Le01mr.read_state == Le01mr.start_address_count) {
         Le01mr.read_state = 0;
 
-        EnergyUpdateTotal(Le01mr.total_active, true);
+        EnergyUpdateTotal();
       }
     }
   } // end data ready

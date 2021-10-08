@@ -49,7 +49,7 @@
 */
 #ifndef USE_BLE_ESP32
 #ifdef ESP32                       // ESP32 only. Use define USE_HM10 for ESP8266 support
-#if CONFIG_IDF_TARGET_ESP32
+#if defined CONFIG_IDF_TARGET_ESP32 || defined CONFIG_IDF_TARGET_ESP32C3
 
 #ifdef USE_MI_ESP32
 
@@ -2334,6 +2334,6 @@ bool Xsns62(uint8_t function)
   return result;
 }
 #endif  // USE_MI_ESP32
-#endif  // CONFIG_IDF_TARGET_ESP32
+#endif  // CONFIG_IDF_TARGET_ESP32 or CONFIG_IDF_TARGET_ESP32C3
 #endif  // ESP32
 #endif  // USE_BLE_ESP32

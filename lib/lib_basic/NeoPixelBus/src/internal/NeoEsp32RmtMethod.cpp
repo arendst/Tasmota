@@ -153,6 +153,28 @@ void NeoEsp32RmtSpeedTm1814::Translate(const void* src,
         RmtBit0, RmtBit1, RmtDurationReset);
 }
 
+void NeoEsp32RmtSpeedTm1829::Translate(const void* src,
+    rmt_item32_t* dest,
+    size_t src_size,
+    size_t wanted_num,
+    size_t* translated_size,
+    size_t* item_num)
+{
+    _translate(src, dest, src_size, wanted_num, translated_size, item_num,
+        RmtBit0, RmtBit1, RmtDurationReset);
+}
+
+void NeoEsp32RmtSpeedTm1914::Translate(const void* src,
+    rmt_item32_t* dest,
+    size_t src_size,
+    size_t wanted_num,
+    size_t* translated_size,
+    size_t* item_num)
+{
+    _translate(src, dest, src_size, wanted_num, translated_size, item_num,
+        RmtBit0, RmtBit1, RmtDurationReset);
+}
+
 void NeoEsp32RmtSpeed800Kbps::Translate(const void* src,
     rmt_item32_t* dest,
     size_t src_size,
@@ -231,6 +253,28 @@ void NeoEsp32RmtInvertedSpeedSk6812::Translate(const void* src,
 }
 
 void NeoEsp32RmtInvertedSpeedTm1814::Translate(const void* src,
+    rmt_item32_t* dest,
+    size_t src_size,
+    size_t wanted_num,
+    size_t* translated_size,
+    size_t* item_num)
+{
+    _translate(src, dest, src_size, wanted_num, translated_size, item_num,
+        RmtBit0, RmtBit1, RmtDurationReset);
+}
+
+void NeoEsp32RmtInvertedSpeedTm1829::Translate(const void* src,
+    rmt_item32_t* dest,
+    size_t src_size,
+    size_t wanted_num,
+    size_t* translated_size,
+    size_t* item_num)
+{
+    _translate(src, dest, src_size, wanted_num, translated_size, item_num,
+        RmtBit0, RmtBit1, RmtDurationReset);
+}
+
+void NeoEsp32RmtInvertedSpeedTm1914::Translate(const void* src,
     rmt_item32_t* dest,
     size_t src_size,
     size_t wanted_num,

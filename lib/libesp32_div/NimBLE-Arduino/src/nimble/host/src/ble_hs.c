@@ -504,20 +504,20 @@ ble_hs_sched_start(void)
 static void
 ble_hs_event_rx_hci_ev(struct ble_npl_event *ev)
 {
-    uint8_t *hci_evt;
+    const struct ble_hci_ev *hci_ev;
     int rc;
 
-    hci_evt = ble_npl_event_get_arg(ev);
+    hci_ev = ble_npl_event_get_arg(ev);
 
     rc = os_memblock_put(&ble_hs_hci_ev_pool, ev);
     BLE_HS_DBG_ASSERT_EVAL(rc == 0);
 
 #if BLE_MONITOR
-    ble_monitor_send(BLE_MONITOR_OPCODE_EVENT_PKT, hci_evt,
-                     hci_evt[1] + BLE_HCI_EVENT_HDR_LEN);
+    ble_monitor_send(BLE_MONITOR_OPCODE_EVENT_PKT, hci_ev,
+                     hci_ev->length + sizeof(*hci_ev));
 #endif
 
-    ble_hs_hci_evt_process(hci_evt);
+    ble_hs_hci_evt_process(hci_ev);
 }
 
 static void
@@ -684,7 +684,7 @@ ble_hs_rx_data(struct os_mbuf *om, void *arg)
     /* If flow control is enabled, mark this packet with its corresponding
      * connection handle.
      */
-    ble_hs_flow_fill_acl_usrhdr(om);
+    ble_hs_flow_track_data_mbuf(om);
 
     rc = ble_mqueue_put(&ble_hs_rx_q, ble_hs_evq, om);
     if (rc != 0) {
@@ -747,8 +747,10 @@ ble_hs_init(void)
     rc = ble_hs_conn_init();
     SYSINIT_PANIC_ASSERT(rc == 0);
 
+#if MYNEWT_VAL(BLE_PERIODIC_ADV)
     rc = ble_hs_periodic_sync_init();
     SYSINIT_PANIC_ASSERT(rc == 0);
+#endif
 
     rc = ble_l2cap_init();
     SYSINIT_PANIC_ASSERT(rc == 0);
@@ -784,14 +786,14 @@ ble_hs_init(void)
     ble_hs_dbg_mutex_locked = 0;
 #endif
 
-    /* Configure the HCI transport to communicate with a host. */
-    ble_hci_trans_cfg_hs(ble_hs_hci_rx_evt, NULL, ble_hs_rx_data, NULL);
-
 #ifdef MYNEWT
     ble_hs_evq_set((struct ble_npl_eventq *)os_eventq_dflt_get());
 #else
     ble_hs_evq_set(nimble_port_get_dflt_eventq());
 #endif
+
+    /* Configure the HCI transport to communicate with a host. */
+    ble_hci_trans_cfg_hs(ble_hs_hci_rx_evt, NULL, ble_hs_rx_data, NULL);
 
 #if BLE_MONITOR
     rc = ble_monitor_init();

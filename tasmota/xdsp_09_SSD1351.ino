@@ -68,7 +68,7 @@ void SSD1351_InitDriver() {
     ssd1351->begin();
     renderer = ssd1351;
     renderer->DisplayInit(DISPLAY_INIT_MODE,Settings->display_size,Settings->display_rotate,Settings->display_font);
-    renderer->dim(Settings->display_dimmer);
+    renderer->dim(GetDisplayDimmer16());
 
 #ifdef SHOW_SPLASH
     // Welcome text

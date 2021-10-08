@@ -18,6 +18,7 @@
 */
 
 #ifdef USE_PWM_DIMMER
+#ifdef USE_LIGHT
 
 /*********************************************************************************************\
 * Support for Martin Jerry/acenx/Tessan/NTONPOWER SD0x PWM dimmer switches. The brightness of
@@ -886,4 +887,5 @@ bool Xdrv35(uint8_t function)
   return result;
 }
 
+#endif  // USE_LIGHT
 #endif  // USE_PWM_DIMMER

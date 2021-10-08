@@ -80,6 +80,7 @@ static bstring* sim2str(bvm *vm, bvalue *v)
     case BE_BOOL:
         strcpy(sbuf, var_tobool(v) ? "true" : "false");
         break;
+    case BE_INDEX:
     case BE_INT:
         sprintf(sbuf, BE_INT_FORMAT, var_toint(v));
         break;
@@ -95,6 +96,9 @@ static bstring* sim2str(bvm *vm, bvalue *v)
         break;
     case BE_MODULE:
         module2str(sbuf, v);
+        break;
+    case BE_COMPTR:
+        sprintf(sbuf, "<ptr: %p>", var_toobj(v));
         break;
     default:
         strcpy(sbuf, "(unknow value)");
@@ -322,15 +326,47 @@ BERRY_API const char *be_str2num(bvm *vm, const char *str)
     return sout;
 }
 
+static bstring* string_range(bvm *vm, bstring *str, binstance *range)
+{
+    bint lower, upper;
+    bint size = str_len(str);   /* size of source string */
+    // bint size = be_data_size(vm, -1); /* get source list size */
+    /* get index range */
+    bvalue temp;
+    be_instance_member(vm, range, be_newstr(vm, "__lower__"), &temp);
+    lower = var_toint(&temp);
+    be_instance_member(vm, range, be_newstr(vm, "__upper__"), &temp);
+    upper = var_toint(&temp);
+    /* protection scope */
+    if (upper < 0) { upper = size + upper; }
+    if (lower < 0) { lower = size + lower; }
+    upper = upper < size ? upper : size - 1;
+    lower = lower < 0 ? 0 : lower;
+    if (lower > upper) {
+        return be_newstrn(vm, "", 0);   /* empty string */
+    }
+    return be_newstrn(vm, str(str) + lower, upper - lower + 1);
+
+}
+
 /* string subscript operation */
 bstring* be_strindex(bvm *vm, bstring *str, bvalue *idx)
 {
     if (var_isint(idx)) {
         int pos = var_toidx(idx);
-        if (pos < str_len(str)) {
+        int size = str_len(str);
+        if (pos < 0) { pos = size + pos; }
+        if ((pos < size) && (pos >= 0)) {
             return be_newstrn(vm, str(str) + pos, 1);
         }
         be_raise(vm, "index_error", "string index out of range");
+    } else if (var_isinstance(idx)) {
+        binstance * ins = var_toobj(idx);
+        const char *cname = str(be_instance_name(ins));
+        if (!strcmp(cname, "range")) {
+            return string_range(vm, str, ins);
+        }
+        // str(be_instance_name(i))
     }
     be_raise(vm, "index_error", "string indices must be integers");
     return NULL;
@@ -511,11 +547,15 @@ static int str_format(bvm *vm)
             concat2(vm);
             p = get_mode(p + 1, mode);
             buf[0] = '\0';
-            if (index > top) {
+            if (index > top && *p != '%') {
                 be_raise(vm, "runtime_error", be_pushfstring(vm,
                     "bad argument #%d to 'format': no value", index));
             }
             switch (*p) {
+            case '%':
+                be_pushstring(vm, "%");
+                --index;  /* compensate the future ++index */
+                break;
             case 'd': case 'i': case 'o':
             case 'u': case 'x': case 'X':
                 if (be_isint(vm, index)) {

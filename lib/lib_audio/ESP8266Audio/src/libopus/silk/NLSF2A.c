@@ -80,10 +80,11 @@ void silk_NLSF2A(
     };
     const unsigned char *ordering;
     opus_int   k, i, dd;
-    opus_int32 cos_LSF_QA[ SILK_MAX_ORDER_LPC ];
-    opus_int32 P[ SILK_MAX_ORDER_LPC / 2 + 1 ], Q[ SILK_MAX_ORDER_LPC / 2 + 1 ];
+    opus_int32 *cos_LSF_QA = (opus_int32*)malloc(sizeof(opus_int32) * SILK_MAX_ORDER_LPC );
+    opus_int32 *P = (opus_int32*)malloc(sizeof(opus_int32) * (SILK_MAX_ORDER_LPC / 2 + 1));
+    opus_int32 *Q= (opus_int32*)malloc(sizeof(opus_int32) * (SILK_MAX_ORDER_LPC / 2 + 1));
     opus_int32 Ptmp, Qtmp, f_int, f_frac, cos_val, delta;
-    opus_int32 a32_QA1[ SILK_MAX_ORDER_LPC ];
+    opus_int32 *a32_QA1 = (opus_int32*)malloc(sizeof(opus_int32) * SILK_MAX_ORDER_LPC );
 
     silk_assert( LSF_COS_TAB_SZ_FIX == 128 );
     celt_assert( d==10 || d==16 );
@@ -137,5 +138,9 @@ void silk_NLSF2A(
             a_Q12[ k ] = (opus_int16)silk_RSHIFT_ROUND( a32_QA1[ k ], QA + 1 - 12 );            /* QA+1 -> Q12 */
         }
     }
+    free(cos_LSF_QA);
+    free(P);
+    free(Q);
+    free(a32_QA1);
 }
 

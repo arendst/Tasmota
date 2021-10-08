@@ -219,7 +219,7 @@ typedef NeoAvrMethodBase<NeoAvrSpeedTm1814> NeoAvrTm1814InvertedMethod;
 typedef NeoAvrMethodBase<NeoAvrSpeedTm1829> NeoAvrTm1829InvertedMethod;
 typedef NeoAvrMethodBase<NeoAvrSpeed800Kbps> NeoAvr800KbpsMethod;
 typedef NeoAvrMethodBase<NeoAvrSpeed400Kbps> NeoAvr400KbpsMethod;
-
+typedef NeoAvrTm1814InvertedMethod NeoAvrTm1914InvertedMethod;
 
 // AVR doesn't have alternatives yet, so there is just the default
 typedef NeoAvrWs2812xMethod NeoWs2813Method;
@@ -232,7 +232,9 @@ typedef NeoAvr400KbpsMethod NeoApa106Method;
 typedef NeoAvrWs2812xMethod Neo800KbpsMethod;
 typedef NeoAvr400KbpsMethod Neo400KbpsMethod;
 
+// there is no non-invert methods for avr, but the norm for TM1814 is inverted, so
 typedef NeoAvrTm1814InvertedMethod NeoTm1814InvertedMethod;
+typedef NeoAvrTm1914InvertedMethod NeoTm1914InvertedMethod;
 typedef NeoAvrTm1829InvertedMethod NeoTm1829InvertedMethod;
 #endif
 

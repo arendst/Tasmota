@@ -31,10 +31,11 @@ struct bt_mesh_cfg_cli {
 };
 
 extern const struct bt_mesh_model_op bt_mesh_cfg_cli_op[];
+extern const struct bt_mesh_model_cb bt_mesh_cfg_cli_cb;
 
-#define BT_MESH_MODEL_CFG_CLI(cli_data)                                      \
-		BT_MESH_MODEL(BT_MESH_MODEL_ID_CFG_CLI,                      \
-			      bt_mesh_cfg_cli_op, NULL, cli_data)
+#define BT_MESH_MODEL_CFG_CLI(cli_data)                                        \
+	BT_MESH_MODEL_CB(BT_MESH_MODEL_ID_CFG_CLI, bt_mesh_cfg_cli_op, NULL,   \
+			 cli_data, &bt_mesh_cfg_cli_cb)
 
 int bt_mesh_cfg_comp_data_get(u16_t net_idx, u16_t addr, u8_t page,
 			      u8_t *status, struct os_mbuf *comp);

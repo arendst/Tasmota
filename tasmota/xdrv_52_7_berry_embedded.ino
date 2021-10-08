@@ -26,7 +26,7 @@
 \*********************************************************************************************/
 
 const char berry_prog[] =
-  ""
+  "import persist "
   // create a 'ntv' module to allow functions to be registered in a safe namespace
   // "ntv = module('ntv') "
 
@@ -91,23 +91,9 @@ const char berry_prog[] =
   "def load(f) return tasmota.load(f) end "
 
 #ifdef USE_LVGL
-  // instanciate singleton
-  // "class lvgl : lvgl_ntv "
-  // "end "
-  // "lv = lvgl() "
   "import lvgl as lv "
-  "_lvgl_cb = [ {}, {}, {}, {}, {}, {} ] "
-  "_lvgl_cb_obj = [ {}, {}, {}, {}, {}, {} ] "
-  "def _lvgl_cb_dispatch(idx, obj, v1, v2, v3, v4) "
-    // "import string print(string.format('>>> idx=%i obj=0x%08X v1=%i', idx, obj, v1)) "
-    "var func = _lvgl_cb[idx].find(obj) "
-    "var inst = _lvgl_cb_obj[idx].find(obj) "
-    "if func != nil "
-      "return func(inst, v1, v2, v3, v4) "
-    "end "
-    "return nil "
-  "end "
-  // array of 6 callback types, each with key (lv_obj pointer converted to int, closure)
+  // create the '_lvgl' global singleton
+  "_lvgl = LVGL_glob() "
 
 #endif // USE_LVGL
 

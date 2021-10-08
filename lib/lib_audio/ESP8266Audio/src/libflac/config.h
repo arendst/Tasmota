@@ -2,9 +2,7 @@
 
 #ifdef DEBUG
   #undef NDEBUG
-#endif
-
-#ifndef NDEBUG
+#else
   #define NDEBUG
 #endif
 

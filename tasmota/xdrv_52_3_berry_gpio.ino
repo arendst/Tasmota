@@ -22,7 +22,9 @@
 
 #include <berry.h>
 
-
+#if defined(CONFIG_IDF_TARGET_ESP32) || defined(CONFIG_IDF_TARGET_ESP32S2)
+#include <driver/dac.h>
+#endif
 /*********************************************************************************************\
  * Native functions mapped to Berry functions
  * 
@@ -39,7 +41,40 @@ extern "C" {
       int32_t pin = be_toint(vm, 1);
       int32_t mode = be_toint(vm, 2);
       if (pin >= 0) {
-        pinMode(pin, mode);
+        if (mode > 0) {
+          // standard ESP mode
+          pinMode(pin, mode);
+        } else {
+          // synthetic mode
+          if (-1 == mode) {
+            // DAC
+#if   defined(CONFIG_IDF_TARGET_ESP32)
+            if (25 == pin || 26 == pin) {
+              uint32_t channel = pin - 25 + 1;    // 1 or 2
+              esp_err_t err = dac_output_enable((dac_channel_t) channel);
+              if (err) {
+                be_raisef(vm, "value_error", "Error: dac_output_enable(%i) -> %i", channel, err);
+              }
+            } else {
+              be_raise(vm, "value_error", "DAC only supported on GPIO25-26");
+            }
+#elif defined(CONFIG_IDF_TARGET_ESP32S2)
+            if (17 == pin || 18 == pin) {
+              uint32_t channel = pin - 17 + 1;    // 1 or 2
+              esp_err_t err = dac_output_enable((dac_channel_t) channel);
+              if (err) {
+                be_raisef(vm, "value_error", "Error: dac_output_enable(%i) -> %i", channel, err);
+              }
+            } else {
+              be_raise(vm, "value_error", "DAC only supported on GPIO17-18");
+            }
+#elif defined(CONFIG_IDF_TARGET_ESP32C3)
+            be_raise(vm, "value_error", "DAC unsupported in this chip");
+#else
+            be_raise(vm, "value_error", "DAC unsupported in this chip");
+#endif
+          }
+        }
       }
       be_return_nil(vm);
     }
@@ -71,6 +106,45 @@ extern "C" {
       } else {
         be_pushnil(vm);
       }
+      be_return(vm);
+    }
+    be_raise(vm, kTypeError, nullptr);
+  }
+
+  int gp_dac_voltage(bvm *vm);
+  int gp_dac_voltage(bvm *vm) {
+    int32_t argc = be_top(vm); // Get the number of arguments
+    if (argc == 2 && be_isint(vm, 1) && be_isint(vm, 2)) {
+      int32_t pin = be_toint(vm, 1);
+      int32_t mV = be_toint(vm, 2);
+      if (mV < 0) { mV = 0; }
+      uint32_t dac_value = changeUIntScale(mV, 0, 3300, 0, 255);    // convert from 0..3300 ms to 0..255
+#if   defined(CONFIG_IDF_TARGET_ESP32)
+      if (25 == pin || 26 == pin) {
+        uint32_t channel = pin - 25 + 1;    // 1 or 2
+        esp_err_t err = dac_output_voltage((dac_channel_t) channel, dac_value);
+        if (err) {
+          be_raisef(vm, "internal_error", "Error: esp_err_tdac_output_voltage(%i, %i) -> %i", channel, dac_value, err);
+        }
+      } else {
+        be_raise(vm, "value_error", "DAC only supported on GPIO25-26");
+      }
+#elif defined(CONFIG_IDF_TARGET_ESP32S2)
+      if (17 == pin || 18 == pin) {
+        uint32_t channel = pin - 17 + 1;    // 1 or 2
+        esp_err_t err = dac_output_voltage((dac_channel_t) channel, dac_value);
+        if (err) {
+          be_raisef(vm, "internal_error", "Error: esp_err_tdac_output_voltage(%i, %i) -> %i", channel, dac_value, err);
+        }
+      } else {
+        be_raise(vm, "value_error", "DAC only supported on GPIO17-18");
+      }
+#elif defined(CONFIG_IDF_TARGET_ESP32C3)
+      be_raise(vm, "value_error", "DAC unsupported in this chip");
+#else
+      be_raise(vm, "value_error", "DAC unsupported in this chip");
+#endif
+      be_pushint(vm, changeUIntScale(dac_value, 0, 255, 0, 3300));
       be_return(vm);
     }
     be_raise(vm, kTypeError, nullptr);

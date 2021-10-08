@@ -339,12 +339,19 @@ static void free_lstring(bvm *vm, bgcobject *obj)
     }
 }
 
+static void free_instance(bvm *vm, bgcobject *obj)
+{
+    binstance *o = cast_instance(obj);
+    int nvar = be_instance_member_count(o);
+    be_free(vm, obj, sizeof(binstance) + sizeof(bvalue) * (nvar - 1));
+}
+
 static void free_object(bvm *vm, bgcobject *obj)
 {
     switch (obj->type) {
     case BE_STRING: free_lstring(vm, obj); break; /* long string */
     case BE_CLASS: be_free(vm, obj, sizeof(bclass)); break;
-    case BE_INSTANCE: be_free(vm, obj, sizeof(binstance)); break;
+    case BE_INSTANCE: free_instance(vm, obj); break;
     case BE_MAP: be_map_delete(vm, cast_map(obj)); break;
     case BE_LIST: be_list_delete(vm, cast_list(obj)); break;
     case BE_CLOSURE: free_closure(vm, obj); break;
@@ -451,10 +458,13 @@ static void destruct_object(bvm *vm, bgcobject *obj)
         int type;
         binstance *ins = cast_instance(obj);
         /* does not GC when creating the string "deinit". */
-        type = be_instance_member(vm, ins, str_literal(vm, "deinit"), vm->top);
+        type = be_instance_member_simple(vm, ins, str_literal(vm, "deinit"), vm->top);
         be_incrtop(vm);
         if (basetype(type) == BE_FUNCTION) {
-            be_dofunc(vm, vm->top - 1, 1);
+            var_setinstance(vm->top, ins);  /* push instance on stack as arg 1 */
+            be_incrtop(vm);
+            be_dofunc(vm, vm->top - 2, 1);  /* warning, there shoudln't be any exception raised here, or the gc stops */
+            be_stackpop(vm, 1);
         }
         be_stackpop(vm, 1);
     }

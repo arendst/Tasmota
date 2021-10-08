@@ -1,5 +1,0 @@
-<map id="IRHitachiAc424" name="IRHitachiAc424">
-<area shape="rect" id="node1" title="Class for handling detailed Hitachi 53&#45;byte/424&#45;bit A/C messages." alt="" coords="43,95,165,121"/>
-<area shape="rect" id="node2" href="$classIRsend.html" title="Class for sending all basic IR protocols." alt="" coords="5,5,72,32"/>
-<area shape="rect" id="node3" href="$unionHitachi424Protocol.html" title="Native representation of a Hitachi 53&#45;byte/424&#45;bit A/C message." alt="" coords="97,5,242,32"/>
-</map>

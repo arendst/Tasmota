@@ -50,6 +50,7 @@
 #define D_JSON_CONFIDENCE "Confidence"
 #define D_JSON_CONFIG_HOLDER "CfgHolder"
 #define D_JSON_CONNECT_FAILED "Connect failed"
+#define D_JSON_CONNECTION_LOST "Connection lost"
 #define D_JSON_COREVERSION "Core"
 #define D_JSON_COUNT "Count"
 #define D_JSON_COUNTER "Counter"
@@ -94,6 +95,8 @@
 #define D_JSON_HEAPSIZE "Heap"
 #define D_JSON_HIGH "High"
 #define D_JSON_HOST_NOT_FOUND "Host not found"
+#define D_JSON_FILE_NOT_FOUND "File not found"
+#define D_JSON_OTHER_HTTP_ERROR "Other http error"
 #define D_JSON_HSBCOLOR "HSBColor"
 #define D_JSON_HUMIDITY "Humidity"
 #define D_JSON_I2CSCAN_DEVICES_FOUND_AT "Device(s) found at"
@@ -257,6 +260,7 @@
 #define D_CMND_PULSETIME "PulseTime"
 #define D_CMND_BLINKTIME "BlinkTime"
 #define D_CMND_BLINKCOUNT "BlinkCount"
+#define D_CMND_SETSENSOR "SetSensor"
 #define D_CMND_SENSOR "Sensor"
 #define D_CMND_DRIVER "Driver"
 #define D_CMND_SAVEDATA "SaveData"
@@ -355,6 +359,8 @@
 #define D_CMND_GLOBAL_TEMP "GlobalTemp"
 #define D_CMND_GLOBAL_HUM "GlobalHum"
 
+#define D_SO_WIFINOSLEEP "WifiNoSleep"
+
 #ifdef ESP32
 #define D_CMND_TOUCH_CAL "TouchCal"
 #define D_CMND_TOUCH_THRES "TouchThres"
@@ -409,9 +415,11 @@
 #define D_CMND_WEBLOG "WebLog"
 #define D_CMND_WEBREFRESH "WebRefresh"
 #define D_CMND_WEBSEND "WebSend"
+#define D_CMND_WEBQUERY "WebQuery"
 #define D_CMND_WEBCOLOR "WebColor"
 #define D_CMND_WEBBUTTON "WebButton"
 #define D_CMND_WEBSENSOR "WebSensor"
+#define D_CMND_WEBGETCONFIG "WebGetConfig"
 #define D_CMND_EMULATION "Emulation"
 #define D_CMND_SENDMAIL "Sendmail"
 #define D_CMND_CORS "CORS"
@@ -424,7 +432,11 @@
 #define D_CMND_VOLTAGEHIGH "VoltageHigh"
 #define D_CMND_CURRENTLOW "CurrentLow"
 #define D_CMND_CURRENTHIGH "CurrentHigh"
-#define D_CMND_ENERGYRESET "EnergyReset"
+#define D_CMND_ENERGYTODAY "EnergyToday"
+#define D_CMND_ENERGYYESTERDAY "EnergyYesterday"
+#define D_CMND_ENERGYTOTAL "EnergyTotal"
+#define D_CMND_ENERGYUSAGE "EnergyUsage"
+#define D_CMND_ENERGYEXPORT "EnergyExport"
 #define D_CMND_POWERSET "PowerSet"
 #define D_CMND_VOLTAGESET "VoltageSet"
 #define D_CMND_CURRENTSET "CurrentSet"
@@ -857,6 +869,8 @@ const char HTTP_SNS_COLOR_GREEN[]   PROGMEM = "{s}%s "  D_COLOR_GREEN         "{
 const char HTTP_SNS_COLOR_BLUE[]    PROGMEM = "{s}%s "  D_COLOR_BLUE          "{m}%u "                            "{e}";
 const char HTTP_SNS_MILLILITERS[]   PROGMEM = "{s}%s "  D_VOLUME              "{m}%s " D_UNIT_MILLILITERS         "{e}";
 const char HTTP_SNS_GAS[]           PROGMEM = "{s}%s "  D_GAS                 "{m}%d " D_UNIT_PERCENT          "LEL{e}";
+const char HTTP_SNS_SOC[]           PROGMEM = "{s}%s "  D_SOC                 "{m}%d " D_UNIT_PERCENT             "{e}";
+const char HTTP_SNS_SOH[]           PROGMEM = "{s}%s "  D_SOH                 "{m}%d " D_UNIT_PERCENT             "{e}";
 #endif  // USE_WEBSERVER
 
 #endif  // _I18N_H_

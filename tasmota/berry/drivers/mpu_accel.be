@@ -5,14 +5,13 @@
  - Alternative to xsns_85_mpu6886.ino 
  -#
 
-class MPU6886 : Driver
-  var wire          #- if wire == nil then the module is not initialized -#
+class MPU6886 : I2C_Driver
   var device
   var gres, ares
   var accel, gyro
 
   def init()
-    self.wire = tasmota.wire_scan(0x68, 58)
+    super(self, I2C_Driver).init(self.detect_mpu, 0x68, 58)
 
     if self.wire
       var v = self.wire.read(0x68,0x75,1)
@@ -50,7 +49,22 @@ class MPU6886 : Driver
 
       self.gres = 2000.0/32768.0
       self.ares = 8.0/32678.0
-      print("I2C:","MPU"+str(self.device),"detected on bus",self.wire.bus)
+    end
+  end
+
+  #- detect the MPU model type -#
+  #- currently MPU6886 and MPU9250 -#
+  def detect_mpu()
+    if self.wire
+      var v = self.wire.read(0x68,0x75,1)
+      if   v == 0x19  self.device = 6886
+      elif v == 0x71  self.device = 9250
+      end
+
+      if self.device
+        return "MPU" + str(self.device)
+      end
+      #- don't return anything if invalid or unidentified -#
     end
   end
 
@@ -118,5 +132,6 @@ class MPU6886 : Driver
   end
 
 end
+
 mpu_accel = MPU6886()
 tasmota.add_driver(mpu_accel)

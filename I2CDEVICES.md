@@ -93,3 +93,7 @@ Index | Define              | Driver  | Device   | Address(es) | Description
   57  | USE_TOF10120        | xsns_84 | TOF10120 | 0x52        | Time-of-flight (ToF) distance sensor
   58  | USE_MPU_ACCEL       | xsns_85 | MPU_ACCEL| 0x68        | MPU6886/MPU9250 6-axis MotionTracking sensor from M5Stack
   59  | USE_BM8563          | xdrv_56 | BM8563   | 0x51        | BM8563 RTC from M5Stack
+  60  | USE_AM2320          | xsns_88 | AM2320   | 0x5C        | Temperature and Humidity sensor
+  61  | USE_T67XX           | xsns_89 | T67XX    | 0x15        | CO2 sensor
+  62  | USE_SCD40           | xsns_92 | SCD40    | 0x62        | CO2 sensor Sensirion SCD40/SCD41
+  63  | USE_HM330X          | xsns_93 | HM330X   | 0x40        | Particule sensor

@@ -12,7 +12,7 @@
 #include "be_string.h"
 
 typedef enum {
-    ETVOID,
+    ETVOID,    /* unknown (new variable or error) */
     ETNIL,
     ETBOOL,
     ETREAL,
@@ -20,12 +20,13 @@ typedef enum {
     ETSTRING,
     ETPROTO,
     ETCONST,
-    ETLOCAL,
-    ETGLOBAL,
+    ETLOCAL,    /* local variable, allocated until end of scope */
+    ETGLOBAL,   /* global by index number */
     ETUPVAL,
-    ETMEMBER,
-    ETINDEX,
-    ETREG
+    ETMEMBER,   /* member accessor (by name) */
+    ETINDEX,    /* index accessor (ex array index) */
+    ETREG,      /* temporary register, can be freed if top of stack */
+    ETNGLOBAL   /* named global */
 } exptype_t;
 
 typedef struct {

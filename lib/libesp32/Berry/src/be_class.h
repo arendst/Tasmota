@@ -10,7 +10,7 @@
 
 #include "be_object.h"
 
-#define MT_VARIABLE                     BE_INT
+#define MT_VARIABLE                     BE_INDEX
 #define MT_METHOD                       BE_CLOSURE
 #define MT_PRIMMETHOD                   BE_NTVFUNC
 
@@ -52,14 +52,17 @@ struct binstance {
 bclass* be_newclass(bvm *vm, bstring *name, bclass *super);
 void be_class_compress(bvm *vm, bclass *c);
 int be_class_attribute(bvm *vm, bclass *c, bstring *attr);
-void be_member_bind(bvm *vm, bclass *c, bstring *name);
+void be_member_bind(bvm *vm, bclass *c, bstring *name, bbool var);
 void be_method_bind(bvm *vm, bclass *c, bstring *name, bproto *p);
 void be_prim_method_bind(bvm *vm, bclass *c, bstring *name, bntvfunc f);
 void be_closure_method_bind(bvm *vm, bclass *c, bstring *name, bclosure *cl);
 int be_class_closure_count(bclass *c);
 void be_class_upvalue_init(bvm *vm, bclass *c);
 bbool be_class_newobj(bvm *vm, bclass *c, bvalue *argv, int argc, int mode);
+int be_instance_member_simple(bvm *vm, binstance *obj, bstring *name, bvalue *dst);
 int be_instance_member(bvm *vm, binstance *obj, bstring *name, bvalue *dst);
+int be_class_member(bvm *vm, bclass *obj, bstring *name, bvalue *dst);
 bbool be_instance_setmember(bvm *vm, binstance *obj, bstring *name, bvalue *src);
+bbool be_class_setmember(bvm *vm, bclass *obj, bstring *name, bvalue *src);
 
 #endif

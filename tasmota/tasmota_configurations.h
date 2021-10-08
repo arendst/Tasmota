@@ -107,6 +107,7 @@
 //#define USE_MGC3130                            // [I2cDriver27] Enable MGC3130 Electric Field Effect Sensor (I2C address 0x42) (+2k7 code, 0k3 mem)
 //#define USE_MAX44009                           // [I2cDriver28] Enable MAX44009 Ambient Light sensor (I2C addresses 0x4A and 0x4B) (+0k8 code)
 #define USE_SCD30                              // [I2cDriver29] Enable Sensiron SCd30 CO2 sensor (I2C address 0x61) (+3k3 code)
+//#define USE_SCD40                              // [I2cDriver62] Enable Sensiron SCd40 CO2 sensor (I2C address 0x62) (+3k5 code)
 //#define USE_SPS30                              // [I2cDriver30] Enable Sensiron SPS30 particle sensor (I2C address 0x69) (+1.7 code)
 #define USE_ADE7953                            // [I2cDriver7] Enable ADE7953 Energy monitor as used on Shelly 2.5 (I2C address 0x38) (+1k5)
 #define USE_VL53L0X                            // [I2cDriver31] Enable VL53L0x time of flight sensor (I2C address 0x29) (+4k code)
@@ -120,7 +121,7 @@
 #define USE_DHT12                              // [I2cDriver41] Enable DHT12 humidity and temperature sensor (I2C address 0x5C) (+0k7 code)
 #define USE_DS1624                             // [I2cDriver42] Enable DS1624, DS1621 temperature sensor (I2C addresses 0x48 - 0x4F) (+1k2 code)
 //#define USE_AHT1x                              // [I2cDriver43] Enable AHT10/15 humidity and temperature sensor (I2C address 0x38, 0x39) (+0k8 code)
-//  #define USE_AHT2x                              // [I2cDriver43] Enable AHT20 instead of AHT1x humidity and temperature sensor (I2C address 0x38) (+0k8 code)
+//#define USE_AHT2x                              // [I2cDriver43] Enable AHT20 instead of AHT1x humidity and temperature sensor (I2C address 0x38) (+0k8 code)
 #define USE_WEMOS_MOTOR_V1                     // [I2cDriver44] Enable Wemos motor driver V1 (I2C addresses 0x2D - 0x30) (+0k7 code)
   #define WEMOS_MOTOR_V1_ADDR  0x30              // Default I2C address 0x30
   #define WEMOS_MOTOR_V1_FREQ  1000              // Default frequency
@@ -143,6 +144,10 @@
 //#define USE_EZORGB                             // [I2cDriver55] Enable support for EZO's RGB sensor (+0k5 code) - Shared EZO code required for any EZO device (+1k2 code)
 //#define USE_EZOPMP                             // [I2cDriver55] Enable support for EZO's PMP sensor (+0k3 code) - Shared EZO code required for any EZO device (+1k2 code)
 //#define USE_SEESAW_SOIL                        // [I2cDriver56] Enable Capacitice Soil Moisture & Temperature Sensor (I2C addresses 0x36 - 0x39) (+1k3 code)
+//#define USE_MPU_ACCEL                          // [I2cDriver58] Enable MPU6886/MPU9250 - found in M5Stack - support both I2C buses on ESP32 (I2C address 0x68) (+2k code)
+//#define USE_BM8563                             // [I2cDriver59] Enable BM8563 RTC - found in M5Stack - support both I2C buses on ESP32 (I2C address 0x51) (+2k5 code)
+//#define USE_AM2320                             // [I2cDriver60] Enable AM2320 temperature and humidity Sensor (I2C address 0x5C) (+1k code)
+//#define USE_T67XX                              // [I2cDriver61] Enable Telaire T67XX CO2 sensor (I2C address 0x15) (+1k3 code)
 
 //#define USE_SPI                                // Hardware SPI using GPIO12(MISO), GPIO13(MOSI) and GPIO14(CLK) in addition to two user selectable GPIOs(CS and DC)
 //#define USE_RC522                              // Add support for MFRC522 13.56Mhz Rfid reader (+6k code)
@@ -184,6 +189,7 @@
 //  #define USE_PROJECTOR_CTRL_OPTOMA              // Use codes for OPTOMA
 //#define USE_AS608                                // Add support for AS608 optical and R503 capacitive fingerprint sensor (+3k4 code)
 //#define USE_TFMINIPLUS                           // Add suppoer for TFmini Plus (TFmini, TFmini-S) LiDAR modules via UART interface
+//#define USE_HRG15                                // Add support for Hydreon RG-15 Solid State Rain sensor (+1k5 code)
 
 #define USE_ENERGY_SENSOR                        // Add energy sensors (-14k code)
 #define USE_PZEM004T                             // Add support for PZEM004T Energy monitor (+2k code)
@@ -265,6 +271,7 @@
 #undef USE_EMULATION_WEMO                        // Disable Belkin WeMo emulation for Alexa (+6k code, +2k mem common)
 #undef USE_DOMOTICZ                              // Disable Domoticz
 #undef USE_HOME_ASSISTANT                        // Disable Home Assistant
+#define USE_TASMOTA_DISCOVERY                    // Enable Tasmota Discovery support (+2k code)
 
 // -- Optional modules ----------------------------
 #undef ROTARY_V1                                 // Disable support for MI Desk Lamp
@@ -355,6 +362,10 @@
 //#undef USE_SUNRISE                               // Disable support for Sunrise and sunset tools
 //#undef USE_RULES                                 // Disable support for rules
 #undef USE_DISCOVERY                             // Disable mDNS for the following services (+8k code or +23.5k code with core 2_5_x, +0.3k mem)
+
+// -- IR options ----------------------------
+#define USE_IR_REMOTE                            // Enable IR remote commands using library IRremoteESP8266
+#define USE_IR_REMOTE_FULL                       // Support all IR protocols from IRremoteESP8266
 
 // -- Optional modules ----------------------------
 #undef ROTARY_V1                                 // Disable support for MI Desk Lamp
@@ -478,6 +489,7 @@
 #undef USE_ARDUINO_OTA                           // Disable support for Arduino OTA
 #define USE_DOMOTICZ                             // Enable Domoticz
 #undef USE_HOME_ASSISTANT                        // Disable Home Assistant
+#define USE_TASMOTA_DISCOVERY                    // Enable Tasmota Discovery support (+2k code)
 
 #define UPGRADE_V8_MIN                           // do not support upgrading from version below 8.0.0
 
@@ -491,11 +503,10 @@
   #define USE_TLS                                  // flag indicates we need to include TLS code
 #endif                                             // USE_ZBBRIDGE_TLS
 
-#undef USE_KNX                                   // Disable KNX IP Protocol Support
+//#undef USE_KNX                                   // Disable KNX IP Protocol Support
 //#undef USE_WEBSERVER                             // Disable Webserver
 #undef USE_ENHANCED_GUI_WIFI_SCAN                // Disable wifi scan output with BSSID (+0k5 code)
 //#undef USE_WEBSEND_RESPONSE                      // Disable command WebSend response message (+1k code)
-#define USE_EMULATION                            // Enable Hue emulation
 #define USE_EMULATION_HUE                        // Enable Hue Bridge emulation for Alexa (+14k code, +2k mem common)
 #undef USE_EMULATION_WEMO                        // Disable Belkin WeMo emulation for Alexa (+6k code, +2k mem common)
 #undef USE_CUSTOM                                // Disable Custom features
@@ -631,6 +642,7 @@
 #undef USE_ARDUINO_OTA                           // Disable support for Arduino OTA
 #undef USE_DOMOTICZ                              // Disable Domoticz
 #undef USE_HOME_ASSISTANT                        // Disable Home Assistant
+#define USE_TASMOTA_DISCOVERY                    // Enable Tasmota Discovery support (+2k code)
 #undef USE_MQTT_TLS                              // Disable TLS support won't work as the MQTTHost is not set
 #undef USE_KNX                                   // Disable KNX IP Protocol Support
 //#undef USE_WEBSERVER                             // Disable Webserver
@@ -743,6 +755,7 @@
 #undef USE_THERMOSTAT                            // Disable support for Thermostat
 #undef DEBUG_THEO                                // Disable debug code
 #undef USE_DEBUG_DRIVER                          // Disable debug code
+#undef USE_AC_ZERO_CROSS_DIMMER                  // Disable support for AC_ZERO_CROSS_DIMMER
 #endif  // FIRMWARE_LITE
 
 
@@ -762,7 +775,6 @@
 #undef FIRMWARE_KNX_NO_EMULATION                 // Disable tasmota-knx with KNX but without Emulation
 #undef FIRMWARE_DISPLAYS                         // Disable tasmota-display with display drivers enabled
 #undef FIRMWARE_IR                               // Disable tasmota-ir with IR full protocols activated
-#undef FIRMWARE_IR_CUSTOM                        // Disable tasmota customizable with special marker to add all IR protocols
 
 #undef USE_ARDUINO_OTA                           // Disable support for Arduino OTA
 #undef USE_DOMOTICZ                              // Disable Domoticz
@@ -865,7 +877,7 @@
 #undef USE_DDSU666                               // Disable support for Chint DDSU666 Modbus energy monitor (+0k6 code)
 #undef USE_SOLAX_X1                              // Disable support for Solax X1 series Modbus log info (+3k1 code)
 #undef USE_LE01MR                                // Disable support for F&F LE-01MR Modbus energy meter (+2k code)
-#undef USE_BL0940                                // Disable support for BL0940 Energy monitor as used in Blitzwolf SHP-10 (+1k6 code)
+#undef USE_BL09XX                                // Add support for various BL09XX Energy monitor as used in Blitzwolf SHP-10 or Sonoff Dual R3 v2 (+1k6 code)
 #undef USE_TELEINFO                              // Disable support for French Energy Provider metering telemetry
 #undef USE_IEM3000                               // Disable support for Schneider Electric iEM3000-Modbus series energy monitor (+0k8 code)
 #undef USE_WE517                                 // Disable support for Orno WE517-Modbus energy monitor (+1k code)
@@ -888,6 +900,7 @@
 #undef USE_PROMETHEUS                            // Disable support for https://prometheus.io/ metrics exporting over HTTP /metrics endpoint
 #undef DEBUG_THEO                                // Disable debug code
 #undef USE_DEBUG_DRIVER                          // Disable debug code
+#undef USE_AC_ZERO_CROSS_DIMMER                  // Disable support for AC_ZERO_CROSS_DIMMER
 
 #endif  // FIRMWARE_MINIMAL
 #endif  // ifndef FIRMWARE_MINICUSTOM
@@ -909,7 +922,6 @@
 #undef FIRMWARE_KNX_NO_EMULATION                // Disable tasmota-knx with KNX but without Emulation
 #undef FIRMWARE_DISPLAYS                        // Disable tasmota-display with display drivers enabled
 #undef FIRMWARE_IR                              // Disable tasmota-ir with IR full protocols activated
-#undef FIRMWARE_IR_CUSTOM                       // Disable tasmota customizable with special marker to add all IR protocols
 
 #endif  // FIRMWARE_MINICUSTOM
 
@@ -918,5 +930,99 @@
 #include "tasmota_configurations_ESP32.h"
 #endif  // ESP32
 
+/*********************************************************************************************\
+ * Post-configuration for IRremoteESP8266 protocol selection
+\*********************************************************************************************/
+
+// IR_SEND has two mode: minimal or full (USE_IR_REMOTE_FULL)
+#ifdef USE_IR_REMOTE_FULL
+  // Enable all protocols except PRONTO
+  #ifndef _IR_ENABLE_DEFAULT_                  // it is possible to define this value previously in config
+    #define _IR_ENABLE_DEFAULT_ true           // Enable all protocols except exluded below
+  #endif
+  // PRONTO protocol cannot be supported because it requires specific APIs which are not supported in Tasmota
+  #define DECODE_PRONTO false                  // Exclude PRONTO protocol
+  #define SEND_PRONTO false                    // Exclude PRONTO protocol
+#else
+  #define _IR_ENABLE_DEFAULT_ false              // disable all protocols by default
+  // below are the default IR protocols
+  #define DECODE_HASH true
+  #ifdef USE_IR_SEND_NEC
+    #define SEND_NEC   true                      // Support IRsend NEC protocol
+    #define DECODE_NEC true                      // Support IRreceive NEC protocol
+  #endif
+  #ifdef USE_IR_SEND_RC5
+    #define SEND_RC5   true                      // Support IRsend Philips RC5 protocol
+    #define DECODE_RC5 true                      // Support IRreceive Philips RC5 protocol
+  #endif
+  #ifdef USE_IR_SEND_RC6
+    #define SEND_RC6   true                      // Support IRsend Philips RC6 protocol
+    #define DECODE_RC6 true                      // Support IRreceive Philips RC6 protocol
+  #endif
+#endif
+
+/*********************************************************************************************\
+ * Mandatory defines satisfying disabled defines
+\*********************************************************************************************/
+
+#ifndef ESP8266_1M
+#define USE_UFILESYS
+#define GUI_TRASH_FILE
+#define GUI_EDIT_FILE
+#define USE_PING
+  #ifdef USE_RULES
+  #define USE_EXPRESSION
+  #define SUPPORT_IF_STATEMENT
+  #define SUPPORT_MQTT_EVENT
+  #endif  // USE_RULES
+#endif  // NOT ESP8266_1M
+
+#ifdef USE_EMULATION_HUE
+#define USE_EMULATION
+#endif
+#ifdef USE_EMULATION_WEMO
+#define USE_EMULATION
+#endif
+#ifdef USE_EMULATION
+#define USE_LIGHT
+#endif
+
+#ifdef USE_AC_ZERO_CROSS_DIMMER
+#define USE_COUNTER
+#define USE_LIGHT
+#endif
+
+#ifdef USE_PWM_DIMMER
+#define USE_LIGHT
+#endif
+
+#ifdef USE_TUYA_MCU
+#define USE_LIGHT
+#endif
+
+#ifdef USE_ARILUX_RF
+#define USE_LIGHT
+#endif
+
+// Convert legacy slave to client
+#ifdef USE_TASMOTA_SLAVE
+#define USE_TASMOTA_CLIENT
+#endif
+#ifdef USE_TASMOTA_SLAVE_FLASH_SPEED
+#define USE_TASMOTA_CLIENT_FLASH_SPEED USE_TASMOTA_SLAVE_FLASH_SPEED
+#endif
+#ifdef USE_TASMOTA_SLAVE_SERIAL_SPEED
+#define USE_TASMOTA_CLIENT_SERIAL_SPEED USE_TASMOTA_SLAVE_SERIAL_SPEED
+#endif
+
+#ifdef USE_SCRIPT
+#define USE_UNISHOX_COMPRESSION                // Add support for string compression
+#endif
+#ifdef USE_ZIGBEE
+#define USE_UNISHOX_COMPRESSION                // Add support for string compression
+#endif
+#ifdef USE_EMULATION_HUE
+#define USE_UNISHOX_COMPRESSION                // Add support for string compression
+#endif
 
 #endif  // _TASMOTA_CONFIGURATIONS_H_

@@ -20,12 +20,12 @@
 /*
  * Xtensa toolchain declares `int32_t` as `int` but RISC-V toolchain
  * declares `int32_t` as `long int` which causes compilation errors.
- * 
+ *
  * See:
  *   https://github.com/espressif/esp-idf/issues/6906
  *   https://github.com/espressif/arduino-esp32/issues/5086
- * 
- * You need to add the following lines in `build_flags`:      
+ *
+ * You need to add the following lines in `build_flags`:
  *                            -I$PROJECT_DIR/include
  *                            -include "esp32x_fixes.h"
  */
@@ -39,16 +39,27 @@
 
 #endif // __riscv
 
-// fix a bug in esp-idf 4.4 for esp32c3
-#ifndef REG_SPI_BASE
-#define REG_SPI_BASE(i)     (DR_REG_SPI1_BASE + (((i)>1) ? (((i)* 0x1000) + 0x20000) : (((~(i)) & 1)* 0x1000 )))
-#endif
+//alias, deprecated for the chips after esp32s2
+#ifdef CONFIG_IDF_TARGET_ESP32
+#define SPI_HOST    SPI1_HOST
+#define HSPI_HOST   SPI2_HOST
+#define VSPI_HOST   SPI3_HOST
 
-#if CONFIG_IDF_TARGET_ESP32C3
-// SPI_MOSI_DLEN_REG is not defined anymore in esp32c3, instead use SPI_MS_DLEN_REG
-#define SPI_MOSI_DLEN_REG(x) SPI_MS_DLEN_REG(x)
-//alias for different chips, deprecated for the chips after esp32s2
+#elif CONFIG_IDF_TARGET_ESP32S2
+// SPI_HOST (SPI1_HOST) is not supported by the SPI Master and SPI Slave driver on ESP32-S2 and later
+#define SPI_HOST    SPI1_HOST
+#define FSPI_HOST   SPI2_HOST
+#define HSPI_HOST   SPI3_HOST
+#define VSPI_HOST   SPI3_HOST
+
+#elif CONFIG_IDF_TARGET_ESP32C3
 #define SPI_HOST    SPI1_HOST
 #define HSPI_HOST   SPI2_HOST
 #define VSPI_HOST   SPI2_HOST  /* No SPI3_host on C3 */
-#endif
+// fix a bug in esp-idf 4.4 for esp32c3
+#ifndef REG_SPI_BASE
+#define REG_SPI_BASE(i)     (DR_REG_SPI1_BASE + (((i)>1) ? (((i)* 0x1000) + 0x20000) : (((~(i)) & 1)* 0x1000 )))
+// SPI_MOSI_DLEN_REG is not defined anymore in esp32c3, instead use SPI_MS_DLEN_REG
+#define SPI_MOSI_DLEN_REG(x) SPI_MS_DLEN_REG(x)
+#endif // REG_SPI_BASE
+#endif // TARGET

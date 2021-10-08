@@ -60,8 +60,8 @@ TasmotaSerial *PzemSerial = nullptr;
 /*********************************************************************************************/
 
 struct PZEM {
-  float energy = 0;
-  float last_energy = 0;
+//  float energy = 0;
+//  float last_energy = 0;
   uint8_t send_retry = 0;
   uint8_t read_state = 0;  // Set address
   uint8_t phase = 0;
@@ -192,15 +192,11 @@ void PzemEvery250ms(void)
           Energy.active_power[Pzem.phase] = value;
           break;
         case 4:  // Total energy as 99999Wh
-          Pzem.energy += value;
+          Energy.import_active[Pzem.phase] = value / 1000.0;  // 99.999kWh
           if (Pzem.phase == Energy.phase_count -1) {
-            if (Pzem.energy > Pzem.last_energy) {  // Handle missed phase
-              if (TasmotaGlobal.uptime > PZEM_STABILIZE) {
-                EnergyUpdateTotal(Pzem.energy, false);
-              }
-              Pzem.last_energy = Pzem.energy;
+            if (TasmotaGlobal.uptime > PZEM_STABILIZE) {
+              EnergyUpdateTotal();
             }
-            Pzem.energy = 0;
           }
           break;
       }

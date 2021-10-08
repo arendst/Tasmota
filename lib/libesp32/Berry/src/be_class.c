@@ -14,6 +14,7 @@
 #include "be_vm.h"
 #include "be_func.h"
 #include "be_var.h"
+#include <string.h>
 
 #define check_members(vm, c)            \
     if (!(c)->members) {                \
@@ -53,18 +54,25 @@ int be_class_attribute(bvm *vm, bclass *c, bstring *attr)
             }
         }
     }
-    return BE_NIL;
+    return BE_NONE;
 }
 
-void be_member_bind(bvm *vm, bclass *c, bstring *name)
+void be_member_bind(bvm *vm, bclass *c, bstring *name, bbool var)
 {
     bvalue *attr;
     set_fixed(name);
     check_members(vm, c);
     attr = be_map_insertstr(vm, c->members, name, NULL);
     restore_fixed(name);
-    attr->v.i = c->nvar++;
-    attr->type = MT_VARIABLE;
+    if (var) {
+        /* this is an instance variable so we set it as MT_VARIABLE */
+        attr->v.i = c->nvar++;
+        attr->type = MT_VARIABLE;
+    } else {
+        /* this is a static class constant, leave it as BE_NIL */
+        attr->v.i = 0;
+        attr->type = BE_NIL;
+    }
 }
 
 void be_method_bind(bvm *vm, bclass *c, bstring *name, bproto *p)
@@ -135,6 +143,23 @@ static binstance* instance_member(bvm *vm,
     return NULL;
 }
 
+static bclass* class_member(bvm *vm,
+    bclass *obj, bstring *name, bvalue *dst)
+{
+    for (; obj; obj = obj->super) {
+        bmap *members = obj->members;
+        if (members) {
+            bvalue *v = be_map_findstr(vm, members, name);
+            if (v) {
+                *dst = *v;
+                return obj;
+            }
+        }
+    }
+    var_setnil(dst);
+    return NULL;
+}
+
 void be_class_upvalue_init(bvm *vm, bclass *c)
 {
     bmap *mbr = c->members;
@@ -154,6 +179,7 @@ void be_class_upvalue_init(bvm *vm, bclass *c)
     }
 }
 
+/* (internal) Instanciate an instance for a single class and initialize variables to nil */
 static binstance* newobjself(bvm *vm, bclass *c)
 {
     size_t size = sizeof(binstance) + sizeof(bvalue) * (c->nvar - 1);
@@ -161,15 +187,17 @@ static binstance* newobjself(bvm *vm, bclass *c)
     binstance *obj = cast_instance(gco);
     be_assert(obj != NULL);
     if (obj) { /* initialize members */
-        bvalue *v = obj->members, *end = v + c->nvar;
-        while (v < end) { var_setnil(v); ++v; }
-        obj->_class = c;
-        obj->super = NULL;
-        obj->sub = NULL;
+        bvalue *v = obj->members, *end = v + c->nvar;  /* instance variables is a simple array of pointers at obj->members of size c->nvar */
+        while (v < end) { var_setnil(v); ++v; }  /* Initialize all instance variables to `nil` */
+        obj->_class = c;  /* set its class object */
+        obj->super = NULL;  /* no super class instance for now */
+        obj->sub = NULL;  /* no subclass instance for now */
     }
     return obj;
 }
 
+/* (internal) Instanciate the whole chain of instances when there is a class hierarchy */
+/* All variables set to nil, constructors are not called here */
 static binstance* newobject(bvm *vm, bclass *c)
 {
     binstance *obj, *prev;
@@ -177,23 +205,26 @@ static binstance* newobject(bvm *vm, bclass *c)
     obj = prev = newobjself(vm, c);
     var_setinstance(vm->top, obj);
     be_incrtop(vm); /* protect new objects from GC */
-    for (c = c->super; c; c = c->super) {
+    for (c = c->super; c; c = c->super) {  /* initialize one instance object per class and per superclass */
         prev->super = newobjself(vm, c);
-        prev->super->sub = prev;
+        prev->super->sub = prev;  /* link the super/sub classes instances */
         prev = prev->super;
     }
     be_stackpop(vm, 1);
     return obj;
 }
 
+/* Instanciate new instance from stack with argc parameters */
+/* Pushes the constructor on the stack to be executed if a construtor is found */
+/* Returns true if a constructor is found */
 bbool be_class_newobj(bvm *vm, bclass *c, bvalue *reg, int argc, int mode)
 {
     bvalue init;
     size_t pos = reg - vm->reg;
-    binstance *obj = newobject(vm, c);
-    reg = vm->reg + pos - mode; /* the stack may have changed  */
+    binstance *obj = newobject(vm, c);  /* create empty object hierarchy from class hierarchy */
+    reg = vm->reg + pos - mode; /* the stack may have changed, mode=1 when class is instanciated from module #104 */
     var_setinstance(reg, obj);
-    var_setinstance(reg + mode, obj);
+    var_setinstance(reg + mode, obj);  /* copy to reg and reg+1 if mode==1 */
     /* find constructor */
     obj = instance_member(vm, obj, str_literal(vm, "init"), &init);
     if (obj && var_type(&init) != MT_VARIABLE) {
@@ -207,16 +238,80 @@ bbool be_class_newobj(bvm *vm, bclass *c, bvalue *reg, int argc, int mode)
     return bfalse;
 }
 
-int be_instance_member(bvm *vm, binstance *obj, bstring *name, bvalue *dst)
+/* Default empty constructor */
+static int default_init_native_method(bvm *vm) {
+    be_return_nil(vm);
+}
+
+/* Find instance member by name and copy value to `dst` */
+/* Do not look into virtual members */
+int be_instance_member_simple(bvm *vm, binstance *instance, bstring *name, bvalue *dst)
 {
     int type;
     be_assert(name != NULL);
-    obj = instance_member(vm, obj, name, dst);
+    binstance * obj = instance_member(vm, instance, name, dst);
     type = var_type(dst);
     if (obj && type == MT_VARIABLE) {
         *dst = obj->members[dst->v.i];
     }
     return type;
+}
+
+/* Find instance member by name and copy value to `dst` */
+/* Input: none of `obj`, `name` and `dst` may not be NULL */
+/* Returns the type of the member or BE_NONE if member not found */
+/* TODO need to support synthetic members */
+int be_instance_member(bvm *vm, binstance *instance, bstring *name, bvalue *dst)
+{
+    int type;
+    be_assert(name != NULL);
+    binstance * obj = instance_member(vm, instance, name, dst);
+    type = var_type(dst);
+    if (obj && type == MT_VARIABLE) {
+        *dst = obj->members[dst->v.i];
+    }
+    if (obj) {
+        return type;
+    } else {  /* if no method found, try virtual */
+        /* if 'init' does not exist, create a virtual empty constructor */
+        if (strcmp(str(name), "init") == 0) {
+            var_setntvfunc(dst, default_init_native_method);
+            return var_type(dst);
+        } else {
+            /* get method 'member' */
+            obj = instance_member(vm, instance, str_literal(vm, "member"), vm->top);
+            if (obj && basetype(var_type(vm->top)) == BE_FUNCTION) {
+                bvalue *top = vm->top;
+                var_setinstance(&top[1], instance);
+                var_setstr(&top[2], name);
+                vm->top += 3;   /* prevent gc collection results */
+                be_dofunc(vm, top, 2); /* call method 'member' */
+                vm->top -= 3;
+                *dst = *vm->top;   /* copy result to R(A) */
+                if (obj && var_type(dst) == MT_VARIABLE) {
+                    *dst = obj->members[dst->v.i];
+                }
+                type = var_type(dst);
+                if (type != BE_NIL) {
+                    return type;
+                }
+            }
+        }
+    }
+    return BE_NONE;
+}
+
+int be_class_member(bvm *vm, bclass *obj, bstring *name, bvalue *dst)
+{
+    int type;
+    be_assert(name != NULL);
+    obj = class_member(vm, obj, name, dst);
+    type = var_type(dst);
+    if (obj) {
+        return type;
+    } else {
+        return BE_NONE;
+    }
 }
 
 bbool be_instance_setmember(bvm *vm, binstance *o, bstring *name, bvalue *src)
@@ -241,8 +336,20 @@ bbool be_instance_setmember(bvm *vm, binstance *o, bstring *name, bvalue *src)
             vm->top += 4;   /* prevent collection results */
             be_dofunc(vm, top, 3); /* call method 'member' */
             vm->top -= 4;
-            return var_tobool(top);
+            return btrue;
         }
+    }
+    return bfalse;
+}
+
+bbool be_class_setmember(bvm *vm, bclass *o, bstring *name, bvalue *src)
+{
+    bvalue v;
+    be_assert(name != NULL);
+    bclass * obj = class_member(vm, o, name, &v);
+    if (obj && !var_istype(&v, MT_VARIABLE)) {
+        be_map_insertstr(vm, obj->members, name, src);
+        return btrue;
     }
     return bfalse;
 }

@@ -284,10 +284,21 @@ void WiFiClientSecure_light::stop(void) {
 
 void WiFiClientSecure_light::flush(void) {
   (void) _run_until(BR_SSL_SENDAPP);
-  WiFiClient::flush();
+  // don't call flush on ESP32 - its behavior is different and empties the receive buffer - which we don't want
 }
 #endif
 
+#ifdef ESP32
+int WiFiClientSecure_light::connect(IPAddress ip, uint16_t port, int32_t timeout) {
+  DEBUG_BSSL("connect(%s,%d)", ip.toString().c_str(), port);
+  clearLastError();
+  if (!WiFiClient::connect(ip, port, timeout)) {
+    setLastError(ERR_TCP_CONNECT);
+    return 0;
+  }
+  return _connectSSL(nullptr);
+}
+#else // ESP32
 int WiFiClientSecure_light::connect(IPAddress ip, uint16_t port) {
   DEBUG_BSSL("connect(%s,%d)", ip.toString().c_str(), port);
   clearLastError();
@@ -297,7 +308,28 @@ int WiFiClientSecure_light::connect(IPAddress ip, uint16_t port) {
   }
   return _connectSSL(nullptr);
 }
+#endif
 
+#ifdef ESP32
+int WiFiClientSecure_light::connect(const char* name, uint16_t port, int32_t timeout) {
+  DEBUG_BSSL("connect(%s,%d)\n", name, port);
+  IPAddress remote_addr;
+  clearLastError();
+  if (!WiFi.hostByName(name, remote_addr)) {
+    DEBUG_BSSL("connect: Name loopup failure\n");
+    setLastError(ERR_CANT_RESOLVE_IP);
+    return 0;
+  }
+  DEBUG_BSSL("connect(%s,%d)\n", remote_addr.toString().c_str(), port);
+  if (!WiFiClient::connect(remote_addr, port, timeout)) {
+    DEBUG_BSSL("connect: Unable to connect TCP socket\n");
+    _last_error = ERR_TCP_CONNECT;
+    return 0;
+  }
+  LOG_HEAP_SIZE("Before calling _connectSSL");
+  return _connectSSL(name);
+}
+#else // ESP32
 int WiFiClientSecure_light::connect(const char* name, uint16_t port) {
   DEBUG_BSSL("connect(%s,%d)\n", name, port);
   IPAddress remote_addr;
@@ -316,6 +348,7 @@ int WiFiClientSecure_light::connect(const char* name, uint16_t port) {
   LOG_HEAP_SIZE("Before calling _connectSSL");
   return _connectSSL(name);
 }
+#endif
 
 void WiFiClientSecure_light::_freeSSL() {
   _ctx_present = false;

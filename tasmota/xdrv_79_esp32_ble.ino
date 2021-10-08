@@ -31,8 +31,8 @@
 #define USE_BLE_ESP32
 #endif
 
-#ifdef ESP32                       // ESP32 only. Use define USE_HM10 for ESP8266 support
-#if CONFIG_IDF_TARGET_ESP32
+#ifdef ESP32                       // ESP32 family only. Use define USE_HM10 for ESP8266 support
+#if defined CONFIG_IDF_TARGET_ESP32 || defined CONFIG_IDF_TARGET_ESP32C3
 #ifdef USE_BLE_ESP32
 
 /*
@@ -3121,22 +3121,18 @@ void CmndBLEOperation(void){
 \*********************************************************************************************/
 static void BLEPostMQTTSeenDevices(int type) {
   int remains = 0;
-#ifdef MQTT_DATA_STRING
-  ResponseTime_P(PSTR(""));
-  String response_time = TasmotaGlobal.mqtt_data;
+  nextSeenDev = 0;
 
+#ifdef MQTT_DATA_STRING
   int maxlen = 1024;
   char dest[maxlen];
   do {
-    Response_P(response_time.c_str());  // Keep using same time stamp
     remains = getSeenDevicesToJson(dest, maxlen);
-    ResponseAppend_P(dest);
+    ResponseTime_P(dest);
     // no retain - this is present devices, not historic
-    MqttPublishPrefixTopicRulesProcess_P((1== type) ? TELE : STAT, PSTR("BLE"));
+    MqttPublishPrefixTopicRulesProcess_P((1 == type) ? TELE : STAT, PSTR("BLE"));
   } while (remains);
 #else
-  nextSeenDev = 0;
-
   memset(TasmotaGlobal.mqtt_data, 0, sizeof(TasmotaGlobal.mqtt_data));
   int timelen = ResponseTime_P(PSTR(""));
   char *dest = TasmotaGlobal.mqtt_data + timelen;
@@ -3338,8 +3334,7 @@ static void mainThreadOpCallbacks() {
 static void BLEShowStats(){
   uint32_t totalCount = BLEAdvertisment.totalCount;
   uint32_t deviceCount = seenDevices.size();
-  ResponseTime_P(PSTR(""));
-  ResponseAppend_P(PSTR(",\"BLE\":{\"scans\":%u,\"adverts\":%u,\"devices\":%u,\"resets\":%u}}"), BLEScanCount, totalCount, deviceCount, BLEResets);
+  ResponseTime_P(PSTR(",\"BLE\":{\"scans\":%u,\"adverts\":%u,\"devices\":%u,\"resets\":%u}}"), BLEScanCount, totalCount, deviceCount, BLEResets);
   MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR("BLE"), 0);
 }
 
@@ -3723,7 +3718,7 @@ void sendExample(){
 
 
 #endif
-#endif  // CONFIG_IDF_TARGET_ESP32
+#endif  // CONFIG_IDF_TARGET_ESP32 or CONFIG_IDF_TARGET_ESP32C3
 #endif  // ESP32
 
 

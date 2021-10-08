@@ -96,7 +96,7 @@ ble_rpa_remove_peer_dev_rec(struct ble_hs_dev_records *p_dev_rec)
     ble_store_num_peer_dev_rec--;
     if ((i != ble_store_num_peer_dev_rec) && (ble_store_num_peer_dev_rec != 0)) {
         memmove(&peer_dev_rec[i], &peer_dev_rec[i + 1],
-                (ble_store_num_peer_dev_rec - i + 1) * sizeof(struct ble_hs_dev_records ));
+                (ble_store_num_peer_dev_rec - i) * sizeof(struct ble_hs_dev_records ));
     }
 
     BLE_HS_LOG(DEBUG, " RPA: removed device at index = %d, no. of peer records"
@@ -567,9 +567,25 @@ ble_hs_resolv_list_add(uint8_t *cmdbuf)
     addr_type = cmdbuf[0];
     ident_addr = cmdbuf + 1;
 
+/*--------------------------------------------------------------------------------*/
+    /* Temporary workaround to resolve an issue when deinitializing the stack
+     * and reinitializing. If the a peer deletes the bonding info after deiniting
+     * it will not be able to re-bond without this. Awaiting upstream fix.
+     */
+/*
     if (ble_hs_is_on_resolv_list(ident_addr, addr_type)) {
         return BLE_HS_EINVAL;
     }
+*/
+    int position = ble_hs_is_on_resolv_list(ident_addr, addr_type);
+    if (position) {
+        memmove(&g_ble_hs_resolv_list[position],
+                &g_ble_hs_resolv_list[position + 1],
+                (g_ble_hs_resolv_data.rl_cnt - position) * sizeof (struct
+                        ble_hs_resolv_entry));
+        --g_ble_hs_resolv_data.rl_cnt;
+    }
+/*--------------------------------------------------------------------------------*/
 
     rl = &g_ble_hs_resolv_list[g_ble_hs_resolv_data.rl_cnt];
     memset(rl, 0, sizeof(*rl));

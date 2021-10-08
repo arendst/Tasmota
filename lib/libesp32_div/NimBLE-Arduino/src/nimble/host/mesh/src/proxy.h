@@ -19,7 +19,7 @@
 int bt_mesh_proxy_send(uint16_t conn_handle, u8_t type, struct os_mbuf *msg);
 
 int bt_mesh_proxy_prov_enable(void);
-int bt_mesh_proxy_prov_disable(void);
+int bt_mesh_proxy_prov_disable(bool disconnect);
 
 int bt_mesh_proxy_gatt_enable(void);
 int bt_mesh_proxy_gatt_disable(void);

@@ -63,6 +63,7 @@ License along with NeoPixel.  If not, see
 
 #include "internal/NeoColorFeatures.h"
 #include "internal/NeoTm1814ColorFeatures.h"
+#include "internal/NeoTm1914ColorFeatures.h"
 #include "internal/DotStarColorFeatures.h"
 #include "internal/Lpd8806ColorFeatures.h"
 #include "internal/Lpd6803ColorFeatures.h"

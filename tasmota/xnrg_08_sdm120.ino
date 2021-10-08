@@ -161,7 +161,8 @@ void SDM120Every250ms(void)
             Sdm120.start_address_count = sdm120_table;  // No extended registers available
           }
         }
-        EnergyUpdateTotal(Sdm120.total_active, true);  // 484.708 kWh
+        Energy.import_active[0] = Sdm120.total_active;  // 484.708 kWh
+        EnergyUpdateTotal();  // 484.708 kWh
       }
     }
   } // end data ready

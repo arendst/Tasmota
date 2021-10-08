@@ -51,10 +51,14 @@ struct ble_hs_conn;
 #define BLE_L2CAP_SIG_OP_MOVE_CHAN_CONF_RSP     0x11
 #define BLE_L2CAP_SIG_OP_UPDATE_REQ             0x12
 #define BLE_L2CAP_SIG_OP_UPDATE_RSP             0x13
-#define BLE_L2CAP_SIG_OP_CREDIT_CONNECT_REQ     0x14
-#define BLE_L2CAP_SIG_OP_CREDIT_CONNECT_RSP     0x15
+#define BLE_L2CAP_SIG_OP_LE_CREDIT_CONNECT_REQ  0x14
+#define BLE_L2CAP_SIG_OP_LE_CREDIT_CONNECT_RSP  0x15
 #define BLE_L2CAP_SIG_OP_FLOW_CTRL_CREDIT       0x16
-#define BLE_L2CAP_SIG_OP_MAX                    0x17
+#define BLE_L2CAP_SIG_OP_CREDIT_CONNECT_REQ     0x17
+#define BLE_L2CAP_SIG_OP_CREDIT_CONNECT_RSP     0x18
+#define BLE_L2CAP_SIG_OP_CREDIT_RECONFIG_REQ    0x19
+#define BLE_L2CAP_SIG_OP_CREDIT_RECONFIG_RSP    0x1A
+#define BLE_L2CAP_SIG_OP_MAX                    0x1B
 
 #define BLE_L2CAP_SIG_ERR_CMD_NOT_UNDERSTOOD    0x0000
 #define BLE_L2CAP_SIG_ERR_MTU_EXCEEDED          0x0001
@@ -70,12 +74,21 @@ struct ble_hs_conn;
 #define BLE_L2CAP_COC_ERR_INVALID_SOURCE_CID        0x0009
 #define BLE_L2CAP_COC_ERR_SOURCE_CID_ALREADY_USED   0x000A
 #define BLE_L2CAP_COC_ERR_UNACCEPTABLE_PARAMETERS   0x000B
+#define BLE_L2CAP_COC_ERR_INVALID_PARAMETERS        0x000C
+
+#define BLE_L2CAP_ERR_RECONFIG_SUCCEED                       0x0000
+#define BLE_L2CAP_ERR_RECONFIG_REDUCTION_MTU_NOT_ALLOWED     0x0001
+#define BLE_L2CAP_ERR_RECONFIG_REDUCTION_MPS_NOT_ALLOWED     0x0002
+#define BLE_L2CAP_ERR_RECONFIG_INVALID_DCID                  0x0003
+#define BLE_L2CAP_ERR_RECONFIG_UNACCAPTED_PARAM              0x0004
 
 #define BLE_L2CAP_EVENT_COC_CONNECTED                 0
 #define BLE_L2CAP_EVENT_COC_DISCONNECTED              1
 #define BLE_L2CAP_EVENT_COC_ACCEPT                    2
 #define BLE_L2CAP_EVENT_COC_DATA_RECEIVED             3
 #define BLE_L2CAP_EVENT_COC_TX_UNSTALLED              4
+#define BLE_L2CAP_EVENT_COC_RECONFIG_COMPLETED        5
+#define BLE_L2CAP_EVENT_COC_PEER_RECONFIGURED         6
 
 typedef void ble_l2cap_sig_update_fn(uint16_t conn_handle, int status,
                                      void *arg);
@@ -196,10 +209,43 @@ struct ble_l2cap_event {
              */
             int status;
         } tx_unstalled;
+
+        /**
+         * Represents reconfiguration done. Valid for the following event
+         * types:
+         *      o BLE_L2CAP_EVENT_COC_RECONFIG_COMPLETED
+         *      o BLE_L2CAP_EVENT_COC_PEER_RECONFIGURED
+         */
+        struct {
+            /**
+             * The status of the reconfiguration attempt;
+             *     o 0: the reconfiguration was successfully done.
+             *     o BLE host error code: the reconfiguration attempt failed for
+             *       the specified reason.
+             */
+            int status;
+
+            /** Connection handle of the relevant connection */
+            uint16_t conn_handle;
+
+            /** The L2CAP channel of the relevant L2CAP connection. */
+            struct ble_l2cap_chan *chan;
+        } reconfigured;
     };
 };
 
+struct ble_l2cap_chan_info {
+    uint16_t scid;
+    uint16_t dcid;
+    uint16_t our_l2cap_mtu;
+    uint16_t peer_l2cap_mtu;
+    uint16_t psm;
+    uint16_t our_coc_mtu;
+    uint16_t peer_coc_mtu;
+};
+
 typedef int ble_l2cap_event_fn(struct ble_l2cap_event *event, void *arg);
+
 
 uint16_t ble_l2cap_get_conn_handle(struct ble_l2cap_chan *chan);
 int ble_l2cap_create_server(uint16_t psm, uint16_t mtu,
@@ -211,10 +257,7 @@ int ble_l2cap_connect(uint16_t conn_handle, uint16_t psm, uint16_t mtu,
 int ble_l2cap_disconnect(struct ble_l2cap_chan *chan);
 int ble_l2cap_send(struct ble_l2cap_chan *chan, struct os_mbuf *sdu_tx);
 int ble_l2cap_recv_ready(struct ble_l2cap_chan *chan, struct os_mbuf *sdu_rx);
-int ble_l2cap_get_scid(struct ble_l2cap_chan *chan);
-int ble_l2cap_get_dcid(struct ble_l2cap_chan *chan);
-int ble_l2cap_get_our_mtu(struct ble_l2cap_chan *chan);
-int ble_l2cap_get_peer_mtu(struct ble_l2cap_chan *chan);
+int ble_l2cap_get_chan_info(struct ble_l2cap_chan *chan, struct ble_l2cap_chan_info *chan_info);
 
 #ifdef __cplusplus
 }

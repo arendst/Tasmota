@@ -23,9 +23,11 @@
 #define XDRV_52             52
 
 #include <berry.h>
+#include "be_vm.h"
 
 extern "C" {
   extern void be_load_custom_libs(bvm *vm);
+  extern void be_tracestack(bvm *vm);
 }
 
 const char kBrCommands[] PROGMEM = D_PRFX_BR "|"    // prefix
@@ -35,6 +37,8 @@ const char kBrCommands[] PROGMEM = D_PRFX_BR "|"    // prefix
 void (* const BerryCommand[])(void) PROGMEM = {
   CmndBrRun,
   };
+
+int32_t callBerryEventDispatcher(const char *type, const char *cmd, int32_t idx, const char *payload, uint32_t data_len = 0);
 
 //
 // Sanity Check for be_top()
@@ -90,12 +94,13 @@ extern "C" {
 \*********************************************************************************************/
 // // call a function (if exists) of type void -> void
 
-bool callBerryRule(void) {
+// If event == nullptr, then take XdrvMailbox.data
+bool callBerryRule(const char *event) {
   if (berry.rules_busy) { return false; }
   berry.rules_busy = true;
   char * json_event = XdrvMailbox.data;
   bool serviced = false;
-  serviced = callBerryEventDispatcher(PSTR("rule"), nullptr, 0, XdrvMailbox.data);
+  serviced = callBerryEventDispatcher(PSTR("rule"), nullptr, 0, event ? event : XdrvMailbox.data);
   berry.rules_busy = false;
   return serviced;     // TODO event not handled
 }
@@ -111,6 +116,8 @@ void BerryDumpErrorAndClear(bvm *vm, bool berry_console) {
   if (top >= 2 && be_isstring(vm, -1) && be_isstring(vm, -2)) {
     if (berry_console) {
       berry_log_C(PSTR(D_LOG_BERRY "Exception> '%s' - %s"), be_tostring(berry.vm, -2), be_tostring(berry.vm, -1));
+      be_tracestack(vm);
+      top = be_top(vm);   // update top after dump
     } else {
       AddLog(LOG_LEVEL_ERROR, PSTR(D_LOG_BERRY "Exception> '%s' - %s"), be_tostring(berry.vm, -2), be_tostring(berry.vm, -1));
     }
@@ -190,7 +197,8 @@ bool callMethodObjectWithArgs(const char * objname, const char * method, size_t 
 
 
 // call the event dispatcher from Tasmota object
-int32_t callBerryEventDispatcher(const char *type, const char *cmd, int32_t idx, const char *payload) {
+// if data_len is non-zero, the event is also sent as raw `bytes()` object because the string may lose data
+int32_t callBerryEventDispatcher(const char *type, const char *cmd, int32_t idx, const char *payload, uint32_t data_len) {
   int32_t ret = 0;
   bvm *vm = berry.vm;
 
@@ -205,7 +213,13 @@ int32_t callBerryEventDispatcher(const char *type, const char *cmd, int32_t idx,
       be_pushstring(vm, cmd != nullptr ? cmd : "");
       be_pushint(vm, idx);
       be_pushstring(vm, payload != nullptr ? payload : "{}");  // empty json
-      ret = be_pcall(vm, 5);   // 5 arguments
+      if (data_len > 0) {
+        be_pushbytes(vm, payload, data_len);    // if data_len is set, we also push raw bytes
+        ret = be_pcall(vm, 6);   // 6 arguments
+        be_pop(vm, 1);
+      } else {
+        ret = be_pcall(vm, 5);   // 5 arguments
+      }
       if (ret != 0) {
         BerryDumpErrorAndClear(vm, false);  // log in Tasmota console only
         return ret;
@@ -245,6 +259,10 @@ void BerryObservability(bvm *vm, int event...) {
         int32_t vm_usage2 = va_arg(param, int32_t);
         uint32_t gc_elapsed = millis() - gc_time;
         AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_BERRY "GC from %i to %i bytes (in %d ms)"), vm_usage, vm_usage2, gc_elapsed);
+        // make new threshold tighter when we reach high memory usage
+        if (!UsePSRAM() && vm->gc.threshold > 20*1024) {
+          vm->gc.threshold = vm->gc.usage + 10*1024;    // increase by only 10 KB
+        }
       }
       break;
     default: break;
@@ -267,6 +285,8 @@ void BerryInit(void) {
   do {
     berry.vm = be_vm_new(); /* create a virtual machine instance */
     be_set_obs_hook(berry.vm, &BerryObservability);
+    comp_set_named_gbl(berry.vm);  /* Enable named globals in Berry compiler */
+    comp_set_strict(berry.vm);  /* Enable strict mode in Berry compiler */
     be_load_custom_libs(berry.vm);
 
     // Register functions
@@ -334,7 +354,7 @@ void BrLoad(const char * script_name) {
     bool loaded = be_tobool(berry.vm, -2);  // did it succeed?
     be_pop(berry.vm, 2);
     if (loaded) {
-      AddLog(LOG_LEVEL_INFO, D_LOG_BERRY "sucessfully loaded '%s'", script_name);
+      AddLog(LOG_LEVEL_INFO, D_LOG_BERRY "successfully loaded '%s'", script_name);
     } else {
       AddLog(LOG_LEVEL_INFO, D_LOG_BERRY "no '%s'", script_name);
     }
@@ -720,10 +740,10 @@ bool Xdrv52(uint8_t function)
 
     // Berry wide commands and events
     case FUNC_RULES_PROCESS:
-      result = callBerryRule();
+      result = callBerryRule(nullptr);
       break;
     case FUNC_MQTT_DATA:
-      result = callBerryEventDispatcher(PSTR("mqtt_data"), XdrvMailbox.topic, 0, XdrvMailbox.data);
+      result = callBerryEventDispatcher(PSTR("mqtt_data"), XdrvMailbox.topic, 0, XdrvMailbox.data, XdrvMailbox.data_len);
       break;
     case FUNC_EVERY_50_MSECOND:
       callBerryEventDispatcher(PSTR("every_50ms"), nullptr, 0, nullptr);
@@ -751,10 +771,17 @@ bool Xdrv52(uint8_t function)
       } else {
         WSContentSend_P(HTTP_BTN_BERRY_CONSOLE);
         callBerryEventDispatcher(PSTR("web_add_button"), nullptr, 0, nullptr);
+        callBerryEventDispatcher(PSTR("web_add_console_button"), nullptr, 0, nullptr);
       }
       break;
     case FUNC_WEB_ADD_MAIN_BUTTON:
       callBerryEventDispatcher(PSTR("web_add_main_button"), nullptr, 0, nullptr);
+      break;
+    case FUNC_WEB_ADD_MANAGEMENT_BUTTON:
+      callBerryEventDispatcher(PSTR("web_add_management_button"), nullptr, 0, nullptr);
+      break;
+    case FUNC_WEB_ADD_BUTTON:
+      callBerryEventDispatcher(PSTR("web_add_config_button"), nullptr, 0, nullptr);
       break;
     case FUNC_WEB_ADD_HANDLER:
       callBerryEventDispatcher(PSTR("web_add_handler"), nullptr, 0, nullptr);

@@ -6,14 +6,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include "syscfg/syscfg.h"
+#define MESH_LOG_MODULE BLE_MESH_BEACON_LOG
+
 #include <errno.h>
 #include <assert.h>
 #include "os/os_mbuf.h"
 #include "mesh/mesh.h"
-
-#include "syscfg/syscfg.h"
-#define BT_DBG_ENABLED (MYNEWT_VAL(BLE_MESH_DEBUG_BEACON))
-#include "host/ble_hs_log.h"
 
 #include "adv.h"
 #include "mesh_priv.h"
@@ -147,7 +146,6 @@ static int secure_beacon_send(void)
 
 static int unprovisioned_beacon_send(void)
 {
-#if (MYNEWT_VAL(BLE_MESH_PB_ADV))
 	const struct bt_mesh_prov *prov;
 	u8_t uri_hash[16] = { 0 };
 	struct os_mbuf *buf;
@@ -199,8 +197,41 @@ static int unprovisioned_beacon_send(void)
 		net_buf_unref(buf);
 	}
 
-#endif /* MYNEWT_VAL(BLE_MESH_PB_ADV) */
 	return 0;
+}
+
+static void unprovisioned_beacon_recv(struct os_mbuf *buf)
+{
+#if MYNEWT_VAL(BLE_MESH_PB_ADV)
+	const struct bt_mesh_prov *prov;
+	u8_t *uuid;
+	u16_t oob_info;
+	u32_t uri_hash_val;
+	u32_t *uri_hash = NULL;
+
+	if (buf->om_len != 18 && buf->om_len != 22) {
+		BT_ERR("Invalid unprovisioned beacon length (%u)", buf->om_len);
+		return;
+	}
+
+	uuid = net_buf_simple_pull_mem(buf, 16);
+	oob_info = net_buf_simple_pull_be16(buf);
+
+	if (buf->om_len == 4) {
+		uri_hash_val = net_buf_simple_pull_be32(buf);
+		uri_hash = &uri_hash_val;
+	}
+
+	BT_DBG("uuid %s", bt_hex(uuid, 16));
+
+	prov = bt_mesh_prov_get();
+
+	if (prov->unprovisioned_beacon) {
+		prov->unprovisioned_beacon(uuid,
+					   (bt_mesh_prov_oob_info_t)oob_info,
+					   uri_hash);
+	}
+#endif
 }
 
 static void update_beacon_observation(void)
@@ -249,11 +280,10 @@ static void beacon_send(struct ble_npl_event *work)
 			k_delayed_work_submit(&beacon_timer,
 					      PROVISIONED_INTERVAL);
 		}
-	} else {
+	} else if (IS_ENABLED(CONFIG_BT_MESH_PB_ADV)) {
 		unprovisioned_beacon_send();
 		k_delayed_work_submit(&beacon_timer, UNPROVISIONED_INTERVAL);
 	}
-
 }
 
 static void secure_beacon_recv(struct os_mbuf *buf)
@@ -351,7 +381,7 @@ void bt_mesh_beacon_recv(struct os_mbuf *buf)
 	type = net_buf_simple_pull_u8(buf);
 	switch (type) {
 	case BEACON_TYPE_UNPROVISIONED:
-		BT_DBG("Ignoring unprovisioned device beacon");
+		unprovisioned_beacon_recv(buf);
 		break;
 	case BEACON_TYPE_SECURE:
 		secure_beacon_recv(buf);

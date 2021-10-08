@@ -85,22 +85,22 @@ typedef struct
 
 struct SHD
 {
+    SHD_DIMMER dimmer;
     uint8_t *buffer = nullptr;          // Serial receive buffer
     int byte_counter = 0;               // Index in serial receive buffer
-    uint16_t req_brightness = 0;
-    bool req_on = false;
-    SHD_DIMMER dimmer;
+#ifdef USE_ENERGY_SENSOR
+    uint32_t last_power_check = 0;      // Time when last power was checked
+#endif // USE_ENERGY_SENSOR
     uint32_t start_time = 0;
-    uint8_t counter = 1;                // Packet counter
+    uint16_t req_brightness = 0;
     uint16_t req_fade_rate = 0;
     uint16_t leading_edge = 2;          // Leading edge = 2 Trailing edge = 1
     uint16_t warmup_brightness = 100;   // 10%
     uint16_t warmup_time = 20;          // 20ms
-#ifdef USE_ENERGY_SENSOR
-    uint32_t last_power_check = 0;      // Time when last power was checked
-#endif // USE_ENERGY_SENSOR
-    bool present = false;
+    uint8_t counter = 1;                // Packet counter
     uint8_t hw_version = 0;             // Dimmer 1 = 1 Dimmer 2 = 2
+    bool present = false;
+    bool req_on = false;
 } Shd;
 
 /*********************************************************************************************\
@@ -534,28 +534,16 @@ bool ShdPacketProcess(void)
                 Energy.active_power[0] = wattage;
                 Energy.voltage[0] = voltage;
                 Energy.current[0] = current;
-                Energy.apparent_power[0] = voltage * current;
-                if ((voltage * current) > wattage)
-                    Energy.reactive_power[0] = sqrt((voltage * current) * (voltage * current) - wattage * wattage);
-                else
-                    Energy.reactive_power[0] = 0;
-                if (wattage > (voltage * current))
-                    Energy.power_factor[0] = 1;
-                else if ((voltage * current) == 0)
-                    Energy.power_factor[0] = 0;
-                else
-                    Energy.power_factor[0] = wattage / (voltage * current);
-
-                if (Shd.last_power_check > 10 && Energy.active_power[0] > 0)
-                {
-                    float kWhused = (float)Energy.active_power[0] * (Rtc.utc_time - Shd.last_power_check) / 36;
+                if (Shd.last_power_check > 10 && Energy.active_power[0] > 0) {
+                    uint32_t time_passed = abs(TimePassedSince(Shd.last_power_check));  // Time passed in milliseconds
+                    uint32_t deca_microWh = (uint32_t)(Energy.active_power[0] * time_passed) / 36;
 #ifdef SHELLY_DIMMER_DEBUG
-                    AddLog(LOG_LEVEL_DEBUG, PSTR(SHD_LOGNAME "Adding %i mWh to todays usage from %lu to %lu"), (int)(kWhused * 10), Shd.last_power_check, Rtc.utc_time);
+                    AddLog(LOG_LEVEL_DEBUG, PSTR(SHD_LOGNAME "%4_f W is %u dmWh during %u ms"), &Energy.active_power[0], deca_microWh, time_passed);
 #endif  // SHELLY_DIMMER_DEBUG
-                    Energy.kWhtoday += kWhused;
+                    Energy.kWhtoday_delta[0] += deca_microWh;
                     EnergyUpdateToday();
                 }
-                Shd.last_power_check = Rtc.utc_time;
+                Shd.last_power_check = millis();
 #endif  // USE_ENERGY_SENSOR
 
 #ifdef SHELLY_DIMMER_DEBUG

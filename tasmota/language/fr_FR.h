@@ -1,18 +1,18 @@
 /*
   fr-FR.h - localization for French - France for Tasmota
-  
+
   Copyright (C) 2021  Olivier Francais
-  
+
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
-  
+
   This program is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU General Public License for more details.
-  
+
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
@@ -198,6 +198,8 @@
 #define D_WEIGHT "Poids"
 #define D_WARMLIGHT "Chaud"
 #define D_WEB_SERVER "Serveur web"
+#define D_SOC "State of Charge"
+#define D_SOH "State of Health"
 
 // tasmota.ino
 #define D_WARNING_MINIMAL_VERSION "ATTENTION Cette version ne supporte pas les réglages persistants"
@@ -326,6 +328,8 @@
 #define D_WEB_ADMIN_PASSWORD "Mot de passe Web Admin"
 #define D_MQTT_ENABLE "MQTT activé"
 #define D_MQTT_TLS_ENABLE "MQTT TLS"
+#define D_HTTP_API "HTTP API"
+#define D_HTTP_API_ENABLE "HTTP API activé"
 #define D_FRIENDLY_NAME "Surnom"
 #define D_BELKIN_WEMO "Belkin WeMo"
 #define D_HUE_BRIDGE "Hue Bridge"
@@ -705,7 +709,10 @@
 #define D_SENSOR_CSE7761_TX    "CSE7761 TX"
 #define D_SENSOR_CSE7761_RX    "CSE7761 RX"
 #define D_SENSOR_CSE7766_TX    "CSE7766 TX"
-#define D_SENSOR_CSE7766_RX    "CSE7766 RX"
+#define D_SENSOR_CSE7766_RX    "CSE7766 Rx"
+#define D_SENSOR_BL0939_RX     "BL0939 Rx"
+#define D_SENSOR_BL0942_RX     "BL0942 Rx"
+#define D_SENSOR_HM330X_SET    "HM330X SET"
 #define D_SENSOR_PN532_TX      "PN532 TX"
 #define D_SENSOR_PN532_RX      "PN532 RX"
 #define D_SENSOR_SM16716_CLK   "SM16716 CLK"
@@ -831,6 +838,10 @@
 #define D_SENSOR_ZEROCROSS     "ZC Pulse"
 #define D_SENSOR_HALLEFFECT    "HallEffect"
 #define D_SENSOR_EPD_DATA      "EPD Data"
+#define D_SENSOR_MCP2515_CS    "MCP2515 CS"
+#define D_SENSOR_HRG15_RX      "HRG15 Rx"
+#define D_SENSOR_HRG15_TX      "HRG15 Tx"
+#define D_SENSOR_VINDRIKTNING_RX "VINDRIKTNING"
 
 // Units
 #define D_UNIT_AMPERE "A"
@@ -938,6 +949,8 @@
 #define D_NEW_FILE             "nouveau-fichier.txt"
 #define D_CREATE_NEW_FILE      "Créer and modifier un nouveau fichier"
 #define D_EDIT_FILE            "Modification de fichier"
+#define D_CONFIRM_FILE_DEL     "Confirmez la suppression du fichier"
+#define D_SHOW_HIDDEN_FILES    "Affichez les fichiers cachés"
 
 //xsns_67_as3935.ino
 #define D_AS3935_GAIN "gain:"

@@ -55,6 +55,7 @@ m = minimal, l = lite, t = tasmota, k = knx, s = sensors, i = ir, d = display
 | USE_KEELOQ            | - | - | - / - | - | - | - | - |
 | USE_SONOFF_D1         | - | - | x / - | x | - | - | - |
 | USE_SHELLY_DIMMER     | - | - | x / - | - | - | - | - |
+| USE_AC_ZERO_CROSS_DIMMER | - | - | x / x | x | x | x | x |
 |                       |   |   |       |   |   |   |   |
 | Feature or Sensor     | m | l | t     | k | s | i | d | Remarks
 | USE_LIGHT             | - | x | x / x | x | x | x | x |
@@ -79,7 +80,7 @@ m = minimal, l = lite, t = tasmota, k = knx, s = sensors, i = ir, d = display
 | USE_DDSU666           | - | - | - / x | - | x | - | - |
 | USE_SOLAX_X1          | - | - | - / - | - | - | - | - |
 | USE_LE01MR            | - | - | - / - | - | - | - | - |
-| USE_BL0940            | - | x | x / - | x | x | - | - |
+| USE_BL09XX            | - | x | x / x | x | x | - | - |
 | USE_TELEINFO          | - | - | - / - | - | - | - | - |
 | USE_IEM3000           | - | - | - / - | - | - | - | - |
 | USE_WE517             | - | - | - / - | - | - | - | - |
@@ -122,6 +123,7 @@ m = minimal, l = lite, t = tasmota, k = knx, s = sensors, i = ir, d = display
 | USE_MGC3130           | - | - | - / - | - | - | - | - |
 | USE_MAX44009          | - | - | - / - | - | - | - | - |
 | USE_SCD30             | - | - | - / x | - | x | - | - |
+| USE_SCD40             | - | - | - / x | - | - | - | - |
 | USE_SPS30             | - | - | - / - | - | - | - | - |
 | USE_ADE7953           | - | - | x / x | x | x | - | x |
 | USE_VL53L0X           | - | - | - / x | - | x | - | - |
@@ -157,6 +159,9 @@ m = minimal, l = lite, t = tasmota, k = knx, s = sensors, i = ir, d = display
 | USE_EZORTD            | - | - | - / - | - | - | - | - |
 | USE_SEESAW_SOIL       | - | - | - / - | - | - | - | - |
 | USE_TOF10120          | - | - | - / - | - | - | - | - |
+| USE_AM2320            | - | - | - / - | - | - | - | - |
+| USE_T67XX             | - | - | - / - | - | - | - | - |
+| USE_HM330X            | - | - | - / - | - | - | - | - |
 |                       |   |   |       |   |   |   |   |
 | Feature or Sensor     | m | l | t     | k | s | i | d | Remarks
 | USE_SPI               | - | - | - / - | - | - | - | x |

@@ -16,8 +16,10 @@
 #include "static_block.hpp"
 
 // Local pointer for file managment
-#include <FS.h>
-extern FS *ufsp;
+#ifdef USE_UFILESYS
+    #include <FS.h>
+    extern FS *ufsp;
+#endif // USE_UFILESYS
 
 /* this file contains configuration for the file system. */
 
@@ -58,12 +60,10 @@ extern "C" {
 #ifndef BERRY_LOGSZ
 #define BERRY_LOGSZ 700
 #endif
-extern "C" {
-    extern void *berry_malloc(size_t size);
-}
+
 static char * log_berry_buffer = nullptr;
 static_block {
-    log_berry_buffer = (char*) berry_malloc(BERRY_LOGSZ);
+    log_berry_buffer = (char*) malloc(BERRY_LOGSZ);
     if (log_berry_buffer) log_berry_buffer[0] = 0;
 }
 extern void berry_log(const char * berry_buf);
@@ -105,6 +105,7 @@ BERRY_API char* be_readstring(char *buffer, size_t size)
 
 void* be_fopen(const char *filename, const char *modes)
 {
+#ifdef USE_UFILESYS
     if (ufsp != nullptr && filename != nullptr && modes != nullptr) {
         char fname2[strlen(filename) + 2];
         if (filename[0] == '/') {
@@ -121,12 +122,14 @@ void* be_fopen(const char *filename, const char *modes)
             return f_ptr;
         }
     }
+#endif // USE_UFILESYS
     return nullptr;
     // return fopen(filename, modes);
 }
 
 int be_fclose(void *hfile)
 {
+#ifdef USE_UFILESYS
     // Serial.printf("be_fclose\n");
     if (ufsp != nullptr && hfile != nullptr) {
         File * f_ptr = (File*) hfile;
@@ -134,23 +137,27 @@ int be_fclose(void *hfile)
         delete f_ptr;
         return 0;
     }
+#endif // USE_UFILESYS
     return -1;
     // return fclose(hfile);
 }
 
 size_t be_fwrite(void *hfile, const void *buffer, size_t length)
 {
+#ifdef USE_UFILESYS
     // Serial.printf("be_fwrite %d\n", length);
     if (ufsp != nullptr && hfile != nullptr && buffer != nullptr) {
         File * f_ptr = (File*) hfile;
         return f_ptr->write((const uint8_t*) buffer, length);
     }
+#endif // USE_UFILESYS
     return 0;
     // return fwrite(buffer, 1, length, hfile);
 }
 
 size_t be_fread(void *hfile, void *buffer, size_t length)
 {
+#ifdef USE_UFILESYS
     // Serial.printf("be_fread %d\n", length);
     if (ufsp != nullptr && hfile != nullptr && buffer != nullptr) {
         File * f_ptr = (File*) hfile;
@@ -160,12 +167,14 @@ size_t be_fread(void *hfile, void *buffer, size_t length)
             return ret;
         }
     }
+#endif // USE_UFILESYS
     return 0;
     // return fread(buffer, 1, length, hfile);
 }
 
 char* be_fgets(void *hfile, void *buffer, int size)
 {
+#ifdef USE_UFILESYS
     // Serial.printf("be_fgets %d\n", size);
     uint8_t * buf = (uint8_t*) buffer;
     if (ufsp != nullptr && hfile != nullptr && buffer != nullptr && size > 0) {
@@ -176,12 +185,14 @@ char* be_fgets(void *hfile, void *buffer, int size)
             return (char*) buffer;
         }
     }
+#endif // USE_UFILESYS
     return nullptr;
     // return fgets(buffer, size, hfile);
 }
 
 int be_fseek(void *hfile, long offset)
 {
+#ifdef USE_UFILESYS
     // Serial.printf("be_fseek %d\n", offset);
     if (ufsp != nullptr && hfile != nullptr) {
         File * f_ptr = (File*) hfile;
@@ -189,34 +200,40 @@ int be_fseek(void *hfile, long offset)
             return 0;       // success
         }
     }
+#endif // USE_UFILESYS
     return -1;
     // return fseek(hfile, offset, SEEK_SET);
 }
 
 long int be_ftell(void *hfile)
 {
+#ifdef USE_UFILESYS
     // Serial.printf("be_ftell\n");
     if (ufsp != nullptr && hfile != nullptr) {
         File * f_ptr = (File*) hfile;
         return f_ptr->position();
     }
+#endif // USE_UFILESYS
     return 0;
     // return ftell(hfile);
 }
 
 long int be_fflush(void *hfile)
 {
+#ifdef USE_UFILESYS
     // Serial.printf("be_fflush\n");
     if (ufsp != nullptr && hfile != nullptr) {
         File * f_ptr = (File*) hfile;
         f_ptr->flush();
     }
+#endif // USE_UFILESYS
     return 0;
     // return fflush(hfile);
 }
 
 size_t be_fsize(void *hfile)
 {
+#ifdef USE_UFILESYS
     // Serial.printf("be_fsize\n");
     if (ufsp != nullptr && hfile != nullptr) {
         File * f_ptr = (File*) hfile;
@@ -227,10 +244,37 @@ size_t be_fsize(void *hfile)
     // size = ftell(hfile);
     // fseek(hfile, offset, SEEK_SET);
     // return size;
+#endif // USE_UFILESYS
     return 0;
 }
 
+extern "C" time_t be_last_modified(void *hfile)
+{
+#ifdef USE_UFILESYS
+    if (ufsp != nullptr && hfile != nullptr) {
+        File * f_ptr = (File*) hfile;
+        return f_ptr->getLastWrite();
+    }
+#endif // USE_UFILESYS
+    return 0;
+}
 
+int be_isexist(const char *filename)
+{
+#ifdef USE_UFILESYS
+    if (ufsp != nullptr) {
+        char fname2[strlen(filename) + 2];
+        if (filename[0] == '/') {
+            strcpy(fname2, filename);   // copy unchanged
+        } else {
+            fname2[0] = '/';
+            strcpy(fname2 + 1, filename);   // prepend with '/'
+        }
+        return ufsp->exists(fname2);
+    }
+#endif // USE_UFILESYS
+    return 0;
+}
 
 #if BE_USE_FILE_SYSTEM
 #if defined(USE_FATFS) /* FatFs */

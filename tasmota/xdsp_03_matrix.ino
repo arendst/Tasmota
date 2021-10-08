@@ -67,7 +67,7 @@ void MatrixFixed(char* txt)
     matrix[i]->clear();
     matrix[i]->setCursor(-i *8, 0);
     matrix[i]->print(txt);
-    matrix[i]->setBrightness(Settings->display_dimmer);
+    matrix[i]->setBrightness(GetDisplayDimmer16());
   }
   MatrixWrite();
 }
@@ -82,7 +82,7 @@ void MatrixCenter(char* txt)
     matrix[i]->clear();
     matrix[i]->setCursor(-(i *8)+offset, 0);
     matrix[i]->print(txt);
-    matrix[i]->setBrightness(Settings->display_dimmer);
+    matrix[i]->setBrightness(GetDisplayDimmer16());
   }
   MatrixWrite();
 }
@@ -106,7 +106,7 @@ void MatrixScrollLeft(char* txt, int loop)
         matrix[i]->clear();
         matrix[i]->setCursor(mtx_x - i *8, 0);
         matrix[i]->print(txt);
-        matrix[i]->setBrightness(Settings->display_dimmer);
+        matrix[i]->setBrightness(GetDisplayDimmer16());
       }
       MatrixWrite();
       // Move text position left by 1 pixel.
@@ -151,7 +151,7 @@ void MatrixScrollUp(char* txt, int loop)
           matrix[i]->setCursor(-i *8, mtx_y + (j *8));
           matrix[i]->println(words[j]);
         }
-        matrix[i]->setBrightness(Settings->display_dimmer);
+        matrix[i]->setBrightness(GetDisplayDimmer16());
       }
       MatrixWrite();
       if (((mtx_y %8) == 0) && mtx_counter) {
@@ -172,7 +172,7 @@ void MatrixInitMode(void)
 {
   for (uint32_t i = 0; i < mtx_matrices; i++) {
     matrix[i]->setRotation(Settings->display_rotate);  // 1
-    matrix[i]->setBrightness(Settings->display_dimmer);
+    matrix[i]->setBrightness(GetDisplayDimmer16());
     matrix[i]->blinkRate(0);               // 0 - 3
     matrix[i]->setTextWrap(false);         // Allow text to run off edges
 //    matrix[i]->setTextSize(Settings->display_size);

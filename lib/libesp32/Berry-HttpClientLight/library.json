@@ -1,0 +1,17 @@
+{
+  "name": "HttpClient light for Berry",
+  "version": "1.0",
+  "description": "Forked version of Arduino HttpClient to support BearSSL instead of mbedTLS",
+  "license": "MIT",
+  "homepage": "https://github.com/arendst/Tasmota",
+  "frameworks": "*",
+  "platforms": "*",
+  "authors":
+  {
+    "name": "Stephan Hadinger",
+    "maintainer": true
+  },
+  "build": {
+    "flags": [ "-I$PROJECT_DIR/include" ]
+  }
+}
