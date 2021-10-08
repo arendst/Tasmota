@@ -2422,10 +2422,8 @@ void AddLogData(uint32_t loglevel, const char* log_data, const char* log_data_pa
     snprintf_P(mxtime, sizeof(mxtime), PSTR("%s-%03d"),
       mxtime, ESP_getFreeHeap1024());
 #else
-    uint32_t freemem = ESP_getFreeHeap();
-    int32_t free_maxmem = 100 - (int32_t)(ESP_getMaxAllocHeap() * 100 / freemem);
     snprintf_P(mxtime, sizeof(mxtime), PSTR("%s-%03d/%02d"),
-      mxtime, freemem / 1024, free_maxmem);
+      mxtime, ESP_getFreeHeap1024(), ESP_getHeapFragmentation());
 #endif
   }
   strcat(mxtime, " ");

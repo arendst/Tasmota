@@ -398,6 +398,12 @@ uint32_t ESP_getMaxAllocHeap(void) {
   return free_block_size;
 }
 
+int32_t ESP_getHeapFragmentation(void) {
+  int32_t free_maxmem = 100 - (int32_t)(ESP_getMaxAllocHeap() * 100 / ESP_getFreeHeap());
+  if (free_maxmem < 0) { free_maxmem = 0; }
+  return free_maxmem;
+}
+
 void ESP_Restart(void) {
   ESP.restart();
 }
