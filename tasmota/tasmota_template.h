@@ -174,6 +174,7 @@ enum UserSelectablePins {
   GPIO_VINDRIKTNING_RX,                // IKEA VINDRIKTNING Serial interface
   GPIO_BL0939_RX,                      // BL0939 Serial interface (Dual R3 v2)
   GPIO_BL0942_RX,                      // BL0942 Serial interface
+  GPIO_HM330X_SET,                     // HM330X SET pin (sleep when low)
   GPIO_SENSOR_END };
 
 enum ProgramSelectablePins {
@@ -367,7 +368,8 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_HRG15_TX "|" D_SENSOR_HRG15_RX "|"
   D_SENSOR_VINDRIKTNING_RX "|"
   D_SENSOR_BL0939_RX "|"
-  D_SENSOR_BL0942_RX
+  D_SENSOR_BL0942_RX "|"
+  D_SENSOR_HM330X_SET
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -755,6 +757,12 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_PMS5003_TX),     // Plantower PMS5003 Serial interface
   AGPIO(GPIO_PMS5003_RX),     // Plantower PMS5003 Serial interface
 #endif
+#ifdef USE_VINDRIKTNING
+  AGPIO(GPIO_VINDRIKTNING_RX),
+#endif
+#ifdef USE_HM330X
+  AGPIO(GPIO_HM330X_SET),     // HM330X Sleep pin (active low)
+#endif
 #if defined(USE_TX20_WIND_SENSOR) || defined(USE_TX23_WIND_SENSOR) || defined(USE_WS2300_WIND_SENSOR)
   AGPIO(GPIO_TX2X_TXD_BLACK), // TX20/TX23 Transmission Pin
 #endif
@@ -804,9 +812,6 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_HRG15
   AGPIO(GPIO_HRG15_TX),
   AGPIO(GPIO_HRG15_RX),
-#endif
-#ifdef USE_VINDRIKTNING
-  AGPIO(GPIO_VINDRIKTNING_RX),
 #endif
 
 /*-------------------------------------------------------------------------------------------*\

@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 - Commands ``EnergyUsage`` and ``EnergyExport`` to (re)set energy usage and export values
 - Berry add module ``import persist``
 - Support for BL0942 energy monitor (#13259)
+- Support for HM330X SeedStudio Grove Particule sensor (#13250)
 
 ### Breaking Changed
 - ESP32 LVGL updated to v8.0.2
