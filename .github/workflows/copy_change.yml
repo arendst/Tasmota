@@ -1,3 +1,5 @@
+name: Copy to docs repo
+
 on:
   workflow_dispatch:  # Manually start a workflow
   push:
@@ -17,7 +19,7 @@ jobs:
       env:
         API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
       with:
-        source_file: 'BUILDS.md, I2CDEVICES.md'
+        source_file: 'I2CDEVICES.md'
         destination_repo: 'Tasmota/docs'
         destination_branch: 'development'
         destination_folder: 'docs'
