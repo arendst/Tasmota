@@ -32,7 +32,6 @@ extern int i2s_file_source_fs_deinit(bvm *vm);
 #endif // USE_UFILESYS
 
 
-#if BE_USE_PRECOMPILED_OBJECT
 #include "../generate/be_fixed_be_class_audio_output.h"
 #include "../generate/be_fixed_be_class_audio_output_i2s.h"
 #include "../generate/be_fixed_be_class_audio_generator.h"
@@ -40,7 +39,6 @@ extern int i2s_file_source_fs_deinit(bvm *vm);
 #include "../generate/be_fixed_be_class_audio_generator_mp3.h"
 #include "../generate/be_fixed_be_class_audio_file_source.h"
 #include "../generate/be_fixed_be_class_audio_file_source_fs.h"
-#endif
 
 void be_load_driver_audio_lib(bvm *vm) {
     be_pushntvclass(vm, &be_class_audio_output);

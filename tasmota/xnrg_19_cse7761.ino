@@ -95,7 +95,7 @@ struct {
   uint32_t energy[2] = { 0 };
   uint32_t active_power[2] = { 0 };
   uint16_t coefficient[8] = { 0 };
-  uint8_t energy_update = 0;
+  uint8_t energy_update[2] = { 0 };
   uint8_t init = 4;
   uint8_t ready = 0;
 } CSE7761Data;
@@ -476,7 +476,7 @@ void Cse7761GetData(void) {
         // Energy.current[channel] = (float)(((uint64_t)CSE7761Data.current_rms[channel] * CSE7761Data.coefficient[RmsIAC + channel]) >> 23) / 1000;  // A
         Energy.current[channel] = (float)CSE7761Data.current_rms[channel] / Settings->energy_current_calibration;  // A
         CSE7761Data.energy[channel] += Energy.active_power[channel];
-        CSE7761Data.energy_update++;
+        CSE7761Data.energy_update[channel]++;
       }
     }
   }
@@ -557,16 +557,14 @@ void Cse7761EverySecond(void) {
   }
   else {
     if (2 == CSE7761Data.ready) {
-      if (CSE7761Data.energy_update) {
-        uint32_t energy_sum = ((CSE7761Data.energy[0] + CSE7761Data.energy[1]) * 1000) / CSE7761Data.energy_update;
-        if (energy_sum) {
-          Energy.kWhtoday_delta += energy_sum / 36;
-          EnergyUpdateToday();
+      for (uint32_t channel = 0; channel < 2; channel++) {
+        if (CSE7761Data.energy_update[channel]) {
+          Energy.kWhtoday_delta[channel] += ((CSE7761Data.energy[channel] * 1000) / CSE7761Data.energy_update[channel]) / 36;
+          CSE7761Data.energy[channel] = 0;
+          CSE7761Data.energy_update[channel] = 0;
         }
+        EnergyUpdateToday();
       }
-      CSE7761Data.energy[0] = 0;
-      CSE7761Data.energy[1] = 0;
-      CSE7761Data.energy_update = 0;
     }
   }
 }

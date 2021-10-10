@@ -59,6 +59,7 @@ void be_closure_method_bind(bvm *vm, bclass *c, bstring *name, bclosure *cl);
 int be_class_closure_count(bclass *c);
 void be_class_upvalue_init(bvm *vm, bclass *c);
 bbool be_class_newobj(bvm *vm, bclass *c, bvalue *argv, int argc, int mode);
+int be_instance_member_simple(bvm *vm, binstance *obj, bstring *name, bvalue *dst);
 int be_instance_member(bvm *vm, binstance *obj, bstring *name, bvalue *dst);
 int be_class_member(bvm *vm, bclass *obj, bstring *name, bvalue *dst);
 bbool be_instance_setmember(bvm *vm, binstance *obj, bstring *name, bvalue *src);

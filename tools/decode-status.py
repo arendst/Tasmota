@@ -52,7 +52,7 @@ a_on_off = ["OFF","ON "]
 a_setoption = [[
     "(Settings) Save power state (1) and use after restart",
     "(Button) Control button single press (1) or multipress (0)",
-    "(Not used) Add units to JSON status messages",
+    "(MQTT) Add global temperature/humidity/pressure info to JSON sensor message",
     "(MQTT) Enable (1)",
     "(MQTT) Switch between RESULT (0) or COMMAND (1)",
     "(MQTT) Retain on Power",
@@ -182,8 +182,10 @@ a_setoption = [[
     "(Zigbee) Hide bridge topic from zigbee topic (use with SetOption89) (1)",
     "(DS18x20) Enable arithmetic mean over teleperiod for JSON temperature (1)",
     "(Wifi) Keep wifi in no-sleep mode, prevents some occasional unresponsiveness",
-    "","",
-    "","","","",
+    "(Web) Allow access without referer check",
+    "(Energy) Show phase information",
+    "(Debug) Show heap with logging timestamp",
+    "","","",
     "","","","",
     "","","","",
     "","","",""
@@ -238,7 +240,7 @@ a_features = [[
     "USE_KEELOQ","USE_HRXL","USE_SONOFF_D1","USE_HDC1080",
     "USE_IAQ","USE_DISPLAY_SEVENSEG","USE_AS3935","USE_PING",
     "USE_WINDMETER","USE_OPENTHERM","USE_THERMOSTAT","USE_VEML6075",
-    "USE_VEML7700","USE_MCP9808","USE_BL0940","USE_TELEGRAM",
+    "USE_VEML7700","USE_MCP9808","USE_BL09XX","USE_TELEGRAM",
     "USE_HP303B","USE_TCP_BRIDGE","USE_TELEINFO","USE_LMT01",
     "USE_PROMETHEUS","USE_IEM3000","USE_DYP","USE_I2S_AUDIO",
     "USE_MLX90640","USE_VL53L1X","USE_MIEL_HVAC","USE_WE517",
@@ -256,7 +258,7 @@ a_features = [[
     "USE_MPU_ACCEL","USE_TFMINIPLUS","USE_CSE7761","USE_BERRY",
     "USE_BM8563","USE_ENERGY_DUMMY","USE_AM2320","USE_T67XX",
     "USE_MCP2515","USE_TASMESH","USE_WIFI_RANGE_EXTENDER","USE_INFLUXDB",
-    "","","","",
+    "USE_HRG15","USE_VINDRIKTNING","USE_SCD40","USE_HM330X",
     "","","","",
     "","","","",
     "","","","",
@@ -288,7 +290,7 @@ else:
         obj = json.load(fp)
 
 def StartDecode():
-    print ("\n*** decode-status.py v20210812 by Theo Arends and Jacek Ziolkowski ***")
+    print ("\n*** decode-status.py v20211008 by Theo Arends and Jacek Ziolkowski ***")
 
 #    print("Decoding\n{}".format(obj))
 

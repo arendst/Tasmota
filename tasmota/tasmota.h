@@ -137,10 +137,11 @@ const uint32_t PWM_RANGE = 1023;            // 255..1023 needs to be devisible b
 const uint16_t PWM_FREQ = 977;              // 100..4000 Hz led refresh
 #ifdef ESP32
 const uint16_t PWM_MAX = 50000;             // [PWM_MAX] Maximum frequency for ESP32 - Default: 50000
+const uint16_t PWM_MIN = 2;                 // [PWM_MIN] Minimum frequency for ESP32 - Default: 2
 #else
 const uint16_t PWM_MAX = 4000;              // [PWM_MAX] Maximum frequency - Default: 4000
-#endif
 const uint16_t PWM_MIN = 40;                // [PWM_MIN] Minimum frequency - Default: 40
+#endif
                                             //    For Dimmers use double of your mains AC frequecy (100 for 50Hz and 120 for 60Hz)
                                             //    For Controlling Servos use 50 and also set PWM_FREQ as 50 (DO NOT USE THESE VALUES FOR DIMMERS)
 
@@ -293,7 +294,8 @@ enum UploadTypes { UPL_TASMOTA = 1, UPL_SETTINGS, UPL_EFM8BB1, UPL_TASMOTACLIENT
 enum ExecuteCommandPowerOptions { POWER_OFF, POWER_ON, POWER_TOGGLE, POWER_BLINK, POWER_BLINK_STOP,
                                   POWER_OFF_NO_STATE = 8, POWER_ON_NO_STATE, POWER_TOGGLE_NO_STATE,
                                   POWER_SHOW_STATE = 16 };
-enum SendKeyPowerOptions { POWER_HOLD = 3, POWER_INCREMENT = 4, POWER_INV = 5, POWER_CLEAR = 6, POWER_RELEASE = 7, POWER_100 = 8, CLEAR_RETAIN = 9 };
+enum SendKeyPowerOptions { POWER_HOLD = 3, POWER_INCREMENT = 4, POWER_INV = 5, POWER_CLEAR = 6, POWER_RELEASE = 7, 
+                           POWER_100 = 8, CLEAR_RETAIN = 9, POWER_DELAYED = 10 };
 enum SendKeyOptions { KEY_BUTTON, KEY_SWITCH };
 enum SendKeyMultiClick { SINGLE = 10, DOUBLE = 11, TRIPLE = 12, QUAD = 13, PENTA = 14};
 

@@ -6,15 +6,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include "syscfg/syscfg.h"
+#define MESH_LOG_MODULE BLE_MESH_LOG
+
 #include <stdbool.h>
 #include <errno.h>
 
 #include "os/os_mbuf.h"
 #include "mesh/mesh.h"
-
-#include "syscfg/syscfg.h"
-#define BT_DBG_ENABLED (MYNEWT_VAL(BLE_MESH_DEBUG))
-#include "host/ble_hs_log.h"
 #include "host/ble_uuid.h"
 
 #include "adv.h"
@@ -50,7 +49,7 @@ int bt_mesh_provision(const u8_t net_key[16], u16_t net_idx,
 	}
 
 	if ((MYNEWT_VAL(BLE_MESH_PB_GATT))) {
-		if (bt_mesh_proxy_prov_disable() == 0) {
+		if (bt_mesh_proxy_prov_disable(false) == 0) {
 			pb_gatt_enabled = true;
 		} else {
 			pb_gatt_enabled = false;
@@ -86,6 +85,26 @@ int bt_mesh_provision(const u8_t net_key[16], u16_t net_idx,
 	bt_mesh_net_start();
 
 	return 0;
+}
+
+int bt_mesh_provision_adv(const u8_t uuid[16], u16_t net_idx, u16_t addr,
+			  u8_t attention_duration)
+{
+	if (!atomic_test_bit(bt_mesh.flags, BT_MESH_VALID)) {
+		return -EINVAL;
+	}
+
+	if (bt_mesh_subnet_get(net_idx) == NULL) {
+		return -EINVAL;
+	}
+
+	if (IS_ENABLED(CONFIG_BT_MESH_PROVISIONER) &&
+	    IS_ENABLED(CONFIG_BT_MESH_PB_ADV)) {
+		return bt_mesh_pb_adv_open(uuid, net_idx, addr,
+					   attention_duration);
+	}
+
+	return -ENOTSUP;
 }
 
 void bt_mesh_reset(void)
@@ -149,14 +168,12 @@ int bt_mesh_prov_enable(bt_mesh_prov_bearer_t bearers)
 		return -EALREADY;
 	}
 
-	if (MYNEWT_VAL(BLE_MESH_DEBUG)) {
-		char uuid_buf[BLE_UUID_STR_LEN];
-		const struct bt_mesh_prov *prov = bt_mesh_prov_get();
-		ble_uuid_t *uuid = BLE_UUID128_DECLARE();
+	char uuid_buf[BLE_UUID_STR_LEN];
+	const struct bt_mesh_prov *prov = bt_mesh_prov_get();
+	ble_uuid_t *uuid = BLE_UUID128_DECLARE();
 
-		memcpy(BLE_UUID128(uuid)->value, prov->uuid, 16);
-		BT_INFO("Device UUID: %s", ble_uuid_to_str(uuid, uuid_buf));
-	}
+	memcpy(BLE_UUID128(uuid)->value, prov->uuid, 16);
+	BT_INFO("Device UUID: %s", ble_uuid_to_str(uuid, uuid_buf));
 
 	if (IS_ENABLED(CONFIG_BT_MESH_PB_ADV) &&
 	    (bearers & BT_MESH_PROV_ADV)) {
@@ -189,8 +206,7 @@ int bt_mesh_prov_disable(bt_mesh_prov_bearer_t bearers)
 
 	if (IS_ENABLED(CONFIG_BT_MESH_PB_GATT) &&
 	    (bearers & BT_MESH_PROV_GATT)) {
-		bt_mesh_proxy_prov_disable();
-		bt_mesh_adv_update();
+		bt_mesh_proxy_prov_disable(true);
 	}
 
 	return 0;

@@ -191,6 +191,11 @@ void WiFiClientSecure_light::_clear() {
   _last_error = 0;
   _recvapp_buf = nullptr;
   _recvapp_len = 0;
+#ifdef USE_MQTT_TLS_CA_CERT
+  _insecure = false;        // insecure (fingerprint) mode is only enabled if setPubKeyFingerprint() is called
+#else
+  _insecure = true;        // force insecure if CA validation is not enabled
+#endif
   _fingerprint_any = true; // by default accept all fingerprints
   _fingerprint1 = nullptr;
   _fingerprint2 = nullptr;
@@ -284,10 +289,21 @@ void WiFiClientSecure_light::stop(void) {
 
 void WiFiClientSecure_light::flush(void) {
   (void) _run_until(BR_SSL_SENDAPP);
-  WiFiClient::flush();
+  // don't call flush on ESP32 - its behavior is different and empties the receive buffer - which we don't want
 }
 #endif
 
+#ifdef ESP32
+int WiFiClientSecure_light::connect(IPAddress ip, uint16_t port, int32_t timeout) {
+  DEBUG_BSSL("connect(%s,%d)", ip.toString().c_str(), port);
+  clearLastError();
+  if (!WiFiClient::connect(ip, port, timeout)) {
+    setLastError(ERR_TCP_CONNECT);
+    return 0;
+  }
+  return _connectSSL(nullptr);
+}
+#else // ESP32
 int WiFiClientSecure_light::connect(IPAddress ip, uint16_t port) {
   DEBUG_BSSL("connect(%s,%d)", ip.toString().c_str(), port);
   clearLastError();
@@ -297,7 +313,28 @@ int WiFiClientSecure_light::connect(IPAddress ip, uint16_t port) {
   }
   return _connectSSL(nullptr);
 }
+#endif
 
+#ifdef ESP32
+int WiFiClientSecure_light::connect(const char* name, uint16_t port, int32_t timeout) {
+  DEBUG_BSSL("connect(%s,%d)\n", name, port);
+  IPAddress remote_addr;
+  clearLastError();
+  if (!WiFi.hostByName(name, remote_addr)) {
+    DEBUG_BSSL("connect: Name loopup failure\n");
+    setLastError(ERR_CANT_RESOLVE_IP);
+    return 0;
+  }
+  DEBUG_BSSL("connect(%s,%d)\n", remote_addr.toString().c_str(), port);
+  if (!WiFiClient::connect(remote_addr, port, timeout)) {
+    DEBUG_BSSL("connect: Unable to connect TCP socket\n");
+    _last_error = ERR_TCP_CONNECT;
+    return 0;
+  }
+  LOG_HEAP_SIZE("Before calling _connectSSL");
+  return _connectSSL(name);
+}
+#else // ESP32
 int WiFiClientSecure_light::connect(const char* name, uint16_t port) {
   DEBUG_BSSL("connect(%s,%d)\n", name, port);
   IPAddress remote_addr;
@@ -316,6 +353,7 @@ int WiFiClientSecure_light::connect(const char* name, uint16_t port) {
   LOG_HEAP_SIZE("Before calling _connectSSL");
   return _connectSSL(name);
 }
+#endif
 
 void WiFiClientSecure_light::_freeSSL() {
   _ctx_present = false;
@@ -921,10 +959,9 @@ extern "C" {
 bool WiFiClientSecure_light::_connectSSL(const char* hostName) {
   // Validation context, either full CA validation or checking only fingerprints
 #ifdef USE_MQTT_TLS_CA_CERT
-  br_x509_minimal_context *x509_minimal;
-#else
-  br_x509_pubkeyfingerprint_context *x509_insecure;
+  br_x509_minimal_context *x509_minimal = nullptr;
 #endif
+  br_x509_pubkeyfingerprint_context *x509_insecure = nullptr;
 
   LOG_HEAP_SIZE("_connectSSL.start");
 
@@ -951,24 +988,26 @@ bool WiFiClientSecure_light::_connectSSL(const char* hostName) {
     // Allocatte and initialize Decoder Context
     LOG_HEAP_SIZE("_connectSSL before DecoderContext allocation");
     // Only failure possible in the installation is OOM
-  #ifdef USE_MQTT_TLS_CA_CERT
-    x509_minimal = (br_x509_minimal_context*) malloc(sizeof(br_x509_minimal_context));
-    if (!x509_minimal) break;
-    br_x509_minimal_init(x509_minimal, &br_sha256_vtable, _ta_P, _ta_size);
-    br_x509_minimal_set_rsa(x509_minimal, br_ssl_engine_get_rsavrfy(_eng));
-    br_x509_minimal_set_hash(x509_minimal, br_sha256_ID, &br_sha256_vtable);
-    br_ssl_engine_set_x509(_eng, &x509_minimal->vtable);
-    uint32_t now = UtcTime();
-    uint32_t cfg_time = CfgTime();
-    if (cfg_time > now) { now = cfg_time; }
-    br_x509_minimal_set_time(x509_minimal, now / 86400 + 719528, now % 86400);
 
-  #else
     x509_insecure = (br_x509_pubkeyfingerprint_context*) malloc(sizeof(br_x509_pubkeyfingerprint_context));
     //x509_insecure = std::unique_ptr<br_x509_pubkeyfingerprint_context>(new br_x509_pubkeyfingerprint_context);
     if (!x509_insecure) break;
     br_x509_pubkeyfingerprint_init(x509_insecure, _fingerprint1, _fingerprint2, _recv_fingerprint, _fingerprint_any);
     br_ssl_engine_set_x509(_eng, &x509_insecure->vtable);
+
+  #ifdef USE_MQTT_TLS_CA_CERT
+    if (!_insecure) {
+      x509_minimal = (br_x509_minimal_context*) malloc(sizeof(br_x509_minimal_context));
+      if (!x509_minimal) break;
+      br_x509_minimal_init(x509_minimal, &br_sha256_vtable, _ta_P, _ta_size);
+      br_x509_minimal_set_rsa(x509_minimal, br_ssl_engine_get_rsavrfy(_eng));
+      br_x509_minimal_set_hash(x509_minimal, br_sha256_ID, &br_sha256_vtable);
+      br_ssl_engine_set_x509(_eng, &x509_minimal->vtable);
+      uint32_t now = UtcTime();
+      uint32_t cfg_time = CfgTime();
+      if (cfg_time > now) { now = cfg_time; }
+      br_x509_minimal_set_time(x509_minimal, now / 86400 + 719528, now % 86400);
+    }
   #endif
     LOG_HEAP_SIZE("_connectSSL after DecoderContext allocation");
 
@@ -1010,9 +1049,8 @@ bool WiFiClientSecure_light::_connectSSL(const char* hostName) {
 
   #ifdef USE_MQTT_TLS_CA_CERT
     free(x509_minimal);
-  #else
-    free(x509_insecure);
   #endif
+    free(x509_insecure);
     LOG_HEAP_SIZE("_connectSSL after release of Priv Key");
     return ret;
   } while (0);
@@ -1026,9 +1064,8 @@ bool WiFiClientSecure_light::_connectSSL(const char* hostName) {
 #endif
 #ifdef USE_MQTT_TLS_CA_CERT
   free(x509_minimal);
-#else
-  free(x509_insecure);
 #endif
+  free(x509_insecure);
   LOG_HEAP_SIZE("_connectSSL clean_on_error");
   return false;
 }

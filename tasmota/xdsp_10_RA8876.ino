@@ -61,7 +61,7 @@ void RA8876_InitDriver(void) {
     ra8876->begin();
     renderer = ra8876;
     renderer->DisplayInit(DISPLAY_INIT_MODE,Settings->display_size,Settings->display_rotate,Settings->display_font);
-    renderer->dim(Settings->display_dimmer);
+    renderer->dim(GetDisplayDimmer16());
 
     //testall();
 #ifdef SHOW_SPLASH

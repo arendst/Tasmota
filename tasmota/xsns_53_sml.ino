@@ -1287,7 +1287,11 @@ void sml_empty_receiver(uint32_t meters) {
 
 void sml_shift_in(uint32_t meters,uint32_t shard) {
   uint32_t count;
+#ifndef SML_OBIS_LINE
   if (meter_desc_p[meters].type!='e' && meter_desc_p[meters].type!='m' && meter_desc_p[meters].type!='M' && meter_desc_p[meters].type!='p' && meter_desc_p[meters].type!='R' && meter_desc_p[meters].type!='v') {
+#else
+  if (meter_desc_p[meters].type!='o' && meter_desc_p[meters].type!='e' && meter_desc_p[meters].type!='m' && meter_desc_p[meters].type!='M' && meter_desc_p[meters].type!='p' && meter_desc_p[meters].type!='R' && meter_desc_p[meters].type!='v') {
+#endif
     // shift in
     for (count=0; count<SML_BSIZ-1; count++) {
       smltbuf[meters][count]=smltbuf[meters][count+1];
@@ -1295,8 +1299,21 @@ void sml_shift_in(uint32_t meters,uint32_t shard) {
   }
   uint8_t iob=(uint8_t)meter_ss[meters]->read();
 
-  if (meter_desc_p[meters].type=='o') {
-    smltbuf[meters][SML_BSIZ-1]=iob&0x7f;
+  if (meter_desc_p[meters].type == 'o') {
+#ifndef SML_OBIS_LINE
+    smltbuf[meters][SML_BSIZ-1] = iob & 0x7f;
+#else
+    iob &= 0x7f;
+    smltbuf[meters][meter_spos[meters]] = iob;
+    meter_spos[meters]++;
+    if (meter_spos[meters] >= SML_BSIZ) {
+      meter_spos[meters] = 0;
+    }
+    if (iob == 0x0a) {
+      SML_Decode(meters);
+      meter_spos[meters] = 0;
+    }
+#endif
   } else if (meter_desc_p[meters].type=='s') {
     smltbuf[meters][SML_BSIZ-1]=iob;
   } else if (meter_desc_p[meters].type=='r') {
@@ -1369,7 +1386,11 @@ void sml_shift_in(uint32_t meters,uint32_t shard) {
 		}
   }
   sb_counter++;
+#ifndef SML_OBIS_LINE
   if (meter_desc_p[meters].type!='e' && meter_desc_p[meters].type!='m' && meter_desc_p[meters].type!='M' && meter_desc_p[meters].type!='p' && meter_desc_p[meters].type!='R' && meter_desc_p[meters].type!='v') SML_Decode(meters);
+#else
+  if (meter_desc_p[meters].type!='o' && meter_desc_p[meters].type!='e' && meter_desc_p[meters].type!='m' && meter_desc_p[meters].type!='M' && meter_desc_p[meters].type!='p' && meter_desc_p[meters].type!='R' && meter_desc_p[meters].type!='v') SML_Decode(meters);
+#endif
 }
 
 

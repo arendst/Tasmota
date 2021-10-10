@@ -23,6 +23,7 @@
 #include "NimBLEAddress.h"
 #include "NimBLEUUID.h"
 #include "NimBLEUtils.h"
+#include "NimBLEConnInfo.h"
 #include "NimBLEAdvertisedDevice.h"
 #include "NimBLERemoteService.h"
 
@@ -71,6 +72,7 @@ public:
     void                                        updateConnParams(uint16_t minInterval, uint16_t maxInterval,
                                                                  uint16_t latency, uint16_t timeout);
     void                                        discoverAttributes();
+    NimBLEConnInfo                              getConnInfo();
 
 private:
     NimBLEClient(const NimBLEAddress &peerAddress);

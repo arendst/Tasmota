@@ -70,8 +70,8 @@
 // for testing of BLE_ESP32, we remove xsns_62_MI_ESP32.ino completely, and instead add this modified xsns_52_ibeacon_BLE_ESP32.ino
 #ifdef USE_BLE_ESP32
 
-#ifdef ESP32                       // ESP32 only. Use define USE_HM10 for ESP8266 support
-#if CONFIG_IDF_TARGET_ESP32
+#ifdef ESP32                       // ESP32 family only. Use define USE_HM10 for ESP8266 support
+#if defined CONFIG_IDF_TARGET_ESP32 || defined CONFIG_IDF_TARGET_ESP32C3
 
 #ifdef USE_MI_ESP32
 
@@ -343,7 +343,7 @@ std::vector<mi_sensor_t> MIBLEsensors;
 std::vector<mi_bindKey_t> MIBLEbindKeys;
 std::vector<MAC_t> MIBLEBlockList;
 
-void *slotmutex = nullptr;
+SemaphoreHandle_t slotmutex = (SemaphoreHandle_t) nullptr;
 
 /*********************************************************************************************\
  * constants
@@ -2389,7 +2389,7 @@ const char HTTP_MI32_LIGHT[] PROGMEM = "{s}%s" " Light" "{m}%d{e}";
 //  "http://127.0.0.1:8887/keys/TelinkFlasher.html?mac=%s&cb=http%%3A%%2F%%2F%s%%2Fmikey"
 //  "\">%s</a>{m} {e}";
 const char HTTP_NEEDKEY[] PROGMEM = "{s}%s <a target=\"_blank\" href=\""
-  "https://btsimonh.github.io/atc1441.github.io/TelinkFlasherTasmota.html?mac=%s&cb=http%%3A%%2F%%2F%s%%2Fmikey"
+  "https://tasmota.github.io/ble_key_extractor?mac=%s&cb=http%%3A%%2F%%2F%s%%2Fmikey"
   "\">%s</a>{m} {e}";
 
 
@@ -3066,18 +3066,17 @@ void MI32ShowTriggeredSensors(){
         if (alias && *alias){
           id = alias;
         } else {
-          sprintf(idstr, PSTR("%s%02x%02x%02x"),
+          snprintf_P(idstr, sizeof(idstr), PSTR("%s%02x%02x%02x"),
                 kMI32DeviceType[p->type-1],
                 p->MAC[3], p->MAC[4], p->MAC[5]);
         }
-        sprintf(SensorTopic, "tele/tasmota_ble/%s",
-          id);
+        snprintf_P(SensorTopic, sizeof(SensorTopic), PSTR("tele/tasmota_ble/%s"), id);
         MqttPublish(SensorTopic, Settings->flag.mqtt_sensor_retain);
+        AddLog(LOG_LEVEL_DEBUG, PSTR("M32: triggered %d %s"), sensor, ResponseData());
+        XdrvRulesProcess(0);
       } else {
-        MqttPublishPrefixTopic_P(STAT, PSTR(D_RSLT_SENSOR), Settings->flag.mqtt_sensor_retain);
+        MqttPublishPrefixTopicRulesProcess_P(STAT, PSTR(D_RSLT_SENSOR), Settings->flag.mqtt_sensor_retain);
       }
-      AddLog(LOG_LEVEL_DEBUG,PSTR("M32: %s: triggered %d %s"),D_CMND_MI32, sensor, ResponseData());
-      XdrvRulesProcess(0);
 
     } else { // else don't and clear
       ResponseClear();
@@ -3269,7 +3268,7 @@ bool Xsns62(uint8_t function)
   return result;
 }
 #endif  // USE_MI_ESP32
-#endif  // CONFIG_IDF_TARGET_ESP32
+#endif  // CONFIG_IDF_TARGET_ESP32 or CONFIG_IDF_TARGET_ESP32C3
 #endif  // ESP32
 
 #endif

@@ -93,11 +93,6 @@
 enum TimepropCommands { CMND_TIMEPROP_SETPOWER };
 const char kTimepropCommands[] PROGMEM = D_CMND_TIMEPROP_SETPOWER;
 
-static Timeprop timeprops[TIMEPROP_NUM_OUTPUTS];
-static int relayNos[TIMEPROP_NUM_OUTPUTS] = {TIMEPROP_RELAYS};
-static long currentRelayStates = 0;  // current actual relay states. Bit 0 first relay
-
-
 #ifndef TIMEPROP_NUM_OUTPUTS
 #define TIMEPROP_NUM_OUTPUTS          1       // how many outputs to control (with separate alogorithm for each)
 #endif
@@ -119,6 +114,10 @@ static long currentRelayStates = 0;  // current actual relay states. Bit 0 first
 #ifndef TIMEPROP_RELAYS
 #define TIMEPROP_RELAYS               1       // which relay to control 1:8
 #endif
+
+static Timeprop timeprops[TIMEPROP_NUM_OUTPUTS];
+static int relayNos[TIMEPROP_NUM_OUTPUTS] = {TIMEPROP_RELAYS};
+static long currentRelayStates = 0;  // current actual relay states. Bit 0 first relay
 
 struct {
   Timeprop timeprops[TIMEPROP_NUM_OUTPUTS];

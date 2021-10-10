@@ -85,6 +85,16 @@
  **/
 #define BE_STACK_FREE_MIN               20
 
+/* Macro: BE_CONST_SEARCH_SIZE
+ * Constants in function are limited to 255. However the compiler
+ * will look for a maximum of pre-existing constants to avoid
+ * performance degradation. This may cause the number of constants
+ * to be higher than required.
+ * Increase is you need to solidify functions.
+ * Default: 50
+ **/
+#define BE_CONST_SEARCH_SIZE            150
+
 /* Macro: BE_STACK_FREE_MIN
  * The short string will hold the hash value when the value is
  * true. It may be faster but requires more RAM.
@@ -205,5 +215,11 @@ extern "C" {
  * Default: use the assert() function of the standard library.
  **/
 #define be_assert(expr)                 assert(expr)
+
+/* Tasmota debug specific */
+#ifdef USE_BERRY_DEBUG
+  #undef BE_DEBUG_RUNTIME_INFO
+  #define BE_DEBUG_RUNTIME_INFO 2 /* record line information in 16 bits */
+#endif // USE_BERRY_DEBUG
 
 #endif

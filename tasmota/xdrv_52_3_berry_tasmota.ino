@@ -27,7 +27,7 @@ const uint32_t BERRY_MAX_LOGS = 16;   // max number of print output recorded whe
 
 /*********************************************************************************************\
  * Return C callback from index
- * 
+ *
 \*********************************************************************************************/
 extern "C" {
   int32_t l_get_cb(struct bvm *vm);
@@ -47,11 +47,11 @@ extern "C" {
 
 /*********************************************************************************************\
  * Native functions mapped to Berry functions
- * 
+ *
  * log(msg:string [,log_level:int]) ->nil
- * 
+ *
  * import tasmota
- * 
+ *
  * tasmota.get_free_heap() -> int
  * tasmota.publish(topic:string, payload:string[, retain:bool]) -> nil
  * tasmota.cmd(command:string) -> string
@@ -59,12 +59,12 @@ extern "C" {
  * tasmota.millis([delay:int]) -> int
  * tasmota.time_reached(timer:int) -> bool
  * tasmota.yield() -> nil
- * 
+ *
  * tasmota.get_light([index:int = 0]) -> map
  * tasmota.get_power([index:int = 0]) -> bool
  * tasmota.set_power(idx:int, power:bool) -> bool or nil
  * tasmota.set_light(idx:int, values:map) -> map
- * 
+ *
 \*********************************************************************************************/
 extern "C" {
   // Berry: `tasmota.publish(topic, payload [,retain]) -> nil``
@@ -97,7 +97,7 @@ extern "C" {
     }
     be_raise(vm, kTypeError, nullptr);
   }
-  
+
   // Berry: `tasmota.publish_result(payload:string, subtopic:string) -> nil``
   //
   int32_t l_publish_result(struct bvm *vm);
@@ -201,8 +201,7 @@ extern "C" {
       map_insert_int(vm, "program", ESP_getSketchSize() / 1024);
       map_insert_int(vm, "program_free", ESP.getFreeSketchSpace() / 1024);
       map_insert_int(vm, "heap_free", ESP_getFreeHeap() / 1024);
-      int32_t freeMaxMem = 100 - (int32_t)(ESP_getMaxAllocHeap() * 100 / ESP_getFreeHeap());
-      map_insert_int(vm, "frag", freeMaxMem);
+      map_insert_int(vm, "frag", ESP_getHeapFragmentation());
       if (UsePSRAM()) {
         map_insert_int(vm, "psram", ESP.getPsramSize() / 1024);
         map_insert_int(vm, "psram_free", ESP.getFreePsram() / 1024);
@@ -279,6 +278,20 @@ extern "C" {
     be_raise(vm, kTypeError, nullptr);
   }
 
+  int32_t l_strftime(bvm *vm) {
+    int32_t argc = be_top(vm); // Get the number of arguments
+    if (argc == 3 && be_isstring(vm, 2) && be_isint(vm, 3)) {
+      const char * format = be_tostring(vm, 2);
+      time_t ts = be_toint(vm, 3);
+      struct tm *t = gmtime(&ts);
+      char s[64] = {0};
+      strftime(s, sizeof(s), format, t);
+      be_pushstring(vm, s);
+      be_return(vm);
+    }
+    be_raise(vm, kTypeError, nullptr);
+  }
+
   // Berry: tasmota.delay(timer:int) -> nil
   //
   int32_t l_delay(struct bvm *vm);
@@ -346,7 +359,7 @@ extern "C" {
     ResponseCmndDone();
     be_return_nil(vm);
   }
-  
+
   int32_t l_respCmndError(bvm *vm);
   int32_t l_respCmndError(bvm *vm) {
     ResponseCmndError();
@@ -437,6 +450,21 @@ extern "C" {
     be_raise(vm, kTypeError, nullptr);
   }
 
+  // get power
+  int32_t l_getswitch(bvm *vm);
+  int32_t l_getswitch(bvm *vm) {
+    be_newobject(vm, "list");
+    for (uint32_t i = 0; i < MAX_SWITCHES; i++) {
+      if (PinUsed(GPIO_SWT1, i)) {
+        be_pushbool(vm, Switch.virtual_state[i] == PRESSED);
+        be_data_push(vm, -2);
+        be_pop(vm, 1);
+      }
+    }
+    be_pop(vm, 1);
+    be_return(vm); // Return
+  }
+
 #ifdef USE_I2C
   // I2C specific
   // Berry: `i2c_enabled(index:int) -> bool` is I2C device enabled
@@ -459,9 +487,9 @@ extern "C" {
 
 /*********************************************************************************************\
  * Native functions mapped to Berry functions
- * 
+ *
  * log(msg:string [,log_level:int]) ->nil
- * 
+ *
 \*********************************************************************************************/
 extern "C" {
   // Berry: `log(msg:string [,log_level:int]) ->nil`

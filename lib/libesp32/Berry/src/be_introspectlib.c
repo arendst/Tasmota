@@ -13,6 +13,8 @@
 #include "be_debug.h"
 #include "be_map.h"
 #include "be_vm.h"
+#include "be_exec.h"
+#include "be_gc.h"
 #include <string.h>
 
 #if BE_USE_INTROSPECT_MODULE
@@ -56,12 +58,20 @@ static int m_attrlist(bvm *vm)
     be_return(vm);
 }
 
+static void m_findmember_protected(bvm *vm, void* data)
+{
+    be_getmember(vm, 1, (const char*) data);
+}
+
 static int m_findmember(bvm *vm)
 {
     int top = be_top(vm);
     if (top >= 2 && (be_isinstance(vm, 1) || be_ismodule(vm, 1) || be_isclass(vm, 1)) && be_isstring(vm, 2)) {
-        be_getmember(vm, 1, be_tostring(vm, 2));
-        be_return(vm);
+        int ret = be_execprotected(vm, &m_findmember_protected, (void*) be_tostring(vm, 2));
+        if (ret == BE_OK) {
+            // be_getmember(vm, 1, be_tostring(vm, 2));
+            be_return(vm);
+        }
     }
     be_return_nil(vm);
 }
@@ -76,12 +86,57 @@ static int m_setmember(bvm *vm)
     be_return_nil(vm);
 }
 
+static int m_toptr(bvm *vm)
+{
+    int top = be_top(vm);
+    if (top >= 1) {
+        bvalue *v = be_indexof(vm, 1);
+        if (var_basetype(v) >= BE_FUNCTION || var_type(v) == BE_COMPTR) {
+            be_pushcomptr(vm, var_toobj(v));
+            be_return(vm);
+        } else if (var_type(v) == BE_INT) {
+            be_pushcomptr(vm, (void*) var_toint(v));
+            be_return(vm);
+        } else {
+            be_raise(vm, "value_error", "unsupported for this type");
+        }
+    }
+    be_return_nil(vm);
+}
+
+static int m_fromptr(bvm *vm)
+{
+    int top = be_top(vm);
+    if (top >= 1) {
+        void* v;
+        if (be_iscomptr(vm, 1)) {
+            v = be_tocomptr(vm, 1);
+        } else {
+            v = (void*) be_toint(vm, 1);
+        }
+        if (v) {
+            bgcobject * ptr = (bgcobject*) v;
+            if (var_basetype(ptr) >= BE_GCOBJECT) {
+                bvalue *top = be_incrtop(vm);
+                var_setobj(top, ptr->type, ptr);
+            } else {
+                be_raise(vm, "value_error", "unsupported for this type");
+            }
+            be_return(vm);
+        }
+    }
+    be_return_nil(vm);
+}
+
 #if !BE_USE_PRECOMPILED_OBJECT
 be_native_module_attr_table(introspect) {
     be_native_module_function("members", m_attrlist),
 
     be_native_module_function("get", m_findmember),
     be_native_module_function("set", m_setmember),
+
+    be_native_module_function("toptr", m_toptr),
+    be_native_module_function("fromptr", m_fromptr),
 };
 
 be_define_native_module(introspect, NULL);
@@ -92,6 +147,9 @@ module introspect (scope: global, depend: BE_USE_INTROSPECT_MODULE) {
 
     get, func(m_findmember)
     set, func(m_setmember)
+
+    toptr, func(m_toptr)
+    fromptr, func(m_fromptr)
 }
 @const_object_info_end */
 #include "../generate/be_fixed_introspect.h"

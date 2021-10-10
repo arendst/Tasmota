@@ -150,7 +150,23 @@ const char HTTP_SCRIPT_TEMPLATE2[] PROGMEM =
     "for(i=0;i<" STR(MAX_USER_PINS) ";i++){"
       "sk(g[i],i);"                       // Set GPIO
     "}";
-#else // Now ESP32 and ESP8266
+#elif defined(CONFIG_IDF_TARGET_ESP32S2)
+const char HTTP_SCRIPT_TEMPLATE2[] PROGMEM =
+    "j=0;"
+    "for(i=0;i<" STR(MAX_USER_PINS) ";i++){"  // Skip 22-32
+      "if(22==i){j=33;}"
+      "sk(g[i],j);"                       // Set GPIO
+      "j++;"
+    "}";
+#elif defined(CONFIG_IDF_TARGET_ESP32)
+const char HTTP_SCRIPT_TEMPLATE2[] PROGMEM =
+    "j=0;"
+    "for(i=0;i<" STR(MAX_USER_PINS) ";i++){"  // Skip 28-31
+      "if(28==i){j=32;}"
+      "sk(g[i],j);"                       // Set GPIO
+      "j++;"
+    "}";
+#else // ESP8266
 const char HTTP_SCRIPT_TEMPLATE2[] PROGMEM =
     "j=0;"
     "for(i=0;i<" STR(MAX_USER_PINS) ";i++){"  // Supports 13 GPIOs
@@ -316,6 +332,7 @@ const char HTTP_FORM_OTHER[] PROGMEM =
   "<br>"
   "<label><b>" D_WEB_ADMIN_PASSWORD "</b><input type='checkbox' onclick='sp(\"wp\")'></label><br><input id='wp' type='password' placeholder=\"" D_WEB_ADMIN_PASSWORD "\" value=\"" D_ASTERISK_PWD "\"><br>"
   "<br>"
+  "<label><input id='b3' type='checkbox'%s><b>" D_HTTP_API_ENABLE "</b></label><br>"
   "<label><input id='b1' type='checkbox'%s><b>" D_MQTT_ENABLE "</b></label><br>"
   "<br>"
   "<label><b>" D_DEVICE_NAME "</b> (%s)</label><br><input id='dn' placeholder=\"\" value=\"%s\"><br>"
@@ -399,6 +416,12 @@ const char kUploadErrors[] PROGMEM =
 const uint16_t DNS_PORT = 53;
 enum HttpOptions {HTTP_OFF, HTTP_USER, HTTP_ADMIN, HTTP_MANAGER, HTTP_MANAGER_RESET_ONLY};
 enum WifiTestOptions {WIFI_NOT_TESTING, WIFI_TESTING, WIFI_TEST_FINISHED, WIFI_TEST_FINISHED_BAD};
+
+enum WebCmndStatus { WEBCMND_DONE=0, WEBCMND_WRONG_PARAMETERS, WEBCMND_CONNECT_FAILED, WEBCMND_HOST_NOT_FOUND, WEBCMND_MEMORY_ERROR
+#ifdef USE_WEBGETCONFIG
+  , WEBCMND_FILE_NOT_FOUND, WEBCMND_OTHER_HTTP_ERROR, WEBCMND_CONNECTION_LOST, WEBCMND_INVALID_FILE
+#endif // USE_WEBGETCONFIG
+};
 
 DNSServer *DnsServer;
 ESP8266WebServer *Webserver;
@@ -666,7 +689,7 @@ bool HttpCheckPriviledgedAccess(bool autorequestauth = true)
         return true;
       }
     }
-    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_HTTP "Referer denied. Use 'SO128 1' for HTTP API commands. 'Webpassword' is recommended."));
+    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_HTTP "Referer '%s' denied. Use 'SO128 1' for HTTP API commands. 'Webpassword' is recommended."), referer.c_str());
     return false;
   } else {
     return true;
@@ -1577,6 +1600,10 @@ void HandleTemplateConfiguration(void) {
 #if defined(ESP32) && CONFIG_IDF_TARGET_ESP32C3
       // ESP32C3 we always send all GPIOs, Flash are just hidden
       WSContentSend_P(PSTR("%s%d"), (i>0)?",":"", template_gp.io[i]);
+#elif defined(CONFIG_IDF_TARGET_ESP32S2)
+      if (!FlashPin(i)) {
+        WSContentSend_P(PSTR("%s%d"), (i>0)?",":"", template_gp.io[i]);
+      }
 #else
       if (!FlashPin(i)) {
         WSContentSend_P(PSTR("%s%d"), (i>0)?",":"", template_gp.io[i]);
@@ -1629,7 +1656,7 @@ void HandleTemplateConfiguration(void) {
       hidden ? PSTR(" hidden") : "",
       RedPin(i) ? WebColor(COL_TEXT_WARNING) : WebColor(COL_TEXT), i, (0==i) ? PSTR(" style='width:146px'") : "", i, i);
     WSContentSend_P(PSTR("<td style='width:54px'><select id='h%d'></select></td></tr>"), i);
-#else
+#else // also works for ESP32S2
     if (!FlashPin(i)) {
       WSContentSend_P(PSTR("<tr><td><b><font color='#%06x'>" D_GPIO "%d</font></b></td><td%s><select id='g%d' onchange='ot(%d,this.value)'></select></td>"),
         RedPin(i) ? WebColor(COL_TEXT_WARNING) : WebColor(COL_TEXT), i, (0==i) ? PSTR(" style='width:146px'") : "", i, i);
@@ -1675,7 +1702,13 @@ void TemplateSaveSettings(void) {
   for (uint32_t i = 0; i < nitems(Settings->user_template.gp.io); i++) {
 #if defined(ESP32) && CONFIG_IDF_TARGET_ESP32C3
     snprintf_P(command, sizeof(command), PSTR("%s%s%d"), command, (i>0)?",":"", WebGetGpioArg(i));
-#else
+#elif defined(CONFIG_IDF_TARGET_ESP32S2)
+    if (22 == i) { j = 33; }    // skip 22-32
+    snprintf_P(command, sizeof(command), PSTR("%s%s%d"), command, (i>0)?",":"", WebGetGpioArg(j));
+    j++;
+#elif defined(CONFIG_IDF_TARGET_ESP32)
+    snprintf_P(command, sizeof(command), PSTR("%s%s%d"), command, (i>0)?",":"", WebGetGpioArg(Esp32TemplateToPhy[i]));
+#else  // ESP8266
     if (6 == i) { j = 9; }
     if (8 == i) { j = 12; }
     snprintf_P(command, sizeof(command), PSTR("%s%s%d"), command, (i>0)?",":"", WebGetGpioArg(j));
@@ -2136,6 +2169,7 @@ void HandleOtherConfiguration(void) {
 
   TemplateJson();
   WSContentSend_P(HTTP_FORM_OTHER, ResponseData(), (USER_MODULE == Settings->module) ? PSTR(" checked disabled") : "",
+    (Settings->flag5.disable_referer_chk) ? PSTR(" checked") : "",   // SetOption128 - Enable HTTP API
     (Settings->flag.mqtt_enabled) ? PSTR(" checked") : "",   // SetOption3 - Enable MQTT
     SettingsText(SET_FRIENDLYNAME1), SettingsText(SET_DEVICENAME));
 
@@ -2186,6 +2220,8 @@ void OtherSaveSettings(void) {
   cmnd += AddWebCommand(PSTR(D_CMND_WEBPASSWORD "2"), PSTR("wp"), PSTR("\""));
   cmnd += F(";" D_CMND_SO "3 ");
   cmnd += Webserver->hasArg(F("b1"));
+  cmnd += F(";" D_CMND_SO "128 ");
+  cmnd += Webserver->hasArg(F("b3"));
   cmnd += AddWebCommand(PSTR(D_CMND_DEVICENAME), PSTR("dn"), PSTR("\""));
   char webindex[5];
   char cmnd2[24];                             // ";Module 0;Template "
@@ -2349,6 +2385,8 @@ void HandleInformation(void)
     WSContentSend_P(PSTR("}1" D_GATEWAY "}2%_I"), (uint32_t)WiFi.softAPIP());
   }
   WSContentSend_P(PSTR("}1}2&nbsp;"));  // Empty line
+  WSContentSend_P(PSTR("}1" D_HTTP_API "}2%s"), Settings->flag5.disable_referer_chk ? PSTR(D_ENABLED) : PSTR(D_DISABLED)); // SetOption 128
+  WSContentSend_P(PSTR("}1}2&nbsp;"));  // Empty line
   if (Settings->flag.mqtt_enabled) {  // SetOption3 - Enable MQTT
     WSContentSend_P(PSTR("}1" D_MQTT_HOST "}2%s"), SettingsText(SET_MQTT_HOST));
     WSContentSend_P(PSTR("}1" D_MQTT_PORT "}2%d"), Settings->mqtt_port);
@@ -2401,8 +2439,7 @@ void HandleInformation(void)
   WSContentSend_P(PSTR("}1" D_PROGRAM_SIZE "}2%d kB"), ESP_getSketchSize() / 1024);
   WSContentSend_P(PSTR("}1" D_FREE_PROGRAM_SPACE "}2%d kB"), ESP.getFreeSketchSpace() / 1024);
 #ifdef ESP32
-  int32_t freeMaxMem = 100 - (int32_t)(ESP_getMaxAllocHeap() * 100 / ESP_getFreeHeap());
-  WSContentSend_PD(PSTR("}1" D_FREE_MEMORY "}2%1_f kB (" D_FRAGMENTATION " %d%%)"), &freemem, freeMaxMem);
+  WSContentSend_PD(PSTR("}1" D_FREE_MEMORY "}2%1_f kB (" D_FRAGMENTATION " %d%%)"), &freemem, ESP_getHeapFragmentation());
   if (UsePSRAM()) {
     WSContentSend_P(PSTR("}1" D_PSR_MAX_MEMORY "}2%d kB"), ESP.getPsramSize() / 1024);
     WSContentSend_P(PSTR("}1" D_PSR_FREE_MEMORY "}2%d kB"), ESP.getFreePsram() / 1024);
@@ -3036,7 +3073,7 @@ int WebSend(char *buffer)
   char *user;
   char *password;
   char *command;
-  int status = 1;                             // Wrong parameters
+  int status = WEBCMND_WRONG_PARAMETERS;
 
                                               // buffer = |  [  192.168.178.86  :  80  ,  admin  :  joker  ]    POWER1 ON   |
   host = strtok_r(buffer, "]", &command);     // host = |  [  192.168.178.86  :  80  ,  admin  :  joker  |, command = |    POWER1 ON   |
@@ -3060,14 +3097,67 @@ int WebSend(char *buffer)
       }
       url += F("cmnd=");                      // url = |http://192.168.178.86/cm?cmnd=| or |http://192.168.178.86/cm?user=admin&password=joker&cmnd=|
     }
-    url += command;                           // url = |http://192.168.178.86/cm?cmnd=POWER1 ON|
+    url += UrlEncode(command);                // url = |http://192.168.178.86/cm?cmnd=POWER1%20ON|
+    url += F(" GET");                         // url = |http://192.168.178.86/cm?cmnd=POWER1%20ON GET|
 
-    DEBUG_CORE_LOG(PSTR("WEB: Uri |%s|"), url.c_str());
+    DEBUG_CORE_LOG(PSTR("WEB: Uri '%s'"), url.c_str());
+    status = WebQuery(const_cast<char*>(url.c_str()));
+  }
+  return status;
+}
 
-    WiFiClient http_client;
-    HTTPClient http;
-    if (http.begin(http_client, UrlEncode(url))) {  // UrlEncode(url) = |http://192.168.178.86/cm?cmnd=POWER1%20ON|
-      int http_code = http.GET();             // Start connection and send HTTP header
+int WebQuery(char *buffer)
+{
+  // http://192.168.1.1/path GET                                         -> Sends HTTP GET http://192.168.1.1/path
+  // http://192.168.1.1/path POST {"some":"message"}                     -> Sends HTTP POST to http://192.168.1.1/path with body {"some":"message"}
+  // http://192.168.1.1/path PUT [Autorization: Bearer abcdxyz] potato   -> Sends HTTP PUT to http://192.168.1.1/path with authorization header and body "potato"
+  // http://192.168.1.1/path PATCH patchInfo                             -> Sends HTTP PATCH to http://192.168.1.1/path with body "potato"
+
+  // Valid HTTP Commands: GET, POST, PUT, and PATCH
+  // An unlimited number of headers can be sent per request, and a body can be sent for all command types
+  // The body will be ignored if sending a GET command
+
+  WiFiClient http_client;
+  HTTPClient http;
+
+  int status = WEBCMND_WRONG_PARAMETERS;
+
+  char *temp;
+  char *url = strtok_r(buffer, " ", &temp);
+  char *method = strtok_r(temp, " ", &temp);
+
+  if (url && method) {
+    if (http.begin(http_client, UrlEncode(url))) {
+      char empty_body[1] = { 0 };
+      char *body = empty_body;
+      if (temp) {                             // There is a body and/or header
+        if (temp[0] == '[') {                 // Header information was sent; decode it
+          temp += 1;
+          temp = strtok_r(temp, "]", &body);
+          bool headerFound = true;
+          while (headerFound) {
+            char *header = strtok_r(temp, ":", &temp);
+            if (header) {
+              char *headerBody = strtok_r(temp, "|", &temp);
+              if (headerBody) {
+                http.addHeader(header, headerBody);
+              }
+              else headerFound = false;
+            }
+            else headerFound = false;
+          }
+        } else {                              // No header information was sent, but there was a body
+          body = temp;
+        }
+      }
+
+      int http_code;
+      if (0 == strcasecmp_P(method, PSTR("GET"))) { http_code = http.GET(); }
+      else if (0 == strcasecmp_P(method, PSTR("POST"))) { http_code = http.POST(body); }
+      else if (0 == strcasecmp_P(method, PSTR("PUT"))) { http_code = http.PUT(body); }
+      else if (0 == strcasecmp_P(method, PSTR("PATCH"))) { http_code = http.PATCH(body); }
+      else return status;
+
       if (http_code > 0) {                    // http_code will be negative on error
         if (http_code == HTTP_CODE_OK || http_code == HTTP_CODE_MOVED_PERMANENTLY) {
 #ifdef USE_WEBSEND_RESPONSE
@@ -3087,20 +3177,83 @@ int WebSend(char *buffer)
           // recursive call must be possible in this case
           tasm_cmd_activ = 0;
 #endif  // USE_SCRIPT
-          MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, PSTR(D_CMND_WEBSEND));
+          MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, PSTR(D_CMND_WEBQUERY));
 #endif  // USE_WEBSEND_RESPONSE
         }
-        status = 0;                           // No error - Done
+        status = WEBCMND_DONE;
       } else {
-        status = 2;                           // Connection failed
+        status = WEBCMND_CONNECT_FAILED;
       }
       http.end();                             // Clean up connection data
     } else {
-      status = 3;                             // Host not found or connection error
+      status = WEBCMND_HOST_NOT_FOUND;
     }
   }
   return status;
 }
+
+#ifdef USE_WEBGETCONFIG
+int WebGetConfig(char *buffer)
+{
+  // http://user:password@server:port/path/%id%.dmp  : %id% will be expanded to MAC address
+
+  int status = WEBCMND_WRONG_PARAMETERS;
+
+  RemoveSpace(buffer);                        // host = |[192.168.178.86:80,admin:joker|
+  String url = ResolveToken(buffer);
+
+  DEBUG_CORE_LOG(PSTR("WEB: Config Uri '%s'"), url.c_str());
+
+  WiFiClient http_client;
+  HTTPClient http;
+  if (http.begin(http_client, UrlEncode(url))) {  // UrlEncode(url) = |http://192.168.178.86/cm?cmnd=POWER1%20ON|
+    int http_code = http.GET();             // Start connection and send HTTP header
+    if (http_code > 0) {                    // http_code will be negative on error
+      status = WEBCMND_DONE;
+      if (http_code == HTTP_CODE_OK || http_code == HTTP_CODE_MOVED_PERMANENTLY) {
+        WiFiClient *stream = http.getStreamPtr();
+        int len = http.getSize();
+        if ((len <= sizeof(TSettings)) && SettingsBufferAlloc()) {
+          uint8_t *buff = settings_buffer;
+          if (len == -1) { len = sizeof(TSettings); }
+          while (http.connected() && (len > 0)) {
+            size_t size = stream->available();
+            if (size) {
+              int read = stream->readBytes(buff, len);
+              len -= read;
+            }
+            delayMicroseconds(1);
+          }
+          if (len) {
+            DEBUG_CORE_LOG(PSTR("WEB: Connection lost"));
+            status = WEBCMND_CONNECTION_LOST;
+          } else if (SettingsConfigRestore()) {
+            AddLog(LOG_LEVEL_INFO, PSTR("WEB: Settings applied, restarting"));
+            TasmotaGlobal.restart_flag = 2;  // Always restart to re-enable disabled features during update
+          } else {
+            DEBUG_CORE_LOG(PSTR("WEB: Settings file invalid"));
+            status = WEBCMND_INVALID_FILE;
+          }
+        } else {
+          DEBUG_CORE_LOG(PSTR("WEB: Memory error (%d) or invalid file length (%d)"), settings_buffer, len);
+          status = WEBCMND_MEMORY_ERROR;
+        }
+      } else {
+        AddLog(LOG_LEVEL_DEBUG, PSTR("WEB: HTTP error %d"), http_code);
+        status = (http_code == HTTP_CODE_NOT_FOUND) ? WEBCMND_FILE_NOT_FOUND : WEBCMND_OTHER_HTTP_ERROR;
+      }
+    } else {
+      DEBUG_CORE_LOG(PSTR("WEB: Connection failed"));
+      status = 2;                           // Connection failed
+    }
+    http.end();                             // Clean up connection data
+  } else {
+    status = 3;                             // Host not found or connection error
+  }
+
+  return status;
+}
+#endif // USE_WEBGETCONFIG
 
 bool JsonWebColor(const char* dataBuf)
 {
@@ -3126,7 +3279,11 @@ bool JsonWebColor(const char* dataBuf)
   return true;
 }
 
-const char kWebSendStatus[] PROGMEM = D_JSON_DONE "|" D_JSON_WRONG_PARAMETERS "|" D_JSON_CONNECT_FAILED "|" D_JSON_HOST_NOT_FOUND "|" D_JSON_MEMORY_ERROR;
+const char kWebCmndStatus[] PROGMEM = D_JSON_DONE "|" D_JSON_WRONG_PARAMETERS "|" D_JSON_CONNECT_FAILED "|" D_JSON_HOST_NOT_FOUND "|" D_JSON_MEMORY_ERROR
+#ifdef USE_WEBGETCONFIG
+  "|" D_JSON_FILE_NOT_FOUND "|" D_JSON_OTHER_HTTP_ERROR "|" D_JSON_CONNECTION_LOST "|" D_JSON_INVALID_FILE_TYPE
+#endif // USE_WEBGETCONFIG
+;
 
 const char kWebCommands[] PROGMEM = "|"  // No prefix
 #ifdef USE_EMULATION
@@ -3135,12 +3292,15 @@ const char kWebCommands[] PROGMEM = "|"  // No prefix
 #if defined(USE_SENDMAIL) || defined(USE_ESP32MAIL)
   D_CMND_SENDMAIL "|"
 #endif
-  D_CMND_WEBSERVER "|" D_CMND_WEBPASSWORD "|" D_CMND_WEBLOG "|" D_CMND_WEBREFRESH "|" D_CMND_WEBSEND "|" D_CMND_WEBCOLOR "|"
-  D_CMND_WEBSENSOR "|" D_CMND_WEBBUTTON
+  D_CMND_WEBSERVER "|" D_CMND_WEBPASSWORD "|" D_CMND_WEBLOG "|" D_CMND_WEBREFRESH "|" D_CMND_WEBSEND "|" D_CMND_WEBQUERY "|"
+  D_CMND_WEBCOLOR "|" D_CMND_WEBSENSOR "|" D_CMND_WEBBUTTON
+#ifdef USE_WEBGETCONFIG
+  "|" D_CMND_WEBGETCONFIG
+#endif
 #ifdef USE_CORS
   "|" D_CMND_CORS
 #endif
-  ;
+;
 
 void (* const WebCommand[])(void) PROGMEM = {
 #ifdef USE_EMULATION
@@ -3149,8 +3309,11 @@ void (* const WebCommand[])(void) PROGMEM = {
 #if defined(USE_SENDMAIL) || defined(USE_ESP32MAIL)
   &CmndSendmail,
 #endif
-  &CmndWebServer, &CmndWebPassword, &CmndWeblog, &CmndWebRefresh, &CmndWebSend, &CmndWebColor,
-  &CmndWebSensor, &CmndWebButton
+  &CmndWebServer, &CmndWebPassword, &CmndWeblog, &CmndWebRefresh, &CmndWebSend, &CmndWebQuery,
+  &CmndWebColor, &CmndWebSensor, &CmndWebButton
+#ifdef USE_WEBGETCONFIG
+  , &CmndWebGetConfig
+#endif
 #ifdef USE_CORS
   , &CmndCors
 #endif
@@ -3188,7 +3351,7 @@ void CmndSendmail(void)
   if (XdrvMailbox.data_len > 0) {
     uint8_t result = SendMail(XdrvMailbox.data);
     char stemp1[20];
-    ResponseCmndChar(GetTextIndexed(stemp1, sizeof(stemp1), result, kWebSendStatus));
+    ResponseCmndChar(GetTextIndexed(stemp1, sizeof(stemp1), result, kWebCmndStatus));
   }
 }
 #endif  // USE_SENDMAIL
@@ -3244,9 +3407,31 @@ void CmndWebSend(void)
   if (XdrvMailbox.data_len > 0) {
     uint32_t result = WebSend(XdrvMailbox.data);
     char stemp1[20];
-    ResponseCmndChar(GetTextIndexed(stemp1, sizeof(stemp1), result, kWebSendStatus));
+    ResponseCmndChar(GetTextIndexed(stemp1, sizeof(stemp1), result, kWebCmndStatus));
   }
 }
+
+void CmndWebQuery(void)
+{
+  if (XdrvMailbox.data_len > 0) {
+    uint32_t result = WebQuery(XdrvMailbox.data);
+    char stemp1[20];
+    ResponseCmndChar(GetTextIndexed(stemp1, sizeof(stemp1), result, kWebCmndStatus));
+  }
+}
+
+#ifdef USE_WEBGETCONFIG
+void CmndWebGetConfig(void)
+{
+  // WebGetConfig http://myserver:8000/tasmota/conf/%id%.dmp where %id% is expanded to device mac address
+  // WebGetConfig http://myserver:8000/tasmota/conf/Config_demo_9.5.0.8.dmp
+  if (XdrvMailbox.data_len > 0) {
+    uint32_t result = WebGetConfig(XdrvMailbox.data);
+    char stemp1[20];
+    ResponseCmndChar(GetTextIndexed(stemp1, sizeof(stemp1), result, kWebCmndStatus));
+  }
+}
+#endif // USE_WEBGETCONFIG
 
 void CmndWebColor(void)
 {

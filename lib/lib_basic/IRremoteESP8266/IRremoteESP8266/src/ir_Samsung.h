@@ -6,6 +6,7 @@
 /// @see https://github.com/crankyoldgit/IRremoteESP8266/issues/621
 /// @see https://github.com/crankyoldgit/IRremoteESP8266/issues/1062
 /// @see http://elektrolab.wz.cz/katalog/samsung_protocol.pdf
+/// @see https://github.com/crankyoldgit/IRremoteESP8266/issues/1538 (Checksum)
 
 // Supports:
 //   Brand: Samsung,  Model: UA55H6300 TV (SAMSUNG)
@@ -88,19 +89,59 @@ union SamsungProtocol{
     uint8_t       :6;
   };
   struct {
-    uint8_t :8;
+    // 1st Section
+    // Byte 0
+    uint8_t           :8;
     // Byte 1
-    uint8_t       :4;
-    uint8_t Sum1  :4;
-    uint8_t pad1[6];
+    uint8_t           :4;
+    uint8_t Sum1Lower :4;
+    // Byte 2
+    uint8_t Sum1Upper :4;
+    uint8_t           :4;
+    // Byte 3
+    uint8_t           :8;
+    // Byte 4
+    uint8_t           :8;
+    // Byte 5
+    uint8_t           :8;
+    // Byte 6
+    uint8_t           :8;
+    // 2nd Section
+    // Byte 7
+    uint8_t           :8;
     // Byte 8
-    uint8_t       :4;
-    uint8_t Sum2  :4;
-    uint8_t :8;
+    uint8_t           :4;
+    uint8_t Sum2Lower :4;
+    // Byte 9
+    uint8_t Sum2Upper :4;
+    uint8_t           :4;
     // Byte 10
-    uint8_t         :1;
-    uint8_t Breeze  :3;  // WindFree
-    uint8_t         :4;
+    uint8_t           :1;
+    uint8_t Breeze    :3;  // WindFree
+    uint8_t           :4;
+    // Byte 11
+    uint8_t           :8;
+    // Byte 12
+    uint8_t           :8;
+    // Byte 13
+    uint8_t           :8;
+    // 3rd Section
+    // Byte 14
+    uint8_t           :8;
+    // Byte 15
+    uint8_t           :4;
+    uint8_t Sum3Lower :4;
+    // Byte 16
+    uint8_t Sum3Upper :4;
+    uint8_t           :4;
+    // Byte 17
+    uint8_t           :8;
+    // Byte 18
+    uint8_t           :8;
+    // Byte 19
+    uint8_t           :8;
+    // Byte 20
+    uint8_t           :8;
   };
 };
 
@@ -110,8 +151,8 @@ const uint8_t kSamsungAcSwingMove =                0b010;
 const uint8_t kSamsungAcSwingStop =                0b111;
 const uint8_t kSamsungAcPowerful10On =                     0b011;
 const uint8_t kSamsungAcBreezeOn =                         0b101;
-const uint8_t kSamsungAcMinTemp = 16;   // C   Mask 0b11110000
-const uint8_t kSamsungAcMaxTemp = 30;   // C   Mask 0b11110000
+const uint8_t kSamsungAcMinTemp  = 16;  // C   Mask 0b11110000
+const uint8_t kSamsungAcMaxTemp  = 30;  // C   Mask 0b11110000
 const uint8_t kSamsungAcAutoTemp = 25;  // C   Mask 0b11110000
 const uint8_t kSamsungAcAuto = 0;
 const uint8_t kSamsungAcCool = 1;
@@ -177,10 +218,10 @@ class IRSamsungAc {
   uint8_t* getRaw(void);
   void setRaw(const uint8_t new_code[],
               const uint16_t length = kSamsungAcStateLength);
+  static uint8_t calcSectionChecksum(const uint8_t *section);
+  static uint8_t getSectionChecksum(const uint8_t *section);
   static bool validChecksum(const uint8_t state[],
                             const uint16_t length = kSamsungAcStateLength);
-  static uint8_t calcChecksum(const uint8_t state[],
-                              const uint16_t length = kSamsungAcStateLength);
   static uint8_t convertMode(const stdAc::opmode_t mode);
   static uint8_t convertFan(const stdAc::fanspeed_t speed);
   static stdAc::opmode_t toCommonMode(const uint8_t mode);
@@ -199,7 +240,7 @@ class IRSamsungAc {
   SamsungProtocol _;
   bool _forcepower;  ///< Hack to know when we need to send a special power mesg
   bool _lastsentpowerstate;
-  void checksum(const uint16_t length = kSamsungAcStateLength);
+  void checksum(void);
 };
 
 #endif  // IR_SAMSUNG_H_

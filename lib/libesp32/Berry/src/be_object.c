@@ -30,6 +30,7 @@ const char* be_vtype2str(bvalue *v)
     case BE_INSTANCE: return "instance";
     case BE_MODULE: return "module";
     case BE_INDEX: return "var";
+    case BE_COMPTR: return "ptr";
     default: return "invalid type";
     }
 }

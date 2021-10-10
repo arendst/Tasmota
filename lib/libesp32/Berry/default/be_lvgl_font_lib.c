@@ -7,36 +7,26 @@
 
 #include "lvgl.h"
 
-extern int lvx_init(bvm *vm);           // generic function
 extern int lvx_tostring(bvm *vm);       // generic function
+extern int lvx_init_ctor(bvm *vm, void * func);
+extern int be_call_c_func(bvm *vm, void * func, const char * return_type, const char * arg_type);
 
-#if BE_USE_PRECOMPILED_OBJECT
+
+// create font either empty or from parameter on stack
+int lvbe_font_create(bvm *vm)       { return be_call_c_func(vm, NULL, "+lv_group", ""); }
+
 #include "../generate/be_fixed_be_class_lv_font.h"
-#endif
 
 void be_load_lvgl_font_lib(bvm *vm) {
-#if !BE_USE_PRECOMPILED_OBJECT
-    static const bnfuncinfo members[] = {
-        { ".p", NULL },               // keeping track of styles to avoid GC
-        { "init", lvx_init },
-        { "tostring", lvx_tostring },
-
-        // { NULL, (bntvfunc) BE_CLOSURE }, /* mark section for berry closures */
-        
-        { NULL, NULL }
-    };
-    be_regclass(vm, "lv_font", members);
-#else
     be_pushntvclass(vm, &be_class_lv_font);
     be_setglobal(vm, "lv_font");
     be_pop(vm, 1);
-#endif
 }
 
 /* @const_object_info_begin
 class be_class_lv_font (scope: global, name: lv_font) {
-    .p, var
-    init, func(lvx_init)
+    _p, var
+    init, func(lvbe_font_create)
     tostring, func(lvx_tostring)
 }
 @const_object_info_end */

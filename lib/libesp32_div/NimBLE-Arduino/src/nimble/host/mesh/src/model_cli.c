@@ -4,16 +4,17 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <mesh/mesh.h>
+#include "syscfg/syscfg.h"
+#define MESH_LOG_MODULE BLE_MESH_MODEL_LOG
 
-#define BT_DBG_ENABLED (MYNEWT_VAL(BLE_MESH_DEBUG_MODEL))
+#include "mesh/mesh.h"
 #include "mesh/model_cli.h"
 #include "mesh_priv.h"
 
 static s32_t msg_timeout = K_SECONDS(5);
 
-struct bt_mesh_gen_model_cli gen_onoff_cli;
-struct bt_mesh_gen_model_cli gen_level_cli;
+static struct bt_mesh_gen_model_cli *gen_onoff_cli;
+static struct bt_mesh_gen_model_cli *gen_level_cli;
 
 static u8_t transaction_id = 0;
 
@@ -90,9 +91,51 @@ const struct bt_mesh_model_op gen_onoff_cli_op[] = {
 	BT_MESH_MODEL_OP_END,
 };
 
+static int onoff_cli_init(struct bt_mesh_model *model)
+{
+	BT_DBG("");
+
+	if (!model->user_data) {
+		BT_ERR("No Generic OnOff Client context provided");
+		return -EINVAL;
+	}
+
+	gen_onoff_cli = model->user_data;
+	gen_onoff_cli->model = model;
+
+	k_sem_init(&gen_onoff_cli->op_sync, 0, 1);
+
+	return 0;
+}
+
+const struct bt_mesh_model_cb bt_mesh_gen_onoff_cli_cb = {
+	.init = onoff_cli_init,
+};
+
 const struct bt_mesh_model_op gen_level_cli_op[] = {
 	{ OP_GEN_LEVEL_STATUS, 2, gen_level_status },
 	BT_MESH_MODEL_OP_END,
+};
+
+static int level_cli_init(struct bt_mesh_model *model)
+{
+	BT_DBG("");
+
+	if (!model->user_data) {
+		BT_ERR("No Generic Level Client context provided");
+		return -EINVAL;
+	}
+
+	gen_level_cli = model->user_data;
+	gen_level_cli->model = model;
+
+	k_sem_init(&gen_level_cli->op_sync, 0, 1);
+
+	return 0;
+}
+
+const struct bt_mesh_model_cb bt_mesh_gen_level_cli_cb = {
+	.init = level_cli_init,
 };
 
 static int cli_wait(struct bt_mesh_gen_model_cli *cli, void *param, u32_t op)
@@ -129,13 +172,13 @@ int bt_mesh_gen_onoff_get(u16_t net_idx, u16_t addr, u16_t app_idx,
 
 	bt_mesh_model_msg_init(msg, OP_GEN_ONOFF_GET);
 
-	err = bt_mesh_model_send(gen_onoff_cli.model, &ctx, msg, NULL, NULL);
+	err = bt_mesh_model_send(gen_onoff_cli->model, &ctx, msg, NULL, NULL);
 	if (err) {
 		BT_ERR("model_send() failed (err %d)", err);
 		goto done;
 	}
 
-	err = cli_wait(&gen_onoff_cli, &param, OP_GEN_ONOFF_STATUS);
+	err = cli_wait(gen_onoff_cli, &param, OP_GEN_ONOFF_STATUS);
 done:
 	os_mbuf_free_chain(msg);
 	return err;
@@ -165,7 +208,7 @@ int bt_mesh_gen_onoff_set(u16_t net_idx, u16_t addr, u16_t app_idx,
 	net_buf_simple_add_u8(msg, val);
 	net_buf_simple_add_u8(msg, transaction_id);
 
-	err = bt_mesh_model_send(gen_onoff_cli.model, &ctx, msg, NULL, NULL);
+	err = bt_mesh_model_send(gen_onoff_cli->model, &ctx, msg, NULL, NULL);
 	if (err) {
 		BT_ERR("model_send() failed (err %d)", err);
 		goto done;
@@ -175,7 +218,7 @@ int bt_mesh_gen_onoff_set(u16_t net_idx, u16_t addr, u16_t app_idx,
 		goto done;
 	}
 
-	err = cli_wait(&gen_onoff_cli, &param, OP_GEN_ONOFF_STATUS);
+	err = cli_wait(gen_onoff_cli, &param, OP_GEN_ONOFF_STATUS);
 done:
 	if (err == 0) {
 		transaction_id++;
@@ -201,13 +244,13 @@ int bt_mesh_gen_level_get(u16_t net_idx, u16_t addr, u16_t app_idx,
 
 	bt_mesh_model_msg_init(msg, OP_GEN_LEVEL_GET);
 
-	err = bt_mesh_model_send(gen_level_cli.model, &ctx, msg, NULL, NULL);
+	err = bt_mesh_model_send(gen_level_cli->model, &ctx, msg, NULL, NULL);
 	if (err) {
 		BT_ERR("model_send() failed (err %d)", err);
 		goto done;
 	}
 
-	err = cli_wait(&gen_level_cli, &param, OP_GEN_LEVEL_STATUS);
+	err = cli_wait(gen_level_cli, &param, OP_GEN_LEVEL_STATUS);
 done:
 	os_mbuf_free_chain(msg);
 	return err;
@@ -237,7 +280,7 @@ int bt_mesh_gen_level_set(u16_t net_idx, u16_t addr, u16_t app_idx,
 	net_buf_simple_add_le16(msg, val);
 	net_buf_simple_add_u8(msg, transaction_id);
 
-	err = bt_mesh_model_send(gen_level_cli.model, &ctx, msg, NULL, NULL);
+	err = bt_mesh_model_send(gen_level_cli->model, &ctx, msg, NULL, NULL);
 	if (err) {
 		BT_ERR("model_send() failed (err %d)", err);
 		goto done;
@@ -247,30 +290,12 @@ int bt_mesh_gen_level_set(u16_t net_idx, u16_t addr, u16_t app_idx,
 		goto done;
 	}
 
-	err = cli_wait(&gen_level_cli, &param, OP_GEN_LEVEL_STATUS);
+	err = cli_wait(gen_level_cli, &param, OP_GEN_LEVEL_STATUS);
 done:
 	if (err == 0) {
 		transaction_id++;
 	}
 	os_mbuf_free_chain(msg);
 	return err;
-}
-
-int bt_mesh_gen_model_cli_init(struct bt_mesh_model *model, bool primary)
-{
-	struct bt_mesh_gen_model_cli *cli = model->user_data;
-
-	BT_DBG("primary %u", primary);
-
-	if (!cli) {
-		BT_ERR("No Generic Model Client context provided");
-		return -EINVAL;
-	}
-
-	cli->model = model;
-
-	k_sem_init(&cli->op_sync, 0, 1);
-
-	return 0;
 }
 

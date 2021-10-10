@@ -1,4 +1,0 @@
-<map id="CoronaProtocol" name="CoronaProtocol">
-<area shape="rect" id="node1" title="Native representation of a Corona A/C message." alt="" coords="5,95,127,121"/>
-<area shape="rect" id="node2" href="$structCoronaSection.html" title="Native representation of a section of a Corona A/C message." alt="" coords="8,5,124,32"/>
-</map>

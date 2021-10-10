@@ -57,9 +57,12 @@ extern "C" {
         // we did have a match, low == high
         be_pushint(vm, webserver_constants[constant_idx].value);
         be_return(vm);
+      } else if (strcmp(needle, "init")) {
+        /* don't throw an exception if the 'init' function is requested */
+        be_raise(vm, "attribute_error", be_pushfstring(vm, "module 'webserver' has no such attribute '%s'", needle));
       }
     }
-    be_raise(vm, "attribute_error", "module 'webserver' has no such attribute");
+    be_return_nil(vm);
   }
 }
 

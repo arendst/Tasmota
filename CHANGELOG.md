@@ -3,7 +3,76 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [9.5.0.6]
+## [9.5.0.9]
+### Added
+- Command ``SetOption129 1`` to enable split total energy results (#13030)
+- Command ``SetOption130 1`` adding heap size (and ESP32 fragmentation) to logging timestamp for debugging
+- Commands ``EnergyTotal<phase>``, ``EnergyToday<phase>`` and ``EnergyYesterday<phase>`` to (re)set energy values
+- Commands ``EnergyUsage`` and ``EnergyExport`` to (re)set energy usage and export values
+- Berry add module ``import persist``
+- Support for BL0942 energy monitor (#13259)
+- Support for HM330X SeedStudio Grove Particule sensor (#13250)
+
+### Breaking Changed
+- ESP32 LVGL updated to v8.0.2
+
+### Changed
+- Removed command ``EnergyReset`` as it is replaced by new commands
+- Files starting with underscore in file system are no more hidden
+- ESP32 Memory display to exclude IRAM (i.e. less by 40-50KB) (#13294)
+
+## [9.5.0.8] 20210927
+### Added
+- Command ``WebGetConfig <url>`` if ``#define USE_WEBGETCONFIG`` is enabled to restore/init configuration from external webserver (#13034)
+- Berry class ``webclient`` for HTTP/HTTPS requests
+- Support for ESP32S2 GPIOs
+- ESP32 add GPIO 6/7/8/11 to template and remove GPIO 28-31 (remapping so backwards compatible)
+- Crash recorder ``Status 12`` for ESP32/ESP32S2/ESP32C3, supporting Esp-idf 3.3/4.4
+- Support for ESP32/ESP32S2 DAC gpio via Berry
+- Berry support for Serial
+- Support for Sensirion SCD40/SCD41 CO2 sensor (#13139)
+- Support for BL0939 energy monitor as used in ESP32 based Sonoff Dual R3 V2 Pow (#13195)
+- Command ``WebQuery <url> GET|POST|PUT|PATCH [<headers>] <body>`` to extent HTTP requests (#13209)
+- Berry print stack trace when exception, more detailed with line numbers if `#define USE_BERRY_DEBUG`
+
+### Changed
+- M5 Stack Core2 uses UNIVERSAL_DISPLAY with enabled LVGL as default now
+- ``DisplayDimmer`` has now range 0..100 instead of 0..15
+- Minimum PWM Frequency lowered to 2Hz on ESP32 (#13123)
+- Use Tasmota Arduino Core32 1.0.7.4 for ESP32 builds (#13154)
+- Shrinked Webcam build, uses now `USE_TASMOTA_DISCOVERY` (#13148)
+- Berry revamped ``energy`` module to expose all C variables to Berry (read/write)
+
+### Fixed
+- OpenTherm invalid JSON (#13028)
+- ESP32 crash when PSRAM is absent and ``BOARD_HAS_PSRAM`` set (#13037)
+- MQTT TLS related connection timing errors (#13033)
+
+## [9.5.0.7] 20210901
+### Added
+- Turn HTTP API (command ``SetOption128 1``) default on for backward compatibility
+- Support for IEM3155 Wattmeter (#12940)
+- Berry support for vararg
+- Command ``Subscribe2 ...`` to subscribe to a MQTT topic without appended "/#" (#12858)
+- Support for Hydreon RG-15 Solid State Rain sensor (#12974)
+- Support for IKEA VINDRIKTNING particle concentration sensor (#12976)
+- Berry support for Curve 25519 EC crypto
+- Command ``SetOption2 1`` to enable display of global temperature/humidity/pressure info to JSON sensor message
+
+### Changed
+- Shelly EM template needs to use GPIO ADE7953_IRQ_2
+- IRremoteESP8266 library from v2.7.19 to v2.7.20
+
+### Fixed
+- WDT reset on shutters with stepper motors during deceleration (#12849)
+- Shelly 2.5 negative power values on relay 1 regression from 9.5.0.5
+- Wiegand support for keypad zero key in single key mode using ``SetOption124 1`` (#12960)
+- Hass and Tasmota discovery prefix topic notifications (#12972)
+- Unable to disable MusicSync mode on Sonoff L1 Lite regression from 9.3.0 (#12930)
+- Shelly Dimmer 2 Energy usage (#12815)
+- Sonoff L1 (lite) smoother color transitions
+
+## [9.5.0.6] 20210820
 ### Added
 - Version bump to monitor possible HTTP issues releated to ``SetOption128``
 
@@ -1018,7 +1087,7 @@ All notable changes to this project will be documented in this file.
 ## [8.1.0.6] - 20200205
 ### Added
 - Support for sensors DS18x20 and DHT family on Shelly 1 and Shelly 1PM using Shelly Add-On adapter (#7469)
-- Commands ``SwitchMode 11`` PushHoldMulti and ``SwitchMode 12`` PushHoldInverted (#7603)
+- Commands ``SwitchMode 11`` PushHoldMulti and ``SwitchMode 12`` PushHoldMultiInverted (#7603)
 - Command ``Buzzer -1`` for infinite mode and command ``Buzzer -2`` for following led mode (#7623)
 - Support for MI-BLE sensors using HM-10 Bluetooth 4.0 module by Christian Staars (#7683)
 - BootCount Reset Time as BCResetTime to ``Status 1``

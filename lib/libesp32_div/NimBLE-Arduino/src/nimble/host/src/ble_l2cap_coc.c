@@ -88,17 +88,56 @@ ble_l2cap_coc_create_server(uint16_t psm, uint16_t mtu,
     return 0;
 }
 
-static uint16_t
-ble_l2cap_coc_get_cid(void)
+static inline void
+ble_l2cap_set_used_cid(uint32_t *cid_mask, int bit)
 {
-    static uint16_t next_cid = BLE_L2CAP_COC_CID_START;
+    cid_mask[bit / 32] |= (1 << (bit % 32));
+}
 
-    if (next_cid > BLE_L2CAP_COC_CID_END) {
-            next_cid = BLE_L2CAP_COC_CID_START;
+static inline void
+ble_l2cap_clear_used_cid(uint32_t *cid_mask, int bit)
+{
+    cid_mask[bit / 32] &= ~(1 << (bit % 32));
+}
+
+static inline int
+ble_l2cap_get_first_available_bit(uint32_t *cid_mask)
+{
+    int i;
+    int bit = 0;
+
+    for (i = 0; i < BLE_HS_CONN_L2CAP_COC_CID_MASK_LEN; i++) {
+        /* Find first available index by finding first available bit
+         * in the mask.
+         * Note:
+         * a) If bit == 0 means all the bits are used
+         * b) this function returns 1 + index
+         */
+        bit = __builtin_ffs(~(unsigned int)(cid_mask[i]));
+        if (bit != 0) {
+            break;
+        }
     }
 
-    /*TODO: Make it smarter*/
-    return next_cid++;
+    if (i == BLE_HS_CONN_L2CAP_COC_CID_MASK_LEN) {
+        return -1;
+    }
+
+    return (i * 32 + bit - 1);
+}
+
+static int
+ble_l2cap_coc_get_cid(uint32_t *cid_mask)
+{
+    int bit;
+
+    bit = ble_l2cap_get_first_available_bit(cid_mask);
+    if (bit < 0) {
+        return -1;
+    }
+
+    ble_l2cap_set_used_cid(cid_mask, bit);
+    return BLE_L2CAP_COC_CID_START + bit;
 }
 
 static struct ble_l2cap_coc_srv *
@@ -145,22 +184,26 @@ ble_l2cap_coc_rx_fn(struct ble_l2cap_chan *chan)
 
     /* Create a shortcut to rx endpoint */
     rx = &chan->coc_rx;
+    BLE_HS_DBG_ASSERT(rx != NULL);
 
     om_total = OS_MBUF_PKTLEN(*om);
-    rc = ble_hs_mbuf_pullup_base(om, BLE_L2CAP_SDU_SIZE);
-    if (rc != 0) {
-        return rc;
-    }
 
     /* First LE frame */
     if (OS_MBUF_PKTLEN(rx->sdu) == 0) {
         uint16_t sdu_len;
 
+        rc = ble_hs_mbuf_pullup_base(om, BLE_L2CAP_SDU_SIZE);
+        if (rc != 0) {
+            return rc;
+        }
+
         sdu_len = get_le16((*om)->om_data);
         if (sdu_len > rx->mtu) {
-            /* TODO Disconnect?*/
             BLE_HS_LOG(INFO, "error: sdu_len > rx->mtu (%d>%d)\n",
                        sdu_len, rx->mtu);
+
+            /* Disconnect peer with invalid behaviour */
+            ble_l2cap_disconnect(chan);
             return BLE_HS_EBADDATA;
         }
 
@@ -231,14 +274,25 @@ ble_l2cap_coc_rx_fn(struct ble_l2cap_chan *chan)
     return 0;
 }
 
+void
+ble_l2cap_coc_set_new_mtu_mps(struct ble_l2cap_chan *chan, uint16_t mtu, uint16_t mps)
+{
+    chan->my_coc_mps = mps;
+    chan->coc_rx.mtu = mtu;
+    chan->initial_credits = mtu / chan->my_coc_mps;
+    if (mtu % chan->my_coc_mps) {
+        chan->initial_credits++;
+    }
+}
+
 struct ble_l2cap_chan *
-ble_l2cap_coc_chan_alloc(uint16_t conn_handle, uint16_t psm, uint16_t mtu,
+ble_l2cap_coc_chan_alloc(struct ble_hs_conn *conn, uint16_t psm, uint16_t mtu,
                          struct os_mbuf *sdu_rx, ble_l2cap_event_fn *cb,
                          void *cb_arg)
 {
     struct ble_l2cap_chan *chan;
 
-    chan = ble_l2cap_chan_alloc(conn_handle);
+    chan = ble_l2cap_chan_alloc(conn->bhc_handle);
     if (!chan) {
         return NULL;
     }
@@ -246,8 +300,8 @@ ble_l2cap_coc_chan_alloc(uint16_t conn_handle, uint16_t psm, uint16_t mtu,
     chan->psm = psm;
     chan->cb = cb;
     chan->cb_arg = cb_arg;
-    chan->scid = ble_l2cap_coc_get_cid();
-    chan->my_mtu = MYNEWT_VAL(BLE_L2CAP_COC_MPS);
+    chan->scid = ble_l2cap_coc_get_cid(conn->l2cap_coc_cid_mask);
+    chan->my_coc_mps = MYNEWT_VAL(BLE_L2CAP_COC_MPS);
     chan->rx_fn = ble_l2cap_coc_rx_fn;
     chan->coc_rx.mtu = mtu;
     chan->coc_rx.sdu = sdu_rx;
@@ -255,8 +309,8 @@ ble_l2cap_coc_chan_alloc(uint16_t conn_handle, uint16_t psm, uint16_t mtu,
     /* Number of credits should allow to send full SDU with on given
      * L2CAP MTU
      */
-    chan->coc_rx.credits = mtu / chan->my_mtu;
-    if (mtu % chan->my_mtu) {
+    chan->coc_rx.credits = mtu / chan->my_coc_mps;
+    if (mtu % chan->my_coc_mps) {
         chan->coc_rx.credits++;
     }
 
@@ -265,7 +319,7 @@ ble_l2cap_coc_chan_alloc(uint16_t conn_handle, uint16_t psm, uint16_t mtu,
 }
 
 int
-ble_l2cap_coc_create_srv_chan(uint16_t conn_handle, uint16_t psm,
+ble_l2cap_coc_create_srv_chan(struct ble_hs_conn *conn, uint16_t psm,
                               struct ble_l2cap_chan **chan)
 {
     struct ble_l2cap_coc_srv *srv;
@@ -276,7 +330,7 @@ ble_l2cap_coc_create_srv_chan(uint16_t conn_handle, uint16_t psm,
         return BLE_HS_ENOTSUP;
     }
 
-    *chan = ble_l2cap_coc_chan_alloc(conn_handle, psm, srv->mtu, NULL, srv->cb,
+    *chan = ble_l2cap_coc_chan_alloc(conn, psm, srv->mtu, NULL, srv->cb,
                                      srv->cb_arg);
     if (!*chan) {
         return BLE_HS_ENOMEM;
@@ -303,7 +357,7 @@ ble_l2cap_event_coc_disconnected(struct ble_l2cap_chan *chan)
 }
 
 void
-ble_l2cap_coc_cleanup_chan(struct ble_l2cap_chan *chan)
+ble_l2cap_coc_cleanup_chan(struct ble_hs_conn *conn, struct ble_l2cap_chan *chan)
 {
     /* PSM 0 is used for fixed channels. */
     if (chan->psm == 0) {
@@ -311,6 +365,11 @@ ble_l2cap_coc_cleanup_chan(struct ble_l2cap_chan *chan)
     }
 
     ble_l2cap_event_coc_disconnected(chan);
+
+    if (conn && chan->scid) {
+        ble_l2cap_clear_used_cid(conn->l2cap_coc_cid_mask,
+                                 chan->scid - BLE_L2CAP_COC_CID_START);
+    }
 
     os_mbuf_free_chain(chan->coc_rx.sdu);
     os_mbuf_free_chain(chan->coc_tx.sdu);
@@ -364,7 +423,7 @@ ble_l2cap_coc_continue_tx(struct ble_l2cap_chan *chan)
         }
 
         /* Take into account peer MTU */
-        len = min(left_to_send, chan->peer_mtu);
+        len = min(left_to_send, chan->peer_coc_mps);
 
         /* Prepare packet */
         txom = ble_hs_mbuf_l2cap_pkt();
@@ -538,46 +597,6 @@ ble_l2cap_coc_send(struct ble_l2cap_chan *chan, struct os_mbuf *sdu_tx)
     tx->sdu = sdu_tx;
 
     return ble_l2cap_coc_continue_tx(chan);
-}
-
-int
-ble_l2cap_get_scid(struct ble_l2cap_chan *chan)
-{
-    if (!chan) {
-        return 0;
-    }
-
-    return chan->scid;
-}
-
-int
-ble_l2cap_get_dcid(struct ble_l2cap_chan *chan)
-{
-    if (!chan) {
-        return 0;
-    }
-
-    return chan->dcid;
-}
-
-int
-ble_l2cap_get_our_mtu(struct ble_l2cap_chan *chan)
-{
-    if (!chan) {
-        return 0;
-    }
-
-    return chan->my_mtu;
-}
-
-int
-ble_l2cap_get_peer_mtu(struct ble_l2cap_chan *chan)
-{
-    if (!chan) {
-        return 0;
-    }
-
-    return chan->peer_mtu;
 }
 
 int

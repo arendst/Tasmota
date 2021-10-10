@@ -106,7 +106,7 @@ void SevensegLog(void)
 void SevensegDim(void)
 {
   for (uint32_t i = 0; i < sevensegs; i++) {
-    sevenseg[i]->setBrightness(Settings->display_dimmer);
+    sevenseg[i]->setBrightness(GetDisplayDimmer16());
   }
 }
 
@@ -130,7 +130,7 @@ void SevensegClear(void)
 void SevensegInitMode(void)
 {
   for (uint32_t i = 0; i < sevensegs; i++) {
-    sevenseg[i]->setBrightness(Settings->display_dimmer);
+    sevenseg[i]->setBrightness(GetDisplayDimmer16());
     sevenseg[i]->blinkRate(0);
   }
   SevensegClear();

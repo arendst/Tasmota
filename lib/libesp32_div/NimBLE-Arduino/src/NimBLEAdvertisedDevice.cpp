@@ -734,7 +734,7 @@ uint8_t* NimBLEAdvertisedDevice::getPayload() {
  * @param [in] length The length of the payload in bytes.
  * @param [in] append Indicates if the the data should be appended (scan response).
  */
-void NimBLEAdvertisedDevice::setPayload(uint8_t *payload, uint8_t length, bool append) {
+void NimBLEAdvertisedDevice::setPayload(const uint8_t *payload, uint8_t length, bool append) {
     if(!append) {
         m_advLength = length;
         m_payload.assign(payload, payload + length);

@@ -47,7 +47,7 @@ extern "C" {
     .type = BE_INT                                              \
 }
 
-#define be_const_index(_val) {                                  \
+#define be_const_var(_val) {                                  \
     .v.i = (bint)(_val),                                        \
     .type = BE_INDEX                                            \
 }
@@ -70,6 +70,11 @@ extern "C" {
 #define be_const_str(_str) {                                    \
     .v.s = (bstring*)(_str),                                    \
     .type = BE_STRING                                           \
+}
+
+#define be_const_comptr(_val) {                                 \
+    .v.c = (const void*)(_val),                                       \
+    .type = BE_COMPTR                                           \
 }
 
 #define be_const_class(_class) {                                \
@@ -203,7 +208,7 @@ const bntvmodule be_native_module(_module) = {                  \
     BE_BOOL                                                     \
 }
 
-#define be_const_index(_val) {                                  \
+#define be_const_var(_val) {                                  \
     bvaldata(bint(_val)),                                       \
     BE_INDEX                                                    \
 }
@@ -216,6 +221,11 @@ const bntvmodule be_native_module(_module) = {                  \
 #define be_const_real_hex(_val) {                               \
     bvaldata((void*)(_val)),                                    \
     BE_REAL                                                     \
+}
+
+#define be_const_comptr(_val) {                                 \
+    bvaldata((void*)(_val)),                                    \
+    BE_COMPTR                                                   \
 }
 
 #define be_const_str(_string) {                                 \

@@ -97,7 +97,7 @@ static void match_notoken(bparser *parser, btokentype type)
     }
 }
 
-/* check that if the expdesc is a symbol, it is avalid one or raise an exception */
+/* check that if the expdesc is a symbol, it is a valid one or raise an exception */
 static void check_symbol(bparser *parser, bexpdesc *e)
 {
     if (e->type == ETVOID && e->v.s == NULL) { /* error when token is not a symbol */
@@ -106,7 +106,7 @@ static void check_symbol(bparser *parser, bexpdesc *e)
     }
 }
 
-/* check that the value in `e` is valid for a variable, i.e. conatins a value or a valid symbol */
+/* check that the value in `e` is valid for a variable, i.e. contains a value or a valid symbol */
 static void check_var(bparser *parser, bexpdesc *e)
 {
     check_symbol(parser, e); /* check the token is a symbol */
@@ -461,6 +461,14 @@ static void new_var(bparser *parser, bstring *name, bexpdesc *var)
             push_error(parser,
                 "too many global variables (in '%s')", str(name));
         }
+        if (comp_is_named_gbl(parser->vm)) {
+            /* change to ETNGLBAL */
+            bexpdesc key;
+            init_exp(&key, ETSTRING, 0);
+            key.v.s = name;
+            init_exp(var, ETNGLOBAL, 0);
+            var->v.idx = be_code_nglobal(parser->finfo, &key);
+        }
     }
 }
 
@@ -528,23 +536,45 @@ static void singlevar(bparser *parser, bexpdesc *var)
     }
 }
 
+/* parse a vararg argument in the form `def f(a, *b) end` */
+/* Munch the '*', read the token, create variable and declare the function as vararg */
+static void func_vararg(bparser *parser) {
+    bexpdesc v;
+    bstring *str;
+    match_token(parser, OptMul); /* skip '*' */
+    str = next_token(parser).u.s;
+    match_token(parser, TokenId); /* match and skip ID */
+    new_var(parser, str, &v); /* new variable */
+    parser->finfo->proto->varg = 1;   /* set varg flag */
+}
+
 /* Parse function or method definition variable list */
 /* Create an implicit local variable for each argument starting at R0 */
 /* Update function proto argc to the expected number or arguments */
 /* Raise an exception if multiple arguments have the same name */
+/* New: vararg support */
 static void func_varlist(bparser *parser)
 {
     bexpdesc v;
     bstring *str;
-    /* '(' [ID {',' ID}] ')' */
+    /* '(' [ ID {',' ID}] ')' or */
+    /* '(' '*' ID ')' or */
+    /* '(' [ ID {',' ID}] ',' '*' ID ')' */
     match_token(parser, OptLBK); /* skip '(' */
-    if (match_id(parser, str) != NULL) {
+    if (next_type(parser) == OptMul) {
+        func_vararg(parser);
+    } else if (match_id(parser, str) != NULL) {
         new_var(parser, str, &v); /* new variable */
         while (match_skip(parser, OptComma)) { /* ',' */
-            str = next_token(parser).u.s;
-            match_token(parser, TokenId); /* match and skip ID */
-            /* new local variable */
-            new_var(parser, str, &v);
+            if (next_type(parser) == OptMul) {
+                func_vararg(parser);
+                break;
+            } else {
+                str = next_token(parser).u.s;
+                match_token(parser, TokenId); /* match and skip ID */
+                /* new local variable */
+                new_var(parser, str, &v);
+            }
         }
     }
     match_token(parser, OptRBK); /* skip ')' */
@@ -572,12 +602,12 @@ static bproto* funcbody(bparser *parser, bstring *name, int type)
     return finfo.proto; /* return fully constructed `bproto` */
 }
 
-/* anonymous function, build `bproto` object with name `<anonymous>` */
+/* anonymous function, build `bproto` object with name `_anonymous_` */
 /* and build a expdesc for the bproto */
 static void anon_func(bparser *parser, bexpdesc *e)
 {
     bproto *proto;
-    bstring *name = parser_newstr(parser, "<anonymous>");
+    bstring *name = parser_newstr(parser, "_anonymous_");
     /* 'def' ID '(' varlist ')' block 'end' */
     scan_next_token(parser); /* skip 'def' */
     proto = funcbody(parser, name, FUNC_ANONYMOUS);
@@ -762,6 +792,13 @@ static void member_expr(bparser *parser, bexpdesc *e)
         init_exp(&key, ETSTRING, 0);
         key.v.s = str;
         be_code_member(parser->finfo, e, &key);
+    } else if (next_type(parser) == OptLBK) {
+        scan_next_token(parser); /* skip '(' */
+        bexpdesc key;
+        expr(parser, &key);
+        check_var(parser, &key);
+        match_token(parser, OptRBK); /* skip ')' */
+        be_code_member(parser->finfo, e, &key);
     } else {
         push_error(parser, "invalid syntax near '%s'",
             be_token2str(parser->vm, &next_token(parser)));
@@ -863,10 +900,12 @@ static void suffix_expr(bparser *parser, bexpdesc *e)
 static void suffix_alloc_reg(bparser *parser, bexpdesc *l)
 {
     bfuncinfo *finfo = parser->finfo;
-    bbool suffix = l->type == ETINDEX || l->type == ETMEMBER;
+    bbool is_suffix = l->type == ETINDEX || l->type == ETMEMBER;   /* is suffix */
+    bbool is_suffix_reg = l->v.ss.tt == ETREG || l->v.ss.tt == ETLOCAL || l->v.ss.tt == ETGLOBAL || l->v.ss.tt == ETNGLOBAL;   /* if suffix, does it need a register */
+    bbool is_global = l->type == ETGLOBAL || l->type == ETNGLOBAL;
     /* in the suffix expression, if the object is a temporary
      * variable (l->v.ss.tt == ETREG), it needs to be cached. */
-    if (suffix && l->v.ss.tt == ETREG) {
+    if (is_global || (is_suffix && is_suffix_reg)) {
         be_code_allocregs(finfo, 1);
     }
 }
@@ -959,6 +998,7 @@ static void cond_expr(bparser *parser, bexpdesc *e)
     if (next_type(parser) == OptQuestion) {
         int jf, jl = NO_JUMP; /* jump list */
         bfuncinfo *finfo = parser->finfo;
+        check_var(parser, e);  /* check if valid */
         scan_next_token(parser); /* skip '?' */
         be_code_jumpbool(finfo, e, bfalse); /* go if true */
         jf = e->f;
@@ -1380,11 +1420,12 @@ static void classdef_stmt(bparser *parser, bclass *c)
 static void class_inherit(bparser *parser, bexpdesc *e)
 {
     if (next_type(parser) == OptColon) { /* ':' */
+        bexpdesc ec = *e;    /* work on a copy because we preserve original class */
         bexpdesc e1;
         scan_next_token(parser); /* skip ':' */
         expr(parser, &e1);
         check_var(parser, &e1);
-        be_code_setsuper(parser->finfo, e, &e1);
+        be_code_setsuper(parser->finfo, &ec, &e1);
     }
 }
 

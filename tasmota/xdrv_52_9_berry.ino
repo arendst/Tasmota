@@ -27,6 +27,7 @@
 
 extern "C" {
   extern void be_load_custom_libs(bvm *vm);
+  extern void be_tracestack(bvm *vm);
 }
 
 const char kBrCommands[] PROGMEM = D_PRFX_BR "|"    // prefix
@@ -115,6 +116,8 @@ void BerryDumpErrorAndClear(bvm *vm, bool berry_console) {
   if (top >= 2 && be_isstring(vm, -1) && be_isstring(vm, -2)) {
     if (berry_console) {
       berry_log_C(PSTR(D_LOG_BERRY "Exception> '%s' - %s"), be_tostring(berry.vm, -2), be_tostring(berry.vm, -1));
+      be_tracestack(vm);
+      top = be_top(vm);   // update top after dump
     } else {
       AddLog(LOG_LEVEL_ERROR, PSTR(D_LOG_BERRY "Exception> '%s' - %s"), be_tostring(berry.vm, -2), be_tostring(berry.vm, -1));
     }
@@ -256,6 +259,10 @@ void BerryObservability(bvm *vm, int event...) {
         int32_t vm_usage2 = va_arg(param, int32_t);
         uint32_t gc_elapsed = millis() - gc_time;
         AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_BERRY "GC from %i to %i bytes (in %d ms)"), vm_usage, vm_usage2, gc_elapsed);
+        // make new threshold tighter when we reach high memory usage
+        if (!UsePSRAM() && vm->gc.threshold > 20*1024) {
+          vm->gc.threshold = vm->gc.usage + 10*1024;    // increase by only 10 KB
+        }
       }
       break;
     default: break;
@@ -347,7 +354,7 @@ void BrLoad(const char * script_name) {
     bool loaded = be_tobool(berry.vm, -2);  // did it succeed?
     be_pop(berry.vm, 2);
     if (loaded) {
-      AddLog(LOG_LEVEL_INFO, D_LOG_BERRY "sucessfully loaded '%s'", script_name);
+      AddLog(LOG_LEVEL_INFO, D_LOG_BERRY "successfully loaded '%s'", script_name);
     } else {
       AddLog(LOG_LEVEL_INFO, D_LOG_BERRY "no '%s'", script_name);
     }

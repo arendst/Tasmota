@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v9.5.0.3
+ * Updated until v9.5.0.7
 \*********************************************************************/
 
 //#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -234,8 +234,8 @@
 #define D_SYSLOG_HOST_NOT_FOUND "Syslog-Host nicht gefunden"
 
 // settings.ino
-#define D_SAVED_TO_FLASH_AT "in Flash gespeichert am"
-#define D_LOADED_FROM_FLASH_AT "aus Flash geladen am"
+#define D_SAVED_TO_FLASH_AT "in Flash gespeichert an"
+#define D_LOADED_FROM_FLASH_AT "aus Flash geladen von"
 #define D_USE_DEFAULTS "Standard verwenden"
 #define D_ERASED_SECTOR "gelöschter Sektor"
 
@@ -328,7 +328,9 @@
 #define D_WEB_ADMIN_PASSWORD "Passwort für Web Oberfläche"
 #define D_MQTT_ENABLE "MQTT aktivieren"
 #define D_MQTT_TLS_ENABLE "MQTT TLS"
-#define D_FRIENDLY_NAME "Name [friendly name]"
+#define D_HTTP_API "HTTP API"
+#define D_HTTP_API_ENABLE "HTTP API aktivieren"
+#define D_FRIENDLY_NAME "Name [Friendly Name]"
 #define D_BELKIN_WEMO "Belkin WeMo"
 #define D_HUE_BRIDGE "Hue Bridge"
 #define D_SINGLE_DEVICE "Einzelnes Gerät"
@@ -491,19 +493,19 @@
 #define D_ZIGBEE_UNKNWON_ATTRIBUTE "Unbekannter Attribut Name (ignoriert): %s"
 #define D_ZIGBEE_TOO_MANY_CLUSTERS "Nur eine Cluster id pro Kommando"
 #define D_ZIGBEE_WRONG_DELIMITER "Falscher Delimeter für Payload"
-#define D_ZIGBEE_UNRECOGNIZED_COMMAND "Unerkanntes zigbee Kommando: %s"
+#define D_ZIGBEE_UNRECOGNIZED_COMMAND "Unerkanntes Zigbee Kommando: %s"
 #define D_ZIGBEE_TOO_MANY_COMMANDS "Nur 1 Kommando zulässig (%d)"
 #define D_ZIGBEE_NO_ATTRIBUTE "Kein Attribut in der Liste"
 #define D_ZIGBEE_UNSUPPORTED_ATTRIBUTE_TYPE "Nicht unterstützter Attribut Typ"
 #define D_ZIGBEE_JSON_REQUIRED "Konfiguration muss JSON basiert sein"
 #define D_ZIGBEE_RESET_1_OR_2 "1 oder 2 für Reset"
-#define D_ZIGBEE_EEPROM_FOUND_AT_ADDRESS "ZBBridge EEPROM gefunden auf Adresse"
+#define D_ZIGBEE_EEPROM_FOUND_AT_ADDRESS "ZBBridge EEPROM gefunden an Adresse"
 #define D_ZIGBEE_RANDOMIZING_ZBCONFIG "Zufällige Zigbee Parameter erstellt, Überprüfung mit 'ZbConfig'"
 
 // xdrv_03_energy.ino
 #define D_ENERGY_TODAY "Energie heute"
 #define D_ENERGY_YESTERDAY "Energie gestern"
-#define D_ENERGY_TOTAL "Energie insgesamt"
+#define D_ENERGY_TOTAL "Energie gesamt"
 
 // xdrv_27_shutter.ino
 #define D_OPEN "Öffnen"
@@ -531,7 +533,7 @@
 #define D_CHECKSUM_FAILURE "Prüfsummen-Fehler"
 
 // xsns_07_sht1x.ino
-#define D_SENSOR_DID_NOT_ACK_COMMAND "Sensor hat ACK-Befehl nicht ausgeführt"
+#define D_SENSOR_DID_NOT_ACK_COMMAND "Sensor hat Befehl nicht ausgeführt"
 #define D_SHT1X_FOUND "SHT1X gefunden"
 
 // xsns_18_pms5003.ino
@@ -708,6 +710,9 @@
 #define D_SENSOR_CSE7761_RX    "CSE7761 Rx"
 #define D_SENSOR_CSE7766_TX    "CSE7766 Tx"
 #define D_SENSOR_CSE7766_RX    "CSE7766 Rx"
+#define D_SENSOR_BL0939_RX     "BL0939 Rx"
+#define D_SENSOR_BL0942_RX     "BL0942 Rx"
+#define D_SENSOR_HM330X_SET    "HM330X SET"
 #define D_SENSOR_PN532_TX      "PN532 Tx"
 #define D_SENSOR_PN532_RX      "PN532 Rx"
 #define D_SENSOR_SM16716_CLK   "SM16716 CLK"
@@ -834,6 +839,9 @@
 #define D_SENSOR_HALLEFFECT    "HallEffect"
 #define D_SENSOR_EPD_DATA      "EPD Data"
 #define D_SENSOR_MCP2515_CS    "MCP2515 CS"
+#define D_SENSOR_HRG15_RX      "HRG15 Rx"
+#define D_SENSOR_HRG15_TX      "HRG15 Tx"
+#define D_SENSOR_VINDRIKTNING_RX "VINDRIKTNING"
 
 // Units
 #define D_UNIT_AMPERE "A"
@@ -940,9 +948,10 @@
 #define D_FS_SIZE              "Größe"
 #define D_FS_FREE              "Frei"
 #define D_NEW_FILE             "neue-datei.txt"
-#define D_CREATE_NEW_FILE      "Neue Datei erstellen und bearbeiten"
+#define D_CREATE_NEW_FILE      "Datei erstellen und bearbeiten"
 #define D_EDIT_FILE            "Datei bearbeiten"
-#define D_CONFIRM_FILE_DEL     "Löschen der Datei bestätigen"
+#define D_CONFIRM_FILE_DEL     "Datei löschen bestätigen"
+#define D_SHOW_HIDDEN_FILES    "Show hidden files"
 
 //xsns_67_as3935.ino
 #define D_AS3935_GAIN "Umgebung:"
@@ -1012,7 +1021,7 @@
 #define D_FP_INVALIDIMAGE "Abbild ungültig"             // 0x15 Failed to generate image because of lac of valid primary image
 #define D_FP_FLASHERR "Flash Schreibfehler"             // 0x18 Error when writing flash
 #define D_FP_INVALIDREG "Ungültige ID-Nummer"           // 0x1A Invalid register number
-#define D_FP_ADDRCODE "Addresse"                        // 0x20 Address code
+#define D_FP_ADDRCODE "Adresse"                        // 0x20 Address code
 #define D_FP_PASSVERIFY "Übereinstimmung"               // 0x21 Verify the fingerprint passed
 #define D_FP_UNKNOWNERROR "Fehler"                      // Any other error
 

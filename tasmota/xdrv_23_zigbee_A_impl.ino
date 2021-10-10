@@ -1491,6 +1491,7 @@ void CmndZbEZSPListen(void) {
 }
 
 void ZigbeeGlowPermitJoinLight(void) {
+#ifdef ESP8266  // quick fix since this causes a crash on ESP32
   static const uint16_t cycle_time = 1000;    // cycle up and down in 1000 ms
   static const uint16_t half_cycle_time = cycle_time / 2;    // cycle up and down in 1000 ms
 
@@ -1511,6 +1512,7 @@ void ZigbeeGlowPermitJoinLight(void) {
   if (led_pin >= 0) {
     analogWrite(led_pin, TasmotaGlobal.ledlnk_inverted ? 1023 - led_power : led_power);
   }
+#endif
 }
 #endif // USE_ZIGBEE_EZSP
 

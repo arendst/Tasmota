@@ -8,5 +8,14 @@ const char HTTP_HEAD_LAST_SCRIPT[] PROGMEM =
       "t++;"
     "}"
   "}"
+  "function sf(s){"
+    "var t=0,i=document.querySelectorAll('.hf');"
+    "while(i.length>=t){"
+      "if(i[t]){"
+        "i[t].style.display=s?'block':'none';"
+      "}"
+      "t++;"
+    "}"
+  "}"
   "wl(jd);"                               // Add name='' to any id='' in input,button,textarea,select
   "</script>";

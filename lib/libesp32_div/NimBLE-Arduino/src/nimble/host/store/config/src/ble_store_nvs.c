@@ -214,8 +214,10 @@ get_nvs_db_attribute(int obj_type, bool empty, void *value, int num_value)
             if (value) {
 #if MYNEWT_VAL(BLE_HOST_BASED_PRIVACY)
                 if (obj_type == BLE_STORE_OBJ_TYPE_PEER_DEV_REC) {
-                    err = get_nvs_matching_index(&p_dev_rec, value, num_value,
-                                                 sizeof(struct ble_hs_dev_records));
+                    err = get_nvs_matching_index(&p_dev_rec.peer_sec,
+                                                 &((struct ble_hs_dev_records *)value)->peer_sec,
+                                                 num_value,
+                                                 sizeof(struct ble_hs_peer_sec));
                 } else
 #endif
                 {

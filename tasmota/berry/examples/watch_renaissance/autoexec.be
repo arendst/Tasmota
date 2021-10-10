@@ -11,13 +11,13 @@ lv.start()
 
 scr = lv.scr_act()
 
-scr.set_style_local_bg_color(lv.OBJ_PART_MAIN, lv.STATE_DEFAULT, lv_color(lv.BLACK))
+scr.set_style_local_bg_color(lv.OBJ_PART_MAIN, lv.STATE_DEFAULT, lv_color(lv.COLOR_BLACK))
 ren_back = lv_img(scr)
 ren_back.set_src("A:/watch_ren_back_240.png")
 ren_back.align(0, lv.ALIGN_CENTER, 0, 0)
 
 ren_day = lv_label(ren_back)
-ren_day.set_style_local_text_color(lv.OBJ_PART_MAIN, lv.STATE_DEFAULT, lv_color(lv.BLACK))
+ren_day.set_style_local_text_color(lv.OBJ_PART_MAIN, lv.STATE_DEFAULT, lv_color(lv.COLOR_BLACK))
 ren_day.set_long_mode(lv.LABEL_LONG_CROP)
 ren_day.set_align(lv.LABEL_ALIGN_CENTER)
 ren_day.set_text("")

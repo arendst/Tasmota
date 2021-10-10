@@ -33,11 +33,26 @@
 #define CODE_IMAGE_STR "webcam"
 
 #define USE_WEBCAM
+#define USE_TASMOTA_DISCOVERY
 #define ENABLE_RTSPSERVER
-#define USE_SDCARD
 #define USE_SPI
+#define USE_SDCARD
+
+#undef USE_I2C
+#undef USE_HOME_ASSISTANT
+#undef USE_COUNTER
+#undef USE_IR_REMOTE
+#undef USE_AC_ZERO_CROSS_DIMMER
+#undef USE_PWM_DIMMER
+#undef USE_TUYA_MCU
+#undef USE_EMULATION_HUE
+#undef USE_EMULATION_WEMO
+#undef USE_ARILUX_RF
+#undef USE_DS18x20
+#undef USE_WS2812
+#undef USE_ENERGY_SENSOR
 #undef USE_BERRY                                 // Disable Berry scripting language
-#undef  USE_MI_ESP32                             // (ESP32 only) Disable support for ESP32 as a BLE-bridge (+9k2 mem, +292k flash)
+#undef USE_MI_ESP32                             // (ESP32 only) Disable support for ESP32 as a BLE-bridge (+9k2 mem, +292k flash)
 #endif  // FIRMWARE_WEBCAM
 
 /*********************************************************************************************\
@@ -58,13 +73,12 @@
 #define USE_ODROID_GO                            // Add support for Odroid Go
 #define USE_SDCARD
 
-#ifdef USE_BERRY                                 // Berry scripting language
-  #define USE_BERRY_PSRAM                        // Allocate Berry memory in PSRAM if PSRAM is connected - this might be slightly slower but leaves main memory intact
-#endif
+#undef USE_HOME_ASSISTANT
 
 #define USE_ADC
 #define USE_SPI
   #define USE_DISPLAY                            // Add SPI Display Support (+2k code)
+  #define SHOW_SPLASH
   #ifndef USE_UNIVERSAL_DISPLAY
     #define USE_DISPLAY_ILI9341                  // [DisplayModel 4] Enable ILI9341 Tft 480x320 display (+19k code)
   #endif
@@ -87,28 +101,28 @@
 #undef FALLBACK_MODULE
 #define FALLBACK_MODULE        M5STACK_CORE2     // [Module2] Select default module on fast reboot where USER_MODULE is user template
 
+#undef USE_HOME_ASSISTANT
+
 #define USE_M5STACK_CORE2                        // Add support for M5Stack Core2
   #define USE_I2S_SAY_TIME
   #define USE_I2S_WEBRADIO
 #define USE_SDCARD
-
-#ifdef USE_BERRY                                 // Berry scripting language
-  #define USE_BERRY_PSRAM                        // Allocate Berry memory in PSRAM if PSRAM is connected - this might be slightly slower but leaves main memory intact
-#endif
 
 #define USE_I2C
   #define USE_BMA423
   #define USE_MPU_ACCEL
 #define USE_SPI
   #define USE_DISPLAY
+  #define SHOW_SPLASH
 #ifdef USE_UNIVERSAL_DISPLAY
   #define USE_LVGL
+  #define USE_LVGL_FREETYPE
 //  #define USE_DISPLAY_LVGL_ONLY
 #else
   #define USE_DISPLAY_ILI9341                  // [DisplayModel 4] Enable ILI9341 Tft 480x320 display (+19k code)
   #define USE_DISPLAY_MODES1TO5
-  #define USE_TOUCH_BUTTONS
 #endif
+    #define USE_TOUCH_BUTTONS
     #define JPEG_PICTS
     #define USE_FT5206
 
@@ -150,11 +164,16 @@
 #undef FALLBACK_MODULE
 #define FALLBACK_MODULE        WEMOS             // [Module2] Select default module on fast reboot where USER_MODULE is user template
 
+#define USE_INFLUXDB                             // Enable influxdb support (+5k code)
+#define USE_TASMOTA_DISCOVERY
+#undef USE_HOME_ASSISTANT
+
 #define USE_SDCARD
 
 #define USE_ADC
 #undef USE_BERRY                                 // Disable Berry scripting language
 #define USE_BLE_ESP32                            // Enable new BLE driver
+#define USE_EQ3_ESP32
 #define USE_MI_ESP32                             // (ESP32 only) Add support for ESP32 as a BLE-bridge (+9k2 mem, +292k flash)
 #endif  // FIRMWARE_BLUETOOTH
 
@@ -180,6 +199,7 @@
 #define USE_SPI
 #define USE_LVGL
 #define USE_DISPLAY
+#define SHOW_SPLASH
 #define USE_XPT2046
 #define USE_FT5206
 #define USE_MPU_ACCEL
@@ -197,9 +217,6 @@
 #undef USE_DISPLAY_SEVENSEG
 
 #define USE_ENHANCED_GUI_WIFI_SCAN
-
-#define USE_BERRY                                // Enable Berry scripting language
-//#define USE_BERRY_PSRAM                        // Allocate Berry memory in PSRAM if PSRAM is connected - this might be slightly slower but leaves main memory intact
 
 #define USE_SDCARD
 
@@ -266,6 +283,7 @@
 //#define USE_MGC3130                            // [I2cDriver27] Enable MGC3130 Electric Field Effect Sensor (I2C address 0x42) (+2k7 code, 0k3 mem)
 //#define USE_MAX44009                           // [I2cDriver28] Enable MAX44009 Ambient Light sensor (I2C addresses 0x4A and 0x4B) (+0k8 code)
 //#define USE_SCD30                              // [I2cDriver29] Enable Sensiron SCd30 CO2 sensor (I2C address 0x61) (+3k3 code)
+//#define USE_SCD40                              // [I2cDriver62] Enable Sensiron SCd40 CO2 sensor (I2C address 0x62) (+3k3 code)
 //#define USE_SPS30                              // [I2cDriver30] Enable Sensiron SPS30 particle sensor (I2C address 0x69) (+1.7 code)
 //#define USE_ADE7953                            // [I2cDriver7] Enable ADE7953 Energy monitor as used on Shelly 2.5 (I2C address 0x38) (+1k5)
 //#define USE_VL53L0X                            // [I2cDriver31] Enable VL53L0x time of flight sensor (I2C address 0x29) (+4k code)
@@ -279,7 +297,7 @@
 //#define USE_DHT12                              // [I2cDriver41] Enable DHT12 humidity and temperature sensor (I2C address 0x5C) (+0k7 code)
 //#define USE_DS1624                             // [I2cDriver42] Enable DS1624, DS1621 temperature sensor (I2C addresses 0x48 - 0x4F) (+1k2 code)
 //#define USE_AHT1x                              // [I2cDriver43] Enable AHT10/15 humidity and temperature sensor (I2C address 0x38, 0x39) (+0k8 code)
-//  #define USE_AHT2x                              // [I2cDriver43] Enable AHT20 instead of AHT1x humidity and temperature sensor (I2C address 0x38) (+0k8 code)
+//#define USE_AHT2x                              // [I2cDriver43] Enable AHT20 instead of AHT1x humidity and temperature sensor (I2C address 0x38) (+0k8 code)
 //#define USE_WEMOS_MOTOR_V1                     // [I2cDriver44] Enable Wemos motor driver V1 (I2C addresses 0x2D - 0x30) (+0k7 code)
   #define WEMOS_MOTOR_V1_ADDR  0x30              // Default I2C address 0x30
   #define WEMOS_MOTOR_V1_FREQ  1000              // Default frequency
@@ -341,6 +359,8 @@
 
 #ifdef FIRMWARE_TASMOTA32
 
+#define USE_INFLUXDB                             // Enable influxdb support (+5k code)
+
 #define USE_ENHANCED_GUI_WIFI_SCAN
 
 #define USE_SDCARD
@@ -400,6 +420,7 @@
 //#define USE_MGC3130                            // [I2cDriver27] Enable MGC3130 Electric Field Effect Sensor (I2C address 0x42) (+2k7 code, 0k3 mem)
 //#define USE_MAX44009                           // [I2cDriver28] Enable MAX44009 Ambient Light sensor (I2C addresses 0x4A and 0x4B) (+0k8 code)
 #define USE_SCD30                              // [I2cDriver29] Enable Sensiron SCd30 CO2 sensor (I2C address 0x61) (+3k3 code)
+#define USE_SCD40                              // [I2cDriver62] Enable Sensiron SCd40 CO2 sensor (I2C address 0x62) (+3k5 code)
 //#define USE_SPS30                              // [I2cDriver30] Enable Sensiron SPS30 particle sensor (I2C address 0x69) (+1.7 code)
 #define USE_ADE7953                            // [I2cDriver7] Enable ADE7953 Energy monitor as used on Shelly 2.5 (I2C address 0x38) (+1k5)
 #define USE_VL53L0X                            // [I2cDriver31] Enable VL53L0x time of flight sensor (I2C address 0x29) (+4k code)
@@ -413,7 +434,7 @@
 #define USE_DHT12                              // [I2cDriver41] Enable DHT12 humidity and temperature sensor (I2C address 0x5C) (+0k7 code)
 #define USE_DS1624                             // [I2cDriver42] Enable DS1624, DS1621 temperature sensor (I2C addresses 0x48 - 0x4F) (+1k2 code)
 //#define USE_AHT1x                              // [I2cDriver43] Enable AHT10/15 humidity and temperature sensor (I2C address 0x38, 0x39) (+0k8 code)
-//  #define USE_AHT2x                              // [I2cDriver43] Enable AHT20 instead of AHT1x humidity and temperature sensor (I2C address 0x38) (+0k8 code)
+//#define USE_AHT2x                              // [I2cDriver43] Enable AHT20 instead of AHT1x humidity and temperature sensor (I2C address 0x38) (+0k8 code)
 #define USE_WEMOS_MOTOR_V1                     // [I2cDriver44] Enable Wemos motor driver V1 (I2C addresses 0x2D - 0x30) (+0k7 code)
   #define WEMOS_MOTOR_V1_ADDR  0x30              // Default I2C address 0x30
   #define WEMOS_MOTOR_V1_FREQ  1000              // Default frequency
@@ -476,6 +497,7 @@
 //  #define USE_PROJECTOR_CTRL_OPTOMA              // Use codes for OPTOMA
 //#define USE_AS608                                // Add support for AS608 optical and R503 capacitive fingerprint sensor (+3k4 code)
 //#define USE_TFMINIPLUS                           // Add support for TFmini Plus (TFmini, TFmini-S) LiDAR modules via UART interface
+//#define USE_HRG15                                // Add support for Hydreon RG-15 Solid State Rain sensor (+1k5 code)
 
 #define USE_ENERGY_SENSOR                        // Add energy sensors (-14k code)
 #define USE_PZEM004T                             // Add support for PZEM004T Energy monitor (+2k code)

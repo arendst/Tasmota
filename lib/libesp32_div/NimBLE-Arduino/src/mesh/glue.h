@@ -24,6 +24,8 @@
 #include <errno.h>
 
 #include "syscfg/syscfg.h"
+#include "logcfg/logcfg.h"
+#include "modlog/modlog.h"
 #include "nimble/nimble_npl.h"
 
 #include "os/os_mbuf.h"
@@ -179,13 +181,19 @@ extern "C" {
 #define BT_GAP_ADV_SLOW_INT_MIN                 0x0640  /* 1 s      */
 #define BT_GAP_ADV_SLOW_INT_MAX                 0x0780  /* 1.2 s    */
 
-#define BT_DBG(fmt, ...)    \
-    if (BT_DBG_ENABLED) { \
-        BLE_HS_LOG(DEBUG, "%s: " fmt "\n", __func__, ## __VA_ARGS__); \
-    }
-#define BT_INFO(fmt, ...)   BLE_HS_LOG(INFO, "%s: " fmt "\n", __func__, ## __VA_ARGS__);
-#define BT_WARN(fmt, ...)   BLE_HS_LOG(WARN, "%s: " fmt "\n", __func__, ## __VA_ARGS__);
-#define BT_ERR(fmt, ...)    BLE_HS_LOG(ERROR, "%s: " fmt "\n", __func__, ## __VA_ARGS__);
+#ifndef MESH_LOG_MODULE
+#define MESH_LOG_MODULE BLE_MESH_LOG
+#endif
+
+#define CAT(a, ...) PRIMITIVE_CAT(a, __VA_ARGS__)
+#define PRIMITIVE_CAT(a, ...) a ## __VA_ARGS__
+
+#define BLE_MESH_LOG(lvl, ...) CAT(MESH_LOG_MODULE, CAT(_, lvl))(__VA_ARGS__)
+
+#define BT_DBG(fmt, ...)    BLE_MESH_LOG(DEBUG, "%s: " fmt "\n", __func__, ## __VA_ARGS__);
+#define BT_INFO(fmt, ...)   BLE_MESH_LOG(INFO, "%s: " fmt "\n", __func__, ## __VA_ARGS__);
+#define BT_WARN(fmt, ...)   BLE_MESH_LOG(WARN, "%s: " fmt "\n", __func__, ## __VA_ARGS__);
+#define BT_ERR(fmt, ...)    BLE_MESH_LOG(ERROR, "%s: " fmt "\n", __func__, ## __VA_ARGS__);
 #define BT_GATT_ERR(_att_err)   (-(_att_err))
 
 typedef ble_addr_t bt_addr_le_t;
@@ -216,6 +224,20 @@ static inline struct os_mbuf * NET_BUF_SIMPLE(uint16_t size)
 
 #define K_NO_WAIT (0)
 #define K_FOREVER (-1)
+
+#if MYNEWT_VAL(BLE_EXT_ADV)
+#define BT_MESH_ADV_INST     (MYNEWT_VAL(BLE_MULTI_ADV_INSTANCES))
+
+#if MYNEWT_VAL(BLE_MESH_PROXY)
+/* Note that BLE_MULTI_ADV_INSTANCES contains number of additional instances.
+ * Instance 0 is always there
+ */
+#if MYNEWT_VAL(BLE_MULTI_ADV_INSTANCES) < 1
+#error "Mesh needs at least BLE_MULTI_ADV_INSTANCES set to 1"
+#endif
+#define BT_MESH_ADV_GATT_INST     (MYNEWT_VAL(BLE_MULTI_ADV_INSTANCES) - 1)
+#endif /* BLE_MESH_PROXY */
+#endif /* BLE_EXT_ADV */
 
 /* This is by purpose */
 static inline void net_buf_simple_init(struct os_mbuf *buf,
@@ -260,6 +282,11 @@ void net_buf_reserve(struct os_mbuf *om, size_t reserve);
 #define net_buf_clone(a, b) os_mbuf_dup(a)
 #define net_buf_add_be32(a, b) net_buf_simple_add_be32(a, b)
 #define net_buf_add_be16(a, b) net_buf_simple_add_be16(a, b)
+#define net_buf_pull(a, b) net_buf_simple_pull(a, b)
+#define net_buf_pull_mem(a, b) net_buf_simple_pull_mem(a, b)
+#define net_buf_pull_u8(a) net_buf_simple_pull_u8(a)
+#define net_buf_pull_be16(a) net_buf_simple_pull_be16(a)
+#define net_buf_skip(a, b) net_buf_simple_pull_mem(a, b)
 
 #define BT_GATT_CCC_NOTIFY BLE_GATT_CHR_PROP_NOTIFY
 
@@ -370,9 +397,11 @@ static inline unsigned int find_msb_set(u32_t op)
 #define CONFIG_BT_MESH_PB_ADV               BLE_MESH_PB_ADV
 #define CONFIG_BT_MESH_PB_GATT              BLE_MESH_PB_GATT
 #define CONFIG_BT_MESH_PROV                 BLE_MESH_PROV
+#define CONFIG_BT_MESH_PROXY                BLE_MESH_PROXY
 #define CONFIG_BT_TESTING                   BLE_MESH_TESTING
 #define CONFIG_BT_SETTINGS                  BLE_MESH_SETTINGS
 #define CONFIG_SETTINGS                     BLE_MESH_SETTINGS
+#define CONFIG_BT_MESH_PROVISIONER          BLE_MESH_PROVISIONER
 
 /* Above flags are used with IS_ENABLED macro */
 #define IS_ENABLED(config) MYNEWT_VAL(config)
@@ -394,6 +423,8 @@ static inline unsigned int find_msb_set(u32_t op)
 #define CONFIG_BT_MESH_IVU_DIVIDER          MYNEWT_VAL(BLE_MESH_IVU_DIVIDER)
 #define CONFIG_BT_DEVICE_NAME               MYNEWT_VAL(BLE_MESH_DEVICE_NAME)
 #define CONFIG_BT_MESH_TX_SEG_MAX           MYNEWT_VAL(BLE_MESH_TX_SEG_MAX)
+#define CONFIG_BT_MESH_LABEL_COUNT          MYNEWT_VAL(BLE_MESH_LABEL_COUNT)
+#define CONFIG_BT_MESH_NODE_COUNT           MYNEWT_VAL(BLE_MESH_NODE_COUNT)
 
 #define printk console_printf
 
@@ -459,7 +490,8 @@ void net_buf_slist_merge_slist(struct net_buf_slist_t *list,
 
 #define settings_load conf_load
 int settings_bytes_from_str(char *val_str, void *vp, int *len);
-char *settings_str_from_bytes(void *vp, int vp_len, char *buf, int buf_len);
+char *settings_str_from_bytes(const void *vp, int vp_len,
+			      char *buf, int buf_len);
 
 #define snprintk snprintf
 #define BT_SETTINGS_SIZE(in_size) ((((((in_size) - 1) / 3) * 4) + 4) + 1)

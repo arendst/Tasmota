@@ -753,7 +753,7 @@ void TuyaProcessStatePacket(void) {
 
           if (RtcTime.valid) {
             if (Tuya.lastPowerCheckTime != 0 && Energy.active_power[0] > 0) {
-              Energy.kWhtoday += Energy.active_power[0] * (float)(Rtc.utc_time - Tuya.lastPowerCheckTime) / 36.0;
+              Energy.kWhtoday[0] += Energy.active_power[0] * (float)(Rtc.utc_time - Tuya.lastPowerCheckTime) / 36.0;
               EnergyUpdateToday();
             }
             Tuya.lastPowerCheckTime = Rtc.utc_time;
@@ -885,14 +885,15 @@ void TuyaProcessStatePacket(void) {
 
           if (RtcTime.valid) {
             if (Tuya.lastPowerCheckTime != 0 && Energy.active_power[0] > 0) {
-              Energy.kWhtoday += Energy.active_power[0] * (float)(Rtc.utc_time - Tuya.lastPowerCheckTime) / 36.0;
+              Energy.kWhtoday[0] += Energy.active_power[0] * (float)(Rtc.utc_time - Tuya.lastPowerCheckTime) / 36.0;
               EnergyUpdateToday();
             }
             Tuya.lastPowerCheckTime = Rtc.utc_time;
           }
         } else if (tuya_energy_enabled && fnId == TUYA_MCU_FUNC_POWER_TOTAL) {
-          EnergyUpdateTotal((float)packetValue / 100,true);
+          Energy.import_active[0] = (float)packetValue / 100;
           AddLog(LOG_LEVEL_DEBUG, PSTR("TYA: Rx ID=%d Total_Power=%d"), Tuya.buffer[dpidStart], packetValue);
+          EnergyUpdateTotal();
         }
   #endif // USE_ENERGY_SENSOR
       }

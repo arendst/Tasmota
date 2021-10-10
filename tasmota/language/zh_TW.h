@@ -326,8 +326,10 @@
 #define D_ACTIVATE "啟動"
 #define D_DEVICE_NAME "裝置名稱"
 #define D_WEB_ADMIN_PASSWORD "網頁上的管理員密碼"
-#define D_MQTT_ENABLE "MQTT的啟用"
+#define D_MQTT_ENABLE "MQTT 的啟用"
 #define D_MQTT_TLS_ENABLE "MQTT TLS"
+#define D_HTTP_API "HTTP API"
+#define D_HTTP_API_ENABLE "HTTP API 的啟用"
 #define D_FRIENDLY_NAME "暱稱"
 #define D_BELKIN_WEMO "貝爾金 WeMo"
 #define D_HUE_BRIDGE "Hue 橋接器"
@@ -708,6 +710,9 @@
 #define D_SENSOR_CSE7761_RX    "CSE7761 Rx"
 #define D_SENSOR_CSE7766_TX    "CSE7766 Tx"
 #define D_SENSOR_CSE7766_RX    "CSE7766 Rx"
+#define D_SENSOR_BL0939_RX     "BL0939 Rx"
+#define D_SENSOR_BL0942_RX     "BL0942 Rx"
+#define D_SENSOR_HM330X_SET    "HM330X SET"
 #define D_SENSOR_PN532_TX      "PN532 Tx"
 #define D_SENSOR_PN532_RX      "PN532 Rx"
 #define D_SENSOR_SM16716_CLK   "SM16716 CLK"
@@ -834,6 +839,9 @@
 #define D_SENSOR_HALLEFFECT    "HallEffect"
 #define D_SENSOR_EPD_DATA      "EPD Data"
 #define D_SENSOR_MCP2515_CS    "MCP2515 CS"
+#define D_SENSOR_HRG15_RX      "HRG15 Rx"
+#define D_SENSOR_HRG15_TX      "HRG15 Tx"
+#define D_SENSOR_VINDRIKTNING_RX "VINDRIKTNING"
 
 // Units
 #define D_UNIT_AMPERE "安培"
@@ -943,6 +951,7 @@
 #define D_CREATE_NEW_FILE      "Create and edit new file"
 #define D_EDIT_FILE            "Edit File"
 #define D_CONFIRM_FILE_DEL     "Confirm file deletion"
+#define D_SHOW_HIDDEN_FILES    "Show hidden files"
 
 //xsns_67_as3935.ino
 #define D_AS3935_GAIN "gain:"

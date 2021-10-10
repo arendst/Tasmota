@@ -209,6 +209,7 @@ typedef const char* (*breader)(void*, size_t*);
 #define var_ismap(_v)           var_istype(_v, BE_MAP)
 #define var_ismodule(_v)        var_istype(_v, BE_MODULE)
 #define var_isindex(_v)         var_istype(_v, BE_INDEX)
+#define var_iscomptr(_v)        var_istype(_v, BE_COMPTR)
 #define var_isnumber(_v)        (var_isint(_v) || var_isreal(_v))
 
 #define var_setnil(_v)          var_settype(_v, BE_NIL)

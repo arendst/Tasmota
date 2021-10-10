@@ -1,5 +1,0 @@
-<map id="IRCoolixAC" name="IRCoolixAC">
-<area shape="rect" id="node1" title="Class for handling detailed Coolix A/C messages." alt="" coords="49,109,143,136"/>
-<area shape="rect" id="node2" href="$classIRsend.html" title="Class for sending all basic IR protocols." alt="" coords="5,5,72,32"/>
-<area shape="rect" id="node3" href="$unionCoolixProtocol.html" title="Native representation of a Coolix A/C message." alt="" coords="97,5,213,32"/>
-</map>

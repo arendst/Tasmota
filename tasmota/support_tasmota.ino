@@ -515,6 +515,7 @@ bool SendKey(uint32_t key, uint32_t device, uint32_t state)
 // state 6 = POWER_CLEAR = button released
 // state 7 = POWER_RELEASE = button released
 // state 9 = CLEAR_RETAIN = clear retain flag
+// state 10 = POWER_DELAYED = button released delayed
 
   char stopic[TOPSZ];
   char scommand[CMDSZ];
@@ -843,7 +844,7 @@ bool MqttShowSensor(void)
   XsnsCall(FUNC_JSON_APPEND);
   XdrvCall(FUNC_JSON_APPEND);
 
-  if (TasmotaGlobal.global_update) {
+  if (TasmotaGlobal.global_update && Settings->flag.mqtt_add_global_info) {
     if ((TasmotaGlobal.humidity > 0) || !isnan(TasmotaGlobal.temperature_celsius) || (TasmotaGlobal.pressure_hpa != 0)) {
       uint32_t add_comma = 0;
       ResponseAppend_P(PSTR(",\"Global\":{"));
@@ -1778,6 +1779,7 @@ void GpioInit(void)
 
 #ifdef ESP8266
   if ((2 == Pin(GPIO_TXD)) || (H801 == TasmotaGlobal.module_type)) { Serial.set_tx(2); }
+  SetSerialSwap();
 #endif
 
   uint32_t sspi_mosi = (PinUsed(GPIO_SSPI_SCLK) && PinUsed(GPIO_SSPI_MOSI)) ? SPI_MOSI : SPI_NONE;

@@ -75,9 +75,9 @@ void TasDiscoverMessage(void) {
                    TasmotaGlobal.version,
                    TasmotaGlobal.mqtt_topic,
                    SettingsText(SET_MQTT_FULLTOPIC),
-                   PSTR(SUB_PREFIX),
-                   PSTR(PUB_PREFIX),
-                   PSTR(PUB_PREFIX2));
+                   SettingsText(SET_MQTTPREFIX1),
+                   SettingsText(SET_MQTTPREFIX2),
+                   SettingsText(SET_MQTTPREFIX3));
 
   uint8_t light_idx = MAX_RELAYS + 1;                          // Will store the starting position of the lights
   uint8_t light_subtype = 0;

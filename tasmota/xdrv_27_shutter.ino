@@ -34,8 +34,8 @@
 const uint16_t MOTOR_STOP_TIME = 500;   // in mS
 const uint16_t RESOLUTION = 1000;       // incresed to 1000 in 8.5 to ramp servos
 const uint8_t  STEPS_PER_SECOND = 20;   // FUNC_EVERY_50_MSECOND
-const uint16_t pwm_max = 500;
-const uint16_t pwm_min = 90;
+const uint16_t pwm_servo_max = 500;
+const uint16_t pwm_servo_min = 90;
 
 uint8_t calibrate_pos[6] = {0,30,50,70,90,100};
 uint16_t messwerte[5] = {30,50,70,90,100};
@@ -88,7 +88,7 @@ struct SHUTTER {
   int8_t   direction;          // 1 == UP , 0 == stop; -1 == down
   int8_t   lastdirection;      // last direction (1 == UP , -1 == down)
   uint8_t  switch_mode;        // how to switch relays: SHT_SWITCH, SHT_PULSE
-  int16_t  motordelay;         // initial motorstarttime in 0.05sec. Also uses for ramp at steppers and servos
+  int8_t   motordelay;         // initial motorstarttime in 0.05sec. Also uses for ramp at steppers and servos, negative if motor stops late
   int16_t  pwm_velocity;       // frequency of PWN for stepper motors or PWM duty cycle change for PWM servo
   uint16_t pwm_value;          // dutyload of PWM 0..1023 on ESP8266
   uint16_t close_velocity_max; // maximum of PWM change during closeing. Defines velocity on opening. Steppers and Servos only
@@ -128,9 +128,9 @@ void ShutterUpdateVelocity(uint8_t i)
   // do not allow accellerator to stop movement
   Shutter[i].pwm_velocity = tmax(velocity_change_per_step_max, Shutter[i].pwm_velocity+Shutter[i].accelerator);
   Shutter[i].pwm_velocity = tmin(Shutter[i].direction==1 ? ShutterGlobal.open_velocity_max : Shutter[i].close_velocity_max,Shutter[i].pwm_velocity);
-  // respect hard coded SDK limit of 100Hz on PWM frequency.
+  // respect hard coded SDK limit of PWM_MIN on PWM frequency.
   if (ShutterGlobal.position_mode == SHT_COUNTER) {
-  	Shutter[i].pwm_velocity = tmax(100,Shutter[i].pwm_velocity);
+  	Shutter[i].pwm_velocity = tmax(PWM_MIN,Shutter[i].pwm_velocity);
   }
 }
 
@@ -316,8 +316,8 @@ void ShutterInit(void)
         case SHT_PWM_VALUE:
           ShutterGlobal.open_velocity_max =  RESOLUTION;
           // Initiate pwm range with defaults if not already set.
-          Settings->shutter_pwmrange[0][i] = Settings->shutter_pwmrange[0][i] > 0 ? Settings->shutter_pwmrange[0][i] : pwm_min;
-          Settings->shutter_pwmrange[1][i] = Settings->shutter_pwmrange[1][i] > 0 ? Settings->shutter_pwmrange[1][i] : pwm_max;
+          Settings->shutter_pwmrange[0][i] = Settings->shutter_pwmrange[0][i] > 0 ? Settings->shutter_pwmrange[0][i] : pwm_servo_min;
+          Settings->shutter_pwmrange[1][i] = Settings->shutter_pwmrange[1][i] > 0 ? Settings->shutter_pwmrange[1][i] : pwm_servo_max;
         break;
       }
       Shutter[i].close_velocity_max = ShutterGlobal.open_velocity_max*Shutter[i].open_time / Shutter[i].close_time;
@@ -420,7 +420,7 @@ void ShutterDecellerateForStop(uint8_t i)
       int16_t missing_steps;
       Shutter[i].accelerator = -(ShutterGlobal.open_velocity_max / (Shutter[i].motordelay>4 ? (Shutter[i].motordelay*11)/10 : 4) );
 
-      while (Shutter[i].pwm_velocity > -2*Shutter[i].accelerator &&  Shutter[i].pwm_velocity != 100) {
+      while (Shutter[i].pwm_velocity > -2*Shutter[i].accelerator &&  Shutter[i].pwm_velocity != PWM_MIN) {
 	      delay(50);
         AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Velocity %ld, Delta %d"), Shutter[i].pwm_velocity, Shutter[i].accelerator );
         // Control will be done in RTC Ticker.
@@ -431,7 +431,7 @@ void ShutterDecellerateForStop(uint8_t i)
         //prepare for stop PWM
         Shutter[i].accelerator = 0;
         Shutter[i].pwm_velocity = 0;
-        while (RtcSettings.pulse_counter[i] < (uint32_t)(Shutter[i].target_position-Shutter[i].start_position)*Shutter[i].direction*ShutterGlobal.open_velocity_max/RESOLUTION/STEPS_PER_SECOND) {
+        while (RtcSettings.pulse_counter[i] < (uint32_t)(Shutter[i].target_position-Shutter[i].start_position)*Shutter[i].direction*ShutterGlobal.open_velocity_max/RESOLUTION/STEPS_PER_SECOND && missing_steps > 0) {
         }
         analogWrite(Pin(GPIO_PWM1, i), 0); // removed with 8.3 because of reset caused by watchog
         Shutter[i].real_position = ShutterCalculatePosition(i);
@@ -505,7 +505,7 @@ void ShutterUpdatePosition(void)
         Shutter[i].time, current_stop_way, current_pwm_velocity, velocity_max, Shutter[i].accelerator, min_runtime_ms, current_real_position,
         next_possible_stop_position, Shutter[i].target_position, velocity_change_per_step_max, Shutter[i].direction);
 
-      if ( Shutter[i].real_position * Shutter[i].direction >= Shutter[i].target_position * Shutter[i].direction || (ShutterGlobal.position_mode == SHT_COUNTER && Shutter[i].accelerator <0 && Shutter[i].pwm_velocity+Shutter[i].accelerator<100)) {
+      if ( Shutter[i].real_position * Shutter[i].direction >= Shutter[i].target_position * Shutter[i].direction || (ShutterGlobal.position_mode == SHT_COUNTER && Shutter[i].accelerator <0 && Shutter[i].pwm_velocity+Shutter[i].accelerator<PWM_MIN)) {
         if (Shutter[i].direction != 0) {
           Shutter[i].lastdirection = Shutter[i].direction;
         }
@@ -1185,11 +1185,11 @@ void CmndShutterMotorDelay(void)
 {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= TasmotaGlobal.shutters_present)) {
     if (XdrvMailbox.data_len > 0) {
-      Settings->shutter_motordelay[XdrvMailbox.index -1] = (uint16_t)(STEPS_PER_SECOND * CharToFloat(XdrvMailbox.data));
+      Settings->shutter_motordelay[XdrvMailbox.index -1] = (uint8_t)(STEPS_PER_SECOND * CharToFloat(XdrvMailbox.data));
       ShutterInit();
     }
     char time_chr[10];
-    dtostrfd((float)(Settings->shutter_motordelay[XdrvMailbox.index -1]) / STEPS_PER_SECOND, 2, time_chr);
+    dtostrfd((float)(Shutter[XdrvMailbox.index -1].motordelay) / STEPS_PER_SECOND, 2, time_chr);
     ResponseCmndIdxChar(time_chr);
   }
 }

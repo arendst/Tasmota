@@ -19,7 +19,7 @@
 */
 
 #ifdef USE_I2C
-#ifdef USE_AHT1x
+#if defined(USE_AHT1x) || defined(USE_AHT2x)
 
 /*********************************************************************************************\
  * AHT10/15/20 - Temperature and Humidity
@@ -38,6 +38,7 @@
  *
  * 27.08.2020 support for AHT20 added. Now, the AHT20 should support standard I2C Protokoll
  *            and allows other I2C Devices on the bus but have only one I2C Address (0x38)
+ * 14.09.2021 support AHT20 without enabling AHT1x 
  *
  * AHT20 I2C Address: 0x38
 \*********************************************************************************************/

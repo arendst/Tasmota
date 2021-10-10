@@ -121,6 +121,15 @@ static int m_find(bvm *vm)
     be_return(vm);
 }
 
+static int m_has(bvm *vm)
+{
+    be_getmember(vm, 1, ".p");
+    map_check_data(vm, 2);
+    be_pushvalue(vm, 2);
+    be_pushbool(vm, be_getindex(vm, -2));
+    be_return(vm);
+}
+
 static int m_insert(bvm *vm)
 {
     bbool res;
@@ -232,6 +241,7 @@ class be_class_map (scope: global, name: map) {
     item, func(m_item)
     setitem, func(m_setitem)
     find, func(m_find)
+    has, func(m_has)
     size, func(m_size)
     insert, func(m_insert)
     iter, func(m_iter)

@@ -223,6 +223,20 @@ bool NimBLERemoteService::retrieveCharacteristics(const NimBLEUUID *uuid_filter)
     ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
 
     if(taskData.rc == 0){
+        if (uuid_filter == nullptr) {
+            if (m_characteristicVector.size() > 1) {
+                for (auto it = m_characteristicVector.begin(); it != m_characteristicVector.end(); ++it ) {
+                    auto nx = std::next(it, 1);
+                    if (nx == m_characteristicVector.end()) {
+                        break;
+                    }
+                    (*it)->m_endHandle = (*nx)->m_defHandle - 1;
+                }
+            }
+
+            m_characteristicVector.back()->m_endHandle = getEndHandle();
+        }
+
         NIMBLE_LOGD(LOG_TAG, "<< retrieveCharacteristics()");
         return true;
     }
@@ -247,23 +261,6 @@ NimBLEClient* NimBLERemoteService::getClient() {
  */
 uint16_t NimBLERemoteService::getEndHandle() {
     return m_endHandle;
-} // getEndHandle
-
-/**
- * @brief Get the end handle of specified NimBLERemoteCharacteristic.
- */
-
-uint16_t NimBLERemoteService::getEndHandle(NimBLERemoteCharacteristic *pCharacteristic) {
-    uint16_t endHandle = m_endHandle;
-    
-    for(auto &it: m_characteristicVector) {
-        uint16_t defHandle = it->getDefHandle() - 1;
-        if(defHandle > pCharacteristic->getDefHandle() && endHandle > defHandle) {
-            endHandle = defHandle;
-        }
-    }
-
-    return endHandle;
 } // getEndHandle
 
 

@@ -49,7 +49,6 @@ const uint16_t Ddsu666_start_addresses[] {
 };
 
 struct DDSU666 {
-  float import_active = NAN;
   uint8_t read_state = 0;
   uint8_t send_retry = 0;
 } Ddsu666;
@@ -106,7 +105,7 @@ void DDSU666Every250ms(void)
           break;
 
         case 6:
-          Ddsu666.import_active = value;    // 478.492 kWh
+          Energy.import_active[0] = value;    // 478.492 kWh
           break;
 
         case 7:
@@ -118,7 +117,7 @@ void DDSU666Every250ms(void)
 
       if (Ddsu666.read_state == 8) {
         Ddsu666.read_state = 0;
-        EnergyUpdateTotal(Ddsu666.import_active, true);  // 484.708 kWh
+        EnergyUpdateTotal();  // 484.708 kWh
       }
     }
   } // end data ready

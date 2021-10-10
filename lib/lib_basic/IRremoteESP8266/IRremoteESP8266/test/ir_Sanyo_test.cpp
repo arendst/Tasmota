@@ -1,4 +1,4 @@
-// Copyright 2017-2020 David Conran
+// Copyright 2017-2021 David Conran
 
 #include "ir_Sanyo.h"
 #include "IRac.h"
@@ -11,7 +11,7 @@
 // Tests for encodeSanyoLC7461().
 
 TEST(TestEncodeSanyoLC7461, NormalEncoding) {
-  IRsendTest irsend(4);
+  IRsendTest irsend(kGpioUnused);
   EXPECT_EQ(0x1FFF00FF, irsend.encodeSanyoLC7461(0, 0));
   EXPECT_EQ(0x3FFE01FE, irsend.encodeSanyoLC7461(1, 1));
   EXPECT_EQ(0x3FFE02FD, irsend.encodeSanyoLC7461(1, 2));
@@ -25,7 +25,7 @@ TEST(TestEncodeSanyoLC7461, NormalEncoding) {
 
 // Test sending typical data only.
 TEST(TestEncodeSanyoLC7461, SendDataOnly) {
-  IRsendTest irsend(4);
+  IRsendTest irsend(kGpioUnused);
   irsend.begin();
 
   irsend.reset();
@@ -44,7 +44,7 @@ TEST(TestEncodeSanyoLC7461, SendDataOnly) {
 
 // Test sending with different repeats.
 TEST(TestEncodeSanyoLC7461, SendWithRepeats) {
-  IRsendTest irsend(4);
+  IRsendTest irsend(kGpioUnused);
   irsend.begin();
 
   irsend.reset();
@@ -66,8 +66,8 @@ TEST(TestEncodeSanyoLC7461, SendWithRepeats) {
 
 // Decode normal Sanyo LC7461 messages.
 TEST(TestDecodeSanyoLC7461, NormalDecodeWithStrict) {
-  IRsendTest irsend(4);
-  IRrecv irrecv(4);
+  IRsendTest irsend(kGpioUnused);
+  IRrecv irrecv(kGpioUnused);
   irsend.begin();
 
   // Normal Sanyo LC7461 42-bit message.
@@ -115,8 +115,8 @@ TEST(TestDecodeSanyoLC7461, NormalDecodeWithStrict) {
 
 // Decode normal repeated Sanyo LC7461 messages.
 TEST(TestDecodeSanyoLC7461, NormalDecodeWithRepeatAndStrict) {
-  IRsendTest irsend(4);
-  IRrecv irrecv(4);
+  IRsendTest irsend(kGpioUnused);
+  IRrecv irrecv(kGpioUnused);
   irsend.begin();
 
   // Normal Sanyo LC7461 16-bit message with 1 repeat.
@@ -136,8 +136,8 @@ TEST(TestDecodeSanyoLC7461, NormalDecodeWithRepeatAndStrict) {
 
 // Decode unsupported Sanyo LC7461 messages.
 TEST(TestDecodeSanyoLC7461, DecodeWithNonStrictValues) {
-  IRsendTest irsend(4);
-  IRrecv irrecv(4);
+  IRsendTest irsend(kGpioUnused);
+  IRrecv irrecv(kGpioUnused);
   irsend.begin();
 
   irsend.reset();
@@ -191,8 +191,8 @@ TEST(TestDecodeSanyoLC7461, DecodeWithNonStrictValues) {
 
 // Decode (non-standard) 64-bit messages.
 TEST(TestDecodeSanyoLC7461, Decode64BitMessages) {
-  IRsendTest irsend(4);
-  IRrecv irrecv(4);
+  IRsendTest irsend(kGpioUnused);
+  IRrecv irrecv(kGpioUnused);
   irsend.begin();
 
   irsend.reset();
@@ -211,8 +211,8 @@ TEST(TestDecodeSanyoLC7461, Decode64BitMessages) {
 
 // Decode a 'real' example via GlobalCache
 TEST(TestDecodeSanyoLC7461, DecodeGlobalCacheExample) {
-  IRsendTest irsend(4);
-  IRrecv irrecv(4);
+  IRsendTest irsend(kGpioUnused);
+  IRrecv irrecv(kGpioUnused);
   irsend.begin();
 
   irsend.reset();
@@ -243,8 +243,8 @@ TEST(TestDecodeSanyoLC7461, DecodeGlobalCacheExample) {
 
 // Fail to decode a non-Sanyo LC7461 example via GlobalCache
 TEST(TestDecodeSanyoLC7461, FailToDecodeNonSanyoLC7461Example) {
-  IRsendTest irsend(4);
-  IRrecv irrecv(4);
+  IRsendTest irsend(kGpioUnused);
+  IRrecv irrecv(kGpioUnused);
   irsend.begin();
 
   irsend.reset();
@@ -277,6 +277,13 @@ TEST(TestUtils, Housekeeping) {
   ASSERT_TRUE(IRac::isProtocolSupported(decode_type_t::SANYO_AC));
   ASSERT_EQ(kSanyoAcBits, IRsend::defaultBits(decode_type_t::SANYO_AC));
   ASSERT_EQ(kNoRepeat, IRsend::minRepeats(decode_type_t::SANYO_AC));
+  // Sanyo A/C 88 Bit.
+  ASSERT_EQ("SANYO_AC88", typeToString(decode_type_t::SANYO_AC88));
+  ASSERT_EQ(decode_type_t::SANYO_AC88, strToDecodeType("SANYO_AC88"));
+  ASSERT_TRUE(hasACState(decode_type_t::SANYO_AC88));
+  ASSERT_TRUE(IRac::isProtocolSupported(decode_type_t::SANYO_AC88));
+  ASSERT_EQ(kSanyoAc88Bits, IRsend::defaultBits(decode_type_t::SANYO_AC88));
+  ASSERT_EQ(kSanyoAc88MinRepeat, IRsend::minRepeats(decode_type_t::SANYO_AC88));
 }
 
 TEST(TestDecodeSanyoAc, DecodeRealExamples) {
@@ -529,4 +536,287 @@ TEST(TestSanyoAcClass, Beep) {
       0x6A, 0x6E, 0x54, 0x00, 0x10, 0x83, 0x00, 0x00, 0x39};
   ac.setRaw(beep_on);
   EXPECT_TRUE(ac.getBeep());
+}
+
+TEST(TestDecodeSanyoAc88, DecodeRealExamples) {
+  IRsendTest irsend(kGpioUnused);
+  IRrecv irrecv(kGpioUnused);
+  // Ref: "On" from https://github.com/crankyoldgit/IRremoteESP8266/issues/1503#issuecomment-868450739
+  const uint16_t rawData[539] = {5374, 1972, 512, 762, 522, 1510, 498, 780, 578,
+      1486, 462, 790, 462, 1550, 544, 708, 510, 1500, 544, 1470, 516, 762, 482,
+      770, 516, 1496, 518, 1510, 498, 780, 468, 1544, 466, 786, 466, 786, 466,
+      786, 466, 786, 486, 748, 526, 756, 506, 1520, 516, 764, 516, 1492, 518,
+      762, 544, 708, 548, 704, 602, 1434, 556, 1456, 524, 726, 552, 700, 554,
+      698, 648, 1438, 548, 684, 536, 1478, 568, 682, 568, 682, 578, 702, 568,
+      684, 570, 712, 624, 724, 528, 1482, 528, 726, 528, 1482, 526, 724, 546,
+      1524, 568, 682, 540, 710, 544, 734, 542, 1516, 492, 762, 488, 744, 546,
+      1482, 492, 788, 544, 734, 494, 758, 492, 760, 490, 744, 548, 828, 494,
+      760, 494, 758, 494, 758, 494, 786, 492, 760, 494, 758, 494, 742, 508, 746,
+      508, 788, 492, 760, 494, 786, 494, 786, 494, 742, 508, 744, 508, 788, 570,
+      760, 494, 784, 494, 788, 568, 786, 492, 744, 508, 772, 608, 768, 538, 714,
+      490, 786, 628, 728, 494, 786, 494, 758, 494, 742, 508, 1390, 494, 3692,
+      5394, 1960, 494, 784, 494, 1516, 494, 760, 494, 1516, 494, 760, 492, 1516,
+      494, 760, 492, 1518, 524, 1486, 494, 790, 486, 764, 492, 1524, 538, 1472,
+      540, 740, 538, 1546, 546, 728, 524, 726, 526, 728, 524, 728, 526, 728,
+      524, 728, 524, 1486, 526, 726, 546, 1464, 550, 702, 550, 728, 552, 702,
+      550, 1460, 550, 1460, 550, 702, 552, 728, 550, 702, 550, 1460, 550, 728,
+      550, 1464, 548, 704, 546, 704, 548, 732, 546, 704, 548, 704, 548, 730,
+      548, 1462, 548, 706, 518, 1492, 546, 706, 518, 1490, 546, 706, 520, 732,
+      520, 732, 522, 1492, 518, 760, 518, 732, 546, 1468, 516, 736, 516, 732,
+      520, 732, 520, 758, 520, 818, 478, 772, 480, 802, 454, 894, 520, 734, 518,
+      734, 518, 760, 518, 734, 518, 734, 518, 718, 506, 746, 480, 818, 488, 790,
+      490, 744, 508, 790, 490, 744, 510, 770, 508, 788, 490, 762, 544, 788, 490,
+      788, 462, 818, 566, 788, 490, 744, 480, 770, 456, 794, 458, 894, 492, 762,
+      492, 760, 490, 744, 508, 1390, 492, 3664,
+      5398, 1960, 490, 746, 476, 1552, 492, 742, 508, 1504, 508, 746, 504, 1522,
+      494, 786, 492, 1516, 494, 1516, 494, 760, 492, 786, 494, 1520, 490, 1520,
+      458, 822, 458, 1554, 510, 788, 494, 784, 494, 760, 492, 742, 508, 770,
+      512, 786, 492, 1516, 520, 760, 520, 1488, 520, 734, 520, 760, 518, 734,
+      520, 1490, 520, 1494, 516, 734, 518, 732, 520, 762, 516, 762, 488, 1522,
+      458, 1554, 506, 774, 506, 744, 508, 774, 508, 770, 510, 742, 506, 746,
+      540, 1472, 506, 744, 508, 1522, 488, 764, 488, 1504, 538, 758, 520, 734,
+      520, 760, 520, 1490, 518, 734, 520, 734, 520, 1490, 520, 760, 518, 760,
+      538, 770, 488, 764, 516, 734, 518, 734, 518, 818, 476, 802, 476, 774, 478,
+      904, 538, 734, 520, 762, 516, 818, 510, 748, 476, 772, 458, 794, 458, 792,
+      516, 736, 516, 736, 516, 736, 516, 738, 514, 762, 516, 764, 514, 738, 516,
+      738, 538, 766, 516, 738, 514, 738, 514, 766, 512, 794, 486, 768, 486, 794,
+      486, 766, 512, 738, 488, 1398, 504};  // UNKNOWN ABF4C698
+
+  const uint8_t expectedState[kSanyoAc88StateLength] = {
+        0xAA, 0x59, 0xA0, 0x18, 0x06, 0x2A, 0x12, 0x00, 0x00, 0x00, 0x80};
+  irsend.begin();
+  irsend.reset();
+  irsend.sendRaw(rawData, 539, 38000);
+  irsend.makeDecodeResult();
+
+  ASSERT_TRUE(irrecv.decode(&irsend.capture));
+  ASSERT_EQ(SANYO_AC88, irsend.capture.decode_type);
+  EXPECT_EQ(kSanyoAc88Bits, irsend.capture.bits);
+  EXPECT_STATE_EQ(expectedState, irsend.capture.state, irsend.capture.bits);
+  EXPECT_FALSE(irsend.capture.repeat);
+  EXPECT_EQ(
+      "Power: On, Mode: 2 (Cool), Temp: 24C, Fan: 0 (Auto), Swing(V): Off, "
+      "Turbo: Off, Sleep: Off, Clock: 18:42",
+      IRAcUtils::resultAcToString(&irsend.capture));
+}
+
+TEST(TestDecodeSanyoAc88, SyntheticSelfDecode) {
+  IRsendTest irsend(kGpioUnused);
+  IRrecv irrecv(kGpioUnused);
+  const uint8_t expectedState[kSanyoAc88StateLength] = {
+      0xAA, 0x59, 0xA0, 0x18, 0x06, 0x2A, 0x12, 0x00, 0x00, 0x00, 0x80};
+  irsend.begin();
+  irsend.reset();
+  irsend.sendSanyoAc88(expectedState);
+  irsend.makeDecodeResult();
+
+  ASSERT_TRUE(irrecv.decode(&irsend.capture));
+  EXPECT_EQ(SANYO_AC88, irsend.capture.decode_type);
+  EXPECT_EQ(kSanyoAc88Bits, irsend.capture.bits);
+  EXPECT_STATE_EQ(expectedState, irsend.capture.state, irsend.capture.bits);
+  EXPECT_FALSE(irsend.capture.repeat);
+  EXPECT_EQ(
+      "Power: On, Mode: 2 (Cool), Temp: 24C, Fan: 0 (Auto), Swing(V): Off, "
+      "Turbo: Off, Sleep: Off, Clock: 18:42",
+      IRAcUtils::resultAcToString(&irsend.capture));
+  EXPECT_EQ(
+      "f38000d50"
+      "m5400s2000"
+      "m500s750m500s1500m500s750m500s1500m500s750m500s1500m500s750m500s1500"
+      "m500s1500m500s750m500s750m500s1500m500s1500m500s750m500s1500m500s750"
+      "m500s750m500s750m500s750m500s750m500s750m500s1500m500s750m500s1500"
+      "m500s750m500s750m500s750m500s1500m500s1500m500s750m500s750m500s750"
+      "m500s750m500s1500m500s1500m500s750m500s750m500s750m500s750m500s750"
+      "m500s750m500s1500m500s750m500s1500m500s750m500s1500m500s750m500s750"
+      "m500s750m500s1500m500s750m500s750m500s1500m500s750m500s750m500s750"
+      "m500s750m500s750m500s750m500s750m500s750m500s750m500s750m500s750"
+      "m500s750m500s750m500s750m500s750m500s750m500s750m500s750m500s750"
+      "m500s750m500s750m500s750m500s750m500s750m500s750m500s750m500s750"
+      "m500s750m500s750m500s750m500s750m500s750m500s750m500s750m500s1500"
+      "m500s3675"
+      "m5400s2000"
+      "m500s750m500s1500m500s750m500s1500m500s750m500s1500m500s750m500s1500"
+      "m500s1500m500s750m500s750m500s1500m500s1500m500s750m500s1500m500s750"
+      "m500s750m500s750m500s750m500s750m500s750m500s1500m500s750m500s1500"
+      "m500s750m500s750m500s750m500s1500m500s1500m500s750m500s750m500s750"
+      "m500s750m500s1500m500s1500m500s750m500s750m500s750m500s750m500s750"
+      "m500s750m500s1500m500s750m500s1500m500s750m500s1500m500s750m500s750"
+      "m500s750m500s1500m500s750m500s750m500s1500m500s750m500s750m500s750"
+      "m500s750m500s750m500s750m500s750m500s750m500s750m500s750m500s750"
+      "m500s750m500s750m500s750m500s750m500s750m500s750m500s750m500s750"
+      "m500s750m500s750m500s750m500s750m500s750m500s750m500s750m500s750"
+      "m500s750m500s750m500s750m500s750m500s750m500s750m500s750m500s1500"
+      "m500s3675"
+      "m5400s2000"
+      "m500s750m500s1500m500s750m500s1500m500s750m500s1500m500s750m500s1500"
+      "m500s1500m500s750m500s750m500s1500m500s1500m500s750m500s1500m500s750"
+      "m500s750m500s750m500s750m500s750m500s750m500s1500m500s750m500s1500"
+      "m500s750m500s750m500s750m500s1500m500s1500m500s750m500s750m500s750"
+      "m500s750m500s1500m500s1500m500s750m500s750m500s750m500s750m500s750"
+      "m500s750m500s1500m500s750m500s1500m500s750m500s1500m500s750m500s750"
+      "m500s750m500s1500m500s750m500s750m500s1500m500s750m500s750m500s750"
+      "m500s750m500s750m500s750m500s750m500s750m500s750m500s750m500s750"
+      "m500s750m500s750m500s750m500s750m500s750m500s750m500s750m500s750"
+      "m500s750m500s750m500s750m500s750m500s750m500s750m500s750m500s750"
+      "m500s750m500s750m500s750m500s750m500s750m500s750m500s750m500s1500"
+      "m500s103675",
+      irsend.outputStr());
+}
+
+// Tests for IRSanyoAc88 class.
+
+TEST(TestSanyoAc88Class, Power) {
+  IRSanyoAc88 ac(kGpioUnused);
+  ac.begin();
+
+  ac.on();
+  EXPECT_TRUE(ac.getPower());
+
+  ac.off();
+  EXPECT_FALSE(ac.getPower());
+
+  ac.setPower(true);
+  EXPECT_TRUE(ac.getPower());
+
+  ac.setPower(false);
+  EXPECT_FALSE(ac.getPower());
+}
+
+TEST(TestSanyoAc88Class, FanSpeed) {
+  IRSanyoAc88 ac(kGpioUnused);
+  ac.begin();
+
+  ac.setFan(kSanyoAc88FanAuto);
+  EXPECT_EQ(kSanyoAc88FanAuto, ac.getFan());
+
+  ac.setFan(kSanyoAc88FanHigh);
+  EXPECT_EQ(kSanyoAc88FanHigh, ac.getFan());
+
+  ac.setFan(kSanyoAc88FanLow);
+  EXPECT_EQ(kSanyoAc88FanLow, ac.getFan());
+
+  ac.setFan(kSanyoAc88FanMedium);
+  EXPECT_EQ(kSanyoAc88FanMedium, ac.getFan());
+}
+
+TEST(TestSanyoAc88Class, Sleep) {
+  IRSanyoAc88 ac(kGpioUnused);
+  ac.begin();
+
+  ac.setSleep(true);
+  EXPECT_TRUE(ac.getSleep());
+  ac.setSleep(false);
+  EXPECT_FALSE(ac.getSleep());
+  ac.setSleep(true);
+  EXPECT_TRUE(ac.getSleep());
+}
+
+TEST(TestSanyoAc88Class, SwingV) {
+  IRSanyoAc88 ac(kGpioUnused);
+  ac.begin();
+
+  ac.setSwingV(true);
+  EXPECT_TRUE(ac.getSwingV());
+  ac.setSwingV(false);
+  EXPECT_FALSE(ac.getSwingV());
+  ac.setSwingV(true);
+  EXPECT_TRUE(ac.getSwingV());
+}
+
+TEST(TestSanyoAc88Class, Filter) {
+  IRSanyoAc88 ac(kGpioUnused);
+  ac.begin();
+
+  ac.setFilter(true);
+  EXPECT_TRUE(ac.getFilter());
+  ac.setFilter(false);
+  EXPECT_FALSE(ac.getFilter());
+  ac.setFilter(true);
+  EXPECT_TRUE(ac.getFilter());
+}
+
+TEST(TestSanyoAc88Class, Turbo) {
+  IRSanyoAc88 ac(kGpioUnused);
+  ac.begin();
+
+  ac.setTurbo(true);
+  EXPECT_TRUE(ac.getTurbo());
+  ac.setTurbo(false);
+  EXPECT_FALSE(ac.getTurbo());
+  ac.setTurbo(true);
+  EXPECT_TRUE(ac.getTurbo());
+}
+
+TEST(TestSanyoAc88Class, Temperature) {
+  IRSanyoAc88 ac(kGpioUnused);
+  ac.begin();
+
+  ac.setTemp(0);
+  EXPECT_EQ(kSanyoAc88TempMin, ac.getTemp());
+
+  ac.setTemp(255);
+  EXPECT_EQ(kSanyoAc88TempMax, ac.getTemp());
+
+  ac.setTemp(kSanyoAc88TempMin);
+  EXPECT_EQ(kSanyoAc88TempMin, ac.getTemp());
+
+  ac.setTemp(kSanyoAc88TempMax);
+  EXPECT_EQ(kSanyoAc88TempMax, ac.getTemp());
+
+  ac.setTemp(kSanyoAc88TempMin - 1);
+  EXPECT_EQ(kSanyoAc88TempMin, ac.getTemp());
+
+  ac.setTemp(kSanyoAc88TempMax + 1);
+  EXPECT_EQ(kSanyoAc88TempMax, ac.getTemp());
+
+  ac.setTemp(17);
+  EXPECT_EQ(17, ac.getTemp());
+
+  ac.setTemp(21);
+  EXPECT_EQ(21, ac.getTemp());
+
+  ac.setTemp(25);
+  EXPECT_EQ(25, ac.getTemp());
+}
+
+TEST(TestSanyoAc88Class, OperatingMode) {
+  IRSanyoAc88 ac(kGpioUnused);
+  ac.begin();
+
+  ac.setMode(kSanyoAc88Auto);
+  EXPECT_EQ(kSanyoAc88Auto, ac.getMode());
+
+  ac.setMode(kSanyoAc88Cool);
+  EXPECT_EQ(kSanyoAc88Cool, ac.getMode());
+
+  ac.setMode(kSanyoAc88Heat);
+  EXPECT_EQ(kSanyoAc88Heat, ac.getMode());
+
+  ac.setMode(kSanyoAc88Fan);
+  EXPECT_EQ(kSanyoAc88Fan, ac.getMode());
+
+  ac.setMode(kSanyoAc88Fan + 1);
+  EXPECT_EQ(kSanyoAc88Auto, ac.getMode());
+
+  ac.setMode(0);
+  EXPECT_EQ(kSanyoAc88Auto, ac.getMode());
+
+  ac.setMode(255);
+  EXPECT_EQ(kSanyoAc88Auto, ac.getMode());
+}
+
+TEST(TestSanyoAc88Class, Clock) {
+  IRSanyoAc88 ac(kGpioUnused);
+  ac.begin();
+
+  EXPECT_EQ(0, ac.getClock());
+
+  ac.setClock(21 * 60 + 19);
+  EXPECT_EQ(21 * 60 + 19, ac.getClock());
+
+  ac.setClock(0);
+  EXPECT_EQ(0, ac.getClock());
+
+  ac.setClock(25 * 60 + 61);
+  EXPECT_EQ(23 * 60 + 59, ac.getClock());
 }

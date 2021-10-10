@@ -348,7 +348,12 @@ static long lodepng_filesize(const char* filename) {
     lv_fs_res_t res = lv_fs_open(&f, filename, LV_FS_MODE_RD);
     if(res != LV_FS_RES_OK) return -1;
     uint32_t size = 0;
-    lv_fs_size(&f, &size);
+    if(lv_fs_seek(&f, 0, SEEK_END) != 0) {
+      lv_fs_close(&f);
+      return -1;
+    }
+
+    lv_fs_tell(&f, &size);
     lv_fs_close(&f);
     return size;
 #else
@@ -607,7 +612,7 @@ static unsigned readBits(LodePNGBitReader* reader, size_t nbits) {
 }
 
 /* Public for testing only. steps and result must have numsteps values. */
-unsigned lode_png_test_bitreader(const unsigned char* data, size_t size,
+static unsigned lode_png_test_bitreader(const unsigned char* data, size_t size,
                                  size_t numsteps, const size_t* steps, unsigned* result) {
   size_t i;
   LodePNGBitReader reader;
@@ -3625,7 +3630,7 @@ function, do not use to process all pixels of an image. Alpha channel not suppor
 this is for bKGD, supporting alpha may prevent it from finding a color in the palette, from the
 specification it looks like bKGD should ignore the alpha values of the palette since it can use
 any palette index but doesn't have an alpha channel. Idem with ignoring color key. */
-unsigned lodepng_convert_rgb(
+static unsigned lodepng_convert_rgb(
     unsigned* r_out, unsigned* g_out, unsigned* b_out,
     unsigned r_in, unsigned g_in, unsigned b_in,
     const LodePNGColorMode* mode_out, const LodePNGColorMode* mode_in) {

@@ -28,6 +28,11 @@ ble_hs_atomic_conn_delete(uint16_t conn_handle)
     conn = ble_hs_conn_find(conn_handle);
     if (conn != NULL) {
         ble_hs_conn_remove(conn);
+#if MYNEWT_VAL(BLE_PERIODIC_ADV_SYNC_TRANSFER)
+        if (conn->psync) {
+            ble_hs_periodic_sync_free(conn->psync);
+        }
+#endif
         ble_hs_conn_free(conn);
 
     }
