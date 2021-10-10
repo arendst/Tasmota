@@ -478,10 +478,13 @@ void *special_calloc(size_t num, size_t size) {
 
 float CpuTemperature(void) {
 #ifdef CONFIG_IDF_TARGET_ESP32
-//  return (float)temperatureRead();  // In Celsius
+  return (float)temperatureRead();  // In Celsius
+/*
+  // These jumps are not stable either. Sometimes it jumps to 77.3
   float t = (float)temperatureRead();  // In Celsius
   if (t > 81) { t = t - 27.2; }        // Fix temp jump observed on some ESP32 like DualR3
   return t;
+*/
 #else
   // Currently (20210801) repeated calls to temperatureRead() on ESP32C3 and ESP32S2 result in IDF error messages
   static float t = NAN;
@@ -491,6 +494,39 @@ float CpuTemperature(void) {
   return t;
 #endif
 }
+
+/*
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+uint8_t temprature_sens_read();
+
+#ifdef __cplusplus
+}
+#endif
+
+#ifdef CONFIG_IDF_TARGET_ESP32
+uint8_t temprature_sens_read();
+
+float CpuTemperature(void) {
+  uint8_t t = temprature_sens_read();
+
+  AddLog(LOG_LEVEL_DEBUG, PSTR("TMP: value %d"), t);
+
+  return (t - 32) / 1.8;
+}
+#else
+float CpuTemperature(void) {
+  // Currently (20210801) repeated calls to temperatureRead() on ESP32C3 and ESP32S2 result in IDF error messages
+  static float t = NAN;
+  if (isnan(t)) {
+    t = (float)temperatureRead();  // In Celsius
+  }
+  return t;
+}
+#endif
+*/
 
 /*
 #if CONFIG_IDF_TARGET_ESP32S2
