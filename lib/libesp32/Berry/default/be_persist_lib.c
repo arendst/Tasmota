@@ -8,139 +8,6 @@
 #include "be_constobj.h"
 
 /********************************************************************
-** Solidified function: tostring
-********************************************************************/
-be_local_closure(tostring,   /* name */
-  be_nested_proto(
-    8,                          /* nstack */
-    1,                          /* argc */
-    0,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
-    1,                          /* has constants */
-    ( &(const bvalue[ 4]) {     /* constants */
-    /* K0   */  be_nested_string("string", 398550328, 6),
-    /* K1   */  be_nested_string("format", -1180859054, 6),
-    /* K2   */  be_nested_string("<instance: %s(%s)>", 1553432777, 18),
-    /* K3   */  be_nested_string("_p", 1594591802, 2),
-    }),
-    (be_nested_const_str("tostring", -1995258651, 8)),
-    (be_nested_const_str("input", -103256197, 5)),
-    ( &(const binstruction[11]) {  /* code */
-      0xA4060000,  //  0000  IMPORT	R1	K0
-      0x8C080301,  //  0001  GETMET	R2	R1	K1
-      0x58100002,  //  0002  LDCONST	R4	K2
-      0x60140005,  //  0003  GETGBL	R5	G5
-      0x5C180000,  //  0004  MOVE	R6	R0
-      0x7C140200,  //  0005  CALL	R5	1
-      0x60180008,  //  0006  GETGBL	R6	G8
-      0x881C0103,  //  0007  GETMBR	R7	R0	K3
-      0x7C180200,  //  0008  CALL	R6	1
-      0x7C080800,  //  0009  CALL	R2	4
-      0x80040400,  //  000A  RET	1	R2
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
-** Solidified function: member
-********************************************************************/
-be_local_closure(member,   /* name */
-  be_nested_proto(
-    5,                          /* nstack */
-    2,                          /* argc */
-    0,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
-    1,                          /* has constants */
-    ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_nested_string("_p", 1594591802, 2),
-    /* K1   */  be_nested_string("find", -1108310694, 4),
-    }),
-    (be_nested_const_str("member", 719708611, 6)),
-    (be_nested_const_str("input", -103256197, 5)),
-    ( &(const binstruction[ 5]) {  /* code */
-      0x88080100,  //  0000  GETMBR	R2	R0	K0
-      0x8C080501,  //  0001  GETMET	R2	R2	K1
-      0x5C100200,  //  0002  MOVE	R4	R1
-      0x7C080400,  //  0003  CALL	R2	2
-      0x80040400,  //  0004  RET	1	R2
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
-** Solidified function: setmember
-********************************************************************/
-be_local_closure(setmember,   /* name */
-  be_nested_proto(
-    4,                          /* nstack */
-    3,                          /* argc */
-    0,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
-    1,                          /* has constants */
-    ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_nested_string("_p", 1594591802, 2),
-    /* K1   */  be_nested_string("_dirty", 283846766, 6),
-    }),
-    (be_nested_const_str("setmember", 1432909441, 9)),
-    (be_nested_const_str("input", -103256197, 5)),
-    ( &(const binstruction[ 5]) {  /* code */
-      0x880C0100,  //  0000  GETMBR	R3	R0	K0
-      0x980C0202,  //  0001  SETIDX	R3	R1	R2
-      0x500C0200,  //  0002  LDBOOL	R3	1	0
-      0x90020203,  //  0003  SETMBR	R0	K1	R3
-      0x80000000,  //  0004  RET	0
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
-** Solidified function: zero
-********************************************************************/
-be_local_closure(zero,   /* name */
-  be_nested_proto(
-    2,                          /* nstack */
-    1,                          /* argc */
-    0,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
-    1,                          /* has constants */
-    ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_nested_string("_p", 1594591802, 2),
-    /* K1   */  be_nested_string("_dirty", 283846766, 6),
-    }),
-    (be_nested_const_str("zero", -1955600541, 4)),
-    (be_nested_const_str("input", -103256197, 5)),
-    ( &(const binstruction[ 6]) {  /* code */
-      0x60040013,  //  0000  GETGBL	R1	G19
-      0x7C040000,  //  0001  CALL	R1	0
-      0x90020001,  //  0002  SETMBR	R0	K0	R1
-      0x50040200,  //  0003  LDBOOL	R1	1	0
-      0x90020201,  //  0004  SETMBR	R0	K1	R1
-      0x80000000,  //  0005  RET	0
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
 ** Solidified function: save
 ********************************************************************/
 be_local_closure(save,   /* name */
@@ -203,12 +70,12 @@ be_local_closure(save,   /* name */
 
 
 /********************************************************************
-** Solidified function: has
+** Solidified function: setmember
 ********************************************************************/
-be_local_closure(has,   /* name */
+be_local_closure(setmember,   /* name */
   be_nested_proto(
-    5,                          /* nstack */
-    2,                          /* argc */
+    4,                          /* nstack */
+    3,                          /* argc */
     0,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
@@ -217,16 +84,16 @@ be_local_closure(has,   /* name */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_string("_p", 1594591802, 2),
-    /* K1   */  be_nested_string("has", -306245661, 3),
+    /* K1   */  be_nested_string("_dirty", 283846766, 6),
     }),
-    (be_nested_const_str("has", -306245661, 3)),
+    (be_nested_const_str("setmember", 1432909441, 9)),
     (be_nested_const_str("input", -103256197, 5)),
     ( &(const binstruction[ 5]) {  /* code */
-      0x88080100,  //  0000  GETMBR	R2	R0	K0
-      0x8C080501,  //  0001  GETMET	R2	R2	K1
-      0x5C100200,  //  0002  MOVE	R4	R1
-      0x7C080400,  //  0003  CALL	R2	2
-      0x80040400,  //  0004  RET	1	R2
+      0x880C0100,  //  0000  GETMBR	R3	R0	K0
+      0x980C0202,  //  0001  SETIDX	R3	R1	R2
+      0x500C0200,  //  0002  LDBOOL	R3	1	0
+      0x90020203,  //  0003  SETMBR	R0	K1	R3
+      0x80000000,  //  0004  RET	0
     })
   )
 );
@@ -234,11 +101,11 @@ be_local_closure(has,   /* name */
 
 
 /********************************************************************
-** Solidified function: remove
+** Solidified function: init
 ********************************************************************/
-be_local_closure(remove,   /* name */
+be_local_closure(init,   /* name */
   be_nested_proto(
-    5,                          /* nstack */
+    6,                          /* nstack */
     2,                          /* argc */
     0,                          /* varg */
     0,                          /* has upvals */
@@ -246,21 +113,37 @@ be_local_closure(remove,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 3]) {     /* constants */
-    /* K0   */  be_nested_string("_p", 1594591802, 2),
-    /* K1   */  be_nested_string("remove", -611183107, 6),
-    /* K2   */  be_nested_string("_dirty", 283846766, 6),
+    ( &(const bvalue[ 6]) {     /* constants */
+    /* K0   */  be_nested_string("_filename", 1430813195, 9),
+    /* K1   */  be_nested_string("_persist.json", 2008425138, 13),
+    /* K2   */  be_nested_string("_p", 1594591802, 2),
+    /* K3   */  be_nested_string("copy", -446502332, 4),
+    /* K4   */  be_nested_string("load", -435725847, 4),
+    /* K5   */  be_nested_string("_dirty", 283846766, 6),
     }),
-    (be_nested_const_str("remove", -611183107, 6)),
+    (be_nested_const_str("init", 380752755, 4)),
     (be_nested_const_str("input", -103256197, 5)),
-    ( &(const binstruction[ 7]) {  /* code */
-      0x88080100,  //  0000  GETMBR	R2	R0	K0
-      0x8C080501,  //  0001  GETMET	R2	R2	K1
-      0x5C100200,  //  0002  MOVE	R4	R1
-      0x7C080400,  //  0003  CALL	R2	2
-      0x50080200,  //  0004  LDBOOL	R2	1	0
-      0x90020402,  //  0005  SETMBR	R0	K2	R2
-      0x80000000,  //  0006  RET	0
+    ( &(const binstruction[20]) {  /* code */
+      0x90020101,  //  0000  SETMBR	R0	K0	K1
+      0x6008000F,  //  0001  GETGBL	R2	G15
+      0x5C0C0200,  //  0002  MOVE	R3	R1
+      0x60100013,  //  0003  GETGBL	R4	G19
+      0x7C080400,  //  0004  CALL	R2	2
+      0x780A0003,  //  0005  JMPF	R2	#000A
+      0x8C080303,  //  0006  GETMET	R2	R1	K3
+      0x7C080200,  //  0007  CALL	R2	1
+      0x90020402,  //  0008  SETMBR	R0	K2	R2
+      0x70020002,  //  0009  JMP		#000D
+      0x60080013,  //  000A  GETGBL	R2	G19
+      0x7C080000,  //  000B  CALL	R2	0
+      0x90020402,  //  000C  SETMBR	R0	K2	R2
+      0x8C080104,  //  000D  GETMET	R2	R0	K4
+      0x88100102,  //  000E  GETMBR	R4	R0	K2
+      0x88140100,  //  000F  GETMBR	R5	R0	K0
+      0x7C080600,  //  0010  CALL	R2	3
+      0x50080000,  //  0011  LDBOOL	R2	0	0
+      0x90020A02,  //  0012  SETMBR	R0	K5	R2
+      0x80000000,  //  0013  RET	0
     })
   )
 );
@@ -339,11 +222,11 @@ be_local_closure(load,   /* name */
 
 
 /********************************************************************
-** Solidified function: init
+** Solidified function: has
 ********************************************************************/
-be_local_closure(init,   /* name */
+be_local_closure(has,   /* name */
   be_nested_proto(
-    6,                          /* nstack */
+    5,                          /* nstack */
     2,                          /* argc */
     0,                          /* varg */
     0,                          /* has upvals */
@@ -351,37 +234,115 @@ be_local_closure(init,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 6]) {     /* constants */
-    /* K0   */  be_nested_string("_filename", 1430813195, 9),
-    /* K1   */  be_nested_string("_persist.json", 2008425138, 13),
-    /* K2   */  be_nested_string("_p", 1594591802, 2),
-    /* K3   */  be_nested_string("copy", -446502332, 4),
-    /* K4   */  be_nested_string("load", -435725847, 4),
-    /* K5   */  be_nested_string("_dirty", 283846766, 6),
+    ( &(const bvalue[ 2]) {     /* constants */
+    /* K0   */  be_nested_string("_p", 1594591802, 2),
+    /* K1   */  be_nested_string("has", -306245661, 3),
     }),
-    (be_nested_const_str("init", 380752755, 4)),
+    (be_nested_const_str("has", -306245661, 3)),
     (be_nested_const_str("input", -103256197, 5)),
-    ( &(const binstruction[20]) {  /* code */
-      0x90020101,  //  0000  SETMBR	R0	K0	K1
-      0x6008000F,  //  0001  GETGBL	R2	G15
-      0x5C0C0200,  //  0002  MOVE	R3	R1
-      0x60100013,  //  0003  GETGBL	R4	G19
-      0x7C080400,  //  0004  CALL	R2	2
-      0x780A0003,  //  0005  JMPF	R2	#000A
-      0x8C080303,  //  0006  GETMET	R2	R1	K3
-      0x7C080200,  //  0007  CALL	R2	1
-      0x90020402,  //  0008  SETMBR	R0	K2	R2
-      0x70020002,  //  0009  JMP		#000D
-      0x60080013,  //  000A  GETGBL	R2	G19
-      0x7C080000,  //  000B  CALL	R2	0
-      0x90020402,  //  000C  SETMBR	R0	K2	R2
-      0x8C080104,  //  000D  GETMET	R2	R0	K4
-      0x88100102,  //  000E  GETMBR	R4	R0	K2
-      0x88140100,  //  000F  GETMBR	R5	R0	K0
-      0x7C080600,  //  0010  CALL	R2	3
-      0x50080000,  //  0011  LDBOOL	R2	0	0
-      0x90020A02,  //  0012  SETMBR	R0	K5	R2
-      0x80000000,  //  0013  RET	0
+    ( &(const binstruction[ 5]) {  /* code */
+      0x88080100,  //  0000  GETMBR	R2	R0	K0
+      0x8C080501,  //  0001  GETMET	R2	R2	K1
+      0x5C100200,  //  0002  MOVE	R4	R1
+      0x7C080400,  //  0003  CALL	R2	2
+      0x80040400,  //  0004  RET	1	R2
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: zero
+********************************************************************/
+be_local_closure(zero,   /* name */
+  be_nested_proto(
+    2,                          /* nstack */
+    1,                          /* argc */
+    0,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 2]) {     /* constants */
+    /* K0   */  be_nested_string("_p", 1594591802, 2),
+    /* K1   */  be_nested_string("_dirty", 283846766, 6),
+    }),
+    (be_nested_const_str("zero", -1955600541, 4)),
+    (be_nested_const_str("input", -103256197, 5)),
+    ( &(const binstruction[ 6]) {  /* code */
+      0x60040013,  //  0000  GETGBL	R1	G19
+      0x7C040000,  //  0001  CALL	R1	0
+      0x90020001,  //  0002  SETMBR	R0	K0	R1
+      0x50040200,  //  0003  LDBOOL	R1	1	0
+      0x90020201,  //  0004  SETMBR	R0	K1	R1
+      0x80000000,  //  0005  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: member
+********************************************************************/
+be_local_closure(member,   /* name */
+  be_nested_proto(
+    5,                          /* nstack */
+    2,                          /* argc */
+    0,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 2]) {     /* constants */
+    /* K0   */  be_nested_string("_p", 1594591802, 2),
+    /* K1   */  be_nested_string("find", -1108310694, 4),
+    }),
+    (be_nested_const_str("member", 719708611, 6)),
+    (be_nested_const_str("input", -103256197, 5)),
+    ( &(const binstruction[ 5]) {  /* code */
+      0x88080100,  //  0000  GETMBR	R2	R0	K0
+      0x8C080501,  //  0001  GETMET	R2	R2	K1
+      0x5C100200,  //  0002  MOVE	R4	R1
+      0x7C080400,  //  0003  CALL	R2	2
+      0x80040400,  //  0004  RET	1	R2
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: remove
+********************************************************************/
+be_local_closure(remove,   /* name */
+  be_nested_proto(
+    5,                          /* nstack */
+    2,                          /* argc */
+    0,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 3]) {     /* constants */
+    /* K0   */  be_nested_string("_p", 1594591802, 2),
+    /* K1   */  be_nested_string("remove", -611183107, 6),
+    /* K2   */  be_nested_string("_dirty", 283846766, 6),
+    }),
+    (be_nested_const_str("remove", -611183107, 6)),
+    (be_nested_const_str("input", -103256197, 5)),
+    ( &(const binstruction[ 7]) {  /* code */
+      0x88080100,  //  0000  GETMBR	R2	R0	K0
+      0x8C080501,  //  0001  GETMET	R2	R2	K1
+      0x5C100200,  //  0002  MOVE	R4	R1
+      0x7C080400,  //  0003  CALL	R2	2
+      0x50080200,  //  0004  LDBOOL	R2	1	0
+      0x90020402,  //  0005  SETMBR	R0	K2	R2
+      0x80000000,  //  0006  RET	0
     })
   )
 );
@@ -426,21 +387,20 @@ be_local_closure(find,   /* name */
 be_local_class(Persist,
     3,
     NULL,
-    be_nested_map(13,
+    be_nested_map(12,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_nested_key("tostring", -1995258651, 8, -1), be_const_closure(tostring_closure) },
-        { be_nested_key("member", 719708611, 6, 3), be_const_closure(member_closure) },
-        { be_nested_key("setmember", 1432909441, 9, 5), be_const_closure(setmember_closure) },
-        { be_nested_key("zero", -1955600541, 4, 9), be_const_closure(zero_closure) },
         { be_nested_key("save", -855671224, 4, -1), be_const_closure(save_closure) },
-        { be_nested_key("has", -306245661, 3, -1), be_const_closure(has_closure) },
-        { be_nested_key("_filename", 1430813195, 9, 10), be_const_var(0) },
-        { be_nested_key("remove", -611183107, 6, -1), be_const_closure(remove_closure) },
-        { be_nested_key("_dirty", 283846766, 6, -1), be_const_var(2) },
-        { be_nested_key("load", -435725847, 4, -1), be_const_closure(load_closure) },
+        { be_nested_key("setmember", 1432909441, 9, 4), be_const_closure(setmember_closure) },
+        { be_nested_key("_p", 1594591802, 2, 5), be_const_var(1) },
         { be_nested_key("init", 380752755, 4, -1), be_const_closure(init_closure) },
-        { be_nested_key("_p", 1594591802, 2, 1), be_const_var(1) },
+        { be_nested_key("load", -435725847, 4, -1), be_const_closure(load_closure) },
+        { be_nested_key("_dirty", 283846766, 6, -1), be_const_var(2) },
+        { be_nested_key("has", -306245661, 3, -1), be_const_closure(has_closure) },
+        { be_nested_key("zero", -1955600541, 4, 8), be_const_closure(zero_closure) },
+        { be_nested_key("member", 719708611, 6, 6), be_const_closure(member_closure) },
+        { be_nested_key("remove", -611183107, 6, -1), be_const_closure(remove_closure) },
         { be_nested_key("find", -1108310694, 4, -1), be_const_closure(find_closure) },
+        { be_nested_key("_filename", 1430813195, 9, -1), be_const_var(0) },
     })),
     (be_nested_const_str("Persist", 1456346147, 7))
 );

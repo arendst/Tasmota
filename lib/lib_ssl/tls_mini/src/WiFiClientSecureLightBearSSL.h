@@ -82,6 +82,7 @@ class WiFiClientSecure_light : public WiFiClient {
       _fingerprint1 = f1;
       _fingerprint2 = f2;
       _fingerprint_any = f_any;
+      _insecure = true;
     }
     const uint8_t * getRecvPubKeyFingerprint(void) {
       return _recv_fingerprint;
@@ -132,7 +133,8 @@ class WiFiClientSecure_light : public WiFiClient {
     bool _handshake_done;
     uint64_t _last_error;
 
-    bool _fingerprint_any;           // accept all fingerprints
+    bool _fingerprint_any;            // accept all fingerprints
+    bool _insecure;                   // force fingerprint
     const uint8_t *_fingerprint1;          // fingerprint1 to be checked against
     const uint8_t *_fingerprint2;          // fingerprint2 to be checked against
 // **** Start patch Castellucci

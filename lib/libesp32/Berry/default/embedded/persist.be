@@ -60,12 +60,6 @@ persist_module.init = def (m)
         return self._p.find(k, d)
     end
 
-    #- custom tostring -#
-    def tostring()
-      import string
-      return string.format("<instance: %s(%s)>", classname(self), str(self._p))
-    end
-
     def load()
       import json
       import path
