@@ -105,6 +105,7 @@ enum NeoPoolRegister {
   MBF_HIDRO_VOLTAGE,                      // 0x0111         Reports on the stress applied to the hydrolysis cell. This register, together with that of MBF_HIDRO_CURRENT allows extrapolating the salinity of the water.
 
   // GLOBAL page (0x02xx)
+  MBF_BOOST_CTRL = 0x020C,                // 0x020C         undocumented - 0x0000 = Boost Off, 0x05A0 = Boost with redox ctrl, 0x85A0 = Boost without redox ctrl
   MBF_SET_MANUAL_CTRL = 0x0289,           // 0x0289         undocumented - write a 1 before manual control MBF_RELAY_STATE, after done write 0 and do MBF_EXEC
   MBF_ESCAPE = 0x0297,                    // 0x0297         undocumented - A write operation to this register is the same as using the ESC button on main screen - clears error
   MBF_SAVE_TO_EEPROM = 0x02F0,            // 0x02F0         A write operation to this register starts a EEPROM storage operation immediately. During the EEPROM storage procedure, the system may be unresponsive to MODBUS requests. The operation will last always less than 1 second.
