@@ -105,6 +105,8 @@ enum NeoPoolRegister {
   MBF_HIDRO_VOLTAGE,                      // 0x0111         Reports on the stress applied to the hydrolysis cell. This register, together with that of MBF_HIDRO_CURRENT allows extrapolating the salinity of the water.
 
   // GLOBAL page (0x02xx)
+  MBF_CELL_RUNTIME_LOW = 0x0206,          // 0x0206*        undocumented - cell runtime (32 bit) - low word
+  MBF_CELL_RUNTIME_HIGH = 0x0207,         // 0x0207*        undocumented - cell runtime (32 bit) - high word
   MBF_BOOST_CTRL = 0x020C,                // 0x020C         undocumented - 0x0000 = Boost Off, 0x05A0 = Boost with redox ctrl, 0x85A0 = Boost without redox ctrl
   MBF_SET_MANUAL_CTRL = 0x0289,           // 0x0289         undocumented - write a 1 before manual control MBF_RELAY_STATE, after done write 0 and do MBF_EXEC
   MBF_ESCAPE = 0x0297,                    // 0x0297         undocumented - A write operation to this register is the same as using the ESC button on main screen - clears error
@@ -581,8 +583,9 @@ struct {
     NeoPoolRegList list[];
   };
 } NeoPoolReg[] = {
-    // 4 entries so using 250ms poll interval we are through in a second for all register
+    // 6 entries so using 250ms poll interval we are through in 1,5 for all register
     {NEOPOOL_REG_TYPE_BLOCK, {MBF_ION_CURRENT,       MBF_NOTIFICATION      - MBF_ION_CURRENT + 1, nullptr}},
+    {NEOPOOL_REG_TYPE_BLOCK, {MBF_CELL_RUNTIME_LOW,  MBF_CELL_RUNTIME_HIGH - MBF_CELL_RUNTIME_LOW + 1, nullptr}},
     {NEOPOOL_REG_TYPE_BLOCK, {MBF_PAR_VERSION,       MBF_PAR_MODEL         - MBF_PAR_VERSION + 1, nullptr}},
     {NEOPOOL_REG_TYPE_BLOCK, {MBF_PAR_TIME_LOW,      MBF_PAR_FILT_GPIO     - MBF_PAR_TIME_LOW + 1, nullptr}},
     {NEOPOOL_REG_TYPE_BLOCK, {MBF_PAR_ION,           MBF_PAR_FILTRATION_TYPE - MBF_PAR_ION + 1, nullptr}},
@@ -685,6 +688,7 @@ const char HTTP_SNS_NEOPOOL_CONDUCTIVITY[]     PROGMEM = "{s}%s " D_NEOPOOL_COND
 const char HTTP_SNS_NEOPOOL_IONIZATION[]       PROGMEM = "{s}%s " D_NEOPOOL_IONIZATION      "{m}"  NEOPOOL_FMT_ION    " "  "%s%s"                                 "{e}";
 const char HTTP_SNS_NEOPOOL_FILT_MODE[]        PROGMEM = "{s}%s " D_NEOPOOL_FILT_MODE       "{m}%s"                                                               "{e}";
 const char HTTP_SNS_NEOPOOL_RELAY[]            PROGMEM = "{s}%s " "%s"                      "{m}%s"                                                               "{e}";
+const char HTTP_SNS_NEOPOOL_CELL_RUNTIME[]     PROGMEM = "{s}%s " D_NEOPOOL_CELL_RUNTIME    "{m}%s"                                                               "{e}";
 
 const char HTTP_SNS_NEOPOOL_STATUS[]           PROGMEM = "<span style=\"background-color:%s;font-size:small;text-align:center;%s;\">&nbsp;%s&nbsp;</span>";
 const char HTTP_SNS_NEOPOOL_STATUS_NORMAL[]    PROGMEM = "filter:invert(0.1)";
@@ -1254,6 +1258,7 @@ uint32_t NeoPoolGetSpeedIndex(uint16_t speedvalue)
 #define D_NEOPOOL_JSON_FILTRATION_MODE        "Mode"
 #define D_NEOPOOL_JSON_FILTRATION_SPEED       "Speed"
 #define D_NEOPOOL_JSON_HYDROLYSIS             "Hydrolysis"
+#define D_NEOPOOL_JSON_CELL_RUNTIME           "Runtime"
 #define D_NEOPOOL_JSON_IONIZATION             "Ionization"
 #define D_NEOPOOL_JSON_LIGHT                  "Light"
 #define D_NEOPOOL_JSON_LIGHT_MODE             "Mode"
@@ -1382,6 +1387,11 @@ void NeoPoolShow(bool json)
       ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_HYDROLYSIS  "\":{\""  D_JSON_DATA  "\":"  NEOPOOL_FMT_HIDRO), dec, &fvalue);
       ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_UNIT  "\":\"%s\""), sunit);
 
+#ifndef NEOPOOL_OPTIMIZE_READINGS
+      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_CELL_RUNTIME  "\":\"%s\""), 
+        GetDuration((uint32_t)NeoPoolGetData(MBF_CELL_RUNTIME_LOW) + ((uint32_t)NeoPoolGetData(MBF_CELL_RUNTIME_HIGH) << 16)).c_str());
+#endif  // NEOPOOL_OPTIMIZE_READINGS
+
       // S1
       const char *state = PSTR("");
       if (0 == (NeoPoolGetData(MBF_HIDRO_STATUS) & MBMSK_HIDRO_STATUS_MODULE_ACTIVE)) {
@@ -1456,13 +1466,15 @@ void NeoPoolShow(bool json)
       );
 
 #ifndef NEOPOOL_OPTIMIZE_READINGS
-    // Time
-    char dt[20];
-    TIME_T tmpTime;
-    BreakTime((uint32_t)NeoPoolGetData(MBF_PAR_TIME_LOW) + ((uint32_t)NeoPoolGetData(MBF_PAR_TIME_HIGH) << 16), tmpTime);
-    snprintf_P(dt, sizeof(dt), PSTR("%04d-%02d-%02d %02d:%02d"),
-      tmpTime.year +1970, tmpTime.month, tmpTime.day_of_month, tmpTime.hour, tmpTime.minute);
-    WSContentSend_PD(HTTP_SNS_NEOPOOL_TIME, neopool_type, dt);
+    {
+      // Time
+      char dt[20];
+      TIME_T tmpTime;
+      BreakTime((uint32_t)NeoPoolGetData(MBF_PAR_TIME_LOW) + ((uint32_t)NeoPoolGetData(MBF_PAR_TIME_HIGH) << 16), tmpTime);
+      snprintf_P(dt, sizeof(dt), PSTR("%04d-%02d-%02d %02d:%02d"),
+        tmpTime.year +1970, tmpTime.month, tmpTime.day_of_month, tmpTime.hour, tmpTime.minute);
+      WSContentSend_PD(HTTP_SNS_NEOPOOL_TIME, neopool_type, dt);
+    }
 #endif  // NEOPOOL_OPTIMIZE_READINGS
 
     // Temperature
@@ -1635,6 +1647,18 @@ void NeoPoolShow(bool json)
       WSContentSend_PD(HTTP_SNS_NEOPOOL_RELAY,neopool_type, sdesc,
         '\0' == *stemp ? ((NeoPoolGetData(MBF_RELAY_STATE) & (1<<i))?PSTR(D_ON):PSTR(D_OFF)) : stemp);
     }
+
+#ifndef NEOPOOL_OPTIMIZE_READINGS
+    {
+      // Cell runtime
+      char dt[16];
+      TIME_T tmpTime;
+      BreakTime((uint32_t)NeoPoolGetData(MBF_CELL_RUNTIME_LOW) + ((uint32_t)NeoPoolGetData(MBF_CELL_RUNTIME_HIGH) << 16), tmpTime);
+      snprintf_P(dt, sizeof(dt), PSTR("%dT%02d:%02d"), tmpTime.days, tmpTime.hour, tmpTime.minute);
+      WSContentSend_PD(HTTP_SNS_NEOPOOL_CELL_RUNTIME, neopool_type, dt);
+    }
+#endif  // NEOPOOL_OPTIMIZE_READINGS
+
 #endif  // USE_WEBSERVER
   }
 }
