@@ -235,18 +235,28 @@ extern "C" {
     be_return(vm);  /* return code */
   }
 
+  void wc_errorCodeMessage(int32_t httpCode, uint32_t http_connect_time) {
+    if (httpCode < 0) {
+      if (httpCode <= -1000) {
+        AddLog(LOG_LEVEL_INFO, D_LOG_HTTP "TLS connection error %d after %d ms", -httpCode - 1000, millis() - http_connect_time);
+      } else if (httpCode == -1) {
+        AddLog(LOG_LEVEL_INFO, D_LOG_HTTP "Connection timeout after %d ms", httpCode, millis() - http_connect_time);
+      } else {
+        AddLog(LOG_LEVEL_INFO, D_LOG_HTTP "Connection error %d after %d ms", httpCode, millis() - http_connect_time);
+      }
+    } else {
+      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP "Connected in %d ms, stack low mark %d"),
+        millis() - http_connect_time, uxTaskGetStackHighWaterMark(nullptr));
+    }
+  }
+
   // cw.GET(void) -> httpCode:int
   int32_t wc_GET(struct bvm *vm);
   int32_t wc_GET(struct bvm *vm) {
     HTTPClientLight * cl = wc_getclient(vm);
     uint32_t http_connect_time = millis();
     int32_t httpCode = cl->GET();
-    if (httpCode <= -1000) {
-      AddLog(LOG_LEVEL_INFO, D_LOG_HTTP "TLS connection error: %d", -httpCode - 1000);
-    } else {
-      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP "TLS connected in %d ms, stack low mark %d"),
-        millis() - http_connect_time, uxTaskGetStackHighWaterMark(nullptr));
-    }
+    wc_errorCodeMessage(httpCode, http_connect_time);
     be_pushint(vm, httpCode);
     be_return(vm);  /* return code */
   }
@@ -267,12 +277,7 @@ extern "C" {
       }
       uint32_t http_connect_time = millis();
       int32_t httpCode = cl->POST((uint8_t*)buf, buf_len);
-      if (httpCode <= -1000) {
-        AddLog(LOG_LEVEL_INFO, D_LOG_HTTP "TLS connection error: %d", -httpCode - 1000);
-      } else {
-        AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP "TLS connected in %d ms, stack low mark %d"),
-          millis() - http_connect_time, uxTaskGetStackHighWaterMark(nullptr));
-      }
+      wc_errorCodeMessage(httpCode, http_connect_time);
       be_pushint(vm, httpCode);
       be_return(vm);  /* return code */
     }
