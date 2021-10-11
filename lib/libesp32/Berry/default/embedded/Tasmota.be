@@ -50,7 +50,7 @@ class Tasmota
   def find_key_i(m,keyi)
     import string
     var keyu = string.toupper(keyi)
-    if classof(m) == map
+    if isinstance(m, map)
       for k:m.keys()
         if string.toupper(k)==keyu || keyi=='?'
           return k
@@ -149,9 +149,14 @@ class Tasmota
       if ev == nil
         print('BRY: ERROR, bad json: '+ev_json, 3)
       else
-        for r: self._rules.keys()
-          ret = self.try_rule(ev,r,self._rules[r]) || ret
+        try
+          ret = self._rules.reduce( /k,v,r-> self.try_rule(ev,k,v) || r, nil, false)
+        except "stop_iteration"
+          # silence stop_iteration which means that the map was resized during iteration
         end
+        # for r: self._rules.keys()
+        #   ret = self.try_rule(ev,r,self._rules[r]) || ret
+        # end
       end
       return ret
     end
