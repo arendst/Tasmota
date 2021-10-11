@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 - Berry add module ``import persist``
 - Support for BL0942 energy monitor (#13259)
 - Support for HM330X SeedStudio Grove Particule sensor (#13250)
+- ESP32 restore GPIO16/17 if no PSRAM was found
 
 ### Breaking Changed
 - ESP32 LVGL updated to v8.0.2
