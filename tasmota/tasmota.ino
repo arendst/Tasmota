@@ -222,13 +222,6 @@ void setup(void) {
 #endif
 #endif
 
-#ifdef CONFIG_IDF_TARGET_ESP32
-  // restore GPIO16/17 if no PSRAM is found
-  if (!FoundPSRAM()) {
-    gpio_reset_pin(GPIO_NUM_16);
-    gpio_reset_pin(GPIO_NUM_17);
-  }
-#endif
   RtcPreInit();
   SettingsInit();
 
