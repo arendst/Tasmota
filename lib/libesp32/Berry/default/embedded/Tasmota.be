@@ -50,7 +50,7 @@ class Tasmota
   def find_key_i(m,keyi)
     import string
     var keyu = string.toupper(keyi)
-    if classof(m) == map
+    if isinstance(m, map)
       for k:m.keys()
         if string.toupper(k)==keyu || keyi=='?'
           return k
@@ -149,9 +149,14 @@ class Tasmota
       if ev == nil
         print('BRY: ERROR, bad json: '+ev_json, 3)
       else
-        for r: self._rules.keys()
-          ret = self.try_rule(ev,r,self._rules[r]) || ret
+        try
+          ret = self._rules.reduce( /k,v,r-> self.try_rule(ev,k,v) || r, nil, false)
+        except "stop_iteration"
+          # silence stop_iteration which means that the map was resized during iteration
         end
+        # for r: self._rules.keys()
+        #   ret = self.try_rule(ev,r,self._rules[r]) || ret
+        # end
       end
       return ret
     end
@@ -300,6 +305,8 @@ class Tasmota
 
   def event(event_type, cmd, idx, payload, raw)
     import introspect
+    import debug
+    import string
     if event_type=='every_50ms' self.run_deferred() end  #- first run deferred events -#
 
     var done = false
@@ -317,8 +324,8 @@ class Tasmota
             done = f(d, cmd, idx, payload, raw)
             if done break end
           except .. as e,m
-            import string
             print(string.format("BRY: Exception> '%s' - %s", e, m))
+            debug.traceback()
           end
         end
         i += 1
