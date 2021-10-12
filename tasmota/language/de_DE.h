@@ -1064,6 +1064,7 @@
 #define D_NEOPOOL_RELAY_CD                "Salzwasserpumpe"
 #define D_NEOPOOL_TIME                    "Zeit"
 #define D_NEOPOOL_FILT_MODE               "Filtration"
+#define D_NEOPOOL_CELL_RUNTIME            "Laufzeit Zelle"
 #define D_NEOPOOL_POLARIZATION            "Pol"               // Sensor status
 #define D_NEOPOOL_PR_OFF                  "PrAus"
 #define D_NEOPOOL_SETPOINT_OK             "Ok"

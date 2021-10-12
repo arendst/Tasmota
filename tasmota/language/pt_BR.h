@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v9.5.0.3
+ * Updated until v9.5.0.9
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -944,14 +944,14 @@
 #define D_SCRIPT_UPLOAD_FILES  "Enviar arquivos"
 
 //xdrv_50_filesystem.ino
-#define D_MANAGE_FILE_SYSTEM   "Manage File system"
+#define D_MANAGE_FILE_SYSTEM   "Gerenciar sistema de arquivos"
 #define D_FS_SIZE              "Tamanho"
 #define D_FS_FREE              "Livre"
-#define D_NEW_FILE             "newfile.txt"
-#define D_CREATE_NEW_FILE      "Criar e editar um novo arquivo"
+#define D_NEW_FILE             "Newfile.txt"
+#define D_CREATE_NEW_FILE      "Criar um novo arquivo"
 #define D_EDIT_FILE            "Editar arquivo"
 #define D_CONFIRM_FILE_DEL     "Confirmar remoção do arquivo"
-#define D_SHOW_HIDDEN_FILES    "Show hidden files"
+#define D_SHOW_HIDDEN_FILES    "Mostrar arquivos ocultos"
 
 //xsns_67_as3935.ino
 #define D_AS3935_GAIN "ganho:"
@@ -1064,6 +1064,7 @@
 #define D_NEOPOOL_RELAY_CD                "Bomba de salmora"
 #define D_NEOPOOL_TIME                    "Time"
 #define D_NEOPOOL_FILT_MODE               "Filtragem"
+#define D_NEOPOOL_CELL_RUNTIME            "Cell runtime"
 #define D_NEOPOOL_POLARIZATION            "Pol"               // Sensor status
 #define D_NEOPOOL_PR_OFF                  "PrOff"
 #define D_NEOPOOL_SETPOINT_OK             "Ok"

@@ -1064,6 +1064,7 @@
 #define D_NEOPOOL_RELAY_CD                "Brine pump"
 #define D_NEOPOOL_TIME                    "Time"
 #define D_NEOPOOL_FILT_MODE               "Filtration"
+#define D_NEOPOOL_CELL_RUNTIME            "Cell runtime"
 #define D_NEOPOOL_POLARIZATION            "Pol"               // Sensor status
 #define D_NEOPOOL_PR_OFF                  "PrOff"
 #define D_NEOPOOL_SETPOINT_OK             "Ok"
