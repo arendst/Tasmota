@@ -1,4 +1,4 @@
-name: Build firmware development
+name: Build Test
 
 on:
   workflow_dispatch:  # Manually start a workflow
@@ -95,8 +95,6 @@ jobs:
         path: main
     - name: Push Firmware files to https://github.com/arendst/Tasmota-firmware
       run: |
-         git config user.name 'github-actions'
-         git config user.email 'github-actions@github.com'
          git add ./firmware*
          git commit -a ${GITHUB_SHA}
          git push
@@ -108,8 +106,6 @@ jobs:
       run: |
          echo ${GITHUB_SHA}  &> trigger.txt
          echo "$(<trigger.txt)"
-         git config user.name 'github-actions'
-         git config user.email 'github-actions@github.com'
          git add trigger.txt
          git commit -a ${GITHUB_SHA}
          git push
