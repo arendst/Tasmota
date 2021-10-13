@@ -50,6 +50,7 @@ jobs:
 
   Upload:
     runs-on: ubuntu-latest
+    needs: [tasmota, tasmota-minimal] 
     continue-on-error: true
     steps:
     - uses: actions/download-artifact@v2
