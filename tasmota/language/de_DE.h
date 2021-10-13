@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v9.5.0.7
+ * Updated until v9.5.0.9
 \*********************************************************************/
 
 //#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -76,7 +76,7 @@
 #define D_COUNT "Anzahl"             // used as a noun throughout
 #define D_COUNTER "Zähler"
 #define D_CT_POWER "CT Power"
-#define D_CURRENT "Strom"          // As in Voltage and Current
+#define D_CURRENT "Strom"            // As in Voltage and Current
 #define D_DATA "Daten"
 #define D_DARKLIGHT "dunkel"
 #define D_DEBUG "debug"
@@ -889,9 +889,9 @@
 #define D_UNIT_WATTHOUR "Wh"
 #define D_UNIT_WATT_METER_QUADRAT "W/m²"
 
-#define D_NEW_ADDRESS          "Neue Adresse"
-#define D_OUT_OF_RANGE         "Außerhalb Bereich"
-#define D_SENSOR_DETECTED      "erkannt"
+#define D_NEW_ADDRESS      "Neue Adresse"
+#define D_OUT_OF_RANGE     "Außerhalb Bereich"
+#define D_SENSOR_DETECTED  "erkannt"
 
 //SDM220, SDM120, SDM72, LE01MR
 #define D_EXPORT_POWER    "Exportiere Leistung"
@@ -951,7 +951,7 @@
 #define D_CREATE_NEW_FILE      "Datei erstellen und bearbeiten"
 #define D_EDIT_FILE            "Datei bearbeiten"
 #define D_CONFIRM_FILE_DEL     "Datei löschen bestätigen"
-#define D_SHOW_HIDDEN_FILES    "Show hidden files"
+#define D_SHOW_HIDDEN_FILES    "Zeige versteckte Datei(en)"
 
 //xsns_67_as3935.ino
 #define D_AS3935_GAIN "Umgebung:"
@@ -1021,7 +1021,7 @@
 #define D_FP_INVALIDIMAGE "Abbild ungültig"             // 0x15 Failed to generate image because of lac of valid primary image
 #define D_FP_FLASHERR "Flash Schreibfehler"             // 0x18 Error when writing flash
 #define D_FP_INVALIDREG "Ungültige ID-Nummer"           // 0x1A Invalid register number
-#define D_FP_ADDRCODE "Adresse"                        // 0x20 Address code
+#define D_FP_ADDRCODE "Adresse"                         // 0x20 Address code
 #define D_FP_PASSVERIFY "Übereinstimmung"               // 0x21 Verify the fingerprint passed
 #define D_FP_UNKNOWNERROR "Fehler"                      // Any other error
 
