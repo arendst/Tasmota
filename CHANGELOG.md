@@ -3,7 +3,7 @@ All notable changes to this project will be documented in this file.
 
 ## [Released]
 
-## [9.6.0] 20211019
+## [10.0.0] 20211019
 - Release Norman
 
 ## [9.5.0.9]
