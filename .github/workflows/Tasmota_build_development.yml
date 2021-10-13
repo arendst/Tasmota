@@ -1359,8 +1359,7 @@ jobs:
         [ ! -f ./mv_firmware/firmware/tasmota32* ] || mv ./mv_firmware/firmware/tasmota32* ./firmware/tasmota32/languages/
         [ ! -f ./mv_firmware/firmware/* ] || mv ./mv_firmware/firmware/* ./firmware/tasmota/languages/
     - name: Display files to transfer
-      run: ls -R ./*
-    - name: Push Firmware files to https://github.com/arendst/Tasmota-firmware
+      run: ls -R ./
     - uses: actions/checkout@v2
       with:
         repository: arendst/Tasmota-firmware
