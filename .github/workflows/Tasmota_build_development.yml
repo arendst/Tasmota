@@ -1,5 +1,4 @@
-
-name: Build_firmware_development
+name: Build firmware development
 
 on:
   workflow_dispatch:  # Manually start a workflow
@@ -10,6 +9,7 @@ on:
     - '**.md' # Do no build if *.md files changes
 
 jobs:
+
   tasmota:
     runs-on: ubuntu-latest
     continue-on-error: true
