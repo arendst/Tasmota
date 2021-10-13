@@ -1,5 +1,4 @@
 name: Build_firmware_development
-
 on:
   workflow_dispatch:  # Manually start a workflow
   push:
