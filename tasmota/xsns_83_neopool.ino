@@ -211,7 +211,7 @@ enum NeoPoolRegister {
   MBF_PAR_PH2,                            // 0x0505         Lower limit of the pH regulation system. The value set in this register is multiplied by 100. This means that if we want to set a value of 7.0, the numerical content that we must write in this register is 700. This register must be always lower than MBF_PAR_PH1.
   MBF_PAR_RX1 = 0x0508,                   // 0x0508         Set point for the redox regulation system. This value must be in the range of 0 to 1000.
   MBF_PAR_CL1 = 0x050A,                   // 0x050A         Set point for the chlorine regulation system. The value stored in this register is multiplied by 100. This mean that if we want to set a value of 1.5 ppm, we will have to write a numerical value of 150. This value stored in this register must be in the range of 0 to 1000.
-  MBF_PAR_FILTRATION_TYPE = 0x050F,       // 0x050F         undocumented - filtration type, see MBV_PAR_FILTRATION_TYPE_*  0 = Standard, 1 = Variable Hayward, 2 = Variable speed B
+  MBF_PAR_FILTRATION_CONF = 0x050F,       // 0x050F  mask   undocumented - filtration type and speed, see MBMSK_PAR_FILTRATION_CONF_*
   MBF_PAR_FILTRATION_SPEED_FUNC = 0x0513, // 0x0513         undocumented - filtration speed function control
   MBF_PAR_FUNCTION_DEPENDENCY = 0x051B,   // 0x051B  mask   Specification for the dependency of different functions, such as heating, from external events like FL1 (see MBMSK_FCTDEP_HEATING/MBMSK_DEPENDENCY_*)
 
@@ -418,14 +418,23 @@ enum NeoPoolConstAndBitMask {
   MBV_PAR_RELAY_MODE_SHOW_ONLY            = 1,      // The system only shows the alarm on screen, but the dosing continues.
   MBV_PAR_RELAY_MODE_SHOW_AND_STOP        = 2,      // The system shows the alarm on screen and stops the dosing pump
 
-  // MBF_PAR_FILTRATION_TYPE
-  MBV_PAR_FILTRATION_TYPE_STANDARD        = 0x00,   // Standard (without speed control)
-  MBV_PAR_FILTRATION_TYPE_HAYWARD_SLOW    = 0x01,   // Variable Hayward Slow
-  MBV_PAR_FILTRATION_TYPE_HAYWARD_MEDIUM  = 0x11,   // Variable Hayward Medium
-  MBV_PAR_FILTRATION_TYPE_HAYWARD_FAST    = 0x21,   // Variable Hayward Fast
-  MBV_PAR_FILTRATION_TYPE_SPEED_B_SLOW    = 0x02,   // Variable speed B Slow
-  MBV_PAR_FILTRATION_TYPE_SPEED_B_MEDIUM  = 0x12,   // Variable speed B Medium
-  MBV_PAR_FILTRATION_TYPE_SPEED_B_FAST    = 0x22,   // Variable speed B Fast
+  // MBF_PAR_FILTRATION_CONF
+  MBMSK_PAR_FILTRATION_CONF_TYPE          = 0x000F, // Filtration pump type, see MBV_PAR_FILTRATION_TYPE_*
+  MBMSK_PAR_FILTRATION_CONF_DEF_SPEED     = 0x0070, // Filtration default speed, see MBV_PAR_FILTRATION_SPEED_*
+  MBMSK_PAR_FILTRATION_CONF_INT1_SPEED    = 0x0380, // Filtration speed for timer interval 1, see MBV_PAR_FILTRATION_SPEED_*
+  MBMSK_PAR_FILTRATION_CONF_INT2_SPEED    = 0x1C00, // Filtration speed for timer interval 2, see MBV_PAR_FILTRATION_SPEED_*
+  MBMSK_PAR_FILTRATION_CONF_INT3_SPEED    = 0xE000, // Filtration speed for timer interval 3, see MBV_PAR_FILTRATION_SPEED_*
+  MBSHFT_PAR_FILTRATION_CONF_TYPE         = 0,      // Filtration pump type bit shift
+  MBSHFT_PAR_FILTRATION_CONF_DEF_SPEED    = 4,      // Filtration default speed bit shift
+  MBSHFT_PAR_FILTRATION_CONF_INT1_SPEED   = 7,      // Filtration speed for timer interval 1 bit shift
+  MBSHFT_PAR_FILTRATION_CONF_INT2_SPEED   = 10,     // Filtration speed for timer interval 2 bit shift
+  MBSHFT_PAR_FILTRATION_CONF_INT3_SPEED   = 13,     // Filtration speed for timer interval 3 bit shift
+  MBV_PAR_FILTRATION_TYPE_STANDARD        = 0,      // Standard (without speed control)
+  MBV_PAR_FILTRATION_TYPE_HAYWARD         = 1,      // Variable speed B
+  MBV_PAR_FILTRATION_TYPE_SPEED_B         = 2,      // Variable speed B
+  MBV_PAR_FILTRATION_SPEED_SLOW           = 0,      // Speed Slow
+  MBV_PAR_FILTRATION_SPEED_MEDIUM         = 1,      // Speed Medium
+  MBV_PAR_FILTRATION_SPEED_FAST           = 2,      // Speed Fast
 
   // MBF_PAR_FUNCTION_DEPENDENCY
   MBMSK_FCTDEP_HEATING                    = 0x0007, // Heating function dependency:
@@ -588,14 +597,9 @@ struct {
     {NEOPOOL_REG_TYPE_BLOCK, {MBF_CELL_RUNTIME_LOW,  MBF_CELL_RUNTIME_HIGH - MBF_CELL_RUNTIME_LOW + 1, nullptr}},
     {NEOPOOL_REG_TYPE_BLOCK, {MBF_PAR_VERSION,       MBF_PAR_MODEL         - MBF_PAR_VERSION + 1, nullptr}},
     {NEOPOOL_REG_TYPE_BLOCK, {MBF_PAR_TIME_LOW,      MBF_PAR_FILT_GPIO     - MBF_PAR_TIME_LOW + 1, nullptr}},
-    {NEOPOOL_REG_TYPE_BLOCK, {MBF_PAR_ION,           MBF_PAR_FILTRATION_TYPE - MBF_PAR_ION + 1, nullptr}},
+    {NEOPOOL_REG_TYPE_BLOCK, {MBF_PAR_ION,           MBF_PAR_FILTRATION_CONF - MBF_PAR_ION + 1, nullptr}},
     {NEOPOOL_REG_TYPE_BLOCK, {MBF_PAR_UICFG_MACHINE, MBF_PAR_UICFG_MACH_VISUAL_STYLE - MBF_PAR_UICFG_MACHINE + 1, nullptr}}
 };
-
-uint16_t filtration_types[2][3] = {
-  {MBV_PAR_FILTRATION_TYPE_HAYWARD_SLOW, MBV_PAR_FILTRATION_TYPE_HAYWARD_MEDIUM, MBV_PAR_FILTRATION_TYPE_HAYWARD_FAST},
-  {MBV_PAR_FILTRATION_TYPE_SPEED_B_SLOW, MBV_PAR_FILTRATION_TYPE_SPEED_B_MEDIUM, MBV_PAR_FILTRATION_TYPE_SPEED_B_FAST}
-  };
 
 // NeoPool modbus function errors
 enum NeoPoolModbusCode {
@@ -1823,24 +1827,25 @@ void CmndNeopoolFiltration(void)
 {
   uint16_t addr = MBF_PAR_FILT_MANUAL_STATE;
   uint16_t data;
-  uint16_t filtration_type;
+  uint16_t filtration_conf;
   uint32_t value[2] = { 0 };
   uint32_t params_cnt = ParseParameters(nitems(value), value);
 
   if (XdrvMailbox.data_len) {
-    if (NEOPOOL_MODBUS_OK != NeoPoolReadRegister(MBF_PAR_FILTRATION_TYPE, &filtration_type, 1)) {
+    if (NEOPOOL_MODBUS_OK != NeoPoolReadRegister(MBF_PAR_FILTRATION_CONF, &filtration_conf, 1)) {
       NeopoolResponseError();
       return;
     }
-    if (params_cnt > 2 || (MBV_PAR_FILTRATION_TYPE_STANDARD == filtration_type && params_cnt > 1)) {
-        // no speed control for standard types
+    if (params_cnt > 2 || (params_cnt > 1 && (MBV_PAR_FILTRATION_TYPE_STANDARD == (filtration_conf & MBMSK_PAR_FILTRATION_CONF_TYPE)))) {
+        // no speed control for standard filtration types
         NeopoolCmndError();
         return;
     }
     if (params_cnt > 1) {
       if (value[1] >= 1 && value[1] <= 3) {
         // Set filtration speed first
-        NeoPoolWriteRegisterWord(MBF_PAR_FILTRATION_TYPE, (filtration_type & 0xFF00) | filtration_types[(filtration_type & 0x0F) - 1][value[1] - 1]);
+        NeoPoolWriteRegisterWord(MBF_PAR_FILTRATION_CONF,
+          (filtration_conf & MBMSK_PAR_FILTRATION_CONF_DEF_SPEED) | ((value[1] - 1) << MBSHFT_PAR_FILTRATION_CONF_DEF_SPEED));
         NeoPoolWriteRegisterWord(MBF_EXEC, 1);
       } else {
           NeopoolCmndError();
