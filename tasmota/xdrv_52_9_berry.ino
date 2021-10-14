@@ -120,6 +120,7 @@ void BerryDumpErrorAndClear(bvm *vm, bool berry_console) {
       top = be_top(vm);   // update top after dump
     } else {
       AddLog(LOG_LEVEL_ERROR, PSTR(D_LOG_BERRY "Exception> '%s' - %s"), be_tostring(berry.vm, -2), be_tostring(berry.vm, -1));
+      be_tracestack(vm);
     }
   } else {
     be_dumpstack(vm);
