@@ -1854,7 +1854,7 @@ void CmndNeopoolFiltration(void)
       if (value[1] >= 1 && value[1] <= 3) {
         // Set filtration speed first
         NeoPoolWriteRegisterWord(MBF_PAR_FILTRATION_CONF,
-          (filtration_conf & MBMSK_PAR_FILTRATION_CONF_DEF_SPEED) | ((value[1] - 1) << MBSHFT_PAR_FILTRATION_CONF_DEF_SPEED));
+          (filtration_conf & ~MBMSK_PAR_FILTRATION_CONF_DEF_SPEED) | ((value[1] - 1) << MBSHFT_PAR_FILTRATION_CONF_DEF_SPEED));
         NeoPoolWriteRegisterWord(MBF_EXEC, 1);
       } else {
           NeopoolCmndError();
