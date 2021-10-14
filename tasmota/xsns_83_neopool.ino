@@ -82,8 +82,12 @@ enum NeoPoolRegister {
                                           // addr    Unit   Description
                                           // ------  ------ ------------------------------------------------------------
   // MODBUS page (0x0000 - 0x002E - unknown - for internal use only)
-  MBF_VOLT_24_36 = 0x0022,                // 0x0022         Current 24-36V line in mV
-  MBF_VOLT_12 = 0x0023,                   // 0x0023         Current 12V line in mV
+  MBF_POWER_MODULE_VERSION = 0x0002,      // 0x0002         undocumented - power module version
+  MBF_POWER_MODULE_NODEID = 0x0004,       // 0x0004         undocumented - power module Node ID (6 register 0x0004 - 0x0009)
+  MBF_POWER_MODULE_REGISTER = 0x000C,     // 0x000C         undocumented - Writing an address in this register causes the power module register address to be read out into MBF_POWER_MODULE_DATA, see MBF_POWER_MODULE_REG_*
+  MBF_POWER_MODULE_DATA = 0x000D,         // 0x000D         undocumented - power module data as requested in MBF_POWER_MODULE_REGISTER
+  MBF_VOLT_24_36 = 0x0022,                // 0x0022         undocumented - Current 24-36V line in mV
+  MBF_VOLT_12 = 0x0023,                   // 0x0023         undocumented - Current 12V line in mV
 
   // MEASURE page (0x01xx)
   MBF_ION_CURRENT = 0x0100,               // 0x0100*        Current measured in the ionization system
@@ -540,6 +544,9 @@ enum NeoPoolConstAndBitMask {
   MBMSK_VS_FORCE_UNITS_GRH                = 0x2000, // Display the hydrolysis/electrolysis in units of grams per hour (gr/h).
   MBMSK_VS_FORCE_UNITS_PERCENTAGE         = 0x4000, // Display the hydrolysis/electrolysis in percentage units (%).
   MBMSK_ELECTROLISIS                      = 0x8000, // Display the word electrolysis instead of hydrolysis in generic mode.
+
+  // MBF_POWER_MODULE_REG_*
+  MBV_POWER_MODULE_REG_INFO = 0,          // undocumented - set of 26-byte power module register stores an ASCIIZ string containing the subversion and timestamp of the module, e. g. ".57\nMay 26 2020\n01:08:10\n\0"
 };
 
 #include <TasmotaModbus.h>
