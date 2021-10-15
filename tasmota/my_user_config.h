@@ -96,7 +96,11 @@
 #define OTA_URL                "http://ota.tasmota.com/tasmota/release/tasmota.bin.gz"  // [OtaUrl]
 #endif  // ESP8266
 #ifdef ESP32
+#ifdef CONFIG_IDF_TARGET_ESP32C3
+#define OTA_URL                "http://ota.tasmota.com/tasmota32/release/tasmota32c3.bin"  // [OtaUrl]
+#else   // No CONFIG_IDF_TARGET_ESP32C3
 #define OTA_URL                "http://ota.tasmota.com/tasmota32/release/tasmota32.bin"  // [OtaUrl]
+#endif  //  CONFIG_IDF_TARGET_ESP32C3
 #endif  // ESP32
 
 // -- MQTT ----------------------------------------
