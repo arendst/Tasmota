@@ -483,9 +483,9 @@ typedef struct {
   int16_t       toffset[2];                // 30E
   uint8_t       display_font;              // 312
   DisplayOptions  display_options;         // 313
-  uint32_t      energy_kWhtoday_ph[3];     // 314
-  uint32_t      energy_kWhyesterday_ph[3]; // 320
-  uint32_t      energy_kWhtotal_ph[3];     // 32C
+  int32_t       energy_kWhtoday_ph[3];     // 314
+  int32_t       energy_kWhyesterday_ph[3]; // 320
+  int32_t       energy_kWhtotal_ph[3];     // 32C
 
   uint8_t       free_338[7];               // 338
 
@@ -786,8 +786,8 @@ typedef struct {
 
   uint8_t       free_2d6[2];               // 2D6
 
-  uint32_t      energy_kWhtoday_ph[3];     // 2D8
-  uint32_t      energy_kWhtotal_ph[3];     // 2E4
+  int32_t       energy_kWhtoday_ph[3];     // 2D8
+  int32_t       energy_kWhtotal_ph[3];     // 2E4
 
                                            // 2F0 - 2FF free locations
 } TRtcSettings;

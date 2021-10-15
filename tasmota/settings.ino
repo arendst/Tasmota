@@ -287,11 +287,11 @@ void UpdateQuickPowerCycle(bool update) {
 
 void EmergencyReset(void) {
   Serial.begin(115200);
-  Serial.write(0xAA);
-  Serial.write(0x55);
+  Serial.write(0xA5);
+  Serial.write(0x5A);
   delay(1);
   if (Serial.available() == 2) {
-    if ((Serial.read() == 0xAA) && (Serial.read() == 0x55)) {
+    if ((Serial.read() == 0xA5) && (Serial.read() == 0x5A)) {
       SettingsErase(3);       // Reset all settings including QuickPowerCycle flag
 
       do {                    // Wait for user to remove Rx Tx jumper and power cycle
@@ -302,7 +302,8 @@ void EmergencyReset(void) {
       ESP_Restart();          // Restart to init default settings
     }
   }
-  while (Serial.available()) { Serial.read(); }  // Flush input buffer
+  Serial.println();
+  Serial.flush();
 #ifdef ESP32
   delay(10);                  // Allow time to cleanup queues - if not used hangs ESP32
   Serial.end();
