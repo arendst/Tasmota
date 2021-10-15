@@ -9,17 +9,17 @@ f20 = lv.montserrat_font(20)  # load embedded Montserrat 20
 f28 = lv.montserrat_font(28)  # load embedded Montserrat 28
 
 #- Backgroun -#
-scr.set_style_bg_color(lv_color(0x000066), lv.PART_MAIN | lv.STATE_DEFAULT)
+scr.set_style_bg_color(lv.color(0x000066), lv.PART_MAIN | lv.STATE_DEFAULT)
 
 #- Upper state line -#
-stat_line = lv_label(scr)
+stat_line = lv.label(scr)
 if f20 != nil stat_line.set_style_text_font(f20, lv.PART_MAIN | lv.STATE_DEFAULT) end
 stat_line.set_long_mode(lv.LABEL_LONG_SCROLL)                                                  # auto scrolling if text does not fit
 stat_line.set_width(hres)
 stat_line.set_align(lv.TEXT_ALIGN_LEFT)                                                      # align text left
-stat_line.set_style_bg_color(lv_color(0xD00000), lv.PART_MAIN | lv.STATE_DEFAULT)    # background #000088
+stat_line.set_style_bg_color(lv.color(0xD00000), lv.PART_MAIN | lv.STATE_DEFAULT)    # background #000088
 stat_line.set_style_bg_opa(lv.OPA_COVER, lv.PART_MAIN | lv.STATE_DEFAULT)            # 100% background opacity
-stat_line.set_style_text_color(lv_color(0xFFFFFF), lv.PART_MAIN | lv.STATE_DEFAULT)  # text color #FFFFFF
+stat_line.set_style_text_color(lv.color(0xFFFFFF), lv.PART_MAIN | lv.STATE_DEFAULT)  # text color #FFFFFF
 stat_line.set_text("Tasmota")
 stat_line.refr_size()                                                                # new in LVGL8
 stat_line.refr_pos()                                                                 # new in LVGL8
@@ -29,12 +29,12 @@ wifi_icon = lv_wifi_arcs_icon(stat_line)    # the widget takes care of positioni
 clock_icon = lv_clock_icon(stat_line)
 
 #- create a style for the buttons -#
-btn_style = lv_style()
+btn_style = lv.style()
 
 btn_style.set_radius(10)                        # radius of rounded corners
 btn_style.set_bg_opa(lv.OPA_COVER)              # 100% backgrond opacity
 if f28 != nil btn_style.set_text_font(f28) end  # set font to Montserrat 28
-btn_style.set_text_color(lv_color(0x000000))    # text color black when not checked
+btn_style.set_text_color(lv.color(0x000000))    # text color black when not checked
 
 #- register buttons -#
 var btns = []         # relay buttons are added to this list to match with Tasmota relays
@@ -53,12 +53,12 @@ end
 #- you still need to re-position the button -#
 def create_btn_relay(label)
   var btn, btn_label
-  btn = lv_btn(scr)
+  btn = lv.btn(scr)
   btn.set_pos(30, 30)
   btn.set_size(hres - 60, 60)
   btn.add_style(btn_style, lv.PART_MAIN | lv.STATE_DEFAULT)   # style of button
   btn.add_flag(lv.OBJ_FLAG_CHECKABLE)                           # enable toggle mode   
-  btn_label = lv_label(btn)
+  btn_label = lv.label(btn)
   btn_label.center()
   btn_label.set_text(label)
   btn.add_event_cb(btn_clicked_cb, lv.EVENT_CLICKED, 0)       # set callback to update Tasmota relays

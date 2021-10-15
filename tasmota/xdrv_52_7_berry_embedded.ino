@@ -91,7 +91,7 @@ const char berry_prog[] =
   "def load(f) return tasmota.load(f) end "
 
 #ifdef USE_LVGL
-  "import lvgl as lv "
+  "import lv "
   // create the '_lvgl' global singleton
   "_lvgl = LVGL_glob() "
 

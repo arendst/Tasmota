@@ -157,6 +157,14 @@ const bntvmodule be_native_module(_module) = {                  \
     .name = _cname                                              \
 }
 
+/* defines needed for solidified modules */
+#define be_local_module(_c_name, _module_name, _map)            \
+  static const bmodule m_lib##_c_name = {                       \
+    be_const_header(BE_MODULE),                                 \
+    .table = (bmap*)_map,                                       \
+    .info.name = _module_name                                   \
+}
+
 #define be_nested_map(_size, _slots)                            \
   & (const bmap) {                                              \
     be_const_header(BE_MAP),                                    \

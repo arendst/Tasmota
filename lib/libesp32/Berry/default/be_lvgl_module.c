@@ -36,65 +36,65 @@ const lvbe_call_c_t lv_func[] = {
 
   { "clamp_height", (void*) &lv_clamp_height, "i", "iiii" },
   { "clamp_width", (void*) &lv_clamp_width, "i", "iiii" },
-  { "color_mix", (void*) &lv_color_mix, "lv_color", "(lv_color)(lv_color)i" },
+  { "color_mix", (void*) &lv_color_mix, "lv.lv_color", "(lv.lv_color)(lv.lv_color)i" },
   { "dpx", (void*) &lv_dpx, "i", "i" },
-  { "draw_arc", (void*) &lv_draw_arc, "", "iiiii(lv_area)(lv_draw_arc_dsc)" },
-  { "draw_arc_dsc_init", (void*) &lv_draw_arc_dsc_init, "", "(lv_draw_arc_dsc)" },
-  { "draw_arc_get_area", (void*) &lv_draw_arc_get_area, "", "iiiiiib(lv_area)" },
-  { "draw_img", (void*) &lv_draw_img, "", "(lv_area)(lv_area).(lv_draw_img_dsc)" },
-  { "draw_img_dsc_init", (void*) &lv_draw_img_dsc_init, "", "(lv_draw_img_dsc)" },
-  { "draw_label", (void*) &lv_draw_label, "", "(lv_area)(lv_area)(lv_draw_label_dsc)s(lv_draw_label_hint)" },
-  { "draw_label_dsc_init", (void*) &lv_draw_label_dsc_init, "", "(lv_draw_label_dsc)" },
-  { "draw_letter", (void*) &lv_draw_letter, "", "(lv_point)(lv_area)(lv_font)i(lv_color)ii" },
-  { "draw_line", (void*) &lv_draw_line, "", "(lv_point)(lv_point)(lv_area)(lv_draw_line_dsc)" },
-  { "draw_line_dsc_init", (void*) &lv_draw_line_dsc_init, "", "(lv_draw_line_dsc)" },
+  { "draw_arc", (void*) &lv_draw_arc, "", "iiiii(lv.lv_area)(lv.lv_draw_arc_dsc)" },
+  { "draw_arc_dsc_init", (void*) &lv_draw_arc_dsc_init, "", "(lv.lv_draw_arc_dsc)" },
+  { "draw_arc_get_area", (void*) &lv_draw_arc_get_area, "", "iiiiiib(lv.lv_area)" },
+  { "draw_img", (void*) &lv_draw_img, "", "(lv.lv_area)(lv.lv_area).(lv.lv_draw_img_dsc)" },
+  { "draw_img_dsc_init", (void*) &lv_draw_img_dsc_init, "", "(lv.lv_draw_img_dsc)" },
+  { "draw_label", (void*) &lv_draw_label, "", "(lv.lv_area)(lv.lv_area)(lv.lv_draw_label_dsc)s(lv.lv_draw_label_hint)" },
+  { "draw_label_dsc_init", (void*) &lv_draw_label_dsc_init, "", "(lv.lv_draw_label_dsc)" },
+  { "draw_letter", (void*) &lv_draw_letter, "", "(lv.lv_point)(lv.lv_area)(lv.lv_font)i(lv.lv_color)ii" },
+  { "draw_line", (void*) &lv_draw_line, "", "(lv.lv_point)(lv.lv_point)(lv.lv_area)(lv.lv_draw_line_dsc)" },
+  { "draw_line_dsc_init", (void*) &lv_draw_line_dsc_init, "", "(lv.lv_draw_line_dsc)" },
   { "draw_mask_add", (void*) &lv_draw_mask_add, "i", ".." },
-  { "draw_mask_angle_init", (void*) &lv_draw_mask_angle_init, "", "(lv_draw_mask_angle_param)iiii" },
-  { "draw_mask_fade_init", (void*) &lv_draw_mask_fade_init, "", "(lv_draw_mask_fade_param)(lv_area)iiii" },
+  { "draw_mask_angle_init", (void*) &lv_draw_mask_angle_init, "", "(lv.lv_draw_mask_angle_param)iiii" },
+  { "draw_mask_fade_init", (void*) &lv_draw_mask_fade_init, "", "(lv.lv_draw_mask_fade_param)(lv.lv_area)iiii" },
   { "draw_mask_get_cnt", (void*) &lv_draw_mask_get_cnt, "i", "" },
-  { "draw_mask_line_angle_init", (void*) &lv_draw_mask_line_angle_init, "", "(lv_draw_mask_line_param)iiii" },
-  { "draw_mask_line_points_init", (void*) &lv_draw_mask_line_points_init, "", "(lv_draw_mask_line_param)iiiii" },
-  { "draw_mask_map_init", (void*) &lv_draw_mask_map_init, "", "(lv_draw_mask_map_param)(lv_area)(lv_opa)" },
-  { "draw_mask_radius_init", (void*) &lv_draw_mask_radius_init, "", "(lv_draw_mask_radius_param)(lv_area)ib" },
+  { "draw_mask_line_angle_init", (void*) &lv_draw_mask_line_angle_init, "", "(lv.lv_draw_mask_line_param)iiii" },
+  { "draw_mask_line_points_init", (void*) &lv_draw_mask_line_points_init, "", "(lv.lv_draw_mask_line_param)iiiii" },
+  { "draw_mask_map_init", (void*) &lv_draw_mask_map_init, "", "(lv.lv_draw_mask_map_param)(lv.lv_area)(lv.lv_opa)" },
+  { "draw_mask_radius_init", (void*) &lv_draw_mask_radius_init, "", "(lv.lv_draw_mask_radius_param)(lv.lv_area)ib" },
   { "draw_mask_remove_custom", (void*) &lv_draw_mask_remove_custom, ".", "." },
   { "draw_mask_remove_id", (void*) &lv_draw_mask_remove_id, ".", "i" },
-  { "draw_polygon", (void*) &lv_draw_polygon, "", "ii(lv_area)(lv_draw_rect_dsc)" },
-  { "draw_rect", (void*) &lv_draw_rect, "", "(lv_area)(lv_area)(lv_draw_rect_dsc)" },
-  { "draw_rect_dsc_init", (void*) &lv_draw_rect_dsc_init, "", "(lv_draw_rect_dsc)" },
-  { "draw_triangle", (void*) &lv_draw_triangle, "", "i(lv_area)(lv_draw_rect_dsc)" },
+  { "draw_polygon", (void*) &lv_draw_polygon, "", "ii(lv.lv_area)(lv.lv_draw_rect_dsc)" },
+  { "draw_rect", (void*) &lv_draw_rect, "", "(lv.lv_area)(lv.lv_area)(lv.lv_draw_rect_dsc)" },
+  { "draw_rect_dsc_init", (void*) &lv_draw_rect_dsc_init, "", "(lv.lv_draw_rect_dsc)" },
+  { "draw_triangle", (void*) &lv_draw_triangle, "", "i(lv.lv_area)(lv.lv_draw_rect_dsc)" },
   { "event_register_id", (void*) &lv_event_register_id, "i", "" },
-  { "event_send", (void*) &lv_event_send, "i", "(lv_obj)i." },
-  { "event_set_cover_res", (void*) &lv_event_set_cover_res, "", "(lv_event)(lv_cover_res)" },
-  { "event_set_ext_draw_size", (void*) &lv_event_set_ext_draw_size, "", "(lv_event)i" },
+  { "event_send", (void*) &lv_event_send, "i", "(lv.lv_obj)i." },
+  { "event_set_cover_res", (void*) &lv_event_set_cover_res, "", "(lv.lv_event)(lv.lv_cover_res)" },
+  { "event_set_ext_draw_size", (void*) &lv_event_set_ext_draw_size, "", "(lv.lv_event)i" },
   { "get_hor_res", (void*) &lv_get_hor_res, "i", "" },
   { "get_ver_res", (void*) &lv_get_ver_res, "i", "" },
-  { "group_get_default", (void*) &lv_group_get_default, "lv_group", "" },
+  { "group_get_default", (void*) &lv_group_get_default, "lv.lv_group", "" },
   { "img_src_get_type", (void*) &lv_img_src_get_type, "i", "." },
-  { "indev_get_obj_act", (void*) &lv_indev_get_obj_act, "lv_obj", "" },
-  { "indev_read_timer_cb", (void*) &lv_indev_read_timer_cb, "", "(lv_timer)" },
-  { "layer_sys", (void*) &lv_layer_sys, "lv_obj", "" },
-  { "layer_top", (void*) &lv_layer_top, "lv_obj", "" },
+  { "indev_get_obj_act", (void*) &lv_indev_get_obj_act, "lv.lv_obj", "" },
+  { "indev_read_timer_cb", (void*) &lv_indev_read_timer_cb, "", "(lv.lv_timer)" },
+  { "layer_sys", (void*) &lv_layer_sys, "lv.lv_obj", "" },
+  { "layer_top", (void*) &lv_layer_top, "lv.lv_obj", "" },
   { "layout_register", (void*) &lv_layout_register, "i", "^lv_layout_update_cb^." },
-  { "obj_class_create_obj", (void*) &lv_obj_class_create_obj, "lv_obj", "(_lv_obj_class)(lv_obj)" },
-  { "obj_del_anim_ready_cb", (void*) &lv_obj_del_anim_ready_cb, "", "(lv_anim)" },
-  { "obj_draw_dsc_init", (void*) &lv_obj_draw_dsc_init, "", "(lv_obj_draw_part_dsc)(lv_area)" },
+  { "obj_class_create_obj", (void*) &lv_obj_class_create_obj, "lv.lv_obj", "(lv._lv_obj_class)(lv.lv_obj)" },
+  { "obj_del_anim_ready_cb", (void*) &lv_obj_del_anim_ready_cb, "", "(lv.lv_anim)" },
+  { "obj_draw_dsc_init", (void*) &lv_obj_draw_dsc_init, "", "(lv.lv_obj_draw_part_dsc)(lv.lv_area)" },
   { "obj_enable_style_refresh", (void*) &lv_obj_enable_style_refresh, "", "b" },
-  { "obj_event_base", (void*) &lv_obj_event_base, "i", "(lv_obj_class)(lv_event)" },
-  { "obj_report_style_change", (void*) &lv_obj_report_style_change, "", "(lv_style)" },
-  { "obj_style_get_selector_part", (void*) &lv_obj_style_get_selector_part, "i", "(lv_style_selector)" },
-  { "obj_style_get_selector_state", (void*) &lv_obj_style_get_selector_state, "i", "(lv_style_selector)" },
-  { "refr_now", (void*) &lv_refr_now, "", "(lv_disp)" },
-  { "scr_act", (void*) &lv_scr_act, "lv_obj", "" },
-  { "scr_load", (void*) &lv_scr_load, "", "(lv_obj)" },
-  { "scr_load_anim", (void*) &lv_scr_load_anim, "", "(lv_obj)iiib" },
-  { "theme_apply", (void*) &lv_theme_apply, "", "(lv_obj)" },
-  { "theme_get_color_primary", (void*) &lv_theme_get_color_primary, "lv_color", "(lv_obj)" },
-  { "theme_get_color_secondary", (void*) &lv_theme_get_color_secondary, "lv_color", "(lv_obj)" },
-  { "theme_get_font_large", (void*) &lv_theme_get_font_large, "lv_font", "(lv_obj)" },
-  { "theme_get_font_normal", (void*) &lv_theme_get_font_normal, "lv_font", "(lv_obj)" },
-  { "theme_get_font_small", (void*) &lv_theme_get_font_small, "lv_font", "(lv_obj)" },
-  { "theme_set_apply_cb", (void*) &lv_theme_set_apply_cb, "", "(lv_theme)^lv_theme_apply_cb^" },
-  { "theme_set_parent", (void*) &lv_theme_set_parent, "", "(lv_theme)(lv_theme)" },
+  { "obj_event_base", (void*) &lv_obj_event_base, "i", "(lv.lv_obj_class)(lv.lv_event)" },
+  { "obj_report_style_change", (void*) &lv_obj_report_style_change, "", "(lv.lv_style)" },
+  { "obj_style_get_selector_part", (void*) &lv_obj_style_get_selector_part, "i", "(lv.lv_style_selector)" },
+  { "obj_style_get_selector_state", (void*) &lv_obj_style_get_selector_state, "i", "(lv.lv_style_selector)" },
+  { "refr_now", (void*) &lv_refr_now, "", "(lv.lv_disp)" },
+  { "scr_act", (void*) &lv_scr_act, "lv.lv_obj", "" },
+  { "scr_load", (void*) &lv_scr_load, "", "(lv.lv_obj)" },
+  { "scr_load_anim", (void*) &lv_scr_load_anim, "", "(lv.lv_obj)iiib" },
+  { "theme_apply", (void*) &lv_theme_apply, "", "(lv.lv_obj)" },
+  { "theme_get_color_primary", (void*) &lv_theme_get_color_primary, "lv.lv_color", "(lv.lv_obj)" },
+  { "theme_get_color_secondary", (void*) &lv_theme_get_color_secondary, "lv.lv_color", "(lv.lv_obj)" },
+  { "theme_get_font_large", (void*) &lv_theme_get_font_large, "lv.lv_font", "(lv.lv_obj)" },
+  { "theme_get_font_normal", (void*) &lv_theme_get_font_normal, "lv.lv_font", "(lv.lv_obj)" },
+  { "theme_get_font_small", (void*) &lv_theme_get_font_small, "lv.lv_font", "(lv.lv_obj)" },
+  { "theme_set_apply_cb", (void*) &lv_theme_set_apply_cb, "", "(lv.lv_theme)^lv_theme_apply_cb^" },
+  { "theme_set_parent", (void*) &lv_theme_set_parent, "", "(lv.lv_theme)(lv.lv_theme)" },
 
 };
 const size_t lv_func_size = sizeof(lv_func) / sizeof(lv_func[0]);
@@ -177,23 +177,23 @@ const be_constint_t lv0_constants[] = {
     { "COLORWHEEL_MODE_HUE", LV_COLORWHEEL_MODE_HUE },
     { "COLORWHEEL_MODE_SATURATION", LV_COLORWHEEL_MODE_SATURATION },
     { "COLORWHEEL_MODE_VALUE", LV_COLORWHEEL_MODE_VALUE },
-    { "COLOR_AQUA", 65535 },
-    { "COLOR_BLACK", 0 },
-    { "COLOR_BLUE", 255 },
-    { "COLOR_CYAN", 65535 },
-    { "COLOR_GRAY", 8421504 },
-    { "COLOR_GREEN", 32768 },
-    { "COLOR_LIME", 65280 },
-    { "COLOR_MAGENTA", 16711935 },
-    { "COLOR_MAROON", 8388608 },
-    { "COLOR_NAVY", 128 },
-    { "COLOR_OLIVE", 8421376 },
-    { "COLOR_PURPLE", 8388736 },
-    { "COLOR_RED", 16711680 },
-    { "COLOR_SILVER", 12632256 },
-    { "COLOR_TEAL", 32896 },
-    { "COLOR_WHITE", 16777215 },
-    { "COLOR_YELLOW", 16776960 },
+    { "COLOR_AQUA", (int32_t) 0x00FFFF },
+    { "COLOR_BLACK", (int32_t) 0x000000 },
+    { "COLOR_BLUE", (int32_t) 0x0000FF },
+    { "COLOR_CYAN", (int32_t) 0x00FFFF },
+    { "COLOR_GRAY", (int32_t) 0x808080 },
+    { "COLOR_GREEN", (int32_t) 0x008000 },
+    { "COLOR_LIME", (int32_t) 0x00FF00 },
+    { "COLOR_MAGENTA", (int32_t) 0xFF00FF },
+    { "COLOR_MAROON", (int32_t) 0x800000 },
+    { "COLOR_NAVY", (int32_t) 0x000080 },
+    { "COLOR_OLIVE", (int32_t) 0x808000 },
+    { "COLOR_PURPLE", (int32_t) 0x800080 },
+    { "COLOR_RED", (int32_t) 0xFF0000 },
+    { "COLOR_SILVER", (int32_t) 0xC0C0C0 },
+    { "COLOR_TEAL", (int32_t) 0x008080 },
+    { "COLOR_WHITE", (int32_t) 0xFFFFFF },
+    { "COLOR_YELLOW", (int32_t) 0xFFFF00 },
     { "COVER_RES_COVER", LV_COVER_RES_COVER },
     { "COVER_RES_MASKED", LV_COVER_RES_MASKED },
     { "COVER_RES_NOT_COVER", LV_COVER_RES_NOT_COVER },
@@ -573,6 +573,65 @@ const be_constint_t lv0_constants[] = {
     { "STYLE_WIDTH", LV_STYLE_WIDTH },
     { "STYLE_X", LV_STYLE_X },
     { "STYLE_Y", LV_STYLE_Y },
+    { "$SYMBOL_AUDIO", (int32_t) "\xef\x80\x81" },
+    { "$SYMBOL_BACKSPACE", (int32_t) "\xef\x95\x9A" },
+    { "$SYMBOL_BATTERY_1", (int32_t) "\xef\x89\x83" },
+    { "$SYMBOL_BATTERY_2", (int32_t) "\xef\x89\x82" },
+    { "$SYMBOL_BATTERY_3", (int32_t) "\xef\x89\x81" },
+    { "$SYMBOL_BATTERY_EMPTY", (int32_t) "\xef\x89\x84" },
+    { "$SYMBOL_BATTERY_FULL", (int32_t) "\xef\x89\x80" },
+    { "$SYMBOL_BELL", (int32_t) "\xef\x83\xb3" },
+    { "$SYMBOL_BLUETOOTH", (int32_t) "\xef\x8a\x93" },
+    { "$SYMBOL_BULLET", (int32_t) "\xE2\x80\xA2" },
+    { "$SYMBOL_CALL", (int32_t) "\xef\x82\x95" },
+    { "$SYMBOL_CHARGE", (int32_t) "\xef\x83\xa7" },
+    { "$SYMBOL_CLOSE", (int32_t) "\xef\x80\x8d" },
+    { "$SYMBOL_COPY", (int32_t) "\xef\x83\x85" },
+    { "$SYMBOL_CUT", (int32_t) "\xef\x83\x84" },
+    { "$SYMBOL_DIRECTORY", (int32_t) "\xef\x81\xbb" },
+    { "$SYMBOL_DOWN", (int32_t) "\xef\x81\xb8" },
+    { "$SYMBOL_DOWNLOAD", (int32_t) "\xef\x80\x99" },
+    { "$SYMBOL_DRIVE", (int32_t) "\xef\x80\x9c" },
+    { "$SYMBOL_DUMMY", (int32_t) "\xEF\xA3\xBF" },
+    { "$SYMBOL_EDIT", (int32_t) "\xef\x8C\x84" },
+    { "$SYMBOL_EJECT", (int32_t) "\xef\x81\x92" },
+    { "$SYMBOL_EYE_CLOSE", (int32_t) "\xef\x81\xb0" },
+    { "$SYMBOL_EYE_OPEN", (int32_t) "\xef\x81\xae" },
+    { "$SYMBOL_FILE", (int32_t) "\xef\x85\x9b" },
+    { "$SYMBOL_GPS", (int32_t) "\xef\x84\xa4" },
+    { "$SYMBOL_HOME", (int32_t) "\xef\x80\x95" },
+    { "$SYMBOL_IMAGE", (int32_t) "\xef\x80\xbe" },
+    { "$SYMBOL_KEYBOARD", (int32_t) "\xef\x84\x9c" },
+    { "$SYMBOL_LEFT", (int32_t) "\xef\x81\x93" },
+    { "$SYMBOL_LIST", (int32_t) "\xef\x80\x8b" },
+    { "$SYMBOL_LOOP", (int32_t) "\xef\x81\xb9" },
+    { "$SYMBOL_MINUS", (int32_t) "\xef\x81\xa8" },
+    { "$SYMBOL_MUTE", (int32_t) "\xef\x80\xa6" },
+    { "$SYMBOL_NEW_LINE", (int32_t) "\xef\xA2\xA2" },
+    { "$SYMBOL_NEXT", (int32_t) "\xef\x81\x91" },
+    { "$SYMBOL_OK", (int32_t) "\xef\x80\x8c" },
+    { "$SYMBOL_PASTE", (int32_t) "\xef\x83\xAA" },
+    { "$SYMBOL_PAUSE", (int32_t) "\xef\x81\x8c" },
+    { "$SYMBOL_PLAY", (int32_t) "\xef\x81\x8b" },
+    { "$SYMBOL_PLUS", (int32_t) "\xef\x81\xa7" },
+    { "$SYMBOL_POWER", (int32_t) "\xef\x80\x91" },
+    { "$SYMBOL_PREV", (int32_t) "\xef\x81\x88" },
+    { "$SYMBOL_REFRESH", (int32_t) "\xef\x80\xa1" },
+    { "$SYMBOL_RIGHT", (int32_t) "\xef\x81\x94" },
+    { "$SYMBOL_SAVE", (int32_t) "\xef\x83\x87" },
+    { "$SYMBOL_SD_CARD", (int32_t) "\xef\x9F\x82" },
+    { "$SYMBOL_SETTINGS", (int32_t) "\xef\x80\x93" },
+    { "$SYMBOL_SHUFFLE", (int32_t) "\xef\x81\xb4" },
+    { "$SYMBOL_STOP", (int32_t) "\xef\x81\x8d" },
+    { "$SYMBOL_TRASH", (int32_t) "\xef\x8B\xAD" },
+    { "$SYMBOL_UP", (int32_t) "\xef\x81\xb7" },
+    { "$SYMBOL_UPLOAD", (int32_t) "\xef\x82\x93" },
+    { "$SYMBOL_USB", (int32_t) "\xef\x8a\x87" },
+    { "$SYMBOL_VIDEO", (int32_t) "\xef\x80\x88" },
+    { "$SYMBOL_VOLUME_MAX", (int32_t) "\xef\x80\xa8" },
+    { "$SYMBOL_VOLUME_MID", (int32_t) "\xef\x80\xa7" },
+    { "$SYMBOL_WARNING", (int32_t) "\xef\x81\xb1" },
+    { "$SYMBOL_WIFI", (int32_t) "\xef\x87\xab" },
     { "TABLE_CELL_CTRL_CUSTOM_1", LV_TABLE_CELL_CTRL_CUSTOM_1 },
     { "TABLE_CELL_CTRL_CUSTOM_2", LV_TABLE_CELL_CTRL_CUSTOM_2 },
     { "TABLE_CELL_CTRL_CUSTOM_3", LV_TABLE_CELL_CTRL_CUSTOM_3 },
@@ -594,153 +653,27 @@ const be_constint_t lv0_constants[] = {
     { "TEXT_FLAG_FIT", LV_TEXT_FLAG_FIT },
     { "TEXT_FLAG_NONE", LV_TEXT_FLAG_NONE },
     { "TEXT_FLAG_RECOLOR", LV_TEXT_FLAG_RECOLOR },
+    { "&load_font", (int32_t) &lv0_load_font },
+    { "&load_freetype_font", (int32_t) &lv0_load_freetype_font },
+    { "&montserrat_font", (int32_t) &lv0_load_montserrat_font },
+    { "&register_button_encoder", (int32_t) &lv0_register_button_encoder },
+    { "&screenshot", (int32_t) &lv0_screenshot },
+    { "&seg7_font", (int32_t) &lv0_load_seg7_font },
 
 };
 
 const size_t lv0_constants_size = sizeof(lv0_constants)/sizeof(lv0_constants[0]);
 
-be_define_local_const_str(SYMBOL_AUDIO, "\xef\x80\x81", 0, 3);
-be_define_local_const_str(SYMBOL_VIDEO, "\xef\x80\x88", 0, 3);
-be_define_local_const_str(SYMBOL_LIST, "\xef\x80\x8b", 0, 3);
-be_define_local_const_str(SYMBOL_OK, "\xef\x80\x8c", 0, 3);
-be_define_local_const_str(SYMBOL_CLOSE, "\xef\x80\x8d", 0, 3);
-be_define_local_const_str(SYMBOL_POWER, "\xef\x80\x91", 0, 3);
-be_define_local_const_str(SYMBOL_SETTINGS, "\xef\x80\x93", 0, 3);
-be_define_local_const_str(SYMBOL_HOME, "\xef\x80\x95", 0, 3);
-be_define_local_const_str(SYMBOL_DOWNLOAD, "\xef\x80\x99", 0, 3);
-be_define_local_const_str(SYMBOL_DRIVE, "\xef\x80\x9c", 0, 3);
-be_define_local_const_str(SYMBOL_REFRESH, "\xef\x80\xa1", 0, 3);
-be_define_local_const_str(SYMBOL_MUTE, "\xef\x80\xa6", 0, 3);
-be_define_local_const_str(SYMBOL_VOLUME_MID, "\xef\x80\xa7", 0, 3);
-be_define_local_const_str(SYMBOL_VOLUME_MAX, "\xef\x80\xa8", 0, 3);
-be_define_local_const_str(SYMBOL_IMAGE, "\xef\x80\xbe", 0, 3);
-be_define_local_const_str(SYMBOL_EDIT, "\xef\x8C\x84", 0, 3);
-be_define_local_const_str(SYMBOL_PREV, "\xef\x81\x88", 0, 3);
-be_define_local_const_str(SYMBOL_PLAY, "\xef\x81\x8b", 0, 3);
-be_define_local_const_str(SYMBOL_PAUSE, "\xef\x81\x8c", 0, 3);
-be_define_local_const_str(SYMBOL_STOP, "\xef\x81\x8d", 0, 3);
-be_define_local_const_str(SYMBOL_NEXT, "\xef\x81\x91", 0, 3);
-be_define_local_const_str(SYMBOL_EJECT, "\xef\x81\x92", 0, 3);
-be_define_local_const_str(SYMBOL_LEFT, "\xef\x81\x93", 0, 3);
-be_define_local_const_str(SYMBOL_RIGHT, "\xef\x81\x94", 0, 3);
-be_define_local_const_str(SYMBOL_PLUS, "\xef\x81\xa7", 0, 3);
-be_define_local_const_str(SYMBOL_MINUS, "\xef\x81\xa8", 0, 3);
-be_define_local_const_str(SYMBOL_EYE_OPEN, "\xef\x81\xae", 0, 3);
-be_define_local_const_str(SYMBOL_EYE_CLOSE, "\xef\x81\xb0", 0, 3);
-be_define_local_const_str(SYMBOL_WARNING, "\xef\x81\xb1", 0, 3);
-be_define_local_const_str(SYMBOL_SHUFFLE, "\xef\x81\xb4", 0, 3);
-be_define_local_const_str(SYMBOL_UP, "\xef\x81\xb7", 0, 3);
-be_define_local_const_str(SYMBOL_DOWN, "\xef\x81\xb8", 0, 3);
-be_define_local_const_str(SYMBOL_LOOP, "\xef\x81\xb9", 0, 3);
-be_define_local_const_str(SYMBOL_DIRECTORY, "\xef\x81\xbb", 0, 3);
-be_define_local_const_str(SYMBOL_UPLOAD, "\xef\x82\x93", 0, 3);
-be_define_local_const_str(SYMBOL_CALL, "\xef\x82\x95", 0, 3);
-be_define_local_const_str(SYMBOL_CUT, "\xef\x83\x84", 0, 3);
-be_define_local_const_str(SYMBOL_COPY, "\xef\x83\x85", 0, 3);
-be_define_local_const_str(SYMBOL_SAVE, "\xef\x83\x87", 0, 3);
-be_define_local_const_str(SYMBOL_CHARGE, "\xef\x83\xa7", 0, 3);
-be_define_local_const_str(SYMBOL_PASTE, "\xef\x83\xAA", 0, 3);
-be_define_local_const_str(SYMBOL_BELL, "\xef\x83\xb3", 0, 3);
-be_define_local_const_str(SYMBOL_KEYBOARD, "\xef\x84\x9c", 0, 3);
-be_define_local_const_str(SYMBOL_GPS, "\xef\x84\xa4", 0, 3);
-be_define_local_const_str(SYMBOL_FILE, "\xef\x85\x9b", 0, 3);
-be_define_local_const_str(SYMBOL_WIFI, "\xef\x87\xab", 0, 3);
-be_define_local_const_str(SYMBOL_BATTERY_FULL, "\xef\x89\x80", 0, 3);
-be_define_local_const_str(SYMBOL_BATTERY_3, "\xef\x89\x81", 0, 3);
-be_define_local_const_str(SYMBOL_BATTERY_2, "\xef\x89\x82", 0, 3);
-be_define_local_const_str(SYMBOL_BATTERY_1, "\xef\x89\x83", 0, 3);
-be_define_local_const_str(SYMBOL_BATTERY_EMPTY, "\xef\x89\x84", 0, 3);
-be_define_local_const_str(SYMBOL_USB, "\xef\x8a\x87", 0, 3);
-be_define_local_const_str(SYMBOL_BLUETOOTH, "\xef\x8a\x93", 0, 3);
-be_define_local_const_str(SYMBOL_TRASH, "\xef\x8B\xAD", 0, 3);
-be_define_local_const_str(SYMBOL_BACKSPACE, "\xef\x95\x9A", 0, 3);
-be_define_local_const_str(SYMBOL_SD_CARD, "\xef\x9F\x82", 0, 3);
-be_define_local_const_str(SYMBOL_NEW_LINE, "\xef\xA2\xA2", 0, 3);
-
-be_define_local_const_str(SYMBOL_DUMMY, "\xEF\xA3\xBF", 0, 3);
-
-be_define_local_const_str(SYMBOL_BULLET, "\xE2\x80\xA2", 0, 3);
-
-
-/* @const_object_info_begin
-module lvgl (scope: global) {
-    SYMBOL_AUDIO, str(&be_local_const_str_SYMBOL_AUDIO)
-    SYMBOL_VIDEO, str(&be_local_const_str_SYMBOL_VIDEO)
-    SYMBOL_LIST, str(&be_local_const_str_SYMBOL_LIST)
-    SYMBOL_OK, str(&be_local_const_str_SYMBOL_OK)
-    SYMBOL_CLOSE, str(&be_local_const_str_SYMBOL_CLOSE)
-    SYMBOL_POWER, str(&be_local_const_str_SYMBOL_POWER)
-    SYMBOL_SETTINGS, str(&be_local_const_str_SYMBOL_SETTINGS)
-    SYMBOL_HOME, str(&be_local_const_str_SYMBOL_HOME)
-    SYMBOL_DOWNLOAD, str(&be_local_const_str_SYMBOL_DOWNLOAD)
-    SYMBOL_DRIVE, str(&be_local_const_str_SYMBOL_DRIVE)
-    SYMBOL_REFRESH, str(&be_local_const_str_SYMBOL_REFRESH)
-    SYMBOL_MUTE, str(&be_local_const_str_SYMBOL_MUTE)
-    SYMBOL_VOLUME_MID, str(&be_local_const_str_SYMBOL_VOLUME_MID)
-    SYMBOL_VOLUME_MAX, str(&be_local_const_str_SYMBOL_VOLUME_MAX)
-    SYMBOL_IMAGE, str(&be_local_const_str_SYMBOL_IMAGE)
-    SYMBOL_EDIT, str(&be_local_const_str_SYMBOL_EDIT)
-    SYMBOL_PREV, str(&be_local_const_str_SYMBOL_PREV)
-    SYMBOL_PLAY, str(&be_local_const_str_SYMBOL_PLAY)
-    SYMBOL_PAUSE, str(&be_local_const_str_SYMBOL_PAUSE)
-    SYMBOL_STOP, str(&be_local_const_str_SYMBOL_STOP)
-    SYMBOL_NEXT, str(&be_local_const_str_SYMBOL_NEXT)
-    SYMBOL_EJECT, str(&be_local_const_str_SYMBOL_EJECT)
-    SYMBOL_LEFT, str(&be_local_const_str_SYMBOL_LEFT)
-    SYMBOL_RIGHT, str(&be_local_const_str_SYMBOL_RIGHT)
-    SYMBOL_PLUS, str(&be_local_const_str_SYMBOL_PLUS)
-    SYMBOL_MINUS, str(&be_local_const_str_SYMBOL_MINUS)
-    SYMBOL_EYE_OPEN, str(&be_local_const_str_SYMBOL_EYE_OPEN)
-    SYMBOL_EYE_CLOSE, str(&be_local_const_str_SYMBOL_EYE_CLOSE)
-    SYMBOL_WARNING, str(&be_local_const_str_SYMBOL_WARNING)
-    SYMBOL_SHUFFLE, str(&be_local_const_str_SYMBOL_SHUFFLE)
-    SYMBOL_UP, str(&be_local_const_str_SYMBOL_UP)
-    SYMBOL_DOWN, str(&be_local_const_str_SYMBOL_DOWN)
-    SYMBOL_LOOP, str(&be_local_const_str_SYMBOL_LOOP)
-    SYMBOL_DIRECTORY, str(&be_local_const_str_SYMBOL_DIRECTORY)
-    SYMBOL_UPLOAD, str(&be_local_const_str_SYMBOL_UPLOAD)
-    SYMBOL_CALL, str(&be_local_const_str_SYMBOL_CALL)
-    SYMBOL_CUT, str(&be_local_const_str_SYMBOL_CUT)
-    SYMBOL_COPY, str(&be_local_const_str_SYMBOL_COPY)
-    SYMBOL_SAVE, str(&be_local_const_str_SYMBOL_SAVE)
-    SYMBOL_CHARGE, str(&be_local_const_str_SYMBOL_CHARGE)
-    SYMBOL_PASTE, str(&be_local_const_str_SYMBOL_PASTE)
-    SYMBOL_BELL, str(&be_local_const_str_SYMBOL_BELL)
-    SYMBOL_KEYBOARD, str(&be_local_const_str_SYMBOL_KEYBOARD)
-    SYMBOL_GPS, str(&be_local_const_str_SYMBOL_GPS)
-    SYMBOL_FILE, str(&be_local_const_str_SYMBOL_FILE)
-    SYMBOL_WIFI, str(&be_local_const_str_SYMBOL_WIFI)
-    SYMBOL_BATTERY_FULL, str(&be_local_const_str_SYMBOL_BATTERY_FULL)
-    SYMBOL_BATTERY_3, str(&be_local_const_str_SYMBOL_BATTERY_3)
-    SYMBOL_BATTERY_2, str(&be_local_const_str_SYMBOL_BATTERY_2)
-    SYMBOL_BATTERY_1, str(&be_local_const_str_SYMBOL_BATTERY_1)
-    SYMBOL_BATTERY_EMPTY, str(&be_local_const_str_SYMBOL_BATTERY_EMPTY)
-    SYMBOL_USB, str(&be_local_const_str_SYMBOL_USB)
-    SYMBOL_BLUETOOTH, str(&be_local_const_str_SYMBOL_BLUETOOTH)
-    SYMBOL_TRASH, str(&be_local_const_str_SYMBOL_TRASH)
-    SYMBOL_BACKSPACE, str(&be_local_const_str_SYMBOL_BACKSPACE)
-    SYMBOL_SD_CARD, str(&be_local_const_str_SYMBOL_SD_CARD)
-    SYMBOL_NEW_LINE, str(&be_local_const_str_SYMBOL_NEW_LINE)
-
-    SYMBOL_DUMMY, str(&be_local_const_str_SYMBOL_DUMMY)
-
-    SYMBOL_BULLET, str(&be_local_const_str_SYMBOL_BULLET)
-
-
-    member, func(lv0_member)
-    start, func(lv0_start)
-
-    register_button_encoder, func(lv0_register_button_encoder)
-
-    montserrat_font, func(lv0_load_montserrat_font)
-    seg7_font, func(lv0_load_seg7_font)
-    load_font, func(lv0_load_font)
-    load_freetype_font, func(lv0_load_freetype_font)
-
-    screenshot, func(lv0_screenshot)
-}
-@const_object_info_end */
-#include "../generate/be_fixed_lvgl.h"
+/* generated */
+be_local_module(lv,
+    "lv",
+    be_nested_map(2,
+    ( (struct bmapnode*) &(const bmapnode[]) {
+        { be_nested_key("member", 719708611, 6, -1), be_const_func(lv0_member) },
+        { be_nested_key("start", 1697318111, 5, 0), be_const_func(lv0_start) },
+    }))
+);
+BE_EXPORT_VARIABLE be_define_const_native_module(lv, NULL);
 
 #endif // USE_LVGL
 
