@@ -786,27 +786,34 @@ newframe: /* a new call frame */
             dispatch();
         }
         opcase(GETMBR): {
-            bvalue *a = RA(), *b = RKB(), *c = RKC();
+            bvalue a_temp;  /* copy result to a temp variable because the stack may be relocated in virtual member calls */
+            // bvalue *a = RA(), *b = RKB(), *c = RKC();
+            bvalue *b = RKB(), *c = RKC();
             if (var_isinstance(b) && var_isstr(c)) {
-                obj_attribute(vm, b, var_tostr(c), a);
+                obj_attribute(vm, b, var_tostr(c), &a_temp);
                 reg = vm->reg;
             } else if (var_isclass(b) && var_isstr(c)) {
-                class_attribute(vm, b, c, a);
+                class_attribute(vm, b, c, &a_temp);
                 reg = vm->reg;
             } else if (var_ismodule(b) && var_isstr(c)) {
-                module_attribute(vm, b, c, a);
+                module_attribute(vm, b, c, &a_temp);
                 reg = vm->reg;
             } else {
                 attribute_error(vm, "attribute", b, c);
             }
+            bvalue *a = RA();
+            *a = a_temp;    /* assign the resul to the specified register on the updated stack */
             dispatch();
         }
         opcase(GETMET): {
-            bvalue *a = RA(), *b = RKB(), *c = RKC();
+            bvalue a_temp;  /* copy result to a temp variable because the stack may be relocated in virtual member calls */
+            bvalue *b = RKB(), *c = RKC();
             if (var_isinstance(b) && var_isstr(c)) {
                 binstance *obj = var_toobj(b);
-                int type = obj_attribute(vm, b, var_tostr(c), a);
+                int type = obj_attribute(vm, b, var_tostr(c), &a_temp);
                 reg = vm->reg;
+                bvalue *a = RA();
+                *a = a_temp;
                 if (basetype(type) == BE_FUNCTION) {
                     /* check if the object is a superinstance, if so get the lowest possible subclass */
                     while (obj->sub) {
@@ -819,7 +826,10 @@ newframe: /* a new call frame */
                         str(be_instance_name(obj)), str(var_tostr(c)));
                 }
             } else if (var_ismodule(b) && var_isstr(c)) {
-                module_attribute(vm, b, c, &a[1]);
+                module_attribute(vm, b, c, &a_temp);
+                reg = vm->reg;
+                bvalue *a = RA();
+                a[1] = a_temp;
                 var_settype(a, NOT_METHOD);
             } else {
                 attribute_error(vm, "method", b, c);

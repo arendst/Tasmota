@@ -33,7 +33,8 @@
         be_writestring(__lbuf);         \
     } while (0)
 
-static void m_solidify_bvalue(bvm *vm, bvalue * value)
+// pass key name in case of class, or NULL if none
+static void m_solidify_bvalue(bvm *vm, bvalue * value, const char *classname, const char *key)
 {
     int type = var_type(value);
     switch (type) {
@@ -80,6 +81,12 @@ static void m_solidify_bvalue(bvm *vm, bvalue * value)
         break;
     case BE_CLASS:
         logfmt("be_const_class(be_class_%s)", str(((bclass*) var_toobj(value))->name));
+        break;
+    case BE_COMPTR:
+        logfmt("be_const_comptr(&be_ntv_%s_%s)", classname ? classname : "unknown", key ? key : "unknown");
+        break;
+    case BE_NTVFUNC:
+        logfmt("be_const_func(be_ntv_%s_%s)", classname ? classname : "unknown", key ? key : "unknown");
         break;
     default:
         {
@@ -150,7 +157,7 @@ static void m_solidify_proto(bvm *vm, bproto *pr, const char * func_name, int bu
         logfmt("%*s( &(const bvalue[%2d]) {     /* constants */\n", indent, "", pr->nconst);
         for (int k = 0; k < pr->nconst; k++) {
             logfmt("%*s/* K%-3d */  ", indent, "", k);
-            m_solidify_bvalue(vm, &pr->ktab[k]);
+            m_solidify_bvalue(vm, &pr->ktab[k], NULL, NULL);
             logfmt(",\n");
         }
         logfmt("%*s}),\n", indent, "");
@@ -262,7 +269,7 @@ static void m_solidify_subclass(bvm *vm, bclass *cl, int builtins)
                 key_next = -1;      /* more readable */
             }
             logfmt("        { be_nested_key(\"%s\", %i, %zu, %i), ", str(node->key.v.s), be_strhash(node->key.v.s), len >= 255 ? 255 : len, key_next);
-            m_solidify_bvalue(vm, &node->value);
+            m_solidify_bvalue(vm, &node->value, class_name, str(node->key.v.s));
 
             logfmt(" },\n");
         }

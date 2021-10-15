@@ -2,7 +2,7 @@
  -
 --#
 
-class lv_signal_bars : lv_obj
+class lv_signal_bars : lv.obj
   var percentage              # value to display, range 0..100
   var p1, p2, area, line_dsc  # instances of objects kept to avoid re-instanciating at each call
 
@@ -12,10 +12,10 @@ class lv_signal_bars : lv_obj
     # own values
     self.percentage = 100
     # pre-allocate buffers
-    self.p1 = lv_point()
-    self.p2 = lv_point()
-    self.area = lv_area()
-    self.line_dsc = lv_draw_line_dsc()
+    self.p1 = lv.point()
+    self.p2 = lv.point()
+    self.area = lv.area()
+    self.line_dsc = lv.draw_line_dsc()
   end
 
   def widget_event(cl, event)
@@ -33,7 +33,7 @@ class lv_signal_bars : lv_obj
     var bar_offset = bar / 2
 
     if code == lv.EVENT_DRAW_MAIN
-      var clip_area = lv_area(event.param)
+      var clip_area = lv.area(event.param)
 
       # get coordinates of object
       self.get_coords(self.area)
@@ -104,8 +104,8 @@ end
 class lv_wifi_bars_icon: lv_wifi_bars
   def init(parent)
     super(self).init(parent)
-    self.set_style_line_color(lv_color(lv.COLOR_WHITE), lv.PART_MAIN | lv.STATE_DEFAULT)
-    self.set_style_bg_color(lv_color(lv.COLOR_BLACK), lv.PART_MAIN | lv.STATE_DEFAULT)
+    self.set_style_line_color(lv.color(lv.COLOR_WHITE), lv.PART_MAIN | lv.STATE_DEFAULT)
+    self.set_style_bg_color(lv.color(lv.COLOR_BLACK), lv.PART_MAIN | lv.STATE_DEFAULT)
     if parent != nil
       var parent_height = parent.get_height()
       var pad_right = parent.get_style_pad_right(lv.PART_MAIN | lv.STATE_DEFAULT)
