@@ -80,4 +80,10 @@ static void ctypes_register_class(bvm *vm, const bclass * ctypes_class, const be
       (be_nested_const_str(_name, 0, sizeof(_name)-1))                      \
   )
 
+// list of simple classes, sorted
+typedef struct be_ctypes_class_by_name_t {
+    const char * name;
+    const bclass * cl;
+} be_ctypes_class_by_name_t;
+
 #endif // __BE_CONSTOBJ_H__

@@ -150,14 +150,14 @@ be_local_closure(init,   /* name */
     /* K15  */  be_const_int(3),
     /* K16  */  be_nested_string("set_style_pad_right", -980898242, 19),
     /* K17  */  be_nested_string("set_style_bg_color", 1689513089, 18),
-    /* K18  */  be_nested_string("lv_color", 1419148319, 8),
+    /* K18  */  be_nested_string("color", 1031692888, 5),
     /* K19  */  be_nested_string("COLOR_BLACK", 264427940, 11),
     /* K20  */  be_nested_string("tasmota", 424643812, 7),
     /* K21  */  be_nested_string("add_driver", 1654458371, 10),
     }),
     (be_nested_const_str("init", 380752755, 4)),
     (be_nested_const_str("input", -103256197, 5)),
-    ( &(const binstruction[82]) {  /* code */
+    ( &(const binstruction[83]) {  /* code */
       0x600C0003,  //  0000  GETGBL	R3	G3
       0x5C100000,  //  0001  MOVE	R4	R0
       0x7C0C0200,  //  0002  CALL	R3	1
@@ -182,7 +182,7 @@ be_local_closure(init,   /* name */
       0x7C100600,  //  0015  CALL	R4	3
       0x4C100000,  //  0016  LDNIL	R4
       0x20100204,  //  0017  NE	R4	R1	R4
-      0x78120033,  //  0018  JMPF	R4	#004D
+      0x78120034,  //  0018  JMPF	R4	#004E
       0x8C100306,  //  0019  GETMET	R4	R1	K6
       0x7C100200,  //  001A  CALL	R4	1
       0x8C140107,  //  001B  GETMET	R5	R0	K7
@@ -225,21 +225,22 @@ be_local_closure(init,   /* name */
       0x3028140B,  //  0040  OR	R10	R10	R11
       0x7C1C0600,  //  0041  CALL	R7	3
       0x8C1C0111,  //  0042  GETMET	R7	R0	K17
-      0xB8262400,  //  0043  GETNGBL	R9	K18
-      0xB82A0200,  //  0044  GETNGBL	R10	K1
-      0x88281513,  //  0045  GETMBR	R10	R10	K19
-      0x7C240200,  //  0046  CALL	R9	1
-      0xB82A0200,  //  0047  GETNGBL	R10	K1
-      0x88281504,  //  0048  GETMBR	R10	R10	K4
-      0xB82E0200,  //  0049  GETNGBL	R11	K1
-      0x882C1705,  //  004A  GETMBR	R11	R11	K5
-      0x3028140B,  //  004B  OR	R10	R10	R11
-      0x7C1C0600,  //  004C  CALL	R7	3
-      0xB8122800,  //  004D  GETNGBL	R4	K20
-      0x8C100915,  //  004E  GETMET	R4	R4	K21
-      0x5C180000,  //  004F  MOVE	R6	R0
-      0x7C100400,  //  0050  CALL	R4	2
-      0x80000000,  //  0051  RET	0
+      0xB8260200,  //  0043  GETNGBL	R9	K1
+      0x8C241312,  //  0044  GETMET	R9	R9	K18
+      0xB82E0200,  //  0045  GETNGBL	R11	K1
+      0x882C1713,  //  0046  GETMBR	R11	R11	K19
+      0x7C240400,  //  0047  CALL	R9	2
+      0xB82A0200,  //  0048  GETNGBL	R10	K1
+      0x88281504,  //  0049  GETMBR	R10	R10	K4
+      0xB82E0200,  //  004A  GETNGBL	R11	K1
+      0x882C1705,  //  004B  GETMBR	R11	R11	K5
+      0x3028140B,  //  004C  OR	R10	R10	R11
+      0x7C1C0600,  //  004D  CALL	R7	3
+      0xB8122800,  //  004E  GETNGBL	R4	K20
+      0x8C100915,  //  004F  GETMET	R4	R4	K21
+      0x5C180000,  //  0050  MOVE	R6	R0
+      0x7C100400,  //  0051  CALL	R4	2
+      0x80000000,  //  0052  RET	0
     })
   )
 );

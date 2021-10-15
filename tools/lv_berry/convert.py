@@ -137,8 +137,10 @@ lv_cb_types = ['lv_group_focus_cb', 'lv_event_cb',
                ]
 # list of callback types that will need each a separate C callback
 
-# For LVGL8, need to add synthetic lv_style
+# For LVGL8, need to add synthetic lv_style, lv_font, lv_color
 lv['style'] = []
+lv['font'] = []
+lv['color'] = []
 
 # standard widgets
 lv_widgets = ['arc', 'bar', 'btn', 'btnmatrix', 'canvas', 'checkbox',
@@ -222,7 +224,7 @@ with open(lv_widgets_file) as f:
               c_args += "^" + ga_type + "^"
             else:
               # we have a high-level type that we treat as a class name, enclose in parenthesis
-              c_args += "(" + ga_type + ")"
+              c_args += "(" + "lv." + ga_type + ")"
 
       # analyze function name and determine if it needs to be assigned to a specific class
       func_name = g.group(2)
@@ -241,8 +243,8 @@ with open(lv_widgets_file) as f:
           be_name = re.sub("^lv_" + subtype + "_", '', func_name)
           c_func_name = "lvbe_" + subtype + "_" + be_name
           if subtype not in lv: lv[subtype] = []    # add entry
-          is_right_type = c_args.startswith(f"(lv_{subtype})")  # check if first arg matches class
-          is_obj_arg1 = c_args.startswith(f"(lv_obj)")          # or first arg is lv_obj
+          is_right_type = c_args.startswith(f"(lv.lv_{subtype})")  # check if first arg matches class
+          is_obj_arg1 = c_args.startswith(f"(lv.lv_obj)")          # or first arg is lv_obj
           is_group_create = (subtype == 'group') and (func_name == 'lv_group_create')
           if is_right_type or is_obj_arg1 or is_group_create:
             lv[subtype].append( [ c_func_name, c_ret, c_args, func_name, be_name ] )
@@ -277,34 +279,16 @@ with open(lv_module_file) as f:
     if k.startswith("_"):
       continue      # skip any label starting with '_'
     k = re.sub('^LV_', '', k) # remove remove any LV_ prefix
+    v = None
     if len(k_v) == 2:   # value is included
       v = k_v[1]
-      if k is None or v is None: continue
-      v_num = try_int(eval(v))
-    else:             # no value, we use the C value instead
-      v_num = None
-      v = None
-
+      if k is None or v is None: continue   # we skip if key is void or value is void
 
     if not k.isidentifier():
       print(f"Error: {k} is not an identifier")
       continue
-    
-    if v_num is not None:
-      lv_module.append( [k, v_num] )
-    else:
-      lv_module.append( [k, v] )    # keep as string or None
 
-# recursively try to match value
-# TODO
-
-# print(lv)
-
-      #print(f"orig {func_name} berry {c_func_name}")
-
-      #print(g.group(1))
-      #print(g.group(2))
-      #print(g.group(3))
+    lv_module.append( [k, v] )    # keep as string or None
 
 
 sys.stdout = open(out_prefix + be_lv_c_mapping, 'w')
@@ -317,7 +301,7 @@ print("""
 extern "C" {
 #endif
 
-
+#include "be_ctypes.h"
 """)
 
 for subtype, flv in lv.items():
@@ -334,6 +318,9 @@ for subtype, flv in lv.items():
     if c_argc is not None: c_argc = "\"" + c_argc + "\""
     orig_func_name = f[3]
     be_name = f[4]
+    # if c_ret_type is an object, prefix with `lv.`
+    if len(c_ret_type) > 1: c_ret_type = "lv." + c_ret_type
+
     if c_func_name.endswith("_create"):
       pass
       # c_ret_type = f"+lv_{subtype}"
@@ -348,6 +335,11 @@ for subtype, flv in lv.items():
     print(f"#endif // BE_LV_WIDGET_{subtype.upper()}")
   print(f"")
 
+# extern classes
+for subtype in sorted(lv):
+  print(f"extern const bclass be_class_lv_{subtype};");
+print()
+
 # print the global map of classes
 print(f"""
 // map of clases
@@ -357,7 +349,7 @@ for subtype in sorted(lv):
 # for subtype, flv in lv.items():
   if subtype in lv_widgets:
     print(f"#ifdef BE_LV_WIDGET_{subtype.upper()}")
-  print(f"  {{ \"lv_{subtype}\", lv_{subtype}_func, sizeof(lv_{subtype}_func) / sizeof(lv_{subtype}_func[0]) }},")
+  print(f"  {{ \"lv_{subtype}\", &be_class_lv_{subtype}, lv_{subtype}_func, sizeof(lv_{subtype}_func) / sizeof(lv_{subtype}_func[0]) }},")
   if subtype in lv_widgets:
     print(f"#endif // BE_LV_WIDGET_{subtype.upper()}")
 
@@ -376,18 +368,28 @@ for subtype, flv in lv.items():
     c_argc = f[2]
     if c_argc is not None: c_argc = "\"" + c_argc + "\""
     orig_func_name = f[3]
+
+    # if c_ret_type is an object, prefix with `lv.`
+    if len(c_ret_type) > 1: c_ret_type = "lv." + c_ret_type
+
     if c_func_name.endswith("_create"):
-      c_ret_type = f"+lv_{subtype}"
+      c_ret_type = f"+lv.lv_{subtype}"
       if subtype in lv_widgets:
         print(f"#ifdef BE_LV_WIDGET_{subtype.upper()}")
-      print(f"  int {c_func_name}(bvm *vm)       {{ return be_call_c_func(vm, (void*) &{orig_func_name}, \"{c_ret_type}\", { c_argc if c_argc else 'nullptr'}); }}")
-      if subtype in lv_widgets:
+        print(f"  int be_ntv_lv_{subtype}_init(bvm *vm)       {{ return be_call_c_func(vm, (void*) &{orig_func_name}, \"{c_ret_type}\", { c_argc if c_argc else 'nullptr'}); }}")
         print(f"#endif // BE_LV_WIDGET_{subtype.upper()}")
-  print()
+      else:
+        print(f"  int be_ntv_lv_{subtype}_init(bvm *vm)       {{ return be_call_c_func(vm, (void*) &{orig_func_name}, \"{c_ret_type}\", { c_argc if c_argc else 'nullptr'}); }}")
+
+print("""
+// create font either empty or from parameter on stack
+int lvbe_font_create(bvm *vm)       { return be_call_c_func(vm, NULL, "+lv_group", ""); }
+""")
+
 
 print()
 for subtype in lv:
-  print(f"  extern void be_load_lv_{subtype}_lib(bvm *vm);")
+  print(f"  extern void be_load_lv_{subtype}_class(bvm *vm);")
 print()
 print(f"  void be_load_lv_all_lib(bvm *vm) {{")
 
@@ -395,7 +397,7 @@ for subtype in lv:
   define = f"BE_LV_WIDGET_" + subtype.upper()
   if subtype in lv_widgets:
     print(f"#ifdef {define}")
-  print(f"    be_load_lv_{subtype}_lib(vm);")
+  print(f"    be_load_lv_{subtype}_class(vm);")
   if subtype in lv_widgets:
     print(f"#endif")
 
@@ -422,13 +424,14 @@ print("""
 #ifdef USE_LVGL
 
 #include "lvgl.h"
-#include "be_lvgl.h"
 
 extern int lv0_init(bvm *vm);
 
-extern int lco_init(bvm *vm);
-extern int lco_tostring(bvm *vm);
+extern int lco_init(bvm *vm);           // generic function
+extern int lco_tostring(bvm *vm);       // generic function
+extern int lco_toint(bvm *vm);          // generic function
 
+extern int lvx_init_ctor(bvm *vm, void * func);
 extern int lvx_member(bvm *vm);
 extern int lvx_tostring(bvm *vm);       // generic function
 
@@ -436,8 +439,19 @@ extern int lvs_init(bvm *vm);
 extern int lvs_tostring(bvm *vm);
 
 BE_EXPORT_VARIABLE extern const bclass be_class_lv_obj;
+
+extern int lvbe_font_create(bvm *vm);
+
 """)
 
+# expose all extern definitions:
+# Ex:
+#
+# /* `lv_canvas` external functions definitions */
+# extern int lvbe_canvas_create(bvm *vm);
+# extern int lvbe_canvas_set_buffer(bvm *vm);
+# ...
+#
 for subtype, flv in lv.items():
   print(f"/* `lv_{subtype}` external functions definitions */")
   for f in flv:
@@ -447,49 +461,143 @@ for subtype, flv in lv.items():
   print()
 
 for subtype, flv in lv.items():
-  print(f"#include \"../generate/be_fixed_be_class_lv_{subtype}.h\"")
+  print(f"""extern int be_ntv_lv_{subtype}_init(bvm *vm);""")
 
 print()
 
+# Define specific classes for lv_obj
+#
+print("""
+/********************************************************************
+** Solidified class: lv_style
+********************************************************************/
+be_local_class(lv_style,
+    1,
+    NULL,
+    be_nested_map(4,
+    ( (struct bmapnode*) &(const bmapnode[]) {
+        { be_nested_key("init", 380752755, 4, -1), be_const_func(lvs_init) },
+        { be_nested_key("tostring", -1995258651, 8, -1), be_const_func(lvs_tostring) },
+        { be_nested_key("_p", 1594591802, 2, -1), be_const_var(0) },
+        { be_nested_key("member", 719708611, 6, 0), be_const_func(lvx_member) },
+    })),
+    (be_nested_const_str("lv_style", -143355747, 8))
+);
+/*******************************************************************/
+
+/********************************************************************
+** Solidified class: lv_obj
+********************************************************************/
+be_local_class(lv_obj,
+    1,
+    NULL,
+    be_nested_map(5,
+    ( (struct bmapnode*) &(const bmapnode[]) {
+        { be_nested_key("tostring", -1995258651, 8, 3), be_const_func(lvx_tostring) },
+        { be_nested_key("member", 719708611, 6, -1), be_const_func(lvx_member) },
+        { be_nested_key("_p", 1594591802, 2, -1), be_const_var(0) },
+        { be_nested_key("init", 380752755, 4, 4), be_const_func(be_ntv_lv_obj_init) },
+        { be_nested_key("_class", -1562820946, 6, -1), be_const_comptr(&lv_obj_class) },
+    })),
+    (be_nested_const_str("lv_obj", -37134147, 6))
+);
+/*******************************************************************/
+
+/********************************************************************
+** Solidified class: lv_group
+********************************************************************/
+be_local_class(lv_group,
+    1,
+    NULL,
+    be_nested_map(4,
+    ( (struct bmapnode*) &(const bmapnode[]) {
+        { be_nested_key("init", 380752755, 4, -1), be_const_func(be_ntv_lv_group_init) },
+        { be_nested_key("tostring", -1995258651, 8, -1), be_const_func(lvx_tostring) },
+        { be_nested_key("_p", 1594591802, 2, -1), be_const_var(0) },
+        { be_nested_key("member", 719708611, 6, 0), be_const_func(lvx_member) },
+    })),
+    (be_nested_const_str("lv_group", -442928277, 8))
+);
+/*******************************************************************/
+
+/********************************************************************
+** Solidified class: lv_indev
+********************************************************************/
+be_local_class(lv_indev,
+    1,
+    NULL,
+    be_nested_map(4,
+    ( (struct bmapnode*) &(const bmapnode[]) {
+        { be_nested_key("init", 380752755, 4, -1), be_const_func(lv0_init) },
+        { be_nested_key("tostring", -1995258651, 8, -1), be_const_func(lvx_tostring) },
+        { be_nested_key("_p", 1594591802, 2, -1), be_const_var(0) },
+        { be_nested_key("member", 719708611, 6, 0), be_const_func(lvx_member) },
+    })),
+    (be_nested_const_str("lv_indev", 225602374, 8))
+);
+/*******************************************************************/
+
+/********************************************************************
+** Solidified class: lv_font
+********************************************************************/
+be_local_class(lv_font,
+    1,
+    NULL,
+    be_nested_map(3,
+    ( (struct bmapnode*) &(const bmapnode[]) {
+        { be_nested_key("init", 380752755, 4, -1), be_const_func(lvbe_font_create) },
+        { be_nested_key("tostring", -1995258651, 8, -1), be_const_func(lvx_tostring) },
+        { be_nested_key("_p", 1594591802, 2, -1), be_const_var(0) },
+    })),
+    (be_nested_const_str("lv_font", 1550958453, 7))
+);
+/*******************************************************************/
+
+/********************************************************************
+** Solidified class: lv_color
+********************************************************************/
+be_local_class(lv_color,
+    1,
+    NULL,
+    be_nested_map(4,
+    ( (struct bmapnode*) &(const bmapnode[]) {
+        { be_nested_key("toint", -681784387, 5, -1), be_const_func(lco_toint) },
+        { be_nested_key("tostring", -1995258651, 8, 0), be_const_func(lco_tostring) },
+        { be_nested_key("_p", 1594591802, 2, -1), be_const_var(0) },
+        { be_nested_key("init", 380752755, 4, -1), be_const_func(lco_init) },
+    })),
+    (be_nested_const_str("lv_color", 1419148319, 8))
+);
+/*******************************************************************/
+""")
+
+
 for subtype, flv in lv.items():
+  # special version for widgets
+  if subtype in lv_widgets:
+    print(f"""/********************************************************************
+** Solidified class: lv_{subtype}
+********************************************************************/
+extern const bclass be_class_lv_obj;
+be_local_class(lv_{subtype},
+    0,
+    &be_class_lv_obj,
+    be_nested_map(2,
+    ( (struct bmapnode*) &(const bmapnode[]) {{
+        {{ be_nested_key("_class", -1562820946, 6, -1), be_const_comptr(&lv_{subtype}_class) }},
+        {{ be_nested_key("init", 380752755, 4, -1), be_const_func(be_ntv_lv_{subtype}_init) }},
+    }})),
+    (be_nested_const_str("lv_{subtype}", 1612829968, 6))
+);
+/*******************************************************************/
+""")
   # class definitions
-  print(f"void be_load_lv_{subtype}_lib(bvm *vm) {{")
-  
-  print(f"    be_pushntvclass(vm, &be_class_lv_{subtype});")
-  print(f"    be_setglobal(vm, \"lv_{subtype}\");")
-  print(f"    be_pop(vm, 1);")
-
-  print(f"}};")
-  print()
-  print(f"/* @const_object_info_begin")
-  if subtype in lv_widgets: # only for subclasses of lv_obj
-    print(f"class be_class_lv_{subtype} (scope: global, name: lv_{subtype}, super: be_class_lv_obj) {{")
-  else:
-    print(f"class be_class_lv_{subtype} (scope: global, name: lv_{subtype}) {{")
-
-  print(f"    _p, var")
-  if subtype == "style":
-    print(f"    init, func(lvs_init)")
-    print(f"    tostring, func(lvs_tostring)")
-  else:
-    if subtype != 'indev':    # indev has no create
-      if (subtype in lv_widgets) or (subtype == "obj"):
-        print(f"    _class, int(&lv_{subtype}_class)")
-      print(f"    init, func(lvbe_{subtype}_create)")
-    else:
-      print(f"    init, func(lv0_init)")
-    print(f"    tostring, func(lvx_tostring)")
-  print(f"    member, func(lvx_member)")
-  print()
-
-  # for f in flv:
-  #   c_func_name = f[0]
-  #   be_name = f[4]
-  #   print(f"    {be_name}, func({c_func_name})")
-
-  print(f"}}")
-  print(f"@const_object_info_end */")
-  print()
+  print(f"""void be_load_lv_{subtype}_class(bvm *vm) {{
+    be_pushntvclass(vm, &be_class_lv_{subtype});
+    be_setglobal(vm, \"lv_{subtype}\");
+    be_pop(vm, 1);
+}}
+""")
 
 print("""
 #endif // USE_LVGL
@@ -544,6 +652,10 @@ for f in lv0:
   if c_argc is not None: c_argc = "\"" + c_argc + "\""
   orig_func_name = f[3]
   be_name = f[4]
+
+  # if c_ret_type is an object, prefix with `lv.`
+  if len(c_ret_type) > 1: c_ret_type = "lv." + c_ret_type
+
   func_out[be_name] = f"  {{ \"{be_name}\", (void*) &{orig_func_name}, \"{c_ret_type}\", { c_argc if c_argc else 'nullptr'} }},"
 
 for be_name in sorted(func_out):
@@ -586,10 +698,28 @@ for k_v in lv_module:
   if k is not None:
     lv_module2[k] = v
 
+# print the enums, symbols and functions
+# Ex: { "ALIGN_BOTTOM_LEFT", LV_ALIGN_BOTTOM_LEFT },
+#
+# Encoding:
+# 1. `COLOR_WHITE=0xFFFFFF` enum with explicit value
+# 2. `LV_EVENT_ALL` enum with implicit value with same name resolved by C compiler
+# 3. `$SYMBOL_OK="\xef\x80\x8c"` if starts with `$` then it's a string
+# 4. `&seg7_font=lv0_load_seg7_font` if starts with `&` then it's a native function
+#
+# We need to sort ignoring the first char if it's not a letter
 for k in sorted(lv_module2):
   v = lv_module2[k]
+  # check the type of the value
+  # if first char is '"' then it's a string and prefix with '$'
+  # if first char is '&' then it's a function and prefix with '&'
+  # if no value, then it's an enum, prefix with `LV_`
+  # otherwise it's an int, leave if unchanged
   if v is not None:
-    print(f"    {{ \"{k}\", {v} }},")
+    v_prefix = ""
+    if v[0] == '"': v_prefix = "$"
+    if v[0] == '&': v_prefix = "&"
+    print(f"    {{ \"{v_prefix}{k}\", (int32_t) {v} }},")
   else:
     print(f"    {{ \"{k}\", LV_{k} }},")
 
@@ -598,157 +728,16 @@ print("""
 
 const size_t lv0_constants_size = sizeof(lv0_constants)/sizeof(lv0_constants[0]);
 
-be_define_local_const_str(SYMBOL_AUDIO, "\\xef\\x80\\x81", 0, 3);
-be_define_local_const_str(SYMBOL_VIDEO, "\\xef\\x80\\x88", 0, 3);
-be_define_local_const_str(SYMBOL_LIST, "\\xef\\x80\\x8b", 0, 3);
-be_define_local_const_str(SYMBOL_OK, "\\xef\\x80\\x8c", 0, 3);
-be_define_local_const_str(SYMBOL_CLOSE, "\\xef\\x80\\x8d", 0, 3);
-be_define_local_const_str(SYMBOL_POWER, "\\xef\\x80\\x91", 0, 3);
-be_define_local_const_str(SYMBOL_SETTINGS, "\\xef\\x80\\x93", 0, 3);
-be_define_local_const_str(SYMBOL_HOME, "\\xef\\x80\\x95", 0, 3);
-be_define_local_const_str(SYMBOL_DOWNLOAD, "\\xef\\x80\\x99", 0, 3);
-be_define_local_const_str(SYMBOL_DRIVE, "\\xef\\x80\\x9c", 0, 3);
-be_define_local_const_str(SYMBOL_REFRESH, "\\xef\\x80\\xa1", 0, 3);
-be_define_local_const_str(SYMBOL_MUTE, "\\xef\\x80\\xa6", 0, 3);
-be_define_local_const_str(SYMBOL_VOLUME_MID, "\\xef\\x80\\xa7", 0, 3);
-be_define_local_const_str(SYMBOL_VOLUME_MAX, "\\xef\\x80\\xa8", 0, 3);
-be_define_local_const_str(SYMBOL_IMAGE, "\\xef\\x80\\xbe", 0, 3);
-be_define_local_const_str(SYMBOL_EDIT, "\\xef\\x8C\\x84", 0, 3);
-be_define_local_const_str(SYMBOL_PREV, "\\xef\\x81\\x88", 0, 3);
-be_define_local_const_str(SYMBOL_PLAY, "\\xef\\x81\\x8b", 0, 3);
-be_define_local_const_str(SYMBOL_PAUSE, "\\xef\\x81\\x8c", 0, 3);
-be_define_local_const_str(SYMBOL_STOP, "\\xef\\x81\\x8d", 0, 3);
-be_define_local_const_str(SYMBOL_NEXT, "\\xef\\x81\\x91", 0, 3);
-be_define_local_const_str(SYMBOL_EJECT, "\\xef\\x81\\x92", 0, 3);
-be_define_local_const_str(SYMBOL_LEFT, "\\xef\\x81\\x93", 0, 3);
-be_define_local_const_str(SYMBOL_RIGHT, "\\xef\\x81\\x94", 0, 3);
-be_define_local_const_str(SYMBOL_PLUS, "\\xef\\x81\\xa7", 0, 3);
-be_define_local_const_str(SYMBOL_MINUS, "\\xef\\x81\\xa8", 0, 3);
-be_define_local_const_str(SYMBOL_EYE_OPEN, "\\xef\\x81\\xae", 0, 3);
-be_define_local_const_str(SYMBOL_EYE_CLOSE, "\\xef\\x81\\xb0", 0, 3);
-be_define_local_const_str(SYMBOL_WARNING, "\\xef\\x81\\xb1", 0, 3);
-be_define_local_const_str(SYMBOL_SHUFFLE, "\\xef\\x81\\xb4", 0, 3);
-be_define_local_const_str(SYMBOL_UP, "\\xef\\x81\\xb7", 0, 3);
-be_define_local_const_str(SYMBOL_DOWN, "\\xef\\x81\\xb8", 0, 3);
-be_define_local_const_str(SYMBOL_LOOP, "\\xef\\x81\\xb9", 0, 3);
-be_define_local_const_str(SYMBOL_DIRECTORY, "\\xef\\x81\\xbb", 0, 3);
-be_define_local_const_str(SYMBOL_UPLOAD, "\\xef\\x82\\x93", 0, 3);
-be_define_local_const_str(SYMBOL_CALL, "\\xef\\x82\\x95", 0, 3);
-be_define_local_const_str(SYMBOL_CUT, "\\xef\\x83\\x84", 0, 3);
-be_define_local_const_str(SYMBOL_COPY, "\\xef\\x83\\x85", 0, 3);
-be_define_local_const_str(SYMBOL_SAVE, "\\xef\\x83\\x87", 0, 3);
-be_define_local_const_str(SYMBOL_CHARGE, "\\xef\\x83\\xa7", 0, 3);
-be_define_local_const_str(SYMBOL_PASTE, "\\xef\\x83\\xAA", 0, 3);
-be_define_local_const_str(SYMBOL_BELL, "\\xef\\x83\\xb3", 0, 3);
-be_define_local_const_str(SYMBOL_KEYBOARD, "\\xef\\x84\\x9c", 0, 3);
-be_define_local_const_str(SYMBOL_GPS, "\\xef\\x84\\xa4", 0, 3);
-be_define_local_const_str(SYMBOL_FILE, "\\xef\\x85\\x9b", 0, 3);
-be_define_local_const_str(SYMBOL_WIFI, "\\xef\\x87\\xab", 0, 3);
-be_define_local_const_str(SYMBOL_BATTERY_FULL, "\\xef\\x89\\x80", 0, 3);
-be_define_local_const_str(SYMBOL_BATTERY_3, "\\xef\\x89\\x81", 0, 3);
-be_define_local_const_str(SYMBOL_BATTERY_2, "\\xef\\x89\\x82", 0, 3);
-be_define_local_const_str(SYMBOL_BATTERY_1, "\\xef\\x89\\x83", 0, 3);
-be_define_local_const_str(SYMBOL_BATTERY_EMPTY, "\\xef\\x89\\x84", 0, 3);
-be_define_local_const_str(SYMBOL_USB, "\\xef\\x8a\\x87", 0, 3);
-be_define_local_const_str(SYMBOL_BLUETOOTH, "\\xef\\x8a\\x93", 0, 3);
-be_define_local_const_str(SYMBOL_TRASH, "\\xef\\x8B\\xAD", 0, 3);
-be_define_local_const_str(SYMBOL_BACKSPACE, "\\xef\\x95\\x9A", 0, 3);
-be_define_local_const_str(SYMBOL_SD_CARD, "\\xef\\x9F\\x82", 0, 3);
-be_define_local_const_str(SYMBOL_NEW_LINE, "\\xef\\xA2\\xA2", 0, 3);
-
-be_define_local_const_str(SYMBOL_DUMMY, "\\xEF\\xA3\\xBF", 0, 3);
-
-be_define_local_const_str(SYMBOL_BULLET, "\\xE2\\x80\\xA2", 0, 3);
-
-
-/* @const_object_info_begin
-module lvgl (scope: global) {
-    SYMBOL_AUDIO, str(&be_local_const_str_SYMBOL_AUDIO)
-    SYMBOL_VIDEO, str(&be_local_const_str_SYMBOL_VIDEO)
-    SYMBOL_LIST, str(&be_local_const_str_SYMBOL_LIST)
-    SYMBOL_OK, str(&be_local_const_str_SYMBOL_OK)
-    SYMBOL_CLOSE, str(&be_local_const_str_SYMBOL_CLOSE)
-    SYMBOL_POWER, str(&be_local_const_str_SYMBOL_POWER)
-    SYMBOL_SETTINGS, str(&be_local_const_str_SYMBOL_SETTINGS)
-    SYMBOL_HOME, str(&be_local_const_str_SYMBOL_HOME)
-    SYMBOL_DOWNLOAD, str(&be_local_const_str_SYMBOL_DOWNLOAD)
-    SYMBOL_DRIVE, str(&be_local_const_str_SYMBOL_DRIVE)
-    SYMBOL_REFRESH, str(&be_local_const_str_SYMBOL_REFRESH)
-    SYMBOL_MUTE, str(&be_local_const_str_SYMBOL_MUTE)
-    SYMBOL_VOLUME_MID, str(&be_local_const_str_SYMBOL_VOLUME_MID)
-    SYMBOL_VOLUME_MAX, str(&be_local_const_str_SYMBOL_VOLUME_MAX)
-    SYMBOL_IMAGE, str(&be_local_const_str_SYMBOL_IMAGE)
-    SYMBOL_EDIT, str(&be_local_const_str_SYMBOL_EDIT)
-    SYMBOL_PREV, str(&be_local_const_str_SYMBOL_PREV)
-    SYMBOL_PLAY, str(&be_local_const_str_SYMBOL_PLAY)
-    SYMBOL_PAUSE, str(&be_local_const_str_SYMBOL_PAUSE)
-    SYMBOL_STOP, str(&be_local_const_str_SYMBOL_STOP)
-    SYMBOL_NEXT, str(&be_local_const_str_SYMBOL_NEXT)
-    SYMBOL_EJECT, str(&be_local_const_str_SYMBOL_EJECT)
-    SYMBOL_LEFT, str(&be_local_const_str_SYMBOL_LEFT)
-    SYMBOL_RIGHT, str(&be_local_const_str_SYMBOL_RIGHT)
-    SYMBOL_PLUS, str(&be_local_const_str_SYMBOL_PLUS)
-    SYMBOL_MINUS, str(&be_local_const_str_SYMBOL_MINUS)
-    SYMBOL_EYE_OPEN, str(&be_local_const_str_SYMBOL_EYE_OPEN)
-    SYMBOL_EYE_CLOSE, str(&be_local_const_str_SYMBOL_EYE_CLOSE)
-    SYMBOL_WARNING, str(&be_local_const_str_SYMBOL_WARNING)
-    SYMBOL_SHUFFLE, str(&be_local_const_str_SYMBOL_SHUFFLE)
-    SYMBOL_UP, str(&be_local_const_str_SYMBOL_UP)
-    SYMBOL_DOWN, str(&be_local_const_str_SYMBOL_DOWN)
-    SYMBOL_LOOP, str(&be_local_const_str_SYMBOL_LOOP)
-    SYMBOL_DIRECTORY, str(&be_local_const_str_SYMBOL_DIRECTORY)
-    SYMBOL_UPLOAD, str(&be_local_const_str_SYMBOL_UPLOAD)
-    SYMBOL_CALL, str(&be_local_const_str_SYMBOL_CALL)
-    SYMBOL_CUT, str(&be_local_const_str_SYMBOL_CUT)
-    SYMBOL_COPY, str(&be_local_const_str_SYMBOL_COPY)
-    SYMBOL_SAVE, str(&be_local_const_str_SYMBOL_SAVE)
-    SYMBOL_CHARGE, str(&be_local_const_str_SYMBOL_CHARGE)
-    SYMBOL_PASTE, str(&be_local_const_str_SYMBOL_PASTE)
-    SYMBOL_BELL, str(&be_local_const_str_SYMBOL_BELL)
-    SYMBOL_KEYBOARD, str(&be_local_const_str_SYMBOL_KEYBOARD)
-    SYMBOL_GPS, str(&be_local_const_str_SYMBOL_GPS)
-    SYMBOL_FILE, str(&be_local_const_str_SYMBOL_FILE)
-    SYMBOL_WIFI, str(&be_local_const_str_SYMBOL_WIFI)
-    SYMBOL_BATTERY_FULL, str(&be_local_const_str_SYMBOL_BATTERY_FULL)
-    SYMBOL_BATTERY_3, str(&be_local_const_str_SYMBOL_BATTERY_3)
-    SYMBOL_BATTERY_2, str(&be_local_const_str_SYMBOL_BATTERY_2)
-    SYMBOL_BATTERY_1, str(&be_local_const_str_SYMBOL_BATTERY_1)
-    SYMBOL_BATTERY_EMPTY, str(&be_local_const_str_SYMBOL_BATTERY_EMPTY)
-    SYMBOL_USB, str(&be_local_const_str_SYMBOL_USB)
-    SYMBOL_BLUETOOTH, str(&be_local_const_str_SYMBOL_BLUETOOTH)
-    SYMBOL_TRASH, str(&be_local_const_str_SYMBOL_TRASH)
-    SYMBOL_BACKSPACE, str(&be_local_const_str_SYMBOL_BACKSPACE)
-    SYMBOL_SD_CARD, str(&be_local_const_str_SYMBOL_SD_CARD)
-    SYMBOL_NEW_LINE, str(&be_local_const_str_SYMBOL_NEW_LINE)
-
-    SYMBOL_DUMMY, str(&be_local_const_str_SYMBOL_DUMMY)
-
-    SYMBOL_BULLET, str(&be_local_const_str_SYMBOL_BULLET)
-""")
-
-
-# for k_v in lv_module:
-#   (k,v) = k_v
-#   if k is None:
-#     continue
-
-#   print(f"    {k}, int({v})")
-
-print("""
-    member, func(lv0_member)
-    start, func(lv0_start)
-
-    register_button_encoder, func(lv0_register_button_encoder)
-
-    montserrat_font, func(lv0_load_montserrat_font)
-    seg7_font, func(lv0_load_seg7_font)
-    load_font, func(lv0_load_font)
-    load_freetype_font, func(lv0_load_freetype_font)
-
-    screenshot, func(lv0_screenshot)
-}
-@const_object_info_end */
-#include "../generate/be_fixed_lvgl.h"
+/* generated */
+be_local_module(lv,
+    "lv",
+    be_nested_map(2,
+    ( (struct bmapnode*) &(const bmapnode[]) {
+        { be_nested_key("member", 719708611, 6, -1), be_const_func(lv0_member) },
+        { be_nested_key("start", 1697318111, 5, 0), be_const_func(lv0_start) },
+    }))
+);
+BE_EXPORT_VARIABLE be_define_const_native_module(lv, NULL);
 
 #endif // USE_LVGL
 """)

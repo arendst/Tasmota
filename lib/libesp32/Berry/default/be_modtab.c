@@ -32,7 +32,7 @@ be_extern_native_module(webserver);
 be_extern_native_module(flash);
 be_extern_native_module(path);
 #ifdef USE_LVGL
-be_extern_native_module(lvgl);
+be_extern_native_module(lv);
 #endif // USE_LVGL
 
 /* user-defined modules declare start */
@@ -88,7 +88,7 @@ BERRY_LOCAL const bntvmodule* const be_module_table[] = {
 #endif
 
 #ifdef USE_LVGL
-    &be_native_module(lvgl),
+    &be_native_module(lv),
 #endif // USE_LVGL
 #ifdef USE_ENERGY_SENSOR
     &be_native_module(energy),
@@ -124,8 +124,8 @@ extern void be_load_driver_audio_lib(bvm *vm);
 #endif
 
 #ifdef USE_LVGL
-extern void be_load_lvgl_color_lib(bvm *vm);
-extern void be_load_lvgl_font_lib(bvm *vm);
+extern void be_load_lv_color_class(bvm *vm);
+extern void be_load_lv_font_class(bvm *vm);
 extern void be_load_lv_all_lib(bvm *vm);
 extern void be_load_ctypes_lvgl_definitions_lib(bvm *vm);
 extern void be_load_LVGL_glob_class(bvm *vm);
@@ -176,8 +176,8 @@ BERRY_API void be_load_custom_libs(bvm *vm)
 #endif
 #ifdef USE_LVGL
     // LVGL
-    be_load_lvgl_color_lib(vm);
-    be_load_lvgl_font_lib(vm);
+    be_load_lv_color_class(vm);
+    be_load_lv_font_class(vm);
 
     be_load_lv_all_lib(vm);
     be_load_ctypes_lvgl_definitions_lib(vm);

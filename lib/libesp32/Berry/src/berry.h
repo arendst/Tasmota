@@ -514,6 +514,7 @@ BERRY_API bbool be_refcontains(bvm *vm, int index);
 BERRY_API void be_refpush(bvm *vm, int index);
 BERRY_API void be_refpop(bvm *vm);
 BERRY_API void be_stack_require(bvm *vm, int count);
+BERRY_API bbool be_getmodule(bvm *vm, const char *k);
 
 /* relop operation APIs */
 BERRY_API bbool be_iseq(bvm *vm);
