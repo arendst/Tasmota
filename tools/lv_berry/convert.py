@@ -386,23 +386,7 @@ print("""
 int lvbe_font_create(bvm *vm)       { return be_call_c_func(vm, NULL, "+lv_group", ""); }
 """)
 
-
 print()
-for subtype in lv:
-  print(f"  extern void be_load_lv_{subtype}_class(bvm *vm);")
-print()
-print(f"  void be_load_lv_all_lib(bvm *vm) {{")
-
-for subtype in lv:
-  define = f"BE_LV_WIDGET_" + subtype.upper()
-  if subtype in lv_widgets:
-    print(f"#ifdef {define}")
-  print(f"    be_load_lv_{subtype}_class(vm);")
-  if subtype in lv_widgets:
-    print(f"#endif")
-
-print(f"  }};")
-
 print("#ifdef __cplusplus")
 print("} /* extern \"C\" */")
 print("#endif")
