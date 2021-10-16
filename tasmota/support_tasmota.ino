@@ -416,11 +416,14 @@ void UpdateLedPowerAll()
 
 void SetLedPowerIdx(uint32_t led, uint32_t state)
 {
+/*
+  // Fix legacy led support 20211016 (Notice: legacy led supports TWO leds max)
   if (!PinUsed(GPIO_LEDLNK) && (0 == led)) {  // Legacy - LED1 is link led only if LED2 is present
     if (PinUsed(GPIO_LED1, 1)) {
       led = 1;
     }
   }
+*/
   if (PinUsed(GPIO_LED1, led)) {
     uint32_t mask = 1 << led;
     if (state) {
@@ -448,10 +451,15 @@ void SetLedPowerIdx(uint32_t led, uint32_t state)
 #endif // USE_BUZZER
 }
 
-void SetLedPower(uint32_t state)
+void SetLedPower(bool state)
 {
   if (!PinUsed(GPIO_LEDLNK)) {           // Legacy - Only use LED1 and/or LED2
+/*
     SetLedPowerIdx(0, state);
+*/
+    // Fix legacy led support 20211016 (Notice: legacy led supports TWO leds max)
+    uint32_t led = (PinUsed(GPIO_LED1, 1)) ? 1 : 0;
+    SetLedPowerIdx(led, state);
   } else {
     power_t mask = 1;
     for (uint32_t i = 0; i < TasmotaGlobal.leds_present; i++) {  // Map leds to power
