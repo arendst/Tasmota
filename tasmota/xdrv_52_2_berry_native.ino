@@ -179,6 +179,37 @@ extern "C" {
     be_pop(vm, 3);                  // stack = instance
   }
 
+  extern void berry_log_C(const char * berry_buf, ...);
+  // Create a class given a global name or a name within a module
+  // Case 1: (no dot in name) `lv_wifi_bars` will look for a global variable `lv_wifi_bars`
+  // Case 2: (dot in name) `lvgl.lv_obj` will import `lvgl` and look for `lv_obj` within this module
+  // returns true if successful and result is top of stack, or false if not found and `nil` is at top of stack
+  bbool be_find_class(bvm *vm, const char * cl_name);
+  bbool be_find_class(bvm *vm, const char * cl_name) {
+    char *saveptr;
+    bbool ret = false;
+
+    if (cl_name == NULL) {
+      be_pushnil(vm);
+      return ret;
+    }
+    // berry_log_C(">> be_find_class %s", cl_name);
+    char cl_name_buf[strlen(cl_name)+1];
+    strcpy(cl_name_buf, cl_name);
+
+    char * prefix = strtok_r(cl_name_buf, ".", &saveptr);
+    char * suffix = strtok_r(NULL, ".", &saveptr);
+    if (suffix) {
+    // berry_log_C(">> be_find_class %s - %s", prefix, suffix);
+      be_getmodule(vm, prefix);
+      ret = be_getmember(vm, -1, suffix);
+      // berry_log_C(">> be_find_class ret=%i", ret);
+      be_remove(vm, -2);
+    } else {
+      ret = be_getglobal(vm, prefix);
+    }
+    return ret;
+  }
 }
 
 /*********************************************************************************************\
@@ -189,6 +220,9 @@ extern "C" {
 // binary search within an array of sorted strings
 // the first 4 bytes are a pointer to a string
 // returns 0..total_elements-1 or -1 if not found
+//
+// This version skips the first character of the string if it's not a letter,
+// the first character is used to indicate the type of the value associated to the key
 extern "C" {
   int32_t bin_search(const char * needle, const void * table, size_t elt_size, size_t total_elements);
   int32_t bin_search(const char * needle, const void * table, size_t elt_size, size_t total_elements) {
@@ -198,6 +232,10 @@ extern "C" {
     // start a dissect
     while (low <= high) {
       const char * elt = *(const char **) ( ((uint8_t*)table) + mid * elt_size );
+      char first_char = elt[0];
+      if ( !(first_char >= 'a' && first_char <='z') && !(first_char >= 'A' && first_char <='Z') ) {
+        elt++;  // skip first char
+      }
       int32_t comp = strcmp(needle, elt);
       if (comp < 0) {
         high = mid - 1;
@@ -315,6 +353,7 @@ extern "C" {
 
 
 #define LV_OBJ_CLASS    "lv_obj"
+#define LV_MODULE       "lvgl"    // name of the lvgl module
 
 /*********************************************************************************************\
  * Automatically parse Berry stack and call the C function accordingly
@@ -430,7 +469,7 @@ int32_t be_convert_single_elt(bvm *vm, int32_t idx, const char * arg_type = null
       if (arg_type_len > 1) {
         // Check type
         be_classof(vm, idx);
-        bool class_found = be_getglobal(vm, arg_type);
+        bool class_found = be_find_class(vm, arg_type);
         // Stack: class_of_idx, class_of_target (or nil)
         if (class_found) {
           if (!be_isderived(vm, -2)) {

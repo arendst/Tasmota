@@ -234,6 +234,14 @@ ctypes.print_classes = def (module_name)
     print(string.format("  ctypes_register_class(vm, &be_class_%s, &be_%s);", elt, elt))
   end
   print("}")
+  print()
+  print("be_ctypes_class_by_name_t be_ctypes_lvgl_classes[] = {")
+  for elt:global_classes
+    print(string.format("  { \"%s\", &be_class_%s },", elt, elt))
+  end
+  print("};")
+  print("const size_t be_ctypes_lvgl_classes_size = sizeof(be_ctypes_lvgl_classes)/sizeof(be_ctypes_lvgl_classes[0]);")
+  print()
 
   print("/********************************************************************/")
   print()
