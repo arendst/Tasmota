@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v9.3.1.1
+ * Updated until v9.5.0.9 - Last update 16.10.2021
 \*********************************************************************/
 
 //#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -84,7 +84,7 @@
 #define D_DISABLED "Wyłączony"
 #define D_DISTANCE "Odległość"
 #define D_DNS_SERVER "Serwer DNS"
-#define D_DO "Rozpuszcalność tlenu"
+#define D_DO "Rozpuszczalność tlenu"
 #define D_DONE "Wykonane"
 #define D_DST_TIME "Czas DST"
 #define D_EC "EC"
@@ -149,7 +149,7 @@
 #define D_PROGRAM_SIZE "Rozmiar programu"
 #define D_PROJECT "Projekt"
 #define D_RAIN "Deszcz"
-#define D_RANGE "Range"
+#define D_RANGE "Zakres"
 #define D_RECEIVED "Otrzymany"
 #define D_RESTART "Restart"
 #define D_RESTARTING "Restartowanie"
