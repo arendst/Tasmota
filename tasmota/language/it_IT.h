@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v9.5.0.9 - Last update 11.10.2021
+ * Updated until v9.5.0.9 - Last update 16.10.2021
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -1064,7 +1064,7 @@
 #define D_NEOPOOL_RELAY_CD                "Pompa salamoia"
 #define D_NEOPOOL_TIME                    "Orario"
 #define D_NEOPOOL_FILT_MODE               "Filtrazione"
-#define D_NEOPOOL_CELL_RUNTIME            "Cell runtime"
+#define D_NEOPOOL_CELL_RUNTIME            "Cella attiva"
 #define D_NEOPOOL_POLARIZATION            "Pol"               // Sensor status
 #define D_NEOPOOL_PR_OFF                  "PrOff"
 #define D_NEOPOOL_SETPOINT_OK             "OK"
