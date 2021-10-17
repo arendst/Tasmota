@@ -200,6 +200,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - Hass and Tasmota discovery prefix topic notifications [#12972](https://github.com/arendst/Tasmota/issues/12972)
 - OpenTherm invalid JSON [#13028](https://github.com/arendst/Tasmota/issues/13028)
 - MQTT TLS related connection timing errors [#13033](https://github.com/arendst/Tasmota/issues/13033)
+- Restore functionality as documented when both GPIO_LED1 and GPIO_LED2 are used regression from v8.5.0 [#13368](https://github.com/arendst/Tasmota/issues/13368)
 - ESP32 core v2.0.0 setting hostname
 - ESP32-C3 settings layout for configuration backup and restore
 - ESP32-Solo OTA upgrade

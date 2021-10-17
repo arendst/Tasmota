@@ -24,6 +24,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - ESP32 restore GPIO16/17 if no PSRAM was found regression from v9.5.0.3
+- Restore functionality as documented when both GPIO_LED1 and GPIO_LED2 are used regression from v8.5.0 (#13368)
 
 ## [9.5.0.8] 20210927
 ### Added
