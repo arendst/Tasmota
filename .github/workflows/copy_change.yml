@@ -15,7 +15,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Push I2CDevices.md to https://github.com/Tasmota/docs
-      uses: dmnemec/copy_file_to_another_repo_action@main
+      uses: Jason2866/copy_file_to_another_repo_action@main
       env:
         API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
       with:
@@ -27,7 +27,7 @@ jobs:
         user_name: 'github-actions'
         commit_message: 'I2CDevices.md changed'
     - name: Push Builds.md to https://github.com/Tasmota/docs
-      uses: dmnemec/copy_file_to_another_repo_action@main
+      uses: Jason2866/copy_file_to_another_repo_action@main
       env:
         API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
       with:
