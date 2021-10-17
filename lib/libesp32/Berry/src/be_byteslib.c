@@ -579,11 +579,14 @@ static int m_init(bvm *vm)
         if (hex_in) {
             size_arg = strlen(hex_in) / 2;        /* allocate headroom */
         }
-    }
-    
-    /* check if fixed size that we have the right size */
-    if (attr.fixed && size_arg > attr.size) {
-        be_raise(vm, BYTES_RESIZE_ERROR, BYTES_RESIZE_MESSAGE);
+        /* check if fixed size that we have the right size */
+        if (size_arg > attr.size) {
+            if (attr.fixed) {
+                be_raise(vm, BYTES_RESIZE_ERROR, BYTES_RESIZE_MESSAGE);
+            } else {
+                attr.size = size_arg;
+            }
+        }
     }
     
     /* allocate */
