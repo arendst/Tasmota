@@ -685,10 +685,15 @@ void SettingsLoad(void) {
     }
   }
 #endif  // ESP8266
+
 #ifdef ESP32
   uint32_t source = SettingsRead(Settings, sizeof(TSettings));
-  if (source) { settings_location = 1; }
-  AddLog(LOG_LEVEL_NONE, PSTR(D_LOG_CONFIG "Loaded from %s, " D_COUNT " %lu"), (source)?"File":"Nvm", Settings->save_flag);
+  if (source) {
+    settings_location = 1;
+    if (Settings->cfg_holder == (uint16_t)CFG_HOLDER) {
+      AddLog(LOG_LEVEL_NONE, PSTR(D_LOG_CONFIG "Loaded from %s, " D_COUNT " %lu"), (source)?"File":"Nvm", Settings->save_flag);
+    }
+  }
 #endif  // ESP32
 
 #ifndef FIRMWARE_MINIMAL
