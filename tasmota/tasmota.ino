@@ -573,7 +573,7 @@ void loop(void) {
       SleepDelay((uint32_t)TasmotaGlobal.sleep - my_activity);  // Provide time for background tasks like wifi
     } else {
       if (TasmotaGlobal.global_state.network_down) {
-        SleepDelay(my_activity /2);                // If wifi down and my_activity > setoption36 then force loop delay to 1/3 of my_activity period
+        SleepDelay(my_activity /2);                // If wifi down and my_activity > setoption36 then force loop delay to 1/2 of my_activity period
       }
     }
   }

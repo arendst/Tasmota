@@ -17,6 +17,14 @@ end
 
 tasmota = nil
 class Tasmota
+  var _rules
+  var _timers
+  var _ccmd
+  var _drivers
+  var _cb
+  var wire1
+  var wire2
+  var cmd_res     # store the command result, nil if disables, true if capture enabled, contains return value
   var global      # mapping to TasmotaGlobal
 
   def init()
@@ -144,19 +152,21 @@ class Tasmota
   def exec_rules(ev_json)
     if self._rules
       import json
-      var ev = json.load(ev_json)
+      var ev = json.load(ev_json)   # returns nil if invalid JSON
       var ret = false
       if ev == nil
-        print('BRY: ERROR, bad json: '+ev_json, 3)
-      else
-        try
-          ret = self._rules.reduce( /k,v,r-> self.try_rule(ev,k,v) || r, nil, false)
-        except "stop_iteration"
-          # silence stop_iteration which means that the map was resized during iteration
-        end
-        # for r: self._rules.keys()
-        #   ret = self.try_rule(ev,r,self._rules[r]) || ret
-        # end
+        self.log('BRY: ERROR, bad json: '+ev_json, 3)
+        ev = ev_json                # revert to string
+      end
+      # record the rule payload for tasmota.cmd()
+      if self.cmd_res != nil
+        self.cmd_res = ev
+      end
+      # try all rule handlers
+      try
+        ret = self._rules.reduce( /k,v,r-> self.try_rule(ev,k,v) || r, nil, false)
+      except "stop_iteration"
+        # silence stop_iteration which means that the map was resized during iteration
       end
       return ret
     end
@@ -360,14 +370,17 @@ class Tasmota
 
   # cmd high-level function
   def cmd(command)
-    import json
-    var ret = self._cmd(command)
-    var j = json.load(ret)
-    if type(j) == 'instance'
-      return j
-    else
-      return {'response':j}
+    self.cmd_res = true      # signal buffer capture
+
+    self._cmd(command)
+    
+    var ret = nil
+    if self.cmd_res != true       # unchanged
+      ret = self.cmd_res
     end
+    self.cmd_res = nil       # clear buffer
+    
+    return ret
   end
 
   # set_light and get_light deprecetaion

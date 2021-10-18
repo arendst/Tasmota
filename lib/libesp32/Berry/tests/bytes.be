@@ -8,8 +8,8 @@ assert(str(b) == "bytes('')")
 b=bytes(1)
 assert(str(b) == "bytes('')")
 b=bytes(-1)
-assert(str(b) == "bytes('')")
-assert(b.size() == 0)
+assert(str(b) == "bytes(\'00\')")
+assert(b.size() == 1)
 
 b=bytes("a")
 assert(str(b) == "bytes('')")
@@ -120,7 +120,7 @@ assert(b[2] == 0x55)
 #- item range -#
 b = bytes("00112233445566778899AABBCCDDEEFF")
 assert(str(b[1..1]) =="bytes('11')")
-assert(str(b[-11..1]) =="bytes('0011')")
+assert(str(b[-1..1]) =="bytes('')")
 assert(str(b[0..40]) =="bytes('00112233445566778899AABBCCDDEEFF')")
 assert(str(b[1..0]) =="bytes('')")
 
@@ -168,3 +168,18 @@ assert(str(b) =="bytes('4C6F72656D20697073756D20646F6C6F722073697420616D65742C20
 assert(b.tostring(0) =="bytes('4C6F72656D20697073756D20646F6C6F722073697420616D65742C20636F6E73656374657475722061646970697363696E6720656C69742C2073656420646F20656975736D6F642074656D706F7220696E6369646964756E74207574206C61626F726520657420646F6C6F7265206D61676E6120616C697175612E')")
 
 assert(size(bytes('4C6F72656D20697073756D20646F6C6F722073697420616D65742C20636F6E73656374657475722061646970697363696E6720656C69742C2073656420646F20656975736D6F642074656D706F7220696E6369646964756E74207574206C61626F726520657420646F6C6F7265206D61676E6120616C697175612E')) == 123)
+
+#- negative index -#
+b=bytes("112233")
+assert(b[0] == 0x11)
+assert(b[-1] == 0x33)   #- last element -#
+assert(b[-3] == 0x11)
+
+#- ranges with negative indices -#
+b = bytes("00112233445566778899AABBCCDDEEFF")
+assert(b[0..-1] == b)
+assert(b[1..-2] == bytes("112233445566778899AABBCCDDEE"))
+assert(b[5..10] == bytes("5566778899AA"))
+assert(b[-10..-5] == bytes("66778899AABB"))
+assert(b[5..-10] == bytes("5566"))
+assert(b[7..-12] == bytes())
