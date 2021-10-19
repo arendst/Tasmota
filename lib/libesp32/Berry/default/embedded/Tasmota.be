@@ -181,6 +181,28 @@ class Tasmota
     return false
   end
 
+  # Run tele rules
+  def exec_tele(ev_json)
+    if self._rules
+      import json
+      var ev = json.load(ev_json)   # returns nil if invalid JSON
+      var ret = false
+      if ev == nil
+        self.log('BRY: ERROR, bad json: '+ev_json, 3)
+        ev = ev_json                # revert to string
+      end
+      # insert tele prefix
+      ev = { "Tele": ev }
+      try
+        ret = self._rules.reduce( /k,v,r-> self.try_rule(ev,k,v) || r, nil, false)
+      except "stop_iteration"
+        # silence stop_iteration which means that the map was resized during iteration
+      end
+      return ret
+    end
+    return false
+  end
+
   def set_timer(delay,f,id)
     if !self._timers self._timers=[] end
     self._timers.push(Timer(self.millis(delay),f,id))
@@ -329,6 +351,7 @@ class Tasmota
 
     var done = false
     if event_type=='cmd' return self.exec_cmd(cmd, idx, payload)
+    elif event_type=='tele' return self.exec_tele(payload)
     elif event_type=='rule' return self.exec_rules(payload)
     elif event_type=='gc' return self.gc()
     elif self._drivers

@@ -284,6 +284,7 @@ extern const bcstring be_const_str_save;
 extern const bcstring be_const_str_yield;
 extern const bcstring be_const_str_NONE;
 extern const bcstring be_const_str_TASMOTACLIENT_RST;
+extern const bcstring be_const_str_exec_tele;
 extern const bcstring be_const_str_read24;
 extern const bcstring be_const_str_search;
 extern const bcstring be_const_str_web_send_decimal;
