@@ -33,10 +33,18 @@ extern "C" {
 
   extern const be_ctypes_structure_t be_tasmota_global_struct = {
     sizeof(TasmotaGlobal),  /* size in bytes */
-    2,  /* number of elements */
+    1,  /* number of elements */
     nullptr,
     (const be_ctypes_structure_item_t[2]) {
       { "sleep", offsetof(TasmotaGlobal_t, sleep), 0, 0, ctypes_u8, 0 },
+  }};
+
+  extern const be_ctypes_structure_t be_tasmota_settings_struct = {
+    sizeof(TSettings),  /* size in bytes */
+    1,  /* number of elements */
+    nullptr,
+    (const be_ctypes_structure_item_t[2]) {
+      { "sleep", offsetof(TSettings, sleep), 0, 0, ctypes_u8, 0 },
   }};
 
 }
