@@ -1324,6 +1324,8 @@ jobs:
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
+    - uses: actions/checkout@v2
+    - name: Download artifacts
     - uses: actions/download-artifact@v2
       with:
         name: firmware
@@ -1362,18 +1364,16 @@ jobs:
       run: ls -R ./*
 
     - name: Push Firmware files to https://github.com/arendst/Tasmota-firmware
-      uses: andstor/copycat-action@v3
-      with:
-        personal_token: ${{ secrets.API_TOKEN_GITHUB }}
-        src_path: firmware/.
-        src_branch: development
-        dst_path: /firmware/
-        dst_owner: arendst
-        dst_branch: main
-        dst_repo_name: Tasmota-firmware
-        username: github-actions
-        email: github-actions@github.com
-        commit_message: ${GITHUB_SHA}
+      run: |
+        git config user.name "Platformio BUILD"
+        git config user.email github-actions@github.com
+        git switch -c work
+        git remote add -f Tasmota "https://github.com/arendst/Tasmota-firmware.git" --track main
+        git rm -r --cached .
+        git add -f ./firmware/*
+        git commit -m ${GITHUB_SHA}
+        git merge Tasmota-firmware/main --allow-unrelated-histories
+        git push -u origin main
 
     - name: Creat trigger.txt
       run: |
