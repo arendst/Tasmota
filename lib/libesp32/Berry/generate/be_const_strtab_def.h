@@ -72,7 +72,8 @@ be_define_const_str(cos, "cos", 4220379804u, 0, 3, &be_const_str_select);
 be_define_const_str(select, "select", 297952813u, 0, 6, NULL);
 be_define_const_str(BOILER_OT_TX, "BOILER_OT_TX", 671743623u, 0, 12, &be_const_str_INPUT_PULLDOWN);
 be_define_const_str(INPUT_PULLDOWN, "INPUT_PULLDOWN", 1172232591u, 0, 14, &be_const_str_WEBCAM_SIOC);
-be_define_const_str(WEBCAM_SIOC, "WEBCAM_SIOC", 218815147u, 0, 11, &be_const_str_resp_cmnd_done);
+be_define_const_str(WEBCAM_SIOC, "WEBCAM_SIOC", 218815147u, 0, 11, &be_const_str_counters);
+be_define_const_str(counters, "counters", 4095866864u, 0, 8, &be_const_str_resp_cmnd_done);
 be_define_const_str(resp_cmnd_done, "resp_cmnd_done", 2601874875u, 0, 14, &be_const_str_tob64);
 be_define_const_str(tob64, "tob64", 373777640u, 0, 5, NULL);
 be_define_const_str(response_append, "response_append", 450346371u, 0, 15, NULL);
@@ -887,6 +888,6 @@ static const bstring* const m_string_table[] = {
 
 static const struct bconststrtab m_const_string_table = {
     .size = 287,
-    .count = 574,
+    .count = 575,
     .table = m_string_table
 };

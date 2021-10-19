@@ -71,6 +71,21 @@
  **/
 #define BE_USE_OBSERVABILITY_HOOK       1
 
+/* Macro: BE_USE_OBSERVABILITY_HOOK
+ * Use the obshook function to report low-level actions.
+ * Default: 0
+ **/
+#define BE_USE_PERF_COUNTERS            1
+
+/* Macro: BE_VM_OBSERVABILITY_SAMPLING
+ * If BE_USE_OBSERVABILITY_HOOK == 1 and BE_USE_PERF_COUNTERS == 1
+ * then the observability hook is called regularly in the VM loop
+ * allowing to stop infinite loops or too-long running code.
+ * The value is a power of 2.
+ * Default: 20 - which translates to 2^20 or ~1 million instructions
+ **/
+#define BE_VM_OBSERVABILITY_SAMPLING    20
+
 /* Macro: BE_STACK_TOTAL_MAX
  * Set the maximum total stack size.
  * Default: 20000
