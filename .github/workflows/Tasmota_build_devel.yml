@@ -3,7 +3,7 @@ name: Build_firmware_devel
 on:
   workflow_dispatch:  # Manually start a workflow
   push:
-    branches: development
+    branches: test # Dummy branch run only manually for testing!
     paths-ignore:
     - '.github/**' # Ignore changes towards the .github directory
     - '**.md' # Do no build if *.md files changes
