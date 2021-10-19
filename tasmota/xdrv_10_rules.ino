@@ -806,7 +806,7 @@ bool RulesProcessEvent(const char *json_event)
 {
 #ifdef USE_BERRY
   // events are passed to Berry before Rules engine
-  callBerryRule(json_event);
+  callBerryRule(json_event, Rules.teleperiod);
 #endif
 
   if (Rules.busy) { return false; }

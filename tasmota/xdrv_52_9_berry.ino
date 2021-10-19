@@ -95,12 +95,12 @@ extern "C" {
 // // call a function (if exists) of type void -> void
 
 // If event == nullptr, then take XdrvMailbox.data
-bool callBerryRule(const char *event) {
+bool callBerryRule(const char *event, bool teleperiod) {
   if (berry.rules_busy) { return false; }
   berry.rules_busy = true;
   char * json_event = XdrvMailbox.data;
   bool serviced = false;
-  serviced = callBerryEventDispatcher(PSTR("rule"), nullptr, 0, event ? event : XdrvMailbox.data);
+  serviced = callBerryEventDispatcher(teleperiod ? "tele" : "rule", nullptr, 0, event ? event : XdrvMailbox.data);
   berry.rules_busy = false;
   return serviced;     // TODO event not handled
 }
@@ -760,7 +760,10 @@ bool Xdrv52(uint8_t function)
 
     // Berry wide commands and events
     case FUNC_RULES_PROCESS:
-      result = callBerryRule(nullptr);
+      result = callBerryRule(nullptr, false);
+      break;
+    case FUNC_TELEPERIOD_RULES_PROCESS:
+      result = callBerryRule(nullptr, true);
       break;
     case FUNC_MQTT_DATA:
       result = callBerryEventDispatcher(PSTR("mqtt_data"), XdrvMailbox.topic, 0, XdrvMailbox.data, XdrvMailbox.data_len);

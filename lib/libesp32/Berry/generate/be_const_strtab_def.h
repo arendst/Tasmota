@@ -284,6 +284,7 @@ be_define_const_str(save, "save", 3439296072u, 0, 4, &be_const_str_yield);
 be_define_const_str(yield, "yield", 1821831854u, 0, 5, NULL);
 be_define_const_str(NONE, "NONE", 1932136219u, 0, 4, NULL);
 be_define_const_str(TASMOTACLIENT_RST, "TASMOTACLIENT_RST", 3326196213u, 0, 17, NULL);
+be_define_const_str(exec_tele, "exec_tele", 1020751601u, 0, 9, &be_const_str_read24);
 be_define_const_str(read24, "read24", 1808533811u, 0, 6, &be_const_str_search);
 be_define_const_str(search, "search", 2150836393u, 0, 6, &be_const_str_web_send_decimal);
 be_define_const_str(web_send_decimal, "web_send_decimal", 1407210204u, 0, 16, NULL);
@@ -733,7 +734,7 @@ static const bstring* const m_string_table[] = {
     (const bstring *)&be_const_str_add_driver,
     (const bstring *)&be_const_str_NONE,
     (const bstring *)&be_const_str_TASMOTACLIENT_RST,
-    (const bstring *)&be_const_str_read24,
+    (const bstring *)&be_const_str_exec_tele,
     (const bstring *)&be_const_str_IEM3000_RX,
     (const bstring *)&be_const_str_Tasmota,
     (const bstring *)&be_const_str_has_arg,
@@ -893,6 +894,6 @@ static const bstring* const m_string_table[] = {
 
 static const struct bconststrtab m_const_string_table = {
     .size = 289,
-    .count = 578,
+    .count = 579,
     .table = m_string_table
 };
