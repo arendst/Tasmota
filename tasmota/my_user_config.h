@@ -348,6 +348,7 @@
 #define ZIGBEE_DISTINCT_TOPICS false             // [SetOption89] Enable unique device topic based on Zigbee device ShortAddr
 #define ZIGBEE_RMV_ZBRECEIVED  false             // [SetOption100] Remove ZbReceived form JSON message
 #define ZIGBEE_INDEX_EP        false             // [SetOption101] Add the source endpoint as suffix to attributes, ex `Power3` instead of `Power` if sent from endpoint 3
+#define WATCHDOG_TASK_SECONDS  5                 // [ESP32 only] Task Watchdog Timer (TWDT) time in seconds - detecting Tasmota running for a prolonged period of time without yielding with `esp_task_wdt_reset()`
 
 /*********************************************************************************************\
  * END OF SECTION 1
@@ -990,7 +991,7 @@
 //#define USE_WEBCAM                               // Add support for webcam
 
 #define USE_BERRY                                // Enable Berry scripting language
-  #define USE_BERRY_TIMEOUT             4000     // Timeout in ms, will raise an exception if running time exceeds this timeout
+  #define USE_BERRY_TIMEOUT             4000     // Timeout in ms, will raise an exception if running time exceeds this timeout. Must be lower than `WATCHDOG_TASK_SECONDS * 1000` or the hardwware watchdog will fire first
   #define USE_BERRY_PSRAM                        // Allocate Berry memory in PSRAM if PSRAM is connected - this might be slightly slower but leaves main memory intact
   // #define USE_BERRY_DEBUG                        // Compile Berry bytecode with line number information, makes exceptions easier to debug. Adds +8% of memory consumption for compiled code
   #define USE_WEBCLIENT                          // Enable `webclient` to make HTTP/HTTPS requests. Can be disabled for security reasons.

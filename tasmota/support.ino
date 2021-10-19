@@ -66,6 +66,35 @@ void OsWatchTicker(void)
   }
 }
 
+#ifdef ESP32
+#include "esp_task_wdt.h"
+void TWDTInit(void) {
+  // enable Task Watchdog Timer
+  esp_task_wdt_init(WATCHDOG_TASK_SECONDS, true);
+  // if (ret != ESP_OK) { AddLog(LOG_LEVEL_ERROR, "HDW: cannot init Task WDT %i", ret); }
+  esp_task_wdt_add(nullptr);
+  // if (ret != ESP_OK) { AddLog(LOG_LEVEL_ERROR, "HDW: cannot start Task WDT %i", ret); }
+}
+
+void TWDTRestore(void) {
+  // restore default WDT values
+  esp_task_wdt_init(WATCHDOG_TASK_SECONDS, false);
+}
+
+void TWDTLoop(void) {
+  esp_task_wdt_reset();
+}
+
+// custom handler
+extern "C" {
+  void __attribute__((weak)) esp_task_wdt_isr_user_handler(void)
+  {
+    Serial.printf(">>>>>----------\n");
+  }
+
+}
+#endif
+
 void OsWatchInit(void)
 {
   oswatch_blocked_loop = RtcSettings.oswatch_blocked_loop;
