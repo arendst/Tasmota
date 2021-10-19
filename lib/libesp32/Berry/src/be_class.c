@@ -346,10 +346,12 @@ bbool be_class_setmember(bvm *vm, bclass *o, bstring *name, bvalue *src)
 {
     bvalue v;
     be_assert(name != NULL);
-    bclass * obj = class_member(vm, o, name, &v);
-    if (obj && !var_istype(&v, MT_VARIABLE)) {
-        be_map_insertstr(vm, obj->members, name, src);
-        return btrue;
+    if (!gc_isconst(o)) {
+        bclass * obj = class_member(vm, o, name, &v);
+        if (obj && !var_istype(&v, MT_VARIABLE)) {
+            be_map_insertstr(vm, obj->members, name, src);
+            return btrue;
+        }
     }
     return bfalse;
 }
