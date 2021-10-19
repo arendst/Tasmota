@@ -492,5 +492,26 @@ int32_t be_convert_single_elt(bvm *vm, int32_t idx, const char * arg_type = null
   return ret;
 }
 
+/*********************************************************************************************\
+ * Manage timeout for Berry code
+ *
+\*********************************************************************************************/
+void BrTimeoutStart(void)  {
+  berry.timeout = millis() + USE_BERRY_TIMEOUT;
+  if (0 == berry.timeout) {
+    berry.timeout = 1;    // rare case when value accidentally computes to zero
+  }
+
+}
+
+void BrTimeoutYield(void) {
+  if (0 != berry.timeout) {
+    BrTimeoutStart();
+  }
+}
+
+void BrTimeoutReset(void)  {
+  berry.timeout = 0;      // remove timer
+}
 
 #endif  // USE_BERRY

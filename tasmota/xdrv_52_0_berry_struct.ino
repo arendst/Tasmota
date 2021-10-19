@@ -51,6 +51,7 @@ public:
 class BerrySupport {
 public:
   bvm *vm = nullptr;                    // berry vm
+  int32_t timeout = 0;                  // Berry heartbeat timeout, preventing code to run for too long. `0` means not enabled
   bool rules_busy = false;              // are we already processing rules, avoid infinite loop
   bool autoexec_done = false;           // do we still need to load 'autoexec.be'
   bool repl_active = false;             // is REPL running (activates log recording)

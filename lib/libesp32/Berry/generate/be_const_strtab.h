@@ -73,6 +73,7 @@ extern const bcstring be_const_str_select;
 extern const bcstring be_const_str_BOILER_OT_TX;
 extern const bcstring be_const_str_INPUT_PULLDOWN;
 extern const bcstring be_const_str_WEBCAM_SIOC;
+extern const bcstring be_const_str_counters;
 extern const bcstring be_const_str_resp_cmnd_done;
 extern const bcstring be_const_str_tob64;
 extern const bcstring be_const_str_response_append;

@@ -48,9 +48,28 @@
   #define DEBUG_HOOK()
 #endif
 
+#if BE_USE_PERF_COUNTERS
+  #define COUNTER_HOOK() \
+    vm->counter_ins++;
+#else
+  #define COUNTER_HOOK()
+#endif
+
+#if BE_USE_PERF_COUNTERS && BE_USE_OBSERVABILITY_HOOK
+  #define VM_HEARTBEAT() \
+    if ((vm->counter_ins & ((1<<(BE_VM_OBSERVABILITY_SAMPLING - 1))-1) ) == 0) { /* call every 2^BE_VM_OBSERVABILITY_SAMPLING instructions */    \
+        if (vm->obshook != NULL)                                                    \
+            (*vm->obshook)(vm, BE_OBS_VM_HEARTBEAT, vm->counter_ins);               \
+    }
+#else
+  #define VM_HEARTBEAT()
+#endif
+
 #define vm_exec_loop() \
     loop: \
         DEBUG_HOOK(); \
+        COUNTER_HOOK(); \
+        VM_HEARTBEAT(); \
         switch (IGET_OP(ins = *vm->ip++))
 
 #if BE_USE_SINGLE_FLOAT
@@ -445,6 +464,15 @@ BERRY_API bvm* be_vm_new(void)
 #if BE_USE_OBSERVABILITY_HOOK
     vm->obshook = NULL;
 #endif
+#if BE_USE_PERF_COUNTERS
+    vm->counter_ins = 0;
+    vm->counter_enter = 0;
+    vm->counter_call = 0;
+    vm->counter_get = 0;
+    vm->counter_set = 0;
+    vm->counter_try = 0;
+    vm->counter_exc = 0;
+#endif
     return vm;
 }
 
@@ -478,6 +506,9 @@ newframe: /* a new call frame */
     clos = var_toobj(vm->cf->func);  /* `clos` is the current function/closure */
     ktab = clos->proto->ktab;  /* `ktab` is the current constant table */
     reg = vm->reg;  /* `reg` is the current stack base for the callframe */
+#if BE_USE_PERF_COUNTERS
+    vm->counter_enter++;
+#endif
     vm_exec_loop() {
         opcase(LDNIL): {
             var_setnil(RA());
@@ -786,6 +817,9 @@ newframe: /* a new call frame */
             dispatch();
         }
         opcase(GETMBR): {
+#if BE_USE_PERF_COUNTERS
+            vm->counter_get++;
+#endif
             bvalue a_temp;  /* copy result to a temp variable because the stack may be relocated in virtual member calls */
             // bvalue *a = RA(), *b = RKB(), *c = RKC();
             bvalue *b = RKB(), *c = RKC();
@@ -806,6 +840,9 @@ newframe: /* a new call frame */
             dispatch();
         }
         opcase(GETMET): {
+#if BE_USE_PERF_COUNTERS
+            vm->counter_get++;
+#endif
             bvalue a_temp;  /* copy result to a temp variable because the stack may be relocated in virtual member calls */
             bvalue *b = RKB(), *c = RKC();
             if (var_isinstance(b) && var_isstr(c)) {
@@ -837,6 +874,9 @@ newframe: /* a new call frame */
             dispatch();
         }
         opcase(SETMBR): {
+#if BE_USE_PERF_COUNTERS
+            vm->counter_set++;
+#endif
             bvalue *a = RA(), *b = RKB(), *c = RKC();
             if (var_isinstance(a) && var_isstr(b)) {
                 binstance *obj = var_toobj(a);
@@ -971,6 +1011,9 @@ newframe: /* a new call frame */
             dispatch();
         }
         opcase(RAISE): {
+#if BE_USE_PERF_COUNTERS
+            vm->counter_exc++;
+#endif
             if (IGET_RA(ins) < 2) {  /* A==2 means no arguments are passed to RAISE, i.e. rethrow with current exception */
                 bvalue *top = vm->top;
                 top[0] = *RKB(); /* push the exception value to top */
@@ -985,6 +1028,9 @@ newframe: /* a new call frame */
             dispatch();
         }
         opcase(EXBLK): {
+#if BE_USE_PERF_COUNTERS
+            vm->counter_try++;
+#endif
             if (!IGET_RA(ins)) {
                 be_except_block_setup(vm);
                 if (be_setjmp(vm->errjmp->b)) {
@@ -998,6 +1044,9 @@ newframe: /* a new call frame */
             dispatch();
         }
         opcase(CALL): {
+#if BE_USE_PERF_COUNTERS
+            vm->counter_call++;
+#endif
             bvalue *var = RA();  /* `var` is the register for the call followed by arguments */
             int mode = 0, argc = IGET_RKB(ins);  /* B contains number of arguments pushed on stack */
         recall: /* goto: instantiation class and call constructor */

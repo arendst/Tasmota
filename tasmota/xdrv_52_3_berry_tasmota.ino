@@ -308,7 +308,7 @@ extern "C" {
   // ESP object
   int32_t l_yield(bvm *vm);
   int32_t l_yield(bvm *vm) {
-    optimistic_yield(10);
+    BrTimeoutYield();   // reset timeout
     be_return_nil(vm);
   }
 
