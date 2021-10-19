@@ -150,7 +150,7 @@ class Tasmota
   # Run rules, i.e. check each individual rule
   # Returns true if at least one rule matched, false if none
   def exec_rules(ev_json)
-    if self._rules
+    if self._rules || self.cmd_res != nil  # if there is a rule handler, or we record rule results
       import json
       var ev = json.load(ev_json)   # returns nil if invalid JSON
       var ret = false
@@ -163,10 +163,12 @@ class Tasmota
         self.cmd_res = ev
       end
       # try all rule handlers
-      try
-        ret = self._rules.reduce( /k,v,r-> self.try_rule(ev,k,v) || r, nil, false)
-      except "stop_iteration"
-        # silence stop_iteration which means that the map was resized during iteration
+      if self._rules
+        try
+          ret = self._rules.reduce( /k,v,r-> self.try_rule(ev,k,v) || r, nil, false)
+        except "stop_iteration"
+          # silence stop_iteration which means that the map was resized during iteration
+        end
       end
       return ret
     end
