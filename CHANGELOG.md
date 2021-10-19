@@ -3,7 +3,15 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [9.5.0.9]
+## [10.0.0.0]
+
+
+## [Released]
+
+## [10.0.0] 20211019
+- Release Norman
+
+## [9.5.0.9] 20211019
 ### Added
 - Command ``SetOption129 1`` to enable split total energy results (#13030)
 - Command ``SetOption130 1`` adding heap size (and ESP32 fragmentation) to logging timestamp for debugging
@@ -186,8 +194,6 @@ All notable changes to this project will be documented in this file.
 - NO VALID JSON regression from may 4th (#12440)
 - Telegram response decoding stopped working after 20210621 and exception on long result message (#12451)
 - Neopool compile error on DEBUG_TASMOTA_SENSOR (#12464)
-
-## [Released]
 
 ## [9.5.0] 20210617
 - Release Michael (Rossi)
