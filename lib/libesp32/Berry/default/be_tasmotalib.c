@@ -7,7 +7,9 @@
 
 struct dummy_struct {};  // we need a struct name but don't need any meaningful content, we just take the address
 extern struct TasmotaGlobal_t TasmotaGlobal;
+extern struct TSettings * Settings;
 extern struct dummy_struct be_tasmota_global_struct;
+extern struct dummy_struct be_tasmota_settings_struct;
 
 extern int l_getFreeHeap(bvm *vm);
 extern int l_publish(bvm *vm);
@@ -53,7 +55,7 @@ extern int l_i2cenabled(bvm *vm);
 ********************************************************************/
 be_local_closure(init,   /* name */
   be_nested_proto(
-    4,                          /* nstack */
+    7,                          /* nstack */
     1,                          /* argc */
     0,                          /* varg */
     0,                          /* has upvals */
@@ -61,21 +63,45 @@ be_local_closure(init,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 4]) {     /* constants */
+    ( &(const bvalue[11]) {     /* constants */
     /* K0   */  be_nested_string("global", 503252654, 6),
     /* K1   */  be_nested_string("ctypes_bytes_dyn", 915205307, 16),
     /* K2   */  be_nested_string("_global_addr", 533766721, 12),
     /* K3   */  be_nested_string("_global_def", 646007001, 11),
+    /* K4   */  be_nested_string("introspect", 164638290, 10),
+    /* K5   */  be_nested_string("_settings_ptr", 1825772182, 13),
+    /* K6   */  be_nested_string("get", 1410115415, 3),
+    /* K7   */  be_const_int(0),
+    /* K8   */  be_nested_string("settings", 1745255176, 8),
+    /* K9   */  be_nested_string("toptr", -915119842, 5),
+    /* K10  */  be_nested_string("_settings_def", -519406989, 13),
     }),
     (be_nested_const_str("init", 380752755, 4)),
-    (be_nested_const_str("input", -103256197, 5)),
-    ( &(const binstruction[ 6]) {  /* code */
+    (be_nested_const_str("tasmota.be", 1128870755, 10)),
+    ( &(const binstruction[23]) {  /* code */
       0xB8060200,  //  0000  GETNGBL	R1	K1
       0x88080102,  //  0001  GETMBR	R2	R0	K2
       0x880C0103,  //  0002  GETMBR	R3	R0	K3
       0x7C040400,  //  0003  CALL	R1	2
       0x90020001,  //  0004  SETMBR	R0	K0	R1
-      0x80000000,  //  0005  RET	0
+      0xA4060800,  //  0005  IMPORT	R1	K4
+      0x60080015,  //  0006  GETGBL	R2	G21
+      0x880C0105,  //  0007  GETMBR	R3	R0	K5
+      0x54120003,  //  0008  LDINT	R4	4
+      0x7C080400,  //  0009  CALL	R2	2
+      0x8C080506,  //  000A  GETMET	R2	R2	K6
+      0x58100007,  //  000B  LDCONST	R4	K7
+      0x54160003,  //  000C  LDINT	R5	4
+      0x7C080600,  //  000D  CALL	R2	3
+      0x780A0006,  //  000E  JMPF	R2	#0016
+      0xB80E0200,  //  000F  GETNGBL	R3	K1
+      0x8C100309,  //  0010  GETMET	R4	R1	K9
+      0x5C180400,  //  0011  MOVE	R6	R2
+      0x7C100400,  //  0012  CALL	R4	2
+      0x8814010A,  //  0013  GETMBR	R5	R0	K10
+      0x7C0C0400,  //  0014  CALL	R3	2
+      0x90021003,  //  0015  SETMBR	R0	K8	R3
+      0x80000000,  //  0016  RET	0
     })
   )
 );
@@ -1659,10 +1685,13 @@ class be_class_tasmota (scope: global, name: Tasmota) {
     wire1, var
     wire2, var
     global, var
+    settings, var
     cmd_res, var
 
     _global_def, comptr(&be_tasmota_global_struct)
+    _settings_def, comptr(&be_tasmota_settings_struct)
     _global_addr, comptr(&TasmotaGlobal)
+    _settings_ptr, comptr(&Settings)
 
     init, closure(init_closure)
 

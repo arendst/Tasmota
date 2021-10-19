@@ -26,10 +26,16 @@ class Tasmota
   var wire2
   var cmd_res     # store the command result, nil if disables, true if capture enabled, contains return value
   var global      # mapping to TasmotaGlobal
+  var settings
 
   def init()
     # instanciate the mapping object to TasmotaGlobal
     self.global = ctypes_bytes_dyn(self._global_addr, self._global_def)
+    import introspect
+    var settings_addr = bytes(self._settings_ptr, 4).get(0,4)
+    if settings_addr
+      self.settings = ctypes_bytes_dyn(introspect.toptr(settings_addr), self._settings_def)
+    end
   end
 
   # add `chars_in_string(s:string,c:string) -> int``
