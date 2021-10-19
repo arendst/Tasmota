@@ -36,8 +36,7 @@ extern "C" {
     2,  /* number of elements */
     nullptr,
     (const be_ctypes_structure_item_t[2]) {
-      { "energy_driver", offsetof(TasmotaGlobal_t, energy_driver), 0, 0, ctypes_u8, 0 },
-      { "uptime", offsetof(TasmotaGlobal_t, uptime), 0, 0, ctypes_u32, 0 },
+      { "sleep", offsetof(TasmotaGlobal_t, sleep), 0, 0, ctypes_u8, 0 },
   }};
 
 }
