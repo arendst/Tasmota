@@ -1325,7 +1325,6 @@ jobs:
     continue-on-error: true
     steps:
     - uses: actions/checkout@v2
-    - name: Download artifacts
     - uses: actions/download-artifact@v2
       with:
         name: firmware
