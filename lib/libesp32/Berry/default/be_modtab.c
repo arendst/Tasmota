@@ -24,6 +24,7 @@ be_extern_native_module(introspect);
 be_extern_native_module(strict);
 
 /* Tasmota specific */
+be_extern_native_module(python_compat);
 be_extern_native_module(persist);
 be_extern_native_module(light);
 be_extern_native_module(gpio);
@@ -80,6 +81,7 @@ BERRY_LOCAL const bntvmodule* const be_module_table[] = {
 #endif
     /* user-defined modules register start */
     
+    &be_native_module(python_compat),
     &be_native_module(path),
     &be_native_module(persist),
     &be_native_module(gpio),

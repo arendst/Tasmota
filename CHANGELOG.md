@@ -3,8 +3,9 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [10.0.0.0]
-
+## [10.0.0.1]
+### Added
+- Berry add module ``python_compat`` to be closer to Python syntax
 
 ## [Released]
 
