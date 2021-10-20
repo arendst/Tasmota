@@ -20,6 +20,7 @@
 #include "be_decoder.h"
 #include "be_debug.h"
 #include "be_exec.h"
+#include <limits.h>
 
 #define OP_NOT_BINARY           TokenNone
 #define OP_NOT_UNARY            TokenNone
@@ -29,6 +30,17 @@
 
 #define FUNC_METHOD             1
 #define FUNC_ANONYMOUS          2
+
+#if BE_INTGER_TYPE == 0 /* int */
+  #define M_IMAX    INT_MAX
+  #define M_IMIN    INT_MIN
+#elif BE_INTGER_TYPE == 1 /* long */
+  #define M_IMAX    LONG_MAX
+  #define M_IMIN    LONG_MIN
+#else /* int64_t (long long) */
+  #define M_IMAX    LLONG_MAX
+  #define M_IMIN    LLONG_MIN
+#endif
 
 /* get binary operator priority */
 #define binary_op_prio(op)      (binary_op_prio_tab[cast_int(op) - OptAdd])
@@ -1074,7 +1086,11 @@ static void sub_expr(bparser *parser, bexpdesc *e, int prio)
         be_code_prebinop(finfo, op, e); /* and or */
         init_exp(&e2, ETVOID, 0);
         sub_expr(parser, &e2, binary_op_prio(op));  /* parse right side */
-        check_var(parser, &e2);  /* check if valid */
+        if ((e2.type == ETVOID) && (op == OptConnect)) {
+            init_exp(&e2, ETINT, M_IMAX);
+        } else {
+            check_var(parser, &e2);  /* check if valid */
+        }
         be_code_binop(finfo, op, e, &e2, -1); /* encode binary op */
         op = get_binop(parser);  /* is there a following binop? */
     }
