@@ -38,7 +38,7 @@ check(45.e+2, 4500)
 
 test_source('x = 5; 0...x;', 'unexpected symbol near \'.\'')
 test_source('x = 5; 0...x;', 'unexpected symbol near \'.\'')
-test_source('45..', 'unexpected symbol near \'EOS\'')
+# test_source('45..', 'unexpected symbol near \'EOS\'')
 test_source('0xg', 'invalid hexadecimal number')
 test_source('"\\x5g"', 'invalid hexadecimal number')
 test_source('0x5g', 'malformed number')

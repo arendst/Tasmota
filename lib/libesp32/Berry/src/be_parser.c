@@ -1074,7 +1074,11 @@ static void sub_expr(bparser *parser, bexpdesc *e, int prio)
         be_code_prebinop(finfo, op, e); /* and or */
         init_exp(&e2, ETVOID, 0);
         sub_expr(parser, &e2, binary_op_prio(op));  /* parse right side */
-        check_var(parser, &e2);  /* check if valid */
+        if ((e2.type == ETVOID) && (op == OptConnect)) {
+            init_exp(&e2, ETINT, -1);
+        } else {
+            check_var(parser, &e2);  /* check if valid */
+        }
         be_code_binop(finfo, op, e, &e2, -1); /* encode binary op */
         op = get_binop(parser);  /* is there a following binop? */
     }
