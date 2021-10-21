@@ -560,12 +560,8 @@ const char UFS_FORM_SDC_DIRa[] PROGMEM =
 const char UFS_FORM_SDC_DIRc[] PROGMEM =
   "</div>";
 const char UFS_FORM_FILE_UPGb[] PROGMEM =
-#ifdef GUI_EDIT_FILE
   "<form method='get' action='ufse'><input type='hidden' file='" D_NEW_FILE "'>"
-  "<button type='submit'>" D_CREATE_NEW_FILE "</button></form>"
-#endif
-;
-
+  "<button type='submit'>" D_CREATE_NEW_FILE "</button></form>";
 const char UFS_FORM_FILE_UPGb1[] PROGMEM =
   "<input type='checkbox' id='shf' onclick='sf(eb(\"shf\").checked);' name='shf'>" D_SHOW_HIDDEN_FILES "</input>";
 
@@ -670,7 +666,9 @@ void UfsDirectory(void) {
     UfsListDir(ufs_path, depth);
   }
   WSContentSend_P(UFS_FORM_SDC_DIRc);
+#ifdef GUI_EDIT_FILE
   WSContentSend_P(UFS_FORM_FILE_UPGb);
+#endif
   if (!isSDC()) {
     WSContentSend_P(UFS_FORM_FILE_UPGb1);
   }
