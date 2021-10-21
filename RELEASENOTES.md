@@ -98,11 +98,13 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 
 [Complete list](BUILDS.md) of available feature and sensors.
 
-## Changelog v10.0.0.0
+## Changelog v10.0.0.1
 ### Added
+- ESP32 Berry add module ``python_compat`` to be closer to Python syntax [#13428](https://github.com/arendst/Tasmota/issues/13428)
 
 ### Breaking Changed
 
 ### Changed
+- File editor no-wrap [#13427](https://github.com/arendst/Tasmota/issues/13427)
 
 ### Fixed

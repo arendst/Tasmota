@@ -5,7 +5,10 @@ All notable changes to this project will be documented in this file.
 
 ## [10.0.0.1]
 ### Added
-- Berry add module ``python_compat`` to be closer to Python syntax
+- Berry add module ``python_compat`` to be closer to Python syntax (#13428)
+
+### Changed
+- File editor no-wrap (#13427)
 
 ## [Released]
 
