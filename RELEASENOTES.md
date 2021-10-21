@@ -106,6 +106,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 
 ### Changed
 - File editor no-wrap [#13427](https://github.com/arendst/Tasmota/issues/13427)
+- ESP32 core library from v1.0.7.4 to v1.0.7.5
 
 ### Fixed
 - Initial reset RTC memory based variables like EnergyToday and EnergyTotal
