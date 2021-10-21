@@ -34,3 +34,8 @@ assert(s.format("%i%%", 12) == "12%")
 assert(s.format("%i%%%i", 12, 13) == "12%13")
 assert(s.format("%s%%", "foo") == "foo%")
 assert(s.format("%.1f%%", 3.5) == "3.5%")
+
+s="azerty"
+assert(s[1..2] == "ze")
+assert(s[1..] == "zerty")
+assert(s[1..-1] == "zerty")

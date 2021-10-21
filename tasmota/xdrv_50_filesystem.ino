@@ -601,7 +601,7 @@ const char HTTP_EDITOR_FORM_START[] PROGMEM =
   "<fieldset><legend><b>&nbsp;" D_EDIT_FILE "&nbsp;</b></legend>"
   "<form>"
   "<label for='name'>" D_FILE ":</label><input type='text' id='name' name='name' value='%s'><br><hr width='98%%'>"
-  "<textarea id='content' name='content' rows='8' cols='80' style='font-size: 12pt'>";
+  "<textarea id='content' name='content' wrap='off' rows='8' cols='80' style='font-size: 12pt'>";
 
 const char HTTP_EDITOR_FORM_END[] PROGMEM =
   "</textarea>"

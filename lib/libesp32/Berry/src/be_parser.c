@@ -20,6 +20,7 @@
 #include "be_decoder.h"
 #include "be_debug.h"
 #include "be_exec.h"
+#include <limits.h>
 
 #define OP_NOT_BINARY           TokenNone
 #define OP_NOT_UNARY            TokenNone
@@ -29,6 +30,17 @@
 
 #define FUNC_METHOD             1
 #define FUNC_ANONYMOUS          2
+
+#if BE_INTGER_TYPE == 0 /* int */
+  #define M_IMAX    INT_MAX
+  #define M_IMIN    INT_MIN
+#elif BE_INTGER_TYPE == 1 /* long */
+  #define M_IMAX    LONG_MAX
+  #define M_IMIN    LONG_MIN
+#else /* int64_t (long long) */
+  #define M_IMAX    LLONG_MAX
+  #define M_IMIN    LLONG_MIN
+#endif
 
 /* get binary operator priority */
 #define binary_op_prio(op)      (binary_op_prio_tab[cast_int(op) - OptAdd])
@@ -877,6 +889,30 @@ static void primary_expr(bparser *parser, bexpdesc *e)
     }
 }
 
+/* parse a single string literal as parameter */
+static void call_single_string_expr(bparser *parser, bexpdesc *e)
+{
+    bexpdesc arg;
+    bfuncinfo *finfo = parser->finfo;
+    int base;
+
+    /* func 'string_literal' */
+    check_var(parser, e);
+    if (e->type == ETMEMBER) {
+        push_error(parser, "method not allowed for string prefix");
+    }
+    
+    base = be_code_nextreg(finfo, e); /* allocate a new base reg if not at top already */
+    simple_expr(parser, &arg);
+    be_code_nextreg(finfo, &arg);  /* move result to next reg */
+
+    be_code_call(finfo, base, 1);  /* only one arg */
+    if (e->type != ETREG) {
+        e->type = ETREG;
+        e->v.idx = base;
+    }
+}
+
 static void suffix_expr(bparser *parser, bexpdesc *e)
 {
     primary_expr(parser, e);
@@ -890,6 +926,9 @@ static void suffix_expr(bparser *parser, bexpdesc *e)
             break;
         case OptLSB: /* '[' index */
             index_expr(parser, e);
+            break;
+        case TokenString:
+            call_single_string_expr(parser, e); /* " string literal */
             break;
         default:
             return;
@@ -1047,7 +1086,11 @@ static void sub_expr(bparser *parser, bexpdesc *e, int prio)
         be_code_prebinop(finfo, op, e); /* and or */
         init_exp(&e2, ETVOID, 0);
         sub_expr(parser, &e2, binary_op_prio(op));  /* parse right side */
-        check_var(parser, &e2);  /* check if valid */
+        if ((e2.type == ETVOID) && (op == OptConnect)) {
+            init_exp(&e2, ETINT, M_IMAX);
+        } else {
+            check_var(parser, &e2);  /* check if valid */
+        }
         be_code_binop(finfo, op, e, &e2, -1); /* encode binary op */
         op = get_binop(parser);  /* is there a following binop? */
     }
