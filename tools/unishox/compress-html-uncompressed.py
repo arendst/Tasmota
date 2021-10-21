@@ -21,16 +21,19 @@
 
 import unishox
 from os import listdir
+from os import path
 from datetime import datetime
 
+path_compressed   = path.join('..','..','tasmota','html_compressed')
+path_uncompressed = path.join('..','..','tasmota','html_uncompressed')
 
-files = listdir('..\\..\\tasmota\\html_uncompressed') 
+files = listdir(path_uncompressed)
 
 totalIn = 0
 totalSaved = 0
 
 for file in files:
-  f = open('..\\..\\tasmota\\html_uncompressed\\' + file, "r")
+  f = open(path_uncompressed + path.sep + file, "r")
   text = f.read()
   f.close()
 
@@ -83,7 +86,7 @@ for file in files:
           # print(text[lastel+1:pos:])
       lastel = pos
 
-  print("####### Parsing input from "+'..\\..\\tasmota\\html_uncompressed\\' + file)  
+  print("####### Parsing input from " + path_uncompressed + path.sep + file)  
   print("  Const char name: "+const_name)
   #print('####### Cleaned input:')  
   #print(input)
@@ -142,9 +145,9 @@ for file in files:
   comment = comment + "// compressed by tools/unishox/compress-html-uncompressed.py\n"
   comment = comment + "/////////////////////////////////////////////////////////////////////\n"
 
-  f = open('..\\..\\tasmota\\html_compressed\\' + file, "w")
+  f = open(path_compressed + path.sep + file, "w")
   f.write(comment + lines + definition)
   f.close()
-  print("####### Wrote output to "+'..\\..\\tasmota\\html_compressed\\' + file)  
+  print("####### Wrote output to " + path_compressed + path.sep + file)  
 
 print("If all files are in use, total saving was "+str(totalSaved)+" out of "+str(totalIn))
